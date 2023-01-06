@@ -1,0 +1,31 @@
+--- pio.mysqli.php	2021-09-05 21:02:19.025446583 +0100
++++ pio.mysqli.php	2021-09-05 21:07:30.570186984 +0100
+@@ -317,12 +317,15 @@
+ 	public function getLastPostNo($state){
+ 		if(!$this->prepared) $this->dbPrepare();
+ 
+-		if($state=='afterCommit'){ // 送出後的最後文章編號
+-			$tree = $this->_mysql_call('SELECT MAX(no) FROM '.$this->tablename, array('Get the last No. failed', __LINE__));
+-			$lastno = $tree->fetch_row();
+-			$tree->free();
+-			return $lastno[0];
+-		}else return 0; // 其他狀態沒用
++		$tree = $this->_mysql_call('SELECT MAX(no) FROM '.$this->tablename, array('Get the last No. failed', __LINE__));
++		$lastno = $tree->fetch_row();
++		$tree->free();
++		switch($state){
++			case 'beforeCommit':
++			case 'afterCommit':
++				return $lastno[0];
++		}
++		return 0;
+ 	}
+ 
+ 	/* Output list of articles */
+@@ -576,4 +579,4 @@
+ 	}
+ }
+ 
+-?>
+\ No newline at end of file
++?>
