@@ -28,10 +28,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 	$pagenum = intval($pagenum);
 
 	$adminMode = valid()>=LEV_JANITOR && $pagenum != -1 && !$single_page; // Front-end management mode
-	$adminFunc = ''; // Front-end management choices
-	if($adminMode){
-		$adminFunc = '<input type="hidden" name="func" value="delete" />';
-	}
+
 	$resno = intval($resno); // Number digitization
 	$page_start = $page_end = 0; // Static page number
 	$inner_for_count = 1; // The number of inner loop executions
@@ -42,7 +39,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 		'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel" />'._T('del_head'),
 		'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on" />',
 		'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
-		'{$DEL_PASS_TEXT}' => ($adminMode ? $adminFunc : '')._T('del_pass'),
+		'{$DEL_PASS_TEXT}' => ($adminMode ? '<input type="hidden" name="func" value="delete" />' : '')._T('del_pass'),
 		'{$DEL_PASS_FIELD}' => '<input type="password" name="pwd" size="8" value="" />',
 		'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'" />',
 		'{$IS_THREAD}' => !!$resno);
@@ -362,10 +359,10 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno=0, $
 			$category = implode(', ', $ary_category2);
 		}else $category = '';
 
-		$THREADNAV = '';
-		$THREADNAV.= '<a href="#postform">&#9632;</a>&nbsp;';
-		$THREADNAV.= '<a href="#top">&#9650;</a>&nbsp;';
-		$THREADNAV.= '<a href="#bottom">&#9660;</a>&nbsp;';
+		$THREADNAV = '<a href="#postform">&#9632;</a>&nbsp;
+			      <a href="#top">&#9650;</a>&nbsp;
+			      <a href="#bottom">&#9660;</a>&nbsp;
+		';
 
 		// Final output
 		if($i){ // Response
@@ -518,14 +515,14 @@ function regist($preview=false){
 				if($upfile_path) $tmp_upfile_path = get_magic_quotes_gpc() ? stripslashes($upfile_path) : $upfile_path;
 				list(,$boundary) = explode('=', $_SERVER['CONTENT_TYPE']);
 				foreach($_POST as $header => $value){ // Form fields transfer data
-					$upsizeHDR += strlen('--'.$boundary."\r\n");
-					$upsizeHDR += strlen('Content-Disposition: form-data; name="'.$header.'"'."\r\n\r\n".(get_magic_quotes_gpc()?stripslashes($value):$value)."\r\n");
+					$upsizeHDR += strlen('--'.$boundary."\r\n")
+					+ strlen('Content-Disposition: form-data; name="'.$header.'"'."\r\n\r\n".(get_magic_quotes_gpc()?stripslashes($value):$value)."\r\n");
 				}
 				// The attached image file field transmits the data
-				$upsizeHDR += strlen('--'.$boundary."\r\n");
-				$upsizeHDR += strlen('Content-Disposition: form-data; name="upfile"; filename="'.$tmp_upfile_path."\"\r\n".'Content-Type: '.$_FILES['upfile']['type']."\r\n\r\n");
-				$upsizeHDR += strlen("\r\n--".$boundary."--\r\n");
-				$upsizeHDR += $_FILES['upfile']['size']; // Send attachment data
+				$upsizeHDR += strlen('--'.$boundary."\r\n")
+				+ strlen('Content-Disposition: form-data; name="upfile"; filename="'.$tmp_upfile_path."\"\r\n".'Content-Type: '.$_FILES['upfile']['type']."\r\n\r\n")
+				+ strlen("\r\n--".$boundary."--\r\n")
+				+ $_FILES['upfile']['size']; // Send attachment data
 				// The upload byte difference exceeds HTTP_UPLOAD_DIFF: The upload of additional image files is incomplete
 				if(($upsizeTTL - $upsizeHDR) > HTTP_UPLOAD_DIFF){
 					if(KILL_INCOMPLETE_UPLOAD){
@@ -1299,9 +1296,6 @@ function showstatus(){
 	$PMS->useModuleMethods('LinksAboveBar', array(&$links,'status',$level));
 	$dat .= $links.'<center class="theading2"><b>'._T('info_top').'</b></center>
 </div>
-';
-
-	$dat .= '
 <center id="status">
 	<table cellspacing="0" cellpadding="0" border="1"><thead>
 		<tr><th colspan="4">'._T('info_basic').'</th></tr>
