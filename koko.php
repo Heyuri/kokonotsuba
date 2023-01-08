@@ -1,6 +1,6 @@
 <?php
 
-define("PIXMICAT_VER", 'Koko BBS Release 1'); // 版本資訊文字
+define("PIXMICAT_VER", 'Koko BBS Release 1'); // Version information text
 /*
 
 YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE THIS SOFTWARE.
@@ -12,13 +12,13 @@ if (file_exists('.lockdown')&&!(valid()>=LEV_JANITOR)) {
 
 @session_start();
 
-require './config.php'; // 引入設定檔
-require ROOTPATH.'lib/pmclibrary.php'; // 引入函式庫
-require ROOTPATH.'lib/lib_errorhandler.php'; // 引入全域錯誤捕捉
-require ROOTPATH.'lib/lib_compatible.php'; // 引入相容函式庫
-require ROOTPATH.'lib/lib_common.php'; // 引入共通函式檔案
+require './config.php'; // Introduce a settings file
+require ROOTPATH.'lib/pmclibrary.php'; // Ingest libraries
+require ROOTPATH.'lib/lib_errorhandler.php'; // Introduce global error capture
+require ROOTPATH.'lib/lib_compatible.php'; // Introduce compatible libraries
+require ROOTPATH.'lib/lib_common.php'; // Introduce common function archives
 
-/* 更新記錄檔檔案／輸出討論串 */
+/* Update the log file/output thread */
 function updatelog($resno=0,$pagenum=-1,$single_page=false){
 	global $LIMIT_SENSOR;
 	$PIO = PMCLibrary::getPIOInstance();
@@ -27,17 +27,17 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 	$PMS = PMCLibrary::getPMSInstance();
 	$pagenum = intval($pagenum);
 
-	$adminMode = valid()>=LEV_JANITOR && $pagenum != -1 && !$single_page; // 前端管理模式
-	$adminFunc = ''; // 前端管理選擇
+	$adminMode = valid()>=LEV_JANITOR && $pagenum != -1 && !$single_page; // Front-end management mode
+	$adminFunc = ''; // Front-end management choices
 	if($adminMode){
 		$adminFunc = '<input type="hidden" name="func" value="delete" />';
 	}
-	$resno = intval($resno); // 編號數字化
-	$page_start = $page_end = 0; // 靜態頁面編號
-	$inner_for_count = 1; // 內部迴圈執行次數
+	$resno = intval($resno); // Number digitization
+	$page_start = $page_end = 0; // Static page number
+	$inner_for_count = 1; // The number of inner loop executions
 	$RES_start = $RES_amount = $hiddenReply = $tree_count = 0;
-	$kill_sensor = $old_sensor = false; // 預測系統啟動旗標
-	$arr_kill = $arr_old = array(); // 過舊編號陣列
+	$kill_sensor = $old_sensor = false; // Predictive system start flag
+	$arr_kill = $arr_old = array(); // Obsolete numbered array
 	$pte_vals = array('{$THREADFRONT}'=>'','{$THREADREAR}'=>'','{$SELF}'=>PHP_SELF,
 		'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel" />'._T('del_head'),
 		'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on" />',
@@ -49,40 +49,40 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 	if($resno) $pte_vals['{$RESTO}'] = $resno;
 
 	if(!$resno){
-		if($pagenum==-1){ // rebuild模式 (PHP動態輸出多頁份)
-			$threads = $PIO->fetchThreadList(); // 取得全討論串列表
+		if($pagenum==-1){ // Rebuild mode (PHP dynamic output of multiple pages)
+			$threads = $PIO->fetchThreadList(); // Get a full list of discussion threads
 			$PMS->useModuleMethods('ThreadOrder', array($resno,$pagenum,$single_page,&$threads)); // "ThreadOrder" Hook Point
 			$threads_count = count($threads);
 			$inner_for_count = $threads_count > PAGE_DEF ? PAGE_DEF : $threads_count;
-			$page_end = ceil($threads_count / PAGE_DEF); // 頁面編號最後值
-		}else{ // 討論串分頁模式 (PHP動態輸出一頁份)
-			$threads_count = $PIO->threadCount(); // 討論串個數
-			if($pagenum < 0 || ($pagenum * PAGE_DEF) >= $threads_count) error(_T('page_not_found')); // $pagenum超過範圍
-			$page_start = $page_end = $pagenum; // 設定靜態頁面編號
-			$threads = $PIO->fetchThreadList(); // 取得全討論串列表
+			$page_end = ceil($threads_count / PAGE_DEF); // The last value of the page number
+		}else{ // Discussion of the clue label pattern (PHP dynamic output one page)
+			$threads_count = $PIO->threadCount(); // Discuss the number of strings
+			if($pagenum < 0 || ($pagenum * PAGE_DEF) >= $threads_count) error(_T('page_not_found')); // $Pagenum is out of range
+			$page_start = $page_end = $pagenum; // Set a static page number
+			$threads = $PIO->fetchThreadList(); // Get a full list of discussion threads
 			$PMS->useModuleMethods('ThreadOrder', array($resno,$pagenum,$single_page,&$threads)); // "ThreadOrder" Hook Point
-			$threads = array_splice($threads, $pagenum * PAGE_DEF, PAGE_DEF); // 取出分頁後的討論串首篇列表
-			$inner_for_count = count($threads); // 討論串個數就是迴圈次數
+			$threads = array_splice($threads, $pagenum * PAGE_DEF, PAGE_DEF); // Remove the list of discussion threads after the tag
+			$inner_for_count = count($threads); // The number of discussion strings is the number of cycles
 		}
 	}else{
 		if(!$PIO->isThread($resno)){ error(_T('thread_not_found')); }
-		$AllRes = isset($pagenum) && ($_GET['pagenum']??'')=='all'; // 是否使用 ALL 全部輸出
+		$AllRes = isset($pagenum) && ($_GET['pagenum']??'')=='all'; // Whether to use ALL for output
 
-		// 計算回應分頁範圍
-		$tree_count = $PIO->postCount($resno) - 1; // 討論串回應個數
-		if($tree_count && RE_PAGE_DEF){ // 有回應且RE_PAGE_DEF > 0才做分頁動作
+		// Calculate the response label range
+		$tree_count = $PIO->postCount($resno) - 1; // Number of discussion thread responses
+		if($tree_count && RE_PAGE_DEF){ // There is a response and RE_PAGE_DEF > 0 to do the pagination action
 			if($pagenum==='all'){ // show all
 				$pagenum = 0;
 				$RES_start = 1; $RES_amount = $tree_count;
 			}else{
-				if($pagenum==='RE_PAGE_MAX') $pagenum = ceil($tree_count / RE_PAGE_DEF) - 1; // 特殊值：最末頁
-				if($pagenum < 0) $pagenum = 0; // 負數
+				if($pagenum==='RE_PAGE_MAX') $pagenum = ceil($tree_count / RE_PAGE_DEF) - 1; // Special value: Last page
+				if($pagenum < 0) $pagenum = 0; // negative number
 				if($pagenum * RE_PAGE_DEF >= $tree_count) error(_T('page_not_found'));
-				$RES_start = $pagenum * RE_PAGE_DEF + 1; // 開始
-				$RES_amount = RE_PAGE_DEF; // 取幾個
+				$RES_start = $pagenum * RE_PAGE_DEF + 1; // Begin
+				$RES_amount = RE_PAGE_DEF; // Take several
 			}
-		}elseif($pagenum > 0) error(_T('page_not_found')); // 沒有回應的情況只允許pagenum = 0 或負數
-		else{ $RES_start = 1; $RES_amount = $tree_count; $pagenum = 0; } // 輸出全部回應
+		}elseif($pagenum > 0) error(_T('page_not_found')); // In the case of no response, only pagenum = 0 or negative numbers are allowed
+		else{ $RES_start = 1; $RES_amount = $tree_count; $pagenum = 0; } // Output All Responses
 
 		if(THREAD_PAGINATION && !$adminMode){ // Thread Pagination
 			$cacheETag = md5(($AllRes ? 'all' : $pagenum).'-'.$tree_count);
@@ -106,22 +106,22 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 		}
 	}
 
-	// 預測過舊文章和將被刪除檔案
-	if(PIOSensor::check('predict', $LIMIT_SENSOR)){ // 是否需要預測
-		$old_sensor = true; // 標記打開
-		$arr_old = array_flip(PIOSensor::listee('predict', $LIMIT_SENSOR)); // 過舊文章陣列
+	// Predict that old articles will be deleted and archives
+	if(PIOSensor::check('predict', $LIMIT_SENSOR)){ // Whether a forecast is required
+		$old_sensor = true; // tag opens
+		$arr_old = array_flip(PIOSensor::listee('predict', $LIMIT_SENSOR)); // Array of old articles
 	}
-	$tmp_total_size = $FileIO->getCurrentStorageSize(); // 目前附加圖檔使用量
-	$tmp_STORAGE_MAX = STORAGE_MAX * (($tmp_total_size >= STORAGE_MAX) ? 1 : 0.95); // 預估上限值
+	$tmp_total_size = $FileIO->getCurrentStorageSize(); // The current usage of additional image files
+	$tmp_STORAGE_MAX = STORAGE_MAX * (($tmp_total_size >= STORAGE_MAX) ? 1 : 0.95); // Estimated upper limit
 	if(STORAGE_LIMIT && STORAGE_MAX > 0 && ($tmp_total_size >= $tmp_STORAGE_MAX)){
-		$kill_sensor = true; // 標記打開
-		$arr_kill = $PIO->delOldAttachments($tmp_total_size, $tmp_STORAGE_MAX); // 過舊附檔陣列
+		$kill_sensor = true; // tag opens
+		$arr_kill = $PIO->delOldAttachments($tmp_total_size, $tmp_STORAGE_MAX); // Outdated attachment array
 	}
 
 	$PMS->useModuleMethods('ThreadFront', array(&$pte_vals['{$THREADFRONT}'], $resno)); // "ThreadFront" Hook Point
 	$PMS->useModuleMethods('ThreadRear', array(&$pte_vals['{$THREADREAR}'], $resno)); // "ThreadRear" Hook Point
 
-	// 生成靜態頁面一頁份內容
+	// Generate static pages one page at a time
 	for($page = $page_start; $page <= $page_end; $page++){
 
 		$dat = ''; $pte_vals['{$THREADS}'] = '';
@@ -140,36 +140,36 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 		form($form_dat, $resno, '', '', '', $qu);
 		$pte_vals['{$FORMDAT}'] = $form_dat;
 		unset($qu);
-		// 輸出討論串內容
+		// Output the thread content
 		for($i = 0; $i < $inner_for_count; $i++){
-			// 取出討論串編號
-			if($resno) $tID = $resno; // 單討論串輸出 (回應模式)
+			// Take out the thread number
+			if($resno) $tID = $resno; // Single thread output (response mode)
 			else{
-				if($pagenum == -1 && ($page * PAGE_DEF + $i) >= $threads_count) break; // rebuild 超出索引代表已全部完成
-				$tID = ($page_start==$page_end) ? $threads[$i] : $threads[$page * PAGE_DEF + $i]; // 一頁內容 (一般模式) / 多頁內容 (rebuild模式)
-				$tree_count = $PIO->postCount($tID) - 1; // 討論串回應個數
-				$RES_start = $tree_count - RE_DEF + 1; if($RES_start < 1) $RES_start = 1; // 開始
-				$RES_amount = RE_DEF; // 取幾個
-				$hiddenReply = $RES_start - 1; // 被隱藏回應數
+				if($pagenum == -1 && ($page * PAGE_DEF + $i) >= $threads_count) break; // rebuild Exceeding the index indicates that it is all done
+				$tID = ($page_start==$page_end) ? $threads[$i] : $threads[$page * PAGE_DEF + $i]; // One page of content (normal mode) / multi-page content (rebuild mode)
+				$tree_count = $PIO->postCount($tID) - 1; // Number of discussion thread responses
+				$RES_start = $tree_count - RE_DEF + 1; if($RES_start < 1) $RES_start = 1; // Begin
+				$RES_amount = RE_DEF; // Take several
+				$hiddenReply = $RES_start - 1; // The number of responses that are hidden
 			}
 
-			// $RES_start, $RES_amount 拿去算新討論串結構 (分頁後, 部分回應隱藏)
-			$tree = $PIO->fetchPostList($tID); // 整個討論串樹狀結構
-			$tree_cut = array_slice($tree, $RES_start, $RES_amount); array_unshift($tree_cut, $tID); // 取出特定範圍回應
-			$posts = $PIO->fetchPosts($tree_cut); // 取得文章架構內容
-			$pte_vals['{$THREADS}'] .= arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $arr_kill, $arr_old, $kill_sensor, $old_sensor, true, $adminMode, $inner_for_count); // 交給這個函式去搞討論串印出
+			// $RES_start, $RES_amount Take it to calculate the new clue structure (after the tag, part of the response is hidden)
+			$tree = $PIO->fetchPostList($tID); // The entire discussion is structured in a tree-like manner
+			$tree_cut = array_slice($tree, $RES_start, $RES_amount); array_unshift($tree_cut, $tID); // Take out a specific range of responses
+			$posts = $PIO->fetchPosts($tree_cut); // Get the article schema content
+			$pte_vals['{$THREADS}'] .= arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $arr_kill, $arr_old, $kill_sensor, $old_sensor, true, $adminMode, $inner_for_count); // Leave this function to discuss serial printing
 		}
 		$pte_vals['{$PAGENAV}'] = '';
 
-		// 換頁判斷
+		// Page change judgment
 		$prev = ($resno ? $pagenum : $page) - 1;
 		$next = ($resno ? $pagenum : $page) + 1;
-		if($resno){ // 回應分頁
-			if(RE_PAGE_DEF > 0){ // 回應分頁開啟
+		if($resno){ // Response labels
+			if(RE_PAGE_DEF > 0){ // The Responses tab is on
 				$pte_vals['{$PAGENAV}'] .= '<table border="1" id="pager"><tbody><tr><td nowrap="nowrap">';
 				$pte_vals['{$PAGENAV}'] .= ($prev >= 0) ? '<a rel="prev" href="'.PHP_SELF.'?res='.$resno.'&pagenum='.$prev.'">'._T('prev_page').'</a>' : _T('first_page');
 				$pte_vals['{$PAGENAV}'] .= "</td><td>";
-				if($tree_count==0) $pte_vals['{$PAGENAV}'] .= '[<b>0</b>] '; // 無回應
+				if($tree_count==0) $pte_vals['{$PAGENAV}'] .= '[<b>0</b>] '; // No response
 				else{
 					for($i = 0, $len = $tree_count / RE_PAGE_DEF; $i <= $len; $i++){
 						if(!$AllRes && $pagenum==$i) $pte_vals['{$PAGENAV}'] .= '[<b>'.$i.'</b>] ';
@@ -181,7 +181,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 				$pte_vals['{$PAGENAV}'] .= (!$AllRes && $tree_count > $next * RE_PAGE_DEF) ? '<a href="'.PHP_SELF.'?res='.$resno.'&pagenum='.$next.'">'._T('next_page').'</a>' : _T('last_page');
 				$pte_vals['{$PAGENAV}'] .= '</td></tr></tbody></table>';
 			}
-		}else{ // 一般分頁
+		}else{ // General labels
 			$pte_vals['{$PAGENAV}'] .= '<table border="1" id="pager"><tbody><tr>';
 			if($prev >= 0){
 				if(!$adminMode && $prev==0) $pte_vals['{$PAGENAV}'] .= '<td><form action="'.PHP_SELF2.'" method="get">';
@@ -219,8 +219,8 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 		if(MINIFY_HTML){
 			$dat = html_minify($dat);
 		}
-		// 存檔 / 輸出
-		if($single_page || ($pagenum == -1 && !$resno)){ // 靜態快取頁面生成
+		// Archive / Output
+		if($single_page || ($pagenum == -1 && !$resno)){ // Static cache page generation
 			if(THREAD_PAGINATION){
 				if($oldCaches = glob(STORAGE_PATH.'cache/catalog-*')){
 					foreach($oldCaches as $o) unlink($o); // Clear old catalog caches
@@ -236,8 +236,8 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 			fwrite($fp, $dat);
 			fclose($fp);
 			@chmod($logfilename, 0666);
-			if(STATIC_HTML_UNTIL != -1 && STATIC_HTML_UNTIL==$page) break; // 頁面數目限制
-		}else{ // PHP 輸出 (回應模式/一般動態輸出)
+			if(STATIC_HTML_UNTIL != -1 && STATIC_HTML_UNTIL==$page) break; // Page Limit
+		}else{ // PHP output (responsive mode/regular dynamic output)
 			if(THREAD_PAGINATION && !$adminMode && $resno && !isset($_GET['upseries'])){ // Thread pagination
 				if($oldCaches = glob(STORAGE_PATH.'cache/api-'.$resno.'.*')){
 					foreach($oldCaches as $o) unlink($o); // Clear old API caches
@@ -261,25 +261,25 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 	
 }
 
-/* 輸出討論串架構 */
+/* Output thread schema */
 function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno=0, $arr_kill, $arr_old, $kill_sensor, $old_sensor, $showquotelink=true, $adminMode=false, $threads_shown=0){
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PMS = PMCLibrary::getPMSInstance();
 
-	$thdat = ''; // 討論串輸出碼
-	$posts_count = count($posts); // 迴圈次數
-	if(gettype($tree_cut) == 'array') $tree_cut = array_flip($tree_cut); // array_flip + isset 搜尋法
+	$thdat = ''; // Discuss serial output codes
+	$posts_count = count($posts); // Number of cycles
+	if(gettype($tree_cut) == 'array') $tree_cut = array_flip($tree_cut); // array_flip + isset Search Law
 	if(gettype($tree) == 'array') $tree_clone = array_flip($tree);
-	// $i = 0 (首篇), $i = 1～n (回應)
+	// $i = 0 (first article), $i = 1~n (response)
 	for($i = 0; $i < $posts_count; $i++){
 		$imgsrc = $img_thumb = $imgwh_bar = '';
 		$IMG_BAR = $REPLYBTN = $QUOTEBTN = $BACKLINKS = $POSTFORM_EXTRA = $WARN_OLD = $WARN_BEKILL = $WARN_ENDREPLY = $WARN_HIDEPOST = '';
-		extract($posts[$i]); // 取出討論串文章內容設定變數
+		extract($posts[$i]); // Take out the thread content setting variable
 
-		// 設定欄位值
-		if(CLEAR_SAGE) $email = preg_replace('/^sage( *)/i', '', trim($email)); // 清除E-mail中的「sage」關鍵字
-		if(ALLOW_NONAME==2){ // 強制砍名
+		// Set the field value
+		if(CLEAR_SAGE) $email = preg_replace('/^sage( *)/i', '', trim($email)); // Clear the "sage" keyword from the e-mail
+		if(ALLOW_NONAME==2){ // Forced beheading
 			if($email) $now = "<a href=\"mailto:$email\">$now</a>";
 		}else{
 			if($email) $name = "<a href=\"mailto:$email\">$name</a>";
@@ -287,7 +287,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno=0, $
 
 		$com = quote_link($com);
 		$com = quote_unkfunc($com);
-		// 設定附加圖檔顯示
+		// Configure attachment display
 		if ($ext) {
 			if(!$fname) $fname = $tim;
 			$truncated = (strlen($fname)>40 ? substr($fname,0,40).'(&hellip;)' : $fname);
@@ -300,26 +300,26 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno=0, $
 
 			$imageURL = $FileIO->getImageURL($tim.$ext); // image URL
 			$thumbName = $FileIO->resolveThumbName($tim); // thumb Name
-			$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.STATIC_URL.'image/nothumb.gif" class="postimg" alt="'.$imgsize.'" hspace="20" vspace="3" border="0" align="left" /></a>'; // 預設顯示圖樣式 (無預覽圖時)
+			$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.STATIC_URL.'image/nothumb.gif" class="postimg" alt="'.$imgsize.'" hspace="20" vspace="3" border="0" align="left" /></a>'; // Default display style (when no preview image)
 			if($tw && $th){
-				if ($thumbName != false){ // 有預覽圖
+				if ($thumbName != false){ // There is a preview image
 					$thumbURL = $FileIO->getImageURL($thumbName); // thumb URL
 //					$img_thumb = '<small>'._T('img_sample').'</small>';
 					$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$thumbURL.'" width="'.$tw.'" height="'.$th.'" class="postimg" alt="'.$imgsize.'" title="Click to show full image" hspace="20" vspace="3" border="0" align="left" /></a>';
 				}
-				if(SHOW_IMGWH) $imgwh_bar = ', '.$imgw.'x'.$imgh; // 顯示附加圖檔之原檔長寬尺寸
+				if(SHOW_IMGWH) $imgwh_bar = ', '.$imgw.'x'.$imgh; // Displays the original length and width dimensions of the attached image file
 			} else $imgsrc = '';
 			$IMG_BAR = _T('img_filename').'<a href="'.$imageURL.'" target="_blank" rel="nofollow" onmouseover="this.textContent=\''.$fname.'\';" onmouseout="this.textContent=\''.$truncated.'\'"> '.$truncated.'</a> <a href="'.$imageURL.'" download="'.$fname.'"><div class="download"></div></a> <small>('.$imgsize.$imgwh_bar.')</small> '.$img_thumb;
 		}
 
-        // 設定回應 / 引用連結
+        // Set the response/reference link
         if(USE_QUOTESYSTEM) {
             $qu = $_GET['q']??''; if ($qu) $qu.= ',';
-            if($resno){ // 回應模式
+            if($resno){ // Response mode
                 if($showquotelink) $QUOTEBTN = '<a href="'.PHP_SELF.'?res='.$tree[0]."&q=".htmlspecialchars($qu)."".$no.'#postform" class="qu" title="Quote">'.strval($no).'</a>';
                 else $QUOTEBTN = '<a href="'.PHP_SELF.'?res='.$tree."&q=".htmlspecialchars($qu)."".$no.'#postform" title="Quote">'.strval($no).'</a>';
             }else{
-                if(!$i)    $REPLYBTN = '[<a href="'.PHP_SELF.'?res='.$no.'">'._T('reply_btn').'</a>]'; // 首篇
+                if(!$i)    $REPLYBTN = '[<a href="'.PHP_SELF.'?res='.$no.'">'._T('reply_btn').'</a>]'; // First article
                 $QUOTEBTN = '<a href="'.PHP_SELF.'?res='.$tree[0]."&q=".htmlspecialchars($qu)."".$no.'#postform" title="Quote">'.$no.'</a>';
             }
             unset($qu);
@@ -338,20 +338,20 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno=0, $
 			$QUOTEBTN = $no;
 		}
 
-		if($adminMode){ // 前端管理模式
+		if($adminMode){ // Front-end management mode
 			$modFunc = '';
 			$PMS->useModuleMethods('AdminList', array(&$modFunc, $posts[$i], $resto)); // "AdminList" Hook Point
 			$POSTFORM_EXTRA .= $modFunc;
 		}
 
-		// 設定討論串屬性
-		if(STORAGE_LIMIT && $kill_sensor) if(isset($arr_kill[$no])) $WARN_BEKILL = '<span class="warning">'._T('warn_sizelimit').'</span><br />'; // 預測刪除過大檔
+		// Set thread properties
+		if(STORAGE_LIMIT && $kill_sensor) if(isset($arr_kill[$no])) $WARN_BEKILL = '<span class="warning">'._T('warn_sizelimit').'</span><br />'; // Predict to delete too large files
 		if(!$i){ // 首篇 Only
-			if($old_sensor) if(isset($arr_old[$no])) $WARN_OLD = '<span class="warning">'._T('warn_oldthread').'</span><br />'; // 快要被刪除的提示
+			if($old_sensor) if(isset($arr_old[$no])) $WARN_OLD = '<span class="warning">'._T('warn_oldthread').'</span><br />'; // Reminder that it is about to be deleted
 			$flgh = $PIO->getPostStatus($status);
-			if($hiddenReply) $WARN_HIDEPOST = '<span class="omittedposts">'._T('notice_omitted',$hiddenReply).'</span><br />'; // 有隱藏的回應
+			if($hiddenReply) $WARN_HIDEPOST = '<span class="omittedposts">'._T('notice_omitted',$hiddenReply).'</span><br />'; // There is a hidden response
 		}
-		// 對類別標籤作自動連結
+		// Automatically link category labels
 		if(USE_CATEGORY){
 			$ary_category = explode(',', str_replace('&#44;', ',', $category)); $ary_category = array_map('trim', $ary_category);
 			$ary_category_count = count($ary_category);
@@ -367,13 +367,13 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno=0, $
 		$THREADNAV.= '<a href="#top">&#9650;</a>&nbsp;';
 		$THREADNAV.= '<a href="#bottom">&#9660;</a>&nbsp;';
 
-		// 最終輸出處
-		if($i){ // 回應
+		// Final output
+		if($i){ // Response
 			$arrLabels = array('{$NO}'=>$no, '{$RESTO}'=>$resto, '{$SUB}'=>$sub, '{$NAME}'=>$name, '{$NOW}'=>$now, '{$CATEGORY}'=>$category, '{$QUOTEBTN}'=>$QUOTEBTN, '{$IMG_BAR}'=>$IMG_BAR, '{$IMG_SRC}'=>$imgsrc, '{$WARN_BEKILL}'=>$WARN_BEKILL, '{$NAME_TEXT}'=>_T('post_name'), '{$CATEGORY_TEXT}'=>_T('post_category'), '{$SELF}'=>PHP_SELF, '{$COM}'=>$com, '{$POSTINFO_EXTRA}'=>$POSTFORM_EXTRA, '{$THREADNAV}'=>$THREADNAV, '{$BACKLINKS}'=>$BACKLINKS, '{$IS_THREAD}'=>!!$resno);
 			if($resno) $arrLabels['{$RESTO}']=$resno;
 			$PMS->useModuleMethods('ThreadReply', array(&$arrLabels, $posts[$i], $resno)); // "ThreadReply" Hook Point
 			$thdat .= $PTE->ParseBlock('REPLY',$arrLabels);
-		}else{ // 首篇
+		}else{ // First Article
 			$arrLabels = array('{$NO}'=>$no, '{$RESTO}'=>$no, '{$SUB}'=>$sub, '{$NAME}'=>$name, '{$NOW}'=>$now, '{$CATEGORY}'=>$category, '{$QUOTEBTN}'=>$QUOTEBTN, '{$REPLYBTN}'=>$REPLYBTN, '{$IMG_BAR}'=>$IMG_BAR, '{$IMG_SRC}'=>$imgsrc, '{$WARN_OLD}'=>$WARN_OLD, '{$WARN_BEKILL}'=>$WARN_BEKILL, '{$WARN_ENDREPLY}'=>$WARN_ENDREPLY, '{$WARN_HIDEPOST}'=>$WARN_HIDEPOST, '{$NAME_TEXT}'=>_T('post_name'), '{$CATEGORY_TEXT}'=>_T('post_category'), '{$SELF}'=>PHP_SELF, '{$COM}'=>$com, '{$POSTINFO_EXTRA}'=>$POSTFORM_EXTRA, '{$THREADNAV}'=>$THREADNAV, '{$BACKLINKS}'=>$BACKLINKS, '{$IS_THREAD}'=>!!$resno);
 			if($resno) $arrLabels['{$RESTO}']=$resno;
 			$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, $posts[$i], $resno)); // "ThreadPost" Hook Point
@@ -421,7 +421,7 @@ function previewPost($tmpno) {
 	echo $dat;
 }
 
-/* 寫入記錄檔 */
+/* Write to log file */
 function regist($preview=false){
 	global $BAD_STRING, $BAD_FILEMD5, $BAD_IPADDR, $LIMIT_SENSOR, $THUMB_SETTING;
 	$PIO = PMCLibrary::getPIOInstance();
@@ -429,7 +429,7 @@ function regist($preview=false){
 	$PMS = PMCLibrary::getPMSInstance();
 
 	$fname = $dest = $mes = ''; $up_incomplete = 0; $is_admin = false;
-	$delta_totalsize = 0; // 總檔案大小的更動值
+	$delta_totalsize = 0; // The change in the total file size
 
 	if(!$_SERVER['HTTP_REFERER']
 	|| !$_SERVER['HTTP_USER_AGENT']
@@ -437,7 +437,7 @@ function regist($preview=false){
 		error('You look like a robot.', $dest);
 	}
 
-	if($_SERVER['REQUEST_METHOD'] != 'POST') error(_T('regist_notpost')); // 非正規POST方式
+	if($_SERVER['REQUEST_METHOD'] != 'POST') error(_T('regist_notpost')); // Informal POST method
 
 	$name = CleanStr($_POST['name']??'');
 	$email = CleanStr($_POST['email']??'');
@@ -452,20 +452,20 @@ function regist($preview=false){
 	$host = $ip; //This should improve reliability by a longshot
 
 	$PMS->useModuleMethods('RegistBegin', array(&$name, &$email, &$sub, &$com, array('file'=>&$upfile, 'path'=>&$upfile_path, 'name'=>&$upfile_name, 'status'=>&$upfile_status), array('ip'=>$ip, 'host'=>$host), $resto)); // "RegistBegin" Hook Point
-	// 封鎖：IP/Hostname/DNSBL 檢查機能
+	// Blocking: IP/Hostname/DNSBL Check Function
 	$baninfo = '';
 	if(BanIPHostDNSBLCheck($ip, $host, $baninfo)) error(_T('regist_ipfiltered', $baninfo));
-	// 封鎖：限制出現之文字
+	// Block: Restrict the text that appears (text filter?)
 	foreach($BAD_STRING as $value){
 		if(strpos($com, $value)!==false || strpos($sub, $value)!==false || strpos($name, $value)!==false || strpos($email, $value)!==false){
 			error(_T('regist_wordfiltered'));
 		}
 	}
 
-	// 檢查是否輸入櫻花日文假名
+	// Check if you enter Sakura Japanese kana (kana = Japanese syllabary)
 	foreach(array($name, $email, $sub, $com) as $anti) if(anti_sakura($anti)) error(_T('regist_sakuradetected'));
 
-	// 時間
+	// Time
 	$time = $_SERVER['REQUEST_TIME'];
 	$tim = $time.substr($_SERVER['REQUEST_TIME_FLOAT'],2,3);
 
@@ -475,7 +475,7 @@ function regist($preview=false){
 		$upfile_name = $_FILES['upfile']['name']??'';
 		$upfile_status = $_FILES['upfile']['error']??UPLOAD_ERR_NO_FILE;
 
-		// 判斷上傳狀態
+		// Determine the upload status
 		switch($upfile_status){
 			case UPLOAD_ERR_OK:
 				break;
@@ -501,50 +501,50 @@ function regist($preview=false){
 				error('ERROR: Unable to save the uploaded file.');
 		}
 
-		// 如果有上傳檔案則處理附加圖檔
+		// If there is an uploaded file, process the additional image file
 		if($upfile && (@is_uploaded_file($upfile) || @is_file($upfile)) && !$preview){
-			// 一‧先儲存檔案
+			// 1. Save the file first
 			$dest = STORAGE_PATH .$tim.'.tmp';
 			@move_uploaded_file($upfile, $dest) or @copy($upfile, $dest);
 			@chmod($dest, 0666);
 			if(!is_file($dest)) error(_T('regist_upload_filenotfound'), $dest);
 
-			// 二‧判斷上傳附加圖檔途中是否有中斷
+			// 2. Determine whether there is any interruption in the process of uploading additional image files
 			$upsizeTTL = $_SERVER['CONTENT_LENGTH'];
-			if(isset($_FILES['upfile'])){ // 有傳輸資料才需要計算，避免作白工
+			if(isset($_FILES['upfile'])){ // Only when there is transmitted data does it need to be calculated, so as to avoid white work
 				$upsizeHDR = 0;
-				// 檔案路徑：IE附完整路徑，故得從隱藏表單取得
+				// File path: IE has the full path attached, so you have to get it from the hidden form
 				$tmp_upfile_path = $upfile_name;
 				if($upfile_path) $tmp_upfile_path = get_magic_quotes_gpc() ? stripslashes($upfile_path) : $upfile_path;
 				list(,$boundary) = explode('=', $_SERVER['CONTENT_TYPE']);
-				foreach($_POST as $header => $value){ // 表單欄位傳送資料
+				foreach($_POST as $header => $value){ // Form fields transfer data
 					$upsizeHDR += strlen('--'.$boundary."\r\n");
 					$upsizeHDR += strlen('Content-Disposition: form-data; name="'.$header.'"'."\r\n\r\n".(get_magic_quotes_gpc()?stripslashes($value):$value)."\r\n");
 				}
-				// 附加圖檔欄位傳送資料
+				// The attached image file field transmits the data
 				$upsizeHDR += strlen('--'.$boundary."\r\n");
 				$upsizeHDR += strlen('Content-Disposition: form-data; name="upfile"; filename="'.$tmp_upfile_path."\"\r\n".'Content-Type: '.$_FILES['upfile']['type']."\r\n\r\n");
 				$upsizeHDR += strlen("\r\n--".$boundary."--\r\n");
-				$upsizeHDR += $_FILES['upfile']['size']; // 傳送附加圖檔資料量
-				// 上傳位元組差值超過 HTTP_UPLOAD_DIFF：上傳附加圖檔不完全
+				$upsizeHDR += $_FILES['upfile']['size']; // Send attachment data
+				// The upload byte difference exceeds HTTP_UPLOAD_DIFF: The upload of additional image files is incomplete
 				if(($upsizeTTL - $upsizeHDR) > HTTP_UPLOAD_DIFF){
 					if(KILL_INCOMPLETE_UPLOAD){
 						unlink($dest);
-						die(_T('regist_upload_killincomp')); // 給瀏覽器的提示，假如使用者還看的到的話才不會納悶
+						die(_T('regist_upload_killincomp')); // The prompt to the browser, if the user still sees it, will not be puzzled
 					}else $up_incomplete = 1;
 				}
 			}
 
-			// 三‧檢查是否為可接受的檔案
+			// 3. Check whether it is an acceptable file
 			$size = @getimagesize($dest);
-			$imgsize = @filesize($dest); // 檔案大小
-			$imgsize = ($imgsize>=1024) ? (int)($imgsize/1024).' KB' : $imgsize.' B'; // KB和B的判別
+			$imgsize = @filesize($dest); // File size
+			$imgsize = ($imgsize>=1024) ? (int)($imgsize/1024).' KB' : $imgsize.' B'; // Discrimination of KB and B
 			$fname = pathinfo($upfile_name, PATHINFO_FILENAME);
 			$ext = '.'.strtolower(pathinfo($upfile_name, PATHINFO_EXTENSION));
 			if (is_array($size)) {
 				// File extension detection from Heyuri
 				// Don't assume the script supports the file type just because the extension is here.
-				switch($size[2]){ // 判斷上傳附加圖檔之格式
+				switch($size[2]){ // Determine the format of the uploaded image file
 					case IMAGETYPE_GIF: $ext = '.gif'; break;
 					case IMAGETYPE_JPEG:
 					case IMAGETYPE_JPEG2000: $ext = '.jpg'; break;
@@ -580,17 +580,17 @@ function regist($preview=false){
 					$tmpfile .= ".jpg";
 					@exec("ffmpeg -y -i ".$dest." -ss 00:00:1 -vframes 1 ".$tmpfile." 2>&1");
 					$size = @getimagesize($tmpfile);
-					$imgsize = @filesize($dest); // 檔案大小
-					$imgsize = ($imgsize>=1024) ? (int)($imgsize/1024).' KB' : $imgsize.' B'; // KB和B的判別
+					$imgsize = @filesize($dest); // File size
+					$imgsize = ($imgsize>=1024) ? (int)($imgsize/1024).' KB' : $imgsize.' B'; // Discrimination of KB and B
 				}
 			}
-			$allow_exts = explode('|', strtolower(ALLOW_UPLOAD_EXT)); // 接受之附加圖檔副檔名
-			if(array_search(substr($ext, 1), $allow_exts)===false) error(_T('regist_upload_notsupport'), $dest); // 並無在接受副檔名之列
-			// 封鎖設定：限制上傳附加圖檔之MD5檢查碼
-			$md5chksum = md5_file($dest); // 檔案MD5
-			if(array_search($md5chksum, $BAD_FILEMD5)!==false) error(_T('regist_upload_blocked'), $dest); // 在封鎖設定內則阻擋
+			$allow_exts = explode('|', strtolower(ALLOW_UPLOAD_EXT)); // Accepted additional image file extension
+			if(array_search(substr($ext, 1), $allow_exts)===false) error(_T('regist_upload_notsupport'), $dest); // Uploaded file not allowed due to wrong file extension
+			// Block setting: Restrict the upload of MD5 checkcodes for additional images
+			$md5chksum = md5_file($dest); // File MD%
+			if(array_search($md5chksum, $BAD_FILEMD5)!==false) error(_T('regist_upload_blocked'), $dest); // If the MD5 checkcode of the uploaded file is in the block list, the upload is blocked
 
-			// 四‧計算附加圖檔圖檔縮圖顯示尺寸
+			// 4. Calculate the thumbnail display size of the additional image file
 			$W = $imgW = $size[0];
 			$H = $imgH = $size[1];
 			$MAXW = $resto ? MAX_RW : MAX_W;
@@ -612,14 +612,14 @@ function regist($preview=false){
 		$upfile_status = 4;
 	}
 
-	// 檢查表單欄位內容並修整
+	// Check the form field contents and trim them
 	if(strlenUnicode($name) > INPUT_MAX) error(_T('regist_nametoolong'), $dest);
 	if(strlenUnicode($email) > INPUT_MAX) error(_T('regist_emailtoolong'), $dest);
 	if(strlenUnicode($sub) > INPUT_MAX) error(_T('regist_topictoolong'), $dest);
 	if(strlenUnicode($resto) > INPUT_MAX) error(_T('regist_longthreadnum'), $dest);
 
 	setrawcookie('namec', rawurlencode($name), time()+7*24*3600);
-	// E-mail / 標題修整
+	// E-mail / Title trimming
 	$email = str_replace("\r\n", '', $email); $sub = str_replace("\r\n", '', $sub);
 	// Tripcode crap
 	$name = str_replace('&#', '&&', $name); // otherwise HTML numeric entities will explode!
@@ -658,13 +658,13 @@ function regist($preview=false){
 	}
 	$email = preg_replace('/^vipcode$/i', '', $email);
 	
-	// 內文修整
+	// Text trimming
 	if((strlenUnicode($com) > COMM_MAX) && !$is_admin) error(_T('regist_commenttoolong'), $dest);
-	$com = CleanStr($com, $is_admin); // 引入$is_admin參數是因為當管理員キャップ啟動時，允許管理員依config設定是否使用HTML
+	$com = CleanStr($com, $is_admin); // The$ is_admin parameter is introduced because when the administrator starts, the administrator is allowed to set whether to use HTML according to config.
 	if(!$com && $upfile_status==4) error(TEXTBOARD_ONLY?'ERROR: No text entered.':_T('regist_withoutcomment'));
 	$com = str_replace(array("\r\n", "\r"), "\n", $com); $com = preg_replace("/\n((　| )*\n){3,}/", "\n", $com);
-	if(!BR_CHECK || substr_count($com,"\n") < BR_CHECK) $com = nl2br($com); // 換行字元用<br />代替
-	$com = str_replace("\n", '', $com); // 若還有\n換行字元則取消換行
+	if(!BR_CHECK || substr_count($com,"\n") < BR_CHECK) $com = nl2br($com); // Newline characters are replaced by <br />
+	$com = str_replace("\n", '', $com); // If there are still \n newline characters, cancel the newline
 	if(AUTO_LINK) $com = auto_link($com);
 	if (FORTUNES && stristr($email, 'fortune')) {
 		if (!$preview) {
@@ -692,19 +692,19 @@ function regist($preview=false){
 		}
 
 	}
-	// 預設的內容
+	// Default content
 	if(!$sub || preg_match("/^[ |　|]*$/", $sub)) $sub = DEFAULT_NOTITLE;
 	if(!$com || preg_match("/^[ |　|\t]*$/", $com)) $com = DEFAULT_NOCOMMENT;
-	// 修整標籤樣式
+	// Trimming label style
 	if($category && USE_CATEGORY){
-		$category = explode(',', $category); // 把標籤拆成陣列
-		$category = ','.implode(',', array_map('trim', $category)).','; // 去空白再合併為單一字串 (左右含,便可以直接以,XX,形式搜尋)
+		$category = explode(',', $category); // Disassemble the labels into an array
+		$category = ','.implode(',', array_map('trim', $category)).','; // Remove the white space and merge into a single string (left and right, you can directly search in the form XX)
 	}else{ $category = ''; }
-	if($up_incomplete) $com .= '<br /><br /><span class="warning">'._T('notice_incompletefile').'</span>'; // 上傳附加圖檔不完全的提示
+	if($up_incomplete) $com .= '<br /><br /><span class="warning">'._T('notice_incompletefile').'</span>'; // Tips for uploading incomplete additional image files
 
-	// 密碼和時間的樣式
+	// Password and time style
 	if($pwd=='') $pwd = ($pwdc=='') ? substr(rand(),0,8) : $pwdc;
-	$pass = $pwd ? substr(md5($pwd), 2, 8) : '*'; // 生成真正儲存判斷用的密碼
+	$pass = $pwd ? substr(md5($pwd), 2, 8) : '*'; // Generate a password for true storage judgment (the 8 characters at the bottom right of the imageboard where it says Password ******** SUBMIT for deleting posts)
 	$youbi = array(_T('sun'),_T('mon'),_T('tue'),_T('wed'),_T('thu'),_T('fri'),_T('sat'));
 	$yd = $youbi[gmdate('w', $time+TIME_ZONE*60*60)];
 	$now = gmdate('Y/m/d', $time+TIME_ZONE*60*60).'('.(string)$yd.')'.gmdate('H:i', $time+TIME_ZONE*60*60);
@@ -724,54 +724,54 @@ function regist($preview=false){
         }
     }
 
-	// 連續投稿 / 相同附加圖檔檢查
-	$checkcount = 50; // 預設檢查50筆資料
-	$pwdc = substr(md5($pwdc), 2, 8); // Cookies密碼
+	// Continuous submission / same additional image check
+	$checkcount = 50; // Check 50 by default
+	$pwdc = substr(md5($pwdc), 2, 8); // Cookies Password
 	if (valid()>=LEV_MODERATOR) {
 		if($PIO->isSuccessivePost($checkcount, $com, $time, $pass, $pwdc, $host, $upfile_name))
-			error(_T('regist_successivepost'), $dest); // 連續投稿檢查
-		if($dest){ if($PIO->isDuplicateAttachment($checkcount, $md5chksum)) error(_T('regist_duplicatefile'), $dest); } // 相同附加圖檔檢查
+			error(_T('regist_successivepost'), $dest); // Continuous submission check
+		if($dest){ if($PIO->isDuplicateAttachment($checkcount, $md5chksum)) error(_T('regist_duplicatefile'), $dest); } // Same additional image file check
 	}
 	if($resto) $ThreadExistsBefore = $PIO->isThread($resto);
 
-	// 舊文章刪除處理
+	// Deletion of old articles
 	if(PIOSensor::check('delete', $LIMIT_SENSOR)){
 		$delarr = PIOSensor::listee('delete', $LIMIT_SENSOR);
 		if(count($delarr)){
 			deleteCache($delarr);
 			$PMS->useModuleMethods('PostOnDeletion', array($delarr, 'recycle')); // "PostOnDeletion" Hook Point
 			$files = $PIO->removePosts($delarr);
-			if(count($files)) $delta_totalsize -= $FileIO->deleteImage($files); // 更新 delta 值
+			if(count($files)) $delta_totalsize -= $FileIO->deleteImage($files); // Update delta value
 		}
 	}
 
-	// 附加圖檔容量限制功能啟動：刪除過大檔
+	// Additional image file capacity limit function is enabled: delete oversized files
 	if(STORAGE_LIMIT && STORAGE_MAX > 0){
-		$tmp_total_size = $FileIO->getCurrentStorageSize(); // 取得目前附加圖檔使用量
+		$tmp_total_size = $FileIO->getCurrentStorageSize(); // Get the current size of additional images
 		if($tmp_total_size > STORAGE_MAX){
 			$files = $PIO->delOldAttachments($tmp_total_size, STORAGE_MAX, false);
 			$delta_totalsize -= $FileIO->deleteImage($files);
 		}
 	}
 
-	// 判斷欲回應的文章是不是剛剛被刪掉了
+	// Determine whether the article you want to respond to has just been deleted
 	if($resto){
-		if($ThreadExistsBefore){ // 欲回應的討論串是否存在
-			if(!$PIO->isThread($resto)){ // 被回應的討論串存在但已被刪
-				// 提前更新資料來源，此筆新增亦不紀錄
+		if($ThreadExistsBefore){ // If the thread of the discussion you want to reply to exists
+			if(!$PIO->isThread($resto)){ // If the thread of the discussion you want to reply to has been deleted
+				// Update the data source in advance, and this new addition is not recorded
 				$PIO->dbCommit();
 				updatelog();
 				error(_T('regist_threaddeleted'), $dest);
-			}else{ // 檢查是否討論串被設為禁止回應 (順便取出原討論串的貼文時間)
-				$post = $PIO->fetchPosts($resto); // [特殊] 取單篇文章內容，但是回傳的$post同樣靠[$i]切換文章！
+			}else{ // Check that the thread is set to suppress response (by the way, take out the post time of the original post)
+				$post = $PIO->fetchPosts($resto); // [Special] Take a single article content, but the $post of the return also relies on [$i] to switch articles!
 				list($chkstatus, $chktime) = array($post[0]['status'], $post[0]['tim']);
-				$chktime = substr($chktime, 0, -3); // 拿掉微秒 (後面三個字元)
+				$chktime = substr($chktime, 0, -3); // Remove microseconds (the last three characters)
 				$flgh = $PIO->getPostStatus($chkstatus);
 			}
-		}else error(_T('thread_not_found'), $dest); // 不存在
+		}else error(_T('thread_not_found'), $dest); // Does not exist
 	}
 
-	// 計算某些欄位值
+	// Calculate field values
 	$no = $PIO->getLastPostNo('beforeCommit') + 1;
 	isset($ext) ? 0 : $ext = '';
 	isset($imgW) ? 0 : $imgW = 0;
@@ -784,7 +784,7 @@ function regist($preview=false){
 	$status = '';
 	if ($resto) {
 		if ($PIO->postCount($resto) <= MAX_RES || MAX_RES==0) {
-			if(!MAX_AGE_TIME || (($time - $chktime) < (MAX_AGE_TIME * 60 * 60))) $age = true; // 討論串並無過期，推文
+			if(!MAX_AGE_TIME || (($time - $chktime) < (MAX_AGE_TIME * 60 * 60))) $age = true; // Discussion threads are not expired
 		}
 		if (NOTICE_SAGE && stristr($email, 'sage')) {
 			$age = false;
@@ -808,22 +808,22 @@ function regist($preview=false){
 	}
 
 	logtime("Post No.$no registered", valid());
-	// 正式寫入儲存
+	// Formal writing to storage
 	$PIO->dbCommit();
-	$lastno = $PIO->getLastPostNo('afterCommit'); // 取得此新文章編號
+	$lastno = $PIO->getLastPostNo('afterCommit'); // Get this new article number
 	$PMS->useModuleMethods('RegistAfterCommit', array($lastno, $resto, $name, $email, $sub, $com)); // "RegistAfterCommit" Hook Point
 
-	// Cookies儲存：密碼與E-mail部分，期限是一週
+	// Cookies storage: password and e-mail part, for one week
 	setcookie('pwdc', $pwd, time()+7*24*3600);
 	setcookie('emailc', $email, time()+7*24*3600);
 	if($dest && is_file($dest)){
-		$destFile = IMG_DIR.$tim.$ext; // 圖檔儲存位置
-		$thumbFile = THUMB_DIR.$tim.'s.'.$THUMB_SETTING['Format']; // 預覽圖儲存位置
+		$destFile = IMG_DIR.$tim.$ext; // Image file storage location
+		$thumbFile = THUMB_DIR.$tim.'s.'.$THUMB_SETTING['Format']; // Preview image storage location
 		if (defined(CDN_DIR)) {
 			$destFile = CDN_DIR.$destFile;
 			$thumbFile = CDN_DIR.$thumbFile;
 		}
-		if(USE_THUMB !== 0){ // 生成預覽圖
+		if(USE_THUMB !== 0){ // Generate preview image
 			$thumbType = USE_THUMB; if(USE_THUMB==1){ $thumbType = $THUMB_SETTING['Method']; }
 			require(ROOTPATH.'lib/thumb/thumb.'.$thumbType.'.php');
 			if (isset($tmpfile)) $thObj = new ThumbWrapper($tmpfile, $imgW, $imgH);
@@ -906,7 +906,7 @@ function regist($preview=false){
 	}
 
 
-	// delta != 0 表示總檔案大小有更動，須更新快取
+	// delta != 0 indicates that the total file size has changed and the cache must be updated
 	if($delta_totalsize != 0){
 		$FileIO->updateStorageSize($delta_totalsize);
 	}
@@ -920,13 +920,13 @@ function regist($preview=false){
 	redirect($redirect, 0);
 }
 
-/* 使用者刪除 */
+/* User post deletion */
 function usrdel(){
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PMS = PMCLibrary::getPMSInstance();
 
-	// $pwd: 使用者輸入值, $pwdc: Cookie記錄密碼
+	// $pwd: User input value, $pwdc: Cookie records password
 	$pwd = $_POST['pwd']??'';
 	$pwdc = $_COOKIE['pwdc']??'';
 	$onlyimgdel = $_POST['onlyimgdel']??'';
@@ -943,7 +943,7 @@ function usrdel(){
 	}
 	$haveperm = valid()>=LEV_JANITOR;
 	$PMS->useModuleMethods('Authenticate', array($pwd,'userdel',&$haveperm));
-	if($haveperm && isset($_POST['func'])){ // 前端管理功能
+	if($haveperm && isset($_POST['func'])){ // If the user has permissions (admin, mod, or janny) for front-end management capabilities
 		$message = '';
 		$PMS->useModuleMethods('AdminFunction', array('run', &$delno, $_POST['func'], &$message)); // "AdminFunction" Hook Point
 		if($_POST['func'] != 'delete'){
@@ -951,7 +951,7 @@ function usrdel(){
 				header('HTTP/1.1 302 Moved Temporarily');
 				header('Location: '.$_SERVER['HTTP_REFERER']);
 			}
-			exit(); // 僅執行AdminFunction，終止刪除動作
+			exit(); // Only execute AdminFunction to terminate the deletion action
 		}
 	}
 
@@ -962,11 +962,11 @@ function usrdel(){
 
 	if(!count($delno)) error(_T('del_notchecked'));
 
-	$delposts = array(); // 真正符合刪除條件文章
+	$delposts = array(); // Articles that are truly eligible for deletion
 	$posts = $PIO->fetchPosts($delno);
 	foreach($posts as $post){
 		if($pwd_md5==$post['pwd'] || $host==$post['host'] || $haveperm){
-			$search_flag = true; // 有搜尋到
+			$search_flag = true; // Found
 			array_push($delposts, intval($post['no']));
 			logtime("Delete post No.".$post['no'].($onlyimgdel?' (file only)':''), valid());
 		}
@@ -974,12 +974,12 @@ function usrdel(){
 	if($search_flag){
 		if(!$onlyimgdel) $PMS->useModuleMethods('PostOnDeletion', array($delposts, 'frontend')); // "PostOnDeletion" Hook Point
 		$files = $onlyimgdel ? $PIO->removeAttachments($delposts) : $PIO->removePosts($delposts);
-		$FileIO->updateStorageSize(-$FileIO->deleteImage($files)); // 更新容量快取
+		$FileIO->updateStorageSize(-$FileIO->deleteImage($files)); // Update capacity cache
 		deleteCache($delposts);
 		$PIO->dbCommit();
 	}else error(_T('del_wrongpwornotfound'));
 	updatelog();
-	if(isset($_POST['func']) && $_POST['func'] == 'delete'){ // 前端管理刪除文章返回管理頁面
+	if(isset($_POST['func']) && $_POST['func'] == 'delete'){ // Front-end management deletes the article and returns to the management page
 		if(isset($_SERVER['HTTP_REFERER'])){
 			header('HTTP/1.1 302 Moved Temporarily');
 			header('Location: '.$_SERVER['HTTP_REFERER']);
@@ -988,20 +988,20 @@ function usrdel(){
 	}
 }
 
-/* 管理文章模式 */
+/* Manage article(threads) mode */
 function admindel(&$dat){
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PMS = PMCLibrary::getPMSInstance();
 
-	$pass = $_POST['pass']??''; // 管理者密碼
-	$page = $_REQUEST['page']??0; // 切換頁數
-	$onlyimgdel = $_POST['onlyimgdel']??''; // 只刪圖
+	$pass = $_POST['pass']??''; // Admin password
+	$page = $_REQUEST['page']??0; // Toggle the number of pages
+	$onlyimgdel = $_POST['onlyimgdel']??''; // Only delete the image
 	$modFunc = '';
 	$delno = $thsno = array();
-	$message = ''; // 操作後顯示訊息
+	$message = ''; // Display message after deletion
 
-	// 刪除文章區塊
+	// Delete the article(thread) block
 	$delno = array_merge($delno, $_POST['clist']??array());
 	if($delno) logtime("Delete post No.$delno".($onlyimgdel?' (file only)':''), valid());
 	if($onlyimgdel != 'on') $PMS->useModuleMethods('PostOnDeletion', array($delno, 'backend')); // "PostOnDeletion" Hook Point
@@ -1010,9 +1010,9 @@ function admindel(&$dat){
 	deleteCache($delno);
 	$PIO->dbCommit();
 
-	$line = $PIO->fetchPostList(0, $page * ADMIN_PAGE_DEF, ADMIN_PAGE_DEF); // 分頁過的文章列表
-	$posts_count = count($line); // 迴圈次數
-	$posts = $PIO->fetchPosts($line); // 文章內容陣列
+	$line = $PIO->fetchPostList(0, $page * ADMIN_PAGE_DEF, ADMIN_PAGE_DEF); // A list of tagged articles
+	$posts_count = count($line); // Number of cycles
+	$posts = $PIO->fetchPosts($line); // Article content array
 
 	$dat.= '<form action="'.PHP_SELF.'" method="POST">';
 	$dat.= '<input type="hidden" name="mode" value="admin" />
@@ -1024,10 +1024,10 @@ $message.'<br />
 <tbody>';
 
 	for($j = 0; $j < $posts_count; $j++){
-		$bg = ($j % 2) ? 'row1' : 'row2'; // 背景顏色
+		$bg = ($j % 2) ? 'row1' : 'row2'; // Background color
 		extract($posts[$j]);
 
-		// 修改欄位樣式
+		// Modify the field style
 		//$now = preg_replace('/.{2}\/(.{5})\(.+?\)(.{5}).*/', '$1 $2', $now);
 		$name = htmlspecialchars(str_cut(html_entity_decode(strip_tags($name)), 8));
 		$sub = htmlspecialchars(str_cut(html_entity_decode($sub), 8));
@@ -1035,14 +1035,14 @@ $message.'<br />
 		$com = str_replace('<br />',' ',$com);
 		$com = htmlspecialchars(str_cut(html_entity_decode($com), 20));
 
-		// 討論串首篇停止勾選框 及 模組功能
+		// The first part of the discussion is the stop tick box and module function
 		$modFunc = ' ';
 		$PMS->useModuleMethods('AdminList', array(&$modFunc, $posts[$j], $resto)); // "AdminList" Hook Point
-		if($resto==0){ // $resto = 0 (即討論串首篇)
+		if($resto==0){ // $resto = 0 (the first part of the discussion string)
 			$flgh = $PIO->getPostStatus($status);
 		}
 
-		// 從記錄抽出附加圖檔使用量並生成連結
+		// Extract additional archived image files and generate a link
 		if($ext && $FileIO->imageExists($tim.$ext)){
 			$clip = '<a href="'.$FileIO->getImageURL($tim.$ext).'" target="_blank">'.$tim.$ext.'</a>';
 			$size = $FileIO->getImageFilesize($tim.$ext);
@@ -1057,7 +1057,7 @@ $message.'<br />
 			$host = " - ";
 		}
 
-		// 印出介面
+		// Print out the interface
 		$dat.= <<< _ADMINEOF_
 <tr align="LEFT">
 	<th align="center">$modFunc</th><th><input type="checkbox" name="clist[]" value="$no" />$no</th>
@@ -1078,8 +1078,8 @@ _ADMINEOF_;
 </center></form>
 <hr size="1" />';
 
-	$countline = $PIO->postCount(); // 總文章數
-	$page_max = ceil($countline / ADMIN_PAGE_DEF) - 1; // 總頁數
+	$countline = $PIO->postCount(); // Total number of articles(threads)
+	$page_max = ceil($countline / ADMIN_PAGE_DEF) - 1; // Total number of pages
 	$dat.= '<table id="pager" border="1" cellspacing="0" cellpadding="0"><tbody><tr>';
 	if($page) $dat.= '<td><a href="'.PHP_SELF.'?mode=admin&admin=del&page='.($page - 1).'">'._T('prev_page').'</a></td>';
 	else $dat.= '<td nowrap="nowrap">'._T('first_page').'</td>';
@@ -1095,7 +1095,7 @@ _ADMINEOF_;
 }
 
 /**
- * 計算目前附加圖檔使用容量 (單位：KB)
+ * Calculate the current capacity of additional files (unit: KB)
  * @deprecated Use FileIO->getCurrentStorageSize() / FileIO->updateStorageSize($delta) instead
  */
 function total_size($delta=0){
@@ -1103,7 +1103,7 @@ function total_size($delta=0){
 	return $FileIO->getCurrentStorageSize($delta);
 }
 
-/* 搜尋(全文檢索)功能 */
+/* Search (full-text search) function */
 function search(){
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
@@ -1111,7 +1111,7 @@ function search(){
 	$PMS = PMCLibrary::getPMSInstance();
 
 	if(!USE_SEARCH) error(_T('search_disabled'));
-	$searchKeyword = isset($_POST['keyword']) ? trim($_POST['keyword']) : ''; // 欲搜尋的文字
+	$searchKeyword = isset($_POST['keyword']) ? trim($_POST['keyword']) : ''; // The text you want to search
 	$dat = '';
 	head($dat);
 	$links = '[<a href="'.PHP_SELF2.'?'.time().'">'._T('return').'</a>]';
@@ -1135,11 +1135,11 @@ function search(){
 </div>
 </form>';
 	}else{
-		$searchField = $_POST['field']; // 搜尋目標 (no:編號, name:名稱, sub:標題, com:內文)
-		$searchMethod = $_POST['method']; // 搜尋方法
-		$searchKeyword = preg_split('/(　| )+/', trim($searchKeyword)); // 搜尋文字用空格切割
+		$searchField = $_POST['field']; // Search target (no:number, name:name, sub:title, com:text)
+		$searchMethod = $_POST['method']; // Search method
+		$searchKeyword = preg_split('/(　| )+/', trim($searchKeyword)); // Search text is cut with spaces
 		if ($searchMethod=='REG') $searchMethod = 'AND';
-		$hitPosts = $PIO->searchPost($searchKeyword, $searchField, $searchMethod); // 直接傳回符合的文章內容陣列
+		$hitPosts = $PIO->searchPost($searchKeyword, $searchField, $searchMethod); // Directly return the matching article content array
 
 		echo '<div id="searchresult">';
 		$resultlist = '';
@@ -1163,30 +1163,30 @@ function search(){
 	echo "</body></html>";
 }
 
-/* 利用類別標籤搜尋符合的文章 */
+/* Use category tags to search for articles that match */
 function searchCategory(){
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PTE = PMCLibrary::getPTEInstance();
 	$PMS = PMCLibrary::getPMSInstance();
 
-	$category = isset($_GET['c']) ? strtolower(strip_tags(trim($_GET['c']))) : ''; // 搜尋之類別標籤
+	$category = isset($_GET['c']) ? strtolower(strip_tags(trim($_GET['c']))) : ''; // Search for category tags
 	if(!$category) error(_T('category_nokeyword'));
 	$category_enc = urlencode($category); $category_md5 = md5($category);
-	$page = isset($_GET['p']) ? @intval($_GET['p']) : 1; if($page < 1) $page = 1; // 目前瀏覽頁數
-	$isrecache = isset($_GET['recache']); // 是否強制重新生成快取
+	$page = isset($_GET['p']) ? @intval($_GET['p']) : 1; if($page < 1) $page = 1; // Current number of pages viewed
+	$isrecache = isset($_GET['recache']); // Whether to force the cache to be regenerated
 
-	// 利用Session快取類別標籤出現篇別以減少負擔
+	// Use the session to cache the category tags to appear in the article category to reduce the burden
 	if(!isset($_SESSION['loglist_'.$category_md5]) || $isrecache){
 		$loglist = $PIO->searchCategory($category);
 		$_SESSION['loglist_'.$category_md5] = serialize($loglist);
 	}else $loglist = unserialize($_SESSION['loglist_'.$category_md5]);
 
 	$loglist_count = count($loglist);
-	$page_max = ceil($loglist_count / PAGE_DEF); if($page > $page_max) $page = $page_max; // 總頁數
+	$page_max = ceil($loglist_count / PAGE_DEF); if($page > $page_max) $page = $page_max; // Total pages
 
-	// 分割陣列取出適當範圍作分頁之用
-	$loglist_cut = array_slice($loglist, PAGE_DEF * ($page - 1), PAGE_DEF); // 取出特定範圍文章
+	// Slice the array and get the range for pagination purposes
+	$loglist_cut = array_slice($loglist, PAGE_DEF * ($page - 1), PAGE_DEF); // Take out a specific range of articles
 	$loglist_cut_count = count($loglist_cut);
 
 	$dat = '';
@@ -1196,8 +1196,8 @@ function searchCategory(){
 	$PMS->useModuleMethods('LinksAboveBar', array(&$links,'category',$level));
 	$dat .= "<div>$links</div>\n";
 	for($i = 0; $i < $loglist_cut_count; $i++){
-		$posts = $PIO->fetchPosts($loglist_cut[$i]); // 取得文章內容
-		$dat .= arrangeThread($PTE, ($posts[0]['resto'] ? $posts[0]['resto'] : $posts[0]['no']), null, $posts, 0, $loglist_cut[$i], array(), array(), false, false, false); // 逐個輸出 (引用連結不顯示)
+		$posts = $PIO->fetchPosts($loglist_cut[$i]); // Get article content
+		$dat .= arrangeThread($PTE, ($posts[0]['resto'] ? $posts[0]['resto'] : $posts[0]['no']), null, $posts, 0, $loglist_cut[$i], array(), array(), false, false, false); // Output by output (reference links are not displayed)
 	}
 
 	$dat .= '<table id="pager" border="1"><tr>';
@@ -1217,7 +1217,7 @@ function searchCategory(){
 	echo $dat;
 }
 
-/* 顯示已載入模組資訊 */
+/* Displays loaded module information */
 function listModules(){
 	$PMS = PMCLibrary::getPMSInstance();
 
@@ -1247,7 +1247,7 @@ function listModules(){
 	echo $dat;
 }
 
-/* 刪除舊頁面快取檔 */
+/* Delete the old page cache file */
 function deleteCache($no){
 	foreach($no as $n){
 		if($oldCaches = glob('./cache/'.$n.'-*')){
@@ -1256,7 +1256,7 @@ function deleteCache($no){
 	}
 }
 
-/* 顯示系統各項資訊 */
+/* Display system information */
 function showstatus(){
 	global $LIMIT_SENSOR, $THUMB_SETTING;
 	$PIO = PMCLibrary::getPIOInstance();
@@ -1264,19 +1264,19 @@ function showstatus(){
 	$PTE = PMCLibrary::getPTEInstance();
 	$PMS = PMCLibrary::getPMSInstance();
 
-	$countline = $PIO->postCount(); // 計算投稿文字記錄檔目前資料筆數
-	$counttree = $PIO->threadCount(); // 計算樹狀結構記錄檔目前資料筆數
-	$tmp_total_size = $FileIO->getCurrentStorageSize(); // 附加圖檔使用量總大小
-	$tmp_ts_ratio = STORAGE_MAX > 0 ? $tmp_total_size / STORAGE_MAX : 0; // 附加圖檔使用量
+	$countline = $PIO->postCount(); // Calculate the current number of data entries in the submitted text log file
+	$counttree = $PIO->threadCount(); // Calculate the current number of data entries in the tree structure log file
+	$tmp_total_size = $FileIO->getCurrentStorageSize(); // The total size of the attached image file usage
+	$tmp_ts_ratio = STORAGE_MAX > 0 ? $tmp_total_size / STORAGE_MAX : 0; // Additional image file usage
 
-	// 決定「附加圖檔使用量」提示文字顏色
+	// Determines the color of the "Additional Image File Usage" prompt
   	if($tmp_ts_ratio < 0.3 ) $clrflag_sl = '235CFF';
 	elseif($tmp_ts_ratio < 0.5 ) $clrflag_sl = '0CCE0C';
 	elseif($tmp_ts_ratio < 0.7 ) $clrflag_sl = 'F28612';
 	elseif($tmp_ts_ratio < 0.9 ) $clrflag_sl = 'F200D3';
 	else $clrflag_sl = 'F2004A';
 
-	// 生成預覽圖物件資訊及功能是否正常
+	// Generate preview image object information and whether the functions of the generated preview image are normal
 	$func_thumbWork = '<span class="offline">'._T('info_nonfunctional').'</span>';
 	$func_thumbInfo = '(No thumbnail)';
 	if(USE_THUMB !== 0){
@@ -1429,9 +1429,9 @@ function logout(&$dat) {
 	exit;
 }
 
-/*-----------程式各項功能主要判斷-------------*/
-if(GZIP_COMPRESS_LEVEL && ($Encoding = CheckSupportGZip())){ ob_start(); ob_implicit_flush(0); } // 支援且開啟Gzip壓縮就設緩衝區
-$mode = isset($_GET['mode']) ? $_GET['mode'] : (isset($_POST['mode']) ? $_POST['mode'] : ''); // 目前執行模式 (GET, POST)
+/*-----------The main judgment of the functions of the program-------------*/
+if(GZIP_COMPRESS_LEVEL && ($Encoding = CheckSupportGZip())){ ob_start(); ob_implicit_flush(0); } // Support and enable Gzip compression to set buffers
+$mode = isset($_GET['mode']) ? $_GET['mode'] : (isset($_POST['mode']) ? $_POST['mode'] : ''); // Current operating mode (GET, POST)
 
 switch($mode){
 	case 'regist':
@@ -1535,14 +1535,14 @@ switch($mode){
 	default:
 		header('Content-Type: text/html; charset=utf-8');
 
-		$res = isset($_GET['res']) ? $_GET['res'] : 0; // 欲回應編號
-		if($res){ // 回應模式輸出
+		$res = isset($_GET['res']) ? $_GET['res'] : 0; // To respond to the number
+		if($res){ // Response mode output
 			$page = $_GET['pagenum']??'RE_PAGE_MAX';
 			if(!($page=='all' || $page=='RE_PAGE_MAX')) $page = intval($_GET['pagenum']);
-			updatelog($res, $page); // 實行分頁
-		}elseif(isset($_GET['pagenum']) && intval($_GET['pagenum']) > -1){ // PHP動態輸出一頁
+			updatelog($res, $page); // Implement pagin
+		}elseif(isset($_GET['pagenum']) && intval($_GET['pagenum']) > -1){ // PHP dynamically outputs one page
 			updatelog(0, intval($_GET['pagenum']));
-		}else{ // 導至靜態庫存頁
+		}else{ // Go to the static inventory page
 			if(!is_file(PHP_SELF2)) {
 				logtime("Rebuilt pages");
 				updatelog();
@@ -1551,11 +1551,11 @@ switch($mode){
 			header('Location: '.fullURL().PHP_SELF2.'?'.$_SERVER['REQUEST_TIME']);
 		}
 }
-if(GZIP_COMPRESS_LEVEL && $Encoding){ // 有啟動Gzip
-	if(!ob_get_length()) exit; // 沒內容不必壓縮
+if(GZIP_COMPRESS_LEVEL && $Encoding){ // If Gzip is enabled
+	if(!ob_get_length()) exit; // No content, no need to compress
 	header('Content-Encoding: '.$Encoding);
 	header('X-Content-Encoding-Level: '.GZIP_COMPRESS_LEVEL);
 	header('Vary: Accept-Encoding');
-	print gzencode(ob_get_clean(), GZIP_COMPRESS_LEVEL); // 壓縮內容
+	print gzencode(ob_get_clean(), GZIP_COMPRESS_LEVEL); // Compressed content
 }
 clearstatcache();
