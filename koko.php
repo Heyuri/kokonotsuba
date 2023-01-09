@@ -6,7 +6,7 @@ define("PIXMICAT_VER", 'Koko BBS Release 1'); // Version information text
 YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE THIS SOFTWARE.
 
 */
-if (file_exists('.lockdown')&&!(valid()>=LEV_JANITOR)) {
+if (file_exists('.lockdown') && valid() < LEV_JANITOR) {
 	die('Posting temporarily disabled. Come back later!');
 }
 
