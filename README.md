@@ -1,4 +1,9 @@
 # Kokonotsuba
+
+## Required stack
+Kokonotsuba is designed and tested on debian 10, nginx, mariadb, and php7.3, and isn't guaranteed to work on any other stack.
+If you are going to suggest pull requests, please make sure the change would work on the above stack first.
+
 ## On creating new instances
 Create the database, modify the configuration file, run install.php, delete install.php, make the first post.
 
