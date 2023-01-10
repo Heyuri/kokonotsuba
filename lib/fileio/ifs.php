@@ -2,7 +2,7 @@
 /**
  * FileIO Index File System
  *
- * 把遠端圖檔的各種屬性作本機快取及記錄，方便程式取用
+ * Cache and record the various attributes of the remote image file locally to facilitate program access
  *
  * @package PMCLibrary
  * @version $Id$
@@ -12,13 +12,13 @@
 class IndexFS{
 	var $logfile, $backend, $index, $modified, $keylist;
 
-	/* 建構元 */
+	/* Constructor */
 	function IndexFS($logfile){
-		// 索引記錄檔位置
+		// Index log file location
 		$this->logfile = $logfile;
 	}
 
-	/* 初始化 */
+	/* initialization */
 	function init(){
 		switch($this->backend){
 			case 'pdo_sqlite':
@@ -30,7 +30,7 @@ class IndexFS{
 				$this->index->exec($execText);
 				break;
 			case 'log':
-				touch($this->logfile); chmod($this->logfile, 0666); // 建立索引檔
+				touch($this->logfile); chmod($this->logfile, 0666); // Create index file
 				break;
 			case 'sqlite2':
 				$execText = 'CREATE TABLE IndexFS (
@@ -43,7 +43,7 @@ class IndexFS{
 		}
 	}
 
-	/* 開啟索引檔並讀入 */
+	/* Open the index file and read in */
 	function openIndex(){
 		if(extension_loaded('pdo_sqlite')){
 			$this->backend = 'pdo_sqlite';
@@ -59,13 +59,13 @@ class IndexFS{
 			$this->modified = false;
 			if(!file_exists($this->logfile)){ $this->init(); return; }
 			if(filesize($this->logfile)==0) return;
-			$indexlog = file($this->logfile); $indexlog_count = count($indexlog); // 讀入索引檔並計算目前筆數
+			$indexlog = file($this->logfile); $indexlog_count = count($indexlog); // Read the index file and calculate the current number
 			$this->index = array();
 			for($i = 0; $i < $indexlog_count; $i++){
-				if(!($trimline = rtrim($indexlog[$i]))) continue; // 本行無意義
+				if(!($trimline = rtrim($indexlog[$i]))) continue; // This line is meaningless
 				$field = explode("\t\t", $trimline);
 				$this->index[$field[0]] = array('imgSize' => $field[1], 'imgURL' => isset($field[2]) ? $field[2] : '');
-				// 索引格式: 檔名	檔案大小	對應路徑
+				// Index format: file name, file size, corresponding path
 			}
 			$this->keylist = array_keys($this->index);
 			unset($indexlog);
@@ -74,7 +74,7 @@ class IndexFS{
 			info('Backend: %s, Path: %s', $this->backend, $this->logfile);
 	}
 
-	/* 索引是否存在 */
+	/* Does the index exist */
 	function beRecord($id){
 		switch($this->backend){
 			case 'pdo_sqlite':
@@ -88,7 +88,7 @@ class IndexFS{
 		}
 	}
 
-	/* 搜尋預覽圖檔檔名 */
+	/* Search for preview image file name */
 	function findThumbName($pattern){
 		switch($this->backend){
 			case 'pdo_sqlite':
@@ -113,7 +113,7 @@ class IndexFS{
 		}
 	}
 
-	/* 取得一筆索引 */
+	/* Get an index */
 	function getRecord($id){
 		switch($this->backend){
 			case 'pdo_sqlite':
@@ -127,7 +127,7 @@ class IndexFS{
 		}
 	}
 
-	/* 新增一筆索引 */
+	/* Add an index */
 	function addRecord($id, $imgSize, $imgURL){
 		switch($this->backend){
 			case 'pdo_sqlite':
@@ -136,7 +136,7 @@ class IndexFS{
 				break;
 			case 'log':
 				$this->modified = true;
-				$this->index[$id] = array('imgSize' => $imgSize, 'imgURL' => $imgURL); // 加入索引之中
+				$this->index[$id] = array('imgSize' => $imgSize, 'imgURL' => $imgURL); // Added to the index
 				break;
 			case 'sqlite2':
 				sqlite_exec($this->index, 'INSERT INTO IndexFS (imgName, imgSize, imgURL) VALUES ("'.sqlite_escape_string($id).'", '.sqlite_escape_string($imgSize).', "'.sqlite_escape_string($imgURL).'");');
@@ -144,7 +144,7 @@ class IndexFS{
 		}
 	}
 
-	/* 刪除一筆索引 */
+	/* Delete an index */
 	function delRecord($id){
 		switch($this->backend){
 			case 'pdo_sqlite':
@@ -158,11 +158,11 @@ class IndexFS{
 		}
 	}
 
-	/* 儲存索引變更 */
+	/* Save index changes */
 	function saveIndex(){
-		if($this->backend=='log' && $this->modified){ // 如果有修改索引就回存
+		if($this->backend=='log' && $this->modified){ // If the index is modified, it will be saved back
 			$indexlog = '';
-			if(count($this->index)) foreach($this->index as $ikey => $ival){ $indexlog .= $ikey."\t\t".$ival['imgSize']."\t\t".$ival['imgURL']."\n"; } // 有資料才跑迴圈
+			if(count($this->index)) foreach($this->index as $ikey => $ival){ $indexlog .= $ikey."\t\t".$ival['imgSize']."\t\t".$ival['imgURL']."\n"; } // Run the loop only if you have information
 			$fp = fopen($this->logfile, 'w');
 			fwrite($fp, $indexlog);
 			fclose($fp);
@@ -171,7 +171,7 @@ class IndexFS{
 		}
 	}
 
-	/* 取得目前索引之所有檔案大小 */
+	/* Get the size of all files in the current index */
 	function getCurrentStorageSize(){
 		switch($this->backend){
 			case 'pdo_sqlite':
