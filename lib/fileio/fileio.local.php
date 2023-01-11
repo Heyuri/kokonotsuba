@@ -1,12 +1,12 @@
 <?php
 
 /**
- * FileIO Local 本機儲存 API (Without IFS 索引快取)
+ * FileIO Local local storage API (Without IFS index cache)
  *
- * 以本機硬碟空間作為圖檔儲存的方式，並提供一套方法供程式管理圖片
+ * Use the local hard disk space as the image file storage method, and provide a set of methods for the program to manage images
  *
- * 此版還原至舊版 (5th.Release) 的行為，判斷圖檔時仍使用檔案 I/O 來確認，
- * 避免特定環境下 IFS 出現錯誤造成圖檔無法顯示的問題。
+ * This version reverts to the behavior of the old version (5th.Release), and still uses file I/O to confirm when judging image files,
+ * Avoid the problem that the image file cannot be displayed due to an error in IFS in a specific environment.
  *
  * @package PMCLibrary
  * @version $Id$
@@ -33,7 +33,7 @@ class FileIOlocal extends AbstractFileIO {
 
     public function deleteImage($imgname) {
         if (!is_array($imgname)) {
-            $imgname = array($imgname); // 單一名稱參數
+            $imgname = array($imgname); // Single name parameter
         }
 
         $size = 0;
@@ -78,10 +78,10 @@ class FileIOlocal extends AbstractFileIO {
     }
 
     /**
-     * 用傳統的 1234567890123s.jpg 規則嘗試尋找預覽圖，運氣好的話只需要找一次。
+     * Use the traditional 1234567890123s.jpg rules try to find the preview image, if you are lucky, you only need to find it once.
      *
-     * @param string $thumbPattern 預覽圖檔名
-     * @return bool 是否找到
+     * @param string $thumbPattern preview image file name
+     * @return bool found
      */
     private function resolveThumbNameShortcut($thumbPattern) {
         $shortcutFind = $this->getImagePhysicalPath($thumbPattern . 's.jpg');
