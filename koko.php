@@ -650,7 +650,7 @@ function regist($preview=false){
 		$name = '<font color="'.$capcode['color'].'">'.$name.'<b>'.$capcode['cap'].'</b>'.'</font>';
 	}
 	
-	if ($email == "vipcode" && defined('VIPDEF')) {
+	if(stristr($email, 'vipcode') && defined('VIPDEF')) {
 			$name .= ' <img src="'.STATIC_URL.'vip.gif" title="This user is a VIP user" style="vertical-align: middle;margin-top: -2px;" alt="VIP">'; 
 	}
 	$email = preg_replace('/^vipcode$/i', '', $email);
