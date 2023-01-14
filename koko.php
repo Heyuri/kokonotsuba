@@ -333,6 +333,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno=0, $
 		} else {
 			if($resno&&!$i)		$REPLYBTN = '[<a href="'.PHP_SELF.'?res='.$no.'">'._T('reply_btn').'</a>]';
 			$QUOTEBTN = $no;
+			if (TEXTBOARD_ONLY) $QUOTEBTN = '<b>'.($i+1).'</b>';
 		}
 
 		if($adminMode){ // Front-end management mode
