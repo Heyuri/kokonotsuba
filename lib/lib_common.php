@@ -170,10 +170,16 @@ function redirect($to, $time=0, $verbose=false) {
 }
 
 /* 網址自動連結 */
-function auto_link_callback2($matches){
-	$URL = $matches[1].$matches[2];
-	if (REF_URL) $URL = urlencode($URL);
-	return '<a href="'.REF_URL.'?'.$URL.'" target="_blank" rel="nofollow noreferrer">'.$matches[1].$matches[2].'</a>';
+function auto_link_callback2($matches) {
+	$URL = $matches[1].$matches[2]; // https://example.com
+
+	// Redirect URL!
+	if (REF_URL) {
+		$URL_Encode = urlencode($URL);  // https%3A%2F%2Fexample.com (For the address bar)
+		return '<a href="'.REF_URL.'?'.$URL_Encode.'" target="_blank" rel="nofollow noreferrer">'.$URL.'</a>';
+	}
+	// Also works if its blank!
+	return '<a href="'.$URL.'" target="_blank" rel="nofollow noreferrer">'.$URL.'</a>';
 }
 function auto_link_callback($matches){
 	return (strtolower($matches[3]) == "</a>") ? $matches[0] : preg_replace_callback('/([a-zA-Z]+)(:\/\/[\w\+\$\;\?\.\{\}%,!#~*\/:@&=_-]+)/u', 'auto_link_callback2', $matches[0]);
