@@ -2,12 +2,12 @@
 class mod_bbcode extends ModuleHelper { 
 	private $myPage;
 	private $urlcount;
-	private	$ImgTagTagMode = 0; // [img]標籤行為 (0:不轉換 1:無貼圖時轉換 2:常時轉換)
-	private	$URLTagMode = 0; // [url]標籤行為 (0:不轉換 1:正常)
-	private	$MaxURLCount = 2; // [url]標籤上限 (超過上限時標籤為陷阱標籤[寫入至$URLTrapLog])
-	private	$URLTrapLog = './URLTrap.log'; // [url]陷阱標籤記錄檔
+	private	$ImgTagTagMode = 0; // [img] tag behavior (0: no conversion 1: conversion when no textures 2: always conversion)
+	private	$URLTagMode = 0; // [url] tag behavior (0: no conversion 1: normal)
+	private	$MaxURLCount = 2; // [url] tag upper limit (when the upper limit is exceeded, the tag is a trap tag [written to $URLTrapLog])
+	private	$URLTrapLog = './URLTrap.log'; // [url]trap label log file
 	private $AATagMode = 1; // Koko [0:Enabled 1:Disabled]
-	private $supportRuby = 0; // <ruby> tag (0:不支持 1:支持)
+	private $supportRuby = 0; // <ruby> tag (0: not supported 1: supported)
 	private $emotes = array(
 			'nigra'=>STATIC_URL.'image/emote/nigra.gif',
 			'sage'=>STATIC_URL.'image/emote/sage.gif',
@@ -62,7 +62,7 @@ class mod_bbcode extends ModuleHelper {
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
-		$this->myPage = $this->getModulePageURL();// 基底位置
+		$this->myPage = $this->getModulePageURL();// Base position
 	}
 
 	public function getModuleName(){

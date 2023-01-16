@@ -150,7 +150,7 @@ class mod_cat extends ModuleHelper {
 		echo $dat;
 	}
 
-	/* 最佳化圖顯示尺寸 */
+	/* Optimize the display size of the picture */
 	private function OptimizeImageWH($w, $h){
 		if($w > MAX_RW || $h > MAX_RH){
 			$W2 = MAX_RW / $w; $H2 = MAX_RH / $h;

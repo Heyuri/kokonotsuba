@@ -20,7 +20,7 @@ class mod_recaptcha_v2 extends ModuleHelper {
 		$head.="<script src='https://www.google.com/recaptcha/api.js?hl=en-US'></script>";
 	}
 
-	/* 在頁面附加 reCAPTCHA 功能 */
+	/* Add reCAPTCHA function to the page */
 	public function autoHookPostForm(&$txt){
 		$txt .= '<tr><th class="postblock">Verification</th><td>'.'<div class="g-recaptcha" data-sitekey="'.$this->KEY_PUBLIC.'"></div>'.'</td></tr>';
 	}
@@ -30,7 +30,7 @@ class mod_recaptcha_v2 extends ModuleHelper {
 	    return $responseData->success;
     }
 
-	/* 在接收到送出要求後馬上檢查是否正確 */
+	/* Check whether it is correct as soon as you receive the request */
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo){
 		if (valid() >= LEV_MODERATOR ) return; //no captcha for admin mode
 		$resp = $this->validateCaptcha('SECRET KEY', $_POST['g-recaptcha-response']);

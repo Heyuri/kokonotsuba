@@ -1,13 +1,13 @@
 <?php
 class mod_pushpost extends ModuleHelper {
-	// 推文判斷起始標籤
+	// Tweet judgment start tag
 	private $PUSHPOST_SEPARATOR = '[MOD_PUSHPOST_USE]';
-	// 討論串最多顯示之推文筆數 (超過則自動隱藏，全部隱藏：0)
+	// The maximum number of tweets displayed in the discussion thread (if exceeded, it will be automatically hidden, all hidden: 0)
 	private $PUSHPOST_DEF = 5;
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
-		$this->loadLanguage(); // 載入語言檔
+		$this->loadLanguage(); // Load language file
 	}
 
 	public function getModuleName() {
@@ -21,7 +21,7 @@ class mod_pushpost extends ModuleHelper {
 
 
 	public function autoHookHead(&$txt, $isReply) {
-//如果不需要JQUERY可以COMMENT 第一行，第一行為自動決定加載JQUERY的JAVASCRIPT
+//If you don't need jQuery, you can comment the first line, and the first line automatically decides to load jQuery's JavaScript
 		$txt .= '<script type="text/javascript">window.jQuery || document.write("\x3Cscript src=\x22//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js\x22>\x3C/script>");</script>
 <script type="text/javascript">
 // <![CDATA[
@@ -76,7 +76,7 @@ function mod_pushpostSend(){
 		$pushcount = '';
 		if ($post['status'] != '') {
 			$f = $PIO->getPostStatus($post['status']);
-			$pushcount = $f->value('mppCnt'); // 被推次數
+			$pushcount = $f->value('mppCnt'); // Number of pushes
 		}
 
 		$arrLabels['{$QUOTEBTN}'] .= '&nbsp;<a href="'.
@@ -84,14 +84,14 @@ function mod_pushpostSend(){
 			'" onclick="return mod_pushpostShow('.$post['no'].')">'.
 			$pushcount.$this->_T('pushbutton').'</a>';
 		if (strpos($arrLabels['{$COM}'], $this->PUSHPOST_SEPARATOR.'<br />') !== false) {
-			// 回應模式
+			// Response mode
 			if ($isReply || $pushcount <= $this->PUSHPOST_DEF) {
 				$arrLabels['{$COM}'] = str_replace($this->PUSHPOST_SEPARATOR.
 					'<br />', '<div class="pushpost">', $arrLabels['{$COM}']).
 					'</div>';
 			} else {
-			// 頁面瀏覽
-				// 定位符號位置
+			// Page view
+				// Locate the position of the symbol
 				$delimiter = strpos($arrLabels['{$COM}'], $this->PUSHPOST_SEPARATOR.'<br />');
 				if ($this->PUSHPOST_DEF > 0) {
 					$push_array = explode('<br />', substr($arrLabels['{$COM}'], $delimiter + strlen($this->PUSHPOST_SEPARATOR.'<br />')));
@@ -110,10 +110,10 @@ function mod_pushpostSend(){
 	}
 
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo, $isReply) {
-		// 登入權限允許標籤留存不轉換 (後端登入修改文章後推文仍有效)
+		// Login permissions allow tags to be retained without conversion (the tweet is still valid after the backend logs in and modifies the article)
 		if (valid() < LEV_MODERATOR) return;
 
-		// 防止手動插入標籤
+		// Prevent manual insertion of tags
 		if (strpos($com, $this->PUSHPOST_SEPARATOR."\r\n") !== false) {
 			$com = str_replace($this->PUSHPOST_SEPARATOR."\r\n", "\r\n", $com);
 		}
@@ -135,12 +135,12 @@ function mod_pushpostSend(){
 		if (isset($_GET['action'])) {
 				$pushcount = ''; $puststart=0;
 				$post = $PIO->fetchPosts($_GET['no']);
-				if (!count($post)) die('[Error] Post does not exist.'); // 被推之文章不存在
+				if (!count($post)) die('[Error] Post does not exist.'); // The pushed article does not exist
 				extract($post[0]);
 
 				if ($status != ''){
 					$f = $PIO->getPostStatus($status);
-					$pushcount = $f->value('mppCnt'); // 被推次數
+					$pushcount = $f->value('mppCnt'); // Number of pushes
 				}
 
 				if (($puststart=strpos($com, $this->PUSHPOST_SEPARATOR.'<br />'))===false) die('[Error] No pushpost.');
@@ -189,14 +189,14 @@ function mod_pushpostSend(){
 					}
 					$pushcount = count($pushpost);
 					if ($pushcount) {
-						$f->update('mppCnt', $pushcount); // 更新推文次數
+						$f->update('mppCnt', $pushcount); // Number of updated tweets
 						$com = $ocom.$this->PUSHPOST_SEPARATOR.'<br />'.implode('<br />', $pushpost);
 					} else {
-						$f->remove('mppCnt'); // 刪除推文次數
+						$f->remove('mppCnt'); // Number of deleted tweets
 						$com = $ocom;
 					}
 
-					$PIO->updatePost($_GET['no'], array('com' => $com, 'status' => $f->toString())); // 更新推文
+					$PIO->updatePost($_GET['no'], array('com' => $com, 'status' => $f->toString())); // Update tweet
 					$PIO->dbCommit();
 
 					header('HTTP/1.1 302 Moved Temporarily');
@@ -204,17 +204,17 @@ function mod_pushpostSend(){
 					return;
 				} else die('[Error] unknown action.');
 		}
-		// 非 AJAX 推文，產出表單供填寫
+		// Non-AJAX tweet, produce output form for filling in
 		if (!isset($_POST['comm'])) {
 			echo $this->printStaticForm(intval($_GET['no']));
 		} else {
-		// 處理推文
-			// 傳送方法不正確
+		// Process tweets
+			// Incorrect delivery method
 			if ($_SERVER['REQUEST_METHOD'] != 'POST') {
 				die(_T('regist_notpost'));
 			}
 
-			// 查IP
+			// Check IP
 			$baninfo = '';
 			$ip = getREMOTE_ADDR();
 			$host = gethostbyaddr($ip);
@@ -224,15 +224,15 @@ function mod_pushpostSend(){
 
 			$name = CleanStr($_POST['name']);
 			$comm = CleanStr($_POST['comm']);
-			if (strlen($name) > 30) die($this->_T('maxlength')); // 名稱太長
-			if (strlen($comm) > 160) die($this->_T('maxlength')); // 太多字
-			if (strlen($comm) == 0) die($this->_T('nocomment')); // 沒打字
+			if (strlen($name) > 30) die($this->_T('maxlength')); // The name is too long
+			if (strlen($comm) > 160) die($this->_T('maxlength')); // Too many words
+			if (strlen($comm) == 0) die($this->_T('nocomment')); // No typing
 			$name = str_replace(
 				array(_T('trip_pre'), _T('admin'), _T('deletor')),
 				array(_T('trip_pre_fake'), '"'._T('admin').'"', '"'._T('deletor').'"'),
 				$name
 			);
-			// 生成ID, Trip 等識別資訊
+			// Generate ID, Trip and other identification information
 			$pushtime = gmdate('y/m/d H:i', time() + intval(TIME_ZONE) * 3600);
 			if (preg_match('/(.*?)[#＃](.*)/u', $name, $regs)) {
 				$cap = strtr($regs[2], array('&amp;'=>'&'));
@@ -241,30 +241,30 @@ function mod_pushpostSend(){
 			}
 			if (!$name || preg_match("/^[ |　|]*$/", $name)) {
 				if (ALLOW_NONAME) $name = DEFAULT_NONAME;
-				else die(_T('regist_withoutname')); // 不接受匿名
+				else die(_T('regist_withoutname')); // Do not accept anonymity
 			}
-			if (ALLOW_NONAME == 2) { // 強制砍名
+			if (ALLOW_NONAME == 2) { // Forced name cut
 				$name = preg_match('/(\\'._T('trip_pre').'.{10})/', $name, $matches) ? $matches[1].':' : DEFAULT_NONAME.':';
 			} else {
 				$name .= ':';
 			}
-			$pushpost = "{$name} {$comm} ({$pushtime})"; // 推文主體
+			$pushpost = "{$name} {$comm} ({$pushtime})"; // Body of tweet
 
 			$post = $PIO->fetchPosts($_GET['no']);
-			if (!count($post)) die('[Error] Post does not exist.'); // 被推之文章不存在
+			if (!count($post)) die('[Error] Post does not exist.'); // The pushed article does not exist
 
 			$parentNo = $post[0]['resto'] ? $post[0]['resto'] : $post[0]['no'];
 			$threads = array_flip($PIO->fetchThreadList());
 			$threadPage = floor($threads[$parentNo] / PAGE_DEF);
 
-			$p = ($parentNo==$post[0]['no']) ? $post : $PIO->fetchPosts($parentNo); // 取出首篇
+			$p = ($parentNo==$post[0]['no']) ? $post : $PIO->fetchPosts($parentNo); // Take out the first article
 			$flgh = $PIO->getPostStatus($p[0]['status']);
-			if ($flgh->exists('TS')) die('[Error] '._T('regist_threadlocked')); // 首篇禁止回應/同時表示禁止推文
+			if ($flgh->exists('TS')) die('[Error] '._T('regist_threadlocked')); // The first article prohibits responding/at the same time indicates that the tweet is prohibited
 
 			$post[0]['com'] .= ((strpos($post[0]['com'], $this->PUSHPOST_SEPARATOR.'<br />')===false) ? '<br />'.$this->PUSHPOST_SEPARATOR : '').'<br /> '.$pushpost;
 			$flgh2 = $PIO->getPostStatus($post[0]['status']);
-			$flgh2->plus('mppCnt'); // 推文次數+1
-			$PIO->updatePost($_GET['no'], array('com'=>$post[0]['com'], 'status'=>$flgh2->toString())); // 更新推文
+			$flgh2->plus('mppCnt'); // Number of tweets +1
+			$PIO->updatePost($_GET['no'], array('com'=>$post[0]['com'], 'status'=>$flgh2->toString())); // Update tweet
 			$PIO->dbCommit();
 
 			// mod_audit logcat
@@ -277,10 +277,10 @@ function mod_pushpostSend(){
 			);
 
 			if (STATIC_HTML_UNTIL == -1 || $threadPage <= STATIC_HTML_UNTIL) {
-				// 僅更新討論串出現那頁
+				// Only update the page where the discussion string appears
 				updatelog(0, $threadPage, true);
 			}
-			deleteCache(array($parentNo)); // 刪除討論串舊快取
+			deleteCache(array($parentNo)); // Delete the thread's old cache
 
 			if (isset($_POST['ajaxmode'])) {
 				echo '+OK ', $pushpost;
@@ -292,10 +292,10 @@ function mod_pushpostSend(){
 	}
 
 	/**
-	 * 產出靜態推文表單
+	 * Generate a static tweet form
 	 *
-	 * @param  int $targetPost 推文對象文章編號
-	 * @return string             表單頁面 HTML
+	 * @param  int $targetPost Tweet object article number
+	 * @return string             Form page HTML
 	 */
 	private function printStaticForm($targetPost) {
 		$PIO = PMCLibrary::getPIOInstance();
@@ -314,7 +314,7 @@ function mod_pushpostSend(){
 	}
 
 	/**
-	 * 動態加入語言資源
+	 * Dynamically add language resources
 	 */
 	private function loadLanguage() {
 		$lang = array(
