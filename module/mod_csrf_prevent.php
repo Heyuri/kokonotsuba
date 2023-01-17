@@ -15,9 +15,9 @@ class mod_csrf_prevent extends ModuleHelper {
 
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo, $isReply){
 		$CSRFdetectd = false;
-		/* 檢查 HTTP_REFERER (防止跨站 form)
-		 *  1. 無 HTTP_REFERER
-		 *  2. HTTP_REFERER 不是此網域
+		/* Check HTTP_REFERER (to prevent cross-site form)
+		 *  1. No HTTP_REFERER
+		 *  2. HTTP_REFERER is not in this domain
 		 */
 		if(!strpos($_SERVER['HTTP_REFERER']??'', fullURL()))
 			$CSRFdetectd = true;

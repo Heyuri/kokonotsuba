@@ -2,20 +2,20 @@
 /*
 mod_captcha.php
 
-原始概念來自於各技術討論區，將各種想法混合實做而成。
+The original concept came from various technical discussion forums, and various ideas were mixed and implemented.
 
-最主要基礎是此頁內容：
+The main basis is the content of this page:
 http://jmhoule314.blogspot.com/2006/05/easy-php-captcha-tutorial-today-im.html
-加上回應的Kris Knigga修改的成果。
+Added the result of Kris Knigga's modification in response.
 */
 class mod_captcha extends ModuleHelper {
-	private $CAPTCHA_WIDTH = 100; // 圖片寬
-	private $CAPTCHA_HEIGHT = 25; // 圖片高
-	private $CAPTCHA_LENGTH = 4; // 明碼字數
-	private $CAPTCHA_GAP = 20; // 明碼字元間隔
-	private $CAPTCHA_TEXTY = 20; // 字元直向位置
-	private $CAPTCHA_FONTMETHOD = 0; // 字體使用種類 (0: GDF (*.gdf) 1: TrueType Font (*.ttf))
-	private $CAPTCHA_FONTFACE = array(ROOTPATH.'module/font1.gdf'); // 使用之字型 (可隨機挑選，惟字型種類需要相同不可混用)
+	private $CAPTCHA_WIDTH = 100; // Picture width
+	private $CAPTCHA_HEIGHT = 25; // Picture height
+	private $CAPTCHA_LENGTH = 4; // Number of plain words
+	private $CAPTCHA_GAP = 20; // Clear code character spacing
+	private $CAPTCHA_TEXTY = 20; // character vertical position
+	private $CAPTCHA_FONTMETHOD = 0; // Types of fonts used (0: GDF (*.gdf) 1: TrueType Font (*.ttf))
+	private $CAPTCHA_FONTFACE = array(ROOTPATH.'module/font1.gdf'); // Fonts used (can be selected randomly, but the font types need to be the same and cannot be mixed)
 	private $CAPTCHA_ECOUNT = 2;
 	private $ALT_POSTAREA = stristr(TEMPLATE_FILE, 'txt');
 	private $LANGUAGE=array(
@@ -46,7 +46,7 @@ class mod_captcha extends ModuleHelper {
 		parent::__construct($PMS);
 
 		$this->mypage = $this->getModulePageURL(); 
-		$this->attachLanguage($this->LANGUAGE);// 載入語言檔
+		$this->attachLanguage($this->LANGUAGE);// Load language file
 	}
 
 	public function getModuleName(){
@@ -57,69 +57,69 @@ class mod_captcha extends ModuleHelper {
 		return 'Koko BBS Release 1';
 	}
 
-	/* 在頁面附加 CAPTCHA 圖像和功能 */
+	/* Attach CAPTCHA image and function to page */
 	public function autoHookPostForm(&$form){
 		if ($this->ALT_POSTAREA) $form .= '<tr class="captchaarea"><td valign="TOP"><label for="captchacode">Captcha:</label></td><td><img src="'.$this->mypage.'" alt="'._T('modcaptcha_captcha_alt').'" id="chaimg" /><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&\';})();">'.$this->_T('modcaptcha_reload').'</a>]</small><br /><input tabindex="7" type="text" id="captchacode" name="captchacode" autocomplete="off" class="inputtext" />'.$this->_T('modcaptcha_enterword').'</td></tr>';
 		else $form .= '<tr><td class="postblock"><b><label for="captchacode">Captcha</label></b></td><td><img src="'.$this->mypage.'" alt="'._T('modcaptcha_captcha_alt').'" id="chaimg" /><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&\';})();">'.$this->_T('modcaptcha_reload').'</a>]</small><br /><input tabindex="7" type="text" id="captchacode" name="captchacode" autocomplete="off" class="inputtext" />'.$this->_T('modcaptcha_enterword').'</td></tr>';
 	}
 
-	/* 在接收到送出要求後馬上檢查明暗碼是否符合 */
+	/* Check whether the light and dark codes meet the requirements immediately after receiving the request */
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo){
 		if (defined('VIPDEF')) return;
 		if (valid()>=LEV_JANITOR) return; //no captcha for admin mode
 		@session_start();
 		$MD5code = isset($_SESSION['captcha_dcode']) ? $_SESSION['captcha_dcode'] : false;
-		if($MD5code===false || !isset($_POST['captchacode']) || md5(strtoupper($_POST['captchacode'])) !== $MD5code){ // 大小寫不分檢查
+		if($MD5code===false || !isset($_POST['captchacode']) || md5(strtoupper($_POST['captchacode'])) !== $MD5code){ // Case insensitive check
 			unset($_SESSION['captcha_dcode']);
 			error($this->_T('modcaptcha_worderror'));
 		}
 	}
 
 	public function ModulePage(){
-		$this->OutputCAPTCHA(); // 生成暗碼、CAPTCHA圖像
+		$this->OutputCAPTCHA(); // Generate password, CAPTCHA image
 	}
 
-	/* 生成CAPTCHA圖像、明碼、暗碼及內嵌用Script */
+	/* Generate CAPTCHA image, clear code, password and embedded script */
 	private function OutputCAPTCHA(){
 		@session_start();
 
-		// 隨機生成明碼、暗碼
-		$byteTable = Array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'); // 明碼定義陣列
-		$LCode = ''; // 明碼
-		for($i = 0; $i < $this->CAPTCHA_LENGTH; $i++) $LCode .= $byteTable[rand(0, count($byteTable) - 1)]; // 隨機抽碼
-		$DCode = md5($LCode); // 暗碼 (明碼的MD5)
-		$_SESSION['captcha_dcode'] = $DCode; // 暗碼存入 Session
+		// Randomly generate clear and secret codes
+		$byteTable = Array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'); // Clearly define the array
+		$LCode = ''; // Clear code
+		for($i = 0; $i < $this->CAPTCHA_LENGTH; $i++) $LCode .= $byteTable[rand(0, count($byteTable) - 1)]; // Random draw code
+		$DCode = md5($LCode); // Password (MD5 with clear code)
+		$_SESSION['captcha_dcode'] = $DCode; // Password is stored in session
 
-		// 生成暫存圖像
+		// Generate staging image
 		$captcha = ImageCreateTrueColor($this->CAPTCHA_WIDTH, $this->CAPTCHA_HEIGHT);
-		$randcolR = rand(100, 230); $randcolG = rand(100, 230); $randcolB = rand(100, 230); // 隨機色碼值
-		$backColor = ImageColorAllocate($captcha, $randcolR, $randcolG, $randcolB); // 背景色
-		ImageFill($captcha, 0, 0, $backColor); // 填入背景色
-		$txtColor = ImageColorAllocate($captcha, $randcolR - 40, $randcolG - 40, $randcolB - 40); // 文字色
-		$rndFontCount = count($this->CAPTCHA_FONTFACE); // 隨機字型數目
+		$randcolR = rand(100, 230); $randcolG = rand(100, 230); $randcolB = rand(100, 230); // Random color code value
+		$backColor = ImageColorAllocate($captcha, $randcolR, $randcolG, $randcolB); // Background color
+		ImageFill($captcha, 0, 0, $backColor); // Fill in the background color
+		$txtColor = ImageColorAllocate($captcha, $randcolR - 40, $randcolG - 40, $randcolB - 40); // Text color
+		$rndFontCount = count($this->CAPTCHA_FONTFACE); // Random number of fonts
 
-		// 打入文字
+		// Type text
 		for($p = 0; $p < $this->CAPTCHA_LENGTH; $p++){
-			if($this->CAPTCHA_FONTMETHOD){ // TrueType 字型
-				// 設定旋轉角度 (左旋或右旋)
+			if($this->CAPTCHA_FONTMETHOD){ // TrueType Font
+				// Set the rotation angle (left or right)
 		    	if(rand(1, 2)==1) $degree = rand(0, 25);
 		    	else $degree = rand(335, 360);
-				// 圖層, 字型大小, 旋轉角度, X軸, Y軸 (字左下方起算), 字色, 字型, 印出文字
+				// Layer, font size, rotation angle, X-axis, Y-axis (counting from the bottom left of the word), font color, font, printed text
 				ImageTTFText($captcha, rand(14, 16), $degree, ($p + 1) * $this->CAPTCHA_GAP, $this->CAPTCHA_TEXTY, $txtColor, $this->CAPTCHA_FONTFACE[rand(0, $rndFontCount - 1)], substr($LCode, $p, 1));
-			}else{ // GDF 字型
+			}else{ // GDF font
 				$font = ImageLoadFont($this->CAPTCHA_FONTFACE[rand(0, $rndFontCount - 1)]);
-				// 圖層, 字型, X軸, Y軸 (字左上方起算), 印出文字, 字色
+				// Layer, font, X-axis, Y-axis (counting from the top left of the word), printed text, font color
 				ImageString($captcha, $font, ($p + 1) * $this->CAPTCHA_GAP, $this->CAPTCHA_TEXTY - 18, substr($LCode, $p, 1), $txtColor);
 			}
 		}
 
-		// 混淆用 (畫橢圓)
+		// For confusion (draw ellipse)
 		for($n = 0; $n < $this->CAPTCHA_ECOUNT; $n++){
 	    	ImageEllipse($captcha, rand(1, $this->CAPTCHA_WIDTH), rand(1, $this->CAPTCHA_HEIGHT), rand(50, 100), rand(12, 25), $txtColor);
 	    	ImageEllipse($captcha, rand(1, $this->CAPTCHA_WIDTH), rand(1, $this->CAPTCHA_HEIGHT), rand(50, 100), rand(12, 25), $backColor);
 		}
 
-		// 輸出圖像
+		// Output image
 		header('Content-Type: image/png');
 		header('Cache-Control: no-cache');
 		ImagePNG($captcha);

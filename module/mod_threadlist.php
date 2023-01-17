@@ -1,16 +1,16 @@
 <?php
 class mod_threadlist extends ModuleHelper {
-	// 一頁顯示列表個數
+	// Number of lists displayed on one page
 	private $THREADLIST_NUMBER = 50;
-	// 是否強制開新串要有標題
+	// Whether to force a new string to have a title
 	private $FORCE_SUBJECT = true;
-	// 是否在主頁面顯示
+	// Whether to display on the main page
 	private $SHOW_IN_MAIN = true;
-	// 在主頁面顯示列表個數
+	// Display the number of lists on the main page
 	private $THREADLIST_NUMBER_IN_MAIN = 100;
-	// 是否顯示刪除表單
+	// Whether to display the delete form
 	private $SHOW_FORM = false;
-	// 熱門回應數，超過這個值回應數會變紅色 (0 為不使用)
+	// The number of popular responses, the number of responses exceeding this value will turn red (0 means not used)
 	private $HIGHLIGHT_COUNT = 30;
 
 	public function __construct($PMS) {
@@ -61,13 +61,13 @@ class mod_threadlist extends ModuleHelper {
 		
 		if($this->SHOW_IN_MAIN && !$isReply) {
 			$dat = ''; // HTML Buffer
-			$plist = $PIO->fetchThreadList(0, $this->THREADLIST_NUMBER_IN_MAIN); // 編號由大到小排序
+			$plist = $PIO->fetchThreadList(0, $this->THREADLIST_NUMBER_IN_MAIN); // Numbers are sorted from large to small
 			self::$PMS->useModuleMethods('ThreadOrder', array($isReply, 0, 0, &$plist)); // "ThreadOrder" Hook Point
 
 		    $dat .= '<center id="topiclist">
 <table class="postlists" cellpadding="1" cellspacing="1" width="95%"><td>';
 			for ($i=0; $i<count($plist); $i++) {
-				$post = $PIO->fetchPosts($plist[$i]); // 取出資料
+				$post = $PIO->fetchPosts($plist[$i]); // Take out data
 				if (!($i%2)) $dat.= '';
 				
 				/* If a post is made w/out subject, it will use the comment instead.
@@ -128,33 +128,33 @@ class mod_threadlist extends ModuleHelper {
 
 	public function ModulePage() {
 		$PIO = PMCLibrary::getPIOInstance();
-		$thisPage = $this->getModulePageURL(); // 基底位置
+		$thisPage = $this->getModulePageURL(); // Base position
 		$dat = ''; // HTML Buffer
-		$listMax = $PIO->threadCount(); // 討論串總筆數
-		$pageMax = ceil($listMax / $this->THREADLIST_NUMBER) - 1; // 分頁最大編號
-		$page = isset($_GET['page']) ? intval($_GET['page']) : 0; // 目前所在分頁頁數
+		$listMax = $PIO->threadCount(); // Total number of discussion strings
+		$pageMax = ceil($listMax / $this->THREADLIST_NUMBER) - 1; // Maximum paging number
+		$page = isset($_GET['page']) ? intval($_GET['page']) : 0; // Current page number
 		$sort = isset($_GET['sort']) ? $_GET['sort'] : 'no';
-		if ($page < 0 || $page > $pageMax) exit('Page out of range.'); // $page 超過範圍
+		if ($page < 0 || $page > $pageMax) exit('Page out of range.'); // $page out of range
 
 		if (strpos($sort, 'post') !== false) {
 			$plist = $PIO->fetchThreadList();
 			$pc = $this->_getPostCounts($plist);
 			$this->_kasort($pc,$sort == 'postdesc',true);
-			// 切出需要的大小
+			// Cut out the required size
 			$plist = array_slice(
 				array_keys($pc),
 				$this->THREADLIST_NUMBER * $page,
 				$this->THREADLIST_NUMBER
 			);
 		} else {
-			$plist = $PIO->fetchThreadList($this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER, $sort == 'date' ? false : true); // 編號由大到小排序
+			$plist = $PIO->fetchThreadList($this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER, $sort == 'date' ? false : true); // Numbers are sorted from large to small
 			self::$PMS->useModuleMethods('ThreadOrder', array(0,$page,0,&$plist)); // "ThreadOrder" Hook Point
 			$pc = $this->_getPostCounts($plist);
 		}
-		$post = $PIO->fetchPosts($plist); // 取出資料
+		$post = $PIO->fetchPosts($plist); // Take out the data
 		$post_count = count($post);
 
-		if($sort=='date' || strpos($sort, 'post') !== false) { // 要重排次序
+		if($sort=='date' || strpos($sort, 'post') !== false) { // To rearrange the order
 			$mypost = array();
 
 			foreach($plist as $p) {

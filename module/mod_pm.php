@@ -72,7 +72,7 @@ class mod_pm extends ModuleHelper {
 
 	private function _loadCache() {
 		if(!$this->trips) {
-			if($logs=@file($this->MESG_CACHE)) { // 有快取
+			if($logs=@file($this->MESG_CACHE)) { // Has cache
 				$this->lastno=trim($logs[0]);
 				$this->trips=unserialize($logs[1]);
 				return true;
