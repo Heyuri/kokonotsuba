@@ -98,6 +98,19 @@ define("FORTUNES", array( // Used for fortune function, selected at random.
 	'Dark times are to come',
 	'Your harem is only just begining',
 	'You have cancer',
+	'You have aids',
+	'Tomo will strangle you in your sleep',
+	'You just lost the game',
+	'We don\'t know what happens next',
+	'mah pen0z is bigger than uurz',
+	'LOLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOL'
+	'Bad luck',
+	'Average luck',
+	'Good luck',
+	'Godly luck',
+	'Very bad luck',
+	'ｷﾀ━━━━━━(ﾟ∀ﾟ)━━━━━━ !!!!',
+	'（　´_ゝ`）ﾌｰﾝ'
 ));
 
 // Module List
