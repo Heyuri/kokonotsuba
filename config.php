@@ -54,6 +54,7 @@ define("CAPCODES", array( // tripcode=>color,cap
 // define("IRC_WH", '');
 
 // Moderator settings
+// Passwords must be hashed. Obtain a hashed password at https://sys.kolyma.net/passwd.php
 define("ADMIN_HASH", array('')); // Administrator password
 define("MOD_HASH", array('')); // Moderator password
 define("JANITOR_HASH", array('')); ///
