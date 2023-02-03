@@ -124,7 +124,7 @@ class mod_bbcode extends ModuleHelper {
 		}
 
 		foreach ($this->emotes as $emo=>$url) {
-			$string = str_replace(":$emo:", "<img class=\"emote\" src=\"$url\" alt=\"$emo\" border=\"0\" />", $string);
+			$string = str_replace(":$emo:", "<img title=\":$emo:\" class=\"emote\" src=\"$url\" alt=\"$emo\" border=\"0\" />", $string);
 		}
 
 		return $string;
