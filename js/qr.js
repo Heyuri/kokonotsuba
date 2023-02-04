@@ -84,7 +84,7 @@ const kkqr = { name: "KK Quick Reply",
 		if (pw>400) pw=400;
 		var pm = $q("#postform .theading"), pmstr;
 		if (pm.length) pmstr = pm[0].innerText;
-		else pmstr = "Posting mode: New Thread";
+		else pmstr = "Quick Reply";
 		if (exist = $kkwm_name(pmstr)) {
 			exist.flash();
 			return;
