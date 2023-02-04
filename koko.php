@@ -704,7 +704,7 @@ function regist($preview=false){
 	$pass = $pwd ? substr(md5($pwd), 2, 8) : '*'; // Generate a password for true storage judgment (the 8 characters at the bottom right of the imageboard where it says Password ******** SUBMIT for deleting posts)
 	$youbi = array(_T('sun'),_T('mon'),_T('tue'),_T('wed'),_T('thu'),_T('fri'),_T('sat'));
 	$yd = $youbi[gmdate('w', $time+TIME_ZONE*60*60)];
-	$now = gmdate('Y/m/d', $time+TIME_ZONE*60*60).'('.(string)$yd.')'.gmdate('H:i', $time+TIME_ZONE*60*60);
+	$now = gmdate('Y/m/d', $time+TIME_ZONE*60*60).'('.(string)$yd.')'.gmdate('H:i:s', $time+TIME_ZONE*60*60);
     if(DISP_ID){ //       ID
         if(valid() == LEV_ADMIN and DISP_ID == 2) $now .= ' ID:ADMIN'; else
 		if(valid() == LEV_MODERATOR and DISP_ID == 2) $now .= ' ID:MODERATOR'; else
