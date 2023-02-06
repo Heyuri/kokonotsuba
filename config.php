@@ -151,6 +151,7 @@ define("STORAGE_LIMIT", 0); // storage limit
 define("STORAGE_MAX", 300000); // total storage limit
 define("ALLOW_UPLOAD_EXT", 'GIF|JPG|JPEG|PNG|BMP|SWF|WEBM|MP4'); // Allowed filetypes
 define("VIDEO_EXT", 'WEBM|MP4'); // What filetypes will be loaded as a video
+define("SWF_THUMB", STATIC_URL."swf_thumb.png");
 
 // Continuous Posting Time Limits
 define("RENZOKU", 0); // Post limit, intervals in seconds
