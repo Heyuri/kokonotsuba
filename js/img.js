@@ -274,7 +274,7 @@ const kkimg = { name: "KK Image Features",
 	postimg: null,
 	imgext: Array("png","jpg","jpeg","gif","giff","bmp","jfif"),
 	vidext: Array("webm","mp4"),
-	swfext: Array("webm","mp4"),
+	swfext: Array("swf"),
 	/* event */
 	_evexpand: function (event) {
 		if (localStorage.getItem("imgexpand")!="true") return;
