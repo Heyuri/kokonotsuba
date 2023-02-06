@@ -274,6 +274,7 @@ const kkimg = { name: "KK Image Features",
 	postimg: null,
 	imgext: Array("png","jpg","jpeg","gif","giff","bmp","jfif"),
 	vidext: Array("webm","mp4"),
+	swfext: Array("webm","mp4"),
 	/* event */
 	_evexpand: function (event) {
 		if (localStorage.getItem("imgexpand")!="true") return;
@@ -313,6 +314,15 @@ const kkimg = { name: "KK Image Features",
 			a.insertAdjacentHTML("afterend", '<div class="expand">'+
 				'<div>[<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]</div>'+
 				'<video controls="controls" loop="loop" autoplay="autoplay" src="'+a.href+'"></video>'+
+			'</div>');
+			return true;
+		} else if (kkimg.swfext.includes(ext)) {
+			a.insertAdjacentHTML("afterend", '<div class="expand">'+
+				'<div>[<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]</div>'+
+				'<object width="640" height="480">'+
+				'<param name="movie" value="'+a.href+'">'+
+				'<embed src="'+a.href+'" width="640" height="480">'+
+				'</embed></object>'+
 			'</div>');
 			return true;
 		}
