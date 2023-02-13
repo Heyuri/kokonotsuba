@@ -844,7 +844,7 @@ function regist($preview=false){
 	}
 
 // webhooks
-	if(defined('IRC_WH')){
+	if (defined('IRC_WH') && !stristr($email, 'sage')) {
 		$url = 'https:'.fullURL().PHP_SELF."?res=".($resto?$resto:$no)."#p$no";
 		$stream = stream_context_create([
 			'ssl' =>[
@@ -859,7 +859,7 @@ function regist($preview=false){
 		]);
 		@file_get_contents(IRC_WH, false, $stream);
 	}
-	if(defined('DISCORD_WH')){
+	if (defined('DISCORD_WH') && !stristr($email, 'sage')) {
 		$url = 'https:'.fullURL().PHP_SELF."?res=".($resto?$resto:$no)."#p$no";
 		$stream = stream_context_create([
 			'http'=>[
