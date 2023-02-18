@@ -52,6 +52,9 @@ define("CAPCODES", array( // tripcode=>color,cap
 // Webhooks for post notifications
 // define("DISCORD_WH", '');
 // define("IRC_WH", '');
+// false = Don't send saged posts to WHs
+// true = Send saged posts to WHs
+// define("WH_POST_SAGES", 0)
 
 // Moderator settings
 // Passwords must be hashed. Obtain a hashed password at https://sys.kolyma.net/passwd.php
