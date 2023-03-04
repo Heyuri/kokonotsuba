@@ -25,15 +25,13 @@
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/csstxt/kareha.css" title="Kareha" />
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/csstxt/mobile.css?v2" title="Mobile" />
 	<meta http-equiv="cache-control" content="no-cache" />
-	<script type="text/javascript" src="https://k.kncdn.org/js/koko.js"></script>
-	<script type="text/javascript" src="https://k.kncdn.org/js/qr.js"></script>
-	<script type="text/javascript" src="https://k.kncdn.org/js/qu.js"></script>
-	<script type="text/javascript" src="https://k.kncdn.org/js/qu2.js"></script>
-	<script type="text/javascript" src="https://k.kncdn.org/js/style.js"></script>
-	<script type="text/javascript" src="https://k.kncdn.org/js/img.js"></script>
-	<script type="text/javascript" src="https://k.kncdn.org/js/catalog.js"></script>
-	<script type="text/javascript" src="https://k.kncdn.org/js/insert.js"></script>
-	<script src="https://kncdn.org/knirp.php?js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/koko.js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/qr.js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/qu.js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/qu2.js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/style.js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/catalog.js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/insert.js"></script>
 	<!--/&HEADER-->
 
 	<!--&TOPLINKS-->
