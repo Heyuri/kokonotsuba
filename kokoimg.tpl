@@ -19,32 +19,21 @@
 	<meta name="Berry" content="no" />
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive" />
-	<link class="linkstyle" rel="stylesheet" type="text/css" href="https://k.kncdn.org/css/sosach.css?344" title="Sosach" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/darkach.css" title="Darkach" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/futaba.css" title="Futaba" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/burichan.css" title="Burichan" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/yotsuba.css" title="Yotsuba" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/yotsubab.css" title="Yotsuba B" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/futabam.css" title="Futaba Modern" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/fuuka.css" title="Fuuka" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/fuuka2.css" title="Fuuka Alt" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/kolyma.css" title="KolymaNET" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/dark.css" title="Dark" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/midnight.css" title="Midnight" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/jp.css" title="Japanese" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/gurochan.css" title="Gurochan" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/gorechan.css" title="Gorechan" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/css/loliboard.css" title="Loliboard" />
+	<link class="linkstyle" rel="stylesheet" type="text/css" href="https://static.heyuri.net/css/koko/heyuriclassic.css" title="Heyuri Classic" />
+	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://static.heyuri.net/css/koko/futaba.css" title="Futaba" />
+	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://static.heyuri.net/css/koko/oldheyuri.css" title="Sakomoto" />
+	
 	<meta http-equiv="cache-control" content="no-cache" />
-	<script type="text/javascript" src="https://k.kncdn.org/js/koko.js"></script>
-	<script type="text/javascript" src="https://k.kncdn.org/js/qr.js"></script>
-	<script type="text/javascript" src="https://k.kncdn.org/js/qu.js"></script>
-	<!--<script type="text/javascript" src="https://k.kncdn.org/js/filter.js"></script>-->
-	<script type="text/javascript" src="https://k.kncdn.org/js/qu2.js"></script>
-	<script type="text/javascript" src="https://k.kncdn.org/js/style.js"></script>
-	<script type="text/javascript" src="https://k.kncdn.org/js/img.js"></script>
-	<script type="text/javascript" src="https://k.kncdn.org/js/catalog.js"></script>
-	<script src="https://kncdn.org/knirp.php?js"></script>
+	<link rel="shortcut icon" href="https://static.heyuri.net/koko/image/favicon.png" />
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/koko.js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/qu.js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/qu2.js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/style.js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/img.js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/catalog.js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/inline.js"></script>
+	<script type="text/javascript" src="https://static.heyuri.net/js/koko/update.js"></script>
+	<script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
 	<!--/&HEADER-->
 
 	<!--&TOPLINKS-->
