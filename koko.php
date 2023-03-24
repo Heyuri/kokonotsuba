@@ -626,7 +626,7 @@ function regist($preview=false){
 	if ($trip) {
 		$trip = mb_convert_encoding($trip, 'Shift_JIS', 'UTF-8');
 		$salt = strtr(preg_replace('/[^\.-z]/', '.', substr($trip.'H.',1,2)), ':;<=>?@[\\]^_`', 'ABCDEFGabcdef');
-		$trip = '◆'.substr(crypt($trip, $salt), -10);
+		$trip = '!'.substr(crypt($trip, $salt), -10);
 	}
 	if ($sectrip) {
 		if ($level=valid($sectrip)) {
