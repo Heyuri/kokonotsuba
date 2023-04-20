@@ -130,7 +130,7 @@ function foot(&$dat,$res=false){
 
 	$pte_vals = array('{$FOOTER}'=>'','{$IS_THREAD}'=>$res);
 	$PMS->useModuleMethods('Foot', array(&$pte_vals['{$FOOTER}'])); // "Foot" Hook Point
-	$pte_vals['{$FOOTER}'] .= '<center>- <a rel="nofollow noreferrer license" href="https://web.archive.org/web/20150701123900/http://php.s3.to/" target="_blank">GazouBBS</a> + <a rel="nofollow noreferrer license" href="http://www.2chan.net/" target="_blank">futaba</a> + <a rel="nofollow noreferrer license" href="https://pixmicat.github.io/" target="_blank">Pixmicat!</a> + <a rel="nofollow noreferrer license" href="https://github.com/Heyuri/kokonotsuba/" target="_blank" title="Developed by Deadking for Kolyma Network">Kokonotsuba</a> -</center>';
+	$pte_vals['{$FOOTER}'] .= '<center>- <a rel="nofollow noreferrer license" href="https://web.archive.org/web/20150701123900/http://php.s3.to/" target="_blank">GazouBBS</a> + <a rel="nofollow noreferrer license" href="http://www.2chan.net/" target="_blank">futaba</a> + <a rel="nofollow noreferrer license" href="https://pixmicat.github.io/" target="_blank">Pixmicat!</a> + <a rel="nofollow noreferrer license" href="https://github.com/Heyuri/kokonotsuba/" target="_blank">Kokonotsuba</a> -</center>';
 	$dat .= $PTE->ParseBlock('FOOTER',$pte_vals);
 }
 
