@@ -25,7 +25,7 @@ class mod_admindel extends ModuleHelper {
 		if (valid() < LEV_JANITOR) return;
 		$modfunc.= '[<a href="'.$this->mypage.'&action=del&no='.$post['no'].'" title="Delete">D</a>]';
 		if ($post['ext'] && $FileIO->imageExists($post['tim'].$post['ext'])) $modfunc.= '[<a href="'.$this->mypage.'&action=imgdel&no='.$post['no'].'" title="Delete File">Df</a>]';
-		$modfunc.= '[<a href="'.$this->mypage.'&action=delmute&no='.$post['no'].'" title="Delete and Mute">DM</a>]';
+		$modfunc.= '[<a href="'.$this->mypage.'&action=delmute&no='.$post['no'].'" title="Delete and Mute for '.$this->JANIMUTE_LENGTH.' minute'.($this->JANIMUTE_LENGTH == 1 ? "" : "s").'">DM</a>]';
 //		if (THREAD_PAGINATION) $modfunc.= '[<a href="'.$this->mypage.'&action=cachedel&no='.$post['no'].'" title="Delete Cache">Dc</a>]';
 	}
 
