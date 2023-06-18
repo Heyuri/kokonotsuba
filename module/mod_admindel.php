@@ -1,11 +1,15 @@
 <?php
 // admin extra module made for kokonotsuba by deadking
 class mod_admindel extends ModuleHelper {
+	private $BANFILE = STORAGE_PATH.'bans.log.txt';
+	private $JANIMUTE_LENGTH = 30; // Janitor mute duration (in minutes)
+    private $JANIMUTE_REASON = 'You have been muted temporarily!'; // Janitor mute reason
 	private $mypage;
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
 		$this->mypage = $this->getModulePageURL();
+		touch($this->BANFILE);
 	}
 
 	public function getModuleName() {
@@ -21,6 +25,7 @@ class mod_admindel extends ModuleHelper {
 		if (valid() < LEV_JANITOR) return;
 		$modfunc.= '[<a href="'.$this->mypage.'&action=del&no='.$post['no'].'" title="Delete">D</a>]';
 		if ($post['ext'] && $FileIO->imageExists($post['tim'].$post['ext'])) $modfunc.= '[<a href="'.$this->mypage.'&action=imgdel&no='.$post['no'].'" title="Delete File">Df</a>]';
+		$modfunc.= '[<a href="'.$this->mypage.'&action=delmute&no='.$post['no'].'" title="Delete and Mute for '.$this->JANIMUTE_LENGTH.' minute'.($this->JANIMUTE_LENGTH == 1 ? "" : "s").'">DM</a>]';
 //		if (THREAD_PAGINATION) $modfunc.= '[<a href="'.$this->mypage.'&action=cachedel&no='.$post['no'].'" title="Delete Cache">Dc</a>]';
 	}
 
@@ -42,6 +47,21 @@ class mod_admindel extends ModuleHelper {
 				$files = $PIO->removePosts(array($post['no']));
 				deleteCache(array($post['no']));
 				logtime('Deleted post No.'.$post['no'], valid());
+				break;
+			case 'delmute':
+				$PMS->useModuleMethods('PostOnDeletion', array($post['no'], 'backend'));
+				$files = $PIO->removePosts(array($post['no']));
+				deleteCache(array($post['no']));
+				$ip = $post['host'];
+				$starttime = $_SERVER['REQUEST_TIME'];
+				$expires = $starttime+intval($this->JANIMUTE_LENGTH)*60;
+				$f = fopen($this->BANFILE, 'w');
+				if ($ip) {
+					$reason = $this->JANIMUTE_REASON;
+					fwrite($f, "$ip,$starttime,$expires,$reason\r\n");
+				}
+				fclose($f);
+				logtime('Muted '.$ip.' and deleted post No.'.$post['no'], valid());
 				break;
 			case 'imgdel':
 				$files = $PIO->removeAttachments(array($post['no']));
