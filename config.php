@@ -139,7 +139,7 @@ $ModuleList = array(
 //mod_countryflags
 define("FLAG_MODE", 1); // For the country flags module: 1 = hide flags on posts with "flag" in email field, 2 = show flags on posts with "flag" in email field
 //mod_admindel
-define("JANIMUTE_LENGTH", 1000); // Janitor mute duration (in minutes)
+define("JANIMUTE_LENGTH", 20); // Janitor mute duration (in minutes)
 define("JANIMUTE_REASON", 'You have been muted temporarily!'); // Janitor mute reason
 
 // Ban Settings
