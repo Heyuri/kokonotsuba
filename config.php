@@ -135,6 +135,13 @@ $ModuleList = array(
 	'mod_anigif',
 );
 
+// Module-specific options
+//mod_countryflags
+define("FLAG_MODE", 1); // For the country flags module: 1 = hide flags on posts with "flag" in email field, 2 = show flags on posts with "flag" in email field
+//mod_admindel
+define("JANIMUTE_LENGTH", 1000); // Janitor mute duration (in minutes)
+define("JANIMUTE_REASON", 'You have been muted temporarily!'); // Janitor mute reason
+
 // Ban Settings
 define("BAN_CHECK", 1); // Comprehensive ban check function
 $BANPATTERN = array(); // Deprecated by adminban module
