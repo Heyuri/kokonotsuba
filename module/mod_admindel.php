@@ -2,8 +2,8 @@
 // admin extra module made for kokonotsuba by deadking
 class mod_admindel extends ModuleHelper {
 	private $BANFILE = STORAGE_PATH.'bans.log.txt';
-	private $JANIMUTE_LENGTH = 30; // Janitor mute duration (in minutes)
-    private $JANIMUTE_REASON = 'You have been muted temporarily!'; // Janitor mute reason
+	private $JANIMUTE_LENGTH = JANIMUTE_LENGTH;
+	private $JANIMUTE_REASON = JANIMUTE_REASON;
 	private $mypage;
 
 	public function __construct($PMS) {
