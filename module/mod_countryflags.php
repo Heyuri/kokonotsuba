@@ -36,9 +36,13 @@ class mod_countryflags  extends ModuleHelper {
 		//global $language;
 		$PIO = PMCLibrary::getPIOInstance();
 		
+		if (FLAG_MODE == 1 && strstr($post['email'], 'flag')) return;
+		if (FLAG_MODE == 2 && !strstr($post['email'], 'flag')) return;
+		
 		$reader = new Reader('module/geoip/GeoLite2-Country.mmdb');
 		
 		$iphost = strtolower($post['host']);
+		
 		
 		try {
 			$record = $reader->country(gethostbyname($post['host']));
