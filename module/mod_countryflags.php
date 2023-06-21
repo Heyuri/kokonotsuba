@@ -31,7 +31,22 @@ class mod_countryflags  extends ModuleHelper {
 		}
 		return false;
 	}
-
+	
+	/*
+	Toggle flag button for heyuri/jp/
+	public function autoHookHead(&$file){
+		if (preg_match('/\/jp\//i' ,$_SERVER[REQUEST_URI])) {
+			$file.= '<script type="text/javascript">function toggleFlagJP() {var field = document.getElementById("email"); if (!field.value.includes("flag")) field.value += "flag"; else field.value = field.value.replaceAll("flag", ""); }</script>';
+		} 
+	}
+	
+	public function autoHookPostForm(&$file){
+		if (preg_match('/\/jp\//i' ,$_SERVER[REQUEST_URI])) {
+			$file.= '<nobr>[<a href="#" onclick="toggleFlagJP()">Toggle flag</a>]</nobr>';
+		} 
+	}
+	*/
+	
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply){
 		//global $language;
 		$PIO = PMCLibrary::getPIOInstance();
