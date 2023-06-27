@@ -3,7 +3,7 @@
 	Online counter for kokonotsuba
 	from http://php.loglog.jp/
 	*/
-	define(USR_LST, STORAGE_PATH."users.dat"); 
+	define(USR_LST, "../dat/users.dat");
 	define(TIMEOUT, 300); // Update every 5 minutes
 
 	$usr_arr = file(USR_LST);
