@@ -27,9 +27,9 @@ class mod_ads implements IModule {
 		//$txt .= '<center><a href="#">[AD] #01！</a></center><hr size="1" />'."\n";
 		
 		$txt .= '<center>
-		<iframe id="spasob" src="//kncdn.org/fonts.php" frameborder="0" scrolling="no" width="728" height="90" style="border: 1px solid #000000;"></iframe>
+		<iframe id="spasob" src="https://static.heyuri.net/image/fullbanners/fullbanners.php" frameborder="0" scrolling="no" width="728" height="90" style="border: 1px solid #000000;"></iframe>
 		</center>
-		<hr size"1" />'."\n";
+		<hr size="1" />'."\n";
 	}
 
 	// Bottom Ad
