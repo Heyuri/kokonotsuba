@@ -87,7 +87,7 @@ class mod_bbcode extends ModuleHelper {
 		$string = preg_replace('#\==(.*?)==#si', '<span class="soot">\1</span>', $string);
 		$string = preg_replace('#\[u\](.*?)\[/u\]#si', '<u>\1</u>', $string);
 		$string = preg_replace('#\[p\](.*?)\[/p\]#si', '<p>\1</p>', $string);
-		$string=preg_replace('#\[sw\](.*?)\[/sw\]#si', '<pre class="sw">\1</pre>', $string);
+		$string = preg_replace('#\[sw\](.*?)\[/sw\]#si', '<pre class="sw">\1</pre>', $string);
 
 		$string = preg_replace('#\[color=(\S+?)\](.*?)\[/color\]#si', '<font color="\1">\2</font>', $string);
 
@@ -96,7 +96,8 @@ class mod_bbcode extends ModuleHelper {
 		$string = preg_replace('#\[del\](.*?)\[/del\]#si', '<del>\1</del>', $string);
 		$string = preg_replace('#\[pre\](.*?)\[/pre\]#si', '<pre>\1</pre>', $string);
 		$string = preg_replace('#\[quote\](.*?)\[/quote\]#si', '<blockquote>\1</blockquote>', $string);
-
+		$string = preg_replace('#\[scroll\](.*?)\[/scroll\]#si', '<div style="overflow:scroll; height: 200px;">\1</div>', $string);
+		
 		if ($this->supportRuby){
 		//add ruby tag
 			$string = preg_replace('#\[ruby\](.*?)\[/ruby\]#si', '<ruby>\1</ruby>', $string);
