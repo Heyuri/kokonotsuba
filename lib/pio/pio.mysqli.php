@@ -327,6 +327,16 @@ class PIOmysqli implements IPIO {
 		}
 		return 0;
 	}
+	
+	/* Get the last thread post time */
+	public function getLastThreadTime() {
+		if(!$this->prepared) $this->dbPrepare();
+		
+		$tree = $this->_mysql_call('SELECT MAX(time) AS last FROM '.$this->tablename.' WHERE resto = 0', array('Failed to get last thread time', __LINE__));
+		$last = $tree->fetch_row();
+		$tree->free();
+		return $last[0];
+	}
 
 	/* Output list of articles */
 	public function fetchPostList($resno=0, $start=0, $amount=0){
