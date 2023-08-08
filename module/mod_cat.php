@@ -4,6 +4,7 @@ class mod_cat extends ModuleHelper {
 	private $mypage;
 	private $PAGE_DEF = 1000;
 	private $RESICON = STATIC_URL.'/image/replies.png';
+	private $THUMB_EXT = THUMB_SETTING['Format'];
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
@@ -28,6 +29,7 @@ class mod_cat extends ModuleHelper {
 		$PIO = PMCLibrary::getPIOInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$dat = '';
+		$THUMB_EXT = $THUMB_SETTING['Format'];
 
 		$list_max = $PIO->postCount();
 		$page = $_GET['page']??0;
@@ -105,7 +107,7 @@ class mod_cat extends ModuleHelper {
 			$dat.= '<td class="thread" width="180" height="200" align="CENTER">
 	<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>
 	<a href="'.PHP_SELF.'?res='.($resto?$resto:$no).'#p'.$no.'">'.
-	($FileIO->imageExists($tim.$ext) ? '<img src="'.$FileIO->getImageURL($tim.'s.jpg').'" width="'.min(150, $tw).'" vspace="3"	class="thumb" />' : '***').
+	($FileIO->imageExists($tim.$ext) ? '<img src="'.$FileIO->getImageURL($tim.'s.'.$this->THUMB_EXT).'" width="'.min(150, $tw).'" vspace="3"	class="thumb" />' : '***').
 	'</a><br />
 	<nobr><small><b class="title">'.substr($sub, 0, 20).'</b>:'.
 		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon" /> '.$res.'</small></span></nobr><br />
