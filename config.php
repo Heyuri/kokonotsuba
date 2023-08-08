@@ -170,11 +170,11 @@ define("MAX_W", 250); // Max Width
 define("MAX_H", 250); // Max Height
 define("MAX_RW", 125); // Reply Max Width
 define("MAX_RH", 125); // Reply Max Height
-$THUMB_SETTING = array( // Thumbnail Gen. Settings
+define("THUMB_SETTING", array( // Thumbnail Gen. Settings
 	'Method' => 'gd', //gd (default), imagemagick, imagick, magickwand, repng2jpeg
 	'Format' => 'png',
 	'Quality' => 75
-);
+));
 
 // Appearance
 $ADDITION_INFO = @file_get_contents(ROOTPATH.'addinfo.txt'); // Addinfo
