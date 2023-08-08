@@ -29,7 +29,6 @@ class mod_cat extends ModuleHelper {
 		$PIO = PMCLibrary::getPIOInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$dat = '';
-		$THUMB_EXT = $THUMB_SETTING['Format'];
 
 		$list_max = $PIO->postCount();
 		$page = $_GET['page']??0;
