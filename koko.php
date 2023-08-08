@@ -422,7 +422,7 @@ function previewPost($tmpno) {
 
 /* Write to log file */
 function regist($preview=false){
-	global $BAD_STRING, $BAD_FILEMD5, $BAD_IPADDR, $LIMIT_SENSOR, $THUMB_SETTING;
+	global $BAD_STRING, $BAD_FILEMD5, $BAD_IPADDR, $LIMIT_SENSOR;
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PMS = PMCLibrary::getPMSInstance();
@@ -818,17 +818,17 @@ function regist($preview=false){
 	setcookie('emailc', $email, time()+7*24*3600);
 	if($dest && is_file($dest)){
 		$destFile = IMG_DIR.$tim.$ext; // Image file storage location
-		$thumbFile = THUMB_DIR.$tim.'s.'.$THUMB_SETTING['Format']; // Preview image storage location
+		$thumbFile = THUMB_DIR.$tim.'s.'.THUMB_SETTING['Format']; // Preview image storage location
 		if (defined(CDN_DIR)) {
 			$destFile = CDN_DIR.$destFile;
 			$thumbFile = CDN_DIR.$thumbFile;
 		}
 		if(USE_THUMB !== 0){ // Generate preview image
-			$thumbType = USE_THUMB; if(USE_THUMB==1){ $thumbType = $THUMB_SETTING['Method']; }
+			$thumbType = USE_THUMB; if(USE_THUMB==1){ $thumbType = THUMB_SETTING['Method']; }
 			require(ROOTPATH.'lib/thumb/thumb.'.$thumbType.'.php');
 			if (isset($tmpfile)) $thObj = new ThumbWrapper($tmpfile, $imgW, $imgH);
 			else $thObj = new ThumbWrapper($dest, $imgW, $imgH);
-			$thObj->setThumbnailConfig($W, $H, $THUMB_SETTING);
+			$thObj->setThumbnailConfig($W, $H, THUMB_SETTING);
 			$thObj->makeThumbnailtoFile($thumbFile);
 			@chmod($thumbFile, 0666);
 			unset($thObj);
@@ -839,7 +839,7 @@ function regist($preview=false){
 			$delta_totalsize += filesize($destFile);
 		}
 		if(file_exists($thumbFile)){
-			$FileIO->uploadImage($tim.'s.'.$THUMB_SETTING['Format'], $thumbFile, filesize($thumbFile));
+			$FileIO->uploadImage($tim.'s.'.THUMB_SETTING['Format'], $thumbFile, filesize($thumbFile));
 			$delta_totalsize += filesize($thumbFile);
 		}
 	}
@@ -1258,7 +1258,7 @@ function deleteCache($no){
 
 /* Display system information */
 function showstatus(){
-	global $LIMIT_SENSOR, $THUMB_SETTING;
+	global $LIMIT_SENSOR;
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PTE = PMCLibrary::getPTEInstance();
@@ -1314,7 +1314,7 @@ function showstatus(){
 		<tr><td>'._T('info_basic_com_limit').'</td><td colspan="3"> '.COMM_MAX._T('info_basic_com_after').'</td></tr>
 		<tr><td>'._T('info_basic_anonpost').'</td><td colspan="3"> '.ALLOW_NONAME.' '._T('info_basic_anonpost_opt').'</td></tr>
 		<tr><td>'._T('info_basic_del_incomplete').'</td><td colspan="3"> '.KILL_INCOMPLETE_UPLOAD.' '._T('info_0no1yes').'</td></tr>
-		<tr><td>'._T('info_basic_use_sample', $THUMB_SETTING['Quality']).'</td><td colspan="3"> '.USE_THUMB.' '._T('info_0notuse1use').'</td></tr>
+		<tr><td>'._T('info_basic_use_sample', THUMB_SETTING['Quality']).'</td><td colspan="3"> '.USE_THUMB.' '._T('info_0notuse1use').'</td></tr>
 		<tr><td>'._T('info_basic_useblock').'</td><td colspan="3"> '.BAN_CHECK.' '._T('info_0disable1enable').'</td></tr>
 		<tr><td>'._T('info_basic_showid').'</td><td colspan="3"> '.DISP_ID.' '._T('info_basic_showid_after').'</td></tr>
 		<tr><td>'._T('info_basic_cr_limit').'</td><td colspan="3"> '.BR_CHECK._T('info_basic_cr_after').'</td></tr>
