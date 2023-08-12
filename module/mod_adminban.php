@@ -2,7 +2,7 @@
 // admin extra module made for kokonotsuba by deadking
 class mod_adminban extends ModuleHelper {
 	private $BANFILE = STORAGE_PATH.'bans.log.txt';
-	private $BANIMG = 'https://static.kolyma.org/image/banned/';
+	private $BANIMG = 'https://static.heyuri.net/image/banned.jpg';
 	private $mypage;
 
 	public function __construct($PMS) {
