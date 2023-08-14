@@ -45,7 +45,7 @@ class mod_adminban extends ModuleHelper {
 					unset($log[$i]);
 					file_put_contents($this->BANFILE, implode("\r\n", $log));
 				} else {
-					$dat.= "Your ban was filed on ".date('Y/d/m', $starttime)." and expires on ".date('Y/d/m', $expires).".";
+					$dat.= "Your ban was filed on ".date('Y/m/d', $starttime)." and expires on ".date('Y/m/d', $expires).".";
 				}
 				$dat.= "<br clear=\"ALL\" /><hr />";
 				foot($dat);
@@ -74,7 +74,7 @@ class mod_adminban extends ModuleHelper {
 					unset($glog[$i]);
 					file_put_contents(GLOBAL_BANS, implode("\r\n", $glog));
 				} else {
-					$dat.= "Your ban was filed on ".date('Y/d/m', $starttime)." and expires on ".date('Y/d/m', $expires).".";
+					$dat.= "Your ban was filed on ".date('Y/m/d', $starttime)." and expires on ".date('Y/m/d', $expires).".";
 				}
 				$dat.= "<br clear=\"ALL\" /><hr />";
 				foot($dat);
@@ -214,8 +214,8 @@ fieldset {
 					$dat.= '<tr>
 <td align="CENTER"><input type="checkbox" id="del'.$i.'" name="del'.$i.'"'.($unban==$log[$i]?' checked="checked"':'').' value="on" /></td>
 <td><label for="del'.$i.'">'.$ip.'</label></td>
-<td>'.date('Y/d/m', $starttime).'</td>
-<td>'.date('Y/d/m', $expires).'</td>
+<td>'.date('Y/m/d', $starttime).'</td>
+<td>'.date('Y/m/d', $expires).'</td>
 <td>'.( strlen($reason)>20 ? substr($reason, 0, 20).'&hellip;' : $reason ).'</td></tr>';
 				}
 			}
@@ -231,8 +231,8 @@ fieldset {
 					$dat.= '<tr>
 <td align="CENTER"><input type="checkbox" id="delg'.$i.'" name="delg'.$i.'"'.($unban==$log[$i]?' checked="checked"':'').' value="on" /></td>
 <td><label for="delg'.$i.'">'.$ip.'</label></td>
-<td>'.date('Y/d/m', $starttime).'</td>
-<td>'.date('Y/d/m', $expires).'</td>
+<td>'.date('Y/m/d', $starttime).'</td>
+<td>'.date('Y/m/d', $expires).'</td>
 <td>'.( strlen($reason)>20 ? substr($reason, 0, 20).'&hellip;' : $reason ).'</td></tr>';
 				}
 			}
