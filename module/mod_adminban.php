@@ -231,8 +231,8 @@ fieldset {
 					$dat.= '<tr>
 <td align="CENTER"><input type="checkbox" id="delg'.$i.'" name="delg'.$i.'"'.($unban==$log[$i]?' checked="checked"':'').' value="on" /></td>
 <td><label for="delg'.$i.'">'.$ip.'</label></td>
-<td>'.date('Y/d/m', $starttime).'</td>
-<td>'.date('Y/d/m', $expires).'</td>
+<td>'.date('Y/m/d', $starttime).'</td>
+<td>'.date('Y/m/d', $expires).'</td>
 <td>'.( strlen($reason)>20 ? substr($reason, 0, 20).'&hellip;' : $reason ).'</td></tr>';
 				}
 			}
