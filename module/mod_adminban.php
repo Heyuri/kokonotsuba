@@ -45,9 +45,10 @@ class mod_adminban extends ModuleHelper {
 					unset($log[$i]);
 					file_put_contents($this->BANFILE, implode("\r\n", $log));
 				} else {
-					$dat.= "Your ban was filed on ".date('Y/m/d', $starttime)." and expires on ".date('Y/m/d', $expires).".";
+					$dat.= "Your ban was filed on ".date('Y/m/d \a\t H:i:s', $starttime)." and expires on ".date('Y/m/d \a\t H:i:s', $expires).".";
 				}
-				$dat.= "<br clear=\"ALL\" /><hr />";
+				$dat.= "<br>[<a href='./'>Return</a>]
+				<br clear=\"ALL\" /><hr />";
 				foot($dat);
 				die($dat);
 			}
@@ -74,9 +75,10 @@ class mod_adminban extends ModuleHelper {
 					unset($glog[$i]);
 					file_put_contents(GLOBAL_BANS, implode("\r\n", $glog));
 				} else {
-					$dat.= "Your ban was filed on ".date('Y/m/d', $starttime)." and expires on ".date('Y/m/d', $expires).".";
+					$dat.= "Your ban was filed on ".date('Y/m/d \a\t H:i:s', $starttime)." and expires on ".date('Y/m/d \a\t H:i:s', $expires).".";
 				}
-				$dat.= "<br clear=\"ALL\" /><hr />";
+				$dat.= "<br>[<a href='./'>Return</a>]
+				<br clear=\"ALL\" /><hr />";
 				foot($dat);
 				die($dat);
 			}
@@ -185,7 +187,7 @@ fieldset {
 		<input type="hidden" name="load" value="mod_adminban" />
 		<label>Global?<input type="checkbox" name="global" /></label><br />
 		<label>IP Addr:<input type="text" name="ip" value="'.($_GET['ip']??'').'" /></label> <small>(Leave blank to use poster IP)</small><br />
-		<label>Expires (days):<input type="number" id="days" name="days" size="3" min="0" value="1" /></label> <small>[Set to 0 (zero) for warning]</small><br />
+		<label>Expires (ex. 1w2d3h):<input type="text" id="days" name="duration" value="1d" /></label> <small>[Set to 0 (zero) or leave blank for warning]</small><br />
 		<label>Private Message:<br />
 			<textarea name="privmsg" cols="80" rows="6">No reason given.</textarea></label><br />
 		<details'.($_GET['no']??0 ? ' open="open"' : '').'><summary>Public message</summary><blockquote>
@@ -214,8 +216,8 @@ fieldset {
 					$dat.= '<tr>
 <td align="CENTER"><input type="checkbox" id="del'.$i.'" name="del'.$i.'"'.($unban==$log[$i]?' checked="checked"':'').' value="on" /></td>
 <td><label for="del'.$i.'">'.$ip.'</label></td>
-<td>'.date('Y/m/d', $starttime).'</td>
-<td>'.date('Y/m/d', $expires).'</td>
+<td>'.date('Y/m/d H:i:s', $starttime).'</td>
+<td>'.date('Y/m/d H:i:s', $expires).'</td>
 <td>'.( strlen($reason)>20 ? substr($reason, 0, 20).'&hellip;' : $reason ).'</td></tr>';
 				}
 			}
@@ -231,8 +233,8 @@ fieldset {
 					$dat.= '<tr>
 <td align="CENTER"><input type="checkbox" id="delg'.$i.'" name="delg'.$i.'"'.($unban==$log[$i]?' checked="checked"':'').' value="on" /></td>
 <td><label for="delg'.$i.'">'.$ip.'</label></td>
-<td>'.date('Y/m/d', $starttime).'</td>
-<td>'.date('Y/m/d', $expires).'</td>
+<td>'.date('Y/m/d H:i:s', $starttime).'</td>
+<td>'.date('Y/m/d H:i:s', $expires).'</td>
 <td>'.( strlen($reason)>20 ? substr($reason, 0, 20).'&hellip;' : $reason ).'</td></tr>';
 				}
 			}
@@ -255,7 +257,11 @@ fieldset {
 				$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', nl2br($_POST['privmsg']??'')));
 				if(!$reason) $reason='No reason given.';
 				$starttime = $_SERVER['REQUEST_TIME'];
-				$expires = $starttime+intval($_POST['days']??0)*86400;
+				$duration = $_POST['duration'];
+				$durationWeeks = preg_match("/(\d+)w/", $duration, $matchWeeks);
+				$durationDays = preg_match("/(\d+)d/", $duration, $matchDays);
+				$durationHours = preg_match("/(\d+)h/", $duration, $matchHours);
+				$expires = $starttime + ($matchWeeks[0] * 604800) + ($matchDays[0] * 86400) + ($matchHours[0] * 3600);
 
 				if(isset($_POST["global"])) {
 					if($_POST["global"]) {
