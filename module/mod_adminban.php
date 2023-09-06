@@ -26,7 +26,7 @@ class mod_adminban extends ModuleHelper {
 		$log = array_map('rtrim', file($this->BANFILE));
 		for ($i=0; $i<count($log); $i++) {
 			list($banip, $starttime, $expires, $reason) = explode(',', $log[$i], 4);
-			if (strpos($ip, gethostbyname($banip))) {
+			if (strstr($ip, gethostbyname($banip))) {
 				// ban page
 				$dat.= '';
 				head($dat);
@@ -56,7 +56,7 @@ class mod_adminban extends ModuleHelper {
 		// global ban page
 		for ($i=0; $i<count($glog); $i++) {
 			list($banip, $starttime, $expires, $reason) = explode(',', $glog[$i], 4);
-			if (strpos($ip, $banip)) {
+			if (strstr($ip, $banip)) {
 				// ban page
 				$dat.= '';
 				head($dat);
