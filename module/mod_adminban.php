@@ -185,7 +185,7 @@ fieldset {
 	<form action="'.PHP_SELF.'" method="POST">
 		<input type="hidden" name="mode" value="module" />
 		<input type="hidden" name="load" value="mod_adminban" />
-		<label>Global?<input type="checkbox" name="global" /></label><br />
+		<label>Global?<input type="checkbox" name="global" /></label> <small>(Check this box if you want to rangeban)</small><br />
 		<label>IP Addr:<input type="text" name="ip" value="'.($_GET['ip']??'').'" /></label> <small>(Leave blank to use poster IP)</small><br />
 		<label>Expires (ex. 1w2d3h):<input type="text" id="days" name="duration" value="1d" /></label> <small>[Set to 0 (zero) or leave blank for warning]</small><br />
 		<label>Private Message:<br />
@@ -277,12 +277,13 @@ fieldset {
 					// update post message
 					$msg = preg_replace('/[\r\n]/', '', $msg);
 					$post = $PIO->fetchPosts($no);
-					if (!count($post)) error('ERROR: Post does not exist.');
-					$post[0]['com'].= $msg;
-					$PIO->updatePost($no, $post[0]);
-					$PIO->dbCommit();
-					$parentNo = $post[0]['resto'] ? $post[0]['resto'] : $post[0]['no'];
-					deleteCache(array($parentNo));
+					if (count($post)) {
+						$post[0]['com'].= $msg;
+						$PIO->updatePost($no, $post[0]);
+						$PIO->dbCommit();
+						$parentNo = $post[0]['resto'] ? $post[0]['resto'] : $post[0]['no'];
+						deleteCache(array($parentNo));
+					}
 				}
 			}
 
