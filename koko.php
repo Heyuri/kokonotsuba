@@ -932,14 +932,14 @@ function usrdel(){
 	$onlyimgdel = $_POST['onlyimgdel']??'';
 	$delno = array();
 	reset($_POST);
-	while ($item = each($_POST)){
-		if ($item[1] !== 'delete') {
+	foreach($_POST as $key=>$val){
+		if (!is_numeric($key)) {
 			continue;
 		}
-		if (!is_numeric($item[0])) {
-			continue;
+		if($val==='delete'){
+			array_push($delno,$key);
+			$delflag=TRUE;
 		}
-		array_push($delno, intval($item[0]));
 	}
 	$haveperm = valid()>=LEV_JANITOR;
 	$PMS->useModuleMethods('Authenticate', array($pwd,'userdel',&$haveperm));

@@ -12,7 +12,7 @@
 class ThumbWrapper{
 	var $sourceFile, $sourceWidth, $sourceHeight, $thumbWidth, $thumbHeight, $thumbSetting, $thumbQuality;
 
-	function ThumbWrapper($sourceFile='', $sourceWidth=0, $sourceHeight=0){
+	function __construct($sourceFile='', $sourceWidth=0, $sourceHeight=0){
 		$this->sourceFile = $sourceFile;
 		$this->sourceWidth = $sourceWidth;
 		$this->sourceHeight = $sourceHeight;
