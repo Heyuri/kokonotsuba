@@ -96,7 +96,7 @@ class mod_bbcode extends ModuleHelper {
 		$string = preg_replace('#\[del\](.*?)\[/del\]#si', '<del>\1</del>', $string);
 		$string = preg_replace('#\[pre\](.*?)\[/pre\]#si', '<pre>\1</pre>', $string);
 		$string = preg_replace('#\[quote\](.*?)\[/quote\]#si', '<blockquote>\1</blockquote>', $string);
-		$string = preg_replace('#\[scroll\](.*?)\[/scroll\]#si', '<div style="overflow:scroll; height: 200px;">\1</div>', $string);
+		$string = preg_replace('#\[scroll\](.*?)\[/scroll\]#si', '<div style="overflow:scroll; max-height: 200px;">\1</div>', $string);
 		
 		if ($this->supportRuby){
 		//add ruby tag
