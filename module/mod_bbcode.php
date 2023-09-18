@@ -88,7 +88,7 @@ class mod_bbcode extends ModuleHelper {
 		$string = preg_replace('#\[u\](.*?)\[/u\]#si', '<u>\1</u>', $string);
 		$string = preg_replace('#\[p\](.*?)\[/p\]#si', '<p>\1</p>', $string);
 		$string = preg_replace('#\[sw\](.*?)\[/sw\]#si', '<pre class="sw">\1</pre>', $string);
-
+		$string = preg_replace('#\[kao\](.*?)\[/kao\]#si', '<span class="ascii">\1</span>', $string);
 		$string = preg_replace('#\[color=(\S+?)\](.*?)\[/color\]#si', '<font color="\1">\2</font>', $string);
 
 		$string = preg_replace('#\[s([1-7])\](.*?)\[/s([1-7])\]#si', '<font size="\1">\2</font>', $string);
