@@ -260,7 +260,7 @@ http://www.meyu.net/star/viewthread.php?tid=267&fpage=10 */
 function str_cut($str, $maxlen=20){
     $i = $l = 0; $len = strlen($str); $f = true; $return_str = $str;
 	while($i < $len){
-		$chars = ord($str{$i});
+		$chars = ord($str[$i]);
 		if($chars < 0x80){ $l++; $i++; }
 		elseif($chars < 0xe0){ $l++; $i += 2; }
 		elseif($chars < 0xf0){ $l += 2; $i += 3; }
