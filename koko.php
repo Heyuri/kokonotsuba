@@ -18,6 +18,8 @@ require ROOTPATH.'lib/lib_errorhandler.php'; // Introduce global error capture
 require ROOTPATH.'lib/lib_compatible.php'; // Introduce compatible libraries
 require ROOTPATH.'lib/lib_common.php'; // Introduce common function archives
 
+defined("ROLL") or define("ROLL",[]);//When undefined, empty array
+
 /* Update the log file/output thread */
 function updatelog($resno=0,$pagenum=-1,$single_page=false){
 	global $LIMIT_SENSOR;
@@ -514,11 +516,11 @@ function regist($preview=false){
 				$upsizeHDR = 0;
 				// File path: IE has the full path attached, so you have to get it from the hidden form
 				$tmp_upfile_path = $upfile_name;
-				if($upfile_path) $tmp_upfile_path = get_magic_quotes_gpc() ? stripslashes($upfile_path) : $upfile_path;
+				if($upfile_path) $tmp_upfile_path = $upfile_path;
 				list(,$boundary) = explode('=', $_SERVER['CONTENT_TYPE']);
 				foreach($_POST as $header => $value){ // Form fields transfer data
 					$upsizeHDR += strlen('--'.$boundary."\r\n")
-					+ strlen('Content-Disposition: form-data; name="'.$header.'"'."\r\n\r\n".(get_magic_quotes_gpc()?stripslashes($value):$value)."\r\n");
+					+ strlen('Content-Disposition: form-data; name="'.$header.'"'."\r\n\r\n".($value)."\r\n");
 				}
 				// The attached image file field transmits the data
 				$upsizeHDR += strlen('--'.$boundary."\r\n")
