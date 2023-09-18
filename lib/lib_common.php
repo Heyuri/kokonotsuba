@@ -244,7 +244,7 @@ function error($mes, $dest=''){
 /* 文字修整 */
 function CleanStr($str, $IsAdmin=false){
 	$str = trim($str); // 去除前後多餘空白
-	if(get_magic_quotes_gpc()) $str = stripslashes($str); // "\"斜線符號去除
+	// if(get_magic_quotes_gpc()) $str = stripslashes($str); // "\"斜線符號去除
 	// XML 1.1 Second Edition: 部分避免用字 (http://www.w3.org/TR/2006/REC-xml11-20060816/#charsets)
 	$str = preg_replace('/([\x1-\x8\xB-\xC\xE-\x1F\x7F-\x84\x86-\x9F\x{FDD0}-\x{FDDF}])/u', '', htmlspecialchars($str));
 
@@ -260,7 +260,7 @@ http://www.meyu.net/star/viewthread.php?tid=267&fpage=10 */
 function str_cut($str, $maxlen=20){
     $i = $l = 0; $len = strlen($str); $f = true; $return_str = $str;
 	while($i < $len){
-		$chars = ord($str{$i});
+		$chars = ord($str[$i]);
 		if($chars < 0x80){ $l++; $i++; }
 		elseif($chars < 0xe0){ $l++; $i += 2; }
 		elseif($chars < 0xf0){ $l += 2; $i += 3; }
