@@ -4,11 +4,11 @@
 if(!defined('DEBUG')) define("DEBUG", false); // Set to "true" to generate detailed debug settings in the error.log file
 define("ROOTPATH", './'); // Main Program Root Directory
 define("STORAGE_PATH", 'dat/'); // Storage directory, needs to have 777 permissions (include trailing '/')
-define("TIME_ZONE", '-5'); // Timezones
+define("TIME_ZONE", '0'); // Timezones
 define("PIXMICAT_LANGUAGE", 'en_US'); // Language (available languages in /lib/lang/)
 define("HTTP_UPLOAD_DIFF", 50); 
 ini_set("memory_limit", '128M'); // Maximum allowed memory usage by php 
-define("STATIC_URL", 'https://k.kncdn.org/global/'); // Where static files are stored
+define("STATIC_URL", 'https://static.heyuri.net/koko/'); // Where static files are stored
 define("ACTION_LOG", 'audit.log.txt');
 
 // FileIO settings 
@@ -34,7 +34,7 @@ define("IMG_DIR", 'src/'); // Image Directory
 define("THUMB_DIR", 'src/'); // Thumbnail Directory
 define("CDN_DIR", ''); // absolute path to the folder for storing imgs & thumbs (excluding IMG_DIR, e.g. /var/www/cdn/heyuri/)
 define("CDN_URL", ''); // img/thumb CDN url (without IMG_DIR directory, e.g. https://h.kncdn.org/b/). Set to blank for locally hosted files
-define("REF_URL", 'https://jump.kolyma.org'); // Leaving this blank will break URL's.
+define("REF_URL", ''); // URL prefix, eg: https://jump.heyuri.net
 define("PHP_SELF", 'koko.php'); // Name of the main script
 define("PHP_SELF2", 'index.html'); // Defines PHP_SELF
 define("PHP_EXT", '.html'); // File extension for static pages
