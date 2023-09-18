@@ -4,7 +4,7 @@
 if(!defined('DEBUG')) define("DEBUG", false); // Set to "true" to generate detailed debug settings in the error.log file
 define("ROOTPATH", './'); // Main Program Root Directory
 define("STORAGE_PATH", 'dat/'); // Storage directory, needs to have 777 permissions (include trailing '/')
-define("TIME_ZONE", '0'); // Timezones
+define("TIME_ZONE", '0'); // Timezones, 0 is UTC. Example: '-4' for New York, or '9' for Japan
 define("PIXMICAT_LANGUAGE", 'en_US'); // Language (available languages in /lib/lang/)
 define("HTTP_UPLOAD_DIFF", 50); 
 ini_set("memory_limit", '128M'); // Maximum allowed memory usage by php 
