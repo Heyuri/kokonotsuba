@@ -50,7 +50,10 @@
 	<!--&TOPLINKS/-->
 	<center id="header">
 		<div class="logo">
-			<!--<br><img src="https://s.kncdn.org/image/banner/" class="banner"><br>-->
+			<br />
+			<noscript><img border="1" src="https://heyuri.net/banners.php" /></noscript>
+			<script src="https://static.heyuri.net/js/banner.js"></script>
+			<br />
 			<h1 class="mtitle">{$TITLE}</h1>
 			{$TITLESUB}
 			<hr class="top" width="90%" size="1" />
@@ -92,6 +95,10 @@
 							{$FORM_FILE_EXTRA_FIELD}
 							<!--&IF($FORM_ATTECHMENT_FIELD,'</td></tr>','')-->
 							<!--&IF($FORM_CATEGORY_FIELD,'<tr><td class="postblock"><label for="category"><b>Category</b></label></td><td>{$FORM_CATEGORY_FIELD}<small></small></td></tr>','')-->
+		<tr>
+			<td class="postblock"><label for="pwd"><b>Password</b></label></td>
+			<td>{$FORM_DELETE_PASSWORD_FIELD}<small>(for deletion, 8 chars max)</small></td>
+		</tr>
 							{$FORM_EXTRA_COLUMN}
 							<tr>
 								<td colspan="2" align="LEFT" id="rules">
