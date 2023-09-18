@@ -54,7 +54,7 @@ class mod_countryflags  extends ModuleHelper {
 		if (FLAG_MODE == 1 && strstr($post['email'], 'flag')) return;
 		if (FLAG_MODE == 2 && !strstr($post['email'], 'flag')) return;
 		
-		$reader = new Reader('module/geoip/GeoLite2-Country.mmdb');
+		$reader = new Reader('/path_to_kokonotsuba/module/geoip/GeoLite2-Country.mmdb');
 		
 		$iphost = strtolower($post['host']);
 		
@@ -73,9 +73,9 @@ class mod_countryflags  extends ModuleHelper {
 			}
 						
 			if ($CountryName != "" || $record != ""){
-				$arrLabels['{$NAME}'] .= ' <img src="module/geoip/flag/'.strtolower($CountryID).'.png" title="'.$CountryName.'" style="vertical-align: middle;margin-top: -2px;" alt="'.$CountryID.'">';
+				$arrLabels['{$NAME}'] .= ' <img src="https://static.heyuri.net/image/flag/'.strtolower($CountryID).'.png" title="'.$CountryName.'" style="vertical-align: middle;margin-top: -2px;" alt="'.$CountryID.'">';
 			} else {
-				$arrLabels['{$NAME}'] .= ' <img src="module/geoip/flag/xx.png" title="Unknown" style="vertical-align: middle;margin-top: -2px;" alt="XX">';
+				$arrLabels['{$NAME}'] .= ' <img src="https://static.heyuri.net/image/flag/xx.png" title="Unknown" style="vertical-align: middle;margin-top: -2px;" alt="XX">';
 			}
 		} else { // host
 			$parthost=''; $iscctld = false; $isgtld = false;
@@ -550,9 +550,9 @@ class mod_countryflags  extends ModuleHelper {
 			}
 						
 			if ($CountryName != "" || $record != ""){
-				$arrLabels['{$NAME}'] .= ' <img src="module/geoip/flag/'.strtolower($CountryID).'.png" title="'.$CountryName.'" style="vertical-align: middle;margin-top: -2px;" alt="'.$CountryID.'">';
+				$arrLabels['{$NAME}'] .= ' <img src="https://static.heyuri.net/image/flag/'.strtolower($CountryID).'.png" title="'.$CountryName.'" style="vertical-align: middle;margin-top: -2px;" alt="'.$CountryID.'">';
 			} else {
-				$arrLabels['{$NAME}'] .= ' <img src="module/geoip/flag/xx.png" title="Unknown" style="vertical-align: middle;margin-top: -2px;" alt="XX">';
+				$arrLabels['{$NAME}'] .= ' <img src="https://static.heyuri.net/image/flag/xx.png" title="Unknown" style="vertical-align: middle;margin-top: -2px;" alt="XX">';
 			}
 			}
 	}
