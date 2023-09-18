@@ -1,6 +1,6 @@
 <?php
 
-require_once("module/geoip/geoip2.phar");
+require_once("geoip/geoip2.phar");
 use GeoIp2\Database\Reader;
 
 class mod_countryflags  extends ModuleHelper {
