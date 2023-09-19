@@ -118,7 +118,7 @@
 		</form>
 	</div>
 	<center>
-		<!--&FILE('/var/www/kolyma/data/script/globalmsg.txt')-->
+		<!--&FILE('/path/to/globalmsg.txt')-->
 	</center>
 	<!--&IF($FORMBOTTOM,'{$FORMBOTTOM}','')-->
 	<!--/&POSTFORM-->
