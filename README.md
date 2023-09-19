@@ -1,10 +1,10 @@
 # Kokonotsuba
 
 ## Required stack
-Kokonotsuba is designed and tested on the following stack, and isn't guaranteed to work on any other stack.
-OS: debian 10
-Web server: nginx
-DB: mariadb
+Kokonotsuba is designed and tested on the following stack, and isn't guaranteed to work on any other stack.<br />
+OS: debian 10<br />
+Web server: nginx<br />
+DB: mariadb<br />
 PHP: PHP7.2-PHP8.3
 
 If you are going to suggest pull requests, please make sure the change would work on the above stack first.
@@ -38,4 +38,4 @@ This also has the added benefit of moving the backend files from being viewable 
 `define("STORAGE_PATH", '/srv/boarddata/');`
 
 ## Other questions
-Check our wiki (https://github.com/Heyuri/kokonotsuba/wiki), or feel free to create an issue to ask your question.
+Check <a href="https://github.com/Heyuri/kokonotsuba/wiki">our wiki</a>, or feel free to <a href="https://github.com/Heyuri/kokonotsuba/issues/new?assignees=&labels=question&projects=&template=help-plz---1-1-.md&title=">create an issue</a> to ask your question.
