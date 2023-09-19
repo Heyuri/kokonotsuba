@@ -1,7 +1,12 @@
 # Kokonotsuba
 
 ## Required stack
-Kokonotsuba is designed and tested on debian 10, nginx, mariadb, and php7.3, and isn't guaranteed to work on any other stack.
+Kokonotsuba is designed and tested on the following stack, and isn't guaranteed to work on any other stack.
+OS: debian 10
+Web server: nginx
+DB: mariadb
+PHP: PHP7.2-PHP8.3
+
 If you are going to suggest pull requests, please make sure the change would work on the above stack first.
 
 ## On creating new instances
@@ -31,3 +36,6 @@ Add
 This also has the added benefit of moving the backend files from being viewable by the user. The same can be done with the dat directory by editing it to be in a non-indexable directory, such as /srv/. Example:
 
 `define("STORAGE_PATH", '/srv/boarddata/');`
+
+## Other questions
+Check our wiki (https://github.com/Heyuri/kokonotsuba/wiki), or feel free to create an issue to ask your question.
