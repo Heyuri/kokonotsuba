@@ -261,7 +261,8 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 }
 
 /* Output thread schema */
-function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno=0, $arr_kill, $arr_old, $kill_sensor, $old_sensor, $showquotelink=true, $adminMode=false, $threads_shown=0){
+function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $arr_kill, $arr_old, $kill_sensor, $old_sensor, $showquotelink=true, $adminMode=false, $threads_shown=0){
+	$resno = isset($resno) && $resno ? $resno : 0;
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PMS = PMCLibrary::getPMSInstance();
