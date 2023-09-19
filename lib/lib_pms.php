@@ -15,6 +15,7 @@ class PMS{
 	var $hookPoints;
 	var $loaded;
 	var $CHPList;
+	var $hooks;
 
 	/* Constructor */
 	function __construct($ENV){

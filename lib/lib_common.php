@@ -315,7 +315,7 @@ function BanIPHostDNSBLCheck($IP, $HOST, &$baninfo){
 	if($IsBanned){ $baninfo = _T('ip_banned'); return true; }
 
 	// DNS-based Blackhole List(DNSBL) 黑名單
-	if(!$DNSBLservers[0]) return false; // Skip check
+	if(!isset($DNSBLservers[0])||!$DNSBLservers[0]) return false; // Skip check
 	if(array_search($IP, $DNSBLWHlist)!==false) return false; // IP位置在白名單內
 	$rev = implode('.', array_reverse(explode('.', $IP)));
 	$lastPoint = count($DNSBLservers) - 1; if($DNSBLservers[0] < $lastPoint) $lastPoint = $DNSBLservers[0];

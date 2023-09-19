@@ -43,25 +43,25 @@ class FlagHelper{
 	function update($flag, $value=null){
 		if($value===null){
 			$ifexist = $this->get($flag);
-			if($ifexist !== $flag) $this->_write($this->toString()."_${flag}_");
+			if($ifexist !== $flag) $this->_write($this->toString()."_{$flag}_");
 		}else{
 			if(is_array($value)) $value = $this->join($value); // Array Flatten
 			$ifexist = $this->get($flag);
 			if($ifexist !== $flag.':'.$value){
 				if($ifexist) $this->_write($this->replace($ifexist, "$flag:$value")); // 已立flag，不同值
-				else $this->_write($this->toString()."_$flag:${value}_"); // 無flag
+				else $this->_write($this->toString()."_$flag:{$value}_"); // 無flag
 			}
 		}
 		return $this;
 	}
 
 	function replace($from, $to){
-		return str_replace("_${from}_", "_${to}_", $this->toString());
+		return str_replace("_{$from}_", "_{$to}_", $this->toString());
 	}
 
 	function remove($flag){
 		$wholeflag = $this->get($flag);
-		$this->_write(str_replace("_${wholeflag}_", '', $this->toString()));
+		$this->_write(str_replace("_{$wholeflag}_", '', $this->toString()));
 		return $this;
 	}
 
