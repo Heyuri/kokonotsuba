@@ -23,9 +23,10 @@ class mod_anigif extends ModuleHelper {
 
 	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $isReply, $imgWH, &$status) {
 		$fh = new FlagHelper($status);
-		$size = @getimagesize($dest);
 
-		if(isset($_POST['anigif']) && ($size[2] == 1)) {
+		$size =($dest && is_file($dest)) ? @getimagesize($dest) :[];
+
+		if(isset($_POST['anigif']) && isset($size[2]) && ($size[2] == 1)) {
 			$fh->toggle('agif');
 			$status = $fh->toString();
 		}
