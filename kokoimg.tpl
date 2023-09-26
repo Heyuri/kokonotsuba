@@ -30,7 +30,6 @@
 	<script type="text/javascript" src="https://static.heyuri.net/js/koko/qu2.js"></script>
 	<script type="text/javascript" src="https://static.heyuri.net/js/koko/style.js"></script>
 	<script type="text/javascript" src="https://static.heyuri.net/js/koko/img.js"></script>
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/catalog.js"></script>
 	<script type="text/javascript" src="https://static.heyuri.net/js/koko/inline.js"></script>
 	<script type="text/javascript" src="https://static.heyuri.net/js/koko/update.js"></script>
 	<script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
@@ -51,9 +50,6 @@
 	<!--&TOPLINKS/-->
 	<center id="header">
 		<div class="logo">
-			<br />
-			<noscript><img border="1" src="https://heyuri.net/banners.php" /></noscript>
-			<script src="https://static.heyuri.net/js/banner.js"></script>
 			<br />
 			<h1 class="mtitle">{$TITLE}</h1>
 			{$TITLESUB}
