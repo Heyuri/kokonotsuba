@@ -67,7 +67,9 @@ class mod_cat extends ModuleHelper {
 			$cat_cols = 'auto';
 
 		head($dat);
-		$dat.= '<div id="catalog">
+		$dat.= '
+		<script type="text/javascript" src="https://static.heyuri.net/js/koko/catalog.js"></script>
+		<div id="catalog">
 [<a href="'.PHP_SELF2.'?'.time().'">Return</a>]
 <center class="theading2"><b>Catalog</b></center>';
 

@@ -180,7 +180,7 @@ define("THUMB_SETTING", array( // Thumbnail Gen. Settings
 $ADDITION_INFO = @file_get_contents(ROOTPATH.'addinfo.txt'); // Addinfo
 $LIMIT_SENSOR = array('ByThreadCountCondition'=>150); // AutoDelete, defaults to 10 pages
 define("TEMPLATE_FILE", 'kokoimg.tpl'); // Template File. Set this and the next line to 'kokotxt.tpl' and 'kokotxtreply.tpl' respectively to use Kokonotsuba as a textboard.
-define("REPLY_TEMPLATE_FILE", 'kokoimgreply.tpl'); // Reply page template file
+define("REPLY_TEMPLATE_FILE", 'kokoimg.tpl'); // Reply page template file
 define("PAGE_DEF", 15); // How many threads per page
 define("ADMIN_PAGE_DEF", 20); // How many threads per page on admin panel
 define("RE_DEF", 5); // Shown Replies on Index
