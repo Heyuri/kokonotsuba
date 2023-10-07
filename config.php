@@ -186,7 +186,7 @@ define("ADMIN_PAGE_DEF", 20); // How many threads per page on admin panel
 define("RE_DEF", 5); // Shown Replies on Index
 define("RE_PAGE_DEF", 1000); // Shown replies on the thread index
 define("MAX_RES", 1000); // How many replies before autosaged
-define("MAX_AGE_TIME", 0); // How long will thread accept age replies?
+define("MAX_AGE_TIME", 0); // How long will thread accept age replies? (hours)
 define("COMM_MAX", 5000); // How many characters in comment
 define("INPUT_MAX", 100); // Maximum non-message characters
 define("BR_CHECK", 0); // how many lines to show
