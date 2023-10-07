@@ -287,6 +287,10 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 
 		$com = quote_link($com);
 		$com = quote_unkfunc($com);
+		
+		// Mark threads that hit age limit
+		if (!$i && MAX_AGE_TIME && $_SERVER['REQUEST_TIME'] - $time > (MAX_AGE_TIME * 60 * 60)) $com .= "<br><br><span class='warning'>"._T('warn_oldthread')."</span>";
+		
 		// Configure attachment display
 		if ($ext) {
 			if(!$fname) $fname = $tim;
