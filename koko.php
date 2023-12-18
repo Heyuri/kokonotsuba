@@ -295,6 +295,8 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 		if ($ext) {
 			if(!$fname) $fname = $tim;
 			$truncated = (strlen($fname)>40 ? substr($fname,0,40).'(&hellip;)' : $fname);
+			$fname = str_replace('&#039;', '\&#039;', $fname);
+			$truncated = str_replace('&#039;', '\&#039;', $truncated);
 			if ($fname=='SPOILERS') {
 				$truncated=$fname;
 			} else {
