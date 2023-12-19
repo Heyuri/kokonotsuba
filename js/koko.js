@@ -378,7 +378,7 @@ const kkjs = {
 		kkjs.sett_init();
 		$doc.postform &&
 			$id("rules").insertAdjacentHTML("beforeend",
-			'<span id="formfuncs"></span>');
+			'<span id="formfuncs"><a href="javascript:kkjs.form_switch();">Switch form position</a></span>');
 		kkjs.modules.forEach( function(mod) {
 			try {
 				if (!mod.startup()) {
@@ -481,6 +481,17 @@ const kkjs = {
 		if (upf) upf.insertAdjacentHTML('afterend',
 			'<small>[<a href="javascript:void(0);" onclick="$id(\'upfile\').value=\'\';">X</a>]</small> ');
 	},
+	
+	// form switch
+	form_index: 0,
+	form_switch: function () {
+		const a = Array($id("postarea"), $id("postarea2"));
+		if (!(a[0]&&a[1])) return;
+ 		const pform = $id("postform");
+		a[kkjs.form_index=kkjs.form_index?0:1].appendChild(pform);
+		pform.scrollIntoView({behavior:"smooth",block:"center"});
+	},
+	
 	// wz_tooltip
 	wztt: function (el=$doc.body, reset=false) {
 		var tips = el.querySelectorAll("[title],[data-tip]");
