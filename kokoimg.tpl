@@ -61,8 +61,8 @@
 	<!--&POSTFORM-->
 	<div id="postarea">
 		<!--&IF($IS_THREAD,'[<a href="{$PHP_SELF2}">Return</a>]','')-->
+		<!--&IF($IS_THREAD,' <center class="theading"><b>Posting mode: Reply</b></center>','')-->
 		<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" <!--&IF($MAX_FILE_SIZE,' enctype="multipart/form-data"','')-->>
-				<!--&IF($IS_THREAD,' <center class="theading"><b>Posting mode: Reply</b></center>','')-->
 			{$FORM_HIDDEN}
 			<center>
 					<table cellspacing="2" cellpadding="1">
@@ -223,6 +223,7 @@
 			{$THREADREAR}
 			<!--&DELFORM/-->
 		</form>
+		<div id="postarea2"></div>
 		{$PAGENAV}
 		<br clear="ALL" />
 		<!--/&MAIN-->
