@@ -116,7 +116,7 @@ class mod_adminban extends ModuleHelper {
 		if (valid() < LEV_MODERATOR) return;
 		if (!($ip=$this->_lookupPostIP($post['no']))) return;
 		$modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'&ip='.$ip.'" title="Ban">B</a>]';
-		$modfunc.= '<small>[HOST: <a href="?mode=admin&admin=del&host='.$ip.'">'.$ip.'</a>]</small>';
+		if (!$_GET['mode'] && !$_POST['mode']) $modfunc.= '<small>[HOST: <a href="?mode=admin&admin=del&host='.$ip.'">'.$ip.'</a>]</small>';
 	}
 
 	public function ModulePage() {
