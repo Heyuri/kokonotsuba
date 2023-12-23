@@ -116,6 +116,7 @@ class mod_adminban extends ModuleHelper {
 		if (valid() < LEV_MODERATOR) return;
 		if (!($ip=$this->_lookupPostIP($post['no']))) return;
 		$modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'&ip='.$ip.'" title="Ban">B</a>]';
+		$modfunc.= '<small>[HOST: <a href="?mode=admin&admin=del&host='.$ip.'">'.$ip.'</a>]</small>';
 	}
 
 	public function ModulePage() {
@@ -187,7 +188,7 @@ fieldset {
 		<input type="hidden" name="load" value="mod_adminban" />
 		<label>Global?<input type="checkbox" name="global" /></label> <small>(Check this box if you want to rangeban)</small><br />
 		<label>IP Addr:<input type="text" name="ip" value="'.($_GET['ip']??'').'" /></label> <small>(Leave blank to use poster IP)</small><br />
-		<label>Expires (ex. 1w2d3h):<input type="text" id="days" name="duration" value="1d" /></label> <small>[Set to 0 (zero) or leave blank for warning]</small><br />
+		<label>Expires (ex. 1w2d3h4min):<input type="text" id="days" name="duration" value="1d" /></label> <small>[Set to 0 (zero) or leave blank for warning]</small><br />
 		<label>Private Message:<br />
 			<textarea name="privmsg" cols="80" rows="6">No reason given.</textarea></label><br />
 		<details'.($_GET['no']??0 ? ' open="open"' : '').'><summary>Public message</summary><blockquote>
@@ -261,7 +262,8 @@ fieldset {
 				$durationWeeks = preg_match("/(\d+)w/", $duration, $matchWeeks);
 				$durationDays = preg_match("/(\d+)d/", $duration, $matchDays);
 				$durationHours = preg_match("/(\d+)h/", $duration, $matchHours);
-				$expires = $starttime + ($matchWeeks[0] * 604800) + ($matchDays[0] * 86400) + ($matchHours[0] * 3600);
+				$durationMinutes = preg_match("/(\d+)min/", $duration, $matchMinutes);
+				$expires = $starttime + ($matchWeeks[0] * 604800) + ($matchDays[0] * 86400) + ($matchHours[0] * 3600) + ($matchMinutes[0] * 60);
 
 				if(isset($_POST["global"])) {
 					if($_POST["global"]) {
