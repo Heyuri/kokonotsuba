@@ -1010,6 +1010,12 @@ function admindel(&$dat){
 	$modFunc = '';
 	$delno = $thsno = array();
 	$message = ''; // Display message after deletion
+	$searchHost = htmlspecialchars(trim($_GET['host']));
+	if ($searchHost) {
+		if (valid() <= LEV_JANITOR) error('ERROR: No Access.');
+		$noticeHost = '<h2>Viewing all posts from: '.$searchHost.'. Click submit to cancel.</h2><br />';
+	}
+	
 
 	// Delete the article(thread) block
 	$delno = array_merge($delno, $_POST['clist']??array());
@@ -1028,7 +1034,7 @@ function admindel(&$dat){
 	$dat.= '<input type="hidden" name="mode" value="admin" />
 <input type="hidden" name="admin" value="del" />
 <div align="left">'._T('admin_notices').'</div>'.
-$message.'<br />
+$message.'<br />'.$noticeHost.'
 <center><table width="95%" cellspacing="0" cellpadding="0" border="1" class="postlists">
 <thead><tr>'._T('admin_list_header').'</tr></thead>
 <tbody>';
@@ -1036,14 +1042,16 @@ $message.'<br />
 	for($j = 0; $j < $posts_count; $j++){
 		$bg = ($j % 2) ? 'row1' : 'row2'; // Background color
 		extract($posts[$j]);
-
+		
+		if ($searchHost && $host != $searchHost) continue;
 		// Modify the field style
 		//$now = preg_replace('/.{2}\/(.{5})\(.+?\)(.{5}).*/', '$1 $2', $now);
-		$name = htmlspecialchars(str_cut(html_entity_decode(strip_tags($name)), 8));
+		$name = htmlspecialchars(str_cut(html_entity_decode(strip_tags($name)), 9));
 		$sub = htmlspecialchars(str_cut(html_entity_decode($sub), 8));
 		if($email) $name = "<a href=\"mailto:$email\">$name</a>";
 		$com = str_replace('<br />',' ',$com);
 		$com = htmlspecialchars(str_cut(html_entity_decode($com), 20));
+		$host2 = gethostbyaddr($host);
 
 		// The first part of the discussion is the stop tick box and module function
 		$modFunc = ' ';
@@ -1065,6 +1073,7 @@ $message.'<br />
 
 		if (valid() <= LEV_JANITOR) {
 			$host = " - ";
+			$host2 = " - ";
 		}
 
 		// Print out the interface
@@ -1075,7 +1084,7 @@ $message.'<br />
 	<td><b class="title">$sub</b></td>
 	<td><b class="name">$name</b></td>
 	<td><small>$com</small></td>
-	<td>$host</td>
+	<td>$host<br /><small>$host2</small></td>
 	<td align="center">$clip ($size)<br />$md5chksum</td>
 </tr>
 _ADMINEOF_;
@@ -1091,15 +1100,15 @@ _ADMINEOF_;
 	$countline = $PIO->postCount(); // Total number of articles(threads)
 	$page_max = ceil($countline / ADMIN_PAGE_DEF) - 1; // Total number of pages
 	$dat.= '<table id="pager" border="1" cellspacing="0" cellpadding="0"><tbody><tr>';
-	if($page) $dat.= '<td><a href="'.PHP_SELF.'?mode=admin&admin=del&page='.($page - 1).'">'._T('prev_page').'</a></td>';
+	if($page) $dat.= '<td><a href="'.PHP_SELF.'?mode=admin&admin=del&page='.($page - 1).($searchHost?'&host='.$searchHost:'').'">'._T('prev_page').'</a></td>';
 	else $dat.= '<td nowrap="nowrap">'._T('first_page').'</td>';
 	$dat.= '<td>';
 	for($i = 0; $i <= $page_max; $i++){
 		if($i==$page) $dat.= '[<b>'.$i.'</b>] ';
-		else $dat.= '[<a href="'.PHP_SELF.'?mode=admin&admin=del&page='.$i.'">'.$i.'</a>] ';
+		else $dat.= '[<a href="'.PHP_SELF.'?mode=admin&admin=del&page='.$i.($searchHost?'&host='.$searchHost:'').'">'.$i.'</a>] ';
 	}
 	$dat.= '</td>';
-	if($page < $page_max) $dat.= '<td><a href="'.PHP_SELF.'?mode=admin&admin=del&page='.($page + 1).'">'._T('next_page').'</a></td>';
+	if($page < $page_max) $dat.= '<td><a href="'.PHP_SELF.'?mode=admin&admin=del&page='.($page + 1).($searchHost?'&host='.$searchHost:'').'">'._T('next_page').'</a></td>';
 	else $dat.= '<td nowrap="nowrap">'._T('last_page').'</td>';
 	$dat.= '</tr></tbody></table>';
 }
