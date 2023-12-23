@@ -1051,7 +1051,6 @@ $message.'<br />'.$noticeHost.'
 		if($email) $name = "<a href=\"mailto:$email\">$name</a>";
 		$com = str_replace('<br />',' ',$com);
 		$com = htmlspecialchars(str_cut(html_entity_decode($com), 20));
-		$host2 = gethostbyaddr($host);
 
 		// The first part of the discussion is the stop tick box and module function
 		$modFunc = ' ';
@@ -1073,7 +1072,6 @@ $message.'<br />'.$noticeHost.'
 
 		if (valid() <= LEV_JANITOR) {
 			$host = " - ";
-			$host2 = " - ";
 		}
 
 		// Print out the interface
@@ -1084,7 +1082,7 @@ $message.'<br />'.$noticeHost.'
 	<td><b class="title">$sub</b></td>
 	<td><b class="name">$name</b></td>
 	<td><small>$com</small></td>
-	<td>$host<br /><small>$host2</small></td>
+	<td>$host</td>
 	<td align="center">$clip ($size)<br />$md5chksum</td>
 </tr>
 _ADMINEOF_;
