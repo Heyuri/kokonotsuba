@@ -219,7 +219,7 @@ fieldset {
 <td><label for="del'.$i.'">'.$ip.'</label></td>
 <td>'.date('Y/m/d H:i:s', $starttime).'</td>
 <td>'.date('Y/m/d H:i:s', $expires).'</td>
-<td>'.( strlen($reason)>20 ? substr($reason, 0, 20).'&hellip;' : $reason ).'</td></tr>';
+<td>'.( strlen($reason)>9001 ? substr($reason, 0, 9001).'&hellip;' : $reason ).'</td></tr>';
 				}
 			}
 
@@ -236,7 +236,7 @@ fieldset {
 <td><label for="delg'.$i.'">'.$ip.'</label></td>
 <td>'.date('Y/m/d H:i:s', $starttime).'</td>
 <td>'.date('Y/m/d H:i:s', $expires).'</td>
-<td>'.( strlen($reason)>20 ? substr($reason, 0, 20).'&hellip;' : $reason ).'</td></tr>';
+<td>'.( strlen($reason)>9001 ? substr($reason, 0, 9001).'&hellip;' : $reason ).'</td></tr>';
 				}
 			}
 
