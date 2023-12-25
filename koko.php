@@ -296,7 +296,6 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 			if(!$fname) $fname = $tim;
 			$truncated = (strlen($fname)>40 ? substr($fname,0,40).'(&hellip;)' : $fname);
 			$fname = str_replace('&#039;', '\&#039;', $fname);
-			$truncated = str_replace('&#039;', '\&#039;', $truncated);
 			if ($fname=='SPOILERS') {
 				$truncated=$fname;
 			} else {
@@ -1010,7 +1009,8 @@ function admindel(&$dat){
 	$modFunc = '';
 	$delno = $thsno = array();
 	$message = ''; // Display message after deletion
-	$searchHost = htmlspecialchars(trim($_GET['host']));
+	preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", $_GET['host'], $hostMatch);
+	$searchHost = $hostMatch[0];
 	if ($searchHost) {
 		if (valid() <= LEV_JANITOR) error('ERROR: No Access.');
 		$noticeHost = '<h2>Viewing all posts from: '.$searchHost.'. Click submit to cancel.</h2><br />';
@@ -1026,7 +1026,7 @@ function admindel(&$dat){
 	deleteCache($delno);
 	$PIO->dbCommit();
 
-	$line = $PIO->fetchPostList(0, $page * ADMIN_PAGE_DEF, ADMIN_PAGE_DEF); // A list of tagged articles
+	$line = ($searchHost ? $PIO->fetchPostList(0, 0, 0, $searchHost) : $PIO->fetchPostList(0, $page * ADMIN_PAGE_DEF, ADMIN_PAGE_DEF)); // A list of tagged articles
 	$posts_count = count($line); // Number of cycles
 	$posts = $PIO->fetchPosts($line); // Article content array
 
@@ -1043,7 +1043,6 @@ $message.'<br />'.$noticeHost.'
 		$bg = ($j % 2) ? 'row1' : 'row2'; // Background color
 		extract($posts[$j]);
 		
-		if ($searchHost && $host != $searchHost) continue;
 		// Modify the field style
 		//$now = preg_replace('/.{2}\/(.{5})\(.+?\)(.{5}).*/', '$1 $2', $now);
 		$name = htmlspecialchars(str_cut(html_entity_decode(strip_tags($name)), 9));
@@ -1096,7 +1095,7 @@ _ADMINEOF_;
 <hr size="1" />';
 
 	$countline = $PIO->postCount(); // Total number of articles(threads)
-	$page_max = ceil($countline / ADMIN_PAGE_DEF) - 1; // Total number of pages
+	$page_max = ($searchHost ? 0 : ceil($countline / ADMIN_PAGE_DEF) - 1); // Total number of pages
 	$dat.= '<table id="pager" border="1" cellspacing="0" cellpadding="0"><tbody><tr>';
 	if($page) $dat.= '<td><a href="'.PHP_SELF.'?mode=admin&admin=del&page='.($page - 1).($searchHost?'&host='.$searchHost:'').'">'._T('prev_page').'</a></td>';
 	else $dat.= '<td nowrap="nowrap">'._T('first_page').'</td>';
