@@ -339,7 +339,7 @@ class PIOmysqli implements IPIO {
 	}
 
 	/* Output list of articles */
-	public function fetchPostList($resno=0, $start=0, $amount=0){
+	public function fetchPostList($resno=0, $start=0, $amount=0, $host=0){
 		if(!$this->prepared) $this->dbPrepare();
 
 		$line = array();
@@ -347,7 +347,7 @@ class PIOmysqli implements IPIO {
 		if($resno){ // 輸出討論串的結構 (含自己, EX : 1,2,3,4,5,6)
 			$tmpSQL = 'SELECT no FROM '.$this->tablename.' WHERE no = '.$resno.' OR resto = '.$resno.' ORDER BY no';
 		}else{ // 輸出所有文章編號，新的在前
-			$tmpSQL = 'SELECT no FROM '.$this->tablename.' ORDER BY no DESC';
+			$tmpSQL = 'SELECT no FROM '.$this->tablename.($host ? ' WHERE `host` = \''.$host.'\'':'').' ORDER BY no DESC';
 			$start = intval($start); $amount = intval($amount);
 			if($amount) $tmpSQL .= " LIMIT {$start}, {$amount}"; // 有指定數量才用 LIMIT
 		}
