@@ -295,7 +295,6 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 		if ($ext) {
 			if(!$fname) $fname = $tim;
 			$truncated = (strlen($fname)>40 ? substr($fname,0,40).'(&hellip;)' : $fname);
-			$fname = str_replace('&#039;', '\&#039;', $fname);
 			if ($fname=='SPOILERS') {
 				$truncated=$fname;
 			} else {
@@ -303,6 +302,8 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 				$fname.=$ext;
 			}
 
+ 			$fnameJS = str_replace('&#039;', '\&#039;', $fname);
+ 			$truncatedJS = str_replace('&#039;', '\&#039;', $truncated);
 			$imageURL = $FileIO->getImageURL($tim.$ext); // image URL
 			$thumbName = $FileIO->resolveThumbName($tim); // thumb Name
 			$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.STATIC_URL.'image/nothumb.gif" class="postimg" alt="'.$imgsize.'" hspace="20" vspace="3" border="0" align="left" /></a>'; // Default display style (when no preview image)
@@ -316,7 +317,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 			} else if ($ext = "swf") {
 				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.SWF_THUMB.'" class="postimg" alt="SWF Embed" hspace="20" vspace="3" border="0" align="left" /></a>'; // Default display style (when no preview image)
 			} else $imgsrc = '';
-			$IMG_BAR = _T('img_filename').'<a href="'.$imageURL.'" target="_blank" rel="nofollow" onmouseover="this.textContent=\''.$fname.'\';" onmouseout="this.textContent=\''.$truncated.'\'"> '.$truncated.'</a> <a href="'.$imageURL.'" download="'.$fname.'"><div class="download"></div></a> <small>('.$imgsize.$imgwh_bar.')</small> '.$img_thumb;
+			$IMG_BAR = _T('img_filename').'<a href="'.$imageURL.'" target="_blank" rel="nofollow" onmouseover="this.textContent=\''.$fnameJS.'\';" onmouseout="this.textContent=\''.$truncatedJS.'\'"> '.$truncated.'</a> <a href="'.$imageURL.'" download="'.$fname.'"><div class="download"></div></a> <small>('.$imgsize.$imgwh_bar.')</small> '.$img_thumb;
 		}
 
         // Set the response/reference link
