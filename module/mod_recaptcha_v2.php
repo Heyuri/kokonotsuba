@@ -3,6 +3,7 @@
 mod_recaptcha_v2.php
 */
 
+/* get the keys from https://www.google.com/recaptcha/admin/create */
 class mod_recaptcha_v2 extends ModuleHelper {
 	private $KEY_PUBLIC   = 'SITE KEY';
 	private $KEY_PRIVATE  = 'SECRET KEY';
