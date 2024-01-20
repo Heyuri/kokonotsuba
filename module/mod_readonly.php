@@ -4,7 +4,7 @@ Mod_Readonly - Add this to the boards config to make it admin-only
 */
 class mod_readonly extends ModuleHelper {
 	private $READONLY  = true; // Set read-only
-	private $ALLOWREPLY = true; // Allow replies
+	private $ALLOWREPLY = false; // Allow replies
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
@@ -23,6 +23,6 @@ class mod_readonly extends ModuleHelper {
 		$resto = isset($_POST['resto']) ? $_POST['resto'] : 0;
 
 		if($this->ALLOWREPLY && $resto) return;
-		if($this->READONLY && valid() < LEV_MODERATOR && ($name != CAP_NAME && $pwd != CAP_PASS)){ error('New threads cannot be made at this time.'); }
+		if($this->READONLY && valid() < LEV_MODERATOR && ($name != CAP_NAME && $pwd != CAP_PASS)){ error('New posts cannot be made at this time.'); }
 	}
 }
