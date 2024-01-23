@@ -516,6 +516,20 @@ function regist($preview=false){
 			@move_uploaded_file($upfile, $dest) or @copy($upfile, $dest);
 			@chmod($dest, 0666);
 			if(!is_file($dest)) error(_T('regist_upload_filenotfound'), $dest);
+           // Remove exif
+    if (function_exists('exif_read_data') && function_exists('exif_imagetype')) {
+        $imageType = exif_imagetype($dest);
+
+        if ($imageType == IMAGETYPE_JPEG) {
+            $exif = @exif_read_data($dest);
+            if ($exif !== false) {
+                // Remove Exif data
+                $image = imagecreatefromjpeg($dest);
+                imagejpeg($image, $dest, 100);
+                imagedestroy($image);
+            }
+        }
+    }
 
 			// 2. Determine whether there is any interruption in the process of uploading additional image files
 			$upsizeTTL = $_SERVER['CONTENT_LENGTH'];
