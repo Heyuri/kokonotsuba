@@ -106,10 +106,11 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 	}
 
 	// Predict that old articles will be deleted and archives
-	if(PIOSensor::check('predict', $LIMIT_SENSOR)){ // Whether a forecast is required
+	// Obsolete
+	/*if(PIOSensor::check('predict', $LIMIT_SENSOR)){ // Whether a forecast is required
 		$old_sensor = true; // tag opens
 		$arr_old = array_flip(PIOSensor::listee('predict', $LIMIT_SENSOR)); // Array of old articles
-	}
+	}*/
 	$tmp_total_size = $FileIO->getCurrentStorageSize(); // The current usage of additional image files
 	$tmp_STORAGE_MAX = STORAGE_MAX * (($tmp_total_size >= STORAGE_MAX) ? 1 : 0.95); // Estimated upper limit
 	if(STORAGE_LIMIT && STORAGE_MAX > 0 && ($tmp_total_size >= $tmp_STORAGE_MAX)){
@@ -288,7 +289,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 		$com = quote_link($com);
 		$com = quote_unkfunc($com);
 		
-		// Mark threads that hit age limit
+		// Mark threads that hit age limit (this replaces the old system for marking old threads)
 		if (!$i && MAX_AGE_TIME && $_SERVER['REQUEST_TIME'] - $time > (MAX_AGE_TIME * 60 * 60)) $com .= "<br><br><span class='warning'>"._T('warn_oldthread')."</span>";
 		
 		// Configure attachment display
@@ -355,7 +356,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 		// Set thread properties
 		if(STORAGE_LIMIT && $kill_sensor) if(isset($arr_kill[$no])) $WARN_BEKILL = '<span class="warning">'._T('warn_sizelimit').'</span><br />'; // Predict to delete too large files
 		if(!$i){ // 首篇 Only
-			if($old_sensor) if(isset($arr_old[$no])) $WARN_OLD = '<span class="warning">'._T('warn_oldthread').'</span><br />'; // Reminder that it is about to be deleted
+			//if($old_sensor) if(isset($arr_old[$no])) $WARN_OLD = '<span class="warning">'._T('warn_oldthread').'</span><br />'; // Reminder that it is about to be deleted (Obsolete)
 			$flgh = $PIO->getPostStatus($status);
 			if($hiddenReply) $WARN_HIDEPOST = '<span class="omittedposts">'._T('notice_omitted',$hiddenReply).'</span><br />'; // There is a hidden response
 		}
