@@ -1169,7 +1169,7 @@ function search(){
 	}else{
 		$searchField = $_POST['field']; // Search target (no:number, name:name, sub:title, com:text)
 		$searchMethod = $_POST['method']; // Search method
-		$searchKeyword = preg_split('/(　| )+/', trim($searchKeyword)); // Search text is cut with spaces
+		$searchKeyword = preg_split('/(　| )+/', strtolower(trim($searchKeyword))); // Search text is cut with spaces
 		if ($searchMethod=='REG') $searchMethod = 'AND';
 		$hitPosts = $PIO->searchPost($searchKeyword, $searchField, $searchMethod); // Directly return the matching article content array
 
