@@ -102,7 +102,7 @@ class mod_cat extends ModuleHelper {
 				$sub = 'No Title';
 			
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'');
-			$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, $post[$i], false)); // "ThreadPost" Hook Point
+			$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, $post[0], false)); // "ThreadPost" Hook Point
 
 			$res = count($PIO->fetchPostList($no)) - 1;
 			$dat.= '<td class="thread" width="180" height="200" align="CENTER">
