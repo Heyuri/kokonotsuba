@@ -25,13 +25,13 @@
 
 	<meta http-equiv="cache-control" content="no-cache" />
 	<link rel="shortcut icon" href="https://static.heyuri.net/koko/image/favicon.png" />
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/koko.js"></script>
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/qu.js"></script>
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/qu2.js"></script>
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/style.js"></script>
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/img.js"></script>
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/inline.js"></script>
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/update.js"></script>
+	<script type="text/javascript" src="/js/koko.js"></script>
+	<script type="text/javascript" src="/js/qu.js"></script>
+	<script type="text/javascript" src="/js/qu2.js"></script>
+	<script type="text/javascript" src="/js/style.js"></script>
+	<script type="text/javascript" src="/js/img.js"></script>
+	<script type="text/javascript" src="/js/inline.js"></script>
+	<script type="text/javascript" src="/js/update.js"></script>
 	<script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
 	<!--/&HEADER-->
 
