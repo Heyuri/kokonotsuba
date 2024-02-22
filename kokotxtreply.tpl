@@ -28,7 +28,7 @@
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png" />
 	<script type="text/javascript" src="/js/koko.js"></script>
 	<script type="text/javascript" src="/js/qr.js"></script>
-	<script type="text/javascript" src="/js/koko/qu.js"></script>
+	<script type="text/javascript" src="/js/qu.js"></script>
 	<script type="text/javascript" src="/js/qu2.js"></script>
 	<script type="text/javascript" src="/js/style.js"></script>
 	<script type="text/javascript" src="/js/catalog.js"></script>
