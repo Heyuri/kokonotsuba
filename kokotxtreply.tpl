@@ -26,13 +26,13 @@
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/csstxt/mobile.css?v2" title="Mobile" />
 	<meta http-equiv="cache-control" content="no-cache" />
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png" />
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/koko.js"></script>
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/qr.js"></script>
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/qu.js"></script>
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/qu2.js"></script>
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/style.js"></script>
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/catalog.js"></script>
-	<script type="text/javascript" src="https://static.heyuri.net/js/koko/insert.js"></script>
+	<script type="text/javascript" src="js/koko.js"></script>
+	<script type="text/javascript" src="js/qr.js"></script>
+	<script type="text/javascript" src="js/qu.js"></script>
+	<script type="text/javascript" src="js/qu2.js"></script>
+	<script type="text/javascript" src="js/style.js"></script>
+	<script type="text/javascript" src="js/catalog.js"></script>
+	<script type="text/javascript" src="js/insert.js"></script>
 	<!--/&HEADER-->
 
 	<!--&TOPLINKS-->
