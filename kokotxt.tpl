@@ -45,7 +45,7 @@
 
 <body>
 	<a name="top"></a>
-	<script id="wz_tooltip" type="text/javascript" src="{$STATIC_URL}javascript/wz_tooltip.js"></script>
+	<script id="wz_tooltip" type="text/javascript" src="js/wz_tooltip.js"></script>
 	<!--&TOPLINKS/-->
 	<table class="menu" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3">
 		<tbody>

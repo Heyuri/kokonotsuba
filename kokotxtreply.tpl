@@ -25,7 +25,7 @@
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/csstxt/kareha.css" title="Kareha" />
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/csstxt/mobile.css?v2" title="Mobile" />
 	<meta http-equiv="cache-control" content="no-cache" />
-	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png" />
+	<link rel="shortcut icon" href="image/favicon.png" />
 	<script type="text/javascript" src="js/koko.js"></script>
 	<script type="text/javascript" src="js/qr.js"></script>
 	<script type="text/javascript" src="js/qu.js"></script>
@@ -47,7 +47,7 @@
 <body class="thread" style="border:none;padding:0px;margin:0px;background-image:none;margin-left:0px; padding-top: 1px;";>
 	[<a href="{$PHP_SELF2}">Return</a>]  {$HOME} {$SEARCH}
 	<hr>
-	<script id="wz_tooltip" type="text/javascript" src="{$STATIC_URL}javascript/wz_tooltip.js"></script>
+	<script id="wz_tooltip" type="text/javascript" src="js/wz_tooltip.js"></script>
 	<!--&TOPLINKS/-->
 	<!--/&BODYHEAD-->
 
