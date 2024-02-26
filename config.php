@@ -8,7 +8,7 @@ define("TIME_ZONE", '0'); // Timezones, 0 is UTC. Example: '-4' for New York, or
 define("PIXMICAT_LANGUAGE", 'en_US'); // Language (available languages in /lib/lang/)
 define("HTTP_UPLOAD_DIFF", 50); 
 ini_set("memory_limit", '128M'); // Maximum allowed memory usage by php 
-define("STATIC_URL", 'https://static.heyuri.net/koko/'); // Where static files are stored
+define("STATIC_URL", './static/'); // Where static files are stored. Can be a url.
 define("ACTION_LOG", 'audit.log.txt');
 
 // FileIO settings 

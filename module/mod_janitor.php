@@ -58,7 +58,7 @@ class mod_janitor extends ModuleHelper {
 			$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', nl2br($_POST['msg']??'')));
 			if(!$reason) $reason='No reason given.';
 			if ($_POST["public"]) {
-				$post['com'] .= "<br \><br \><b class=\"warning\">($reason)</b> <img style=\"vertical-align: baseline;\" src=\"https://static.heyuri.net/image/hammer.gif\">";
+				$post['com'] .= "<br \><br \><b class=\"warning\">($reason)</b> <img style=\"vertical-align: baseline;\" src=\"{$STATIC_URL}/image/hammer.gif\">";
 				$PIO->updatePost($no, $post);
 				$PIO->dbCommit();
 				$parentNo = $post['resto'] ? $post['resto'] : $post['no'];
