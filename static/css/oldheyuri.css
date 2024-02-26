@@ -1,0 +1,286 @@
+/* Color Pallete:
+ * Primary FG: #800000 (maroon)
+ * Primary BG: #FFE
+ * Reply BG: #F0E0D6
+ * Hinting: #BE8080
+ */
+@import "base.css";
+
+body {
+    font-family:IPAMonaPGothic,'IPA モナー Pゴシック',Monapo,Mona,'MS Pgothic','MS Pゴシック',submona;
+    font-size: 12pt;
+    background-color: #FFE;
+    background-image: linear-gradient(#FCA, #FFE);
+    background-size: 100% 500px;
+    background-repeat: repeat-x;
+    color: #800000;
+}
+
+table, table td {
+    border-color: #BE8080;
+}
+
+.doubledash {
+    color: #BE8080;
+}
+
+.reply {
+    background: #F0E0D6;
+    border: 1px solid;
+    border-left: none;
+    border-top: none;
+    border-color: #BE8080;
+    padding: 2px;
+}
+
+.post:target, .replyhl {
+    background-color: #F0C0B0;
+}
+
+.post.op:target, .post.op.replyhl {
+    border: 1px solid;
+    border-color: #BE8080;
+    border-radius: 5px;
+    margin: -1px;
+}
+
+.inputtext {
+    margin: 0;
+    margin-right: 2px;
+    padding: 1px 4px;
+    border: 1px solid #AAA;
+    border-radius: 0px; /* Chrome fucks up borders */
+    outline: none;
+    font-size: 10pt;
+}
+
+.inputtext:focus {
+    border: 1px solid #EA8;
+}
+
+button,input[type=submit],input[type=reset] {
+    border-radius: 0;
+    border-width: 1px;
+    padding: 1px 0.5em;
+    margin: 0;
+    margin-right: 2px;
+}
+
+.logo h1 {
+    font-family: Tahoma, Verdana, Arial, Helvetica;
+    font-size: 20pt;
+    margin: 0;
+}
+
+hr {
+    color: #800000;
+    border-color: #BE8080;
+}
+
+.top {
+    background-image: -webkit-linear-gradient(left,rgba(255,255,238,0),rgba(128,0,0,0.75),rgba(255,255,238,0));
+    background-image: -moz-linear-gradient(left,rgba(255,255,238,0),rgba(128,0,0,0.75),rgba(255,255,238,0));
+    background-image: -ms-linear-gradient(left,rgba(255,255,238,0),rgba(128,0,0,0.75),rgba(255,255,238,0));
+    background-image: -o-linear-gradient(left,rgba(255,255,238,0),rgba(128,0,0,0.75),rgba(255,255,238,0));
+    border-style: none;
+    height: 1px;
+}
+
+.postblock {
+    border: 1px outset #BE8080;
+    font-size: 11pt;
+    padding: 0px 5px;
+}
+
+iframe, .rotating { background: #F0E0D6; border-right: 1px solid #D9BFB7; border-bottom: 1px solid #D9BFB7; }
+
+#pager {
+    background-color: #F0E0D6;
+}
+
+#pager td {
+    padding: 2px 5px;
+}
+
+a, a:link a:visited {
+    color: #00C;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #EE0000 !important;
+}
+
+.filesize, .postnum a {
+    text-decoration: underline;
+}
+
+.postnum a {
+    color: inherit;
+}
+
+.quotelink {
+    color: #000080;
+    text-decoration: underline;
+}
+
+.rules {
+    margin: 0;
+    padding: 0 0 0 1.25em;
+}
+
+.postblock {
+    background: #EA8;
+    color: #800000;
+}
+
+.unkfunc {
+    background-color:#F0C0B0;
+	color:#789922;
+}
+.unkfunc2 {
+	background-color:#F0C0B0;
+	color:#FF69B3;
+}
+
+.title {
+    color: #CC1105;
+}
+
+.name {
+    color: #117743;
+}
+
+.warning {
+    color: #F00000;
+}
+
+.omittedposts {
+    color: #707070;
+}
+
+.postlists {
+    min-width: 500px;
+    max-width: 100%;
+}
+
+.postlists th {
+    background-color: #6080F6;
+}
+
+.postlists tbody tr:nth-child(odd){
+    background-color: #D6D6F6;
+}
+
+.postlists tbody tr:nth-child(even){
+	background-color: #F6F6F6;
+}
+
+.exif {
+    background-color: #FFE;
+}
+
+.theading {
+    background-color: #E04000;
+    background-image: -webkit-linear-gradient(left,rgb(64,18,0),rgb(224,64,0),rgb(224,64,0),rgb(224,64,0),rgb(64,18,0));
+    background-image: -moz-linear-gradient(left,rgb(64,18,0),rgb(224,64,0),rgb(224,64,0),rgb(224,64,0),rgb(64,18,0));
+    background-image: -ms-linear-gradient(left,rgb(64,18,0),rgb(224,64,0),rgb(224,64,0),rgb(224,64,0),rgb(64,18,0));
+    background-image: -o-linear-gradient(left,rgb(64,18,0),rgb(224,64,0),rgb(224,64,0),rgb(224,64,0),rgb(64,18,0));
+}
+
+.theading2 {
+    background-color: #0040E0;
+    background-image: -webkit-linear-gradient(left,rgb(0,18,64),rgb(0,64,224),rgb(0,64,224),rgb(0,64,224),rgb(0,18,64));
+    background-image: -moz-linear-gradient(left,rgb(0,18,64),rgb(0,64,224),rgb(0,64,224),rgb(0,64,224),rgb(0,18,64));
+    background-image: -ms-linear-gradient(left,rgb(0,18,64),rgb(0,64,224),rgb(0,64,224),rgb(0,64,224),rgb(0,18,64));
+    background-image: -o-linear-gradient(left,rgb(0,18,64),rgb(0,64,224),rgb(0,64,224),rgb(0,64,224),rgb(0,18,64));
+}
+
+.theading3 {
+    background-color: #E08000;
+    background-image: -webkit-linear-gradient(left,rgb(64,36,0),rgb(224,128,0),rgb(224,128,0),rgb(224,128,0),rgb(64,36,0));
+    background-image: -moz-linear-gradient(left,rgb(64,36,0),rgb(224,128,0),rgb(224,128,0),rgb(224,128,0),rgb(64,36,0));
+    background-image: -ms-linear-gradient(left,rgb(64,36,0),rgb(224,128,0),rgb(224,128,0),rgb(224,128,0),rgb(64,36,0));
+    background-image: -o-linear-gradient(left,rgb(64,36,0),rgb(224,128,0),rgb(224,128,0),rgb(224,128,0),rgb(64,36,0));
+}
+
+.theading, .theading2, .theading3 {
+    color: #FFF;
+    padding: 2px 0;
+    margin-top: 0.2em;
+    margin-bottom: 0.5em;
+}
+
+.icon {
+    vertical-align: bottom;
+}
+
+#catalog .thumb {
+    box-shadow: 0 0 5px rgb(0 0 0 / 25%);
+    min-width: 50px;
+    min-height: 50px;
+    border-radius: 2px;
+}
+
+.ascii {
+    font-family: Mona, 'MS PGothic'!important;
+    word-wrap: break-word;
+    line-height: 1;
+    font-size: 12pt;
+}
+
+.error, .offline {
+    color: #F00;
+}
+
+.good, .online {
+    color: #080;
+}
+
+.globalmsg {
+    color: #F00;
+}
+
+.auditlog {
+    margin: 0.5em;
+    padding: 1em;
+    background-color: #EA8;
+    border-style: solid;
+    border-width: 1px;
+    max-width: 720px;
+}
+
+#catalog .thread {
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
+    overflow: hidden;
+    vertical-align: top;
+    padding: 0.5em 0;
+}
+
+#catalog .thread:hover {
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
+    overflow-y: auto;
+}
+
+.winbar {
+    background-image: linear-gradient(#FCA, #FFE);
+}
+
+.winctrl>*:hover, #settarea>label:hover {
+    background-color: #FFA66066;
+}
+
+.boardlist {
+	font-size: 10pt;
+	background-color: #efe1d7;
+	color: #bb8866;
+}
+
+.boardlist a {
+	color: #880000;
+	text-decoration: none;
+}
