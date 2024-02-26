@@ -2,7 +2,7 @@
 // admin extra module made for kokonotsuba by deadking
 class mod_adminban extends ModuleHelper {
 	private $BANFILE = STORAGE_PATH.'bans.log.txt';
-	private $BANIMG = 'https://static.heyuri.net/image/banned.jpg';
+	private $BANIMG = STATIC_URL."image/banned.jpg";
 	private $mypage;
 
 	public function __construct($PMS) {
@@ -193,7 +193,7 @@ fieldset {
 			<textarea name="privmsg" cols="80" rows="6">No reason given.</textarea></label><br />
 		<details'.($_GET['no']??0 ? ' open="open"' : '').'><summary>Public message</summary><blockquote>
 			<label>Post No.<input type="number" name="no" min="0" value="'.($_GET['no']??'0').'" /></label><br />
-			<textarea id="banmsg" name="msg" cols="80" rows="6"><br /><br /><b class="warning">(USER WAS BANNED FOR THIS POST)</b> <img style= "vertical-align: baseline;" src="https://static.heyuri.net/image/hammer.gif">
+			<textarea id="banmsg" name="msg" cols="80" rows="6"><br /><br /><b class="warning">(USER WAS BANNED FOR THIS POST)</b> <img style= "vertical-align: baseline;" src="'.STATIC_URL.'image/hammer.gif">
 </textarea>
 		</blockquote></details>
 		<center><button type="submit" id="bigredbutton">BAN!</button></center>

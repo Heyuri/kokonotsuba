@@ -19,9 +19,9 @@
 	<meta name="Berry" content="no" />
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive" />
-	<link class="linkstyle" rel="stylesheet" type="text/css" href="css/heyuriclassic.css" title="Heyuri Classic" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="css/futaba.css" title="Futaba" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="css/oldheyuri.css" title="Sakomoto" />
+	<link class="linkstyle" rel="stylesheet" type="text/css" href="{$STATIC_URL}/css/heyuriclassic.css" title="Heyuri Classic" />
+	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}/css/futaba.css" title="Futaba" />
+	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}/css/oldheyuri.css" title="Sakomoto" />
 	
 	<meta http-equiv="cache-control" content="no-cache" />
 	<link rel="shortcut icon" href="image/favicon.png" />
