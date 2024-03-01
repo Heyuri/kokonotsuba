@@ -24,7 +24,7 @@
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}/css/oldheyuri.css" title="Sakomoto" />
 	
 	<meta http-equiv="cache-control" content="no-cache" />
-	<link rel="shortcut icon" href="image/favicon.png" />
+	<link rel="shortcut icon" href="static/image/favicon.png" />
 	<script type="text/javascript" src="js/koko.js"></script>
 	<script type="text/javascript" src="js/qu.js"></script>
 	<script type="text/javascript" src="js/qu2.js"></script>
