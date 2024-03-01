@@ -68,7 +68,7 @@ class mod_cat extends ModuleHelper {
 
 		head($dat);
 		$dat.= '
-		<script type="text/javascript" src="'.$ROOTPATH.'/js/catalog.js"></script>
+		<script type="text/javascript" src="'.ROOTPATH.'/js/catalog.js"></script>
 		<div id="catalog">
 [<a href="'.PHP_SELF2.'?'.time().'">Return</a>]
 <center class="theading2"><b>Catalog</b></center>';
