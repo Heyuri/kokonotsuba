@@ -1097,7 +1097,7 @@ $message.'<br />'.$noticeHost.'
 	<td><b class="title">$sub</b></td>
 	<td><b class="name">$name</b></td>
 	<td><small>$com</small></td>
-	<td>$host <a target="_blank" href="https://otx.alienvault.com/indicator/ip/$host" title="Resolve hostname"><img height="12" src="{$STATIC_URL}image/glass.png"></a> <a href="?mode=admin&admin=del&host=$host" title="See all posts">★</a></td>
+	<td>$host <a target="_blank" href="https://otx.alienvault.com/indicator/ip/$host" title="Resolve hostname"><img height="12" src="$STATIC_URLimage/glass.png"></a> <a href="?mode=admin&admin=del&host=$host" title="See all posts">★</a></td>
 	<td align="center">$clip ($size)<br />$md5chksum</td>
 </tr>
 _ADMINEOF_;
