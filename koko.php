@@ -1090,7 +1090,7 @@ $message.'<br />'.$noticeHost.'
 		}
 
 		// Print out the interface
-		$dat. = '<tr align="LEFT">
+		$dat .= '<tr align="LEFT">
     <th align="center">' . $modFunc . '</th><th><input type="checkbox" name="clist[]" value="' . $no . '" />' . $no . '</th>
     <td><small class="time">' . $now . '</small></td>
     <td><b class="title">' . $sub . '</b></td>
