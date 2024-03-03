@@ -1,8 +1,4 @@
 <?php
-	//ini_set('display_errors', 1);
-	//ini_set('display_startup_errors', 1);
-	//error_reporting(E_ALL);
-	//mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 	require './config.php';
 
 	// Parse the mysql connection string
@@ -68,13 +64,13 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>KotatsuBBS Installer</title>
+		<title>Kokonotsuba Installer</title>
 		<link rel="stylesheet" type="text/css" href="<?php echo STATIC_URL ?>/css/heyuriclassic.css">
 	</head>
 	<body>
 		<h1>Kokonotsuba Installer</h1><hr>
-		<h2>DONT RUN THIS SCRIPT WHITH A DATABASE ALREADY IN USE!</h2>
-		Doing so would drop that database. If you want to use that database, delete this <i>install.php</i>. script and add your own MySQL creds to <i>config.php</i><br><br>
+		<h2>DONT RUN THIS SCRIPT WHITH A TABLE ALREADY IN USE!</h2>
+		Doing so would drop that table. If you want to use that table, delete this <i>install.php</i>. script and add your own MySQL creds to <i>config.php</i><br><br>
 		<div class="reply">
 			Once you have a MySQL server set up with a basic username, password, and database, put the MySQL credentials in <i>config.php</i> and run this form.<br>
 			You have an option to set your own database names here.<hr>
