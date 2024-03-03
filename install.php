@@ -19,7 +19,7 @@
 		try {
 			$conn->query("DROP TABLE IF EXISTS " . $table );
 		} catch (mysqli_sql_exception $e) {
-			echo "Error Failed to drop table : " . $conn->error . "\n";
+			echo "Error Failed to drop table : " . $e . "\n";
 			return False;
 		}
 		try {
@@ -52,7 +52,7 @@
 				index (time)
 			) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;");
 		} catch (mysqli_sql_exception $e) {
-			echo "Error Failed to create table : " . $conn->error . "\n";
+			echo "Error Failed to create table : " . $e . "\n";
 			return False;
 		}
 		
@@ -93,7 +93,7 @@
 		try {
 			$connection = new mysqli($host, $username, $password, $database);
 		} catch (mysqli_sql_exception $e) {
-			echo "invalid credentals. is you database running?";
+			echo "invalid credentals. is you database running? . $e .";
 		}
 		if ($connection) {
 			createDB($connection);
