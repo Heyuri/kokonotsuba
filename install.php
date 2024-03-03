@@ -73,7 +73,7 @@
 		Doing so would drop that table. If you want to use that table, delete this <i>install.php</i>. script and add your own MySQL creds to <i>config.php</i><br><br>
 		<div class="reply">
 			Once you have a MySQL server set up with a basic username, password, and database, put the MySQL credentials in <i>config.php</i> and run this form.<br>
-			You have an option to set your own database names here.<hr>
+			verify these creds are correct.<hr>
 			<form method="post">
 				<label>Username: </label><?php echo htmlspecialchars($username);?><br>
 				<label>Password: </label><?php echo htmlspecialchars($password);?><br>
