@@ -20,7 +20,7 @@ define("FILEIO_PARAMETER", ''); // FileIO Parameters (local storage)
 //define("FILEIO_PARAMETER", serialize(array('http://www.example.com/~demo/satellite.cgi', true, '12345678', 'http://www.example.com/~demo/src/', true)));
 
 // Database Settings
-define("CONNECTION_STRING", 'mysqli://user:password@localhost/boarddb/imglog/'); // PIO Connection string (MySQLi)
+define("CONNECTION_STRING", 'mysqli://user:password@127.0.0.1/boarddb/imglog/'); // PIO Connection string (MySQLi)
 
 // Archive Database Settings (MySQLi)
 define("ARCHIVE_HOST",	'localhost');
