@@ -69,7 +69,7 @@
 	</head>
 	<body>
 		<h1>Kokonotsuba Installer</h1><hr>
-		<h2>DONT RUN THIS SCRIPT WHITH A TABLE ALREADY IN USE!</h2>
+		<h2>DO NOT RUN THIS SCRIPT WHITH A TABLE ALREADY IN USE!</h2>
 		Doing so would drop that table. If you want to use that table, delete this <i>install.php</i>. script and add your own MySQL creds to <i>config.php</i><br><br>
 		<div class="reply">
 			Once you have a MySQL server set up with a basic username, password, and database, put the MySQL credentials in <i>config.php</i> and run this form.<br>
