@@ -44,7 +44,7 @@ define("TITLEIMG", ''); // Board Title
 define("HOME", 'index.html'); // What the [Home] button links to
 define("TOP_LINKS", @file_get_contents('toplinks.txt')); // Additional links
 define("IDSEED", 'setrandom'); // ID generation seed
-define("TRIPSALT", ''); // Used for secure tripcodes. Don't change after setting!
+define("TRIPSALT", 'test'); // Used for secure tripcodes. Don't change after setting!
 define("CAPCODES", array( // tripcode=>color,cap
 	'!tripcode' => array('color'=>'#fd0000', 'cap'=>' ## Admin'),
 ));
@@ -55,7 +55,11 @@ define("CAPCODES", array( // tripcode=>color,cap
 
 // Moderator settings
 // Passwords must be hashed. Obtain a hashed password at https://sys.kolyma.net/passwd.php
-define("ADMIN_HASH", array('')); // Administrator password
+define("ADMIN_HASH", array(
+	'K-X73SjIStJOo',//kolyma test
+	'teH0wLIpW0gyQ',//local test
+
+)); // Administrator password : test
 define("MOD_HASH", array('')); // Moderator password
 define("JANITOR_HASH", array('')); ///
 // Capcode formats (put '%s' where you want the original name)
