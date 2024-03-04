@@ -1,14 +1,6 @@
 <?php
 
 define("PIXMICAT_VER", 'Koko BBS Release 1'); // Version information text
-/*
-
-YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE THIS SOFTWARE.
-
-*/
-if (file_exists('.lockdown') && valid() < LEV_JANITOR) {
-	die('Posting temporarily disabled. Come back later!');
-}
 
 @session_start();
 
@@ -22,7 +14,6 @@ defined("ROLL") or define("ROLL",[]);//When undefined, empty array
 
 /* Update the log file/output thread */
 function updatelog($resno=0,$pagenum=-1,$single_page=false){
-	global $LIMIT_SENSOR;
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PTE = PMCLibrary::getPTEInstance();
@@ -261,6 +252,11 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 	
 }
 
+
+
+
+
+
 /* Output thread schema */
 function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $arr_kill, $arr_old, $kill_sensor, $old_sensor, $showquotelink=true, $adminMode=false, $threads_shown=0){
 	$resno = isset($resno) && $resno ? $resno : 0;
@@ -311,7 +307,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 			if($tw && $th){
 				if ($thumbName != false){ // There is a preview image
 					$thumbURL = $FileIO->getImageURL($thumbName); // thumb URL
-//					$img_thumb = '<small>'._T('img_sample').'</small>';
+					//$img_thumb = '<small>'._T('img_sample').'</small>';
 					$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$thumbURL.'" width="'.$tw.'" height="'.$th.'" class="postimg" alt="'.$imgsize.'" title="Click to show full image" hspace="20" vspace="3" border="0" align="left" /></a>';
 				}
 				if(SHOW_IMGWH) $imgwh_bar = ', '.$imgw.'x'.$imgh; // Displays the original length and width dimensions of the attached image file
@@ -518,19 +514,19 @@ function regist($preview=false){
 			@chmod($dest, 0666);
 			if(!is_file($dest)) error(_T('regist_upload_filenotfound'), $dest);
            // Remove exif
-    if (function_exists('exif_read_data') && function_exists('exif_imagetype')) {
-        $imageType = exif_imagetype($dest);
+			if (function_exists('exif_read_data') && function_exists('exif_imagetype')) {
+				$imageType = exif_imagetype($dest);
 
-        if ($imageType == IMAGETYPE_JPEG) {
-            $exif = @exif_read_data($dest);
-            if ($exif !== false) {
-                // Remove Exif data
-                $image = imagecreatefromjpeg($dest);
-                imagejpeg($image, $dest, 100);
-                imagedestroy($image);
-            }
-        }
-    }
+				if ($imageType == IMAGETYPE_JPEG) {
+					$exif = @exif_read_data($dest);
+					if ($exif !== false) {
+						// Remove Exif data
+						$image = imagecreatefromjpeg($dest);
+						imagejpeg($image, $dest, 100);
+						imagedestroy($image);
+					}
+				}
+			}
 
 			// 2. Determine whether there is any interruption in the process of uploading additional image files
 			$upsizeTTL = $_SERVER['CONTENT_LENGTH'];
@@ -869,7 +865,7 @@ function regist($preview=false){
 		}
 	}
 
-// webhooks
+ // webhooks
 	if(defined('IRC_WH')){
 		$url = 'https:'.fullURL().PHP_SELF."?res=".($resto?$resto:$no)."#p$no";
 		$stream = stream_context_create([
@@ -1047,13 +1043,13 @@ function admindel(&$dat){
 	$posts = $PIO->fetchPosts($line); // Article content array
 
 	$dat.= '<form action="'.PHP_SELF.'" method="POST">';
-	$dat.= '<input type="hidden" name="mode" value="admin" />
-<input type="hidden" name="admin" value="del" />
-<div align="left">'._T('admin_notices').'</div>'.
-$message.'<br />'.$noticeHost.'
-<center><table width="95%" cellspacing="0" cellpadding="0" border="1" class="postlists">
-<thead><tr>'._T('admin_list_header').'</tr></thead>
-<tbody>';
+	$dat.= '<input type="hidden" name="mode" value="admin"/>';
+	$dat.= '<input type="hidden" name="admin" value="del"/>';
+	$dat.= '<div align="left">' ._T('admin_notices'). '</div>';
+	$dat.= $message. '<br />'.$noticeHost;
+	$dat.= '<center><table width="95%" cellspacing="0" cellpadding="0" border="1" class="postlists">';
+	$dat.= '<thead><tr>' ._T('admin_list_header'). '</tr></thead>';
+	$dat.= '<tbody>';
 
 	for($j = 0; $j < $posts_count; $j++){
 		$bg = ($j % 2) ? 'row1' : 'row2'; // Background color
@@ -1098,15 +1094,15 @@ $message.'<br />'.$noticeHost.'
     <td><small>' . $com . '</small></td>
     <td>' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . STATIC_URL . 'image/glass.png"></a> <a href="?mode=admin&admin=del&host=' . $host . '" title="See all posts">★</a></td>
     <td align="center">' . $clip . ' (' . $size . ')<br />' . $md5chksum . '</td>
-</tr>';
+	</tr>';
 	}
 	$dat.= '</tbody></table>
 		<p>
 			<input type="submit" value="'._T('admin_submit_btn').'" /> <input type="reset" value="'._T('admin_reset_btn').'" /> [<label><input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on" />'._T('del_img_only').'</label>]
 		</p>
 		<p>'._T('admin_totalsize', $FileIO->getCurrentStorageSize()).'</p>
-</center></form>
-<hr size="1" />';
+	</center></form>
+	<hr size="1" />';
 
 	$countline = $PIO->postCount(); // Total number of articles(threads)
 	$page_max = ($searchHost ? 0 : ceil($countline / ADMIN_PAGE_DEF) - 1); // Total number of pages
@@ -1147,23 +1143,20 @@ function search(){
 	$links = '[<a href="'.PHP_SELF2.'?'.time().'">'._T('return').'</a>]';
 	$level = valid();
 	$PMS->useModuleMethods('LinksAboveBar', array(&$links,'search',$level));
-	$dat .= $links.'<center class="theading2"><b>'._T('search_top').'</b></center>
-</div>
-';
+	$dat .= $links.'<center class="theading2"><b>'._T('search_top').'</b></center></div>';
 	echo $dat;
 	if($searchKeyword==''){
 		echo '<form action="'.PHP_SELF.'" method="post">
-<div id="search">
-<input type="hidden" name="mode" value="search" />
-';
+	<div id="search">
+	<input type="hidden" name="mode" value="search" />';
 		echo '<ul>'._T('search_notice').'<input type="text" name="keyword" size="30" />
-'._T('search_target').'<select name="field"><option value="com" selected="selected">'._T('search_target_comment').'</option><option value="name">'._T('search_target_name').'</option><option value="sub">'._T('search_target_topic').'</option><option value="no">'._T('search_target_number').'</option></select>
-'._T('search_method').'<select name="method"><option value="AND" selected="selected">'._T('search_method_and').'</option><option value="OR">'._T('search_method_or').'</option></select>
-<input type="submit" value="'._T('search_submit_btn').'" />
-</li>
-</ul>
-</div>
-</form>';
+	'._T('search_target').'<select name="field"><option value="com" selected="selected">'._T('search_target_comment').'</option><option value="name">'._T('search_target_name').'</option><option value="sub">'._T('search_target_topic').'</option><option value="no">'._T('search_target_number').'</option></select>
+	'._T('search_method').'<select name="method"><option value="AND" selected="selected">'._T('search_method_and').'</option><option value="OR">'._T('search_method_or').'</option></select>
+	<input type="submit" value="'._T('search_submit_btn').'" />
+	</li>
+	</ul>
+	</div>
+	</form>';
 	}else{
 		$searchField = $_POST['field']; // Search target (no:number, name:name, sub:title, com:text)
 		$searchMethod = $_POST['method']; // Search method
@@ -1256,11 +1249,7 @@ function listModules(){
 	$links = '[<a href="'.PHP_SELF2.'?'.time().'">'._T('return').'</a>]';
 	$level = valid();
 	$PMS->useModuleMethods('LinksAboveBar', array(&$links,'modules',$level));
-	$dat .= $links.'<center class="theading2"><b>'._T('module_info_top').'</b></center>
-</div>
-
-<div id="modules">
-';
+	$dat .= $links.'<center class="theading2"><b>'._T('module_info_top').'</b></center></div><div id="modules">';
 	/* Module Loaded */
 	$dat .= _T('module_loaded').'<ul>';
 	foreach($PMS->getLoadedModules() as $m) $dat .= '<li>'.$m."</li>\n";
@@ -1269,10 +1258,7 @@ function listModules(){
 	/* Module Infomation */
 	$dat .= _T('module_info').'<ul>';
 	foreach($PMS->moduleInstance as $m) $dat .= '<li>'.$m->getModuleName().'<div>'.$m->getModuleVersionInfo()."</div></li>\n";
-	$dat .= '</ul><hr size="1" />
-</div>
-
-';
+	$dat .= '</ul><hr size="1" /></div>';
 	foot($dat);
 	echo $dat;
 }
@@ -1328,11 +1314,11 @@ function showstatus(){
 	$level = valid();
 	$PMS->useModuleMethods('LinksAboveBar', array(&$links,'status',$level));
 	$dat .= $links.'<center class="theading2"><b>'._T('info_top').'</b></center>
-</div>
-<center id="status">
+	</div>
+	<center id="status">
 	<table cellspacing="0" cellpadding="0" border="1"><thead>
 		<tr><th colspan="4">'._T('info_basic').'</th></tr>
-	</thead><tbody>
+		</thead><tbody>
 		<tr><td width="240">'._T('info_basic_ver').'</td><td colspan="3"> '.PIXMICAT_VER.' </td></tr>
 		<tr><td>'._T('info_basic_pio').'</td><td colspan="3"> '.PIXMICAT_BACKEND.' : '.$PIO->pioVersion().'</td></tr>
 		<tr><td>'._T('info_basic_threadsperpage').'</td><td colspan="3"> '.PAGE_DEF.' '._T('info_basic_threads').'</td></tr>
@@ -1369,7 +1355,7 @@ function showstatus(){
 		<tr align="center"><td colspan="3">'.$func_thumbInfo.'</td><td>'.$func_thumbWork.'</td></tr>
 	</tbody></table>
 	<hr size="1" />
-</center>';
+	</center>';
 
 	foot($dat);
 	echo $dat;
@@ -1396,7 +1382,7 @@ function actionlog(&$dat) {
 		<option'.($filter=='admin'?' selected="selected"':'').' value="admin">## Admin actions only</option>
 	</select><input type="submit" value="Filter" /><br />
 	<label>IP Addr:<input class="textinput" type="text" name="ipfilter" value="'.($_REQUEST['ipfilter']??'').'" /></label>
-</form>';
+	</form>';
 	switch ($filter) {
 		case 'user':
 			$regex = '^USER';
