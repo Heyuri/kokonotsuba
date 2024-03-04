@@ -1,7 +1,7 @@
 <?php
 /*---- Part 1：Basic Program Settings ----*/
 // Server Settings
-if(!defined('DEBUG')) define("DEBUG", false); // Set to "true" to generate detailed debug settings in the error.log file
+if(!defined('DEBUG')) define("DEBUG", true); // Set to "true" to generate detailed debug settings in the error.log file
 define("ROOTPATH", './'); // Main Program Root Directory
 define("STORAGE_PATH", 'dat/'); // Storage directory, needs to have 777 permissions (include trailing '/')
 define("TIME_ZONE", '0'); // Timezones, 0 is UTC. Example: '-4' for New York, or '9' for Japan
@@ -20,7 +20,7 @@ define("FILEIO_PARAMETER", ''); // FileIO Parameters (local storage)
 //define("FILEIO_PARAMETER", serialize(array('http://www.example.com/~demo/satellite.cgi', true, '12345678', 'http://www.example.com/~demo/src/', true)));
 
 // Database Settings
-define("CONNECTION_STRING", 'mysqli://user:password@127.0.0.1/boarddb/imglog/'); // PIO Connection string (MySQLi)
+define("CONNECTION_STRING", 'mysqli://kodomo:kodomo@127.0.0.1/boarddb/imglog/'); // PIO Connection string (MySQLi)
 
 // Archive Database Settings (MySQLi)
 define("ARCHIVE_HOST",	'localhost');

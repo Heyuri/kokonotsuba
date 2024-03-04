@@ -2,6 +2,10 @@
 
 define("PIXMICAT_VER", 'Koko BBS Release 1'); // Version information text
 
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+error_reporting(E_ALL);
+
 @session_start();
 
 require './config.php'; // Introduce a settings file
