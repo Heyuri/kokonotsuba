@@ -138,6 +138,8 @@ define("BAN_CHECK", 1); // Comprehensive ban check function
 $BANPATTERN = array(); // Deprecated by adminban module
 $DNSBLservers = array();  // Deprecated by adminban module
 $DNSBLWHlist = array(); // Deprecated by adminban module
+$BAD_STRING = array(); // Deprecated by spamdb 
+$BAD_FILEMD5 = array(); // Deprecated by spamdb
 define("GLOBAL_BANS", STORAGE_PATH.'globalbans.log');
 
 
