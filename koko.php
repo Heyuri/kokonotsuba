@@ -466,8 +466,7 @@ function regist($preview=false){
 	
 
 	$time = $_SERVER['REQUEST_TIME'];
-	$microtime = microtime(true);
-	$tim  = sprintf("%d%03d", $microtime, ($microtime - floor($microtime)) * 1000);
+	$tim  = sprintf('%d%03d', $time = microtime(true), ($time - floor($time)) * 1000);
 	//$tim = $time.substr($_SERVER['REQUEST_TIME_FLOAT'],2,3);
 
 	if(!TEXTBOARD_ONLY) {

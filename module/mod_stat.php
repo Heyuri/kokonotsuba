@@ -27,7 +27,7 @@ class mod_stat extends ModuleHelper {
 		}
 		$posts = $PIO->fetchPosts( $PIO->fetchPostList() );
 		$time = $_SERVER['REQUEST_TIME'] - $limit;
-		$tim = intval($time.substr($_SERVER['REQUEST_TIME_FLOAT'],2,3));
+		$tim = sprintf('%d%03d', $time = microtime(true), ($time - floor($time)) * 1000);
 		$count = 0;
 		if ($limit == -2) {
 			$count = $posts[0]['no'];
