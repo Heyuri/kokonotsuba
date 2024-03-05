@@ -257,10 +257,6 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 }
 
 
-
-
-
-
 /* Output thread schema */
 function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $arr_kill, $arr_old, $kill_sensor, $old_sensor, $showquotelink=true, $adminMode=false, $threads_shown=0){
 	$resno = isset($resno) && $resno ? $resno : 0;
@@ -432,22 +428,20 @@ function previewPost($tmpno) {
 
 /* Write to log file */
 function regist($preview=false){
-	global $BAD_STRING, $BAD_FILEMD5, $BAD_IPADDR, $LIMIT_SENSOR;
+	global $LIMIT_SENSOR; //fefined in config
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PMS = PMCLibrary::getPMSInstance();
 
-	$fname = $dest = $mes = ''; $up_incomplete = 0; $is_admin = false;
+	$fname = $dest = $mes = ''; 
+	$up_incomplete = 0; 
+	$is_admin = false;
 	$delta_totalsize = 0; // The change in the total file size
 
-	if(!$_SERVER['HTTP_REFERER']
-	|| !$_SERVER['HTTP_USER_AGENT']
-	|| preg_match("/^(curl|wget)/i", $_SERVER['HTTP_USER_AGENT']) ){
-		error('You look like a robot.', $dest);
-	}
 
 	if($_SERVER['REQUEST_METHOD'] != 'POST') error(_T('regist_notpost')); // Informal POST method
 
+	//parse post.
 	$name = CleanStr($_POST['name']??'');
 	$email = CleanStr($_POST['email']??'');
 	$sub = CleanStr($_POST['sub']??'');
@@ -464,19 +458,17 @@ function regist($preview=false){
 	// Blocking: IP/Hostname/DNSBL Check Function
 	$baninfo = '';
 	if(BanIPHostDNSBLCheck($ip, $host, $baninfo)) error(_T('regist_ipfiltered', $baninfo));
-	// Block: Restrict the text that appears (text filter?)
-	foreach($BAD_STRING as $value){
-		if(preg_match($value, $com) || preg_match($value, $sub) || preg_match($value, $name) || preg_match($value, $email)){
-			error(_T('regist_wordfiltered'));
-		}
-	}
 
 	// Check if you enter Sakura Japanese kana (kana = Japanese syllabary)
 	foreach(array($name, $email, $sub, $com) as $anti) if(anti_sakura($anti)) error(_T('regist_sakuradetected'));
 
-	// Time
+	// Get the current time with microsecond precision
+	
+
 	$time = $_SERVER['REQUEST_TIME'];
-	$tim = $time.substr($_SERVER['REQUEST_TIME_FLOAT'],2,3);
+	$microtime = microtime(true);
+	$tim  = sprintf("%d%03d", $microtime, ($microtime - floor($microtime)) * 1000);
+	//$tim = $time.substr($_SERVER['REQUEST_TIME_FLOAT'],2,3);
 
 	if(!TEXTBOARD_ONLY) {
 		$upfile = CleanStr($_FILES['upfile']['tmp_name']??'');
@@ -1448,7 +1440,9 @@ function logout(&$dat) {
 
 /*-----------The main judgment of the functions of the program-------------*/
 if(GZIP_COMPRESS_LEVEL && ($Encoding = CheckSupportGZip())){ ob_start(); ob_implicit_flush(0); } // Support and enable Gzip compression to set buffers
-$mode = isset($_GET['mode']) ? $_GET['mode'] : (isset($_POST['mode']) ? $_POST['mode'] : ''); // Current operating mode (GET, POST)
+
+
+$mode = $_GET['mode'] ?? $_POST['mode'] ?? '';
 
 switch($mode){
 	case 'regist':

@@ -98,24 +98,11 @@ $PROXYHEADERlist=array(
 define("TEXTBOARD_ONLY", 0); // Completely disables all file features
 define("USE_PREVIEW", 0); // BROKEN! 
 define("FORTUNES", array( // Used for fortune function, selected at random.
-	'Your true waifu will reveal herself',
-	'Only time will tell',
-	'Dark times are to come',
-	'Your harem is only just begining',
-	'You have cancer',
-	'You have aids',
-	'Tomo will strangle you in your sleep',
-	'You just lost the game',
-	'We don\'t know what happens next',
-	'mah pen0z is bigger than uurz',
-	'LOLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOL',
 	'Bad luck',
 	'Average luck',
 	'Good luck',
 	'Godly luck',
 	'Very bad luck',
-	'ｷﾀ━━━━━━(ﾟ∀ﾟ)━━━━━━ !!!!',
-	'（　´_ゝ`）ﾌｰﾝ'
 ));
 
 // Module List
@@ -151,8 +138,6 @@ define("BAN_CHECK", 1); // Comprehensive ban check function
 $BANPATTERN = array(); // Deprecated by adminban module
 $DNSBLservers = array();  // Deprecated by adminban module
 $DNSBLWHlist = array(); // Deprecated by adminban module
-$BAD_STRING = array(); // Deprecated by spamdb 
-$BAD_FILEMD5 = array(); // Deprecated by spamdb
 define("GLOBAL_BANS", STORAGE_PATH.'globalbans.log');
 
 
