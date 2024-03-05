@@ -603,8 +603,6 @@ function regist($preview=false){
 			if(array_search(substr($ext, 1), $allow_exts)===false) error(_T('regist_upload_notsupport'), $dest); // Uploaded file not allowed due to wrong file extension
 			// Block setting: Restrict the upload of MD5 checkcodes for additional images
 			$md5chksum = md5_file($dest); // File MD%
-			if(array_search($md5chksum, $BAD_FILEMD5)!==false) error(_T('regist_upload_blocked'), $dest); // If the MD5 checkcode of the uploaded file is in the block list, the upload is blocked
-
 			// 4. Calculate the thumbnail display size of the additional image file
 			$W = $imgW = $size[0];
 			$H = $imgH = $size[1];
