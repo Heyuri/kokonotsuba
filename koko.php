@@ -476,7 +476,7 @@ function regist($preview=false){
 
 	// Time
 	$time = $_SERVER['REQUEST_TIME'];
-	$tim = $time.substr($_SERVER['REQUEST_TIME_FLOAT'],2,3);
+	$tim  = sprintf('%d%03d', $time = microtime(true), ($time - floor($time)) * 1000);
 
 	if(!TEXTBOARD_ONLY) {
 		$upfile = CleanStr($_FILES['upfile']['tmp_name']??'');
