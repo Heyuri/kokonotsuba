@@ -15,10 +15,21 @@ return [
      * its best to keep it outside of the web path
      * /var/www/logs
      */
-    'timeZone' => '0', // Timezones, 0 is UTC. Example: '-4' for New York, or '9' for Japan
+    'timeZone' => 'UTC',
     'logDir' => '../logs', //also known as storage path
     'rootPath' => './', //dumb config
     'auditLog' => 'auditlog.txt',
     
-
+    /*
+     * This section should end up in its own board config file.
+     */
+    'fileConf' =>[
+        'allowedMimeTypes'=> [
+            'image/jpeg', 
+            'image/png', 
+            'image/gif'
+        ],
+        'maxFileSize'=> 5242880, // 5mb
+    ],
+    'cookieExpireTime'=> time()+7*24*3600, // 7days from the curent time
 ];
