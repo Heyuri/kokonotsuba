@@ -9,7 +9,7 @@ class fileDataClass {
 
     
     /*
-     * why not get this on the fly when rebuilding a page?? 
+     * why not get this on the fly when rebuilding a page??  prob to slow for each page insted of pulling from cache.
      * 
         private $imgw; //image width
         private $imgh; //image hight

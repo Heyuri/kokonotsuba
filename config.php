@@ -1,4 +1,12 @@
 <?php
+
+
+
+// this file is to be removed and in favor of using conf.php
+// that is becuase you can easily write changes to conf.php from whithin a php script.
+
+
+
 /*---- Part 1：Basic Program Settings ----*/
 // Server Settings
 if(!defined('DEBUG')) define("DEBUG", true); // Set to "true" to generate detailed debug settings in the error.log file
@@ -56,10 +64,10 @@ define("CAPCODES", array( // tripcode=>color,cap
 // Moderator settings
 // Passwords must be hashed. Obtain a hashed password at https://sys.kolyma.net/passwd.php
 define("ADMIN_HASH", array(
-	'K-X73SjIStJOo',//kolyma test
-	'teH0wLIpW0gyQ',//local test
+	'K-X73SjIStJOo',//kolyma 'test'
+	'teH0wLIpW0gyQ',//local 'test'
 
-)); // Administrator password : test
+)); // Administrator password is: test
 define("MOD_HASH", array('')); // Moderator password
 define("JANITOR_HASH", array('')); ///
 // Capcode formats (put '%s' where you want the original name)
@@ -169,7 +177,7 @@ define("THUMB_SETTING", array( // Thumbnail Gen. Settings
 
 // Appearance
 $ADDITION_INFO = @file_get_contents(ROOTPATH.'addinfo.txt'); // Addinfo
-$LIMIT_SENSOR = array('ByThreadCountCondition'=>150); // AutoDelete, defaults to 10 pages
+$THREAD_CAP = array('ByThreadCountCondition'=>150); // AutoDelete, defaults to 10 pages
 define("TEMPLATE_FILE", 'kokoimg.tpl'); // Template File. Set this and the next line to 'kokotxt.tpl' and 'kokotxtreply.tpl' respectively to use Kokonotsuba as a textboard.
 define("REPLY_TEMPLATE_FILE", 'kokoimg.tpl'); // Reply page template file
 define("PAGE_DEF", 15); // How many threads per page

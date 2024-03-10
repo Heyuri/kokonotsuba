@@ -1,4 +1,4 @@
-# Kotatsuba
+# kotatsuBBS
 
 ## Required stack
 kotatsuba is designed and tested on the following stack.<br>
