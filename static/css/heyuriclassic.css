@@ -1,25 +1,16 @@
-@import "base.css";
+@import "/static/css/base.css";
 /* updated */
   @font-face {
-    font-family:           'Osaka';
-//  platform-font-family:  'Osaka';
-    font-style:            normal;
-    unicode-range:         U+0-10FFFF;
-    font-weight:           normal;
-    src:                   url('Osaka.woff');
-  }
-  @font-face {
-    font-family:           'Osaka';
-//  platform-font-family:  'Osaka';
-    font-style:            normal;
-    unicode-range:         U+0-10FFFF;
-    font-weight:           normal;
-    src:                   url('Osaka.woff');
+    font-family: 'Osaka';
+    font-style: normal;
+    unicode-range: U+0-10FFFF;
+    font-weight: normal;
+    src: url('/static/fonts/Osaka.woff');
   }
 
 @font-face {
         font-family:'submona';
-        src:url('submona/submona.woff') format('woff');
+        src: url('/static/fonts/submona/submona.woff') format('woff');
 }
 body {
 	background-image: linear-gradient(#ffccab, #ffffee);
@@ -66,8 +57,6 @@ input:focus {
 	color: #000;
 }
 
-.emote {}
-
 a,
 a:link,
 a:visited {
@@ -111,7 +100,6 @@ a:hover {
 	padding: 1px 4px;
 	border: 1px solid #38444d;
 	border-radius: 0px;
-	/* Chrome fucks up borders */
 	outline: none;
 	font-size: 10pt;
 	color: #000;

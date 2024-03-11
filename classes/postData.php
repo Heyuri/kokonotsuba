@@ -1,6 +1,6 @@
 <?php
-require_once 'fileDataClass.php';
-require_once 'libCommon.php';
+require_once './fileDataClass.php';
+require_once '../testLib.php';
 class postDataClass {
     private $threadID;//threadID, resto
 	private $category;//thread catagory
@@ -78,7 +78,7 @@ class postDataClass {
 
     // files uploaded will be clensed
     private function loadFilesFromPostRequest(){
-        $config = require('config.php')['fileConf'];
+        $config = require('../config.php')['fileConf'];
 
         // Check if the file input exists and a file is uploaded
         if (!isset($_FILES['upfile'])){

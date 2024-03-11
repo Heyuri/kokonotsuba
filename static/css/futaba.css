@@ -39,7 +39,7 @@ table td {
 	color: #880000;
 }
 .download {
- /*   background-image: url(https://s.kncdn.org/image/icon/futaba/download.gif);*/
+    background-image: url(/static/image/download.png);
 }
 .banner {
 	border: 1px solid black;

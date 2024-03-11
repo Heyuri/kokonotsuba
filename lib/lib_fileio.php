@@ -121,7 +121,7 @@ abstract class AbstractIfsFileIO extends AbstractFileIO {
 
     public function __construct($parameter, $ENV) {
         parent::__construct();
-
+        //?????
         require($ENV['IFS.PATH']);
         $this->IFS = new IndexFS($ENV['IFS.LOG']);
         $this->IFS->openIndex();

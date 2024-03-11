@@ -391,9 +391,9 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 
 
 /* user submited a post */
-require_once 'postDataClass.php';
-require_once 'hookClass.php';
-$conf = require 'boardConf.php';
+require_once './classes/postDataClass.php';
+require_once './classes/hookClass.php';
+$conf = require './conf.php';
 date_default_timezone_set($conf->timeZone);
 
 // gets data from post request -> validate data -> save data to database -> redraw pages -> redirect user
