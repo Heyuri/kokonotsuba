@@ -239,29 +239,41 @@ class ThumbWrapper{
 				return false;
 		}
 		if(!$im_in) return false;
+	   	$this->sourceWidth = imagesx($im_in);
+		$this->sourceHeight = imagesy($im_in);
 		$im_out = ImageCreateTrueColor($this->thumbWidth, $this->thumbHeight);
-		
-		//Transparency
-		imagecolortransparent($im_out, imagecolorallocatealpha($im_out, 0, 0, 0, 0));
-		imagesavealpha($im_out, true);
-		imagealphablending($im_out, false);
-		
-		ImageCopyResampled($im_out, $im_in, 0, 0, 0, 0, $this->thumbWidth, $this->thumbHeight, $this->sourceWidth, $this->sourceHeight);
-		switch(strtolower($this->thumbSetting['Format'])){
-			case 'png':
-				ImagePNG($im_out, $destFile, intval($this->thumbQuality/10)); //Temp workaround
-				break;
-			case 'gif':
-				ImageGIF($im_out, $destFile);
-				break;
-			case 'jpg':
-			case 'jpeg':
-			default:
-				ImageJPEG($im_out, $destFile, $this->thumbQuality);	
-				break;
-		}
-		ImageDestroy($im_in); ImageDestroy($im_out);
-		return true;
+
+
+	   switch(strtolower($this->thumbSetting['Format'])){
+		case 'png':
+			//Transparency
+			imagecolortransparent($im_out, imagecolorallocatealpha($im_out, 0, 0, 0, 0));
+			imagesavealpha($im_out, true);
+			imagealphablending($im_out, false);
+			ImageCopyResampled($im_out, $im_in, 0, 0, 0, 0, $this->thumbWidth, $this->thumbHeight, $this->sourceWidth, $this->sourceHeight);
+			ImagePNG($im_out, $destFile, intval($this->thumbQuality/10)); //Temp workaround
+			break;
+		case 'gif':
+			ImageGIF($im_out, $destFile);
+			break;
+		case 'jpg':
+		case 'jpeg':
+		default:
+			$backgroundColor = imagecolorallocate($im_out, 240, 224, 214); // make a config for this.  this is the defualt heyuri post background
+			imagefill($im_out, 0, 0, $backgroundColor);
+	
+			// Enable blending for images with transparency
+			if($size[2] === IMAGETYPE_PNG) {
+				imagealphablending($im_out, true);
+				imagesavealpha($im_out, true);
+			}
+			ImageCopyResampled($im_out, $im_in, 0, 0, 0, 0, $this->thumbWidth, $this->thumbHeight, $this->sourceWidth, $this->sourceHeight);
+			ImageJPEG($im_out, $destFile, $this->thumbQuality);	
+			break;
+	   }
+	   ImageDestroy($im_in); 
+	   ImageDestroy($im_out);
+	   return true;
 	}
 }
 ?>
