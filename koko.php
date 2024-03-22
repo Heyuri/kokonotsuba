@@ -22,221 +22,25 @@ require_once './classes/auth.php';
 class boardClass{
 	private $conf = require './conf.php'; // board configs.
 	private $threads = [];
+	private $threadsFullyLoaded = false;
+	private $repo;
 
 	public function __construct($conf){
 		$this->conf = $conf;
 		date_default_timezone_set($this->conf->timeZone);
 	}
-
-	// gets data from post request -> validate data -> save data to database -> redraw pages -> redirect user
-	public function postToThread($threadID){
-		$conf = $this->conf;
-		// do some house keeping
-
-		//gen post password if none is provided
-		if($_POST['password'] == ''){
-			$hasinput = $_SERVER['REMOTE_ADDR'] . time() . $conf['passwordSalt'];
-			$hash = hash('sha256', $hasinput);
-			$_POST['password'] = substr($hash, -8); 
-		}
-
-		setrawcookie('passwordc', $_POST['password'], $conf->cookieExpireTime);
-		setrawcookie('namec', $_POST['name'], $conf->cookieExpireTime);
-
-
-		$auth = AuthClass::getInstance(); // singleton to check session and see if the user's role.
-		$hookObj = HookClass::getInstance(); // singelton to manage hooks so moduels are easy to write.
-
-		/*do some magic to get thread or fail
-		//invalid thread ID
-		if (!isset($_POST['threadID']) && !is_numeric($_POST['threadID'])) {
-			echo 'invalid threadID';
-			return;
-		}
-		*/
-		$fileHandler = new fileHandlerClass($conf->fileConf);
-		$postData = new PostDataClass(	$conf, $_POST['name'], $_POST['email'], $_POST['subject'], 
-										$_POST['comment'], $_POST['password'], $_SERVER['REMOTE_ADDR'], time());
-
-
-		
-		// get the uploaded files and put them inside the post object.
-		$uploadFiles = $fileHandler->getFilesFromPostRequest();
-		foreach ($uploadFiles as $file) {
-			$postData->addFile($file);
-		}
-		
-		$postData->procssesFiles(); 	// do file procssesing like make thumbnails. make hash. etc.
-
-		// if we are not admin or mod, remove any html tags.
-		if( !$auth->isAdmin() || !$auth->isMod()){ 	
-			$postData->stripHtml();
-		}
-
-		//if the board lets you tripcode, apply tripcode to name.
-		if($conf['canTripcode']){
-			$postData->applyTripcode();	
-		}
-		
-		//if the board lets you have a id, apply the id.
-		//if($conf->usingID){
-		// this should be done as a moduel?
-		//}
-
-		$hookObj->executeHook("onUserPostToBoard", $postData, $fileHandler);// HOOK base post fully loaded
-
-		/*prep post for db and drawing*/
-		// stuff like bb code, emotes, capcode, ID, should all be handled in moduels.
-
-		// if the board allows embeding of links
-		if($conf['autoEmbedLinks']){
-			$postData->embedLinks();
-		}
-		// if board allows post to link to other post.
-		if($conf['allowQuoteLinking']){
-			$postData->quoteLinks();
-		}
-		$hookObj->executeHook("onPostPrepForDrawing", $postData);// HOOK post with html fully loaded
-
-		//after all of the text is converted properly.
-
-		//save to database.
-
-		//add post to proper thread object.
-
-		//draw page.
-
-		// Continuous submission / same additional image check
-		$checkcount = 50; // Check 50 by default
-		$pwdc = substr(md5($pwdc), 2, 8); // Cookies Password
-		if (valid()<LEV_MODERATOR or defined('VIPDEF'))  {
-			if($PIO->isSuccessivePost($checkcount, $com, $time, $pass, $pwdc, $host, $upfile_name))
-				error(_T('regist_successivepost'), $dest); // Continuous submission check
-			if($dest){ if($PIO->isDuplicateAttachment($checkcount, $md5chksum)) error(_T('regist_duplicatefile'), $dest); } // Same additional image file check
-		}
-		if($resto) $ThreadExistsBefore = $PIO->isThread($resto);
-
-		// Deletion of old articles
-		if(PIOSensor::check('delete', $THREAD_CAP)){
-			$delarr = PIOSensor::listee('delete', $THREAD_CAP);
-			if(count($delarr)){
-				deleteCache($delarr);
-				$PMS->useModuleMethods('PostOnDeletion', array($delarr, 'recycle')); // "PostOnDeletion" Hook Point
-				$files = $PIO->removePosts($delarr);
-				if(count($files)) $delta_totalsize -= $FileIO->deleteImage($files); // Update delta value
-			}
-		}
-
-		// Additional image file capacity limit function is enabled: delete oversized files
-		if(STORAGE_LIMIT && STORAGE_MAX > 0){
-			$tmp_total_size = $FileIO->getCurrentStorageSize(); // Get the current size of additional images
-			if($tmp_total_size > STORAGE_MAX){
-				$files = $PIO->delOldAttachments($tmp_total_size, STORAGE_MAX, false);
-				$delta_totalsize -= $FileIO->deleteImage($files);
-			}
-		}
-
-		// Determine whether the article you want to respond to has just been deleted
-		if($resto){
-			if($ThreadExistsBefore){ // If the thread of the discussion you want to reply to exists
-				if(!$PIO->isThread($resto)){ // If the thread of the discussion you want to reply to has been deleted
-					// Update the data source in advance, and this new addition is not recorded
-					$PIO->dbCommit();
-					updatelog();
-					error(_T('regist_threaddeleted'), $dest);
-				}else{ // Check that the thread is set to suppress response (by the way, take out the post time of the original post)
-					$post = $PIO->fetchPosts($resto); // [Special] Take a single article content, but the $post of the return also relies on [$i] to switch articles!
-					list($chkstatus, $chktime) = array($post[0]['status'], $post[0]['tim']);
-					$chktime = substr($chktime, 0, -3); // Remove microseconds (the last three characters)
-					$flgh = $PIO->getPostStatus($chkstatus);
-				}
-			}else error(_T('thread_not_found'), $dest); // Does not exist
-		}
-
-		// Calculate field values
-		$no = $PIO->getLastPostNo('beforeCommit') + 1;
-		isset($ext) ? 0 : $ext = '';
-		isset($imgW) ? 0 : $imgW = 0;
-		isset($imgH) ? 0 : $imgH = 0;
-		isset($imgsize) ? 0 : $imgsize = '';
-		isset($W) ? 0 : $W = 0;
-		isset($H) ? 0 : $H = 0;
-		isset($md5chksum) ? 0 : $md5chksum = '';
-		$age = false;
-		$status = '';
-		if ($resto) {
-			if ($PIO->postCount($resto) <= MAX_RES || MAX_RES==0) {
-				if(!MAX_AGE_TIME || (($time - $chktime) < (MAX_AGE_TIME * 60 * 60))) $age = true; // Discussion threads are not expired
-			}
-			if (NOTICE_SAGE && stristr($email, 'sage')) {
-				$age = false;
-				if (!CLEAR_SAGE) $name.= '&nbsp;<b><font color="#F00">SAGE!</font></b>';
-			}
-		}
-
-
-		$PMS->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $resto, array($W, $H, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
-		$PIO->addPost($no,$resto,$md5chksum,$category,$tim,$fname,$ext,$imgW,$imgH,$imgsize,$W,$H,$pass,$now,$name,$email,$sub,$com,$host,$age,$status);
-
-
-		logtime("Post No.$no registered", valid());
-		// Formal writing to storage
-		$PIO->dbCommit();
-		$lastno = $PIO->getLastPostNo('afterCommit'); // Get this new article number
-		$PMS->useModuleMethods('RegistAfterCommit', array($lastno, $resto, $name, $email, $sub, $com)); // "RegistAfterCommit" Hook Point
-
-		// Cookies storage: password and e-mail part, for one week
-		setcookie('pwdc', $pwd, time()+7*24*3600);
-		setcookie('emailc', $email, time()+7*24*3600);
-		if($dest && is_file($dest)){
-			$destFile = IMG_DIR.$tim.$ext; // Image file storage location
-			$thumbFile = THUMB_DIR.$tim.'s.'.THUMB_SETTING['Format']; // Preview image storage location
-			if (defined(CDN_DIR)) {
-				$destFile = CDN_DIR.$destFile;
-				$thumbFile = CDN_DIR.$thumbFile;
-			}
-			if(USE_THUMB !== 0){ // Generate preview image
-				$thumbType = USE_THUMB; if(USE_THUMB==1){ $thumbType = THUMB_SETTING['Method']; }
-				require(ROOTPATH.'lib/thumb/thumb.'.$thumbType.'.php');
-				if (isset($tmpfile)) $thObj = new ThumbWrapper($tmpfile, $imgW, $imgH);
-				else $thObj = new ThumbWrapper($dest, $imgW, $imgH);
-				$thObj->setThumbnailConfig($W, $H, THUMB_SETTING);
-				$thObj->makeThumbnailtoFile($thumbFile);
-				@chmod($thumbFile, 0666);
-				unset($thObj);
-			}
-			rename($dest, $destFile);
-			if(file_exists($destFile)){
-				$FileIO->uploadImage($tim.$ext, $destFile, filesize($destFile));
-				$delta_totalsize += filesize($destFile);
-			}
-			if(file_exists($thumbFile)){
-				$FileIO->uploadImage($tim.'s.'.THUMB_SETTING['Format'], $thumbFile, filesize($thumbFile));
-				$delta_totalsize += filesize($thumbFile);
-			}
-		}
-
-
-
-		// delta != 0 indicates that the total file size has changed and the cache must be updated
-		if($delta_totalsize != 0){
-			$FileIO->updateStorageSize($delta_totalsize);
-		}
-		updatelog();
-
-		if(isset($_POST['up_series'])){
-			if($resto) $redirect = PHP_SELF.'?res='.$resto.'&upseries=1';
-			else $redirect = PHP_SELF.'?res='.$lastno.'&upseries=1';
-		}
-		/*
-		*
-		* todo: save the data to the data base.
-		* redraw all pages.
-		* redirect user.
-		* probly want to do stuff with moduels too?
-		* <style> @keyframes colorRotate {from {color: #6666ff;}10% {color: #0099ff;}50% {color: #00ff00;}75% {color: #ff3399;}100% {color: #6666ff;}}</style><b style="text-align: center; letter-spacing: 2px; animation: colorRotate 6s linear 0s infinite;">%s ##site Owner</b>
-		*/
-		redirect($redirect, 0);
+	public function getThreads(){
+		if($this->threadsFullyLoaded == false){
+            $this->threads = $this->repo->loadThreads($this->conf);
+            $this->threadsFullyLoaded = true;
+        }
+        return $this->threads;
+	}
+	public function getThreadByID($threadID){
+        if(!isset($this->threads[$threadID])){
+            $this->threads[$threadID] = $this->repo->loadThreadByID($this->conf ,$threadID);
+        }
+        return $this->threads[$threadID];
 	}
 
 	/* Update the log file/output thread */
@@ -1133,7 +937,8 @@ elseif($_POST['action']){
 	$_POST['action'];
 	switch ($action) {
 		case 'postToThread':
-			$board->postToThread($_POST['ThreadID']);
+			$thread = $board->getThreadByID($_POST['ThreadID']);
+			$thread->postToThread();
 			break;
 		default:
 			$stripedInput = htmlspecialchars($_POST['action'], ENT_QUOTES, 'UTF-8');

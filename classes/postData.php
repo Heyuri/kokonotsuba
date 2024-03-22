@@ -6,7 +6,7 @@ class PostDataClass {
     private int $postID;//postID 
 
     private array $files = [];//file objects
-
+    
     private string $password;//post password
     private string $name;//name
     private string $email;//email
@@ -63,16 +63,7 @@ class PostDataClass {
         $this->name = convertTextToTripcodedText($this->name);
     }
     public function quoteLinks(){
-        // this is a tricky one to implement....
-        // this seems awufl!!
-        
-        // Pattern for >>123 linking to a post on the current board
-        //$regexPostLink = '/>>(\d+)/';
-        //$this->comment = preg_replace($regexPostLink, '<a href="#$1">>>$1</a>', $this->comment);
-
-        // Pattern for >>>/b/123 linking to a post on a different board
-        //$regexBoardLink = '/>>>(\/\w+\/\d+)/';
-        //$this->comment = preg_replace($regexBoardLink, '<a href="$1">>>$1</a>', $this->comment);
+        // 
     }
     public function procssesFiles(){
         foreach ($this->files as $file) {
