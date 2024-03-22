@@ -29,8 +29,8 @@ class boardClass{
 	}
 
 	// gets data from post request -> validate data -> save data to database -> redraw pages -> redirect user
-	function onUserPostToThread(){
-		global $conf;
+	public function postToThread($threadID){
+		$conf = $this->conf;
 		// do some house keeping
 
 		//gen post password if none is provided
@@ -104,9 +104,7 @@ class boardClass{
 
 		//add post to proper thread object.
 
-		//rebuild page.
-
-		//RENDER TIMEEE!!!
+		//draw page.
 
 		// Continuous submission / same additional image check
 		$checkcount = 50; // Check 50 by default
@@ -480,7 +478,6 @@ class boardClass{
 		}
 		
 	}
-
 
 	/* Output thread schema */
 	function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $arr_kill, $arr_old, $kill_sensor, $old_sensor, $showquotelink=true, $adminMode=false, $threads_shown=0){
@@ -1119,6 +1116,11 @@ class boardClass{
 
 $boardID = $_GET['boardID'] ?? $_POST['boardID'] ?? '';
 
+$boardRepo = BoardRepoClass::getInstance();
+$board = $boardRepo->GetBoard($boardID);
+
+
+
 /*          get action recived           */
 if ($_GET['action']){
 	$action = $_GET['action'];
@@ -1131,11 +1133,11 @@ elseif($_POST['action']){
 	$_POST['action'];
 	switch ($action) {
 		case 'postToThread':
-			onUserPostToThread();
+			$board->postToThread($_POST['ThreadID']);
 			break;
 		default:
 			$stripedInput = htmlspecialchars($_POST['action'], ENT_QUOTES, 'UTF-8');
-			//displayErrorPage("invalid action" . $stripedInput);
+			//displayErrorPage("invalid action: " . $stripedInput);
 			break;
 	}
 }

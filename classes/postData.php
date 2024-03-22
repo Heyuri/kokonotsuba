@@ -83,7 +83,6 @@ class PostDataClass {
         $this->files[] = $file;
     }
 
-    
     public function getFiles() {
         return $this->files;
     }
