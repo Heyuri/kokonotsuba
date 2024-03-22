@@ -1,8 +1,8 @@
 <?php
 /**
  * Pixmicat! PIO 公用程式 - 檢查伺服器執行環境支援
- * - PIO: SQLite 2, PDO SQLite, PostgreSQL, MySQL, MySQL Improved
- * - Thumbnail: GD, Imagick, MagickWand, ImageMagick, repng2jpeg
+ * - PIO: MySQL
+ * - Thumbnail: GD, Imagick, ImageMagick, MagickWand, repng2jpeg, ffmpeg
  *
  * 本公用程式可為您檢查伺服器支援的項目，讓您選擇最適合的 PIO 資料來源後端和預覽圖生成物件。
  * - 伺服器資訊: 得知伺服器的基本資訊，如伺服器版本、PHP 版本等

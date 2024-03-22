@@ -4,6 +4,7 @@
 
 // this file is to be removed and in favor of using conf.php
 // that is becuase you can easily write changes to conf.php from whithin a php script.
+// things are too deeply tied to just rip this out and replace. or would take to long..
 
 
 

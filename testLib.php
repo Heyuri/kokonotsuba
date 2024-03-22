@@ -1,5 +1,6 @@
 <?php
-function getExtensionByMimeType($mimeType) {
+// can return null if none is found
+function getExtensionByMimeType($mimeType): string {
     $mimeMap = [
         // Images
         'image/jpeg' => '.jpg',
@@ -119,9 +120,61 @@ function getExtensionByMimeType($mimeType) {
         // Add more MIME types as needed
     ];
 
-    return $mimeMap[$mimeType] ?? false; // Return false if MIME type is not found
+    return $mimeMap[$mimeType] ?? null; // Return false if MIME type is not found
 }
 
-function isIPBanned($ip){
+function isIPBanned($ip): bool{
     return false;
 }
+
+
+//tripcode put this in it own lib file.
+//
+function genTripcode(string $password, string $salt = ''): string{
+    $tripcode = "";
+
+    return $tripcode;
+}
+
+function extractTripCodePassword(string $text): string{
+    $tripcodePassword = "";
+
+    return $tripcodePassword;
+}
+
+// regular tripcode function where you put a string in and get text with tripcode appended.
+function convertTextToTripcodedText(string $str):string{
+    $textWithTripcode = "";
+
+    return $textWithTripcode;
+}
+
+    /*
+	// Tripcode crap
+	$name = str_replace('&#', '&&', $name); // otherwise HTML numeric entities will explode!
+	list($name, $trip, $sectrip) = str_replace('&%', '&#', explode('#',$name.'##'));
+	if ($trip) {
+		$trip = mb_convert_encoding($trip, 'Shift_JIS', 'UTF-8');
+		$salt = strtr(preg_replace('/[^\.-z]/', '.', substr($trip.'H.',1,2)), ':;<=>?@[\\]^_`', 'ABCDEFGabcdef');
+		$trip = '!'.substr(crypt($trip, $salt), -10);
+	}
+	if ($sectrip) {
+		if ($level=valid($sectrip)) {
+			// Moderator capcode
+			switch ($level) {
+				case 1: if (JCAPCODE_FMT) $name = sprintf(JCAPCODE_FMT, $name); break;
+				case 2: if (MCAPCODE_FMT) $name = sprintf(MCAPCODE_FMT, $name); break;
+				case 3: if (ACAPCODE_FMT) $name = sprintf(ACAPCODE_FMT, $name); break;
+			}
+		} else {
+			// User
+			$sha =str_rot13(base64_encode(pack("H*",sha1($sectrip.TRIPSALT))));
+			$sha = substr($sha,0,10);
+			$trip = '!!'.$sha;
+		}
+	}
+	if(!$name || preg_match("/^[ |　|]*$/", $name)){
+		if(ALLOW_NONAME) $name = DEFAULT_NONAME;
+		else error(_T('regist_withoutname'), $dest);
+	}
+    */

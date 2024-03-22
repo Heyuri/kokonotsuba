@@ -1,17 +1,16 @@
 # kotatsuBBS
 
 ## Required stack
-kotatsuba is designed and tested on the following stack.<br>
-Web server: nginx/apache/httpd<br>
+KotatsuBBS is designed and tested on the following stack.<br>
+Web server: nginx/httpd<br>
 DB: mariadb<br>
 PHP: PHP7.2-PHP8.3<br>
 
-*note: it is not required to use OpenBSD. its just what i am using for testing. debian might be a better choice*
-## installation for OpenBSD
+## installation guide for OpenBSD
 
 install the required packages : 
 ```
-pkg_add mariadb-server php php-mysqli php-gdb
+pkg_add mariadb-server php php-mysqli php-gdb ffmpeg imagemagick
 ```
 php8.2 is what i am going with foir this guide.
 

@@ -1,11 +1,11 @@
 <?php
 
-class fileDataClass {
+class FileDataClass {
     // move this into its own object.
-    private $fileName; //file name
-    private $fileNameOnDisk;//filename as stored on the system
+    private string $fileName; //file name
+    private string $fileNameOnDisk;//filename as stored on the system
     private $fileSize; //file size
-    private $md5chksum; //file hash
+    private string $md5chksum; //file hash
 
     
     /*
@@ -19,7 +19,7 @@ class fileDataClass {
 
         $md5chksum = md5_file($dest)
     */
-    public function __construct($fileName ='noName', $fileNameOnDisk, $fileSize=-1, $md5chksum='null') {
+    public function __construct(string $fileName ='noName', string $fileNameOnDisk, int $fileSize=-1, string $md5chksum='null') {
         $this->fileName = $fileName;
         $this->fileNameOnDisk = $fileNameOnDisk;
         $this->fileSize = $fileSize;

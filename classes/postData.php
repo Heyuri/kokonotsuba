@@ -1,154 +1,113 @@
 <?php
 require_once './fileDataClass.php';
+require_once './auth.php';
 require_once '../testLib.php';
-class postDataClass {
-    private $threadID;//threadID, resto
-	private $category;//thread catagory
-    private $lastBumpTime;//last time thread has been bumped. root in db
+class PostDataClass {
+    private int $postID;//postID 
 
-    private $postID;//postID 
+    private array $files = [];//file objects
 
-    private $utime;//time in unix seconds
-	private $time;// time but normal.
+    private string $password;//post password
+    private string $name;//name
+    private string $email;//email
+    private string $subject;//subject
+    private string $comment;//comment
+    private string $IP;//poster's ip
+    private string $special;//special things like. auto sage, locked, animated gif, etc. split by a _thing_
+    private $config;
 
-    private $files = [];
+	public function __construct(array &$config, string $name, string $email, string $subject, 
+                                string $comment, string $password, int $unixTime, string $IP, 
+                                int $postID=-1, string $special='') {
+        //$this->postID = $data['no'] ?? null;
+        //$this->threadID = $data['resto'] ?? null;
+        //$this->category = $data['category'] ?? null;
 
-    private $password;//post password
-	private $passwordCookie;//password from a cookie
-    private $name;//name
-    private $email;//email
-    private $sub;//subject
-    private $com;//comment
-    private $host;//poster's ip
-    private $status;//special things like. auto sage, locked, animated gif, etc. split by a _thing_
+        //$this->lastBumpTime = $data['root'] ?? null;
+        //$this->time = $data['now'] ?? null; //time with proper time zone as string.
 
-    // moduels should have fun messing around withthings like this. 
-    public $maxFileSize = null;
-    public $forceAllowFileType = false;
-    public $CleanseComment = true;
+        $this->config = $config;
+		$this->name = $name ?? $config['defualtName'];
+		$this->email = $email ?? $config['defaultEmail'];
+		$this->subject = $subject ?? $config['defaultSubject'];
+		$this->comment = $comment ?? $config['defaultComment'];
+        $this->password = $password;
 
-	public function __construct($data = []) {
-        $this->postID = $data['no'] ?? null;
-        $this->threadID = $data['resto'] ?? null;
-        $this->category = $data['category'] ?? null;
-
-        $this->lastBumpTime = $data['root'] ?? null;
-        $this->utime = $data['time'] ?? null; //unix time stamp
-        $this->time = $data['now'] ?? null; //time with proper time zone as string.
-
-        $this->md5chksum = $data['md5chksum'] ?? null; //file md5 hash
-        $this->fileName = $data['fname'] ?? null;
-        $this->fileExtension = $data['ext'] ?? null;
-        $this->imgw = $data['imgw'] ?? null;// width
-        $this->imgh = $data['imgh'] ?? null;// hight
-        $this->imgsize = $data['imgsize'] ?? null;
-        $this->tw = $data['tw'] ?? null;// thumbnail witdh
-        $this->th = $data['th'] ?? null;// thumbnail hight
-        $this->fileNameOnDisk = $data['tim'] ?? null;// its time plus miliseconds at the end i only found to use with filenames
-
-        $this->password = $data['pwd'] ?? null;
-        $this->name = $data['name'] ?? null;
-        $this->email = $data['email'] ?? null;
-        $this->subject = $data['sub'] ?? null;
-        $this->comment = $data['com'] ?? null;
-        $this->host = $data['host'] ?? null;
-        $this->status = $data['status'] ?? null;
+        $this->unixTime = $unixTime;
+        $this->IP = $IP;
+        $this->postID = $postID;
+        $this->special = $special;
     }
-
-	public function LoadFromDBfromPostID($postID){
-        // this should be done inside a repository pattern no int this object.
-        // the repository pattern should use the regual constructor.
-	}
-
-	//this should only ever be called when user post a post
-	public function loadDataFromPostRequest() {
-		$this->name = $_POST['name'] ?? '';
-		$this->email = $_POST['email'] ?? '';
-		$this->subject = $_POST['sub'] ?? '';
-		$this->comment = $_POST['com'] ?? '';
-		$this->password = $_POST['pwd'] ?? '';
-		$this->category = $_POST['category'] ?? '';
-		$this->threadID = intval($_POST['resto'] ?? 0);
-		$this->host = getREMOTE_ADDR(); 
-		$this->time = (new DateTime())->format('Y/m/d (D) H:i:s'); //time with proper time zone as string.
-        $this->utime = time(); //unix time stamp
+    private function isValid():bool {
+        if (mb_strlen($this->name, 'UTF-8') > INPUT_MAX) 
+            return false;
+        if (mb_strlen($this->email, 'UTF-8') > INPUT_MAX) 
+            return false;
+        if (mb_strlen($this->subject, 'UTF-8') > INPUT_MAX) 
+            return false;
+        if(strlenUnicode($this->comment) > COMM_MAX) 
+		    return false;
+        return true;
+    }
+    public function stripHtml(){
+        $this->name = htmlspecialchars($this->name, ENT_QUOTES, 'UTF-8');
+		$this->email = htmlspecialchars($this->email, ENT_QUOTES, 'UTF-8');
+		$this->subject = htmlspecialchars($this->subject, ENT_QUOTES, 'UTF-8');
+		$this->comment = htmlspecialchars($this->comment, ENT_QUOTES, 'UTF-8');
+    }
+    public function embedLinks(){
+        $regexUrl  = '/(https?:\/\/[^\s]+)/';
+        $this->comment = preg_replace($regexUrl , '<a href="$1" target="_blank">$1</a>', $this->comment);
+    }
+    public function applyTripcode(){
+        $this->name = convertTextToTripcodedText($this->name);
+    }
+    public function quoteLinks(){
+        // this is a tricky one to implement....
+        // this seems awufl!!
         
-        $this->loadFilesFromPostRequest();
-    }
+        // Pattern for >>123 linking to a post on the current board
+        //$regexPostLink = '/>>(\d+)/';
+        //$this->comment = preg_replace($regexPostLink, '<a href="#$1">>>$1</a>', $this->comment);
 
-    // files uploaded will be clensed
-    private function loadFilesFromPostRequest(){
-        $config = require('../config.php')['fileConf'];
-
-        // Check if the file input exists and a file is uploaded
-        if (!isset($_FILES['upfile'])){
-            echo "Error: No file uploaded.";
-            return;
-        }
-
-        // Loop through each file (single or multiple)
-        foreach ($_FILES['upfile']['error'] as $key => $error) {
-            // Check for upload errors
-            if ($error != UPLOAD_ERR_OK) {
-                echo "Error: There was an error uploading file {$fileName}.";
-                continue;
-            }
-            
-            $tmpName = $_FILES['upfile']['tmp_name'][$key];
-            $fileName = $_FILES['upfile']['name'][$key];
-            $fileSize = $_FILES['upfile']['size'][$key];
-            $fileType = $_FILES['upfile']['type'][$key];
-
-            // Validate file size.
-            if ($fileSize > $this->maxFileSize ?? $config['maxFileSize']) {
-                echo "Error: File {$fileName} is too large. Maximum file size is {$config['maxFileSize']}.";
-                continue;
-            }
-
-            $finfo = new finfo(FILEINFO_MIME_TYPE);
-            $realMimeType = $finfo->file($tmpName);
-
-            // Validate file type
-            if (!in_array($realMimeType, $config['allowedMimeTypes']) || !$this->forceAllowFileType) {
-                echo "Error: File {$fileName} type is not allowed.";
-                continue; 
-            }
-
-            // File passed validation checks.
-            // make a valid name for the new file
-            // make the object and attach it to the posts list.
-            $fileExtention = getExtensionByMimeType($realMimeType);
-            $fileNameOnDisk =  uniqid() . $fileExtention;
-            move_uploaded_file($tmpName, $config['fileStoreLocation'] . "/" . $fileNameOnDisk);
-
-            $this->files[] = new fileDataClass($fileName, $fileNameOnDisk, $fileSize);
-        }
-    }
-
-    public function cleansePost(){
-        //this should not cleans mysql. that should be done in the repository pattern.
-        
-        /*
-        if(strlenUnicode($name) > INPUT_MAX) error(_T('regist_nametoolong'), $dest);
-        if(strlenUnicode($email) > INPUT_MAX) error(_T('regist_emailtoolong'), $dest);
-        if(strlenUnicode($sub) > INPUT_MAX) error(_T('regist_topictoolong'), $dest);
-        if(strlenUnicode($resto) > INPUT_MAX) error(_T('regist_longthreadnum'), $dest);
-        */
+        // Pattern for >>>/b/123 linking to a post on a different board
+        //$regexBoardLink = '/>>>(\/\w+\/\d+)/';
+        //$this->comment = preg_replace($regexBoardLink, '<a href="$1">>>$1</a>', $this->comment);
     }
     public function procssesFiles(){
-
+        foreach ($this->files as $file) {
+            $file->procssesFile();
+        }
     }
-    public function addFile($file) {
+    public function addFile(FileDataClass $file) {
         $this->files[] = $file;
     }
+
+    
     public function getFiles() {
         return $this->files;
     }
-	public function getAttributes(){
+	public function getSpecial(){
         //do this in a way to split up status string. 
-		return $this->status;
+		return $this->special;
 	}
 	public function getParentThread(){
 		//connstruct thread from resto ID
 	}
+    public function getID(){
+        return $this->postID;
+    }
+    public function getName(){
+        return $this->name;
+    }
+    public function getEmail(){
+        return $this->email;
+    }
+    public function getSubject(){
+        return $this->subject;
+    }
+    public function getComment(){
+        return $this->comment;
+    }
+
 }

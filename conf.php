@@ -19,7 +19,8 @@ return [
     'logDir' => '../logs', //also known as storage path
     'rootPath' => './', //dumb config
     'auditLog' => 'auditlog.txt',
-    
+    'passwordSalt'=> 'abc123!?_',
+
     /*
      * This section should end up in its own board config file.
      */
@@ -30,6 +31,15 @@ return [
             'image/gif'
         ],
         'maxFileSize'=> 5242880, // 5mb
+        'maxFiles'=> 3,
     ],
     'cookieExpireTime'=> time()+7*24*3600, // 7days from the curent time
+    'canTripcode'=> true,
+    'allowQuoteLinking'=> false, // link to post and post on other boards.
+    'autoEmbedLinks'=> true, // links will be turned into hyperlinks
+    'defualtName'=> '',
+    'defaultEmail'=> '',
+    'defaultSubject'=> '',
+    'defaultComment'=> '',
+
 ];

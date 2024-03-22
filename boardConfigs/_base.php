@@ -4,6 +4,7 @@
 // deleting a config from this file could break the system.
 
 return [
+    'canTripcode' => true,
     'canFortune' => true,
     'threadCap' => 150,
 ];
