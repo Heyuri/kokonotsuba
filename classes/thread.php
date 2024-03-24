@@ -11,6 +11,8 @@ class threadClass{
     private $threadID;
     private $postsFullyLoaded=false;
     private $repo = postRepoClass::getInstance();
+    private $auth = AuthClass::getInstance();
+    private $hookObj = HookClass::getInstance();
 
 	public function __construct($conf, $threadID){
 		$this->conf = $conf;
@@ -31,10 +33,6 @@ class threadClass{
 		setrawcookie('passwordc', $_POST['password'], $conf->cookieExpireTime);
 		setrawcookie('namec', $_POST['name'], $conf->cookieExpireTime);
 
-
-		$auth = AuthClass::getInstance(); // singleton to check session and see if the user's role.
-		$hookObj = HookClass::getInstance(); // singelton to manage hooks so moduels are easy to write.
-
 		$fileHandler = new fileHandlerClass($conf->fileConf);
 		$postData = new PostDataClass(	$conf, $_POST['name'], $_POST['email'], $_POST['subject'], 
 										$_POST['comment'], $_POST['password'], $_SERVER['REMOTE_ADDR'], time());
@@ -50,7 +48,7 @@ class threadClass{
 		$postData->procssesFiles(); 
 
 		// if we are not admin or mod, remove any html tags.
-		if( !$auth->isAdmin() || !$auth->isMod()){ 	
+		if( !$this->auth->isAdmin() || !$this->auth->isMod()){ 	
 			$postData->stripHtml();
 		}
 
@@ -59,7 +57,7 @@ class threadClass{
 			$postData->applyTripcode();	
 		}
 
-		$hookObj->executeHook("onUserPostToBoard", $postData, $fileHandler);// HOOK base post fully loaded
+		$this->hookObj->executeHook("onUserPostToBoard", $postData, $fileHandler);// HOOK base post fully loaded
 
 		/* prep post for db and drawing */
 
@@ -73,7 +71,7 @@ class threadClass{
 		}
 
         // stuff like bb code, emotes, capcode, ID, should all be handled in moduels.
-		$hookObj->executeHook("onPostPrepForDrawing", $postData);// HOOK post with html fully loaded
+		$this->hookObj->executeHook("onPostPrepForDrawing", $postData);// HOOK post with html fully loaded
 
 		// save post to data base
         $this->repo->savePost($this->conf ,$this->threadID, $postData);

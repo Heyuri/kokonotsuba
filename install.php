@@ -1,108 +1,181 @@
-<?php
-	require './config.php';
-
-	// Parse the mysql connection string
-	$parsedUrl = parse_url(CONNECTION_STRING);
-
-	// Extract the components
-	$username = $parsedUrl['user'] ?? '';
-	$password = $parsedUrl['pass'] ?? '';
-	$host = $parsedUrl['host'] ?? '';
-	
-	$path = trim($parsedUrl['path'], '/'); // Trim leading and trailing slashes
-	$pathComponents = explode('/', $path); // Split the path to get database and table name
-	$database = $pathComponents[0] ?? '';
-	$table = $pathComponents[1] ?? '';
-
-	function createDB(&$conn){
-		global $table;
-		try {
-			$conn->query("DROP TABLE IF EXISTS " . $table );
-		} catch (mysqli_sql_exception $e) {
-			echo "Error Failed to drop table : " . $e . "\n";
-			return False;
-		}
-		try {
-			$conn->query("CREATE TABLE " . $table . " (
-				`no` int(1) NOT NULL AUTO_INCREMENT,
-				`resto` int(1) NOT NULL,
-				`root` timestamp NOT NULL,
-				`time` int(1) NOT NULL,
-				`md5chksum` text,
-				`category` text NOT NULL,
-				`tim` bigint(1) NOT NULL,
-				`fname` text NOT NULL,
-				`ext` text NOT NULL,
-				`imgw` smallint(1) NOT NULL,
-				`imgh` smallint(1) NOT NULL,
-				`imgsize` text NOT NULL,
-				`tw` smallint(1) NOT NULL,
-				`th` smallint(1) NOT NULL,
-				`pwd` text NOT NULL,
-				`now` text NOT NULL,
-				`name` text NOT NULL,
-				`email` text NOT NULL,
-				`sub` text NOT NULL,
-				`com` text NOT NULL,
-				`host` text NOT NULL,
-				`status` text NOT NULL,
-				PRIMARY KEY (`no`),
-				index (resto),
-				index (root),
-				index (time)
-			) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;");
-		} catch (mysqli_sql_exception $e) {
-			echo "Error Failed to create table : " . $e . "\n";
-			return False;
-		}
-		
-		echo "database Successfully set up!\n";
-		return True;
-	}
-?>
-
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Kokonotsuba Installer</title>
-		<link rel="stylesheet" type="text/css" href="<?php echo STATIC_URL ?>/css/heyuriclassic.css">
+		<title>KotatsuBBS Installer</title>
+		<style>
+			body {
+				background-color: #d0f0c0;
+				font-family: Arial, sans-serif;
+			}
+			.postblock {
+				padding: 20px;
+				background-color: #ffcccc;
+				border: 2px solid #ff0000;
+				margin: 10px 0;
+			}
+			.prompt {
+				padding: 20px;
+				background-color: #e6ffe6;
+				border: 2px solid #4CAF50;
+				margin: 10px 0;
+			}
+			form > div {
+				display: flex;
+				align-items: center;
+				margin-bottom: 10px;
+			}
+
+			form > div > label {
+				margin-right: 10px;
+				width: 20%;
+				min-width: 120px;
+			}
+
+			form > div > input {
+				width: 80%;
+				padding: 8px;
+				border: 1px solid #ccc;
+			}
+
+			button[type="submit"] {
+				padding: 10px 15px;
+				cursor: pointer;
+			}
+		</style>
 	</head>
 	<body>
-		<h1>Kokonotsuba Installer</h1><hr>
-		<h2>DO NOT RUN THIS SCRIPT WHITH A TABLE ALREADY IN USE!</h2>
-		Doing so would drop that table. If you want to use that table, delete this <i>install.php</i>. script and add your own MySQL creds to <i>config.php</i><br><br>
-		<div class="reply">
-			Once you have a MySQL server set up with a basic username, password, and database, put the MySQL credentials in <i>config.php</i> and run this form.<br>
-			verify these creds are correct.<hr>
-			<form method="post">
-				<label>Username: </label><?php echo htmlspecialchars($username);?><br>
-				<label>Password: </label><?php echo htmlspecialchars($password);?><br>
-				<label>Domain/ip: </label><?php echo htmlspecialchars($host);?><br>
-				<label>Database Name: </label><?php echo htmlspecialchars($database);?><br>
-				<label>Table name: </label><?php echo htmlspecialchars($table);?><br>
-				<button type="submit">install</button>
-			</form>
-		</div>
 
-<?php
-	// on post request recived. connect to the DB and create the table.
+<?php 
+	ini_set('display_errors', 1);
+	ini_set('display_startup_errors', 1);
+	error_reporting(E_ALL);
+	mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+	
+	function createDB($conn){
+		// SQL to create tables
+		$sqlCommands = [
+			"CREATE TABLE IF NOT EXISTS boardTable (
+				boardID INT AUTO_INCREMENT PRIMARY KEY,
+				configPath VARCHAR(255) NOT NULL,
+				lastPostID INT,
+				FOREIGN KEY (lastPostID) REFERENCES posts(postID) ON DELETE SET NULL ON UPDATE CASCADE
+			)",
+			"CREATE TABLE IF NOT EXISTS threads (
+				threadID INT AUTO_INCREMENT PRIMARY KEY,
+				boardID INT NOT NULL,
+				lastTimePosted INT NOT NULL,
+				opPostID INT,
+				FOREIGN KEY (boardID) REFERENCES boardTable(boardID) ON DELETE CASCADE ON UPDATE CASCADE,
+				FOREIGN KEY (opPostID) REFERENCES posts(postID) ON DELETE SET NULL ON UPDATE CASCADE
+			)",
+			"CREATE TABLE IF NOT EXISTS posts (
+				postID INT AUTO_INCREMENT PRIMARY KEY,
+				boardID INT NOT NULL,
+				threadID INT NOT NULL,
+				password VARCHAR(255) NOT NULL,
+				name VARCHAR(255) NOT NULL,
+				email VARCHAR(255),
+				subject VARCHAR(255),
+				comment TEXT NOT NULL,
+				ip VARCHAR(45) NOT NULL,
+				postTime INT NOT NULL,
+				special VARCHAR(255),
+				FOREIGN KEY (boardID) REFERENCES boardTable(boardID) ON DELETE CASCADE ON UPDATE CASCADE,
+				FOREIGN KEY (threadID) REFERENCES threads(threadID) ON DELETE CASCADE ON UPDATE CASCADE
+			)",
+			"CREATE TABLE IF NOT EXISTS files (
+				fileID INT AUTO_INCREMENT PRIMARY KEY,
+				postID INT NOT NULL,
+				threadID INT NOT NULL,
+				boardID INT NOT NULL,
+				filePath VARCHAR(255) NOT NULL,
+				FOREIGN KEY (postID) REFERENCES posts(postID) ON DELETE CASCADE ON UPDATE CASCADE,
+				FOREIGN KEY (threadID) REFERENCES threads(threadID) ON DELETE CASCADE ON UPDATE CASCADE,
+				FOREIGN KEY (boardID) REFERENCES boardTable(boardID) ON DELETE CASCADE ON UPDATE CASCADE
+			)"
+		];
+		// Execute each SQL command
+		foreach ($sqlCommands as $sql) {
+			if ($conn->query($sql) === TRUE) {
+				echo "Table created successfully\n";
+			} else {
+				echo "Error creating table: " . $conn->error . "\n";
+			}
+		}
+		
+		echo "database Successfully set up!\n";
+	}
+
+	function updateConf(){	
+		$conf = require './conf.php'; 
+
+		//set configs from postData
+		$conf['mysqlDB']['host']			= $_POST['host'];
+		$conf['mysqlDB']['port']			= $_POST['port'];
+		$conf['mysqlDB']['username'] 		= $_POST['username'];
+		$conf['mysqlDB']['password'] 		= $_POST['password'];
+		$conf['mysqlDB']['databaseName']	= $_POST['databaseName'];
+
+		//formate and write new config to file
+		//$newConfig = '<?php' . PHP_EOL . '// conf.php' . PHP_EOL . 'return ' . var_export($config, true) . ';' . PHP_EOL;
+		//file_put_contents('conf.php', $newConfig);
+
+		$newConf = '<?php return ' . var_export($conf, true) . ';';
+		if (file_put_contents('conf.php', $newConf) === false) {
+			echo "Failed to write configuration.";
+		}
+	}
+
+	
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		echo "<div class=\"postblock\">";
+		updateConf();
 
-		$connection = NULL;
+		$connection;
 		try {
-			$connection = new mysqli($host, $username, $password, $database);
+			$connection = new mysqli($_POST['host'], $_POST['username'], $_POST['password'], $_POST['databaseName']);
 		} catch (mysqli_sql_exception $e) {
-			echo "invalid credentals. is you database running? " . $e ."\n";
+			echo "invalid credentals. is you database running?";
 		}
+
 		if ($connection) {
 			createDB($connection);
 			$connection->close();
 		}
-
 		echo "</div>";
 	} 
 ?>
 
+		<h1>KotatsuBBS Installer</h1>
+		<div class="prompt">
+			Once you have a MySQL server set up with a basic username, password, and privileges. enter in the credentals below.<br>
+			this would also update your <i>conf.php</i> to use the newly added creds.<br>
+			<hr>
+			<form method="post">
+				<div>
+					<label for="username">Username*:</label>
+					<input type="text" id="username" name="username" value="<?php echo htmlspecialchars($config['mainDB']['username']); ?>">
+				</div>
+				<div>
+					<label for="dbpassword">Password*:</label>
+					<input type="text" id="dbpassword" name="dbpassword" value="<?php echo htmlspecialchars($config['mainDB']['password']); ?>">
+				</div>
+				<div>
+					<label for="host">Domain/ip*:</label>
+					<input type="text" id="host" name="host" value="<?php echo htmlspecialchars($config['mainDB']['host']); ?>">
+				</div>
+				<div>
+					<label for="host">port:</label>
+					<input type="text" id="host" name="host" value="<?php echo htmlspecialchars($config['mainDB']['port']); ?>">
+				</div>
+				<div>
+					<label for="databaseName">Database name*:</label>
+					<input type="text" id="databaseName" name="databaseName" value="<?php echo htmlspecialchars($config['mainDB']['databaseName']); ?>">
+				</div>
+				<div>
+					<button type="submit" name="install">install</button>
+				</div>
+			</form>
+		</div>
 	</body>
 </html>

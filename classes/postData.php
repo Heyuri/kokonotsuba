@@ -4,9 +4,7 @@ require_once './auth.php';
 require_once '../testLib.php';
 class PostDataClass {
     private int $postID;//postID 
-
     private array $files = [];//file objects
-    
     private string $password;//post password
     private string $name;//name
     private string $email;//email

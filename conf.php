@@ -12,7 +12,7 @@ return [
     ],
     /*
      * This is the directory to store your logs. 
-     * its best to keep it outside of the web path
+     * its best to keep it outside of the project path.
      * /var/www/logs
      */
     'timeZone' => 'UTC',

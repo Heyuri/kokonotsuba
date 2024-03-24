@@ -14,6 +14,8 @@ require './lib/lib_errorhandler.php'; // Introduce global error capture
 require './lib/lib_compatible.php'; // Introduce compatible libraries
 require './lib/lib_common.php'; // Introduce common function archives
 */
+
+// stuff below up untill -MAIN ENTRY- is not something that should be here..
 require_once './classes/postData.php';
 require_once './classes/fileHandler.php';
 require_once './classes/hook.php';
@@ -918,27 +920,35 @@ class boardClass{
 }
 /*-------------------------------------------------------MAIN ENTRY-------------------------------------------------------*/
 
+/*
+ * this file is the main request handler of the board after it is already installed.
+ * 
+ * you should not try and hack anything into this file unless you know what you are doing.
+ * ./moduels/ is where your hacks should be put. and then enable them through the admin pannel.
+ */
+
 $boardID = $_GET['boardID'] ?? $_POST['boardID'] ?? '';
+if ($boardID == '') {
+	//displayErrorPage("you must have a boardID");
+}
 
 $boardRepo = BoardRepoClass::getInstance();
 $board = $boardRepo->GetBoard($boardID);
 
-
-
-/*          get action recived           */
+/*----------get action recived----------*/
 if ($_GET['action']){
 	$action = $_GET['action'];
 	switch ($action) {
 
 	}
 }
-/*          post action recived           */
+/*----------post action recived----------*/
 elseif($_POST['action']){
 	$_POST['action'];
 	switch ($action) {
 		case 'postToThread':
 			$thread = $board->getThreadByID($_POST['ThreadID']);
-			$thread->postToThread();
+			$thread->postToThread(); /* this function uses post request's super global. */
 			break;
 		default:
 			$stripedInput = htmlspecialchars($_POST['action'], ENT_QUOTES, 'UTF-8');
@@ -946,6 +956,13 @@ elseif($_POST['action']){
 			break;
 	}
 }
+/*----------no action recived----------*/
+else{
+	//displayErrorPage("you must have a action);
+}
+
+
+
 
 /*
 if(GZIP_COMPRESS_LEVEL && ($Encoding = CheckSupportGZip())){ ob_start(); ob_implicit_flush(0); } 
