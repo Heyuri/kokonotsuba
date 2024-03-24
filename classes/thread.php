@@ -9,16 +9,29 @@ class threadClass{
 	private $conf = require './conf.php'; // board configs.
 	private $posts = [];
     private $threadID;
+    private $lastBumpTime;
+    private $OPPostID;
     private $postsFullyLoaded=false;
     private $repo = postRepoClass::getInstance();
     private $auth = AuthClass::getInstance();
     private $hookObj = HookClass::getInstance();
 
-	public function __construct($conf, $threadID){
+	public function __construct($conf, $threadID, $lastBumpTime, $OPPostID){
 		$this->conf = $conf;
         $this->threadID = $threadID;
+        $this->lastBumpTime = $lastBumpTime;
+        $this->OPPostID = $OPPostID;
 	}
 
+    public function getLastBumpTime(){
+        return $this->lastBumpTime;
+    }
+    public function getThreadID(){
+        return $this->threadID;
+    }
+    public function getOPPostID(){  
+        return $this->OPPostID;
+    }
 	/* build postObj from postrequest -> validate postObj -> save postObj to database */ // -> redraw pages -> redirect user */
 	public function postToThread(){
 		$conf = $this->conf;

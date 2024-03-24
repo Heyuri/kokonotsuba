@@ -34,7 +34,6 @@ return [
         'maxFiles'=> 3,
     ],
     'cookieExpireTime'=> time()+7*24*3600, // 7days from the curent time
-    'canTripcode'=> true,
     'allowQuoteLinking'=> false, // link to post and post on other boards.
     'autoEmbedLinks'=> true, // links will be turned into hyperlinks
     'defualtName'=> '',
