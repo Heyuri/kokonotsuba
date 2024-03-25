@@ -142,7 +142,7 @@ function displayErrorPage($txt){
 	<body>
 
 	<div class="postblock">
-		<p><?php $txt ?></p>
+		<p><?php echo $txt; ?></p>
 	</div>
 
 	</body>
