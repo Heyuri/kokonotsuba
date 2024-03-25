@@ -55,7 +55,7 @@
 	function createDB($conn){
 		// SQL to create tables
 		$sqlCommands = [
-			"CREATE TABLE IF NOT EXISTS boardTable (
+			"CREATE TABLE IF NOT EXISTS boards (
 				boardID INT AUTO_INCREMENT PRIMARY KEY,
 				configPath VARCHAR(255) NOT NULL,
 				lastPostID INT
@@ -73,14 +73,14 @@
 				ip VARCHAR(45) NOT NULL,
 				postTime INT NOT NULL,
 				special TEXT,
-				FOREIGN KEY (boardID) REFERENCES boardTable(boardID) ON DELETE CASCADE ON UPDATE CASCADE
+				FOREIGN KEY (boardID) REFERENCES boards(boardID) ON DELETE CASCADE ON UPDATE CASCADE
 			)",
 			"CREATE TABLE IF NOT EXISTS threads (
 				threadID INT AUTO_INCREMENT PRIMARY KEY,
 				boardID INT NOT NULL,
 				lastTimePosted INT NOT NULL,
 				opPostID INT,
-				FOREIGN KEY (boardID) REFERENCES boardTable(boardID) ON DELETE CASCADE ON UPDATE CASCADE
+				FOREIGN KEY (boardID) REFERENCES boards(boardID) ON DELETE CASCADE ON UPDATE CASCADE
 			)",
 			"ALTER TABLE posts ADD CONSTRAINT fk_threadID FOREIGN KEY (threadID) REFERENCES threads(threadID) ON DELETE CASCADE ON UPDATE CASCADE;",
 			"CREATE TABLE IF NOT EXISTS files (
@@ -91,7 +91,7 @@
 				filePath VARCHAR(255) NOT NULL,
 				FOREIGN KEY (postID) REFERENCES posts(UID) ON DELETE CASCADE ON UPDATE CASCADE,  -- Note: Ensure this references the correct column
 				FOREIGN KEY (threadID) REFERENCES threads(threadID) ON DELETE CASCADE ON UPDATE CASCADE,
-				FOREIGN KEY (boardID) REFERENCES boardTable(boardID) ON DELETE CASCADE ON UPDATE CASCADE
+				FOREIGN KEY (boardID) REFERENCES boards(boardID) ON DELETE CASCADE ON UPDATE CASCADE
 			)"
 		];
 		// Execute each SQL command

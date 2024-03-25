@@ -27,11 +27,11 @@ class PostRepoClass implements PostDataRepositoryInterface {
     
         try {
             // increment the lastPostID for the board.
-            $updateQuery = "UPDATE boardTable SET lastPostID = lastPostID + 1 WHERE boardID = " . intval($boardConf['boardID']);
+            $updateQuery = "UPDATE boards SET lastPostID = lastPostID + 1 WHERE boardID = " . intval($boardConf['boardID']);
             $this->db->query($updateQuery);
     
             // get the lastPostID. this will be used for new post
-            $lastIdQuery = "SELECT lastPostID FROM boardTable WHERE boardID = " . intval($boardConf['boardID']);
+            $lastIdQuery = "SELECT lastPostID FROM boards WHERE boardID = " . intval($boardConf['boardID']);
             $result = $this->db->query($lastIdQuery);
             $lastPostID = null;
             if ($row = $result->fetch_assoc()) {

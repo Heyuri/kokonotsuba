@@ -25,7 +25,7 @@ class BoardRepoClass implements BoardRepositoryInterface {
         $path = $board->getConfPath();
         $lastID = $board->getLastPostID();
         $id = $board->getBoardID();
-        $stmt = $this->db->prepare("UPDATE boardTable SET configPath = ?, lastPostID = ? WHERE boardID = ?");
+        $stmt = $this->db->prepare("UPDATE boards SET configPath = ?, lastPostID = ? WHERE boardID = ?");
         $stmt->bind_param("sii", $path, $lastID, $id );
         $success = $stmt->execute();
         $stmt->close();
@@ -33,7 +33,7 @@ class BoardRepoClass implements BoardRepositoryInterface {
     }
     public function loadBoards() {
         $boards = [];
-        $query = "SELECT * FROM boardTable";
+        $query = "SELECT * FROM boards";
         $result = $this->db->query($query);
     
         if ($result) {
@@ -44,7 +44,7 @@ class BoardRepoClass implements BoardRepositoryInterface {
         return $boards;
     }
     public function loadBoardByID($boardID) {
-        $stmt = $this->db->prepare("SELECT * FROM boardTable WHERE boardID = ?");
+        $stmt = $this->db->prepare("SELECT * FROM boards WHERE boardID = ?");
         $stmt->bind_param("i", $boardID);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -58,9 +58,8 @@ class BoardRepoClass implements BoardRepositoryInterface {
             return null;
         }
     }
-    
     public function deleteBoardByID($boardID) {
-        $stmt = $this->db->prepare("DELETE FROM boardTable WHERE boardID = ?");
+        $stmt = $this->db->prepare("DELETE FROM boards WHERE boardID = ?");
         $stmt->bind_param("i", $boardID);
         $success = $stmt->execute();
         $stmt->close();
@@ -69,7 +68,7 @@ class BoardRepoClass implements BoardRepositoryInterface {
 
     public function createBoard($board) {
         $conf = $board->getConfPath();
-        $stmt = $this->db->prepare("INSERT INTO boardTable (configPath) VALUES (?)");
+        $stmt = $this->db->prepare("INSERT INTO boards (configPath) VALUES (?)");
         $stmt->bind_param("s", $conf);
         $success = $stmt->execute();
         if ($success) {
