@@ -58,7 +58,7 @@
 			"CREATE TABLE IF NOT EXISTS boardTable (
 				boardID INT AUTO_INCREMENT PRIMARY KEY,
 				configPath VARCHAR(255) NOT NULL,
-				lastPostID INT,
+				lastPostID INT
 			)",
 			"CREATE TABLE IF NOT EXISTS threads (
 				threadID INT AUTO_INCREMENT PRIMARY KEY,
