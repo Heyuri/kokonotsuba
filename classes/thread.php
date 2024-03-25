@@ -3,7 +3,7 @@ require_once __DIR__ .'/post.php';
 require_once __DIR__ .'/hook.php';
 require_once __DIR__ .'/auth.php';
 require_once __DIR__ .'/fileHandler.php';
-require_once __DIR__ .'/repos/postRepo.php';
+require_once __DIR__ .'/repos/repoPost.php';
 
 class threadClass{
 	private $conf;
