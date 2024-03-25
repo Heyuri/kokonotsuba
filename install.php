@@ -159,7 +159,7 @@
 				</div>
 				<div>
 					<label for="dbpassword">Password*:</label>
-					<input type="text" id="dbpassword" name="dbpassword" value="<?php echo htmlspecialchars($conf['mysqlDB']['password']); ?>">
+					<input type="text" id="password" name="password" value="<?php echo htmlspecialchars($conf['mysqlDB']['password']); ?>">
 				</div>
 				<div>
 					<label for="host">Domain/ip*:</label>
@@ -167,7 +167,7 @@
 				</div>
 				<div>
 					<label for="host">port:</label>
-					<input type="text" id="host" name="host" value="<?php echo htmlspecialchars($conf['mysqlDB']['port']); ?>">
+					<input type="text" id="port" name="port" value="<?php echo htmlspecialchars($conf['mysqlDB']['port']); ?>">
 				</div>
 				<div>
 					<label for="databaseName">Database name*:</label>
