@@ -4,19 +4,19 @@ ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
 
-require_once './classes/board.php';
-require_once './classes/thread.php';
-require_once './classes/post.php';
-require_once './classes/file.php';
+require_once __DIR__ .'/classes/board.php';
+require_once __DIR__ .'/classes/thread.php';
+require_once __DIR__ .'/classes/post.php';
+require_once __DIR__ .'/classes/file.php';
 
-require_once './classes/hook.php';
-require_once './classes/auth.php';
-require_once './classes/fileHandler.php';
+require_once __DIR__ .'/classes/hook.php';
+require_once __DIR__ .'/classes/auth.php';
+require_once __DIR__ .'/classes/fileHandler.php';
 
-require_once './classes/repos/repoBoard.php';
-require_once './classes/repos/repoThread.php';
-require_once './classes/repos/repoPost.php';
-require_once './classes/repos/repoFile.php';
+require_once __DIR__ .'/classes/repos/repoBoard.php';
+require_once __DIR__ .'/classes/repos/repoThread.php';
+require_once __DIR__ .'/classes/repos/repoPost.php';
+require_once __DIR__ .'/classes/repos/repoFile.php';
 
 $AUTH = AuthClass::getInstance();
 $HOOK = HookClass::getInstance();

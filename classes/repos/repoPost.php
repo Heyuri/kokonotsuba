@@ -1,7 +1,7 @@
 <?php
-require_once  './DBConnection.php';
-require_once  './interfaces.php';
-require_once '../postData.php';
+require_once  __DIR__ .'/DBConnection.php';
+require_once  __DIR__ .'/interfaces.php';
+require_once __DIR__ .'../postData.php';
 
 class PostRepoClass implements PostDataRepositoryInterface {
     private $db;

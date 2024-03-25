@@ -1,10 +1,10 @@
 <?php
 
-require_once './post.php';
-require_once './fileHandler.php';
-require_once './hook.php';
-require_once './auth.php';
-require_once './repos/repoThread.php';
+require_once __DIR__ .'/post.php';
+require_once __DIR__ .'/fileHandler.php';
+require_once __DIR__ .'/hook.php';
+require_once __DIR__ .'/auth.php';
+require_once __DIR__ .'/repos/repoThread.php';
 
 class boardClass{
 	private $conf;
