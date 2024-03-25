@@ -4,7 +4,7 @@ class DatabaseConnection {
     public function __wakeup() { throw new Exception("Unserialization of AuthClass instances is not allowed.");}
     private static $conn = null;
     private function __construct() {
-        $conf = require '../../conf.php'; 
+        $conf = require __DIR__ .'/../../conf.php'; 
         self::$conn = new mysqli($conf['mysqlDB']['host'], $conf['mysqlDB']['username'], $conf['mysqlDB']['password'], $conf['mysqlDB']['databaseName']);
         if (self::$conn->connect_error) {
             die("Connection failed: " . self::$conn->connect_error);
