@@ -1,13 +1,13 @@
 <?php
 require_once  __DIR__ .'/DBConnection.php';
 require_once  __DIR__ .'/interfaces.php';
-require_once __DIR__ .'../board.php';
+require_once __DIR__ .'/../board.php';
 
 class BoardRepoClass implements BoardRepositoryInterface {
     // this is a singleton.
     // these functions should be disabled. and getInstance should be used insted.
     private function __clone() {}
-    private function __wakeup() {}
+    private function __wakeup() { throw new Exception("Unserialization of AuthClass instances is not allowed.");}
 
     private $db;
     private static $instance = null;

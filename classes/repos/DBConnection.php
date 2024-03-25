@@ -1,7 +1,7 @@
 <?php
 class DatabaseConnection {
     private function __clone() {}
-    private function __wakeup() {}
+    private function __wakeup() { throw new Exception("Unserialization of AuthClass instances is not allowed.");}
     private static $conn = null;
     private function __construct() {
         $conf = require '../../conf.php'; 

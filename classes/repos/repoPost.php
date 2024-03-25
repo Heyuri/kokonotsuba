@@ -1,18 +1,18 @@
 <?php
 require_once  __DIR__ .'/DBConnection.php';
 require_once  __DIR__ .'/interfaces.php';
-require_once __DIR__ .'../postData.php';
+require_once __DIR__ .'/../post.php';
 
 class PostRepoClass implements PostDataRepositoryInterface {
+    private function __clone() {}
+    private function __wakeup() { throw new Exception("Unserialization of AuthClass instances is not allowed.");}
+
     private $db;
     private static $instance = null;
 
     private function __construct() {
         $this->db = DatabaseConnection::getInstance();
     }
-
-    private function __clone() {}
-    private function __wakeup() {}
 
     public static function getInstance() {
         if (self::$instance === null) {
@@ -41,15 +41,26 @@ class PostRepoClass implements PostDataRepositoryInterface {
             if (is_null($lastPostID)) {
                 throw new Exception("Failed to retrieve updated lastPostID.");
             }
+            // why is sqli like this...
+            $threadID = $post->getThreadID();
+            $name =$post->getName();
+            $email = $post->getEmail();
+            $sub = $post->getSubject();
+            $comment = $post->getComment();
+            $pass = $post->getPassword();
+            $time = $post->getUnixTime();
+            $id = $post->postID();
+            $ip = $post->getIp();
+            $special = $post->getSpecial();
     
             // create post in db
             $insertQuery = "INSERT INTO posts ( boardID, threadID, postID, name, 
                                                 email, subject, comment, password, 
                                                 postTime, IP, special) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $insertStmt = $this->db->prepare($insertQuery);
-            $insertStmt->bind_param("iiisssssiss",  $boardConf['boardID'], $post->getThreadID(), $lastPostID, $post->getName(), 
-                                                    $post->getEmail(), $post->getSubject(), $post->getComment(), $post->getPassword(),
-                                                    $post->getUnixTime(), $post->getIP(), $post->getSpecial());
+            $insertStmt->bind_param("iiisssssiss",  $boardConf['boardID'], $threadID, $lastPostID, $name, 
+                                                    $email, $sub, $comment, $pass, 
+                                                    $time, $ip, $special);
             $insertSuccess = $insertStmt->execute();
             $insertStmt->close();
     
@@ -126,16 +137,27 @@ class PostRepoClass implements PostDataRepositoryInterface {
         return $posts;
     }
     public function updatePost($boardConf, $post) {
+        // why is sqli like this...
+        $threadID = $post->getThreadID();
+        $name =$post->getName();
+        $email = $post->getEmail();
+        $sub = $post->getSubject();
+        $comment = $post->getComment();
+        $pass = $post->getPassword();
+        $time = $post->getUnixTime();
+        $id = $post->postID();
+        $ip = $post->getIp();
+        $special = $post->getSpecial();
         $query = "UPDATE posts SET      boardID = ?, threadID = ?, name = ?, email = ?,
                                         subject = ?, comment = ?, password = ?, postTime = ?, 
                                         ip = ?, special = ?
                                     WHERE postID = ? and boardID = ?";
         $stmt = $this->db->prepare($query);
-         $stmt->bind_param("iisssssissii",
-                                        $boardConf['boardID'], $post->getThreadID(), $post->getName(), $post->getEmail(), 
-                                        $post->getSubject(), $post->getComment(), $post->getPassword(), $post->getUnixTime(),
-                                        $post->getIP(), $post->getSpecial(),
-                                    $post->getPostID(), $boardConf['boardID']);
+        $stmt->bind_param("iisssssissii",
+                                        $boardConf['boardID'], $threadID, $name, $email, 
+                                        $sub, $comment, $pass, $time, 
+                                        $ip, $special,
+                                    $id, $boardConf['boardID']);
         $success = $stmt->execute();
         $stmt->close();
         return $success;
@@ -167,7 +189,8 @@ class PostRepoClass implements PostDataRepositoryInterface {
             if (!$updateStmt) {
                 throw new Exception("Failed to prepare statement for updating postID.");
             }
-            $updateStmt->bind_param("iii", $newPostID, $post->getPostID(), $boardConf['boardID']);
+            $id = $post->postID();
+            $updateStmt->bind_param("iii", $newPostID, $id, $boardConf['boardID']);
             $success = $updateStmt->execute();
             $updateStmt->close();
     

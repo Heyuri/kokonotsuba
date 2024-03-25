@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ .'/file.php';
 require_once __DIR__ .'/auth.php';
-require_once __DIR__ .'../lib/boardMagic.php';
+require_once __DIR__ .'/../lib/boardMagic.php';
 class PostDataClass {
     private int $postID;//postID 
     private int $threadID;
