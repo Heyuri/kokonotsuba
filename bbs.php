@@ -179,7 +179,7 @@ if (isset($_GET['action'])){
 }
 /*----------post action recived----------*/
 elseif(isset($_POST['action'])){
-	$_POST['action'];
+	$action = $_POST['action'];
 	switch ($action) {
 		case 'postToThread':
 			userPostToThread($board);
