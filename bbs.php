@@ -161,11 +161,15 @@ function displayErrorPage($txt){
  */
 
 $boardID = $_GET['boardID'] ?? $_POST['boardID'] ?? '';
+
 if (!is_numeric($boardID)) {
 	displayErrorPage("you must have a boardID");
 }
 
 $board = $BOARDREPO->loadBoardByID($boardID);
+if(is_null($board) || $board->getConf()['unlisted']) {
+	displayErrorPage("board dose not exist");
+}
 
 /*----------get action recived----------*/
 if (isset($_GET['action'])){
