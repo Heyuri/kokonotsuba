@@ -5,7 +5,7 @@ require_once __DIR__ .'/../post.php';
 
 class PostRepoClass implements PostDataRepositoryInterface {
     private function __clone() {}
-    private function __wakeup() { throw new Exception("Unserialization of AuthClass instances is not allowed.");}
+    public function __wakeup() { throw new Exception("Unserialization of AuthClass instances is not allowed.");}
 
     private $db;
     private static $instance = null;

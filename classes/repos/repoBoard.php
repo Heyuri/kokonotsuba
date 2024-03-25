@@ -7,7 +7,7 @@ class BoardRepoClass implements BoardRepositoryInterface {
     // this is a singleton.
     // these functions should be disabled. and getInstance should be used insted.
     private function __clone() {}
-    private function __wakeup() { throw new Exception("Unserialization of AuthClass instances is not allowed.");}
+    public function __wakeup() { throw new Exception("Unserialization of AuthClass instances is not allowed.");}
 
     private $db;
     private static $instance = null;

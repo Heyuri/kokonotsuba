@@ -16,7 +16,7 @@ require_once __DIR__ .'/classes/fileHandler.php';
 require_once __DIR__ .'/classes/repos/repoBoard.php';
 require_once __DIR__ .'/classes/repos/repoThread.php';
 require_once __DIR__ .'/classes/repos/repoPost.php';
-require_once __DIR__ .'/classes/repos/repoFile.php';
+//require_once __DIR__ .'/classes/repos/repoFile.php';
 
 $AUTH = AuthClass::getInstance();
 $HOOK = HookClass::getInstance();
