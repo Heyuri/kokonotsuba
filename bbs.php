@@ -117,52 +117,7 @@ function userPostThread($board){
 function userDeletedPost(){
 
 }
-
-/*-------------------------------------------------------MAIN ENTRY-------------------------------------------------------*/
-
-/*
- * this file is the main request handler of the board after it is already installed.
- * 
- * you should not try and hack anything into this file unless you know what you are doing.
- * ./moduels/ is where your hacks should be put. and then enable them through the admin pannel.
- */
-
-$boardID = $_GET['boardID'] ?? $_POST['boardID'] ?? '';
-if ($boardID == '') {
-	//displayErrorPage("you must have a boardID");
-}
-
-$board = $BOARDREPO->loadBoardByID($boardID);
-
-/*----------get action recived----------*/
-if (isset($_GET['action'])){
-	$action = $_GET['action'];
-	switch ($action) {
-
-	}
-}
-/*----------post action recived----------*/
-elseif(isset($_POST['action'])){
-	$_POST['action'];
-	switch ($action) {
-		case 'postToThread':
-			userPostToThread($board);
-			//drawFunction;
-			//redirect;
-			break;
-		case 'postThread':
-			userPostThread($board);
-			//drawFunction;
-			//redirect;
-			break;
-		default:
-			$stripedInput = htmlspecialchars($_POST['action'], ENT_QUOTES, 'UTF-8');
-			//displayErrorPage("invalid action: " . $stripedInput);
-			break;
-	}
-}
-/*----------no action recived----------*/
-else{
+function displayErrorPage($txt){
 	?>
 	<!DOCTYPE html>
 	<html lang="en">
@@ -187,13 +142,64 @@ else{
 	<body>
 
 	<div class="postblock">
-		<p>you must have a action in your request feild</p>
+		<p><?php $txt ?></p>
 	</div>
 
 	</body>
 	</html>
 	<?php
-	//displayErrorPage("you must have a action);
+	die();
+}
+
+/*-------------------------------------------------------MAIN ENTRY-------------------------------------------------------*/
+
+/*
+ * this file is the main request handler of the board after it is already installed.
+ * 
+ * you should not try and hack anything into this file unless you know what you are doing.
+ * ./moduels/ is where your hacks should be put. and then enable them through the admin pannel.
+ */
+
+$boardID = $_GET['boardID'] ?? $_POST['boardID'] ?? '';
+if ($boardID == '') {
+	displayErrorPage("you must have a boardID");
+}
+
+$board = $BOARDREPO->loadBoardByID($boardID);
+
+/*----------get action recived----------*/
+if (isset($_GET['action'])){
+	$action = $_GET['action'];
+	switch ($action) {
+		default:
+			$stripedInput = htmlspecialchars($_GET['action'], ENT_QUOTES, 'UTF-8');
+			displayErrorPage("invalid action: " . $stripedInput);
+			break;
+	}
+}
+/*----------post action recived----------*/
+elseif(isset($_POST['action'])){
+	$_POST['action'];
+	switch ($action) {
+		case 'postToThread':
+			userPostToThread($board);
+			//drawFunction;
+			//redirect;
+			break;
+		case 'postThread':
+			userPostThread($board);
+			//drawFunction;
+			//redirect;
+			break;
+		default:
+			$stripedInput = htmlspecialchars($_POST['action'], ENT_QUOTES, 'UTF-8');
+			displayErrorPage("invalid action: " . $stripedInput);
+			break;
+	}
+}
+/*----------no action recived----------*/
+else{
+	displayErrorPage("you must have a action");
 }
 
 
