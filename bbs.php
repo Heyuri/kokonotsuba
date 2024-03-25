@@ -135,14 +135,14 @@ if ($boardID == '') {
 $board = $BOARDREPO->loadBoardByID($boardID);
 
 /*----------get action recived----------*/
-if ($_GET['action']){
+if (isset($_GET['action'])){
 	$action = $_GET['action'];
 	switch ($action) {
 
 	}
 }
 /*----------post action recived----------*/
-elseif($_POST['action']){
+elseif(isset($_POST['action'])){
 	$_POST['action'];
 	switch ($action) {
 		case 'postToThread':
@@ -163,6 +163,36 @@ elseif($_POST['action']){
 }
 /*----------no action recived----------*/
 else{
+	?>
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Action Required</title>
+	<style>
+		body {
+			background-color: #d0f0c0;
+			font-family: Arial, sans-serif;
+		}
+		.postblock {
+			padding: 20px;
+			background-color: #ffcccc;
+			border: 2px solid #ff0000;
+			margin: 10px 0;
+			text-align: center;
+		}
+	</style>
+	</head>
+	<body>
+
+	<div class="postblock">
+		<p>you must have a action in your request feild</p>
+	</div>
+
+	</body>
+	</html>
+	<?php
 	//displayErrorPage("you must have a action);
 }
 
