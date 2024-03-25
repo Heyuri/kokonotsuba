@@ -19,7 +19,7 @@ class FileDataClass {
 
         $md5chksum = md5_file($dest)
     */
-    public function __construct(string $fileName ='noName', string $fileNameOnDisk, int $fileSize=-1, string $md5chksum='null') {
+    public function __construct(string $fileNameOnDisk, string $fileName ='noName', int $fileSize=-1, string $md5chksum='null') {
         $this->fileName = $fileName;
         $this->fileNameOnDisk = $fileNameOnDisk;
         $this->fileSize = $fileSize;
