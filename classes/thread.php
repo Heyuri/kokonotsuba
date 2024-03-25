@@ -6,7 +6,7 @@ require_once __DIR__ .'/fileHandler.php';
 require_once __DIR__ .'/repos/postRepo.php';
 
 class threadClass{
-	private $conf = require './conf.php'; // board configs.
+	private $conf;
 	private $posts = [];
     private $threadID;
     private $lastBumpTime;

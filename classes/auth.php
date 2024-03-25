@@ -11,7 +11,7 @@ class AuthClass {
     // these functions should be disabled. and getInstance should be used insted.
     private function __construct() {}
     private function __clone() {}
-    private function __wakeup() { throw new Exception("Unserialization of AuthClass instances is not allowed.");}
+    public function __wakeup() { throw new Exception("Unserialization of AuthClass instances is not allowed.");}
     private static $instance = null;
     public static function getInstance() {
         if (self::$instance === null) {
