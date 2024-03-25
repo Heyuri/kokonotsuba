@@ -50,6 +50,7 @@
 	ini_set('display_startup_errors', 1);
 	error_reporting(E_ALL);
 	mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+	$conf = require __DIR__ .'/conf.php'; 
 	
 	function createDB($conn){
 		// SQL to create tables
@@ -105,9 +106,9 @@
 		
 		echo "database Successfully set up!\n";
 	}
-
+	
 	function updateConf(){	
-		$conf = require './conf.php'; 
+		global $conf;
 
 		//set configs from postData
 		$conf['mysqlDB']['host']			= $_POST['host'];
@@ -154,23 +155,23 @@
 			<form method="post">
 				<div>
 					<label for="username">Username*:</label>
-					<input type="text" id="username" name="username" value="<?php echo htmlspecialchars($config['mainDB']['username']); ?>">
+					<input type="text" id="username" name="username" value="<?php echo htmlspecialchars($conf['mysqlDB']['username']); ?>">
 				</div>
 				<div>
 					<label for="dbpassword">Password*:</label>
-					<input type="text" id="dbpassword" name="dbpassword" value="<?php echo htmlspecialchars($config['mainDB']['password']); ?>">
+					<input type="text" id="dbpassword" name="dbpassword" value="<?php echo htmlspecialchars($conf['mysqlDB']['password']); ?>">
 				</div>
 				<div>
 					<label for="host">Domain/ip*:</label>
-					<input type="text" id="host" name="host" value="<?php echo htmlspecialchars($config['mainDB']['host']); ?>">
+					<input type="text" id="host" name="host" value="<?php echo htmlspecialchars($conf['mysqlDB']['host']); ?>">
 				</div>
 				<div>
 					<label for="host">port:</label>
-					<input type="text" id="host" name="host" value="<?php echo htmlspecialchars($config['mainDB']['port']); ?>">
+					<input type="text" id="host" name="host" value="<?php echo htmlspecialchars($conf['mysqlDB']['port']); ?>">
 				</div>
 				<div>
 					<label for="databaseName">Database name*:</label>
-					<input type="text" id="databaseName" name="databaseName" value="<?php echo htmlspecialchars($config['mainDB']['databaseName']); ?>">
+					<input type="text" id="databaseName" name="databaseName" value="<?php echo htmlspecialchars($conf['mysqlDB']['databaseName']); ?>">
 				</div>
 				<div>
 					<button type="submit" name="install">install</button>

@@ -6,9 +6,9 @@ return [
     'mysqlDB' => [
         'host' => '127.0.0.1',
         'port' => '3306',
-        'username' => 'user',
-        'password' => 'password',
-        'databaseName' => 'kotatsuba', 
+        'username' => 'kodomo',
+        'password' => 'kodomo',
+        'databaseName' => 'boarddb', 
     ],
     /*
      * its best to keep logs just outside of the web path.
