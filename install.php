@@ -60,19 +60,11 @@
 				configPath VARCHAR(255) NOT NULL,
 				lastPostID INT
 			)",
-			"CREATE TABLE IF NOT EXISTS threads (
-				threadID INT AUTO_INCREMENT PRIMARY KEY,
-				boardID INT NOT NULL,
-				lastTimePosted INT NOT NULL,
-				opPostID INT,
-				FOREIGN KEY (boardID) REFERENCES boardTable(boardID) ON DELETE CASCADE ON UPDATE CASCADE,
-				FOREIGN KEY (opPostID) REFERENCES posts(postID) ON DELETE CASCADE ON UPDATE CASCADE
-			)",
 			"CREATE TABLE IF NOT EXISTS posts (
 				UID INT AUTO_INCREMENT PRIMARY KEY,
 				postID INT NOT NULL,
 				boardID INT NOT NULL,
-				threadID INT NOT NULL,
+				threadID INT,  -- Temporarily remove the NOT NULL constraint
 				password VARCHAR(255) NOT NULL,
 				name VARCHAR(255) NOT NULL,
 				email VARCHAR(255),
@@ -81,16 +73,24 @@
 				ip VARCHAR(45) NOT NULL,
 				postTime INT NOT NULL,
 				special TEXT,
-				FOREIGN KEY (boardID) REFERENCES boardTable(boardID) ON DELETE CASCADE ON UPDATE CASCADE,
-				FOREIGN KEY (threadID) REFERENCES threads(threadID) ON DELETE CASCADE ON UPDATE CASCADE
+				FOREIGN KEY (boardID) REFERENCES boardTable(boardID) ON DELETE CASCADE ON UPDATE CASCADE
 			)",
+			"CREATE TABLE IF NOT EXISTS threads (
+				threadID INT AUTO_INCREMENT PRIMARY KEY,
+				boardID INT NOT NULL,
+				lastTimePosted INT NOT NULL,
+				opPostID INT,
+				FOREIGN KEY (boardID) REFERENCES boardTable(boardID) ON DELETE CASCADE ON UPDATE CASCADE,
+				FOREIGN KEY (opPostID) REFERENCES posts(postID) ON DELETE CASCADE ON UPDATE CASCADE  -- Note: Ensure this references the correct column
+			)",
+			"ALTER TABLE posts ADD CONSTRAINT fk_threadID FOREIGN KEY (threadID) REFERENCES threads(threadID) ON DELETE CASCADE ON UPDATE CASCADE;",
 			"CREATE TABLE IF NOT EXISTS files (
 				fileID INT AUTO_INCREMENT PRIMARY KEY,
 				postID INT NOT NULL,
 				threadID INT NOT NULL,
 				boardID INT NOT NULL,
 				filePath VARCHAR(255) NOT NULL,
-				FOREIGN KEY (postID) REFERENCES posts(postID) ON DELETE CASCADE ON UPDATE CASCADE,
+				FOREIGN KEY (postID) REFERENCES posts(UID) ON DELETE CASCADE ON UPDATE CASCADE,  -- Note: Ensure this references the correct column
 				FOREIGN KEY (threadID) REFERENCES threads(threadID) ON DELETE CASCADE ON UPDATE CASCADE,
 				FOREIGN KEY (boardID) REFERENCES boardTable(boardID) ON DELETE CASCADE ON UPDATE CASCADE
 			)"
