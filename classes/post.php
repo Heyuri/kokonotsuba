@@ -18,7 +18,7 @@ class PostDataClass {
 
 	public function __construct(array $config, string $name, string $email, string $subject, 
                                 string $comment, string $password, int $unixTime, string $IP, 
-                                int $threadID, int $postID=-1, string $special='') {
+                                int $threadID=-1, int $postID=-1, string $special='') {
 
         $this->config = $config;
 		$this->name = $name ?? $config['defualtName'];

@@ -9,7 +9,7 @@ interface BoardRepositoryInterface {
 }
 
 interface ThreadRepositoryInterface {
-    public function createThread($boardConf, $thread);
+    public function createThread($boardConf, $thread, $post);
     public function loadThreadByID($boardConf, $threadID);
     public function loadThreads($boardConf);
     public function updateThread($boardConf, $thread);
@@ -19,6 +19,9 @@ interface ThreadRepositoryInterface {
 interface PostDataRepositoryInterface {
     public function createPost($boardConf, $post);
     public function loadPostByID($boardConf, $postID);
+    public function loadPosts($boardConf);
+    public function loadPostsFromThreadID($boardConf, $threadID);
+    public function setPostID($boardConf, $post, $newPostID);
     public function updatePost($boardConf, $post);
     public function deletePostByID($boardConf, $postID);
 }

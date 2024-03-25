@@ -2,7 +2,7 @@
 enum roles{
         case Admin;
         case Mod;
-        case janny;
+        case janitor;
         case noAuth; // user was never logged in.
 }
 
@@ -28,8 +28,8 @@ class AuthClass {
     public function isMod(){
         return $this->role == roles::Mod;
     }
-    public function isJanny(){
-        return $this->role == roles::janny;
+    public function isJanitor(){
+        return $this->role == roles::janitor;
     }
     //person dose not have special status.
     public function isNotAuth(){

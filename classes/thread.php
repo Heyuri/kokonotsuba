@@ -12,15 +12,13 @@ class threadClass{
     private $lastBumpTime;
     private $OPPostID;
     private $postsFullyLoaded=false;
-    private $repo = postRepoClass::getInstance();
-    private $auth = AuthClass::getInstance();
-    private $hookObj = HookClass::getInstance();
-
-	public function __construct($conf, $threadID, $lastBumpTime, $OPPostID){
+	private $postRepo;
+	public function __construct($conf, $lastBumpTime, $threadID = -1, $OPPostID = -1){
 		$this->conf = $conf;
         $this->threadID = $threadID;
         $this->lastBumpTime = $lastBumpTime;
         $this->OPPostID = $OPPostID;
+		$this->postRepo = PostRepoClass::getInstance();
 	}
 
     public function getLastBumpTime(){
@@ -33,78 +31,28 @@ class threadClass{
         return $this->OPPostID;
     }
 	/* build postObj from postrequest -> validate postObj -> save postObj to database */ // -> redraw pages -> redirect user */
-	public function postToThread(){
-		$conf = $this->conf;
-
-		//gen post password if none is provided
-		if($_POST['password'] == ''){
-			$hasinput = $_SERVER['REMOTE_ADDR'] . time() . $conf['passwordSalt'];
-			$hash = hash('sha256', $hasinput);
-			$_POST['password'] = substr($hash, -8); 
-		}
-
-		setrawcookie('passwordc', $_POST['password'], $conf->cookieExpireTime);
-		setrawcookie('namec', $_POST['name'], $conf->cookieExpireTime);
-
-		$fileHandler = new fileHandlerClass($conf->fileConf);
-		$postData = new PostDataClass(	$conf, $_POST['name'], $_POST['email'], $_POST['subject'], 
-										$_POST['comment'], $_POST['password'], time(), $_SERVER['REMOTE_ADDR'],$this->threadID );
-
-
-		// get the uploaded files and put them inside the post object.
-		$uploadFiles = $fileHandler->getFilesFromPostRequest();
-		foreach ($uploadFiles as $file) {
-			$postData->addFile($file);
-		}
-		
-        // do file procssesing like make thumbnails. make hash. etc.
-		$postData->procssesFiles(); 
-
-		// if we are not admin or mod, remove any html tags.
-		if( !$this->auth->isAdmin() || !$this->auth->isMod()){ 	
-			$postData->stripHtml();
-		}
-
-		//if the board lets you tripcode, apply tripcode to name.
-		if($conf['canTripcode']){
-			$postData->applyTripcode();	
-		}
-
-		$this->hookObj->executeHook("onUserPostToBoard", $postData, $fileHandler);// HOOK base post fully loaded
-
-		/* prep post for db and drawing */
-
-		// if the board allows embeding of links
-		if($conf['autoEmbedLinks']){
-			$postData->embedLinks();
-		}
-		// if board allows post to link to other post.
-		if($conf['allowQuoteLinking']){
-			$postData->quoteLinks();
-		}
-
-        // stuff like bb code, emotes, capcode, ID, should all be handled in moduels.
-		$this->hookObj->executeHook("onPostPrepForDrawing", $postData);// HOOK post with html fully loaded
-
-		// save post to data base
-		$postData->setThreadID($this->threadID);
-        $this->repo->createPost($this->conf, $postData);
-
-        return;
-	}
-
     public function getPosts(){
         if($this->postsFullyLoaded == false){
-            $this->posts = $this->repo->loadPosts($this->conf, $this->threadID);
+            $this->posts = $this->postRepo->loadPostsFromThreadID($this->conf, $this->threadID);
             $this->postFullyLoaded = true;
         }
         return $this->posts;
     }
-
     public function getPostByID($postID){
         if(!isset($this->posts[$postID])){
-            $this->posts[$postID] = $this->repo->loadPostsByID($this->conf ,$this->threadID, $postID);
+            $this->posts[$postID] = $this->postRepo->loadPostByThreadID($this->conf, $this->threadID ,$postID);
         }
         return $this->posts[$postID];
     }
+
 }
+/*new thread 
+$repoP = postRepoClass::getInstance();
+$repoT = ThreadRepoClass::getInstance();
+
+$t = new threadClass([],4);
+$p = new PostDataClass([],0,0,0,0,0,0,0,$t->getThreadID());
+$repoP->createPost([], $p);
+$repoT->createThread([], $t,$p->getPostID());
+$repoP->updatePost([], $p);
+*/

@@ -1,12 +1,122 @@
 <?php
 
-//define("PIXMICAT_VER", 'Koko BBS Release 1'); // Version information text
-
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
 
+require_once './classes/board.php';
+require_once './classes/thread.php';
+require_once './classes/post.php';
+require_once './classes/file.php';
+
+require_once './classes/hook.php';
+require_once './classes/auth.php';
+require_once './classes/fileHandler.php';
+
+require_once './classes/repos/repoBoard.php';
+require_once './classes/repos/repoThread.php';
+require_once './classes/repos/repoPost.php';
+require_once './classes/repos/repoFile.php';
+
+$AUTH = AuthClass::getInstance();
+$HOOK = HookClass::getInstance();
+$POSTREPO = PostRepoClass::getInstance();
+$THREADREPO = ThreadRepoClass::getInstance();
+$BOARDREPO = BoardRepoClass::getInstance();
+
 //@session_start();
+
+
+function getUserPost($conf, $thread){
+	global $AUTH;
+	global $HOOK;
+	//gen post password if none is provided
+	if($_POST['password'] == ''){
+		$hasinput = $_SERVER['REMOTE_ADDR'] . time() . $conf['passwordSalt'];
+		$hash = hash('sha256', $hasinput);
+		$_POST['password'] = substr($hash, -8); 
+	}
+
+	setrawcookie('passwordc', $_POST['password'], $conf->cookieExpireTime);
+	setrawcookie('namec', $_POST['name'], $conf->cookieExpireTime);
+
+	$fileHandler = new fileHandlerClass($conf->fileConf);
+	$post = new PostDataClass(	$conf, $_POST['name'], $_POST['email'], $_POST['subject'], 
+									$_POST['comment'], $_POST['password'], time(), $_SERVER['REMOTE_ADDR'], $thread->getThreadID());
+	/*
+	// get the uploaded files and put them inside the post object.
+	$uploadFiles = $fileHandler->getFilesFromPostRequest();
+	foreach ($uploadFiles as $file) {
+		$postData->addFile($file);
+	}
+	
+	// do file procssesing like make thumbnails. make hash. etc.
+	$postData->procssesFiles(); 
+	*/
+
+	// if we are not admin or mod, remove any html tags.
+	if( !$AUTH->isAdmin() || !$AUTH->isMod()){ 	
+		$post->stripHtml();
+	}
+
+	//if the board lets you tripcode, apply tripcode to name.
+	if($conf['canTripcode']){
+		$post->applyTripcode();	
+	}
+
+	$HOOK->executeHook("onUserPostToBoard", $post, $fileHandler);// HOOK base post fully loaded
+
+	/* prep post for db and drawing */
+
+	// if the board allows embeding of links
+	if($conf['autoEmbedLinks']){
+		$post->embedLinks();
+	}
+	// if board allows post to link to other post.
+	if($conf['allowQuoteLinking']){
+		$post->quoteLinks();
+	}
+
+	// stuff like bb code, emotes, capcode, ID, should all be handled in moduels.
+	$HOOK->executeHook("onPostPrepForDrawing", $post);// HOOK post with html fully loaded
+	return $post;
+}
+
+function userPostToThread($board){
+	$conf = $board->conf;
+	global $POSTREPO;
+
+	// load existing thread
+	$thread = $board->getThreadByID($_POST['threadID']);
+	
+	// create post with thread
+	$post = getUserPost($conf, $thread);
+
+	// save post to data base.
+	$POSTREPO->createPost($conf, $post);
+
+	return;
+}
+function userPostThread($board){
+	$conf = $board->conf;
+	global $POSTREPO;
+	global $THREADREPO;
+
+	// make a new thread
+	$thread = new threadClass($conf, time());
+
+	// create post with thread
+	$post = getUserPost($conf, $thread);
+
+	// save post and thread to data base.
+	$POSTREPO->createPost($conf, $post);
+	$THREADREPO->createThread($conf, $thread, $post);
+
+	return;
+}
+function userDeletedPost(){
+
+}
 
 /*-------------------------------------------------------MAIN ENTRY-------------------------------------------------------*/
 
@@ -22,8 +132,7 @@ if ($boardID == '') {
 	//displayErrorPage("you must have a boardID");
 }
 
-$boardRepo = BoardRepoClass::getInstance();
-$board = $boardRepo->loadBoardByID($boardID);
+$board = $BOARDREPO->loadBoardByID($boardID);
 
 /*----------get action recived----------*/
 if ($_GET['action']){
@@ -37,8 +146,14 @@ elseif($_POST['action']){
 	$_POST['action'];
 	switch ($action) {
 		case 'postToThread':
-			$thread = $board->getThreadByID($_POST['ThreadID']);
-			$thread->postToThread(); /* this function uses post request's super global. */
+			userPostToThread($board);
+			//drawFunction;
+			//redirect;
+			break;
+		case 'postThread':
+			userPostThread($board);
+			//drawFunction;
+			//redirect;
 			break;
 		default:
 			$stripedInput = htmlspecialchars($_POST['action'], ENT_QUOTES, 'UTF-8');

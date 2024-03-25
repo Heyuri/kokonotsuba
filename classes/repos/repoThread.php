@@ -20,11 +20,14 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         }
         return self::$instance;
     }
-
-    public function createThread($boardConf, $thread) {
-        $query = "INSERT INTO threads (boardID, lastTimePosted, opPostID) VALUES ('{$boardConf['boardID']}','{$thread->getLastBumpTime()}','{$thread->getOPPostID()}')";
+    public function createThread($boardConf, $thread, $post) {
+        if($post->getPostID() == -1 ){
+            error_log("post must be registed before the thread.");
+        }
+        $query = "INSERT INTO threads (boardID, lastTimePosted, opPostID) VALUES ('{$boardConf['boardID']}','{$thread->getLastBumpTime()}','{$post->getPostID()}')";
         if ($this->db->query($query) === TRUE) {
             $thread->setThreadID($this->db->insert_id);
+            $thread->setPostID($post->getPostID());
             return true;
         } else {
             return false;

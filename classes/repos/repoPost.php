@@ -3,7 +3,7 @@ require_once  './DBConnection.php';
 require_once  './interfaces.php';
 require_once '../postData.php';
 
-class postRepoClass implements PostDataRepositoryInterface {
+class PostRepoClass implements PostDataRepositoryInterface {
     private $db;
     private static $instance = null;
 
@@ -20,17 +20,17 @@ class postRepoClass implements PostDataRepositoryInterface {
         }
         return self::$instance;
     }
-
+    /* this feels a bit hacky to get the newstPostid on the new post*/
     public function createPost($boardConf, $post) {
         // Start transaction
         $this->db->begin_transaction();
     
         try {
-            // Step 1: Increment lastPostID for the board directly without a prepared statement
+            // increment the lastPostID for the board.
             $updateQuery = "UPDATE boardTable SET lastPostID = lastPostID + 1 WHERE boardID = " . intval($boardConf['boardID']);
             $this->db->query($updateQuery);
     
-            // Retrieve the updated lastPostID
+            // get the lastPostID. this will be used for new post
             $lastIdQuery = "SELECT lastPostID FROM boardTable WHERE boardID = " . intval($boardConf['boardID']);
             $result = $this->db->query($lastIdQuery);
             $lastPostID = null;
@@ -42,12 +42,14 @@ class postRepoClass implements PostDataRepositoryInterface {
                 throw new Exception("Failed to retrieve updated lastPostID.");
             }
     
-            // Step 2: Insert the new post with the lastPostID
-            // Assuming this part remains unchanged, using a prepared statement
-            $post->setPostID($lastPostID);
-            $insertQuery = "INSERT INTO posts (boardID, threadID, postID, name, email, subject, comment, password, postTime, IP, special) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            // create post in db
+            $insertQuery = "INSERT INTO posts ( boardID, threadID, postID, name, 
+                                                email, subject, comment, password, 
+                                                postTime, IP, special) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $insertStmt = $this->db->prepare($insertQuery);
-            $insertStmt->bind_param("iiisssssiss", $boardConf['boardID'], $post->getThreadID(), $post->getPostID, $post->getName(), $post->getEmail(), $post->getSubject(), $post->getComment(), $post->getPassword(), $post->getUnixTime(), $post->getIP(), $post->getSpecial());
+            $insertStmt->bind_param("iiisssssiss",  $boardConf['boardID'], $post->getThreadID(), $lastPostID, $post->getName(), 
+                                                    $post->getEmail(), $post->getSubject(), $post->getComment(), $post->getPassword(),
+                                                    $post->getUnixTime(), $post->getIP(), $post->getSpecial());
             $insertSuccess = $insertStmt->execute();
             $insertStmt->close();
     
@@ -55,10 +57,11 @@ class postRepoClass implements PostDataRepositoryInterface {
                 throw new Exception("Failed to insert new post.");
             }
             
-            // Commit the transaction
+            // comit and update post object.
             $this->db->commit();
-    
-            return $lastPostID;
+            $post->setPostID($lastPostID);
+            
+            return true;
         } catch (Exception $e) {
             // Rollback the transaction on error
             $this->db->rollback();
@@ -66,10 +69,9 @@ class postRepoClass implements PostDataRepositoryInterface {
             return false;
         }
     }
-
     public function loadPostByID($boardConf, $postID) {
-        $stmt = $this->db->prepare("SELECT * FROM posts WHERE postID = ? and boardID = ?");
-        $stmt->bind_param("ii", $postID, $boardConf['boardID']);
+        $stmt = $this->db->prepare("SELECT * FROM posts WHERE boardID = ? and postID = ? ");
+        $stmt->bind_param("ii", $boardConf['boardID'], $postID);
         $stmt->execute();
         $result = $stmt->get_result();
         if ($row = $result->fetch_assoc()) {
@@ -80,18 +82,111 @@ class postRepoClass implements PostDataRepositoryInterface {
         $stmt->close();
         return null;
     }
-
+    public function loadPostByThreadID($boardConf, $threadID, $postID) {
+        $stmt = $this->db->prepare("SELECT * FROM posts WHERE boardID = ? and postID = ? and threadID = ? ");
+        $stmt->bind_param("iii", $boardConf['boardID'], $postID, $threadID);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            return new PostDataClass($boardConf, $row['name'], $row['email'], $row['subject'], 
+                                     $row['comment'], $row['password'], $row['unixTime'], $row['IP'], 
+                                     $row['threadID'], $row['postID'], $row['special']);
+        }
+        $stmt->close();
+        return null;
+    }
+    public function loadPosts($boardConf){
+        $posts = [];
+        $stmt = $this->db->prepare("SELECT * FROM posts WHERE boardID = ?");
+        $stmt->bind_param("i", $boardConf['boardID']);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $posts[] =  new PostDataClass($boardConf, $row['name'], $row['email'], $row['subject'], 
+                                     $row['comment'], $row['password'], $row['unixTime'], $row['IP'], 
+                                     $row['threadID'], $row['postID'], $row['special']);
+        }
+        
+        $stmt->close();
+        return $posts;
+    }
+    public function loadPostsFromThreadID($boardConf, $threadID){
+        $posts = [];
+        $stmt = $this->db->prepare("SELECT * FROM posts WHERE boardID = ? and threadID = ? ");
+        $stmt->bind_param("ii", $boardConf['boardID'], $threadID);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $posts[] =  new PostDataClass($boardConf, $row['name'], $row['email'], $row['subject'], 
+                                     $row['comment'], $row['password'], $row['unixTime'], $row['IP'], 
+                                     $row['threadID'], $row['postID'], $row['special']);
+        }
+        
+        $stmt->close();
+        return $posts;
+    }
     public function updatePost($boardConf, $post) {
-        $query = "UPDATE posts SET boardID = ?, threadID = ?, name = ?, email = ?, subject = ?, comment = ?, password = ?, postTime = ?, IP = ?, special = ?,  postID = ? WHERE postID = ? and boardID = ?";
+        $query = "UPDATE posts SET      boardID = ?, threadID = ?, name = ?, email = ?,
+                                        subject = ?, comment = ?, password = ?, postTime = ?, 
+                                        ip = ?, special = ?
+                                    WHERE postID = ? and boardID = ?";
         $stmt = $this->db->prepare($query);
-         $stmt->bind_param("iisssssissii",$boardConf['boardID'], $post->getThreadID(), $post->getName(), $post->getEmail(), $post->getSubject(), 
-                                      $post->getComment(), $post->getPassword(), $post->getUnixTime(), $post->getIP(), 
-                                      $post->getSpecial(), $post->getPostID(), $post->getPostID(), $boardConf['boardID']);
+         $stmt->bind_param("iisssssissii",
+                                        $boardConf['boardID'], $post->getThreadID(), $post->getName(), $post->getEmail(), 
+                                        $post->getSubject(), $post->getComment(), $post->getPassword(), $post->getUnixTime(),
+                                        $post->getIP(), $post->getSpecial(),
+                                    $post->getPostID(), $boardConf['boardID']);
         $success = $stmt->execute();
         $stmt->close();
         return $success;
     }
-
+    public function setPostID($boardConf, $post, $newPostID) {
+        $this->db->begin_transaction();
+        
+        try {
+            // check if newPostID is in use by another post on the board.
+            $checkQuery = "SELECT COUNT(*) AS cnt FROM posts WHERE postID = ? AND boardID = ?";
+            $checkStmt = $this->db->prepare($checkQuery);
+            if (!$checkStmt) {
+                throw new Exception("Failed to prepare statement for checking postID.");
+            }
+            $checkStmt->bind_param("ii", $newPostID, $boardConf['boardID']);
+            $checkStmt->execute();
+            $result = $checkStmt->get_result();
+            $row = $result->fetch_assoc();
+            $checkStmt->close();
+    
+            if ($row['cnt'] > 0) {
+                // The newPostID is already in use
+                throw new Exception("The new postID is already in use.");
+            }
+    
+            // set the post with the new postID
+            $updateQuery = "UPDATE posts SET postID = ? WHERE postID = ? AND boardID = ?";
+            $updateStmt = $this->db->prepare($updateQuery);
+            if (!$updateStmt) {
+                throw new Exception("Failed to prepare statement for updating postID.");
+            }
+            $updateStmt->bind_param("iii", $newPostID, $post->getPostID(), $boardConf['boardID']);
+            $success = $updateStmt->execute();
+            $updateStmt->close();
+    
+            if (!$success) {
+                throw new Exception("Failed to update the post with the new postID.");
+            }
+    
+            // Commit the transaction
+            $this->db->commit();
+            $post->setPostID($newPostID);
+    
+            return true;
+        } catch (Exception $e) {
+            // Rollback the transaction on error
+            $this->db->rollback();
+            error_log($e->getMessage());
+            return false;
+        }
+    }
     public function deletePostByID($boardConf, $postID) {
         $query = "DELETE FROM posts WHERE boardID = ? and postID = ?";
         $stmt = $this->db->prepare($query);
