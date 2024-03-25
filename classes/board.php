@@ -1,6 +1,6 @@
 <?php
 
-require_once './postData.php';
+require_once './post.php';
 require_once './fileHandler.php';
 require_once './hook.php';
 require_once './auth.php';
