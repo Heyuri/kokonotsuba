@@ -161,7 +161,7 @@ function displayErrorPage($txt){
  */
 
 $boardID = $_GET['boardID'] ?? $_POST['boardID'] ?? '';
-if ($boardID == '') {
+if (!is_numeric($boardID)) {
 	displayErrorPage("you must have a boardID");
 }
 
