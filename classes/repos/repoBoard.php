@@ -22,8 +22,13 @@ class BoardRepoClass implements BoardRepositoryInterface {
         return self::$instance;
     }
     public function updateBoard($board) {
-        $query = "UPDATE boardTable SET configPath = '{$board->getConfPath()}' , lastPostID = {$board->getLastPostID()} WHERE boardID = {$board->getBoardID()}";
-        $success = $this->db->query($query);
+        $path = $board->getConfPath();
+        $lastID = $board->getLastPostID();
+        $id = $board->getBoardID();
+        $stmt = $this->db->prepare("UPDATE boardTable SET configPath = ?, lastPostID = ? WHERE boardID = ?");
+        $stmt->bind_param("sii", $path, $lastID, $id );
+        $success = $stmt->execute();
+        $stmt->close();
         return $success;
     }
     public function loadBoards() {
@@ -38,31 +43,39 @@ class BoardRepoClass implements BoardRepositoryInterface {
         }
         return $boards;
     }
-    public function loadBoardByID($boardID){
-        $query = "SELECT * FROM boardTable WHERE boardID = $boardID";
-        $result = $this->db->query($query);
+    public function loadBoardByID($boardID) {
+        $stmt = $this->db->prepare("SELECT * FROM boardTable WHERE boardID = ?");
+        $stmt->bind_param("i", $boardID);
+        $stmt->execute();
+        $result = $stmt->get_result();
     
-        if ($result && $result->num_rows > 0) {
-            $row = $result->fetch_assoc(); 
-            $board = new boardClass($row['configPath'],$row['boardID']);
+        if ($row = $result->fetch_assoc()) {
+            $board = new boardClass($row['configPath'], $row['boardID']);
+            $stmt->close();
             return $board;
         } else {
+            $stmt->close();
             return null;
         }
     }
     
     public function deleteBoardByID($boardID) {
-        $query = "DELETE FROM boardTable WHERE boardID = $boardID";
-        $success = $this->db->query($query);
+        $stmt = $this->db->prepare("DELETE FROM boardTable WHERE boardID = ?");
+        $stmt->bind_param("i", $boardID);
+        $success = $stmt->execute();
+        $stmt->close();
         return $success;
     }
 
     public function createBoard($board) {
-        $query = "INSERT INTO boardTable (configPath) VALUES ('{$board->getConf()}')";
-        $success = $this->db->query($query);
+        $conf = $board->getConfPath();
+        $stmt = $this->db->prepare("INSERT INTO boardTable (configPath) VALUES (?)");
+        $stmt->bind_param("s", $conf);
+        $success = $stmt->execute();
         if ($success) {
             $board->setBoardID($this->db->insert_id);
         }
+        $stmt->close();
         return $success;
-    }
+    }  
 }

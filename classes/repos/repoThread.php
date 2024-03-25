@@ -21,42 +21,67 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         return self::$instance;
     }
     public function createThread($boardConf, $thread, $post) {
-        if($post->getPostID() == -1 ){
-            error_log("post must be registed before the thread.");
-        }
-        $query = "INSERT INTO threads (boardID, lastTimePosted, opPostID) VALUES ('{$boardConf['boardID']}','{$thread->getLastBumpTime()}','{$post->getPostID()}')";
-        if ($this->db->query($query) === TRUE) {
-            $thread->setThreadID($this->db->insert_id);
-            $thread->setPostID($post->getPostID());
-            return true;
-        } else {
+        if ($post->getPostID() == -1) {
+            error_log("post must be registered before the thread.");
             return false;
         }
+        $bump = $thread->getLastBumpTime();
+        $postID = $post->getPostID();
+        $stmt = $this->db->prepare("INSERT INTO threads (boardID, lastTimePosted, opPostID) VALUES (?, ?, ?)");
+        $stmt->bind_param("iii", $boardConf['boardID'], $bump, $postID);
+        $success = $stmt->execute();
+        if ($success) {
+            $thread->setThreadID($this->db->insert_id);
+            $thread->setPostID($post->getPostID());
+        }
+        $stmt->close();
+        return $success;
     }
     public function loadThreadByID($boardConf, $threadID) {
-        $query = "SELECT * FROM threads WHERE boardID = '{$boardConf['boardID']}' AND threadID = '{$threadID}'";
-        $result = $this->db->query($query);
+        $stmt = $this->db->prepare("SELECT * FROM threads WHERE boardID = ? AND threadID = ?");
+        $stmt->bind_param("ii", $boardConf['boardID'], $threadID);
+        $stmt->execute();
+        $result = $stmt->get_result();
         if ($row = $result->fetch_assoc()) {
-            return new threadClass($boardConf, $row['threadID'], $row['lastTimePosted'], $row['opPostID']);
+            $thread = new threadClass($boardConf, $row['threadID'], $row['lastTimePosted'], $row['opPostID']);
+            $stmt->close();
+            return $thread;
         } else {
+            $stmt->close();
             return null;
         }
     }
+    
     public function loadThreads($boardConf) {
         $threads = [];
-        $query = "SELECT * FROM threads WHERE boardID = '{$boardConf['boardID']}'";
-        $result = $this->db->query($query);
+        $stmt = $this->db->prepare("SELECT * FROM threads WHERE boardID = ?");
+        $stmt->bind_param("i", $boardConf['boardID']);
+        $stmt->execute();
+        $result = $stmt->get_result();
         while ($row = $result->fetch_assoc()) {
             $threads[] = new threadClass($boardConf, $row['threadID'], $row['lastTimePosted'], $row['opPostID']);
         }
+        $stmt->close();
         return $threads;
     }
+    
     public function updateThread($boardConf, $thread) {
-        $query = "UPDATE threads SET lastTimePosted = '{$thread->getLastBumpTime()}', opPostID = {$thread->getOPPostID()} WHERE boardID = '{$boardConf['boardID']}' AND threadID = '{$thread->getThreadID()}'";
-        return $this->db->query($query);
+        $bump = $thread->getLastBumpTime();
+        $postID = $thread->getOPPostID()();
+        $id = $thread->getThreadID();
+        $stmt = $this->db->prepare("UPDATE threads SET lastTimePosted = ?, opPostID = ? WHERE boardID = ? AND threadID = ?");
+        $stmt->bind_param("iiii", $bump, $postID, $boardConf['boardID'], $ID);
+        $success = $stmt->execute();
+        $stmt->close();
+        return $success;
     }
+    
     public function deleteThreadByID($boardConf, $threadID) {
-        $query = "DELETE FROM threads WHERE boardID = '{$boardConf['boardID']}' AND threadID = '{$threadID}'";
-        return $this->db->query($query);
+        $stmt = $this->db->prepare("DELETE FROM threads WHERE boardID = ? AND threadID = ?");
+        $stmt->bind_param("ii", $boardConf['boardID'], $threadID);
+        $success = $stmt->execute();
+        $stmt->close();
+        return $success;
     }
+    
 }
