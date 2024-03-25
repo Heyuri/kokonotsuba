@@ -21,13 +21,11 @@ class BoardRepoClass implements BoardRepositoryInterface {
         }
         return self::$instance;
     }
-    
-    public function saveBoard($board) {
-        $query = "UPDATE boardTable SET configPath = '{$board->getConf()}' WHERE boardID = {$board->getBoardID()}";
+    public function updateBoard($board) {
+        $query = "UPDATE boardTable SET configPath = '{$board->getConfPath()}' , lastPostID = {$board->getLastPostID()} WHERE boardID = {$board->getBoardID()}";
         $success = $this->db->query($query);
         return $success;
     }
-
     public function loadBoards() {
         $boards = [];
         $query = "SELECT * FROM boardTable";
@@ -35,7 +33,7 @@ class BoardRepoClass implements BoardRepositoryInterface {
     
         if ($result) {
             while ($row = $result->fetch_assoc()) {
-                $boards[] = new boardClass(require $row['configPath'], $row['boardID']);
+                $boards[] = new boardClass($row['configPath'], $row['boardID']);
             }
         }
         return $boards;
@@ -46,7 +44,7 @@ class BoardRepoClass implements BoardRepositoryInterface {
     
         if ($result && $result->num_rows > 0) {
             $row = $result->fetch_assoc(); 
-            $board = new boardClass(require $row['configPath'],$row['boardID']);
+            $board = new boardClass($row['configPath'],$row['boardID']);
             return $board;
         } else {
             return null;

@@ -1,8 +1,8 @@
 <?php
-require_once './postData.php';
-require_once './fileHandler.php';
+require_once './post.php';
 require_once './hook.php';
 require_once './auth.php';
+require_once './fileHandler.php';
 require_once './repos/postRepo.php';
 
 class threadClass{
@@ -48,7 +48,7 @@ class threadClass{
 
 		$fileHandler = new fileHandlerClass($conf->fileConf);
 		$postData = new PostDataClass(	$conf, $_POST['name'], $_POST['email'], $_POST['subject'], 
-										$_POST['comment'], $_POST['password'], $_SERVER['REMOTE_ADDR'], time());
+										$_POST['comment'], $_POST['password'], time(), $_SERVER['REMOTE_ADDR'],$this->threadID );
 
 
 		// get the uploaded files and put them inside the post object.
@@ -87,7 +87,8 @@ class threadClass{
 		$this->hookObj->executeHook("onPostPrepForDrawing", $postData);// HOOK post with html fully loaded
 
 		// save post to data base
-        $this->repo->savePost($this->conf ,$this->threadID, $postData);
+		$postData->setThreadID($this->threadID);
+        $this->repo->createPost($this->conf, $postData);
 
         return;
 	}

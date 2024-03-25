@@ -11,13 +11,12 @@ return [
         'databaseName' => 'kotatsuba', 
     ],
     /*
-     * This is the directory to store your logs. 
-     * its best to keep it outside of the project path.
-     * /var/www/logs
+     * its best to keep logs just outside of the web path.
+     * so a place like this. /var/www/logs
      */
     'timeZone' => 'UTC',
-    'logDir' => '../logs', //also known as storage path
-    'rootPath' => './', //dumb config
+    'logDir' => '../logs',
+    'rootPath' => './',
     'auditLog' => 'auditlog.txt',
     'passwordSalt'=> 'abc123!?_',
 

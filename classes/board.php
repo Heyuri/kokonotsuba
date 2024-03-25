@@ -7,15 +7,19 @@ require_once './auth.php';
 require_once './repos/repoThread.php';
 
 class boardClass{
-	private $conf = require './conf.php'; // board configs.
+	private $conf;
+	private $confPath;
 	private $boardID;
+	private $lastPostID;
 	private $threads = [];
 	private $threadsFullyLoaded = false;
 	private $repo;
 
-	public function __construct($conf, $boardID){
-		$this->conf = $conf;
+	public function __construct($confPath, $boardID, $lastPostID = 0){
+		$this->confPath = $confPath;
+		$this->conf = require $confPath;
         $this->boardID = $boardID;
+		$this->lastPostID = $lastPostID;
         $this->repo = ThreadRepoClass::getInstance();
 		date_default_timezone_set($this->conf->timeZone);
 	}
@@ -40,6 +44,12 @@ class boardClass{
 	}
 	public function getConf(){
 		return $this->conf;
+	}
+	public function getConfPath(){
+		return $this->confPath;
+	}
+	public function getLastPostID(){
+		return $this->lastPostID;
 	}
 
 

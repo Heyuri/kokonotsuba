@@ -4,25 +4,21 @@ require_once './auth.php';
 require_once '../testLib.php';
 class PostDataClass {
     private int $postID;//postID 
+    private int $threadID;
     private array $files = [];//file objects
     private string $password;//post password
     private string $name;//name
     private string $email;//email
     private string $subject;//subject
     private string $comment;//comment
+    private int $unixTime;//time posted
     private string $IP;//poster's ip
     private string $special;//special things like. auto sage, locked, animated gif, etc. split by a _thing_
     private $config;
 
-	public function __construct(array &$config, string $name, string $email, string $subject, 
+	public function __construct(array $config, string $name, string $email, string $subject, 
                                 string $comment, string $password, int $unixTime, string $IP, 
-                                int $postID=-1, string $special='') {
-        //$this->postID = $data['no'] ?? null;
-        //$this->threadID = $data['resto'] ?? null;
-        //$this->category = $data['category'] ?? null;
-
-        //$this->lastBumpTime = $data['root'] ?? null;
-        //$this->time = $data['now'] ?? null; //time with proper time zone as string.
+                                int $threadID, int $postID=-1, string $special='') {
 
         $this->config = $config;
 		$this->name = $name ?? $config['defualtName'];
@@ -34,6 +30,7 @@ class PostDataClass {
         $this->unixTime = $unixTime;
         $this->IP = $IP;
         $this->postID = $postID;
+        $this->threadID = $threadID;
         $this->special = $special;
     }
     private function isValid():bool {
@@ -61,7 +58,7 @@ class PostDataClass {
         $this->name = convertTextToTripcodedText($this->name);
     }
     public function quoteLinks(){
-        // 
+        // just make this use a get request to other board
     }
     public function procssesFiles(){
         foreach ($this->files as $file) {
@@ -75,15 +72,15 @@ class PostDataClass {
     public function getFiles() {
         return $this->files;
     }
-	public function getSpecial(){
-        //do this in a way to split up status string. 
-		return $this->special;
-	}
 	public function getParentThread(){
 		//connstruct thread from resto ID
 	}
-    public function getID(){
+
+    public function getPostID(){
         return $this->postID;
+    }
+    public function getThreadID(){
+        return $this->threadID;
     }
     public function getName(){
         return $this->name;
@@ -97,5 +94,47 @@ class PostDataClass {
     public function getComment(){
         return $this->comment;
     }
+    public function getPassword(){
+        return $this->password;
+    }
+    public function getUnixTime(){
+        return $this->unixTime;
+    }
+    public function getIP(){
+        return $this->IP;
+    }
+    public function getSpecial(){
+        return $this->special;
+    }
 
+    public function setPostID($id){
+        $this->postID = $id;
+    }
+    public function setThreadID($id){
+        $this->threadID = $id;
+    }
+    public function setName($name){
+        $this->name = $name;
+    }
+    public function setEmail($email){
+        $this->email = $email;
+    }
+    public function setSubject($subject){
+        $this->subject = $subject;
+    }
+    public function setComment($comment){
+        $this->comment = $comment;
+    }
+    public function setPassword($password){
+        $this->password = $password;
+    }
+    public function setUnixTime($unixTime){
+        $this->unixTime = $unixTime;
+    }
+    public function setIP($IP){
+        $this->IP = $IP;
+    }
+    public function setSpecial($special){
+        $this->special = $special;
+    }
 }
