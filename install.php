@@ -81,7 +81,6 @@
 				lastTimePosted INT NOT NULL,
 				opPostID INT,
 				FOREIGN KEY (boardID) REFERENCES boardTable(boardID) ON DELETE CASCADE ON UPDATE CASCADE,
-				FOREIGN KEY (opPostID) REFERENCES posts(postID) ON DELETE CASCADE ON UPDATE CASCADE  -- Note: Ensure this references the correct column
 			)",
 			"ALTER TABLE posts ADD CONSTRAINT fk_threadID FOREIGN KEY (threadID) REFERENCES threads(threadID) ON DELETE CASCADE ON UPDATE CASCADE;",
 			"CREATE TABLE IF NOT EXISTS files (
@@ -98,7 +97,7 @@
 		// Execute each SQL command
 		foreach ($sqlCommands as $sql) {
 			if ($conn->query($sql) === TRUE) {
-				echo "Table created successfully\n";
+				echo "Table created successfully<br>";
 			} else {
 				echo "Error creating table: " . $conn->error . "\n";
 			}
