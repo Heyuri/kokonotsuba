@@ -146,7 +146,7 @@ function redirect($to, $time=0, $verbose=false) {
 	<html><head>
 		<meta charset="utf-8" />
 		<title>Redirecting...</title>
-		<meta http-equiv="refresh" content="'.($time+1).';URL='.$to.'" />
+		<meta http-equiv="refresh" content="0;URL='.$to.'" />
 		<script>
 	setTimeout(function(){'.$tojs.'}, '.$time.'*1000);
 		</script>
