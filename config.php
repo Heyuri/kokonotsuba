@@ -163,6 +163,7 @@ define("SWF_THUMB", STATIC_URL."image/swf_thumb.png");
 // Continuous Posting Time Limits
 define("RENZOKU", 0); // Post limit, intervals in seconds
 define("RENZOKU2", 0); // Post limit for images, intervals in seconds
+define("RENZOKU3", 30); // Post limit for threads (Requires mod_antiflood)
 
 // Image Thumbnailing
 define("USE_THUMB", 1); // Enable Thumbnailing [gd, imagemagick, imagick, magickwand, repng2jpeg]
