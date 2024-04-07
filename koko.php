@@ -1102,11 +1102,21 @@ $message.'<br />'.$noticeHost.'
 	}
 	$dat.= '</tbody></table>
 		<p>
+        <button type="button" onclick="selectAll()">Select All</button>
 			<input type="submit" value="'._T('admin_submit_btn').'" /> <input type="reset" value="'._T('admin_reset_btn').'" /> [<label><input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on" />'._T('del_img_only').'</label>]
 		</p>
 		<p>'._T('admin_totalsize', $FileIO->getCurrentStorageSize()).'</p>
 </center></form>
-<hr size="1" />';
+<hr size="1" />
+<script>
+function selectAll() {
+    var checkboxes = document.querySelectorAll(\'input[name="clist[]"]\');
+        checkboxes.forEach(function(checkbox) {
+        checkbox.checked = true;
+    });
+}
+</script>
+';
 
 	$countline = $PIO->postCount(); // Total number of articles(threads)
 	$page_max = ($searchHost ? 0 : ceil($countline / ADMIN_PAGE_DEF) - 1); // Total number of pages
