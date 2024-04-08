@@ -4,7 +4,7 @@ class HookClass {
     // these functions should be disabled. and getInstance should be used insted.
     private function __construct() {}
     private function __clone() {}
-    public function __wakeup() { throw new Exception("Unserialization of AuthClass instances is not allowed.");}
+    public function __wakeup() { throw new Exception("Unserialization of HookClass instances is not allowed.");}
     static $instance = null;
     public static function getInstance() {
         if (self::$instance === null) {
@@ -24,10 +24,15 @@ class HookClass {
     }
 
     public function executeHook(string $hookName, ...$params) {
+        $results = [];
         if (isset($this->hooks[$hookName])) {
             foreach ($this->hooks[$hookName] as $callback) {
-                call_user_func_array($callback, $params);
+                $result = call_user_func_array($callback, $params);
+                if ($result !== null) {
+                    $results[] = $result;
+                }
             }
         }
+        return $results;
     }
 }

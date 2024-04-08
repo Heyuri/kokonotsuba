@@ -155,6 +155,7 @@ function displayErrorPage($txt){
 
 /*
  * this file is the main request handler of the board after it is already installed.
+ * below handels the routing.
  * 
  * you should not try and hack anything into this file unless you know what you are doing.
  * ./moduels/ is where your hacks should be put. and then enable them through the admin pannel.
@@ -172,7 +173,7 @@ if(is_null($board) || $board->getConf()['unlisted']) {
 }
 
 /*----------get action recived----------*/
-if (isset($_GET['action'])){
+if (isset($_GET['res'])){
 	$action = $_GET['action'];
 	switch ($action) {
 		default:
