@@ -100,6 +100,7 @@ class htmlclass {
         <!--set constraints based on board conf-->
         <div class="postForm">
         <form class="formThread" action="/bbs.php" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="action" value="postNewThread">
         <table>
         <tr>
             <td><label for="name">Name</label></td>

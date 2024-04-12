@@ -190,11 +190,10 @@ elseif(isset($_POST['action'])){
 	switch ($action) {
 		case 'postToThread':
 			userPostToThread($board);
-			//drawFunction;
 			break;
 		case 'postNewThread':
 			userPostNewThread($board);
-			//drawFunction;
+			displayErrorPage("thread created");
 			break;
 		default:
 			$stripedInput = htmlspecialchars($_POST['action'], ENT_QUOTES, 'UTF-8');
