@@ -206,6 +206,7 @@ class htmlclass {
         $this->drawFormNewThread();
 
         $this->html .= '</body>';
+        echo $this->html;
     }
     public function drawThread($threadID){
 
