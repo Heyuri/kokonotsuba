@@ -12,6 +12,7 @@ require_once __DIR__ .'/classes/file.php';
 require_once __DIR__ .'/classes/hook.php';
 require_once __DIR__ .'/classes/auth.php';
 require_once __DIR__ .'/classes/fileHandler.php';
+require_once __DIR__ .'/classes/html.php';
 
 require_once __DIR__ .'/classes/repos/repoBoard.php';
 require_once __DIR__ .'/classes/repos/repoThread.php';
@@ -172,13 +173,15 @@ if(is_null($board) || $board->getConf()['unlisted']) {
 	displayErrorPage("board dose not exist");
 }
 
+$html = new htmlclass($board->getConf(), $board);
+
 /*----------get action recived----------*/
-if (isset($_GET['res'])){
+if (isset($_GET['action'])){
 	$action = $_GET['action'];
 	switch ($action) {
+		case 'thread'://go to thead.
+			break;
 		default:
-			$stripedInput = htmlspecialchars($_GET['action'], ENT_QUOTES, 'UTF-8');
-			displayErrorPage("invalid action: " . $stripedInput);
 			break;
 	}
 }
@@ -189,12 +192,10 @@ elseif(isset($_POST['action'])){
 		case 'postToThread':
 			userPostToThread($board);
 			//drawFunction;
-			//redirect;
 			break;
 		case 'postNewThread':
 			userPostNewThread($board);
 			//drawFunction;
-			//redirect;
 			break;
 		default:
 			$stripedInput = htmlspecialchars($_POST['action'], ENT_QUOTES, 'UTF-8');
@@ -204,7 +205,7 @@ elseif(isset($_POST['action'])){
 }
 /*----------no action recived----------*/
 else{
-	displayErrorPage("you must have a action");
+	$html->drawPage(1);
 }
 
 
