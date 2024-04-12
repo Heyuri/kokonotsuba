@@ -21,7 +21,7 @@ class boardClass{
         $this->boardID = $boardID;
 		$this->lastPostID = $lastPostID;
         $this->repo = ThreadRepoClass::getInstance();
-		date_default_timezone_set($this->conf->timeZone);
+		date_default_timezone_set($this->conf['timeZone']);
 	}
 	public function getThreads(){
 		if($this->threadsFullyLoaded == false){

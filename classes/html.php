@@ -45,7 +45,7 @@ class htmlclass {
     private function drawNavGroup($URLPair){
         $this->html .= "[";
         foreach ($URLPair as $key => $value) {
-            $this->html .= '<a class="navLink" href="'.$value.'">'.$key.'</a>"';
+            $this->html .= '<a class="navLink" href="'.$value.'">'.$key.'</a>';
             $this->html .= "/";
         }
         $this->html = substr($this->html, 0, -1);
@@ -97,7 +97,7 @@ class htmlclass {
     private function drawFormNewThread(){
         $this->html .= '
         <!--drawFormNewThread()-->
-        <!--set constraints based on $this->conf-->
+        <!--set constraints based on board conf-->
         <div class="postForm">
         <form class="formThread" action="/bbs.php" method="POST" enctype="multipart/form-data">
         <table>

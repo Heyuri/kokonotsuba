@@ -1,7 +1,7 @@
 <?php
-// this is the defualt configs. new board configs will shadow this config file. 
-// so if new board config is missing something, it will have to be in here.
-// deleting a config from this file could break the system.
+/*
+ * This is the base config file. new boards created will have this a default.
+ */
 
 return [
 
@@ -27,6 +27,7 @@ return [
         'maxFiles'=> 3,
     ],
 
+    'staticPath' => "/static/",
     'unlisted' => false,
     'timeZone' => 'UTC',
     'allowRuffle' => true,
