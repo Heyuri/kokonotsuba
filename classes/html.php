@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ .'/classes/hook.php';
+require_once __DIR__ .'/hook.php';
 $HOOK = HookClass::getInstance();
 
 class htmlclass {
