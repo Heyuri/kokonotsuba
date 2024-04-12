@@ -99,8 +99,10 @@ class htmlclass {
         <!--drawFormNewThread()-->
         <!--set constraints based on board conf-->
         <div class="postForm">
-        <form class="formThread" action="/bbs.php" method="POST" enctype="multipart/form-data">
+        <form class="formThread" action="/bbs.php" method="post" enctype="multipart/form-data">
         <input type="hidden" name="action" value="postNewThread">
+        <input type="hidden" name="boardID" value="'. $this->board->getBoardID() . '">
+
         <table>
         <tr>
             <td><label for="name">Name</label></td>
