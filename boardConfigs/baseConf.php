@@ -26,7 +26,9 @@ return [
         'maxFileSize'=> 5242880, // 5mb
         'maxFiles'=> 3,
     ],
-    
+
+    'unlisted' => false,
+    'timeZone' => 'UTC',
     'allowRuffle' => true,
     'cookieExpireTime'=> time()+7*24*3600, // 7days from the curent time
     'allowQuoteLinking'=> false, // link to post and post on other boards.

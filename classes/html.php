@@ -4,7 +4,7 @@ require_once __DIR__ .'/hook.php';
 $HOOK = HookClass::getInstance();
 
 class htmlclass {
-    private string $html;
+    private string $html = "";
     private array $conf;
     private boardClass $board;
     public function __construct(array $conf, boardClass $board) {
@@ -69,11 +69,11 @@ class htmlclass {
         $this->html .= '</div>
 
         <div class="navRight">';
-        $res = $HOOK->executeHook("navLinksRight");// HOOK drawing to right side of nav
+        $res = $HOOK->executeHook("onDrawNavRight");// HOOK drawing to right side of nav
         foreach ($res as $urlGroup) {
             $this->drawNavGroup($urlGroup);
         }
-        $this->drawNavGroup($conf['drawNavRight']);
+        $this->drawNavGroup($conf['navLinksRight']);
         //$this->drawNavGroup($adminStuff);
         $this->html .= '
         </div>

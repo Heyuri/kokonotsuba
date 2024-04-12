@@ -14,7 +14,6 @@ class BoardRepoClass implements BoardRepositoryInterface {
     private function __construct() {
         $this->db = DatabaseConnection::getInstance(); 
     }
-
     public static function getInstance() {
         if (self::$instance === null) {
             self::$instance = new BoardRepoClass();

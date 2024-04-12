@@ -14,7 +14,6 @@ return [
      * its best to keep logs just outside of the web path.
      * so a place like this. /var/www/logs
      */
-    'timeZone' => 'UTC',
     //'logDir' => '../logs',
     //'rootPath' => '/',
     'auditLog' => 'auditlog.txt',

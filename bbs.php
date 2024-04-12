@@ -27,7 +27,6 @@ $BOARDREPO = BoardRepoClass::getInstance();
 
 //@session_start();
 
-
 function getUserPost($conf, $thread){
 	global $AUTH;
 	global $HOOK;
