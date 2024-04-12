@@ -23,17 +23,18 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
     public function createThread($boardConf, $thread, $post) {
         if ($post->getPostID() == -1) {
             error_log("post must be registered before the thread.");
-            return false;
-        }
+       //     return false;
+	}
+
         $bump = $thread->getLastBumpTime();
-        $postID = $post->getPostID();
+	$PostID = $post->getPostID();
         $stmt = $this->db->prepare("INSERT INTO threads (boardID, lastTimePosted, opPostID) VALUES (?, ?, ?)");
         $stmt->bind_param("iii", $boardConf['boardID'], $bump, $postID);
         $success = $stmt->execute();
         if ($success) {
             $thread->setThreadID($this->db->insert_id);
-            $thread->setPostID($post->getPostID());
-        }
+	    $thread->setOPPostID($post->getPostID());
+	}
         $stmt->close();
         return $success;
     }
