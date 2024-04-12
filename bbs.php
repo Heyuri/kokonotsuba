@@ -25,24 +25,28 @@ $POSTREPO = PostRepoClass::getInstance();
 $THREADREPO = ThreadRepoClass::getInstance();
 $BOARDREPO = BoardRepoClass::getInstance();
 
+$globalConf = require __DIR__ ."/conf.php";
+
 //@session_start();
 
 function getUserPost($conf, $thread){
 	global $AUTH;
 	global $HOOK;
+	global $globalConf;
 	//gen post password if none is provided
-	if($_POST['password'] == ''){
-		$hasinput = $_SERVER['REMOTE_ADDR'] . time() . $conf['passwordSalt'];
+	if(isset($_POST['password']) == false){
+		$hasinput = $_SERVER['REMOTE_ADDR'] . time() . $globalConf['passwordSalt'];
 		$hash = hash('sha256', $hasinput);
 		$_POST['password'] = substr($hash, -8); 
 	}
 
-	setrawcookie('passwordc', $_POST['password'], $conf->cookieExpireTime);
-	setrawcookie('namec', $_POST['name'], $conf->cookieExpireTime);
+	setrawcookie('passwordc', $_POST['password'], $conf['cookieExpireTime']);
+	setrawcookie('namec', $_POST['name'], $conf['cookieExpireTime']);
 
-	$fileHandler = new fileHandlerClass($conf->fileConf);
-	$post = new PostDataClass(	$conf, $_POST['name'], $_POST['email'], $_POST['subject'], 
-									$_POST['comment'], $_POST['password'], time(), $_SERVER['REMOTE_ADDR'], $thread->getThreadID());
+	$fileHandler = new fileHandlerClass($conf['fileConf']);
+	$post = new PostDataClass(	$conf, @$_POST['name'], @$_POST['email'], @$_POST['subject'], @$_POST['comment'], 
+								@$_POST['password'], time(), $_SERVER['REMOTE_ADDR'], $thread->getThreadID());
+								//didnt know but '@' ignores warnings. the defualts should kick in on PostDataClass()
 	/*
 	// get the uploaded files and put them inside the post object.
 	$uploadFiles = $fileHandler->getFilesFromPostRequest();
@@ -83,7 +87,7 @@ function getUserPost($conf, $thread){
 }
 
 function userPostToThread($board){
-	$conf = $board->conf;
+	$conf = $board->getConf();
 	global $POSTREPO;
 
 	// load existing thread
@@ -98,7 +102,7 @@ function userPostToThread($board){
 	return;
 }
 function userPostNewThread($board){
-	$conf = $board->conf;
+	$conf = $board->getConf();
 	global $POSTREPO;
 	global $THREADREPO;
 
