@@ -21,10 +21,10 @@ class PostDataClass {
                                 int $threadID=-1, int $postID=-1, string $special='') {
 
         $this->config = $config;
-		$this->name = $name ?? $config['defualtName'];
-		$this->email = $email ?? $config['defaultEmail'];
-		$this->subject = $subject ?? $config['defaultSubject'];
-		$this->comment = $comment ?? $config['defaultComment'];
+		$this->name = $name;
+		$this->email = $email;
+		$this->subject = $subject;
+		$this->comment = $comment;
         $this->password = $password;
 
         $this->unixTime = $unixTime;

@@ -44,9 +44,17 @@ function getUserPost($conf, $thread){
 	setrawcookie('namec', $_POST['name'], $conf['cookieExpireTime']);
 
 	$fileHandler = new fileHandlerClass($conf['fileConf']);
-	$post = new PostDataClass(	$conf, @$_POST['name'], @$_POST['email'], @$_POST['subject'], @$_POST['comment'], 
-								@$_POST['password'], time(), $_SERVER['REMOTE_ADDR'], $thread->getThreadID());
-								//didnt know but '@' ignores warnings. the defualts should kick in on PostDataClass()
+	$post = new PostDataClass(
+		$conf,
+		$_POST['name'] ?? $conf['defaultName'],
+		$_POST['email'] ?? $conf['defaultEmail'],
+		$_POST['subject'] ?? $conf['defaultSubject'],
+		$_POST['comment'] ?? $conf['defaultComment'],
+		$_POST['password'],
+		time(),
+		$_SERVER['REMOTE_ADDR'],
+		$thread->getThreadID()
+	);
 	/*
 	// get the uploaded files and put them inside the post object.
 	$uploadFiles = $fileHandler->getFilesFromPostRequest();
