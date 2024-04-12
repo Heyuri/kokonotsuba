@@ -8,7 +8,7 @@ $name =  uniqid();
 
 copy(__DIR__ . "/boardConfigs/baseConf.php", __DIR__ . "/boardConfigs/". $name . ".php");
 
-$board = new boardClass(__DIR__ . "/boardConfigs",0);
+$board = new boardClass(__DIR__ . "/boardConfigs/" . $name . ".php",0);
 
 $BOARDREPO->createBoard($board);
 
