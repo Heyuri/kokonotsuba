@@ -4,7 +4,7 @@
  */
 
 return [
-
+    'boardID' => -1, // do not change this.
     'boardTitle' => "no title",
     'boardSubTitle' => "no discription",
     'boardLogoPath' => "", //leave blank for no logo.
