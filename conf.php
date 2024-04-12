@@ -15,29 +15,9 @@ return [
      * so a place like this. /var/www/logs
      */
     'timeZone' => 'UTC',
-    'logDir' => '../logs',
-    'rootPath' => './',
+    //'logDir' => '../logs',
+    //'rootPath' => '/',
     'auditLog' => 'auditlog.txt',
     'passwordSalt'=> 'abc123!?_',
-
-    /*
-     * This section should end up in its own board config file.
-     */
-    'fileConf' =>[
-        'allowedMimeTypes'=> [
-            'image/jpeg', 
-            'image/png', 
-            'image/gif'
-        ],
-        'maxFileSize'=> 5242880, // 5mb
-        'maxFiles'=> 3,
-    ],
-    'cookieExpireTime'=> time()+7*24*3600, // 7days from the curent time
-    'allowQuoteLinking'=> false, // link to post and post on other boards.
-    'autoEmbedLinks'=> true, // links will be turned into hyperlinks
-    'defualtName'=> '',
-    'defaultEmail'=> '',
-    'defaultSubject'=> '',
-    'defaultComment'=> '',
-
+    'maxInputLength' => '255', /* you cant make this bigger with out changing the data base max storage. */
 ];

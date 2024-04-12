@@ -37,5 +37,7 @@ return [
     'defaultComment'=> '',
     'canTripcode' => true,
     'canFortune' => true,
-    'threadCap' => 150,
+    'threadsPerPage' => 15,
+    'maxActiveThreads' => 150,
+    'defaultCSS' => '/static/css/kotatsu.css',
 ];

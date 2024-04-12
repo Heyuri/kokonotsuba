@@ -97,7 +97,7 @@ function userPostToThread($board){
 
 	return;
 }
-function userPostThread($board){
+function userPostNewThread($board){
 	$conf = $board->conf;
 	global $POSTREPO;
 	global $THREADREPO;
@@ -191,8 +191,8 @@ elseif(isset($_POST['action'])){
 			//drawFunction;
 			//redirect;
 			break;
-		case 'postThread':
-			userPostThread($board);
+		case 'postNewThread':
+			userPostNewThread($board);
 			//drawFunction;
 			//redirect;
 			break;

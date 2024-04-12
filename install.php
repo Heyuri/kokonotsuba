@@ -57,42 +57,46 @@
 		$sqlCommands = [
 			"CREATE TABLE IF NOT EXISTS boards (
 				boardID INT AUTO_INCREMENT PRIMARY KEY,
-				configPath VARCHAR(255) NOT NULL,
+				configPath VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 				lastPostID INT
-			)",
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+		
 			"CREATE TABLE IF NOT EXISTS posts (
 				UID INT AUTO_INCREMENT PRIMARY KEY,
 				postID INT NOT NULL,
 				boardID INT NOT NULL,
 				threadID INT,  -- Temporarily remove the NOT NULL constraint
-				password VARCHAR(255) NOT NULL,
-				name VARCHAR(255) NOT NULL,
-				email VARCHAR(255),
-				subject VARCHAR(255),
-				comment TEXT NOT NULL,
+				password VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+				name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+				email VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+				subject VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+				comment TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 				ip VARCHAR(45) NOT NULL,
 				postTime INT NOT NULL,
-				special TEXT,
+				special TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
 				FOREIGN KEY (boardID) REFERENCES boards(boardID) ON DELETE CASCADE ON UPDATE CASCADE
-			)",
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+		
 			"CREATE TABLE IF NOT EXISTS threads (
 				threadID INT AUTO_INCREMENT PRIMARY KEY,
 				boardID INT NOT NULL,
 				lastTimePosted INT NOT NULL,
 				opPostID INT,
 				FOREIGN KEY (boardID) REFERENCES boards(boardID) ON DELETE CASCADE ON UPDATE CASCADE
-			)",
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+		
 			"ALTER TABLE posts ADD CONSTRAINT fk_threadID FOREIGN KEY (threadID) REFERENCES threads(threadID) ON DELETE CASCADE ON UPDATE CASCADE;",
+		
 			"CREATE TABLE IF NOT EXISTS files (
 				fileID INT AUTO_INCREMENT PRIMARY KEY,
 				postID INT NOT NULL,
 				threadID INT NOT NULL,
 				boardID INT NOT NULL,
-				filePath VARCHAR(255) NOT NULL,
+				filePath VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 				FOREIGN KEY (postID) REFERENCES posts(UID) ON DELETE CASCADE ON UPDATE CASCADE,  -- Note: Ensure this references the correct column
 				FOREIGN KEY (threadID) REFERENCES threads(threadID) ON DELETE CASCADE ON UPDATE CASCADE,
 				FOREIGN KEY (boardID) REFERENCES boards(boardID) ON DELETE CASCADE ON UPDATE CASCADE
-			)"
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
 		];
 		// Execute each SQL command
 		foreach ($sqlCommands as $sql) {

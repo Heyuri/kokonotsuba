@@ -6,8 +6,10 @@ $HOOK = HookClass::getInstance();
 class htmlclass {
     private string $html;
     private array $conf;
-    public function __construct(array $conf) {
+    private boardClass $board;
+    public function __construct(array $conf, boardClass $board) {
         $this->conf = $conf;
+        $this->board = $board;
     }
     private function drawHead(){
         $staticPath = $this->conf['staticPath'];
@@ -39,11 +41,10 @@ class htmlclass {
             //'<link rel="alternate" type="application/rss+xml" title="RSS 2.0 Feed" href="//nashikouen.net/main/koko.php?mode=module&amp;load=mod_rss">
         '</head>';
     }
-
     /*drawNavGroup expects a key,value pair. where key is displayname and value is url*/
-    private function drawNavGroup($URL){
+    private function drawNavGroup($URLPair){
         $this->html .= "[";
-        foreach ($URL as $key => $value) {
+        foreach ($URLPair as $key => $value) {
             $this->html .= '<a class="navLink" href="'.$value.'">'.$key.'</a>"';
             $this->html .= "/";
         }
@@ -78,7 +79,6 @@ class htmlclass {
         </div>
         </div>';
     }
-
     private function drawBoardTitle(){
         $conf = $this->conf;
         $conf['boardTitle'];
@@ -94,41 +94,120 @@ class htmlclass {
         $this->html .= '<h5 class="boardSubTitle">'.$conf['boardSubTitle'].'</h5>
         </div>';
     }
-
     private function drawFormNewThread(){
         $this->html .= '
         <!--drawFormNewThread()-->
+        <!--set constraints based on $this->conf-->
         <div class="postForm">
-        <form>
-
+        <form class="formThread" action="/bbs.php" method="POST" enctype="multipart/form-data">
+        <table>
+        <tr>
+            <td><label for="name">Name</label></td>
+            <td><input type="text" id="name" name="name"></td>
+        </tr>
+        <tr>
+            <td><label for="email">Email</label></td>
+            <td>
+                <input type="text" id="email" email="email">
+                <button type="submit" name="action" value="postNewThread">Post</button>
+            </td>
+        </tr>
+        <tr>
+            <td><label for="subject">Subject</label></td>
+            <td><input type="text" id="subject" subject="subject"></td>
+        </tr>
+        <tr>
+            <td><label for="comment">Comment</label></td>
+            <td><input type="text" id="comment" subject="comment"></td>
+        </tr>
+        <tr>
+            <td><label for="subject">Subject</label></td>
+            <td><input type="text" id="subject" subject="subject"></td>
+        </tr>
+        <tr>
+            <td><label for="password">Password</label></td>
+            <td><input type="text" id="password" password="password"></td>
+        </tr>
         </form>
         </div>';
     }
+    private function drawFormNewPost($threadID){
+        $this->html .= '
+        <!--drawFormNewPost()-->
+        <!--set constraints based on $this->conf-->
+        <div class="postForm">
+        <form class="formThread" action="/bbs.php" method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="threadID" value="'.$threadID.'">
+        <table>
+        <tr>
+            <td><label for="name">Name</label></td>
+            <td><input type="text" id="name" name="name"></td>
+        </tr>
+        <tr>
+            <td><label for="email">Email</label></td>
+            <td>
+                <input type="text" id="email" email="email">
+                <button type="submit" name="action" value="postToThread">Post</button>
+            </td>
+        </tr>
+        <tr>
+            <td><label for="subject">Subject</label></td>
+            <td><input type="text" id="subject" name="subject"></td>
+        </tr>
+        <tr>
+            <td><label for="comment">Comment</label></td>
+            <td><input type="text" id="comment" name="comment"></td>
+        </tr>
+        <tr>
+            <td><label for="subject">Subject</label></td>
+            <td><input type="text" id="subject" name="subject"></td>
+        </tr>
+        <tr>
+            <td><label for="password">Password</label></td>
+            <td><input type="password" id="password" name="password"></td>
+        </tr>
+        </form>
+        </div>';
+    }
+    private function drawFormManagePostsOpen(){
+        $this->html .= '
+        <!--drawFormManagePostsOpen()-->
+        <form name="managePost" id="managePost" action="/bbs.php" method="post">';
+    }
+    private function drawFormManagePostsClosed(){
+        // make this have a drop down of options, not just delete file.
+        $this->html .= '
+        <!--drawFormManagePostsClosed()-->
+        <table><tr><td>
+			<input type="hidden" name="action" value="deletePosts">
+            Delete Post: [<label><input type="checkbox" name="fileOnly" id="fileOnly" value="on">File only</label>]<br>
+			Password: <input type="password" name="password" size="8" value="">
+            <input type="submit" value="Submit">
+        /td></tr></table>
+        </form>';
+    }
+    private function drawFooter(){
+        $this->html .= '';
+    }
+    private function drawPostOP($post){
+        $this->html .= '';
+    }
+    private function drawPosts($posts){
+        $this->html .= '';
+    }
+    public function drawPage($pageNumber = 1){
+        $this->html .='
+        <!DOCTYPE html>
+        <html lang="en-US">';
+        $this->drawHead();
+        $this->html .= '<body>';
+        $this->drawNavBar();
+        $this->drawBoardTitle();
+        $this->drawFormNewThread();
 
-    private function drawFormNewPost(){
-        $this->html .= "";
+        $this->html .= '</body>';
+    }
+    public function drawThread($threadID){
 
     }
-    private function drawFormModifyPost(){
-        $this->html .= "";
-    }
-    private function drawModuelList(){
-        $this->html .= "";
-    }
-
-    private function drawTable(){
-        $this->html .= "";
-    }
-
-    private function drawPosts(){
-        $this->html .= "";
-    }
-    private function drawPageList(){
-        $this->html .= "";
-    }
-
-    private function clearDraw(){
-        $this->html = "";
-    }
-
 }
