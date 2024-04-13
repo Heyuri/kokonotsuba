@@ -81,6 +81,7 @@ class BoardRepoClass implements BoardRepositoryInterface {
             if ($success) {
                 // Set the board ID on the board object to the newly generated ID
                 $board->setBoardID($this->db->insert_id);
+                $board->setLastPostID($lastPostID);
             } else {
                 throw new Exception("Failed to create new board");
             }

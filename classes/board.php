@@ -50,6 +50,9 @@ class boardClass{
 		$this->conf['$boardID'] = $boardID;
 		file_put_contents($this->confPath, "<?php\nreturn " . var_export($this->conf, true) . ";\n");
 	}
+	public function setLastPostID($id){
+		$this->lastPostID = $id;
+	}
 	public function getConf(){
 		return $this->conf;
 	}
