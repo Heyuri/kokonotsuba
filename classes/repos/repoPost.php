@@ -50,7 +50,6 @@ class PostRepoClass implements PostDataRepositoryInterface {
             $comment = $post->getComment();
             $pass = $post->getPassword();
             $time = $post->getUnixTime();
-            $id = $post->postID();
             $ip = $post->getIp();
             $special = $post->getSpecial();
     
