@@ -65,7 +65,7 @@
 				UID INT AUTO_INCREMENT PRIMARY KEY,
 				postID INT NOT NULL,
 				boardID INT NOT NULL,
-				threadID INT,  -- Temporarily remove the NOT NULL constraint
+				threadID INT NULL, -- Allow NULL to create a post without an existing thread
 				password VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 				name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 				email VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -81,8 +81,9 @@
 				threadID INT AUTO_INCREMENT PRIMARY KEY,
 				boardID INT NOT NULL,
 				lastTimePosted INT NOT NULL,
-				opPostID INT,
+				opPostID INT NOT NULL,
 				FOREIGN KEY (boardID) REFERENCES boards(boardID) ON DELETE CASCADE ON UPDATE CASCADE
+				FOREIGN KEY (opPostID) REFERENCES posts(UID) ON DELETE CASCADE ON UPDATE CASCADE
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 		
 			"ALTER TABLE posts ADD CONSTRAINT fk_threadID FOREIGN KEY (threadID) REFERENCES threads(threadID) ON DELETE CASCADE ON UPDATE CASCADE;",
