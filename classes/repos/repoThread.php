@@ -41,7 +41,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
             }
             // update objects with new data
             $thread->setThreadID($this->db->insert_id);
-            $thread->setPostID($post->getPostID());
+            $thread->setOPPostID($post->getPostID());
             $stmt->close();
             return $success;
         } catch (Exception $e) {

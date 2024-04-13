@@ -44,6 +44,9 @@ class threadClass{
         }
         return $this->posts[$postID];
     }
+    public function setOPPostID($postID){
+        $this->OPPostID = $postID;
+    }
 
 }
 /*new thread 
