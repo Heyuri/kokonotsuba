@@ -149,7 +149,7 @@ if (!is_numeric($boardID)) {
 
 $board = $BOARDREPO->loadBoardByID($boardID);
 if(is_null($board) || $board->getConf()['unlisted']) {
-	displayErrorPageAndDie("board dose not exist");
+	displayErrorPageAndDie("board with the boardID of \"".$boardID."\"dose not exist");
 }
 
 $html = new htmlclass($board->getConf(), $board);

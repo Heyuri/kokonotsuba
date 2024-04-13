@@ -30,6 +30,12 @@ class PostRepoClass implements PostDataRepositoryInterface {
             // increment the lastPostID from the boad table.
             $updateQuery = "UPDATE boards SET lastPostID = lastPostID + 1 WHERE boardID = " . intval($boardConf['boardID']);
             $this->db->query($updateQuery);
+            if ($this->db->affected_rows === 0) {
+                // No rows were updated, which means the boardID might not exist or lastPostID is not set up correctly.
+                error_log("No board found or updated with ID " . intval($boardConf['boardID']));
+            } else {
+                error_log("Updated lastPostID for board ID " . intval($boardConf['boardID']));
+            }
     
             // get the lastPostID. this will be used for new post
             $lastIdQuery = "SELECT lastPostID FROM boards WHERE boardID = " . intval($boardConf['boardID']);
@@ -40,7 +46,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
             }
     
             if (is_null($lastPostID)) {
-                throw new Exception("Failed to retrieve new lastPostID from board table.");
+                throw new Exception("Failed to retrieve new lastPostID from board table. where boardID = ".$boardConf['boardID']);
             }
             // why is sqli like this...
             $threadID = $post->getThreadID();
