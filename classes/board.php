@@ -5,6 +5,8 @@ require_once __DIR__ .'/fileHandler.php';
 require_once __DIR__ .'/hook.php';
 require_once __DIR__ .'/auth.php';
 require_once __DIR__ .'/repos/repoThread.php';
+require_once __DIR__ .'/common.php';
+
 
 class boardClass{
 	private $conf;
@@ -52,6 +54,8 @@ class boardClass{
 	}
 	public function setLastPostID($id){
 		$this->lastPostID = $id;
+		$this->conf['boardID'] = $id;
+		$this->updateConfigFile();
 	}
 	public function getConf(){
 		return $this->conf;
@@ -61,6 +65,12 @@ class boardClass{
 	}
 	public function getLastPostID(){
 		return $this->lastPostID;
+	}
+	public function updateConfigFile(){
+		$newConf = '<?php return ' . var_export($this->conf, true) . ';';
+		if (file_put_contents($this->confPath, $newConf) === false) {
+			displayErrorPageAndDie("Failed to write configuration.");
+		}
 	}
 
 	// function updatelog($resno=0,$pagenum=-1,$single_page=false){

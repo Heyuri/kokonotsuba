@@ -10,7 +10,5 @@ copy(__DIR__ . "/boardConfigs/baseConf.php", __DIR__ . "/boardConfigs/". $name .
 
 $board = new boardClass(__DIR__ . "/boardConfigs/" . $name . ".php",0);
 
-$BOARDREPO->createBoard($board, function($str){
-    echo $str;
-});
+$BOARDREPO->createBoard($board);
 
