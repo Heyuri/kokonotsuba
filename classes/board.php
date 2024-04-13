@@ -5,7 +5,7 @@ require_once __DIR__ .'/fileHandler.php';
 require_once __DIR__ .'/hook.php';
 require_once __DIR__ .'/auth.php';
 require_once __DIR__ .'/repos/repoThread.php';
-require_once __DIR__ .'/common.php';
+require_once __DIR__ .'/../common.php';
 
 
 class boardClass{
