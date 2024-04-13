@@ -47,7 +47,9 @@ class threadClass{
     public function setOPPostID($postID){
         $this->OPPostID = $postID;
     }
-
+    public function setThreadID($threadID){
+        $this->threadID = $threadID;
+    }
 }
 /*new thread 
 $repoP = postRepoClass::getInstance();
