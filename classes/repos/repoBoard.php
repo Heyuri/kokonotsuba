@@ -65,15 +65,23 @@ class BoardRepoClass implements BoardRepositoryInterface {
         return $success;
     }
 
-    public function createBoard($board) {
-        $conf = $board->getConfPath();
-        $stmt = $this->db->prepare("INSERT INTO boards (configPath) VALUES (?)");
-        $stmt->bind_param("s", $conf);
-        $success = $stmt->execute();
-        if ($success) {
-            $board->setBoardID($this->db->insert_id);
+    public function createBoard($board, $callBackErr) {
+        try{
+            $conf = $board->getConfPath();
+            $stmt = $this->db->prepare("INSERT INTO boards (configPath) VALUES (?)");
+            $stmt->bind_param("s", $conf);
+            $success = $stmt->execute();
+            if ($success) {
+                $board->setBoardID($this->db->insert_id);
+            }else{
+                throw new Exception("Failed to create new thread");
+            }
+            $stmt->close();
+            return $success;
+        }catch (Exception $e) {
+            error_log($e->getMessage());
+            $callBackErr($e->getMessage());
+            return false;
         }
-        $stmt->close();
-        return $success;
     }  
 }

@@ -21,12 +21,12 @@ class PostRepoClass implements PostDataRepositoryInterface {
         return self::$instance;
     }
     /* this feels a bit hacky to get the newstPostid on the new post*/
-    public function createPost($boardConf, $post) {
+    public function createPost($boardConf, $post, $callBackErr) {
         // Start transaction
         $this->db->begin_transaction();
     
         try {
-            // increment the lastPostID for the board.
+            // increment the lastPostID from the boad table.
             $updateQuery = "UPDATE boards SET lastPostID = lastPostID + 1 WHERE boardID = " . intval($boardConf['boardID']);
             $this->db->query($updateQuery);
     
@@ -39,11 +39,11 @@ class PostRepoClass implements PostDataRepositoryInterface {
             }
     
             if (is_null($lastPostID)) {
-                throw new Exception("Failed to retrieve updated lastPostID.");
+                throw new Exception("Failed to retrieve new lastPostID from board table.");
             }
             // why is sqli like this...
             $threadID = $post->getThreadID();
-            $name =$post->getName();
+            $name = $post->getName();
             $email = $post->getEmail();
             $sub = $post->getSubject();
             $comment = $post->getComment();
@@ -65,7 +65,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
             $insertStmt->close();
     
             if (!$insertSuccess) {
-                throw new Exception("Failed to insert new post.");
+                throw new Exception("Failed to insert new post in post table.");
             }
             
             // comit and update post object.
@@ -77,6 +77,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
             // Rollback the transaction on error
             $this->db->rollback();
             error_log($e->getMessage());
+            $callBackErr($e->getMessage());
             return false;
         }
     }

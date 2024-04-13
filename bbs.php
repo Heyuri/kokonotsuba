@@ -29,6 +29,40 @@ $globalConf = require __DIR__ ."/conf.php";
 
 //@session_start();
 
+function displayErrorPage($txt){
+	?>
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Action Required</title>
+	<style>
+		body {
+			background-color: #d0f0c0;
+			font-family: Arial, sans-serif;
+		}
+		.postblock {
+			padding: 20px;
+			background-color: #ffcccc;
+			border: 2px solid #ff0000;
+			margin: 10px 0;
+			text-align: center;
+		}
+	</style>
+	</head>
+	<body>
+
+	<div class="postblock">
+		<p><?php echo $txt; ?></p>
+	</div>
+
+	</body>
+	</html>
+	<?php
+	die();
+}
+
 function getUserPost($conf, $thread){
 	global $AUTH;
 	global $HOOK;
@@ -93,7 +127,6 @@ function getUserPost($conf, $thread){
 	$HOOK->executeHook("onPostPrepForDrawing", $post);// HOOK post with html fully loaded
 	return $post;
 }
-
 function userPostToThread($board){
 	$conf = $board->getConf();
 	global $POSTREPO;
@@ -105,7 +138,7 @@ function userPostToThread($board){
 	$post = getUserPost($conf, $thread);
 
 	// save post to data base.
-	$POSTREPO->createPost($conf, $post);
+	$POSTREPO->createPost($conf, $post, 'displayErrorPage');
 
 	return;
 }
@@ -121,46 +154,13 @@ function userPostNewThread($board){
 	$post = getUserPost($conf, $thread);
 
 	// save post and thread to data base.
-	$POSTREPO->createPost($conf, $post);
-	$THREADREPO->createThread($conf, $thread, $post);
+	$POSTREPO->createPost($conf, $post, 'displayErrorPage');
+	$THREADREPO->createThread($conf, $thread, $post, 'displayErrorPage');
 
 	return;
 }
 function userDeletedPost(){
 
-}
-function displayErrorPage($txt){
-	?>
-	<!DOCTYPE html>
-	<html lang="en">
-	<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Action Required</title>
-	<style>
-		body {
-			background-color: #d0f0c0;
-			font-family: Arial, sans-serif;
-		}
-		.postblock {
-			padding: 20px;
-			background-color: #ffcccc;
-			border: 2px solid #ff0000;
-			margin: 10px 0;
-			text-align: center;
-		}
-	</style>
-	</head>
-	<body>
-
-	<div class="postblock">
-		<p><?php echo $txt; ?></p>
-	</div>
-
-	</body>
-	</html>
-	<?php
-	die();
 }
 
 /*-------------------------------------------------------MAIN ENTRY-------------------------------------------------------*/

@@ -20,22 +20,35 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         }
         return self::$instance;
     }
-    public function createThread($boardConf, $thread, $post) {
-        if ($post->getPostID() == -1) {
-            error_log("post must be registered before the thread.");
-            return false;
-        }
-        $bump = $thread->getLastBumpTime();
-        $postID = $post->getPostID();
-        $stmt = $this->db->prepare("INSERT INTO threads (boardID, lastTimePosted, opPostID) VALUES (?, ?, ?)");
-        $stmt->bind_param("iii", $boardConf['boardID'], $bump, $postID);
-        $success = $stmt->execute();
-        if ($success) {
+    public function createThread($boardConf, $thread, $post, $callBackErr) {
+        try{
+            if ($post->getPostID() == -1) {
+                error_log("post must be registered before the thread.");
+                return false;
+            }
+            // get vlaues for querry
+            $bump = $thread->getLastBumpTime();
+            $postID = $post->getPostID();
+
+            //construct querry
+            $stmt = $this->db->prepare("INSERT INTO threads (boardID, lastTimePosted, opPostID) VALUES (?, ?, ?)");
+            $stmt->bind_param("iii", $boardConf['boardID'], $bump, $postID);
+
+            // run qerrry
+            $success = $stmt->execute();
+            if (!$success) {
+                throw new Exception("Failed to create new thread");
+            }
+            // update objects with new data
             $thread->setThreadID($this->db->insert_id);
             $thread->setPostID($post->getPostID());
+            $stmt->close();
+            return $success;
+        } catch (Exception $e) {
+            error_log($e->getMessage());
+            $callBackErr($e->getMessage());
+            return false;
         }
-        $stmt->close();
-        return $success;
     }
     public function loadThreadByID($boardConf, $threadID) {
         $stmt = $this->db->prepare("SELECT * FROM threads WHERE boardID = ? AND threadID = ?");
