@@ -2,6 +2,7 @@
 require_once  __DIR__ .'/DBConnection.php';
 require_once  __DIR__ .'/interfaces.php';
 require_once __DIR__ .'/../board.php';
+require_once __DIR__ .'/../../common.php';
 
 class BoardRepoClass implements BoardRepositoryInterface {
     // this is a singleton.
@@ -65,7 +66,7 @@ class BoardRepoClass implements BoardRepositoryInterface {
         return $success;
     }
 
-    public function createBoard($board, $callBackErr) {
+    public function createBoard($board) {
         try {
             // Fetch configuration path from the board object
             $conf = $board->getConfPath();
@@ -90,7 +91,7 @@ class BoardRepoClass implements BoardRepositoryInterface {
         } catch (Exception $e) {
             // Log the error and execute the error callback
             error_log($e->getMessage());
-            $callBackErr($e->getMessage());
+            displayErrorPageAndDie($e->getMessage());
             return false;
         }
     }  

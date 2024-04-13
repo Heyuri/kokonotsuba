@@ -19,6 +19,8 @@ require_once __DIR__ .'/classes/repos/repoThread.php';
 require_once __DIR__ .'/classes/repos/repoPost.php';
 //require_once __DIR__ .'/classes/repos/repoFile.php';
 
+require_once __DIR__ .'/common.php';
+
 $AUTH = AuthClass::getInstance();
 $HOOK = HookClass::getInstance();
 $POSTREPO = PostRepoClass::getInstance();
@@ -28,40 +30,6 @@ $BOARDREPO = BoardRepoClass::getInstance();
 $globalConf = require __DIR__ ."/conf.php";
 
 //@session_start();
-
-function displayErrorPage($txt){
-	?>
-	<!DOCTYPE html>
-	<html lang="en">
-	<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Action Required</title>
-	<style>
-		body {
-			background-color: #d0f0c0;
-			font-family: Arial, sans-serif;
-		}
-		.postblock {
-			padding: 20px;
-			background-color: #ffcccc;
-			border: 2px solid #ff0000;
-			margin: 10px 0;
-			text-align: center;
-		}
-	</style>
-	</head>
-	<body>
-
-	<div class="postblock">
-		<p><?php echo $txt; ?></p>
-	</div>
-
-	</body>
-	</html>
-	<?php
-	die();
-}
 
 function getUserPost($conf, $thread){
 	global $AUTH;
@@ -138,7 +106,7 @@ function userPostToThread($board){
 	$post = getUserPost($conf, $thread);
 
 	// save post to data base.
-	$POSTREPO->createPost($conf, $post, 'displayErrorPage');
+	$POSTREPO->createPost($conf, $post);
 
 	return;
 }
@@ -154,8 +122,8 @@ function userPostNewThread($board){
 	$post = getUserPost($conf, $thread);
 
 	// save post and thread to data base.
-	$POSTREPO->createPost($conf, $post, 'displayErrorPage');
-	$THREADREPO->createThread($conf, $thread, $post, 'displayErrorPage');
+	$POSTREPO->createPost($conf, $post);
+	$THREADREPO->createThread($conf, $thread, $post);
 
 	return;
 }
@@ -176,12 +144,12 @@ function userDeletedPost(){
 $boardID = $_GET['boardID'] ?? $_POST['boardID'] ?? '';
 
 if (!is_numeric($boardID)) {
-	displayErrorPage("you must have a boardID");
+	displayErrorPageAndDie("you must have a boardID");
 }
 
 $board = $BOARDREPO->loadBoardByID($boardID);
 if(is_null($board) || $board->getConf()['unlisted']) {
-	displayErrorPage("board dose not exist");
+	displayErrorPageAndDie("board dose not exist");
 }
 
 $html = new htmlclass($board->getConf(), $board);
@@ -205,11 +173,11 @@ elseif(isset($_POST['action'])){
 			break;
 		case 'postNewThread':
 			userPostNewThread($board);
-			displayErrorPage("thread created");
+			displayErrorPageAndDie("thread created");// temp. make a suscsses and redirect
 			break;
 		default:
 			$stripedInput = htmlspecialchars($_POST['action'], ENT_QUOTES, 'UTF-8');
-			displayErrorPage("invalid action: " . $stripedInput);
+			displayErrorPageAndDie("invalid action: " . $stripedInput);
 			break;
 	}
 }

@@ -2,6 +2,8 @@
 require_once __DIR__ .'/DBConnection.php';
 require_once __DIR__ .'/interfaces.php';
 require_once __DIR__ .'/../thread.php';
+require_once __DIR__ .'/../../common.php';
+
 
 class ThreadRepoClass implements ThreadRepositoryInterface {
     private $db;
@@ -20,7 +22,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         }
         return self::$instance;
     }
-    public function createThread($boardConf, $thread, $post, $callBackErr) {
+    public function createThread($boardConf, $thread, $post) {
         try{
             if ($post->getPostID() == -1) {
                 error_log("post must be registered before the thread.");
@@ -46,7 +48,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
             return $success;
         } catch (Exception $e) {
             error_log($e->getMessage());
-            $callBackErr($e->getMessage());
+            displayErrorPageAndDie($e->getMessage());
             return false;
         }
     }

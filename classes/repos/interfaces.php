@@ -5,11 +5,11 @@ interface BoardRepositoryInterface {
     public function loadBoards();
     public function loadBoardByID($boardID);
     public function deleteBoardByID($boardID);
-    public function createBoard($board, callable $callBackErr);
+    public function createBoard($board);
 }
 
 interface ThreadRepositoryInterface {
-    public function createThread($boardConf, $thread, $post, callable $callBackErr);
+    public function createThread($boardConf, $thread, $post);
     public function loadThreadByID($boardConf, $threadID);
     public function loadThreads($boardConf);
     public function updateThread($boardConf, $thread);
@@ -17,7 +17,7 @@ interface ThreadRepositoryInterface {
 }
 
 interface PostDataRepositoryInterface {
-    public function createPost($boardConf, $post, callable $callBackErr);
+    public function createPost($boardConf, $post);
     public function loadPostByID($boardConf, $postID);
     public function loadPosts($boardConf);
     public function loadPostsFromThreadID($boardConf, $threadID);
@@ -31,5 +31,5 @@ interface FileRepositoryInterface {
     public function loadBoards();
     public function loadBoardByID($boardID);
     public function deleteBoardByID($boardID);
-    public function createBoard($board, $callBackErr);
+    public function createBoard($board);
 }

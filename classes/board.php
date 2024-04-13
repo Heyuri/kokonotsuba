@@ -17,6 +17,12 @@ class boardClass{
 
 	public function __construct($confPath, $boardID, $lastPostID = 0){
 		$this->confPath = $confPath;
+		if (file_exists($confPath)){
+			$this->conf = require $confPath;
+		}else
+		{
+			displayErrorPageAndDie("could not load config file for boardID: " . $boardID);
+		}
 		$this->conf = require $confPath;
         $this->boardID = $boardID;
 		$this->lastPostID = $lastPostID;

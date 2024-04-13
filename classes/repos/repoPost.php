@@ -2,6 +2,7 @@
 require_once  __DIR__ .'/DBConnection.php';
 require_once  __DIR__ .'/interfaces.php';
 require_once __DIR__ .'/../post.php';
+require_once __DIR__ .'/../../common.php';
 
 class PostRepoClass implements PostDataRepositoryInterface {
     private function __clone() {}
@@ -21,7 +22,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
         return self::$instance;
     }
     /* this feels a bit hacky to get the newstPostid on the new post*/
-    public function createPost($boardConf, $post, $callBackErr) {
+    public function createPost($boardConf, $post) {
         // Start transaction
         $this->db->begin_transaction();
     
@@ -77,7 +78,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
             // Rollback the transaction on error
             $this->db->rollback();
             error_log($e->getMessage());
-            $callBackErr($e->getMessage());
+            displayErrorPageAndDie($e->getMessage());
             return false;
         }
     }
