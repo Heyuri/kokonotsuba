@@ -65,7 +65,7 @@
 				UID INT AUTO_INCREMENT PRIMARY KEY,
 				postID INT NOT NULL,
 				boardID INT NOT NULL,
-				threadID INT, -- Allow NULL to create a post without an existing thread
+				threadID INT NULL,  -- Correctly set to allow NULL
 				password VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 				name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 				email VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -75,16 +75,16 @@
 				postTime INT NOT NULL,
 				special TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
 				FOREIGN KEY (boardID) REFERENCES boards(boardID) ON DELETE CASCADE ON UPDATE CASCADE
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci",
 		
 			"CREATE TABLE IF NOT EXISTS threads (
 				threadID INT AUTO_INCREMENT PRIMARY KEY,
 				boardID INT NOT NULL,
 				lastTimePosted INT NOT NULL,
-				opPostID INT NOT NULL,
+				opPostID INT NULL,  -- Changed to allow NULL
 				FOREIGN KEY (boardID) REFERENCES boards(boardID) ON DELETE CASCADE ON UPDATE CASCADE,
 				FOREIGN KEY (opPostID) REFERENCES posts(UID) ON DELETE CASCADE ON UPDATE CASCADE
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci",
 		
 			"ALTER TABLE posts ADD CONSTRAINT fk_threadID FOREIGN KEY (threadID) REFERENCES threads(threadID) ON DELETE CASCADE ON UPDATE CASCADE;",
 		
@@ -94,10 +94,10 @@
 				threadID INT NOT NULL,
 				boardID INT NOT NULL,
 				filePath VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-				FOREIGN KEY (postID) REFERENCES posts(UID) ON DELETE CASCADE ON UPDATE CASCADE,  -- Note: Ensure this references the correct column
+				FOREIGN KEY (postID) REFERENCES posts(UID) ON DELETE CASCADE ON UPDATE CASCADE,
 				FOREIGN KEY (threadID) REFERENCES threads(threadID) ON DELETE CASCADE ON UPDATE CASCADE,
 				FOREIGN KEY (boardID) REFERENCES boards(boardID) ON DELETE CASCADE ON UPDATE CASCADE
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE utf8mb4_unicode_ci"
 		];
 		// Execute each SQL command
 		foreach ($sqlCommands as $sql) {
