@@ -65,7 +65,7 @@
 				UID INT AUTO_INCREMENT PRIMARY KEY,
 				postID INT NOT NULL,
 				boardID INT NOT NULL,
-				threadID INT NULL, -- Allow NULL to create a post without an existing thread
+				threadID INT, -- Allow NULL to create a post without an existing thread
 				password VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 				name VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
 				email VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
