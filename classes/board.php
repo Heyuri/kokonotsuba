@@ -49,13 +49,11 @@ class boardClass{
 	}
 	public function setBoardID($boardID){
 		$this->boardID = $boardID;
-		$this->conf['$boardID'] = $boardID;
-		file_put_contents($this->confPath, "<?php\nreturn " . var_export($this->conf, true) . ";\n");
+		$this->conf['boardID'] = $boardID;
+		$this->updateConfigFile();
 	}
 	public function setLastPostID($id){
 		$this->lastPostID = $id;
-		$this->conf['boardID'] = $id;
-		$this->updateConfigFile();
 	}
 	public function getConf(){
 		return $this->conf;
