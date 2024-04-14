@@ -197,7 +197,12 @@ elseif(isset($_POST['action'])){
 }
 /*----------no action recived----------*/
 else{
-	$html->drawPage(1);
+	$page = $_GET['page'] ?? $_POST['page'] ?? 0;
+	if (!is_numeric($page)) {
+		displayErrorPageAndDie("invalid page");
+	}
+	$page = abs(intval($page));
+	$html->drawPage($page);
 }
 
 

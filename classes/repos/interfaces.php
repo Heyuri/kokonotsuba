@@ -12,6 +12,7 @@ interface ThreadRepositoryInterface {
     public function createThread($boardConf, $thread, $post);
     public function loadThreadByID($boardConf, $threadID);
     public function loadThreads($boardConf);
+    public function loadThreadsByPage($boardConf, $page);
     public function updateThread($boardConf, $thread);
     public function deleteThreadByID($boardCon, $threadID);
 }

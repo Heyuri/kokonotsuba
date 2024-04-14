@@ -1,7 +1,10 @@
 <?php
 
 require_once __DIR__ .'/hook.php';
+require_once __DIR__ .'/repos/repoThread.php';
 $HOOK = HookClass::getInstance();
+$THREADREPO = ThreadRepoClass::getInstance();
+
 
 class htmlclass {
     private string $html = "";
@@ -194,7 +197,16 @@ class htmlclass {
     private function drawPosts($posts){
         $this->html .= '';
     }
-    public function drawPage($pageNumber = 1){
+    private function drawThread($thread){
+        $this->html .= $thread->getThreadID() .'<br>';
+    }
+    private function drawThreads($threads){
+        foreach ($threads as $thread) {
+            $this->drawThread($thread);
+        }
+    }
+    public function drawPage($pageNumber = 0){
+        global $THREADREPO;
         $this->html .='
         <!DOCTYPE html>
         <html lang="en-US">';
@@ -203,11 +215,11 @@ class htmlclass {
         $this->drawNavBar();
         $this->drawBoardTitle();
         $this->drawFormNewThread();
+        $threads = $THREADREPO->loadThreadsByPage($this->conf, $pageNumber);
+        $this->drawThreads($threads);
 
         $this->html .= '</body>';
         echo $this->html;
     }
-    public function drawThread($threadID){
 
-    }
 }

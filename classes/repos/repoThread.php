@@ -87,7 +87,21 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         $stmt->close();
         return $threads;
     }
-    
+    public function loadThreadsByPage($boardConf, $page=0){
+        $threads = [];
+
+        $stmt = $this->db->prepare("SELECT * FROM posts WHERE boardID = ? ORDER BY lastTimePosted DESC LIMIT ? OFFSET ?");
+        $stmt->bind_param("iii", $boardConf['boardID'], $boardConf['threadsPerPage'], $page);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        while ($row = $result->fetch_assoc()) {
+            $threads[] = new threadClass($boardConf, $row['threadID'], $row['lastTimePosted'], $row['opPostID']);
+        }
+
+        $stmt->close();
+        return $threads;
+    }
     public function updateThread($boardConf, $thread) {
         $bump = $thread->getLastBumpTime();
         $postID = $thread->getOPPostID()();
