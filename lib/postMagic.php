@@ -161,7 +161,7 @@ function genTripcode(string $password, string $salt = ''): string{
     $tripcode = crypt($password, $salt);
 
     if ($hashType === 'regular') {
-        return '◆◇'.substr($tripcode, -10);
+        return '◆'.substr($tripcode, -10);
     }else{
         return '◆◆'.substr($tripcode, -10);
     }
@@ -186,7 +186,7 @@ function extractTripCode(string $text): string{
 
 
 
-    
+    /*
 	// Tripcode crap
 	$name = str_replace('&#', '&&', $name); // otherwise HTML numeric entities will explode!
 	list($name, $trip, $sectrip) = str_replace('&%', '&#', explode('#',$name.'##'));
@@ -210,4 +210,4 @@ function extractTripCode(string $text): string{
 			$trip = '!!'.$sha;
 		}
 	}
-    
+    */
