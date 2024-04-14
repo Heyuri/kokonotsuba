@@ -66,7 +66,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         $stmt->execute();
         $result = $stmt->get_result();
         if ($row = $result->fetch_assoc()) {
-            $thread = new threadClass($boardConf, $row['threadID'], $row['lastTimePosted'], $row['opPostID']);
+            $thread = new threadClass($boardConf, $row['lastTimePosted'], $row['threadID'], $row['opPostID']);
             $stmt->close();
             return $thread;
         } else {
@@ -82,7 +82,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         $stmt->execute();
         $result = $stmt->get_result();
         while ($row = $result->fetch_assoc()) {
-            $threads[] = new threadClass($boardConf, $row['threadID'], $row['lastTimePosted'], $row['opPostID']);
+            $threads[] = new threadClass($boardConf, $row['lastTimePosted'], $row['threadID'], $row['opPostID']);
         }
         $stmt->close();
         return $threads;
@@ -96,7 +96,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         $result = $stmt->get_result();
 
         while ($row = $result->fetch_assoc()) {
-            $threads[] = new threadClass($boardConf, $row['threadID'], $row['lastTimePosted'], $row['opPostID']);
+            $threads[] = new threadClass($boardConf, $row['lastTimePosted'], $row['threadID'], $row['opPostID']);
         }
 
         $stmt->close();
