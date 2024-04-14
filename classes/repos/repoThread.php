@@ -90,7 +90,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
     public function loadThreadsByPage($boardConf, $page=0){
         $threads = [];
 
-        $stmt = $this->db->prepare("SELECT * FROM posts WHERE boardID = ? ORDER BY lastTimePosted DESC LIMIT ? OFFSET ?");
+        $stmt = $this->db->prepare("SELECT * FROM threads WHERE boardID = ? ORDER BY lastTimePosted DESC LIMIT ? OFFSET ?");
         $stmt->bind_param("iii", $boardConf['boardID'], $boardConf['threadsPerPage'], $page);
         $stmt->execute();
         $result = $stmt->get_result();
