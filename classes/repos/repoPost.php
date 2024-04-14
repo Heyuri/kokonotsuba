@@ -146,7 +146,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
         $comment = $post->getComment();
         $pass = $post->getPassword();
         $time = $post->getUnixTime();
-        $id = $post->postID();
+        $id = $post->getPostID();
         $ip = $post->getIp();
         $special = $post->getSpecial();
         $query = "UPDATE posts SET      boardID = ?, threadID = ?, name = ?, email = ?,
