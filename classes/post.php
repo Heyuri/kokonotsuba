@@ -21,7 +21,7 @@ class PostDataClass {
                                 int $threadID=-1, int $postID=-1, string $special='') {
 
         $this->config = $config;
-		$this->name = $name;
+		$this->name = str_replace("◆", "◇", $name);
 		$this->email = $email;
 		$this->subject = $subject;
 		$this->comment = $comment;
@@ -68,7 +68,9 @@ class PostDataClass {
         $this->comment = preg_replace($regexUrl , '<a href="$1" target="_blank">$1</a>', $this->comment);
     }
     public function applyTripcode(){
-        $this->name = convertTextToTripcodedText($this->name);
+        $nameXpass = splitTextAtTripcodePass($this->name);
+        $tripcode = genTripcode($nameXpass[1], $this->config['tripcodeSalt']);
+        $this->name = $nameXpass[0] . $tripcode;
     }
     public function quoteLinks(){
         // just make this use a get request to other board

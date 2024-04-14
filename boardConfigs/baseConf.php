@@ -26,7 +26,6 @@ return [
         'maxFileSize'=> 5242880, // 5mb
         'maxFiles'=> 3,
     ],
-
     'staticPath' => "/static/",
     'unlisted' => false,
     'timeZone' => 'UTC',
@@ -43,7 +42,9 @@ return [
     'defaultSubject'=> '',
     'defaultComment'=> 'kita',
     'canTripcode' => true,
+    'tripcodeSalt'=> 'abc123!?_',
     'canFortune' => true,
+    'fortunes' => ['Very bad luck', 'Bad luck','Average luck','Good luck','Godly luck'],
     'threadsPerPage' => 15,
     'maxActiveThreads' => 150,
     'defaultCSS' => '/static/css/kotatsu.css',

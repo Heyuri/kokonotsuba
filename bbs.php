@@ -65,13 +65,13 @@ function genUserPostFromRequest($conf, $thread){
 	setrawcookie('email', rawurlencode($email), $conf['cookieExpireTime']);
 	setrawcookie('password', rawurlencode($password), $conf['cookieExpireTime']);
 
-	$fileHandler = new fileHandlerClass($conf['fileConf']);
 	$post = new PostDataClass(	$conf,$name,$email,$subject,
 								$comment,$password,time(),$_SERVER['REMOTE_ADDR'],
 								$thread->getThreadID());
 
 	/*
 	// get the uploaded files and put them inside the post object.
+	$fileHandler = new fileHandlerClass($conf['fileConf']);
 	$uploadFiles = $fileHandler->getFilesFromPostRequest();
 	foreach ($uploadFiles as $file) {
 		$postData->addFile($file);
@@ -91,7 +91,7 @@ function genUserPostFromRequest($conf, $thread){
 		$post->applyTripcode();	
 	}
 
-	$HOOK->executeHook("onUserPostToBoard", $post, $fileHandler);// HOOK base post fully loaded
+	//$HOOK->executeHook("onUserPostToBoard", $post, $fileHandler);// HOOK base post fully loaded
 
 	/* prep post for db and drawing */
 
@@ -137,6 +137,7 @@ function userPostNewThread($board){
 	// save post and thread to data base.
 	$POSTREPO->createPost($conf, $post);
 	$THREADREPO->createThread($conf, $thread, $post);
+	displayErrorPageAndDie($post);
 
 	return;
 }

@@ -131,25 +131,62 @@ function isIPBanned($ip): bool{
 //tripcode put this in it own lib file.
 //
 function genTripcode(string $password, string $salt = ''): string{
-    $tripcode = "";
+    if (empty($password)) {
+        return '';
+    }
 
-    return $tripcode;
+    //determan tripcode type
+    $hashType = '';
+    if (substr($password, 0, 2) === '##') {
+        $hashType = 'secure';
+        $password = substr($password, 2);
+    } elseif (substr($password, 0, 1) === '#') {
+        $hashType = 'regular';
+        $password = substr($password, 1); 
+    } else {
+        return '';
+    }
+    //traditional tripcodes use shift jis
+    $password = mb_convert_encoding($password, 'Shift_JIS', 'UTF-8');
+
+    //set to futaba type salt if regualr
+    if ($hashType === 'regular') {
+        $salt = substr($password . 'H.', 1, 2);
+    }
+
+    $salt = preg_replace('/[^\.-z]/', '.', $salt);  // Clean up the salt
+    $salt = strtr($salt, ':;<=>?@[\\]^_`', 'ABCDEFGabcdef');  // Adjust the salt
+
+    // Generate the tripcode
+    $tripcode = crypt($password, $salt);
+
+    if ($hashType === 'regular') {
+        return '◆◇'.substr($tripcode, -10);
+    }else{
+        return '◆◆'.substr($tripcode, -10);
+    }
 }
 
-function extractTripCodePassword(string $text): string{
-    $tripcodePassword = "";
+function splitTextAtTripcodePass(string $text): array {
+    $pos = strpos($text, '#');
 
-    return $tripcodePassword;
+    if ($pos !== false) {
+        $name = substr($text, 0, $pos);
+        $tripcodePassword = substr($text, $pos);
+        return [$name, $tripcodePassword];
+    } else {
+        return [$text, ''];
+    }
 }
 
-// regular tripcode function where you put a string in and get text with tripcode appended.
-function convertTextToTripcodedText(string $str):string{
-    $textWithTripcode = "";
-
-    return $textWithTripcode;
+function extractTripCode(string $text): string{
+    return "";
 }
 
-    /*
+
+
+
+    
 	// Tripcode crap
 	$name = str_replace('&#', '&&', $name); // otherwise HTML numeric entities will explode!
 	list($name, $trip, $sectrip) = str_replace('&%', '&#', explode('#',$name.'##'));
@@ -173,8 +210,4 @@ function convertTextToTripcodedText(string $str):string{
 			$trip = '!!'.$sha;
 		}
 	}
-	if(!$name || preg_match("/^[ |　|]*$/", $name)){
-		if(ALLOW_NONAME) $name = DEFAULT_NONAME;
-		else error(_T('regist_withoutname'), $dest);
-	}
-    */
+    
