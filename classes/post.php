@@ -33,6 +33,19 @@ class PostDataClass {
         $this->threadID = $threadID;
         $this->special = $special;
     }
+    public function __toString() {
+        return  "BoardID: {$this->config['boardID']}\n" .
+                "Name: {$this->name}\n" .
+                "Email: {$this->email}\n" .
+                "Subject: {$this->subject}\n" .
+                "Comment: {$this->comment}\n" .
+                "Password: {$this->password}\n" .
+                "Unix Time: {$this->unixTime}\n" .
+                "IP Address: {$this->IP}\n" .
+                "Post ID: {$this->postID}\n" .
+                "Thread ID: {$this->threadID}\n" .
+                "Special Info: {$this->special}";
+    }
     private function isValid():bool {
         if (mb_strlen($this->name, 'UTF-8') > INPUT_MAX) 
             return false;
@@ -60,6 +73,7 @@ class PostDataClass {
     public function quoteLinks(){
         // just make this use a get request to other board
     }
+/*
     public function procssesFiles(){
         foreach ($this->files as $file) {
             $file->procssesFile();
@@ -72,8 +86,9 @@ class PostDataClass {
     public function getFiles() {
         return $this->files;
     }
-	public function getParentThread(){
-		//connstruct thread from resto ID
+*/
+	public function getThread(){
+		//idk if i will use this..
 	}
 
     public function getPostID(){

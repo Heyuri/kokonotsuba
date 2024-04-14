@@ -31,19 +31,21 @@ $globalConf = require __DIR__ ."/conf.php";
 
 //@session_start();
 
-function getUserPost($conf, $thread){
+function genUserPostFromRequest($conf, $thread){
 	global $AUTH;
 	global $HOOK;
 	global $globalConf;
 	//gen post password if none is provided
-	if(isset($_POST['password']) == false){
+	if(isset($_POST['password']) == false && isset($_COOKIE["password"]) == false){
 		$hasinput = $_SERVER['REMOTE_ADDR'] . time() . $globalConf['passwordSalt'];
 		$hash = hash('sha256', $hasinput);
 		$_POST['password'] = substr($hash, -8); 
 	}
 
-	setrawcookie('passwordc', $_POST['password'], $conf['cookieExpireTime']);
-	setrawcookie('namec', $_POST['name'], $conf['cookieExpireTime']);
+	setrawcookie('password', $_POST['password'], $conf['cookieExpireTime']);
+	setrawcookie('name', $_POST['name'], $conf['cookieExpireTime']);
+	setrawcookie('email', $_POST['email'], $conf['cookieExpireTime']);
+
 
 	$fileHandler = new fileHandlerClass($conf['fileConf']);
 	$post = new PostDataClass(
@@ -57,6 +59,7 @@ function getUserPost($conf, $thread){
 		$_SERVER['REMOTE_ADDR'],
 		$thread->getThreadID()
 	);
+	displayErrorPageAndDie($post);
 	/*
 	// get the uploaded files and put them inside the post object.
 	$uploadFiles = $fileHandler->getFilesFromPostRequest();
@@ -103,7 +106,7 @@ function userPostToThread($board){
 	$thread = $board->getThreadByID($_POST['threadID']);
 	
 	// create post with thread
-	$post = getUserPost($conf, $thread);
+	$post = genUserPostFromRequest($conf, $thread);
 
 	// save post to data base.
 	$POSTREPO->createPost($conf, $post);
@@ -119,7 +122,7 @@ function userPostNewThread($board){
 	$thread = new threadClass($conf, time());
 
 	// create post with thread
-	$post = getUserPost($conf, $thread);
+	$post = genUserPostFromRequest($conf, $thread);
 
 	// save post and thread to data base.
 	$POSTREPO->createPost($conf, $post);
