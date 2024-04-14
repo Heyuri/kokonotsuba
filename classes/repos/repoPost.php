@@ -140,7 +140,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
     public function updatePost($boardConf, $post) {
         // why is sqli like this...
         $threadID = $post->getThreadID();
-        $name =$post->getName();
+        $name = $post->getName();
         $email = $post->getEmail();
         $sub = $post->getSubject();
         $comment = $post->getComment();

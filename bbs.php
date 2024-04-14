@@ -40,20 +40,20 @@ function genUserPostFromRequest($conf, $thread){
 	 * below is the exact same thing as this
 	 * 
 	 * $name;
-	 * if($_POST['name']) == true){
+	 * if(!empty($_POST['name']))){
 	 *     $name = $_POST['name'];
-	 * }elseif ($conf['allowNoName'] == true){
+	 * }elseif ($conf['allowNoName']){
 	 *     $name = $conf['defaultName'];
 	 * }else{
 	 *     displayErrorPageAndDie("name is a required feild");
 	 * }
 	 */
-	$name = isset($_POST['name']) ? $_POST['name'] : ($conf['allowNoName'] ? $conf['defaultName'] : displayErrorPageAndDie("your Name is required."));
-	$email = isset($_POST['email']) ? $_POST['email'] : ($conf['allowNoEmail'] ? $conf['defaultEmail'] : displayErrorPageAndDie("your Email is required."));
-	$subject = isset($_POST['subject']) ? $_POST['subject'] : ($conf['allowNoSubject'] ? $conf['defaultSubject'] : displayErrorPageAndDie("a Subject is required."));
-	$comment = isset($_POST['comment']) ? $_POST['comment'] : ($conf['allowNoComment'] ? $conf['defaultComment'] : displayErrorPageAndDie("a comment is required."));;
+	$name = !empty($_POST['name']) ? $_POST['name'] : ($conf['allowNoName'] ? $conf['defaultName'] : displayErrorPageAndDie("your Name is required."));
+	$email = !empty($_POST['email']) ? $_POST['email'] : ($conf['allowNoEmail'] ? $conf['defaultEmail'] : displayErrorPageAndDie("your Email is required."));
+	$subject = !empty($_POST['subject']) ? $_POST['subject'] : ($conf['allowNoSubject'] ? $conf['defaultSubject'] : displayErrorPageAndDie("a Subject is required."));
+	$comment = !empty($_POST['comment']) ? $_POST['comment'] : ($conf['allowNoComment'] ? $conf['defaultComment'] : displayErrorPageAndDie("a comment is required."));;
 	
-	$password = isset($_POST['password']) ? $_POST['password'] : (isset($_COOKIE['password']) ? $_COOKIE["password"] : null);
+	$password = !empty($_POST['password']) ? $_POST['password'] : (isset($_COOKIE['password']) ? $_COOKIE["password"] : null);
 	//gen post password if none is provided
 	if($password == null){
 		$hasinput = $_SERVER['REMOTE_ADDR'] . time() . $globalConf['passwordSalt'];
@@ -61,9 +61,9 @@ function genUserPostFromRequest($conf, $thread){
 		$password = substr($hash, -8); 
 	}
 
-	setrawcookie('password', $_POST['password'], $conf['cookieExpireTime']);
-	setrawcookie('name', $_POST['name'], $conf['cookieExpireTime']);
-	setrawcookie('email', $_POST['email'], $conf['cookieExpireTime']);
+	setrawcookie('name', $name, $conf['cookieExpireTime']);
+	setrawcookie('email', $email, $conf['cookieExpireTime']);
+	setrawcookie('password', $password, $conf['cookieExpireTime']);
 
 
 	$fileHandler = new fileHandlerClass($conf['fileConf']);
