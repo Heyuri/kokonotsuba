@@ -42,16 +42,16 @@ function genUserPostFromRequest($conf, $thread){
 	 * $name;
 	 * if(!empty($_POST['name']))){
 	 *     $name = $_POST['name'];
-	 * }elseif ($conf['allowNoName']){
+	 * }elseif ($conf['allowBlankName']){
 	 *     $name = $conf['defaultName'];
 	 * }else{
 	 *     displayErrorPageAndDie("name is a required feild");
 	 * }
 	 */
-	$name = !empty($_POST['name']) ? $_POST['name'] : ($conf['allowNoName'] ? $conf['defaultName'] : displayErrorPageAndDie("your Name is required."));
-	$email = !empty($_POST['email']) ? $_POST['email'] : ($conf['allowNoEmail'] ? $conf['defaultEmail'] : displayErrorPageAndDie("your Email is required."));
-	$subject = !empty($_POST['subject']) ? $_POST['subject'] : ($conf['allowNoSubject'] ? $conf['defaultSubject'] : displayErrorPageAndDie("a Subject is required."));
-	$comment = !empty($_POST['comment']) ? $_POST['comment'] : ($conf['allowNoComment'] ? $conf['defaultComment'] : displayErrorPageAndDie("a comment is required."));;
+	$name = !empty($_POST['name']) ? $_POST['name'] : ($conf['allowBlankName'] ? $conf['defaultName'] : displayErrorPageAndDie("your Name is required."));
+	$email = !empty($_POST['email']) ? $_POST['email'] : ($conf['allowBlankEmail'] ? $conf['defaultEmail'] : displayErrorPageAndDie("your Email is required."));
+	$subject = !empty($_POST['subject']) ? $_POST['subject'] : ($conf['allowBlankSubject'] ? $conf['defaultSubject'] : displayErrorPageAndDie("a Subject is required."));
+	$comment = !empty($_POST['comment']) ? $_POST['comment'] : ($conf['allowBlankComment'] ? $conf['defaultComment'] : displayErrorPageAndDie("a comment is required."));;
 	
 	$password = !empty($_POST['password']) ? $_POST['password'] : (isset($_COOKIE['password']) ? $_COOKIE["password"] : null);
 	//gen post password if none is provided
@@ -61,10 +61,9 @@ function genUserPostFromRequest($conf, $thread){
 		$password = substr($hash, -8); 
 	}
 
-	setrawcookie('name', $name, $conf['cookieExpireTime']);
-	setrawcookie('email', $email, $conf['cookieExpireTime']);
-	setrawcookie('password', $password, $conf['cookieExpireTime']);
-
+	setrawcookie('name', rawurlencode($name), $conf['cookieExpireTime']);
+	setrawcookie('email', rawurlencode($email), $conf['cookieExpireTime']);
+	setrawcookie('password', rawurlencode($password), $conf['cookieExpireTime']);
 
 	$fileHandler = new fileHandlerClass($conf['fileConf']);
 	$post = new PostDataClass(	$conf,$name,$email,$subject,
