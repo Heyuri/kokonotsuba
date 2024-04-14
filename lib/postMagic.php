@@ -127,7 +127,6 @@ function isIPBanned($ip): bool{
     return false;
 }
 
-
 //tripcode put this in it own lib file.
 function genTripcode(string $password, string $salt = ''): string{
     if (empty($password)) {
