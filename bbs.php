@@ -35,11 +35,30 @@ function genUserPostFromRequest($conf, $thread){
 	global $AUTH;
 	global $HOOK;
 	global $globalConf;
+
+	/*
+	 * below is the exact same thing as this
+	 * 
+	 * $name;
+	 * if($_POST['name']) == true){
+	 *     $name = $_POST['name'];
+	 * }elseif ($conf['allowNoName'] == true){
+	 *     $name = $conf['defaultName'];
+	 * }else{
+	 *     displayErrorPageAndDie("name is a required feild");
+	 * }
+	 */
+	$name = isset($_POST['name']) ? $_POST['name'] : ($conf['allowNoName'] ? $conf['defaultName'] : displayErrorPageAndDie("your Name is required."));
+	$email = isset($_POST['email']) ? $_POST['email'] : ($conf['allowNoEmail'] ? $conf['defaultEmail'] : displayErrorPageAndDie("your Email is required."));
+	$subject = isset($_POST['subject']) ? $_POST['subject'] : ($conf['allowNoSubject'] ? $conf['defaultSubject'] : displayErrorPageAndDie("a Subject is required."));
+	$comment = isset($_POST['comment']) ? $_POST['comment'] : ($conf['allowNoComment'] ? $conf['defaultComment'] : displayErrorPageAndDie("a comment is required."));;
+	
+	$password = isset($_POST['password']) ? $_POST['password'] : (isset($_COOKIE['password']) ? $_COOKIE["password"] : null);
 	//gen post password if none is provided
-	if(isset($_POST['password']) == false && isset($_COOKIE["password"]) == false){
+	if($password == null){
 		$hasinput = $_SERVER['REMOTE_ADDR'] . time() . $globalConf['passwordSalt'];
 		$hash = hash('sha256', $hasinput);
-		$_POST['password'] = substr($hash, -8); 
+		$password = substr($hash, -8); 
 	}
 
 	setrawcookie('password', $_POST['password'], $conf['cookieExpireTime']);
@@ -48,18 +67,10 @@ function genUserPostFromRequest($conf, $thread){
 
 
 	$fileHandler = new fileHandlerClass($conf['fileConf']);
-	$post = new PostDataClass(
-		$conf,
-		$_POST['name'] ?? $conf['defaultName'],
-		$_POST['email'] ?? $conf['defaultEmail'],
-		$_POST['subject'] ?? $conf['defaultSubject'],
-		$_POST['comment'] ?? $conf['defaultComment'],
-		$_POST['password'],
-		time(),
-		$_SERVER['REMOTE_ADDR'],
-		$thread->getThreadID()
-	);
-	displayErrorPageAndDie($post);
+	$post = new PostDataClass(	$conf,$name,$email,$subject,
+								$comment,$password,time(),$_SERVER['REMOTE_ADDR'],
+								$thread->getThreadID());
+
 	/*
 	// get the uploaded files and put them inside the post object.
 	$uploadFiles = $fileHandler->getFilesFromPostRequest();

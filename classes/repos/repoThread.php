@@ -3,6 +3,8 @@ require_once __DIR__ .'/DBConnection.php';
 require_once __DIR__ .'/interfaces.php';
 require_once __DIR__ .'/../thread.php';
 require_once __DIR__ .'/../../common.php';
+require_once __DIR__ .'/repoPost.php';
+
 
 
 class ThreadRepoClass implements ThreadRepositoryInterface {
@@ -41,9 +43,15 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
             if (!$success) {
                 throw new Exception("Failed to create new thread");
             }
-            // update objects with new data
+            // update objects and repo with new data
             $thread->setThreadID($this->db->insert_id);
             $thread->setOPPostID($post->getPostID());
+
+            $POSTREPO = PostRepoClass::getInstance();
+            $post->setThreadID($this->db->insert_id);
+            $POSTREPO->updatePost($boardConf, $post);
+
+
             $stmt->close();
             return $success;
         } catch (Exception $e) {
