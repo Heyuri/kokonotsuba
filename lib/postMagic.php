@@ -129,7 +129,6 @@ function isIPBanned($ip): bool{
 
 
 //tripcode put this in it own lib file.
-//
 function genTripcode(string $password, string $salt = ''): string{
     if (empty($password)) {
         return '';
@@ -163,11 +162,13 @@ function genTripcode(string $password, string $salt = ''): string{
     if ($hashType === 'regular') {
         return '◆'.substr($tripcode, -10);
     }else{
-        return '◆◆'.substr($tripcode, -10);
+        return '★'.substr($tripcode, -10);
     }
 }
 
 function splitTextAtTripcodePass(string $text): array {
+    //replace reserved characters.
+    $text = str_replace(["◆", "★"], ["◇", "☆"], $text);
     $pos = strpos($text, '#');
 
     if ($pos !== false) {

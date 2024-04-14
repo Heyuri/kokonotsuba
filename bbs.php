@@ -91,7 +91,7 @@ function genUserPostFromRequest($conf, $thread){
 		$post->applyTripcode();	
 	}
 
-	//$HOOK->executeHook("onUserPostToBoard", $post, $fileHandler);// HOOK base post fully loaded
+	//$HOOK->executeHook("onUserPostToBoard", $post, $fileHandler);// HOOK base post fully loaded with no html
 
 	/* prep post for db and drawing */
 

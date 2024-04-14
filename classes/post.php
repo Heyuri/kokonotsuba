@@ -21,7 +21,7 @@ class PostDataClass {
                                 int $threadID=-1, int $postID=-1, string $special='') {
 
         $this->config = $config;
-		$this->name = str_replace("◆", "◇", $name);
+		$this->name = $name;
 		$this->email = $email;
 		$this->subject = $subject;
 		$this->comment = $comment;
