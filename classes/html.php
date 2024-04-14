@@ -111,25 +111,21 @@ class htmlclass {
         <tr>
             <td><label for="email">Email</label></td>
             <td>
-                <input type="text" id="email" email="email">
-                <button type="submit" name="action" value="postNewThread">Post</button>
+                <input type="text" id="email" name="email">
+                <button type="submit">Post</button>
             </td>
         </tr>
         <tr>
             <td><label for="subject">Subject</label></td>
-            <td><input type="text" id="subject" subject="subject"></td>
+            <td><input type="text" id="subject" name="subject"></td>
         </tr>
         <tr>
             <td><label for="comment">Comment</label></td>
-            <td><input type="text" id="comment" subject="comment"></td>
-        </tr>
-        <tr>
-            <td><label for="subject">Subject</label></td>
-            <td><input type="text" id="subject" subject="subject"></td>
+            <td><input type="text" id="comment" name="comment"></td>
         </tr>
         <tr>
             <td><label for="password">Password</label></td>
-            <td><input type="text" id="password" password="password"></td>
+            <td><input type="text" id="password" name="password"></td>
         </tr>
         </form>
         </div>';
