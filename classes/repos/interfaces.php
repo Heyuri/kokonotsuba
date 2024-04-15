@@ -21,7 +21,8 @@ interface PostDataRepositoryInterface {
     public function createPost($boardConf, $post);
     public function loadPostByID($boardConf, $postID);
     public function loadPosts($boardConf);
-    public function loadPostsFromThreadID($boardConf, $threadID);
+    public function loadPostsByThreadID($boardConf, $threadID);
+    public function loadLastPostByThreadID($boardConf, $threadID, $num);
     public function setPostID($boardConf, $post, $newPostID);
     public function updatePost($boardConf, $post);
     public function deletePostByID($boardConf, $postID);

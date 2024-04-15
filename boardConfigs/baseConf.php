@@ -47,5 +47,6 @@ return [
     'fortunes' => ['Very bad luck', 'Bad luck','Average luck','Good luck','Godly luck'],
     'threadsPerPage' => 15,
     'maxActiveThreads' => 150,
+    'postPerThreadListing' => 5,
     'defaultCSS' => '/static/css/kotatsu.css',
 ];

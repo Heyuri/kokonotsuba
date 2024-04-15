@@ -122,10 +122,25 @@ class PostRepoClass implements PostDataRepositoryInterface {
         $stmt->close();
         return $posts;
     }
-    public function loadPostsFromThreadID($boardConf, $threadID){
+    public function loadPostsByThreadID($boardConf, $threadID){
         $posts = [];
         $stmt = $this->db->prepare("SELECT * FROM posts WHERE boardID = ? and threadID = ? ");
         $stmt->bind_param("ii", $boardConf['boardID'], $threadID);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $posts[] =  new PostDataClass($boardConf, $row['name'], $row['email'], $row['subject'], 
+                                     $row['comment'], $row['password'], $row['unixTime'], $row['IP'], 
+                                     $row['threadID'], $row['postID'], $row['special']);
+        }
+        
+        $stmt->close();
+        return $posts;
+    }
+    public function loadLastPostByThreadID($boardConf, $threadID, $num=$boardConf['postPerThreadListing']){
+        $posts = [];
+        $stmt = $this->db->prepare("SELECT * FROM posts WHERE boardID = ? and threadID = ? ORDER BY postTime DESC LIMIT ?");
+        $stmt->bind_param("iii", $boardConf['boardID'], $threadID, $num);
         $stmt->execute();
         $result = $stmt->get_result();
         while ($row = $result->fetch_assoc()) {

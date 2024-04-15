@@ -82,6 +82,7 @@
 				boardID INT NOT NULL,
 				lastTimePosted INT NOT NULL,
 				opPostID INT,
+				postCount INT,
 				FOREIGN KEY (boardID) REFERENCES boards(boardID) ON DELETE CASCADE ON UPDATE CASCADE
 			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
 				
