@@ -251,7 +251,7 @@ class htmlclass {
         
         foreach ($threads as $thread) {
             $opPost = $thread->getPostByID($thread->getOPPostID());
-            $posts = $threads->getLastNPost($this->conf['postPerThreadListing']);
+            $posts = $thread->getLastNPost($this->conf['postPerThreadListing']);
 
             $omitedPost = sizeof($posts) - $thread->getPostCount - 1;//-1 for op post
 
