@@ -130,6 +130,7 @@ class htmlclass {
             <td><label for="password">Password</label></td>
             <td><input type="text" id="password" name="password"></td>
         </tr>
+        </table>
         </form>
         </div>';
     }
@@ -198,7 +199,7 @@ class htmlclass {
         $this->html .= '';
     }
     private function drawThread($thread){
-        $this->html .= $thread->getThreadID() .'<br>';
+        $this->html .= 'Thread ID: '.$thread->getThreadID() .'<br>';
     }
     private function drawThreads($threads){
         foreach ($threads as $thread) {
