@@ -33,10 +33,11 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
             // get vlaues for querry
             $bump = $thread->getLastBumpTime();
             $postID = $post->getPostID();
+            $postCount = 1;
 
             //construct querry
             $stmt = $this->db->prepare("INSERT INTO threads (boardID, lastTimePosted, opPostID, postCount) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("iiii", $boardConf['boardID'], $bump, $postID, 1);
+            $stmt->bind_param("iiiii", $boardConf['boardID'], $bump, $postID, $postCount);
 
             // run qerrry
             $success = $stmt->execute();
@@ -45,7 +46,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
             }
             // update objects and repo with new data
             $thread->setThreadID($this->db->insert_id);
-            $thread->setPostCount(1);
+            $thread->setPostCount($postCount);
             $thread->setOPPostID($post->getPostID());
 
             $POSTREPO = PostRepoClass::getInstance();
