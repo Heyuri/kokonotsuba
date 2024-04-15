@@ -207,17 +207,25 @@ class htmlclass {
         foreach($posts as $post){
             $postID = $post->getPostID();
             $threadID = $post->getThreadID();
+            $email = $post->getEmail();
             $this->html .= '
             <div class="post reply" id="'.$postID.'">
                 <nobr class="postinfo">
                     <input type="checkbox" name="'.$postID.'">
-                    <b class="subject">'.$post->getSubject().'</b>
-                    <b class="name">'.$post->getName().'</b>
+                    <b class="subject">'.$post->getSubject().'</b>';
+
+                    if($email != ""){
+                        $this->html .= '<a href="mailto:'.$email.'"><b class="name">'.$post->getName().'</b>';
+                    }else{
+                        $this->html .= '<b class="name">'.$email.'</b>';
+                    }
+                    $this->html .= '
                     <div class="time">'.date('Y-m-d H:i:s', $post->getUnixTime()).'</div>
 				    <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#p'.$postID.'" class="no">No.</a>
                     <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#postForm" title="Quote">'.$postID.'</a>
                 </nobr>
-                <blockquote class="comment">'.$post->getComment().'</blockquote>		
+                <blockquote class="comment">'.$post->getComment().'</blockquote>
+            </div>	
             ';
         }
     }
@@ -228,7 +236,7 @@ class htmlclass {
         <!--drawThreads()-->
         <div id="t'.$thread->getThreadID().'" class="thread>';
 
-        $this->drawPosts($posts,);
+        $this->drawPosts($posts);
         $this->html .='
         </div>';
     }
