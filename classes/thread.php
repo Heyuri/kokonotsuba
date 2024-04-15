@@ -50,7 +50,7 @@ class threadClass{
         }
         return $this->posts[$postID];
     }
-    public function getLastNumPost($num){
+    public function getLastNPost($num){
         if ($this->postsFullyLoaded != true && !count($this->lastPosts) >= $num) {
             $this->lastPosts[] = $this->postRepo->loadLastPostByThreadID($this->conf, $this->threadID);
         }

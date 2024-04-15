@@ -46,6 +46,7 @@ class htmlclass {
     }
     /*drawNavGroup expects a key,value pair. where key is displayname and value is url*/
     private function drawNavGroup($URLPair){
+        //this is what i mean by grouping [ webpage1 / webpage2 / webpage3 / etc.. ]
         $this->html .= "[";
         foreach ($URLPair as $key => $value) {
             $this->html .= '<a class="navLink" href="'.$value.'">'.$key.'</a>';
@@ -101,7 +102,8 @@ class htmlclass {
         $this->html .= '
         <!--drawFormNewThread()-->
         <!--set constraints based on board conf-->
-        <div class="postForm">
+        <div id="postForm class="postForm">';//id is used so we can jump to it from a url example.com#postForm
+        $this->html .= '
         <form class="formThread" action="/bbs.php" method="post" enctype="multipart/form-data">
         <input type="hidden" name="action" value="postNewThread">
         <input type="hidden" name="boardID" value="'. $this->board->getBoardID() . '">
@@ -124,7 +126,7 @@ class htmlclass {
         </tr>
         <tr>
             <td><label for="comment">Comment</label></td>
-            <td><input type="text" id="comment" name="comment"></td>
+            <td><textarea type="text" id="comment" name="comment"></textarea></td>
         </tr>
         <tr>
             <td><label for="password">Password</label></td>
@@ -192,22 +194,71 @@ class htmlclass {
     private function drawFooter(){
         $this->html .= '';
     }
-    private function drawPostOP($post){
+    private function drawOPPost($post,$thread){
         $this->html .= '';
+    }
+    private function drawOPPostAsListing($post, $omitedPosts){
+        $this->html .='
+        <div class"post op">';
     }
     private function drawPosts($posts){
-        $this->html .= '';
+        $this->html .= '
+        <!--drawPosts()-->';
+        foreach($posts as $post){
+            $postID = $post->getPostID();
+            $threadID = $post->getThreadID();
+            $this->html .= '
+            <div class="post reply" id="'.$postID.'">
+                <nobr class="postinfo">
+                    <input type="checkbox" name="'.$postID.'">
+                    <b class="subject">'.$post->getSubject().'</b>
+                    <b class="name">'.$post->getName().'</b>
+                    <div class="time">'.date('Y-m-d H:i:s', $post->getUnixTime()).'</div>
+				    <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#p'.$postID.'" class="no">No.</a>
+                    <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#postForm" title="Quote">'.$postID.'</a>
+                </nobr>
+                <blockquote class="comment">'.$post->getComment().'</blockquote>		
+            ';
+        }
     }
     private function drawThread($thread){
-        $this->html .= 'Thread ID: '.$thread->getThreadID() .'<br>';
+        $posts = $thread->getPosts();
+
+        $this->html .='
+        <!--drawThreads()-->
+        <div id="t'.$thread->getThreadID().'" class="thread>';
+
+        $this->drawPosts($posts,);
+        $this->html .='
+        </div>';
     }
-    private function drawThreads($threads){
+
+    private function drawThreadListing($threads){
+        //encapsalate all of the threads into a form
+        $this->drawFormManagePostsOpen();
+
+        $this->html .='
+        <!--drawThreadListing()-->
+        <div class="threadListing">';
+        
         foreach ($threads as $thread) {
-            $this->drawThread($thread);
+            $opPost = $thread->getPostByID($thread->getOPPostID());
+            $posts = $threads->getLastNPost($this->conf['postPerThreadListing']);
+
+            $omitedPost = sizeof($posts) - $thread->getPostCount - 1;//-1 for op post
+
+            $this->drawOPPostAsListing($opPost, $omitedPost);
+            $this->drawPosts($posts);
         }
+        $this->html .='</div>';
+
+        $this->drawFormManagePostsOpen();
+
     }
     public function drawPage($pageNumber = 0){
         global $THREADREPO;
+        $threads = $THREADREPO->loadThreadsByPage($this->conf, $pageNumber);
+        
         $this->html .='
         <!DOCTYPE html>
         <html lang="en-US">';
@@ -216,11 +267,9 @@ class htmlclass {
         $this->drawNavBar();
         $this->drawBoardTitle();
         $this->drawFormNewThread();
-        $threads = $THREADREPO->loadThreadsByPage($this->conf, $pageNumber);
-        $this->drawThreads($threads);
+        $this->drawThreadListing($threads);
 
         $this->html .= '</body>';
         echo $this->html;
     }
-
 }
