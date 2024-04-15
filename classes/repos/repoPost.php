@@ -56,7 +56,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
             // create post in db
             $insertQuery = "INSERT INTO posts ( boardID, threadID, postID, name, 
                                                 email, subject, comment, password, 
-                                                postTime, IP, special) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                                                postTime, ip, special) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $insertStmt = $this->db->prepare($insertQuery);
             $insertStmt->bind_param("iiisssssiss",  $boardConf['boardID'], $threadID, $lastPostID, $name, 
                                                     $email, $sub, $comment, $pass, 
@@ -88,7 +88,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
         $result = $stmt->get_result();
         if ($row = $result->fetch_assoc()) {
             return new PostDataClass($boardConf, $row['name'], $row['email'], $row['subject'], 
-                                     $row['comment'], $row['password'], $row['unixTime'], $row['IP'], 
+                                     $row['comment'], $row['password'], $row['postTime'], $row['ip'], 
                                      $row['threadID'], $row['postID'], $row['special']);
         }
         $stmt->close();
@@ -101,7 +101,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
         $result = $stmt->get_result();
         if ($row = $result->fetch_assoc()) {
             return new PostDataClass($boardConf, $row['name'], $row['email'], $row['subject'], 
-                                     $row['comment'], $row['password'], $row['unixTime'], $row['IP'], 
+                                     $row['comment'], $row['password'], $row['postTime'], $row['ip'], 
                                      $row['threadID'], $row['postID'], $row['special']);
         }
         $stmt->close();
@@ -115,7 +115,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
         $result = $stmt->get_result();
         while ($row = $result->fetch_assoc()) {
             $posts[] =  new PostDataClass($boardConf, $row['name'], $row['email'], $row['subject'], 
-                                     $row['comment'], $row['password'], $row['unixTime'], $row['IP'], 
+                                     $row['comment'], $row['password'], $row['postTime'], $row['ip'], 
                                      $row['threadID'], $row['postID'], $row['special']);
         }
         
@@ -130,7 +130,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
         $result = $stmt->get_result();
         while ($row = $result->fetch_assoc()) {
             $posts[] =  new PostDataClass($boardConf, $row['name'], $row['email'], $row['subject'], 
-                                     $row['comment'], $row['password'], $row['unixTime'], $row['IP'], 
+                                     $row['comment'], $row['password'], $row['postTime'], $row['ip'], 
                                      $row['threadID'], $row['postID'], $row['special']);
         }
         
@@ -145,7 +145,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
         $result = $stmt->get_result();
         while ($row = $result->fetch_assoc()) {
             $posts[] =  new PostDataClass($boardConf, $row['name'], $row['email'], $row['subject'], 
-                                     $row['comment'], $row['password'], $row['unixTime'], $row['IP'], 
+                                     $row['comment'], $row['password'], $row['postTime'], $row['ip'], 
                                      $row['threadID'], $row['postID'], $row['special']);
         }
         
