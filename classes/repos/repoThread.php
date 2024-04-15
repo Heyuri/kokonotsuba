@@ -37,7 +37,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
 
             //construct querry
             $stmt = $this->db->prepare("INSERT INTO threads (boardID, lastTimePosted, opPostID, postCount) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("iiiii", $boardConf['boardID'], $bump, $postID, $postCount);
+            $stmt->bind_param("iiii", $boardConf['boardID'], $bump, $postID, $postCount);
 
             // run qerrry
             $success = $stmt->execute();
