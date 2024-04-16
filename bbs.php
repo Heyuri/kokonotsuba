@@ -29,6 +29,9 @@ $BOARDREPO = BoardRepoClass::getInstance();
 
 $globalConf = require __DIR__ ."/conf.php";
 
+define("ROOTPATH", './'); /* Main Program Root Directory */
+define("MAX_INPUT_LENGTH", 255 - 128); /* you cant make this bigger then 255 with out changing the cap to to the db */
+
 //@session_start();
 
 function genUserPostFromRequest($conf, $thread){
