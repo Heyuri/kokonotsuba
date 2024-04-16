@@ -29,7 +29,7 @@ $BOARDREPO = BoardRepoClass::getInstance();
 
 $globalConf = require __DIR__ ."/conf.php";
 
-define("ROOTPATH", './'); /* Main Program Root Directory */
+define("ROOTPATH", './'); /* Program location relitive to web root */
 define("MAX_INPUT_LENGTH", 255 - 128); /* you cant make this bigger then 255 with out changing the cap to to the db */
 
 //@session_start();
@@ -197,7 +197,7 @@ elseif(isset($_POST['action'])){
 	switch ($action) {
 		case 'postToThread':
 			$post = userPostNewPostToThread($board);
-			$thread = $board->getThreadByID($_POST['threadID']);
+			$thread = $board->getThreadByID($_GET['threadID'] ?? $_POST['threadID'] ?? '');
 			if (strtolower($post->getEmail()) == "noko"){
 				$post->setEmail("");
 				$POSTREPO->updatePost($board->getConf(), $post);
