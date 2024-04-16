@@ -106,7 +106,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
     }
     public function updateThread($boardConf, $thread) {
         $bump = $thread->getLastBumpTime();
-        $postID = $thread->getOPPostID()();
+        $postID = $thread->getOPPostID();
         $id = $thread->getThreadID();
         $postCount = $thread->getPostCount();
         $stmt = $this->db->prepare("UPDATE threads SET lastTimePosted = ?, opPostID = ? WHERE boardID = ? AND threadID = ? AND postCount ?");
