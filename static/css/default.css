@@ -26,6 +26,7 @@ body {
     justify-content: space-between; 
     width: 100%; 
 }
+
 .boardTitle,
 .formThread,
 .thread{
@@ -41,24 +42,4 @@ body {
 .accent{
   background: #eeaa88;
   border: 1px solid #800000;
-}
-
-.formThread {
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-}
-
-textarea,
-input {
-	background-color: #fff;
-	border-color: #000;
-	color: #000;
-}
-
-textarea:focus,
-input:focus {
-	background-color: #fff;
-	border-color: #000;
-	color: #000;
 }

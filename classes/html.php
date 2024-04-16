@@ -59,27 +59,26 @@ class htmlclass {
         global $HOOK;
         $conf = $this->conf;
 
-
         $this->html .= '
         <!--drawNavBar()-->
         <div class="navBar">
         <span class="navLeft">';
-        //$this->drawNavGroup($boardList);
-        $this->drawNavGroup($conf['navLinksLeft']);
-        $res = $HOOK->executeHook("onDrawNavLeft");// HOOK drawing to left side of nav
-        foreach ($res as $urlGroup) {
-            $this->drawNavGroup($urlGroup);
-        }
-        $this->html .= '</span>
-
+            //$this->drawNavGroup($boardList);
+            $this->drawNavGroup($conf['navLinksLeft']);
+            $res = $HOOK->executeHook("onDrawNavLeft");// HOOK drawing to left side of nav
+            foreach ($res as $urlGroup) {
+                $this->drawNavGroup($urlGroup);
+            }
+            $this->html .= '
+        </span>
         <span class="navRight">';
-        $res = $HOOK->executeHook("onDrawNavRight");// HOOK drawing to right side of nav
-        foreach ($res as $urlGroup) {
-            $this->drawNavGroup($urlGroup);
-        }
-        $this->drawNavGroup($conf['navLinksRight']);
-        //$this->drawNavGroup($adminStuff);
-        $this->html .= '
+            $res = $HOOK->executeHook("onDrawNavRight");// HOOK drawing to right side of nav
+            foreach ($res as $urlGroup) {
+                $this->drawNavGroup($urlGroup);
+            }
+            $this->drawNavGroup($conf['navLinksRight']);
+            //$this->drawNavGroup($adminStuff);
+            $this->html .= '
         </span>
         </div>';
     }
@@ -94,20 +93,12 @@ class htmlclass {
         if ($conf['boardLogoPath'] != ""){
             $this->html .= '<img class="logo" src="'.$conf['boardLogoPath'].'">';
         }
-        $this->html .= '<h1 class="boardTitle">'.$conf['boardTitle'].'</h1>';
-        $this->html .= '<h5 class="boardSubTitle">'.$conf['boardSubTitle'].'</h5>
+        $this->html .= '<h1 class="title">'.$conf['boardTitle'].'</h1>';
+        $this->html .= '<h5 class="subtitle">'.$conf['boardSubTitle'].'</h5>
         </div>';
     }
-    private function drawFormNewThread(){
+    private function drawMainFormBody(){
         $this->html .= '
-        <!--drawFormNewThread()-->
-        <!--set constraints based on board conf-->
-        <div id="postForm" class="postForm">';//id is used so we can jump to it from a url example.com#postForm
-        $this->html .= '
-        <form class="formThread" action="'.ROOTPATH.'bbs.php" method="post" enctype="multipart/form-data">
-        <input type="hidden" name="action" value="postNewThread">
-        <input type="hidden" name="boardID" value="'. $this->board->getBoardID() . '">
-
         <table>
         <tr>
             <td class="accent"><label for="name">Name</label></td>
@@ -121,9 +112,9 @@ class htmlclass {
         </tr>
         <tr>
             <td class="accent"><label for="subject">Subject</label></td>
-	    <td><input type="text" id="subject" name="subject">
-	    <button type="submit">New Thread</button>
-	   </td>
+	        <td><input type="text" id="subject" name="subject">
+	            <button type="submit">New Thread</button>
+	        </td>
         </tr>
         <tr>
             <td class="accent"><label for="comment">Comment</label></td>
@@ -133,53 +124,39 @@ class htmlclass {
             <td class="accent"><label for="password">Password</label></td>
             <td><input type="text" id="password" name="password"></td>
         </tr>
-        </table>
-        </form>
-        </div>';
+        </table>';
+    }
+    private function drawFormNewThread(){
+        $this->html .= '
+        <!--drawFormNewThread()-->
+        <center id="mainForm">
+            <form id="formThread" action="'.ROOTPATH.'bbs.php" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="action" value="postNewThread">
+            <input type="hidden" name="boardID" value="'.$this->board->getBoardID().'">';
+            $this->drawMainFormBody();
+            $this->html .= '
+            </form>
+        </center>';
     }
     private function drawFormNewPost($threadID){
         $this->html .= '
         <!--drawFormNewPost()-->
-	<!--set constraints based on $this->conf-->
-	<a href="'.ROOTPATH.'bbs.php?boardID='.$this->conf['boardID'].'">[Return]</a>
-	<center class="theading"><b>Posting mode: Reply</b></center>
-        <div class="postForm">
-        <form class="formThread" action="'.ROOTPATH.'bbs.php?'.$_SERVER['QUERY_STRING'].'" method="POST" enctype="multipart/form-data">
-        <input type="hidden" name="threadID" value="'.$threadID.'">
-        <table>
-        <tr>
-            <td class="accent"><label for="name">Name</label></td>
-            <td><input type="text" id="name" name="name"></td>
-        </tr>
-        <tr>
-            <td class="accent"><label for="email">Email</label></td>
-            <td>
-                <input type="text" id="email" email="email">
-            </td>
-        </tr>
-        <tr>
-            <td class="accent"><label for="subject">Subject</label></td>
-	    <td><input type="text" id="subject" name="subject"> <button type="submit" name="action" value="postToThread">Post</button> </td>
-        </tr>
-        <tr>
-            <td class="accent"><label for="comment">Comment</label></td>
-            <td><textarea type="text" id="comment" name="comment" cols="48" rows="4"></textarea></td>
-        </tr>
-        <tr>
-            <td class="accent"><label for="password">Password</label></td>
-            <td><input type="password" id="password" name="password"></td>
-	</tr>
-	</table>
-        </form>
-        </div>';
+        <a href="'.ROOTPATH.'bbs.php?boardID='.$this->conf['boardID'].'">[Return]</a>
+        <center class="theading"><b>Posting mode: Reply</b></center>
+        <center id="mainForm">
+            <form id="formPost" action="'.ROOTPATH.'bbs.php?'.$_SERVER['QUERY_STRING'].'" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="threadID" value="'.$threadID.'">
+            <input type="hidden" name="boardID" value="'. $this->board->getBoardID().'">';
+            $this->drawMainFormBody();
+            $this->html .= '
+            </form>
+        </center>';
     }
-    private function drawOpenFormManagePosts(){
+    private function postManagerWraper($drawFunc, $parameter){
         $this->html .= '
         <!--drawFormManagePostsOpen()-->
         <form name="managePost" id="managePost" action="'.ROOTPATH.'bbs.php" method="post">';
-    }
-    private function drawCloseFormManagePosts(){
-        // make this have a drop down of options, not just delete file.
+        $drawFunc();
         $this->html .= '
         <!--drawFormManagePostsClosed()-->
         <!--make dropdown with other options-->
@@ -205,7 +182,10 @@ class htmlclass {
                 $type = "op";
             }
             $threadID = $post->getThreadID();
-	    $email = $post->getEmail(); if($email == $this->conf['defaultEmail']) $email = ''; //if email is default (such as noko) then it will be drawn as blank
+	        $email = $post->getEmail(); 
+            if($email == $this->conf['defaultEmail']){
+                $email = '';
+            }
 
             $this->html .= '
             <div class="post '.$type.'" id="'.$postID.'">
@@ -242,29 +222,18 @@ class htmlclass {
         }
     }
     private function drawThread($thread){
-        $this->html .='
-        <!--drawThreads()-->';
-
-        //encapsalate all of the threads into a form
-        $this->drawOpenFormManagePosts();
-
         $posts = $thread->getPosts();
 
         $this->html .='
+        <!--drawThreads()-->
         <div id="t'.$thread->getThreadID().'" class="thread">';
             $this->drawPosts($thread, $posts);
             $this->html .='
         </div>';
-
-        $this->drawCloseFormManagePosts();
     }
     private function drawThreadListing($threads){
         $this->html .='
         <!--drawThreadListing()-->';
-
-        //encapsalate all of the threads into a form
-        $this->drawOpenFormManagePosts();
-
         foreach ($threads as $thread) {
             $posts = $thread->getLastNPost($this->conf['postPerThreadListing']);
             $posts[0] = $thread->getPostByID($thread->getOPPostID());
@@ -276,8 +245,6 @@ class htmlclass {
                 $this->html .='
             </div>';
         }
-
-        $this->drawCloseFormManagePosts();
     }
     public function drawPage($pageNumber = 0){
         global $THREADREPO;
@@ -291,10 +258,12 @@ class htmlclass {
         $this->drawNavBar();
         $this->drawBoardTitle();
         $this->drawFormNewThread();
-        $this->drawThreadListing($threads);
+        $this->postManagerWraper(
+            [$this, 'drawThreadListing'] , $threads
+        );
 
-	$this->html .= '</body>';
-	$this->drawFooter();
+        $this->html .= '</body>';
+        $this->drawFooter();
         echo $this->html;
     }
     public function drawThreadPage($thread){
@@ -306,10 +275,12 @@ class htmlclass {
         $this->drawNavBar();
         $this->drawBoardTitle();
         $this->drawFormNewPost($thread->getThreadID());
-        $this->drawThread($thread);
-	
+        $this->postManagerWraper(
+            [$this, 'drawThread'] , $thread
+        );
+
         $this->html .= '</body>';
-	$this->drawFooter();       
-	echo $this->html;
+        $this->drawFooter();       
+        echo $this->html;
     }
 }
