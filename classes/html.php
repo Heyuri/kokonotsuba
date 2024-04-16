@@ -167,6 +167,7 @@ class htmlclass {
         <center class="theading"><b>Posting mode: Reply</b></center>
         <center id="mainForm">
             <form id="formPost" action="'.ROOTPATH.'bbs.php?'.$_SERVER['QUERY_STRING'].'" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="action" value="postToThread">
             <input type="hidden" name="threadID" value="'.$threadID.'">
             <input type="hidden" name="boardID" value="'. $this->board->getBoardID().'">';
             $this->drawMainFormBody("New Post");
