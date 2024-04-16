@@ -114,7 +114,7 @@ class htmlclass {
             <td><input type="text" id="name" name="name"></td>
         </tr>
         <tr>
-            <td><label for="email">Email</label></td>
+            <td class="accent"><label for="email">Email</label></td>
             <td>
                 <input type="text" id="email" name="email">
                 <button type="submit">Post</button>
