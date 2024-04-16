@@ -194,22 +194,51 @@ class htmlclass {
     private function drawFooter(){
         $this->html .= '';
     }
-    private function drawOPPost($post,$thread){
-        $this->html .= '';
-    }
     private function drawOPPostAsListing($post, $omitedPosts){
-        $this->html .='
-        <div class"post op">';
+        $postID = $post->getPostID();
+        $threadID = $post->getThreadID();
+        $email = $post->getEmail();
+        $this->html .= '
+        <!--drawOPPostAsListing()-->
+        <div class="post op" id="'.$postID.'">
+            <div class="postinfo">
+                <input type="checkbox" name="'.$postID.'">
+                <span class="bigger"><b class="subject">'.$post->getSubject().'</b></span>
+                <spanclass="name"';
+                if($email != ""){
+                    $this->html .= '<a href="mailto:'.$email.'"><b>'.$post->getName().'</b></a>';
+                }else{
+                    $this->html .= '<b>'.$email.'</b>';
+                }
+                $this->html .= '
+                <span class="time">'.date('Y-m-d H:i:s', $post->getUnixTime()).'</span>
+                <span class="postnum">
+                    <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#p'.$postID.'" class="no">No.</a>
+                    <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#postForm" title="Quote">'.$postID.'</a>
+                </span>
+                [
+                    <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'" class="no">Reply</a>
+                ]
+            </div>
+            <blockquote class="comment">'.$post->getComment().'</blockquote>';
+            if($omitedPosts > 0){
+                $this->html .= '<span class="omittedposts">'.$omitedPosts.' posts omitted. Click Reply to view.</span>';
+            }
+        $this->html .= '</div>';
     }
-    private function drawPosts($posts){
+    private function drawPosts($thread, $posts){
         $this->html .= '
         <!--drawPosts()-->';
         foreach($posts as $post){
             $postID = $post->getPostID();
+            $type = "reply";
+            if($postID == $thread->getOPPostID()){
+                $type = "op";
+            }
             $threadID = $post->getThreadID();
             $email = $post->getEmail();
             $this->html .= '
-            <div class="post reply" id="'.$postID.'">
+            <div class="post '.$type.'" id="'.$postID.'">
                 <div class="postinfo">
                     <input type="checkbox" name="'.$postID.'">
                     <span class="bigger"><b class="subject">'.$post->getSubject().'</b></span>
@@ -236,8 +265,7 @@ class htmlclass {
         $this->html .='
         <!--drawThreads()-->
         <div id="t'.$thread->getThreadID().'" class="thread>';
-
-        $this->drawPosts($posts);
+        $this->drawPosts($thread, $posts);
         $this->html .='
         </div>';
     }
@@ -257,7 +285,7 @@ class htmlclass {
             $omitedPost = sizeof($posts) - $thread->getPostCount() - 1;//-1 for op post
 
             $this->drawOPPostAsListing($opPost, $omitedPost);
-            $this->drawPosts($posts);
+            $this->drawPosts($thread, $posts);
         }
         $this->html .='</div>';
 
