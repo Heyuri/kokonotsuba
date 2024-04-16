@@ -97,6 +97,28 @@ class htmlclass {
         $this->html .= '<h5 class="subtitle">'.$conf['boardSubTitle'].'</h5>
         </div>';
     }
+    private function drawFooter(){
+        $this->html .= '<br><br><br><center>- <a rel="nofollow noreferrer license" href="http://www.2chan.net/" target="_blank">futaba</a> + <a rel="nofollow noreferrer license" href="https://pixmicat.github.io/" target="_blank">Pixmicat!</a> + <a rel="nofollow noreferrer license" href="https://github.com/Heyuri/kokonotsuba/" target="_blank">Kokonotsuba</a> + <a rel="nofollow noreferrer license" href="https://github.com/nashikouen/kotatsuba/" target="_blank">Kotatsuba</a> -</center>' ;
+    }
+    private function postManagerWraper($drawFunc, $parameter){
+        $this->html .= '
+        <!--postManagerWraper()-->
+        <form name="managePost" id="managePost" action="'.ROOTPATH.'bbs.php" method="post">';
+        $drawFunc($parameter);
+        $this->html .= '
+            <!--make dropdown with other options-->
+            <table align="right">
+            <tr>
+            <td align="">
+			<input type="hidden" name="action" value="deletePosts">
+                Delete Post: [<label><input type="checkbox" name="fileOnly" id="fileOnly" value="on">File only</label>]<br>
+                Password: <input type="password" name="password" size="8" value="">
+                <input type="submit" value="Submit">
+            </td>
+            </tr>
+            </table>
+        </form>';
+    }
     private function drawMainFormBody(){
         $this->html .= '
         <table>
@@ -151,25 +173,6 @@ class htmlclass {
             $this->html .= '
             </form>
         </center>';
-    }
-    private function postManagerWraper($drawFunc, $parameter){
-        $this->html .= '
-        <!--drawFormManagePostsOpen()-->
-        <form name="managePost" id="managePost" action="'.ROOTPATH.'bbs.php" method="post">';
-        $drawFunc();
-        $this->html .= '
-        <!--drawFormManagePostsClosed()-->
-        <!--make dropdown with other options-->
-        <table align="right"><tr><td align="">
-			<input type="hidden" name="action" value="deletePosts">
-            Delete Post: [<label><input type="checkbox" name="fileOnly" id="fileOnly" value="on">File only</label>]<br>
-			Password: <input type="password" name="password" size="8" value="">
-            <input type="submit" value="Submit">
-        </td></tr></table>
-        </form>';
-    }
-    private function drawFooter(){
-        $this->html .= '<br><br><br><center>- <a rel="nofollow noreferrer license" href="http://www.2chan.net/" target="_blank">futaba</a> + <a rel="nofollow noreferrer license" href="https://pixmicat.github.io/" target="_blank">Pixmicat!</a> + <a rel="nofollow noreferrer license" href="https://github.com/Heyuri/kokonotsuba/" target="_blank">Kokonotsuba</a> + <a rel="nofollow noreferrer license" href="https://github.com/nashikouen/kotatsuba/" target="_blank">Kotatsuba</a> -</center>' ;
     }
     private function drawPosts($thread, $posts, $isListingMode=false ,$omitedPosts=0){
         $this->html .= '
