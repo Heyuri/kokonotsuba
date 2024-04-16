@@ -109,7 +109,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         $postID = $thread->getOPPostID();
         $id = $thread->getThreadID();
         $postCount = $thread->getPostCount();
-        $stmt = $this->db->prepare("UPDATE threads SET lastTimePosted = ?, opPostID = ? WHERE boardID = ? AND threadID = ? AND postCount ?");
+        $stmt = $this->db->prepare("UPDATE threads SET lastTimePosted = ?, opPostID = ? WHERE boardID = ? AND threadID = ? AND postCount = ?");
         $stmt->bind_param("iiiii", $bump, $postID, $boardConf['boardID'], $id, $postCount);
         $success = $stmt->execute();
         $stmt->close();
