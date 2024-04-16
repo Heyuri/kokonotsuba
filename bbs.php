@@ -198,17 +198,13 @@ elseif(isset($_POST['action'])){
 		case 'postToThread':
 			$post = userPostNewPostToThread($board);
 			$thread = $board->getThreadByID($_POST['threadID']);
-
-			/*
-			 *this is hacky. noko is what special colum is made for in the database. gut this out and dont fallow this format.
-			 */
-			if($post->getEmail() == "noko"){
+			if (strtolower($post->getEmail()) == "noko"){
 				$post->setEmail("");
-				$html->drawThreadPage($thread);
+				$POSTREPO->updatePost($board->getConf(), $post);
+				$html->drawPage(0);
 				break;
 			}
-
-			$html->drawPage(0);
+			$html->drawThreadPage($thread);
 			break;
 		case 'postNewThread':
 			$thread = userPostNewThread($board);

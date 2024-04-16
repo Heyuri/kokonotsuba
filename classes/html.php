@@ -194,12 +194,12 @@ class htmlclass {
                     <input type="checkbox" name="'.$postID.'">
                     <span class="bigger"><b class="subject">'.$post->getSubject().'</b></span>
                     <span class="name">';
-                    if($email != ""){
-                        $this->html .= '<a href="mailto:'.$email.'"><b>'.$post->getName().'</b></a>';
-                    }else{
-                        $this->html .= '<b>'.$post->getName().'</b>';
-                    }
-                    $this->html .= '
+                        if($email != ""){
+                            $this->html .= '<a href="mailto:'.$email.'"><b>'.$post->getName().'</b></a>';
+                        }else{
+                            $this->html .= '<b>'.$post->getName().'</b>';
+                        }
+                        $this->html .= '
                     </span">
                     <span class="time">'.date('Y-m-d H:i:s', $post->getUnixTime()).'</span>
                     <span class="postnum">

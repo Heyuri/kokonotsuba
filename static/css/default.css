@@ -43,3 +43,23 @@ body {
   background: #eeaa88;
   border: 1px solid #800000;
 }
+
+.omittedposts {
+	color: #707070;
+}
+
+.reply{
+	margin-left: auto; 
+	width: fit-content;
+	background: #f0e0d6;
+	padding: 8px; 
+	margin: 10px;
+}
+
+.name{
+    color: #117743;
+}
+
+.subject{
+	color: #cc1105
+}

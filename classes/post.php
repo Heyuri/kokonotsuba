@@ -101,9 +101,6 @@ class PostDataClass {
         return $this->files;
     }
 */
-	public function getThread(){
-		return $this->thread;
-	}
 
     public function getPostID(){
         return $this->postID;
@@ -165,8 +162,5 @@ class PostDataClass {
     }
     public function setSpecial($special){
         $this->special = $special;
-    }
-    public function setThread($thread){
-        $this->thread = $thread;
     }
 }
