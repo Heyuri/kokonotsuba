@@ -267,11 +267,10 @@ class htmlclass {
         foreach ($threads as $thread) {
             $posts = $thread->getLastNPost($this->conf['postPerThreadListing']);
             $omitedPost = sizeof($posts) - $thread->getPostCount() - 1;//-1 for op post
-            var_dump($posts);
 
             $this->html .='
             <div id="t'.$thread->getThreadID().'" class="thread">';
-                //$this->drawPosts($thread, $posts, true, $omitedPost);
+                $this->drawPosts($thread, $posts, true, $omitedPost);
                 $this->html .='
             </div>';
         }
