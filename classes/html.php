@@ -234,7 +234,7 @@ class htmlclass {
                 </div>
                 <blockquote class="comment">'.$post->getComment().'</blockquote>';
                 if($isOP && $isListingMode){
-                    $this->html .= '<span class="omittedposts">3 posts omitted. Click Reply to view.</span>';
+                    $this->html .= '<span class="omittedposts">'.$omitedPosts.' posts omitted. Click Reply to view.</span>';
                 }
                 $this->html .= '
             </div>';
@@ -250,7 +250,7 @@ class htmlclass {
         $posts = $thread->getPosts();
 
         $this->html .='
-        <div id="t'.$thread->getThreadID().'" class="thread>';
+        <div id="t'.$thread->getThreadID().'" class="thread">';
             $this->drawPosts($thread, $posts);
             $this->html .='
         </div>';
@@ -270,7 +270,7 @@ class htmlclass {
             $omitedPost = sizeof($posts) - $thread->getPostCount() - 1;//-1 for op post
 
             $this->html .='
-            <div id="t'.$thread->getThreadID().'" class="thread>';
+            <div id="t'.$thread->getThreadID().'" class="thread">';
                 $this->drawPosts($thread, $posts, true, $omitedPost);
                 $this->html .='
             </div>';
