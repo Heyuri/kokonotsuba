@@ -210,23 +210,24 @@ class htmlclass {
             $email = $post->getEmail();
             $this->html .= '
             <div class="post reply" id="'.$postID.'">
-                <nobr class="postinfo">
+                <div class="postinfo">
                     <input type="checkbox" name="'.$postID.'">
-                    <b class="subject">'.$post->getSubject().'</b>';
-
+                    <span class="bigger"><b class="subject">'.$post->getSubject().'</b></span>
+                    <spanclass="name"';
                     if($email != ""){
-                        $this->html .= '<a href="mailto:'.$email.'"><b class="name">'.$post->getName().'</b>';
+                        $this->html .= '<a href="mailto:'.$email.'"><b>'.$post->getName().'</b></a>';
                     }else{
-                        $this->html .= '<b class="name">'.$email.'</b>';
+                        $this->html .= '<b>'.$email.'</b>';
                     }
                     $this->html .= '
-                    <div class="time">'.date('Y-m-d H:i:s', $post->getUnixTime()).'</div>
-				    <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#p'.$postID.'" class="no">No.</a>
-                    <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#postForm" title="Quote">'.$postID.'</a>
-                </nobr>
+                    <span class="time">'.date('Y-m-d H:i:s', $post->getUnixTime()).'</span>
+                    <span class="postnum">
+				        <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#p'.$postID.'" class="no">No.</a>
+                        <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#postForm" title="Quote">'.$postID.'</a>
+                    </span>
+                </div>
                 <blockquote class="comment">'.$post->getComment().'</blockquote>
-            </div>	
-            ';
+            </div>';
         }
     }
     private function drawThread($thread){
@@ -253,7 +254,7 @@ class htmlclass {
             $opPost = $thread->getPostByID($thread->getOPPostID());
             $posts = $thread->getLastNPost($this->conf['postPerThreadListing']);
 
-            $omitedPost = sizeof($posts) - $thread->getPostCount - 1;//-1 for op post
+            $omitedPost = sizeof($posts) - $thread->getPostCount() - 1;//-1 for op post
 
             $this->drawOPPostAsListing($opPost, $omitedPost);
             $this->drawPosts($posts);
