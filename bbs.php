@@ -168,15 +168,14 @@ if(is_null($board) || $board->getConf()['unlisted']) {
 
 $html = new htmlclass($board->getConf(), $board);
 
-/*----------get action recived----------*/
-if (isset($_GET['action'])){
-	$action = $_GET['action'];
-	switch ($action) {
-		case 'thread'://go to thead.
-			break;
-		default:
-			break;
+/*----------get thread recived----------*/
+if (isset($_GET['thread'])){
+	$rec_threadID = $_GET['thread'];
+	if(!is_numeric($rec_threadID)){
+		displayErrorPageAndDie("invalid get value 'thread'");
 	}
+	$thread = $board->getThreadByID($rec_threadID);
+	$html->drawThread($thread);
 }
 /*----------post action recived----------*/
 elseif(isset($_POST['action'])){

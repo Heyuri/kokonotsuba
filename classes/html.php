@@ -240,7 +240,7 @@ class htmlclass {
             </div>';
         }
     }
-    private function drawThread($thread){
+    public function drawThread($thread){
         $this->html .='
         <!--drawThreads()-->';
 
