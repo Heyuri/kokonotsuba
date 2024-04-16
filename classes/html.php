@@ -188,7 +188,7 @@ class htmlclass {
             Delete Post: [<label><input type="checkbox" name="fileOnly" id="fileOnly" value="on">File only</label>]<br>
 			Password: <input type="password" name="password" size="8" value="">
             <input type="submit" value="Submit">
-        /td></tr></table>
+        </td></tr></table>
         </form>';
     }
     private function drawFooter(){
@@ -240,7 +240,7 @@ class htmlclass {
             </div>';
         }
     }
-    public function drawThread($thread){
+    private function drawThread($thread){
         $this->html .='
         <!--drawThreads()-->';
 
@@ -291,6 +291,20 @@ class htmlclass {
         $this->drawBoardTitle();
         $this->drawFormNewThread();
         $this->drawThreadListing($threads);
+
+        $this->html .= '</body>';
+        echo $this->html;
+    }
+    public function drawThreadPage($thread){
+        $this->html .='
+        <!DOCTYPE html>
+        <html lang="en-US">';
+        $this->drawHead();
+        $this->html .= '<body>';
+        $this->drawNavBar();
+        $this->drawBoardTitle();
+        //$this->drawFormNewPost($thread->getThreadID());
+        $this->drawThread($thread);
 
         $this->html .= '</body>';
         echo $this->html;
