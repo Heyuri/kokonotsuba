@@ -175,7 +175,10 @@ if (isset($_GET['thread'])){
 		displayErrorPageAndDie("invalid get value 'thread'");
 	}
 	$thread = $board->getThreadByID($rec_threadID);
-	$html->drawThread($thread);
+	if(is_null($thread)){
+		displayErrorPageAndDie("invalid threadID");
+	}
+	$html->drawThreadPage($thread);
 }
 /*----------post action recived----------*/
 elseif(isset($_POST['action'])){
