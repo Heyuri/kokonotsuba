@@ -63,16 +63,16 @@ class htmlclass {
         $this->html .= '
         <!--drawNavBar()-->
         <div class="navBar">
-        <div class="navLeft">';
+        <span class="navLeft">';
         //$this->drawNavGroup($boardList);
         $this->drawNavGroup($conf['navLinksLeft']);
         $res = $HOOK->executeHook("onDrawNavLeft");// HOOK drawing to left side of nav
         foreach ($res as $urlGroup) {
             $this->drawNavGroup($urlGroup);
         }
-        $this->html .= '</div>
+        $this->html .= '</span>
 
-        <div class="navRight">';
+        <span class="navRight">';
         $res = $HOOK->executeHook("onDrawNavRight");// HOOK drawing to right side of nav
         foreach ($res as $urlGroup) {
             $this->drawNavGroup($urlGroup);
@@ -80,7 +80,7 @@ class htmlclass {
         $this->drawNavGroup($conf['navLinksRight']);
         //$this->drawNavGroup($adminStuff);
         $this->html .= '
-        </div>
+        </span>
         </div>';
     }
     private function drawBoardTitle(){
@@ -102,7 +102,7 @@ class htmlclass {
         $this->html .= '
         <!--drawFormNewThread()-->
         <!--set constraints based on board conf-->
-        <div id="postForm class="postForm">';//id is used so we can jump to it from a url example.com#postForm
+        <div id="postForm" class="postForm">';//id is used so we can jump to it from a url example.com#postForm
         $this->html .= '
         <form class="formThread" action="/bbs.php" method="post" enctype="multipart/form-data">
         <input type="hidden" name="action" value="postNewThread">
@@ -110,7 +110,7 @@ class htmlclass {
 
         <table>
         <tr>
-            <td><label for="name">Name</label></td>
+            <td class="accent"><label for="name">Name</label></td>
             <td><input type="text" id="name" name="name"></td>
         </tr>
         <tr>
@@ -121,15 +121,15 @@ class htmlclass {
             </td>
         </tr>
         <tr>
-            <td><label for="subject">Subject</label></td>
+            <td class="accent"><label for="subject">Subject</label></td>
             <td><input type="text" id="subject" name="subject"></td>
         </tr>
         <tr>
-            <td><label for="comment">Comment</label></td>
-            <td><textarea type="text" id="comment" name="comment"></textarea></td>
+            <td class="accent"><label for="comment">Comment</label></td>
+            <td><textarea type="text" id="comment" name="comment" cols="48" rows="4"></textarea></td>
         </tr>
         <tr>
-            <td><label for="password">Password</label></td>
+            <td class="accent"><label for="password">Password</label></td>
             <td><input type="text" id="password" name="password"></td>
         </tr>
         </table>
@@ -141,7 +141,7 @@ class htmlclass {
         <!--drawFormNewPost()-->
         <!--set constraints based on $this->conf-->
         <div class="postForm">
-        <form class="formThread" action="/bbs.php" method="POST" enctype="multipart/form-data">
+        <form class="formThread" action="bbs.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="threadID" value="'.$threadID.'">
         <table>
         <tr>
@@ -177,12 +177,13 @@ class htmlclass {
     private function drawOpenFormManagePosts(){
         $this->html .= '
         <!--drawFormManagePostsOpen()-->
-        <form name="managePost" id="managePost" action="/bbs.php" method="post">';
+        <form name="managePost" id="managePost" action="bbs.php" method="post">';
     }
     private function drawCloseFormManagePosts(){
         // make this have a drop down of options, not just delete file.
         $this->html .= '
         <!--drawFormManagePostsClosed()-->
+        <!--make dropdown with other options-->
         <table><tr><td>
 			<input type="hidden" name="action" value="deletePosts">
             Delete Post: [<label><input type="checkbox" name="fileOnly" id="fileOnly" value="on">File only</label>]<br>

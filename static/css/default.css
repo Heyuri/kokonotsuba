@@ -1,0 +1,48 @@
+body {
+	background-color: #ffffee;
+	color: #880000;
+	font-family: Times New Roman;
+	font-size: 16px;
+}
+
+.navBar{
+    display: flex;
+    justify-content: space-between; 
+    width: 100%; 
+}
+.boardTitle,
+.formThread,
+.thread{
+    border-bottom: 1px solid #000;
+    padding-bottom: 10px;
+}
+
+.boardTitle,
+.boardSubTitle{
+  text-align: center
+}
+
+.accent{
+  background: #eeaa88;
+  border: 1px solid #800000;
+}
+
+.formThread {
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+}
+
+textarea,
+input {
+	background-color: #fff;
+	border-color: #000;
+	color: #000;
+}
+
+textarea:focus,
+input:focus {
+	background-color: #fff;
+	border-color: #000;
+	color: #000;
+}

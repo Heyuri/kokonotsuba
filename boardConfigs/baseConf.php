@@ -6,7 +6,7 @@
 return [
     'boardID' => -1, // do not change this.
     'boardTitle' => "no title",
-    'boardSubTitle' => "no discription",
+    'boardSubTitle' => "no description",
     'boardLogoPath' => "", //leave blank for no logo.
 
     'navLinksLeft'=> [
