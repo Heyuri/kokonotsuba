@@ -1,4 +1,10 @@
 <?php
+//constants
+define("ROOTPATH", './'); // Main Program Root Directory
+
+//database limits
+define("ROOTPATH", './');
+define("MAX_INPUT_LENGTH", 255 - 128); /* you cant make this bigger then 255 with out changing the cap to to the db */
 return [
     /*
      * this is where you put in the creds for you main data base
@@ -18,5 +24,5 @@ return [
     //'rootPath' => '/',
     'auditLog' => 'auditlog.txt',
     'passwordSalt'=> 'abc123!?_',
-    'maxInputLength' => '255', /* you cant make this bigger with out changing the data base max storage. */
 ];
+

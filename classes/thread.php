@@ -23,7 +23,15 @@ class threadClass{
         $this->postCount = $postCount;
 		$this->postRepo = PostRepoClass::getInstance();
 	}
-
+    public function bump(){
+        if($this->postCount >= $this->conf['postUntilCantBump']){
+            return;
+        }elseif($this->getOPPost()->getUnixTime() > $this->conf['timeUntilCantBump']){
+            return;
+        }else{
+            $this->lastBumpTime = time();
+        }
+    }
     public function getLastBumpTime(){
         return $this->lastBumpTime;
     }
@@ -49,6 +57,9 @@ class threadClass{
             $this->posts[$postID] = $this->postRepo->loadPostByThreadID($this->conf, $this->threadID ,$postID);
         }
         return $this->posts[$postID];
+    }
+    public function getOPPost(){
+        return $this->getPostByID($this->OPPostID);
     }
     public function getLastNPost($num){
         if ($this->isPostsFullyLoaded != true || !count($this->lastPosts) >= $num) {

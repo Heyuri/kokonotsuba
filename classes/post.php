@@ -14,6 +14,7 @@ class PostDataClass {
     private int $unixTime;//time posted
     private string $IP;//poster's ip
     private string $special;//special things like. auto sage, locked, animated gif, etc. split by a _thing_
+    private threadClass $thread;
     private $config;
 
 	public function __construct(array $config, string $name, string $email, string $subject, 
@@ -46,22 +47,26 @@ class PostDataClass {
                 "Thread ID: {$this->threadID}\n" .
                 "Special Info: {$this->special}";
     }
-    private function isValid():bool {
-        if (mb_strlen($this->name, 'UTF-8') > INPUT_MAX) 
-            return false;
-        if (mb_strlen($this->email, 'UTF-8') > INPUT_MAX) 
-            return false;
-        if (mb_strlen($this->subject, 'UTF-8') > INPUT_MAX) 
-            return false;
-        if(strlenUnicode($this->comment) > COMM_MAX) 
-		    return false;
-        return true;
+    public function validate(){
+        if (mb_strlen($this->name, 'utf8mb4') > INPUT_MAX ){
+            drawErrorPageAndDie("your post's name is invalid. max size: ".INPUT_MAX);
+        }  
+        if (mb_strlen($this->email, 'utf8mb4') > INPUT_MAX){
+            drawErrorPageAndDie("your post's email is invalid. max size : ".INPUT_MAX);
+
+        }
+        if (mb_strlen($this->subject, 'utf8mb4') > INPUT_MAX){
+            drawErrorPageAndDie("your post's subject is invalid. max size: ".INPUT_MAX);
+        }
+        if (mb_strlen($this->comment, 'utf8mb4') > $this->config['maxCommentSize']){
+            drawErrorPageAndDie("your post's comment is invalid. max size: ".$this->config['maxCommentSize']);
+        }
     }
     public function stripHtml(){
         $this->name = htmlspecialchars($this->name, ENT_QUOTES, 'UTF-8');
 		$this->email = htmlspecialchars($this->email, ENT_QUOTES, 'UTF-8');
 		$this->subject = htmlspecialchars($this->subject, ENT_QUOTES, 'UTF-8');
-		$this->comment = htmlspecialchars($this->comment, ENT_QUOTES, 'UTF-8');
+		$this->comment = nl2br(htmlspecialchars($this->comment, ENT_QUOTES, 'UTF-8'));
     }
     public function embedLinks(){
         $regexUrl  = '/(https?:\/\/[^\s]+)/';
@@ -73,7 +78,14 @@ class PostDataClass {
         $this->name = $nameXpass[0] . $tripcode;
     }
     public function quoteLinks(){
-        // just make this use a get request to other board
+        // I dont want to do all that db querrys!!!ヽ(`Д´)ノ 
+    }
+    public function isBumpingThread(){
+        if(stripos($this->getEmail(),"sage")){
+            return true;
+        }else{
+            return false;
+        }
     }
 /*
     public function procssesFiles(){
@@ -90,7 +102,7 @@ class PostDataClass {
     }
 */
 	public function getThread(){
-		//idk if i will use this..
+		return $this->thread;
 	}
 
     public function getPostID(){
@@ -153,5 +165,8 @@ class PostDataClass {
     }
     public function setSpecial($special){
         $this->special = $special;
+    }
+    public function setThread($thread){
+        $this->thread = $thread;
     }
 }

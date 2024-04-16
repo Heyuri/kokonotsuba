@@ -30,7 +30,7 @@ return [
     'unlisted' => false,
     'timeZone' => 'UTC',
     'allowRuffle' => true,
-    'cookieExpireTime'=> time()+7*24*3600, // 7days from the curent time
+    'cookieExpireTime'=> time()+7*24*60*60, // 7days from the curent time
     'allowQuoteLinking'=> false, // link to post and post on other boards.
     'autoEmbedLinks'=> true,
     'allowBlankName' => true,
@@ -45,6 +45,9 @@ return [
     'tripcodeSalt'=> 'abc123!?_',
     'canFortune' => true,
     'fortunes' => ['Very bad luck', 'Bad luck','Average luck','Good luck','Godly luck'],
+    'maxCommentSize' => 1024, //how many characters can there be
+    'postUntilCantBump' => 5,
+    'timeUntilCantBump' => time()+7*24*60*60,// 7days from the curent time
     'threadsPerPage' => 15,
     'maxActiveThreads' => 150,
     'postPerThreadListing' => 5,

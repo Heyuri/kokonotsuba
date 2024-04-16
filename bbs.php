@@ -29,9 +29,6 @@ $BOARDREPO = BoardRepoClass::getInstance();
 
 $globalConf = require __DIR__ ."/conf.php";
 
-//constants
-define("ROOTPATH", './'); // Main Program Root Directory
-
 //@session_start();
 
 function genUserPostFromRequest($conf, $thread){
@@ -48,13 +45,13 @@ function genUserPostFromRequest($conf, $thread){
 	 * }elseif ($conf['allowBlankName']){
 	 *     $name = $conf['defaultName'];
 	 * }else{
-	 *     displayErrorPageAndDie("name is a required feild");
+	 *     drawErrorPageAndDie("name is a required feild");
 	 * }
 	 */
-	$name = !empty($_POST['name']) ? $_POST['name'] : ($conf['allowBlankName'] ? $conf['defaultName'] : displayErrorPageAndDie("your Name is required."));
-	$email = !empty($_POST['email']) ? $_POST['email'] : ($conf['allowBlankEmail'] ? $conf['defaultEmail'] : displayErrorPageAndDie("your Email is required."));
-	$subject = !empty($_POST['subject']) ? $_POST['subject'] : ($conf['allowBlankSubject'] ? $conf['defaultSubject'] : displayErrorPageAndDie("a Subject is required."));
-	$comment = !empty($_POST['comment']) ? $_POST['comment'] : ($conf['allowBlankComment'] ? $conf['defaultComment'] : displayErrorPageAndDie("a comment is required."));
+	$name = !empty($_POST['name']) ? $_POST['name'] : ($conf['allowBlankName'] ? $conf['defaultName'] : drawErrorPageAndDie("your Name is required."));
+	$email = !empty($_POST['email']) ? $_POST['email'] : ($conf['allowBlankEmail'] ? $conf['defaultEmail'] : drawErrorPageAndDie("your Email is required."));
+	$subject = !empty($_POST['subject']) ? $_POST['subject'] : ($conf['allowBlankSubject'] ? $conf['defaultSubject'] : drawErrorPageAndDie("a Subject is required."));
+	$comment = !empty($_POST['comment']) ? $_POST['comment'] : ($conf['allowBlankComment'] ? $conf['defaultComment'] : drawErrorPageAndDie("a comment is required."));
 	$password = !empty($_POST['password']) ? $_POST['password'] : (isset($_COOKIE['password']) ? $_COOKIE["password"] : null);
 	
 	//gen post password if none is provided
@@ -64,6 +61,7 @@ function genUserPostFromRequest($conf, $thread){
 		$password = substr($hash, -8); 
 	}
 
+	//cookies!!!!
 	setrawcookie('name', rawurlencode($name), $conf['cookieExpireTime']);
 	setrawcookie('email', rawurlencode($email), $conf['cookieExpireTime']);
 	setrawcookie('password', rawurlencode($password), $conf['cookieExpireTime']);
@@ -72,16 +70,18 @@ function genUserPostFromRequest($conf, $thread){
 								$comment,$password,time(),$_SERVER['REMOTE_ADDR'],
 								$thread->getThreadID());
 
+	$post->validate();
+
 	/*
-	// get the uploaded files and put them inside the post object.
-	$fileHandler = new fileHandlerClass($conf['fileConf']);
-	$uploadFiles = $fileHandler->getFilesFromPostRequest();
-	foreach ($uploadFiles as $file) {
-		$postData->addFile($file);
-	}
-	
-	// do file procssesing like make thumbnails. make hash. etc.
-	$postData->procssesFiles(); 
+		// get the uploaded files and put them inside the post object.
+		$fileHandler = new fileHandlerClass($conf['fileConf']);
+		$uploadFiles = $fileHandler->getFilesFromPostRequest();
+		foreach ($uploadFiles as $file) {
+			$postData->addFile($file);
+		}
+		
+		// do file procssesing like make thumbnails. make hash. etc.
+		$postData->procssesFiles(); 
 	*/
 
 	// if we are not admin or mod, remove any html tags.
@@ -111,19 +111,26 @@ function genUserPostFromRequest($conf, $thread){
 	$HOOK->executeHook("onPostPrepForDrawing", $post);// HOOK post with html fully loaded
 	return $post;
 }
-function userPostToThread($board){
+function userPostNewPostToThread($board){
 	$conf = $board->getConf();
 	global $POSTREPO;
+	global $THREADREPO;
 
 	// load existing thread
 	$thread = $board->getThreadByID($_POST['threadID']);	
-	// create post with thread
+
+	// create post to thread
 	$post = genUserPostFromRequest($conf, $thread);
+
+	if($post->isBumpingThread()){
+		$thread->bump();
+	}
 
 	// save post to data base.
 	$POSTREPO->createPost($conf, $post);
+	$THREADREPO->updateThread($conf, $thread);
 
-	return;
+	return $post;
 }
 function userPostNewThread($board){
 	$conf = $board->getConf();
@@ -159,12 +166,12 @@ function userDeletedPost(){
 $boardID = $_GET['boardID'] ?? $_POST['boardID'] ?? '';
 
 if (!is_numeric($boardID)) {
-	displayErrorPageAndDie("you must have a boardID");
+	drawErrorPageAndDie("you must have a boardID");
 }
 
 $board = $BOARDREPO->loadBoardByID($boardID);
 if(is_null($board) || $board->getConf()['unlisted']) {
-	displayErrorPageAndDie("board with the boardID of \"".$boardID."\"dose not exist");
+	drawErrorPageAndDie("board with the boardID of \"".$boardID."\"dose not exist");
 }
 
 $html = new htmlclass($board->getConf(), $board);
@@ -173,11 +180,11 @@ $html = new htmlclass($board->getConf(), $board);
 if (isset($_GET['thread'])){
 	$rec_threadID = $_GET['thread'];
 	if(!is_numeric($rec_threadID)){
-		displayErrorPageAndDie("invalid get value 'thread'");
+		drawErrorPageAndDie("invalid get value 'thread'");
 	}
 	$thread = $board->getThreadByID($rec_threadID);
 	if(is_null($thread)){
-		displayErrorPageAndDie("invalid threadID");
+		drawErrorPageAndDie("invalid threadID");
 	}
 	$html->drawThreadPage($thread);
 }
@@ -186,7 +193,19 @@ elseif(isset($_POST['action'])){
 	$action = $_POST['action'];
 	switch ($action) {
 		case 'postToThread':
-			userPostToThread($board);
+			$post = userPostNewPostToThread($board);
+			$thread = $board->getThreadByID($_POST['threadID']);
+
+			/*
+			 *this is hacky. noko is what special colum is made for in the database. gut this out and dont fallow this format.
+			 */
+			if($post->getEmail() == "noko"){
+				$post->setEmail("");
+				$html->drawThreadPage($thread);
+				break;
+			}
+
+			$html->drawPage(0);
 			break;
 		case 'postNewThread':
 			$thread = userPostNewThread($board);
@@ -194,7 +213,7 @@ elseif(isset($_POST['action'])){
 			break;
 		default:
 			$stripedInput = htmlspecialchars($_POST['action'], ENT_QUOTES, 'UTF-8');
-			displayErrorPageAndDie("invalid action: " . $stripedInput);
+			drawErrorPageAndDie("invalid action: " . $stripedInput);
 			break;
 	}
 }
@@ -202,7 +221,7 @@ elseif(isset($_POST['action'])){
 else{
 	$page = $_GET['page'] ?? $_POST['page'] ?? 0;
 	if (!is_numeric($page)) {
-		displayErrorPageAndDie("invalid page");
+		drawErrorPageAndDie("invalid page");
 	}
 	$page = abs(intval($page));
 	$html->drawPage($page);
