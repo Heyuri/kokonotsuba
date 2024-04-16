@@ -13,7 +13,7 @@ class threadClass{
     private $lastBumpTime;
     private $OPPostID;
     private $postCount;
-    private $postsFullyLoaded=false;
+    private $isPostsFullyLoaded=false;
 	private $postRepo;
 	public function __construct($conf, $lastBumpTime, $threadID = -1, $OPPostID = -1, $postCount = -1){
 		$this->conf = $conf;
@@ -38,20 +38,20 @@ class threadClass{
     }
 	/* build postObj from postrequest -> validate postObj -> save postObj to database */ // -> redraw pages -> redirect user */
     public function getPosts(){
-        if($this->postsFullyLoaded != true){
+        if($this->isPostsFullyLoaded != true){
             $this->posts = $this->postRepo->loadPostsByThreadID($this->conf, $this->threadID);
-            $this->postFullyLoaded = true;
+            $this->isPostsFullyLoaded = true;
         }
         return $this->posts;
     }
     public function getPostByID($postID){
-        if($this->postsFullyLoaded != true && !isset($this->posts[$postID])){
+        if($this->isPostsFullyLoaded != true && !isset($this->posts[$postID])){
             $this->posts[$postID] = $this->postRepo->loadPostByThreadID($this->conf, $this->threadID ,$postID);
         }
         return $this->posts[$postID];
     }
     public function getLastNPost($num){
-        if ($this->postsFullyLoaded != true && !count($this->lastPosts) >= $num) {
+        if ($this->isPostsFullyLoaded != true && !count($this->lastPosts) >= $num) {
             $this->lastPosts[] = $this->postRepo->loadLastPostByThreadID($this->conf, $this->threadID);
         }
         return $this->posts;
