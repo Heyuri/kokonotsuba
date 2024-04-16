@@ -233,7 +233,7 @@ class htmlclass {
                     $this->html .= '
                 </div>
                 <blockquote class="comment">'.$post->getComment().'</blockquote>';
-                if($isOP && $isListingMode){
+                if($isOP && $isListingMode && $omitedPosts > 0){
                     $this->html .= '<span class="omittedposts">'.$omitedPosts.' posts omitted. Click Reply to view.</span>';
                 }
                 $this->html .= '
@@ -266,6 +266,7 @@ class htmlclass {
 
         foreach ($threads as $thread) {
             $posts = $thread->getLastNPost($this->conf['postPerThreadListing']);
+            $posts[0] = $thread->getPostByID($thread->getOPPostID());
             $omitedPost = sizeof($posts) - $thread->getPostCount() - 1;//-1 for op post
 
             $this->html .='
