@@ -3,7 +3,6 @@
 define("ROOTPATH", './'); // Main Program Root Directory
 
 //database limits
-define("ROOTPATH", './');
 define("MAX_INPUT_LENGTH", 255 - 128); /* you cant make this bigger then 255 with out changing the cap to to the db */
 return [
     /*
