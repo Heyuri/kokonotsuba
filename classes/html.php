@@ -104,7 +104,7 @@ class htmlclass {
         <!--set constraints based on board conf-->
         <div id="postForm" class="postForm">';//id is used so we can jump to it from a url example.com#postForm
         $this->html .= '
-        <form class="formThread" action="/bbs.php" method="post" enctype="multipart/form-data">
+        <form class="formThread" action="'.ROOTPATH.'bbs.php" method="post" enctype="multipart/form-data">
         <input type="hidden" name="action" value="postNewThread">
         <input type="hidden" name="boardID" value="'. $this->board->getBoardID() . '">
 
@@ -141,7 +141,7 @@ class htmlclass {
         <!--drawFormNewPost()-->
         <!--set constraints based on $this->conf-->
         <div class="postForm">
-        <form class="formThread" action="bbs.php" method="POST" enctype="multipart/form-data">
+        <form class="formThread" action="'.ROOTPATH.'bbs.php" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="threadID" value="'.$threadID.'">
         <table>
         <tr>
@@ -177,7 +177,7 @@ class htmlclass {
     private function drawOpenFormManagePosts(){
         $this->html .= '
         <!--drawFormManagePostsOpen()-->
-        <form name="managePost" id="managePost" action="bbs.php" method="post">';
+        <form name="managePost" id="managePost" action="'.ROOTPATH.'bbs.php" method="post">';
     }
     private function drawCloseFormManagePosts(){
         // make this have a drop down of options, not just delete file.
@@ -222,13 +222,13 @@ class htmlclass {
                     </span">
                     <span class="time">'.date('Y-m-d H:i:s', $post->getUnixTime()).'</span>
                     <span class="postnum">
-				        <a href="/bbs.php?boardID='.$this->conf['boardID'].'&thread='.$threadID.'#p'.$postID.'" class="no">No.</a>
-                        <a href="/bbs.php?boardID='.$this->conf['boardID'].'&thread='.$threadID.'#postForm" title="Quote">'.$postID.'</a>
+				        <a href="'.ROOTPATH.'bbs.php?boardID='.$this->conf['boardID'].'&thread='.$threadID.'#p'.$postID.'" class="no">No.</a>
+                        <a href="'.ROOTPATH.'bbs.php?boardID='.$this->conf['boardID'].'&thread='.$threadID.'#postForm" title="Quote">'.$postID.'</a>
                     </span>';
                     if($isOP  && $isListingMode){
                         $this->html .= '
                         [
-                            <a href="/bbs.php?boardID='.$this->conf['boardID'].'&thread='.$threadID.'" class="no">Reply</a>
+                            <a href="'.ROOTPATH.'bbs.php?boardID='.$this->conf['boardID'].'&thread='.$threadID.'" class="no">Reply</a>
                         ]';
                     }
                     $this->html .= '

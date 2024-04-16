@@ -29,6 +29,9 @@ $BOARDREPO = BoardRepoClass::getInstance();
 
 $globalConf = require __DIR__ ."/conf.php";
 
+//constants
+define("ROOTPATH", './'); // Main Program Root Directory
+
 //@session_start();
 
 function genUserPostFromRequest($conf, $thread){
