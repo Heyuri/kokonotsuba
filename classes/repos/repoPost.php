@@ -137,7 +137,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
         $stmt->close();
         return $posts;
     }
-    public function loadLastPostByThreadID($boardConf, $threadID, $num=0){
+    public function loadNPostByThreadID($boardConf, $threadID, $num){
         $posts = [];
         $stmt = $this->db->prepare("SELECT * FROM posts WHERE boardID = ? and threadID = ? ORDER BY postTime DESC LIMIT ?");
         $stmt->bind_param("iii", $boardConf['boardID'], $threadID, $num);

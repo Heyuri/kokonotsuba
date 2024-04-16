@@ -51,10 +51,10 @@ class threadClass{
         return $this->posts[$postID];
     }
     public function getLastNPost($num){
-        if ($this->isPostsFullyLoaded != true && !count($this->lastPosts) >= $num) {
-            $this->lastPosts[] = $this->postRepo->loadLastPostByThreadID($this->conf, $this->threadID);
+        if ($this->isPostsFullyLoaded != true || !count($this->lastPosts) >= $num) {
+            $this->lastPosts[] = $this->postRepo->loadNPostByThreadID($this->conf, $this->threadID, $num);
         }
-        return $this->posts;
+        return array_reverse($this->lastPosts);
     }
     public function setOPPostID($postID){
         $this->OPPostID = $postID;

@@ -22,7 +22,7 @@ interface PostDataRepositoryInterface {
     public function loadPostByID($boardConf, $postID);
     public function loadPosts($boardConf);
     public function loadPostsByThreadID($boardConf, $threadID);
-    public function loadLastPostByThreadID($boardConf, $threadID, $num);
+    public function loadNPostByThreadID($boardConf, $threadID, $num);
     public function setPostID($boardConf, $post, $newPostID);
     public function updatePost($boardConf, $post);
     public function deletePostByID($boardConf, $postID);
