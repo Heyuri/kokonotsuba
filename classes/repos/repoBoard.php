@@ -92,7 +92,7 @@ class BoardRepoClass implements BoardRepositoryInterface {
         } catch (Exception $e) {
             // Log the error and execute the error callback
             error_log($e->getMessage());
-            displayErrorPageAndDie($e->getMessage());
+            drawErrorPageAndDie($e->getMessage());
             return false;
         }
     }  

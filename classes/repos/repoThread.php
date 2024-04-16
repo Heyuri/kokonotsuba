@@ -58,7 +58,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
             return $success;
         } catch (Exception $e) {
             error_log($e->getMessage());
-            displayErrorPageAndDie($e->getMessage());
+            drawErrorPageAndDie($e->getMessage());
             return false;
         }
     }

@@ -1,6 +1,6 @@
 <?php
 
-function displayErrorPageAndDie($txt){
+function drawErrorPageAndDie($txt){
 	?>
 	<!DOCTYPE html>
 	<html lang="en">

@@ -23,7 +23,7 @@ class boardClass{
 			$this->conf = require $confPath;
 		}else
 		{
-			displayErrorPageAndDie("could not load config file for boardID: " . $boardID);
+			drawErrorPageAndDie("could not load config file for boardID: " . $boardID);
 		}
 		$this->conf = require $confPath;
         $this->boardID = $boardID;
@@ -67,7 +67,7 @@ class boardClass{
 	public function updateConfigFile(){
 		$newConf = '<?php return ' . var_export($this->conf, true) . ';';
 		if (file_put_contents($this->confPath, $newConf) === false) {
-			displayErrorPageAndDie("Failed to write configuration.");
+			drawErrorPageAndDie("Failed to write configuration.");
 		}
 	}
 

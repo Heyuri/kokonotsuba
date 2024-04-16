@@ -186,9 +186,6 @@ class htmlclass {
             }
             $threadID = $post->getThreadID();
 	        $email = $post->getEmail(); 
-            if($email == $this->conf['defaultEmail']){
-                $email = '';
-            }
 
             $this->html .= '
             <div class="post '.$type.'" id="'.$postID.'">

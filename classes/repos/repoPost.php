@@ -77,7 +77,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
             // Rollback the transaction on error
             $this->db->rollback();
             error_log($e->getMessage());
-            displayErrorPageAndDie($e->getMessage());
+            drawErrorPageAndDie($e->getMessage());
             return false;
         }
     }
