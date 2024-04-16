@@ -141,7 +141,7 @@ function userPostNewThread($board){
 	$THREADREPO->createThread($conf, $thread, $post);
 	displayErrorPageAndDie($post);
 
-	return;
+	return $thread;
 }
 function userDeletedPost(){
 
@@ -190,8 +190,8 @@ elseif(isset($_POST['action'])){
 			userPostToThread($board);
 			break;
 		case 'postNewThread':
-			userPostNewThread($board);
-			displayErrorPageAndDie("thread created");// temp. make a suscsses and redirect
+			$thread = userPostNewThread($board);
+			$html->drawThreadPage($thread);
 			break;
 		default:
 			$stripedInput = htmlspecialchars($_POST['action'], ENT_QUOTES, 'UTF-8');

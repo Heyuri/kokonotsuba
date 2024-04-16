@@ -119,7 +119,7 @@ class htmlclass {
             </table>
         </form>';
     }
-    private function drawMainFormBody(){
+    private function drawMainFormBody($buttonText){
         $this->html .= '
         <table>
         <tr>
@@ -135,7 +135,7 @@ class htmlclass {
         <tr>
             <td class="accent"><label for="subject">Subject</label></td>
 	        <td><input type="text" id="subject" name="subject">
-	            <button type="submit">New Thread</button>
+	            <button type="submit">'.$buttonText.'</button>
 	        </td>
         </tr>
         <tr>
@@ -155,7 +155,7 @@ class htmlclass {
             <form id="formThread" action="'.ROOTPATH.'bbs.php" method="post" enctype="multipart/form-data">
             <input type="hidden" name="action" value="postNewThread">
             <input type="hidden" name="boardID" value="'.$this->board->getBoardID().'">';
-            $this->drawMainFormBody();
+            $this->drawMainFormBody("New Thread");
             $this->html .= '
             </form>
         </center>';
@@ -169,7 +169,7 @@ class htmlclass {
             <form id="formPost" action="'.ROOTPATH.'bbs.php?'.$_SERVER['QUERY_STRING'].'" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="threadID" value="'.$threadID.'">
             <input type="hidden" name="boardID" value="'. $this->board->getBoardID().'">';
-            $this->drawMainFormBody();
+            $this->drawMainFormBody("New Post");
             $this->html .= '
             </form>
         </center>';
