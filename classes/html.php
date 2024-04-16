@@ -15,7 +15,7 @@ class htmlclass {
         $this->board = $board;
     }
     private function drawHead(){
-        $staticPath = ROOTPATH.'static/';
+        $staticPath = $this->conf['staticPath'];
         $this->html .= '
         <!--drawHead() Hello!! If you are looking to modify this webapge. please check out kotatsu github and look in /classes/html.php-->
         <head>
