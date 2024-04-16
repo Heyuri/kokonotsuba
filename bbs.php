@@ -139,7 +139,6 @@ function userPostNewThread($board){
 	// save post and thread to data base.
 	$POSTREPO->createPost($conf, $post);
 	$THREADREPO->createThread($conf, $thread, $post);
-	displayErrorPageAndDie($post);
 
 	return $thread;
 }
