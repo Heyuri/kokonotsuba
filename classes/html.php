@@ -204,13 +204,14 @@ class htmlclass {
             <div class="postinfo">
                 <input type="checkbox" name="'.$postID.'">
                 <span class="bigger"><b class="subject">'.$post->getSubject().'</b></span>
-                <spanclass="name"';
+                <span class="name"';
                 if($email != ""){
                     $this->html .= '<a href="mailto:'.$email.'"><b>'.$post->getName().'</b></a>';
                 }else{
                     $this->html .= '<b>'.$email.'</b>';
                 }
                 $this->html .= '
+                </span>
                 <span class="time">'.date('Y-m-d H:i:s', $post->getUnixTime()).'</span>
                 <span class="postnum">
                     <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#p'.$postID.'" class="no">No.</a>
@@ -226,7 +227,7 @@ class htmlclass {
             }
         $this->html .= '</div>';
     }
-    private function drawPosts($thread, $posts){
+    private function drawPosts($thread, $posts, $listingMode=false ,$omitedPosts=0){
         $this->html .= '
         <!--drawPosts()-->';
         foreach($posts as $post){
@@ -242,18 +243,26 @@ class htmlclass {
                 <div class="postinfo">
                     <input type="checkbox" name="'.$postID.'">
                     <span class="bigger"><b class="subject">'.$post->getSubject().'</b></span>
-                    <spanclass="name"';
+                    <span class="name">';
                     if($email != ""){
                         $this->html .= '<a href="mailto:'.$email.'"><b>'.$post->getName().'</b></a>';
                     }else{
                         $this->html .= '<b>'.$email.'</b>';
                     }
                     $this->html .= '
+                    </span">
                     <span class="time">'.date('Y-m-d H:i:s', $post->getUnixTime()).'</span>
                     <span class="postnum">
 				        <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#p'.$postID.'" class="no">No.</a>
                         <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#postForm" title="Quote">'.$postID.'</a>
-                    </span>
+                    </span>';
+                    if($postID == $thread->getOPPostID() && $listingMode){
+                        $this->html .= '
+                        [
+                            <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'" class="no">Reply</a>
+                        ]';
+                    }
+                    $this->html .= '
                 </div>
                 <blockquote class="comment">'.$post->getComment().'</blockquote>
             </div>';
@@ -284,8 +293,8 @@ class htmlclass {
 
             $omitedPost = sizeof($posts) - $thread->getPostCount() - 1;//-1 for op post
 
-            $this->drawOPPostAsListing($opPost, $omitedPost);
-            $this->drawPosts($thread, $posts);
+            //$this->drawOPPostAsListing($opPost, $omitedPost);
+            $this->drawPosts($thread, $posts, true, $omitedPost);
         }
         $this->html .='</div>';
 
