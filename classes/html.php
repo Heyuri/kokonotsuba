@@ -221,13 +221,13 @@ class htmlclass {
                     </span">
                     <span class="time">'.date('Y-m-d H:i:s', $post->getUnixTime()).'</span>
                     <span class="postnum">
-				        <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#p'.$postID.'" class="no">No.</a>
-                        <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#postForm" title="Quote">'.$postID.'</a>
+				        <a href="/bbs.php?boardID='.$this->conf['boardID'].'&thread='.$threadID.'#p'.$postID.'" class="no">No.</a>
+                        <a href="/bbs.php?boardID='.$this->conf['boardID'].'&thread='.$threadID.'#postForm" title="Quote">'.$postID.'</a>
                     </span>';
                     if($isOP  && $isListingMode){
                         $this->html .= '
                         [
-                            <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'" class="no">Reply</a>
+                            <a href="/bbs.php?boardID='.$this->conf['boardID'].'&thread='.$threadID.'" class="no">Reply</a>
                         ]';
                     }
                     $this->html .= '
