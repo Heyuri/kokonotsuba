@@ -174,12 +174,12 @@ class htmlclass {
         </form>
         </div>';
     }
-    private function drawFormManagePostsOpen(){
+    private function drawOpenFormManagePosts(){
         $this->html .= '
         <!--drawFormManagePostsOpen()-->
         <form name="managePost" id="managePost" action="/bbs.php" method="post">';
     }
-    private function drawFormManagePostsClosed(){
+    private function drawCloseFormManagePosts(){
         // make this have a drop down of options, not just delete file.
         $this->html .= '
         <!--drawFormManagePostsClosed()-->
@@ -194,46 +194,14 @@ class htmlclass {
     private function drawFooter(){
         $this->html .= '';
     }
-    private function drawOPPostAsListing($post, $omitedPosts){
-        $postID = $post->getPostID();
-        $threadID = $post->getThreadID();
-        $email = $post->getEmail();
-        $this->html .= '
-        <!--drawOPPostAsListing()-->
-        <div class="post op" id="'.$postID.'">
-            <div class="postinfo">
-                <input type="checkbox" name="'.$postID.'">
-                <span class="bigger"><b class="subject">'.$post->getSubject().'</b></span>
-                <span class="name"';
-                if($email != ""){
-                    $this->html .= '<a href="mailto:'.$email.'"><b>'.$post->getName().'</b></a>';
-                }else{
-                    $this->html .= '<b>'.$email.'</b>';
-                }
-                $this->html .= '
-                </span>
-                <span class="time">'.date('Y-m-d H:i:s', $post->getUnixTime()).'</span>
-                <span class="postnum">
-                    <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#p'.$postID.'" class="no">No.</a>
-                    <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#postForm" title="Quote">'.$postID.'</a>
-                </span>
-                [
-                    <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'" class="no">Reply</a>
-                ]
-            </div>
-            <blockquote class="comment">'.$post->getComment().'</blockquote>';
-            if($omitedPosts > 0){
-                $this->html .= '<span class="omittedposts">'.$omitedPosts.' posts omitted. Click Reply to view.</span>';
-            }
-        $this->html .= '</div>';
-    }
-    private function drawPosts($thread, $posts, $listingMode=false ,$omitedPosts=0){
+    private function drawPosts($thread, $posts, $isListingMode=false ,$omitedPosts=0){
         $this->html .= '
         <!--drawPosts()-->';
         foreach($posts as $post){
             $postID = $post->getPostID();
             $type = "reply";
-            if($postID == $thread->getOPPostID()){
+            $isOP = $postID == $thread->getOPPostID();
+            if($isOP){
                 $type = "op";
             }
             $threadID = $post->getThreadID();
@@ -247,7 +215,7 @@ class htmlclass {
                     if($email != ""){
                         $this->html .= '<a href="mailto:'.$email.'"><b>'.$post->getName().'</b></a>';
                     }else{
-                        $this->html .= '<b>'.$email.'</b>';
+                        $this->html .= '<b>'.$post->getName().'</b>';
                     }
                     $this->html .= '
                     </span">
@@ -256,7 +224,7 @@ class htmlclass {
 				        <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#p'.$postID.'" class="no">No.</a>
                         <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'#postForm" title="Quote">'.$postID.'</a>
                     </span>';
-                    if($postID == $thread->getOPPostID() && $listingMode){
+                    if($isOP  && $isListingMode){
                         $this->html .= '
                         [
                             <a href="/bbs.php?boardID='.$this->conf['boardID'].'&threadID='.$threadID.'" class="no">Reply</a>
@@ -264,42 +232,51 @@ class htmlclass {
                     }
                     $this->html .= '
                 </div>
-                <blockquote class="comment">'.$post->getComment().'</blockquote>
+                <blockquote class="comment">'.$post->getComment().'</blockquote>';
+                if($isOP && $isListingMode){
+                    $this->html .= '<span class="omittedposts">3 posts omitted. Click Reply to view.</span>';
+                }
+                $this->html .= '
             </div>';
         }
     }
     private function drawThread($thread){
+        $this->html .='
+        <!--drawThreads()-->';
+
+        //encapsalate all of the threads into a form
+        $this->drawOpenFormManagePosts();
+
         $posts = $thread->getPosts();
 
         $this->html .='
-        <!--drawThreads()-->
         <div id="t'.$thread->getThreadID().'" class="thread>';
-        $this->drawPosts($thread, $posts);
-        $this->html .='
+            $this->drawPosts($thread, $posts);
+            $this->html .='
         </div>';
+
+        $this->drawCloseFormManagePosts();
     }
 
     private function drawThreadListing($threads){
-        //encapsalate all of the threads into a form
-        $this->drawFormManagePostsOpen();
-
         $this->html .='
-        <!--drawThreadListing()-->
-        <div class="threadListing">';
-        
-        foreach ($threads as $thread) {
-            $opPost = $thread->getPostByID($thread->getOPPostID());
-            $posts = $thread->getLastNPost($this->conf['postPerThreadListing']);
+        <!--drawThreadListing()-->';
 
+        //encapsalate all of the threads into a form
+        $this->drawOpenFormManagePosts();
+
+        foreach ($threads as $thread) {
+            $posts = $thread->getLastNPost($this->conf['postPerThreadListing']);
             $omitedPost = sizeof($posts) - $thread->getPostCount() - 1;//-1 for op post
 
-            //$this->drawOPPostAsListing($opPost, $omitedPost);
-            $this->drawPosts($thread, $posts, true, $omitedPost);
+            $this->html .='
+            <div id="t'.$thread->getThreadID().'" class="thread>';
+                $this->drawPosts($thread, $posts, true, $omitedPost);
+                $this->html .='
+            </div>';
         }
-        $this->html .='</div>';
 
-        $this->drawFormManagePostsOpen();
-
+        $this->drawCloseFormManagePosts();
     }
     public function drawPage($pageNumber = 0){
         global $THREADREPO;

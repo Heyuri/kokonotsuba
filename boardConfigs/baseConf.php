@@ -33,12 +33,12 @@ return [
     'cookieExpireTime'=> time()+7*24*3600, // 7days from the curent time
     'allowQuoteLinking'=> false, // link to post and post on other boards.
     'autoEmbedLinks'=> true,
-    'allowBlankName' => false,
-    'allowBlankEmail' => false,
+    'allowBlankName' => true,
+    'allowBlankEmail' => true,
     'allowBlankSubject' => true,
-    'allowBlankComment' => true,
-    'defualtName'=> 'anon',
-    'defaultEmail'=> '',
+    'allowBlankComment' => false,
+    'defualtName'=> 'Anon',
+    'defaultEmail'=> 'noko',
     'defaultSubject'=> '',
     'defaultComment'=> 'kita',
     'canTripcode' => true,
