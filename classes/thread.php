@@ -52,7 +52,7 @@ class threadClass{
     }
     public function getLastNPost($num){
         if ($this->isPostsFullyLoaded != true || !count($this->lastPosts) >= $num) {
-            $this->lastPosts[] = $this->postRepo->loadNPostByThreadID($this->conf, $this->threadID, $num);
+            $this->lastPosts = $this->postRepo->loadNPostByThreadID($this->conf, $this->threadID, $num);
         }
         return array_reverse($this->lastPosts);
     }
