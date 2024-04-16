@@ -54,9 +54,9 @@ function genUserPostFromRequest($conf, $thread){
 	$name = !empty($_POST['name']) ? $_POST['name'] : ($conf['allowBlankName'] ? $conf['defaultName'] : displayErrorPageAndDie("your Name is required."));
 	$email = !empty($_POST['email']) ? $_POST['email'] : ($conf['allowBlankEmail'] ? $conf['defaultEmail'] : displayErrorPageAndDie("your Email is required."));
 	$subject = !empty($_POST['subject']) ? $_POST['subject'] : ($conf['allowBlankSubject'] ? $conf['defaultSubject'] : displayErrorPageAndDie("a Subject is required."));
-	$comment = !empty($_POST['comment']) ? $_POST['comment'] : ($conf['allowBlankComment'] ? $conf['defaultComment'] : displayErrorPageAndDie("a comment is required."));;
-	
+	$comment = !empty($_POST['comment']) ? $_POST['comment'] : ($conf['allowBlankComment'] ? $conf['defaultComment'] : displayErrorPageAndDie("a comment is required."));
 	$password = !empty($_POST['password']) ? $_POST['password'] : (isset($_COOKIE['password']) ? $_COOKIE["password"] : null);
+	
 	//gen post password if none is provided
 	if($password == null){
 		$hasinput = $_SERVER['REMOTE_ADDR'] . time() . $globalConf['passwordSalt'];
@@ -116,8 +116,7 @@ function userPostToThread($board){
 	global $POSTREPO;
 
 	// load existing thread
-	$thread = $board->getThreadByID($_POST['threadID']);
-	
+	$thread = $board->getThreadByID($_POST['threadID']);	
 	// create post with thread
 	$post = genUserPostFromRequest($conf, $thread);
 

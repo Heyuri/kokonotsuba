@@ -15,7 +15,7 @@ class htmlclass {
         $this->board = $board;
     }
     private function drawHead(){
-        $staticPath = $this->conf['staticPath'];
+        $staticPath = ROOTPATH.'static/';
         $this->html .= '
         <!--drawHead() Hello!! If you are looking to modify this webapge. please check out kotatsu github and look in /classes/html.php-->
         <head>
@@ -117,12 +117,13 @@ class htmlclass {
             <td class="accent"><label for="email">Email</label></td>
             <td>
                 <input type="text" id="email" name="email">
-                <button type="submit">Post</button>
             </td>
         </tr>
         <tr>
             <td class="accent"><label for="subject">Subject</label></td>
-            <td><input type="text" id="subject" name="subject"></td>
+	    <td><input type="text" id="subject" name="subject">
+	    <button type="submit">New Thread</button>
+	   </td>
         </tr>
         <tr>
             <td class="accent"><label for="comment">Comment</label></td>
@@ -139,38 +140,36 @@ class htmlclass {
     private function drawFormNewPost($threadID){
         $this->html .= '
         <!--drawFormNewPost()-->
-        <!--set constraints based on $this->conf-->
+	<!--set constraints based on $this->conf-->
+	<a href="'.ROOTPATH.'bbs.php?boardID='.$this->conf['boardID'].'">[Return]</a>
+	<center class="theading"><b>Posting mode: Reply</b></center>
         <div class="postForm">
-        <form class="formThread" action="'.ROOTPATH.'bbs.php" method="POST" enctype="multipart/form-data">
+        <form class="formThread" action="'.ROOTPATH.'bbs.php?'.$_SERVER['QUERY_STRING'].'" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="threadID" value="'.$threadID.'">
         <table>
         <tr>
-            <td><label for="name">Name</label></td>
+            <td class="accent"><label for="name">Name</label></td>
             <td><input type="text" id="name" name="name"></td>
         </tr>
         <tr>
-            <td><label for="email">Email</label></td>
+            <td class="accent"><label for="email">Email</label></td>
             <td>
                 <input type="text" id="email" email="email">
-                <button type="submit" name="action" value="postToThread">Post</button>
             </td>
         </tr>
         <tr>
-            <td><label for="subject">Subject</label></td>
-            <td><input type="text" id="subject" name="subject"></td>
+            <td class="accent"><label for="subject">Subject</label></td>
+	    <td><input type="text" id="subject" name="subject"> <button type="submit" name="action" value="postToThread">Post</button> </td>
         </tr>
         <tr>
-            <td><label for="comment">Comment</label></td>
-            <td><input type="text" id="comment" name="comment"></td>
+            <td class="accent"><label for="comment">Comment</label></td>
+            <td><textarea type="text" id="comment" name="comment" cols="48" rows="4"></textarea></td>
         </tr>
         <tr>
-            <td><label for="subject">Subject</label></td>
-            <td><input type="text" id="subject" name="subject"></td>
-        </tr>
-        <tr>
-            <td><label for="password">Password</label></td>
+            <td class="accent"><label for="password">Password</label></td>
             <td><input type="password" id="password" name="password"></td>
-        </tr>
+	</tr>
+	</table>
         </form>
         </div>';
     }
@@ -184,7 +183,7 @@ class htmlclass {
         $this->html .= '
         <!--drawFormManagePostsClosed()-->
         <!--make dropdown with other options-->
-        <table><tr><td>
+        <table align="right"><tr><td align="">
 			<input type="hidden" name="action" value="deletePosts">
             Delete Post: [<label><input type="checkbox" name="fileOnly" id="fileOnly" value="on">File only</label>]<br>
 			Password: <input type="password" name="password" size="8" value="">
@@ -193,7 +192,7 @@ class htmlclass {
         </form>';
     }
     private function drawFooter(){
-        $this->html .= '';
+        $this->html .= '<br><br><br><center>- <a rel="nofollow noreferrer license" href="http://www.2chan.net/" target="_blank">futaba</a> + <a rel="nofollow noreferrer license" href="https://pixmicat.github.io/" target="_blank">Pixmicat!</a> + <a rel="nofollow noreferrer license" href="https://github.com/Heyuri/kokonotsuba/" target="_blank">Kokonotsuba</a> + <a rel="nofollow noreferrer license" href="https://github.com/nashikouen/kotatsuba/" target="_blank">Kotatsuba</a> -</center>' ;
     }
     private function drawPosts($thread, $posts, $isListingMode=false ,$omitedPosts=0){
         $this->html .= '
@@ -206,7 +205,8 @@ class htmlclass {
                 $type = "op";
             }
             $threadID = $post->getThreadID();
-            $email = $post->getEmail();
+	    $email = $post->getEmail(); if($email == $this->conf['defaultEmail']) $email = ''; //if email is default (such as noko) then it will be drawn as blank
+
             $this->html .= '
             <div class="post '.$type.'" id="'.$postID.'">
                 <div class="postinfo">
@@ -293,7 +293,8 @@ class htmlclass {
         $this->drawFormNewThread();
         $this->drawThreadListing($threads);
 
-        $this->html .= '</body>';
+	$this->html .= '</body>';
+	$this->drawFooter();
         echo $this->html;
     }
     public function drawThreadPage($thread){
@@ -304,10 +305,11 @@ class htmlclass {
         $this->html .= '<body>';
         $this->drawNavBar();
         $this->drawBoardTitle();
-        //$this->drawFormNewPost($thread->getThreadID());
+        $this->drawFormNewPost($thread->getThreadID());
         $this->drawThread($thread);
-
+	
         $this->html .= '</body>';
-        echo $this->html;
+	$this->drawFooter();       
+	echo $this->html;
     }
 }

@@ -5,6 +5,22 @@ body {
 	font-size: 16px;
 }
 
+.theading,
+.theading2,
+.theading3 {
+	color: #EEE;
+	background-color: #E04000;
+	padding: 2px 0;
+	margin-top: 0.2em;
+	margin-bottom: 0.5em;
+}
+
+.postnum a {
+	color: inherit;
+	text-decoration: none;
+
+}
+
 .navBar{
     display: flex;
     justify-content: space-between; 

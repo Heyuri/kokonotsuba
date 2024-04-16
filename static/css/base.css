@@ -1,8 +1,8 @@
 @font-face {
 	font-family: "saitamaar_light";
-	src: url("/static/fonts/saitamaaar_light/saitamaar_light.woff2") format("woff2"),
-	url("/static/fonts/saitamaaar_light/saitamaar_light.woff") format("woff"),
-	url("/static/fonts/saitamaaar_light/saitamaar_light.ttf") format("ttf");
+	src: url("fonts/saitamaaar_light/saitamaar_light.woff2") format("woff2"),
+	url("fonts/saitamaaar_light/saitamaar_light.woff") format("woff"),
+	url("fonts/saitamaaar_light/saitamaar_light.ttf") format("ttf");
 	font-display: swap;
 }
 
