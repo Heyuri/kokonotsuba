@@ -48,17 +48,17 @@ class PostDataClass {
                 "Special Info: {$this->special}";
     }
     public function validate(){
-        if (mb_strlen($this->name, 'utf8mb4') > INPUT_MAX ){
+        if (mb_strlen($this->name, 'UTF-8') > INPUT_MAX ){
             drawErrorPageAndDie("your post's name is invalid. max size: ".INPUT_MAX);
         }  
-        if (mb_strlen($this->email, 'utf8mb4') > INPUT_MAX){
+        if (mb_strlen($this->email, 'UTF-8') > INPUT_MAX){
             drawErrorPageAndDie("your post's email is invalid. max size : ".INPUT_MAX);
 
         }
-        if (mb_strlen($this->subject, 'utf8mb4') > INPUT_MAX){
+        if (mb_strlen($this->subject, 'UTF-8') > INPUT_MAX){
             drawErrorPageAndDie("your post's subject is invalid. max size: ".INPUT_MAX);
         }
-        if (mb_strlen($this->comment, 'utf8mb4') > $this->config['maxCommentSize']){
+        if (mb_strlen($this->comment, 'UTF-8') > $this->config['maxCommentSize']){
             drawErrorPageAndDie("your post's comment is invalid. max size: ".$this->config['maxCommentSize']);
         }
     }
