@@ -37,7 +37,7 @@ return [
     'allowBlankEmail' => true,
     'allowBlankSubject' => true,
     'allowBlankComment' => false,
-    'defualtName'=> 'Anon',
+    'defaultName'=> 'Anon',
     'defaultEmail'=> 'noko',
     'defaultSubject'=> '',
     'defaultComment'=> 'kita',
