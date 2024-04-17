@@ -163,7 +163,7 @@ class htmlclass {
     private function drawFormNewPost($threadID){
         $this->html .= '
         <!--drawFormNewPost()-->
-        <a href="'.ROOTPATH.'bbs.php?" boardID='.$this->conf['boardID'].'">[Return]</a>
+        <a href="'.ROOTPATH.'bbs.php" boardID="'.$this->conf['boardID'].'">[Return]</a>
         <center class="theading"><b>Posting mode: Reply</b></center>
         <center id="mainForm">
             <form id="formPost" action="'.ROOTPATH.'bbs.php method="POST" enctype="multipart/form-data">
