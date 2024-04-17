@@ -36,8 +36,8 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
             $postCount = 1;
 
             //construct querry
-            $stmt = $this->db->prepare("INSERT INTO threads (boardID, lastTimePosted, opPostID, postCount) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("iiii", $boardConf['boardID'], $bump, $postID, $postCount);
+            $stmt = $this->db->prepare("INSERT INTO threads (boardID, lastTimePosted, opPostID) VALUES (?, ?, ?)");
+            $stmt->bind_param("iii", $boardConf['boardID'], $bump, $postID, $postCount);
 
             // run qerrry
             $success = $stmt->execute();
@@ -68,7 +68,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         $stmt->execute();
         $result = $stmt->get_result();
         if ($row = $result->fetch_assoc()) {
-            $thread = new threadClass($boardConf, $row['lastTimePosted'], $row['threadID'], $row['opPostID'], $row['postCount']);
+            $thread = new threadClass($boardConf, $row['lastTimePosted'], $row['threadID'], $row['opPostID']);
             $stmt->close();
             return $thread;
         } else {
@@ -84,7 +84,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         $stmt->execute();
         $result = $stmt->get_result();
         while ($row = $result->fetch_assoc()) {
-            $threads[] = new threadClass($boardConf, $row['lastTimePosted'], $row['threadID'], $row['opPostID'], $row['postCount']);
+            $threads[] = new threadClass($boardConf, $row['lastTimePosted'], $row['threadID'], $row['opPostID']);
         }
         $stmt->close();
         return $threads;
@@ -99,7 +99,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         $result = $stmt->get_result();
 
         while ($row = $result->fetch_assoc()) {
-            $threads[] = new threadClass($boardConf, $row['lastTimePosted'], $row['threadID'], $row['opPostID'], $row['postCount']);
+            $threads[] = new threadClass($boardConf, $row['lastTimePosted'], $row['threadID'], $row['opPostID']);
         }
 
         $stmt->close();
@@ -111,11 +111,10 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         $postID = $thread->getOPPostID();
         $id = $thread->getThreadID();
         $postCount = $thread->getPostCount();
-        $stmt = $this->db->prepare("UPDATE threads SET lastTimePosted = ?, opPostID = ? WHERE boardID = ? AND threadID = ? AND postCount = ?");
-        $stmt->bind_param("iiiii", $bump, $postID, $boardConf['boardID'], $id, $postCount);
+        $stmt = $this->db->prepare("UPDATE threads SET lastTimePosted = ?, opPostID = ? WHERE boardID = ? AND threadID = ?");
+        $stmt->bind_param("iiii", $bump, $postID, $boardConf['boardID'], $id);
         $success = $stmt->execute();
         $stmt->close();
-        drawErrorPageAndDie($bump);
         return $success;
     }
     

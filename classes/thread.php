@@ -16,12 +16,11 @@ class threadClass{
     private $isPostsFullyLoaded=false;
     private $isPostCountFullyLoaded=false;
 	private $postRepo;
-	public function __construct($conf, $lastBumpTime, $threadID = -1, $OPPostID = -1, $postCount = -1){
+	public function __construct($conf, $lastBumpTime, $threadID = -1, $OPPostID = -1){
 		$this->conf = $conf;
         $this->threadID = $threadID;
         $this->lastBumpTime = $lastBumpTime;
         $this->OPPostID = $OPPostID;
-        $this->postCount = $postCount;
 		$this->postRepo = PostRepoClass::getInstance();
 	}
     public function bump(){
