@@ -29,7 +29,7 @@ $BOARDREPO = BoardRepoClass::getInstance();
 
 $globalConf = require __DIR__ ."/conf.php";
 
-define("ROOTPATH", './'); /* Program location relitive to web root */
+define("ROOTPATH", '/'); /* Program location relitive to web root */
 define("MAX_INPUT_LENGTH", 255 - 128); /* you cant make this bigger then 255 with out changing the cap to to the db */
 
 //@session_start();
