@@ -14,6 +14,7 @@ class threadClass{
     private $OPPostID;
     private $postCount;
     private $isPostsFullyLoaded=false;
+    private $isPostCountFullyLoaded=false;
 	private $postRepo;
 	public function __construct($conf, $lastBumpTime, $threadID = -1, $OPPostID = -1, $postCount = -1){
 		$this->conf = $conf;
@@ -25,8 +26,10 @@ class threadClass{
 	}
     public function bump(){
         if($this->postCount >= $this->conf['postUntilCantBump']){
+            drawErrorPageAndDie("no bump bc count");
             return;
         }elseif($this->getOPPost()->getUnixTime() - time() > $this->conf['timeUntilCantBump']){
+            drawErrorPageAndDie("no bump bc time");
             return;
         }else{
             $this->lastBumpTime = time();
@@ -39,6 +42,10 @@ class threadClass{
         return $this->threadID;
     }
     public function getPostCount(){
+        if($this->isPostsFullyLoaded != true){
+            $this->postCount = $this->postRepo->getPostCount($this->conf, $this->threadID);
+            $this->isPostCountFullyLoaded = true;
+        }
         return $this->postCount;
     }
     public function getOPPostID(){  

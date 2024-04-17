@@ -202,7 +202,7 @@ elseif(isset($_POST['action'])){
 	switch ($action) {
 		case 'postToThread':
 			$post = userPostNewPostToThread($board);
-			$thread = $board->getThreadByID($_GET['threadID'] ?? $_POST['threadID'] ?? '');
+			$thread = $board->getThreadByID($_POST['threadID']);
 			$html->drawThreadPage($thread);
 			break;
 		case 'postNewThread':

@@ -152,6 +152,17 @@ class PostRepoClass implements PostDataRepositoryInterface {
         $stmt->close();
         return $posts;
     }
+    public function getPostCount($boardConf, $threadID){
+        $count = 0;
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM posts WHERE boardID = ? AND threadID = ?");
+        $stmt->bind_param("ii", $boardConf['boardID'], $threadID,);
+        $stmt->execute();
+        $stmt->bind_result($count);
+        $stmt->fetch();
+        $stmt->close();
+
+        return $count;
+    }
     public function updatePost($boardConf, $post) {
         // why is sqli like this...
         $threadID = $post->getThreadID();
