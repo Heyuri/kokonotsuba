@@ -85,9 +85,9 @@ class PostDataClass {
     }
     public function isBumpingThread(){
         if(stripos($this->getEmail(),"sage")){
-            return true;
-        }else{
             return false;
+        }else{
+            return true;
         }
     }
 /*
