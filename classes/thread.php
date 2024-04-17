@@ -26,7 +26,7 @@ class threadClass{
     public function bump(){
         if($this->postCount >= $this->conf['postUntilCantBump']){
             return;
-        }elseif($this->getOPPost()->getUnixTime() < $this->conf['timeUntilCantBump']){
+        }elseif($this->getOPPost()->getUnixTime() - time() > $this->conf['timeUntilCantBump']){
             return;
         }else{
             $this->lastBumpTime = time();

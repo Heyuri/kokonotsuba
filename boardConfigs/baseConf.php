@@ -43,11 +43,11 @@ return [
     'defaultComment'=> 'kita',
     'canTripcode' => true,
     'tripcodeSalt'=> 'abc123!?_',
-    'canFortune' => true,
+    'canFortune' => true, 
     'fortunes' => ['Very bad luck', 'Bad luck','Average luck','Good luck','Godly luck'],
     'maxCommentSize' => 1024, //how many characters can there be
     'postUntilCantBump' => 10,
-    'timeUntilCantBump' => time()+7*24*60*60,// 7days from the curent time
+    'timeUntilCantBump' => 7*24*60*60,// 7days
     'threadsPerPage' => 15,
     'maxActiveThreads' => 150,
     'postPerThreadListing' => 5,
