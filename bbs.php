@@ -132,6 +132,7 @@ function userPostNewPostToThread($board){
 
 	if($post->isBumpingThread()){
 		$thread->bump();
+		drawErrorPageAndDie("new time for thread: ". $thread->getLastBumpTime);
 	}
 
 	// save post to data base.

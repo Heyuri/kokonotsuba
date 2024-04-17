@@ -84,7 +84,7 @@ class PostDataClass {
         // I dont want to do all that db querrys!!!ヽ(`Д´)ノ 
     }
     public function isBumpingThread(){
-        if(stripos($this->getEmail(),"sage")){
+        if(stripos($this->getEmail(),"sage")!== false){//bc 2 was not enough...
             return false;
         }else{
             return true;

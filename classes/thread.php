@@ -26,10 +26,8 @@ class threadClass{
 	}
     public function bump(){
         if($this->postCount >= $this->conf['postUntilCantBump']){
-            drawErrorPageAndDie("no bump bc count");
             return;
         }elseif($this->getOPPost()->getUnixTime() - time() > $this->conf['timeUntilCantBump']){
-            drawErrorPageAndDie("no bump bc time");
             return;
         }else{
             $this->lastBumpTime = time();
