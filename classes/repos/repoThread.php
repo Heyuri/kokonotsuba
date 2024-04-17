@@ -106,6 +106,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         return $threads;
     }
     public function updateThread($boardConf, $thread) {
+        
         $bump = $thread->getLastBumpTime();
         $postID = $thread->getOPPostID();
         $id = $thread->getThreadID();
@@ -114,6 +115,7 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
         $stmt->bind_param("iiiii", $bump, $postID, $boardConf['boardID'], $id, $postCount);
         $success = $stmt->execute();
         $stmt->close();
+        drawErrorPageAndDie($bump);
         return $success;
     }
     
