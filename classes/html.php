@@ -200,7 +200,7 @@ class htmlclass {
                             $this->html .= '<b>'.$post->getName().'</b>';
                         }
                         $this->html .= '
-                    </span">
+                    </span>
                     <span class="time">'.date('Y-m-d H:i:s', $post->getUnixTime()).'</span>
                     <span class="postnum">
 				        <a href="'.ROOTPATH.'bbs.php?boardID='.$this->conf['boardID'].'&thread='.$threadID.'#p'.$postID.'" class="no">No.</a>
