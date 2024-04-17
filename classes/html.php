@@ -166,7 +166,7 @@ class htmlclass {
         <a href="'.ROOTPATH.'bbs.php" boardID="'.$this->conf['boardID'].'">[Return]</a>
         <center class="theading"><b>Posting mode: Reply</b></center>
         <center id="mainForm">
-            <form id="formPost" action="'.ROOTPATH.'bbs.php method="POST" enctype="multipart/form-data">
+            <form id="formPost" action="'.ROOTPATH.'bbs.php" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="action" value="postToThread">
             <input type="hidden" name="threadID" value="'.$threadID.'">
             <input type="hidden" name="boardID" value="'. $this->board->getBoardID().'">';
