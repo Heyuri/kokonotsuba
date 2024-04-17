@@ -97,6 +97,10 @@ function genUserPostFromRequest($conf, $thread){
 		$post->applyTripcode();	
 	}
 
+	if (strtolower($post->getEmail()) == "noko"){
+		$post->setEmail("");
+	}
+
 	//$HOOK->executeHook("onUserPostToBoard", $post, $fileHandler);// HOOK base post fully loaded with no html
 
 	/* prep post for db and drawing */
@@ -110,6 +114,7 @@ function genUserPostFromRequest($conf, $thread){
 		$post->quoteLinks();
 	}
 
+	$post->addLineBreaks();
 	// stuff like bb code, emotes, capcode, ID, should all be handled in moduels.
 	$HOOK->executeHook("onPostPrepForDrawing", $post);// HOOK post with html fully loaded
 	return $post;
@@ -198,12 +203,6 @@ elseif(isset($_POST['action'])){
 		case 'postToThread':
 			$post = userPostNewPostToThread($board);
 			$thread = $board->getThreadByID($_GET['threadID'] ?? $_POST['threadID'] ?? '');
-			if (strtolower($post->getEmail()) == "noko"){
-				$post->setEmail("");
-				$POSTREPO->updatePost($board->getConf(), $post);
-				$html->drawPage(0);
-				break;
-			}
 			$html->drawThreadPage($thread);
 			break;
 		case 'postNewThread':

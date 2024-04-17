@@ -66,11 +66,14 @@ class PostDataClass {
         $this->name = htmlspecialchars($this->name, ENT_QUOTES, 'UTF-8');
 		$this->email = htmlspecialchars($this->email, ENT_QUOTES, 'UTF-8');
 		$this->subject = htmlspecialchars($this->subject, ENT_QUOTES, 'UTF-8');
-		$this->comment = nl2br(htmlspecialchars($this->comment, ENT_QUOTES, 'UTF-8'));
+		$this->comment = htmlspecialchars($this->comment, ENT_QUOTES, 'UTF-8');
     }
     public function embedLinks(){
         $regexUrl  = '/(https?:\/\/[^\s]+)/';
         $this->comment = preg_replace($regexUrl , '<a href="$1" target="_blank">$1</a>', $this->comment);
+    }
+    public function addLineBreaks(){
+        $this->comment = nl2br($this->comment);
     }
     public function applyTripcode(){
         $nameXpass = splitTextAtTripcodePass($this->name);
