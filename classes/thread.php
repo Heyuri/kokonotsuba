@@ -39,7 +39,7 @@ class threadClass{
         return $this->threadID;
     }
     public function getPostCount(){
-        if($this->isPostsFullyLoaded != true){
+        if($this->isPostCountFullyLoaded != true){
             $this->postCount = $this->postRepo->getPostCount($this->conf, $this->threadID);
             $this->isPostCountFullyLoaded = true;
         }

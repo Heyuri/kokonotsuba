@@ -155,7 +155,7 @@ class PostRepoClass implements PostDataRepositoryInterface {
     public function getPostCount($boardConf, $threadID){
         $count = 0;
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM posts WHERE boardID = ? AND threadID = ?");
-        $stmt->bind_param("ii", $boardConf['boardID'], $threadID,);
+        $stmt->bind_param("ii", $boardConf['boardID'], $threadID);
         $stmt->execute();
         $stmt->bind_result($count);
         $stmt->fetch();

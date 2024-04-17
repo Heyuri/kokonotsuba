@@ -76,7 +76,6 @@ class ThreadRepoClass implements ThreadRepositoryInterface {
             return null;
         }
     }
-    
     public function loadThreads($boardConf) {
         $threads = [];
         $stmt = $this->db->prepare("SELECT * FROM threads WHERE boardID = ?");
