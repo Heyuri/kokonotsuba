@@ -238,7 +238,7 @@ class htmlclass {
         foreach ($threads as $thread) {
             $posts = $thread->getLastNPost($this->conf['postPerThreadListing']);
             $posts[0] = $thread->getPostByID($thread->getOPPostID());
-            $omitedPost = sizeof($posts) - $thread->getPostCount() - 1;//-1 for op post
+            $omitedPost = sizeof($posts) - $thread->getPostCount();
 
             $this->html .='
             <div id="t'.$thread->getThreadID().'" class="thread">';
