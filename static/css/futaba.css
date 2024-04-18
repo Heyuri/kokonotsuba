@@ -74,6 +74,7 @@ a:hover {
 
 .reply {
 	background: #f0e0d6;
+	max-width: 90vw;
 }
 
 .replyhl {
