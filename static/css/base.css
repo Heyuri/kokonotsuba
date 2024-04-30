@@ -209,7 +209,7 @@ a[href*="youtube.com"] {
 }
 
 #blotter {
-	width: 530px;
+	max-width: 530px;
 	list-style: none;
 	margin: 0;
 	padding: 0;
