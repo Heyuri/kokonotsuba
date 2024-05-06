@@ -108,6 +108,7 @@
 						</tbody>
 					</table>
 					<hr size="1" />
+				<!--&FILE('static/html/blotter.inc.html')-->
 			</center>
 		</form>
 	</div>
