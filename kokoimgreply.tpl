@@ -118,6 +118,7 @@
 				<!--&FILE('static/html/blotter.inc.html')-->
 			</center>
 			<hr size="1" />
+			<hr size="1" />
 		</form>
 	</div>
 	<center>
