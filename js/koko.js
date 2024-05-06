@@ -563,6 +563,7 @@ const kkjs = {
 				<label><input type="checkbox" onchange="localStorage.setItem('centerthreads',this.checked);$id('jscenterthreads').disabled=!this.checked;"`+(localStorage.getItem("centerthreads")=="true"?'checked="checked"':'')+` />Center threads</label>
 				<label><input type="checkbox" onchange="localStorage.setItem('persistpager',this.checked);$id('jspersistpager').disabled=!this.checked;"`+(localStorage.getItem("persistpager")=="true"?'checked="checked"':'')+` />Persistent pager</label>
 				<label><input type="checkbox" onchange="localStorage.setItem('persistnav',this.checked);location.reload();"`+(localStorage.getItem("persistnav")=="true"?'checked="checked"':'')+` />Persistent navigation</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('neomenu',this.checked);location.reload();"`+(localStorage.getItem("neomenu")=="true"?'checked="checked"':'')+` />Use Neomenu</label>
 			`;
 		}
 		for (var i=0; i<kkjs.modules.length; i++) {
