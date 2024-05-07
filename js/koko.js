@@ -575,3 +575,34 @@ const kkjs = {
 };
 
 window.addEventListener("DOMContentLoaded", kkjs.startup);
+
+function cacheComment(text) {
+	localStorage.setItem("comment", text.value);
+}
+
+function handleCommentCachingEvent() {
+	let data;
+	data = localStorage.getItem("comment");
+
+	
+	let commentArea = document.getElementById("com");
+	commentArea.setAttribute("onkeyup", "cacheComment(this)");
+	commentArea.value = data;
+	
+	let postform = document.getElementById("postform");
+	//clear comment cache if form is submitted
+	if(postform.addEventListener){
+		postform.addEventListener("submit", function() {
+		localStorage.setItem("comment", '')}, false);
+	}else if(postform.attachEvent){
+		postform.attachEvent('onsubmit', function() {
+		localStorage.setItem("comment", '')}); 
+	}
+
+}
+
+$win.onload = function () {
+	handleCommentCachingEvent();
+}
+
+
