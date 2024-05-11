@@ -19,6 +19,7 @@ require ROOTPATH.'lib/lib_compatible.php'; // Introduce compatible libraries
 require ROOTPATH.'lib/lib_common.php'; // Introduce common function archives
 
 defined("ROLL") or define("ROLL",[]);//When undefined, empty array
+ignore_user_abort(true); 
 
 /* Update the log file/output thread */
 function updatelog($resno=0,$pagenum=-1,$single_page=false){
@@ -935,7 +936,6 @@ function regist($preview=false){
 	if($delta_totalsize != 0){
 		$FileIO->updateStorageSize($delta_totalsize);
 	}
-	updatelog();
 
 	if(isset($_POST['up_series'])){
 		if($resto) $redirect = PHP_SELF.'?res='.$resto.'&upseries=1';
@@ -943,6 +943,7 @@ function regist($preview=false){
 	}
 
 	redirect($redirect, 0);
+	updatelog();
 }
 
 /* User post deletion */
