@@ -941,7 +941,7 @@ function regist($preview=false){
 		if($resto) $redirect = PHP_SELF.'?res='.$resto.'&upseries=1';
 		else $redirect = PHP_SELF.'?res='.$lastno.'&upseries=1';
 	}
-
+	updatelog(0,0);
 	redirect($redirect, 0);
 	updatelog();
 }
