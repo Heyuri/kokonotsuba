@@ -164,9 +164,8 @@ function redirect($to, $time=0, $verbose=false) {
 	</html>';
 		exit;
 	}
-	
 	header("Location: " . $to);
-	exit;
+	fastcgi_finish_request();
 }
 
 /* 網址自動連結 */
