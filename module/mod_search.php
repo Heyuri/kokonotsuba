@@ -1,5 +1,4 @@
 <?php
-// animated gif module made for kokonotsuba by deadking
 class mod_search extends ModuleHelper {
 	private $mypage;
 	private $THUMB_EXT = THUMB_SETTING['Format'];
