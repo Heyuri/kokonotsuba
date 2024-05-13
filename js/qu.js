@@ -112,7 +112,7 @@ const kkqu = { name: "KK Quote",
 		for (var i=0; i<m.length; i++) {
 			var m2 = m[i].match(/((?:>)+)(?:No\.)?(\d+)/i);
 			var p = $id("p"+m2[2]);
-			if (!p) continue;
+			if (!p || p.classList.contains("op")) continue;
 			p.classList.add("replyhl");
 			kkqu.hl.push(p);
 		}
