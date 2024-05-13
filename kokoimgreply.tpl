@@ -40,7 +40,7 @@
 	<!--&TOPLINKS-->
 	<div class="boardlist">
 		<small class="toplinks">{$TOP_LINKS}</small>
-		<div class="adminbar">{$HOME} {$SEARCH} {$HOOKLINKS} {$ADMIN}</div>
+		<div class="adminbar">{$HOME} {$HOOKLINKS} {$ADMIN}</div>
 	</div>
 	<!--/&TOPLINKS-->
 

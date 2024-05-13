@@ -120,6 +120,7 @@ $ModuleList = array(
 	'mod_soudane',
 	'mod_rss',
 	'mod_cat',
+	'mod_search',
 	'mod_stat',
 	/* admin */
 	'mod_admindel',
