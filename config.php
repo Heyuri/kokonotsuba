@@ -142,6 +142,8 @@ define("FLAG_MODE", 1); // For the country flags module: 1 = hide flags on posts
 //mod_admindel
 define("JANIMUTE_LENGTH", 20); // Janitor mute duration (in minutes)
 define("JANIMUTE_REASON", 'You have been muted temporarily!'); // Janitor mute reason
+//mod_antiflood
+define("RENZOKU3", 30); // How many seconds between new threads?
 
 // Ban Settings
 define("BAN_CHECK", 1); // Comprehensive ban check function
@@ -164,7 +166,6 @@ define("SWF_THUMB", STATIC_URL."image/swf_thumb.png");
 // Continuous Posting Time Limits
 define("RENZOKU", 0); // Post limit, intervals in seconds
 define("RENZOKU2", 0); // Post limit for images, intervals in seconds
-define("RENZOKU3", 30); // Post limit for threads (Requires mod_antiflood)
 
 // Image Thumbnailing
 define("USE_THUMB", 1); // Enable Thumbnailing [gd, imagemagick, imagick, magickwand, repng2jpeg]
