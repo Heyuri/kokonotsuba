@@ -22,7 +22,17 @@ class mod_cat extends ModuleHelper {
 	public function autoHookToplink(&$linkbar, $isreply){
 		$linkbar .= ' [<a href="'.$this->mypage.'">Catalog</a>] ';
 	}
-
+	private function drawSortOptions() {
+		return '
+			<form action="koko.php?mode=module&load=mod_cat" method="post">
+				<span>Sort by:</span>
+				<select name="sort_by" style="display: inline-block">
+					<option selected="" value="bump">Bump order</option>
+					<option value="time">Creation date</option>
+				</select>
+				<input type="submit" value="Apply">
+			</form>';
+	}
 	public function ModulePage(){
 		$PTE = PMCLibrary::getPTEInstance();
 		$PMS = PMCLibrary::getPMSInstance();
@@ -32,14 +42,21 @@ class mod_cat extends ModuleHelper {
 
 		$list_max = $PIO->postCount();
 		$page = $_GET['page']??0;
-		$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF);
+		$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
 		$post_cnt = count($plist);
 		$page_max = ceil($post_cnt / $this->PAGE_DEF) - 1;
 
-		if($page < 0 || $page > $page_max) {
-			error('Page out of range.');
+		//sort threads. If sort is set to bump nothing will change because that is the default order returned by fetchThreadList
+		if(isset($_POST['sort_by'])) {
+			switch($_POST['sort_by']) {
+				case 'bump':
+					$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
+				break;
+				case 'time':
+					rsort($plist);
+				break;
+			}
 		}
-
 		if(THREAD_PAGINATION){ // Catalog caching
 			$cacheETag = md5($page.'-'.$post_cnt);
 			$cacheFile = STORAGE_PATH.'cache/catalog-'.$page.'.';
@@ -70,7 +87,7 @@ class mod_cat extends ModuleHelper {
 		$dat.= '
 		<script type="text/javascript" src="'.ROOTPATH.'/js/catalog.js"></script>
 		<div id="catalog">
-[<a href="'.PHP_SELF2.'?'.time().'">Return</a>]
+[<a href="'.PHP_SELF2.'?'.time().'">Return</a>] '.$this->drawSortOptions().'
 <center class="theading2"><b>Catalog</b></center>';
 
 		$dat.= '<style>';
