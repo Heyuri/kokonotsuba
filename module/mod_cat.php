@@ -48,7 +48,7 @@ class mod_cat extends ModuleHelper {
 
 		if($page < 0 || $page > $page_max) {
 			error('Page out of range.');
-
+		}
 		//sort threads. If sort is set to bump nothing will change because that is the default order returned by fetchThreadList
 		if(isset($_POST['sort_by'])) {
 			switch($_POST['sort_by']) {
