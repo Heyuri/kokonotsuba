@@ -56,7 +56,7 @@ class mod_cat extends ModuleHelper {
 					$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
 				break;
 				case 'time':
-					rsort($plist);
+					sort($plist);
 				break;
 			}
 		}
