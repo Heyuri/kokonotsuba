@@ -100,7 +100,10 @@
 			createDB($connection);
 			$connection->close();
 		}
-
+		
+		if (!is_dir(IMG_DIR)) mkdir(IMG_DIR);
+		if (!is_dir(THUMB_DIR)) mkdir(THUMB_DIR);
+		
 		echo "</div>";
 	} 
 ?>

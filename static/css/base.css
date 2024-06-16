@@ -296,12 +296,12 @@ audio {
 	.doubledash {
 		visibility: hidden;
 	}
-
 	.thread,
 	.op,
 	.reply {
 		width: 100%;
 	}
+	.postimg {display: block; float: none;}
 	.serve5 {display: none;}
 }
 
