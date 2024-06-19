@@ -563,6 +563,7 @@ function regist($preview=false){
 			$imgsize = @filesize($dest); // File size
 			if ($imgsize > MAX_KB*1024) error(_T('regist_upload_exceedcustom'));
 			$imgsize = ($imgsize>=1024) ? (int)($imgsize/1024).' KB' : $imgsize.' B'; // Discrimination of KB and B
+			setlocale(LC_ALL,'en_US.UTF-8'); // Japanese/etc special characters trimming fix
 			$fname = Cleanstr(pathinfo($upfile_name, PATHINFO_FILENAME));
 			$ext = '.'.strtolower(pathinfo($upfile_name, PATHINFO_EXTENSION));
 			if (is_array($size)) {
