@@ -1,5 +1,5 @@
 <?php
-// animated gif module made for kokonotsuba by deadking
+// catalog module
 class mod_cat extends ModuleHelper {
 	private $mypage;
 	private $PAGE_DEF = 1000;
