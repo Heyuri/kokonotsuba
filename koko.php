@@ -64,7 +64,11 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 			$inner_for_count = count($threads); // The number of discussion strings is the number of cycles
 		}
 	}else{
-		if(!$PIO->isThread($resno)){ error(_T('thread_not_found')); }
+		if(!$PIO->isThread($resno)){ // Try to find the thread by child post no. instead
+			$resnoNew = $PIO->fetchPosts($resno)[0]['resto'];
+			if (!$PIO->isThread($resnoNew)) error(_T('thread_not_found'));
+			header("Location: ".fullURL().PHP_SELF."?res=".$resnoNew."&q=".$resno."#p".$resno); // Found, redirect
+		}
 		$AllRes = isset($pagenum) && ($_GET['pagenum']??'')=='all'; // Whether to use ALL for output
 
 		// Calculate the response label range
