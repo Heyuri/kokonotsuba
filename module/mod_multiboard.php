@@ -19,17 +19,13 @@ class mod_multiboard extends ModuleHelper {
 	//configuration
 	private function getConfig() {
 	    return $conf = [
-	        'dbInfo' => [
-	            'host'     => 'localhost',
-	            'username' => 'mysqliusername',
-	            'password' => 'mysqliuserpass',
-	        ],
 	        //boards to be visible to other modules
 	        'boards' => [
 	            'b' => [
 	                'dbname' => 'boarddb',
 	                'tablename' => 'imglog',
 	                'boardname' => 'boardname',
+	                'imgpath' => '/path/to/kokonotsuba/image/dir/',
 	            ],
 	            //add more boards here
 	        ],
@@ -37,8 +33,6 @@ class mod_multiboard extends ModuleHelper {
 	    ];
 	} 
 	public function ModulePage() {
-		if (valid() < LEV_ADMIN) error('403 Access denied'); // ADMIN ONLY!
-		
 		header('Content-Type: application/json');
 		$dat = json_encode($this->getConfig(),  JSON_PRETTY_PRINT);
 		
