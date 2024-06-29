@@ -1096,7 +1096,7 @@ $message.'<br />'.$noticeHost.'
 
 		// Print out the interface
 		$dat .= '<tr align="LEFT">
-    <th align="center">' . $modFunc . '</th><th><input type="checkbox" name="clist[]" value="' . $no . '" />' . $no . '</th>
+    <th align="center">' . $modFunc . '</th><th><input type="checkbox" name="clist[]" value="' . $no . '" /><a target="_blank" href="koko.php?res=' . $no . '">' . $no . '</a></th>
     <td><small class="time">' . $now . '</small></td>
     <td><b class="title">' . $sub . '</b></td>
     <td><b class="name">' . $name . '</b></td>
