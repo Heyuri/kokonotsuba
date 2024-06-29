@@ -1,5 +1,5 @@
 <?php
-// animated gif module made for kokonotsuba by deadking
+// catalog module
 class mod_cat extends ModuleHelper {
 	private $mypage;
 	private $PAGE_DEF = 1000;
@@ -56,7 +56,7 @@ class mod_cat extends ModuleHelper {
 					$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
 				break;
 				case 'time':
-					sort($plist);
+					rsort($plist);
 				break;
 			}
 		}
@@ -64,7 +64,7 @@ class mod_cat extends ModuleHelper {
 			$cacheETag = md5($page.'-'.$post_cnt);
 			$cacheFile = STORAGE_PATH.'cache/catalog-'.$page.'.';
 			$cacheGzipPrefix = extension_loaded('zlib') ? 'compress.zlib://' : '';
-			$cacheControl = 'cache';
+			$cacheControl = 'no-cache';
 			//$cacheControl = isset($_SERVER['HTTP_CACHE_CONTROL']) ? $_SERVER['HTTP_CACHE_CONTROL'] : ''; // respect user's cache wishes? (comment out to force caching)
 			if(isset($_SERVER['HTTP_IF_NONE_MATCH']) && $_SERVER['HTTP_IF_NONE_MATCH'] == '"'.$cacheETag.'"'){
 				header('HTTP/1.1 304 Not Modified');

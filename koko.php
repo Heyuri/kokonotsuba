@@ -64,7 +64,11 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 			$inner_for_count = count($threads); // The number of discussion strings is the number of cycles
 		}
 	}else{
-		if(!$PIO->isThread($resno)){ error(_T('thread_not_found')); }
+		if(!$PIO->isThread($resno)){ // Try to find the thread by child post no. instead
+			$resnoNew = $PIO->fetchPosts($resno)[0]['resto'];
+			if (!$PIO->isThread($resnoNew)) error(_T('thread_not_found'));
+			header("Location: ".fullURL().PHP_SELF."?res=".$resnoNew."&q=".$resno."#p".$resno); // Found, redirect
+		}
 		$AllRes = isset($pagenum) && ($_GET['pagenum']??'')=='all'; // Whether to use ALL for output
 
 		// Calculate the response label range
@@ -563,6 +567,7 @@ function regist($preview=false){
 			$imgsize = @filesize($dest); // File size
 			if ($imgsize > MAX_KB*1024) error(_T('regist_upload_exceedcustom'));
 			$imgsize = ($imgsize>=1024) ? (int)($imgsize/1024).' KB' : $imgsize.' B'; // Discrimination of KB and B
+			setlocale(LC_ALL,'en_US.UTF-8'); // Japanese/etc special characters trimming fix
 			$fname = Cleanstr(pathinfo($upfile_name, PATHINFO_FILENAME));
 			$ext = '.'.strtolower(pathinfo($upfile_name, PATHINFO_EXTENSION));
 			if (is_array($size)) {

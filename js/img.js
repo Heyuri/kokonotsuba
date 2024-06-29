@@ -313,7 +313,7 @@ const kkimg = { name: "KK Image Features",
 		} else if (kkimg.vidext.includes(ext)) {
 			a.insertAdjacentHTML("afterend", '<div class="expand">'+
 				'<div>[<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]</div>'+
-				'<video controls="controls" loop="loop" autoplay="autoplay" src="'+a.href+'"></video>'+
+				'<video class="expandimg" controls="controls" loop="loop" autoplay="autoplay" src="'+a.href+'"></video>'+
 			'</div>');
 			return true;
 		} else if (kkimg.swfext.includes(ext)) {
