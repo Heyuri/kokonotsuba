@@ -90,14 +90,6 @@ class mod_movethread extends ModuleHelper {
 	    if(is_array($errarray) && $resource===false) die($query);
 	    else return $resource;
 	}
-	private function deleteThread($threadOPDat) {
-	    $PIO = PMCLibrary::getPIOInstance();
-	    $postsInThread = $PIO->fetchPostList($threadOPsDat['no']);
-	    
-        $PIO->removeAttachments($postsInThread);
-	    $PIO->removePosts($postsInThread);
-	    
-	}
 	private  function getLastPostNo($board, $state){
 	    $tree = $this->mysqli_call('SELECT AUTO_INCREMENT AS size FROM information_schema.tables WHERE table_name="'.$board['tablename'].'" AND table_schema="'.$board['dbname'].'"', array('Get the last No. failed', __LINE__));
 	    $lastno = $tree->fetch_row();
@@ -247,7 +239,6 @@ class mod_movethread extends ModuleHelper {
            
             $threadDat =  $PIO->fetchPosts($PIO->fetchPostList($post['no'])); //get posts in thread
             $this->registNewThreadToBoard($threadDat, $destination, $boardData); // copy thread to destination board 
-            //$this->deleteThread($post); //now delete thread from home board
             $this->con->commit(); //commit changes
             
 			updatelog();
