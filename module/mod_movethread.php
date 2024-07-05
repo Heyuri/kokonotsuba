@@ -37,7 +37,7 @@ class mod_movethread extends ModuleHelper {
 	private function copyFile($sourceFile, $destinationFile) {
 	    // Check if source file exists
 	    if (!file_exists($sourceFile)) {
-	        error("Source file '{$sourceFile}' does not exist.");
+	        return false;
 	    }
 	    // Attempt to copy the file
 	    if (!copy($sourceFile, $destinationFile)) {
@@ -178,23 +178,37 @@ class mod_movethread extends ModuleHelper {
 	        $this->tablename = $linkinfos[6];	// Table name
 	    }
 	} 
+	private function updateQuoteLink($threadData,  $oldPno, $newNo) {
+	    foreach($threadData as &$postcoms) {
+	        $postcoms['com'] = str_replace($oldPno, $newNo, $postcoms['com']);//skips if not found
+	    }
+	    return $threadData;
+	}
 	private function registNewThreadToBoard($threadDat, $board) {
 	    $PIO = PMCLibrary::getPIOInstance();
 	    //transfer data
 	    $threadOP = $threadDat[0];
 	    $newThreadNo = 0;
+       
+	    /* regist OP post */
+	    $newNo = $this->getLastPostNo($board, 'beforeCommit') + 1;
+	    $newThreadNo = $newNo; //if thread then set the new thread number
+	    //change quote link
+	    $threadDat = $this->updateQuoteLink($threadDat, $threadOP['no'], $newNo);
 
-	    foreach($threadDat as $post) {
+	    if($threadOP['ext'] != '') $this->copyAttachmentToBoardSrc($board, $threadOP);
+	    $this->addPost($board, $newNo, 0, $threadOP['md5chksum'], $threadOP['category'], $threadOP['tim'], $threadOP['fname'], $threadOP['ext'], $threadOP['imgw'], $threadOP['imgh'], $threadOP['imgsize'], $threadOP['tw'], $threadOP['th'], 				$threadOP['pwd'], $threadOP['now'], $threadOP['name'], $threadOP['email'], $threadOP['sub'], $threadOP['com'], $threadOP['host'], $threadOP['age'], $threadOP['status']); //add OP
+	    
+	    
+	    $threadDatModifiedCom = $threadDat; //foreach can't be modified while running
+	    foreach($threadDat as $key=>$post) {
+	       if($post['resto'] == 0) continue; // skip OP, it was already been processes
 	       $newNo = $this->getLastPostNo($board, 'beforeCommit') + 1;
-	       if($post['resto'] == 0) {
-	           $newThreadNo = $newNo; //if thread then set the new thread number
-	           
-	           $this->addPost($board, $newNo, 0, $post['md5chksum'], $post['category'], $post['tim'], $post['fname'], $post['ext'], $post['imgw'], $post['imgh'], $post['imgsize'], $post['tw'], $post['th'], $post['pwd'], $post['now'], $post['name'], $post['email'], $post['sub'], $post['com'], $post['host'], $post['age'], $post['status']); //add OP
-	           if($post['ext'] != '') $this->copyAttachmentToBoardSrc($board, $post);
-	           continue;
-	       }
-	       $this->addPost($board, $newNo, $newThreadNo, $post['md5chksum'], $post['category'], $post['tim'], $post['fname'], $post['ext'], $post['imgw'], $post['imgh'], $post['imgsize'], $post['tw'], $post['th'], $post['pwd'], $post['now'], $post['name'], $post['email'], $post['sub'], $post['com'], $post['host'], $post['age'], $post['status']);
+
+	       //change quote link (inception
+	       $threadDatModifiedCom = $this->updateQuoteLink($threadDatModifiedCom, $post['no'] , $newNo);
 	       if($post['ext'] != '') $this->copyAttachmentToBoardSrc($board, $post);
+	       $this->addPost($board, $newNo, $newThreadNo, $post['md5chksum'], $post['category'], $post['tim'], $post['fname'], $post['ext'], $post['imgw'], $post['imgh'], $post['imgsize'], $post['tw'], $post['th'], $post['pwd'], $post['now'], $post['name'], $post['email'], $post['sub'], $threadDatModifiedCom[$key]['com'], $post['host'], $post['age'], $post['status']);
 	    }
 	}
 	public function ModulePage() {
@@ -228,7 +242,7 @@ class mod_movethread extends ModuleHelper {
 			$post = $PIO->fetchPosts($no)[0]; if (!$post) error('ERROR: That thread does not exist.');
 			if($post['resto'] != 0) error('That is not a thread.');
 			$destination = $boardData['boards'][$_POST['board']]; //destination board key
-			
+
 			//exit if no board is selected
 			if(!isset($destination)) error('No board selected.');
 
