@@ -1,0 +1,204 @@
+@font-face {
+	font-family: 'submona';
+	src: url("../fonts/saitamaar_light/saitamaar_light.woff2") format('woff2'), url("../fonts/saitamaar_light/saitamaar_light.woff") format('woff')
+}
+
+@font-face {
+	font-family: 'saitamaar';
+	src: url("../fonts/saitamaar_light/saitamaar_light.woff2") format('woff2'), url("..fonts/saitamaar_light/saitamaar_light.woff") format('woff')
+}
+
+
+.postlists, .menu {
+	background-color: #CFC;
+	border-color: #ffffff;
+	border-style: solid;
+}
+.postlists {	padding: 5px;
+}
+
+.scroll {
+	height: 100px;
+	overflow: scroll;
+}
+
+.thread,
+#pager,
+.auditlog {
+	background-color: #EFEFEF;
+	border-color: #ffffff;
+	border-style: solid;
+	border-width: 1px;
+}
+
+spoiler {
+	background-color: #000;
+	transition: .3s;
+	color: #000;
+}
+
+spoiler:hover {
+	background-color: inherit;
+	color: inherit;
+}
+pre {
+	padding: 0;
+	
+}
+
+.post.op:target {
+	background-color: inherit;
+	/* THIS HAS TO BE THE SAME MOTHERFUCKING COLOR AS THE MOTHERFUCKING BACKGROUND!!!!!!!!! */
+}
+
+.code {
+	background-color: #ffffff;
+	color: #000;
+	font-family: monospace;
+	line-height: 1;
+	padding: 10px;
+	font-size: 10pt;
+	 white-space: pre-wrap;       /* css-3 */
+ white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+ white-space: -pre-wrap;      /* Opera 4-6 */
+ white-space: -o-pre-wrap;    /* Opera 7 */
+ word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+.staffico {
+	vertical-align: middle;
+    image-rendering: optimizeSpeed;             /* STOP SMOOTHING, GIVE ME SPEED  */
+    image-rendering: -moz-crisp-edges;          /* Firefox                        */
+    image-rendering: -o-crisp-edges;            /* Opera                          */
+    image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
+    image-rendering: pixelated; /* Chrome */
+    image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
+
+
+	
+}
+#update-status {
+	color: #af0a0f;
+	
+}
+
+.hooklinks {
+padding-top: 12px;
+}
+.sod {
+	color: #000000;
+	text-decoration: none;
+	
+}
+.unkfunc2 {color: #dd00a9;}
+#com {
+	width: 400px;
+	height: 150px;
+	
+}
+
+.tnav a {
+	text-decoration: none;
+}
+
+.postnum a {
+	text-decoration: none;
+	color: #000;
+	font-weight: bold;
+}
+
+.ascii {
+	font-family: "Mona", "IPAMonaGothic", 'MS PGothic', 'saitamaar', 'submona' !important;
+	-webkit-font-smoothing: none;
+	word-wrap: break-word;
+	line-height: 1;
+	font-size: 12pt;
+	padding: 0;
+}
+
+.penis {
+	font-size: 13pt;
+	background-color: #663399;
+	color: #00ffff;
+}
+
+.infosection {
+	background-color: #ffffff;
+	border-radius: 6px;
+	text-align: center;
+	width: 55%;
+	margin: auto;
+	padding: 7px;
+	font-weight: bold;
+	color: #666666;
+	font-size: 12pt;
+}
+
+.nobr {
+	margin: 0;
+	padding: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	display: inline;
+	text-overflow: ellipsis;
+}
+
+.title2 {
+	background-color: #3399ff;
+	color: #fff;
+	border-radius: 6px;
+	padding: 3px;
+}
+
+.info5ch {
+	background-color: #eeffee;
+	overflow-y: scroll;
+	height: 150px;
+	border-radius: 6px;
+	border: 1px solid #eeffee;
+	padding: 4px;
+	color: #333333;
+	font-weight: bold;
+	margin-right: auto;
+	width: 80%;
+}
+
+.info5chheader {
+	color: #ff0000;
+	margin: 0;
+}
+
+.menu2 {
+	background-color: #CFC;
+	height: 220px;
+}
+.menu {
+	background-color: #CFC;
+}
+
+
+
+input,
+button,
+summary,
+select,
+textarea,
+select,
+option,
+audio {
+	border-width: 1px;
+	border-radius: 0;
+	outline-style: none;
+	padding: 1;
+}
+
+
+.mnav,.mnav2, .galleryb, #expandall{
+display: none;
+}
+
+.toplinks {
+float: left;
+font-size: 10pt;
+}
+.neomenu .menulist {background-color: #cfc;}
