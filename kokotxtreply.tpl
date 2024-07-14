@@ -19,35 +19,34 @@
 	<meta name="Berry" content="no" />
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive" />
-    <link class="linkstyle" rel="stylesheet" type="text/css" href="https://k.kncdn.org/csstxt/pseud0ch2.css" title="Pseud0ch" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/csstxt/pseud0ch.css" title="Pseud0ch Mona" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/csstxt/pseud0ch3.css" title="Pseud0ch Times New Roman" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/csstxt/kareha.css" title="Kareha" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://k.kncdn.org/csstxt/mobile.css?v2" title="Mobile" />
+    <link class="linkstyle" rel="stylesheet" type="text/css" href="{$STATIC_URL}css/txt/pseud0ch2.css" title="Pseud0ch" />
+	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/pseud0ch.css" title="Pseud0ch Mona" />
+	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/pseud0ch3.css" title="Pseud0ch Times New Roman" />
+	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/kareha.css" title="Kareha" />
+	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/mobile.css" title="Mobile" />
 	<meta http-equiv="cache-control" content="no-cache" />
-	<link rel="shortcut icon" href="image/favicon.png" />
-	<script type="text/javascript" src="js/koko.js"></script>
-	<script type="text/javascript" src="js/qr.js"></script>
-	<script type="text/javascript" src="js/qu.js"></script>
-	<script type="text/javascript" src="js/qu2.js"></script>
-	<script type="text/javascript" src="js/style.js"></script>
-	<script type="text/javascript" src="js/catalog.js"></script>
-	<script type="text/javascript" src="js/insert.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/koko.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/qr.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/qu.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/qu2.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/style.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/catalog.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/insert.js"></script>
 	<!--/&HEADER-->
 
 	<!--&TOPLINKS-->
 	<div class="boardlist"<!--&IF($IS_THREAD,' style="display:none"','')-->>
 		<span class="toplinks">{$TOP_LINKS}</span>
-		<div class="adminbar" align="RIGHT">{$HOME} {$SEARCH} {$HOOKLINKS} {$ADMIN}</div>
+		<div class="adminbar" align="RIGHT">{$HOME} {$HOOKLINKS} {$ADMIN}</div>
 	</div>
 	<!--/&TOPLINKS-->
 
 	<!--&BODYHEAD-->
 
 <body class="thread" style="border:none;padding:0px;margin:0px;background-image:none;margin-left:0px; padding-top: 1px;";>
-	[<a href="{$PHP_SELF2}">Return</a>]  {$HOME} {$SEARCH}
+	[<a href="{$PHP_SELF2}">Return</a>]  {$HOME}
 	<hr>
-	<script id="wz_tooltip" type="text/javascript" src="js/wz_tooltip.js"></script>
+	<script id="wz_tooltip" type="text/javascript" src="{$STATIC_URL}js/wz_tooltip.js"></script>
 	<!--&TOPLINKS/-->
 	<!--/&BODYHEAD-->
 
