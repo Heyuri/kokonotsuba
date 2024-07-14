@@ -1,0 +1,7 @@
+@import "pseud0ch2.css?v3";
+body {
+	font-family: Mona, 'MS PGothic' !important;
+	word-wrap: break-word;
+	line-height: 1;
+	font-size: 12pt;
+}
