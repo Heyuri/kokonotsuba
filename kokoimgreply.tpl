@@ -26,14 +26,14 @@
 
 
 	<meta http-equiv="cache-control" content="no-cache" />
-	<link rel="shortcut icon" href="static/image/favicon.png" />
-	<script type="text/javascript" src="js/koko.js"></script>
-	<script type="text/javascript" src="js/qu.js"></script>
-	<script type="text/javascript" src="js/qu2.js"></script>
-	<script type="text/javascript" src="js/style.js"></script>
-	<script type="text/javascript" src="js/img.js"></script>
-	<script type="text/javascript" src="js/inline.js"></script>
-	<script type="text/javascript" src="js/update.js"></script>
+	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png" />
+	<script type="text/javascript" src="{$STATIC_URL}js/koko.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/qu.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/qu2.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/style.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/img.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/inline.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/update.js"></script>
 	<script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
 	<!--/&HEADER-->
 
@@ -47,14 +47,12 @@
 	<!--&BODYHEAD-->
 
 <body>
-	<script id="wz_tooltip" type="text/javascript" src="js/wz_tooltip.js"></script>
+	<script id="wz_tooltip" type="text/javascript" src="{$STATIC_URL}js/wz_tooltip.js"></script>
 	<a name="top"></a>
 	<!--&TOPLINKS/-->
 	<center id="header">
 		<div class="logo">
 			<br />
-			<noscript><img border="1" src="https://heyuri.net/banners.php" /></noscript>
-			<script src="https://static.heyuri.net/js/banner.js"></script>
 			<br />
 			<h1 class="mtitle">{$TITLE}</h1>
 			{$TITLESUB}
