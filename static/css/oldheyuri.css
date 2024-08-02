@@ -7,8 +7,6 @@
 @import "base.css";
 
 body {
-    font-family:IPAMonaPGothic,'IPA モナー Pゴシック',Monapo,Mona,'MS Pgothic','MS Pゴシック',submona;
-    font-size: 12pt;
     background-color: #FFE;
     background-image: linear-gradient(#FCA, #FFE);
     background-size: 100% 500px;
@@ -30,7 +28,6 @@ table, table td {
     border-left: none;
     border-top: none;
     border-color: #BE8080;
-    padding: 2px;
 }
 
 .post:target, .replyhl {
@@ -41,17 +38,12 @@ table, table td {
     border: 1px solid;
     border-color: #BE8080;
     border-radius: 5px;
-    margin: -1px;
 }
 
 .inputtext {
-    margin: 0;
-    margin-right: 2px;
-    padding: 1px 4px;
     border: 1px solid #AAA;
     border-radius: 0px; /* Chrome fucks up borders */
     outline: none;
-    font-size: 10pt;
 }
 
 .inputtext:focus {
@@ -61,15 +53,6 @@ table, table td {
 button,input[type=submit],input[type=reset] {
     border-radius: 0;
     border-width: 1px;
-    padding: 1px 0.5em;
-    margin: 0;
-    margin-right: 2px;
-}
-
-.logo h1 {
-    font-family: Tahoma, Verdana, Arial, Helvetica;
-    font-size: 20pt;
-    margin: 0;
 }
 
 hr {
@@ -88,18 +71,12 @@ hr {
 
 .postblock {
     border: 1px outset #BE8080;
-    font-size: 11pt;
-    padding: 0px 5px;
 }
 
 iframe, .rotating { background: #F0E0D6; border-right: 1px solid #D9BFB7; border-bottom: 1px solid #D9BFB7; }
 
 #pager {
     background-color: #F0E0D6;
-}
-
-#pager td {
-    padding: 2px 5px;
 }
 
 a, a:link a:visited {
@@ -122,11 +99,6 @@ a:hover {
 .quotelink {
     color: #000080;
     text-decoration: underline;
-}
-
-.rules {
-    margin: 0;
-    padding: 0 0 0 1.25em;
 }
 
 .postblock {
@@ -157,11 +129,6 @@ a:hover {
 
 .omittedposts {
     color: #707070;
-}
-
-.postlists {
-    min-width: 500px;
-    max-width: 100%;
 }
 
 .postlists th {
@@ -206,27 +173,11 @@ a:hover {
 
 .theading, .theading2, .theading3 {
     color: #FFF;
-    padding: 2px 0;
-    margin-top: 0.2em;
-    margin-bottom: 0.5em;
-}
-
-.icon {
-    vertical-align: bottom;
 }
 
 #catalog .thumb {
     box-shadow: 0 0 5px rgb(0 0 0 / 25%);
-    min-width: 50px;
-    min-height: 50px;
     border-radius: 2px;
-}
-
-.ascii {
-    font-family: Mona, 'MS PGothic'!important;
-    word-wrap: break-word;
-    line-height: 1;
-    font-size: 12pt;
 }
 
 .error, .offline {
@@ -242,28 +193,9 @@ a:hover {
 }
 
 .auditlog {
-    margin: 0.5em;
-    padding: 1em;
     background-color: #EA8;
     border-style: solid;
     border-width: 1px;
-    max-width: 720px;
-}
-
-#catalog .thread {
-    width: 180px;
-    min-width: 180px;
-    max-width: 180px;
-    overflow: hidden;
-    vertical-align: top;
-    padding: 0.5em 0;
-}
-
-#catalog .thread:hover {
-    width: 180px;
-    min-width: 180px;
-    max-width: 180px;
-    overflow-y: auto;
 }
 
 .winbar {
@@ -272,12 +204,6 @@ a:hover {
 
 .winctrl>*:hover, #settarea>label:hover {
     background-color: #FFA66066;
-}
-
-.boardlist {
-	font-size: 10pt;
-	background-color: #efe1d7;
-	color: #bb8866;
 }
 
 .boardlist a {
