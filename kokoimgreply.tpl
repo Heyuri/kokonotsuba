@@ -19,13 +19,10 @@
 	<meta name="Berry" content="no" />
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive" />
-	<link class="linkstyle" rel="stylesheet" type="text/css" href="{$STATIC_URL}/css/heyuriclassic.css" title="Heyuri Classic" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}/css/futaba.css" title="Futaba" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}/css/oldheyuri.css" title="Sakomoto" />
-
-
-
-	<meta http-equiv="cache-control" content="no-cache" />
+	<link class="linkstyle" rel="stylesheet" type="text/css" href="{$STATIC_URL}css/heyuriclassic.css" title="Heyuri Classic" />
+	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/futaba.css" title="Futaba" />
+	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/oldheyuri.css" title="Sakomoto" />
+	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/base.css" title="Import Custom" />
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png" />
 	<script type="text/javascript" src="{$STATIC_URL}js/koko.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/qu.js"></script>
