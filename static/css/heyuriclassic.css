@@ -7,14 +7,15 @@
     font-style:            normal;
     unicode-range:         U+0-10FFFF;
     font-weight:           normal;
-    src:                   url('Osaka.woff');
+    src:                   url('fonts/osaka/Osaka.woff');
     font-display:          swap;
   }
 
 @font-face {
         font-family:'submona';
-        src:url('submona/submona.woff') format('woff');
+        src:url('fonts/submona/submona.woff') format('woff');
 }
+
 body {
 	background-image: linear-gradient(#ffccab, #ffffee);
 	background-size: 100% 500px;
@@ -66,7 +67,7 @@ a,
 a:link,
 a:visited {
 	color: #0000ee;
-text-decoration: underline;
+	text-decoration: underline;
 }
 
 a:hover {
@@ -92,22 +93,11 @@ a:hover {
 	/* SHOULD BE SAME COLOR AS BG */
 }
 
-.post.op.replyhl {
-	border: 1px solid;
-	border-color: #000;
-	border-radius: 5px;
-	margin: -1px;
-}
-
 .inputtext {
-	margin: 0;
-	margin-right: 2px;
-	padding: 1px 4px;
 	border: 1px solid #38444d;
 	border-radius: 0px;
 	/* Chrome fucks up borders */
 	outline: none;
-	font-size: 10pt;
 	color: #000;
 }
 
@@ -120,9 +110,6 @@ input[type=submit],
 input[type=reset] {
 	border-radius: 0;
 	border-width: 1px;
-	padding: 1px 0.5em;
-	margin: 0;
-	margin-right: 2px;
 }
 
 .logo h1 {
@@ -140,8 +127,6 @@ hr {
 }
 
 .postblock {
-	font-size: 11pt;
-	padding: 0px 5px;
 	background-color: #425c98;
 }
 
@@ -186,14 +171,9 @@ a:hover {
 
 }
 
-.rules {
-	margin: 0;
-	padding: 0 0 0 1.25em;
-}
-
 .postblock {
 	background: #eeaa88;
-border: 1px solid #800043;
+	border: 1px solid #800043;
 }
 
 
@@ -214,8 +194,6 @@ border: 1px solid #800043;
 }
 
 .postlists {
-	min-width: 500px;
-	max-width: 100%;
 	border: 1px solid #000;
 }
 
@@ -256,9 +234,6 @@ border: 1px solid #800043;
 .theading2,
 .theading3 {
 	color: #FFF;
-	padding: 2px 0;
-	margin-top: 0.2em;
-	margin-bottom: 0.5em;
 }
 
 .icon {
@@ -267,29 +242,10 @@ border: 1px solid #800043;
 
 #catalog .thumb {
 	box-shadow: 0 0 5px rgb(0 0 0 / 25%);
-	min-width: 50px;
-	min-height: 50px;
 	border-radius: 2px;
 }
 
-#catalog .thread {
-	width: 180px;
-	min-width: 180px;
-	max-width: 180px;
-	overflow-y: hidden;
-	vertical-align: top;
-	padding: 0.5em 0;
-}
-
-#catalog .thread:hover {
-	width: 180px;
-	min-width: 180px;
-	max-width: 180px;
-	overflow-y: auto;
-}
-
 .boardlist {
-	font-size: 10pt;
 	background-color: #efe1d7;
 	color: #bb8866;
 }
