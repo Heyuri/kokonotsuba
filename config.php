@@ -3,12 +3,12 @@
 // Server Settings
 if(!defined('DEBUG')) define("DEBUG", false); // Set to "true" to generate detailed debug settings in the error.log file
 define("ROOTPATH", './'); // Main Program Root Directory
-define("STORAGE_PATH", 'dat/'); // Storage directory, needs to have 777 permissions (include trailing '/')
+define("STORAGE_PATH", 'dat/'); // Storage directory, needs to have 777 permissions. Include trailing '/'
 define("TIME_ZONE", '0'); // Timezones, 0 is UTC. Example: '-4' for New York, or '9' for Japan
 define("PIXMICAT_LANGUAGE", 'en_US'); // Language (available languages in /lib/lang/)
 define("HTTP_UPLOAD_DIFF", 50); 
 ini_set("memory_limit", '128M'); // Maximum allowed memory usage by php 
-define("STATIC_URL", './static/'); // Where static files are stored. Can be a url.
+define("STATIC_URL", './static/'); // Where static files are stored. Can be a url. Include trailing '/'
 define("ACTION_LOG", 'audit.log.txt');
 
 // FileIO settings 
