@@ -3,7 +3,7 @@
 class mod_cat extends ModuleHelper {
 	private $mypage;
 	private $PAGE_DEF = 1000;
-	private $RESICON = STATIC_URL.'/image/replies.png';
+	private $RESICON = STATIC_URL.'image/replies.png';
 	private $THUMB_EXT = THUMB_SETTING['Format'];
 
 	public function __construct($PMS) {
@@ -88,7 +88,7 @@ class mod_cat extends ModuleHelper {
 
 		head($dat);
 		$dat.= '
-		<script type="text/javascript" src="'.STATIC_URL.'/js/catalog.js"></script>
+		<script type="text/javascript" src="'.STATIC_URL.'js/catalog.js"></script>
 		<div id="catalog">
 [<a href="'.PHP_SELF2.'?'.time().'">Return</a>] '.$this->drawSortOptions().'
 <center class="theading2"><b>Catalog</b></center>';
