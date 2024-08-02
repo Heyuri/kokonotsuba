@@ -23,7 +23,7 @@
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/futaba.css" title="Futaba" />
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/oldheyuri.css" title="Sakomoto" />
 <link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/base.css" title="Import Custom" />
-	<link rel="shortcut icon" href="static/image/favicon.png" />
+	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png" />
 	<script type="text/javascript" src="{$STATIC_URL}js/koko.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/qu.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/qu2.js"></script>
