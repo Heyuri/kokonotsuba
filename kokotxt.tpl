@@ -24,7 +24,6 @@
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/pseud0ch3.css" title="Pseud0ch Times New Roman" />
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/kareha.css" title="Kareha" />
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/mobile.css" title="Mobile" />
-	<meta http-equiv="cache-control" content="no-cache" />
 	<script type="text/javascript" src="{$STATIC_URL}js/koko.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/qr.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/qu.js"></script>
