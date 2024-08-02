@@ -6,6 +6,10 @@
 	font-display: swap;
 }
 
+body {
+    font-family:IPAMonaPGothic,'IPA モナー Pゴシック',Monapo,Mona,'MS Pgothic','MS Pゴシック',submona;
+    font-size: 12pt;
+}
 
 .inlineborder {
 	color: #cccccc;
@@ -42,13 +46,13 @@ pre {
 }
 
 .download{
-vertical-align: text-bottom; 
-width: 16px;
-height: 16px;
-margin: 0px;
-padding: 0px;
-display: inline-block;
-background-image: url(download.png);
+	vertical-align: text-bottom; 
+	width: 16px;
+	height: 16px;
+	margin: 0px;
+	padding: 0px;
+	display: inline-block;
+	background-image: url(download.png);
 
 }
 
@@ -204,7 +208,6 @@ a[href*="youtube.com"] {
 .boardlisticon {
 	width: 16px;
 	height: 16px;
-	background-image: url(//s.kncdn.org/image/icon/svg/cog.svg);
 	fill: #ff6600;
 }
 
@@ -316,4 +319,130 @@ blockquote {
 
 .expandimg {
 	max-width: 100%;
+}
+
+.reply {
+    padding: 2px;
+}
+
+.post.op:target, .post.op.replyhl {
+    margin: -1px;
+}
+
+.inputtext {
+    margin: 0;
+    margin-right: 2px;
+    padding: 1px 4px;
+    font-size: 10pt;
+}
+
+button,input[type=submit],input[type=reset] {
+    padding: 1px 0.5em;
+    margin: 0;
+    margin-right: 2px;
+}
+
+#pager td {
+    padding: 2px 5px;
+}
+
+.postlists {
+    min-width: 500px;
+    max-width: 100%;
+    font-size: 9pt;
+}
+
+.theading, .theading2, .theading3 {
+    padding: 2px 0;
+    margin-top: 0.2em;
+    margin-bottom: 0.5em;
+}
+
+.icon {
+    vertical-align: bottom;
+}
+
+#catalog .thumb {
+    min-width: 50px;
+    min-height: 50px;
+}
+
+.ascii {
+    font-family: Mona, 'MS PGothic'!important;
+    word-wrap: break-word;
+    line-height: 1;
+    font-size: 12pt;
+}
+
+.auditlog {
+    margin: 0.5em;
+    padding: 1em;
+    max-width: 720px;
+}
+
+#catalog .thread {
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
+    overflow-wrap: break-word;
+    vertical-align: top;
+    padding: 0.5em 0;
+}
+
+#catalog .thread:hover {
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
+    overflow-y: auto;
+}
+
+.boardlist {
+	font-size: 10pt;
+}
+
+.postblock {
+    font-size: 11pt;
+    padding: 0px 5px;
+}
+
+.logo h1 {
+    font-family: Tahoma, Verdana, Arial, Helvetica;
+    font-size: 20pt;
+    margin: 0;
+}
+
+.rules {
+    margin: 0;
+    padding: 0 0 0 1.25em;
+}
+
+.managecom {
+	overflow-y: scroll; 
+	overflow-wrap: break-word; 
+	width: 300px; 
+	height: 60px; 
+	margin-left: 1px;
+	margin-top: 1px;
+}
+
+.managesub {
+	overflow-y: scroll; 
+	overflow-wrap: break-word; 
+	width: 200px;
+	height: 60px;
+	display: inline-block;
+}
+
+.managename {
+	overflow-x: scroll; 
+	width: 200px;
+	height: 60px;
+	display: inline-block;
+}
+
+.managehash {
+	overflow-x: scroll; 
+	width: 150px;
+	height: 60px;
+	display: inline-block;
 }
