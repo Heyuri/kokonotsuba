@@ -19,11 +19,12 @@
 	<meta name="Berry" content="no" />
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive" />
-    <link class="linkstyle" rel="stylesheet" type="text/css" href="{$STATIC_URL}css/txt/pseud0ch2.css" title="Pseud0ch" />
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/pseud0ch.css" title="Pseud0ch Mona" />
+	<link class="linkstyle" rel="stylesheet" type="text/css" href="{$STATIC_URL}css/txt/pseud0ch.css" title="Pseud0ch Mona" />
+	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/pseud0ch2.css" title="Pseud0ch" />
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/pseud0ch3.css" title="Pseud0ch Times New Roman" />
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/kareha.css" title="Kareha" />
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/mobile.css" title="Mobile" />
+	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png" />
 	<script type="text/javascript" src="{$STATIC_URL}js/koko.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/qr.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/qu.js"></script>
