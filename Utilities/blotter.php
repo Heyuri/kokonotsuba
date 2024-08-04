@@ -58,13 +58,13 @@ if($_SERVER['QUERY_STRING']=='rebuild'){
 			<meta name="Berry" content="no" />
 			<title>Blotter@Heyuri</title>
 			<meta name="robots" content="follow,archive" />
-			<link class="linkstyle" rel="stylesheet" type="text/css" href="https://static.heyuri.net/css/koko/heyuriclassic.css" title="Heyuri Classic" />
-			<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://static.heyuri.net/css/koko/futaba.css" title="Futaba" />
-			<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="https://static.heyuri.net/css/koko/oldheyuri.css" title="Sakomoto" />			<meta http-equiv="cache-control" content="no-cache" />
-			<link rel="shortcut icon" href="https://static.heyuri.net/koko/image/favicon.png" />
+			<link class="linkstyle" rel="stylesheet" type="text/css" href="../static/css/heyuriclassic.css" title="Heyuri Classic" />
+			<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="../static/css/futaba.css" title="Futaba" />
+			<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="../static/css/oldheyuri.css" title="Sakomoto" />			<meta http-equiv="cache-control" content="no-cache" />
+			<link rel="shortcut icon" href="../static/image/favicon.png" />
 
-			<script type="text/javascript" src="https://static.heyuri.net/js/koko/koko.js"></script>
-			<script type="text/javascript" src="https://static.heyuri.net/js/koko/style.js"></script>			
+			<script type="text/javascript" src="../static/js/koko.js"></script>
+			<script type="text/javascript" src="../static/js/koko/style.js"></script>			
 <link rel="alternate" type="application/rss+xml" title="RSS 2.0 Feed" href="//img.heyuri.net/b/koko.php?mode=module&amp;load=mod_rss" /></head><body class="heyuri"><a name="top"></a>
 		<div id="nav">
 			<?=BOARDLIST?>
