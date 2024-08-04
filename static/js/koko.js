@@ -378,7 +378,7 @@ const kkjs = {
 		kkjs.sett_init();
 		$doc.postform &&
 			$id("rules").insertAdjacentHTML("beforeend",
-			'<span id="formfuncs"><a href="javascript:kkjs.form_switch();">Switch form position</a></span>');
+			'<span id="formfuncs"></span>');
 		kkjs.modules.forEach( function(mod) {
 			try {
 				if (!mod.startup()) {
