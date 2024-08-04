@@ -1,8 +1,3 @@
-/* thx to "yot" from Heyuri.net for first creating this script.  */
-/* Add emotes v1.5 */
-/* get it from https://up.heyuri.net/src/3512.txt */
-/* old version @ https://up.heyuri.net/src/2572.js */
-
 /*
 add text to where the cursor is located in a textarea (and focus on it)
 this also replaces any selected text!
