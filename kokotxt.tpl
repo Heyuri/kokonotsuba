@@ -233,4 +233,5 @@
 <div id="postarea2"></div>
 {$PAGENAV}
 <br clear="ALL" />
+<script type="text/javascript" src="{$STATIC_URL}js/addemotestxt.js"></script>
 <!--/&MAIN-->
