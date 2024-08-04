@@ -50,9 +50,12 @@
 	<center id="header">
 		<div class="logo">
 			<br />
+			<noscript><img border="1" src="./Utilities/banners.php" /></noscript>
+			<script src="{$STATIC_URL}js/banner.js"></script>
+			<br />
 			<h1 class="mtitle">{$TITLE}</h1>
 			{$TITLESUB}
-			<hr class="top" width="90%" size="1" />
+			<hr size="1" />
 		</div>
 	</center>
 	<!--/&BODYHEAD-->
