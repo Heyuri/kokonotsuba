@@ -82,7 +82,7 @@ class mod_bbcode extends ModuleHelper {
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
-		$this->myPage = $this->getModulePageURL();// 基底位置
+		$this->myPage = $this->getModulePageURL(); // Base position
 	}
 
 	public function getModuleName(){
