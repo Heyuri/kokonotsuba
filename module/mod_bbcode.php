@@ -2,12 +2,12 @@
 class mod_bbcode extends ModuleHelper { 
 	private $myPage;
 	private $urlcount;
-	private	$ImgTagTagMode = 0; // [img] tag behavior (0: no conversion 1: conversion when no textures 2: always conversion)
-	private	$URLTagMode = 0; // [url] tag behavior (0: no conversion 1: normal)
-	private	$MaxURLCount = 2; // [url] tag upper limit (when the upper limit is exceeded, the tag is a trap tag [written to $URLTrapLog])
-	private	$URLTrapLog = './URLTrap.log'; // [url]trap label log file
+	private	$ImgTagTagMode = 0; // [img]標籤行為 (0:不轉換 1:無貼圖時轉換 2:常時轉換)
+	private	$URLTagMode = 0; // [url]標籤行為 (0:不轉換 1:正常)
+	private	$MaxURLCount = 2; // [url]標籤上限 (超過上限時標籤為陷阱標籤[寫入至$URLTrapLog])
+	private	$URLTrapLog = './URLTrap.log'; // [url]陷阱標籤記錄檔
 	private $AATagMode = 1; // Koko [0:Enabled 1:Disabled]
-	private $supportRuby = 0; // <ruby> tag (0: not supported 1: supported)
+	private $supportRuby = 0; // <ruby> tag (0:不支持 1:支持)
 	private $emotes = array(
 			'nigra'=>STATIC_URL.'image/emote/nigra.gif',
 			'sage'=>STATIC_URL.'image/emote/sage.gif',
@@ -24,6 +24,9 @@ class mod_bbcode extends ModuleHelper {
 			'dizzy'=>STATIC_URL.'image/emote/emo-yotsuba-dizzy.gif',
 			'drool'=>STATIC_URL.'image/emote/emo-yotsuba-drool.gif',
 			'love'=>STATIC_URL.'image/emote/emo-yotsuba-heart.gif',
+			'blush'=>STATIC_URL.'image/emote/emo-yotsuba-blush3.gif',
+			'mask'=>STATIC_URL.'image/emote/emo-yotsuba-mask.gif',
+			'lolico'=>STATIC_URL.'image/emote/emo-yotsuba-lolico.gif',
 			'glare'=>STATIC_URL.'image/emote/emo-yotsuba-glare.gif',
 			'glare1'=>STATIC_URL.'image/emote/emo-yotsuba-glare-01.gif',
 			'glare2'=>STATIC_URL.'image/emote/emo-yotsuba-glare-02.gif',
@@ -52,17 +55,34 @@ class mod_bbcode extends ModuleHelper {
 			'party'=>STATIC_URL.'image/emote/emo-yotsuba-partyhat.png',
 			'mona2'=>STATIC_URL.'image/emote/mona2.gif',
 			'nida'=>STATIC_URL.'image/emote/nida.gif',
+			'saitama'=>STATIC_URL.'image/emote/anime_saitama05.gif',
 			'banana'=>STATIC_URL.'image/emote/banana.gif',
+			'onigiri'=>STATIC_URL.'image/emote/onigiri.gif',
+			'shii'=>STATIC_URL.'image/emote/anime_shii01.gif',
 			'af2'=>STATIC_URL.'image/emote/af2.gif',
+			'pata'=>STATIC_URL.'image/emote/u_pata.gif',
+			'depression'=>STATIC_URL.'image/emote/u_sasu.gif',
+			'saitama2'=>STATIC_URL.'image/emote/anime_saitama06.gif',
+			'monapc'=>STATIC_URL.'image/emote/anime_miruna_pc.gif',
+			'purin'=>STATIC_URL.'image/emote/purin.gif',
+			'ranta'=>STATIC_URL.'image/emote/anime_imanouchi04.gif',
 			'nagato'=>STATIC_URL.'image/emote/nagato.gif',
-			'folder'=>STATIC_URL.'image/emote/folder.gif',
+			'foruda'=>STATIC_URL.'image/emote/foruda.gif',
 			'sofa'=>STATIC_URL.'image/emote/sofa.gif',
+			'hardgay'=>STATIC_URL.'image/emote/hg.gif',
 			'iyahoo'=>STATIC_URL.'image/emote/iyahoo.gif',
+			'tehegg'=>STATIC_URL.'image/emote/egg.gif',
+			'kuz'=>STATIC_URL.'image/emote/emo-yotsuba-tomo.gif',
+			'emo'=>STATIC_URL.'image/emote/emo.gif',
+			'dance'=>STATIC_URL.'image/emote/heyuri-dance.gif',
+			'dance2'=>STATIC_URL.'image/emote/heyuri-dance-pantsu.gif',
+			'kuma6'=>STATIC_URL.'image/emote/kuma6.gif',
+			'waha'=>STATIC_URL.'image/emote/waha.gif',
 		);
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
-		$this->myPage = $this->getModulePageURL();// Base position
+		$this->myPage = $this->getModulePageURL();// 基底位置
 	}
 
 	public function getModuleName(){
@@ -84,11 +104,11 @@ class mod_bbcode extends ModuleHelper {
 		$string = preg_replace('#\[spoiler\](.*?)\[/spoiler\]#si', '<span class="spoiler">\1</span>', $string);
 		$string = preg_replace('#\[code\](.*?)\[/code\]#si', '<pre class="code">\1</pre>', $string);
 		$string = preg_replace('#\[i\](.*?)\[/i\]#si', '<i>\1</i>', $string);
-		$string = preg_replace('#\==(.*?)==#si', '<span class="soot">\1</span>', $string);
 		$string = preg_replace('#\[u\](.*?)\[/u\]#si', '<u>\1</u>', $string);
 		$string = preg_replace('#\[p\](.*?)\[/p\]#si', '<p>\1</p>', $string);
 		$string = preg_replace('#\[sw\](.*?)\[/sw\]#si', '<pre class="sw">\1</pre>', $string);
 		$string = preg_replace('#\[kao\](.*?)\[/kao\]#si', '<span class="ascii">\1</span>', $string);
+		
 		$string = preg_replace('#\[color=(\S+?)\](.*?)\[/color\]#si', '<font color="\1">\2</font>', $string);
 
 		$string = preg_replace('#\[s([1-7])\](.*?)\[/s([1-7])\]#si', '<font size="\1">\2</font>', $string);
@@ -97,7 +117,7 @@ class mod_bbcode extends ModuleHelper {
 		$string = preg_replace('#\[pre\](.*?)\[/pre\]#si', '<pre>\1</pre>', $string);
 		$string = preg_replace('#\[quote\](.*?)\[/quote\]#si', '<blockquote>\1</blockquote>', $string);
 		$string = preg_replace('#\[scroll\](.*?)\[/scroll\]#si', '<div style="overflow:scroll; max-height: 200px;">\1</div>', $string);
-		
+
 		if ($this->supportRuby){
 		//add ruby tag
 			$string = preg_replace('#\[ruby\](.*?)\[/ruby\]#si', '<ruby>\1</ruby>', $string);
@@ -175,11 +195,10 @@ class mod_bbcode extends ModuleHelper {
 		$string = preg_replace('#<span class="spoiler">(.*?)</span>#si', '[spoiler]\1[/spoiler]', $string);
 		$string = preg_replace('#<pre class="code">(.*?)</pre>#si', '[aa]\1[/aa]', $string);
 		$string = preg_replace('#<i>(.*?)</i>#si', '[i]\1[/i]', $string);
-		$string = preg_replace('#<span class="soot">(.*?)</span>#si', '==\1==', $string);
 		$string = preg_replace('#<u>(.*?)</u>#si', '[u]\1[/u]', $string);
 		$string = preg_replace('#<p>(.*?)</p>#si', '[p]\1[/p]', $string);
 		$string = preg_replace('#<pre class="sw">(.*?)</pre>#si', '[sw]\1[/sw]', $string);
-		
+
 		$string = preg_replace('#<font color="(\S+?)">(.*?)</font>#si', '[color=\1]\2[/color]', $string);
 
 		$string = preg_replace('#<font size="([1-7])">(.*?)</font>#si', '[s\1]\2[/s\1]', $string);
