@@ -51,7 +51,7 @@
 		<div class="logo">
 			<br />
 			<noscript><img border="1" src="./Utilities/banners.php" /></noscript>
-			<script src="{$STATIC_URL}js/banner.js"></script>
+			<script src="{$STATIC_URL}js/banners.js"></script>
 			<br />
 			<h1 class="mtitle">{$TITLE}</h1>
 			{$TITLESUB}
