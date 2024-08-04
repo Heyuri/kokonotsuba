@@ -1,4 +1,4 @@
-    <?php
+<?php
     class mod_wf implements IModule {
       private $FILTERS = array(
      
