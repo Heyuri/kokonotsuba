@@ -1,11 +1,8 @@
-/* LOL HEYURI
- */
-
 document.write(`<style>
-#catsett {
+/* #catsett {
 	float: right;
 	height: 0;
-}
+} */
 #sett_cols {
 	width: 80px;
 }
@@ -29,7 +26,7 @@ const kkcat = { name: "KK Catalog Functions",
 		kkcat.cat = $id("catalog");
 		if (!kkcat.cat) return true;
 		if (!kkjs.get_cookie("sett_sscase")) kkjs.set_cookie("sett_sscase", "true");
-		$id("header").insertAdjacentHTML("afterbegin", `
+		$id("catalog").insertAdjacentHTML("afterbegin", `
 <div id="catsett" align="RIGHT">
 	[<label><input type="checkbox" id="sett_fw"`+$mkcheck($bool(kkjs.get_cookie("cat_fw")))+` />Full width</label>]
 	<label title="0 for auto">Columns:<input type="number" id="sett_cols" value="`+kkjs.get_cookie("cat_cols")+`" min="0" max="20" /></label><button onclick="kkcat.sett_save();">Apply</button><br/>
