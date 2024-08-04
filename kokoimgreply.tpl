@@ -118,7 +118,7 @@
 		</form>
 	</div>
 	<center>
-		<!--&FILE('/path/to/globalmsg.txt')-->
+		<!--&FILE('./globalmsg.txt')-->
 	</center>
 	<!--&IF($FORMBOTTOM,'{$FORMBOTTOM}','')-->
 	<!--/&POSTFORM-->
