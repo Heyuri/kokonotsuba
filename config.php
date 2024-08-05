@@ -185,7 +185,7 @@ $LIMIT_SENSOR = array('ByThreadCountCondition'=>150); // AutoDelete, defaults to
 define("TEMPLATE_FILE", 'kokoimg.tpl'); // Template File. Set this and the next line to 'kokotxt.tpl' and 'kokotxtreply.tpl' respectively to use Kokonotsuba as a textboard.
 define("REPLY_TEMPLATE_FILE", 'kokoimg.tpl'); // Reply page template file
 define("PAGE_DEF", 15); // How many threads per page
-define("ADMIN_PAGE_DEF", 20); // How many threads per page on admin panel
+define("ADMIN_PAGE_DEF", 20); // How many replies per page on admin panel
 define("RE_DEF", 5); // Shown Replies on Index
 define("RE_PAGE_DEF", 1000); // Shown replies on the thread index
 define("MAX_RES", 1000); // How many replies before autosaged
