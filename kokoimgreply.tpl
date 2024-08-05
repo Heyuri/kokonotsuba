@@ -31,6 +31,7 @@
 	<script type="text/javascript" src="{$STATIC_URL}js/img.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/inline.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/update.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/addemotes.js" defer></script>
 	<script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
 	<!--/&HEADER-->
 
@@ -230,5 +231,4 @@
 		<div id="postarea2"></div>
 		{$PAGENAV}
 		<br clear="ALL" />
-<script type="text/javascript" src="{$STATIC_URL}js/addemotes.js"></script>
 		<!--/&MAIN-->
