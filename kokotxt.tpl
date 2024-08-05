@@ -32,6 +32,8 @@
 	<script type="text/javascript" src="{$STATIC_URL}js/style.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/catalog.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/insert.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/addemotestxt.js" defer></script>
+	<script type="text/javascript" src="{$STATIC_URL}/js/admin.js" defer></script>
 	<!--/&HEADER-->
 
 	<!--&TOPLINKS-->
@@ -233,5 +235,4 @@
 <div id="postarea2"></div>
 {$PAGENAV}
 <br clear="ALL" />
-<script type="text/javascript" src="{$STATIC_URL}js/addemotestxt.js"></script>
 <!--/&MAIN-->
