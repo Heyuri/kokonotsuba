@@ -336,6 +336,7 @@ const kkimg = { name: "KK Image Features",
 
 		var a = p.getElementsByClassName("postimg")[0].parentNode;
 		a.style.display = "";
+		if (p.getBoundingClientRect().top < 0) p.scrollIntoView();
 	},
 	error: function (no) {
 		var p = $id("p"+no);
