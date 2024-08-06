@@ -298,11 +298,11 @@ audio {
 	}
 	.doubledash {
 		visibility: hidden;
+		float: left;
 	}
 	.thread,
-	.op,
-	.reply {
-		width: 100%;
+	.op {
+	 width:100%;
 	}
 	.postimg {display: block; float: none;}
 	.serve5 {display: none;}
@@ -321,8 +321,17 @@ blockquote {
 	max-width: 100%;
 }
 
+.doubledash {
+	float: left;
+}
+
+.reply-container {
+	margin: 4px 0;	
+}
+
 .reply {
     padding: 2px;
+    display: table;
 }
 
 .post.op:target, .post.op.replyhl {
