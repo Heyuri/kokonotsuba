@@ -323,6 +323,7 @@ blockquote {
 
 .doubledash {
 	float: left;
+	padding-right: 2px;
 }
 
 .reply-container {
