@@ -162,27 +162,23 @@
 			<!--/&THREAD-->
 
 			<!--&REPLY-->
-			<table>
-				<tbody>
-					<tr>
-						<td class="doubledash" valign="top">
-							&gt;&gt;
-						</td>
-						<td class="post reply" id="p{$NO}">
-							<div class="postinfo"><label><input type="checkbox" name="{$NO}" value="delete" /><big class="title"><b>{$SUB}</b></big> {$NAME_TEXT}<span class="name">{$NAME}</span> <span class="time">{$NOW}</span></label>
-								<nobr><span class="postnum">
-										<!--&IF($QUOTEBTN,'<a href="{$SELF}?res={$RESTO}#p{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$SELF}?res={$RESTO}#p{$NO}">No.{$NO}</a>')--></span>{$POSTINFO_EXTRA}</nobr>
-								<small><i class="backlinks">{$BACKLINKS}</i></small>
-							</div>
-							<div class="filesize">{$IMG_BAR}</div>
-							{$IMG_SRC}
-							<blockquote class="comment">{$COM}</blockquote>
-							<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
-							{$WARN_BEKILL}
-						</td>
-					</tr>
-				</tbody>
-			</table>
+			<div class="reply-container">
+				<div class="doubledash" valign="top">
+					&gt;&gt;
+				</div>
+				<div class="post reply" id="p{$NO}">
+					<div class="postinfo"><label><input type="checkbox" name="{$NO}" value="delete" /><big class="title"><b>{$SUB}</b></big> {$NAME_TEXT}<span class="name">{$NAME}</span> <span class="time">{$NOW}</span></label>
+					<nobr><span class="postnum">
+					<!--&IF($QUOTEBTN,'<a href="{$SELF}?res={$RESTO}#p{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$SELF}?res={$RESTO}#p{$NO}">No.{$NO}</a>')--></span>{$POSTINFO_EXTRA}</nobr>
+						<small><i class="backlinks">{$BACKLINKS}</i></small>
+					</div>
+					<div class="filesize">{$IMG_BAR}</div>
+						{$IMG_SRC}
+						<blockquote class="comment">{$COM}</blockquote>
+						<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
+						{$WARN_BEKILL}
+				</div>
+			</div>
 			<!--/&REPLY-->
 
 			<!--&SEARCHRESULT-->
