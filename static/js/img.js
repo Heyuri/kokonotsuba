@@ -304,6 +304,7 @@ const kkimg = { name: "KK Image Features",
 		var ext; _split = a.href.split("."); ext = _split[_split.length-1];
 
 		a.style.display = "none"
+		if (p.getBoundingClientRect().top < 0) p.scrollIntoView();
 		if (kkimg.imgext.includes(ext)) {
 			a.insertAdjacentHTML("afterend", '<div class="expand">'+
 			'<a href="'+a.href+'" onclick="event.preventDefault();kkimg.contract(\''+no+'\');">'+
