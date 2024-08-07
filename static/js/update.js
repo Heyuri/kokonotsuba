@@ -46,10 +46,10 @@ const kkupdate = { name: "KK Thread Updating",
 				data.text().then(text => {
 					var d = document.createElement("html");
 					d.innerHTML = text;
-					var rs = document.querySelectorAll(".reply");
+					var rs = document.querySelectorAll(".reply-container");
 					var lid = 0;
  					if (rs.length) lid = rs[rs.length-1].id.slice(1);
-					var frs = d.querySelectorAll(".reply");
+					var frs = d.querySelectorAll(".reply-container");
 					var i;
  					for (i = frs.length-1; i >= 0; i--)
 						if (frs[i].id.slice(1) <= lid)
@@ -70,8 +70,8 @@ const kkupdate = { name: "KK Thread Updating",
 						document.querySelector(".thread").insertAdjacentElement("beforeEnd", frs[i]);
 						frs[i].querySelectorAll(".comment .quotelink").forEach(function (i) {
 							var id = i.innerText.slice(2);
-							var lr = document.querySelector("#p"+id);
-							var fr = d.querySelector("#p"+id);
+							var lr = document.querySelector("#pc"+id);
+							var fr = d.querySelector("#pc"+id);
 							if (lr && fr) {
 								lr.querySelector(".backlinks").innerHTML = fr.querySelector(".backlinks").innerHTML;
 							}
