@@ -163,7 +163,7 @@
 
 			<!--&REPLY-->
 			<div id="p{$NO} class="reply-container">
-				<div class="doubledash" valign="top">
+				<div class="doubledash" align="top">
 					&gt;&gt;
 				</div>
 				<div class="post reply" id="p{$NO}">
