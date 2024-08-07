@@ -67,7 +67,7 @@ const kkupdate = { name: "KK Thread Updating",
 					kkupdate.inci = 0;
 					var ptable;
 					for (i = i; i <= frs.length-1; i++) {
-						document.querySelector(".thread").insertAdjacentElement("beforeEnd", frs[i].parentElement.parentElement.parentElement);
+						document.querySelector(".thread").insertAdjacentElement("beforeEnd", frs[i]);
 						frs[i].querySelectorAll(".comment .quotelink").forEach(function (i) {
 							var id = i.innerText.slice(2);
 							var lr = document.querySelector("#p"+id);
