@@ -332,12 +332,13 @@ const kkimg = { name: "KK Image Features",
 	contract: function (no) {
 		var p = $id("p"+no);
 		var exp = p.getElementsByClassName("expand")[0];
+		var scroll = p.getBoundingClientRect().top < 0;
 		if (!exp) return;
 		exp.remove();
 
 		var a = p.getElementsByClassName("postimg")[0].parentNode;
 		a.style.display = "";
-		if (p.getBoundingClientRect().top < 0) p.scrollIntoView();
+		if (scroll) p.scrollIntoView();
 	},
 	error: function (no) {
 		var p = $id("p"+no);
