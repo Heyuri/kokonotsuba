@@ -162,8 +162,8 @@
 			<!--/&THREAD-->
 
 			<!--&REPLY-->
-			<div id="p{$NO} class="reply-container">
-				<div class="doubledash" align="top">
+			<div id="p{$NO}" class="reply-container">
+				<div class="doubledash" valign="top">
 					&gt;&gt;
 				</div>
 				<div class="post reply" id="p{$NO}">
