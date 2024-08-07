@@ -162,7 +162,7 @@
 			<!--/&THREAD-->
 
 			<!--&REPLY-->
-			<div id="p{$NO}" class="reply-container">
+			<div id="pc{$NO}" class="reply-container">
 				<div class="doubledash" valign="top">
 					&gt;&gt;
 				</div>
