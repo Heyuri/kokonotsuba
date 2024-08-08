@@ -833,7 +833,7 @@ function regist($preview=false){
 	// Get number of pages to rebuild
 	$threads = $PIO->fetchThreadList();
 	$threads_count = count($threads);
-	$page_end = ($resto ? ceil(array_search($resto, $threads) / PAGE_DEF) : ceil($threads_count / PAGE_DEF));
+	$page_end = ($resto ? floor(array_search($resto, $threads) / PAGE_DEF) : ceil($threads_count / PAGE_DEF));
 
 	$PMS->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $resto, array($W, $H, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
 	$PIO->addPost($no,$resto,$md5chksum,$category,$tim,$fname,$ext,$imgW,$imgH,$imgsize,$W,$H,$pass,$now,$name,$email,$sub,$com,$host,$age,$status);
