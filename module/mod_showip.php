@@ -1,6 +1,8 @@
 <?php
 class mod_showip extends ModuleHelper {
 	
+	private $IPTOGGLE = IPTOGGLE;
+	
 	public function __construct($PMS) {
 		parent::__construct($PMS);
 	}
@@ -31,10 +33,15 @@ class mod_showip extends ModuleHelper {
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply){
 		//global $language;
 		$PIO = PMCLibrary::getPIOInstance();
+		
+		$email = ($post['resto'] ? $PIO->fetchPosts($post['resto'])[0]['email'] : $post['email']);
 
 		$iphost = strtolower($post['host']);
 		if(ip2long($iphost)!==false) {
-			$arrLabels['{$NOW}'] .= ' (IP: '.preg_replace('/\d+\.\d+$/','*.*',$iphost).')';
+			if ($this->IPTOGGLE == 2 || $email == 'displayip') {
+				if (!$post['resto'] && $this->IPTOGGLE == 1) $arrLabels['{$COM}'] .= '<br><br><span style="color: #00C;"><b>Posts in this thread will display IP addresses.</b></span>';
+				$arrLabels['{$NOW}'] .= ' (IP: '.preg_replace('/\d+\.\d+$/','*.*',$iphost).')';
+			} 
 		} else { // host
 			$parthost=''; $iscctld = false; $isgtld = false;
 
