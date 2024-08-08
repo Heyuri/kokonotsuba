@@ -38,7 +38,7 @@ class mod_showip extends ModuleHelper {
 
 		$iphost = strtolower($post['host']);
 		if(ip2long($iphost)!==false) {
-			if ($this->IPTOGGLE == 2 || $email == 'displayip') {
+			if ($this->IPTOGGLE == 2 || stristr($email, 'displayid')) {
 				if (!$post['resto'] && $this->IPTOGGLE == 1) $arrLabels['{$COM}'] .= '<br><br><span style="color: #00C;"><b>Posts in this thread will display IP addresses.</b></span>';
 				$arrLabels['{$NOW}'] .= ' (IP: '.preg_replace('/\d+\.\d+$/','*.*',$iphost).')';
 			} 
