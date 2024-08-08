@@ -144,6 +144,8 @@ define("JANIMUTE_LENGTH", 20); // Janitor mute duration (in minutes)
 define("JANIMUTE_REASON", 'You have been muted temporarily!'); // Janitor mute reason
 //mod_antiflood
 define("RENZOKU3", 30); // How many seconds between new threads?
+//mod_showip
+define("IPTOGGLE", 1); // 1 to have OPs toggle IP display, 2 enables for all posts
 
 // Ban Settings
 define("BAN_CHECK", 1); // Comprehensive ban check function
