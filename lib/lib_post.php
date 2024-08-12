@@ -396,9 +396,9 @@ function applyTripcodeAndCapcodes(&$name, &$email, &$dest){
         if ($level=$AccountIO->valid($sectrip)) {
             // Moderator capcode
             switch ($level) {
-                case 1: if (JCAPCODE_FMT) $name = sprintf(JCAPCODE_FMT, $name); break;
-                case 2: if (MCAPCODE_FMT) $name = sprintf(MCAPCODE_FMT, $name); break;
-                case 3: if (ACAPCODE_FMT) $name = sprintf(ACAPCODE_FMT, $name); break;
+                case LEV_JANITOR: if (JCAPCODE_FMT) $name = sprintf(JCAPCODE_FMT, $name); break;
+                case LEV_MODERATOR: if (MCAPCODE_FMT) $name = sprintf(MCAPCODE_FMT, $name); break;
+                case LEV_ADMIN: if (ACAPCODE_FMT) $name = sprintf(ACAPCODE_FMT, $name); break;
             }
         } else {
             // User
