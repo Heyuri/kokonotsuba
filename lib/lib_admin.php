@@ -357,7 +357,7 @@ function createAccount() {
 		
 		
 		
-		error("Creation of a new account was a success!");
+		$dat .= '<center>Creation of a new account was a success!<br><form method="post" action="'.PHP_SELF.'?mode=viewAcc"> <input type="submit" value="View mod list"></form></center> ';
 	} else {
 		drawAccountCreationForm($dat);
 	}
