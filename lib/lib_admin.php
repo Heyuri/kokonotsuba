@@ -371,8 +371,8 @@ function viewAccounts() {
 	if($AccountIO->valid() < LEV_ADMIN) error("403 Access Denied");
 	
 	//delete account
-	if(!empty($_POST['del'])) {
-		$id = intval($id);
+	if(isset($_POST['del'])) {
+		$id = intval($_POST['del']);
 		if(!is_numeric($id)) error("Invalid ID");
 		$moderatorUsername = $AccountIO->getUsername();
 		$moderatorLevel = $AccountIO->getRoleLevel();
@@ -386,18 +386,22 @@ function viewAccounts() {
 	$accounts = $AccountIO->getAllAccounts();
 	
 	foreach($accounts as $account) {
+		if(sizeof($account) != 4) continue;
+		$account = array_combine(['id', 'username', 'password', 'role'], $account);
+
 		$accountsHTML .= '<tr> 
-			<td> '.$account['id'].' </td>
-			<td> '.$account['username'].' </td>
-			<td> '.num2role($account['role']).' </td>
-			<td> <form action="'.PHP_SELF.'?mode=viewAcc"> <input type="hidden" value="'.$account['id'] .'"/>  <input type="submit" value="Delete"> </form></td>
+			<td><center> '.$account['id'].'</center></td>
+			<td><center>'.$account['username'].' </center></td>
+			<td><center>'.num2role($account['role']).'</center></td>
+			<td><center><form action="'.PHP_SELF.'?mode=viewAcc" method="post"> <input type="hidden" name="del" value="'.$account['id'] .'"/>  <input type="submit" value="Delete"> </form></center></td>
 		</tr>';
 	}
 	
 		$dat .= '[<a href="'.PHP_SELF2.'?'.time().'">Return</a>]';
 		$dat .='	<center>
 			<h4>Mod list</h4>
-      	 <table border="1" class="postlists"><tbody>
+      	 <table  cellspacing="0" cellpadding="0" border="1" class="postlists">
+      	 <tbody>
 			<th> ID </th> <th> USERNAME </th> <th> ROLE </th> <th> ACTION </th>
 			'.$accountsHTML.'
       	</tbody>
@@ -420,7 +424,7 @@ function manageaccounts(&$dat) {
 
 function logout(&$dat) {
 	unset($_SESSION['kokologin']);
-	redirect(fullURL().PHP_SELF2.'?'.$_SERVER['REQUEST_TIME']);
+	redirect(fullURL().PHP_SELF.'?mode=admin');
 	exit;
 }
 
@@ -448,7 +452,7 @@ function drawAdminList() {
 			array('name'=>'optimize', 'level'=>LEV_ADMIN, 'label'=>'Optimize', 'func'=>''),
 			array('name'=>'check', 'level'=>LEV_ADMIN, 'label'=>'Check data source', 'func'=>''),
 			array('name'=>'repair', 'level'=>LEV_ADMIN, 'label'=>'Repair data source', 'func'=>''),
-			array('name'=>'logout', 'level'=>LEV_JANITOR, 'label'=>'Logout', 'func'=>'logout'),
+			array('name'=>'logout', 'level'=>LEV_USER, 'label'=>'Logout', 'func'=>'logout'),
 		);
 		$dat.= '<nobr>';
 		foreach ($admins as $adminmode) {

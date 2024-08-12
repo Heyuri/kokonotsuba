@@ -463,7 +463,7 @@ function num2Role($roleNumber) {
 	
 	switch ($num) {
 			case LEV_NONE: $from = 'USER'; break;
-			case LEV_NONE: $from = 'REGISTERED_USER'; break;
+			case LEV_USER: $from = 'REGISTERED_USER'; break;
 			case LEV_JANITOR: $from = 'JANITOR'; break;
 			case LEV_MODERATOR: $from = 'MODERATOR'; break;
 			case LEV_ADMIN: $from = 'ADMIN'; break;

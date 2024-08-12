@@ -23,7 +23,7 @@ require ROOTPATH.'lib/lib_post.php'; // Post and thread functions
 defined("ROLL") or define("ROLL",[]);//When undefined, empty array
 
 /* Update the log file/output thread */ 
-function updatelog($resno=0,$pagenum=-1,$single_page=false){
+function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 	global $LIMIT_SENSOR;
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
@@ -56,7 +56,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 			$PMS->useModuleMethods('ThreadOrder', array($resno,$pagenum,$single_page,&$threads)); // "ThreadOrder" Hook Point
 			$threads_count = count($threads);
 			$inner_for_count = $threads_count > PAGE_DEF ? PAGE_DEF : $threads_count;
-			$page_end = ceil($threads_count / PAGE_DEF); // The last value of the page number
+			$page_end = ($last == -1 ? ceil($threads_count / PAGE_DEF) : $last);
 		}else{ // Discussion of the clue label pattern (PHP dynamic output one page)
 			$threads_count = $PIO->threadCount(); // Discuss the number of strings
 			if($pagenum < 0 || ($pagenum * PAGE_DEF) >= $threads_count) error(_T('page_not_found')); // $Pagenum is out of range
@@ -502,6 +502,11 @@ function regist($preview=false){
         }
     }
     $email = preg_replace('/^(no)+ko\d*$/i', '', $email);
+ 
+ 	// Get number of pages to rebuild
+	$threads = $PIO->fetchThreadList();
+	$threads_count = count($threads);
+	$page_end = ($resto ? floor(array_search($resto, $threads) / PAGE_DEF) : ceil($threads_count / PAGE_DEF));
  
     $PMS->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $resto, array($W, $H, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
     $PIO->addPost($no, $resto, $md5chksum, $category, $tim, $fname, $ext, $imgW, $imgH, $imgsize, $W, $H, $pass, $now, $name, $email, $sub, $com, $host, $age, $status);

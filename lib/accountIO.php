@@ -16,21 +16,15 @@ class AccountIO {
 
 	public function __construct(){
 		$this->level = 0;
-		$this->ACCusername = '';
 		$this->id = 0;
+		$this->ACCusername = '';
 		
-//	$this->flatfileConnect();
+		if(!file_exists($this->flatfileName))
+			if(!touch($this->flatfileName)) error("Could not create accounts.txt flatfile.");
 	}
 
 	/* Process connection string/connection */
 	public function flatfileConnect(){
-		$this->flatfileData = fopen($this->flatfileName, 'r+'); //open for reading and writing
-		// Acquire an exclusive lock
-		if (!flock($this->flatfileData, LOCK_EX)) {
-			echo "Could not lock log file.";
-			fclose($this->flatfileData);
-			return false;
-		}
 		$this->readOnlyFFData = fopen($this->flatfileName, 'r');
 	}
 	
@@ -41,14 +35,22 @@ class AccountIO {
 			$line = explode("<>", fgets($this->readOnlyFFData));
 			$accounts[] = $line;
 		}
-		flock($this->flatfileData, LOCK_UN);
-		fclose($this->flatfileData);
 		fclose($this->readOnlyFFData);
 		return $accounts;
 	}
 	
 	private function getLastID() {
-	
+		$this->flatfileConnect();
+		$lastID = 0;
+		while (!feof($this->readOnlyFFData)) {
+			$line = fgets($this->readOnlyFFData);
+			$data = explode("<>", $line);
+			
+			$lastID = $data[0];
+			break;
+		}
+		fclose($this->readOnlyFFData);
+		return $lastID;
 	}
 	
 	public function addNewAccount($newUsername, $newPassword, $newRole) {
@@ -58,13 +60,18 @@ class AccountIO {
 		$id = $this->getLastID();
 		
 		$this->flatfileConnect();
-		
+		$this->flatfileData = fopen($this->flatfileName, 'c+');
+		if (!flock($this->flatfileData, LOCK_EX)) {
+			echo "Could not lock log file.";
+			fclose($fileHandle);
+			return false;
+		}
+
 		//flatfile insert string
 		$dataString = implode("<>", [$id + 1, $newUsername, $newPassword, $newRole]);
-		
-    	rewind($this->flatfileData);
+		$existingStringData = stream_get_contents($this->readOnlyFFData);
 
-		if (fwrite($this->flatfileData, $dataString . $this->readOnlyFFData) === false) {
+		if (fwrite($this->flatfileData, $existingStringData . PHP_EOL . $dataString) === false) {
 			echo "Failed to write new account.";
 			return false;
 		}
@@ -74,15 +81,15 @@ class AccountIO {
 		return true;
 	}
 	
-	public function deleteAccount($id) {;
+	public function deleteAccount($id) {
 		$accountfound = false;
 		$newAccountFlatfile = [];
 		$foundAccountRow = null;
 		
 		$this->flatfileConnect();
 	
-		while (!feof($this->flatfileData)) {
-			$line = fgets($this->flatfileData);
+		while (!feof($this->readOnlyFFData)) {
+			$line = fgets($this->readOnlyFFData);
 			$data = explode("<>", $line);
 			if ($data[0] == $id) {
 				$accountfound = true;
@@ -91,20 +98,19 @@ class AccountIO {
 				$newAccountFlatfile[] = $line;
 			}
 		}
-
-
+		
 		// data was not found.
 		if ($accountfound == false) {
     	    return false;
 		}
-
-
-
+		$openLogFile = fopen($this->flatfileName, 'w');
+		flock($openLogFile, LOCK_EX);
  	   foreach ($newAccountFlatfile as $line) {
-    	    fwrite($this->flatfileData, $line);
+    	    fwrite($openLogFile, $line);
     	}
-		flock($this->flatfileData, LOCK_UN);
-		fclose($this->flatfileData);
+    	
+    	flock($openLogFile, LOCK_UN);
+		fclose($openLogFile);
 		fclose($this->readOnlyFFData);
 	    return true;
 	}
@@ -127,7 +133,7 @@ class AccountIO {
 		
 		$this->flatfileConnect();
 		foreach($totalStoredAccounts as $account) {
-			if(sizeof($account) < 4) break;
+			if(sizeof($account) != 4) continue;
 			$account = array_combine(['id', 'username', 'password', 'role'], $account);
 			if (crypt($pass, TRIPSALT) !== $account['password']) {
 				$this->level = LEV_NONE; //pass wrong
@@ -156,8 +162,6 @@ class AccountIO {
 				break 2;
 			}
 		}
-		flock($this->flatfileData, LOCK_UN);
-		fclose($this->flatfileData);
 		fclose($this->readOnlyFFData);	
 		return $this->level;
 	}
