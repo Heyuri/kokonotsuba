@@ -331,15 +331,6 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
             }
             unset($qu);
 			
-			if (USE_BACKLINK) {
-				$blref = $PIO->searchPost(array('((?:&gt;|  ^~)+)(?:No\.)?('.$no.')\b'), 'com', 'REG');
-				if ($blcnt=count($blref)) {
-					$blref = array_reverse($blref);
-					foreach ($blref as $ref) {
-						$BACKLINKS.= ' <a href="'.PHP_SELF.'?res='.($ref['resto']?$ref['resto']:$ref['no']).'#p'.$ref['no'].'" class="backlink">&gt;&gt;'.$ref['no'].'</a>';
-					}
-				}
-			}
 		} else {
 			if($resno&&!$i)		$REPLYBTN = '[<a href="'.PHP_SELF.'?res='.$no.'">'._T('reply_btn').'</a>]';
 			$QUOTEBTN = $no;

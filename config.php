@@ -88,7 +88,6 @@ define("ID_MODE", 0); // Leave 0, do not change
 define("CLEAR_SAGE", 0); // Disable sage if true
 define("NOTICE_SAGE", 1); // Visible sage ("SAGE!")
 define("USE_QUOTESYSTEM", 1); // Enable >>1234
-define("USE_BACKLINK", 1); // Enable backlinks on posts 
 define("SHOW_IMGWH", 1); // Display the original length and width dimension of the additional image file
 define("USE_CATEGORY", 0); // Enable Categories
 define("TRUST_HTTP_X_FORWARDED_FOR", 0); //Whether to use HTTP_X_FORWARDED_FOR to grab the real IP after the Proxy. Note that the file head may be forged, do not open if there is no special need.
