@@ -62,11 +62,6 @@ define("CAPCODES", array( // tripcode=>color,cap
 // define("DISCORD_WH", '');
 // define("IRC_WH", '');
 
-// Moderator settings
-// Passwords must be hashed. Obtain a hashed password at https://sys.kolyma.net/passwd.php
-define("ADMIN_HASH", array('')); // Administrator password
-define("MOD_HASH", array('')); // Moderator password
-define("JANITOR_HASH", array('')); ///
 // Capcode formats (put '%s' where you want the original name)
 define("JCAPCODE_FMT", '%s');
 define("MCAPCODE_FMT", '<font color="#770099">%s ## Mod</font>');
