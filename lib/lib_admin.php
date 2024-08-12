@@ -79,15 +79,15 @@ function admindel(&$dat){
 			$host = " - ";
 		}
 
-		// Print out the interface
+			// Print out the interface
 		$dat .= '<tr align="LEFT">
-    <th align="center">' . $modFunc . '</th><th><span><input type="checkbox" name="clist[]" value="' . $no . '" /><a target="_blank" href="'.PHP_SELF.'?res=' . $no . '">' . $no . '</a> </span></th>
-    <td> <small class="time">' . $now . '</small></td>
-    <td><b class="title managesub">' . $sub . '</b></td>
-    <td><div class="managename name">' . $name . '</div></td>
-    <td ><div class="managecom"> '. $com . '</div></td>
-    <td><span>' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . STATIC_URL . 'image/glass.png"></a> <a href="?mode=admin&admin=del&host=' . $host . '" title="See all posts">★</a></span></td>
-    <td align="center"><div class="managehash">' . $clip . ' (' . $size . ')<br />' . $md5chksum . '</div></td>
+    <th align="center">' . $modFunc . '</th><th><input type="checkbox" name="clist[]" value="' . $no . '" /><a target="_blank" href="koko.php?res=' . $no . '">' . $no . '</a></th>
+    <td><small class="time">' . $now . '</small></td>
+    <td><b class="title">' . $sub . '</b></td>
+    <td><b class="name">' . $name . '</b></td>
+    <td><small>' . $com . '</small></td>
+    <td>' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . STATIC_URL . 'image/glass.png"></a> <a href="?mode=admin&admin=del&host=' . $host . '" title="See all posts">★</a></td>
+    <td align="center">' . $clip . ' (' . $size . ')<br />' . $md5chksum . '</td>
 </tr>';
 	}
 	$dat.= '</tbody></table>
@@ -106,7 +106,7 @@ function selectAll() {
     });
 }
 </script>
-';
+'
 
 	$countline = $PIO->postCount(); // Total number of articles(threads)
 	$page_max = ($searchHost ? 0 : ceil($countline / ADMIN_PAGE_DEF) - 1); // Total number of pages
