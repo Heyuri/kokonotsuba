@@ -69,7 +69,7 @@ function head(&$dat,$resno=0){
 		'{$STATUS}' => '[<a href="'.PHP_SELF.'?mode=status">'._T('head_info').'</a>]',
 		'{$ADMIN}' => '[<a href="'.PHP_SELF.'?mode=admin">'._T('head_admin').'</a>]',
 		'{$REFRESH}' => '[<a href="'.PHP_SELF2.'?">'._T('head_refresh').'</a>]',
-		'{$SEARCH}' => (USE_SEARCH) ? '[<a href="'.PHP_SELF.'?mode=search">'._T('head_search').'</a>]' : '',
+		'{$SEARCH}' => (0) ? '[<a href="'.PHP_SELF.'?mode=search">'._T('head_search').'</a>]' : '',
 		'{$HOOKLINKS}' => '');
 	$PMS->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
 	$dat .= $PTE->ParseBlock('BODYHEAD',$pte_vals);
