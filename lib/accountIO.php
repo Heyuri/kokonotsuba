@@ -23,7 +23,6 @@ class AccountIO {
 			if(!touch($this->flatfileName)) error("Could not create accounts.txt flatfile.");
 	}
 
-	/* Process connection string/connection */
 	public function flatfileConnect(){
 		$this->readOnlyFFData = fopen($this->flatfileName, 'r');
 	}
@@ -41,15 +40,17 @@ class AccountIO {
 	
 	private function getLastID() {
 		$this->flatfileConnect();
-		$lastID = 0;
+		$lastIDlist = [];
 		while (!feof($this->readOnlyFFData)) {
 			$line = fgets($this->readOnlyFFData);
 			$data = explode("<>", $line);
 			
-			$lastID = $data[0];
-			break;
+			$lastIDlist[] = $data[0];
 		}
 		fclose($this->readOnlyFFData);
+		
+		//get largest ID from id array
+		$lastID = max($lastIDlist);
 		return $lastID;
 	}
 	
