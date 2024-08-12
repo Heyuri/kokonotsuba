@@ -27,7 +27,6 @@ class mod_search extends ModuleHelper {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$AccountIO = PMCLibrary::getAccountIOInstance();
 		
-		if(!USE_SEARCH) error(_T('search_disabled'));
 		$searchKeyword = isset($_POST['keyword']) ? trim($_POST['keyword']) : ''; // The text you want to search
 		$dat = '';
 		head($dat);

@@ -74,7 +74,6 @@ define("FOOTTEXT", '');
 // Functions
 // 0 = NO | 1 = YES 
 define("THREAD_PAGINATION", 1); // Thread html pagination
-define("USE_SEARCH", 1); // Use the search feature
 define("USE_UPSERIES", 0); // Allows users to optionally bypass pagination
 define("RESIMG", 1); // Allow files in replies
 define("AUTO_LINK", 1); // Create urls (autolink)
@@ -149,6 +148,8 @@ define("JANIMUTE_LENGTH", 20); // Janitor mute duration (in minutes)
 define("JANIMUTE_REASON", 'You have been muted temporarily!'); // Janitor mute reason
 //mod_antiflood
 define("RENZOKU3", 30); // How many seconds between new threads?
+//mod_showip
+define("IPTOGGLE", 1); // 1 to have OPs toggle IP display, 2 enables for all posts
 
 // Ban Settings
 define("BAN_CHECK", 1); // Comprehensive ban check function
