@@ -9,7 +9,7 @@
  */
 
 class AccountIO {
-	private $flatfileName = STORAGE_PATH.'accounts.txt'; // Local Constant
+	private $flatfileName = ACCOUNT_FLATFILE; // Local Constant
 	private $flatfileData = ''; //flatfile data will be loaded into memory with this variable
 	private $readOnlyFFData = ''; //READ ONLY
 	private $level, $ACCusername, $id; // account details

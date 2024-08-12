@@ -11,6 +11,7 @@ ini_set("memory_limit", '128M'); // Maximum allowed memory usage by php
 define("STATIC_URL", './static/'); // Where static files are stored. Can be a url. Include trailing '/'
 define("ACTION_LOG", 'audit.log.txt');
 
+
 // FileIO settings 
 define("FILEIO_BACKEND", 'local'); // FileIO backend specification (local, ftp)
 define("FILEIO_INDEXLOG", 'fileioindex.dat'); // FileIO Index Log file
@@ -44,6 +45,7 @@ define("THUMB_DIR", 'src/'); // Thumbnail Directory
 define("CDN_DIR", ''); // absolute path to the folder for storing imgs & thumbs (excluding IMG_DIR, e.g. /var/www/cdn/heyuri/)
 define("CDN_URL", ''); // img/thumb CDN url (without IMG_DIR directory, e.g. https://h.kncdn.org/b/). Set to blank for locally hosted files
 define("REF_URL", ''); // URL prefix, eg: https://jump.heyuri.net
+define("ACCOUNT_FLATFILE", STORAGE_PATH.'accounts.txt'); //flatfile used for  storing account data
 define("PHP_SELF", 'koko.php'); // Name of the main script
 define("PHP_SELF2", 'index.html'); // Defines PHP_SELF
 define("PHP_EXT", '.html'); // File extension for static pages
