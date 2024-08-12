@@ -24,11 +24,12 @@ class mod_adminban extends ModuleHelper {
 		$ip = getREMOTE_ADDR();
 		$glog = array_map('rtrim', file(GLOBAL_BANS));
 		$log = array_map('rtrim', file($this->BANFILE));
+		
 		for ($i=0; $i<count($log); $i++) {
 			list($banip, $starttime, $expires, $reason) = explode(',', $log[$i], 4);
 			if (strstr($ip, gethostbyname($banip))) {
 				// ban page
-				$dat.= '';
+				$dat = "";
 				head($dat);
 				$dat.= "
 <style>
@@ -86,7 +87,8 @@ class mod_adminban extends ModuleHelper {
 	}
 
 	public function autoHookLinksAboveBar(&$link, $pageId, $level) {
-		if (valid() < LEV_MODERATOR
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		if ($AccountIO->valid() < LEV_MODERATOR
 		 || $pageId != 'admin') return;
 		$link.= '[<a href="'.$this->mypage.'">Manage Bans</a>] ';
 	}
@@ -113,7 +115,9 @@ class mod_adminban extends ModuleHelper {
 
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$FileIO = PMCLibrary::getFileIOInstance();
-		if (valid() < LEV_MODERATOR) return;
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		
+		if ($AccountIO->valid() < LEV_MODERATOR) return;
 		if (!($ip=$this->_lookupPostIP($post['no']))) return;
 		$modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'&ip='.$ip.'" title="Ban">B</a>]';
 		if (empty($_GET['mode']) && empty($_POST['mode'])) $modfunc.= '<small>[HOST: <a href="?mode=admin&admin=del&host='.$ip.'">'.$ip.'</a>]</small>';
@@ -122,8 +126,9 @@ class mod_adminban extends ModuleHelper {
 	public function ModulePage() {
 		$PIO = PMCLibrary::getPIOInstance();
 		$PMS = PMCLibrary::getPMSInstance();
+		$AccountIO = PMCLibrary::getAccountIOInstance();
 
-		if (valid() < LEV_MODERATOR) {
+		if ($AccountIO->valid() < LEV_MODERATOR) {
 			error('403 Access denied');
 		}
 
@@ -264,7 +269,6 @@ fieldset {
 				$durationHours = preg_match("/(\d+)h/", $duration, $matchHours);
 				$durationMinutes = preg_match("/(\d+)min/", $duration, $matchMinutes);
 				$expires = $starttime + ($matchWeeks[0] * 604800) + ($matchDays[0] * 86400) + ($matchHours[0] * 3600) + ($matchMinutes[0] * 60);
-
 				if(isset($_POST["global"])) {
 					if($_POST["global"]) {
 						fwrite($g, "$newip,$starttime,$expires,$reason\r\n");
@@ -287,6 +291,12 @@ fieldset {
 						deleteCache(array($parentNo));
 					}
 				}
+				$AccountIO = PMCLibrary::getAccountIOInstance();
+				$AccountIO->valid();
+				
+				$moderatorUsername = $AccountIO->getUsername();
+				$moderatorLevel = $AccountIO->getRoleLevel();
+				logtime("Banned $newip for post: $no", $moderatorUsername.' ## '.$moderatorLevel);
 			}
 
 			for ($i=0; $i<count($log); $i++) {

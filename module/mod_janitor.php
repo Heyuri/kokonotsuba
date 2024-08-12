@@ -20,7 +20,8 @@ class mod_janitor extends ModuleHelper {
 	
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$FileIO = PMCLibrary::getFileIOInstance();
-		if (valid() != LEV_JANITOR) return;
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		if ($AccountIO->valid() != LEV_JANITOR) return;
 		//if (!($ip=$this->_lookupPostIP($post['no']))) return;
 		$modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'" title="Warn">W</a>]';
 	}
@@ -28,8 +29,9 @@ class mod_janitor extends ModuleHelper {
 	public function ModulePage() {
 		$PIO = PMCLibrary::getPIOInstance();
 		$PMS = PMCLibrary::getPMSInstance();
+		$AccountIO = PMCLibrary::getAccountIOInstance();
 		
-		if (valid() < LEV_JANITOR) error('403 Access denied');
+		if ($AccountIO->valid() < LEV_JANITOR) error('403 Access denied');
 		
 		if ($_SERVER['REQUEST_METHOD']!='POST') { 
 			$dat = '';
@@ -68,7 +70,7 @@ class mod_janitor extends ModuleHelper {
 			$f = fopen($this->BANFILE, 'w');
 			$rtime = $_SERVER['REQUEST_TIME'];
 			fwrite($f, "$ip,$rtime,$rtime,$reason\r\n");
-			logtime('Warned '.$ip, valid());
+			logtime('Warned '.$ip.' for post: '.$no, $AccountIO->valid());
 			
 			fclose($f);
 			updatelog();

@@ -26,7 +26,8 @@ class mod_sticky extends ModuleHelper {
 	}
 
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
-		if (valid() < LEV_MODERATOR) return;
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		if ($AccountIO->valid() < LEV_MODERATOR) return;
 		$fh = new FlagHelper($post['status']);
 		if (!$isres) $modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'"'.($fh->value('sticky')?' title="Unsticky">s':' title="Sticky post">S').'</a>]';
 	}
@@ -44,8 +45,9 @@ class mod_sticky extends ModuleHelper {
 	
 	public function ModulePage() {
 		$PIO = PMCLibrary::getPIOInstance();
+		$AccountIO = PMCLibrary::getAccountIOInstance();
 
-		if (valid() < LEV_MODERATOR) {
+		if ($AccountIO->valid() < LEV_MODERATOR) {
 			error('403 Access denied');
 		}
 
@@ -57,7 +59,7 @@ class mod_sticky extends ModuleHelper {
 		$PIO->setPostStatus($post['no'], $flgh->toString());
 		$PIO->dbCommit();
 
-		logtime('Changed sticky status on post No.'.$post['no'].' ('.($flgh->value('sticky')?'true':'false').')', valid());
+		logtime('Changed sticky status on post No.'.$post['no'].' ('.($flgh->value('sticky')?'true':'false').')', $AccountIO->valid());
 		updatelog();
 		redirect('back', 1);
 	}

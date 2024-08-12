@@ -30,7 +30,8 @@ class mod_movethread extends ModuleHelper {
 	
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$FileIO = PMCLibrary::getFileIOInstance();
-		if (valid() != LEV_ADMIN) return;
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		if ($AccountIO->valid() != LEV_ADMIN) return;
 		if (!$isres)$modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'" title="move thread">MT</a>]';
 	}
 	
@@ -212,10 +213,11 @@ class mod_movethread extends ModuleHelper {
 	    }
 	}
 	public function ModulePage() {
-	    if (valid() < LEV_ADMIN) error('403 Access denied');
-	    
 		$PIO = PMCLibrary::getPIOInstance();
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		
 		$this->getCreds(CONNECTION_STRING); //get credentials & updatre member cred variables
+		if ($AccountIO->valid() < LEV_ADMIN) error('403 Access denied');
 		$boardData = json_decode(file_get_contents($this->full_path().'?'.'mode=module&load=mod_multiboard'), true);
 		
 		if ($_SERVER['REQUEST_METHOD']!='POST') { 

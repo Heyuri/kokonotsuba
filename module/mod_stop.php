@@ -36,15 +36,17 @@ class mod_stop extends ModuleHelper {
 	}
 
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
-		if (valid() < LEV_MODERATOR) return;
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		if ($AccountIO->valid() < LEV_MODERATOR) return;
 		$fh = new FlagHelper($post['status']);
 		if(!$isres) $modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'"'.($fh->value('stop')?' title="Unlock">l':' title="Lock thread">L').'</a>]';
 	}
 
 	public function ModulePage() {
 		$PIO = PMCLibrary::getPIOInstance();
-
-		if (valid() < LEV_MODERATOR) {
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		
+		if ($AccountIO->valid() < LEV_MODERATOR) {
 			error('403 Access denied');
 		}
 
@@ -56,7 +58,7 @@ class mod_stop extends ModuleHelper {
 		$PIO->setPostStatus($post['no'], $flgh->toString());
 		$PIO->dbCommit();
 
-		logtime('Changed lock status on post No.'.$post['no'].' ('.($flgh->value('stop')?'true':'false').')', valid());
+		logtime('Changed lock status on post No.'.$post['no'].' ('.($flgh->value('stop')?'true':'false').')', $AccountIO->valid());
 		updatelog();
 		redirect('back', 0);
 	}

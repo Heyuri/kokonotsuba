@@ -19,11 +19,12 @@ require ROOTPATH.'lib/lib_admin.php'; // Admin panel functions
 require ROOTPATH.'lib/lib_template.php'; // Template library
 require ROOTPATH.'lib/lib_cache.php'; // Caching functions
 require ROOTPATH.'lib/lib_post.php'; // Post and thread functions
+require ROOTPATH.'lib/AccountIO.php';
 
 defined("ROLL") or define("ROLL",[]);//When undefined, empty array
 
 /* Update the log file/output thread */ 
-function updatelog($resno=0,$pagenum=-1,$single_page=false){
+function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 	global $LIMIT_SENSOR;
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
@@ -56,7 +57,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false){
 			$PMS->useModuleMethods('ThreadOrder', array($resno,$pagenum,$single_page,&$threads)); // "ThreadOrder" Hook Point
 			$threads_count = count($threads);
 			$inner_for_count = $threads_count > PAGE_DEF ? PAGE_DEF : $threads_count;
-			$page_end = ceil($threads_count / PAGE_DEF); // The last value of the page number
+			$page_end = ($last == -1 ? ceil($threads_count / PAGE_DEF) : $last);
 		}else{ // Discussion of the clue label pattern (PHP dynamic output one page)
 			$threads_count = $PIO->threadCount(); // Discuss the number of strings
 			if($pagenum < 0 || ($pagenum * PAGE_DEF) >= $threads_count) error(_T('page_not_found')); // $Pagenum is out of range
@@ -331,19 +332,8 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
             }
             unset($qu);
 			
-			if (USE_BACKLINK) {
-				$blref = $PIO->searchPost(array('((?:&gt;|  ^~)+)(?:No\.)?('.$no.')\b'), 'com', 'REG');
-				if ($blcnt=count($blref)) {
-					$blref = array_reverse($blref);
-					foreach ($blref as $ref) {
-						$BACKLINKS.= ' <a href="'.PHP_SELF.'?res='.($ref['resto']?$ref['resto']:$ref['no']).'#p'.$ref['no'].'" class="backlink">&gt;&gt;'.$ref['no'].'</a>';
-					}
-				}
-			}
-		} else {
-			if($resno&&!$i)		$REPLYBTN = '[<a href="'.PHP_SELF.'?res='.$no.'">'._T('reply_btn').'</a>]';
-			$QUOTEBTN = $no;
-		}
+		if($resno&&!$i)		$REPLYBTN = '[<a href="'.PHP_SELF.'?res='.$no.'">'._T('reply_btn').'</a>]';
+		$QUOTEBTN = $no;
 
 		if($adminMode){ // Front-end management mode
 			$modFunc = '';
@@ -445,6 +435,11 @@ function regist($preview=false){
     // E-mail / Title trimming
     $email = str_replace("\r\n", '', $email); 
     $sub = str_replace("\r\n", '', $sub);
+    
+ 	// Get number oif pages to rebuild	
+ 	$threads = $PIO->fetchThreadList();
+	$threads_count = count($threads);
+	$page_end = ($resto ? ceil(array_search($resto, $threads) / PAGE_DEF) : ceil($threads_count / PAGE_DEF));
  
     applyTripcodeAndCapCodes($name, $email, $dest);
     cleanComment($com, $upfile_status, $is_admin, $dest);
@@ -532,7 +527,7 @@ function regist($preview=false){
     if($delta_totalsize != 0){
         $FileIO->updateStorageSize($delta_totalsize);
     }
-    updatelog();
+	updatelog(0, -1, false, $page_end);
  
     if(isset($_POST['up_series'])){
         if($resto) $redirect = PHP_SELF.'?res='.$resto.'&upseries=1';

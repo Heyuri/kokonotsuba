@@ -35,15 +35,19 @@ class mod_autosage extends ModuleHelper {
 	}
 
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
-		if (valid() < LEV_MODERATOR) return;
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		if ($AccountIO->valid() < LEV_MODERATOR) return;
 		$fh = new FlagHelper($post['status']);
 		if(!$isres) $modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'"'.($fh->value('as')?' title="Allow age">as':' title="Autosage">AS').'</a>]';
 	}
 
 	public function ModulePage() {
 		$PIO = PMCLibrary::getPIOInstance();
-
-		if (valid() < LEV_MODERATOR) {
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		
+		$level = $AccountIO->valid();
+		
+		if ($level < LEV_MODERATOR) {
 			error('403 Access denied');
 		}
 
@@ -54,8 +58,12 @@ class mod_autosage extends ModuleHelper {
 		$flgh->toggle('as');
 		$PIO->setPostStatus($post['no'], $flgh->toString());
 		$PIO->dbCommit();
+		
+		//username for logging
+		$moderatorUsername = $AccountIO->getUsername();
+		$moderatorLevel = $AccountIO->getRoleLevel();
 
-		logtime('Changed autosage status on post No.'.$post['no'].' ('.($flgh->value('as')?'true':'false').')', valid());
+		logtime('Changed autosage status on post No.'.$post['no'].' ('.($flgh->value('as')?'true':'false').')', $moderatorUsername.' ## '.$moderatorLevel);
 		updatelog();
 		redirect('back', 1);
 	}

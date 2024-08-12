@@ -20,7 +20,16 @@ define("FILEIO_PARAMETER", ''); // FileIO Parameters (local storage)
 //define("FILEIO_PARAMETER", serialize(array('http://www.example.com/~demo/satellite.cgi', true, '12345678', 'http://www.example.com/~demo/src/', true)));
 
 // Database Settings
-define("CONNECTION_STRING", 'mysqli://user:password@127.0.0.1/boarddb/imglog/'); // PIO Connection string (MySQLi)
+define("DATABASE_USERNAME", 'user');
+define("DATABASE_PASSWORD", 'password');
+define("DATABASE_DBNAME", 'database');
+define("DATABASE_TABLENAME", 'table');
+
+define("DATABASE_DRIVER", 'mysqli');
+define("DATABASE_HOST", '127.0.0.1');
+define("DATABASE_PORT", 3306);
+
+define("CONNECTION_STRING", DATABASE_DRIVER.'://'.DATABASE_USERNAME.':'.DATABASE_PASSWORD.'@'.DATABASE_HOST.'/'.DATABASE_DBNAME.'/'.DATABASE_TABLENAME.'/'); // PIO Connection string
 
 // Archive Database Settings (MySQLi)
 define("ARCHIVE_HOST",	'localhost');
@@ -144,8 +153,6 @@ define("JANIMUTE_LENGTH", 20); // Janitor mute duration (in minutes)
 define("JANIMUTE_REASON", 'You have been muted temporarily!'); // Janitor mute reason
 //mod_antiflood
 define("RENZOKU3", 30); // How many seconds between new threads?
-//mod_showip
-define("IPTOGGLE", 1); // 1 to have OPs toggle IP display, 2 enables for all posts
 
 // Ban Settings
 define("BAN_CHECK", 1); // Comprehensive ban check function
