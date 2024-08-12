@@ -136,7 +136,7 @@ class AccountIO {
 		foreach($totalStoredAccounts as $account) {
 			if(sizeof($account) != 4) continue;
 			$account = array_combine(['id', 'username', 'password', 'role'], $account);
-			if (crypt($pass, TRIPSALT) !== $account['password']) {
+			if (crypt($pass, $account['password']) !== $account['password']) {
 				$this->level = LEV_NONE; //pass wrong
 				continue;
 			}

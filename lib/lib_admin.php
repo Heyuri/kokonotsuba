@@ -340,7 +340,7 @@ function createAccount() {
 		$nPass = strval($_POST['passwd']);//password for new account
 		$nRole = intval($_POST['role']);//moderation role
 
-		$hashedPassword = crypt($nPass, TRIPSALT); //password hash to be stored in account flatfile
+		$hashedPassword = password_hash($nPass, PASSWORD_DEFAULT); //password hash to be stored in account flatfile
 		
 		//auth role
 		switch($nRole) {
