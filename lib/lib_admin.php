@@ -106,7 +106,7 @@ function selectAll() {
     });
 }
 </script>
-'
+';
 
 	$countline = $PIO->postCount(); // Total number of articles(threads)
 	$page_max = ($searchHost ? 0 : ceil($countline / ADMIN_PAGE_DEF) - 1); // Total number of pages
