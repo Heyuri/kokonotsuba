@@ -134,6 +134,7 @@ function showstatus(){
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PTE = PMCLibrary::getPTEInstance();
 	$PMS = PMCLibrary::getPMSInstance();
+	$AccountIO = PMCLibrary::getAccountIOInstance();
 
 	$countline = $PIO->postCount(); // Calculate the current number of data entries in the submitted text log file
 	$counttree = $PIO->threadCount(); // Calculate the current number of data entries in the tree structure log file
