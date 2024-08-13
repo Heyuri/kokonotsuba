@@ -31,7 +31,7 @@ class mod_movethread extends ModuleHelper {
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$AccountIO = PMCLibrary::getAccountIOInstance();
-		if ($AccountIO->valid() != LEV_ADMIN) return;
+		if ($AccountIO->valid() < LEV_MODERATOR) return;
 		if (!$isres)$modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'" title="move thread">MT</a>]';
 	}
 	
@@ -217,7 +217,7 @@ class mod_movethread extends ModuleHelper {
 		$AccountIO = PMCLibrary::getAccountIOInstance();
 		
 		$this->getCreds(CONNECTION_STRING); //get credentials & updatre member cred variables
-		if ($AccountIO->valid() < LEV_ADMIN) error('403 Access denied');
+		if ($AccountIO->valid() < LEV_MODERATOR) error('403 Access denied');
 		$boardData = json_decode(file_get_contents($this->full_path().'?'.'mode=module&load=mod_multiboard'), true);
 		
 		if ($_SERVER['REQUEST_METHOD']!='POST') { 
@@ -256,6 +256,11 @@ class mod_movethread extends ModuleHelper {
             $threadDat =  $PIO->fetchPosts($PIO->fetchPostList($post['no'])); //get posts in thread
             $this->registNewThreadToBoard($threadDat, $destination, $boardData); // copy thread to destination board 
             $this->con->commit(); //commit changes
+            
+			$level = $AccountIO->valid();
+			$moderatorUsername = $AccountIO->getUsername();
+			$moderatorLevel = $AccountIO->getRoleLevel();
+			logtime('Moved thread No.'.$post['no'].' to '.$destination, $moderatorUsername.'##'.num2role($moderatorLevel));
             
 			updatelog();
 			echo "success!";
