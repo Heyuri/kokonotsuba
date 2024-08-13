@@ -447,13 +447,15 @@ function drawAdminList() {
 			
 		//authenticate
 		$level = $AccountIO->valid($pass);
+		$log_in_msg = "<b class=\"username\">Logged in as ".$AccountIO->getUsername()." (".$AccountIO->getRoleLevel().")</b>";
+		if($level == LEV_NONE) $log_in_msg = "";
 		$admin = $_REQUEST['admin']??'';
 		$dat = '';
 		head($dat);
 		$links = '[<a href="'.PHP_SELF2.'?'.$_SERVER['REQUEST_TIME'].'">Return</a>] [<a href="'.PHP_SELF.'?mode=rebuild">Rebuild</a>] [<a href="'.PHP_SELF.'?pagenum=0">Live Frontend</a>]';
 		$PMS->useModuleMethods('LinksAboveBar', array(&$dat,'admin',$level));
 		$dat .= $links; //hook above bar links
-		$dat.= "<center class=\"theading3\"><b>Administrator mode</b> <br/> <b class=\"username\">Logged in as ".$AccountIO->getUsername()." (".$AccountIO->getRoleLevel().")</b></center>";
+		$dat.= "<center class=\"theading3\"><b>Administrator mode</b> <br/>$log_in_msg </center>";
 		$dat.= '<center><form action="'.PHP_SELF.'" method="POST" name="adminform">';
 		$admins = array(
 			array('name'=>'del', 'level'=>LEV_JANITOR, 'label'=>'Manage posts', 'func'=>'admindel'),
