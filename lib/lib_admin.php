@@ -302,8 +302,12 @@ function drawAccountCreationForm(&$dat) {
        </tr>
        <tr>
            <td class="postblock"><label for="passwd">Account password:</label></td>
-           <td><input type="password" id="passwd" name="passwd" required="" maxlength="50"/></td>
+           <td><input type="password" id="passwd" name="passwd" required="" maxlength="200"/></td>
        </tr>
+		<tr>
+			<td class="postblock"><label for="hashed">Already hashed?</label></td>
+			<td><input type="checkbox" id="hashed" name="ishashed" /></td>
+			</tr>
        <tr>
            <td class="postblock"><label for="role">Role</label></td>
            <td>
@@ -336,11 +340,13 @@ function createAccount() {
 	if(!empty($_POST['usrname']) && !empty($_POST['passwd'])) {
 		$AccountIO = PMCLibrary::getAccountIOInstance();
 	
+		$ishash = $_POST['ishashed']; if(!isset($ishash)) $ishash = false;
+		
 		$nUsername = strval(htmlspecialchars($_POST['usrname'])); //username for new account
 		$nPass = strval($_POST['passwd']);//password for new account
 		$nRole = intval($_POST['role']);//moderation role
 
-		$hashedPassword = password_hash($nPass, PASSWORD_DEFAULT); //password hash to be stored in account flatfile
+		(!$ishash) ? $hashedPassword = password_hash($nPass, PASSWORD_DEFAULT) : $hashedPassword = $nPass; //password hash to be stored in account flatfile
 		
 		//auth role
 		switch($nRole) {

@@ -57,7 +57,7 @@ class AccountIO {
 	public function addNewAccount($newUsername, $newPassword, $newRole) {
 		$newRole = intval($newRole);
 		$newUsername = substr($newUsername, 0, 30);
-		$newPassword = substr($newPassword, 0, 50);
+		$newPassword = substr($newPassword, 0, 200);
 		$id = $this->getLastID();
 		
 		$this->flatfileConnect();
