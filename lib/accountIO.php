@@ -154,7 +154,7 @@ class AccountIO {
 				break 2;
 				case 3:
 					$this->level = LEV_MODERATOR;
-				break;
+				break 2;
 				case 4:
 					$this->level = LEV_ADMIN;
 				break 2;
