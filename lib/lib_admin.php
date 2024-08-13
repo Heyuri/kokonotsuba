@@ -441,6 +441,8 @@ function drawAdminList() {
 		
 		if ($pass=$_POST['pass']??'')
 			$_SESSION['kokologin'] = $pass;
+			
+		//authenticate
 		$level = $AccountIO->valid($pass);
 		$admin = $_REQUEST['admin']??'';
 		$dat = '';

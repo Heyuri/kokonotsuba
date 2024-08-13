@@ -15,7 +15,7 @@ class AccountIO {
 	private $level, $ACCusername, $id; // account details
 
 	public function __construct(){
-		$this->level = 0;
+		$this->level = -1;
 		$this->id = 0;
 		$this->ACCusername = '';
 		
@@ -125,8 +125,16 @@ class AccountIO {
 		return $this->ACCusername;	
 	}
 	
+	private function setDetails($username) {
+		$this->ACCusername = $account['username'];
+		$_SESSION['usernameID'] = $this->ACCusername;
+		session_regenerate_id(true);
+	}
+	
 	public function valid($pass='') {
+		if ($this->level !== -1) return $this->level;
 		if (!$pass) $pass = $_SESSION['kokologin']??'';
+		
 		$this->level = LEV_NONE;
 		
 		//get all acounts
@@ -143,27 +151,27 @@ class AccountIO {
 			switch($account['role']) {
 				case 0:
 					$this->level = LEV_NONE;
-					$this->ACCusername = $account['username'];
 				break 2;
 				case 1:
 					$this->level = LEV_USER;
-					$this->ACCusername = $account['username'];		
 				break 2;
 				case 2:
 					$this->level = LEV_JANITOR;
-					$this->ACCusername = $account['username'];
+		
 				break 2;
 				case 3:
 					$this->level = LEV_MODERATOR;
-					$this->ACCusername = $account['username'];
 				break;
 				case 4:
 					$this->level = LEV_ADMIN;
-					$this->ACCusername = $account['username'];
 				break 2;
 			}
 		}
 		fclose($this->readOnlyFFData);	
+		
+		$this->ACCusername = $account['username'];
+		$_SESSION['usernameID'] = $this->ACCusername;
+		
 		return $this->level;
 	}
 }
