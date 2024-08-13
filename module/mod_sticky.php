@@ -58,8 +58,11 @@ class mod_sticky extends ModuleHelper {
 		$flgh->toggle('sticky');
 		$PIO->setPostStatus($post['no'], $flgh->toString());
 		$PIO->dbCommit();
-
-		logtime('Changed sticky status on post No.'.$post['no'].' ('.($flgh->value('sticky')?'true':'false').')', $AccountIO->valid());
+		
+		$level = $AccountIO->valid();
+		$moderatorUsername = $AccountIO->getUsername();
+		$moderatorLevel = $AccountIO->getRoleLevel();
+		logtime('Changed sticky status on post No.'.$post['no'].' ('.($flgh->value('sticky')?'true':'false').')', $moderatorUsername);
 		updatelog();
 		redirect('back', 1);
 	}

@@ -417,7 +417,6 @@ function regist($preview=false){
     $upfile_status = 4;
     
     spamValidate($ip, $name, $email, $sub, $com);
-    
     /* hook call */
 	$PMS->useModuleMethods('RegistBegin', array(&$name, &$email, &$sub, &$com, array('file'=>&$upfile, 'path'=>&$upfile_path, 'name'=>&$upfile_name, 'status'=>&$upfile_status), array('ip'=>$ip, 'host'=>$host), $resto)); // "RegistBegin" Hook Point
 
@@ -505,7 +504,8 @@ function regist($preview=false){
         previewPost($no);
         return;
     }
-    
+     $PIO->bumpThread($resto); //bump thread
+     
     $level = $AccountIO->valid();
  	//username for logging
 	$moderatorUsername = $AccountIO->getUsername();
@@ -534,7 +534,7 @@ function regist($preview=false){
         if($resto) $redirect = PHP_SELF.'?res='.$resto.'&upseries=1';
         else $redirect = PHP_SELF.'?res='.$lastno.'&upseries=1';
     }
- 
+ 	
     redirect($redirect, 0);
 }
 /* User post deletion */
