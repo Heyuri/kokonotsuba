@@ -125,12 +125,6 @@ class AccountIO {
 		return $this->ACCusername;	
 	}
 	
-	private function setDetails($username) {
-		$this->ACCusername = $account['username'];
-		$_SESSION['usernameID'] = $this->ACCusername;
-		session_regenerate_id(true);
-	}
-	
 	public function valid($pass='') {
 		if ($this->level !== -1) return $this->level;
 		if (!$pass) $pass = $_SESSION['kokologin']??'';
@@ -157,7 +151,6 @@ class AccountIO {
 				break 2;
 				case 2:
 					$this->level = LEV_JANITOR;
-		
 				break 2;
 				case 3:
 					$this->level = LEV_MODERATOR;
@@ -168,10 +161,8 @@ class AccountIO {
 			}
 		}
 		fclose($this->readOnlyFFData);	
-		
 		$this->ACCusername = $account['username'];
-		$_SESSION['usernameID'] = $this->ACCusername;
-		
+
 		return $this->level;
 	}
 }
