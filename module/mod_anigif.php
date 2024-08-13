@@ -59,8 +59,9 @@ class mod_anigif extends ModuleHelper {
 	public function ModulePage() {
 		$PIO = PMCLibrary::getPIOInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
-
-		if(valid() < LEV_JANITOR) {
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		
+		if($AccountIO->valid() < LEV_JANITOR) {
 			error('403 Access denied');
 		}
 
@@ -75,7 +76,7 @@ class mod_anigif extends ModuleHelper {
 			$PIO->setPostStatus($post[0]['no'], $flgh->toString());
 			$PIO->dbCommit();
 			
-			logtime('Changed anigif status on post No.'.$post['no'].' ('.($flgh->value('agif')?'true':'false').')', valid());
+			logtime('Changed anigif status on post No.'.$post['no'].' ('.($flgh->value('agif')?'true':'false').')', $AccountIO->valid());
 			redirect('back', 0);
 		} else {
 			error('ERROR: Post does not have attechment.');
