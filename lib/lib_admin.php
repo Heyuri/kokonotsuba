@@ -53,9 +53,12 @@ function admindel(&$dat){
 		extract($posts[$j]);
 		
 		// Modify the field style
-		$sub = htmlspecialchars($sub);
+		$name = htmlspecialchars(str_cut(html_entity_decode(strip_tags($name)), 9));
+		$sub = htmlspecialchars(str_cut(html_entity_decode($sub), 8));
 		if($email) $name = "<a href=\"mailto:$email\">$name</a>";
-		$sub = str_replace('<br />',' ',$sub);
+		$com = str_replace('<br />',' ',$com);
+		$com = htmlspecialchars(str_cut(html_entity_decode($com), 20));
+
 
 		// The first part of the discussion is the stop tick box and module function
 		$modFunc = ' ';
@@ -85,7 +88,7 @@ function admindel(&$dat){
     <td><small class="time">' . $now . '</small></td>
     <td><b class="title">' . $sub . '</b></td>
     <td><b class="name">' . $name . '</b></td>
-    <td><small>' . $com . '</small></td>
+    <td>' . $com . '</td>
     <td>' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . STATIC_URL . 'image/glass.png"></a> <a href="?mode=admin&admin=del&host=' . $host . '" title="See all posts">★</a></td>
     <td align="center">' . $clip . ' (' . $size . ')<br />' . $md5chksum . '</td>
 </tr>';
