@@ -10,11 +10,10 @@
  */
 
 class PIOmysqli implements IPIO {
-	private $ENV, $username, $password, $server, $port, $dbname, $tablename; // Local Constant
+	private $username, $password, $server, $port, $dbname, $tablename; // Local Constant
 	private $con, $prepared, $useTransaction; // Local Global
 
 	public function __construct($connstr='', $ENV){
-		$this->ENV = $ENV;
 		$this->prepared = 0;
 		if($connstr) $this->dbConnect($connstr);
 	}
@@ -584,7 +583,15 @@ class PIOmysqli implements IPIO {
 	public function getPostStatus($status){
 		return new FlagHelper($status); // 回傳 FlagHelper 物件
 	}
+	
+	/* Check if article exists */
+	public function postExists($no){
+		if(!$this->prepared) $this->dbPrepare();
 
+		$result = $this->_mysql_call('SELECT no FROM '.$this->tablename.' WHERE no = '.intval($no));
+		return $result->fetch_row() ? true : false;
+	}
+		
 	/* Update article */
 	public function updatePost($no, $newValues){
 		if(!$this->prepared) $this->dbPrepare();

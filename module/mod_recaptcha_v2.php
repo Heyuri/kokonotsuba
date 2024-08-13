@@ -33,7 +33,8 @@ class mod_recaptcha_v2 extends ModuleHelper {
 
 	/* Check whether it is correct as soon as you receive the request */
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo){
-		if (valid() >= LEV_MODERATOR ) return; //no captcha for admin mode
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		if ($AccountIO->valid() >= LEV_MODERATOR ) return; //no captcha for admin mode
 		$resp = $this->validateCaptcha('SECRET KEY', $_POST['g-recaptcha-response']);
 		if($resp == null){ error('reCAPTCHA failed！You are not acting like a human!'); } // 檢查
 	}

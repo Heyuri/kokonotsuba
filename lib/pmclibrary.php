@@ -125,4 +125,17 @@ class PMCLibrary {
 		}
 		return $instLanguage;
 	}
+	
+	/**
+	* Get account instance
+	*/
+	public static function getAccountIOInstance() {
+		static $instAccount = null;
+		if ($instAccount == null) {
+			require ROOTPATH.'lib/accountIO.php';
+			$instAccount = new AccountIO();
+		}
+		return $instAccount;
+	}
+
 }

@@ -25,13 +25,13 @@ class mod_search extends ModuleHelper {
 		$PMS = PMCLibrary::getPMSInstance();
 		$PIO = PMCLibrary::getPIOInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
-
-		if(!USE_SEARCH) error(_T('search_disabled'));
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		
 		$searchKeyword = isset($_POST['keyword']) ? trim($_POST['keyword']) : ''; // The text you want to search
 		$dat = '';
 		head($dat);
 		$links = '[<a href="'.PHP_SELF2.'?'.time().'">'._T('return').'</a>]';
-		$level = valid();
+		$level = $AccountIO->valid();
 		$PMS->useModuleMethods('LinksAboveBar', array(&$links,'search',$level));
 		$dat .= $links.'<center class="theading2"><b>'._T('search_top').'</b></center>
 		</div>

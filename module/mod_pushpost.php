@@ -110,8 +110,9 @@ function mod_pushpostSend(){
 	}
 
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo, $isReply) {
+		$AccountIO = PMCLibrary::getAccountIOInstance();
 		// Login permissions allow tags to be retained without conversion (the tweet is still valid after the backend logs in and modifies the article)
-		if (valid() < LEV_MODERATOR) return;
+		if ($AccountIO->valid() < LEV_MODERATOR) return;
 
 		// Prevent manual insertion of tags
 		if (strpos($com, $this->PUSHPOST_SEPARATOR."\r\n") !== false) {

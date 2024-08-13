@@ -10,9 +10,10 @@
  */
 
 define("LEV_NONE", 0);
-define("LEV_JANITOR", 1);
-define("LEV_MODERATOR", 2);
-define("LEV_ADMIN", 3);
+define("LEV_USER", 1);
+define("LEV_JANITOR", 2);
+define("LEV_MODERATOR", 3);
+define("LEV_ADMIN", 4);
 
 // Windows PHP 5.2.0 does not have this function implemented.
 if (!function_exists('inet_pton')) {
@@ -68,7 +69,7 @@ function head(&$dat,$resno=0){
 		'{$STATUS}' => '[<a href="'.PHP_SELF.'?mode=status">'._T('head_info').'</a>]',
 		'{$ADMIN}' => '[<a href="'.PHP_SELF.'?mode=admin">'._T('head_admin').'</a>]',
 		'{$REFRESH}' => '[<a href="'.PHP_SELF2.'?">'._T('head_refresh').'</a>]',
-		'{$SEARCH}' => (USE_SEARCH) ? '[<a href="'.PHP_SELF.'?mode=search">'._T('head_search').'</a>]' : '',
+		'{$SEARCH}' => (0) ? '[<a href="'.PHP_SELF.'?mode=search">'._T('head_search').'</a>]' : '',
 		'{$HOOKLINKS}' => '');
 	$PMS->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
 	$dat .= $PTE->ParseBlock('BODYHEAD',$pte_vals);
@@ -363,19 +364,6 @@ function matchCIDRv6($addr, $cidr) {
     return true;
 }
 
-// Password validation
-function valid($pass='') {
-	if (!$pass) $pass = $_SESSION['kokologin']??'';
-	$level = LEV_NONE;
-	foreach ((is_array(JANITOR_HASH) ? JANITOR_HASH : array(JANITOR_HASH)) as $janitorhash) {
-		if (crypt($pass, $janitorhash) === $janitorhash) return $level=LEV_JANITOR; }
-	foreach ((is_array(MOD_HASH) ? MOD_HASH : array(MOD_HASH)) as $modhash) {
-		if (crypt($pass, $modhash) === $modhash) return $level=LEV_MODERATOR; }
-	foreach ((is_array(ADMIN_HASH) ? ADMIN_HASH : array(ADMIN_HASH)) as $adminhash) {
-		if (crypt($pass, $adminhash) === $adminhash) return $level=LEV_ADMIN; }
-	return $level;
-}
-
 //
 function getREMOTE_ADDR(){
 	static $ip_cache;
@@ -469,16 +457,22 @@ function strlenUnicode($str) {
     return mb_strlen($str, 'UTF-8');
 }
 
-// Moderator log
-function logtime($desc, $from='SYSTEM') {
-	if (is_int($from)) {
-		switch ($from) {
+function num2Role($roleNumber) {
+	$num = intval($roleNumber);
+	$from = '';
+	
+	switch ($num) {
 			case LEV_NONE: $from = 'USER'; break;
+			case LEV_USER: $from = 'REGISTERED_USER'; break;
 			case LEV_JANITOR: $from = 'JANITOR'; break;
 			case LEV_MODERATOR: $from = 'MODERATOR'; break;
 			case LEV_ADMIN: $from = 'ADMIN'; break;
-		}
 	}
+	return $from;
+}
+
+// Moderator log
+function logtime($desc, $from='SYSTEM') {
 	$now = date("m/d/y H:i:s", $_SERVER['REQUEST_TIME']);
 	$ip = ' ('.getREMOTE_ADDR().')';
 	static $fp; if (!$fp) $fp = fopen(STORAGE_PATH.ACTION_LOG, "a");

@@ -11,6 +11,7 @@ ini_set("memory_limit", '128M'); // Maximum allowed memory usage by php
 define("STATIC_URL", './static/'); // Where static files are stored. Can be a url. Include trailing '/'
 define("ACTION_LOG", 'audit.log.txt');
 
+
 // FileIO settings 
 define("FILEIO_BACKEND", 'local'); // FileIO backend specification (local, ftp)
 define("FILEIO_INDEXLOG", 'fileioindex.dat'); // FileIO Index Log file
@@ -20,7 +21,16 @@ define("FILEIO_PARAMETER", ''); // FileIO Parameters (local storage)
 //define("FILEIO_PARAMETER", serialize(array('http://www.example.com/~demo/satellite.cgi', true, '12345678', 'http://www.example.com/~demo/src/', true)));
 
 // Database Settings
-define("CONNECTION_STRING", 'mysqli://user:password@127.0.0.1/boarddb/imglog/'); // PIO Connection string (MySQLi)
+define("DATABASE_USERNAME", 'user');
+define("DATABASE_PASSWORD", 'password');
+define("DATABASE_DBNAME", 'database');
+define("DATABASE_TABLENAME", 'table');
+
+define("DATABASE_DRIVER", 'mysqli');
+define("DATABASE_HOST", '127.0.0.1');
+define("DATABASE_PORT", 3306);
+
+define("CONNECTION_STRING", DATABASE_DRIVER.'://'.DATABASE_USERNAME.':'.DATABASE_PASSWORD.'@'.DATABASE_HOST.'/'.DATABASE_DBNAME.'/'.DATABASE_TABLENAME.'/'); // PIO Connection string
 
 // Archive Database Settings (MySQLi)
 define("ARCHIVE_HOST",	'localhost');
@@ -35,6 +45,7 @@ define("THUMB_DIR", 'src/'); // Thumbnail Directory
 define("CDN_DIR", ''); // absolute path to the folder for storing imgs & thumbs (excluding IMG_DIR, e.g. /var/www/cdn/heyuri/)
 define("CDN_URL", ''); // img/thumb CDN url (without IMG_DIR directory, e.g. https://h.kncdn.org/b/). Set to blank for locally hosted files
 define("REF_URL", ''); // URL prefix, eg: https://jump.heyuri.net
+define("ACCOUNT_FLATFILE", STORAGE_PATH.'accounts.txt'); //flatfile used for  storing account data
 define("PHP_SELF", 'koko.php'); // Name of the main script
 define("PHP_SELF2", 'index.html'); // Defines PHP_SELF
 define("PHP_EXT", '.html'); // File extension for static pages
@@ -53,11 +64,6 @@ define("CAPCODES", array( // tripcode=>color,cap
 // define("DISCORD_WH", '');
 // define("IRC_WH", '');
 
-// Moderator settings
-// Passwords must be hashed. Obtain a hashed password at https://sys.kolyma.net/passwd.php
-define("ADMIN_HASH", array('')); // Administrator password
-define("MOD_HASH", array('')); // Moderator password
-define("JANITOR_HASH", array('')); ///
 // Capcode formats (put '%s' where you want the original name)
 define("JCAPCODE_FMT", '%s');
 define("MCAPCODE_FMT", '<font color="#770099">%s ## Mod</font>');
@@ -68,7 +74,6 @@ define("FOOTTEXT", '');
 // Functions
 // 0 = NO | 1 = YES 
 define("THREAD_PAGINATION", 1); // Thread html pagination
-define("USE_SEARCH", 1); // Use the search feature
 define("USE_UPSERIES", 0); // Allows users to optionally bypass pagination
 define("RESIMG", 1); // Allow files in replies
 define("AUTO_LINK", 1); // Create urls (autolink)
@@ -79,7 +84,6 @@ define("ID_MODE", 0); // Leave 0, do not change
 define("CLEAR_SAGE", 0); // Disable sage if true
 define("NOTICE_SAGE", 1); // Visible sage ("SAGE!")
 define("USE_QUOTESYSTEM", 1); // Enable >>1234
-define("USE_BACKLINK", 1); // Enable backlinks on posts 
 define("SHOW_IMGWH", 1); // Display the original length and width dimension of the additional image file
 define("USE_CATEGORY", 0); // Enable Categories
 define("TRUST_HTTP_X_FORWARDED_FOR", 0); //Whether to use HTTP_X_FORWARDED_FOR to grab the real IP after the Proxy. Note that the file head may be forged, do not open if there is no special need.

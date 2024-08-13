@@ -22,7 +22,8 @@ class mod_admindel extends ModuleHelper {
 
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$FileIO = PMCLibrary::getFileIOInstance();
-		if (valid() < LEV_JANITOR) return;
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		if ($AccountIO->valid() < LEV_JANITOR) return;
 		$modfunc.= '[<a href="'.$this->mypage.'&action=del&no='.$post['no'].'" title="Delete">D</a>]';
 		if ($post['ext'] && $FileIO->imageExists($post['tim'].$post['ext'])) $modfunc.= '[<a href="'.$this->mypage.'&action=imgdel&no='.$post['no'].'" title="Delete File">Df</a>]';
 		$modfunc.= '[<a href="'.$this->mypage.'&action=delmute&no='.$post['no'].'" title="Delete and Mute for '.$this->JANIMUTE_LENGTH.' minute'.($this->JANIMUTE_LENGTH == 1 ? "" : "s").'">DM</a>]';
@@ -33,11 +34,17 @@ class mod_admindel extends ModuleHelper {
 		$PIO = PMCLibrary::getPIOInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$PMS = PMCLibrary::getPMSInstance();
-
-		if (valid() < LEV_JANITOR) {
+		$AccountIO = PMCLibrary::getAccountIOInstance();
+		
+		//valid also 'logs in'
+		if ($AccountIO->valid() < LEV_JANITOR) {
 			error('403 Access denied');
 		}
-
+		
+		//username for logging
+		$moderatorUsername = $AccountIO->getUsername();
+		$moderatorLevel = $AccountIO->getRoleLevel();
+		
 		$post = $PIO->fetchPosts(intval($_GET['no']??''))[0];
 		if (!$post) error('ERROR: That post does not exist.');
 		$files = false;
@@ -46,7 +53,7 @@ class mod_admindel extends ModuleHelper {
 				$PMS->useModuleMethods('PostOnDeletion', array($post['no'], 'backend'));
 				$files = $PIO->removePosts(array($post['no']));
 				deleteCache(array($post['no']));
-				logtime('Deleted post No.'.$post['no'], valid());
+				logtime('Deleted post No.'.$post['no'], $moderatorUsername.' ## '.$moderatorLevel);
 				break;
 			case 'delmute':
 				$PMS->useModuleMethods('PostOnDeletion', array($post['no'], 'backend'));
@@ -61,15 +68,15 @@ class mod_admindel extends ModuleHelper {
 					fwrite($f, "$ip,$starttime,$expires,$reason\r\n");
 				}
 				fclose($f);
-				logtime('Muted '.$ip.' and deleted post No.'.$post['no'], valid());
+				logtime('Muted '.$ip.' and deleted post No.'.$post['no'], $moderatorUsername.' ## '.$moderatorLevel);
 				break;
 			case 'imgdel':
 				$files = $PIO->removeAttachments(array($post['no']));
-				logtime('Deleted file for post No.'.$post['no'], valid());
+				logtime('Deleted file for post No.'.$post['no'], $moderatorUsername.' ## '.$moderatorLevel);
 				break;
 			case 'cachedel':
 				deleteCache(array($post['no']));
-				logtime('Deleted cache for post No.'.$post['no'], valid());
+				logtime('Deleted cache for post No.'.$post['no'], $moderatorUsername.' ## '.$moderatorLevel);
 				break;
 			default:
 				error('ERROR: Invalid action.');
