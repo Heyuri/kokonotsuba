@@ -141,28 +141,28 @@ class AccountIO {
 			if (crypt($pass, $account['password']) !== $account['password']) {
 				$this->level = LEV_NONE; //pass wrong
 				continue;
-			}
+			} 
 			switch($account['role']) {
 				case 0:
 					$this->level = LEV_NONE;
-				break 2;
+				break;
 				case 1:
 					$this->level = LEV_USER;
 				break 2;
 				case 2:
 					$this->level = LEV_JANITOR;
-				break 2;
+				break;
 				case 3:
 					$this->level = LEV_MODERATOR;
-				break 2;
+				break;
 				case 4:
 					$this->level = LEV_ADMIN;
-				break 2;
+				break;
 			}
+			$this->ACCusername = $account['username'];
+			break;
 		}
 		fclose($this->readOnlyFFData);	
-		$this->ACCusername = $account['username'];
-
 		return $this->level;
 	}
 }
