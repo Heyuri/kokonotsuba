@@ -260,7 +260,7 @@ class mod_movethread extends ModuleHelper {
 			$level = $AccountIO->valid();
 			$moderatorUsername = $AccountIO->getUsername();
 			$moderatorLevel = $AccountIO->getRoleLevel();
-			logtime('Moved thread No.'.$post['no'].' to '.$destination, $moderatorUsername.' ## '.($moderatorLevel);
+			logtime('Moved thread No.'.$post['no'].' to '.$destination, $moderatorUsername.' ## '.$moderatorLevel);
             
 			updatelog();
 			echo "success!";
