@@ -493,7 +493,7 @@ function regist($preview=false){
     }
     $email = preg_replace('/^(no)+ko\d*$/i', '', $email);
  
- 	// Get number of pages to rebuild
+	// Get number of pages to rebuild
 	$threads = $PIO->fetchThreadList();
 	$threads_count = count($threads);
 	$page_end = ($resto ? floor(array_search($resto, $threads) / PAGE_DEF) : ceil($threads_count / PAGE_DEF));
@@ -504,14 +504,14 @@ function regist($preview=false){
         previewPost($no);
         return;
     }
-     $PIO->bumpThread($resto); //bump thread
+	$PIO->bumpThread($resto); //bump thread
      
-    $level = $AccountIO->valid();
+	$level = $AccountIO->valid();
  	//username for logging
-	$moderatorUsername = $AccountIO->getUsername();
+ 	$moderatorUsername = $AccountIO->getUsername();
 	$moderatorLevel = $AccountIO->getRoleLevel();
 	
-    logtime("Post No.$no registered", $moderatorUsername.' ## '.$moderatorLevel);
+	logtime("Post No.$no registered", $moderatorUsername.' ## '.$moderatorLevel);
     // Formal writing to storage
     $PIO->dbCommit();
     $lastno = $PIO->getLastPostNo('afterCommit'); // Get this new article number
@@ -528,7 +528,7 @@ function regist($preview=false){
     if($delta_totalsize != 0){
         $FileIO->updateStorageSize($delta_totalsize);
     }
-    updatelog();
+	updatelog(0, -1, false, $page_end);
  
     if(isset($_POST['up_series'])){
         if($resto) $redirect = PHP_SELF.'?res='.$resto.'&upseries=1';
