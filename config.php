@@ -24,7 +24,7 @@ define("FILEIO_PARAMETER", ''); // FileIO Parameters (local storage)
 define("DATABASE_USERNAME", 'user');
 define("DATABASE_PASSWORD", 'password');
 define("DATABASE_DBNAME", 'database');
-define("DATABASE_TABLENAME", 'table');
+define("DATABASE_TABLENAME", 'sometable');
 
 define("DATABASE_DRIVER", 'mysqli');
 define("DATABASE_HOST", '127.0.0.1');
