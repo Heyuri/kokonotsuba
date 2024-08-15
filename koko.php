@@ -481,7 +481,7 @@ function regist($preview=false){
     if(!isset($md5chksum)) $md5chksum = '';
     $age = false;
     $status = '';
-    applyAging($resto, $PIO, $time, $chktime, $email, $name);
+    applyAging($resto, $PIO, $time, $chktime, $email, $name, $age);
  
     // noko
     $redirect = PHP_SELF2.'?'.$tim;
