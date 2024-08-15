@@ -147,7 +147,7 @@ function pruneOld(&$PMS, &$PIO, &$FileIO, &$delta_totalsize){
     }
 }
 
-function applyAging(&$resto, &$PIO, &$time, &$chktime, &$email, &$name){
+function applyAging(&$resto, &$PIO, &$time, &$chktime, &$email, &$name, &$age){
     if ($resto) {
         if ($PIO->postCount($resto) <= MAX_RES || MAX_RES==0) {
             if(!MAX_AGE_TIME || (($time - $chktime) < (MAX_AGE_TIME * 60 * 60))){
