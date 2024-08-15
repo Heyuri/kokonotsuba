@@ -504,7 +504,6 @@ function regist($preview=false){
         previewPost($no);
         return;
     }
-	$PIO->bumpThread($resto); //bump thread
      
 	$level = $AccountIO->valid();
  	//username for logging
