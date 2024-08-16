@@ -7,6 +7,15 @@ YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE TH
 
 */
 
+// composer auto loading
+$autoloadPath = __DIR__ . '/vendor/autoload.php';
+
+if (file_exists($autoloadPath)) {
+    require $autoloadPath;
+} else {
+    echo "please run composer install in the project root";
+	die();
+}
 
 @session_start();
 

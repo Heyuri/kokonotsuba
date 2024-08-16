@@ -1,0 +1,5 @@
+{
+    "require": {
+        "jenssegers/imagehash": "^0.10.0"
+    }
+}
