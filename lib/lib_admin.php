@@ -15,8 +15,7 @@ function admindel(&$dat){
 	$modFunc = '';
 	$delno = $thsno = array();
 	$message = ''; // Display message after deletion
-	preg_match("/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/", $_GET['host'], $hostMatch);
-	$searchHost = $hostMatch[0];
+	$searchHost = filter_var($_GET['host'], FILTER_VALIDATE_IP) ?: filter_var($_GET['host'], FILTER_VALIDATE_DOMAIN);
 	if ($searchHost) {
 		if ($AccountIO->valid() <= LEV_JANITOR) error('ERROR: No Access.');
 		$noticeHost = '<h2>Viewing all posts from: '.$searchHost.'. Click submit to cancel.</h2><br />';
