@@ -27,13 +27,14 @@
 	<script type="text/javascript" src="{$STATIC_URL}js/koko.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/qu.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/qu2.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/qu3.js" defer></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/style.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/img.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/inline.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/update.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/addemotes.js" defer></script>
 	<script type="text/javascript" src="{$STATIC_URL}/js/admin.js" defer></script>
-	<script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/ruffle/ruffle.js"></script>
 	<!--/&HEADER-->
 
 	<!--&TOPLINKS-->
