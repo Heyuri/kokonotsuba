@@ -33,7 +33,8 @@
 	<script type="text/javascript" src="{$STATIC_URL}js/update.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/addemotes.js" defer></script>
 	<script type="text/javascript" src="{$STATIC_URL}/js/admin.js" defer></script>
-	<script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/ruffle.js"></script>
+	
 	<!--/&HEADER-->
 
 	<!--&TOPLINKS-->
