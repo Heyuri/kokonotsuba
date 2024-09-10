@@ -275,7 +275,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 		$imgsrc = $img_thumb = $imgwh_bar = '';
 		$IMG_BAR = $REPLYBTN = $QUOTEBTN = $BACKLINKS = $POSTFORM_EXTRA = $WARN_OLD = $WARN_BEKILL = $WARN_ENDREPLY = $WARN_HIDEPOST = '';
 		extract($posts[$i]); // Take out the thread content setting variable
-
+	
 		// Set the field value
 		if(CLEAR_SAGE) $email = preg_replace('/^sage( *)/i', '', trim($email)); // Clear the "sage" keyword from the e-mail
 		if(ALLOW_NONAME==2){ // Forced beheading
@@ -371,7 +371,9 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 			$PMS->useModuleMethods('ThreadReply', array(&$arrLabels, $posts[$i], $resno)); // "ThreadReply" Hook Point
 			$thdat .= $PTE->ParseBlock('REPLY', $arrLabels);
 		}else{ // First Article
-			$arrLabels = bindOPValuesToTemplate($no, $sub, $name, $now, $category, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $imgsrc, $WARN_OLD, $WARN_BEKILL, $WARN_ENDREPLY, $WARN_HIDEPOST, $com, $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $resno); 
+			$arrLabels = bindOPValuesToTemplate($no, $sub, $name, $now, $category, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $imgsrc, $fname, $imgsize, $imageURL, $WARN_OLD, $WARN_BEKILL, $WARN_ENDREPLY, 
+				$WARN_HIDEPOST, $com, $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $resno); 
+			
 			if($resno) $arrLabels['{$RESTO}']=$resno;
 			$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, $posts[$i], $resno)); // "ThreadPost" Hook Point
 			$thdat .= $PTE->ParseBlock('THREAD', $arrLabels);
