@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    const MIN_WIDTH = 500; // Minimum width of the preview box
+    const MIN_WIDTH = 440; // Minimum width of the preview box
     const OFFSET_X = 10;   // Offset to the left from the mouse cursor
     const RIGHT_MARGIN = 30; // Margin from the right edge of the viewport
     let hoverTimeout;
