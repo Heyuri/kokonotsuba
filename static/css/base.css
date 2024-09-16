@@ -429,3 +429,17 @@ button,input[type=submit],input[type=reset] {
 .username {
 	font-size: 10pt;
 }
+
+.flashboardList {
+	margin-bottom: 20px;
+	border-spacing: 1px;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.flashboardtd {
+	padding-left: 4px;
+	padding-right: 4px;
+	text-align: center;
+}
+
