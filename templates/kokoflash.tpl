@@ -23,15 +23,12 @@
 	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/base.css" title="Import Custom" />
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png" />
 	<script type="text/javascript" src="{$STATIC_URL}js/koko.js"></script>
-	<script type="text/javascript" src="{$STATIC_URL}js/qu.js"></script>
-	<script type="text/javascript" src="{$STATIC_URL}js/qu2.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/style.js"></script>
-	<script type="text/javascript" src="{$STATIC_URL}js/img.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/inline.js"></script>
-	<script type="text/javascript" src="{$STATIC_URL}js/update.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/addemotes.js" defer></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/admin.js" defer></script>
-	<script type="text/javascript" src="{$STATIC_URL}js/ruffle.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/ruffle/ruffle.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/flashembed.js"></script>
 	<!--/&HEADER-->
 
 	<!--&TOPLINKS-->
@@ -61,7 +58,6 @@
 	<!--/&BODYHEAD-->
 
 	<!--&POSTFORM-->
-	<b>test</b>
 	<div id="postarea">
 		<!--&IF($IS_THREAD,'[<a href="{$PHP_SELF2}">Return</a>]','')-->
 		<!--&IF($IS_THREAD,' <center class="theading"><b>Posting mode: Reply</b></center>','')-->
@@ -145,14 +141,15 @@
 		<!--/&ERROR-->
 		<!--&THREAD-->
 		<tr class="thread" id="t{$NO}">
-				<td class="flashboardtd"> <a href="{$SELF}?res={$RESTO}#p{$NO}" class="no">{$NO}</a> </td>
-				<td class="flashboardtd name"> {$NAME} </td>
-				<td class="flashboardtd filesize"> <a href="{$FILE_LINK}">{$FILE_NAME}</td>
-				<td> [<a onclick="">Embed</a>] </td>
-				<td class="flashboardtd title"> {$SUB}</td>
-				<td><div class="flashboardtd">{$FILE_SIZE}</div></td>
+				<td> <a href="{$SELF}?res={$RESTO}#p{$NO}" class="no">{$NO}</a> </td>
+				<td class="name"> {$NAME} </td>
+				<td class="filecol"> [<a href="{$FILE_LINK}" download="{$FILE_NAME}">{$FILE_NAME}</a>]</td>
+				<td> [<a id="flashboardEmbedText" onclick="openFlashEmbedWindow('{$FILE_LINK}', '{$ESCAPED_FILE_NAME}', {$FILE_WIDTH}, {$FILE_HEIGHT})">Embed</a>] </td>
+				<td class="title"> {$SUB}</td>
+				<td><div>{$FILE_SIZE}</div></td>
 				<td class="time"> {$NOW} </td>
-				<td class="flashboardtd"> {$REPLYBTN} </td>
+				<td>{$REPLYNUM}</td>
+				<td> {$REPLYBTN} </td>
 			</tr>
 			<!--/&THREAD-->
 
@@ -191,6 +188,7 @@
 		{$FORMDAT}
 		{$THREADFRONT}
 		<form name="delform" id="delform" action="{$SELF}" method="post">
+		<center>
 			<table class="flashboardList" id="filelist">
 				<tbody>
 					<thead>
@@ -201,12 +199,14 @@
 						<td class="postblock">Subject</td>
 						<td class="postblock">Size</td>
 						<td class="postblock">Date</td>
+						<td class="postblock">Replies</td>
 						<td class="postblock"></td>
 					</thead>				
 					{$THREADS}
 					{$THREADREAR}
 				</tbody>
 			</table>
+			</center>
 			<!--&DELFORM/-->
 		</form>
 		<div id="postarea2"></div>

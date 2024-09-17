@@ -239,6 +239,6 @@ a:hover {
 	text-decoration: none;
 }
 
-.flashboardList tr:nth-child(even) {
-	background-color: #f0e0d6;
+.flashboardList tr:nth-child(odd) {
+    background-color: #ede2d4;
 }

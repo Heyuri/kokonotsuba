@@ -371,7 +371,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 			$PMS->useModuleMethods('ThreadReply', array(&$arrLabels, $posts[$i], $resno)); // "ThreadReply" Hook Point
 			$thdat .= $PTE->ParseBlock('REPLY', $arrLabels);
 		}else{ // First Article
-			$arrLabels = bindOPValuesToTemplate($no, $sub, $name, $now, $category, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $imgsrc, $fname, $imgsize, $imageURL, $WARN_OLD, $WARN_BEKILL, $WARN_ENDREPLY, 
+			$arrLabels = bindOPValuesToTemplate($no, $sub, $name, $now, $category, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $imgsrc, $fname, $imgsize, $imgw, $imgh, $imageURL, $posts_count, $WARN_OLD, $WARN_BEKILL, $WARN_ENDREPLY, 
 				$WARN_HIDEPOST, $com, $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $resno); 
 			
 			if($resno) $arrLabels['{$RESTO}']=$resno;
