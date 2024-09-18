@@ -8,7 +8,7 @@ function bindReplyValuesToTemplate($no, $resto, $sub, $name, $now, $category, $Q
 	 '{$NOW}'=>$now, 
 	 '{$CATEGORY}'=>$category, 
 	 '{$QUOTEBTN}'=>$QUOTEBTN, 
-	 '{$IMG_BAR}'=>$IMG_BAR, 
+	 '{$IMG_BAR}'=>$IMG_BAR,
 	 '{$IMG_SRC}'=>$imgsrc,
 	 '{$WARN_BEKILL}'=>$WARN_BEKILL, 
 	 '{$NAME_TEXT}'=>_T('post_name'), 
@@ -20,7 +20,7 @@ function bindReplyValuesToTemplate($no, $resto, $sub, $name, $now, $category, $Q
 	 '{$IS_THREAD}'=>!!$resno);
 }
 
-function bindOPValuesToTemplate($no, $sub, $name, $now, $category, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $imgsrc, $WARN_OLD, $WARN_BEKILL, $WARN_ENDREPLY, $WARN_HIDEPOST, $com, $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $resno) {
+function bindOPValuesToTemplate($no, $sub, $name, $now, $category, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $imgsrc, $fname, $fsize, $imgw, $imgh, $filelink, $numberOfReplies, $WARN_OLD, $WARN_BEKILL, $WARN_ENDREPLY, $WARN_HIDEPOST, $com, $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $resno) {
 	return array(
 	'{$NO}'=>$no, 
 	'{$RESTO}'=>$no, 
@@ -32,6 +32,13 @@ function bindOPValuesToTemplate($no, $sub, $name, $now, $category, $QUOTEBTN, $R
 	'{$REPLYBTN}'=>$REPLYBTN, 
 	'{$IMG_BAR}'=>$IMG_BAR, 
 	'{$IMG_SRC}'=>$imgsrc, 
+	'{$FILE_NAME}' => $fname,
+	'{$ESCAPED_FILE_NAME}' => htmlspecialchars($fname),
+	'{$FILE_SIZE}' => $fsize,
+	'{$FILE_WIDTH}' => $imgw,
+	'{$FILE_HEIGHT}' => $imgh,
+	'{$FILE_LINK}' => $filelink,
+	'{$REPLYNUM}' => $numberOfReplies - 1,
 	'{$WARN_OLD}'=>$WARN_OLD, 
 	'{$WARN_BEKILL}'=>$WARN_BEKILL,
 	'{$WARN_ENDREPLY}'=>$WARN_ENDREPLY, 

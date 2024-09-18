@@ -238,3 +238,7 @@ a:hover {
 	color: #880000;
 	text-decoration: none;
 }
+
+.flashboardList tr:nth-child(odd) {
+    background-color: #ede2d4;
+}

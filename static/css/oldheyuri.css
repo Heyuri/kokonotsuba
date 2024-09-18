@@ -210,3 +210,7 @@ a:hover {
 	color: #880000;
 	text-decoration: none;
 }
+
+.flashboardList tr:nth-child(even) {
+    background-color: #ede2d4;
+}
