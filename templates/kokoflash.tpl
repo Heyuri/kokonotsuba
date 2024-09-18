@@ -49,7 +49,7 @@
 			<br />
 			<noscript><img border="1" src="./Utilities/banners.php" /></noscript>
 			<script src="{$STATIC_URL}js/banners.js"></script>
-			<br />
+			<div id="bannerContainer"></div>
 			<h1 class="mtitle">{$TITLE}</h1>
 			{$TITLESUB}
 			<hr size="1" />
