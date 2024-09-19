@@ -25,6 +25,7 @@
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png" />
 	<script type="text/javascript" src="{$STATIC_URL}js/koko.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/style.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/banners.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/inline.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/addemotes.js" defer></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/admin.js" defer></script>
@@ -49,7 +50,6 @@
 		<div class="logo">
 			<br />
 			<noscript><img border="1" src="./Utilities/banners.php" /></noscript>
-			<script src="{$STATIC_URL}js/banners.js"></script>
 			<div id="bannerContainer"></div>
 			<h1 class="mtitle">{$TITLE}</h1>
 			{$TITLESUB}
