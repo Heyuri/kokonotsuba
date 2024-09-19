@@ -30,7 +30,9 @@
 	<script type="text/javascript" src="{$STATIC_URL}js/qu2.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/qu3.js" defer></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/style.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/banners.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/img.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/momo/tegaki.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/inline.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/update.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/addemotes.js" defer></script>
@@ -55,7 +57,6 @@
 		<div class="logo">
 			<br />
 			<noscript><img border="1" src="./Utilities/banners.php" /></noscript>
-			<script src="{$STATIC_URL}js/banners.js"></script>
 			<div id="bannerContainer"></div>
 			<h1 class="mtitle">{$TITLE}</h1>
 			{$TITLESUB}
