@@ -28,8 +28,8 @@ function openFlashEmbedWindow(file, name, w, h) {
 
 		swfWindow.innerHTML = `
 			<div id="swf-embed-header" style="cursor: move;">
-				<img src="${staticURL}image/cross2embed.png?v1" id="closeButton" onclick="closeSWFWindow()" style="float: right; cursor: pointer;">
-				<div id="embed-swf-details">${name}, ${w}x${h} <a href="${file}" download="${name}"><div class="download"></div></a></div>
+				<img src="${staticURL}image/cross2embed.png?v1" id="closeButton" style="float: right; cursor: pointer;">
+				<div id="embed-swf-details">${name}, ${w}x${h} <a href="${file}" download="${name}" id="downloadButton"><div class="download"></div></a></div>
 			</div>
 			<div id="ruffleContainer" style="width: 100%; height: calc(100% - 20px);"></div>
 		`;
@@ -63,6 +63,10 @@ function openFlashEmbedWindow(file, name, w, h) {
 
 		// Add drag functionality to move the window
 		makeElementDraggable(swfWindow, document.getElementById('swf-embed-header'));
+
+		// Disable default action for close and download buttons during drag
+		disableButtonActionsDuringDrag(document.getElementById('closeButton'), closeSWFWindow);
+		disableButtonActionsDuringDrag(document.getElementById('downloadButton'));
 	}
 }
 
@@ -78,6 +82,7 @@ function closeSWFWindow() {
 // Function to make the window draggable
 function makeElementDraggable(element, handle) {
 	let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+	let isDragging = false;
 
 	handle.onmousedown = dragMouseDown;
 
@@ -85,6 +90,8 @@ function makeElementDraggable(element, handle) {
 		e.preventDefault();
 		pos3 = e.clientX;
 		pos4 = e.clientY;
+		isDragging = false;
+
 		document.onmouseup = closeDragElement;
 		document.onmousemove = elementDrag;
 	}
@@ -97,10 +104,35 @@ function makeElementDraggable(element, handle) {
 		pos4 = e.clientY;
 		element.style.top = (element.offsetTop - pos2) + "px";
 		element.style.left = (element.offsetLeft - pos1) + "px";
+		isDragging = true;
+		element.style.cursor = "move";
 	}
 
 	function closeDragElement() {
 		document.onmouseup = null;
 		document.onmousemove = null;
+		element.style.cursor = "default";
 	}
+}
+
+// Function to disable button actions during drag
+function disableButtonActionsDuringDrag(button, action) {
+	let isDragging = false;
+
+	button.onmousedown = (e) => {
+		e.stopPropagation();
+		isDragging = false;
+
+		document.onmousemove = () => {
+			isDragging = true;
+		};
+	};
+
+	button.onmouseup = (e) => {
+		document.onmousemove = null;
+		if (!isDragging && action) {
+			action();
+		}
+		isDragging = false;
+	};
 }
