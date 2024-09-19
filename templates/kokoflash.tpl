@@ -173,14 +173,7 @@
 		<!--&DELFORM-->
 		<div align="right">
 			<table id="userdelete" align="right" cellpadding="0">
-				<tbody>
-					<tr>
-						<td align="right">
-							{$DEL_HEAD_TEXT}[<label>{$DEL_IMG_ONLY_FIELD}{$DEL_IMG_ONLY_TEXT}</label>]<br />
-							{$DEL_PASS_TEXT}{$DEL_PASS_FIELD}{$DEL_SUBMIT_BTN}
-						</td>
-					</tr>
-				</tbody>
+
 			</table>
 		</div>
 		<!--/&DELFORM-->
