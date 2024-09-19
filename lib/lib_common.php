@@ -496,3 +496,47 @@ function html_minify($buffer){
     $buffer = preg_replace($search, $replace, $buffer);
     return $buffer;
 }
+
+/**
+ * zlib versions after 1.2.9 b0rks php_handle_swc function in php: https://bugs.php.net/bug.php?id=74910
+ * so getimagesize() doesn't work with on compressed swfs
+ * this is a replacement for getimagesize() to use on .swf files
+ */
+function getswfsize($file) {
+    $swf = file_get_contents($file);
+    $swf = unpack(
+        'a3signature/'.
+        'Cversion/'.
+        'Vlength/'.
+        'a*payload', $swf);
+    extract($swf);
+ 
+    if ($signature == 'CWS') {
+        $type = IMAGETYPE_SWC;
+        $payload = gzuncompress($payload);
+    } else if ($signature == 'FWS') {
+        $type = IMAGETYPE_SWF;
+    } else {
+        return false;
+    }
+ 
+    $payload = array_values(unpack('C*', $payload));
+ 
+    $nbits = _getbits($payload, 0, 5);
+    $w = (_getbits($payload, 5 + $nbits * 1, $nbits) -
+          _getbits($payload, 5 + $nbits * 0, $nbits)) / 20;
+    $h = (_getbits($payload, 5 + $nbits * 3, $nbits) -
+          _getbits($payload, 5 + $nbits * 2, $nbits)) / 20;
+    return [$w, $h, $type, 'width="'.$w.'" height="'.$h.'"',
+        'mime' => 'application/x-shockwave-flash'];
+}
+ 
+function _getbits($buffer, $pos, $count){
+    $result = 0;
+ 
+    for ($loop = $pos; $loop < $pos + $count; $loop++) {
+        $result = $result +
+            (((($buffer[$loop >> 3]) >> (7 - ($loop % 8))) & 0x01) << ($count - ($loop - $pos) - 1));
+    }
+    return $result;
+}
