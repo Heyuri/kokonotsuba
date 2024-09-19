@@ -1,0 +1,671 @@
+/*
+ * 桃の缶詰
+ *
+ * Copyright 2019 akahuku, akahuku@gmail.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * whole container
+ */
+
+#momocan-container {
+	position:fixed;
+	display:flex;
+	flex-direction:column;
+	justify-content:center;
+	left:0px;
+	top:0px;
+	right:0px;
+	bottom:0px;
+	background-color:rgba(64,0,0,.5); /*global bg*/
+	opacity:0;
+	transition-property:opacity;
+	transition-duration:.4s;
+	transition-timing-function:ease;
+	transition-delay:0s;
+	-webkit-user-select:none;
+	-moz-user-select:none;
+	user-select:none;
+	z-index:65536;
+}
+
+#momocan-container.hide, #momocan-container .hide {
+	display:none !important;
+}
+
+#momocan-container .right {
+	text-align:right !important;
+}
+
+#momocan-container .flipx {
+	transform:scaleX(-1);
+}
+
+#momocan-container.run {
+	opacity:1;
+}
+
+#momocan-container input[type="range"] {
+	margin:0 4px 0 4px;
+	vertical-align:middle;
+}
+
+#momocan-container input[type="checkbox"],
+#momocan-container input[type="radio"] {
+	vertical-align:-0.15em;
+	margin-left:2px;
+}
+
+/*
+ * toolbox
+ */
+
+#momocan-container .toolbox-container {
+	display:flex;
+	flex-direction:column;
+	justify-content:flex-end;
+	z-index:65538;
+	background:linear-gradient(to bottom, rgba(0,0,0,.9), rgba(0,0,0,.5)); /*global bg*/
+}
+
+#momocan-container .toolbox-container-inner {
+	padding:0 0 16px 0;
+}
+
+#momocan-container .toolbox {
+	display:flex;
+	justify-content:center;
+}
+
+#momocan-container .toolbox > div {
+	display:flex;
+	flex-direction:column;
+	padding:2px 4px;
+	background-color:#cdb2aa;
+	color:#800000;
+	border-style:solid;
+	border-width:1px;
+	border-color:#f0e0d6 #9f6c67 #9f6c67 #f0e0d6;
+	font-size:small;
+	line-height:1;
+}
+
+#momocan-container .toolbox > div:first-child {
+	border-radius:8px 0 0 8px;
+}
+
+#momocan-container .toolbox > div:last-child {
+	border-radius:0 8px 8px 0;
+}
+
+#momocan-container .toolbox > div > div {
+	margin:0;
+	text-align:center;
+}
+
+#momocan-container .toolbox > div > div:not(:first-child) {
+	text-align:left;
+}
+
+#momocan-container .toolbox > div > :first-child {
+	padding-bottom:2px;
+	margin-bottom:2px;
+	border-bottom:1px solid #9f6c67;
+}
+
+#momocan-container .toolbox > div > :not(:first-child) {
+	margin-top:4px;
+}
+
+#momocan-container .palette-wrap {
+	display:flex;
+	margin-top:2px !important;
+	margin-bottom:0 !important;
+	border:none !important;
+}
+
+#momocan-container .toolbox .current-color {
+	position:relative;
+	width:52px;
+	height:49px;
+}
+
+#momocan-container .toolbox .current-color a {
+	display:inline-block;
+	position:absolute;
+	width:32px;
+	height:32px;
+	border:1px solid white;
+	outline:1px solid black;
+	box-sizing:border-box;
+}
+
+#momocan-container .toolbox .current-color a:first-child {
+	right:3px;
+	bottom:0;
+}
+
+#momocan-container .toolbox .current-color a:last-child {
+	left:0;
+	top:0;
+}
+
+#momocan-container .toolbox .sub-colors-wrap a {
+	display:inline-block;
+	width:24px;
+	height:24px;
+	margin:0 1px 0 0;
+	border:1px solid white;
+	outline:1px solid black;
+	box-sizing:border-box;
+}
+
+#momocan-container .toolbox label {
+	padding:0 2px 0 0;
+	border-radius:3px;
+}
+
+#momocan-container .toolbox label:hover {
+	background:#cf9c97;
+}
+
+#momocan-container .toolbox .momocan-popup-panel label:hover {
+	background:#e9c2ba;
+}
+
+#momocan-container .toolbox .draw-subtext {
+	margin:0 0 0 4px;
+}
+
+#momocan-container .toolbox .draw-method-wrap {
+	display:flex;
+	justify-content:flex-start;
+	align-items:start;
+}
+
+#momocan-container .toolbox .draw-method-list-wrap {
+	margin:0 12px 0 0;
+	width:calc((24px + 4px) * 3 + 8px);
+	display:flex;
+	flex-direction:row;
+	justify-content:flex-start;
+	flex-wrap:wrap;
+	border-right:1px solid #bc9891;
+}
+
+#momocan-container .toolbox .draw-method-list-wrap a {
+	display:inline-block;
+	box-sizing:border-box;
+	width:28px;
+	height:28px;
+	margin:0;
+	border-radius:2px;
+	border:1px solid transparent;
+}
+
+#momocan-container .toolbox .draw-method-list-wrap a.active {
+	background-color:#dfd0cb;
+	border-color:#9f6c67 #f0e0d6 #f0e0d6 #9f6c67;
+}
+
+#momocan-container .toolbox .draw-method-list-wrap a img {
+	width:20px;
+	height:20px;
+	margin:4px 0 0 4px;
+	/* this filter is genrated by https://codepen.io/sosuke/pen/Pjoqqp */
+	filter:invert(10%) sepia(44%) saturate(6674%) hue-rotate(354deg) brightness(101%) contrast(115%);
+}
+
+#momocan-container .toolbox .draw-method-list-wrap a:not(.active):hover img {
+	/* this filter is genrated by https://codepen.io/sosuke/pen/Pjoqqp */
+	filter:invert(45%) sepia(93%) saturate(333%) hue-rotate(35deg) brightness(99%) contrast(95%);
+}
+
+#momocan-container .toolbox .draw-method-options {
+}
+
+#momocan-container .toolbox .draw-method-options .main {
+	margin:0 0 8px 0;
+}
+
+#momocan-container .toolbox .draw-method-options .head {
+	margin:0 0 4px 0;
+	padding:0;
+	font-size:x-small;
+	line-height:1;
+}
+
+#momocan-container .toolbox .draw-method-options .head:not(:first-child) {
+	margin-top:8px;
+	padding-top:8px;
+	border-top:1px solid #e9c2ba;
+}
+
+#momocan-container .toolbox .draw-method-options-wrap .draw-method-options-more {
+	display:block;
+	padding:2px 0 2px 0;
+	border-radius:3px;
+	color:#800000;
+	font-size:small;
+	line-height:1;
+	text-align:center;
+	text-decoration:none;
+}
+
+#momocan-container .toolbox .draw-method-options-wrap .draw-method-options-more:hover {
+	background-color:#cf9c97;
+}
+
+#momocan-container .toolbox .pen-size-canvas,
+#momocan-container .toolbox .eraser-size-canvas {
+	vertical-align:-0.5em;
+}
+
+#momocan-container .toolbox a.incdec img {
+	width:16px;
+	height:16px;
+	vertical-align:middle;
+	filter:invert(10%) sepia(44%) saturate(6674%) hue-rotate(354deg) brightness(101%) contrast(115%);
+}
+
+#momocan-container .toolbox a.incdec:hover img {
+	filter:invert(45%) sepia(93%) saturate(333%) hue-rotate(35deg) brightness(99%) contrast(95%);
+}
+
+#momocan-container .toolbox input[type="range"] {
+	width:100px;
+}
+
+#momocan-container .toolbox .draw-tools-wrap {
+	display:flex;
+	flex-direction:row;
+	justify-content:flex-start;
+}
+
+#momocan-container .toolbox .draw-tools-wrap > div {
+	display:flex;
+	flex-direction:row;
+	justify-content:flex-start;
+	flex-wrap:wrap;
+}
+
+#momocan-container .toolbox .draw-tools a {
+	position:relative;
+	display:inline-block;
+	width:24px;
+	height:24px;
+	margin:0 0 0 4px;
+}
+
+#momocan-container .toolbox .draw-tools a img {
+	width:20px;
+	height:20px;
+	margin:0;
+	/* this filter is genrated by https://codepen.io/sosuke/pen/Pjoqqp */
+	filter:invert(10%) sepia(44%) saturate(6674%) hue-rotate(354deg) brightness(101%) contrast(115%);
+}
+
+#momocan-container .toolbox .draw-tools a:hover img {
+	/* this filter is genrated by https://codepen.io/sosuke/pen/Pjoqqp */
+	filter:invert(45%) sepia(93%) saturate(333%) hue-rotate(35deg) brightness(99%) contrast(95%);
+}
+
+#momocan-container .toolbox .draw-tools a.multi::after {
+	position:absolute;
+	display:inline-block;
+	left:0;
+	top:0;
+	width:24px;
+	height:24px;
+	content:" ";
+	background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAK0lEQVQ4y2NgGAWjYBTwL2P4z0iJZgYGBgZGSjSTZQCyZpINQNfMwMDAAACt3wiJ2TbJBwAAAABJRU5ErkJggg==) right bottom no-repeat;
+}
+
+#momocan-container .toolbox .draw-tools-wrap > div:nth-child(1) {
+	margin:0 4px 0 0;
+	width:calc((24px + 4px) * 5 + 4px);
+	border-right:1px solid #bc9891;
+}
+
+#momocan-container .toolbox .draw-tools-wrap > div:nth-child(2) a {
+	width:48px;
+	height:48px;
+}
+
+#momocan-container .toolbox .draw-tools-wrap > div:nth-child(2) a img {
+	width:44px;
+	height:44px;
+}
+
+#momocan-container .toolbox .draw-tools-wrap > div:nth-child(2) a.multi::after {
+	width:48px;
+	height:48px;
+}
+
+#momocan-container .tips {
+	text-align:center;
+	font-size:x-small;
+	color:#fff;
+}
+
+#momocan-container .tips .key {
+	display:inline-block;
+	margin:2px 2px 0 16px;
+	padding:1px 4px 1px 4px;
+	border-radius:3px;
+	background-color:#cf9c97;
+	color:#800;
+	font-family:monospace;
+	font-size:small;
+}
+
+#momocan-container .tips .keys {
+	margin:0 2px 0 16px;
+}
+
+#momocan-container .tips .keys .key {
+	margin-left:0;
+}
+
+/*
+ * canvas
+ */
+
+#momocan-container .canvas-container {
+	background-color:rgba(0,0,0,.5); /* global bg */
+	/*overflow:hidden;*/
+}
+
+#momocan-container .canvas-wrap {
+	position:relative;
+	margin:0;
+	display:flex;
+	flex-direction:row;
+	justify-content:center;
+	align-items:center;
+	overflow:visible;
+	background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAABhWlDQ1BJQ0MgcHJvZmlsZQAAKJF9kT1Iw0AYht+2lopUHCwo4pChikMLoiKOWoUiVAi1QqsOJpf+QZOGJMXFUXAtOPizWHVwcdbVwVUQBH9AXFydFF2kxO+SQosY7zju4b3vfbn7DvA3Kkw1u8YBVbOMdDIhZHOrQugVQQzQjGFMYqY+J4opeI6ve/j4fhfnWd51f45eJW8ywCcQzzLdsIg3iKc3LZ3zPnGElSSF+Jw4ZtAFiR+5Lrv8xrnosJ9nRoxMep44QiwUO1juYFYyVOIp4qiiapTvz7qscN7irFZqrHVP/sJwXltZ5jqtYSSxiCWIECCjhjIqsBCnXSPFRJrOEx7+IccvkksmVxmMHAuoQoXk+MH/4HdvzcLkhJsUTgDBF9v+GAFCu0Czbtvfx7bdPAECz8CV1vZXG8DMJ+n1thY9Avq2gYvrtibvAZc7wOCTLhmSIwVo+QsF4P2MvikH9N8CPWtu31rnOH0AMtSr1A1wcAiMFil73ePd3Z19+7em1b8fuOlyw58VklYAAAAJcEhZcwAALiMAAC4jAXilP3YAAAAHdElNRQfjBRgADhXyF/rpAAAAGXRFWHRDb21tZW50AENyZWF0ZWQgd2l0aCBHSU1QV4EOFwAAACtJREFUKM9jvHz5MgM2oKOjg1WciYFEMKqBGMD4//9/rBJXrlwZDSX6aQAAYrMIlTzxGQ8AAAAASUVORK5CYII=) left top;
+}
+
+#momocan-container .canvas-wrap-inner {
+}
+
+#momocan-container .canvas-wrap canvas {
+	position:absolute;
+	left:0;
+	top:0;
+	image-rendering:crisp-edges;
+	image-rendering:pixelated;
+}
+
+#momocan-container .canvas-wrap canvas.canvas-1,
+#momocan-container .canvas-wrap canvas.canvas-2 {
+}
+
+#momocan-container .canvas-wrap .hud-wrap {
+	position:absolute;
+	left:0;
+	top:0;
+	display:flex;
+	flex-direction:row;
+	justify-content:center;
+	align-items:center;
+}
+
+#momocan-container .canvas-wrap .hud {
+	padding:8px;
+	background-color:#e9c2ba;
+	color:#800;
+	border-radius:8px;
+	font-size:xx-large;
+	font-weight:bold;
+	line-height:1;
+	box-shadow:0 8px 4px -4px rgba(0,0,0,.5);
+}
+
+/*
+ * cursor
+ */
+
+#momocan-container > canvas.cursor {
+	position:absolute;
+	left:0;
+	top:0;
+	image-rendering:crisp-edges;
+	image-rendering:pixelated;
+	pointer-events:none;
+	z-index:65539;
+}
+
+/*
+ * footer
+ */
+
+#momocan-container .footer-container {
+	z-index:65538;
+	background:linear-gradient(to bottom, rgba(0,0,0,.5), rgba(0,0,0,.9)); /*global bg*/
+}
+
+#momocan-container .footer-container-inner {
+	margin:0 auto 0 auto;
+	padding:16px 0 0 0;
+	display:flex;
+	justify-content:center;
+}
+
+#momocan-container .footer-container-inner > div {
+	width:45%;
+	color:#f0e0d6;
+	font-size:small;
+}
+
+#momocan-container .footer-container-inner > div:nth-child(1) {
+	margin-right:3px;
+	text-align:right;
+}
+
+#momocan-container .footer-container-inner > div:nth-child(1) button {
+	font-weight:bold;
+	margin-left:16px;
+}
+
+#momocan-container .footer-container-inner > div:nth-child(2) {
+	margin-left:3px;
+	text-align:left;
+}
+
+#momocan-container .footer-container-inner > div:nth-child(2) button {
+	margin-right:16px;
+}
+
+#momocan-container .footer-container-inner .credit {
+	font-size:inherit;
+	color:hotpink;
+}
+
+#momocan-container .footer-container-inner .credit:hover {
+	color:bisque;
+}
+
+#momocan-container .footer-container button,
+#momocan-container .settings-footer button {
+	min-width:8em;
+	border:none;
+	background-color:#e9c2ba;
+	color:#800000;
+	border-radius:3px;
+	cursor:pointer;
+}
+
+#momocan-container .footer-container button:hover,
+#momocan-container .settings-container button:hover {
+	background-color:#789922;
+	color:#ffffee;
+}
+
+#momocan-container .receiver {
+	position:fixed;
+	left:0;
+	top:0;
+	right:0;
+	bottom:0;
+	z-index:200;
+	background-color:rgba(255,0,0,0.5);
+}
+
+/*
+ * settings dialog
+ */
+
+#momocan-container .settings-container {
+	position:fixed;
+	display:flex;
+	flex-direction:column;
+	justify-content:center;
+	align-items:center;
+	left:0px;
+	top:0px;
+	right:0px;
+	bottom:0px;
+	background-color:rgba(0,0,0,.01);
+	z-index:65540;
+	transition-property:background-color;
+	transition-duration:.4s;
+	transition-timing-function:ease;
+	transition-delay:0s;
+}
+
+#momocan-container .settings-wrap {
+	box-sizing:border-box;
+	width:75%;
+	height:75%;
+	padding:12px;
+	background-color:#ffffee;
+	color:#800000;
+	overflow-y:scroll;
+	box-shadow:0 8px 4px -4px #000;
+}
+
+#momocan-container .settings-footer {
+	margin:1em 0 0 0;
+}
+
+#momocan-container .settings-wrap,
+#momocan-container .settings-footer {
+	position:relative;
+	top:-32px;
+	opacity:0;
+	transition-property:opacity,top;
+	transition-duration:.4s;
+	transition-timing-function:ease;
+	transition-delay:0s;
+}
+
+#momocan-container .settings-container.running {
+	background-color:rgba(0,0,0,0.75);
+}
+
+#momocan-container .settings-container.running .settings-wrap,
+#momocan-container .settings-container.running .settings-footer {
+	top:0;
+	opacity:1;
+}
+
+#momocan-container .settings-head {
+	margin:0 0 12px 0;
+	padding:0 0 6px 0;
+	border:none;
+	border-bottom:1px solid #ea8;
+	font-size:xx-large;
+	font-weight:bold;
+	line-height:1;
+}
+
+#momocan-container .settings-head2 {
+	margin:2em 0 8px 0;
+	padding:0;
+	font-size:large;
+	font-weight:bold;
+	line-height:1;
+}
+
+#momocan-container .settings-item {
+	margin:8px 0 8px 10em;
+	padding:8px;
+	border:1px solid #ea8;
+	border-radius:8px;
+}
+
+#momocan-container .settings-item > :first-child {
+	margin:0 0 8px 0;
+	color:#d00;
+	font-weight:bold;
+}
+
+#momocan-container .settings-item label {
+	display:block;
+}
+
+#momocan-container .output {
+	margin:0 0 0 8px;
+	padding:1px 2px;
+	background-color:#f0e0d6;
+	font-size:small;
+	font-weight:bold;
+	border-radius:4px;
+	border:1px solid #cf9c97;
+	line-height:1;
+}
+
+/*
+ * transitions
+ */
+
+#momocan-container.running .canvas-wrap,
+#momocan-container.running .canvas-wrap-inner,
+#momocan-container.running .toolbox-container,
+#momocan-container.running .canvas-container,
+#momocan-container.running .footer-container {
+	transition-property:left,top,width,height,transform;
+	transition-duration:.4s;
+	transition-timing-function:ease-out;
+	transition-delay:0s;
+}
+
+/*
+ * popups
+ */
+
+.momocan-popup-panel .popup-menu-wrap {
+	margin:-12px;
+}
+
+.momocan-popup-panel .popup-menu-wrap a {
+	display:block;
+	padding:8px 16px 8px 16px;
+	border-top:1px solid #ddd;
+	text-decoration:none;
+	font-size:small;
+	line-height:1;
+	color:#333;
+}
+
+.momocan-popup-panel .popup-menu-wrap a:first-child {
+	border:none;
+}
+
+.momocan-popup-panel .popup-menu-wrap a:hover {
+	background-color:#ddd;
+}
