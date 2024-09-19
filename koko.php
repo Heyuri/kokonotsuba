@@ -268,6 +268,8 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 
 	$thdat = ''; // Discuss serial output codes
 	$posts_count = count($posts); // Number of cycles
+	$replyCount = $PIO->postCount($posts[0]['no']);	
+	
 	if(gettype($tree_cut) == 'array') $tree_cut = array_flip($tree_cut); // array_flip + isset Search Law
 	if(gettype($tree) == 'array') $tree_clone = array_flip($tree);
 	// $i = 0 (first article), $i = 1~n (response)
@@ -371,7 +373,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 			$PMS->useModuleMethods('ThreadReply', array(&$arrLabels, $posts[$i], $resno)); // "ThreadReply" Hook Point
 			$thdat .= $PTE->ParseBlock('REPLY', $arrLabels);
 		}else{ // First Article
-			$arrLabels = bindOPValuesToTemplate($no, $sub, $name, $now, $category, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $imgsrc, $fname, $imgsize, $imgw, $imgh, $imageURL, $posts_count, $WARN_OLD, $WARN_BEKILL, $WARN_ENDREPLY, 
+			$arrLabels = bindOPValuesToTemplate($no, $sub, $name, $now, $category, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $imgsrc, $fname, $imgsize, $imgw, $imgh, $imageURL, $replyCount, $WARN_OLD, $WARN_BEKILL, $WARN_ENDREPLY, 
 				$WARN_HIDEPOST, $com, $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $resno); 
 			
 			if($resno) $arrLabels['{$RESTO}']=$resno;
