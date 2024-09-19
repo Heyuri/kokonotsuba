@@ -1,0 +1,34 @@
+@import "base.css";
+
+.fg1,.func,.func:visited,.postnum a,.postnum a:visited{color:#000;}
+.fg2,a,a:visited{color:#34345C;}
+.fg2:hover,a:hover{color:#D00;}
+.fg3,.filetitle,.replytitle{color:#0F0C5D;}
+.fg4,.commentpostername,.postername{color:#117743;}
+.fg5,#errmsg,.globalmsg,.unkfunc3{color:#F00;}
+.fg6,.required{color:purple;}
+.fg7,.unkfunc2{color:#FF69B3;}
+.fg8,.omittedposts{color:#707070;}
+.fg9,.oldpost{color:#0F0C5D;}
+.fg10,.theading,.theading2,.passvalid,.unkfunc{color:#FFF;}
+.fg11,.logo{color:#AF0A0F;}
+
+.bg1,body{background-color:#EEF2FF;}
+.bg2,.postblock{background-color:#98E;}
+.bg3,.waka,.reply{background-color:#D6DAF0;}
+.bg4,.reply:target{background-color:#D6BAD0;}
+.bg5,.theading{background-color:#0010E0;}
+.bg6,.theading2{background-color:#0040E0;}
+.bg7,.passvalid{background-color:#9988EE;}
+.bg8,.bg9,.bg10{/*reserved*/}
+.bg12,.unkfunc{background:#C4C2EE;}
+
+
+.filesize{text-decoration:underline;}
+
+.filetitle,.replytitle{color:#0F0C5D;}
+.omittedposts{font-weight:bold;}
+
+.mugi.menu ul a{color:#34345C;}
+.mugi.menu ul a:hover{background-color:#C6DAF0;}
+.mugi.menu .postblock{background-color:#D1D5EE;}
