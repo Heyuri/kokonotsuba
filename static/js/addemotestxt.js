@@ -172,7 +172,7 @@ emotes_list.forEach((emote,index) => {
   let button = document.createElement('button');
   button.type = "button";
   button.title = emote.value;
-  button.innerHTML += '<img src="./static/image/emote/'+emote.src+'" alt="'+emote.value+'" title="'+emote.value+'" height="30px"/>';
+  button.innerHTML += '<img src="./static/image/emote/'+emote.src+'" loading="lazy" title="'+emote.value+'" alt="'+emote.value+'" height="30px"/>';
   button.addEventListener("click", onClickHandler);
   emotes_container.appendChild(button);
   if (index%8 === 7) { // 8 emotes per row
