@@ -510,7 +510,7 @@ function getswfsize($file) {
         'Vlength/'.
         'a*payload', $swf);
     extract($swf);
- 
+
     if ($signature == 'CWS') {
         $type = IMAGETYPE_SWC;
         $payload = gzuncompress($payload);
@@ -519,9 +519,10 @@ function getswfsize($file) {
     } else {
         return false;
     }
- 
+     
+    $payload = substr($payload, 0, 17);
     $payload = array_values(unpack('C*', $payload));
- 
+
     $nbits = _getbits($payload, 0, 5);
     $w = (_getbits($payload, 5 + $nbits * 1, $nbits) -
           _getbits($payload, 5 + $nbits * 0, $nbits)) / 20;
@@ -530,7 +531,7 @@ function getswfsize($file) {
     return [$w, $h, $type, 'width="'.$w.'" height="'.$h.'"',
         'mime' => 'application/x-shockwave-flash'];
 }
- 
+
 function _getbits($buffer, $pos, $count){
     $result = 0;
  
