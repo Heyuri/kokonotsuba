@@ -434,7 +434,7 @@ function regist($preview=false){
     if(strlenUnicode($sub) > INPUT_MAX)     error(_T('regist_topictoolong'), $dest);
     if(strlenUnicode($resto) > INPUT_MAX)   error(_T('regist_longthreadnum'), $dest);
  
-    setrawcookie('namec', rawurlencode($name), time()+7*24*3600);
+    setrawcookie('namec', rawurlencode(htmlspecialchars_decode($name)), time()+7*24*3600);
  
     // E-mail / Title trimming
     $email = str_replace("\r\n", '', $email); 
@@ -522,7 +522,7 @@ function regist($preview=false){
  
     // Cookies storage: password and e-mail part, for one week
     setcookie('pwdc', $pwd, time()+7*24*3600);
-    setcookie('emailc', $email, time()+7*24*3600);
+    setcookie('emailc', htmlspecialchars_decode($email), time()+7*24*3600);
     makeThumbnailAndUpdateStats($delta_totalsize, $dest, $ext, $tim, $tmpfile ,$imgW, $imgH, $W, $H);
     runWebhooks($resto,  $no,  $sub);
  
