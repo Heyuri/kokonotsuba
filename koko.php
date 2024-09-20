@@ -314,10 +314,10 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 //					$img_thumb = '<small>'._T('img_sample').'</small>';
 					$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$thumbURL.'" width="'.$tw.'" height="'.$th.'" class="postimg" alt="'.$imgsize.'" title="Click to show full image" hspace="20" vspace="3" border="0" align="left" /></a>';
 				}
-				if(SHOW_IMGWH) $imgwh_bar = ', '.$imgw.'x'.$imgh; // Displays the original length and width dimensions of the attached image file
 			} else if ($ext = "swf") {
 				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.SWF_THUMB.'" class="postimg" alt="SWF Embed" hspace="20" vspace="3" border="0" align="left" /></a>'; // Default display style (when no preview image)
 			} else $imgsrc = '';
+			if(SHOW_IMGWH && ($imgw || $imgh)) $imgwh_bar = ', '.$imgw.'x'.$imgh; // Displays the original length and width dimensions of the attached image file
 			$IMG_BAR = _T('img_filename').'<a href="'.$imageURL.'" target="_blank" rel="nofollow" onmouseover="this.textContent=\''.$fnameJS.'\';" onmouseout="this.textContent=\''.$truncatedJS.'\'"> '.$truncated.'</a> <a href="'.$imageURL.'" download="'.$fname.'"><div class="download"></div></a> <small>('.$imgsize.$imgwh_bar.')</small> '.$img_thumb;
 		}
 
