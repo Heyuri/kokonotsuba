@@ -327,6 +327,7 @@ function processFiles(&$upfile, &$upfile_path, &$upfile_name, &$upfile_status, &
                 case IMAGETYPE_PNG: $ext = '.png'; break;
                 case IMAGETYPE_SWF:
                 case IMAGETYPE_SWC: $ext = '.swf';
+		    $size = getswfsize($dest);
                     if(!($size[0]&&$size[1])){
                         $size[0]=MAX_W;
                         $size[1]=MAX_H;
