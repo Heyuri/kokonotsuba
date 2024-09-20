@@ -2,6 +2,7 @@
  */
 
 const KOKOJS = true;
+const STATIC_URL = './static/';
 
 document.write(`<style>
 #formfuncs a, a.linkjs {
@@ -46,16 +47,11 @@ document.write(`<style>
 	top: 0;
 	left: 0;
 	width: 100%;
-	height: 1.5em;
 	cursor: move;
 }
 .winctrl {
 	background-image: inherit;
 	display: inline-block;
-	margin: 0 0.5em 0 0;
-	border-style: solid;
-	border-top-style: none;
-	border-width: 1px;
 	float: right;
 	position: absolute;
 	line-height: 1.15em;
@@ -70,8 +66,6 @@ document.write(`<style>
 .winctrl>* {
 	display: inline-block;
 	text-decoration: none;
-	cursor: default;
-	padding: 0.1em;
 	transition: all 0.1s;
 }
 .winmin {
@@ -79,9 +73,8 @@ document.write(`<style>
 	border-width: 1px;
 	padding: 0 0.3em;
 }
-.winclose {
-	padding: 0 1em;
-}
+
+
 /* Settings */
 #settarea {
 	display: flex;
@@ -129,6 +122,7 @@ padding-top: 0px;
 }
 
 </style>`);
+
 
 /* - */
 if (typeof(FONTSIZE) === "undefined") { var FONTSIZE = 12; }
@@ -277,8 +271,7 @@ class kkwmWindow {
 		this.div.onmousedown = function () { kkwm.top(name); };
 		this.div.innerHTML = '<div class="winbar" data-name="'+name+'" onmousedown="kkwm.drag_start(\''+name+'\',event.clientX,event.clientY);">'+
 		'<span class="winname">'+name+'</span><span class="winctrl" onmousedown="event.stopPropagation();">'+
-			'<b onclick="$kkwm_name(\''+name+'\').minimize();" class="winmin" onmouseover="Tip($kkwm_name(\''+name+'\').minimized?\'Restore\':\'Minimize\')" onmouseout="UnTip();">&mdash;</b>'+
-			'<b onclick="$kkwm_name(\''+name+'\').remove();" class="winclose" onmouseover="Tip(\'Close\');" onmouseout="UnTip();">&times;</b>'+
+			'<img onclick="$kkwm_name(\''+name+'\').remove();" class="winclose" onmouseover="Tip(\'Close\');" onmouseout="UnTip();" src="'+STATIC_URL+'/image/closebtn.png">'+
 		'</span></div>';
 		$doc.body.appendChild(this.div);
 		kkwm.windows.push(this);

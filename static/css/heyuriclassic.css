@@ -258,3 +258,8 @@ a:hover {
 .flashboardList tr:nth-child(even) {
     background-color: #ede2d4;
 }
+
+.winbar {
+	background-color: #eeaa88;
+	color: #800043;
+}

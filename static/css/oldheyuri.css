@@ -198,10 +198,6 @@ a:hover {
     border-width: 1px;
 }
 
-.winbar {
-    background-image: linear-gradient(#FCA, #FFE);
-}
-
 .winctrl>*:hover, #settarea>label:hover {
     background-color: #FFA66066;
 }
@@ -213,4 +209,9 @@ a:hover {
 
 .flashboardList tr:nth-child(even) {
     background-color: #ede2d4;
+}
+
+.winbar {
+	background-color: #eeaa88;
+	color: #800043;
 }

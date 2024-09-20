@@ -525,11 +525,29 @@ button,input[type=submit],input[type=reset] {
 }
 
 #darken-embed-screen {
-			position: fixed;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
-			background-color: rgba(0, 0, 0, 0.7);
-			z-index: 900; 
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.7);
+	z-index: 900; 
+}
+
+#settabs {
+	padding-top: 10px;
+	display: inline-block;
+}
+
+.winbar {
+	height: 1.5em;
+}
+
+.winctrl {
+	margin: 0.1em 0.1em 0 0;
+}
+
+.winclose {
+	padding: 1px;
+	cursor: pointer;
 }
