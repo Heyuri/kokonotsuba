@@ -387,6 +387,7 @@ function processFiles(&$upfile, &$upfile_path, &$upfile_name, &$upfile_status, &
 function applyTripcodeAndCapcodes(&$name, &$email, &$dest){
     $name = str_replace('&#', '&&', $name); // otherwise HTML numeric entities will explode!
     list($name, $trip, $sectrip) = str_replace('&%', '&#', explode('#',$name.'##'));
+    $name = str_replace('&&', '&#', $name);
     if ($trip) {
         $trip = mb_convert_encoding($trip, 'Shift_JIS', 'UTF-8');
         $salt = strtr(preg_replace('/[^\.-z]/', '.', substr($trip.'H.',1,2)), ':;<=>?@[\\]^_`', 'ABCDEFGabcdef');
