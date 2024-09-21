@@ -19,8 +19,8 @@ function openFlashEmbedWindow(file, name, w, h) {
             Winw = Math.round(0.8 * window.innerWidth);
         }
 
-        swfWindow.style.width = `${Winw - 26}px`;
-        swfWindow.style.height = `${Winh}px`;
+        swfWindow.style.width = `${Winw}px`;
+        swfWindow.style.height = `${Winh + 20}px`;
 
         // Enable resizing for the window and hide scrollbars
         swfWindow.style.resize = "both";
