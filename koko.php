@@ -12,7 +12,7 @@ YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE TH
 
 /* load configuration files */
 $config = array();
-require './root-config.php'; // Include configuration file
+require './config.php'; // Include configuration file
 
 require $config['ROOTPATH'].'lib/lib_common.php'; // Introduce common function archives
 require $config['ROOTPATH'].'lib/pmclibrary.php'; // Ingest libraries
