@@ -112,7 +112,7 @@ function mod_pushpostSend(){
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo, $isReply) {
 		$AccountIO = PMCLibrary::getAccountIOInstance();
 		// Login permissions allow tags to be retained without conversion (the tweet is still valid after the backend logs in and modifies the article)
-		if ($AccountIO->valid() < LEV_MODERATOR) return;
+		if ($AccountIO->valid() < $this->config['LEV_MODERATOR']) return;
 
 		// Prevent manual insertion of tags
 		if (strpos($com, $this->PUSHPOST_SEPARATOR."\r\n") !== false) {
@@ -234,18 +234,18 @@ function mod_pushpostSend(){
 				$name
 			);
 			// Generate ID, Trip and other identification information
-			$pushtime = gmdate('y/m/d H:i', time() + intval(TIME_ZONE) * 3600);
+			$pushtime = gmdate('y/m/d H:i', time() + intval($this->config['TIME_ZONE']) * 3600);
 			if (preg_match('/(.*?)[#＃](.*)/u', $name, $regs)) {
 				$cap = strtr($regs[2], array('&amp;'=>'&'));
 				$salt = strtr(preg_replace('/[^\.-z]/', '.', substr($cap.'H.', 1, 2)), ':;<=>?@[\\]^_`', 'ABCDEFGabcdef');
 				$name = $regs[1]._T('trip_pre').substr(crypt($cap, $salt), -10);
 			}
 			if (!$name || preg_match("/^[ |　|]*$/", $name)) {
-				if (ALLOW_NONAME) $name = DEFAULT_NONAME;
+				if ($this->config['ALLOW_NONAME']) $name = $this->config['DEFAULT_NONAME'];
 				else die(_T('regist_withoutname')); // Do not accept anonymity
 			}
-			if (ALLOW_NONAME == 2) { // Forced name cut
-				$name = preg_match('/(\\'._T('trip_pre').'.{10})/', $name, $matches) ? $matches[1].':' : DEFAULT_NONAME.':';
+			if ($this->config['ALLOW_NONAME'] == 2) { // Forced name cut
+				$name = preg_match('/(\\'._T('trip_pre').'.{10})/', $name, $matches) ? $matches[1].':' : $this->config['DEFAULT_NONAME'].':';
 			} else {
 				$name .= ':';
 			}
@@ -256,7 +256,7 @@ function mod_pushpostSend(){
 
 			$parentNo = $post[0]['resto'] ? $post[0]['resto'] : $post[0]['no'];
 			$threads = array_flip($PIO->fetchThreadList());
-			$threadPage = floor($threads[$parentNo] / PAGE_DEF);
+			$threadPage = floor($threads[$parentNo] / $this->config['PAGE_DEF']);
 
 			$p = ($parentNo==$post[0]['no']) ? $post : $PIO->fetchPosts($parentNo); // Take out the first article
 			$flgh = $PIO->getPostStatus($p[0]['status']);
@@ -277,7 +277,7 @@ function mod_pushpostSend(){
 				)
 			);
 
-			if (STATIC_HTML_UNTIL == -1 || $threadPage <= STATIC_HTML_UNTIL) {
+			if ($this->config['STATIC_HTML_UNTIL'] == -1 || $threadPage <= $this->config['STATIC_HTML_UNTIL']) {
 				// Only update the page where the discussion string appears
 				updatelog(0, $threadPage, true);
 			}
@@ -287,7 +287,7 @@ function mod_pushpostSend(){
 				echo '+OK ', $pushpost;
 			} else {
 				header('HTTP/1.1 302 Moved Temporarily');
-				header('Location: '.fullURL().PHP_SELF2.'?'.time());
+				header('Location: '.fullURL().$this>config['PHP_SELF2'].'?'.time());
 			}
 		}
 	}
@@ -305,7 +305,7 @@ function mod_pushpostSend(){
 		$post = $PIO->fetchPosts($targetPost);
 		if (!count($post)) die('[Error] Post does not exist.');
 
-		$dat = $PTE->ParseBlock('HEADER', array('{$TITLE}'=>TITLE, '{$RESTO}'=>''));
+		$dat = $PTE->ParseBlock('HEADER', array('{$TITLE}'=>$this->config['TITLE'], '{$RESTO}'=>''));
 		$dat .= '</head><body id="main">';
 		$dat .= '<form action="'.$this->getModulePageURL(array('no' => $targetPost)).'" method="post">
 '.$this->_T('pushpost').' <ul><li>'._T('form_name').' <input type="text" name="name" maxlength="20" /></li><li>'._T('form_comment').' <input type="text" name="comm" size="50" maxlength="50" /><input type="submit" value="'._T('form_submit_btn').'" /></li></ul>

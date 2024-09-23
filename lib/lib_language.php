@@ -24,10 +24,11 @@ class LanguageLoader {
 	 * @throws InvalidArgumentException 如果找不到設定語言
 	 */
 	public static function getInstance() {
+		global $config;
 		static $inst = null;
 		if ($inst == null) {
-			$locale = PIXMICAT_LANGUAGE;
-			$langFile = ROOTPATH."lib/lang/{$locale}.php";
+			$locale = $config['PIXMICAT_LANGUAGE'];
+			$langFile = $config['ROOTPATH']."lib/lang/{$locale}.php";
 			if (file_exists($langFile)) {
 				require $langFile;
 			} else {
@@ -47,8 +48,9 @@ class LanguageLoader {
 	 * @param string $localeFallback 備用語系
 	 */
 	public function setFallback($localeFallback = 'en_US') {
+		global $config;
 		if ($localeFallback != $this->getLocale()) {
-			require ROOTPATH."lib/lang/{$localeFallback}.php";
+			require $config['ROOTPATH']."lib/lang/{$localeFallback}.php";
 			$this->hasFallback = true;
 			$this->languageFallback = $language;
 		} else {

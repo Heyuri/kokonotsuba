@@ -9,15 +9,21 @@
  */
 
 class AccountIO {
-	private $flatfileName = ACCOUNT_FLATFILE; // Local Constant
+	private $flatfileName = ''; // Local Constant
 	private $flatfileData = ''; //flatfile data will be loaded into memory with this variable
 	private $readOnlyFFData = ''; //READ ONLY
 	private $level, $ACCusername, $id; // account details
+	private $config;
 
 	public function __construct(){
+		global $config;
+		$this->config = $config;	
+		
 		$this->level = -1;
 		$this->id = 0;
 		$this->ACCusername = '';
+		$this->flatfileName = $this->config['ACCOUNT_FLATFILE'];
+		
 		
 		if(!file_exists($this->flatfileName))
 			if(!touch($this->flatfileName)) error("Could not create accounts.txt flatfile.");
@@ -129,7 +135,7 @@ class AccountIO {
 		if ($this->level !== -1) return $this->level;
 		if (!$pass) $pass = $_SESSION['kokologin']??'';
 		
-		$this->level = LEV_NONE;
+		$this->level = $this->config['roles']['LEV_NONE'];
 		
 		//get all acounts
 		$totalStoredAccounts = $this->getAllAccounts();
@@ -139,24 +145,24 @@ class AccountIO {
 			if(sizeof($account) != 4) continue;
 			$account = array_combine(['id', 'username', 'password', 'role'], $account);
 			if (crypt($pass, $account['password']) !== $account['password']) {
-				$this->level = LEV_NONE; //pass wrong
+				$this->level = $this->config['roles']['LEV_NONE']; //pass wrong
 				continue;
 			} 
 			switch($account['role']) {
 				case 0:
-					$this->level = LEV_NONE;
+					$this->level = $this->config['roles']['LEV_NONE'];
 				break;
 				case 1:
-					$this->level = LEV_USER;
+					$this->level = $this->config['roles']['LEV_USER'];
 				break 2;
 				case 2:
-					$this->level = LEV_JANITOR;
+					$this->level = $this->config['roles']['LEV_JANITOR'];
 				break;
 				case 3:
-					$this->level = LEV_MODERATOR;
+					$this->level = $this->config['roles']['LEV_MODERATOR'];
 				break;
 				case 4:
-					$this->level = LEV_ADMIN;
+					$this->level = $this->config['roles']['LEV_ADMIN'];
 				break;
 			}
 			$this->ACCusername = $account['username'];

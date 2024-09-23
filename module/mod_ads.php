@@ -15,7 +15,7 @@ class mod_ads implements IModule {
 
 	// Names
 	public function getModuleName() {
-		return __CLASS__.' : KolymaNET Ads';
+		return __CLASS__.' : Kokonotsuba Ads';
 	}
 
 	public function getModuleVersionInfo() {
@@ -23,11 +23,9 @@ class mod_ads implements IModule {
 	}
 
 	// Top Ad
-	public function autoHookThreadFront(&$txt) {
-		//$txt .= '<center><a href="#">[AD] #01！</a></center><hr size="1" />'."\n";
-		
+	public function autoHookThreadFront(&$txt) {		
 		$txt .= '<center>
-		<iframe id="spasob" src="https://static.heyuri.net/image/fullbanners/fullbanners.php" style="max-width: 100%;" frameborder="0" scrolling="no" width="468" height="60" style="border: 1px solid #000000;"></iframe>
+		<iframe id="spasob" src="'.$this->config['STATIC_URL'].'image/fullbanners/fullbanners.php" style="max-width: 100%;" frameborder="0" scrolling="no" width="468" height="60" style="border: 1px solid #000000;"></iframe>
 		</center>
 		<hr size="1" />'."\n";
 	}

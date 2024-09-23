@@ -26,7 +26,7 @@ class mod_api extends ModuleHelper {
 			$posts = $PIO->fetchPosts( $PIO->fetchThreadList() );
 		}
 
-		if(THREAD_PAGINATION){ // API caching
+		if($this->config['THREAD_PAGINATION']){ // API caching
 			$cacheETag = md5($no.'-'.count($posts).'-'.end($posts)['id']);
 			$cacheFile = STORAGE_PATH.'cache/api-'.$no.'.';
 			$cacheGzipPrefix = extension_loaded('zlib') ? 'compress.zlib://' : '';

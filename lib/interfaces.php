@@ -20,9 +20,8 @@ interface IPIO {
 	/**
 	 * 處理連線字串/連接。
 	 *
-	 * @param  string $connStr 連線字串
 	 */
-	public function dbConnect($connStr);
+	public function dbConnect();
 
 	/**
 	 * 資料來源初始化。

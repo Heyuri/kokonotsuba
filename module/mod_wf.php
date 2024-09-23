@@ -1,5 +1,6 @@
 <?php
     class mod_wf implements IModule {
+      private $config;
       private $FILTERS = array(
      
         '/\b(rabi-en-rose)\b/i' => '<span style="background-color:#ffe6f9;color:#78376d;font-family:serif;font-weight:bold;">Rabi~en~Rose</span>',
@@ -20,6 +21,9 @@
       );
      
       public function __construct($PMS) {
+      	global $config;
+      	$this->config = $config;
+      
         $this->addEmojiFilters();
       }
      
@@ -507,7 +511,7 @@
         ];
      
         foreach ($emojis as $char => $name) {
-          $this->FILTERS["/$char/"] = "<img class=\"emoji\" src=\" ".STATIC_URL."image/emoji/$name.gif\" title=\"$name\" alt=\"$char\">";
+          $this->FILTERS["/$char/"] = "<img class=\"emoji\" src=\" ".$this->config['STATIC_URL']."image/emoji/$name.gif\" title=\"$name\" alt=\"$char\">";
         }
       }
      

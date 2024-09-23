@@ -15,9 +15,9 @@ class mod_captcha extends ModuleHelper {
 	private $CAPTCHA_GAP = 20; // Clear code character spacing
 	private $CAPTCHA_TEXTY = 20; // character vertical position
 	private $CAPTCHA_FONTMETHOD = 0; // Types of fonts used (0: GDF (*.gdf) 1: TrueType Font (*.ttf))
-	private $CAPTCHA_FONTFACE = array(ROOTPATH.'module/font1.gdf'); // Fonts used (can be selected randomly, but the font types need to be the same and cannot be mixed)
+	private $CAPTCHA_FONTFACE = array(); // Fonts used (can be selected randomly, but the font types need to be the same and cannot be mixed)
 	private $CAPTCHA_ECOUNT = 2;
-	private $ALT_POSTAREA = stristr(TEMPLATE_FILE, 'txt');
+	private $ALT_POSTAREA = '';
 	private $LANGUAGE=array(
 			'zh_TW' => array(
 				'modcaptcha_captcha' => '發文驗證碼',
@@ -45,6 +45,9 @@ class mod_captcha extends ModuleHelper {
 	public function __construct($PMS) {
 		parent::__construct($PMS);
 
+		$this->CAPTCHA_FONTFACE = array($this->config['ROOTPATH'].'module/font1.gdf'); 
+		$this->ALT_POSTAREA = stristr($this->config['TEMPLATE_FILE'], 'txt');
+		
 		$this->mypage = $this->getModulePageURL(); 
 		$this->attachLanguage($this->LANGUAGE);// Load language file
 	}
@@ -66,7 +69,7 @@ class mod_captcha extends ModuleHelper {
 	/* Check whether the light and dark codes meet the requirements immediately after receiving the request */
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo){
 		if (defined('VIPDEF')) return;
-		if (valid()>=LEV_JANITOR) return; //no captcha for admin mode
+		if (valid()>=$this->config['roles']['LEV_JANITOR']) return; //no captcha for admin mode
 		@session_start();
 		$MD5code = isset($_SESSION['captcha_dcode']) ? $_SESSION['captcha_dcode'] : false;
 		if($MD5code===false || !isset($_POST['captchacode']) || md5(strtoupper($_POST['captchacode'])) !== $MD5code){ // Case insensitive check

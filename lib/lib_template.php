@@ -1,6 +1,7 @@
 <?php
 //template convenience library
 function bindReplyValuesToTemplate($no, $resto, $sub, $name, $now, $category, $QUOTEBTN, $IMG_BAR, $imgsrc, $WARN_BEKILL, $com, $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $resno) {
+	global $config;
 	return array('{$NO}'=>$no,
 	 '{$RESTO}'=>$resto, 
 	 '{$SUB}'=>$sub, 
@@ -13,7 +14,7 @@ function bindReplyValuesToTemplate($no, $resto, $sub, $name, $now, $category, $Q
 	 '{$WARN_BEKILL}'=>$WARN_BEKILL, 
 	 '{$NAME_TEXT}'=>_T('post_name'), 
 	 '{$CATEGORY_TEXT}'=>_T('post_category'), 
-	 '{$SELF}'=>PHP_SELF, '{$COM}'=>$com, 
+	 '{$SELF}'=>$config['PHP_SELF'], '{$COM}'=>$com, 
 	 '{$POSTINFO_EXTRA}'=>$POSTFORM_EXTRA,
 	 '{$THREADNAV}'=>$THREADNAV, 
 	 '{$BACKLINKS}'=>$BACKLINKS, 
@@ -21,6 +22,7 @@ function bindReplyValuesToTemplate($no, $resto, $sub, $name, $now, $category, $Q
 }
 
 function bindOPValuesToTemplate($no, $sub, $name, $now, $category, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $imgsrc, $fname, $fsize, $imgw, $imgh, $filelink, $numberOfReplies, $WARN_OLD, $WARN_BEKILL, $WARN_ENDREPLY, $WARN_HIDEPOST, $com, $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $resno) {
+	global $config;
 	return array(
 	'{$NO}'=>$no, 
 	'{$RESTO}'=>$no, 
@@ -45,7 +47,7 @@ function bindOPValuesToTemplate($no, $sub, $name, $now, $category, $QUOTEBTN, $R
 	'{$WARN_HIDEPOST}'=>$WARN_HIDEPOST, 
 	'{$NAME_TEXT}'=>_T('post_name'), 
 	'{$CATEGORY_TEXT}'=>_T('post_category'), 
-	'{$SELF}'=>PHP_SELF, 
+	'{$SELF}'=>$config['PHP_SELF'], 
 	'{$COM}'=>$com, 
 	'{$POSTINFO_EXTRA}'=>$POSTFORM_EXTRA, 
 	'{$THREADNAV}'=>$THREADNAV, 

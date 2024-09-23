@@ -2,10 +2,11 @@
 // sticky module made for kokonotsuba by deadking
 class mod_sticky extends ModuleHelper {
 	private $mypage;
-	private $STICKYICON = STATIC_URL.'/image/sticky.png';
+	private $STICKYICON = '';
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
+		$this->STICKYICON = $this->config['STATIC_URL'].'image/sticky.png';
 		$this->mypage = $this->getModulePageURL();
 	}
 
@@ -27,7 +28,7 @@ class mod_sticky extends ModuleHelper {
 
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$AccountIO = PMCLibrary::getAccountIOInstance();
-		if ($AccountIO->valid() < LEV_MODERATOR) return;
+		if ($AccountIO->valid() < $this->config['roles']['LEV_MODERATOR']) return;
 		$fh = new FlagHelper($post['status']);
 		if (!$isres) $modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'"'.($fh->value('sticky')?' title="Unsticky">s':' title="Sticky post">S').'</a>]';
 	}
@@ -47,7 +48,7 @@ class mod_sticky extends ModuleHelper {
 		$PIO = PMCLibrary::getPIOInstance();
 		$AccountIO = PMCLibrary::getAccountIOInstance();
 
-		if ($AccountIO->valid() < LEV_MODERATOR) {
+		if ($AccountIO->valid() < $this->config['roles']['LEV_MODERATOR']) {
 			error('403 Access denied');
 		}
 

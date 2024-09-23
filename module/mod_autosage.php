@@ -2,10 +2,12 @@
 // auto sage module made for kokonotsuba by deadking
 class mod_autosage extends ModuleHelper {
 	private $mypage;
-	private $LOCKICON = STATIC_URL.'/image/locked.png';
+	private $LOCKICON = '';
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
+		
+		$this->LOCKICON = $this->config['STATIC_URL'].'image/locked.png';
 		$this->mypage = $this->getModulePageURL();
 	}
 
@@ -36,7 +38,7 @@ class mod_autosage extends ModuleHelper {
 
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$AccountIO = PMCLibrary::getAccountIOInstance();
-		if ($AccountIO->valid() < LEV_MODERATOR) return;
+		if ($AccountIO->valid() < $this->config['roles']['LEV_MODERATOR']) return;
 		$fh = new FlagHelper($post['status']);
 		if(!$isres) $modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'"'.($fh->value('as')?' title="Allow age">as':' title="Autosage">AS').'</a>]';
 	}
@@ -47,7 +49,7 @@ class mod_autosage extends ModuleHelper {
 		
 		$level = $AccountIO->valid();
 		
-		if ($level < LEV_MODERATOR) {
+		if ($level < $this->config['roles']['LEV_MODERATOR']) {
 			error('403 Access denied');
 		}
 

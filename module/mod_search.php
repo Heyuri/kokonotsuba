@@ -1,10 +1,12 @@
 <?php
 class mod_search extends ModuleHelper {
 	private $mypage;
-	private $THUMB_EXT = THUMB_SETTING['Format'];
+	private $THUMB_EXT = -1;
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
+		
+		$this->THUMB_EXT = $this->config['THUMB_SETTING']['Format'];
 		$this->mypage = $this->getModulePageURL();
 	}
 
@@ -30,7 +32,7 @@ class mod_search extends ModuleHelper {
 		$searchKeyword = isset($_POST['keyword']) ? trim($_POST['keyword']) : ''; // The text you want to search
 		$dat = '';
 		head($dat);
-		$links = '[<a href="'.PHP_SELF2.'?'.time().'">'._T('return').'</a>]';
+		$links = '[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>]';
 		$level = $AccountIO->valid();
 		$PMS->useModuleMethods('LinksAboveBar', array(&$links,'search',$level));
 		$dat .= $links.'<center class="theading2"><b>'._T('search_top').'</b></center>
@@ -39,7 +41,7 @@ class mod_search extends ModuleHelper {
 		
 		echo $dat;
 		if($searchKeyword==''){
-		echo '<form action="'.PHP_SELF.'?mode=module&load=mod_search" method="post">
+		echo '<form action="'.$this->config['PHP_SELF'].'?mode=module&load=mod_search" method="post">
 		<div id="search">
 		<input type="hidden" name="mode" value="search" />
 		';
@@ -62,16 +64,19 @@ class mod_search extends ModuleHelper {
 			$resultlist = '';
 			foreach($hitPosts as $post){
 				extract($post);
-				if(USE_CATEGORY){
+				if($this->config['USE_CATEGORY']){
 					$ary_category = explode(',', str_replace('&#44;', ',', $category)); $ary_category = array_map('trim', $ary_category);
 					$ary_category_count = count($ary_category);
 					$ary_category2 = array();
 					for($p = 0; $p < $ary_category_count; $p++){
-						if($c = $ary_category[$p]) $ary_category2[] = '<a href="'.PHP_SELF.'?mode=category&c='.urlencode($c).'">'.$c.'</a>';
+						if($c = $ary_category[$p]) $ary_category2[] = '<a href="'.$this->config['PHP_SELF'].'?mode=category&c='.urlencode($c).'">'.$c.'</a>';
 					}
 					$category = implode(', ', $ary_category2);
 				}else $category = '';
-				$arrLabels = array('{$NO}'=>'<a href="'.PHP_SELF.'?res='.($resto?$resto.'#p'.$no:$no).'">'.$no.'</a>', '{$SUB}'=>$sub, '{$NAME}'=>$name, '{$NOW}'=>$now, '{$COM}'=>$com, '{$CATEGORY}'=>$category, '{$NAME_TEXT}'=>_T('post_name'), '{$CATEGORY_TEXT}'=>_T('post_category'));
+					$com = quote_link($com);
+					$com = quote_unkfunc($com);
+				
+					$arrLabels = array('{$NO}'=>'<a href="'.$this->config['PHP_SELF'].'?res='.($resto?$resto.'#p'.$no:$no).'">'.$no.'</a>', '{$SUB}'=>$sub, '{$NAME}'=>$name, '{$NOW}'=>$now, '{$COM}'=>$com, '{$CATEGORY}'=>$category, '{$NAME_TEXT}'=>_T('post_name'), '{$CATEGORY_TEXT}'=>_T('post_category'));
 				$resultlist .= $PTE->ParseBlock('SEARCHRESULT',$arrLabels);
 			}
 			echo $resultlist ? $resultlist : '<center>'._T('search_notfound').'<br/>[<a href="?mode=search">'._T('search_back').'</a>]</center>';

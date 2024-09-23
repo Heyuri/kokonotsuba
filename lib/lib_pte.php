@@ -15,9 +15,12 @@ $Id$
 
 class PTELibrary{
 	var $tpl_block, $tpl;
-
+	private $config;
+	
 	/* 開啟樣板檔案並取出區塊 */
 	function __construct($tplname){
+		global $config;
+		$this->config = $config;
 		$this->tpl_block = array();
 		$this->tpl = file_get_contents($tplname);
 	}
@@ -39,14 +42,14 @@ class PTELibrary{
 	}
 
 	/* 將樣版的標籤取代為正確的字串並傳回 */
-	function ParseBlock($blockName, $ary_val){ global $ADDITION_INFO;
+	function ParseBlock($blockName, $ary_val){ 
 		$ary_val = array_merge(array(
-			'{$LANGUAGE}'=>PIXMICAT_LANGUAGE,
-			'{$STATIC_URL}'=>STATIC_URL, '{$REF_URL}'=>REF_URL,
-			'{$PHP_SELF}'=>PHP_SELF, '{$PHP_SELF2}'=>PHP_SELF2, '{$PHP_EXT}'=>PHP_EXT,
-			'{$TITLEIMG}'=>TITLEIMG, '{$TITLE}'=>TITLE, '{$TITLESUB}'=>TITLESUB,
-			'{$HOME}'=>HOME, '{$TOP_LINKS}'=>TOP_LINKS, '{$FOOTTEXT}'=>FOOTTEXT,
-			'{$ADDINFO}'=>$ADDITION_INFO, '{$PAGE_TITLE}'=>TITLE,
+			'{$LANGUAGE}'=>$this->config['PIXMICAT_LANGUAGE'],
+			'{$STATIC_URL}'=>$this->config['STATIC_URL'], '{$REF_URL}'=>$this->config['REF_URL'],
+			'{$PHP_SELF}'=>$this->config['PHP_SELF'], '{$PHP_SELF2}'=>$this->config['PHP_SELF2'], '{$PHP_EXT}'=>$this->config['PHP_EXT'],
+			'{$TITLEIMG}'=>$this->config['TITLEIMG'], '{$TITLE}'=>$this->config['TITLE'], '{$TITLESUB}'=>$this->config['TITLESUB'],
+			'{$HOME}'=>$this->config['HOME'], '{$TOP_LINKS}'=>$this->config['TOP_LINKS'], '{$FOOTTEXT}'=>$this->config['FOOTTEXT'],
+			'{$ADDINFO}'=>$this->config['ADDITION_INFO'], '{$PAGE_TITLE}'=>$this->config['TITLE'],
 		), $ary_val);
 		if(($tmp_block = $this->_readBlock($blockName))===false) return ""; // 找無
 		foreach($ary_val as $akey=>$aval) $ary_val[$akey] = str_replace('{$', '{'.chr(1).'$', $ary_val[$akey]);

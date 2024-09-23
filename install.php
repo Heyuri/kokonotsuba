@@ -4,20 +4,16 @@
 	ini_set('display_startup_errors', '1');
 	error_reporting(E_ALL);
 
-	require './config.php';
-
-	// Parse the mysql connection string
-	$parsedUrl = parse_url(CONNECTION_STRING);
+	$config = array();
+	require './root-config.php';
 
 	// Extract the components
-	$username = $parsedUrl['user'] ?? '';
-	$password = $parsedUrl['pass'] ?? '';
-	$host = $parsedUrl['host'] ?? '';
+	$username = $config['DATABASE_USERNAME'] ?? '';
+	$password = $config['DATABASE_PASSWORD'] ?? '';
+	$host = $config['DATABASE_HOST'] ?? '';
 	
-	$path = trim($parsedUrl['path'], '/'); // Trim leading and trailing slashes
-	$pathComponents = explode('/', $path); // Split the path to get database and table name
-	$database = $pathComponents[0] ?? '';
-	$table = $pathComponents[1] ?? '';
+	$database = $config['DATABASE_DBNAME'] ?? '';
+	$table = $config['DATABASE_TABLENAME'] ?? '';
 
 	function createDB(&$conn){
 		global $table;
@@ -70,7 +66,7 @@
 <html>
 	<head>
 		<title>Kokonotsuba Installer</title>
-		<link rel="stylesheet" type="text/css" href="<?php echo STATIC_URL ?>/css/heyuriclassic.css">
+		<link rel="stylesheet" type="text/css" href="<?php echo $config['STATIC_URL'] ?>/css/heyuriclassic.css">
 	</head>
 	<body>
 		<h1>Kokonotsuba Installer</h1><hr>
@@ -106,8 +102,8 @@
 			$connection->close();
 		}
 		
-		if (!is_dir(IMG_DIR)) mkdir(IMG_DIR);
-		if (!is_dir(THUMB_DIR)) mkdir(THUMB_DIR);
+		if (!is_dir($config['IMG_DIR'])) mkdir($config['IMG_DIR']);
+		if (!is_dir($config['THUMB_DIR'])) mkdir($config['THUMB_DIR']);
 		
 		echo "</div>";
 	} 

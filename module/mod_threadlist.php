@@ -46,7 +46,7 @@ class mod_threadlist extends ModuleHelper {
 
 	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com,
 		&$category, &$age, $dest, $isReply, $imgWH, &$status) {
-		if ($this->FORCE_SUBJECT && !$isReply && $sub == DEFAULT_NOTITLE) {
+		if ($this->FORCE_SUBJECT && !$isReply && $sub == $this->config['DEFAULT_NOTITLE']) {
 			error($this->_T('no_title'), $dest);
 		}
 	}
@@ -83,7 +83,7 @@ class mod_threadlist extends ModuleHelper {
 				
 				$dat.= sprintf('<span<!--%d--> <a href="%s">%s (%d)</a></span>',
 					$post[0]['no'],
-					PHP_SELF.'?res='.$post[0]['no'], $post[0]['sub'] ? $post[0]['sub'] : $CommentTitle,
+					$this->config['PHP_SELF'].'?res='.$post[0]['no'], $post[0]['sub'] ? $post[0]['sub'] : $CommentTitle,
 					$PIO->postCount($post[0]['no']) - 1
 				);
 			}
@@ -184,9 +184,9 @@ function checkall(){
 }
 </script>';
 		$dat .= '<div id="contents">
-[<a href="'.PHP_SELF2.'?'.time().'">'._T('return').'</a>]
+[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>]
 <center class="theading"><b>'.$this->_T('page_title').'</b></center>'.
-($this->SHOW_FORM ? '<form action="'.PHP_SELF.'" method="post">' : '').'<table align="center" width="95%" class="postlists" cellspacing="0" cellpadding="0" border="1"><thead><tr>
+($this->SHOW_FORM ? '<form action="'.$this->config['PHP_SELF'].'" method="post">' : '').'<table align="center" width="95%" class="postlists" cellspacing="0" cellpadding="0" border="1"><thead><tr>
 '.($this->SHOW_FORM ? '<th><a href="javascript:checkall()">↓</a></th>' : '').'
 <th><a href="'.$thisPage.'&sort=no">No.'.($sort == 'no' ? ' ▼' : '').'</a></th>
 <th width="48%">'._T('form_topic').'</th>
@@ -205,7 +205,7 @@ function checkall(){
 			}
 			$dat .= '<tr>'.
 				($this->SHOW_FORM ? '<td align="CENTER"><input type="checkbox" name="'.$no.'" value="delete" /></td>' : '').
-				'<td align="CENTER"><a href="'.PHP_SELF.'?res='.$no.'">'.$no.'</a></td><td><big class="title"><b>'.( $sub ? $sub : 'No Title' ).
+				'<td align="CENTER"><a href="'.$this->config['PHP_SELF'].'?res='.$no.'">'.$no.'</a></td><td><big class="title"><b>'.( $sub ? $sub : 'No Title' ).
 				'</b></big></td><td><span class="name">'.$name.'</span></td><td align="CENTER">'.$rescount.'</td><td>'.$now.'</td></tr>';
 		}
 

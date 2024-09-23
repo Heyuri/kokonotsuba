@@ -61,7 +61,7 @@ class mod_anigif extends ModuleHelper {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$AccountIO = PMCLibrary::getAccountIOInstance();
 		
-		if($AccountIO->valid() < LEV_JANITOR) {
+		if($AccountIO->valid() < $this->config['roles']['LEV_JANITOR']) {
 			error('403 Access denied');
 		}
 
