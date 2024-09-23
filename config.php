@@ -1,10 +1,10 @@
 <?php
 /*
-* This file is for board-specific configurations
+* This file is for board-specific configurations. Make sure that values in globalconfig.php are set correctly.
 */
 
 $config['STORAGE_PATH'] = 'dat/'; // Storage directory, needs to have 777 permissions. Include trailing '/'
-require $config['STORAGE_PATH'].'instance-config.php';
+require $config['STORAGE_PATH'].'globalconfig.php';
 
 //Board database info
 $config['DATABASE_DBNAME'] =  'database';
