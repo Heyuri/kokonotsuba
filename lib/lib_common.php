@@ -541,3 +541,11 @@ function _getbits($buffer, $pos, $count){
     }
     return $result;
 }
+
+function drawAlert($message) {
+	$escapedMessage = addslashes($message);
+	$escapedMessage = str_replace(array("\r", "\n"), '', $escapedMessage);	
+	echo "	<script type='text/javascript'> 
+			alert('" . $escapedMessage . "');
+		</script>";
+}
