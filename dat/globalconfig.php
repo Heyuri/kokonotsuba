@@ -54,7 +54,6 @@ $config['CAPCODES'] = array( // tripcode=>color,cap
 	'!tripcode' => array('color'=>'#fd0000', 'cap'=>' ## Admin'),
 );
 
-$config['ROOTPATH'] = './'; // Main Program Root Directory
 $config['REF_URL'] = ''; // URL prefix, eg: https://jump.heyuri.net
 
 $config['VIDEO_EXT'] = 'WEBM|MP4'; // What filetypes will be loaded as a video
