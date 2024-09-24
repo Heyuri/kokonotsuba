@@ -60,10 +60,43 @@ class AccountIO {
 		return $lastID;
 	}
 	
+	public function editAccountRole($id, $newRole) {
+		$accountfound = false;
+		$newAccountFlatfile = [];
+
+		$this->flatfileConnect();
+
+		while (!feof($this->readOnlyFFData)) {
+			$line = fgets($this->readOnlyFFData);
+			$data = explode("<>", $line);
+			if ($data[0] == $id) {
+				$data[3] = $newRole; // Update the role
+				$accountfound = true;
+			}
+			$newAccountFlatfile[] = implode("<>", $data); // Rebuild the line
+		}
+
+		// If the account was not found, return false
+		if ($accountfound == false) {
+			return false;
+		}
+
+		$openLogFile = fopen($this->flatfileName, 'w');
+		flock($openLogFile, LOCK_EX);
+		foreach ($newAccountFlatfile as $line) {
+			fwrite($openLogFile, $line);
+		}
+		flock($openLogFile, LOCK_UN);
+		fclose($openLogFile);
+		fclose($this->readOnlyFFData);
+		return true;
+	}
+
+	
 	public function addNewAccount($newUsername, $newPassword, $newRole) {
 		$newRole = intval($newRole);
-		$newUsername = substr($newUsername, 0, 30);
-		$newPassword = substr($newPassword, 0, 200);
+		$newUsername = substr($newUsername, 0, 50);
+		$newPassword = substr($newPassword, 0, 1000);
 		$id = $this->getLastID();
 		
 		$this->flatfileConnect();
@@ -120,6 +153,32 @@ class AccountIO {
 		fclose($openLogFile);
 		fclose($this->readOnlyFFData);
 	    return true;
+	}
+	
+	public function getAccountById($id) {
+		$this->flatfileConnect();
+
+		while (!feof($this->readOnlyFFData)) {
+			$line = fgets($this->readOnlyFFData);
+			$data = explode("<>", $line);
+			if ($data[0] == $id) {
+				fclose($this->readOnlyFFData);
+				return [
+					'id' => $data[0],
+					'username' => $data[1],
+					'password' => $data[2],
+					'role' => $data[3],
+				];
+			}
+		}
+
+		fclose($this->readOnlyFFData);
+		return null; // Return null if no account is found with the given ID
+	}
+
+	
+	public function getRoleNum() {
+		return $this->level;
 	}
 	
 	public function getRoleLevel() {

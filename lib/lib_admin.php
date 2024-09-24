@@ -304,11 +304,11 @@ function drawAccountCreationForm(&$dat) {
        <table ><tbody>
        <tr>
            <td class="postblock"><label for="usrname">Account username:</label></td>
-           <td><input  required maxlength="30" id="usrname" name="usrname"/></td>
+           <td><input  required maxlength="50" id="usrname" name="usrname"/></td>
        </tr>
        <tr>
            <td class="postblock"><label for="passwd">Account password:</label></td>
-           <td><input type="password" id="passwd" name="passwd" required="" maxlength="200"/></td>
+           <td><input type="password" id="passwd" name="passwd" required="" maxlength="1000"/></td>
        </tr>
 		<tr>
 			<td class="postblock"><label for="hashed">Already hashed?</label></td>
@@ -346,14 +346,15 @@ function createAccount() {
 	//just check if one of the fields is set
 	if(!empty($_POST['usrname']) && !empty($_POST['passwd'])) {
 		$AccountIO = PMCLibrary::getAccountIOInstance();
-	
-		$ishash = $_POST['ishashed']; if(!isset($ishash)) $ishash = false;
+		
+		$ishashed = false;
+		if(isset($_POST['ishashed'])) $ishashed = $_POST['ishashed']; 
 		
 		$nUsername = strval(htmlspecialchars($_POST['usrname'])); //username for new account
 		$nPass = strval($_POST['passwd']);//password for new account
 		$nRole = intval($_POST['role']);//moderation role
 
-		(!$ishash) ? $hashedPassword = password_hash($nPass, PASSWORD_DEFAULT) : $hashedPassword = $nPass; //password hash to be stored in account flatfile
+		(!$ishashed) ? $hashedPassword = password_hash($nPass, PASSWORD_DEFAULT) : $hashedPassword = $nPass; //password hash to be stored in account flatfile
 		
 		//auth role
 		switch($nRole) {
@@ -370,7 +371,7 @@ function createAccount() {
 		
 		
 		
-		$dat .= '<center>Creation of a new account was a success!<br><form method="post" action="'.$config['PHP_SELF'].'?mode=viewAcc"> <input type="submit" value="View mod list"></form></center><br> ';
+		$dat .= '<center>Creation of a new account was a success!<br> [<a href="'.$config['PHP_SELF'].'?mode=viewAcc">View mod list</a>] </center><br> ';
 	} else {
 		drawAccountCreationForm($dat);
 	}
@@ -379,35 +380,109 @@ function createAccount() {
     echo $dat;
 }
 
+/* Comparision for account roles - used in sorting */
+function compareAccountByRole($acc1, $acc2) {
+	if($acc1['role'] == $acc2['role']) return 0;
+	return ($acc1['role'] < $acc2['role']) ? 1 : -1;
+}
+
+function buildAccountArray($accountText) {
+	$accountArray = array();
+	foreach($accountText as $account) {
+		if(sizeof($account) != 4) continue;
+		$accountArray[] = array_combine(['id', 'username', 'password', 'role'], $account);
+	}
+	return $accountArray;
+}
+
+function handleAccountDelete($id) {
+	$AccountIO = PMCLibrary::getAccountIOInstance();
+	$id = intval($id);
+	
+	if(!is_numeric($id)) error("Invalid ID");
+	$moderatorUsername = $AccountIO->getUsername();
+	$moderatorLevel = $AccountIO->getRoleLevel();
+	logtime("Deleted '".$id."' from accounts", $moderatorUsername.' ## '.$moderatorLevel);	
+	$AccountIO->deleteAccount($id);
+}
+
+function handleAccountDemote($id) {
+	global $config;
+	if(!is_numeric($id)) error("Invalid ID");
+	
+	$AccountIO = PMCLibrary::getAccountIOInstance();
+	$id = intval($id);
+	$currentRole = $AccountIO->getAccountById($id)['role'];
+	$newRole = $currentRole - 1;
+	
+	if(($currentRole - 1) <= $config['roles']['LEV_NONE']) {
+		drawAlert("Could not demote $id. Can't lower role any further.");
+		//redirect($config['PHP_SELF'].'?mode=viewAcc');
+		return false;
+	}
+	
+	$AccountIO->editAccountRole($id, $newRole); //subtract role number to 'demote'
+	
+	$moderatorUsername = $AccountIO->getUsername();
+	$moderatorLevel = $AccountIO->getRoleLevel();
+	logtime("Demoted '".$id."' to ".num2role($newRole)."", $moderatorUsername.' ## '.$moderatorLevel);	
+}
+
+function handleAccountPromote($id) {
+	global $config;
+	if(!is_numeric($id)) error("Invalid ID");
+	
+	$AccountIO = PMCLibrary::getAccountIOInstance();
+	$id = intval($id);
+	$currentRole = $AccountIO->getAccountById($id)['role'];
+	$newRole = $currentRole + 1;
+	
+	if(($currentRole + 1) > $config['roles']['LEV_ADMIN']) {
+		drawAlert("Could not demote $id. Can't raise role any further.");
+		//redirect($config['PHP_SELF'].'?mode=viewAcc');
+		return false;
+	}
+	
+	$AccountIO->editAccountRole($id, $newRole); //subtract role number to 'demote'
+	
+	$moderatorUsername = $AccountIO->getUsername();
+	$moderatorLevel = $AccountIO->getRoleLevel();
+	logtime("Promoted '".$id."' to ".num2role($newRole)."", $moderatorUsername.' ## '.$moderatorLevel);	
+}
+
 function viewAccounts() {
 	global $config;
 	$AccountIO = PMCLibrary::getAccountIOInstance();
 	if($AccountIO->valid() < $config['roles']['LEV_ADMIN']) error("403 Access Denied");
 	
 	//delete account
-	if(isset($_POST['del'])) {
-		$id = intval($_POST['del']);
-		if(!is_numeric($id)) error("Invalid ID");
-		$moderatorUsername = $AccountIO->getUsername();
-		$moderatorLevel = $AccountIO->getRoleLevel();
-		logtime("Deleted '".$id."' from accounts", $moderatorUsername.' ## '.$moderatorLevel);	
-		$AccountIO->deleteAccount($id);
-	}
+	if(isset($_GET['del'])) handleAccountDelete($_GET['del']);
+	if(isset($_GET['dem'])) handleAccountDemote($_GET['dem']);
+	if(isset($_GET['up'])) handleAccountPromote($_GET['up']);
 	
 	$dat = '';
 	head($dat);
 	$accountsHTML = '';
 	$accounts = $AccountIO->getAllAccounts();
 	
-	foreach($accounts as $account) {
-		if(sizeof($account) != 4) continue;
-		$account = array_combine(['id', 'username', 'password', 'role'], $account);
-
+	
+	//first, build
+	$accountArrayData = buildAccountArray($accounts);
+	
+	usort($accountArrayData, 'compareAccountByRole');
+	
+	foreach($accountArrayData as $account) {
+		$actionHTML = '[<a title="Delete account" href="'.$config['PHP_SELF'].'?mode=viewAcc&del='.$account['id'].'">D</a>] ';
+		if($account['role'] + 1 <= $config['roles']['LEV_ADMIN']) $actionHTML .= '[<a title="Promote account" href="'.$config['PHP_SELF'].'?mode=viewAcc&up='.$account['id'].'">▲</a>]';
+		if($account['role'] - 1 > $config['roles']['LEV_NONE']) $actionHTML .= '[<a title="Demote account" href="'.$config['PHP_SELF'].'?mode=viewAcc&dem='.$account['id'].'">▼</a>]';
+		
 		$accountsHTML .= '<tr> 
 			<td><center> '.$account['id'].'</center></td>
 			<td><center>'.$account['username'].' </center></td>
 			<td><center>'.num2role($account['role']).'</center></td>
-			<td><center><form action="'.$config['PHP_SELF'].'?mode=viewAcc" method="post"> <input type="hidden" name="del" value="'.$account['id'] .'"/>  <input type="submit" value="Delete"> </form></center></td>
+			<td><center> 
+			'.$actionHTML.'
+			 </center></td>
 		</tr>';
 	}
 	
@@ -431,9 +506,9 @@ function manageaccounts(&$dat) {
 	$dat .= '
 				<h3>Account management</h3>
 		<fieldset class="menu" style="display: inline-block; width: 200px;"><legend>Panel</legend>
-		<form method="post" action="'.$config['PHP_SELF'].'?mode=viewAcc"> <input type="submit" value="View list"></form> 
+		[<a href="'.$config['PHP_SELF'].'?mode=viewAcc">Mod list</a>]
 		<br />
-		<form method="post" action="'.$config['PHP_SELF'].'?mode=createAcc"><input type="submit" value="Add account"></form>		
+		[<a href="'.$config['PHP_SELF'].'?mode=createAcc">Add a new account</a>]		
 		</fieldset>';
 }
 
