@@ -82,7 +82,7 @@ class mod_adminban extends ModuleHelper {
 				} else {
 					$dat.= "Your ban was filed on ".date('Y/m/d \a\t H:i:s', $starttime)." and expires on ".date('Y/m/d \a\t H:i:s', $expires).".";
 				}
-				$dat.= "<br>[<a href='./'>Return</a>]
+				$dat.= "<br>[<a href='".$this->config['PHP_SELF2']."'>Return</a>]
 				<br clear=\"ALL\" /><hr />";
 				foot($dat);
 				die($dat);
