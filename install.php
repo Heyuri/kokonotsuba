@@ -5,7 +5,7 @@
 	error_reporting(E_ALL);
 
 	$config = array();
-	require './root-config.php';
+	require './config.php';
 
 	// Extract the components
 	$username = $config['DATABASE_USERNAME'] ?? '';
