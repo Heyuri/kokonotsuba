@@ -10,7 +10,7 @@ $config['DATABASE_PASSWORD'] ='password';
 
 $config['DATABASE_DRIVER'] = 'mysqli';
 $config['DATABASE_HOST'] = '127.0.0.1';
-$config['DATABASE_PORT'] = 3306;
+$config['DATABASE_PORT'] = 3306; // Default MySQL port
 
 $config['ROOTPATH'] = '/srv/location/of/kokonotsuba/directory/'; //Set this to the directory of the backend-files
 
@@ -162,6 +162,8 @@ $config['FORTUNES'] = array( // Used for fortune function, selected at random.
 );
 
 // Module List
+// These are not all modules that come with kokonotsuba that you can enable, there are some unlisted ones too.
+// See: https://github.com/Heyuri/kokonotsuba/wiki/All-modules
 $config['ModuleList'] = array(
 	/* modes */
 	'mod_soudane',
