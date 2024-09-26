@@ -436,13 +436,9 @@ function regist($preview=false){
     if(strlenUnicode($name) > $config['INPUT_MAX'])    error(_T('regist_nametoolong'), $dest);
     if(strlenUnicode($email) > $config['INPUT_MAX'])   error(_T('regist_emailtoolong'), $dest);
     if(strlenUnicode($sub) > $config['INPUT_MAX'])     error(_T('regist_topictoolong'), $dest);
- 
-<<<<<<< HEAD
+
     setrawcookie('namec', rawurlencode(htmlspecialchars_decode($name)), time()+7*24*3600);
-=======
-	setrawcookie('namec', rawurlencode(htmlspecialchars_decode($name)), time()+7*24*3600);
->>>>>>> 62d0330 (update config for all files)
- 
+	
     // E-mail / Title trimming
     $email = str_replace("\r\n", '', $email); 
     $sub = str_replace("\r\n", '', $sub);
