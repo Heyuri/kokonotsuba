@@ -123,13 +123,15 @@ const kkgal = {
 		kkgal.gimg = $id("galimg");
 		kkgal.gctrl = $id("galctrl");
 		var side = $id("galside");
+		var sideInnerHTML = "";
 		for (var i=0; i<kkimg.postimg.length; i++) {
 			var a = kkimg.postimg[i].parentNode;
 			var pno = a.parentNode.id.substr(1);
 
-			side.innerHTML+= '<a href="javascript:kkgal.expand(\''+pno+'\');"><img id="galthumb'+pno+'" class="" src="'+kkimg.postimg[i].src+'" alt="" border="1" width="100%" /></a>';
+			sideInnerHTML += '<a href="javascript:kkgal.expand(\''+pno+'\');"><img id="galthumb'+pno+'" class="" src="'+kkimg.postimg[i].src+'" alt="" border="1" width="100%" /></a>';
 			kkgal.imgindex[i] = pno;
 		}
+		side.insertAdjacentHTML("beforeend", sideInnerHTML);
 		kkgal.getfit();
 		window.addEventListener("resize", kkgal._evresize);
 	},
