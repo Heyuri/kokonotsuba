@@ -9,12 +9,6 @@
  * @date $Date$
  */
 
-define("LEV_NONE", 0);
-define("LEV_USER", 1);
-define("LEV_JANITOR", 2);
-define("LEV_MODERATOR", 3);
-define("LEV_ADMIN", 4);
-
 // Windows PHP 5.2.0 does not have this function implemented.
 if (!function_exists('inet_pton')) {
 	// Source: http://stackoverflow.com/a/14568699
@@ -48,6 +42,7 @@ if (!function_exists('inet_pton')) {
 
 /* 輸出表頭 | document head */
 function head(&$dat,$resno=0){
+	global $config;
 	$PTE = PMCLibrary::getPTEInstance();
 	$PMS = PMCLibrary::getPMSInstance();
 	$PIO = PMCLibrary::getPIOInstance();
@@ -60,16 +55,16 @@ function head(&$dat,$resno=0){
 		} else {
 			$CommentTitle = mb_substr($post[0]['com'],0,10,'UTF-8') . "...";
 		}
-		$pte_vals['{$PAGE_TITLE}'] = ($post[0]['sub'] ? $post[0]['sub'] : $CommentTitle).' - '.TITLE;
+		$pte_vals['{$PAGE_TITLE}'] = ($post[0]['sub'] ? $post[0]['sub'] : $CommentTitle).' - '.$config['TITLE'];
 	}
 	$dat .= $PTE->ParseBlock('HEADER',$pte_vals);
 	$PMS->useModuleMethods('Head', array(&$dat,$resno)); // "Head" Hook Point
 	$dat .= '</head>';
-	$pte_vals += array('{$HOME}' => '[<a href="'.HOME.'" target="_top">'._T('head_home').'</a>]',
-		'{$STATUS}' => '[<a href="'.PHP_SELF.'?mode=status">'._T('head_info').'</a>]',
-		'{$ADMIN}' => '[<a href="'.PHP_SELF.'?mode=admin">'._T('head_admin').'</a>]',
-		'{$REFRESH}' => '[<a href="'.PHP_SELF2.'?">'._T('head_refresh').'</a>]',
-		'{$SEARCH}' => (0) ? '[<a href="'.PHP_SELF.'?mode=search">'._T('head_search').'</a>]' : '',
+	$pte_vals += array('{$HOME}' => '[<a href="'.$config['HOME'].'" target="_top">'._T('head_home').'</a>]',
+		'{$STATUS}' => '[<a href="'.$config['PHP_SELF'].'?mode=status">'._T('head_info').'</a>]',
+		'{$ADMIN}' => '[<a href="'.$config['PHP_SELF'].'?mode=admin">'._T('head_admin').'</a>]',
+		'{$REFRESH}' => '[<a href="'.$config['PHP_SELF2'].'?">'._T('head_refresh').'</a>]',
+		'{$SEARCH}' => (0) ? '[<a href="'.$config['PHP_SELF'].'?mode=search">'._T('head_search').'</a>]' : '',
 		'{$HOOKLINKS}' => '');
 	$PMS->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
 	$dat .= $PTE->ParseBlock('BODYHEAD',$pte_vals);
@@ -77,31 +72,30 @@ function head(&$dat,$resno=0){
 
 /* 發表用表單輸出 | user contribution form */
 function form(&$dat, $resno, $name='', $mail='', $sub='', $com='', $cat='', $preview=false){
-	global $ADDITION_INFO;
+	global $config;
 	$PTE = PMCLibrary::getPTEInstance();
 	$PMS = PMCLibrary::getPMSInstance();
 
 	$hidinput =
 		($resno ? '<input type="hidden" name="resto" value="'.$resno.'" />' : '').
-		(TEXTBOARD_ONLY ? '' : '<input type="hidden" name="MAX_FILE_SIZE" value="{$MAX_FILE_SIZE}" />');
+		($config['TEXTBOARD_ONLY'] ? '' : '<input type="hidden" name="MAX_FILE_SIZE" value="{$MAX_FILE_SIZE}" />');
 
 	$pte_vals = array(
 		'{$RESTO}' => strval($resno),
 		'{$IS_THREAD}' => $resno!=0,
 		'{$FORM_HIDDEN}' => $hidinput,
-		'{$MAX_FILE_SIZE}' => strval(TEXTBOARD_ONLY ? 0 : MAX_KB * 1024),
-		'{$FORM_NAME_FIELD}' => '<input tabindex="1" maxlength="'.INPUT_MAX.'" type="text" name="name" id="name" size="28" value="'.$name.'" class="inputtext" />',
-		'{$FORM_EMAIL_FIELD}' => '<input tabindex="2" maxlength="'.INPUT_MAX.'" type="text" name="email" id="email" size="28" value="'.$mail.'" class="inputtext" />',
-		'{$FORM_TOPIC_FIELD}' => '<input tabindex="3" maxlength="'.INPUT_MAX.'"  type="text" name="sub" id="sub" size="28" value="'.$sub.'" class="inputtext" />',
+		'{$MAX_FILE_SIZE}' => strval($config['TEXTBOARD_ONLY'] ? 0 : $config['MAX_KB'] * 1024),
+		'{$FORM_NAME_FIELD}' => '<input tabindex="1" maxlength="'.$config['INPUT_MAX'].'" type="text" name="name" id="name" size="28" value="'.$name.'" class="inputtext" />',
+		'{$FORM_EMAIL_FIELD}' => '<input tabindex="2" maxlength="'.$config['INPUT_MAX'].'" type="text" name="email" id="email" size="28" value="'.$mail.'" class="inputtext" />',
+		'{$FORM_TOPIC_FIELD}' => '<input tabindex="3" maxlength="'.$config['INPUT_MAX'].'"  type="text" name="sub" id="sub" size="28" value="'.$sub.'" class="inputtext" />',
 		'{$FORM_SUBMIT}' => '<button tabindex="10" type="submit" name="mode" value="regist">'.($resno ? 'Post' : 'New Thread' ).'</button>',
-		'{$FORM_COMMENT_FIELD}' => '<textarea tabindex="6" maxlength="'.COMM_MAX.'" name="com" id="com" cols="48" rows="4" class="inputtext">'.$com.'</textarea>',
+		'{$FORM_COMMENT_FIELD}' => '<textarea tabindex="6" maxlength="'.$config['COMM_MAX'].'" name="com" id="com" cols="48" rows="4" class="inputtext">'.$com.'</textarea>',
 		'{$FORM_DELETE_PASSWORD_FIELD}' => '<input tabindex="6" type="password" name="pwd" id="pwd" size="8" maxlength="8" value="" class="inputtext" />',
 		'{$FORM_EXTRA_COLUMN}' => '',
 		'{$FORM_FILE_EXTRA_FIELD}' => '',
-		'{$FORM_NOTICE}' => (TEXTBOARD_ONLY?'':_T('form_notice',str_replace('|',', ',ALLOW_UPLOAD_EXT),MAX_KB,($resno ? MAX_RW : MAX_W),($resno ? MAX_RH : MAX_H))),
+		'{$FORM_NOTICE}' => ($config['TEXTBOARD_ONLY'] ? '' :_T('form_notice',str_replace('|',', ',$config['ALLOW_UPLOAD_EXT']),$config['MAX_KB'],($resno ? $config['MAX_RW'] : $config['MAX_W']),($resno ? $config['MAX_RH'] : $config['MAX_H']))),
 		'{$HOOKPOSTINFO}' => '');
-	if (USE_PREVIEW) $pte_vals['{$FORM_SUBMIT}'].= '<button tabindex="11" type="submit" name="mode" value="preview">Preview</button>';
-	if(!TEXTBOARD_ONLY && (RESIMG || !$resno)){
+	if(!$config['TEXTBOARD_ONLY'] && ($config['RESIMG'] || !$resno)){
 		if(isset($_FILES['upfile']['error']) && $_FILES['upfile']['error']!=UPLOAD_ERR_NO_FILE) $w = ($preview?'<small class="warning"><b>Please enter the file again:</b></small><br />':'');
 		else $w = '';
 		$pte_vals += array('{$FORM_ATTECHMENT_FIELD}' => $w.'<input type="file" name="upfile" id="upfile" />');
@@ -109,16 +103,16 @@ function form(&$dat, $resno, $name='', $mail='', $sub='', $com='', $cat='', $pre
 		if (!$resno) {
 			$pte_vals += array('{$FORM_NOATTECHMENT_FIELD}' => '<input type="checkbox" name="noimg" id="noimg" value="on" />');
 		}
-		if(USE_UPSERIES) { // 啟動連貼機能
+		if($config['USE_UPSERIES']) { // 啟動連貼機能
 			$pte_vals['{$FORM_CONTPOST_FIELD}'] = '<input type="checkbox" name="up_series" id="up_series" value="on"'.((isset($_GET["upseries"]) && $resno)?' checked="checked"':'').' />';
 		}
 		$PMS->useModuleMethods('PostFormFile', array(&$pte_vals['{$FORM_FILE_EXTRA_FIELD}']));
 	}
 	$PMS->useModuleMethods('PostForm', array(&$pte_vals['{$FORM_EXTRA_COLUMN}'])); // "PostForm" Hook Point
-	if(USE_CATEGORY) {
+	if($config['USE_CATEGORY']) {
 		$pte_vals += array('{$FORM_CATEGORY_FIELD}' => '<input tabindex="5" type="text" name="category" id="category" size="28" value="'.$cat.'" class="inputtext" />');
 	}
-	if(STORAGE_LIMIT) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',total_size(),STORAGE_MAX);
+	if($config['STORAGE_LIMIT']) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',total_size(),$config['STORAGE_MAX']);
 	$PMS->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
 
 	$dat .= $PTE->ParseBlock('POSTFORM',$pte_vals);
@@ -172,12 +166,13 @@ function redirect($to, $time=0, $verbose=false) {
 
 /* 網址自動連結 */
 function auto_link_callback2($matches) {
+	global $config;
 	$URL = $matches[1].$matches[2]; // https://example.com
 
 	// Redirect URL!
-	if (REF_URL) {
+	if ($config['REF_URL']) {
 		$URL_Encode = urlencode($URL);  // https%3A%2F%2Fexample.com (For the address bar)
-		return '<a href="'.REF_URL.'?'.$URL_Encode.'" target="_blank" rel="nofollow noreferrer">'.$URL.'</a>';
+		return '<a href="'.$config['REF_URL'].'?'.$URL_Encode.'" target="_blank" rel="nofollow noreferrer">'.$URL.'</a>';
 	}
 	// Also works if its blank!
 	return '<a href="'.$URL.'" target="_blank" rel="nofollow noreferrer">'.$URL.'</a>';
@@ -200,9 +195,10 @@ function quote_unkfunc($comment){
 
 /* quote links */
 function quote_link($comment){
+	global $config;
 	$PIO = PMCLibrary::getPIOInstance();
-
-	if(USE_QUOTESYSTEM){
+	
+	if($config['USE_QUOTESYSTEM']){
 		if(preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $comment, $matches, PREG_SET_ORDER)){
 			$matches_unique = array();
 			foreach($matches as $val){ if(!in_array($val, $matches_unique)) array_push($matches_unique, $val); }
@@ -221,7 +217,8 @@ function quote_link($comment){
 
 /* 取得完整的網址 */
 function fullURL(){
-	return '//'.$_SERVER['HTTP_HOST'].substr($_SERVER['PHP_SELF'], 0, strpos($_SERVER['PHP_SELF'], PHP_SELF));
+	global $config;
+	return '//'.$_SERVER['HTTP_HOST'].substr($_SERVER['PHP_SELF'], 0, strpos($_SERVER['PHP_SELF'], $config['PHP_SELF']));
 }
 
 /* 反櫻花字 */
@@ -231,10 +228,11 @@ function anti_sakura($str){
 
 /* 輸出錯誤畫面 */
 function error($mes, $dest=''){
+	global $config;
 	$PTE = PMCLibrary::getPTEInstance();
 
 	if(is_file($dest)) unlink($dest);
-	$pte_vals = array('{$SELF2}'=>PHP_SELF2.'?'.time(), '{$MESG}'=>$mes, '{$RETURN_TEXT}'=>_T('return'), '{$BACK_TEXT}'=>_T('error_back'));
+	$pte_vals = array('{$SELF2}'=>$config['PHP_SELF2'].'?'.time(), '{$MESG}'=>$mes, '{$RETURN_TEXT}'=>_T('return'), '{$BACK_TEXT}'=>_T('error_back'));
 	$dat = '';
 	head($dat);
 	$dat .= $PTE->ParseBlock('ERROR',$pte_vals);
@@ -292,14 +290,14 @@ function CheckSupportGZip(){
 
 /* 封鎖 IP / Hostname / DNSBL 綜合性檢查 */
 function BanIPHostDNSBLCheck($IP, $HOST, &$baninfo){
-	if(!BAN_CHECK) return false; // Disabled
-	global $BANPATTERN, $DNSBLservers, $DNSBLWHlist;
-
+	global $config;
+	if(!$config['BAN_CHECK']) return false; // Disabled
+				
 	// IP/Hostname Check
 	$HOST = strtolower($HOST);
 	$checkTwice = ($IP != $HOST); // 是否需檢查第二次
 	$IsBanned = false;
-	foreach($BANPATTERN as $pattern){
+	foreach($config['BANPATTERN'] as $pattern){
 		$slash = substr_count($pattern, '/');
 		if($slash==2){ // RegExp
 			$pattern .= 'i';
@@ -317,15 +315,15 @@ function BanIPHostDNSBLCheck($IP, $HOST, &$baninfo){
 	if($IsBanned){ $baninfo = _T('ip_banned'); return true; }
 
 	// DNS-based Blackhole List(DNSBL) 黑名單
-	if(!isset($DNSBLservers[0])||!$DNSBLservers[0]) return false; // Skip check
-	if(array_search($IP, $DNSBLWHlist)!==false) return false; // IP位置在白名單內
+	if(!isset($config['DNSBLservers'][0])||!$config['DNSBLservers'][0]) return false; // Skip check
+	if(array_search($IP, $config['DNSBLWHlist'])!==false) return false; // IP位置在白名單內
 	$rev = implode('.', array_reverse(explode('.', $IP)));
-	$lastPoint = count($DNSBLservers) - 1; if($DNSBLservers[0] < $lastPoint) $lastPoint = $DNSBLservers[0];
+	$lastPoint = count($config['DNSBLservers']) - 1; if($config['DNSBLservers'][0] < $lastPoint) $lastPoint = $config['DNSBLservers'][0];
 	$isListed = false;
 	for($i = 1; $i <= $lastPoint; $i++){
-		$query = $rev.'.'.$DNSBLservers[$i].'.'; // FQDN
+		$query = $rev.'.'.$config['DNSBLservers'][$i].'.'; // FQDN
 		$result = gethostbyname($query);
-		if($result && ($result != $query)){ $isListed = $DNSBLservers[$i]; break; }
+		if($result && ($result != $query)){ $isListed = $config['DNSBLservers'][$i]; break; }
 	}
 	if($isListed){ $baninfo = _T('ip_dnsbl_banned',$isListed); return true; }
 	return false;
@@ -458,24 +456,26 @@ function strlenUnicode($str) {
 }
 
 function num2Role($roleNumber) {
+	global $config;
 	$num = intval($roleNumber);
 	$from = '';
 	
 	switch ($num) {
-			case LEV_NONE: $from = 'USER'; break;
-			case LEV_USER: $from = 'REGISTERED_USER'; break;
-			case LEV_JANITOR: $from = 'JANITOR'; break;
-			case LEV_MODERATOR: $from = 'MODERATOR'; break;
-			case LEV_ADMIN: $from = 'ADMIN'; break;
+			case $config['roles']['LEV_NONE']: $from = 'USER'; break;
+			case $config['roles']['LEV_USER']: $from = 'REGISTERED_USER'; break;
+			case $config['roles']['LEV_JANITOR']: $from = 'JANITOR'; break;
+			case $config['roles']['LEV_MODERATOR']: $from = 'MODERATOR'; break;
+			case $config['roles']['LEV_ADMIN']: $from = 'ADMIN'; break;
 	}
 	return $from;
 }
 
 // Moderator log
 function logtime($desc, $from='SYSTEM') {
+	global $config;
 	$now = date("m/d/y H:i:s", $_SERVER['REQUEST_TIME']);
 	$ip = ' ('.getREMOTE_ADDR().')';
-	static $fp; if (!$fp) $fp = fopen(STORAGE_PATH.ACTION_LOG, "a");
+	static $fp; if (!$fp) $fp = fopen($config['STORAGE_PATH'].$config['ACTION_LOG'], "a");
 	fwrite($fp, "$from$ip: $now: $desc\r\n");
 }
 
@@ -540,4 +540,12 @@ function _getbits($buffer, $pos, $count){
             (((($buffer[$loop >> 3]) >> (7 - ($loop % 8))) & 0x01) << ($count - ($loop - $pos) - 1));
     }
     return $result;
+}
+
+function drawAlert($message) {
+	$escapedMessage = addslashes($message);
+	$escapedMessage = str_replace(array("\r", "\n"), '', $escapedMessage);	
+	echo "	<script type='text/javascript'> 
+			alert('" . $escapedMessage . "');
+		</script>";
 }

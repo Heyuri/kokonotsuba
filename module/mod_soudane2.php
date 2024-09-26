@@ -1,10 +1,13 @@
 <?php
 class mod_soudane2 extends ModuleHelper {
-	private $SOUDANE_DIR = STORAGE_PATH.'soudane2/';
+	private $SOUDANE_DIR = '';
 	private $mypage;
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
+		
+		$this->SOUDANE_DIR = $this->config['STORAGE_PATH'].'soudane2/';
+		
 		$this->mypage = str_replace('&amp;', '&', $this->getModulePageURL());
 		if (!is_dir($this->SOUDANE_DIR)) {
 			@mkdir($this->SOUDANE_DIR);

@@ -9,7 +9,7 @@
  * 抽象 FileIO，預先實作好本地圖檔相關方法。
  */
 abstract class AbstractFileIO implements IFileIO {
-
+	private $config;
     /** @var ILogger */
     var $LOG;
 
@@ -28,31 +28,35 @@ abstract class AbstractFileIO implements IFileIO {
     private $cacheFile;
 
     public function __construct() {
+    	global $config;
+    	$this->config = $config;
+    	
         $this->LOG = PMCLibrary::getLoggerInstance('AbstractFileIO');
         $this->absoluteUrl = $this->getAbsoluteUrl();
         $this->cacheFile = $this->getCacheFile();
+   
     }
 
     private function getAbsoluteUrl() {
-    	if (defined(CDN_URL)) {
-			if (CDN_URL !== "") {
-				return CDN_URL;
+    	if (!empty($this->config['CDN_URL'])) {
+			if ($config['CDN_URL'] !== "") {
+				return $this->config['CDN_URL'];
 			}
 		}
 
         $phpSelf = $_SERVER['PHP_SELF'];
         return sprintf(
-                '//%s%s', $_SERVER['HTTP_HOST'], substr($phpSelf, 0, strpos($phpSelf, PHP_SELF))
+                '//%s%s', $_SERVER['HTTP_HOST'], substr($phpSelf, 0, strpos($phpSelf, $this->config['PHP_SELF']))
         );
     }
 
     private function getCacheFile() {
-        return STORAGE_PATH . 'sizecache.dat';
+        return $this->config['STORAGE_PATH'] . 'sizecache.dat';
     }
 
     protected function getImageLocalURL($imgname) {
         return $this->absoluteUrl .
-                (strpos($imgname, 's.') !== false ? basename(THUMB_DIR) : basename(IMG_DIR)).'/'.
+                (strpos($imgname, 's.') !== false ? basename($this->config['THUMB_DIR']) : basename($this->config['IMG_DIR'])).'/'.
                 $imgname;
     }
 
@@ -157,4 +161,4 @@ abstract class AbstractIfsFileIO extends AbstractFileIO {
 }
 
 // 引入實作
-require ROOTPATH . 'lib/fileio/fileio.' . FILEIO_BACKEND . '.php';
+require $config['ROOTPATH'] . 'lib/fileio/fileio.' . $config['FILEIO_BACKEND'] . '.php';

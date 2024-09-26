@@ -10,21 +10,23 @@ YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE TH
 
 @session_start();
 
-require './config.php'; // Introduce a settings file
-require ROOTPATH.'lib/pmclibrary.php'; // Ingest libraries
-require ROOTPATH.'lib/lib_errorhandler.php'; // Introduce global error capture
-require ROOTPATH.'lib/lib_compatible.php'; // Introduce compatible libraries
-require ROOTPATH.'lib/lib_common.php'; // Introduce common function archives
-require ROOTPATH.'lib/lib_admin.php'; // Admin panel functions
-require ROOTPATH.'lib/lib_template.php'; // Template library
-require ROOTPATH.'lib/lib_cache.php'; // Caching functions
-require ROOTPATH.'lib/lib_post.php'; // Post and thread functions
+/* load configuration files */
+$config = array();
+require './config.php'; // Include configuration file
 
-defined("ROLL") or define("ROLL",[]);//When undefined, empty array
+require $config['ROOTPATH'].'lib/lib_common.php'; // Introduce common function archives
+require $config['ROOTPATH'].'lib/pmclibrary.php'; // Ingest libraries
+require $config['ROOTPATH'].'lib/lib_errorhandler.php'; // Introduce global error capture
+require $config['ROOTPATH'].'lib/lib_compatible.php'; // Introduce compatible libraries
+
+require $config['ROOTPATH'].'lib/lib_admin.php'; // Admin panel functions
+require $config['ROOTPATH'].'lib/lib_template.php'; // Template library
+require $config['ROOTPATH'].'lib/lib_cache.php'; // Caching functions
+require $config['ROOTPATH'].'lib/lib_post.php'; // Post and thread functions
 
 /* Update the log file/output thread */ 
 function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
-	global $LIMIT_SENSOR;
+	global $config;
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PTE = PMCLibrary::getPTEInstance();
@@ -32,7 +34,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 	$AccountIO = PMCLibrary::getAccountIOInstance();
 	$pagenum = intval($pagenum);
 
-	$adminMode = $AccountIO->valid()>=LEV_JANITOR && $pagenum != -1 && !$single_page; // Front-end management mode
+	$adminMode = $AccountIO->valid()>=$config['roles']['LEV_JANITOR'] && $pagenum != -1 && !$single_page; // Front-end management mode
 
 	$resno = intval($resno); // Number digitization
 	$page_start = $page_end = 0; // Static page number
@@ -40,7 +42,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 	$RES_start = $RES_amount = $hiddenReply = $tree_count = 0;
 	$kill_sensor = $old_sensor = false; // Predictive system start flag
 	$arr_kill = $arr_old = array(); // Obsolete numbered array
-	$pte_vals = array('{$THREADFRONT}'=>'','{$THREADREAR}'=>'','{$SELF}'=>PHP_SELF,
+	$pte_vals = array('{$THREADFRONT}'=>'','{$THREADREAR}'=>'','{$SELF}'=>$config['PHP_SELF'],
 		'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel" />'._T('del_head'),
 		'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on" />',
 		'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
@@ -55,44 +57,44 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 			$threads = $PIO->fetchThreadList(); // Get a full list of discussion threads
 			$PMS->useModuleMethods('ThreadOrder', array($resno,$pagenum,$single_page,&$threads)); // "ThreadOrder" Hook Point
 			$threads_count = count($threads);
-			$inner_for_count = $threads_count > PAGE_DEF ? PAGE_DEF : $threads_count;
-			$page_end = ($last == -1 ? ceil($threads_count / PAGE_DEF) : $last);
+			$inner_for_count = $threads_count > $config['PAGE_DEF'] ? $config['PAGE_DEF'] : $threads_count;
+			$page_end = ($last == -1 ? ceil($threads_count / $config['PAGE_DEF']) : $last);
 		}else{ // Discussion of the clue label pattern (PHP dynamic output one page)
 			$threads_count = $PIO->threadCount(); // Discuss the number of strings
-			if($pagenum < 0 || ($pagenum * PAGE_DEF) >= $threads_count) error(_T('page_not_found')); // $Pagenum is out of range
+			if($pagenum < 0 || ($pagenum * $config['PAGE_DEF']) >= $threads_count) error(_T('page_not_found')); // $Pagenum is out of range
 			$page_start = $page_end = $pagenum; // Set a static page number
 			$threads = $PIO->fetchThreadList(); // Get a full list of discussion threads
 			$PMS->useModuleMethods('ThreadOrder', array($resno,$pagenum,$single_page,&$threads)); // "ThreadOrder" Hook Point
-			$threads = array_splice($threads, $pagenum * PAGE_DEF, PAGE_DEF); // Remove the list of discussion threads after the tag
+			$threads = array_splice($threads, $pagenum * $config['PAGE_DEF'], $config['PAGE_DEF']); // Remove the list of discussion threads after the tag
 			$inner_for_count = count($threads); // The number of discussion strings is the number of cycles
 		}
 	}else{
 		if(!$PIO->isThread($resno)){ // Try to find the thread by child post no. instead
 			$resnoNew = $PIO->fetchPosts($resno)[0]['resto'];
 			if (!$PIO->isThread($resnoNew)) error(_T('thread_not_found'));
-			header("Location: ".fullURL().PHP_SELF."?res=".$resnoNew."&q=".$resno."#p".$resno); // Found, redirect
+			header("Location: ".fullURL().$config['PHP_SELF']."?res=".$resnoNew."&q=".$resno."#p".$resno); // Found, redirect
 		}
 		$AllRes = isset($pagenum) && ($_GET['pagenum']??'')=='all'; // Whether to use ALL for output
 
 		// Calculate the response label range
 		$tree_count = $PIO->postCount($resno) - 1; // Number of discussion thread responses
-		if($tree_count && RE_PAGE_DEF){ // There is a response and RE_PAGE_DEF > 0 to do the pagination action
+		if($tree_count && $config['RE_PAGE_DEF']){ // There is a response and RE_PAGE_DEF > 0 to do the pagination action
 			if($pagenum==='all'){ // show all
 				$pagenum = 0;
 				$RES_start = 1; $RES_amount = $tree_count;
 			}else{
-				if($pagenum==='RE_PAGE_MAX') $pagenum = ceil($tree_count / RE_PAGE_DEF) - 1; // Special value: Last page
+				if($pagenum==='RE_PAGE_MAX') $pagenum = ceil($tree_count / $config['RE_PAGE_DEF']) - 1; // Special value: Last page
 				if($pagenum < 0) $pagenum = 0; // negative number
-				if($pagenum * RE_PAGE_DEF >= $tree_count) error(_T('page_not_found'));
-				$RES_start = $pagenum * RE_PAGE_DEF + 1; // Begin
-				$RES_amount = RE_PAGE_DEF; // Take several
+				if($pagenum * $config['RE_PAGE_DEF'] >= $tree_count) error(_T('page_not_found'));
+				$RES_start = $pagenum * $config['RE_PAGE_DEF'] + 1; // Begin
+				$RES_amount = $config['RE_PAGE_DEF']; // Take several
 			}
 		}elseif($pagenum > 0) error(_T('page_not_found')); // In the case of no response, only pagenum = 0 or negative numbers are allowed
 		else{ $RES_start = 1; $RES_amount = $tree_count; $pagenum = 0; } // Output All Responses
 
-		if(THREAD_PAGINATION && !$adminMode){ // Thread Pagination
+		if($config['THREAD_PAGINATION'] && !$adminMode){ // Thread Pagination
 			$cacheETag = md5(($AllRes ? 'all' : $pagenum).'-'.$tree_count);
-			$cacheFile = STORAGE_PATH .'cache/'.$resno.'-'.($AllRes ? 'all' : $pagenum).'.';
+			$cacheFile = $config['STORAGE_PATH'] .'cache/'.$resno.'-'.($AllRes ? 'all' : $pagenum).'.';
 			$cacheGzipPrefix = extension_loaded('zlib') ? 'compress.zlib://' : ''; // Zlib compression stream
 			$cacheControl = 'cache';
 			//$cacheControl = isset($_SERVER['HTTP_CACHE_CONTROL']) ? $_SERVER['HTTP_CACHE_CONTROL'] : ''; // respect user's cache wishes? (comment this line out to force caching)
@@ -114,8 +116,8 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 
 	// Predict that old articles will be deleted and archives
 	$tmp_total_size = $FileIO->getCurrentStorageSize(); // The current usage of additional image files
-	$tmp_STORAGE_MAX = STORAGE_MAX * (($tmp_total_size >= STORAGE_MAX) ? 1 : 0.95); // Estimated upper limit
-	if(STORAGE_LIMIT && STORAGE_MAX > 0 && ($tmp_total_size >= $tmp_STORAGE_MAX)){
+	$tmp_STORAGE_MAX = $config['STORAGE_MAX'] * (($tmp_total_size >= $config['STORAGE_MAX']) ? 1 : 0.95); // Estimated upper limit
+	if($config['STORAGE_LIMIT'] && $config['STORAGE_MAX'] > 0 && ($tmp_total_size >= $tmp_STORAGE_MAX)){
 		$kill_sensor = true; // tag opens
 		$arr_kill = $PIO->delOldAttachments($tmp_total_size, $tmp_STORAGE_MAX); // Outdated attachment array
 	}
@@ -130,7 +132,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 		head($dat, $resno);
 		// form
 		$qu = '';
-		if (USE_QUOTESYSTEM && $resno && isset($_GET['q'])) {
+		if ($config['USE_QUOTESYSTEM'] && $resno && isset($_GET['q'])) {
 			$qq = explode(',', $_GET['q']);
 			foreach ($qq as $q) {
 				$q = intval($q);
@@ -147,11 +149,11 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 			// Take out the thread number
 			if($resno) $tID = $resno; // Single thread output (response mode)
 			else{
-				if($pagenum == -1 && ($page * PAGE_DEF + $i) >= $threads_count) break; // rebuild Exceeding the index indicates that it is all done
-				$tID = ($page_start==$page_end) ? $threads[$i] : $threads[$page * PAGE_DEF + $i]; // One page of content (normal mode) / multi-page content (rebuild mode)
+				if($pagenum == -1 && ($page * $config['PAGE_DEF'] + $i) >= $threads_count) break; // rebuild Exceeding the index indicates that it is all done
+				$tID = ($page_start==$page_end) ? $threads[$i] : $threads[$page * $config['PAGE_DEF'] + $i]; // One page of content (normal mode) / multi-page content (rebuild mode)
 				$tree_count = $PIO->postCount($tID) - 1; // Number of discussion thread responses
-				$RES_start = $tree_count - RE_DEF + 1; if($RES_start < 1) $RES_start = 1; // Begin
-				$RES_amount = RE_DEF; // Take several
+				$RES_start = $tree_count - $config['RE_DEF'] + 1; if($RES_start < 1) $RES_start = 1; // Begin
+				$RES_amount = $config['RE_DEF']; // Take several
 				$hiddenReply = $RES_start - 1; // The number of responses that are hidden
 			}
 
@@ -167,46 +169,46 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 		$prev = ($resno ? $pagenum : $page) - 1;
 		$next = ($resno ? $pagenum : $page) + 1;
 		if($resno){ // Response labels
-			if(RE_PAGE_DEF > 0){ // The Responses tab is on
+			if($config['RE_PAGE_DEF'] > 0){ // The Responses tab is on
 				$pte_vals['{$PAGENAV}'] .= '<table border="1" id="pager"><tbody><tr><td nowrap="nowrap">';
-				$pte_vals['{$PAGENAV}'] .= ($prev >= 0) ? '<a rel="prev" href="'.PHP_SELF.'?res='.$resno.'&pagenum='.$prev.'">'._T('prev_page').'</a>' : _T('first_page');
+				$pte_vals['{$PAGENAV}'] .= ($prev >= 0) ? '<a rel="prev" href="'.$config['PHP_SELF'].'?res='.$resno.'&pagenum='.$prev.'">'._T('prev_page').'</a>' : _T('first_page');
 				$pte_vals['{$PAGENAV}'] .= "</td><td>";
 				if($tree_count==0) $pte_vals['{$PAGENAV}'] .= '[<b>0</b>] '; // No response
 				else{
-					for($i = 0, $len = $tree_count / RE_PAGE_DEF; $i <= $len; $i++){
+					for($i = 0, $len = $tree_count / $config['RE_PAGE_DEF']; $i <= $len; $i++){
 						if(!$AllRes && $pagenum==$i) $pte_vals['{$PAGENAV}'] .= '[<b>'.$i.'</b>] ';
-						else $pte_vals['{$PAGENAV}'] .= '[<a href="'.PHP_SELF.'?res='.$resno.'&pagenum='.$i.'">'.$i.'</a>] ';
+						else $pte_vals['{$PAGENAV}'] .= '[<a href="'.$config['PHP_SELF'].'?res='.$resno.'&pagenum='.$i.'">'.$i.'</a>] ';
 					}
-					$pte_vals['{$PAGENAV}'] .= $AllRes ? '[<b>'._T('all_pages').'</b>] ' : ($tree_count > RE_PAGE_DEF ? '[<a href="'.PHP_SELF.'?res='.$resno.'">'._T('all_pages').'</a>] ' : '');
+					$pte_vals['{$PAGENAV}'] .= $AllRes ? '[<b>'._T('all_pages').'</b>] ' : ($tree_count > $config['RE_PAGE_DEF'] ? '[<a href="'.$config['PHP_SELF'].'?res='.$resno.'">'._T('all_pages').'</a>] ' : '');
 				}
 				$pte_vals['{$PAGENAV}'] .= '</td><td nowrap="nowrap">';
-				$pte_vals['{$PAGENAV}'] .= (!$AllRes && $tree_count > $next * RE_PAGE_DEF) ? '<a href="'.PHP_SELF.'?res='.$resno.'&pagenum='.$next.'">'._T('next_page').'</a>' : _T('last_page');
+				$pte_vals['{$PAGENAV}'] .= (!$AllRes && $tree_count > $next * $config['RE_PAGE_DEF']) ? '<a href="'.$config['PHP_SELF'].'?res='.$resno.'&pagenum='.$next.'">'._T('next_page').'</a>' : _T('last_page');
 				$pte_vals['{$PAGENAV}'] .= '</td></tr></tbody></table>';
 			}
 		}else{ // General labels
 			$pte_vals['{$PAGENAV}'] .= '<table border="1" id="pager"><tbody><tr>';
 			if($prev >= 0){
-				if(!$adminMode && $prev==0) $pte_vals['{$PAGENAV}'] .= '<td><form action="'.PHP_SELF2.'" method="get">';
+				if(!$adminMode && $prev==0) $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$config['PHP_SELF2'].'" method="get">';
 				else{
-					if($adminMode || (STATIC_HTML_UNTIL != -1) && ($prev > STATIC_HTML_UNTIL)) $pte_vals['{$PAGENAV}'] .= '<td><form action="'.PHP_SELF.'?pagenum='.$prev.'" method="post">';
-					else $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$prev.PHP_EXT.'" method="get">';
+					if($adminMode || ($config['STATIC_HTML_UNTIL'] != -1) && ($prev > $config['STATIC_HTML_UNTIL'])) $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$config['PHP_SELF'].'?pagenum='.$prev.'" method="post">';
+					else $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$prev.$config['PHP_EXT'].'" method="get">';
 				}
 				$pte_vals['{$PAGENAV}'] .= '<div><input type="submit" value="'._T('prev_page').'" /></div></form></td>';
 			}else $pte_vals['{$PAGENAV}'] .= '<td nowrap="nowrap">'._T('first_page').'</td>';
 			$pte_vals['{$PAGENAV}'] .= '<td>';
-			for($i = 0, $len = $threads_count / PAGE_DEF; $i <= $len; $i++){
+			for($i = 0, $len = $threads_count / $config['PAGE_DEF']; $i <= $len; $i++){
 				if($page==$i) $pte_vals['{$PAGENAV}'] .= "[<b>".$i."</b>] ";
 				else{
 					$pageNext = ($i==$next) ? ' rel="next"' : '';
-					if(!$adminMode && $i==0) $pte_vals['{$PAGENAV}'] .= '[<a href="'.PHP_SELF2.'?">0</a>] ';
-					elseif($adminMode || (STATIC_HTML_UNTIL != -1 && $i > STATIC_HTML_UNTIL)) $pte_vals['{$PAGENAV}'] .= '[<a href="'.PHP_SELF.'?pagenum='.$i.'"'.$pageNext.'>'.$i.'</a>] ';
-					else $pte_vals['{$PAGENAV}'] .= '[<a href="'.$i.PHP_EXT.'?"'.$pageNext.'>'.$i.'</a>] ';
+					if(!$adminMode && $i==0) $pte_vals['{$PAGENAV}'] .= '[<a href="'.$config['PHP_SELF2'].'?">0</a>] ';
+					elseif($adminMode || ($config['STATIC_HTML_UNTIL'] != -1 && $i > $config['STATIC_HTML_UNTIL'])) $pte_vals['{$PAGENAV}'] .= '[<a href="'.$config['PHP_SELF'].'?pagenum='.$i.'"'.$pageNext.'>'.$i.'</a>] ';
+					else $pte_vals['{$PAGENAV}'] .= '[<a href="'.$i.$config['PHP_EXT'].'?"'.$pageNext.'>'.$i.'</a>] ';
 				}
 			}
 			$pte_vals['{$PAGENAV}'] .= '</td>';
-			if($threads_count > $next * PAGE_DEF){
-				if($adminMode || (STATIC_HTML_UNTIL != -1) && ($next > STATIC_HTML_UNTIL)) $pte_vals['{$PAGENAV}'] .= '<td><form action="'.PHP_SELF.'?pagenum='.$next.'" method="post">';
-				else $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$next.PHP_EXT.'" method="get">';
+			if($threads_count > $next * $config['PAGE_DEF']){
+				if($adminMode || ($config['STATIC_HTML_UNTIL'] != -1) && ($next > $config['STATIC_HTML_UNTIL'])) $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$config['PHP_SELF'].'?pagenum='.$next.'" method="post">';
+				else $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$next.$config['PHP_EXT'].'" method="get">';
 				$pte_vals['{$PAGENAV}'] .= '<div><input type="submit" value="'._T('next_page').'" /></div></form></td>';
 			}else $pte_vals['{$PAGENAV}'] .= '<td nowrap="nowrap">'._T('last_page').'</td>';
 			$pte_vals['{$PAGENAV}'] .= '</tr></tbody></table>';
@@ -218,30 +220,30 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 		$dat = preg_replace('/name="email" id="email" size="28" value="(.*)" class="inputtext" \/>/','name="email" id="email" size="28" value="" class="inputtext" />',$dat);
 		$dat = preg_replace('/replyhl/','',$dat);
 		// Minify
-		if(MINIFY_HTML){
+		if($config['MINIFY_HTML']){
 			$dat = html_minify($dat);
 		}
 		// Archive / Output
 		if($single_page || ($pagenum == -1 && !$resno)){ // Static cache page generation
-			if(THREAD_PAGINATION){
-				if($oldCaches = glob(STORAGE_PATH.'cache/catalog-*')){
+			if($config['THREAD_PAGINATION']){
+				if($oldCaches = glob($config['STORAGE_PATH'].'cache/catalog-*')){
 					unlinkCache($oldCaches); // Clear old catalog caches
 				}
-				if($oldCaches = glob(STORAGE_PATH.'cache/api-0.*')){
+				if($oldCaches = glob($config['STORAGE_PATH'].'cache/api-0.*')){
 					unlinkCache($oldCaches); // Clear old API caches
 				}
 			}
-			if($page==0) $logfilename = PHP_SELF2;
-			else $logfilename = $page.PHP_EXT;
+			if($page==0) $logfilename = $config['PHP_SELF2'];
+			else $logfilename = $page.$config['PHP_EXT'];
 			$fp = fopen($logfilename, 'w');
 			stream_set_write_buffer($fp, 0);
 			fwrite($fp, $dat);
 			fclose($fp);
 			@chmod($logfilename, 0666);
-			if(STATIC_HTML_UNTIL != -1 && STATIC_HTML_UNTIL==$page) break; // Page Limit
+			if($config['STATIC_HTML_UNTIL'] != -1 && $config['STATIC_HTML_UNTIL']==$page) break; // Page Limit
 		}else{ // PHP output (responsive mode/regular dynamic output)
-			if(THREAD_PAGINATION && !$adminMode && $resno && !isset($_GET['upseries'])){ // Thread pagination
-				if($oldCaches = glob(STORAGE_PATH.'cache/api-'.$resno.'.*')){
+			if($config['THREAD_PAGINATION'] && !$adminMode && $resno && !isset($_GET['upseries'])){ // Thread pagination
+				if($oldCaches = glob($config['STORAGE_PATH'].'cache/api-'.$resno.'.*')){
 					unlinkCache($oldCaches); // Clear old API caches
 				}
 				if($oldCaches = glob($cacheFile.'*')){
@@ -261,6 +263,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 
 /* Output thread schema */
 function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $arr_kill, $arr_old, $kill_sensor, $old_sensor, $showquotelink=true, $adminMode=false, $threads_shown=0){
+	global $config;
 	$resno = isset($resno) && $resno ? $resno : 0;
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
@@ -269,6 +272,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 	$thdat = ''; // Discuss serial output codes
 	$posts_count = count($posts); // Number of cycles
 	$replyCount = $PIO->postCount($posts[0]['no']);	
+	$imageURL = '';
 	
 	if(gettype($tree_cut) == 'array') $tree_cut = array_flip($tree_cut); // array_flip + isset Search Law
 	if(gettype($tree) == 'array') $tree_clone = array_flip($tree);
@@ -279,8 +283,8 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 		extract($posts[$i]); // Take out the thread content setting variable
 	
 		// Set the field value
-		if(CLEAR_SAGE) $email = preg_replace('/^sage( *)/i', '', trim($email)); // Clear the "sage" keyword from the e-mail
-		if(ALLOW_NONAME==2){ // Forced beheading
+		if($config['CLEAR_SAGE']) $email = preg_replace('/^sage( *)/i', '', trim($email)); // Clear the "sage" keyword from the e-mail
+		if($config['ALLOW_NONAME']==2){ // Forced beheading
 			if($email) $now = "<a href=\"mailto:$email\">$now</a>";
 		}else{
 			if($email) $name = "<a href=\"mailto:$email\">$name</a>";
@@ -290,7 +294,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 		$com = quote_unkfunc($com);
 		
 		// Mark threads that hit age limit (this replaces the old system for marking old threads)
-		if (!$i && MAX_AGE_TIME && $_SERVER['REQUEST_TIME'] - $time > (MAX_AGE_TIME * 60 * 60)) $com .= "<br><br><span class='warning'>"._T('warn_oldthread')."</span>";
+		if (!$i && $config['MAX_AGE_TIME'] && $_SERVER['REQUEST_TIME'] - $time > ($config['MAX_AGE_TIME'] * 60 * 60)) $com .= "<br><br><span class='warning'>"._T('warn_oldthread')."</span>";
 		
 		// Configure attachment display
 		if ($ext) {
@@ -307,7 +311,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
  			$truncatedJS = str_replace('&#039;', '\&#039;', $truncated);
 			$imageURL = $FileIO->getImageURL($tim.$ext); // image URL
 			$thumbName = $FileIO->resolveThumbName($tim); // thumb Name
-			$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.STATIC_URL.'image/nothumb.gif" class="postimg" alt="'.$imgsize.'" hspace="20" vspace="3" border="0" align="left" /></a>'; // Default display style (when no preview image)
+			$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$config['STATIC_URL'].'image/nothumb.gif" class="postimg" alt="'.$imgsize.'" hspace="20" vspace="3" border="0" align="left" /></a>'; // Default display style (when no preview image)
 			if($tw && $th){
 				if ($thumbName != false){ // There is a preview image
 					$thumbURL = $FileIO->getImageURL($thumbName); // thumb URL
@@ -315,26 +319,26 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 					$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$thumbURL.'" width="'.$tw.'" height="'.$th.'" class="postimg" alt="'.$imgsize.'" title="Click to show full image" hspace="20" vspace="3" border="0" align="left" /></a>';
 				}
 			} else if ($ext = "swf") {
-				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.SWF_THUMB.'" class="postimg" alt="SWF Embed" hspace="20" vspace="3" border="0" align="left" /></a>'; // Default display style (when no preview image)
+				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$config['SWF_THUMB'].'" class="postimg" alt="SWF Embed" hspace="20" vspace="3" border="0" align="left" /></a>'; // Default display style (when no preview image)
 			} else $imgsrc = '';
-			if(SHOW_IMGWH && ($imgw || $imgh)) $imgwh_bar = ', '.$imgw.'x'.$imgh; // Displays the original length and width dimensions of the attached image file
+			if($config['SHOW_IMGWH'] && ($imgw || $imgh)) $imgwh_bar = ', '.$imgw.'x'.$imgh; // Displays the original length and width dimensions of the attached image file
 			$IMG_BAR = _T('img_filename').'<a href="'.$imageURL.'" target="_blank" rel="nofollow" onmouseover="this.textContent=\''.$fnameJS.'\';" onmouseout="this.textContent=\''.$truncatedJS.'\'"> '.$truncated.'</a> <a href="'.$imageURL.'" download="'.$fname.'"><div class="download"></div></a> <small>('.$imgsize.$imgwh_bar.')</small> '.$img_thumb;
 		}
 
         // Set the response/reference link
-        if(USE_QUOTESYSTEM) {
+        if($config['USE_QUOTESYSTEM']) {
             $qu = $_GET['q']??''; if ($qu) $qu.= ',';
             if($resno){ // Response mode
-                if($showquotelink) $QUOTEBTN = '<a href="'.PHP_SELF.'?res='.$tree[0]."&q=".htmlspecialchars($qu)."".$no.'#postform" class="qu" title="Quote">'.strval($no).'</a>';
-                else $QUOTEBTN = '<a href="'.PHP_SELF.'?res='.$tree."&q=".htmlspecialchars($qu)."".$no.'#postform" title="Quote">'.strval($no).'</a>';
+                if($showquotelink) $QUOTEBTN = '<a href="'.$config['PHP_SELF'].'?res='.$tree[0]."&q=".htmlspecialchars($qu)."".$no.'#postform" class="qu" title="Quote">'.strval($no).'</a>';
+                else $QUOTEBTN = '<a href="'.$config['PHP_SELF'].'?res='.$tree."&q=".htmlspecialchars($qu)."".$no.'#postform" title="Quote">'.strval($no).'</a>';
             }else{
-                if(!$i)    $REPLYBTN = '[<a href="'.PHP_SELF.'?res='.$no.'">'._T('reply_btn').'</a>]'; // First article
-                $QUOTEBTN = '<a href="'.PHP_SELF.'?res='.$tree[0]."&q=".htmlspecialchars($qu)."".$no.'#postform" title="Quote">'.$no.'</a>';
+                if(!$i)    $REPLYBTN = '[<a href="'.$config['PHP_SELF'].'?res='.$no.'">'._T('reply_btn').'</a>]'; // First article
+                $QUOTEBTN = '<a href="'.$config['PHP_SELF'].'?res='.$tree[0]."&q=".htmlspecialchars($qu)."".$no.'#postform" title="Quote">'.$no.'</a>';
             }
             unset($qu);
 			
 		} else {
-			if($resno&&!$i)		$REPLYBTN = '[<a href="'.PHP_SELF.'?res='.$no.'">'._T('reply_btn').'</a>]';
+			if($resno&&!$i)		$REPLYBTN = '[<a href="'.$config['PHP_SELF'].'?res='.$no.'">'._T('reply_btn').'</a>]';
 			$QUOTEBTN = $no;
 		}
 
@@ -345,18 +349,18 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 		}
 
 		// Set thread properties
-		if(STORAGE_LIMIT && $kill_sensor) if(isset($arr_kill[$no])) $WARN_BEKILL = '<span class="warning">'._T('warn_sizelimit').'</span><br />'; // Predict to delete too large files
+		if($config['STORAGE_LIMIT'] && $kill_sensor) if(isset($arr_kill[$no])) $WARN_BEKILL = '<span class="warning">'._T('warn_sizelimit').'</span><br />'; // Predict to delete too large files
 		if(!$i){ // 首篇 Only
 			$flgh = $PIO->getPostStatus($status);
 			if($hiddenReply) $WARN_HIDEPOST = '<span class="omittedposts">'._T('notice_omitted',$hiddenReply).'</span><br />'; // There is a hidden response
 		}
 		// Automatically link category labels
-		if(USE_CATEGORY){
+		if($config['USE_CATEGORY']){
 			$ary_category = explode(',', str_replace('&#44;', ',', $category)); $ary_category = array_map('trim', $ary_category);
 			$ary_category_count = count($ary_category);
 			$ary_category2 = array();
 			for($p = 0; $p < $ary_category_count; $p++){
-				if($c = $ary_category[$p]) $ary_category2[] = '<a href="'.PHP_SELF.'?mode=category&c='.urlencode($c).'">'.$c.'</a>';
+				if($c = $ary_category[$p]) $ary_category2[] = '<a href="'.$config['PHP_SELF'].'?mode=category&c='.urlencode($c).'">'.$c.'</a>';
 			}
 			$category = implode(', ', $ary_category2);
 		}else $category = '';
@@ -387,7 +391,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 
 /* Write to post table */
 function regist($preview=false){
-	global $BAD_STRING, $BAD_FILEMD5, $BAD_IPADDR, $LIMIT_SENSOR;
+	global $config;
     $PIO = PMCLibrary::getPIOInstance();
     $FileIO = PMCLibrary::getFileIOInstance();
     $PMS = PMCLibrary::getPMSInstance();
@@ -424,18 +428,17 @@ function regist($preview=false){
     /* hook call */
 	$PMS->useModuleMethods('RegistBegin', array(&$name, &$email, &$sub, &$com, array('file'=>&$upfile, 'path'=>&$upfile_path, 'name'=>&$upfile_name, 'status'=>&$upfile_status), array('ip'=>$ip, 'host'=>$host), $resto)); // "RegistBegin" Hook Point
 
-    if(TEXTBOARD_ONLY == false) {
-		processFiles($upfile, $upfile_path, $upfile_name, $upfile_status, $md5chksum, $imgW, $imgH, $imgsize, $W, $H, $fname, $ext, $age, $status, $resto, $tim, $preview, $dest, $tmpfile);
+    if($config['TEXTBOARD_ONLY'] == false) {
+		processFiles($upfile, $upfile_path, $upfile_name, $upfile_status, $md5chksum, $imgW, $imgH, $imgsize, $W, $H, $fname, $ext, $age, $status, $resto, $tim, $dest, $tmpfile);
     }
      
     // Check the form field contents and trim them
-    if(strlenUnicode($name) > INPUT_MAX)    error(_T('regist_nametoolong'), $dest);
-    if(strlenUnicode($email) > INPUT_MAX)   error(_T('regist_emailtoolong'), $dest);
-    if(strlenUnicode($sub) > INPUT_MAX)     error(_T('regist_topictoolong'), $dest);
-    if(strlenUnicode($resto) > INPUT_MAX)   error(_T('regist_longthreadnum'), $dest);
- 
+    if(strlenUnicode($name) > $config['INPUT_MAX'])    error(_T('regist_nametoolong'), $dest);
+    if(strlenUnicode($email) > $config['INPUT_MAX'])   error(_T('regist_emailtoolong'), $dest);
+    if(strlenUnicode($sub) > $config['INPUT_MAX'])     error(_T('regist_topictoolong'), $dest);
+
     setrawcookie('namec', rawurlencode(htmlspecialchars_decode($name)), time()+7*24*3600);
- 
+	
     // E-mail / Title trimming
     $email = str_replace("\r\n", '', $email); 
     $sub = str_replace("\r\n", '', $sub);
@@ -443,10 +446,10 @@ function regist($preview=false){
     applyTripcodeAndCapCodes($name, $email, $dest);
     cleanComment($com, $upfile_status, $is_admin, $dest);
 	addDefaultText($sub, $com);
-    applyPostFilters($preview, $com, $email);
+    applyPostFilters($com, $email);
  
     // Trimming label style
-    if($category && USE_CATEGORY){
+    if($category && $config['USE_CATEGORY']){
         $category = explode(',', $category); // Disassemble the labels into an array
         $category = ','.implode(',', array_map('trim', $category)).','; // Remove the white space and merge into a single string (left and right, you can directly search in the form XX)
     }else{ 
@@ -488,9 +491,9 @@ function regist($preview=false){
     applyAging($resto, $PIO, $time, $chktime, $email, $name, $age);
  
     // noko
-    $redirect = PHP_SELF2.'?'.$tim;
+    $redirect = $config['PHP_SELF2'].'?'.$tim;
     if (strstr($email, 'noko') && !strstr($email, 'nonoko')) {
-        $redirect = PHP_SELF.'?res='.($resto?$resto:$no);
+        $redirect = $config['PHP_SELF'].'?res='.($resto?$resto:$no);
         if (!strstr($email, 'noko2')){
             $redirect.= "#p$no";
         }
@@ -500,14 +503,10 @@ function regist($preview=false){
 	// Get number of pages to rebuild
 	$threads = $PIO->fetchThreadList();
 	$threads_count = count($threads);
-	$page_end = ($resto ? floor(array_search($resto, $threads) / PAGE_DEF) : ceil($threads_count / PAGE_DEF));
+	$page_end = ($resto ? floor(array_search($resto, $threads) / $config['PAGE_DEF']) : ceil($threads_count / $config['PAGE_DEF']));
  
     $PMS->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $resto, array($W, $H, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
     $PIO->addPost($no, $resto, $md5chksum, $category, $tim, $fname, $ext, $imgW, $imgH, $imgsize, $W, $H, $pass, $now, $name, $email, $sub, $com, $host, $age, $status);
-    if($preview) {
-        previewPost($no);
-        return;
-    }
      
 	$level = $AccountIO->valid();
  	//username for logging
@@ -534,14 +533,16 @@ function regist($preview=false){
 	updatelog(0, -1, false, $page_end);
  
     if(isset($_POST['up_series'])){
-        if($resto) $redirect = PHP_SELF.'?res='.$resto.'&upseries=1';
-        else $redirect = PHP_SELF.'?res='.$lastno.'&upseries=1';
+        if($resto) $redirect = $config['PHP_SELF'].'?res='.$resto.'&upseries=1';
+        else $redirect = $config['PHP_SELF'].'?res='.$lastno.'&upseries=1';
     }
  	
     redirect($redirect, 0);
 }
+
 /* User post deletion */
 function usrdel(){
+	global $config;
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PMS = PMCLibrary::getPMSInstance();
@@ -562,7 +563,7 @@ function usrdel(){
 			$delflag=TRUE;
 		}
 	}
-	$haveperm = $AccountIO->valid()>=LEV_JANITOR;
+	$haveperm = $AccountIO->valid()>=$config['roles']['LEV_JANITOR'];
 	$PMS->useModuleMethods('Authenticate', array($pwd,'userdel',&$haveperm));
 	if($haveperm && isset($_POST['func'])){ // If the user has permissions (admin, mod, or janny) for front-end management capabilities
 		$message = '';
@@ -616,12 +617,13 @@ function usrdel(){
 
 /* Displays loaded module information */
 function listModules(){
+	global $config;
 	$PMS = PMCLibrary::getPMSInstance();
 	$AccountIO = PMCLibrary::getAccountIOInstance();
 	
 	$dat = '';
 	head($dat);
-	$links = '[<a href="'.PHP_SELF2.'?'.time().'">'._T('return').'</a>]';
+	$links = '[<a href="'.$config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>]';
 	$level = $AccountIO->getRoleLevel();
 	$PMS->useModuleMethods('LinksAboveBar', array(&$links,'modules',$level));
 	$dat .= $links.'<center class="theading2"><b>'._T('module_info_top').'</b></center>
@@ -646,16 +648,12 @@ function listModules(){
 }
 
 /*-----------The main judgment of the functions of the program-------------*/
-if(GZIP_COMPRESS_LEVEL && ($Encoding = CheckSupportGZip())){ ob_start(); ob_implicit_flush(0); } // Support and enable Gzip compression to set buffers
+if($config['GZIP_COMPRESS_LEVEL'] && ($Encoding = CheckSupportGZip())){ ob_start(); ob_implicit_flush(0); } // Support and enable Gzip compression to set buffers
 $mode = isset($_GET['mode']) ? $_GET['mode'] : (isset($_POST['mode']) ? $_POST['mode'] : ''); // Current operating mode (GET, POST)
 
 switch($mode){
 	case 'regist':
 		regist();
-		break;
-	case 'preview':
-		if(!USE_PREVIEW) error('ERROR: Posting preview is not enabled on this board.');
-		regist(true);
 		break;
 	case 'admin':
 		drawAdminList(); //show forms and buttons
@@ -686,17 +684,17 @@ switch($mode){
  		//username for logging
 		$moderatorUsername = $AccountIO->getUsername();
 		$moderatorLevel = $AccountIO->getRoleLevel();
-		if ($AccountIO->valid()>=LEV_JANITOR) {
+		if ($AccountIO->valid()>=$config['roles']['LEV_JANITOR']) {
 			logtime("Rebuilt pages", $moderatorUsername.' ## '.$moderatorLevel);
 			updatelog();
-			if(THREAD_PAGINATION){
-				if($oldCaches = glob(STORAGE_PATH.'cache/*')){
+			if($config['THREAD_PAGINATION']){
+				if($oldCaches = glob($config['STORAGE_PATH'].'cache/*')){
 					foreach($oldCaches as $o) unlink($o); // Clear old catalog caches
 				}
 			}
 		}
 		header('HTTP/1.1 302 Moved Temporarily');
-		header('Location: '.fullURL().PHP_SELF2.'?'.time());
+		header('Location: '.fullURL().$config['PHP_SELF2'].'?'.time());
 		break;
 	default:
 		header('Content-Type: text/html; charset=utf-8');
@@ -704,26 +702,26 @@ switch($mode){
 		$res = isset($_GET['res']) ? $_GET['res'] : 0; // To respond to the number
 		if($res){ // Response mode output
 			$page = $_GET['pagenum']??'RE_PAGE_MAX';
-			if(!($page=='all' || $page=='RE_PAGE_MAX')) $page = intval($_GET['pagenum']);
+			if(!($page == 'all' || $page == 'RE_PAGE_MAX')) $page = intval($_GET['pagenum']);
 			updatelog($res, $page); // Implement pagin
 		}elseif(isset($_GET['pagenum']) && intval($_GET['pagenum']) > -1){ // PHP dynamically outputs one page
 			updatelog(0, intval($_GET['pagenum']));
 		}else{ // Go to the static inventory page
-			if(!is_file(PHP_SELF2)) {
+			if(!is_file($config['PHP_SELF2'])) {
 				logtime("Rebuilt pages");
 				updatelog();
 			}
 			header('HTTP/1.1 302 Moved Temporarily');
-			header('Location: '.fullURL().PHP_SELF2.'?'.$_SERVER['REQUEST_TIME']);
+			header('Location: '.fullURL().$config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME']);
 		}
 }
 
-if(GZIP_COMPRESS_LEVEL && $Encoding){ // If Gzip is enabled
+if($config['GZIP_COMPRESS_LEVEL'] && $Encoding){ // If Gzip is enabled
 	if(!ob_get_length()) exit; // No content, no need to compress
 	header('Content-Encoding: '.$Encoding);
-	header('X-Content-Encoding-Level: '.GZIP_COMPRESS_LEVEL);
+	header('X-Content-Encoding-Level: '.$config['GZIP_COMPRESS_LEVEL']);
 	header('Vary: Accept-Encoding');
-	print gzencode(ob_get_clean(), GZIP_COMPRESS_LEVEL); // Compressed content
+	print gzencode(ob_get_clean(), $config['GZIP_COMPRESS_LEVEL']); // Compressed content
 }
 
 clearstatcache();

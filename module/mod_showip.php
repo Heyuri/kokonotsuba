@@ -1,10 +1,10 @@
 <?php
 class mod_showip extends ModuleHelper {
-	
-	private $IPTOGGLE = IPTOGGLE;
+	private $IPTOGGLE = -1;
 	
 	public function __construct($PMS) {
 		parent::__construct($PMS);
+		$this->IPTOGGLE = $this->config['ModuleSettings']['IPTOGGLE'];
 	}
 
 	public function getModuleName(){

@@ -137,9 +137,12 @@ class PMS{
  */
 abstract class ModuleHelper implements IModule {
 	protected static $PMS;
+	protected $config;
 	private $clazz;
 
 	public function __construct($PMS) {
+		global $config;
+		$this->config = $config;
 		// 儲存 $PMS 參考
 		if (self::$PMS == null) {
 			self::$PMS = $PMS;
@@ -213,9 +216,10 @@ abstract class ModuleHelper implements IModule {
 	 * @throws InvalidArgumentException 如果找不到設定備用語系
 	 */
 	protected function attachLanguage(array $lang, $fallbackLang = 'en_US') {
+		global $config;
 		// 取出使用語言，如果不存在則用備用
-		if (isset($lang[PIXMICAT_LANGUAGE])) {
-			$lang = $lang[PIXMICAT_LANGUAGE];
+		if (isset($lang[$config['PIXMICAT_LANGUAGE']])) {
+			$lang = $lang[$config['PIXMICAT_LANGUAGE']];
 		} else if (isset($lang[$fallbackLang])) {
 			$lang = $lang[$fallbackLang];
 		} else {

@@ -3,14 +3,18 @@
  * $Id$
  */
 class mod_pm extends ModuleHelper {
-	private $MESG_LOG = './tripmesg.log'; // Log file location
-	private $MESG_CACHE = './tripmesg.cc'; // Cache file location
+	private $MESG_LOG = ''; // Log file location
+	private $MESG_CACHE = ''; // Cache file location
 	private $myPage;
 	private $trips;
 	private $lastno;
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
+		
+		$this->MESG_LOG = $this->config['STORAGE_PATH'].'tripmesg.log';
+		$this->MESG_CACHE = $this->config['STORAGE_PATH'].'tripmesg.cc';
+		
 		$this->trips = array();
 		$this->myPage = $this->getModulePageURL();
 	}
@@ -127,8 +131,8 @@ class mod_pm extends ModuleHelper {
 	private function _postPM($from,$to,$topic,$mesg) {
 		if(!preg_match('/^[0-9a-zA-Z\.\/]{10}$/',$to)) error("Incorrect Tripcode");
 		$from=CleanStr($from); $to=CleanStr($to); $topic=CleanStr($topic); $mesg=CleanStr($mesg);
-		if(!$from) if(ALLOW_NONAME) $from = DEFAULT_NONAME;
-		if(!$topic)  $topic = DEFAULT_NOTITLE;
+		if(!$from) if($this->config['ALLOW_NONAME']) $from = $this->config['DEFAULT_NONAME'];
+		if(!$topic)  $topic = $this->config['DEFAULT_NOTITLE'];
 		if(!$mesg) error("Please write a message");
 		if(preg_match('/(.*?)[#＃](.*)/u', $from, $regs)){ // Tripcode Functrion
 			$from = $nameOri = $regs[1]; $cap = strtr($regs[2], array('&amp;'=>'&'));
@@ -160,8 +164,7 @@ class mod_pm extends ModuleHelper {
 				list($mno,$totrip,$pdate,$from,$topic,$mesg,$ip)=explode(',',trim($log));
 				if($totrip==$tripped) {
 					if(!$dat) $dat=$PTE->ParseBlock('REALSEPARATE',array()).'<form action="'.$this->myPage.'" method="POST"><input type="hidden" name="action" value="delete" /><input type="hidden" name="trip" value="'.$trip.'" />';
-					$arrLabels = array('{$NO}'=>$mno, '{$SUB}'=>$topic, '{$NAME}'=>$from, '{$NOW}'=>date('Y-m-d H:i:s',$pdate)." IP:".preg_replace('/\d+$/','*',$ip), '{$COM}'=>$mesg, '{$QUOTEBTN}'=>"No.$mno", '{$REPLYBTN}'=>'', '{$IMG_BAR}'=>'', '{$IMG_SRC}'=>'', '{$WARN_OLD}'=>'', '{$WARN_BEKILL}'=>'', '{$WARN_ENDREPLY}'=>'', '{$WARN_HIDEPOST}'=>'', '{$NAME_TEXT}'=>_T('post_name'), '{$RESTO}'=>1);
-					$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, array(), 0)); // "ThreadPost" Hook Point
+					$arrLabels = array('{$NO}'=>$mno, '{$SUB}'=>$topic, '{$NAME}'=>$from, '{$NOW}'=>date('Y-m-d H:i:s',$pdate), '{$COM}'=>$mesg, '{$QUOTEBTN}'=>$mno, '{$REPLYBTN}'=>'', '{$IMG_BAR}'=>'', '{$IMG_SRC}'=>'', '{$WARN_OLD}'=>'', '{$WARN_BEKILL}'=>'', '{$WARN_ENDREPLY}'=>'', '{$WARN_HIDEPOST}'=>'', '{$NAME_TEXT}'=>_T('post_name'), '{$RESTO}'=>1);
 					$dat .= $PTE->ParseBlock('THREAD',$arrLabels);
 					$dat .= $PTE->ParseBlock('REALSEPARATE',array());
 				}
@@ -206,7 +209,7 @@ class mod_pm extends ModuleHelper {
 
 		if($action != 'postverify') {
 			head($dat);
-			echo $dat.'[<a href="'.PHP_SELF2.'?'.time().'">'._T('return').'</a>]';
+			echo $dat.'[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>]';
 		}
 		if($action == 'write') {
 			echo '<div class="bar_reply">Send a PM</div>
@@ -248,7 +251,7 @@ $g("pmform").from.value=getCookie("namec");
 				$_POST['from'] = $_POST['from'].'<span class="nor">'._T('trip_pre').$this->_tripping($cap)."</span>";
 			}
 			head($dat);
-			echo $dat.'[<a href="'.PHP_SELF2.'?'.time().'">'._T('return').'</a>]';
+			echo $dat.'[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>]';
 			echo '<div class="bar_reply">Message sent.</div>
 <table cellpadding="1" cellspacing="1" id="postform_tbl" style="margin-left:1.5em">
 <tr><td colspan="2">Sent.</td></tr>

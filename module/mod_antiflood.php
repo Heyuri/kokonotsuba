@@ -2,11 +2,13 @@
 // by komeo
 class mod_antiflood extends ModuleHelper {
 	private $mypage;
-	private $CONNECTION_STRING = CONNECTION_STRING;
-	private $RENZOKU3 = RENZOKU3; // Seconds before a new thread can be made
+	private $RENZOKU3 = 0; // Seconds before a new thread can be made
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
+		
+		$this->RENZOKU3 = $this->config['ModuleSettings']['RENZOKU3'];
+		
 		$this->mypage = $this->getModulePageURL();
 	}
 

@@ -93,7 +93,7 @@ class FlagHelper{
 }
 
 // 文章自動刪除機制
-include(ROOTPATH.'lib/lib_pio.cond.php');
+include($config['ROOTPATH'].'lib/lib_pio.cond.php');
 class PIOSensor{
 	public static function check($type, array $condobj){
 		foreach($condobj as $i => $j){
@@ -122,20 +122,17 @@ class PIOSensor{
 	}
 }
 
-// 分析連線字串
-if(preg_match('/^(.*):\/\//i', CONNECTION_STRING, $backend)) define('PIXMICAT_BACKEND', $backend[1]);
-
 // 引入必要函式庫
 $PIOEnv = array( // PIO 環境常數
-	'BOARD' => STORAGE_PATH,
+	'BOARD' => $config['STORAGE_PATH'],
 	'LUTCACHE' => 'lutcache.dat',
-	'NONAME' => DEFAULT_NONAME,
-	'NOTITLE' => DEFAULT_NOTITLE,
-	'NOCOMMENT' => DEFAULT_NOCOMMENT,
-	'PERIOD.POST' => RENZOKU,
-	'PERIOD.IMAGEPOST' => RENZOKU2
+	'NONAME' => $config['DEFAULT_NONAME'],
+	'NOTITLE' => $config['DEFAULT_NOTITLE'],
+	'NOCOMMENT' => $config['DEFAULT_NOCOMMENT'],
+	'PERIOD.POST' => $config['RENZOKU'],
+	'PERIOD.IMAGEPOST' => $config['RENZOKU2']
 );
 
-$pio_file = ROOTPATH.'lib/pio/pio.'.PIXMICAT_BACKEND.'.php';
+$pio_file = $config['ROOTPATH'].'lib/pio/pio.'.$config['DATABASE_DRIVER'].'.php';
 if(is_file($pio_file)) include($pio_file);
 ?>

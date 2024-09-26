@@ -4,6 +4,7 @@
 
 /* Manage article(threads) mode */
 function admindel(&$dat){
+	global $config;
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PMS = PMCLibrary::getPMSInstance();
@@ -17,7 +18,7 @@ function admindel(&$dat){
 	$message = ''; // Display message after deletion
 	$searchHost = filter_var($_GET['host'], FILTER_VALIDATE_IP) ?: filter_var($_GET['host'], FILTER_VALIDATE_DOMAIN);
 	if ($searchHost) {
-		if ($AccountIO->valid() <= LEV_JANITOR) error('ERROR: No Access.');
+		if ($AccountIO->valid() <= $config['roles']['LEV_JANITOR']) error('ERROR: No Access.');
 		$noticeHost = '<h2>Viewing all posts from: '.$searchHost.'. Click submit to cancel.</h2><br />';
 	}
 	//username for logging
@@ -33,11 +34,11 @@ function admindel(&$dat){
 	deleteCache($delno);
 	$PIO->dbCommit();
 
-	$line = ($searchHost ? $PIO->fetchPostList(0, 0, 0, $searchHost) : $PIO->fetchPostList(0, $page * ADMIN_PAGE_DEF, ADMIN_PAGE_DEF)); // A list of tagged articles
+	$line = ($searchHost ? $PIO->fetchPostList(0, 0, 0, $searchHost) : $PIO->fetchPostList(0, $page * $config['ADMIN_PAGE_DEF'], $config['ADMIN_PAGE_DEF'])); // A list of tagged articles
 	$posts_count = count($line); // Number of cycles
 	$posts = $PIO->fetchPosts($line); // Article content array
 
-	$dat.= '<form action="'.PHP_SELF.'" method="POST">';
+	$dat.= '<form action="'.$config['PHP_SELF'].'" method="POST">';
 	$dat.= '<input type="hidden" name="mode" value="admin" />
 	<input type="hidden" name="admin" value="del" />
 	<div align="left">'._T('admin_notices').'</div>'.
@@ -77,7 +78,7 @@ function admindel(&$dat){
 			$size = 0;
 		}
 
-		if ($AccountIO->valid() <= LEV_JANITOR) {
+		if ($AccountIO->valid() <= $config['roles']['LEV_JANITOR']) {
 			$host = " - ";
 		}
 
@@ -88,7 +89,7 @@ function admindel(&$dat){
     <td><b class="title">' . $sub . '</b></td>
     <td><b class="name">' . $name . '</b></td>
     <td>' . $com . '</td>
-    <td>' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . STATIC_URL . 'image/glass.png"></a> <a href="?mode=admin&admin=del&host=' . $host . '" title="See all posts">★</a></td>
+    <td>' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $config['STATIC_URL'] . 'image/glass.png"></a> <a href="?mode=admin&admin=del&host=' . $host . '" title="See all posts">★</a></td>
     <td align="center">' . $clip . ' (' . $size . ')<br />' . $md5chksum . '</td>
 </tr>';
 	}
@@ -111,24 +112,24 @@ function selectAll() {
 ';
 
 	$countline = $PIO->postCount(); // Total number of articles(threads)
-	$page_max = ($searchHost ? 0 : ceil($countline / ADMIN_PAGE_DEF) - 1); // Total number of pages
+	$page_max = ($searchHost ? 0 : ceil($countline / $config['ADMIN_PAGE_DEF']) - 1); // Total number of pages
 	$dat.= '<table id="pager" border="1" cellspacing="0" cellpadding="0"><tbody><tr>';
-	if($page) $dat.= '<td><a href="'.PHP_SELF.'?mode=admin&admin=del&page='.($page - 1).($searchHost?'&host='.$searchHost:'').'">'._T('prev_page').'</a></td>';
+	if($page) $dat.= '<td><a href="'.$config['PHP_SELF'].'?mode=admin&admin=del&page='.($page - 1).($searchHost?'&host='.$searchHost:'').'">'._T('prev_page').'</a></td>';
 	else $dat.= '<td nowrap="nowrap">'._T('first_page').'</td>';
 	$dat.= '<td>';
 	for($i = 0; $i <= $page_max; $i++){
 		if($i==$page) $dat.= '[<b>'.$i.'</b>] ';
-		else $dat.= '[<a href="'.PHP_SELF.'?mode=admin&admin=del&page='.$i.($searchHost?'&host='.$searchHost:'').'">'.$i.'</a>] ';
+		else $dat.= '[<a href="'.$config['roles']['PHP_SELF'].'?mode=admin&admin=del&page='.$i.($searchHost?'&host='.$searchHost:'').'">'.$i.'</a>] ';
 	}
 	$dat.= '</td>';
-	if($page < $page_max) $dat.= '<td><a href="'.PHP_SELF.'?mode=admin&admin=del&page='.($page + 1).($searchHost?'&host='.$searchHost:'').'">'._T('next_page').'</a></td>';
+	if($page < $page_max) $dat.= '<td><a href="'.$config['PHP_SELF'].'?mode=admin&admin=del&page='.($page + 1).($searchHost?'&host='.$searchHost:'').'">'._T('next_page').'</a></td>';
 	else $dat.= '<td nowrap="nowrap">'._T('last_page').'</td>';
 	$dat.= '</tr></tbody></table>';
 }
 
 /* Display system information */
 function showstatus(){
-	global $LIMIT_SENSOR;
+	global $config;
 	$PIO = PMCLibrary::getPIOInstance();
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$PTE = PMCLibrary::getPTEInstance();
@@ -138,7 +139,7 @@ function showstatus(){
 	$countline = $PIO->postCount(); // Calculate the current number of data entries in the submitted text log file
 	$counttree = $PIO->threadCount(); // Calculate the current number of data entries in the tree structure log file
 	$tmp_total_size = $FileIO->getCurrentStorageSize(); // The total size of the attached image file usage
-	$tmp_ts_ratio = STORAGE_MAX > 0 ? $tmp_total_size / STORAGE_MAX : 0; // Additional image file usage
+	$tmp_ts_ratio = $config['STORAGE_MAX'] > 0 ? $tmp_total_size / $config['STORAGE_MAX'] : 0; // Additional image file usage
 
 	// Determines the color of the "Additional Image File Usage" prompt
   	if($tmp_ts_ratio < 0.3 ) $clrflag_sl = '235CFF';
@@ -150,9 +151,9 @@ function showstatus(){
 	// Generate preview image object information and whether the functions of the generated preview image are normal
 	$func_thumbWork = '<span class="offline">'._T('info_nonfunctional').'</span>';
 	$func_thumbInfo = '(No thumbnail)';
-	if(USE_THUMB !== 0){
-		$thumbType = USE_THUMB; if(USE_THUMB==1){ $thumbType = 'gd'; }
-		require(ROOTPATH.'lib/thumb/thumb.'.$thumbType.'.php');
+	if($config['USE_THUMB'] !== 0){
+		$thumbType = $config['USE_THUMB']; if($config['USE_THUMB']==1){ $thumbType = 'gd'; }
+		require($config['ROOTPATH'].'lib/thumb/thumb.'.$thumbType.'.php');
 		$thObj = new ThumbWrapper();
 		if($thObj->isWorking()) $func_thumbWork = '<span class="online">'._T('info_functional').'</span>';
 		$func_thumbInfo = $thObj->getClass();
@@ -160,12 +161,12 @@ function showstatus(){
 	}
 
 	// PIOSensor
-	if(count($LIMIT_SENSOR))
-		$piosensorInfo=nl2br(PIOSensor::info($LIMIT_SENSOR));
+	if(count($config['LIMIT_SENSOR']))
+		$piosensorInfo=nl2br(PIOSensor::info($config['LIMIT_SENSOR']));
 
 	$dat = '';
 	head($dat);
-	$links = '[<a href="'.PHP_SELF2.'?'.time().'">'._T('return').'</a>] [<a href="'.PHP_SELF.'?mode=moduleloaded">'._T('module_info_top').'</a>]';
+	$links = '[<a href="'.$config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>] [<a href="'.$config['PHP_SELF'].'?mode=moduleloaded">'._T('module_info_top').'</a>]';
 	$level = $AccountIO->valid();
 	$PMS->useModuleMethods('LinksAboveBar', array(&$links,'status',$level));
 	$dat .= $links.'<center class="theading2"><b>'._T('info_top').'</b></center>
@@ -174,31 +175,31 @@ function showstatus(){
 	<table cellspacing="0" cellpadding="0" border="1"><thead>
 		<tr><th colspan="4">'._T('info_basic').'</th></tr>
 	</thead><tbody>
-		<tr><td width="240">'._T('info_basic_ver').'</td><td colspan="3"> '.PIXMICAT_VER.' </td></tr>
-		<tr><td>'._T('info_basic_pio').'</td><td colspan="3"> '.PIXMICAT_BACKEND.' : '.$PIO->pioVersion().'</td></tr>
-		<tr><td>'._T('info_basic_threadsperpage').'</td><td colspan="3"> '.PAGE_DEF.' '._T('info_basic_threads').'</td></tr>
-		<tr><td>'._T('info_basic_postsperpage').'</td><td colspan="3"> '.RE_DEF.' '._T('info_basic_posts').'</td></tr>
-		<tr><td>'._T('info_basic_postsinthread').'</td><td colspan="3"> '.RE_PAGE_DEF.' '._T('info_basic_posts').' '._T('info_basic_posts_showall').'</td></tr>
-		<tr><td>'._T('info_basic_bumpposts').'</td><td colspan="3"> '.MAX_RES.' '._T('info_basic_posts').' '._T('info_basic_0disable').'</td></tr>
-		<tr><td>'._T('info_basic_bumphours').'</td><td colspan="3"> '.MAX_AGE_TIME.' '._T('info_basic_hours').' '._T('info_basic_0disable').'</td></tr>
-		<tr><td>'._T('info_basic_urllinking').'</td><td colspan="3"> '.AUTO_LINK.' '._T('info_0no1yes').'</td></tr>
-		<tr><td>'._T('info_basic_com_limit').'</td><td colspan="3"> '.COMM_MAX._T('info_basic_com_after').'</td></tr>
-		<tr><td>'._T('info_basic_anonpost').'</td><td colspan="3"> '.ALLOW_NONAME.' '._T('info_basic_anonpost_opt').'</td></tr>
-		<tr><td>'._T('info_basic_del_incomplete').'</td><td colspan="3"> '.KILL_INCOMPLETE_UPLOAD.' '._T('info_0no1yes').'</td></tr>
-		<tr><td>'._T('info_basic_use_sample', THUMB_SETTING['Quality']).'</td><td colspan="3"> '.USE_THUMB.' '._T('info_0notuse1use').'</td></tr>
-		<tr><td>'._T('info_basic_useblock').'</td><td colspan="3"> '.BAN_CHECK.' '._T('info_0disable1enable').'</td></tr>
-		<tr><td>'._T('info_basic_showid').'</td><td colspan="3"> '.DISP_ID.' '._T('info_basic_showid_after').'</td></tr>
-		<tr><td>'._T('info_basic_cr_limit').'</td><td colspan="3"> '.BR_CHECK._T('info_basic_cr_after').'</td></tr>
-		<tr><td>'._T('info_basic_timezone').'</td><td colspan="3"> GMT '.TIME_ZONE.'</td></tr>
+		<tr><td width="240">'._T('info_basic_ver').'</td><td colspan="3"> '.$config['PIXMICAT_VER'].' </td></tr>
+		<tr><td>'._T('info_basic_pio').'</td><td colspan="3"> '.$config['PIXMICAT_BACKEND'].' : '.$PIO->pioVersion().'</td></tr>
+		<tr><td>'._T('info_basic_threadsperpage').'</td><td colspan="3"> '.$config['PAGE_DEF'].' '._T('info_basic_threads').'</td></tr>
+		<tr><td>'._T('info_basic_postsperpage').'</td><td colspan="3"> '.$config['RE_DEF'].' '._T('info_basic_posts').'</td></tr>
+		<tr><td>'._T('info_basic_postsinthread').'</td><td colspan="3"> '.$config['RE_PAGE_DEF'].' '._T('info_basic_posts').' '._T('info_basic_posts_showall').'</td></tr>
+		<tr><td>'._T('info_basic_bumpposts').'</td><td colspan="3"> '.$config['MAX_RES'].' '._T('info_basic_posts').' '._T('info_basic_0disable').'</td></tr>
+		<tr><td>'._T('info_basic_bumphours').'</td><td colspan="3"> '.$config['MAX_AGE_TIME'].' '._T('info_basic_hours').' '._T('info_basic_0disable').'</td></tr>
+		<tr><td>'._T('info_basic_urllinking').'</td><td colspan="3"> '.$config['AUTO_LINK'].' '._T('info_0no1yes').'</td></tr>
+		<tr><td>'._T('info_basic_com_limit').'</td><td colspan="3"> '.$config['COMM_MAX']._T('info_basic_com_after').'</td></tr>
+		<tr><td>'._T('info_basic_anonpost').'</td><td colspan="3"> '.$config['ALLOW_NONAME'].' '._T('info_basic_anonpost_opt').'</td></tr>
+		<tr><td>'._T('info_basic_del_incomplete').'</td><td colspan="3"> '.$config['KILL_INCOMPLETE_UPLOAD'].' '._T('info_0no1yes').'</td></tr>
+		<tr><td>'._T('info_basic_use_sample', $config['THUMB_SETTING']['Quality']).'</td><td colspan="3"> '.$config['USE_THUMB'].' '._T('info_0notuse1use').'</td></tr>
+		<tr><td>'._T('info_basic_useblock').'</td><td colspan="3"> '.$config['BAN_CHECK'].' '._T('info_0disable1enable').'</td></tr>
+		<tr><td>'._T('info_basic_showid').'</td><td colspan="3"> '.$config['DISP_ID'].' '._T('info_basic_showid_after').'</td></tr>
+		<tr><td>'._T('info_basic_cr_limit').'</td><td colspan="3"> '.$config['BR_CHECK']._T('info_basic_cr_after').'</td></tr>
+		<tr><td>'._T('info_basic_timezone').'</td><td colspan="3"> GMT '.$config['TIME_ZONE'].'</td></tr>
 		<tr><td>'._T('info_basic_theme').'</td><td colspan="3"> '.$PTE->BlockValue('THEMENAME').' '.$PTE->BlockValue('THEMEVER').'<br/>by '.$PTE->BlockValue('THEMEAUTHOR').'</td></tr>
 		<tr><th colspan="4">'._T('info_dsusage_top').'</th></tr>
 		<tr align="center"><td>'._T('info_basic_threadcount').'</td><td colspan="'.(isset($piosensorInfo)?'2':'3').'"> '.$counttree.' '._T('info_basic_threads').'</td>'.(isset($piosensorInfo)?'<td rowspan="2">'.$piosensorInfo.'</td>':'').'</tr>
 		<tr align="center"><td>'._T('info_dsusage_count').'</td><td colspan="'.(isset($piosensorInfo)?'2':'3').'">'.$countline.'</td></tr>
-		<tr><th colspan="4">'._T('info_fileusage_top').STORAGE_LIMIT.' '._T('info_0disable1enable').'</th></tr>';
+		<tr><th colspan="4">'._T('info_fileusage_top').$config['STORAGE_LIMIT'].' '._T('info_0disable1enable').'</th></tr>';
 
-	if(STORAGE_LIMIT){
+	if($config['STORAGE_LIMIT']){
 		$dat .= '
-		<tr align="center"><td>'._T('info_fileusage_limit').'</td><td colspan="2">'.STORAGE_MAX.' KB</td><td rowspan="2">'._T('info_dsusage_usage').'<br /><font color="#'.$clrflag_sl.'">'.substr(($tmp_ts_ratio * 100), 0, 6).'</font> %</td></tr>
+		<tr align="center"><td>'._T('info_fileusage_limit').'</td><td colspan="2">'.$config['STORAGE_MAX'].' KB</td><td rowspan="2">'._T('info_dsusage_usage').'<br /><font color="#'.$clrflag_sl.'">'.substr(($tmp_ts_ratio * 100), 0, 6).'</font> %</td></tr>
 		<tr align="center"><td>'._T('info_fileusage_count').'</td><td colspan="2"><font color="#'.$clrflag_sl.'">'.$tmp_total_size.' KB</font></td></tr>';
 	}else{
 		$dat .= '
@@ -218,13 +219,14 @@ function showstatus(){
 
 /* write to admin log */
 function actionlog(&$dat) {
+	global $config;
 	$LIMIT = 40;
 	$page = intval($_REQUEST['page']??0);
 	$offset = $page*$LIMIT;
 	// filter
 	$filter = $_REQUEST['filter']??'';
 	$ipfilter = preg_quote($_REQUEST['ipfilter']??'');
-	$dat.= '<p align="LEFT"><form action="'.PHP_SELF.'" method="GET">
+	$dat.= '<p align="LEFT"><form action="'.$config['PHP_SELF'].'" method="GET">
 	<input type="hidden" name="mode" value="admin" />
 	<input type="hidden" name="admin" value="action" />
 	<input type="hidden" name="page" value="'.$page.'" />
@@ -265,7 +267,7 @@ function actionlog(&$dat) {
 	if ($ipfilter) $regex.= "\s\($ipfilter\)";
 	// log
 	$dat.= '<pre class="actionlog">';
-	$log = array_reverse(file(STORAGE_PATH.ACTION_LOG));
+	$log = array_reverse(file($config['STORAGE_PATH'].$config['ACTION_LOG']));
 	$log = array_filter($log, function ($a) use ($regex) { return preg_match("/$regex/", $a); });
 	$log = array_values($log);
 	$find = false;
@@ -278,34 +280,35 @@ function actionlog(&$dat) {
 	$dat.= '</pre>';
 	// pager
 	$dat.= '<table id="pager" cellspacing="0" cellpadding="0" border="1"><tbody><tr>';
-	if ($page) $dat.= '<td><a href="'.PHP_SELF.'?mode=admin&admin=action&page='.($page-1).'&filter='.$filter.'">Prev</a></td>';
+	if ($page) $dat.= '<td><a href="'.$config['PHP_SELF'].'?mode=admin&admin=action&page='.($page-1).'&filter='.$filter.'">Prev</a></td>';
 	else $dat.= '<td>First</td>';
 	$dat.= '<td>';
 	for ($i=0; $i<count($log); $i+=$LIMIT) {
 		$p = $i/$LIMIT;
 		if ($p==$page) $dat.= '[<b>'.($p+1).'</b>]';
-		else $dat.= '[<a href="'.PHP_SELF.'?mode=admin&admin=action&page='.$p.'&filter='.$filter.'&">'.($p+1).'</a>]';
+		else $dat.= '[<a href="'.$config['PHP_SELF'].'?mode=admin&admin=action&page='.$p.'&filter='.$filter.'&">'.($p+1).'</a>]';
 	}
 	$dat.= '</td>';
-	if ($offset<count($log)-$LIMIT) $dat.= '<td><a href="'.PHP_SELF.'?mode=admin&admin=action&page='.($page+1).'&filter='.$filter.'">Next</a></td>';
+	if ($offset<count($log)-$LIMIT) $dat.= '<td><a href="'.$config['PHP_SELF'].'?mode=admin&admin=action&page='.($page+1).'&filter='.$filter.'">Next</a></td>';
 	else $dat.= '<td>Last</td>';
 	$dat.= '</tr></tbody></table><br clear="ALL" />';
 }
 
 
 function drawAccountCreationForm(&$dat) {
+	global $config;
 	$dat .= '
 	<center>
 		<h4>Add a new moderator account</h4>
-       <form action="'.PHP_SELF.'?mode=createAcc" method="post">
+       <form action="'.$config['PHP_SELF'].'?mode=createAcc" method="post">
        <table ><tbody>
        <tr>
            <td class="postblock"><label for="usrname">Account username:</label></td>
-           <td><input  required maxlength="30" id="usrname" name="usrname"/></td>
+           <td><input  required maxlength="50" id="usrname" name="usrname"/></td>
        </tr>
        <tr>
            <td class="postblock"><label for="passwd">Account password:</label></td>
-           <td><input type="password" id="passwd" name="passwd" required="" maxlength="200"/></td>
+           <td><input type="password" id="passwd" name="passwd" required="" maxlength="1000"/></td>
        </tr>
 		<tr>
 			<td class="postblock"><label for="hashed">Already hashed?</label></td>
@@ -316,10 +319,10 @@ function drawAccountCreationForm(&$dat) {
            <td>
            <select id="role" name="role" required>
            <option value="" disabled="" selected="">Select a role</option>
-           	<option value="'.LEV_USER.'">User</option>
-			<option value="'.LEV_JANITOR.'">Janitor</option>
-			<option value="'.LEV_MODERATOR.'">Moderator</option>
-			<option value="'.LEV_ADMIN.'">Admin</option>
+           	<option value="'.$config['roles']['LEV_USER'].'">User</option>
+			<option value="'.$config['roles']['LEV_JANITOR'].'">Janitor</option>
+			<option value="'.$config['roles']['LEV_MODERATOR'].'">Moderator</option>
+			<option value="'.$config['roles']['LEV_ADMIN'].'">Admin</option>
 		</select></td>
        </tr>
        <tr>
@@ -332,31 +335,33 @@ function drawAccountCreationForm(&$dat) {
 }
 
 function createAccount() {
+	global $config;
 	$AccountIO = PMCLibrary::getAccountIOInstance();
-	if($AccountIO->valid() < LEV_ADMIN) error("403 Access Denied");
+	if($AccountIO->valid() < $config['roles']['LEV_ADMIN']) error("403 Access Denied");
 	
 	$dat = '';
 	head($dat);
 	
-	$dat .= '[<a href="'.PHP_SELF2.'?'.time().'">Return</a>]';
+	$dat .= '[<a href="'.$config['PHP_SELF2'].'?'.time().'">Return</a>]';
 	//just check if one of the fields is set
 	if(!empty($_POST['usrname']) && !empty($_POST['passwd'])) {
 		$AccountIO = PMCLibrary::getAccountIOInstance();
-	
-		$ishash = $_POST['ishashed']; if(!isset($ishash)) $ishash = false;
+		
+		$ishashed = false;
+		if(isset($_POST['ishashed'])) $ishashed = $_POST['ishashed']; 
 		
 		$nUsername = strval(htmlspecialchars($_POST['usrname'])); //username for new account
 		$nPass = strval($_POST['passwd']);//password for new account
 		$nRole = intval($_POST['role']);//moderation role
 
-		(!$ishash) ? $hashedPassword = password_hash($nPass, PASSWORD_DEFAULT) : $hashedPassword = $nPass; //password hash to be stored in account flatfile
+		(!$ishashed) ? $hashedPassword = password_hash($nPass, PASSWORD_DEFAULT) : $hashedPassword = $nPass; //password hash to be stored in account flatfile
 		
 		//auth role
 		switch($nRole) {
-			case LEV_USER:
-			case LEV_JANITOR:
-			case LEV_MODERATOR:
-			case LEV_ADMIN:
+			case $config['roles']['LEV_USER']:
+			case $config['roles']['LEV_JANITOR']:
+			case $config['roles']['LEV_MODERATOR']:
+			case $config['roles']['LEV_ADMIN']:
 				$AccountIO->addNewAccount($nUsername, $hashedPassword, $nRole); //enter account into flatfile
 			break;
 			default:
@@ -366,7 +371,7 @@ function createAccount() {
 		
 		
 		
-		$dat .= '<center>Creation of a new account was a success!<br><form method="post" action="'.PHP_SELF.'?mode=viewAcc"> <input type="submit" value="View mod list"></form></center><br> ';
+		$dat .= '<center>Creation of a new account was a success!<br> [<a href="'.$config['PHP_SELF'].'?mode=viewAcc">View mod list</a>] </center><br> ';
 	} else {
 		drawAccountCreationForm($dat);
 	}
@@ -375,38 +380,113 @@ function createAccount() {
     echo $dat;
 }
 
-function viewAccounts() {
+/* Comparision for account roles - used in sorting */
+function compareAccountByRole($acc1, $acc2) {
+	if($acc1['role'] == $acc2['role']) return 0;
+	return ($acc1['role'] < $acc2['role']) ? 1 : -1;
+}
+
+function buildAccountArray($accountText) {
+	$accountArray = array();
+	foreach($accountText as $account) {
+		if(sizeof($account) != 4) continue;
+		$accountArray[] = array_combine(['id', 'username', 'password', 'role'], $account);
+	}
+	return $accountArray;
+}
+
+function handleAccountDelete($id) {
 	$AccountIO = PMCLibrary::getAccountIOInstance();
-	if($AccountIO->valid() < LEV_ADMIN) error("403 Access Denied");
+	$id = intval($id);
+	
+	if(!is_numeric($id)) error("Invalid ID");
+	$moderatorUsername = $AccountIO->getUsername();
+	$moderatorLevel = $AccountIO->getRoleLevel();
+	logtime("Deleted '".$id."' from accounts", $moderatorUsername.' ## '.$moderatorLevel);	
+	$AccountIO->deleteAccount($id);
+}
+
+function handleAccountDemote($id) {
+	global $config;
+	if(!is_numeric($id)) error("Invalid ID");
+	
+	$AccountIO = PMCLibrary::getAccountIOInstance();
+	$id = intval($id);
+	$currentRole = $AccountIO->getAccountById($id)['role'];
+	$newRole = $currentRole - 1;
+	
+	if(($currentRole - 1) <= $config['roles']['LEV_NONE']) {
+		drawAlert("Could not demote $id. Can't lower role any further.");
+		//redirect($config['PHP_SELF'].'?mode=viewAcc');
+		return false;
+	}
+	
+	$AccountIO->editAccountRole($id, $newRole); //subtract role number to 'demote'
+	
+	$moderatorUsername = $AccountIO->getUsername();
+	$moderatorLevel = $AccountIO->getRoleLevel();
+	logtime("Demoted '".$id."' to ".num2role($newRole)."", $moderatorUsername.' ## '.$moderatorLevel);	
+}
+
+function handleAccountPromote($id) {
+	global $config;
+	if(!is_numeric($id)) error("Invalid ID");
+	
+	$AccountIO = PMCLibrary::getAccountIOInstance();
+	$id = intval($id);
+	$currentRole = $AccountIO->getAccountById($id)['role'];
+	$newRole = $currentRole + 1;
+	
+	if(($currentRole + 1) > $config['roles']['LEV_ADMIN']) {
+		drawAlert("Could not demote $id. Can't raise role any further.");
+		//redirect($config['PHP_SELF'].'?mode=viewAcc');
+		return false;
+	}
+	
+	$AccountIO->editAccountRole($id, $newRole); //subtract role number to 'demote'
+	
+	$moderatorUsername = $AccountIO->getUsername();
+	$moderatorLevel = $AccountIO->getRoleLevel();
+	logtime("Promoted '".$id."' to ".num2role($newRole)."", $moderatorUsername.' ## '.$moderatorLevel);	
+}
+
+function viewAccounts() {
+	global $config;
+	$AccountIO = PMCLibrary::getAccountIOInstance();
+	if($AccountIO->valid() < $config['roles']['LEV_ADMIN']) error("403 Access Denied");
 	
 	//delete account
-	if(isset($_POST['del'])) {
-		$id = intval($_POST['del']);
-		if(!is_numeric($id)) error("Invalid ID");
-		$moderatorUsername = $AccountIO->getUsername();
-		$moderatorLevel = $AccountIO->getRoleLevel();
-		logtime("Deleted '".$id."' from accounts", $moderatorUsername.' ## '.$moderatorLevel);	
-		$AccountIO->deleteAccount($id);
-	}
+	if(isset($_GET['del'])) handleAccountDelete($_GET['del']);
+	if(isset($_GET['dem'])) handleAccountDemote($_GET['dem']);
+	if(isset($_GET['up'])) handleAccountPromote($_GET['up']);
 	
 	$dat = '';
 	head($dat);
 	$accountsHTML = '';
 	$accounts = $AccountIO->getAllAccounts();
 	
-	foreach($accounts as $account) {
-		if(sizeof($account) != 4) continue;
-		$account = array_combine(['id', 'username', 'password', 'role'], $account);
-
+	
+	//first, build
+	$accountArrayData = buildAccountArray($accounts);
+	
+	usort($accountArrayData, 'compareAccountByRole');
+	
+	foreach($accountArrayData as $account) {
+		$actionHTML = '[<a title="Delete account" href="'.$config['PHP_SELF'].'?mode=viewAcc&del='.$account['id'].'">D</a>] ';
+		if($account['role'] + 1 <= $config['roles']['LEV_ADMIN']) $actionHTML .= '[<a title="Promote account" href="'.$config['PHP_SELF'].'?mode=viewAcc&up='.$account['id'].'">▲</a>]';
+		if($account['role'] - 1 > $config['roles']['LEV_NONE']) $actionHTML .= '[<a title="Demote account" href="'.$config['PHP_SELF'].'?mode=viewAcc&dem='.$account['id'].'">▼</a>]';
+		
 		$accountsHTML .= '<tr> 
 			<td><center> '.$account['id'].'</center></td>
 			<td><center>'.$account['username'].' </center></td>
 			<td><center>'.num2role($account['role']).'</center></td>
-			<td><center><form action="'.PHP_SELF.'?mode=viewAcc" method="post"> <input type="hidden" name="del" value="'.$account['id'] .'"/>  <input type="submit" value="Delete"> </form></center></td>
+			<td><center> 
+			'.$actionHTML.'
+			 </center></td>
 		</tr>';
 	}
 	
-		$dat .= '[<a href="'.PHP_SELF2.'?'.time().'">Return</a>]';
+		$dat .= '[<a href="'.$config['PHP_SELF2'].'?'.time().'">Return</a>]';
 		$dat .='	<center>
 			<h4>Mod list</h4>
       	 <table  cellspacing="0" cellpadding="0" border="1" class="postlists">
@@ -422,22 +502,25 @@ function viewAccounts() {
 }
 
 function manageaccounts(&$dat) {
+	global $config;
 	$dat .= '
 				<h3>Account management</h3>
 		<fieldset class="menu" style="display: inline-block; width: 200px;"><legend>Panel</legend>
-		<form method="post" action="'.PHP_SELF.'?mode=viewAcc"> <input type="submit" value="View list"></form> 
+		[<a href="'.$config['PHP_SELF'].'?mode=viewAcc">Mod list</a>]
 		<br />
-		<form method="post" action="'.PHP_SELF.'?mode=createAcc"><input type="submit" value="Add account"></form>		
+		[<a href="'.$config['PHP_SELF'].'?mode=createAcc">Add a new account</a>]		
 		</fieldset>';
 }
 
 function logout(&$dat) {
+	global $config;
 	unset($_SESSION['kokologin']);
-	redirect(fullURL().PHP_SELF.'?mode=admin');
+	redirect(fullURL().$config['PHP_SELF'].'?mode=admin');
 	exit;
 }
 
 function drawAdminList() {
+		global $config;
 		$PMS = PMCLibrary::getPMSInstance();
 		$PIO = PMCLibrary::getPIOInstance();	
 		$AccountIO = PMCLibrary::getAccountIOInstance();
@@ -448,33 +531,33 @@ function drawAdminList() {
 		//authenticate
 		$level = $AccountIO->valid($pass);
 		$log_in_msg = "<b class=\"username\">Logged in as ".$AccountIO->getUsername()." (".$AccountIO->getRoleLevel().")</b>";
-		if($level == LEV_NONE) $log_in_msg = "";
+		if($level == $config['roles']['LEV_NONE']) $log_in_msg = "";
 		$admin = $_REQUEST['admin']??'';
 		$dat = '';
 		head($dat);
-		$links = '[<a href="'.PHP_SELF2.'?'.$_SERVER['REQUEST_TIME'].'">Return</a>] [<a href="'.PHP_SELF.'?mode=rebuild">Rebuild</a>] [<a href="'.PHP_SELF.'?pagenum=0">Live Frontend</a>]';
+		$links = '[<a href="'.$config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a>] [<a href="'.$config['PHP_SELF'].'?mode=rebuild">Rebuild</a>] [<a href="'.$config['PHP_SELF'].'?pagenum=0">Live Frontend</a>]';
 		$PMS->useModuleMethods('LinksAboveBar', array(&$dat,'admin',$level));
 		$dat .= $links; //hook above bar links
 		$dat.= "<center class=\"theading3\"><b>Administrator mode</b> <br/>$log_in_msg </center>";
-		$dat.= '<center><form action="'.PHP_SELF.'" method="POST" name="adminform">';
+		$dat.= '<center><form action="'.$config['PHP_SELF'].'" method="POST" name="adminform">';
 		$admins = array(
-			array('name'=>'del', 'level'=>LEV_JANITOR, 'label'=>'Manage posts', 'func'=>'admindel'),
-			array('name'=>'action', 'level'=>LEV_ADMIN, 'label'=>'Action log', 'func'=>'actionlog'),
-			array('name'=>'acct', 'level'=>LEV_ADMIN, 'label'=>'Manage accounts', 'func'=>'manageaccounts'),
-			array('name'=>'export', 'level'=>LEV_ADMIN, 'label'=>'Export data', 'func'=>''),
-			array('name'=>'optimize', 'level'=>LEV_ADMIN, 'label'=>'Optimize', 'func'=>''),
-			array('name'=>'check', 'level'=>LEV_ADMIN, 'label'=>'Check data source', 'func'=>''),
-			array('name'=>'repair', 'level'=>LEV_ADMIN, 'label'=>'Repair data source', 'func'=>''),
-			array('name'=>'logout', 'level'=>LEV_USER, 'label'=>'Logout', 'func'=>'logout'),
+			array('name'=>'del', 'level'=>$config['roles']['LEV_JANITOR'], 'label'=>'Manage posts', 'func'=>'admindel'),
+			array('name'=>'action', 'level'=>$config['roles']['LEV_ADMIN'], 'label'=>'Action log', 'func'=>'actionlog'),
+			array('name'=>'acct', 'level'=>$config['roles']['LEV_ADMIN'], 'label'=>'Manage accounts', 'func'=>'manageaccounts'),
+			array('name'=>'export', 'level'=>$config['roles']['LEV_ADMIN'], 'label'=>'Export data', 'func'=>''),
+			array('name'=>'optimize', 'level'=>$config['roles']['LEV_ADMIN'], 'label'=>'Optimize', 'func'=>''),
+			array('name'=>'check', 'level'=>$config['roles']['LEV_ADMIN'], 'label'=>'Check data source', 'func'=>''),
+			array('name'=>'repair', 'level'=>$config['roles']['LEV_ADMIN'], 'label'=>'Repair data source', 'func'=>''),
+			array('name'=>'logout', 'level'=>$config['roles']['LEV_USER'], 'label'=>'Logout', 'func'=>'logout'),
 		);
 		$dat.= '<nobr>';
 		foreach ($admins as $adminmode) {
-			if ($level==LEV_NONE && $adminmode['name']=='logout') continue;
+			if ($level==$config['roles']['LEV_NONE'] && $adminmode['name']=='logout') continue;
 			$checked = ($admin==$adminmode['name']) ? ' checked="checked"' : '';
 			$dat.= '<label><input type="radio" name="admin" value="'.$adminmode['name'].'"'.$checked.' />'.$adminmode['label'].'</label> ';
 		}
 		$dat.= '</nobr>';
-		if ($level==LEV_NONE) {
+		if ($level==$config['roles']['LEV_NONE']) {
 			$dat.= '<br/>
 				<input class="inputtext" type="password" name="pass" value="" size="8" /><button type="submit" name="mode" value="admin">Login</button>
 			</form></center><hr/>';

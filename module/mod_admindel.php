@@ -1,13 +1,18 @@
 <?php
 // admin extra module made for kokonotsuba by deadking
 class mod_admindel extends ModuleHelper {
-	private $BANFILE = STORAGE_PATH.'bans.log.txt';
-	private $JANIMUTE_LENGTH = JANIMUTE_LENGTH;
-	private $JANIMUTE_REASON = JANIMUTE_REASON;
+	private $BANFILE = '';
+	private $JANIMUTE_LENGTH = '';
+	private $JANIMUTE_REASON = '';
 	private $mypage;
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
+		
+		$this->BANFILE = $this->config['STORAGE_PATH'].'bans.log.txt';
+		$this->JANIMUTE_LENGTH = $this->config['ModuleSettings']['JANIMUTE_LENGTH'];
+		$this->JANIMUTE_REASON = $this->config['ModuleSettings']['JANIMUTE_REASON'];
+		
 		$this->mypage = $this->getModulePageURL();
 		touch($this->BANFILE);
 	}
@@ -23,7 +28,7 @@ class mod_admindel extends ModuleHelper {
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$AccountIO = PMCLibrary::getAccountIOInstance();
-		if ($AccountIO->valid() < LEV_JANITOR) return;
+		if ($AccountIO->valid() < $this->config['roles']['LEV_JANITOR']) return;
 		$modfunc.= '[<a href="'.$this->mypage.'&action=del&no='.$post['no'].'" title="Delete">D</a>]';
 		if ($post['ext'] && $FileIO->imageExists($post['tim'].$post['ext'])) $modfunc.= '[<a href="'.$this->mypage.'&action=imgdel&no='.$post['no'].'" title="Delete File">Df</a>]';
 		$modfunc.= '[<a href="'.$this->mypage.'&action=delmute&no='.$post['no'].'" title="Delete and Mute for '.$this->JANIMUTE_LENGTH.' minute'.($this->JANIMUTE_LENGTH == 1 ? "" : "s").'">DM</a>]';
@@ -37,7 +42,7 @@ class mod_admindel extends ModuleHelper {
 		$AccountIO = PMCLibrary::getAccountIOInstance();
 		
 		//valid also 'logs in'
-		if ($AccountIO->valid() < LEV_JANITOR) {
+		if ($AccountIO->valid() < $this->config['roles']['LEV_JANITOR']) {
 			error('403 Access denied');
 		}
 		

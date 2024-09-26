@@ -91,7 +91,7 @@ class mod_rss extends ModuleHelper {
 		$PIO = PMCLibrary::getPIOInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 		// Time zone format used in the RFC standard
-		$RFC_timezone = ' '.(TIME_ZONE < 0 ? '-' : '+').substr('0'.abs(TIME_ZONE), -2).'00';
+		$RFC_timezone = ' '.($this->config['TIME_ZONE'] < 0 ? '-' : '+').substr('0'.abs($this->config['TIME_ZONE']), -2).'00';
 
 		switch ($this->FEED_DISPLAYTYPE) {
 			case 'T':
@@ -116,10 +116,10 @@ class mod_rss extends ModuleHelper {
 		$tmp_c = '<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
 <channel>
-<title>'.TITLE.'</title>
+<title>'.$this->config['TITLE'].'</title>
 <link>'.$this->BASEDIR.'</link>
-<description>'.TITLE.'</description>
-<language>'.PIXMICAT_LANGUAGE.'</language>
+<description>'.$this->config['TITLE'].'</description>
+<language>'.$this->config['PIXMICAT_LANGUAGE'].'</language>
 <generator>'.$this->getModuleName().' '.$this->getModuleVersionInfo().'</generator>
 <atom:link href="'.$this->SELF.'" rel="self" type="application/rss+xml" />
 ';
@@ -148,7 +148,7 @@ class mod_rss extends ModuleHelper {
 				);
 			}
 			// Local time RFC standard format
-			$time = gmdate("D, d M Y H:i:s", $time + TIME_ZONE * 60 * 60).$RFC_timezone;
+			$time = gmdate("D, d M Y H:i:s", $time + $this->config['TIME_ZONE'] * 60 * 60).$RFC_timezone;
 			$reslink = $this->BASEDIR.PHP_SELF.'?res='.($resto ? $resto : $no);
 			switch ($this->FEED_DISPLAYTYPE) {
 				case 'T':

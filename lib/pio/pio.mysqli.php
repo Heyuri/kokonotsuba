@@ -11,11 +11,15 @@
 
 class PIOmysqli implements IPIO {
 	private $username, $password, $server, $port, $dbname, $tablename; // Local Constant
-	private $con, $prepared, $useTransaction; // Local Global
+	private $con, $prepared, $useTransaction, $config; // Local Global
 
-	public function __construct($connstr='', $ENV){
+	public function __construct($ENV){
+		global $config;
+		
 		$this->prepared = 0;
-		if($connstr) $this->dbConnect($connstr);
+		$this->config = $config; 
+
+		$this->dbConnect();
 	}
 
 	public function __destruct(){
@@ -65,17 +69,13 @@ class PIOmysqli implements IPIO {
 	}
 
 	/* Process connection string/connection */
-	public function dbConnect($connStr){
-		// Format: mysqli://account:password@server location:port number (can be omitted)/database/table/
-		// Example： mysqli://pixmicat:1234@127.0.0.1/pixmicat_use/imglog/
-		if(preg_match('/^mysqli:\/\/(.*)\:(.*)\@(.*)(?:\:([0-9]+))?\/(.*)\/(.*)\/$/i', $connStr, $linkinfos)){
-			$this->username = $linkinfos[1];	// DB User
-			$this->password = $linkinfos[2];	// DB Pass
-			$this->server = $linkinfos[3];		// Server
-			$this->port = $linkinfos[4] ? intval($linkinfos[4]) : 3306; // Port
-			$this->dbname = $linkinfos[5];		// Database
-			$this->tablename = $linkinfos[6];	// Table name
-		}
+	public function dbConnect(){
+		$this->username = $this->config['DATABASE_USERNAME'];	// DB User
+		$this->password = $this->config['DATABASE_PASSWORD'];	// DB Pass
+		$this->server = $this->config['DATABASE_HOST'];		// Server
+		$this->port = $this->config['DATABASE_PORT']; // Port
+		$this->dbname = $this->config['DATABASE_DBNAME'];		// Database
+		$this->tablename = $this->config['DATABASE_TABLENAME'];	// Table name
 	}
 
 	/* Initialization */
@@ -506,10 +506,10 @@ class PIOmysqli implements IPIO {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		if(!$this->prepared) $this->dbPrepare();
 
-		if(!RENZOKU) return false; // 關閉連續投稿檢查
+		if(!$this->config['RENZOKU']) return false; // 關閉連續投稿檢查
 		$timestamp = intval($timestamp);
-		$tmpSQL = 'SELECT pwd,host FROM '.$this->tablename.' WHERE time > '.($timestamp - RENZOKU); // 一般投稿時間檢查
-		if($isupload) $tmpSQL .= ' OR (fname != "" AND time > '.($timestamp - RENZOKU2).')'; // 附加圖檔的投稿時間檢查 (與下者兩者擇一)
+		$tmpSQL = 'SELECT pwd,host FROM '.$this->tablename.' WHERE time > '.($timestamp - $this->config['RENZOKU']); // 一般投稿時間檢查
+		if($isupload) $tmpSQL .= ' OR (fname != "" AND time > '.($timestamp - $this->config['RENZOKU2']).')'; // 附加圖檔的投稿時間檢查 (與下者兩者擇一)
 		//else $tmpSQL .= ' OR md5(com) = "'.md5($com).'"'; // 內文一樣的檢查 (與上者兩者擇一)
 
 		$result = $this->_mysql_call($tmpSQL, array('Get the post to check the succession failed', __LINE__));

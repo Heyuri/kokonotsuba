@@ -3,11 +3,14 @@
 class mod_cat extends ModuleHelper {
 	private $mypage;
 	private $PAGE_DEF = 1000;
-	private $RESICON = STATIC_URL.'image/replies.png';
-	private $THUMB_EXT = THUMB_SETTING['Format'];
+	private $RESICON = -1;
+	private $THUMB_EXT = -1;
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
+				
+		$this->THUMB_EXT = $this->config['THUMB_SETTING']['Format'];
+		$this->RESICON = $this->config['STATIC_URL'].'image/replies.png';
 		$this->mypage = $this->getModulePageURL();
 	}
 
@@ -60,9 +63,9 @@ class mod_cat extends ModuleHelper {
 				break;
 			}
 		}
-		if(THREAD_PAGINATION){ // Catalog caching
+		if($this->config['THREAD_PAGINATION']){ // Catalog caching
 			$cacheETag = md5($page.'-'.$post_cnt);
-			$cacheFile = STORAGE_PATH.'cache/catalog-'.$page.'.';
+			$cacheFile = $this->config['STORAGE_PATH'].'cache/catalog-'.$page.'.';
 			$cacheGzipPrefix = extension_loaded('zlib') ? 'compress.zlib://' : '';
 			$cacheControl = 'no-cache';
 			//$cacheControl = isset($_SERVER['HTTP_CACHE_CONTROL']) ? $_SERVER['HTTP_CACHE_CONTROL'] : ''; // respect user's cache wishes? (comment out to force caching)
@@ -88,9 +91,9 @@ class mod_cat extends ModuleHelper {
 
 		head($dat);
 		$dat.= '
-		<script type="text/javascript" src="'.STATIC_URL.'js/catalog.js"></script>
+		<script type="text/javascript" src="'.$this->config['STATIC_URL'].'js/catalog.js"></script>
 		<div id="catalog">
-[<a href="'.PHP_SELF2.'?'.time().'">Return</a>] '.$this->drawSortOptions().'
+[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">Return</a>] '.$this->drawSortOptions().'
 <center class="theading2"><b>Catalog</b></center>';
 
 		$dat.= '<style>';
@@ -127,7 +130,7 @@ class mod_cat extends ModuleHelper {
 			$res = count($PIO->fetchPostList($no)) - 1;
 			$dat.= '<td class="thread" width="180" height="200" align="CENTER">
 	<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>
-	<a href="'.PHP_SELF.'?res='.($resto?$resto:$no).'#p'.$no.'">'.
+	<a href="'.$this->config['PHP_SELF'].'?res='.($resto?$resto:$no).'#p'.$no.'">'.
 	($FileIO->imageExists($tim.$ext) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim)).'" width="'.min(150, $tw).'" vspace="3"	class="thumb" />' : '***').
 	'</a><br />
 	<nobr><small><b class="title">'.substr($sub, 0, 20).'</b>:'.
@@ -157,7 +160,7 @@ class mod_cat extends ModuleHelper {
 			$dat .= '<td nowrap="nowrap">Last</td>';
 		$dat .= '</tr></tbody></table><br clear="ALL" />';
 		foot($dat);
-		if (THREAD_PAGINATION){ // Catalog caching
+		if ($this->config['THREAD_PAGINATION']){ // Catalog caching
 			if ($oldCaches = glob($cacheFile.'*')){
 				foreach($oldCaches as $o) unlink($o);
 			}
@@ -175,8 +178,8 @@ class mod_cat extends ModuleHelper {
 
 	/* Optimize the display size of the picture */
 	private function OptimizeImageWH($w, $h){
-		if($w > MAX_RW || $h > MAX_RH){
-			$W2 = MAX_RW / $w; $H2 = MAX_RH / $h;
+		if($w > $this->config['MAX_RW'] || $h > $this->config['MAX_RH']){
+			$W2 = $this->config['MAX_RW'] / $w; $H2 = $this->config['MAX_RH'] / $h;
 			$tkey = ($W2 < $H2) ? $W2 : $H2;
 			$w = ceil($w * $tkey); $h = ceil($h * $tkey);
 		}

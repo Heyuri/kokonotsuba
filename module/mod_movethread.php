@@ -31,7 +31,7 @@ class mod_movethread extends ModuleHelper {
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$AccountIO = PMCLibrary::getAccountIOInstance();
-		if ($AccountIO->valid() < LEV_MODERATOR) return;
+		if ($AccountIO->valid() < $this->config['roles']['LEV_MODERATOR']) return;
 		if (!$isres)$modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'" title="move thread">MT</a>]';
 	}
 	
@@ -118,8 +118,8 @@ class mod_movethread extends ModuleHelper {
 	    return true;
 	}
 	private function copyAttachmentToBoardSrc($board, $post) {
-	    $this->copyFile(IMG_DIR.$post['tim'].$post['ext'], $board['imgpath'].$post['tim'].$post['ext']); //copy file (if it exists)
-	    $this->copyFile(IMG_DIR.$post['tim'].'s.'.THUMB_SETTING['Format'], $board['imgpath'].$post['tim'].'s'.$post['ext']); //copy file thumb (if it exists)
+	    $this->copyFile($this->config['IMG_DIR'].$post['tim'].$post['ext'], $board['imgpath'].$post['tim'].$post['ext']); //copy file (if it exists)
+	    $this->copyFile($this->config['IMG_DIR'].$post['tim'].'s.'.$this->config['THUMB_SETTING']['Format'], $board['imgpath'].$post['tim'].'s'.$post['ext']); //copy file thumb (if it exists)
 	}
 	private function addPost($board, $no, $resto, $md5chksum, $category, $tim, $fname, $ext, $imgw, $imgh, $imgsize, $tw, $th, $pwd, $now, $name, $email, $sub, $com, $host, $age=false, $status='') {
 	    $time = floor(substr($tim, 0, -3)); // 13位數的數字串是檔名，10位數的才是時間數值
@@ -171,13 +171,11 @@ class mod_movethread extends ModuleHelper {
 	    
 	    $stmt->close(); 
 	}
-	private function getCreds($connStr) {
-	    if(preg_match('/^mysqli:\/\/(.*)\:(.*)\@(.*)(?:\:([0-9]+))?\/(.*)\/(.*)\/$/i', $connStr, $linkinfos)){
-	        $this->username = $linkinfos[1];	// DB User
-	        $this->password = $linkinfos[2];	// DB Pass
-	        $this->dbname = $linkinfos[5];		// Database
-	        $this->tablename = $linkinfos[6];	// Table name
-	    }
+	private function setCreds() {
+		$this->username = $this->config['DATABASE_USER'];	// DB User
+		$this->password = $this->config['DATABASE_PASSWORD'];	// DB Pass
+		$this->dbname = $this->config['DATABASE_DBNAME'];		// Database
+	    $this->tablename = $this->config['DATABASE_TABLENAME'];	// Table name
 	} 
 	private function updateQuoteLink($threadData,  $oldPno, $newNo) {
 	    foreach($threadData as &$postcoms) {
@@ -223,9 +221,9 @@ class mod_movethread extends ModuleHelper {
 		if ($_SERVER['REQUEST_METHOD']!='POST') { 
 			$dat = '';
 			head($dat);
-			$dat .= '[<a href="'.PHP_SELF2.'?'.$_SERVER['REQUEST_TIME'].'">Return</a>]<br>
+			$dat .= '[<a href="'.$this->config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a>]<br>
 			<center><fieldset class="menu" style="display: inline-block;"><legend>Move Thread</legend>
-				<form action="'.PHP_SELF.'" method="POST">
+				<form action="'.$this->config['PHP_SELF'].'" method="POST">
 					<input type="hidden" name="mode" value="module" />
 					<input type="hidden" name="load" value="mod_movethread" />
 					<label>Post No. '.($_GET['no']??'0').'</label><br />

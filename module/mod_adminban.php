@@ -1,15 +1,19 @@
 <?php
 // admin extra module made for kokonotsuba by deadking
 class mod_adminban extends ModuleHelper {
-	private $BANFILE = STORAGE_PATH.'bans.log.txt';
-	private $BANIMG = STATIC_URL."image/banned.jpg";
+	private $BANFILE ='';
+	private $BANIMG = '';
 	private $mypage;
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
+		
+		$this->BANFILE = $this->config['STORAGE_PATH'].'bans.log.txt';
+		$this->BANIMG = $this->config['STATIC_URL']."image/banned.jpg";
+		
 		$this->mypage = $this->getModulePageURL();
 		touch($this->BANFILE);
-		touch(GLOBAL_BANS);
+		touch($this->config['GLOBAL_BANS']);
 	}
 
 	public function getModuleName() {
@@ -22,7 +26,7 @@ class mod_adminban extends ModuleHelper {
 
 	public function autoHookRegistBegin() {
 		$ip = getREMOTE_ADDR();
-		$glog = array_map('rtrim', file(GLOBAL_BANS));
+		$glog = array_map('rtrim', file($this->config['GLOBAL_BANS']));
 		$log = array_map('rtrim', file($this->BANFILE));
 		
 		for ($i=0; $i<count($log); $i++) {
@@ -48,7 +52,7 @@ class mod_adminban extends ModuleHelper {
 				} else {
 					$dat.= "Your ban was filed on ".date('Y/m/d \a\t H:i:s', $starttime)." and expires on ".date('Y/m/d \a\t H:i:s', $expires).".";
 				}
-				$dat.= "<br>[<a href='./'>Return</a>]
+				$dat.= "<br>[<a href='".$this->config['PHP_SELF2']."'>Return</a>]
 				<br clear=\"ALL\" /><hr />";
 				foot($dat);
 				die($dat);
@@ -74,11 +78,11 @@ class mod_adminban extends ModuleHelper {
 				if ($_SERVER['REQUEST_TIME']>intval($expires)) {
 					$dat.= 'Now that you have seen this message you can post again.';
 					unset($glog[$i]);
-					file_put_contents(GLOBAL_BANS, implode("\r\n", $glog));
+					file_put_contents($this->config['GLOBAL_BANS'], implode("\r\n", $glog));
 				} else {
 					$dat.= "Your ban was filed on ".date('Y/m/d \a\t H:i:s', $starttime)." and expires on ".date('Y/m/d \a\t H:i:s', $expires).".";
 				}
-				$dat.= "<br>[<a href='./'>Return</a>]
+				$dat.= "<br>[<a href='".$this->config['PHP_SELF2']."'>Return</a>]
 				<br clear=\"ALL\" /><hr />";
 				foot($dat);
 				die($dat);
@@ -88,7 +92,7 @@ class mod_adminban extends ModuleHelper {
 
 	public function autoHookLinksAboveBar(&$link, $pageId, $level) {
 		$AccountIO = PMCLibrary::getAccountIOInstance();
-		if ($AccountIO->valid() < LEV_MODERATOR
+		if ($AccountIO->valid() < $this->config['roles']['LEV_MODERATOR']
 		 || $pageId != 'admin') return;
 		$link.= '[<a href="'.$this->mypage.'">Manage Bans</a>] ';
 	}
@@ -98,7 +102,7 @@ class mod_adminban extends ModuleHelper {
 		$v = $PIO->getPostIP($no);
 		if ($v) return $v;
 		return false;
-		$f = @fopen(STORAGE_PATH.ACTION_LOG, 'r');
+		$f = @fopen($this->config['STORAGE_PATH'].$this->config['ACTION_LOG'], 'r');
 		if (!$f) return false;
 		while ($line=fgets($f)) {
 			preg_match("/^(\w+) \((\d+\.\d+\.\d+\.\d+)\)\: \d+\/\d+\/\d+ \d+\:\d+\:\d+\: Post No.(\d+)/i", $line, $matches);
@@ -117,7 +121,7 @@ class mod_adminban extends ModuleHelper {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$AccountIO = PMCLibrary::getAccountIOInstance();
 		
-		if ($AccountIO->valid() < LEV_MODERATOR) return;
+		if ($AccountIO->valid() < $this->config['roles']['LEV_MODERATOR']) return;
 		if (!($ip=$this->_lookupPostIP($post['no']))) return;
 		$modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'&ip='.$ip.'" title="Ban">B</a>]';
 		if (empty($_GET['mode']) && empty($_POST['mode'])) $modfunc.= '<small>[HOST: <a href="?mode=admin&admin=del&host='.$ip.'">'.$ip.'</a>]</small>';
@@ -128,14 +132,14 @@ class mod_adminban extends ModuleHelper {
 		$PMS = PMCLibrary::getPMSInstance();
 		$AccountIO = PMCLibrary::getAccountIOInstance();
 
-		if ($AccountIO->valid() < LEV_MODERATOR) {
+		if ($AccountIO->valid() < $this->config['roles']['LEV_MODERATOR']) {
 			error('403 Access denied');
 		}
 
 		if ($_SERVER['REQUEST_METHOD']!='POST') {
 			$dat = '';
 			head($dat);
-			$dat.= '[<a href="'.PHP_SELF2.'?'.$_SERVER['REQUEST_TIME'].'">Return</a>]
+			$dat.= '[<a href="'.$this->config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a>]
 <br clear="ALL" />
 <script>
 var trolls = Array(
@@ -184,11 +188,11 @@ fieldset {
 	border-style: inset;
 }
 #days {
-	width: 4em;
+	width: 4em; 
 }
 </style>
 <fieldset class="menu"><legend>Ban User</legend>
-	<form action="'.PHP_SELF.'" method="POST">
+	<form action="'.$this->config['PHP_SELF'].'" method="POST">
 		<input type="hidden" name="mode" value="module" />
 		<input type="hidden" name="load" value="mod_adminban" />
 		<label>Global?<input type="checkbox" name="global" /></label> <small>(Check this box if you want to rangeban)</small><br />
@@ -198,7 +202,7 @@ fieldset {
 			<textarea name="privmsg" cols="80" rows="6">No reason given.</textarea></label><br />
 		<details'.($_GET['no']??0 ? ' open="open"' : '').'><summary>Public message</summary><blockquote>
 			<label>Post No.<input type="number" name="no" min="0" value="'.($_GET['no']??'0').'" /></label><br />
-			<textarea id="banmsg" name="msg" cols="80" rows="6"><br /><br /><b class="warning">(USER WAS BANNED FOR THIS POST)</b> <img style= "vertical-align: baseline;" src="'.STATIC_URL.'image/hammer.gif">
+			<textarea id="banmsg" name="msg" cols="80" rows="6"><br /><br /><b class="warning">(USER WAS BANNED FOR THIS POST)</b> <img style= "vertical-align: baseline;" src="'.$this->config['STATIC_URL'].'image/hammer.gif">
 </textarea>
 		</blockquote></details>
 		<center><button type="submit" id="bigredbutton">BAN!</button></center>
@@ -206,7 +210,7 @@ fieldset {
 </fieldset>';
 			$unban = $_GET['unban']??'';
 			if ($unban) $dat.= '<p class="warning">The user\'s IP is selected, please click [Revoke] to confirm.</p>';
-			$dat.= '<form action="'.PHP_SELF.'" method="POST">
+			$dat.= '<form action="'.$this->config['PHP_SELF'].'" method="POST">
 	<input type="hidden" name="mode" value="module" />
 	<input type="hidden" name="load" value="mod_adminban" />
 	<table class="postlists" width="800">
@@ -230,7 +234,7 @@ fieldset {
 
 			$dat .= '<tr><td colspan="5">GLOBAL BANS</td></tr>';
 
-			$log = array_map('rtrim', file(GLOBAL_BANS));
+			$log = array_map('rtrim', file($this->config['GLOBAL_BANS']));
 			if (!count($log)) {
 				$dat.= '<tr><td colspan="5">No active bans.</td></tr>';
 			} else {
@@ -250,9 +254,9 @@ fieldset {
 			foot($dat);
 			echo $dat;
 		} else {
-			$glog = array_map('rtrim', file(GLOBAL_BANS));
+			$glog = array_map('rtrim', file($this->config['GLOBAL_BANS']));
 			$log = array_map('rtrim', file($this->BANFILE));
-			$g = fopen(GLOBAL_BANS, 'w');
+			$g = fopen($this->config['GLOBAL_BANS'], 'w');
 			$f = fopen($this->BANFILE, 'w');
 
 			$newip = str_replace(",", "&#44;", htmlspecialchars($_POST['ip']??''));

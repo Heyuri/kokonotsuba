@@ -1,10 +1,12 @@
 <?php
 class mod_SearchCategory extends ModuleHelper {
 	private $mypage;
-	private $THUMB_EXT = THUMB_SETTING['Format'];
+	private $THUMB_EXT = -1;
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
+		
+		$this->THUMB_EXT = $this->config['THUMB_SETTING']['Format'];
 		$this->mypage = $this->getModulePageURL();
 	}
 
@@ -40,15 +42,15 @@ class mod_SearchCategory extends ModuleHelper {
 		}else $loglist = unserialize($_SESSION['loglist_'.$category_md5]);
 
 		$loglist_count = count($loglist);
-		$page_max = ceil($loglist_count / PAGE_DEF); if($page > $page_max) $page = $page_max; // Total pages
+		$page_max = ceil($loglist_count / $this->config['PAGE_DEF']); if($page > $page_max) $page = $page_max; // Total pages
 
 		// Slice the array and get the range for pagination purposes
-		$loglist_cut = array_slice($loglist, PAGE_DEF * ($page - 1), PAGE_DEF); // Take out a specific range of articles
+		$loglist_cut = array_slice($loglist, $this->config['PAGE_DEF'] * ($page - 1), $this->config['PAGE_DEF']); // Take out a specific range of articles
 		$loglist_cut_count = count($loglist_cut);
 
 		$dat = '';
 		head($dat);
-		$links = '[<a href="'.PHP_SELF2.'?'.time().'">'._T('return').'</a>] [<a href="'.PHP_SELF.'?mode=category&c='.$category_enc.'&recache=1">'._T('category_recache').'</a>]';
+		$links = '[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>] [<a href="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&recache=1">'._T('category_recache').'</a>]';
 		$level = $AccountIO->valid();
 		$PMS->useModuleMethods('LinksAboveBar', array(&$links,'category',$level));
 		$dat .= "<div>$links</div>\n";
@@ -58,15 +60,15 @@ class mod_SearchCategory extends ModuleHelper {
 		}
 
 		$dat .= '<table id="pager" border="1"><tr>';
-		if($page > 1) $dat .= '<td><form action="'.PHP_SELF.'?mode=category&c='.$category_enc.'&p='.($page - 1).'" method="post"><div><input type="submit" value="'._T('prev_page').'" /></div></form></td>';
+		if($page > 1) $dat .= '<td><form action="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&p='.($page - 1).'" method="post"><div><input type="submit" value="'._T('prev_page').'" /></div></form></td>';
 		else $dat .= '<td nowrap="nowrap">'._T('first_page').'</td>';
 		$dat .= '<td>';
 		for($i = 1; $i <= $page_max ; $i++){
 			if($i==$page) $dat .= "[<b>".$i."</b>] ";
-			else $dat .= '[<a href="'.PHP_SELF.'?mode=category&c='.$category_enc.'&p='.$i.'">'.$i.'</a>] ';
+			else $dat .= '[<a href="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&p='.$i.'">'.$i.'</a>] ';
 		}
 		$dat .= '</td>';
-		if($page < $page_max) $dat .= '<td><form action="'.PHP_SELF.'?mode=category&c='.$category_enc.'&p='.($page + 1).'" method="post"><div><input type="submit" value="'._T('next_page').'" /></div></form></td>';
+		if($page < $page_max) $dat .= '<td><form action="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&p='.($page + 1).'" method="post"><div><input type="submit" value="'._T('next_page').'" /></div></form></td>';
 		else $dat .= '<td nowrap="nowrap">'._T('last_page').'</td>';
 		$dat .= '</tr></table>';
 

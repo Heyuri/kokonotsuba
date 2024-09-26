@@ -9,9 +9,9 @@
  * @since 7th.Release
  */
 
-require ROOTPATH.'lib/interfaces.php';
-require ROOTPATH.'lib/lib_simplelogger.php';
-require ROOTPATH.'lib/lib_loggerinterceptor.php';
+require $config['ROOTPATH'].'lib/interfaces.php';
+require $config['ROOTPATH'].'lib/lib_simplelogger.php';
+require $config['ROOTPATH'].'lib/lib_loggerinterceptor.php';
 
 class PMCLibrary {
 	/**
@@ -20,13 +20,13 @@ class PMCLibrary {
 	 * @return IPIO PIO 函式庫物件
 	 */
 	public static function getPIOInstance() {
-		global $PIOEnv;
+		global $PIOEnv, $config;
 		static $instPIO = null;
 		if ($instPIO == null) {
-			require ROOTPATH.'lib/lib_pio.php';
-			$pioExactClass = 'PIO'.PIXMICAT_BACKEND;
+			require $config['ROOTPATH'].'lib/lib_pio.php';
+			$pioExactClass = 'PIO'.$config['DATABASE_DRIVER'];
 			$instPIO = new LoggerInjector(
-				new $pioExactClass(CONNECTION_STRING, $PIOEnv),
+				new $pioExactClass($config['TITLE'], $PIOEnv),
 				new LoggerInterceptor(PMCLibrary::getLoggerInstance($pioExactClass))
 			);
 		}
@@ -39,13 +39,14 @@ class PMCLibrary {
 	 * @return PTELibrary PTE 函式庫物件
 	 */
 	public static function getPTEInstance() {
+		global $config;
 		static $instPTE = null;
 		if ($instPTE == null) {
-			require ROOTPATH.'lib/lib_pte.php';
+			require $config['ROOTPATH'].'lib/lib_pte.php';
 			if (isset($_GET["res"]))
-				$instPTE = new PTELibrary(ROOTPATH.REPLY_TEMPLATE_FILE);
+				$instPTE = new PTELibrary($config['ROOTPATH'].$config['REPLY_TEMPLATE_FILE']);
 			else
-				$instPTE = new PTELibrary(ROOTPATH.TEMPLATE_FILE);
+				$instPTE = new PTELibrary($config['ROOTPATH'].$config['TEMPLATE_FILE']);
 		}
 		return $instPTE;
 	}
@@ -56,14 +57,14 @@ class PMCLibrary {
 	 * @return PMS PMS 函式庫物件
 	 */
 	public static function getPMSInstance() {
-		global $ModuleList;
+		global $config;
 		static $instPMS = null;
 		if ($instPMS == null) {
-			require ROOTPATH.'lib/lib_pms.php';
+			require $config['ROOTPATH'].'lib/lib_pms.php';
 			$instPMS = new PMS(array( // PMS 環境常數
-				'MODULE.PATH' => ROOTPATH.'module/',
-				'MODULE.PAGE' => PHP_SELF.'?mode=module&amp;load=',
-				'MODULE.LOADLIST' => $ModuleList
+				'MODULE.PATH' => $config['ROOTPATH'].'module/',
+				'MODULE.PAGE' => $config['PHP_SELF'].'?mode=module&amp;load=',
+				'MODULE.LOADLIST' => $config['ModuleList'],
 			));
 		}
 		return $instPMS;
@@ -75,21 +76,22 @@ class PMCLibrary {
 	 * @return IFileIO FileIO 函式庫物件
 	 */
 	public static function getFileIOInstance() {
+		global $config;
 		static $instFileIO = null;
 		if ($instFileIO == null) {
-			require ROOTPATH.'lib/lib_fileio.php';
-			$fileIoExactClass = 'FileIO'.FILEIO_BACKEND;
-			$imgDir = IMG_DIR;
-			$thumbDir = THUMB_DIR;
-			if (defined(CDN_DIR)) {
-				$imgDir = CDN_DIR.$imgDir;
-				$thumbDir = CDN_DIR.$thumbDir;
+			require $config['ROOTPATH'].'lib/lib_fileio.php';
+			$fileIoExactClass = 'FileIO'.$config['FILEIO_BACKEND'];
+			$imgDir = $config['IMG_DIR'];
+			$thumbDir = $config['THUMB_DIR'];
+			if (!empty($config['CDN_DIR'])) {
+				$imgDir = $config['CDN_DIR'].$imgDir;
+				$thumbDir = $config['CDN_DIR'].$thumbDir;
 			}
 			$instFileIO = new $fileIoExactClass(
-                                unserialize(FILEIO_PARAMETER),
+                                unserialize($config['FILEIO_PARAMETER']),
 				array( // FileIO 環境常數
-					'IFS.PATH' => ROOTPATH.'lib/fileio/ifs.php',
-					'IFS.LOG' => STORAGE_PATH.FILEIO_INDEXLOG,
+					'IFS.PATH' => $config['ROOTPATH'].'lib/fileio/ifs.php',
+					'IFS.LOG' => $config['STORAGE_PATH'].$config['FILEIO_INDEXLOG'],
 					'IMG' => $imgDir,
 					'THUMB' => $thumbDir
 				)
@@ -105,9 +107,10 @@ class PMCLibrary {
 	 * @return ILogger Logger 函式庫物件
 	 */
 	public static function getLoggerInstance($name = 'Global') {
+		global $config;
 		static $instLogger = array();
 		if (!array_key_exists($name, $instLogger)) {
-			$instLogger[$name] = new SimpleLogger($name, STORAGE_PATH .'error.log');
+			$instLogger[$name] = new SimpleLogger($name, $config['STORAGE_PATH'] .'error.log');
 		}
 		return $instLogger[$name];
 	}
@@ -118,9 +121,10 @@ class PMCLibrary {
 	 * @return LanguageLoader Language 函式庫物件
 	 */
 	public static function getLanguageInstance() {
+		global $config;
 		static $instLanguage = null;
 		if ($instLanguage == null) {
-			require ROOTPATH.'lib/lib_language.php';
+			require $config['ROOTPATH'].'lib/lib_language.php';
 			$instLanguage = LanguageLoader::getInstance();
 		}
 		return $instLanguage;
@@ -130,9 +134,10 @@ class PMCLibrary {
 	* Get account instance
 	*/
 	public static function getAccountIOInstance() {
+		global $config;
 		static $instAccount = null;
 		if ($instAccount == null) {
-			require ROOTPATH.'lib/accountIO.php';
+			require $config['ROOTPATH'].'lib/accountIO.php';
 			$instAccount = new AccountIO();
 		}
 		return $instAccount;
