@@ -57,12 +57,12 @@ class mod_exif extends ModuleHelper {
 		if($file && $FileIO->imageExists($file)){
 			$pfile=$this->config['IMG_DIR'].'/'.$file;
 			if(function_exists("exif_read_data")) {
-				echo "DEBUG: Using exif_read_data()<br/>";
+				echo "DEBUG: Using exif_read_data()<br>";
 				$exif_data = exif_read_data($pfile, 0, true);
 				//if(isset($exif_data['FILE'])) unset($exif_data['FILE']);
 				//if(isset($exif_data['COMPUTED'])) unset($exif_data['COMPUTED']);
 				if(is_array($exif_data) && count($exif_data)) {
-					echo 'Image contains EXIF data:<br />';
+					echo 'Image contains EXIF data:<br>';
 					echo '</p><table border="1" class="exif"><tbody>';
 					foreach($exif_data as $key=>$section) {
 						foreach($section as $name=>$value) {
@@ -74,10 +74,10 @@ class mod_exif extends ModuleHelper {
 					echo 'No EXIF data found.';
 				}
 			} else {
-				echo "DEBUG: Using built-in exif library<br/>";
+				echo "DEBUG: Using built-in exif library<br>";
 				$exif=new exif($pfile);
 				if(count($exif->exif_data)) {
-					echo 'Image contains EXIF data:<br />';
+					echo 'Image contains EXIF data:<br>';
 					echo '</p><table border="1"><tbody>';
 					foreach($exif->exif_data as $key=>$value) {
 						echo "<tr><th align=\"RIGHT\">$key</th><td>$value</td></tr>";

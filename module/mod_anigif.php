@@ -18,7 +18,7 @@ class mod_anigif extends ModuleHelper {
 	}
 
 	public function autoHookPostFormFile(&$file){
-		$file.= '<nobr>[<label><input type="checkbox" name="anigif" id="anigif" value="on" />Animated GIF</label>]</nobr>';
+		$file.= '<nobr>[<label><input type="checkbox" name="anigif" id="anigif" value="on">Animated GIF</label>]</nobr>';
 	}
 
 	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $isReply, $imgWH, &$status) {

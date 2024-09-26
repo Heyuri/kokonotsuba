@@ -46,7 +46,7 @@ async function getRandomImage() {
     let imgUrl = await getRandomImageUrl();
     if (imgUrl) {
         document.getElementById("bannerContainer").innerHTML = 
-            '<img border="1" src="' + imgUrl + '" id="banner" style="max-width: 300px;" title="Click to change" onclick="change()" />';
+            '<img border="1" src="' + imgUrl + '" id="banner" style="max-width: 300px;" title="Click to change" onclick="change()">';
     } else {
         document.getElementById("bannerContainer").innerHTML = 'No banners available. ;_;';
     }

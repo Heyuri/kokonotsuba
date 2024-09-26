@@ -142,7 +142,7 @@ class mod_pm extends ModuleHelper {
 		$from = str_replace(_T('deletor'), '"'._T('deletor').'"', $from);
 		$from = str_replace('&'._T('trip_pre'), '&amp;'._T('trip_pre'), $from); // Avoid &#xxxx; being treated as Trip left behind & causing parsing errors
 		$mesg = str_replace(',','&#44;',$mesg); // Convert ","
-		$mesg = str_replace("\n",'<br/>',$mesg); //new line breaking
+		$mesg = str_replace("\n",'<br>',$mesg); //new line breaking
 
 		$this->_loadCache();
 
@@ -163,7 +163,7 @@ class mod_pm extends ModuleHelper {
 			foreach($logs as $log) {
 				list($mno,$totrip,$pdate,$from,$topic,$mesg,$ip)=explode(',',trim($log));
 				if($totrip==$tripped) {
-					if(!$dat) $dat=$PTE->ParseBlock('REALSEPARATE',array()).'<form action="'.$this->myPage.'" method="POST"><input type="hidden" name="action" value="delete" /><input type="hidden" name="trip" value="'.$trip.'" />';
+					if(!$dat) $dat=$PTE->ParseBlock('REALSEPARATE',array()).'<form action="'.$this->myPage.'" method="POST"><input type="hidden" name="action" value="delete"><input type="hidden" name="trip" value="'.$trip.'">';
 					$arrLabels = array('{$NO}'=>$mno, '{$SUB}'=>$topic, '{$NAME}'=>$from, '{$NOW}'=>date('Y-m-d H:i:s',$pdate), '{$COM}'=>$mesg, '{$QUOTEBTN}'=>$mno, '{$REPLYBTN}'=>'', '{$IMG_BAR}'=>'', '{$IMG_SRC}'=>'', '{$WARN_OLD}'=>'', '{$WARN_BEKILL}'=>'', '{$WARN_ENDREPLY}'=>'', '{$WARN_HIDEPOST}'=>'', '{$NAME_TEXT}'=>_T('post_name'), '{$RESTO}'=>1);
 					$dat .= $PTE->ParseBlock('THREAD',$arrLabels);
 					$dat .= $PTE->ParseBlock('REALSEPARATE',array());
@@ -171,7 +171,7 @@ class mod_pm extends ModuleHelper {
 			}
 		}
 		if(!$dat) $dat="No information.";
-		else $dat.='<input type="submit" name="delete" value="'._T('del_btn').'" /></form>';
+		else $dat.='<input type="submit" name="delete" value="'._T('del_btn').'"></form>';
 		return $dat;
 	}
 
@@ -215,13 +215,13 @@ class mod_pm extends ModuleHelper {
 			echo '<div class="bar_reply">Send a PM</div>
 <div style="text-align: center;">
 <form id="pmform" action="'.$this->myPage.'" method="POST">
-<input type="hidden" name="action" value="post" />
+<input type="hidden" name="action" value="post">
 <table cellpadding="1" cellspacing="1" id="postform_tbl" style="margin: 0px auto; text-align: left;">
-<tr><td class="Form_bg"><b>From</b></td><td><input type="text" name="from" value="" size="28" />(Trip Password with #)</td></tr>
-<tr><td class="Form_bg"><b>To</b></td><td>'._T('trip_pre').'<input type="text" name="t" value="'.$trip.'" maxlength="10" size="14" /></td></tr>
-<tr><td class="Form_bg"><b>'._T('form_topic').'</b></td><td><input type="text" name="topic" size="28" value="" /></td></tr>
+<tr><td class="Form_bg"><b>From</b></td><td><input type="text" name="from" value="" size="28">(Trip Password with #)</td></tr>
+<tr><td class="Form_bg"><b>To</b></td><td>'._T('trip_pre').'<input type="text" name="t" value="'.$trip.'" maxlength="10" size="14"></td></tr>
+<tr><td class="Form_bg"><b>'._T('form_topic').'</b></td><td><input type="text" name="topic" size="28" value=""></td></tr>
 <tr><td class="Form_bg"><b>'._T('form_comment').'</b></td><td><textarea cols="40" rows="5" name="content"></textarea></td></tr>
-<tr><td colspan="2" align="right"><input type="submit" name="submit" value="'._T('form_submit_btn').'"/></td></tr>
+<tr><td colspan="2" align="right"><input type="submit" name="submit" value="'._T('form_submit_btn').'"></td></tr>
 </table>
 </form>
 </div>
@@ -233,14 +233,14 @@ $g("pmform").from.value=getCookie("namec");
 			echo '<div class="bar_reply">Confirm you want to send this message</div>
 <div style="text-align: center;">
 <form id="pmform" action="'.$this->myPage.'" method="POST">
-<input type="hidden" name="action" value="postverify" />
+<input type="hidden" name="action" value="postverify">
 <table cellpadding="1" cellspacing="1" id="postform_tbl" style="margin: 0px auto; text-align: left;">
 <tr><td colspan="2">Confirm that you want to send this['._T('form_submit_btn').']Submit</td></tr>
-<tr><td class="Form_bg"><b>From</b></td><td><input type="text" name="from" value="'.$_POST['from'].'" size="28" /></td></tr>
-<tr><td class="Form_bg"><b>To</b></td><td>'._T('trip_pre').'<input type="text" name="t" value="'.$_POST['t'].'" maxlength="10" size="14" /></td></tr>
-<tr><td class="Form_bg"><b>'._T('form_topic').'</b></td><td><input type="text" name="topic" size="28" value="'.$_POST['topic'].'" /></td></tr>
+<tr><td class="Form_bg"><b>From</b></td><td><input type="text" name="from" value="'.$_POST['from'].'" size="28"></td></tr>
+<tr><td class="Form_bg"><b>To</b></td><td>'._T('trip_pre').'<input type="text" name="t" value="'.$_POST['t'].'" maxlength="10" size="14"></td></tr>
+<tr><td class="Form_bg"><b>'._T('form_topic').'</b></td><td><input type="text" name="topic" size="28" value="'.$_POST['topic'].'"></td></tr>
 <tr><td class="Form_bg"><b>'._T('form_comment').'</b></td><td><textarea cols="40" rows="5" name="content">'.$_POST['content'].'</textarea></td></tr>
-<tr><td colspan="2" align="right"><input type="submit" name="submit" value="'._T('form_submit_btn').'"/></td></tr>
+<tr><td colspan="2" align="right"><input type="submit" name="submit" value="'._T('form_submit_btn').'"></td></tr>
 </table>
 </form>
 </div>';
@@ -269,8 +269,8 @@ $g("pmform").from.value=getCookie("namec");
 			}
 			echo $this->_latestPM();
 			echo 'Check your inbox by inputting your password below<form id="pmform" action="'.$this->myPage.'" method="POST">
-<input type="hidden" name="action" value="check" />
-<label>Trip:<input type="text" name="trip" value="" size="28" /></label><input type="submit" name="submit" value="'._T('form_submit_btn').'"/>(Trip pass with #)
+<input type="hidden" name="action" value="check">
+<label>Trip:<input type="text" name="trip" value="" size="28"></label><input type="submit" name="submit" value="'._T('form_submit_btn').'">(Trip pass with #)
 </form>
 <script type="text/javascript">
 $g("pmform").trip.value=getCookie("namec").replace(/^[^#]*#/,"#");

@@ -42,8 +42,8 @@ class mod_adminban extends ModuleHelper {
 	max-width: 300px;
 }
 </style>
-<h2>You have been ".($starttime==$expires?'warned':'banned')."! ヽ(ー_ー )ノ</h2><hr />
-<img id=\"banimg\" src=\"".$this->BANIMG."\" alt=\"BANNED!\" align=\"RIGHT\" border=\"1\" />
+<h2>You have been ".($starttime==$expires?'warned':'banned')."! ヽ(ー_ー )ノ</h2><hr>
+<img id=\"banimg\" src=\"".$this->BANIMG."\" alt=\"BANNED!\" align=\"RIGHT\" border=\"1\">
 <p>$reason</p>";
 				if ($_SERVER['REQUEST_TIME']>intval($expires)) {
 					$dat.= 'Now that you have seen this message you can post again.';
@@ -53,7 +53,7 @@ class mod_adminban extends ModuleHelper {
 					$dat.= "Your ban was filed on ".date('Y/m/d \a\t H:i:s', $starttime)." and expires on ".date('Y/m/d \a\t H:i:s', $expires).".";
 				}
 				$dat.= "<br>[<a href='".$this->config['PHP_SELF2']."'>Return</a>]
-				<br clear=\"ALL\" /><hr />";
+				<br clear=\"ALL\"><hr>";
 				foot($dat);
 				die($dat);
 			}
@@ -72,8 +72,8 @@ class mod_adminban extends ModuleHelper {
 	max-width: 300px;
 }
 </style>
-<h2>You have been ".($starttime==$expires?'warned':'banned')."! ヽ(ー_ー )ノ</h2><hr />
-<img id=\"banimg\" src=\"".$this->BANIMG."\" alt=\"BANNED!\" align=\"RIGHT\" border=\"1\" />
+<h2>You have been ".($starttime==$expires?'warned':'banned')."! ヽ(ー_ー )ノ</h2><hr>
+<img id=\"banimg\" src=\"".$this->BANIMG."\" alt=\"BANNED!\" align=\"RIGHT\" border=\"1\">
 <p>$reason</p>";
 				if ($_SERVER['REQUEST_TIME']>intval($expires)) {
 					$dat.= 'Now that you have seen this message you can post again.';
@@ -83,7 +83,7 @@ class mod_adminban extends ModuleHelper {
 					$dat.= "Your ban was filed on ".date('Y/m/d \a\t H:i:s', $starttime)." and expires on ".date('Y/m/d \a\t H:i:s', $expires).".";
 				}
 				$dat.= "<br>[<a href='".$this->config['PHP_SELF2']."'>Return</a>]
-				<br clear=\"ALL\" /><hr />";
+				<br clear=\"ALL\"><hr>";
 				foot($dat);
 				die($dat);
 			}
@@ -140,7 +140,7 @@ class mod_adminban extends ModuleHelper {
 			$dat = '';
 			head($dat);
 			$dat.= '[<a href="'.$this->config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a>]
-<br clear="ALL" />
+<br clear="ALL">
 <script>
 var trolls = Array(
 	"Hatsune Miku is nothing more than an overated normie whore.",
@@ -148,11 +148,11 @@ var trolls = Array(
 	"You\'re imposing on muh freedoms of speech! See you in court, buddy.",
 	"Being gay is okay.",
 	"<span class=\"unkfunc\">&gt;Soooooooooooy</span>",
-	"I know where you live.<br />I watch everything you do.<br />I know everything about you and I am coming!",
-	"Ooooh muh god! Literally can\'t even!<br />I didn\'t even break any of the rules and I was banned?!",
+	"I know where you live.<br>I watch everything you do.<br>I know everything about you and I am coming!",
+	"Ooooh muh god! Literally can\'t even!<br>I didn\'t even break any of the rules and I was banned?!",
 	"Unrestricted access to the internet is a human right.",
-	"get live Child Pizza at http:/jbbait.gov<br />get live Child Pizza at http:/jbbait.gov<br />get live Child Pizza at http:/jbbait.gov<br />get live Child Pizza at http:/jbbait.gov",
-	"<span class=\"unkfunc\">&gt;(USER WAS BANNED FOR THIS POST)<br />&gt;(USER WAS BANNED FOR THIS POST)<br />&gt;(USER WAS BANNED FOR THIS POST)<br />&gt;(USER WAS BANNED FOR THIS POST)<br />&gt;(USER WAS BANNED FOR THIS POST)<br /></span>"
+	"get live Child Pizza at http:/jbbait.gov<br>get live Child Pizza at http:/jbbait.gov<br>get live Child Pizza at http:/jbbait.gov<br>get live Child Pizza at http:/jbbait.gov",
+	"<span class=\"unkfunc\">&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br></span>"
 );
 var troll = trolls[Math.floor(Math.random()*trolls.length)];
 
@@ -164,7 +164,7 @@ function updatepview(event=null) {
 
 window.onload = function () {
 	var msg = document.getElementById("banmsg");
-	msg.insertAdjacentHTML("afterend", \'<br />Preview:<br /><table><tbody><tr><td class="reply"><blockquote id="msgpview"></blockquote></td></tr></tbody></table>\');
+	msg.insertAdjacentHTML("afterend", \'<br>Preview:<br><table><tbody><tr><td class="reply"><blockquote id="msgpview"></blockquote></td></tr></tbody></table>\');
 	msg.oninput = updatepview;
 	updatepview();
 }
@@ -193,16 +193,16 @@ fieldset {
 </style>
 <fieldset class="menu"><legend>Ban User</legend>
 	<form action="'.$this->config['PHP_SELF'].'" method="POST">
-		<input type="hidden" name="mode" value="module" />
-		<input type="hidden" name="load" value="mod_adminban" />
-		<label>Global?<input type="checkbox" name="global" /></label> <small>(Check this box if you want to rangeban)</small><br />
-		<label>IP Addr:<input type="text" name="ip" value="'.($_GET['ip']??'').'" /></label> <small>(Leave blank to use poster IP)</small><br />
-		<label>Expires (ex. 1w2d3h4min):<input type="text" id="days" name="duration" value="1d" /></label> <small>[Set to 0 (zero) or leave blank for warning]</small><br />
-		<label>Private Message:<br />
-			<textarea name="privmsg" cols="80" rows="6">No reason given.</textarea></label><br />
+		<input type="hidden" name="mode" value="module">
+		<input type="hidden" name="load" value="mod_adminban">
+		<label>Global?<input type="checkbox" name="global"></label> <small>(Check this box if you want to rangeban)</small><br>
+		<label>IP Addr:<input type="text" name="ip" value="'.($_GET['ip']??'').'"></label> <small>(Leave blank to use poster IP)</small><br>
+		<label>Expires (ex. 1w2d3h4min):<input type="text" id="days" name="duration" value="1d"></label> <small>[Set to 0 (zero) or leave blank for warning]</small><br>
+		<label>Private Message:<br>
+			<textarea name="privmsg" cols="80" rows="6">No reason given.</textarea></label><br>
 		<details'.($_GET['no']??0 ? ' open="open"' : '').'><summary>Public message</summary><blockquote>
-			<label>Post No.<input type="number" name="no" min="0" value="'.($_GET['no']??'0').'" /></label><br />
-			<textarea id="banmsg" name="msg" cols="80" rows="6"><br /><br /><b class="warning">(USER WAS BANNED FOR THIS POST)</b> <img style= "vertical-align: baseline;" src="'.$this->config['STATIC_URL'].'image/hammer.gif">
+			<label>Post No.<input type="number" name="no" min="0" value="'.($_GET['no']??'0').'"></label><br>
+			<textarea id="banmsg" name="msg" cols="80" rows="6"><br><br><b class="warning">(USER WAS BANNED FOR THIS POST)</b> <img style= "vertical-align: baseline;" src="'.$this->config['STATIC_URL'].'image/hammer.gif">
 </textarea>
 		</blockquote></details>
 		<center><button type="submit" id="bigredbutton">BAN!</button></center>
@@ -211,8 +211,8 @@ fieldset {
 			$unban = $_GET['unban']??'';
 			if ($unban) $dat.= '<p class="warning">The user\'s IP is selected, please click [Revoke] to confirm.</p>';
 			$dat.= '<form action="'.$this->config['PHP_SELF'].'" method="POST">
-	<input type="hidden" name="mode" value="module" />
-	<input type="hidden" name="load" value="mod_adminban" />
+	<input type="hidden" name="mode" value="module">
+	<input type="hidden" name="load" value="mod_adminban">
 	<table class="postlists" width="800">
 		<thead>
 			<tr><th width="1">Del</th><th>Pattern</th><th>Start Time</th><th>Expires</th><th>Reason</th><tr>
@@ -224,7 +224,7 @@ fieldset {
 				for ($i=0; $i<count($log); $i++) {
 					list($ip, $starttime, $expires, $reason) = explode(',', $log[$i], 4);
 					$dat.= '<tr>
-<td align="CENTER"><input type="checkbox" id="del'.$i.'" name="del'.$i.'"'.($unban==$log[$i]?' checked="checked"':'').' value="on" /></td>
+<td align="CENTER"><input type="checkbox" id="del'.$i.'" name="del'.$i.'"'.($unban==$log[$i]?' checked="checked"':'').' value="on"></td>
 <td><label for="del'.$i.'">'.$ip.'</label></td>
 <td>'.date('Y/m/d H:i:s', $starttime).'</td>
 <td>'.date('Y/m/d H:i:s', $expires).'</td>
@@ -241,7 +241,7 @@ fieldset {
 				for ($i=0; $i<count($log); $i++) {
 					list($ip, $starttime, $expires, $reason) = explode(',', $log[$i], 4);
 					$dat.= '<tr>
-<td align="CENTER"><input type="checkbox" id="delg'.$i.'" name="delg'.$i.'"'.($unban==$log[$i]?' checked="checked"':'').' value="on" /></td>
+<td align="CENTER"><input type="checkbox" id="delg'.$i.'" name="delg'.$i.'"'.($unban==$log[$i]?' checked="checked"':'').' value="on"></td>
 <td><label for="delg'.$i.'">'.$ip.'</label></td>
 <td>'.date('Y/m/d H:i:s', $starttime).'</td>
 <td>'.date('Y/m/d H:i:s', $expires).'</td>
@@ -249,7 +249,7 @@ fieldset {
 				}
 			}
 
-			$dat.= '</tbody></table><button type="submit">Revoke</button></form><hr />';
+			$dat.= '</tbody></table><button type="submit">Revoke</button></form><hr>';
 
 			foot($dat);
 			echo $dat;

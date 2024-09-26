@@ -104,7 +104,7 @@ const kkupdate = { name: "KK Thread Updating",
 	},
 	sett: function (tab, div) { if (tab!="general") return;
 		div.innerHTML+= `
-			<label><input type="checkbox" onchange="localStorage.setItem('update',this.checked);kkupdate.reset();kkupdate.startup();"`+(localStorage.getItem("update")=="true"?'checked="checked"':'')+` />Thread updater</label>
+			<label><input type="checkbox" onchange="localStorage.setItem('update',this.checked);kkupdate.reset();kkupdate.startup();"`+(localStorage.getItem("update")=="true"?'checked="checked"':'')+`>Thread updater</label>
 			`;
 	}
 };

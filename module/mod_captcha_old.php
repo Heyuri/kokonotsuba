@@ -29,7 +29,7 @@ class mod_captcha extends ModuleHelper {
 			'ja_JP' => array(
 				'modcaptcha_captcha' => '画像認証',
 				'modcaptcha_reload' => 'リロード',
-				'modcaptcha_enterword' => '<br /><small>(画像に表示されている文字を入力してください。大文字と小文字は区別されません。)</small>',
+				'modcaptcha_enterword' => '<br><small>(画像に表示されている文字を入力してください。大文字と小文字は区別されません。)</small>',
 				'modcaptcha_captcha_alt' => 'CAPTCHA画像',
 				'modcaptcha_worderror' => '画像認証に失敗しました!'
 			),
@@ -62,8 +62,8 @@ class mod_captcha extends ModuleHelper {
 
 	/* Attach CAPTCHA image and function to page */
 	public function autoHookPostForm(&$form){
-		if ($this->ALT_POSTAREA) $form .= '<tr class="captchaarea"><td valign="TOP"><label for="captchacode">Captcha:</label></td><td><img src="'.$this->mypage.'" alt="'._T('modcaptcha_captcha_alt').'" id="chaimg" /><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&\';})();">'.$this->_T('modcaptcha_reload').'</a>]</small><br /><input tabindex="7" type="text" id="captchacode" name="captchacode" autocomplete="off" class="inputtext" />'.$this->_T('modcaptcha_enterword').'</td></tr>';
-		else $form .= '<tr><td class="postblock"><b><label for="captchacode">Captcha</label></b></td><td><img src="'.$this->mypage.'" alt="'._T('modcaptcha_captcha_alt').'" id="chaimg" /><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&\';})();">'.$this->_T('modcaptcha_reload').'</a>]</small><br /><input tabindex="7" type="text" id="captchacode" name="captchacode" autocomplete="off" class="inputtext" />'.$this->_T('modcaptcha_enterword').'</td></tr>';
+		if ($this->ALT_POSTAREA) $form .= '<tr class="captchaarea"><td valign="TOP"><label for="captchacode">Captcha:</label></td><td><img src="'.$this->mypage.'" alt="'._T('modcaptcha_captcha_alt').'" id="chaimg"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&\';})();">'.$this->_T('modcaptcha_reload').'</a>]</small><br><input tabindex="7" type="text" id="captchacode" name="captchacode" autocomplete="off" class="inputtext">'.$this->_T('modcaptcha_enterword').'</td></tr>';
+		else $form .= '<tr><td class="postblock"><b><label for="captchacode">Captcha</label></b></td><td><img src="'.$this->mypage.'" alt="'._T('modcaptcha_captcha_alt').'" id="chaimg"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&\';})();">'.$this->_T('modcaptcha_reload').'</a>]</small><br><input tabindex="7" type="text" id="captchacode" name="captchacode" autocomplete="off" class="inputtext">'.$this->_T('modcaptcha_enterword').'</td></tr>';
 	}
 
 	/* Check whether the light and dark codes meet the requirements immediately after receiving the request */

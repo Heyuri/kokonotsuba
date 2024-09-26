@@ -2,7 +2,7 @@
 //post lib
 
 function applyRoll(&$com, &$email){
-	$com = "$com<br/><br/><font color='#ff0000'><b>[NUMBER: ".rand(1,10000)."]</b></font>";
+	$com = "$com<br><br><font color='#ff0000'><b>[NUMBER: ".rand(1,10000)."]</b></font>";
 	$email = preg_replace('/^roll( *)/i', '');
 }
 
@@ -13,7 +13,7 @@ function applyFortune(&$com, &$email){
 		127+127*sin(2*M_PI*$fortunenum/count($config['FORTUNES'])),
 		127+127*sin(2*M_PI*$fortunenum/count($config['FORTUNES'])+2/3*M_PI),
 		127+127*sin(2*M_PI*$fortunenum/count($config['FORTUNES'])+4/3*M_PI));
-	$com = "$com<br /><br /><font color=\"#$fortcol\"><b>Your fortune: ".$config['FORTUNES'][$fortunenum]."</b></font>";
+	$com = "$com<br><br><font color=\"#$fortcol\"><b>Your fortune: ".$config['FORTUNES'][$fortunenum]."</b></font>";
 }
 
 function cleanComment(&$com, &$upfile_status, &$is_admin, &$dest){
@@ -30,7 +30,7 @@ function cleanComment(&$com, &$upfile_status, &$is_admin, &$dest){
     $com = preg_replace("/\n((　| )*\n){3,}/", "\n", $com);
  
     if(!$config['BR_CHECK'] || substr_count($com,"\n") < $config['BR_CHECK']){
-        $com = nl2br($com); // Newline characters are replaced by <br />
+        $com = nl2br($com); // Newline characters are replaced by <br>
     }
     $com = str_replace("\n", '', $com); // If there are still \n newline characters, cancel the newline
 }

@@ -77,40 +77,40 @@ function form(&$dat, $resno, $name='', $mail='', $sub='', $com='', $cat='', $pre
 	$PMS = PMCLibrary::getPMSInstance();
 
 	$hidinput =
-		($resno ? '<input type="hidden" name="resto" value="'.$resno.'" />' : '').
-		($config['TEXTBOARD_ONLY'] ? '' : '<input type="hidden" name="MAX_FILE_SIZE" value="{$MAX_FILE_SIZE}" />');
+		($resno ? '<input type="hidden" name="resto" value="'.$resno.'">' : '').
+		($config['TEXTBOARD_ONLY'] ? '' : '<input type="hidden" name="MAX_FILE_SIZE" value="{$MAX_FILE_SIZE}">');
 
 	$pte_vals = array(
 		'{$RESTO}' => strval($resno),
 		'{$IS_THREAD}' => $resno!=0,
 		'{$FORM_HIDDEN}' => $hidinput,
 		'{$MAX_FILE_SIZE}' => strval($config['TEXTBOARD_ONLY'] ? 0 : $config['MAX_KB'] * 1024),
-		'{$FORM_NAME_FIELD}' => '<input tabindex="1" maxlength="'.$config['INPUT_MAX'].'" type="text" name="name" id="name" size="28" value="'.$name.'" class="inputtext" />',
-		'{$FORM_EMAIL_FIELD}' => '<input tabindex="2" maxlength="'.$config['INPUT_MAX'].'" type="text" name="email" id="email" size="28" value="'.$mail.'" class="inputtext" />',
-		'{$FORM_TOPIC_FIELD}' => '<input tabindex="3" maxlength="'.$config['INPUT_MAX'].'"  type="text" name="sub" id="sub" size="28" value="'.$sub.'" class="inputtext" />',
+		'{$FORM_NAME_FIELD}' => '<input tabindex="1" maxlength="'.$config['INPUT_MAX'].'" type="text" name="name" id="name" size="28" value="'.$name.'" class="inputtext">',
+		'{$FORM_EMAIL_FIELD}' => '<input tabindex="2" maxlength="'.$config['INPUT_MAX'].'" type="text" name="email" id="email" size="28" value="'.$mail.'" class="inputtext">',
+		'{$FORM_TOPIC_FIELD}' => '<input tabindex="3" maxlength="'.$config['INPUT_MAX'].'"  type="text" name="sub" id="sub" size="28" value="'.$sub.'" class="inputtext">',
 		'{$FORM_SUBMIT}' => '<button tabindex="10" type="submit" name="mode" value="regist">'.($resno ? 'Post' : 'New Thread' ).'</button>',
 		'{$FORM_COMMENT_FIELD}' => '<textarea tabindex="6" maxlength="'.$config['COMM_MAX'].'" name="com" id="com" cols="48" rows="4" class="inputtext">'.$com.'</textarea>',
-		'{$FORM_DELETE_PASSWORD_FIELD}' => '<input tabindex="6" type="password" name="pwd" id="pwd" size="8" maxlength="8" value="" class="inputtext" />',
+		'{$FORM_DELETE_PASSWORD_FIELD}' => '<input tabindex="6" type="password" name="pwd" id="pwd" size="8" maxlength="8" value="" class="inputtext">',
 		'{$FORM_EXTRA_COLUMN}' => '',
 		'{$FORM_FILE_EXTRA_FIELD}' => '',
 		'{$FORM_NOTICE}' => ($config['TEXTBOARD_ONLY'] ? '' :_T('form_notice',str_replace('|',', ',$config['ALLOW_UPLOAD_EXT']),$config['MAX_KB'],($resno ? $config['MAX_RW'] : $config['MAX_W']),($resno ? $config['MAX_RH'] : $config['MAX_H']))),
 		'{$HOOKPOSTINFO}' => '');
 	if(!$config['TEXTBOARD_ONLY'] && ($config['RESIMG'] || !$resno)){
-		if(isset($_FILES['upfile']['error']) && $_FILES['upfile']['error']!=UPLOAD_ERR_NO_FILE) $w = ($preview?'<small class="warning"><b>Please enter the file again:</b></small><br />':'');
+		if(isset($_FILES['upfile']['error']) && $_FILES['upfile']['error']!=UPLOAD_ERR_NO_FILE) $w = ($preview?'<small class="warning"><b>Please enter the file again:</b></small><br>':'');
 		else $w = '';
-		$pte_vals += array('{$FORM_ATTECHMENT_FIELD}' => $w.'<input type="file" name="upfile" id="upfile" />');
+		$pte_vals += array('{$FORM_ATTECHMENT_FIELD}' => $w.'<input type="file" name="upfile" id="upfile">');
 
 		if (!$resno) {
-			$pte_vals += array('{$FORM_NOATTECHMENT_FIELD}' => '<input type="checkbox" name="noimg" id="noimg" value="on" />');
+			$pte_vals += array('{$FORM_NOATTECHMENT_FIELD}' => '<input type="checkbox" name="noimg" id="noimg" value="on">');
 		}
 		if($config['USE_UPSERIES']) { // 啟動連貼機能
-			$pte_vals['{$FORM_CONTPOST_FIELD}'] = '<input type="checkbox" name="up_series" id="up_series" value="on"'.((isset($_GET["upseries"]) && $resno)?' checked="checked"':'').' />';
+			$pte_vals['{$FORM_CONTPOST_FIELD}'] = '<input type="checkbox" name="up_series" id="up_series" value="on"'.((isset($_GET["upseries"]) && $resno)?' checked="checked"':'').'>';
 		}
 		$PMS->useModuleMethods('PostFormFile', array(&$pte_vals['{$FORM_FILE_EXTRA_FIELD}']));
 	}
 	$PMS->useModuleMethods('PostForm', array(&$pte_vals['{$FORM_EXTRA_COLUMN}'])); // "PostForm" Hook Point
 	if($config['USE_CATEGORY']) {
-		$pte_vals += array('{$FORM_CATEGORY_FIELD}' => '<input tabindex="5" type="text" name="category" id="category" size="28" value="'.$cat.'" class="inputtext" />');
+		$pte_vals += array('{$FORM_CATEGORY_FIELD}' => '<input tabindex="5" type="text" name="category" id="category" size="28" value="'.$cat.'" class="inputtext">');
 	}
 	if($config['STORAGE_LIMIT']) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',total_size(),$config['STORAGE_MAX']);
 	$PMS->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
@@ -139,9 +139,9 @@ function redirect($to, $time=0, $verbose=false) {
 		$tojs = $to==($_SERVER['HTTP_REFERER']??'') ? 'history.go(-1);' : "location.href=\"$to\"";
 		echo '<!DOCTYPE html>
 	<html><head>
-		<meta charset="utf-8" />
+		<meta charset="utf-8">
 		<title>Redirecting...</title>
-		<meta http-equiv="refresh" content="0;URL='.$to.'" />
+		<meta http-equiv="refresh" content="0;URL='.$to.'">
 		<script>
 	setTimeout(function(){'.$tojs.'}, '.$time.'*1000);
 		</script>
@@ -183,13 +183,13 @@ function auto_link_callback($matches){
 function auto_link($proto){
 	$proto = preg_replace('|<br\s*/?>|',"\n",$proto);
 	$proto = preg_replace_callback('/(>|^)([^<]+?)(<.*?>|$)/m','auto_link_callback',$proto);
-	return str_replace("\n",'<br />',$proto);
+	return str_replace("\n",'<br>',$proto);
 }
 
 /* 引用標註 */
 function quote_unkfunc($comment){
-	$comment = preg_replace('/(^|<br \/>)((?:&gt;|＞).*?)(?=<br \/>|$)/ui', '$1<span class="unkfunc">$2</span>', $comment);
-	$comment = preg_replace('/(^|<br \/>)((?:&lt;).*?)(?=<br \/>|$)/ui', '$1<span class="unkfunc2">$2</span>', $comment);
+	$comment = preg_replace('/(^|<br>)((?:&gt;|＞).*?)(?=<br>|$)/ui', '$1<span class="unkfunc">$2</span>', $comment);
+	$comment = preg_replace('/(^|<br>)((?:&lt;).*?)(?=<br>|$)/ui', '$1<span class="unkfunc2">$2</span>', $comment);
 	return $comment;
 }
 

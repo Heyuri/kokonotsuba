@@ -204,13 +204,13 @@ function checkall(){
 				$rescount = '<span class="warning">'.$rescount.'</span>';
 			}
 			$dat .= '<tr>'.
-				($this->SHOW_FORM ? '<td align="CENTER"><input type="checkbox" name="'.$no.'" value="delete" /></td>' : '').
+				($this->SHOW_FORM ? '<td align="CENTER"><input type="checkbox" name="'.$no.'" value="delete"></td>' : '').
 				'<td align="CENTER"><a href="'.$this->config['PHP_SELF'].'?res='.$no.'">'.$no.'</a></td><td><big class="title"><b>'.( $sub ? $sub : 'No Title' ).
 				'</b></big></td><td><span class="name">'.$name.'</span></td><td align="CENTER">'.$rescount.'</td><td>'.$now.'</td></tr>';
 		}
 
 		$dat .= '</tbody></table>
-<hr />
+<hr>
 <table border="1" align="LEFT" id="pager"><tr>
 ';
 		if ($page) {
@@ -231,16 +231,16 @@ function checkall(){
 		else $dat .= '<td nowrap="nowrap">'._T('last_page').'</td>';
 		$dat .= '</tr></table>';
 		if ($this->SHOW_FORM) {
-			$pte_vals = array('{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel" />'._T('del_head'),
-				'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on" />',
+			$pte_vals = array('{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel">'._T('del_head'),
+				'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 				'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
 				'{$DEL_PASS_TEXT}' => _T('del_pass'),
-				'{$DEL_PASS_FIELD}' => '<input type="password" name="pwd" size="8" value="" />',
-				'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'" />');
+				'{$DEL_PASS_FIELD}' => '<input type="password" name="pwd" size="8" value="">',
+				'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'">');
 			$dat .= PMCLibrary::getPTEInstance()->ParseBlock('DELFORM', $pte_vals).'</form>';
 		}
 
-		$dat .= '</div><br clear="both" />';
+		$dat .= '</div><br clear="both">';
 		foot($dat);
 		echo $dat;
 	}

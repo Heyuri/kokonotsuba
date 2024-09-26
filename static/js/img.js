@@ -102,14 +102,14 @@ const kkgal = {
 		var df = $id("delform");
 		if (!df) return;
 		if (document.querySelector("#galfuncs")) return;
-		df.insertAdjacentHTML("beforebegin", '<div align="RIGHT" id="galfuncs"><label><input type="checkbox" onchange="localStorage.setItem(\'galmode\',this.checked);"'+( localStorage.getItem("galmode")=="true" ? ' checked="checked"' : '')+' />Gallery mode</label></div>');
+		df.insertAdjacentHTML("beforebegin", '<div align="RIGHT" id="galfuncs"><label><input type="checkbox" onchange="localStorage.setItem(\'galmode\',this.checked);"'+( localStorage.getItem("galmode")=="true" ? ' checked="checked"' : '')+'>Gallery mode</label></div>');
 		$doc.body.insertAdjacentHTML("beforeend", `
 <div id="galframe">
 	<table id="galmain" cellspacing="0" cellpadding="5" height="100%"><tbody>
 		<tr><td align="CENTER" valign="CENTER" id="galimgcontainer">
 			<a href="" id="galimgprev"></a>
 			<a href="" id="galimgnext"></a>
-			<img src="" alt="Gallery Image" id="galimg" />
+			<img src="" alt="Gallery Image" id="galimg">
 		</td></tr>
 		<tr><td id="galctrl" valign="CENTER">
 			<nobr id="galctrl2"><a href="javascript:kkgal.contract();" title="close">&times;</a></nobr>
@@ -128,7 +128,7 @@ const kkgal = {
 			var a = kkimg.postimg[i].parentNode;
 			var pno = a.parentNode.id.substr(1);
 
-			sideInnerHTML += '<a href="javascript:kkgal.expand(\''+pno+'\');"><img id="galthumb'+pno+'" class="" src="'+kkimg.postimg[i].src+'" alt="" border="1" width="100%" /></a>';
+			sideInnerHTML += '<a href="javascript:kkgal.expand(\''+pno+'\');"><img id="galthumb'+pno+'" class="" src="'+kkimg.postimg[i].src+'" alt="" border="1" width="100%"></a>';
 			kkgal.imgindex[i] = pno;
 		}
 		side.insertAdjacentHTML("beforeend", sideInnerHTML);
@@ -246,7 +246,7 @@ const kkimg = { name: "KK Image Features",
 			a.addEventListener("mouseover", kkimg._evhover1);
 			a.addEventListener("mouseout", kkimg._evhover2);
 		}
-		$doc.body.insertAdjacentHTML('beforeend', '<img id="hoverimg" src="" alt="Full Image" onerror="this.style.display=\'\';" onload="this.style.display=\'inline-block\';" border="1" />');
+		$doc.body.insertAdjacentHTML('beforeend', '<img id="hoverimg" src="" alt="Full Image" onerror="this.style.display=\'\';" onload="this.style.display=\'inline-block\';" border="1">');
 		kkgal.startup();
 		return true;
 	},
@@ -268,9 +268,9 @@ const kkimg = { name: "KK Image Features",
 	},
 	sett: function(tab, div) { if (tab!="general") return;
 		div.innerHTML+= `
-			<label><input type="checkbox" onchange="localStorage.setItem('imgexpand',this.checked);kkimg.reset();kkimg.startup();"`+(localStorage.getItem("imgexpand")=="true"?'checked="checked"':'')+` />Inline image expansion</label>
-			<label><input type="checkbox" onchange="localStorage.setItem('imghover',this.checked);$id('hoverimg').src='';"`+(localStorage.getItem("imghover")=="true"?'checked="checked"':'')+` />Image hover</label>
-			<label><input type="checkbox" onchange="localStorage.setItem('galmode',this.checked);kkgal.reset();kkgal.startup();"`+(localStorage.getItem("galmode")=="true"?'checked="checked"':'')+` />Gallery mode</label>`;
+			<label><input type="checkbox" onchange="localStorage.setItem('imgexpand',this.checked);kkimg.reset();kkimg.startup();"`+(localStorage.getItem("imgexpand")=="true"?'checked="checked"':'')+`>Inline image expansion</label>
+			<label><input type="checkbox" onchange="localStorage.setItem('imghover',this.checked);$id('hoverimg').src='';"`+(localStorage.getItem("imghover")=="true"?'checked="checked"':'')+`>Image hover</label>
+			<label><input type="checkbox" onchange="localStorage.setItem('galmode',this.checked);kkgal.reset();kkgal.startup();"`+(localStorage.getItem("galmode")=="true"?'checked="checked"':'')+`>Gallery mode</label>`;
 	},
 	/* - */
 	postimg: null,
@@ -310,7 +310,7 @@ const kkimg = { name: "KK Image Features",
 		if (kkimg.imgext.includes(ext)) {
 			a.insertAdjacentHTML("afterend", '<div class="expand">'+
 			'<a href="'+a.href+'" onclick="event.preventDefault();kkimg.contract(\''+no+'\');">'+
-				'<img src="'+a.href+'" alt="Full image" onerror="kkimg.error(\''+no+'\');" class="expandimg" title="Click to contract" border="0" />'+
+				'<img src="'+a.href+'" alt="Full image" onerror="kkimg.error(\''+no+'\');" class="expandimg" title="Click to contract" border="0">'+
 			'</a></div>');
 			return true;
 		} else if (kkimg.vidext.includes(ext)) {

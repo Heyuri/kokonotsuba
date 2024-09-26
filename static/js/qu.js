@@ -91,7 +91,7 @@ const kkqu = { name: "KK Quote",
 
 	/* Settings */
 	sett: function (tab, div) { if (tab!="general") return;
- 		div.innerHTML+= '<label><input type="checkbox" onchange="localStorage.setItem(\'quotetooltip\',this.checked);location.reload();"'+(localStorage.getItem("quotetooltip")=="true"?'checked="checked"':'')+' />Quote tooltip</label>';
+ 		div.innerHTML+= '<label><input type="checkbox" onchange="localStorage.setItem(\'quotetooltip\',this.checked);location.reload();"'+(localStorage.getItem("quotetooltip")=="true"?'checked="checked"':'')+'>Quote tooltip</label>';
 	},
 	/* Function */
 	quote: function (no) {

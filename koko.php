@@ -43,12 +43,12 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 	$kill_sensor = $old_sensor = false; // Predictive system start flag
 	$arr_kill = $arr_old = array(); // Obsolete numbered array
 	$pte_vals = array('{$THREADFRONT}'=>'','{$THREADREAR}'=>'','{$SELF}'=>$config['PHP_SELF'],
-		'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel" />'._T('del_head'),
-		'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on" />',
+		'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel">'._T('del_head'),
+		'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 		'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
-		'{$DEL_PASS_TEXT}' => ($adminMode ? '<input type="hidden" name="func" value="delete" />' : '')._T('del_pass'),
-		'{$DEL_PASS_FIELD}' => '<input type="password" name="pwd" size="8" value="" />',
-		'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'" />',
+		'{$DEL_PASS_TEXT}' => ($adminMode ? '<input type="hidden" name="func" value="delete">' : '')._T('del_pass'),
+		'{$DEL_PASS_FIELD}' => '<input type="password" name="pwd" size="8" value="">',
+		'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'">',
 		'{$IS_THREAD}' => !!$resno);
 	if($resno) $pte_vals['{$RESTO}'] = $resno;
 
@@ -193,7 +193,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 					if($adminMode || ($config['STATIC_HTML_UNTIL'] != -1) && ($prev > $config['STATIC_HTML_UNTIL'])) $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$config['PHP_SELF'].'?pagenum='.$prev.'" method="post">';
 					else $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$prev.$config['PHP_EXT'].'" method="get">';
 				}
-				$pte_vals['{$PAGENAV}'] .= '<div><input type="submit" value="'._T('prev_page').'" /></div></form></td>';
+				$pte_vals['{$PAGENAV}'] .= '<div><input type="submit" value="'._T('prev_page').'"></div></form></td>';
 			}else $pte_vals['{$PAGENAV}'] .= '<td nowrap="nowrap">'._T('first_page').'</td>';
 			$pte_vals['{$PAGENAV}'] .= '<td>';
 			for($i = 0, $len = $threads_count / $config['PAGE_DEF']; $i <= $len; $i++){
@@ -209,7 +209,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 			if($threads_count > $next * $config['PAGE_DEF']){
 				if($adminMode || ($config['STATIC_HTML_UNTIL'] != -1) && ($next > $config['STATIC_HTML_UNTIL'])) $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$config['PHP_SELF'].'?pagenum='.$next.'" method="post">';
 				else $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$next.$config['PHP_EXT'].'" method="get">';
-				$pte_vals['{$PAGENAV}'] .= '<div><input type="submit" value="'._T('next_page').'" /></div></form></td>';
+				$pte_vals['{$PAGENAV}'] .= '<div><input type="submit" value="'._T('next_page').'"></div></form></td>';
 			}else $pte_vals['{$PAGENAV}'] .= '<td nowrap="nowrap">'._T('last_page').'</td>';
 			$pte_vals['{$PAGENAV}'] .= '</tr></tbody></table>';
 		}
@@ -217,7 +217,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 		foot($dat,$resno);
 		// Remove any preset form values (DO NOT CACHE PRIVATE DETAILS!!!)
 		$dat = preg_replace('/id="com" cols="48" rows="4" class="inputtext">(.*)<\/textarea>/','id="com" cols="48" rows="4" class="inputtext"></textarea>',$dat);
-		$dat = preg_replace('/name="email" id="email" size="28" value="(.*)" class="inputtext" \/>/','name="email" id="email" size="28" value="" class="inputtext" />',$dat);
+		$dat = preg_replace('/name="email" id="email" size="28" value="(.*)" class="inputtext">/','name="email" id="email" size="28" value="" class="inputtext">',$dat);
 		$dat = preg_replace('/replyhl/','',$dat);
 		// Minify
 		if($config['MINIFY_HTML']){
@@ -311,15 +311,15 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
  			$truncatedJS = str_replace('&#039;', '\&#039;', $truncated);
 			$imageURL = $FileIO->getImageURL($tim.$ext); // image URL
 			$thumbName = $FileIO->resolveThumbName($tim); // thumb Name
-			$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$config['STATIC_URL'].'image/nothumb.gif" class="postimg" alt="'.$imgsize.'" hspace="20" vspace="3" border="0" align="left" /></a>'; // Default display style (when no preview image)
+			$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$config['STATIC_URL'].'image/nothumb.gif" class="postimg" alt="'.$imgsize.'" hspace="20" vspace="3" border="0" align="left"></a>'; // Default display style (when no preview image)
 			if($tw && $th){
 				if ($thumbName != false){ // There is a preview image
 					$thumbURL = $FileIO->getImageURL($thumbName); // thumb URL
 //					$img_thumb = '<small>'._T('img_sample').'</small>';
-					$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$thumbURL.'" width="'.$tw.'" height="'.$th.'" class="postimg" alt="'.$imgsize.'" title="Click to show full image" hspace="20" vspace="3" border="0" align="left" /></a>';
+					$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$thumbURL.'" width="'.$tw.'" height="'.$th.'" class="postimg" alt="'.$imgsize.'" title="Click to show full image" hspace="20" vspace="3" border="0" align="left"></a>';
 				}
 			} else if ($ext = "swf") {
-				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$config['SWF_THUMB'].'" class="postimg" alt="SWF Embed" hspace="20" vspace="3" border="0" align="left" /></a>'; // Default display style (when no preview image)
+				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$config['SWF_THUMB'].'" class="postimg" alt="SWF Embed" hspace="20" vspace="3" border="0" align="left"></a>'; // Default display style (when no preview image)
 			} else $imgsrc = '';
 			if($config['SHOW_IMGWH'] && ($imgw || $imgh)) $imgwh_bar = ', '.$imgw.'x'.$imgh; // Displays the original length and width dimensions of the attached image file
 			$IMG_BAR = _T('img_filename').'<a href="'.$imageURL.'" target="_blank" rel="nofollow" onmouseover="this.textContent=\''.$fnameJS.'\';" onmouseout="this.textContent=\''.$truncatedJS.'\'"> '.$truncated.'</a> <a href="'.$imageURL.'" download="'.$fname.'"><div class="download"></div></a> <small>('.$imgsize.$imgwh_bar.')</small> '.$img_thumb;
@@ -349,10 +349,10 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 		}
 
 		// Set thread properties
-		if($config['STORAGE_LIMIT'] && $kill_sensor) if(isset($arr_kill[$no])) $WARN_BEKILL = '<span class="warning">'._T('warn_sizelimit').'</span><br />'; // Predict to delete too large files
+		if($config['STORAGE_LIMIT'] && $kill_sensor) if(isset($arr_kill[$no])) $WARN_BEKILL = '<span class="warning">'._T('warn_sizelimit').'</span><br>'; // Predict to delete too large files
 		if(!$i){ // 首篇 Only
 			$flgh = $PIO->getPostStatus($status);
-			if($hiddenReply) $WARN_HIDEPOST = '<span class="omittedposts">'._T('notice_omitted',$hiddenReply).'</span><br />'; // There is a hidden response
+			if($hiddenReply) $WARN_HIDEPOST = '<span class="omittedposts">'._T('notice_omitted',$hiddenReply).'</span><br>'; // There is a hidden response
 		}
 		// Automatically link category labels
 		if($config['USE_CATEGORY']){
@@ -457,7 +457,7 @@ function regist($preview=false){
     }
     
     if($up_incomplete){
-        $com .= '<br /><br /><span class="warning">'._T('notice_incompletefile').'</span>'; // Tips for uploading incomplete additional image files
+        $com .= '<br><br><span class="warning">'._T('notice_incompletefile').'</span>'; // Tips for uploading incomplete additional image files
     }
  
     // Password and time style
@@ -634,12 +634,12 @@ function listModules(){
 	/* Module Loaded */
 	$dat .= _T('module_loaded').'<ul>';
 	foreach($PMS->getLoadedModules() as $m) $dat .= '<li>'.$m."</li>\n";
-	$dat .= "</ul><hr size='1' />\n";
+	$dat .= "</ul><hr size='1'>\n";
 
 	/* Module Infomation */
 	$dat .= _T('module_info').'<ul>';
 	foreach($PMS->moduleInstance as $m) $dat .= '<li>'.$m->getModuleName().'<div>'.$m->getModuleVersionInfo()."</div></li>\n";
-	$dat .= '</ul><hr size="1" />
+	$dat .= '</ul><hr size="1">
 </div>
 
 ';

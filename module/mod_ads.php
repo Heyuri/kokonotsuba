@@ -31,12 +31,12 @@ class mod_ads implements IModule {
 		$txt .= '<center>
 		<iframe id="spasob" src="'.$this->config['STATIC_URL'].'image/fullbanners/fullbanners.php" style="max-width: 100%;" frameborder="0" scrolling="no" width="468" height="60" style="border: 1px solid #000000;"></iframe>
 		</center>
-		<hr size="1" />'."\n";
+		<hr size="1">'."\n";
 	}
 
 	// Bottom Ad
 	public function autoHookThreadRear(&$txt) {
-		//$txt .= '<center><a href="#">[AD] #02！</a></center><hr size="1" />'."\n";
+		//$txt .= '<center><a href="#">[AD] #02！</a></center><hr size="1">'."\n";
 	}
 	
 }

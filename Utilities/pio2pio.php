@@ -27,8 +27,8 @@ $PIOEnv = array( // PIO 環境常數
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="zh-tw">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta http-equiv="Content-Language" content="zh-tw" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Language" content="zh-tw">
 <title>PIO -> PIO Im/Exporter</title>
 </head>
 <body>
@@ -40,7 +40,7 @@ $PIOEnv = array( // PIO 環境常數
 	<li><a href="?mode=import">匯入目前中介檔案到 Another-PIO (請修改此頁 PHP 設定)</a></li>
 	<li><a href="?mode=convert">將目前 PIO 資料轉換到 Another-PIO</a></li>
 </ul>
-<hr />
+<hr>
 <div id="result">
 <?php
 $mode = isset($_GET['mode']) ? $_GET['mode'] : '';

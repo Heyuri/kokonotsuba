@@ -67,8 +67,8 @@ const kkqr = { name: "KK Quick Reply",
 	win: null,
 	/* Settings */
 	sett: function (tab, div) { if (tab!="general") return;
-		div.innerHTML+= '<label><input type="checkbox" onchange="localStorage.setItem(\'useqr\',this.checked);location.reload();"'+(localStorage.getItem("useqr")=="true"?'checked="checked"':'')+' />Use quick reply</label>';
-		div.innerHTML+= '<label><input type="checkbox" onchange="localStorage.setItem(\'alwaysqr\',this.checked);if(this.checked&&!kkqr.win)kkqr.openqr();"'+(localStorage.getItem("alwaysqr")=="true"?'checked="checked"':'')+' />Persistent quick reply</label>';
+		div.innerHTML+= '<label><input type="checkbox" onchange="localStorage.setItem(\'useqr\',this.checked);location.reload();"'+(localStorage.getItem("useqr")=="true"?'checked="checked"':'')+'>Use quick reply</label>';
+		div.innerHTML+= '<label><input type="checkbox" onchange="localStorage.setItem(\'alwaysqr\',this.checked);if(this.checked&&!kkqr.win)kkqr.openqr();"'+(localStorage.getItem("alwaysqr")=="true"?'checked="checked"':'')+'>Persistent quick reply</label>';
 	},
 	/* Function */
 	_evqr: function (event) {
@@ -98,11 +98,11 @@ const kkqr = { name: "KK Quick Reply",
 			var qr = $id("qrinputs");
 			var submitplace = 'qr';
 			if (typeof(name)!='undefined') {
-				qr.innerHTML+= '<div id="qrnamediv"><input type="text" name="name" id="qrname" value="'+name.value+'" maxlength="100" class="inputtext" placeholder="Name" oninput="kkqr.input(this);"/></div>';
+				qr.innerHTML+= '<div id="qrnamediv"><input type="text" name="name" id="qrname" value="'+name.value+'" maxlength="100" class="inputtext" placeholder="Name" oninput="kkqr.input(this);"></div>';
 				submitplace = 'qrnamediv';
 			}
 			if (typeof(email)!='undefined') {
-				qr.innerHTML+= '<div id="qremaildiv"><input type="text" name="email" id="qremail" value="'+email.value+'" maxlength="100" class="inputtext" placeholder="Email" oninput="kkqr.input(this);"/></div>';
+				qr.innerHTML+= '<div id="qremaildiv"><input type="text" name="email" id="qremail" value="'+email.value+'" maxlength="100" class="inputtext" placeholder="Email" oninput="kkqr.input(this);"></div>';
 				if (!submitplace) submitplace = 'qremaildiv';
 			}
 			if (typeof(sub)!='undefined') {
@@ -114,18 +114,18 @@ const kkqr = { name: "KK Quick Reply",
 			if (typeof(upfile)!='undefined') {
 				upfile.insertAdjacentHTML("beforebegin", '<span id="upfileDUMMY"></span>');
 				kkqr.win.div.appendChild(upfile);
-				kkqr.win.div.innerHTML+= '<small>[<a href="javascript:void(0);" onclick="$id(\'upfile\').value=\'\';">X</a>]</small> <br />';
+				kkqr.win.div.innerHTML+= '<small>[<a href="javascript:void(0);" onclick="$id(\'upfile\').value=\'\';">X</a>]</small> <br>';
 			}
 			if (typeof(noimg)!='undefined')
-				kkqr.win.div.innerHTML+= '<nobr><label>[<input type="checkbox" name="noimg" id="qrnoimg" onclick="$id(\'noimg\').checked=this.checked;"'+(noimg.checked?' checked="checked"':'')+' />No File]</label></nobr> ';
+				kkqr.win.div.innerHTML+= '<nobr><label>[<input type="checkbox" name="noimg" id="qrnoimg" onclick="$id(\'noimg\').checked=this.checked;"'+(noimg.checked?' checked="checked"':'')+'>No File]</label></nobr> ';
 			if (typeof(anigif)!='undefined')
-				kkqr.win.div.innerHTML+= '<nobr><label>[<input type="checkbox" name="anigif" id="qranigif" onclick="$id(\'anigif\').checked=this.checked;"'+(anigif.checked?' checked="checked"':'')+' />Animated GIF]</label></nobr> ';
+				kkqr.win.div.innerHTML+= '<nobr><label>[<input type="checkbox" name="anigif" id="qranigif" onclick="$id(\'anigif\').checked=this.checked;"'+(anigif.checked?' checked="checked"':'')+'>Animated GIF]</label></nobr> ';
 			if (typeof(category)!='undefined')
 				kkqr.win.div.innerHTML+= '';
 			if (typeof(pwd)!='undefined')
-				kkqr.win.div.innerHTML+= '<div><input type="password" name="pwd" id="qrpwd" size="8" maxlength="8" value="'+pwd.value+'" class="inputtext" placeholder="Password" oninput="kkqr.input(this);" /> <small>(for deletion, 8 chars max)</small></div>';
+				kkqr.win.div.innerHTML+= '<div><input type="password" name="pwd" id="qrpwd" size="8" maxlength="8" value="'+pwd.value+'" class="inputtext" placeholder="Password" oninput="kkqr.input(this);"> <small>(for deletion, 8 chars max)</small></div>';
 			if (typeof(captchacode)!='undefined') {
-				kkqr.win.div.innerHTML+= '<div id="qrcaptcha" class="postblock"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&amp;\';})();">Reload</a>]</small><br /><input type="text" name="captchacode" id="qrcaptchacode" value="'+captchacode.value+'" autocomplete="off" class="inputtext" placeholder="Captcha" oninput="kkqr.input(this);" /><nobr><small>(Please enter the words. Case-insensitive.)</small></nobr></div>';
+				kkqr.win.div.innerHTML+= '<div id="qrcaptcha" class="postblock"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&amp;\';})();">Reload</a>]</small><br><input type="text" name="captchacode" id="qrcaptchacode" value="'+captchacode.value+'" autocomplete="off" class="inputtext" placeholder="Captcha" oninput="kkqr.input(this);"><nobr><small>(Please enter the words. Case-insensitive.)</small></nobr></div>';
 				var qrc = $id("qrcaptcha"), chaimg = $id("chaimg");
 				chaimg.insertAdjacentHTML("beforebegin", '<span id="chaimgDUMMY"></span>');
 				qrc.insertAdjacentElement("afterbegin", chaimg);

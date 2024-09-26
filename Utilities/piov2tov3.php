@@ -43,7 +43,7 @@ switch(PIXMICAT_BACKEND){
 		}
 		break;
 	default:
-		echo('What backend did you use? Sorry we can\'t fix it now.<br />');
+		echo('What backend did you use? Sorry we can\'t fix it now.<br>');
 }
 $PIO->dbCommit();
 echo('PIO V3 Update OK.');

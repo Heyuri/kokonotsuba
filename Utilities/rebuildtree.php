@@ -42,5 +42,5 @@ fclose($fp);
 unset($fp);
 @chmod($treefile.'.new', 0666);
 
-echo '重建完成，檔案名稱為 "'.$treefile.'.new"，請自行更名為 "'.$treefile.'"。以下是預覽：<hr/><pre>'.$treeline.'</pre>';
+echo '重建完成，檔案名稱為 "'.$treefile.'.new"，請自行更名為 "'.$treefile.'"。以下是預覽：<hr><pre>'.$treeline.'</pre>';
 ?>

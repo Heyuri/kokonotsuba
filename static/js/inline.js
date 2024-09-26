@@ -80,7 +80,7 @@ const kkinline = { name: "KK Quote Inlining",
 	},
 	sett: function (tab, div) { if (tab!="general") return;
 		div.innerHTML+= `
-			<label><input type="checkbox" onchange="localStorage.setItem('quoteinline',this.checked);kkinline.reset();kkinline.startup();"`+(localStorage.getItem("quoteinline")=="true"?'checked="checked"':'')+` />Quote inlining</label>
+			<label><input type="checkbox" onchange="localStorage.setItem('quoteinline',this.checked);kkinline.reset();kkinline.startup();"`+(localStorage.getItem("quoteinline")=="true"?'checked="checked"':'')+`>Quote inlining</label>
 			`;
 	}
 };

@@ -19,7 +19,7 @@ function admindel(&$dat){
 	$searchHost = filter_var($_GET['host'], FILTER_VALIDATE_IP) ?: filter_var($_GET['host'], FILTER_VALIDATE_DOMAIN);
 	if ($searchHost) {
 		if ($AccountIO->valid() <= $config['roles']['LEV_JANITOR']) error('ERROR: No Access.');
-		$noticeHost = '<h2>Viewing all posts from: '.$searchHost.'. Click submit to cancel.</h2><br />';
+		$noticeHost = '<h2>Viewing all posts from: '.$searchHost.'. Click submit to cancel.</h2><br>';
 	}
 	//username for logging
 	$moderatorUsername = $AccountIO->getUsername();
@@ -39,10 +39,10 @@ function admindel(&$dat){
 	$posts = $PIO->fetchPosts($line); // Article content array
 
 	$dat.= '<form action="'.$config['PHP_SELF'].'" method="POST">';
-	$dat.= '<input type="hidden" name="mode" value="admin" />
-	<input type="hidden" name="admin" value="del" />
+	$dat.= '<input type="hidden" name="mode" value="admin">
+	<input type="hidden" name="admin" value="del">
 	<div align="left">'._T('admin_notices').'</div>'.
-	$message.'<br />'.$noticeHost.'
+	$message.'<br>'.$noticeHost.'
 	<center><table width="100%" cellspacing="0" cellpadding="0" border="1" class="postlists">
 	<thead>
 		<tr>'._T('admin_list_header').'</tr></thead>
@@ -56,7 +56,7 @@ function admindel(&$dat){
 		$name = htmlspecialchars(str_cut(html_entity_decode(strip_tags($name)), 9));
 		$sub = htmlspecialchars(str_cut(html_entity_decode($sub), 8));
 		if($email) $name = "<a href=\"mailto:$email\">$name</a>";
-		$com = str_replace('<br />',' ',$com);
+		$com = str_replace('<br>',' ',$com);
 		$com = htmlspecialchars(str_cut(html_entity_decode($com), 20));
 
 
@@ -84,23 +84,23 @@ function admindel(&$dat){
 
 			// Print out the interface
 		$dat .= '<tr align="LEFT">
-    <th align="center">' . $modFunc . '</th><th><input type="checkbox" name="clist[]" value="' . $no . '" /><a target="_blank" href="koko.php?res=' . $no . '">' . $no . '</a></th>
+    <th align="center">' . $modFunc . '</th><th><input type="checkbox" name="clist[]" value="' . $no . '"><a target="_blank" href="koko.php?res=' . $no . '">' . $no . '</a></th>
     <td><small class="time">' . $now . '</small></td>
     <td><b class="title">' . $sub . '</b></td>
     <td><b class="name">' . $name . '</b></td>
     <td>' . $com . '</td>
     <td>' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $config['STATIC_URL'] . 'image/glass.png"></a> <a href="?mode=admin&admin=del&host=' . $host . '" title="See all posts">★</a></td>
-    <td align="center">' . $clip . ' (' . $size . ')<br />' . $md5chksum . '</td>
+    <td align="center">' . $clip . ' (' . $size . ')<br>' . $md5chksum . '</td>
 </tr>';
 	}
 	$dat.= '</tbody></table>
 		<p>
         <button type="button" onclick="selectAll()">Select All</button>
-			<input type="submit" value="'._T('admin_submit_btn').'" /> <input type="reset" value="'._T('admin_reset_btn').'" /> [<label><input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on" />'._T('del_img_only').'</label>]
+			<input type="submit" value="'._T('admin_submit_btn').'"> <input type="reset" value="'._T('admin_reset_btn').'"> [<label><input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">'._T('del_img_only').'</label>]
 		</p>
 		<p>'._T('admin_totalsize', $FileIO->getCurrentStorageSize()).'</p>
 </center></form>
-<hr size="1" />
+<hr size="1">
 <script>
 function selectAll() {
     var checkboxes = document.querySelectorAll(\'input[name="clist[]"]\');
@@ -191,7 +191,7 @@ function showstatus(){
 		<tr><td>'._T('info_basic_showid').'</td><td colspan="3"> '.$config['DISP_ID'].' '._T('info_basic_showid_after').'</td></tr>
 		<tr><td>'._T('info_basic_cr_limit').'</td><td colspan="3"> '.$config['BR_CHECK']._T('info_basic_cr_after').'</td></tr>
 		<tr><td>'._T('info_basic_timezone').'</td><td colspan="3"> GMT '.$config['TIME_ZONE'].'</td></tr>
-		<tr><td>'._T('info_basic_theme').'</td><td colspan="3"> '.$PTE->BlockValue('THEMENAME').' '.$PTE->BlockValue('THEMEVER').'<br/>by '.$PTE->BlockValue('THEMEAUTHOR').'</td></tr>
+		<tr><td>'._T('info_basic_theme').'</td><td colspan="3"> '.$PTE->BlockValue('THEMENAME').' '.$PTE->BlockValue('THEMEVER').'<br>by '.$PTE->BlockValue('THEMEAUTHOR').'</td></tr>
 		<tr><th colspan="4">'._T('info_dsusage_top').'</th></tr>
 		<tr align="center"><td>'._T('info_basic_threadcount').'</td><td colspan="'.(isset($piosensorInfo)?'2':'3').'"> '.$counttree.' '._T('info_basic_threads').'</td>'.(isset($piosensorInfo)?'<td rowspan="2">'.$piosensorInfo.'</td>':'').'</tr>
 		<tr align="center"><td>'._T('info_dsusage_count').'</td><td colspan="'.(isset($piosensorInfo)?'2':'3').'">'.$countline.'</td></tr>
@@ -199,18 +199,18 @@ function showstatus(){
 
 	if($config['STORAGE_LIMIT']){
 		$dat .= '
-		<tr align="center"><td>'._T('info_fileusage_limit').'</td><td colspan="2">'.$config['STORAGE_MAX'].' KB</td><td rowspan="2">'._T('info_dsusage_usage').'<br /><font color="#'.$clrflag_sl.'">'.substr(($tmp_ts_ratio * 100), 0, 6).'</font> %</td></tr>
+		<tr align="center"><td>'._T('info_fileusage_limit').'</td><td colspan="2">'.$config['STORAGE_MAX'].' KB</td><td rowspan="2">'._T('info_dsusage_usage').'<br><font color="#'.$clrflag_sl.'">'.substr(($tmp_ts_ratio * 100), 0, 6).'</font> %</td></tr>
 		<tr align="center"><td>'._T('info_fileusage_count').'</td><td colspan="2"><font color="#'.$clrflag_sl.'">'.$tmp_total_size.' KB</font></td></tr>';
 	}else{
 		$dat .= '
-		<tr align="center"><td>'._T('info_fileusage_count').'</td><td>'.$tmp_total_size.' KB</td><td colspan="2">'._T('info_dsusage_usage').'<br /><span class="green">'._T('info_fileusage_unlimited').'</span></td></tr>';
+		<tr align="center"><td>'._T('info_fileusage_count').'</td><td>'.$tmp_total_size.' KB</td><td colspan="2">'._T('info_dsusage_usage').'<br><span class="green">'._T('info_fileusage_unlimited').'</span></td></tr>';
 	}
 
 	$dat .= '
 		<tr><th colspan="4">'._T('info_server_top').'</th></tr>
 		<tr align="center"><td colspan="3">'.$func_thumbInfo.'</td><td>'.$func_thumbWork.'</td></tr>
 	</tbody></table>
-	<hr size="1" />
+	<hr size="1">
 </center>';
 
 	foot($dat);
@@ -227,9 +227,9 @@ function actionlog(&$dat) {
 	$filter = $_REQUEST['filter']??'';
 	$ipfilter = preg_quote($_REQUEST['ipfilter']??'');
 	$dat.= '<p align="LEFT"><form action="'.$config['PHP_SELF'].'" method="GET">
-	<input type="hidden" name="mode" value="admin" />
-	<input type="hidden" name="admin" value="action" />
-	<input type="hidden" name="page" value="'.$page.'" />
+	<input type="hidden" name="mode" value="admin">
+	<input type="hidden" name="admin" value="action">
+	<input type="hidden" name="page" value="'.$page.'">
 	<select name="filter">
 		<option'.($filter==''?' selected="selected"':'').' value="">All actions</option>
 		<option'.($filter=='system'?' selected="selected"':'').' value="system">System actions only</option>
@@ -238,8 +238,8 @@ function actionlog(&$dat) {
 		<option'.($filter=='janitor'?' selected="selected"':'').' value="janitor">## Janitor actions only</option>
 		<option'.($filter=='mod'?' selected="selected"':'').' value="mod">## Mod actions only</option>
 		<option'.($filter=='admin'?' selected="selected"':'').' value="admin">## Admin actions only</option>
-	</select><input type="submit" value="Filter" /><br />
-	<label>IP Addr:<input class="textinput" type="text" name="ipfilter" value="'.($_REQUEST['ipfilter']??'').'" /></label>
+	</select><input type="submit" value="Filter"><br>
+	<label>IP Addr:<input class="textinput" type="text" name="ipfilter" value="'.($_REQUEST['ipfilter']??'').'"></label>
 </form>';
 	switch ($filter) {
 		case 'user':
@@ -291,7 +291,7 @@ function actionlog(&$dat) {
 	$dat.= '</td>';
 	if ($offset<count($log)-$LIMIT) $dat.= '<td><a href="'.$config['PHP_SELF'].'?mode=admin&admin=action&page='.($page+1).'&filter='.$filter.'">Next</a></td>';
 	else $dat.= '<td>Last</td>';
-	$dat.= '</tr></tbody></table><br clear="ALL" />';
+	$dat.= '</tr></tbody></table><br clear="ALL">';
 }
 
 
@@ -304,15 +304,15 @@ function drawAccountCreationForm(&$dat) {
        <table ><tbody>
        <tr>
            <td class="postblock"><label for="usrname">Account username:</label></td>
-           <td><input  required maxlength="50" id="usrname" name="usrname"/></td>
+           <td><input  required maxlength="50" id="usrname" name="usrname"></td>
        </tr>
        <tr>
            <td class="postblock"><label for="passwd">Account password:</label></td>
-           <td><input type="password" id="passwd" name="passwd" required="" maxlength="1000"/></td>
+           <td><input type="password" id="passwd" name="passwd" required="" maxlength="1000"></td>
        </tr>
 		<tr>
 			<td class="postblock"><label for="hashed">Already hashed?</label></td>
-			<td><input type="checkbox" id="hashed" name="ishashed" /></td>
+			<td><input type="checkbox" id="hashed" name="ishashed"></td>
 			</tr>
        <tr>
            <td class="postblock"><label for="role">Role</label></td>
@@ -331,7 +331,7 @@ function drawAccountCreationForm(&$dat) {
       </tbody>
 	</table>
     </form>
-    </center> <br />';
+    </center> <br>';
 }
 
 function createAccount() {
@@ -495,7 +495,7 @@ function viewAccounts() {
 			'.$accountsHTML.'
       	</tbody>
 		</table>
-    	</center> <br />';
+    	</center> <br>';
 	
 	foot($dat);
 	echo $dat;
@@ -507,7 +507,7 @@ function manageaccounts(&$dat) {
 				<h3>Account management</h3>
 		<fieldset class="menu" style="display: inline-block; width: 200px;"><legend>Panel</legend>
 		[<a href="'.$config['PHP_SELF'].'?mode=viewAcc">Mod list</a>]
-		<br />
+		<br>
 		[<a href="'.$config['PHP_SELF'].'?mode=createAcc">Add a new account</a>]		
 		</fieldset>';
 }
@@ -538,7 +538,7 @@ function drawAdminList() {
 		$links = '[<a href="'.$config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a>] [<a href="'.$config['PHP_SELF'].'?mode=rebuild">Rebuild</a>] [<a href="'.$config['PHP_SELF'].'?pagenum=0">Live Frontend</a>]';
 		$PMS->useModuleMethods('LinksAboveBar', array(&$dat,'admin',$level));
 		$dat .= $links; //hook above bar links
-		$dat.= "<center class=\"theading3\"><b>Administrator mode</b> <br/>$log_in_msg </center>";
+		$dat.= "<center class=\"theading3\"><b>Administrator mode</b> <br>$log_in_msg </center>";
 		$dat.= '<center><form action="'.$config['PHP_SELF'].'" method="POST" name="adminform">';
 		$admins = array(
 			array('name'=>'del', 'level'=>$config['roles']['LEV_JANITOR'], 'label'=>'Manage posts', 'func'=>'admindel'),
@@ -554,13 +554,13 @@ function drawAdminList() {
 		foreach ($admins as $adminmode) {
 			if ($level==$config['roles']['LEV_NONE'] && $adminmode['name']=='logout') continue;
 			$checked = ($admin==$adminmode['name']) ? ' checked="checked"' : '';
-			$dat.= '<label><input type="radio" name="admin" value="'.$adminmode['name'].'"'.$checked.' />'.$adminmode['label'].'</label> ';
+			$dat.= '<label><input type="radio" name="admin" value="'.$adminmode['name'].'"'.$checked.'>'.$adminmode['label'].'</label> ';
 		}
 		$dat.= '</nobr>';
 		if ($level==$config['roles']['LEV_NONE']) {
-			$dat.= '<br/>
-				<input class="inputtext" type="password" name="pass" value="" size="8" /><button type="submit" name="mode" value="admin">Login</button>
-			</form></center><hr/>';
+			$dat.= '<br>
+				<input class="inputtext" type="password" name="pass" value="" size="8"><button type="submit" name="mode" value="admin">Login</button>
+			</form></center><hr>';
 			foot($dat);
 			die($dat.'</body></html>');
 		} else {
@@ -571,20 +571,20 @@ function drawAdminList() {
 			if ($admin!=$adminmode['name']) continue;
 			$find = true;
 			if ($adminmode['level']>$level) {
-				$dat.= '<center><b class="error">ERROR: No Access.</b></center><hr size="1" />';
+				$dat.= '<center><b class="error">ERROR: No Access.</b></center><hr size="1">';
 				break;
 			}
 			if ($adminmode['func']) {
 				$adminmode['func']($dat, $admin);
 			} else {
-				if(!$PIO->dbMaintanence($admin)) $dat.= '<center><b class="error">ERROR: Backend does not support this operation.</b></center><hr size="1" />';
+				if(!$PIO->dbMaintanence($admin)) $dat.= '<center><b class="error">ERROR: Backend does not support this operation.</b></center><hr size="1">';
 				else $dat.= '<center>'.(($mret=$PIO->dbMaintanence($admin, true))
 					? '<b class="good">Success!</b>'
 					: '<b class="error">Failure!</b>').
-					(is_bool($mret)?'':"<br />".print_r($mret, true)."<hr size='1' />").'</center>';
+					(is_bool($mret)?'':"<br>".print_r($mret, true)."<hr size='1'>").'</center>';
 			}
 		}
-		if (!$find) $dat.= '<hr size="1" />';
+		if (!$find) $dat.= '<hr size="1">';
 		foot($dat);
 		die($dat.'</body></html>');
 }

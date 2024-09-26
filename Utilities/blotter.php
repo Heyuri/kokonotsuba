@@ -24,7 +24,7 @@ if($_SERVER['REQUEST_METHOD']=='POST'){
 	$newblotter.=implode('',$blotter);
 	file_put_contents(BLOTTERFILE,$newblotter);
 
-	die('Blotter updated.<meta http-equiv="refresh" content="1;url='.PHP_SELF.'?rebuild"/>');
+	die('Blotter updated.<meta http-equiv="refresh" content="1;url='.PHP_SELF.'?rebuild">');
 }
 
 if($_SERVER['QUERY_STRING']=='rebuild'){
@@ -42,46 +42,46 @@ if($_SERVER['QUERY_STRING']=='rebuild'){
 		file_put_contents(BLOTTER_HTML, $dat);
 	}
 
-	die('Blotter rebuilt.<meta http-equiv="refresh" content="1;url='.PHP_SELF.'"/>');
+	die('Blotter rebuilt.<meta http-equiv="refresh" content="1;url='.PHP_SELF.'">');
 }
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-			<meta http-equiv="cache-control" content="max-age=0" />
-			<meta http-equiv="cache-control" content="no-cache" />
-			<meta http-equiv="expires" content="0" />
-			<meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
-			<meta http-equiv="pragma" content="no-cache" />
-			<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-			<meta name="Berry" content="no" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+			<meta http-equiv="cache-control" content="max-age=0">
+			<meta http-equiv="cache-control" content="no-cache">
+			<meta http-equiv="expires" content="0">
+			<meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT">
+			<meta http-equiv="pragma" content="no-cache">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<meta name="Berry" content="no">
 			<title>Blotter@Heyuri</title>
-			<meta name="robots" content="follow,archive" />
-			<link class="linkstyle" rel="stylesheet" type="text/css" href="../static/css/heyuriclassic.css" title="Heyuri Classic" />
-			<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="../static/css/futaba.css" title="Futaba" />
-			<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="../static/css/oldheyuri.css" title="Sakomoto" />			<meta http-equiv="cache-control" content="no-cache" />
-			<link rel="shortcut icon" href="../static/image/favicon.png" />
+			<meta name="robots" content="follow,archive">
+			<link class="linkstyle" rel="stylesheet" type="text/css" href="../static/css/heyuriclassic.css" title="Heyuri Classic">
+			<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="../static/css/futaba.css" title="Futaba">
+			<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="../static/css/oldheyuri.css" title="Sakomoto">			<meta http-equiv="cache-control" content="no-cache">
+			<link rel="shortcut icon" href="../static/image/favicon.png">
 
 			<script type="text/javascript" src="../static/js/koko.js"></script>
 			<script type="text/javascript" src="../static/js/koko/style.js"></script>			
-<link rel="alternate" type="application/rss+xml" title="RSS 2.0 Feed" href="//img.heyuri.net/b/koko.php?mode=module&amp;load=mod_rss" /></head><body class="heyuri"><a name="top"></a>
+<link rel="alternate" type="application/rss+xml" title="RSS 2.0 Feed" href="//img.heyuri.net/b/koko.php?mode=module&amp;load=mod_rss"></head><body class="heyuri"><a name="top"></a>
 		<div id="nav">
 			<?=BOARDLIST?>
 			<div class="adminbar" align="right">[<a class="extr" href="<?=HOME?>">Home</a>]</div>
 		</div>
-		<center class="logo"><h1><?=TITLE?></h1><hr size="1" width="50%"/></center>
+		<center class="logo"><h1><?=TITLE?></h1><hr size="1" width="50%"></center>
 <?php
 
 if($_SERVER['QUERY_STRING']=='newblotter'){
 	echo '<form action="'.PHP_SELF.'" method="POST">';
 	echo <<<FORM
 <table><tbody>
-	<tr><td class="postblock"><label for="pwd"><b>Password</b></label></td><td><input type="password" name="pwd" id="pwd" value=""/></td></tr>
-	<tr><td class="postblock"><label for="msg"><b>Message</b></label></td><td><input type="text" name="msg" id="msg" value="" size="40"/><input type="submit"/></td></tr>
+	<tr><td class="postblock"><label for="pwd"><b>Password</b></label></td><td><input type="password" name="pwd" id="pwd" value=""></td></tr>
+	<tr><td class="postblock"><label for="msg"><b>Message</b></label></td><td><input type="text" name="msg" id="msg" value="" size="40"><input type="submit"></td></tr>
 </tbody></table>
 </form>
-<hr size="1" width="50%" />
+<hr size="1" width="50%">
 FORM;
 }
 

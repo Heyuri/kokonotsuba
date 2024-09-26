@@ -131,15 +131,15 @@ class mod_cat extends ModuleHelper {
 			$dat.= '<td class="thread" width="180" height="200" align="CENTER">
 	<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>
 	<a href="'.$this->config['PHP_SELF'].'?res='.($resto?$resto:$no).'#p'.$no.'">'.
-	($FileIO->imageExists($tim.$ext) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim)).'" width="'.min(150, $tw).'" vspace="3"	class="thumb" />' : '***').
-	'</a><br />
+	($FileIO->imageExists($tim.$ext) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim)).'" width="'.min(150, $tw).'" vspace="3"	class="thumb">' : '***').
+	'</a><br>
 	<nobr><small><b class="title">'.substr($sub, 0, 20).'</b>:'.
-		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon" /> '.$res.'</small></span></nobr><br />
+		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon"> '.$res.'</small></span></nobr><br>
 	<small>'.$com.'</small>
 </td>';
 		}
 
-		$dat .= '</tr></tbody></table><hr />';
+		$dat .= '</tr></tbody></table><hr>';
 
 		$dat .= '</div><table id="pager" border="1"><tbody><tr>';
 		if($page)
@@ -158,7 +158,7 @@ class mod_cat extends ModuleHelper {
 			$dat .= '<td><a href="'.$this->mypage.'&page='.($page + 1).'">Next</a></td>';
 		else
 			$dat .= '<td nowrap="nowrap">Last</td>';
-		$dat .= '</tr></tbody></table><br clear="ALL" />';
+		$dat .= '</tr></tbody></table><br clear="ALL">';
 		foot($dat);
 		if ($this->config['THREAD_PAGINATION']){ // Catalog caching
 			if ($oldCaches = glob($cacheFile.'*')){

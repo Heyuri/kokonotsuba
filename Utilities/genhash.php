@@ -17,7 +17,7 @@
         <body>
             <form method="post" id="generator">
                 <div>
-                    <input type="password" id="str" name="str" placeholder="Password"  required />
+                    <input type="password" id="str" name="str" placeholder="Password"  required>
                 </div>
                 <div>
                     <select id="type">
@@ -28,10 +28,10 @@
                         <option>CRYPT_SHA512</option>
                         <option>CRYPT_BLOWFISH</option>
                     </select>
-                    <input type="text" id="salt" name="salt" placeholder="Salt" required />
+                    <input type="text" id="salt" name="salt" placeholder="Salt" required>
                 </div>
                 <div>
-                    <!--<input type="submit" value="Generate" id="submit" />-->
+                    <!--<input type="submit" value="Generate" id="submit">-->
                     <button id="submit">Generate</button>
                     <button id="reset">Regenerate salt</button>
                 </div>
@@ -41,14 +41,14 @@
                 </div>
             </form>
 
-<hr /><small><ol>
+<hr><small><ol>
   <li>Select a random hash type from the dropdown menu</li>
   <li>If JavaScript is enabled, the salt field will be auto-filled based on your selected hash type. You don't need to touch it</li>
   <li>Enter your password and click "Generate" to create the hash. Provide the generated hash to the administrator privately</li>
 </ol></small>
 <noscript>
-    <b>It seems you don't have javascript enabled.</b><br />
-    Please manually enter a salt value according to the selected hash type:<br />
+    <b>It seems you don't have javascript enabled.</b><br>
+    Please manually enter a salt value according to the selected hash type:<br>
     <ul>
         <li><b>CRYPT_DES:</b> 2 characters long.</li>
         <li><b>CRYPT_MD5:</b> Should start with <code>$1$</code> followed by 12 random alphanumeric characters.</li>
