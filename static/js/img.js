@@ -155,14 +155,14 @@ const kkgal = {
 	_evkeydown: function (event) {
 		switch (event.key) {
 			case "ArrowLeft": case "ArrowUp": case "PageUp": // normal person keys (:^|)
-			case "h": case "j": // autist keys (hjkl)
+			case "h": case "k": // autist keys (hjkl)
 			case "<": case "[": // chad keys (*pounds keyboard*)
 			case "w": case "a": // gamer keys (wasd)
 				$id("galimgprev").click();
 				event.preventDefault();
 				break;
 			case "ArrowRight": case "ArrowDown": case "PageDown":
-			case "l": case "k":
+			case "l": case "j":
 			case ">": case "]":
 			case "s": case "d":
 				$id("galimgnext").click();
