@@ -88,13 +88,6 @@
 							<ul class="rules">
 								{$HOOKPOSTINFO}
 							</ul>
-						    <input type="button" onClick="insertThisInThere('(;´Д`)','com')" value="(;´Д`)">
-							<input type="button" onClick="insertThisInThere('ヽ(´∇`)ノ','com')" value="ヽ(´∇`)ノ">
-							<input type="button" onClick="insertThisInThere('(´ー`)','com')" value="(´ー`)">
-							<input type="button" onClick="insertThisInThere('（ ’～’）','com')" value="（ ’～’）">
-							<input type="button" onClick="insertThisInThere('ヽ(`Д´)ノ','com')" value="ヽ(`Д´)ノ">
-							<input type="button" onClick="insertThisInThere('( ´ω`)','com')" value="( ´ω`)">
-							<input type="button" onClick="insertThisInThere('(・∀・)','com')" value="(・∀・)"><br>
 						</td>
 					</tr>
 				</tbody>
