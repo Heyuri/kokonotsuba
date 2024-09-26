@@ -60,7 +60,7 @@ class mod_SearchCategory extends ModuleHelper {
 		}
 
 		$dat .= '<table id="pager" border="1"><tr>';
-		if($page > 1) $dat .= '<td><form action="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&p='.($page - 1).'" method="post"><div><input type="submit" value="'._T('prev_page').'" /></div></form></td>';
+		if($page > 1) $dat .= '<td><form action="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&p='.($page - 1).'" method="post"><div><input type="submit" value="'._T('prev_page').'"></div></form></td>';
 		else $dat .= '<td nowrap="nowrap">'._T('first_page').'</td>';
 		$dat .= '<td>';
 		for($i = 1; $i <= $page_max ; $i++){
@@ -68,7 +68,7 @@ class mod_SearchCategory extends ModuleHelper {
 			else $dat .= '[<a href="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&p='.$i.'">'.$i.'</a>] ';
 		}
 		$dat .= '</td>';
-		if($page < $page_max) $dat .= '<td><form action="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&p='.($page + 1).'" method="post"><div><input type="submit" value="'._T('next_page').'" /></div></form></td>';
+		if($page < $page_max) $dat .= '<td><form action="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&p='.($page + 1).'" method="post"><div><input type="submit" value="'._T('next_page').'"></div></form></td>';
 		else $dat .= '<td nowrap="nowrap">'._T('last_page').'</td>';
 		$dat .= '</tr></table>';
 

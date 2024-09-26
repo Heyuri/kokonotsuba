@@ -41,7 +41,7 @@ class mod_rss extends ModuleHelper {
 
 	/* Add a <link> tag to RSS to the page*/
 	public function autoHookHead(&$txt, $isReply){
-		$txt .= '<link rel="alternate" type="application/rss+xml" title="RSS 2.0 Feed" href="'.$this->SELF.'" />';
+		$txt .= '<link rel="alternate" type="application/rss+xml" title="RSS 2.0 Feed" href="'.$this->SELF.'">';
 	}
 
 	public function autoHookToplink(&$linkbar, $isReply){
@@ -121,7 +121,7 @@ class mod_rss extends ModuleHelper {
 <description>'.$this->config['TITLE'].'</description>
 <language>'.$this->config['PIXMICAT_LANGUAGE'].'</language>
 <generator>'.$this->getModuleName().' '.$this->getModuleVersionInfo().'</generator>
-<atom:link href="'.$this->SELF.'" rel="self" type="application/rss+xml" />
+<atom:link href="'.$this->SELF.'" rel="self" type="application/rss+xml">
 ';
 		for ($i = 0; $i < $post_count; $i++) {
 			$imglink = ''; // Image files
@@ -140,7 +140,7 @@ class mod_rss extends ModuleHelper {
 
 			// Processing data
 			if ($ext && $FileIO->imageExists($tim.'s.jpg')) {
-				$imglink = sprintf('<img src="%s" alt="%s" width="%d" height="%d" /><br />',
+				$imglink = sprintf('<img src="%s" alt="%s" width="%d" height="%d"><br>',
 					$FileIO->getImageURL($tim.'s.jpg'),
 					$tim.$ext,
 					$tw,

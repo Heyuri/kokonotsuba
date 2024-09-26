@@ -41,11 +41,11 @@ class mod_janitor extends ModuleHelper {
 			$dat .= '[<a href="'.$this->config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a>]<br>
 			<fieldset class="menu" style="display: inline-block;"><legend>Warn User</legend>
 				<form action="'.$this->config['PHP_SELF'].'" method="POST">
-					<input type="hidden" name="mode" value="module" />
-					<input type="hidden" name="load" value="mod_janitor" />
-					<label>Post No.<input type="number" name="no" min="0" value="'.($_GET['no']??'0').'" /></label><br />
-					<label>Reason:<br />
-						<textarea name="msg" cols="80" rows="6">No reason given.</textarea></label><br />
+					<input type="hidden" name="mode" value="module">
+					<input type="hidden" name="load" value="mod_janitor">
+					<label>Post No.<input type="number" name="no" min="0" value="'.($_GET['no']??'0').'"></label><br>
+					<label>Reason:<br>
+						<textarea name="msg" cols="80" rows="6">No reason given.</textarea></label><br>
 					<label>Public? <input type="checkbox" name="public">
 					<center><input type="submit" value="Warn"></center>
 			</form>

@@ -52,7 +52,7 @@ function mod_pushpostSend(){
 			rv = rv.substr(4);
 			(pp.find(".pushpost").length===0)
 				? pp.append("<div class=\'pushpost\'>"+rv+"</div>")
-				: pp.children(".pushpost").append("<br />"+rv);
+				: pp.children(".pushpost").append("<br>"+rv);
 			o0.value = o1.value = o2.value = ""; o1.disabled = o2.disabled = o3.disabled = false;
 			$("div#mod_pushpostBOX").hide();
 		},
@@ -66,7 +66,7 @@ function mod_pushpostSend(){
 	public function autoHookFoot(&$foot) {
 		$foot .= '
 <div id="mod_pushpostBOX" style="display:none">
-<input type="hidden" id="mod_pushpostID" />'.$this->_T('pushpost').' <ul><li>'._T('form_name').' <input type="text" id="mod_pushpostName" maxlength="20" onkeypress="mod_pushpostKeyPress(event)" /></li><li>'._T('form_comment').' <input type="text" id="mod_pushpostComm" size="50" maxlength="50" onkeypress="mod_pushpostKeyPress(event)" /><input type="button" id="mod_pushpostSmb" value="'._T('form_submit_btn').'" onclick="mod_pushpostSend()" /></li></ul>
+<input type="hidden" id="mod_pushpostID">'.$this->_T('pushpost').' <ul><li>'._T('form_name').' <input type="text" id="mod_pushpostName" maxlength="20" onkeypress="mod_pushpostKeyPress(event)"></li><li>'._T('form_comment').' <input type="text" id="mod_pushpostComm" size="50" maxlength="50" onkeypress="mod_pushpostKeyPress(event)"><input type="button" id="mod_pushpostSmb" value="'._T('form_submit_btn').'" onclick="mod_pushpostSend()"></li></ul>
 </div>
 ';
 	}
@@ -83,24 +83,24 @@ function mod_pushpostSend(){
 			$this->getModulePageURL(array('no'=> $post['no'])).
 			'" onclick="return mod_pushpostShow('.$post['no'].')">'.
 			$pushcount.$this->_T('pushbutton').'</a>';
-		if (strpos($arrLabels['{$COM}'], $this->PUSHPOST_SEPARATOR.'<br />') !== false) {
+		if (strpos($arrLabels['{$COM}'], $this->PUSHPOST_SEPARATOR.'<br>') !== false) {
 			// Response mode
 			if ($isReply || $pushcount <= $this->PUSHPOST_DEF) {
 				$arrLabels['{$COM}'] = str_replace($this->PUSHPOST_SEPARATOR.
-					'<br />', '<div class="pushpost">', $arrLabels['{$COM}']).
+					'<br>', '<div class="pushpost">', $arrLabels['{$COM}']).
 					'</div>';
 			} else {
 			// Page view
 				// Locate the position of the symbol
-				$delimiter = strpos($arrLabels['{$COM}'], $this->PUSHPOST_SEPARATOR.'<br />');
+				$delimiter = strpos($arrLabels['{$COM}'], $this->PUSHPOST_SEPARATOR.'<br>');
 				if ($this->PUSHPOST_DEF > 0) {
-					$push_array = explode('<br />', substr($arrLabels['{$COM}'], $delimiter + strlen($this->PUSHPOST_SEPARATOR.'<br />')));
-					$pushs = '<div class="pushpost">...<br />'.implode('<br />', array_slice($push_array, 0 - $this->PUSHPOST_DEF)).'</div>';
+					$push_array = explode('<br>', substr($arrLabels['{$COM}'], $delimiter + strlen($this->PUSHPOST_SEPARATOR.'<br>')));
+					$pushs = '<div class="pushpost">...<br>'.implode('<br>', array_slice($push_array, 0 - $this->PUSHPOST_DEF)).'</div>';
 				} else {
 					$pushs = '';
 				}
 				$arrLabels['{$COM}'] = substr($arrLabels['{$COM}'], 0, $delimiter).$pushs;
-				$arrLabels['{$WARN_BEKILL}'] .= '<span class="warn_txt2">'.$this->_T('omitted').'<br /></span>'."\n";
+				$arrLabels['{$WARN_BEKILL}'] .= '<span class="warn_txt2">'.$this->_T('omitted').'<br></span>'."\n";
 			}
 		}
 	}
@@ -144,17 +144,17 @@ function mod_pushpostSend(){
 					$pushcount = $f->value('mppCnt'); // Number of pushes
 				}
 
-				if (($puststart=strpos($com, $this->PUSHPOST_SEPARATOR.'<br />'))===false) die('[Error] No pushpost.');
+				if (($puststart=strpos($com, $this->PUSHPOST_SEPARATOR.'<br>'))===false) die('[Error] No pushpost.');
 
 				$ocom = substr($com,0,$puststart);
-				$pushpost = explode('<br />',substr($com,$puststart+strlen($this->PUSHPOST_SEPARATOR.'<br />')));
+				$pushpost = explode('<br>',substr($com,$puststart+strlen($this->PUSHPOST_SEPARATOR.'<br>')));
 				$com = $ocom;
 
 				if ($_GET['action'] == 'del') { // list
 					$p_count = 1;
 					$com .= '<div class="pushpost">';
 					foreach($pushpost as $p) {
-						$com .= '<input type="checkbox" name="'.($p_count++).'" value="delete" />'.$p.'<br />';
+						$com .= '<input type="checkbox" name="'.($p_count++).'" value="delete">'.$p.'<br>';
 					}
 					$com .= '</div>';
 
@@ -174,7 +174,7 @@ function mod_pushpostSend(){
 							'{$NAME_TEXT}'=>_T('post_name'), '{$CATEGORY_TEXT}'=>_T('post_category')
 						)
 					);
-					echo $dat, '<input type="submit" value="'._T('del_btn').'" /></form></body></html>';
+					echo $dat, '<input type="submit" value="'._T('del_btn').'"></form></body></html>';
 					return;
 				} else if($_GET['action'] == 'delpush') { // delete
 					$delno = array();
@@ -191,7 +191,7 @@ function mod_pushpostSend(){
 					$pushcount = count($pushpost);
 					if ($pushcount) {
 						$f->update('mppCnt', $pushcount); // Number of updated tweets
-						$com = $ocom.$this->PUSHPOST_SEPARATOR.'<br />'.implode('<br />', $pushpost);
+						$com = $ocom.$this->PUSHPOST_SEPARATOR.'<br>'.implode('<br>', $pushpost);
 					} else {
 						$f->remove('mppCnt'); // Number of deleted tweets
 						$com = $ocom;
@@ -262,7 +262,7 @@ function mod_pushpostSend(){
 			$flgh = $PIO->getPostStatus($p[0]['status']);
 			if ($flgh->exists('TS')) die('[Error] '._T('regist_threadlocked')); // The first article prohibits responding/at the same time indicates that the tweet is prohibited
 
-			$post[0]['com'] .= ((strpos($post[0]['com'], $this->PUSHPOST_SEPARATOR.'<br />')===false) ? '<br />'.$this->PUSHPOST_SEPARATOR : '').'<br /> '.$pushpost;
+			$post[0]['com'] .= ((strpos($post[0]['com'], $this->PUSHPOST_SEPARATOR.'<br>')===false) ? '<br>'.$this->PUSHPOST_SEPARATOR : '').'<br> '.$pushpost;
 			$flgh2 = $PIO->getPostStatus($post[0]['status']);
 			$flgh2->plus('mppCnt'); // Number of tweets +1
 			$PIO->updatePost($_GET['no'], array('com'=>$post[0]['com'], 'status'=>$flgh2->toString())); // Update tweet
@@ -308,7 +308,7 @@ function mod_pushpostSend(){
 		$dat = $PTE->ParseBlock('HEADER', array('{$TITLE}'=>$this->config['TITLE'], '{$RESTO}'=>''));
 		$dat .= '</head><body id="main">';
 		$dat .= '<form action="'.$this->getModulePageURL(array('no' => $targetPost)).'" method="post">
-'.$this->_T('pushpost').' <ul><li>'._T('form_name').' <input type="text" name="name" maxlength="20" /></li><li>'._T('form_comment').' <input type="text" name="comm" size="50" maxlength="50" /><input type="submit" value="'._T('form_submit_btn').'" /></li></ul>
+'.$this->_T('pushpost').' <ul><li>'._T('form_name').' <input type="text" name="name" maxlength="20"></li><li>'._T('form_comment').' <input type="text" name="comm" size="50" maxlength="50"><input type="submit" value="'._T('form_submit_btn').'"></li></ul>
 </form>';
 		$dat .= '</body></html>';
 		return $dat;

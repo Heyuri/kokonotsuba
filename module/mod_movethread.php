@@ -224,11 +224,11 @@ class mod_movethread extends ModuleHelper {
 			$dat .= '[<a href="'.$this->config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a>]<br>
 			<center><fieldset class="menu" style="display: inline-block;"><legend>Move Thread</legend>
 				<form action="'.$this->config['PHP_SELF'].'" method="POST">
-					<input type="hidden" name="mode" value="module" />
-					<input type="hidden" name="load" value="mod_movethread" />
-					<label>Post No. '.($_GET['no']??'0').'</label><br />
-                    <input type="hidden" name="no" value="'.($_GET['no']??'0').'"/>
-                    <br /> <label>Destination board</label>'.$this->drawBoardList($boardData).'<br />
+					<input type="hidden" name="mode" value="module">
+					<input type="hidden" name="load" value="mod_movethread">
+					<label>Post No. '.($_GET['no']??'0').'</label><br>
+                    <input type="hidden" name="no" value="'.($_GET['no']??'0').'">
+                    <br> <label>Destination board</label>'.$this->drawBoardList($boardData).'<br>
 					
                     <center><input type="submit" value="Move"></center>
 			</form>

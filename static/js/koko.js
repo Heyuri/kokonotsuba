@@ -188,7 +188,7 @@ const kkwm = {
 		if (localStorage.getItem('wm_nodemo')) return;
 		var demowin = new kkwmWindow("KKJS Window Manager Demo", {x: 20, y: 20, w: 400, h: 200});
 		demowin.div.insertAdjacentHTML("beforeend", `
-Demonstrating the new KKJS Window Manager!<br />
+Demonstrating the new KKJS Window Manager!<br>
 Feature list:
 <ul>
 	<li>Window snapping (can be adjusted in the settings)</li>
@@ -387,7 +387,7 @@ const kkjs = {
 		$id("jscenterthreads").disabled = localStorage.getItem("centerthreads")!="true";
 		if (localStorage.getItem("persistnav")=="true") {
 			$id("jspersistnav").disabled = false;
-			$doc.body.insertAdjacentHTML("afterbegin", '<br />');
+			$doc.body.insertAdjacentHTML("afterbegin", '<br>');
 		} else {
 			$id("jspersistnav").disabled = true;
 		}
@@ -448,8 +448,8 @@ const kkjs = {
 		var email = $id("email");
 		if (!email) return;
 		email.insertAdjacentHTML("afterend", '<nobr class="emailjs">'+
-			//'<label class="nokosagenoko2"><input type="checkbox" class="nokosagenoko2" onclick="kkjs.ee2(this.id, this.checked);" id="sage" /> sage</label>'+
-			//'<label class="nokosagenoko2"><input type="checkbox" class="nokosagenoko2" onclick="kkjs.ee2(\'noko2\',false);kkjs.ee2(this.id,this.checked);" id="noko" /> noko</label>'+
+			//'<label class="nokosagenoko2"><input type="checkbox" class="nokosagenoko2" onclick="kkjs.ee2(this.id, this.checked);" id="sage"> sage</label>'+
+			//'<label class="nokosagenoko2"><input type="checkbox" class="nokosagenoko2" onclick="kkjs.ee2(\'noko2\',false);kkjs.ee2(this.id,this.checked);" id="noko"> noko</label>'+
 		'</nobr>');
 		if (localStorage.getItem("alwaysnoko")=="true") {
 			if (email.value == "") // Only add if blank
@@ -531,7 +531,7 @@ const kkjs = {
 			h: 400,
 		});
 		win.div.innerHTML+= '<span id="settabs"><a href="javascript:kkjs.sett_tab(\'general\');" id="settab_general">General</a></span>'+
-			'<hr size="1" />'+
+			'<hr size="1">'+
 			'<div id="settarea"></div>';
 		for (var i=0; i<kkjs.modules.length; i++) {
 			var mod = kkjs.modules[i];
@@ -552,11 +552,11 @@ const kkjs = {
 		if (tab=="general") {
 			var _fso = localStorage.getItem("fontsizeoverride");
 			if (!_fso) _fso = parseInt(getComputedStyle($doc.body).fontSize);
-			div.innerHTML+= `<label><input type="checkbox" onchange="localStorage.setItem('alwaysnoko',this.checked);"`+(localStorage.getItem("alwaysnoko")=="true"?'checked="checked"':'')+` />Always noko</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('centerthreads',this.checked);$id('jscenterthreads').disabled=!this.checked;"`+(localStorage.getItem("centerthreads")=="true"?'checked="checked"':'')+` />Center threads</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('persistpager',this.checked);$id('jspersistpager').disabled=!this.checked;"`+(localStorage.getItem("persistpager")=="true"?'checked="checked"':'')+` />Persistent pager</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('persistnav',this.checked);location.reload();"`+(localStorage.getItem("persistnav")=="true"?'checked="checked"':'')+` />Persistent navigation</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('neomenu',this.checked);location.reload();"`+(localStorage.getItem("neomenu")=="true"?'checked="checked"':'')+` />Use Neomenu</label>
+			div.innerHTML+= `<label><input type="checkbox" onchange="localStorage.setItem('alwaysnoko',this.checked);"`+(localStorage.getItem("alwaysnoko")=="true"?'checked="checked"':'')+`>Always noko</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('centerthreads',this.checked);$id('jscenterthreads').disabled=!this.checked;"`+(localStorage.getItem("centerthreads")=="true"?'checked="checked"':'')+`>Center threads</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('persistpager',this.checked);$id('jspersistpager').disabled=!this.checked;"`+(localStorage.getItem("persistpager")=="true"?'checked="checked"':'')+`>Persistent pager</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('persistnav',this.checked);location.reload();"`+(localStorage.getItem("persistnav")=="true"?'checked="checked"':'')+`>Persistent navigation</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('neomenu',this.checked);location.reload();"`+(localStorage.getItem("neomenu")=="true"?'checked="checked"':'')+`>Use Neomenu</label>
 			`;
 		}
 		for (var i=0; i<kkjs.modules.length; i++) {

@@ -28,10 +28,10 @@ const kkcat = { name: "KK Catalog Functions",
 		if (!kkjs.get_cookie("sett_sscase")) kkjs.set_cookie("sett_sscase", "true");
 		$id("catalog").insertAdjacentHTML("afterbegin", `
 <div id="catsett" align="RIGHT">
-	[<label><input type="checkbox" id="sett_fw"`+$mkcheck($bool(kkjs.get_cookie("cat_fw")))+` />Full width</label>]
-	<label title="0 for auto">Columns:<input type="number" id="sett_cols" value="`+kkjs.get_cookie("cat_cols")+`" min="0" max="20" /></label><button onclick="kkcat.sett_save();">Apply</button><br/>
-	[<label><input type="checkbox" id="sett_sscase"`+$mkcheck($bool(kkjs.get_cookie("sett_sscase")))+` onclick="kkjs.set_cookie('sett_sscase', this.checked);kkcat.search();" />Case insensitive</label>]
-	<input type="search" id="sett_ss" placeholder="Search" value="`+location.hash.substr(1)+`" oninput="kkcat.search(this.value);" />
+	[<label><input type="checkbox" id="sett_fw"`+$mkcheck($bool(kkjs.get_cookie("cat_fw")))+`>Full width</label>]
+	<label title="0 for auto">Columns:<input type="number" id="sett_cols" value="`+kkjs.get_cookie("cat_cols")+`" min="0" max="20"></label><button onclick="kkcat.sett_save();">Apply</button><br>
+	[<label><input type="checkbox" id="sett_sscase"`+$mkcheck($bool(kkjs.get_cookie("sett_sscase")))+` onclick="kkjs.set_cookie('sett_sscase', this.checked);kkcat.search();">Case insensitive</label>]
+	<input type="search" id="sett_ss" placeholder="Search" value="`+location.hash.substr(1)+`" oninput="kkcat.search(this.value);">
 </div>
 `);
 		kkcat.search();

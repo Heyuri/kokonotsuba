@@ -33,7 +33,7 @@ const kkqu2 = { name: "KK Quotelink Marking",
 	},
 	sett: function (tab, div) { if (tab!="general") return;
 		div.innerHTML+= `
-			<label><input type="checkbox" onchange="localStorage.setItem('markopqu',this.checked);kkqu2.reset();kkqu2.startup();"`+(localStorage.getItem("markopqu")=="true"?'checked="checked"':'')+` />Mark OP quotes</label>
+			<label><input type="checkbox" onchange="localStorage.setItem('markopqu',this.checked);kkqu2.reset();kkqu2.startup();"`+(localStorage.getItem("markopqu")=="true"?'checked="checked"':'')+`>Mark OP quotes</label>
 			`;
 	}
 };

@@ -33,7 +33,7 @@ class mod_stop extends ModuleHelper {
 		$PIO = PMCLibrary::getPIOInstance();
 		$fh = new FlagHelper($post['status']);
 		if ($fh->value('stop')) {
-			$arrLabels['{$POSTINFO_EXTRA}'].='&nbsp;<img src="'.$this->LOCKICON.'" class="icon" title="Locked" />';
+			$arrLabels['{$POSTINFO_EXTRA}'].='&nbsp;<img src="'.$this->LOCKICON.'" class="icon" title="Locked">';
 		}
 	}
 

@@ -22,7 +22,7 @@ class mod_sticky extends ModuleHelper {
 		$PIO = PMCLibrary::getPIOInstance();
 		$fh = new FlagHelper($post['status']);
 		if ($fh->value('sticky')) {
-			$arrLabels['{$POSTINFO_EXTRA}'].='&nbsp;<img src="'.$this->STICKYICON.'" class="icon" title="Sticky" />';
+			$arrLabels['{$POSTINFO_EXTRA}'].='&nbsp;<img src="'.$this->STICKYICON.'" class="icon" title="Sticky">';
 		}
 	}
 
