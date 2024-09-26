@@ -152,17 +152,17 @@ const kkgal = {
 	_evresize: function (event) {
 		kkgal.getfit();
 	},
-	_evkeypress: function (event) {
+	_evkeydown: function (event) {
 		switch (event.key) {
 			case "ArrowLeft": case "ArrowUp": case "PageUp": // normal person keys (:^|)
-			case "h": case "j": // autist keys (hjkl)
+			case "h": case "k": // autist keys (hjkl)
 			case "<": case "[": // chad keys (*pounds keyboard*)
 			case "w": case "a": // gamer keys (wasd)
 				$id("galimgprev").click();
 				event.preventDefault();
 				break;
 			case "ArrowRight": case "ArrowDown": case "PageDown":
-			case "l": case "k":
+			case "l": case "j":
 			case ">": case "]":
 			case "s": case "d":
 				$id("galimgnext").click();
@@ -201,7 +201,7 @@ const kkgal = {
 		kkgal.gimg.style.maxHeight = (d.clientHeight-FONTSIZE*2.5)+"px";
 	},
 	expand: function (no=0) {
-		$doc.addEventListener("keypress", kkgal._evkeypress);
+		$doc.addEventListener("keydown", kkgal._evkeydown);
 		var _a = $class("activethumb");
 		if (_a.length) _a[0].classList.remove("activethumb");
 		if (!no) no = ($class("postimg")[0].parentNode).parentNode.id.substr(1);
@@ -228,7 +228,7 @@ const kkgal = {
 		$id("hoverimg").style.display = "none";
 	},
 	contract: function (no=0) {
-		$doc.removeEventListener("keypress", kkgal._evkeypress);
+		$doc.removeEventListener("keydown", kkgal._evkeydown);
 		kkgal.gframe.style.display = "none";
 		$doc.body.style.overflow = "";
 	},
