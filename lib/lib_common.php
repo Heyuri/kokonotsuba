@@ -188,8 +188,8 @@ function auto_link($proto){
 
 /* 引用標註 */
 function quote_unkfunc($comment){
-	$comment = preg_replace('/(^|<br>)((?:&gt;|＞).*?)(?=<br>|$)/ui', '$1<span class="unkfunc">$2</span>', $comment);
-	$comment = preg_replace('/(^|<br>)((?:&lt;).*?)(?=<br>|$)/ui', '$1<span class="unkfunc2">$2</span>', $comment);
+	$comment = preg_replace('/(^|<br\s*\/?>)((?:&gt;|＞).*?)(?=<br\s*\/?>|$)/ui', '$1<span class="unkfunc">$2</span>', $comment);
+	$comment = preg_replace('/(^|<br\s*\/?>)((?:&lt;).*?)(?=<br\s*\/?>|$)/ui', '$1<span class="unkfunc2">$2</span>', $comment);
 	return $comment;
 }
 
