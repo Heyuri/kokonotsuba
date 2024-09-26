@@ -1,16 +1,20 @@
 <?php
 
 /*
-	mod_ads.php : KolymaNET Ads 
+	mod_ads.php
 	By: bobman (Yahoo! ^_^)
 */
 
 class mod_ads implements IModule {
 	private static $PMS;
 	private static $SELF;
+	private $config;
 	
 	public function __construct($PMS) {
+		global $config;
 		self::$PMS = $PMS;
+
+		$this->config = $config;
 	}
 
 	// Names
