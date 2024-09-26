@@ -205,7 +205,7 @@ function quote_link($comment){
 			foreach($matches_unique as $val){
 				$post = $PIO->fetchPosts(intval($val[2]));
 				if($post){
-					$comment = str_replace($val[0], '<a href="'.PHP_SELF.'?res='.($post[0]['resto']?$post[0]['resto']:$post[0]['no']).'#p'.$post[0]['no'].'" class="quotelink">'.$val[0].'</a>', $comment);
+					$comment = str_replace($val[0], '<a href="'.$config['PHP_SELF'].'?res='.($post[0]['resto']?$post[0]['resto']:$post[0]['no']).'#p'.$post[0]['no'].'" class="quotelink">'.$val[0].'</a>', $comment);
 				} else {
 					$comment = str_replace($val[0], '<a href="javascript:void(0);" class="quotelink"><del>'.$val[0].'</del></a>', $comment);
 				}
