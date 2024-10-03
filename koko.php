@@ -20,6 +20,7 @@ require $config['ROOTPATH'].'lib/lib_errorhandler.php'; // Introduce global erro
 require $config['ROOTPATH'].'lib/lib_compatible.php'; // Introduce compatible libraries
 
 require $config['ROOTPATH'].'lib/lib_admin.php'; // Admin panel functions
+require $config['ROOTPATH'].'lib/lib_draw.php'; // Drawing functions
 require $config['ROOTPATH'].'lib/lib_template.php'; // Template library
 require $config['ROOTPATH'].'lib/lib_cache.php'; // Caching functions
 require $config['ROOTPATH'].'lib/lib_post.php'; // Post and thread functions
@@ -161,7 +162,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 			$tree = $PIO->fetchPostList($tID); // The entire discussion is structured in a tree-like manner
 			$tree_cut = array_slice($tree, $RES_start, $RES_amount); array_unshift($tree_cut, $tID); // Take out a specific range of responses
 			$posts = $PIO->fetchPosts($tree_cut); // Get the article schema content
-			$pte_vals['{$THREADS}'] .= arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $arr_kill, $arr_old, $kill_sensor, $old_sensor, true, $adminMode, $inner_for_count); // Leave this function to discuss serial printing
+			$pte_vals['{$THREADS}'] .= arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $arr_kill, $arr_old, $kill_sensor, $old_sensor, true, $adminMode, $inner_for_count, $i); // Leave this function to discuss serial printing
 		}
 		$pte_vals['{$PAGENAV}'] = '';
 
@@ -262,7 +263,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 }
 
 /* Output thread schema */
-function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $arr_kill, $arr_old, $kill_sensor, $old_sensor, $showquotelink=true, $adminMode=false, $threads_shown=0){
+function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $arr_kill, $arr_old, $kill_sensor, $old_sensor, $showquotelink=true, $adminMode=false, $threads_shown=0, $threadIterator){
 	global $config;
 	$resno = isset($resno) && $resno ? $resno : 0;
 	$PIO = PMCLibrary::getPIOInstance();
@@ -279,7 +280,7 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 	// $i = 0 (first article), $i = 1~n (response)
 	for($i = 0; $i < $posts_count; $i++){
 		$imgsrc = $img_thumb = $imgwh_bar = '';
-		$IMG_BAR = $REPLYBTN = $QUOTEBTN = $BACKLINKS = $POSTFORM_EXTRA = $WARN_OLD = $WARN_BEKILL = $WARN_ENDREPLY = $WARN_HIDEPOST = '';
+		$IMG_BAR = $REPLYBTN = $QUOTEBTN = $BACKLINKS = $POSTFORM_EXTRA = $WARN_OLD = $WARN_BEKILL = $WARN_ENDREPLY = $WARN_HIDEPOST = $THREADNAV = '';
 		extract($posts[$i]); // Take out the thread content setting variable
 	
 		// Set the field value
@@ -364,11 +365,8 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 			}
 			$category = implode(', ', $ary_category2);
 		}else $category = '';
-
-		$THREADNAV = '<a href="#postform">&#9632;</a>&nbsp;
-			      <a href="#top">&#9650;</a>&nbsp;
-			      <a href="#bottom">&#9660;</a>&nbsp;
-		';
+		
+		if(!$resno) $THREADNAV = buildThreadNavButtons($no, $threadIterator, $config, $PIO);
 
 		// Final output
 		if($i){ // Response
