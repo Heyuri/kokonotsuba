@@ -551,3 +551,8 @@ button,input[type=submit],input[type=reset] {
 	padding: 1px;
 	cursor: pointer;
 }
+
+.tnav {
+	float: right;
+	font-family: "MS PGothic", "Mona", submona, IPAMonaPGothic, "BIZ UDPGothic", saitamaar_light, sans-serif !important;
+}
