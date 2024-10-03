@@ -122,6 +122,7 @@
 <!--&THREAD-->
 <table class="thread" id="t{$NO}" align="CENTER" width="95%" border="<!--&IF($IS_THREAD,'0','1')-->" cellspacing="7" cellpadding="3"<!--&IF($IS_THREAD,' style="margin:0;width:100%;border:none;padding:0"','')-->>
 	<tbody>
+		<div class="tnav"><a title="Go to post form" href="#postform">■</a><a title="Go to page top" href="#top">▲</a><a title="Go to page bottom" href="#bottom">▼</a>
 		<tr>
 			<td<!--&IF($IS_THREAD,'','')-->>
 				<div class="tnav" align="RIGHT"><small>{$THREADNAV}</small></div>
