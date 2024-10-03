@@ -150,6 +150,7 @@
 
 		<!--&THREAD-->
 		<div class="thread" id="t{$NO}">
+			<div class="tnav">{$THREADNAV}</div>
 			<div class="post op" id="p{$NO}">
 				<div class="filesize">{$IMG_BAR}</div>
 				{$IMG_SRC}
