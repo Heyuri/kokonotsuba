@@ -554,5 +554,6 @@ button,input[type=submit],input[type=reset] {
 
 .tnav {
 	float: right;
+	margin-right: 10px;
 	font-family: "MS PGothic", "Mona", submona, IPAMonaPGothic, "BIZ UDPGothic", saitamaar_light, sans-serif !important;
 }
