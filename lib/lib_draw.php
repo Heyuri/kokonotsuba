@@ -55,7 +55,7 @@ function quote_link($comment){
 }
 
 function buildThreadNavButtons($threadID, $threadInnerIterator, $config, $PIO) {		
-	$threads = $PIO->fetchThreadList(); 
+	$threads = $PIO->fetchThreadList(0, $config['PAGE_DEF']); 
 	$upArrow = '';
 	$downArrow = '';
 	$postFormButton = '<a title="Go to post form" href="#postform">&#9632;</a>';
