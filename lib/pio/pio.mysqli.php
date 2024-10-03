@@ -357,7 +357,6 @@ class PIOmysqli implements IPIO {
 	}
 
 	/* Output discussion thread list */
-	
 	public function fetchThreadList($start=0, $amount=0, $isDESC=false){
 		if(!$this->prepared) $this->dbPrepare();
 

@@ -39,182 +39,6 @@ if (!function_exists('inet_pton')) {
 	}
 }
  
-
-/* 輸出表頭 | document head */
-function head(&$dat,$resno=0){
-	global $config;
-	$PTE = PMCLibrary::getPTEInstance();
-	$PMS = PMCLibrary::getPMSInstance();
-	$PIO = PMCLibrary::getPIOInstance();
-
-	$pte_vals = array('{$RESTO}'=>$resno?$resno:'', '{$IS_THREAD}'=>boolval($resno));
-	if ($resno) {
-		$post = $PIO->fetchPosts($resno);
-		if (mb_strlen($post[0]['com']) <= 10){
-			$CommentTitle = $post[0]['com'];
-		} else {
-			$CommentTitle = mb_substr($post[0]['com'],0,10,'UTF-8') . "...";
-		}
-		$pte_vals['{$PAGE_TITLE}'] = ($post[0]['sub'] ? $post[0]['sub'] : $CommentTitle).' - '.$config['TITLE'];
-	}
-	$dat .= $PTE->ParseBlock('HEADER',$pte_vals);
-	$PMS->useModuleMethods('Head', array(&$dat,$resno)); // "Head" Hook Point
-	$dat .= '</head>';
-	$pte_vals += array('{$HOME}' => '[<a href="'.$config['HOME'].'" target="_top">'._T('head_home').'</a>]',
-		'{$STATUS}' => '[<a href="'.$config['PHP_SELF'].'?mode=status">'._T('head_info').'</a>]',
-		'{$ADMIN}' => '[<a href="'.$config['PHP_SELF'].'?mode=admin">'._T('head_admin').'</a>]',
-		'{$REFRESH}' => '[<a href="'.$config['PHP_SELF2'].'?">'._T('head_refresh').'</a>]',
-		'{$SEARCH}' => (0) ? '[<a href="'.$config['PHP_SELF'].'?mode=search">'._T('head_search').'</a>]' : '',
-		'{$HOOKLINKS}' => '');
-	$PMS->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
-	$dat .= $PTE->ParseBlock('BODYHEAD',$pte_vals);
-}
-
-/* 發表用表單輸出 | user contribution form */
-function form(&$dat, $resno, $name='', $mail='', $sub='', $com='', $cat='', $preview=false){
-	global $config;
-	$PTE = PMCLibrary::getPTEInstance();
-	$PMS = PMCLibrary::getPMSInstance();
-
-	$hidinput =
-		($resno ? '<input type="hidden" name="resto" value="'.$resno.'">' : '').
-		($config['TEXTBOARD_ONLY'] ? '' : '<input type="hidden" name="MAX_FILE_SIZE" value="{$MAX_FILE_SIZE}">');
-
-	$pte_vals = array(
-		'{$RESTO}' => strval($resno),
-		'{$IS_THREAD}' => $resno!=0,
-		'{$FORM_HIDDEN}' => $hidinput,
-		'{$MAX_FILE_SIZE}' => strval($config['TEXTBOARD_ONLY'] ? 0 : $config['MAX_KB'] * 1024),
-		'{$FORM_NAME_FIELD}' => '<input tabindex="1" maxlength="'.$config['INPUT_MAX'].'" type="text" name="name" id="name" size="28" value="'.$name.'" class="inputtext">',
-		'{$FORM_EMAIL_FIELD}' => '<input tabindex="2" maxlength="'.$config['INPUT_MAX'].'" type="text" name="email" id="email" size="28" value="'.$mail.'" class="inputtext">',
-		'{$FORM_TOPIC_FIELD}' => '<input tabindex="3" maxlength="'.$config['INPUT_MAX'].'"  type="text" name="sub" id="sub" size="28" value="'.$sub.'" class="inputtext">',
-		'{$FORM_SUBMIT}' => '<button tabindex="10" type="submit" name="mode" value="regist">'.($resno ? 'Post' : 'New Thread' ).'</button>',
-		'{$FORM_COMMENT_FIELD}' => '<textarea tabindex="6" maxlength="'.$config['COMM_MAX'].'" name="com" id="com" cols="48" rows="4" class="inputtext">'.$com.'</textarea>',
-		'{$FORM_DELETE_PASSWORD_FIELD}' => '<input tabindex="6" type="password" name="pwd" id="pwd" size="8" maxlength="8" value="" class="inputtext">',
-		'{$FORM_EXTRA_COLUMN}' => '',
-		'{$FORM_FILE_EXTRA_FIELD}' => '',
-		'{$FORM_NOTICE}' => ($config['TEXTBOARD_ONLY'] ? '' :_T('form_notice',str_replace('|',', ',$config['ALLOW_UPLOAD_EXT']),$config['MAX_KB'],($resno ? $config['MAX_RW'] : $config['MAX_W']),($resno ? $config['MAX_RH'] : $config['MAX_H']))),
-		'{$HOOKPOSTINFO}' => '');
-	if(!$config['TEXTBOARD_ONLY'] && ($config['RESIMG'] || !$resno)){
-		if(isset($_FILES['upfile']['error']) && $_FILES['upfile']['error']!=UPLOAD_ERR_NO_FILE) $w = ($preview?'<small class="warning"><b>Please enter the file again:</b></small><br>':'');
-		else $w = '';
-		$pte_vals += array('{$FORM_ATTECHMENT_FIELD}' => $w.'<input type="file" name="upfile" id="upfile">');
-
-		if (!$resno) {
-			$pte_vals += array('{$FORM_NOATTECHMENT_FIELD}' => '<input type="checkbox" name="noimg" id="noimg" value="on">');
-		}
-		if($config['USE_UPSERIES']) { // 啟動連貼機能
-			$pte_vals['{$FORM_CONTPOST_FIELD}'] = '<input type="checkbox" name="up_series" id="up_series" value="on"'.((isset($_GET["upseries"]) && $resno)?' checked="checked"':'').'>';
-		}
-		$PMS->useModuleMethods('PostFormFile', array(&$pte_vals['{$FORM_FILE_EXTRA_FIELD}']));
-	}
-	$PMS->useModuleMethods('PostForm', array(&$pte_vals['{$FORM_EXTRA_COLUMN}'])); // "PostForm" Hook Point
-	if($config['USE_CATEGORY']) {
-		$pte_vals += array('{$FORM_CATEGORY_FIELD}' => '<input tabindex="5" type="text" name="category" id="category" size="28" value="'.$cat.'" class="inputtext">');
-	}
-	if($config['STORAGE_LIMIT']) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',total_size(),$config['STORAGE_MAX']);
-	$PMS->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
-
-	$dat .= $PTE->ParseBlock('POSTFORM',$pte_vals);
-}
-
-/* 輸出頁尾文字 | footer credits */
-function foot(&$dat,$res=false){
-	$PTE = PMCLibrary::getPTEInstance();
-	$PMS = PMCLibrary::getPMSInstance();
-
-	$pte_vals = array('{$FOOTER}'=>'','{$IS_THREAD}'=>$res);
-	$PMS->useModuleMethods('Foot', array(&$pte_vals['{$FOOTER}'])); // "Foot" Hook Point
-	$pte_vals['{$FOOTER}'] .= '<center>- <a rel="nofollow noreferrer license" href="https://web.archive.org/web/20150701123900/http://php.s3.to/" target="_blank">GazouBBS</a> + <a rel="nofollow noreferrer license" href="http://www.2chan.net/" target="_blank">futaba</a> + <a rel="nofollow noreferrer license" href="https://pixmicat.github.io/" target="_blank">Pixmicat!</a> + <a rel="nofollow noreferrer license" href="https://github.com/Heyuri/kokonotsuba/" target="_blank">Kokonotsuba</a> -</center>';
-	$dat .= $PTE->ParseBlock('FOOTER',$pte_vals);
-}
-
-/* redirect */
-function redirect($to, $time=0, $verbose=false) {
-	if($to=='back') {
-		$to = $_SERVER['HTTP_REFERER']??'';
-	}
-	
-	if ($verbose) {
-		$tojs = $to==($_SERVER['HTTP_REFERER']??'') ? 'history.go(-1);' : "location.href=\"$to\"";
-		echo '<!DOCTYPE html>
-	<html><head>
-		<meta charset="utf-8">
-		<title>Redirecting...</title>
-		<meta http-equiv="refresh" content="0;URL='.$to.'">
-		<script>
-	setTimeout(function(){'.$tojs.'}, '.$time.'*1000);
-		</script>
-	<style>
-	body {
-		font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
-	}
-	</style>
-	</head><body>
-	<center>
-		<h1>Redirecting...
-		<p>If your browser doesn\'t redirect for you, please click: <a href="'.$to.'" onclick="event.preventDefault();'.$tojs.'">Go</a></p></h1>
-	<br><br>
-	</body>
-	</html>';
-		exit;
-	}
-	
-	header("Location: " . $to);
-	exit;
-}
-
-/* 網址自動連結 */
-function auto_link_callback2($matches) {
-	global $config;
-	$URL = $matches[1].$matches[2]; // https://example.com
-
-	// Redirect URL!
-	if ($config['REF_URL']) {
-		$URL_Encode = urlencode($URL);  // https%3A%2F%2Fexample.com (For the address bar)
-		return '<a href="'.$config['REF_URL'].'?'.$URL_Encode.'" target="_blank" rel="nofollow noreferrer">'.$URL.'</a>';
-	}
-	// Also works if its blank!
-	return '<a href="'.$URL.'" target="_blank" rel="nofollow noreferrer">'.$URL.'</a>';
-}
-function auto_link_callback($matches){
-	return (strtolower($matches[3]) == "</a>") ? $matches[0] : preg_replace_callback('/([a-zA-Z]+)(:\/\/[\w\+\$\;\?\.\{\}%,!#~*\/:@&=_-]+)/u', 'auto_link_callback2', $matches[0]);
-}
-function auto_link($proto){
-	$proto = preg_replace('|<br\s*/?>|',"\n",$proto);
-	$proto = preg_replace_callback('/(>|^)([^<]+?)(<.*?>|$)/m','auto_link_callback',$proto);
-	return str_replace("\n",'<br>',$proto);
-}
-
-/* 引用標註 */
-function quote_unkfunc($comment){
-	$comment = preg_replace('/(^|<br\s*\/?>)((?:&gt;|＞).*?)(?=<br\s*\/?>|$)/ui', '$1<span class="unkfunc">$2</span>', $comment);
-	$comment = preg_replace('/(^|<br\s*\/?>)((?:&lt;).*?)(?=<br\s*\/?>|$)/ui', '$1<span class="unkfunc2">$2</span>', $comment);
-	return $comment;
-}
-
-/* quote links */
-function quote_link($comment){
-	global $config;
-	$PIO = PMCLibrary::getPIOInstance();
-	
-	if($config['USE_QUOTESYSTEM']){
-		if(preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $comment, $matches, PREG_SET_ORDER)){
-			$matches_unique = array();
-			foreach($matches as $val){ if(!in_array($val, $matches_unique)) array_push($matches_unique, $val); }
-			foreach($matches_unique as $val){
-				$post = $PIO->fetchPosts(intval($val[2]));
-				if($post){
-					$comment = str_replace($val[0], '<a href="'.$config['PHP_SELF'].'?res='.($post[0]['resto']?$post[0]['resto']:$post[0]['no']).'#p'.$post[0]['no'].'" class="quotelink">'.$val[0].'</a>', $comment);
-				} else {
-					$comment = str_replace($val[0], '<a href="javascript:void(0);" class="quotelink"><del>'.$val[0].'</del></a>', $comment);
-				}
-			}
-		}
-	}
-	return $comment;
-}
-
 /* 取得完整的網址 */
 function fullURL(){
 	global $config;
@@ -477,6 +301,41 @@ function logtime($desc, $from='SYSTEM') {
 	$ip = ' ('.getREMOTE_ADDR().')';
 	static $fp; if (!$fp) $fp = fopen($config['STORAGE_PATH'].$config['ACTION_LOG'], "a");
 	fwrite($fp, "$from$ip: $now: $desc\r\n");
+}
+
+/* redirect */
+function redirect($to, $time=0, $verbose=false) {
+	if($to=='back') {
+		$to = $_SERVER['HTTP_REFERER']??'';
+	}
+	
+	if ($verbose) {
+		$tojs = $to==($_SERVER['HTTP_REFERER']??'') ? 'history.go(-1);' : "location.href=\"$to\"";
+		echo '<!DOCTYPE html>
+	<html><head>
+		<meta charset="utf-8">
+		<title>Redirecting...</title>
+		<meta http-equiv="refresh" content="0;URL='.$to.'">
+		<script>
+	setTimeout(function(){'.$tojs.'}, '.$time.'*1000);
+		</script>
+	<style>
+	body {
+		font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+	}
+	</style>
+	</head><body>
+	<center>
+		<h1>Redirecting...
+		<p>If your browser doesn\'t redirect for you, please click: <a href="'.$to.'" onclick="event.preventDefault();'.$tojs.'">Go</a></p></h1>
+	<br><br>
+	</body>
+	</html>';
+		exit;
+	}
+	
+	header("Location: " . $to);
+	exit;
 }
 
 // Currently a simple minify

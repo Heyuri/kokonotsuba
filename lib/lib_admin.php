@@ -588,4 +588,3 @@ function drawAdminList() {
 		foot($dat);
 		die($dat.'</body></html>');
 }
-
