@@ -408,7 +408,7 @@ function applyTripcodeAndCapcodes(&$name, &$email, &$dest){
         $salt = strtr(preg_replace('/[^\.-z]/', '.', substr($trip.'H.',1,2)), ':;<=>?@[\\]^_`', 'ABCDEFGabcdef');
         
         $tripcodeCrypt = substr(crypt($trip, $salt), -10);
-        $trip = "<span class=\"postertrip\">◆$tripcodeCrypt</span>";
+        $trip = "◆$tripcodeCrypt";
     }
     if ($sectrip) {
     	$AccountIO = PMCLibrary::getAccountIOInstance();
@@ -423,14 +423,14 @@ function applyTripcodeAndCapcodes(&$name, &$email, &$dest){
             // User
             $sha =str_rot13(base64_encode(pack("H*",sha1($sectrip.$config['TRIPSALT']))));
             $sha = substr($sha,0,10);
-            $trip = "<span class=\"postertrip\">★$sha</span>";
+            $trip = "★$sha";
         }
     }
     if(!$name || preg_match("/^[ |　|]*$/", $name)){
         if($config['ALLOW_NONAME']) $name = $config['DEFAULT_NONAME'];
         else error(_T('regist_withoutname'), $dest);
     }
-    $name = "<b>$name</b>$trip";
+    $name = "<b>$name</b><span class=\"postertrip\">$trip</span>";
     if (isset($config['CAPCODES'][$trip])) {
         $capcode = $config['CAPCODES'][$trip];
         $name = '<font color="'.$capcode['color'].'">'.$name.'<b>'.$capcode['cap'].'</b>'.'</font>';
