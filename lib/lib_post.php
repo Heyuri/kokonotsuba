@@ -388,17 +388,27 @@ function processFiles(&$upfile, &$upfile_path, &$upfile_name, &$upfile_status, &
         $mes = _T('regist_uploaded', CleanStr($upfile_name));
     }
 }
+
+/* Catch impersonators and modify name to display such */ 
+function catchFraudsters(&$name) {
+	if (preg_match('/[◆◇♢♦⟡★]/u', $name)) $name .= " (fraudster)";
+}
  
 function applyTripcodeAndCapcodes(&$name, &$email, &$dest){
 	global $config;
 	
+    catchFraudsters($name);
+    
     $name = str_replace('&&', '&#', $name);
     list($name, $trip, $sectrip) = str_replace('&%', '&#', explode('#',$name.'##'));
     $name = str_replace('&&', '&#', $name);
+    
     if ($trip) {
         $trip = mb_convert_encoding($trip, 'Shift_JIS', 'UTF-8');
         $salt = strtr(preg_replace('/[^\.-z]/', '.', substr($trip.'H.',1,2)), ':;<=>?@[\\]^_`', 'ABCDEFGabcdef');
-        $trip = '!'.substr(crypt($trip, $salt), -10);
+        
+        $tripcodeCrypt = substr(crypt($trip, $salt), -10);
+        $trip = "<span class=\"postertrip\">◆$tripcodeCrypt</span>";
     }
     if ($sectrip) {
     	$AccountIO = PMCLibrary::getAccountIOInstance();
@@ -413,7 +423,7 @@ function applyTripcodeAndCapcodes(&$name, &$email, &$dest){
             // User
             $sha =str_rot13(base64_encode(pack("H*",sha1($sectrip.$config['TRIPSALT']))));
             $sha = substr($sha,0,10);
-            $trip = '!!'.$sha;
+            $trip = "<span class=\"postertrip\">★$sha</span>";
         }
     }
     if(!$name || preg_match("/^[ |　|]*$/", $name)){

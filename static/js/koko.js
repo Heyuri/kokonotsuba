@@ -383,6 +383,11 @@ const kkjs = {
 				kkjs.modules.pop(mod);
 			}
 		} );
+		
+		if (localStorage.getItem("tripkeys")=="true") {
+			kkjs.applyTripKeys();
+		}
+		
 		//kkjs.wztt();
 		$id("jscenterthreads").disabled = localStorage.getItem("centerthreads")!="true";
 		if (localStorage.getItem("persistnav")=="true") {
@@ -443,6 +448,16 @@ const kkjs = {
 		com.dispatchEvent(event);
 		return true;
 	},
+	
+	//futallaby tripkeys
+	applyTripKeys: function() {
+		let trips = document.getElementsByClassName("postertrip");
+		for(let i=0;i<trips.length;i++){
+			trips[i].innerHTML=trips[i].innerHTML.replace(RegExp("^"+"★"),"!!");
+			trips[i].innerHTML=trips[i].innerHTML.replace(RegExp("^"+"◆"),"!");
+		}
+	},
+	
 	// email
 	ee: function () {
 		var email = $id("email");
@@ -556,6 +571,7 @@ const kkjs = {
 				<label><input type="checkbox" onchange="localStorage.setItem('centerthreads',this.checked);$id('jscenterthreads').disabled=!this.checked;"`+(localStorage.getItem("centerthreads")=="true"?'checked="checked"':'')+`>Center threads</label>
 				<label><input type="checkbox" onchange="localStorage.setItem('persistpager',this.checked);$id('jspersistpager').disabled=!this.checked;"`+(localStorage.getItem("persistpager")=="true"?'checked="checked"':'')+`>Persistent pager</label>
 				<label><input type="checkbox" onchange="localStorage.setItem('persistnav',this.checked);location.reload();"`+(localStorage.getItem("persistnav")=="true"?'checked="checked"':'')+`>Persistent navigation</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('tripkeys', this.checked);location.reload();"`+(localStorage.getItem("tripkeys")=="true"?'checked="checked"':'')+`>Futallaby style tripkeys</label>
 				<label><input type="checkbox" onchange="localStorage.setItem('neomenu',this.checked);location.reload();"`+(localStorage.getItem("neomenu")=="true"?'checked="checked"':'')+`>Use Neomenu</label>
 			`;
 		}
@@ -568,34 +584,3 @@ const kkjs = {
 };
 
 window.addEventListener("DOMContentLoaded", kkjs.startup);
-
-function cacheComment(text) {
-	localStorage.setItem("comment", text.value);
-}
-
-function handleCommentCachingEvent() {
-	let data;
-	data = localStorage.getItem("comment");
-
-	
-	let commentArea = document.getElementById("com");
-	commentArea.setAttribute("onkeyup", "cacheComment(this)");
-	commentArea.value = data;
-	
-	let postform = document.getElementById("postform");
-	//clear comment cache if form is submitted
-	if(postform.addEventListener){
-		postform.addEventListener("submit", function() {
-		localStorage.setItem("comment", '')}, false);
-	}else if(postform.attachEvent){
-		postform.attachEvent('onsubmit', function() {
-		localStorage.setItem("comment", '')}); 
-	}
-
-}
-
-$win.onload = function () {
-	handleCommentCachingEvent();
-}
-
-
