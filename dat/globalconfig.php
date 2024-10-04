@@ -50,8 +50,8 @@ $config['FILEIO_PARAMETER'] = ''; // FileIO Parameters (local storage)
 
 $config['IDSEED'] = 'setrandom'; // ID generation seed
 $config['TRIPSALT'] = ''; // Used for secure tripcodes. Don't change after setting!
-$config['CAPCODES'] = array( // tripcode=>color,cap
-	'!tripcode' => array('color'=>'#fd0000', 'cap'=>' ## Admin'),
+$config['CAPCODES'] = array( // tripcode=>color,cap // for secure tripcode hashes, put ★ instead of ◆
+	'◆tripcode' => array('color'=>'#fd0000', 'cap'=>' ## Admin'),
 );
 
 $config['REF_URL'] = ''; // URL prefix, eg: https://jump.heyuri.net
