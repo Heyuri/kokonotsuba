@@ -12,7 +12,7 @@ $config['DATABASE_DRIVER'] = 'mysqli';
 $config['DATABASE_HOST'] = '127.0.0.1';
 $config['DATABASE_PORT'] = 3306; // Default MySQL port
 
-$config['ROOTPATH'] = '/srv/location/of/kokonotsuba/directory/'; //Set this to the directory of the backend-files
+$config['ROOTPATH'] = './'; //Set this to the directory of the backend-files
 
 $config['ALLOW_UPLOAD_EXT'] = 'GIF|JPG|JPEG|PNG|BMP|SWF|WEBM|MP4'; // Allowed filetypes
 
