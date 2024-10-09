@@ -22,8 +22,8 @@ $config['LIMIT_SENSOR'] = array('ByThreadCountCondition'=>150); // AutoDelete, d
 
 
 // Appearance
-$config['TEMPLATE_FILE'] = 'templates/kokoimg.tpl'; // Template File. Set this and the next line to 'kokotxt.tpl' and 'kokotxtreply.tpl' respectively to use Kokonotsuba as a textboard.
-$config['REPLY_TEMPLATE_FILE'] = 'templates/kokoimg.tpl'; // Reply page template file
+$config['TEMPLATE_FILE'] = $config['ROOTPATH'].'templates/kokoimg.tpl'; // Template File. Set this and the next line to 'kokotxt.tpl' and 'kokotxtreply.tpl' respectively to use Kokonotsuba as a textboard.
+$config['REPLY_TEMPLATE_FILE'] = $config['ROOTPATH'].'templates/kokoimg.tpl'; // Reply page template file
 $config['MAX_AGE_TIME'] = 0; // How long will thread accept age replies? (hours)
 
 $config['USE_CATEGORY'] = 0; // Enable Categories

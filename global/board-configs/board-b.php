@@ -3,8 +3,11 @@
 * This file is for board-specific configurations. Make sure that values in globalconfig.php are set correctly.
 */
 
-$config['STORAGE_PATH'] = '/srv/location/to/dat/'; // Storage directory, needs to have 777 permissions. Include trailing '/'
-require $config['STORAGE_PATH'].'globalconfig.php';
+$config['GLOBAL_PATH'] = './global/'; //Directory for files used by all boards. Include trailing '/'
+$config['STORAGE_PATH'] = './dat/'; // Board storage directory, needs to have 777 permissions. Include trailing '/'
+
+require $config['GLOBAL_PATH'].'globalconfig.php';
+
 
 //Board database info
 $config['DATABASE_DBNAME'] =  'database';
