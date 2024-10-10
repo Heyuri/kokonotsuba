@@ -415,8 +415,10 @@ function regist($preview=false){
     $pwdc = $_COOKIE['pwdc']??'';
     $ip = getREMOTE_ADDR(); 
     $host = $ip;
+    // Unix timestamp in seconds
     $time = $_SERVER['REQUEST_TIME'];
-    $tim  = sprintf('%d%03d', $time = microtime(true), ($time - floor($time)) * 1000);
+    // Unix timestamp in milliseconds
+    $tim  = intval($_SERVER['REQUEST_TIME_FLOAT'] * 1000);
     $upfile = '';
     $upfile_path = '';
     $upfile_name = '';
