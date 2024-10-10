@@ -169,6 +169,7 @@ $config['ModuleList'] = array(
 	'mod_cat' => true,
 	'mod_search' => true,
 	'mod_stat' => true,
+	'mod_threadlist' => false,
 	/* admin */
 	'mod_admindel' => true,
 	'mod_adminban' => true,
