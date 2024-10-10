@@ -1,28 +1,11 @@
 <?php
     class mod_wf implements IModule {
-      private $config;
-      private $FILTERS = array(
-     
-        '/\b(rabi-en-rose)\b/i' => '<span style="background-color:#ffe6f9;color:#78376d;font-family:serif;font-weight:bold;">Rabi~en~Rose</span>',
-        '/\b(rabi~en~rose)\b/i' => '<span style="background-color:#ffe6f9;color:#78376d;font-family:serif;font-weight:bold;">Rabi~en~Rose</span>',
-        '/\b(newfag)\b/i' => 'n00b like me',
-        '/\b(newfags)\b/i' => 'n00bs like me',
-        '/\b(heyuri★cgi)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
-        '/\b(heyuri cgi)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
-        '/\b(chat@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/chat/">Chat@Heyuri</a>',
-        '/\b(polls@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/vote2/">Polls@Heyuri</a>',
-        '/\b(dating@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/dating/">Dating@Heyuri</a>',
-        '/\b(uploader@heyuri)\b/i' => '<a href="https://up.heyuri.net/">Uploader@Heyuri</a>',
-        '/@party 2/i' => '<a href="https://cgi.heyuri.net/party2/">@Party II</a>',
-        '/@party ii/i' => '<a href="https://cgi.heyuri.net/party2/">@Party II</a>',
-        '/\b(ayashii world)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Ayashii_World">Ayashii World</a>',
-        '/\b(partybus)\b/i' => '<span style="font-family:\'Comic Sans MS\',cursive;font-size:1.5em;text-shadow: 0.0625em 0.0625em 0 #000000a8"><span style="color:#ff00ff">p</span><span style="color:#ffff80;position:relative;bottom:0.125em">a</span><span style="color:#00ff80">r</span><span style="color:#80ffff;position:relative;top:0.125em">t</span><span style="color:#8080ff">y</span><span style="color:#ff0080">b</span><span style="color:#ff8040;position:relative;bottom:0.125em">u</span><span style="color:#0080ff">s</span></span>',
-        '/\b(boku)\b/i' => '<span title="AGE OF DESU IS OVAR, WE BOKU NOW"><b><font color="#489b67">B</font><font color="#d30615">O</font><font color="#489b67">K</font><font color="#d30615">U</font></b></span>'
-      );
+      private $config, $FILTERS;
      
       public function __construct($PMS) {
       	global $config;
       	$this->config = $config;
+      	$this->FILTERS = $this->config['ModuleSettings']['FILTERS'];
       
         $this->addEmojiFilters();
       }
