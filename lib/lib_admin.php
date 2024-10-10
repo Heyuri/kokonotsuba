@@ -119,7 +119,7 @@ function selectAll() {
 	$dat.= '<td>';
 	for($i = 0; $i <= $page_max; $i++){
 		if($i==$page) $dat.= '[<b>'.$i.'</b>] ';
-		else $dat.= '[<a href="'.$config['roles']['PHP_SELF'].'?mode=admin&admin=del&page='.$i.($searchHost?'&host='.$searchHost:'').'">'.$i.'</a>] ';
+		else $dat.= '[<a href="'.$config['PHP_SELF'].'?mode=admin&admin=del&page='.$i.($searchHost?'&host='.$searchHost:'').'">'.$i.'</a>] ';
 	}
 	$dat.= '</td>';
 	if($page < $page_max) $dat.= '<td><a href="'.$config['PHP_SELF'].'?mode=admin&admin=del&page='.($page + 1).($searchHost?'&host='.$searchHost:'').'">'._T('next_page').'</a></td>';
