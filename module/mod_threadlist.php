@@ -1,21 +1,16 @@
 <?php
 class mod_threadlist extends ModuleHelper {
-	// Number of lists displayed on one page
-	private $THREADLIST_NUMBER = 50;
-	// Whether to force a new string to have a title
-	private $FORCE_SUBJECT = true;
-	// Whether to display on the main page
-	private $SHOW_IN_MAIN = true;
-	// Display the number of lists on the main page
-	private $THREADLIST_NUMBER_IN_MAIN = 100;
-	// Whether to display the delete form
-	private $SHOW_FORM = false;
-	// The number of popular responses, the number of responses exceeding this value will turn red (0 means not used)
-	private $HIGHLIGHT_COUNT = 30;
+	private $THREADLIST_NUMBER, $FORCE_SUBJECT, $SHOW_IN_MAIN, $THREADLIST_NUMBER_IN_MAIN, $SHOW_FORM, $HIGHLIGHT_COUNT = -1;
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
 
+		$this->THREADLIST_NUMBER = $this->config['ModuleSettings']['THREADLIST_NUMBER'];
+		$this->FORCE_SUBJECT = $this->config['ModuleSettings']['FORCE_SUBJECT'];
+		$this->THREADLIST_NUMBER_IN_MAIN = $this->config['ModuleSettings']['THREADLIST_NUMBER_IN_MAIN'];
+		$this->SHOW_FORM = $this->config['ModuleSettings']['SHOW_FORM'];
+		$this->HIGHLIGHT_COUNT = $this->config['ModuleSettings']['HIGHLIGHT_COUNT'];		
+		
 		$this->attachLanguage(array(
 			'zh_TW' => array(
 				'modulename' => '討論串列表',
@@ -77,7 +72,7 @@ class mod_threadlist extends ModuleHelper {
 			if (mb_strlen(strip_tags($post[0]['com'])) <= 10){
 					$CommentTitle = strip_tags($post[0]['com']);
 				} else {
-					 					$CommentTitle = mb_substr(strip_tags($post[0]['com']),0,10,'UTF-8') . "...";
+					$CommentTitle = mb_substr(strip_tags($post[0]['com']),0,10,'UTF-8') . "...";
 					//Yahoo! ^_^
 				}
 				
