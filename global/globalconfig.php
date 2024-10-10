@@ -20,7 +20,6 @@ $config['ALLOW_UPLOAD_EXT'] = 'GIF|JPG|JPEG|PNG|BMP|SWF|WEBM|MP4'; // Allowed fi
 $config['ADDITION_INFO'] = @file_get_contents($config['ROOTPATH'].'addinfo.txt'); // Addinfo
 $config['LIMIT_SENSOR'] = array('ByThreadCountCondition'=>150); // AutoDelete, defaults to 10 pages
 
-
 // Appearance
 $config['TEMPLATE_FILE'] = $config['ROOTPATH'].'templates/kokoimg.tpl'; // Template File. Set this and the next line to 'kokotxt.tpl' and 'kokotxtreply.tpl' respectively to use Kokonotsuba as a textboard.
 $config['REPLY_TEMPLATE_FILE'] = $config['ROOTPATH'].'templates/kokoimg.tpl'; // Reply page template file
@@ -31,7 +30,8 @@ $config['USE_CATEGORY'] = 0; // Enable Categories
 
 // Ban Settings
 $config['BAN_CHECK'] = 1; // Comprehensive ban check function
-$config['GLOBAL_BANS'] = $config['STORAGE_PATH'].'globalbans.log';
+$config['GLOBAL_BANS'] = $config['GLOBAL_PATH'].'globalbans.log';
+$config['LOCAL_BAN_PATH'] = $config['STORAGE_PATH'];
 
 // Webhooks for post notifications
 $config['DISCORD_WH'] = '';
@@ -166,26 +166,38 @@ $config['FORTUNES'] = array( // Used for fortune function, selected at random.
 // See: https://github.com/Heyuri/kokonotsuba/wiki/All-modules
 $config['ModuleList'] = array(
 	/* modes */
-	'mod_soudane',
-	'mod_rss',
-	'mod_cat',
-	'mod_search',
-	'mod_stat',
+	'mod_cat' => true,
+	'mod_search' => true,
+	'mod_stat' => true,
 	/* admin */
-	'mod_admindel',
-	'mod_adminban',
+	'mod_admindel' => true,
+	'mod_adminban' => true,
+	'mod_movethread' => true,
 	/* thread modes */
-	'mod_autosage',
-	'mod_stop',
-	'mod_sticky',
+	'mod_autosage' => true,
+	'mod_stop' => true,
+	'mod_sticky' => true,
 	/* posting */
-	'mod_csrf_prevent',
-	'mod_bbcode',
-	'mod_wf',
-	'mod_anigif',
+	'mod_csrf_prevent' => true,
+	'mod_bbcode' => true,
+	'mod_wf' => true,
+	'mod_anigif' => true,
+	'mod_antiflood' => true,
+	'mod_fieldtraps' => false,
+	'mod_readonly' => false,
+	'mod_showip' => true,
+	/* API */
+	'mod_api' => true,
+	'mod_rss' => true,
+	/* misc */
+	'mod_soudane' => true,
+	'mod_soudane2' => false,
+	'mod_pm' => true,
+	'mod_ads' => true,
+	'mod_exif' => true,
 );
 
-// Module-specific options
+/* Module-specific options */
 //mod_countryflags
 $config['ModuleSettings']['FLAG_MODE'] = 1; // For the country flags module: 1 = hide flags on posts with "flag" in email field, 2 = show flags on posts with "flag" in email field
 //mod_admindel
@@ -195,12 +207,48 @@ $config['ModuleSettings']['JANIMUTE_REASON'] = 'You have been muted temporarily!
 $config['ModuleSettings']['RENZOKU3'] = 30; // How many seconds between new threads?
 //mod_showip
 $config['ModuleSettings']['IPTOGGLE'] = 1; // 1 to have OPs toggle IP display, 2 enables for all posts
+//mod_blotter
+$config['ModuleSettings']['BLOTTER_FILE'] = $config['GLOBAL_PATH'].'blotter.txt';
+$config['ModuleSettings']['BLOTTER_DATE_FORMAT'] = "Y-m-d";
+//mod_pm
+$config['ModuleSettings']['PM_DIR'] = $config['GLOBAL_PATH'];
+//mod_wf
+$config['ModuleSettings']['FILTERS'] = array( 
+        '/\b(rabi-en-rose)\b/i' => '<span style="background-color:#ffe6f9;color:#78376d;font-family:serif;font-weight:bold;">Rabi~en~Rose</span>',
+        '/\b(rabi~en~rose)\b/i' => '<span style="background-color:#ffe6f9;color:#78376d;font-family:serif;font-weight:bold;">Rabi~en~Rose</span>',
+        '/\b(newfag)\b/i' => 'n00b like me',
+        '/\b(newfags)\b/i' => 'n00bs like me',
+        '/\b(heyuri★cgi)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
+        '/\b(heyuri cgi)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
+        '/\b(chat@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/chat/">Chat@Heyuri</a>',
+        '/\b(polls@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/vote2/">Polls@Heyuri</a>',
+        '/\b(dating@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/dating/">Dating@Heyuri</a>',
+        '/\b(uploader@heyuri)\b/i' => '<a href="https://up.heyuri.net/">Uploader@Heyuri</a>',
+        '/@party 2/i' => '<a href="https://cgi.heyuri.net/party2/">@Party II</a>',
+        '/@party ii/i' => '<a href="https://cgi.heyuri.net/party2/">@Party II</a>',
+        '/\b(ayashii world)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Ayashii_World">Ayashii World</a>',
+        '/\b(partybus)\b/i' => '<span style="font-family:\'Comic Sans MS\',cursive;font-size:1.5em;text-shadow: 0.0625em 0.0625em 0 #000000a8"><span style="color:#ff00ff">p</span><span style="color:#ffff80;position:relative;bottom:0.125em">a</span><span style="color:#00ff80">r</span><span style="color:#80ffff;position:relative;top:0.125em">t</span><span style="color:#8080ff">y</span><span style="color:#ff0080">b</span><span style="color:#ff8040;position:relative;bottom:0.125em">u</span><span style="color:#0080ff">s</span></span>',
+        '/\b(boku)\b/i' => '<span title="AGE OF DESU IS OVAR, WE BOKU NOW"><b><font color="#489b67">B</font><font color="#d30615">O</font><font color="#489b67">K</font><font color="#d30615">U</font></b></span>'
+);
+//mod_threadlist
+$config['ModuleSettings']['THREADLIST_NUMBER'] = 50; // Number of lists displayed on one page
+$config['ModuleSettings']['FORCE_SUBJECT'] = true; // Whether to force a new string to have a title
+$config['ModuleSettings']['SHOW_IN_MAIN'] = true; // Whether to display on the main page
+$config['ModuleSettings']['THREADLIST_NUMBER_IN_MAIN'] = 100; // Display the number of lists on the main page\
+$config['ModuleSettings']['SHOW_FORM'] = false; // Whether to display the delete form
+$config['ModuleSettings']['HIGHLIGHT_COUNT'] = 30; // The number of popular responses, the number of responses exceeding this value will turn red (0 means not used)
 
+$config['ACCOUNT_FLATFILE'] = $config['GLOBAL_PATH'].'accounts.txt';
 
-$config['ACCOUNT_FLATFILE'] = $config['STORAGE_PATH'].'accounts.txt';
+/*
+*This is the list of all boards that allows multiboard features. It must include paths to these boards' configs
+*/
+$config['BOARDS'] = array(
+	'b' => $config['GLOBAL_PATH'].'board-configs/boards-b.php', //default
+);
 
-$config['BAD_STRING'] = array();
-$config['BAD_FILEMD5'] = array();
+$config['BAD_STRING'] = array(); // Deprecated by spamdb
+$config['BAD_FILEMD5'] = array(); // Deprecated by spamdb
 $config['BANPATTERN'] = array(); // Deprecated by adminban module
 $config['DNSBLservers'] = array();  // Deprecated by adminban module
 $config['DNSBLWHlist'] = array(); // Deprecated by adminban module
@@ -208,7 +256,7 @@ $config['DNSBLWHlist'] = array(); // Deprecated by adminban module
 
 $config['SWF_THUMB'] = $config['STATIC_URL']."image/swf_thumb.png";
 
-$config['ROLL'] = array();
+$config['ROLL'] = true; //roll feature. True = enabled, False = disabled
 
 //these are moderator / elevated user roles
 $config['roles']['LEV_NONE'] = 0; //not logged-in

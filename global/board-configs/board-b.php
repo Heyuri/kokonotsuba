@@ -21,3 +21,9 @@ $config['IMG_DIR'] = 'src/'; // Image Directory
 $config['THUMB_DIR'] = 'src/'; // Thumbnail Directory
 $config['CDN_DIR'] = ''; // absolute path to the folder for storing imgs & thumbs (excluding IMG_DIR, e.g. /var/www/cdn/heyuri/)
 $config['CDN_URL'] = ''; // img/thumb CDN url (without IMG_DIR directory, e.g. https://h.kncdn.org/b/). Set to blank for locally hosted files
+
+
+/* 
+* Board modules - you can adjust module settings specifically for this board by overwriting the value of the module to false or 0
+* e.g $config['ModuleList']['mod_showip'] = false; 
+*/

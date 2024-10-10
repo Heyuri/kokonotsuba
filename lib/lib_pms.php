@@ -44,20 +44,25 @@ class PMS{
 	/* 單載入模式 */
 	function onlyLoad($specificModule){
 		// 搜尋載入模組列表有沒有，沒有就直接取消程式
-		if(array_search($specificModule, $this->ENV['MODULE.LOADLIST'])===false) return false;
+		if(!array_key_exists($specificModule, $this->ENV['MODULE.LOADLIST'])) return false;
 		$this->loadModules($specificModule);
 		return isset($this->hookPoints['ModulePage']);
 	}
 
+	/* Search MODULE.LOADLIST for the module name then return it's name and value pair. If not, return an empty string */
+	function getModuleDataByName($moduleName) {
+		return array($moduleName => $this->ENV['MODULE.LOADLIST'][$moduleName]);
+	}
+	
 	/* 載入擴充模組 */
 	function loadModules($specificModule=false){
-		$loadlist = $specificModule ? array($specificModule) : $this->ENV['MODULE.LOADLIST'];
-		foreach($loadlist as $f){
-			$mpath = $this->ENV['MODULE.PATH'].$f.'.php';
-			if(is_file($mpath) && array_search($f, $this->moduleLists)===false){
+		$loadlist = isset($this->ENV['MODULE.LOADLIST'][$specificModule]) ? $this->getModuleDataByName($specificModule) : $this->ENV['MODULE.LOADLIST'];
+		foreach($loadlist as $moduleFileName=>$moduleStatus){
+			$mpath = $this->ENV['MODULE.PATH'].$moduleFileName.'.php';
+			if(is_file($mpath) && array_search($moduleFileName, $this->moduleLists)===false && $moduleStatus){
 				include($mpath);
-				$this->moduleLists[] = $f;
-				$this->moduleInstance[$f] = new $f($this); // Sent $PMS into constructor
+				$this->moduleLists[] = $moduleFileName;
+				$this->moduleInstance[$moduleFileName] = new $moduleFileName($this); // Sent $PMS into constructor			
 			}
 		}
 	}
