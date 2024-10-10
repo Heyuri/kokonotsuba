@@ -12,8 +12,8 @@ class mod_pm extends ModuleHelper {
 	public function __construct($PMS) {
 		parent::__construct($PMS);
 		
-		$this->MESG_LOG = $this->config['STORAGE_PATH'].'tripmesg.log';
-		$this->MESG_CACHE = $this->config['STORAGE_PATH'].'tripmesg.cc';
+		$this->MESG_LOG = $this->config['ModuleSettings']['PM_DIR'].'tripmesg.log';
+		$this->MESG_CACHE = $this->config['ModuleSettings']['PM_DIR'].'tripmesg.cc';
 		
 		$this->trips = array();
 		$this->myPage = $this->getModulePageURL();
@@ -217,10 +217,10 @@ class mod_pm extends ModuleHelper {
 <form id="pmform" action="'.$this->myPage.'" method="POST">
 <input type="hidden" name="action" value="post">
 <table cellpadding="1" cellspacing="1" id="postform_tbl" style="margin: 0px auto; text-align: left;">
-<tr><td class="Form_bg"><b>From</b></td><td><input type="text" name="from" value="" size="28">(Trip Password with #)</td></tr>
-<tr><td class="Form_bg"><b>To</b></td><td>'._T('trip_pre').'<input type="text" name="t" value="'.$trip.'" maxlength="10" size="14"></td></tr>
-<tr><td class="Form_bg"><b>'._T('form_topic').'</b></td><td><input type="text" name="topic" size="28" value=""></td></tr>
-<tr><td class="Form_bg"><b>'._T('form_comment').'</b></td><td><textarea cols="40" rows="5" name="content"></textarea></td></tr>
+<tr><td class="postblock"><b>From</b></td><td><input type="text" name="from" value="" size="28">(Trip Password with #)</td></tr>
+<tr><td class="postblock"><b>To</b></td><td>'._T('trip_pre').'<input type="text" name="t" value="'.$trip.'" maxlength="10" size="14"></td></tr>
+<tr><td class="postblock"><b>'._T('form_topic').'</b></td><td><input type="text" name="topic" size="28" value=""></td></tr>
+<tr><td class="postblock"><b>'._T('form_comment').'</b></td><td><textarea cols="40" rows="5" name="content"></textarea></td></tr>
 <tr><td colspan="2" align="right"><input type="submit" name="submit" value="'._T('form_submit_btn').'"></td></tr>
 </table>
 </form>
@@ -236,10 +236,10 @@ $g("pmform").from.value=getCookie("namec");
 <input type="hidden" name="action" value="postverify">
 <table cellpadding="1" cellspacing="1" id="postform_tbl" style="margin: 0px auto; text-align: left;">
 <tr><td colspan="2">Confirm that you want to send this['._T('form_submit_btn').']Submit</td></tr>
-<tr><td class="Form_bg"><b>From</b></td><td><input type="text" name="from" value="'.$_POST['from'].'" size="28"></td></tr>
-<tr><td class="Form_bg"><b>To</b></td><td>'._T('trip_pre').'<input type="text" name="t" value="'.$_POST['t'].'" maxlength="10" size="14"></td></tr>
-<tr><td class="Form_bg"><b>'._T('form_topic').'</b></td><td><input type="text" name="topic" size="28" value="'.$_POST['topic'].'"></td></tr>
-<tr><td class="Form_bg"><b>'._T('form_comment').'</b></td><td><textarea cols="40" rows="5" name="content">'.$_POST['content'].'</textarea></td></tr>
+<tr><td class="postblock"><b>From</b></td><td><input type="text" name="from" value="'.$_POST['from'].'" size="28"></td></tr>
+<tr><td class="postblock"><b>To</b></td><td>'._T('trip_pre').'<input type="text" name="t" value="'.$_POST['t'].'" maxlength="10" size="14"></td></tr>
+<tr><td class="postblock"><b>'._T('form_topic').'</b></td><td><input type="text" name="topic" size="28" value="'.$_POST['topic'].'"></td></tr>
+<tr><td class="postblock"><b>'._T('form_comment').'</b></td><td><textarea cols="40" rows="5" name="content">'.$_POST['content'].'</textarea></td></tr>
 <tr><td colspan="2" align="right"><input type="submit" name="submit" value="'._T('form_submit_btn').'"></td></tr>
 </table>
 </form>
@@ -255,10 +255,10 @@ $g("pmform").from.value=getCookie("namec");
 			echo '<div class="bar_reply">Message sent.</div>
 <table cellpadding="1" cellspacing="1" id="postform_tbl" style="margin-left:1.5em">
 <tr><td colspan="2">Sent.</td></tr>
-<tr><td class="Form_bg"><b>From</b></td><td class="name">'.$_POST['from'].'</td></tr>
-<tr><td class="Form_bg"><b>To</b></td><td>'._T('trip_pre').$_POST['t'].'</td></tr>
-<tr><td class="Form_bg"><b>'._T('form_topic').'</b></td><td>'.$_POST['topic'].'</td></tr>
-<tr><td class="Form_bg"><b>'._T('form_comment').'</b></td><td><blockquote>'.$_POST['content'].'</blockquote></td></tr>
+<tr><td class="postblock"><b>From</b></td><td class="name">'.$_POST['from'].'</td></tr>
+<tr><td class="postblock"><b>To</b></td><td>'._T('trip_pre').$_POST['t'].'</td></tr>
+<tr><td class="postblock"><b>'._T('form_topic').'</b></td><td>'.$_POST['topic'].'</td></tr>
+<tr><td class="postblock"><b>'._T('form_comment').'</b></td><td><blockquote>'.$_POST['content'].'</blockquote></td></tr>
 </table>';
 		} else {
 			echo '<div class="bar_reply">Inbox</div>';
