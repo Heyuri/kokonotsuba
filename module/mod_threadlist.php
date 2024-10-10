@@ -10,6 +10,7 @@ class mod_threadlist extends ModuleHelper {
 		$this->THREADLIST_NUMBER_IN_MAIN = $this->config['ModuleSettings']['THREADLIST_NUMBER_IN_MAIN'];
 		$this->SHOW_FORM = $this->config['ModuleSettings']['SHOW_FORM'];
 		$this->HIGHLIGHT_COUNT = $this->config['ModuleSettings']['HIGHLIGHT_COUNT'];		
+		$this->SHOW_IN_MAIN = $this->config['ModuleSettings']['SHOW_IN_MAIN'];
 		
 		$this->attachLanguage(array(
 			'zh_TW' => array(
