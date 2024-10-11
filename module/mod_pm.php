@@ -35,7 +35,6 @@ class mod_pm extends ModuleHelper {
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply){
 		if($this->config['ModuleSettings']['APPEND_TRIP_PM_BUTTON_TO_POST'] === false) return;
 		if(strpos($post['name'], '◆') === false) return;
-		//$arrLabels['{$NAME}'] = !isset($arrLabels['{$NAME}']) ? $arrLabels['{$NAME}'] = '' : $arrLabels['{$NAME}'];  
 	
 		$username = $post['name'];
 
