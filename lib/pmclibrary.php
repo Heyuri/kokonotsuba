@@ -44,9 +44,9 @@ class PMCLibrary {
 		if ($instPTE == null) {
 			require $config['ROOTPATH'].'lib/lib_pte.php';
 			if (isset($_GET["res"]))
-				$instPTE = new PTELibrary($config['ROOTPATH'].$config['REPLY_TEMPLATE_FILE']);
+				$instPTE = new PTELibrary($config['REPLY_TEMPLATE_FILE']);
 			else
-				$instPTE = new PTELibrary($config['ROOTPATH'].$config['TEMPLATE_FILE']);
+				$instPTE = new PTELibrary($config['TEMPLATE_FILE']);
 		}
 		return $instPTE;
 	}
