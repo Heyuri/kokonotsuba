@@ -33,15 +33,15 @@ class mod_pm extends ModuleHelper {
 	}
 
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply){
-		if(preg_match('|(<a.*">)?(.*)<span class\="nor">'._T('trip_pre').'(.{10})</span>(<span.*</span>)(</a>)?|', $arrLabels['{$NAME}'], $matches)) {
-			if($matches[3]) { // Trip found
-				if($matches[2]) { // has name
-					$arrLabels['{$NAME}']=$matches[1].$matches[2].($matches[1]?'</a>':'').'<span class="nor"><a href="'.$this->myPage.'&amp;action=write&amp;t='.$matches[3].'" style="text-decoration: overline underline" title="PM">'._T('trip_pre').'</a>'.$matches[1].$matches[3].($matches[1]?'</a>':'')."</span>".$matches[4];
-				} else {
-					$arrLabels['{$NAME}']='<span class="nor"><a href="'.$this->myPage.'&amp;action=write&amp;t='.$matches[3].'" style="text-decoration: overline underline" title="PM">'._T('trip_pre').'</a>'.$matches[1].$matches[3].($matches[1]?'</a>':'')."</span>".$matches[4];
-				}
-			}
-		}
+		if($this->config['ModuleSettings']['APPEND_TRIP_PM_BUTTON_TO_POST'] === false) return;
+		if(strpos($post['name'], '◆') === false) return;
+		//$arrLabels['{$NAME}'] = !isset($arrLabels['{$NAME}']) ? $arrLabels['{$NAME}'] = '' : $arrLabels['{$NAME}'];  
+	
+		$username = $post['name'];
+
+	    list($name, $trip) = explode('◆',$username);
+		$tripSanitized = strip_tags($trip);
+		if($trip)  $arrLabels['{$NAME}'] = $username.'<a href="'.$this->myPage.'&action=write&t='.$tripSanitized.'" style="text-decoration: overline underline" title="PM">❖</a>';
 	}
 
 	public function autoHookThreadReply(&$arrLabels, $post, $isReply){

@@ -213,6 +213,7 @@ $config['ModuleSettings']['BLOTTER_FILE'] = $config['GLOBAL_PATH'].'blotter.txt'
 $config['ModuleSettings']['BLOTTER_DATE_FORMAT'] = "Y-m-d";
 //mod_pm
 $config['ModuleSettings']['PM_DIR'] = $config['GLOBAL_PATH'];
+$config['ModuleSettings']['APPEND_TRIP_PM_BUTTON_TO_POST'] = false;
 //mod_wf
 $config['ModuleSettings']['FILTERS'] = array( 
         '/\b(rabi-en-rose)\b/i' => '<span style="background-color:#ffe6f9;color:#78376d;font-family:serif;font-weight:bold;">Rabi~en~Rose</span>',
@@ -238,6 +239,8 @@ $config['ModuleSettings']['SHOW_IN_MAIN'] = true; // Whether to display on the m
 $config['ModuleSettings']['THREADLIST_NUMBER_IN_MAIN'] = 100; // Display the number of lists on the main page\
 $config['ModuleSettings']['SHOW_FORM'] = false; // Whether to display the delete form
 $config['ModuleSettings']['HIGHLIGHT_COUNT'] = 30; // The number of popular responses, the number of responses exceeding this value will turn red (0 means not used)
+
+
 
 $config['ACCOUNT_FLATFILE'] = $config['GLOBAL_PATH'].'accounts.txt';
 
