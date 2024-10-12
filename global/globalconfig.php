@@ -196,6 +196,7 @@ $config['ModuleList'] = array(
 	'mod_pm' => true,
 	'mod_ads' => true,
 	'mod_exif' => true,
+	'mod_onlinecounter' => true,
 );
 
 /* Module-specific options */
@@ -239,8 +240,9 @@ $config['ModuleSettings']['SHOW_IN_MAIN'] = true; // Whether to display on the m
 $config['ModuleSettings']['THREADLIST_NUMBER_IN_MAIN'] = 100; // Display the number of lists on the main page\
 $config['ModuleSettings']['SHOW_FORM'] = false; // Whether to display the delete form
 $config['ModuleSettings']['HIGHLIGHT_COUNT'] = 30; // The number of popular responses, the number of responses exceeding this value will turn red (0 means not used)
-
-
+//mod_onlinecounter
+$config['ModuleSettings']['USER_COUNT_DAT_FILE'] = $config['STORAGE_PATH'].'users.dat'; //Path to the user data file for that board. The file stores some meta data if the page is opened in order to count the amount of users currently viewing it
+$config['ModuleSettings']['USER_COUNT_TIMEOUT'] = 10; //Timeout for counting the amount of users. Counts in minutes
 
 $config['ACCOUNT_FLATFILE'] = $config['GLOBAL_PATH'].'accounts.txt';
 

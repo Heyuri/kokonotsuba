@@ -22,7 +22,4 @@
 <li>Read the <a href="//example.net/rules.html">rules</a> before you post.</li>
 <li>Read <a href="//example.net/faq.html">our FAQ</a> for any questions.</li>
 <li>Modify here by editing addinfo.txt</li>
-<li><div id="counterInsert"></div>
-<noscript><iframe src="Utilities/onlinecounter.php" style="border-right: 0px; border-bottom: 0px; font-size: small; height: 1.9em; width: 100%; vertical-align: text-bottom;" scrolling="no" frameborder="0"></iframe></noscript></li>
 </ul>
-<iframe style="display: none;" src="Utilities/onlinecounter.php"></iframe>
