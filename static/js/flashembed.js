@@ -1,5 +1,6 @@
 //chatgpt-sensei & hachichigo
-const staticURL = "./static/";
+var scriptUrl = document.currentScript.src; // Get the current script's URL
+const closebuttan = scriptUrl.substring(0, scriptUrl.lastIndexOf('/')).replace('/js', '/image/cross2embed.png'); // Construct the URL for close button
 
 function openFlashEmbedWindow(file, name, w, h) {
     if (!document.getElementById("swfWindow")) {
@@ -28,7 +29,7 @@ function openFlashEmbedWindow(file, name, w, h) {
 
         swfWindow.innerHTML = `
             <div id="swf-embed-header" style="cursor: move;">
-                <img src="${staticURL}image/cross2embed.png?v1" id="closeButton" style="float: right; cursor: pointer;">
+                <img src="${closebuttan}" id="closeButton" style="float: right; cursor: pointer;">
                 <div id="embed-swf-details">${name}, ${w}x${h} <a href="${file}" download="${name}" id="downloadButton"><div class="download"></div></a></div>
             </div>
             <div id="ruffleContainer" style="width: 100%; height: calc(100% - 20px);"></div>
