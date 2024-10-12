@@ -399,7 +399,7 @@ function applyTripcodeAndCapcodes(&$name, &$email, &$dest){
 	
     catchFraudsters($name);
     
-    $name = str_replace('&&', '&#', $name);
+    $name = str_replace('&#', '&&', $name);
     list($name, $trip, $sectrip) = str_replace('&%', '&#', explode('#',$name.'##'));
     $name = str_replace('&&', '&#', $name);
     
