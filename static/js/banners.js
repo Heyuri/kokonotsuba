@@ -1,5 +1,6 @@
 // Configuration Variables
-var baseUrl = "./static/image/banner/banner"; //where are the banners & what is their prefix
+var scriptUrl = document.currentScript.src; // Get the current script's URL
+const baseUrl = scriptUrl.substring(0, scriptUrl.lastIndexOf('/')).replace('/js', '/image/banner/banner'); // Construct the base URL for banners
 var totalBanners = 5;       // Total number of possible banners (e.g., banner001 to banner050). Set a little higher if you don't want to bother updating later.
 var maxAttempts = 9001;        // Number of banner numbers to try before stopping. Probably doesn't need to be changed.
 
@@ -25,10 +26,9 @@ async function getRandomImageUrl() {
     while (attempts < maxAttempts) {
         let randomNum = Math.floor(Math.random() * totalBanners) + 1;
         let paddedNum = String(randomNum).padStart(3, '0');
-
         // Check for file existence in the order: png, gif, jpg
         for (let ext of ['png', 'gif', 'jpg']) {
-            let filename = baseUrl + paddedNum + '.' + ext; // Base URL + padded number + extension
+            let filename = `${baseUrl}${paddedNum}.${ext}`; // Base URL + padded number + extension
             if (await fileExists(filename)) {
                 return filename;
             }
@@ -42,11 +42,11 @@ async function getRandomImageUrl() {
 let isChanging = false;
 
 // Function to display a random image
-async function getRandomImage() { 
+async function getRandomImage() {
     let imgUrl = await getRandomImageUrl();
     if (imgUrl) {
-        document.getElementById("bannerContainer").innerHTML = 
-            '<img border="1" src="' + imgUrl + '" id="banner" style="max-width: 300px;" title="Click to change" onclick="change()">';
+        document.getElementById("bannerContainer").innerHTML =
+            '<img border="1" src="' + imgUrl + '" id="banner" style="max-width: 300px;" title="Click to change" onclick="change()" />';
     } else {
         document.getElementById("bannerContainer").innerHTML = 'No banners available. ;_;';
     }
@@ -56,10 +56,8 @@ async function getRandomImage() {
 async function change() {
     if (isChanging) return; // Prevent multiple simultaneous clicks
     isChanging = true;
-
     const banner = document.getElementById("banner");
     banner.style.opacity = "0.5";  // Set opacity to 0.5
-
     let imgUrl = await getRandomImageUrl();
     if (imgUrl) {
         banner.src = imgUrl;
