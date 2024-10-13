@@ -104,7 +104,6 @@
 										<!--&IF($FORM_NOTICE_STORAGE_LIMIT,'{$FORM_NOTICE_STORAGE_LIMIT}','')-->
 										{$HOOKPOSTINFO}
 									</ul>
-									{$ADDINFO}
 								</td>
 							</tr>
 						</tbody>

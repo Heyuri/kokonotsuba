@@ -17,7 +17,6 @@ $config['ROOTPATH'] = './'; //Set this to the directory of the backend-files
 $config['ALLOW_UPLOAD_EXT'] = 'GIF|JPG|JPEG|PNG|BMP|SWF|WEBM|MP4'; // Allowed filetypes
 
 // Appearance
-$config['ADDITION_INFO'] = @file_get_contents($config['ROOTPATH'].'addinfo.txt'); // Addinfo
 $config['LIMIT_SENSOR'] = array('ByThreadCountCondition'=>150); // AutoDelete, defaults to 10 pages
 
 // Appearance
@@ -245,6 +244,12 @@ $config['ModuleSettings']['USER_COUNT_DAT_FILE'] = $config['STORAGE_PATH'].'user
 $config['ModuleSettings']['USER_COUNT_TIMEOUT'] = 10; //Timeout for counting the amount of users. Counts in minutes
 //mod_banner
 $config['ModuleSettings']['BANNER_PATH'] = './static/image/banner/'; //Set this to the directory of your banner images in static_path
+//mod_addinfo
+$config['ModuleSettings']['ADD_INFO'] = array(
+	'Read the <a href="//example.net/rules.html">rules</a> before you post.',
+	'Read <a href="//example.net/faq.html">our FAQ</a> for any questions.',
+	'Modify this by editing $config[\'ModuleSettings\'][\'ADD_INFO\'] in globalconfig.php',
+);
 
 $config['ACCOUNT_FLATFILE'] = $config['GLOBAL_PATH'].'accounts.txt';
 
