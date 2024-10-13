@@ -1,25 +1,10 @@
-<script>
-  fetch('./Utilities/onlinecounter.php')
-    .then(response => response.text())
-    .then(html => {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const bodyContent = doc.body.innerHTML;
-      document.getElementById('counterInsert').innerHTML = bodyContent;
-      var iframe = document.querySelector('iframe.jsenabled');
-      if (iframe) {
-        iframe.style.display = 'block';
-      }
-    });
-</script>
-
 <!-- Edit the links below  -->
 <ul class="rules">
-<li><a style="color:#800043" href="javascript:kkjs.form_switch();">Switch Form Position</a> | <a style="color:#800043" href="./static/html/bbcode.html" target="_blank">BBCode Reference</a></li>
+  <li><a style="color:#800043" href="javascript:kkjs.form_switch();">Switch Form Position</a> | <a style="color:#800043" href="./static/html/bbcode.html" target="_blank">BBCode Reference</a></li>
 </ul>
 <hr>
 <ul class="rules">
-<li>Read the <a href="//example.net/rules.html">rules</a> before you post.</li>
-<li>Read <a href="//example.net/faq.html">our FAQ</a> for any questions.</li>
-<li>Modify here by editing addinfo.txt</li>
+  <li>Read the <a href="//example.net/rules.html">rules</a> before you post.</li>
+  <li>Read <a href="//example.net/faq.html">our FAQ</a> for any questions.</li>
+  <li>Modify this by editing addinfo.txt</li>
 </ul>
