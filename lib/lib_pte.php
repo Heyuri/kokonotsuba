@@ -49,6 +49,7 @@ class PTELibrary{
 			'{$PHP_SELF}'=>$this->config['PHP_SELF'], '{$PHP_SELF2}'=>$this->config['PHP_SELF2'], '{$PHP_EXT}'=>$this->config['PHP_EXT'],
 			'{$TITLEIMG}'=>$this->config['TITLEIMG'], '{$TITLE}'=>$this->config['TITLE'], '{$TITLESUB}'=>$this->config['TITLESUB'],
 			'{$HOME}'=>$this->config['HOME'], '{$TOP_LINKS}'=>$this->config['TOP_LINKS'], '{$FOOTTEXT}'=>$this->config['FOOTTEXT'],
+			 '{$PAGE_TITLE}'=>strip_tags($this->config['TITLE']),
 		), $ary_val);
 		if(($tmp_block = $this->_readBlock($blockName))===false) return ""; // 找無
 		foreach($ary_val as $akey=>$aval) $ary_val[$akey] = str_replace('{$', '{'.chr(1).'$', $ary_val[$akey]);
