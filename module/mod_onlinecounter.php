@@ -40,9 +40,30 @@ class mod_onlinecounter extends ModuleHelper {
 	}
 	
 	public function autoHookPostInfo(&$form) {
+		$pageHTML = '';
+		
+		//make the regular user count hidden if js is disabled
+		$pageHTML .= '<noscript><style> .jsonly { display: none } </style></noscript>';
+		
 		$userCount = $this->getUserCount();
-		$userCounterHTML = '<li><div id="usercounter"><b>' . $userCount . '</b> unique user' . ($userCount > 1 ? 's' : '') . ' in the last '.$this->timeout.' minutes (including lurkers)</div></li>';
-		$form .= $userCounterHTML;
+		$userCounterHTML = '<li class ="jsonly"><div data-timeout="'.$this->timeout.'" id="usercounter"><b>' . $userCount . '</b> unique user' . ($userCount > 1 ? 's' : '') . ' in the last '.$this->timeout.' minute'.($this->timeout > 1 ? 's' : '').' (including lurkers)</div></li>';
+		$pageHTML .= $userCounterHTML;
+		
+		$form .= $pageHTML;
+		$form .= '<noscript> <iframe src="'.$this->mypage.'" style="border-right: 0px; border-bottom: 0px; font-size: small; height: 1.9em; width: 100%; vertical-align: text-bottom;" scrolling="no" frameborder="0"></iframe></noscript>';
+	}
+	
+	public function ModulePage() {
+		$pageHTML = '';
+		
+		//add css so it appears properly inside iframe
+		$pageHTML .= '<link rel="stylesheet" href="'.$this->config['STATIC_URL'].'css/base.css">';
+		
+		$userCount = $this->getUserCount();
+		$userCounterHTML = '<div id="usercounter" value="'.$this->timeout.'"><b>' . $userCount . '</b> unique user' . ($userCount > 1 ? 's' : '') . ' in the last '.$this->timeout.' minutes (including lurkers)</div>';
+		$pageHTML .= $userCounterHTML;
+		
+		echo $pageHTML;
 	}
 
 }
