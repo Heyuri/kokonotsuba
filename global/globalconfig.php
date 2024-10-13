@@ -243,6 +243,8 @@ $config['ModuleSettings']['HIGHLIGHT_COUNT'] = 30; // The number of popular resp
 //mod_onlinecounter
 $config['ModuleSettings']['USER_COUNT_DAT_FILE'] = $config['STORAGE_PATH'].'users.dat'; //Path to the user data file for that board. The file stores some meta data if the page is opened in order to count the amount of users currently viewing it
 $config['ModuleSettings']['USER_COUNT_TIMEOUT'] = 10; //Timeout for counting the amount of users. Counts in minutes
+//mod_banner
+$config['ModuleSettings']['BANNER_PATH'] = './static/image/banner/'; //Set this to the directory of your banner images in static_path
 
 $config['ACCOUNT_FLATFILE'] = $config['GLOBAL_PATH'].'accounts.txt';
 

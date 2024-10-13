@@ -27,10 +27,11 @@
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
 	<script type="text/javascript" src="{$STATIC_URL}js/koko.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/qu.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/onlinecounter.js"></script>
+	<script type="text/javascript" src="{$STATIC_URL}js/banners.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/qu2.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/qu3.js" defer></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/style.js"></script>
-	<script type="text/javascript" src="{$STATIC_URL}js/banners.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/img.js"></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/momo/tegaki.js" defer></script>
 	<script type="text/javascript" src="{$STATIC_URL}js/inline.js"></script>
@@ -56,8 +57,7 @@
 	<center id="header">
 		<div class="logo">
 			<br>
-			<noscript><img border="1" src="./Utilities/banners.php"></noscript>
-			<div id="bannerContainer"></div>
+			{$BANNER}
 			<h1 class="mtitle">{$TITLE}</h1>
 			{$TITLESUB}
 			<hr size="1">
