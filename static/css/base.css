@@ -260,6 +260,7 @@ audio {
 }
 
 .globalmsg {
+	text-align: center;
 	color: #F00;
 }
 
@@ -556,4 +557,9 @@ button,input[type=submit],input[type=reset] {
 	float: right;
 	margin-right: 10px;
 	font-family: "MS PGothic", "Mona", submona, IPAMonaPGothic, "BIZ UDPGothic", saitamaar_light, sans-serif !important;
+}
+
+#usercounter {
+	background-color: #000000; 
+	color: #00FF00;
 }
