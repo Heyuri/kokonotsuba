@@ -173,6 +173,7 @@ $config['ModuleList'] = array(
 	'mod_admindel' => true,
 	'mod_adminban' => true,
 	'mod_movethread' => true,
+	'mod_globalmsg' => true,
 	/* thread modes */
 	'mod_autosage' => true,
 	'mod_stop' => true,
@@ -196,6 +197,8 @@ $config['ModuleList'] = array(
 	'mod_ads' => true,
 	'mod_exif' => true,
 	'mod_onlinecounter' => true,
+	'mod_banner' => true,
+	'mod_globalmsg' => true,
 );
 
 /* Module-specific options */
@@ -220,7 +223,7 @@ $config['ModuleSettings']['FILTERS'] = array(
         '/\b(rabi~en~rose)\b/i' => '<span style="background-color:#ffe6f9;color:#78376d;font-family:serif;font-weight:bold;">Rabi~en~Rose</span>',
         '/\b(newfag)\b/i' => 'n00b like me',
         '/\b(newfags)\b/i' => 'n00bs like me',
-        '/\b(heyuri★cgi)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
+        '/\b(heyuri★cgi)\b/i' => '<a href="https://wiki.heyuri.net/index>>119784.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
         '/\b(heyuri cgi)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
         '/\b(chat@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/chat/">Chat@Heyuri</a>',
         '/\b(polls@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/vote2/">Polls@Heyuri</a>',
@@ -250,6 +253,8 @@ $config['ModuleSettings']['ADD_INFO'] = array(
 	'Read <a href="//example.net/faq.html">our FAQ</a> for any questions.',
 	'Modify this by editing $config[\'ModuleSettings\'][\'ADD_INFO\'] in globalconfig.php',
 );
+//mod_globalmsg
+$config['ModuleSettings']['GLOBAL_TXT'] = $config['GLOBAL_PATH'].'globalmsg.txt';
 
 $config['ACCOUNT_FLATFILE'] = $config['GLOBAL_PATH'].'accounts.txt';
 
