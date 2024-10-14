@@ -111,6 +111,7 @@ function form(&$dat, $resno, $name='', $mail='', $sub='', $com='', $cat='', $pre
 
 	$pte_vals = array(
 		'{$RESTO}' => strval($resno),
+		'{$GLOBAL_MESSAGE}' => '',
 		'{$IS_THREAD}' => $resno!=0,
 		'{$FORM_HIDDEN}' => $hidinput,
 		'{$MAX_FILE_SIZE}' => strval($config['TEXTBOARD_ONLY'] ? 0 : $config['MAX_KB'] * 1024),
@@ -143,6 +144,8 @@ function form(&$dat, $resno, $name='', $mail='', $sub='', $com='', $cat='', $pre
 	}
 	if($config['STORAGE_LIMIT']) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',total_size(),$config['STORAGE_MAX']);
 	$PMS->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
-
+	
+	$PMS->useModuleMethods('GlobalMessage', array(&$pte_vals['{$GLOBAL_MESSAGE}'])); // "GlobalMessage" Hook Point
+	
 	$dat .= $PTE->ParseBlock('POSTFORM',$pte_vals);
 }

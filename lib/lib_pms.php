@@ -23,7 +23,7 @@ class PMS{
 		$this->ENV = $ENV; // 環境變數
 		$this->hooks = array_flip(array('Head', 'Toplink', 'LinksAboveBar', 'PostInfo', 'AboveTitle',
 			'PostForm', 'PostFormFile', 'PostFormSubmit',
-			'ThreadFront', 'ThreadRear', 'ThreadPost', 'ThreadReply',
+			'GlobalMessage', 'ThreadFront', 'ThreadRear', 'ThreadPost', 'ThreadReply',
 			'Foot', 'ModulePage', 'RegistBegin', 'RegistBeforeCommit', 'RegistAfterCommit', 'PostOnDeletion',
 			'AdminList', 'AdminFunction', 'Authenticate', 'ThreadOrder'
 		));
