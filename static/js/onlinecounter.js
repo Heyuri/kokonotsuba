@@ -8,7 +8,6 @@ const kkUserUpdate = {  name: "KK online user updating",
 		this.elementId = 'usercounter';
 		const element = document.getElementById(this.elementId);
 		if (!element) {
-			console.log("ERROR: Element not found.");
 			return false;
 		}
 		this.reloadElement();
