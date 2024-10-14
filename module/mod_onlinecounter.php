@@ -18,8 +18,8 @@ class mod_onlinecounter extends ModuleHelper {
 	}
 
 	private function getUserCount() {
-		$usr_arr = file($this->usercounter);
 		touch($this->usercounter);
+		$usr_arr = file($this->usercounter);
 
 		$fp = fopen($this->usercounter, "w");
 		$currentTimeInMinutes = floor(time() / 60);
