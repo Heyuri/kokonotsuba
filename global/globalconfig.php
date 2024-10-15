@@ -198,7 +198,7 @@ $config['ModuleList'] = array(
 	'mod_exif' => true,
 	'mod_onlinecounter' => true,
 	'mod_banner' => true,
-	'mod_globalmsg' => true,
+	'mod_addinfo' => true,
 );
 
 /* Module-specific options */
