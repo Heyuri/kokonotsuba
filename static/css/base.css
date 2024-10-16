@@ -563,3 +563,10 @@ button,input[type=submit],input[type=reset] {
 	background-color: #000000; 
 	color: #00FF00;
 }
+
+#bannerContainer { height: 102px; }
+
+#banner {
+	width: 300px;
+	height: 100px;
+}

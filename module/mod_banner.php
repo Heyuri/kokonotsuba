@@ -1,7 +1,9 @@
 <?php
 class mod_banner extends ModuleHelper {
+	private $mypage;
 	public function __construct($PMS) {
 		parent::__construct($PMS);
+		$this->mypage = $this->getModulePageURL();
 	}
 
 	public function getModuleName() {
@@ -48,25 +50,41 @@ class mod_banner extends ModuleHelper {
 
 	// Banner
 	public function autoHookAboveTitle(&$html) {
-		$bannerImageArray = $this->getRandomFilesFromDirectory($this->config['ModuleSettings']['BANNER_PATH'], 1); 
-
-		$bannerImage = '';
-		if ($bannerImageArray !== false && !empty($bannerImageArray)) {
-			$bannerImage = $bannerImageArray[0];  // Get the first (and only) file from the array
-		}
-
-		$html .= '<div id="bannerContainer">
-					<img border="1" src="' . $this->config['STATIC_URL'] . 'image/banner/' . $bannerImage . '" 
-					id="banner" style="max-width: 300px;" title="Click to change" 
-					onclick="change()">
+		$html .= '<div id="bannerContainer"">
+					<img border="1" src="' .$this->mypage.'" 
+					id="banner"  title="Click to change" >
 				  </div>';
 	}
 	
-	public function ModulePage() {
-		header('Content-Type: application/json');
+	private function outputbannerJSON() {
+		header('Location: ', );
 		$bannerDirectoryJSON = json_encode($this->getAllFilesFromDirectory($this->config['ModuleSettings']['BANNER_PATH']),  JSON_PRETTY_PRINT);
 		
 		echo $bannerDirectoryJSON;
+	}
+
+	private function drawBannerRedirect() {
+		$bannerImageArray = $this->getRandomFilesFromDirectory($this->config['ModuleSettings']['BANNER_PATH'], 1); 
+		
+		$bannerImage = '';
+		$bannerURL = '';
+		if ($bannerImageArray !== false && !empty($bannerImageArray)) {
+			$bannerImage = $bannerImageArray[0];  // Get the first (and only) file from the array
+			$bannerURL = $this->config['STATIC_URL'].'image/banner/'.$bannerImage;
+		} else {
+			$bannerImage = 'defaultbanner.png';
+			$bannerURL = $this->config['STATIC_URL'].'image/default/'.$bannerImage;
+		}
+	
+		header('Location: '. $bannerURL); //redirect to image
+	}
+	
+	public function ModulePage() {
+		if(isset($_GET['bannerjson'])) {
+			$this->outputbannerJSON();
+			return;
+		} else $this->drawBannerRedirect();
+		
 	}
 
 }
