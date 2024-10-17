@@ -39,7 +39,7 @@ abstract class AbstractFileIO implements IFileIO {
 
     private function getAbsoluteUrl() {
     	if (!empty($this->config['CDN_URL'])) {
-			if ($config['CDN_URL'] !== "") {
+			if ($this->config['CDN_URL'] !== "") {
 				return $this->config['CDN_URL'];
 			}
 		}
