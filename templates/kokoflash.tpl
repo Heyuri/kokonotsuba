@@ -114,9 +114,7 @@
 			<hr size="1">
 		</form>
 	</div>
-	<center>
-		<!--&FILE('./globalmsg.txt')-->
-	</center>
+	{$GLOBAL_MESSAGE}
 	<!--&IF($FORMBOTTOM,'{$FORMBOTTOM}','')-->
 	<!--/&POSTFORM-->
 
