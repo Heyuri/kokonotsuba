@@ -49,8 +49,7 @@
 	<center id="header">
 		<div class="logo">
 			<br>
-			<noscript><img border="1" src="./Utilities/banners.php"></noscript>
-			<div id="bannerContainer"></div>
+			{$BANNER}
 			<h1 class="mtitle">{$TITLE}</h1>
 			{$TITLESUB}
 			<hr size="1">
