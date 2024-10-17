@@ -40,7 +40,8 @@ $config['IRC_WH'] = '';
 $config['TIME_ZONE'] = '0'; // Timezones, 0 is UTC. Example: '-4' for New York, or '9' for Japan
 $config['PIXMICAT_LANGUAGE'] = 'en_US'; // Language (available languages in /lib/lang/)
 $config['HTTP_UPLOAD_DIFF'] = 50; 
-$config['STATIC_URL'] = './static/'; // Where static files are stored. Can be a url. Include trailing '/'
+$config['STATIC_URL'] = './static/'; // Where static files are located on the web, can be a full URL. Include trailing '/'
+$config['STATIC_PATH'] = './static/'; // Where static files are stored in the server, can be an absolute path. Include trailing '/'
 $config['ACTION_LOG'] = 'audit.log.txt';
 
 $config['FILEIO_BACKEND'] = 'local'; // FileIO backend specification (local, ftp)
@@ -246,7 +247,7 @@ $config['ModuleSettings']['HIGHLIGHT_COUNT'] = 30; // The number of popular resp
 $config['ModuleSettings']['USER_COUNT_DAT_FILE'] = $config['STORAGE_PATH'].'users.dat'; //Path to the user data file for that board. The file stores some meta data if the page is opened in order to count the amount of users currently viewing it
 $config['ModuleSettings']['USER_COUNT_TIMEOUT'] = 10; //Timeout for counting the amount of users. Counts in minutes
 //mod_banner
-$config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_URL'].'image/banner/'; // directory of your banner images
+$config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_PATH'].'image/banner/'; // directory of your banner images
 //mod_addinfo
 $config['ModuleSettings']['ADD_INFO'] = array(
 	'Read the <a href="//example.net/rules.html">rules</a> before you post.',
