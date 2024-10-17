@@ -223,7 +223,7 @@ $config['ModuleSettings']['FILTERS'] = array(
         '/\b(rabi~en~rose)\b/i' => '<span style="background-color:#ffe6f9;color:#78376d;font-family:serif;font-weight:bold;">Rabi~en~Rose</span>',
         '/\b(newfag)\b/i' => 'n00b like me',
         '/\b(newfags)\b/i' => 'n00bs like me',
-        '/\b(heyuri★cgi)\b/i' => '<a href="https://wiki.heyuri.net/index>>119784.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
+        '/\b(heyuri★cgi)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
         '/\b(heyuri cgi)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
         '/\b(chat@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/chat/">Chat@Heyuri</a>',
         '/\b(polls@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/vote2/">Polls@Heyuri</a>',
