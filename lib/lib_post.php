@@ -76,7 +76,7 @@ function generatePostID(&$email, &$now, &$time, &$resto, &$PIO){
         elseif($AccountIO->valid() == $config['roles']['LEV_MODERATOR'] and $config['DISP_ID'] == 2) return ' ID:MODERATOR'; 
         elseif(stristr($email, 'sage') and $config['DISP_ID'] == 2) return ' ID:Heaven';
         else {
-            switch (ID_MODE) {
+            switch ($config['ID_MODE']) {
                 case 0:                 
                     return ' ID:'.substr(crypt(md5(getREMOTE_ADDR().$config['IDSEED'].($resto?$resto:($PIO->getLastPostNo("beforeCommit")+1))),'id'), -8);
                     break;
