@@ -40,8 +40,8 @@ $config['IRC_WH'] = '';
 $config['TIME_ZONE'] = '0'; // Timezones, 0 is UTC. Example: '-4' for New York, or '9' for Japan
 $config['PIXMICAT_LANGUAGE'] = 'en_US'; // Language (available languages in /lib/lang/)
 $config['HTTP_UPLOAD_DIFF'] = 50; 
-$config['STATIC_URL'] = './static/'; // Where static files are located on the web, can be a full URL. Include trailing '/'
-$config['STATIC_PATH'] = './static/'; // Where static files are stored in the server, can be an absolute path. Include trailing '/'
+$config['STATIC_URL'] = './static/'; // Where static files are located on the web, can be a full URL (eg. 'https://static.example.com/'). Include trailing '/'
+$config['STATIC_PATH'] = './static/'; // Where static files are stored in the server, can be an absolute path (eg. '/home/example/web/static/'). Include trailing '/'
 $config['ACTION_LOG'] = 'audit.log.txt';
 
 $config['FILEIO_BACKEND'] = 'local'; // FileIO backend specification (local, ftp)
