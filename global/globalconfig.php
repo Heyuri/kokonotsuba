@@ -175,6 +175,7 @@ $config['ModuleList'] = array(
 	'mod_adminban' => true,
 	'mod_movethread' => true,
 	'mod_globalmsg' => true,
+	'mod_blotter' => true,
 	/* thread modes */
 	'mod_autosage' => true,
 	'mod_stop' => true,
@@ -214,7 +215,7 @@ $config['ModuleSettings']['RENZOKU3'] = 30; // How many seconds between new thre
 $config['ModuleSettings']['IPTOGGLE'] = 1; // 1 to have OPs toggle IP display, 2 enables for all posts
 //mod_blotter
 $config['ModuleSettings']['BLOTTER_FILE'] = $config['GLOBAL_PATH'].'blotter.txt';
-$config['ModuleSettings']['BLOTTER_DATE_FORMAT'] = "Y-m-d";
+$config['ModuleSettings']['BLOTTER_DATE_FORMAT'] = "Y/m/d";
 //mod_pm
 $config['ModuleSettings']['PM_DIR'] = $config['GLOBAL_PATH'];
 $config['ModuleSettings']['APPEND_TRIP_PM_BUTTON_TO_POST'] = false;
@@ -250,6 +251,7 @@ $config['ModuleSettings']['USER_COUNT_TIMEOUT'] = 10; //Timeout for counting the
 $config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_PATH'].'image/banner/'; // directory of your banner images
 //mod_addinfo
 $config['ModuleSettings']['ADD_INFO'] = array(
+	'<a style="color:#800043" href="javascript:kkjs.form_switch();">Switch Form Position</a> | <a style="color:#800043" href="//www.example.net/bbcode/" target="_blank">BBCode Reference</a>',
 	'Read the <a href="//example.net/rules.html">rules</a> before you post.',
 	'Read <a href="//example.net/faq.html">our FAQ</a> for any questions.',
 	'Modify this by editing $config[\'ModuleSettings\'][\'ADD_INFO\'] in globalconfig.php',
