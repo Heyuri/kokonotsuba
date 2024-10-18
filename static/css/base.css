@@ -103,8 +103,26 @@ h6 {
 }
 
 .theading,
+.theading2,
+.theading3 {
+	color: #fff;
+	margin: 4px 0;
+	padding: 1px 0;
+	font-size: 1em;
+	font-weight: bold;
+	text-align: center;
+}
+ 
+.theading {
+	background-color: #e04000;
+}
+ 
 .theading2 {
-	margin-bottom: 0.5em;
+	background-color: #0040e0;
+}
+ 
+.theading3 {
+	background-color: #e08000;
 }
 
 
@@ -432,7 +450,7 @@ button,input[type=submit],input[type=reset] {
 }
 
 .flashboardList {
-  text-align: center;
+	text-align: center;
 }
 
 .title {
@@ -569,4 +587,41 @@ button,input[type=submit],input[type=reset] {
 #banner {
 	width: 300px;
 	height: 100px;
+}
+
+.formtable {
+	margin: 0px auto; 
+	text-align: left;
+}
+
+.adminfieldset {
+	border-color: #800043;
+}
+
+#blotterlist {
+	margin: 0px auto;
+}
+
+#blotter {
+	margin: 0 auto;
+	padding: 0 8px;
+	max-width: 475px;
+	font-size: 0.75em;
+	list-style: none;
+}
+
+#blotter ul {
+	list-style-type: none;
+}
+
+.blotterListItem {
+	text-align: left;
+}
+
+.blotterDate {
+	font-weight: bold;
+}
+
+.blotterListShowAll {
+	text-align: center;
 }
