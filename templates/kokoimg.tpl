@@ -116,9 +116,8 @@
 						</tbody>
 					</table>
 					<hr size="1">
-				<!--&FILE('./static/html/blotter.inc.html')-->
+				{$BLOTTER}
 			</center>
-			<hr size="1">
 		</form>
 	</div>
 	{$GLOBAL_MESSAGE}
