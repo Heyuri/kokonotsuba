@@ -252,7 +252,7 @@ $config['ModuleSettings']['USER_COUNT_TIMEOUT'] = 10; //Timeout for counting the
 $config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_PATH'].'image/banner/'; // directory of your banner images
 //mod_addinfo
 $config['ModuleSettings']['ADD_INFO'] = array(
-	'<a style="color:#800043" href="javascript:kkjs.form_switch();">Switch Form Position</a> | <a style="color:#800043" href="'.$config['STATIC_URL'].'/bbcode/" target="_blank">BBCode Reference</a>',
+	'<a style="color:#800043" href="javascript:kkjs.form_switch();">Switch Form Position</a> | <a style="color:#800043" href="'.$config['STATIC_URL'].'html/bbcode/" target="_blank">BBCode Reference</a>',
 	'Read the <a href="//example.net/rules.html">rules</a> before you post.',
 	'Read <a href="//example.net/faq.html">our FAQ</a> for any questions.',
 	'Modify this by editing $config[\'ModuleSettings\'][\'ADD_INFO\'] in globalconfig.php',
