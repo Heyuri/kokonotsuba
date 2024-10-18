@@ -112,6 +112,7 @@ function form(&$dat, $resno, $name='', $mail='', $sub='', $com='', $cat='', $pre
 	$pte_vals = array(
 		'{$RESTO}' => strval($resno),
 		'{$GLOBAL_MESSAGE}' => '',
+		'{$BLOTTER}' => '',
 		'{$IS_THREAD}' => $resno!=0,
 		'{$FORM_HIDDEN}' => $hidinput,
 		'{$MAX_FILE_SIZE}' => strval($config['TEXTBOARD_ONLY'] ? 0 : $config['MAX_KB'] * 1024),
@@ -146,6 +147,7 @@ function form(&$dat, $resno, $name='', $mail='', $sub='', $com='', $cat='', $pre
 	$PMS->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
 	
 	$PMS->useModuleMethods('GlobalMessage', array(&$pte_vals['{$GLOBAL_MESSAGE}'])); // "GlobalMessage" Hook Point
+	$PMS->useModuleMethods('BlotterPreview', array(&$pte_vals['{$BLOTTER}'])); // "Blotter Preview" Hook Point
 	
 	$dat .= $PTE->ParseBlock('POSTFORM',$pte_vals);
 }
