@@ -50,7 +50,7 @@ class mod_banner extends ModuleHelper {
 
 	// Banner
 	public function autoHookAboveTitle(&$html) {
-		$html .= '<div id="bannerContainer"">
+		$html .= '<div id="bannerContainer">
 					<img border="1" src="' .$this->mypage.'" 
 					id="banner"  title="Click to change" >
 				  </div>';
