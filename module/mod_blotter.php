@@ -7,6 +7,8 @@ class mod_blotter extends ModuleHelper {
 		parent::__construct($PMS);
 		
 		$this->BLOTTER_PATH = $this->config['ModuleSettings']['BLOTTER_FILE'];
+		if(!file_exists($this->BLOTTER_PATH)) touch($this->BLOTTER_PATH);
+		
 		$this->previewLimit = $this->config['ModuleSettings']['BLOTTER_PREVIEW_AMOUNT'];
 		$this->mypage = $this->getModulePageURL();
 	}
@@ -81,16 +83,20 @@ class mod_blotter extends ModuleHelper {
 		});
 		
 		$html .= '<form id="blotterdeletionform" action="'.$this->mypage.'" method="POST"><table class="postlists" id="blotterlist">';
-		$html .= '<th>Date</th>
+		$html .= '<thead><tr><th>Date</th>
 						<th>Entry</th>
 						<th>UID</th>
-						<th></th>';
+						<th></th></tr></thead>
+						
+						<tbody>';
 		foreach ($blotterData as $entry) {
 			$html .= "<tr><td>{$entry['date']}</td> <td>{$entry['comment']}</td> <td>{$entry['uid']}</td> <td><input type=\"checkbox\" id=\"blotterdeletecheckbox\" name=\"entrydelete[]\" value=\"{$entry['uid']}\"></td></tr>";
 		}
-		$html .= '<tr><td><input type="submit" name="delete_submit" value="Delete Selected"></td></tr></table></form>';
+		$html .= '<tr><td colspan="4"><input type="submit" name="delete_submit" value="Delete Selected"></td></tr>
+				</tbody>
+			</table></form>';
 	}
-	private function drawBlotterAdminPage(&$html) {
+	private function drawBlotterAdminForm(&$html) {
 		$html .= "
 			<h2 class=\"theading3\">Manage Blotter</h2>
 			<fieldset class=\"adminfieldset\"> <legend>Add blotter entry</legend>
@@ -102,15 +108,22 @@ class mod_blotter extends ModuleHelper {
 							<td><textarea cols='50' rows='10' name='new_blot_txt'></textarea></td>
 						</tr>
 						<tr>
-							<td colspan='2' align='right'><input type='submit' name='submit' value='Submit'></td>
+							<td  colspan='4' align='right'><input type='submit' name='submit' value='Submit'></td>
 						</tr>
 					</tbody>
 				</table>
 			</form></fieldset>";
 	}
-
+	
+	private function drawBlotterAdminPage(&$html) {
+		$this->drawBlotterAdminForm($html);
+		$this->drawAdminBlotterTable($html);
+	}
+	
 	private function writeToBlotterFile($comment, $date, $uid) {
+		$escapedComment = preg_replace('/<>/', '&lt;&gt;', $comment);
 		$line = "{$date}<>{$comment}<>{$uid}\n";
+		
 		file_put_contents($this->BLOTTER_PATH, $line, FILE_APPEND);
 	}
 	
@@ -178,7 +191,6 @@ class mod_blotter extends ModuleHelper {
 		head($pageHTML);
 		$pageHTML .= $returnButton;
 		$this->drawBlotterAdminPage($pageHTML);
-		$this->drawAdminBlotterTable($pageHTML);
 		foot($pageHTML);
 		echo $pageHTML;
 	}
