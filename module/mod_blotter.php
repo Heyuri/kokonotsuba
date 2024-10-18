@@ -136,7 +136,7 @@ class mod_blotter extends ModuleHelper {
 		$blotterData = $this->getBlotterFileData();
 		if(empty($blotterData)) $html .= '<li>- No blotter entries -</li>';
 		foreach($blotterData as $key=>$entry) {
-			if($key > $this->previewLimit) break;
+			if($key > $this->previewLimit - 1) break;
 			$html .= '<li class="blotterListItem"><span class="blotterDate">' . $entry['date'] . '</span> - <span class="blotterMessage">' . $entry['comment'] . '</span></li>';
 		}
 		$html .= '<li class="blotterListShowAll">[<a href="'.$this->mypage.'">Show All</a>]</li>';
