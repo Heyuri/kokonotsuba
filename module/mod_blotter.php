@@ -75,27 +75,45 @@ class mod_blotter extends ModuleHelper {
 	    updatelog();
 	}
 
+
+
 	private function drawAdminBlotterTable(&$html) {
-		$blotterData = $this->getBlotterFileData();
-		
-		usort($blotterData, function($a, $b) {
-			return strtotime($b['date']) - strtotime($a['date']);
-		});
-		
-		$html .= '<form id="blotterdeletionform" action="'.$this->mypage.'" method="POST"><table class="postlists" id="blotterlist">';
-		$html .= '<thead><tr><th>Date</th>
-						<th>Entry</th>
-						<th>UID</th>
-						<th></th></tr></thead>
-						
-						<tbody>';
-		foreach ($blotterData as $entry) {
-			$html .= "<tr><td>{$entry['date']}</td> <td>{$entry['comment']}</td> <td>{$entry['uid']}</td> <td><input type=\"checkbox\" id=\"blotterdeletecheckbox\" name=\"entrydelete[]\" value=\"{$entry['uid']}\"></td></tr>";
-		}
-		$html .= '<tr><td colspan="4"><input type="submit" name="delete_submit" value="Delete Selected"></td></tr>
-				</tbody>
-			</table></form>';
-	}
+    		$blotterData = $this->getBlotterFileData();
+     
+    		usort($blotterData, function($a, $b) {
+    			return strtotime($b['date']) - strtotime($a['date']);
+    		});
+     
+    		$html .= '
+    			<form id="blotterdeletionform" action="'.$this->mypage.'" method="POST">
+    				<table class="postlists" id="blotterlist">
+    					<thead>
+    						<tr>
+    							<th>Date</th>
+    							<th>Entry</th>
+    							<th>UID</th>
+    							<th>Del</th>
+    						</tr>
+    					</thead>
+    					<tbody>';
+    		foreach ($blotterData as $entry) {
+    			$html .= "
+    						<tr>
+    							<td>{$entry['date']}</td>
+    							<td>{$entry['comment']}</td>
+    							<td>{$entry['uid']}</td>
+    							<td><input type=\"checkbox\" id=\"blotterdeletecheckbox\" name=\"entrydelete[]\" value=\"{$entry['uid']}\"></td>
+    						</tr>";
+    		}
+    		$html .= '
+    					</tbody>
+    				</table>
+    				<div class="centerText">
+    					<input type="submit" name="delete_submit" value="Delete Selected">
+    				</div>
+    			</form>';
+    }
+
 	private function drawBlotterAdminForm(&$html) {
 		$html .= "
 			<h2 class=\"theading3\">Manage Blotter</h2>
