@@ -1,11 +1,13 @@
 const kkUserUpdate = {  name: "KK online user updating",
 	intervalId: null,
 	elementId: null,
+	countid: null,
 	minutes: 0,
 
 	// Startup function to initialize the reloader
 	startup: function () {
 		this.elementId = 'usercounter';
+		this.countid = 'countnumber'
 		const element = document.getElementById(this.elementId);
 		if (!element) {
 			return true;
@@ -23,33 +25,25 @@ const kkUserUpdate = {  name: "KK online user updating",
 		}, milliseconds);
 	},
 
-	reloadElement: function () {
-		const element = document.getElementById(this.elementId);
-		if (!element) {
-			console.log("ERROR: Online user counter element not found.");
-			return;
-		}
-
-		fetch(window.location.href)
-		.then(response => response.text())
-		.then(html => {
-
-			const parser = new DOMParser();
-			const doc = parser.parseFromString(html, 'text/html');
-			const newElement = doc.getElementById(this.elementId);
-
-			if (newElement) {
-				element.innerHTML = newElement.innerHTML;
-			} else {
-				console.log("ERROR: Updated element not found in the fetched HTML.");
+	reloadElement: async function () {
+		try {
+			let url = document.getElementById(this.elementId).dataset.modurl;
+			const response = await fetch(url);
+		
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
 			}
-		})
-		.catch(error => {
-			console.error("Error reloading element:", error);
-		});
+		
+			const data = await response.json();
+		
+			if (data !== 'undefined') {
+				let onlinecounterelement = document.getElementById(this.countid);
+				onlinecounterelement.innerHTML = data;
+			}
+		} catch (error) {
+			console.error('Error fetching data:', error);
+		}
 	},
-
-
 
 	reset: function () {
 		if (this.intervalId !== null) {
