@@ -194,7 +194,7 @@ class mod_blotter extends ModuleHelper {
 			return;
 		}
 		
-		if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+		if ($_SERVER['REQUEST_METHOD'] == 'POST' && $AccountIO->valid() >= $this->config['roles']['LEV_ADMIN']) {
 			if (!empty($_POST['new_blot_txt'])) {
 				$this->handleBlotterAddition();
 			}
