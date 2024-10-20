@@ -11,6 +11,10 @@ body {
     font-size: 12pt;
 }
 
+.hidden {
+	display: none;
+}
+
 .inlineborder {
 	color: #cccccc;
 	
