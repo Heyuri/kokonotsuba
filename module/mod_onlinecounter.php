@@ -41,16 +41,24 @@ class mod_onlinecounter extends ModuleHelper {
 	
 	public function autoHookPostInfo(&$form) {
 		$pageHTML = '';
-		
-		//make the regular user count hidden if js is disabled
-		$pageHTML .= ' <style>.noscriptonly { display: none}</style> <noscript><style> .jsonly { display: none } .noscriptonly { display: contents; } </style></noscript>';
-		
+				
 		$userCount = $this->getUserCount();
-		$userCounterHTML = '<li class ="jsonly"><div data-timeout="'.$this->timeout.'" data-modurl="'.$this->mypage.'&usercountjson" id="usercounter"><b id="countnumber">' . $userCount . '</b> unique user' . ($userCount > 1 ? 's' : '') . ' in the last '.$this->timeout.' minute'.($this->timeout > 1 ? 's' : '').' (including lurkers)</div></li>';
+		$userCounterHTML = '
+			<li id="counterListItemJS" class="hidden">
+				<div data-timeout="'.$this->timeout.'" data-modurl="'.$this->mypage.'&usercountjson" id="usercounter">
+					<span id="countnumber">' . $userCount . '</span> unique user' . ($userCount > 1 ? 's' : '') . ' in the last '.$this->timeout.' minute'.($this->timeout > 1 ? 's' : '').' (including lurkers)
+				</div>
+			</li>';
+
 		$pageHTML .= $userCounterHTML;
 		
 		$form .= $pageHTML;
-		$form .= '<li class="noscriptonly"><noscript> <iframe src="'.$this->mypage.'" style="border-right: 0px; border-bottom: 0px; font-size: small; height: 1.9em; width: 100%; vertical-align: text-bottom;" scrolling="no" frameborder="0"></iframe></noscript></li>';
+		$form .= '
+			<li id="counterListItemNoJS" class="">
+				<noscript>
+					<iframe id="counterIframe" src="'.$this->mypage.'" scrolling="no"></iframe>
+				</noscript>
+			</li>';
 	}
 	
 	public function ModulePage() {
@@ -58,16 +66,21 @@ class mod_onlinecounter extends ModuleHelper {
 			echo json_encode($this->getUserCount() ?? []);
 			return;
 		}
-		
-		
-		$pageHTML = '';
+
+		$pageHTML = '<!DOCTYPE html><html>';
 		
 		//add css so it appears properly inside iframe
-		$pageHTML .= '<link rel="stylesheet" href="'.$this->config['STATIC_URL'].'css/base.css">';
-		
+		$pageHTML .= '
+			<head>
+				<meta charset="utf-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<link rel="stylesheet" href="'.$this->config['STATIC_URL'].'css/base.css">
+			</head>
+			<body id="counterIframeBody">';
 		$userCount = $this->getUserCount();
-		$userCounterHTML = '<div id="usercounter" value="'.$this->timeout.'"><b id="countnumber">' . $userCount . '</b> unique user' . ($userCount > 1 ? 's' : '') . ' in the last '.$this->timeout.' minutes (including lurkers)</div>';
+		$userCounterHTML = '<div id="usercounter" value="'.$this->timeout.'"><span id="countnumber">' . $userCount . '</span> unique user' . ($userCount > 1 ? 's' : '') . ' in the last '.$this->timeout.' minutes (including lurkers)</div>';
 		$pageHTML .= $userCounterHTML;
+		$pageHTML .= '</body></html>';
 		
 		echo $pageHTML;
 	}
