@@ -577,9 +577,39 @@ button,input[type=submit],input[type=reset] {
 	font-family: "MS PGothic", "Mona", submona, IPAMonaPGothic, "BIZ UDPGothic", saitamaar_light, sans-serif !important;
 }
 
+#counterIframe {
+	border: none;
+	width: 100%;
+	height: 1.2em;
+	vertical-align: bottom;
+}
+
+#counterIframeBody {
+	margin: 0;
+	font-size: 0.75em;
+}
+
 #usercounter {
-	background-color: #000000; 
-	color: #00FF00;
+	display: block;
+	background-color: #000000;
+	color: #00ff00;
+	padding: 0 0.125em;
+}
+
+#counterIframeBody #usercounter {
+	font-family:
+	'MS PGothic',
+	'MS Pゴシック',
+	IPAMonaPGothic,
+	'IPA モナー Pゴシック',
+	Monapo,
+	Mona,
+	submona,
+	sans-serif;
+}
+
+#countnumber {
+	font-weight: bold;
 }
 
 #bannerContainer { height: 102px; }
@@ -625,3 +655,4 @@ button,input[type=submit],input[type=reset] {
 .blotterListShowAll {
 	text-align: center;
 }
+
