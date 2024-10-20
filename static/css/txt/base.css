@@ -8,6 +8,9 @@
 	src: url("../fonts/saitamaar_light/saitamaar_light.woff2") format('woff2'), url("..fonts/saitamaar_light/saitamaar_light.woff") format('woff')
 }
 
+.hidden {
+	display: none;
+}
 
 .postlists, .menu {
 	background-color: #CFC;
@@ -206,5 +209,44 @@ display: none;
 .toplinks {
 float: left;
 font-size: 10pt;
+}
+
+#counterListItemNoJS noscript {
+	display: contents;
+}
+
+#counterIframe {
+	display: table;
+	border: none;
+	height: 1.2em;
+	vertical-align: bottom;
+}
+
+#counterIframeBody {
+	margin: 0;
+	font-size: 0.75em;
+}
+
+#usercounter {
+	display: table;
+	background-color: #000000;
+	color: #00ff00;
+	padding: 0 0.125em;
+}
+
+#counterIframeBody #usercounter {
+	font-family:
+	'MS PGothic',
+	'MS Pゴシック',
+	IPAMonaPGothic,
+	'IPA モナー Pゴシック',
+	Monapo,
+	Mona,
+	submona,
+	sans-serif;
+}
+
+#countnumber {
+	font-weight: bold;
 }
 .neomenu .menulist {background-color: #cfc;}
