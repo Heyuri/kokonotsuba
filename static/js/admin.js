@@ -1,8 +1,8 @@
 (function() {
     'use strict';
 
-    // Check if the page contains the specified HTML
-    const adminModeElement = document.querySelector('b') && document.querySelector('b').textContent.includes('Administrator mode');
+    // Improved Admin Mode Check: Check if any <b> tag contains the text "Administrator mode"
+    const adminModeElement = [...document.querySelectorAll('b')].some(b => b.textContent.trim().includes('Administrator mode'));
     if (!adminModeElement) return; // Exit if not in Administrator mode
 
     let hoverTimeout;
@@ -38,12 +38,12 @@
             if (!thumbnailDiv.matches(':hover') && !currentLink?.matches(':hover')) {
                 thumbnailDiv.style.display = 'none';
             }
-        }, 0); // You can set delay to prevent flicker
+        }, 0); // Delay can be adjusted to prevent flicker
     }
 
     // Function to determine the base path for images
     function determineImagePath(link) {
-        const url = new URL(link.href);
+        const url = new URL(link.href, window.location.origin); // Ensure it handles protocol-relative URLs
         const pathParts = url.pathname.split('/');
         pathParts.pop(); // Remove the file name
         const basePath = pathParts.join('/');
@@ -55,10 +55,12 @@
         link.addEventListener('mouseenter', function(e) {
             currentLink = link; // Set current link for hover check
             clearTimeout(hoverTimeout);
-            const filename = link.href.match(/(\d+)\.\w+$/)[1]; // Extract filename without extension
+            
+            // Extract filename without extension, adjusted for non-numeric filenames
+            const filename = link.href.match(/([^/]+)\.\w+$/)[1];
             const basePath = determineImagePath(link);
-            const imgUrlJpg = `${basePath}${filename}s.jpg`;
-            const imgUrlPng = `${basePath}${filename}s.png`;
+            const imgUrlJpg = `${link.href.startsWith('//') ? window.location.protocol : ''}${basePath}${filename}s.jpg`;
+            const imgUrlPng = `${link.href.startsWith('//') ? window.location.protocol : ''}${basePath}${filename}s.png`;
 
             // Check if the JPG thumbnail exists
             fetch(imgUrlJpg).then(response => {
