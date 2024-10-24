@@ -59,6 +59,10 @@ class AccountIO {
 		$lastID = max($lastIDlist);
 		return $lastID;
 	}
+
+	private function replaceWindowsEOLWithLinux($string) {
+    	return  str_replace("\r\n", "\n", $string); //replace windows EOL with linux EOL
+	}
 	
 	public function editAccountRole($id, $newRole) {
 		$accountfound = false;
@@ -68,12 +72,13 @@ class AccountIO {
 
 		while (!feof($this->readOnlyFFData)) {
 			$line = fgets($this->readOnlyFFData);
+			$line = $this->replaceWindowsEOLWithLinux($line);
 			$data = explode("<>", $line);
 			if ($data[0] == $id) {
 				$data[3] = $newRole; // Update the role
 				$accountfound = true;
 			}
-			$newAccountFlatfile[] = implode("<>", $data); // Rebuild the line
+			$newAccountFlatfile[] = implode("<>", $data).PHP_EOL; // Rebuild the line
 		}
 
 		// If the account was not found, return false
