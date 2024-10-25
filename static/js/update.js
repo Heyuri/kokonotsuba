@@ -68,14 +68,9 @@ const kkupdate = { name: "KK Thread Updating",
 					var ptable;
 					for (i = i; i <= frs.length-1; i++) {
 						document.querySelector(".thread").insertAdjacentElement("beforeEnd", frs[i]);
-						frs[i].querySelectorAll(".comment .quotelink").forEach(function (i) {
-							var id = i.innerText.slice(2);
-							var lr = document.querySelector("#pc"+id);
-							var fr = d.querySelector("#pc"+id);
-							if (lr && fr) {
-								lr.querySelector(".backlinks").innerHTML = fr.querySelector(".backlinks").innerHTML;
-							}
-						});
+						
+						let quoteButton = document.getElementById(frs[i].id).querySelector(`.qu`);
+						quoteButton.addEventListener("click", kkqu._evquote);
 					}
 					document.querySelector("#update-status").innerText = npc+" new post"+(npc>1 ? "s" : "");
 					if (kkupdate.total > 0) document.title = "("+kkupdate.total+") "+kkupdate.otitle;
