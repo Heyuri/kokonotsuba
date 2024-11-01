@@ -53,6 +53,11 @@ const kkqu = { name: "KK Quote",
 	startup: function () {
 		com = $id("com");
 		if (!com) return true;
+		var q = window.location.hash.match(/^#q(\d+)/);
+		if (q) {
+			console.log(q);
+			kkqu.quote(q[1]);
+		}
 		kkqu.qu = $class("qu");
 		for (var i=0; i<kkqu.qu.length; i++) {
 			kkqu.qu[i].addEventListener("click", kkqu._evquote);
