@@ -73,7 +73,7 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 		if(!$PIO->isThread($resno)){ // Try to find the thread by child post no. instead
 			$resnoNew = $PIO->fetchPosts($resno)[0]['resto'];
 			if (!$PIO->isThread($resnoNew)) error(_T('thread_not_found'));
-			header("Location: ".fullURL().$config['PHP_SELF']."?res=".$resnoNew."&q=".$resno."#p".$resno); // Found, redirect
+			header("Location: ".fullURL().$config['PHP_SELF']."?res=".$resnoNew."#p".$resno); // Found, redirect
 		}
 		$AllRes = isset($pagenum) && ($_GET['pagenum']??'')=='all'; // Whether to use ALL for output
 
@@ -132,19 +132,9 @@ function updatelog($resno=0,$pagenum=-1,$single_page=false, $last=-1){
 		$dat = ''; $pte_vals['{$THREADS}'] = '';
 		head($dat, $resno);
 		// form
-		$qu = '';
-		if ($config['USE_QUOTESYSTEM'] && $resno && isset($_GET['q'])) {
-			$qq = explode(',', $_GET['q']);
-			foreach ($qq as $q) {
-				$q = intval($q);
-				if ($q<1) continue;
-				$qu.= '&gt;&gt;'.intval($q)."\r\n";
-			}
-		}
 		$form_dat = '';
-		form($form_dat, $resno, '', '', '', $qu);
+		form($form_dat, $resno, '', '', '', '');
 		$pte_vals['{$FORMDAT}'] = $form_dat;
-		unset($qu);
 		// Output the thread content
 		for($i = 0; $i < $inner_for_count; $i++){
 			// Take out the thread number
@@ -328,15 +318,13 @@ function arrangeThread($PTE, $tree, $tree_cut, $posts, $hiddenReply, $resno, $ar
 
         // Set the response/reference link
         if($config['USE_QUOTESYSTEM']) {
-            $qu = $_GET['q']??''; if ($qu) $qu.= ',';
             if($resno){ // Response mode
-                if($showquotelink) $QUOTEBTN = '<a href="'.$config['PHP_SELF'].'?res='.$tree[0]."&q=".htmlspecialchars($qu)."".$no.'#postform" class="qu" title="Quote">'.strval($no).'</a>';
-                else $QUOTEBTN = '<a href="'.$config['PHP_SELF'].'?res='.$tree."&q=".htmlspecialchars($qu)."".$no.'#postform" title="Quote">'.strval($no).'</a>';
+                if($showquotelink) $QUOTEBTN = '<a href="'.$config['PHP_SELF'].'?res='.$tree[0]."#q".$no.'" class="qu" title="Quote">'.strval($no).'</a>';
+                else $QUOTEBTN = '<a href="'.$config['PHP_SELF'].'?res='.$tree."#q".$no.'" title="Quote">'.strval($no).'</a>';
             }else{
                 if(!$i)    $REPLYBTN = '[<a href="'.$config['PHP_SELF'].'?res='.$no.'">'._T('reply_btn').'</a>]'; // First article
-                $QUOTEBTN = '<a href="'.$config['PHP_SELF'].'?res='.$tree[0]."&q=".htmlspecialchars($qu)."".$no.'#postform" title="Quote">'.$no.'</a>';
+                $QUOTEBTN = '<a href="'.$config['PHP_SELF'].'?res='.$tree[0]."#q".$no.'" title="Quote">'.$no.'</a>';
             }
-            unset($qu);
 			
 		} else {
 			if($resno&&!$i)		$REPLYBTN = '[<a href="'.$config['PHP_SELF'].'?res='.$no.'">'._T('reply_btn').'</a>]';

@@ -436,7 +436,7 @@ const kkjs = {
 		if (!com) return false;
 		if (qrcom) com = qrcom;
 
-		if (typeof(kkgal)!="undefined")
+		if (kkgal && kkgal.gframe)
 			kkgal.contract();
 		com.value+= str;
 		if (com != qrcom) // Don't scroll to the QR form
