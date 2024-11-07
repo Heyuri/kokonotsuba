@@ -2,7 +2,7 @@
 // catalog module
 class mod_cat extends ModuleHelper {
 	private $mypage;
-	private $PAGE_DEF = 1000;
+	private $PAGE_DEF = 200;
 	private $RESICON = -1;
 	private $THUMB_EXT = -1;
 
@@ -48,6 +48,7 @@ class mod_cat extends ModuleHelper {
 		$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
 		$post_cnt = count($plist);
 		$page_max = ceil($post_cnt / $this->PAGE_DEF) - 1;
+		$sort = 'bump';
 
 		if($page < 0 || $page > $page_max) {
 			error('Page out of range.');
@@ -57,17 +58,19 @@ class mod_cat extends ModuleHelper {
 			switch($_POST['sort_by']) {
 				case 'bump':
 					$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
+					$sort = 'bump';
 				break;
 				case 'time':
 					rsort($plist);
+					$sort = 'time';
 				break;
 			}
 		}
 		if($this->config['THREAD_PAGINATION']){ // Catalog caching
 			$cacheETag = md5($page.'-'.$post_cnt);
-			$cacheFile = $this->config['STORAGE_PATH'].'cache/catalog-'.$page.'.';
+			$cacheFile = $this->config['STORAGE_PATH'].'cache/catalog-'.$sort.'-'.$page.'.';
 			$cacheGzipPrefix = extension_loaded('zlib') ? 'compress.zlib://' : '';
-			$cacheControl = 'no-cache';
+			$cacheControl = 'cache';
 			//$cacheControl = isset($_SERVER['HTTP_CACHE_CONTROL']) ? $_SERVER['HTTP_CACHE_CONTROL'] : ''; // respect user's cache wishes? (comment out to force caching)
 			if(isset($_SERVER['HTTP_IF_NONE_MATCH']) && $_SERVER['HTTP_IF_NONE_MATCH'] == '"'.$cacheETag.'"'){
 				header('HTTP/1.1 304 Not Modified');
