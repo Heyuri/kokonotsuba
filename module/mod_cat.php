@@ -25,13 +25,19 @@ class mod_cat extends ModuleHelper {
 	public function autoHookToplink(&$linkbar, $isreply){
 		$linkbar .= ' [<a href="'.$this->mypage.'">Catalog</a>] ';
 	}
-	private function drawSortOptions() {
+	private function drawSortOptions($sort = 'bump') {
+		$timeSelected = $bumpSelected = '';
+		if ($sort == 'bump') {
+			$bumpSelected = ' selected';
+		} else if ($sort == 'time') {
+			$timeSelected = ' selected';
+		}
 		return '
 			<form action="koko.php?mode=module&load=mod_cat" method="post">
 				<span>Sort by:</span>
 				<select name="sort_by" style="display: inline-block">
-					<option selected="" value="bump">Bump order</option>
-					<option value="time">Creation date</option>
+					<option value="bump"'.$bumpSelected.'>Bump order</option>
+					<option value="time"'.$timeSelected.'>Creation date</option>
 				</select>
 				<input type="submit" value="Apply">
 			</form>';
@@ -43,25 +49,25 @@ class mod_cat extends ModuleHelper {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$dat = '';
 
-		$list_max = $PIO->postCount();
+		$list_max = $PIO->threadCount();
 		$page = $_GET['page']??0;
 		$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
 		$post_cnt = count($plist);
-		$page_max = ceil($post_cnt / $this->PAGE_DEF) - 1;
+		$page_max = ceil($list_max / $this->PAGE_DEF) - 1;
 		$sort = 'bump';
 
 		if($page < 0 || $page > $page_max) {
 			error('Page out of range.');
 		}
 		//sort threads. If sort is set to bump nothing will change because that is the default order returned by fetchThreadList
-		if(isset($_POST['sort_by'])) {
-			switch($_POST['sort_by']) {
+		if(isset($_REQUEST['sort_by'])) {
+			switch($_REQUEST['sort_by']) {
 				case 'bump':
 					$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
 					$sort = 'bump';
 				break;
 				case 'time':
-					rsort($plist);
+					$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF, true);
 					$sort = 'time';
 				break;
 			}
@@ -96,7 +102,7 @@ class mod_cat extends ModuleHelper {
 		$dat.= '
 		<script type="text/javascript" src="'.$this->config['STATIC_URL'].'js/catalog.js"></script>
 		<div id="catalog">
-[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">Return</a>] '.$this->drawSortOptions().'
+[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">Return</a>] '.$this->drawSortOptions($sort).'
 <center class="theading2"><b>Catalog</b></center>';
 
 		$dat.= '<style>';
@@ -145,8 +151,10 @@ class mod_cat extends ModuleHelper {
 		$dat .= '</tr></tbody></table><hr>';
 
 		$dat .= '</div><table id="pager" border="1"><tbody><tr>';
+		$pageurl = $this->mypage;
+		$pageurl .= isset($_REQUEST['sort_by']) ? "&sort_by={$sort}" : '';
 		if($page)
-			$dat .= '<td nowrap="nowrap"><a href="'.$this->mypage.'&page='.($page - 1).'">Previous</a></td>';
+			$dat .= '<td nowrap="nowrap"><a href="'.$pageurl.'&page='.($page - 1).'">Previous</a></td>';
 		else
 			$dat .= '<td nowrap="nowrap">First</td>';
 		$dat .= '<td nowrap="nowrap">';
@@ -154,11 +162,11 @@ class mod_cat extends ModuleHelper {
 			if($i==$page)
 				$dat .= '[<b>'.$i.'</b>] ';
 			else
-				$dat .= '[<a href="'.$this->mypage.'&page='.$i.'">'.$i.'</a>] ';
+				$dat .= '[<a href="'.$pageurl.'&page='.$i.'">'.$i.'</a>] ';
 		}
 		$dat .= '</td>';
 		if($page < $page_max)
-			$dat .= '<td><a href="'.$this->mypage.'&page='.($page + 1).'">Next</a></td>';
+			$dat .= '<td><a href="'.$pageurl.'&page='.($page + 1).'">Next</a></td>';
 		else
 			$dat .= '<td nowrap="nowrap">Last</td>';
 		$dat .= '</tr></tbody></table><br clear="ALL">';
