@@ -54,13 +54,17 @@ class mod_cat extends ModuleHelper {
 		$post_cnt = $PIO->postCount();
 		$page_max = ceil($list_max / $this->PAGE_DEF) - 1;
 
-		$sort = $_REQUEST['sort_by'] ?? '';
+		$sort = $_POST['sort_by'] ?? $_GET['sort_by'] ?? $_COOKIE['cat_sort_by'] ?? '';
 		if (!in_array($sort, array('bump', 'time'))) {
 			$sort = 'bump';
 		}
 
 		if($page < 0 || $page > $page_max) {
 			error('Page out of range.');
+		}
+
+		if (isset($_POST['sort_by'])) {
+			setcookie('cat_sort_by', $sort, time() + 365 * 86400);
 		}
 
 		//sort threads. If sort is set to bump nothing will change because that is the default order returned by fetchThreadList
@@ -157,8 +161,7 @@ class mod_cat extends ModuleHelper {
 		$dat .= '</tr></tbody></table><hr>';
 
 		$dat .= '</div><table id="pager" border="1"><tbody><tr>';
-		$pageurl = $this->mypage;
-		$pageurl .= isset($_REQUEST['sort_by']) ? "&sort_by={$sort}" : '';
+		$pageurl = $this->mypage."&sort_by={$sort}";
 		if($page)
 			$dat .= '<td nowrap="nowrap"><a href="'.$pageurl.'&page='.($page - 1).'">Previous</a></td>';
 		else
