@@ -51,27 +51,34 @@ class mod_cat extends ModuleHelper {
 
 		$list_max = $PIO->threadCount();
 		$page = $_GET['page']??0;
-		$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
-		$post_cnt = count($plist);
+		$post_cnt = $PIO->postCount();
 		$page_max = ceil($list_max / $this->PAGE_DEF) - 1;
-		$sort = 'bump';
+
+		$sort = $_REQUEST['sort_by'] ?? '';
+		if (!in_array($sort, array('bump', 'time'))) {
+			$sort = 'bump';
+		}
 
 		if($page < 0 || $page > $page_max) {
 			error('Page out of range.');
 		}
+
 		//sort threads. If sort is set to bump nothing will change because that is the default order returned by fetchThreadList
-		if(isset($_REQUEST['sort_by'])) {
-			switch($_REQUEST['sort_by']) {
-				case 'bump':
-					$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
-					$sort = 'bump';
-				break;
-				case 'time':
-					$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF, true);
-					$sort = 'time';
-				break;
-			}
+		switch($sort) {
+			case 'time':
+				$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF, true);
+				$sortfcn = function ($a, $b) { return $b['no'] - $a['no']; };
+			break;
+			case 'bump':
+			default:
+				$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
+				$sortfcn = function ($a, $b) { return strtotime($b['root']) - strtotime($a['root']); };
+			break;
 		}
+
+		$posts = $PIO->fetchPosts($plist);
+		usort($posts, $sortfcn);
+
 		if($this->config['THREAD_PAGINATION']){ // Catalog caching
 			$cacheETag = md5($page.'-'.$post_cnt);
 			$cacheFile = $this->config['STORAGE_PATH'].'cache/catalog-'.$sort.'-'.$page.'.';
@@ -124,9 +131,8 @@ class mod_cat extends ModuleHelper {
 		}
 		$dat.= '</style>';
 		$dat.= '<table align="CENTER" cellpadding="0" cellspacing="20"><tbody><tr>';
-		for($i = 0; $i < $post_cnt; $i++){
-			$post = $PIO->fetchPosts($plist[$i]);
-			extract($post[0]);
+		for($i = 0; $i < count($posts); $i++){
+			extract($posts[$i]);
 			if ( ($cat_cols!='auto') && !($i%intval($cat_cols)) )
 				$dat.= '</tr><tr>';
 
@@ -134,9 +140,9 @@ class mod_cat extends ModuleHelper {
 				$sub = 'No Title';
 			
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'');
-			$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, $post[0], false)); // "ThreadPost" Hook Point
+			$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, $posts[$i], false)); // "ThreadPost" Hook Point
 
-			$res = count($PIO->fetchPostList($no)) - 1;
+			$res = $PIO->postCount($no) - 1;
 			$dat.= '<td class="thread" width="180" height="200" align="CENTER">
 	<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>
 	<a href="'.$this->config['PHP_SELF'].'?res='.($resto?$resto:$no).'#p'.$no.'">'.
