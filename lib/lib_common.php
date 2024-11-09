@@ -56,7 +56,7 @@ function error($mes, $dest=''){
 	$PTE = PMCLibrary::getPTEInstance();
 
 	if(is_file($dest)) unlink($dest);
-	$pte_vals = array('{$SELF2}'=>$config['PHP_SELF2'].'?'.time(), '{$MESG}'=>$mes, '{$RETURN_TEXT}'=>_T('return'), '{$BACK_TEXT}'=>_T('error_back'));
+	$pte_vals = array('{$SELF2}'=>$config['PHP_SELF2'].'?'.time(), '{$MESG}'=>$mes, '{$RETURN_TEXT}'=>_T('return'), '{$BACK_TEXT}'=>_T('error_back'), '{$BACK_URL}'=>htmlspecialchars($_SERVER['HTTP_REFERER']??''));
 	$dat = '';
 	head($dat);
 	$dat .= $PTE->ParseBlock('ERROR',$pte_vals);
