@@ -114,7 +114,7 @@
 <center>
 	<h1 class="error">{$MESG}</h1>
 	[<a href="{$SELF2}">{$RETURN_TEXT}</a>]
-	[<a href="'.$_SERVER['HTTP_REFERER'].'" onclick="event.preventDefault();history.go(-1);">{$BACK_TEXT}</a>]
+	[<a href="{$BACK_URL}" onclick="event.preventDefault();history.go(-1);">{$BACK_TEXT}</a>]
 	<hr>
 </center>
 <!--/&ERROR-->
