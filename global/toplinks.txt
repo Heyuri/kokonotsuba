@@ -1,0 +1,7 @@
+<script>
+if (localStorage.getItem("neomenu")=="true") var url = "./static/html/neomenu.html";
+else var url = "./static/html/boardlist.html";
+fetch(url)
+   .then( r => r.text() )
+   .then( t => document.getElementsByClassName("toplinks")[0].innerHTML = t )
+</script>

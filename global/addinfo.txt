@@ -1,0 +1,10 @@
+<!-- Edit the links below  -->
+<ul class="rules">
+  <li><a style="color:#800043" href="javascript:kkjs.form_switch();">Switch Form Position</a> | <a style="color:#800043" href="./static/html/bbcode.html" target="_blank">BBCode Reference</a></li>
+</ul>
+<hr>
+<ul class="rules">
+  <li>Read the <a href="//example.net/rules.html">rules</a> before you post.</li>
+  <li>Read <a href="//example.net/faq.html">our FAQ</a> for any questions.</li>
+  <li>Modify this by editing addinfo.txt</li>
+</ul>
