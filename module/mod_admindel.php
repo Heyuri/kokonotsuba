@@ -14,7 +14,6 @@ class mod_admindel extends ModuleHelper {
 		$this->JANIMUTE_REASON = $this->config['ModuleSettings']['JANIMUTE_REASON'];
 		
 		$this->mypage = $this->getModulePageURL();
-		touch($this->BANFILE);
 	}
 
 	public function getModuleName() {
@@ -27,43 +26,45 @@ class mod_admindel extends ModuleHelper {
 
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$FileIO = PMCLibrary::getFileIOInstance();
-		$AccountIO = PMCLibrary::getAccountIOInstance();
-		if ($AccountIO->valid() < $this->config['roles']['LEV_JANITOR']) return;
-		$modfunc.= '[<a href="'.$this->mypage.'&action=del&no='.$post['no'].'" title="Delete">D</a>]';
-		if ($post['ext'] && $FileIO->imageExists($post['tim'].$post['ext'])) $modfunc.= '[<a href="'.$this->mypage.'&action=imgdel&no='.$post['no'].'" title="Delete File">Df</a>]';
-		$modfunc.= '[<a href="'.$this->mypage.'&action=delmute&no='.$post['no'].'" title="Delete and Mute for '.$this->JANIMUTE_LENGTH.' minute'.($this->JANIMUTE_LENGTH == 1 ? "" : "s").'">DM</a>]';
-//		if (THREAD_PAGINATION) $modfunc.= '[<a href="'.$this->mypage.'&action=cachedel&no='.$post['no'].'" title="Delete Cache">Dc</a>]';
+		$staffSession = new staffAccountFromSession;
+		
+		if ($staffSession->getRoleLevel() < $this->config['AuthLevels']['CAN_DELETE_POST']) return;
+		
+		$postBoard = searchBoardArrayForBoard($this->moduleBoardList, $post['boardUID']);
+
+		$modfunc.= '[<a href="'.$this->mypage.'&action=del&post_uid='.$post['post_uid'].'" title="Delete">D</a>]';
+		if ($post['ext'] && $FileIO->imageExists($post['tim'].$post['ext'], $postBoard)) $modfunc.= '[<a href="'.$this->mypage.'&action=imgdel&post_uid='.$post['post_uid'].'" title="Delete File">Df</a>]';
+		$modfunc.= '[<a href="'.$this->mypage.'&action=delmute&post_uid='.$post['post_uid'].'" title="Delete and Mute for '.$this->JANIMUTE_LENGTH.' minute'.($this->JANIMUTE_LENGTH == 1 ? "" : "s").'">DM</a>]';
 	}
 
 	public function ModulePage() {
-		$PIO = PMCLibrary::getPIOInstance();
+		$PIO = PIOPDO::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
-		$PMS = PMCLibrary::getPMSInstance();
-		$AccountIO = PMCLibrary::getAccountIOInstance();
+		$PMS = PMS::getInstance();
+		$boardIO = boardIO::getInstance();
+		$ActionLogger = ActionLogger::getInstance();
+		$staffSession = new staffAccountFromSession;
+		$softErrorHandler = new softErrorHandler($this->board);
+		$globalHTML = new globalHTML($this->board);
+		$roleLevel = $staffSession->getRoleLevel();
 		
-		//valid also 'logs in'
-		if ($AccountIO->valid() < $this->config['roles']['LEV_JANITOR']) {
-			error('403 Access denied');
-		}
+		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_DELETE_POST']);
 		
-		//username for logging
-		$moderatorUsername = $AccountIO->getUsername();
-		$moderatorLevel = $AccountIO->getRoleLevel();
-		
-		$post = $PIO->fetchPosts(intval($_GET['no']??''))[0];
-		if (!$post) error('ERROR: That post does not exist.');
+		$post = $PIO->fetchPosts(strval($_GET['post_uid']??''))[0];
+		$board = $boardIO->getBoardByUID($post['boardUID']);
+		$boardUID = $board->getBoardUID();
+
+		if (!$post) $globalHTML->error('ERROR: That post does not exist.');
 		$files = false;
 		switch ($_GET['action']??'') {
 			case 'del':
-				$PMS->useModuleMethods('PostOnDeletion', array($post['no'], 'backend'));
-				$files = $PIO->removePosts(array($post['no']));
-				deleteCache(array($post['no']));
-				logtime('Deleted post No.'.$post['no'], $moderatorUsername.' ## '.$moderatorLevel);
+				$PMS->useModuleMethods('PostOnDeletion', array($post['post_uid'], 'backend'));
+				$files = $PIO->removePosts(array($post['post_uid']));
+				$ActionLogger->logAction('Deleted post No.'.$post['no'], $boardUID);
 				break;
 			case 'delmute':
-				$PMS->useModuleMethods('PostOnDeletion', array($post['no'], 'backend'));
-				$files = $PIO->removePosts(array($post['no']));
-				deleteCache(array($post['no']));
+				$PMS->useModuleMethods('PostOnDeletion', array($post['post_uid'], 'backend'));
+				$files = $PIO->removePosts(array($post['post_uid']));
 				$ip = $post['host'];
 				$starttime = $_SERVER['REQUEST_TIME'];
 				$expires = $starttime+intval($this->JANIMUTE_LENGTH)*60;
@@ -73,26 +74,21 @@ class mod_admindel extends ModuleHelper {
 					fwrite($f, "$ip,$starttime,$expires,$reason\r\n");
 				}
 				fclose($f);
-				logtime('Muted '.$ip.' and deleted post No.'.$post['no'], $moderatorUsername.' ## '.$moderatorLevel);
+				$ActionLogger->logAction('Muted '.$ip.' and deleted post No.'.$post['no'], $boardUID);
 				break;
 			case 'imgdel':
-				$files = $PIO->removeAttachments(array($post['no']));
-				logtime('Deleted file for post No.'.$post['no'], $moderatorUsername.' ## '.$moderatorLevel);
-				break;
-			case 'cachedel':
-				deleteCache(array($post['no']));
-				logtime('Deleted cache for post No.'.$post['no'], $moderatorUsername.' ## '.$moderatorLevel);
+				$files = $PIO->removeAttachments(array($post['post_uid']));
+				$ActionLogger->logAction('Deleted file for post No.'.$post['no'], $boardUID);
 				break;
 			default:
-				error('ERROR: Invalid action.');
+				$globalHTML->error('ERROR: Invalid action.');
 				break;
 		}
 		if ($files) {
-			$FileIO->updateStorageSize(-$FileIO->deleteImage($files));
+			$FileIO->deleteImage($files, $board);
 		}
-		$PIO->dbCommit();
-
-		updatelog();
+		
+		$this->board->rebuildBoard();
 		redirect('back', 0);
 	}
 }

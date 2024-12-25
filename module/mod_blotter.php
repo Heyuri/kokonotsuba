@@ -72,10 +72,8 @@ class mod_blotter extends ModuleHelper {
 	    }
 	    
 	    file_put_contents($this->BLOTTER_PATH, $blotterContent);
-	    updatelog();
+	    $this->board->rebuildBoard();
 	}
-
-
 
 	private function drawAdminBlotterTable(&$html) {
     		$blotterData = $this->getBlotterFileData();
@@ -151,12 +149,14 @@ class mod_blotter extends ModuleHelper {
 		$newUID = substr(bin2hex(random_bytes(10)), 0, 10);
 		
 		$this->writeToBlotterFile($newText, $newDate, $newUID);
-		updatelog();//rebuild all pages so it takes effect immedietly
+		rebuildAllBoards();//rebuild all pages so it takes effect immedietly
 	}
 	
 	public function autoHookLinksAboveBar(&$link, $pageId, $level) {
-		$AccountIO = PMCLibrary::getAccountIOInstance();
-		if ($AccountIO->valid() < $this->config['roles']['LEV_ADMIN']) return;
+		$staffSession = new staffAccountFromSession;
+		
+		$roleLevel = $staffSession->getRoleLevel();
+		if ($roleLevel < $this->config['roles']['LEV_ADMIN']) return;
 		
 		$link.= '[<a href="'.$this->mypage.'">Manage Blotter</a>] ';
 	}
@@ -176,25 +176,29 @@ class mod_blotter extends ModuleHelper {
 	}
 
 	public function ModulePage() {
-		$PIO = PMCLibrary::getPIOInstance();
-		$PMS = PMCLibrary::getPMSInstance();
-		$AccountIO = PMCLibrary::getAccountIOInstance();
-		$returnButton = '[<a href="'.$this->config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a>]';
+		$PIO = PIOPDO::getInstance();
+		$PMS = PMS::getInstance();
+		$globalHTML = new globalHTML($this->board);
+		$staffSession = new staffAccountFromSession;
+		
+		$roleLevel = $staffSession->getRoleLevel();
+		$returnButton = $globalHTML->generateAdminLinkButtons();
 		
 		//If a regular user, draw blotter page
-		if ($AccountIO->valid() < $this->config['roles']['LEV_ADMIN']) {
+		if ($roleLevel < $this->config['roles']['LEV_ADMIN']) {
 			$pageHTML = '';
 			
-			head($pageHTML);
+			$globalHTML->head($pageHTML);
 			$pageHTML .= $returnButton;
+			$globalHTML->drawAdminTheading($dat, $staffSession);
 			$this->drawBlotterPage($pageHTML);
-			foot($pageHTML);
+			$globalHTML->foot($pageHTML);
 			
 			echo $pageHTML;
 			return;
 		}
 		
-		if ($_SERVER['REQUEST_METHOD'] == 'POST' && $AccountIO->valid() >= $this->config['roles']['LEV_ADMIN']) {
+		if ($_SERVER['REQUEST_METHOD'] == 'POST' && $roleLevel >= $this->config['roles']['LEV_ADMIN']) {
 			if (!empty($_POST['new_blot_txt'])) {
 				$this->handleBlotterAddition();
 			}
@@ -206,10 +210,11 @@ class mod_blotter extends ModuleHelper {
 		
 		$pageHTML = '';
 		
-		head($pageHTML);
+		$globalHTML->head($pageHTML);
 		$pageHTML .= $returnButton;
+		$globalHTML->drawAdminTheading($dat, $staffSession);
 		$this->drawBlotterAdminPage($pageHTML);
-		foot($pageHTML);
+		$globalHTML->foot($pageHTML);
 		echo $pageHTML;
 	}
 }

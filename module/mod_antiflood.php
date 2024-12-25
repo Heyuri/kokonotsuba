@@ -20,15 +20,26 @@ class mod_antiflood extends ModuleHelper {
 		return 'Koko BBS Release 1';
 	}
 	
-	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $resto, $imgWH){
-		if (!$resto) {
-			$PIO = PMCLibrary::getPIOInstance();
-			$last = $PIO->getLastThreadTime();
-			$now = $_SERVER["REQUEST_TIME"];
-			if ($now - $last < $this->RENZOKU3) {
-				if ($dest != NULL) unlink($dest); // Delete image
-				error('ERROR: Please wait a few seconds before creating a new thread.');
-			} 
+	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, $imgWH){
+		if (!$thread_uid) {
+			$PIO = PIOPDO::getInstance();
+			$globalHTML = new globalHTML($this->board);
+
+			$lastThreadTimestamp = $PIO->getLastThreadTimeFromBoard($this->board);
+			if(!$lastThreadTimestamp) return;
+			$currentTimestamp = new DateTime();
+			$timestampFromDatabase = new DateTime($lastThreadTimestamp);
+
+			$currentTimestampUnix      = $currentTimestamp->getTimestamp();
+			$timestampFromDatabaseUnix = $timestampFromDatabase->getTimestamp();
+			
+			$timeDifference = $currentTimestampUnix - $timestampFromDatabaseUnix;
+			if ($timeDifference < $this->RENZOKU3) {
+				if ($dest != NULL) {
+					unlink($dest);
+				}
+				$globalHTML->error('ERROR: Please wait a few seconds before creating a new thread.');
+			}
 		}
 	}
 }

@@ -19,11 +19,13 @@ class mod_readonly extends ModuleHelper {
 	}
 
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo){
-		$AccountIO = PMCLibrary::getAccountIOInstance();
-		$pwd = isset($_POST['pwd']) ? $_POST['pwd'] : '';
-		$resto = isset($_POST['resto']) ? $_POST['resto'] : 0;
+		$staffSession = new staffAccountFromSession;
+		$globalHTML = new globalHTML($this->board);
+
+		$pwd = $_POST['pwd'] ?? '';
+		$resto = $_POST['resto'] ?? 0;
 
 		if($this->ALLOWREPLY && $resto) return;
-		if($this->READONLY && $AccountIO->valid() < $this->config['roles']['LEV_MODERATOR'] && ($name != CAP_NAME && $pwd != CAP_PASS)){ error('New posts cannot be made at this time.'); }
+		if($this->READONLY && $staffSession->getRoleLevel() < $this->config['roles']['LEV_MODERATOR']){ $globalHTML->error('New posts cannot be made at this time.'); }
 	}
 }

@@ -19,49 +19,56 @@ class mod_stop extends ModuleHelper {
 		return 'Koko BBS Release 1';
 	}
 
-	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $file, $ip, $resto) {
-		$PIO = PMCLibrary::getPIOInstance();
+	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $file, $ip, $thread_uid) {
+		$PIO = PIOPDO::getInstance();
+		$staffSession = new staffAccountFromSession;
+		$globalHTML = new globalHTML($this->board);
+		$roleLevel = $staffSession->getRoleLevel();
+		
 
-		if ($resto && $PIO->isThread($resto)) {
-			$post = $PIO->fetchPosts($resto)[0];
+		if ($thread_uid && $PIO->isThread($thread_uid) && $roleLevel < $this->config['roles']['LEV_MODERATOR']) {
+			$post = $PIO->fetchPostsFromThread($thread_uid)[0];
 			$fh = new FlagHelper($post['status']);
-			if($fh->value('stop')) error('ERROR: This thread is locked.');
+			if($fh->value('stop')) $globalHTML->error('ERROR: This thread is locked.');
 		}
 	}
 
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
-		$PIO = PMCLibrary::getPIOInstance();
+		$PIO = PIOPDO::getInstance();
 		$fh = new FlagHelper($post['status']);
 		if ($fh->value('stop')) {
 			$arrLabels['{$POSTINFO_EXTRA}'].='&nbsp;<img src="'.$this->LOCKICON.'" class="icon" title="Locked">';
 		}
 	}
 
-	public function autoHookAdminList(&$modfunc, $post, $isres) {
-		$AccountIO = PMCLibrary::getAccountIOInstance();
-		if ($AccountIO->valid() < $this->config['roles']['LEV_MODERATOR']) return;
+	public function autoHookAdminList(&$modfunc, $post, $isReply) {
+		$staffSession = new staffAccountFromSession;
+		$roleLevel = $staffSession->getRoleLevel();
+		
+		if ($roleLevel < $this->config['AuthLevels']['CAN_LOCK']) return;
 		$fh = new FlagHelper($post['status']);
-		if(!$isres) $modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'"'.($fh->value('stop')?' title="Unlock">l':' title="Lock thread">L').'</a>]';
+		if(!$isReply) $modfunc.= '[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('stop')?' title="Unlock">l':' title="Lock thread">L').'</a>]';
 	}
 
 	public function ModulePage() {
-		$PIO = PMCLibrary::getPIOInstance();
-		$AccountIO = PMCLibrary::getAccountIOInstance();
+		$PIO = PIOPDO::getInstance();
+		$actionLogger = ActionLogger::getInstance();
+		$softErrorHandler = new softErrorHandler($this->board);
+		$globalHTML = new globalHTML($this->board);
 		
-		if ($AccountIO->valid() < $this->config['roles']['LEV_MODERATOR']) {
-			error('403 Access denied');
-		}
+		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_LOCK']);
 
-		$post = $PIO->fetchPosts(intval($_GET['no']))[0];
-		if(!$PIO->isThread($post['no'])) error('ERROR: Cannot lock reply.');
-		if(!$post) error('ERROR: Post does not exist.');
-		$flgh = $PIO->getPostStatus($post['status']);
+		$post = $PIO->fetchPostsFromThread(strval($_GET['thread_uid']))[0];
+		if(!$PIO->isThreadOP($post['post_uid'])) $globalHTML->error('ERROR: Cannot lock reply.');
+		if(!$post) $globalHTML->error('ERROR: Post does not exist.');
+		$flgh = $PIO->getPostStatus($post['post_uid']);
 		$flgh->toggle('stop');
-		$PIO->setPostStatus($post['no'], $flgh->toString());
-		$PIO->dbCommit();
-
-		logtime('Changed lock status on post No.'.$post['no'].' ('.($flgh->value('stop')?'true':'false').')', $AccountIO->valid());
-		updatelog();
+		$PIO->setPostStatus($post['post_uid'], $flgh->toString());
+		
+		$logMessage = $flgh->value('stop') ? "Locked thread No. {$post['no']}" : "Unlock thread No. {$post['no']}";
+		
+		$actionLogger->logAction($logMessage, $this->board->getBoardUID());
+		$this->board->rebuildBoard();
 		redirect('back', 0);
 	}
 }

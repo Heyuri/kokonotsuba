@@ -1,5 +1,4 @@
 <?php
-// catalog module
 class mod_cat extends ModuleHelper {
 	private $mypage;
 	private $PAGE_DEF = 200;
@@ -25,6 +24,7 @@ class mod_cat extends ModuleHelper {
 	public function autoHookToplink(&$linkbar, $isreply){
 		$linkbar .= ' [<a href="'.$this->mypage.'">Catalog</a>] ';
 	}
+
 	private function drawSortOptions($sort = 'bump') {
 		$timeSelected = $bumpSelected = '';
 		if ($sort == 'bump') {
@@ -42,16 +42,20 @@ class mod_cat extends ModuleHelper {
 				<input type="submit" value="Apply">
 			</form>';
 	}
+
 	public function ModulePage(){
-		$PTE = PMCLibrary::getPTEInstance();
-		$PMS = PMCLibrary::getPMSInstance();
-		$PIO = PMCLibrary::getPIOInstance();
+		$PTE = PTELibrary::getInstance();
+		$PMS = PMS::getInstance();
+		$PIO = PIOPDO::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
+		
+		$globalHTML = new globalHTML($this->board);
+		
 		$dat = '';
 
-		$list_max = $PIO->threadCount();
+		$list_max = $PIO->threadCountFromBoard($this->board);
 		$page = $_GET['page']??0;
-		$post_cnt = $PIO->postCount();
+		$post_cnt = $PIO->postCountFromBoard($this->board);
 		$page_max = ceil($list_max / $this->PAGE_DEF) - 1;
 
 		$sort = $_POST['sort_by'] ?? $_GET['sort_by'] ?? $_COOKIE['cat_sort_by'] ?? '';
@@ -60,56 +64,36 @@ class mod_cat extends ModuleHelper {
 		}
 
 		if($page < 0 || $page > $page_max) {
-			error('Page out of range.');
+			$globalHTML->error('Page out of range.');
 		}
 
 		if (isset($_POST['sort_by'])) {
 			setcookie('cat_sort_by', $sort, time() + 365 * 86400);
 		}
-
+ 
 		//sort threads. If sort is set to bump nothing will change because that is the default order returned by fetchThreadList
 		switch($sort) {
 			case 'time':
-				$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF, true);
-				$sortfcn = function ($a, $b) { return $b['no'] - $a['no']; };
+				$plist = $PIO->getThreadListFromBoard($this->board, $this->PAGE_DEF * $page, $this->PAGE_DEF, true);
+				$sortfcn = function ($a, $b) { return strtotime($b['thread_created_time']) - strtotime($a['thread_created_time']); };
+				
 			break;
 			case 'bump':
 			default:
-				$plist = $PIO->fetchThreadList($this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
-				$sortfcn = function ($a, $b) { return strtotime($b['root']) - strtotime($a['root']); };
+				$plist = $PIO->getThreadListFromBoard($this->board, $this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
+				$sortfcn = function ($a, $b) { return strtotime($b['last_bump_time']) - strtotime($a['last_bump_time']); };
 			break;
 		}
 
-		$posts = $PIO->fetchPosts($plist);
-		usort($posts, $sortfcn);
-
-		if($this->config['THREAD_PAGINATION']){ // Catalog caching
-			$cacheETag = md5($page.'-'.$post_cnt);
-			$cacheFile = $this->config['STORAGE_PATH'].'cache/catalog-'.$sort.'-'.$page.'.';
-			$cacheGzipPrefix = extension_loaded('zlib') ? 'compress.zlib://' : '';
-			$cacheControl = 'cache';
-			//$cacheControl = isset($_SERVER['HTTP_CACHE_CONTROL']) ? $_SERVER['HTTP_CACHE_CONTROL'] : ''; // respect user's cache wishes? (comment out to force caching)
-			if(isset($_SERVER['HTTP_IF_NONE_MATCH']) && $_SERVER['HTTP_IF_NONE_MATCH'] == '"'.$cacheETag.'"'){
-				header('HTTP/1.1 304 Not Modified');
-				header('ETag: "'.$cacheETag.'"');
-				return;
-			}elseif(file_exists($cacheFile.$cacheETag) && $cacheControl != 'no-cache'){
-				header('X-Cache: HIT');
-				header('ETag: "'.$cacheETag.'"');
-				header('Connection: close');
-				readfile($cacheGzipPrefix.$cacheFile.$cacheETag);
-				return;
-			}else{
-				header('X-Cache: MISS');
-			}
-		}
+		$threadList = $PIO->fetchThreads($plist) ?? [];
+		usort($threadList, $sortfcn);
 
 		$cat_cols = $_COOKIE['cat_cols']??0;
 		$cat_fw = ($_COOKIE['cat_fw']??'false')=='true';
 		if (!$cat_cols=intval($cat_cols))
 			$cat_cols = 'auto';
 
-		head($dat);
+		$globalHTML->head($dat);
 		$dat.= '
 		<script type="text/javascript" src="'.$this->config['STATIC_URL'].'js/catalog.js"></script>
 		<div id="catalog">
@@ -135,8 +119,11 @@ class mod_cat extends ModuleHelper {
 		}
 		$dat.= '</style>';
 		$dat.= '<table align="CENTER" cellpadding="0" cellspacing="20"><tbody><tr>';
-		for($i = 0; $i < count($posts); $i++){
-			extract($posts[$i]);
+		foreach($threadList as $i=>$thread){
+			$opPost = $PIO->fetchPostsFromThread($thread['thread_uid'])[0];
+			extract($opPost);
+			
+			$resno = $PIO->resolveThreadNumberFromUID($thread_uid);
 			if ( ($cat_cols!='auto') && !($i%intval($cat_cols)) )
 				$dat.= '</tr><tr>';
 
@@ -144,13 +131,13 @@ class mod_cat extends ModuleHelper {
 				$sub = 'No Title';
 			
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'');
-			$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, $posts[$i], false)); // "ThreadPost" Hook Point
+			//$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, $posts[$i], false)); // "ThreadPost" Hook Point
 
-			$res = $PIO->postCount($no) - 1;
+			$res = $PIO->getPostCountFromThread($thread_uid) - 1;
 			$dat.= '<td class="thread" width="180" height="200" align="CENTER">
 	<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>
-	<a href="'.$this->config['PHP_SELF'].'?res='.($resto?$resto:$no).'#p'.$no.'">'.
-	($FileIO->imageExists($tim.$ext) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim)).'" width="'.min(150, $tw).'" vspace="3"	class="thumb">' : '***').
+	<a href="'.$this->config['PHP_SELF'].'?res='.($resno?$resno:$no).'#p'.$no.'">'.
+	($FileIO->imageExists($tim.$ext, $this->board) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim, $this->board), $this->board).'" width="'.min(150, $tw).'" vspace="3"	class="thumb">' : '***').
 	'</a><br>
 	<nobr><small><b class="title">'.substr($sub, 0, 20).'</b>:'.
 		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon"> '.$res.'</small></span></nobr><br>
@@ -179,20 +166,7 @@ class mod_cat extends ModuleHelper {
 		else
 			$dat .= '<td nowrap="nowrap">Last</td>';
 		$dat .= '</tr></tbody></table><br clear="ALL">';
-		foot($dat);
-		if ($this->config['THREAD_PAGINATION']){ // Catalog caching
-			if ($oldCaches = glob($cacheFile.'*')){
-				foreach($oldCaches as $o) unlink($o);
-			}
-			@$fp = fopen($cacheGzipPrefix.$cacheFile.$cacheETag, 'w');
-			if($fp){
-				fwrite($fp, $dat);
-				fclose($fp);
-				@chmod($cacheFile.$cacheETag, 0666);
-				header('ETag: "'.$cacheETag.'"');
-				header('Connection: close');
-			}
-		}
+		$globalHTML->foot($dat);
 		echo $dat;
 	}
 

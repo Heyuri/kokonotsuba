@@ -26,43 +26,45 @@ class mod_globalmsg extends ModuleHelper {
 	}
 
 	private function writeToGlobalMsg($message) {
+		$globalHTML = new globalHTML($this->board);
 		if (!is_writable($this->globalMessageFile)) {
-			error('Error: Unable to write to the file.');
+			$globalHTML->error('Error: Unable to write to the file.');
 		}
 		file_put_contents($this->globalMessageFile, $message);
 	}
 
 	public function autoHookLinksAboveBar(&$link, $pageId, $level) {
-		$AccountIO = PMCLibrary::getAccountIOInstance();
+		$staffSession = new staffAccountFromSession;
 		
-		if ($AccountIO->valid() < $this->config['roles']['LEV_ADMIN'] || $pageId != 'admin') return;
+		if ($staffSession->getRoleLevel() < $this->config['roles']['LEV_ADMIN'] || $pageId != 'admin') return;
 		$link .= '[<a title="Manage the global warning/message that will appear across all boards" href="'.$this->mypage.'">Manage Global Message</a>] ';
 	}
 
 	public function autoHookGlobalMessage(&$msg) {
-		$AccountIO = PMCLibrary::getAccountIOInstance();
 		$msg .= $this->getCurrentGlobalMsg() ?? '';
 	}
 
 	public function ModulePage() {
-		$AccountIO = PMCLibrary::getAccountIOInstance();
-		if ($AccountIO->valid() < $this->config['roles']['LEV_ADMIN']) error("403 DENIED!");
-	
+		$globalHTML = new globalHTML($this->board);
+		$staffSession = new staffAccountFromSession;
+		$softErrorHandler = new softErrorHandler($this->board);
+		$softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
 	
 		$pageHTML = '';
 		$success = '';
-		$action = isset($_GET['action']) ? $_GET['action'] : '';
+		$action = $_GET['action'] ?? '';
 
 		if ($action === 'setmessage' && isset($_POST['submit'])) {
+			
 			$message = isset($_POST['content']) ? $_POST['content'] : '';
 			$result = $this->writeToGlobalMsg($message);
-			updatelog();
-			$success .= '<b class="good">Global message updated!</b>';
+			$this->board->rebuildBoard();
 		}
 
 		$currentMessage = $this->getCurrentGlobalMsg();
 		
-		$returnButton = '[<a href="'.$this->config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a>]';
+		$returnButton = $globalHTML->generateAdminLinkButtons();
+		
 		$adminGlobalMessageForm = '
 		<fieldset class="adminfieldset"> <legend>Edit global message</legend>
 			<form action="'.$this->mypage.'&action=setmessage" method="post">
@@ -88,9 +90,11 @@ class mod_globalmsg extends ModuleHelper {
 		</fieldset>
 		';
 		//assemble page output
-		head($pageHTML);
-		$pageHTML .= $returnButton.$adminGlobalMessageForm.$currentPreview.$success;
-		foot($pageHTML);
+		$globalHTML->head($pageHTML);
+		$pageHTML .= $returnButton;
+		$globalHTML->drawAdminTheading($pageHTML, $staffSession);
+		$pageHTML .= $adminGlobalMessageForm.$currentPreview;
+		$globalHTML->foot($pageHTML);
 		
 		echo $pageHTML;
 	}

@@ -5,16 +5,11 @@
 	By: bobman (Yahoo! ^_^)
 */
 
-class mod_ads implements IModule {
-	private static $PMS;
-	private static $SELF;
-	private $config;
+class mod_ads extends ModuleHelper {
 	
 	public function __construct($PMS) {
-		global $config;
-		self::$PMS = $PMS;
-
-		$this->config = $config;
+		parent::__construct($PMS);
+		$this->mypage = $this->getModulePageURL();
 	}
 
 	// Names

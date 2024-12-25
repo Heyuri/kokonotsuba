@@ -1,3 +1,4 @@
+//
 <?php
 class mod_SearchCategory extends ModuleHelper {
 	private $mypage;
@@ -23,14 +24,17 @@ class mod_SearchCategory extends ModuleHelper {
 	}
 
 	public function ModulePage(){
-		$PIO = PMCLibrary::getPIOInstance();
-		$FileIO = PMCLibrary::getFileIOInstance();
-		$PTE = PMCLibrary::getPTEInstance();
-		$PMS = PMCLibrary::getPMSInstance();
-		$AccountIO = PMCLibrary::getAccountIOInstance();
+		$PTE = PTELibrary::getInstance();
+		$PMS = PMS::getInstance();
+		$PIO = PIOPDO::getInstance();
+		
+		$staffSession = new staffAccountFromSession;
+		$globalHTML = new globalHTML($this->board);
+
+		$roleLevel = $staffSession->getRoleLevel();
 		
 		$category = isset($_GET['c']) ? strtolower(strip_tags(trim($_GET['c']))) : ''; // Search for category tags
-		if(!$category) error(_T('category_nokeyword'));
+		if(!$category) $globalHTML->error(_T('category_nokeyword'));
 		$category_enc = urlencode($category); $category_md5 = md5($category);
 		$page = isset($_GET['p']) ? @intval($_GET['p']) : 1; if($page < 1) $page = 1; // Current number of pages viewed
 		$isrecache = isset($_GET['recache']); // Whether to force the cache to be regenerated
@@ -49,14 +53,14 @@ class mod_SearchCategory extends ModuleHelper {
 		$loglist_cut_count = count($loglist_cut);
 
 		$dat = '';
-		head($dat);
+		$globalHTML->head($dat);
 		$links = '[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>] [<a href="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&recache=1">'._T('category_recache').'</a>]';
-		$level = $AccountIO->valid();
-		$PMS->useModuleMethods('LinksAboveBar', array(&$links,'category',$level));
+
+		$PMS->useModuleMethods('LinksAboveBar', array(&$links,'category',$roleLevel));
 		$dat .= "<div>$links</div>\n";
 		for($i = 0; $i < $loglist_cut_count; $i++){
 			$posts = $PIO->fetchPosts($loglist_cut[$i]); // Get article content
-			$dat .= arrangeThread($PTE, ($posts[0]['resto'] ? $posts[0]['resto'] : $posts[0]['no']), null, $posts, 0, $loglist_cut[$i], array(), array(), false, false, false); // Output by output (reference links are not displayed)
+			$dat .= arrangeThread($this->board, $this->config, $PTE, $globalHTML, $PIO, ($posts[0]['resto'] ? $posts[0]['resto'] : $posts[0]['no']), null, $posts, 0, $loglist_cut[$i], array(), array(), false, false, false); // Output by output (reference links are not displayed)
 		}
 
 		$dat .= '<table id="pager" border="1"><tr>';
@@ -72,7 +76,7 @@ class mod_SearchCategory extends ModuleHelper {
 		else $dat .= '<td nowrap="nowrap">'._T('last_page').'</td>';
 		$dat .= '</tr></table>';
 
-		foot($dat);
+		$globalHTML->foot($dat);
 		echo $dat;
 	}
 }

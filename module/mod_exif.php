@@ -27,16 +27,18 @@ class mod_exif extends ModuleHelper {
 		$FileIO =PMCLibrary::getFileIOInstance();
         $file = $post['tim'].$post['ext'];
         
+		$board = searchBoardArrayForBoard($this->moduleBoardList, $post['boardUID']);
+
         //EXIF
-		if($this->enable_exif && $FileIO->imageExists($file) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-			$arrLabels['{$IMG_BAR}'] .= '<small>[<a href="'.$this->myPage.'&file='.$file.'">EXIF</a>]</small> ';
+		if($this->enable_exif && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
+			$arrLabels['{$IMG_BAR}'] .= '<small>[<a href="'.$this->myPage.'&file='.$file.'&boardUID='.$board->getBoardUID().'">EXIF</a>]</small> ';
 		}
 		//ImgOps
-		if($this->enable_imgops && $FileIO->imageExists($file) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
+		if($this->enable_imgops && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
 		    $arrLabels['{$IMG_BAR}'] .= '<small>[<a href="http://imgops.com/'.substr($FileIO->getImageURL($file), 2).'" target="_blank">ImgOps</a>]</small> ';
 		}
 		//Anime/manga search engine
-		if($this->enable_iqdb && $FileIO->imageExists($file) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
+		if($this->enable_iqdb && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
 			$arrLabels['{$IMG_BAR}'] .= '<small>[<a href="http://iqdb.org/?url='.$FileIO->getImageURL($file).'" target="_blank">iqdb</a>]</small> ';
 		}
 	}
@@ -47,15 +49,21 @@ class mod_exif extends ModuleHelper {
 
 	public function ModulePage(){
 		$FileIO =PMCLibrary::getFileIOInstance();
+		$globalHTML = new globalHTML($this->board);
 		
+		$boardUID = $_GET['boardUID'] ?? $this->board->getBoardUID();
+		$board = searchBoardArrayForBoard($this->moduleBoardList, $boardUID);
+		$boardConfig = $board->loadBoardConfig();
+		
+
 		$h = '';
-		head($h);
+		$globalHTML->head($h);
 		echo $h;
 		$file=isset($_GET['file'])?$_GET['file']:'';
 		echo '[<a href="'.$this->config['PHP_SELF2'].'">Return</a>]';
 		echo '<p>';
-		if($file && $FileIO->imageExists($file)){
-			$pfile=$this->config['IMG_DIR'].'/'.$file;
+		if($file && $FileIO->imageExists($file, $board)){
+			$pfile=$board->getBoardCdnDir().$boardConfig['IMG_DIR'].'/'.$file;
 			if(function_exists("exif_read_data")) {
 				echo "DEBUG: Using exif_read_data()<br>";
 				$exif_data = exif_read_data($pfile, 0, true);
@@ -93,7 +101,7 @@ class mod_exif extends ModuleHelper {
 		echo '</p>';
 		if(isset($_SERVER['HTTP_REFERER'])) echo '[<a href="'.$_SERVER['HTTP_REFERER'].'" onclick="event.preventDefault();history.go(-1);">Back</a>]';
 		$f = '';
-		foot($f);
+		$globalHTML->foot($f);
 		echo $f;
 	}
 }

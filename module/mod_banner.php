@@ -15,8 +15,9 @@ class mod_banner extends ModuleHelper {
 	}
 	
 	private function getAllFilesFromDirectory($directory) {
+		$globalHTML = new  globalHTML($this->config);
 		if (!is_dir($directory)) {
-			error('Invalid directory: ' . $directory);
+			$globalHTML->error('Invalid directory: ' . $directory);
 			return false;
 		}
 
@@ -65,7 +66,6 @@ class mod_banner extends ModuleHelper {
 
 	private function drawBannerRedirect() {
 		$bannerImageArray = $this->getRandomFilesFromDirectory($this->config['ModuleSettings']['BANNER_PATH'], 1); 
-		
 		$bannerImage = '';
 		$bannerURL = '';
 		if ($bannerImageArray !== false && !empty($bannerImageArray)) {

@@ -16,7 +16,7 @@ class mod_stat extends ModuleHelper {
 	}
 
 	public function ModulePage() {
-		$PIO = PMCLibrary::getPIOInstance();
+		$PIO = PIOPDO::getInstance();
 		header('Content-Type: text/plain');
 		switch ($_GET['stats']??'') {
 			case 'alltime': $limit = -1; break;
@@ -25,7 +25,7 @@ class mod_stat extends ModuleHelper {
 			case 'pph':
 			default: $limit = 60*60; break;
 		}
-		$posts = $PIO->fetchPosts( $PIO->fetchPostList() );
+		$posts = $PIO->getPostsFromBoard($this->board);
 		$time = $_SERVER['REQUEST_TIME'] - $limit;
 		$tim = intval($time.substr($_SERVER['REQUEST_TIME_FLOAT'],2,3));
 		$count = 0;
