@@ -14,102 +14,80 @@
  * @since 8th.Release
  */
 class FileIOlocal extends AbstractFileIO {
-    var $imgPath, $thumbPath;
+	public function __construct() {
+		parent::__construct();
+	}
 
-    public function __construct($parameter, $ENV) {
-        parent::__construct();
+	public function init() {
+		return true;
+	}
 
-        $this->imgPath = $ENV['IMG'];
-        $this->thumbPath = $ENV['THUMB'];
-    }
+	public function imageExists($imgname, $board) {
+		return file_exists($this->getImagePhysicalPath($imgname, $board));
+	}
 
-    public function init() {
-        return true;
-    }
+	public function deleteImage($imgname, $board) {
+		if (!is_array($imgname)) [$imgname = array($imgname)];
 
-    public function imageExists($imgname) {
-        return file_exists($this->getImagePhysicalPath($imgname));
-    }
+		foreach ($imgname as $i) {
+			unlink($this->getImagePhysicalPath($i, $board));
+		}
+	}
 
-    public function deleteImage($imgname) {
-        if (!is_array($imgname)) {
-            $imgname = array($imgname); // Single name parameter
-        }
+	public function deleteImagesByBoardFiles($boardFiles) {
+		if (!is_array($boardFiles)) $boardFiles = [$boardFiles];
 
-        $size = 0;
-        $size_perimg = 0;
-        foreach ($imgname as $i) {
-            $size_perimg = $this->getImageFilesize($i);
-            if (unlink($this->getImagePhysicalPath($i))) {
-                $size += $size_perimg;
-            } 
-        }
-        return $size;
-    }
+		foreach ($boardFiles as $boardFile) {
+			$fileName = $boardFile->getFilename();
+			$fileUnixName = $boardFile->getUnixFileName();
+			$fileBoard = $boardFile->getBoard();
 
-    private function getImagePhysicalPath($imgname) {
-        return (strpos($imgname, 's.') !== false ? $this->thumbPath : $this->imgPath) . $imgname;
-    }
+			$dFile = $fileName;
+			$dThumb = $this->resolveThumbName($fileUnixName, $fileBoard);
+			if ($this->imageExists($dFile, $fileBoard)) $this->deleteImage($dFile, $fileBoard);
+			if ($dThumb && $this->imageExists($dThumb, $fileBoard)) $this->deleteImage($dThumb, $fileBoard);
 
-    public function uploadImage($imgname, $imgpath, $imgsize) {
-        return false;
-    }
+		}
 
-    public function getImageFilesize($imgname) {
-        $size = filesize($this->getImagePhysicalPath($imgname));
-        if ($size === false) {
-            $size = 0;
-        }
-        return $size;
-    }
+	}
 
-    public function getImageURL($imgname) {
-        return $this->getImageLocalURL($imgname);
-    }
+	private function getImagePhysicalPath($imgname, $board) {
+		$config = $board->loadBoardConfig();
+		$cdnDir = $board->getBoardCdnDir();
+		$fileDir = (strpos($imgname, 's.') !== false ? $config['THUMB_DIR'] : $config['IMG_DIR']) . $imgname;
+		return $cdnDir.$fileDir;
+	}
 
-    public function resolveThumbName($thumbPattern) {
-        $shortcut = $this->resolveThumbNameShortcut($thumbPattern);
-        if ($shortcut !== false) {
-            return $shortcut;
-        }
+	public function uploadImage($imgname, $imgpath, $imgsize, $board) {
+		return false;
+	}
 
-        $find = glob($this->thumbPath . $thumbPattern . 's.*');
-        return ($find !== false && count($find) != 0) ? basename($find[0]) : false;
-    }
+	public function getImageFilesize($imgname, $board) {
+		$size = filesize($this->getImagePhysicalPath($imgname, $board));
+		if ($size === false) {
+			$size = 0;
+		}
+		return $size;
+	}
 
-    /**
-     * Use the traditional 1234567890123s.jpg rules try to find the preview image, if you are lucky, you only need to find it once.
-     *
-     * @param string $thumbPattern preview image file name
-     * @return bool found
-     */
-    private function resolveThumbNameShortcut($thumbPattern) {
-        $shortcutFind = $this->getImagePhysicalPath($thumbPattern . 's.jpg');
-        if (file_exists($shortcutFind)) {
-            return basename($shortcutFind);
-        } else {
-            return false;
-        }
-    }
+	public function getImageURL($imgname, $board) {
+		return $this->getImageLocalURL($imgname, $board);
+	}
 
-    protected function getCurrentStorageSizeNoCache() {
-        $totalSize = 0;
-        $dirs = array(
-            new RecursiveDirectoryIterator($this->imgPath),
-            new RecursiveDirectoryIterator($this->thumbPath)
-        );
-        
-        foreach ($dirs as $dir) {
-            $totalSize += $this->getDirectoryTotalSize($dir);
-        }
-        return $totalSize;
-    }
+	public function resolveThumbName($thumbPattern, $board) {
+		$config = $board->loadBoardConfig();
+		
+		$find = glob($board->getBoardCdnDir().$config['THUMB_DIR'] . $thumbPattern . 's.*');
+		return ($find !== false && count($find) != 0) ? basename($find[0]) : false;
+	}
 
-    private function getDirectoryTotalSize($dirIterator) {
-        $dirSize = 0;
-        foreach (new RecursiveIteratorIterator($dirIterator) as $file) {
-            $dirSize += $file->getSize();
-        }
-        return $dirSize;
-    }
+	protected function getDirectoryTotalSize($dirIterator) {
+		$dirSize = 0;
+		foreach (new RecursiveIteratorIterator($dirIterator) as $file) {
+			$dirSize += $file->getSize();
+		}
+		return $dirSize;
+	}
+
+	
 }
