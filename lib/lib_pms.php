@@ -16,9 +16,11 @@ class PMS{
 	var $loaded;
 	var $CHPList;
 	var $hooks;
+	private static $instance;
+	public $board;
 
 	/* Constructor */
-	function __construct($ENV){
+	function __construct($ENV, $board){
 		$this->loaded = false; // 是否載入完成 (模組及函式)
 		$this->ENV = $ENV; // 環境變數
 		$this->hooks = array_flip(array('Head', 'Toplink', 'LinksAboveBar', 'PostInfo', 'AboveTitle',
@@ -31,6 +33,23 @@ class PMS{
 		$this->moduleInstance = array(); // 存放各模組實體
 		$this->moduleLists = array(); // 存放各模組類別名稱
 		$this->CHPList = array(); // CHP List
+		$this->board = $board; //board page is loaded from
+	}
+
+	public static function createInstance($board) {
+		$config = $board->loadBoardConfig(); 
+		if (self::$instance === null) {
+			self::$instance =  new self(array( // PMS 環境常數
+				'MODULE.PATH' => getBackendDir().'module/',
+				'MODULE.PAGE' => $config['PHP_SELF'].'?mode=module&amp;load=',
+				'MODULE.LOADLIST' => $config['ModuleList'],
+			), $board);
+		}
+		return self::$instance;
+	}
+	
+	public static function getInstance() {
+		return self::$instance;
 	}
 
 	// 模組載入相關
@@ -56,7 +75,7 @@ class PMS{
 	
 	/* 載入擴充模組 */
 	function loadModules($specificModule=false){
-		$loadlist = isset($this->ENV['MODULE.LOADLIST'][$specificModule]) ? $this->getModuleDataByName($specificModule) : $this->ENV['MODULE.LOADLIST'];
+		$loadlist = $this->ENV['MODULE.LOADLIST'];
 		foreach($loadlist as $moduleFileName=>$moduleStatus){
 			$mpath = $this->ENV['MODULE.PATH'].$moduleFileName.'.php';
 			if(is_file($mpath) && array_search($moduleFileName, $this->moduleLists)===false && $moduleStatus){
@@ -142,18 +161,20 @@ class PMS{
  */
 abstract class ModuleHelper implements IModule {
 	protected static $PMS;
-	protected $config;
+	protected $board, $config, $moduleBoardList;
 	private $clazz;
 
 	public function __construct($PMS) {
-		global $config;
-		$this->config = $config;
+		$this->board = $PMS->board;
+		$this->config = $PMS->board->loadBoardConfig();
+		$boardIO = boardIO::getInstance();
+
 		// 儲存 $PMS 參考
 		if (self::$PMS == null) {
 			self::$PMS = $PMS;
 		}
 		$this->clazz = get_class($this);
-
+		$this->moduleBoardList = $boardIO->getAllBoards();
 		// 自動註冊模組頁面
 		if (method_exists($this, 'ModulePage')) {
 			$PMS->hookModuleMethod('ModulePage', $this->clazz);
@@ -221,10 +242,9 @@ abstract class ModuleHelper implements IModule {
 	 * @throws InvalidArgumentException 如果找不到設定備用語系
 	 */
 	protected function attachLanguage(array $lang, $fallbackLang = 'en_US') {
-		global $config;
 		// 取出使用語言，如果不存在則用備用
-		if (isset($lang[$config['PIXMICAT_LANGUAGE']])) {
-			$lang = $lang[$config['PIXMICAT_LANGUAGE']];
+		if (isset($lang[$this->config['PIXMICAT_LANGUAGE']])) {
+			$lang = $lang[$this->config['PIXMICAT_LANGUAGE']];
 		} else if (isset($lang[$fallbackLang])) {
 			$lang = $lang[$fallbackLang];
 		} else {
