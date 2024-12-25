@@ -388,6 +388,59 @@ const kkjs = {
 			kkjs.applyTripKeys();
 		}
 		
+		const overboardFilterElement = document.getElementById('overboard-filter-form');
+
+		if (overboardFilterElement) {
+			const isOpen = localStorage.getItem('overboard-filter_open') === 'true';
+			overboardFilterElement.open = isOpen;
+	
+			overboardFilterElement.addEventListener('toggle', function() {
+				localStorage.setItem('overboard-filter_open', overboardFilterElement.open);
+			});
+		}
+		
+		const boardSelectAllLink = document.getElementById('boardselectall');
+
+		if (boardSelectAllLink) {
+			const updateLinkText = (link, checkboxes) => {
+			const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+			link.innerHTML = allChecked ? '[<a>Unselect All</a>]' : '[<a>Select All</a>]';
+		};
+
+			boardSelectAllLink.addEventListener('click', function (event) {
+				if (event.target.tagName === 'A') {
+					event.preventDefault();
+		
+					const filterContainer = document.getElementById('overboard-filter-form');
+					if (filterContainer) {
+						const checkboxes = filterContainer.querySelectorAll('input[type="checkbox"]');
+						const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+		
+						if (allChecked) {
+							checkboxes.forEach(checkbox => checkbox.checked = false);
+						} else {
+							checkboxes.forEach(checkbox => checkbox.checked = true);
+						}
+						updateLinkText(boardSelectAllLink, checkboxes);
+					}
+				}
+			});
+		
+			const filterContainer = document.getElementById('overboard-filter-form');
+			if (filterContainer) {
+				const checkboxes = filterContainer.querySelectorAll('input[type="checkbox"]');
+		
+				checkboxes.forEach(checkbox => {
+					checkbox.addEventListener('change', () => {
+						updateLinkText(boardSelectAllLink, checkboxes);
+					});
+				});
+		
+				updateLinkText(boardSelectAllLink, checkboxes);
+			}
+		}	
+	
+			
 		//kkjs.wztt();
 		$id("jscenterthreads").disabled = localStorage.getItem("centerthreads")!="true";
 		if (localStorage.getItem("persistnav")=="true") {
@@ -436,7 +489,7 @@ const kkjs = {
 		if (!com) return false;
 		if (qrcom) com = qrcom;
 
-		if (kkgal && kkgal.gframe)
+		if (typeof(kkgal)!="undefined")
 			kkgal.contract();
 		com.value+= str;
 		if (com != qrcom) // Don't scroll to the QR form
