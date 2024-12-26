@@ -12,6 +12,7 @@ PHP: PHP7.2\~PHP8.3
 - pdo
 - gd
 - bcmath
+- ffmpeg
 
 ## Installation
 - Clone the repository into your web directory
