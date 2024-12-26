@@ -24,7 +24,7 @@ class postValidator {
 	        $globalHTML->error(_T('regist_ipfiltered', $baninfo));
 	    }
 	    // Block: Restrict the text that appears (text filter?)
-	    foreach($config['BAD_STRING'] as $value){
+	    foreach($this->config['BAD_STRING'] as $value){
 	        if(preg_match($value, $com) || preg_match($value, $sub) || preg_match($value, $name) || preg_match($value, $email)){
 	            error(_T('regist_wordfiltered'));
 	        }
