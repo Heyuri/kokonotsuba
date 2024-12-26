@@ -67,8 +67,8 @@ function createBoardAndFiles($boardTable) {
 	$dataDir = $fullBoardPath.DIRECTORY_SEPARATOR.'dat'.DIRECTORY_SEPARATOR;
 	//create physical board files
 	//create cdn dirs
-	$boardCdnSrc = $globalConfig['CDN_DIR'].$board_identifier.DIRECTORY_SEPARATOR.'img'.DIRECTORY_SEPARATOR;
-	$boardCdnThumb = $globalConfig['CDN_DIR'].$board_identifier.DIRECTORY_SEPARATOR.'img'.DIRECTORY_SEPARATOR;
+	$boardCdnSrc = $globalConfig['CDN_DIR'].$board_identifier.DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR;
+	$boardCdnThumb = $globalConfig['CDN_DIR'].$board_identifier.DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR;
 	createDirectory($boardCdnSrc);
 	createDirectory($boardCdnThumb);
 	//create dat
