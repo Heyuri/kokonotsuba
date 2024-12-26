@@ -1,8 +1,6 @@
 <?php
 require __DIR__.DIRECTORY_SEPARATOR.'globalconfig.php';
 
-$config['WEBSITE_URL'] = "https://".$_SERVER['HTTP_HOST']."/";
-
 $config['PROXYHEADERlist'] = array(
 	'HTTP_CLIENT_IP',
 	'HTTP_X_REAL_IP',
