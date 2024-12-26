@@ -37,11 +37,6 @@ function getGlobalConfig() {
 	return $config;
 }
 
-function createDirectory($directoryName) {
-	if(file_exists($directoryName)) return;
-	if(!mkdir($directoryName, 0755, true)) die("Could not create $directoryName");
-}
-
 function generateNewBoardConfigFile() {
 	$templateConfigPath = __DIR__.DIRECTORY_SEPARATOR.'global'.DIRECTORY_SEPARATOR.'board-configs'.DIRECTORY_SEPARATOR.'board-template.php';//config template
 	$newConfigFileName = 'board-'.generateUid().'.php';
