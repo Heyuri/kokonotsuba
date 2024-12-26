@@ -173,7 +173,7 @@ class modeHandler {
 		$staffSession = new staffAccountFromSession;
 		$roleLevel = $staffSession->getRoleLevel();
 		
-		$postValidator->spamValidate($boardConfig, $ip, $name, $email, $sub, $com);
+		$postValidator->spamValidate($ip, $name, $email, $sub, $com);
 		/* hook call */
 		$this->PMS->useModuleMethods('RegistBegin', array(&$name, &$email, &$sub, &$com, array('file'=>&$upfile, 'path'=>&$upfile_path, 'name'=>&$upfile_name, 'status'=>&$upfile_status), array('ip'=>$ip, 'host'=>$host), $thread_uid)); // "RegistBegin" Hook Point
 		if($this->config['TEXTBOARD_ONLY'] == false) {
@@ -192,7 +192,7 @@ class modeHandler {
 		$sub = str_replace("\r\n", '', $sub);
 	
 		applyTripcodeAndCapCodes($boardConfig, $staffSession, $name, $email, $dest);
-		$postValidator->cleanComment($boardConfig, $com, $upfile_status, $is_admin, $dest);
+		$postValidator->cleanComment($com, $upfile_status, $is_admin, $dest);
 		addDefaultText($boardConfig, $sub, $com);
 		applyPostFilters($boardConfig, $globalHTML, $com, $email);
 	
@@ -217,13 +217,13 @@ class modeHandler {
 		$now = generatePostDay($boardConfig, $time);
 		$now .= generatePostID($roleLevel, $boardConfig, $email,$now, $time, $thread_uid, $PIO);
 
-		$postValidator->validateForDatabase($boardBeingPostedTo, $pwdc, $com, $time, $pass, $host,  $upfile, $md5chksum, $dest, $PIO, $roleLevel);
+		$postValidator->validateForDatabase($pwdc, $com, $time, $pass, $host,  $upfile, $md5chksum, $dest, $PIO, $roleLevel);
 		if($thread_uid){
 				$ThreadExistsBefore = $PIO->isThread($thread_uid);
 		}
 	
 		pruneOld($boardBeingPostedTo, $this->config, $this->PMS, $PIO, $this->FileIO);
-		$postValidator->threadSanityCheck($this->config, $chktime, $flgh, $thread_uid, $PIO, $dest, $ThreadExistsBefore, $this->board);
+		$postValidator->threadSanityCheck($chktime, $flgh, $thread_uid, $PIO, $dest, $ThreadExistsBefore);
 	
 		// Calculate the last feilds needed before putitng in db
 		$no = $boardBeingPostedTo->getLastPostNoFromBoard() + 1;
@@ -514,11 +514,13 @@ class modeHandler {
 			'{$ADMIN_THEADING_BAR}' => $thead,
 			'{$ADMIN_LINKS}' => $globalHTML->generateAdminLinkButtons(),
 			'{$BOARD_LIST}' => $boardTableList,
-			'{$CREATE_BOARD}' => ($authRoleLevel === $this->config['roles']['LEV_ADMIN']) ? $this->PTE->ParseBlock('CREATE_BOARD', [
-				'{$DEFAULT_CDN_DIR}' => $this->config['CDN_DIR'], 
-				'{$DEFAULT_CDN_URL}' => $this->config['CDN_URL'], 
-				'{$DEFAULT_ROOT_URL}' => $this->board->getBoardRootURL(),
-				'{$DEFAULT_PATH}' => dirname(__DIR__, 2).DIRECTORY_SEPARATOR) : '',
+			'{$CREATE_BOARD}' => ($authRoleLevel === $this->config['roles']['LEV_ADMIN']) ? $this->PTE->ParseBlock('CREATE_BOARD',
+				 [
+					'{$DEFAULT_CDN_DIR}' => $this->config['CDN_DIR'], 
+					'{$DEFAULT_CDN_URL}' => $this->config['CDN_URL'], 
+					'{$DEFAULT_ROOT_URL}' => $this->board->getBoardRootURL(),
+					'{$DEFAULT_PATH}' => dirname(__DIR__, 2).DIRECTORY_SEPARATOR
+				]) : '',
 			'{$FOOTER}' => $foot,
 		];
 		
@@ -569,19 +571,20 @@ class modeHandler {
 
 	public function handleAccountRequests() {
 		$staffSession = new staffAccountFromSession;
+		$accountRequestHandler = new accountRequestHandler($this->board);
 		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
 
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_USER']);
 
 		if($staffSession->getRoleLevel() === $this->config['roles']['LEV_ADMIN']) {
-			if(isset($_GET['del'])) handleAccountDelete($this->AccountIO);
-			if(isset($_GET['dem'])) handleAccountDemote($this->AccountIO);
-			if(isset($_GET['up'])) handleAccountPromote($this->AccountIO);
-			if(!empty($_POST['usrname']) && !empty($_POST['passwd'])) handleAccountCreation($this->AccountIO, $staffSession, $this->actionLogger, $this->board);
+			if(isset($_GET['del'])) $accountRequestHandler->handleAccountDelete();
+			if(isset($_GET['dem'])) $accountRequestHandler->handleAccountDemote();
+			if(isset($_GET['up'])) $accountRequestHandler->handleAccountPromote();
+			if(!empty($_POST['usrname']) && !empty($_POST['passwd'])) $accountRequestHandler->handleAccountCreation($this->board);
 		}
 		//password reset
-		if(!empty($_POST['new_account_password'])) handleAccountPasswordReset($this->AccountIO);
+		if(!empty($_POST['new_account_password'] ?? '')) $accountRequestHandler->handleAccountPasswordReset();
 		
 		redirect($this->config['PHP_SELF'].'?mode=account');
 	}

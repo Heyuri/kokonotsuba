@@ -22,56 +22,6 @@ function adminLogin($AccountIO, $globalHTML) {
 	
 }
 
-function handleAccountDelete($AccountIO) {
-	$id = isset($_GET['del']) ? $_GET['del'] : '';
-	$AccountIO->deleteAccountByID($id);	
-}
-
-function handleAccountDemote($AccountIO) {
-	$id = $_GET['dem'] ?? -1;
-	$account = $AccountIO->getAccountByID($id);
-	
-	if($account->getRoleLevel() - 1 === 0) return;
-	
-	$AccountIO->demoteAccountByID($id);
-}
-
-function handleAccountPromote($AccountIO) {
-	$id = isset($_GET['up']) ? $_GET['up'] : '';
-	$account = $AccountIO->getAccountByID($id);
-	
-	if($account->getRoleLevel() + 1 === 5) return;
-	
-	$AccountIO->promoteAccountByID($id);
-}
-
-function handleAccountCreation($AccountIO, $staffSession, $actionLogger, $board) {
-	$passwordHash = $_POST['passwd'] ?? '';
-	$isHashed = $_POST['ishashed'] ?? '';
-	$username = $_POST['usrname'] ?? '';
-	$role = $_POST['role'] ?? '';
-	
-	if(!$isHashed) $passwordHash = password_hash($passwordHash, PASSWORD_DEFAULT);
-
-	$AccountIO->addNewAccount($username, $role, $passwordHash);
-	$actionLogger->logAction("Registered a new account ($username)", $board->getBoardUID());
-}
-
-function handleAccountPasswordReset($AccountIO) {
-	$staffSession = new staffAccountFromSession;
-	$accountID = $_POST['id'] ?? -1;
-	$newAccountPassword = $_POST['new_account_password'] ?? -1;
-	$account = $AccountIO->getAccountById($accountID);
-	
-	$currentPasswordHash = $account->getPasswordHash();
-	$currentUserPasswordHashFromSession = $staffSession->getHashedPassword();
-	
-	if($currentPasswordHash !== $currentUserPasswordHashFromSession) throw new Exception("You cannot change the password of a different account!");
-	
-	$AccountIO->updateAccountPasswordHashById($accountID, $newAccountPassword);
-	$actionLogger->logAction("Reset password", $board->getBoardUID());
-}
-
 function getCurrentStorageSizeFromSelectedBoards(array $boards) {
 	$FileIO = PMCLibrary::getInstance();
 	$totalBoardsStorageSize = 0;
