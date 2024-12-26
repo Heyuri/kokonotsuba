@@ -5,8 +5,8 @@
 $config['PIXMICAT_LANGUAGE'] = 'en_US'; // Language (available languages in /lib/lang/)
 $config['ERROR_HANDLER_FILE'] = __DIR__.DIRECTORY_SEPARATOR.'error.log';
 
-$config['STATIC_URL'] = './static/'; // Where static files are located on the web, can be a full URL (eg. 'https://static.example.com/'). Include trailing '/'
-$config['STATIC_PATH'] = './static/'; // Where static files are stored in the server, can be an absolute path (eg. '/home/example/web/static/'). Include trailing '/'
+$config['STATIC_URL'] = 'https://static.example.net/'; // Where static files are located on the web, can be a full URL (eg. 'https://static.example.com/'). Include trailing '/'
+$config['STATIC_PATH'] = '/var/www/static/'; // Where static files are stored in the server, can be an absolute path (eg. '/home/example/web/static/'). Include trailing '/'
 
 // Image Thumbnailing
 $config['USE_THUMB'] = 1; // Enable Thumbnailing [gd, imagemagick, imagick, magickwand, repng2jpeg]

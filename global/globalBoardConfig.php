@@ -1,5 +1,5 @@
 <?php
-require __DIR__.'/globalconfig.php';
+require __DIR__.DIRECTORY_SEPARATOR.'globalconfig.php';
 
 $config['WEBSITE_URL'] = "https://".$_SERVER['HTTP_HOST']."/";
 
@@ -65,7 +65,7 @@ $config['ModuleList'] = array(
 	'mod_api' => true,
 	'mod_rss' => true,
 	/* misc */
-	'mod_pushpost' => true,
+	'mod_pushpost' => false,
 	'mod_soudane' => true,
 	'mod_pm' => true,
 	'mod_ads' => true,
@@ -86,11 +86,11 @@ $config['ModuleSettings']['RENZOKU3'] = 30; // How many seconds between new thre
 //mod_showip
 $config['ModuleSettings']['IPTOGGLE'] = 1; // 1 to have OPs toggle IP display, 2 enables for all posts
 //mod_blotter
-$config['ModuleSettings']['BLOTTER_FILE'] = 'global/blotter.txt'; //blotter flat file
+$config['ModuleSettings']['BLOTTER_FILE'] = __DIR__.DIRECTORY_SEPARATOR.'blotter.txt'; //blotter flat file
 $config['ModuleSettings']['BLOTTER_DATE_FORMAT'] = "Y/m/d"; //time date format for blotter entries
 $config['ModuleSettings']['BLOTTER_PREVIEW_AMOUNT'] = 5; //Number of previewed blotter entries on the index and thread view
 //mod_pm
-$config['ModuleSettings']['PM_DIR'] = getBackendGlobalDir();
+$config['ModuleSettings']['PM_DIR'] = __DIR__.DIRECTORY_SEPARATOR;
 $config['ModuleSettings']['APPEND_TRIP_PM_BUTTON_TO_POST'] = false;
 //mod_wf
 $config['ModuleSettings']['FILTERS'] = array( 
@@ -130,7 +130,7 @@ $config['ModuleSettings']['ADD_INFO'] = array(
 	'Modify this by editing $config[\'ModuleSettings\'][\'ADD_INFO\'] in globalconfig.php',
 );
 //mod_globalmsg
-$config['ModuleSettings']['GLOBAL_TXT'] = getBackendGlobalDir().'globalmsg.txt';
+$config['ModuleSettings']['GLOBAL_TXT'] = __DIR__.DIRECTORY_SEPARATOR.'globalmsg.txt';
 //mod_adminban
 $config['DEFAULT_BAN_MESSAGE'] = '<br><br><b class="warning">(USER WAS BANNED FOR THIS POST)</b> <img style= "vertical-align: baseline;" src="'.$config['STATIC_URL'].'image'.DIRECTORY_SEPARATOR.'hammer.gif">';
 
@@ -155,7 +155,7 @@ $config['ROLL'] = true; //roll feature. True = enabled, False = disabled
 
 /*---- Part 2：Board Functions ----*/
 $config['HOME'] = 'index.html'; // What the [Home] button links to
-$config['TOP_LINKS'] = @file_get_contents(getBackendGlobalDir().'toplinks.txt'); //
+$config['TOP_LINKS'] = @file_get_contents(__DIR__.DIRECTORY_SEPARATOR.'toplinks.txt'); //
 
 $config['COMM_MAX'] = 5000; // How many characters in comment
 $config['INPUT_MAX'] = 100; // Maximum non-message characters
