@@ -8,9 +8,6 @@
  * @version $Id$
  * @since 7th.Release
  */
-require __DIR__.'/interfaces.php';
-require __DIR__.'/lib_simplelogger.php';
-require __DIR__.'/lib_loggerinterceptor.php';
 
 class PMCLibrary {
 	private static $instFileIO;

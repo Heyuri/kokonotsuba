@@ -11,7 +11,7 @@ class SimpleLogger implements ILogger {
 	private $logName;
 	private $logFile;
 
-	public function __construct($logName, $logFile) {
+	public function __construct($logFile, $logName) {
 		$this->logName = $logName;
 		$this->logFile = $logFile;
 	}
