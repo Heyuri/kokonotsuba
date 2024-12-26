@@ -156,6 +156,42 @@ class html {
 
 	}
 
+	public function drawImportantConfigValuesPreview() {
+		$globalConfig = getGlobalConfig();
+
+		$cdnDir = $globalConfig['CDN_DIR'];
+		$cdnURL = $globalConfig['CDN_URL'];
+		$websiteURL = $globalConfig['WEBSITE_URL'];
+		$staticURL = $globalConfig['STATIC_URL']; // Where static files are located on the web, can be a full URL (eg. 'https://static.example.com/'). Include trailing '/'
+		$staticPath = $globalConfig['STATIC_PATH']; // Where static files are stored in the server, can be an absolute path (eg. '/home/example/web/static/'). Include trailing '/'
+
+		echo '
+		<h3>Config</h3>
+		<p>Here are a few config values that are required for a successful installation, make sure they\'re set correctly in global/globalconfig.php</p>
+		<table id="config-preview-table-table">
+				<tr> 
+					<td class="postblock"> <label for "cdn-dir-preview">CDN Directory</label></td>
+					<td>'.htmlspecialchars($cdnDir).'</td>
+				</tr>
+				<tr> 
+					<td class="postblock"> <label for "cdn-url-preview">CDN URL</label></td>
+					<td>'.htmlspecialchars($cdnURL).'</td>
+				</tr>
+				<tr> 
+					<td class="postblock"> <label for "static-dir-preview">Static Path</label></td>
+					<td>'.htmlspecialchars($staticPath).'</td>
+				</tr>
+				<tr> 
+					<td class="postblock"> <label for "static-url-preview">Static Path</label></td>
+					<td>'.htmlspecialchars($staticURL).'</td>
+				</tr>
+				<tr> 
+					<td class="postblock"> <label for "site-url-preview">Site URL</label></td>
+					<td>'.htmlspecialchars($websiteURL).'</td>
+				</tr>
+			</table>';
+	}
+
 	public function drawInstallForm() {
 		echo '
 		<form id="installation-form" action="'.$_SERVER['PHP_SELF'].'" method="POST">
@@ -427,7 +463,7 @@ if(file_exists('.installed')) {
 	$html->drawHeader();
 	$html->drawStyle();
 	$html->drawInstallNotice();
-	echo "Kokonotsuba is already installed!";
+	echo "Kokonotsuba has been installed!";
 	$html->drawFooter();
 	exit;
 }
@@ -485,5 +521,6 @@ $html->drawHeader();
 $html->drawStyle();
 $html->drawInstallNotice();
 $html->drawRequiredExtentions();
+$html->drawImportantConfigValuesPreview();
 $html->drawInstallForm();
 $html->drawFooter();
