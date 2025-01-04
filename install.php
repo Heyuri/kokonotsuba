@@ -66,11 +66,13 @@ function createBoardAndFiles($boardTable) {
 
 	$dataDir = $fullBoardPath.DIRECTORY_SEPARATOR.'dat'.DIRECTORY_SEPARATOR;
 	//create physical board files
+	$fileUploadedDirectory = $globalConfig['USE_CDN'] ? $globalConfig['CDN_DIR'].$board_identifier.DIRECTORY_SEPARATOR : $fullBoardPath.'src'.DIRECTORY_SEPARATOR;
+
 	//create cdn dirs
-	$boardCdnSrc = $globalConfig['CDN_DIR'].$board_identifier.DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR;
-	$boardCdnThumb = $globalConfig['CDN_DIR'].$board_identifier.DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR;
-	createDirectory($boardCdnSrc);
-	createDirectory($boardCdnThumb);
+	$boardImagesDir = $fileUploadedDirectory;
+	$boardThumbDir = $fileUploadedDirectory;
+	createDirectory($boardImagesDir);
+	createDirectory($boardThumbDir);
 	//create dat
 	createDirectory($dataDir);
 	//write files
@@ -159,8 +161,6 @@ class html {
 	public function drawImportantConfigValuesPreview() {
 		$globalConfig = getGlobalConfig();
 
-		$cdnDir = $globalConfig['CDN_DIR'];
-		$cdnURL = $globalConfig['CDN_URL'];
 		$websiteURL = $globalConfig['WEBSITE_URL'];
 		$staticURL = $globalConfig['STATIC_URL']; // Where static files are located on the web, can be a full URL (eg. 'https://static.example.com/'). Include trailing '/'
 		$staticPath = $globalConfig['STATIC_PATH']; // Where static files are stored in the server, can be an absolute path (eg. '/home/example/web/static/'). Include trailing '/'
@@ -169,14 +169,6 @@ class html {
 		<h3>Config</h3>
 		<p>Here are a few config values that are required for a successful installation, make sure they\'re set correctly in global/globalconfig.php</p>
 		<table id="config-preview-table-table">
-				<tr> 
-					<td class="postblock"> <label for "cdn-dir-preview">CDN Directory</label></td>
-					<td>'.htmlspecialchars($cdnDir).'</td>
-				</tr>
-				<tr> 
-					<td class="postblock"> <label for "cdn-url-preview">CDN URL</label></td>
-					<td>'.htmlspecialchars($cdnURL).'</td>
-				</tr>
 				<tr> 
 					<td class="postblock"> <label for "static-dir-preview">Static Path</label></td>
 					<td>'.htmlspecialchars($staticPath).'</td>
@@ -216,6 +208,10 @@ class html {
 					<td> <input id="database-board-table-input" name="BOARD_TABLE" value="'.htmlspecialchars($this->dbSettings['BOARD_TABLE']).'" required> </td>
 				</tr>
 				<tr>
+					<td class="postblock"> <label for "database-board-cache-table-input">Board path cache table</label></td>
+					<td> <input id="database-board-cache-table-input" name="BOARD_PATH_CACHE_TABLE" value="'.htmlspecialchars($this->dbSettings['BOARD_PATH_CACHE_TABLE']).'" required> </td>
+				</tr>
+				<tr>
 					<td class="postblock"> <label for "database-post-number-table-input">Post number table</label></td>
 					<td> <input id="database-post-number-table-input" name="POST_NUMBER_TABLE" value="'.htmlspecialchars($this->dbSettings['POST_NUMBER_TABLE']).'" required> </td>
 				</tr>
@@ -232,8 +228,8 @@ class html {
 					<td> <input id="database-thread-table-input" name="THREAD_TABLE" value="'.htmlspecialchars($this->dbSettings['THREAD_TABLE']).'" required> </td>
 				</tr>
 				<tr>
-					<td class="postblock"> <label for "database-thread-table-input">Thread redirect table</label></td>
-					<td> <input id="database-thread-table-input" name="THREAD_REDIRECT_TABLE" value="'.htmlspecialchars($this->dbSettings['THREAD_REDIRECT_TABLE']).'" required> </td>
+					<td class="postblock"> <label for "database-thread-redirect-table-input">Thread redirect table</label></td>
+					<td> <input id="database-thread-redirect-table-input" name="THREAD_REDIRECT_TABLE" value="'.htmlspecialchars($this->dbSettings['THREAD_REDIRECT_TABLE']).'" required> </td>
 				</tr>
 			</table>
 			<h3>Admin account</h3>
@@ -265,7 +261,7 @@ class html {
 				</tr>
 				<tr> 
 					<td class="postblock"> <label for "first-board-path-input" >Board Path</label></td>
-					<td> <input id="first-board-path-input" name="board-path" placeholder="an example board" value="'.dirname(__DIR__, 1).DIRECTORY_SEPARATOR.'" required> </td>
+					<td> <input id="first-board-path-input" name="board-path" placeholder="an example board" value="'.dirname(__FILE__).DIRECTORY_SEPARATOR.'" required> </td>
 				</tr>
 			</table>
 			<input type="submit" Value="Install">
@@ -398,6 +394,14 @@ class tableCreator {
 				CONSTRAINT redirect_thread_uid FOREIGN KEY (`thread_uid`) REFERENCES `{$sanitizedTableNames['THREAD_TABLE']}`(`thread_uid`) ON DELETE CASCADE,
 				INDEX (`original_board_uid`),
 				INDEX (`thread_uid`)
+			) ENGINE=InnoDB;",
+
+			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BOARD_PATH_CACHE_TABLE']} (
+				`id` INT NOT NULL AUTO_INCREMENT,
+				`boardUID` INT NOT NULL,
+				`board_path` TEXT NOT NULL,
+				PRIMARY KEY (`id`),
+				CONSTRAINT path_cache_board_uid FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
 			) ENGINE=InnoDB;"
 		];
 	
@@ -490,7 +494,8 @@ switch($action) {
 				'ACCOUNT_TABLE' => $_POST['ACCOUNT_TABLE'],
 				'ACTIONLOG_TABLE' => $_POST['ACTIONLOG_TABLE'],
 				'THREAD_TABLE' => $_POST['THREAD_TABLE'],
-				'THREAD_REDIRECT_TABLE' => $_POST['THREAD_REDIRECT_TABLE']
+				'THREAD_REDIRECT_TABLE' => $_POST['THREAD_REDIRECT_TABLE'],
+				'BOARD_PATH_CACHE_TABLE' => $_POST['BOARD_PATH_CACHE_TABLE'],
 			];
 
 			$tableCreator = new tableCreator($pdoConnection);

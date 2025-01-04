@@ -24,6 +24,9 @@ require __DIR__.'/lib/pmclibrary.php'; // Ingest libraries
 require __DIR__.'/lib/lib_errorhandler.php'; // Introduce global error capture
 require __DIR__.'/lib/lib_compatible.php'; // Introduce compatible libraries
 
+/* Caching */
+require __DIR__.'/lib/boardPathCachingIO.php';
+require __DIR__.'/lib/cachedBoardPath.php';
 
 /* Database singleton */
 require __DIR__.'/lib/database.php';
@@ -142,6 +145,7 @@ DatabaseConnection::createInstance($dbSettings);
 boardIO::createInstance($dbSettings);
 AccountIO::createInstance($dbSettings);
 ActionLogger::createInstance($dbSettings);
+boardPathCachingIO::createInstance($dbSettings);
 
 $board = getBoardFromBootstrapFile();
 $configLoadedFromBoard = $board->loadBoardConfig();
