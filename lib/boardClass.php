@@ -15,6 +15,17 @@ class board {
 	public function getBoardIdentifier() { return $this->board_identifier; }
 	public function getBoardListed(){ return $this->listed; }
 
+	public function updateBoardPathCache() {
+		$board = $this;
+		$boardPathCachingIO = boardPathCachingIO::getInstance();
+
+		$currentDirectory = getcwd().DIRECTORY_SEPARATOR;
+
+		//update board path cache
+		if($boardPathCachingIO->getRowByBoardUID($board->getBoardUID())) $boardPathCachingIO->updateBoardPathCacheByBoardUID($board->getBoardUID(), $currentDirectory);
+		else $boardPathCachingIO->addNewCachedBoardPath($board->getBoardUID(), $currentDirectory);
+	}
+
 	public function getBoardCdnDir() { 
 		$config = $this->loadBoardConfig();
 		if(!$config) return;
@@ -23,19 +34,48 @@ class board {
 
 	public function getBoardCdnUrl() { 
 		$config = $this->loadBoardConfig();
-		if(!$config) return;
-		return $config['CDN_URL'].$this->board_identifier.'/';
+		return $config['CDN_URL'].$this->getBoardUID().'-'.$this->getBoardIdentifier().'/';
+	}
+
+	public function getBoardLocalUploadDir() {
+		$board = $this;
+		$boardPathCachingIO = boardPathCachingIO::getInstance();
+		$boardPathCache = $boardPathCachingIO->getRowByBoardUID($board->getBoardUID());
+		if(!$boardPathCache) return;
+
+		return $boardPathCache->getBoardPath();
+	}
+
+	public function getBoardLocalUploadURL() {
+		$config = $this->loadBoardConfig();
+		return $config['WEBSITE_URL'].$this->getBoardIdentifier().'/';
+	}
+
+	public function getBoardUploadedFilesDirectory() {
+		$config = $this->loadBoardConfig();
+		if($config['USE_CDN']) {
+			return $this->getBoardCdnDir();
+		} else {
+			return $this->getBoardLocalUploadDir();
+		}
+	}
+
+	public function getBoardUploadedFilesURL() {
+		$config = $this->loadBoardConfig();
+		if($config['USE_CDN']) {
+			return $this->getBoardCdnDir();
+		} else {
+			return $this->getBoardLocalUploadURL();
+		}
 	}
 
 	public function getBoardURL() { 
 		$config = $this->loadBoardConfig();
-		if(!$config) return;
-		return $config['WEBSITE_URL'].$this->board_identifier.'/';;
+		return $config['WEBSITE_URL'].$this->getBoardIdentifier().'/';
 	}
 
 	public function getBoardRootURL() { 
 		$config = $this->loadBoardConfig();
-		if(!$config) return;
 		return $config['WEBSITE_URL'];
 	}
 	

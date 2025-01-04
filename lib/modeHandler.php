@@ -87,10 +87,12 @@ class modeHandler {
 		$softErrorHandler = new softErrorHandler($this->board);
 		$staffSession = new staffAccountFromSession;
 		$board = $this->board;
-		
+
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_JANITOR']);
+		
 
 		$this->actionLogger->logAction("Rebuilt pages", $board->getBoardUID());
+		$board->updateBoardPathCache(); 
 		$board->rebuildBoard();
 		
 		header('HTTP/1.1 302 Moved Temporarily');
@@ -114,6 +116,7 @@ class modeHandler {
 		} else { // Go to the static inventory page
 			if (!is_file($this->config['PHP_SELF2'])) {
 				$this->actionLogger->logAction("Rebuilt pages", $board->getBoardUID());
+				$board->updateBoardPathCache(); 
 				$board->rebuildBoard();
 			}
 			header('HTTP/1.1 302 Moved Temporarily');
@@ -139,6 +142,11 @@ class modeHandler {
 		$boardConfig = $boardBeingPostedTo->loadBoardConfig();
 		$boardUID = $boardBeingPostedTo->getBoardUID();
 		
+		$currentDirectory = getcwd().DIRECTORY_SEPARATOR;
+
+		$boardBeingPostedTo->updateBoardPathCache();
+
+
 		$ThreadExistsBefore = false;
 		$fname = '';
 		$ext = '';
@@ -519,7 +527,7 @@ class modeHandler {
 					'{$DEFAULT_CDN_DIR}' => $this->config['CDN_DIR'], 
 					'{$DEFAULT_CDN_URL}' => $this->config['CDN_URL'], 
 					'{$DEFAULT_ROOT_URL}' => $this->board->getBoardRootURL(),
-					'{$DEFAULT_PATH}' => dirname(__DIR__, 2).DIRECTORY_SEPARATOR
+					'{$DEFAULT_PATH}' => dirname(__DIR__).DIRECTORY_SEPARATOR
 				]) : '',
 			'{$FOOTER}' => $foot,
 		];
@@ -537,8 +545,6 @@ class modeHandler {
 			$boardSubtitle = $board->getBoardSubTitle() ?? '';
 			$boardURL = $board->getBoardURL() ?? '';
 			$boardRootURL = $board->getBoardRootURL() ?? '';
-			$boardCdnURL = $board->getBoardCdnUrl() ?? '';
-			$boardCdnDir = $board->getBoardCdnDir() ?? '';
 			$boardListed = $board->getBoardListed() ?? '';
 			$boardConfigPath = $board->getConfigFileName() ?? '';
 			$boardDate = $board->getDateAdded() ?? '';
@@ -554,9 +560,6 @@ class modeHandler {
 			$template_values['{$BOARD_CONFIG_FILE}'] = $boardConfigPath;
 			$template_values['{$CHECKED}'] = $boardListed ? 'checked' : '';
 
-			$template_values['{$BOARD_CDN_DIR}'] = $boardCdnDir;
-			$template_values['{$BOARD_CDN_URL}'] = $boardCdnURL;
-			
 			$template_values['{$EDIT_BOARD_HTML}'] = $this->PTE->ParseBlock('EDIT_BOARD', $template_values);
 
 			$html = $this->PTE->ParseBlock('VIEW_BOARD', $template_values);
@@ -591,6 +594,7 @@ class modeHandler {
 
 	public function handleBoardRequests() {
 		$boardIO = boardIO::getInstance();
+		$boardPathCachingIO = boardPathCachingIO::getInstance();
 		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
 		$staffSession = new staffAccountFromSession;
@@ -632,19 +636,21 @@ class modeHandler {
 			$boardListed = isset($_POST['new-board-listed']) ? intval($_POST['new-board-listed']) : 0;
 			$boardPath = !empty($_POST['new-board-path']) ? $_POST['new-board-path'] : $globalHTML->error("Board path wasn't set!");
 			
-			$fullBoardPath = $boardPath.DIRECTORY_SEPARATOR.$boardIdentifier.DIRECTORY_SEPARATOR;
+			$fullBoardPath = $boardPath.$boardIdentifier.DIRECTORY_SEPARATOR;
 			$mockConfig = getTemplateConfigArray();
 			$dataDir = $fullBoardPath.$mockConfig['STORAGE_PATH'];
 			$backendDirectory = getBackendDir();
 			
+			$cdnDir = $this->config['CDN_DIR'].$boardIdentifier.DIRECTORY_SEPARATOR;
+
 			$createdPaths = [];
 			try {
 				//create physical board files
 				createDirectoryWithErrorHandle($fullBoardPath, $globalHTML);
 				$createdPaths[] = $fullBoardPath;
 				//create cdn dirs
-				$boardCdnSrc = $this->config['CDN_DIR'].$boardIdentifier.DIRECTORY_SEPARATOR.$mockConfig['IMG_DIR'];
-				$boardCdnThumb = $this->config['CDN_DIR'].$boardIdentifier.DIRECTORY_SEPARATOR.$mockConfig['THUMB_DIR'];
+				$boardCdnSrc = $this->config['USE_CDN'] ? $cdnDir.$mockConfig['IMG_DIR'] : $fullBoardPath.$mockConfig['IMG_DIR'];
+				$boardCdnThumb = $this->config['USE_CDN'] ? $cdnDir.$mockConfig['THUMB_DIR'] : $fullBoardPath.$mockConfig['THUMB_DIR'];
 				createDirectoryWithErrorHandle($boardCdnSrc, $globalHTML);
 				createDirectoryWithErrorHandle($boardCdnThumb, $globalHTML);
 				$createdPaths[] = $boardCdnSrc;
@@ -664,6 +670,9 @@ class modeHandler {
 
 				$boardUIDforBootstrapFile = $boardIO->getLastBoardUID();
 				createFileAndWriteText($fullBoardPath, 'boardUID.ini', "board_uid = $boardUIDforBootstrapFile");
+
+				$boardPathCachingIO->addNewCachedBoardPath($boardUIDforBootstrapFile, $fullBoardPath);
+
 			} catch(Exception $e) {
 				foreach (array_reverse($createdPaths) as $path) {
 					safeRmdir($path);

@@ -19,7 +19,7 @@ abstract class AbstractFileIO implements IFileIO {
     }
 
     private function getAbsoluteUrl($board) {
-        return $board->getBoardCdnUrl();
+        return $board->getBoardUploadedFilesURL();
     }
     protected function getImageLocalURL($imgname, $board) {
         $config = $board->loadBoardConfig();
@@ -44,13 +44,13 @@ abstract class AbstractFileIO implements IFileIO {
 		$config = $board->loadBoardConfig();
         $globalHTML = new globalHTML($board);
 
-        if(!file_exists($board->getBoardCdnDir().$config['THUMB_DIR'])) $globalHTML->error("Thumb directory not found or created ".$board->getBoardCdnDir().$config['THUMB_DIR']);
-        if(!file_exists($board->getBoardCdnDir().$config['IMG_DIR'])) $globalHTML->error("Image directory not found or created ".$board->getBoardCdnDir().$config['IMG_DIR']);
+        if(!file_exists($board->getBoardUploadedFilesDirectory().$config['THUMB_DIR'])) $globalHTML->error("Thumb directory not found or created ".$board->getBoardUploadedFilesDirectory().$config['THUMB_DIR']);
+        if(!file_exists($board->getBoardUploadedFilesDirectory().$config['IMG_DIR'])) $globalHTML->error("Image directory not found or created ".$board->getBoardUploadedFilesDirectory().$config['IMG_DIR']);
 		
         $totalSize = 0;
 		$dirs = array(
-			new RecursiveDirectoryIterator($board->getBoardCdnDir().$config['IMG_DIR']),
-			new RecursiveDirectoryIterator($board->getBoardCdnDir().$config['THUMB_DIR'])
+			new RecursiveDirectoryIterator($board->getBoardUploadedFilesDirectory().$config['IMG_DIR']),
+			new RecursiveDirectoryIterator($board->getBoardUploadedFilesDirectory().$config['THUMB_DIR'])
 		);
 
 		foreach ($dirs as $dir) {

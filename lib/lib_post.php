@@ -103,8 +103,8 @@ function applyAging($config, &$resto, &$PIO, &$time, &$chktime, &$email, &$name,
 
 function makeThumbnailAndUpdateStats($boardBeingPostedTo, $config, $FileIO, &$dest, &$ext, &$tim, $tmpfile, $imgW, $imgH, $W, $H){
     if($dest && is_file($dest)){
-        $destFile = $boardBeingPostedTo->getBoardCdnDir().$config['IMG_DIR'].$tim.$ext;
-        $thumbFile = $boardBeingPostedTo->getBoardCdnDir().$config['THUMB_DIR'].$tim.'s.'.$config['THUMB_SETTING']['Format'];
+        $destFile = $boardBeingPostedTo->getBoardUploadedFilesDirectory().$config['IMG_DIR'].$tim.$ext;
+        $thumbFile = $boardBeingPostedTo->getBoardUploadedFilesDirectory().$config['THUMB_DIR'].$tim.'s.'.$config['THUMB_SETTING']['Format'];
         if($config['USE_THUMB'] !== 0){ // Generate preview image
             $thumbType = $config['USE_THUMB']; if($config['USE_THUMB']==1){ $thumbType = $config['THUMB_SETTING']['Method']; }
             require(__DIR__.'/thumb/thumb.'.$thumbType.'.php');
