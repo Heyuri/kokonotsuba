@@ -46,6 +46,7 @@ $config['ModuleList'] = array(
 	'mod_adminban' => true,
 	'mod_globalmsg' => true,
 	'mod_blotter' => true,
+	'mod_movethread' => true,
 	/* thread modes */
 	'mod_autosage' => true,
 	'mod_stop' => true,

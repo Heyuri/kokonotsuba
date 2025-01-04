@@ -8,7 +8,8 @@ $config['ERROR_HANDLER_FILE'] = __DIR__.DIRECTORY_SEPARATOR.'error.log';
 $config['STATIC_URL'] = 'https://static.example.net/'; // Where static files are located on the web, can be a full URL (eg. 'https://static.example.com/'). Include trailing '/'
 $config['STATIC_PATH'] = '/var/www/static/'; // Where static files are stored in the server, can be an absolute path (eg. '/home/example/web/static/'). Include trailing '/'
 
-$config['WEBSITE_URL'] = "https://".$_SERVER['HTTP_HOST']."/";
+$config['WEBSITE_URL'] = "https://".$_SERVER['HTTP_HOST']."/"; //The URL of where the boards are. (e.g "https://boards.example.net/")
+$config['USE_CDN'] = false; //Whether to use the "cdn" (AKA storing all board uploaded-file-storages in one central directory on the server)
 
 // Image Thumbnailing
 $config['USE_THUMB'] = 1; // Enable Thumbnailing [gd, imagemagick, imagick, magickwand, repng2jpeg]
