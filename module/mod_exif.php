@@ -63,7 +63,7 @@ class mod_exif extends ModuleHelper {
 		echo '[<a href="'.$this->config['PHP_SELF2'].'">Return</a>]';
 		echo '<p>';
 		if($file && $FileIO->imageExists($file, $board)){
-			$pfile=$board->getBoardCdnDir().$boardConfig['IMG_DIR'].'/'.$file;
+			$pfile=$board->getBoardUploadedFilesDirectory().$boardConfig['IMG_DIR'].'/'.$file;
 			if(function_exists("exif_read_data")) {
 				echo "DEBUG: Using exif_read_data()<br>";
 				$exif_data = exif_read_data($pfile, 0, true);

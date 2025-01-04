@@ -39,7 +39,7 @@ class mod_anigif extends ModuleHelper {
 		$fh = new FlagHelper($post['status']);
 		if($FileIO->imageExists($post['tim'].$post['ext'], $this->board)
 		&& $fh->value('agif')) {
-			$imgURL = $FileIO->getImageURL($post['tim'].$post['ext']);
+			$imgURL = $FileIO->getImageURL($post['tim'].$post['ext'], $this->board);
 			$arrLabels['{$IMG_SRC}'] = preg_replace('/<img src=".*"/U','<img src="'.$imgURL.'"',$arrLabels['{$IMG_SRC}']);
 			$arrLabels['{$IMG_BAR}'].= '<small>[Animated GIF]</small>';
 		}

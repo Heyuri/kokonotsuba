@@ -28,24 +28,24 @@ class mod_movethread extends ModuleHelper {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$boardIO = boardIO::getInstance();
 
-		$hostBoardCdnDir = $hostBoard->getBoardCdnDir();
-		$destinationBoardCdnDir = $destinationBoard->getBoardCdnDir();
+		$hostBoardStoredFilesDir = $hostBoard->getBoardUploadedFilesDirectory();
+		$destinationBoardStoredFilesDir = $destinationBoard->getBoardUploadedFilesDirectory();
 		$hostBoardConfig = $hostBoard->loadBoardConfig();
 		$destinationBoardConfig = $destinationBoard->loadBoardConfig();
 
-		$destinationBoardImgPath = $destinationBoardCdnDir.$destinationBoardConfig['IMG_DIR'];
-		$destinationBoardThumbPath = $destinationBoardCdnDir.$destinationBoardConfig['THUMB_DIR'];
+		$destinationBoardImgPath = $destinationBoardStoredFilesDir.$destinationBoardConfig['IMG_DIR'];
+		$destinationBoardThumbPath = $destinationBoardStoredFilesDir.$destinationBoardConfig['THUMB_DIR'];
 
 		foreach($filesToCopy as $fileToCopy) {
 			$fileBoard = $boardIO->getBoardByUID($fileToCopy['boardUID']);
 			$fileBoardConfig = $fileBoard->loadBoardConfig();
 
-			$boardFullCdnImgPath = $fileBoard->getBoardCdnDir().$fileBoardConfig['IMG_DIR'];
-			$boardFullCdnThumbPath = $fileBoard->getBoardCdnDir().$fileBoardConfig['THUMB_DIR'];
+			$boardFullImgPath = $fileBoard->getBoardUploadedFilesDirectory().$fileBoardConfig['IMG_DIR'];
+			$boardFullThumbPath = $fileBoard->getBoardUploadedFilesDirectory().$fileBoardConfig['THUMB_DIR'];
 			$thumbName = $FileIO->resolveThumbName($fileToCopy['tim'], $fileBoard);
 
-			moveFileOnly($boardFullCdnImgPath.$fileToCopy['tim'].$fileToCopy['ext'], $destinationBoardImgPath);
-			moveFileOnly($boardFullCdnThumbPath.$thumbName, $destinationBoardThumbPath);
+			moveFileOnly($boardFullImgPath.$fileToCopy['tim'].$fileToCopy['ext'], $destinationBoardImgPath);
+			moveFileOnly($boardFullThumbPath.$thumbName, $destinationBoardThumbPath);
 		}
 
 	}
