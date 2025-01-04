@@ -53,6 +53,11 @@ function sanitizeTableName($tableName) {
 	return $tableName;
 }
 
+function getTemplateConfigArray() {
+	require  __DIR__.DIRECTORY_SEPARATOR.'global'.DIRECTORY_SEPARATOR.'board-configs'.DIRECTORY_SEPARATOR.'board-template.php';//config template	
+	return $config;
+}
+
 function createBoardAndFiles($boardTable) {
 	//create board
 	$board_identifier = $_POST['board-identifier'];
@@ -61,16 +66,18 @@ function createBoardAndFiles($boardTable) {
 	$board_path = $_POST['board-path'];
 
 	$globalConfig = getGlobalConfig();
+	$mockConfig = getTemplateConfigArray();
 
 	$fullBoardPath = $board_path.DIRECTORY_SEPARATOR.$board_identifier.DIRECTORY_SEPARATOR;
 
-	$dataDir = $fullBoardPath.DIRECTORY_SEPARATOR.'dat'.DIRECTORY_SEPARATOR;
+	$dataDir = $fullBoardPath.DIRECTORY_SEPARATOR.$mockConfig['STORAGE_PATH'].DIRECTORY_SEPARATOR;
 	//create physical board files
-	$fileUploadedDirectory = $globalConfig['USE_CDN'] ? $globalConfig['CDN_DIR'].$board_identifier.DIRECTORY_SEPARATOR : $fullBoardPath.'src'.DIRECTORY_SEPARATOR;
+	$fileUploadedImgDirectory = $globalConfig['USE_CDN'] ? $globalConfig['CDN_DIR'].$board_identifier.DIRECTORY_SEPARATOR.$mockConfig['IMG_DIR'].DIRECTORY_SEPARATOR : $fullBoardPath.$mockConfig['IMG_DIR'].DIRECTORY_SEPARATOR;
+	$fileUploadedThumbDirectory = $globalConfig['USE_CDN'] ? $globalConfig['CDN_DIR'].$board_identifier.DIRECTORY_SEPARATOR.$mockConfig['THUMB_DIR'].DIRECTORY_SEPARATOR : $fullBoardPath.$mockConfig['THUMB_DIR'].DIRECTORY_SEPARATOR;
 
 	//create cdn dirs
-	$boardImagesDir = $fileUploadedDirectory;
-	$boardThumbDir = $fileUploadedDirectory;
+	$boardImagesDir = $fileUploadedImgDirectory;
+	$boardThumbDir = $fileUploadedThumbDirectory;
 	createDirectory($boardImagesDir);
 	createDirectory($boardThumbDir);
 	//create dat
