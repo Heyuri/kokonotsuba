@@ -465,15 +465,7 @@
 			</tr>
 			<tr>
 				<td class="postblock"><label for="board-url">URL</label></td>
-				<td><div id="board-url">{$BOARD_URL}</div></td>
-			</tr>
-			<tr>
-				<td class="postblock"><label for="board-cdn-dir">CDN directory</label></td>
-				<td><div id="board-cdn-dir">{$BOARD_CDN_DIR}</div></td>
-			</tr>
-			<tr>
-				<td class="postblock"><label for="board-cdn-url">CDN URL</label></td>
-				<td><div id="board-cdn-url">{$BOARD_CDN_URL}</div></td>
+				<td><div id="board-url"><a href="{$BOARD_URL}">{$BOARD_URL}</a></div></td>
 			</tr>
 			<tr>
 				<td class="postblock"><label for="board-listed">Listed</label></td>
