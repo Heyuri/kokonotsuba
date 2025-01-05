@@ -91,7 +91,11 @@ class boardIO {
 		
 		$params = [];
 		$assignments = [];
-		
+
+		if (!empty($fields['board_identifier'])) {
+			$assignments[] = "board_identifier = :board_identifier";
+			$params[':board_identifier'] = $fields['board_identifier'];
+		}
 		if (!empty($fields['board_title'])) {
 			$assignments[] = "board_title = :board_title";
 			$params[':board_title'] = $fields['board_title'];
