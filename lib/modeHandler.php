@@ -527,7 +527,7 @@ class modeHandler {
 					'{$DEFAULT_CDN_DIR}' => $this->config['CDN_DIR'], 
 					'{$DEFAULT_CDN_URL}' => $this->config['CDN_URL'], 
 					'{$DEFAULT_ROOT_URL}' => $this->board->getBoardRootURL(),
-					'{$DEFAULT_PATH}' => dirname(__DIR__).DIRECTORY_SEPARATOR
+					'{$DEFAULT_PATH}' => dirname(getcwd()).DIRECTORY_SEPARATOR
 				]) : '',
 			'{$FOOTER}' => $foot,
 		];
