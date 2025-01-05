@@ -1,258 +1,278 @@
 <?php
 
-require './lib/lib_common.php';
+function getRootPath() {
+    $kokoFile = __DIR__ . DIRECTORY_SEPARATOR . 'koko.php';
+    if (!file_exists($kokoFile)) {
+        die(
+            "The file <i>" . __DIR__ . DIRECTORY_SEPARATOR . "koko.php</i> couldn't be found. Please create it with the following code:<br>" .
+            "<code>&lt;?php require_once '/path/to/kokonotsuba/koko.php'; ?&gt;</code>"
+        );
+    }
+
+    $fileHandle = fopen($kokoFile, 'r');
+    if (!$fileHandle) {
+        die("Error: Unable to open <i>koko.php</i>.");
+    }
+
+    while (($line = fgets($fileHandle)) !== false) {
+        if (preg_match("/require(?:_once)? ['\"](.*koko\.php)['\"]; /", $line, $matches)) {
+            fclose($fileHandle);
+            return dirname($matches[1]);
+        }
+    }
+
+    fclose($fileHandle);
+    return __DIR__;
+}
+
+define('ROOTPATH', getRootPath());
+
+require ROOTPATH . '/lib/lib_common.php';
 
 $extensions = [
-	'mbstring',
-	'pdo',
-	'gd',
-	'bcmath',
+    'mbstring',
+    'pdo',
+    'gd',
+    'bcmath',
 ];
 
 function checkExtensions(array $extensions) {
-	$results = [];
-
-	foreach ($extensions as $extension) {
-		if (extension_loaded($extension)) {
-			$results[$extension] = true;
-		} else {
-			$results[$extension] = false;
-		}
-	}
-
-	return $results;
+    $results = [];
+    foreach ($extensions as $extension) {
+        $results[$extension] = extension_loaded($extension);
+    }
+    return $results;
 }
 
 function isFFmpegInstalled() {
-	$output = null;
-	$returnVar = null;
-	
-	exec("ffmpeg -version", $output, $returnVar);
-
-	return $returnVar === 0;
+    $output = null;
+    $returnVar = null;
+    exec("ffmpeg -version", $output, $returnVar);
+    return $returnVar === 0;
 }
 
 function getGlobalConfig() {
-	require __DIR__.DIRECTORY_SEPARATOR.'global'.DIRECTORY_SEPARATOR.'globalconfig.php';
-	return $config;
+    require ROOTPATH . '/global/globalconfig.php';
+    return $config;
 }
 
 function generateNewBoardConfigFile() {
-	$templateConfigPath = __DIR__.DIRECTORY_SEPARATOR.'global'.DIRECTORY_SEPARATOR.'board-configs'.DIRECTORY_SEPARATOR.'board-template.php';//config template
-	$newConfigFileName = 'board-'.generateUid().'.php';
-	$boardConfigsDirectory = __DIR__.DIRECTORY_SEPARATOR.'global'.DIRECTORY_SEPARATOR.'board-configs'.DIRECTORY_SEPARATOR;
-
-	if(!copyFileWithNewName($templateConfigPath, $newConfigFileName, $boardConfigsDirectory)) throw new Exception("Failed to copy new config file");
-	return $newConfigFileName;
+    $templateConfigPath = ROOTPATH . '/global/board-configs/board-template.php';
+    $newConfigFileName = 'board-' . generateUid() . '.php';
+    $boardConfigsDirectory = ROOTPATH . '/global/board-configs/';
+    if (!copyFileWithNewName($templateConfigPath, $newConfigFileName, $boardConfigsDirectory)) {
+        throw new Exception("Failed to copy new config file");
+    }
+    return $newConfigFileName;
 }
 
 // Function to sanitize table names using regular expression validation
 function sanitizeTableName($tableName) {
-	// Validat e table name: Only allow alphanumeric characters and underscores
-	if (!preg_match('/^[a-zA-Z0-9_]+$/', $tableName)) throw new InvalidArgumentException("Invalid table name: $tableName. Only alphanumeric characters and underscores are allowed.");
-	return $tableName;
+    // Validat e table name: Only allow alphanumeric characters and underscores
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $tableName)) {
+        throw new InvalidArgumentException("Invalid table name: $tableName. Only alphanumeric characters and underscores are allowed.");
+    }
+    return $tableName;
 }
 
 function getTemplateConfigArray() {
-	require  __DIR__.DIRECTORY_SEPARATOR.'global'.DIRECTORY_SEPARATOR.'board-configs'.DIRECTORY_SEPARATOR.'board-template.php';//config template	
-	return $config;
+    require ROOTPATH . '/global/board-configs/board-template.php';
+    return $config;
 }
 
 function createBoardAndFiles($boardTable) {
-	//create board
-	$board_identifier = $_POST['board-identifier'];
-	$board_title = $_POST['board-title'];
-	$board_sub_title = $_POST['board-sub-title'];
-	$board_path = $_POST['board-path'];
+    //create board
+    $board_identifier = $_POST['board-identifier'];
+    $board_title = $_POST['board-title'];
+    $board_sub_title = $_POST['board-sub-title'];
+    $board_path = $_POST['board-path'];
 
-	$globalConfig = getGlobalConfig();
-	$mockConfig = getTemplateConfigArray();
+    $globalConfig = getGlobalConfig();
+    $mockConfig = getTemplateConfigArray();
 
-	$fullBoardPath = $board_path.DIRECTORY_SEPARATOR.$board_identifier.DIRECTORY_SEPARATOR;
+    $fullBoardPath = $board_path . DIRECTORY_SEPARATOR . $board_identifier . DIRECTORY_SEPARATOR;
 
-	$dataDir = $fullBoardPath.DIRECTORY_SEPARATOR.$mockConfig['STORAGE_PATH'].DIRECTORY_SEPARATOR;
-	//create physical board files
-	$fileUploadedImgDirectory = $globalConfig['USE_CDN'] ? $globalConfig['CDN_DIR'].$board_identifier.DIRECTORY_SEPARATOR.$mockConfig['IMG_DIR'].DIRECTORY_SEPARATOR : $fullBoardPath.$mockConfig['IMG_DIR'].DIRECTORY_SEPARATOR;
-	$fileUploadedThumbDirectory = $globalConfig['USE_CDN'] ? $globalConfig['CDN_DIR'].$board_identifier.DIRECTORY_SEPARATOR.$mockConfig['THUMB_DIR'].DIRECTORY_SEPARATOR : $fullBoardPath.$mockConfig['THUMB_DIR'].DIRECTORY_SEPARATOR;
+    $dataDir = $fullBoardPath . DIRECTORY_SEPARATOR . $mockConfig['STORAGE_PATH'] . DIRECTORY_SEPARATOR;
+    //create physical board files
+    $fileUploadedImgDirectory = $globalConfig['USE_CDN']
+        ? $globalConfig['CDN_DIR'] . $board_identifier . DIRECTORY_SEPARATOR . $mockConfig['IMG_DIR'] . DIRECTORY_SEPARATOR
+        : $fullBoardPath . $mockConfig['IMG_DIR'] . DIRECTORY_SEPARATOR;
+    $fileUploadedThumbDirectory = $globalConfig['USE_CDN']
+        ? $globalConfig['CDN_DIR'] . $board_identifier . DIRECTORY_SEPARATOR . $mockConfig['THUMB_DIR'] . DIRECTORY_SEPARATOR
+        : $fullBoardPath . $mockConfig['THUMB_DIR'] . DIRECTORY_SEPARATOR;
 
-	//create cdn dirs
-	$boardImagesDir = $fileUploadedImgDirectory;
-	$boardThumbDir = $fileUploadedThumbDirectory;
-	createDirectory($boardImagesDir);
-	createDirectory($boardThumbDir);
-	//create dat
-	createDirectory($dataDir);
-	//write files
-	$backendDirectory = __DIR__.DIRECTORY_SEPARATOR;
-	$requireString = "\"$backendDirectory{$globalConfig['PHP_SELF']}\"";
-	createFileAndWriteText($fullBoardPath, $globalConfig['PHP_SELF'], "<?php require_once {$requireString}; ?>");
+    //create cdn dirs
+    createDirectory($fileUploadedImgDirectory);
+    createDirectory($fileUploadedThumbDirectory);
+    //create dat
+    createDirectory($dataDir);
+    //write files
+    $requireString = "'" . ROOTPATH . "{$globalConfig['PHP_SELF']}'";
+    createFileAndWriteText($fullBoardPath, $globalConfig['PHP_SELF'], "<?php require_once {$requireString}; ?>");
 
-	//generate new config
-	$boardConfigName = generateNewBoardConfigFile();
+    //generate new config
+    $boardConfigName = generateNewBoardConfigFile();
+    $boardTable->addFirstBoard($board_identifier, $board_title, $board_sub_title, $boardConfigName);
 
-	$boardTable->addFirstBoard($board_identifier, $board_title, $board_sub_title, $boardConfigName);
-
-	$boardUIDforBootstrapFile = $boardTable->getLastBoardUID();
-	createFileAndWriteText($fullBoardPath, 'boardUID.ini', "board_uid = $boardUIDforBootstrapFile");
+    $boardUIDforBootstrapFile = $boardTable->getLastBoardUID();
+    createFileAndWriteText($fullBoardPath, 'boardUID.ini', "board_uid = $boardUIDforBootstrapFile");
 }
 
 class html {
-	private $dbSettings;
+    private $dbSettings;
 
-	public function __construct($dbSettings) {
-		$this->dbSettings = $dbSettings;
-	}
+    public function __construct($dbSettings) {
+        $this->dbSettings = $dbSettings;
+    }
 
-	public function drawHeader() {
-		echo '<head>
-					<meta charset="UTF-8">
-					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	
-					<!-- Prevent caching -->
-					<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, proxy-revalidate">
-					<meta http-equiv="Pragma" content="no-cache">
-					<meta http-equiv="Expires" content="0">
-	
-					<!-- Prevent archiving by search engines -->
-					<meta name="robots" content="noarchive, noindex, nofollow">
-					<meta http-equiv="X-Robots-Tag" content="noindex, nofollow">
-					
-					<title>Kokonotsuba Installer</title>
-				</head>
-				<h1 class="page-head-title">Kokonotsuba Installer</h1>';
-	}
+    public function drawHeader() {
+        echo '<head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-	public function drawStyle() {
-		echo '<style>
-			.postblock {
-				border: 1px solid #800043;
-				background: #eeaa88;
-			}
-			.notice-text {
-				padding-bottom: 20px;
-				text-align:center;
-			}
+            <!-- Prevent caching -->
+            <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, proxy-revalidate">
+            <meta http-equiv="Pragma" content="no-cache">
+            <meta http-equiv="Expires" content="0">
 
-			body {
-				background-color: #ffffee;
-				color: #880000;
-				font-size: 16px;
-			}
-		</style>';
-	}
+            <!-- Prevent archiving by search engines -->
+            <meta name="robots" content="noarchive, noindex, nofollow">
+            <meta http-equiv="X-Robots-Tag" content="noindex, nofollow">
 
-	public function drawInstallNotice() {
-		echo '
-			<div class="notice-text">
-				<h2>Notice!</h2>
-				<p>Kokonotsuba is a BBS software</p>
-				<p>Read the instructions, other documentation or open a Pull Request on the <a href="https://github.com/Heyuri/kokonotsuba">repo</a> if there are any problems</p>
-				<p>For more info: <a href="https://kokonotsuba.github.io/">see here</a></p>
-			</div><hr size=1>';
-	}
-	
-	public function drawRequiredExtentions() {
-		global $extensions; 
-		$results = checkExtensions($extensions);
-		
-		echo '<h3>Required extentions</h3>
-			<p>These are extentions required for Kokonotsuba to work fully.</p>
-		<ul>';
-		foreach ($results as $extension => $isEnabled) {
-			echo "<li> $extension: " . ($isEnabled ? 'enabled' : 'not enabled').'</li>';
-		}
-		echo '<li>ffmpeg: '.(isFFmpegInstalled() ? 'enabled' : 'not enabled').'</li></ul>';
+            <title>Kokonotsuba Installer</title>
+        </head>
+        <h1 class="page-head-title">Kokonotsuba Installer</h1>';
+    }
 
-	}
+    public function drawStyle() {
+        echo '<style>
+            .postblock {
+                border: 1px solid #800043;
+                background: #eeaa88;
+            }
+            .notice-text {
+                padding-bottom: 20px;
+                text-align:center;
+            }
 
-	public function drawImportantConfigValuesPreview() {
-		$globalConfig = getGlobalConfig();
+            body {
+                background-color: #ffffee;
+                color: #880000;
+                font-size: 16px;
+            }
+        </style>';
+    }
 
-		$websiteURL = $globalConfig['WEBSITE_URL'];
-		$staticURL = $globalConfig['STATIC_URL']; // Where static files are located on the web, can be a full URL (eg. 'https://static.example.com/'). Include trailing '/'
-		$staticPath = $globalConfig['STATIC_PATH']; // Where static files are stored in the server, can be an absolute path (eg. '/home/example/web/static/'). Include trailing '/'
+    public function drawInstallNotice() {
+        echo '<div class="notice-text">
+            <h2>Notice!</h2>
+            <p>Kokonotsuba is a BBS software</p>
+            <p>Read the instructions, other documentation or open a Pull Request on the <a href="https://github.com/Heyuri/kokonotsuba">repo</a> if there are any problems</p>
+            <p>For more info: <a href="https://kokonotsuba.github.io/">see here</a></p>
+        </div><hr size=1>';
+    }
 
-		echo '
-		<h3>Config</h3>
-		<p>Here are a few config values that are required for a successful installation, make sure they\'re set correctly in global/globalconfig.php</p>
-		<table id="config-preview-table-table">
-				<tr> 
-					<td class="postblock"> <label for "static-dir-preview">Static Path</label></td>
-					<td>'.htmlspecialchars($staticPath).'</td>
-				</tr>
-				<tr> 
-					<td class="postblock"> <label for "static-url-preview">Static Path</label></td>
-					<td>'.htmlspecialchars($staticURL).'</td>
-				</tr>
-				<tr> 
-					<td class="postblock"> <label for "site-url-preview">Site URL</label></td>
-					<td>'.htmlspecialchars($websiteURL).'</td>
-				</tr>
-			</table>';
-	}
+    public function drawRequiredExtentions() {
+        global $extensions; 
+        $results = checkExtensions($extensions);
 
-	public function drawInstallForm() {
-		echo '
-		<form id="installation-form" action="'.$_SERVER['PHP_SELF'].'" method="POST">
-			<input type="hidden" name="action" value="install">
-			<h3>Database Options</h3>
-			<p>If you make any changes to these - make sure to update databaseSettings.php afterwards to match what you set</p>
-			<table id="installation-form-database-settings-table">
-				<tr> 
-					<td class="postblock"> <label for "database-post-table-input">Post table</label></td>
-					<td> <input id="database-post-table-input" name="POST_TABLE" value="'.htmlspecialchars($this->dbSettings['POST_TABLE']).'" required> </td>
-				</tr>
-				<tr>
-					<td class="postblock"> <label for "database-report-table-input">Report table</label></td>
-					<td> <input id="database-report-table-input" name="REPORT_TABLE" value="'.htmlspecialchars($this->dbSettings['REPORT_TABLE']).'" required> </td>
-				</tr>
-				<tr>
-					<td class="postblock"> <label for "database-ban-table-input">Ban table</label></td>
-					<td> <input id="database-ban-table-input" name="BAN_TABLE" value="'.htmlspecialchars($this->dbSettings['BAN_TABLE']).'" required> </td>
-				</tr>
-				<tr>
-					<td class="postblock"> <label for "database-board-table-input">Board table</label></td>
-					<td> <input id="database-board-table-input" name="BOARD_TABLE" value="'.htmlspecialchars($this->dbSettings['BOARD_TABLE']).'" required> </td>
-				</tr>
-				<tr>
-					<td class="postblock"> <label for "database-board-cache-table-input">Board path cache table</label></td>
-					<td> <input id="database-board-cache-table-input" name="BOARD_PATH_CACHE_TABLE" value="'.htmlspecialchars($this->dbSettings['BOARD_PATH_CACHE_TABLE']).'" required> </td>
-				</tr>
-				<tr>
-					<td class="postblock"> <label for "database-post-number-table-input">Post number table</label></td>
-					<td> <input id="database-post-number-table-input" name="POST_NUMBER_TABLE" value="'.htmlspecialchars($this->dbSettings['POST_NUMBER_TABLE']).'" required> </td>
-				</tr>
-				<tr>
-					<td class="postblock"> <label for "database-account-table-input">Account table</label></td>
-					<td> <input id="database-account-table-input" name="ACCOUNT_TABLE" value="'.htmlspecialchars($this->dbSettings['ACCOUNT_TABLE']).'" required> </td>
-				</tr>
-				<tr>
-					<td class="postblock"> <label for "database-actionlog-table-input">Action log table</label></td>
-					<td> <input id="database-actionlog-table-input" name="ACTIONLOG_TABLE" value="'.htmlspecialchars($this->dbSettings['ACTIONLOG_TABLE']).'" required> </td>
-				</tr>
-				<tr>
-					<td class="postblock"> <label for "database-thread-table-input">Thread table</label></td>
-					<td> <input id="database-thread-table-input" name="THREAD_TABLE" value="'.htmlspecialchars($this->dbSettings['THREAD_TABLE']).'" required> </td>
-				</tr>
-				<tr>
-					<td class="postblock"> <label for "database-thread-redirect-table-input">Thread redirect table</label></td>
-					<td> <input id="database-thread-redirect-table-input" name="THREAD_REDIRECT_TABLE" value="'.htmlspecialchars($this->dbSettings['THREAD_REDIRECT_TABLE']).'" required> </td>
-				</tr>
-			</table>
-			<h3>Admin account</h3>
-			<p>The username and password of the admin account, it can be changed at any time</p>
-			<table id="installation-form-admin-account-table">
-				<tr> 
-					<td class="postblock"> <label for "admin-username-input" >Admin username</label></td>
-					<td> <input id="admin-username-input" name="admin-username" required> </td>
-				</tr>
-				<tr> 
-					<td class="postblock"> <label for "admin-password-input">Admin password</label></td>
-					<td> <input type="password" id="admin-password-input" name="admin-password" required> </td>
-				</tr>
-			</table>
-			<h3>First board</h3>
-			<p>This will be the first board on your kokonotsuba instance</p>
+        echo '<h3>Required Extensions</h3>
+        <p>These are the extensions required for Kokonotsuba to work fully:</p>
+        <ul>';
+        foreach ($results as $extension => $isEnabled) {
+            echo "<li>$extension: " . ($isEnabled ? 'enabled' : 'not enabled') . '</li>';
+        }
+        echo '<li>ffmpeg: ' . (isFFmpegInstalled() ? 'enabled' : 'not enabled') . '</li></ul>';
+    }
+
+    public function drawImportantConfigValuesPreview() {
+        $globalConfig = getGlobalConfig();
+
+        $websiteURL = $globalConfig['WEBSITE_URL'];
+        $staticURL = $globalConfig['STATIC_URL']; // eg. 'https://static.example.com/'
+        $staticPath = $globalConfig['STATIC_PATH']; // eg. '/home/example/web/static/'
+
+        echo '<h3>Config</h3>
+        <p>Ensure these values are correctly set in global/globalconfig.php:</p>
+        <table>
+            <tr>
+                <td>Static Path:</td>
+                <td>' . htmlspecialchars($staticPath) . '</td>
+            </tr>
+            <tr>
+                <td>Static URL:</td>
+                <td>' . htmlspecialchars($staticURL) . '</td>
+            </tr>
+            <tr>
+                <td>Website URL:</td>
+                <td>' . htmlspecialchars($websiteURL) . '</td>
+            </tr>
+        </table>';
+    }
+
+    public function drawInstallForm() {
+        echo '<form id="installation-form" action="'.$_SERVER['PHP_SELF'].'" method="POST">
+            <input type="hidden" name="action" value="install">
+            <h3>Database Options</h3>
+            <p>If you make any changes to these - make sure to update databaseSettings.php afterwards to match what you set</p>
+
+	<table id="installation-form-database-settings-table">
+		<tr> 
+			<td class="postblock"> <label for "database-post-table-input">Post table</label></td>
+			<td> <input id="database-post-table-input" name="POST_TABLE" value="'.htmlspecialchars($this->dbSettings['POST_TABLE']).'" required> </td>
+		</tr>
+		<tr>
+			<td class="postblock"> <label for "database-report-table-input">Report table</label></td>
+			<td> <input id="database-report-table-input" name="REPORT_TABLE" value="'.htmlspecialchars($this->dbSettings['REPORT_TABLE']).'" required> </td>
+		</tr>
+		<tr>
+			<td class="postblock"> <label for "database-ban-table-input">Ban table</label></td>
+			<td> <input id="database-ban-table-input" name="BAN_TABLE" value="'.htmlspecialchars($this->dbSettings['BAN_TABLE']).'" required> </td>
+		</tr>
+		<tr>
+			<td class="postblock"> <label for "database-board-table-input">Board table</label></td>
+			<td> <input id="database-board-table-input" name="BOARD_TABLE" value="'.htmlspecialchars($this->dbSettings['BOARD_TABLE']).'" required> </td>
+		</tr>
+		<tr>
+			<td class="postblock"> <label for "database-board-cache-table-input">Board path cache table</label></td>
+			<td> <input id="database-board-cache-table-input" name="BOARD_PATH_CACHE_TABLE" value="'.htmlspecialchars($this->dbSettings['BOARD_PATH_CACHE_TABLE']).'" required> </td>
+		</tr>
+		<tr>
+			<td class="postblock"> <label for "database-post-number-table-input">Post number table</label></td>
+			<td> <input id="database-post-number-table-input" name="POST_NUMBER_TABLE" value="'.htmlspecialchars($this->dbSettings['POST_NUMBER_TABLE']).'" required> </td>
+		</tr>
+		<tr>
+			<td class="postblock"> <label for "database-account-table-input">Account table</label></td>
+			<td> <input id="database-account-table-input" name="ACCOUNT_TABLE" value="'.htmlspecialchars($this->dbSettings['ACCOUNT_TABLE']).'" required> </td>
+		</tr>
+		<tr>
+			<td class="postblock"> <label for "database-actionlog-table-input">Action log table</label></td>
+			<td> <input id="database-actionlog-table-input" name="ACTIONLOG_TABLE" value="'.htmlspecialchars($this->dbSettings['ACTIONLOG_TABLE']).'" required> </td>
+		</tr>
+		<tr>
+			<td class="postblock"> <label for "database-thread-table-input">Thread table</label></td>
+			<td> <input id="database-thread-table-input" name="THREAD_TABLE" value="'.htmlspecialchars($this->dbSettings['THREAD_TABLE']).'" required> </td>
+		</tr>
+		<tr>
+			<td class="postblock"> <label for "database-thread-redirect-table-input">Thread redirect table</label></td>
+			<td> <input id="database-thread-redirect-table-input" name="THREAD_REDIRECT_TABLE" value="'.htmlspecialchars($this->dbSettings['THREAD_REDIRECT_TABLE']).'" required> </td>
+		</tr>
+	</table>
+
+            <h3>Admin Account</h3>
+	    <p>The username and password of the admin account, it can be changed at any time</p>
+            <table id="installation-form-admin-account-table">
+                <tr>
+                    <td class="postblock"> <label for "admin-username-input" >Admin username</label></td>
+                    <td> <input id="admin-username-input" name="admin-username" required> </td>
+                </tr>
+                <tr>
+                    <td class="postblock"> <label for "admin-password-input">Admin password</label></td>
+                    <td> <input type="password" id="admin-password-input" name="admin-password" required> </td>
+                </tr>
+            </table>
+            <h3>First Board</h3>
+	    <p>This will be the first board on your kokonotsuba instance</p>
 			<table id="installation-form-admin-account-table">
 				<tr> 
 					<td class="postblock"> <label for "first-board-identifier-input" >Board identifier</label></td>
@@ -271,17 +291,15 @@ class html {
 					<td> <input id="first-board-path-input" name="board-path" placeholder="an example board" value="'.dirname(__FILE__).DIRECTORY_SEPARATOR.'" required> </td>
 				</tr>
 			</table>
-			<input type="submit" Value="Install">
-		</form>';
+            <input type="submit" value="Install">
+        </form>';
+    }
 
-	}
-
-	public function drawFooter() {
-		echo '<hr size="1">';
-	}
-
-
+    public function drawFooter() {
+        echo '<hr size="1">';
+    }
 }
+
 
 class tableCreator {
 	private $db;	
@@ -466,73 +484,70 @@ class boardTable {
 	}
 }
 
-$dbSettings = require './databaseSettings.php';
+
+// Main execution
+$dbSettings = require ROOTPATH . '/databaseSettings.php';
 $html = new html($dbSettings);
 
-
-if(file_exists('.installed')) {
-	$html->drawHeader();
-	$html->drawStyle();
-	$html->drawInstallNotice();
-	echo "Kokonotsuba has been installed!";
-	$html->drawFooter();
-	exit;
+if (file_exists('.installed')) {
+    $html->drawHeader();
+    $html->drawStyle();
+    $html->drawInstallNotice();
+    echo "Kokonotsuba has been installed!";
+    $html->drawFooter();
+    exit;
 }
 
 $action = $_REQUEST['action'] ?? '';
-switch($action) {
-	case 'install':
-		try {
+switch ($action) {
+    case 'install':
+        try {
+            $dsn = "{$dbSettings['DATABASE_DRIVER']}:host={$dbSettings['DATABASE_HOST']};port={$dbSettings['DATABASE_PORT']};dbname={$dbSettings['DATABASE_NAME']};charset={$dbSettings['DATABASE_CHARSET']}";
+            $pdoConnection = new PDO($dsn, $dbSettings['DATABASE_USERNAME'], $dbSettings['DATABASE_PASSWORD'], [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ]);
 
-			$dsn = "{$dbSettings['DATABASE_DRIVER']}:host={$dbSettings['DATABASE_HOST']};port={$dbSettings['DATABASE_PORT']};dbname={$dbSettings['DATABASE_NAME']};charset={$dbSettings['DATABASE_CHARSET']}";
-			$pdoConnection = new PDO($dsn, $dbSettings['DATABASE_USERNAME'], $dbSettings['DATABASE_PASSWORD'], [
-				PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-				PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-				PDO::ATTR_EMULATE_PREPARES   => false,
-			]);
+            $tableCreator = new tableCreator($pdoConnection);
+            $tables = [
+                'POST_TABLE' => $_POST['POST_TABLE'],
+                'REPORT_TABLE' => $_POST['REPORT_TABLE'],
+                'BAN_TABLE' => $_POST['BAN_TABLE'],
+                'BOARD_TABLE' => $_POST['BOARD_TABLE'],
+                'POST_NUMBER_TABLE' => $_POST['POST_NUMBER_TABLE'],
+                'ACCOUNT_TABLE' => $_POST['ACCOUNT_TABLE'],
+                'ACTIONLOG_TABLE' => $_POST['ACTIONLOG_TABLE'],
+                'THREAD_TABLE' => $_POST['THREAD_TABLE'],
+                'THREAD_REDIRECT_TABLE' => $_POST['THREAD_REDIRECT_TABLE'],
+                'BOARD_PATH_CACHE_TABLE' => $_POST['BOARD_PATH_CACHE_TABLE'],
+            ];
 
-			$tableCreator = new tableCreator($pdoConnection);
-			$tables = [
-				'POST_TABLE' => $_POST['POST_TABLE'],
-				'REPORT_TABLE' => $_POST['REPORT_TABLE'],
-				'BAN_TABLE' => $_POST['BAN_TABLE'],
-				'BOARD_TABLE' => $_POST['BOARD_TABLE'],
-				'POST_NUMBER_TABLE' => $_POST['POST_NUMBER_TABLE'],
-				'ACCOUNT_TABLE' => $_POST['ACCOUNT_TABLE'],
-				'ACTIONLOG_TABLE' => $_POST['ACTIONLOG_TABLE'],
-				'THREAD_TABLE' => $_POST['THREAD_TABLE'],
-				'THREAD_REDIRECT_TABLE' => $_POST['THREAD_REDIRECT_TABLE'],
-				'BOARD_PATH_CACHE_TABLE' => $_POST['BOARD_PATH_CACHE_TABLE'],
-			];
+            $tableCreator->createTables($tables);
+            $sanitizedTableNames = array_map('sanitizeTableName', $tables);
+            $boardTable = new boardTable($pdoConnection, $sanitizedTableNames['BOARD_TABLE']);
+            $accountTable = new accountTable($pdoConnection, $sanitizedTableNames['ACCOUNT_TABLE']);
 
-			$tableCreator = new tableCreator($pdoConnection);
-			$tableCreator->createTables($tables);
+            createBoardAndFiles($boardTable);
 
-			$sanitizedTableNames = array_map('sanitizeTableName', $tables);
-			$boardTable = new boardTable($pdoConnection, $sanitizedTableNames['BOARD_TABLE']);
-			$accountTable = new accountTable($pdoConnection, $sanitizedTableNames['ACCOUNT_TABLE']);
+            $username = $_POST['admin-username'];
+            $password = $_POST['admin-password'];
+            $accountTable->addAdminAccount($username, $password, 4);
 
-			createBoardAndFiles($boardTable);
-			
-			$username = $_POST['admin-username'];
-			$password = $_POST['admin-password'];
+            touch('.installed');
+            redirect($_SERVER['PHP_SELF']);
+        } catch (Exception $e) {
+            throw $e;
+        }
+        break;
 
-			$accountTable->addAdminAccount($username, $password, 4);
-
-			touch('.installed');
-			redirect($_SERVER['PHP_SELF']);
-		} catch(Exception $e) {
-			throw $e;
-		}
-	break;
+    //default main
+    default:
+        $html->drawHeader();
+        $html->drawStyle();
+        $html->drawInstallNotice();
+        $html->drawRequiredExtentions();
+        $html->drawImportantConfigValuesPreview();
+        $html->drawInstallForm();
+        $html->drawFooter();
 }
-
-
-//default main
-$html->drawHeader();
-$html->drawStyle();
-$html->drawInstallNotice();
-$html->drawRequiredExtentions();
-$html->drawImportantConfigValuesPreview();
-$html->drawInstallForm();
-$html->drawFooter();
