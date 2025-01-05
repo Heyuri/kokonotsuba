@@ -1,6 +1,0 @@
-<?php
-/*
-* Draw library
-*/
-
-
