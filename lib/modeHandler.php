@@ -634,7 +634,7 @@ class modeHandler {
 			$boardTitle = !empty($_POST['new-board-title']) ? $_POST['new-board-title'] : $globalHTML->error("Board title wasn't set!");
 			$boardSubTitle = !empty($_POST['new-board-sub-title']) ? $_POST['new-board-sub-title'] : $globalHTML->error("Board sub-title wasn't set!");
 			$boardIdentifier = !empty($_POST['new-board-identifier']) ? $_POST['new-board-identifier'] : $globalHTML->error("Board identifier wasn't set!");
-			$boardListed = intval($_POST['new-board-listed'] ?? 0);
+			$boardListed = isset($_POST['new-board-listed']) ? 1 : 0;
 			$boardPath = !empty($_POST['new-board-path']) ? $_POST['new-board-path'] : $globalHTML->error("Board path wasn't set!");
 			
 			$fullBoardPath = $boardPath.$boardIdentifier.DIRECTORY_SEPARATOR;
