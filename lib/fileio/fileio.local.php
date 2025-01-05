@@ -53,9 +53,13 @@ class FileIOlocal extends AbstractFileIO {
 
 	private function getImagePhysicalPath($imgname, $board) {
 		$config = $board->loadBoardConfig();
-		$cdnDir = $board->getBoardCdnDir();
+
+		$fullDirectory = '';
 		$fileDir = (strpos($imgname, 's.') !== false ? $config['THUMB_DIR'] : $config['IMG_DIR']) . $imgname;
-		return $cdnDir.$fileDir;
+
+		$fullDirectory = $board->getBoardUploadedFilesDirectory();
+
+		return $fullDirectory.$fileDir;
 	}
 
 	public function uploadImage($imgname, $imgpath, $imgsize, $board) {
@@ -76,8 +80,7 @@ class FileIOlocal extends AbstractFileIO {
 
 	public function resolveThumbName($thumbPattern, $board) {
 		$config = $board->loadBoardConfig();
-		
-		$find = glob($board->getBoardCdnDir().$config['THUMB_DIR'] . $thumbPattern . 's.*');
+		$find = glob($board->getBoardUploadedFilesDirectory().$config['THUMB_DIR'] . $thumbPattern . 's.*');
 		return ($find !== false && count($find) != 0) ? basename($find[0]) : false;
 	}
 
