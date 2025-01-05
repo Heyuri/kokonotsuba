@@ -40,7 +40,8 @@ class accountRequestHandler {
 	public function handleAccountCreation($board) {
 		$staffSession = new staffAccountFromSession;
 		$actionLogger = actionLogger::getInstance();
-		
+		$AccountIO = AccountIO::getInstance();
+
 		$passwordHash = $_POST['passwd'] ?? '';
 		$isHashed = $_POST['ishashed'] ?? '';
 		$username = $_POST['usrname'] ?? '';
