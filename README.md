@@ -1,11 +1,19 @@
 # Kokonotsuba
 
+## About Kokonotsuba
+* https://kokonotsuba.github.io/
+
+## Detailed installation instructions
+* https://kokonotsuba.github.io/setup.html
+
 ## Required stack
-Kokonotsuba is designed and tested on the following stack, and isn't guaranteed to work on any other stack.<br>
-OS: debian 10\~12<br>
-Web server: nginx<br>
-DB: mariadb<br>
-PHP: PHP7.2\~PHP8.3
+Kokonotsuba is designed and tested on the following stack, and isn't guaranteed to work on any other stack.
+- OS: Debian 10\~12
+- Web server: nginx (but seems to work fine on Apache)
+- DB: MariaDB
+- PHP: PHP7.2\~PHP8.3
+
+If you are going to suggest pull requests, please make sure the change would work on the above stack first.
 
 ## Dependencies
 - mbstring
@@ -14,7 +22,7 @@ PHP: PHP7.2\~PHP8.3
 - bcmath
 - ffmpeg
 
-## Installation
+## Basic installation instructions
 - Clone the repository into your web directory
 - Ensure that Kokonotsuba-related files have the necessary ownsership and permissions
 - Open globalconfig.php and globalBoardConfig.php in a text editor and configure it to your needs
