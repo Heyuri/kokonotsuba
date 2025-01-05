@@ -527,3 +527,9 @@ function moveFileOnly(string $sourceFile, string $destDir) {
 		return false;
 	}
 }
+
+function addSlashesToArray(&$arrayOfValuesForQuery) {
+	foreach ($arrayOfValuesForQuery as &$item) {
+		$item = "'" . addslashes($item) . "'";
+	}
+}
