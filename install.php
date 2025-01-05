@@ -107,7 +107,7 @@ function createBoardAndFiles($boardTable) {
     //create dat
     createDirectory($dataDir);
     //write files
-    $requireString = "'" . ROOTPATH . "{$globalConfig['PHP_SELF']}'";
+    $requireString = "'" . ROOTPATH . '/' . ltrim($globalConfig['PHP_SELF'], '/') . "'";
     createFileAndWriteText($fullBoardPath, $globalConfig['PHP_SELF'], "<?php require_once {$requireString}; ?>");
 
     //generate new config
