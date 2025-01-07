@@ -11,11 +11,13 @@ require __DIR__.'/lib/interfaces.php';
 require __DIR__.'/lib/lib_simplelogger.php';
 require __DIR__.'/lib/lib_loggerinterceptor.php';
 require __DIR__.'/lib/lib_admin.php'; // Admin panel functions
+require __DIR__.'/lib/lib_draw.php'; // Drawing functions
 require __DIR__.'/lib/lib_template.php'; // Template library
 require __DIR__.'/lib/lib_post.php'; // Post and thread functions
 require __DIR__.'/lib/lib_pte.php';
 require __DIR__.'/lib/lib_pms.php';
 require __DIR__.'/lib/lib_pio.php';
+require __DIR__.'/lib/lib_database.php';
 require __DIR__.'/lib/lib_pio.cond.php';
 require __DIR__.'/lib/lib_common.php'; // Introduce common function archives
 require __DIR__.'/lib/pmclibrary.php'; // Ingest libraries
@@ -79,6 +81,10 @@ function getBackendGlobalDir() {
 
 function getBoardConfigDir() {
 	return getBackendGlobalDir().'board-configs'.DIRECTORY_SEPARATOR;
+}
+
+function getBoardStoragesDir() {
+	return getBackendGlobalDir().'board-storages/';
 }
 
 function getTemplateConfigArray() {
@@ -146,10 +152,9 @@ ActionLogger::createInstance($dbSettings);
 boardPathCachingIO::createInstance($dbSettings);
 
 $board = getBoardFromBootstrapFile();
-$configLoadedFromBoard = $board->loadBoardConfig();
 
 //create singleton instances
-PMCLibrary::createFileIOInstance($configLoadedFromBoard);
+PMCLibrary::createFileIOInstance($board);
 PMS::createInstance($board);
 PTELibrary::createInstance($board);
 PIOPDO::createInstance($dbSettings);
