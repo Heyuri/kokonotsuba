@@ -365,7 +365,7 @@
 					</tr>
 					<tr>
 						<td class="postblock"><label for="new-board-sub-title">Sub-title</label></td>
-						<td><input required  id="new-board-sub-title" name="new-board-sub-title"></td> <td>Smaller text beneath the board title on the page, typically providing a description of the board</td>
+						<td><input  id="new-board-sub-title" name="new-board-sub-title"></td> <td>Smaller text beneath the board title on the page, typically providing a description of the board</td>
 					</tr>
 					<tr>
 						<td class="postblock"><label for="new-board-identifier">Identifier</label></td>
@@ -408,7 +408,7 @@
 				</tr>
 				<tr>
 					<td class="postblock"><label for="edit-board-sub-title">Sub-title</label></td>
-					<td> <input required id="edit-board-sub-title" name="edit-board-sub-title" value="{$BOARD_SUB_TITLE}"></td>
+					<td> <input id="edit-board-sub-title" name="edit-board-sub-title" value="{$BOARD_SUB_TITLE}"></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="edit-board-config-path">Config File</label></td>
