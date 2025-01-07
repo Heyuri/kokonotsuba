@@ -30,6 +30,8 @@ $config['PHP_SELF'] = 'koko.php'; // Name of the main script
 $config['PHP_SELF2'] = 'index.html'; // Defines PHP_SELF
 $config['PHP_EXT'] = '.html'; // File extension for static pages
 
+$config['STORAGE_DIR_PREFIX'] = 'dat';
+
 //these are moderator / elevated user roles
 $config['roles']['LEV_NONE'] = 0; //not logged in
 $config['roles']['LEV_USER'] = 1; //registered user
