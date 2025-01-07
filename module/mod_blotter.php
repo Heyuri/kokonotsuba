@@ -149,7 +149,7 @@ class mod_blotter extends ModuleHelper {
 		$newUID = substr(bin2hex(random_bytes(10)), 0, 10);
 		
 		$this->writeToBlotterFile($newText, $newDate, $newUID);
-		rebuildAllBoards();//rebuild all pages so it takes effect immedietly
+		$this->board->rebuildBoard();//rebuild all pages so it takes effect immedietly
 	}
 	
 	public function autoHookLinksAboveBar(&$link, $pageId, $level) {

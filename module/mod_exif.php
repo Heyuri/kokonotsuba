@@ -24,7 +24,7 @@ class mod_exif extends ModuleHelper {
 	}
 
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply){
-		$FileIO =PMCLibrary::getFileIOInstance();
+		$FileIO = PMCLibrary::getFileIOInstance();
         $file = $post['tim'].$post['ext'];
         
 		$board = searchBoardArrayForBoard($this->moduleBoardList, $post['boardUID']);
@@ -59,16 +59,15 @@ class mod_exif extends ModuleHelper {
 		$h = '';
 		$globalHTML->head($h);
 		echo $h;
-		$file=isset($_GET['file'])?$_GET['file']:'';
+		$file = $_GET['file'] ?? '';
 		echo '[<a href="'.$this->config['PHP_SELF2'].'">Return</a>]';
 		echo '<p>';
 		if($file && $FileIO->imageExists($file, $board)){
-			$pfile=$board->getBoardUploadedFilesDirectory().$boardConfig['IMG_DIR'].'/'.$file;
+			$pfile = $board->getBoardUploadedFilesDirectory().$boardConfig['IMG_DIR'].'/'.$file;
 			if(function_exists("exif_read_data")) {
 				echo "DEBUG: Using exif_read_data()<br>";
 				$exif_data = exif_read_data($pfile, 0, true);
-				//if(isset($exif_data['FILE'])) unset($exif_data['FILE']);
-				//if(isset($exif_data['COMPUTED'])) unset($exif_data['COMPUTED']);
+
 				if(is_array($exif_data) && count($exif_data)) {
 					echo 'Image contains EXIF data:<br>';
 					echo '</p><table border="1" class="exif"><tbody>';

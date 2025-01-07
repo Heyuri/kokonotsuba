@@ -9,7 +9,7 @@ class mod_admindel extends ModuleHelper {
 	public function __construct($PMS) {
 		parent::__construct($PMS);
 		
-		$this->BANFILE = $this->config['STORAGE_PATH'].'bans.log.txt';
+		$this->BANFILE = $this->board->getBoardStoragePath() . 'bans.log.txt';
 		$this->JANIMUTE_LENGTH = $this->config['ModuleSettings']['JANIMUTE_LENGTH'];
 		$this->JANIMUTE_REASON = $this->config['ModuleSettings']['JANIMUTE_REASON'];
 		

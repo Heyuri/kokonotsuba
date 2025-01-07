@@ -7,7 +7,7 @@ class mod_janitor extends ModuleHelper {
 	public function __construct($PMS) {
 		parent::__construct($PMS);
 		
-		$this->BANFILE = $this->config['STORAGE_PATH'] . 'bans.log.txt';
+		$this->BANFILE = $this->board->getBoardStoragePath() . 'bans.log.txt';
 		$this->mypage = $this->getModulePageURL();
 		touch($this->BANFILE);
 	}
