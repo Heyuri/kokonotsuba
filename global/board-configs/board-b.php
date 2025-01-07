@@ -3,8 +3,6 @@
 * This file is for board-specific configurations. Make sure that values in globalconfig.php are set correctly.
 */
 
-$config['STORAGE_PATH'] = './dat/'; // Board storage directory, needs to have 777 permissions. Include trailing '/'
-
 require __DIR__.'/../globalBoardConfig.php';
 
 $config['TITLEIMG'] = ''; // Board Title Image (url)

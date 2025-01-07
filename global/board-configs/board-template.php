@@ -1,7 +1,4 @@
 <?php
-
-$config['STORAGE_PATH'] = './dat/';
-
 require __DIR__.'/../globalBoardConfig.php';
 
 
