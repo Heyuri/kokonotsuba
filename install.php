@@ -324,16 +324,18 @@ class tableCreator {
 				INDEX(date_added)
 			) ENGINE=InnoDB;",
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['THREAD_TABLE']} (
-				`post_op_number` INT NOT NULL,
-				`post_op_post_uid` VARCHAR(255) NOT NULL,
+				`insert_id` INT NOT NULL AUTO_INCREMENT,
 				`thread_uid` VARCHAR(255) NOT NULL,
+				`post_op_number` INT NOT NULL,
+				`post_op_post_uid` INT NOT NULL,
 				`bump_number` INT NOT NULL,
 				`boardUID` INT NOT NULL,
 				`last_reply_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 				`last_bump_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 				`thread_created_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-				PRIMARY KEY (`thread_uid`),
+				PRIMARY KEY (`insert_id`),
 				CONSTRAINT fk_thread_boardUID FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
+				INDEX (`thread_uid`),
 				INDEX (`last_reply_time`),
 				INDEX (`last_bump_time`),
 				INDEX (`thread_created_time`),
@@ -343,12 +345,12 @@ class tableCreator {
 				`bump_increment` INT NOT NULL AUTO_INCREMENT,
 				`no` INT NOT NULL,
 				`boardUID` INT NOT NULL,
-				`post_uid` VARCHAR(255) NOT NULL,
+				`post_uid` INT NOT NULL,
 				`thread_uid` VARCHAR(255) NOT NULL,
 				`root` TIMESTAMP NOT NULL,
 				`time` INT NOT NULL,
 				`md5chksum` TEXT,
-				`category` TEXT NOT NULL,
+				`category` TEXT,
 				`tim` BIGINT NOT NULL,
 				`fname` TEXT NOT NULL,
 				`ext` TEXT NOT NULL,
@@ -372,7 +374,6 @@ class tableCreator {
 				INDEX (`post_uid`),
 				INDEX (`no`)
 			) ENGINE=InnoDB;",
-	
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_NUMBER_TABLE']} (
 				`post_number` INT NOT NULL AUTO_INCREMENT,
 				`board_uid` INT NOT NULL,
@@ -382,13 +383,13 @@ class tableCreator {
 			) ENGINE=InnoDB;",
 	
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['ACTIONLOG_TABLE']} (
-				`id` int(1) NOT NULL AUTO_INCREMENT,
+				`id` INT NOT NULL AUTO_INCREMENT,
 				`time_added` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 				`date_added` DATE DEFAULT CURRENT_DATE,
 				`name` TEXT NOT NULL,
 				`role` INT NOT NULL,
 				`log_action` TEXT NOT NULL,
-				`ip_address` VARCHAR(500),
+				`ip_address` TEXT NOT NULL,
 				`board_uid` INT,
 				`board_title` TEXT NOT NULL,
 				PRIMARY KEY (`id`),
@@ -400,12 +401,14 @@ class tableCreator {
 	
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['ACCOUNT_TABLE']} (
 				id INT AUTO_INCREMENT PRIMARY KEY,
-				username VARCHAR(50) NOT NULL UNIQUE,
+				username TEXT NOT NULL UNIQUE,
 				role INT DEFAULT 0,
-				password_hash VARCHAR(255) NOT NULL,
+				password_hash TEXT NOT NULL,
 				number_of_actions INT DEFAULT 0,
 				last_login TIMESTAMP DEFAULT NULL,
-				date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+				date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+				index(last_login),
+				index(date_added)
 			) ENGINE=InnoDB;",
 	
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['THREAD_REDIRECT_TABLE']} (
