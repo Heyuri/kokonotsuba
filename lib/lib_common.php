@@ -535,3 +535,9 @@ function rollbackCreatedPaths($paths) {
 		safeRmdir($path);
 	}
 }
+
+function addSlashesToArray(&$arrayOfValuesForQuery) {
+	foreach ($arrayOfValuesForQuery as &$item) {
+		$item = "'" . addslashes($item) . "'";
+	}
+}
