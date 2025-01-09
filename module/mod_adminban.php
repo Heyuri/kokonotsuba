@@ -12,8 +12,8 @@ class mod_adminban extends ModuleHelper {
 
 		// Ensure required configuration keys exist
 		$this->BANFILE = $this->board->getBoardStoragePath() . 'bans.log.txt';
-		$this->BANIMG = $this->config['STATIC_URL'] . "image".DIRECTORY_SEPARATOR."banned.jpg";
-		$this->GLOBAL_BANS = getBackendDir().DIRECTORY_SEPARATOR.'global'.DIRECTORY_SEPARATOR.$this->config['GLOBAL_BANS'];
+		$this->BANIMG = $this->config['STATIC_URL'] . "image/banned.jpg";
+		$this->GLOBAL_BANS = getBackendGlobalDir().$this->config['GLOBAL_BANS'];
 		$this->DEFAULT_BAN_MESSAGE = $this->config['DEFAULT_BAN_MESSAGE'];
 
 		$this->mypage = $this->getModulePageURL();

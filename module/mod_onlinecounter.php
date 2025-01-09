@@ -4,7 +4,7 @@ class mod_onlinecounter extends ModuleHelper {
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
-		$this->usercounter = $this->config['ModuleSettings']['USER_COUNT_DAT_FILE'];
+		$this->usercounter = $this->board->getBoardStorageDirName().$this->config['ModuleSettings']['USER_COUNT_DAT_FILE'];
 		$this->timeout = $this->config['ModuleSettings']['USER_COUNT_TIMEOUT'];
 		$this->mypage = $this->getModulePageURL();
 	}
