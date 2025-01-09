@@ -443,8 +443,10 @@ function getDirectorySize($directory) {
 }
 
 function createDirectoryWithErrorHandle($directoryName, $globalHTML) {
-	if(file_exists($directoryName)) return;
-	if(!mkdir($directoryName, 0755, true)) $globalHTML->error("Failed to create directory: $directoryName");
+	if (!file_exists($directoryName)) {
+		if (!mkdir($directoryName, 0755, true)) $globalHTML->error("Failed to create directory: $directoryName");
+	}
+	return $directoryName;
 }
 
 function createDirectory($directoryName) {
@@ -528,8 +530,8 @@ function moveFileOnly(string $sourceFile, string $destDir) {
 	}
 }
 
-function addSlashesToArray(&$arrayOfValuesForQuery) {
-	foreach ($arrayOfValuesForQuery as &$item) {
-		$item = "'" . addslashes($item) . "'";
+function rollbackCreatedPaths($paths) {
+	foreach (array_reverse($paths) as $path) {
+		safeRmdir($path);
 	}
 }

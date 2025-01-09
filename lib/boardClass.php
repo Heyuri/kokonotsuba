@@ -3,23 +3,26 @@
 class board {
 	private $databaseConnection, $postNumberTable;
 	private $config;
-	public $board_uid, $board_identifier, $board_title, $board_sub_title, $config_name, $date_added, $board_file_url, $listed;
+	public $board_uid, $board_identifier, $board_title, $board_sub_title, $config_name, $storage_directory_name, $date_added, $board_file_url, $listed;
 
 	// getters
-	public function getBoardUID() { return intval($this->board_uid); }
-	public function getBoardTitle() { return htmlspecialchars($this->board_title); }
-	public function getBoardSubTitle() { return htmlspecialchars($this->board_sub_title); }
-	public function getFullConfigPath() { return getBoardConfigDir().$this->config_name; }
-	public function getConfigFileName() { return $this->config_name; }
-	public function getDateAdded() { return $this->date_added; }
-	public function getBoardIdentifier() { return $this->board_identifier; }
-	public function getBoardListed(){ return $this->listed; }
+	public function getBoardUID() { return intval($this->board_uid) ?? ''; }
+	public function getBoardTitle() { return htmlspecialchars($this->board_title) ?? ''; }
+	public function getBoardSubTitle() { return htmlspecialchars($this->board_sub_title) ?? ''; }
+	public function getFullConfigPath() { return getBoardConfigDir().$this->config_name ?? ''; }
+	public function getConfigFileName() { return $this->config_name ?? ''; }
+	public function getBoardStorageDirName() { return $this->storage_directory_name ?? '';}
+	public function getDateAdded() { return $this->date_added ?? ''; }
+	public function getBoardIdentifier() { return $this->board_identifier ?? ''; }
+	public function getBoardListed(){ return $this->listed ?? false; }
+
+	public function getBoardStoragePath() { return getBoardStoragesDir().$this->getBoardStorageDirName().'/'; }
 
 	public function updateBoardPathCache() {
 		$board = $this;
 		$boardPathCachingIO = boardPathCachingIO::getInstance();
 
-		$currentDirectory = getcwd().DIRECTORY_SEPARATOR;
+		$currentDirectory = getcwd().'/';
 
 		//update board path cache
 		if($boardPathCachingIO->getRowByBoardUID($board->getBoardUID())) $boardPathCachingIO->updateBoardPathCacheByBoardUID($board->getBoardUID(), $currentDirectory);
@@ -29,7 +32,7 @@ class board {
 	public function getBoardCdnDir() { 
 		$config = $this->loadBoardConfig();
 		if(!$config) return;
-		return $config['CDN_DIR'].$this->board_identifier.DIRECTORY_SEPARATOR;
+		return $config['CDN_DIR'].$this->board_identifier.'/';
 	}
 
 	public function getBoardCdnUrl() { 
@@ -380,4 +383,5 @@ class board {
 		
 		$this->databaseConnection->execute($query, $params);	
 	}
+
 }

@@ -161,14 +161,14 @@ class PIOPDO implements IPIO {
 		return false; // Not a successive post
 	}
 
-	public function addThread($boardUID, $post_uid,  $post_op_number, $bump_number = 0, $threadUID = null) {
+	public function addThread($boardUID, $post_uid, $thread_uid, $post_op_number, $bump_number = 0) {
 		$query = "INSERT INTO {$this->threadTable} (boardUID, post_op_post_uid, post_op_number, bump_number, thread_uid) VALUES (:board_uid, :post_op_post_uid, :post_op_number, :bump_number, :thread_uid)";
 		$params = [
 			':board_uid' => $boardUID,
 			':post_op_post_uid' => $post_uid,
 			':post_op_number' => $post_op_number,
 			':bump_number' => $bump_number,
-			':thread_uid' => $threadUID,
+			':thread_uid' => $thread_uid,
 		];
 		$this->db->execute($query, $params);
 	}
@@ -182,7 +182,7 @@ class PIOPDO implements IPIO {
 			$boardUID = $board->getBoardUID();
 			$time = (int)substr($tim, 0, -3);
 			$root = gmdate('Y-m-d H:i:s');
-			$postUID = generateUid();
+			$postUID = $this->db->getNextAutoIncrement($this->tablename);
 			$thread_uid_for_database = null;
 			$isThread = false;
 			
@@ -191,7 +191,7 @@ class PIOPDO implements IPIO {
 			if(!$thread_uid_from_url) {
 				//create a new thread
 				$thread_uid = generateUid();
-				$this->addThread($boardUID, $postUID, $no, 0, $thread_uid);
+				$this->addThread($boardUID, $postUID, $thread_uid, $no, 0);
 				$thread_uid_for_database = $thread_uid;
 				$isThread = true;
 			} else {
@@ -243,6 +243,12 @@ class PIOPDO implements IPIO {
 			$this->rollBack();
 			throw $e;
 		}
+	}
+
+	public function getLastInsertedThreadUID() {
+		$query = "SELECT MAX(thread_uid) FROM {$this->threadTable}";
+		$result = $this->databaseConnection->fetchColumn($query);
+		return $result;
 	}
 
 	public function getThreadOpPostsFromList($threadUIDList) {

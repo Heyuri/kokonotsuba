@@ -91,5 +91,11 @@ class AccountIO {
 		return $this->databaseConnection->execute($query, $params);
 	}
 	
+	public function incrementAccountActionRecordByID($id) {
+		$query = "UPDATE {$this->accountTable} SET number_of_actions = number_of_actions + 1 WHERE id = :id";
+		$params = [':id' => $id];
+		return $this->databaseConnection->execute($query, $params);
+	}
+
 }
 

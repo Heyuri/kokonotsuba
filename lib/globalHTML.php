@@ -543,7 +543,7 @@ class globalHTML {
 		$dat .= '
 				<table class="postlists">
 				<tbody>
-					<tr> <th> ID </th> <th> USERNAME </th> <th> ROLE </th> <th> BOARDS </th> <th> TOTAL ACTIONS </th> <th>LAST LOGGED IN</th> <th> </th> </tr>
+					<tr> <th> ID </th> <th> USERNAME </th> <th> ROLE </th> <th> TOTAL ACTIONS </th> <th>LAST LOGGED IN</th> <th> </th> </tr>
 					' . $accountsHTML . '
 				</tbody>
 				</table>';

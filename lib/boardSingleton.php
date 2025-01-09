@@ -72,14 +72,15 @@ class boardIO {
 		return $boards;
 	}
 	
-	public function addNewBoard($board_identifier, $board_title, $board_sub_title, $listed, $config_name) {
-		$query = "INSERT INTO {$this->tablename} (board_identifier, board_title, board_sub_title, listed, config_name) VALUES(:board_identifier, :board_title, :board_sub_title, :listed, :config_name)";
+	public function addNewBoard($board_identifier, $board_title, $board_sub_title, $listed, $config_name, $storage_directory_name) {
+		$query = "INSERT INTO {$this->tablename} (board_identifier, board_title, board_sub_title, listed, config_name, storage_directory_name) VALUES(:board_identifier, :board_title, :board_sub_title, :listed, :config_name, :storage_directory_name)";
 		$params = [
 			':board_identifier' => $board_identifier,
 			':board_title' => $board_title,
 			':board_sub_title' => $board_sub_title,
 			':listed' => $listed,
 			':config_name' => $config_name,
+			':storage_directory_name' => $storage_directory_name
 		];
 		$this->databaseConnection->execute($query, $params);
 	}
@@ -108,6 +109,10 @@ class boardIO {
 			$assignments[] = "config_name = :config_name";
 			$params[':config_name'] = $fields['config_name'];
 		}
+		if (!empty($fields['storage_directory_name'])) {
+			$assignments[] = "storage_directory_name = :storage_directory_name";
+			$params[':storage_directory_name'] = $fields['storage_directory_name'];
+		}
 		if (isset($fields['listed'])) {
 			$assignments[] = "listed = :listed";
 			$params[':listed'] = $fields['listed'] ? 1 : 0;
@@ -123,6 +128,10 @@ class boardIO {
 		$params[':board_uid'] = $boardToBeEdited->getBoardUID();
 	
 		$this->databaseConnection->execute($query, $params);
+	}
+
+	public function getNextBoardUID() {
+		return $this->databaseConnection->getNextAutoIncrement($this->tablename);
 	}
 
 	public function getLastBoardUID() {

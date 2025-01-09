@@ -133,10 +133,14 @@ class actionLogger {
 	}
 	
 	public function logAction($actionString, $board_uid){
+		$AccountIO = AccountIO::getInstance();
 		$staffSession = new staffAccountFromSession;
+
 		$name = $staffSession->getUsername();
 		$role = $staffSession->getRoleLevel();
 		
+		if($role) $AccountIO->incrementAccountActionRecordByID($staffSession->getUID());
+
 		$query = "INSERT INTO {$this->tableName} (name, role, log_action, ip_address, board_uid, board_title) VALUES(:name, :role, :log_action, :ip_address, :board_uid, (SELECT board_title FROM {$this->boardTable} WHERE board_uid = :board_uid LIMIT 1))";
 		$params = [
 			':name' => $name,

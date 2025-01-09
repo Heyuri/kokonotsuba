@@ -15,6 +15,11 @@ class modeHandler {
 		
 		$this->AccountIO = AccountIO::getInstance();
 		$this->actionLogger = ActionLogger::getInstance();
+
+		//validate required directories 
+		if(!file_exists($board->getFullConfigPath())) die("Board's config file was not found.");
+		if(!file_exists($board->getBoardStoragePath())) die("Board's storage directory does not exist.");
+
 	}
 
 	public function handle() {
@@ -185,7 +190,7 @@ class modeHandler {
 		/* hook call */
 		$this->PMS->useModuleMethods('RegistBegin', array(&$name, &$email, &$sub, &$com, array('file'=>&$upfile, 'path'=>&$upfile_path, 'name'=>&$upfile_name, 'status'=>&$upfile_status), array('ip'=>$ip, 'host'=>$host), $thread_uid)); // "RegistBegin" Hook Point
 		if($this->config['TEXTBOARD_ONLY'] == false) {
-				processFiles($boardConfig, $postValidator, $globalHTML, $upfile, $upfile_path, $upfile_name, $upfile_status, $md5chksum, $imgW, $imgH, $imgsize, $W, $H, $fname, $ext, $age, $status, $thread_uid, $tim, $dest, $tmpfile);
+				processFiles($boardBeingPostedTo, $postValidator, $globalHTML, $upfile, $upfile_path, $upfile_name, $upfile_status, $md5chksum, $imgW, $imgH, $imgsize, $W, $H, $fname, $ext, $age, $status, $thread_uid, $tim, $dest, $tmpfile);
 		}
 		
 		// Check the form field contents and trim them
@@ -454,6 +459,7 @@ class modeHandler {
 	}
 
 	private function drawAccountScreen() {
+		$AccountIO = AccountIO::getInstance();
 		$staffSession = new staffAccountFromSession;
 		$authRoleLevel = $staffSession->getRoleLevel();
 		$authUsername = htmlspecialchars($staffSession->getUsername());
@@ -470,11 +476,12 @@ class modeHandler {
 		$foot = $globalHTML->foot($foot);
 		$accountTableList = ($authRoleLevel === $this->config['roles']['LEV_ADMIN']) ? $globalHTML->drawAccountTable() : '';
 		
+		$currentAccount = $AccountIO->getAccountByID($staffSession->getUID());
 		$accountTemplateValues = [
 			'{$ACCOUNT_ID}' => htmlspecialchars($staffSession->getUID()),
 			'{$ACCOUNT_NAME}' => htmlspecialchars($authUsername),
-			'{$ACCOUNT_ROLE}' => $globalHTML->roleNumberToRoleName($authRoleLevel),
-			'{$ACCOUNT_ACTIONS}' => htmlspecialchars($staffSession->getNumberOfActions()) ?? 'N/A',
+			'{$ACCOUNT_ROLE}' => htmlspecialchars($globalHTML->roleNumberToRoleName($authRoleLevel)),
+			'{$ACCOUNT_ACTIONS}' => htmlspecialchars($currentAccount->getNumberOfActions()),
 		];	
 		
 		$accountTemplateRoles = [
@@ -547,6 +554,7 @@ class modeHandler {
 			$boardRootURL = $board->getBoardRootURL() ?? '';
 			$boardListed = $board->getBoardListed() ?? '';
 			$boardConfigPath = $board->getConfigFileName() ?? '';
+			$boardStorageDirectoryName = $board->getBoardStorageDirName() ?? '';
 			$boardDate = $board->getDateAdded() ?? '';
 
 			$template_values['{$BOARD_UID}'] = $boardUID;
@@ -559,8 +567,9 @@ class modeHandler {
 			$template_values['{$BOARD_DATE_ADDED}'] = $boardDate;
 			$template_values['{$BOARD_CONFIG_FILE}'] = $boardConfigPath;
 			$template_values['{$CHECKED}'] = $boardListed ? 'checked' : '';
-
+			$template_values['{$BOARD_STORAGE_DIR}'] = $boardStorageDirectoryName;
 			$template_values['{$EDIT_BOARD_HTML}'] = $this->PTE->ParseBlock('EDIT_BOARD', $template_values);
+
 
 			$html = $this->PTE->ParseBlock('VIEW_BOARD', $template_values);
 			
@@ -601,83 +610,95 @@ class modeHandler {
 		
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
 
-		if(!empty($_POST['edit-board'])) {
+		if (!empty($_POST['edit-board'])) {
 			try {
-				$modifiedBoardIdFromPOST = intval($_POST['edit-board-uid']) ?? ''; if(!$modifiedBoardIdFromPOST) throw new Exception("Board id in board editing cannot be NULL!");
-				$modifiedBoard = $boardIO->getBoardByUID($modifiedBoardIdFromPOST);
-				
-				if(isset($_POST['board-action-submit']) && $_POST['board-action-submit'] === 'delete-board') {
-					$boardIO->deleteBoardByUID($modifiedBoard->getBoardUID());
-					redirect($this->config['PHP_SELF'].'?mode=boards');
+				// Retrieve and validate the board ID from POST
+				$modifiedBoardIdFromPOST = intval($_POST['edit-board-uid']) ?? ''; 
+				if (!$modifiedBoardIdFromPOST) {
+					throw new Exception("Board UID in board editing cannot be NULL!");
 				}
-				
+		
+				// Get the board object using the board ID
+				$modifiedBoard = $boardIO->getBoardByUID($modifiedBoardIdFromPOST);
+		
+				// Check if the action is to delete the board
+				if (isset($_POST['board-action-submit']) && $_POST['board-action-submit'] === 'delete-board') {
+					$boardIO->deleteBoardByUID($modifiedBoard->getBoardUID());
+					redirect($this->config['PHP_SELF'] . '?mode=boards');
+				}
+		
+				// Prepare fields for editing the board
 				$fields = [
 					'board_identifier' => $_POST['edit-board-identifier'] ?? false,
 					'board_title' => $_POST['edit-board-title'] ?? false,
 					'board_sub_title' => $_POST['edit-board-sub-title'] ?? false,
 					'config_name' => $_POST['edit-board-config-path'] ?? false,
+					'storage_directory_name' => $_POST['edit-board-storage-dir'] ?? false,
 					'listed' => $_POST['edit-board-listed'] ?? false
 				];
-				if(!is_file(getBoardConfigDir().$fields['config_name'])) $globalHTML->error("Invalid config file, doesn't exist.");
-
+		
+				// Validate the config file exists
+				if (!is_file(getBoardConfigDir() . $fields['config_name'])) $globalHTML->error("Invalid config file, doesn't exist.");
+		
+				// Edit the board values in the database
 				$boardIO->editBoardValues($modifiedBoard, $fields);
-			} catch(Exception $e) {
+			} catch (Exception $e) {
+				// Handle any exceptions that occur
 				http_response_code(500);
 				echo "Error: " . $e->getMessage();
 			}
+		
+			// Redirect after the operation is complete
 			$boardRedirectUID = $_POST['edit-board-uid-for-redirect'] ?? '';
-			redirect($this->config['PHP_SELF'].'?mode=boards&view='.$boardRedirectUID);
+			redirect($this->config['PHP_SELF'] . '?mode=boards&view=' . $boardRedirectUID);
 		}
-
-		//password reset
-		if(!empty($_POST['new-board'])) {
-			$boardTitle = !empty($_POST['new-board-title']) ? $_POST['new-board-title'] : $globalHTML->error("Board title wasn't set!");
-			$boardSubTitle = !empty($_POST['new-board-sub-title']) ? $_POST['new-board-sub-title'] : $globalHTML->error("Board sub-title wasn't set!");
-			$boardIdentifier = !empty($_POST['new-board-identifier']) ? $_POST['new-board-identifier'] : $globalHTML->error("Board identifier wasn't set!");
+		
+		if (!empty($_POST['new-board'])) {
+			// Fetch and validate input
+			$boardTitle = $_POST['new-board-title'] ?? $globalHTML->error("Board title wasn't set!");
+			$boardSubTitle = $_POST['new-board-sub-title'] ?? '';
+			$boardIdentifier = $_POST['new-board-identifier'] ?? $globalHTML->error("Board identifier wasn't set!");
 			$boardListed = isset($_POST['new-board-listed']) ? 1 : 0;
-			$boardPath = !empty($_POST['new-board-path']) ? $_POST['new-board-path'] : $globalHTML->error("Board path wasn't set!");
-			
-			$fullBoardPath = $boardPath.$boardIdentifier.DIRECTORY_SEPARATOR;
+			$boardPath = $_POST['new-board-path'] ?? $globalHTML->error("Board path wasn't set!");
+
+			$fullBoardPath = $boardPath . $boardIdentifier.'/';
 			$mockConfig = getTemplateConfigArray();
-			$dataDir = $fullBoardPath.$mockConfig['STORAGE_PATH'];
 			$backendDirectory = getBackendDir();
-			
-			$cdnDir = $this->config['CDN_DIR'].$boardIdentifier.DIRECTORY_SEPARATOR;
-
+			$cdnDir = $this->config['CDN_DIR'] . $boardIdentifier.'/';
+		
 			$createdPaths = [];
+		
 			try {
-				//create physical board files
-				createDirectoryWithErrorHandle($fullBoardPath, $globalHTML);
-				$createdPaths[] = $fullBoardPath;
-				//create cdn dirs
-				$boardCdnSrc = $this->config['USE_CDN'] ? $cdnDir.$mockConfig['IMG_DIR'] : $fullBoardPath.$mockConfig['IMG_DIR'];
-				$boardCdnThumb = $this->config['USE_CDN'] ? $cdnDir.$mockConfig['THUMB_DIR'] : $fullBoardPath.$mockConfig['THUMB_DIR'];
-				createDirectoryWithErrorHandle($boardCdnSrc, $globalHTML);
-				createDirectoryWithErrorHandle($boardCdnThumb, $globalHTML);
-				$createdPaths[] = $boardCdnSrc;
-				$createdPaths[] = $boardCdnThumb;
-
-				//create dat
-				createDirectoryWithErrorHandle($dataDir, $globalHTML);
-				$createdPaths[] = $dataDir; // Add to rollback list
-				//write files
+				// Create required directories
+				$createdPaths[] = createDirectoryWithErrorHandle($fullBoardPath, $globalHTML);
+		
+				$imgDir = $this->config['USE_CDN'] ? $cdnDir . $mockConfig['IMG_DIR'] : $fullBoardPath . $mockConfig['IMG_DIR'];
+				$thumbDir = $this->config['USE_CDN'] ? $cdnDir . $mockConfig['THUMB_DIR'] : $fullBoardPath . $mockConfig['THUMB_DIR'];
+				$createdPaths[] = createDirectoryWithErrorHandle($imgDir, $globalHTML);
+				$createdPaths[] = createDirectoryWithErrorHandle($thumbDir, $globalHTML);
+		
+				// Create required files
 				$requireString = "\"$backendDirectory{$this->config['PHP_SELF']}\"";
 				createFileAndWriteText($fullBoardPath, $mockConfig['PHP_SELF'], "<?php require_once {$requireString}; ?>");
+		
+				// Create storage directory for the new board
+				$boardStorageDirectoryName = 'storage-'.$boardIO->getNextBoardUID();
+				$dataDir = getBoardStoragesDir().$boardStorageDirectoryName;
+				$createdPaths[] = createDirectoryWithErrorHandle($dataDir, $globalHTML);
 
-				//generate new config
+				// Generate and save board configuration
 				$boardConfigName = generateNewBoardConfigFile();
+				$boardIO->addNewBoard($boardIdentifier, $boardTitle, $boardSubTitle, $boardListed, $boardConfigName, $boardStorageDirectoryName);
 
-				$boardIO->addNewBoard($boardIdentifier, $boardTitle, $boardSubTitle, $boardListed, $boardConfigName);
+				// Get board UID and save to configuration file
+				$newBoardUID = $boardIO->getLastBoardUID();
+				createFileAndWriteText($fullBoardPath, 'boardUID.ini', "board_uid = $newBoardUID");
 
-				$boardUIDforBootstrapFile = $boardIO->getLastBoardUID();
-				createFileAndWriteText($fullBoardPath, 'boardUID.ini', "board_uid = $boardUIDforBootstrapFile");
-
-				$boardPathCachingIO->addNewCachedBoardPath($boardUIDforBootstrapFile, $fullBoardPath);
-
-			} catch(Exception $e) {
-				foreach (array_reverse($createdPaths) as $path) {
-					safeRmdir($path);
-				}
+				// Cache board path
+				$boardPathCachingIO->addNewCachedBoardPath($newBoardUID, $fullBoardPath);
+			} catch (Exception $e) {
+				// Rollback created paths in case of an error
+				rollbackCreatedPaths($createdPaths);
 				$globalHTML->error($e->getMessage());
 			}
 		}
@@ -721,7 +742,7 @@ class modeHandler {
 		foreach ($posts as $post) {
 			if ($pwd_md5 == $post['pwd'] || $host == $post['host'] || $haveperm) {
 				$search_flag = true;
-				array_push($delPostUIDs, strval($post['post_uid']));
+				array_push($delPostUIDs, intval($post['post_uid']));
 				array_push($delPosts, $post);
 				$this->actionLogger->logAction("Delete post No." . $post['no'] . ($onlyimgdel ? ' (file only)' : ''), $currentBoard->getBoardUID());
 			}

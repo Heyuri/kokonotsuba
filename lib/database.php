@@ -2,10 +2,12 @@
 class DatabaseConnection {
 	private static $instance = null;
 	private $pdo;
+	private $dbName;
 
 	// Make constructor private to prevent direct instantiation
 	private function __construct(array $dbSettings) {
 		$this->pdo = $this->createPDOConnection($dbSettings);
+		$this->dbName = $dbSettings['DATABASE_NAME'];
 	}
 
 	public static function createInstance(array $dbSettings) {
@@ -115,5 +117,35 @@ class DatabaseConnection {
 
 	public function getConnection() {
 		return $this->pdo;
+	}
+
+	public function getNextAutoIncrement($tableName) {
+		try {
+			// Prepare the query to fetch AUTO_INCREMENT value from information_schema
+			$query = "SELECT AUTO_INCREMENT 
+					  FROM information_schema.TABLES 
+					  WHERE TABLE_SCHEMA = :databaseName 
+					  AND TABLE_NAME = :tableName";
+	
+			$stmt = $this->pdo->prepare($query);
+			$stmt->execute([
+				':databaseName' => $this->dbName,
+				':tableName' => $tableName,
+			]);
+	
+			// Fetch the result
+			$result = $stmt->fetch(PDO::FETCH_ASSOC);
+	
+			if ($result && isset($result['AUTO_INCREMENT'])) {
+				return (int)$result['AUTO_INCREMENT'];
+			}
+	
+			// Return null if AUTO_INCREMENT value is not found
+			return null;
+		} catch (PDOException $e) {
+			// Handle exceptions by logging or re-throwing
+			error_log("Error fetching AUTO_INCREMENT value: " . $e->getMessage());
+			return null;
+		}
 	}
 }

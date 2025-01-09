@@ -126,7 +126,9 @@ function makeThumbnailAndUpdateStats($boardBeingPostedTo, $config, $FileIO, &$de
     }
 }
 
-function processFiles($config, &$postValidator, &$globalHTML, &$upfile, &$upfile_path, &$upfile_name, &$upfile_status, &$md5chksum, &$imgW, &$imgH, &$imgsize, &$W, &$H, &$fname, &$ext, &$age, &$status, &$resto, &$tim, &$dest, &$tmpfile){
+function processFiles($board, &$postValidator, &$globalHTML, &$upfile, &$upfile_path, &$upfile_name, &$upfile_status, &$md5chksum, &$imgW, &$imgH, &$imgsize, &$W, &$H, &$fname, &$ext, &$age, &$status, &$resto, &$tim, &$dest, &$tmpfile){
+    $config = $board->loadBoardConfig();
+    
     $upfile = CleanStr($_FILES['upfile']['tmp_name']??'');
     $upfile_path = $_POST['upfile_path']??'';
     $upfile_name = $_FILES['upfile']['name']??'';
@@ -138,7 +140,7 @@ function processFiles($config, &$postValidator, &$globalHTML, &$upfile, &$upfile
     // If there is an uploaded file, process the additional image file
     if($upfile && (is_uploaded_file($upfile) || is_file($upfile))){
         // 1. Save the file first
-        $dest = $config['STORAGE_PATH'].$tim.'.tmp';
+        $dest = $board->getBoardStoragePath().$tim.'.tmp';
         move_uploaded_file($upfile, $dest) or copy($upfile, $dest);
         chmod($dest, 0666);
         if(!is_file($dest)) 

@@ -9,8 +9,6 @@ class loginSessionHandler {
 			$_SESSION['last_activity'] = time();
 			$_SESSION['role_level'] = $account->getRoleLevel();
 			$_SESSION['hash'] = $account->getPasswordHash();
-			$_SESSION['number_of_actions'] = $account->getNumberOfActions();
-			$_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
 			
 			session_write_close();
 			return true;
