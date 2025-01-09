@@ -72,15 +72,15 @@ require __DIR__.'/lib/boardStoredFile.php';
 
 
 function getBackendDir() {
-	return __DIR__.DIRECTORY_SEPARATOR;
+	return __DIR__.'/';
 }
 
 function getBackendGlobalDir() {
-	return __DIR__.DIRECTORY_SEPARATOR.'global'.DIRECTORY_SEPARATOR;
+	return __DIR__.'/global/';
 }
 
 function getBoardConfigDir() {
-	return getBackendGlobalDir().'board-configs'.DIRECTORY_SEPARATOR;
+	return getBackendGlobalDir().'board-configs/';
 }
 
 function getBoardStoragesDir() {
@@ -145,20 +145,22 @@ if(file_exists('.backend')) die("You are trying to access the instance's backend
 
 /*-----------The main judgment of the functions of the program-------------*/
 $dbSettings = getDatabaseSettings();
+//database singletons
 DatabaseConnection::createInstance($dbSettings);
 boardIO::createInstance($dbSettings);
 AccountIO::createInstance($dbSettings);
 ActionLogger::createInstance($dbSettings);
 boardPathCachingIO::createInstance($dbSettings);
+postRedirectIO::createInstance($dbSettings);
 
 $board = getBoardFromBootstrapFile();
 
-//create singleton instances
+//board-related singletons
 PMCLibrary::createFileIOInstance($board);
 PMS::createInstance($board);
 PTELibrary::createInstance($board);
 PIOPDO::createInstance($dbSettings);
-postRedirectIO::createInstance($dbSettings);
+
 
 //handle user requests and gzip compression on request
 $modeHandler = new modeHandler($board);

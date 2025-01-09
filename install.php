@@ -56,6 +56,10 @@ function getGlobalConfig() {
     return $config;
 }
 
+function getBoardStorageDir() {
+	return ROOTPATH.'/global/board-storages/';
+}
+
 function generateNewBoardConfigFile() {
     $templateConfigPath = ROOTPATH . '/global/board-configs/board-template.php';
     $newConfigFileName = 'board-' . generateUid() . '.php';
@@ -82,40 +86,40 @@ function getTemplateConfigArray() {
 
 function createBoardAndFiles($boardTable) {
     //create board
-    $board_identifier = $_POST['board-identifier'];
-    $board_title = $_POST['board-title'];
-    $board_sub_title = $_POST['board-sub-title'];
-    $board_path = $_POST['board-path'];
+    $board_identifier = $_POST['board-identifier'] ?? '';
+	$board_title = $_POST['board-title'] ?? '';
+	$board_sub_title = $_POST['board-sub-title'] ?? '';
+	$board_path = $_POST['board-path'] ?? '';
+
 
     $globalConfig = getGlobalConfig();
     $mockConfig = getTemplateConfigArray();
 
-    $fullBoardPath = $board_path . DIRECTORY_SEPARATOR . $board_identifier . DIRECTORY_SEPARATOR;
-
-    $dataDir = $fullBoardPath . DIRECTORY_SEPARATOR . $mockConfig['STORAGE_PATH'] . DIRECTORY_SEPARATOR;
+	$dataDirName = 'storage-'.generateUid();
+	$dataDir = getBoardStorageDir().'/'.$dataDirName;
     //create physical board files
     $fileUploadedImgDirectory = $globalConfig['USE_CDN']
-        ? $globalConfig['CDN_DIR'] . $board_identifier . DIRECTORY_SEPARATOR . $mockConfig['IMG_DIR'] . DIRECTORY_SEPARATOR
-        : $fullBoardPath . $mockConfig['IMG_DIR'] . DIRECTORY_SEPARATOR;
+        ? $globalConfig['CDN_DIR'].$board_identifier.'/'.$mockConfig['IMG_DIR'].'/'
+        : $board_path . $mockConfig['IMG_DIR'].'/';
     $fileUploadedThumbDirectory = $globalConfig['USE_CDN']
-        ? $globalConfig['CDN_DIR'] . $board_identifier . DIRECTORY_SEPARATOR . $mockConfig['THUMB_DIR'] . DIRECTORY_SEPARATOR
-        : $fullBoardPath . $mockConfig['THUMB_DIR'] . DIRECTORY_SEPARATOR;
+        ? $globalConfig['CDN_DIR'].$board_identifier.'/'.$mockConfig['THUMB_DIR'].'/'
+        : $board_path.$mockConfig['THUMB_DIR'].'/';
 
-    //create cdn dirs
+    //create upload dirs
     createDirectory($fileUploadedImgDirectory);
     createDirectory($fileUploadedThumbDirectory);
     //create dat
     createDirectory($dataDir);
     //write files
     $requireString = "'" . ROOTPATH . '/' . ltrim($globalConfig['PHP_SELF'], '/') . "'";
-    createFileAndWriteText($fullBoardPath, $globalConfig['PHP_SELF'], "<?php require_once {$requireString}; ?>");
+    createFileAndWriteText($board_path, $globalConfig['PHP_SELF'], "<?php require_once {$requireString}; ?>");
 
     //generate new config
     $boardConfigName = generateNewBoardConfigFile();
-    $boardTable->addFirstBoard($board_identifier, $board_title, $board_sub_title, $boardConfigName);
+    $boardTable->addFirstBoard($board_identifier, $board_title, $board_sub_title, $boardConfigName, $dataDirName);
 
     $boardUIDforBootstrapFile = $boardTable->getLastBoardUID();
-    createFileAndWriteText($fullBoardPath, 'boardUID.ini', "board_uid = $boardUIDforBootstrapFile");
+    createFileAndWriteText($board_path, 'boardUID.ini', "board_uid = $boardUIDforBootstrapFile");
 }
 
 class html {
@@ -276,7 +280,8 @@ class html {
 			<table id="installation-form-admin-account-table">
 				<tr> 
 					<td class="postblock"> <label for "first-board-identifier-input" >Board identifier</label></td>
-					<td> <input id="first-board-identifier-input" name="board-identifier" placeholder="b" required> </td>
+					<td> <input id="first-board-identifier-input" name="board-identifier" placeholder="b" value="'.basename(__DIR__).'"> </td>
+					<td> (leave blank if the board is in web root) </td>
 				</tr>
 				<tr> 
 					<td class="postblock"> <label for "first-board-title-input" >Board Title</label></td>
@@ -288,7 +293,7 @@ class html {
 				</tr>
 				<tr> 
 					<td class="postblock"> <label for "first-board-path-input" >Board Path</label></td>
-					<td> <input id="first-board-path-input" name="board-path" placeholder="an example board" value="'.dirname(__FILE__).DIRECTORY_SEPARATOR.'" required> </td>
+					<td> <input id="first-board-path-input" name="board-path" placeholder="an example board" value="'.dirname(__FILE__).'/'.'" required> </td>
 				</tr>
 			</table>
             <input type="submit" value="Install">
@@ -299,7 +304,6 @@ class html {
         echo '<hr size="1">';
     }
 }
-
 
 class tableCreator {
 	private $db;	
@@ -314,10 +318,11 @@ class tableCreator {
 		$queries = [
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BOARD_TABLE']} (
 				`board_uid` INT NOT NULL AUTO_INCREMENT,
-				`board_identifier` TEXT NOT NULL,
+				`board_identifier` TEXT,
 				`board_title` TEXT NOT NULL,
-				`board_sub_title` TEXT NOT NULL,
+				`board_sub_title` TEXT,
 				`config_name` TEXT NOT NULL,
+				`storage_directory_name` TEXT NOT NULL,
 				`listed` BOOL DEFAULT TRUE,
 				`date_added` DATE DEFAULT CURRENT_DATE,
 				PRIMARY KEY(`board_uid`),
@@ -461,6 +466,7 @@ class accountTable {
 	}
 }
 
+
 class boardTable {
 	private $db, $boardTableName;
 
@@ -469,13 +475,14 @@ class boardTable {
 		$this->boardTableName = $boardTableName;
 	}
 
-	public function addFirstBoard($board_identifier, $board_title, $board_sub_title, $config_name) {
-		$query = "INSERT INTO {$this->boardTableName} (board_identifier, board_title, board_sub_title, config_name) VALUES(:board_identifier, :board_title, :board_sub_title, :config_name)";
+	public function addFirstBoard($board_identifier, $board_title, $board_sub_title, $config_name, $storage_directory_name) {
+		$query = "INSERT INTO {$this->boardTableName} (board_identifier, board_title, board_sub_title, config_name, storage_directory_name) VALUES(:board_identifier, :board_title, :board_sub_title, :config_name, :storage_directory_name)";
 		$stmt = $this->db->prepare($query);
 		$stmt->bindParam(':board_identifier', $board_identifier);
 		$stmt->bindParam(':board_title', $board_title);
 		$stmt->bindParam(':board_sub_title', $board_sub_title);
 		$stmt->bindParam(':config_name', $config_name);
+		$stmt->bindParam(':storage_directory_name', $storage_directory_name);
 		return $stmt->execute();
 	}
 
@@ -553,4 +560,5 @@ switch ($action) {
         $html->drawImportantConfigValuesPreview();
         $html->drawInstallForm();
         $html->drawFooter();
+    break;
 }
