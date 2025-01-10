@@ -95,7 +95,9 @@ function createBoardAndFiles($boardTable) {
     $globalConfig = getGlobalConfig();
     $mockConfig = getTemplateConfigArray();
 
-	$dataDirName = 'storage-'.generateUid();
+	$nextBoardUID = $boardTable->getLastBoardUID() + 1;
+
+	$dataDirName = 'storage-'.$nextBoardUID;
 	$dataDir = getBoardStorageDir().'/'.$dataDirName;
     //create physical board files
     $fileUploadedImgDirectory = $globalConfig['USE_CDN']
@@ -347,10 +349,9 @@ class tableCreator {
 				INDEX (`bump_number`)
 			) ENGINE=InnoDB;",
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_TABLE']} (
-				`bump_increment` INT NOT NULL AUTO_INCREMENT,
+				`post_uid` INT NOT NULL AUTO_INCREMENT,
 				`no` INT NOT NULL,
 				`boardUID` INT NOT NULL,
-				`post_uid` INT NOT NULL,
 				`thread_uid` VARCHAR(255) NOT NULL,
 				`root` TIMESTAMP NOT NULL,
 				`time` INT NOT NULL,
@@ -372,11 +373,10 @@ class tableCreator {
 				`com` TEXT NOT NULL,
 				`host` TEXT NOT NULL,
 				`status` TEXT,
-				PRIMARY KEY (`bump_increment`),
+				PRIMARY KEY (`post_uid`),
 				CONSTRAINT fk_boardUID FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
 				CONSTRAINT fk_thread_uid FOREIGN KEY (`thread_uid`) REFERENCES `{$sanitizedTableNames['THREAD_TABLE']}`(`thread_uid`) ON DELETE CASCADE,
 				INDEX (`thread_uid`),
-				INDEX (`post_uid`),
 				INDEX (`no`)
 			) ENGINE=InnoDB;",
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_NUMBER_TABLE']} (
@@ -490,7 +490,37 @@ class boardTable {
 		$query = "SELECT MAX(board_uid) AS max_uid FROM {$this->boardTableName}";
 		$stmt = $this->db->query($query);
 		$board_uid = $stmt->fetchColumn();
-		return $board_uid;
+		return $board_uid ?? 0;
+	}
+
+	public function getNextAutoIncrement($tableName) {
+		try {
+			// Prepare the query to fetch AUTO_INCREMENT value from information_schema
+			$query = "SELECT AUTO_INCREMENT 
+					  FROM information_schema.TABLES 
+					  WHERE TABLE_SCHEMA = :databaseName 
+					  AND TABLE_NAME = :tableName";
+	
+			$stmt = $this->pdo->prepare($query);
+			$stmt->execute([
+				':databaseName' => $this->dbName,
+				':tableName' => $tableName,
+			]);
+	
+			// Fetch the result
+			$result = $stmt->fetch(PDO::FETCH_ASSOC);
+	
+			if ($result && isset($result['AUTO_INCREMENT'])) {
+				return (int)$result['AUTO_INCREMENT'];
+			}
+	
+			// Return null if AUTO_INCREMENT value is not found
+			return null;
+		} catch (PDOException $e) {
+			// Handle exceptions by logging or re-throwing
+			error_log("Error fetching AUTO_INCREMENT value: " . $e->getMessage());
+			return null;
+		}
 	}
 }
 
