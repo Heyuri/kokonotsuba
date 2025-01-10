@@ -245,6 +245,7 @@
 		<br clear="ALL">
 		<!--/&MAIN-->
 		
+
 <!--&ACCOUNT_PAGE-->
 {$HEADER}
 	{$ADMIN_LINKS}
@@ -390,13 +391,14 @@
 				<tr>
 					<td class="postblock"><label for="edit-board-sub-title">Sub-title</label></td>
 					<td> <input id="edit-board-sub-title" name="edit-board-sub-title" value="{$BOARD_SUB_TITLE}"></td>
-				<tr>
-					<td class="postblock"><label for="edit-board-root-url">Root URL</label></td>
-					<td> <input id="edit-board-root-url" class="url-input" name="edit-board-root-url" value="{$BOARD_ROOT_URL}" required></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="edit-board-config-path">Config File</label></td>
 					<td> <input id="edit-board-config-path" class="url-input" name="edit-board-config-path" value="{$BOARD_CONFIG_FILE}" required></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="edit-board-storage-dir">Board Storage Directory</label></td>
+					<td> <input id="edit-board-storage-dir" name="edit-board-storage-dir" value="{$BOARD_STORAGE_DIR}" required> </td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="edit-board-listed">Listed</label></td>
@@ -446,6 +448,10 @@
 			<tr>
 				<td class="postblock"><label for="board-config-path">Config File</label></td>
 				<td><div id="board-config-path">{$BOARD_CONFIG_FILE}</div></td>
+			</tr>
+			<tr>
+				<td class="postblock"><label for="board-storage-dir">Board Storage Directory</label></td>
+				<td><div id="board-storage-dir">{$BOARD_STORAGE_DIR}</div></td>
 			</tr>
 			<tr>
 				<td class="postblock"><label for="board-url">URL</label></td>

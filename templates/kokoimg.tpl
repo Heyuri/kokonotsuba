@@ -236,8 +236,8 @@
 		{$PAGENAV}
 		<br clear="ALL">
 		<!--/&MAIN-->
-		
-		
+
+
 <!--&ACCOUNT_PAGE-->
 {$HEADER}
 	{$ADMIN_LINKS}
@@ -389,6 +389,10 @@
 					<td> <input id="edit-board-config-path" class="url-input" name="edit-board-config-path" value="{$BOARD_CONFIG_FILE}" required></td>
 				</tr>
 				<tr>
+					<td class="postblock"><label for="edit-board-storage-dir">Board Storage Directory</label></td>
+					<td> <input id="edit-board-storage-dir" name="edit-board-storage-dir" value="{$BOARD_STORAGE_DIR}" required> </td>
+				</tr>
+				<tr>
 					<td class="postblock"><label for="edit-board-listed">Listed</label></td>
 					<td><input type="checkbox"  id="edit-board-listed" name="edit-board-listed" {$CHECKED}></td>
 				</tr>
@@ -436,6 +440,10 @@
 			<tr>
 				<td class="postblock"><label for="board-config-path">Config File</label></td>
 				<td><div id="board-config-path">{$BOARD_CONFIG_FILE}</div></td>
+			</tr>
+			<tr>
+				<td class="postblock"><label for="board-storage-dir">Board Storage Directory</label></td>
+				<td><div id="board-storage-dir">{$BOARD_STORAGE_DIR}</div></td>
 			</tr>
 			<tr>
 				<td class="postblock"><label for="board-url">URL</label></td>
