@@ -558,12 +558,14 @@ class globalHTML {
 		$boards = $boardIO->getAllBoards();
 		foreach ($boards as $board) {
 				$boardUID = $board->getBoardUID();
+				$boardIdentifier = $board->getBoardIdentifier();
 				$boardTitle = $board->getBoardTitle();
 				$boardDateAdded = $board->getDateAdded();
 		
 				$actionHTML = '[<a title="View board" href="' . $this->config['PHP_SELF'] . '?mode=boards&view='.$boardUID.'">View</a>] ';
 				$boardsHTML .= '<tr> 
 						<td><center> ' . $boardUID . '</center></td>
+						<td><center>' . $boardIdentifier . ' </center></td>
 						<td><center>' . $boardTitle . ' </center></td>
 						<td><center>' . $boardDateAdded . ' </center></td>
 						<td><center> 
@@ -574,7 +576,7 @@ class globalHTML {
 		$dat .= '
 				<table class="postlists">
 					<tbody>
-					<tr> <th> Board UID </th> <th> Board Title </th> <th> Date Added</th> <th> </th> </tr>
+					<tr> <th> Board UID </th> <th> Board Identifier </th> <th> Board Title </th> <th> Date Added</th> <th> </th> </tr>
 					' . $boardsHTML . '
 					</tbody>
 				</table>';
