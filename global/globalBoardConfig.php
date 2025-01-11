@@ -132,8 +132,10 @@ $config['ModuleSettings']['ADD_INFO'] = array(
 	'Read <a href="//example.net/faq.html">our FAQ</a> for any questions.',
 	'Modify this by editing $config[\'ModuleSettings\'][\'ADD_INFO\'] in globalconfig.php',
 );
+
 //mod_globalmsg
-$config['ModuleSettings']['GLOBAL_TXT'] = __DIR__.DIRECTORY_SEPARATOR.'globalmsg.txt';
+$config['ModuleSettings']['GLOBAL_TXT'] = __DIR__.'/globalmsg.txt';
+
 //mod_adminban
 $config['DEFAULT_BAN_MESSAGE'] = '<br><br><b class="warning">(USER WAS BANNED FOR THIS POST)</b> <img style= "vertical-align: baseline;" src="'.$config['STATIC_URL'].'image'.DIRECTORY_SEPARATOR.'hammer.gif">';
 
@@ -143,7 +145,11 @@ $config['ModuleSettings']['ENABLE_NOPE'] = false;
 $config['ModuleSettings']['ENABLE_SCORE'] = false;
 $config['ModuleSettings']['SHOW_SCORE_ONLY'] = false;
 
-//mod_pushpost
+//mod_readonly
+$config['ModuleSettings']['ALLOW_REPLY'] = false; //allow replies to threads but disallow creating threads when board is read-only
+$config['ModuleSettings']['MINIMUM_ROLE'] = $config['roles']['LEV_MODERATOR'];
+
+ //mod_pushpost
 $config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'] = 250;
 
 $config['BAD_STRING'] = array(); // Deprecated by spamdb
@@ -158,7 +164,7 @@ $config['ROLL'] = true; //roll feature. True = enabled, False = disabled
 
 /*---- Part 2：Board Functions ----*/
 $config['HOME'] = 'index.html'; // What the [Home] button links to
-$config['TOP_LINKS'] = @file_get_contents(__DIR__.DIRECTORY_SEPARATOR.'toplinks.txt'); //
+$config['TOP_LINKS'] = @file_get_contents(__DIR__.'/toplinks.txt'); //
 
 $config['COMM_MAX'] = 5000; // How many characters in comment
 $config['INPUT_MAX'] = 100; // Maximum non-message characters
