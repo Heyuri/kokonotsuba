@@ -183,12 +183,7 @@ $config['ACAPCODE_FMT'] = '<font color="#FF101A">%s ## Admin</font>';
 // Footer at the bottom of the page
 $config['FOOTTEXT'] = '';
 
-$config['FILEIO_BACKEND'] = 'local'; // FileIO backend specification (local, ftp)
-$config['FILEIO_INDEXLOG'] = 'fileioindex.dat'; // FileIO Index Log file
-$config['FILEIO_PARAMETER'] = ''; // FileIO Parameters (local storage)
 
-$config['IDSEED'] = 'setrandom'; // ID generation seed
-$config['TRIPSALT'] = ''; // Used for secure tripcodes. Don't change after setting!
 $config['CAPCODES'] = array( // tripcode=>color,cap // for secure tripcode hashes, put ★ instead of ◆
 	'◆tripcode' => array('color'=>'#fd0000', 'cap'=>' ## Admin'),
 );
@@ -254,6 +249,10 @@ $config['OVERBOARD_BOARDS'] = [1];
 //overboard title and sub-title
 $config['OVERBOARD_TITLE'] = "Overboard";
 $config['OVERBOARD_SUBTITLE'] = "Posts from all koko boards";
+
+//html that will appear helow the filter box
+$config['OVERBOARD_SUB_HEADER_HTML'] = '';
+
 //how many threads per page on the overboard
 $config['OVERBOARD_THREADS_PER_PAGE'] = 20;
 
