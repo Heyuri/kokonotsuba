@@ -3,11 +3,13 @@
 Mod_Readonly - Add this to the boards config to make it admin-only
 */
 class mod_readonly extends ModuleHelper {
-	private $READONLY  = true; // Set read-only
-	private $ALLOWREPLY = false; // Allow replies
+	private $ALLOWREPLY, $MINIMUM_ROLE = false; // Allow replies
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
+
+		$this->ALLOWREPLY = $this->config['ModuleSettings']['ALLOW_REPLY'];
+		$this->MINIMUM_ROLE = $this->config['ModuleSettings']['MINIMUM_ROLE'];
 	}
 
 	public function getModuleName(){
@@ -22,10 +24,9 @@ class mod_readonly extends ModuleHelper {
 		$staffSession = new staffAccountFromSession;
 		$globalHTML = new globalHTML($this->board);
 
-		$pwd = $_POST['pwd'] ?? '';
 		$resto = $_POST['resto'] ?? 0;
 
 		if($this->ALLOWREPLY && $resto) return;
-		if($this->READONLY && $staffSession->getRoleLevel() < $this->config['roles']['LEV_MODERATOR']){ $globalHTML->error('New posts cannot be made at this time.'); }
+		if($staffSession->getRoleLevel() < $this->MINIMUM_ROLE){ $globalHTML->error('New posts cannot be made at this time.'); }
 	}
 }

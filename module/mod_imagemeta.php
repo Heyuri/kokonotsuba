@@ -37,7 +37,7 @@ class mod_imagemeta extends ModuleHelper {
 		}
 		//ImgOps
 		if($this->enable_imgops && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-		    $arrLabels['{$IMG_BAR}'] .= '<small>[<a href="http://imgops.com/'.substr($FileIO->getImageURL($file, $board), 2).'" target="_blank">ImgOps</a>]</small> ';
+		    $arrLabels['{$IMG_BAR}'] .= '<small>[<a href="http://imgops.com/'.$FileIO->getImageURL($file, $board).'" target="_blank">ImgOps</a>]</small> ';
 		}
 		//Anime/manga search engine
 		if($this->enable_iqdb && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
