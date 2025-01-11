@@ -242,15 +242,11 @@ $config['PIXMICAT_LANGUAGE'] = 'en_US'; // Language (available languages in /lib
 $config['HTTP_UPLOAD_DIFF'] = 50; 
 
 
-//whether to use boards that have the listed setting
-$config['OVERBOARD_USE_LISTED'] = true;
-//[will only apply if OVERBOARD_USE_LISTED is disabled] these are boards that will be visible on the overboard, enter the UIDs (found in ?mode=boards) of the boards you want to be displayed
-$config['OVERBOARD_BOARDS'] = [1];
 //overboard title and sub-title
 $config['OVERBOARD_TITLE'] = "Overboard";
 $config['OVERBOARD_SUBTITLE'] = "Posts from all koko boards";
 
-//html that will appear helow the filter box
+//html that will appear bselow the filter box
 $config['OVERBOARD_SUB_HEADER_HTML'] = '';
 
 //how many threads per page on the overboard
