@@ -1,5 +1,5 @@
 <?php
-/* mod_exif : EXIF information (Pre-Alpha)
+/* mod_imagemeta : image reverse searching and exif information (Pre-Alpha)
  * $Id$
  * exif.php from http://www.rjk-hosting.co.uk/programs/prog.php?id=4
  */
