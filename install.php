@@ -112,9 +112,6 @@ function createBoardAndFiles($boardTable) {
     createDirectory($fileUploadedThumbDirectory);
     //create dat
     createDirectory($dataDir);
-    //write files
-    $requireString = "'" . ROOTPATH . '/' . ltrim($globalConfig['PHP_SELF'], '/') . "'";
-    createFileAndWriteText($board_path, $globalConfig['PHP_SELF'], "<?php require_once {$requireString}; ?>");
 
     //generate new config
     $boardConfigName = generateNewBoardConfigFile();
@@ -549,7 +546,9 @@ switch ($action) {
                 PDO::ATTR_EMULATE_PREPARES => false,
             ]);
 
-            $tableCreator = new tableCreator($pdoConnection);
+			$globalConfig = getGlobalConfig();
+
+			$tableCreator = new tableCreator($pdoConnection);
             $tables = [
                 'POST_TABLE' => $_POST['POST_TABLE'],
                 'REPORT_TABLE' => $_POST['REPORT_TABLE'],
@@ -574,8 +573,28 @@ switch ($action) {
             $password = $_POST['admin-password'];
             $accountTable->addAdminAccount($username, $password, 4);
 
+			
             touch('.installed');
-            redirect($_SERVER['PHP_SELF']);
+			
+			if(file_exists(dirname(__FILE__) . '/' .$globalConfig['PHP_SELF2'])) {
+
+				unlink('./'.$globalConfig['PHP_SELF2']);
+				createFileAndWriteText(dirname(__FILE__) . '/', $globalConfig['PHP_SELF2'], '
+					<!DOCTYPE html>
+					<html lang="en">
+						<head>
+							<meta charset="UTF-8">
+							<meta http-equiv="refresh" content="url='.$globalConfig['PHP_SELF'].'">
+							<title>Redirecting...</title>
+						</head>
+						<body>
+							<p>If you are not redirected automatically, follow this <a href="'.$globalConfig['PHP_SELF'].'">link</a>.</p>
+						</body>
+					</html>
+				');
+			}
+            
+			redirect($globalConfig['PHP_SELF']);
         } catch (Exception $e) {
             throw $e;
         }
