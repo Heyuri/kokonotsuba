@@ -793,7 +793,7 @@ class modeHandler {
 
 		//filter list for the database
 		$filters = [
-			'board' => $filtersBoards ?? ($allListedBoards = $this->config['OVERBOARD_USE_LISTED'] ? $boardIO->getAllListedBoardUIDs() : $this->config['OVERBOARD_BOARDS']),
+			'board' => $filtersBoards ?? ($allListedBoards = $boardIO->getAllListedBoardUIDs()),
 		];
 
 		$config = $this->config;

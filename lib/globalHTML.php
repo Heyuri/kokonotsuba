@@ -493,7 +493,7 @@ class globalHTML {
 	public function drawOverboardFilterForm(&$dat, $board) {
 		$boardIO = boardIO::getInstance();
 		
-		$allListedBoards = $this->config['OVERBOARD_USE_LISTED'] ? $boardIO->getAllListedBoardUIDs() : $this->config['OVERBOARD_BOARDS'];
+		$allListedBoards = $boardIO->getAllListedBoardUIDs();
 		$filterBoard = unserialize($_COOKIE['overboard_filterboards'] ?? ''); if(!is_array($filterBoard)) $filterBoard = $allListedBoards;
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard, $boardIO->getBoardsFromUIDs($allListedBoards));
 		$dat .= '
