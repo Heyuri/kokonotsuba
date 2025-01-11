@@ -17,8 +17,8 @@ class modeHandler {
 		$this->actionLogger = ActionLogger::getInstance();
 
 		//validate required directories 
-		if(!file_exists($board->getFullConfigPath())) die("Board's config file was not found.");
-		if(!file_exists($board->getBoardStoragePath())) die("Board's storage directory does not exist.");
+		if(!file_exists($board->getFullConfigPath())) die("Board's config file <i>".$board->getFullConfigPath()."</i> was not found.");
+		if(!file_exists($board->getBoardStoragePath())) die("Board's storage directory <i>".$board->getBoardStoragePath()."</i> does not exist.");
 
 	}
 
