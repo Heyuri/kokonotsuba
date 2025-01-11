@@ -17,8 +17,8 @@ class modeHandler {
 		$this->actionLogger = ActionLogger::getInstance();
 
 		//validate required directories 
-		if(!file_exists($board->getFullConfigPath())) die("Board's config file <i>" . $board->getFullConfigPath() . "</i> was not found.");
-		if(!file_exists($board->getBoardStoragePath())) die("Board's storage directory <i>" . $board->getBoardStoragePath() . "</i> does not exist.");
+		if(!file_exists($board->getFullConfigPath())) die("Board's config file was not found.");
+		if(!file_exists($board->getBoardStoragePath())) die("Board's storage directory does not exist.");
 
 	}
 
@@ -637,9 +637,9 @@ class modeHandler {
 					'listed' => $_POST['edit-board-listed'] ?? false
 				];
 		
-				// Validate the config file exists
-				if (!is_file(getBoardConfigDir() . $fields['config_name'])) $globalHTML->error("Invalid config file, doesn't exist.");
-		
+				// Validate the config file and storage directory exists
+				if (!file_exists(getBoardConfigDir() . $fields['config_name'])) $globalHTML->error("Invalid config file, doesn't exist.");
+				if (!file_exists(getBoardStoragesDir() . $fields['storage_directory_name'])) $globalHTML->error("Invalid storage directory, doesn't exist.");
 				// Edit the board values in the database
 				$boardIO->editBoardValues($modifiedBoard, $fields);
 			} catch (Exception $e) {

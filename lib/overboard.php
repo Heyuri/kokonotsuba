@@ -34,12 +34,12 @@ class overboard {
 			
 		$PMS->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
 		$PMS->useModuleMethods('AboveTitle', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
-
 		$html .= $PTE->ParseBlock('BODYHEAD',$pte_vals);
 		
 		$PMS->useModuleMethods('GlobalMessage', array(&$pte_vals['{$GLOBAL_MESSAGE}'])); // "GlobalMessage" Hook Point
 		$PMS->useModuleMethods('BlotterPreview', array(&$pte_vals['{$BLOTTER}'])); // "Blotter Preview" Hook Point
 		$html .= $PTE->ParseBlock('MODULE_INFO_HOOK',$pte_vals);
+		$html .= $this->config['OVERBOARD_SUB_HEADER_HTML'];
 
 		$dat .= $html;
 		return $html;
