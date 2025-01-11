@@ -68,13 +68,17 @@ $config['ModuleList'] = array(
 	'mod_soudane' => true,
 	'mod_pm' => true,
 	'mod_ads' => true,
-	'mod_exif' => true,
+	'mod_imagemeta' => true,
 	'mod_onlinecounter' => true,
 	'mod_banner' => true,
 	'mod_addinfo' => true,
 );
 
 /* Module-specific options */
+//mod_imagemeta
+$config['ModuleSettings']['EXIF_DATA_VIEWER'] = false;
+$config['ModuleSettings']['IMG_OPS'] = true; //imgops reverse image searcher portal
+$config['ModuleSettings']['IQDB'] = false; //iqdb reverse image search protal
 //mod_countryflags
 $config['ModuleSettings']['FLAG_MODE'] = 1; // For the country flags module: 1 = hide flags on posts with "flag" in email field, 2 = show flags on posts with "flag" in email field
 //mod_admindel
