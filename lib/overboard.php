@@ -132,7 +132,7 @@ class overboard {
 			array_unshift($tree_cut, $tree[0]);
 			$posts = $PIO->fetchPosts($tree_cut);
 			
-			$overboardThreadTitle = '<span class="overboard-thread-title"><a href="'.$boardURL.'">'.$boardTitle.'</a></span>';
+			$overboardThreadTitle = '<span class="overboardThreadBoardTitle"><a href="'.$boardURL.'">'.$boardTitle.'</a></span>';
 			$crossLink = $boardURL;
 
 			$templateValues['{$THREADS}'] .= $globalHTML->arrangeThread(
