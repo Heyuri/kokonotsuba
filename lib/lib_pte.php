@@ -63,7 +63,7 @@ class PTELibrary{
 			'{$LANGUAGE}'=>$this->config['PIXMICAT_LANGUAGE'],
 			'{$STATIC_URL}'=>$this->config['STATIC_URL'], '{$REF_URL}'=>$this->config['REF_URL'],
 			'{$PHP_SELF}'=>$this->config['PHP_SELF'], '{$PHP_SELF2}'=>$this->config['PHP_SELF2'], '{$PHP_EXT}'=>$this->config['PHP_EXT'],
-			'{$TITLEIMG}'=>$this->config['TITLEIMG'], '{$TITLE}'=>$this->board->getBoardTitle(), '{$TITLESUB}'=>$this->board->getBoardSubTitle(),
+			'{$TITLE}'=>$this->board->getBoardTitle(), '{$TITLESUB}'=>$this->board->getBoardSubTitle(),
 			'{$HOME}'=>$this->config['HOME'], '{$TOP_LINKS}'=>$this->config['TOP_LINKS'], '{$FOOTTEXT}'=>$this->config['FOOTTEXT'],
 			 '{$PAGE_TITLE}'=>strip_tags($this->board->getBoardTitle()),
 		), $ary_val);
