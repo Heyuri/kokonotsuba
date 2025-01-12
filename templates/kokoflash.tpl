@@ -137,7 +137,7 @@
 		</center>
 		<!--/&ERROR-->
 		<!--&THREAD-->
-		<tr class="thread" id="t{$NO}">
+		<tr class="thread" id="t{$BOARD_UID}_{$NO}">
 				<td> <a href="{$SELF}?res={$RESTO}#p{$NO}" class="no">{$NO}</a> </td>
 				<td class="name"> {$NAME} </td>
 				<td class="filecol"> [<a href="{$FILE_LINK}" download="{$FILE_NAME}">{$FILE_NAME}</a>]</td>
@@ -337,11 +337,11 @@
 		<input type="hidden" name="edit-board-uid-for-redirect" value="{$BOARD_UID}">
 		<input type="hidden" name="edit-board" value="{$BOARD_UID}">
 		
-		<table  id="board-action-table">
+		<table id="board-action-table">
 			<tbody>
 				<tr>
 					<td class="postblock"><label for="edit-board-identifier">Identifier</label></td>
-					<td> <input required id="edit-board-identifier" name="edit-board-identifier" value="{$BOARD_IDENTIFIER}"></td>
+					<td> <input id="edit-board-identifier" name="edit-board-identifier" value="{$BOARD_IDENTIFIER}"></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="edit-board-title">Title</label></td>

@@ -140,7 +140,7 @@
 <!--/&ERROR-->
 
 <!--&THREAD-->
-<table class="thread" id="t{$NO}" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3">
+<table class="thread" id="t{$BOARD_UID}_{$NO}" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3">
 	<tbody>
 			<tr class="t4vv">
 			<td>
@@ -367,7 +367,7 @@
 			<tbody>
 				<tr>
 					<td class="postblock"><label for="edit-board-identifier">Identifier</label></td>
-					<td> <input required id="edit-board-identifier" name="edit-board-identifier" value="{$BOARD_IDENTIFIER}"></td>
+					<td> <input id="edit-board-identifier" name="edit-board-identifier" value="{$BOARD_IDENTIFIER}"></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="edit-board-title">Title</label></td>

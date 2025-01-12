@@ -173,7 +173,7 @@
 				<div class="doubledash" valign="top">
 					&gt;&gt;
 				</div>
-				<div class="post reply" id="p{$NO}">
+				<div class="post reply" id="p{$BOARD_UID}_{$NO}">
 					<div class="postinfo"><label><input type="checkbox" name="{$POST_UID}" value="delete"><big class="title"><b>{$SUB}</b></big> {$NAME_TEXT}<span class="name">{$NAME}</span> <span class="time">{$NOW}</span></label>
 					<nobr><span class="postnum">
 					<!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$NO}">No.{$NO}</a>')--></span>{$POSTINFO_EXTRA}</nobr>
@@ -374,7 +374,7 @@
 			<tbody>
 				<tr>
 					<td class="postblock"><label for="edit-board-identifier">Identifier</label></td>
-					<td> <input required id="edit-board-identifier" name="edit-board-identifier" value="{$BOARD_IDENTIFIER}"></td>
+					<td> <input id="edit-board-identifier" name="edit-board-identifier" value="{$BOARD_IDENTIFIER}"></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="edit-board-title">Title</label></td>

@@ -141,7 +141,7 @@
 
 				<!--&REPLY-->
 				<!--&IF($IS_PREVIEW,'<table class="thread" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3"><tbody><tr><td>','')-->
-				<div class="post reply" id="p{$NO}">
+				<div class="post reply" id="p{$BOARD_UID}_{$NO}">
 					<div class="filesize">{$IMG_BAR}</div>
 					<!--&IF($IMG_SRC,'{$IMG_SRC}<br clear="ALL">','')-->
 					<font size="+2"><b class="title"><a href="{$PHP_SELF}?res={$RESTO}#p{$NO}">{$SUB}</a></b></font>
@@ -350,7 +350,7 @@
 			<tbody>
 				<tr>
 					<td class="postblock"><label for="edit-board-identifier">Identifier</label></td>
-					<td> <input required id="edit-board-identifier" name="edit-board-identifier" value="{$BOARD_IDENTIFIER}"></td>
+					<td> <input id="edit-board-identifier" name="edit-board-identifier" value="{$BOARD_IDENTIFIER}"></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="edit-board-title">Title</label></td>

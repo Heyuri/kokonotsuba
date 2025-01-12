@@ -145,9 +145,9 @@
 
 
 		<!--&THREAD-->
-		<div class="thread" id="t{$NO}">
+		<div class="thread" id="t{$BOARD_UID}_{$NO}">
 			{$BOARD_THREAD_NAME}
-			<div class="post op" id="p{$NO}">
+			<div class="post op" id="p{$BOARD_UID}_{$NO}">
 				<div class="filesize">{$IMG_BAR}</div>
 				{$IMG_SRC}
 				<span class="postinfo"><label><input type="checkbox" name="{$POST_UID}" value="delete"><big class="title"><b>{$SUB}</b></big> {$NAME_TEXT}<span class="name">{$NAME}</span> <span class="time">{$NOW}</span></label>
@@ -382,7 +382,7 @@
 			<tbody>
 				<tr>
 					<td class="postblock"><label for="edit-board-identifier">Identifier</label></td>
-					<td> <input required id="edit-board-identifier" name="edit-board-identifier" value="{$BOARD_IDENTIFIER}"></td>
+					<td> <input id="edit-board-identifier" name="edit-board-identifier" value="{$BOARD_IDENTIFIER}"></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="edit-board-title">Title</label></td>
