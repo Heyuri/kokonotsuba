@@ -497,7 +497,7 @@ class globalHTML {
 		$filterBoard = unserialize($_COOKIE['overboard_filterboards'] ?? ''); if(!is_array($filterBoard)) $filterBoard = $allListedBoards;
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard, $boardIO->getBoardsFromUIDs($allListedBoards));
 		$dat .= '
-		<div class="overboard-filter-form-container">
+		<div class="overboardFilterFormContainer">
 			<details id="overboard-filter-form" class="detailsbox"> <summary>Filter Boards</summary>
 				<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=overboard" method="POST">
 					<div class="postblock">
