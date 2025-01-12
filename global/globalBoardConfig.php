@@ -267,7 +267,7 @@ $config['HTTP_UPLOAD_DIFF'] = 50;
 $config['OVERBOARD_TITLE'] = "Overboard";
 $config['OVERBOARD_SUBTITLE'] = "Posts from all koko boards";
 
-// HTML that will appear below the filter box
+// HTML that will appear abave the filter box
 $config['OVERBOARD_SUB_HEADER_HTML'] = '';
 
 // How many threads per page on the overboard
