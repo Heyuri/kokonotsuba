@@ -31,6 +31,10 @@ class postRedirectIO {
 
 
     public function addNewRedirect($original_board_uid, $new_board_uid, $thread_uid) {
+        //delete any pre-existing redirects for the thread
+        $deleteExistingRedirectsQuery = "DELETE FROM {$this->redirectsTable} WHERE thread_uid = :thread_uid";
+        $this->db->execute($deleteExistingRedirectsQuery, [':thread_uid' => $thread_uid]);
+
         $query = "INSERT INTO {$this->redirectsTable} (original_board_uid, new_board_uid, thread_uid, post_op_number) VALUES(:original_board_uid, :new_board_uid, :thread_uid, (SELECT post_op_number FROM {$this->threadTable} WHERE thread_uid = :thread_uid))";
         $params = [
             ':original_board_uid' => intval($original_board_uid),
@@ -47,10 +51,15 @@ class postRedirectIO {
 
         return $redirect;
     }
-
+    
     public function deleteRedirectByID($id) {
         $query = "DELETE FROM {$this->redirectsTable} WHERE redirect_id = :redirect_id";
         $this->db->execute($query, [':redirect_id' => $id]);
+    }
+
+    public function deleteRedirectByThreadUID($thread_uid) {
+        $query = "DELETE FROM {$this->redirectsTable} WHERE thread_uid = :thread_uid";
+        $this->db->execute($query, [':thread_uid' => $thread_uid]);
     }
 
     public function resolveRedirectedThreadLinkFromThreadUID($thread_uid) {
