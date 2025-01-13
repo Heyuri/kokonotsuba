@@ -39,7 +39,7 @@
 	<!--&TOPLINKS-->
 	<div class="boardlist">
 		<span class="toplinks">{$TOP_LINKS}</span>
-		<div class="adminbar" align="RIGHT">{$HOME} {$HOOKLINKS} {$ADMIN}</div>
+		<div class="adminbar" align="RIGHT">{$HOME} {$HOOKLINKS} {$OVERBOARD} {$ADMIN}</div>
 	</div>
 	<!--/&TOPLINKS-->
 
@@ -140,7 +140,7 @@
 <!--/&ERROR-->
 
 <!--&THREAD-->
-<table class="thread" id="t{$BOARD_UID}_{$NO}" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3">
+<table class="thread {$BOARD_UID}" id="t{$BOARD_UID}_{$NO}" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3">
 	<tbody>
 			<tr class="t4vv">
 			<td>
@@ -161,7 +161,7 @@
 
 				<!--&REPLY-->
 				<!--&IF($IS_PREVIEW,'<table class="thread" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3"><tbody><tr><td>','')-->
-				<div class="post reply" id="p{$BOARD_UID}_{$NO}">
+				<div class="post reply {$BOARD_UID}" id="p{$BOARD_UID}_{$NO}">
 					<div class="filesize">{$IMG_BAR}</div>
 					<!--&IF($IMG_SRC,'{$IMG_SRC}<br clear="ALL">','')-->
 					<font size="+2"><b class="title"><a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$NO}">{$SUB}</a></b></font>

@@ -37,7 +37,7 @@
 	<!--&TOPLINKS-->
 	<div class="boardlist">
 		<small class="toplinks">{$TOP_LINKS}</small>
-		<div class="adminbar">{$HOME} {$HOOKLINKS} {$ADMIN}</div>
+		<div class="adminbar">{$HOME} {$HOOKLINKS} {$OVERBOARD} {$ADMIN}</div>
 	</div>
 	<!--/&TOPLINKS-->
 
@@ -45,6 +45,7 @@
 
 <body>
 	<script id="wz_tooltip" type="text/javascript" src="{$STATIC_URL}js/wz_tooltip.js"></script>
+	
 	<a name="top"></a>
 	<!--&TOPLINKS/-->
 	<center id="header">

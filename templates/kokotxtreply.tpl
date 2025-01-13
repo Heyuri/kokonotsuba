@@ -39,7 +39,7 @@
 	<!--&TOPLINKS-->
 	<div class="boardlist"<!--&IF($IS_THREAD,' style="display:none"','')-->>
 		<span class="toplinks">{$TOP_LINKS}</span>
-		<div class="adminbar" align="RIGHT">{$HOME} {$HOOKLINKS} {$ADMIN}</div>
+		<div class="adminbar" align="RIGHT">{$HOME} {$HOOKLINKS} {$OVERBOARD} {$ADMIN}</div>
 	</div>
 	<!--/&TOPLINKS-->
 
