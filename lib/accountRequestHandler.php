@@ -53,10 +53,11 @@ class accountRequestHandler {
 		$actionLogger->logAction("Registered a new account ($username)", $board->getBoardUID());
 	}
 
-	public function handleAccountPasswordReset() {
+	public function handleAccountPasswordReset($board) {
 		$actionLogger = actionLogger::getInstance();
 		$AccountIO = AccountIO::getInstance();
-	
+		
+		$loginSessionHandler = new loginSessionHandler;
 		$staffSession = new staffAccountFromSession;
 		$accountID = $_POST['id'] ?? -1;
 		$newAccountPassword = $_POST['new_account_password'] ?? -1;
@@ -66,8 +67,13 @@ class accountRequestHandler {
 		$currentUserPasswordHashFromSession = $staffSession->getHashedPassword();
 		
 		if($currentPasswordHash !== $currentUserPasswordHashFromSession) throw new Exception("You cannot change the password of a different account!");
-		
+
 		$AccountIO->updateAccountPasswordHashById($accountID, $newAccountPassword);
+
+		//refresh session values
+		$accountAfterPasswordUpdate = $AccountIO->getAccountById($accountID);
+		$loginSessionHandler->login($accountAfterPasswordUpdate);
+
 		$actionLogger->logAction("Reset password", $board->getBoardUID());
 	}
 	

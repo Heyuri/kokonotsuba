@@ -595,7 +595,7 @@ class modeHandler {
 			if(!empty($_POST['usrname']) && !empty($_POST['passwd'])) $accountRequestHandler->handleAccountCreation($this->board);
 		}
 		//password reset
-		if(!empty($_POST['new_account_password'] ?? '')) $accountRequestHandler->handleAccountPasswordReset();
+		if(!empty($_POST['new_account_password'] ?? '')) $accountRequestHandler->handleAccountPasswordReset($this->board);
 		
 		redirect($this->config['PHP_SELF'].'?mode=account');
 	}
