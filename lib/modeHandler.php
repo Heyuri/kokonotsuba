@@ -19,7 +19,6 @@ class modeHandler {
 		//validate required directories 
 		if(!file_exists($board->getFullConfigPath())) die("Board's config file <i>".$board->getFullConfigPath()."</i> was not found.");
 		if(!file_exists($board->getBoardStoragePath())) die("Board's storage directory <i>".$board->getBoardStoragePath()."</i> does not exist.");
-
 	}
 
 	public function handle() {
@@ -657,7 +656,7 @@ class modeHandler {
 			// Fetch and validate input
 			$boardTitle = $_POST['new-board-title'] ?? $globalHTML->error("Board title wasn't set!");
 			$boardSubTitle = $_POST['new-board-sub-title'] ?? '';
-			$boardIdentifier = $_POST['new-board-identifier'] ?? $globalHTML->error("Board identifier wasn't set!");
+			$boardIdentifier = $_POST['new-board-identifier'] ?? '';
 			$boardListed = isset($_POST['new-board-listed']) ? 1 : 0;
 			$boardPath = $_POST['new-board-path'] ?? $globalHTML->error("Board path wasn't set!");
 
