@@ -56,14 +56,14 @@ class mod_movethread extends ModuleHelper {
 		$postRedirectIO = postRedirectIO::getInstance();
 		
 		$thread_uid = $thread['thread_uid'];
+
 		$postsFromThread = $PIO->getPostsFromThread($thread_uid);
 		$filesToCopy = $PIO->getAllAttachmentsFromThread($thread_uid);
 
+		$postRedirectIO->addNewRedirect($hostBoard->getBoardUID(), $destinationBoard->getBoardUID(), $thread_uid);
 		$this->copyThreadFilesFromHostToDestination($filesToCopy, $hostBoard, $destinationBoard);
 		$PIO->moveThreadAndUpdate($thread_uid, $hostBoard, $destinationBoard);
 		$PIO->bumpThread($thread_uid);
-		$postRedirectIO->addNewRedirect($hostBoard->getBoardUID(), $destinationBoard->getBoardUID(), $thread_uid);
-
 	}
 	
 	public function ModulePage() {
