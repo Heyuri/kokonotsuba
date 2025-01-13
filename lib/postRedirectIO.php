@@ -31,6 +31,8 @@ class postRedirectIO {
 
 
     public function addNewRedirect($original_board_uid, $new_board_uid, $thread_uid) {
+        if(intval($original_board_uid) === intval($new_board_uid)) return; //prevent redirect loop
+        
         //delete any pre-existing redirects for the thread
         $deleteExistingRedirectsQuery = "DELETE FROM {$this->redirectsTable} WHERE thread_uid = :thread_uid";
         $this->db->execute($deleteExistingRedirectsQuery, [':thread_uid' => $thread_uid]);
@@ -78,6 +80,7 @@ class postRedirectIO {
     }
 
     public function resolveRedirectedThreadLinkFromPostOpNumber($board, $resno) {
+        $PIO = PIOPDO::getInstance();
         $boardIO = boardIO::getInstance();
         
         $query = "SELECT * FROM {$this->redirectsTable} WHERE original_board_uid = :board_uid AND post_op_number = :resno";
@@ -92,7 +95,10 @@ class postRedirectIO {
         $newBoardConfig = $newBoardFromRedirect->loadBoardConfig();
         $newBoardURL = $newBoardFromRedirect->getBoardURL();
 
-        $redirectNumber = $redirect->getPostOPNumber();
+        $thread_uid = $redirect->getThreadUID();
+        $redirectThread = $thread = $PIO->getThreadByUID($thread_uid);
+
+        $redirectNumber = $redirectThread['post_op_number'];
 
         $threadURL = $newBoardURL.$newBoardConfig['PHP_SELF'].'?res='.$redirectNumber;
         return $threadURL;
