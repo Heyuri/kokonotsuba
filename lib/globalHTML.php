@@ -298,7 +298,7 @@ class globalHTML {
 		$thread = $PIO->getThreadByUID($thread_uid);
 		$threadParentBoard = $boardIO->getBoardByUID($thread['boardUID']); 
 		
-		$boardRadioHTML = $this->generateBoardListRadioHTML($this->board);
+		$boardRadioHTML = $this->generateBoardListRadioHTML($threadParentBoard);
 
 
 
