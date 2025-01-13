@@ -120,7 +120,7 @@
 <!--/&ERROR-->
 
 <!--&THREAD-->
-<table class="thread" id="t{$NO}" align="CENTER" width="95%" border="<!--&IF($IS_THREAD,'0','1')-->" cellspacing="7" cellpadding="3"<!--&IF($IS_THREAD,' style="margin:0;width:100%;border:none;padding:0"','')-->>
+<table class="thread {$BOARD_UID}" id="t{$NO}" align="CENTER" width="95%" border="<!--&IF($IS_THREAD,'0','1')-->" cellspacing="7" cellpadding="3"<!--&IF($IS_THREAD,' style="margin:0;width:100%;border:none;padding:0"','')-->>
 	<tbody>
 		<div class="tnav"><a title="Go to post form" href="#postform">■</a><a title="Go to page top" href="#top">▲</a><a title="Go to page bottom" href="#bottom">▼</a></div>
 		<tr>
@@ -141,7 +141,7 @@
 
 				<!--&REPLY-->
 				<!--&IF($IS_PREVIEW,'<table class="thread" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3"><tbody><tr><td>','')-->
-				<div class="post reply" id="p{$BOARD_UID}_{$NO}">
+				<div class="post reply {$BOARD_UID}" id="p{$BOARD_UID}_{$NO}">
 					<div class="filesize">{$IMG_BAR}</div>
 					<!--&IF($IMG_SRC,'{$IMG_SRC}<br clear="ALL">','')-->
 					<font size="+2"><b class="title"><a href="{$PHP_SELF}?res={$RESTO}#p{$NO}">{$SUB}</a></b></font>
@@ -307,7 +307,7 @@
 <!--&CREATE_BOARD-->
 		<form action="{$PHP_SELF}?mode=handleBoardRequests" method="POST">
 			<input type="hidden" name="new-board" value="1">
-			<table id="account-create-table">
+			<table id="board-create-table">
 				<tbody>
 					<tr>
 						<td class="postblock"><label for="new-board-title">Title</label></td>
@@ -319,7 +319,7 @@
 					</tr>
 					<tr>
 						<td class="postblock"><label for="new-board-identifier">Identifier</label></td>
-						<td><input required id="new-board-identifier" name="new-board-identifier" placeholder="b"></td> <td>The string that represents the board in the URL and file storage. e.g the 'b' in "/b/" or "boards.example.net/b/"</td>
+						<td><input id="new-board-identifier" name="new-board-identifier" placeholder="b"></td> <td>The string that represents the board in the URL and file storage. e.g the 'b' in "/b/" or "boards.example.net/b/"</td>
 					</tr>
 					<tr>
 						<td class="postblock"><label for="new-board-path">Absolute Directory</label></td>

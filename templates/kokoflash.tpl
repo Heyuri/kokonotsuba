@@ -137,7 +137,7 @@
 		</center>
 		<!--/&ERROR-->
 		<!--&THREAD-->
-		<tr class="thread" id="t{$BOARD_UID}_{$NO}">
+		<tr class="thread {$BOARD_UID}" id="t{$BOARD_UID}_{$NO}">
 				<td> <a href="{$SELF}?res={$RESTO}#p{$NO}" class="no">{$NO}</a> </td>
 				<td class="name"> {$NAME} </td>
 				<td class="filecol"> [<a href="{$FILE_LINK}" download="{$FILE_NAME}">{$FILE_NAME}</a>]</td>
@@ -298,7 +298,7 @@
 <!--&CREATE_BOARD-->
 		<form action="{$PHP_SELF}?mode=handleBoardRequests" method="POST">
 			<input type="hidden" name="new-board" value="1">
-			<table id="account-create-table">
+			<table id="board-create-table">
 				<tbody>
 					<tr>
 						<td class="postblock"><label for="new-board-title">Title</label></td>
@@ -310,7 +310,7 @@
 					</tr>
 					<tr>
 						<td class="postblock"><label for="new-board-identifier">Identifier</label></td>
-						<td><input required id="new-board-identifier" name="new-board-identifier" placeholder="b"></td> <td>The string that represents the board in the URL and file storage. e.g the 'b' in "/b/" or "boards.example.net/b/"</td>
+						<td><input id="new-board-identifier" name="new-board-identifier" placeholder="b"></td> <td>The string that represents the board in the URL and file storage. e.g the 'b' in "/b/" or "boards.example.net/b/"</td>
 					</tr>
 					<tr>
 						<td class="postblock"><label for="new-board-path">Absolute Directory</label></td>

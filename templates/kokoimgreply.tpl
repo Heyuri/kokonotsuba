@@ -145,7 +145,7 @@
 
 
 		<!--&THREAD-->
-		<div class="thread" id="t{$BOARD_UID}_{$NO}">
+		<div class="thread {$BOARD_UID}" id="t{$BOARD_UID}_{$NO}">
 			{$BOARD_THREAD_NAME}
 			<div class="post op" id="p{$BOARD_UID}_{$NO}">
 				<div class="filesize">{$IMG_BAR}</div>
@@ -166,7 +166,7 @@
 				<div class="doubledash" valign="top">
 					&gt;&gt;
 				</div>
-				<div class="post reply" id="p{$NO}">
+				<div class="post reply {$BOARD_UID}" id="p{$NO}">
 					<div class="postinfo"><label><input type="checkbox" name="{$POST_UID}" value="delete"><big class="title"><b>{$SUB}</b></big> {$NAME_TEXT}<span class="name">{$NAME}</span> <span class="time">{$NOW}</span></label>
 					<nobr><span class="postnum">
 					<!--&IF($QUOTEBTN,'<a href="{$SELF}?res={$RESTO}#p{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$SELF}?res={$RESTO}#p{$NO}">No.{$NO}</a>')--></span>{$POSTINFO_EXTRA}</nobr>
@@ -182,7 +182,7 @@
 			<!--/&REPLY-->
 
 			<!--&SEARCHRESULT-->
-			<div class="post op">
+			<div class="post op {$BOARD_UID}">
 				<label><big class="title">{$SUB}</big>
 					{$NAME_TEXT}<span class="name">{$NAME}</span>
 					<span class="time">{$NOW}</span></label> No.{$NO}
@@ -197,7 +197,7 @@
 			<!--/&REPLY-->
 
 			<!--&SEARCHRESULT-->
-			<div class="post op">
+			<div class="post op {$BOARD_UID}">
 				<label><big class="title">{$SUB}</big>
 					{$NAME_TEXT}<span class="name">{$NAME}</span>
 					<span class="time">{$NOW}</span></label> No.{$NO}
@@ -339,7 +339,7 @@
 <!--&CREATE_BOARD-->
 		<form action="{$PHP_SELF}?mode=handleBoardRequests" method="POST">
 			<input type="hidden" name="new-board" value="1">
-			<table id="account-create-table">
+			<table id="board-create-table">
 				<tbody>
 					<tr>
 						<td class="postblock"><label for="new-board-title">Title</label></td>
@@ -351,7 +351,7 @@
 					</tr>
 					<tr>
 						<td class="postblock"><label for="new-board-identifier">Identifier</label></td>
-						<td><input required id="new-board-identifier" name="new-board-identifier" placeholder="b"></td> <td>The string that represents the board in the URL and file storage. e.g the 'b' in "/b/" or "boards.example.net/b/"</td>
+						<td><input id="new-board-identifier" name="new-board-identifier" placeholder="b"></td> <td>The string that represents the board in the URL and file storage. e.g the 'b' in "/b/" or "boards.example.net/b/"</td>
 					</tr>
 					<tr>
 						<td class="postblock"><label for="new-board-path">Absolute Directory</label></td>
