@@ -28,7 +28,6 @@ class overboard {
 		$pte_vals += array('{$HOME}' => '[<a href="'.$this->config['HOME'].'" target="_top">'._T('head_home').'</a>]',
 			'{$STATUS}' => '[<a href="'.$this->config['PHP_SELF'].'?mode=status">'._T('head_info').'</a>]',
 			'{$ADMIN}' => '[<a href="'.$this->config['PHP_SELF'].'?mode=admin">'._T('head_admin').'</a>]',
-			'{$OVERBOARD}' => '[<a href="'.$this->config['PHP_SELF'].'?mode=overboard">Overboard</a>]',
 			'{$REFRESH}' => '[<a href="'.$this->config['PHP_SELF2'].'?">'._T('head_refresh').'</a>]',
 			'{$HOOKLINKS}' => '', '{$TITLE}' => htmlspecialchars($this->config['OVERBOARD_TITLE']), '{$TITLESUB}' => htmlspecialchars($this->config['OVERBOARD_SUBTITLE'])
 			);

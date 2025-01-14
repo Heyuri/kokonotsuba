@@ -60,7 +60,8 @@ class PTELibrary{
 	/* 將樣版的標籤取代為正確的字串並傳回 */
 	function ParseBlock($blockName, $ary_val){ 
 		$ary_val = array_merge(array(
-			'{$LANGUAGE}'=>$this->config['PIXMICAT_LANGUAGE'],
+			'{$LANGUAGE}' => $this->config['PIXMICAT_LANGUAGE'],
+			'{$OVERBOARD}' => $this->config['ADMINBAR_OVERBOARD_BUTTON'] ? '[<a href="'.$this->config['PHP_SELF'].'?mode=overboard">Overboard</a>]' : ' ',
 			'{$STATIC_URL}'=>$this->config['STATIC_URL'], '{$REF_URL}'=>$this->config['REF_URL'],
 			'{$PHP_SELF}'=>$this->config['PHP_SELF'], '{$PHP_SELF2}'=>$this->config['PHP_SELF2'], '{$PHP_EXT}'=>$this->config['PHP_EXT'],
 			'{$TITLE}'=>$this->board->getBoardTitle(), '{$TITLESUB}'=>$this->board->getBoardSubTitle(),
