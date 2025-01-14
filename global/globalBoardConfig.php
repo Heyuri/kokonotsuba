@@ -266,12 +266,12 @@ $config['HTTP_UPLOAD_DIFF'] = 50;
 // Overboard title and sub-title
 $config['OVERBOARD_TITLE'] = "Overboard";
 $config['OVERBOARD_SUBTITLE'] = "Posts from all koko boards";
-
 // HTML that will appear above the filter box
 $config['OVERBOARD_SUB_HEADER_HTML'] = '';
-
 // How many threads per page on the overboard
 $config['OVERBOARD_THREADS_PER_PAGE'] = 20;
+//A link to the overboard on the admin bar (next to [Admin] on the top right). Displayed as [Overboard]
+$config['ADMINBAR_OVERBOARD_BUTTON'] = false;
 
 $config['ACTIONLOG_MAX_PER_PAGE'] = 250; // the amount of actionlog entries per page
 
