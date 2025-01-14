@@ -161,7 +161,7 @@
 
 				<!--&REPLY-->
 				<!--&IF($IS_PREVIEW,'<table class="thread" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3"><tbody><tr><td>','')-->
-				<div class="post reply {$BOARD_UID}" id="p{$BOARD_UID}_{$NO}">
+				<div class="post reply {$BOARD_UID}" id="p{$NO}">
 					<div class="filesize">{$IMG_BAR}</div>
 					<!--&IF($IMG_SRC,'{$IMG_SRC}<br clear="ALL">','')-->
 					<font size="+2"><b class="title"><a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$NO}">{$SUB}</a></b></font>
