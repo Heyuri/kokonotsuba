@@ -660,3 +660,39 @@ button,input[type=submit],input[type=reset] {
 	text-align: center;
 }
 
+.detailsbox {
+	padding: 4px;
+	display: inline;
+}
+
+.detailsbox > summary {
+  padding: 4px;
+  cursor: pointer;
+}
+
+.selectlinktextjs {
+	font-size: 10px;
+	user-select: none;
+}
+
+.littlelist {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.overboardFilterFormContainer {
+	text-align: center;
+}
+
+.overboardThreadBoardTitle {
+	font-weight: bold;
+}
+
+.url-input {
+	min-width: 35ch;
+}
+
+.mod-extra-info {
+	text-align: center;
+}

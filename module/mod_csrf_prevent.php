@@ -14,15 +14,16 @@ class mod_csrf_prevent extends ModuleHelper {
 	}
 
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo, $isReply){
+		$globalHTML = new globalHTML($this->board);
 		$CSRFdetectd = false;
 		/* Check HTTP_REFERER (to prevent cross-site form)
 		 *  1. No HTTP_REFERER
 		 *  2. HTTP_REFERER is not in this domain
 		 */
-		if(!strpos($_SERVER['HTTP_REFERER']??'', fullURL()))
+		if(!strpos($_SERVER['HTTP_REFERER']??'', $globalHTML->fullURL()))
 			$CSRFdetectd = true;
 
-		if($CSRFdetectd) error('ERROR: CSRF detected!');
+		if($CSRFdetectd) $globalHTML->error('ERROR: CSRF detected!');
 	}
 }//End-Of-Module
 

@@ -10,6 +10,8 @@
  * IPIO
  */
 interface IPIO {
+
+	public function fetchPostsFromThread($threadUID, $start = 0, $amount = 0);
 	/**
 	 * 取得 PIO 模組版本。
 	 *
@@ -17,78 +19,6 @@ interface IPIO {
 	 */
 	public function pioVersion();
 
-	/**
-	 * 處理連線字串/連接。
-	 *
-	 */
-	public function dbConnect();
-
-	/**
-	 * 資料來源初始化。
-	 *
-	 * @param  boolean $isAddInitData 是否建立一筆預設資料
-	 */
-	public function dbInit($isAddInitData = true);
-
-	/**
-	 * 連接資料來源並準備使用。
-	 *
-	 * @param  boolean $reload 是否強制重新連接
-	 * @param  boolean $transaction 是否使用交易模式(如果支援的話)
-	 */
-	public function dbPrepare($reload = false, $transaction = false);
-
-	/**
-	 * 提交/儲存。
-	 */
-	public function dbCommit();
-
-	/**
-	 * 維護資料來源的操作。
-	 *
-	 * @param  string  $action 執行操作
-	 * @param  boolean $doit   是否執行
-	 * @return boolean         是否支援此操作 ($doit為false時做為查詢之用)
-	 */
-	public function dbMaintanence($action, $doit = false);
-
-	/**
-	 * 自中介格式匯入資料來源。
-	 *
-	 * @param  string $data 中介檔的檔案全文
-	 * @return boolean       操作是否成功
-	 */
-	public function dbImport($data);
-
-	/**
-	 * 匯出資料來源至中介格式。
-	 *
-	 * @return string 中介檔的檔案全文
-	 */
-	public function dbExport();
-
-	/**
-	 * 取得文章數目。
-	 *
-	 * @param  integer $resno 討論串文章編號。有指定的話則回傳指定討論串之文章數
-	 * @return integer         文章數目
-	 */
-	public function postCount($resno = 0);
-
-	/**
-	 * 取得討論串數目。
-	 *
-	 * @return integer         討論串數目
-	 */
-	public function threadCount();
-
-	/**
-	 * 取得最後文章編號。
-	 *
-	 * @param  string $state 取得狀態 'beforeCommit', 'afterCommit'
-	 * @return integer        最後文章編號
-	 */
-	public function getLastPostNo($state);
 
 	/**
 	 * 輸出文章清單
@@ -100,15 +30,6 @@ interface IPIO {
 	 */
 	public function fetchPostList($resno = 0, $start = 0, $amount = 0);
 
-	/**
-	 * 輸出討論串清單
-	 *
-	 * @param  integer $start  起始位置
-	 * @param  integer $amount 數目
-	 * @param  boolean $isDESC 是否依編號遞減排序
-	 * @return array          文章編號陣列
-	 */
-	public function fetchThreadList($start = 0, $amount = 0, $isDESC = false);
 
 	/**
 	 * 輸出文章
@@ -127,7 +48,7 @@ interface IPIO {
 	 * @param  boolean $warnOnly    是否僅提醒不刪除
 	 * @return array               附加圖檔及預覽圖陣列
 	 */
-	public function delOldAttachments($total_size, $storage_max, $warnOnly = true);
+	public function delOldAttachments($board, $total_size, $storage_max, $warnOnly = true);
 
 	/**
 	 * 刪除文章
@@ -170,9 +91,8 @@ interface IPIO {
 	 * @param boolean $age       是否推文
 	 * @param string  $status    狀態旗標
 	 */
-	public function addPost($no, $resto, $md5chksum, $category, $tim, $fname, $ext,
-		$imgw, $imgh, $imgsize, $tw, $th, $pwd, $now, $name, $email, $sub,
-		$com, $host, $age = false, $status = '');
+	public function addPost($boardUID, $no, $resto, $md5chksum, $category, $tim, $fname, $ext, $imgw, $imgh, 
+		$imgsize, $tw, $th, $pwd, $now, $name, $email, $sub, $com, $host, $age = false, $status = '');
 
 	/**
 	 * 檢查是否連續投稿
@@ -186,7 +106,7 @@ interface IPIO {
 	 * @param  boolean  $isupload   是否上傳附加圖檔
 	 * @return boolean             是否為連續投稿
 	 */
-	public function isSuccessivePost($lcount, $com, $timestamp, $pass,
+	public function isSuccessivePost($board, $lcount, $com, $timestamp, $pass,
 		$passcookie, $host, $isupload);
 
 	/**
@@ -196,15 +116,7 @@ interface IPIO {
 	 * @param  string  $md5hash MD5
 	 * @return boolean          是否為連續貼圖
 	 */
-	public function isDuplicateAttachment($lcount, $md5hash);
-
-	/**
-	 * 有此討論串?
-	 *
-	 * @param int $no        文章編號
-	 * @return boolean     討論串是否存在
-	 */
-	public function isThread($no);
+	public function isDuplicateAttachment($board, $lcount, $md5hash);
 
 	/**
 	 * 搜尋文章
@@ -270,14 +182,14 @@ interface IFileIO {
      * @param string $imgname 圖檔名稱
      * @return bool 是否存在
      */
-    function imageExists($imgname);
+    function imageExists($imgname, $board);
 
     /**
      * 刪除圖片。
      *
      * @param string $imgname 圖檔名稱
      */
-    function deleteImage($imgname);
+    function deleteImage($imgname, $board);
 
     /**
      * 上傳圖片。
@@ -286,7 +198,7 @@ interface IFileIO {
      * @param string $imgpath 圖檔路徑
      * @param int $imgsize 圖檔檔案大小 (byte)
      */
-    function uploadImage($imgname, $imgpath, $imgsize);
+    function uploadImage($imgname, $imgpath, $imgsize, $board);
 
     /**
      * 取得圖檔檔案大小。
@@ -294,7 +206,7 @@ interface IFileIO {
      * @param string $imgname 圖檔名稱
      * @return mixed 檔案大小 (byte) 或 0 (失敗時)
      */
-    function getImageFilesize($imgname);
+    function getImageFilesize($imgname, $board);
 
     /**
      *　取得圖檔的 URL 以便 &lt;img&gt; 標籤顯示圖片。
@@ -302,7 +214,7 @@ interface IFileIO {
      * @param string $imgname 圖檔名稱
      * @return string 圖檔 URL
      */
-    function getImageURL($imgname);
+    function getImageURL($imgname, $board);
 
     /**
      * 取得預覽圖檔名。
@@ -310,22 +222,15 @@ interface IFileIO {
      * @param string $thumbPattern 預覽圖檔名格式
      * @return string 預覽圖檔名
      */
-    function resolveThumbName($thumbPattern);
+    function resolveThumbName($thumbPattern, $board);
 
     /**
      * 回傳目前總檔案大小 (單位 KB)
      *
      * @return int 目前總檔案大小
      */
-    function getCurrentStorageSize();
+    function getCurrentStorageSize($board);
 
-    /**
-     * 更新總檔案大小數值
-     *
-     * @param int $delta 本次更動檔案大小，作為差異修改之用 (單位 byte)
-     * @return int 目前容量大小 (單位 byte)
-     */
-    function updateStorageSize($delta = 0);
 }
 
 /**
@@ -339,7 +244,7 @@ interface IPIOCondition {
 	 * @param  mixed  $limit 判斷機制上限參數
 	 * @return boolean       是否需要進行進一步檢查
 	 */
-	public static function check($type, $limit);
+	public static function check($board, $type, $limit);
 
 	/**
 	 * 列出需要刪除的文章編號列表。
@@ -348,7 +253,7 @@ interface IPIOCondition {
 	 * @param  mixed  $limit 判斷機制上限參數
 	 * @return array         文章編號列表陣列
 	 */
-	public static function listee($type, $limit);
+	public static function listee($board, $type, $limit);
 
 	/**
 	 * 輸出 Condition 物件資訊。
@@ -356,7 +261,7 @@ interface IPIOCondition {
 	 * @param  mixed  $limit 判斷機制上限參數
 	 * @return string        物件資訊文字
 	 */
-	public static function info($limit);
+	public static function info($board, $limit);
 }
 
 /**

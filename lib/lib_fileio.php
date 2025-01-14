@@ -9,54 +9,22 @@
  * 抽象 FileIO，預先實作好本地圖檔相關方法。
  */
 abstract class AbstractFileIO implements IFileIO {
-	private $config;
-    /** @var ILogger */
-    var $LOG;
-
-    /**
-     * 伺服器絕對位置
-     *
-     * @var string
-     */
-    private $absoluteUrl;
-
-    /**
-     * 圖檔總容量快取檔案位置
-     *
-     * @var string
-     */
-    private $cacheFile;
+    /** @public ILogger */
+    public $LOG;
+    
 
     public function __construct() {
-    	global $config;
-    	$this->config = $config;
-    	
-        $this->LOG = PMCLibrary::getLoggerInstance('AbstractFileIO');
-        $this->absoluteUrl = $this->getAbsoluteUrl();
-        $this->cacheFile = $this->getCacheFile();
-   
+    	$globalconfig = getGlobalConfig();
+        $this->LOG = PMCLibrary::getLoggerInstance($globalconfig['ERROR_HANDLER_FILE'], 'AbstractFileIO');
     }
 
-    private function getAbsoluteUrl() {
-    	if (!empty($this->config['CDN_URL'])) {
-			if ($this->config['CDN_URL'] !== "") {
-				return $this->config['CDN_URL'];
-			}
-		}
-
-        $phpSelf = $_SERVER['PHP_SELF'];
-        return sprintf(
-                '//%s%s', $_SERVER['HTTP_HOST'], substr($phpSelf, 0, strpos($phpSelf, $this->config['PHP_SELF']))
-        );
+    private function getAbsoluteUrl($board) {
+        return $board->getBoardUploadedFilesURL();
     }
-
-    private function getCacheFile() {
-        return $this->config['STORAGE_PATH'] . 'sizecache.dat';
-    }
-
-    protected function getImageLocalURL($imgname) {
-        return $this->absoluteUrl .
-                (strpos($imgname, 's.') !== false ? basename($this->config['THUMB_DIR']) : basename($this->config['IMG_DIR'])).'/'.
+    protected function getImageLocalURL($imgname, $board) {
+        $config = $board->loadBoardConfig();
+        return $this->getAbsoluteUrl($board) .
+                (strpos($imgname, 's.') !== false ? basename($config['THUMB_DIR']) : basename($config['IMG_DIR'])).'/'.
                 $imgname;
     }
 
@@ -71,49 +39,25 @@ abstract class AbstractFileIO implements IFileIO {
         return ($result !== false);
     }
 
-    public function getCurrentStorageSize() {
-        $size = 0;
-        if (!is_file($this->cacheFile)) {
-            $size = $this->updateStorageSize();
-        } else {
-            $size = file_get_contents($this->cacheFile);
-        }
-        return intval($size / 1024);
+    //get board storage size in KB
+    public function getCurrentStorageSize($board) {
+		$config = $board->loadBoardConfig();
+        $globalHTML = new globalHTML($board);
+
+        if(!file_exists($board->getBoardUploadedFilesDirectory().$config['THUMB_DIR'])) $globalHTML->error("Thumb directory not found or created ".$board->getBoardUploadedFilesDirectory().$config['THUMB_DIR']);
+        if(!file_exists($board->getBoardUploadedFilesDirectory().$config['IMG_DIR'])) $globalHTML->error("Image directory not found or created ".$board->getBoardUploadedFilesDirectory().$config['IMG_DIR']);
+		
+        $totalSize = 0;
+		$dirs = array(
+			new RecursiveDirectoryIterator($board->getBoardUploadedFilesDirectory().$config['IMG_DIR']),
+			new RecursiveDirectoryIterator($board->getBoardUploadedFilesDirectory().$config['THUMB_DIR'])
+		);
+
+		foreach ($dirs as $dir) {
+			$totalSize += $this->getDirectoryTotalSize($dir);
+		}
+		return $totalSize;
     }
-
-    public function updateStorageSize($delta = 0) {
-        if (!is_file($this->cacheFile)) {
-            $sizeNow = $this->getCurrentStorageSizeNoCache();
-        } else {
-            $sizeNow = file_get_contents($this->cacheFile) + $delta;
-            if ($delta == 0) {
-                return $sizeNow;
-            }
-        }
-
-        $this->writeToCache($sizeNow);
-        return $sizeNow;
-    }
-
-    /**
-     * 不依賴圖檔總容量快取檔案，取得目前圖檔所占空間 (單位 byte)
-     *
-     * @return int 圖檔所占空間
-     */
-    protected abstract function getCurrentStorageSizeNoCache();
-
-    /**
-     * 寫入到圖檔總容量快取檔案。
-     *
-     * @param int $sizeNow
-     */
-    private function writeToCache($sizeNow) {
-        file_put_contents(
-                $this->cacheFile, $sizeNow, LOCK_EX
-        );
-        chmod($this->cacheFile, 0666);
-    }
-
 }
 
 /**
@@ -139,11 +83,11 @@ abstract class AbstractIfsFileIO extends AbstractFileIO {
         $this->IFS->saveIndex();
     }
 
-    public function imageExists($imgname) {
+    public function imageExists($imgname, $board) {
         return $this->IFS->beRecord($imgname);
     }
 
-    public function getImageFilesize($imgname) {
+    public function getImageFilesize($imgname, $board) {
         $rc = $this->IFS->getRecord($imgname);
         if (!is_null($rc)) {
             return $rc['imgSize'];
@@ -151,14 +95,14 @@ abstract class AbstractIfsFileIO extends AbstractFileIO {
         return 0;
     }
 
-    public function resolveThumbName($thumbPattern) {
-        return $this->IFS->findThumbName($thumbPattern);
+    public function resolveThumbName($thumbPattern, $board) {
+        return $this->IFS->findThumbName($thumbPattern, $board);
     }
 
-    protected function getCurrentStorageSizeNoCache() {
-        return $this->IFS->getCurrentStorageSize();
+    protected function getCurrentStorageSizeNoCache($board) {
+        return $this->IFS->getCurrentStorageSize($board);
     }
 }
 
 // 引入實作
-require $config['ROOTPATH'] . 'lib/fileio/fileio.' . $config['FILEIO_BACKEND'] . '.php';
+require __DIR__.'/fileio/fileio.local.php';

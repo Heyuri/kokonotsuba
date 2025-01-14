@@ -24,7 +24,7 @@ class mod_anigif extends ModuleHelper {
 	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $isReply, $imgWH, &$status) {
 		$fh = new FlagHelper($status);
 
-		$size =($dest && is_file($dest)) ? @getimagesize($dest) :[];
+		$size =($dest && is_file($dest)) ? getimagesize($dest) :[];
 
 		if(isset($_POST['anigif']) && isset($size[2]) && ($size[2] == 1)) {
 			$fh->toggle('agif');
@@ -33,13 +33,13 @@ class mod_anigif extends ModuleHelper {
 	}
 
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
-		$PIO = PMCLibrary::getPIOInstance();
+		$PIO = PIOPDO::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 
 		$fh = new FlagHelper($post['status']);
-		if($FileIO->imageExists($post['tim'].$post['ext'])
+		if($FileIO->imageExists($post['tim'].$post['ext'], $this->board)
 		&& $fh->value('agif')) {
-			$imgURL = $FileIO->getImageURL($post['tim'].$post['ext']);
+			$imgURL = $FileIO->getImageURL($post['tim'].$post['ext'], $this->board);
 			$arrLabels['{$IMG_SRC}'] = preg_replace('/<img src=".*"/U','<img src="'.$imgURL.'"',$arrLabels['{$IMG_SRC}']);
 			$arrLabels['{$IMG_BAR}'].= '<small>[Animated GIF]</small>';
 		}
@@ -52,34 +52,36 @@ class mod_anigif extends ModuleHelper {
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$fh = new FlagHelper($post['status']);
 		if ($post['ext'] == '.gif') {
-			$modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'"'.($fh->value('agif')?' title="Use still image of GIF">g':' title="Use Animated GIF">G').'</a>]';
+			$modfunc.= '[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('agif')?' title="Use still image of GIF">g':' title="Use Animated GIF">G').'</a>]';
 		}
 	}
 
 	public function ModulePage() {
-		$PIO = PMCLibrary::getPIOInstance();
+		$PIO = PIOPDO::getInstance();
+		$actionLogger = ActionLogger::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
-		$AccountIO = PMCLibrary::getAccountIOInstance();
+		$staffSession = new staffAccountFromSession;
+		$softErrorHandler = new softErrorHandler($this->board);
+		$roleLevel = $staffSession->getRoleLevel();
 		
-		if($AccountIO->valid() < $this->config['roles']['LEV_JANITOR']) {
-			error('403 Access denied');
-		}
+		$softErrorHandler->handleAuthError($this->config['roles']['LEV_JANITOR']);
 
-		$post = $PIO->fetchPosts($_GET['no']);
-		if(!count($post)) error('ERROR: Post does not exist.');
-		if($post[0]['ext'] && $post[0]['ext'] == '.gif') {
-			if(!$FileIO->imageExists($post[0]['tim'].$post[0]['ext'])) {
-				error('ERROR: attachment does not exist.');
+		$post = $PIO->fetchPostsFromThread($_GET['thread_uid'])[0];
+		if(!count($post)) $globalHTML->error('ERROR: Post does not exist.');
+		if($post['ext'] && $post['ext'] == '.gif') {
+			if(!$FileIO->imageExists($post['tim'].$post['ext'], $this->board)) {
+				$globalHTML->error('ERROR: attachment does not exist.');
 			}
-			$flgh = $PIO->getPostStatus($post[0]['status']);
+			$flgh = $PIO->getPostStatus($post['post_uid']);
 			$flgh->toggle('agif');
-			$PIO->setPostStatus($post[0]['no'], $flgh->toString());
-			$PIO->dbCommit();
+			$PIO->setPostStatus($post['post_uid'], $flgh->toString());
 			
-			logtime('Changed anigif status on post No.'.$post['no'].' ('.($flgh->value('agif')?'true':'false').')', $AccountIO->valid());
+			$logMessage = $flgh->value('agif') ? "Animated gif activated on No. {$post['no']}" : "Animated gif taken off of No. {$post['no']}";
+			$actionLogger->logAction($logMessage, $this->board->getBoardUID());
+			
 			redirect('back', 0);
 		} else {
-			error('ERROR: Post does not have attechment.');
+			$globalHTML->error('ERROR: Post does not have attechment.');
 		}
 	}
 }

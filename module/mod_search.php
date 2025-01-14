@@ -23,25 +23,25 @@ class mod_search extends ModuleHelper {
 	}
 
 	public function ModulePage(){
-		$PTE = PMCLibrary::getPTEInstance();
-		$PMS = PMCLibrary::getPMSInstance();
-		$PIO = PMCLibrary::getPIOInstance();
-		$FileIO = PMCLibrary::getFileIOInstance();
-		$AccountIO = PMCLibrary::getAccountIOInstance();
+		$PTE = PTELibrary::getInstance();
+		$PMS = PMS::getInstance();
+		$PIO = PIOPDO::getInstance();
+		$staffSession = new staffAccountFromSession;
+		$globalHTML = new globalHTML($this->board);
+
+		$roleLevel = $staffSession->getRoleLevel();
 		
 		$searchKeyword = isset($_POST['keyword']) ? trim($_POST['keyword']) : ''; // The text you want to search
 		$dat = '';
-		head($dat);
+		$globalHTML->head($dat);
 		$links = '[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>]';
-		$level = $AccountIO->valid();
-		$PMS->useModuleMethods('LinksAboveBar', array(&$links,'search',$level));
 		$dat .= $links.'<center class="theading2"><b>'._T('search_top').'</b></center>
 		</div>
 		';
 		
 		echo $dat;
 		if($searchKeyword==''){
-		echo '<form action="'.$this->config['PHP_SELF'].'?mode=module&load=mod_search" method="post">
+		echo '<form action="'.$this->mypage.'" method="post">
 		<div id="search">
 		<input type="hidden" name="mode" value="search">
 		';
@@ -58,12 +58,13 @@ class mod_search extends ModuleHelper {
 			$searchMethod = $_POST['method']; // Search method
 			$searchKeyword = preg_split('/(　| )+/', strtolower(trim($searchKeyword))); // Search text is cut with spaces
 			if ($searchMethod=='REG') $searchMethod = 'AND';
-			$hitPosts = $PIO->searchPost($searchKeyword, $searchField, $searchMethod); // Directly return the matching article content array
+			$hitPosts = $PIO->searchPost($this->board, $searchKeyword, $searchField, $searchMethod) ?? []; // Directly return the matching article content array
 
 			echo '<div id="searchresult">';
 			$resultlist = '';
 			foreach($hitPosts as $post){
 				extract($post);
+				$resno = $PIO->resolveThreadNumberFromUID($thread_uid);
 				if($this->config['USE_CATEGORY']){
 					$ary_category = explode(',', str_replace('&#44;', ',', $category)); $ary_category = array_map('trim', $ary_category);
 					$ary_category_count = count($ary_category);
@@ -73,13 +74,13 @@ class mod_search extends ModuleHelper {
 					}
 					$category = implode(', ', $ary_category2);
 				}else $category = '';
-					$com = quote_link($com);
-					$com = quote_unkfunc($com);
+					$com = $globalHTML->quote_link($this->board, $PIO, $com);
+					$com = $globalHTML->quote_unkfunc($com);
 				
-					$arrLabels = array('{$NO}'=>'<a href="'.$this->config['PHP_SELF'].'?res='.($resto?$resto.'#p'.$no:$no).'">'.$no.'</a>', '{$SUB}'=>$sub, '{$NAME}'=>$name, '{$NOW}'=>$now, '{$COM}'=>$com, '{$CATEGORY}'=>$category, '{$NAME_TEXT}'=>_T('post_name'), '{$CATEGORY_TEXT}'=>_T('post_category'));
+					$arrLabels = array('{$NO}'=>'<a href="'.$this->config['PHP_SELF'].'?res='.($resno?$resno.'#p'.$no:$no).'">'.$no.'</a>', '{$SUB}'=>$sub, '{$NAME}'=>$name, '{$NOW}'=>$now, '{$COM}'=>$com, '{$CATEGORY}'=>$category, '{$NAME_TEXT}'=>_T('post_name'), '{$CATEGORY_TEXT}'=>_T('post_category'));
 				$resultlist .= $PTE->ParseBlock('SEARCHRESULT',$arrLabels);
 			}
-			echo $resultlist ? $resultlist : '<center>'._T('search_notfound').'<br>[<a href="?mode=search">'._T('search_back').'</a>]</center>';
+			echo $resultlist ? $resultlist : '<center>'._T('search_notfound').'<br>[<a href="'.$this->mypage.'">'._T('search_back').'</a>]</center>';
 			echo "</div>";
 		}
 	}

@@ -1,10 +1,9 @@
 <?php
-    class mod_wf implements IModule {
-      private $config, $FILTERS;
+    class mod_wf extends ModuleHelper {
+      private $FILTERS;
      
       public function __construct($PMS) {
-      	global $config;
-      	$this->config = $config;
+      	parent::__construct($PMS);
       	$this->FILTERS = $this->config['ModuleSettings']['FILTERS'];
       
         $this->addEmojiFilters();

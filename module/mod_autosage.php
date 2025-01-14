@@ -19,17 +19,17 @@ class mod_autosage extends ModuleHelper {
 		return 'Koko BBS Release 1';
 	}
 
-	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $resto, $img, &$status) {
-		$PIO = PMCLibrary::getPIOInstance();
-		if ($resto) {
-			$post = $PIO->fetchPosts($resto)[0];
+	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, $img, &$status) {
+		$PIO = PIOPDO::getInstance();
+	
+		if ($thread_uid) {
+			$post = $PIO->fetchPostsFromThread($thread_uid)[0];
 			$fh = new FlagHelper($post['status']);
 			if($fh->value('as')) $age = false;
 		}
 	}
 
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
-		$PIO = PMCLibrary::getPIOInstance();
 		$fh = new FlagHelper($post['status']);
 		if($fh->value('as')) {
 			$arrLabels['{$POSTINFO_EXTRA}'].='&nbsp;<b title="AutoSage"><font color="#F00">AS</font></b>';
@@ -37,36 +37,35 @@ class mod_autosage extends ModuleHelper {
 	}
 
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
-		$AccountIO = PMCLibrary::getAccountIOInstance();
-		if ($AccountIO->valid() < $this->config['roles']['LEV_MODERATOR']) return;
+		$staffSession = new staffAccountFromSession;
+		$roleLevel = $staffSession->getRoleLevel();
+
+		if ($roleLevel < $this->config['AuthLevels']['CAN_AUTO_SAGE']) return;
 		$fh = new FlagHelper($post['status']);
-		if(!$isres) $modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'"'.($fh->value('as')?' title="Allow age">as':' title="Autosage">AS').'</a>]';
+		if(!$isres) $modfunc.= '[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('as')?' title="Allow age">as':' title="Autosage">AS').'</a>]';
 	}
 
 	public function ModulePage() {
-		$PIO = PMCLibrary::getPIOInstance();
-		$AccountIO = PMCLibrary::getAccountIOInstance();
+		$PIO = PIOPDO::getInstance();
+		$actionLogger = ActionLogger::getInstance();
+		$globalHTML = new globalHTML($this->board);
+		$softErrorHandler = new softErrorHandler($this->board);
+		$staffSession = new staffAccountFromSession;
+		$roleLevel = $staffSession->getRoleLevel();
 		
-		$level = $AccountIO->valid();
+		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_AUTO_SAGE']);
 		
-		if ($level < $this->config['roles']['LEV_MODERATOR']) {
-			error('403 Access denied');
-		}
-
-		$post = $PIO->fetchPosts(intval($_GET['no']))[0];
-		if (!$PIO->isThread($post['no'])) error('ERROR: Cannot autosage reply.');
-		if (!$post) error('ERROR: Post does not exist.');
-		$flgh = $PIO->getPostStatus($post['status']);
+		$post = $PIO->fetchPostsFromThread(strval($_GET['thread_uid']))[0];
+		if (!$PIO->isThreadOP($post['post_uid'])) $globalHTML->error('ERROR: Cannot autosage reply.');
+		if (!$post) $globalHTML->error('ERROR: Post does not exist.');
+		$flgh = $PIO->getPostStatus($post['post_uid']);
 		$flgh->toggle('as');
-		$PIO->setPostStatus($post['no'], $flgh->toString());
-		$PIO->dbCommit();
+		$PIO->setPostStatus($post['post_uid'], $flgh->toString());
 		
-		//username for logging
-		$moderatorUsername = $AccountIO->getUsername();
-		$moderatorLevel = $AccountIO->getRoleLevel();
-
-		logtime('Changed autosage status on post No.'.$post['no'].' ('.($flgh->value('as')?'true':'false').')', $moderatorUsername.' ## '.$moderatorLevel);
-		updatelog();
+		$logMessage = $flgh->value('as') ? "Autosaged No. {$post['no']}" : "Took off autosage on No. {$post['no']}";
+		$actionLogger->logAction($logMessage, $this->board->getBoardUID());
+		
+		$this->board->rebuildBoard();	
 		redirect('back', 1);
 	}
 }

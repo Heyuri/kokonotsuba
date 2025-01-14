@@ -153,7 +153,7 @@ class mod_pm extends ModuleHelper {
 
 	private function _getPM($trip) {
 		$PMS = self::$PMS;
-		$PTE = PMCLibrary::getPTEInstance();
+		$PTE = PTELibrary::getInstance();
 		$dat='';
 		$trip=substr($trip,1);
 		$tripped=$this->_tripping($trip);
@@ -199,15 +199,16 @@ class mod_pm extends ModuleHelper {
 
 	public function ModulePage(){
 		$PMS = self::$PMS;
-		$PIO  = PMCLibrary::getPIOInstance();
+		$PIO  = PIOPDO::getInstance();
 		$FileIO  = PMCLibrary::getFileIOInstance();
 		
+		$globalHTML = new globalHTML($this->board);
 		$trip=isset($_REQUEST['t'])?$_REQUEST['t']:'';
 		$action=isset($_REQUEST['action'])?$_REQUEST['action']:'';
 		$dat='';
 
 		if($action != 'postverify') {
-			head($dat);
+			$globalHTML->head($dat);
 			echo $dat.'[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>]';
 		}
 		if($action == 'write') {
@@ -249,7 +250,7 @@ $g("pmform").from.value=getCookie("namec");
 				$_POST['from'] = $nameOri = $regs[1]; $cap = strtr($regs[2], array('&amp;'=>'&'));
 				$_POST['from'] = $_POST['from'].'<span class="nor">'._T('trip_pre').$this->_tripping($cap)."</span>";
 			}
-			head($dat);
+			$globalHTML->head($dat);
 			echo $dat.'[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>]';
 			echo '<div class="bar_reply">Message sent.</div>
 <table cellpadding="1" cellspacing="1" id="postform_tbl" style="margin-left:1.5em">

@@ -1,43 +1,47 @@
 <?php
-/* mod_exif : EXIF information (Pre-Alpha)
+/* mod_imagemeta : image reverse searching and exif information (Pre-Alpha)
  * $Id$
  * exif.php from http://www.rjk-hosting.co.uk/programs/prog.php?id=4
  */
-class mod_exif extends ModuleHelper {
-    private $enable_exif   = true; // Enable EXIF
-    private $enable_imgops = false; // Enable ImgOps
-    private $enable_iqdb   = false; // Enable iqdb
+class mod_imagemeta extends ModuleHelper {
+    private $enable_exif, $enable_imgops, $enable_iqdb = false; // Enable iqdb
     
 	private $myPage;
 	
 	public function __construct($PMS) {
 		parent::__construct($PMS);
 		$this->myPage = $this->getModulePageURL(); // Base position
+		
+		$this->enable_exif = $this->config['ModuleSettings']['EXIF_DATA_VIEWER'];
+		$this->enable_imgops = $this->config['ModuleSettings']['IMG_OPS'];
+		$this->enable_iqdb = $this->config['ModuleSettings']['IQDB'];
 	}
 
 	public function getModuleName(){
-		return 'mod_exif : EXIF資訊';
+		return 'mod_imagemeta : image meta info and reverse searcher';
 	}
 
 	public function getModuleVersionInfo(){
 		return 'Koko BBS Release 1';
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply){
-		$FileIO =PMCLibrary::getFileIOInstance();
+	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
+		$FileIO = PMCLibrary::getFileIOInstance();
         $file = $post['tim'].$post['ext'];
         
+		$board = searchBoardArrayForBoard($this->moduleBoardList, $post['boardUID']);
+
         //EXIF
-		if($this->enable_exif && $FileIO->imageExists($file) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-			$arrLabels['{$IMG_BAR}'] .= '<small>[<a href="'.$this->myPage.'&file='.$file.'">EXIF</a>]</small> ';
+		if($this->enable_exif && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
+			$arrLabels['{$IMG_BAR}'] .= '<small>[<a href="'.$this->myPage.'&file='.$file.'&boardUID='.$board->getBoardUID().'">EXIF</a>]</small> ';
 		}
 		//ImgOps
-		if($this->enable_imgops && $FileIO->imageExists($file) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-		    $arrLabels['{$IMG_BAR}'] .= '<small>[<a href="http://imgops.com/'.substr($FileIO->getImageURL($file), 2).'" target="_blank">ImgOps</a>]</small> ';
+		if($this->enable_imgops && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
+		    $arrLabels['{$IMG_BAR}'] .= '<small>[<a href="http://imgops.com/'.$FileIO->getImageURL($file, $board).'" target="_blank">ImgOps</a>]</small> ';
 		}
 		//Anime/manga search engine
-		if($this->enable_iqdb && $FileIO->imageExists($file) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-			$arrLabels['{$IMG_BAR}'] .= '<small>[<a href="http://iqdb.org/?url='.$FileIO->getImageURL($file).'" target="_blank">iqdb</a>]</small> ';
+		if($this->enable_iqdb && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
+			$arrLabels['{$IMG_BAR}'] .= '<small>[<a href="http://iqdb.org/?url='.$FileIO->getImageURL($file, $board).'" target="_blank">iqdb</a>]</small> ';
 		}
 	}
 
@@ -47,20 +51,25 @@ class mod_exif extends ModuleHelper {
 
 	public function ModulePage(){
 		$FileIO =PMCLibrary::getFileIOInstance();
+		$globalHTML = new globalHTML($this->board);
 		
+		$boardUID = $_GET['boardUID'] ?? $this->board->getBoardUID();
+		$board = searchBoardArrayForBoard($this->moduleBoardList, $boardUID);
+		$boardConfig = $board->loadBoardConfig();
+		
+
 		$h = '';
-		head($h);
+		$globalHTML->head($h);
 		echo $h;
-		$file=isset($_GET['file'])?$_GET['file']:'';
+		$file = $_GET['file'] ?? '';
 		echo '[<a href="'.$this->config['PHP_SELF2'].'">Return</a>]';
 		echo '<p>';
-		if($file && $FileIO->imageExists($file)){
-			$pfile=$this->config['IMG_DIR'].'/'.$file;
+		if($file && $FileIO->imageExists($file, $board)){
+			$pfile = $board->getBoardUploadedFilesDirectory().$boardConfig['IMG_DIR'].'/'.$file;
 			if(function_exists("exif_read_data")) {
 				echo "DEBUG: Using exif_read_data()<br>";
 				$exif_data = exif_read_data($pfile, 0, true);
-				//if(isset($exif_data['FILE'])) unset($exif_data['FILE']);
-				//if(isset($exif_data['COMPUTED'])) unset($exif_data['COMPUTED']);
+
 				if(is_array($exif_data) && count($exif_data)) {
 					echo 'Image contains EXIF data:<br>';
 					echo '</p><table border="1" class="exif"><tbody>';
@@ -93,7 +102,7 @@ class mod_exif extends ModuleHelper {
 		echo '</p>';
 		if(isset($_SERVER['HTTP_REFERER'])) echo '[<a href="'.$_SERVER['HTTP_REFERER'].'" onclick="event.preventDefault();history.go(-1);">Back</a>]';
 		$f = '';
-		foot($f);
+		$globalHTML->foot($f);
 		echo $f;
 	}
 }

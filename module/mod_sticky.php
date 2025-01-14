@@ -19,7 +19,7 @@ class mod_sticky extends ModuleHelper {
 	}
 
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
-		$PIO = PMCLibrary::getPIOInstance();
+		$PIO = PIOPDO::getInstance();
 		$fh = new FlagHelper($post['status']);
 		if ($fh->value('sticky')) {
 			$arrLabels['{$POSTINFO_EXTRA}'].='&nbsp;<img src="'.$this->STICKYICON.'" class="icon" title="Sticky">';
@@ -27,44 +27,44 @@ class mod_sticky extends ModuleHelper {
 	}
 
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
-		$AccountIO = PMCLibrary::getAccountIOInstance();
-		if ($AccountIO->valid() < $this->config['roles']['LEV_MODERATOR']) return;
+		$staffSession = new staffAccountFromSession;
+
+		if ($staffSession->getRoleLevel() < $this->config['AuthLevels']['CAN_STICKY']) return;
 		$fh = new FlagHelper($post['status']);
-		if (!$isres) $modfunc.= '[<a href="'.$this->mypage.'&no='.$post['no'].'"'.($fh->value('sticky')?' title="Unsticky">s':' title="Sticky post">S').'</a>]';
+		if (!$isres) $modfunc.= '[<a href="'.$this->mypage.'&post_uid='.$post['post_uid'].'"'.($fh->value('sticky')?' title="Unsticky">s':' title="Sticky post">S').'</a>]';
 	}
 	
 	public function autoHookRegistAfterCommit($lastno, $resto, $name, $email, $sub, $com) {
-		$PIO = PMCLibrary::getPIOInstance();
-		$threads = $PIO->fetchThreadList();
+		$PIO = PIOPDO::getInstance();
+		$threads = $PIO->getThreadListFromBoard($this->board);
 		foreach ($threads as $thread) {
-			$post = $PIO->fetchPosts($thread)[0];
-			$flgh = $PIO->getPostStatus($post['status']);
+			$post = $PIO->fetchPostsFromThread($thread)[0];
+			$flgh = $PIO->getPostStatus($post['post_uid']);
 			if ($flgh->value('sticky')) $PIO->bumpThread($thread,true);
 		}
-		$PIO->dbCommit();
 	}
 	
 	public function ModulePage() {
-		$PIO = PMCLibrary::getPIOInstance();
-		$AccountIO = PMCLibrary::getAccountIOInstance();
-
-		if ($AccountIO->valid() < $this->config['roles']['LEV_MODERATOR']) {
-			error('403 Access denied');
-		}
-
-		$post = $PIO->fetchPosts(intval($_GET['no']))[0];
-		if(!$PIO->isThread($post['no'])) error('ERROR: Cannot sticky reply.');
-		if(!$post) error('ERROR: Post does not exist.');
-		$flgh = $PIO->getPostStatus($post['status']);
-		$flgh->toggle('sticky');
-		$PIO->setPostStatus($post['no'], $flgh->toString());
-		$PIO->dbCommit();
+		$PIO = PIOPDO::getInstance();
+		$staffSession = new staffAccountFromSession;
+		$softErrorHandler = new softErrorHandler($this->board);
+		$actionLogger = ActionLogger::getInstance();
+		$globalHTML = new globalHTML($this->board);
 		
-		$level = $AccountIO->valid();
-		$moderatorUsername = $AccountIO->getUsername();
-		$moderatorLevel = $AccountIO->getRoleLevel();
-		logtime('Changed sticky status on post No.'.$post['no'].' ('.($flgh->value('sticky')?'true':'false').')', $moderatorUsername.' ## '.$moderatorLevel);
-		updatelog();
+		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_STICKY']);
+
+		$post = $PIO->fetchPosts(($_GET['post_uid']))[0];
+		if(!$PIO->isThreadOP($post['post_uid'])) $globalHTML->error('ERROR: Cannot sticky reply.');
+		if(!$post) $globalHTML->error('ERROR: Post does not exist.');
+		$flgh = $PIO->getPostStatus($post['post_uid']);
+		$flgh->toggle('sticky');
+		$PIO->setPostStatus($post['post_uid'], $flgh->toString());
+		
+		//reset its bump number to the last reply's increment
+		if (!$flgh->value('sticky')) $PIO->bumpThread($post['thread_uid']);
+
+		$actionLogger->logAction('Changed sticky status on post No.'.$post['no'].' ('.($flgh->value('sticky')?'true':'false').')', $this->board->getBoardUID());
+		$this->board->rebuildBoard();
 		redirect('back', 1);
 	}
 }

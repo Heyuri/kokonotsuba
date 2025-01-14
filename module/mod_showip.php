@@ -31,17 +31,18 @@ class mod_showip extends ModuleHelper {
 	}
 
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply){
-		//global $language;
-		$PIO = PMCLibrary::getPIOInstance();
+		$PIO = PIOPDO::getInstance();
 		
-		$email = ($post['resto'] ? $PIO->fetchPosts($post['resto'])[0]['email'] : $post['email']);
+		$isThreadOP = $PIO->isThreadOP($post['post_uid']);
+
+		$email = (!$isThreadOP ? $PIO->fetchPostsFromThread($post['thread_uid'])[0]['email'] : $post['email']);
 
 		$iphost = strtolower($post['host']);
 
 		if (!($this->IPTOGGLE == 2) && !($this->IPTOGGLE == 1 && stristr($email, 'displayip'))) {
 			return;
 		}
-		if (!$post['resto'] && $this->IPTOGGLE == 1) $arrLabels['{$COM}'] .= '<br><br><span style="color: #00C;"><b>Posts in this thread will display IP addresses.</b></span>';
+		if ($isThreadOP && $this->IPTOGGLE == 1) $arrLabels['{$COM}'] .= '<br><br><span style="color: #00C;"><b>Posts in this thread will display IP addresses.</b></span>';
 		if(ip2long($iphost)!==false) {
 			$arrLabels['{$NOW}'] .= ' (IP: '.preg_replace('/\d+\.\d+$/','*.*',$iphost).')';
 		} else if (inet_pton($iphost) !== false) { // ipv6

@@ -38,30 +38,10 @@ if (!function_exists('inet_pton')) {
 		return $ip;
 	}
 }
- 
-/* 取得完整的網址 */
-function fullURL(){
-	global $config;
-	return '//'.$_SERVER['HTTP_HOST'].substr($_SERVER['PHP_SELF'], 0, strpos($_SERVER['PHP_SELF'], $config['PHP_SELF']));
-}
 
 /* 反櫻花字 */
 function anti_sakura($str){
 	return preg_match('/[\x{E000}-\x{F848}]/u', $str);
-}
-
-/* 輸出錯誤畫面 */
-function error($mes, $dest=''){
-	global $config;
-	$PTE = PMCLibrary::getPTEInstance();
-
-	if(is_file($dest)) unlink($dest);
-	$pte_vals = array('{$SELF2}'=>$config['PHP_SELF2'].'?'.time(), '{$MESG}'=>$mes, '{$RETURN_TEXT}'=>_T('return'), '{$BACK_TEXT}'=>_T('error_back'), '{$BACK_URL}'=>htmlspecialchars($_SERVER['HTTP_REFERER']??''));
-	$dat = '';
-	head($dat);
-	$dat .= $PTE->ParseBlock('ERROR',$pte_vals);
-	foot($dat);
-	exit($dat);
 }
 
 /* 文字修整 */
@@ -113,8 +93,7 @@ function CheckSupportGZip(){
 }
 
 /* 封鎖 IP / Hostname / DNSBL 綜合性檢查 */
-function BanIPHostDNSBLCheck($IP, $HOST, &$baninfo){
-	global $config;
+function BanIPHostDNSBLCheck($config, $IP, $HOST, &$baninfo){
 	if(!$config['BAN_CHECK']) return false; // Disabled
 				
 	// IP/Hostname Check
@@ -279,8 +258,7 @@ function strlenUnicode($str) {
     return mb_strlen($str, 'UTF-8');
 }
 
-function num2Role($roleNumber) {
-	global $config;
+function num2Role($roleNumber, $config) {
 	$num = intval($roleNumber);
 	$from = '';
 	
@@ -292,15 +270,6 @@ function num2Role($roleNumber) {
 			case $config['roles']['LEV_ADMIN']: $from = 'ADMIN'; break;
 	}
 	return $from;
-}
-
-// Moderator log
-function logtime($desc, $from='SYSTEM') {
-	global $config;
-	$now = date("m/d/y H:i:s", $_SERVER['REQUEST_TIME']);
-	$ip = ' ('.getREMOTE_ADDR().')';
-	static $fp; if (!$fp) $fp = fopen($config['STORAGE_PATH'].$config['ACTION_LOG'], "a");
-	fwrite($fp, "$from$ip: $now: $desc\r\n");
 }
 
 /* redirect */
@@ -407,4 +376,168 @@ function drawAlert($message) {
 	echo "	<script type='text/javascript'> 
 			alert('" . $escapedMessage . "');
 		</script>";
+}
+
+function generateUid($length = 8) {
+	$randomData = bin2hex(random_bytes(8));
+
+	$uid = uniqid($randomData, true);
+	$uid = str_replace('.', '', $uid);
+	$uid = substr($uid, 0, $length);
+
+	return $uid;
+}
+
+function executeFunction(callable $func, ...$params) {
+    return $func(...$params);
+}
+
+function safeRmdir($dirPath) {
+	if (!is_dir($dirPath)) {
+		return false;
+	}
+
+	$items = scandir($dirPath);
+	if ($items === false) {
+		return false;
+	}
+
+	foreach ($items as $item) {
+		if ($item === '.' || $item === '..') {
+			continue;
+		}
+
+		$itemPath = $dirPath . DIRECTORY_SEPARATOR . $item;
+
+		if (is_dir($itemPath)) {
+			if (!safeRmdir($itemPath)) {
+				return false;
+			}
+		} else {
+			if (!unlink($itemPath)) {
+				return false;
+			}
+		}
+	}
+
+	if (!rmdir($dirPath)) {
+		return false;
+	}
+	return true;
+}
+
+function getDirectorySize($directory) {
+	$size = 0;
+
+	if (!is_dir($directory)) {
+		return false;
+	}
+
+	$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS));
+
+	foreach ($iterator as $file) {
+		$size += $file->getSize();
+	}
+
+	return $size;
+}
+
+function createDirectoryWithErrorHandle($directoryName, $globalHTML) {
+	if (!file_exists($directoryName)) {
+		if (!mkdir($directoryName, 0755, true)) $globalHTML->error("Failed to create directory: $directoryName");
+	}
+	return $directoryName;
+}
+
+function createDirectory($directoryName) {
+	if(file_exists($directoryName)) return;
+	if(!mkdir($directoryName, 0755, true)) die("Could not create $directoryName");
+}
+
+function writeToFile($filePath, $text) {
+	$fileHandle = fopen($filePath, 'w');
+	if ($fileHandle === false) {
+		return false;
+	}
+	
+	$result = fwrite($fileHandle, $text);
+	if ($result === false) {
+		fclose($fileHandle);
+		return false;
+	}
+	
+	fclose($fileHandle);
+	return true;
+}
+
+function createFileAndWriteText($directory, $fileName, $text) {
+	$filePath = $directory . DIRECTORY_SEPARATOR . $fileName;
+
+	if (!file_exists($directory)) mkdir($directory, 0777, true);
+
+	$file = fopen($filePath, 'w');
+
+	if ($file) {
+		fwrite($file, $text);
+		fclose($file);
+	} else {
+		throw new Exception("Failed to create or open the file.");
+	}
+}
+
+function copyFileWithNewName($sourceFilePath, $newFileName, $destinationDir = null) {
+	if (!file_exists($sourceFilePath)) {
+		return "Error: Source file does not exist.";
+	}
+
+	// If no destination directory is provided, use the directory of the source file
+	if ($destinationDir === null) {
+		$destinationDir = dirname($sourceFilePath);
+	}
+
+	// Ensure the destination directory ends with a slash
+	$destinationDir = rtrim($destinationDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+
+	// Construct the full path for the new file
+	$newFilePath = $destinationDir . $newFileName;
+
+	// Copy the file
+	if (copy($sourceFilePath, $newFilePath)) {
+		return "File copied successfully to: $newFilePath";
+	} else {
+		return "Error: Failed to copy the file.";
+	}
+}
+
+function moveFileOnly(string $sourceFile, string $destDir) {
+	// Ensure source file exists
+	if (!is_file($sourceFile)) {
+		return false;
+	}
+
+	// Ensure destination directory exists
+	if (!is_dir($destDir)) {
+		if (!mkdir($destDir, 0777, true)) {
+			return false;
+		}
+	}
+
+	$destPath = $destDir . DIRECTORY_SEPARATOR . basename($sourceFile);
+
+	// Move the file
+	if (!rename($sourceFile, $destPath)) {
+		return false;
+	}
+}
+
+function rollbackCreatedPaths($paths) {
+	foreach (array_reverse($paths) as $path) {
+		safeRmdir($path);
+	}
+}
+
+function addSlashesToArray(&$arrayOfValuesForQuery) {
+	foreach ($arrayOfValuesForQuery as &$item) {
+		$item = "'" . addslashes($item) . "'";
+	}
 }

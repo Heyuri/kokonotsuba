@@ -92,47 +92,65 @@ class FlagHelper{
 	}
 }
 
-// 文章自動刪除機制
-include($config['ROOTPATH'].'lib/lib_pio.cond.php');
-class PIOSensor{
-	public static function check($type, array $condobj){
-		foreach($condobj as $i => $j){
-			// 有其中一個需要處理
-			if(call_user_func_array(array($i, 'check'), array($type, $j))===true) return true;
+// Automatic Article Deletion Mechanism
+class PIOSensor {
+	
+	/**
+	 * Check if any condition requires processing.
+	 *
+	 * @param string $type The type of check to perform.
+	 * @param array $conditions Array of objects and their corresponding parameters.
+	 * @return bool True if any condition passes the check, otherwise false.
+	 */
+	public static function check($board, $type, array $conditions) {
+		foreach ($conditions as $object => $params) {
+			// Call the 'check' method on the object/class with given parameters
+			if (call_user_func_array([$object, 'check'], [$board, $type, $params]) === true) {
+				return true;
+			}
 		}
 		return false;
 	}
 
-	public static function listee($type, array $condobj){
-		$tmparray = array(); // 項目陣列
-		foreach($condobj as $i => $j){
-			// 結果併進 $tmparray
-			$tmparray = array_merge($tmparray, call_user_func_array(array($i, 'listee'), array($type, $j)));
+	/**
+	 * Get a sorted, unique list of results from conditions.
+	 *
+	 * @param string $type The type of operation to list.
+	 * @param array $conditions Array of objects and their corresponding parameters.
+	 * @return array Sorted and unique list of results.
+	 */
+	public static function listee($board, $type, array $conditions) {
+		$resultList = []; // Array to collect results
+
+		foreach ($conditions as $object => $params) {
+			// Merge results from calling 'listee' on the object/class
+			$resultList = array_merge(
+				$resultList,
+				call_user_func_array([$object, 'listee'], [$board, $type, $params])
+			);
 		}
-		sort($tmparray); // 由舊排到新 (小到大)
-		return array_unique($tmparray);
+
+		// Sort results in ascending order and remove duplicates
+		sort($resultList);
+		return array_unique($resultList);
 	}
 
-	public static function info(array $condobj){
-		$sensorinfo='';
-		foreach($condobj as $i => $j){
-			$sensorinfo .= call_user_func_array(array($i, 'info'), array($j))."\n";
+	/**
+	 * Gather information from all conditions.
+	 *
+	 * @param array $conditions Array of objects and their corresponding parameters.
+	 * @return string Concatenated information string.
+	 */
+	public static function info($board, array $conditions) {
+		$sensorInfo = ''; // String to collect information
+
+		foreach ($conditions as $object => $params) {
+			// Append information from calling 'info' on the object/class
+			$sensorInfo .= call_user_func_array([$object, 'info'], [$board, $params]) . "\n";
 		}
-		return $sensorinfo;
+
+		return $sensorInfo;
 	}
 }
 
-// 引入必要函式庫
-$PIOEnv = array( // PIO 環境常數
-	'BOARD' => $config['STORAGE_PATH'],
-	'LUTCACHE' => 'lutcache.dat',
-	'NONAME' => $config['DEFAULT_NONAME'],
-	'NOTITLE' => $config['DEFAULT_NOTITLE'],
-	'NOCOMMENT' => $config['DEFAULT_NOCOMMENT'],
-	'PERIOD.POST' => $config['RENZOKU'],
-	'PERIOD.IMAGEPOST' => $config['RENZOKU2']
-);
 
-$pio_file = $config['ROOTPATH'].'lib/pio/pio.'.$config['DATABASE_DRIVER'].'.php';
-if(is_file($pio_file)) include($pio_file);
-?>

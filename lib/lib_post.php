@@ -3,11 +3,10 @@
 
 function applyRoll(&$com, &$email){
 	$com = "$com<br><br><font color='#ff0000'><b>[NUMBER: ".rand(1,10000)."]</b></font>";
-	$email = preg_replace('/^roll( *)/i', '');
+	$email = preg_replace('/^roll( *)/i', '', $email);
 }
 
-function applyFortune(&$com, &$email){
-	global $config;
+function applyFortune($config, &$com, &$email){
 	$fortunenum=array_rand($config['FORTUNES']);
 	$fortcol=sprintf("%02x%02x%02x",
 		127+127*sin(2*M_PI*$fortunenum/count($config['FORTUNES'])),
@@ -16,40 +15,19 @@ function applyFortune(&$com, &$email){
 	$com = "$com<br><br><font color=\"#$fortcol\"><b>Your fortune: ".$config['FORTUNES'][$fortunenum]."</b></font>";
 }
 
-function cleanComment(&$com, &$upfile_status, &$is_admin, &$dest){
-     global $config;
-        // Text trimming
-    if((strlenUnicode($com) > $config['COMM_MAX']) && !$is_admin){
-        error(_T('regist_commenttoolong'), $dest);
-    }
-    $com = CleanStr($com, $is_admin); // The$ is_admin parameter is introduced because when the administrator starts, the administrator is allowed to set whether to use HTML according to config.
-    if(!$com && $upfile_status==4){ 
-        error($config['TEXTBOARD_ONLY']?'ERROR: No text entered.':_T('regist_withoutcomment'));
-    }
-    $com = str_replace(array("\r\n", "\r"), "\n", $com);
-    $com = preg_replace("/\n((　| )*\n){3,}/", "\n", $com);
- 
-    if(!$config['BR_CHECK'] || substr_count($com,"\n") < $config['BR_CHECK']){
-        $com = nl2br($com); // Newline characters are replaced by <br>
-    }
-    $com = str_replace("\n", '', $com); // If there are still \n newline characters, cancel the newline
-}
-
-function applyPostFilters(&$com, &$email){
-	global $config;
+function applyPostFilters($config, $globalHTML, &$com, &$email){
     if($config['AUTO_LINK']){
-        $com = auto_link($com);
+        $com = $globalHTML->auto_link($com);
     }
     if ($config['FORTUNES'] && stristr($email, 'fortune')) {
-        applyFortune($com, $email);
+        applyFortune($config, $com, $email);
     }
     if ($config['ROLL'] && stristr($email, 'roll')) {
         applyRoll($com, $email);
     }
 }
  
-function addDefaultText(&$sub, &$com){
-	global $config;
+function addDefaultText($config, &$sub, &$com){
     // Default content
     if(!$sub || preg_match("/^[ |　|]*$/", $sub)){
         $sub = $config['DEFAULT_NOTITLE'];
@@ -60,20 +38,16 @@ function addDefaultText(&$sub, &$com){
     }
 }
  
-function generatePostDay(&$time){
-	global $config;
-
+function generatePostDay($config, &$time){
     $youbi = array(_T('sun'),_T('mon'),_T('tue'),_T('wed'),_T('thu'),_T('fri'),_T('sat'));
     $yd = $youbi[gmdate('w', $time+$config['TIME_ZONE']*60*60)];
     return gmdate('Y/m/d', $time+$config['TIME_ZONE']*60*60).'('.(string)$yd.')'.gmdate('H:i:s', $time+$config['TIME_ZONE']*60*60);
 }
-function generatePostID(&$email, &$now, &$time, &$resto, &$PIO){
-	global $config;
 
-	$AccountIO = PMCLibrary::getAccountIOInstance();
+function generatePostID($roleLevel, $config, &$email, &$now, &$time, &$resto, &$PIO){
     if($config['DISP_ID']){ // ID
-        if($AccountIO->valid() == $config['roles']['LEV_ADMIN'] and $config['DISP_ID'] == 2) return' ID:ADMIN'; 
-        elseif($AccountIO->valid() == $config['roles']['LEV_MODERATOR'] and $config['DISP_ID'] == 2) return ' ID:MODERATOR'; 
+        if($roleLevel == $config['roles']['LEV_ADMIN'] and $config['DISP_ID'] == 2) return' ID:ADMIN'; 
+        elseif($roleLevel == $config['roles']['LEV_MODERATOR'] and $config['DISP_ID'] == 2) return ' ID:MODERATOR'; 
         elseif(stristr($email, 'sage') and $config['DISP_ID'] == 2) return ' ID:Heaven';
         else {
             switch ($config['ID_MODE']) {
@@ -88,71 +62,32 @@ function generatePostID(&$email, &$now, &$time, &$resto, &$PIO){
     }
 }
  
-function validateForDatabase(&$pwdc, &$com, &$time, &$pass, &$host, &$upfile_name, &$md5chksum, &$dest, &$PIO){
-	global $config;
-	
-	$AccountIO = PMCLibrary::getAccountIOInstance();	
-	// Continuous submission / same additional image check
-    $checkcount = 50; // Check 50 by default
-    $pwdc = substr(md5($pwdc), 2, 8); // Cookies Password
-    if ($AccountIO->valid() < $config['roles']['LEV_MODERATOR'])  {
-        if($PIO->isSuccessivePost($checkcount, $com, $time, $pass, $pwdc, $host, $upfile_name))
-            error(_T('regist_successivepost'), $dest); // Continuous submission check
-        if($dest){ 
-            if($PIO->isDuplicateAttachment($checkcount, $md5chksum)){
-                 error(_T('regist_duplicatefile'), $dest); 
-            }
-        } // Same additional image file check
-    }
-}
 
-function threadSanityCheck(&$chktime, &$flgh, &$resto, &$PIO, &$dest, &$ThreadExistsBefore){
-        // Determine whether the article you want to respond to has just been deleted
-    if($resto){
-        if($ThreadExistsBefore){ // If the thread of the discussion you want to reply to exists
-            if(!$PIO->isThread($resto)){ // If the thread of the discussion you want to reply to has been deleted
-                // Update the data source in advance, and this new addition is not recorded
-                $PIO->dbCommit();
-                updatelog();
-                error(_T('regist_threaddeleted'), $dest);
-            }else{ // Check that the thread is set to suppress response (by the way, take out the post time of the original post)
-                $post = $PIO->fetchPosts($resto); // [Special] Take a single article content, but the $post of the return also relies on [$i] to switch articles!
-                list($chkstatus, $chktime) = array($post[0]['status'], $post[0]['tim']);
-                $chktime = substr($chktime, 0, -3); // Remove microseconds (the last three characters)
-                $flgh = $PIO->getPostStatus($chkstatus);
-            }
-        }else error(_T('thread_not_found'), $dest); // Does not exist
-    }
-    return[$chktime];
-}
 
-function pruneOld(&$PMS, &$PIO, &$FileIO, &$delta_totalsize){
-	global $config;
+function pruneOld($board, $config, &$PMS, &$PIO, &$FileIO){
         // Deletion of old articles
-    if(PIOSensor::check('delete', $config['LIMIT_SENSOR'])){
-        $delarr = PIOSensor::listee('delete', $config['LIMIT_SENSOR']);
+    if(PIOSensor::check($board, 'delete', $config['LIMIT_SENSOR'])){
+        $delarr = PIOSensor::listee($board, 'delete', $config['LIMIT_SENSOR']);
         if(count($delarr)){
-            deleteCache($delarr);
             $PMS->useModuleMethods('PostOnDeletion', array($delarr, 'recycle')); // "PostOnDeletion" Hook Point
             $files = $PIO->removePosts($delarr);
-            if(count($files)) $delta_totalsize -= $FileIO->deleteImage($files); // Update delta value
+            if(count($files)) $FileIO->deleteImage($files, $board); // Update delta value
         }
     }
  
     // Additional image file capacity limit function is enabled: delete oversized files
     if($config['STORAGE_LIMIT'] && $config['STORAGE_MAX'] > 0){
-        $tmp_total_size = $FileIO->getCurrentStorageSize(); // Get the current size of additional images
+        $tmp_total_size = $FileIO->getCurrentStorageSize($board); // Get the current size of additional images
         if($tmp_total_size > $config['STORAGE_MAX']){
-            $files = $PIO->delOldAttachments($tmp_total_size, $config['STORAGE_MAX'], false);
-            $delta_totalsize -= $FileIO->deleteImage($files);
+            $files = $PIO->delOldAttachments($boardBeingPostedTo, $tmp_total_size, $config['STORAGE_MAX'], false);
+            $FileIO->deleteImage($files, $board);
         }
     }
 }
 
-function applyAging(&$resto, &$PIO, &$time, &$chktime, &$email, &$name, &$age){
-    global $config;
-    if ($resto) {
-        if ($PIO->postCount($resto) <= $config['MAX_RES'] || $config['MAX_RES'] == 0) {
+function applyAging($config, &$resto, &$PIO, &$time, &$chktime, &$email, &$name, &$age){
+    if ($resto) { 
+        if ($PIO->getPostCountFromThread($resto) <= $config['MAX_RES'] || $config['MAX_RES'] == 0) {
             if(!$config['MAX_AGE_TIME'] || (($time - $chktime) < ($config['MAX_AGE_TIME'] * 60 * 60))){
                 $age = true; // Discussion threads are not expired
             }
@@ -166,20 +101,13 @@ function applyAging(&$resto, &$PIO, &$time, &$chktime, &$email, &$name, &$age){
     }
 }
 
-function makeThumbnailAndUpdateStats(&$delta_totalsize, &$dest, &$ext, &$tim, $tmpfile, $imgW, $imgH, $W, $H){
-	global $config;
-	$FileIO = PMCLibrary::getFileIOInstance();
-	
+function makeThumbnailAndUpdateStats($boardBeingPostedTo, $config, $FileIO, &$dest, &$ext, &$tim, $tmpfile, $imgW, $imgH, $W, $H){
     if($dest && is_file($dest)){
-        $destFile = $config['IMG_DIR'].$tim.$ext; // Image file storage location
-        $thumbFile = $config['THUMB_DIR'].$tim.'s.'.$config['THUMB_SETTING']['Format']; // Preview image storage location
-        if (!empty($config['CDN_DIR'])) {
-            $destFile = $config['CDN_DIR'].$destFile;
-            $thumbFile = $config['CDN_DIR'].$thumbFile;
-        }
+        $destFile = $boardBeingPostedTo->getBoardUploadedFilesDirectory().$config['IMG_DIR'].$tim.$ext;
+        $thumbFile = $boardBeingPostedTo->getBoardUploadedFilesDirectory().$config['THUMB_DIR'].$tim.'s.'.$config['THUMB_SETTING']['Format'];
         if($config['USE_THUMB'] !== 0){ // Generate preview image
             $thumbType = $config['USE_THUMB']; if($config['USE_THUMB']==1){ $thumbType = $config['THUMB_SETTING']['Method']; }
-            require($config['ROOTPATH'].'lib/thumb/thumb.'.$thumbType.'.php');
+            require(__DIR__.'/thumb/thumb.'.$thumbType.'.php');
             if (!empty($tmpfile)) $thObj = new ThumbWrapper($tmpfile, $imgW, $imgH);
             else $thObj = new ThumbWrapper($dest, $imgW, $imgH);
             $thObj->setThumbnailConfig($W, $H, $config['THUMB_SETTING']);
@@ -190,48 +118,16 @@ function makeThumbnailAndUpdateStats(&$delta_totalsize, &$dest, &$ext, &$tim, $t
        
         rename($dest, $destFile);
         if(file_exists($destFile)){
-            $FileIO->uploadImage($tim.$ext, $destFile, filesize($destFile));
-            $delta_totalsize += filesize($destFile);
+            $FileIO->uploadImage($tim.$ext, $destFile, filesize($destFile), $boardBeingPostedTo);
         }
         if(file_exists($thumbFile)){
-            $FileIO->uploadImage($tim.'s.'.$config['THUMB_SETTING']['Format'], $thumbFile, filesize($thumbFile));
-            $delta_totalsize += filesize($thumbFile);
+            $FileIO->uploadImage($tim.'s.'.$config['THUMB_SETTING']['Format'], $thumbFile, filesize($thumbFile), $boardBeingPostedTo);
         }
     }
 }
 
-function registValidate(){
-    if(!$_SERVER['HTTP_REFERER'] || !$_SERVER['HTTP_USER_AGENT'] || preg_match("/^(curl|wget)/i", $_SERVER['HTTP_USER_AGENT']) ){
-        error('You look like a robot.', '');
-    }
- 
-    if($_SERVER['REQUEST_METHOD'] != 'POST') error(_T('regist_notpost')); // Informal POST method
-}
- 
-function spamValidate(&$ip, &$name, &$email, &$sub, &$com){
-	global $config; 
-    // Blocking: IP/Hostname/DNSBL Check Function
-    $baninfo = '';
-    if(BanIPHostDNSBLCheck($ip, $ip, $baninfo)){
-        error(_T('regist_ipfiltered', $baninfo));
-    }
-    // Block: Restrict the text that appears (text filter?)
-    foreach($config['BAD_STRING'] as $value){
-        if(preg_match($value, $com) || preg_match($value, $sub) || preg_match($value, $name) || preg_match($value, $email)){
-            error(_T('regist_wordfiltered'));
-        }
-    }
- 
-    // Check if you enter Sakura Japanese kana (kana = Japanese syllabary)
-    foreach(array($name, $email, $sub, $com) as $anti){
-        if(anti_sakura($anti)){
-            error(_T('regist_sakuradetected'));
-        }
-    }
-}
- 
-function processFiles(&$upfile, &$upfile_path, &$upfile_name, &$upfile_status, &$md5chksum, &$imgW, &$imgH, &$imgsize, &$W, &$H, &$fname, &$ext, &$age, &$status, &$resto, &$tim, &$dest, &$tmpfile){
-    global $config;
+function processFiles($board, &$postValidator, &$globalHTML, &$upfile, &$upfile_path, &$upfile_name, &$upfile_status, &$md5chksum, &$imgW, &$imgH, &$imgsize, &$W, &$H, &$fname, &$ext, &$age, &$status, &$resto, &$tim, &$dest, &$tmpfile){
+    $config = $board->loadBoardConfig();
     
     $upfile = CleanStr($_FILES['upfile']['tmp_name']??'');
     $upfile_path = $_POST['upfile_path']??'';
@@ -239,39 +135,16 @@ function processFiles(&$upfile, &$upfile_path, &$upfile_name, &$upfile_status, &
     $upfile_status = $_FILES['upfile']['error']??UPLOAD_ERR_NO_FILE;
  
     // Determine the upload status
-    switch($upfile_status){
-        case UPLOAD_ERR_OK:
-            break;
-        case UPLOAD_ERR_FORM_SIZE:
-            error('ERROR: The file is too large.(upfile)');
-            break;
-        case UPLOAD_ERR_INI_SIZE:
-            error('ERROR: The file is too large.(php.ini)');
-            break;
-        case UPLOAD_ERR_PARTIAL:
-            error('ERROR: The uploaded file was only partially uploaded.');
-            break;
-        case UPLOAD_ERR_NO_FILE:
-            if(!$resto && !isset($_POST['noimg'])) error(_T('regist_upload_noimg'));
-            break;
-        case UPLOAD_ERR_NO_TMP_DIR:
-            error('ERROR: Missing a temporary folder.');
-            break;
-        case UPLOAD_ERR_CANT_WRITE:
-            error('ERROR: Failed to write file to disk.');
-            break;
-        default:
-            error('ERROR: Unable to save the uploaded file.');
-    }
+	$postValidator->validateFileUploadStatus($resto, $upfile_status);
  	
     // If there is an uploaded file, process the additional image file
     if($upfile && (is_uploaded_file($upfile) || is_file($upfile))){
         // 1. Save the file first
-        $dest = $config['STORAGE_PATH'].$tim.'.tmp';
+        $dest = $board->getBoardStoragePath().$tim.'.tmp';
         move_uploaded_file($upfile, $dest) or copy($upfile, $dest);
         chmod($dest, 0666);
         if(!is_file($dest)) 
-            error(_T('regist_upload_filenotfound'), $dest);
+            $globalHTML->error(_T('regist_upload_filenotfound'), $dest);
         // Remove exif
         if (function_exists('exif_read_data') && function_exists('exif_imagetype')) {
             $imageType = exif_imagetype($dest);
@@ -315,7 +188,7 @@ function processFiles(&$upfile, &$upfile_path, &$upfile_name, &$upfile_status, &
         // 3. Check whether it is an acceptable file
         $size = getimagesize($dest);
         $imgsize = filesize($dest); // File size
-        if ($imgsize > $config['MAX_KB']*1024) error(_T('regist_upload_exceedcustom'));
+        if ($imgsize > $config['MAX_KB']*1024) $globalHTML->error(_T('regist_upload_exceedcustom'));
         $imgsize = ($imgsize>=1024) ? (int)($imgsize/1024).' KB' : $imgsize.' B'; // Discrimination of KB and B
         setlocale(LC_ALL,'en_US.UTF-8'); // Japanese/etc special characters trimming fix
         $fname = Cleanstr(pathinfo($upfile_name, PATHINFO_FILENAME));
@@ -367,10 +240,10 @@ function processFiles(&$upfile, &$upfile_path, &$upfile_name, &$upfile_status, &
             }
         }
         $allow_exts = explode('|', strtolower($config['ALLOW_UPLOAD_EXT'])); // Accepted additional image file extension
-        if(array_search(substr($ext, 1), $allow_exts)===false) error(_T('regist_upload_notsupport'), $dest); // Uploaded file not allowed due to wrong file extension
+        if(array_search(substr($ext, 1), $allow_exts)===false) $globalHTML->error(_T('regist_upload_notsupport'), $dest); // Uploaded file not allowed due to wrong file extension
         // Block setting: Restrict the upload of MD5 checkcodes for additional images
         $md5chksum = md5_file($dest); // File MD%
-        if(array_search($md5chksum, $config['BAD_FILEMD5'])!==false) error(_T('regist_upload_blocked'), $dest); // If the MD5 checkcode of the uploaded file is in the block list, the upload is blocked
+        if(array_search($md5chksum, $config['BAD_FILEMD5'])!==false) $globalHTML->error(_T('regist_upload_blocked'), $dest); // If the MD5 checkcode of the uploaded file is in the block list, the upload is blocked
  
         // 4. Calculate the thumbnail display size of the additional image file
         $W = $imgW = $size[0];
@@ -394,10 +267,10 @@ function catchFraudsters(&$name) {
 	if (preg_match('/[◆◇♢♦⟡★]/u', $name)) $name .= " (fraudster)";
 }
  
-function applyTripcodeAndCapcodes(&$name, &$email, &$dest){
-	global $config;
-	
+function applyTripcodeAndCapcodes($config, $staffSession, &$name, &$email, &$dest){
     catchFraudsters($name);
+    
+    $hashedPasswordFromSession = $staffSession->getHashedPassword();
     
     $name = str_replace('&#', '&&', $name);
     list($name, $trip, $sectrip) = str_replace('&%', '&#', explode('#',$name.'##'));
@@ -410,22 +283,24 @@ function applyTripcodeAndCapcodes(&$name, &$email, &$dest){
         $tripcodeCrypt = substr(crypt($trip, $salt), -10);
         $trip = "◆$tripcodeCrypt";
     }
-    if ($sectrip) {
-    	$AccountIO = PMCLibrary::getAccountIOInstance();
-        if ($level=$AccountIO->valid($sectrip)) {
-            // Moderator capcode
-            switch ($level) {
-                case $config['roles']['LEV_JANITOR']: if ($config['JCAPCODE_FMT']) $name = sprintf($config['JCAPCODE_FMT'], $name); break;
-                case $config['roles']['LEV_MODERATOR']: if ($config['MCAPCODE_FMT']) $name = sprintf($config['MCAPCODE_FMT'], $name); break;
-                case $config['roles']['LEV_ADMIN']: if ($config['ACAPCODE_FMT']) $name = sprintf($config['ACAPCODE_FMT'], $name); break;
-            }
-        } else {
-            // User
-            $sha =str_rot13(base64_encode(pack("H*",sha1($sectrip.$config['TRIPSALT']))));
-            $sha = substr($sha,0,10);
-            $trip = "★$sha";
-        }
+	if ($sectrip) {
+		// Moderator capcode
+		$capcodeRoleLevel = $staffSession->getRoleLevel();
+		if($capcodeRoleLevel >= $config['roles']['LEV_JANITOR']) {
+			switch ($capcodeRoleLevel) {
+				case $config['roles']['LEV_JANITOR']: if ($config['JCAPCODE_FMT']) $name = sprintf($config['JCAPCODE_FMT'], $name); break;
+				case $config['roles']['LEV_MODERATOR']: if ($config['MCAPCODE_FMT']) $name = sprintf($config['MCAPCODE_FMT'], $name); break;
+				case $config['roles']['LEV_ADMIN']: if ($config['ACAPCODE_FMT']) $name = sprintf($config['ACAPCODE_FMT'], $name); break;
+			}
+		} else {
+			// User
+			$sha =str_rot13(base64_encode(pack("H*",sha1($sectrip.$config['TRIPSALT']))));
+			$sha = substr($sha,0,10);
+			$trip = "★$sha";
+		}
+
     }
+
     if(!$name || preg_match("/^[ |　|]*$/", $name)){
         if($config['ALLOW_NONAME']) $name = $config['DEFAULT_NONAME'];
         else error(_T('regist_withoutname'), $dest);
@@ -439,12 +314,11 @@ function applyTripcodeAndCapcodes(&$name, &$email, &$dest){
     if(stristr($email, 'vipcode') && defined('VIPDEF')) {
             $name .= ' <img src="'.$config['STATIC_URL'].'vip.gif" title="This user is a VIP user" style="vertical-align: middle;margin-top: -2px;" alt="VIP">'; 
     }
+    
     $email = preg_replace('/^vipcode$/i', '', $email);
 }
 
-function runWebhooks(&$resto, &$no, &$sub){
-	global $config;
-
+function runWebhooks($config, &$resto, &$no, &$sub){
     // webhooks
     if(!empty($config['IRC_WH'])){
         $url = 'https:'.fullURL().$config['PHP_SELF']."?res=".($resto?$resto:$no)."#p$no";
@@ -507,3 +381,23 @@ function runWebhooks(&$resto, &$no, &$sub){
     }
 }
 
+function searchBoardArrayForBoard($boards, $targetBoardUID) {
+    foreach ($boards as $board) {
+        if ($board->getBoardUID() === intval($targetBoardUID)) {
+            return $board;
+        }
+    }
+}
+
+function createBoardStoredFilesFromArray($posts) {
+    $boardIO = boardIO::getInstance();
+
+    $boards = $boardIO->getAllBoards();
+    $files = [];
+    foreach($posts as $post) {
+        $board = searchBoardArrayForBoard($boards, $post['boardUID']);
+
+        $files[] = new boardStoredFile($post['tim'], $post['ext'], $board);
+    }
+    return $files;
+}
