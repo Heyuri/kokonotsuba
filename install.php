@@ -1,29 +1,31 @@
 <?php
 
 function getRootPath() {
-    $kokoFile = __DIR__ . DIRECTORY_SEPARATOR . 'koko.php';
-    if (!file_exists($kokoFile)) {
-        die(
-            "The file <i>" . __DIR__ . DIRECTORY_SEPARATOR . "koko.php</i> couldn't be found. Please create it with the following code:<br>" .
-            "<code>&lt;?php require_once '/path/to/kokonotsuba/koko.php'; ?&gt;</code>"
-        );
-    }
+	$kokoFile = __DIR__ . DIRECTORY_SEPARATOR . 'koko.php';
+	if (!file_exists($kokoFile)) {
+		die(
+			"The file <i>" . __DIR__ . DIRECTORY_SEPARATOR . "koko.php</i> couldn't be found. Please create it with the following code:<br>" .
+			"<code>&lt;?php require_once '/path/to/kokonotsuba/koko.php'; ?&gt;</code>"
+		);
+	}
 
-    $fileHandle = fopen($kokoFile, 'r');
-    if (!$fileHandle) {
-        die("Error: Unable to open <i>koko.php</i>.");
-    }
+	$fileHandle = fopen($kokoFile, 'r');
+	if (!$fileHandle) {
+		die("Error: Unable to open <i>koko.php</i>.");
+	}
 
-    while (($line = fgets($fileHandle)) !== false) {
-        if (preg_match("/require(?:_once)? ['\"](.*koko\.php)['\"]; /", $line, $matches)) {
-            fclose($fileHandle);
-            return dirname($matches[1]);
-        }
-    }
+	while (($line = fgets($fileHandle)) !== false) {
+		if (preg_match("/require(?:_once)? ['\"](.*?koko\.php)['\"];/", $line, $matches)) {
+			fclose($fileHandle);
+			// Use dirname to extract the directory path from the matched file
+			return dirname($matches[1]);
+		}
+	}
 
-    fclose($fileHandle);
-    return __DIR__;
+	fclose($fileHandle);
+	return __DIR__;
 }
+
 
 define('ROOTPATH', getRootPath());
 
