@@ -318,10 +318,12 @@ function applyTripcodeAndCapcodes($config, $staffSession, &$name, &$email, &$des
     $email = preg_replace('/^vipcode$/i', '', $email);
 }
 
-function runWebhooks($config, &$resto, &$no, &$sub){
-    // webhooks
+function runWebhooks($board, &$resto, &$no, &$sub){
+	$config = $board->loadBoardConfig();
+	$globalHTML = new globalHTML($board);
+	// webhooks
     if(!empty($config['IRC_WH'])){
-        $url = 'https:'.fullURL().$config['PHP_SELF']."?res=".($resto?$resto:$no)."#p$no";
+        $url = 'https:'.$globalHTML->fullURL().$config['PHP_SELF']."?res=".($resto?$resto:$no)."#p$no";
         $stream = stream_context_create([
             'ssl' =>[
                 'verify_peer'=>false,
@@ -336,7 +338,7 @@ function runWebhooks($config, &$resto, &$no, &$sub){
         file_get_contents($config['IRC_WH'], false, $stream);
     }
     if(!empty($config['DISCORD_WH'])){
-        $url = 'https:'.fullURL().$config['PHP_SELF']."?res=".($resto?$resto:$no)."#p$no";
+        $url = 'https:'.$globalHTML->fullURL().$config['PHP_SELF']."?res=".($resto?$resto:$no)."#p$no";
         $stream = stream_context_create([
             'http'=>[
                 'method'=>'POST',
@@ -367,7 +369,7 @@ function runWebhooks($config, &$resto, &$no, &$sub){
     }
     
     if(!empty($config['DISCORD_WH_NEWS']) && !$resto){
-        $url = 'https:'.fullURL().$config['PHP_SELF']."?res=".($resto?$resto:$no);
+        $url = 'https:'.$globalHTML->fullURL().$config['PHP_SELF']."?res=".($resto?$resto:$no);
         $stream = stream_context_create([
             'http'=>[
                 'method'=>'POST',
