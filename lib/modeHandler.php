@@ -276,7 +276,7 @@ class modeHandler {
 		setcookie('pwdc', $pwd, time()+7*24*3600);
 		setcookie('emailc', htmlspecialchars_decode($email), time()+7*24*3600);
 		makeThumbnailAndUpdateStats($boardBeingPostedTo, $this->config, $this->FileIO, $dest, $ext, $tim, $tmpfile ,$imgW, $imgH, $W, $H);
-		runWebhooks($this->config, $resno,  $no,  $sub);
+		runWebhooks($boardBeingPostedTo, $resno,  $no,  $sub);
 	
 	
 		$boardBeingPostedTo->rebuildBoard(0, -1, false, $page_end);
