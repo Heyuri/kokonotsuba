@@ -73,7 +73,10 @@ class adminPageHandler {
 		 
 		$postsPerPage = $this->config['ADMIN_PAGE_DEF'];
 		$numberOfFilteredPosts = $PIO->postCount($filters);
-		$page = isset($_REQUEST['page']) ? (int)$_REQUEST['page'] : 0;
+		$page = $_REQUEST['page'] ?? 0;
+
+		if (!filter_var($page, FILTER_VALIDATE_INT) && $page != 0) $globalHTML->error("Page number was not a valid int.");
+
 		$page = ($page >= 0) ? $page : 1;
 		$offset = $page * $postsPerPage;
 		

@@ -598,6 +598,10 @@ class globalHTML {
 	}
 	
 	public function drawPager($entriesPerPage, $totalEntries, $url) {
+		if (!filter_var($entriesPerPage, FILTER_VALIDATE_INT) && $entriesPerPage != 0) $this->error("Page entries was not a valid int.");
+		if (!filter_var($totalEntries, FILTER_VALIDATE_INT) && $totalEntries != 0) $this->error("Total entries was not a valid int.");
+
+		
 		$totalPages = ceil($totalEntries / $entriesPerPage);
 		$currentPage = $_REQUEST['page'] ?? 0;
 		$pageHTML = '<table border="1" id="pager"><tbody><tr>';
