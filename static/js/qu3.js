@@ -48,25 +48,29 @@
         if (!target) return;
 
         hoverTimeout = setTimeout(() => {
-            const quotedText = target.textContent.slice(1).trim(); // Remove ">" and trim whitespace
+            const rawText = target.textContent;
+            if (!rawText.startsWith('>')) return;
+            let quotedText = rawText.slice(1).trim(); // Remove first ">"
             const isDoubleQuote = quotedText.startsWith('>');
-            const currentPostId = target.closest('.post').id;
-            const matchingPostId = isDoubleQuote
-                ? findMatchingPostId(quotedText.slice(1), currentPostId, true) // Remove extra ">" for double >>
-                : findMatchingPostId(quotedText, currentPostId, false);
+            if (isDoubleQuote) {
+                quotedText = quotedText.slice(1).trim(); // Remove extra ">" for double quotes
+            }
+            const currentPost = target.closest('.post');
+            if (!currentPost) return;
+            const currentPostId = currentPost.id;
+            const matchingPostId = findMatchingPostId(quotedText, currentPostId, isDoubleQuote);
 
             const post = document.getElementById(matchingPostId);
-
             const isOP = post && post.classList.contains('op');
-
             const previewBox = createPreviewBox(matchingPostId === 'notFound', isOP);
 
             if (post && matchingPostId !== 'notFound') {
                 previewBox.innerHTML = '';
                 const clonedPost = post.cloneNode(true);
+                // Remove the id from the cloned post to avoid duplicate IDs
+                clonedPost.removeAttribute('id');
                 clonedPost.style.margin = '0';
                 previewBox.appendChild(clonedPost);
-                applyHoverListeners(clonedPost);
             }
 
             positionPreviewBox(previewBox, event);
@@ -142,19 +146,28 @@
                 const comment = post.querySelector('.comment');
                 const filenameLink = post.querySelector('.filesize a');
 
-                if (includeUnkfunc || !post.querySelector('.unkfunc')) {
-                    if (comment && comment.textContent.includes(quotedText)) {
+                if (comment) {
+                    let textToCheck;
+                    if (!includeUnkfunc) {
+                        // For single ">" quotes, ignore nested .unkfunc elements.
+                        const clone = comment.cloneNode(true);
+                        clone.querySelectorAll('.unkfunc').forEach(el => el.remove());
+                        textToCheck = clone.textContent;
+                    } else {
+                        textToCheck = comment.textContent;
+                    }
+                    if (textToCheck.includes(quotedText)) {
                         return post.id;
                     }
+                }
 
-                    if (filenameLink) {
-                        const visibleFilename = filenameLink.textContent.trim();
-                        const fullFilename = filenameLink.getAttribute('onmouseover')
-                            ?.match(/this\.textContent='([^']+)'/)?.[1] || visibleFilename;
+                if (filenameLink) {
+                    const visibleFilename = filenameLink.textContent.trim();
+                    const fullFilename = filenameLink.getAttribute('onmouseover')
+                        ?.match(/this\.textContent='([^']+)'/)?.[1] || visibleFilename;
 
-                        if (fullFilename === quotedText) {
-                            return post.id;
-                        }
+                    if (fullFilename === quotedText) {
+                        return post.id;
                     }
                 }
             }
