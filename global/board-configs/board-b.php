@@ -5,10 +5,10 @@
 
 require __DIR__.'/../globalBoardConfig.php';
 
-$config['TITLEIMG'] = ''; // Board Title Image (url)
+$config['TITLEIMG'] = ''; // Board title image (url)
 
-$config['IMG_DIR'] = 'src/'; // Image Directory
-$config['THUMB_DIR'] = 'src/'; // Thumbnail Directory
+$config['IMG_DIR'] = 'src/'; // Image directory
+$config['THUMB_DIR'] = 'src/'; // Thumbnail directory
 
 /* 
 * Board modules - you can adjust module settings specifically for this board by overwriting the value of the module to false or 0

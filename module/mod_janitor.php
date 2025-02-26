@@ -70,7 +70,7 @@ class mod_janitor extends ModuleHelper {
 			$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', nl2br($_POST['msg']??'')));
 			if(!$reason) $reason='No reason given.';
 			if ($_POST["public"]) {
-				$post['com'] .= "<br \><br \><b class=\"warning\">($reason)</b> <img style=\"vertical-align: baseline;\" src=\"".$this->config['STATIC_URL']."/image/hammer.gif\">";
+				$post['com'] .= "<p class=\"warning\">($reason) <img class=\"banIcon icon\" alt=\"banhammer\" src=\"".$this->config['STATIC_URL']."/image/hammer.gif\"></p>";
 				$PIO->updatePost($post_uid, $post);
 				$parentNo = $post['thread_uid'];
 			}

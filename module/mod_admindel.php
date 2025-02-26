@@ -32,9 +32,11 @@ class mod_admindel extends ModuleHelper {
 		
 		$postBoard = searchBoardArrayForBoard($this->moduleBoardList, $post['boardUID']);
 
+		$modfunc.= '<span class="adminDeleteFunctions">';
 		$modfunc.= '[<a href="'.$this->mypage.'&action=del&post_uid='.$post['post_uid'].'" title="Delete">D</a>]';
 		if ($post['ext'] && $FileIO->imageExists($post['tim'].$post['ext'], $postBoard)) $modfunc.= '[<a href="'.$this->mypage.'&action=imgdel&post_uid='.$post['post_uid'].'" title="Delete File">Df</a>]';
 		$modfunc.= '[<a href="'.$this->mypage.'&action=delmute&post_uid='.$post['post_uid'].'" title="Delete and Mute for '.$this->JANIMUTE_LENGTH.' minute'.($this->JANIMUTE_LENGTH == 1 ? "" : "s").'">DM</a>]';
+		$modfunc.= '</span>';
 	}
 
 	public function ModulePage() {

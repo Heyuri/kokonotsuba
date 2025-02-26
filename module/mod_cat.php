@@ -33,9 +33,9 @@ class mod_cat extends ModuleHelper {
 			$timeSelected = ' selected';
 		}
 		return '
-			<form action="koko.php?mode=module&load=mod_cat" method="post">
+			<form id="catalogSortForm" action="koko.php?mode=module&load=mod_cat" method="post">
 				<span>Sort by:</span>
-				<select name="sort_by" style="display: inline-block">
+				<select name="sort_by">
 					<option value="bump"'.$bumpSelected.'>Bump order</option>
 					<option value="time"'.$timeSelected.'>Creation date</option>
 				</select>
@@ -95,30 +95,12 @@ class mod_cat extends ModuleHelper {
 
 		$globalHTML->head($dat);
 		$dat.= '
-		<script type="text/javascript" src="'.$this->config['STATIC_URL'].'js/catalog.js"></script>
+		<script src="'.$this->config['STATIC_URL'].'js/catalog.js"></script>
 		<div id="catalog">
-[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">Return</a>] '.$this->drawSortOptions($sort).'
-<center class="theading2"><b>Catalog</b></center>';
-
-		$dat.= '<style>';
-		if ($cat_fw) {
-			$dat.= '#catalog>table { width: 100%; }';
-		}
-		if ($cat_cols=='auto') {
-			$dat.='
-#catalog>table {
-	text-align: center;
-}
-#catalog>table tr, #catalog>table tbody {
-	display: inline;
-}
-#catalog>table td {
-	display: inline-block;
-	margin: 0.5em;
-}';
-		}
-		$dat.= '</style>';
-		$dat.= '<table align="CENTER" cellpadding="0" cellspacing="20"><tbody><tr>';
+[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">Return</a>]
+<h2 class="theading2">Catalog</h2> '.$this->drawSortOptions($sort).'';
+				
+		$dat.= '<table id="catalogTable" class="' . ($cat_fw ? 'full-width' : '') . ' ' . ($cat_cols === 'auto' ? 'auto-cols' : 'fixed-cols') . '"><tbody><tr>';
 		foreach($threadList as $i=>$thread){
 			$opPost = $PIO->fetchPostsFromThread($thread['thread_uid'])[0];
 			extract($opPost);
@@ -134,26 +116,26 @@ class mod_cat extends ModuleHelper {
 			$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, $opPost, false)); // "ThreadPost" Hook Point
 
 			$res = $PIO->getPostCountFromThread($thread_uid) - 1;
-			$dat.= '<td class="thread" width="180" height="200" align="CENTER">
-	<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>
+			$dat.= '<td class="thread">
+	<!--<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>-->
 	<a href="'.$this->config['PHP_SELF'].'?res='.($resno?$resno:$no).'#p'.$no.'">'.
 	($FileIO->imageExists($tim.$ext, $this->board) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim, $this->board), $this->board).'" width="'.min(150, $tw).'" vspace="3"	class="thumb">' : '***').
-	'</a><br>
-	<nobr><small><b class="title">'.substr($sub, 0, 20).'</b>:'.
-		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon"> '.$res.'</small></span></nobr><br>
-	<small>'.$com.'</small>
+	'</a>
+	<div class="catPostInfo"><span class="title">'.$sub.'</span>'.
+		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon"> '.$res.'</span></span></div>
+	<div class="catComment">'.$com.'</div>
 </td>';
 		}
 
 		$dat .= '</tr></tbody></table><hr>';
 
-		$dat .= '</div><table id="pager" border="1"><tbody><tr>';
+		$dat .= '</div><table id="pager"><tbody><tr>';
 		$pageurl = $this->mypage."&sort_by={$sort}";
 		if($page)
-			$dat .= '<td nowrap="nowrap"><a href="'.$pageurl.'&page='.($page - 1).'">Previous</a></td>';
+			$dat .= '<td><a href="'.$pageurl.'&page='.($page - 1).'">Previous</a></td>';
 		else
-			$dat .= '<td nowrap="nowrap">First</td>';
-		$dat .= '<td nowrap="nowrap">';
+			$dat .= '<td>First</td>';
+		$dat .= '<td>';
 		for($i = 0; $i <= $page_max; $i++){
 			if($i==$page)
 				$dat .= '[<b>'.$i.'</b>] ';
@@ -164,8 +146,8 @@ class mod_cat extends ModuleHelper {
 		if($page < $page_max)
 			$dat .= '<td><a href="'.$pageurl.'&page='.($page + 1).'">Next</a></td>';
 		else
-			$dat .= '<td nowrap="nowrap">Last</td>';
-		$dat .= '</tr></tbody></table><br clear="ALL">';
+			$dat .= '<td>Last</td>';
+		$dat .= '</tr></tbody></table>';
 		$globalHTML->foot($dat);
 		echo $dat;
 	}

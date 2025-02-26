@@ -17,8 +17,7 @@ const kkupdate = { name: "KK Thread Updating",
 		var controls = document.createElement("div");
 		controls.id = "controls";
 		document.querySelector("#delform").lastElementChild.insertAdjacentElement("beforeBegin", controls);
-		controls.style.paddingLeft = "8px";
-		controls.innerHTML += "[<a onclick=\"kkupdate.update();return false;\" href=\"\">Update</a>] [<label><input onchange=\"kkupdate.toggleAuto();\" checked type=\"checkbox\">Auto</label>] <span id=\"update-status\"></span><hr size=\"1\">";
+		controls.innerHTML += "[<a onclick=\"kkupdate.update();return false;\" href=\"\">Update</a>] [<label><input onchange=\"kkupdate.toggleAuto();\" checked type=\"checkbox\">Auto</label>] <span id=\"update-status\"></span><hr>";
 		document.addEventListener("scroll", function () {
 			if ((window.innerHeight + document.documentElement.scrollTop) >= (document.documentElement.scrollHeight - 2)) {
 				kkupdate.total = 0;
@@ -68,10 +67,14 @@ const kkupdate = { name: "KK Thread Updating",
 					kkupdate.inci = 0;
 					var ptable;
 					for (i = i; i <= frs.length-1; i++) {
-						document.querySelector(".post.op").parentElement.insertAdjacentElement("beforeEnd", frs[i]);
+						document.querySelector(".thread").insertAdjacentElement("beforeEnd", frs[i]);
+						
+						let quoteButton = document.getElementById(frs[i].id).querySelector(`.qu`);
+						quoteButton.addEventListener("click", kkqu._evquote);
 					}
 					document.querySelector("#update-status").innerText = npc+" new post"+(npc>1 ? "s" : "");
 					if (kkupdate.total > 0) document.title = "("+kkupdate.total+") "+kkupdate.otitle;
+					if (kkimg) kkimg.startup();
 					if (kkinline) kkinline.startup();
 					return true;
 				});

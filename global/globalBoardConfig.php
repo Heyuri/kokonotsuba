@@ -39,13 +39,15 @@ $config['ModuleList'] = array(
 	/* modes */
 	'mod_cat' => true,
 	'mod_search' => true,
+	'mod_searchcategory' => false,
 	'mod_stat' => true,
-	'mod_threadlist' => false,
+	'mod_threadlist' => true,
 	/* admin */
 	'mod_admindel' => true,
 	'mod_adminban' => true,
 	'mod_globalmsg' => true,
 	'mod_blotter' => true,
+	'mod_janitor' => true,
 	'mod_movethread' => true,
 	/* thread modes */
 	'mod_autosage' => true,
@@ -55,6 +57,7 @@ $config['ModuleList'] = array(
 	'mod_csrf_prevent' => true,
 	'mod_bbcode' => true,
 	'mod_wf' => true,
+	'mod_countryflags' => false,
 	'mod_anigif' => true,
 	'mod_antiflood' => true,
 	'mod_fieldtraps' => true,
@@ -102,23 +105,26 @@ $config['ModuleSettings']['BLOTTER_PREVIEW_AMOUNT'] = 5; //Number of previewed b
 $config['ModuleSettings']['PM_DIR'] = __DIR__.DIRECTORY_SEPARATOR;
 $config['ModuleSettings']['APPEND_TRIP_PM_BUTTON_TO_POST'] = false;
 
+//mod_ads
+$config['ModuleSettings']['SHOW_TOP_AD'] = true; // Whether to show the top full banner ad
+$config['ModuleSettings']['SHOW_BOTTOM_AD'] = true; // Whether to show the bottom full banner ad
+
 //mod_wf
 $config['ModuleSettings']['FILTERS'] = array( 
-        '/\b(rabi-en-rose)\b/i' => '<span style="background-color:#ffe6f9;color:#78376d;font-family:serif;font-weight:bold;">Rabi~en~Rose</span>',
-        '/\b(rabi~en~rose)\b/i' => '<span style="background-color:#ffe6f9;color:#78376d;font-family:serif;font-weight:bold;">Rabi~en~Rose</span>',
-        '/\b(newfag)\b/i' => 'n00b like me',
-        '/\b(newfags)\b/i' => 'n00bs like me',
-        '/\b(heyuri★cgi)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
-        '/\b(heyuri cgi)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
-        '/\b(chat@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/chat/">Chat@Heyuri</a>',
-        '/\b(polls@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/vote2/">Polls@Heyuri</a>',
-        '/\b(dating@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/dating/">Dating@Heyuri</a>',
-        '/\b(uploader@heyuri)\b/i' => '<a href="https://up.heyuri.net/">Uploader@Heyuri</a>',
-        '/@party 2/i' => '<a href="https://cgi.heyuri.net/party2/">@Party II</a>',
-        '/@party ii/i' => '<a href="https://cgi.heyuri.net/party2/">@Party II</a>',
-        '/\b(ayashii world)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Ayashii_World">Ayashii World</a>',
-        '/\b(partybus)\b/i' => '<span style="font-family:\'Comic Sans MS\',cursive;font-size:1.5em;text-shadow: 0.0625em 0.0625em 0 #000000a8"><span style="color:#ff00ff">p</span><span style="color:#ffff80;position:relative;bottom:0.125em">a</span><span style="color:#00ff80">r</span><span style="color:#80ffff;position:relative;top:0.125em">t</span><span style="color:#8080ff">y</span><span style="color:#ff0080">b</span><span style="color:#ff8040;position:relative;bottom:0.125em">u</span><span style="color:#0080ff">s</span></span>',
-        '/\b(boku)\b/i' => '<span title="AGE OF DESU IS OVAR, WE BOKU NOW"><b><font color="#489b67">B</font><font color="#d30615">O</font><font color="#489b67">K</font><font color="#d30615">U</font></b></span>'
+  '/\b(rabi-en-rose|rabi~en~rose)\b/i' => '<span class="rabienrose">Rabi~en~Rose</span>',
+	'/\b(newfag)\b/i' => 'n00b like me',
+	'/\b(newfags)\b/i' => 'n00bs like me',
+	'/\b(heyuri★cgi)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
+	'/\b(heyuri cgi)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
+	'/\b(chat@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/chat/">Chat@Heyuri</a>',
+	'/\b(polls@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/vote2/">Polls@Heyuri</a>',
+	'/\b(dating@heyuri)\b/i' => '<a href="https://cgi.heyuri.net/dating/">Dating@Heyuri</a>',
+	'/\b(uploader@heyuri)\b/i' => '<a href="https://up.heyuri.net/">Uploader@Heyuri</a>',
+	'/@party 2/i' => '<a href="https://cgi.heyuri.net/party2/">@Party II</a>',
+	'/@party ii/i' => '<a href="https://cgi.heyuri.net/party2/">@Party II</a>',
+	'/\b(ayashii world)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Ayashii_World">Ayashii World</a>',
+	'/\b(partybus)\b/i' => '<span class="partybus"><span class="partybusColor1">p</span><span class="partybusColor2">a</span><span class="partybusColor3">r</span><span class="partybusColor4">t</span><span class="partybusColor5">y</span><span class="partybusColor6">b</span><span class="partybusColor7">u</span><span class="partybusColor8">s</span></span>',
+	'/\b(boku)\b/i' => '<span class="boku" title="AGE OF DESU IS OVAR, WE BOKU NOW"><span class="bokuGreen">B</span><span class="bokuRed">O</span><span class="bokuGreen">K</span><span class="bokuRed">U</span></span>'
 );
 
 //mod_threadlist
@@ -134,11 +140,11 @@ $config['ModuleSettings']['USER_COUNT_DAT_FILE'] = 'users.dat'; //Name of the fi
 $config['ModuleSettings']['USER_COUNT_TIMEOUT'] = 10; //Timeout for counting the amount of users. Counts in minutes
 
 //mod_banner
-$config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_PATH'].'image/banner/'; // directory of your banner images
+$config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_PATH'].'image/banner/'; // Set this to the directory of your banner images
 
 //mod_addinfo
 $config['ModuleSettings']['ADD_INFO'] = array(
-	'<a style="color:#800043" href="javascript:kkjs.form_switch();">Switch Form Position</a> | <a style="color:#800043" href="'.$config['STATIC_URL'].'html/bbcode/" target="_blank">BBCode Reference</a>',
+	'<div id="formfuncs"><a class="postformOption" href="javascript:kkjs.form_switch();">Switch form position</a> | <a class="postformOption" href="'.$config['STATIC_URL'].'html/bbcode.html" target="_blank">BBCode reference</a></div>',
 	'Read the <a href="//example.net/rules.html">rules</a> before you post.',
 	'Read <a href="//example.net/faq.html">our FAQ</a> for any questions.',
 	'Modify this by editing $config[\'ModuleSettings\'][\'ADD_INFO\'] in globalconfig.php',
@@ -198,8 +204,9 @@ $config['AUTO_LINK'] = 1; // Create urls (autolink)
 
 // Capcode formats (put '%s' where you want the original name)
 $config['JCAPCODE_FMT'] = '%s';
-$config['MCAPCODE_FMT'] = '<font color="#770099">%s ## Mod</font>';
-$config['ACAPCODE_FMT'] = '<font color="#FF101A">%s ## Admin</font>';
+$config['MCAPCODE_FMT'] = '<span class="capcode capcodeMod">%s ## Mod</span>';
+$config['ACAPCODE_FMT'] = '<span class="capcode capcodeAdmin">%s ## Admin</span>';
+$config['CAP_ISHTML'] = 1; // Whether to accept HTML tags in the comment if administrator module is enabled (Yes: 1 No: 0)
 
 // Footer at the bottom of the page
 $config['FOOTTEXT'] = '';
@@ -271,7 +278,7 @@ $config['OVERBOARD_SUB_HEADER_HTML'] = '';
 // How many threads per page on the overboard
 $config['OVERBOARD_THREADS_PER_PAGE'] = 20;
 //A link to the overboard on the admin bar (next to [Admin] on the top right). Displayed as [Overboard]
-$config['ADMINBAR_OVERBOARD_BUTTON'] = false;
+$config['ADMINBAR_OVERBOARD_BUTTON'] = true;
 
 $config['ACTIONLOG_MAX_PER_PAGE'] = 250; // the amount of actionlog entries per page
 

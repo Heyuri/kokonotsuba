@@ -136,7 +136,7 @@ class board {
 			'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 			'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
 			'{$DEL_PASS_TEXT}' => ($adminMode ? '<input type="hidden" name="func" value="delete">' : '')._T('del_pass'),
-			'{$DEL_PASS_FIELD}' => '<input type="password" name="pwd" size="8" value="">',
+			'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" size="8" value="">',
 			'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'">',
 			'{$IS_THREAD}' => !!$resno);
 		if($resno) $pte_vals['{$RESTO}'] = $resno;
@@ -298,7 +298,7 @@ class board {
 			$next = ($resno ? $pagenum : $page) + 1;
 			if($resno){ // Response labels
 				if($config['RE_PAGE_DEF'] > 0){ // The Responses tab is on
-					$pte_vals['{$PAGENAV}'] .= '<table border="1" id="pager"><tbody><tr><td nowrap="nowrap">';
+					$pte_vals['{$PAGENAV}'] .= '<table id="pager"><tbody><tr><td>';
 					$pte_vals['{$PAGENAV}'] .= ($prev >= 0) ? '<a rel="prev" href="'.$config['PHP_SELF'].'?res='.$resno.'&pagenum='.$prev.'">'._T('prev_page').'</a>' : _T('first_page');
 					$pte_vals['{$PAGENAV}'] .= "</td><td>";
 					if($tree_count==0) $pte_vals['{$PAGENAV}'] .= '[<b>0</b>] '; // No response
@@ -309,12 +309,12 @@ class board {
 						}
 						$pte_vals['{$PAGENAV}'] .= $AllRes ? '[<b>'._T('all_pages').'</b>] ' : ($tree_count > $config['RE_PAGE_DEF'] ? '[<a href="'.$config['PHP_SELF'].'?res='.$resno.'">'._T('all_pages').'</a>] ' : '');
 					}
-					$pte_vals['{$PAGENAV}'] .= '</td><td nowrap="nowrap">';
+					$pte_vals['{$PAGENAV}'] .= '</td><td>';
 					$pte_vals['{$PAGENAV}'] .= (!$AllRes && $tree_count > $next * $config['RE_PAGE_DEF']) ? '<a href="'.$config['PHP_SELF'].'?res='.$resno.'&pagenum='.$next.'">'._T('next_page').'</a>' : _T('last_page');
 					$pte_vals['{$PAGENAV}'] .= '</td></tr></tbody></table>';
 				}
 			}else{ // General labels
-				$pte_vals['{$PAGENAV}'] .= '<table border="1" id="pager"><tbody><tr>';
+				$pte_vals['{$PAGENAV}'] .= '<table id="pager"><tbody><tr>';
 				if($prev >= 0){
 					if(!$adminMode && $prev==0) $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$config['PHP_SELF2'].'" method="get">';
 					else{
@@ -322,7 +322,7 @@ class board {
 						else $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$prev.$config['PHP_EXT'].'" method="get">';
 					}
 					$pte_vals['{$PAGENAV}'] .= '<div><input type="submit" value="'._T('prev_page').'"></div></form></td>';
-				}else $pte_vals['{$PAGENAV}'] .= '<td nowrap="nowrap">'._T('first_page').'</td>';
+				}else $pte_vals['{$PAGENAV}'] .= '<td>'._T('first_page').'</td>';
 				$pte_vals['{$PAGENAV}'] .= '<td>';
 				for($i = 0, $len = $threads_count / $config['PAGE_DEF']; $i <= $len; $i++){
 					if($page==$i) $pte_vals['{$PAGENAV}'] .= "[<b>".$i."</b>] ";
@@ -338,7 +338,7 @@ class board {
 					if($adminMode || ($config['STATIC_HTML_UNTIL'] != -1) && ($next > $config['STATIC_HTML_UNTIL'])) $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$config['PHP_SELF'].'?pagenum='.$next.'" method="post">';
 					else $pte_vals['{$PAGENAV}'] .= '<td><form action="'.$next.$config['PHP_EXT'].'" method="get">';
 					$pte_vals['{$PAGENAV}'] .= '<div><input type="submit" value="'._T('next_page').'"></div></form></td>';
-				}else $pte_vals['{$PAGENAV}'] .= '<td nowrap="nowrap">'._T('last_page').'</td>';
+				}else $pte_vals['{$PAGENAV}'] .= '<td>'._T('last_page').'</td>';
 				$pte_vals['{$PAGENAV}'] .= '</tr></tbody></table>';
 			}
 			$dat .= $PTE->ParseBlock('MAIN', $pte_vals);

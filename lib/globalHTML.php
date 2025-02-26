@@ -89,6 +89,7 @@ class globalHTML {
 	function form(&$dat, $resno, $name='', $mail='', $sub='', $com='', $cat=''){
 		$PTE = PTELibrary::getInstance();
 		$PMS = PMS::getInstance();
+		$FileIO = PMCLibrary::getFileIOInstance();
 		
 		$hidinput = ($resno ? '<input type="hidden" name="resto" value="'.$resno.'">' : '');
 	
@@ -121,7 +122,7 @@ class globalHTML {
 		if($this->config['USE_CATEGORY']) {
 			$pte_vals += array('{$FORM_CATEGORY_FIELD}' => '<input tabindex="5" type="text" name="category" id="category" size="28" value="'.$cat.'" class="inputtext">');
 		}
-		if($this->config['STORAGE_LIMIT']) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',total_size(),$this->config['STORAGE_MAX']);
+		if($this->config['STORAGE_LIMIT']) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',$FileIO->getCurrentStorageSize($this->board),$this->config['STORAGE_MAX']);
 		$PMS->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
 		
 		$dat .= $PTE->ParseBlock('POSTFORM',$pte_vals);
@@ -240,9 +241,9 @@ class globalHTML {
 		$role = $staffSession->getRoleLevel();
 		$loggedInInfo = '';
 		
-		if($role) $loggedInInfo = "<br>Logged in as $username ({$this->roleNumberToRoleName($role)})";
+		if($role) $loggedInInfo = "<div class=\"username\">Logged in as $username ({$this->roleNumberToRoleName($role)})</div>";
 		
-		$html = "<center class=\"theading3\"><b>Administrator mode</b> $loggedInInfo</center>";
+		$html = "<h2 class=\"theading3\">Administrator mode$loggedInInfo</h2>";
 		$dat .= $html;
 		return $html;
 	}
@@ -386,7 +387,7 @@ class globalHTML {
 
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
 		$dat .= '
-		<details id="filtercontainer" class="detailsbox"> <summary>Filter Action Logs</summary>
+		<details id="filtercontainer" class="detailsbox"> <summary>Filter action log</summary>
 			<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'?admin=action&mode=admin" method="POST">
 				<table>
 					<tbody>
@@ -543,7 +544,14 @@ class globalHTML {
 		$dat .= '
 				<table class="postlists">
 				<tbody>
-					<tr> <th> ID </th> <th> USERNAME </th> <th> ROLE </th> <th> TOTAL ACTIONS </th> <th>LAST LOGGED IN</th> <th> </th> </tr>
+					<tr>
+						<th>ID</th>
+						<th>Username</th>
+						<th>Role</th>
+						<th>Total actions</th>
+						<th>Last logged in</th>
+						<th>Actions</th>
+					</tr>
 					' . $accountsHTML . '
 				</tbody>
 				</table>';
@@ -563,20 +571,25 @@ class globalHTML {
 				$boardDateAdded = $board->getDateAdded();
 		
 				$actionHTML = '[<a title="View board" href="' . $this->config['PHP_SELF'] . '?mode=boards&view='.$boardUID.'">View</a>] ';
-				$boardsHTML .= '<tr> 
-						<td><center> ' . $boardUID . '</center></td>
-						<td><center>' . $boardIdentifier . ' </center></td>
-						<td><center>' . $boardTitle . ' </center></td>
-						<td><center>' . $boardDateAdded . ' </center></td>
-						<td><center> 
-						' . $actionHTML . '
-						</center></td>
-				</tr>';
+				$boardsHTML .= '
+					<tr> 
+						<td>' . $boardUID . '</td>
+						<td>' . $boardIdentifier . '</td>
+						<td>' . $boardTitle . '</td>
+						<td>' . $boardDateAdded . '</td>
+						<td>' . $actionHTML . '</td>
+					</tr>';
 		}
 		$dat .= '
 				<table class="postlists">
 					<tbody>
-					<tr> <th> Board UID </th> <th> Board Identifier </th> <th> Board Title </th> <th> Date Added</th> <th> </th> </tr>
+					<tr>
+						<th>Board UID</th>
+						<th>Board identifier</th>
+						<th>Board title</th>
+						<th>Date added</th>
+						<th>View</th>
+					</tr>
 					' . $boardsHTML . '
 					</tbody>
 				</table>';
@@ -592,17 +605,16 @@ class globalHTML {
 					[<a href="'.$this->config['PHP_SELF'].'?mode=rebuild">Rebuild</a>] 
 					[<a href="'.$this->config['PHP_SELF'].'?mode=account">Account</a>]
 					[<a href="'.$this->config['PHP_SELF'].'?mode=boards">Boards</a>] 
-					[<a href="'.$this->config['PHP_SELF'].'?pagenum=0">Live Frontend</a>] ';
+					[<a href="'.$this->config['PHP_SELF'].'?pagenum=0">Live frontend</a>] ';
 		$PMS->useModuleMethods('LinksAboveBar', array(&$linksAboveBar,'admin',$authRoleLevel));
 		return $linksAboveBar;
 	}
 	
 	public function drawPager($entriesPerPage, $totalEntries, $url) {
+		$totalPages = ceil($totalEntries / $entriesPerPage);
 		if (!filter_var($entriesPerPage, FILTER_VALIDATE_INT) && $entriesPerPage != 0) $this->error("Page entries was not a valid int.");
 		if (!filter_var($totalEntries, FILTER_VALIDATE_INT) && $totalEntries != 0) $this->error("Total entries was not a valid int.");
-
 		
-		$totalPages = ceil($totalEntries / $entriesPerPage);
 		$currentPage = $_REQUEST['page'] ?? 0;
 		$pageHTML = '<table border="1" id="pager"><tbody><tr>';
 
@@ -659,7 +671,7 @@ class globalHTML {
 			$com = $globalHTML->quote_unkfunc($com);
 			
 		// Mark threads that hit age limit (this replaces the old system for marking old threads)
-			if (!$i && $config['MAX_AGE_TIME'] && $_SERVER['REQUEST_TIME'] - $time > ($config['MAX_AGE_TIME'] * 60 * 60)) $com .= "<br><br><span class='warning'>"._T('warn_oldthread')."</span>";
+			if (!$i && $config['MAX_AGE_TIME'] && $_SERVER['REQUEST_TIME'] - $time > ($config['MAX_AGE_TIME'] * 60 * 60)) $com .= "<p class='markedDeletion'><span class='warning'>"._T('warn_oldthread')."</span></p>";
 			
 			// Configure attachment display
 			if ($ext) {
@@ -677,17 +689,17 @@ class globalHTML {
 				$imageURL = $FileIO->getImageURL($tim.$ext, $board); // image URL
 				$thumbName = $FileIO->resolveThumbName($tim, $board); // thumb Name
 
-				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$config['STATIC_URL'].'image/nothumb.gif" class="postimg" alt="'.$imgsize.'" hspace="20" vspace="3" border="0" align="left"></a>'; // Default display style 	(when no preview image)
+				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$config['STATIC_URL'].'image/nothumb.gif" class="postimg" alt="'.$imgsize.'"></a>'; // Default display style (when no preview image)
 				if($tw && $th){
 					if ($thumbName != false){ // There is a preview image
 						$thumbURL = $FileIO->getImageURL($thumbName, $board); // thumb URL
-						$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$thumbURL.'" width="'.$tw.'" height="'.$th.'" class="postimg" alt="'.$imgsize.'" title="Click to show full image" hspace="20" vspace="3" border="0" 	align="left"></a>';
+						$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$thumbURL.'" width="'.$tw.'" height="'.$th.'" class="postimg" alt="'.$imgsize.'" title="Click to show full image"></a>';
 					}
 				} else if ($ext === "swf") {
-					$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$config['SWF_THUMB'].'" class="postimg" alt="SWF Embed" hspace="20" vspace="3" border="0" align="left"></a>'; // Default display style (when no preview 	image)
+					$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$config['SWF_THUMB'].'" class="postimg" alt="SWF Embed"></a>'; // Default display style (when no preview 	image)
 				} else $imgsrc = '';
 				if($config['SHOW_IMGWH'] && ($imgw || $imgh)) $imgwh_bar = ', '.$imgw.'x'.$imgh; // Displays the original length and width dimensions of the attached image file
-				$IMG_BAR = _T('img_filename').'<a href="'.$imageURL.'" target="_blank" rel="nofollow" onmouseover="this.textContent=\''.$fnameJS.'\';" onmouseout="this.textContent=\''.$truncatedJS.'\'"> '.$truncated.'</a> <a href="'.$imageURL.'" 	download="'.$fname.'"><div class="download"></div></a> <small>('.$imgsize.$imgwh_bar.')</small> '.$img_thumb;
+				$IMG_BAR = _T('img_filename').'<a href="'.$imageURL.'" target="_blank" rel="nofollow" onmouseover="this.textContent=\''.$fnameJS.'\';" onmouseout="this.textContent=\''.$truncatedJS.'\'"> '.$truncated.'</a> <a href="'.$imageURL.'" alt="'.$fname.'" download="'.$fname.'"><div class="download"></div></a> <span class="fileProperties">('.$imgsize.$imgwh_bar.')</span> '.$img_thumb;
 			}
 	
 	        // Set the response/reference link
@@ -714,10 +726,10 @@ class globalHTML {
 			}
 	
 			// Set thread properties
-			if($config['STORAGE_LIMIT'] && $kill_sensor) if(isset($arr_kill[$no])) $WARN_BEKILL = '<span class="warning">'._T('warn_sizelimit').'</span><br>'; // Predict to delete too large files
+			if($config['STORAGE_LIMIT'] && $kill_sensor) if(isset($arr_kill[$no])) $WARN_BEKILL = '<div class="warning">'._T('warn_sizelimit').'</div>'; // Predict to delete too large files
 			if(!$i){ // 首篇 Only
 				$flgh = $PIO->getPostStatus($status);
-				if($hiddenReply) $WARN_HIDEPOST = '<span class="omittedposts">'._T('notice_omitted',$hiddenReply).'</span><br>'; // There is a hidden response
+				if($hiddenReply) $WARN_HIDEPOST = '<div class="omittedposts">'._T('notice_omitted',$hiddenReply).'</div>'; // There is a hidden response
 			}
 			// Automatically link category labels
 			if($config['USE_CATEGORY']){
@@ -725,7 +737,7 @@ class globalHTML {
 				$ary_category_count = count($ary_category);
 				$ary_category2 = array();
 				for($p = 0; $p < $ary_category_count; $p++){
-					if($c = $ary_category[$p]) $ary_category2[] = '<a href="'.$crossLink.$config['PHP_SELF'].'?mode=category&c='.urlencode($c).'">'.$c.'</a>';
+					if($c = $ary_category[$p]) $ary_category2[] = '<a href="'.$crossLink.$config['PHP_SELF'].'?mode=module&load=mod_searchcategory&c='.urlencode($c).'">'.$c.'</a>';
 				}
 				$category = implode(', ', $ary_category2);
 			}else $category = '';
@@ -754,27 +766,24 @@ class globalHTML {
 		
 	public function drawBanPage(&$dat, $banip, $starttime, $expires, $reason, $banImage = '') {
 		$dat .= "
-			<style>
-				#banimg {
-					float: right;
-					max-width: 300px;
-				}
-			</style>
-			<h2>You have been " . ($starttime == $expires ? 'warned' : 'banned') . "! ヽ(ー_ー )ノ</h2>
-			<hr>
-			<img id=\"banimg\" src=\"$banImage\" alt=\"BANNED!\" align=\"RIGHT\" border=\"1\">
-			<p>{$reason}</p>";
+			<div>[<a href='".$this->config['PHP_SELF2']."'>Return</a>]</div>
+				<h2 id=\"banHeading\" class=\"centerText\">You have been " . ($starttime == $expires ? 'warned' : 'banned') . "! ヽ(ー_ー )ノ</h2>
+				<div id=\"banScreen\">
+						<div id=\"banScreenText\">
+							<p>$reason</p>";
 
 		if ($_SERVER['REQUEST_TIME'] > intval($expires)) {
 			$dat .= 'Now that you have seen this message, you can post again.';
 		} else {
-			$dat .= "Your ban was filed on " . date('Y/m/d \a\t H:i:s', $starttime) . 
-					" and expires on " . date('Y/m/d \a\t H:i:s', $expires) . ".";
+			$dat .= "<p>Your ban was filed on " . date('Y/m/d \a\t H:i:s', $starttime) . 
+					" and expires on " . date('Y/m/d \a\t H:i:s', $expires) . ".</p>";
 		}
 
-		$dat .= "<br>[<a href='" . htmlspecialchars($this->config['PHP_SELF2']) . "'>Return</a>]
-			
-		<br clear=\"ALL\"><hr>";
+		$dat .= "
+						</div>
+							<img id=\"banimg\" src=\"$banImage\" alt=\"BANNED!\">
+						</div>
+					<hr id=\"hrBan\">";
 	}
 
 	public function drawBanManagementPage(&$dat, $banFile, $moduleURL, $defaultPublicBanMessage = '', $globalBanFilePath = '') {
@@ -790,13 +799,10 @@ class globalHTML {
 		$postNumberFromUID = $postUIDFromRequest ? $PIO->resolvePostNumberFromUID($postUIDFromRequest) : 'No post selected.';
 		$dat .= $this->generateAdminLinkButtons();
 		$this->drawAdminTheading($dat, $staffSession);
-		$dat .= '<h2>Ban Management</h2>';
-		$dat .= '<p>Manage active bans and apply new bans to users.</p>';
-		
 
-		$dat .= '<h3> Add a ban </h3>
+		$dat .= '<h3>Add a ban</h3>
 			<form method="POST" action="' . $moduleURL . '">
-				<table>
+				<table id="banForm">
 					<tbody>
 						<input type="hidden" name="adminban-action" value="add-ban">
 						<tr>
@@ -805,41 +811,43 @@ class globalHTML {
 							<td><input type="hidden" name="post_uid" id="post_uid" value="'.htmlspecialchars($postUIDFromRequest).'"></td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="ip">IP Address</label>
-							<td><input type="text" id="ip" name="ip" placeholder="Enter IP Address" value="'.htmlspecialchars($postIPFromRequest).'" required></td>
+							<td class="postblock"><label for="ip">IP address</label>
+							<td><input type="text" id="ip" name="ip" placeholder="Enter IP address" value="'.htmlspecialchars($postIPFromRequest).'" required></td>
 						</tr>
 						<tr>
-							<td class="postblock"> <label for="duration">Ban Duration</label> </td>
+							<td class="postblock"> <label for="duration">Ban duration</label> </td>
 							<td> <input type="text" id="duration" name="duration" placeholder="e.g., 1d, 2h" value="1d" required> <small>Examples: 1w = 1 week, 2d = 2 days, 3h = 3 hours</small> </td>
 						</tr>
 						<tr>
-							<td class="postblock"> <label for="reason">Reason for Ban</label> </td>
+							<td class="postblock"> <label for="reason">Reason for ban</label> </td>
 							<td> <textarea id="reason" name="privmsg" rows="4" cols="50" placeholder="Enter reason for the ban"></textarea> </td>
 						</tr>
 						<tr>
-							<td class="postblock"> <label for="banmsg">Public Ban Message</label> </td>
+							<td class="postblock"> <label for="banmsg">Public ban message</label> </td>
 							<td> <textarea id="banmsg" name="banmsg" rows="4" cols="50" placeholder="Enter html that will apended to the post">'.htmlspecialchars($defaultPublicBanMessage).'</textarea> </td>
 						</tr>
 						<tr>
-							<td class="postblock"> <label for="global">Apply as Global Ban</label> </td>
+							<td class="postblock"> <label for="global">Global ban</label> </td>
 							<td> <input type="checkbox" id="global" name="global"> </td>
 						</tr>
 						<tr>
 							<td class="postblock"> <label for="public">Public ban</label> </td>
 							<td> <input type="checkbox" id="public" name="public"> </td>
 						</tr>
-						<tr> <td><input id="bigredbutton" type="submit" value="BAN!"> </td> </tr>
 					</tbody>
 				</table>
+				<div id="bigredbuttonContainer">
+					<input id="bigredbutton" type="submit" value="BAN!">
+				</div>
 			</form>';
 
 		// Active Bans Section
-		$dat .= '<h3>Active Bans</h3>';
+		$dat .= '<h3>Active bans</h3>';
 
-		$dat .= '<h4>Local Bans</h4>';
+		$dat .= '<h4>Local bans</h4>';
 		$dat .= $this->generateBanTable($log, 'del', $moduleURL);
 
-		$dat .= '<h4>Global Bans</h4>';
+		$dat .= '<h4>Global bans</h4>';
 		$dat .= $this->generateBanTable($glog, 'delg', $moduleURL);
 
 
@@ -852,34 +860,40 @@ class globalHTML {
 
 		$table = '<form method="POST" action="' . $moduleURL . '">
 			<input type="hidden" name="adminban-action" value="delete-ban">
-			<table class="postlists">
-				<thead>
-					<tr>
-						<th>Remove</th>
-						<th>IP Address</th>
-						<th>Start Time</th>
-						<th>Expiration Time</th>
-						<th>Reason</th>
-					</tr>
-				</thead>
-				<tbody>';
+			<div id="banTableContainer">
+				<table class="postlists" id="banTable">
+					<thead>
+						<tr>
+							<th>Remove</th>
+							<th>IP address</th>
+							<th>Start time</th>
+							<th>Expiration time</th>
+							<th>Reason</th>
+						</tr>
+					</thead>
+					<tbody>';
 
 		foreach ($bans as $i => $ban) {
 			list($ip, $starttime, $expires, $reason) = explode(',', $ban, 4);
-			$table .= '<tr>
-				<td>
-					<input type="checkbox" id="' . $checkboxPrefix . $i . '" name="' . $checkboxPrefix . $i . '" value="on">
-				</td>
-				<td>' . htmlspecialchars($ip) . '</td>
-				<td>' . date('Y/m/d H:i:s', intval($starttime)) . '</td>
-				<td>' . date('Y/m/d H:i:s', intval($expires)) . '</td>
-				<td>' . htmlspecialchars($reason) . '</td>
-			</tr>';
+			$table .= '
+						<tr>
+							<td class="colDel">
+								<input type="checkbox" id="' . $checkboxPrefix . $i . '" name="' . $checkboxPrefix . $i . '" value="on">
+							</td>
+							<td class="colPattern">' . htmlspecialchars($ip) . '</td>
+							<td class="colStart">' . date('Y/m/d H:i:s', intval($starttime)) . '</td>
+							<td class="colEnd">' . date('Y/m/d H:i:s', intval($expires)) . '</td>
+							<td class="colReason">' . htmlspecialchars($reason) . '</td>
+						</tr>';
 		}
 
-		$table .= '</tbody>
-			</table>
-			<button type="submit">Remove Selected</button>
+		$table .= '
+					</tbody>
+				</table>
+			</div>
+			<div id="revokeButtonContainer">
+				<button type="submit" id="revokeButton">Remove selected</button>
+			</div>
 		</form>';
 
 		return $table;

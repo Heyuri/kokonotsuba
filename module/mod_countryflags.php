@@ -55,9 +55,9 @@ class mod_countryflags  extends ModuleHelper {
 			}
 						
 			if ($CountryName != "" || $record != ""){
-				$arrLabels['{$NAME}'] .= ' <img src="'.$this->config['STATIC_URL'].'image/flag/'.strtolower($CountryID).'.png" title="'.$CountryName.'" style="vertical-align: middle;margin-top: -2px;" alt="'.$CountryID.'">';
+				$arrLabels['{$NAME}'] .= ' <img class="countryFlag" src="'.$this->config['STATIC_URL'].'image/flag/'.strtolower($CountryID).'.png" title="'.$CountryName.'" alt="'.$CountryID.'">';
 			} else {
-				$arrLabels['{$NAME}'] .= ' <img src="'.$this->config['STATIC_URL'].'image/flag/xx.png" title="Unknown" style="vertical-align: middle;margin-top: -2px;" alt="XX">';
+				$arrLabels['{$NAME}'] .= ' <img class="countryFlag" src="'.$this->config['STATIC_URL'].'image/flag/xx.png" title="Unknown" alt="XX">';
 			}
 		} else { // host
 			$parthost=''; $iscctld = false; $isgtld = false;

@@ -217,7 +217,7 @@ class modeHandler {
 		}
 		
 		if($up_incomplete){
-				$com .= '<br><br><span class="warning">'._T('notice_incompletefile').'</span>'; // Tips for uploading incomplete additional image files
+				$com .= '<p class="incompleteFile"><span class="warning">'._T('notice_incompletefile').'</span></p>'; // Tips for uploading incomplete additional image files
 		}
 	
 		// Password and time style
@@ -254,7 +254,7 @@ class modeHandler {
 		$redirect = $boardConfig['PHP_SELF2'].'?'.$tim;
 		if (strstr($email, 'noko') && !strstr($email, 'nonoko')) {
 				$redirect = $boardConfig['PHP_SELF'].'?res='.($resno?$resno:$no);
-				if (!strstr($email, 'noko2')){
+				if (!strstr($email, 'dump')){
 						$redirect.= "#p$no";
 				}
 		}
@@ -276,7 +276,7 @@ class modeHandler {
 		setcookie('pwdc', $pwd, time()+7*24*3600);
 		setcookie('emailc', htmlspecialchars_decode($email), time()+7*24*3600);
 		makeThumbnailAndUpdateStats($boardBeingPostedTo, $this->config, $this->FileIO, $dest, $ext, $tim, $tmpfile ,$imgW, $imgH, $W, $H);
-		runWebhooks($boardBeingPostedTo, $resno,  $no,  $sub);
+		runWebhooks($boardBeingPostedTo, $resno, $no, $sub);
 	
 	
 		$boardBeingPostedTo->rebuildBoard(0, -1, false, $page_end);
@@ -432,7 +432,7 @@ class modeHandler {
 		$links = '[<a href="' . $this->config['PHP_SELF2'] . '?' . time() . '">' . _T('return') . '</a>]';
 		$this->PMS->useModuleMethods('LinksAboveBar', array(&$links, 'modules', $roleLevel));
 
-		$dat .= $links . '<center class="theading2"><b>' . _T('module_info_top') . '</b></center>
+		$dat .= $links.'<h2 class="theading2">'._T('module_info_top').'</h2>
 </div>
 
 <div id="modules">
@@ -443,14 +443,14 @@ class modeHandler {
 		foreach ($this->PMS->getLoadedModules() as $m) {
 				$dat .= '<li>' . $m . "</li>\n";
 		}
-		$dat .= "</ul><hr size='1'>\n";
+		$dat .= "</ul><hr>\n";
 
 		/* Module Information */
 		$dat .= _T('module_info') . '<ul>';
 		foreach ($this->PMS->moduleInstance as $m) {
 				$dat .= '<li>' . $m->getModuleName() . '<div>' . $m->getModuleVersionInfo() . "</div></li>\n";
 		}
-		$dat .= '</ul><hr size="1">
+		$dat .= '</ul><hr>
 		</div>
 		';
 		$globalHTML->foot($dat);
@@ -473,7 +473,7 @@ class modeHandler {
 		$thead = $globalHTML->drawAdminTheading($thead, $staffSession);
 		$head =  $globalHTML->head($head);
 		$foot = $globalHTML->foot($foot);
-		$accountTableList = ($authRoleLevel === $this->config['roles']['LEV_ADMIN']) ? $globalHTML->drawAccountTable() : '';
+		$accountTableList = ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $globalHTML->drawAccountTable() : ''; # == is for PHP7 compatibility, change to === in future for PHP8
 		
 		$currentAccount = $AccountIO->getAccountByID($staffSession->getUID());
 		$accountTemplateValues = [
@@ -495,7 +495,7 @@ class modeHandler {
 			'{$ADMIN_THEADING_BAR}' => $thead,
 			'{$ADMIN_LINKS}' => $globalHTML->generateAdminLinkButtons(),
 			'{$ACCOUNT_LIST}' => "$accountTableList",
-			'{$CREATE_ACCOUNT}' => ($authRoleLevel === $this->config['roles']['LEV_ADMIN']) ? $this->PTE->ParseBlock('CREATE_ACCOUNT', $accountTemplateRoles) : '',
+			'{$CREATE_ACCOUNT}' => ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $this->PTE->ParseBlock('CREATE_ACCOUNT', $accountTemplateRoles) : '', # == is for PHP7 compatibility, change to === in future for PHP8
 			'{$VIEW_OWN_ACCOUNT}' => $this->PTE->ParseBlock('VIEW_ACCOUNT', $accountTemplateValues),
 			'{$FOOTER}' => $foot,
 		];
@@ -528,7 +528,7 @@ class modeHandler {
 			'{$ADMIN_THEADING_BAR}' => $thead,
 			'{$ADMIN_LINKS}' => $globalHTML->generateAdminLinkButtons(),
 			'{$BOARD_LIST}' => $boardTableList,
-			'{$CREATE_BOARD}' => ($authRoleLevel === $this->config['roles']['LEV_ADMIN']) ? $this->PTE->ParseBlock('CREATE_BOARD',
+			'{$CREATE_BOARD}' => ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $this->PTE->ParseBlock('CREATE_BOARD', # == is for PHP7 compatibility, change to === in future for PHP8
 				 [
 					'{$DEFAULT_CDN_DIR}' => $this->config['CDN_DIR'], 
 					'{$DEFAULT_CDN_URL}' => $this->config['CDN_URL'], 
@@ -588,7 +588,7 @@ class modeHandler {
 
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_USER']);
 
-		if($staffSession->getRoleLevel() === $this->config['roles']['LEV_ADMIN']) {
+		if($staffSession->getRoleLevel() == $this->config['roles']['LEV_ADMIN']) { # == is for PHP7 compatibility, change to === in future for PHP8
 			if(isset($_GET['del'])) $accountRequestHandler->handleAccountDelete();
 			if(isset($_GET['dem'])) $accountRequestHandler->handleAccountDemote();
 			if(isset($_GET['up'])) $accountRequestHandler->handleAccountPromote();

@@ -22,7 +22,7 @@ class mod_sticky extends ModuleHelper {
 		$PIO = PIOPDO::getInstance();
 		$fh = new FlagHelper($post['status']);
 		if ($fh->value('sticky')) {
-			$arrLabels['{$POSTINFO_EXTRA}'].='&nbsp;<img src="'.$this->STICKYICON.'" class="icon" title="Sticky">';
+			$arrLabels['{$POSTINFO_EXTRA}'].='<img src="'.$this->STICKYICON.'" class="icon" height="18" width="18" title="Sticky">';
 		}
 	}
 
@@ -31,7 +31,7 @@ class mod_sticky extends ModuleHelper {
 
 		if ($staffSession->getRoleLevel() < $this->config['AuthLevels']['CAN_STICKY']) return;
 		$fh = new FlagHelper($post['status']);
-		if (!$isres) $modfunc.= '[<a href="'.$this->mypage.'&post_uid='.$post['post_uid'].'"'.($fh->value('sticky')?' title="Unsticky">s':' title="Sticky post">S').'</a>]';
+		if (!$isres) $modfunc.= '<span class="adminStickyFunction">[<a href="'.$this->mypage.'&post_uid='.$post['post_uid'].'"'.($fh->value('sticky')?' title="Unsticky">s':' title="Sticky post">S').'</a>]</span>';
 	}
 	
 	public function autoHookRegistAfterCommit($lastno, $resto, $name, $email, $sub, $com) {

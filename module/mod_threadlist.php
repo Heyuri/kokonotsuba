@@ -13,7 +13,7 @@ class mod_threadlist extends ModuleHelper {
 		$this->SHOW_FORM = $this->config['ModuleSettings']['SHOW_FORM'];
 		$this->HIGHLIGHT_COUNT = $this->config['ModuleSettings']['HIGHLIGHT_COUNT'];
 		$this->SHOW_IN_MAIN = $this->config['ModuleSettings']['SHOW_IN_MAIN'];
-		
+
 		// Attach language translations
 		$this->attachLanguage(array(
 			'zh_TW' => array(
@@ -26,8 +26,8 @@ class mod_threadlist extends ModuleHelper {
 			),
 			'en_US' => array(
 				'modulename' => 'Thread list',
-				'no_title' => 'Non-Titled posts not accepted',
-				'link' => 'Thread List',
+				'no_title' => 'Non-titled posts not accepted',
+				'link' => 'Thread list',
 				'main_title' => 'Thread overview',
 				'page_title' => 'List mode',
 				'date' => 'Date'
@@ -56,7 +56,7 @@ class mod_threadlist extends ModuleHelper {
 
 	// Adds a link to the top navigation bar
 	public function autoHookToplink(&$linkbar, $isReply) {
-		$linkbar .= '[<a href="'.$this->getModulePageURL().'">'.$this->_T('link').'</a>]';
+		$linkbar .= '[<a href="'.$this->getModulePageURL().'">'.$this->_T('link').'</a>]'."\n";
 	}
 
 	// Generates thread list and adds it to the front of the page
@@ -70,8 +70,7 @@ class mod_threadlist extends ModuleHelper {
 			self::$PMS->useModuleMethods('ThreadOrder', array($isReply, 0, 0, &$plist)); // "ThreadOrder" Hook Point
 
 			// Start building the HTML for the thread list
-			$dat .= '<center id="topiclist">
-<table class="postlists" cellpadding="1" cellspacing="1" width="95%"><td>';
+			$dat .= '<div class="menu outerbox" id="topiclist"><div class="innerbox">';
 
 			foreach ($plist as $i => $post) {
 				$post = $PIO->getThreadOpPostsFromList($post); // Fetch post data
@@ -79,7 +78,7 @@ class mod_threadlist extends ModuleHelper {
 					? strip_tags($post[0]['com']) 
 					: mb_substr(strip_tags($post[0]['com']), 0, 10, 'UTF-8') . "...";
 
-				$dat .= sprintf('<span<!--%d--> <a href="%s">%s (%d)</a></span>',
+					$dat.= sprintf('<span><!--%d--> <a href="%s">%s (%d)</a></span>',
 					$post[0]['no'],
 					$this->config['PHP_SELF'].'?res='.$post[0]['no'], 
 					$post[0]['sub'] ? $post[0]['sub'] : $CommentTitle,
@@ -87,7 +86,7 @@ class mod_threadlist extends ModuleHelper {
 				);
 			}
 
-			$dat .= '</td></table></center>';
+			$dat .= '</div></div>';
 			$dat .= $PTE->ParseBlock('REALSEPARATE', array());
 			$txt .= $dat;
 		}
@@ -97,7 +96,7 @@ class mod_threadlist extends ModuleHelper {
 	private function _getPostCounts($posts) {
 		$PIO = PIOPDO::getInstance();
 		$pc = array();
-		
+
 		foreach($posts as $post) {
 			$pc[$post] = $PIO->getPostCountFromThread($post);
 		}
@@ -153,7 +152,7 @@ class mod_threadlist extends ModuleHelper {
 			$plist = $PIO->fetchThreadListFromBoard($this->board);
 			$pc = $this->_getPostCounts($plist);
 			$this->_kasort($pc, $sort == 'postdesc', true);
-			
+
 			// Slice the list based on page
 			$plist = array_slice(array_keys($pc), $this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER);
 		} else {
@@ -221,23 +220,25 @@ function checkall(){
 			}
 
 			$dat .= '<tr>'.
-				($this->SHOW_FORM ? '<td align="CENTER"><input type="checkbox" name="'.$no.'" value="delete"></td>' : '').
-				'<td align="CENTER"><a href="'.$this->config['PHP_SELF'].'?res='.$no.'">'.$no.'</a></td>
-				<td><big class="title"><b>'.($sub ? $sub : 'No Title').'</b></big></td>
-				<td><span class="name">'.$name.'</span></td>
-				<td align="CENTER">'.$rescount.'</td>
-				<td>'.$now.'</td>
+				($this->SHOW_FORM ? '<td class="colDel"><input type="checkbox" name="'.$no.'" value="delete"></td>' : '').
+				'<td class="colNum"><a href="'.$this->config['PHP_SELF'].'?res='.$no.'">'.$no.'</a></td>
+				<td class="colSub"><span class="title">'.( $sub ? $sub : 'No Title' ).'</span></td>
+				<td class="colName"><span class="name">'.$name.'</span></td>
+				<td class="colReply">'.$rescount.'</td>
+				<td class="colDate">'.$now.'</td>
 			</tr>';
 		}
 
-		$dat .= '</tbody></table><hr>
-<table border="1" align="LEFT" id="pager"><tr>';
+		$dat .= '</tbody></table>
+<hr>
+<table id="pager"><tr>
+';
 
 		// Pagination
 		if ($page) {
 			$dat .= '<td><a href="'.$thisPage.'&page='.($page - 1).'&sort='.$sort.'">'._T('prev_page').'</a></td>';
 		} else {
-			$dat .= '<td nowrap="nowrap">'._T('first_page').'</td>';
+			$dat .= '<td>'._T('first_page').'</td>';
 		}
 
 		$dat .= '<td>';
@@ -255,7 +256,7 @@ function checkall(){
 		if ($page < $pageMax) {
 			$dat .= '<td><a href="'.$thisPage.'&page='.($page + 1).'&sort='.$sort.'">'._T('next_page').'</a></td>';
 		} else {
-			$dat .= '<td nowrap="nowrap">'._T('last_page').'</td>';
+			$dat .= '<td>'._T('last_page').'</td>';
 		}
 
 		$dat .= '</tr></table>';
@@ -267,13 +268,13 @@ function checkall(){
 				'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 				'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
 				'{$DEL_PASS_TEXT}' => _T('del_pass'),
-				'{$DEL_PASS_FIELD}' => '<input type="password" name="pwd" size="8" value="">',
+				'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" size="8" value="">',
 				'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'">'
 			);
 			$dat .= PTELibrary::getInstance()->ParseBlock('DELFORM', $pte_vals).'</form>';
 		}
 
-		$dat .= '</div><br clear="both">';
+		$dat .= '</div>';
 		$globalHTML->foot($dat);
 		echo $dat;
 	}

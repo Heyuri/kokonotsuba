@@ -1,13 +1,6 @@
 /* LOL HEYURI
  */
 
-document.write(`<style>
-.oplink:after {
-	content: " (OP)";
-	font-size: small;
-}
-</style>`);
-
 /* Module */
 const kkqu2 = { name: "KK Quotelink Marking",
 	startup: function () {

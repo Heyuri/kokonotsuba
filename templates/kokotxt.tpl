@@ -1,234 +1,196 @@
-<!--&THEMENAME-->Kokonotsuba Textboard
-<!--/&THEMENAME-->
-<!--&THEMEVER-->DEV RC1
-<!--/&THEMEVER-->
-<!--&THEMEAUTHOR-->Deadking
-<!--/&THEMEAUTHOR-->
+<!--&THEMENAME-->Kokonotsuba Textboard<!--/&THEMENAME-->
+<!--&THEMEVER-->v2.0<!--/&THEMEVER-->
+<!--&THEMEAUTHOR-->Heyuri (original by Deadking)<!--/&THEMEAUTHOR-->
+
 <!--&HEADER-->
 <!DOCTYPE html>
 <html lang="en-US">
 
 <head>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<meta http-equiv="cache-control" content="max-age=0">
-	<meta http-equiv="cache-control" content="no-cache">
-	<meta http-equiv="expires" content="0">
-	<meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT">
-	<meta http-equiv="pragma" content="no-cache">
+	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="Berry" content="no">
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive">
-	<link class="linkstyle" rel="stylesheet" type="text/css" href="{$STATIC_URL}css/txt/pseud0ch.css" title="Pseud0ch Mona">
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/pseud0ch2.css" title="Pseud0ch">
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/pseud0ch3.css" title="Pseud0ch Times New Roman">
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/kareha.css" title="Kareha">
-	<link class="linkstyle" rel="stylesheet alternate" type="text/css" href="{$STATIC_URL}css/txt/mobile.css" title="Mobile">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<script type="text/javascript" src="{$STATIC_URL}js/koko.js"></script>
-	<script type="text/javascript" src="{$STATIC_URL}js/qr.js"></script>
-	<script type="text/javascript" src="{$STATIC_URL}js/qu.js"></script>
-	<script type="text/javascript" src="{$STATIC_URL}js/qu2.js"></script>
-	<script type="text/javascript" src="{$STATIC_URL}js/style.js"></script>
-	<script type="text/javascript" src="{$STATIC_URL}js/catalog.js"></script>
-	<script type="text/javascript" src="{$STATIC_URL}js/insert.js"></script>
-	<script type="text/javascript" src="{$STATIC_URL}js/addemotestxt.js" defer></script>
-	<script type="text/javascript" src="{$STATIC_URL}/js/admin.js" defer></script>
-	<!--/&HEADER-->
+	<link rel="stylesheet" href="{$STATIC_URL}css/txt/base.css?v=7">
+	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/txt/pseud0ch.css" title="Pseud0ch">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch2.css" title="Pseud0ch (sans-serif)">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch3.css" title="Pseud0ch (MS PGothic)">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/tomorrow.css" title="Tomorrow">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css" title="Import Custom">
+	<script src="{$STATIC_URL}js/koko.js?v=6"></script>
+	<script src="{$STATIC_URL}js/qr.js"></script>
+	<script src="{$STATIC_URL}js/qu.js"></script>
+	<script src="{$STATIC_URL}js/onlinecounter.js"></script>
+	<script src="{$STATIC_URL}js/qu2.js"></script>
+	<script src="{$STATIC_URL}js/qu3.js?v=15" defer></script>
+	<script src="{$STATIC_URL}js/style.js"></script>
+	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
+	<script src="{$STATIC_URL}js/filter.js"></script>
+	<script src="{$STATIC_URL}js/catalog.js"></script>
+	<script src="{$STATIC_URL}js/insert.js"></script>
+	<script src="{$STATIC_URL}js/addemotestxt.js" defer></script>
+	<script src="{$STATIC_URL}/js/admin.js?v=3" defer></script>
+<!--/&HEADER-->
 
-	<!--&TOPLINKS-->
+<!--&TOPLINKS-->
 	<div class="boardlist">
-		<span class="toplinks">{$TOP_LINKS}</span>
-		<div class="adminbar" align="RIGHT">{$HOME} {$HOOKLINKS} {$OVERBOARD} {$ADMIN}</div>
+		<div class="toplinks">{$TOP_LINKS}</div>
+		<div class="adminbar">{$HOME} {$OVERBOARD} {$HOOKLINKS} {$ADMIN}</div>
 	</div>
-	<!--/&TOPLINKS-->
+<!--/&TOPLINKS-->
 
-	<!--&BODYHEAD-->
-
-<body>
-	<a name="top"></a>
-	<script id="wz_tooltip" type="text/javascript" src="{$STATIC_URL}js/wz_tooltip.js"></script>
+<!--&BODYHEAD-->
+<body id="txt">
+	<!-- <script id="wz_tooltip" src="{$STATIC_URL}js/wz_tooltip.js"></script> -->
+	<div id="top"></div>
 	<!--&TOPLINKS/-->
-	<table class="menu" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3">
-		<tbody>
-			<tr class="t4vv">
-				<td>
-						<font size="+2">{$TITLE}</font><br>
-						{$TITLESUB}
-						<p>
-						</p>
-				</td>
-			</tr>
-		</tbody>
-	</table>
-	<br clear="ALL">
-	<!--/&BODYHEAD-->
-
-	<!--&POSTFORM-->
-	<div id="postarea">
-		<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" <!--&IF($MAX_FILE_SIZE,' enctype="multipart/form-data"','')-->>
-				<table class="menu" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3"><tbody>
-					<tr><td>
-						<nobr><font size="+1"><b><!--&IF($IS_THREAD,' New Reply <small>[<a href="{$PHP_SELF2}">Return</a>]</small>','New Thread')--></b></font>
-			</nobr>
-			{$FORM_HIDDEN}
-			<table>
-				<tbody>
-					<tr>
-						<td valign="TOP"><label for="sub">Topic:</label></td>
-						<td>{$FORM_TOPIC_FIELD}{$FORM_SUBMIT}</td>
-					</tr>
-					<tr>
-						<td valign="TOP"><label for="name">Name:</label></td>
-						<td>{$FORM_NAME_FIELD} <label>Email: {$FORM_EMAIL_FIELD}</label></td>
-					</tr>
-					<!--&IF($FORM_ATTECHMENT_FIELD,'<tr><td valign="TOP"><label><label for="upfile">File:</label></td><td>{$FORM_ATTECHMENT_FIELD}','')-->
-					<!--&IF($FORM_NOATTECHMENT_FIELD,'<nobr>[<label>{$FORM_NOATTECHMENT_FIELD}No File</label>]</nobr>','')-->
-					<!--&IF($FORM_CONTPOST_FIELD,'<nobr>[<label>{$FORM_CONTPOST_FIELD}Continuous</label>]</nobr>','')-->
-					{$FORM_FILE_EXTRA_FIELD}
-					<!--&IF($FORM_ATTECHMENT_FIELD,'</td></tr>','')-->
-					<!--&IF($FORM_CATEGORY_FIELD,'<tr><td><label for="category">Category:</label></td><td>{$FORM_CATEGORY_FIELD}<small>(Use , to separate)</small></td></tr>','')-->
-					<tr>
-						<td><label for="pwd">Password:</td>
-						<td>{$FORM_DELETE_PASSWORD_FIELD}<small>(for deletion, 8 chars max)</small></td>
-					</tr>
-					<tr>
-						<td></td>
-						<td>{$FORM_COMMENT_FIELD}</td>
-						{$FORM_EXTRA_COLUMN}
-					</tr>
-					<tr>
-						<td colspan="2" id="rules">
-							<ul class="rules">
-								{$FORM_NOTICE}
-								<!--&IF($FORM_NOTICE_STORAGE_LIMIT,'{$FORM_NOTICE_STORAGE_LIMIT}','')-->
-								{$HOOKPOSTINFO}
-							</ul>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-			<!--&IF($FORMBOTTOM,'{$FORMBOTTOM}','')-->
-			</td>
-			</tr>
-			</tbody>
-			</table>
-			<br clear="ALL">
-		</form>
+	<div id="boxTitle" class="menu outerbox">
+		<div class="innerbox">
+			<!-- {$BANNER} -->
+			<h1 class="mtitle">{$TITLE}</h1>
+			<div class="subtitle">{$TITLESUB}</div>
+		</div>
 	</div>
-	<!--/&POSTFORM-->
+<!--/&BODYHEAD-->
 
+<!--&POSTFORM-->
+	<div class="menu outerbox">
+		<div id="postarea" class="innerbox">
+			<h2 class="formTitle"><!--&IF($IS_THREAD,' New reply [<a href="{$PHP_SELF2}">Return</a>]','New thread')--></h2>
+			<!--&IF($MAX_FILE_SIZE,'<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" enctype="multipart/form-data">','<form id="postform" name="postform" action="{$PHP_SELF}" method="POST">')-->
+				{$FORM_HIDDEN}
+				<div id="postformTable">
+					<div class="postformItem"><label for="sub">Topic:</label>{$FORM_TOPIC_FIELD}{$FORM_SUBMIT}</div>
+					<div class="postformCombinedItems">
+						<div class="postformItem"><label for="name">Name:</label>{$FORM_NAME_FIELD}</div>
+						<div class="postformItem"><label for="email">Email:</label>{$FORM_EMAIL_FIELD}</div>
+					</div>
+					<!--&IF($FORM_ATTECHMENT_FIELD,'<div class="postformItem"><label for="upfile">File:</label>{$FORM_ATTECHMENT_FIELD}','')-->
+					<!--&IF($FORM_NOATTECHMENT_FIELD,'<span class="nowrap">[<label>{$FORM_NOATTECHMENT_FIELD}No File</label>]</span>','')-->
+					<!--&IF($FORM_CONTPOST_FIELD,'<span class="nowrap">[<label>{$FORM_CONTPOST_FIELD}Continuous</label>]</span>','')-->
+					{$FORM_FILE_EXTRA_FIELD}
+					<!--&IF($FORM_ATTECHMENT_FIELD,'</div>','')-->
+					<!--&IF($FORM_CATEGORY_FIELD,'<div class="postformItem"><label for="category">Category:</label>{$FORM_CATEGORY_FIELD}<small>(Use , to separate)</small></div>','')-->
+					<div class="postformItem"><label for="com">Comment:</label>
+						<div class="commentArea">{$FORM_COMMENT_FIELD}</div>
+					</div>
+					<div class="postformItem"><label for="pwd">Password:</label>{$FORM_DELETE_PASSWORD_FIELD}<span id="delPasswordInfo">(for deletion, 8 chars max)</span></div>
+					<div class="postformItem">{$FORM_EXTRA_COLUMN}</div>
+					<div id="rules">
+						<ul class="rules">
+							{$FORM_NOTICE}
+							<!--&IF($FORM_NOTICE_STORAGE_LIMIT,'{$FORM_NOTICE_STORAGE_LIMIT}','')-->
+							{$HOOKPOSTINFO}
+						</ul>
+					</div>
+				</div>
+				<!--&IF($FORMBOTTOM,'{$FORMBOTTOM}','')-->
+			</form>
+		</div>
+	</div>
+<!--/&POSTFORM-->
 
-	<!--&FOOTER-->
-	<p align="CENTER" class="footer">
+<!--&MODULE_INFO_HOOK-->
+	<div class="menu outerbox">
+		<div class="mod-extra-info innerbox">
+			{$BLOTTER}
+			<hr>
+			<div id="globalmsg">
+				{$GLOBAL_MESSAGE}
+			</div>
+		</div>
+	</div>
+<!--/&MODULE_INFO_HOOK-->
+
+<!--&FOOTER-->
+	<div id="footer">
 		{$FOOTER}
 		{$FOOTTEXT}
-	</p>
-	<a name="bottom"></a>
+	</div>
+	<div id="bottom"></div>
 </body>
-
 </html>
 <!--/&FOOTER-->
 
 <!--&ERROR-->
-<center>
-	<h1 class="error">{$MESG}</h1>
-	[<a href="{$SELF2}">{$RETURN_TEXT}</a>]
-	[<a href="{$BACK_URL}" onclick="event.preventDefault();history.go(-1);">{$BACK_TEXT}</a>]
-	<hr>
-</center>
+	<div class="centerBlock">
+		<h1 class="error">{$MESG}</h1>
+		[<a href="{$SELF2}">{$RETURN_TEXT}</a>]
+		[<a href="{$BACK_URL}" onclick="event.preventDefault();history.go(-1);">{$BACK_TEXT}</a>]
+		<hr>
+	</div>
 <!--/&ERROR-->
 
 <!--&THREAD-->
-<table class="thread {$BOARD_UID}" id="t{$BOARD_UID}_{$NO}" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3">
-	<tbody>
-			<tr class="t4vv">
-			<td>
-				<div class="tnav" align="RIGHT"><small>{$THREADNAV}</small></div>
+	<div class="thread outerbox" id="t{$BOARD_UID}_{$NO}">
+		<div class="innerbox">
+			<div class="tnav">{$THREADNAV}</div>
+			<div class="post op" id="p{$BOARD_UID}_{$NO}">
 				{$BOARD_THREAD_NAME}
-				<div class="post op" id="p{$BOARD_UID}_{$NO}">
-					<font size="+2"><b class="title"><a href="{$BOARD_URL}{$SELF}?res={$RESTO}">
-								<!--&IF($SUB,'{$SUB}','No Title')--></a></b></font>
-					<div class="filesize">{$IMG_BAR}</div>
-					<!--&IF($IMG_SRC,'{$IMG_SRC}<br clear="ALL">','')-->
-					<div class="del" align="RIGHT">[<label>Del:<input type="checkbox" name="{$NO}" value="delete"></label>]</div>
-					<dt class="postinfo"><span class="postnum">{$QUOTEBTN}</span> Name:<span class="name">{$NAME}</span> <span class="time">{$NOW}</span>{$POSTINFO_EXTRA}</dt>
-					<dd class="body">{$COM}</dd>
-					<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
-					{$WARN_OLD}{$WARN_BEKILL}{$WARN_ENDREPLY}{$WARN_HIDEPOST}
-				</div>
-				<!--/&THREAD-->
+				<h2 class="title"><a href="{$PHP_SELF}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No Title')--></a></h2>
+				<div class="del">[<label>Del:<input type="checkbox" name="{$NO}" value="delete"></label>]</div>
+				<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span><span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
+				<div class="filesize">{$IMG_BAR}</div>
+				<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
+				<div class="comment">{$COM}</div>
+				<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
+				{$WARN_OLD}{$WARN_BEKILL}{$WARN_ENDREPLY}{$WARN_HIDEPOST}
+			</div>
+<!--/&THREAD-->
 
-				<!--&REPLY-->
-				<!--&IF($IS_PREVIEW,'<table class="thread" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3"><tbody><tr><td>','')-->
-				<div class="post reply {$BOARD_UID}" id="p{$NO}">
-					<div class="filesize">{$IMG_BAR}</div>
-					<!--&IF($IMG_SRC,'{$IMG_SRC}<br clear="ALL">','')-->
-					<font size="+2"><b class="title"><a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$NO}">{$SUB}</a></b></font>
-					<div class="del" align="RIGHT">[<label>Del:<input type="checkbox" name="{$NO}" value="delete"></label>]</div>
-					<dt class="postinfo"><span class="postnum">{$QUOTEBTN}</span> Name:<span class="name">{$NAME}</span> <span class="time">{$NOW}</span>{$POSTINFO_EXTRA}</dt>
-					<dd class="body">{$COM}</dd>
-					<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
-					{$WARN_BEKILL}
-				</div>
-				<!--/&REPLY-->
+<!--&REPLY-->
+			<!--&IF($IS_PREVIEW,'<table class="thread"><tbody><tr><td>','')-->
+			<div class="post reply" id="p{$NO}">
+				<!-- <span class="title"><a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$NO}">{$SUB}</a></span> -->
+				<div class="del">[<label>Del:<input type="checkbox" name="{$NO}" value="delete"></label>]</div>
+				<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span><span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
+				<div class="filesize">{$IMG_BAR}</div>
+				<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
+				<div class="comment">{$COM}</div>
+				<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
+				{$WARN_BEKILL}
+			</div>
+<!--/&REPLY-->
 
-				<!--&SEARCHRESULT-->
-				<table class="thread" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3">
-					<tbody>
-			<tr class="t4vv">
-							<td>
-								<div class="post search">
-									<font size="+2"><b class="title">{$SUB}</b></font>
-									<dt class="postinfo">{$NO} Name:<span class="name">{$NAME}</span> <span class="time">{$NOW}</span></dt>
-									<dd class="body">{$COM}</dd>
-									<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
-								</div>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<!--&REALSEPARATE/-->
-				<!--/&SEARCHRESULT-->
+<!--&SEARCHRESULT-->
+	<div class="thread outerbox">
+		<div class="post search innerbox">
+			<span class="title">{$SUB}</span>
+			<div class="postinfo"><span class="postnum">{$NO}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span></div>
+			<div class="comment">{$COM}</div>
+			<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
+		</div>
+	</div>
+	<!--&REALSEPARATE/-->
+<!--/&SEARCHRESULT-->
 
-				<!--&THREADSEPARATE-->
-			</td>
-		</tr>
-	</tbody>
-</table>
-<br clear="all">
+<!--&THREADSEPARATE-->
+	</div>
+</div>
 <!--/&THREADSEPARATE-->
 
 <!--&REALSEPARATE-->
-<br clear="ALL">
 <!--/&REALSEPARATE-->
 
 <!--&DELFORM-->
-<div align="right">
-	<table id="userdelete" align="right" cellpadding="0">
-		<tbody>
-			<tr>
-				<td align="right">
-					{$DEL_HEAD_TEXT}{$DEL_PASS_FIELD}{$DEL_SUBMIT_BTN}
-				</td>
-			</tr>
-		</tbody>
-	</table>
-</div>
+	<div id="userdelete">
+		<div id="passwordRow"><label>{$DEL_HEAD_TEXT}{$DEL_PASS_FIELD}</label>{$DEL_SUBMIT_BTN}</div>
+	</div>
 <!--/&DELFORM-->
 
 <!--&MAIN-->
-{$FORMDAT}
-{$THREADFRONT}
-<form name="delform" id="delform" action="{$SELF}" method="post">
-	{$THREADS}
-	{$THREADREAR}
-	<!--&DELFORM/-->
-</form>
-<div id="postarea2"></div>
-{$PAGENAV}
-<br clear="ALL">
+	{$FORMDAT}
+	{$THREADFRONT}
+	<form name="delform" id="delform" action="{$SELF}" method="post">
+		{$THREADS}
+		{$THREADREAR}
+		<!--&DELFORM/-->
+	</form>
+	{$PAGENAV}
+	<div id="postarea2"></div>
 <!--/&MAIN-->
+
 
 
 <!--&ACCOUNT_PAGE-->
@@ -339,7 +301,7 @@
 						<td><input id="new-board-identifier" name="new-board-identifier" placeholder="b"></td> <td>The string that represents the board in the URL and file storage. e.g the 'b' in "/b/" or "boards.example.net/b/"</td>
 					</tr>
 					<tr>
-						<td class="postblock"><label for="new-board-path">Absolute Directory</label></td>
+						<td class="postblock"><label for="new-board-path">Absolute directory</label></td>
 						<td><input id="new-board-path" name="new-board-path" required class="url-input" placeholder="/var/www/html/boards/" value="{$DEFAULT_PATH}"></td> <td>The directory where the board will be created at. Excluding it's identifier. e.g '/var/www/boards/' not '/var/www/boards/b/'</td>
 					</tr>
 					<tr>

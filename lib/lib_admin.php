@@ -27,7 +27,7 @@ function getCurrentStorageSizeFromSelectedBoards(array $boards) {
 	$totalBoardsStorageSize = 0;
 
 	foreach($boards as $boards) {
-		$totalBoardsStorangeSize += $FileIO->getCurrentStorageSize($board);
+		$totalBoardsStorageSize += $FileIO->getCurrentStorageSize($board);
 	}
 	return $totalBoardsStorageSize;
 }

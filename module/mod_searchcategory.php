@@ -1,6 +1,6 @@
 //
 <?php
-class mod_SearchCategory extends ModuleHelper {
+class mod_searchcategory extends ModuleHelper {
 	private $mypage;
 	private $THUMB_EXT = -1;
 
@@ -54,7 +54,7 @@ class mod_SearchCategory extends ModuleHelper {
 
 		$dat = '';
 		$globalHTML->head($dat);
-		$links = '[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>] [<a href="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&recache=1">'._T('category_recache').'</a>]';
+		$links = '[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>] [<a href="'.$this->config['PHP_SELF'].'?mode=module&load=mod_searchcategory&c='.$category_enc.'&recache=1">'._T('category_recache').'</a>]';
 
 		$PMS->useModuleMethods('LinksAboveBar', array(&$links,'category',$roleLevel));
 		$dat .= "<div>$links</div>\n";
@@ -63,17 +63,17 @@ class mod_SearchCategory extends ModuleHelper {
 			$dat .= arrangeThread($this->board, $this->config, $PTE, $globalHTML, $PIO, ($posts[0]['resto'] ? $posts[0]['resto'] : $posts[0]['no']), null, $posts, 0, $loglist_cut[$i], array(), array(), false, false, false); // Output by output (reference links are not displayed)
 		}
 
-		$dat .= '<table id="pager" border="1"><tr>';
-		if($page > 1) $dat .= '<td><form action="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&p='.($page - 1).'" method="post"><div><input type="submit" value="'._T('prev_page').'"></div></form></td>';
-		else $dat .= '<td nowrap="nowrap">'._T('first_page').'</td>';
+		$dat .= '<table id="pager"><tr>';
+		if($page > 1) $dat .= '<td><form action="'.$this->config['PHP_SELF'].'?mode=module&load=mod_searchcategory&c='.$category_enc.'&p='.($page - 1).'" method="post"><div><input type="submit" value="'._T('prev_page').'"></div></form></td>';
+		else $dat .= '<td>'._T('first_page').'</td>';
 		$dat .= '<td>';
 		for($i = 1; $i <= $page_max ; $i++){
 			if($i==$page) $dat .= "[<b>".$i."</b>] ";
-			else $dat .= '[<a href="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&p='.$i.'">'.$i.'</a>] ';
+			else $dat .= '[<a href="'.$this->config['PHP_SELF'].'?mode=module&load=mod_searchcategory&c='.$category_enc.'&p='.$i.'">'.$i.'</a>] ';
 		}
 		$dat .= '</td>';
-		if($page < $page_max) $dat .= '<td><form action="'.$this->config['PHP_SELF'].'?mode=category&c='.$category_enc.'&p='.($page + 1).'" method="post"><div><input type="submit" value="'._T('next_page').'"></div></form></td>';
-		else $dat .= '<td nowrap="nowrap">'._T('last_page').'</td>';
+		if($page < $page_max) $dat .= '<td><form action="'.$this->config['PHP_SELF'].'?mode=module&load=mod_searchcategory&c='.$category_enc.'&p='.($page + 1).'" method="post"><div><input type="submit" value="'._T('next_page').'"></div></form></td>';
+		else $dat .= '<td>'._T('last_page').'</td>';
 		$dat .= '</tr></table>';
 
 		$globalHTML->foot($dat);

@@ -118,14 +118,14 @@ const bbcode = [
   {meaning:"<i>Italics</i>&nbsp;",code:"i"},
   {meaning:"<u>Underline</u>&nbsp;",code:"u"},
   {meaning:"<s>Strikethrough</s>&nbsp;",code:"del"},
-  {meaning:"<mark style='background-color:black;color:white'>&nbsp;Spoiler&nbsp;</mark>",code:"s"},
+  {meaning:"<span style='background-color:black;color:white'>&nbsp;Spoiler&nbsp;</span>",code:"s"},
   {meaning:"<pre style='display:inline'>Preformatted</pre>",code:"pre"},
   {meaning:"<q>Blockquote</q>&nbsp;",code:"quote"},
-  {meaning:"<code style='background-color:white;color:black'>&nbsp;Code&nbsp;</code>&nbsp;",code:"code"},
+  {meaning:"<code class='code'>Code</code>&nbsp;",code:"code"},
 ];
 const selector_bbcode = [ // BBCodes with selectors
-  {meaning:"<b style='display:inline;color:#489b67'>C<span style='color:#d30615'>o</span>l<span style='color:#d30615'>o</span>r</b>&nbsp;", code:"color",selector:"#800043"},
-  {meaning:"<h3 style='display:inline'>Size</h3>&nbsp;",code:"s",selector:"7"},
+  {meaning:"<span style='font-weight:bold'><span class='bokuRed'>C</span><span class='bokuGreen'>o</span><span class='bokuRed'>l</span><span class='bokuGreen'>o</span><span class='bokuRed'>r</span>&nbsp;", code:"color",selector:"#800043"},
+  {meaning:"<span class='fontSize5'>Size</span>&nbsp;",code:"s",selector:"7"},
 ];
 
 const emoji_list = [
@@ -672,17 +672,16 @@ const insertBBCode = () => {
 /* EMOTES */
 let emotes_container = document.createElement("details");
 emotes_container.innerHTML += SUMMARY_ELEMENT("Emotes");
+emotes_container.classList.add("emotesContainer");
 
 emotes_list.forEach((emote,index) => {
   let button = document.createElement('button');
   button.type = "button";
   button.title = emote.value;
-  button.innerHTML += '<img src="./static/image/emote/'+emote.src+'" loading="lazy" title="'+emote.value+'" alt="'+emote.value+'" height="30px">';
+  button.classList.add("emoteButton");
+  button.innerHTML += '<img class="emoteImage" src="'+STATIC_URL+'image/emote/'+emote.src+'" loading="lazy" title="'+emote.value+'" alt="'+emote.value+'">';
   button.addEventListener("click", onClickHandler);
   emotes_container.appendChild(button);
-  if (index%8 === 7) { // 8 emotes per row
-    emotes_container.appendChild(document.createElement('br'));
-  }
 });
 
 // A.after(B), B.after(C), etc... = A --> B --> C --> ...
@@ -691,20 +690,21 @@ COMMENT.after(emotes_container); // insert emotes after comment box
 /* EMOJI */
 let emoji_container = document.createElement("details");
 emoji_container.innerHTML += SUMMARY_ELEMENT("Emoji");
+emoji_container.classList.add("emojiContainer");
 
 emoji_list.forEach((emoji, index) => {
   let button = document.createElement('button');
   button.type = "button";
   button.title = emoji.title;
   button.value = emoji.value;
-  button.innerHTML += '<img src="./static/image/emoji/'+emoji.src+'" loading="lazy" title="'+emoji.title+'" alt="'+emoji.title+'" height="24px">';
+  button.classList.add("emojiButton");
+  button.innerHTML += '<img class="emojiImage" src="'+STATIC_URL+'image/emoji/'+emoji.src+'" loading="lazy" title="'+emoji.title+'" alt="'+emoji.title+'" height="24px">';
   button.addEventListener("click", onClickHandler2);
   emoji_container.appendChild(button);
-  if ((index + 1) % 10 === 0) { // 10 emoji per row
-    emoji_container.appendChild(document.createElement('br'));
-    if ((index + 1) % 70 === 0) { // After every 7 rows of 10 items
-      emoji_container.appendChild(document.createElement('br'));
-    }
+
+  // Add margin at the end of every 7th row (after every 70 emoji)
+  if ((index + 1) % 70 === 0) {
+    button.classList.add('row-end'); // Add the 'row-end' class to create a gap
   }
 });
 
@@ -713,20 +713,19 @@ emotes_container.after(emoji_container);
 /* SHIFT_JIS */
 let sjis_container = document.createElement("details");
 sjis_container.innerHTML += SUMMARY_ELEMENT("Kaomoji");
+sjis_container.classList.add("kaomojiContainer");
 
 shift_jis.forEach((sjis, index) => {
   let button = document.createElement('button');
   button.type = "button";
   button.title = sjis.value;
   button.dataset.value = sjis.value;
+  button.classList.add("kaomojiButton");
   button.innerHTML += '<div class="ascii" title="' + sjis.value + '">' + sjis.display + '</div>';
   button.addEventListener("click", onClickHandler);
   sjis_container.appendChild(button);
-  if (index % 7 === 6) { // 7 kaomoji per row
-    sjis_container.appendChild(document.createElement('br'));
-  }
 });
-emoji_container.after(sjis_container); // insert sjis after emotes
+emoji_container.after(sjis_container); // insert sjis after emoji
 
 /* BBCODE */
 let bbcode_container = document.createElement("details");
@@ -740,12 +739,8 @@ bbcode.forEach((code,index) => {
 
   input_label.appendChild(checkbox);
   input_label.innerHTML += code.meaning+" ";
-  if (index%4 === 0 && index !== 0) { // 5 BBCodes per row
-    bbcode_container.appendChild(document.createElement('br'));
-  }
   bbcode_container.appendChild(input_label);
 });
-bbcode_container.appendChild(document.createElement('br'));
 
 /* bbcode with selectors */
 // color
@@ -782,7 +777,6 @@ size_input.addEventListener('change',(e)=>selector_bbcode[1].selector=e.target.v
 
 size_label.appendChild(size_input);
 bbcode_container.appendChild(size_label);
-bbcode_container.appendChild(document.createElement("br"));
 
 // text input + add button
 let text_input = document.createElement("textarea");

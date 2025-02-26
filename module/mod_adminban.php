@@ -45,7 +45,7 @@ class mod_adminban extends ModuleHelper {
 		$globalHTML = new globalHTML($this->board);
 		foreach ($log as $i => $entry) {
 			list($banip, $starttime, $expires, $reason) = explode(',', $entry, 4);
-			if (str_contains($ip, gethostbyname($banip))) {
+			if (strpos($ip, gethostbyname($banip)) !== false) { # PHP7 compatibility. change for PHP8: if (str_contains($ip, gethostbyname($banip))) {
 				// Render the ban page
 				$dat = '';
 				$globalHTML->head($dat);
@@ -68,7 +68,7 @@ class mod_adminban extends ModuleHelper {
 		$staffSession = new staffAccountFromSession;
 
 		if ($staffSession->getRoleLevel() >= $this->config['roles']['LEV_MODERATOR'] && $pageId === 'admin') {
-			$link .= '[<a href="' . $this->mypage . '">Manage Bans</a>] ';
+			$link .= '[<a href="' . $this->mypage . '">Manage bans</a>] ';
 		}
 	}
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
@@ -77,8 +77,8 @@ class mod_adminban extends ModuleHelper {
 		
 		$ip = htmlspecialchars($post['host']) ?? '';
 		$delMode = $_REQUEST['admin'] ?? '';
-		if ($roleLevel >= $this->config['AuthLevels']['CAN_BAN']) $modfunc .= '[<a href="' . $this->mypage . '&post_uid=' . $post['post_uid'] . '&ip=' . $ip . '" title="Ban">B</a>] ';
-		if (!empty($ip) && $roleLevel >= $this->config['AuthLevels']['CAN_VIEW_IP_ADDRESSES'] && $delMode !== 'del') $modfunc .= '<small>[HOST: <a href="?mode=admin&admin=del&host=' . $ip . '">' . $ip . '</a>]</small>';
+		if ($roleLevel >= $this->config['AuthLevels']['CAN_BAN']) $modfunc .= '<span class="adminBanFunction">[<a href="' . $this->mypage . '&post_uid=' . $post['post_uid'] . '&ip=' . $ip . '" title="Ban">B</a>]</span> ';
+		if (!empty($ip) && $roleLevel >= $this->config['AuthLevels']['CAN_VIEW_IP_ADDRESSES'] && $delMode !== 'del') $modfunc .= '<span class="host">[HOST: <a href="?mode=admin&admin=del&host=' . $ip . '">' . $ip . '</a>]</span>';
 	}
 
 	public function ModulePage() {
@@ -114,7 +114,7 @@ function updatepview(event=null) {
 
 window.onload = function () {
 	var msg = document.getElementById("banmsg");
-	msg.insertAdjacentHTML("afterend", \'<br>Preview:<br><table><tbody><tr><td class="reply"><blockquote id="msgpview"></blockquote></td></tr></tbody></table>\');
+	msg.insertAdjacentHTML("afterend", \'<br>Preview:<br><table><tbody><tr><td class="reply"><div id="msgpview" class="comment"></div></td></tr></tbody></table>\');
 	msg.oninput = updatepview;
 	updatepview();
 }

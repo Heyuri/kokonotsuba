@@ -21,7 +21,7 @@ class mod_movethread extends ModuleHelper {
 		$staffSession = new staffAccountFromSession;
 		if ($staffSession->getRoleLevel() < $this->config['roles']['LEV_MODERATOR']) return;
 
-		if (!$isres) $modfunc .= '[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'" title="move thread">MT</a>]';
+		if (!$isres) $modfunc .= '<span class="adminMoveThreadFunction">[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'" title="move thread">MT</a>]</span>';
 	}
 
 	private function copyThreadFilesFromHostToDestination($filesToCopy, $hostBoard, $destinationBoard) {

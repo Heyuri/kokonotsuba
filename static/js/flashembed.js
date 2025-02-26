@@ -15,9 +15,13 @@ function openFlashEmbedWindow(file, name, w, h) {
         let Winw = w;
         let Winh = h;
 
-        if (window.innerHeight < h || window.innerWidth < w) {
-            Winh = Math.round(0.8 * window.innerHeight);
-            Winw = Math.round(0.8 * window.innerWidth);
+        if (Winw > window.innerWidth) {
+            Winh = Math.round(Winh / Winw * window.innerWidth);
+            Winw = window.innerWidth;
+        }
+        if (Winh > window.innerHeight) {
+            Winw = Math.round(Winw / Winh * window.innerHeight);
+            Winh = window.innerHeight;
         }
 
         swfWindow.style.width = `${Winw}px`;

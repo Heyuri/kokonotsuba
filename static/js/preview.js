@@ -64,18 +64,14 @@ function preview() {
 	c = c.replaceAll(/\[i\](.*?)\[\/i\]/gi, "<i>$1</i>");
 	c = c.replaceAll(/\[u\](.*?)\[\/u\]/gi, "<u>$1</u>");
 	c = c.replaceAll(/\[p\](.*?)\[\/p\]/gi, "<p>$1</p>");
-	c = c.replaceAll(/\[color=(\S+?)\](.*?)\[\/color\]/gi, "<font color=\"$1\">$2</font>");
-	c = c.replaceAll(/\[s([1-7])\](.*?)\[\/s([1-7])\]/gi, "<font size=\"$1\">$2</font>");
+	c = c.replaceAll(/\[color=(\S+?)\](.*?)\[\/color\]/gi, "<span style=\"color:$1;\">$2</span>");
+	c = c.replaceAll(/\[s([1-7])\](.*?)\[\/s([1-7])\]/gi, "<span class=\"fontSize$1\">$2</span>");
 	c = c.replaceAll(/\[del\](.*?)\[\/del\]/gi, "<del>$1</del>");
 	c = c.replaceAll(/\[pre\](.*?)\[\/pre\]/gi, "<pre>$1</pre>");
 	c = c.replaceAll(/\[blockquote\](.*?)\[\/blockquote\]/gi, "<blockquote>$1</blockquote>");
 	c = c.replaceAll(/\[aa\](.*?)\[\/aa\]/gi, "<pre class=\"ascii\">$1</pre>");
 	c = c.replaceAll(/\[email\](\S+?@\S+?\\.\S+?)\[\/email\]/gi, "<a href=\"mailto:$1\">$1</a>");
 	c = c.replaceAll(/\[email=(\S+?@\S+?\\.\S+?)\](.*?)\[\/email\]/gi, "<a href=\"mailto:$1\">$2</a>");
-	c = c.replaceAll(//gi, "");
-	c = c.replaceAll(//gi, "");
-	c = c.replaceAll(//gi, "");
-
 	c = c.replaceAll("\r", "");
 	c = c.replaceAll("\n", "<br>");
 	p.innerHTML = c;

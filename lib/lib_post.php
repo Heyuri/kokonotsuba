@@ -319,9 +319,9 @@ function applyTripcodeAndCapcodes($config, $staffSession, &$name, &$email, &$des
 }
 
 function runWebhooks($board, &$resto, &$no, &$sub){
-	$config = $board->loadBoardConfig();
-	$globalHTML = new globalHTML($board);
-	// webhooks
+    $config = $board->loadBoardConfig();
+    $globalHTML = new globalHTML($board);
+    // webhooks
     if(!empty($config['IRC_WH'])){
         $url = 'https:'.$globalHTML->fullURL().$config['PHP_SELF']."?res=".($resto?$resto:$no)."#p$no";
         $stream = stream_context_create([
@@ -353,7 +353,7 @@ function runWebhooks($board, &$resto, &$no, &$sub){
  
             // webhooks with titles
     if(!empty($config['IRC_WH_NEWS']) && !$resto){
-        $url = 'https:'.fullURL().$config['PHP_SELF']."?res=".($resto?$resto:$no);
+        $url = 'https:'.$globalHTML->fullURL().$config['PHP_SELF']."?res=".($resto?$resto:$no);
         $stream = stream_context_create([
                         'ssl' =>[
                 'verify_peer'=>false,

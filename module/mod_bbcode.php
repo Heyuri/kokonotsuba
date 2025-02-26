@@ -112,14 +112,14 @@ class mod_bbcode extends ModuleHelper {
 		$string = preg_replace('#\[sw\](.*?)\[/sw\]#si', '<pre class="sw">\1</pre>', $string);
 		$string = preg_replace('#\[kao\](.*?)\[/kao\]#si', '<span class="ascii">\1</span>', $string);
 		
-		$string = preg_replace('#\[color=(\S+?)\](.*?)\[/color\]#si', '<font color="\1">\2</font>', $string);
+		$string = preg_replace('#\[color=(\S+?)\](.*?)\[/color\]#si', '<span style="color:\1;">\2</span>', $string);
 
-		$string = preg_replace('#\[s([1-7])\](.*?)\[/s([1-7])\]#si', '<font size="\1">\2</font>', $string);
+		$string = preg_replace('#\[s([1-7])\](.*?)\[/s([1-7])\]#si', '<span class="fontSize\1">\2</span>', $string);
 
 		$string = preg_replace('#\[del\](.*?)\[/del\]#si', '<del>\1</del>', $string);
 		$string = preg_replace('#\[pre\](.*?)\[/pre\]#si', '<pre>\1</pre>', $string);
 		$string = preg_replace('#\[quote\](.*?)\[/quote\]#si', '<blockquote>\1</blockquote>', $string);
-		$string = preg_replace('#\[scroll\](.*?)\[/scroll\]#si', '<div style="overflow:scroll; max-height: 200px;">\1</div>', $string);
+		$string = preg_replace('#\[scroll\](.*?)\[/scroll\]#si', '<div class="scrollText">\1</div>', $string);
 
 		if ($this->supportRuby){
 		//add ruby tag
@@ -148,7 +148,7 @@ class mod_bbcode extends ModuleHelper {
 		}
 
 		foreach ($this->emotes as $emo=>$url) {
-			$string = str_replace(":$emo:", "<img title=\":$emo:\" class=\"emote\" src=\"$url\" alt=\"$emo\" border=\"0\">", $string);
+			$string = str_replace(":$emo:", "<img title=\":$emo:\" class=\"emote\" src=\"$url\" alt=\":$emo:\">", $string);
 		}
 
 		return $string;
@@ -202,9 +202,9 @@ class mod_bbcode extends ModuleHelper {
 		$string = preg_replace('#<p>(.*?)</p>#si', '[p]\1[/p]', $string);
 		$string = preg_replace('#<pre class="sw">(.*?)</pre>#si', '[sw]\1[/sw]', $string);
 
-		$string = preg_replace('#<font color="(\S+?)">(.*?)</font>#si', '[color=\1]\2[/color]', $string);
+		$string = preg_replace('#<span style="color:(\S+?);">(.*?)</span>#si', '[color=\1]\2[/color]', $string);
 
-		$string = preg_replace('#<font size="([1-7])">(.*?)</font>#si', '[s\1]\2[/s\1]', $string);
+		$string = preg_replace('#<span class="fontSize([1-7])">(.*?)</span>#si', '[s\1]\2[/s\1]', $string);
 
 		$string = preg_replace('#<del>(.*?)</del>#si', '[del]\1[/del]', $string);
 		$string = preg_replace('#<pre>(.*?)</pre>#si', '[pre]\1[/pre]', $string);
@@ -226,15 +226,16 @@ class mod_bbcode extends ModuleHelper {
 	private function _URLExcced(){
 		if($this->urlcount > $this->MaxURLCount) {
 		  	  $fh = fopen($this->URLTrapLog, 'a+b');
-		  	  fwrite($fh, time()."\t$_SERVER[REMOTE_ADDR]\t$cnt\n");
+		  	  fwrite($fh, time()."\t$_SERVER[REMOTE_ADDR]\t{$this->urlcount}\n");
 		  	  fclose($fh);
 		  	  error("URL:標籤超過上限");
 		}
 	}
 
 	public function ModulePage(){
+		$globalHTML = new globalHTML($this->board);
 		$dat='';
-		head($dat);
+		$globalHTML->head($dat);
 		$dat.='
 BBCODE Settings:
 <ul>
@@ -245,7 +246,7 @@ BBCODE Settings:
 	<li>[aa]Hello[/aa] will become</li>
 </ul>
 ';
-		foot($dat);
+		$globalHTML->foot($dat);
 		echo $dat;
 	}
 }

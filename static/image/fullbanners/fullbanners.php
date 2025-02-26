@@ -8,8 +8,16 @@
 	);
 	
 	$random = array_rand($ads);
-	echo '<body style="margin: 0;">
+	echo '<!DOCTYPE html>
+	<html lang="en" style="overflow:hidden;">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Full banner</title>
+	</head>
+	<body style="margin: 0;">
 	<a href="'.$ads[$random].'" target="_blank"><img style="max-width: 100%;" src="'.$random.'">
-	</body>';
+	</body>
+	</html>';
 	
 ?>

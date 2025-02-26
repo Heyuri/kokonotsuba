@@ -288,7 +288,15 @@ class adminPageHandler {
 		$dat .= "  [<a href=\"{$this->config['PHP_SELF']}?admin=action&mode=admin\">Reload Table</a>]
 			<table class=\"postlists\" id=\"actionlogtable\">
 				<thead>
-					<tr><th>Board Title</th> <th>Board UID</th> <th>Name</th> <th> Role </th> <th>IP</th> <th></th> <th>Time</th> </tr>
+					<tr>
+						<th>Board title</th>
+						<th>Board UID</th>
+						<th>Name</th>
+						<th>Role</th>
+						<th>IP</th>
+						<th>Action</th>
+						<th>Time</th>
+					</tr>
 				</thead>
 				<tbody>
 					$tableEntries

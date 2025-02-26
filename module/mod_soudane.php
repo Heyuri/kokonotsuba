@@ -86,6 +86,12 @@ class mod_soudane extends ModuleHelper {
 			if (xmlhttp.readyState == 4) {
 				elem.innerHTML = xmlhttp.responseText;
 				updateScore(post_uid);
+
+				// Check and update class from noVotes to hasVotes if needed
+				if (elem.classList.contains("noVotes")) {
+					elem.classList.remove("noVotes");
+					elem.classList.add("hasVotes");
+				}
 			}
 		};
 		xmlhttp.send(null);

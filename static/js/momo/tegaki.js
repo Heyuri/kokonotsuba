@@ -5426,7 +5426,7 @@ function createMomocan (opts) {
 			const link = document.head.appendChild(document.createElement('link'));
 			link.rel = 'stylesheet';
 			link.type = 'text/css';
-			link.href = url || `${MOMO_URL}/can.css`;
+			link.href = url || `${MOMO_URL}/can.css?v=2`;
 
 			if ('onload' in link) {
 				link.onload = resolve;
@@ -5474,7 +5474,7 @@ function createMomocan (opts) {
 						const div = anchor.appendChild(document.createElement('div'));
 						thumb = div.appendChild(document.createElement('img'));
 						thumb.id = THUMBNAIL_ID;
-						thumb.style.width = '100%';
+						thumb.style.width = '150px';
 					}
 					thumb.src = dataURL;
 				},
@@ -5508,8 +5508,9 @@ function createMomocan (opts) {
 		const anchor = div.appendChild(document.createElement('a'));
 		anchor.id = START_LINK_ID;
 		anchor.href = '#start-momocan';
-		anchor.textContent = 'Tegaki (momo)';
-		anchor.style.fontSize = 'x-small';
+		anchor.textContent = 'Tegaki';
+		anchor.style.fontSize = '1em';
+		anchor.style.color = 'inherit';
 		anchor.addEventListener('click', e => {
 			e.preventDefault();
 			let momocan = createMomocan({
@@ -5534,7 +5535,7 @@ function createMomocan (opts) {
 						const div = anchor.appendChild(document.createElement('div'));
 						thumb = div.appendChild(document.createElement('img'));
 						thumb.id = THUMBNAIL_ID;
-						thumb.style.width = '100%';
+						thumb.style.width = '150px';
 					}
 					thumb.src = dataURL;
 				},

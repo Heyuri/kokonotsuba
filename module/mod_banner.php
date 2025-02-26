@@ -13,7 +13,7 @@ class mod_banner extends ModuleHelper {
 	public function getModuleVersionInfo() {
 		return 'Kokonotsuba 2024';
 	}
-	
+
 	private function getAllFilesFromDirectory($directory) {
 		$globalHTML = new  globalHTML($this->config);
 		if (!is_dir($directory)) {
@@ -26,7 +26,7 @@ class mod_banner extends ModuleHelper {
 		return $files;
 	}
 
-	
+
 	private function getRandomFilesFromDirectory($directory, $numFiles = 1) {
 		if (!is_dir($directory)) {
 			return false;
@@ -51,16 +51,16 @@ class mod_banner extends ModuleHelper {
 
 	// Banner
 	public function autoHookAboveTitle(&$html) {
-		$html .= '<div id="bannerContainer">
-					<img border="1" src="' .$this->mypage.'" 
-					id="banner"  title="Click to change" >
-				  </div>';
+		$html .= '
+      <div id="bannerContainer">
+        <img width="300" height="100" src="' .$this->mypage.'" id="banner" title="Click to change">
+      </div>';
 	}
-	
+
 	private function outputbannerJSON() {
 		header('Location: ', );
 		$bannerDirectoryJSON = json_encode($this->getAllFilesFromDirectory($this->config['ModuleSettings']['BANNER_PATH']),  JSON_PRETTY_PRINT);
-		
+
 		echo $bannerDirectoryJSON;
 	}
 
@@ -75,16 +75,16 @@ class mod_banner extends ModuleHelper {
 			$bannerImage = 'defaultbanner.png';
 			$bannerURL = $this->config['STATIC_URL'].'image/default/'.$bannerImage;
 		}
-	
+
 		header('Location: '. $bannerURL); //redirect to image
 	}
-	
+
 	public function ModulePage() {
 		if(isset($_GET['bannerjson'])) {
 			$this->outputbannerJSON();
 			return;
 		} else $this->drawBannerRedirect();
-		
+
 	}
 
 }

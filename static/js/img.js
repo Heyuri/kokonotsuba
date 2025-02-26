@@ -1,118 +1,23 @@
 /* LOL HEYURI
  */
 
-document.write(`<style>
-#hoverimg {
-	position: fixed;
-	top: 0;
-	right: 0;
-	max-height: calc( 100% - 2px );
-	max-width: calc( 100% - 2px );
-	z-index: 495;
-	pointer-events: none;
-	display: none;
-	background-color: inherit;
-}
-/* Gallery */
-#galframe {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 490;
-	background-color: #000A;
-	color: #FFF;
-	display: none;
-	flex-direction: row;
-}
-#galmain {
-	width: calc(100% - 150px - 1em);
-}
-#galimg {
-	max-width: 100%;
-	max-height: 100%;
-}
-#galctrl {
-	background-color: #111E;
-	height: 2em;
-}
-#galctrl .filesize {
-	margin-top: 0.25em;
-	display: block;
-}
-#galctrl * {
-	color: #FFF!important;
-	text-decoration: none;
-}
-#galctrl a, #galctrl a:hover {
-	font-weight: bold;
-}
-#galctrl a:hover {
-	text-decoration: underline;
-}
-#galctrl2 {
-	float: right;
-	font-family: Tahoma, Verdana;
-	font-size: larger;
-}
-#galside {
-	border-style: inset;
-	background-color: #111;
-	padding: 0 5px;
-	overflow-x: hidden;
-	overflow-y: scroll;
-	max-width: 150px;
-}
-#galside img {
-	border-style: solid;
-	border-width: 1px;
-	border-color: #008;
-	opacity: 0.8;
-}
-#galside img:hover {
-	border-color: #00F;
-}
-#galside img.activethumb {
-	border-color: #FFF;
-	opacity: 1;
-}
-#galimgcontainer {
-	position: relative;
-}
-#galimgprev {
-	position: absolute;
-	left: 0;
-	top: 0;
-	width: 50%;
-	height: 100%;
-}
-#galimgnext {
-	position: absolute;
-	left: 50%;
-	top: 0;
-	width: 50%;
-	height: 100%;
-}
-</style>`);
-
 /* Gallery (submodule) */
 const kkgal = {
 	startup: function () {
 		var df = $id("delform");
 		if (!df) return;
 		if (document.querySelector("#galfuncs")) return;
-		df.insertAdjacentHTML("beforebegin", '<div align="RIGHT" id="galfuncs"><label><input type="checkbox" onchange="localStorage.setItem(\'galmode\',this.checked);"'+( localStorage.getItem("galmode")=="true" ? ' checked="checked"' : '')+'>Gallery mode</label></div>');
+		//df.insertAdjacentHTML("beforebegin", '<div id="galfuncs"><label><input type="checkbox" onchange="localStorage.setItem(\'galmode\',this.checked);"'+( localStorage.getItem("galmode")=="true" ? ' checked="checked"' : '')+'>Gallery mode</label></div>'); // disable "Gallery mode" checkbox in thread
 		$doc.body.insertAdjacentHTML("beforeend", `
 <div id="galframe">
 	<table id="galmain" cellspacing="0" cellpadding="5" height="100%"><tbody>
-		<tr><td align="CENTER" valign="CENTER" id="galimgcontainer">
+		<tr><td id="galimgcontainer" style="text-align: center">
 			<a href="" id="galimgprev"></a>
 			<a href="" id="galimgnext"></a>
 			<img src="" alt="Gallery Image" id="galimg">
 		</td></tr>
-		<tr><td id="galctrl" valign="CENTER">
-			<nobr id="galctrl2"><a href="javascript:kkgal.contract();" title="close">&times;</a></nobr>
+		<tr><td id="galctrl">
+			<div id="galctrl2"><a href="javascript:kkgal.contract();" title="close">&times;</a></div>
 		</td></tr>
 	</tbody></table>
 	<div id="galside">
@@ -128,7 +33,7 @@ const kkgal = {
 			var a = kkimg.postimg[i].parentNode;
 			var pno = a.parentNode.id.substr(1);
 
-			sideInnerHTML += '<a href="javascript:kkgal.expand(\''+pno+'\');"><img id="galthumb'+pno+'" class="" src="'+kkimg.postimg[i].src+'" alt="" border="1" width="100%"></a>';
+			sideInnerHTML += '<a href="javascript:kkgal.expand(\''+pno+'\');"><img id="galthumb'+pno+'" class="" src="'+kkimg.postimg[i].src+'" alt="'+kkimg.postimg[i].src+'"></a>';
 			kkgal.imgindex[i] = pno;
 		}
 		side.insertAdjacentHTML("beforeend", sideInnerHTML);
@@ -197,7 +102,7 @@ const kkgal = {
 	/* Function */
 	getfit: function () {
 		var d = $doc.documentElement;
-		kkgal.gimg.style.maxWidth = (d.clientWidth-200)+"px";
+		kkgal.gimg.style.maxWidth = (d.clientWidth-300)+"px";
 		kkgal.gimg.style.maxHeight = (d.clientHeight-FONTSIZE*2.5)+"px";
 	},
 	expand: function (no=0) {
@@ -219,7 +124,7 @@ const kkgal = {
 				kkgal.gimg.src = a.href;
 				$id("galimgprev").href = "javascript:kkgal.expand('"+prev+"');";
 				$id("galimgnext").href = "javascript:kkgal.expand('"+next+"');";
-				kkgal.gctrl.innerHTML = '<nobr id="galctrl2"><a href="javascript:kkgal.expand(\''+prev+'\');" title="Previous">&#9664;</a> <a href="javascript:kkgal.expand(\''+next+'\');" title="Next">&#9654;</a> <a href="javascript:kkgal.contract();" title="Close">&times;</a></nobr>';
+				kkgal.gctrl.innerHTML = '<div id="galctrl2"><a href="javascript:kkgal.expand(\''+prev+'\');" title="Previous">&#9664;</a> <a href="javascript:kkgal.expand(\''+next+'\');" title="Next">&#9654;</a> <a href="javascript:kkgal.contract();" title="Close">&times;</a></div>';
 				kkgal.gctrl.appendChild(fs);
 			}
 		}
