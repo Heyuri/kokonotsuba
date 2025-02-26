@@ -18,7 +18,7 @@ class mod_addinfo extends ModuleHelper {
 
 	public function autoHookPostInfo(&$form) {
 		$addinfoHTML = '';	
-		$addinfoHTML .= '<hr>';
+		$addinfoHTML .= '</ul><hr><ul class="rules">';
 		//begin list
 		foreach($this->dotpoints as $rule) {
 			$addinfoHTML .= '<li>'.$rule.'</li>';

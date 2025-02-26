@@ -42,20 +42,20 @@ class mod_showip extends ModuleHelper {
 		if (!($this->IPTOGGLE == 2) && !($this->IPTOGGLE == 1 && stristr($email, 'displayip'))) {
 			return;
 		}
-		if ($isThreadOP && $this->IPTOGGLE == 1) $arrLabels['{$COM}'] .= '<br><br><span style="color: #00C;"><b>Posts in this thread will display IP addresses.</b></span>';
+		if ($isThreadOP && $this->IPTOGGLE == 1) $arrLabels['{$COM}'] .= '<p class="ipWarning">Posts in this thread will display IP addresses.</p>';
 		if(ip2long($iphost)!==false) {
-			$arrLabels['{$NOW}'] .= ' (IP: '.preg_replace('/\d+\.\d+$/','*.*',$iphost).')';
+			$arrLabels['{$NOW}'] .= ' <span class="userIP">(IP: '.preg_replace('/\d+\.\d+$/','*.*',$iphost).')</span>';
 		} else if (inet_pton($iphost) !== false) { // ipv6
 			$ipv6mask = inet_pton('ffff:ffff::');
 			$ipv6 = inet_pton($iphost);
 			$ipv6 = inet_ntop($ipv6 & $ipv6mask);
 			$ipv6 = rtrim($ipv6, ':').':*';
-			$arrLabels['{$NOW}'] .= ' (IP: '.$ipv6.')';
+			$arrLabels['{$NOW}'] .= ' <span class="userIP">(IP: '.$ipv6.')</span>';
 		} else { // host
 			$parthost=''; $iscctld = false; $isgtld = false;
 
 			if($iphost == 'localhost') { // localhost hack
-				$arrLabels['{$NOW}'] .= ' (Host: localhost)';
+				$arrLabels['{$NOW}'] .= ' <span class="userIP">(Host: localhost)</span>';
 				return;
 			}
 

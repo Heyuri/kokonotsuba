@@ -59,7 +59,7 @@ class overboard {
 				'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 				'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
 				'{$FORMDAT}' => '',
-				'{$DEL_PASS_FIELD}' => '<input type="password" name="pwd" size="8" value="">',
+				'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" size="8" value="">',
 				'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'">',
 				'{$THREADS}' => '',
 				'{$TITLE}' => 'Overboard',
@@ -70,10 +70,10 @@ class overboard {
 		$single_page = false;
 		
 		$limit = $this->config['OVERBOARD_THREADS_PER_PAGE'];
-		$pagenum = $_REQUEST['page'] ?? 0;
-
+		
 		if (!filter_var($pagenum, FILTER_VALIDATE_INT) && $pagenum != 0) $globalHTML->error("Page number was not a valid int.");
 
+		$pagenum = $_REQUEST['page'] ?? 0;
 		$pagenum = ($pagenum >= 0) ? $pagenum : 1;
 		$offset = $pagenum * $limit;
 

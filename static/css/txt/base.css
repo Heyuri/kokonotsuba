@@ -1,193 +1,89 @@
+@charset "UTF-8";
+
+/************************ Global **************************************/
+
 @font-face {
 	font-family: 'submona';
-	src: url("../fonts/submona/submona.woff") format('woff')
+	src: url("../fonts/submona/submona.woff") format('woff');
 }
 
+/* saitamaar_light from https://fonts.aahub.org */
 @font-face {
-	font-family: 'saitamaar';
-	src: url("../fonts/saitamaar_light/saitamaar_light.woff2") format('woff2'), url("..fonts/saitamaar_light/saitamaar_light.woff") format('woff')
+	font-family: "saitamaar_light";
+	src:
+		url("../fonts/saitamaar_light/saitamaar_light.woff2") format("woff2"),
+		url("../fonts/saitamaar_light/saitamaar_light.woff") format("woff"),
+		url("../fonts/saitamaar_light/saitamaar_light.ttf") format("ttf");
+	font-display: swap;
 }
 
-.hidden {
-	display: none;
+:root {
+	--font-family-msgothic: "MS Gothic", "IPAMonaGothic", "IPAGothic", "BIZ UDGothic", "Osaka-Mono", "Noto Sans Mono CJK JP", monospace;
+	--font-family-mspgothic: "MS PGothic", "Mona", "Monapo", "IPAMonaPGothic", "IPAPGothic", "submona", sans-serif;
+	--font-family-aa-2ch: "MS PGothic", "Mona", "Monapo", "IPAMonaPGothic", "IPAPGothic", "saitamaar_light", "submona", sans-serif;
+	--font-size-regular: 1em;
+	--font-size-small: 0.8125em;
+	--font-size-x-small: 0.75em;
+	--font-size-xx-small: 0.625em;
 }
 
-.postlists, .menu {
-	background-color: #CFC;
-	border-color: #ffffff;
-	border-style: solid;
-}
-.postlists {	padding: 5px;
+/*** Better sizing ***/
+html {
+  box-sizing: border-box;
 }
 
-.scroll {
-	height: 100px;
-	overflow: scroll;
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
 }
 
-.thread,
-#pager,
-.auditlog {
-	background-color: #EFEFEF;
-	border-color: #ffffff;
-	border-style: solid;
-	border-width: 1px;
+body {
+	background-color: var(--color-bg-main);
+	color: var(--color-fg-main);
+	font-family: var(--font-family-main);
+  font-size: var(--font-size-main);
 }
 
-spoiler {
-	background-color: #000;
-	transition: .3s;
-	color: #000;
+body#txt {
+	background-image: var(--image-bg-main);
 }
 
-spoiler:hover {
-	background-color: inherit;
-	color: inherit;
+body#txtreply {
+  background-color: var(--color-bg-reply);
+	color: var(--color-fg-reply);
 }
-pre {
+
+a,
+a:link,
+a:visited {
+	color: var(--color-fg-link);
+}
+
+a:hover,
+a:focus {
+	color: var(--color-fg-link-hover) !important;
+}
+
+a[href*="youtube.com"] {
+	text-decoration: underline dotted !important;
+}
+
+pre,
+code {
 	padding: 0;
-	
+	font-size: var(--font-size-small);
+	word-break: break-all;
 }
 
-.post.op:target {
-	background-color: inherit;
-	/* THIS HAS TO BE THE SAME MOTHERFUCKING COLOR AS THE MOTHERFUCKING BACKGROUND!!!!!!!!! */
-}
-
-.code {
-	background-color: #ffffff;
-	color: #000;
-	font-family: monospace;
-	line-height: 1;
-	padding: 10px;
-	font-size: 10pt;
-	 white-space: pre-wrap;       /* css-3 */
- white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
- white-space: -pre-wrap;      /* Opera 4-6 */
- white-space: -o-pre-wrap;    /* Opera 7 */
- word-wrap: break-word;       /* Internet Explorer 5.5+ */
-}
-.staffico {
-	vertical-align: middle;
-    image-rendering: optimizeSpeed;             /* STOP SMOOTHING, GIVE ME SPEED  */
-    image-rendering: -moz-crisp-edges;          /* Firefox                        */
-    image-rendering: -o-crisp-edges;            /* Opera                          */
-    image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
-    image-rendering: pixelated; /* Chrome */
-    image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
-    -ms-interpolation-mode: nearest-neighbor;   /* IE8+                           */
-
-
-	
-}
-#update-status {
-	color: #af0a0f;
-	
-}
-
-.hooklinks {
-padding-top: 12px;
-}
-.sod {
-	color: #000000;
-	text-decoration: none;
-	
-}
-.unkfunc2 {color: #dd00a9;}
-#com {
-	width: 400px;
-	height: 150px;
-	
-}
-
-.tnav a {
-	text-decoration: none;
-}
-
-.tnav {
-	float: right;
-	margin-right: 10px;
-	font-family: "MS PGothic", "Mona", submona, IPAMonaPGothic, "BIZ UDPGothic", saitamaar_light, sans-serif !important;
-}
-
-.postnum a {
-	text-decoration: none;
-	color: #000;
-	font-weight: bold;
-}
-
-.ascii {
-	font-family: "Mona", "IPAMonaGothic", 'MS PGothic', 'saitamaar', 'submona' !important;
-	-webkit-font-smoothing: none;
-	word-wrap: break-word;
-	line-height: 1;
-	font-size: 12pt;
-	padding: 0;
-}
-
-.penis {
-	font-size: 13pt;
-	background-color: #663399;
-	color: #00ffff;
-}
-
-.infosection {
-	background-color: #ffffff;
-	border-radius: 6px;
-	text-align: center;
-	width: 55%;
-	margin: auto;
-	padding: 7px;
-	font-weight: bold;
-	color: #666666;
-	font-size: 12pt;
-}
-
-.nobr {
-	margin: 0;
-	padding: 0;
-	white-space: nowrap;
-	overflow: hidden;
-	display: inline;
-	text-overflow: ellipsis;
-}
-
-.title2 {
-	background-color: #3399ff;
-	color: #fff;
-	border-radius: 6px;
-	padding: 3px;
-}
-
-.info5ch {
-	background-color: #eeffee;
-	overflow-y: scroll;
-	height: 150px;
-	border-radius: 6px;
-	border: 1px solid #eeffee;
-	padding: 4px;
-	color: #333333;
-	font-weight: bold;
-	margin-right: auto;
-	width: 80%;
-}
-
-.info5chheader {
-	color: #ff0000;
-	margin: 0;
-}
-
-.menu2 {
-	background-color: #CFC;
-	height: 220px;
-}
-.menu {
-	background-color: #CFC;
-}
-
-
-
+button,
 input,
+textarea,
+select {
+	font-size: var(--font-size-small);
+}
+
+/* input,
 button,
 summary,
 select,
@@ -199,17 +95,491 @@ audio {
 	border-radius: 0;
 	outline-style: none;
 	padding: 1;
+} */
+
+.nowrap {
+	display: inline-block;
 }
 
+.postlists,
+.outerbox {
+	border-width: 1px;
+	border-style: outset;
+	margin: 0 auto;
+	margin-bottom: 20px;
+	width: 95%;
+	padding: 7px;
+}
 
-.mnav,.mnav2, .galleryb, #expandall{
-display: none;
+.innerbox {
+	border-width: 1px;
+	border-style: inset;
+	padding: 3px;
+}
+
+.postlists {
+	border-spacing: 1px;
+	padding: 7px;
+	width: auto;
+}
+
+.postlists > thead > tr > th,
+.postlists > thead > tr > td,
+.postlists > tbody > tr > th,
+.postlists > tbody > tr > td {
+	border-width: 1px;
+	border-style: inset;
+	padding: 3px;
+}
+
+.postlists .title {
+	font-size: 1em;
+}
+
+caption h3 {
+	margin: 0;
+	font-size: var(--font-size-regular);
+}
+
+#slp {
+	position: absolute;
+	z-index: 499;
+	background-color: inherit;
+	border-style: solid;
+	border-width: 1px;
+	padding: 2px;
+}
+
+#slptmp {
+	display: none;
+}
+
+.centerText {
+	text-align: center;
+}
+
+.centerBlock {
+	display: table;
+	margin: 0 auto;
+}
+
+.centerBlock h3 {
+	text-align: center;
+}
+
+.hidden {
+	display: none !important;
+}
+
+/************************ Navigation/admin bar ************************/
+
+.boardlist {
+	background-color: var(--color-bg-boardlist);
+  color: var(--color-hi-contrast-border);
+	margin: -8px;
+	margin-bottom: 0;
+	font-size: var(--font-size-small);
+}
+
+/* Clearfix hax so parents of float elements retain their height */
+.boardlist::after,
+.neomenu::after { 
+	content: "";
+	display: table;
+	clear: both;
+}
+
+.boardlist a {
+	text-decoration: none;
+}
+
+.persistnav .boardlist {
+	border-bottom-style: solid;
+	border-width: 1px;
+	border-color: var(--color-lo-contrast-border);
+	position: sticky;
+	left: 0px;
+	top: 0px;
+	width: auto;
+	margin: -8px;
+	z-index: 1;
+}
+
+.persistnav #boxTitle {
+	margin-top: 0.5em;
+	margin-top: calc(0.5em - 1px);
 }
 
 .toplinks {
-float: left;
-font-size: 10pt;
+	margin: 0.25em;
+	float: left;
 }
+
+/******** Classic menu ********/
+
+.classicmenuGroup::before {
+	content: "["
+}
+
+.classicmenuGroup::after {
+	content: "]"
+}
+
+/******** Neomenu ********/
+
+.neomenuEnabled .toplinks {
+	margin-top: 0;
+}
+
+.neomenu {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	color: var(--color-fg-boardlist);
+	margin: 0.125em 0 0;
+  padding: 0;
+  list-style: none;
+  z-index: 100;
+}
+
+.neomenuTitle,
+.neomenuTopLevel {
+  float: left;
+  max-width: 15em;
+}
+
+.neomenuTitle {
+	padding-right: 2em;
+}
+
+/* .neomenuTitle a:hover {
+  background-color: transparent;
+} */
+
+.neomenuTopLevel,
+.neomenuList {
+	min-width: 12em;
+}
+
+.neomenuTopLevel {
+	background-color: var(--color-bg-boardlist);
+	border: 1px solid var(--color-hi-contrast-border);
+	border-top: none;
+	border-left: none;
+	user-select: none;
+}
+
+.persistnav .neomenuTopLevel {
+	border-color: var(--color-hi-contrast-border);
+}
+
+.neomenuTopLevel,
+.neomenuList {
+	min-width: 12em;
+}
+
+.neomenu h1,
+.neomenu h2 {
+	margin: 0;
+	font-size: var(--font-size-regular);
+	line-height: 1.2;
+	text-align: left;
+}
+
+.neomenu h1 a { 
+	color: inherit;
+}
+
+.neomenu h2 {
+	padding: 0 0.25em;
+}
+
+.neomenuList {
+	display: none;
+  position: absolute;
+	background-color: inherit;
+  border-width: 1px;
+  border-style: solid;
+	border-color: var(--color-hi-contrast-border);
+  list-style: none;
+	padding-left: 0;
+}
+
+.neomenuTopLevel:hover .neomenuList {
+  display: initial;
+}
+
+.neomenu .neomenuTopLevel h2:hover,
+.neomenu .neomenuList li:hover {
+  background-color: rgba(0,0,0,0.1);
+}
+
+.neomenuList {
+	max-height: 100vh;
+	max-height: calc(100vh - 8em);
+	overflow-y: auto;
+}
+
+.neomenuList .extr {
+	display: block;
+	padding-left: 0.25em;
+}
+
+/******** Admin bar ********/
+
+.adminbar {
+	margin: 0.25em;
+	float: right;
+	text-align: right;
+}
+
+/************************ Board header ********************************/
+
+#bannerContainer {
+	max-height: 102px;
+	width: 100%;
+}
+
+#banner {
+	display: block;
+	width: 302px;
+	height: auto;
+	max-width: 100%;
+	margin: 8px auto;
+}
+
+#banner,
+.fullbannerIframe {
+	border: 1px solid var(--color-fg-main);
+}
+
+.mtitle,
+.formTitle {
+	margin: 0;
+	font-size: 1.125em;
+	font-weight: bold;
+	word-break: break-word;
+}
+
+.subtitle {
+	font-size: var(--font-size-small);
+}
+
+.theading,
+.theading2,
+.theading3 {
+	color: var(--color-fg-theading);
+	margin: 4px 0;
+	padding: 1px 0;
+	font-size: var(--font-size-regular);
+	font-weight: bold;
+	text-align: center;
+}
+
+.theading {
+	background-color: var(--color-bg-theading);
+}
+
+.theading2 {
+	background-color: var(--color-bg-theading2);
+}
+
+.theading3 {
+	background-color: var(--color-bg-theading3);
+}
+
+.menu,
+.postlists {
+	background-color: var(--color-bg-menu);
+	border-color: var(--color-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-lo-contrast-border);
+	border-style: solid;
+}
+
+.menu > thead > tr > th,
+.menu > thead > tr > td,
+.menu > tbody > tr > th,
+.menu > tbody > tr > td,
+.menu .innerbox,
+.postlists > thead > tr > th,
+.postlists > thead > tr > td,
+.postlists > tbody > tr > th,
+.postlists > tbody > tr > td {
+	border-color: var(--color-hi-contrast-border-menu) var(--color-lo-contrast-border-menu) var(--color-lo-contrast-border-menu) var(--color-hi-contrast-border-menu);
+	border-style: solid;
+}
+
+/************************ Post form ***********************************/
+
+#toggleFlagContainer {
+	text-align: center;
+}
+
+#newReplyTitle {
+	margin: 0;
+	font-size: 1.125em;
+}
+
+/* #postformTable > tbody > tr > td:first-of-type {
+	vertical-align: top;
+} */
+
+#txtreply #postarea {
+	margin-bottom: 1em;
+	clear: both;
+}
+
+.postformItem {
+	display: block;
+	display: flex;
+	align-items: baseline;
+}
+
+.postformItem > label {
+	min-width: 4.5em;
+	text-align: right;
+	padding-right: 0.125em;
+}
+
+.postformCombinedItems {
+	display: flex;
+	flex-direction: row;
+}
+
+.postformCombinedItems .postformItem {
+	/* flex: 1; */
+  margin-right: 0.25em;
+}
+
+.postformCombinedItems label[for="email"] {
+	width: initial;
+}
+
+#postformTable #emailjs,
+.nokosagedump {
+	display: inline-block;
+}
+
+#txtreply #rowPostNameEmail .postformItem > label[for="email"] {
+	min-width: 0;
+}
+
+.form-row .form-group:last-child {
+	margin-right: 0;
+}
+
+.commentArea {
+	display: inline;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+/* .inputtext {
+	margin: 0;
+	margin-right: 2px;
+	padding: 1px 4px;
+} */
+
+#postformTable #com {
+	width: 100%;
+	max-width: 40em;
+	height: 8em;
+}
+
+#txtreply #postformTable #com {
+	width: 40em;
+	max-width: 100%;
+}
+
+#postarea2 {
+	clear: both;
+}
+
+#anigifContainer,
+#continuousContainer {
+	display: inline-block;
+}
+
+#anigifContainer::before,
+#continuousContainer::before {
+	content: "[";
+}
+
+#anigifContainer::after,
+#continuousContainer::after {
+	content: "]";
+}
+
+.rules {
+	margin: 0;
+	margin-top: 0.5em;
+	padding: 0 1.2em;
+	font-size: var(--font-size-x-small);
+	font-size: max(var(--font-size-x-small), 8pt);
+}
+
+.postformOption {
+	color: inherit !important;
+	text-decoration: underline !important;
+}
+
+.emotesContainer,
+.kaomojiContainer,
+#bbcode_container {
+	max-width: 390px;
+}
+
+.emojiContainer {
+	max-width: 300px;
+}
+
+.emojiContainer .row-end {
+  margin-bottom: 1.5em;
+}
+
+.emojiButton,
+.emoteButton,
+.kaomojiButton {
+	border-color: var(--color-border-button);
+	border-width: 1px;
+	border-radius: 0;
+	padding: 1px;
+	margin: 1px;
+	vertical-align: top;
+}
+
+.kaomojiButton {
+	padding: 2px;
+}
+
+.emoteButton {
+	width: 45px;
+	height: 35px;
+}
+
+.emoteImage,
+.emojiImage {
+	display: block;
+	margin: 0 auto;
+}
+
+.emoteImage {
+	max-height: 100%;
+	max-width: 100%;
+}
+
+#bbcode_container label {
+	display: inline-block;
+}
+
+#delPasswordInfo {
+	display: inline-block;
+	font-size: var(--font-size-small);
+}
+
+/************************ Board info **********************************/
+
+/******** Online counter ********/
 
 #counterListItemNoJS noscript {
 	display: contents;
@@ -224,7 +594,7 @@ font-size: 10pt;
 
 #counterIframeBody {
 	margin: 0;
-	font-size: 0.75em;
+	font-size: var(--font-size-x-small);
 }
 
 #usercounter {
@@ -235,18 +605,1413 @@ font-size: 10pt;
 }
 
 #counterIframeBody #usercounter {
-	font-family:
-	'MS PGothic',
-	'MS Pゴシック',
-	IPAMonaPGothic,
-	'IPA モナー Pゴシック',
-	Monapo,
-	Mona,
-	submona,
-	sans-serif;
+	font-family: var(--font-family-mspgothic);
 }
 
 #countnumber {
 	font-weight: bold;
 }
-.neomenu .menulist {background-color: #cfc;}
+
+/******** Blotter ********/
+
+#blotter {
+	margin: 0 auto;
+	padding: 0 8px;
+	max-width: 475px;
+	font-size: var(--font-size-x-small);
+	list-style: none;
+}
+
+#blotter ul {
+	list-style-type: none;
+}
+
+/******** Global message ********/
+
+#globalmsg {
+	color: var(--color-fg-global-message);
+	font-size: 1.125em;
+	text-align: center;
+}
+
+/******** Full banner ads ********/
+
+.fullbannerIframe {
+  display: table;
+	border: none;
+	width: 468px;
+	max-height: 60px;
+	max-width: 100%;
+	margin: 1em auto;
+	aspect-ratio: 39 / 5;
+}
+
+/******** Thread list ********/
+
+#topiclist {
+	font-size: var(--font-size-small);
+}
+
+#txt .hrAds {
+	display: none;
+}
+
+/************************ Posts/replies *******************************/
+
+#galfuncs {
+	float: right;
+	margin-right: 0.25em;
+}
+
+.tnav {
+	float: right;
+	font-family: var(--font-family-mspgothic) !important;
+	clear: both;
+}
+
+.centerthreads .thread {
+	/* width: 75%; */
+	max-width: 1200px;
+	margin: 0 auto;
+	margin-bottom: 20px;
+}
+
+.centerthreads {
+	max-width: 1200px;
+	margin-left: auto;
+	margin-right: auto;
+	padding: 0 8px;
+}
+
+#txt .thread,
+#pager {
+	background-color: var(--color-bg-thread);
+	border-color: var(--color-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-lo-contrast-border);
+	border-style: solid;
+}
+
+#txt .thread > thead > tr > th,
+#txt .thread > thead > tr > td,
+#txt .thread > tbody > tr > th,
+#txt .thread > tbody > tr > td,
+#pager > thead > tr > th,
+#pager > thead > tr > td,
+#pager > tbody > tr > th,
+#pager > tbody > tr > td,
+#txt .thread .innerbox {
+	border-color: var(--color-hi-contrast-border-thread) var(--color-lo-contrast-border-thread) var(--color-lo-contrast-border-thread) var(--color-hi-contrast-border-thread);
+	border-style: solid;
+}
+
+/* .postinfo {
+	margin-top: 0.5em;
+} */
+
+.del {
+	display: none;
+	float: right;
+	margin-right: 0.5em;
+	clear: both;
+}
+
+.post:target .postinfo,
+.replyhl .postinfo {
+	background-color: var(--color-bg-reply-hl);
+}
+
+.post:hover .del {
+	display: block;
+}
+
+.filesize {
+	margin-left: 2.5em;
+	word-break: break-word;
+}
+
+.download {
+	vertical-align: text-bottom; 
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	padding: 0;
+	display: inline-block;
+	background-image: url(../../image/download.png);
+}
+
+.fileProperties,
+.imageOptions {
+	display: inline-block;
+	font-size: var(--font-size-small);
+}
+
+.postimg {
+	max-width: 100%;
+	height: auto;
+	margin: 3px 3px 3px 2.5em;
+}
+
+.expandimg {
+	max-width: 100%;
+}
+
+#hoverimg {
+	display: none;
+	position: fixed;
+	top: 0;
+	right: 0;
+	max-height: calc( 100% - 2px );
+	max-width: calc( 100% - 2px );
+	pointer-events: none;
+	z-index: 495;
+}
+
+.postnum a {
+	color: inherit !important;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+.title,
+.title a {
+	color: var(--color-fg-title) !important;
+}
+
+.title {
+	margin: 0;
+	font-size: 1.5em;
+	font-weight: bold;
+}
+
+.name {
+	color: var(--color-fg-name);
+}
+
+.postername,
+.postercap {
+	font-weight: bold;
+}
+
+.sageText,
+.autosage {
+	color: var(--color-fg-warning);
+	font-weight: bold;
+}
+
+.staffico {
+	vertical-align: middle;
+  image-rendering: crisp-edges; /* Pre-2022 Firefox */
+  image-rendering: pixelated;
+}
+
+.sod {
+	color: inherit !important;
+	text-decoration: none;
+}
+
+.sod.noVotes {
+	font-family: monospace;
+}
+
+.icon {
+	vertical-align: text-bottom;
+}
+
+.backlinks {
+	font-size: var(--font-size-small);
+	font-style: italic;
+}
+
+.comment {
+	margin-top: 0.25em;
+	margin-left: 2.5em;
+	margin-bottom: 1em;
+	margin-right: 0.25em;
+	word-break: break-all;
+	word-break: break-word;
+}
+
+.emote,
+.emoji {
+	vertical-align: text-bottom;
+}
+
+.post .nameContainer,
+.post .time,
+.post .userIP,
+.post .postnum,
+.post .adminDeleteFunctions,
+.post .adminBanFunction,
+.post .host,
+.post .adminMoveThreadFunction,
+.post .adminAutosageFunction,
+.post .adminLockFunction,
+.post .adminStickyFunction,
+.post .filterpostContainer,
+.post .soudaneContainer,
+.post .replyButton,
+.post .backlinks {
+	display: inline-block;
+}
+
+.post .title:empty,
+.post .postertrip:empty,
+.post .postInfoExtra:empty,
+.post .backlinks:empty,
+.post .filesize:empty,
+.postformItem:empty {
+	display: none !important;
+}
+
+/* .postinfo,
+.postInfoExtra,
+.post .soudaneContainer {
+	display: flex;
+	gap: 0 0.25em;
+	flex-wrap: wrap;
+	align-items: last baseline;
+}
+
+.post .time {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: last baseline;
+} */
+
+.fortune,
+.roll {
+	font-weight: bold;
+	margin-bottom: 0;
+}
+
+.roll {
+	color: var(--color-fg-warning);
+}
+
+.warning {
+	color: var(--color-fg-warning);
+	font-weight: bold;
+}
+
+.banIcon {
+	vertical-align: baseline;
+}
+
+.ipWarning {
+	color: var(--color-fg-warning-ip);
+	font-weight: bold;
+}
+
+.omittedposts {
+	color: var(--color-fg-omitted);
+}
+
+.previewBox {
+	display: none;
+	box-sizing: border-box;
+	position: absolute;
+	z-index: 1000;
+	max-width: 90%;
+}
+
+.previewBox .post {
+	border: 1px solid var(--color-lo-contrast-border) !important;
+}
+
+/************************ Post formatting *****************************/
+
+.quotelink,
+.quotelink a {
+  color: var(--color-fg-quotelink) !important;
+}
+
+.quotelink:hover,
+.quotelink a:hover {
+	color: var(--color-fg-quotelink-hover) !important;
+}
+
+.oplink:after {
+	content: " (OP)";
+	font-size: var(--font-size-small);
+}
+
+.unkfunc {
+	color: var(--color-fg-quote);
+}
+
+.unkfunc2 {
+	color: var(--color-fg-quote2);
+}
+
+.spoiler {
+	background-color: var(--color-bg-spoiler);
+	color: var(--color-bg-spoiler);
+}
+
+.spoiler:hover {
+	background-color: inherit;
+	color: inherit;
+}
+
+.scrollText {
+	height: 300px;
+	overflow: auto;
+	resize: vertical;
+}
+
+.code {
+	background-color: var(--color-bg-code);
+	color: var(--color-fg-code);
+	margin: 0;
+	padding: 4px;
+	max-width: 100%;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+	overflow: auto;
+}
+
+.fontSize1 {
+	font-size: 0.625em;
+}
+
+.fontSize2 {
+	font-size: 0.8125em;
+}
+
+.fontSize3 {
+	font-size: 1em;
+}
+
+.fontSize4 {
+	font-size: 1.125em;
+}
+
+.fontSize5 {
+	font-size: 1.5em;
+}
+
+.fontSize6 {
+	font-size: 2em;
+}
+
+.fontSize7 {
+	font-size: 3em;
+}
+
+
+.rabienrose {
+	background-color: #ffe6f9;
+	color: #78376d;
+	font-family: serif;
+	font-weight: bold;
+}
+
+.partybus {
+	font-family: "Comic Sans MS", cursive;
+	font-size: 1.5em;
+	text-shadow: 0.0625em 0.0625em 0 #000000a8;
+}
+
+.partybusColor1 {
+	color: #ff00ff;
+}
+
+.partybusColor2 {
+	color: #ffff80;
+	position: relative;
+	bottom: 0.125em;
+}
+
+.partybusColor3 {
+	color: #00ff80;
+}
+
+.partybusColor4 {
+	color: #80ffff;
+	position: relative;
+	top: 0.125em;
+}
+
+.partybusColor5 {
+	color: #8080ff;
+}
+
+.partybusColor6 {
+	color: #ff0080;
+}
+
+.partybusColor7 {
+	color: #ff8040;
+	position: relative;
+	bottom: 0.125em;
+}
+
+.partybusColor8 {
+	color: #0080ff;
+}
+
+.boku {
+	font-weight: bold;
+}
+
+.bokuGreen {
+	color: #489b67;
+}
+
+.bokuRed {
+	color: #d30615;
+}
+
+/******** All AA ********/
+
+.ascii,
+.sw {
+	margin: 0;
+	word-break: break-all;
+}
+
+/******** 2channel-style AA ********/
+
+.ascii {
+	font-family: var(--font-family-aa-2ch) !important;
+	font-size: 12pt;
+	line-height: 1;
+	white-space: wrap;
+}
+
+/******** Ayashii World-style AA ********/
+
+.sw {
+	font-family: var(--font-family-msgothic) !important;
+	line-height: 1.16;
+	white-space: pre-wrap;
+}
+
+/************************ Footer **************************************/
+
+.persistpager #pager {
+	position: fixed;
+	left: 8px;
+	bottom: 8px;
+	z-index: 1;
+}
+
+#pager {
+	background-color: var(--color-bg-thread);
+	border: 1px outset;
+	border-spacing: 3px;
+	float: left;
+	vertical-align: middle;
+	z-index: 1;
+}
+
+#pager th,
+#pager td {
+	border: 1px inset;
+	padding: 0.125em 0.25em;
+}
+
+#userdelete {
+	float: right;
+	text-align: right;
+}
+
+#userdelete td {
+	padding: 0;
+}
+
+#footer {
+	font-size: var(--font-size-small);
+	text-align: center;
+	clear: both;
+}
+
+#styleswitch {
+	text-align: right;
+}
+
+/************************ Administrator mode **************************/
+
+.capcodeAdmin {
+	color: #ff101a;
+}
+
+.capcodeMod {
+	color: #770099;
+}
+
+.capcodeJanitor {
+	color: #3366cc;
+}
+
+#adminOptionContainer {
+	text-align: center;
+}
+
+#adminOptionContainer label {
+	display: inline-block;
+}
+
+#viewingAllFrom {
+	font-weight: bold;
+	text-align: center;
+}
+
+#adminNoticesContainer > ul {
+	margin-top: 0;
+}
+
+#tableManagePostsContainer {
+	max-width: 100%;
+	overflow: auto;
+}
+
+#tableManagePosts .colFunc,
+#tableManagePosts .colImage {
+	text-align: center;
+}
+
+#tableManagePosts .colFunc {
+	min-width: 6em;
+}
+
+#tableManagePosts .colComment {
+	max-width: 20em;
+}
+
+#tableManagePosts .colHost {
+	min-width: 9.5em;
+}
+
+.username {
+	font-size: var(--font-size-small);
+}
+
+.postlists {
+	max-width: 100%;
+	margin: 0 auto;
+}
+
+.postlists .title {
+	font-size: var(--font-size-regular);
+}
+
+.error,
+.offline {
+	color: #ff0000;
+}
+
+.good,
+.online {
+	color: #008000;
+}
+
+#actionlogForm {
+	display: table;
+	margin: 1em auto;
+}
+
+#actionlog {
+	text-align: left;
+}
+
+#accountManagementList {
+	margin: 0;
+}
+
+/************************ Ban management*******************************/
+
+#banForm {
+	margin: 1em auto;
+	max-width: 640px;
+}
+
+#banForm #bandays {
+	width: 100%;
+	max-width: 4em;
+}
+
+#banForm #banprivmsg,
+#banForm #banmsg {
+	width: 100%;
+	height: 5em;
+}
+
+#bigredbuttonContainer,
+#revokeButtonContainer {
+	text-align: center;
+}
+
+#bigredbutton {
+	background-color: #ff0000;
+	color: white;
+	border-style: outset;
+	border-width: 3px;
+	font-family: Verdana, Tahoma, Arial, sans-serif;
+	font-size: 1.2em;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+#bigredbutton:active:hover {
+	border-style: inset;
+}
+
+#banTableContainer {
+	margin: 1em auto;
+	overflow: auto;
+}
+
+#banTable {
+	margin: 0 auto;
+}
+
+#banTable .colDel {
+	text-align: center;
+}
+
+/************************ Ban screen **********************************/
+
+#banHeading {
+	color: #dd0000;
+}
+
+#banScreen {
+	display: flex;
+	gap: 0.5em;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-bg-reply);
+	max-width: 800px;
+	margin: 0 auto;
+	padding: 0.5em;
+}
+
+#banScreenText {
+	flex: 1;
+	vertical-align: top;
+	text-align: left;
+}
+
+#banimg {
+	border: 1px solid;
+	max-width: 100%;
+	width: 300px;
+	height: auto;
+}
+
+#hrBan {
+	clear: both;
+}
+
+@media screen and (max-width: 640px) {
+  #banScreen {
+    flex-direction: column;
+	}
+
+  #banimg {
+    width: 100%; /* Makes the image container fill the width */
+  }
+}
+
+/************************ Catalog *************************************/
+
+#catsett {
+	float: right;
+	text-align: right;
+}
+
+#catalogSortForm {
+	float: left;
+}
+
+#catalogTable {
+	clear: both;
+}
+
+#catalogTable.full-width {
+	width: 100%;
+}
+
+#catalogTable.auto-cols {
+	text-align: center;
+}
+
+#catalogTable.auto-cols tr, 
+#catalogTable.auto-cols tbody {
+	display: inline;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: stretch;
+	justify-content: center;
+}
+
+#catalogTable.auto-cols .thread {
+	display: inline-block;
+	margin: 0.5em;
+}
+
+#catalogTable.fixed-cols .thread {
+	margin: 0.5em;
+}
+
+#catalogTable.fixed-cols .catComment {
+	max-height: 100px;
+	overflow: hidden;
+}
+
+#catalogTable.fixed-cols .catComment:hover {
+	overflow: auto;
+}
+
+#catalogTable {
+	margin: 0 auto;
+	text-align: center;
+	clear: both;
+}
+
+#catalogTable .thread {
+	padding: 0 0 0.5em;
+	width: 180px;
+	max-height: 250px;
+	max-width: 155px;
+	text-align: center;
+	vertical-align: top;
+	overflow-y: hidden;
+	overflow-wrap: break-word;
+}
+
+#catalogTable .thread:hover {
+	overflow-y: auto;
+}
+
+#catalogTable .thumb {
+	display: block;
+	margin: 0 auto 0.75em;
+	min-width: 50px;
+	min-height: 50px;
+	max-height: 150px;
+	max-width: 150px;
+	box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.2);
+}
+
+#catalogTable .catPostInfo {
+	font-size: var(--font-size-small);
+}
+
+#catalogTable .catPostInfo .title {
+	display: inline-block;
+	font-size: inherit;
+  max-width: 100%;
+	vertical-align: text-bottom;
+	overflow: hidden;
+	text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#catalogTable .catPostInfo .Replies {
+	display: inline-block;
+}
+
+.catComment {
+	font-size: var(--font-size-small);
+}
+
+@media screen and (max-width: 810px) {
+	#catalogTable .thread {
+		width: 140px;
+		max-width: 140px;
+	}
+	
+	#catalogTable .thumb {
+		max-width: 135px;
+	}
+}
+
+/************************ Search **************************************/
+
+#searchresult {
+	margin-top: 1em;
+}
+
+/************************ PM system ***********************************/
+
+#PMContainer {
+	text-align: center;
+}
+
+#postform_tbl {
+	margin: 0 auto;
+	text-align: left;
+}
+
+.inputInfo {
+	display: inline-block;
+}
+
+#postform_tbl #inputComment {
+
+	max-width: 100vw;
+	max-width: calc(100vw - 85px);
+}
+
+#tableLatestPM {
+	margin: 1em auto;
+}
+
+.newPM {
+	color: #ff4444;
+	font-size: 0.923077em;
+}
+
+/************************ Blotter *************************************/
+
+#newBlotterFormTable {
+	margin: 0 auto;
+}
+
+#newBlotterFormTable #msg {
+	width: 20em;
+	max-width: 100%;
+	max-width: calc(100vw - 6.5em);
+}
+
+.blotterListItem {
+	text-align: left;
+}
+
+.blotterDate {
+	font-weight: bold;
+}
+
+.blotterListShowAll {
+	text-align: center;
+}
+
+/************************ EXIF ****************************************/
+
+.exifInfoList {
+	display: table;
+	margin: 1em auto;
+}
+
+.exif {
+	text-align: left;
+}
+
+/************************ Windows *************************************/
+
+#formfuncs a,
+a.linkjs {
+	text-decoration: underline;
+	color: inherit;
+}
+
+/* Window Manager */
+@keyframes fade {
+	0% { filter: opacity(0); transform: scale(0.95); }
+	100% { filter: opacity(1); transform: scale(1); }
+}
+
+@keyframes fadeout {
+	0% { filter: opacity(1); transform: scale(1); }
+	100% { filter: opacity(0); transform: scale(0.95); }
+}
+
+.window {
+	position: fixed;
+	z-index: 100;
+	background-color: inherit;
+	border-width: 1px;
+	border-style: solid;
+	min-width: 220px;
+	min-height: 220px;
+	max-width: 100vw;
+	max-height: 100vh;
+	overflow: hidden;
+	opacity: 0.9;
+	animation: fade 0.1s;
+}
+
+.wclosing {
+	animation: fadeout 0.1s;
+}
+
+#wintop,
+.window:hover {
+	opacity: 1;
+}
+
+.window.minimized {
+	border-bottom: none;
+	min-height: 1em;
+}
+
+.window.minimized #settcontents {
+	display: none;
+}
+
+.winbar {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	background-color:var(--color-bg-main);
+	border-color: var(--color-fg-main);
+	border-bottom: 1px solid;
+	cursor: move;
+	vertical-align: middle;
+}
+
+.winname {
+	flex-grow: 1;
+	color: var(--color-fg-boardlist);
+	margin: 0.125em 0.25em;
+	font-weight: bold;
+	text-align: left;
+}
+
+.winctrl {
+	display: flex;
+	justify-content: space-between;
+	flex-grow: 0;
+	justify-content: flex-end;
+	gap: 0.25em;
+	margin: 0.25em;
+	text-align: right;
+}
+
+.winctrl button {
+	background-color: transparent;
+  border: none;
+	border-radius: 4px;
+	padding: 0;
+	width: 1em;
+	height: 1em;
+	min-width: 16px;
+	min-height: 16px;
+	cursor: pointer;
+	font-size: var(--font-size-regular);
+	/* transition: all 0.1s; */
+}
+
+.winctrl button img {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* Settings */
+
+#settabs {
+	padding: 0.5em;
+	padding-bottom: 0;
+}
+
+#settabs a {
+	padding: 0.125em 0.25em;
+}
+
+#settarea {
+	display: flex;
+	flex-direction: column;
+	padding: 0.5em;
+	padding-top: 0;
+	max-height: calc(100vh - 5em);
+	overflow: auto;
+}
+
+#settarea > * {
+	display: flex;
+	flex-direction: row;
+	/* transition: all 0.1s; */
+	user-select: none;
+}
+
+#settarea [type=number] {
+	width: 5em;
+}
+
+.winctrl button:hover,
+#settarea > label:hover,
+.settab_selected {
+	background-color: var(--color-bg-window-item-highlight);
+}
+
+#settusercss,
+#settuserfilter {
+	width: 100%;
+	height: 199px;
+	min-width: 202px;
+	min-height: 110px;
+	max-width: calc(100vw - 35px);
+	max-height: calc(100vh - 119px);
+}
+
+#settarea details {
+	max-width: fit-content;
+	font-size: var(--font-size-small);
+}
+
+#settarea details ul {
+	margin: 0;
+	padding-left: 1em;
+}
+
+/************************ Filters *************************************/
+
+.filter .comment,
+.filter .post,
+.filter .omittedposts,
+.filter .filesize,
+.filter .postimg,
+.filter > .reply-container {
+  display: none;
+}
+
+.filter .post.op {
+  display: block;
+}
+
+.filter .postinfo,
+.filter .category {
+  opacity: 0.5;
+}
+
+/* .filterpost {
+  text-decoration: none;
+  font-weight: bold;
+	font-size: 9pt;
+} */
+
+/* .filterpostContainer::before {
+	content: "["
+}
+
+.filterpostContainer::after {
+	content: "]"
+} */
+
+.filterpost:hover {
+  opacity: 1;
+}
+
+/************************ Quick reply  ********************************/
+
+#qrinputs {
+	display: flex;
+	flex-direction: column;
+}
+
+#qrinputs > div {
+	display: flex;
+	flex-direction: row;
+}
+
+#qrinputs > div > .inputtext {
+	flex-basis: -moz-available;
+	width: 100%;
+}
+
+#qrinputs button {
+	white-space: nowrap;
+}
+
+#qrcaptcha {
+	padding: 0.2em;
+	margin: 0.2em 0;
+}
+
+#qrcom,
+#qrname,
+#qremail {
+width: 90%;
+}
+
+#wintop {
+width: 300px;
+}
+
+/************************ Mobile **************************************/
+
+@media screen and (max-width: 810px) {
+	body#txt {
+		margin: 0;
+		margin-bottom: 8px;
+	}
+
+	.boardlist,
+	.persistnav .boardlist {
+		margin: 0;
+	}
+
+	.persistnav #top {
+		margin-top: 0;
+	}
+
+	.neomenuEnabled .toplinks {
+		width: 100%;
+		margin: 0 0 0.25em;
+	}
+
+	.neomenuTitle {
+		padding: 0;
+	}
+
+	.neomenu h1,
+	.neomenu h2 {
+		line-height: 2;
+	}
+
+	.neomenu h1 {
+		padding: 0 0.25em;
+	}
+	
+	.neomenuTitle,
+	.neomenuTopLevel,
+	.neomenuList {
+		min-width: 50%;
+	}
+
+	.neomenuList .extr {
+		padding: 0.5em 0.25em;
+	}
+
+	.postformItem {
+		flex-direction: column;
+		flex-wrap: wrap;
+	}
+
+	.postformItem > label {
+		text-align: left;
+		padding: 0;
+	}
+
+	.postformItem input[type="text"] {
+		width: 100%;
+	}
+
+	.postformItem button[value="regist"] {
+		margin-left: auto;
+	}
+
+	/* #txtreply .postformItem button[value="regist"] {
+		margin-left: 0;
+	} */
+
+	.postformCombinedItems {
+		flex-direction: column;
+    /* align-items: flex-start; */
+	}
+
+	.postformCombinedItems label[for="email"] {
+		width: 4.5em;
+		margin-right: 0;
+	}
+
+	#txtreply #rowPostNameEmail .postformItem {
+		gap: 0;
+	}
+
+	#postformTable #com,
+	#txtreply #postformTable #com {
+		height: 7.5em;
+		width: 100%;
+		max-width: 100%;
+	}
+
+	#topiclist,
+	#topiclists {
+		max-height: 200px;
+		overflow: auto;
+	}
+
+
+	#catsett,
+	#catalogSortForm {
+		float: none;
+		text-align: center;
+	}
+}
+
+@media screen and (max-width: 450px) {
+
+	.boardlist {
+		font-size: var(--font-size-regular);
+		line-height: 1.5;
+	}
+
+	.comment,
+	.filesize,
+	.postimg {
+		margin-left: 0.5em;
+	}
+
+	#topiclist {
+		line-height: 1.5;
+	}
+
+	#adminOptionContainer {
+		display: table;
+		margin: 0 auto;
+	}
+
+	#adminOptionContainer label {
+		display: block;
+		text-align: left;
+	}
+
+	.window {
+		top: 50% !important;
+		left: 50% !important;
+		transform: translate(-50%, -50%) !important;
+		width: 100vw !important;
+		min-height: initial;
+		animation: none;
+	}
+
+	.window.minimized {
+		top: auto !important;
+		bottom: 0;
+	}
+
+	.winbar {
+		font-size: 1.5em;
+	}
+
+	#settarea {
+		line-height: 1.5;
+	}
+
+	#settusercss,
+	#settuserfilter {
+		height: calc(100vh - 23em);
+		min-height: initial;
+		max-width: 100% !important;
+		max-height: 100% !important;
+	}
+}
+
+/************************ Probably not needed *************************/
+
+/* .post.op:target {
+	background-color: inherit; */
+	/* THIS HAS TO BE THE SAME MOTHERFUCKING COLOR AS THE MOTHERFUCKING BACKGROUND!!!!!!!!! */
+/* } */
+
+/* #update-status {
+	color: #af0a0f;
+} */
+
+/* .hooklinks {
+	padding-top: 12px;
+} */
+
+/* .penis {
+	font-size: 13pt;
+	background-color: #663399;
+	color: #00ffff;
+} */
+
+/* .infosection {
+	background-color: #ffffff;
+	border-radius: 6px;
+	text-align: center;
+	width: 55%;
+	margin: auto;
+	padding: 7px;
+	font-weight: bold;
+	color: #666666;
+	font-size: 12pt;
+} */
+
+/* .nobr {
+	margin: 0;
+	padding: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	display: inline;
+	text-overflow: ellipsis;
+} */
+
+/* .title2 {
+	background-color: #3399ff;
+	color: #fff;
+	border-radius: 6px;
+	padding: 3px;
+} */
+
+/* .info5ch {
+	background-color: #eeffee;
+	overflow-y: scroll;
+	height: 150px;
+	border-radius: 6px;
+	border: 1px solid #eeffee;
+	padding: 4px;
+	color: #333333;
+	font-weight: bold;
+	margin-right: auto;
+	width: 80%;
+} */
+
+/* .info5chheader {
+	color: #ff0000;
+	margin: 0;
+} */
+
+/* .menu2 {
+	background-color: #CFC;
+	height: 220px;
+} */
+
+/* .mnav,
+.mnav2,
+.galleryb,
+#expandall {
+	display: none;
+} */
+
+/* .auditlog {
+	background-color: #EFEFEF;
+	border-color: #ffffff;
+	border-style: solid;
+	border-width: 1px;
+} */
+
+/************************ Hachi stuff *************************/
+
+.detailsbox {
+	padding: 4px;
+	display: inline;
+}
+
+.detailsbox > summary {
+  padding: 4px;
+  cursor: pointer;
+}
+
+.selectlinktextjs {
+	font-size: 0.833333em;
+	user-select: none;
+}
+
+.littlelist {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.overboardFilterFormContainer {
+	text-align: center;
+}
+
+.overboardThreadBoardTitle {
+	font-weight: bold;
+}
+
+.url-input {
+	min-width: 35ch;
+}
+
+.mod-extra-info {
+	text-align: center;
+}

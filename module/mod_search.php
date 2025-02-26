@@ -35,7 +35,7 @@ class mod_search extends ModuleHelper {
 		$dat = '';
 		$globalHTML->head($dat);
 		$links = '[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>]';
-		$dat .= $links.'<center class="theading2"><b>'._T('search_top').'</b></center>
+		$dat .= $links.'<h2 class="theading2">'._T('module_info_top').'</h2>
 		</div>
 		';
 		
@@ -45,12 +45,11 @@ class mod_search extends ModuleHelper {
 		<div id="search">
 		<input type="hidden" name="mode" value="search">
 		';
-		echo '<ul>'._T('search_notice').'<input type="text" name="keyword" size="30">
+		echo _T('search_notice').'<input type="text" class="inputtext" name="keyword" size="30">
 	'._T('search_target').'<select name="field"><option value="com" selected="selected">'._T('search_target_comment').'</option><option value="name">'._T('search_target_name').'</option><option value="sub">'._T('search_target_topic').'</option><option value="no">'._T('search_target_number').'</option></select>
 	'._T('search_method').'<select name="method"><option value="AND" selected="selected">'._T('search_method_and').'</option><option value="OR">'._T('search_method_or').'</option></select>
 	<input type="submit" value="'._T('search_submit_btn').'">
-	</li>
-	</ul>
+	</p>
 	</div>
 	</form>';
 		}else{
@@ -70,7 +69,7 @@ class mod_search extends ModuleHelper {
 					$ary_category_count = count($ary_category);
 					$ary_category2 = array();
 					for($p = 0; $p < $ary_category_count; $p++){
-						if($c = $ary_category[$p]) $ary_category2[] = '<a href="'.$this->config['PHP_SELF'].'?mode=category&c='.urlencode($c).'">'.$c.'</a>';
+						if($c = $ary_category[$p]) $ary_category2[] = '<a href="'.$this->config['PHP_SELF'].'??mode=module&load=mod_searchcategory&&c='.urlencode($c).'">'.$c.'</a>';
 					}
 					$category = implode(', ', $ary_category2);
 				}else $category = '';
@@ -80,7 +79,12 @@ class mod_search extends ModuleHelper {
 					$arrLabels = array('{$NO}'=>'<a href="'.$this->config['PHP_SELF'].'?res='.($resno?$resno.'#p'.$no:$no).'">'.$no.'</a>', '{$SUB}'=>$sub, '{$NAME}'=>$name, '{$NOW}'=>$now, '{$COM}'=>$com, '{$CATEGORY}'=>$category, '{$NAME_TEXT}'=>_T('post_name'), '{$CATEGORY_TEXT}'=>_T('post_category'));
 				$resultlist .= $PTE->ParseBlock('SEARCHRESULT',$arrLabels);
 			}
-			echo $resultlist ? $resultlist : '<center>'._T('search_notfound').'<br>[<a href="'.$this->mypage.'">'._T('search_back').'</a>]</center>';
+			echo $resultlist ? $resultlist : '
+				<div class="centerText">
+					<p>'._T('search_notfound').'</p>
+					<p>[<a href="'.$this->mypage.'">'._T('search_back').'</a>]</p>
+				</div>
+				<hr>';
 			echo "</div>";
 		}
 	}

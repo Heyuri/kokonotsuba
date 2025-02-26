@@ -1,0 +1,258 @@
+@charset "UTF-8";
+
+/************************ Global **************************************/
+
+:root {
+	/* Global */
+	--font-family-main: var(--font-family-mspgothic);
+	--font-size-main: 12pt;
+	--color-bg-main: #ffffee;
+	--color-bg-main-gradient: #ffccaa;
+	--color-fg-main: #800043;
+	--color-fg-link: #0000cc;
+	--color-fg-link-hover: #ee0000;
+	--color-lo-contrast-border: #d9bfb7;
+	--color-hi-contrast-border: #be8080;
+	--color-border-button: #e3e3e3;
+	/* Navigation/admin bar */
+	--color-bg-boardlist: var(--color-bg-reply);
+	--color-fg-boardlist: #bb8866;
+	/* Board header */
+	--color-fg-logo: var(--color-fg-main);
+	--color-bg-theading: #e04000;
+	--color-bg-theading2: #0040e0;
+	--color-bg-theading3: #e08000;
+	--color-fg-theading: #ffffff;
+	/* Post form */
+	--color-bg-postblock: #eeaa88;
+	--color-border-input: #aaaaaa;
+	--color-fg-global-message: var(--color-fg-warning);
+	/* Posts/replies */
+	--color-bg-reply: #f0e0d6;
+	--color-bg-reply-hl: #f0c0b0;
+	--color-fg-title: #cc1105;
+	--color-fg-name: #117743;
+	--color-fg-warning: #ff0000;
+	--color-fg-warning-ip: #0000cc;
+	--color-fg-omitted: #707070;
+	/* Post formatting */
+	--color-fg-quotelink: #000080;
+	--color-fg-quotelink-hover: var(--color-fg-link-hover);
+	--color-fg-quote: #789922;
+	--color-fg-quote2: #ff69b4;
+	--color-bg-spoiler: #000000;
+	--color-bg-code: #ffffff;
+	--color-fg-code: #000000;
+	/* Administrator mode */
+	--color-bg-postlists-header: #6080f6;
+	--color-fg-postlists-header: #ffffff;
+	--color-fg-postlists-header-link: #ffff00;
+	--color-bg-postlists-odd: #d6d6f6;
+	--color-bg-postlists-even: #f6f6f6;
+	/* File board/flash board */
+	--color-bg-flashboard-even: #f7efea;
+	/* Windows */
+	--color-bg-window-item-highlight: #ffdbb5;
+}
+
+body {
+	background-image: linear-gradient(var(--color-bg-main-gradient), var(--color-bg-main));
+	background-size: 100% 500px;
+	background-repeat: repeat-x;
+	line-height: 1.2;
+}
+
+a,
+a:link,
+a:visited {
+	text-decoration: none;
+}
+
+hr {
+	border-color: var(--color-lo-contrast-border);
+}
+
+hr:not([size]) {
+	border-top: none;
+	height: 1px;
+}
+
+button,
+select,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input::file-selector-button {
+	border-radius: 0;
+	border-width: 1px;
+}
+
+/************************ Navigation/admin bar ************************/
+
+.boardlist a {
+	color: var(--color-fg-main);
+}
+
+/******** Neomenu ********/
+/************************ Board header ********************************/
+
+/* .logo {
+	color: #af0a0f;
+} */
+
+.mtitle {
+	font-family:
+		Tahoma,
+		Verdana,
+		Arial,
+		Helvetica;
+}
+
+.subtitle {
+	font-family: inherit;
+}
+
+.logo hr {
+	background: linear-gradient(to right, transparent, var(--color-fg-main), transparent);
+	border: none;
+	height: 1px;
+	opacity: 0.75;
+}
+
+.theading {
+	background: linear-gradient(to right, rgb(64, 18, 0) 0%, rgb(224, 64, 0) 25%, rgb(224, 64, 0) 75%, rgb(64, 18, 0) 100%);
+}
+
+.theading2 {
+	background: linear-gradient(to right, rgb(0, 18, 64) 0%, rgb(0, 64, 224) 25%, rgb(0, 64, 224) 75%, rgb(0, 18, 64) 100%);
+}
+
+.theading3 {
+	background: linear-gradient(to right, rgb(64, 36, 0) 0%, rgb(224, 128, 0) 25%, rgb(224, 128, 0) 75%, rgb(64, 36, 0) 100%);
+}
+
+/************************ Post form ***********************************/
+
+.postblock {
+	border: 1px outset var(--color-hi-contrast-border);
+	padding: 0px 5px !important;
+}
+
+#postformTable td.postblock a {
+	text-decoration: underline;
+}
+
+.inputtext {
+	border: 1px solid var(--color-border-input);
+	border-radius: 0px;
+}
+
+.inputtext:focus {
+	outline: 1px solid var(--color-bg-postblock);
+	outline-offset: -1px;
+}
+
+/************************ Board info **********************************/
+/************************ Posts/replies *******************************/
+
+.doubledash {
+	color: var(--color-hi-contrast-border);
+}
+
+.reply {
+	border: 1px solid;
+	border-top: none;
+	border-left: none;
+	border-color: var(--color-lo-contrast-border);
+}
+
+/* .filesize,
+.postnum a {
+	text-decoration: underline;
+} */
+
+.filesize a {
+	text-decoration: underline;
+}
+
+.postnum a {
+	color: inherit;
+}
+
+.sod.noVotes {
+	font-family: var(--font-family-msgothic);
+}
+
+/************************ Post formatting *****************************/
+
+.quotelink {
+	text-decoration: underline !important;
+}
+
+/************************ Footer **************************************/
+
+#pager {
+	background-color: var(--color-bg-reply);
+	border: 1px solid var(--color-lo-contrast-border);
+}
+
+#pager td {
+	border: 1px solid var(--color-lo-contrast-border);
+}
+
+/************************ Administrator mode **************************/
+
+.postlists th {
+	background-color: initial;
+}
+
+.postlists thead,
+.postlists .theadLike {
+	background-color: var(--color-bg-postlists-header);
+	background: linear-gradient(to right, rgb(36, 48, 92), rgb(96, 128, 246) 25%, rgb(96, 128, 246) 75%, rgb(36, 48, 92) 100%);
+}
+
+.postlists tbody th {
+	background-color: var(--color-bg-postlists-header);
+}
+
+.auditlog {
+	background-color: var(--color-bg-postblock);
+	border-style: solid;
+	border-width: 1px;
+}
+
+/************************ Ban screen **********************************/
+
+#banScreen {
+	border: 1px solid;
+	border-left: none;
+	border-top: none;
+	border-color: var(--color-lo-contrast-border);
+}
+
+/************************ Catalog *************************************/
+/********************** File board/flash board ************************/
+/************************ Windows *************************************/
+
+/* .winbar {
+	background-image: linear-gradient(#FCA, #FFE);
+} */
+
+/************************ Probably not needed *************************/
+
+/* .top {
+	background-image: -webkit-linear-gradient(left,rgba(255,255,238,0),rgba(128,0,0,0.75),rgba(255,255,238,0));
+	background-image: -moz-linear-gradient(left,rgba(255,255,238,0),rgba(128,0,0,0.75),rgba(255,255,238,0));
+	background-image: -ms-linear-gradient(left,rgba(255,255,238,0),rgba(128,0,0,0.75),rgba(255,255,238,0));
+	background-image: -o-linear-gradient(left,rgba(255,255,238,0),rgba(128,0,0,0.75),rgba(255,255,238,0));
+	border-style: none;
+	height: 1px;
+} */
+
+/* iframe,
+.rotating {
+	background: var(--color-bg-reply);
+	border-right: 1px solid var(--color-lo-contrast-border);
+	border-bottom: 1px solid var(--color-lo-contrast-border);
+} */

@@ -4,8 +4,8 @@
  * exif.php from http://www.rjk-hosting.co.uk/programs/prog.php?id=4
  */
 class mod_imagemeta extends ModuleHelper {
-    private $enable_exif, $enable_imgops, $enable_iqdb = false; // Enable iqdb
-    
+	private $enable_exif, $enable_imgops, $enable_iqdb = false; // Enable iqdb
+
 	private $myPage;
 	
 	public function __construct($PMS) {
@@ -27,21 +27,21 @@ class mod_imagemeta extends ModuleHelper {
 
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
 		$FileIO = PMCLibrary::getFileIOInstance();
-        $file = $post['tim'].$post['ext'];
-        
+		$file = $post['tim'].$post['ext'];
+
 		$board = searchBoardArrayForBoard($this->moduleBoardList, $post['boardUID']);
 
-        //EXIF
+		//EXIF
 		if($this->enable_exif && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-			$arrLabels['{$IMG_BAR}'] .= '<small>[<a href="'.$this->myPage.'&file='.$file.'&boardUID='.$board->getBoardUID().'">EXIF</a>]</small> ';
+			$arrLabels['{$IMG_BAR}'] .= '<span class="exifLink imageOptions">[<a href="'.$this->myPage.'&file='.$file.'">EXIF</a>]</span> ';
 		}
 		//ImgOps
 		if($this->enable_imgops && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-		    $arrLabels['{$IMG_BAR}'] .= '<small>[<a href="http://imgops.com/'.$FileIO->getImageURL($file, $board).'" target="_blank">ImgOps</a>]</small> ';
+			$arrLabels['{$IMG_BAR}'] .= '<span class="imgopsLink imageOptions">[<a href="http://imgops.com/'.$FileIO->getImageURL($file, $board).'" target="_blank">ImgOps</a>]</span> ';
 		}
 		//Anime/manga search engine
 		if($this->enable_iqdb && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-			$arrLabels['{$IMG_BAR}'] .= '<small>[<a href="http://iqdb.org/?url='.$FileIO->getImageURL($file, $board).'" target="_blank">iqdb</a>]</small> ';
+			$arrLabels['{$IMG_BAR}'] .= '<span class="iqdbLink imageOptions">[<a href="http://iqdb.org/?url='.$FileIO->getImageURL($file, $board).'" target="_blank">iqdb</a>]</span> ';
 		}
 	}
 
@@ -63,43 +63,43 @@ class mod_imagemeta extends ModuleHelper {
 		echo $h;
 		$file = $_GET['file'] ?? '';
 		echo '[<a href="'.$this->config['PHP_SELF2'].'">Return</a>]';
-		echo '<p>';
+		echo '<ul class="exifInfoList">';
 		if($file && $FileIO->imageExists($file, $board)){
 			$pfile = $board->getBoardUploadedFilesDirectory().$boardConfig['IMG_DIR'].'/'.$file;
 			if(function_exists("exif_read_data")) {
-				echo "DEBUG: Using exif_read_data()<br>";
+				echo "<li>DEBUG: Using exif_read_data()</li>";
 				$exif_data = exif_read_data($pfile, 0, true);
 
 				if(is_array($exif_data) && count($exif_data)) {
-					echo 'Image contains EXIF data:<br>';
-					echo '</p><table border="1" class="exif"><tbody>';
+					echo '<li>Image contains EXIF data:</li>';
+					echo '</ul><table class="exif postlists"><tbody>';
 					foreach($exif_data as $key=>$section) {
 						foreach($section as $name=>$value) {
-							echo "<tr><th align=\"RIGHT\">$key.$name</th><td>$value</td></tr>";
+							echo "<tr><th>$key.$name</th><td>$value</td></tr>";
 						}
 					}
 					echo '</tbody></table><p>';
 				} else {
-					echo 'No EXIF data found.';
+					echo '<li>No EXIF data found.</li>';
 				}
 			} else {
-				echo "DEBUG: Using built-in exif library<br>";
+				echo "<li>DEBUG: Using built-in exif library</li>";
 				$exif=new exif($pfile);
 				if(count($exif->exif_data)) {
-					echo 'Image contains EXIF data:<br>';
-					echo '</p><table border="1"><tbody>';
+					echo '<li>Image contains EXIF data:</li>';
+					echo '</ul><table border="1"><tbody>';
 					foreach($exif->exif_data as $key=>$value) {
-						echo "<tr><th align=\"RIGHT\">$key</th><td>$value</td></tr>";
+						echo "<tr><th>$key</th><td>$value</td></tr>";
 					}
 					echo '</tbody></table><p>';
 				} else {
-					echo 'No EXIF data found.';
+					echo '<li>No EXIF data found.</li>';
 				}
 			}
 		} else {
-			echo '<b class="error">File Not Found!</b>';
+			echo '<li><strong class="error">File Not Found!</strong></li>';
 		}
-		echo '</p>';
+		echo '</ul>';
 		if(isset($_SERVER['HTTP_REFERER'])) echo '[<a href="'.$_SERVER['HTTP_REFERER'].'" onclick="event.preventDefault();history.go(-1);">Back</a>]';
 		$f = '';
 		$globalHTML->foot($f);
@@ -270,8 +270,8 @@ class exif{
 			switch ($section_marker) {
 				case 225:
 					fclose($fp);
-			    	return $this->extractEXIFData(substr($data, 2), $section_length);
-			    	$ef = true;
+					return $this->extractEXIFData(substr($data, 2), $section_length);
+					$ef = true;
 					break;
 			}
 		}

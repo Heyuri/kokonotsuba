@@ -1,7 +1,12 @@
-@import "pseud0ch2.css";
+@charset "UTF-8";
+@import "pseud0ch.css";
 
 body {
-	font-size: 17px;
-	font-family: Times New Roman, sans-serif;
-	line-height: 1em;
+	font-family: var(--font-family-mspgothic);
+	font-size: 12pt;
+	line-height: 1;
+}
+
+.sod.noVotes {
+	font-family: var(--font-family-msgothic);
 }

@@ -37,7 +37,7 @@ class mod_globalmsg extends ModuleHelper {
 		$staffSession = new staffAccountFromSession;
 		
 		if ($staffSession->getRoleLevel() < $this->config['roles']['LEV_ADMIN'] || $pageId != 'admin') return;
-		$link .= '[<a title="Manage the global warning/message that will appear across all boards" href="'.$this->mypage.'">Manage Global Message</a>] ';
+		$link .= '[<a title="Manage the global warning/message that will appear across all boards" href="'.$this->mypage.'">Manage global message</a>] ';
 	}
 
 	public function autoHookGlobalMessage(&$msg) {

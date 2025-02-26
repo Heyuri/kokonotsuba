@@ -28,7 +28,6 @@ function insertAtCursor(myField, myValue) {
     }
 }
 
-
 /* DATA */
 const emotes_list = [
   {src:"mona2.gif", value:":mona2:"},
@@ -105,6 +104,7 @@ const COMMENT = document.getElementById("com");
 
 /* FUNCTIONS */
 const onClickHandler = (e) => insertAtCursor(COMMENT, e.target.title); //COMMENT.value += e.target.title;
+const onClickHandler2 = (e) => insertAtCursor(COMMENT, e.currentTarget.value); //COMMENT.value += e.currentTarget.value;
 
 const SUMMARY_ELEMENT = (summary_title) => {
   return "<summary style='width:fit-content;height:fit-content'"+
@@ -160,24 +160,23 @@ const insertBBCode = () => {
     }
 
     // add the BBCode formatted string to the comment field
-    insertAtCursor(COMMENT, formatted_str)//COMMENT.value += formatted_str;
+    insertAtCursor(COMMENT, formatted_str); //COMMENT.value += formatted_str;
   }
 };
 
 /* EMOTES */
 let emotes_container = document.createElement("details");
 emotes_container.innerHTML += SUMMARY_ELEMENT("Emotes");
+emotes_container.classList.add("emotesContainer");
 
 emotes_list.forEach((emote,index) => {
   let button = document.createElement('button');
   button.type = "button";
   button.title = emote.value;
-  button.innerHTML += '<img src="./static/image/emote/'+emote.src+'" loading="lazy" title="'+emote.value+'" alt="'+emote.value+'" height="30px">';
+  button.classList.add("emoteButton");
+  button.innerHTML += '<img class="emoteImage" src="'+STATIC_URL+'image/emote/'+emote.src+'" loading="lazy" title="'+emote.value+'" alt="'+emote.value+'" height="30px">';
   button.addEventListener("click", onClickHandler);
   emotes_container.appendChild(button);
-  if (index%8 === 7) { // 8 emotes per row
-    emotes_container.appendChild(document.createElement('br'));
-  }
 });
 
 // A.after(B), B.after(C), etc... = A --> B --> C --> ...
@@ -186,18 +185,17 @@ COMMENT.after(emotes_container); // insert emotes after comment box
 /* SHIFT_JIS */
 let sjis_container = document.createElement("details");
 sjis_container.innerHTML += SUMMARY_ELEMENT("Kaomoji");
+sjis_container.classList.add("kaomojiContainer");
 
 shift_jis.forEach((sjis, index) => {
   let button = document.createElement('button');
   button.type = "button";
   button.title = sjis.value;
   button.dataset.value = sjis.value;
+  button.classList.add("kaomojiButton");
   button.innerHTML += '<div class="ascii" title="' + sjis.value + '">' + sjis.display + '</div>';
   button.addEventListener("click", onClickHandler);
   sjis_container.appendChild(button);
-  if (index % 7 === 6) { // 7 kaomoji per row
-    sjis_container.appendChild(document.createElement('br'));
-  }
 });
 emotes_container.after(sjis_container); // insert sjis after emotes
 
@@ -213,12 +211,8 @@ bbcode.forEach((code,index) => {
 
   input_label.appendChild(checkbox);
   input_label.innerHTML += code.meaning+" ";
-  if (index%4 === 0 && index !== 0) { // 5 BBCodes per row
-    bbcode_container.appendChild(document.createElement('br'));
-  }
   bbcode_container.appendChild(input_label);
 });
-bbcode_container.appendChild(document.createElement('br'));
 
 /* bbcode with selectors */
 // color
@@ -255,7 +249,6 @@ size_input.addEventListener('change',(e)=>selector_bbcode[1].selector=e.target.v
 
 size_label.appendChild(size_input);
 bbcode_container.appendChild(size_label);
-bbcode_container.appendChild(document.createElement("br"));
 
 // text input + add button
 let text_input = document.createElement("textarea");

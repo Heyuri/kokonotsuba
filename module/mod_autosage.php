@@ -32,7 +32,7 @@ class mod_autosage extends ModuleHelper {
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
 		$fh = new FlagHelper($post['status']);
 		if($fh->value('as')) {
-			$arrLabels['{$POSTINFO_EXTRA}'].='&nbsp;<b title="AutoSage"><font color="#F00">AS</font></b>';
+			$arrLabels['{$POSTINFO_EXTRA}'].=' <span class="autosage" title="Autosage. This thread cannot be bumped.">AS</span>';
 		}
 	}
 
@@ -42,7 +42,7 @@ class mod_autosage extends ModuleHelper {
 
 		if ($roleLevel < $this->config['AuthLevels']['CAN_AUTO_SAGE']) return;
 		$fh = new FlagHelper($post['status']);
-		if(!$isres) $modfunc.= '[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('as')?' title="Allow age">as':' title="Autosage">AS').'</a>]';
+		if(!$isres) $modfunc.= '<span class="adminAutosageFunction">[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('as')?' title="Allow age">as':' title="Autosage">AS').'</a>]</span>';
 	}
 
 	public function ModulePage() {

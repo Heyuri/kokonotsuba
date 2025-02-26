@@ -6,28 +6,28 @@
   /* Global */
   --font-family-main: 'Times New Roman', 'Times', serif;
   --font-size-main: 12pt;
-  --color-bg-main: #eef2ff;
-  --color-bg-main-gradient: #d1d5ee;
+  --color-bg-main: #eefff2;
+  --color-bg-main-gradient: #d1eed5;
   --color-fg-main: #000000;
   --color-fg-link: #34345c;
   --color-fg-link-hover: #ee0000;
-  --color-lo-contrast-border: #b7c5d9;
-  --color-hi-contrast-border: #8899aa;
+  --color-lo-contrast-border: #b7d9c5;
+  --color-hi-contrast-border: #88aa99;
   --color-border-button: #e3e3e3;
   /* Navigation/admin bar */
-  --color-bg-boardlist: #d5d9f0;
-  --color-fg-boardlist: #8899aa;
+  --color-bg-boardlist: #d5f0d9;
+  --color-fg-boardlist: #88aa99;
   /* Board header */
-  --color-fg-logo: #af0a0f;
+  --color-fg-logo: var(--color-fg-main);
   --color-bg-theading: #e04000;
   --color-bg-theading2: #0040e0;
   --color-bg-theading3: #e08000;
   --color-fg-theading: #ffffff;
   /* Post form */
-  --color-bg-postblock: #9988ee;
+  --color-bg-postblock: #bbddbb;
   --color-fg-global-message: var(--color-fg-warning);
   /* Posts/replies */
-  --color-bg-reply: #d6daf0;
+  --color-bg-reply: #d6f0da;
   --color-bg-reply-hl: #d6bad0;
   --color-fg-title: #0f0c5d;
   --color-fg-name: #117743;
@@ -49,9 +49,9 @@
   --color-bg-postlists-odd: #d6d6f6;
   --color-bg-postlists-even: #f6f6f6;
   /* File board/flash board */
-  --color-bg-flashboard-even: #e0e5f6;
+  --color-bg-flashboard-even: #e0f6e5;
   /* Windows */
-  --color-bg-window-item-highlight: #c7cef0;
+  --color-bg-window-item-highlight: #c7f0ce;
 }
  
 /************************ Navigation/admin bar ************************/

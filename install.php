@@ -285,15 +285,15 @@ class html {
 					<td> (leave blank if the board is in web root) </td>
 				</tr>
 				<tr> 
-					<td class="postblock"> <label for "first-board-title-input" >Board Title</label></td>
+					<td class="postblock"> <label for "first-board-title-input" >Board title</label></td>
 					<td> <input id="first-board-title-input" name="board-title" placeholder="board@example.net" required> </td>
 				</tr>
 				<tr> 
-					<td class="postblock"> <label for "first-board-sub-title-input" >Board Sub-Title</label></td>
+					<td class="postblock"> <label for "first-board-sub-title-input" >Board sub-title</label></td>
 					<td> <input id="first-board-sub-title-input" name="board-sub-title" placeholder="an example board" required> </td>
 				</tr>
 				<tr> 
-					<td class="postblock"> <label for "first-board-path-input" >Board Path</label></td>
+					<td class="postblock"> <label for "first-board-path-input" >Board path</label></td>
 					<td> <input id="first-board-path-input" name="board-path" placeholder="an example board" value="'.dirname(__FILE__).'/'.'" required> </td>
 				</tr>
 			</table>

@@ -21,7 +21,7 @@ class accountRequestHandler {
 		$id = $_GET['dem'] ?? -1;
 		$account = $AccountIO->getAccountByID($id);
 		
-		if($account->getRoleLevel() - 1 === $this->config['roles']['LEV_NONE']) return;
+		if($account->getRoleLevel() - 1 == $this->config['roles']['LEV_NONE']) return; # == is for PHP7 compatibility, change to === in future for PHP8
 		
 		$AccountIO->demoteAccountByID($id);
 	}
@@ -32,7 +32,7 @@ class accountRequestHandler {
 		$id = $_GET['up'] ??  '';
 		$account = $AccountIO->getAccountByID($id);
 	
-		if($account->getRoleLevel() + 1 === $this->config['roles']['LEV_ADMIN'] + 1) return;
+		if($account->getRoleLevel() + 1 == $this->config['roles']['LEV_ADMIN'] + 1) return; # == is for PHP7 compatibility, change to === in future for PHP8
 	
 		$AccountIO->promoteAccountByID($id);
 	}

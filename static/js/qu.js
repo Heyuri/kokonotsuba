@@ -1,57 +1,42 @@
 /* LOL HEYURI
  */
 
-document.write(`<style>
-#slp {
-	position: absolute;
-	z-index: 499;
-	background-color: inherit;
-	border-style: solid;
-	border-width: 1px;
-	padding: 2px;
-}
-#slptmp {
-	display: none;
-}
-</style>`);
-
 function getSelectTxt() {
-	var selectStr="", selection;
-	if(document.selection) {//for IE8
-//		selectStr = document.selection.createRange().text;
-	}else{
+	var selectStr = "", selection;
+	if (document.selection) { //for IE8
+		// selectStr = document.selection.createRange().text;
+	} else {
 		selection = window.getSelection();
-		if(true || window.navigator.userAgent.toLowerCase().match(/trident.*rv:11\./)){
-			if(selection.rangeCount<1){return "";}
-			var els=selection.getRangeAt(0).cloneContents().childNodes;
-			for(var i=0;i<els.length;i++){
-				if(els[i].nodeType==1){
-					selectStr+=els[i].outerHTML;
+		if (true || window.navigator.userAgent.toLowerCase().match(/trident.*rv:11\./)) {
+			if (selection.rangeCount < 1) { return ""; }
+			var els = selection.getRangeAt(0).cloneContents().childNodes;
+			for (var i = 0; i < els.length; i++) {
+				if (els[i].nodeType == 1) {
+					selectStr += els[i].outerHTML;
 				}
-				if(els[i].nodeType==3){
-					selectStr+=els[i].nodeValue;
+				if (els[i].nodeType == 3) {
+					selectStr += els[i].nodeValue;
 				}
 			}
-//console.log(selectStr);
-			selectStr=selectStr.replace(/<br>|<blockquote>/ig,"\n");
-			selectStr=selectStr.replace(/<\/?font("[^"]*"|'[^']*'|[^'">])*>/ig,'');
-			selectStr=selectStr.replace(/(<("[^"]*"|'[^']*'|[^'">])*>)+/g,' ');
-			selectStr=selectStr.replace(/(^|\n) +/gm,'$1');
-			selectStr=selectStr.replace(/ +(\n|$)/gm,"$1");
-			selectStr=selectStr.replace(/\n+/gm,'\n');
-			selectStr=selectStr.replace(/^\n/gm,'');
-//console.log(escape(selectStr));
-		}else{
-			selectStr = selection.toString().replace(/^ */gm,'').replace(/^\n\n/gm,'');
+			selectStr = selectStr.replace(/<br>|<blockquote>/ig, "\n");
+			selectStr = selectStr.replace(/<\/?font("[^"]*"|'[^']*'|[^'">])*>/ig, '');
+			selectStr = selectStr.replace(/(<("[^"]*"|'[^']*'|[^'">])*>)+/g, ' ');
+			selectStr = selectStr.replace(/(^|\n) +/gm, '$1');
+			selectStr = selectStr.replace(/ +(\n|$)/gm, "$1");
+			selectStr = selectStr.replace(/\n+/gm, '\n');
+			selectStr = selectStr.replace(/^\n/gm, '');
+		} else {
+			selectStr = selection.toString().replace(/^ */gm, '').replace(/^\n\n/gm, '');
 		}
 	}
 	return selectStr;
 }
 
 /* Module */
-const kkqu = { name: "KK Quote",
+const kkqu = {
+	name: "KK Quote",
 	startup: function () {
-		com = $id("com");
+		const com = $id("com");
 		if (!com) return true;
 		var q = window.location.hash.match(/^#q(\d+)/);
 		if (q) {
@@ -68,7 +53,7 @@ const kkqu = { name: "KK Quote",
 		return true;
 	},
 	reset: function () {
-		com = $id("com");
+		const com = $id("com");
 		kkqu.resetquotes();
 		$doc.removeEventListener("mouseup", kkqu._evselpop);
 		com.removeEventListener("input", kkqu._evinput);
@@ -95,8 +80,9 @@ const kkqu = { name: "KK Quote",
 	},
 
 	/* Settings */
-	sett: function (tab, div) { if (tab!="general") return;
- 		div.innerHTML+= '<label><input type="checkbox" onchange="localStorage.setItem(\'quotetooltip\',this.checked);location.reload();"'+(localStorage.getItem("quotetooltip")=="true"?'checked="checked"':'')+'>Quote tooltip</label>';
+	sett: function (tab, div) {
+		if (tab != "general") return;
+		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'quotetooltip\',this.checked);document.body.classList.toggle(\'quotetooltip-enabled\', this.checked);" ' + (localStorage.getItem("quotetooltip") == "true" ? 'checked="checked"' : '') + '>Quote tooltip</label>';
 	},
 	/* Function */
 	quote: function (no) {
@@ -110,7 +96,7 @@ const kkqu = { name: "KK Quote",
 		kkqu.hl = Array();
 	},
 	hlquotes: function () {
-		com = $id("com");
+		const com = $id("com");
 		var m=com.value.match(/((?:>)+)(?:No\.)?(\d+)/ig);
 		if (!m) return;
 		kkqu.resetquotes();
@@ -125,15 +111,13 @@ const kkqu = { name: "KK Quote",
 	/* Select Quote */
 	_evselpop: function (event) {
 		setTimeout(function(){
-			selpop = $id("slp");
+			const selpop = $id("slp");
 			if (selpop) $del(selpop);
 			kkqu.selopen(event.pageX, event.pageY);
 		}, 50);
 	},
 	selopen: function (x, y) {
-		if (!localStorage.getItem("quotetooltip"))
-			localStorage.setItem("quotetooltip", true);
-		if (localStorage.getItem("quotetooltip")=="false") return true;
+		if (localStorage.getItem("quotetooltip") == "false") return true;
 		var txt = getSelectTxt();
 		if (!txt) return;
 		var selpop = $doc.createElement("div");
