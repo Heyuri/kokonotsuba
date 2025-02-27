@@ -229,7 +229,7 @@ class mod_bbcode extends ModuleHelper {
 		  	  $fh = fopen($this->URLTrapLog, 'a+b');
 		  	  fwrite($fh, time()."\t$_SERVER[REMOTE_ADDR]\t{$this->urlcount}\n");
 		  	  fclose($fh);
-		  	  $globalHTML->error("URL:標籤超過上限");
+		  	  $globalHTML->error("URL: Tags exceed max limit");
 		}
 	}
 
