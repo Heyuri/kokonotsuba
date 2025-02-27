@@ -3,9 +3,9 @@
 class adminPageHandler {
 	private $config, $board;
 	
-	public function __construct($board, $config) { 
-		$this->config = $config;
-		$this->board= $board;
+	public function __construct($board) { 
+		$this->config = $board->loadBoardConfig();
+		$this->board = $board;
 	}
 	
 	public function handleAdminPageSelection($functionName, &$dat) {
@@ -67,7 +67,6 @@ class adminPageHandler {
 		$PMS = PMS::getInstance();
 		$staffSession = new staffAccountFromSession;
 		$softErrorHandler = new softErrorHandler($this->board);
-		$board = $this->board;
 		
 		 $roleLevel = $staffSession->getRoleLevel();
 		 

@@ -289,7 +289,7 @@ class modeHandler {
 
 		$staffSession = new staffAccountFromSession;
 		$currentRoleLevel = $staffSession->getRoleLevel();
-		$adminPageHandler = new adminPageHandler($this->board, $this->config);
+		$adminPageHandler = new adminPageHandler($this->board);
 		$admin = $_REQUEST['admin']??'';
 		$dat = '';
 		$globalHTML->head($dat);
