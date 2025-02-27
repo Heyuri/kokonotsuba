@@ -84,13 +84,5 @@ class FileIOlocal extends AbstractFileIO {
 		return ($find !== false && count($find) != 0) ? basename($find[0]) : false;
 	}
 
-	protected function getDirectoryTotalSize($dirIterator) {
-		$dirSize = 0;
-		foreach (new RecursiveIteratorIterator($dirIterator) as $file) {
-			$dirSize += $file->getSize();
-		}
-		return $dirSize;
-	}
-
 	
 }
