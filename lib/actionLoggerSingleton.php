@@ -11,7 +11,7 @@ class actionLogger {
 	private function __clone() {}
 	private function __construct($dbSettings) { 
 		$this->tableName = $dbSettings['ACTIONLOG_TABLE'];
-		$this->boardTable = $dbSettings['BOARD_TABLE'];
+		$this->boardTableName = $dbSettings['BOARD_TABLE'];
 		$this->databaseConnection = DatabaseConnection::getInstance(); // Get the PDO instance
 		
 	}
@@ -135,18 +135,19 @@ class actionLogger {
 	public function logAction($actionString, $board_uid){
 		$AccountIO = AccountIO::getInstance();
 		$staffSession = new staffAccountFromSession;
+		$IPAddress = new IPAddress;
 
 		$name = $staffSession->getUsername();
 		$role = $staffSession->getRoleLevel();
 		
 		if($role) $AccountIO->incrementAccountActionRecordByID($staffSession->getUID());
 
-		$query = "INSERT INTO {$this->tableName} (name, role, log_action, ip_address, board_uid, board_title) VALUES(:name, :role, :log_action, :ip_address, :board_uid, (SELECT board_title FROM {$this->boardTable} WHERE board_uid = :board_uid LIMIT 1))";
+		$query = "INSERT INTO {$this->tableName} (name, role, log_action, ip_address, board_uid, board_title) VALUES(:name, :role, :log_action, :ip_address, :board_uid, (SELECT board_title FROM {$this->boardTableName} WHERE board_uid = :board_uid LIMIT 1))";
 		$params = [
 			':name' => $name,
 			':role' => $role,
 			':log_action' => $actionString,
-			':ip_address' => getREMOTE_ADDR(),
+			':ip_address' => $IPAddress,
 			':board_uid' => $board_uid,
 		];
 		

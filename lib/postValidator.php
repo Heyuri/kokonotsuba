@@ -1,6 +1,6 @@
 <?php
 class postValidator {
-	private $dbSettings, $config, $board;
+	private $config, $board;
 
 	public function __construct($board) {
 		$this->board = $board;
@@ -13,20 +13,21 @@ class postValidator {
     	    $globalHTML->error('You look like a robot.', '');
     	}
  
-    	if($_SERVER['REQUEST_METHOD'] != 'POST') error(_T('regist_notpost')); // Informal POST method
+    	if($_SERVER['REQUEST_METHOD'] != 'POST') $globalHTML->error(_T('regist_notpost')); // Informal POST method
 	}
  
-	public function spamValidate(&$ip, &$name, &$email, &$sub, &$com){
+	public function spamValidate(&$name, &$email, &$sub, &$com) {
+		$IPValidator = new IPValidator($this->board, new IPAddress);
 	    $globalHTML = new globalHTML($this->board);
 	    // Blocking: IP/Hostname/DNSBL Check Function
 	    $baninfo = '';
-	    if(BanIPHostDNSBLCheck($this->config, $ip, $ip, $baninfo)){
+	    if($IPValidator->isBanned($baninfo)){
 	        $globalHTML->error(_T('regist_ipfiltered', $baninfo));
 	    }
 	    // Block: Restrict the text that appears (text filter?)
 	    foreach($this->config['BAD_STRING'] as $value){
 	        if(preg_match($value, $com) || preg_match($value, $sub) || preg_match($value, $name) || preg_match($value, $email)){
-	            error(_T('regist_wordfiltered'));
+	            $globalHTML->error(_T('regist_wordfiltered'));
 	        }
 	    }
 	 
@@ -79,7 +80,7 @@ class postValidator {
 		if((strlenUnicode($com) > $this->config['COMM_MAX']) && !$is_admin){
 			$globalHTML->error(_T('regist_commenttoolong'), $dest);
 		}
-		$com = CleanStr($com, $is_admin); // The$ is_admin parameter is introduced because when the administrator starts, the administrator is allowed to set whether to use HTML according to config.
+		$com = $globalHTML->CleanStr($com, $is_admin); // The$ is_admin parameter is introduced because when the administrator starts, the administrator is allowed to set whether to use HTML according to config.
 		if(!$com && $upfile_status==4){ 
 		$globalHTML->error($this->config['TEXTBOARD_ONLY']?'ERROR: No text entered.':_T('regist_withoutcomment'));
 		}
@@ -119,5 +120,28 @@ class postValidator {
     	        $globalHTML->error('ERROR: Unable to save the uploaded file.');
     	}
 	}
+
+    function pruneOld(&$PMS, &$PIO, &$FileIO){
+        // Deletion of old articles
+        if(PIOSensor::check($this->board, 'delete', $this->config['LIMIT_SENSOR'])){
+            $delarr = PIOSensor::listee($this->board, 'delete', $this->config['LIMIT_SENSOR']);
+            if(count($delarr)){
+                $PMS->useModuleMethods('PostOnDeletion', array($delarr, 'recycle')); // "PostOnDeletion" Hook Point
+                $files = $PIO->removePosts($delarr);
+                if(count($files)) $FileIO->deleteImage($files, $this->board); // Update delta value
+            }
+        }
+
+        // Additional image file capacity limit function is enabled: delete oversized files
+        if($this->config['STORAGE_LIMIT'] && $this->config['STORAGE_MAX'] > 0){
+            $tmp_total_size = $FileIO->getCurrentStorageSize($this->board); // Get the current size of additional images
+            if($tmp_total_size > $this->config['STORAGE_MAX']){
+                $files = $PIO->delOldAttachments($this->board, $tmp_total_size, $this->config['STORAGE_MAX'], false);
+                $FileIO->deleteImage($files, $this->board);
+            }
+        }
+    }
+
+
 		
 }

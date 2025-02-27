@@ -79,7 +79,7 @@ class overboard {
 
 		$threads = $PIO->getFilteredThreads($limit, $offset, $filters);
 		$threadList = $PIO->getFilteredThreadUIDs($limit, $offset, $filters);
-		$numberThreadsFiltered = $PIO->getFilteredThreadCount($filters);
+		$numberThreadsFiltered = count($threads);
 		
 		if(!$threads) return '<div class="bbls"> <b class="error"> - No threads - </b> </div>';
 		
@@ -95,9 +95,8 @@ class overboard {
 			$staffSession = new staffAccountFromSession;
 			$roleLevel = $staffSession->getRoleLevel();
 			
-			$thread_uid = $thread['thread_uid'];
+
 			$page_start = $page_end = 0; // Static page number
-			$inner_for_count = 1; // The number of inner loop executions
 			$RES_start = $RES_amount = $hiddenReply = $tree_count = 0;
 			$kill_sensor = $old_sensor = false; // Predictive system start flag
 			$arr_kill = $arr_old = array(); // Obsolete numbered array
@@ -114,13 +113,13 @@ class overboard {
 			$tree_count = 0;
 			
 		
-			if ($pagenum == -1 && ($page * $config['PAGE_DEF'] + $iterator) >= $threads_count) {
+			if ($pagenum == -1 && ($pagenum * $config['PAGE_DEF'] + $iterator) >= $numberThreadsFiltered) {
 				break;
 			}
 
 			$tID = ($page_start == $page_end)
 				? $threadList[$iterator]
-				: $threadList[$page * $config['PAGE_DEF'] + $iterator];
+				: $threadList[$pagenum * $config['PAGE_DEF'] + $iterator];
 	
 			$tree_count = $PIO->postCountFromBoard($board, $tID) - 1;
 		

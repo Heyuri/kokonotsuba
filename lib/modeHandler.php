@@ -171,8 +171,8 @@ class modeHandler {
 		$thread_uid = $PIO->resolveThreadUidFromResno($boardBeingPostedTo, $resno);
 		$pwdc = $_COOKIE['pwdc']??'';
 
-		$ip = getREMOTE_ADDR(); 
-		$host = $ip;
+		$ip = new IPAddress; 
+		$host = gethostbyaddr($ip);
 		// Unix timestamp in seconds
 		$time = $_SERVER['REQUEST_TIME'];
 		// Unix timestamp in milliseconds
@@ -185,7 +185,7 @@ class modeHandler {
 		$staffSession = new staffAccountFromSession;
 		$roleLevel = $staffSession->getRoleLevel();
 		
-		$postValidator->spamValidate($ip, $name, $email, $sub, $com);
+		$postValidator->spamValidate($name, $email, $sub, $com);
 		/* hook call */
 		$this->PMS->useModuleMethods('RegistBegin', array(&$name, &$email, &$sub, &$com, array('file'=>&$upfile, 'path'=>&$upfile_path, 'name'=>&$upfile_name, 'status'=>&$upfile_status), array('ip'=>$ip, 'host'=>$host), $thread_uid)); // "RegistBegin" Hook Point
 		if($this->config['TEXTBOARD_ONLY'] == false) {
@@ -203,7 +203,7 @@ class modeHandler {
 		$email = str_replace("\r\n", '', $email); 
 		$sub = str_replace("\r\n", '', $sub);
 	
-		applyTripcodeAndCapCodes($boardConfig, $staffSession, $name, $email, $dest);
+		applyTripcodeAndCapCodes($boardConfig, $globalHTML, $staffSession, $name, $email, $dest);
 		$postValidator->cleanComment($com, $upfile_status, $is_admin, $dest);
 		addDefaultText($boardConfig, $sub, $com);
 		applyPostFilters($boardConfig, $globalHTML, $com, $email);
@@ -229,12 +229,12 @@ class modeHandler {
 		$now = generatePostDay($boardConfig, $time);
 		$now .= generatePostID($roleLevel, $boardConfig, $email,$now, $time, $thread_uid, $PIO);
 
-		$postValidator->validateForDatabase($pwdc, $com, $time, $pass, $host,  $upfile, $md5chksum, $dest, $PIO, $roleLevel);
+		$postValidator->validateForDatabase($pwdc, $com, $time, $pass, $ip,  $upfile, $md5chksum, $dest, $PIO, $roleLevel);
 		if($thread_uid){
 				$ThreadExistsBefore = $PIO->isThread($thread_uid);
 		}
 	
-		pruneOld($boardBeingPostedTo, $this->config, $this->PMS, $PIO, $this->FileIO);
+		$postValidator->pruneOld($boardBeingPostedTo, $this->config, $this->PMS, $PIO, $this->FileIO);
 		$postValidator->threadSanityCheck($chktime, $flgh, $thread_uid, $PIO, $dest, $ThreadExistsBefore);
 	
 		// Calculate the last feilds needed before putitng in db
@@ -265,7 +265,7 @@ class modeHandler {
 		$threads_count = count($threads);
 		$page_end = ($thread_uid ? floor(array_search($thread_uid, $threads) / $this->config['PAGE_DEF']) : ceil($threads_count / $this->config['PAGE_DEF']));
 		$this->PMS->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, array($W, $H, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
-		$PIO->addPost($boardBeingPostedTo, $no, $thread_uid, $md5chksum, $category, $tim, $fname, $ext, $imgW, $imgH, $imgsize, $W, $H, $pass, $now, $name, $email, $sub, $com, $host, $age, $status);
+		$PIO->addPost($boardBeingPostedTo, $no, $thread_uid, $md5chksum, $category, $tim, $fname, $ext, $imgW, $imgH, $imgsize, $W, $H, $pass, $now, $name, $email, $sub, $com, $ip, $age, $status);
 		
 		$this->actionLogger->logAction("Post No.$no registered", $boardBeingPostedTo->getBoardUID());
 		// Formal writing to storage
@@ -728,7 +728,7 @@ class modeHandler {
 	
 		if ($pwd == '' && $pwdc != '') $pwd = $pwdc;
 		$pwd_md5 = substr(md5($pwd), 2, 8);
-		$host = gethostbyaddr(getREMOTE_ADDR());
+		$host = gethostbyaddr(new IPAddress);
 		$search_flag = false;
 		$delPosts = [];
 		$delPostUIDs = [];

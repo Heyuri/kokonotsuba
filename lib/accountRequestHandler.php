@@ -1,11 +1,10 @@
 <?php
 // Handle account sessions for koko
 class accountRequestHandler {
-	private $config, $board;
+	private $config;
 	
 	public function __construct($board) { 
-		$this->config = $board->loadBoardConfig();
-		$this->board= $board;
+		$this->config = $board->loadBoardConfig();;
 	}
 	
 	public function handleAccountDelete() {

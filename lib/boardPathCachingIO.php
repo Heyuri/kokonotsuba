@@ -2,7 +2,7 @@
 //singleton to interface with board path objects
 class boardPathCachingIO {
 	private static $instance = null;
-	private $tablename, $boardTable, $databaseConnection;
+	private $tablename, $databaseConnection;
 	
 	public static function createInstance($dbSettings) {
 		if (self::$instance === null) {
@@ -18,7 +18,6 @@ class boardPathCachingIO {
 	public function __wakeup() { throw new Exception("Unserialization is not allowed.");}
 	private function __clone() {}
 	private function __construct($dbSettings) {
-		$this->boardTable = $dbSettings['BOARD_TABLE'];
 		$this->tablename = $dbSettings['BOARD_PATH_CACHE_TABLE'];
 
 		$this->databaseConnection = DatabaseConnection::getInstance(); // Get the PDO instance

@@ -24,8 +24,6 @@ class LoggerInterceptor implements MethodInterceptor {
 	public function invoke(array $callable, array $args) {
 		$result = null;
 		$methodName = $callable[1];
-		$this->LOG->info('Executing %s method', $methodName);
-		$this->LOG->debug('Args: %s', $args);
 
 		try {
 			$result = call_user_func_array($callable, $args);
@@ -33,7 +31,6 @@ class LoggerInterceptor implements MethodInterceptor {
 			$this->LOG->error('[%s] %s', $methodName, $e);
 		}
 
-		$this->LOG->debug('Return: %s', $result);
 		return $result;
 	}
 }

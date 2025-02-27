@@ -126,7 +126,7 @@ interface IPIO {
 	 * @param  string $method  搜尋方法
 	 * @return array          文章內容陣列
 	 */
-	public function searchPost($keyword, $field, $method);
+	public function searchPost($board, $keywords, $field, $method);
 
 	/**
 	 * 搜尋類別標籤
@@ -275,19 +275,6 @@ interface ILogger {
 	 * @param string $logFile 記錄檔案位置
 	 */
 	public function __construct($logName, $logFile);
-	/**
-	 * 檢查是否 logger 要記錄 DEBUG 等級。
-	 *
-	 * @return boolean 要記錄 DEBUG 等級與否
-	 */
-	public function isDebugEnabled();
-
-	/**
-	 * 檢查是否 logger 要記錄 INFO 等級。
-	 *
-	 * @return boolean 要記錄 INFO 等級與否
-	 */
-	public function isInfoEnabled();
 
 	/**
 	 * 檢查是否 logger 要記錄 ERROR 等級。
@@ -296,21 +283,6 @@ interface ILogger {
 	 */
 	public function isErrorEnabled();
 
-	/**
-	 * 以 DEBUG 等級記錄訊息。
-	 *
-	 * @param string $format 格式化訊息內容
-	 * @param mixed $varargs 參數
-	 */
-	public function debug($format, $varargs = '');
-
-	/**
-	 * 以 INFO 等級記錄訊息。
-	 *
-	 * @param string $format 格式化訊息內容
-	 * @param mixed $varargs 參數
-	 */
-	public function info($format, $varargs = '');
 
 	/**
 	 * 以 ERROR 等級記錄訊息。

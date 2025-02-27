@@ -52,10 +52,10 @@ function generatePostID($roleLevel, $config, &$email, &$now, &$time, &$resto, &$
         else {
             switch ($config['ID_MODE']) {
                 case 0:                 
-                    return ' ID:'.substr(crypt(md5(getREMOTE_ADDR().$config['IDSEED'].($resto?$resto:($PIO->getLastPostNo("beforeCommit")+1))),'id'), -8);
+                    return ' ID:'.substr(crypt(md5(new IPAddress.$config['IDSEED'].($resto?$resto:($PIO->getLastPostNo("beforeCommit")+1))),'id'), -8);
                     break;
                 case 1:
-                    return ' ID:'.substr(crypt(md5(getREMOTE_ADDR().$config['IDSEED'].($resto?$resto:($PIO->getLastPostNo("beforeCommit")+1)).gmdate('Ymd', $time+$config['TIME_ZONE']*60*60)),'id'), -8);
+                    return ' ID:'.substr(crypt(md5(new IPAddress.$config['IDSEED'].($resto?$resto:($PIO->getLastPostNo("beforeCommit")+1)).gmdate('Ymd', $time+$config['TIME_ZONE']*60*60)),'id'), -8);
                     break;
             }
         }
@@ -64,26 +64,7 @@ function generatePostID($roleLevel, $config, &$email, &$now, &$time, &$resto, &$
  
 
 
-function pruneOld($board, $config, &$PMS, &$PIO, &$FileIO){
-        // Deletion of old articles
-    if(PIOSensor::check($board, 'delete', $config['LIMIT_SENSOR'])){
-        $delarr = PIOSensor::listee($board, 'delete', $config['LIMIT_SENSOR']);
-        if(count($delarr)){
-            $PMS->useModuleMethods('PostOnDeletion', array($delarr, 'recycle')); // "PostOnDeletion" Hook Point
-            $files = $PIO->removePosts($delarr);
-            if(count($files)) $FileIO->deleteImage($files, $board); // Update delta value
-        }
-    }
- 
-    // Additional image file capacity limit function is enabled: delete oversized files
-    if($config['STORAGE_LIMIT'] && $config['STORAGE_MAX'] > 0){
-        $tmp_total_size = $FileIO->getCurrentStorageSize($board); // Get the current size of additional images
-        if($tmp_total_size > $config['STORAGE_MAX']){
-            $files = $PIO->delOldAttachments($boardBeingPostedTo, $tmp_total_size, $config['STORAGE_MAX'], false);
-            $FileIO->deleteImage($files, $board);
-        }
-    }
-}
+
 
 function applyAging($config, &$resto, &$PIO, &$time, &$chktime, &$email, &$name, &$age){
     if ($resto) { 
@@ -129,7 +110,7 @@ function makeThumbnailAndUpdateStats($boardBeingPostedTo, $config, $FileIO, &$de
 function processFiles($board, &$postValidator, &$globalHTML, &$upfile, &$upfile_path, &$upfile_name, &$upfile_status, &$md5chksum, &$imgW, &$imgH, &$imgsize, &$W, &$H, &$fname, &$ext, &$age, &$status, &$resto, &$tim, &$dest, &$tmpfile){
     $config = $board->loadBoardConfig();
     
-    $upfile = CleanStr($_FILES['upfile']['tmp_name']??'');
+    $upfile = $globalHTML->CleanStr($_FILES['upfile']['tmp_name']??'');
     $upfile_path = $_POST['upfile_path']??'';
     $upfile_name = $_FILES['upfile']['name']??'';
     $upfile_status = $_FILES['upfile']['error']??UPLOAD_ERR_NO_FILE;
@@ -191,7 +172,7 @@ function processFiles($board, &$postValidator, &$globalHTML, &$upfile, &$upfile_
         if ($imgsize > $config['MAX_KB']*1024) $globalHTML->error(_T('regist_upload_exceedcustom'));
         $imgsize = ($imgsize>=1024) ? (int)($imgsize/1024).' KB' : $imgsize.' B'; // Discrimination of KB and B
         setlocale(LC_ALL,'en_US.UTF-8'); // Japanese/etc special characters trimming fix
-        $fname = Cleanstr(pathinfo($upfile_name, PATHINFO_FILENAME));
+        $fname = $globalHTML->Cleanstr(pathinfo($upfile_name, PATHINFO_FILENAME));
         $ext = '.'.strtolower(pathinfo($upfile_name, PATHINFO_EXTENSION));
         if (is_array($size)) {
             // File extension detection from Heyuri
@@ -205,8 +186,8 @@ function processFiles($board, &$postValidator, &$globalHTML, &$upfile, &$upfile_
                 case IMAGETYPE_SWC: $ext = '.swf';
 		    $size = getswfsize($dest);
                     if(!($size[0]&&$size[1])){
-                        $size[0]=MAX_W;
-                        $size[1]=MAX_H;
+                        $size[0]=$config['MAX_W'];
+                        $size[1]=$config['MAX_H'];
                     }
                     break;
                 case IMAGETYPE_PSD: $ext = '.psd'; break;
@@ -258,7 +239,7 @@ function processFiles($board, &$postValidator, &$globalHTML, &$upfile, &$upfile_
             $H = ceil($H * $key);
         }
         if ($ext=='.swf') $W = $H = 0; // dumb flash file thinks it's an image lol.
-        $mes = _T('regist_uploaded', CleanStr($upfile_name));
+        $mes = _T('regist_uploaded', $globalHTML->CleanStr($upfile_name));
     }
 }
 
@@ -267,7 +248,7 @@ function catchFraudsters(&$name) {
 	if (preg_match('/[◆◇♢♦⟡★]/u', $name)) $name .= " (fraudster)";
 }
  
-function applyTripcodeAndCapcodes($config, $staffSession, &$name, &$email, &$dest){
+function applyTripcodeAndCapcodes($config, $globalHTML, $staffSession, &$name, &$email, &$dest){
     catchFraudsters($name);
     
     $hashedPasswordFromSession = $staffSession->getHashedPassword();
@@ -303,7 +284,7 @@ function applyTripcodeAndCapcodes($config, $staffSession, &$name, &$email, &$des
 
     if(!$name || preg_match("/^[ |　|]*$/", $name)){
         if($config['ALLOW_NONAME']) $name = $config['DEFAULT_NONAME'];
-        else error(_T('regist_withoutname'), $dest);
+        else $globalHTML->error(_T('regist_withoutname'), $dest);
     }
     $name = "<b>$name</b><span class=\"postertrip\">$trip</span>";
     if (isset($config['CAPCODES'][$trip])) {

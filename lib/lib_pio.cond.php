@@ -22,6 +22,7 @@ class ByPostCountCondition implements IPIOCondition {
 	}
 
 	public static function info($board, $limit){
+		$PIO = PIOPDO::getInstance();
 		return __CLASS__.': '.($pcnt=$PIO->postCountFromBoard($board)).'/'.$limit.
 			sprintf(' (%.2f%%)',($pcnt/$limit*100));
 	}

@@ -12,7 +12,7 @@ function adminLogin($AccountIO, $globalHTML) {
 	if(!$account) $globalHTML->error("One of the details you filled was incorrect!");
 
 	
-	$userEnteredPassword = $_POST['password'];
+	$userEnteredPassword = $_POST['password'] ?? '';
 	if($authenticationHandler->verifyPasswordHash($userEnteredPassword, $account)) {
 		$loginSessionHandler->login($account);
 		$AccountIO->updateLastLoginByID($account->getId());
@@ -23,10 +23,10 @@ function adminLogin($AccountIO, $globalHTML) {
 }
 
 function getCurrentStorageSizeFromSelectedBoards(array $boards) {
-	$FileIO = PMCLibrary::getInstance();
+	$FileIO = PMCLibrary::getFileIOInstance();
 	$totalBoardsStorageSize = 0;
 
-	foreach($boards as $boards) {
+	foreach($boards as $board) {
 		$totalBoardsStorageSize += $FileIO->getCurrentStorageSize($board);
 	}
 	return $totalBoardsStorageSize;

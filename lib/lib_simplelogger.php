@@ -16,37 +16,8 @@ class SimpleLogger implements ILogger {
 		$this->logFile = $logFile;
 	}
 
-	public function isDebugEnabled() {
-		return (defined('DEBUG') && DEBUG);
-	}
-
-	public function isInfoEnabled() {
-		return (defined('DEBUG') && DEBUG);
-	}
-
 	public function isErrorEnabled() {
 		return true;
-	}
-
-	public function debug($format, $varargs = '') {
-		if (!$this->isDebugEnabled()) return;
-
-		if (is_array($varargs)) {
-			// Array into structure string
-			$varargs = array(var_export($varargs, true));
-		} else {
-			$varargs = func_get_args();
-			array_shift($varargs);
-		}
-		$this->logFormat('DEBUG', $format, $varargs);
-	}
-
-	public function info($format, $varargs = '') {
-		if (!$this->isInfoEnabled()) return;
-
-		$varargs = func_get_args();
-		array_shift($varargs);
-		$this->logFormat(' INFO', $format, $varargs);
 	}
 
 	public function error($format, $varargs = '') {

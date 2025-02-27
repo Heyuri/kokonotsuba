@@ -2,7 +2,7 @@
 //singleton to interface with board objects
 class boardIO {
 	private static $instance = null;
-	private $tablename, $postNumberTable, $databaseConnection;
+	private $tablename, $databaseConnection;
 	
 	public static function createInstance($dbSettings) {
 		if (self::$instance === null) {
@@ -19,7 +19,6 @@ class boardIO {
 	private function __clone() {}
 	private function __construct($dbSettings) {
 		$this->tablename = $dbSettings['BOARD_TABLE'];
-		$this->postNumberTable = $dbSettings['POST_NUMBER_TABLE'];
 		
 		$this->databaseConnection = DatabaseConnection::getInstance(); // Get the PDO instance
 	}

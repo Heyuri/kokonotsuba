@@ -44,19 +44,6 @@ function anti_sakura($str){
 	return preg_match('/[\x{E000}-\x{F848}]/u', $str);
 }
 
-/* 文字修整 */
-function CleanStr($str, $IsAdmin=false){
-	$str = trim($str); // 去除前後多餘空白
-	// if(get_magic_quotes_gpc()) $str = stripslashes($str); // "\"斜線符號去除
-	// XML 1.1 Second Edition: 部分避免用字 (http://www.w3.org/TR/2006/REC-xml11-20060816/#charsets)
-	$str = preg_replace('/([\x1-\x8\xB-\xC\xE-\x1F\x7F-\x84\x86-\x9F\x{FDD0}-\x{FDDF}])/u', '', htmlspecialchars($str));
-	$str = str_replace("'", "&#039;", $str); // htmlspecialchars above doesn't work on apostrophe
-
-	if($IsAdmin && CAP_ISHTML){ // 管理員開啟HTML
-		$str = preg_replace('/&lt;(.*?)&gt;/', '<$1>', $str); // 如果有&lt;...&gt;則轉回<...>成為正常標籤
-	}
-	return $str;
-}
 
 /* 適用UTF-8環境的擬substr，取出特定數目字元
 原出處：Sea Otter @ 2005.05.10
@@ -92,45 +79,7 @@ function CheckSupportGZip(){
 	return 0;
 }
 
-/* 封鎖 IP / Hostname / DNSBL 綜合性檢查 */
-function BanIPHostDNSBLCheck($config, $IP, $HOST, &$baninfo){
-	if(!$config['BAN_CHECK']) return false; // Disabled
-				
-	// IP/Hostname Check
-	$HOST = strtolower($HOST);
-	$checkTwice = ($IP != $HOST); // 是否需檢查第二次
-	$IsBanned = false;
-	foreach($config['BANPATTERN'] as $pattern){
-		$slash = substr_count($pattern, '/');
-		if($slash==2){ // RegExp
-			$pattern .= 'i';
-		}elseif($slash==1){ // CIDR Notation
-			if(matchCIDR($IP, $pattern)){ $IsBanned = true; break; }
-			continue;
-		}elseif(strpos($pattern, '*')!==false || strpos($pattern, '?')!==false){ // Wildcard
-			$pattern = '/^'.str_replace(array('.', '*', '?'), array('\.', '.*', '.?'), $pattern).'$/i';
-		}else{ // Full-text
-			if($IP==$pattern || ($checkTwice && $HOST==strtolower($pattern))){ $IsBanned = true; break; }
-			continue;
-		}
-		if(preg_match($pattern, $HOST) || ($checkTwice && preg_match($pattern, $IP))){ $IsBanned = true; break; }
-	}
-	if($IsBanned){ $baninfo = _T('ip_banned'); return true; }
 
-	// DNS-based Blackhole List(DNSBL) 黑名單
-	if(!isset($config['DNSBLservers'][0])||!$config['DNSBLservers'][0]) return false; // Skip check
-	if(array_search($IP, $config['DNSBLWHlist'])!==false) return false; // IP位置在白名單內
-	$rev = implode('.', array_reverse(explode('.', $IP)));
-	$lastPoint = count($config['DNSBLservers']) - 1; if($config['DNSBLservers'][0] < $lastPoint) $lastPoint = $config['DNSBLservers'][0];
-	$isListed = false;
-	for($i = 1; $i <= $lastPoint; $i++){
-		$query = $rev.'.'.$config['DNSBLservers'][$i].'.'; // FQDN
-		$result = gethostbyname($query);
-		if($result && ($result != $query)){ $isListed = $config['DNSBLservers'][$i]; break; }
-	}
-	if($isListed){ $baninfo = _T('ip_dnsbl_banned',$isListed); return true; }
-	return false;
-}
 function matchCIDR($addr, $cidr) {
 	list($ip, $mask) = explode('/', $cidr);
 	return (ip2long($addr) >> (32 - $mask) == ip2long($ip.str_repeat('.0', 3 - substr_count($ip, '.'))) >> (32 - $mask));
@@ -150,71 +99,6 @@ function inet_to_bits($inet)
     return $binaryip;
 }
 
-function matchCIDRv6($addr, $cidr) {
-    list($net, $mask) = explode('/', $cidr);
-    $ip = inet_pton($addr);
-    $binaryip=inet_to_bits($ip);
-    $net=inet_pton($net);
-    $binarynet=inet_to_bits($net);
-    $ip_net_bits=substr($binaryip,0,$mask);
-    $net_bits   =substr($binarynet,0,$mask);
-
-    if($ip_net_bits!==$net_bits) {
-        return false;
-    }
-    return true;
-}
-
-//
-function getREMOTE_ADDR(){
-	static $ip_cache;
-	if ($ip_cache) return $ip_cache;
-	
-    $ipCloudFlare = getRemoteAddrCloudFlare();
-    if (!empty($ipCloudFlare)) {
-        return $ip_cache = $ipCloudFlare;
-    }
-
-    $ipOpenShift = getRemoteAddrOpenShift();
-    if (!empty($ipOpenShift)) {
-        return $ip_cache = $ipOpenShift;
-    }
-
-    $ipProxy = getRemoteAddrThroughProxy();
-    if (!empty($ipProxy)) {
-        return $ip_cache = $ipProxy;
-    }
-
-    return $ip_cache = $_SERVER['REMOTE_ADDR'];
-}
-
-/**
- * 取得 (Transparent) Proxy 提供之 IP 參數
- */
-function getRemoteAddrThroughProxy() {
-    global $PROXYHEADERlist;
-
-    if (!defined('TRUST_HTTP_X_FORWARDED_FOR') || !TRUST_HTTP_X_FORWARDED_FOR) {
-        return '';
-    }
-    $ip='';
-    $proxy = $PROXYHEADERlist;
-    
-	foreach ($proxy as $key) {
-		if (array_key_exists($key, $_SERVER)) {
-			foreach (explode(',', $_SERVER[$key]) as $ip) {
-				$ip = trim($ip);
-				// 如果結果為 Private IP 或 Reserved IP，捨棄改用 REMOTE_ADDR
-				if (filter_var($ip, FILTER_VALIDATE_IP,FILTER_FLAG_IPV4 |FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !==false) {
-					return $ip;
-				}
-			}
-		}
-	}
-
-    return '';
-}
-
 /**
  * (OpenShift) 取得 Client IP Address
  *
@@ -228,31 +112,6 @@ function getRemoteAddrOpenShift() {
     return '';
 }
 
-/**
- * 若來源是 CloudFlare IP, 從 CF-Connecting-IP 取得 client IP
- * CloudFlare IP 來源: https://www.cloudflare.com/ips
-*/
-
-function getRemoteAddrCloudFlare() {
-    $addr = $_SERVER['REMOTE_ADDR'];
-    $cloudflare_v4 = array('199.27.128.0/21', '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22', '141.101.64.0/18', '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20', '197.234.240.0/22', '198.41.128.0/17', '162.158.0.0/15', '104.16.0.0/12');
-    $cloudflare_v6 = array('2400:cb00::/32', '2606:4700::/32', '2803:f800::/32', '2405:b500::/32', '2405:8100::/32');
-
-    if(filter_var($addr, FILTER_VALIDATE_IP,FILTER_FLAG_IPV4)) { //v4 address
-        foreach ($cloudflare_v4 as &$cidr) {
-            if(matchCIDR($addr, $cidr)) {
-                return $_SERVER['HTTP_CF_CONNECTING_IP'];
-            }
-        }
-    } else { // v6 address
-        foreach ($cloudflare_v6 as &$cidr) {
-            if(matchCIDRv6($addr, $cidr)) {
-                return $_SERVER['HTTP_CF_CONNECTING_IP'];
-            }
-        }
-    }
-    return '';
-}
 
 function strlenUnicode($str) {
     return mb_strlen($str, 'UTF-8');

@@ -39,6 +39,14 @@ abstract class AbstractFileIO implements IFileIO {
         return ($result !== false);
     }
 
+    protected function getDirectoryTotalSize($dirIterator) {
+		$dirSize = 0;
+		foreach (new RecursiveIteratorIterator($dirIterator) as $file) {
+			$dirSize += $file->getSize();
+		}
+		return $dirSize;
+	}
+    
     //get board storage size in KB
     public function getCurrentStorageSize($board) {
 		$config = $board->loadBoardConfig();
@@ -58,6 +66,7 @@ abstract class AbstractFileIO implements IFileIO {
 		}
 		return $totalSize;
     }
+
 }
 
 /**
