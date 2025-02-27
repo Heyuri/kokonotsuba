@@ -467,11 +467,12 @@ class accountTable {
 
 
 class boardTable {
-	private $db, $boardTableName;
+	private $db, $boardTableName, $databaseName;
 
-	public function __construct($pdoConnection, $boardTableName) {		
+	public function __construct($pdoConnection, $boardTableName, $databaseName) {		
 		$this->db = $pdoConnection;
 		$this->boardTableName = $boardTableName;
+		$this->databaseName = $databaseName;
 	}
 
 	public function addFirstBoard($board_identifier, $board_title, $board_sub_title, $config_name, $storage_directory_name) {
@@ -500,9 +501,9 @@ class boardTable {
 					  WHERE TABLE_SCHEMA = :databaseName 
 					  AND TABLE_NAME = :tableName";
 	
-			$stmt = $this->pdo->prepare($query);
+			$stmt = $this->db->prepare($query);
 			$stmt->execute([
-				':databaseName' => $this->dbName,
+				':databaseName' => $this->databaseName,
 				':tableName' => $tableName,
 			]);
 	
@@ -566,13 +567,13 @@ switch ($action) {
 
             $tableCreator->createTables($tables);
             $sanitizedTableNames = array_map('sanitizeTableName', $tables);
-            $boardTable = new boardTable($pdoConnection, $sanitizedTableNames['BOARD_TABLE']);
+            $boardTable = new boardTable($pdoConnection, $sanitizedTableNames['BOARD_TABLE'], $databaseSettings['DATABASE_NAME']);
             $accountTable = new accountTable($pdoConnection, $sanitizedTableNames['ACCOUNT_TABLE']);
 
             createBoardAndFiles($boardTable);
 
-            $username = $_POST['admin-username'];
-            $password = $_POST['admin-password'];
+            $username = $_POST['admin-username'] ?? '';
+            $password = $_POST['admin-password'] ?? '';
             $accountTable->addAdminAccount($username, $password, 4);
 
 			

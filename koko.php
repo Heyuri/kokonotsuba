@@ -22,6 +22,7 @@ require __DIR__.'/lib/pmclibrary.php'; // Ingest libraries
 require __DIR__.'/lib/lib_errorhandler.php'; // Introduce global error capture
 require __DIR__.'/lib/lib_compatible.php'; // Introduce compatible libraries
 
+
 /* Caching */
 require __DIR__.'/lib/boardPathCachingIO.php';
 require __DIR__.'/lib/cachedBoardPath.php';
@@ -68,6 +69,9 @@ require __DIR__.'/lib/boardClass.php';
 require __DIR__.'/lib/boardSingleton.php';
 require __DIR__.'/lib/boardStoredFile.php';
 
+/* IP */
+require __DIR__.'/lib/IPAddress.php';
+require __DIR__.'/lib/IPValidator.php';
 
 function getBackendDir() {
 	return __DIR__.'/';
@@ -124,18 +128,6 @@ function getBoardFromBootstrapFile() {
 	
 	$boardUID = $boardUIDIni['board_uid'];
 	return $BoardIO->getBoardByUID($boardUID);
-}
-
-/* if the board isn't specified in POST, then get the board from bootstrap board file  */
-function getBoardFromPOST() {
-	$dbSettings = getDatabaseSettings();
-	$BoardIO = boardIO::getInstance($dbSettings);
-
-	$board = null;
-	$boardUIDFromPost = $_POST['board'] ?? '';
-	if(empty($boardUIDFromPost)) $board = getBoardFromBootstrapFile();
-	else $board = $BoardIO->getBoardByUID($boardUIDFromPost);
-	return $board;	
 }
 
 //Check if this is the backend
