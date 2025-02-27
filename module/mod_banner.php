@@ -15,7 +15,7 @@ class mod_banner extends ModuleHelper {
 	}
 
 	private function getAllFilesFromDirectory($directory) {
-		$globalHTML = new  globalHTML($this->config);
+		$globalHTML = new  globalHTML($this->board);
 		if (!is_dir($directory)) {
 			$globalHTML->error('Invalid directory: ' . $directory);
 			return false;

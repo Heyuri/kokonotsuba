@@ -62,7 +62,7 @@ class mod_anigif extends ModuleHelper {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$staffSession = new staffAccountFromSession;
 		$softErrorHandler = new softErrorHandler($this->board);
-		$roleLevel = $staffSession->getRoleLevel();
+		$globalHTML = new globalHTML($this->board);
 		
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_JANITOR']);
 

@@ -6,7 +6,7 @@
 */
 
 class mod_ads extends ModuleHelper {
-	
+	private $mypage;
 	public function __construct($PMS) {
 		parent::__construct($PMS);
 		$this->mypage = $this->getModulePageURL();

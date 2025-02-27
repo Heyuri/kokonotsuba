@@ -137,11 +137,12 @@ class mod_pm extends ModuleHelper {
 	}
 
 	private function _postPM($from,$to,$topic,$mesg) {
-		if(!preg_match('/^[0-9a-zA-Z\.\/]{10}$/',$to)) error("Incorrect Tripcode");
-		$from=CleanStr($from); $to=CleanStr($to); $topic=CleanStr($topic); $mesg=CleanStr($mesg);
+		$globalHTML = new globalHTML($this->board);
+		if(!preg_match('/^[0-9a-zA-Z\.\/]{10}$/',$to)) $globalHTML->error("Incorrect Tripcode");
+		$from=$globalHTML->CleanStr($from); $to=$globalHTML->CleanStr($to); $topic=$globalHTML->CleanStr($topic); $mesg=$globalHTML->CleanStr($mesg);
 		if(!$from) if($this->config['ALLOW_NONAME']) $from = $this->config['DEFAULT_NONAME'];
 		if(!$topic) $topic = $this->config['DEFAULT_NOTITLE'];
-		if(!$mesg) error("Please write a message");
+		if(!$mesg) $globalHTML->error("Please write a message");
 		if(preg_match('/(.*?)[#＃](.*)/u', $from, $regs)){ // Tripcode Functrion
 			$from = $nameOri = $regs[1]; $cap = strtr($regs[2], array('&amp;'=>'&'));
 			$from = $from.'<span class="postertrip">'._T('trip_pre').$this->_tripping($cap)."</span>";

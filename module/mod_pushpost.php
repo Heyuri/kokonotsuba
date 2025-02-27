@@ -5,11 +5,13 @@ class mod_pushpost extends ModuleHelper {
 	// The maximum number of tweets displayed in the discussion thread (if exceeded, it will be automatically hidden, all hidden: 0)
 	private $PUSHPOST_DEF = 5;
 	private $PUSH_POST_MAX_CHAR = 0;
+	private $mypage;
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);
 
 		$this->PUSH_POST_MAX_CHAR = $this->config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'];
+		$this->mypage = $this->getModulePageURL();
 	}
 
 	public function getModuleName() {
@@ -79,7 +81,7 @@ class mod_pushpost extends ModuleHelper {
 
 		$htmlOutput = '';
 
-		$globalHTML->drawPushPostForm($htmlOutput, $this->PUSH_POST_MAX_CHAR)
+		$globalHTML->drawPushPostForm($htmlOutput, $this->PUSH_POST_MAX_CHAR, $this->mypage);
 
 	}
 

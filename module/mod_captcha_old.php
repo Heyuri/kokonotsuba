@@ -18,6 +18,7 @@ class mod_captcha extends ModuleHelper {
 	private $CAPTCHA_FONTFACE = array(); // Fonts used (can be selected randomly, but the font types need to be the same and cannot be mixed)
 	private $CAPTCHA_ECOUNT = 2;
 	private $ALT_POSTAREA = '';
+	private $mypage;
 	private $LANGUAGE=array(
 			'zh_TW' => array(
 				'modcaptcha_captcha' => '發文驗證碼',
@@ -69,12 +70,14 @@ class mod_captcha extends ModuleHelper {
 	/* Check whether the light and dark codes meet the requirements immediately after receiving the request */
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo){
 		if (defined('VIPDEF')) return;
-		if (valid()>=$this->config['roles']['LEV_JANITOR']) return; //no captcha for admin mode
+		$staffSession = new staffAccountFromSession;
+		$globalHTML = new globalHTML($this->board);
+		if ($staffSession->getRoleLevel() >= $this->config['roles']['LEV_JANITOR']) return; //no captcha for admin mode
 		@session_start();
 		$MD5code = isset($_SESSION['captcha_dcode']) ? $_SESSION['captcha_dcode'] : false;
 		if($MD5code===false || !isset($_POST['captchacode']) || md5(strtoupper($_POST['captchacode'])) !== $MD5code){ // Case insensitive check
 			unset($_SESSION['captcha_dcode']);
-			error($this->_T('modcaptcha_worderror'));
+			$globalHTML->error($this->_T('modcaptcha_worderror'));
 		}
 	}
 
