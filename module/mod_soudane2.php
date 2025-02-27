@@ -12,8 +12,9 @@ class mod_soudane2 extends ModuleHelper {
 		if (!is_dir($this->SOUDANE_DIR)) {
 			@mkdir($this->SOUDANE_DIR);
 		}
+		$globalHTML = new globalHTML($this->board);
 		if (!is_writable($this->SOUDANE_DIR)) {
-			error('ERROR: Cannot write to SOUDANE_DIR!');
+			$globalHTML->error('ERROR: Cannot write to SOUDANE_DIR!');
 		}
 	}
 
@@ -75,12 +76,12 @@ function sd2(sno) {
 	}
 	
 	public function ModulePage() {
-		$PIO = PMCLibrary::getPIOInstance();
+		$PIO = PIOPDO::getInstance();
 		$no = intval($_GET['no']??'');
 		if (!$no) die('Bad No.');
 		if (!count($PIO->fetchPosts($no))) die('Post not found!');
 		$log = $this->_soudane($no);
-		$ip = getREMOTE_ADDR();
+		$ip = new IPAddress;
 		if (!in_array($ip, $log)) array_push($log, $ip);
 		file_put_contents($this->SOUDANE_DIR."$no.dat", implode("\r\n", $log));
 		echo $this->_soudaneTxt($log);

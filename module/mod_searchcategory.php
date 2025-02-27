@@ -60,7 +60,7 @@ class mod_searchcategory extends ModuleHelper {
 		$dat .= "<div>$links</div>\n";
 		for($i = 0; $i < $loglist_cut_count; $i++){
 			$posts = $PIO->fetchPosts($loglist_cut[$i]); // Get article content
-			$dat .= arrangeThread($this->board, $this->config, $PTE, $globalHTML, $PIO, ($posts[0]['resto'] ? $posts[0]['resto'] : $posts[0]['no']), null, $posts, 0, $loglist_cut[$i], array(), array(), false, false, false); // Output by output (reference links are not displayed)
+			$dat .= $globalHTML->arrangeThread($this->board, $this->config, $PTE, $globalHTML, $PIO, ($posts[0]['resto'] ? $posts[0]['resto'] : $posts[0]['no']), null, $posts, 0, $loglist_cut[$i], array(), array(), false, false, false); // Output by output (reference links are not displayed)
 		}
 
 		$dat .= '<table id="pager"><tr>';

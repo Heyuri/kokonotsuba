@@ -167,7 +167,7 @@ class mod_soudane extends ModuleHelper {
 		}
 
 		$log = $this->_loadVotes($post_uid, $type);
-		$ip = getREMOTE_ADDR();
+		$ip = new IPAddress;
 		if (!in_array($ip, $log)) array_push($log, $ip);
 
 		$dir = $type === 'yeah' ? $this->SOUDANE_DIR_YEAH : $this->SOUDANE_DIR_NOPE;

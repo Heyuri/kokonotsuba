@@ -1,6 +1,6 @@
 <?php
 class mod_addinfo extends ModuleHelper {
-	private $mypage, $usercounter, $timeout;
+	private $mypage, $dotpoints;
 
 	public function __construct($PMS) {
 		parent::__construct($PMS);

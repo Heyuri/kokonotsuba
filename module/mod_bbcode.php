@@ -224,11 +224,12 @@ class mod_bbcode extends ModuleHelper {
 
 
 	private function _URLExcced(){
+		$globalHTML = new globalHTML($this->board);
 		if($this->urlcount > $this->MaxURLCount) {
 		  	  $fh = fopen($this->URLTrapLog, 'a+b');
 		  	  fwrite($fh, time()."\t$_SERVER[REMOTE_ADDR]\t{$this->urlcount}\n");
 		  	  fclose($fh);
-		  	  error("URL:標籤超過上限");
+		  	  $globalHTML->error("URL:標籤超過上限");
 		}
 	}
 
