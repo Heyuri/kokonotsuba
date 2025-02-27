@@ -156,7 +156,6 @@ class modeHandler {
 		$ext = '';
 		$dest = '';
 		$tmpfile = '';
-		$mes = ''; 
 		$up_incomplete = 0; 
 		$is_admin = false;
 		
