@@ -102,6 +102,10 @@ class mod_bbcode extends ModuleHelper {
 
 	public function bb2html($string, $dest){
 		$this->urlcount=0; // Reset counter
+
+		// Preprocess the BBCode to fix nesting issues
+		$string = $this->fixBBCodeNesting($string);
+
 		$string = preg_replace('#\[b\](.*?)\[/b\]#si', '<b>\1</b>', $string);
 		$string = preg_replace('#\[s\](.*?)\[/s\]#si', '<span class="spoiler">\1</span>', $string);
 		$string = preg_replace('#\[spoiler\](.*?)\[/spoiler\]#si', '<span class="spoiler">\1</span>', $string);
@@ -152,6 +156,136 @@ class mod_bbcode extends ModuleHelper {
 		}
 
 		return $string;
+	}
+
+	// New function to fix improperly nested BBCode tags
+	private function fixBBCodeNesting($text){
+		$pattern = '/(\[\/?[a-z]+\b(?:=[^\]]+)?\])/i';
+		$tokens = array();
+		$lastPos = 0;
+		if(preg_match_all($pattern, $text, $matches, PREG_OFFSET_CAPTURE)){
+			foreach($matches[0] as $match){
+				$pos = $match[1];
+				$tagStr = $match[0];
+				if($pos > $lastPos){
+					$tokens[] = array(
+						'type' => 'text',
+						'content' => substr($text, $lastPos, $pos - $lastPos)
+					);
+				}
+				if(preg_match('/^\[\/([a-z]+)\]/i', $tagStr, $m)){
+					$tokens[] = array(
+						'type' => 'tag',
+						'closing' => true,
+						'tag' => strtolower($m[1]),
+						'full' => $tagStr
+					);
+				}else if(preg_match('/^\[([a-z]+)(=[^\]]+)?\]/i', $tagStr, $m)){
+					$tokens[] = array(
+						'type' => 'tag',
+						'closing' => false,
+						'tag' => strtolower($m[1]),
+						'attr' => isset($m[2]) ? $m[2] : '',
+						'full' => $tagStr
+					);
+				}else{
+					$tokens[] = array(
+						'type' => 'text',
+						'content' => $tagStr
+					);
+				}
+				$lastPos = $pos + strlen($tagStr);
+			}
+		}
+		if($lastPos < strlen($text)){
+			$tokens[] = array(
+				'type' => 'text',
+				'content' => substr($text, $lastPos)
+			);
+		}
+		
+		$outputTokens = array();
+		$stack = array();
+		$tokenCount = count($tokens);
+		for($i = 0; $i < $tokenCount; $i++){
+			$token = $tokens[$i];
+			if($token['type'] == 'text'){
+				$outputTokens[] = $token;
+			}else if(!$token['closing']){
+				$outputTokens[] = $token;
+				$stack[] = array(
+					'tag' => $token['tag'],
+					'pos' => count($outputTokens)-1
+				);
+			}else{
+				$tagName = $token['tag'];
+				if(!empty($stack) && end($stack)['tag'] == $tagName){
+					array_pop($stack);
+					$outputTokens[] = $token;
+				}else{
+					$found = false;
+					$temp = array();
+					while(!empty($stack)){
+						$top = array_pop($stack);
+						$temp[] = $top;
+						if($top['tag'] == $tagName){
+							$found = true;
+							break;
+						}
+					}
+					if($found){
+						$toReopen = array();
+						$matchingTag = array_pop($temp);
+						while(!empty($temp)){
+							$misplaced = array_pop($temp);
+							$outputTokens[] = array(
+								'type' => 'tag',
+								'closing' => true,
+								'tag' => $misplaced['tag'],
+								'full' => '[/' . $misplaced['tag'] . ']'
+							);
+							$toReopen[] = $misplaced;
+						}
+						$outputTokens[] = $token;
+						foreach($toReopen as $tagToReopen){
+							$nextToken = ($i+1 < $tokenCount) ? $tokens[$i+1] : null;
+							if($nextToken && $nextToken['type'] == 'tag' && $nextToken['closing'] && $nextToken['tag'] == $tagToReopen['tag']){
+								$i++; // Skip the next closing tag
+							}else{
+								$outputTokens[] = array(
+									'type' => 'tag',
+									'closing' => false,
+									'tag' => $tagToReopen['tag'],
+									'attr' => '',
+									'full' => '[' . $tagToReopen['tag'] . ']'
+								);
+								$stack[] = $tagToReopen;
+							}
+						}
+					}else{
+						// No matching opening tag found; ignore this closing tag.
+					}
+				}
+			}
+		}
+		while(!empty($stack)){
+			$open = array_pop($stack);
+			$outputTokens[] = array(
+				'type' => 'tag',
+				'closing' => true,
+				'tag' => $open['tag'],
+				'full' => '[/' . $open['tag'] . ']'
+			);
+		}
+		$result = '';
+		foreach($outputTokens as $tok){
+			if($tok['type'] == 'text'){
+				$result .= $tok['content'];
+			}else{
+				$result .= $tok['full'];
+			}
+		}
+		return $result;
 	}
 
 	private function _URLConv1($m){
