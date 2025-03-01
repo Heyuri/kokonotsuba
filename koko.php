@@ -151,8 +151,16 @@ PMS::createInstance($board);
 PTELibrary::createInstance($board);
 PIOPDO::createInstance($dbSettings);
 
+try {
+	//handle user requests and gzip compression on request
+	$modeHandler = new modeHandler($board);
+	$modeHandler->handle();
+} catch(Exception $e) {
+	$globalConfig = getGlobalConfig();
+	$globalHTML = new globalHTML($board);
 
-//handle user requests and gzip compression on request
-$modeHandler = new modeHandler($board);
-$modeHandler->handle();
+	PMCLibrary::getLoggerInstance($globalConfig['ERROR_HANDLER_FILE'],'Global')->error($e->getMessage());	
+	$globalHTML->error("There has been an error. (;´Д`)");
+	
+}
 clearstatcache();
