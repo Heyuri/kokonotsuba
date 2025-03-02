@@ -160,7 +160,7 @@ class mod_bbcode extends ModuleHelper {
 
 	// New function to fix improperly nested BBCode tags
 	private function fixBBCodeNesting($text){
-		$pattern = '/(\[\/?[a-z]+\b(?:=[^\]]+)?\])/i';
+		$pattern = '/(\[\/?[a-zA-Z0-9]+\b(?:=[^\]]+)?\])/i';
 		$tokens = array();
 		$lastPos = 0;
 		if(preg_match_all($pattern, $text, $matches, PREG_OFFSET_CAPTURE)){
@@ -173,14 +173,14 @@ class mod_bbcode extends ModuleHelper {
 						'content' => substr($text, $lastPos, $pos - $lastPos)
 					);
 				}
-				if(preg_match('/^\[\/([a-z]+)\]/i', $tagStr, $m)){
+				if(preg_match('/^\[\/([a-zA-Z0-9]+)\]/i', $tagStr, $m)){
 					$tokens[] = array(
 						'type' => 'tag',
 						'closing' => true,
 						'tag' => strtolower($m[1]),
 						'full' => $tagStr
 					);
-				}else if(preg_match('/^\[([a-z]+)(=[^\]]+)?\]/i', $tagStr, $m)){
+				}else if(preg_match('/^\[([a-zA-Z0-9]+)(=[^\]]+)?\]/i', $tagStr, $m)){
 					$tokens[] = array(
 						'type' => 'tag',
 						'closing' => false,
