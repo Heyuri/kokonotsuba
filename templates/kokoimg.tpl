@@ -38,7 +38,8 @@
 	<script src="{$STATIC_URL}js/addemotes.js?v=5" defer></script>
 	<script src="{$STATIC_URL}/js/admin.js?v=3" defer></script>
 	<script src="{$STATIC_URL}js/filter.js?v=2" defer></script>
-	<script src="{$STATIC_URL}js/qr.js?v=2"></script>
+	<script src="{$STATIC_URL}js/qr.js?v=3"></script>
+	<script src="{$STATIC_URL}js/clipboard.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
 <!--/&HEADER-->
 

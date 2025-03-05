@@ -19,7 +19,7 @@ class mod_search extends ModuleHelper {
 	}
 
 	public function autoHookToplink(&$linkbar, $isreply){
-		$linkbar .= ' [<a href="'.$this->mypage.'">Search</a>] ';
+		$linkbar .= ' [<a href="'.$this->mypage.'">'._T('head_search').'</a>] ';
 	}
 
 	public function ModulePage(){

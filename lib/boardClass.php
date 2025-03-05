@@ -210,24 +210,11 @@ class board {
 			$dat = ''; $pte_vals['{$THREADS}'] = '';
 			$globalHTML->head($dat, $thread_uid);
 			// form
-			$qu = '';
-			if ($config['USE_QUOTESYSTEM'] && $resno && isset($_GET['q'])) {
-				$qq = explode(',', $_GET['q']);
-				foreach ($qq as $q) {
-					$q = intval($q);
-					if ($q<1) continue;
-					$qu.= '&gt;&gt;'.intval($q)."\r\n";
-				}
-			}
 			$form_dat = '';
-			$globalHTML->form($form_dat, $resno, '', '', '', $qu);
+			$globalHTML->form($form_dat, $resno, '', '', '', '');
 
 			$form_dat .= $PTE->ParseBlock('MODULE_INFO_HOOK',$pte_vals);
 			$pte_vals['{$FORMDAT}'] = $form_dat;
-			
-
-			
-			unset($qu);
 			// Output the thread content
 			for ($i = 0; $i < $inner_for_count; $i++) {
 				$posts = array();

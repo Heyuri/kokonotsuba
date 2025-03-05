@@ -81,7 +81,7 @@ const kkqr = { name: "KK Quick Reply",
 				submitplace = 'qrsubdiv';
 			}
 			if (typeof(com)!='undefined')
-				qr.innerHTML+= '<textarea name="com" id="qrcom" maxlength="5000" cols="48" rows="6" class="inputtext" placeholder="Comment" oninput="kkqr.input(this);">'+com.value+'</textarea>';
+				qr.innerHTML+= '<textarea name="com" id="qrcom" cols="48" rows="6" class="inputtext" placeholder="Comment" oninput="kkqr.input(this);">'+com.value+'</textarea>';
 			if (typeof(upfile)!='undefined') {
 				upfile.insertAdjacentHTML("beforebegin", '<span id="upfileDUMMY"></span>');
 				kkqr.win.div.appendChild(upfile);

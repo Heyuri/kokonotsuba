@@ -799,6 +799,7 @@ caption h3 {
 	box-sizing: border-box;
 	position: absolute;
 	z-index: 1000;
+	background-color: var(--color-bg-main);
 	max-width: 90%;
 }
 
@@ -1330,7 +1331,7 @@ caption h3 {
 	font-size: var(--font-size-small);
 }
 
-@media screen and (max-width: 810px) {
+@media screen and (max-width: 768px) {
 	#catalogTable .thread {
 		width: 140px;
 		max-width: 140px;
@@ -1864,7 +1865,7 @@ width: 300px;
 
 /************************ Mobile **************************************/
 
-@media screen and (max-width: 810px) {
+@media screen and (max-width: 768px) {
 	body {
 		margin: 0;
 		margin-bottom: 8px;

@@ -40,36 +40,14 @@ const kkBannerSwitch = {
         // Apply greying-out effect
         bannerElement.style.opacity = "0.5";
 
-        try {
-            // Fetch a new image from the original PHP URL
-            const response = await fetch(this.originalSrc, {
-                method: 'GET',
-                mode: 'cors',
-                cache: 'no-cache'
-            });
+        let url = new URL(this.originalSrc);
+        url.searchParams.set('t', new Date().getTime());
+        bannerElement.src = url.href;
 
-            if (!response.ok) {
-                throw new Error('Network response was not ok: ' + response.statusText);
-            }
-
-            // Create a Blob from the response
-            const blob = await response.blob();
-            const newImageUrl = URL.createObjectURL(blob);
-
-            // Update the src of the img element
-            bannerElement.src = newImageUrl;
-
-            // Reset greying-out effect after the image is loaded
-            bannerElement.onload = () => {
-                bannerElement.style.opacity = "1";
-                this.isChanging = false; // Reset debounce flag
-            };
-
-        } catch (error) {
-            console.error('There has been a problem with your fetch operation:', error);
-            this.isChanging = false; // Reset debounce flag even if an error occurs
-            bannerElement.style.opacity = "1"; // Reset opacity in case of failure
-        }
+        bannerElement.onload = bannerElement.onerror = () => {
+            bannerElement.style.opacity = "1";
+            this.isChanging = false; // Reset debounce flag
+        };
     },
 };
 
