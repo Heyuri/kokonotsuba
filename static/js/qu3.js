@@ -12,7 +12,7 @@
     let previewStack = [];
 
     // Creates and appends a preview box.
-    function createPreviewBox(notFound = false, applyBodyBg = false) {
+    function createPreviewBox(notFound = false) {
         const box = document.createElement('div');
         box.classList.add('previewBox');
         box.style.minWidth = `${MIN_WIDTH}px`;  // Set minimum width only if not showing "Quote source not found"
@@ -22,13 +22,6 @@
                     Quote source not found
                 </div>
             `;
-        }
-        if (applyBodyBg) {
-            const computedStyle = window.getComputedStyle(box);
-            if (!computedStyle.backgroundColor || computedStyle.backgroundColor === 'rgba(0, 0, 0, 0)') {
-                const bodyBackgroundColor = window.getComputedStyle(document.body).backgroundColor;
-                box.style.backgroundColor = bodyBackgroundColor;
-            }
         }
         document.body.appendChild(box);
         return box;
@@ -81,14 +74,7 @@
             const matchingPostId = findMatchingPostId(quotedText, contextElement, isDoubleQuote);
             const post = document.getElementById(matchingPostId);
             const isOP = post && post.classList.contains('op');
-            // If the source post is found, use its .del marker; if not, fall back to checking the context post.
-            let isKokotxt;
-            if (post) {
-                isKokotxt = post.querySelector('.del');
-            } else {
-                isKokotxt = contextElement && contextElement.querySelector('.del');
-            }
-            const previewBox = createPreviewBox(matchingPostId === 'notFound', isOP || isKokotxt);
+            const previewBox = createPreviewBox(matchingPostId === 'notFound', isOP);
 
             // Create a preview object.
             // Note: contextPost is the original post element from which the preview was made.
@@ -107,8 +93,6 @@
                 const clonedPost = post.cloneNode(true);
                 clonedPost.removeAttribute('id');
                 clonedPost.style.margin = '0'; // Remove any margins
-                // Remove any .del elements from the clone.
-                clonedPost.querySelectorAll('.del').forEach(el => el.remove());
                 previewBox.appendChild(clonedPost);
             }
 
