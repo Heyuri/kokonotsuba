@@ -704,15 +704,13 @@ class globalHTML {
 	
 	        // Set the response/reference link
 	        if($config['USE_QUOTESYSTEM']) {
-	        	$qu = htmlspecialchars($no);
 	            if($resno){ // Response mode
-	                if($showquotelink) $QUOTEBTN = '<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$postOPNumber.'#q'.$qu.'" class="qu" title="Quote">'.strval($no).'</a>';
-	                else $QUOTEBTN = '<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$postOPNumber.'#q'.$qu.'" title="Quote">'.strval($no).'</a>';
+	                if($showquotelink) $QUOTEBTN = '<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$postOPNumber.'#q'.$no.'" class="qu" title="Quote">'.strval($no).'</a>';
+	                else $QUOTEBTN = '<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$postOPNumber.'#q'.$no.'" title="Quote">'.strval($no).'</a>';
 	            }else{
 	                if(!$i)    $REPLYBTN = '[<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$no.'">'._T('reply_btn').'</a>]'; // First article
-	                $QUOTEBTN = '<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$postOPNumber.'#q'.$qu.'" title="Quote">'.$no.'</a>';
+	                $QUOTEBTN = '<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$postOPNumber.'#q'.$no.'" title="Quote">'.$no.'</a>';
 	            }
-	            unset($qu);
 				
 			} else {
 				if($resno&&!$i)	$REPLYBTN = '[<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$no.'">'._T('reply_btn').'</a>]';
