@@ -36,7 +36,7 @@
 	/* Post form */
 	--color-fg-global-message: var(--color-fg-warning);
 	/* Posts/replies */
-	--color-bg-reply-hl: #ffefef;
+	--color-bg-reply-hl: #373b41;
 	--color-fg-title: #b294bb;
 	--color-fg-name: var(--color-fg-main);
 	--color-fg-warning: #ee7777;
@@ -149,6 +149,10 @@ fieldset {
 
 .title a:hover {
 	text-decoration: underline;
+}
+
+.previewBox .post {
+	border: 1px solid var(--color-hi-contrast-border) !important;
 }
 
 /************************ Post formatting *****************************/
