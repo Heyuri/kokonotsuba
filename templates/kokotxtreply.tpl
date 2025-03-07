@@ -12,17 +12,17 @@
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/txt/base.css?v=7">
+	<link rel="stylesheet" href="{$STATIC_URL}css/txt/base.css?v=13">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/txt/pseud0ch.css" title="Pseud0ch">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch2.css" title="Pseud0ch (sans-serif)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch3.css" title="Pseud0ch (MS PGothic)">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/tomorrow.css" title="Tomorrow">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/tomorrow.css?v=4" title="Tomorrow">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css" title="Import Custom">
 	<script src="{$STATIC_URL}js/koko.js?v=6"></script>
-	<script src="{$STATIC_URL}js/qr.js"></script>
+	<script src="{$STATIC_URL}js/qr.js?v=3"></script>
 	<script src="{$STATIC_URL}js/qu.js"></script>
 	<script src="{$STATIC_URL}js/qu2.js"></script>
-	<script src="{$STATIC_URL}js/qu3.js?v=15" defer></script>
+	<script src="{$STATIC_URL}js/qu3.js?v=19" defer></script>
 	<script src="{$STATIC_URL}js/style.js"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
 	<script src="{$STATIC_URL}js/catalog.js"></script>

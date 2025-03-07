@@ -13,33 +13,33 @@
 	<meta name="description" content="{$PAGE_TITLE}">
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/base.css?v=12">
+	<link rel="stylesheet" href="{$STATIC_URL}css/base.css?v=27">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/sakomoto.css?v=2" title="Sakomoto">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/heyuriclassic.css?v=2" title="Heyuri Classic">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/futaba.css?v=2" title="Futaba">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/burichan.css?v=2" title="Burichan">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/fuuka.css?v=2" title="Fuuka">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/tomorrow.css?v=2" title="Tomorrow">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/tomorrow.css?v=3" title="Tomorrow">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/ayashii.css?v=2" title="Ayashii">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/mercury.css?v=2" title="Mercury">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import Custom">
 	<script src="{$STATIC_URL}js/koko.js?v=4"></script>
 	<script src="{$STATIC_URL}js/qu.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/onlinecounter.js" defer></script>
-	<script src="{$STATIC_URL}js/banners.js?v=2"></script>
+	<script src="{$STATIC_URL}js/banners.js?v=3"></script>
 	<script src="{$STATIC_URL}js/qu2.js?v=2" defer></script>
-	<script src="{$STATIC_URL}js/qu3.js?v=15" defer></script>
+	<script src="{$STATIC_URL}js/qu3.js?v=19" defer></script>
 	<script src="{$STATIC_URL}js/style.js?v=2"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
 	<script src="{$STATIC_URL}js/img.js?v=2"></script>
 	<script src="{$STATIC_URL}js/momo/tegaki.js?v=3" defer></script>
 	<script src="{$STATIC_URL}js/inline.js" defer></script>
 	<script src="{$STATIC_URL}js/update.js?v=2" defer></script>
-	<script src="{$STATIC_URL}js/addemotes.js?v=5" defer></script>
+	<script src="{$STATIC_URL}js/addemotes.js?v=7" defer></script>
 	<script src="{$STATIC_URL}/js/admin.js?v=3" defer></script>
 	<script src="{$STATIC_URL}js/filter.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qr.js?v=3"></script>
-	<script src="{$STATIC_URL}js/clipboard.js?v=2" defer></script>
+	<script src="{$STATIC_URL}js/clipboard.js?v=15" defer></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
 <!--/&HEADER-->
 

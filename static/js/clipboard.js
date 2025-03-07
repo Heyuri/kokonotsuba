@@ -15,11 +15,27 @@
 			// Create or update the filename input field
 			var filenameInput = document.getElementById('filename-input');
 			if (!filenameInput) {
+				// Create a container div for the filename input and label
+				var filenameContainer = document.createElement('div');
+				filenameContainer.id = 'filename-container';
+
+				// Create a label for the filename input
+				var filenameLabel = document.createElement('label');
+				filenameLabel.setAttribute('for', 'filename-input');
+				filenameLabel.textContent = 'Filename';
+
+				// Create the input field
 				filenameInput = document.createElement('input');
 				filenameInput.type = 'text';
 				filenameInput.id = 'filename-input';
-				filenameInput.style.marginLeft = '10px';
-				fileInput.parentNode.insertBefore(filenameInput, fileInput.nextSibling);
+				filenameInput.classList.add('inputtext');
+
+				// Append label and input inside the container
+				filenameContainer.appendChild(filenameLabel);
+				filenameContainer.appendChild(filenameInput);
+
+				// Insert after #clearFile
+				document.getElementById('clearFile').after(filenameContainer);
 			}
 			filenameInput.value = originalFilename;
 			filenameInput.currentBlob = blob;
@@ -28,12 +44,27 @@
 			// Create or update the file size element
 			var fileSizeElement = document.getElementById('file-size');
 			if (!fileSizeElement) {
+				// Create a container div for the file size display
+				var fileSizeContainer = document.createElement('div');
+				fileSizeContainer.id = 'file-size-container';
+
+				// Create a label for the file size
+				var fileSizeLabel = document.createElement('label');
+				fileSizeLabel.setAttribute('for', 'file-size');
+				fileSizeLabel.textContent = 'File size';
+
+				// Create the file size display element
 				fileSizeElement = document.createElement('div');
 				fileSizeElement.id = 'file-size';
-				fileSizeElement.style.marginTop = '10px';
-				fileInput.parentNode.insertBefore(fileSizeElement, filenameInput.nextSibling);
+
+				// Append label and file size text inside the container
+				fileSizeContainer.appendChild(fileSizeLabel);
+				fileSizeContainer.appendChild(fileSizeElement);
+
+				// Insert after #clearFile
+				document.getElementById('clearFile').after(fileSizeContainer);
 			}
-			fileSizeElement.textContent = `File size: ${(blob.size / 1024).toFixed(2)} KB`;
+			fileSizeElement.textContent = `${(blob.size / 1024).toFixed(2)} KB`;
 
 			// Create or update the preview element only for allowed types
 			var allowedPreviewTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp', 'image/svg+xml'];
@@ -43,12 +74,7 @@
 				if (!preview) {
 					preview = document.createElement('img');
 					preview.id = 'file-preview';
-					preview.style.display = 'block';
-					preview.style.marginTop = '10px';
-					preview.style.maxWidth = '100%';
-					preview.style.maxHeight = '250px';
-					preview.style.border = '1px solid #880000';
-					fileInput.parentNode.insertBefore(preview, fileSizeElement.nextSibling);
+					document.getElementById('clearFile').after(preview);
 				}
 			} else {
 				// Remove any existing preview if the file type is not allowed
@@ -91,12 +117,8 @@
 	function handleDrop(event) {
 		event.preventDefault();
 		var files = event.dataTransfer.files;
-		for (var i = 0; i < files.length; i++) {
-			var file = files[i];
-			if (file.type.startsWith('image/')) {
-				processImageFile(file);
-				break; // Process only the first image file dropped
-			}
+		if (files.length > 0) {
+			processImageFile(files[0]); // Process only the first file dropped
 		}
 	}
 
@@ -104,20 +126,25 @@
 	function attachDragAndDropToFileInput() {
 		var fileInput = document.querySelector('input[type="file"][name="upfile"]');
 		if (fileInput) {
+			// Add default class
+			fileInput.classList.add('file-input');
+	
 			fileInput.addEventListener('dragover', function(e) {
 				e.preventDefault();
 				e.stopPropagation();
-				fileInput.style.backgroundColor = '#f0f0f0';
+				fileInput.classList.add('drag-over');
 			});
+	
 			fileInput.addEventListener('dragleave', function(e) {
 				e.preventDefault();
 				e.stopPropagation();
-				fileInput.style.backgroundColor = '';
+				fileInput.classList.remove('drag-over');
 			});
+	
 			fileInput.addEventListener('drop', function(e) {
 				e.preventDefault();
 				e.stopPropagation();
-				fileInput.style.backgroundColor = '';
+				fileInput.classList.remove('drag-over');
 				handleDrop(e);
 			});
 		}
@@ -141,24 +168,15 @@
 	function createConvertButton(blob, fileInput, filenameInput, preview, fileSizeElement) {
 		var convertButton = document.getElementById('convert-to-png-button');
 		if (!convertButton) {
-			convertButton = document.createElement('div');
+			convertButton = document.createElement('button');
 			convertButton.id = 'convert-to-png-button';
 			convertButton.textContent = 'Convert WebP to PNG';
-			convertButton.style.border = '1px solid #ccc';
-			convertButton.style.display = 'inline-block';
-			convertButton.style.marginTop = '10px';
-			convertButton.style.padding = '5px 10px';
-			convertButton.style.cursor = 'pointer';
-			convertButton.style.transition = 'opacity 0.3s';
-			convertButton.style.clear = 'both';
 
 			// Wrap the button for proper block-level display
 			var buttonWrapper = document.createElement('div');
-			buttonWrapper.style.marginTop = '5px';
-			buttonWrapper.style.textAlign = 'left';
 			buttonWrapper.appendChild(convertButton);
 
-			filenameInput.parentNode.insertBefore(buttonWrapper, filenameInput.nextSibling);
+			document.getElementById('clearFile').after(buttonWrapper);
 
 			convertButton.addEventListener('click', function(e) {
 				e.preventDefault();
@@ -192,7 +210,7 @@
 				filenameInput.currentBlob = pngBlob;
 				filenameInput.currentExtension = '.png';
 				updateFileInput(pngBlob, fileInput, newFileName, '.png', preview);
-				fileSizeElement.textContent = `File size: ${(pngBlob.size / 1024).toFixed(2)} KB`;
+				fileSizeElement.textContent = `${(pngBlob.size / 1024).toFixed(2)} KB`;
 				removeConvertButton();
 			}, 'image/png');
 		};
@@ -268,18 +286,26 @@
 		if (fileInput) {
 			fileInput.value = '';
 		}
-		var filenameInput = document.getElementById('filename-input');
-		if (filenameInput) {
-			filenameInput.remove();
+
+		// Remove the filename container if it exists
+		var filenameContainer = document.getElementById('filename-container');
+		if (filenameContainer) {
+			filenameContainer.remove();
 		}
-		var fileSizeElement = document.getElementById('file-size');
-		if (fileSizeElement) {
-			fileSizeElement.remove();
+
+		// Remove the file size container if it exists
+		var fileSizeContainer = document.getElementById('file-size-container');
+		if (fileSizeContainer) {
+			fileSizeContainer.remove();
 		}
+
+		// Remove the file preview if it exists
 		var preview = document.getElementById('file-preview');
 		if (preview) {
 			preview.remove();
 		}
+
+		// Remove the WebP to PNG conversion button if it exists
 		removeConvertButton();
 	}
 

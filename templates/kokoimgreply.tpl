@@ -13,7 +13,7 @@
 	<meta name="description" content="{$PAGE_TITLE}">
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/base.css?v=6">
+	<link rel="stylesheet" href="{$STATIC_URL}css/base.css?v=18">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/sakomoto.css?v=2" title="Sakomoto">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/heyuriclassic.css?v=2" title="Heyuri Classic">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/futaba.css?v=2" title="Futaba">
@@ -26,9 +26,9 @@
 	<script src="{$STATIC_URL}js/koko.js?v=4"></script>
 	<script src="{$STATIC_URL}js/qu.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/onlinecounter.js" defer></script>
-	<script src="{$STATIC_URL}js/banners.js?v=2"></script>
+	<script src="{$STATIC_URL}js/banners.js?v=3"></script>
 	<script src="{$STATIC_URL}js/qu2.js?v=2" defer></script>
-	<script src="{$STATIC_URL}js/qu3.js?v=5" defer></script>
+	<script src="{$STATIC_URL}js/qu3.js?v=19" defer></script>
 	<script src="{$STATIC_URL}js/style.js?v=2"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
 	<script src="{$STATIC_URL}js/img.js?v=2"></script>
@@ -39,7 +39,7 @@
 	<script src="{$STATIC_URL}/js/admin.js?v=3" defer></script>
 	<script src="{$STATIC_URL}js/filter.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qr.js?v=2"></script>
-	<script src="{$STATIC_URL}js/clipboard.js?v=2" defer></script>
+	<script src="{$STATIC_URL}js/clipboard.js?v=4" defer></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
 <!--/&HEADER-->
 
