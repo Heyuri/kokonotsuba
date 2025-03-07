@@ -389,6 +389,46 @@ caption h3 {
 	max-width: 17.25em;
 }
 
+.file-input {
+	background-color: transparent;
+}
+
+.file-input.drag-over {
+	background-color: var(--color-bg-window-item-highlight);
+}
+
+#convert-to-png-button {
+	transition: opacity 0.3s;
+}
+
+#file-size-container,
+#filename-container {
+	display: flex;
+	flex-direction: row;
+}
+
+#file-size-container label,
+#filename-container label {
+	margin-right: 0.25em;
+}
+
+#file-size-container label::after,
+#filename-container label::after {
+	content: ":"
+}
+
+#filename-input {
+	flex: 1;
+}
+
+#file-preview {
+	display: block;
+	margin-top: 0.25em;
+	max-width: 250px;
+	max-height: 250px;
+	border: 1px solid var(--color-hi-contrast-border);
+}
+
 #postarea2 {
 	clear: both;
 }
@@ -1872,6 +1912,8 @@ width: 300px;
 	}
 
 	.boardlist {
+		margin: 8px;
+		margin-bottom: 0;
 		padding: 0;
 	}
 
