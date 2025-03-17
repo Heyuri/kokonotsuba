@@ -66,8 +66,14 @@ class PTELibrary{
 			'{$PHP_SELF}'=>$this->config['PHP_SELF'], '{$PHP_SELF2}'=>$this->config['PHP_SELF2'], '{$PHP_EXT}'=>$this->config['PHP_EXT'],
 			'{$TITLE}'=>$this->board->getBoardTitle(), '{$TITLESUB}'=>$this->board->getBoardSubTitle(),
 			'{$HOME}'=>$this->config['HOME'], '{$TOP_LINKS}'=>$this->config['TOP_LINKS'], '{$FOOTTEXT}'=>$this->config['FOOTTEXT'],
+			'{$BLOTTER}' => '', '{$GLOBAL_MESSAGE}' => '',
 			 '{$PAGE_TITLE}'=>strip_tags($this->board->getBoardTitle()),
 		), $ary_val);
+
+		$PMS = PMS::getInstance();
+		$PMS->useModuleMethods('GlobalMessage', array(&$ary_val['{$GLOBAL_MESSAGE}'])); // "GlobalMessage" Hook Point
+		$PMS->useModuleMethods('BlotterPreview', array(&$ary_val['{$BLOTTER}'])); // "Blotter Preview" Hook Point
+
 		if(($tmp_block = $this->_readBlock($blockName))===false) return ""; // 找無
 		foreach($ary_val as $akey=>$aval) $ary_val[$akey] = str_replace('{$', '{'.chr(1).'$', $ary_val[$akey]);
 		$tmp_block = $this->EvalFOREACH($tmp_block, $ary_val); // 解析FOREACH敘述
