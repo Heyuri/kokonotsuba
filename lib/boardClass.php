@@ -140,9 +140,6 @@ class board {
 			'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'">',
 			'{$IS_THREAD}' => !!$resno);
 		if($resno) $pte_vals['{$RESTO}'] = $resno;
-
-		$PMS->useModuleMethods('GlobalMessage', array(&$pte_vals['{$GLOBAL_MESSAGE}'])); // "GlobalMessage" Hook Point
-		$PMS->useModuleMethods('BlotterPreview', array(&$pte_vals['{$BLOTTER}'])); // "Blotter Preview" Hook Point
 		
 		if(!$resno){
 			if($pagenum==-1){ // Rebuild mode (PHP dynamic output of multiple pages)
