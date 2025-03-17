@@ -160,6 +160,9 @@ class mod_bbcode extends ModuleHelper {
 
 	// New function to fix improperly nested BBCode tags
 	private function fixBBCodeNesting($text){
+		// List of supported tags. Only these tags will be processed for nesting correction.
+		$supportedTags = array('b', 'i', 'spoiler', 'color', 's', 'u', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'code', 'pre', 'aa', 'kao', 'sw', 'quote');
+		
 		$pattern = '/(\[\/?[a-zA-Z0-9]+\b(?:=[^\]]+)?\])/i';
 		$tokens = array();
 		$lastPos = 0;
@@ -173,21 +176,38 @@ class mod_bbcode extends ModuleHelper {
 						'content' => substr($text, $lastPos, $pos - $lastPos)
 					);
 				}
+				// Check for closing tag
 				if(preg_match('/^\[\/([a-zA-Z0-9]+)\]/i', $tagStr, $m)){
-					$tokens[] = array(
-						'type' => 'tag',
-						'closing' => true,
-						'tag' => strtolower($m[1]),
-						'full' => $tagStr
-					);
+					$tag = strtolower($m[1]);
+					if(!in_array($tag, $supportedTags)){
+						$tokens[] = array(
+							'type' => 'text',
+							'content' => $tagStr
+						);
+					} else {
+						$tokens[] = array(
+							'type' => 'tag',
+							'closing' => true,
+							'tag' => $tag,
+							'full' => $tagStr
+						);
+					}
 				}else if(preg_match('/^\[([a-zA-Z0-9]+)(=[^\]]+)?\]/i', $tagStr, $m)){
-					$tokens[] = array(
-						'type' => 'tag',
-						'closing' => false,
-						'tag' => strtolower($m[1]),
-						'attr' => isset($m[2]) ? $m[2] : '',
-						'full' => $tagStr
-					);
+					$tag = strtolower($m[1]);
+					if(!in_array($tag, $supportedTags)){
+						$tokens[] = array(
+							'type' => 'text',
+							'content' => $tagStr
+						);
+					} else {
+						$tokens[] = array(
+							'type' => 'tag',
+							'closing' => false,
+							'tag' => $tag,
+							'attr' => isset($m[2]) ? $m[2] : '',
+							'full' => $tagStr
+						);
+					}
 				}else{
 					$tokens[] = array(
 						'type' => 'text',
@@ -215,6 +235,7 @@ class mod_bbcode extends ModuleHelper {
 				$outputTokens[] = $token;
 				$stack[] = array(
 					'tag' => $token['tag'],
+					'attr' => $token['attr'],
 					'pos' => count($outputTokens)-1
 				);
 			}else{
@@ -256,8 +277,8 @@ class mod_bbcode extends ModuleHelper {
 									'type' => 'tag',
 									'closing' => false,
 									'tag' => $tagToReopen['tag'],
-									'attr' => '',
-									'full' => '[' . $tagToReopen['tag'] . ']'
+									'attr' => $tagToReopen['attr'],
+									'full' => '[' . $tagToReopen['tag'] . $tagToReopen['attr'] . ']'
 								);
 								$stack[] = $tagToReopen;
 							}
