@@ -4,6 +4,7 @@ function bindReplyValuesToTemplate($board, $config, $post_uid, $no, $resto, $sub
 	return array(
 	 '{$BOARD_URL}' => $board->getBoardURL(),
 	 '{$BOARD_UID}' => $board->getBoardUID(),
+	 '{$BOARD_IDENTIFIER}' => $board->getBoardIdentifier(),
 	 '{$POST_UID}' => $post_uid,
 	 '{$NO}'=>$no,
 	 '{$RESTO}'=>$resto, 
@@ -28,6 +29,7 @@ function bindOPValuesToTemplate($board, $config, $post_uid, $no, $sub, $name, $n
 	return array(
 	'{$BOARD_URL}' => $board->getBoardURL(),
 	'{$BOARD_UID}' => $board->getBoardUID(),
+	'{$BOARD_IDENTIFIER}' => $board->getBoardIdentifier(),
 	'{$POST_UID}' => $post_uid,
 	'{$NO}'=>$no, 
 	'{$RESTO}'=>$no, 
