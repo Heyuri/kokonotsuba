@@ -859,6 +859,11 @@ caption h3 {
 	color: var(--color-fg-quotelink-hover) !important;
 }
 
+.inline-quote {
+	display: table;
+	border: 1px dashed var(--color-hi-contrast-border);
+}
+
 .oplink:after {
 	content: " (OP)";
 	font-size: var(--font-size-small);
