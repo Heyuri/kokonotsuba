@@ -169,7 +169,7 @@ class board {
 				if (!$PIO->isThread($thread_uid_new)) $globalHTML->error("Thread not found!");
 				
 				$resnoNew = $PIO->resolveThreadNumberFromUID($thread_uid_new); 
-				$redirectString = $config['PHP_SELF']."?res=".$resnoNew."#p".$resno;
+				$redirectString = $config['PHP_SELF']."?res=".$resnoNew."#p".$this->getBoardUID()."_$resno";
 				redirect($redirectString); // Found, redirect
 			}
 			$AllRes = isset($pagenum) && ($_GET['pagenum']??'')=='all'; // Whether to use ALL for output
