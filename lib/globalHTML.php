@@ -170,7 +170,7 @@ class globalHTML {
 					
 					$postResno = $PIO->resolveThreadNumberFromUID($post['thread_uid']);
 					if($post){
-						$comment = str_replace($val[0], '<a href="'.$this->config['PHP_SELF'].'?res='.($postResno?$postResno:$post['no']).'#p'.$post['no'].'" class="quotelink">'.$val[0].'</a>', $comment);
+						$comment = str_replace($val[0], '<a href="'.$this->config['PHP_SELF'].'?res='.($postResno?$postResno:$post['no']).'#p'.$post['boardUID'].'_'.$post['no'].'" class="quotelink">'.$val[0].'</a>', $comment);
 					} else {
 						$comment = str_replace($val[0], '<a href="javascript:void(0);" class="quotelink"><del>'.$val[0].'</del></a>', $comment);
 					}
