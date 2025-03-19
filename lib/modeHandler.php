@@ -254,7 +254,7 @@ class modeHandler {
 		if (strstr($email, 'noko') && !strstr($email, 'nonoko')) {
 				$redirect = $boardConfig['PHP_SELF'].'?res='.($resno?$resno:$no);
 				if (!strstr($email, 'dump')){
-						$redirect.= "#p$no";
+						$redirect.= "#p".$this->board->getBoardUID()."_$no";
 				}
 		}
 		$email = preg_replace('/^(no)+ko\d*$/i', '', $email);
