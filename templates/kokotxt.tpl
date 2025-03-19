@@ -12,7 +12,7 @@
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/txt/base.css?v=13">
+	<link rel="stylesheet" href="{$STATIC_URL}css/txt/base.css?v=18">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/txt/pseud0ch.css" title="Pseud0ch">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch2.css" title="Pseud0ch (sans-serif)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch3.css" title="Pseud0ch (MS PGothic)">
@@ -55,7 +55,7 @@
 <!--/&BODYHEAD-->
 
 <!--&POSTFORM-->
-	<div class="menu outerbox">
+	<div class="menu outerbox noVMargin">
 		<div id="postarea" class="innerbox">
 			<h2 class="formTitle"><!--&IF($IS_THREAD,' New reply [<a href="{$PHP_SELF2}">Return</a>]','New thread')--></h2>
 			<!--&IF($MAX_FILE_SIZE,'<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" enctype="multipart/form-data">','<form id="postform" name="postform" action="{$PHP_SELF}" method="POST">')-->
@@ -88,19 +88,16 @@
 				<!--&IF($FORMBOTTOM,'{$FORMBOTTOM}','')-->
 			</form>
 		</div>
+		<div class="mod-extra-info innerbox">
+			{$BLOTTER}
+		</div>
+		<div id="globalmsg" class="innerbox">
+			{$GLOBAL_MESSAGE}
+		</div>
 	</div>
 <!--/&POSTFORM-->
 
 <!--&MODULE_INFO_HOOK-->
-	<div class="menu outerbox">
-		<div class="mod-extra-info innerbox">
-			{$BLOTTER}
-			<hr>
-			<div id="globalmsg">
-				{$GLOBAL_MESSAGE}
-			</div>
-		</div>
-	</div>
 <!--/&MODULE_INFO_HOOK-->
 
 <!--&FOOTER-->
@@ -198,7 +195,7 @@
 	{$ADMIN_LINKS}
 	{$ADMIN_THEADING_BAR}
 		{$VIEW_OWN_ACCOUNT}
-		<!--&IF($CREATE_ACCOUNT,'<li>{$CREATE_ACCOUNT}</li>','')-->
+		{$CREATE_ACCOUNT}
 		<!--&IF($ACCOUNT_LIST,'<h3>Staff List</h3>{$ACCOUNT_LIST}','')-->
 {$FOOTER}
 <!--/&ACCOUNT_PAGE-->

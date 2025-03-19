@@ -108,12 +108,17 @@ audio {
 	margin: 0 auto;
 	margin-bottom: 20px;
 	width: 95%;
-	padding: 7px;
+}
+
+.noVMargin {
+	margin-top: 0;
+	margin-bottom: 0;
 }
 
 .innerbox {
 	border-width: 1px;
 	border-style: inset;
+	margin: 7px;
 	padding: 3px;
 }
 

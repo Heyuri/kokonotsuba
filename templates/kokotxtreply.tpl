@@ -167,7 +167,7 @@
 	[<a href="{$PHP_SELF2}">Return</a>]
 	{$ADMIN_THEADING_BAR}
 	<!--&IF($ACCOUNT_LIST,'{$ACCOUNT_LIST}','')-->
-	<!--&IF($CREATE_ACCOUNT,'{$CREATE_ACCOUNT}','')-->
+	{$CREATE_ACCOUNT}
 	
 	{$VIEW_OWN_ACCOUNT}
 	
