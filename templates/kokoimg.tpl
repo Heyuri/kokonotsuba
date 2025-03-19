@@ -171,7 +171,7 @@
 						</span>
 						<span class="time">{$NOW}</span>
 					</label>
-					<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$NO}">No.{$NO}</a>')--></span>
+					<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
 					<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
 					<span class="replyButton">{$REPLYBTN}</span><span class="backlinks">{$BACKLINKS}</span>
 				</div>
@@ -182,11 +182,11 @@
 <!--/&THREAD-->
 
 <!--&REPLY-->
-			<div id="pc{$NO}" class="reply-container">
+			<div id="pc{$BOARD_UID}_{$NO}" class="reply-container">
 				<div class="doubledash">
 					&gt;&gt;
 				</div>
-				<div class="post reply" id="p{$NO}">
+				<div class="post reply" id="p{$BOARD_UID}_{$NO}">
 					<div class="postinfo">
 						<label>
 							<input type="checkbox" name="{$POST_UID}" value="delete"><span class="title">{$SUB}</span>
@@ -195,7 +195,7 @@
 							</span>
 							<span class="time">{$NOW}</span>
 						</label>
-						<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$NO}">No.{$NO}</a>')--></span>
+						<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
 						<span class="postInfoExtra">{$POSTINFO_EXTRA}</span><span class="backlinks">{$BACKLINKS}</span>
 					</div>
 					<div class="filesize">{$IMG_BAR}</div>

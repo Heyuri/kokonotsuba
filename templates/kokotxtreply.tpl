@@ -99,7 +99,7 @@
 	<!-- <div class="tnav">{$THREADNAV}</div> -->
 	<div class="post op" id="p{$BOARD_UID}_{$NO}">
 		<h1 class="title"><a href="{$PHP_SELF}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No Title')--></a></h1>
-		<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span>{$POSTINFO_EXTRA}<div class="del" align="RIGHT">[<label>Del:<input type="checkbox" name="{$NO}" value="delete"></label>]</div></div>
+		<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span>{$POSTINFO_EXTRA}<div class="del" align="RIGHT">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div></div>
 		<div class="filesize">{$IMG_BAR}</div>
 		<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
 		<div class="comment">{$COM}</div>
@@ -110,9 +110,9 @@
 
 <!--&REPLY-->
 <!--&IF($IS_PREVIEW,'<table class="thread" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3"><tbody><tr><td>','')-->
-<div class="post reply" id="p{$NO}">
-	<span class="title"><a href="{$PHP_SELF}?res={$RESTO}#p{$NO}">{$SUB}</a></span>
-	<div class="del">[<label>Del:<input type="checkbox" name="{$NO}" value="delete"></label>]</div>
+<div class="post reply" id="p{$BOARD_UID}_{$NO}">
+	<span class="title"><a href="{$PHP_SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span>
+	<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
 	<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span>{$POSTINFO_EXTRA}</div>
 	<div class="filesize">{$IMG_BAR}</div>
 	<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->

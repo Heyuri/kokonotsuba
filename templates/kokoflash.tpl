@@ -151,7 +151,7 @@
 
 <!--&THREAD-->
 					<tr class="thread" id="t{$BOARD_UID}_{$NO}">
-						<td><a href="{$SELF}?res={$RESTO}#p{$NO}" class="no">{$NO}</a></td>
+						<td><a href="{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">{$NO}</a></td>
 						<td class="name">{$NAME}</td>
 						<td class="filecol">[<a href="{$FILE_LINK}" download="{$FILE_NAME}">{$FILE_NAME}</a>]</td>
 						<td>[<a class="flashboardEmbedText" onclick="openFlashEmbedWindow('{$FILE_LINK}', '{$ESCAPED_FILE_NAME}', {$FILE_WIDTH}, {$FILE_HEIGHT})">Embed</a>]</td>
