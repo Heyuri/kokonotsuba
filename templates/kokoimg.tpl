@@ -256,7 +256,7 @@
 	{$ADMIN_LINKS}
 	{$ADMIN_THEADING_BAR}
 		{$VIEW_OWN_ACCOUNT}
-		<!--&IF($CREATE_ACCOUNT,'<li>{$CREATE_ACCOUNT}</li>','')-->
+		{$CREATE_ACCOUNT}
 		<!--&IF($ACCOUNT_LIST,'<h3>Staff List</h3>{$ACCOUNT_LIST}','')-->
 {$FOOTER}
 <!--/&ACCOUNT_PAGE-->
