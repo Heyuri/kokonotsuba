@@ -4,7 +4,7 @@ class accountRequestHandler {
 	private $config;
 	
 	public function __construct($board) { 
-		$this->config = $board->loadBoardConfig();;
+		$this->config = $board->loadBoardConfig();
 	}
 	
 	public function handleAccountDelete() {
