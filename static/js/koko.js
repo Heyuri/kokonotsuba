@@ -2,7 +2,7 @@
  */
 
 const KOKOJS = true;
-const STATIC_URL = '../../static/';
+const STATIC_URL = document.currentScript.src.split('?')[0].replace(/js\/[^/]+\.js$/, ''); // Get the script URL, and remove 'js/{filename}.js'
 
 /* - */
 if (typeof(FONTSIZE) === "undefined") { var FONTSIZE = 12; }
