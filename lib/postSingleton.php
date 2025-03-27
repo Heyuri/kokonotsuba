@@ -84,14 +84,14 @@ class PIOPDO implements IPIO {
 
 	/* Get all threads from all boards */
 	public function getAllThreads() {
-		$query = "SELECT * FROM {$this->threadTable} ORDER BY bump_number DESC";
+		$query = "SELECT * FROM {$this->threadTable} ORDER BY last_bump_time DESC";
 		$threads = $this->databaseConnection->fetchAllAsArray($query);
 		return $threads;
 	}
 	
 	/* Get all thread uids from all boards */
 	public function getAllThreadUIDs() {
-		$query = "SELECT thread_uid FROM {$this->threadTable} ORDER BY bump_number DESC";
+		$query = "SELECT thread_uid FROM {$this->threadTable} ORDER BY last_bump_time DESC";
 		$threads = $this->databaseConnection->fetchAllAsIndexArray($query);
 		return array_merge(...$threads);
 	}
@@ -103,7 +103,7 @@ class PIOPDO implements IPIO {
 	}
 
 	/* Fetch the list of threads */
-	public function getThreadListFromBoard($board, $start = 0, $amount = 0, $isDESC = true, $orderBy = 'bump_number') {
+	public function getThreadListFromBoard($board, $start = 0, $amount = 0, $isDESC = true, $orderBy = 'last_bump_time') {
 		$query = "SELECT thread_uid FROM {$this->threadTable} WHERE boardUID = :board_uid ORDER BY $orderBy " . ($isDESC ? "DESC" : "ASC");
 
 		$params = [
@@ -126,7 +126,7 @@ class PIOPDO implements IPIO {
 		addSlashesToArray($threadUidArray);
 	
 		$threadUidArray = implode(',', $threadUidArray);
-		$query = "SELECT post_op_number, boardUID FROM {$this->threadTable} WHERE thread_uid IN ({$threadUidArray}) ORDER BY bump_number DESC";
+		$query = "SELECT post_op_number, boardUID FROM {$this->threadTable} WHERE thread_uid IN ({$threadUidArray}) ORDER BY last_bump_time DESC";
 		
 		return $this->databaseConnection->fetchAllAsArray($query);
 	
@@ -157,13 +157,12 @@ class PIOPDO implements IPIO {
 		return false; // Not a successive post
 	}
 
-	public function addThread($boardUID, $post_uid, $thread_uid, $post_op_number, $bump_number = 0) {
-		$query = "INSERT INTO {$this->threadTable} (boardUID, post_op_post_uid, post_op_number, bump_number, thread_uid) VALUES (:board_uid, :post_op_post_uid, :post_op_number, :bump_number, :thread_uid)";
+	public function addThread($boardUID, $post_uid, $thread_uid, $post_op_number) {
+		$query = "INSERT INTO {$this->threadTable} (boardUID, post_op_post_uid, post_op_number, thread_uid) VALUES (:board_uid, :post_op_post_uid, :post_op_number, :thread_uid)";
 		$params = [
 			':board_uid' => $boardUID,
 			':post_op_post_uid' => $post_uid,
 			':post_op_number' => $post_op_number,
-			':bump_number' => $bump_number,
 			':thread_uid' => $thread_uid,
 		];
 		$this->databaseConnection->execute($query, $params);
@@ -272,16 +271,19 @@ class PIOPDO implements IPIO {
 		
 		$lastReply = end($postsFromThread);
 		
-		$newBumpNumber = $lastReply['post_uid'];
+		$lastReplyRegistTime = $lastReply['root'];
+		
 		if ($future) {
-			$newBumpNumber = $this->getLastBumpIncrement() + 5;
+			$timestamp = $lastReply['time'];
+			$secondsToAdd = 5;
+			$futureTimestamp = $timestamp + $secondsToAdd;
+			$lastReplyRegistTime = date('Y-m-d H:i:s', $futureTimestamp);
 		}
 		
-		$query = "UPDATE {$this->threadTable} SET bump_number = :post_uid, last_reply_time = CURRENT_TIMESTAMP, last_bump_time = CURRENT_TIMESTAMP WHERE thread_uid = :thread_uid";
+		$query = "UPDATE {$this->threadTable} SET last_bump_time = :post_regist_time, last_reply_time = :post_regist_time WHERE thread_uid = :thread_uid";
 		$params = [
-			':post_uid' => $newBumpNumber,
-			':thread_uid' => $threadID,
-		];
+		':post_regist_time' => $lastReplyRegistTime,
+		':thread_uid' => $threadID];
 
 		$this->databaseConnection->execute($query, $params);
 	}
@@ -481,7 +483,7 @@ class PIOPDO implements IPIO {
 	public function fetchThreadListFromBoard($board, $start=0, $amount=0, $isDESC=false){
 			$start = intval($start); $amount = intval($amount);
 			
-			$query = "SELECT thread_uid FROM {$this->threadTable} WHERE boardUID = :board_uid ORDER BY bump_number";
+			$query = "SELECT thread_uid FROM {$this->threadTable} WHERE boardUID = :board_uid ORDER BY last_bump_time";
 
 			if($isDESC) $query .= " DESC";
 			if($amount) $query .= " LIMIT {$start}, {$amount}"; // Use only when there is a specified quantity LIMIT
@@ -517,7 +519,7 @@ class PIOPDO implements IPIO {
 		return $posts;
 	}
 	
-	public function getFilteredThreads($amount, $offset = 0, $filters = [], $order = 'bump_number') {
+	public function getFilteredThreads($amount, $offset = 0, $filters = [], $order = 'last_bump_time') {
 		$query = "SELECT * FROM {$this->threadTable} WHERE 1";
 		$params = [];
 		
@@ -529,7 +531,7 @@ class PIOPDO implements IPIO {
 		return $threads;
 	}
 	
-	public function getFilteredThreadUIDs($amount, $offset = 0, $filters = [], $order = 'bump_number') {
+	public function getFilteredThreadUIDs($amount, $offset = 0, $filters = [], $order = 'last_bump_time') {
 		$query = "SELECT thread_uid FROM {$this->threadTable} WHERE 1";
 		$params = [];
 		
@@ -667,13 +669,15 @@ class PIOPDO implements IPIO {
 
 			if(!is_array($threadUIDs)) $threadUIDs = [$threadUIDs];
 			foreach ($threadUIDs as $threadUID) {
-				$newBumpIncrement = $this->databaseConnection->fetchOne("
-					SELECT MAX(post_uid)
+				$newReplyData = $this->databaseConnection->fetchOne("
+					SELECT `root`
 					FROM {$this->tablename}
 					WHERE thread_uid = ?
+					ORDER BY `root` DESC
+					LIMIT 1
 				", [$threadUID]);
 
-				if ($newBumpIncrement === null) {
+				if ($newReplyData === null) {
 					$this->databaseConnection->execute("
 						DELETE FROM {$this->threadTable}
 						WHERE thread_uid = ?
@@ -681,11 +685,12 @@ class PIOPDO implements IPIO {
 				} else {
 					$this->databaseConnection->execute("
 						UPDATE {$this->threadTable}
-						SET bump_number = ?
+						SET last_bump_time = ?, last_reply_time = ?
 						WHERE thread_uid = ?
-					", [$newBumpIncrement['MAX(post_uid)'], $threadUID]);
+					", [$newReplyData['root'], $newReplyData['root'], $threadUID]);
 				}
 			}
+
 			$this->databaseConnection->commit();
 			return $files;
 		} catch (Exception $e) {
@@ -829,13 +834,6 @@ class PIOPDO implements IPIO {
 		];
 		$lastThreadTime = $this->databaseConnection->fetchColumn($query, $params);
 		return $lastThreadTime;
-	}
-
-	public function getLastBumpIncrement() {
-		$query = "SELECT MAX(post_uid) FROM {$this->tablename}";
-
-		$lastBumpIncrement = $this->databaseConnection->fetchColumn($query);
-		return $lastBumpIncrement;
 	}
 
 	public function moveThreadAndUpdate($thread_uid, $sourceBoard, $destinationBoard) {
