@@ -334,7 +334,6 @@ class tableCreator {
 				`thread_uid` VARCHAR(255) NOT NULL,
 				`post_op_number` INT NOT NULL,
 				`post_op_post_uid` INT NOT NULL,
-				`bump_number` INT NOT NULL,
 				`boardUID` INT NOT NULL,
 				`last_reply_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 				`last_bump_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -345,7 +344,6 @@ class tableCreator {
 				INDEX (`last_reply_time`),
 				INDEX (`last_bump_time`),
 				INDEX (`thread_created_time`),
-				INDEX (`bump_number`)
 			) ENGINE=InnoDB;",
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_TABLE']} (
 				`post_uid` INT NOT NULL AUTO_INCREMENT,
