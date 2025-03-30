@@ -86,7 +86,7 @@ $language['admin_archive']				= '<th>Arşiv</th>';
 $language['admin_notices']				= '<ul><li>Eğer bir post silecekseniz, postun önündeki "sil" kutucuğunu seçip Submit butonuna basın.</li><li>If you want to delete image only, please check "Delete image only" checkbox and follow normal deletion procedures.</li><li>If you want to lock/unlock a thread, please check "Stop" checkbox of that thread and click "Submit" button.</li><li>Please press "Update" after managing posts.</li></ul>';
 $language['admin_submit_btn']			= 'Submit';
 $language['admin_reset_btn']			= 'Reset';
-$language['admin_list_header']			= '<th>Func</th><th>Del</th><th>Date</th><th>Subject</th><th>Name</th><th>Comment</th><th>Host</th><th>Image (Bytes)<br>MD5 checksum</th>';
+$language['admin_list_header']			= '<tr><th class="colFunc">Func</th><th class="colDel">Del</th><th class="colBoard">Board</th><th class="colDate">Date</th><th class="colSub">Subject</th><th class="colName">Name</th><th class="colComment">Comment</th><th class="colHost">Host</th><th class="colImage"><div>Image (Bytes)</div><div>MD5 checksum</div></th></tr>';
 $language['admin_archive_btn']			= 'A';
 $language['admin_stop_btn']				= 'Stop';
 $language['admin_totalsize']			= '[Total size of images: <b>%1$s</b> KB ]';

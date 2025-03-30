@@ -106,13 +106,13 @@
 		}
 	});
 
-	// Role Select All feature
+	// Role select all feature
 	const roleSelectAllLink = document.getElementById('roleselectall');
 
 	if (roleSelectAllLink) {
 		const updateLinkText = (link, checkboxes) => {
 			const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
-			link.innerHTML = allChecked ? '[<a>Unselect All</a>]' : '[<a>Select All</a>]';
+			link.innerHTML = allChecked ? '[<a>Unselect all</a>]' : '[<a>Select all</a>]';
 		};
 
 		roleSelectAllLink.addEventListener('click', function(event) {
@@ -140,13 +140,13 @@
 		}
 	}
 
-	// Board Select All feature
+	// Board select all feature
 	const boardSelectAllLink = document.getElementById('boardselectall');
 
 	if (boardSelectAllLink) {
 		const updateLinkText = (link, checkboxes) => {
 			const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
-			link.innerHTML = allChecked ? '[<a>Unselect All</a>]' : '[<a>Select All</a>]';
+			link.innerHTML = allChecked ? '[<a>Unselect all</a>]' : '[<a>Select all</a>]';
 		};
 
 		boardSelectAllLink.addEventListener('click', function(event) {

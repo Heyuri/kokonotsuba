@@ -136,7 +136,7 @@ class board {
 			'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 			'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
 			'{$DEL_PASS_TEXT}' => ($adminMode ? '<input type="hidden" name="func" value="delete">' : '')._T('del_pass'),
-			'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" size="8" value="">',
+			'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" id="pwd2" value="">',
 			'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'">',
 			'{$IS_THREAD}' => !!$resno);
 		if($resno) $pte_vals['{$RESTO}'] = $resno;
@@ -328,8 +328,8 @@ class board {
 			$dat .= $PTE->ParseBlock('MAIN', $pte_vals);
 			$globalHTML->foot($dat, $thread_uid);
 			// Remove any preset form values (DO NOT CACHE PRIVATE DETAILS!!!)
-			$dat = preg_replace('/id="com" cols="48" rows="4" class="inputtext">(.*)<\/textarea>/','id="com" cols="48" rows="4" class="inputtext"></textarea>',$dat);
-			$dat = preg_replace('/name="email" id="email" size="28" value="(.*)" class="inputtext">/','name="email" id="email" size="28" value="" class="inputtext">',$dat);
+			$dat = preg_replace('/id="com" class="inputtext">(.*)<\/textarea>/','id="com" class="inputtext"></textarea>',$dat);
+			$dat = preg_replace('/name="email" id="email" value="(.*)" class="inputtext">/','name="email" id="email" value="" class="inputtext">',$dat);
 			$dat = preg_replace('/replyhl/','',$dat);
 			// Minify
 			if($config['MINIFY_HTML']){

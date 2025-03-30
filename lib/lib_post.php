@@ -2,7 +2,7 @@
 //post lib
 
 function applyRoll(&$com, &$email){
-	$com = "$com<br><br><font color='#ff0000'><b>[NUMBER: ".rand(1,10000)."]</b></font>";
+	$com = "$com\n<p class=\"roll\">[NUMBER: ".rand(1,10000)."]</p>";
 	$email = preg_replace('/^roll( *)/i', '', $email);
 }
 
@@ -12,7 +12,7 @@ function applyFortune($config, &$com, &$email){
 		127+127*sin(2*M_PI*$fortunenum/count($config['FORTUNES'])),
 		127+127*sin(2*M_PI*$fortunenum/count($config['FORTUNES'])+2/3*M_PI),
 		127+127*sin(2*M_PI*$fortunenum/count($config['FORTUNES'])+4/3*M_PI));
-	$com = "$com<br><br><font color=\"#$fortcol\"><b>Your fortune: ".$config['FORTUNES'][$fortunenum]."</b></font>";
+    $com = "$com<p class=\"fortune\" style=\"color: #$fortcol;\">Your fortune: ".$config['FORTUNES'][$fortunenum]."</p>";
 }
 
 function applyPostFilters($config, $globalHTML, &$com, &$email){
@@ -41,7 +41,7 @@ function addDefaultText($config, &$sub, &$com){
 function generatePostDay($config, &$time){
     $youbi = array(_T('sun'),_T('mon'),_T('tue'),_T('wed'),_T('thu'),_T('fri'),_T('sat'));
     $yd = $youbi[gmdate('w', $time+$config['TIME_ZONE']*60*60)];
-    return gmdate('Y/m/d', $time+$config['TIME_ZONE']*60*60).'('.(string)$yd.')'.gmdate('H:i:s', $time+$config['TIME_ZONE']*60*60);
+    return '<span class="postDate">'.gmdate('Y/m/d', $time+$config['TIME_ZONE']*60*60).'</span><span class="postDay">('.(string)$yd.')</span><span class="postTime">'.gmdate('H:i:s', $time+$config['TIME_ZONE']*60*60).'</span>';
 }
 
 function generatePostID($roleLevel, $config, &$email, &$now, &$time, &$resto, &$PIO){
@@ -286,10 +286,10 @@ function applyTripcodeAndCapcodes($config, $globalHTML, $staffSession, &$name, &
         if($config['ALLOW_NONAME']) $name = $config['DEFAULT_NONAME'];
         else $globalHTML->error(_T('regist_withoutname'), $dest);
     }
-    $name = "<b>$name</b><span class=\"postertrip\">$trip</span>";
+    $name = "<span class=\"postername\">$name</span><span class=\"postertrip\">$trip</span>";
     if (isset($config['CAPCODES'][$trip])) {
         $capcode = $config['CAPCODES'][$trip];
-        $name = '<font color="'.$capcode['color'].'">'.$name.'<b>'.$capcode['cap'].'</b>'.'</font>';
+        $name = '<span class="capcodeSection" style="color:'.$capcode['color'].';">'.$name.'<span class="postercap">'.$capcode['cap'].'</span>'.'</span>';
     }
     
     if(stristr($email, 'vipcode') && defined('VIPDEF')) {
