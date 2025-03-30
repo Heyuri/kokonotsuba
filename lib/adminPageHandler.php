@@ -108,16 +108,18 @@ class adminPageHandler {
 		$posts_count = count($posts); // Number of cycles
 		
 		
-		$globalHTML->drawManagePostsFilterForm($dat, $board); $dat .="[<a href=\"{$this->config['PHP_SELF']}?mode=admin&admin=del\">Reload Table</a>]";
+		$globalHTML->drawManagePostsFilterForm($dat, $board);
+		$dat .= "<div id=\"reloadTable\" class=\"centerText\">[<a href=\"{$this->config['PHP_SELF']}?mode=admin&admin=del\">Reload table</a>]</div>";
 		
-		$dat.= '<form action="'.$this->config['PHP_SELF'].'" method="POST">';
-		$dat.= '<input type="hidden" name="mode" value="admin">
-		<input type="hidden" name="admin" value="del">'.
-		$message.'<br>'.$noticeHost.'
-		<center><table width="100%" cellspacing="0" cellpadding="0" border="1" class="postlists">
-		<thead>
-			<tr>'._T('admin_list_header').'</tr></thead>
-		<tbody>';
+		$dat .= '<form action="'.$this->config['PHP_SELF'].'" method="POST">';
+		$dat .= '<input type="hidden" name="mode" value="admin">
+						<input type="hidden" name="admin" value="del">'.$message.$noticeHost.'
+						<div id="tableManagePostsContainer">
+							<table id="tableManagePosts" class="postlists">
+								<thead>
+									<tr>'._T('admin_list_header').'</tr>
+								</thead>
+								<tbody>';
 		
 		for($j = 0; $j < $posts_count; $j++){
 			$bg = ($j % 2) ? 'row1' : 'row2'; // Background color
@@ -157,27 +159,35 @@ class adminPageHandler {
 			}
 			
 				// Print out the interface
-			$dat .= '<tr align="LEFT">
-	    <th align="center">' . $modFunc . '</th><th><input type="checkbox" name="clist[]" value="' . $post_uid . '"><a target="_blank" href="'.$postBoard->getBoardURL().$postBoardConfig['PHP_SELF'].'?res=' . $no . '">' . $no . '</a></th>
-	    <td><small class="time">' . $postBoard->getBoardTitle() . ' ('.$postBoard->getBoardUID().')</small></td>
-	    <td><small class="time">' . $now . '</small></td>
-	    <td><b class="title">' . $sub . '</b></td>
-	    <td><b class="name">' . $name . '</b></td>
-	    <td>' . $com . '</td>
-	    <td>' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="?	mode=admin&admin=del&host=' . $host . '" title="See all posts">★</a></td>
-	    <td align="center">' . $clip . ' (' . $size . ')<br>' . $md5chksum . '</td>
-	</tr>';
+			$dat .= '
+				<tr>
+					<td class="colFunc">' . $modFunc . '</td>
+					<td class="colDel"><input type="checkbox" name="clist[]" value="' . $post_uid . '"><a target="_blank" href="'.$postBoard->getBoardURL().$postBoardConfig['PHP_SELF'].'?res=' . $no . '">' . $no . '</a></td>
+					<td class="colBoard">/' . $postBoard->getBoardIdentifier() . '/ ('.$postBoard->getBoardUID().')</td>
+					<td class="colDate"><span class="time">' . $now . '</span></td>
+					<td class="colSub"><span class="title">' . $sub . '</span></td>
+					<td class="colName"><b class="name">' . $name . '</b></td>
+					<td class="colComment">' . $com . '</td>
+					<td class="colHost">' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="?	mode=admin&admin=del&host=' . $host . '" title="See all posts">★</a></td>
+					<td class="colImage">' . $clip . ' (' . $size . ')<br>' . $md5chksum . '</td>
+				</tr>';
 		}
 		
-		if(!$posts) $dat .= '<tr> <td colspan="9"><b class="error" id="no-posts-found"> - No posts found! - </b> </td> </tr>';
+		if(!$posts) $dat .= '
+				<tr>
+					<td colspan="9"><b class="error" id="no-posts-found"> - No posts found! - </b></td>
+				</tr>';
 		
-		$dat.= '</tbody></table>
-			<p>
-	        <button type="button" onclick="selectAll()">Select All</button>
-				<input type="submit" value="'._T('admin_submit_btn').'"> <input type="reset" value="'._T('admin_reset_btn').'"> [<label><input type="checkbox" name="onlyimgdel" id="onlyimgdel" 		value="on">'._T('del_img_only').'</label>]
-			</p>
-	</center></form>
-	<hr size="1">
+		$dat.= '
+			</tbody>
+		</table>
+		</div>
+		<p class="centerText">
+			<button type="button" onclick="selectAll()">Select all</button>
+			<input type="submit" value="'._T('admin_submit_btn').'"> <input type="reset" value="'._T('admin_reset_btn').'"> [<label><input type="checkbox" name="onlyimgdel" id="onlyimgdel" 		value="on">'._T('del_img_only').'</label>]
+		</p>
+	</form>
+	<hr>
 	<script>
 	function selectAll() {
 	    var checkboxes = document.querySelectorAll(\'input[name="clist[]"]\');
@@ -284,7 +294,7 @@ class adminPageHandler {
 			}
 		}
 		
-		$dat .= "  [<a href=\"{$this->config['PHP_SELF']}?admin=action&mode=admin\">Reload Table</a>]
+		$dat .= "<div id=\"reloadTable\" class=\"centerText\">[<a href=\"{$this->config['PHP_SELF']}?admin=action&mode=admin\">Reload table</a>]</div>
 			<table class=\"postlists\" id=\"actionlogtable\">
 				<thead>
 					<tr>

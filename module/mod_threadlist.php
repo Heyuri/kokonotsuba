@@ -268,7 +268,7 @@ function checkall(){
 				'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 				'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
 				'{$DEL_PASS_TEXT}' => _T('del_pass'),
-				'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" size="8" value="">',
+				'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" id="pwd2" value="">',
 				'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'">'
 			);
 			$dat .= PTELibrary::getInstance()->ParseBlock('DELFORM', $pte_vals).'</form>';

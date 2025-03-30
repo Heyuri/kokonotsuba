@@ -23,7 +23,7 @@
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/ayashii.css?v=2" title="Ayashii">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/mercury.css?v=2" title="Mercury">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import Custom">
-	<script src="{$STATIC_URL}js/koko.js?v=4"></script>
+	<script src="{$STATIC_URL}js/koko.js?v=7"></script>
 	<script src="{$STATIC_URL}js/qu.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/onlinecounter.js" defer></script>
 	<script src="{$STATIC_URL}js/banners.js?v=3"></script>

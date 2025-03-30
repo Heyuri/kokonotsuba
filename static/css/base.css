@@ -801,6 +801,10 @@ caption h3 {
 	align-items: last baseline;
 } */
 
+.time > * {
+	display: inline-block;
+}
+
 .fortune,
 .roll {
 	font-weight: bold;
@@ -864,6 +868,10 @@ caption h3 {
 	border: 1px dashed var(--color-hi-contrast-border);
 }
 
+.inline-quote .reply {
+	border: none;
+}
+
 .oplink:after {
 	content: " (OP)";
 	font-size: var(--font-size-small);
@@ -902,6 +910,7 @@ caption h3 {
 	max-width: 100%;
 	white-space: pre-wrap;
 	word-wrap: break-word;
+	word-wrap: anywhere;
 	overflow: auto;
 }
 
@@ -1054,6 +1063,11 @@ caption h3 {
 	padding: 0;
 }
 
+#userdelete #pwd2 {
+	width: 100%;
+	max-width: 5.5em;
+}
+
 #footer {
 	font-size: var(--font-size-small);
 	text-align: center;
@@ -1078,12 +1092,16 @@ caption h3 {
 	color: #3366cc;
 }
 
-#adminOptionContainer {
-	text-align: center;
+.formtable {
+	margin: 1em auto;
 }
 
 #adminOptionContainer label {
 	display: inline-block;
+}
+
+#adminPostFilterTable td {
+	text-align: left;
 }
 
 #viewingAllFrom {
@@ -1107,10 +1125,6 @@ caption h3 {
 
 #tableManagePosts .colFunc {
 	min-width: 6em;
-}
-
-#tableManagePosts .colComment {
-	max-width: 20em;
 }
 
 #tableManagePosts .colHost {
@@ -2170,19 +2184,25 @@ input[type=reset] {
 
 /************************ Hachi stuff *************************/
 
-.detailsbox {
-	padding: 4px;
-	display: inline;
-}
+/* .detailsbox {
+	padding: 0.25em;
+} */
 
 .detailsbox > summary {
-  padding: 4px;
   cursor: pointer;
 }
 
 .selectlinktextjs {
-	font-size: 0.833333em;
+	font-size: var(--font-size-x-small);
 	user-select: none;
+}
+
+.filterSelectBoardItem {
+	display: block;
+}
+
+#reloadTable {
+	margin: 0.5em auto;
 }
 
 .littlelist {

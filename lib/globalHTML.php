@@ -79,7 +79,7 @@ class globalHTML {
 	
 		$pte_vals = array('{$FOOTER}'=>'','{$IS_THREAD}'=>$res);
 		$PMS->useModuleMethods('Foot', array(&$pte_vals['{$FOOTER}'])); // "Foot" Hook Point
-		$pte_vals['{$FOOTER}'] .= '<center>- <a rel="nofollow noreferrer license" href="https://web.archive.org/web/20150701123900/http://php.s3.to/" target="_blank">GazouBBS</a> + <a rel="nofollow noreferrer license" href="http://www.2chan.net/" 	target="_blank">futaba</a> + <a rel="nofollow noreferrer license" href="https://pixmicat.github.io/" target="_blank">Pixmicat!</a> + <a rel="nofollow noreferrer license" href="https://kokonotsuba.github.io/" target="_blank">Kokonotsuba</a> -</center>';
+		$pte_vals['{$FOOTER}'] .= '- <a rel="nofollow noreferrer license" href="https://web.archive.org/web/20150701123900/http://php.s3.to/" target="_blank">GazouBBS</a> + <a rel="nofollow noreferrer license" href="http://www.2chan.net/" 	target="_blank">futaba</a> + <a rel="nofollow noreferrer license" href="https://pixmicat.github.io/" target="_blank">Pixmicat!</a> + <a rel="nofollow noreferrer license" href="https://kokonotsuba.github.io/" target="_blank">Kokonotsuba</a> -';
 		$html .= $PTE->ParseBlock('FOOTER',$pte_vals);
 		$dat .= $html;
 		return $html;
@@ -100,12 +100,12 @@ class globalHTML {
 			'{$IS_THREAD}' => $resno!=0,
 			'{$FORM_HIDDEN}' => $hidinput,
 			'{$MAX_FILE_SIZE}' => strval($this->config['TEXTBOARD_ONLY'] ? 0 : $this->config['MAX_KB'] * 1024),
-			'{$FORM_NAME_FIELD}' => '<input tabindex="1" maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="name" id="name" size="28" value="'.$name.'" class="inputtext">',
-			'{$FORM_EMAIL_FIELD}' => '<input tabindex="2" maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="email" id="email" size="28" value="'.$mail.'" class="inputtext">',
-			'{$FORM_TOPIC_FIELD}' => '<input tabindex="3" maxlength="'.$this->config['INPUT_MAX'].'"  type="text" name="sub" id="sub" size="28" value="'.$sub.'" class="inputtext">',
+			'{$FORM_NAME_FIELD}' => '<input tabindex="1" maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="name" id="name" value="'.$name.'" class="inputtext">',
+			'{$FORM_EMAIL_FIELD}' => '<input tabindex="2" maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="email" id="email" value="'.$mail.'" class="inputtext">',
+			'{$FORM_TOPIC_FIELD}' => '<input tabindex="3" maxlength="'.$this->config['INPUT_MAX'].'"  type="text" name="sub" id="sub" value="'.$sub.'" class="inputtext">',
 			'{$FORM_SUBMIT}' => '<button tabindex="10" type="submit" name="mode" value="regist">'.($resno ? 'Post' : 'New Thread' ).'</button>',
-			'{$FORM_COMMENT_FIELD}' => '<textarea tabindex="6" maxlength="'.$this->config['COMM_MAX'].'" name="com" id="com" cols="48" rows="4" class="inputtext">'.$com.'</textarea>',
-			'{$FORM_DELETE_PASSWORD_FIELD}' => '<input tabindex="6" type="password" name="pwd" id="pwd" size="8" maxlength="8" value="" class="inputtext">',
+			'{$FORM_COMMENT_FIELD}' => '<textarea tabindex="6" maxlength="'.$this->config['COMM_MAX'].'" name="com" id="com" class="inputtext">'.$com.'</textarea>',
+			'{$FORM_DELETE_PASSWORD_FIELD}' => '<input tabindex="6" type="password" name="pwd" id="pwd" maxlength="8" value="" class="inputtext">',
 			'{$FORM_EXTRA_COLUMN}' => '',
 			'{$FORM_FILE_EXTRA_FIELD}' => '',
 			'{$FORM_NOTICE}' => ($this->config['TEXTBOARD_ONLY'] ? '' :_T('form_notice',str_replace('|',', ',$this->config['ALLOW_UPLOAD_EXT']),$this->config['MAX_KB'],($resno ? $this->config['MAX_RW'] : $this->config['MAX_W']),($resno ? $this->config['MAX_RH'] : $this->config['MAX_H']))),
@@ -120,7 +120,7 @@ class globalHTML {
 		}
 		$PMS->useModuleMethods('PostForm', array(&$pte_vals['{$FORM_EXTRA_COLUMN}'])); // "PostForm" Hook Point
 		if($this->config['USE_CATEGORY']) {
-			$pte_vals += array('{$FORM_CATEGORY_FIELD}' => '<input tabindex="5" type="text" name="category" id="category" size="28" value="'.$cat.'" class="inputtext">');
+			$pte_vals += array('{$FORM_CATEGORY_FIELD}' => '<input tabindex="5" type="text" name="category" id="category" value="'.$cat.'" class="inputtext">');
 		}
 		if($this->config['STORAGE_LIMIT']) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',$FileIO->getCurrentStorageSize($this->board),$this->config['STORAGE_MAX']);
 		$PMS->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
@@ -219,21 +219,19 @@ class globalHTML {
 	}
 	
 	public function drawAdminLoginForm() {
-		return "<table class=\"formtable\">
-					<tbody>
-						<tr>
-							<td class='postblock'><b>username</b></td>
-							<td><input tabindex=\"1\" maxlength=\"100\" type=\"text\" name=\"username\" id=\"username\" size=\"28\" value=\"\" class=\"inputtext\"></td>
-						</tr>
-						<tr>
-							<td class='postblock'><b>password</b></td>
-							<td><input tabindex=\"1\" maxlength=\"100\" type=\"password\" name=\"password\" id=\"password\" size=\"28\" value=\"\" class=\"inputtext\"></td>
-						</tr>
-						<tr>
-							<td  colspan='4' align='right'><button type=\"submit\" name=\"mode\" value=\"admin\">Login</button></td>
-						</tr>
-					</tbody>
-				</table>";
+		return "<table class=\"formtable centerBlock\">
+				<tbody>
+					<tr>
+						<td class='postblock'><label for=\"username\">Username</label></td>
+						<td><input tabindex=\"1\" maxlength=\"100\" type=\"text\" name=\"username\" id=\"username\" value=\"\" class=\"inputtext\"></td>
+					</tr>
+					<tr>
+						<td class='postblock'><label for=\"password\">Password</label></td>
+						<td><input tabindex=\"1\" maxlength=\"100\" type=\"password\" name=\"password\" id=\"password\" value=\"\" class=\"inputtext\"></td>
+					</tr>
+				</tbody>
+			</table>
+			<button type=\"submit\" name=\"mode\" value=\"admin\">Login</button>";
 	}
 	
 	public function drawAdminTheading(&$dat, $staffSession) {
@@ -260,7 +258,7 @@ class globalHTML {
 			$boardTitle = htmlspecialchars($board->getBoardTitle());
 			$boardUID = htmlspecialchars($board->getBoardUID());
 			
-			$listHTML .= '<label>	<input name="filterboard[]" type="checkbox" value="' . $boardUID . '" '.((in_array($boardUID, $filterBoard) || $boardUID == $currentBoard->getBoardUID() && empty($filterBoard))  ? 'checked' : '').'>'.$boardTitle.'</label>  ';
+			$listHTML .= '<label class="filterSelectBoardItem"><input name="filterboard[]" type="checkbox" value="' . $boardUID . '" '.((in_array($boardUID, $filterBoard) || $boardUID == $currentBoard->getBoardUID() && empty($filterBoard))  ? 'checked' : '').'>'.$boardTitle.'</label>  ';
 		}
 		
 		return $listHTML;
@@ -387,7 +385,8 @@ class globalHTML {
 
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
 		$dat .= '
-		<details id="filtercontainer" class="detailsbox"> <summary>Filter action log</summary>
+		<details id="filtercontainer" class="detailsbox">
+			<summary class="postblock">Filter action log</summary>
 			<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'?admin=action&mode=admin" method="POST">
 				<table>
 					<tbody>
@@ -415,7 +414,7 @@ class globalHTML {
 							</td>
 						</tr>
 						<tr id="rolerow">
-							<td class="postblock">Roles <br> <div class="selectlinktextjs" id="roleselectall">[<a>Select All</a>]</div></td>
+							<td class="postblock">Roles <br> <div class="selectlinktextjs" id="roleselectall">[<a>Select all</a>]</div></td>
 							<td>
 									<ul class="littlelist">
  										<li> <label>	<input name="filterrole[]" type="checkbox" value="' . $none . '" '.(in_array($none, $filterRole) ? 'checked' : '').'>None</label> </li>
@@ -427,17 +426,14 @@ class globalHTML {
 							</td>
 						</tr>
 						<tr id="boardrow">
-							<td class="postblock"><label for="filterboard">Boards <br> <div class="selectlinktextjs" id="boardselectall">[<a>Select All</a>]</div></label></td>
+							<td class="postblock"><label for="filterboard">Boards</label><div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div></td>
 							<td>
 								'.$boardCheckboxHTML.'
 							</td>
 						</tr>
-						<tr>
-							<td class="postblock"></td>
-							<td><button type="submit" name="filterformsubmit" value="filter">Filter</button> <button type="submit" name="filterformsubmit" value="filterclear">Clear filter</button> <input type="reset" value="Reset"></td>
-						</tr>
 					</tbody>
 				</table>
+				<button type="submit" name="filterformsubmit" value="filter">Filter</button> <button type="submit" name="filterformsubmit" value="filterclear">Clear filter</button> <input type="reset" value="Reset">
 			</form>
 		</details>
 		';
@@ -452,9 +448,10 @@ class globalHTML {
 		
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
 		$dat .= '
-		<details id="filtercontainer" class="detailsbox"> <summary>Filter Posts</summary>
+		<details id="filtercontainer" class="detailsbox centerText">
+			<summary>Filter posts</summary>
 			<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=admin&admin=del" method="POST">
-				<table>
+				<table id="adminPostFilterTable" class="centerBlock">
 					<tbody>
 						<tr>
 							<td class="postblock"><label for="manage_filterip">IP address</label></td>
@@ -473,19 +470,15 @@ class globalHTML {
 							<td><input id="manage_filtercomment" name="manage_filtercomment" value="'.$filterComment.'"></td>
 						</tr>
 						<tr id="boardrow">
-							<td class="postblock"><label for="filterboard">Boards <br> <div class="selectlinktextjs" id="boardselectall">[<a>Select All</a>]</div></label></td>
-							<td>
-								'.$boardCheckboxHTML.'
+							<td class="postblock">
+								<label for="filterboard">Boards</label>
+								<div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div>
 							</td>
-						</tr>
-						<tr>
-							<td class="postblock"></td>
-							<td>
-									<button type="submit" name="filterformsubmit" value="filter">Filter</button> <button type="submit" name="filterformsubmit" value="filterclear">Clear filter</button> <input type="reset" value="Reset">
-							</td>
+							<td>'.$boardCheckboxHTML.'</td>
 						</tr>
 					</tbody>
 				</table>
+				<button type="submit" name="filterformsubmit" value="filter">Filter</button> <button type="submit" name="filterformsubmit" value="filterclear">Clear filter</button> <input type="reset" value="Reset">
 			</form>
 		</details>
 		';
@@ -499,10 +492,10 @@ class globalHTML {
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard, $boardIO->getBoardsFromUIDs($allListedBoards));
 		$dat .= '
 		<div class="overboardFilterFormContainer">
-			<details id="overboard-filter-form" class="detailsbox"> <summary>Filter Boards</summary>
+			<details id="overboard-filter-form" class="detailsbox"> <summary>Filter boards</summary>
 				<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=overboard" method="POST">
 					<div class="postblock">
-							<div class="selectlinktextjs" id="boardselectall">[<a>Select All</a>]</div>
+							<div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div>
 									'.$boardCheckboxHTML.'
 					</div>
 					<button type="submit" name="filterformsubmit" value="filter">Filter</button> <input type="reset" value="Reset">

@@ -299,36 +299,39 @@ class modeHandler {
 		
 		$globalHTML->drawAdminTheading($dat, $staffSession);
 		
-		$dat.= '<center><form action="'.$this->config['PHP_SELF'].'" method="POST" name="adminform">';
+		$dat.= '<div id="adminOptionContainer" class="centerText"><form action="'.$this->config['PHP_SELF'].'" method="POST" name="adminform">';
 		$admins = array(
 			array('name'=>'del', 'level'=>$this->config['roles']['LEV_JANITOR'], 'label'=>'Manage posts', 'func'=>'admindel'),
 			array('name'=>'action', 'level'=>$this->config['roles']['LEV_ADMIN'], 'label'=>'Action log', 'func'=>'actionlog'),
 			array('name'=>'logout', 'level'=>$this->config['roles']['LEV_USER'], 'label'=>'Logout', 'func'=>'adminLogout'),
 		);
+
 		foreach ($admins as $adminmode) {
 			if ($currentRoleLevel==$this->config['roles']['LEV_NONE'] && $adminmode['name']=='logout') continue;
 			$checked = ($admin==$adminmode['name']) ? ' checked="checked"' : '';
 			$dat.= '<label><input type="radio" name="admin" value="'.$adminmode['name'].'"'.$checked.'>'.$adminmode['label'].'</label> ';
 		}
 		if ($currentRoleLevel==$this->config['roles']['LEV_NONE']) {
-			$dat.= "<br>".$globalHTML->drawAdminLoginForm()."</form>
-			</center><hr>";
+			$dat.= $globalHTML->drawAdminLoginForm()."</form>";
 		} else {
-			$dat.= '<button type="submit" name="mode" value="admin">Submit</button></form></center>';
+			$dat.= '<button type="submit" name="mode" value="admin">Submit</button></form>';
 		}
 		$find = false;
+		
+		$dat.= '</div><hr>';
+
 		foreach ($admins as $adminmode) {
 			if ($admin!=$adminmode['name']) continue;
 			$find = true;
 			if ($adminmode['level']>$currentRoleLevel) {
-				$dat.= '<center><b class="error">ERROR: No Access.</b></center>';
+				$dat.= '<div class="centerText"><span class="error">ERROR: Access denied.</span></div><hr>';
 				break;
 			}
 			if ($adminmode['func']) {
 				$adminPageHandler->handleAdminPageSelection($adminmode['func'], $dat);
 			}
 		}
-		
+
 		$globalHTML->foot($dat);
 		die($dat.'</body></html>');
 	}
@@ -411,7 +414,7 @@ class modeHandler {
 		<tr><th colspan="4">' . _T('info_server_top') . '</th></tr>
 		<tr align="center"><td colspan="3">' . $func_thumbInfo . '</td><td>' . $func_thumbWork . '</td></tr>
 	</tbody></table>
-	<hr size="1">
+	<hr>
 </center>';
 
 		$globalHTML->foot($dat);

@@ -12,13 +12,13 @@
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/txt/base.css?v=18">
+	<link rel="stylesheet" href="{$STATIC_URL}css/txt/base.css?v=20">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/txt/pseud0ch.css" title="Pseud0ch">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch2.css" title="Pseud0ch (sans-serif)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch3.css" title="Pseud0ch (MS PGothic)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/tomorrow.css?v=4" title="Tomorrow">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css" title="Import Custom">
-	<script src="{$STATIC_URL}js/koko.js?v=6"></script>
+	<script src="{$STATIC_URL}js/koko.js?v=7"></script>
 	<script src="{$STATIC_URL}js/qr.js?v=3"></script>
 	<script src="{$STATIC_URL}js/qu.js"></script>
 	<script src="{$STATIC_URL}js/onlinecounter.js"></script>
@@ -30,7 +30,7 @@
 	<script src="{$STATIC_URL}js/catalog.js"></script>
 	<script src="{$STATIC_URL}js/insert.js"></script>
 	<script src="{$STATIC_URL}js/addemotestxt.js" defer></script>
-	<script src="{$STATIC_URL}/js/admin.js?v=3" defer></script>
+	<script src="{$STATIC_URL}/js/admin.js?v=4" defer></script>
 <!--/&HEADER-->
 
 <!--&TOPLINKS-->
@@ -55,7 +55,7 @@
 <!--/&BODYHEAD-->
 
 <!--&POSTFORM-->
-	<div class="menu outerbox noVMargin">
+	<div class="menu outerbox">
 		<div id="postarea" class="innerbox">
 			<h2 class="formTitle"><!--&IF($IS_THREAD,' New reply [<a href="{$PHP_SELF2}">Return</a>]','New thread')--></h2>
 			<!--&IF($MAX_FILE_SIZE,'<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" enctype="multipart/form-data">','<form id="postform" name="postform" action="{$PHP_SELF}" method="POST">')-->
