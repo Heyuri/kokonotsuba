@@ -20,35 +20,33 @@
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css" title="Import Custom">
 	<script src="{$STATIC_URL}js/koko.js?v=7"></script>
 	<script src="{$STATIC_URL}js/qr.js?v=3"></script>
-	<script src="{$STATIC_URL}js/qu.js"></script>
-	<script src="{$STATIC_URL}js/qu2.js"></script>
+	<script src="{$STATIC_URL}js/qu.js?v=2" defer></script>
+	<script src="{$STATIC_URL}js/qu2.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qu3.js?v=19" defer></script>
-	<script src="{$STATIC_URL}js/style.js"></script>
+	<script src="{$STATIC_URL}js/style.js?v=2"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
 	<script src="{$STATIC_URL}js/catalog.js"></script>
 	<script src="{$STATIC_URL}js/insert.js"></script>
 	<script src="{$STATIC_URL}js/update-txt.js" defer></script>
 	<script src="{$STATIC_URL}js/addemotestxt.js" defer></script>
 	<script src="{$STATIC_URL}/js/admin.js?v=4" defer></script>
-	<!--/&HEADER-->
+<!--/&HEADER-->
 
-	<!--&TOPLINKS-->
+<!--&TOPLINKS-->
 	<div class="boardlist"<!--&IF($IS_THREAD,' style="display:none"','')-->>
 		<span class="toplinks">{$TOP_LINKS}</span>
 		<div class="adminbar">{$HOME} {$OVERBOARD} {$HOOKLINKS} {$ADMIN}</div>
 	</div>
-	<!--/&TOPLINKS-->
+<!--/&TOPLINKS-->
 
-	<!--&BODYHEAD-->
-
+<!--&BODYHEAD-->
 <body id="txtreply">
 	[<a href="{$PHP_SELF2}">Return</a>]  {$HOME}
 	<hr>
-	<script id="wz_tooltip" src="{$STATIC_URL}js/wz_tooltip.js"></script>
 	<!--&TOPLINKS/-->
-	<!--/&BODYHEAD-->
+<!--/&BODYHEAD-->
 
-	<!--&POSTFORM-->
+<!--&POSTFORM-->
 	<div id="postarea">
 		<!--&IF($MAX_FILE_SIZE,'<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" enctype="multipart/form-data">','<form id="postform" name="postform" action="{$PHP_SELF}" method="POST">')-->
 			<h2 id="newReplyTitle"><!--&IF($IS_THREAD,'New reply','New thread')--></h2>
@@ -72,10 +70,10 @@
 			<!--&IF($FORMBOTTOM,'{$FORMBOTTOM}','')-->
 		</form>
 	</div>
-	<!--/&POSTFORM-->
+<!--/&POSTFORM-->
 
 
-	<!--&FOOTER-->
+<!--&FOOTER-->
 	<div id="footer">
 		{$FOOTER}
 		{$FOOTTEXT}
@@ -123,17 +121,15 @@
 <!--/&REPLY-->
 
 <!--&SEARCHRESULT-->
-<div class="thread outerbox">
-	<div class="innerbox">
-		<div class="post search">
+	<div class="thread outerbox">
+		<div class="post search innerbox">
 			<span class="title">{$SUB}</span>
-			<div class="postinfo">{$NO} <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span></div>
+			<div class="postinfo"><span class="postnum">{$NO}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span></div>
 			<div class="comment">{$COM}</div>
 			<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
 		</div>
 	</div>
-</div>
-<!--&REALSEPARATE/-->
+	<!--&REALSEPARATE/-->
 <!--/&SEARCHRESULT-->
 
 <!--&THREADSEPARATE-->
@@ -144,36 +140,32 @@
 <!--/&REALSEPARATE-->
 
 <!--&DELFORM-->
-<div id="userdelete">
-	<div id="passwordRow"><label>{$DEL_HEAD_TEXT}{$DEL_PASS_FIELD}{$DEL_SUBMIT_BTN}</div>
-</div>
+	<div id="userdelete">
+		<div id="passwordRow"><label>{$DEL_HEAD_TEXT}{$DEL_PASS_FIELD}</label>{$DEL_SUBMIT_BTN}</div>
+	</div>
 <!--/&DELFORM-->
 
 <!--&MAIN-->
-{$THREADFRONT}
-<form name="delform" id="delform" action="{$SELF}" method="post">
-	{$THREADS}
-	<hr>
-	{$THREADREAR}
-	<!--&DELFORM/-->
-</form>
-{$PAGENAV}
-{$FORMDAT}
+	{$THREADFRONT}
+	<form name="delform" id="delform" action="{$SELF}" method="post">
+		{$THREADS}
+		<hr>
+		{$THREADREAR}
+		<!--&DELFORM/-->
+	</form>
+	{$PAGENAV}
+	{$FORMDAT}
 <!--/&MAIN-->
 
-
 <!--&ACCOUNT_PAGE-->
-{$HEADER}
-	[<a href="{$PHP_SELF2}">Return</a>]
+	{$HEADER}
+	{$ADMIN_LINKS}
 	{$ADMIN_THEADING_BAR}
-	<!--&IF($ACCOUNT_LIST,'{$ACCOUNT_LIST}','')-->
-	{$CREATE_ACCOUNT}
-	
 	{$VIEW_OWN_ACCOUNT}
-	
-{$FOOTER}
+	{$CREATE_ACCOUNT}
+	<!--&IF($ACCOUNT_LIST,'<h3>Staff list</h3>{$ACCOUNT_LIST}','')-->
+	{$FOOTER}
 <!--/&ACCOUNT_PAGE-->
-
 
 <!--&VIEW_ACCOUNT-->
 	<h3>Your account</h3>
@@ -198,12 +190,9 @@
 					<td class="postblock"><label for="reset-password-inital">New password</label></td>
 					<td><input type="password" name="new_account_password" id="reset-password-inital"></td>
 				</tr>
-				<tr>
-					<td class="postblock"><label for="password-reset-confirm"></label></td>
-					<td><input type="submit" value="Save"></td>
-				</tr>
 			</tbody>
 		</table>
+		<input type="submit" value="Save">
 	</form>
 <!--/&VIEW_ACCOUNT-->
 
@@ -230,17 +219,15 @@
 							<select id="role" name="role" required>
 								<option value="" disabled checked>Select a role</option>
 								<option value="{$USER}">User</option>
-									<option value="{$JANITOR}">Janitor</option>
-									<option value="{$MODERATOR}">Moderator</option>
-									<option value="{$ADMIN}">Admin</option>
-								</select>
-							</td>
-						</tr>
-						<tr>
-							<td class="postblock"><label for="accountcreateformsubmit"></label></td><td><input id="accountcreateformsubmit" type="submit" value="Create account"></td>
-						</tr>
-					</tbody>
-				</table>
+								<option value="{$JANITOR}">Janitor</option>
+								<option value="{$MODERATOR}">Moderator</option>
+								<option value="{$ADMIN}">Admin</option>
+							</select>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<input id="accountcreateformsubmit" type="submit" value="Create account">
 		</form>
 <!--/&CREATE_ACCOUNT-->
 
@@ -297,7 +284,7 @@
 		<input type="hidden" name="edit-board-uid-for-redirect" value="{$BOARD_UID}">
 		<input type="hidden" name="edit-board" value="{$BOARD_UID}">
 		
-		<table  id="board-action-table">
+		<table id="board-action-table">
 			<tbody>
 				<tr>
 					<td class="postblock"><label for="edit-board-identifier">Identifier</label></td>

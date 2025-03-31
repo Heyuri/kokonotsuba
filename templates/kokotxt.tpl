@@ -20,13 +20,13 @@
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css" title="Import Custom">
 	<script src="{$STATIC_URL}js/koko.js?v=7"></script>
 	<script src="{$STATIC_URL}js/qr.js?v=3"></script>
-	<script src="{$STATIC_URL}js/qu.js"></script>
-	<script src="{$STATIC_URL}js/onlinecounter.js"></script>
-	<script src="{$STATIC_URL}js/qu2.js"></script>
+	<script src="{$STATIC_URL}js/qu.js?v=2" defer></script>
+	<script src="{$STATIC_URL}js/onlinecounter.js" defer></script>
+	<script src="{$STATIC_URL}js/qu2.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qu3.js?v=19" defer></script>
-	<script src="{$STATIC_URL}js/style.js"></script>
+	<script src="{$STATIC_URL}js/style.js?v=2"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
-	<script src="{$STATIC_URL}js/filter.js"></script>
+	<script src="{$STATIC_URL}js/filter.js?v=7" defer></script>
 	<script src="{$STATIC_URL}js/catalog.js"></script>
 	<script src="{$STATIC_URL}js/insert.js"></script>
 	<script src="{$STATIC_URL}js/addemotestxt.js" defer></script>
@@ -188,16 +188,14 @@
 	<div id="postarea2"></div>
 <!--/&MAIN-->
 
-
-
 <!--&ACCOUNT_PAGE-->
-{$HEADER}
+	{$HEADER}
 	{$ADMIN_LINKS}
 	{$ADMIN_THEADING_BAR}
-		{$VIEW_OWN_ACCOUNT}
-		{$CREATE_ACCOUNT}
-		<!--&IF($ACCOUNT_LIST,'<h3>Staff List</h3>{$ACCOUNT_LIST}','')-->
-{$FOOTER}
+	{$VIEW_OWN_ACCOUNT}
+	{$CREATE_ACCOUNT}
+	<!--&IF($ACCOUNT_LIST,'<h3>Staff list</h3>{$ACCOUNT_LIST}','')-->
+	{$FOOTER}
 <!--/&ACCOUNT_PAGE-->
 
 <!--&VIEW_ACCOUNT-->
@@ -223,12 +221,9 @@
 					<td class="postblock"><label for="reset-password-inital">New password</label></td>
 					<td><input type="password" name="new_account_password" id="reset-password-inital"></td>
 				</tr>
-				<tr>
-					<td class="postblock"><label for="password-reset-confirm"></label></td>
-					<td><input type="submit" value="Save"></td>
-				</tr>
 			</tbody>
 		</table>
+		<input type="submit" value="Save">
 	</form>
 <!--/&VIEW_ACCOUNT-->
 
@@ -255,17 +250,15 @@
 							<select id="role" name="role" required>
 								<option value="" disabled checked>Select a role</option>
 								<option value="{$USER}">User</option>
-									<option value="{$JANITOR}">Janitor</option>
-									<option value="{$MODERATOR}">Moderator</option>
-									<option value="{$ADMIN}">Admin</option>
-								</select>
-							</td>
-						</tr>
-						<tr>
-							<td class="postblock"><label for="accountcreateformsubmit"></label></td><td><input id="accountcreateformsubmit" type="submit" value="Create account"></td>
-						</tr>
-					</tbody>
-				</table>
+								<option value="{$JANITOR}">Janitor</option>
+								<option value="{$MODERATOR}">Moderator</option>
+								<option value="{$ADMIN}">Admin</option>
+							</select>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<input id="accountcreateformsubmit" type="submit" value="Create account">
 		</form>
 <!--/&CREATE_ACCOUNT-->
 
@@ -322,7 +315,7 @@
 		<input type="hidden" name="edit-board-uid-for-redirect" value="{$BOARD_UID}">
 		<input type="hidden" name="edit-board" value="{$BOARD_UID}">
 		
-		<table  id="board-action-table">
+		<table id="board-action-table">
 			<tbody>
 				<tr>
 					<td class="postblock"><label for="edit-board-identifier">Identifier</label></td>

@@ -13,24 +13,24 @@
 	<meta name="description" content="{$PAGE_TITLE}">
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/base.css">
-	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/sakomoto.css" title="Sakomoto">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/heyuriclassic.css" title="Heyuri Classic">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/futaba.css" title="Futaba">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/burichan.css" title="Burichan">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/fuuka.css" title="Fuuka">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/tomorrow.css" title="Tomorrow">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/ayashii.css" title="Ayashii">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/mercury.css" title="Mercury">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css" title="Import Custom">
-	<script src="{$STATIC_URL}js/koko.js"></script>
+	<link rel="stylesheet" href="{$STATIC_URL}css/base.css?v=47">
+	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/sakomoto.css?v=2" title="Sakomoto">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/heyuriclassic.css?v=2" title="Heyuri Classic">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/futaba.css?v=2" title="Futaba">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/burichan.css?v=2" title="Burichan">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/fuuka.css?v=2" title="Fuuka">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/tomorrow.css?v=3" title="Tomorrow">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/ayashii.css?v=2" title="Ayashii">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/mercury.css?v=2" title="Mercury">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import Custom">
+	<script src="{$STATIC_URL}js/koko.js?v=7"></script>
 	<script src="{$STATIC_URL}js/onlinecounter.js" defer></script>
-	<script src="{$STATIC_URL}js/banners.js"></script>
-	<script src="{$STATIC_URL}js/style.js"></script>
+	<script src="{$STATIC_URL}js/banners.js?v=3"></script>
+	<script src="{$STATIC_URL}js/style.js?v=2"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
-	<script src="{$STATIC_URL}js/inline.js" defer></script>
-	<script src="{$STATIC_URL}js/addemotes.js" defer></script>
-	<script src="{$STATIC_URL}js/admin.js?v=3" defer></script>
+	<script src="{$STATIC_URL}js/inline.js?v=8" defer></script>
+	<script src="{$STATIC_URL}js/addemotes.js?v=7" defer></script>
+	<script src="{$STATIC_URL}/js/admin.js?v=4" defer></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
 	<script src="{$STATIC_URL}js/flashembed.js"></script>
 <!--/&HEADER-->
@@ -117,14 +117,14 @@
 <!--/&POSTFORM-->
 
 <!--&MODULE_INFO_HOOK-->
-<div class="mod-extra-info">
-	{$BLOTTER}
-	<hr>
-	<div id="globalmsg">
-		{$GLOBAL_MESSAGE}
+	<div class="mod-extra-info">
+		{$BLOTTER}
+		<hr>
+		<div id="globalmsg">
+			{$GLOBAL_MESSAGE}
+		</div>
+		<hr>
 	</div>
-	<hr>
-</div>
 <!--/&MODULE_INFO_HOOK-->
 
 <!--&FOOTER-->
@@ -147,7 +147,6 @@
 		<hr>
 	</div>
 <!--/&ERROR-->
-
 
 <!--&THREAD-->
 					<tr class="thread" id="t{$BOARD_UID}_{$NO}">
@@ -222,16 +221,14 @@
 	<div id="postarea2"></div>
 <!--/&MAIN-->
 
-		
-
 <!--&ACCOUNT_PAGE-->
-{$HEADER}
+	{$HEADER}
 	{$ADMIN_LINKS}
 	{$ADMIN_THEADING_BAR}
-		{$VIEW_OWN_ACCOUNT}
-		{$CREATE_ACCOUNT}
-		<!--&IF($ACCOUNT_LIST,'<h3>Staff List</h3>{$ACCOUNT_LIST}','')-->
-{$FOOTER}
+	{$VIEW_OWN_ACCOUNT}
+	{$CREATE_ACCOUNT}
+	<!--&IF($ACCOUNT_LIST,'<h3>Staff list</h3>{$ACCOUNT_LIST}','')-->
+	{$FOOTER}
 <!--/&ACCOUNT_PAGE-->
 
 <!--&VIEW_ACCOUNT-->
@@ -257,12 +254,9 @@
 					<td class="postblock"><label for="reset-password-inital">New password</label></td>
 					<td><input type="password" name="new_account_password" id="reset-password-inital"></td>
 				</tr>
-				<tr>
-					<td class="postblock"><label for="password-reset-confirm"></label></td>
-					<td><input type="submit" value="Save"></td>
-				</tr>
 			</tbody>
 		</table>
+		<input type="submit" value="Save">
 	</form>
 <!--/&VIEW_ACCOUNT-->
 
@@ -289,17 +283,15 @@
 							<select id="role" name="role" required>
 								<option value="" disabled checked>Select a role</option>
 								<option value="{$USER}">User</option>
-									<option value="{$JANITOR}">Janitor</option>
-									<option value="{$MODERATOR}">Moderator</option>
-									<option value="{$ADMIN}">Admin</option>
-								</select>
-							</td>
-						</tr>
-						<tr>
-							<td class="postblock"><label for="accountcreateformsubmit"></label></td><td><input id="accountcreateformsubmit" type="submit" value="Create account"></td>
-						</tr>
-					</tbody>
-				</table>
+								<option value="{$JANITOR}">Janitor</option>
+								<option value="{$MODERATOR}">Moderator</option>
+								<option value="{$ADMIN}">Admin</option>
+							</select>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<input id="accountcreateformsubmit" type="submit" value="Create account">
 		</form>
 <!--/&CREATE_ACCOUNT-->
 
