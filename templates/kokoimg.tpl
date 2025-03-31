@@ -252,13 +252,13 @@
 <!--/&MAIN-->
 
 <!--&ACCOUNT_PAGE-->
-{$HEADER}
+	{$HEADER}
 	{$ADMIN_LINKS}
 	{$ADMIN_THEADING_BAR}
-		{$VIEW_OWN_ACCOUNT}
-		{$CREATE_ACCOUNT}
-		<!--&IF($ACCOUNT_LIST,'<h3>Staff List</h3>{$ACCOUNT_LIST}','')-->
-{$FOOTER}
+	{$VIEW_OWN_ACCOUNT}
+	{$CREATE_ACCOUNT}
+	<!--&IF($ACCOUNT_LIST,'<h3>Staff list</h3>{$ACCOUNT_LIST}','')-->
+	{$FOOTER}
 <!--/&ACCOUNT_PAGE-->
 
 <!--&VIEW_ACCOUNT-->
@@ -284,12 +284,9 @@
 					<td class="postblock"><label for="reset-password-inital">New password</label></td>
 					<td><input type="password" name="new_account_password" id="reset-password-inital"></td>
 				</tr>
-				<tr>
-					<td class="postblock"><label for="password-reset-confirm"></label></td>
-					<td><input type="submit" value="Save"></td>
-				</tr>
 			</tbody>
 		</table>
+		<input type="submit" value="Save">
 	</form>
 <!--/&VIEW_ACCOUNT-->
 
@@ -316,17 +313,15 @@
 							<select id="role" name="role" required>
 								<option value="" disabled checked>Select a role</option>
 								<option value="{$USER}">User</option>
-									<option value="{$JANITOR}">Janitor</option>
-									<option value="{$MODERATOR}">Moderator</option>
-									<option value="{$ADMIN}">Admin</option>
-								</select>
-							</td>
-						</tr>
-						<tr>
-							<td class="postblock"><label for="accountcreateformsubmit"></label></td><td><input id="accountcreateformsubmit" type="submit" value="Create account"></td>
-						</tr>
-					</tbody>
-				</table>
+								<option value="{$JANITOR}">Janitor</option>
+								<option value="{$MODERATOR}">Moderator</option>
+								<option value="{$ADMIN}">Admin</option>
+							</select>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<input id="accountcreateformsubmit" type="submit" value="Create account">
 		</form>
 <!--/&CREATE_ACCOUNT-->
 
@@ -383,7 +378,7 @@
 		<input type="hidden" name="edit-board-uid-for-redirect" value="{$BOARD_UID}">
 		<input type="hidden" name="edit-board" value="{$BOARD_UID}">
 		
-		<table  id="board-action-table">
+		<table id="board-action-table">
 			<tbody>
 				<tr>
 					<td class="postblock"><label for="edit-board-identifier">Identifier</label></td>
