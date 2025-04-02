@@ -103,7 +103,6 @@ class modeHandler {
 	private function handleRebuild() {
 		$globalHTML = new globalHTML($this->board);
 		$softErrorHandler = new softErrorHandler($this->board);
-		$staffSession = new staffAccountFromSession;
 		$board = $this->board;
 
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_JANITOR']);
@@ -121,7 +120,6 @@ class modeHandler {
 		header('Content-Type: text/html; charset=utf-8');
 
 		$board = $this->board;
-		$staffSession = new staffAccountFromSession;
 		$globalHTML = new globalHTML($board);
 		
 		$res = $_GET['res'] ?? 0; // To respond to the number
@@ -158,9 +156,6 @@ class modeHandler {
 		
 		$boardBeingPostedTo =  $this->board;
 		$boardConfig = $boardBeingPostedTo->loadBoardConfig();
-		$boardUID = $boardBeingPostedTo->getBoardUID();
-		
-		$currentDirectory = getcwd().DIRECTORY_SEPARATOR;
 
 		$boardBeingPostedTo->updateBoardPathCache();
 
