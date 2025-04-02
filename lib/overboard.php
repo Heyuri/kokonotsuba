@@ -67,9 +67,10 @@ class overboard {
 		
 		$limit = $this->config['OVERBOARD_THREADS_PER_PAGE'];
 		
-		if (!filter_var($pagenum, FILTER_VALIDATE_INT) && $pagenum != 0) $globalHTML->error("Page number was not a valid int.");
 
 		$pagenum = $_REQUEST['page'] ?? 0;
+		if (!filter_var($pagenum, FILTER_VALIDATE_INT) && $pagenum != 0) $globalHTML->error("Page number was not a valid int.");
+
 		$pagenum = ($pagenum >= 0) ? $pagenum : 1;
 		$offset = $pagenum * $limit;
 
