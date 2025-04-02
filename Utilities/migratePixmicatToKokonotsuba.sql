@@ -1,10 +1,14 @@
--- VARIABLES TO SET BEFORE RUNNING
-SET @old_db = 'pixmicat';
-SET @new_db = 'kokonotsuba';
+-- Kokonnotsuba database conversion script by HARD~
+-- usage: mariadb -u USERNAME -p < migratePixmicatToKokonotsuba.sql
 
-SET @old_post_table = 'imglog';
+-- VARIABLES TO SET BEFORE RUNNING
+SET @old_db = 'pixmicat'; -- old pixmicat/old-koko database
+SET @new_db = 'kokonotsuba'; -- new kokonotsuba database
+
+SET @old_post_table = 'imglog'; -- pixmicat table
 SET @board_uid = 1;	-- Set this to the existing board UID of the board you're importing data to
 
+-- Tables used by Kokonotsuba
 SET @board_table = 'boards';
 SET @thread_table = 'threads';
 SET @post_table = 'posts';
