@@ -526,29 +526,29 @@ class globalHTML {
 				if ($accountRoleLevel- 1 > $this->config['roles']['LEV_NONE']) $actionHTML .= '[<a title="Demote account" href="' . $this->config['PHP_SELF'] . '?mode=handleAccountAction&dem=' . $accountID . '">▼</a>]';
 				
 				$accountsHTML .= '<tr> 
-						<td><center> ' . $accountID . '</center></td>
-						<td><center>' . $accountUsername . ' </center></td>
-						<td><center>' . $this->roleNumberToRoleName($accountRoleLevel) . '</center></td>
-						<td><center>' . $accountNumberOfActions . '</center></td>
-						<td><center>' . $accountLastLogin . '</center></td>
-						<td><center> 
-						' . $actionHTML . '
-						</center></td>
-				</tr>';
+						<td class="colAccountID">' . $accountID . '</td>
+						<td class="colUsername">' . $accountUsername . ' </td>
+						<td class="colRoleLevel">' . $this->roleNumberToRoleName($accountRoleLevel) . '</td>
+						<td class="colNumberofActions">' . $accountNumberOfActions . '</td>
+						<td class="colLastLogin">' . $accountLastLogin . '</td>
+						<td class="colActions">' . $actionHTML . '</td>
+					</tr>';
 		}
 		$dat .= '
-				<table class="postlists">
-				<tbody>
-					<tr>
-						<th>ID</th>
-						<th>Username</th>
-						<th>Role</th>
-						<th>Total actions</th>
-						<th>Last logged in</th>
-						<th>Actions</th>
-					</tr>
-					' . $accountsHTML . '
-				</tbody>
+				<table id="tableStaffList" class="postlists">
+					<thead>
+						<tr>
+							<th class="colAccountID">ID</th>
+							<th class="colUsername">Username</th>
+							<th class="colRoleLevel">Role</th>
+							<th class="colNumberofActions">Total actions</th>
+							<th class="colLastLogin">Last logged in</th>
+							<th class="colActions">Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						' . $accountsHTML . '
+					</tbody>
 				</table>';
 		return $dat;
 	}
@@ -623,12 +623,12 @@ class globalHTML {
 		if ($currentPage < 0) $currentPage = 0;
 		if ($currentPage >= $totalPages) $currentPage = $totalPages - 1;
 	
-		$pageHTML = '<table border="1" id="pager"><tbody><tr>';
+		$pageHTML = '<table id="pager"><tbody><tr>';
 	
 		// First/Prev buttons
 		if ($currentPage <= 0) {
-			$pageHTML .= '<td nowrap="nowrap">First</td>';
-			$pageHTML .= '<td nowrap="nowrap">Prev</td>';
+			$pageHTML .= '<td>First</td>';
+			$pageHTML .= '<td>Prev</td>';
 		} else {
 			$pageHTML .= '<td><a href="'.$url.'&page=0">First</a></td>';
 			$pageHTML .= '<td><a href="'.$url.'&page='.($currentPage - 1).'">Prev</a></td>';
@@ -649,8 +649,8 @@ class globalHTML {
 	
 		// Next/Last buttons
 		if ($currentPage >= $totalPages - 1) {
-			$pageHTML .= '<td nowrap="nowrap">Next</td>';
-			$pageHTML .= '<td nowrap="nowrap">Last</td>';
+			$pageHTML .= '<td>Next</td>';
+			$pageHTML .= '<td>Last</td>';
 		} else {
 			$pageHTML .= '<td><a href="'.$url.'&page='.($currentPage + 1).'">Next</a></td>';
 			$pageHTML .= '<td><a href="'.$url.'&page='.($totalPages - 1).'">Last</a></td>';

@@ -302,7 +302,7 @@ class html {
     }
 
     public function drawFooter() {
-        echo '<hr size="1">';
+        echo '<hr>';
     }
 }
 
