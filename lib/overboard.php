@@ -75,7 +75,7 @@ class overboard {
 
 		$threads = $PIO->getFilteredThreads($limit, $offset, $filters);
 		$threadList = $PIO->getFilteredThreadUIDs($limit, $offset, $filters);
-		$numberThreadsFiltered = count($threads);
+		$numberThreadsFiltered = $PIO->getFilteredThreadCount($filters);
 		
 		if(!$threads) return '<div class="bbls"> <b class="error"> - No threads - </b> </div>';
 		
@@ -94,8 +94,8 @@ class overboard {
 
 			$page_start = $page_end = 0; // Static page number
 			$RES_start = $RES_amount = $hiddenReply = $tree_count = 0;
-			$kill_sensor = $old_sensor = false; // Predictive system start flag
-			$arr_kill = $arr_old = array(); // Obsolete numbered array
+			$kill_sensor = false; // Predictive system start flag
+			$arr_kill = array(); // Obsolete numbered array
 			
 			$adminMode = $roleLevel >=$config['roles']['LEV_JANITOR'] && $pagenum != -1 && !$single_page; // Front-end management mode
 			$templateValues['{$DEL_PASS_TEXT}'] = ($adminMode ? '<input type="hidden" name="func" value="delete">' : '')._T('del_pass');
