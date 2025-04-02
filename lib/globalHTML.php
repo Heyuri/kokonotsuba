@@ -166,7 +166,9 @@ class globalHTML {
 				foreach($matches as $val){ if(!in_array($val, $matches_unique)) array_push($matches_unique, $val); }
 				foreach($matches_unique as $val){
 					$postNum = $PIO->resolvePostUidFromPostNumber($board, $val[2]);
-					$post = $PIO->fetchPosts($postNum)[0];
+					$post = $PIO->fetchPosts($postNum)[0] ?? false;
+
+					if(!$post) continue;
 					
 					$postResno = $PIO->resolveThreadNumberFromUID($post['thread_uid']);
 					if($post){
