@@ -242,7 +242,7 @@ class modeHandler {
 				$ThreadExistsBefore = $PIO->isThread($thread_uid);
 		}
 	
-		$postValidator->pruneOld($boardBeingPostedTo, $this->config, $this->PMS, $PIO, $this->FileIO);
+		$postValidator->pruneOld($this->PMS, $PIO, $this->FileIO);
 		$postValidator->threadSanityCheck($chktime, $flgh, $thread_uid, $PIO, $dest, $ThreadExistsBefore);
 	
 		// Calculate the last feilds needed before putitng in db
