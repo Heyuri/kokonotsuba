@@ -251,8 +251,6 @@ function catchFraudsters(&$name) {
 function applyTripcodeAndCapcodes($config, $globalHTML, $staffSession, &$name, &$email, &$dest){
     catchFraudsters($name);
     
-    $hashedPasswordFromSession = $staffSession->getHashedPassword();
-    
     $name = str_replace('&#', '&&', $name);
     list($name, $trip, $sectrip) = str_replace('&%', '&#', explode('#',$name.'##'));
     $name = str_replace('&&', '&#', $name);
@@ -265,21 +263,10 @@ function applyTripcodeAndCapcodes($config, $globalHTML, $staffSession, &$name, &
         $trip = "◆$tripcodeCrypt";
     }
 	if ($sectrip) {
-		// Moderator capcode
-		$capcodeRoleLevel = $staffSession->getRoleLevel();
-		if($capcodeRoleLevel >= $config['roles']['LEV_JANITOR']) {
-			switch ($capcodeRoleLevel) {
-				case $config['roles']['LEV_JANITOR']: if ($config['JCAPCODE_FMT']) $name = sprintf($config['JCAPCODE_FMT'], $name); break;
-				case $config['roles']['LEV_MODERATOR']: if ($config['MCAPCODE_FMT']) $name = sprintf($config['MCAPCODE_FMT'], $name); break;
-				case $config['roles']['LEV_ADMIN']: if ($config['ACAPCODE_FMT']) $name = sprintf($config['ACAPCODE_FMT'], $name); break;
-			}
-		} else {
 			// User
 			$sha =str_rot13(base64_encode(pack("H*",sha1($sectrip.$config['TRIPSALT']))));
 			$sha = substr($sha,0,10);
 			$trip = "★$sha";
-		}
-
     }
 
     if(!$name || preg_match("/^[ |　|]*$/", $name)){
@@ -297,6 +284,17 @@ function applyTripcodeAndCapcodes($config, $globalHTML, $staffSession, &$name, &
     }
     
     $email = preg_replace('/^vipcode$/i', '', $email);
+
+        // Moderator capcode
+	$capcodeRoleLevel = $staffSession->getRoleLevel();
+	if($capcodeRoleLevel >= $config['roles']['LEV_JANITOR']) {
+		switch ($capcodeRoleLevel) {
+			case $config['roles']['LEV_JANITOR']: if ($config['JCAPCODE_FMT']) $name = sprintf($config['JCAPCODE_FMT'], $name); break;
+			case $config['roles']['LEV_MODERATOR']: if ($config['MCAPCODE_FMT']) $name = sprintf($config['MCAPCODE_FMT'], $name); break;
+			case $config['roles']['LEV_ADMIN']: if ($config['ACAPCODE_FMT']) $name = sprintf($config['ACAPCODE_FMT'], $name); break;
+		}
+	}
+
 }
 
 function runWebhooks($board, &$resto, &$no, &$sub){
