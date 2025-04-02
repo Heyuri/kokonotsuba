@@ -616,7 +616,7 @@ class globalHTML {
 		$totalPages = (int) ceil($totalEntries / $entriesPerPage);
 		$currentPage = $_REQUEST['page'] ?? 0;
 
-		if (!filter_var($currentPage, FILTER_VALIDATE_INT)) {
+		if (filter_var($currentPage, FILTER_VALIDATE_INT) === false) {
 			$this->error("Invalid page number");
 		}
 
