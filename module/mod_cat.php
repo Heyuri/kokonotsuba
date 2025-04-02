@@ -44,7 +44,6 @@ class mod_cat extends ModuleHelper {
 	}
 
 	public function ModulePage(){
-		$PTE = PTELibrary::getInstance();
 		$PMS = PMS::getInstance();
 		$PIO = PIOPDO::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();

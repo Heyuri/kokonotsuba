@@ -62,7 +62,6 @@ class mod_threadlist extends ModuleHelper {
 	// Generates thread list and adds it to the front of the page
 	public function autoHookThreadFront(&$txt, $isReply) {
 		$PIO = PIOPDO::getInstance();
-		$PTE = PTELibrary::getInstance();
 
 		if($this->SHOW_IN_MAIN && !$isReply) {
 			$dat = ''; // HTML Buffer
@@ -87,7 +86,7 @@ class mod_threadlist extends ModuleHelper {
 			}
 
 			$dat .= '</div></div>';
-			$dat .= $PTE->ParseBlock('REALSEPARATE', array());
+			$dat .= $this->templateEngine->ParseBlock('REALSEPARATE', array());
 			$txt .= $dat;
 		}
 	}
@@ -271,7 +270,7 @@ function checkall(){
 				'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" id="pwd2" value="">',
 				'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'">'
 			);
-			$dat .= PTELibrary::getInstance()->ParseBlock('DELFORM', $pte_vals).'</form>';
+			$dat .= $this->templateEngine->ParseBlock('DELFORM', $pte_vals).'</form>';
 		}
 
 		$dat .= '</div>';

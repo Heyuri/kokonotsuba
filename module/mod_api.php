@@ -16,25 +16,6 @@ class mod_api extends ModuleHelper {
 	}
 
 	public function ModulePage() {
-		$PIO =  PIOPDO::getInstance();
-		header('Content-Type: application/json');
-		$no = intval($_GET['no']??'');
 
-		$posts = [];
-		$post_uid = $PIO->resolvePostUidFromPostNumber($this->board, $no);
-		if ($no) {
-			if($PIO->isThreadOP($post_uid)) $posts = $PIO->fetchPostsFromThread($post_uid);
-			$posts = $PIO->fetchPosts($post_uid);
-		} else {
-			$posts = $PIO->getPostsFromBoard($this->board);
-		}
-
-		for ($i=0; $i<count($posts); $i++) {
-			unset($posts[$i]['pwd']);
-			unset($posts[$i]['host']);
-		}
-
-		$dat = json_encode($posts,  JSON_PRETTY_PRINT);
-		echo $dat;
 	}
 }

@@ -23,8 +23,6 @@ class mod_search extends ModuleHelper {
 	}
 
 	public function ModulePage(){
-		$PTE = PTELibrary::getInstance();
-		$PMS = PMS::getInstance();
 		$PIO = PIOPDO::getInstance();
 		$staffSession = new staffAccountFromSession;
 		$globalHTML = new globalHTML($this->board);
@@ -77,7 +75,7 @@ class mod_search extends ModuleHelper {
 					$com = $globalHTML->quote_unkfunc($com);
 				
 					$arrLabels = array('{$NO}'=>'<a href="'.$this->config['PHP_SELF'].'?res='.($resno?$resno.'#p'.$no:$no).'">'.$no.'</a>', '{$SUB}'=>$sub, '{$NAME}'=>$name, '{$NOW}'=>$now, '{$COM}'=>$com, '{$CATEGORY}'=>$category, '{$NAME_TEXT}'=>_T('post_name'), '{$CATEGORY_TEXT}'=>_T('post_category'));
-				$resultlist .= $PTE->ParseBlock('SEARCHRESULT',$arrLabels);
+				$resultlist .= $this->templateEngine->ParseBlock('SEARCHRESULT',$arrLabels);
 			}
 			echo $resultlist ? $resultlist : '
 				<div class="centerText">

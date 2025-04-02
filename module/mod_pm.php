@@ -163,7 +163,6 @@ class mod_pm extends ModuleHelper {
 
 	private function _getPM($trip) {
 		$PMS = self::$PMS;
-		$PTE = PTELibrary::getInstance();
 		$dat='';
 		$trip=substr($trip,1);
 		$tripped=$this->_tripping($trip);
@@ -172,10 +171,10 @@ class mod_pm extends ModuleHelper {
 			foreach($logs as $log) {
 				list($mno,$totrip,$pdate,$from,$topic,$mesg,$ip)=explode(',',trim($log));
 				if($totrip==$tripped) {
-					if(!$dat) $dat=$PTE->ParseBlock('REALSEPARATE',array()).'<form action="'.$this->myPage.'" method="POST"><input type="hidden" name="action" value="delete"><input type="hidden" name="trip" value="'.$trip.'">';
+					if(!$dat) $dat=$this->templateEngine->ParseBlock('REALSEPARATE',array()).'<form action="'.$this->myPage.'" method="POST"><input type="hidden" name="action" value="delete"><input type="hidden" name="trip" value="'.$trip.'">';
 					$arrLabels = array('{$NO}'=>$mno, '{$SUB}'=>$topic, '{$NAME}'=>$from, '{$NOW}'=>date('Y-m-d H:i:s',$pdate), '{$COM}'=>$mesg, '{$QUOTEBTN}'=>$mno, '{$REPLYBTN}'=>'', '{$IMG_BAR}'=>'', '{$IMG_SRC}'=>'', '{$WARN_OLD}'=>'', '{$WARN_BEKILL}'=>'', '{$WARN_ENDREPLY}'=>'', '{$WARN_HIDEPOST}'=>'', '{$NAME_TEXT}'=>_T('post_name'), '{$RESTO}'=>1);
-					$dat .= $PTE->ParseBlock('THREAD',$arrLabels);
-					$dat .= $PTE->ParseBlock('REALSEPARATE',array());
+					$dat .= $this->templateEngine->ParseBlock('THREAD',$arrLabels);
+					$dat .= $this->templateEngine->ParseBlock('REALSEPARATE',array());
 				}
 			}
 		}

@@ -24,7 +24,6 @@ class mod_searchcategory extends ModuleHelper {
 	}
 
 	public function ModulePage(){
-		$PTE = PTELibrary::getInstance();
 		$PMS = PMS::getInstance();
 		$PIO = PIOPDO::getInstance();
 		
@@ -60,7 +59,25 @@ class mod_searchcategory extends ModuleHelper {
 		$dat .= "<div>$links</div>\n";
 		for($i = 0; $i < $loglist_cut_count; $i++){
 			$posts = $PIO->fetchPosts($loglist_cut[$i]); // Get article content
-			$dat .= $globalHTML->arrangeThread($this->board, $this->config, $PTE, $globalHTML, $PIO, ($posts[0]['resto'] ? $posts[0]['resto'] : $posts[0]['no']), null, $posts, 0, $loglist_cut[$i], array(), array(), false, false, false); // Output by output (reference links are not displayed)
+			$dat .= $globalHTML->arrangeThread(
+				$this->board, 				// board $board
+				$this->config, 				// array $config
+				$PIO, 						// PIOPDO $PIO
+				array(), 					// array $threads (you may need to pass actual threads)
+				array(), 					// array $tree (you may need to pass actual tree)
+				$loglist_cut[$i], 			// array $tree_cut
+				$posts, 					// array $posts
+				0, 							// int $hiddenReply
+				($posts[0]['resto'] ? $posts[0]['resto'] : $posts[0]['no']), // string $resno
+				array(), 					// mixed $arr_kill
+				false, 						// bool $kill_sensor
+				false, 						// bool $showquotelink
+				false, 						// bool $adminMode
+				0, 							// int $threadIterator
+				'', 						// string $overboardBoardTitleHTML
+				'' 							// string $crossLink
+			);
+			
 		}
 
 		$dat .= '<table id="pager"><tr>';
