@@ -275,6 +275,7 @@ function applyTripcodeAndCapcodes($config, $globalHTML, $staffSession, &$name, &
 				if ($capcodeRoleLevel >= $roleLevel && $sectrip === ' ' . $roleName) {
 						if (!empty($config[$formatKey])) {
 								$name = sprintf($config[$formatKey], $name);
+								$name = "<span class=\"postername\">$name</span>";
 								$matchedCapcode = true;
 								break;
 						}
