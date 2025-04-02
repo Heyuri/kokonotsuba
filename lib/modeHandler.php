@@ -810,10 +810,9 @@ class modeHandler {
 			'board' => $filtersBoards ?? ($allListedBoards = $boardIO->getAllListedBoardUIDs()),
 		];
 
-		$config = $this->config;
+
 		$globalHTML = new globalHTML($this->board);
 		$overboard = new overboard($this->board);
-		$PIO = PIOPDO::getInstance();
 
 		$html = '';
 
