@@ -531,7 +531,7 @@ class PIOPDO implements IPIO {
 		return $threads;
 	}
 	
-	public function getFilteredThreadUIDs($amount, $offset = 0, $filters = [], $order = 'last_bump_time') {
+	public function getFilteredThreadUIDs(int $amount, int $offset = 0, array $filters = [], string $order = 'last_bump_time') {
 		$query = "SELECT thread_uid FROM {$this->threadTable} WHERE 1";
 		$params = [];
 		

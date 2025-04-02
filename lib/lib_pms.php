@@ -161,12 +161,14 @@ class PMS{
  */
 abstract class ModuleHelper implements IModule {
 	protected static $PMS;
-	protected $board, $config, $moduleBoardList;
+	protected $board, $config, $templateEngine, $moduleBoardList;
 	private $clazz;
 
 	public function __construct($PMS) {
 		$this->board = $PMS->board;
 		$this->config = $PMS->board->loadBoardConfig();
+		$this->templateEngine = $PMS->board->getBoardTemplateEngine();
+
 		$boardIO = boardIO::getInstance();
 
 		// 儲存 $PMS 參考

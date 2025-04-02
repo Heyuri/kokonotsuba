@@ -1,7 +1,7 @@
 <?php
 //Handle GET mode values for koko
 class modeHandler {
-	private $config, $board, $PIO, $PTE, $BoardIO, $FileIO, $PMS, $AccountIO, $actionLogger;
+	private $config, $board, $templateEngine, $adminTemplateEngine, $FileIO, $PMS, $AccountIO, $actionLogger;
 
 	public function __construct($board) {
 		$config = $board->loadBoardConfig();
@@ -9,12 +9,26 @@ class modeHandler {
 		$this->board = $board;
 		$this->config = $config;
 		
+		$this->templateEngine = $board->getBoardTemplateEngine();
+
+		$adminTemplateFile = getBackendDir().'templates/admin.tpl';
+		$dependencies = [
+			'config'	=> $this->config, // assumes config file returns an array
+			'boardData'	=> [
+				'title'		=> $board->getBoardTitle(),
+				'subtitle'	=> $board->getBoardSubTitle()
+			]
+		];
+	
+		$this->adminTemplateEngine = new templateEngine($adminTemplateFile, $dependencies);
+
+
 		$this->FileIO = PMCLibrary::getFileIOInstance();
 		$this->PMS = PMS::getInstance();
-		$this->PTE = PTELibrary::getInstance();
-		
 		$this->AccountIO = AccountIO::getInstance();
 		$this->actionLogger = ActionLogger::getInstance();
+
+
 
 		//validate required directories 
 		if(!file_exists($board->getFullConfigPath())) die("Board's config file <i>".$board->getFullConfigPath()."</i> was not found.");
@@ -395,7 +409,7 @@ class modeHandler {
 		<tr><td>' . _T('info_basic_showid') . '</td><td colspan="3"> ' . $this->config['DISP_ID'] . ' ' . _T('info_basic_showid_after') . '</td></tr>
 		<tr><td>' . _T('info_basic_cr_limit') . '</td><td colspan="3"> ' . $this->config['BR_CHECK'] . _T('info_basic_cr_after') . '</td></tr>
 		<tr><td>' . _T('info_basic_timezone') . '</td><td colspan="3"> GMT ' . $this->config['TIME_ZONE'] . '</td></tr>
-		<tr><td>' . _T('info_basic_theme') . '</td><td colspan="3"> ' . $this->PTE->BlockValue('THEMENAME') . ' ' . $this->PTE->BlockValue('THEMEVER') . '<br>by ' . $this->PTE->BlockValue('THEMEAUTHOR') . '</td></tr>
+		<tr><td>' . _T('info_basic_theme') . '</td><td colspan="3"> ' . $this->templateEngine->BlockValue('THEMENAME') . ' ' . $this->templateEngine->BlockValue('THEMEVER') . '<br>by ' . $this->templateEngine->BlockValue('THEMEAUTHOR') . '</td></tr>
 		<tr><th colspan="4">' . _T('info_dsusage_top') . '</th></tr>
 		<tr align="center"><td>' . _T('info_basic_threadcount') . '</td><td colspan="' . (isset($piosensorInfo) ? '2' : '3') . '"> ' . $counttree . ' ' . _T('info_basic_threads') . '</td>' . (isset($piosensorInfo) ? '<td rowspan="2">' . $piosensorInfo . '</td>' : '') . '</tr>
 		<tr align="center"><td>' . _T('info_dsusage_count') . '</td><td colspan="' . (isset($piosensorInfo) ? '2' : '3') . '">' . $countline . '</td></tr>
@@ -497,12 +511,12 @@ class modeHandler {
 			'{$ADMIN_THEADING_BAR}' => $thead,
 			'{$ADMIN_LINKS}' => $globalHTML->generateAdminLinkButtons(),
 			'{$ACCOUNT_LIST}' => "$accountTableList",
-			'{$CREATE_ACCOUNT}' => ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $this->PTE->ParseBlock('CREATE_ACCOUNT', $accountTemplateRoles) : '', # == is for PHP7 compatibility, change to === in future for PHP8
-			'{$VIEW_OWN_ACCOUNT}' => $this->PTE->ParseBlock('VIEW_ACCOUNT', $accountTemplateValues),
+			'{$CREATE_ACCOUNT}' => ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $this->adminTemplateEngine->ParseBlock('CREATE_ACCOUNT', $accountTemplateRoles) : '', # == is for PHP7 compatibility, change to === in future for PHP8
+			'{$VIEW_OWN_ACCOUNT}' => $this->adminTemplateEngine->ParseBlock('VIEW_ACCOUNT', $accountTemplateValues),
 			'{$FOOTER}' => $foot,
 		];
 		
-		$html = $this->PTE->ParseBlock('ACCOUNT_PAGE', $template_values);
+		$html = $this->adminTemplateEngine->ParseBlock('ACCOUNT_PAGE', $template_values);
 		echo $html;
 	}
 
@@ -530,7 +544,7 @@ class modeHandler {
 			'{$ADMIN_THEADING_BAR}' => $thead,
 			'{$ADMIN_LINKS}' => $globalHTML->generateAdminLinkButtons(),
 			'{$BOARD_LIST}' => $boardTableList,
-			'{$CREATE_BOARD}' => ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $this->PTE->ParseBlock('CREATE_BOARD', # == is for PHP7 compatibility, change to === in future for PHP8
+			'{$CREATE_BOARD}' => ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $this->adminTemplateEngine->ParseBlock('CREATE_BOARD', # == is for PHP7 compatibility, change to === in future for PHP8
 				 [
 					'{$DEFAULT_CDN_DIR}' => $this->config['CDN_DIR'], 
 					'{$DEFAULT_CDN_URL}' => $this->config['CDN_URL'], 
@@ -569,16 +583,15 @@ class modeHandler {
 			$template_values['{$BOARD_CONFIG_FILE}'] = $boardConfigPath;
 			$template_values['{$CHECKED}'] = $boardListed ? 'checked' : '';
 			$template_values['{$BOARD_STORAGE_DIR}'] = $boardStorageDirectoryName;
-			$template_values['{$EDIT_BOARD_HTML}'] = $this->PTE->ParseBlock('EDIT_BOARD', $template_values);
+			$template_values['{$EDIT_BOARD_HTML}'] = $this->adminTemplateEngine->ParseBlock('EDIT_BOARD', $template_values);
 
-
-			$html = $this->PTE->ParseBlock('VIEW_BOARD', $template_values);
+			$html = $this->adminTemplateEngine->ParseBlock('VIEW_BOARD', $template_values);
 			
 			echo $html;
 			return;
 		}	
 		
-		$html = $this->PTE->ParseBlock('BOARD_PAGE', $template_values);
+		$html = $this->adminTemplateEngine->ParseBlock('BOARD_PAGE', $template_values);
 		echo $html;
 	}
 
@@ -799,7 +812,7 @@ class modeHandler {
 
 		$config = $this->config;
 		$globalHTML = new globalHTML($this->board);
-		$overboard = new overboard($config);
+		$overboard = new overboard($this->board);
 		$PIO = PIOPDO::getInstance();
 
 		$html = '';

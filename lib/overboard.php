@@ -1,13 +1,13 @@
 <?php
 class overboard {
-	private $config;
+	private $config, $templateEngine;
 	
-	public function __construct($config) {
-		$this->config = $config;
+	public function __construct(board $board) {
+		$this->config = $board->loadBoardConfig();
+		$this->templateEngine = $board->getBoardTemplateEngine();
 	}
 	
 	public function drawOverboardHead(&$dat, $resno = 0) {
-		$PTE = PTELibrary::getInstance();
 		$PMS = PMS::getInstance();
 		$PIO = PIOPDO::getInstance();
 		$html = '';
@@ -22,7 +22,7 @@ class overboard {
 			}
 			$pte_vals['{$PAGE_TITLE}'] = ($post[0]['sub'] ? $post[0]['sub'] : strip_tags($CommentTitle)).' - '.$this->config['TITLE'];
 		}
-		$html .= $PTE->ParseBlock('HEADER',$pte_vals);
+		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
 		$PMS->useModuleMethods('Head', array(&$html, $resno)); // "Head" Hook Point
 		$html .= '</head>';
 		$pte_vals += array('{$HOME}' => '[<a href="'.$this->config['HOME'].'" target="_top">'._T('head_home').'</a>]',
@@ -34,8 +34,8 @@ class overboard {
 			
 		$PMS->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
 		$PMS->useModuleMethods('AboveTitle', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
-		$html .= $PTE->ParseBlock('BODYHEAD',$pte_vals);
-		$html .= $PTE->ParseBlock('MODULE_INFO_HOOK',$pte_vals);
+		$html .= $this->templateEngine->ParseBlock('BODYHEAD',$pte_vals);
+		$html .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK',$pte_vals);
 		$html .= $this->config['OVERBOARD_SUB_HEADER_HTML'];
 
 		$dat .= $html;
@@ -44,7 +44,6 @@ class overboard {
 
 	public function drawOverboardThreads($filters, $globalHTML) {
 		$PIO = PIOPDO::getInstance();
-		$PTE = PTELibrary::getInstance();
 		$boardIO = boardIO::getInstance();
 		
 		$pagenum = 0;
@@ -137,8 +136,6 @@ class overboard {
 			$templateValues['{$THREADS}'] .= $globalHTML->arrangeThread(
 				$board,
 				$config,
-				$PTE,
-				$globalHTML,
 				$PIO,
 				$threadList,
 				$tree,
@@ -147,19 +144,16 @@ class overboard {
 				$hiddenReply,
 				0,
 				$arr_kill,
-				$arr_old,
 				$kill_sensor,
-				$old_sensor,
 				true,
 				$adminMode,
-				0,
 				$iterator,
 				$overboardThreadTitle,
 				$crossLink
 				);
 		}
 		$templateValues['{$PAGENAV}'] = $globalHTML->drawPager($limit, $numberThreadsFiltered, $globalHTML->fullURL().$this->config['PHP_SELF'].'?mode=overboard');
-		$threadsHTML .= $PTE->ParseBlock('MAIN', $templateValues);
+		$threadsHTML .= $this->templateEngine->ParseBlock('MAIN', $templateValues);
 		return $threadsHTML;
 	}
 	

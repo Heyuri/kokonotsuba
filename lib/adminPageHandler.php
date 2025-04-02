@@ -63,7 +63,6 @@ class adminPageHandler {
 		$AccountIO = AccountIO::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$boardIO = boardIO::getInstance();
-		$PTE = PTELibrary::getInstance();
 		$PMS = PMS::getInstance();
 		$staffSession = new staffAccountFromSession;
 		$softErrorHandler = new softErrorHandler($this->board);

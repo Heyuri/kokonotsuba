@@ -3,20 +3,23 @@
 class globalHTML {
 	private $config, $board;
 
+	private $templateEngine;
+
 	public function __construct($board) { 
 		$this->board = $board;
 		$this->config = $board->loadBoardConfig();
+
+		$this->templateEngine = $board->getBoardTemplateEngine();
 	}
 
 	/* 輸出A錯誤畫面 */
 	public function error($mes, $dest=''){
-		$PTE = PTELibrary::getInstance();
 
 		if(is_file($dest)) unlink($dest);
 		$pte_vals = array('{$SELF2}'=>$this->config['PHP_SELF2'].'?'.time(), '{$MESG}'=>$mes, '{$RETURN_TEXT}'=>_T('return'), '{$BACK_TEXT}'=>_T('error_back'), '{$BACK_URL}'=>htmlspecialchars($_SERVER['HTTP_REFERER']??''));
 		$dat = '';
 		$this->head($dat);
-		$dat .= $PTE->ParseBlock('ERROR',$pte_vals);
+		$dat .= $this->templateEngine->ParseBlock('ERROR',$pte_vals);
 		$this->foot($dat);
 		exit($dat);
 	}
@@ -38,7 +41,6 @@ class globalHTML {
 
 	/* 輸出表頭 | document head */
 	public function head(&$dat, $resno=0){
-		$PTE = PTELibrary::getInstance();
 		$PMS = PMS::getInstance();
 		$PIO = PIOPDO::getInstance();
 		$html = '';
@@ -53,7 +55,7 @@ class globalHTML {
 			}
 			$pte_vals['{$PAGE_TITLE}'] = ($post[0]['sub'] ? $post[0]['sub'] : strip_tags($CommentTitle)).' - '.$this->board->getBoardTitle();
 		}
-		$html .= $PTE->ParseBlock('HEADER',$pte_vals);
+		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
 		$PMS->useModuleMethods('Head', array(&$html, $resno)); // "Head" Hook Point
 		$html .= '</head>';
 		$pte_vals += array('{$HOME}' => '[<a href="'.$this->config['HOME'].'" target="_top">'._T('head_home').'</a>]',
@@ -66,28 +68,26 @@ class globalHTML {
 		$PMS->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
 		$PMS->useModuleMethods('AboveTitle', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
 		
-		$html .= $PTE->ParseBlock('BODYHEAD',$pte_vals);
+		$html .= $this->templateEngine->ParseBlock('BODYHEAD',$pte_vals);
 		$dat .= $html;
 		return $html;
 	}
 
 	/* 輸出頁尾文字 | footer credits */
 	public function foot(&$dat, $res=false){
-		$PTE = PTELibrary::getInstance();
 		$PMS = PMS::getInstance();
 		$html = '';
 	
 		$pte_vals = array('{$FOOTER}'=>'','{$IS_THREAD}'=>$res);
 		$PMS->useModuleMethods('Foot', array(&$pte_vals['{$FOOTER}'])); // "Foot" Hook Point
 		$pte_vals['{$FOOTER}'] .= '- <a rel="nofollow noreferrer license" href="https://web.archive.org/web/20150701123900/http://php.s3.to/" target="_blank">GazouBBS</a> + <a rel="nofollow noreferrer license" href="http://www.2chan.net/" 	target="_blank">futaba</a> + <a rel="nofollow noreferrer license" href="https://pixmicat.github.io/" target="_blank">Pixmicat!</a> + <a rel="nofollow noreferrer license" href="https://kokonotsuba.github.io/" target="_blank">Kokonotsuba</a> -';
-		$html .= $PTE->ParseBlock('FOOTER',$pte_vals);
+		$html .= $this->templateEngine->ParseBlock('FOOTER',$pte_vals);
 		$dat .= $html;
 		return $html;
 	}
 	
 		/* 發表用表單輸出 | user contribution form */
 	function form(&$dat, $resno, $name='', $mail='', $sub='', $com='', $cat=''){
-		$PTE = PTELibrary::getInstance();
 		$PMS = PMS::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 		
@@ -125,7 +125,7 @@ class globalHTML {
 		if($this->config['STORAGE_LIMIT']) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',$FileIO->getCurrentStorageSize($this->board),$this->config['STORAGE_MAX']);
 		$PMS->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
 		
-		$dat .= $PTE->ParseBlock('POSTFORM',$pte_vals);
+		$dat .= $this->templateEngine->ParseBlock('POSTFORM',$pte_vals);
 	}
 	
 		/* 網址自動連結 */
@@ -524,29 +524,29 @@ class globalHTML {
 				if ($accountRoleLevel- 1 > $this->config['roles']['LEV_NONE']) $actionHTML .= '[<a title="Demote account" href="' . $this->config['PHP_SELF'] . '?mode=handleAccountAction&dem=' . $accountID . '">▼</a>]';
 				
 				$accountsHTML .= '<tr> 
-						<td class="colAccountID">' . $accountID . '</td>
-						<td class="colUsername">' . $accountUsername . ' </td>
-						<td class="colRoleLevel">' . $this->roleNumberToRoleName($accountRoleLevel) . '</td>
-						<td class="colNumberofActions">' . $accountNumberOfActions . '</td>
-						<td class="colLastLogin">' . $accountLastLogin . '</td>
-						<td class="colActions">' . $actionHTML . '</td>
-					</tr>';
+						<td><center> ' . $accountID . '</center></td>
+						<td><center>' . $accountUsername . ' </center></td>
+						<td><center>' . $this->roleNumberToRoleName($accountRoleLevel) . '</center></td>
+						<td><center>' . $accountNumberOfActions . '</center></td>
+						<td><center>' . $accountLastLogin . '</center></td>
+						<td><center> 
+						' . $actionHTML . '
+						</center></td>
+				</tr>';
 		}
 		$dat .= '
-				<table id="tableStaffList" class="postlists">
-					<thead>
-						<tr>
-							<th class="colAccountID">ID</th>
-							<th class="colUsername">Username</th>
-							<th class="colRoleLevel">Role</th>
-							<th class="colNumberofActions">Total actions</th>
-							<th class="colLastLogin">Last logged in</th>
-							<th class="colActions">Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-						' . $accountsHTML . '
-					</tbody>
+				<table class="postlists">
+				<tbody>
+					<tr>
+						<th>ID</th>
+						<th>Username</th>
+						<th>Role</th>
+						<th>Total actions</th>
+						<th>Last logged in</th>
+						<th>Actions</th>
+					</tr>
+					' . $accountsHTML . '
+				</tbody>
 				</table>';
 		return $dat;
 	}
@@ -629,9 +629,9 @@ class globalHTML {
 	}
 	
 	/* Output thread schema */
-	public function arrangeThread($board, $config, $PTE, $globalHTML, $PIO, $threads, $tree, $tree_cut, $posts, $hiddenReply, $resno, $arr_kill, $arr_old, 
-									$kill_sensor, $old_sensor, $showquotelink=true, $adminMode=false, $threads_shown=0,
-									$threadIterator=0, $overboardBoardTitleHTML = '', $crossLink = '') {
+	public function arrangeThread(board $board, array $config, LoggerInjector $PIO, array $threads, array $tree, mixed $tree_cut, array $posts, 
+									int $hiddenReply, string $resno, mixed $arr_kill,  bool $kill_sensor, bool $showquotelink=true, 
+									bool $adminMode=false, int $threadIterator = 0, string $overboardBoardTitleHTML = '', string $crossLink = '') {
 		$resno = isset($resno) && $resno ? $resno : 0;
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$PMS = PMS::getInstance();
@@ -660,8 +660,8 @@ class globalHTML {
 				if($email) $name = "<a href=\"mailto:$email\">$name</a>";
 			}
 	
-			$com = $globalHTML->quote_link($board, $PIO, $com);
-			$com = $globalHTML->quote_unkfunc($com);
+			$com = $this->quote_link($board, $PIO, $com);
+			$com = $this->quote_unkfunc($com);
 			
 		// Mark threads that hit age limit (this replaces the old system for marking old threads)
 			if (!$i && $config['MAX_AGE_TIME'] && $_SERVER['REQUEST_TIME'] - $time > ($config['MAX_AGE_TIME'] * 60 * 60)) $com .= "<p class='markedDeletion'><span class='warning'>"._T('warn_oldthread')."</span></p>";
@@ -737,10 +737,10 @@ class globalHTML {
 				$arrLabels = bindReplyValuesToTemplate($board, $config, $post_uid, $no, $postOPNumber, $sub, $name, $now, $category, $QUOTEBTN, $IMG_BAR, $imgsrc, $WARN_BEKILL, $com, $POSTFORM_EXTRA, '', $BACKLINKS, $resno);
 				if($resno) $arrLabels['{$RESTO}']=$postOPNumber;
 				$PMS->useModuleMethods('ThreadReply', array(&$arrLabels, $posts[$i], $resno)); // "ThreadReply" Hook Point
-				$thdat .= $PTE->ParseBlock('REPLY', $arrLabels);
+				$thdat .= $this->templateEngine->ParseBlock('REPLY', $arrLabels);
 			}else{ // First Article
 				
-				if($resno) $arrLabels['{$RESTO}']=$postOPNumber; else $THREADNAV = $globalHTML->buildThreadNavButtons($board, $threads, $threadIterator, $PIO);
+				if($resno) $arrLabels['{$RESTO}']=$postOPNumber; else $THREADNAV = $this->buildThreadNavButtons($board, $threads, $threadIterator, $PIO);
 				$arrLabels = bindOPValuesToTemplate($board, $config, $post_uid, $no, $sub, $name, $now, $category, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $imgsrc, $fname, $imgsize, $imgw, $imgh, $imageURL, 
 																					$replyCount, $WARN_OLD, $WARN_BEKILL, 	$WARN_ENDREPLY, $WARN_HIDEPOST, $com, $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $resno); 
 				
@@ -748,10 +748,10 @@ class globalHTML {
 
 
 				$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, $posts[$i], $resno)); // "ThreadPost" Hook Point
-				$thdat .= $PTE->ParseBlock('THREAD', $arrLabels);
+				$thdat .= $this->templateEngine->ParseBlock('THREAD', $arrLabels);
 			}
 		}
-		$thdat .= $PTE->ParseBlock('THREADSEPARATE',($resno)?array('{$RESTO}'=>$postOPNumber):array());
+		$thdat .= $this->templateEngine->ParseBlock('THREADSEPARATE',($resno)?array('{$RESTO}'=>$postOPNumber):array());
 		return $thdat;
 	}
 		
