@@ -78,7 +78,7 @@ SET @sql = CONCAT(
 		p.md5chksum,
 		p.category,
 		p.tim,
-		CAST(p.tim AS CHAR),
+		p.fname,
 		p.ext,
 		p.imgw,
 		p.imgh,
