@@ -620,7 +620,6 @@ class modeHandler {
 		$boardPathCachingIO = boardPathCachingIO::getInstance();
 		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
-		$staffSession = new staffAccountFromSession;
 		
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
 
