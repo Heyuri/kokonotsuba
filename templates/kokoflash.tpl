@@ -1,5 +1,5 @@
 <!--&THEMENAME-->Kokonotsuba File Board<!--/&THEMENAME-->
-<!--&THEMEVER-->v2.0<!--/&THEMEVER-->
+<!--&THEMEVER-->v2.0 (HTML5 overhaul)<!--/&THEMEVER-->
 <!--&THEMEAUTHOR-->Heyuri, Hachikuji<!--/&THEMEAUTHOR-->
 
 <!--&HEADER-->

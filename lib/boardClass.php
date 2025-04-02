@@ -1,6 +1,5 @@
 <?php
 //board class to encapsulate data gotten directly from board table
-// board class to encapsulate data gotten directly from board table
 class board {
 	private $databaseConnection, $postNumberTable, $templateEngine;
 	private $config;
