@@ -121,24 +121,30 @@ class modeHandler {
 
 		$board = $this->board;
 		$globalHTML = new globalHTML($board);
-		
-		$res = $_GET['res'] ?? 0; // To respond to the number
-		if ($res) { // Response mode output
-			$page = $_GET['pagenum'] ?? 'RE_PAGE_MAX';
-			if (!($page == 'all' || $page == 'RE_PAGE_MAX')) $page = intval($_GET['pagenum']);
-			$board->rebuildBoard($res, $page); // Implement pagin
-		} elseif (isset($_GET['pagenum']) && intval($_GET['pagenum']) > -1) {
-			$board->rebuildBoard(0, intval($_GET['pagenum']));
-		} else { // Go to the static inventory page
-			if (!is_file($this->config['PHP_SELF2'])) {
-				$this->actionLogger->logAction("Rebuilt pages", $board->getBoardUID());
-				$board->updateBoardPathCache(); 
-				$board->rebuildBoard();
-			}
-			header('HTTP/1.1 302 Moved Temporarily');
-			header('Location: ' . $globalHTML->fullURL() . $this->config['PHP_SELF2'] . '?' . $_SERVER['REQUEST_TIME']);
+
+		$res = isset($_GET['res']) ? intval($_GET['res']) : 0;
+		$pageParam = $_GET['pagenum'] ?? null;
+
+		if ($res > 0) {
+				// Response mode output
+				$page = ($pageParam === 'all' || $pageParam === 'RE_PAGE_MAX') 
+						? $pageParam 
+						: intval($pageParam);
+				$board->rebuildBoard($res, $page);
+		} elseif ($pageParam !== null && intval($pageParam) > -1) {
+				$board->rebuildBoard(0, intval($pageParam));
+		} else {
+				// Go to the static inventory page
+				if (!is_file($this->config['PHP_SELF2'])) {
+						$this->actionLogger->logAction("Rebuilt pages", $board->getBoardUID());
+						$board->updateBoardPathCache(); 
+						$board->rebuildBoard();
+				}
+				header('HTTP/1.1 302 Moved Temporarily');
+				header('Location: ' . $globalHTML->fullURL() . $this->config['PHP_SELF2'] . '?' . $_SERVER['REQUEST_TIME']);
 		}
-	}
+}
+
 
 	private function finalizeGzip($Encoding) {
 		if (!ob_get_length()) exit; // No content, no need to compress
