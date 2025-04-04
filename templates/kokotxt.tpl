@@ -26,7 +26,7 @@
 	<script src="{$STATIC_URL}js/qu3.js?v=19" defer></script>
 	<script src="{$STATIC_URL}js/style.js?v=2"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
-	<script src="{$STATIC_URL}js/filter.js?v=7" defer></script>
+	<script src="{$STATIC_URL}js/filter.js?v=11" defer></script>
 	<script src="{$STATIC_URL}js/catalog.js"></script>
 	<script src="{$STATIC_URL}js/insert.js"></script>
 	<script src="{$STATIC_URL}js/addemotestxt.js" defer></script>

@@ -28,7 +28,7 @@
 	<script src="{$STATIC_URL}js/banners.js?v=3"></script>
 	<script src="{$STATIC_URL}js/style.js?v=2"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
-	<script src="{$STATIC_URL}js/inline.js?v=8" defer></script>
+	<script src="{$STATIC_URL}js/inline.js?v=9" defer></script>
 	<script src="{$STATIC_URL}js/addemotes.js?v=7" defer></script>
 	<script src="{$STATIC_URL}/js/admin.js?v=4" defer></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
