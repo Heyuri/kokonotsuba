@@ -11,7 +11,7 @@ const kkfilter = {
 			if (F.storagename=="filter_postnum") {
 				for (var post of $class("post")) {
 					var pi = post.getElementsByClassName("postInfoExtra")[0];
-					pi.insertAdjacentHTML("afterbegin", '<span class="filterpostContainer">[<a class="filterpost" href="javascript:void(0);" onclick="kkfilter.togglepostno(' + post.id.slice(1) + ');">' + (post.classList.contains("filter") ? 'Show' : 'Hide') + '</a>]</span>');
+					pi.insertAdjacentHTML("afterbegin", '<span class="filterpostContainer">[<a class="filterpost" href="javascript:void(0);" onclick="kkfilter.togglepostno(\'' + post.id.slice(1) + '\');">' + (post.classList.contains("filter") ? 'Show' : 'Hide') + '</a>]</span>');
 				}
 			}
 		});
@@ -72,31 +72,43 @@ const kkfilter = {
 		var a = localStorage.getItem("filter_postnum");
 		if (a===null) a = '';
 		var b = a.split("\n");
-		var hack = true;
-		if (p.classList.contains("filter")) {
-			for (var i=0; i<b.length; i++) {
-				var line = b[i];
-				var m = line.match(/^\/(.*)\/([a-z]*)/i);
-				if (m===null) continue;
-				if (m[1] != "\\b"+no+"\\b") continue;
-				b.splice(i, 1);
-				i--;
-			}
-		} else {
-			b.push("/\\b"+no+"\\b/");
-			hack = false;
+		var hide = false;
+		var filter = `/^p${no}$/`;
+		if (!p.classList.contains("filter")) {
+			hide = true;
 		}
+		if (hide) {
+			kkfilter.hidepost(no);
+			b.push(filter);
+		} else {
+			kkfilter.showpost(no);
+			if (b.indexOf(filter) >= 0) {
+				b.splice(b.indexOf(filter), 1);
+			}
+		}
+
 		localStorage.setItem("filter_postnum", b.join("\n"));
-		kkfilter.reset();
-		kkfilter.startup();
 		var fm = $id("filtermode");
 		if (fm) {
 			fm.value = "filter_postnum";
 			kkfilter.update_textarea("filter_postnum");
 		}
-		if (hack) {
-			p.classList.remove("filter");
+	},
+	showpost: function (no) {
+		var p = $id('p' + no);
+		p.classList.remove('filter');
+		if (p.classList.contains('op')) {
+			p.parentNode.classList.remove('filter');
 		}
+		p.querySelector('.filterpost').innerText = 'Hide';
+	},
+	hidepost: function(no) {
+		var p = $id('p' + no);
+		p.classList.add("filter");
+		if (p.classList.contains("op")) {
+			p.parentNode.classList.add("filter");
+		}
+		p.querySelector('.filterpost').innerText = 'Show';
 	}
 };
 
@@ -148,9 +160,7 @@ new kkFilter("General", "filter_general", function(post, r) {
 });
 
 new kkFilter("Post number", "filter_postnum", function(post, r) {
-	var pnum = post.getElementsByClassName("postnum")[0];
-	if (typeof(pnum) === "undefined") return false;
-	return pnum.textContent.match(r) !== null;
+	return post.id.match(r) !== null;
 });
 
 new kkFilter("Name", "filter_name", function(post, r) {
