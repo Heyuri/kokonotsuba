@@ -268,19 +268,19 @@ class mod_pm extends ModuleHelper {
 				<tbody>
 					<tr>
 						<td class="postblock"><label for="inputFrom">From</label></td>
-						<td><input type="text" class="inputtext" name="from" id="inputFrom" value="'.$_POST['from'].'"></td>
+						<td><input type="text" class="inputtext" name="from" id="inputFrom" value="'.htmlspecialchars($_POST['from']).'"></td>
 					</tr>
 					<tr>
 						<td class="postblock"><label for="inputTo">To</label></td>
-						<td>'._T('trip_pre').'<input type="text" class="inputtext" name="t" id="inputTo" value="'.$_POST['t'].'" maxlength="10"></td>
+						<td>'._T('trip_pre').'<input type="text" class="inputtext" name="t" id="inputTo" value="'.htmlspecialchars($_POST['t']).'" maxlength="10"></td>
 					</tr>
 					<tr>
 						<td class="postblock"><label for="inputSubject">'._T('form_topic').'</label></td>
-						<td><input type="text" class="inputtext" name="topic" id="inputSubject" value="'.$_POST['topic'].'"><input type="submit" name="submit" value="'._T('form_submit_btn').'"></td>
+						<td><input type="text" class="inputtext" name="topic" id="inputSubject" value="'.htmlspecialchars($_POST['topic']).'"><input type="submit" name="submit" value="'._T('form_submit_btn').'"></td>
 					</tr>
 					<tr>
 						<td class="postblock"><label for="inputComment">'._T('form_comment').'</label></td>
-						<td><textarea  class="inputtext" name="content" id="inputComment">'.$_POST['content'].'</textarea></td>
+						<td><textarea  class="inputtext" name="content" id="inputComment">'.htmlspecialchars($_POST['content']).'</textarea></td>
 					</tr>
 				</tbody>
 			</table>
@@ -305,19 +305,19 @@ class mod_pm extends ModuleHelper {
 			<tbody>
 				<tr>
 					<td class="postblock"><label for="">From</label></td>
-					<td class="name">'.$_POST['from'].'</td>
+					<td class="name">'.htmlspecialchars($_POST['from']).'</td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="">To</label></td>
-					<td>'._T('trip_pre').$_POST['t'].'</td>
+					<td>'._T('trip_pre').htmlspecialchars($_POST['t']).'</td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="">'._T('form_topic').'</label></td>
-					<td>'.$_POST['topic'].'</td>
+					<td>'.htmlspecialchars($_POST['topic']).'</td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="">'._T('form_comment').'</label></td>
-					<td><div class="comment">'.$_POST['content'].'</div></td>
+					<td><div class="comment">'.htmlspecialchars($_POST['content']).'</div></td>
 				</tr>
 			</tbody>
 		</table>
