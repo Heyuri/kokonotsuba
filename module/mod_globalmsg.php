@@ -66,29 +66,30 @@ class mod_globalmsg extends ModuleHelper {
 		$returnButton = $globalHTML->generateAdminLinkButtons();
 		
 		$adminGlobalMessageForm = '
-		<fieldset class="adminfieldset"> <legend>Edit global message</legend>
+			<h3>Edit global message</h3>
 			<form action="'.$this->mypage.'&action=setmessage" method="post">
 				<table cellpadding="1" cellspacing="1" id="postform_tbl" style="margin: 0px auto; text-align: left;">
 					<tbody>
 						<tr>
-							<td class="postblock"><b>Global Message (Raw HTML)</b></td>
-							<td><textarea cols="150" rows="5" name="content">'.$currentMessage.'</textarea></td>
-						</tr>
-						<tr>
-							<td colspan="2" align="right"><input type="submit" name="submit" value="Submit"></td>
+							<td class="postblock" style="min-width:9em"><label for="inputGlobalMessage">Global message<div>(raw HTML)</div></label></td>
+							<td style="width:100%"><textarea name="content" id="inputGlobalMessage">'.$currentMessage.'</textarea></td>
 						</tr>
 					</tbody>
 				</table>
-			</form>
-		</fieldset>';
+				<div class="centerText">
+					<input type="submit" name="submit" value="Submit">
+				</div>
+			</form>';
 		
 		$currentPreview = '
-		<fieldset class="adminfieldset"><legend>Current global message</legend>
-				<div id="globalMessagePreviewCurrent">
+			<h3>Current global message</h3>
+			<hr>
+			<div id="globalMessagePreviewCurrent">
+				<div id="globalmsg">
 					'.$currentMessage.'
 				</div>
-		</fieldset>
-		';
+			</div>
+			<hr>';
 		//assemble page output
 		$globalHTML->head($pageHTML);
 		$pageHTML .= $returnButton;

@@ -52,7 +52,7 @@ class mod_anigif extends ModuleHelper {
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$fh = new FlagHelper($post['status']);
 		if ($post['ext'] == '.gif') {
-			$modfunc.= '[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('agif')?' title="Use still image of GIF">g':' title="Use Animated GIF">G').'</a>]';
+			$modfunc.= '<span class="adminGIFFunction">[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('agif')?' title="Use still image of GIF">g':' title="Use Animated GIF">G').'</a>]</span>';
 		}
 	}
 

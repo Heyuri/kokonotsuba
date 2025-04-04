@@ -76,7 +76,7 @@ function applyAging($config, &$resto, &$PIO, &$time, &$chktime, &$email, &$name,
 		if ($config['NOTICE_SAGE'] && stristr($email, 'sage')) {
 			$age = false;
 			if (!$config['CLEAR_SAGE']){
-				$name.= '&nbsp;<b><font color="#F00">SAGE!</font></b>';
+				$name.= ' <span class="sageText">SAGE!</span>';
 			}
 		}
 	}

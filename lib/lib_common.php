@@ -152,11 +152,12 @@ function redirect($to, $time=0, $verbose=false) {
 		font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
 	}
 	</style>
-	</head><body>
-	<center>
-		<h1>Redirecting...
-		<p>If your browser doesn\'t redirect for you, please click: <a href="'.$to.'" onclick="event.preventDefault();'.$tojs.'">Go</a></p></h1>
-	<br><br>
+	</head>
+	<body>
+		<div style="text-align:center">
+			<h1>Redirecting...</h1>
+			<p>If your browser doesn\'t redirect for you, please click: <a href="'.$to.'" onclick="event.preventDefault();'.$tojs.'">Go</a></p>
+		</div>
 	</body>
 	</html>';
 		exit;
