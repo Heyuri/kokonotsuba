@@ -24,7 +24,7 @@ class mod_janitor extends ModuleHelper {
 		$staffSession = new staffAccountFromSession;
 		if ($staffSession->getRoleLevel() != $this->config['roles']['LEV_JANITOR']) return;
 
-		$modfunc.= '[<a href="'.$this->mypage.'&post_uid='.$post['post_uid'].'" title="Warn">W</a>]';
+		$modfunc.= '<span class="adminWarnFunction">[<a href="'.$this->mypage.'&post_uid='.$post['post_uid'].'" title="Warn">W</a>]</span>';
 	}
 	
 	public function ModulePage() {
@@ -44,7 +44,7 @@ class mod_janitor extends ModuleHelper {
 			$dat = '';
 			$globalHTML->head($dat);
 			$dat .= '[<a href="'.$this->config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a>]<br>
-			<fieldset class="menu" style="display: inline-block;"><legend>Warn User</legend>
+			<fieldset class="menu" style="display: inline-block;"><legend>Warn user</legend>
 				<form action="'.$this->config['PHP_SELF'].'" method="POST">
 					<input type="hidden" name="mode" value="module">
 					<input type="hidden" name="load" value="mod_janitor">
@@ -53,7 +53,7 @@ class mod_janitor extends ModuleHelper {
 					<label>Reason:<br>
 						<textarea name="msg" cols="80" rows="6">No reason given.</textarea></label><br>
 					<label>Public? <input type="checkbox" name="public">
-					<center><input type="submit" value="Warn"></center>
+					<div class="centerText"><input type="submit" value="Warn"></div>
 			</form>
 			</fieldset>
 			';
