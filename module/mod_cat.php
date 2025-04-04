@@ -101,7 +101,11 @@ class mod_cat extends ModuleHelper {
 				
 		$dat.= '<table id="catalogTable" class="' . ($cat_fw ? 'full-width' : '') . ' ' . ($cat_cols === 'auto' ? 'auto-cols' : 'fixed-cols') . '"><tbody><tr>';
 		foreach($threadList as $i=>$thread){
-			$opPost = $PIO->fetchPostsFromThread($thread['thread_uid'])[0];
+			$threadPosts = $PIO->fetchPostsFromThread($thread['thread_uid']);
+
+			if(!$threadPosts) continue;
+
+			$opPost = $threadPosts[0];
 			extract($opPost);
 			
 			$resno = $PIO->resolveThreadNumberFromUID($thread_uid);
