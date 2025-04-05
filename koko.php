@@ -27,7 +27,9 @@ function getTemplateConfigArray() {
 	return $config;
 }
 
+
 require getBackendDir().'includes.php';
+
 
 function generateNewBoardConfigFile() {
 	$templateConfigPath = getBoardConfigDir().'board-template.php';//config template
@@ -52,8 +54,6 @@ function getGlobalConfig() {
 }
 
 function getBoardFromBootstrapFile() {
-	$dbSettings = getDatabaseSettings();	
-	
 	$BoardIO = boardIO::getInstance();
 	$boardUIDIni = parse_ini_file('./boardUID.ini', true);
 	
