@@ -615,7 +615,7 @@ class globalHTML {
 					[<a href="'.$this->config['PHP_SELF'].'?mode=account">Account</a>]
 					[<a href="'.$this->config['PHP_SELF'].'?mode=boards">Boards</a>] 
 					[<a href="'.$this->config['PHP_SELF'].'?pagenum=0">Live frontend</a>] 
-										[<a href="'.$this->config['PHP_SELF'].'?mode=rebuild">Rebuild board</a>] ';
+					[<a href="'.$this->config['PHP_SELF'].'?mode=rebuild">Rebuild board</a>] ';
 		$this->moduleEngine->useModuleMethods('LinksAboveBar', array(&$linksAboveBar,'admin',$authRoleLevel));
 		return $linksAboveBar;
 	}
