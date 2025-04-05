@@ -28,6 +28,9 @@ class mod_rebuild extends moduleHelper {
 	}
 
 	public function ModulePage() {
+		$softErrorHandler = new softErrorHandler($this->board);
+		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_MANAGE_REBUILD']);
+
 		$boardIO = boardIO::getInstance();
 		$globalHTML = new globalHTML($this->board);
 		
