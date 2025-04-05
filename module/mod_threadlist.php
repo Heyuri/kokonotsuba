@@ -1,10 +1,10 @@
 <?php
-class mod_threadlist extends ModuleHelper {
+class mod_threadlist extends moduleHelper {
 	// Configuration variables
 	private $THREADLIST_NUMBER, $FORCE_SUBJECT, $SHOW_IN_MAIN, $THREADLIST_NUMBER_IN_MAIN, $SHOW_FORM, $HIGHLIGHT_COUNT = -1;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 
 		// Initialize configuration from module settings
 		$this->THREADLIST_NUMBER = $this->config['ModuleSettings']['THREADLIST_NUMBER'];
@@ -66,7 +66,7 @@ class mod_threadlist extends ModuleHelper {
 		if($this->SHOW_IN_MAIN && !$isReply) {
 			$dat = ''; // HTML Buffer
 			$plist = $PIO->getThreadListFromBoard($this->board, 0, $this->THREADLIST_NUMBER_IN_MAIN); 
-			self::$PMS->useModuleMethods('ThreadOrder', array($isReply, 0, 0, &$plist)); // "ThreadOrder" Hook Point
+			$this->moduleEngine->useModuleMethods('ThreadOrder', array($isReply, 0, 0, &$plist)); // "ThreadOrder" Hook Point
 
 			// Start building the HTML for the thread list
 			$dat .= '<div class="menu outerbox" id="topiclist"><div class="innerbox">';
@@ -156,7 +156,7 @@ class mod_threadlist extends ModuleHelper {
 			$plist = array_slice(array_keys($pc), $this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER);
 		} else {
 			$plist = $PIO->fetchThreadListFromBoard($this->board, $this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER, $sort == 'date' ? false : true);
-			self::$PMS->useModuleMethods('ThreadOrder', array(0, $page, 0, &$plist)); // "ThreadOrder" Hook Point
+			$this->moduleEngine->useModuleMethods('ThreadOrder', array(0, $page, 0, &$plist)); // "ThreadOrder" Hook Point
 			$pc = $this->_getPostCounts($plist);
 		}
 		$post = $PIO->getThreadOpPostsFromList($plist); // Fetch posts data

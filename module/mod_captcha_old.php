@@ -8,7 +8,7 @@ The main basis is the content of this page:
 http://jmhoule314.blogspot.com/2006/05/easy-php-captcha-tutorial-today-im.html
 Added the result of Kris Knigga's modification in response.
 */
-class mod_captcha extends ModuleHelper {
+class mod_captcha extends moduleHelper {
 	private $CAPTCHA_WIDTH = 100; // Picture width
 	private $CAPTCHA_HEIGHT = 25; // Picture height
 	private $CAPTCHA_LENGTH = 4; // Number of plain words
@@ -43,8 +43,8 @@ class mod_captcha extends ModuleHelper {
 			)
 		);
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 
 		$this->CAPTCHA_FONTFACE = array($this->config['ROOTPATH'].'module/font1.gdf'); 
 		$this->ALT_POSTAREA = stristr($this->config['TEMPLATE_FILE'], 'txt');

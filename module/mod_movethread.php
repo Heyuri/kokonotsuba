@@ -1,11 +1,11 @@
 <?php
 //move thread module
-class mod_movethread extends ModuleHelper {
+class mod_movethread extends moduleHelper {
 	private $mypage;
 
 	
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		$this->mypage = $this->getModulePageURL();
 	}
 	
@@ -24,13 +24,11 @@ class mod_movethread extends ModuleHelper {
 		if (!$isres) $modfunc .= '<span class="adminMoveThreadFunction">[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'" title="move thread">MT</a>]</span>';
 	}
 
-	private function copyThreadFilesFromHostToDestination($filesToCopy, $hostBoard, $destinationBoard) {
+	private function copyThreadFilesFromHostToDestination($filesToCopy, $destinationBoard) {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$boardIO = boardIO::getInstance();
 
-		$hostBoardStoredFilesDir = $hostBoard->getBoardUploadedFilesDirectory();
 		$destinationBoardStoredFilesDir = $destinationBoard->getBoardUploadedFilesDirectory();
-		$hostBoardConfig = $hostBoard->loadBoardConfig();
 		$destinationBoardConfig = $destinationBoard->loadBoardConfig();
 
 		$destinationBoardImgPath = $destinationBoardStoredFilesDir.$destinationBoardConfig['IMG_DIR'];
@@ -57,7 +55,6 @@ class mod_movethread extends ModuleHelper {
 		
 		$thread_uid = $thread['thread_uid'];
 
-		$postsFromThread = $PIO->fetchPostsFromThread($thread_uid);
 		$filesToCopy = $PIO->getAllAttachmentsFromThread($thread_uid);
 
 		$postRedirectIO->addNewRedirect($hostBoard->getBoardUID(), $destinationBoard->getBoardUID(), $thread_uid);

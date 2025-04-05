@@ -1,9 +1,9 @@
 <?php
-class mod_globalmsg extends ModuleHelper {
+class mod_globalmsg extends moduleHelper {
 	private $mypage, $globalMessageFile;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		
 		$this->globalMessageFile = $this->config['ModuleSettings']['GLOBAL_TXT'];
 		if(!file_exists($this->globalMessageFile)) touch($this->globalMessageFile);

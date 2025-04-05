@@ -1,14 +1,14 @@
 <?php
 
-class mod_adminban extends ModuleHelper {
+class mod_adminban extends moduleHelper {
 	private string $BANFILE = '';
 	private string $GLOBAL_BANS = '';
 	private string $BANIMG = '';
 	private string $DEFAULT_BAN_MESSAGE = '';
 	private string $mypage;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 
 		// Ensure required configuration keys exist
 		$this->BANFILE = $this->board->getBoardStoragePath() . 'bans.log.txt';

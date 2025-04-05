@@ -1,9 +1,9 @@
 <?php
-class mod_api extends ModuleHelper {
+class mod_api extends moduleHelper {
 	private $mypage;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		$this->mypage = str_replace('&amp;', '&', $this->getModulePageURL());
 	}
 

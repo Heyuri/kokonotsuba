@@ -1,10 +1,10 @@
 <?php
-class mod_blotter extends ModuleHelper {
+class mod_blotter extends moduleHelper {
 	private $mypage;
 	private $BLOTTER_PATH, $previewLimit = -1; // Path to blotter file
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		
 		$this->BLOTTER_PATH = $this->config['ModuleSettings']['BLOTTER_FILE'];
 		if(!file_exists($this->BLOTTER_PATH)) touch($this->BLOTTER_PATH);
@@ -180,8 +180,6 @@ class mod_blotter extends ModuleHelper {
 	}
 
 	public function ModulePage() {
-		$PIO = PIOPDO::getInstance();
-		$PMS = PMS::getInstance();
 		$globalHTML = new globalHTML($this->board);
 		$staffSession = new staffAccountFromSession;
 		

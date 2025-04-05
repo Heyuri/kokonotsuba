@@ -3,13 +3,13 @@
  * $Id$
  * exif.php from http://www.rjk-hosting.co.uk/programs/prog.php?id=4
  */
-class mod_imagemeta extends ModuleHelper {
+class mod_imagemeta extends moduleHelper {
 	private $enable_exif, $enable_imgops, $enable_iqdb = false; // Enable iqdb
 
 	private $myPage;
 	
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		$this->myPage = $this->getModulePageURL(); // Base position
 		
 		$this->enable_exif = $this->config['ModuleSettings']['EXIF_DATA_VIEWER'];

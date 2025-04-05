@@ -1,5 +1,5 @@
 <?php
-class mod_pushpost extends ModuleHelper {
+class mod_pushpost extends moduleHelper {
 	// Tweet judgment start tag
 	private $PUSHPOST_SEPARATOR = '[MOD_PUSHPOST_USE]';
 	// The maximum number of tweets displayed in the discussion thread (if exceeded, it will be automatically hidden, all hidden: 0)
@@ -7,8 +7,8 @@ class mod_pushpost extends ModuleHelper {
 	private $PUSH_POST_MAX_CHAR = 0;
 	private $mypage;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 
 		$this->PUSH_POST_MAX_CHAR = $this->config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'];
 		$this->mypage = $this->getModulePageURL();

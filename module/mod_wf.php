@@ -1,9 +1,9 @@
 <?php
-    class mod_wf extends ModuleHelper {
+    class mod_wf extends moduleHelper {
       private $FILTERS;
      
-      public function __construct($PMS) {
-      	parent::__construct($PMS);
+      public function __construct($moduleEngine) {
+      	parent::__construct($moduleEngine);
       	$this->FILTERS = $this->config['ModuleSettings']['FILTERS'];
       
         $this->addEmojiFilters();

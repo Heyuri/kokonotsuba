@@ -1,11 +1,11 @@
 <?php
 // sticky module made for kokonotsuba by deadking
-class mod_sticky extends ModuleHelper {
+class mod_sticky extends moduleHelper {
 	private $mypage;
 	private $STICKYICON = '';
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		$this->STICKYICON = $this->config['STATIC_URL'].'image/sticky.png';
 		$this->mypage = $this->getModulePageURL();
 	}

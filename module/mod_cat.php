@@ -1,12 +1,12 @@
 <?php
-class mod_cat extends ModuleHelper {
+class mod_cat extends moduleHelper {
 	private $mypage;
 	private $PAGE_DEF = 200;
 	private $RESICON = -1;
 	private $THUMB_EXT = -1;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 				
 		$this->THUMB_EXT = $this->config['THUMB_SETTING']['Format'];
 		$this->RESICON = $this->config['STATIC_URL'].'image/replies.png';
@@ -44,7 +44,6 @@ class mod_cat extends ModuleHelper {
 	}
 
 	public function ModulePage(){
-		$PMS = PMS::getInstance();
 		$PIO = PIOPDO::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 		
@@ -116,7 +115,7 @@ class mod_cat extends ModuleHelper {
 				$sub = 'No Title';
 			
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'');
-			$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, $opPost, false)); // "ThreadPost" Hook Point
+			$this->moduleEngine->useModuleMethods('ThreadPost', array(&$arrLabels, $opPost, false)); // "ThreadPost" Hook Point
 
 			$res = $PIO->getPostCountFromThread($thread_uid) - 1;
 			$dat.= '<td class="thread">

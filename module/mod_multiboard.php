@@ -1,11 +1,11 @@
 <?php
 // Multiboard capabilities module for kokonotsuba
-class mod_multiboard extends ModuleHelper {
+class mod_multiboard extends moduleHelper {
 
 	private $mypage;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		$this->mypage = $this->getModulePageURL();
 	}
 

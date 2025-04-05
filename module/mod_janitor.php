@@ -1,11 +1,11 @@
 <?php
 // komeo 2023
-class mod_janitor extends ModuleHelper {
+class mod_janitor extends moduleHelper {
 	private $BANFILE = -1;
 	private $mypage;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		
 		$this->BANFILE = $this->board->getBoardStoragePath() . 'bans.log.txt';
 		$this->mypage = $this->getModulePageURL();
@@ -29,12 +29,10 @@ class mod_janitor extends ModuleHelper {
 	
 	public function ModulePage() {
 		$PIO = PIOPDO::getInstance();
-		$PMS = PMS::getInstance();
 		$actionLogger = ActionLogger::getInstance();
 
 		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
-		$staffSession = new staffAccountFromSession;
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_JANITOR']);
 
 		$postUidFromGET = $_GET['post_uid'] ?? '';
@@ -72,7 +70,6 @@ class mod_janitor extends ModuleHelper {
 			if ($_POST["public"]) {
 				$post['com'] .= "<p class=\"warning\">($reason) <img class=\"banIcon icon\" alt=\"banhammer\" src=\"".$this->config['STATIC_URL']."/image/hammer.gif\"></p>";
 				$PIO->updatePost($post_uid, $post);
-				$parentNo = $post['thread_uid'];
 			}
 			
 			

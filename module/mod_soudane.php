@@ -1,5 +1,5 @@
 <?php
-class mod_soudane extends ModuleHelper {
+class mod_soudane extends moduleHelper {
 	private $SOUDANE_DIR_YEAH = '';
 	private $SOUDANE_DIR_NOPE = '';
 	private $mypage;
@@ -8,8 +8,8 @@ class mod_soudane extends ModuleHelper {
 	private $enableScore;      // Renamed from "difference" to "score"
 	private $showScoreOnly;    // New property for showing "+" and "-" buttons only
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		$globalHTML = new globalHTML($this->board);
 
 		// Load settings to enable/disable each button, score display, and score-only mode

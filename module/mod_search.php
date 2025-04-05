@@ -1,10 +1,10 @@
 <?php
-class mod_search extends ModuleHelper {
+class mod_search extends moduleHelper {
 	private $mypage;
 	private $THUMB_EXT = -1;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		
 		$this->THUMB_EXT = $this->config['THUMB_SETTING']['Format'];
 		$this->mypage = $this->getModulePageURL();

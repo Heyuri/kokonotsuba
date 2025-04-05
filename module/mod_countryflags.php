@@ -3,10 +3,10 @@
 require_once("geoip/geoip2.phar");
 use GeoIp2\Database\Reader;
 
-class mod_countryflags  extends ModuleHelper {
+class mod_countryflags  extends moduleHelper {
 	
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 	}
 
 	public function getModuleName(){

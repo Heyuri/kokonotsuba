@@ -9,8 +9,8 @@ class mod_pm extends ModuleHelper {
 	private $trips;
 	private $lastno;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 
 		$this->MESG_LOG = $this->config['ModuleSettings']['PM_DIR'].'tripmesg.log';
 		$this->MESG_CACHE = $this->config['ModuleSettings']['PM_DIR'].'tripmesg.cc';
@@ -162,7 +162,6 @@ class mod_pm extends ModuleHelper {
 	}
 
 	private function _getPM($trip) {
-		$PMS = self::$PMS;
 		$dat='';
 		$trip=substr($trip,1);
 		$tripped=$this->_tripping($trip);
@@ -207,7 +206,6 @@ class mod_pm extends ModuleHelper {
 	}
 
 	public function ModulePage(){
-		$PMS = self::$PMS;
 		$PIO = PIOPDO::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 

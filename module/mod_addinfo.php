@@ -1,9 +1,9 @@
 <?php
-class mod_addinfo extends ModuleHelper {
+class mod_addinfo extends moduleHelper {
 	private $mypage, $dotpoints;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		$this->dotpoints = $this->config['ModuleSettings']['ADD_INFO'];
 		$this->mypage = $this->getModulePageURL();
 	}

@@ -1,13 +1,13 @@
 <?php
 // admin extra module made for kokonotsuba by deadking
-class mod_admindel extends ModuleHelper {
+class mod_admindel extends moduleHelper {
 	private $BANFILE = '';
 	private $JANIMUTE_LENGTH = '';
 	private $JANIMUTE_REASON = '';
 	private $mypage;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		
 		$this->BANFILE = $this->board->getBoardStoragePath() . 'bans.log.txt';
 		$this->JANIMUTE_LENGTH = $this->config['ModuleSettings']['JANIMUTE_LENGTH'];
@@ -42,7 +42,7 @@ class mod_admindel extends ModuleHelper {
 	public function ModulePage() {
 		$PIO = PIOPDO::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
-		$PMS = PMS::getInstance();
+
 		$boardIO = boardIO::getInstance();
 		$ActionLogger = ActionLogger::getInstance();
 		$staffSession = new staffAccountFromSession;
@@ -60,12 +60,12 @@ class mod_admindel extends ModuleHelper {
 		$files = false;
 		switch ($_GET['action']??'') {
 			case 'del':
-				$PMS->useModuleMethods('PostOnDeletion', array($post['post_uid'], 'backend'));
+				$this->moduleEngine->useModuleMethods('PostOnDeletion', array($post['post_uid'], 'backend'));
 				$files = $PIO->removePosts(array($post['post_uid']));
 				$ActionLogger->logAction('Deleted post No.'.$post['no'], $boardUID);
 				break;
 			case 'delmute':
-				$PMS->useModuleMethods('PostOnDeletion', array($post['post_uid'], 'backend'));
+				$this->moduleEngine->useModuleMethods('PostOnDeletion', array($post['post_uid'], 'backend'));
 				$files = $PIO->removePosts(array($post['post_uid']));
 				$ip = $post['host'];
 				$starttime = $_SERVER['REQUEST_TIME'];

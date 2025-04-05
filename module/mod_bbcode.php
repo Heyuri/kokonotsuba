@@ -1,5 +1,5 @@
 <?php
-class mod_bbcode extends ModuleHelper { 
+class mod_bbcode extends moduleHelper { 
 	private $myPage;
 	private $urlcount;
 	private	$ImgTagTagMode = 0; // [img] tag behavior (0: no conversion 1: conversion when no textures 2: always conversion)
@@ -10,8 +10,8 @@ class mod_bbcode extends ModuleHelper {
 	private $supportRuby = 0; // <ruby> tag (0: not supported 1: supported)
 	private $emotes = array();
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		
 		$this->emotes = array(
 			'nigra'=>$this->config['STATIC_URL'].'image/emote/nigra.gif',

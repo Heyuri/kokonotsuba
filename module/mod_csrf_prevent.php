@@ -1,8 +1,8 @@
 <?php
-class mod_csrf_prevent extends ModuleHelper {
+class mod_csrf_prevent extends moduleHelper {
 	
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 	}
 
 	public function getModuleName(){

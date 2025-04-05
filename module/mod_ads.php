@@ -5,10 +5,10 @@
 	By: bobman (Yahoo! ^_^)
 */
 
-class mod_ads extends ModuleHelper {
+class mod_ads extends moduleHelper {
 	private $mypage;
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		$this->mypage = $this->getModulePageURL();
 
 		$this->config['ModuleSettings']['SHOW_TOP_AD'] = isset($config['ModuleSettings']['SHOW_TOP_AD']) ? $config['ModuleSettings']['SHOW_TOP_AD'] : true;

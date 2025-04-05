@@ -1,9 +1,9 @@
 <?php
-class mod_onlinecounter extends ModuleHelper {
+class mod_onlinecounter extends moduleHelper {
 	private $mypage, $usercounter, $timeout;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		$this->usercounter = $this->board->getBoardStoragePath().$this->config['ModuleSettings']['USER_COUNT_DAT_FILE'];
 		$this->timeout = $this->config['ModuleSettings']['USER_COUNT_TIMEOUT'];
 		$this->mypage = $this->getModulePageURL();

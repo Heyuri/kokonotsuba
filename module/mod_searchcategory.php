@@ -1,12 +1,11 @@
 //
 <?php
-class mod_searchcategory extends ModuleHelper {
+class mod_searchcategory extends moduleHelper {
 	private $mypage;
 	private $THUMB_EXT = -1;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-		
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		$this->THUMB_EXT = $this->config['THUMB_SETTING']['Format'];
 		$this->mypage = $this->getModulePageURL();
 	}
@@ -24,7 +23,6 @@ class mod_searchcategory extends ModuleHelper {
 	}
 
 	public function ModulePage(){
-		$PMS = PMS::getInstance();
 		$PIO = PIOPDO::getInstance();
 		
 		$staffSession = new staffAccountFromSession;
@@ -55,7 +53,7 @@ class mod_searchcategory extends ModuleHelper {
 		$globalHTML->head($dat);
 		$links = '[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>] [<a href="'.$this->config['PHP_SELF'].'?mode=module&load=mod_searchcategory&c='.$category_enc.'&recache=1">'._T('category_recache').'</a>]';
 
-		$PMS->useModuleMethods('LinksAboveBar', array(&$links,'category',$roleLevel));
+		$this->moduleEngine->useModuleMethods('LinksAboveBar', array(&$links,'category',$roleLevel));
 		$dat .= "<div>$links</div>\n";
 		for($i = 0; $i < $loglist_cut_count; $i++){
 			$posts = $PIO->fetchPosts($loglist_cut[$i]); // Get article content

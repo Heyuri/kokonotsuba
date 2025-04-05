@@ -1,9 +1,9 @@
 <?php
-class mod_stat extends ModuleHelper {
+class mod_stat extends moduleHelper {
 	private $mypage;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct($moduleEngine) {
+		parent::__construct($moduleEngine);
 		$this->mypage = str_replace('&amp;', '&', $this->getModulePageURL());
 	}
 
