@@ -43,6 +43,7 @@ $config['ModuleList'] = array(
 	'mod_stat' => true,
 	'mod_threadlist' => true,
 	/* admin */
+	'mod_rebuild' => true,
 	'mod_admindel' => true,
 	'mod_adminban' => true,
 	'mod_globalmsg' => true,
