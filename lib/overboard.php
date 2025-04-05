@@ -1,14 +1,27 @@
 <?php
 class overboard {
-	private $config, $templateEngine;
+	private $config, $templateEngine, $moduleEngine;
 	
 	public function __construct(board $board) {
 		$this->config = $board->loadBoardConfig();
 		$this->templateEngine = $board->getBoardTemplateEngine();
+		$this->moduleEngine = new moduleEngine($board);
+
+		$this->templateEngine->setFunctionCallbacks([
+			[
+				'callback' => function (&$ary_val) {
+					$this->moduleEngine->useModuleMethods('BlotterPreview', [ &$ary_val['{$BLOTTER}'] ]);
+				},
+			],
+			[
+				'callback' => function (&$ary_val) {
+					$this->moduleEngine->useModuleMethods('GlobalMessage', [ &$ary_val['{$GLOBAL_MESSAGE}'] ]);
+				},
+			],
+		]);
 	}
 	
 	public function drawOverboardHead(&$dat, $resno = 0) {
-		$PMS = PMS::getInstance();
 		$PIO = PIOPDO::getInstance();
 		$html = '';
 		
@@ -23,7 +36,7 @@ class overboard {
 			$pte_vals['{$PAGE_TITLE}'] = ($post[0]['sub'] ? $post[0]['sub'] : strip_tags($CommentTitle)).' - '.$this->config['TITLE'];
 		}
 		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
-		$PMS->useModuleMethods('Head', array(&$html, $resno)); // "Head" Hook Point
+		$this->moduleEngine->useModuleMethods('Head', array(&$html, $resno)); // "Head" Hook Point
 		$html .= '</head>';
 		$pte_vals += array('{$HOME}' => '[<a href="'.$this->config['HOME'].'" target="_top">'._T('head_home').'</a>]',
 			'{$STATUS}' => '[<a href="'.$this->config['PHP_SELF'].'?mode=status">'._T('head_info').'</a>]',
@@ -32,8 +45,8 @@ class overboard {
 			'{$HOOKLINKS}' => '', '{$TITLE}' => htmlspecialchars($this->config['OVERBOARD_TITLE']), '{$TITLESUB}' => htmlspecialchars($this->config['OVERBOARD_SUBTITLE'])
 			);
 			
-		$PMS->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
-		$PMS->useModuleMethods('AboveTitle', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
+		$this->moduleEngine->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
+		$this->moduleEngine->useModuleMethods('AboveTitle', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
 		$html .= $this->templateEngine->ParseBlock('BODYHEAD',$pte_vals);
 		$html .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK',$pte_vals);
 		$html .= $this->config['OVERBOARD_SUB_HEADER_HTML'];

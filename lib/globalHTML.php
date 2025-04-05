@@ -3,10 +3,11 @@
 class globalHTML {
 	private $config, $board;
 
-	private $templateEngine;
+	private $templateEngine, $moduleEngine;
 
 	public function __construct($board) { 
 		$this->board = $board;
+		$this->moduleEngine = new moduleEngine($board);
 		$this->config = $board->loadBoardConfig();
 
 		$this->templateEngine = $board->getBoardTemplateEngine();
@@ -41,7 +42,6 @@ class globalHTML {
 
 	/* 輸出表頭 | document head */
 	public function head(&$dat, $resno=0){
-		$PMS = PMS::getInstance();
 		$PIO = PIOPDO::getInstance();
 		$html = '';
 		
@@ -56,7 +56,7 @@ class globalHTML {
 			$pte_vals['{$PAGE_TITLE}'] = ($post[0]['sub'] ? $post[0]['sub'] : strip_tags($CommentTitle)).' - '.$this->board->getBoardTitle();
 		}
 		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
-		$PMS->useModuleMethods('Head', array(&$html, $resno)); // "Head" Hook Point
+		$this->moduleEngine->useModuleMethods('Head', array(&$html, $resno)); // "Head" Hook Point
 		$html .= '</head>';
 		$pte_vals += array('{$HOME}' => '[<a href="'.$this->config['HOME'].'" target="_top">'._T('head_home').'</a>]',
 			'{$STATUS}' => '[<a href="'.$this->config['PHP_SELF'].'?mode=status">'._T('head_info').'</a>]',
@@ -65,8 +65,8 @@ class globalHTML {
 			'{$HOOKLINKS}' => '',
 			);
 			
-		$PMS->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
-		$PMS->useModuleMethods('AboveTitle', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
+		$this->moduleEngine->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
+		$this->moduleEngine->useModuleMethods('AboveTitle', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
 		
 		$html .= $this->templateEngine->ParseBlock('BODYHEAD',$pte_vals);
 		$dat .= $html;
@@ -75,11 +75,10 @@ class globalHTML {
 
 	/* 輸出頁尾文字 | footer credits */
 	public function foot(&$dat, $res=false){
-		$PMS = PMS::getInstance();
 		$html = '';
 	
 		$pte_vals = array('{$FOOTER}'=>'','{$IS_THREAD}'=>$res);
-		$PMS->useModuleMethods('Foot', array(&$pte_vals['{$FOOTER}'])); // "Foot" Hook Point
+		$this->moduleEngine->useModuleMethods('Foot', array(&$pte_vals['{$FOOTER}'])); // "Foot" Hook Point
 		$pte_vals['{$FOOTER}'] .= '- <a rel="nofollow noreferrer license" href="https://web.archive.org/web/20150701123900/http://php.s3.to/" target="_blank">GazouBBS</a> + <a rel="nofollow noreferrer license" href="http://www.2chan.net/" 	target="_blank">futaba</a> + <a rel="nofollow noreferrer license" href="https://pixmicat.github.io/" target="_blank">Pixmicat!</a> + <a rel="nofollow noreferrer license" href="https://kokonotsuba.github.io/" target="_blank">Kokonotsuba</a> -';
 		$html .= $this->templateEngine->ParseBlock('FOOTER',$pte_vals);
 		$dat .= $html;
@@ -88,7 +87,6 @@ class globalHTML {
 	
 		/* 發表用表單輸出 | user contribution form */
 	function form(&$dat, $resno, $name='', $mail='', $sub='', $com='', $cat=''){
-		$PMS = PMS::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 		
 		$hidinput = ($resno ? '<input type="hidden" name="resto" value="'.$resno.'">' : '');
@@ -116,14 +114,14 @@ class globalHTML {
 			if (!$resno) {
 				$pte_vals += array('{$FORM_NOATTECHMENT_FIELD}' => '<input type="checkbox" name="noimg" id="noimg" value="on">');
 			}
-			$PMS->useModuleMethods('PostFormFile', array(&$pte_vals['{$FORM_FILE_EXTRA_FIELD}']));
+			$this->moduleEngine->useModuleMethods('PostFormFile', array(&$pte_vals['{$FORM_FILE_EXTRA_FIELD}']));
 		}
-		$PMS->useModuleMethods('PostForm', array(&$pte_vals['{$FORM_EXTRA_COLUMN}'])); // "PostForm" Hook Point
+		$this->moduleEngine->useModuleMethods('PostForm', array(&$pte_vals['{$FORM_EXTRA_COLUMN}'])); // "PostForm" Hook Point
 		if($this->config['USE_CATEGORY']) {
 			$pte_vals += array('{$FORM_CATEGORY_FIELD}' => '<input tabindex="5" type="text" name="category" id="category" value="'.$cat.'" class="inputtext">');
 		}
 		if($this->config['STORAGE_LIMIT']) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',$FileIO->getCurrentStorageSize($this->board),$this->config['STORAGE_MAX']);
-		$PMS->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
+		$this->moduleEngine->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
 		
 		$dat .= $this->templateEngine->ParseBlock('POSTFORM',$pte_vals);
 	}
@@ -594,14 +592,13 @@ class globalHTML {
 	public function generateAdminLinkButtons() {
 		$staffSession = new staffAccountFromSession;
 		$authRoleLevel = $staffSession->getRoleLevel();
-		$PMS = PMS::getInstance();
 		
 		$linksAboveBar =  ' [<a href="'.$this->config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a>] 
 					[<a href="'.$this->config['PHP_SELF'].'?mode=rebuild">Rebuild</a>] 
 					[<a href="'.$this->config['PHP_SELF'].'?mode=account">Account</a>]
 					[<a href="'.$this->config['PHP_SELF'].'?mode=boards">Boards</a>] 
 					[<a href="'.$this->config['PHP_SELF'].'?pagenum=0">Live frontend</a>] ';
-		$PMS->useModuleMethods('LinksAboveBar', array(&$linksAboveBar,'admin',$authRoleLevel));
+		$this->moduleEngine->useModuleMethods('LinksAboveBar', array(&$linksAboveBar,'admin',$authRoleLevel));
 		return $linksAboveBar;
 	}
 	
@@ -667,7 +664,6 @@ class globalHTML {
 									bool $adminMode=false, int $threadIterator = 0, string $overboardBoardTitleHTML = '', string $crossLink = '') {
 		$resno = isset($resno) && $resno ? $resno : 0;
 		$FileIO = PMCLibrary::getFileIOInstance();
-		$PMS = PMS::getInstance();
 	
 		$thdat = ''; // Discuss serial output codes
 		$posts_count = count($posts); // Number of cycles
@@ -745,7 +741,7 @@ class globalHTML {
 	
 			if($adminMode){ // Front-end management mode
 				$modFunc = '';
-				$PMS->useModuleMethods('AdminList', array(&$modFunc, $posts[$i], $isReply)); // "AdminList" Hook Point
+				$this->moduleEngine->useModuleMethods('AdminList', array(&$modFunc, $posts[$i], $isReply)); // "AdminList" Hook Point
 				$POSTFORM_EXTRA .= $modFunc;
 			}
 	
@@ -769,7 +765,7 @@ class globalHTML {
 			if($i){ // Response
 				$arrLabels = bindReplyValuesToTemplate($board, $config, $post_uid, $no, $postOPNumber, $sub, $name, $now, $category, $QUOTEBTN, $IMG_BAR, $imgsrc, $WARN_BEKILL, $com, $POSTFORM_EXTRA, '', $BACKLINKS, $resno);
 				if($resno) $arrLabels['{$RESTO}']=$postOPNumber;
-				$PMS->useModuleMethods('ThreadReply', array(&$arrLabels, $posts[$i], $resno)); // "ThreadReply" Hook Point
+				$this->moduleEngine->useModuleMethods('ThreadReply', array(&$arrLabels, $posts[$i], $resno)); // "ThreadReply" Hook Point
 				$thdat .= $this->templateEngine->ParseBlock('REPLY', $arrLabels);
 			}else{ // First Article
 				
@@ -780,7 +776,7 @@ class globalHTML {
 				$arrLabels['{$BOARD_THREAD_NAME}'] = $overboardBoardTitleHTML;
 
 
-				$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, $posts[$i], $resno)); // "ThreadPost" Hook Point
+				$this->moduleEngine->useModuleMethods('ThreadPost', array(&$arrLabels, $posts[$i], $resno)); // "ThreadPost" Hook Point
 				$thdat .= $this->templateEngine->ParseBlock('THREAD', $arrLabels);
 			}
 		}

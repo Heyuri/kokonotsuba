@@ -6,7 +6,7 @@ class boardRebuilder {
     private globalHTML $globalHTML;
     private mixed $FileIO;
     private mixed $postRedirectIO;
-    private PMS $PMS;
+    private moduleEngine $moduleEngine;
     private mixed $PIO;
     private staffAccountFromSession $staffSession;
 	private templateEngine $templateEngine;
@@ -16,12 +16,28 @@ class boardRebuilder {
 		$this->board = $board;
 
         $this->globalHTML = new globalHTML($board);
-		$this->FileIO = PMCLibrary::getFileIOInstance();
-		$this->PMS = PMS::getInstance();
-        $this->PIO = PIOPDO::getInstance();
-		$this->postRedirectIO = postRedirectIO::getInstance();
+		$this->moduleEngine = new moduleEngine($board);
 		$this->staffSession = new staffAccountFromSession;
+        $this->PIO = PIOPDO::getInstance();
+		$this->FileIO = PMCLibrary::getFileIOInstance();
+		$this->postRedirectIO = postRedirectIO::getInstance();
+
+
+
 		$this->templateEngine = $templateEngine;
+		$this->templateEngine->setFunctionCallbacks([
+			[
+				'callback' => function (&$ary_val) {
+					$this->moduleEngine->useModuleMethods('BlotterPreview', [ &$ary_val['{$BLOTTER}'] ]);
+				},
+			],
+			[
+				'callback' => function (&$ary_val) {
+					$this->moduleEngine->useModuleMethods('GlobalMessage', [ &$ary_val['{$GLOBAL_MESSAGE}'] ]);
+				},
+			],
+		]);
+
 
         $this->config = $board->loadBoardConfig();
 		if(empty($this->config)) die("No board config for {$board->getBoardTitle()}:{$board->getBoardUID()}");
@@ -52,7 +68,7 @@ class boardRebuilder {
 		if(!$resno){
 			if($pagenum==-1){ // Rebuild mode (PHP dynamic output of multiple pages)
 				$threads = $this->PIO->getThreadListFromBoard($this->board); // Get a full list of discussion threads
-				$this->PMS->useModuleMethods('ThreadOrder', array($resno, $pagenum, $single_page, &$threads)); // "ThreadOrder" Hook Point
+				$this->moduleEngine->useModuleMethods('ThreadOrder', array($resno, $pagenum, $single_page, &$threads)); // "ThreadOrder" Hook Point
 				$threads_count = count($threads);
 				$inner_for_count = $threads_count > $this->config['PAGE_DEF'] ? $this->config['PAGE_DEF'] : $threads_count;
 				$page_end = ($last == -1 ? ceil($threads_count / $this->config['PAGE_DEF']) : $last);
@@ -61,7 +77,7 @@ class boardRebuilder {
 				if($pagenum < 0 || ($pagenum * $this->config['PAGE_DEF']) >= $threads_count) $this->globalHTML->error( _T('page_not_found')); // $Pagenum is out of range
 				$page_start = $page_end = $pagenum; // Set a static page number
 				$threads = $this->PIO->getThreadListFromBoard($this->board); // Get a full list of discussion threads
-				$this->PMS->useModuleMethods('ThreadOrder', array($resno, $pagenum,$single_page,&$threads)); // "ThreadOrder" Hook Point
+				$this->moduleEngine->useModuleMethods('ThreadOrder', array($resno, $pagenum,$single_page,&$threads)); // "ThreadOrder" Hook Point
 				$threads = array_splice($threads, $pagenum * $this->config['PAGE_DEF'], $this->config['PAGE_DEF']); // Remove the list of discussion threads after the tag
 				$inner_for_count = count($threads); // The number of discussion strings is the number of cycles
 			}
@@ -107,8 +123,8 @@ class boardRebuilder {
 			$arr_kill = $this->PIO->delOldAttachments($tmp_total_size, $tmp_STORAGE_MAX); // Outdated attachment array
 		}
 
-		$this->PMS->useModuleMethods('ThreadFront', array(&$pte_vals['{$THREADFRONT}'], $resno)); // "ThreadFront" Hook Point
-		$this->PMS->useModuleMethods('ThreadRear', array(&$pte_vals['{$THREADREAR}'], $resno)); // "ThreadRear" Hook Point
+		$this->moduleEngine->useModuleMethods('ThreadFront', array(&$pte_vals['{$THREADFRONT}'], $resno)); // "ThreadFront" Hook Point
+		$this->moduleEngine->useModuleMethods('ThreadRear', array(&$pte_vals['{$THREADREAR}'], $resno)); // "ThreadRear" Hook Point
 
 		// Generate static pages one page at a time
 		for($page = $page_start; $page <= $page_end; $page++){

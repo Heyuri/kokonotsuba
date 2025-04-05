@@ -1,7 +1,7 @@
 <?php
 //Handle GET mode values for koko
 class modeHandler {
-	private $config, $board, $templateEngine, $adminTemplateEngine, $FileIO, $PMS, $AccountIO, $actionLogger;
+	private $config, $board, $templateEngine, $adminTemplateEngine, $FileIO, $moduleEngine, $AccountIO, $actionLogger;
 
 	public function __construct($board) {
 		$config = $board->loadBoardConfig();
@@ -24,7 +24,7 @@ class modeHandler {
 
 
 		$this->FileIO = PMCLibrary::getFileIOInstance();
-		$this->PMS = PMS::getInstance();
+		$this->moduleEngine = new moduleEngine($board);
 		$this->AccountIO = AccountIO::getInstance();
 		$this->actionLogger = ActionLogger::getInstance();
 
@@ -92,8 +92,8 @@ class modeHandler {
 
 	private function handleModule() {
 		$load = $_GET['load'] ?? $_POST['load'] ?? '';
-		if ($this->PMS->onlyLoad($load)) {
-			$this->PMS->moduleInstance[$load]->ModulePage();
+		if ($this->moduleEngine->onlyLoad($load)) {
+			$this->moduleEngine->moduleInstance[$load]->ModulePage();
 		} else {
 			$globalHTML = new globalHTML($this->board);
 			$globalHTML->error("Module Not Found(" . htmlspecialchars($load) . ")");
@@ -201,7 +201,7 @@ class modeHandler {
 		
 		$postValidator->spamValidate($name, $email, $sub, $com);
 		/* hook call */
-		$this->PMS->useModuleMethods('RegistBegin', array(&$name, &$email, &$sub, &$com, array('file'=>&$upfile, 'path'=>&$upfile_path, 'name'=>&$upfile_name, 'status'=>&$upfile_status), array('ip'=>$ip, 'host'=>$host), $thread_uid)); // "RegistBegin" Hook Point
+		$this->moduleEngine->useModuleMethods('RegistBegin', array(&$name, &$email, &$sub, &$com, array('file'=>&$upfile, 'path'=>&$upfile_path, 'name'=>&$upfile_name, 'status'=>&$upfile_status), array('ip'=>$ip, 'host'=>$host), $thread_uid)); // "RegistBegin" Hook Point
 		if($this->config['TEXTBOARD_ONLY'] == false) {
 				processFiles($boardBeingPostedTo, $postValidator, $globalHTML, $upfile, $upfile_path, $upfile_name, $upfile_status, $md5chksum, $imgW, $imgH, $imgsize, $W, $H, $fname, $ext, $age, $status, $thread_uid, $tim, $dest, $tmpfile);
 		}
@@ -248,7 +248,7 @@ class modeHandler {
 				$ThreadExistsBefore = $PIO->isThread($thread_uid);
 		}
 	
-		$postValidator->pruneOld($this->PMS, $PIO, $this->FileIO);
+		$postValidator->pruneOld($this->moduleEngine, $PIO, $this->FileIO);
 		$postValidator->threadSanityCheck($chktime, $flgh, $thread_uid, $PIO, $dest, $ThreadExistsBefore);
 	
 		// Calculate the last feilds needed before putitng in db
@@ -278,13 +278,13 @@ class modeHandler {
 		$threads = $PIO->getThreadListFromBoard($boardBeingPostedTo);
 		$threads_count = count($threads);
 		$page_end = ($thread_uid ? floor(array_search($thread_uid, $threads) / $this->config['PAGE_DEF']) : ceil($threads_count / $this->config['PAGE_DEF']));
-		$this->PMS->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, array($W, $H, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
+		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, array($W, $H, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
 		$PIO->addPost($boardBeingPostedTo, $no, $thread_uid, $md5chksum, $category, $tim, $fname, $ext, $imgW, $imgH, $imgsize, $W, $H, $pass, $now, $name, $email, $sub, $com, $ip, $age, $status);
 		
 		$this->actionLogger->logAction("Post No.$no registered", $boardBeingPostedTo->getBoardUID());
 		// Formal writing to storage
 		$lastno = $boardBeingPostedTo->getLastPostNoFromBoard() - 1; // Get this new article number
-		$this->PMS->useModuleMethods('RegistAfterCommit', array($lastno, $thread_uid, $name, $email, $sub, $com)); // "RegistAfterCommit" Hook Point
+		$this->moduleEngine->useModuleMethods('RegistAfterCommit', array($lastno, $thread_uid, $name, $email, $sub, $com)); // "RegistAfterCommit" Hook Point
 	
 		// Cookies storage: password and e-mail part, for one week
 		setcookie('pwdc', $pwd, time()+7*24*3600);
@@ -304,7 +304,7 @@ class modeHandler {
 
 		$staffSession = new staffAccountFromSession;
 		$currentRoleLevel = $staffSession->getRoleLevel();
-		$adminPageHandler = new adminPageHandler($this->board);
+		$adminPageHandler = new adminPageHandler($this->board, $this->moduleEngine);
 		$admin = $_REQUEST['admin']??'';
 		$dat = '';
 		$globalHTML->head($dat);
@@ -389,7 +389,7 @@ class modeHandler {
 		$globalHTML->head($dat);
 		$links = '[<a href="' . $this->config['PHP_SELF2'] . '?' . time() . '">' . _T('return') . '</a>] [<a href="' . $this->config['PHP_SELF'] . '?mode=moduleloaded">' . _T('module_info_top') . '</a>]';
 		$level = $staffSession->getRoleLevel();
-		$this->PMS->useModuleMethods('LinksAboveBar', array(&$links, 'status', $level));
+		$this->moduleEngine->useModuleMethods('LinksAboveBar', array(&$links, 'status', $level));
 		$dat .= $links . '<h2 class="theading2">' . _T('info_top') . '</h2>
 <table id="status" class="postlists">
 	<thead>
@@ -521,7 +521,7 @@ class modeHandler {
 
 		$roleLevel = $staffSession->getRoleLevel();
 		$links = '[<a href="' . $this->config['PHP_SELF2'] . '?' . time() . '">' . _T('return') . '</a>]';
-		$this->PMS->useModuleMethods('LinksAboveBar', array(&$links, 'modules', $roleLevel));
+		$this->moduleEngine->useModuleMethods('LinksAboveBar', array(&$links, 'modules', $roleLevel));
 
 		$dat .= $links.'<h2 class="theading2">'._T('module_info_top').'</h2>
 </div>
@@ -531,14 +531,14 @@ class modeHandler {
 
 		/* Module Loaded */
 		$dat .= _T('module_loaded') . '<ul>';
-		foreach ($this->PMS->getLoadedModules() as $m) {
+		foreach ($this->moduleEngine->getLoadedModules() as $m) {
 				$dat .= '<li>' . $m . "</li>\n";
 		}
 		$dat .= "</ul><hr>\n";
 
 		/* Module Information */
 		$dat .= _T('module_info') . '<ul>';
-		foreach ($this->PMS->moduleInstance as $m) {
+		foreach ($this->moduleEngine->moduleInstance as $m) {
 				$dat .= '<li>' . $m->getModuleName() . '<div>' . $m->getModuleVersionInfo() . "</div></li>\n";
 		}
 		$dat .= '</ul><hr>
@@ -813,7 +813,7 @@ class modeHandler {
 		}
 	
 		$haveperm = $staffSession->getRoleLevel() >= $this->config['roles']['LEV_JANITOR'];
-		$this->PMS->useModuleMethods('Authenticate', array($pwd, 'userdel', &$haveperm));
+		$this->moduleEngine->useModuleMethods('Authenticate', array($pwd, 'userdel', &$haveperm));
 	
 		if ($pwd == '' && $pwdc != '') $pwd = $pwdc;
 		$pwd_md5 = substr(md5($pwd), 2, 8);
@@ -837,7 +837,7 @@ class modeHandler {
 		}
 	
 		if ($search_flag) {
-			if (!$onlyimgdel) $this->PMS->useModuleMethods('PostOnDeletion', array($delPosts, 'frontend'));
+			if (!$onlyimgdel) $this->moduleEngine->useModuleMethods('PostOnDeletion', array($delPosts, 'frontend'));
 			$files = createBoardStoredFilesFromArray($delPosts);
 			$onlyimgdel ? $PIO->removeAttachments($delPostUIDs) : $PIO->removePosts($delPostUIDs);
 			

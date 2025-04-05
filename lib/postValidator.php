@@ -121,12 +121,12 @@ class postValidator {
     	}
 	}
 
-    function pruneOld(&$PMS, &$PIO, &$FileIO){
+    function pruneOld(&$moduleEngine, &$PIO, &$FileIO){
         // Deletion of old articles
         if(PIOSensor::check($this->board, 'delete', $this->config['LIMIT_SENSOR'])){
             $delarr = PIOSensor::listee($this->board, 'delete', $this->config['LIMIT_SENSOR']);
             if(count($delarr)){
-                $PMS->useModuleMethods('PostOnDeletion', array($delarr, 'recycle')); // "PostOnDeletion" Hook Point
+                $moduleEngine->useModuleMethods('PostOnDeletion', array($delarr, 'recycle')); // "PostOnDeletion" Hook Point
                 $files = $PIO->removePosts($delarr);
                 if(count($files)) $FileIO->deleteImage($files, $this->board); // Update delta value
             }

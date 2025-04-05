@@ -1,7 +1,7 @@
 <?php
 //board class to encapsulate data gotten directly from board table
-class board {
-	private $databaseConnection, $postNumberTable, $templateEngine;
+class board implements IBoard {
+	private $databaseConnection, $postNumberTable, $templateEngine, $moduleEngine;
 	private $config;
 	public $board_uid, $board_identifier, $board_title, $board_sub_title, $config_name, $storage_directory_name, $date_added, $board_file_url, $listed;
 
@@ -135,7 +135,7 @@ class board {
 				'subtitle'	=> $this->getBoardSubTitle()
 			]
 		];
-	
+
 		$this->templateEngine= new templateEngine($templateFile, $dependencies);
 	}
 

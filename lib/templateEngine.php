@@ -10,10 +10,12 @@ class templateEngine {
 	private $tpl;
 	private $config;
 	private $boardData;
+	private $functionCalls;
 
-	public function __construct(string $tplname, array $dependencies) {
+	public function __construct(string $tplname, array $dependencies, array $functionCalls = array()) {
 		$this->config = $dependencies['config'] ?? [];
 		$this->boardData = $dependencies['boardData'] ?? [];
+		$this->functionCalls = $functionCalls;
 
 		static $tplCache = [];
 
@@ -58,9 +60,7 @@ class templateEngine {
 			'{$PAGE_TITLE}'		=> strip_tags($this->boardData['title'] ?? ''),
 		], $ary_val);
 
-		$PMS = PMS::getInstance();
-		$PMS->useModuleMethods('GlobalMessage', [ &$ary_val['{$GLOBAL_MESSAGE}'] ]);
-		$PMS->useModuleMethods('BlotterPreview', [ &$ary_val['{$BLOTTER}'] ]);
+		$this->runInjectedFunctions($ary_val);
 
 		if (($tmp_block = $this->_readBlock($blockName)) === false) return "";
 
@@ -128,5 +128,17 @@ class templateEngine {
 			}
 		}
 		return $tmp_tpl;
+	}
+
+	private function runInjectedFunctions(&$ary_val) {
+		if(!isset($this->functionCalls)) return;
+
+		foreach($this->functionCalls as $call) {
+			$call['callback']($ary_val);
+		}
+	}
+
+	public function setFunctionCallbacks(array $callbacks) {
+		$this->functionCalls = $callbacks;
 	}
 }

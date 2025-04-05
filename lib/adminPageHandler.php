@@ -1,11 +1,12 @@
 <?php
 // Handle account sessions for koko
 class adminPageHandler {
-	private $config, $board;
+	private $config, $board, $moduleEngine;
 	
-	public function __construct($board) { 
+	public function __construct(board $board, moduleEngine $moduleEngine) { 
 		$this->config = $board->loadBoardConfig();
 		$this->board = $board;
+		$this->moduleEngine = $moduleEngine;
 	}
 	
 	public function handleAdminPageSelection($functionName, &$dat) {
@@ -60,10 +61,8 @@ class adminPageHandler {
 		
 		$globalHTML = new globalHTML($this->board);
 		$ActionLogger = ActionLogger::getInstance();
-		$AccountIO = AccountIO::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$boardIO = boardIO::getInstance();
-		$PMS = PMS::getInstance();
 		$staffSession = new staffAccountFromSession;
 		$softErrorHandler = new softErrorHandler($this->board);
 		
@@ -99,7 +98,7 @@ class adminPageHandler {
 			$delnoActionLogStr = is_array($delno) ? implode(', No. ',$delno) : $delno;
 			$ActionLogger->logAction("Delete post posts: $delnoActionLogStr".($onlyimgdel?' (file only)':''), $this->board->getBoardUID());
 		}
-		if($onlyimgdel != 'on') $PMS->useModuleMethods('PostOnDeletion', array($delno, 'backend')); // "PostOnDeletion" Hook Point
+		if($onlyimgdel != 'on') $this->moduleEngine->useModuleMethods('PostOnDeletion', array($delno, 'backend')); // "PostOnDeletion" Hook Point
 		$files = ($onlyimgdel != 'on') ? $PIO->removePosts($delno) : $PIO->removeAttachments($delno);
 
 		if($searchHost) $posts = $PIO->getPostsFromIP($searchHost);
@@ -137,7 +136,7 @@ class adminPageHandler {
 			
 			// The first part of the discussion is the stop tick box and module function
 			$modFunc = ' ';
-			$PMS->useModuleMethods('AdminList', array(&$modFunc, $posts[$j], !$PIO->isThreadOP($posts[$j]['post_uid']))); // "AdminList" Hook Point
+			$this->moduleEngine->useModuleMethods('AdminList', array(&$modFunc, $posts[$j], !$PIO->isThreadOP($posts[$j]['post_uid']))); // "AdminList" Hook Point
 			if($thread_uid==0){ // $resto = 0 (the first part of the discussion string)
 				$flgh = $PIO->getPostStatus($status);
 			}
