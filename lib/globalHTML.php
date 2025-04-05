@@ -246,26 +246,44 @@ class globalHTML {
 		return $html;
 	}
 	
-	//for the actionlog filter form
-	public function generateBoardListCheckBoxHTML($currentBoard, $filterBoard, $boards = null) {
+	//for the board filter form
+	public function generateBoardListCheckBoxHTML($currentBoard, $filterBoard, $boards = null, $selectAll = false) {
 		$BoardIO = boardIO::getInstance();
-	
+
 		$listHTML = '';
-		
+	
 		if(!$boards) $boards = $BoardIO->getAllBoards();
 
 		foreach($boards as $board) {
 			$boardTitle = htmlspecialchars($board->getBoardTitle());
 			$boardUID = htmlspecialchars($board->getBoardUID());
-			
-			$listHTML .= '<label class="filterSelectBoardItem"><input name="filterboard[]" type="checkbox" value="' . $boardUID . '" '.((in_array($boardUID, $filterBoard) || $boardUID == $currentBoard->getBoardUID() && empty($filterBoard))  ? 'checked' : '').'>'.$boardTitle.'</label>  ';
-		}
 		
+			$isChecked = $selectAll || in_array($boardUID, $filterBoard) || ($boardUID == $currentBoard->getBoardUID() && empty($filterBoard));
+			
+			$listHTML .= '<label class="filterSelectBoardItem"><input name="filterboard[]" type="checkbox" value="' . $boardUID . '" ' . ($isChecked ? 'checked' : '') . '>' . $boardTitle . '</label>  ';
+		}
+	
+		return $listHTML;
+	}
+
+	//for the rebuild action form
+	public function generateRebuildListCheckboxHTML(array $boards) {
+		$listHTML = '<ul class="filterSelectBoardList">';
+
+		foreach($boards as $board) {
+			$boardTitle = htmlspecialchars($board->getBoardTitle());
+			$boardUID = htmlspecialchars($board->getBoardUID());
+			
+			$listHTML .= '<li><label class="filterSelectBoardItem"><input name="rebuildBoardUIDs[]" type="checkbox" value="' . $boardUID . '" checked>' . $boardTitle . '</label></li>';
+		}
+	
+		$listHTML .= '</ul>';
+	
 		return $listHTML;
 	}
 	
 	//for the actionlog filter form
-	public function generateBoardListRadioHTML($currentBoard, $boards = null) {
+	public function generateBoardListRadioHTML($currentBoard = null, $boards = null) {
 		$BoardIO = boardIO::getInstance();
 	
 		$listHTML = '';
@@ -273,7 +291,7 @@ class globalHTML {
 		if(!$boards) $boards = $BoardIO->getAllBoards();
 	
 		foreach($boards as $board) {
-			if($board->getBoardUID() === $currentBoard->getBoardUID()) continue;
+			if($currentBoard && $board->getBoardUID() === $currentBoard->getBoardUID()) continue;
 			
 			$boardTitle = htmlspecialchars($board->getBoardTitle());
 			$boardUID = htmlspecialchars($board->getBoardUID());
@@ -594,10 +612,10 @@ class globalHTML {
 		$authRoleLevel = $staffSession->getRoleLevel();
 		
 		$linksAboveBar =  ' [<a href="'.$this->config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a>] 
-					[<a href="'.$this->config['PHP_SELF'].'?mode=rebuild">Rebuild</a>] 
 					[<a href="'.$this->config['PHP_SELF'].'?mode=account">Account</a>]
 					[<a href="'.$this->config['PHP_SELF'].'?mode=boards">Boards</a>] 
-					[<a href="'.$this->config['PHP_SELF'].'?pagenum=0">Live frontend</a>] ';
+					[<a href="'.$this->config['PHP_SELF'].'?pagenum=0">Live frontend</a>] 
+										[<a href="'.$this->config['PHP_SELF'].'?mode=rebuild">Rebuild board</a>] ';
 		$this->moduleEngine->useModuleMethods('LinksAboveBar', array(&$linksAboveBar,'admin',$authRoleLevel));
 		return $linksAboveBar;
 	}

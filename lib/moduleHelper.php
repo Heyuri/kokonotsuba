@@ -10,6 +10,7 @@ abstract class moduleHelper implements IModule {
 	protected board $board;
 	protected array $config;
 	protected templateEngine $templateEngine;
+	protected templateEngine $adminTemplateEngine;
 	protected array $moduleBoardList;
 	protected array $boardList;
 	private string $className;
@@ -24,6 +25,18 @@ abstract class moduleHelper implements IModule {
 		$this->templateEngine = $moduleEngine->board->getBoardTemplateEngine();
 		$this->className = get_class($this);
 		$this->boardList = $boardIO->getAllBoards();
+
+
+		$adminTemplateFile = getBackendDir().'templates/admin.tpl';
+		$dependencies = [
+			'config'	=> $this->config, // assumes config file returns an array
+			'boardData'	=> [
+				'title'		=> $this->moduleEngine->board->getBoardTitle(),
+				'subtitle'	=> $this->moduleEngine->board->getBoardSubTitle()
+			]
+		];
+	
+		$this->adminTemplateEngine = new templateEngine($adminTemplateFile, $dependencies);
 
 		// Auto-register module page
 		if (method_exists($this, 'ModulePage')) {

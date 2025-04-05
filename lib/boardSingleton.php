@@ -60,16 +60,16 @@ class boardIO {
 		return array_merge(...$boards);
 	}
 
-	public function getBoardsFromUIDs($uidList)  {
-		if(!is_array($uidList)) $uidList = [$uidList];
-
-		$uidList = implode(', ', $uidList);
-		$query = "SELECT * FROM {$this->tablename} WHERE board_uid IN ({$uidList})";
-		
-		$boards = $this->databaseConnection->fetchAllAsClass($query, [], 'board');
-
+	public function getBoardsFromUIDs($uidList) {
+		if (!is_array($uidList)) $uidList = [$uidList];
+	
+		$placeholders = implode(', ', array_fill(0, count($uidList), '?'));
+		$query = "SELECT * FROM {$this->tablename} WHERE board_uid IN ({$placeholders})";
+	
+		$boards = $this->databaseConnection->fetchAllAsClass($query, $uidList, 'board');
+	
 		return $boards;
-	}
+	}	
 	
 	public function addNewBoard($board_identifier, $board_title, $board_sub_title, $listed, $config_name, $storage_directory_name) {
 		$query = "INSERT INTO {$this->tablename} (board_identifier, board_title, board_sub_title, listed, config_name, storage_directory_name) VALUES(:board_identifier, :board_title, :board_sub_title, :listed, :config_name, :storage_directory_name)";

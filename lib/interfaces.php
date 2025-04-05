@@ -364,11 +364,18 @@ interface IBoard {
 	public function getBoardIdentifier(): string;
 
 	/**
+	 * Get the identifier of the board.
+	 *
+	 * @return string
+	 */
+	public function getBoardCachedPath(): string;
+
+	/**
 	 * Rebuild the html of the board.
 	 *
 	 * @return void
 	 */
-	public function rebuildBoard(): void;
-
+	public function rebuildBoard(int $resno = 0, mixed $pagenum = -1, bool $single_page = false, int $last = -1, bool $logRebuild = false): void;
+	
 	
 }

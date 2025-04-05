@@ -3,7 +3,10 @@
 class board implements IBoard {
 	private $databaseConnection, $postNumberTable, $templateEngine, $moduleEngine;
 	private $config;
-	public $board_uid, $board_identifier, $board_title, $board_sub_title, $config_name, $storage_directory_name, $date_added, $board_file_url, $listed;
+
+	public $board_uid, $board_identifier, $board_title, $board_sub_title;
+	public $config_name, $storage_directory_name, $date_added;
+	public $board_file_url, $listed;
 
 	// Getters
 	public function getBoardUID(): int {
@@ -61,53 +64,90 @@ class board implements IBoard {
 		}
 	}
 
+	public function getBoardCachedPath(): string {
+		$boardPathCachingIO = boardPathCachingIO::getInstance();
+		$boardPathCache = $boardPathCachingIO->getRowByBoardUID($this->getBoardUID());
+		return $boardPathCache ? $boardPathCache->getBoardPath() : '';
+	}
+
 	public function getBoardCdnDir(): ?string {
 		$this->config = $this->loadBoardConfig();
-		if (!is_array($this->config) || !isset($this->config['CDN_DIR'])) return null;
+
+		if (!is_array($this->config) || !isset($this->config['CDN_DIR'])) {
+			return null;
+		}
+
 		return $this->config['CDN_DIR'] . $this->board_identifier . '/';
 	}
 
 	public function getBoardCdnUrl(): ?string {
 		$this->config = $this->loadBoardConfig();
-		if (!is_array($this->config) || !isset($this->config['CDN_URL'])) return null;
+
+		if (!is_array($this->config) || !isset($this->config['CDN_URL'])) {
+			return null;
+		}
+
 		return $this->config['CDN_URL'] . $this->getBoardUID() . '-' . $this->getBoardIdentifier() . '/';
 	}
 
 	public function getBoardLocalUploadDir(): ?string {
 		$boardPathCachingIO = boardPathCachingIO::getInstance();
 		$boardPathCache = $boardPathCachingIO->getRowByBoardUID($this->getBoardUID());
+
 		return $boardPathCache ? $boardPathCache->getBoardPath() : null;
 	}
 
 	public function getBoardLocalUploadURL(): ?string {
 		$this->config = $this->loadBoardConfig();
-		if (!is_array($this->config) || !isset($this->config['WEBSITE_URL'])) return null;
+
+		if (!is_array($this->config) || !isset($this->config['WEBSITE_URL'])) {
+			return null;
+		}
+
 		return $this->config['WEBSITE_URL'] . $this->getBoardIdentifier() . '/';
 	}
 
 	public function getBoardUploadedFilesDirectory(): ?string {
 		$this->config = $this->loadBoardConfig();
-		if (!is_array($this->config)) return null;
-		return !empty($this->config['USE_CDN']) ? $this->getBoardCdnDir() : $this->getBoardLocalUploadDir();
+
+		if (!is_array($this->config)) {
+			return null;
+		}
+
+		return !empty($this->config['USE_CDN']) ?
+			$this->getBoardCdnDir() :
+			$this->getBoardLocalUploadDir();
 	}
 
 	public function getBoardUploadedFilesURL(): ?string {
 		$this->config = $this->loadBoardConfig();
-		if (!is_array($this->config)) return null;
-		return !empty($this->config['USE_CDN']) ? $this->getBoardCdnUrl() : $this->getBoardLocalUploadURL();
+
+		if (!is_array($this->config)) {
+			return null;
+		}
+
+		return !empty($this->config['USE_CDN']) ?
+			$this->getBoardCdnUrl() :
+			$this->getBoardLocalUploadURL();
 	}
 
 	public function getBoardURL(): ?string {
 		$this->config = $this->loadBoardConfig();
-		if (!is_array($this->config) || !isset($this->config['WEBSITE_URL'])) return null;
+
+		if (!is_array($this->config) || !isset($this->config['WEBSITE_URL'])) {
+			return null;
+		}
+
 		return $this->config['WEBSITE_URL'] . $this->getBoardIdentifier() . '/';
 	}
 
 	public function getBoardRootURL(): ?string {
 		$this->config = $this->loadBoardConfig();
-		return is_array($this->config) && isset($this->config['WEBSITE_URL']) ? $this->config['WEBSITE_URL'] : null;
-	}
 
+		return is_array($this->config) && isset($this->config['WEBSITE_URL']) ?
+			$this->config['WEBSITE_URL'] :
+			null;
+	}
 	
 	private function __construct() {
 		$dbSettings = getDatabaseSettings();
@@ -152,9 +192,9 @@ class board implements IBoard {
 	}
 
 	/* Rebuild board HTML or output page HTML to a live PHP page */ 
-	public function rebuildBoard(int $resno = 0, mixed $pagenum = -1, bool $single_page = false, int $last = -1): void {
+	public function rebuildBoard(int $resno = 0, mixed $pagenum = -1, bool $single_page = false, int $last = -1, bool $logRebuild = false): void {
 		$boardRebuilder = new boardRebuilder($this, $this->templateEngine);
-		$boardRebuilder->rebuildBoardHtml($resno, $pagenum, $single_page, $last);
+		$boardRebuilder->rebuildBoardHtml($resno, $pagenum, $single_page, $last, $logRebuild);
 	}
 
 	/* Get the last post number */
