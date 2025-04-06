@@ -4,9 +4,8 @@ class mod_sticky extends moduleHelper {
 	private $mypage;
 	private $STICKYICON = '';
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-		$this->STICKYICON = $this->config['STATIC_URL'].'image/sticky.png';
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		$this->STICKYICON = $this->config['STATIC_URL'].'image/sticky.png';
 		$this->mypage = $this->getModulePageURL();
 	}
 

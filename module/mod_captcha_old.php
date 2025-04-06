@@ -43,9 +43,8 @@ class mod_captcha extends moduleHelper {
 			)
 		);
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);
 		$this->CAPTCHA_FONTFACE = array($this->config['ROOTPATH'].'module/font1.gdf'); 
 		$this->ALT_POSTAREA = stristr($this->config['TEMPLATE_FILE'], 'txt');
 		

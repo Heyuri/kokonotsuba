@@ -2,10 +2,10 @@
     class mod_wf extends moduleHelper {
       private $FILTERS;
      
-      public function __construct($moduleEngine) {
-      	parent::__construct($moduleEngine);
-      	$this->FILTERS = $this->config['ModuleSettings']['FILTERS'];
-      
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);
+
+        $this->FILTERS = $this->config['ModuleSettings']['FILTERS'];
         $this->addEmojiFilters();
       }
      

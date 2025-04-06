@@ -5,9 +5,8 @@ use GeoIp2\Database\Reader;
 
 class mod_countryflags  extends moduleHelper {
 	
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-	}
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);	}
 
 	public function getModuleName(){
 		return 'mod_countryflags';

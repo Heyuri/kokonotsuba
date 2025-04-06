@@ -2,8 +2,8 @@
 class mod_rebuild extends moduleHelper {
 	private $mypage;
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);
 		
 		$this->mypage = $this->getModulePageURL();
 	}
@@ -43,18 +43,13 @@ class mod_rebuild extends moduleHelper {
 			redirect($this->mypage);
 			/* Add more things here. TODO: Add thread cache rebuilding when those are added */
 		} else {
-			$staffSession = new staffAccountFromSession;
 			$templateValues = [
 				'{$REBUILD_CHECK_LIST}' => $globalHTML->generateRebuildListCheckboxHTML($this->moduleBoardList),
 				'{$MODULE_URL}' => $this->mypage];
 
 			$htmlOutput = '';
 
-			$globalHTML->head($htmlOutput);
-			$htmlOutput .= $globalHTML->generateAdminLinkButtons();
-			$htmlOutput .= $globalHTML->drawAdminTheading($thead, $staffSession);
-			$htmlOutput .= $this->adminTemplateEngine->ParseBLock('ADMIN_REBUILD_PAGE', $templateValues);
-			$globalHTML->foot($htmlOutput);
+			$htmlOutput .= $this->adminPageRenderer->ParsePage('ADMIN_REBUILD_PAGE', $templateValues, true);
 
 			echo $htmlOutput;
 		}

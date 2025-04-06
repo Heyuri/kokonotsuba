@@ -10,9 +10,8 @@ class mod_bbcode extends moduleHelper {
 	private $supportRuby = 0; // <ruby> tag (0: not supported 1: supported)
 	private $emotes = array();
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-		
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
 		$this->emotes = array(
 			'nigra'=>$this->config['STATIC_URL'].'image/emote/nigra.gif',
 			'sage'=>$this->config['STATIC_URL'].'image/emote/sage.gif',

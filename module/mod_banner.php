@@ -1,9 +1,8 @@
 <?php
 class mod_banner extends moduleHelper {
 	private $mypage;
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-		$this->mypage = $this->getModulePageURL();
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		$this->mypage = $this->getModulePageURL();
 	}
 
 	public function getModuleName() {

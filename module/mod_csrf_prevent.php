@@ -1,9 +1,8 @@
 <?php
 class mod_csrf_prevent extends moduleHelper {
 	
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-	}
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);	}
 
 	public function getModuleName(){
 		return 'mod_csrf_prevent : 防止偽造跨站請求 (CSRF)';

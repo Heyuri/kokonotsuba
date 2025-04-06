@@ -2,9 +2,8 @@
 class mod_globalmsg extends moduleHelper {
 	private $mypage, $globalMessageFile;
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-		
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
 		$this->globalMessageFile = $this->config['ModuleSettings']['GLOBAL_TXT'];
 		if(!file_exists($this->globalMessageFile)) touch($this->globalMessageFile);
 		$this->mypage = $this->getModulePageURL();

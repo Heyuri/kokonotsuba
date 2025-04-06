@@ -1,7 +1,7 @@
 <?php
 //board class to encapsulate data gotten directly from board table
 class board implements IBoard {
-	private $databaseConnection, $postNumberTable, $templateEngine, $moduleEngine;
+	private $databaseConnection, $postNumberTable, $templateEngine;
 	private $config;
 
 	public $board_uid, $board_identifier, $board_title, $board_sub_title;
@@ -71,8 +71,6 @@ class board implements IBoard {
 	}
 
 	public function getBoardCdnDir(): ?string {
-		$this->config = $this->loadBoardConfig();
-
 		if (!is_array($this->config) || !isset($this->config['CDN_DIR'])) {
 			return null;
 		}
@@ -81,8 +79,6 @@ class board implements IBoard {
 	}
 
 	public function getBoardCdnUrl(): ?string {
-		$this->config = $this->loadBoardConfig();
-
 		if (!is_array($this->config) || !isset($this->config['CDN_URL'])) {
 			return null;
 		}
@@ -98,8 +94,6 @@ class board implements IBoard {
 	}
 
 	public function getBoardLocalUploadURL(): ?string {
-		$this->config = $this->loadBoardConfig();
-
 		if (!is_array($this->config) || !isset($this->config['WEBSITE_URL'])) {
 			return null;
 		}
@@ -108,8 +102,6 @@ class board implements IBoard {
 	}
 
 	public function getBoardUploadedFilesDirectory(): ?string {
-		$this->config = $this->loadBoardConfig();
-
 		if (!is_array($this->config)) {
 			return null;
 		}
@@ -142,8 +134,6 @@ class board implements IBoard {
 	}
 
 	public function getBoardRootURL(): ?string {
-		$this->config = $this->loadBoardConfig();
-
 		return is_array($this->config) && isset($this->config['WEBSITE_URL']) ?
 			$this->config['WEBSITE_URL'] :
 			null;
@@ -176,7 +166,7 @@ class board implements IBoard {
 			]
 		];
 
-		$this->templateEngine= new templateEngine($templateFile, $dependencies);
+		$this->templateEngine = new templateEngine($templateFile, $dependencies);
 	}
 
 	public function loadBoardConfig(): bool|array {

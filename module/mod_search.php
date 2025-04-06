@@ -3,9 +3,8 @@ class mod_search extends moduleHelper {
 	private $mypage;
 	private $THUMB_EXT = -1;
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-		
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
 		$this->THUMB_EXT = $this->config['THUMB_SETTING']['Format'];
 		$this->mypage = $this->getModulePageURL();
 	}
