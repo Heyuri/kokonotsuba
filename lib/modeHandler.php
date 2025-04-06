@@ -586,7 +586,6 @@ class modeHandler {
 		];
 
 		$template_values = [
-			'{$ADMIN_LINKS}' => $this->globalHTML->generateAdminLinkButtons(),
 			'{$ACCOUNT_LIST}' => "$accountTableList",
 			'{$CREATE_ACCOUNT}' => ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $this->adminTemplateEngine->ParseBlock('CREATE_ACCOUNT', $accountTemplateRoles) : '', # == is for PHP7 compatibility, change to === in future for PHP8
 			'{$VIEW_OWN_ACCOUNT}' => $this->adminTemplateEngine->ParseBlock('VIEW_ACCOUNT', $accountTemplateValues),
@@ -608,7 +607,6 @@ class modeHandler {
 		
 		$boardTableList = $this->globalHTML->drawBoardTable();
 		$template_values = [
-			'{$ADMIN_LINKS}' => $this->globalHTML->generateAdminLinkButtons(),
 			'{$BOARD_LIST}' => $boardTableList,
 			'{$CREATE_BOARD}' => ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $this->adminTemplateEngine->ParseBlock('CREATE_BOARD', # == is for PHP7 compatibility, change to === in future for PHP8
 				 [
