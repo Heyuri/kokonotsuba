@@ -1192,6 +1192,10 @@ caption h3 {
 	margin: 0;
 }
 
+#inputGlobalMessage {
+	width: 100%;
+}
+
 /************************ Ban management*******************************/
 
 #banForm {
