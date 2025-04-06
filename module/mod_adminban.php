@@ -7,9 +7,8 @@ class mod_adminban extends moduleHelper {
 	private string $DEFAULT_BAN_MESSAGE = '';
 	private string $mypage;
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);
 		// Ensure required configuration keys exist
 		$this->BANFILE = $this->board->getBoardStoragePath() . 'bans.log.txt';
 		$this->BANIMG = $this->config['STATIC_URL'] . "image/banned.jpg";

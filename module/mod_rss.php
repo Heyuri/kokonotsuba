@@ -16,9 +16,8 @@ class mod_rss extends moduleHelper {
 	// RSS link
 	private $SELF;
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);
 		$globalHTML = new globalHTML($this->board);
 		$this->BASEDIR = $globalHTML->fullURL();
 		switch ($this->FEED_UPDATETYPE) {

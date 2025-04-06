@@ -7,9 +7,8 @@ class mod_pushpost extends moduleHelper {
 	private $PUSH_POST_MAX_CHAR = 0;
 	private $mypage;
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);
 		$this->PUSH_POST_MAX_CHAR = $this->config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'];
 		$this->mypage = $this->getModulePageURL();
 	}

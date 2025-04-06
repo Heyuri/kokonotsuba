@@ -5,9 +5,8 @@ class mod_cat extends moduleHelper {
 	private $RESICON = -1;
 	private $THUMB_EXT = -1;
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-				
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);				
 		$this->THUMB_EXT = $this->config['THUMB_SETTING']['Format'];
 		$this->RESICON = $this->config['STATIC_URL'].'image/replies.png';
 		$this->mypage = $this->getModulePageURL();

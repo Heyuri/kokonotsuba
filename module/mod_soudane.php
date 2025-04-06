@@ -8,9 +8,8 @@ class mod_soudane extends moduleHelper {
 	private $enableScore;      // Renamed from "difference" to "score"
 	private $showScoreOnly;    // New property for showing "+" and "-" buttons only
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-		$globalHTML = new globalHTML($this->board);
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		$globalHTML = new globalHTML($this->board);
 
 		// Load settings to enable/disable each button, score display, and score-only mode
 		$this->enableYeah = $this->config['ModuleSettings']['ENABLE_YEAH'] ?? true;

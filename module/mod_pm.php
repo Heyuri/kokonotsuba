@@ -9,9 +9,8 @@ class mod_pm extends ModuleHelper {
 	private $trips;
 	private $lastno;
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);
 		$this->MESG_LOG = $this->config['ModuleSettings']['PM_DIR'].'tripmesg.log';
 		$this->MESG_CACHE = $this->config['ModuleSettings']['PM_DIR'].'tripmesg.cc';
 

@@ -10,39 +10,34 @@ abstract class moduleHelper implements IModule {
 	protected board $board;
 	protected array $config;
 	protected templateEngine $templateEngine;
-	protected templateEngine $adminTemplateEngine;
+	protected pageRenderer $pageRenderer;
+	protected pageRenderer $adminPageRenderer;
 	protected array $moduleBoardList;
 	protected array $boardList;
 	private string $className;
 
-	public function __construct(moduleEngine $moduleEngine) {
-		$boardIO = boardIO::getInstance();
-
+	public function __construct(
+		moduleEngine $moduleEngine,
+		boardIO $boardIO,
+		pageRenderer $pageRenderer,
+		pageRenderer $adminPageRenderer,
+	) {
 		$this->moduleEngine = $moduleEngine;
-		$this->moduleBoardList = $boardIO->getAllBoards();
 		$this->board = $moduleEngine->board;
-		$this->config = $moduleEngine->board->loadBoardConfig();
-		$this->templateEngine = $moduleEngine->board->getBoardTemplateEngine();
+		$this->config = $this->board->loadBoardConfig();
+		$this->templateEngine = $this->board->getBoardTemplateEngine();
+		$this->pageRenderer = $pageRenderer;
+		$this->adminPageRenderer = $adminPageRenderer;
 		$this->className = get_class($this);
+		$this->moduleBoardList = $boardIO->getAllBoards();
 		$this->boardList = $boardIO->getAllBoards();
-
-
-		$adminTemplateFile = getBackendDir().'templates/admin.tpl';
-		$dependencies = [
-			'config'	=> $this->config, // assumes config file returns an array
-			'boardData'	=> [
-				'title'		=> $this->moduleEngine->board->getBoardTitle(),
-				'subtitle'	=> $this->moduleEngine->board->getBoardSubTitle()
-			]
-		];
 	
-		$this->adminTemplateEngine = new templateEngine($adminTemplateFile, $dependencies);
-
 		// Auto-register module page
 		if (method_exists($this, 'ModulePage')) {
 			$this->moduleEngine->hookModuleMethod('ModulePage', [$this->className]);
 		}
 	}
+	
 
 	/**
 	 * Module name builder to assist with generating a consistent module name

@@ -8,9 +8,8 @@ class mod_imagemeta extends moduleHelper {
 
 	private $myPage;
 	
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-		$this->myPage = $this->getModulePageURL(); // Base position
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		$this->myPage = $this->getModulePageURL(); // Base position
 		
 		$this->enable_exif = $this->config['ModuleSettings']['EXIF_DATA_VIEWER'];
 		$this->enable_imgops = $this->config['ModuleSettings']['IMG_OPS'];

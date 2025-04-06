@@ -3,9 +3,8 @@ class mod_soudane2 extends moduleHelper {
 	private $SOUDANE_DIR = '';
 	private $mypage;
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-		
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
 		$this->SOUDANE_DIR = $this->config['STORAGE_PATH'].'soudane2/';
 		
 		$this->mypage = str_replace('&amp;', '&', $this->getModulePageURL());

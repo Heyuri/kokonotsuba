@@ -5,7 +5,7 @@ class globalHTML {
 
 	private $templateEngine, $moduleEngine;
 
-	public function __construct($board) { 
+	public function __construct(IBoard $board) { 
 		$this->board = $board;
 		$this->moduleEngine = new moduleEngine($board);
 		$this->config = $board->loadBoardConfig();

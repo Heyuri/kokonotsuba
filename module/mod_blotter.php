@@ -3,9 +3,8 @@ class mod_blotter extends moduleHelper {
 	private $mypage;
 	private $BLOTTER_PATH, $previewLimit = -1; // Path to blotter file
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-		
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
 		$this->BLOTTER_PATH = $this->config['ModuleSettings']['BLOTTER_FILE'];
 		if(!file_exists($this->BLOTTER_PATH)) touch($this->BLOTTER_PATH);
 		

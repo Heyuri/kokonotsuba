@@ -1,38 +1,56 @@
 <?php
 //Handle GET mode values for koko
 class modeHandler {
-	private $config, $board, $templateEngine, $adminTemplateEngine, $FileIO, $moduleEngine, $AccountIO, $actionLogger;
+	private array $config;
+	private board $board;
+	private templateEngine $templateEngine;
+	private templateEngine $adminTemplateEngine;
+
+	private mixed $FileIO;
+	private moduleEngine $moduleEngine;
+	private AccountIO $AccountIO;
+	private ActionLogger $actionLogger;
+
+	private pageRenderer $pageRenderer;
+	private pageRenderer $adminPageRenderer;
+	private globalHTML $globalHTML;
+
 
 	public function __construct($board) {
 		$config = $board->loadBoardConfig();
-		
+
 		$this->board = $board;
 		$this->config = $config;
-		
+		$this->globalHTML = new globalHTML($this->board);
+
 		$this->templateEngine = $board->getBoardTemplateEngine();
 
-		$adminTemplateFile = getBackendDir().'templates/admin.tpl';
+		$adminTemplateFile = getBackendDir() . 'templates/admin.tpl';
 		$dependencies = [
-			'config'	=> $this->config, // assumes config file returns an array
+			'config'	=> $this->config,
 			'boardData'	=> [
 				'title'		=> $board->getBoardTitle(),
 				'subtitle'	=> $board->getBoardSubTitle()
 			]
 		];
-	
+
 		$this->adminTemplateEngine = new templateEngine($adminTemplateFile, $dependencies);
 
+		$this->adminPageRenderer = new pageRenderer($this->adminTemplateEngine, $this->globalHTML);
+		$this->pageRenderer = new pageRenderer($this->templateEngine, $this->globalHTML);
 
 		$this->FileIO = PMCLibrary::getFileIOInstance();
 		$this->moduleEngine = new moduleEngine($board);
 		$this->AccountIO = AccountIO::getInstance();
 		$this->actionLogger = ActionLogger::getInstance();
 
-
-
-		//validate required directories 
-		if(!file_exists($board->getFullConfigPath())) die("Board's config file <i>".$board->getFullConfigPath()."</i> was not found.");
-		if(!file_exists($board->getBoardStoragePath())) die("Board's storage directory <i>".$board->getBoardStoragePath()."</i> does not exist.");
+		// Validate required directories
+		if (!file_exists($board->getFullConfigPath())) {
+			die("Board's config file <i>" . $board->getFullConfigPath() . "</i> was not found.");
+		}
+		if (!file_exists($board->getBoardStoragePath())) {
+			die("Board's storage directory <i>" . $board->getBoardStoragePath() . "</i> does not exist.");
+		}
 	}
 
 	public function handle() {
@@ -95,13 +113,11 @@ class modeHandler {
 		if ($this->moduleEngine->onlyLoad($load)) {
 			$this->moduleEngine->moduleInstance[$load]->ModulePage();
 		} else {
-			$globalHTML = new globalHTML($this->board);
-			$globalHTML->error("Module Not Found(" . htmlspecialchars($load) . ")");
+			$this->globalHTML->error("Module Not Found(" . htmlspecialchars($load) . ")");
 		}
 	}
 	
 	private function handleRebuild() {
-		$globalHTML = new globalHTML($this->board);
 		$softErrorHandler = new softErrorHandler($this->board);
 		$board = $this->board;
 
@@ -113,14 +129,13 @@ class modeHandler {
 		$board->rebuildBoard();
 		
 		header('HTTP/1.1 302 Moved Temporarily');
-		redirect($globalHTML->fullURL() . $this->config['PHP_SELF2'] . '?' . time());
+		redirect($this->globalHTML->fullURL() . $this->config['PHP_SELF2'] . '?' . time());
 	}
 
 	private function handleDefault() {
 		header('Content-Type: text/html; charset=utf-8');
 
 		$board = $this->board;
-		$globalHTML = new globalHTML($board);
 
 		$res = isset($_GET['res']) ? intval($_GET['res']) : 0;
 		$pageParam = $_GET['pagenum'] ?? null;
@@ -141,7 +156,7 @@ class modeHandler {
 						$board->rebuildBoard();
 				}
 				header('HTTP/1.1 302 Moved Temporarily');
-				header('Location: ' . $globalHTML->fullURL() . $this->config['PHP_SELF2'] . '?' . $_SERVER['REQUEST_TIME']);
+				header('Location: ' . $this->globalHTML->fullURL() . $this->config['PHP_SELF2'] . '?' . $_SERVER['REQUEST_TIME']);
 		}
 }
 
@@ -157,7 +172,6 @@ class modeHandler {
 	/* Write to post table */
 	public function regist(){
 		$PIO = PIOPDO::getInstance();
-		$globalHTML = new globalHTML($this->board);
 		$postValidator = new postValidator($this->board);
 		
 		$boardBeingPostedTo =  $this->board;
@@ -203,13 +217,13 @@ class modeHandler {
 		/* hook call */
 		$this->moduleEngine->useModuleMethods('RegistBegin', array(&$name, &$email, &$sub, &$com, array('file'=>&$upfile, 'path'=>&$upfile_path, 'name'=>&$upfile_name, 'status'=>&$upfile_status), array('ip'=>$ip, 'host'=>$host), $thread_uid)); // "RegistBegin" Hook Point
 		if($this->config['TEXTBOARD_ONLY'] == false) {
-				processFiles($boardBeingPostedTo, $postValidator, $globalHTML, $upfile, $upfile_path, $upfile_name, $upfile_status, $md5chksum, $imgW, $imgH, $imgsize, $W, $H, $fname, $ext, $age, $status, $thread_uid, $tim, $dest, $tmpfile);
+				processFiles($boardBeingPostedTo, $postValidator, $this->globalHTML, $upfile, $upfile_path, $upfile_name, $upfile_status, $md5chksum, $imgW, $imgH, $imgsize, $W, $H, $fname, $ext, $age, $status, $thread_uid, $tim, $dest, $tmpfile);
 		}
 		
 		// Check the form field contents and trim them
-		if(strlenUnicode($name) > $boardConfig['INPUT_MAX'])	$globalHTML->error(_T('regist_nametoolong'), $dest);
-		if(strlenUnicode($email) > $boardConfig['INPUT_MAX'])	$globalHTML->error(_T('regist_emailtoolong'), $dest);
-		if(strlenUnicode($sub) > $boardConfig['INPUT_MAX'])	$globalHTML->error(_T('regist_topictoolong'), $dest);
+		if(strlenUnicode($name) > $boardConfig['INPUT_MAX'])	$this->globalHTML->error(_T('regist_nametoolong'), $dest);
+		if(strlenUnicode($email) > $boardConfig['INPUT_MAX'])	$this->globalHTML->error(_T('regist_emailtoolong'), $dest);
+		if(strlenUnicode($sub) > $boardConfig['INPUT_MAX'])	$this->globalHTML->error(_T('regist_topictoolong'), $dest);
 
 		setrawcookie('namec', rawurlencode(htmlspecialchars_decode($name)), time()+7*24*3600);
 		
@@ -217,10 +231,10 @@ class modeHandler {
 		$email = str_replace("\r\n", '', $email); 
 		$sub = str_replace("\r\n", '', $sub);
 	
-		applyTripcodeAndCapCodes($boardConfig, $globalHTML, $staffSession, $name, $email, $dest);
+		applyTripcodeAndCapCodes($boardConfig, $this->globalHTML, $staffSession, $name, $email, $dest);
 		$postValidator->cleanComment($com, $upfile_status, $is_admin, $dest);
 		addDefaultText($boardConfig, $sub, $com);
-		applyPostFilters($boardConfig, $globalHTML, $com, $email);
+		applyPostFilters($boardConfig, $this->globalHTML, $com, $email);
 	
 		// Trimming label style
 		if($category && $boardConfig['USE_CATEGORY']){
@@ -299,20 +313,19 @@ class modeHandler {
 
 
 	private function drawAdminList() {
-		$globalHTML = new globalHTML($this->board);		
-		if(isset($_POST['username']) || isset($_POST['password'])) adminLogin($this->AccountIO, $globalHTML);
+		if(isset($_POST['username']) || isset($_POST['password'])) adminLogin($this->AccountIO, $this->globalHTML);
 
 		$staffSession = new staffAccountFromSession;
 		$currentRoleLevel = $staffSession->getRoleLevel();
 		$adminPageHandler = new adminPageHandler($this->board, $this->moduleEngine);
 		$admin = $_REQUEST['admin']??'';
 		$dat = '';
-		$globalHTML->head($dat);
-		$links = $globalHTML->generateAdminLinkButtons();
+		$this->globalHTML->head($dat);
+		$links = $this->globalHTML->generateAdminLinkButtons();
 		
 		$dat .= $links; //hook above bar links
 		
-		$globalHTML->drawAdminTheading($dat, $staffSession);
+		$this->globalHTML->drawAdminTheading($dat, $staffSession);
 		
 		$dat.= '<div id="adminOptionContainer" class="centerText"><form action="'.$this->config['PHP_SELF'].'" method="POST" name="adminform">';
 		$admins = array(
@@ -327,7 +340,7 @@ class modeHandler {
 			$dat.= '<label><input type="radio" name="admin" value="'.$adminmode['name'].'"'.$checked.'>'.$adminmode['label'].'</label> ';
 		}
 		if ($currentRoleLevel==$this->config['roles']['LEV_NONE']) {
-			$dat.= $globalHTML->drawAdminLoginForm()."</form>";
+			$dat.= $this->globalHTML->drawAdminLoginForm()."</form>";
 		} else {
 			$dat.= '<button type="submit" name="mode" value="admin">Submit</button></form>';
 		}
@@ -347,7 +360,7 @@ class modeHandler {
 			}
 		}
 
-		$globalHTML->foot($dat);
+		$this->globalHTML->foot($dat);
 		die($dat.'</body></html>');
 	}
 
@@ -355,7 +368,6 @@ class modeHandler {
 	private function showstatus() {
 		$PIO = PIOPDO::getInstance();
 		$staffSession = new staffAccountFromSession;
-		$globalHTML = new globalHTML($this->board);
 				
 		$countline = $PIO->postCountFromBoard($this->board); // Calculate the current number of data entries in the submitted text log file
 		$counttree = $PIO->threadCountFromBoard($this->board); // Calculate the current number of data entries in the tree structure log file
@@ -386,7 +398,7 @@ class modeHandler {
 				$piosensorInfo = nl2br(PIOSensor::info($this->board, $this->config['LIMIT_SENSOR']));
 
 		$dat = '';
-		$globalHTML->head($dat);
+		$this->globalHTML->head($dat);
 		$links = '[<a href="' . $this->config['PHP_SELF2'] . '?' . time() . '">' . _T('return') . '</a>] [<a href="' . $this->config['PHP_SELF'] . '?mode=moduleloaded">' . _T('module_info_top') . '</a>]';
 		$level = $staffSession->getRoleLevel();
 		$this->moduleEngine->useModuleMethods('LinksAboveBar', array(&$links, 'status', $level));
@@ -506,7 +518,7 @@ class modeHandler {
 </table>
 <hr>';
 
-		$globalHTML->foot($dat);
+		$this->globalHTML->foot($dat);
 		echo $dat;
 	}
 
@@ -514,10 +526,9 @@ class modeHandler {
 	/* Displays loaded module information */
 	private function listModules() {
 		$dat = '';
-		$globalHTML = new globalHTML($this->board);
 		$staffSession = new staffAccountFromSession;
 		
-		$globalHTML->head($dat);
+		$this->globalHTML->head($dat);
 
 		$roleLevel = $staffSession->getRoleLevel();
 		$links = '[<a href="' . $this->config['PHP_SELF2'] . '?' . time() . '">' . _T('return') . '</a>]';
@@ -544,7 +555,7 @@ class modeHandler {
 		$dat .= '</ul><hr>
 		</div>
 		';
-		$globalHTML->foot($dat);
+		$this->globalHTML->foot($dat);
 		echo $dat;
 	}
 
@@ -554,23 +565,16 @@ class modeHandler {
 		$authRoleLevel = $staffSession->getRoleLevel();
 		$authUsername = htmlspecialchars($staffSession->getUsername());
 		$softErrorHandler = new softErrorHandler($this->board);
-		$globalHTML = new globalHTML($this->board);
 		
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_USER']);
-		$thead = ''; 
-		$head = '';
-		$foot = '';
 		
-		$thead = $globalHTML->drawAdminTheading($thead, $staffSession);
-		$head =  $globalHTML->head($head);
-		$foot = $globalHTML->foot($foot);
-		$accountTableList = ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $globalHTML->drawAccountTable() : ''; # == is for PHP7 compatibility, change to === in future for PHP8
+		$accountTableList = ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $this->globalHTML->drawAccountTable() : ''; # == is for PHP7 compatibility, change to === in future for PHP8
 		
 		$currentAccount = $AccountIO->getAccountByID($staffSession->getUID());
 		$accountTemplateValues = [
 			'{$ACCOUNT_ID}' => htmlspecialchars($staffSession->getUID()),
 			'{$ACCOUNT_NAME}' => htmlspecialchars($authUsername),
-			'{$ACCOUNT_ROLE}' => htmlspecialchars($globalHTML->roleNumberToRoleName($authRoleLevel)),
+			'{$ACCOUNT_ROLE}' => htmlspecialchars($this->globalHTML->roleNumberToRoleName($authRoleLevel)),
 			'{$ACCOUNT_ACTIONS}' => htmlspecialchars($currentAccount->getNumberOfActions()),
 		];	
 		
@@ -582,42 +586,27 @@ class modeHandler {
 		];
 
 		$template_values = [
-			'{$HEADER}' => $head,
-			'{$ADMIN_THEADING_BAR}' => $thead,
-			'{$ADMIN_LINKS}' => $globalHTML->generateAdminLinkButtons(),
 			'{$ACCOUNT_LIST}' => "$accountTableList",
 			'{$CREATE_ACCOUNT}' => ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $this->adminTemplateEngine->ParseBlock('CREATE_ACCOUNT', $accountTemplateRoles) : '', # == is for PHP7 compatibility, change to === in future for PHP8
 			'{$VIEW_OWN_ACCOUNT}' => $this->adminTemplateEngine->ParseBlock('VIEW_ACCOUNT', $accountTemplateValues),
-			'{$FOOTER}' => $foot,
 		];
 		
-		$html = $this->adminTemplateEngine->ParseBlock('ACCOUNT_PAGE', $template_values);
+		$html = $this->adminPageRenderer->ParsePage('ACCOUNT_PAGE', $template_values, true);
 		echo $html;
 	}
 
 	private function drawBoardScreen() {
 		$staffSession = new staffAccountFromSession;
 		$authRoleLevel = $staffSession->getRoleLevel();
-		$authUsername = htmlspecialchars($staffSession->getUsername());
 		$softErrorHandler = new softErrorHandler($this->board);
-		$globalHTML = new globalHTML($this->board);
 		$boardIO = boardIO::getInstance();
 		
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
-		$thead = ''; 
-		$head = '';
-		$foot = '';
-		
-		$thead = $globalHTML->drawAdminTheading($thead, $staffSession);
-		$head =  $globalHTML->head($head);
-		$foot = $globalHTML->foot($foot);
 		
 		
-		$boardTableList = $globalHTML->drawBoardTable();
+		
+		$boardTableList = $this->globalHTML->drawBoardTable();
 		$template_values = [
-			'{$HEADER}' => $head,
-			'{$ADMIN_THEADING_BAR}' => $thead,
-			'{$ADMIN_LINKS}' => $globalHTML->generateAdminLinkButtons(),
 			'{$BOARD_LIST}' => $boardTableList,
 			'{$CREATE_BOARD}' => ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $this->adminTemplateEngine->ParseBlock('CREATE_BOARD', # == is for PHP7 compatibility, change to === in future for PHP8
 				 [
@@ -626,7 +615,6 @@ class modeHandler {
 					'{$DEFAULT_ROOT_URL}' => $this->board->getBoardRootURL(),
 					'{$DEFAULT_PATH}' => dirname(getcwd()).DIRECTORY_SEPARATOR
 				]) : '',
-			'{$FOOTER}' => $foot,
 		];
 		
 		//view board
@@ -641,7 +629,6 @@ class modeHandler {
 			$boardTitle = $board->getBoardTitle() ?? '';
 			$boardSubtitle = $board->getBoardSubTitle() ?? '';
 			$boardURL = $board->getBoardURL() ?? '';
-			$boardRootURL = $board->getBoardRootURL() ?? '';
 			$boardListed = $board->getBoardListed() ?? '';
 			$boardConfigPath = $board->getConfigFileName() ?? '';
 			$boardStorageDirectoryName = $board->getBoardStorageDirName() ?? '';
@@ -660,13 +647,13 @@ class modeHandler {
 			$template_values['{$BOARD_STORAGE_DIR}'] = $boardStorageDirectoryName;
 			$template_values['{$EDIT_BOARD_HTML}'] = $this->adminTemplateEngine->ParseBlock('EDIT_BOARD', $template_values);
 
-			$html = $this->adminTemplateEngine->ParseBlock('VIEW_BOARD', $template_values);
+			$html = $this->adminPageRenderer->ParsePage('VIEW_BOARD', $template_values, true);
 			
 			echo $html;
 			return;
 		}	
 		
-		$html = $this->adminTemplateEngine->ParseBlock('BOARD_PAGE', $template_values);
+		$html = $this->adminPageRenderer->ParsePage('BOARD_PAGE', $template_values, true);
 		echo $html;
 	}
 
@@ -674,7 +661,6 @@ class modeHandler {
 		$staffSession = new staffAccountFromSession;
 		$accountRequestHandler = new accountRequestHandler($this->board);
 		$softErrorHandler = new softErrorHandler($this->board);
-		$globalHTML = new globalHTML($this->board);
 
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_USER']);
 
@@ -694,7 +680,6 @@ class modeHandler {
 		$boardIO = boardIO::getInstance();
 		$boardPathCachingIO = boardPathCachingIO::getInstance();
 		$softErrorHandler = new softErrorHandler($this->board);
-		$globalHTML = new globalHTML($this->board);
 		
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
 
@@ -726,8 +711,8 @@ class modeHandler {
 				];
 		
 				// Validate the config file and storage directory exists
-				if (!file_exists(getBoardConfigDir() . $fields['config_name'])) $globalHTML->error("Invalid config file, doesn't exist.");
-				if (!file_exists(getBoardStoragesDir() . $fields['storage_directory_name'])) $globalHTML->error("Invalid storage directory, doesn't exist.");
+				if (!file_exists(getBoardConfigDir() . $fields['config_name'])) $this->globalHTML->error("Invalid config file, doesn't exist.");
+				if (!file_exists(getBoardStoragesDir() . $fields['storage_directory_name'])) $this->globalHTML->error("Invalid storage directory, doesn't exist.");
 				// Edit the board values in the database
 				$boardIO->editBoardValues($modifiedBoard, $fields);
 			} catch (Exception $e) {
@@ -743,11 +728,11 @@ class modeHandler {
 		
 		if (!empty($_POST['new-board'])) {
 			// Fetch and validate input
-			$boardTitle = $_POST['new-board-title'] ?? $globalHTML->error("Board title wasn't set!");
+			$boardTitle = $_POST['new-board-title'] ?? $this->globalHTML->error("Board title wasn't set!");
 			$boardSubTitle = $_POST['new-board-sub-title'] ?? '';
 			$boardIdentifier = $_POST['new-board-identifier'] ?? '';
 			$boardListed = isset($_POST['new-board-listed']) ? 1 : 0;
-			$boardPath = $_POST['new-board-path'] ?? $globalHTML->error("Board path wasn't set!");
+			$boardPath = $_POST['new-board-path'] ?? $this->globalHTML->error("Board path wasn't set!");
 
 			$fullBoardPath = $boardPath . $boardIdentifier.'/';
 			$mockConfig = getTemplateConfigArray();
@@ -758,12 +743,12 @@ class modeHandler {
 		
 			try {
 				// Create required directories
-				$createdPaths[] = createDirectoryWithErrorHandle($fullBoardPath, $globalHTML);
+				$createdPaths[] = createDirectoryWithErrorHandle($fullBoardPath, $this->globalHTML);
 		
 				$imgDir = $this->config['USE_CDN'] ? $cdnDir . $mockConfig['IMG_DIR'] : $fullBoardPath . $mockConfig['IMG_DIR'];
 				$thumbDir = $this->config['USE_CDN'] ? $cdnDir . $mockConfig['THUMB_DIR'] : $fullBoardPath . $mockConfig['THUMB_DIR'];
-				$createdPaths[] = createDirectoryWithErrorHandle($imgDir, $globalHTML);
-				$createdPaths[] = createDirectoryWithErrorHandle($thumbDir, $globalHTML);
+				$createdPaths[] = createDirectoryWithErrorHandle($imgDir, $this->globalHTML);
+				$createdPaths[] = createDirectoryWithErrorHandle($thumbDir, $this->globalHTML);
 		
 				// Create required files
 				$requireString = "\"$backendDirectory{$this->config['PHP_SELF']}\"";
@@ -772,7 +757,7 @@ class modeHandler {
 				// Create storage directory for the new board
 				$boardStorageDirectoryName = 'storage-'.$boardIO->getNextBoardUID();
 				$dataDir = getBoardStoragesDir().$boardStorageDirectoryName;
-				$createdPaths[] = createDirectoryWithErrorHandle($dataDir, $globalHTML);
+				$createdPaths[] = createDirectoryWithErrorHandle($dataDir, $this->globalHTML);
 
 				// Generate and save board configuration
 				$boardConfigName = generateNewBoardConfigFile();
@@ -787,7 +772,7 @@ class modeHandler {
 			} catch (Exception $e) {
 				// Rollback created paths in case of an error
 				rollbackCreatedPaths($createdPaths);
-				$globalHTML->error($e->getMessage());
+				$this->globalHTML->error($e->getMessage());
 			}
 		}
 		redirect($this->config['PHP_SELF'].'?mode=boards');
@@ -799,7 +784,6 @@ class modeHandler {
 		$currentBoard = $this->board;
 		$PIO = PIOPDO::getInstance();
 		$staffSession = new staffAccountFromSession;
-		$globalHTML = new globalHTML($this->board);
 		
 		$pwd = $_POST['pwd'] ?? '';
 		$pwdc = $_COOKIE['pwdc'] ?? '';
@@ -823,7 +807,7 @@ class modeHandler {
 		$delPostUIDs = [];
 		$files = [];
 
-		if (!count($delno)) $globalHTML->error(_T('del_notchecked'));
+		if (!count($delno)) $this->globalHTML->error(_T('del_notchecked'));
 	
 		$posts = $PIO->fetchPosts($delno);
 		
@@ -843,7 +827,7 @@ class modeHandler {
 			
 			$this->FileIO->deleteImagesByBoardFiles($files);
 		} else {
-			$globalHTML->error(_T('del_wrongpwornotfound'));
+			$this->globalHTML->error(_T('del_wrongpwornotfound'));
 		}
 
 		$currentBoard->rebuildBoard();
@@ -885,16 +869,16 @@ class modeHandler {
 		];
 
 
-		$globalHTML = new globalHTML($this->board);
+		
 		$overboard = new overboard($this->board);
 
 		$html = '';
 
 		$overboard->drawOverboardHead($html, 0);
-		$globalHTML->drawOverboardFilterForm($html, $this->board);
-		$html .= $overboard->drawOverboardThreads($filters, $globalHTML);	
+		$this->globalHTML->drawOverboardFilterForm($html, $this->board);
+		$html .= $overboard->drawOverboardThreads($filters, $this->globalHTML);	
 		
-		$globalHTML->foot($html, 0);
+		$this->globalHTML->foot($html, 0);
 		echo $html;
 	}
 	

@@ -5,9 +5,8 @@ Mod_Readonly - Add this to the boards config to make it admin-only
 class mod_readonly extends moduleHelper {
 	private $ALLOWREPLY, $MINIMUM_ROLE = false; // Allow replies
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);
 		$this->ALLOWREPLY = $this->config['ModuleSettings']['ALLOW_REPLY'];
 		$this->MINIMUM_ROLE = $this->config['ModuleSettings']['MINIMUM_ROLE'];
 	}

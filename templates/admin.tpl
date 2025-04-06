@@ -1,12 +1,8 @@
 
 <!--&ACCOUNT_PAGE-->
-	{$HEADER}
-	{$ADMIN_LINKS}
-	{$ADMIN_THEADING_BAR}
 	{$VIEW_OWN_ACCOUNT}
 	{$CREATE_ACCOUNT}
 	<!--&IF($ACCOUNT_LIST,'<h3>Staff list</h3>{$ACCOUNT_LIST}','')-->
-	{$FOOTER}
 <!--/&ACCOUNT_PAGE-->
 
 <!--&VIEW_ACCOUNT-->
@@ -74,14 +70,10 @@
 <!--/&CREATE_ACCOUNT-->
 
 <!--&BOARD_PAGE-->
-{$HEADER}
-	{$ADMIN_LINKS}
-	{$ADMIN_THEADING_BAR}
 	<h2>Create a new board</h2>
 	{$CREATE_BOARD}
 	<h2>Boards</h2>
 	{$BOARD_LIST}
-{$FOOTER}
 <!--/&BOARD_PAGE-->
 
 <!--&CREATE_BOARD-->
@@ -166,9 +158,6 @@
 <!--/&EDIT_BOARD-->
 
 <!--&VIEW_BOARD-->
-{$HEADER}
-{$ADMIN_LINKS}
-{$ADMIN_THEADING_BAR}
 	[<a id="board-back-button" href="{$PHP_SELF}?mode=boards">Back to board list</a>]
 	<h2>Board</h2>
 		<table  id="board-view-table">
@@ -213,7 +202,6 @@
 	</table>
 	
 	{$EDIT_BOARD_HTML}
-{$FOOTER}
 <!--/&VIEW_BOARD-->
 
 <!--&ADMIN_REBUILD_PAGE-->

@@ -4,9 +4,8 @@ class mod_janitor extends moduleHelper {
 	private $BANFILE = -1;
 	private $mypage;
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-		
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
 		$this->BANFILE = $this->board->getBoardStoragePath() . 'bans.log.txt';
 		$this->mypage = $this->getModulePageURL();
 		touch($this->BANFILE);

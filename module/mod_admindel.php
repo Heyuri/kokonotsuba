@@ -6,9 +6,8 @@ class mod_admindel extends moduleHelper {
 	private $JANIMUTE_REASON = '';
 	private $mypage;
 
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-		
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
 		$this->BANFILE = $this->board->getBoardStoragePath() . 'bans.log.txt';
 		$this->JANIMUTE_LENGTH = $this->config['ModuleSettings']['JANIMUTE_LENGTH'];
 		$this->JANIMUTE_REASON = $this->config['ModuleSettings']['JANIMUTE_REASON'];

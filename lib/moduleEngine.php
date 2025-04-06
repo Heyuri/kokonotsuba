@@ -15,7 +15,7 @@
 	public board $board;
 
 	/* Constructor */
-	public function __construct(board $board, array $ENV = []) {
+	public function __construct(IBoard $board, array $ENV = []) {
 		$this->loaded = false; // Has the modules and hooks been loaded
 		$this->board = $board; // Board page is loaded from
 		
@@ -101,7 +101,27 @@
 	
 				// Track it
 				$this->moduleLists[] = $moduleFileName;
-				$this->moduleInstance[$moduleFileName] = new $moduleFileName($this);
+
+				$adminTemplatePath = getBackendDir() . 'templates/admin.tpl';
+
+				$dependencies = [
+					'config' => $this->board->loadBoardConfig()
+				];
+			
+				$adminTemplateEngine = new templateEngine($adminTemplatePath, $dependencies);
+			
+				$globalHTML = new globalHTML($this->board);
+				$boardPageRenderer = new pageRenderer($this->board->getBoardTemplateEngine(), $globalHTML);
+				$adminPageRenderer = new pageRenderer($adminTemplateEngine, $globalHTML);
+				$boardIOInstance = boardIO::getInstance();
+			
+				$this->moduleInstance[$moduleFileName] = new $moduleFileName(
+					$this,
+					$boardIOInstance,
+					$boardPageRenderer,
+					$adminPageRenderer,
+				);
+			
 			}
 		}
 	}	

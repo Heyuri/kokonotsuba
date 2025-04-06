@@ -2,9 +2,8 @@
 class mod_showip extends moduleHelper {
 	private $IPTOGGLE = -1;
 	
-	public function __construct($moduleEngine) {
-		parent::__construct($moduleEngine);
-		$this->IPTOGGLE = $this->config['ModuleSettings']['IPTOGGLE'];
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		$this->IPTOGGLE = $this->config['ModuleSettings']['IPTOGGLE'];
 	}
 
 	public function getModuleName(){
