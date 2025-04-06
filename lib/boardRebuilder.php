@@ -8,6 +8,7 @@ class boardRebuilder {
     private mixed $postRedirectIO;
     private moduleEngine $moduleEngine;
     private mixed $PIO;
+	private mixed $actionLogger;
     private staffAccountFromSession $staffSession;
 	private templateEngine $templateEngine;
 
@@ -19,6 +20,7 @@ class boardRebuilder {
 		$this->moduleEngine = new moduleEngine($board);
 		$this->staffSession = new staffAccountFromSession;
         $this->PIO = PIOPDO::getInstance();
+		$this->actionLogger = actionLogger::getInstance();
 		$this->FileIO = PMCLibrary::getFileIOInstance();
 		$this->postRedirectIO = postRedirectIO::getInstance();
 
@@ -44,7 +46,7 @@ class boardRebuilder {
 
 	}
 
-    public function rebuildBoardHtml(int $resno = 0, mixed $pagenum = -1, bool $single_page = false, int $last = -1): void {
+    public function rebuildBoardHtml(int $resno = 0, mixed $pagenum = -1, bool $single_page = false, int $last = -1, bool $logRebuild = false): void {
 		$roleLevel = $this->staffSession->getRoleLevel();
 		$adminMode = $roleLevel >=$this->config['roles']['LEV_JANITOR'] && $pagenum != -1 && !$single_page; // Front-end management mode
 		$thread_uid = $this->PIO->resolveThreadUidFromResno($this->board, $resno);
@@ -258,17 +260,23 @@ class boardRebuilder {
 			if($single_page || ($pagenum == -1 && !$resno)){ // Static cache page generation
 				if($page==0) $logfilename = $this->config['PHP_SELF2'];
 				else $logfilename = $page.$this->config['PHP_EXT'];
-				$fp = fopen($logfilename, 'w');
+
+				$prefix = $this->board->getBoardCachedPath();
+				$logFilePath = $prefix.$logfilename;
+
+				$fp = fopen($logFilePath, 'w');
 				stream_set_write_buffer($fp, 0);
 				fwrite($fp, $dat);
 				fclose($fp);
-				chmod($logfilename, 0666);
+				chmod($logFilePath, 0666);
 				if($this->config['STATIC_HTML_UNTIL'] != -1 && $this->config['STATIC_HTML_UNTIL']==$page) break; // Page Limit
 			}else{ // PHP output (responsive mode/regular dynamic output)
 				echo $dat;
 				break;
 			}
 		}
+
+		if($logRebuild) $this->actionLogger->logAction("Rebuilt board: ".$this->board->getBoardTitle().' ('.$this->board->getBoardUID().')', $this->board->getBoardUID());
 	}
 	
 }

@@ -26,7 +26,7 @@
 		// Default environment values
 		$defaultENV = array(
 			'MODULE.PATH' => getBackendDir().'module/',
-			'MODULE.PAGE' =>  $config['PHP_SELF'].'?mode=module&amp;load=',
+			'MODULE.PAGE' =>  $config['PHP_SELF'].'?mode=module&load=',
 			'MODULE.LOADLIST' => $moduleList,
 		);
 

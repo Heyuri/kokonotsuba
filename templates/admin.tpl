@@ -215,3 +215,12 @@
 	{$EDIT_BOARD_HTML}
 {$FOOTER}
 <!--/&VIEW_BOARD-->
+
+<!--&ADMIN_REBUILD_PAGE-->
+	<h2>Rebuild</h2>
+	<h3>Boards</h3>
+	<form action="{$MODULE_URL}" method="POST">
+		{$REBUILD_CHECK_LIST}
+		<button name="formSubmit" value="save">Submit</button>
+	</form>
+<!--/&ADMIN_REBUILD_PAGE-->
