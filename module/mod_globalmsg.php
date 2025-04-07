@@ -33,9 +33,7 @@ class mod_globalmsg extends moduleHelper {
 	}
 
 	public function autoHookLinksAboveBar(&$link, $pageId, $level) {
-		$staffSession = new staffAccountFromSession;
-		
-		if ($staffSession->getRoleLevel() < $this->config['roles']['LEV_ADMIN'] || $pageId != 'admin') return;
+		if ($level < $this->config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE'] || $pageId != 'admin') return;
 		$link .= '[<a title="Manage the global warning/message that will appear across all boards" href="'.$this->mypage.'">Manage global message</a>] ';
 	}
 
@@ -44,59 +42,24 @@ class mod_globalmsg extends moduleHelper {
 	}
 
 	public function ModulePage() {
-		$globalHTML = new globalHTML($this->board);
-		$staffSession = new staffAccountFromSession;
 		$softErrorHandler = new softErrorHandler($this->board);
-		$softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
+		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE']);
 	
-		$pageHTML = '';
-		$success = '';
 		$action = $_GET['action'] ?? '';
 
 		if ($action === 'setmessage' && isset($_POST['submit'])) {
-			
-			$message = isset($_POST['content']) ? $_POST['content'] : '';
-			$result = $this->writeToGlobalMsg($message);
+			$message = $_POST['content'] ?? '';
+			$this->writeToGlobalMsg($message);
 			$this->board->rebuildBoard();
 		}
 
-		$currentMessage = $this->getCurrentGlobalMsg();
+		$templateValues = [
+			'{$CURRENT_GLOBAL_MESSAGE}' => $this->getCurrentGlobalMsg(),
+			'{$MODULE_URL}' => $this->mypage
+		];
+		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBALMSG_PAGE', $templateValues, true);
 		
-		$returnButton = $globalHTML->generateAdminLinkButtons();
-		
-		$adminGlobalMessageForm = '
-			<h3>Edit global message</h3>
-			<form action="'.$this->mypage.'&action=setmessage" method="post">
-				<table cellpadding="1" cellspacing="1" id="postform_tbl" style="margin: 0px auto; text-align: left;">
-					<tbody>
-						<tr>
-							<td class="postblock" style="min-width:9em"><label for="inputGlobalMessage">Global message<div>(raw HTML)</div></label></td>
-							<td style="width:100%"><textarea name="content" id="inputGlobalMessage">'.$currentMessage.'</textarea></td>
-						</tr>
-					</tbody>
-				</table>
-				<div class="centerText">
-					<input type="submit" name="submit" value="Submit">
-				</div>
-			</form>';
-		
-		$currentPreview = '
-			<h3>Current global message</h3>
-			<hr>
-			<div id="globalMessagePreviewCurrent">
-				<div id="globalmsg">
-					'.$currentMessage.'
-				</div>
-			</div>
-			<hr>';
-		//assemble page output
-		$globalHTML->head($pageHTML);
-		$pageHTML .= $returnButton;
-		$globalHTML->drawAdminTheading($pageHTML, $staffSession);
-		$pageHTML .= $adminGlobalMessageForm.$currentPreview;
-		$globalHTML->foot($pageHTML);
-		
-		echo $pageHTML;
+		echo $htmlOutput;
 	}
 }
 
