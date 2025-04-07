@@ -291,3 +291,4 @@ $config['AuthLevels']['CAN_LOCK'] = $config['roles']['LEV_JANITOR'];
 $config['AuthLevels']['CAN_STICKY'] = $config['roles']['LEV_MODERATOR'];
 $config['AuthLevels']['CAN_AUTO_SAGE'] = $config['roles']['LEV_MODERATOR'];
 $config['AuthLevels']['CAN_MANAGE_REBUILD'] = $config['roles']['LEV_MODERATOR'];
+$config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE'] = $config['roles']['LEV_ADMIN'];
