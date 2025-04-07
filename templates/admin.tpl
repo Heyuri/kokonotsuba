@@ -212,3 +212,33 @@
 		<button name="formSubmit" value="save">Submit</button>
 	</form>
 <!--/&ADMIN_REBUILD_PAGE-->
+
+
+
+
+
+<!--&GLOBALMSG_PAGE-->
+	<h3>Edit global message</h3>
+	<form action="{$MODULE_URL}&action=setmessage" method="post">
+		<table cellpadding="1" cellspacing="1" id="postform_tbl" style="margin: 0px auto; text-align: left;">
+			<tbody>
+				<tr>
+					<td class="postblock" style="min-width:9em"><label for="inputGlobalMessage">Global message<div>(raw HTML)</div></label></td>
+					<td style="width:100%"><textarea name="content" id="inputGlobalMessage">{$CURRENT_GLOBAL_MESSAGE}</textarea></td>
+				</tr>
+			</tbody>
+		</table>
+		<div class="centerText">
+			<input type="submit" name="submit" value="Submit">
+		</div>
+	</form>
+		
+	<h3>Current global message</h3>
+	<hr>
+	<div id="globalMessagePreviewCurrent">
+		<div id="globalmsg">
+			{$CURRENT_GLOBAL_MESSAGE}
+		</div>
+	</div>
+	<hr>
+<!--/&GLOBALMSG_PAGE-->
