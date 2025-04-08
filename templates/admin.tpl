@@ -323,3 +323,130 @@
 		</tbody>
 	</table>
 <!--/&BLOTTER_PAGE-->
+
+<!--&ADMIN_BAN_FORM-->
+	<h3>Add a ban</h3>
+	
+	<form method="POST" action="{$MODULE_URL}">
+		<table id="banForm">
+			<tbody>
+				<input type="hidden" name="adminban-action" value="add-ban">
+				<tr>
+					<td class="postblock"><label for="post_number">Post number</label></td>
+					<td><span id="post_number">{$POST_NUMBER}</span></td>
+					<td><input type="hidden" name="post_uid" id="post_uid" value="{$POST_UID}"></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="ip">IP address</label></td>
+					<td><input type="text" id="ip" name="ip" placeholder="Enter IP address" value="{$IP}" required></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="duration">Ban duration</label></td>
+					<td><input type="text" id="duration" name="duration" value="1d" placeholder="e.g., 1d, 2h" required> <small>Examples: 1w = 1 week, 2d = 2 days, 3h = 3 hours</small></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="reason">Reason for ban</label></td>
+					<td><textarea id="reason" name="privmsg" rows="4" cols="50" placeholder="Enter reason for the ban"></textarea></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="banmsg">Public ban message</label></td>
+					<td><textarea id="banmsg" name="banmsg" rows="4" cols="50">{$DEFAULT_BAN_MESSAGE}</textarea></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="global">Global ban</label></td>
+					<td><input type="checkbox" id="global" name="global"></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="public">Public ban</label></td>
+					<td><input type="checkbox" id="public" name="public"></td>
+				</tr>
+			</tbody>
+		</table>
+		<div id="bigredbuttonContainer">
+			<input id="bigredbutton" type="submit" value="BAN!">
+		</div>
+	</form>
+	<script>
+var trolls = Array(
+	"Hatsune Miku is nothing more than an overated normie whore.",
+	"HAHA NIGGER MODS DELETING POSTS THEY CAN'T TAKE CRITICISM LITERALLY YANDERE DEV OF IMAGE BOARDS",
+	"You're imposing on muh freedoms of speech! See you in court, buddy.",
+	"Being gay is okay.",
+	"<span class=\"unkfunc\">&gt;Soooooooooooy</span>",
+	"I know where you live.<br>I watch everything you do.<br>I know everything about you and I am coming!",
+	"Ooooh muh god! qLiterally can't even!<br>I didn't even break any of the rules and I was banned?!",
+	"Unrestricted access to the internet is a human right.",
+	"get live Child Pizza at http:/jbbait.gov<br>get live Child Pizza at http:/jbbait.gov<br>get live Child Pizza at http:/jbbait.gov<br>get live Child Pizza at http:/jbbait.gov",
+	"<span class=\"unkfunc\">&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br></span>"
+);
+var troll = trolls[Math.floor(Math.random()*trolls.length)];
+
+function updatepview(event=null) {
+	var msg = document.getElementById("banmsg");
+	var pview = document.getElementById("msgpview");
+	pview.innerHTML = troll+msg.value;
+}
+
+window.onload = function () {
+	var msg = document.getElementById("banmsg");
+	msg.insertAdjacentHTML("afterend", '<br>Preview:<br><table><tbody><tr><td class="reply"><div id="msgpview" class="comment"></div></td></tr></tbody></table>');
+	msg.oninput = updatepview;
+	updatepview();
+}
+			</script>
+<!--/&ADMIN_BAN_FORM-->
+
+<!--&ADMIN_BAN_ROW-->
+	<tr>
+		<td class="colDel"><input type="checkbox" name="{$CHECKBOX_NAME}" value="on" /></td>
+		<td class="colPattern">{$IP}</td>
+		<td class="colStart">{$START}</td>
+		<td class="colEnd">{$EXPIRES}</td>
+		<td class="colReason">{$REASON}</td>
+	</tr>
+<!--/&ADMIN_BAN_ROW-->
+
+<!--&ADMIN_BAN_TABLE-->
+	<h4>{$TITLE}</h4>
+	<form method="POST" action="{$MODULE_URL}">
+		<input type="hidden" name="adminban-action" value="delete-ban">
+		<div id="banTableContainer">
+			<table class="postlists" id="banTable">
+				<thead>
+					<tr>
+						<th>Remove</th>
+						<th>IP address</th>
+						<th>Start time</th>
+						<th>Expiration time</th>
+						<th>Reason</th>
+					</tr>
+				</thead>
+				<tbody>
+					<!--&FOREACH($ROWS,'ADMIN_BAN_ROW')-->
+				</tbody>
+			</table>
+		</div>
+		<div id="revokeButtonContainer">
+			<button type="submit" id="revokeButton">Remove selected</button>
+		</div>
+	</form>
+<!--/&ADMIN_BAN_TABLE-->
+
+<!--&ADMIN_BAN_MANAGEMENT_PAGE-->
+	<!--&ADMIN_BAN_FORM/-->
+	<h3>Active bans</h3>
+	<!--&FOREACH($TABLES,'ADMIN_BAN_TABLE')-->
+<!--/&ADMIN_BAN_MANAGEMENT_PAGE-->
+
+<!--&BAN_PAGE-->
+	<div>[<a href="{$RETURN_URL}">Return</a>]</div>
+	<h2 id="banHeading" class="centerText">You have been {$BAN_TYPE}! ヽ(ー_ー )ノ</h2>
+	<div id="banScreen">
+		<div id="banScreenText">
+			<p>{$REASON}</p>
+			{$BAN_DETAIL}
+		</div>
+		<img id="banimg" src="{$BAN_IMAGE}" alt="BANNED!">
+	</div>
+	<hr id="hrBan">
+<!--/&BAN_PAGE-->
