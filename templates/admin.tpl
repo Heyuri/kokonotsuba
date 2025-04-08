@@ -242,3 +242,84 @@
 	</div>
 	<hr>
 <!--/&GLOBALMSG_PAGE-->
+
+<!--&BLOTTER_ADMIN_PAGE_TABLE_BLOCK-->
+	<tr>
+		<td>{$DATE}</td>
+		<td>{$COMMENT}</td>
+		<td><input type="checkbox" name="entrydelete[]" value="{$UID}"></td>
+	</tr>
+<!--/&BLOTTER_ADMIN_PAGE_TABLE_BLOCK-->
+
+<!--&BLOTTER_ADMIN_PAGE-->
+	<h2>Manage blotter</h2>
+	<form action="{$MODULE_URL}" method='post'>
+		<table class="formtable centerBlock">
+			<tbody>
+				<tr>
+					<td class='postblock'><label for='new_blot_txt'>Blotter entry</label></td>
+					<td><textarea id='new_blot_txt' class='inputtext' name='new_blot_txt' cols='30' rows='5' ></textarea></td>
+				</tr>
+			</tbody>
+		</table>
+		<div class="centerText">
+			<input type='submit' name='submit' value='Submit'>
+		</div>
+	</form>
+	<hr>
+
+	<form id="blotterdeletionform" action="{$MODULE_URL}" method="POST">
+		<table class="postlists" id="blotterlist">
+			<thead>
+				<tr>
+					<th>Date</th>
+					<th>Entry</th>
+					<th>Del</th>
+				</tr>
+			</thead>
+			<tbody>
+				<!--&FOREACH($ROWS,'BLOTTER_ADMIN_PAGE_TABLE_BLOCK')-->
+			</tbody>
+		</table>
+			<div class="centerText">
+				<input value="Submit" name="delete_submit" type="submit">
+			</div>
+<!--/&BLOTTER_ADMIN_PAGE-->
+
+<!--&BLOTTER_PREVIEW_ITEM-->
+	<li class="blotterListItem">
+		<span class="blotterDate">{$DATE}</span> - <span class="blotterMessage">{$COMMENT}</span>
+	</li>
+<!--/&BLOTTER_PREVIEW_ITEM-->
+
+<!--&BLOTTER_PREVIEW-->
+	<ul id="blotter">
+		<!--&FOREACH($ENTRIES,'BLOTTER_PREVIEW_ITEM')-->
+		<!--&IF($EMPTY,'<li>- No blotter entries -</li>','')-->
+		<li class="blotterListShowAll">[<a href="{$MODULE_URL}">Show All</a>]</li>
+	</ul>
+<!--/&BLOTTER_PREVIEW-->
+
+<!--&BLOTTER_TABLE_ROW-->
+	<tr>
+		<td>{$DATE}</td>
+		<td>{$COMMENT}</td>
+	</tr>
+<!--/&BLOTTER_TABLE_ROW-->
+
+<!--&BLOTTER_PAGE-->
+	[<a href="{$PHP_SELF2}">Return</a>] 
+	<h2 class="theading3">Blotter</h2>
+	<table class="postlists" id="blotterlist">
+		<thead>
+			<tr>
+				<th>Date</th>
+				<th>Entry</th>
+			</tr>
+		</thead>
+		<tbody>
+			<!--&FOREACH($ROWS,'BLOTTER_TABLE_ROW')-->
+			<!--&IF($EMPTY,'<tr><td colspan="2">No entries</td></tr>','')-->
+		</tbody>
+	</table>
+<!--/&BLOTTER_PAGE-->
