@@ -37,30 +37,31 @@ class mod_blotter extends moduleHelper {
 		return $data;
 	}
 
-	private function drawBlotterTable(&$html) {
+	private function drawBlotterTable() {
+		$globalHTML = new globalHTML($this->board);
 		$blotterData = $this->getBlotterFileData();
-		
+
 		usort($blotterData, function($a, $b) {
-			return strtotime($b['date']) - strtotime($a['date']);
+				return strtotime($b['date']) - strtotime($a['date']);
 		});
 
-		$html .= '<table class="postlists" id="blotterlist">';
-		$html .= '<thead>';
-		$html .= '<th>Date</th>
-							<th>Entry</th>';
-		$html .= '</thead>';
-		$html .= '<tbody>';
+		$rows = [];
 		foreach ($blotterData as $entry) {
-			$html .= "<tr><td>{$entry['date']}</td> <td>{$entry['comment']}</td></tr>";
+				$rows[] = [
+						'{$DATE}' => $entry['date'],
+						'{$COMMENT}' => $entry['comment'],
+				];
 		}
-		$html .= '</tbody>';
-		$html .= '</table>';
+
+		$templateValues = [
+				'{$ROWS}' => $rows,
+				'{$EMPTY}' => empty($rows),
+		];
+
+		return $this->adminPageRenderer->ParsePage('BLOTTER_PAGE', $templateValues);
 	}
 
-	private function drawBlotterPage(&$html) {
-		$html .= "<h2 class=\"theading2\">Blotter</h2>";
-		$this->drawBlotterTable($html);
-	}
+
 
 	private function deleteBlotterEntries($uidsToDelete) {
 		$blotterData = $this->getBlotterFileData();
@@ -78,66 +79,24 @@ class mod_blotter extends moduleHelper {
 			$this->board->rebuildBoard();
 	}
 
-	private function drawAdminBlotterTable(&$html) {
+	private function prepareAdminBlotterPlaceHolders() {
 		$blotterData = $this->getBlotterFileData();
 
 		usort($blotterData, function($a, $b) {
 			return strtotime($b['date']) - strtotime($a['date']);
 		});
 
-		$html .= '
-			<form id="blotterdeletionform" action="'.$this->mypage.'" method="POST">
-				<table class="postlists" id="blotterlist">
-					<thead>
-						<tr>
-							<th>Date</th>
-							<th>Entry</th>
-							<th>UID</th>
-							<th>Del</th>
-						</tr>
-					</thead>
-					<tbody>';
-		foreach ($blotterData as $entry) {
-			$html .= "
-						<tr>
-							<td>{$entry['date']}</td>
-							<td>{$entry['comment']}</td>
-							<td>{$entry['uid']}</td>
-							<td><input type=\"checkbox\" id=\"blotterdeletecheckbox\" name=\"entrydelete[]\" value=\"{$entry['uid']}\"></td>
-						</tr>";
+		$blotterPlaceholders = ['{$MODULE_URL}' => $this->mypage];
+		foreach($blotterData as $blotterEntry) {
+			$blotterPlaceholders['{$ROWS}'][] = [
+				'{$DATE}' => $blotterEntry['date'],
+				'{$COMMENT}' => $blotterEntry['comment'],
+				'{$UID}' => $blotterEntry['uid'],
+			];
 		}
-		$html .= '
-					</tbody>
-				</table>
-				<div class="centerText">
-					<input type="submit" name="delete_submit" value="Delete Selected">
-				</div>
-			</form>';
+		return $blotterPlaceholders;
 	}
 
-	private function drawBlotterAdminForm(&$html) {
-		$html .= "
-			<h2 class=\"theading3\">Manage blotter</h2>
-			<form action=\"".$this->mypage."\" method='post'>
-				<table class=\"formtable centerBlock\">
-					<tbody>
-						<tr>
-							<td class='postblock'><label for='new_blot_txt'>Blotter entry</label></td>
-							<td><textarea id='new_blot_txt' class='inputtext' name='new_blot_txt' cols='30' rows='5' ></textarea></td>
-						</tr>
-					</tbody>
-				</table>
-				<div class=\"centerText\">
-					<input type='submit' name='submit' value='Submit'>
-				</div>
-			</form>
-			<hr>";
-	}
-
-	private function drawBlotterAdminPage(&$html) {
-		$this->drawBlotterAdminForm($html);
-		$this->drawAdminBlotterTable($html);
-	}
 
 	private function writeToBlotterFile($comment, $date, $uid) {
 		$escapedComment = preg_replace('/<>/', '&lt;&gt;', $comment);
@@ -156,27 +115,32 @@ class mod_blotter extends moduleHelper {
 	}
 
 	public function autoHookLinksAboveBar(&$link, $pageId, $level) {
-		$staffSession = new staffAccountFromSession;
-		
-		$roleLevel = $staffSession->getRoleLevel();
-		if ($roleLevel < $this->config['roles']['LEV_ADMIN']) return;
+		if ($level < $this->config['AuthLevels']['CAN_EDIT_BLOTTER']) return;
 		
 		$link.= '[<a href="'.$this->mypage.'">Manage blotter</a>] ';
 	}
 
 	public function autoHookBlotterPreview(&$html) {
-		$html .= "<ul id=\"blotter\">";
-		
 		$blotterData = $this->getBlotterFileData();
-		if(empty($blotterData)) $html .= '<li>- No blotter entries -</li>';
-		foreach($blotterData as $key=>$entry) {
-			if($key > $this->previewLimit - 1) break;
-			$html .= '<li class="blotterListItem"><span class="blotterDate">' . $entry['date'] . '</span> - <span class="blotterMessage">' . $entry['comment'] . '</span></li>';
-		}
-		$html .= '<li class="blotterListShowAll">[<a href="'.$this->mypage.'">Show All</a>]</li>';
+		$previewEntries = [];
 
-		$html .= '</ul>'; //close tags 
+		foreach ($blotterData as $i => $entry) {
+				if ($i >= $this->previewLimit) break;
+				$previewEntries[] = [
+						'{$DATE}' => $entry['date'],
+						'{$COMMENT}' => $entry['comment'],
+				];
+		}
+
+		$templateValues = [
+				'{$MODULE_URL}' => $this->mypage,
+				'{$ENTRIES}' => $previewEntries,
+				'{$EMPTY}' => empty($previewEntries),
+		];
+
+		$html .= $this->adminPageRenderer->ParseBlock('BLOTTER_PREVIEW', $templateValues);
 	}
+
 
 	public function ModulePage() {
 		$globalHTML = new globalHTML($this->board);
@@ -186,21 +150,16 @@ class mod_blotter extends moduleHelper {
 		$returnButton = $globalHTML->generateAdminLinkButtons();
 		
 		//If a regular user, draw blotter page
-		if ($roleLevel < $this->config['roles']['LEV_ADMIN']) {
-			$pageHTML = '';
+		if ($roleLevel < $this->config['AuthLevels']['CAN_EDIT_BLOTTER']) {
+			$htmlOutput = '';
+			$htmlOutput .= $this->drawBlotterTable();
 			
-			$globalHTML->head($pageHTML);
-			$pageHTML .= $returnButton;
-			$globalHTML->drawAdminTheading($dat, $staffSession);
-			$this->drawBlotterPage($pageHTML);
-			$globalHTML->foot($pageHTML);
-			
-			echo $pageHTML;
+			echo $htmlOutput;
 			return;
 		}
 		
 		// Admin panel to manage blotter
-		if ($_SERVER['REQUEST_METHOD'] == 'POST' && $roleLevel >= $this->config['roles']['LEV_ADMIN']) {
+		if ($_SERVER['REQUEST_METHOD'] == 'POST' && $roleLevel >= $this->config['AuthLevels']['CAN_EDIT_BLOTTER']) {
 			if (!empty($_POST['new_blot_txt'])) {
 				$this->handleBlotterAddition();
 			}
@@ -209,15 +168,10 @@ class mod_blotter extends moduleHelper {
 				$this->deleteBlotterEntries($_POST['entrydelete']);
 			}
 		}
-
-		$pageHTML = '';
-
-		$globalHTML->head($pageHTML);
-		$pageHTML .= $returnButton;
-		$globalHTML->drawAdminTheading($dat, $staffSession);
-		$this->drawBlotterAdminPage($pageHTML);
-		$globalHTML->foot($pageHTML);
-		echo $pageHTML;
+	
+		$templateValues = $this->prepareAdminBlotterPlaceHolders();
+		$htmlOutput = $this->adminPageRenderer->ParsePage('BLOTTER_ADMIN_PAGE', $templateValues, true);
+		echo $htmlOutput;
 	}
 }
 ?>
