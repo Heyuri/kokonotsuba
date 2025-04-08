@@ -23,4 +23,13 @@ class pageRenderer {
 
 		return $htmlOutput;
 	}
+
+	/* parse block - so you dont need to call an instance of templateEngine on its own when using pageRenderer */
+	public function ParseBlock(string $templateBlock = '', array $templateValues = array()) {
+		$htmlOutput = '';
+
+		$htmlOutput .= $this->templateEngine->ParseBlock($templateBlock, $templateValues);
+	
+		return $htmlOutput;
+	}
 }
