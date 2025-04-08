@@ -38,7 +38,6 @@ class mod_blotter extends moduleHelper {
 	}
 
 	private function drawBlotterTable() {
-		$globalHTML = new globalHTML($this->board);
 		$blotterData = $this->getBlotterFileData();
 
 		usort($blotterData, function($a, $b) {
