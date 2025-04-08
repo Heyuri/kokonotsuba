@@ -302,50 +302,6 @@ class globalHTML {
 		return $listHTML;
 	}
 	
-	public function drawThreadMoveForm(&$dat, $url) {
-		$PIO = PIOPDO::getInstance();
-		$boardIO = boardIO::getInstance();
-
-		$thread_uid = $_GET['thread_uid'] ?? null;
-		if(!$thread_uid) $this->error("No thread uid selected");
-
-		$threadNumber = $PIO->resolveThreadNumberFromUID($thread_uid);
-
-		$thread = $PIO->getThreadByUID($thread_uid);
-		$threadParentBoard = $boardIO->getBoardByUID($thread['boardUID']); 
-		
-		$boardRadioHTML = $this->generateBoardListRadioHTML($threadParentBoard);
-
-
-
-		$dat .= '<form id="thread-move-form" method="POST" action="'.$url.'">
-					<input type="hidden" name="">
-					<input type="hidden" name="move-thread-uid" value="'.htmlspecialchars($thread_uid).'">
-					<input type="hidden" name="move-thread-board-uid" value="'.$threadParentBoard->getBoardUID().'">
-					<table>
-						<tbody>
-							<tr>
-								<td class="postblock"><label for="move-thread-num">Thread Number</label></td>
-								<td><span id="move-thread-num">'. $threadNumber.'</span></td>
-							</tr>
-							<tr>
-								<td class="postblock"><label for="move-thread-board">Thread\'s current board</label></td>
-								<td><span id="move-thread-board">'. htmlspecialchars($threadParentBoard->getBoardTitle()).' ('.$threadParentBoard->getBoardUID().')</span></td>
-							</tr>
-						<tr id="boardrow">
-							<td class="postblock">Boards</label></td>
-							<td>
-								'.$boardRadioHTML.'
-							</td>
-						</tr>
-						<tr>
-							<td class="postblock"></td>
-							<td><button type="submit" name="move-thread-submit" value="move it!">Move thread</button></td>
-						</tr>
-					</tbody>
-				</table>
-		</form>';
-	}
 
 	public function drawPushPostForm(&$dat, $pushPostCharacterLimit,  $url) {
 		$PIO = PIOPDO::getInstance();
@@ -745,7 +701,7 @@ class globalHTML {
 	        // Set the response/reference link
 	        if($config['USE_QUOTESYSTEM']) {
 	            if($resno){ // Response mode
-	                if($showquotelink) $QUOTEBTN = '<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$postOPNumber.'#q'.$no.'" class="qu" title="Quote">'.strval($no).'</a>';
+	                if($showquotelink) $QUOTEBTN = '<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$postOPNumber.'#q'.$boardUID.'_'.$no.'" class="qu" title="Quote">'.strval($no).'</a>';
 	                else $QUOTEBTN = '<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$postOPNumber.'#q'.$no.'" title="Quote">'.strval($no).'</a>';
 	            }else{
 	                if(!$i)    $REPLYBTN = '[<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$no.'">'._T('reply_btn').'</a>]'; // First article
@@ -782,6 +738,7 @@ class globalHTML {
 			// Final output
 			if($i){ // Response
 				$arrLabels = bindReplyValuesToTemplate($board, $config, $post_uid, $no, $postOPNumber, $sub, $name, $now, $category, $QUOTEBTN, $IMG_BAR, $imgsrc, $WARN_BEKILL, $com, $POSTFORM_EXTRA, '', $BACKLINKS, $resno);
+				
 				if($resno) $arrLabels['{$RESTO}']=$postOPNumber;
 				$this->moduleEngine->useModuleMethods('ThreadReply', array(&$arrLabels, $posts[$i], $resno)); // "ThreadReply" Hook Point
 				$thdat .= $this->templateEngine->ParseBlock('REPLY', $arrLabels);
@@ -790,151 +747,16 @@ class globalHTML {
 				if($resno) $arrLabels['{$RESTO}']=$postOPNumber; else $THREADNAV = $this->buildThreadNavButtons($board, $threads, $threadIterator, $PIO);
 				$arrLabels = bindOPValuesToTemplate($board, $config, $post_uid, $no, $sub, $name, $now, $category, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $imgsrc, $fname, $imgsize, $imgw, $imgh, $imageURL, 
 																					$replyCount, $WARN_OLD, $WARN_BEKILL, 	$WARN_ENDREPLY, $WARN_HIDEPOST, $com, $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $resno); 
-				
+																					print_r($arrLables);
 				$arrLabels['{$BOARD_THREAD_NAME}'] = $overboardBoardTitleHTML;
 
-
 				$this->moduleEngine->useModuleMethods('ThreadPost', array(&$arrLabels, $posts[$i], $resno)); // "ThreadPost" Hook Point
+				
 				$thdat .= $this->templateEngine->ParseBlock('THREAD', $arrLabels);
 			}
 		}
 		$thdat .= $this->templateEngine->ParseBlock('THREADSEPARATE',($resno)?array('{$RESTO}'=>$postOPNumber):array());
 		return $thdat;
-	}
-		
-	public function drawBanPage(&$dat, $banip, $starttime, $expires, $reason, $banImage = '') {
-		$dat .= "
-			<div>[<a href='".$this->config['PHP_SELF2']."'>Return</a>]</div>
-				<h2 id=\"banHeading\" class=\"centerText\">You have been " . ($starttime == $expires ? 'warned' : 'banned') . "! ヽ(ー_ー )ノ</h2>
-				<div id=\"banScreen\">
-						<div id=\"banScreenText\">
-							<p>$reason</p>";
-
-		if ($_SERVER['REQUEST_TIME'] > intval($expires)) {
-			$dat .= 'Now that you have seen this message, you can post again.';
-		} else {
-			$dat .= "<p>Your ban was filed on " . date('Y/m/d \a\t H:i:s', $starttime) . 
-					" and expires on " . date('Y/m/d \a\t H:i:s', $expires) . ".</p>";
-		}
-
-		$dat .= "
-						</div>
-							<img id=\"banimg\" src=\"$banImage\" alt=\"BANNED!\">
-						</div>
-					<hr id=\"hrBan\">";
-	}
-
-	public function drawBanManagementPage(&$dat, $banFile, $moduleURL, $defaultPublicBanMessage = '', $globalBanFilePath = '') {
-		$PIO = PIOPDO::getInstance();
-		$staffSession = new staffAccountFromSession;
-
-		$log = is_file($banFile) ? array_map('rtrim', file($banFile)) : [];
-		$glog = is_file($globalBanFilePath) ? array_map('rtrim', file($globalBanFilePath)) : [];
-
-		$postIPFromRequest = $_GET['ip'] ?? '';
-		$postUIDFromRequest = $_GET['post_uid'] ?? '';
-
-		$postNumberFromUID = $postUIDFromRequest ? $PIO->resolvePostNumberFromUID($postUIDFromRequest) : 'No post selected.';
-		$dat .= $this->generateAdminLinkButtons();
-		$this->drawAdminTheading($dat, $staffSession);
-
-		$dat .= '<h3>Add a ban</h3>
-			<form method="POST" action="' . $moduleURL . '">
-				<table id="banForm">
-					<tbody>
-						<input type="hidden" name="adminban-action" value="add-ban">
-						<tr>
-							<td class="postblock"><label for="post_number">Post number</label>
-							<td><span id="post_number"> '.htmlspecialchars($postNumberFromUID).'</span></td>
-							<td><input type="hidden" name="post_uid" id="post_uid" value="'.htmlspecialchars($postUIDFromRequest).'"></td>
-						</tr>
-						<tr>
-							<td class="postblock"><label for="ip">IP address</label>
-							<td><input type="text" id="ip" name="ip" placeholder="Enter IP address" value="'.htmlspecialchars($postIPFromRequest).'" required></td>
-						</tr>
-						<tr>
-							<td class="postblock"> <label for="duration">Ban duration</label> </td>
-							<td> <input type="text" id="duration" name="duration" placeholder="e.g., 1d, 2h" value="1d" required> <small>Examples: 1w = 1 week, 2d = 2 days, 3h = 3 hours</small> </td>
-						</tr>
-						<tr>
-							<td class="postblock"> <label for="reason">Reason for ban</label> </td>
-							<td> <textarea id="reason" name="privmsg" rows="4" cols="50" placeholder="Enter reason for the ban"></textarea> </td>
-						</tr>
-						<tr>
-							<td class="postblock"> <label for="banmsg">Public ban message</label> </td>
-							<td> <textarea id="banmsg" name="banmsg" rows="4" cols="50" placeholder="Enter html that will apended to the post">'.htmlspecialchars($defaultPublicBanMessage).'</textarea> </td>
-						</tr>
-						<tr>
-							<td class="postblock"> <label for="global">Global ban</label> </td>
-							<td> <input type="checkbox" id="global" name="global"> </td>
-						</tr>
-						<tr>
-							<td class="postblock"> <label for="public">Public ban</label> </td>
-							<td> <input type="checkbox" id="public" name="public"> </td>
-						</tr>
-					</tbody>
-				</table>
-				<div id="bigredbuttonContainer">
-					<input id="bigredbutton" type="submit" value="BAN!">
-				</div>
-			</form>';
-
-		// Active Bans Section
-		$dat .= '<h3>Active bans</h3>';
-
-		$dat .= '<h4>Local bans</h4>';
-		$dat .= $this->generateBanTable($log, 'del', $moduleURL);
-
-		$dat .= '<h4>Global bans</h4>';
-		$dat .= $this->generateBanTable($glog, 'delg', $moduleURL);
-
-
-	}
-
-	public function generateBanTable($bans, $checkboxPrefix, $moduleURL) {
-		if (empty($bans)) {
-			return '<b class="error">No active bans.</b>';
-		}
-
-		$table = '<form method="POST" action="' . $moduleURL . '">
-			<input type="hidden" name="adminban-action" value="delete-ban">
-			<div id="banTableContainer">
-				<table class="postlists" id="banTable">
-					<thead>
-						<tr>
-							<th>Remove</th>
-							<th>IP address</th>
-							<th>Start time</th>
-							<th>Expiration time</th>
-							<th>Reason</th>
-						</tr>
-					</thead>
-					<tbody>';
-
-		foreach ($bans as $i => $ban) {
-			list($ip, $starttime, $expires, $reason) = explode(',', $ban, 4);
-			$table .= '
-						<tr>
-							<td class="colDel">
-								<input type="checkbox" id="' . $checkboxPrefix . $i . '" name="' . $checkboxPrefix . $i . '" value="on">
-							</td>
-							<td class="colPattern">' . htmlspecialchars($ip) . '</td>
-							<td class="colStart">' . date('Y/m/d H:i:s', intval($starttime)) . '</td>
-							<td class="colEnd">' . date('Y/m/d H:i:s', intval($expires)) . '</td>
-							<td class="colReason">' . htmlspecialchars($reason) . '</td>
-						</tr>';
-		}
-
-		$table .= '
-					</tbody>
-				</table>
-			</div>
-			<div id="revokeButtonContainer">
-				<button type="submit" id="revokeButton">Remove selected</button>
-			</div>
-		</form>';
-
-		return $table;
 	}
 	
 	public function CleanStr($str, $IsAdmin=false){
