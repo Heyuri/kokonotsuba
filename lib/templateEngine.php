@@ -76,17 +76,10 @@ class templateEngine {
 		$tmp_block = $this->EvalFile($tmp_block, $ary_val);
 		$tmp_block = $this->EvalInclude($tmp_block, $ary_val);
 
-		// Recursively replace placeholders until stable
-		$previous = null;
-		while ($previous !== $tmp_block) {
-				$previous = $tmp_block;
-
-				foreach ($ary_val as $key => $val) {
-					$escapedKey = str_replace('{$', '{' . chr(1) . '$', $key);
-					$tmp_block = str_replace($escapedKey, strval($val), $tmp_block);
-				}
-				
-		}
+		foreach ($ary_val as $key => $val) {
+			$escapedKey = str_replace('{$', '{' . chr(1) . '$', $key);
+			$tmp_block = str_replace($escapedKey, strval($val), $tmp_block);
+		}		
 
 		// Restore original placeholder syntax
 		return str_replace('{'.chr(1).'$','{$', $tmp_block);
