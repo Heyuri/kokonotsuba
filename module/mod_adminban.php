@@ -180,6 +180,10 @@ class mod_adminban extends moduleHelper {
 		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
 		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
 
+		//lazy hack
+		$log = $this->sortBansByNewest($log);
+		$glog = $this->sortBansByNewest($glog);
+
 		$newLocalLog = [];
 		$newGlobalLog = [];
 
