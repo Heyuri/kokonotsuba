@@ -43,37 +43,52 @@ class templateEngine {
 
 	public function ParseBlock(string $blockName, array $ary_val) {
 		$ary_val = array_merge([
-			'{$LANGUAGE}'		=> $this->config['PIXMICAT_LANGUAGE'] ?? '',
-			'{$OVERBOARD}'		=> !empty($this->config['ADMINBAR_OVERBOARD_BUTTON']) ? '[<a href="'.$this->config['PHP_SELF'].'?mode=overboard">Overboard</a>]' : ' ',
-			'{$STATIC_URL}'		=> $this->config['STATIC_URL'] ?? '',
-			'{$REF_URL}'		=> $this->config['REF_URL'] ?? '',
-			'{$PHP_SELF}'		=> $this->config['PHP_SELF'] ?? '',
-			'{$PHP_SELF2}'		=> $this->config['PHP_SELF2'] ?? '',
-			'{$PHP_EXT}'		=> $this->config['PHP_EXT'] ?? '',
-			'{$TITLE}'			=> $this->boardData['title'] ?? '',
-			'{$TITLESUB}'		=> $this->boardData['subtitle'] ?? '',
-			'{$HOME}'			=> $this->config['HOME'] ?? '',
-			'{$TOP_LINKS}'		=> $this->config['TOP_LINKS'] ?? '',
-			'{$FOOTTEXT}'		=> $this->config['FOOTTEXT'] ?? '',
-			'{$BLOTTER}'		=> '',
-			'{$GLOBAL_MESSAGE}'	=> '',
-			'{$PAGE_TITLE}'		=> strip_tags($this->boardData['title'] ?? ''),
+				'{$LANGUAGE}'				=> $this->config['PIXMICAT_LANGUAGE'] ?? '',
+				'{$OVERBOARD}'				=> !empty($this->config['ADMINBAR_OVERBOARD_BUTTON']) ? '[<a href="'.$this->config['PHP_SELF'].'?mode=overboard">Overboard</a>]' : ' ',
+				'{$STATIC_URL}'				=> $this->config['STATIC_URL'] ?? '',
+				'{$REF_URL}'					=> $this->config['REF_URL'] ?? '',
+				'{$PHP_SELF}'					=> $this->config['PHP_SELF'] ?? '',
+				'{$PHP_SELF2}'				=> $this->config['PHP_SELF2'] ?? '',
+				'{$PHP_EXT}'					=> $this->config['PHP_EXT'] ?? '',
+				'{$TITLE}'						=> $this->boardData['title'] ?? '',
+				'{$TITLESUB}'					=> $this->boardData['subtitle'] ?? '',
+				'{$HOME}'						=> $this->config['HOME'] ?? '',
+				'{$TOP_LINKS}'				=> $this->config['TOP_LINKS'] ?? '',
+				'{$FOOTTEXT}'					=> $this->config['FOOTTEXT'] ?? '',
+				'{$BLOTTER}'					=> '',
+				'{$GLOBAL_MESSAGE}'		=> '',
+				'{$PAGE_TITLE}'				=> strip_tags($this->boardData['title'] ?? ''),
 		], $ary_val);
 
 		$this->runInjectedFunctions($ary_val);
 
 		if (($tmp_block = $this->_readBlock($blockName)) === false) return "";
 
-		foreach ($ary_val as $akey => $aval)
-			$ary_val[$akey] = str_replace('{$', '{'.chr(1).'$', $ary_val[$akey]);
+		// Escape placeholders for internal parsing
+		foreach ($ary_val as $akey => $aval) {
+				if (is_string($aval)) {
+						$ary_val[$akey] = str_replace('{$', '{'.chr(1).'$', $aval);
+				}
+		}
 
 		$tmp_block = $this->EvalFOREACH($tmp_block, $ary_val);
 		$tmp_block = $this->EvalIF($tmp_block, $ary_val);
 		$tmp_block = $this->EvalFile($tmp_block, $ary_val);
 		$tmp_block = $this->EvalInclude($tmp_block, $ary_val);
 
-		return str_replace('{'.chr(1).'$','{$', str_replace(array_keys($ary_val), array_values($ary_val), $tmp_block));
+		// Only use string replacements to avoid array conversion issues
+		$search = [];
+		$replace = [];
+		foreach ($ary_val as $akey => $aval) {
+				if (is_string($aval)) {
+						$search[] = $akey;
+						$replace[] = $aval;
+				}
+		}
+
+		return str_replace('{'.chr(1).'$','{$', str_replace($search, $replace, $tmp_block));
 	}
+
 
 	private function EvalIF(string $tpl, array $ary) {
 		$tmp_tpl = $tpl;
