@@ -450,3 +450,49 @@ window.onload = function () {
 	</div>
 	<hr id="hrBan">
 <!--/&BAN_PAGE-->
+
+
+<!--&JANITOR_WARN_FORM-->
+	<h2>Warn user</h2>
+	<form action="{$FORM_ACTION}" method="POST">
+		<input type="hidden" name="mode" value="module">
+		<input type="hidden" name="load" value="mod_janitor">
+		<label> <span>Post Number {$POST_NUMBER}</span> </label><br>
+		<input type="hidden" name="post_uid" value="{$POST_UID}"><br>
+		<label>Reason:<br>
+			<textarea name="msg" cols="80" rows="6">{$REASON_DEFAULT}</textarea>
+		</label><br>
+		<label>Public? <input type="checkbox" name="public"></label>
+		<div class="centerText">
+			<input type="submit" value="Warn">
+		</div>
+	</form>
+<!--/&JANITOR_WARN_FORM-->
+
+
+<!--&THREAD_MOVE_FORM-->
+<form id="thread-move-form" method="POST" action="{$FORM_ACTION}">
+	<input type="hidden" name="move-thread-uid" value="{$THREAD_UID}">
+	<input type="hidden" name="move-thread-board-uid" value="{$CURRENT_BOARD_UID}">
+	<table>
+		<tbody>
+			<tr>
+				<td class="postblock"><label for="move-thread-num">Thread Number</label></td>
+				<td><span id="move-thread-num">{$THREAD_NUMBER}</span></td>
+			</tr>
+			<tr>
+				<td class="postblock"><label for="move-thread-board">Thread's current board</label></td>
+				<td><span id="move-thread-board">{$CURRENT_BOARD_NAME}</span></td>
+			</tr>
+			<tr id="boardrow">
+				<td class="postblock">Boards</td>
+				<td>{$BOARD_RADIO_HTML}</td>
+			</tr>
+			<tr>
+				<td class="postblock"></td>
+				<td><button type="submit" name="move-thread-submit" value="move it!">Move thread</button></td>
+			</tr>
+		</tbody>
+	</table>
+</form>
+<!--/&THREAD_MOVE_FORM-->
