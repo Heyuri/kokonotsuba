@@ -20,25 +20,16 @@ class mod_rebuild extends moduleHelper {
 		$link .= '[<a href="' . $this->mypage . '">Manage rebuild</a>] ';
 	}
 
-	private function rebuildBoards(array $boards) {
-		//go through each board and rebuild its html
-		foreach($boards as $board) {
-			$board->rebuildBoard(0, -1, false, -1, true);
-		}
-	}
-
 	public function ModulePage() {
 		$softErrorHandler = new softErrorHandler($this->board);
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_MANAGE_REBUILD']);
 
-		$boardIO = boardIO::getInstance();
 		$globalHTML = new globalHTML($this->board);
 		
 		$formSubmit = $_POST['formSubmit'] ?? false;
 		if($formSubmit) {
 			$boardsUIDsToRebuild = $_POST['rebuildBoardUIDs'] ?? false;
-			$boardsToRebuild = $boardIO->getBoardsFromUIDs($boardsUIDsToRebuild);
-			if($boardsToRebuild) $this->rebuildBoards($boardsToRebuild);
+			rebuildBoardsByUIDs($boardsUIDsToRebuild);
 
 			redirect($this->mypage);
 			/* Add more things here. TODO: Add thread cache rebuilding when those are added */
