@@ -50,7 +50,7 @@ class mod_globalmsg extends moduleHelper {
 		if ($action === 'setmessage' && isset($_POST['submit'])) {
 			$message = $_POST['content'] ?? '';
 			$this->writeToGlobalMsg($message);
-			$this->board->rebuildBoard();
+			rebuildAllBoards();
 		}
 
 		$templateValues = [
