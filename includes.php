@@ -10,6 +10,7 @@ require __DIR__.'/lib/lib_simplelogger.php';
 require __DIR__.'/lib/lib_loggerinterceptor.php';
 require __DIR__.'/lib/lib_admin.php'; // Admin panel functions
 require __DIR__.'/lib/lib_template.php'; // Template library
+require __DIR__.'/lib/lib_rebuild.php'; // Rebuild library
 require __DIR__.'/lib/templateEngine.php'; // Post and thread functions
 require __DIR__.'/lib/pageRenderer.php'; // Renderer for pages
 require __DIR__.'/lib/lib_post.php';
