@@ -65,8 +65,9 @@ const kkqr = { name: "KK Quick Reply",
 		kkqr.qrs.disabled = false;
 		var pf = $id("postform");
 		with (pf) {
-			kkqr.win.div.innerHTML+= '<div id="qrinputs"></div>';
+			kkqr.win.div.innerHTML += '<div id="qrcontents"><div id="qrinputs"></div></div>';
 			var qr = $id("qrinputs");
+			var qrcontents = $id("qrcontents");
 			var submitplace = 'qr';
 			if (typeof(name)!='undefined') {
 				qr.innerHTML+= '<div id="qrnamediv"><input type="text" name="name" id="qrname" value="'+name.value+'" maxlength="100" class="inputtext" placeholder="Name" oninput="kkqr.input(this);"></div>';
@@ -80,23 +81,28 @@ const kkqr = { name: "KK Quick Reply",
 				qr.innerHTML+= '<div id="qrsubdiv"><input type="text" name="sub" id="qrsub" value="'+sub.value+'" maxlength="100" class="inputtext" placeholder="Subject" oninput="kkqr.input(this);"></div>';
 				submitplace = 'qrsubdiv';
 			}
-			if (typeof(com)!='undefined')
-				qr.innerHTML+= '<textarea name="com" id="qrcom" cols="48" rows="6" class="inputtext" placeholder="Comment" oninput="kkqr.input(this);">'+com.value+'</textarea>';
-			if (typeof(upfile)!='undefined') {
-				upfile.insertAdjacentHTML("beforebegin", '<span id="upfileDUMMY"></span>');
-				kkqr.win.div.appendChild(upfile);
-				kkqr.win.div.innerHTML+= '<small>[<a href="javascript:void(0);" onclick="$id(\'upfile\').value=\'\';">X</a>]</small> <br>';
+			if (typeof(com) != 'undefined') {
+				qr.innerHTML += '<textarea name="com" id="qrcom" cols="48" rows="6" class="inputtext" placeholder="Comment" oninput="kkqr.input(this);">' + com.value + '</textarea>';
 			}
-			if (typeof(noimg)!='undefined')
-				kkqr.win.div.innerHTML+= '<nobr><label>[<input type="checkbox" name="noimg" id="qrnoimg" onclick="$id(\'noimg\').checked=this.checked;"'+(noimg.checked?' checked="checked"':'')+'>No File]</label></nobr> ';
-			if (typeof(anigif)!='undefined')
-				kkqr.win.div.innerHTML+= '<nobr><label>[<input type="checkbox" name="anigif" id="qranigif" onclick="$id(\'anigif\').checked=this.checked;"'+(anigif.checked?' checked="checked"':'')+'>Animated GIF]</label></nobr> ';
-			if (typeof(category)!='undefined')
-				kkqr.win.div.innerHTML+= '';
-			if (typeof(pwd)!='undefined')
-				kkqr.win.div.innerHTML+= '<div><input type="password" name="pwd" id="qrpwd" size="8" maxlength="8" value="'+pwd.value+'" class="inputtext" placeholder="Password" oninput="kkqr.input(this);"> <span id="delPasswordInfo">(for deletion, 8 chars max)</span></div>';
-			if (typeof(captchacode)!='undefined') {
-				kkqr.win.div.innerHTML+= '<div id="qrcaptcha" class="postblock"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&amp;\';})();">Reload</a>]</small><br><input type="text" name="captchacode" id="qrcaptchacode" value="'+captchacode.value+'" autocomplete="off" class="inputtext" placeholder="Captcha" oninput="kkqr.input(this);"><nobr><small>(Please enter the words. Case-insensitive.)</small></nobr></div>';
+			if (typeof(upfile) != 'undefined') {
+				upfile.insertAdjacentHTML("beforebegin", '<span id="upfileDUMMY"></span>');
+				qrcontents.appendChild(upfile);
+				qrcontents.innerHTML += '<small>[<a href="javascript:void(0);" onclick="$id(\'upfile\').value=\'\';">X</a>]</small> <br>';
+			}
+			if (typeof(noimg) != 'undefined') {
+				qrcontents.innerHTML += '<nobr><label>[<input type="checkbox" name="noimg" id="qrnoimg" onclick="$id(\'noimg\').checked=this.checked;"' + (noimg.checked ? ' checked="checked"' : '') + '>No File]</label></nobr> ';
+			}
+			if (typeof(anigif) != 'undefined') {
+				qrcontents.innerHTML += '<nobr><label>[<input type="checkbox" name="anigif" id="qranigif" onclick="$id(\'anigif\').checked=this.checked;"' + (anigif.checked ? ' checked="checked"' : '') + '>Animated GIF]</label></nobr> ';
+			}
+			if (typeof(category) != 'undefined') {
+				qrcontents.innerHTML += '';
+			}
+			if (typeof(pwd) != 'undefined') {
+				qrcontents.innerHTML += '<div><input type="password" name="pwd" id="qrpwd" size="8" maxlength="8" value="' + pwd.value + '" class="inputtext" placeholder="Password" oninput="kkqr.input(this);"> <span id="delPasswordInfo">(for deletion, 8 chars max)</span></div>';
+			}
+			if (typeof(captchacode) != 'undefined') {
+				qrcontents.innerHTML += '<div id="qrcaptcha" class="postblock"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&amp;\';})();">Reload</a>]</small><br><input type="text" name="captchacode" id="qrcaptchacode" value="' + captchacode.value + '" autocomplete="off" class="inputtext" placeholder="Captcha" oninput="kkqr.input(this);"><nobr><small>(Please enter the words. Case-insensitive.)</small></nobr></div>';
 				var qrc = $id("qrcaptcha"), chaimg = $id("chaimg");
 				chaimg.insertAdjacentHTML("beforebegin", '<span id="chaimgDUMMY"></span>');
 				qrc.insertAdjacentElement("afterbegin", chaimg);

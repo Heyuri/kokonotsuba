@@ -1567,7 +1567,8 @@ a.linkjs {
 	min-height: 1em;
 }
 
-.window.minimized #settcontents {
+.window.minimized #settcontents,
+.window.minimized #qrcontents {
 	display: none;
 }
 
@@ -1742,15 +1743,24 @@ a.linkjs {
 	margin: 0.2em 0;
 }
 
-#qrcom,
+#qrcom {
+	width: 240px;
+	height: 110px;
+	min-width: 240px;
+	min-height: 110px;
+	max-width: calc(100vw - 35px);
+	max-height: calc(100vh - 119px);
+}
+
+/* #qrcom,
 #qrname,
 #qremail {
 width: 90%;
-}
+} */
 
-#wintop {
+/* #wintop {
 width: 300px;
-}
+} */
 
 /************************ Mobile **************************************/
 

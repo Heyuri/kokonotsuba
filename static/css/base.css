@@ -1734,7 +1734,8 @@ a.linkjs {
 	min-height: 1em;
 }
 
-.window.minimized #settcontents {
+.window.minimized #settcontents,
+.window.minimized #qrcontents {
 	display: none;
 }
 
