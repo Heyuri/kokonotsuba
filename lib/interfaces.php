@@ -28,7 +28,7 @@ interface IPIO {
 	 * @param  integer $amount 數目
 	 * @return array          文章編號陣列
 	 */
-	public function fetchPostList($resno = 0, $start = 0, $amount = 0);
+	public function fetchPostList(mixed $resno = 0, int $start = 0, int $amount = 0, string $host = '');
 
 
 	/**
