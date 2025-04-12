@@ -747,7 +747,6 @@ class globalHTML {
 				if($resno) $arrLabels['{$RESTO}']=$postOPNumber; else $THREADNAV = $this->buildThreadNavButtons($board, $threads, $threadIterator, $PIO);
 				$arrLabels = bindOPValuesToTemplate($board, $config, $post_uid, $no, $sub, $name, $now, $category, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $imgsrc, $fname, $imgsize, $imgw, $imgh, $imageURL, 
 																					$replyCount, $WARN_OLD, $WARN_BEKILL, 	$WARN_ENDREPLY, $WARN_HIDEPOST, $com, $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $resno); 
-																					print_r($arrLables);
 				$arrLabels['{$BOARD_THREAD_NAME}'] = $overboardBoardTitleHTML;
 
 				$this->moduleEngine->useModuleMethods('ThreadPost', array(&$arrLabels, $posts[$i], $resno)); // "ThreadPost" Hook Point
