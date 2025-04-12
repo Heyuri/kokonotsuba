@@ -774,9 +774,7 @@ class modeHandler {
 	}
 
 	/* User post deletion */
-	private function usrdel() {
-		$currentBoard = $this->board;
-		
+	private function usrdel() {	
 		$pwd = $_POST['pwd'] ?? '';
 		$pwdc = $_COOKIE['pwdc'] ?? '';
 		$onlyimgdel = $_POST['onlyimgdel'] ?? '';
@@ -808,7 +806,7 @@ class modeHandler {
 				$search_flag = true;
 				array_push($delPostUIDs, intval($post['post_uid']));
 				array_push($delPosts, $post);
-				$this->actionLogger->logAction("Delete post No." . $post['no'] . ($onlyimgdel ? ' (file only)' : ''), $currentBoard->getBoardUID());
+				$this->actionLogger->logAction("Delete post No." . $post['no'] . ($onlyimgdel ? ' (file only)' : ''), $this->board->getBoardUID());
 			}
 		}
 	
@@ -822,7 +820,7 @@ class modeHandler {
 			$this->globalHTML->error(_T('del_wrongpwornotfound'));
 		}
 
-		$currentBoard->rebuildBoard();
+		$this->board->rebuildBoard();
 		if (isset($_POST['func']) && $_POST['func'] == 'delete') {
 			if (isset($_SERVER['HTTP_REFERER'])) {
 				header('HTTP/1.1 302 Moved Temporarily');
