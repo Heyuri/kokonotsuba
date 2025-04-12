@@ -13,6 +13,7 @@ class modeHandler {
 	private readonly AccountIO $AccountIO;
 	private readonly ActionLogger $actionLogger;
 	private readonly softErrorHandler $softErrorHandler;
+	private readonly staffAccountFromSession $staffSession;
 
 	private templateEngine $templateEngine;
 	private templateEngine $adminTemplateEngine;
@@ -55,6 +56,9 @@ class modeHandler {
 
 		// soft error page handler
 		$this->softErrorHandler = new softErrorHandler($board);
+
+		//account from session
+		$this->staffSession = new staffAccountFromSession;
 
 		// File I/O and Logging
 		$this->FileIO = PMCLibrary::getFileIOInstance();
@@ -217,8 +221,7 @@ class modeHandler {
 		$upfile_name = '';
 		$upfile_status = 4;
 		
-		$staffSession = new staffAccountFromSession;
-		$roleLevel = $staffSession->getRoleLevel();
+		$roleLevel = $this->staffSession->getRoleLevel();
 		
 		$postValidator->spamValidate($name, $email, $sub, $com);
 		/* hook call */
@@ -238,7 +241,7 @@ class modeHandler {
 		$email = str_replace("\r\n", '', $email); 
 		$sub = str_replace("\r\n", '', $sub);
 	
-		applyTripcodeAndCapCodes($boardConfig, $this->globalHTML, $staffSession, $name, $email, $dest);
+		applyTripcodeAndCapCodes($boardConfig, $this->globalHTML, $this->staffSession, $name, $email, $dest);
 		$postValidator->cleanComment($com, $upfile_status, $is_admin, $dest);
 		addDefaultText($boardConfig, $sub, $com);
 		applyPostFilters($boardConfig, $this->globalHTML, $com, $email);
@@ -322,8 +325,7 @@ class modeHandler {
 	private function drawAdminList() {
 		if(isset($_POST['username']) || isset($_POST['password'])) adminLogin($this->AccountIO, $this->globalHTML);
 
-		$staffSession = new staffAccountFromSession;
-		$currentRoleLevel = $staffSession->getRoleLevel();
+		$currentRoleLevel = $this->staffSession->getRoleLevel();
 		$adminPageHandler = new adminPageHandler($this->board, $this->moduleEngine);
 		$admin = $_REQUEST['admin']??'';
 		$dat = '';
@@ -332,7 +334,7 @@ class modeHandler {
 		
 		$dat .= $links; //hook above bar links
 		
-		$this->globalHTML->drawAdminTheading($dat, $staffSession);
+		$this->globalHTML->drawAdminTheading($dat, $this->staffSession);
 		
 		$dat.= '<div id="adminOptionContainer" class="centerText"><form action="'.$this->config['PHP_SELF'].'" method="POST" name="adminform">';
 		$admins = array(
@@ -374,7 +376,6 @@ class modeHandler {
 	/* Show instance/board information */
 	private function showstatus() {
 		$PIO = PIOPDO::getInstance();
-		$staffSession = new staffAccountFromSession;
 				
 		$countline = $PIO->postCountFromBoard($this->board); // Calculate the current number of data entries in the submitted text log file
 		$counttree = $PIO->threadCountFromBoard($this->board); // Calculate the current number of data entries in the tree structure log file
@@ -407,7 +408,7 @@ class modeHandler {
 		$dat = '';
 		$this->globalHTML->head($dat);
 		$links = '[<a href="' . $this->config['PHP_SELF2'] . '?' . time() . '">' . _T('return') . '</a>] [<a href="' . $this->config['PHP_SELF'] . '?mode=moduleloaded">' . _T('module_info_top') . '</a>]';
-		$level = $staffSession->getRoleLevel();
+		$level = $this->staffSession->getRoleLevel();
 		$this->moduleEngine->useModuleMethods('LinksAboveBar', array(&$links, 'status', $level));
 		$dat .= $links . '<h2 class="theading2">' . _T('info_top') . '</h2>
 <table id="status" class="postlists">
@@ -533,11 +534,10 @@ class modeHandler {
 	/* Displays loaded module information */
 	private function listModules() {
 		$dat = '';
-		$staffSession = new staffAccountFromSession;
 		
 		$this->globalHTML->head($dat);
 
-		$roleLevel = $staffSession->getRoleLevel();
+		$roleLevel = $this->staffSession->getRoleLevel();
 		$links = '[<a href="' . $this->config['PHP_SELF2'] . '?' . time() . '">' . _T('return') . '</a>]';
 		$this->moduleEngine->useModuleMethods('LinksAboveBar', array(&$links, 'modules', $roleLevel));
 
@@ -567,17 +567,16 @@ class modeHandler {
 	}
 
 	private function drawAccountScreen() {
-		$staffSession = new staffAccountFromSession;
-		$authRoleLevel = $staffSession->getRoleLevel();
-		$authUsername = htmlspecialchars($staffSession->getUsername());
+		$authRoleLevel = $this->staffSession->getRoleLevel();
+		$authUsername = htmlspecialchars($this->staffSession->getUsername());
 		
 		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_USER']);
 		
 		$accountTableList = ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $this->globalHTML->drawAccountTable() : ''; # == is for PHP7 compatibility, change to === in future for PHP8
 		
-		$currentAccount = $this->AccountIO->getAccountByID($staffSession->getUID());
+		$currentAccount = $this->AccountIO->getAccountByID($this->staffSession->getUID());
 		$accountTemplateValues = [
-			'{$ACCOUNT_ID}' => htmlspecialchars($staffSession->getUID()),
+			'{$ACCOUNT_ID}' => htmlspecialchars($this->staffSession->getUID()),
 			'{$ACCOUNT_NAME}' => htmlspecialchars($authUsername),
 			'{$ACCOUNT_ROLE}' => htmlspecialchars($this->globalHTML->roleNumberToRoleName($authRoleLevel)),
 			'{$ACCOUNT_ACTIONS}' => htmlspecialchars($currentAccount->getNumberOfActions()),
@@ -601,8 +600,7 @@ class modeHandler {
 	}
 
 	private function drawBoardScreen() {
-		$staffSession = new staffAccountFromSession;
-		$authRoleLevel = $staffSession->getRoleLevel();
+		$authRoleLevel = $this->staffSession->getRoleLevel();
 		
 		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
 		
@@ -661,12 +659,11 @@ class modeHandler {
 	}
 
 	public function handleAccountRequests() {
-		$staffSession = new staffAccountFromSession;
 		$accountRequestHandler = new accountRequestHandler($this->board);
 
 		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_USER']);
 
-		if($staffSession->getRoleLevel() == $this->config['roles']['LEV_ADMIN']) { # == is for PHP7 compatibility, change to === in future for PHP8
+		if($this->staffSession->getRoleLevel() == $this->config['roles']['LEV_ADMIN']) { # == is for PHP7 compatibility, change to === in future for PHP8
 			if(isset($_GET['del'])) $accountRequestHandler->handleAccountDelete();
 			if(isset($_GET['dem'])) $accountRequestHandler->handleAccountDemote();
 			if(isset($_GET['up'])) $accountRequestHandler->handleAccountPromote();
@@ -782,8 +779,6 @@ class modeHandler {
 	/* User post deletion */
 	private function usrdel() {
 		$currentBoard = $this->board;
-		$PIO = PIOPDO::getInstance();
-		$staffSession = new staffAccountFromSession;
 		
 		$pwd = $_POST['pwd'] ?? '';
 		$pwdc = $_COOKIE['pwdc'] ?? '';
@@ -796,7 +791,7 @@ class modeHandler {
 			}
 		}
 	
-		$haveperm = $staffSession->getRoleLevel() >= $this->config['roles']['LEV_JANITOR'];
+		$haveperm = $this->staffSession->getRoleLevel() >= $this->config['roles']['LEV_JANITOR'];
 		$this->moduleEngine->useModuleMethods('Authenticate', array($pwd, 'userdel', &$haveperm));
 	
 		if ($pwd == '' && $pwdc != '') $pwd = $pwdc;
