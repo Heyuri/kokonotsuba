@@ -78,7 +78,9 @@ class templateEngine {
 
 		foreach ($ary_val as $key => $val) {
 			$escapedKey = str_replace('{$', '{' . chr(1) . '$', $key);
-			$tmp_block = str_replace($escapedKey, strval($val), $tmp_block);
+			if (is_scalar($val) || is_null($val)) {
+				$tmp_block = str_replace($escapedKey, strval($val), $tmp_block);
+			}
 		}		
 
 		// Restore original placeholder syntax
