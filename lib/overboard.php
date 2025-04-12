@@ -1,11 +1,12 @@
 <?php
 class overboard {
-	private $config, $templateEngine, $moduleEngine;
+	private $config, $moduleEngine, $templateEngine;
 	
-	public function __construct(board $board) {
-		$this->config = $board->loadBoardConfig();
-		$this->templateEngine = $board->getBoardTemplateEngine();
-		$this->moduleEngine = new moduleEngine($board);
+	public function __construct(array $config, moduleEngine $moduleEngine, templateEngine $templateEngine) {
+		$this->config = $config;
+
+		$this->moduleEngine = $moduleEngine;
+		$this->templateEngine = $templateEngine;
 
 		$this->templateEngine->setFunctionCallbacks([
 			[
