@@ -9,8 +9,10 @@ class modeHandler {
 	private readonly pageRenderer $pageRenderer;
 	private readonly pageRenderer $adminPageRenderer;
 	private readonly mixed $FileIO;
+	private readonly boardIO $boardIO;
 	private readonly AccountIO $AccountIO;
 	private readonly ActionLogger $actionLogger;
+	private readonly softErrorHandler $softErrorHandler;
 
 	private templateEngine $templateEngine;
 	private templateEngine $adminTemplateEngine;
@@ -50,6 +52,9 @@ class modeHandler {
 		// Page Renderers
 		$this->adminPageRenderer = new pageRenderer($this->adminTemplateEngine, $this->globalHTML);
 		$this->pageRenderer = new pageRenderer($this->templateEngine, $this->globalHTML);
+
+		// soft error page handler
+		$this->softErrorHandler = new softErrorHandler($board);
 
 		// File I/O and Logging
 		$this->FileIO = PMCLibrary::getFileIOInstance();
@@ -123,15 +128,12 @@ class modeHandler {
 	}
 	
 	private function handleRebuild() {
-		$softErrorHandler = new softErrorHandler($this->board);
-		$board = $this->board;
-
-		$softErrorHandler->handleAuthError($this->config['roles']['LEV_JANITOR']);
+		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_JANITOR']);
 		
 
-		$this->actionLogger->logAction("Rebuilt pages", $board->getBoardUID());
-		$board->updateBoardPathCache(); 
-		$board->rebuildBoard();
+		$this->actionLogger->logAction("Rebuilt pages", $this->board->getBoardUID());
+		$this->board->updateBoardPathCache(); 
+		$this->board->rebuildBoard();
 		
 		header('HTTP/1.1 302 Moved Temporarily');
 		redirect($this->globalHTML->fullURL() . $this->config['PHP_SELF2'] . '?' . time());
@@ -565,17 +567,15 @@ class modeHandler {
 	}
 
 	private function drawAccountScreen() {
-		$AccountIO = AccountIO::getInstance();
 		$staffSession = new staffAccountFromSession;
 		$authRoleLevel = $staffSession->getRoleLevel();
 		$authUsername = htmlspecialchars($staffSession->getUsername());
-		$softErrorHandler = new softErrorHandler($this->board);
 		
-		$softErrorHandler->handleAuthError($this->config['roles']['LEV_USER']);
+		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_USER']);
 		
 		$accountTableList = ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) ? $this->globalHTML->drawAccountTable() : ''; # == is for PHP7 compatibility, change to === in future for PHP8
 		
-		$currentAccount = $AccountIO->getAccountByID($staffSession->getUID());
+		$currentAccount = $this->AccountIO->getAccountByID($staffSession->getUID());
 		$accountTemplateValues = [
 			'{$ACCOUNT_ID}' => htmlspecialchars($staffSession->getUID()),
 			'{$ACCOUNT_NAME}' => htmlspecialchars($authUsername),
@@ -603,10 +603,8 @@ class modeHandler {
 	private function drawBoardScreen() {
 		$staffSession = new staffAccountFromSession;
 		$authRoleLevel = $staffSession->getRoleLevel();
-		$softErrorHandler = new softErrorHandler($this->board);
-		$boardIO = boardIO::getInstance();
 		
-		$softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
+		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
 		
 		
 		
@@ -627,7 +625,7 @@ class modeHandler {
 			$id =  $_GET['view'] ?? null;
 			if(!$id) throw new Exception("Board UID from GET was not set or invalid.".__CLASS__.' '.__LINE__);
 			
-			$board = $boardIO->getBoardByUID($id);
+			$board = $this->boardIO->getBoardByUID($id);
 
 			$boardUID = $board->getBoardUID() ?? '';
 			$boardIdentifier = $board->getBoardIdentifier() ?? '';
@@ -665,9 +663,8 @@ class modeHandler {
 	public function handleAccountRequests() {
 		$staffSession = new staffAccountFromSession;
 		$accountRequestHandler = new accountRequestHandler($this->board);
-		$softErrorHandler = new softErrorHandler($this->board);
 
-		$softErrorHandler->handleAuthError($this->config['roles']['LEV_USER']);
+		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_USER']);
 
 		if($staffSession->getRoleLevel() == $this->config['roles']['LEV_ADMIN']) { # == is for PHP7 compatibility, change to === in future for PHP8
 			if(isset($_GET['del'])) $accountRequestHandler->handleAccountDelete();
@@ -682,11 +679,9 @@ class modeHandler {
 	}
 
 	public function handleBoardRequests() {
-		$boardIO = boardIO::getInstance();
 		$boardPathCachingIO = boardPathCachingIO::getInstance();
-		$softErrorHandler = new softErrorHandler($this->board);
 		
-		$softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
+		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
 
 		if (!empty($_POST['edit-board'])) {
 			try {
@@ -697,11 +692,11 @@ class modeHandler {
 				}
 		
 				// Get the board object using the board ID
-				$modifiedBoard = $boardIO->getBoardByUID($modifiedBoardIdFromPOST);
+				$modifiedBoard = $this->boardIO->getBoardByUID($modifiedBoardIdFromPOST);
 		
 				// Check if the action is to delete the board
 				if (isset($_POST['board-action-submit']) && $_POST['board-action-submit'] === 'delete-board') {
-					$boardIO->deleteBoardByUID($modifiedBoard->getBoardUID());
+					$this->boardIO->deleteBoardByUID($modifiedBoard->getBoardUID());
 					redirect($this->config['PHP_SELF'] . '?mode=boards');
 				}
 		
@@ -719,7 +714,7 @@ class modeHandler {
 				if (!file_exists(getBoardConfigDir() . $fields['config_name'])) $this->globalHTML->error("Invalid config file, doesn't exist.");
 				if (!file_exists(getBoardStoragesDir() . $fields['storage_directory_name'])) $this->globalHTML->error("Invalid storage directory, doesn't exist.");
 				// Edit the board values in the database
-				$boardIO->editBoardValues($modifiedBoard, $fields);
+				$this->boardIO->editBoardValues($modifiedBoard, $fields);
 			} catch (Exception $e) {
 				// Handle any exceptions that occur
 				http_response_code(500);
@@ -760,16 +755,16 @@ class modeHandler {
 				createFileAndWriteText($fullBoardPath, $mockConfig['PHP_SELF'], "<?php require_once {$requireString}; ?>");
 		
 				// Create storage directory for the new board
-				$boardStorageDirectoryName = 'storage-'.$boardIO->getNextBoardUID();
+				$boardStorageDirectoryName = 'storage-'.$this->boardIO->getNextBoardUID();
 				$dataDir = getBoardStoragesDir().$boardStorageDirectoryName;
 				$createdPaths[] = createDirectoryWithErrorHandle($dataDir, $this->globalHTML);
 
 				// Generate and save board configuration
 				$boardConfigName = generateNewBoardConfigFile();
-				$boardIO->addNewBoard($boardIdentifier, $boardTitle, $boardSubTitle, $boardListed, $boardConfigName, $boardStorageDirectoryName);
+				$this->boardIO->addNewBoard($boardIdentifier, $boardTitle, $boardSubTitle, $boardListed, $boardConfigName, $boardStorageDirectoryName);
 
 				// Get board UID and save to configuration file
-				$newBoardUID = $boardIO->getLastBoardUID();
+				$newBoardUID = $this->boardIO->getLastBoardUID();
 				createFileAndWriteText($fullBoardPath, 'boardUID.ini', "board_uid = $newBoardUID");
 
 				// Cache board path
@@ -849,7 +844,6 @@ class modeHandler {
 	}
 	
 	private function drawOverboard() {
-		$boardIO = boardIO::getInstance();
 		$filterAction = $_POST['filterformsubmit'] ?? null;
 		
 		if ($_SERVER['REQUEST_METHOD'] === 'POST' && $filterAction === 'filter') {
@@ -870,7 +864,7 @@ class modeHandler {
 
 		//filter list for the database
 		$filters = [
-			'board' => $filtersBoards ?? ($allListedBoards = $boardIO->getAllListedBoardUIDs()),
+			'board' => $filtersBoards ?? ($this->boardIO->getAllListedBoardUIDs()),
 		];
 
 
