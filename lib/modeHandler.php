@@ -1,30 +1,42 @@
 <?php
 //Handle GET mode values for koko
 class modeHandler {
-	private array $config;
-	private board $board;
+	private readonly array $config;
+	private readonly board $board;
+	private readonly globalHTML $globalHTML;
+	private moduleEngine $moduleEngine;
+	private readonly overboard $overboard;
+	private readonly pageRenderer $pageRenderer;
+	private readonly pageRenderer $adminPageRenderer;
+	private readonly mixed $FileIO;
+	private readonly AccountIO $AccountIO;
+	private readonly ActionLogger $actionLogger;
+
 	private templateEngine $templateEngine;
 	private templateEngine $adminTemplateEngine;
+	
+	public function __construct(board $board) {
+		// Validate required directories before anything else
+		if (!file_exists($board->getFullConfigPath())) {
+			throw new \RuntimeException("Board's config file <i>" . $board->getFullConfigPath() . "</i> was not found.");
+		}
 
-	private mixed $FileIO;
-	private moduleEngine $moduleEngine;
-	private AccountIO $AccountIO;
-	private ActionLogger $actionLogger;
-
-	private pageRenderer $pageRenderer;
-	private pageRenderer $adminPageRenderer;
-	private globalHTML $globalHTML;
-
-
-	public function __construct($board) {
-		$config = $board->loadBoardConfig();
+		if (!file_exists($board->getBoardStoragePath())) {
+			throw new \RuntimeException("Board's storage directory <i>" . $board->getBoardStoragePath() . "</i> does not exist.");
+		}
 
 		$this->board = $board;
-		$this->config = $config;
-		$this->globalHTML = new globalHTML($this->board);
+		$this->config = $board->loadBoardConfig();
 
+		// Global HTML helper
+		$this->globalHTML = new globalHTML($board);
+
+		// Module and Template Engines
+		$this->moduleEngine = new moduleEngine($board);
 		$this->templateEngine = $board->getBoardTemplateEngine();
+		$this->overboard = new overboard($this->config, $this->moduleEngine, $this->templateEngine);
 
+		// Admin Template Engine Setup
 		$adminTemplateFile = getBackendDir() . 'templates/admin.tpl';
 		$dependencies = [
 			'config'	=> $this->config,
@@ -33,25 +45,18 @@ class modeHandler {
 				'subtitle'	=> $board->getBoardSubTitle()
 			]
 		];
-
 		$this->adminTemplateEngine = new templateEngine($adminTemplateFile, $dependencies);
 
+		// Page Renderers
 		$this->adminPageRenderer = new pageRenderer($this->adminTemplateEngine, $this->globalHTML);
 		$this->pageRenderer = new pageRenderer($this->templateEngine, $this->globalHTML);
 
+		// File I/O and Logging
 		$this->FileIO = PMCLibrary::getFileIOInstance();
-		$this->moduleEngine = new moduleEngine($board);
 		$this->AccountIO = AccountIO::getInstance();
 		$this->actionLogger = ActionLogger::getInstance();
-
-		// Validate required directories
-		if (!file_exists($board->getFullConfigPath())) {
-			die("Board's config file <i>" . $board->getFullConfigPath() . "</i> was not found.");
-		}
-		if (!file_exists($board->getBoardStoragePath())) {
-			die("Board's storage directory <i>" . $board->getBoardStoragePath() . "</i> does not exist.");
-		}
 	}
+
 
 	public function handle() {
 		if ($this->config['GZIP_COMPRESS_LEVEL'] && ($Encoding = CheckSupportGZip())) {
@@ -869,14 +874,11 @@ class modeHandler {
 		];
 
 
-		
-		$overboard = new overboard($this->board);
-
 		$html = '';
 
-		$overboard->drawOverboardHead($html, 0);
+		$this->overboard->drawOverboardHead($html, 0);
 		$this->globalHTML->drawOverboardFilterForm($html, $this->board);
-		$html .= $overboard->drawOverboardThreads($filters, $this->globalHTML);	
+		$html .= $this->overboard->drawOverboardThreads($filters, $this->globalHTML);	
 		
 		$this->globalHTML->foot($html, 0);
 		echo $html;
