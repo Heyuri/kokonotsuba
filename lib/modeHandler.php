@@ -9,6 +9,7 @@ class modeHandler {
 	private readonly pageRenderer $pageRenderer;
 	private readonly pageRenderer $adminPageRenderer;
 	private readonly mixed $FileIO;
+	private readonly mixed $PIO;
 	private readonly boardIO $boardIO;
 	private readonly AccountIO $AccountIO;
 	private readonly ActionLogger $actionLogger;
@@ -62,6 +63,7 @@ class modeHandler {
 
 		// File I/O and Logging
 		$this->FileIO = PMCLibrary::getFileIOInstance();
+		$this->PIO = PIOPDO::getInstance();
 		$this->AccountIO = AccountIO::getInstance();
 		$this->actionLogger = ActionLogger::getInstance();
 	}
@@ -182,7 +184,6 @@ class modeHandler {
 
 	/* Write to post table */
 	public function regist(){
-		$PIO = PIOPDO::getInstance();
 		$postValidator = new postValidator($this->board);
 		
 		$boardBeingPostedTo =  $this->board;
@@ -207,7 +208,7 @@ class modeHandler {
 		$pwd = $_POST['pwd']??'';
 		$category = filter_var($_POST['category']??'', FILTER_SANITIZE_SPECIAL_CHARS);
 		$resno = intval($_POST['resto']??0);
-		$thread_uid = $PIO->resolveThreadUidFromResno($boardBeingPostedTo, $resno);
+		$thread_uid = $this->PIO->resolveThreadUidFromResno($boardBeingPostedTo, $resno);
 		$pwdc = $_COOKIE['pwdc']??'';
 
 		$ip = new IPAddress; 
@@ -265,15 +266,15 @@ class modeHandler {
 	
 		$pass = $pwd ? substr(md5($pwd), 2, 8) : '*'; // Generate a password for true storage judgment (the 8 characters at the bottom right of the imageboard where it says Password ******** SUBMIT for deleting posts)
 		$now = generatePostDay($boardConfig, $time);
-		$now .= generatePostID($roleLevel, $boardConfig, $email,$now, $time, $thread_uid, $PIO);
+		$now .= generatePostID($roleLevel, $boardConfig, $email,$now, $time, $thread_uid, $this->PIO);
 
-		$postValidator->validateForDatabase($pwdc, $com, $time, $pass, $ip,  $upfile, $md5chksum, $dest, $PIO, $roleLevel);
+		$postValidator->validateForDatabase($pwdc, $com, $time, $pass, $ip,  $upfile, $md5chksum, $dest, $this->PIO, $roleLevel);
 		if($thread_uid){
-				$ThreadExistsBefore = $PIO->isThread($thread_uid);
+				$ThreadExistsBefore = $this->PIO->isThread($thread_uid);
 		}
 	
-		$postValidator->pruneOld($this->moduleEngine, $PIO, $this->FileIO);
-		$postValidator->threadSanityCheck($chktime, $flgh, $thread_uid, $PIO, $dest, $ThreadExistsBefore);
+		$postValidator->pruneOld($this->moduleEngine, $this->PIO, $this->FileIO);
+		$postValidator->threadSanityCheck($chktime, $flgh, $thread_uid, $this->PIO, $dest, $ThreadExistsBefore);
 	
 		// Calculate the last feilds needed before putitng in db
 		$no = $boardBeingPostedTo->getLastPostNoFromBoard() + 1;
@@ -286,7 +287,7 @@ class modeHandler {
 		if(!isset($md5chksum)) $md5chksum = '';
 		$age = false;
 		$status = '';
-		applyAging($boardConfig, $thread_uid, $PIO, $time, $chktime, $email, $name, $age);
+		applyAging($boardConfig, $thread_uid, $this->PIO, $time, $chktime, $email, $name, $age);
 	
 		// noko
 		$redirect = $boardConfig['PHP_SELF2'].'?'.$tim;
@@ -299,11 +300,11 @@ class modeHandler {
 		$email = preg_replace('/^(no)+ko\d*$/i', '', $email);
 	
 		// Get number of pages to rebuild
-		$threads = $PIO->getThreadListFromBoard($boardBeingPostedTo);
+		$threads = $this->PIO->getThreadListFromBoard($boardBeingPostedTo);
 		$threads_count = count($threads);
 		$page_end = ($thread_uid ? floor(array_search($thread_uid, $threads) / $this->config['PAGE_DEF']) : ceil($threads_count / $this->config['PAGE_DEF']));
 		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, array($W, $H, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
-		$PIO->addPost($boardBeingPostedTo, $no, $thread_uid, $md5chksum, $category, $tim, $fname, $ext, $imgW, $imgH, $imgsize, $W, $H, $pass, $now, $name, $email, $sub, $com, $ip, $age, $status);
+		$this->PIO->addPost($boardBeingPostedTo, $no, $thread_uid, $md5chksum, $category, $tim, $fname, $ext, $imgW, $imgH, $imgsize, $W, $H, $pass, $now, $name, $email, $sub, $com, $ip, $age, $status);
 		
 		$this->actionLogger->logAction("Post No.$no registered", $boardBeingPostedTo->getBoardUID());
 		// Formal writing to storage
@@ -375,10 +376,8 @@ class modeHandler {
 
 	/* Show instance/board information */
 	private function showstatus() {
-		$PIO = PIOPDO::getInstance();
-				
-		$countline = $PIO->postCountFromBoard($this->board); // Calculate the current number of data entries in the submitted text log file
-		$counttree = $PIO->threadCountFromBoard($this->board); // Calculate the current number of data entries in the tree structure log file
+		$countline = $this->PIO->postCountFromBoard($this->board); // Calculate the current number of data entries in the submitted text log file
+		$counttree = $this->PIO->threadCountFromBoard($this->board); // Calculate the current number of data entries in the tree structure log file
 		$tmp_total_size = $this->FileIO->getCurrentStorageSize($this->board); // The total size of the attached image file usage
 		$tmp_ts_ratio = $this->config['STORAGE_MAX'] > 0 ? $tmp_total_size / $this->config['STORAGE_MAX'] : 0; // Additional image file usage
 
@@ -403,7 +402,7 @@ class modeHandler {
 
 		// PIOSensor
 		if (count($this->config['LIMIT_SENSOR']))
-				$piosensorInfo = nl2br(PIOSensor::info($this->board, $this->config['LIMIT_SENSOR']));
+				$PIOsensorInfo = nl2br(PIOSensor::info($this->board, $this->config['LIMIT_SENSOR']));
 
 		$dat = '';
 		$this->globalHTML->head($dat);
@@ -483,12 +482,12 @@ class modeHandler {
 		</tr>
 		<tr class="centerText">
 			<td>' . _T('info_basic_threadcount') . '</td>
-			<td colspan="' . (isset($piosensorInfo) ? '2' : '3') . '"> ' . $counttree . ' ' . _T('info_basic_threads') . '</td>' . (isset($piosensorInfo) ? '
-			<td rowspan="2">' . $piosensorInfo . '</td>' : '') . '
+			<td colspan="' . (isset($this->PIOsensorInfo) ? '2' : '3') . '"> ' . $counttree . ' ' . _T('info_basic_threads') . '</td>' . (isset($this->PIOsensorInfo) ? '
+			<td rowspan="2">' . $PIOsensorInfo . '</td>' : '') . '
 		</tr>
 		<tr class="centerText">
 			<td>' . _T('info_dsusage_count') . '</td>
-			<td colspan="' . (isset($piosensorInfo) ? '2' : '3') . '">' . $countline . '</td>
+			<td colspan="' . (isset($this->PIOsensorInfo) ? '2' : '3') . '">' . $countline . '</td>
 		</tr>
 		<tr>
 			<th class="theadLike" colspan="4">' . _T('info_fileusage_top') . $this->config['STORAGE_LIMIT'] . ' ' . _T('info_0disable1enable') . '</th>
@@ -804,7 +803,7 @@ class modeHandler {
 
 		if (!count($delno)) $this->globalHTML->error(_T('del_notchecked'));
 	
-		$posts = $PIO->fetchPosts($delno);
+		$posts = $this->PIO->fetchPosts($delno);
 		
 		foreach ($posts as $post) {
 			if ($pwd_md5 == $post['pwd'] || $host == $post['host'] || $haveperm) {
@@ -818,7 +817,7 @@ class modeHandler {
 		if ($search_flag) {
 			if (!$onlyimgdel) $this->moduleEngine->useModuleMethods('PostOnDeletion', array($delPosts, 'frontend'));
 			$files = createBoardStoredFilesFromArray($delPosts);
-			$onlyimgdel ? $PIO->removeAttachments($delPostUIDs) : $PIO->removePosts($delPostUIDs);
+			$onlyimgdel ? $this->PIO->removeAttachments($delPostUIDs) : $this->PIO->removePosts($delPostUIDs);
 			
 			$this->FileIO->deleteImagesByBoardFiles($files);
 		} else {
