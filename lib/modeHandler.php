@@ -148,8 +148,6 @@ class modeHandler {
 	private function handleDefault() {
 		header('Content-Type: text/html; charset=utf-8');
 
-		$board = $this->board;
-
 		$res = isset($_GET['res']) ? intval($_GET['res']) : 0;
 		$pageParam = $_GET['pagenum'] ?? null;
 
@@ -158,15 +156,15 @@ class modeHandler {
 				$page = ($pageParam === 'all' || $pageParam === 'RE_PAGE_MAX') 
 						? $pageParam 
 						: intval($pageParam);
-				$board->rebuildBoard($res, $page);
+				$this->board->rebuildBoard($res, $page);
 		} elseif ($pageParam !== null && intval($pageParam) > -1) {
-				$board->rebuildBoard(0, intval($pageParam));
+				$this->board->rebuildBoard(0, intval($pageParam));
 		} else {
 				// Go to the static inventory page
 				if (!is_file($this->config['PHP_SELF2'])) {
-						$this->actionLogger->logAction("Rebuilt pages", $board->getBoardUID());
-						$board->updateBoardPathCache(); 
-						$board->rebuildBoard();
+						$this->actionLogger->logAction("Rebuilt pages", $this->board->getBoardUID());
+						$this->board->updateBoardPathCache(); 
+						$this->board->rebuildBoard();
 				}
 				header('HTTP/1.1 302 Moved Temporarily');
 				header('Location: ' . $this->globalHTML->fullURL() . $this->config['PHP_SELF2'] . '?' . $_SERVER['REQUEST_TIME']);
