@@ -4,8 +4,8 @@ class IPValidator {
 	private $config;
 	private IPAddress $ip;
 
-	public function __construct(board $board, IPAddress $ip) {
-		$this->config = $board->loadBoardConfig();
+	public function __construct(array $config, IPAddress $ip) {
+		$this->config = $config;
 		$this->ip = $ip;
 	}
 
