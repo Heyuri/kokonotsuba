@@ -343,7 +343,7 @@ class tableCreator {
 				INDEX (`thread_uid`),
 				INDEX (`last_reply_time`),
 				INDEX (`last_bump_time`),
-				INDEX (`thread_created_time`),
+				INDEX (`thread_created_time`)
 			) ENGINE=InnoDB;",
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_TABLE']} (
 				`post_uid` INT NOT NULL AUTO_INCREMENT,
@@ -565,7 +565,7 @@ switch ($action) {
 
             $tableCreator->createTables($tables);
             $sanitizedTableNames = array_map('sanitizeTableName', $tables);
-            $boardTable = new boardTable($pdoConnection, $sanitizedTableNames['BOARD_TABLE'], $databaseSettings['DATABASE_NAME']);
+            $boardTable = new boardTable($pdoConnection, $sanitizedTableNames['BOARD_TABLE'], $dbSettings['DATABASE_NAME']);
             $accountTable = new accountTable($pdoConnection, $sanitizedTableNames['ACCOUNT_TABLE']);
 
             createBoardAndFiles($boardTable);
