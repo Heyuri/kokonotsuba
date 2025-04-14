@@ -17,7 +17,7 @@ class mod_rebuild extends moduleHelper {
 	}
 
 	public function autoHookLinksAboveBar(&$link, $pageId, $level) {
-		$link .= '[<a href="' . $this->mypage . '">Manage rebuild</a>] ';
+		$link .= '<li class="adminNavLink"><a href="' . $this->mypage . '">Manage rebuild</a></li>';
 	}
 
 	public function ModulePage() {

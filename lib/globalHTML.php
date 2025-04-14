@@ -567,12 +567,16 @@ class globalHTML {
 		$staffSession = new staffAccountFromSession;
 		$authRoleLevel = $staffSession->getRoleLevel();
 		
-		$linksAboveBar =  ' [<a href="'.$this->config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a>] 
-					[<a href="'.$this->config['PHP_SELF'].'?mode=account">Account</a>]
-					[<a href="'.$this->config['PHP_SELF'].'?mode=boards">Boards</a>] 
-					[<a href="'.$this->config['PHP_SELF'].'?pagenum=0">Live frontend</a>] 
-					[<a href="'.$this->config['PHP_SELF'].'?mode=rebuild">Rebuild board</a>] ';
+		$linksAboveBar =  '
+			<ul id="adminNavBar">
+				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a></li>
+				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=account">Account</a></li>
+				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=boards">Boards</a></li>
+				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?pagenum=0">Live frontend</a></li>
+				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=rebuild">Rebuild board</a></li>
+				';
 		$this->moduleEngine->useModuleMethods('LinksAboveBar', array(&$linksAboveBar,'admin',$authRoleLevel));
+		$linksAboveBar .= "</ul>";
 		return $linksAboveBar;
 	}
 	

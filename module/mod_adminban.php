@@ -41,7 +41,7 @@ class mod_adminban extends moduleHelper {
 	public function autoHookLinksAboveBar(&$link, $pageId, $level) {
 
 		if ($level >= $this->config['roles']['LEV_MODERATOR'] && $pageId === 'admin') {
-			$link .= '[<a href="' . $this->mypage . '">Manage bans</a>] ';
+			$link .= '<li class="adminNavLink"><a href="' . $this->mypage . '">Manage bans</a></li>';
 		}
 	}
 

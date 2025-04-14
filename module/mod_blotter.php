@@ -116,7 +116,7 @@ class mod_blotter extends moduleHelper {
 	public function autoHookLinksAboveBar(&$link, $pageId, $level) {
 		if ($level < $this->config['AuthLevels']['CAN_EDIT_BLOTTER']) return;
 		
-		$link.= '[<a href="'.$this->mypage.'">Manage blotter</a>] ';
+		$link.= '<li class="adminNavLink"><a href="'.$this->mypage.'">Manage blotter</a></li>';
 	}
 
 	public function autoHookBlotterPreview(&$html) {
