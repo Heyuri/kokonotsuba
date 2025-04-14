@@ -1092,6 +1092,28 @@ caption h3 {
 	color: #3366cc;
 }
 
+#adminNavBar {
+	display: flex;
+  flex-wrap: wrap;
+	justify-content: center;
+	gap: 0 0.5em;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.adminNavLink {
+	display: inline-block;
+}
+
+.adminNavLink::before {
+	content: "[";
+}
+
+.adminNavLink::after {
+	content: "]";
+}
+
 .formtable {
 	margin: 1em auto;
 }

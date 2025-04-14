@@ -12,7 +12,7 @@
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/txt/base.css?v=21">
+	<link rel="stylesheet" href="{$STATIC_URL}css/txt/base.css?v=22">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/txt/pseud0ch.css" title="Pseud0ch">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch2.css" title="Pseud0ch (sans-serif)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch3.css" title="Pseud0ch (MS PGothic)">
