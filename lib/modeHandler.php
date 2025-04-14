@@ -4,7 +4,6 @@ class modeHandler {
 	private readonly array $config;
 	private readonly board $board;
 	private readonly globalHTML $globalHTML;
-	private moduleEngine $moduleEngine;
 	private readonly overboard $overboard;
 	private readonly pageRenderer $pageRenderer;
 	private readonly pageRenderer $adminPageRenderer;
@@ -15,7 +14,9 @@ class modeHandler {
 	private readonly ActionLogger $actionLogger;
 	private readonly softErrorHandler $softErrorHandler;
 	private readonly staffAccountFromSession $staffSession;
+	private readonly postValidator $postValidator;
 
+	private moduleEngine $moduleEngine;
 	private templateEngine $templateEngine;
 	private templateEngine $adminTemplateEngine;
 	
@@ -58,9 +59,13 @@ class modeHandler {
 		// soft error page handler
 		$this->softErrorHandler = new softErrorHandler($board);
 
-		//account from session
+		// account from session
 		$this->staffSession = new staffAccountFromSession;
 
+		// post + ip validator
+		$IPValidator = new IPValidator($this->config, new IPAddress);
+		$this->postValidator = new postValidator($this->board, $this->config, $this->globalHTML, $IPValidator);
+	
 		// File I/O and Logging
 		$this->FileIO = PMCLibrary::getFileIOInstance();
 		$this->PIO = PIOPDO::getInstance();
@@ -181,15 +186,14 @@ class modeHandler {
 	}
 
 	/* Write to post table */
-	public function regist(){
-		$postValidator = new postValidator($this->board);
-		
+	public function regist(){	
 		$boardBeingPostedTo =  $this->board;
 		$boardConfig = $boardBeingPostedTo->loadBoardConfig();
 
 		$boardBeingPostedTo->updateBoardPathCache();
 
-
+		$chktime = '';
+		$flgh = '';
 		$ThreadExistsBefore = false;
 		$fname = '';
 		$ext = '';
@@ -222,11 +226,11 @@ class modeHandler {
 		
 		$roleLevel = $this->staffSession->getRoleLevel();
 		
-		$postValidator->spamValidate($name, $email, $sub, $com);
+		$this->postValidator->spamValidate($name, $email, $sub, $com);
 		/* hook call */
 		$this->moduleEngine->useModuleMethods('RegistBegin', array(&$name, &$email, &$sub, &$com, array('file'=>&$upfile, 'path'=>&$upfile_path, 'name'=>&$upfile_name, 'status'=>&$upfile_status), array('ip'=>$ip, 'host'=>$host), $thread_uid)); // "RegistBegin" Hook Point
 		if($this->config['TEXTBOARD_ONLY'] == false) {
-				processFiles($boardBeingPostedTo, $postValidator, $this->globalHTML, $upfile, $upfile_path, $upfile_name, $upfile_status, $md5chksum, $imgW, $imgH, $imgsize, $W, $H, $fname, $ext, $age, $status, $thread_uid, $tim, $dest, $tmpfile);
+				processFiles($boardBeingPostedTo, $this->postValidator, $this->globalHTML, $upfile, $upfile_path, $upfile_name, $upfile_status, $md5chksum, $imgW, $imgH, $imgsize, $W, $H, $fname, $ext, $age, $status, $thread_uid, $tim, $dest, $tmpfile);
 		}
 		
 		// Check the form field contents and trim them
@@ -241,7 +245,7 @@ class modeHandler {
 		$sub = str_replace("\r\n", '', $sub);
 	
 		applyTripcodeAndCapCodes($boardConfig, $this->globalHTML, $this->staffSession, $name, $email, $dest);
-		$postValidator->cleanComment($com, $upfile_status, $is_admin, $dest);
+		$this->postValidator->cleanComment($com, $upfile_status, $is_admin, $dest);
 		addDefaultText($boardConfig, $sub, $com);
 		applyPostFilters($boardConfig, $this->globalHTML, $com, $email);
 	
@@ -266,13 +270,13 @@ class modeHandler {
 		$now = generatePostDay($boardConfig, $time);
 		$now .= generatePostID($roleLevel, $boardConfig, $email,$now, $time, $thread_uid, $this->PIO);
 
-		$postValidator->validateForDatabase($pwdc, $com, $time, $pass, $ip,  $upfile, $md5chksum, $dest, $this->PIO, $roleLevel);
+		$this->postValidator->validateForDatabase($pwdc, $com, $time, $pass, $ip,  $upfile, $md5chksum, $dest, $this->PIO, $roleLevel);
 		if($thread_uid){
 				$ThreadExistsBefore = $this->PIO->isThread($thread_uid);
 		}
 	
-		$postValidator->pruneOld($this->moduleEngine, $this->PIO, $this->FileIO);
-		$postValidator->threadSanityCheck($chktime, $flgh, $thread_uid, $this->PIO, $dest, $ThreadExistsBefore);
+		$this->postValidator->pruneOld($this->moduleEngine, $this->PIO, $this->FileIO);
+		$this->postValidator->threadSanityCheck($chktime, $flgh, $thread_uid, $this->PIO, $dest, $ThreadExistsBefore);
 	
 		// Calculate the last feilds needed before putitng in db
 		$no = $boardBeingPostedTo->getLastPostNoFromBoard() + 1;
