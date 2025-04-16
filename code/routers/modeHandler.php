@@ -67,6 +67,7 @@ class modeHandler {
 		$this->postValidator = new postValidator($this->board, $this->config, $this->globalHTML, $IPValidator);
 	
 		// File I/O and Logging
+		$this->boardIO = boardIO::getInstance();
 		$this->FileIO = PMCLibrary::getFileIOInstance();
 		$this->PIO = PIOPDO::getInstance();
 		$this->AccountIO = AccountIO::getInstance();
@@ -187,10 +188,7 @@ class modeHandler {
 
 	/* Write to post table */
 	public function regist(){	
-		$boardBeingPostedTo =  $this->board;
-		$boardConfig = $boardBeingPostedTo->loadBoardConfig();
-
-		$boardBeingPostedTo->updateBoardPathCache();
+		$this->board->updateBoardPathCache();
 
 		$chktime = '';
 		$flgh = '';
@@ -210,7 +208,7 @@ class modeHandler {
 		$pwd = $_POST['pwd']??'';
 		$category = filter_var($_POST['category']??'', FILTER_SANITIZE_SPECIAL_CHARS);
 		$resno = intval($_POST['resto']??0);
-		$thread_uid = $this->PIO->resolveThreadUidFromResno($boardBeingPostedTo, $resno);
+		$thread_uid = $this->PIO->resolveThreadUidFromResno($this->board, $resno);
 		$pwdc = $_COOKIE['pwdc']??'';
 
 		$ip = new IPAddress; 
@@ -230,13 +228,13 @@ class modeHandler {
 		/* hook call */
 		$this->moduleEngine->useModuleMethods('RegistBegin', array(&$name, &$email, &$sub, &$com, array('file'=>&$upfile, 'path'=>&$upfile_path, 'name'=>&$upfile_name, 'status'=>&$upfile_status), array('ip'=>$ip, 'host'=>$host), $thread_uid)); // "RegistBegin" Hook Point
 		if($this->config['TEXTBOARD_ONLY'] == false) {
-				processFiles($boardBeingPostedTo, $this->postValidator, $this->globalHTML, $upfile, $upfile_path, $upfile_name, $upfile_status, $md5chksum, $imgW, $imgH, $imgsize, $W, $H, $fname, $ext, $age, $status, $thread_uid, $tim, $dest, $tmpfile);
+				processFiles($this->board, $this->postValidator, $this->globalHTML, $upfile, $upfile_path, $upfile_name, $upfile_status, $md5chksum, $imgW, $imgH, $imgsize, $W, $H, $fname, $ext, $age, $status, $thread_uid, $tim, $dest, $tmpfile);
 		}
 		
 		// Check the form field contents and trim them
-		if(strlenUnicode($name) > $boardConfig['INPUT_MAX'])	$this->globalHTML->error(_T('regist_nametoolong'), $dest);
-		if(strlenUnicode($email) > $boardConfig['INPUT_MAX'])	$this->globalHTML->error(_T('regist_emailtoolong'), $dest);
-		if(strlenUnicode($sub) > $boardConfig['INPUT_MAX'])	$this->globalHTML->error(_T('regist_topictoolong'), $dest);
+		if(strlenUnicode($name) > $this->config['INPUT_MAX'])	$this->globalHTML->error(_T('regist_nametoolong'), $dest);
+		if(strlenUnicode($email) > $this->config['INPUT_MAX'])	$this->globalHTML->error(_T('regist_emailtoolong'), $dest);
+		if(strlenUnicode($sub) > $this->config['INPUT_MAX'])	$this->globalHTML->error(_T('regist_topictoolong'), $dest);
 
 		setrawcookie('namec', rawurlencode(htmlspecialchars_decode($name)), time()+7*24*3600);
 		
@@ -244,13 +242,13 @@ class modeHandler {
 		$email = str_replace("\r\n", '', $email); 
 		$sub = str_replace("\r\n", '', $sub);
 	
-		applyTripcodeAndCapCodes($boardConfig, $this->globalHTML, $this->staffSession, $name, $email, $dest);
+		applyTripcodeAndCapCodes($this->config, $this->globalHTML, $this->staffSession, $name, $email, $dest);
 		$this->postValidator->cleanComment($com, $upfile_status, $is_admin, $dest);
-		addDefaultText($boardConfig, $sub, $com);
-		applyPostFilters($boardConfig, $this->globalHTML, $com, $email);
+		addDefaultText($this->config, $sub, $com);
+		applyPostFilters($this->config, $this->globalHTML, $com, $email);
 	
 		// Trimming label style
-		if($category && $boardConfig['USE_CATEGORY']){
+		if($category && $this->config['USE_CATEGORY']){
 				$category = explode(',', $category); // Disassemble the labels into an array
 				$category = ','.implode(',', array_map('trim', $category)).','; // Remove the white space and merge into a single string (left and right, you can directly search in the form XX)
 		}else{ 
@@ -267,8 +265,8 @@ class modeHandler {
 		}
 	
 		$pass = $pwd ? substr(md5($pwd), 2, 8) : '*'; // Generate a password for true storage judgment (the 8 characters at the bottom right of the imageboard where it says Password ******** SUBMIT for deleting posts)
-		$now = generatePostDay($boardConfig, $time);
-		$now .= generatePostID($roleLevel, $boardConfig, $email,$now, $time, $thread_uid, $this->PIO);
+		$now = generatePostDay($this->config, $time);
+		$now .= generatePostID($roleLevel, $this->config, $email,$now, $time, $thread_uid, $this->PIO);
 
 		$this->postValidator->validateForDatabase($pwdc, $com, $time, $pass, $ip,  $upfile, $md5chksum, $dest, $this->PIO, $roleLevel);
 		if($thread_uid){
@@ -279,7 +277,7 @@ class modeHandler {
 		$this->postValidator->threadSanityCheck($chktime, $flgh, $thread_uid, $this->PIO, $dest, $ThreadExistsBefore);
 	
 		// Calculate the last feilds needed before putitng in db
-		$no = $boardBeingPostedTo->getLastPostNoFromBoard() + 1;
+		$no = $this->board->getLastPostNoFromBoard() + 1;
 		if(!isset($ext)) $ext = '';
 		if(!isset($imgW)) $imgW = 0;
 		if(!isset($imgH)) $imgH = 0;
@@ -289,12 +287,12 @@ class modeHandler {
 		if(!isset($md5chksum)) $md5chksum = '';
 		$age = false;
 		$status = '';
-		applyAging($boardConfig, $thread_uid, $this->PIO, $time, $chktime, $email, $name, $age);
+		applyAging($this->config, $thread_uid, $this->PIO, $time, $chktime, $email, $name, $age);
 	
 		// noko
-		$redirect = $boardConfig['PHP_SELF2'].'?'.$tim;
+		$redirect = $this->config['PHP_SELF2'].'?'.$tim;
 		if (strstr($email, 'noko') && !strstr($email, 'nonoko')) {
-				$redirect = $boardConfig['PHP_SELF'].'?res='.($resno?$resno:$no);
+				$redirect = $this->config['PHP_SELF'].'?res='.($resno?$resno:$no);
 				if (!strstr($email, 'dump')){
 						$redirect.= "#p".$this->board->getBoardUID()."_$no";
 				}
@@ -302,34 +300,36 @@ class modeHandler {
 		$email = preg_replace('/^(no)+ko\d*$/i', '', $email);
 	
 		// Get number of pages to rebuild
-		$threads = $this->PIO->getThreadListFromBoard($boardBeingPostedTo);
+		$threads = $this->PIO->getThreadListFromBoard($this->board);
 		$threads_count = count($threads);
 		$page_end = ($thread_uid ? floor(array_search($thread_uid, $threads) / $this->config['PAGE_DEF']) : ceil($threads_count / $this->config['PAGE_DEF']));
 		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, array($W, $H, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
-		$this->PIO->addPost($boardBeingPostedTo, $no, $thread_uid, $md5chksum, $category, $tim, $fname, $ext, $imgW, $imgH, $imgsize, $W, $H, $pass, $now, $name, $email, $sub, $com, $ip, $age, $status);
+		$this->PIO->addPost($this->board, $no, $thread_uid, $md5chksum, $category, $tim, $fname, $ext, $imgW, $imgH, $imgsize, $W, $H, $pass, $now, $name, $email, $sub, $com, $ip, $age, $status);
 		
-		$this->actionLogger->logAction("Post No.$no registered", $boardBeingPostedTo->getBoardUID());
+		$this->actionLogger->logAction("Post No.$no registered", $this->board->getBoardUID());
 		// Formal writing to storage
-		$lastno = $boardBeingPostedTo->getLastPostNoFromBoard() - 1; // Get this new article number
+		$lastno = $this->board->getLastPostNoFromBoard() - 1; // Get this new article number
 		$this->moduleEngine->useModuleMethods('RegistAfterCommit', array($lastno, $thread_uid, $name, $email, $sub, $com)); // "RegistAfterCommit" Hook Point
 	
 		// Cookies storage: password and e-mail part, for one week
 		setcookie('pwdc', $pwd, time()+7*24*3600);
 		setcookie('emailc', htmlspecialchars_decode($email), time()+7*24*3600);
-		makeThumbnailAndUpdateStats($boardBeingPostedTo, $this->config, $this->FileIO, $dest, $ext, $tim, $tmpfile ,$imgW, $imgH, $W, $H);
-		runWebhooks($boardBeingPostedTo, $resno, $no, $sub);
+		makeThumbnailAndUpdateStats($this->board, $this->config, $this->FileIO, $dest, $ext, $tim, $tmpfile ,$imgW, $imgH, $W, $H);
+		runWebhooks($this->board, $resno, $no, $sub);
 	
 	
-		$boardBeingPostedTo->rebuildBoard(0, -1, false, $page_end);
+		$this->board->rebuildBoard(0, -1, false, $page_end);
 		redirect($redirect, 0);
 	}
 
 
 	private function drawAdminList() {
-		if(isset($_POST['username']) || isset($_POST['password'])) adminLogin($this->AccountIO, $this->globalHTML);
+		if(isset($_POST['username']) && isset($_POST['password'])) adminLogin($this->AccountIO, $this->globalHTML);
 
-		$currentRoleLevel = $this->staffSession->getRoleLevel();
-		$adminPageHandler = new adminPageHandler($this->board, $this->moduleEngine);
+		$recentStaffAccountFromSession = new staffAccountFromSession;
+
+		$currentRoleLevel = $recentStaffAccountFromSession->getRoleLevel(); // get the newly set role level if login was successful
+		$adminPageHandler = new adminPageHandler($this->board, $this->moduleEngine); // router for some admin pages, mostly legacy
 		$admin = $_REQUEST['admin']??'';
 		$dat = '';
 		$this->globalHTML->head($dat);
@@ -632,7 +632,7 @@ class modeHandler {
 			$boardSubtitle = $board->getBoardSubTitle() ?? '';
 			$boardURL = $board->getBoardURL() ?? '';
 			$boardListed = $board->getBoardListed() ?? '';
-			$boardConfigPath = $board->getConfigFileName() ?? '';
+			$boardConfig = $board->getConfigFileName() ?? '';
 			$boardStorageDirectoryName = $board->getBoardStorageDirName() ?? '';
 			$boardDate = $board->getDateAdded() ?? '';
 
@@ -644,7 +644,7 @@ class modeHandler {
 			$template_values['{$BOARD_IS_LISTED}'] = $boardListed ? 'True' : 'False';
 			
 			$template_values['{$BOARD_DATE_ADDED}'] = $boardDate;
-			$template_values['{$BOARD_CONFIG_FILE}'] = $boardConfigPath;
+			$template_values['{$BOARD_CONFIG_FILE}'] = $boardConfig;
 			$template_values['{$CHECKED}'] = $boardListed ? 'checked' : '';
 			$template_values['{$BOARD_STORAGE_DIR}'] = $boardStorageDirectoryName;
 			$template_values['{$EDIT_BOARD_HTML}'] = $this->adminTemplateEngine->ParseBlock('EDIT_BOARD', $template_values);
