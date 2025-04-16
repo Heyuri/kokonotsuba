@@ -70,9 +70,9 @@
 <!--/&CREATE_ACCOUNT-->
 
 <!--&BOARD_PAGE-->
-	<h2>Create a new board</h2>
+	<h3>Create a new board</h3>
 	{$CREATE_BOARD}
-	<h2>Boards</h2>
+	<h3>Existing boards</h3>
 	{$BOARD_LIST}
 <!--/&BOARD_PAGE-->
 
@@ -205,8 +205,7 @@
 <!--/&VIEW_BOARD-->
 
 <!--&ADMIN_REBUILD_PAGE-->
-	<h2>Rebuild</h2>
-	<h3>Boards</h3>
+	<h3>Rebuild boards</h3>
 	<form action="{$MODULE_URL}" method="POST">
 		{$REBUILD_CHECK_LIST}
 		<button name="formSubmit" value="save">Submit</button>
@@ -252,7 +251,7 @@
 <!--/&BLOTTER_ADMIN_PAGE_TABLE_BLOCK-->
 
 <!--&BLOTTER_ADMIN_PAGE-->
-	<h2>Manage blotter</h2>
+	<h3>Manage blotter</h3>
 	<form action="{$MODULE_URL}" method='post'>
 		<table class="formtable centerBlock">
 			<tbody>
