@@ -21,8 +21,8 @@ require __DIR__.'/code/logger/NopLogger.php'; // no logging class
 require __DIR__.'/code/lang/LanguageLoader.php';
 
 /* FileIO */
-require __DIR__.'/code/abstract fileio/AbstractFileIO.php';
-require __DIR__.'/code/abstract fileio/AbstractIfsFileIO.php';
+require __DIR__.'/code/abstract_fileio/AbstractFileIO.php';
+require __DIR__.'/code/abstract_fileio/AbstractIfsFileIO.php';
 require __DIR__.'/code/fileio/fileio.local.php';
 
 
@@ -53,12 +53,12 @@ require __DIR__.'/code/html/globalHTML.php'; // html class
 require __DIR__.'/code/error/softErrorHandler.php';
 
 /* Module related */
-require __DIR__. '/code/module classes/moduleEngine.php'; // module manager class
-require __DIR__. '/code/module classes/moduleHelper.php'; // module helper class
+require __DIR__. '/code/module_classes/moduleEngine.php'; // module manager class
+require __DIR__. '/code/module_classes/moduleHelper.php'; // module helper class
 
 /* Path caching */
-require __DIR__.'/code/path cache/boardPathCachingIO.php';
-require __DIR__.'/code/path cache/cachedBoardPath.php';
+require __DIR__.'/code/path_cache/boardPathCachingIO.php';
+require __DIR__.'/code/path_cache/cachedBoardPath.php';
 
 
 /* Database singleton */
@@ -85,12 +85,12 @@ require __DIR__.'/code/account/accountRequestHandler.php';
 require __DIR__.'/code/account/staffAccountSession.php';
 
 /* Log in */
-require __DIR__.'/code/log in/authenticate.php';
-require __DIR__.'/code/log in/loginHandler.php';
+require __DIR__.'/code/log_in/authenticate.php';
+require __DIR__.'/code/log_in/loginHandler.php';
 
 /* Action log */
-require __DIR__.'/code/action log/actionClass.php';
-require __DIR__.'/code/action log/actionLoggerSingleton.php';
+require __DIR__.'/code/action_log/actionClass.php';
+require __DIR__.'/code/action_log/actionLoggerSingleton.php';
 
 /* Board classes and singleton */
 require __DIR__.'/code/board/boardClass.php';
