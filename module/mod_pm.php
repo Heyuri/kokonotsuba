@@ -320,7 +320,7 @@ class mod_pm extends moduleHelper {
 	<h2 class="theading2">Message sent</h2>
 	<div class="postformTable">
 		<table cellpadding="1" cellspacing="1" id="postform_tbl">
-			<tr><td class="postblock">From</td><td class="name">' . htmlspecialchars($_POST['from']) . '</td></tr>
+			<tr><td class="postblock">From</td><td class="name">' . htmlspecialchars(strip_tags($_POST['from'] ?? '')) . '</td></tr>
 			<tr><td class="postblock">To</td><td>' . _T('trip_pre') . htmlspecialchars($_POST['t']) . '</td></tr>
 			<tr><td class="postblock">' . _T('form_topic') . '</td><td>' . htmlspecialchars($_POST['topic']) . '</td></tr>
 			<tr><td class="postblock">' . _T('form_comment') . '</td><td><div class="comment">' . htmlspecialchars($_POST['content']) . '</div></td></tr>
