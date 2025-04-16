@@ -49,6 +49,9 @@ require __DIR__.'/code/template/pageRenderer.php'; // page renderer
 /* html */
 require __DIR__.'/code/html/globalHTML.php'; // html class
 
+/* Handle soft error pages */
+require __DIR__.'/code/error/softErrorHandler.php';
+
 /* Module related */
 require __DIR__. '/code/module classes/moduleEngine.php'; // module manager class
 require __DIR__. '/code/module classes/moduleHelper.php'; // module helper class
@@ -60,9 +63,6 @@ require __DIR__.'/code/path cache/cachedBoardPath.php';
 
 /* Database singleton */
 require __DIR__.'/code/database/database.php';
-
-/* Handle soft error pages */
-require __DIR__.'/code/error/softErrorHandler.php';
 
 /* Overboard */
 require __DIR__.'/code/overboard.php';
