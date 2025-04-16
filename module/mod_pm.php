@@ -308,10 +308,12 @@ class mod_pm extends moduleHelper {
 					
 						$this->_postPM($_POST['from'], $_POST['t'], $_POST['topic'], $_POST['content']);
 
-						if (preg_match('/(.*?)[#＃](.*)/u', $_POST['from'], $regs)) {
-								$_POST['from'] = '<span class="postername">' . htmlspecialchars($regs[1]) . '</span>';
+						$from = $_POST['from'] ?? '';
+
+						if (preg_match('/(.*?)[#＃](.*)/u', $from, $regs)) {
+								$from = '<span class="postername">' . htmlspecialchars($regs[1]) . '</span>';
 								$cap = strtr($regs[2], ['&amp;' => '&']);
-								$_POST['from'] .= '<span class="postertrip">' . _T('trip_pre') . $this->_tripping($cap) . '</span>';
+								$from .= '<span class="postertrip">' . _T('trip_pre') . $this->_tripping($cap) . '</span>';
 						}
 
 						$dat .= '
@@ -320,7 +322,7 @@ class mod_pm extends moduleHelper {
 	<h2 class="theading2">Message sent</h2>
 	<div class="postformTable">
 		<table cellpadding="1" cellspacing="1" id="postform_tbl">
-			<tr><td class="postblock">From</td><td class="name">' . htmlspecialchars(strip_tags($_POST['from'] ?? '')) . '</td></tr>
+			<tr><td class="postblock">From</td><td class="name">' . $from . '</td></tr>
 			<tr><td class="postblock">To</td><td>' . _T('trip_pre') . htmlspecialchars($_POST['t']) . '</td></tr>
 			<tr><td class="postblock">' . _T('form_topic') . '</td><td>' . htmlspecialchars($_POST['topic']) . '</td></tr>
 			<tr><td class="postblock">' . _T('form_comment') . '</td><td><div class="comment">' . htmlspecialchars($_POST['content']) . '</div></td></tr>
