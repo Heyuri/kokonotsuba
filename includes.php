@@ -18,7 +18,7 @@ require __DIR__.'/code/logger/LoggerInterceptor.php'; // logger incterceptor cla
 require __DIR__.'/code/logger/NopLogger.php'; // no logging class
 
 /* Language */
-require __DIR__.'/code/LanguageLoader.php';
+require __DIR__.'/code/lang/LanguageLoader.php';
 
 /* FileIO */
 require __DIR__.'/code/abstract fileio/AbstractFileIO.php';
