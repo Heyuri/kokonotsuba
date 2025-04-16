@@ -596,8 +596,8 @@ class modeHandler {
 			'{$VIEW_OWN_ACCOUNT}' => $this->adminTemplateEngine->ParseBlock('VIEW_ACCOUNT', $accountTemplateValues),
 		];
 		
-		$html = $this->adminPageRenderer->ParsePage('ACCOUNT_PAGE', $template_values, true);
-		echo $html;
+		$accountPageHtml = $this->adminPageRenderer->ParseBlock('ACCOUNT_PAGE', $template_values);
+		echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $accountPageHtml], true);
 	}
 
 	private function drawBoardScreen() {
@@ -649,14 +649,14 @@ class modeHandler {
 			$template_values['{$BOARD_STORAGE_DIR}'] = $boardStorageDirectoryName;
 			$template_values['{$EDIT_BOARD_HTML}'] = $this->adminTemplateEngine->ParseBlock('EDIT_BOARD', $template_values);
 
-			$html = $this->adminPageRenderer->ParsePage('VIEW_BOARD', $template_values, true);
+			$viewBoardHtml = $this->adminPageRenderer->ParseBlock('VIEW_BOARD', $template_values);
 			
-			echo $html;
+			echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $viewBoardHtml], true);
 			return;
 		}	
 		
-		$html = $this->adminPageRenderer->ParsePage('BOARD_PAGE', $template_values, true);
-		echo $html;
+		$boardPageHtml = $this->adminPageRenderer->ParseBlock('BOARD_PAGE', $template_values);
+		echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $boardPageHtml], true);
 	}
 
 	public function handleAccountRequests() {
