@@ -10,8 +10,12 @@ function getBackendDir() {
 	return __DIR__.'/';
 }
 
+function getBackendCodeDir() {
+	return getBackendDir().'code/';
+}
+
 function getBackendGlobalDir() {
-	return __DIR__.'/global/';
+	return getBackendDir().'global/';
 }
 
 function getBoardConfigDir() {
@@ -23,9 +27,24 @@ function getBoardStoragesDir() {
 }
 
 function getTemplateConfigArray() {
-	require getBoardConfigDir().'board-template.php';
+	// Path to the board template configuration file
+	$configFile = getBoardConfigDir() . 'board-template.php';
+	
+	// Check if the file exists before including
+	if (!file_exists($configFile)) {
+		throw new Exception("Configuration file not found: " . $configFile);
+	}
+
+	require $configFile;
+	
+	// Ensure $config is set in the included file
+	if (!isset($config)) {
+		throw new Exception("Configuration array \$config is not defined in: " . $configFile);
+	}
+	
 	return $config;
 }
+
 
 
 require getBackendDir().'includes.php';
