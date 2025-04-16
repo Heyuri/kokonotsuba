@@ -91,12 +91,10 @@ class mod_movethread extends moduleHelper {
 			$redirectURL = $postRedirectIO->resolveRedirectedThreadLinkFromThreadUID($thread_uid);
 			redirect($redirectURL);
 		} else {
-			$htmlOutput = '';
-			
+
 			$templateData = $this->prepareMoveFormTemplateValues();
-			$htmlOutput .= $this->adminPageRenderer->ParsePage('THREAD_MOVE_FORM', $templateData, true);
-			
-			echo $htmlOutput;
+			$threadMoveFormHtml = $this->adminPageRenderer->ParseBlock('THREAD_MOVE_FORM', $templateData);
+			echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $threadMoveFormHtml], true);
 		}
 	}
 

@@ -57,7 +57,7 @@ class mod_blotter extends moduleHelper {
 				'{$EMPTY}' => empty($rows),
 		];
 
-		return $this->adminPageRenderer->ParsePage('BLOTTER_PAGE', $templateValues);
+		return $this->adminPageRenderer->ParseBlock('BLOTTER_PAGE', $templateValues);
 	}
 
 
@@ -150,10 +150,9 @@ class mod_blotter extends moduleHelper {
 		
 		//If a regular user, draw blotter page
 		if ($roleLevel < $this->config['AuthLevels']['CAN_EDIT_BLOTTER']) {
-			$htmlOutput = '';
-			$htmlOutput .= $this->drawBlotterTable();
-			
-			echo $htmlOutput;
+			$blotterTableHtml = $this->drawBlotterTable();
+
+			echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $blotterTableHtml]);
 			return;
 		}
 		
@@ -167,10 +166,9 @@ class mod_blotter extends moduleHelper {
 				$this->deleteBlotterEntries($_POST['entrydelete']);
 			}
 		}
-	
 		$templateValues = $this->prepareAdminBlotterPlaceHolders();
-		$htmlOutput = $this->adminPageRenderer->ParsePage('BLOTTER_ADMIN_PAGE', $templateValues, true);
-		echo $htmlOutput;
+		$blotterAdminPageHtml = $this->adminPageRenderer->ParseBlock('BLOTTER_ADMIN_PAGE', $templateValues);
+		echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $blotterAdminPageHtml], true);
 	}
 }
 ?>

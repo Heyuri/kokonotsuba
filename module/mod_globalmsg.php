@@ -57,9 +57,9 @@ class mod_globalmsg extends moduleHelper {
 			'{$CURRENT_GLOBAL_MESSAGE}' => $this->getCurrentGlobalMsg(),
 			'{$MODULE_URL}' => $this->mypage
 		];
-		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBALMSG_PAGE', $templateValues, true);
-		
-		echo $htmlOutput;
+
+		$globalMessagePageHtml = $this->adminPageRenderer->ParseBlock('GLOBALMSG_PAGE', $templateValues);
+		echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $globalMessagePageHtml], true);
 	}
 }
 

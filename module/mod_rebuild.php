@@ -38,11 +38,9 @@ class mod_rebuild extends moduleHelper {
 				'{$REBUILD_CHECK_LIST}' => $globalHTML->generateRebuildListCheckboxHTML($this->moduleBoardList),
 				'{$MODULE_URL}' => $this->mypage];
 
-			$htmlOutput = '';
 
-			$htmlOutput .= $this->adminPageRenderer->ParsePage('ADMIN_REBUILD_PAGE', $templateValues, true);
-
-			echo $htmlOutput;
+			$adminRebuildPage = $this->adminPageRenderer->ParseBlock('ADMIN_REBUILD_PAGE', $templateValues);
+			echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $adminRebuildPage], true);
 		}
 	}
 }

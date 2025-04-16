@@ -110,7 +110,9 @@ class mod_adminban extends moduleHelper {
 			'{$TABLES}' => $tables,
 		];
 
-		echo $this->adminPageRenderer->ParsePage('ADMIN_BAN_MANAGEMENT_PAGE', $templateData, true);
+		$adminBanManagePageHtml = $this->adminPageRenderer->ParseBlock('ADMIN_BAN_MANAGEMENT_PAGE', $templateData);
+
+		echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $adminBanManagePageHtml], true);
 	}
 
 	private function sortBansByNewest(array $bans): array {
@@ -250,7 +252,7 @@ class mod_adminban extends moduleHelper {
 						" and expires on " . date('Y/m/d \a\t H:i:s', $expires) . ".</p>"
 		];
 
-		return $this->adminPageRenderer->ParsePage('BAN_PAGE', $templateValues);
+		return $this->adminPageRenderer->ParseBlock('BAN_PAGE', $templateValues);
 	}
 
 }
