@@ -175,7 +175,7 @@ class modeHandler {
 				header('HTTP/1.1 302 Moved Temporarily');
 				header('Location: ' . $this->globalHTML->fullURL() . $this->config['PHP_SELF2'] . '?' . $_SERVER['REQUEST_TIME']);
 		}
-}
+	}
 
 
 	private function finalizeGzip($Encoding) {
@@ -188,25 +188,42 @@ class modeHandler {
 
 	/* Write to post table */
 	public function regist(){	
-		$this->board->updateBoardPathCache();
+		$this->board->updateBoardPathCache(); //upload board cached path
 
-		$chktime = '';
+		// uploaded file handlers
+		$thumbnailCreator = new thumbnailCreator($this->board, $this->config, $this->FileIO);
+		$fileProcessor = new fileProcessor($this->board, $this->config, $this->postValidator, $this->globalHTML, $thumbnailCreator, $this->FileIO);
+		
+		// post data manipulation
+		$tripcodeProcessor = new tripcodeProcessor($this->config, $this->globalHTML, $this->staffSession);
+		$defaultTextFiller = new defaultTextFiller($this->config);
+		$fortuneGenerator = new fortuneGenerator($this->config['FORTUNES']);
+		
+		// filter, date and IDs
+		$postFilterApplier = new postFilterApplier($this->config, $this->globalHTML, $fortuneGenerator);
+		$postDateFormatter = new postDateFormatter($this->config);
+		$postIdGenerator = new postIdGenerator($this->config, $this->PIO, $this->staffSession);
+
+		// age/sage
+		$agingHandler = new agingHandler($this->config, $this->PIO);
+
+		// webhook for post notifcations
+		$webhookDispatcher = new webhookDispatcher($this->board, $this->config);
+
+		$chktime = 0;
 		$flgh = '';
 		$ThreadExistsBefore = false;
-		$fname = '';
-		$ext = '';
 		$dest = '';
-		$tmpfile = '';
 		$up_incomplete = 0; 
 		$is_admin = false;
 		
 		/* get post data */
-		$name = filter_var($_POST['name']??'', FILTER_SANITIZE_SPECIAL_CHARS);
-		$email = filter_var($_POST['email']??'', FILTER_SANITIZE_SPECIAL_CHARS);
-		$sub = filter_var($_POST['sub']??'', FILTER_SANITIZE_SPECIAL_CHARS);
-		$com = $_POST['com']??'';
+		$name = htmlspecialchars($_POST['name']??'');
+		$email = htmlspecialchars($_POST['email']??'');
+		$sub = htmlspecialchars($_POST['sub']??'');
+		$com = htmlspecialchars($_POST['com']??'');
 		$pwd = $_POST['pwd']??'';
-		$category = filter_var($_POST['category']??'', FILTER_SANITIZE_SPECIAL_CHARS);
+		$category = htmlspecialchars($_POST['category']??'');
 		$resno = intval($_POST['resto']??0);
 		$thread_uid = $this->PIO->resolveThreadUidFromResno($this->board, $resno);
 		$pwdc = $_COOKIE['pwdc']??'';
@@ -217,10 +234,18 @@ class modeHandler {
 		$time = $_SERVER['REQUEST_TIME'];
 		// Unix timestamp in milliseconds
 		$tim  = intval($_SERVER['REQUEST_TIME_FLOAT'] * 1000);
+		
+		// file attributes
 		$upfile = '';
 		$upfile_path = '';
 		$upfile_name = '';
-		$upfile_status = 4;
+		$upfile_status = '';
+
+		$file = null;
+		$thumbnail = null;
+
+		// get file attributes
+		[$upfile, $upfile_path, $upfile_name, $upfile_status] = loadUploadData();
 		
 		$roleLevel = $this->staffSession->getRoleLevel();
 		
@@ -228,7 +253,7 @@ class modeHandler {
 		/* hook call */
 		$this->moduleEngine->useModuleMethods('RegistBegin', array(&$name, &$email, &$sub, &$com, array('file'=>&$upfile, 'path'=>&$upfile_path, 'name'=>&$upfile_name, 'status'=>&$upfile_status), array('ip'=>$ip, 'host'=>$host), $thread_uid)); // "RegistBegin" Hook Point
 		if($this->config['TEXTBOARD_ONLY'] == false) {
-				processFiles($this->board, $this->postValidator, $this->globalHTML, $upfile, $upfile_path, $upfile_name, $upfile_status, $md5chksum, $imgW, $imgH, $imgsize, $W, $H, $fname, $ext, $age, $status, $thread_uid, $tim, $dest, $tmpfile);
+				[$file, $thumbnail] = $fileProcessor->process($thread_uid, $tim);
 		}
 		
 		// Check the form field contents and trim them
@@ -241,11 +266,11 @@ class modeHandler {
 		// E-mail / Title trimming
 		$email = str_replace("\r\n", '', $email); 
 		$sub = str_replace("\r\n", '', $sub);
-	
-		applyTripcodeAndCapCodes($this->config, $this->globalHTML, $this->staffSession, $name, $email, $dest);
+		
 		$this->postValidator->cleanComment($com, $upfile_status, $is_admin, $dest);
-		addDefaultText($this->config, $sub, $com);
-		applyPostFilters($this->config, $this->globalHTML, $com, $email);
+		$tripcodeProcessor->apply($name, $email, $dest);
+		$defaultTextFiller->fill($sub, $com);
+		$postFilterApplier->applyFilters($com, $email);
 	
 		// Trimming label style
 		if($category && $this->config['USE_CATEGORY']){
@@ -265,8 +290,8 @@ class modeHandler {
 		}
 	
 		$pass = $pwd ? substr(md5($pwd), 2, 8) : '*'; // Generate a password for true storage judgment (the 8 characters at the bottom right of the imageboard where it says Password ******** SUBMIT for deleting posts)
-		$now = generatePostDay($this->config, $time);
-		$now .= generatePostID($roleLevel, $this->config, $email,$now, $time, $thread_uid, $this->PIO);
+		$now = $postDateFormatter->format($time);
+		$now .= $postIdGenerator->generate($email, $now, $time, $thread_uid);
 
 		$this->postValidator->validateForDatabase($pwdc, $com, $time, $pass, $ip,  $upfile, $md5chksum, $dest, $this->PIO, $roleLevel);
 		if($thread_uid){
@@ -276,18 +301,21 @@ class modeHandler {
 		$this->postValidator->pruneOld($this->moduleEngine, $this->PIO, $this->FileIO);
 		$this->postValidator->threadSanityCheck($chktime, $flgh, $thread_uid, $this->PIO, $dest, $ThreadExistsBefore);
 	
-		// Calculate the last feilds needed before putitng in db
+		// Calculate the last fields needed before putitng in db
 		$no = $this->board->getLastPostNoFromBoard() + 1;
-		if(!isset($ext)) $ext = '';
-		if(!isset($imgW)) $imgW = 0;
-		if(!isset($imgH)) $imgH = 0;
-		if(!isset($imgsize)) $imgsize = '';
-		if(!isset($W)) $W = 0;
-		if(!isset($H)) $H = 0;
-		if(!isset($md5chksum)) $md5chksum = '';
+		$ext = $file->getExtention();
+		$imgW = $file->getImageWidth();
+		$imgH = $file->getImageHeight();
+		$imgSize = $file->getFileSize();
+		$fileName = $file->getFileName();
+		$thumbWidth = $thumbnail->getThumbnailWidth();
+		$thumbHeight = $thumbnail->getThumbnailHeight();
+		$md5chksum = '';
 		$age = false;
 		$status = '';
-		applyAging($this->config, $thread_uid, $this->PIO, $time, $chktime, $email, $name, $age);
+
+		// apply age/sage
+		$agingHandler->apply($thread_uid, $time, $chktime, $email, $name, $age);
 	
 		// noko
 		$redirect = $this->config['PHP_SELF2'].'?'.$tim;
@@ -303,8 +331,8 @@ class modeHandler {
 		$threads = $this->PIO->getThreadListFromBoard($this->board);
 		$threads_count = count($threads);
 		$page_end = ($thread_uid ? floor(array_search($thread_uid, $threads) / $this->config['PAGE_DEF']) : ceil($threads_count / $this->config['PAGE_DEF']));
-		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, array($W, $H, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
-		$this->PIO->addPost($this->board, $no, $thread_uid, $md5chksum, $category, $tim, $fname, $ext, $imgW, $imgH, $imgsize, $W, $H, $pass, $now, $name, $email, $sub, $com, $ip, $age, $status);
+		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, array($thumbWidth, $thumbHeight, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
+		$this->PIO->addPost($this->board, $no, $thread_uid, $md5chksum, $category, $tim, $fileName, $ext, $imgW, $imgH, $imgSize, $thumbWidth, $thumbHeight, $pass, $now, $name, $email, $sub, $com, $ip, $age, $status);
 		
 		$this->actionLogger->logAction("Post No.$no registered", $this->board->getBoardUID());
 		// Formal writing to storage
@@ -314,10 +342,10 @@ class modeHandler {
 		// Cookies storage: password and e-mail part, for one week
 		setcookie('pwdc', $pwd, time()+7*24*3600);
 		setcookie('emailc', htmlspecialchars_decode($email), time()+7*24*3600);
-		makeThumbnailAndUpdateStats($this->board, $this->config, $this->FileIO, $dest, $ext, $tim, $tmpfile ,$imgW, $imgH, $W, $H);
-		runWebhooks($this->board, $resno, $no, $sub);
-	
-	
+		
+		// dispatch notifcation to post notifcation discord/IRC server
+		$webhookDispatcher->dispatch($resno, $no, $sub);
+
 		$this->board->rebuildBoard(0, -1, false, $page_end);
 		redirect($redirect, 0);
 	}
