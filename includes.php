@@ -94,6 +94,21 @@ require __DIR__.'/code/post/helper/webhookDispatcher.php';
 require __DIR__.'/code/routers/adminPageHandler.php';
 require __DIR__.'/code/routers/modeHandler.php';
 
+/* Routes */
+require __DIR__.'/code/routers/routes/accountRoute.php';
+require __DIR__.'/code/routers/routes/adminRoute.php';
+require __DIR__.'/code/routers/routes/boardsRoute.php';
+require __DIR__.'/code/routers/routes/defaultRoute.php';
+require __DIR__.'/code/routers/routes/handleAccountActionRoute.php';
+require __DIR__.'/code/routers/routes/handleBoardRequestsRoute.php';
+require __DIR__.'/code/routers/routes/moduleloadedRoute.php';
+require __DIR__.'/code/routers/routes/moduleRoute.php';
+require __DIR__.'/code/routers/routes/overboardRoute.php';
+require __DIR__.'/code/routers/routes/rebuildRoute.php';
+require __DIR__.'/code/routers/routes/registRoute.php';
+require __DIR__.'/code/routers/routes/statusRoute.php';
+require __DIR__.'/code/routers/routes/usrdelRoute.php';
+
 /* Account Related */
 require __DIR__.'/code/account/accountClass.php';
 require __DIR__.'/code/account/accountIO.php';
