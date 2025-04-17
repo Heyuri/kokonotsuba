@@ -401,3 +401,37 @@ function addSlashesToArray(&$arrayOfValuesForQuery) {
 		$item = "'" . addslashes($item) . "'";
 	}
 }
+
+function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = false): string {
+	// Trim whitespace from both ends of the string
+	$str = trim($str);
+
+	// Remove potentially problematic characters (e.g., control characters not allowed in XML 1.1)
+	// Reference: http://www.w3.org/TR/2006/REC-xml11-20060816/#charsets
+	$str = preg_replace(
+		'/([\x01-\x08\x0B\x0C\x0E-\x1F\x7F-\x84\x86-\x9F\x{FDD0}-\x{FDDF}])/u',
+		'',
+		htmlspecialchars($str, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+	);
+
+	// Convert single quote to HTML entity (htmlspecialchars doesn't convert it by default)
+	$str = str_replace("'", "&#039;", $str);
+
+	// Allow HTML tags when $injectHtml is true and the user is an admin ($isAdmin)
+	if ($isAdmin && $injectHtml) {
+		// Convert &lt;tag&gt; back to <tag>
+		$str = preg_replace('/&lt;(.*?)&gt;/', '<$1>', $str);
+	}
+
+	return $str;
+}
+
+
+function loadUploadData(): array {
+	$upfile = sanitizeStr($_FILES['upfile']['tmp_name'] ?? '');
+	$upfile_path = $_POST['upfile_path'] ?? '';
+	$upfile_name = $_FILES['upfile']['name'] ?? '';
+	$upfile_status = $_FILES['upfile']['error'] ?? UPLOAD_ERR_NO_FILE;
+
+	return [$upfile, $upfile_path, $upfile_name, $upfile_status];
+}
