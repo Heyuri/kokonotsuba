@@ -30,6 +30,7 @@ class adminRoute {
     public function drawAdminPage() {
 		if(isset($_POST['username']) && isset($_POST['password'])) {
 			adminLogin($this->AccountIO, $this->globalHTML);
+			redirect($this->config['PHP_SELF'].'?mode=admin');
 		}
 		$recentStaffAccountFromSession = new staffAccountFromSession;
 
