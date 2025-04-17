@@ -762,16 +762,4 @@ class globalHTML {
 		return $thdat;
 	}
 	
-	public function CleanStr($str, $IsAdmin=false){
-		$str = trim($str); // 去除前後多餘空白
-		// if(get_magic_quotes_gpc()) $str = stripslashes($str); // "\"斜線符號去除
-		// XML 1.1 Second Edition: 部分避免用字 (http://www.w3.org/TR/2006/REC-xml11-20060816/#charsets)
-		$str = preg_replace('/([\x1-\x8\xB-\xC\xE-\x1F\x7F-\x84\x86-\x9F\x{FDD0}-\x{FDDF}])/u', '', htmlspecialchars($str));
-		$str = str_replace("'", "&#039;", $str); // htmlspecialchars above doesn't work on apostrophe
-
-		if($IsAdmin && $this->config['CAP_ISHTML']){ // 管理員開啟HTML
-			$str = preg_replace('/&lt;(.*?)&gt;/', '<$1>', $str); // 如果有&lt;...&gt;則轉回<...>成為正常標籤
-		}
-		return $str;
-	}
 }		
