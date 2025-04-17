@@ -114,10 +114,10 @@ class mod_pm extends moduleHelper {
 		}
 
 
-		$from = $globalHTML->CleanStr($from);
-		$to = $globalHTML->CleanStr($to);
-		$topic = $globalHTML->CleanStr($topic);
-		$mesg = $globalHTML->CleanStr($mesg);
+		$from = sanitizeStr($from);
+		$to = sanitizeStr($to);
+		$topic = sanitizeStr($topic);
+		$mesg = sanitizeStr($mesg);
 
 		// truncate
 		$from = substr($from, 0, $this->config['INPUT_MAX']);
