@@ -204,7 +204,7 @@ class modeHandler {
 		$name = filter_var($_POST['name']??'', FILTER_SANITIZE_SPECIAL_CHARS);
 		$email = filter_var($_POST['email']??'', FILTER_SANITIZE_SPECIAL_CHARS);
 		$sub = filter_var($_POST['sub']??'', FILTER_SANITIZE_SPECIAL_CHARS);
-		$com = $_POST['com']??'';
+		$com = filter_var($_POST['com']??'', FILTER_SANITIZE_SPECIAL_CHARS);
 		$pwd = $_POST['pwd']??'';
 		$category = filter_var($_POST['category']??'', FILTER_SANITIZE_SPECIAL_CHARS);
 		$resno = intval($_POST['resto']??0);
