@@ -3,13 +3,11 @@
 class webhookDispatcher {
     private readonly board $board;
 	private readonly array $config;
-	private readonly globalHTML $globalHTML;
     
 
-	public function __construct(board $board, array $config, globalHTML $globalHTML) {
+	public function __construct(board $board, array $config) {
 		$this->board = $board;
         $this->config = $config;
-		$this->globalHTML = $globalHTML;
 	}
 
 	public function dispatch(int $threadNumber, int $no, string $sub): void {
