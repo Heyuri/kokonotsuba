@@ -1,4 +1,3 @@
-
 <?php
 /**
  * 抽象 FileIO + IFS。
