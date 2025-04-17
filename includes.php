@@ -74,6 +74,22 @@ require __DIR__.'/code/post/postSingleton.php';
 require __DIR__.'/code/post/postRedirectIO.php';
 require __DIR__.'/code/post/threadRedirect.php';
 
+/* files */
+require __DIR__.'/code/file/file.php';
+require __DIR__.'/code/file/thumbnail.php';
+
+/* regist/post helper classes */
+require __DIR__.'/code/post/helper/agingHandler.php';
+require __DIR__.'/code/post/helper/defaultTextFillter.php';
+require __DIR__.'/code/post/helper/fileProcessor.php';
+require __DIR__.'/code/post/helper/fortuneGenerator.php';
+require __DIR__.'/code/post/helper/postDateFormatter.php';
+require __DIR__.'/code/post/helper/postFilterApplier.php';
+require __DIR__.'/code/post/helper/postIDGenerator.php';
+require __DIR__.'/code/post/helper/thumbnailCreator.php';
+require __DIR__.'/code/post/helper/tripcodeProcessor.php';
+require __DIR__.'/code/post/helper/webhookDispatcher.php';
+
 /* Routers */
 require __DIR__.'/code/routers/adminPageHandler.php';
 require __DIR__.'/code/routers/modeHandler.php';
