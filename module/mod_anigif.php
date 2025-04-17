@@ -51,7 +51,7 @@ class mod_anigif extends moduleHelper {
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$fh = new FlagHelper($post['status']);
 		if ($post['ext'] == '.gif') {
-			$modfunc.= '<span class="adminGIFFunction">[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('agif')?' title="Use still image of GIF">g':' title="Use Animated GIF">G').'</a>]</span>';
+			$modfunc.= '<span class="adminGIFFunction">[<a href="'.$this->mypage.'&post_uid='.$post['post_uid'].'"'.($fh->value('agif')?' title="Use still image of GIF">g':' title="Use Animated GIF">G').'</a>]</span>';
 		}
 	}
 
@@ -59,19 +59,18 @@ class mod_anigif extends moduleHelper {
 		$PIO = PIOPDO::getInstance();
 		$actionLogger = ActionLogger::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
-		$staffSession = new staffAccountFromSession;
 		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
 		
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_JANITOR']);
 
-		$post = $PIO->fetchPostsFromThread($_GET['thread_uid'])[0];
+		$post = $PIO->fetchPosts($_GET['post_uid'] ?? 0)[0];
 		if(!count($post)) $globalHTML->error('ERROR: Post does not exist.');
 		if($post['ext'] && $post['ext'] == '.gif') {
 			if(!$FileIO->imageExists($post['tim'].$post['ext'], $this->board)) {
 				$globalHTML->error('ERROR: attachment does not exist.');
 			}
-			$flgh = $PIO->getPostStatus($post['post_uid']);
+			$flgh = new FlagHelper($post['status']);
 			$flgh->toggle('agif');
 			$PIO->setPostStatus($post['post_uid'], $flgh->toString());
 			
