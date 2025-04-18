@@ -44,10 +44,12 @@ class PIOPDO implements IPIO {
 	private function bindfiltersParameters(&$params, &$query, $filters) {
 		// validate and sanitize 'board' filter
 		if (isset($filters['board']) && is_array($filters['board'])) {
-			$filters['board'] = array_filter($filters['board'], function ($value) {
-				return is_string($value);
-			});
-		}		
+			$filters['board'] = array_values(array_filter($filters['board'], function ($value) {
+				return is_numeric($value);
+			}));
+		}			
+
+		print_r($filters['board']);
 
 		// apply 'board' filter
 		if (!empty($filters['board'])) {
@@ -87,6 +89,7 @@ class PIOPDO implements IPIO {
 				$params[':ip_regex'] = $ip_regex;
 			}
 		}
+
 	}
 
 	
