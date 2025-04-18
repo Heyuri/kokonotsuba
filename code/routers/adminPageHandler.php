@@ -31,7 +31,7 @@ class adminPageHandler {
 			setcookie('manage_filtercomment', $filterComment, time() + (86400 * 30), "/");
 			setcookie('manage_filtername', $filterName, time() + (86400 * 30), "/");
 			setcookie('manage_filtersubject', $filterSubject, time() + (86400 * 30), "/");
-			setcookie('filterboard', serialize($filterBoard), time() + (86400 * 30), "/");
+			setcookie('filterboard', json_encode($filterBoard), time() + (86400 * 30), "/");
 
 			redirect($this->config['PHP_SELF'].'?mode=admin&admin=del');
 			exit;
@@ -45,7 +45,7 @@ class adminPageHandler {
 			redirect($this->config['PHP_SELF'].'?mode=admin&admin=del');
 			exit;
 		}
-		$filtersBoards = (isset($_COOKIE['filterboard'])) ? unserialize($_COOKIE['filterboard']) : [$this->board->getBoardUID()];
+		$filtersBoards = (isset($_COOKIE['filterboard'])) ? json_decode($_COOKIE['filterboard']) : [$this->board->getBoardUID()];
 		
 		//filter list for the database
 		$filters = [
@@ -224,8 +224,8 @@ class adminPageHandler {
 			setcookie('filtername', $filterName, time() + (86400 * 30), "/");
 			setcookie('filterban', $filterBan, time() + (86400 * 30), "/");
 			setcookie('filterdelete', $filterDelete, time() + (86400 * 30), "/");
-			setcookie('filterrole', serialize($filterRole), time() + (86400 * 30), "/");
-			setcookie('filterboard', serialize($filterBoard), time() + (86400 * 30), "/");
+			setcookie('filterrole', json_encode($filterRole), time() + (86400 * 30), "/");
+			setcookie('filterboard', json_encode($filterBoard), time() + (86400 * 30), "/");
 
 			redirect($this->config['PHP_SELF'].'?admin=action&mode=admin');
 			exit;
@@ -243,8 +243,8 @@ class adminPageHandler {
 			exit;
 		}
 		
-		$filtersBoards = (isset($_COOKIE['filterboard'])) ? unserialize($_COOKIE['filterboard']) : [$this->board->getBoardUID()];
-		$filtersRoles = (isset($_COOKIE['filterrole'])) ? unserialize($_COOKIE['filterrole']) : array_values($this->config['roles']); 
+		$filtersBoards = (isset($_COOKIE['filterboard'])) ? json_decode($_COOKIE['filterboard']) : [$this->board->getBoardUID()];
+		$filtersRoles = (isset($_COOKIE['filterrole'])) ? json_decode($_COOKIE['filterrole']) : array_values($this->config['roles']); 
 		
 		//filter list for the database
 		$filters = [

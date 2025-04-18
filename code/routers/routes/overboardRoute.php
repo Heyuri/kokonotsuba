@@ -30,7 +30,7 @@ class overboardRoute {
 			$filterBoardFromPOST = $_POST['filterboard'] ?? '';
 			$filterBoard = (is_array($filterBoardFromPOST) ? array_map('htmlspecialchars', $filterBoardFromPOST) : [htmlspecialchars($filterBoardFromPOST)]);
 
-			setcookie('overboard_filterboards', serialize($filterBoard), time() + (86400 * 30), "/");
+			setcookie('overboard_filterboards', json_encode($filterBoard), time() + (86400 * 30), "/");
 
 			redirect($this->config['PHP_SELF'] . '?mode=overboard');
 			exit;
@@ -41,11 +41,17 @@ class overboardRoute {
 			exit;
 		}
 
-		$filtersBoards = (!empty($_COOKIE['overboard_filterboards'])) ? unserialize($_COOKIE['overboard_filterboards']) : null;
+		$filtersBoards = (!empty($_COOKIE['overboard_filterboards'])) ? json_decode($_COOKIE['overboard_filterboards']) : null;
 
 		$filters = [
 			'board' => $filtersBoards ?? $this->boardIO->getAllListedBoardUIDs(),
 		];
+
+		//sanitize filters
+		$filters['board'] = array_filter($filters['board'], function ($value) {
+			return filter_var($value, FILTER_VALIDATE_INT) !== false;
+		});
+		
 
 		$html = '';
 
