@@ -354,8 +354,8 @@ class globalHTML {
 		$moderator = $this->config['roles']['LEV_MODERATOR'];
 		$admin = $this->config['roles']['LEV_ADMIN'];
 		
-		$filterRole = unserialize($_COOKIE['filterrole'] ?? ''); if(!is_array($filterRole)) $filterRole = [$none, $user, $janitor, $moderator, $admin];
-		$filterBoard = unserialize($_COOKIE['filterboard'] ?? ''); if(!is_array($filterBoard)) $filterBoard = [$board->getBoardUID()];
+		$filterRole = json_decode($_COOKIE['filterrole'] ?? ''); if(!is_array($filterRole)) $filterRole = [$none, $user, $janitor, $moderator, $admin];
+		$filterBoard = json_decode($_COOKIE['filterboard'] ?? ''); if(!is_array($filterBoard)) $filterBoard = [$board->getBoardUID()];
 
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
 		$dat .= '
@@ -418,7 +418,7 @@ class globalHTML {
 		$filterComment = $_COOKIE['manage_filtercomment'] ?? '';
 		$filterName = $_COOKIE['manage_filtername'] ?? '';
 		$filterSubject = $_COOKIE['manage_filtersubject'] ?? '';
-		$filterBoard = unserialize($_COOKIE['filterboard'] ?? ''); if(!is_array($filterBoard)) $filterBoard = [$board->getBoardUID()];
+		$filterBoard = json_decode($_COOKIE['filterboard'] ?? ''); if(!is_array($filterBoard)) $filterBoard = [$board->getBoardUID()];
 		
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
 		$dat .= '
@@ -462,7 +462,7 @@ class globalHTML {
 		$boardIO = boardIO::getInstance();
 		
 		$allListedBoards = $boardIO->getAllListedBoardUIDs();
-		$filterBoard = unserialize($_COOKIE['overboard_filterboards'] ?? ''); if(!is_array($filterBoard)) $filterBoard = $allListedBoards;
+		$filterBoard = json_decode($_COOKIE['overboard_filterboards'] ?? ''); if(!is_array($filterBoard)) $filterBoard = $allListedBoards;
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard, $boardIO->getBoardsFromUIDs($allListedBoards));
 		$dat .= '
 		<div class="overboardFilterFormContainer">
@@ -480,7 +480,6 @@ class globalHTML {
 	}
 	
 	public function drawAccountTable() {
-		$staffSession = new staffAccountFromSession;
 		$AccountIO = AccountIO::getInstance();
 
 		$dat = '';
@@ -581,12 +580,11 @@ class globalHTML {
 	}
 	
 	public function drawPager($entriesPerPage, $totalEntries, $url) {
-		if (!filter_var($entriesPerPage, FILTER_VALIDATE_INT) || $entriesPerPage <= 0) {
-			$this->error("Page entries must be a valid positive integer.");
-		}
-		if (!filter_var($totalEntries, FILTER_VALIDATE_INT) || $totalEntries < 0) {
+
+		if ((filter_var($totalEntries, FILTER_VALIDATE_INT) === false || $totalEntries < 0) 
+		|| (filter_var($entriesPerPage, FILTER_VALIDATE_INT) === false || $entriesPerPage < 0)) {
 			$this->error("Total entries must be a valid non-negative integer.");
-		}
+		}		
 	
 		$totalPages = (int) ceil($totalEntries / $entriesPerPage);
 		$currentPage = $_REQUEST['page'] ?? 0;
