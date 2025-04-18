@@ -40,41 +40,55 @@ class PIOPDO implements IPIO {
 		return '1.0 (PDO Input/Output for posts)';
 	}
 
-	//set the parameters and handle filters for the filter query
+	// set the parameters and handle filters for the filter query
 	private function bindfiltersParameters(&$params, &$query, $filters) {
-		if (isset($filters['board']) && !empty($filters['board'])) {
+		// validate and sanitize 'board' filter
+		if (isset($filters['board']) && is_array($filters['board'])) {
+			$filters['board'] = array_filter($filters['board'], function ($value) {
+				return is_string($value);
+			});
+		}		
+
+		// apply 'board' filter
+		if (!empty($filters['board'])) {
 			$query .= " AND (";
 			foreach ($filters['board'] as $index => $board) {
 				$query .= ($index > 0 ? " OR " : "") . "boardUID = :board_$index";
-				$params[":board_$index"] = $board;
+				$params[":board_$index"] = (int)$board;
 			}
 			$query .= ")";
 		}
 
-		if(isset($filters['comment'])) {
+		// sanitize text filters
+		if (isset($filters['comment']) && is_string($filters['comment'])) {
 			$query .= " AND com LIKE :comment";
-			$params[':comment'] = strval('%'.$filters['comment'].'%');
+			$params[':comment'] = '%' . $filters['comment'] . '%';
 		}
-		if(isset($filters['subject'])) {
+
+		if (isset($filters['subject']) && is_string($filters['subject'])) {
 			$query .= " AND sub LIKE :subject";
-			$params[':subject'] = strval('%'.$filters['subject'].'%');
+			$params[':subject'] = '%' . $filters['subject'] . '%';
 		}
-		if(isset($filters['name'])) {
+
+		if (isset($filters['name']) && is_string($filters['name'])) {
 			$query .= " AND name LIKE :name";
-			$params[':name'] = strval('%'.$filters['name'].'%');
+			$params[':name'] = '%' . $filters['name'] . '%';
 		}
-		
-		if(isset($filters['ip_address'])) {
-			//adjust for wildcard
-			$ip_pattern = preg_quote($filters['ip_address'], '/');
-			$ip_pattern = str_replace('\*', '.*', $ip_pattern);
-    		$ip_regex = "^$ip_pattern$";
 
+		// validate and convert ip_address filter to regex safely
+		if (isset($filters['ip_address']) && is_string($filters['ip_address'])) {
+			// allow only digits, dots, and asterisks
+			if (preg_match('/^[\d\.\*]+$/', $filters['ip_address'])) {
+				$ip_pattern = preg_quote($filters['ip_address'], '/');
+				$ip_pattern = str_replace('\*', '.*', $ip_pattern);
+				$ip_regex = "^$ip_pattern$";
 
-			$query .= " AND host REGEXP :ip_regex";    
-			$params[':ip_regex'] = $ip_regex;
+				$query .= " AND host REGEXP :ip_regex";
+				$params[':ip_regex'] = $ip_regex;
+			}
 		}
 	}
+
 	
 	public function getAllPosts() {
 		$query = "SELECT * FROM {$this->tablename} ORDER BY post_uid DESC";

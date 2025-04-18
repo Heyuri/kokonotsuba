@@ -46,11 +46,6 @@ class overboardRoute {
 		$filters = [
 			'board' => $filtersBoards ?? $this->boardIO->getAllListedBoardUIDs(),
 		];
-
-		//sanitize filters
-		$filters['board'] = array_filter($filters['board'], function ($value) {
-			return filter_var($value, FILTER_VALIDATE_INT) !== false;
-		});
 		
 
 		$html = '';
