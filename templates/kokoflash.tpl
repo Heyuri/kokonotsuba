@@ -30,7 +30,7 @@
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
 	<script src="{$STATIC_URL}js/inline.js?v=9" defer></script>
 	<script src="{$STATIC_URL}js/addemotes.js?v=7" defer></script>
-	<script src="{$STATIC_URL}/js/admin.js?v=4" defer></script>
+	<script src="{$STATIC_URL}js/admin.js?v=4" defer></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
 	<script src="{$STATIC_URL}js/flashembed.js"></script>
 <!--/&HEADER-->
