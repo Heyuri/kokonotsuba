@@ -29,7 +29,7 @@
 	<script src="{$STATIC_URL}js/insert.js"></script>
 	<script src="{$STATIC_URL}js/update-txt.js" defer></script>
 	<script src="{$STATIC_URL}js/addemotestxt.js" defer></script>
-	<script src="{$STATIC_URL}/js/admin.js?v=4" defer></script>
+	<script src="{$STATIC_URL}js/admin.js?v=4" defer></script>
 <!--/&HEADER-->
 
 <!--&TOPLINKS-->
