@@ -86,12 +86,12 @@ class mod_adminban extends moduleHelper {
 
 		$tables = [
 			[
-				'TITLE' => 'Local bans',
+				'{$TITLE}' => 'Local bans',
 				'{$MODULE_URL}' => $this->mypage,
 				'{$ROWS}' => $this->convertBanLogToRows($log, 'del')
 			],
 			[
-				'TITLE' => 'Global bans',
+				'{$TITLE}' => 'Global bans',
 				'{$MODULE_URL}' => $this->mypage,
 				'{$ROWS}' => $this->convertBanLogToRows($glog, 'delg')
 			]
