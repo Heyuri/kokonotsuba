@@ -185,4 +185,17 @@
 			localStorage.setItem('filtercontainer_open', detailsElement.open);
 		});
 	}
+
+	// Disable public ban message text area unless public ban is checked
+	const publicCheckbox   = document.getElementById('public');
+	const publicTextarea   = document.getElementById('banmsg');
+
+	function toggleReason() {
+		publicTextarea.disabled = !publicCheckbox.checked;
+	}
+
+	publicCheckbox.addEventListener('change', toggleReason);
+	// Initialize on load
+	toggleReason();
+
 })();
