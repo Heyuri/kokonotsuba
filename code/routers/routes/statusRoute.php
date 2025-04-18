@@ -53,7 +53,7 @@ class statusRoute {
 		$func_thumbInfo = '(No thumbnail)';
 		if ($this->config['USE_THUMB'] !== 0) {
 				$thumbType = $this->config['USE_THUMB']; if ($this->config['USE_THUMB'] == 1) { $thumbType = 'gd'; }
-				require(getBackendDir() . 'lib/thumb/thumb.' . $thumbType . '.php');
+				require(getBackendCodeDir() . 'thumb/thumb.' . $thumbType . '.php');
 				$thObj = new ThumbWrapper();
 				if ($thObj->isWorking()) $func_thumbWork = '<span class="online">'._T('info_functional').'</span>';
 				$func_thumbInfo = $thObj->getClass();
