@@ -49,8 +49,6 @@ class PIOPDO implements IPIO {
 			}));
 		}			
 
-		print_r($filters['board']);
-
 		// apply 'board' filter
 		if (!empty($filters['board'])) {
 			$query .= " AND (";
