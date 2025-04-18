@@ -23,11 +23,11 @@ class modeHandler {
 	public function __construct(board $board) {
 		// Validate required directories before anything else
 		if (!file_exists($board->getFullConfigPath())) {
-			throw new \RuntimeException("Board's config file <i>" . $board->getFullConfigPath() . "</i> was not found.");
+			die("Board's config file <i>" . $board->getFullConfigPath() . "</i> was not found.");
 		}
 
 		if (!file_exists($board->getBoardStoragePath())) {
-			throw new \RuntimeException("Board's storage directory <i>" . $board->getBoardStoragePath() . "</i> does not exist.");
+			die("Board's storage directory <i>" . $board->getBoardStoragePath() . "</i> does not exist.");
 		}
 
 		$this->board = $board;
