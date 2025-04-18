@@ -41,7 +41,7 @@ class overboardRoute {
 			exit;
 		}
 
-		$filtersBoards = (!empty($_COOKIE['overboard_filterboards'])) ? json_decode($_COOKIE['overboard_filterboards']) : null;
+		$filtersBoards = (!empty($_COOKIE['overboard_filterboards'])) ? json_decode($_COOKIE['overboard_filterboards'], true) : null;
 
 		$filters = [
 			'board' => $filtersBoards ?? $this->boardIO->getAllListedBoardUIDs(),

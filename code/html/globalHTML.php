@@ -354,8 +354,8 @@ class globalHTML {
 		$moderator = $this->config['roles']['LEV_MODERATOR'];
 		$admin = $this->config['roles']['LEV_ADMIN'];
 		
-		$filterRole = json_decode($_COOKIE['filterrole'] ?? ''); if(!is_array($filterRole)) $filterRole = [$none, $user, $janitor, $moderator, $admin];
-		$filterBoard = json_decode($_COOKIE['filterboard'] ?? ''); if(!is_array($filterBoard)) $filterBoard = [$board->getBoardUID()];
+		$filterRole = json_decode($_COOKIE['filterrole'] ?? '', true); if(!is_array($filterRole)) $filterRole = [$none, $user, $janitor, $moderator, $admin];
+		$filterBoard = json_decode($_COOKIE['filterboard'] ?? '', true); if(!is_array($filterBoard)) $filterBoard = [$board->getBoardUID()];
 
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
 		$dat .= '
@@ -418,7 +418,7 @@ class globalHTML {
 		$filterComment = $_COOKIE['manage_filtercomment'] ?? '';
 		$filterName = $_COOKIE['manage_filtername'] ?? '';
 		$filterSubject = $_COOKIE['manage_filtersubject'] ?? '';
-		$filterBoard = json_decode($_COOKIE['filterboard'] ?? ''); if(!is_array($filterBoard)) $filterBoard = [$board->getBoardUID()];
+		$filterBoard = json_decode($_COOKIE['filterboard'] ?? '', true); if(!is_array($filterBoard)) $filterBoard = [$board->getBoardUID()];
 		
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
 		$dat .= '

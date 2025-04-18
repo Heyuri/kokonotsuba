@@ -45,7 +45,7 @@ class adminPageHandler {
 			redirect($this->config['PHP_SELF'].'?mode=admin&admin=del');
 			exit;
 		}
-		$filtersBoards = (isset($_COOKIE['filterboard'])) ? json_decode($_COOKIE['filterboard']) : [$this->board->getBoardUID()];
+		$filtersBoards = (isset($_COOKIE['filterboard'])) ? json_decode($_COOKIE['filterboard'], true) : [$this->board->getBoardUID()];
 		
 		//filter list for the database
 		$filters = [
@@ -243,8 +243,8 @@ class adminPageHandler {
 			exit;
 		}
 		
-		$filtersBoards = (isset($_COOKIE['filterboard'])) ? json_decode($_COOKIE['filterboard']) : [$this->board->getBoardUID()];
-		$filtersRoles = (isset($_COOKIE['filterrole'])) ? json_decode($_COOKIE['filterrole']) : array_values($this->config['roles']); 
+		$filtersBoards = (isset($_COOKIE['filterboard'])) ? json_decode($_COOKIE['filterboard'], true) : [$this->board->getBoardUID()];
+		$filtersRoles = (isset($_COOKIE['filterrole'])) ? json_decode($_COOKIE['filterrole'], true) : array_values($this->config['roles']); 
 		
 		//filter list for the database
 		$filters = [
