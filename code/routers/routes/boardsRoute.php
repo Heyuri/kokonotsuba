@@ -44,7 +44,7 @@ class boardsRoute {
 				'{$DEFAULT_CDN_DIR}' => $this->config['CDN_DIR'],
 				'{$DEFAULT_CDN_URL}' => $this->config['CDN_URL'],
 				'{$DEFAULT_ROOT_URL}' => $this->board->getBoardRootURL(),
-				'{$DEFAULT_PATH}' => dirname(getcwd()) . DIRECTORY_SEPARATOR
+				'{$DEFAULT_PATH}' => dirname(getcwd()) . '/'
 			]) : '',
 		];
 
@@ -62,6 +62,7 @@ class boardsRoute {
 			$boardSubtitle = $board->getBoardSubTitle() ?? '';
 			$boardURL = $board->getBoardURL() ?? '';
 			$boardListed = $board->getBoardListed() ?? '';
+			$boardCanEdit = $board->getBoardCanEdit() ?? '';
 			$boardConfig = $board->getConfigFileName() ?? '';
 			$boardStorageDirectoryName = $board->getBoardStorageDirName() ?? '';
 			$boardDate = $board->getDateAdded() ?? '';
@@ -77,6 +78,11 @@ class boardsRoute {
 			$template_values['{$CHECKED}'] = $boardListed ? 'checked' : '';
 			$template_values['{$BOARD_STORAGE_DIR}'] = $boardStorageDirectoryName;
 			$template_values['{$EDIT_BOARD_HTML}'] = $this->adminTemplateEngine->ParseBlock('EDIT_BOARD', $template_values);
+			
+			// prevent showing editing a reserved board
+			if(!$boardCanEdit) {
+				$template_values['{$EDIT_BOARD_HTML}'] = "<p>This board cannot be edited.</p>"; 
+			}
 
 			$viewBoardHtml = $this->adminPageRenderer->ParseBlock('VIEW_BOARD', $template_values);
 			echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $viewBoardHtml], true);
