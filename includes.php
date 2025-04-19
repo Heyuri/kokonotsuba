@@ -40,6 +40,7 @@ require __DIR__.'/code/libraries/lib_errorhandler.php'; // error library
 require __DIR__.'/code/libraries/lib_compatible.php'; // compatability library
 require __DIR__.'/code/libraries/lib_common.php'; // general-purpose functions
 require __DIR__.'/code/libraries/lib_post.php'; // post-related functions
+require __DIR__.'/code/libraries/lib_filter.php'; // filter-related functions
 
 /* Sensors */
 require __DIR__.'/code/sensor/PIOSensor.php'; // PIO senssor
@@ -74,6 +75,7 @@ require __DIR__.'/code/overboard.php';
 require __DIR__.'/code/post/FlagHelper.php';
 require __DIR__.'/code/post/postValidator.php';
 require __DIR__.'/code/post/postSingleton.php';
+require __DIR__.'/code/post/threadSingleton.php';
 require __DIR__.'/code/post/postRedirectIO.php';
 require __DIR__.'/code/post/threadRedirect.php';
 
