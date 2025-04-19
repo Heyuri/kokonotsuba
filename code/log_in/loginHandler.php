@@ -1,43 +1,79 @@
 <?php
+
 // Handle account sessions for koko
+
 class loginSessionHandler {
-	public function login($account) {
-		if ($account) {
-			session_regenerate_id(true);
-			$_SESSION['accountUID'] = $account->getId();
-			$_SESSION['username'] = $account->getUsername();
-			$_SESSION['last_activity'] = time();
-			$_SESSION['role_level'] = $account->getRoleLevel();
-			$_SESSION['hash'] = $account->getPasswordHash();
-			
-			session_write_close();
-			return true;
-		}
-		return false;
+	private readonly int $loginTimeout; // in seconds
+
+	public function __construct(int $loginTimeout = 1800) {
+		$this->loginTimeout = $loginTimeout;
 	}
 
-	public function isLoggedIn() {
-		if (!isset($_SESSION['accountUID'])) return false;
+	public function login(staffAccount $account): bool {
+		$this->startSession();
 
-		$timeout = 1800;
-		if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > $timeout)) {
-			$this->logout();
+		if (!method_exists($account, 'getId') || !method_exists($account, 'getUsername') || !method_exists($account, 'getRoleLevel')) {
 			return false;
 		}
+
+		session_regenerate_id(true);
+
+		$_SESSION['accountUID'] = $account->getId();
+		$_SESSION['username'] = $account->getUsername();
+		$_SESSION['role_level'] = $account->getRoleLevel();
+		$_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
 		$_SESSION['last_activity'] = time();
 
-		if ($_SESSION['user_agent'] !== $_SERVER['HTTP_USER_AGENT']) {
-			$this->logout();
-			return false;
-		}
-
+		session_write_close();
 		return true;
 	}
 
-	public function logout() {
-		session_unset();
+	public function isLoggedIn(): bool {
+		$this->startSession();
+
+		if (empty($_SESSION['accountUID'])) {
+			return false;
+		}
+
+		$lastActivity = $_SESSION['last_activity'] ?? 0;
+		if ((time() - $lastActivity) > $this->loginTimeout) {
+			$this->logout();
+			return false;
+		}
+
+		$currentUserAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+		if (($_SESSION['user_agent'] ?? '') !== $currentUserAgent) {
+			$this->logout();
+			return false;
+		}
+
+		$_SESSION['last_activity'] = time();
+		return true;
+	}
+
+	public function logout(): void {
+		$this->startSession();
+
+		$_SESSION = [];
+		if (ini_get("session.use_cookies")) {
+			$params = session_get_cookie_params();
+			setcookie(
+				session_name(),
+				'',
+				time() - 42000,
+				$params["path"],
+				$params["domain"],
+				$params["secure"],
+				$params["httponly"]
+			);
+		}
 		session_destroy();
-		setcookie(session_name(), '', time() - 3600, '/');
+	}
+
+	private function startSession(): void {
+		if (session_status() === PHP_SESSION_NONE) {
+			session_start();
+		}
 	}
 }
 
