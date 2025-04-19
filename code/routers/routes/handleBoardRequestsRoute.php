@@ -28,11 +28,16 @@ class handleBoardRequestsRoute {
 		if (!empty($_POST['edit-board'])) {
 			try {
 				$modifiedBoardIdFromPOST = intval($_POST['edit-board-uid']) ?? '';
-				if (!$modifiedBoardIdFromPOST) {
-					throw new Exception("Board UID in board editing cannot be NULL!");
+				
+				if(!$modifiedBoardIdFromPOST) {
+					throw new \InvalidArgumentException("Board UID in board editing cannot be NULL!");
 				}
-
+				
 				$modifiedBoard = $this->boardIO->getBoardByUID($modifiedBoardIdFromPOST);
+
+				if(!$modifiedBoard->getBoardCanEdit()) {
+					throw new \InvalidArgumentException("Cannot reserved board.");
+				}
 
 				if (isset($_POST['board-action-submit']) && $_POST['board-action-submit'] === 'delete-board') {
 					$this->boardIO->deleteBoardByUID($modifiedBoard->getBoardUID());
