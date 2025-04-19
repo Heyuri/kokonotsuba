@@ -6,7 +6,7 @@ class board implements IBoard {
 
 	public $board_uid, $board_identifier, $board_title, $board_sub_title;
 	public $config_name, $storage_directory_name, $date_added;
-	public $board_file_url, $listed;
+	public $board_file_url, $listed, $can_edit;
 
 	// Getters
 	public function getBoardUID(): int {
@@ -45,6 +45,10 @@ class board implements IBoard {
 		return $this->listed ?? false;
 	}
 
+	public function getBoardCanEdit(): bool {
+		return $this->can_edit ?? false;
+	}
+
 	public function getBoardTemplateEngine(): templateEngine {
 		return $this->templateEngine;
 	}
@@ -71,18 +75,10 @@ class board implements IBoard {
 	}
 
 	public function getBoardCdnDir(): ?string {
-		if (!is_array($this->config) || !isset($this->config['CDN_DIR'])) {
-			return null;
-		}
-
 		return $this->config['CDN_DIR'] . $this->board_identifier . '/';
 	}
 
 	public function getBoardCdnUrl(): ?string {
-		if (!is_array($this->config) || !isset($this->config['CDN_URL'])) {
-			return null;
-		}
-
 		return $this->config['CDN_URL'] . $this->getBoardUID() . '-' . $this->getBoardIdentifier() . '/';
 	}
 
@@ -94,83 +90,72 @@ class board implements IBoard {
 	}
 
 	public function getBoardLocalUploadURL(): ?string {
-		if (!is_array($this->config) || !isset($this->config['WEBSITE_URL'])) {
-			return null;
-		}
-
 		return $this->config['WEBSITE_URL'] . $this->getBoardIdentifier() . '/';
 	}
 
 	public function getBoardUploadedFilesDirectory(): ?string {
-		if (!is_array($this->config)) {
-			return null;
-		}
-
 		return !empty($this->config['USE_CDN']) ?
 			$this->getBoardCdnDir() :
 			$this->getBoardLocalUploadDir();
 	}
 
 	public function getBoardUploadedFilesURL(): ?string {
-		$this->config = $this->loadBoardConfig();
-
-		if (!is_array($this->config)) {
-			return null;
-		}
-
 		return !empty($this->config['USE_CDN']) ?
 			$this->getBoardCdnUrl() :
 			$this->getBoardLocalUploadURL();
 	}
 
 	public function getBoardURL(): ?string {
-		$this->config = $this->loadBoardConfig();
-
-		if (!is_array($this->config) || !isset($this->config['WEBSITE_URL'])) {
-			return null;
-		}
-
 		return $this->config['WEBSITE_URL'] . $this->getBoardIdentifier() . '/';
 	}
 
 	public function getBoardRootURL(): ?string {
-		return is_array($this->config) && isset($this->config['WEBSITE_URL']) ?
-			$this->config['WEBSITE_URL'] :
-			null;
+		return $this->config['WEBSITE_URL'];
 	}
 	
 	private function __construct() {
-		$dbSettings = getDatabaseSettings();
-
-		$this->config = $this->loadBoardConfig();
-
-		$this->databaseConnection = DatabaseConnection::getInstance(); // Get the PDO instance
-		$this->postNumberTable = $dbSettings['POST_NUMBER_TABLE'];
-		
-		//Select the template
-		$templateFileName  = '';
-		$isReply = $_GET['res'] ?? '';
-		if($isReply) { //in thread
-			$templateFileName = $this->config['REPLY_TEMPLATE_FILE'];
-		} else { //board index
-			$templateFileName = $this->config['TEMPLATE_FILE'];
+		$config = $this->loadBoardConfig();
+	
+		if (!is_array($config)) {
+			// Optionally log or mark the object as invalid
+			$this->config = false;
+			return;
 		}
-
-		// for the templating object
-		$templateFile = getBackendDir().'templates/'.$templateFileName;
-		$dependencies = [
-			'config'	=> $this->config, // assumes config file returns an array
-			'boardData'	=> [
-				'title'		=> $this->getBoardTitle(),
-				'subtitle'	=> $this->getBoardSubTitle()
-			]
-		];
-
-		$this->templateEngine = new templateEngine($templateFile, $dependencies);
-	}
+	
+		$this->config = $config;
+	
+		$dbSettings = getDatabaseSettings();
+		$this->databaseConnection = DatabaseConnection::getInstance();
+		$this->postNumberTable = $dbSettings['POST_NUMBER_TABLE'];
+	
+		// Only continue if config is valid
+		if (
+			isset($this->config['REPLY_TEMPLATE_FILE']) &&
+			isset($this->config['TEMPLATE_FILE'])
+		) {
+			$isReply = $_GET['res'] ?? '';
+	
+			$templateFileName = $isReply
+				? $this->config['REPLY_TEMPLATE_FILE']
+				: $this->config['TEMPLATE_FILE'];
+	
+			$templateFile = getBackendDir() . 'templates/' . $templateFileName;
+	
+			$dependencies = [
+				'config'	=> $this->config,
+				'boardData'	=> [
+					'title'		=> $this->getBoardTitle(),
+					'subtitle'	=> $this->getBoardSubTitle()
+				]
+			];
+	
+			$this->templateEngine = new templateEngine($templateFile, $dependencies);
+		}
+	}	
 
 	public function loadBoardConfig(): bool|array {
 		$fullConfigPath = $this->getFullConfigPath();
+
 		if(!file_exists($fullConfigPath) || empty($fullConfigPath)) return false;
 		if($this->config) return $this->config;
 
