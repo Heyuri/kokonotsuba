@@ -327,7 +327,6 @@ class tableCreator {
 				`config_name` TEXT NOT NULL,
 				`storage_directory_name` TEXT NOT NULL,
 				`listed` BOOL DEFAULT TRUE,
-				`can_edit` BOOL DEFAULT TRUE,
 				`date_added` DATE DEFAULT CURRENT_DATE,
 				PRIMARY KEY(`board_uid`),
 				INDEX(date_added)

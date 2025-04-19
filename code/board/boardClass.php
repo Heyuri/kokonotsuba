@@ -15,7 +15,6 @@ class board implements IBoard {
 	public string $date_added;
 	public string $board_file_url;
 	public bool $listed = false;
-	public bool $can_edit = false;
 
 	// Getters
 	public function getBoardUID(): int {
@@ -52,10 +51,6 @@ class board implements IBoard {
 
 	public function getBoardListed(): bool {
 		return $this->listed ?? false;
-	}
-
-	public function getBoardCanEdit(): bool {
-		return $this->can_edit ?? false;
 	}
 
 	public function getBoardTemplateEngine(): templateEngine {
