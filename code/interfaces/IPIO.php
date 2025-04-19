@@ -5,8 +5,6 @@
  */
 interface IPIO {
 
-	public function fetchPostsFromThread($threadUID, $start = 0, $amount = 0);
-
 	/**
 	 * Get the PIO module version.
 	 *
