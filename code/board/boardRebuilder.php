@@ -1,25 +1,27 @@
 <?php
 
 class boardRebuilder {
-    private board $board;
-    private array $config;
-    private globalHTML $globalHTML;
-    private mixed $FileIO;
-    private mixed $postRedirectIO;
-    private moduleEngine $moduleEngine;
-    private mixed $PIO;
+	private board $board;
+	private array $config;
+	private globalHTML $globalHTML;
+	private mixed $FileIO;
+	private mixed $postRedirectIO;
+	private moduleEngine $moduleEngine;
+	private mixed $PIO;
+	private mixed $threadSingleton;
 	private mixed $actionLogger;
-    private staffAccountFromSession $staffSession;
+	private staffAccountFromSession $staffSession;
 	private templateEngine $templateEngine;
 
 
 	public function __construct(board $board, templateEngine $templateEngine) {
 		$this->board = $board;
 
-        $this->globalHTML = new globalHTML($board);
+		$this->globalHTML = new globalHTML($board);
 		$this->moduleEngine = new moduleEngine($board);
 		$this->staffSession = new staffAccountFromSession;
-        $this->PIO = PIOPDO::getInstance();
+		$this->threadSingleton = threadSingleton::getInstance();
+		$this->PIO = PIOPDO::getInstance();
 		$this->actionLogger = actionLogger::getInstance();
 		$this->FileIO = PMCLibrary::getFileIOInstance();
 		$this->postRedirectIO = postRedirectIO::getInstance();
@@ -41,15 +43,15 @@ class boardRebuilder {
 		]);
 
 
-        $this->config = $board->loadBoardConfig();
+		$this->config = $board->loadBoardConfig();
 		if(empty($this->config)) die("No board config for {$board->getBoardTitle()}:{$board->getBoardUID()}");
 
 	}
 
-    public function rebuildBoardHtml(int $resno = 0, mixed $pagenum = -1, bool $single_page = false, int $last = -1, bool $logRebuild = false): void {
+	public function rebuildBoardHtml(int $resno = 0, mixed $pagenum = -1, bool $single_page = false, int $last = -1, bool $logRebuild = false): void {
 		$roleLevel = $this->staffSession->getRoleLevel();
 		$adminMode = $roleLevel >=$this->config['roles']['LEV_JANITOR'] && $pagenum != -1 && !$single_page; // Front-end management mode
-		$thread_uid = $this->PIO->resolveThreadUidFromResno($this->board, $resno);
+		$thread_uid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
 		
 		
 		$page_start = $page_end = 0; // Static page number
@@ -69,16 +71,16 @@ class boardRebuilder {
 		
 		if(!$resno){
 			if($pagenum==-1){ // Rebuild mode (PHP dynamic output of multiple pages)
-				$threads = $this->PIO->getThreadListFromBoard($this->board); // Get a full list of discussion threads
+				$threads = $this->threadSingleton->getThreadListFromBoard($this->board); // Get a full list of discussion threads
 				$this->moduleEngine->useModuleMethods('ThreadOrder', array($resno, $pagenum, $single_page, &$threads)); // "ThreadOrder" Hook Point
 				$threads_count = count($threads);
 				$inner_for_count = $threads_count > $this->config['PAGE_DEF'] ? $this->config['PAGE_DEF'] : $threads_count;
 				$page_end = ($last == -1 ? ceil($threads_count / $this->config['PAGE_DEF']) : $last);
 			}else{ // Discussion of the clue label pattern (PHP dynamic output one page)
-				$threads_count = $this->PIO->threadCountFromBoard($this->board); // Discuss the number of strings
+				$threads_count = $this->threadSingleton->threadCountFromBoard($this->board); // Discuss the number of strings
 				if($pagenum < 0 || ($pagenum * $this->config['PAGE_DEF']) >= $threads_count) $this->globalHTML->error( _T('page_not_found')); // $Pagenum is out of range
 				$page_start = $page_end = $pagenum; // Set a static page number
-				$threads = $this->PIO->getThreadListFromBoard($this->board); // Get a full list of discussion threads
+				$threads = $this->threadSingleton->getThreadListFromBoard($this->board); // Get a full list of discussion threads
 				$this->moduleEngine->useModuleMethods('ThreadOrder', array($resno, $pagenum,$single_page,&$threads)); // "ThreadOrder" Hook Point
 				$threads = array_splice($threads, $pagenum * $this->config['PAGE_DEF'], $this->config['PAGE_DEF']); // Remove the list of discussion threads after the tag
 				$inner_for_count = count($threads); // The number of discussion strings is the number of cycles
@@ -88,13 +90,13 @@ class boardRebuilder {
 			$movedThreadRedirect = $this->postRedirectIO->resolveRedirectedThreadLinkFromPostOpNumber($this->board, $resno);
 			if($movedThreadRedirect) redirect($movedThreadRedirect);
 
-			if(!$this->PIO->isThread($thread_uid)){ // Try to find the thread by child post no. instead
+			if(!$this->threadSingleton->isThread($thread_uid)){ // Try to find the thread by child post no. instead
 				$post_uid = $this->PIO->resolvePostUidFromPostNumber($this->board, $resno);
 				$thread_uid_new = $this->PIO->fetchPostsFromThread($post_uid)[0]['thread_uid'] ?? false;
 				
-				if (!$this->PIO->isThread($thread_uid_new)) $this->globalHTML->error("Thread not found!");
+				if (!$this->threadSingleton->isThread($thread_uid_new)) $this->globalHTML->error("Thread not found!");
 				
-				$resnoNew = $this->PIO->resolveThreadNumberFromUID($thread_uid_new); 
+				$resnoNew = $this->threadSingleton->resolveThreadNumberFromUID($thread_uid_new); 
 				$redirectString = $this->config['PHP_SELF']."?res=".$resnoNew."#p".$this->board->getBoardUID()."_$resno";
 				redirect($redirectString); // Found, redirect
 			}
@@ -146,7 +148,7 @@ class boardRebuilder {
 				$tree_count = 0;
 	
 				if ($resno) {
-					$posts = $this->PIO->fetchPostsFromThread($thread_uid);
+					$posts = $this->threadSingleton->fetchPostsFromThread($thread_uid);
 					
 					$tree = array_map(function ($post) {
 						return $post['post_uid'];
@@ -177,7 +179,7 @@ class boardRebuilder {
 					array_unshift($tree_cut, $tree[0]);
 					$posts = $this->PIO->fetchPosts($tree_cut);
 				}
-				$threads = $this->PIO->getThreadListFromBoard($this->board);
+				$threads = $this->threadSingleton->getThreadListFromBoard($this->board);
 				$pte_vals['{$THREADS}'] .= $this->globalHTML->arrangeThread(
 					$this->board,
 					$this->config,
