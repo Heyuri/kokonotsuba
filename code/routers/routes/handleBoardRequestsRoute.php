@@ -2,6 +2,8 @@
 
 // handleBoardRequests route - handles board actions for admin
 
+use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
+
 class handleBoardRequestsRoute {
 	private readonly array $config;
 	private readonly softErrorHandler $softErrorHandler;
@@ -33,11 +35,12 @@ class handleBoardRequestsRoute {
 					throw new \InvalidArgumentException("Board UID in board editing cannot be NULL!");
 				}
 				
-				$modifiedBoard = $this->boardIO->getBoardByUID($modifiedBoardIdFromPOST);
-
-				if(!$modifiedBoard->getBoardCanEdit()) {
+				if($modifiedBoardIdFromPOST === GLOBAL_BOARD_UID) {
 					throw new \InvalidArgumentException("Cannot reserved board.");
 				}
+
+				$modifiedBoard = $this->boardIO->getBoardByUID($modifiedBoardIdFromPOST);
+
 
 				if (isset($_POST['board-action-submit']) && $_POST['board-action-submit'] === 'delete-board') {
 					$this->boardIO->deleteBoardByUID($modifiedBoard->getBoardUID());
