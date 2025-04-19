@@ -29,6 +29,21 @@ class actionLogger {
 	
 	//set the parameters and handle filters for the filter query
 	private function bindfiltersParameters(&$params, &$query, $filters) {
+		if (isset($filters['board']) && is_array($filters['board'])) {
+			$filters['board'] = array_values(array_filter($filters['board'], function ($value, $key) {
+				return is_numeric($key) && is_numeric($value);
+			}, ARRAY_FILTER_USE_BOTH));
+		}	
+
+		if (isset($filters['board']) && !empty($filters['board'])) {
+			$query .= " AND (";
+			foreach ($filters['board'] as $index => $board) {
+				$query .= ($index > 0 ? " OR " : "") . "board_uid = :board_$index";
+				$params[":board_$index"] = $board;
+			}
+			$query .= ")";
+		}
+
 		if(isset($filters['id'])) {
 			$query .= " AND id = :id";
 			$params[':id'] = intval($filters['id']);
@@ -49,15 +64,7 @@ class actionLogger {
 			}
 			$query .= ")";
 		}
-		
-		if (isset($filters['board']) && !empty($filters['board'])) {
-			$query .= " AND (";
-			foreach ($filters['board'] as $index => $board) {
-				$query .= ($index > 0 ? " OR " : "") . "board_uid = :board_$index";
-				$params[":board_$index"] = $board;
-			}
-			$query .= ")";
-		}
+
 
 		if(isset($filters['log_action'])) {
 			$query .= " AND log_action LIKE :log_action";
