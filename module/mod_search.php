@@ -23,6 +23,8 @@ class mod_search extends moduleHelper {
 
 	public function ModulePage(){
 		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getinstance();
+
 		$staffSession = new staffAccountFromSession;
 		$globalHTML = new globalHTML($this->board);
 
@@ -60,7 +62,7 @@ class mod_search extends moduleHelper {
 			$resultlist = '';
 			foreach($hitPosts as $post){
 				extract($post);
-				$resno = $PIO->resolveThreadNumberFromUID($thread_uid);
+				$resno = $threadSingleton->resolveThreadNumberFromUID($thread_uid);
 				if($this->config['USE_CATEGORY']){
 					$ary_category = explode(',', str_replace('&#44;', ',', $category)); $ary_category = array_map('trim', $ary_category);
 					$ary_category_count = count($ary_category);

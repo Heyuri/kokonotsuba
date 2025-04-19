@@ -65,10 +65,10 @@ class postRedirectIO {
     }
 
     public function resolveRedirectedThreadLinkFromThreadUID($thread_uid) {
-        $PIO = PIOPDO::getInstance();
+        $threadSingleton = threadSingleton::getInstance();
         $boardIO = boardIO::getInstance();
 
-        $thread = $PIO->getThreadByUID($thread_uid);
+        $thread = $threadSingleton->getThreadByUID($thread_uid);
 
         $threadBoard = $boardIO->getBoardByUID($thread['boardUID']);
         $threadBoardConfig = $threadBoard->loadBoardConfig();

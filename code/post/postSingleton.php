@@ -40,111 +40,10 @@ class PIOPDO implements IPIO {
 		return '1.0 (PDO Input/Output for posts)';
 	}
 
-	// set the parameters and handle filters for the filter query
-	private function bindfiltersParameters(&$params, &$query, $filters) {
-		// validate and sanitize 'board' filter
-		if (isset($filters['board']) && is_array($filters['board'])) {
-			$filters['board'] = array_values(array_filter($filters['board'], function ($value, $key) {
-				return is_numeric($key) && is_numeric($value);
-			}, ARRAY_FILTER_USE_BOTH));
-		}				
-
-		// apply 'board' filter
-		if (!empty($filters['board'])) {
-			$query .= " AND (";
-			foreach ($filters['board'] as $index => $board) {
-				$query .= ($index > 0 ? " OR " : "") . "boardUID = :board_$index";
-				$params[":board_$index"] = (int)$board;
-			}
-			$query .= ")";
-		}
-
-		// sanitize text filters
-		if (isset($filters['comment']) && is_string($filters['comment'])) {
-			$query .= " AND com LIKE :comment";
-			$params[':comment'] = '%' . $filters['comment'] . '%';
-		}
-
-		if (isset($filters['subject']) && is_string($filters['subject'])) {
-			$query .= " AND sub LIKE :subject";
-			$params[':subject'] = '%' . $filters['subject'] . '%';
-		}
-
-		if (isset($filters['name']) && is_string($filters['name'])) {
-			$query .= " AND name LIKE :name";
-			$params[':name'] = '%' . $filters['name'] . '%';
-		}
-
-		// validate and convert ip_address filter to regex safely
-		if (isset($filters['ip_address']) && is_string($filters['ip_address'])) {
-			// allow only digits, dots, and asterisks
-			if (preg_match('/^[\d\.\*]+$/', $filters['ip_address'])) {
-				$ip_pattern = preg_quote($filters['ip_address'], '/');
-				$ip_pattern = str_replace('\*', '.*', $ip_pattern);
-				$ip_regex = "^$ip_pattern$";
-
-				$query .= " AND host REGEXP :ip_regex";
-				$params[':ip_regex'] = $ip_regex;
-			}
-		}
-
-	}
-
-	
 	public function getAllPosts() {
 		$query = "SELECT * FROM {$this->tablename} ORDER BY post_uid DESC";
 		$posts = $this->databaseConnection->fetchAllAsArray($query);
 		return $posts;
-	}
-
-	/* Get all threads from all boards */
-	public function getAllThreads() {
-		$query = "SELECT * FROM {$this->threadTable} ORDER BY last_bump_time DESC";
-		$threads = $this->databaseConnection->fetchAllAsArray($query);
-		return $threads;
-	}
-	
-	/* Get all thread uids from all boards */
-	public function getAllThreadUIDs() {
-		$query = "SELECT thread_uid FROM {$this->threadTable} ORDER BY last_bump_time DESC";
-		$threads = $this->databaseConnection->fetchAllAsIndexArray($query);
-		return array_merge(...$threads);
-	}
-
-	public function getThreadByUID($thread_uid) {
-		$query = "SELECT * FROM {$this->threadTable} WHERE thread_uid = :thread_uid";
-		$params[':thread_uid'] = strval($thread_uid);
-		return $this->databaseConnection->fetchOne($query, $params);
-	}
-
-	/* Fetch the list of threads */
-	public function getThreadListFromBoard(board $board, int $start = 0, int $amount = 0, bool $isDESC = true, string $orderBy = 'last_bump_time'): array {
-		$query = "SELECT thread_uid FROM {$this->threadTable} WHERE boardUID = :board_uid ORDER BY $orderBy " . ($isDESC ? "DESC" : "ASC");
-
-		$params = [
-			':board_uid' => $board->getBoardUID(),
-		];
-
-		if ($amount > 0) {
-			$query .= " LIMIT $start, $amount";
-		}
-		$threads = $this->databaseConnection->fetchAllAsIndexArray($query, $params);
-		return array_merge(...$threads) ?? [];
-	}
-
-
-	public function mapThreadUidListToPostNumber($threadUidArray) {
-		if (!is_array($threadUidArray)) {
-			$threadUidArray = [$threadUidArray];
-		}
-	
-		addSlashesToArray($threadUidArray);
-	
-		$threadUidArray = implode(',', $threadUidArray);
-		$query = "SELECT post_op_number, boardUID FROM {$this->threadTable} WHERE thread_uid IN ({$threadUidArray}) ORDER BY last_bump_time DESC";
-		
-		return $this->databaseConnection->fetchAllAsArray($query);
-	
 	}
 	
 	/* Check if the post is successive (rate limiting mechanism) */
@@ -171,22 +70,13 @@ class PIOPDO implements IPIO {
 
 		return false; // Not a successive post
 	}
-
-	public function addThread($boardUID, $post_uid, $thread_uid, $post_op_number) {
-		$query = "INSERT INTO {$this->threadTable} (boardUID, post_op_post_uid, post_op_number, thread_uid) VALUES (:board_uid, :post_op_post_uid, :post_op_number, :thread_uid)";
-		$params = [
-			':board_uid' => $boardUID,
-			':post_op_post_uid' => $post_uid,
-			':post_op_number' => $post_op_number,
-			':thread_uid' => $thread_uid,
-		];
-		$this->databaseConnection->execute($query, $params);
-	}
 	
 	/* Add a new post to a thread */
 	public function addPost($board, $no, $thread_uid_from_url, $md5chksum, $category, $tim, $fname, $ext, $imgw, $imgh, 
 		$imgsize, $tw, $th, $pwd, $now, $name, $email, $sub, $com, $host,  $age = false, $status = '') {
 		
+		$threadSingleton = threadSingleton::getInstance();
+
 		$this->beginTransaction();
 		try {
 			$boardUID = $board->getBoardUID();
@@ -201,7 +91,7 @@ class PIOPDO implements IPIO {
 			if(!$thread_uid_from_url) {
 				//create a new thread
 				$thread_uid = generateUid();
-				$this->addThread($boardUID, $postUID, $thread_uid, $no);
+				$threadSingleton->addThread($boardUID, $postUID, $thread_uid, $no);
 				$thread_uid_for_database = $thread_uid;
 				$isThread = true;
 			} else {
@@ -245,71 +135,13 @@ class PIOPDO implements IPIO {
 
 			$this->databaseConnection->execute($query, $params);
 
-			if ($age || $isThread) $this->bumpThread($thread_uid_for_database);
-			else $this->updateThreadLastReplyTime($thread_uid_for_database);
+			if ($age || $isThread) $threadSingleton->bumpThread($thread_uid_for_database);
+			else $threadSingleton->updateThreadLastReplyTime($thread_uid_for_database);
 			$this->commit();
 		} catch (Exception $e) {
 			$this->rollBack();
 			throw $e;
 		}
-	}
-
-	public function getLastInsertedThreadUID() {
-		$query = "SELECT MAX(thread_uid) FROM {$this->threadTable}";
-		$result = $this->databaseConnection->fetchColumn($query);
-		return $result;
-	}
-
-	public function getThreadOpPostsFromList($threadUIDList) {
-		if (!is_array($threadUIDList)) {
-			$threadUIDList = [$threadUIDList];
-		}
-	
-		addSlashesToArray($threadUIDList);
-	
-		$threadUIDList = implode(',', $threadUIDList);
-		$query = "SELECT p.* FROM {$this->tablename} p
-			INNER JOIN (
-				SELECT thread_uid, MIN(post_uid) AS min_post_uid
-				FROM {$this->tablename}
-				WHERE thread_uid IN ($threadUIDList)
-				GROUP BY thread_uid) first_posts ON p.thread_uid = first_posts.thread_uid AND p.post_uid = first_posts.min_post_uid
-				ORDER BY post_uid DESC;";
-
-		return $this->databaseConnection->fetchAllAsArray($query);
-	}
-
-	/* Bump a discussion thread */
-	public function bumpThread($threadID, $future = false) {
-		$postsFromThread = $this->fetchPostsFromThread($threadID);
-		if(empty($postsFromThread)) return;
-		
-		$lastReply = end($postsFromThread);
-		
-		$lastReplyRegistTime = $lastReply['root'];
-		
-		if ($future) {
-			$timestamp = $lastReply['time'];
-			$secondsToAdd = 5;
-			$futureTimestamp = $timestamp + $secondsToAdd;
-			$lastReplyRegistTime = date('Y-m-d H:i:s', $futureTimestamp);
-		}
-		
-		$query = "UPDATE {$this->threadTable} SET last_bump_time = :post_regist_time, last_reply_time = :post_regist_time WHERE thread_uid = :thread_uid";
-		$params = [
-		':post_regist_time' => $lastReplyRegistTime,
-		':thread_uid' => $threadID];
-
-		$this->databaseConnection->execute($query, $params);
-	}
-
-	public function updateThreadLastReplyTime($threadID) {
-		$query = "UPDATE {$this->threadTable} SET last_reply_time = CURRENT_TIMESTAMP WHERE thread_uid = :thread_uid";
-		$params = [
-			':thread_uid' => $threadID
-		]; 
-	
-		$this->databaseConnection->execute($query, $params);
 	}
 
 	/* Transactions methods */
@@ -400,12 +232,7 @@ class PIOPDO implements IPIO {
 	    return $ip !== false ? $ip : null;
 	}
 
-	public function getPostCountFromThread($threadUID) {
-		if(!$threadUID) throw new Exception("Invalid thread UID in ".__METHOD__);
-		$query = "SELECT COUNT(post_uid) FROM {$this->tablename} WHERE thread_uid = ?";
-		$count = $this->databaseConnection->fetchColumn($query, [$threadUID]);
-		return $count;
-	}
+
 	
 	/* Get number of posts */
 	public function postCountFromBoard($board, $threadUID = 0) {
@@ -423,38 +250,9 @@ class PIOPDO implements IPIO {
 	public function postCount($filters = []) {
 		$query = "SELECT COUNT(post_uid) FROM {$this->tablename} WHERE 1 ";
 		$params = [];
-		$this->bindfiltersParameters($params, $query, $filters);
+		bindfiltersParameters($params, $query, $filters);
 		
 		return $this->databaseConnection->fetchColumn($query, $params);
-	}
-
-	/* Get number of discussion threads */
-	public function threadCountFromBoard($board) {
-		$query = "SELECT COUNT(thread_uid) FROM {$this->threadTable} WHERE boardUID = :board_uid";
-		return $this->databaseConnection->fetchColumn($query, [':board_uid' => $board->getBoardUID()]);
-	}
-
-	public function fetchPostsFromThread($threadUID, $start = 0, $amount = 0) {
-		$threadUID = strval($threadUID);
-		$query = "SELECT * FROM {$this->tablename} WHERE thread_uid = :thread_uid";
-		$params = [
-			':thread_uid' => $threadUID
-		];
-		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
-		
-		//get posts from parent thread
-		if(!$posts) {
-			$query = "SELECT * FROM {$this->tablename} 
-								WHERE thread_uid = (
-								SELECT thread_uid 
-								FROM {$this->tablename} 
-								WHERE post_uid = :post_uid
-								)";
-			$params = [':post_uid' => $threadUID]; // Rename to avoid confusion
-			$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
-		}
-		
-		return $posts ?? false;
 	}
 
 	/* Output list of articles */
@@ -493,19 +291,6 @@ class PIOPDO implements IPIO {
 		return array_column($posts, 'post_uid') ?? [];
 	}
 
-	/* Output discussion thread list */
-	public function fetchThreadListFromBoard(board $board, int $start = 0, int $amount = 0, bool $isDESC = false): array {
-		$query = "SELECT thread_uid FROM {$this->threadTable} WHERE boardUID = :board_uid ORDER BY last_bump_time";
-		if ($isDESC) {
-				$query .= " DESC";
-		}
-		if ($amount) {
-				$query .= " LIMIT {$start}, {$amount}";
-		}
-
-		return array_merge(...$this->databaseConnection->fetchAllAsIndexArray($query, [':board_uid' => $board->getBoardUID()])) ?? [];
-	}
-
 	public function getPostsFromBoard(board $board, int $start = 0, int $amount = 0, string $order = "no", string $sortOrder = "DESC"): array {
 		$query = "SELECT * FROM {$this->tablename} WHERE boardUID = :board_uid ORDER BY $order $sortOrder";
 		if($amount) {
@@ -526,7 +311,7 @@ class PIOPDO implements IPIO {
 		$query = "SELECT * FROM {$this->tablename} WHERE 1";
 		$params = [];
 		
-		$this->bindfiltersParameters($params, $query, $filters); //apply filtration to query
+		bindfiltersParameters($params, $query, $filters); //apply filtration to query
 		
 		$query .= " ORDER BY $order  DESC LIMIT $amount OFFSET $offset";
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
@@ -534,39 +319,6 @@ class PIOPDO implements IPIO {
 		return $posts ?? [];
 	}
 	
-	public function getFilteredThreads(int $amount, int $offset = 0, array $filters = [], string $order = 'last_bump_time'): array {
-		$query = "SELECT * FROM {$this->threadTable} WHERE 1";
-		$params = [];
-		
-		$this->bindfiltersParameters($params, $query, $filters); //apply filtration to query
-		
-		$query .= " ORDER BY $order  DESC LIMIT $amount OFFSET $offset";
-		$threads = $this->databaseConnection->fetchAllAsArray($query, $params);
-	
-		return $threads ?? [];
-	}
-	
-	public function getFilteredThreadUIDs(int $amount, int $offset = 0, array $filters = [], string $order = 'last_bump_time') {
-		$query = "SELECT thread_uid FROM {$this->threadTable} WHERE 1";
-		$params = [];
-		
-		$this->bindfiltersParameters($params, $query, $filters); //apply filtration to query
-		
-		$query .= " ORDER BY $order  DESC LIMIT $amount OFFSET $offset";
-		$threads = $this->databaseConnection->fetchAllAsIndexArray($query, $params);
-		return array_merge(...$threads);
-	}
-	
-	public function getFilteredThreadCount($filters = []) {
-		$query = "SELECT COUNT(thread_uid) FROM {$this->threadTable} WHERE 1";
-		$params = [];
-		
-		$this->bindfiltersParameters($params, $query, $filters); //apply filtration to query
-		
-		$threads = $this->databaseConnection->fetchColumn($query, $params);
-	
-		return $threads;
-	}
 	
 	/* Output article */
 	public function fetchPosts($postlist, $fields = '*') {
@@ -578,20 +330,6 @@ class PIOPDO implements IPIO {
 	
 		$postlist = implode(',', $postlist);
 		$query = "SELECT {$fields} FROM {$this->tablename} WHERE post_uid IN ({$postlist}) OR thread_uid IN ({$postlist})";
-		
-		return $this->databaseConnection->fetchAllAsArray($query);
-	}
-
-	/* Output article */
-	public function fetchThreads($postlist, $fields = '*') {
-		if (!is_array($postlist)) {
-			$postlist = [$postlist];
-		}
-	
-		addSlashesToArray($postlist);
-	
-		$postlist = implode(',', $postlist);
-		$query = "SELECT {$fields} FROM {$this->threadTable} WHERE thread_uid IN ({$postlist})";
 		
 		return $this->databaseConnection->fetchAllAsArray($query);
 	}
@@ -713,15 +451,6 @@ class PIOPDO implements IPIO {
 			throw $e;
 		}
 	}
-
-	public function isThread($threadID) {
-		$query = "SELECT thread_uid FROM {$this->threadTable} WHERE thread_uid = :thread_uid";
-		$params = [
-			':thread_uid' => strval($threadID)
-		];
-		$threadExists = $this->databaseConnection->fetchColumn($query, $params) ? true : false;
-		return $threadExists;
-	}
 	
 	public function isThreadOP($post_uid) {
 		$query = "SELECT post_op_post_uid FROM {$this->threadTable} WHERE post_op_post_uid = :post_op_post_uid";
@@ -730,14 +459,6 @@ class PIOPDO implements IPIO {
 		];
 		$threadExists = $this->databaseConnection->fetchColumn($query, $params) ? true : false;
 		return $threadExists;
-	}
-	
-	public function getAllAttachmentsFromThread($thread_uid) {
-		$query = "SELECT ext, tim, boardUID FROM {$this->tablename} WHERE thread_uid = :thread_uid";
-		$params[':thread_uid'] = $thread_uid;
-
-		$threadAttachments = $this->databaseConnection->fetchAllAsArray($query, $params);
-		return $threadAttachments;
 	}
 
 	public function updatePostBoardUIDsFromThread($thread_uid, $destinationBoard) {
@@ -751,16 +472,6 @@ class PIOPDO implements IPIO {
 		$query = "UPDATE {$this->threadTable} SET boardUID = :board_uid WHERE thread_uid = :thread_uid";
 		$this->databaseConnection->execute($query, $params);
 	}
-
-	public function resolveThreadUidFromResno($board, $resno) {
-		$query = "SELECT thread_uid FROM {$this->threadTable} WHERE post_op_number = :resno AND boardUID = :board_uid";
-		$params = [
-			':resno' => intval($resno),
-			':board_uid' => $board->getBoardUID(),
-		];
-		$thread_uid = $this->databaseConnection->fetchColumn($query, $params);
-		return $thread_uid;
-	}
 	
 	public function resolvePostUidFromPostNumber($board, $postNumber) {
 		$query = "SELECT post_uid FROM {$this->tablename} WHERE no = :post_number AND boardUID = :board_uid";
@@ -770,15 +481,6 @@ class PIOPDO implements IPIO {
 		];
 		$postUID = $this->databaseConnection->fetchColumn($query, $params);
 		return $postUID;
-	}
-	
-	public function resolveThreadNumberFromUID($thread_uid) {
-		$query = "SELECT post_op_number FROM {$this->threadTable} WHERE thread_uid = :thread_uid";
-		$params = [
-			':thread_uid' => strval($thread_uid)
-		];
-		$threadNo = $this->databaseConnection->fetchColumn($query, $params);
-		return $threadNo;
 	}
 	
 	public function resolvePostNumberFromUID($post_uid) {
@@ -839,79 +541,4 @@ class PIOPDO implements IPIO {
 		return $files;
 	}
 
-
-	public function getLastThreadTimeFromBoard($board) {
-		$boardUID = $board->getBoardUID();
-		
-		$query = "SELECT MAX(thread_created_time) FROM {$this->threadTable} WHERE boardUID = :boardUID";
-		$params = [
-			':boardUID' => $boardUID,
-		];
-		$lastThreadTime = $this->databaseConnection->fetchColumn($query, $params);
-		return $lastThreadTime;
-	}
-
-	public function moveThreadAndUpdate($thread_uid, $sourceBoard, $destinationBoard) {
-		$this->beginTransaction();
-		try {
-			$posts = $this->fetchPostsFromThread($thread_uid);
-	
-			if (empty($posts)) {
-				throw new Exception("No posts found for thread UID: $thread_uid");
-			}
-	
-			// Get the last post number on the destination board
-			$lastPostNumber = $destinationBoard->getLastPostNoFromBoard();
-	
-			// Mapping for old to new post numbers
-			$postNumberMapping = [];
-			$newThreadPostNumber = -1;
-
-			// Update each post
-			foreach ($posts as $key=>$post) {
-				$oldPostNumber = $post['no'];
-				$newPostNumber = ++$lastPostNumber;
-
-	
-				// Map old to new post numbers
-				$postNumberMapping[$oldPostNumber] = $newPostNumber;
-				// Update the post content (com) to update quote links
-				$updatedCom = preg_replace_callback('/&gt;&gt;([0-9]+)/', function ($matches) use ($postNumberMapping) {
-					$oldQuote = $matches[1];
-					return isset($postNumberMapping[$oldQuote]) ? '&gt;&gt;' . $postNumberMapping[$oldQuote] : $matches[0];
-				}, $post['com']);
-	
-				// Execute the update query
-				$updatePostQuery = "UPDATE {$this->tablename} 
-							SET no = :new_no, boardUID = :new_boardUID, com = :updated_com 
-							WHERE post_uid = :post_uid";
-				$updateParams = [
-					':new_no' => intval($newPostNumber),
-					':new_boardUID' => intval($destinationBoard->getBoardUID()),
-					':updated_com' => strval($updatedCom),
-					':post_uid' => strval($post['post_uid']),
-				];
-				$this->databaseConnection->execute($updatePostQuery, $updateParams);
-				$destinationBoard->incrementBoardPostNumber();
-
-				//op post
-				if($key === 0) $newThreadPostNumber = $newPostNumber;
-			}
-	
-			// Update the thread's board UID
-			$updateThreadQuery = "UPDATE {$this->threadTable} 
-								SET boardUID = :new_boardUID, post_op_number = :new_post_op_number
-								WHERE thread_uid = :thread_uid";
-			$updateThreadParams = [
-				':new_boardUID' => intval($destinationBoard->getBoardUID()),
-				':thread_uid' => strval($thread_uid),
-				':new_post_op_number' => intval($newThreadPostNumber),
-			];
-			$this->databaseConnection->execute($updateThreadQuery, $updateThreadParams);
-			$this->commit();
-		} catch (Exception $e) {
-			$this->rollBack();
-			throw $e;
-		}
-	}
 }

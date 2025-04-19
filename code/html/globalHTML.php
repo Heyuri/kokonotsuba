@@ -7,14 +7,15 @@ use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
 class globalHTML {
 	private $config, $board;
 
-	private $templateEngine, $moduleEngine;
+	private $templateEngine, $moduleEngine, $threadSingleton;
 
 	public function __construct(IBoard $board) { 
 		$this->board = $board;
-		$this->moduleEngine = new moduleEngine($board);
 		$this->config = $board->loadBoardConfig();
 
 		$this->templateEngine = $board->getBoardTemplateEngine();
+		$this->moduleEngine = new moduleEngine($board);
+		$this->threadSingleton = threadSingleton::getInstance();
 	}
 
 	/* 輸出A錯誤畫面 */
@@ -51,7 +52,7 @@ class globalHTML {
 		
 		$pte_vals = array('{$RESTO}'=>$resno?$resno:'', '{$IS_THREAD}'=>boolval($resno));
 		if ($resno) {
-			$post = $PIO->fetchPostsFromThread($resno);
+			$post = $this->threadSingleton->fetchPostsFromThread($resno);
 			if (mb_strlen($post[0]['com']) <= 10){
 				$CommentTitle = $post[0]['com'];
 			} else {
@@ -172,7 +173,7 @@ class globalHTML {
 
 					if(!$post) continue;
 					
-					$postResno = $PIO->resolveThreadNumberFromUID($post['thread_uid']);
+					$postResno = $this->threadSingleton->resolveThreadNumberFromUID($post['thread_uid']);
 					if($post){
 						$comment = str_replace($val[0], '<a href="'.$this->config['PHP_SELF'].'?res='.($postResno?$postResno:$post['no']).'#p'.$post['boardUID'].'_'.$post['no'].'" class="quotelink">'.$val[0].'</a>', $comment);
 					} else {
@@ -185,7 +186,7 @@ class globalHTML {
 	}
 	
 	public function buildThreadNavButtons($board, $threads, $threadInnerIterator, $PIO) {		
-		$threadNumberList = $PIO->mapThreadUidListToPostNumber($threads);
+		$threadNumberList = $this->threadSingleton->mapThreadUidListToPostNumber($threads);
 		$upArrow = '';
 		$downArrow = '';
 		$postFormButton = '<a title="Go to post form" href="#postform">&#9632;</a>';
@@ -649,7 +650,7 @@ class globalHTML {
 		$posts_count = count($posts); // Number of cycles
 		$thread_uid = $posts[0]['thread_uid'];
 		$postOPNumber = $posts[0]['no'];
-		$replyCount = $PIO->getPostCountFromThread($thread_uid);
+		$replyCount = $this->threadSingleton->getPostCountFromThread($thread_uid);
 		$imageURL = '';
 		
 		if(gettype($tree_cut) == 'array') $tree_cut = array_flip($tree_cut); // array_flip + isset Search Law

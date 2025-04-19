@@ -58,6 +58,7 @@ class overboard {
 
 	public function drawOverboardThreads($filters, $globalHTML) {
 		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getInstance();
 		$boardIO = boardIO::getInstance();
 		
 		$pagenum = 0;
@@ -88,9 +89,9 @@ class overboard {
 		$pagenum = ($pagenum >= 0) ? $pagenum : 1;
 		$offset = $pagenum * $limit;
 
-		$threads = $PIO->getFilteredThreads($limit, $offset, $filters);
-		$threadList = $PIO->getFilteredThreadUIDs($limit, $offset, $filters);
-		$numberThreadsFiltered = $PIO->getFilteredThreadCount($filters);
+		$threads = $threadSingleton->getFilteredThreads($limit, $offset, $filters);
+		$threadList = $threadSingleton->getFilteredThreadUIDs($limit, $offset, $filters);
+		$numberThreadsFiltered = $threadSingleton->getFilteredThreadCount($filters);
 		
 		if(!$threads) return '<div class="bbls"> <b class="error"> - No threads - </b> </div>';
 		

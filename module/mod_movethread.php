@@ -49,20 +49,20 @@ class mod_movethread extends moduleHelper {
 	}
 
 	private function handleThreadMove($thread, $hostBoard, $destinationBoard) {
-		$PIO = PIOPDO::getInstance();
+		$threadSingleton = PIOPDO::getInstance();
 		$postRedirectIO = postRedirectIO::getInstance();
 
 		$thread_uid = $thread['thread_uid'];
-		$filesToCopy = $PIO->getAllAttachmentsFromThread($thread_uid);
+		$filesToCopy = $threadSingleton->getAllAttachmentsFromThread($thread_uid);
 
 		$postRedirectIO->addNewRedirect($hostBoard->getBoardUID(), $destinationBoard->getBoardUID(), $thread_uid);
 		$this->copyThreadFilesFromHostToDestination($filesToCopy, $destinationBoard);
-		$PIO->moveThreadAndUpdate($thread_uid, $hostBoard, $destinationBoard);
-		$PIO->bumpThread($thread_uid);
+		$threadSingleton->moveThreadAndUpdate($thread_uid, $hostBoard, $destinationBoard);
+		$threadSingleton->bumpThread($thread_uid);
 	}
 
 	public function ModulePage() {
-		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getInstance();
 		$actionLogger = ActionLogger::getInstance();
 		$postRedirectIO = postRedirectIO::getInstance();
 		$boardIO = boardIO::getInstance();
@@ -79,7 +79,7 @@ class mod_movethread extends moduleHelper {
 			if (!$thread_uid) $globalHTML->error("Invalid thread_uid from request");
 			if (!$destinationBoardUID) $globalHTML->error("Invalid board uid from request");
 
-			$thread = $PIO->getThreadByUID($thread_uid);
+			$thread = $threadSingleton->getThreadByUID($thread_uid);
 			$hostBoard = $boardIO->getBoardByUID($thread['boardUID']);
 			$destinationBoard = $boardIO->getBoardByUID($destinationBoardUID);
 
@@ -100,14 +100,14 @@ class mod_movethread extends moduleHelper {
 
 	private function prepareMoveFormTemplateValues(): array {
 		$globalHTML = new globalHTML($this->board);
-		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getInstance();
 		$boardIO = boardIO::getInstance();
 
 		$thread_uid = $_GET['thread_uid'] ?? null;
 		if (!$thread_uid) (new globalHTML($this->board))->error("No thread uid selected");
 
-		$thread = $PIO->getThreadByUID($thread_uid);
-		$threadNumber = $PIO->resolveThreadNumberFromUID($thread_uid);
+		$thread = $threadSingleton->getThreadByUID($thread_uid);
+		$threadNumber = $threadSingleton->resolveThreadNumberFromUID($thread_uid);
 		$threadParentBoard = $boardIO->getBoardByUID($thread['boardUID']);
 
 		$boardRadioHTML = $globalHTML->generateBoardListRadioHTML($threadParentBoard);

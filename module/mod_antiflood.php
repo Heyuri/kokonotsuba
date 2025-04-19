@@ -21,10 +21,10 @@ class mod_antiflood extends moduleHelper {
 	
 	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, $imgWH){
 		if (!$thread_uid) {
-			$PIO = PIOPDO::getInstance();
+			$threadSingleton = threadSingleton::getInstance();
 			$globalHTML = new globalHTML($this->board);
 
-			$lastThreadTimestamp = $PIO->getLastThreadTimeFromBoard($this->board);
+			$lastThreadTimestamp = $threadSingleton->getLastThreadTimeFromBoard($this->board);
 			if(!$lastThreadTimestamp) return;
 			$currentTimestamp = new DateTime();
 			$timestampFromDatabase = new DateTime($lastThreadTimestamp);

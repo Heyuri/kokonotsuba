@@ -31,10 +31,11 @@ class mod_showip extends moduleHelper {
 
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply){
 		$PIO = PIOPDO::getInstance();
-		
+		$threadSingleton = threadSingleton::getInstance();
+
 		$isThreadOP = $PIO->isThreadOP($post['post_uid']);
 
-		$email = (!$isThreadOP ? $PIO->fetchPostsFromThread($post['thread_uid'])[0]['email'] : $post['email']);
+		$email = (!$isThreadOP ? $threadSingleton->fetchPostsFromThread($post['thread_uid'])[0]['email'] : $post['email']);
 
 		$iphost = strtolower($post['host']);
 

@@ -69,7 +69,6 @@ class mod_rss extends moduleHelper {
 		// Force update of RSS feed
 		if(isset($_GET['force'])) return true;
 
-		$PIO = PIOPDO::getInstance();
 		$lastNo = $this->board->getLastPostNoFromBoard() - 1;
 		// Read status cache data
 		$lastNoCache = file_exists($this->FEED_STATUSFILE) ?
@@ -89,6 +88,7 @@ class mod_rss extends moduleHelper {
 	/* Generate / update static cache RSS Feed file */
 	private function GenerateCache() {
 		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$boardTitle = $this->board->getBoardTitle();
 		// Time zone format used in the RFC standard
@@ -108,8 +108,8 @@ class mod_rss extends moduleHelper {
 				break;
 			case 'P':
 				// Get the first n article numbers
-				$plist = $PIO->getThreadListFromBoard($this->board, 0, $this->FEED_COUNT);
-				$post = $PIO->getThreadOpPostsFromList($plist);
+				$plist = $threadSingleton->getThreadListFromBoard($this->board, 0, $this->FEED_COUNT);
+				$post = $threadSingleton->getFirstPostsFromThreads($plist);
 				break;
 		}
 		$post_count = count($post);
@@ -129,7 +129,7 @@ class mod_rss extends moduleHelper {
 			$resto = 0; // To respond
 			list($no, $resno, $thread_uid, $time, $tw, $th, $tim, $ext, $sub, $com) = array(
 				$post[$i]['no'],
-				$PIO->resolveThreadNumberFromUID($post[$i]['thread_uid']),
+				$threadSingleton->resolveThreadNumberFromUID($post[$i]['thread_uid']),
 				$post[$i]['thread_uid'],
 				substr($post[$i]['tim'], 0, -3),
 				$post[$i]['tw'],
@@ -155,7 +155,7 @@ class mod_rss extends moduleHelper {
 			switch ($this->FEED_DISPLAYTYPE) {
 				case 'T':
 					// Title No. Number (Res: Number of Responses)
-					$titleBar = $sub.' No.'.$no.' (Res: '.($PIO->getPostCountFromThread($thread_uid) - 1).')';
+					$titleBar = $sub.' No.'.$no.' (Res: '.($threadSingleton->getPostCountFromThread($thread_uid) - 1).')';
 					break;
 				case 'P':
 					// Title (number)

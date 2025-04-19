@@ -5,11 +5,15 @@ class postValidator {
 	private readonly globalHTML $globalHTML;
 	private readonly IPValidator $IPValidator;
 
-	public function __construct(board $board, array $config, globalHTML $globalHTML, IPValidator $IPValidator) {
+	private readonly mixed $threadSingleton;
+
+	public function __construct(board $board, array $config, globalHTML $globalHTML, IPValidator $IPValidator, mixed $threadSingleton) {
 		$this->board = $board;
 		$this->config = $config;
 		$this->globalHTML = $globalHTML;
 		$this->IPValidator = $IPValidator;
+
+		$this->threadSingleton = $threadSingleton;
 	}
 	
 	public function registValidate() {
@@ -60,7 +64,7 @@ class postValidator {
 	        // Determine whether the article you want to respond to has just been deleted
 	    if($resto){
 	        if($ThreadExistsBefore){ // If the thread of the discussion you want to reply to exists
-	            if(!$PIO->isThread($resto)){ // If the thread of the discussion you want to reply to has been deleted
+	            if(!$this->threadSingleton->isThread($resto)){ // If the thread of the discussion you want to reply to has been deleted
 	                // Update the data source in advance, and this new addition is not recorded
 	                $this->board->rebuildBoard();
 	                $this->globalHTML->error(_T('regist_threaddeleted'), $dest);

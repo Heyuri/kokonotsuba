@@ -19,10 +19,10 @@ class mod_autosage extends moduleHelper {
 	}
 
 	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, $img, &$status) {
-		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getInstance();
 	
 		if ($thread_uid) {
-			$post = $PIO->fetchPostsFromThread($thread_uid)[0];
+			$post = $threadSingleton->fetchPostsFromThread($thread_uid)[0];
 			$fh = new FlagHelper($post['status']);
 			if($fh->value('as')) $age = false;
 		}

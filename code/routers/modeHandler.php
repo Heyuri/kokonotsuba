@@ -9,6 +9,7 @@ class modeHandler {
 	private readonly pageRenderer $adminPageRenderer;
 	private readonly mixed $FileIO;
 	private readonly mixed $PIO;
+	private readonly mixed $threadSingleton;
 	private readonly boardIO $boardIO;
 	private readonly AccountIO $AccountIO;
 	private readonly ActionLogger $actionLogger;
@@ -34,6 +35,7 @@ class modeHandler {
 		boardIO $boardIO,
 		mixed $FileIO,
 		mixed $PIO,
+		mixed $threadSingleton,
 		AccountIO $AccountIO,
 		ActionLogger $actionLogger,
 		adminLoginController $adminLoginController,
@@ -56,6 +58,7 @@ class modeHandler {
 		$this->boardIO = $boardIO;
 		$this->FileIO = $FileIO;
 		$this->PIO = $PIO;
+		$this->threadSingleton = $threadSingleton;
 		$this->AccountIO = $AccountIO;
 		$this->actionLogger = $actionLogger;
 		$this->adminLoginController = $adminLoginController;
@@ -93,7 +96,8 @@ class modeHandler {
 					$this->moduleEngine,
 					$this->actionLogger,
 					$this->FileIO,
-					$this->PIO
+					$this->PIO,
+					$this->threadSingleton
 				);
 				$route->registerPostToDatabase();
 			},

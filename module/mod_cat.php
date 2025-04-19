@@ -44,13 +44,14 @@ class mod_cat extends moduleHelper {
 
 	public function ModulePage(){
 		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 		
 		$globalHTML = new globalHTML($this->board);
 		
 		$dat = '';
 
-		$list_max = $PIO->threadCountFromBoard($this->board);
+		$list_max = $threadSingleton->threadCountFromBoard($this->board);
 		$page = $_GET['page']??0;
 		$post_cnt = $PIO->postCountFromBoard($this->board);
 		$page_max = ceil($list_max / $this->PAGE_DEF) - 1;
@@ -71,18 +72,18 @@ class mod_cat extends moduleHelper {
 		//sort threads. If sort is set to bump nothing will change because that is the default order returned by fetchThreadList
 		switch($sort) {
 			case 'time':
-				$plist = $PIO->getThreadListFromBoard($this->board, $this->PAGE_DEF * $page, $this->PAGE_DEF, true);
+				$plist = $threadSingleton->getThreadListFromBoard($this->board, $this->PAGE_DEF * $page, $this->PAGE_DEF, true);
 				$sortfcn = function ($a, $b) { return strtotime($b['thread_created_time']) - strtotime($a['thread_created_time']); };
 				
 			break;
 			case 'bump':
 			default:
-				$plist = $PIO->getThreadListFromBoard($this->board, $this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
+				$plist = $threadSingleton->getThreadListFromBoard($this->board, $this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
 				$sortfcn = function ($a, $b) { return strtotime($b['last_bump_time']) - strtotime($a['last_bump_time']); };
 			break;
 		}
 
-		$threadList = $PIO->fetchThreads($plist) ?? [];
+		$threadList = $threadSingleton->fetchThreads($plist) ?? [];
 		usort($threadList, $sortfcn);
 
 		$cat_cols = $_COOKIE['cat_cols']??0;
@@ -99,14 +100,14 @@ class mod_cat extends moduleHelper {
 				
 		$dat.= '<table id="catalogTable" class="' . ($cat_fw ? 'full-width' : '') . ' ' . ($cat_cols === 'auto' ? 'auto-cols' : 'fixed-cols') . '"><tbody><tr>';
 		foreach($threadList as $i=>$thread){
-			$threadPosts = $PIO->fetchPostsFromThread($thread['thread_uid']);
+			$threadPosts = $threadSingleton->fetchPostsFromThread($thread['thread_uid']);
 
 			if(!$threadPosts) continue;
 
 			$opPost = $threadPosts[0];
 			extract($opPost);
 			
-			$resno = $PIO->resolveThreadNumberFromUID($thread_uid);
+			$resno = $threadSingleton->resolveThreadNumberFromUID($thread_uid);
 			if ( ($cat_cols!='auto') && !($i%intval($cat_cols)) )
 				$dat.= '</tr><tr>';
 
@@ -116,7 +117,7 @@ class mod_cat extends moduleHelper {
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'');
 			$this->moduleEngine->useModuleMethods('ThreadPost', array(&$arrLabels, $opPost, false)); // "ThreadPost" Hook Point
 
-			$res = $PIO->getPostCountFromThread($thread_uid) - 1;
+			$res = $threadSingleton->getPostCountFromThread($thread_uid) - 1;
 			$dat.= '<td class="thread">
 	<!--<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>-->
 	<a href="'.$this->config['PHP_SELF'].'?res='.($resno?$resno:$no).'#p'.$no.'">'.

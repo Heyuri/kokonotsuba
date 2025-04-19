@@ -26,7 +26,7 @@ class postIdGenerator {
 			} else {
 				$ip = new IPAddress;
 				$idSeed = $this->config['IDSEED'];
-				$postNo = $thread_uid ? $thread_uid : ($this->PIO->getLastPostNoFromBoard());
+				$postNo = $thread_uid ? $thread_uid : ($this->PIO->getLastPostNoFromBoard() + 1);
 				$baseString = $ip . $idSeed . $postNo;
 
 				switch ($this->config['ID_MODE']) {

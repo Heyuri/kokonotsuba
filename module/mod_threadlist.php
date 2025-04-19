@@ -58,45 +58,57 @@ class mod_threadlist extends moduleHelper {
 		$linkbar .= '[<a href="'.$this->getModulePageURL().'">'.$this->_T('link').'</a>]'."\n";
 	}
 
-	// Generates thread list and adds it to the front of the page
 	public function autoHookThreadFront(&$txt, $isReply) {
+		$threadSingleton = threadSingleton::getInstance();
 		$PIO = PIOPDO::getInstance();
 
-		if($this->SHOW_IN_MAIN && !$isReply) {
-			$dat = ''; // HTML Buffer
-			$plist = $PIO->getThreadListFromBoard($this->board, 0, $this->THREADLIST_NUMBER_IN_MAIN); 
-			$this->moduleEngine->useModuleMethods('ThreadOrder', array($isReply, 0, 0, &$plist)); // "ThreadOrder" Hook Point
+		if ($this->SHOW_IN_MAIN && !$isReply) {
+				$dat = '';
 
-			// Start building the HTML for the thread list
-			$dat .= '<div class="menu outerbox" id="topiclist"><div class="innerbox">';
+				$threadUIDs = $threadSingleton->getThreadListFromBoard($this->board, 0, $this->THREADLIST_NUMBER_IN_MAIN);
+				$this->moduleEngine->useModuleMethods('ThreadOrder', array($isReply, 0, 0, &$threadUIDs));
 
-			foreach ($plist as $i => $post) {
-				$post = $PIO->getThreadOpPostsFromList($post); // Fetch post data
-				$CommentTitle = (mb_strlen(strip_tags($post[0]['com'])) <= 10) 
-					? strip_tags($post[0]['com']) 
-					: mb_substr(strip_tags($post[0]['com']), 0, 10, 'UTF-8') . "...";
+				$opPosts = $threadSingleton->getFirstPostsFromThreads($threadUIDs);
+				$postCounts = $threadSingleton->getPostCountsForThreads($threadUIDs);
 
-					$dat.= sprintf('<span><!--%d--> <a href="%s">%s (%d)</a></span>',
-					$post[0]['no'],
-					$this->config['PHP_SELF'].'?res='.$post[0]['no'], 
-					$post[0]['sub'] ? $post[0]['sub'] : $CommentTitle,
-					$PIO->getpostCountFromThread($post[0]['thread_uid']) - 1
-				);
-			}
+				$dat .= '<div class="menu outerbox" id="topiclist"><div class="innerbox">';
 
-			$dat .= '</div></div>';
-			$dat .= $this->templateEngine->ParseBlock('REALSEPARATE', array());
-			$txt .= $dat;
+				foreach ($threadUIDs as $threadUID) {
+						if (!isset($opPosts[$threadUID])) continue;
+						$post = $opPosts[$threadUID];
+
+						$cleanComment = strip_tags($post['com']);
+						$title = $post['sub'] ?: (mb_strlen($cleanComment) <= 10
+								? $cleanComment
+								: mb_substr($cleanComment, 0, 10, 'UTF-8') . '...');
+
+						$replyCount = isset($postCounts[$threadUID])
+								? $postCounts[$threadUID] - 1
+								: 0;
+
+						$dat .= sprintf(
+								'<span><!--%d--> <a href="%s">%s (%d)</a></span>',
+								$post['no'],
+								$this->config['PHP_SELF'] . '?res=' . $post['no'],
+								htmlspecialchars($title),
+								$replyCount
+						);
+				}
+
+				$dat .= '</div></div>';
+				$dat .= $this->templateEngine->ParseBlock('REALSEPARATE', []);
+				$txt .= $dat;
 		}
 	}
 
+
 	// Helper function to get post counts
 	private function _getPostCounts($posts) {
-		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getInstance();
 		$pc = array();
 
 		foreach($posts as $post) {
-			$pc[$post] = $PIO->getPostCountFromThread($post);
+			$pc[$post] = $threadSingleton->getPostCountFromThread($post);
 		}
 		return $pc;
 	}
@@ -132,10 +144,11 @@ class mod_threadlist extends moduleHelper {
 
 	// Handles the module page display and pagination
 	public function ModulePage() {
-		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getInstance();
+
 		$thisPage = $this->getModulePageURL(); // Base position
 		$dat = ''; // HTML Buffer
-		$listMax = $PIO->threadCountFromBoard($this->board); // Total number of threads
+		$listMax = $threadSingleton->threadCountFromBoard($this->board); // Total number of threads
 		$pageMax = ceil($listMax / $this->THREADLIST_NUMBER) - 1; // Maximum page number
 		$page = isset($_GET['page']) ? intval($_GET['page']) : 0; // Current page number
 		$sort = isset($_GET['sort']) ? $_GET['sort'] : 'no'; // Sorting option
@@ -147,18 +160,18 @@ class mod_threadlist extends moduleHelper {
 
 		// Sort and fetch threads based on sorting options
 		if (strpos($sort, 'post') !== false) {
-			$plist = $PIO->fetchThreadListFromBoard($this->board);
+			$plist = $threadSingleton->fetchThreadListFromBoard($this->board);
 			$pc = $this->_getPostCounts($plist);
 			$this->_kasort($pc, $sort == 'postdesc', true);
 
 			// Slice the list based on page
 			$plist = array_slice(array_keys($pc), $this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER);
 		} else {
-			$plist = $PIO->fetchThreadListFromBoard($this->board, $this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER, $sort == 'date' ? false : true);
+			$plist = $threadSingleton->fetchThreadListFromBoard($this->board, $this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER, $sort == 'date' ? false : true);
 			$this->moduleEngine->useModuleMethods('ThreadOrder', array(0, $page, 0, &$plist)); // "ThreadOrder" Hook Point
 			$pc = $this->_getPostCounts($plist);
 		}
-		$post = $PIO->getThreadOpPostsFromList($plist); // Fetch posts data
+		$post = $threadSingleton->getFirstPostsFromThreads($plist); // Fetch posts data
 		$post_count = count($post);
 
 		// Re-arrange posts based on the sorting option

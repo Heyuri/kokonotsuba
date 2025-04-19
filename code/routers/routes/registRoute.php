@@ -14,6 +14,8 @@ class registRoute {
     private readonly actionLogger $actionLogger;
     private readonly mixed $FileIO;
     private readonly mixed $PIO;
+	private readonly mixed $threadSingleton;
+
 
     public function __construct(board $board, 
         array $config,
@@ -23,7 +25,8 @@ class registRoute {
         moduleEngine $moduleEngine,
         actionLogger $actionLogger,
         mixed $FileIO,
-        mixed $PIO) {
+        mixed $PIO,
+		mixed $threadSingleton) {
         $this->board = $board;
         $this->config = $config;
 
@@ -36,7 +39,8 @@ class registRoute {
         $this->actionLogger = $actionLogger;
         $this->FileIO = $FileIO;
         $this->PIO = $PIO;
-    }
+		$this->threadSingleton = $threadSingleton;
+	}
 
     /* Write to post table */
 	public function registerPostToDatabase() {	
@@ -57,7 +61,7 @@ class registRoute {
 		$postIdGenerator = new postIdGenerator($this->config, $this->PIO, $this->staffSession);
 
 		// age/sage
-		$agingHandler = new agingHandler($this->config, $this->PIO);
+		$agingHandler = new agingHandler($this->config, $this->threadSingleton);
 
 		// webhook for post notifcations
 		$webhookDispatcher = new webhookDispatcher($this->board, $this->config);
@@ -77,7 +81,7 @@ class registRoute {
 		$pwd = $_POST['pwd']??'';
 		$category = htmlspecialchars($_POST['category']??'');
 		$resno = intval($_POST['resto']??0);
-		$thread_uid = $this->PIO->resolveThreadUidFromResno($this->board, $resno);
+		$thread_uid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
 		$pwdc = $_COOKIE['pwdc']??'';
 
 		$ip = new IPAddress; 
@@ -147,7 +151,7 @@ class registRoute {
 
 		$this->postValidator->validateForDatabase($pwdc, $com, $time, $pass, $ip,  $upfile, $md5chksum, $dest, $this->PIO, $roleLevel);
 		if($thread_uid){
-				$ThreadExistsBefore = $this->PIO->isThread($thread_uid);
+				$ThreadExistsBefore = $this->threadSingleton->isThread($thread_uid);
 		}
 	
 		$this->postValidator->pruneOld($this->moduleEngine, $this->PIO, $this->FileIO);
@@ -180,7 +184,7 @@ class registRoute {
 		$email = preg_replace('/^(no)+ko\d*$/i', '', $email);
 	
 		// Get number of pages to rebuild
-		$threads = $this->PIO->getThreadListFromBoard($this->board);
+		$threads = $this->threadSingleton->getThreadListFromBoard($this->board);
 		$threads_count = count($threads);
 		$page_end = ($thread_uid ? floor(array_search($thread_uid, $threads) / $this->config['PAGE_DEF']) : ceil($threads_count / $this->config['PAGE_DEF']));
 		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, array($thumbWidth, $thumbHeight, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
