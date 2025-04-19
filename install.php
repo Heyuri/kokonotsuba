@@ -29,7 +29,7 @@ function getRootPath() {
 
 define('ROOTPATH', getRootPath());
 
-require ROOTPATH . '/lib/lib_common.php';
+require ROOTPATH . '/code/libraries/lib_common.php';
 
 $extensions = [
     'mbstring',
