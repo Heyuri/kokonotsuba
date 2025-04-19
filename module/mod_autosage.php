@@ -46,15 +46,14 @@ class mod_autosage extends moduleHelper {
 
 	public function ModulePage() {
 		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getInstance();
 		$actionLogger = ActionLogger::getInstance();
 		$globalHTML = new globalHTML($this->board);
 		$softErrorHandler = new softErrorHandler($this->board);
-		$staffSession = new staffAccountFromSession;
-		$roleLevel = $staffSession->getRoleLevel();
 		
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_AUTO_SAGE']);
 		
-		$post = $PIO->fetchPostsFromThread(strval($_GET['thread_uid']))[0];
+		$post = $threadSingleton->fetchPostsFromThread(strval($_GET['thread_uid']))[0];
 		if (!$PIO->isThreadOP($post['post_uid'])) $globalHTML->error('ERROR: Cannot autosage reply.');
 		if (!$post) $globalHTML->error('ERROR: Post does not exist.');
 		$flgh = $PIO->getPostStatus($post['post_uid']);
