@@ -20,13 +20,15 @@ class mod_stop extends moduleHelper {
 
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $file, $ip, $thread_uid) {
 		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getInstance();
+
 		$staffSession = new staffAccountFromSession;
 		$globalHTML = new globalHTML($this->board);
 		$roleLevel = $staffSession->getRoleLevel();
 		
 
 		if ($thread_uid && $PIO->isThread($thread_uid) && $roleLevel < $this->config['roles']['LEV_MODERATOR']) {
-			$post = $PIO->fetchPostsFromThread($thread_uid)[0];
+			$post = $threadSingleton->fetchPostsFromThread($thread_uid)[0];
 			$fh = new FlagHelper($post['status']);
 			if($fh->value('stop')) $globalHTML->error('ERROR: This thread is locked.');
 		}
@@ -51,13 +53,15 @@ class mod_stop extends moduleHelper {
 
 	public function ModulePage() {
 		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getInstance();
+
 		$actionLogger = ActionLogger::getInstance();
 		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
 		
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_LOCK']);
 
-		$post = $PIO->fetchPostsFromThread(strval($_GET['thread_uid']))[0];
+		$post = $threadSingleton->fetchPostsFromThread(strval($_GET['thread_uid']))[0];
 		if(!$PIO->isThreadOP($post['post_uid'])) $globalHTML->error('ERROR: Cannot lock reply.');
 		if(!$post) $globalHTML->error('ERROR: Post does not exist.');
 		$flgh = $PIO->getPostStatus($post['post_uid']);
