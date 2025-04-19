@@ -3,6 +3,9 @@
 * Kokonotsuba! includes/require file.
 */
 
+/* Constants */
+require __DIR__.'/constants.php';
+
 /* Interfaces */
 require __DIR__.'/code/interfaces/IBoard.php'; // board interface
 require __DIR__.'/code/interfaces/IFileIO.php'; // FileIO inteface
@@ -118,6 +121,7 @@ require __DIR__.'/code/account/staffAccountSession.php';
 /* Log in */
 require __DIR__.'/code/log_in/authenticate.php';
 require __DIR__.'/code/log_in/loginHandler.php';
+require __DIR__.'/code/log_in/adminLoginController.php';
 
 /* Action log */
 require __DIR__.'/code/action_log/actionClass.php';
