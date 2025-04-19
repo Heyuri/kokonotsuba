@@ -1,5 +1,9 @@
 <?php
+
 // Handle account sessions for koko
+
+use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
+
 class accountRequestHandler {
 	private $config;
 	
@@ -49,7 +53,7 @@ class accountRequestHandler {
 		if(!$isHashed) $passwordHash = password_hash($passwordHash, PASSWORD_DEFAULT);
 
 		$AccountIO->addNewAccount($username, $role, $passwordHash);
-		$actionLogger->logAction("Registered a new account ($username)", $board->getBoardUID());
+		$actionLogger->logAction("Registered a new account ($username)", GLOBAL_BOARD_UID);
 	}
 
 	public function handleAccountPasswordReset($board) {
@@ -73,7 +77,7 @@ class accountRequestHandler {
 		$accountAfterPasswordUpdate = $AccountIO->getAccountById($accountID);
 		$loginSessionHandler->login($accountAfterPasswordUpdate);
 
-		$actionLogger->logAction("Reset password", $board->getBoardUID());
+		$actionLogger->logAction("Reset password", GLOBAL_BOARD_UID);
 	}
 	
 }
