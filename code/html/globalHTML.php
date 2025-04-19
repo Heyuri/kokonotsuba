@@ -1,5 +1,9 @@
 <?php
+
 // Handle misc html output for koko
+
+use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
+
 class globalHTML {
 	private $config, $board;
 
@@ -355,7 +359,7 @@ class globalHTML {
 		$admin = $this->config['roles']['LEV_ADMIN'];
 		
 		$filterRole = json_decode($_COOKIE['filterrole'] ?? '', true); if(!is_array($filterRole)) $filterRole = [$none, $user, $janitor, $moderator, $admin];
-		$filterBoard = json_decode($_COOKIE['filterboard'] ?? '', true); if(!is_array($filterBoard)) $filterBoard = [$board->getBoardUID()];
+		$filterBoard = json_decode($_COOKIE['filterboard'] ?? '', true); if(!is_array($filterBoard)) $filterBoard = [$board->getBoardUID(), GLOBAL_BOARD_UID];
 
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
 		$dat .= '
