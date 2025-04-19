@@ -84,35 +84,133 @@ function getBoardFromBootstrapFile() {
 	return $BoardIO->getBoardByUID($boardUID);
 }
 
+
+/*────────────────────────────────────────────────────────────
+	The main judgment of the functions of the program
+────────────────────────────────────────────────────────────*/
+
 //Check if this is the backend
 if(file_exists('.backend')) die("You are trying to access the instance's backend");
 
-/*-----------The main judgment of the functions of the program-------------*/
+
+// ───────────────────────────────────────
+// Database Setup
+// ───────────────────────────────────────
 $dbSettings = getDatabaseSettings();
-//database singletons
+
 DatabaseConnection::createInstance($dbSettings);
 boardIO::createInstance($dbSettings);
 AccountIO::createInstance($dbSettings);
 ActionLogger::createInstance($dbSettings);
-
 postRedirectIO::createInstance($dbSettings);
 
+// ───────────────────────────────────────
+// Board Bootstrap
+// ───────────────────────────────────────
 $board = getBoardFromBootstrapFile();
 
-//board-related singletons
 PMCLibrary::createFileIOInstance($board);
 PIOPDO::createInstance($dbSettings);
 boardPathCachingIO::createInstance($dbSettings);
 
-try {
-	//handle user requests and gzip compression on request
-	$modeHandler = new modeHandler($board);
-	$modeHandler->handle();
-} catch(\Throwable $e) {
-	$globalConfig = getGlobalConfig();
-	$globalHTML = new globalHTML($board);
+// ───────────────────────────────────────
+// Validate Early
+// ───────────────────────────────────────
+if (!file_exists($board->getFullConfigPath()) || !file_exists($board->getBoardStoragePath())) {
+	die("Invalid board setup");
+}
 
-	PMCLibrary::getLoggerInstance($globalConfig['ERROR_HANDLER_FILE'],'Global')->error($e->getMessage());	
+$config = $board->loadBoardConfig();
+
+// ───────────────────────────────────────
+// Dependencies
+// ───────────────────────────────────────
+$globalHTML			= new globalHTML($board);
+
+$moduleEngine		= new moduleEngine($board);
+$templateEngine		= $board->getBoardTemplateEngine();
+
+$adminTemplateEngine = new templateEngine(getBackendDir() . 'templates/admin.tpl', [
+	'config'	=> $config,
+	'boardData'	=> [
+		'title'		=> $board->getBoardTitle(),
+		'subtitle'	=> $board->getBoardSubTitle()
+	]
+]);
+
+$pageRenderer		= new pageRenderer($templateEngine, $globalHTML);
+$adminPageRenderer	= new pageRenderer($adminTemplateEngine, $globalHTML);
+
+$overboard			= new overboard($config, $moduleEngine, $templateEngine);
+
+// ───────────────────────────────────────
+// IO / Core Systems
+// ───────────────────────────────────────
+$boardIO			= boardIO::getInstance();
+$FileIO				= PMCLibrary::getFileIOInstance();
+$PIO				= PIOPDO::getInstance();
+$AccountIO			= AccountIO::getInstance();
+$actionLogger		= ActionLogger::getInstance();
+
+// ───────────────────────────────────────
+// Error Handling & Authentication
+// ───────────────────────────────────────
+$softErrorHandler	= new softErrorHandler($board);
+
+$loginSessionHandler	= new loginSessionHandler($config['STAFF_LOGIN_TIMEOUT']);
+$authenticationHandler	= new authenticationHandler();
+
+$adminLoginController	= new adminLoginController(
+	$actionLogger,
+	$AccountIO,
+	$globalHTML,
+	$loginSessionHandler,
+	$authenticationHandler
+);
+
+// ───────────────────────────────────────
+// Session & Validation
+// ───────────────────────────────────────
+$staffSession		= new staffAccountFromSession;
+
+$IPValidator		= new IPValidator($config, new IPAddress);
+$postValidator		= new postValidator($board, $config, $globalHTML, $IPValidator);
+
+// ───────────────────────────────────────
+// Main Handler Execution
+// ───────────────────────────────────────
+try {
+	$modeHandler = new modeHandler(
+		$board,
+		$globalHTML,
+		$moduleEngine,
+		$templateEngine,
+		$adminTemplateEngine,
+		$overboard,
+		$pageRenderer,
+		$adminPageRenderer,
+		$softErrorHandler,
+		$boardIO,
+		$FileIO,
+		$PIO,
+		$AccountIO,
+		$actionLogger,
+		$adminLoginController,
+		$staffSession,
+		$postValidator
+	);
+
+	$modeHandler->handle();
+
+} catch (\Throwable $e) {
+	$globalConfig	= getGlobalConfig();
+	$globalHTML		= new globalHTML($board);
+
+	PMCLibrary::getLoggerInstance($globalConfig['ERROR_HANDLER_FILE'], 'Global')
+		->error($e->getMessage());
+
 	$globalHTML->error("There has been an error. (;´Д`)");
 }
+
+
 clearstatcache();
