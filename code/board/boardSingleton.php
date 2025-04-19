@@ -27,13 +27,12 @@ class boardIO {
 		$query = "SELECT * FROM {$this->tablename} WHERE board_uid = ?";
 		$board = $this->databaseConnection->fetchAsClass($query, [$uid], 'board');
 		
-		if(!$board)  die("Board ($uid) not found in `{$this->tablename}`. Contact the Administrator if you believe this is a mistake."); //board was not found
 		return $board;
 	}
 	
 	public function deleteBoardByUID($uid) {
 		$query = "DELETE FROM {$this->tablename} WHERE board_uid = ?";
-		$board = $this->databaseConnection->execute($query, [$uid]);
+		$this->databaseConnection->execute($query, [$uid]);
 	}
 	
 	public function  getAllBoards() {
@@ -43,7 +42,7 @@ class boardIO {
 	}
 
 	public function  getAllRegularBoards() {
-		$query = "SELECT * FROM {$this->tablename} WHERE can_edit = 1"; // don't bother getting reserved boards
+		$query = "SELECT * FROM {$this->tablename} WHERE board_uid > 0"; // don't bother getting negative
 		$boards = $this->databaseConnection->fetchAllAsClass($query, [], 'board');
 		return $boards;
 	}

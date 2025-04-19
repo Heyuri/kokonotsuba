@@ -73,7 +73,7 @@ function getGlobalConfig() {
 }
 
 function getBoardFromBootstrapFile() {
-	$BoardIO = boardIO::getInstance();
+	$boardIO = boardIO::getInstance();
 	$boardUIDIni = parse_ini_file('./boardUID.ini', true);
 	
 	//run some checks
@@ -81,7 +81,10 @@ function getBoardFromBootstrapFile() {
 	if(!isset($boardUIDIni['board_uid'])) die("Board UID value in the ini file is not be set or is null. Check boardUID.ini to ensure it has a valid board UID.");
 	
 	$boardUID = $boardUIDIni['board_uid'];
-	return $BoardIO->getBoardByUID($boardUID);
+
+	$board = $boardIO->getBoardByUID($boardUID);
+	if(!$board) die("Board ($boardUID) not found in database. Contact the Administrator if you believe this is a mistake."); //board was not found
+	return $board;
 }
 
 
