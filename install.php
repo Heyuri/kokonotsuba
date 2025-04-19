@@ -30,6 +30,9 @@ function getRootPath() {
 define('ROOTPATH', getRootPath());
 
 require ROOTPATH . '/code/libraries/lib_common.php';
+require ROOTPATH . '/constants.php';
+
+use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
 
 $extensions = [
     'mbstring',
@@ -118,7 +121,6 @@ function createBoardAndFiles($boardTable) {
     //generate new config
     $boardConfigName = generateNewBoardConfigFile();
     $boardTable->addFirstBoard($board_identifier, $board_title, $board_sub_title, $boardConfigName, $dataDirName);
-
     $boardUIDforBootstrapFile = $boardTable->getLastBoardUID();
     createFileAndWriteText($board_path, 'boardUID.ini', "board_uid = $boardUIDforBootstrapFile");
 }
@@ -325,6 +327,7 @@ class tableCreator {
 				`config_name` TEXT NOT NULL,
 				`storage_directory_name` TEXT NOT NULL,
 				`listed` BOOL DEFAULT TRUE,
+				`can_edit` BOOL DEFAULT TRUE,
 				`date_added` DATE DEFAULT CURRENT_DATE,
 				PRIMARY KEY(`board_uid`),
 				INDEX(date_added)
@@ -465,63 +468,106 @@ class accountTable {
 
 
 class boardTable {
-	private $db, $boardTableName, $databaseName;
+    private $db, $boardTableName, $databaseName;
 
-	public function __construct($pdoConnection, $boardTableName, $databaseName) {		
-		$this->db = $pdoConnection;
-		$this->boardTableName = $boardTableName;
-		$this->databaseName = $databaseName;
-	}
+    // Constructor to initialize the PDO connection, table name, and database name
+    public function __construct($pdoConnection, $boardTableName, $databaseName) {
+        $this->db = $pdoConnection;
+        $this->boardTableName = $boardTableName;
+        $this->databaseName = $databaseName;
+    }
 
-	public function addFirstBoard($board_identifier, $board_title, $board_sub_title, $config_name, $storage_directory_name) {
-		$query = "INSERT INTO {$this->boardTableName} (board_identifier, board_title, board_sub_title, config_name, storage_directory_name) VALUES(:board_identifier, :board_title, :board_sub_title, :config_name, :storage_directory_name)";
-		$stmt = $this->db->prepare($query);
-		$stmt->bindParam(':board_identifier', $board_identifier);
-		$stmt->bindParam(':board_title', $board_title);
-		$stmt->bindParam(':board_sub_title', $board_sub_title);
-		$stmt->bindParam(':config_name', $config_name);
-		$stmt->bindParam(':storage_directory_name', $storage_directory_name);
-		return $stmt->execute();
-	}
+    // Method to create a global board if it doesn't exist
+    public function createGlobalBoard() {
+        // Check if the global board already exists
+        $query = "SELECT COUNT(*) FROM {$this->boardTableName} WHERE board_uid = :global_board_uid";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([
+            ':global_board_uid' => GLOBAL_BOARD_UID
+        ]);
+        $count = $stmt->fetchColumn();
 
-	public function getLastBoardUID() {
-		$query = "SELECT MAX(board_uid) AS max_uid FROM {$this->boardTableName}";
-		$stmt = $this->db->query($query);
-		$board_uid = $stmt->fetchColumn();
-		return $board_uid ?? 0;
-	}
+        // If global board doesn't exist, insert it
+        if ($count == 0) {
+            // Insert the global board with a reserved UID
+            $query = "INSERT INTO {$this->boardTableName} 
+                        (board_uid, board_identifier, board_title, board_sub_title, config_name, storage_directory_name, listed, can_edit) 
+                      VALUES 
+                        (:board_uid, :board_identifier, :board_title, :board_sub_title, :config_name, :storage_directory_name, :listed, :can_edit)";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindValue(':board_uid', GLOBAL_BOARD_UID);
+            $stmt->bindValue(':board_identifier', 'GLOBAL');
+            $stmt->bindValue(':board_title', 'GLOBAL');
+            $stmt->bindValue(':board_sub_title', 'Global board scope');
+            $stmt->bindValue(':config_name', '');
+            $stmt->bindValue(':storage_directory_name', '');
+            $stmt->bindValue(':listed', false);
+            $stmt->bindValue(':can_edit', false);
+            
+            return $stmt->execute(); // Return true if successful
+        }
 
-	public function getNextAutoIncrement($tableName) {
-		try {
-			// Prepare the query to fetch AUTO_INCREMENT value from information_schema
-			$query = "SELECT AUTO_INCREMENT 
-					  FROM information_schema.TABLES 
-					  WHERE TABLE_SCHEMA = :databaseName 
-					  AND TABLE_NAME = :tableName";
-	
-			$stmt = $this->db->prepare($query);
-			$stmt->execute([
-				':databaseName' => $this->databaseName,
-				':tableName' => $tableName,
-			]);
-	
-			// Fetch the result
-			$result = $stmt->fetch(PDO::FETCH_ASSOC);
-	
-			if ($result && isset($result['AUTO_INCREMENT'])) {
-				return (int)$result['AUTO_INCREMENT'];
-			}
-	
-			// Return null if AUTO_INCREMENT value is not found
-			return null;
-		} catch (PDOException $e) {
-			// Handle exceptions by logging or re-throwing
-			error_log("Error fetching AUTO_INCREMENT value: " . $e->getMessage());
-			return null;
-		}
-	}
+        // If the global board exists, return false or a message (optional)
+        return false; // Board already exists
+    }
+
+    // Method to add the first board to the system (example for initial setup)
+    public function addFirstBoard($board_identifier, $board_title, $board_sub_title, $config_name, $storage_directory_name) {
+        $query = "INSERT INTO {$this->boardTableName} 
+                    (board_identifier, board_title, board_sub_title, config_name, storage_directory_name) 
+                  VALUES 
+                    (:board_identifier, :board_title, :board_sub_title, :config_name, :storage_directory_name)";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':board_identifier', $board_identifier);
+        $stmt->bindParam(':board_title', $board_title);
+        $stmt->bindParam(':board_sub_title', $board_sub_title);
+        $stmt->bindParam(':config_name', $config_name);
+        $stmt->bindParam(':storage_directory_name', $storage_directory_name);
+        
+        return $stmt->execute(); // Return true if successful
+    }
+
+    // Method to fetch the last board UID (useful for inserting new boards)
+    public function getLastBoardUID() {
+        $query = "SELECT MAX(board_uid) AS max_uid FROM {$this->boardTableName}";
+        $stmt = $this->db->query($query);
+        $board_uid = $stmt->fetchColumn();
+        return $board_uid ?? 0;
+    }
+
+    // Method to get the next AUTO_INCREMENT value for a table
+    public function getNextAutoIncrement($tableName) {
+        try {
+            // Query to get the AUTO_INCREMENT value from information_schema
+            $query = "SELECT AUTO_INCREMENT 
+                      FROM information_schema.TABLES 
+                      WHERE TABLE_SCHEMA = :databaseName 
+                      AND TABLE_NAME = :tableName";
+    
+            $stmt = $this->db->prepare($query);
+            $stmt->execute([
+                ':databaseName' => $this->databaseName,
+                ':tableName' => $tableName,
+            ]);
+    
+            // Fetch the result
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            if ($result && isset($result['AUTO_INCREMENT'])) {
+                return (int)$result['AUTO_INCREMENT'];
+            }
+    
+            // Return null if AUTO_INCREMENT value is not found
+            return null;
+        } catch (PDOException $e) {
+            // Handle exceptions by logging or re-throwing
+            error_log("Error fetching AUTO_INCREMENT value: " . $e->getMessage());
+            return null;
+        }
+    }
 }
-
 
 // Main execution
 $dbSettings = require ROOTPATH . '/databaseSettings.php';
@@ -567,6 +613,8 @@ switch ($action) {
             $sanitizedTableNames = array_map('sanitizeTableName', $tables);
             $boardTable = new boardTable($pdoConnection, $sanitizedTableNames['BOARD_TABLE'], $dbSettings['DATABASE_NAME']);
             $accountTable = new accountTable($pdoConnection, $sanitizedTableNames['ACCOUNT_TABLE']);
+
+			$boardTable->createGlobalBoard(); // create global dummy board
 
             createBoardAndFiles($boardTable);
 
