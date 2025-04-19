@@ -1,8 +1,8 @@
 <?php
 //Handle GET mode values for koko
 class modeHandler {
-	private readonly array $config;
 	private readonly board $board;
+	private readonly array $config;
 	private readonly globalHTML $globalHTML;
 	private readonly overboard $overboard;
 	private readonly pageRenderer $pageRenderer;
@@ -13,15 +13,57 @@ class modeHandler {
 	private readonly AccountIO $AccountIO;
 	private readonly ActionLogger $actionLogger;
 	private readonly softErrorHandler $softErrorHandler;
+	private readonly adminLoginController $adminLoginController;
 	private readonly staffAccountFromSession $staffSession;
 	private readonly postValidator $postValidator;
 
 	private moduleEngine $moduleEngine;
 	private templateEngine $templateEngine;
 	private templateEngine $adminTemplateEngine;
-	
-	public function __construct(board $board) {
-		// Validate required directories before anything else
+
+	public function __construct(
+		board $board,
+		globalHTML $globalHTML,
+		moduleEngine $moduleEngine,
+		templateEngine $templateEngine,
+		templateEngine $adminTemplateEngine,
+		overboard $overboard,
+		pageRenderer $pageRenderer,
+		pageRenderer $adminPageRenderer,
+		softErrorHandler $softErrorHandler,
+		boardIO $boardIO,
+		mixed $FileIO,
+		mixed $PIO,
+		AccountIO $AccountIO,
+		ActionLogger $actionLogger,
+		adminLoginController $adminLoginController,
+		staffAccountFromSession $staffSession,
+		postValidator $postValidator
+	) {
+		$this->validateBoard($board);
+
+		$this->board = $board;
+		$this->config = $board->loadBoardConfig();
+
+		$this->globalHTML = $globalHTML;
+		$this->moduleEngine = $moduleEngine;
+		$this->templateEngine = $templateEngine;
+		$this->adminTemplateEngine = $adminTemplateEngine;
+		$this->overboard = $overboard;
+		$this->pageRenderer = $pageRenderer;
+		$this->adminPageRenderer = $adminPageRenderer;
+		$this->softErrorHandler = $softErrorHandler;
+		$this->boardIO = $boardIO;
+		$this->FileIO = $FileIO;
+		$this->PIO = $PIO;
+		$this->AccountIO = $AccountIO;
+		$this->actionLogger = $actionLogger;
+		$this->adminLoginController = $adminLoginController;
+		$this->staffSession = $staffSession;
+		$this->postValidator = $postValidator;
+	}
+
+	private function validateBoard(board $board): void {
 		if (!file_exists($board->getFullConfigPath())) {
 			die("Board's config file <i>" . $board->getFullConfigPath() . "</i> was not found.");
 		}
@@ -29,49 +71,6 @@ class modeHandler {
 		if (!file_exists($board->getBoardStoragePath())) {
 			die("Board's storage directory <i>" . $board->getBoardStoragePath() . "</i> does not exist.");
 		}
-
-		$this->board = $board;
-		$this->config = $board->loadBoardConfig();
-
-		// Global HTML helper
-		$this->globalHTML = new globalHTML($board);
-
-		// Module and Template Engines
-		$this->moduleEngine = new moduleEngine($board);
-		$this->templateEngine = $board->getBoardTemplateEngine();
-		$this->overboard = new overboard($this->config, $this->moduleEngine, $this->templateEngine);
-
-		// Admin Template Engine Setup
-		$adminTemplateFile = getBackendDir() . 'templates/admin.tpl';
-		$dependencies = [
-			'config'	=> $this->config,
-			'boardData'	=> [
-				'title'		=> $board->getBoardTitle(),
-				'subtitle'	=> $board->getBoardSubTitle()
-			]
-		];
-		$this->adminTemplateEngine = new templateEngine($adminTemplateFile, $dependencies);
-
-		// Page Renderers
-		$this->adminPageRenderer = new pageRenderer($this->adminTemplateEngine, $this->globalHTML);
-		$this->pageRenderer = new pageRenderer($this->templateEngine, $this->globalHTML);
-
-		// soft error page handler
-		$this->softErrorHandler = new softErrorHandler($board);
-
-		// account from session
-		$this->staffSession = new staffAccountFromSession;
-
-		// post + ip validator
-		$IPValidator = new IPValidator($this->config, new IPAddress);
-		$this->postValidator = new postValidator($this->board, $this->config, $this->globalHTML, $IPValidator);
-	
-		// File I/O and Logging
-		$this->boardIO = boardIO::getInstance();
-		$this->FileIO = PMCLibrary::getFileIOInstance();
-		$this->PIO = PIOPDO::getInstance();
-		$this->AccountIO = AccountIO::getInstance();
-		$this->actionLogger = ActionLogger::getInstance();
 	}
 
 
@@ -103,9 +102,9 @@ class modeHandler {
 					$this->board,
 					$this->config,
 					$this->globalHTML,
+					$this->adminLoginController,
 					$this->staffSession,
 					$this->moduleEngine,
-					$this->AccountIO
 				);
 				$route->drawAdminPage();
 			},
