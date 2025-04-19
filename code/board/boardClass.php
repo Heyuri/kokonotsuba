@@ -168,9 +168,9 @@ class board implements IBoard {
 	public function loadBoardConfig(): array {
 		$fullConfigPath = $this->getFullConfigPath();
 
-		if (!file_exists($fullConfigPath) || empty($fullConfigPath)) {
+		if (!file_exists($fullConfigPath) || is_dir($fullConfigPath)) {
 			return [];
-		}
+		}		
 
 		if (!empty($this->config)) {
 			return $this->config;
