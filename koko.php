@@ -111,6 +111,7 @@ $board = getBoardFromBootstrapFile();
 
 PMCLibrary::createFileIOInstance($board);
 PIOPDO::createInstance($dbSettings);
+threadSingleton::createInstance($dbSettings);
 boardPathCachingIO::createInstance($dbSettings);
 
 // ───────────────────────────────────────
@@ -149,6 +150,7 @@ $overboard			= new overboard($config, $moduleEngine, $templateEngine);
 $boardIO			= boardIO::getInstance();
 $FileIO				= PMCLibrary::getFileIOInstance();
 $PIO				= PIOPDO::getInstance();
+$threadSingleton	= threadSingleton::getInstance();
 $AccountIO			= AccountIO::getInstance();
 $actionLogger		= ActionLogger::getInstance();
 
@@ -174,7 +176,7 @@ $adminLoginController	= new adminLoginController(
 $staffSession		= new staffAccountFromSession;
 
 $IPValidator		= new IPValidator($config, new IPAddress);
-$postValidator		= new postValidator($board, $config, $globalHTML, $IPValidator);
+$postValidator		= new postValidator($board, $config, $globalHTML, $IPValidator, $threadSingleton);
 
 // ───────────────────────────────────────
 // Main Handler Execution
@@ -193,6 +195,7 @@ try {
 		$boardIO,
 		$FileIO,
 		$PIO,
+		$threadSingleton,
 		$AccountIO,
 		$actionLogger,
 		$adminLoginController,
