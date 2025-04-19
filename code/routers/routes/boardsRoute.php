@@ -2,6 +2,8 @@
 
 // boards route - display information on boards for admin
 
+use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
+
 class boardsRoute {
 	private readonly array $config;
 	private readonly staffAccountFromSession $staffSession;
@@ -62,7 +64,6 @@ class boardsRoute {
 			$boardSubtitle = $board->getBoardSubTitle() ?? '';
 			$boardURL = $board->getBoardURL() ?? '';
 			$boardListed = $board->getBoardListed() ?? '';
-			$boardCanEdit = $board->getBoardCanEdit() ?? '';
 			$boardConfig = $board->getConfigFileName() ?? '';
 			$boardStorageDirectoryName = $board->getBoardStorageDirName() ?? '';
 			$boardDate = $board->getDateAdded() ?? '';
@@ -80,7 +81,7 @@ class boardsRoute {
 			$template_values['{$EDIT_BOARD_HTML}'] = $this->adminTemplateEngine->ParseBlock('EDIT_BOARD', $template_values);
 			
 			// prevent showing editing a reserved board
-			if(!$boardCanEdit) {
+			if(!$boardUID === GLOBAL_BOARD_UID) {
 				$template_values['{$EDIT_BOARD_HTML}'] = "<p>This board cannot be edited.</p>"; 
 			}
 
