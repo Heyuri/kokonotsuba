@@ -22,7 +22,7 @@ function searchBoardArrayForBoard($boards, $targetBoardUID) {
 function createBoardStoredFilesFromArray($posts) {
 	$boardIO = boardIO::getInstance();
 
-	$boards = $boardIO->getAllBoards();
+	$boards = $boardIO->getAllRegularBoards();
 	$files = [];
 	foreach($posts as $post) {
 		$board = searchBoardArrayForBoard($boards, $post['boardUID']);

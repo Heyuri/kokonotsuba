@@ -6,7 +6,7 @@
 // rebuild all boards' html pages
 function rebuildAllBoards() {
     $boardIO = boardIO::getInstance();
-    $allBoards = $boardIO->getAllBoards();
+    $allBoards = $boardIO->getAllRegularBoards();
 
     // rebuild boards
     foreach($allBoards as $board) {

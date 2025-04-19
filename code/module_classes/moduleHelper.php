@@ -13,7 +13,6 @@ abstract class moduleHelper implements IModule {
 	protected pageRenderer $pageRenderer;
 	protected pageRenderer $adminPageRenderer;
 	protected array $moduleBoardList;
-	protected array $boardList;
 	private string $className;
 
 	public function __construct(
@@ -29,8 +28,7 @@ abstract class moduleHelper implements IModule {
 		$this->pageRenderer = $pageRenderer;
 		$this->adminPageRenderer = $adminPageRenderer;
 		$this->className = get_class($this);
-		$this->moduleBoardList = $boardIO->getAllBoards();
-		$this->boardList = $boardIO->getAllBoards();
+		$this->moduleBoardList = $boardIO->getAllRegularBoards();
 	
 		// Auto-register module page
 		if (method_exists($this, 'ModulePage')) {

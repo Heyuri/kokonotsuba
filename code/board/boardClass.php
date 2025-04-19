@@ -1,12 +1,21 @@
 <?php
 //board class to encapsulate data gotten directly from board table
 class board implements IBoard {
-	private $databaseConnection, $postNumberTable, $templateEngine;
-	private $config;
+	private $databaseConnection;
+	private $postNumberTable;
+	private $templateEngine;
+	private array $config = [];
 
-	public $board_uid, $board_identifier, $board_title, $board_sub_title;
-	public $config_name, $storage_directory_name, $date_added;
-	public $board_file_url, $listed, $can_edit;
+	public int $board_uid;
+	public string $board_identifier;
+	public string $board_title;
+	public string $board_sub_title;
+	public string $config_name;
+	public string $storage_directory_name;
+	public string $date_added;
+	public string $board_file_url;
+	public bool $listed = false;
+	public bool $can_edit = false;
 
 	// Getters
 	public function getBoardUID(): int {
@@ -14,15 +23,15 @@ class board implements IBoard {
 	}
 
 	public function getBoardTitle(): string {
-		return htmlspecialchars($this->board_title);
+		return htmlspecialchars($this->board_title ?? '');
 	}
 
 	public function getBoardSubTitle(): string {
-		return htmlspecialchars($this->board_sub_title);
+		return htmlspecialchars($this->board_sub_title ?? '');
 	}
 
 	public function getFullConfigPath(): string {
-		return getBoardConfigDir() . $this->config_name;
+		return getBoardConfigDir() . ($this->config_name ?? '');
 	}
 
 	public function getConfigFileName(): string {
@@ -75,11 +84,17 @@ class board implements IBoard {
 	}
 
 	public function getBoardCdnDir(): ?string {
+		if (!isset($this->config['CDN_DIR']) || !$this->board_identifier) {
+			return null;
+		}
 		return $this->config['CDN_DIR'] . $this->board_identifier . '/';
 	}
 
 	public function getBoardCdnUrl(): ?string {
-		return $this->config['CDN_URL'] . $this->getBoardUID() . '-' . $this->getBoardIdentifier() . '/';
+		if (!isset($this->config['CDN_URL']) || !$this->board_identifier) {
+			return null;
+		}
+		return $this->config['CDN_URL'] . $this->getBoardUID() . '-' . $this->board_identifier . '/';
 	}
 
 	public function getBoardLocalUploadDir(): ?string {
@@ -90,57 +105,54 @@ class board implements IBoard {
 	}
 
 	public function getBoardLocalUploadURL(): ?string {
+		if (!isset($this->config['WEBSITE_URL'])) {
+			return '';
+		}
 		return $this->config['WEBSITE_URL'] . $this->getBoardIdentifier() . '/';
 	}
 
 	public function getBoardUploadedFilesDirectory(): ?string {
-		return !empty($this->config['USE_CDN']) ?
-			$this->getBoardCdnDir() :
-			$this->getBoardLocalUploadDir();
+		return !empty($this->config['USE_CDN'])
+			? $this->getBoardCdnDir()
+			: $this->getBoardLocalUploadDir();
 	}
 
 	public function getBoardUploadedFilesURL(): ?string {
-		return !empty($this->config['USE_CDN']) ?
-			$this->getBoardCdnUrl() :
-			$this->getBoardLocalUploadURL();
+		return !empty($this->config['USE_CDN'])
+			? $this->getBoardCdnUrl()
+			: $this->getBoardLocalUploadURL();
 	}
 
 	public function getBoardURL(): ?string {
-		return $this->config['WEBSITE_URL'] . $this->getBoardIdentifier() . '/';
+		return isset($this->config['WEBSITE_URL'])
+			? $this->config['WEBSITE_URL'] . $this->getBoardIdentifier() . '/'
+			: '';
 	}
 
 	public function getBoardRootURL(): ?string {
-		return $this->config['WEBSITE_URL'];
+		return $this->config['WEBSITE_URL'] ?? '';
 	}
-	
+
 	private function __construct() {
 		$config = $this->loadBoardConfig();
-	
-		if (!is_array($config)) {
-			// Optionally log or mark the object as invalid
-			$this->config = false;
-			return;
-		}
-	
-		$this->config = $config;
-	
+		$this->config = is_array($config) ? $config : [];
+
 		$dbSettings = getDatabaseSettings();
 		$this->databaseConnection = DatabaseConnection::getInstance();
-		$this->postNumberTable = $dbSettings['POST_NUMBER_TABLE'];
-	
-		// Only continue if config is valid
+		$this->postNumberTable = $dbSettings['POST_NUMBER_TABLE'] ?? '';
+
+		// Template engine setup
 		if (
 			isset($this->config['REPLY_TEMPLATE_FILE']) &&
 			isset($this->config['TEMPLATE_FILE'])
 		) {
 			$isReply = $_GET['res'] ?? '';
-	
 			$templateFileName = $isReply
 				? $this->config['REPLY_TEMPLATE_FILE']
 				: $this->config['TEMPLATE_FILE'];
-	
+
 			$templateFile = getBackendDir() . 'templates/' . $templateFileName;
-	
+
 			$dependencies = [
 				'config'	=> $this->config,
 				'boardData'	=> [
@@ -148,44 +160,45 @@ class board implements IBoard {
 					'subtitle'	=> $this->getBoardSubTitle()
 				]
 			];
-	
+
 			$this->templateEngine = new templateEngine($templateFile, $dependencies);
 		}
-	}	
-
-	public function loadBoardConfig(): bool|array {
-		$fullConfigPath = $this->getFullConfigPath();
-
-		if(!file_exists($fullConfigPath) || empty($fullConfigPath)) return false;
-		if($this->config) return $this->config;
-
-		//only require when the config hasn't been set yet so it doesn't read from disk every time.
-		require $fullConfigPath;
-		$this->config = $config;
-
-		return $config; 
 	}
 
-	/* Rebuild board HTML or output page HTML to a live PHP page */ 
+	public function loadBoardConfig(): array {
+		$fullConfigPath = $this->getFullConfigPath();
+
+		if (!file_exists($fullConfigPath) || empty($fullConfigPath)) {
+			return [];
+		}
+
+		if (!empty($this->config)) {
+			return $this->config;
+		}
+
+		// Load config if not already loaded
+		require $fullConfigPath;
+		$this->config = $config ?? [];
+
+		return $this->config;
+	}
+
 	public function rebuildBoard(int $resno = 0, mixed $pagenum = -1, bool $single_page = false, int $last = -1, bool $logRebuild = false): void {
 		$boardRebuilder = new boardRebuilder($this, $this->templateEngine);
 		$boardRebuilder->rebuildBoardHtml($resno, $pagenum, $single_page, $last, $logRebuild);
 	}
 
-	/* Get the last post number */
-	public function getLastPostNoFromBoard() {
+	public function getLastPostNoFromBoard(): int {
 		$query = "SELECT COUNT(post_number) FROM {$this->postNumberTable} WHERE board_uid = :board_uid";
 		$params = [':board_uid' => $this->getBoardUID()];
-		
-		$result = $this->databaseConnection->fetchColumn($query, $params);
-		return $result;
-	}
-	
-	public function incrementBoardPostNumber() {
-		$query = "INSERT INTO {$this->postNumberTable} (board_uid) VALUES(:board_uid)";
-		$params = [':board_uid' => $this->getBoardUID()];
-		
-		$this->databaseConnection->execute($query, $params);	
+
+		return (int) $this->databaseConnection->fetchColumn($query, $params);
 	}
 
+	public function incrementBoardPostNumber(): void {
+		$query = "INSERT INTO {$this->postNumberTable} (board_uid) VALUES(:board_uid)";
+		$params = [':board_uid' => $this->getBoardUID()];
+
+		$this->databaseConnection->execute($query, $params);
+	}
 }

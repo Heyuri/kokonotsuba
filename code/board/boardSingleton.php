@@ -41,6 +41,12 @@ class boardIO {
 		$boards = $this->databaseConnection->fetchAllAsClass($query, [], 'board');
 		return $boards;
 	}
+
+	public function  getAllRegularBoards() {
+		$query = "SELECT * FROM {$this->tablename} WHERE can_edit = 1"; // don't bother getting reserved boards
+		$boards = $this->databaseConnection->fetchAllAsClass($query, [], 'board');
+		return $boards;
+	}
 	
 	public function getAllBoardUIDs() {
 		$query = "SELECT board_uid FROM {$this->tablename}";

@@ -533,7 +533,7 @@ class globalHTML {
 
 		$dat = '';
 		$boardsHTML = '';
-		$boards = $boardIO->getAllBoards();
+		$boards = $boardIO->getAllRegularBoards();
 		foreach ($boards as $board) {
 				$boardUID = $board->getBoardUID();
 				$boardIdentifier = $board->getBoardIdentifier();
