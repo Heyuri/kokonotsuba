@@ -286,13 +286,13 @@ class globalHTML {
 		return $listHTML;
 	}
 	
-	//for the actionlog filter form
+	//for the move_thread form
 	public function generateBoardListRadioHTML($currentBoard = null, $boards = null) {
 		$BoardIO = boardIO::getInstance();
 	
 		$listHTML = '';
 		
-		if(!$boards) $boards = $BoardIO->getAllBoards();
+		if(!$boards) $boards = $BoardIO->getAllRegularBoards();
 	
 		foreach($boards as $board) {
 			if($currentBoard && $board->getBoardUID() === $currentBoard->getBoardUID()) continue;
