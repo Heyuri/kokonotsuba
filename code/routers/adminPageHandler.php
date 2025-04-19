@@ -1,5 +1,9 @@
 <?php
+
 // Handle account sessions for koko
+
+use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
+
 class adminPageHandler {
 	private $config, $board, $moduleEngine;
 	
@@ -45,7 +49,7 @@ class adminPageHandler {
 			redirect($this->config['PHP_SELF'].'?mode=admin&admin=del');
 			exit;
 		}
-		$filtersBoards = (isset($_COOKIE['filterboard'])) ? json_decode($_COOKIE['filterboard'], true) : [$this->board->getBoardUID()];
+		$filtersBoards = (isset($_COOKIE['filterboard'])) ? json_decode($_COOKIE['filterboard'], true) : [$this->board->getBoardUID(), GLOBAL_BOARD_UID];
 		
 		//filter list for the database
 		$filters = [
@@ -243,7 +247,7 @@ class adminPageHandler {
 			exit;
 		}
 		
-		$filtersBoards = (isset($_COOKIE['filterboard'])) ? json_decode($_COOKIE['filterboard'], true) : [$this->board->getBoardUID()];
+		$filtersBoards = (isset($_COOKIE['filterboard'])) ? json_decode($_COOKIE['filterboard'], true) : [$this->board->getBoardUID(), GLOBAL_BOARD_UID];
 		$filtersRoles = (isset($_COOKIE['filterrole'])) ? json_decode($_COOKIE['filterrole'], true) : array_values($this->config['roles']); 
 		
 		//filter list for the database
