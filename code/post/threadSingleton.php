@@ -60,9 +60,13 @@ class threadSingleton {
 
 	public function getThreadByUID($thread_uid) {
 		$query = "SELECT * FROM {$this->threadTable} WHERE thread_uid = :thread_uid";
-		$params[':thread_uid'] = strval($thread_uid);
+		$params = [
+			':thread_uid' => (string) $thread_uid
+		];
+	
 		return $this->databaseConnection->fetchOne($query, $params);
 	}
+	
 
 	/**
  	* Fetch thread UIDs for a given board with optional sorting and pagination.
@@ -167,9 +171,6 @@ class threadSingleton {
 
 	/**
 	* Bump a discussion thread to the top.
-	*
-	* @param string $threadID     Thread UID
-	* @param bool   $future       If true, sets bump time slightly in the future (e.g., 5 seconds ahead)
 	*/
 	public function bumpThread(string $threadID, bool $sticky = false): void {
 		$posts = $this->fetchPostsFromThread($threadID);
@@ -435,4 +436,134 @@ class threadSingleton {
 		
 		return $this->databaseConnection->fetchAllAsArray($query);
 	}
+
+	public function copyThreadAndPosts($originalThreadUid, $destinationBoard) {
+		$this->beginTransaction();
+	
+		try {
+			$posts = $this->fetchPostsFromThread($originalThreadUid);
+			$this->validatePostsExist($posts, $originalThreadUid);
+	
+			$newThreadUid = generateUid();
+			$boardUID = $destinationBoard->getBoardUID();
+			$lastPostNo = $destinationBoard->getLastPostNoFromBoard();
+			$postNumberMapping = [];
+			$newPostsData = [];
+	
+			// Get new OP post number
+			$newOpPostNumber = $lastPostNo + 1;
+	
+			// Insert thread first (with NULL for post_op_post_uid for now)
+			$this->insertThreadRecord($newThreadUid, $newOpPostNumber, $boardUID);
+	
+			// Map post data and generate new post numbers
+			foreach ($posts as $post) {
+				$newPostNumber = ++$lastPostNo;
+				$postNumberMapping[$post['no']] = $newPostNumber;
+				$destinationBoard->incrementBoardPostNumber();
+	
+				$newPost = $this->mapPostData($post, $boardUID, $newPostNumber, $newThreadUid);
+				$newPostsData[] = $newPost;
+			}
+	
+			// Update quote references
+			foreach ($newPostsData as &$postData) {
+				$postData['com'] = $this->updateQuoteReferences($postData['com'], $postNumberMapping);
+			}
+	
+			// Insert posts and get OP post UID
+			$opPostUid = -1;
+			foreach ($newPostsData as $i => $postData) {
+				$columns = implode(', ', array_map(fn($k) => "`$k`", array_keys($postData)));
+				$placeholders = implode(', ', array_map(fn($k) => ":$k", array_keys($postData)));
+				$query = "INSERT INTO {$this->postTable} ($columns) VALUES ($placeholders)";
+				$this->databaseConnection->execute($query, array_combine(
+					array_map(fn($k) => ":$k", array_keys($postData)),
+					array_values($postData)
+				));
+	
+				if ($i === 0) {
+					$opPostUid = $this->databaseConnection->lastInsertId();
+				}
+			}
+	
+			// Update thread record with real OP post UID
+			$this->updateThreadOpPostUid($newThreadUid, $opPostUid);
+	
+			$this->commit();
+			return $newThreadUid;
+		} catch (Exception $e) {
+			$this->rollBack();
+			throw $e;
+		}
+	}
+	
+
+	private function validatePostsExist($posts, $originalThreadUid) {
+		if (empty($posts)) {
+			throw new Exception("No posts found for thread UID: $originalThreadUid");
+		}
+	}
+	
+	private function insertThreadRecord($threadUid, $postOpNumber, $boardUID) {
+		$query = "INSERT INTO {$this->threadTable} (
+			thread_uid, post_op_number, post_op_post_uid, boardUID
+		) VALUES (
+			:thread_uid, :post_op_number, -1, :boardUID
+		)";
+		$this->databaseConnection->execute($query, [
+			':thread_uid'		=> $threadUid,
+			':post_op_number'	=> $postOpNumber,
+			':boardUID'			=> $boardUID
+		]);
+	}
+	
+	private function updateThreadOpPostUid($threadUid, $postUid) {
+		$this->databaseConnection->execute(
+			"UPDATE {$this->threadTable}
+			 SET post_op_post_uid = :post_uid
+			 WHERE thread_uid = :thread_uid",
+			[
+				':post_uid'		=> $postUid,
+				':thread_uid'	=> $threadUid
+			]
+		);
+	}
+	
+	private function mapPostData($post, $boardUID, $newPostNumber, $newThreadUid) {
+		return [
+			'no'			=> $newPostNumber,
+			'boardUID'		=> $boardUID,
+			'thread_uid'	=> $newThreadUid,
+			'root'			=> $post['root'],
+			'time'			=> $post['time'],
+			'md5chksum'		=> $post['md5chksum'],
+			'category'		=> $post['category'],
+			'tim'			=> $post['tim'],
+			'fname'			=> $post['fname'],
+			'ext'			=> $post['ext'],
+			'imgw'			=> $post['imgw'],
+			'imgh'			=> $post['imgh'],
+			'imgsize'		=> $post['imgsize'],
+			'tw'			=> $post['tw'],
+			'th'			=> $post['th'],
+			'pwd'			=> $post['pwd'],
+			'now'			=> $post['now'],
+			'name'			=> $post['name'],
+			'email'			=> $post['email'],
+			'sub'			=> $post['sub'],
+			'com'			=> $post['com'],
+			'host'			=> $post['host'],
+			'status'		=> $post['status']
+		];
+	}
+	
+	private function updateQuoteReferences($comment, $postNumberMapping) {
+		return preg_replace_callback('/&gt;&gt;(\d+)/', function ($matches) use ($postNumberMapping) {
+			$oldQuote = $matches[1];
+			return isset($postNumberMapping[$oldQuote]) ? '&gt;&gt;' . $postNumberMapping[$oldQuote] : $matches[0];
+		}, $comment);
+	}
+	
+
 }
