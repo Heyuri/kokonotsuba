@@ -51,5 +51,24 @@ interface IBoard {
 	 */
 	public function rebuildBoard(int $resno = 0, mixed $pagenum = -1, bool $single_page = false, int $last = -1, bool $logRebuild = false): void;
 	
+	/**
+	 * Get the last post number of the board.
+	 *
+	 * @return int
+	 */
+	public function getLastPostNoFromBoard();
 	
+	/**
+	 * Get url template for a thread
+	 *
+	 * @return string
+	 */
+	public function getBoardThreadURL(int $threadNumber): string;
+
+	/**
+	 * Get uploaded files directory for a board
+	 *
+	 * @return string
+	 */
+	public function getBoardUploadedFilesDirectory(): ?string ;
 }
