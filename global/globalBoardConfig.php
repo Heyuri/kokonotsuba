@@ -170,6 +170,9 @@ $config['ModuleSettings']['MINIMUM_ROLE'] = $config['roles']['LEV_MODERATOR'];
 //mod_pushpost
 $config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'] = 250;
 
+//mod_movethread
+$config['ModuleSettings']['COPY_THREAD'] = true; // whether to copy the thread, lock the original and leave a mod post in it. Rather than redirecting to the new one when the old link is accessed 
+
 $config['BAD_STRING'] = array(); // Deprecated by spamdb
 $config['BAD_FILEMD5'] = array(); // Deprecated by spamdb
 $config['BANPATTERN'] = array(); // Deprecated by adminban module
@@ -294,5 +297,5 @@ $config['AuthLevels']['CAN_MANAGE_REBUILD'] = $config['roles']['LEV_MODERATOR'];
 $config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE'] = $config['roles']['LEV_ADMIN'];
 $config['AuthLevels']['CAN_EDIT_BLOTTER'] = $config['roles']['LEV_ADMIN'];
 
-
-$config['STAFF_LOGIN_TIMEOUT'] = 86400; // time since last action before logging out, measured in seconds. Note that it cannot be higher than your session.gc_maxlifetime
+// time since last action before logging out, measured in seconds. Note that it cannot be higher than your session.gc_maxlifetime
+$config['STAFF_LOGIN_TIMEOUT'] = 86400;
