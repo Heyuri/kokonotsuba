@@ -48,6 +48,8 @@
 	--color-bg-spoiler: #000000;
 	--color-bg-code: #ffffff;
 	--color-fg-code: #000000;
+	/* Administrator mode */
+  --color-bg-postblock: #ccffcc;
 	/* Windows */
 	--color-bg-window-item-highlight: var(--color-bg-reply-hl);
 }

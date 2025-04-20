@@ -394,7 +394,8 @@ caption h3 {
 }
 
 .menu,
-.postlists {
+.postlists,
+.postblock {
 	background-color: var(--color-bg-menu);
 	border-color: var(--color-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-lo-contrast-border);
 	border-style: solid;
@@ -1186,6 +1187,41 @@ caption h3 {
 	content: "]";
 }
 
+#adminPageContent {
+	text-align: center;
+}
+
+#adminPageContent form {
+	display: table;
+	margin: 0 auto;
+}
+
+#adminPageContent ul {
+	margin: 0 auto;
+	text-align: left;
+}
+
+#adminPageContent table {
+	text-align: left;
+}
+
+#adminPageContent table th {
+	text-align: center;
+}
+
+#adminPageContent .reply {
+	background-color: var(--color-bg-reply);
+}
+
+.postblock {
+	background-color: var(--color-bg-postblock);
+	border-width: 1px;
+}
+
+.postblock label {
+	font-weight: bold;
+}
+
 .formtable {
 	margin: 1em auto;
 }
@@ -1226,6 +1262,11 @@ caption h3 {
 }
 
 .username {
+	font-size: var(--font-size-small);
+}
+
+.formItemDescription {
+	max-width: 350px;
 	font-size: var(--font-size-small);
 }
 
