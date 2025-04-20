@@ -25,41 +25,162 @@ class mod_movethread extends moduleHelper {
 		}
 	}
 
-	private function copyThreadFilesFromHostToDestination($filesToCopy, $destinationBoard) {
-		$FileIO = PMCLibrary::getFileIOInstance();
-		$boardIO = boardIO::getInstance();
+	private function leavePostInShadowThread(array $originalThread, IBoard $originalBoard, array $newThread, IBoard $destinationBoard, bool $isAnon) {
+		$PIO = PIOPDO::getInstance();
+		$globalHTML = new globalHTML($originalBoard);
+		$staffSession = new staffAccountFromSession();
+		$tripcodeProcessor = new tripcodeProcessor($this->config, $globalHTML, $staffSession);
+		$postDateFormatter = new postDateFormatter($this->config);
+		
+		$time = $_SERVER['REQUEST_TIME'];
+		$now = $postDateFormatter->format($time);
 
-		$destinationBoardStoredFilesDir = $destinationBoard->getBoardUploadedFilesDirectory();
-		$destinationBoardConfig = $destinationBoard->loadBoardConfig();
+		// Generate new post number
+		$no = $originalBoard->getLastPostNoFromBoard() + 1;
 
-		$destinationBoardImgPath = $destinationBoardStoredFilesDir . $destinationBoardConfig['IMG_DIR'];
-		$destinationBoardThumbPath = $destinationBoardStoredFilesDir . $destinationBoardConfig['THUMB_DIR'];
+		// Determine name and capcode
+		$roleLevel = $staffSession->getRoleLevel();
+		$capcodeRole = $globalHTML->roleNumberToRoleName($roleLevel);
+		$username = $staffSession->getUsername();
 
-		foreach ($filesToCopy as $fileToCopy) {
-			$fileBoard = $boardIO->getBoardByUID($fileToCopy['boardUID']);
-			$fileBoardConfig = $fileBoard->loadBoardConfig();
+		$nameToInsert = "$username ## $capcodeRole";
 
-			$boardFullImgPath = $fileBoard->getBoardUploadedFilesDirectory() . $fileBoardConfig['IMG_DIR'];
-			$boardFullThumbPath = $fileBoard->getBoardUploadedFilesDirectory() . $fileBoardConfig['THUMB_DIR'];
-			$thumbName = $FileIO->resolveThumbName($fileToCopy['tim'], $fileBoard);
-
-			moveFileOnly($boardFullImgPath . $fileToCopy['tim'] . $fileToCopy['ext'], $destinationBoardImgPath);
-			moveFileOnly($boardFullThumbPath . $thumbName, $destinationBoardThumbPath);
+		// Anonymize staff as an anonymous moderator
+		if ($isAnon) {
+			$username = $originalBoard->loadBoardConfig()['DEFAULT_NONAME'];
+			$modCapcodeRole = $globalHTML->roleNumberToRoleName($this->config['roles']['LEV_MODERATOR']);
+			$nameToInsert = "$username ## $modCapcodeRole";
 		}
+
+		// Generate link to the new thread
+		$newThreadUrl = $destinationBoard->getBoardThreadURL($newThread['post_op_number']);
+		$moveComment = 'Thread moved to <a href="' . $newThreadUrl . '">here</a>.';
+
+		// Prepare post metadata
+		$email = '';
+		$dest = '';
+		$ip = new IPAddress();
+
+		// Apply tripcode/capcode
+		$tripcodeProcessor->apply($nameToInsert, $email, $dest);
+
+		// Get original thread UID
+		$originalThreadUid = $originalThread['thread_uid'];
+
+		// Add shadow post
+		$PIO->addPost(
+			$originalBoard,
+			$no,
+			$originalThreadUid,
+			'', '', 0, '', '',
+			0, 0, 0, 0, 0, 0, $now,
+			$nameToInsert,
+			'', '', $moveComment,
+			$ip,
+			false,
+			$now,
+		);
 	}
 
-	private function handleThreadMove($thread, $hostBoard, $destinationBoard) {
-		$threadSingleton = PIOPDO::getInstance();
+
+	public function copyThreadToBoard(string $originalThreadUid, IBoard $destinationBoard): string {
+		$threadSingleton = threadSingleton::getInstance();
+		// Step 1: Get attachments
+		$filesToCopy = $threadSingleton->getAllAttachmentsFromThread($originalThreadUid);
+	
+		// Step 2: Copy the thread data
+		$newThreadUid = $threadSingleton->copyThreadAndPosts($originalThreadUid, $destinationBoard);
+	
+		// Step 3: Copy attachments
+		$this->copyThreadAttachmentsToBoard($filesToCopy, $destinationBoard, true);
+		
+		return $newThreadUid;
+	}
+	
+	private function copyThreadAttachmentsToBoard(array $attachments, IBoard $destinationBoard, bool $isCopy = false): void {
+		if (empty($attachments)) return;
+	
+		$boardIO = boardIO::getInstance();
+		$FileIO = PMCLibrary::getFileIOInstance();
+	
+		// Destination board paths and config
+		$destBasePath = $destinationBoard->getBoardUploadedFilesDirectory();
+		$destConfig = $destinationBoard->loadBoardConfig();
+	
+		$destImgPath = $destBasePath . $destConfig['IMG_DIR'];
+		$destThumbPath = $destBasePath . $destConfig['THUMB_DIR'];
+	
+		// All attachments are from the same source board
+		$srcBoardUID = $attachments[0]['boardUID'];
+		$srcBoard = $boardIO->getBoardByUID($srcBoardUID);
+		$srcConfig = $srcBoard->loadBoardConfig();
+	
+		$srcBasePath = $srcBoard->getBoardUploadedFilesDirectory();
+		$srcImgPath = $srcBasePath . $srcConfig['IMG_DIR'];
+		$srcThumbPath = $srcBasePath . $srcConfig['THUMB_DIR'];
+	
+		foreach ($attachments as $file) {
+			$imageFilename = $file['tim'] . $file['ext'];
+			$thumbFilename = $FileIO->resolveThumbName($file['tim'], $srcBoard);
+	
+			$srcImage = $srcImgPath . $imageFilename;
+			$destImage = $destImgPath . $imageFilename;
+	
+			$srcThumb = $srcThumbPath . $thumbFilename;
+			$destThumb = $destThumbPath . $thumbFilename;
+	
+			if ($isCopy) {
+				copy($srcImage, $destImage);
+				copy($srcThumb, $destThumb);
+			} else {
+				moveFileOnly($srcImage, $destImgPath);
+				moveFileOnly($srcThumb, $destThumbPath);
+			}
+		}
+	}	
+
+	private function handleThreadMove($thread, $hostBoard, $destinationBoard, $copyThread = true, $isAnon = false) {
+		$threadSingleton = threadSingleton::getInstance();
 		$postRedirectIO = postRedirectIO::getInstance();
 
-		$thread_uid = $thread['thread_uid'];
-		$filesToCopy = $threadSingleton->getAllAttachmentsFromThread($thread_uid);
+		// redirect for url
+		$threadRedirectUrl = '';
 
-		$postRedirectIO->addNewRedirect($hostBoard->getBoardUID(), $destinationBoard->getBoardUID(), $thread_uid);
-		$this->copyThreadFilesFromHostToDestination($filesToCopy, $destinationBoard);
-		$threadSingleton->moveThreadAndUpdate($thread_uid, $hostBoard, $destinationBoard);
-		$threadSingleton->bumpThread($thread_uid);
+		$threadUid = $thread['thread_uid'];
+
+		// use thread redirection
+		if($copyThread) { 
+			// lock original thread and duplicate contents to destination board
+			$newThreadUid = $this->copyThreadToBoard($threadUid, $destinationBoard);
+
+			$newThread = $threadSingleton->getThreadByUID($newThreadUid);
+
+			// leave shadow post
+			$this->leavePostInShadowThread($thread, $hostBoard, $newThread, $destinationBoard, $isAnon);
+			lockThread($thread);
+			
+			$threadRedirectUrl = $destinationBoard->getBoardThreadURL($newThread['post_op_number']); 
+		} else {
+			$attachments = $threadSingleton->getAllAttachmentsFromThread($threadUid);
+
+			$postRedirectIO->addNewRedirect($hostBoard->getBoardUID(), $destinationBoard->getBoardUID(), $threadUid);
+			$this->copyThreadAttachmentsToBoard($attachments, $destinationBoard);
+			$threadSingleton->moveThreadAndUpdate($threadUid, $hostBoard, $destinationBoard);
+			
+			$threadRedirectUrl = $postRedirectIO->resolveRedirectedThreadLinkFromThreadUID($threadUid);
+		}
+
+		// rebuild the boards' html
+		$boardsToRebuild = [
+			$hostBoard->getBoardUID(),
+			$destinationBoard->getBoardUID()
+		];
+		rebuildBoardsByUIDs($boardsToRebuild);
+
+		// return redirect
+		return $threadRedirectUrl;
 	}
+
 
 	public function ModulePage() {
 		$threadSingleton = threadSingleton::getInstance();
@@ -75,6 +196,7 @@ class mod_movethread extends moduleHelper {
 		if (!empty($_POST['move-thread-submit'])) {
 			$thread_uid = $_POST['move-thread-uid'] ?? null;
 			$destinationBoardUID = $_POST['radio-board-selection'] ?? null;
+			$isAnon = $_POST['isAnon'] ?? false;
 
 			if (!$thread_uid) $globalHTML->error("Invalid thread_uid from request");
 			if (!$destinationBoardUID) $globalHTML->error("Invalid board uid from request");
@@ -83,12 +205,12 @@ class mod_movethread extends moduleHelper {
 			$hostBoard = $boardIO->getBoardByUID($thread['boardUID']);
 			$destinationBoard = $boardIO->getBoardByUID($destinationBoardUID);
 
-			$this->handleThreadMove($thread, $hostBoard, $destinationBoard);
+			$copyThread = $hostBoard->loadBoardConfig()['ModuleSettings']['COPY_THREAD'];
+			$redirectURL = $this->handleThreadMove($thread, $hostBoard, $destinationBoard, $copyThread, $isAnon);
 
 			$destinationBoardTitle = htmlspecialchars($destinationBoard->getBoardTitle());
 			$actionLogger->logAction("Moved thread {$thread['post_op_number']} to board $destinationBoardTitle", $this->board->getBoardUID());
 
-			$redirectURL = $postRedirectIO->resolveRedirectedThreadLinkFromThreadUID($thread_uid);
 			redirect($redirectURL);
 		} else {
 
@@ -103,9 +225,11 @@ class mod_movethread extends moduleHelper {
 		$threadSingleton = threadSingleton::getInstance();
 		$boardIO = boardIO::getInstance();
 
-		$thread_uid = $_GET['thread_uid'] ?? null;
-		if (!$thread_uid) (new globalHTML($this->board))->error("No thread uid selected");
+		$thread_uid = $_GET['thread_uid'] ?? '';
 
+		if (!$thread_uid) {
+			$globalHTML->error("No thread uid selected");
+		}
 		$thread = $threadSingleton->getThreadByUID($thread_uid);
 		$threadNumber = $threadSingleton->resolveThreadNumberFromUID($thread_uid);
 		$threadParentBoard = $boardIO->getBoardByUID($thread['boardUID']);
