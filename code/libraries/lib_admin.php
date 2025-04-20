@@ -11,3 +11,17 @@ function getCurrentStorageSizeFromSelectedBoards(array $boards) {
 	return $totalBoardsStorageSize;
 }
 
+/* So threads can be locked without repeating the same code */
+function lockThread(array $thread): void {
+	// get singleton instances
+	$PIO = PIOPDO::getInstance();
+	$threadSingleton = threadSingleton::getInstance();
+
+	// get OP
+	$opPost = $threadSingleton->fetchPostsFromThread($thread['thread_uid'])[0];
+
+	// lock
+	$flags = new FlagHelper($opPost['status']);
+	$flags->toggle('stop');
+	$PIO->setPostStatus($opPost['post_uid'], $flags->toString());	
+}
