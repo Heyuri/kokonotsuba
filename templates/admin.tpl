@@ -1,6 +1,9 @@
 
 <!--&GLOBAL_ADMIN_PAGE_CONTENT-->
-	{$PAGE_CONTENT}
+	<div id="adminPageContent">
+		{$PAGE_CONTENT}
+	</div>
+	<hr>
 <!--/&GLOBAL_ADMIN_PAGE_CONTENT-->
 
 
@@ -12,8 +15,8 @@
 <!--/&ACCOUNT_PAGE-->
 
 <!--&VIEW_ACCOUNT-->
-	<h3>Your account</h3>
-	<form id="account-modify-form" action="{$PHP_SELF}?mode=handleAccountAction" method="POST">
+<form id="account-modify-form" action="{$PHP_SELF}?mode=handleAccountAction" method="POST">
+		<h3>Your account</h3>
 		<input type="hidden" name="password_reset_form" value="1">
 		<input  type="hidden" name="id" value="{$ACCOUNT_ID}">
 		<table  id="account-view-table">
@@ -32,7 +35,7 @@
 				</tr>
 				<tr>
 					<td class="postblock"><label for="reset-password-inital">New password</label></td>
-					<td><input type="password" name="new_account_password" id="reset-password-inital"></td>
+					<td><input type="password" class="inputtext" name="new_account_password" id="reset-password-inital"></td>
 				</tr>
 			</tbody>
 		</table>
@@ -41,42 +44,41 @@
 <!--/&VIEW_ACCOUNT-->
 
 <!--&CREATE_ACCOUNT-->
-	<h3>Create a new staff account</h3>
-		<form action="{$PHP_SELF}?mode=handleAccountAction" method="POST">
-			<table id="account-create-table">
-				<tbody>
-					<tr>
-						<td class="postblock"><label for="usrname">Account username:</label></td>
-						<td><input required maxlength="50" id="usrname" name="usrname"></td>
-					</tr>
-					<tr>
-						<td class="postblock"><label for="passwd">Account password:</label></td>
-						<td><input type="password" id="passwd" name="passwd" required maxlength="1000"></td>
-					</tr>
-					<tr>
-						<td class="postblock"><label for="hashed">Already hashed?</label></td>
-						<td><input type="checkbox" id="hashed" name="ishashed"></td>
-					</tr>
-					<tr>
-						<td class="postblock"><label for="role">Role</label></td>
-						<td>
-							<select id="role" name="role" required>
-								<option value="" disabled checked>Select a role</option>
-								<option value="{$USER}">User</option>
-								<option value="{$JANITOR}">Janitor</option>
-								<option value="{$MODERATOR}">Moderator</option>
-								<option value="{$ADMIN}">Admin</option>
-							</select>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-			<input id="accountcreateformsubmit" type="submit" value="Create account">
-		</form>
+	<form action="{$PHP_SELF}?mode=handleAccountAction" method="POST">
+		<h3>Create a new staff account</h3>
+		<table id="account-create-table">
+			<tbody>
+				<tr>
+					<td class="postblock"><label for="usrname">Account username:</label></td>
+					<td><input required maxlength="50" class="inputtext" id="usrname" name="usrname"></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="passwd">Account password:</label></td>
+					<td><input type="password" class="inputtext" id="passwd" name="passwd" required maxlength="1000"></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="hashed">Already hashed?</label></td>
+					<td><input type="checkbox" id="hashed" name="ishashed"></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="role">Role</label></td>
+					<td>
+						<select id="role" name="role" required>
+							<option value="" disabled checked>Select a role</option>
+							<option value="{$USER}">User</option>
+							<option value="{$JANITOR}">Janitor</option>
+							<option value="{$MODERATOR}">Moderator</option>
+							<option value="{$ADMIN}">Admin</option>
+						</select>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<input id="accountcreateformsubmit" type="submit" value="Create account">
+	</form>
 <!--/&CREATE_ACCOUNT-->
 
 <!--&BOARD_PAGE-->
-	<h3>Create a new board</h3>
 	{$CREATE_BOARD}
 	<h3>Existing boards</h3>
 	{$BOARD_LIST}
@@ -84,36 +86,49 @@
 
 <!--&CREATE_BOARD-->
 		<form action="{$PHP_SELF}?mode=handleBoardRequests" method="POST">
+			<h3>Create a new board</h3>
 			<input type="hidden" name="new-board" value="1">
 			<table id="board-create-table">
 				<tbody>
 					<tr>
 						<td class="postblock"><label for="new-board-title">Title</label></td>
-						<td><input required  id="new-board-title" name="new-board-title"></td> <td>Title of the board.</td>
+						<td>
+							<input required class="inputtext" id="new-board-title" name="new-board-title">
+							<div class="formItemDescription">Title of the board.</div>
+						</td>
 					</tr>
 					<tr>
 						<td class="postblock"><label for="new-board-sub-title">Sub-title</label></td>
-						<td><input  id="new-board-sub-title" name="new-board-sub-title"></td> <td>Smaller text beneath the board title on the page, typically providing a description of the board</td>
+						<td>
+							<input class="inputtext" id="new-board-sub-title" name="new-board-sub-title">
+							<div class="formItemDescription">Smaller text beneath the board title on the page, typically providing a description of the board.</div>
+						</td>
 					</tr>
 					<tr>
 						<td class="postblock"><label for="new-board-identifier">Identifier</label></td>
-						<td><input id="new-board-identifier" name="new-board-identifier" placeholder="b"></td> <td>The string that represents the board in the URL and file storage. e.g the 'b' in "/b/" or "boards.example.net/b/"</td>
+						<td>
+							<input class="inputtext" id="new-board-identifier" name="new-board-identifier" placeholder="b">
+							<div class="formItemDescription">The string that represents the board in the URL and file storage. E.g. the 'b' in "/b/" or "boards.example.net/b/"</div>
+						</td>
 					</tr>
 					<tr>
 						<td class="postblock"><label for="new-board-path">Absolute directory</label></td>
-						<td><input id="new-board-path" name="new-board-path" required class="url-input" placeholder="/var/www/html/boards/" value="{$DEFAULT_PATH}"></td> <td>The directory where the board will be created at. Excluding it's identifier. e.g '/var/www/boards/' not '/var/www/boards/b/'</td>
+						<td>
+							<input class="inputtext" id="new-board-path" name="new-board-path" required class="url-input" placeholder="/var/www/html/boards/" value="{$DEFAULT_PATH}">
+							<div class="formItemDescription">The directory where the board will be created at. Excluding its identifier. E.g. '/var/www/boards/' not '/var/www/boards/b/'</div>
+						</td>
 					</tr>
 					<tr>
 						<td class="postblock"><label for="new-board-listed">Listed</label></td> 
 						<td><input type="checkbox" id="new-board-listed" name="new-board-listed" checked></td>
 					</tr>
-						<tr>
-							<td class="postblock"><label for="board-form-submit"></label></td><td><input id="board-form-submit" type="submit" value="Create board"></td>
-						</tr>
-					</tbody>
-				</table>
+				</tbody>
+			</table>
+
+			<div><input id="board-form-submit" type="submit" value="Create board"></div>
 		</form>
-		<p> After creating a new board, be sure to configure it at its configuration file</p>
+
+		<p>After creating a new board, be sure to configure it at its configuration file</p>
 <!--/&CREATE_BOARD-->
 
 <!--&EDIT_BOARD-->
@@ -166,8 +181,8 @@
 <!--&VIEW_BOARD-->
 	[<a id="board-back-button" href="{$PHP_SELF}?mode=boards">Back to board list</a>]
 	<h2>Board</h2>
-		<table  id="board-view-table">
-			<tbody>
+	<table  id="board-view-table">
+		<tbody>
 			<tr>
 				<td class="postblock"><label for="board-uid">UID</label></td>
 				<td><div id="board-uid">{$BOARD_UID}</div></td>
@@ -211,10 +226,12 @@
 <!--/&VIEW_BOARD-->
 
 <!--&ADMIN_REBUILD_PAGE-->
-	<h3>Rebuild boards</h3>
 	<form action="{$MODULE_URL}" method="POST">
+		<h3>Rebuild boards</h3>
 		{$REBUILD_CHECK_LIST}
-		<button name="formSubmit" value="save">Submit</button>
+		<p>
+			<button name="formSubmit" value="save">Submit</button>
+		</p>
 	</form>
 <!--/&ADMIN_REBUILD_PAGE-->
 
@@ -223,19 +240,19 @@
 
 
 <!--&GLOBALMSG_PAGE-->
-	<h3>Edit global message</h3>
 	<form action="{$MODULE_URL}&action=setmessage" method="post">
-		<table cellpadding="1" cellspacing="1" id="postform_tbl" style="margin: 0px auto; text-align: left;">
+		<h3>Edit global message</h3>
+		<table id="postform_tbl">
 			<tbody>
 				<tr>
 					<td class="postblock" style="min-width:9em"><label for="inputGlobalMessage">Global message<div>(raw HTML)</div></label></td>
-					<td style="width:100%"><textarea name="content" id="inputGlobalMessage">{$CURRENT_GLOBAL_MESSAGE}</textarea></td>
+					<td style="width:100%"><textarea class="inputtext" id="inputGlobalMessage" name="content">{$CURRENT_GLOBAL_MESSAGE}</textarea></td>
 				</tr>
 			</tbody>
 		</table>
-		<div class="centerText">
+		<p>
 			<input type="submit" name="submit" value="Submit">
-		</div>
+		</p>
 	</form>
 		
 	<h3>Current global message</h3>
@@ -245,7 +262,6 @@
 			{$CURRENT_GLOBAL_MESSAGE}
 		</div>
 	</div>
-	<hr>
 <!--/&GLOBALMSG_PAGE-->
 
 <!--&BLOTTER_ADMIN_PAGE_TABLE_BLOCK-->
@@ -257,8 +273,8 @@
 <!--/&BLOTTER_ADMIN_PAGE_TABLE_BLOCK-->
 
 <!--&BLOTTER_ADMIN_PAGE-->
-	<h3>Manage blotter</h3>
 	<form action="{$MODULE_URL}" method='post'>
+		<h3>Add new blotter entry</h3>
 		<table class="formtable centerBlock">
 			<tbody>
 				<tr>
@@ -267,13 +283,13 @@
 				</tr>
 			</tbody>
 		</table>
-		<div class="centerText">
+		<div>
 			<input type='submit' name='submit' value='Submit'>
 		</div>
 	</form>
-	<hr>
 
 	<form id="blotterdeletionform" action="{$MODULE_URL}" method="POST">
+		<h3>Blotter entries</h3>
 		<table class="postlists" id="blotterlist">
 			<thead>
 				<tr>
@@ -286,9 +302,10 @@
 				<!--&FOREACH($ROWS,'BLOTTER_ADMIN_PAGE_TABLE_BLOCK')-->
 			</tbody>
 		</table>
-			<div class="centerText">
-				<input value="Submit" name="delete_submit" type="submit">
-			</div>
+		<div>
+			<input value="Submit" name="delete_submit" type="submit">
+		</div>
+	</form>
 <!--/&BLOTTER_ADMIN_PAGE-->
 
 <!--&BLOTTER_PREVIEW_ITEM-->
@@ -330,9 +347,8 @@
 <!--/&BLOTTER_PAGE-->
 
 <!--&ADMIN_BAN_FORM-->
-	<h3>Add a ban</h3>
-	
 	<form method="POST" action="{$MODULE_URL}">
+		<h3>Add a ban</h3>
 		<table id="banForm">
 			<tbody>
 				<input type="hidden" name="adminban-action" value="add-ban">
@@ -343,19 +359,22 @@
 				</tr>
 				<tr>
 					<td class="postblock"><label for="ip">IP address</label></td>
-					<td><input type="text" id="ip" name="ip" placeholder="Enter IP address" value="{$IP}" required></td>
+					<td><input type="text" class="inputtext" id="ip" name="ip" placeholder="Enter IP address" value="{$IP}" required></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="duration">Ban duration</label></td>
-					<td><input type="text" id="duration" name="duration" value="1d" placeholder="e.g., 1d, 2h" required> <small>Examples: 1w = 1 week, 2d = 2 days, 3h = 3 hours</small></td>
+					<td>
+						<input type="text" class="inputtext" id="duration" name="duration" value="1d" placeholder="e.g., 1d, 2h" required>
+						<div class="formItemDescription">Examples: 1w = 1 week, 2d = 2 days, 3h = 3 hours</div>
+					</td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="reason">Reason for ban</label></td>
-					<td><textarea id="reason" name="privmsg" rows="4" cols="50" placeholder="Enter reason for the ban"></textarea></td>
+					<td><textarea class="inputtext" id="reason" name="privmsg" rows="4" cols="50" placeholder="Enter reason for the ban"></textarea></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="banmsg">Public ban message</label></td>
-					<td><textarea id="banmsg" name="banmsg" rows="4" cols="50">{$DEFAULT_BAN_MESSAGE}</textarea></td>
+					<td><textarea class="inputtext" id="banmsg" name="banmsg" rows="4" cols="50">{$DEFAULT_BAN_MESSAGE}</textarea></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="global">Global ban</label></td>
@@ -367,10 +386,12 @@
 				</tr>
 			</tbody>
 		</table>
+
 		<div id="bigredbuttonContainer">
 			<input id="bigredbutton" type="submit" value="BAN!">
 		</div>
 	</form>
+
 	<script>
 var trolls = Array(
 	"Hatsune Miku is nothing more than an overated normie whore.",
@@ -394,7 +415,7 @@ function updatepview(event=null) {
 
 window.onload = function () {
 	var msg = document.getElementById("banmsg");
-	msg.insertAdjacentHTML("afterend", '<br>Preview:<br><table><tbody><tr><td class="reply"><div id="msgpview" class="comment"></div></td></tr></tbody></table>');
+	msg.insertAdjacentHTML("afterend", '<div>Preview:</div><div class="thread"><div class="post reply"><div class="comment" id="msgpview"></div></div></div>');
 	msg.oninput = updatepview;
 	updatepview();
 }
@@ -412,11 +433,11 @@ window.onload = function () {
 <!--/&ADMIN_BAN_ROW-->
 
 <!--&ADMIN_BAN_TABLE-->
-	<h4>{$TITLE}</h4>
 	<form method="POST" action="{$MODULE_URL}">
+		<h3>{$TITLE}</h3>
 		<input type="hidden" name="adminban-action" value="delete-ban">
 		<div id="banTableContainer">
-			<table class="postlists" id="banTable">
+			<table class="postlists banTable" id="{$TABLE_ID}">
 				<thead>
 					<tr>
 						<th>Remove</th>
@@ -439,7 +460,6 @@ window.onload = function () {
 
 <!--&ADMIN_BAN_MANAGEMENT_PAGE-->
 	<!--&ADMIN_BAN_FORM/-->
-	<h3>Active bans</h3>
 	<!--&FOREACH($TABLES,'ADMIN_BAN_TABLE')-->
 <!--/&ADMIN_BAN_MANAGEMENT_PAGE-->
 

@@ -1114,6 +1114,32 @@ caption h3 {
 	content: "]";
 }
 
+#adminPageContent {
+	text-align: center;
+}
+
+#adminPageContent form {
+	display: table;
+	margin: 0 auto;
+}
+
+#adminPageContent ul {
+	margin: 0 auto;
+	text-align: left;
+}
+
+#adminPageContent table {
+	text-align: left;
+}
+
+#adminPageContent table th {
+	text-align: center;
+}
+
+#adminPageContent .reply {
+	background-color: var(--color-bg-reply);
+}
+
 .formtable {
 	margin: 1em auto;
 }
@@ -1154,6 +1180,11 @@ caption h3 {
 }
 
 .username {
+	font-size: var(--font-size-small);
+}
+
+.formItemDescription {
+	max-width: 350px;
 	font-size: var(--font-size-small);
 }
 
