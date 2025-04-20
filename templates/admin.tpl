@@ -514,6 +514,15 @@ window.onload = function () {
 				<td>{$BOARD_RADIO_HTML}</td>
 			</tr>
 			<tr>
+				<td class="postblock"><label for="move-thread-is-anon">Option</label></td>
+				<td>
+					<label id="move-thread-is-anon">
+						<span title="Leave shadow reply anonymously">Reply anon</span>
+						<input type="checkbox" name="isAnon" checked value="1">
+					</label>
+				</td>
+			</tr>
+			<tr>
 				<td class="postblock"></td>
 				<td><button type="submit" name="move-thread-submit" value="move it!">Move thread</button></td>
 			</tr>
