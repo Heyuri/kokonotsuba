@@ -1,14 +1,11 @@
 <?php
 
 class postRedirectIO {
-	private $boardTable, $threadTable, $redirectsTable; // Table name
+	private $threadTable, $redirectsTable; // Table name
 	private $db; // Database connection
 	private static $instance;
 
 	public function __construct($dbSettings){
-		$boardIO = boardIO::getInstance();
-		
-		$this->boardTable = $dbSettings['BOARD_TABLE']; 
 		$this->threadTable = $dbSettings['THREAD_TABLE'];
 		$this->redirectsTable = $dbSettings['THREAD_REDIRECT_TABLE'];
 		
@@ -80,7 +77,7 @@ class postRedirectIO {
     }
 
     public function resolveRedirectedThreadLinkFromPostOpNumber($board, $resno) {
-        $PIO = PIOPDO::getInstance();
+        $threadSingleton = threadSingleton::getInstance();
         $boardIO = boardIO::getInstance();
         
         $query = "SELECT * FROM {$this->redirectsTable} WHERE original_board_uid = :board_uid AND post_op_number = :resno";
@@ -96,7 +93,7 @@ class postRedirectIO {
         $newBoardURL = $newBoardFromRedirect->getBoardURL();
 
         $thread_uid = $redirect->getThreadUID();
-        $redirectThread = $thread = $PIO->getThreadByUID($thread_uid);
+        $redirectThread = $threadSingleton->getThreadByUID($thread_uid);
 
         $redirectNumber = $redirectThread['post_op_number'];
 
