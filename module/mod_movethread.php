@@ -20,8 +20,14 @@ class mod_movethread extends moduleHelper {
 		$staffSession = new staffAccountFromSession;
 		if ($staffSession->getRoleLevel() < $this->config['roles']['LEV_MODERATOR']) return;
 
+		// if it's a thread, apply admin hook list html
 		if (!$isres) {
-			$modfunc .= '<span class="adminMoveThreadFunction">[<a href="' . $this->mypage . '&thread_uid=' . $post['thread_uid'] . '" title="move thread">MT</a>]</span>';
+			$threadStatus = new FlagHelper($post['status']); 
+			if($threadStatus->value('ghost')) {
+				$modfunc .= '<span class="adminMoveThreadFunction" title="Ghost threads cannot be moved.">[mt]</span>';
+			} else {
+				$modfunc .= '<span class="adminMoveThreadFunction">[<a href="' . $this->mypage . '&thread_uid=' . $post['thread_uid'] . '" title="move thread">MT</a>]</span>';
+			}
 		}
 	}
 
@@ -157,8 +163,12 @@ class mod_movethread extends moduleHelper {
 
 			// leave shadow post
 			$this->leavePostInShadowThread($thread, $hostBoard, $newThread, $destinationBoard, $isAnon);
-			lockThread($thread);
 			
+			// lock thread
+			toggleThreadStatus('stop', $thread);
+			// make unmoveable
+			toggleThreadStatus('ghost', $thread);
+
 			$threadRedirectUrl = $destinationBoard->getBoardThreadURL($newThread['post_op_number']); 
 		} else {
 			$attachments = $threadSingleton->getAllAttachmentsFromThread($threadUid);
@@ -185,40 +195,76 @@ class mod_movethread extends moduleHelper {
 	public function ModulePage() {
 		$threadSingleton = threadSingleton::getInstance();
 		$actionLogger = ActionLogger::getInstance();
-		$postRedirectIO = postRedirectIO::getInstance();
 		$boardIO = boardIO::getInstance();
-
+	
 		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
-
+	
+		// Check user has proper permissions
 		$softErrorHandler->handleAuthError($this->config['roles']['LEV_MODERATOR']);
-
+	
+		// If form was submitted to move a thread
 		if (!empty($_POST['move-thread-submit'])) {
 			$thread_uid = $_POST['move-thread-uid'] ?? null;
 			$destinationBoardUID = $_POST['radio-board-selection'] ?? null;
-			$isAnon = $_POST['is-anon'] ?? false;
-			$leaveShadowThread = $_POST['leave-shadow-thread'] ?? false;
-
-			if (!$thread_uid) $globalHTML->error("Invalid thread_uid from request");
-			if (!$destinationBoardUID) $globalHTML->error("Invalid board uid from request");
-
+			$isAnon = !empty($_POST['is-anon']);
+			$leaveShadowThread = !empty($_POST['leave-shadow-thread']);
+	
+			// Validate inputs
+			if (!$thread_uid) {
+				$globalHTML->error("Invalid thread_uid from request");
+			}
+			if (!$destinationBoardUID) {
+				$globalHTML->error("Invalid board uid from request");
+			}
+	
+			// Retrieve thread and validate
 			$thread = $threadSingleton->getThreadByUID($thread_uid);
+			if (!$thread) {
+				$globalHTML->error("Thread not found");
+			}
+	
+			$threadOP = $threadSingleton->getFirstPostsFromThreads([$thread_uid])[0];
+			$threadStatus = new FlagHelper($threadOP['status']);
+	
+			if ($threadStatus->value('ghost')) {
+				$globalHTML->error("Cannot move ghost threads");
+			}
+	
+			// Get board objects
 			$hostBoard = $boardIO->getBoardByUID($thread['boardUID']);
 			$destinationBoard = $boardIO->getBoardByUID($destinationBoardUID);
-
-			$redirectURL = $this->handleThreadMove($thread, $hostBoard, $destinationBoard, $leaveShadowThread, $isAnon);
-
+	
+			// Perform the move
+			$redirectURL = $this->handleThreadMove(
+				$thread,
+				$hostBoard,
+				$destinationBoard,
+				$leaveShadowThread,
+				$isAnon
+			);
+	
+			// Log the action
 			$destinationBoardTitle = htmlspecialchars($destinationBoard->getBoardTitle());
-			$actionLogger->logAction("Moved thread {$thread['post_op_number']} to board $destinationBoardTitle", $this->board->getBoardUID());
-
+			$actionLogger->logAction(
+				"Moved thread {$thread['post_op_number']} to board $destinationBoardTitle",
+				$this->board->getBoardUID()
+			);
+	
 			redirect($redirectURL);
-		} else {
-
-			$templateData = $this->prepareMoveFormTemplateValues();
-			$threadMoveFormHtml = $this->adminPageRenderer->ParseBlock('THREAD_MOVE_FORM', $templateData);
-			echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $threadMoveFormHtml], true);
 		}
+	
+		// Show move form if no submission
+		$templateData = $this->prepareMoveFormTemplateValues();
+		$threadMoveFormHtml = $this->adminPageRenderer->ParseBlock('THREAD_MOVE_FORM', $templateData);
+	
+		echo $this->adminPageRenderer->ParsePage(
+			'GLOBAL_ADMIN_PAGE_CONTENT',
+			['{$PAGE_CONTENT}' => $threadMoveFormHtml],
+			true
+		);
 	}
+	
 
 	private function prepareMoveFormTemplateValues(): array {
 		$globalHTML = new globalHTML($this->board);
