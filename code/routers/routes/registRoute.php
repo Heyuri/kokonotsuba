@@ -51,7 +51,7 @@ class registRoute {
 		$fileProcessor = new fileProcessor($this->board, $this->config, $this->postValidator, $this->globalHTML, $thumbnailCreator, $this->FileIO);
 		
 		// post data manipulation
-		$tripcodeProcessor = new tripcodeProcessor($this->config, $this->globalHTML, $this->staffSession);
+		$tripcodeProcessor = new tripcodeProcessor($this->config, $this->globalHTML);
 		$defaultTextFiller = new defaultTextFiller($this->config);
 		$fortuneGenerator = new fortuneGenerator($this->config['FORTUNES']);
 		
@@ -124,7 +124,7 @@ class registRoute {
 		$sub = str_replace("\r\n", '', $sub);
 		
 		$this->postValidator->cleanComment($com, $upfile_status, $is_admin, $dest);
-		$tripcodeProcessor->apply($name, $email, $dest);
+		$tripcodeProcessor->apply($name, $roleLevel);
 		$defaultTextFiller->fill($sub, $com);
 		$postFilterApplier->applyFilters($com, $email);
 	
