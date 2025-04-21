@@ -35,7 +35,6 @@ class mod_stop extends moduleHelper {
 	}
 
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
-		$PIO = PIOPDO::getInstance();
 		$fh = new FlagHelper($post['status']);
 		if ($fh->value('stop')) {
 			$arrLabels['{$POSTINFO_EXTRA}'].='<img src="'.$this->LOCKICON.'" class="icon" width="16" height="16" title="Locked">';
