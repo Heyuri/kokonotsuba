@@ -8,7 +8,7 @@ class file {
 	private readonly int $imgW;		// width of the image
 	private readonly int $imgH;		// height of the image
 
-	public function __construct(string $extention, string $fileName, string $fileSize, int $imgW, int $imgH) {
+	public function __construct(string $extention = '', string $fileName = '', string $fileSize = '', int $imgW = 0, int $imgH = 0) {
 		$this->extention = $extention;
 		$this->fileName = $fileName;
         $this->fileSize = $fileSize;
