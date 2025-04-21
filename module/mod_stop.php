@@ -27,8 +27,9 @@ class mod_stop extends moduleHelper {
 		$roleLevel = $staffSession->getRoleLevel();
 		
 
-		if ($thread_uid && $PIO->isThread($thread_uid) && $roleLevel < $this->config['roles']['LEV_MODERATOR']) {
+		if ($thread_uid && $threadSingleton->isThread($thread_uid) && $roleLevel < $this->config['roles']['LEV_MODERATOR']) {
 			$post = $threadSingleton->fetchPostsFromThread($thread_uid)[0];
+
 			$fh = new FlagHelper($post['status']);
 			if($fh->value('stop')) $globalHTML->error('ERROR: This thread is locked.');
 		}
