@@ -523,7 +523,7 @@ window.onload = function () {
 					<br>
 					<label id="move-thread-is-anon" title="Leave shadow reply anonymously">
 						Reply anon
-						<input type="checkbox" name="isAnon" checked value="1">
+						<input type="checkbox" name="is-anon" checked value="1">
 					</label>				
 				</td>
 			</tr>
