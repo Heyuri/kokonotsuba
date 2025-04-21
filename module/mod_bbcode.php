@@ -95,11 +95,11 @@ class mod_bbcode extends moduleHelper {
 		return 'Koko BBS Release 1';
 	}
 
-	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $resto, $imgWH){
-		$com = $this->bb2html($com,$dest);
+	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $resto, $imgWH){
+		$com = $this->bb2html($com,$file);
 	}
 
-	public function bb2html($string, $dest){
+	public function bb2html($string, $file){
 		$this->urlcount=0; // Reset counter
 
 		// Preprocess the BBCode to fix nesting issues
@@ -146,7 +146,7 @@ class mod_bbcode extends moduleHelper {
 		$string = preg_replace('#\[email\](\S+?@\S+?\\.\S+?)\[/email\]#si', '<a href="mailto:\1">\1</a>', $string);
 
 		$string = preg_replace('#\[email=(\S+?@\S+?\\.\S+?)\](.*?)\[/email\]#si', '<a href="mailto:\1">\2</a>', $string);
-		if (($this->ImgTagTagMode == 2) || ($this->ImgTagTagMode && !$dest)){
+		if (($this->ImgTagTagMode == 2) || ($this->ImgTagTagMode && !$file)){
 			$string = preg_replace('#\[img\](([a-z]+?)://([^ \n\r]+?))\[\/img\]#si', '<img class="bbcodeIMG" src="\1" style="border:1px solid \#021a40;" alt="\1">', $string);
 		}
 

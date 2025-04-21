@@ -46,10 +46,10 @@ class mod_threadlist extends moduleHelper {
 
 	// Automatically checks subject for posts before commit
 	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com,
-												&$category, &$age, $dest, $isReply, $imgWH, &$status) {
+												&$category, &$age, $file, $isReply, $imgWH, &$status) {
 		$globalHTML = new globalHTML($this->board);
 		if ($this->FORCE_SUBJECT && !$isReply && $sub == $this->config['DEFAULT_NOTITLE']) {
-			$globalHTML->error($this->_T('no_title'), $dest);
+			$globalHTML->error($this->_T('no_title'));
 		}
 	}
 

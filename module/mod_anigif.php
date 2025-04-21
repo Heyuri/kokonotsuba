@@ -20,14 +20,19 @@ class mod_anigif extends moduleHelper {
 		$file.= '<div id="anigifContainer"><label id="anigifLabel" title="Makes GIF thumbnails animated"><input type="checkbox" name="anigif" id="anigif" value="on">Animated GIF</label></div>';
 	}
 
-	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $isReply, $imgWH, &$status) {
-		$fh = new FlagHelper($status);
-
-		$size =($dest && is_file($dest)) ? getimagesize($dest) :[];
-
-		if(isset($_POST['anigif']) && isset($size[2]) && ($size[2] == 1)) {
-			$fh->toggle('agif');
-			$status = $fh->toString();
+	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, $imgWH, &$status) {
+		$mimeType = $file->getMimeType();
+		
+		if($mimeType !== 'image/gif') {
+			return;
+		}
+		
+		$anigifRequested = isset($_POST['anigif']);
+		
+		$flagHelper = new FlagHelper($status);
+		if ($anigifRequested) {
+			$flagHelper->toggle('agif');
+			$status = $flagHelper->toString();
 		}
 	}
 

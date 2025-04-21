@@ -497,7 +497,7 @@
         }
       }
      
-      public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $isReply, $imgWH, &$status) {
+      public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, $imgWH, &$status) {
         //VAGINA filter
         $red1 = mt_rand(0, 255);
         $green1 = mt_rand(0, 255);

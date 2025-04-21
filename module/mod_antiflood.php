@@ -19,7 +19,7 @@ class mod_antiflood extends moduleHelper {
 		return 'Koko BBS Release 1';
 	}
 	
-	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, $imgWH){
+	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $thread_uid, $imgWH){
 		if (!$thread_uid) {
 			$threadSingleton = threadSingleton::getInstance();
 			$globalHTML = new globalHTML($this->board);
@@ -34,8 +34,8 @@ class mod_antiflood extends moduleHelper {
 			
 			$timeDifference = $currentTimestampUnix - $timestampFromDatabaseUnix;
 			if ($timeDifference < $this->RENZOKU3) {
-				if ($dest != NULL) {
-					unlink($dest);
+				if ($file->getDest() != NULL) {
+					unlink($file->getDest());
 				}
 				$globalHTML->error('ERROR: Please wait a few seconds before creating a new thread.');
 			}

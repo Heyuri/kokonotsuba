@@ -18,7 +18,7 @@ class mod_autosage extends moduleHelper {
 		return 'Koko BBS Release 1';
 	}
 
-	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, $img, &$status) {
+	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $thread_uid, $img, &$status) {
 		$threadSingleton = threadSingleton::getInstance();
 	
 		if ($thread_uid) {
