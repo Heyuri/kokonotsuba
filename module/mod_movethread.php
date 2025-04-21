@@ -54,7 +54,7 @@ class mod_movethread extends moduleHelper {
 
 		// Generate link to the new thread
 		$newThreadUrl = $destinationBoard->getBoardThreadURL($newThread['post_op_number']);
-		$moveComment = 'Thread moved to <a href="' . $newThreadUrl . '">here</a>.';
+		$moveComment = 'Thread moved to <a href="' . $newThreadUrl . '">'.$destinationBoard->getBoardTitle().'</a>';
 
 		// Prepare post metadata
 		$email = '';
