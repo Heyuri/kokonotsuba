@@ -44,3 +44,16 @@ function togglePostStatus(string $flag, array $post): FlagHelper {
 	// Return updated flags
 	return $flags;
 }
+
+function getThreadStatus(string $thread_uid) {
+	// get thread singleton instance
+	$threadSingleton = threadSingleton::getInstance();
+	
+	// get op
+	$post = $threadSingleton->fetchPostsFromThread($thread_uid)[0];
+
+	// return flag
+	$flags = new FlagHelper($post['status']);
+
+	return $flags;
+}
