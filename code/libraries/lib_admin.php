@@ -11,17 +11,36 @@ function getCurrentStorageSizeFromSelectedBoards(array $boards) {
 	return $totalBoardsStorageSize;
 }
 
-/* So threads can be locked without repeating the same code */
-function lockThread(array $thread): void {
-	// get singleton instances
-	$PIO = PIOPDO::getInstance();
+/**
+ * Toggle a status flag for a thread (applies to OP post).
+ */
+function toggleThreadStatus(string $flag, array $thread): FlagHelper {
+	// get thread singleton instance
 	$threadSingleton = threadSingleton::getInstance();
 
-	// get OP
+	// fetch OP post of thread
 	$opPost = $threadSingleton->fetchPostsFromThread($thread['thread_uid'])[0];
 
-	// lock
-	$flags = new FlagHelper($opPost['status']);
-	$flags->toggle('stop');
-	$PIO->setPostStatus($opPost['post_uid'], $flags->toString());	
+	// delegate to post toggler
+	return togglePostStatus($flag, $opPost);
+}
+
+/**
+ * Toggle a status flag for a single post.
+ */
+function togglePostStatus(string $flag, array $post): FlagHelper {
+	// Get singleton instance to interact with the post database
+	$PIO = PIOPDO::getInstance();
+
+	// Create helper with current status
+	$flags = new FlagHelper($post['status']);
+
+	// Toggle the specified flag
+	$flags->toggle($flag);
+
+	// Save the updated status back to the post
+	$PIO->setPostStatus($post['post_uid'], $flags->toString());
+
+	// Return updated flags
+	return $flags;
 }
