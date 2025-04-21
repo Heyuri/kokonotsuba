@@ -207,6 +207,7 @@ $config['AUTO_LINK'] = 1; // Create urls (autolink)
 $config['JCAPCODE_FMT'] = '%s';
 $config['MCAPCODE_FMT'] = '<span class="capcode capcodeMod">%s ## Mod</span>';
 $config['ACAPCODE_FMT'] = '<span class="capcode capcodeAdmin">%s ## Admin</span>';
+$config['SCAPCODE_FMT'] = '<span class="capcode capcodeSystem">%s ## System</span>';
 $config['CAP_ISHTML'] = 1; // Whether to accept HTML tags in the comment if administrator module is enabled (Yes: 1 No: 0)
 
 // Footer at the bottom of the page
@@ -296,3 +297,6 @@ $config['AuthLevels']['CAN_EDIT_BLOTTER'] = $config['roles']['LEV_ADMIN'];
 
 // time since last action before logging out, measured in seconds. Note that it cannot be higher than your session.gc_maxlifetime
 $config['STAFF_LOGIN_TIMEOUT'] = 86400;
+
+// name of system role/user
+$config['SYSTEMCHAN_NAME'] = "System-chan";

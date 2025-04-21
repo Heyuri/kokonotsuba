@@ -44,5 +44,6 @@ $config['roles']['LEV_USER'] = 1; //registered user
 $config['roles']['LEV_JANITOR'] = 2; //janitor
 $config['roles']['LEV_MODERATOR'] = 3; //moderator
 $config['roles']['LEV_ADMIN'] = 4; //administrator
+$config['roles']['LEV_SYSTEM'] = 5; //system
 
 $config['KILL_INCOMPLETE_UPLOAD'] = 1; // Automatically delete uploaded incomplete additional images
