@@ -224,7 +224,7 @@ class mod_movethread extends moduleHelper {
 				$globalHTML->error("Thread not found");
 			}
 	
-			$threadOP = $threadSingleton->getFirstPostsFromThreads([$thread_uid])[0];
+			$threadOP = $threadSingleton->fetchPostsFromThread($thread_uid)[0];
 			$threadStatus = new FlagHelper($threadOP['status']);
 	
 			if ($threadStatus->value('ghost')) {
