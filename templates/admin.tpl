@@ -519,12 +519,7 @@ window.onload = function () {
 					<label id="move-thread-leave-shadow-thread" title="Leave original thread up and lock it">
 						Leave shadow thread
 						<input type="checkbox" name="leave-shadow-thread" checked value="1">
-					</label>
-					<br>
-					<label id="move-thread-is-anon" title="Leave shadow reply anonymously">
-						Reply anon
-						<input type="checkbox" name="is-anon" checked value="1">
-					</label>				
+					</label>		
 				</td>
 			</tr>
 

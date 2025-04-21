@@ -31,12 +31,11 @@ class mod_movethread extends moduleHelper {
 		}
 	}
 
-	private function leavePostInShadowThread(array $originalThread, IBoard $originalBoard, array $newThread, IBoard $destinationBoard, bool $isAnon) {
+	private function leavePostInShadowThread(array $originalThread, IBoard $originalBoard, array $newThread, IBoard $destinationBoard) {
 		$PIO = PIOPDO::getInstance();
 		$globalHTML = new globalHTML($originalBoard);
-		$staffSession = new staffAccountFromSession();
-		$tripcodeProcessor = new tripcodeProcessor($this->config, $globalHTML, $staffSession);
 		$postDateFormatter = new postDateFormatter($this->config);
+		$tripcodeProcessor = new tripcodeProcessor($this->config, $globalHTML);
 		
 		$time = $_SERVER['REQUEST_TIME'];
 		$now = $postDateFormatter->format($time);
@@ -45,30 +44,18 @@ class mod_movethread extends moduleHelper {
 		$no = $originalBoard->getLastPostNoFromBoard() + 1;
 
 		// Determine name and capcode
-		$roleLevel = $staffSession->getRoleLevel();
-		$capcodeRole = $globalHTML->roleNumberToRoleName($roleLevel);
-		$username = $staffSession->getUsername();
-
+		$capcodeRole = "System";
+		$username = $this->config['SYSTEMCHAN_NAME'];
 		$nameToInsert = "$username ## $capcodeRole";
-
-		// Anonymize staff as an anonymous moderator
-		if ($isAnon) {
-			$username = $originalBoard->loadBoardConfig()['DEFAULT_NONAME'];
-			$modCapcodeRole = $globalHTML->roleNumberToRoleName($this->config['roles']['LEV_MODERATOR']);
-			$nameToInsert = "$username ## $modCapcodeRole";
-		}
 
 		// Generate link to the new thread
 		$newThreadUrl = $destinationBoard->getBoardThreadURL($newThread['post_op_number']);
 		$moveComment = 'Thread moved to <a href="' . $newThreadUrl . '">'.$destinationBoard->getBoardTitle().'</a>';
 
 		// Prepare post metadata
-		$email = '';
-		$dest = '';
-		$ip = new IPAddress();
+		$ip = new IPAddress('127.0.0.1');
 
-		// Apply tripcode/capcode
-		$tripcodeProcessor->apply($nameToInsert, $email, $dest);
+		$tripcodeProcessor->apply($nameToInsert, $this->config['roles']['LEV_SYSTEM']);
 
 		// Get original thread UID
 		$originalThreadUid = $originalThread['thread_uid'];
@@ -135,17 +122,26 @@ class mod_movethread extends moduleHelper {
 			$srcThumb = $srcThumbPath . $thumbFilename;
 			$destThumb = $destThumbPath . $thumbFilename;
 	
-			if ($isCopy) {
-				copy($srcImage, $destImage);
-				copy($srcThumb, $destThumb);
-			} else {
-				moveFileOnly($srcImage, $destImgPath);
-				moveFileOnly($srcThumb, $destThumbPath);
+			// Check for null/empty and existence before proceeding
+			if (!empty($srcImage) && file_exists($srcImage)) {
+				if ($isCopy) {
+					copy($srcImage, $destImage);
+				} else {
+					moveFileOnly($srcImage, $destImgPath);
+				}
+			}
+	
+			if (!empty($srcThumb) && file_exists($srcThumb)) {
+				if ($isCopy) {
+					copy($srcThumb, $destThumb);
+				} else {
+					moveFileOnly($srcThumb, $destThumbPath);
+				}
 			}
 		}
 	}	
 
-	private function handleThreadMove($thread, $hostBoard, $destinationBoard, $leaveShadowThread = true, $isAnon = false) {
+	private function handleThreadMove($thread, $hostBoard, $destinationBoard, $leaveShadowThread = true) {
 		$threadSingleton = threadSingleton::getInstance();
 		$postRedirectIO = postRedirectIO::getInstance();
 
@@ -162,7 +158,7 @@ class mod_movethread extends moduleHelper {
 			$newThread = $threadSingleton->getThreadByUID($newThreadUid);
 
 			// leave shadow post
-			$this->leavePostInShadowThread($thread, $hostBoard, $newThread, $destinationBoard, $isAnon);
+			$this->leavePostInShadowThread($thread, $hostBoard, $newThread, $destinationBoard);
 			
 			// lock thread
 			toggleThreadStatus('stop', $thread);
@@ -207,7 +203,6 @@ class mod_movethread extends moduleHelper {
 		if (!empty($_POST['move-thread-submit'])) {
 			$thread_uid = $_POST['move-thread-uid'] ?? null;
 			$destinationBoardUID = $_POST['radio-board-selection'] ?? null;
-			$isAnon = !empty($_POST['is-anon']);
 			$leaveShadowThread = !empty($_POST['leave-shadow-thread']);
 	
 			// Validate inputs
@@ -240,8 +235,7 @@ class mod_movethread extends moduleHelper {
 				$thread,
 				$hostBoard,
 				$destinationBoard,
-				$leaveShadowThread,
-				$isAnon
+				$leaveShadowThread
 			);
 	
 			// Log the action
