@@ -156,7 +156,7 @@ class mod_threadlist extends moduleHelper {
 		$globalHTML = new globalHTML($this->board);
 
 		// Check if the page number is out of range
-		if ($page < 0 || $page > $pageMax) exit('Page out of range.');
+		if ($page < 0 || $page > $pageMax) $globalHTML->error('Page out of range.');
 
 		// Sort and fetch threads based on sorting options
 		if (strpos($sort, 'post') !== false) {
@@ -171,22 +171,21 @@ class mod_threadlist extends moduleHelper {
 			$this->moduleEngine->useModuleMethods('ThreadOrder', array(0, $page, 0, &$plist)); // "ThreadOrder" Hook Point
 			$pc = $this->_getPostCounts($plist);
 		}
-		$post = $threadSingleton->getFirstPostsFromThreads($plist); // Fetch posts data
-		$post_count = count($post);
+		$threadOPs = $threadSingleton->getFirstPostsFromThreads($plist); // Fetch posts data
 
 		// Re-arrange posts based on the sorting option
 		if ($sort == 'date' || strpos($sort, 'post') !== false) {
 			$mypost = array();
 			foreach ($plist as $p) {
-				foreach ($post as $k => $v) {
+				foreach ($threadOPs as $k => $v) {
 					if ($v['thread_uid'] == $p) {
 						$mypost[] = $v;
-						unset($post[$k]);
+						unset($threadOPs[$k]);
 						break;
 					}
 				}
 			}
-			$post = $mypost;
+			$threadOPs = $mypost;
 		}
 
 		// Start output HTML
@@ -218,12 +217,12 @@ function checkall(){
 		';
 
 		// Loop through and display each post
-		for ($i = 0; $i < $post_count; $i++) {
-			$no = $post[$i]['no'];
-			$sub = $post[$i]['sub'];
-			$name = $post[$i]['name'];
-			$now = $post[$i]['now'];
-			$thread_uid = $post[$i]['thread_uid'];
+		foreach($threadOPs as $opPost) {
+			$no = $opPost['no'];
+			$sub = $opPost['sub'];
+			$name = $opPost['name'];
+			$now = $opPost['now'];
+			$thread_uid = $opPost['thread_uid'];
 
 			$rescount = $pc[$thread_uid] - 1;
 			if ($this->HIGHLIGHT_COUNT > 0 && $rescount > $this->HIGHLIGHT_COUNT) {
