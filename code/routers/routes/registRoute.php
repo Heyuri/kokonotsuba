@@ -69,7 +69,6 @@ class registRoute {
 		$chktime = 0;
 		$flgh = '';
 		$ThreadExistsBefore = false;
-		$dest = '';
 		$up_incomplete = 0; 
 		$is_admin = false;
 		
@@ -91,6 +90,7 @@ class registRoute {
 		// Unix timestamp in milliseconds
 		$tim  = intval($_SERVER['REQUEST_TIME_FLOAT'] * 1000);
 		
+		$dest = $_FILES['upfile']['tmp_name'];
 		// file attributes
 		$upfile = '';
 		$upfile_path = '';
@@ -112,10 +112,24 @@ class registRoute {
 				[$file, $thumbnail] = $fileProcessor->process($thread_uid, $tim);
 		}
 		
+		// Calculate the last fields needed before putitng in db
+		$no = $this->board->getLastPostNoFromBoard() + 1;
+		$ext = $file->getExtention();
+		$imgW = $file->getImageWidth();
+		$imgH = $file->getImageHeight();
+		$imgSize = $file->getFileSize();
+		$fileName = $file->getFileName();
+		$md5chksum = $file->getMd5Chksum();
+		$dest = $file->getDest();
+		$thumbWidth = $thumbnail->getThumbnailWidth();
+		$thumbHeight = $thumbnail->getThumbnailHeight();
+		$age = false;
+		$status = '';
+
 		// Check the form field contents and trim them
-		if(strlenUnicode($name) > $this->config['INPUT_MAX'])	$this->globalHTML->error(_T('regist_nametoolong'), $dest);
-		if(strlenUnicode($email) > $this->config['INPUT_MAX'])	$this->globalHTML->error(_T('regist_emailtoolong'), $dest);
-		if(strlenUnicode($sub) > $this->config['INPUT_MAX'])	$this->globalHTML->error(_T('regist_topictoolong'), $dest);
+		if(strlenUnicode($name) > $this->config['INPUT_MAX'])	$this->globalHTML->error(_T('regist_nametoolong'));
+		if(strlenUnicode($email) > $this->config['INPUT_MAX'])	$this->globalHTML->error(_T('regist_emailtoolong'));
+		if(strlenUnicode($sub) > $this->config['INPUT_MAX'])	$this->globalHTML->error(_T('regist_topictoolong'));
 
 		setrawcookie('namec', rawurlencode(htmlspecialchars_decode($name)), time()+7*24*3600);
 		
@@ -144,7 +158,7 @@ class registRoute {
 		if($pwd==''){
 				$pwd = ($pwdc=='') ? substr(rand(),0,8) : $pwdc;
 		}
-	
+
 		$pass = $pwd ? substr(md5($pwd), 2, 8) : '*'; // Generate a password for true storage judgment (the 8 characters at the bottom right of the imageboard where it says Password ******** SUBMIT for deleting posts)
 		$now = $postDateFormatter->format($time);
 		$now .= $postIdGenerator->generate($email, $now, $time, $thread_uid);
@@ -157,18 +171,6 @@ class registRoute {
 		$this->postValidator->pruneOld($this->moduleEngine, $this->PIO, $this->FileIO);
 		$this->postValidator->threadSanityCheck($chktime, $flgh, $thread_uid, $this->PIO, $dest, $ThreadExistsBefore);
 	
-		// Calculate the last fields needed before putitng in db
-		$no = $this->board->getLastPostNoFromBoard() + 1;
-		$ext = $file->getExtention();
-		$imgW = $file->getImageWidth();
-		$imgH = $file->getImageHeight();
-		$imgSize = $file->getFileSize();
-		$fileName = $file->getFileName();
-		$thumbWidth = $thumbnail->getThumbnailWidth();
-		$thumbHeight = $thumbnail->getThumbnailHeight();
-		$md5chksum = '';
-		$age = false;
-		$status = '';
 
 		// apply age/sage
 		$agingHandler->apply($thread_uid, $time, $chktime, $email, $name, $age);
@@ -187,7 +189,7 @@ class registRoute {
 		$threads = $this->threadSingleton->getThreadListFromBoard($this->board);
 		$threads_count = count($threads);
 		$page_end = ($thread_uid ? floor(array_search($thread_uid, $threads) / $this->config['PAGE_DEF']) : ceil($threads_count / $this->config['PAGE_DEF']));
-		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, array($thumbWidth, $thumbHeight, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
+		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $thread_uid, array($thumbWidth, $thumbHeight, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
 		$this->PIO->addPost($this->board, $no, $thread_uid, $md5chksum, $category, $tim, $fileName, $ext, $imgW, $imgH, $imgSize, $thumbWidth, $thumbHeight, $pass, $now, $name, $email, $sub, $com, $ip, $age, $status);
 		
 		$this->actionLogger->logAction("Post No.$no registered", $this->board->getBoardUID());

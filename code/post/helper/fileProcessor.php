@@ -1,5 +1,4 @@
 <?php
-// handles file uploading for new posts
 
 class fileProcessor {
 	private readonly board $board;
@@ -13,18 +12,28 @@ class fileProcessor {
 	private string $upfile_path = '';
 	private string $upfile_name = '';
 	private int $upfile_status = 0;
-	private string $md5chksum = '';
-	private int $imgW = 0;
-	private int $imgH = 0;
-	private string $imgsize = '';
-	private int $thumbW = 0;
-	private int $thumbH = 0;
+
 	private string $ext = '';
 	private string $fname = '';
 	private string $tmpfile = '';
 	private string $dest = '';
+	private string $imgsize = '';
+	private string $md5chksum = '';
+	private string $mimeType = '';
 
-	public function __construct(board $board, array $config, postValidator $postValidator, globalHTML $globalHTML, thumbnailCreator $thumbnailCreator, mixed $FileIO) {
+	private int $imgW = 0;
+	private int $imgH = 0;
+	private int $thumbW = 0;
+	private int $thumbH = 0;
+
+	public function __construct(
+		board $board,
+		array $config,
+		postValidator $postValidator,
+		globalHTML $globalHTML,
+		thumbnailCreator $thumbnailCreator,
+		mixed $FileIO
+	) {
 		$this->board = $board;
 		$this->config = $config;
 		$this->postValidator = $postValidator;
@@ -34,98 +43,113 @@ class fileProcessor {
 	}
 
 	public function process(string $thread_uid, string $tim): array {
-		[$this->upfile, $this->upfile_path, $this->upfile_name, $this->upfile_status] = loadUploadData();
-		$this->postValidator->validateFileUploadStatus($thread_uid, $this->upfile_status);
+		[$upfile, $upfilePath, $upfileName, $uploadStatus] = loadUploadData();
+		$this->postValidator->validateFileUploadStatus($thread_uid, $uploadStatus);
 
-		if($this->upfile && (is_uploaded_file($this->upfile) || is_file($this->upfile))) {
-			$this->saveUploadedFile($tim);
-			$this->removeExif();
-			$this->validateUploadIntegrity();
-			$this->checkFileType();
-			$this->generateThumbnail($thread_uid, $tim);
-			_T('regist_uploaded', sanitizeStr($this->upfile_name));
-		
+		$this->upfile = $upfile;
+		$this->upfile_path = $upfilePath;
+		$this->upfile_name = $upfileName;
+		$this->upfile_status = $uploadStatus;
+
+		if ($upfile && (is_uploaded_file($upfile) || is_file($upfile))) {
+			$this->moveFileToStorage($tim);
+			$this->removeExifIfJpeg();
+			$this->checkForUploadMismatch();
+			$this->analyzeFileType();
+			$this->createThumbnail($thread_uid, $tim);
+			_T('regist_uploaded', sanitizeStr($upfileName));
+
 			if (file_exists($this->dest)) {
-				$this->FileIO->uploadImage($tim . $this->ext, $$this->dest, filesize($this->dest), $this->board);
+				$this->FileIO->uploadImage($tim . $this->ext, $this->dest, filesize($this->dest), $this->board);
 			}
 		}
 
-		$file = new file($this->ext, $this->fname, $this->imgsize, $this->imgW, $this->imgH);
+		$file = new file(
+			$this->ext,
+			$this->fname,
+			$this->imgsize,
+			$this->imgW,
+			$this->imgH,
+			$this->md5chksum,
+			$this->dest,
+			$this->mimeType
+		);
+
 		$thumbnail = new thumbnail($this->thumbW, $this->thumbH);
-		
-		// return file data
+
 		return [$file, $thumbnail];
 	}
 
-
-	private function saveUploadedFile(int $tim): void {
+	private function moveFileToStorage(int $tim): void {
 		$this->dest = $this->board->getBoardStoragePath() . $tim . '.tmp';
 		move_uploaded_file($this->upfile, $this->dest) or copy($this->upfile, $this->dest);
 		chmod($this->dest, 0666);
 
-		if(!is_file($this->dest)) {
+		if (!is_file($this->dest)) {
 			$this->globalHTML->error(_T('regist_upload_filenotfound'), $this->dest);
 		}
 	}
 
-	private function removeExif(): void {
-		if(function_exists('exif_read_data') && function_exists('exif_imagetype')) {
-			$imageType = exif_imagetype($this->dest);
+	private function removeExifIfJpeg(): void {
+		if (!function_exists('exif_read_data') || !function_exists('exif_imagetype')) return;
 
-			if($imageType == IMAGETYPE_JPEG) {
-				$exif = @exif_read_data($this->dest);
-				if($exif !== false) {
-					$image = imagecreatefromjpeg($this->dest);
-					imagejpeg($image, $this->dest, 100);
-					imagedestroy($image);
-				}
+		if (exif_imagetype($this->dest) === IMAGETYPE_JPEG) {
+			$exif = @exif_read_data($this->dest);
+			if ($exif !== false) {
+				$image = imagecreatefromjpeg($this->dest);
+				imagejpeg($image, $this->dest, 100);
+				imagedestroy($image);
 			}
 		}
 	}
 
-	private function validateUploadIntegrity() {
-		if(isset($_FILES['upfile'])) {
-			$upsizeTTL = $_SERVER['CONTENT_LENGTH'];
-			$upsizeHDR = 0;
-			$tmp_upfile_path = $this->upfile_name;
-			if($this->upfile_path) $tmp_upfile_path = $this->upfile_path;
+	private function checkForUploadMismatch(): void {
+		if (!isset($_FILES['upfile'])) return;
 
-			list(,$boundary) = explode('=', $_SERVER['CONTENT_TYPE']);
-			foreach($_POST as $header => $value) {
-				$upsizeHDR += strlen('--'.$boundary."\r\n")
-					+ strlen('Content-Disposition: form-data; name="'.$header.'"'."\r\n\r\n".($value)."\r\n");
-			}
+		$totalSize = $_SERVER['CONTENT_LENGTH'];
+		$headerSize = 0;
+		$boundary = explode('=', $_SERVER['CONTENT_TYPE'])[1];
+		$upfilePath = $this->upfile_path ?: $this->upfile_name;
 
-			$upsizeHDR += strlen('--'.$boundary."\r\n")
-				+ strlen('Content-Disposition: form-data; name="upfile"; filename="'.$tmp_upfile_path."\"\r\n".'Content-Type: '.$_FILES['upfile']['type']."\r\n\r\n")
-				+ strlen("\r\n--".$boundary."--\r\n")
-				+ $_FILES['upfile']['size'];
+		foreach ($_POST as $name => $value) {
+			$headerSize += strlen("--{$boundary}\r\n")
+				+ strlen("Content-Disposition: form-data; name=\"{$name}\"\r\n\r\n{$value}\r\n");
+		}
 
-			if(($upsizeTTL - $upsizeHDR) > $this->config['HTTP_UPLOAD_DIFF']) {
-				if($this->config['KILL_INCOMPLETE_UPLOAD']) {
-					unlink($this->dest);
-					die(_T('regist_upload_killincomp'));
-				}
+		$headerSize += strlen("--{$boundary}\r\n")
+			+ strlen("Content-Disposition: form-data; name=\"upfile\"; filename=\"{$upfilePath}\"\r\n")
+			+ strlen("Content-Type: " . $_FILES['upfile']['type'] . "\r\n\r\n")
+			+ strlen("\r\n--{$boundary}--\r\n")
+			+ $_FILES['upfile']['size'];
+
+		if (($totalSize - $headerSize) > $this->config['HTTP_UPLOAD_DIFF']) {
+			if ($this->config['KILL_INCOMPLETE_UPLOAD']) {
+				unlink($this->dest);
+				die(_T('regist_upload_killincomp'));
 			}
 		}
 	}
 
-	private function checkFileType(): void {
+	private function analyzeFileType(): void {
 		$size = getimagesize($this->dest);
-		$imgsize = filesize($this->dest);
+		$this->mimeType = $size['mime'] ?? 'application/octet-stream';
+		$fileSize = filesize($this->dest);
 
-		if($imgsize > $this->config['MAX_KB'] * 1024) {
+		if ($fileSize > $this->config['MAX_KB'] * 1024) {
 			$this->globalHTML->error(_T('regist_upload_exceedcustom'));
 		}
 
-		$this->imgsize = ($imgsize >= 1024) ? (int)($imgsize / 1024).' KB' : $imgsize.' B';
+		$this->imgsize = ($fileSize >= 1024) ? (int)($fileSize / 1024) . ' KB' : $fileSize . ' B';
 
 		setlocale(LC_ALL, 'en_US.UTF-8');
 		$this->fname = sanitizeStr(pathinfo($this->upfile_name, PATHINFO_FILENAME));
-		$this->ext = '.'.strtolower(pathinfo($this->upfile_name, PATHINFO_EXTENSION));
+		$this->ext = '.' . strtolower(pathinfo($this->upfile_name, PATHINFO_EXTENSION));
 
-		if(is_array($size)) {
-			switch($size[2]) {
+		if (is_array($size)) {
+			$this->imgW = $size[0];
+			$this->imgH = $size[1];
+
+			switch ($size[2]) {
 				case IMAGETYPE_GIF: $this->ext = '.gif'; break;
 				case IMAGETYPE_JPEG:
 				case IMAGETYPE_JPEG2000: $this->ext = '.jpg'; break;
@@ -133,11 +157,9 @@ class fileProcessor {
 				case IMAGETYPE_SWF:
 				case IMAGETYPE_SWC:
 					$this->ext = '.swf';
-					$size = getswfsize($this->dest);
-					if(!($size[0] && $size[1])) {
-						$size[0] = $this->config['MAX_W'];
-						$size[1] = $this->config['MAX_H'];
-					}
+					$swfSize = getswfsize($this->dest);
+					$this->imgW = $swfSize[0] ?: $this->config['MAX_W'];
+					$this->imgH = $swfSize[1] ?: $this->config['MAX_H'];
 					break;
 				case IMAGETYPE_PSD: $this->ext = '.psd'; break;
 				case IMAGETYPE_BMP: $this->ext = '.bmp'; break;
@@ -154,51 +176,46 @@ class fileProcessor {
 				case IMAGETYPE_WEBP: $this->ext = '.webp'; break;
 			}
 		} else {
-			$size = array(0, 0, 0);
-			$video_exts = explode('|', strtolower($this->config['VIDEO_EXT']));
-			if(array_search(substr($this->ext, 1), $video_exts) !== false) {
-				$this->tmpfile = tempnam(sys_get_temp_dir(), "thumbnail_");
-				rename($this->tmpfile, $this->tmpfile.".jpg");
-				$this->tmpfile .= ".jpg";
+			$this->imgW = $this->imgH = 0;
 
-				exec("ffmpeg -y -i ".$this->dest." -ss 00:00:1 -vframes 1 ".$this->tmpfile." 2>&1");
-
+			$videoExts = explode('|', strtolower($this->config['VIDEO_EXT']));
+			if (in_array(substr($this->ext, 1), $videoExts)) {
+				$this->tmpfile = tempnam(sys_get_temp_dir(), 'thumbnail_') . '.jpg';
+				exec("ffmpeg -y -i {$this->dest} -ss 00:00:01 -vframes 1 {$this->tmpfile} 2>&1");
 				$size = getimagesize($this->tmpfile);
-				$this->imgsize = filesize($this->dest);
-				$this->imgsize = ($this->imgsize >= 1024) ? (int)($this->imgsize / 1024).' KB' : $this->imgsize.' B';
+
+				if (is_array($size)) {
+					$this->imgW = $size[0];
+					$this->imgH = $size[1];
+				}
 			}
 		}
 
-		$this->imgW = $size[0];
-		$this->imgH = $size[1];
-
-		$allow_exts = explode('|', strtolower($this->config['ALLOW_UPLOAD_EXT']));
-		if(array_search(substr($this->ext, 1), $allow_exts) === false) {
-			$this->globalHTML->error(_T('regist_upload_notsupport'), $this->dest);
+		$allowed = explode('|', strtolower($this->config['ALLOW_UPLOAD_EXT']));
+		if (!in_array(substr($this->ext, 1), $allowed)) {
+			$this->globalHTML->error(_T('regist_upload_notsupport'));
 		}
 
 		$this->md5chksum = md5_file($this->dest);
-		if(array_search($this->md5chksum, $this->config['BAD_FILEMD5']) !== false) {
-			$this->globalHTML->error(_T('regist_upload_blocked'), $this->dest);
+		if (in_array($this->md5chksum, $this->config['BAD_FILEMD5'])) {
+			$this->globalHTML->error(_T('regist_upload_blocked'));
 		}
 	}
 
-	private function generateThumbnail(string $thread_uid, string $tim): void {
+	private function createThumbnail(string $thread_uid, string $tim): void {
 		$this->thumbW = $this->imgW;
 		$this->thumbH = $this->imgH;
 
-		$MAXW = $thread_uid ? $this->config['MAX_RW'] : $this->config['MAX_W'];
-		$MAXH = $thread_uid ? $this->config['MAX_RH'] : $this->config['MAX_H'];
+		$maxW = $thread_uid ? $this->config['MAX_RW'] : $this->config['MAX_W'];
+		$maxH = $thread_uid ? $this->config['MAX_RH'] : $this->config['MAX_H'];
 
-		if($this->thumbW > $MAXW || $this->thumbH > $MAXH) {
-			$W2 = $MAXW / $this->thumbW;
-			$H2 = $MAXH / $this->thumbH;
-			$key = ($W2 < $H2) ? $W2 : $H2;
-			$this->thumbW = ceil($this->thumbW * $key);
-			$this->thumbH = ceil($this->thumbH * $key);
+		if ($this->thumbW > $maxW || $this->thumbH > $maxH) {
+			$scale = min($maxW / $this->thumbW, $maxH / $this->thumbH);
+			$this->thumbW = ceil($this->thumbW * $scale);
+			$this->thumbH = ceil($this->thumbH * $scale);
 		}
 
-		if($this->ext == '.swf') {
+		if ($this->ext === '.swf') {
 			$this->thumbW = $this->thumbH = 0;
 		}
 
