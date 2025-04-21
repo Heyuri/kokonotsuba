@@ -18,7 +18,7 @@ class mod_stop extends moduleHelper {
 		return 'Koko BBS Release 1';
 	}
 
-	public function autoHookThreadFront(&$txt) {		
+	public function autoHookPostForm(&$txt) {		
 		$txt = '<div class="centerText"><b class="warning">This thread is locked!</b></div>';
 	}
 
