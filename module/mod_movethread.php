@@ -139,7 +139,7 @@ class mod_movethread extends moduleHelper {
 		}
 	}	
 
-	private function handleThreadMove($thread, $hostBoard, $destinationBoard, $copyThread = true, $isAnon = false) {
+	private function handleThreadMove($thread, $hostBoard, $destinationBoard, $leaveShadowThread = true, $isAnon = false) {
 		$threadSingleton = threadSingleton::getInstance();
 		$postRedirectIO = postRedirectIO::getInstance();
 
@@ -149,7 +149,7 @@ class mod_movethread extends moduleHelper {
 		$threadUid = $thread['thread_uid'];
 
 		// use thread redirection
-		if($copyThread) { 
+		if($leaveShadowThread) { 
 			// lock original thread and duplicate contents to destination board
 			$newThreadUid = $this->copyThreadToBoard($threadUid, $destinationBoard);
 
@@ -196,7 +196,8 @@ class mod_movethread extends moduleHelper {
 		if (!empty($_POST['move-thread-submit'])) {
 			$thread_uid = $_POST['move-thread-uid'] ?? null;
 			$destinationBoardUID = $_POST['radio-board-selection'] ?? null;
-			$isAnon = $_POST['isAnon'] ?? false;
+			$isAnon = $_POST['is-anon'] ?? false;
+			$leaveShadowThread = $_POST['leave-shadow-thread'] ?? false;
 
 			if (!$thread_uid) $globalHTML->error("Invalid thread_uid from request");
 			if (!$destinationBoardUID) $globalHTML->error("Invalid board uid from request");
@@ -205,8 +206,7 @@ class mod_movethread extends moduleHelper {
 			$hostBoard = $boardIO->getBoardByUID($thread['boardUID']);
 			$destinationBoard = $boardIO->getBoardByUID($destinationBoardUID);
 
-			$copyThread = $hostBoard->loadBoardConfig()['ModuleSettings']['COPY_THREAD'];
-			$redirectURL = $this->handleThreadMove($thread, $hostBoard, $destinationBoard, $copyThread, $isAnon);
+			$redirectURL = $this->handleThreadMove($thread, $hostBoard, $destinationBoard, $leaveShadowThread, $isAnon);
 
 			$destinationBoardTitle = htmlspecialchars($destinationBoard->getBoardTitle());
 			$actionLogger->logAction("Moved thread {$thread['post_op_number']} to board $destinationBoardTitle", $this->board->getBoardUID());
