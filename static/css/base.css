@@ -1080,6 +1080,10 @@ caption h3 {
 
 /************************ Administrator mode **************************/
 
+.capcodeSystem {
+	color: #BDBDBD;
+}
+
 .capcodeAdmin {
 	color: #ff101a;
 }
