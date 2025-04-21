@@ -18,10 +18,6 @@ class mod_stop extends moduleHelper {
 		return 'Koko BBS Release 1';
 	}
 
-	public function autoHookPostForm(&$txt) {		
-		$txt = '<div class="centerText"><b class="warning">This thread is locked!</b></div>';
-	}
-
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $file, $ip, $thread_uid) {
 		$threadSingleton = threadSingleton::getInstance();
 
