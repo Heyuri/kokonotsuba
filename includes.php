@@ -38,6 +38,7 @@ require __DIR__.'/code/libraries/lib_template.php'; // template library
 require __DIR__.'/code/libraries/lib_rebuild.php'; // rebuild library
 require __DIR__.'/code/libraries/lib_errorhandler.php'; // error library
 require __DIR__.'/code/libraries/lib_compatible.php'; // compatability library
+require __DIR__.'/code/libraries/lib_file.php'; // file I/O library
 require __DIR__.'/code/libraries/lib_common.php'; // general-purpose functions
 require __DIR__.'/code/libraries/lib_post.php'; // post-related functions
 require __DIR__.'/code/libraries/lib_filter.php'; // filter-related functions
