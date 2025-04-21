@@ -97,8 +97,8 @@ class registRoute {
 		$upfile_name = '';
 		$upfile_status = '';
 
-		$file = null;
-		$thumbnail = null;
+		$file = new file();
+		$thumbnail = new thumbnail();
 
 		// get file attributes
 		[$upfile, $upfile_path, $upfile_name, $upfile_status] = loadUploadData();
