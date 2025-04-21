@@ -40,6 +40,7 @@ class globalHTML {
 				case $this->config['roles']['LEV_JANITOR']: $from = 'Janitor'; break;
 				case $this->config['roles']['LEV_MODERATOR']: $from = 'Moderator'; break;
 				case $this->config['roles']['LEV_ADMIN']: $from = 'Admin'; break;
+				case $this->config['roles']['LEV_SYSTEM']: $from = 'System'; break;
 				default: $from = '[UNKNOWN ROLE]'; break;
 		}
 		return $from;
