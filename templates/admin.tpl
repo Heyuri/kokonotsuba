@@ -17,8 +17,10 @@
 <!--&VIEW_ACCOUNT-->
 <form id="account-modify-form" action="{$PHP_SELF}?mode=handleAccountAction" method="POST">
 		<h3>Your account</h3>
+
 		<input type="hidden" name="password_reset_form" value="1">
 		<input  type="hidden" name="id" value="{$ACCOUNT_ID}">
+
 		<table  id="account-view-table">
 			<tbody>
 				<tr>
@@ -39,13 +41,17 @@
 				</tr>
 			</tbody>
 		</table>
-		<input type="submit" value="Save">
+
+		<div class="buttonSection">
+			<input type="submit" value="Save new password">
+		</div>
 	</form>
 <!--/&VIEW_ACCOUNT-->
 
 <!--&CREATE_ACCOUNT-->
 	<form action="{$PHP_SELF}?mode=handleAccountAction" method="POST">
 		<h3>Create a new staff account</h3>
+
 		<table id="account-create-table">
 			<tbody>
 				<tr>
@@ -74,7 +80,10 @@
 				</tr>
 			</tbody>
 		</table>
-		<input id="accountcreateformsubmit" type="submit" value="Create account">
+
+		<div class="buttonSection">
+			<input id="accountcreateformsubmit" type="submit" value="Create account">
+		</div>
 	</form>
 <!--/&CREATE_ACCOUNT-->
 
@@ -85,55 +94,59 @@
 <!--/&BOARD_PAGE-->
 
 <!--&CREATE_BOARD-->
-		<form action="{$PHP_SELF}?mode=handleBoardRequests" method="POST">
-			<h3>Create a new board</h3>
-			<input type="hidden" name="new-board" value="1">
-			<table id="board-create-table">
-				<tbody>
-					<tr>
-						<td class="postblock"><label for="new-board-title">Title</label></td>
-						<td>
-							<input required class="inputtext" id="new-board-title" name="new-board-title">
-							<div class="formItemDescription">Title of the board.</div>
-						</td>
-					</tr>
-					<tr>
-						<td class="postblock"><label for="new-board-sub-title">Sub-title</label></td>
-						<td>
-							<input class="inputtext" id="new-board-sub-title" name="new-board-sub-title">
-							<div class="formItemDescription">Smaller text beneath the board title on the page, typically providing a description of the board.</div>
-						</td>
-					</tr>
-					<tr>
-						<td class="postblock"><label for="new-board-identifier">Identifier</label></td>
-						<td>
-							<input class="inputtext" id="new-board-identifier" name="new-board-identifier" placeholder="b">
-							<div class="formItemDescription">The string that represents the board in the URL and file storage. E.g. the 'b' in "/b/" or "boards.example.net/b/"</div>
-						</td>
-					</tr>
-					<tr>
-						<td class="postblock"><label for="new-board-path">Absolute directory</label></td>
-						<td>
-							<input class="inputtext" id="new-board-path" name="new-board-path" required class="url-input" placeholder="/var/www/html/boards/" value="{$DEFAULT_PATH}">
-							<div class="formItemDescription">The directory where the board will be created at. Excluding its identifier. E.g. '/var/www/boards/' not '/var/www/boards/b/'</div>
-						</td>
-					</tr>
-					<tr>
-						<td class="postblock"><label for="new-board-listed">Listed</label></td> 
-						<td><input type="checkbox" id="new-board-listed" name="new-board-listed" checked></td>
-					</tr>
-				</tbody>
-			</table>
+	<form action="{$PHP_SELF}?mode=handleBoardRequests" method="POST">
+		<h3>Create a new board</h3>
 
-			<div><input id="board-form-submit" type="submit" value="Create board"></div>
-		</form>
+		<input type="hidden" name="new-board" value="1">
 
-		<p>After creating a new board, be sure to configure it at its configuration file</p>
+		<table id="board-create-table">
+			<tbody>
+				<tr>
+					<td class="postblock"><label for="new-board-title">Title</label></td>
+					<td>
+						<input required class="inputtext" id="new-board-title" name="new-board-title">
+						<div class="formItemDescription">Title of the board.</div>
+					</td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="new-board-sub-title">Sub-title</label></td>
+					<td>
+						<input class="inputtext" id="new-board-sub-title" name="new-board-sub-title">
+						<div class="formItemDescription">Smaller text beneath the board title on the page, typically providing a description of the board.</div>
+					</td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="new-board-identifier">Identifier</label></td>
+					<td>
+						<input class="inputtext" id="new-board-identifier" name="new-board-identifier" placeholder="b">
+						<div class="formItemDescription">The string that represents the board in the URL and file storage. E.g. the 'b' in "/b/" or "boards.example.net/b/"</div>
+					</td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="new-board-path">Absolute directory</label></td>
+					<td>
+						<input class="inputtext" id="new-board-path" name="new-board-path" required class="url-input" placeholder="/var/www/html/boards/" value="{$DEFAULT_PATH}">
+						<div class="formItemDescription">The directory where the board will be created at. Excluding its identifier. E.g. '/var/www/boards/' not '/var/www/boards/b/'</div>
+					</td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="new-board-listed">Listed</label></td> 
+					<td><input type="checkbox" id="new-board-listed" name="new-board-listed" checked></td>
+				</tr>
+			</tbody>
+		</table>
+
+		<div class="buttonSection">
+			<input id="board-form-submit" type="submit" value="Create board">
+		</div>
+	</form>
+
+	<p>After creating a new board, be sure to configure it at its configuration file</p>
 <!--/&CREATE_BOARD-->
 
 <!--&EDIT_BOARD-->
-	<h2>Edit Board</h2>
 	<form id="board-action-form" action="{$PHP_SELF}?mode=handleBoardRequests" method="POST">
+		<h3>Edit board</h3>
 	
 		<input type="hidden" name="edit-board-uid" value="{$BOARD_UID}">
 		<input type="hidden" name="edit-board-uid-for-redirect" value="{$BOARD_UID}">
@@ -150,37 +163,36 @@
 					<td> <input required id="edit-board-title" name="edit-board-title" value="{$BOARD_TITLE}"></td>
 				</tr>
 				<tr>
-					<td class="postblock"><label for="edit-board-sub-title">Sub-title</label></td>
+					<td class="postblock"><label for="edit-board-sub-title">Subtitle</label></td>
 					<td> <input id="edit-board-sub-title" name="edit-board-sub-title" value="{$BOARD_SUB_TITLE}"></td>
 				</tr>
 				<tr>
-					<td class="postblock"><label for="edit-board-config-path">Config File</label></td>
+					<td class="postblock"><label for="edit-board-config-path">Config file</label></td>
 					<td> <input id="edit-board-config-path" class="url-input" name="edit-board-config-path" value="{$BOARD_CONFIG_FILE}" required></td>
 				</tr>
 				<tr>
-					<td class="postblock"><label for="edit-board-storage-dir">Board Storage Directory</label></td>
+					<td class="postblock"><label for="edit-board-storage-dir">Board storage directory</label></td>
 					<td> <input id="edit-board-storage-dir" name="edit-board-storage-dir" value="{$BOARD_STORAGE_DIR}" required> </td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="edit-board-listed">Listed</label></td>
 					<td><input type="checkbox"  id="edit-board-listed" name="edit-board-listed" {$CHECKED}></td>
 				</tr>
-				<tr>
-					<td class="postblock"><label for="board-save-button"></label></td>
-					<td> <button type="submit" id="board-save-button" name="boardactionsubmit" value="save">Save</button> </td>
-				</tr>
-				<tr>
-					<td class="postblock"><label for="edit-board-delete-button"></label></td>
-					<td> <button type="submit" id="edit-board-delete-button" name="board-action-submit" value="delete-board">Delete Board</button> </td>
-				</tr>
 			</tbody>
 		</table>
+
+		<div class="buttonSection">
+			<button type="submit" id="board-save-button" name="boardactionsubmit" value="save">Save changes</button>
+			<button type="submit" id="edit-board-delete-button" name="board-action-submit" value="delete-board">Delete board</button>
+		</div>
 	</form>
 <!--/&EDIT_BOARD-->
 
 <!--&VIEW_BOARD-->
 	[<a id="board-back-button" href="{$PHP_SELF}?mode=boards">Back to board list</a>]
-	<h2>Board</h2>
+
+	<h3>Board info</h3>
+
 	<table  id="board-view-table">
 		<tbody>
 			<tr>
@@ -196,19 +208,19 @@
 				<td><div id="board-database-title">{$BOARD_TITLE}</div></td>
 			</tr>
 			<tr>
-				<td class="postblock"><label for="board-database-sub-title">Sub-title</label></td>
+				<td class="postblock"><label for="board-database-sub-title">Subtitle</label></td>
 				<td><div id="board-database-sub-title">{$BOARD_SUB_TITLE}</div></td>
 			</tr>
 			<tr>
-				<td class="postblock"><label for="board-date-added">Date Added</label></td>
+				<td class="postblock"><label for="board-date-added">Date added</label></td>
 				<td><div id="board-date-added">{$BOARD_DATE_ADDED}</div></td>
 			</tr>
 			<tr>
-				<td class="postblock"><label for="board-config-path">Config File</label></td>
+				<td class="postblock"><label for="board-config-path">Config file</label></td>
 				<td><div id="board-config-path">{$BOARD_CONFIG_FILE}</div></td>
 			</tr>
 			<tr>
-				<td class="postblock"><label for="board-storage-dir">Board Storage Directory</label></td>
+				<td class="postblock"><label for="board-storage-dir">Board storage directory</label></td>
 				<td><div id="board-storage-dir">{$BOARD_STORAGE_DIR}</div></td>
 			</tr>
 			<tr>
@@ -228,10 +240,12 @@
 <!--&ADMIN_REBUILD_PAGE-->
 	<form action="{$MODULE_URL}" method="POST">
 		<h3>Rebuild boards</h3>
+		
 		{$REBUILD_CHECK_LIST}
-		<p>
+
+		<div class="buttonSection">
 			<button name="formSubmit" value="save">Submit</button>
-		</p>
+		</div>
 	</form>
 <!--/&ADMIN_REBUILD_PAGE-->
 
@@ -242,6 +256,7 @@
 <!--&GLOBALMSG_PAGE-->
 	<form action="{$MODULE_URL}&action=setmessage" method="post">
 		<h3>Edit global message</h3>
+
 		<table id="postform_tbl">
 			<tbody>
 				<tr>
@@ -250,13 +265,16 @@
 				</tr>
 			</tbody>
 		</table>
-		<p>
+
+		<div class="buttonSection">
 			<input type="submit" name="submit" value="Submit">
-		</p>
+		</div>
 	</form>
 		
 	<h3>Current global message</h3>
+
 	<hr>
+
 	<div id="globalMessagePreviewCurrent">
 		<div id="globalmsg">
 			{$CURRENT_GLOBAL_MESSAGE}
@@ -275,7 +293,8 @@
 <!--&BLOTTER_ADMIN_PAGE-->
 	<form action="{$MODULE_URL}" method='post'>
 		<h3>Add new blotter entry</h3>
-		<table class="formtable centerBlock">
+
+		<table class="formtable">
 			<tbody>
 				<tr>
 					<td class='postblock'><label for='new_blot_txt'>Blotter entry</label></td>
@@ -283,13 +302,15 @@
 				</tr>
 			</tbody>
 		</table>
-		<div>
+
+		<div class="buttonSection">
 			<input type='submit' name='submit' value='Submit'>
 		</div>
 	</form>
 
 	<form id="blotterdeletionform" action="{$MODULE_URL}" method="POST">
 		<h3>Blotter entries</h3>
+
 		<table class="postlists" id="blotterlist">
 			<thead>
 				<tr>
@@ -302,7 +323,8 @@
 				<!--&FOREACH($ROWS,'BLOTTER_ADMIN_PAGE_TABLE_BLOCK')-->
 			</tbody>
 		</table>
-		<div>
+
+		<div class="buttonSection">
 			<input value="Submit" name="delete_submit" type="submit">
 		</div>
 	</form>
@@ -318,7 +340,7 @@
 	<ul id="blotter">
 		<!--&FOREACH($ENTRIES,'BLOTTER_PREVIEW_ITEM')-->
 		<!--&IF($EMPTY,'<li>- No blotter entries -</li>','')-->
-		<li class="blotterListShowAll">[<a href="{$MODULE_URL}">Show All</a>]</li>
+		<li class="blotterListShowAll">[<a href="{$MODULE_URL}">Show all</a>]</li>
 	</ul>
 <!--/&BLOTTER_PREVIEW-->
 
@@ -330,8 +352,10 @@
 <!--/&BLOTTER_TABLE_ROW-->
 
 <!--&BLOTTER_PAGE-->
-	[<a href="{$PHP_SELF2}">Return</a>] 
+	[<a href="{$PHP_SELF2}">Return</a>]
+
 	<h2 class="theading3">Blotter</h2>
+
 	<table class="postlists" id="blotterlist">
 		<thead>
 			<tr>
@@ -349,6 +373,7 @@
 <!--&ADMIN_BAN_FORM-->
 	<form method="POST" action="{$MODULE_URL}">
 		<h3>Add a ban</h3>
+
 		<table id="banForm">
 			<tbody>
 				<input type="hidden" name="adminban-action" value="add-ban">
@@ -369,8 +394,8 @@
 					</td>
 				</tr>
 				<tr>
-					<td class="postblock"><label for="reason">Reason for ban</label></td>
-					<td><textarea class="inputtext" id="reason" name="privmsg" rows="4" cols="50" placeholder="Enter reason for the ban"></textarea></td>
+					<td class="postblock"><label for="banprivmsg">Reason for ban</label></td>
+					<td><textarea class="inputtext" id="banprivmsg" name="privmsg" rows="4" cols="50" placeholder="Enter reason for the ban"></textarea></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="banmsg">Public ban message</label></td>
@@ -387,7 +412,7 @@
 			</tbody>
 		</table>
 
-		<div id="bigredbuttonContainer">
+		<div class="buttonSection">
 			<input id="bigredbutton" type="submit" value="BAN!">
 		</div>
 	</form>
@@ -419,7 +444,7 @@ window.onload = function () {
 	msg.oninput = updatepview;
 	updatepview();
 }
-			</script>
+	</script>
 <!--/&ADMIN_BAN_FORM-->
 
 <!--&ADMIN_BAN_ROW-->
@@ -435,7 +460,9 @@ window.onload = function () {
 <!--&ADMIN_BAN_TABLE-->
 	<form method="POST" action="{$MODULE_URL}">
 		<h3>{$TITLE}</h3>
+
 		<input type="hidden" name="adminban-action" value="delete-ban">
+
 		<div id="banTableContainer">
 			<table class="postlists banTable" id="{$TABLE_ID}">
 				<thead>
@@ -452,7 +479,8 @@ window.onload = function () {
 				</tbody>
 			</table>
 		</div>
-		<div id="revokeButtonContainer">
+
+		<div class="buttonSection">
 			<button type="submit" id="revokeButton">Remove selected</button>
 		</div>
 	</form>
@@ -465,21 +493,26 @@ window.onload = function () {
 
 <!--&BAN_PAGE-->
 	<div>[<a href="{$RETURN_URL}">Return</a>]</div>
+
 	<h2 id="banHeading" class="centerText">You have been {$BAN_TYPE}! ヽ(ー_ー )ノ</h2>
+
 	<div id="banScreen">
 		<div id="banScreenText">
 			<p>{$REASON}</p>
 			{$BAN_DETAIL}
 		</div>
+
 		<img id="banimg" src="{$BAN_IMAGE}" alt="BANNED!">
 	</div>
+	
 	<hr id="hrBan">
 <!--/&BAN_PAGE-->
 
 
 <!--&JANITOR_WARN_FORM-->
-	<h2>Warn user</h2>
 	<form action="{$FORM_ACTION}" method="POST">
+		<h3>Warn user</h3>
+
 		<input type="hidden" name="mode" value="module">
 		<input type="hidden" name="load" value="mod_janitor">
 		<label> <span>Post Number {$POST_NUMBER}</span> </label><br>
@@ -488,7 +521,8 @@ window.onload = function () {
 			<textarea name="msg" cols="80" rows="6">{$REASON_DEFAULT}</textarea>
 		</label><br>
 		<label>Public? <input type="checkbox" name="public"></label>
-		<div class="centerText">
+
+		<div class="buttonSection">
 			<input type="submit" value="Warn">
 		</div>
 	</form>
@@ -496,38 +530,39 @@ window.onload = function () {
 
 
 <!--&THREAD_MOVE_FORM-->
-<form id="thread-move-form" method="POST" action="{$FORM_ACTION}">
-	<input type="hidden" name="move-thread-uid" value="{$THREAD_UID}">
-	<input type="hidden" name="move-thread-board-uid" value="{$CURRENT_BOARD_UID}">
-	<table>
-		<tbody>
-			<tr>
-				<td class="postblock"><label for="move-thread-num">Thread Number</label></td>
-				<td><span id="move-thread-num">{$THREAD_NUMBER}</span></td>
-			</tr>
-			<tr>
-				<td class="postblock"><label for="move-thread-board">Thread's current board</label></td>
-				<td><span id="move-thread-board">{$CURRENT_BOARD_NAME}</span></td>
-			</tr>
-			<tr id="boardrow">
-				<td class="postblock">Boards</td>
-				<td>{$BOARD_RADIO_HTML}</td>
-			</tr>
-			<tr>
-				<td class="postblock"><label>Options</label></td>
-				<td>
-					<label id="move-thread-leave-shadow-thread" title="Leave original thread up and lock it">
-						Leave shadow thread
-						<input type="checkbox" name="leave-shadow-thread" checked value="1">
-					</label>		
-				</td>
-			</tr>
+	<form id="thread-move-form" method="POST" action="{$FORM_ACTION}">
+		<h3>Move thread</h3>
 
-			<tr>
-				<td class="postblock"></td>
-				<td><button type="submit" name="move-thread-submit" value="move it!">Move thread</button></td>
-			</tr>
-		</tbody>
-	</table>
-</form>
+		<input type="hidden" name="move-thread-uid" value="{$THREAD_UID}">
+		<input type="hidden" name="move-thread-board-uid" value="{$CURRENT_BOARD_UID}">
+
+		<table>
+			<tbody>
+				<tr>
+					<td class="postblock"><label for="move-thread-num">Thread No.</label></td>
+					<td><span id="move-thread-num">{$THREAD_NUMBER}</span></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="move-thread-board">Current board</label></td>
+					<td><span id="move-thread-board">{$CURRENT_BOARD_NAME}</span></td>
+				</tr>
+				<tr id="boardrow">
+					<td class="postblock"><label>Boards</label></td>
+					<td>{$BOARD_RADIO_HTML}</td>
+				</tr>
+				<tr>
+					<td class="postblock"><label>Options</label></td>
+					<td>
+						<label id="move-thread-leave-shadow-thread" title="Leave original thread up and lock it">
+							<input type="checkbox" name="leave-shadow-thread" checked value="1">Leave shadow thread
+						</label>		
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<div class="buttonSection">
+			<button type="submit" name="move-thread-submit" value="move it!">Move thread</button>
+		</div>
+	</form>
 <!--/&THREAD_MOVE_FORM-->
