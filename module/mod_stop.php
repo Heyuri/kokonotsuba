@@ -18,8 +18,11 @@ class mod_stop extends moduleHelper {
 		return 'Koko BBS Release 1';
 	}
 
+	public function autoHookThreadFront(&$txt) {		
+		$txt = '<div class="centerText"><b class="warning">This thread is locked!</b></div>';
+	}
+
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $file, $ip, $thread_uid) {
-		$PIO = PIOPDO::getInstance();
 		$threadSingleton = threadSingleton::getInstance();
 
 		$staffSession = new staffAccountFromSession;
@@ -28,10 +31,9 @@ class mod_stop extends moduleHelper {
 		
 
 		if ($thread_uid && $threadSingleton->isThread($thread_uid) && $roleLevel < $this->config['roles']['LEV_MODERATOR']) {
-			$post = $threadSingleton->fetchPostsFromThread($thread_uid)[0];
+			$flags = getThreadStatus($thread_uid);
 
-			$fh = new FlagHelper($post['status']);
-			if($fh->value('stop')) $globalHTML->error('ERROR: This thread is locked.');
+			if($flags->value('stop')) $globalHTML->error('ERROR: This thread is locked.');
 		}
 	}
 
