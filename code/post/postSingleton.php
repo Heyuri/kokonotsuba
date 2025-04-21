@@ -430,7 +430,7 @@ class PIOPDO implements IPIO {
 					LIMIT 1
 				", [$threadUID]);
 
-				if ($newReplyData === null) {
+				if (!$newReplyData) {
 					$this->databaseConnection->execute("
 						DELETE FROM {$this->threadTable}
 						WHERE thread_uid = ?
