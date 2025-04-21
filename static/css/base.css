@@ -1133,6 +1133,7 @@ caption h3 {
 }
 
 #adminPageContent table {
+	margin: 0 auto;
 	text-align: left;
 }
 
@@ -1142,6 +1143,10 @@ caption h3 {
 
 #adminPageContent .reply {
 	background-color: var(--color-bg-reply);
+}
+
+.buttonSection {
+	margin-top: 0.5em;
 }
 
 .formtable {
@@ -1271,11 +1276,6 @@ caption h3 {
 	height: 5em;
 }
 
-#bigredbuttonContainer,
-#revokeButtonContainer {
-	text-align: center;
-}
-
 #bigredbutton {
 	background-color: #ff0000;
 	color: white;
@@ -1292,12 +1292,7 @@ caption h3 {
 }
 
 #banTableContainer {
-	margin: 1em auto;
 	overflow: auto;
-}
-
-#banTable {
-	margin: 0 auto;
 }
 
 #banTable .colDel {
@@ -2012,7 +2007,8 @@ width: 300px;
 	}
 
 	.neomenu h1,
-	.neomenu h2 {
+	.neomenu h2,
+	#adminNavBar {
 		line-height: 2;
 	}
 
