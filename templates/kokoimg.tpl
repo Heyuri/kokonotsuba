@@ -13,7 +13,7 @@
 	<meta name="description" content="{$PAGE_TITLE}">
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/base.css?v=62">
+	<link rel="stylesheet" href="{$STATIC_URL}css/base.css?v=67">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/sakomoto.css?v=2" title="Sakomoto">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/heyuriclassic.css?v=2" title="Heyuri Classic">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/futaba.css?v=2" title="Futaba">

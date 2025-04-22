@@ -1118,30 +1118,36 @@ caption h3 {
 	content: "]";
 }
 
-#adminPageContent {
+#adminPageContent,
+.modulePageContent {
 	text-align: center;
 }
 
-#adminPageContent form {
+#adminPageContent form,
+.modulePageContent form {
 	display: table;
 	margin: 0 auto;
 }
 
-#adminPageContent ul {
+#adminPageContent ul,
+.modulePageContent ul {
+	margin: 1em auto;
+	text-align: left;
+}
+
+#adminPageContent table,
+.modulePageContent table {
 	margin: 0 auto;
 	text-align: left;
 }
 
-#adminPageContent table {
-	margin: 0 auto;
-	text-align: left;
-}
-
-#adminPageContent table th {
+#adminPageContent table th,
+.modulePageContent table th {
 	text-align: center;
 }
 
-#adminPageContent .reply {
+#adminPageContent .reply,
+.modulePageContent .reply {
 	background-color: var(--color-bg-reply);
 }
 
@@ -1461,6 +1467,7 @@ caption h3 {
 
 #searchresult {
 	margin-top: 1em;
+	text-align: left;
 }
 
 /************************ PM system ***********************************/
