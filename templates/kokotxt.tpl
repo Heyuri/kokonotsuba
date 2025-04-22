@@ -12,11 +12,11 @@
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/txt/base.css?v=35">
-	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/txt/pseud0ch.css?v=2" title="Pseud0ch">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch2.css" title="Pseud0ch (sans-serif)">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch3.css" title="Pseud0ch (MS PGothic)">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/tomorrow.css?v=4" title="Tomorrow">
+	<link rel="stylesheet" href="{$STATIC_URL}css/txt/base.css?v=37">
+	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/txt/pseud0ch.css?v=6" title="Pseud0ch">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch2.css?v=6" title="Pseud0ch (serif)">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch3.css?v=6" title="Pseud0ch (sans-serif)">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/tomorrow.css?v=6" title="Tomorrow">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css" title="Import Custom">
 	<script src="{$STATIC_URL}js/koko.js?v=7"></script>
 	<script src="{$STATIC_URL}js/qr.js?v=8"></script>
