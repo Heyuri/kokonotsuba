@@ -13,7 +13,7 @@
 	<meta name="description" content="{$PAGE_TITLE}">
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/base.css?v=61">
+	<link rel="stylesheet" href="{$STATIC_URL}css/base.css?v=62">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/sakomoto.css?v=2" title="Sakomoto">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/heyuriclassic.css?v=2" title="Heyuri Classic">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/futaba.css?v=2" title="Futaba">
@@ -26,7 +26,7 @@
 	<script src="{$STATIC_URL}js/koko.js?v=7"></script>
 	<script src="{$STATIC_URL}js/onlinecounter.js" defer></script>
 	<script src="{$STATIC_URL}js/banners.js?v=3"></script>
-	<script src="{$STATIC_URL}js/style.js?v=2"></script>
+	<script src="{$STATIC_URL}js/style.js?v=3"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
 	<script src="{$STATIC_URL}js/inline.js?v=9" defer></script>
 	<script src="{$STATIC_URL}js/addemotes.js?v=7" defer></script>

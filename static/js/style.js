@@ -89,10 +89,20 @@ const kkstyle = {
 	},
 	sett: function(tab, div) {
 		if (tab != "style") return;
-
-		div.innerHTML += '<textarea id="settusercss" class="inputtext" oninput="kkstyle.update_usercss(this.value);" placeholder="Enter your own CSS here">' + _usercss + '</textarea>';
+	
+		// Fetch latest usercss from localStorage when the tab is selected
+		var latestUserCSS = localStorage.getItem("usercss") || '';
+	
+		// Create and insert textarea
+		div.innerHTML += '<textarea id="settusercss" class="inputtext" oninput="kkstyle.update_usercss(this.value);" placeholder="Enter your own CSS here"></textarea>';
+		
+		var textarea = document.getElementById("settusercss");
+		if (textarea) {
+			textarea.value = latestUserCSS;
+		}
+	
+		// Clone and insert style selector
 		var stylesel = kkstyle.stylessel.cloneNode(true);
-
 		stylesel.onchange = function(event) {
 			kkstyle.set_stylesheet(this.value, false);
 			stylesel.value = kkstyle.get_active_stylesheet();
