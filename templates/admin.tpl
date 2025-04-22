@@ -261,7 +261,7 @@
 			<tbody>
 				<tr>
 					<td class="postblock" style="min-width:9em"><label for="inputGlobalMessage">Global message<div>(raw HTML)</div></label></td>
-					<td style="width:100%"><textarea class="inputtext" id="inputGlobalMessage" name="content">{$CURRENT_GLOBAL_MESSAGE}</textarea></td>
+					<td><textarea class="inputtext" id="inputGlobalMessage" name="content">{$CURRENT_GLOBAL_MESSAGE}</textarea></td>
 				</tr>
 			</tbody>
 		</table>
@@ -504,7 +504,7 @@ window.onload = function () {
 
 		<img id="banimg" src="{$BAN_IMAGE}" alt="BANNED!">
 	</div>
-	
+
 	<hr id="hrBan">
 <!--/&BAN_PAGE-->
 

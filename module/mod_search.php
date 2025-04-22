@@ -34,23 +34,57 @@ class mod_search extends moduleHelper {
 		$dat = '';
 		$globalHTML->head($dat);
 		$links = '[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">'._T('return').'</a>]';
-		$dat .= $links.'<h2 class="theading2">'._T('module_info_top').'</h2>
-		</div>
-		';
-		
+		$dat .= $links;
 		echo $dat;
+		
+		echo '
+			<h2 class="theading2">'._T('search_top').'</h2>
+				<div class="modulePageContent">
+			';
+
 		if($searchKeyword==''){
-		echo '<form action="'.$this->mypage.'" method="post">
-		<div id="search">
-		<input type="hidden" name="mode" value="search">
-		';
-		echo _T('search_notice').'<input type="text" class="inputtext" name="keyword" size="30">
-	'._T('search_target').'<select name="field"><option value="com" selected="selected">'._T('search_target_comment').'</option><option value="name">'._T('search_target_name').'</option><option value="sub">'._T('search_target_topic').'</option><option value="no">'._T('search_target_number').'</option></select>
-	'._T('search_method').'<select name="method"><option value="AND" selected="selected">'._T('search_method_and').'</option><option value="OR">'._T('search_method_or').'</option></select>
-	<input type="submit" value="'._T('search_submit_btn').'">
-	</p>
-	</div>
-	</form>';
+			echo '
+				<form action="'.$this->mypage.'" method="post">
+					<div id="search">
+						<ul>'._T('search_notice').'</ul>
+						<input type="hidden" name="mode" value="search">
+						
+						<table>
+							<tbody>
+								<tr>
+									<td class="postblock"><label for="searchKeyword">'._T('search_keyword').'</label></td>
+									<td><input type="text" class="inputtext" id="searchKeyword" name="keyword"></td>
+								</tr>
+								<tr>
+									<td class="postblock"><label for="searchTarget">'._T('search_target').'</label></td>
+									<td>
+										<select id="searchTarget" name="field">
+											<option value="com" selected="selected">'._T('search_target_comment').'</option>
+											<option value="name">'._T('search_target_name').'</option>
+											<option value="sub">'._T('search_target_topic').'</option>
+											<option value="no">'._T('search_target_number').'</option>
+										</select>
+									</td>
+								</tr>
+								<tr>
+									<td class="postblock"><label for="searchMethod">'._T('search_method').'</label></td>
+									<td>
+										<select id="searchMethod" name="method">
+											<option value="AND" selected="selected">'._T('search_method_and').'</option>
+											<option value="OR">'._T('search_method_or').'</option>
+										</select>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+
+						<div class="buttonSection">
+							<input type="submit" value="'._T('search_submit_btn').'">
+						</div>
+					</div>
+				</form>
+				<hr>
+				';
 		}else{
 			$searchField = $_POST['field']; // Search target (no:number, name:name, sub:title, com:text)
 			$searchMethod = $_POST['method']; // Search method
@@ -86,5 +120,7 @@ class mod_search extends moduleHelper {
 				<hr>';
 			echo "</div>";
 		}
+
+		echo '</div>';
 	}
 }
