@@ -55,7 +55,7 @@ class mod_onlinecounter extends moduleHelper {
 		$form .= '
 			<li id="counterListItemNoJS" class="">
 				<noscript>
-					<iframe id="counterIframe" title="User counter" src="'.$this->mypage.'" scrolling="no"></iframe>
+					<iframe id="counterIframe" title="User counter" src="'.$this->mypage.'"></iframe>
 				</noscript>
 			</li>';
 	}
