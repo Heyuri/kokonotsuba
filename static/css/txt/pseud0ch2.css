@@ -1,15 +1,14 @@
 @charset "UTF-8";
 @import "pseud0ch.css";
 
-body {
-	font-family: system-ui, Arial, Helvetica, sans-serif;
-	font-size: 11pt;
+:root {
+	--font-family-main: var(--font-family-serif);
 }
 
-/************************ Mobile **************************************/
+body {
+	line-height: revert;
+}
 
-@media screen and (max-width: 450px) {
-	body {
-		font-size: 12pt;
-	}
+.sod.noVotes {
+	font-family: inherit;
 }

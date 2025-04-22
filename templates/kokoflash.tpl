@@ -13,15 +13,15 @@
 	<meta name="description" content="{$PAGE_TITLE}">
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/base.css?v=67">
-	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/sakomoto.css?v=2" title="Sakomoto">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/heyuriclassic.css?v=2" title="Heyuri Classic">
+	<link rel="stylesheet" href="{$STATIC_URL}css/base.css?v=69">
+	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/sakomoto.css?v=4" title="Sakomoto">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/heyuriclassic.css?v=4" title="Heyuri Classic">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/futaba.css?v=2" title="Futaba">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/burichan.css?v=2" title="Burichan">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/fuuka.css?v=2" title="Fuuka">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/tomorrow.css?v=3" title="Tomorrow">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/ayashii.css?v=2" title="Ayashii">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/mercury.css?v=2" title="Mercury">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/burichan.css?v=4" title="Burichan">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/fuuka.css?v=4" title="Fuuka">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/tomorrow.css?v=4" title="Tomorrow">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/ayashii.css?v=4" title="Ayashii">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/mercury.css?v=4" title="Mercury">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import Custom">
 	<script src="{$STATIC_URL}js/koko.js?v=7"></script>
 	<script src="{$STATIC_URL}js/onlinecounter.js" defer></script>

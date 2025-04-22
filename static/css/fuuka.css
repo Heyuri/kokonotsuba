@@ -4,7 +4,7 @@
 
 :root {
   /* Global */
-  --font-family-main: 'Times New Roman', 'Times', serif;
+  --font-family-main: var(--font-family-serif);
   --font-size-main: 12pt;
   --color-bg-main: #eefff2;
   --color-bg-main-gradient: #d1eed5;

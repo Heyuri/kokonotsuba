@@ -4,7 +4,7 @@
 
 :root {
   /* Global */
-  --font-family-main: system-ui, 'Segoe UI', Calibri, Tahoma, Arial, sans-serif;
+  --font-family-main: var(--font-family-sans-serif);
   --font-size-main: 11pt;
   --color-bg-main: #ffffee;
   --color-bg-main-gradient: #ffccaa;
