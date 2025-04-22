@@ -90,7 +90,7 @@ class mod_threadlist extends moduleHelper {
 								'<span><!--%d--> <a href="%s">%s (%d)</a></span>',
 								$post['no'],
 								$this->config['PHP_SELF'] . '?res=' . $post['no'],
-								htmlspecialchars($title),
+								$title,
 								$replyCount
 						);
 				}
