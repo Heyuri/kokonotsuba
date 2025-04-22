@@ -5,19 +5,19 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="shortcut icon" href="../image/favicon.png">
   <title>BBCode Reference</title>
-  <link rel="stylesheet" href="../css/base.css?v=6">
+  <link rel="stylesheet" href="../css/base.css?v=62">
   <link class="linkstyle" rel="stylesheet" href="../css/sakomoto.css?v=2" title="Sakomoto">
   <link class="linkstyle" rel="stylesheet alternate" href="../css/heyuriclassic.css?v=2" title="Heyuri Classic">
   <link class="linkstyle" rel="stylesheet alternate" href="../css/futaba.css?v=2" title="Futaba">
   <link class="linkstyle" rel="stylesheet alternate" href="../css/burichan.css?v=2" title="Burichan">
   <link class="linkstyle" rel="stylesheet alternate" href="../css/fuuka.css?v=2" title="Fuuka">
-  <link class="linkstyle" rel="stylesheet alternate" href="../css/tomorrow.css?v=2" title="Tomorrow">
+  <link class="linkstyle" rel="stylesheet alternate" href="../css/tomorrow.css?v=3" title="Tomorrow">
   <link class="linkstyle" rel="stylesheet alternate" href="../css/ayashii.css?v=2" title="Ayashii">
   <link class="linkstyle" rel="stylesheet alternate" href="../css/mercury.css?v=2" title="Mercury">
   <link class="linkstyle" rel="stylesheet alternate" href="../css/blank.css?v=2" title="Import Custom">
   <meta name="description" content="Heyuri's BBCode">
-  <script src="../js/koko.js"></script>
-  <script src="../js/style.js?v=2"></script>
+  <script src="../js/koko.js?v=7"></script>
+  <script src="../js/style.js?v=3"></script>
   <style>
     .centered {
       text-align: center;
@@ -40,7 +40,7 @@
     #emoteTable,
     #emoteTable th,
     #emoteTable td {
-      border: 1px solid var(--color-lo-contrast-border);
+      border: 1px solid var(--color-lo-contrast-border) !important;
     }
 
     #bbcodeContainer {
@@ -55,6 +55,7 @@
       vertical-align: top;
       border: 1px solid var(--color-lo-contrast-border);
       padding: 0 0.5em;
+      max-width: 410px;
     }
 
     .bbcodeSection h3 {
@@ -73,8 +74,9 @@
       margin-bottom: 0.5em;
     }
 
-    .bbcodeSection p {
+    .bbcodeNote {
       margin: 0.5em 0;
+      font-size: var(--font-size-small);
     }
 
     @media screen and (max-width: 650px) {
@@ -370,12 +372,12 @@
       </tbody>
     </table>
 
-    <p><strong>Note: Emotes are case-sensitive.</strong></p>
+    <p class="bbcodeNote">Note: Emotes are case-sensitive.</p>
   </div>
   
   <hr>
 
-  <h2>BBCode stuff</h2>
+  <h2>BBCode</h2>
 
   <div id="bbcodeContainer">
   
@@ -395,11 +397,11 @@
           <div class="postinfo">
             <label>
               <input type="checkbox"><span class="title"></span>
-              <span class="name"><b>Anonymous</b></span>
-              <span class="time">202X/XX/XX(X)XX:XX</span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
             </label>
             <span class="postnum">
-              <a class="no">No.</a><a class="qu">XXXXX</a>
+              <a class="no">No.</a><a class="qu">1931</a>
             </span>
           </div>
           <div class="comment"><b>Waha!</b></div>
@@ -423,11 +425,11 @@
           <div class="postinfo">
             <label>
               <input type="checkbox"><span class="title"></span>
-              <span class="name"><b>Anonymous</b></span>
-              <span class="time">202X/XX/XX(X)XX:XX</span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
             </label>
             <span class="postnum">
-              <a class="no">No.</a><a class="qu">XXXXX</a>
+              <a class="no">No.</a><a class="qu">1931</a>
             </span>
           </div>
           <div class="comment"><i>Waha!</i></div>
@@ -451,11 +453,11 @@
           <div class="postinfo">
             <label>
               <input type="checkbox"><span class="title"></span>
-              <span class="name"><b>Anonymous</b></span>
-              <span class="time">202X/XX/XX(X)XX:XX</span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
             </label>
             <span class="postnum">
-              <a class="no">No.</a><a class="qu">XXXXX</a>
+              <a class="no">No.</a><a class="qu">1931</a>
             </span>
           </div>
           <div class="comment"><u>Waha!</u></div>
@@ -479,11 +481,11 @@
           <div class="postinfo">
             <label>
               <input type="checkbox"><span class="title"></span>
-              <span class="name"><b>Anonymous</b></span>
-              <span class="time">202X/XX/XX(X)XX:XX</span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
             </label>
             <span class="postnum">
-              <a class="no">No.</a><a class="qu">XXXXX</a>
+              <a class="no">No.</a><a class="qu">1931</a>
             </span>
           </div>
           <div class="comment"><del>Desu!</del></div>
@@ -507,11 +509,11 @@
           <div class="postinfo">
             <label>
               <input type="checkbox"><span class="title"></span>
-              <span class="name"><b>Anonymous</b></span>
-              <span class="time">202X/XX/XX(X)XX:XX</span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
             </label>
             <span class="postnum">
-              <a class="no">No.</a><a class="qu">XXXXX</a>
+              <a class="no">No.</a><a class="qu">1931</a>
             </span>
           </div>
           <div class="comment"><span class="spoiler">Waha!</span></div>
@@ -535,18 +537,18 @@
           <div class="postinfo">
             <label>
               <input type="checkbox"><span class="title"></span>
-              <span class="name"><b>Anonymous</b></span>
-              <span class="time">202X/XX/XX(X)XX:XX</span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
             </label>
             <span class="postnum">
-              <a class="no">No.</a><a class="qu">XXXXX</a>
+              <a class="no">No.</a><a class="qu">1931</a>
             </span>
           </div>
           <div class="comment"><pre>Waha!</pre></div>
         </div>
       </div>
 
-      <p><strong>Note: This adds <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/pre">&lt;pre&gt;</a> to your post.</strong></p>
+      <p class="bbcodeNote">Note: This adds <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/pre">&lt;pre&gt;</a> to your post.</p>
 
     </div>
 
@@ -566,18 +568,18 @@
           <div class="postinfo">
             <label>
               <input type="checkbox"><span class="title"></span>
-              <span class="name"><b>Anonymous</b></span>
-              <span class="time">202X/XX/XX(X)XX:XX</span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
             </label>
             <span class="postnum">
-              <a class="no">No.</a><a class="qu">XXXXX</a>
+              <a class="no">No.</a><a class="qu">1931</a>
             </span>
           </div>
           <div class="comment"><blockquote>Waha!</blockquote></div>
         </div>
       </div>
 
-      <p><strong>Note: This adds <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/blockquote">&lt;blockquote&gt;</a> to your post.</strong></p>
+      <p class="bbcodeNote">Note: This adds <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/blockquote">&lt;blockquote&gt;</a> to your post.</p>
 
     </div>
 
@@ -597,11 +599,11 @@
           <div class="postinfo">
             <label>
               <input type="checkbox"><span class="title"></span>
-              <span class="name"><b>Anonymous</b></span>
-              <span class="time">202X/XX/XX(X)XX:XX</span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
             </label>
             <span class="postnum">
-              <a class="no">No.</a><a class="qu">XXXXX</a>
+              <a class="no">No.</a><a class="qu">1931</a>
             </span>
           </div>
           <div class="comment"><pre class="code">Waha!</pre></div>
@@ -611,7 +613,7 @@
 
     <!-- AA -->
     <div class="bbcodeSection" id="asciiart">
-      <h3>Ascii Art</h3>
+      <h3>ASCII Art (Shift-JIS art)</h3>
 
       <p>Input:</p>
 
@@ -628,11 +630,11 @@
           <div class="postinfo">
             <label>
               <input type="checkbox"><span class="title"></span>
-              <span class="name"><b>Anonymous</b></span>
-              <span class="time">202X/XX/XX(X)XX:XX</span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
             </label>
             <span class="postnum">
-              <a class="no">No.</a><a class="qu">XXXXX</a>
+              <a class="no">No.</a><a class="qu">1931</a>
             </span>
           </div>
           <div class="comment">
@@ -640,6 +642,11 @@
           </div>
         </div>
       </div>
+
+      <p class="bbcodeNote">Note: This is intended for <a href="https://en.wikipedia.org/wiki/2channel">2ch</a>-type AA.</p>
+      <p class="bbcodeNote">For Western ASCII art, use <code>[pre]</code> tags.</p>
+      <p class="bbcodeNote">For <a href="https://wiki.heyuri.net/index.php?title=Ayashii_World">Ayashii World</a>-type AA, use <code>[sw]</code> tags.</p>
+
     </div>
 
     <!-- Colors -->
@@ -658,11 +665,11 @@
           <div class="postinfo">
             <label>
               <input type="checkbox"><span class="title"></span>
-              <span class="name"><b>Anonymous</b></span>
-              <span class="time">202X/XX/XX(X)XX:XX</span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
             </label>
             <span class="postnum">
-              <a class="no">No.</a><a class="qu">XXXXX</a>
+              <a class="no">No.</a><a class="qu">1931</a>
             </span>
           </div>
           <div class="comment">
@@ -678,7 +685,13 @@
 
       <p>Input:</p>
 
-      <textarea class="com" readonly>[s5]WAHA[/s5]</textarea>
+      <textarea class="com" readonly>[s1]WAHA[/s1]
+[s2]WAHA[/s2]
+[s3]WAHA[/s3] &lt;-- normal size
+[s4]WAHA[/s4]
+[s5]WAHA[/s5]
+[s6]WAHA[/s6]
+[s7]WAHA[/s7]</textarea>
 
       <p>Output:</p>
 
@@ -688,18 +701,21 @@
           <div class="postinfo">
             <label>
               <input type="checkbox"><span class="title"></span>
-              <span class="name"><b>Anonymous</b></span>
-              <span class="time">202X/XX/XX(X)XX:XX</span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
             </label>
             <span class="postnum">
-              <a class="no">No.</a><a class="qu">XXXXX</a>
+              <a class="no">No.</a><a class="qu">1931</a>
             </span>
           </div>
-          <div class="comment"><span class="fontSize5">Waha!</span></div>
+          <div class="comment">
+            <span class="fontSize1">Waha!</span><br><span class="fontSize2">Waha!</span><br><span class="fontSize3">Waha!</span> &lt;-- normal size<br><span class="fontSize4">Waha!</span><br><span class="fontSize5">Waha!</span><br><span class="fontSize6">Waha!</span><br><span class="fontSize7">Waha!</span>
+          </div>
         </div>
       </div>
 
-      <p><strong>Note: You can change 5 with any number between 1 and 7.</strong></p>
+      <p class="bbcodeNote">Note: You can only use sizes between 1 and 7.</p>
+      <p class="bbcodeNote">1 is the smallest, 7 is the largest.</p>
 
     </div>
 
@@ -719,11 +735,11 @@
           <div class="postinfo">
             <label>
               <input type="checkbox"><span class="title"></span>
-              <span class="name"><b>Anonymous</b></span>
-              <span class="time">202X/XX/XX(X)XX:XX</span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
             </label>
             <span class="postnum">
-              <a class="no">No.</a><a class="qu">XXXXX</a>
+              <a class="no">No.</a><a class="qu">1931</a>
             </span>
           </div>
           <div class="comment">
@@ -732,10 +748,12 @@
         </div>
       </div>
       
-      <p><strong>Note: This is intended to be used with extremely long posts.</strong></p>
+      <p class="bbcodeNote">Note: This is intended to be used with extremely long posts.</p>
 
     </div>
   </div>
+
+  <hr>
 
 </body>
 </html>
