@@ -279,7 +279,7 @@ $config['OVERBOARD_SUBTITLE'] = "Posts from all koko boards";
 $config['OVERBOARD_SUB_HEADER_HTML'] = '';
 // How many threads per page on the overboard
 $config['OVERBOARD_THREADS_PER_PAGE'] = 20;
-//A link to the overboard on the admin bar (next to [Admin] on the top right). Displayed as [Overboard]
+// A link to the overboard on the admin bar (next to [Admin] on the top right). Displayed as [Overboard]
 $config['ADMINBAR_OVERBOARD_BUTTON'] = true;
 
 $config['ACTIONLOG_MAX_PER_PAGE'] = 250; // the amount of actionlog entries per page
@@ -295,7 +295,8 @@ $config['AuthLevels']['CAN_MANAGE_REBUILD'] = $config['roles']['LEV_MODERATOR'];
 $config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE'] = $config['roles']['LEV_ADMIN'];
 $config['AuthLevels']['CAN_EDIT_BLOTTER'] = $config['roles']['LEV_ADMIN'];
 
-// time since last action before logging out, measured in seconds. Note that it cannot be higher than your session.gc_maxlifetime
+// The duration (in seconds) of inactivity allowed before automatically logging out a staff user
+// This value must not exceed the value of session.gc_maxlifetime in your php.ini
 $config['STAFF_LOGIN_TIMEOUT'] = 86400;
 
 // name of system role/user
