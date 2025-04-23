@@ -334,6 +334,11 @@ caption h3 {
 	background-color: var(--color-bg-theading3);
 }
 
+.theading3 h2 {
+	font-size: var(--font-size-regular);
+	margin: 0;
+}
+
 /************************ Post form ***********************************/
 
 #toggleFlagContainer {

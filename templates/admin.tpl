@@ -354,7 +354,7 @@
 <!--&BLOTTER_PAGE-->
 	[<a href="{$PHP_SELF2}">Return</a>]
 
-	<h2 class="theading3">Blotter</h2>
+	<h2 class="theading2">Blotter</h2>
 
 	<table class="postlists" id="blotterlist">
 		<thead>
