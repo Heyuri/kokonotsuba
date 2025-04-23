@@ -247,7 +247,7 @@ class globalHTML {
 		
 		if($role) $loggedInInfo = "<div class=\"username\">Logged in as $username ({$this->roleNumberToRoleName($role)})</div>";
 		
-		$html = "<h2 class=\"theading3\">Administrator mode$loggedInInfo</h2>";
+		$html = "<div class=\"theading3\"><h2>Administrator mode</h2>$loggedInInfo</div>";
 		$dat .= $html;
 		return $html;
 	}
