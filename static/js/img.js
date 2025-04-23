@@ -7,6 +7,7 @@ const kkgal = {
 		var df = $id("delform");
 		if (!df) return;
 		if (document.querySelector("#galfuncs")) return;
+		//df.insertAdjacentHTML("beforebegin", '<div id="galfuncs"><label><input type="checkbox" onchange="localStorage.setItem(\'galmode\',this.checked);"'+( localStorage.getItem("galmode")=="true" ? ' checked="checked"' : '')+'>Gallery mode</label></div>'); // disable "Gallery mode" checkbox in thread
 		$doc.body.insertAdjacentHTML("beforeend", `
 <div id="galframe">
 	<table id="galmain" cellspacing="0" cellpadding="5" height="100%"><tbody>
@@ -19,22 +20,23 @@ const kkgal = {
 			<div id="galctrl2"><a href="javascript:kkgal.contract();" title="close">&times;</a></div>
 		</td></tr>
 	</tbody></table>
-	<div id="galside"></div>
+	<div id="galside">
+	</div>
 </div>
 		`);
-		kkgal.gframe	= $id("galframe");
-		kkgal.gimg		= $id("galimg");
-		kkgal.gctrl		= $id("galctrl");
-		var side		= $id("galside"),
-			html		= "";
+		kkgal.gframe = $id("galframe");
+		kkgal.gimg   = $id("galimg");
+		kkgal.gctrl  = $id("galctrl");
+		var side = $id("galside");
+		var sideInnerHTML = "";
 		for (var i = 0; i < kkimg.postimg.length; i++) {
-			var a		= kkimg.postimg[i].parentNode;
-			var pno		= a.parentNode.id.substr(1);
-			html		+= '<a href="javascript:kkgal.expand(\''+pno+'\');">'
-					 + '<img id="galthumb'+pno+'" src="'+kkimg.postimg[i].src+'"></a>';
+			var a   = kkimg.postimg[i].parentNode;
+			var pno = a.parentNode.id.substr(1);
+
+			sideInnerHTML += '<a href="javascript:kkgal.expand(\''+pno+'\');"><img id="galthumb'+pno+'" class="" src="'+kkimg.postimg[i].src+'" alt="'+kkimg.postimg[i].src+'"></a>';
 			kkgal.imgindex[i] = pno;
 		}
-		side.insertAdjacentHTML("beforeend", html);
+		side.insertAdjacentHTML("beforeend", sideInnerHTML);
 		kkgal.getfit();
 		window.addEventListener("resize", kkgal._evresize);
 	},
@@ -46,39 +48,58 @@ const kkgal = {
 		$del(kkgal.gframe);
 		window.removeEventListener("resize", kkgal._evresize);
 	},
+	/* - */
 	gframe:	null,
 	gimg:	null,
 	gctrl:	null,
 	imgindex: Array(),
-	_evresize: function () {
+	/* Event */
+	_evresize: function (event) {
 		kkgal.getfit();
 	},
-	_evkeydown: function (e) {
-		switch (e.key) {
-			case "ArrowLeft": case "ArrowUp": case "PageUp":
-			case "h": case "k":
-			case "<": case "[":
-			case "w": case "a":
-				$id("galimgprev").click(); e.preventDefault(); break;
+	_evkeydown: function (event) {
+		switch (event.key) {
+			case "ArrowLeft": case "ArrowUp": case "PageUp": // normal person keys (:^|)
+			case "h": case "k": // autist keys (hjkl)
+			case "<": case "[": // chad keys (*pounds keyboard*)
+			case "w": case "a": // gamer keys (wasd)
+				$id("galimgprev").click();
+				event.preventDefault();
+				break;
 			case "ArrowRight": case "ArrowDown": case "PageDown":
 			case "l": case "j":
 			case ">": case "]":
 			case "s": case "d":
-				$id("galimgnext").click(); e.preventDefault(); break;
-			case "Escape": case "q": case "x":
-				kkgal.contract(); e.preventDefault(); break;
-			case "Home": case "^":
-				kkgal.expand(kkgal.imgindex[0]); e.preventDefault(); break;
-			case "End": case "$":
-				kkgal.expand(kkgal.imgindex[kkgal.imgindex.length-1]); e.preventDefault(); break;
+				$id("galimgnext").click();
+				event.preventDefault();
+				break;
+			case "Escape":
+			case "q":
+			case "x":
+				kkgal.contract();
+				event.preventDefault();
+				break;
+			case "Home":
+			case "^":
+				kkgal.expand(kkgal.imgindex[0]);
+				event.preventDefault();
+				break;
+			case "End":
+			case "$":
+				kkgal.expand(kkgal.imgindex[kkgal.imgindex.length-1]);
+				event.preventDefault();
+				break;
 			default:
-				if (e.key.match(/^\d$/i)) {
-					var idx = parseInt(e.key,10)-1;
-					if (kkgal.imgindex[idx]) kkgal.expand(kkgal.imgindex[idx]);
-					e.preventDefault();
+				if (event.key.match(/^\d$/i)) {
+					var i = parseInt(event.key) - 1;
+					if (typeof(kkgal.imgindex[i]) != "undefined")
+						kkgal.expand(kkgal.imgindex[i]);
+					event.preventDefault();
 				}
+				break;
 		}
 	},
+	/* Function */
 	getfit: function () {
 		var d = $doc.documentElement;
 		kkgal.gimg.style.maxWidth  = (d.clientWidth  - 300) + "px";
@@ -86,27 +107,31 @@ const kkgal = {
 	},
 	expand: function (no = 0) {
 		$doc.addEventListener("keydown", kkgal._evkeydown);
-		var act = $class("activethumb");
-		if (act.length) act[0].classList.remove("activethumb");
+		var _a = $class("activethumb");
+		if (_a.length) _a[0].classList.remove("activethumb");
 		if (!no) no = ($class("postimg")[0].parentNode).parentNode.id.substr(1);
 		for (var i = 0; i < kkimg.postimg.length; i++) {
 			var a   = kkimg.postimg[i].parentNode;
 			var pno = a.parentNode.id.substr(1);
+
 			if (pno == no) {
-				var thumb = $id("galthumb"+no);
+				var thumb = $id("galthumb" + no);
 				thumb.classList.add("activethumb");
-				thumb.scrollIntoView({behavior:"smooth",block:"center"});
-				var fs   = $q("#p"+pno+" .filesize")[0].cloneNode(true);
-				var prev = kkgal.imgindex[i-1] || kkgal.imgindex[kkgal.imgindex.length-1];
-				var next = kkgal.imgindex[i+1] || kkgal.imgindex[0];
-				kkgal.gimg.src         = a.href;
-				$id("galimgprev").href = "javascript:kkgal.expand('"+prev+"');";
-				$id("galimgnext").href = "javascript:kkgal.expand('"+next+"');";
-				kkgal.gctrl.innerHTML  = '<div id="galctrl2">'
-				                        + '<a href="javascript:kkgal.expand(\''+prev+'\');" title="Previous">&#9664;</a> '
-				                        + '<a href="javascript:kkgal.expand(\''+next+'\');" title="Next">&#9654;</a> '
-				                        + '<a href="javascript:kkgal.contract();" title="Close">&times;</a>'
-				                        + '</div>';
+				thumb.scrollIntoView({ behavior: "smooth", block: "center" });
+				var fs   = $q("#p" + pno + " .filesize")[0].cloneNode(true);
+				var prev = typeof(kkgal.imgindex[i-1]) != "undefined"
+				         ? kkgal.imgindex[i-1]
+				         : kkgal.imgindex[kkgal.imgindex.length-1];
+				var next = typeof(kkgal.imgindex[i+1]) != "undefined"
+				         ? kkgal.imgindex[i+1]
+				         : kkgal.imgindex[0];
+				kkgal.gimg.src               = a.href;
+				$id("galimgprev").href       = "javascript:kkgal.expand('" + prev + "');";
+				$id("galimgnext").href       = "javascript:kkgal.expand('" + next + "');";
+				kkgal.gctrl.innerHTML        =
+					'<div id="galctrl2"><a href="javascript:kkgal.expand(\''+prev+'\');" title="Previous">&#9664;</a> '
+				  + '<a href="javascript:kkgal.expand(\''+next+'\');" title="Next">&#9654;</a> '
+				  + '<a href="javascript:kkgal.contract();" title="Close">&times;</a></div>';
 				kkgal.gctrl.appendChild(fs);
 			}
 		}
@@ -114,7 +139,7 @@ const kkgal = {
 		$doc.body.style.overflow      = "hidden";
 		$id("hoverimg").style.display = "none";
 	},
-	contract: function () {
+	contract: function (no = 0) {
 		$doc.removeEventListener("keydown", kkgal._evkeydown);
 		kkgal.gframe.style.display = "none";
 		$doc.body.style.overflow   = "";
@@ -122,13 +147,12 @@ const kkgal = {
 };
 
 /* Module */
-const kkimg = {
-	name: "KK Image Features",
+const kkimg = { name: "KK Image Features",
 	startup: function () {
 		if (!localStorage.getItem("imgexpand"))
-			localStorage.setItem("imgexpand","true");
+			localStorage.setItem("imgexpand", "true");
 		kkimg.postimg = $class("postimg");
-		for (var i=0; i<kkimg.postimg.length; i++) {
+		for (var i = 0; i < kkimg.postimg.length; i++) {
 			var a = kkimg.postimg[i].parentNode;
 			a.addEventListener("click",    kkimg._evexpand);
 			a.addEventListener("mouseover",kkimg._evhover1);
@@ -136,8 +160,8 @@ const kkimg = {
 		}
 		$doc.body.insertAdjacentHTML("beforeend",
 			'<img id="hoverimg" src="" alt="Full Image" '
-			+'onerror="this.style.display=\'\';" '
-			+'onload="this.style.display=\'inline-block\';" border="1">'
+		  + 'onerror="this.style.display=\\\'\\\';" '
+		  + 'onload="this.style.display=\\\'inline-block\\\';" border="1">'
 		);
 		kkgal.startup();
 		return true;
@@ -148,7 +172,7 @@ const kkimg = {
 			return;
 		}
 		kkgal.reset();
-		for (var i=0; i<kkimg.postimg.length; i++) {
+		for (var i = 0; i < kkimg.postimg.length; i++) {
 			var a  = kkimg.postimg[i].parentNode;
 			var no = a.parentNode.id.substr(1);
 			kkimg.contract(no);
@@ -158,39 +182,39 @@ const kkimg = {
 		}
 		$del($id("hoverimg"));
 	},
-	sett: function (tab, div) {
-		if (tab!="general") return;
-		div.innerHTML += `
-			<label><input type="checkbox" onchange="localStorage.setItem('imgexpand',this.checked);kkimg.reset();kkimg.startup();"`
-			+(localStorage.getItem("imgexpand")==="true"?' checked':'')+`>Inline image expansion</label>
-			<label><input type="checkbox" onchange="localStorage.setItem('imghover',this.checked);$id('hoverimg').src='';"`
-			+(localStorage.getItem("imghover")==="true"?' checked':'')+`>Image hover</label>
-			<label><input type="checkbox" onchange="localStorage.setItem('galmode',this.checked);kkgal.reset();kkgal.startup();"`
-			+(localStorage.getItem("galmode")==="true"?' checked':'')+`>Gallery mode</label>`;
+	sett: function(tab, div) { if (tab!="general") return;
+		div.innerHTML+= `
+			<label><input type="checkbox" onchange="localStorage.setItem('imgexpand',this.checked);kkimg.reset();kkimg.startup();"`+(localStorage.getItem("imgexpand")=="true"?' checked="checked"':'')+`>Inline image expansion</label>
+			<label><input type="checkbox" onchange="localStorage.setItem('imghover',this.checked);$id('hoverimg').src='';"`+(localStorage.getItem("imghover")=="true"?' checked="checked"':'')+`>Image hover</label>
+			<label><input type="checkbox" onchange="localStorage.setItem('galmode',this.checked);kkgal.reset();kkgal.startup();"`+(localStorage.getItem("galmode")=="true"?' checked="checked"':'')+`>Gallery mode</label>`;
 	},
-	postimg:Array(),
+	/* - */
+	postimg: null,
 	imgext: Array("png","jpg","jpeg","gif","giff","bmp","jfif"),
 	vidext: Array("webm","mp4"),
 	swfext: Array("swf"),
-	_evexpand: function (e) {
-		if (localStorage.getItem("imgexpand")!=="true") return;
-		var p=this.parentNode,no=p.id.substr(1);
-		if (localStorage.getItem("galmode")==="true") {
+	/* event */
+	_evexpand: function (event) {
+		if (localStorage.getItem("imgexpand")!="true") return;
+		var p  = this.parentNode;
+		var no = p.id.substr(1);
+		if (localStorage.getItem("galmode")=="true") {
 			kkgal.expand(no);
-			e.preventDefault();
+			event.preventDefault();
 			return;
 		}
-		if (kkimg.expand(no)) e.preventDefault();
+		if (kkimg.expand(no)) event.preventDefault();
 	},
-	_evhover1: function () {
-		if (localStorage.getItem("imghover")!=="true") return;
-		$id("hoverimg").src=this.href;
+	_evhover1: function (event) {
+		if (localStorage.getItem("imghover")!="true") return;
+		$id("hoverimg").src = this.href;
 	},
-	_evhover2: function () {
-		var hi=$id("hoverimg");
-		hi.style.display="";
-		hi.src="";
+	_evhover2: function (event) {
+		var hi = $id("hoverimg");
+		hi.style.display = "";
+		hi.src = "";
 	},
+	/* function */
 	expand: function (no) {
 		var p    = $id("p"+no),
 			thumb= p.getElementsByClassName("postimg")[0];
@@ -199,82 +223,73 @@ const kkimg = {
 		if (!a||a.tagName!=="A") return;
 		var ext  = a.href.split(".").pop().toLowerCase();
 
-		a.style.display="none";
-		if (p.getBoundingClientRect().top<0) p.scrollIntoView();
+		a.style.display = "none";
+		if (p.getBoundingClientRect().top < 0) p.scrollIntoView();
 
-		// images
 		if (kkimg.imgext.includes(ext)) {
-			a.insertAdjacentHTML("afterend",
-				'<div class="expand">'
-				+'<a href="'+a.href+'" onclick="event.preventDefault();kkimg.contract(\''+no+'\');">'
-				+'<img src="'+a.href+'" class="expandimg" title="Click to contract" border="0" onerror="kkimg.error(\''+no+'\');">'
-				+'</a></div>'
-			);
+			a.insertAdjacentHTML("afterend", '<div class="expand">'+
+				'<a href="'+a.href+'" onclick="event.preventDefault();kkimg.contract(\''+no+'\');">'+
+				'<img src="'+a.href+'" alt="Full image" onerror="kkimg.error(\''+no+'\');" class="expandimg" title="Click to contract" border="0">'+
+				'</a></div>');
 			return true;
-		}
-		// videos
-		else if (kkimg.vidext.includes(ext)) {
-			a.insertAdjacentHTML("afterend",
-				'<div class="expand">'
-				+'<div>[<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]</div>'
-				+'<video class="expandimg" controls loop autoplay src="'+a.href+'"></video>'
-				+'</div>'
-			);
+		} else if (kkimg.vidext.includes(ext)) {
+			a.insertAdjacentHTML("afterend", '<div class="expand">'+
+				'<div>[<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]</div>'+
+				'<video class="expandimg" controls="controls" loop="loop" autoplay="autoplay" src="'+a.href+'"></video>'+
+				'</div>');
 			return true;
-		}
-		// flash/swf
-		else if (kkimg.swfext.includes(ext)) {
+		} else if (kkimg.swfext.includes(ext)) {
 			// pull native dims from the existing filesize text (leave it visible)
-			var fsNode=$q("#p"+no+" .filesize")[0],
-				m=fsNode.textContent.match(/(\d+)\s*x\s*(\d+)/i),
-				realW=m?parseInt(m[1],10):550,
-				realH=m?parseInt(m[2],10):400;
+			var fsNode = $q("#p"+no+" .filesize")[0],
+				m      = fsNode.textContent.match(/(\d+)\s*x\s*(\d+)/i),
+				realW  = m ? parseInt(m[1],10) : 550,
+				realH  = m ? parseInt(m[2],10) : 400;
 
 			// cap at 95%
-			var vw=document.documentElement.clientWidth,
-				vh=document.documentElement.clientHeight,
-				maxW=vw*0.95, maxH=vh*0.95,
-				ratio=realW/realH,
-				dispW=Math.min(realW,maxW),
-				dispH=dispW/ratio;
-			if(dispH>maxH){ dispH=maxH; dispW=dispH*ratio; }
+			var vw     = document.documentElement.clientWidth,
+				vh     = document.documentElement.clientHeight,
+				maxW   = vw*0.95, maxH = vh*0.95,
+				ratio  = realW/realH,
+				dispW  = Math.min(realW,maxW),
+				dispH  = dispW/ratio;
+			if (dispH>maxH) { dispH = maxH; dispW = dispH*ratio; }
 
 			// build container
-			var hdr=20,
-				container=document.createElement("div");
-			container.className="expand swf-expand";
+			var hdr       = 20,
+				container = document.createElement("div");
+			container.className = "expand swf-expand";
 			container.style.width   = dispW+"px";
 			container.style.height  = (dispH+hdr)+"px";
 			container.style.resize  = "both";
 			container.style.overflow= "hidden";
 
 			// close header
-			var header=document.createElement("div");
-			header.className   ="swf-expand-header";
-			header.style.height= hdr+"px";
-			header.innerHTML   ='[<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]';
+			var header        = document.createElement("div");
+			header.className = "swf-expand-header";
+			header.style.height = hdr+"px";
+			header.innerHTML = '[<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]';
 			container.appendChild(header);
 
 			// ruffle host
-			var host=document.createElement("div");
-			host.className    ="ruffleContainer";
-			host.style.width  ="100%";
-			host.style.height ="calc(100% - "+hdr+"px)";
+			var host           = document.createElement("div");
+			host.className    = "ruffleContainer";
+			host.style.width  = "100%";
+			host.style.height = "calc(100% - "+hdr+"px)";
 			container.appendChild(host);
 
 			// insert & hide original link
 			a.insertAdjacentElement("afterend", container);
 
 			// init ruffle
-			var ruffle       = window.RufflePlayer.newest(),
-				player       = ruffle.createPlayer();
-			player.style.width  ="100%";
-			player.style.height ="100%";
+			var ruffle = window.RufflePlayer.newest(),
+				player = ruffle.createPlayer();
+			player.style.width  = "100%";
+			player.style.height = "100%";
 			host.appendChild(player);
 			player.load(a.href);
 
 			// live‐resize sync
-			var ro=new ResizeObserver(function(en){
+			var ro = new ResizeObserver(function(en){
 				en.forEach(function(e){
 					player.style.width  = e.contentRect.width  +"px";
 					player.style.height = e.contentRect.height +"px";
@@ -290,25 +305,24 @@ const kkimg = {
 	contract: function (no) {
 		var p   = $id("p"+no),
 			exp = p.getElementsByClassName("expand")[0];
-		if(!exp) return;
-		var rp=exp.querySelector(".ruffleContainer>*");
-		if(rp&&rp._resizeObserver) rp._resizeObserver.disconnect();
+		if (!exp) return;
+		var rp = exp.querySelector(".ruffleContainer>*");
+		if (rp && rp._resizeObserver) rp._resizeObserver.disconnect();
 		exp.remove();
-		var a=p.getElementsByClassName("postimg")[0].parentNode;
-		a.style.display="";
-		if(p.getBoundingClientRect().top<0) p.scrollIntoView();
+		var a = p.getElementsByClassName("postimg")[0].parentNode;
+		a.style.display = "";
+		if (p.getBoundingClientRect().top < 0) p.scrollIntoView();
 	},
 	error: function (no) {
-		var p=$id("p"+no),
-			exp=p.getElementsByClassName("expand")[0];
-		exp.innerHTML='<span class="error">Error loading file!</span>'
-					+' [<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]';
+		var p   = $id("p"+no),
+			exp = p.getElementsByClassName("expand")[0];
+		exp.innerHTML = '<span class="error">Error loading file!</span> [<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]';
 	}
 };
 
 /* Register */
-if(typeof(KOKOJS)!=="undefined"){
+if (typeof(KOKOJS)!="undefined") {
 	kkjs.modules.push(kkimg);
-}else{
-	console.log("ERROR: KOKOJS not loaded! Please load 'koko.js' before this script.");
+} else {
+	console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");
 }
