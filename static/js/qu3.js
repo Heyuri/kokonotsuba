@@ -186,7 +186,14 @@ function showAggregated(trigger, e) {
 
 function findMatchingPostId(text, selfId, includeUnkfunc) {
 	const nm = text.match(/^No\. ?(\d+)$/)
-	if (nm) return `p${nm[1]}`
+	if (nm) {
+		// restore >No.X quoting by reusing the same thread prefix as selfId
+		const num     = nm[1]
+		const prefix  = selfId.split('_')[0]    // e.g. "p1" from "p1_53"
+		const postId  = `${prefix}_${num}`      // e.g. "p1_47"
+		const postElm = document.getElementById(postId)
+		return postElm ? postId : 'notFound'
+	}
 
 	const posts = Array.from(document.querySelectorAll('.post.op, .post.reply'))
 		.reverse()
