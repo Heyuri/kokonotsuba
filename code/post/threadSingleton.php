@@ -118,6 +118,7 @@ class threadSingleton {
 	
 	}
 
+	// insert a new thread into the thread table
 	public function addThread($boardUID, $post_uid, $thread_uid, $post_op_number) {
 		$query = "INSERT INTO {$this->threadTable} (boardUID, post_op_post_uid, post_op_number, thread_uid) VALUES (:board_uid, :post_op_post_uid, :post_op_number, :thread_uid)";
 		$params = [
@@ -135,6 +136,7 @@ class threadSingleton {
 		return $result;
 	}
 
+	// get all OPs from threads
 	public function getFirstPostsFromThreads(array $threadUIDs): array {
 		if (empty($threadUIDs)) {
 				return [];
@@ -168,6 +170,40 @@ class threadSingleton {
 		return $indexed;
 	}
 
+	// get all replies from a thread
+	public function getAllPostsFromThreads(array $threadUIDs): array {
+		if (empty($threadUIDs)) {
+			return [];
+		}
+	
+		// Ensure values are unique and sanitized
+		$threadUIDs = array_map('strval', array_unique($threadUIDs));
+		$placeholders = implode(',', array_fill(0, count($threadUIDs), '?'));
+	
+		// Fetch all posts for the given threads
+		$query = "
+			SELECT p.*
+			FROM {$this->postTable} p
+			WHERE p.thread_uid IN ($placeholders)
+			ORDER BY p.thread_uid, p.post_uid
+		";
+	
+		$results = $this->databaseConnection->fetchAllAsArray($query, $threadUIDs);
+	
+		// Group all posts by thread_uid
+		$grouped = [];
+		foreach ($results as $row) {
+			$threadUID = $row['thread_uid'];
+			if (!isset($grouped[$threadUID])) {
+				$grouped[$threadUID] = [];
+			}
+			$grouped[$threadUID][] = $row;
+		}
+	
+		return $grouped;
+	}
+	
+	
 
 	/**
 	* Bump a discussion thread to the top.
