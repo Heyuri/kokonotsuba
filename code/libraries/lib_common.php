@@ -286,9 +286,46 @@ function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = fals
 
 function loadUploadData(): array {
 	$upfile = sanitizeStr($_FILES['upfile']['tmp_name'] ?? '');
-	$upfile_path = $_POST['upfile_path'] ?? '';
 	$upfile_name = $_FILES['upfile']['name'] ?? '';
 	$upfile_status = $_FILES['upfile']['error'] ?? UPLOAD_ERR_NO_FILE;
 
-	return [$upfile, $upfile_path, $upfile_name, $upfile_status];
+	return [$upfile, $upfile_name, $upfile_status];
+}
+
+function getVideoDimensions(string $filePath): array {
+	if (!file_exists($filePath) || !is_readable($filePath)) {
+		throw new RuntimeException("Video file not accessible: $filePath");
+	}
+
+	$escapedFile = escapeshellarg($filePath);
+
+	// ffmpeg outputs stream info to stderr, so we capture stderr using 2>&1
+	$cmd = "ffmpeg -i $escapedFile 2>&1";
+
+	exec($cmd, $output, $returnCode);
+
+	if ($returnCode !== 0 && $returnCode !== 1) {
+		// ffmpeg often returns 1 even on success when probing
+		throw new RuntimeException("Failed to run ffmpeg to get dimensions.");
+	}
+
+	$dimensions = [0, 0];
+
+	foreach ($output as $line) {
+		if (preg_match('/Stream.*Video.* (\d{2,5})x(\d{2,5})/', $line, $matches)) {
+			$dimensions = [(int)$matches[1], (int)$matches[2]];
+			break;
+		}
+	}
+
+	if ($dimensions[0] === 0 || $dimensions[1] === 0) {
+		throw new RuntimeException("Could not parse video dimensions.");
+	}
+
+	return $dimensions;
+}
+
+// convert bytes to readable kilobytes
+function formatFileSize(int $bytes): string {
+	return ($bytes >= 1024) ? (int)($bytes / 1024) . ' KB' : $bytes . ' B';
 }
