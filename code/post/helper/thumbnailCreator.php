@@ -1,44 +1,31 @@
 <?php
 
 class thumbnailCreator {
-    private readonly board $board;
-	private readonly array $config;
-	private readonly mixed $FileIO;
+    private readonly bool $useThumb;
+	private readonly array $thumbConfig;
+	private readonly string $thumbDirectory;
 
-	public function __construct(board $board, array $config, mixed $FileIO) {
-		$this->board = $board;
-        $this->config = $config;
-		$this->FileIO = $FileIO;
+	public function __construct(bool $useThumb, array $thumbConfig, string $thumbDirectory) {
+		$this->useThumb = $useThumb;
+		$this->thumbConfig = $thumbConfig;
+		$this->thumbDirectory = $thumbDirectory;
 	}
 
-	public function makeAndUpload(string &$dest, string &$ext, string $tim, ?string $tmpfile, int $imgW, int $imgH, int $W, int $H): void {
-		if (!$dest || !is_file($dest)) return;
+	public function makeAndUpload(string $thumbnailPath, string $thumbnailDestinationName, int $imgW, int $imgH, int $thumbnailWidth, int $thumbnailHeight): void {
+		//if (!$dest || !is_file($dest)) return;
+		if(!$this->useThumb) return;
 
-		$baseDir = $this->board->getBoardUploadedFilesDirectory();
-		$destFile = $baseDir . $this->config['IMG_DIR'] . $tim . $ext;
-		$thumbFile = $baseDir . $this->config['THUMB_DIR'] . $tim . 's.' . $this->config['THUMB_SETTING']['Format'];
+		$thumbnailDestination = $this->thumbDirectory . $thumbnailDestinationName;
 
-		if ($this->config['USE_THUMB'] !== 0) {
-			$thumbType = $this->config['USE_THUMB'] === 1
-				? $this->config['THUMB_SETTING']['Method']
-				: $this->config['USE_THUMB'];
+		$thumbType = $this->thumbConfig['Method'];
 
-			require(getBackendCodeDir() . 'thumb/thumb.' . $thumbType . '.php');
+		require(getBackendCodeDir() . 'thumb/thumb.' . $thumbType . '.php');
 
-			$thObj = !empty($tmpfile)
-				? new ThumbWrapper($tmpfile, $imgW, $imgH)
-				: new ThumbWrapper($dest, $imgW, $imgH);
+		$thObj = new ThumbWrapper($thumbnailPath, $imgW, $imgH);
 
-			$thObj->setThumbnailConfig($W, $H, $this->config['THUMB_SETTING']);
-			$thObj->makeThumbnailtoFile($thumbFile);
-			chmod($thumbFile, 0666);
-			unset($thObj);
-		}
-
-		rename($dest, $destFile);
-
-		if (file_exists($thumbFile)) {
-			$this->FileIO->uploadImage($tim . 's.' . $this->config['THUMB_SETTING']['Format'], $thumbFile, filesize($thumbFile), $this->board);
-		}
+		$thObj->setThumbnailConfig($thumbnailWidth, $thumbnailHeight, $this->thumbConfig);
+		$thObj->makeThumbnailtoFile($thumbnailDestination);
+		chmod($thumbnailDestination, 0666);
+		unset($thObj);
 	}
 }
