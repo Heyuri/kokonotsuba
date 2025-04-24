@@ -98,7 +98,7 @@ class registRoute {
 		$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['chktime'], $postData['email'], $postData['name'], $postData['age']);
 	
 		// Generate redirect URL and sanitize
-		$redirect = $this->calculateRedirectURL($computedPostInfo['no'], $postData['email'], $postData['resno'], $computedPostInfo['timeInMilliseconds']);
+		$redirect = $this->generateRedirectURL($computedPostInfo['no'], $postData['email'], $postData['resno'], $computedPostInfo['timeInMilliseconds']);
 	
 		// Commit pre-write hook
 		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', [
@@ -195,7 +195,7 @@ class registRoute {
 	
 			$postFileUploadController = new postFileUploadController($this->config, $fileFromUpload, $thumbnailCreator, $thumbnail, $this->globalHTML, $boardFileDirectory);
 			$postFileUploadController->validateFile();
-	
+			
 			[$upfile, $upfile_path, $upfile_status] = loadUploadData();
 		}
 	
@@ -257,7 +257,8 @@ class registRoute {
 		}
 	}
 
-	private function calculateRedirectURL(int $no, string &$email, int $resno, int $timeInMilliseconds): string {
+	// generate url for redirect after post
+	private function generateRedirectURL(int $no, string &$email, int $resno, int $timeInMilliseconds): string {
 		$redirect = $this->config['PHP_SELF2'] . '?' . $timeInMilliseconds;
 	
 		if (strstr($email, 'noko') && !strstr($email, 'nonoko')) {
@@ -270,6 +271,7 @@ class registRoute {
 		return $redirect;
 	}
 
+	// prepare post meta data
 	private function preparePostMetadata(array &$postData, postDateFormatter $formatter, postIdGenerator $idGen, file $file): array {
 		if ($postData['pwd'] == '') {
 			$postData['pwd'] = ($postData['pwdc'] == '') ? substr(rand(), 0, 8) : $postData['pwdc'];
