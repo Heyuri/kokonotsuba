@@ -241,62 +241,83 @@ const kkimg = { name: "KK Image Features",
 		} else if (kkimg.swfext.includes(ext)) {
 			// pull native dims from the existing filesize text (leave it visible)
 			var fsNode = $q("#p"+no+" .filesize")[0],
-				m      = fsNode.textContent.match(/(\d+)\s*x\s*(\d+)/i),
-				realW  = m ? parseInt(m[1],10) : 550,
-				realH  = m ? parseInt(m[2],10) : 400;
+			    m      = fsNode.textContent.match(/(\d+)\s*x\s*(\d+)/i),
+			    realW  = m ? parseInt(m[1],10) : 550,
+			    realH  = m ? parseInt(m[2],10) : 400;
 
 			// cap at 95%
-			var vw     = document.documentElement.clientWidth,
-				vh     = document.documentElement.clientHeight,
-				maxW   = vw*0.95, maxH = vh*0.95,
-				ratio  = realW/realH,
-				dispW  = Math.min(realW,maxW),
-				dispH  = dispW/ratio;
-			if (dispH>maxH) { dispH = maxH; dispW = dispH*ratio; }
+			var vw    = document.documentElement.clientWidth,
+			    vh    = document.documentElement.clientHeight,
+			    maxW  = vw * 0.95,
+			    maxH  = vh * 0.95,
+			    ratio = realW / realH,
+			    dispW = Math.min(realW, maxW),
+			    dispH = dispW / ratio;
+
+			if (dispH > maxH) {
+				dispH = maxH;
+				dispW = dispH * ratio;
+			}
 
 			// build container
 			var hdr       = 20,
-				container = document.createElement("div");
-			container.className = "expand swf-expand";
-			container.style.width   = dispW+"px";
-			container.style.height  = (dispH+hdr)+"px";
-			container.style.resize  = "both";
-			container.style.overflow= "hidden";
+			    container = document.createElement("div");
+			container.className      = "expand swf-expand";
+			container.style.width    = dispW + "px";
+			container.style.height   = (dispH + hdr) + "px";
+			container.style.resize   = "both";
+			container.style.overflow = "hidden";
 
 			// close header
 			var header        = document.createElement("div");
 			header.className = "swf-expand-header";
-			header.style.height = hdr+"px";
+			header.style.height = hdr + "px";
 			header.innerHTML = '[<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]';
 			container.appendChild(header);
-
-			// ruffle host
-			var host           = document.createElement("div");
-			host.className    = "ruffleContainer";
-			host.style.width  = "100%";
-			host.style.height = "calc(100% - "+hdr+"px)";
-			container.appendChild(host);
 
 			// insert & hide original link
 			a.insertAdjacentElement("afterend", container);
 
-			// init ruffle
-			var ruffle = window.RufflePlayer.newest(),
-				player = ruffle.createPlayer();
-			player.style.width  = "100%";
-			player.style.height = "100%";
-			host.appendChild(player);
-			player.load(a.href);
+			// try native Flash fallback
+			var useNative = !!(navigator.mimeTypes['application/x-shockwave-flash'] ||
+			                   navigator.plugins['Shockwave Flash']);
 
-			// live‐resize sync
-			var ro = new ResizeObserver(function(en){
-				en.forEach(function(e){
-					player.style.width  = e.contentRect.width  +"px";
-					player.style.height = e.contentRect.height +"px";
+			if (useNative) {
+				// native Flash via <object>
+				var obj = document.createElement("object");
+				obj.data   = a.href;
+				obj.type   = "application/x-shockwave-flash";
+				obj.width  = dispW  + "px";
+				obj.height = dispH  + "px";
+				container.appendChild(obj);
+			} else {
+				// ruffle host
+				var host   = document.createElement("div"),
+				    ruffle = window.RufflePlayer.newest(),
+				    player = ruffle.createPlayer(),
+				    ro;
+
+				host.className    = "ruffleContainer";
+				host.style.width  = "100%";
+				host.style.height = "calc(100% - "+hdr+"px)";
+				container.appendChild(host);
+
+				// init ruffle
+				player.style.width  = "100%";
+				player.style.height = "100%";
+				host.appendChild(player);
+				player.load(a.href);
+
+				// live‐resize sync
+				ro = new ResizeObserver(function(en) {
+					en.forEach(function(e) {
+						player.style.width  = e.contentRect.width  + "px";
+						player.style.height = e.contentRect.height + "px";
+					});
 				});
-			});
-			ro.observe(host);
-			player._resizeObserver = ro;
+				ro.observe(host);
+				player._resizeObserver = ro;
+			}
 
 			return true;
 		}
