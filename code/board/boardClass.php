@@ -92,11 +92,11 @@ class board implements IBoard {
 		return $this->config['CDN_URL'] . $this->getBoardUID() . '-' . $this->board_identifier . '/';
 	}
 
-	public function getBoardLocalUploadDir(): ?string {
+	public function getBoardLocalUploadDir(): string {
 		$boardPathCachingIO = boardPathCachingIO::getInstance();
 		$boardPathCache = $boardPathCachingIO->getRowByBoardUID($this->getBoardUID());
 
-		return $boardPathCache ? $boardPathCache->getBoardPath() : null;
+		return $boardPathCache ? $boardPathCache->getBoardPath() : '';
 	}
 
 	public function getBoardLocalUploadURL(): ?string {
