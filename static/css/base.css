@@ -1430,6 +1430,7 @@ caption h3 {
 #catalogTable .thumb {
 	display: block;
 	margin: 0 auto 0.75em;
+	width: auto;
 	min-width: 50px;
 	min-height: 50px;
 	max-height: 150px;
