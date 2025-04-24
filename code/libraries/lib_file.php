@@ -171,7 +171,7 @@ function moveFileOnly(string $sourceFile, string $destDir): bool {
 	if (!is_dir($destDir) && !mkdir($destDir, 0777, true)) {
 		return false;
 	}
-	$destPath = $destDir . DIRECTORY_SEPARATOR . basename($sourceFile);
+	$destPath = $destDir . '/' . basename($sourceFile);
 	return rename($sourceFile, $destPath);
 }
 
@@ -184,5 +184,18 @@ function moveFileOnly(string $sourceFile, string $destDir): bool {
 function rollbackCreatedPaths(array $paths): void {
 	foreach (array_reverse($paths) as $path) {
 		safeRmdir($path);
+	}
+}
+
+function removeExifIfJpeg(string $filePath): void {
+	if (!function_exists('exif_read_data') || !function_exists('exif_imagetype')) return;
+
+	if (exif_imagetype($filePath) === IMAGETYPE_JPEG) {
+		$exif = @exif_read_data($filePath);
+		if ($exif !== false) {
+			$image = imagecreatefromjpeg($filePath);
+			imagejpeg($image, $filePath, 100);
+			imagedestroy($image);
+		}
 	}
 }
