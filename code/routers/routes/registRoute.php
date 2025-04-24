@@ -43,168 +43,251 @@ class registRoute {
 	}
 
     /* Write to post table */
-	public function registerPostToDatabase() {	
-		$this->board->updateBoardPathCache(); //upload board cached path
-
-		// uploaded file handlers
-		$thumbnailCreator = new thumbnailCreator($this->board, $this->config, $this->FileIO);
-		$fileProcessor = new fileProcessor($this->board, $this->config, $this->postValidator, $this->globalHTML, $thumbnailCreator, $this->FileIO);
-		
-		// post data manipulation
+	public function registerPostToDatabase() {
+		$this->board->updateBoardPathCache(); // Upload board cached path
+	
+		// Initialize file directories
+		$thumbDir = $this->board->getBoardUploadedFilesDirectory() . $this->config['THUMB_DIR'];
+		$imgDir = $this->board->getBoardUploadedFilesDirectory() . $this->config['IMG_DIR'];
+	
+		// Initialize core handlers
+		$thumbnailCreator = new thumbnailCreator($this->config['USE_THUMB'], $this->config['THUMB_SETTING'], $thumbDir);
 		$tripcodeProcessor = new tripcodeProcessor($this->config, $this->globalHTML);
 		$defaultTextFiller = new defaultTextFiller($this->config);
 		$fortuneGenerator = new fortuneGenerator($this->config['FORTUNES']);
-		
-		// filter, date and IDs
 		$postFilterApplier = new postFilterApplier($this->config, $this->globalHTML, $fortuneGenerator);
 		$postDateFormatter = new postDateFormatter($this->config);
 		$postIdGenerator = new postIdGenerator($this->config, $this->PIO, $this->staffSession);
-
-		// age/sage
 		$agingHandler = new agingHandler($this->config, $this->threadSingleton);
-
-		// webhook for post notifcations
 		$webhookDispatcher = new webhookDispatcher($this->board, $this->config);
-
-		$chktime = 0;
-		$flgh = '';
-		$ThreadExistsBefore = false;
-		$up_incomplete = 0; 
-		$is_admin = false;
-		
-		/* get post data */
-		$name = htmlspecialchars($_POST['name']??'');
-		$email = htmlspecialchars($_POST['email']??'');
-		$sub = htmlspecialchars($_POST['sub']??'');
-		$com = htmlspecialchars($_POST['com']??'');
-		$pwd = $_POST['pwd']??'';
-		$category = htmlspecialchars($_POST['category']??'');
-		$resno = intval($_POST['resto']??0);
-		$thread_uid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
-		$pwdc = $_COOKIE['pwdc']??'';
-
-		$ip = new IPAddress; 
-		$host = gethostbyaddr($ip);
-		// Unix timestamp in seconds
-		$time = $_SERVER['REQUEST_TIME'];
-		// Unix timestamp in milliseconds
-		$tim  = intval($_SERVER['REQUEST_TIME_FLOAT'] * 1000);
-		
-		$dest = $_FILES['upfile']['tmp_name'];
-		// file attributes
-		$upfile = '';
-		$upfile_path = '';
-		$upfile_name = '';
-		$upfile_status = '';
-
-		$file = new file();
-		$thumbnail = new thumbnail();
-
-		// get file attributes
-		[$upfile, $upfile_path, $upfile_name, $upfile_status] = loadUploadData();
-		
-		$roleLevel = $this->staffSession->getRoleLevel();
-		
-		$this->postValidator->spamValidate($name, $email, $sub, $com);
-		/* hook call */
-		$this->moduleEngine->useModuleMethods('RegistBegin', array(&$name, &$email, &$sub, &$com, array('file'=>&$upfile, 'path'=>&$upfile_path, 'name'=>&$upfile_name, 'status'=>&$upfile_status), array('ip'=>$ip, 'host'=>$host), $thread_uid)); // "RegistBegin" Hook Point
-		if($this->config['TEXTBOARD_ONLY'] == false) {
-				[$file, $thumbnail] = $fileProcessor->process($thread_uid, $tim);
-		}
-		
-		// Calculate the last fields needed before putitng in db
-		$no = $this->board->getLastPostNoFromBoard() + 1;
-		$ext = $file->getExtention();
-		$imgW = $file->getImageWidth();
-		$imgH = $file->getImageHeight();
-		$imgSize = $file->getFileSize();
-		$fileName = $file->getFileName();
-		$md5chksum = $file->getMd5Chksum();
-		$dest = $file->getDest();
-		$thumbWidth = $thumbnail->getThumbnailWidth();
-		$thumbHeight = $thumbnail->getThumbnailHeight();
-		$age = false;
-		$status = '';
-
-		// Check the form field contents and trim them
-		if(strlenUnicode($name) > $this->config['INPUT_MAX'])	$this->globalHTML->error(_T('regist_nametoolong'));
-		if(strlenUnicode($email) > $this->config['INPUT_MAX'])	$this->globalHTML->error(_T('regist_emailtoolong'));
-		if(strlenUnicode($sub) > $this->config['INPUT_MAX'])	$this->globalHTML->error(_T('regist_topictoolong'));
-
-		setrawcookie('namec', rawurlencode(htmlspecialchars_decode($name)), time()+7*24*3600);
-		
-		// E-mail / Title trimming
-		$email = str_replace("\r\n", '', $email); 
-		$sub = str_replace("\r\n", '', $sub);
-		
-		$this->postValidator->cleanComment($com, $upfile_status, $is_admin, $dest);
-		$tripcodeProcessor->apply($name, $roleLevel);
-		$defaultTextFiller->fill($sub, $com);
-		$postFilterApplier->applyFilters($com, $email);
 	
-		// Trimming label style
-		if($category && $this->config['USE_CATEGORY']){
-				$category = explode(',', $category); // Disassemble the labels into an array
-				$category = ','.implode(',', array_map('trim', $category)).','; // Remove the white space and merge into a single string (left and right, you can directly search in the form XX)
-		}else{ 
-				$category = ''; 
-		}
-		
-		if($up_incomplete){
-				$com .= '<p class="incompleteFile"><span class="warning">'._T('notice_incompletefile').'</span></p>'; // Tips for uploading incomplete additional image files
-		}
+		// Step 1: Gather POST input data
+		$postData = $this->gatherPostInputData();
 	
-		// Password and time style
-		if($pwd==''){
-				$pwd = ($pwdc=='') ? substr(rand(),0,8) : $pwdc;
-		}
-
-		$pass = $pwd ? substr(md5($pwd), 2, 8) : '*'; // Generate a password for true storage judgment (the 8 characters at the bottom right of the imageboard where it says Password ******** SUBMIT for deleting posts)
-		$now = $postDateFormatter->format($time);
-		$now .= $postIdGenerator->generate($email, $now, $time, $thread_uid);
-
-		$this->postValidator->validateForDatabase($pwdc, $com, $time, $pass, $ip,  $upfile, $md5chksum, $dest, $this->PIO, $roleLevel);
-		if($thread_uid){
-				$ThreadExistsBefore = $this->threadSingleton->isThread($thread_uid);
+		// Step 2: Process uploaded file (if any)
+		$fileMeta = $this->handleFileUpload($postData['isReply'], $thumbnailCreator, $imgDir);
+	
+		// Step 3: Validate & clean post content
+		$this->validateAndCleanPostContent($postData, $fileMeta['status'], $fileMeta['file'], $postData['is_admin']);
+	
+		// Step 4: Handle tripcode, default text, filters, and categories
+		$this->processPostDetails($postData, $tripcodeProcessor, $defaultTextFiller, $postFilterApplier);
+	
+		// Step 5: Final data prep (timestamps, password hashing, unique ID)
+		$computedPostInfo = $this->preparePostMetadata($postData, $postDateFormatter, $postIdGenerator, $fileMeta['file']);
+	
+		// Step 6: Validate post for database storage
+		$this->postValidator->validateForDatabase(
+			$postData['pwdc'], $postData['comment'], $postData['time'], $computedPostInfo['pass'],
+			$postData['ip'], $fileMeta['upfile'], $fileMeta['md5'], $computedPostInfo['dest'],
+			$this->PIO, $postData['roleLevel']
+		);
+	
+		// Thread-related checks
+		if($postData['thread_uid']){
+			$postData['ThreadExistsBefore'] = $this->threadSingleton->isThread($postData['thread_uid']);
 		}
 	
 		$this->postValidator->pruneOld($this->moduleEngine, $this->PIO, $this->FileIO);
-		$this->postValidator->threadSanityCheck($chktime, $flgh, $thread_uid, $this->PIO, $dest, $ThreadExistsBefore);
+		$this->postValidator->threadSanityCheck(
+			$postData['chktime'], $postData['flgh'], $postData['thread_uid'],
+			$this->PIO, $computedPostInfo['dest'], $postData['ThreadExistsBefore']
+		);
 	
-
-		// apply age/sage
-		$agingHandler->apply($thread_uid, $time, $chktime, $email, $name, $age);
+		// Age/sage logic
+		$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['chktime'], $postData['email'], $postData['name'], $postData['age']);
 	
-		// noko
-		$redirect = $this->config['PHP_SELF2'].'?'.$tim;
-		if (strstr($email, 'noko') && !strstr($email, 'nonoko')) {
-				$redirect = $this->config['PHP_SELF'].'?res='.($resno?$resno:$no);
-				if (!strstr($email, 'dump')){
-						$redirect.= "#p".$this->board->getBoardUID()."_$no";
-				}
+		// Generate redirect URL and sanitize
+		$redirect = $this->calculateRedirectURL($computedPostInfo['no'], $postData['email'], $postData['resno'], $computedPostInfo['timeInMilliseconds']);
+	
+		// Commit pre-write hook
+		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', [
+			&$postData['name'], &$postData['email'], &$postData['sub'], &$postData['comment'],
+			&$postData['category'], &$postData['age'], $fileMeta['file'], $postData['thread_uid'],
+			[$fileMeta['thumbWidth'], $fileMeta['thumbHeight'], $fileMeta['imgW'], $fileMeta['imgH'], $fileMeta['fileTimeInMilliseconds'], $fileMeta['ext']],
+			&$postData['status']
+		]);
+	
+		// Add post to storage
+		$this->PIO->addPost(
+			$this->board, $computedPostInfo['no'], $postData['thread_uid'], $fileMeta['md5'],
+			$postData['category'], $fileMeta['fileTimeInMilliseconds'], $fileMeta['fileName'], $fileMeta['ext'],
+			$fileMeta['imgW'], $fileMeta['imgH'], $fileMeta['readableSize'], $fileMeta['thumbWidth'], $fileMeta['thumbHeight'],
+			$computedPostInfo['pass'], $computedPostInfo['now'],
+			$postData['name'], $postData['email'], $postData['sub'], $postData['comment'],
+			$postData['ip'], $postData['age'], $postData['status']
+		);
+	
+		// Log and hooks
+		$this->actionLogger->logAction("Post No.{$computedPostInfo['no']} registered", $this->board->getBoardUID());
+		$this->moduleEngine->useModuleMethods('RegistAfterCommit', [$this->board->getLastPostNoFromBoard(), $postData['thread_uid'], $postData['name'], $postData['email'], $postData['sub'], $postData['comment']]);
+	
+		// Set cookies for password and email
+		setcookie('pwdc', $postData['pwd'], time()+7*24*3600);
+		setcookie('emailc', htmlspecialchars_decode($postData['email']), time()+7*24*3600);
+	
+		// Dispatch webhook
+		$webhookDispatcher->dispatch($postData['resno'], $computedPostInfo['no'], $postData['sub']);
+	
+		// Save files
+		if($fileMeta['file']->getExtention()) {
+			$fileMeta['uploadController']->savePostThumbnailToBoard();
+			$fileMeta['uploadController']->savePostFileToBoard();
 		}
-		$email = preg_replace('/^(no)+ko\d*$/i', '', $email);
 	
-		// Get number of pages to rebuild
+		// Rebuild board
 		$threads = $this->threadSingleton->getThreadListFromBoard($this->board);
-		$threads_count = count($threads);
-		$page_end = ($thread_uid ? floor(array_search($thread_uid, $threads) / $this->config['PAGE_DEF']) : ceil($threads_count / $this->config['PAGE_DEF']));
-		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', array(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $thread_uid, array($thumbWidth, $thumbHeight, $imgW, $imgH, $tim, $ext), &$status)); // "RegistBeforeCommit" Hook Point
-		$this->PIO->addPost($this->board, $no, $thread_uid, $md5chksum, $category, $tim, $fileName, $ext, $imgW, $imgH, $imgSize, $thumbWidth, $thumbHeight, $pass, $now, $name, $email, $sub, $com, $ip, $age, $status);
-		
-		$this->actionLogger->logAction("Post No.$no registered", $this->board->getBoardUID());
-		// Formal writing to storage
-		$lastno = $this->board->getLastPostNoFromBoard() - 1; // Get this new article number
-		$this->moduleEngine->useModuleMethods('RegistAfterCommit', array($lastno, $thread_uid, $name, $email, $sub, $com)); // "RegistAfterCommit" Hook Point
-	
-		// Cookies storage: password and e-mail part, for one week
-		setcookie('pwdc', $pwd, time()+7*24*3600);
-		setcookie('emailc', htmlspecialchars_decode($email), time()+7*24*3600);
-		
-		// dispatch notifcation to post notifcation discord/IRC server
-		$webhookDispatcher->dispatch($resno, $no, $sub);
-
+		$page_end = ($postData['thread_uid']
+			? floor(array_search($postData['thread_uid'], $threads) / $this->config['PAGE_DEF'])
+			: ceil(count($threads) / $this->config['PAGE_DEF']));
 		$this->board->rebuildBoard(0, -1, false, $page_end);
+	
+		// Final redirect
 		redirect($redirect, 0);
 	}
+
+	private function gatherPostInputData(): array {
+		$name = htmlspecialchars($_POST['name'] ?? '');
+		$email = htmlspecialchars($_POST['email'] ?? '');
+		$sub = htmlspecialchars($_POST['sub'] ?? '');
+		$comment = htmlspecialchars($_POST['com'] ?? '');
+		$pwd = $_POST['pwd'] ?? '';
+		$category = htmlspecialchars($_POST['category'] ?? '');
+		$resno = intval($_POST['resto'] ?? 0);
+		$pwdc = $_COOKIE['pwdc'] ?? '';
+	
+		$ip = new IPAddress;
+		$host = gethostbyaddr($ip);
+	
+		$thread_uid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
+		$isReply = $thread_uid ? true : false;
+	
+		$roleLevel = $this->staffSession->getRoleLevel();
+		$time = $_SERVER['REQUEST_TIME'];
+		$timeInMilliseconds = intval($_SERVER['REQUEST_TIME_FLOAT'] * 1000);
+	
+		$chktime = 0;
+		$flgh = '';
+		$ThreadExistsBefore = false;
+		$up_incomplete = 0;
+		$is_admin = false;
+	
+		return [ 'name' => $name, 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
+			 'category' => $category, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip, 'host' => $host,
+			 'thread_uid' => $thread_uid, 'isReply' => $isReply, 'roleLevel' => $roleLevel, 'time' => $time,
+			 'timeInMilliseconds' => $timeInMilliseconds, 'chktime' => $chktime, 'flgh' => $flgh, 'age' => $age = false,
+			 'ThreadExistsBefore' => $ThreadExistsBefore, 'up_incomplete' => $up_incomplete, 'is_admin' => $is_admin
+		];
+	}
+
+	private function handleFileUpload(bool $isReply, thumbnailCreator $thumbnailCreator, string $boardFileDirectory): array {
+		$file = new file();
+		$thumbnail = new thumbnail();
+		$upfile = $upfile_path = $upfile_name = $upfile_status = '';
+		$postFileUploadController = null;
+	
+		if (isset($_FILES['upfile']) && is_uploaded_file($_FILES['upfile']['tmp_name'])) {
+			$fileFromUpload = getUserFileFromRequest();
+	
+			$file = $fileFromUpload->getFile();
+			$thumbnail = getThumbnailFromFile($file, $this->config['THUMB_SETTING']['Method']);
+			$thumbnail = scaleThumbnail($thumbnail, $isReply, $this->config['MAX_RW'], $this->config['MAX_RH'], $this->config['MAX_W'], $this->config['MAX_H']);
+	
+			$postFileUploadController = new postFileUploadController($this->config, $fileFromUpload, $thumbnailCreator, $thumbnail, $this->globalHTML, $boardFileDirectory);
+			$postFileUploadController->validateFile();
+	
+			[$upfile, $upfile_path, $upfile_status] = loadUploadData();
+		}
+	
+		return [
+			'file' => $file,
+			'thumbnail' => $thumbnail,
+			'uploadController' => $postFileUploadController,
+			'upfile' => $upfile,
+			'path' => $upfile_path,
+			'name' => $upfile_name,
+			'status' => $upfile_status,
+			'imgW' => $file->getImageWidth(),
+			'imgH' => $file->getImageHeight(),
+			'fileName' => $file->getFileName(),
+			'ext' => $file->getExtention(),
+			'fileTimeInMilliseconds' => $file->getTimeInMilliseconds(),
+			'md5' => $file->getMd5Chksum(),
+			'thumbWidth' => $thumbnail->getThumbnailWidth(),
+			'thumbHeight' => $thumbnail->getThumbnailHeight(),
+			'readableSize' => formatFileSize($file->getFileSize())
+		];
+	}
+
+	private function validateAndCleanPostContent(array &$postData, string $upfileStatus, file $file, bool $isAdmin): void {
+		$this->postValidator->spamValidate($postData['name'], $postData['email'], $postData['sub'], $postData['comment']);
+	
+		$this->moduleEngine->useModuleMethods('RegistBegin', [
+			&$postData['name'], &$postData['email'], &$postData['sub'], &$postData['comment'],
+			['file' => '', 'path' => '', 'name' => '', 'status' => $upfileStatus],
+			['ip' => $postData['ip'], 'host' => $postData['host']], $postData['thread_uid']
+		]);
+	
+		if (strlenUnicode($postData['name']) > $this->config['INPUT_MAX']) $this->globalHTML->error(_T('regist_nametoolong'));
+		if (strlenUnicode($postData['email']) > $this->config['INPUT_MAX']) $this->globalHTML->error(_T('regist_emailtoolong'));
+		if (strlenUnicode($postData['sub']) > $this->config['INPUT_MAX']) $this->globalHTML->error(_T('regist_topictoolong'));
+	
+		setrawcookie('namec', rawurlencode(htmlspecialchars_decode($postData['name'])), time() + 7 * 24 * 3600);
+	
+		$postData['email'] = str_replace("\r\n", '', $postData['email']);
+		$postData['sub'] = str_replace("\r\n", '', $postData['sub']);
+	
+		$this->postValidator->cleanComment($postData['comment'], $upfileStatus, $isAdmin, $file->getTemporaryFileName());
+	}
+
+	private function processPostDetails(array &$postData, tripcodeProcessor $tripcodeProcessor, defaultTextFiller $defaultTextFiller, postFilterApplier $postFilterApplier): void {
+		$tripcodeProcessor->apply($postData['name'], $postData['roleLevel']);
+		$defaultTextFiller->fill($postData['sub'], $postData['comment']);
+		$postFilterApplier->applyFilters($postData['comment'], $postData['email']);
+	
+		if ($postData['category'] && $this->config['USE_CATEGORY']) {
+			$categories = explode(',', $postData['category']);
+			$postData['category'] = ',' . implode(',', array_map('trim', $categories)) . ',';
+		} else {
+			$postData['category'] = '';
+		}
+	
+		if ($postData['up_incomplete']) {
+			$postData['comment'] .= '<p class="incompleteFile"><span class="warning">' . _T('notice_incompletefile') . '</span></p>';
+		}
+	}
+
+	private function calculateRedirectURL(int $no, string &$email, int $resno, int $timeInMilliseconds): string {
+		$redirect = $this->config['PHP_SELF2'] . '?' . $timeInMilliseconds;
+	
+		if (strstr($email, 'noko') && !strstr($email, 'nonoko')) {
+			$redirect = $this->config['PHP_SELF'] . '?res=' . ($resno ?: '');
+			if (!strstr($email, 'dump')) {
+				$redirect .= "#p" . $this->board->getBoardUID() . "_". $no;
+			}
+		}
+		$email = preg_replace('/^(no)+ko\d*$/i', '', $email);
+		return $redirect;
+	}
+
+	private function preparePostMetadata(array &$postData, postDateFormatter $formatter, postIdGenerator $idGen, file $file): array {
+		if ($postData['pwd'] == '') {
+			$postData['pwd'] = ($postData['pwdc'] == '') ? substr(rand(), 0, 8) : $postData['pwdc'];
+		}
+		$pass = substr(md5($postData['pwd']), 2, 8);
+	
+		$no = $this->board->getLastPostNoFromBoard() + 1;
+		$now = $formatter->format($postData['time']);
+		$now .= $idGen->generate($postData['email'], $now, $postData['time'], $postData['thread_uid']);
+	
+		return [
+			'no' => $no,
+			'pass' => $pass,
+			'now' => $now,
+			'dest' => $file->getTemporaryFileName(),
+			'timeInMilliseconds' => $postData['timeInMilliseconds']
+		];
+	}
+	
+
 }
