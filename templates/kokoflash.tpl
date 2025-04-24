@@ -13,7 +13,7 @@
 	<meta name="description" content="{$PAGE_TITLE}">
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/base.css?v=71">
+	<link rel="stylesheet" href="{$STATIC_URL}css/base.css?v=73">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/sakomoto.css?v=4" title="Sakomoto">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/heyuriclassic.css?v=4" title="Heyuri Classic">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/futaba.css?v=2" title="Futaba">
@@ -32,7 +32,7 @@
 	<script src="{$STATIC_URL}js/addemotes.js?v=7" defer></script>
 	<script src="{$STATIC_URL}js/admin.js?v=4" defer></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
-	<script src="{$STATIC_URL}js/flashembed.js"></script>
+	<script src="{$STATIC_URL}js/flashembed.js?v=2"></script>
 <!--/&HEADER-->
 
 <!--&TOPLINKS-->

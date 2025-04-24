@@ -1416,7 +1416,7 @@ caption h3 {
 	padding: 0 0 0.5em;
 	width: 180px;
 	max-height: 250px;
-	max-width: 155px;
+	max-width: 170px;
 	text-align: center;
 	vertical-align: top;
 	overflow-y: hidden;
@@ -1456,6 +1456,9 @@ caption h3 {
 }
 
 .catComment {
+	display: table;
+  margin: 0 auto;
+	text-align: left;
 	font-size: var(--font-size-small);
 }
 
