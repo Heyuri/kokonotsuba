@@ -24,6 +24,8 @@ class mod_antiflood extends moduleHelper {
 			$threadSingleton = threadSingleton::getInstance();
 			$globalHTML = new globalHTML($this->board);
 
+			$tempFileName = $file->getTemporaryFileName();
+
 			$lastThreadTimestamp = $threadSingleton->getLastThreadTimeFromBoard($this->board);
 			if(!$lastThreadTimestamp) return;
 			$currentTimestamp = new DateTime();
@@ -34,8 +36,9 @@ class mod_antiflood extends moduleHelper {
 			
 			$timeDifference = $currentTimestampUnix - $timestampFromDatabaseUnix;
 			if ($timeDifference < $this->RENZOKU3) {
-				if ($file->getDest() != NULL) {
-					unlink($file->getDest());
+				
+				if ($tempFileName != NULL) {
+					unlink($tempFileName);
 				}
 				$globalHTML->error('ERROR: Please wait a few seconds before creating a new thread.');
 			}
