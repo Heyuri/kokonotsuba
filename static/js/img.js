@@ -195,7 +195,6 @@ const kkimg = { name: "KK Image Features",
 	swfext: Array("swf"),
 	/* event */
 	_evexpand: function (event) {
-		if (localStorage.getItem("imgexpand")!="true") return;
 		var p  = this.parentNode;
 		var no = p.id.substr(1);
 		if (localStorage.getItem("galmode")=="true") {
@@ -203,6 +202,7 @@ const kkimg = { name: "KK Image Features",
 			event.preventDefault();
 			return;
 		}
+		if (localStorage.getItem("imgexpand")!="true") return;
 		if (kkimg.expand(no)) event.preventDefault();
 	},
 	_evhover1: function (event) {
