@@ -261,62 +261,56 @@ const kkimg = { name: "KK Image Features",
 
 			// build container
 			var hdr       = 20,
-			    container = document.createElement("div");
+			    container = document.createElement("div"),
+			    header    = document.createElement("div");
+
 			container.className      = "expand swf-expand";
 			container.style.width    = dispW + "px";
 			container.style.height   = (dispH + hdr) + "px";
 			container.style.resize   = "both";
 			container.style.overflow = "hidden";
+			// ensure children absolute‐fill works
+			container.style.position = "relative";
 
 			// close header
-			var header        = document.createElement("div");
-			header.className = "swf-expand-header";
+			header.className    = "swf-expand-header";
 			header.style.height = hdr + "px";
-			header.innerHTML = '[<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]';
+			header.innerHTML    = '[<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]';
 			container.appendChild(header);
 
 			// insert & hide original link
 			a.insertAdjacentElement("afterend", container);
 
-			// try native Flash fallback
-			var useNative = !!(navigator.mimeTypes['application/x-shockwave-flash'] ||
+			// build a host that fills the container and holds either native Flash or Ruffle
+			// using CSS absolute fill ensures resizing always works
+			var host      = document.createElement("div"),
+			    useNative = !!(navigator.mimeTypes['application/x-shockwave-flash'] ||
 			                   navigator.plugins['Shockwave Flash']);
 
+			host.className      = "ruffleContainer";
+			host.style.position = "absolute";
+			host.style.top      = hdr + "px";
+			host.style.left     = "0";
+			host.style.right    = "0";
+			host.style.bottom   = "0";
+			container.appendChild(host);
+
 			if (useNative) {
-				// native Flash via <object>
+				// native Flash via <object>, fill host
 				var obj = document.createElement("object");
 				obj.data   = a.href;
 				obj.type   = "application/x-shockwave-flash";
-				obj.width  = dispW  + "px";
-				obj.height = dispH  + "px";
-				container.appendChild(obj);
+				obj.style.width  = "100%";
+				obj.style.height = "100%";
+				host.appendChild(obj);
 			} else {
-				// ruffle host
-				var host   = document.createElement("div"),
-				    ruffle = window.RufflePlayer.newest(),
-				    player = ruffle.createPlayer(),
-				    ro;
-
-				host.className    = "ruffleContainer";
-				host.style.width  = "100%";
-				host.style.height = "calc(100% - "+hdr+"px)";
-				container.appendChild(host);
-
-				// init ruffle
+				// ruffle emulator, fill host
+				var ruffle = window.RufflePlayer.newest(),
+				    player = ruffle.createPlayer();
 				player.style.width  = "100%";
 				player.style.height = "100%";
 				host.appendChild(player);
 				player.load(a.href);
-
-				// live‐resize sync
-				ro = new ResizeObserver(function(en) {
-					en.forEach(function(e) {
-						player.style.width  = e.contentRect.width  + "px";
-						player.style.height = e.contentRect.height + "px";
-					});
-				});
-				ro.observe(host);
-				player._resizeObserver = ro;
 			}
 
 			return true;
