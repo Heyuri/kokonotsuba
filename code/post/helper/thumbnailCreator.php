@@ -12,7 +12,6 @@ class thumbnailCreator {
 	}
 
 	public function makeAndUpload(string $thumbnailPath, string $thumbnailDestinationName, int $imgW, int $imgH, int $thumbnailWidth, int $thumbnailHeight): void {
-		//if (!$dest || !is_file($dest)) return;
 		if(!$this->useThumb) return;
 
 		$thumbnailDestination = $this->thumbDirectory . $thumbnailDestinationName;
