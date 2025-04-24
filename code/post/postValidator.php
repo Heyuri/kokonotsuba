@@ -51,10 +51,11 @@ class postValidator {
 	    $pwdc = substr(md5($pwdc), 2, 8); // Cookies Password
 	    if ($roleLevel < $this->config['roles']['LEV_MODERATOR'])  {
 	        if($PIO->isSuccessivePost($this->board, $checkcount, $com, $time, $pass, $pwdc, $host, $upfile_name))
-	           $this->globalHTML->error(_T('regist_successivepost'), $dest); // Continuous submission check
-	        if($dest){ 
+	           $this->globalHTML->error(_T('regist_successivepost')); // Continuous submission check
+	        
+			if($dest){ 
 	            if($PIO->isDuplicateAttachment($this->board, $checkcount, $md5chksum)){
-	            	$this->globalHTML->error(_T('regist_duplicatefile'), $dest); 
+	            	$this->globalHTML->error(_T('regist_duplicatefile')); 
 	            }
 	        } // Same additional image file check
 	    }
@@ -71,7 +72,7 @@ class postValidator {
 	            }else{ // Check that the thread is set to suppress response (by the way, take out the post time of the original post)
 	                $post = $PIO->fetchPosts($resto); // [Special] Take a single article content, but the $post of the return also relies on [$i] to switch articles!
 	                list($chkstatus, $chktime) = array($post[0]['status'], $post[0]['tim']);
-	                $chktime = substr($chktime, 0, -3); // Remove microseconds (the last three characters)
+	                $chktime = intval(substr($chktime, 0, -3)); // Remove microseconds (the last three characters)
 	                $flgh = $PIO->getPostStatus($chkstatus);
 	            }
 	        }else $this->globalHTML->error(_T('thread_not_found'), $dest); // Does not exist
