@@ -83,11 +83,12 @@ require __DIR__.'/code/post/threadRedirect.php';
 /* files */
 require __DIR__.'/code/file/file.php';
 require __DIR__.'/code/file/thumbnail.php';
+require __DIR__.'/code/file/fileFromUpload.php';
+require __DIR__.'/code/file/postFileUploadController.php';
 
 /* regist/post helper classes */
 require __DIR__.'/code/post/helper/agingHandler.php';
 require __DIR__.'/code/post/helper/defaultTextFillter.php';
-require __DIR__.'/code/post/helper/fileProcessor.php';
 require __DIR__.'/code/post/helper/fortuneGenerator.php';
 require __DIR__.'/code/post/helper/postDateFormatter.php';
 require __DIR__.'/code/post/helper/postFilterApplier.php';
