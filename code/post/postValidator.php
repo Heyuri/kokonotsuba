@@ -84,15 +84,11 @@ class postValidator {
 		if((strlenUnicode($com) > $this->config['COMM_MAX']) && !$is_admin){
 			$this->globalHTML->error(_T('regist_commenttoolong'));
 		}
-		
-		// allow admin to insert html
-		if($is_admin) {
-			$com = htmlspecialchars_decode($com);
-		}
 
 		if(!$com && $upfile_status==4){ 
 			$this->globalHTML->error($this->config['TEXTBOARD_ONLY']?'ERROR: No text entered.':_T('regist_withoutcomment'));
 		}
+		
 		$com = str_replace(array("\r\n", "\r"), "\n", $com);
 		$com = preg_replace("/\n((　| )*\n){3,}/", "\n", $com);
 
