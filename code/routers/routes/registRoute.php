@@ -137,14 +137,31 @@ class registRoute {
 	
 		// Rebuild board
 		$threads = $this->threadSingleton->getThreadListFromBoard($this->board);
-		$page_end = ($postData['thread_uid']
-			? floor(array_search($postData['thread_uid'], $threads) / $this->config['PAGE_DEF'])
-			: ceil(count($threads) / $this->config['PAGE_DEF']));
+		$threadsCount = count($threads);
+
+		$page_end = $postData['thread_uid']
+		? $this->getPageOfThread($postData['thread_uid'], $threads)
+		: max(0, (int) ceil($threadsCount / $this->config['PAGE_DEF']));
+	
+		// Rebuild pages from 0 to the one the thread is on
 		$this->board->rebuildBoard(0, -1, false, $page_end);
 	
 		// Final redirect
 		redirect($redirect, 0);
 	}
+
+	// method to get the pages to rebuild
+	private function getPageOfThread(string $thread_uid, array $threads): int {
+		$thread_list = array_values($threads); // Make sure it's zero-indexed
+		$index = array_search($thread_uid, $thread_list);
+		
+		if ($index !== false) {
+			return (int) floor($index / $this->config['PAGE_DEF']);
+		}
+	
+		return -1; // Thread not found
+	}	
+	
 
 	private function gatherPostInputData(): array {
 		$name = htmlspecialchars($_POST['name'] ?? '');
