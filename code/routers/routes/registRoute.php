@@ -257,7 +257,7 @@ class registRoute {
 		$postData['email'] = str_replace("\r\n", '', $postData['email']);
 		$postData['sub'] = str_replace("\r\n", '', $postData['sub']);
 	
-		$this->postValidator->cleanComment($postData['comment'], $upfileStatus, $isAdmin, $file->getTemporaryFileName());
+		$postData['comment'] = $this->postValidator->cleanComment($postData['comment'], $upfileStatus, $isAdmin, $file->getTemporaryFileName());
 	}
 
 	private function processPostDetails(array &$postData, tripcodeProcessor $tripcodeProcessor, defaultTextFiller $defaultTextFiller, postFilterApplier $postFilterApplier): void {
