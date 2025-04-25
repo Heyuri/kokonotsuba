@@ -314,7 +314,11 @@ function observeNewPosts() {
 
 function applyHoverListeners(root) {
 	root.querySelectorAll('[data-target-id]').forEach(el => {
-		if (!el.classList.contains('unkfunc') && !el.classList.contains('backlink')) return
+		if (
+			!el.classList.contains('unkfunc')
+		 && !el.classList.contains('backlink')
+		 && !el.classList.contains('quotelink')
+		) return
 		el.removeEventListener('mouseover', startHover)
 		el.removeEventListener('mouseout',  stopHover)
 		el.addEventListener   ('mouseover', startHover)
