@@ -187,7 +187,7 @@ class registRoute {
 		$flgh = '';
 		$ThreadExistsBefore = false;
 		$up_incomplete = 0;
-		$is_admin = false;
+		$is_admin = $roleLevel === $this->config['roles']['LEV_ADMIN'];
 	
 		return [ 'name' => $name, 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
 			 'category' => $category, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip, 'host' => $host,
