@@ -66,7 +66,7 @@ class registRoute {
 	
 		// Step 2: Process uploaded file (if any)
 		$fileMeta = $this->handleFileUpload($postData['isReply'], $thumbnailCreator, $imgDir);
-	
+
 		// Step 3: Validate & clean post content
 		$this->validateAndCleanPostContent($postData, $fileMeta['status'], $fileMeta['file'], $postData['is_admin']);
 	
@@ -200,7 +200,10 @@ class registRoute {
 	private function handleFileUpload(bool $isReply, thumbnailCreator $thumbnailCreator, string $boardFileDirectory): array {
 		$file = new file();
 		$thumbnail = new thumbnail();
-		$upfile = $upfile_path = $upfile_name = $upfile_status = '';
+
+		$upfile = $upfile_path = $upfile_name = '';
+		$upfile_status = UPLOAD_ERR_NO_FILE;
+
 		$postFileUploadController = null;
 	
 		if (isset($_FILES['upfile']) && is_uploaded_file($_FILES['upfile']['tmp_name'])) {
