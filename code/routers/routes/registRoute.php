@@ -99,7 +99,7 @@ class registRoute {
 	
 		// Generate redirect URL and sanitize
 		$redirect = $this->generateRedirectURL($computedPostInfo['no'], $postData['email'], $postData['resno'], $computedPostInfo['timeInMilliseconds']);
-	
+
 		// Commit pre-write hook
 		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', [
 			&$postData['name'], &$postData['email'], &$postData['sub'], &$postData['comment'],
@@ -262,7 +262,7 @@ class registRoute {
 		$redirect = $this->config['PHP_SELF2'] . '?' . $timeInMilliseconds;
 	
 		if (strstr($email, 'noko') && !strstr($email, 'nonoko')) {
-			$redirect = $this->config['PHP_SELF'] . '?res=' . ($resno ?: '');
+			$redirect = $this->config['PHP_SELF'] . '?res=' . ($resno ?: $no);
 			if (!strstr($email, 'dump')) {
 				$redirect .= "#p" . $this->board->getBoardUID() . "_". $no;
 			}
