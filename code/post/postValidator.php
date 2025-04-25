@@ -79,12 +79,17 @@ class postValidator {
 	    }
 	    return[$chktime];
 	}
-	public function cleanComment($com, $upfile_status, $is_admin, $dest){
+	public function cleanComment(string $com, int $upfile_status, bool $is_admin){
         // Text trimming
 		if((strlenUnicode($com) > $this->config['COMM_MAX']) && !$is_admin){
-			$this->globalHTML->error(_T('regist_commenttoolong'), $dest);
+			$this->globalHTML->error(_T('regist_commenttoolong'));
 		}
-		$com = sanitizeStr($com, $is_admin, $this->config['CAP_ISHTML']); // The$ is_admin parameter is introduced because when the administrator starts, the administrator is allowed to set whether to use HTML according to config.
+		
+		// allow admin to insert html
+		if($is_admin) {
+			$com = htmlspecialchars_decode($com);
+		}
+
 		if(!$com && $upfile_status==4){ 
 			$this->globalHTML->error($this->config['TEXTBOARD_ONLY']?'ERROR: No text entered.':_T('regist_withoutcomment'));
 		}
