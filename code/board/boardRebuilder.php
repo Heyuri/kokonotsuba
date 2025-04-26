@@ -55,6 +55,7 @@ class boardRebuilder {
 		$thread_uid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
 		
 		$threads = array();
+		
 		$page_start = $page_end = 0; // Static page number
 		$inner_for_count = 1; // The number of inner loop executions
 		$RES_start = $RES_amount = $hiddenReply = $tree_count = 0;
@@ -133,6 +134,12 @@ class boardRebuilder {
 
 		// Generate static pages one page at a time
 		for($page = $page_start; $page <= $page_end; $page++){
+			$currentPageThreads = $threads;
+
+			if($pagenum == -1) {
+				$currentPageThreads = array_slice($threads, $page * $this->config['PAGE_DEF'], $this->config['PAGE_DEF']);
+			}
+
 			$dat = ''; $pte_vals['{$THREADS}'] = '';
 			$this->globalHTML->head($dat, $thread_uid);
 			// form
@@ -180,7 +187,9 @@ class boardRebuilder {
 					array_unshift($tree_cut, $tree[0]);
 					$posts = $this->PIO->fetchPosts($tree_cut);
 				}
+				
 				$pte_vals['{$THREADS}'] .= $threadRenderer->render($threads,
+				 $currentPageThreads,
 				 $tree_cut, 
 				 $posts, $hiddenReply, 
 				 $thread_uid, 
