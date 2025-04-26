@@ -285,7 +285,7 @@ class threadRenderer {
 	/**
 	 * Builds the attachment/file download bar with filename and size info.
 	 */
-	private function buildAttachmentBar($tim, $ext, $fname, $imgsize, $imgw, $imgh, $tw, $th, $img_thumb): string {
+	private function buildAttachmentBar(int $tim, string $ext, string $fname, string $imgsize, int $imgw, int $imgh, int $img_thumb): string {
 		// if the filename isn't set, then use unix timestamp
 		if (!isset($fname)) $fname = $tim;
 		
