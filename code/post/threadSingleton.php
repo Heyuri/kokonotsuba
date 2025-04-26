@@ -105,19 +105,20 @@ class threadSingleton {
 	}
 
 	public function mapThreadUidListToPostNumber($threadUidArray) {
+		if (empty($threadUidArray)) {
+			return array(); // early return if no thread UIDs
+		}
+	
 		if (!is_array($threadUidArray)) {
 			$threadUidArray = [$threadUidArray];
 		}
-	
-		addSlashesToArray($threadUidArray);
-	
-		$threadUidArray = implode(',', $threadUidArray);
-		$query = "SELECT post_op_number, boardUID FROM {$this->threadTable} WHERE thread_uid IN ({$threadUidArray}) ORDER BY last_bump_time DESC";
 		
-		return $this->databaseConnection->fetchAllAsArray($query);
-	
+		$placeholders = implode(',', array_fill(0, count($threadUidArray), '?'));
+		$query = "SELECT post_op_number, boardUID FROM {$this->threadTable} WHERE thread_uid IN ($placeholders) ORDER BY last_bump_time DESC";
+		
+		return $this->databaseConnection->fetchAllAsArray($query, $threadUidArray);
 	}
-
+	
 	// insert a new thread into the thread table
 	public function addThread($boardUID, $post_uid, $thread_uid, $post_op_number) {
 		$query = "INSERT INTO {$this->threadTable} (boardUID, post_op_post_uid, post_op_number, thread_uid) VALUES (:board_uid, :post_op_post_uid, :post_op_number, :thread_uid)";
