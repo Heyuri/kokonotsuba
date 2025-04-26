@@ -1,8 +1,8 @@
 <?php
 class overboard {
-	private $config, $moduleEngine, $templateEngine;
+	private $config, $moduleEngine, $templateEngine, $threadRenderer;
 	
-	public function __construct(array $config, moduleEngine $moduleEngine, templateEngine $templateEngine) {
+	public function __construct(array $config, moduleEngine $moduleEngine, templateEngine $templateEngine, threadRenderer $threadRenderer) {
 		$this->config = $config;
 
 		$this->moduleEngine = $moduleEngine;
@@ -20,6 +20,9 @@ class overboard {
 				},
 			],
 		]);
+
+		$this->threadRenderer = $threadRenderer;
+
 	}
 	
 	public function drawOverboardHead(&$dat, $resno = 0) {
@@ -56,121 +59,176 @@ class overboard {
 		return $html;
 	}
 
-	public function drawOverboardThreads($filters, $globalHTML) {
-		$PIO = PIOPDO::getInstance();
+	public function drawOverboardThreads(array $filters, globalHTML $globalHTML) {
 		$threadSingleton = threadSingleton::getInstance();
-		$boardIO = boardIO::getInstance();
-		
-		$pagenum = 0;
-		
-		$threadsHTML = '';
-		
-		$templateValues = array('{$THREADFRONT}'=>'','{$THREADREAR}'=>'',
-				'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel">'._T('del_head'),
-				'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
-				'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
-				'{$FORMDAT}' => '',
-				'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" id="pwd2" value="">',
-				'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'">',
-				'{$THREADS}' => '',
-				'{$TITLE}' => 'Overboard',
-				'{$TITLESUB}' => 'Posts from all kokonotsuba boards',
-				'{$BOARD_URL}' => '',
-				'{$IS_THREAD}' => false);
-				
-		$single_page = false;
-		
-		$limit = $this->config['OVERBOARD_THREADS_PER_PAGE'];
-		
 
 		$pagenum = $_REQUEST['page'] ?? 0;
 		if (!filter_var($pagenum, FILTER_VALIDATE_INT) && $pagenum != 0) $globalHTML->error("Page number was not a valid int.");
-
 		$pagenum = ($pagenum >= 0) ? $pagenum : 1;
+		
+		$threadsHTML = '';
+		$limit = $this->config['OVERBOARD_THREADS_PER_PAGE'];
 		$offset = $pagenum * $limit;
-
+		
+		$templateValues = $this->buildOverboardTemplateValues();
+		
+		$single_page = false;
+		
 		$threads = $threadSingleton->getFilteredThreads($limit, $offset, $filters);
-		$threadList = $threadSingleton->getFilteredThreadUIDs($limit, $offset, $filters);
+		$threadList = array_column($threads, 'thread_uid');
 		$numberThreadsFiltered = $threadSingleton->getFilteredThreadCount($filters);
 		
-		if(!$threads) return '<div class="bbls"> <b class="error"> - No threads - </b> </div>';
+		if (!$threads) return '<div class="bbls"> <b class="error"> - No threads - </b> </div>';
 		
-		// Output the thread content
-		foreach($threads as $iterator => $thread) {
-			$board = $boardIO->getBoardByUID($thread['boardUID']);
-			$config = $board->loadBoardConfig();
-		
-			$boardTitle = $board->getBoardTitle();
-			$boardURL = $board->getBoardURL();
-			
+		$boardMap = $this->loadBoardsForThreads($threads);
+		$postsByBoardAndThread = $this->loadPostsForThreads($threads);
 
-			$staffSession = new staffAccountFromSession;
-			$roleLevel = $staffSession->getRoleLevel();
-			
-
-			$page_start = $page_end = 0; // Static page number
-			$RES_start = $RES_amount = $hiddenReply = $tree_count = 0;
-			$kill_sensor = false; // Predictive system start flag
-			$arr_kill = array(); // Obsolete numbered array
-			
-			$adminMode = $roleLevel >=$config['roles']['LEV_JANITOR'] && $pagenum != -1 && !$single_page; // Front-end management mode
-			$templateValues['{$DEL_PASS_TEXT}'] = ($adminMode ? '<input type="hidden" name="func" value="delete">' : '')._T('del_pass');
-			$templateValues['{$SELF}'] = $config['PHP_SELF'];
-			$templateValues['{$BOARD_UID}'] = $board->getBoardUID();
-			
-			
-			$posts = array();
-			$tree = array();
-			$tree_cut = array();
-			$tree_count = 0;
-			
-		
-			if ($pagenum == -1 && ($pagenum * $config['PAGE_DEF'] + $iterator) >= $numberThreadsFiltered) {
-				break;
-			}
-
-			$tID = ($page_start == $page_end)
-				? $threadList[$iterator]
-				: $threadList[$pagenum * $config['PAGE_DEF'] + $iterator];
-	
-			$tree_count = $PIO->postCountFromBoard($board, $tID) - 1;
-		
-			$RES_start = $tree_count - $config['RE_DEF'];
-			if ($RES_start < 1) $RES_start = 1;
-			
-			$RES_amount = $config['RE_DEF'];
-			$hiddenReply = $RES_start - 1;
-		
-			$tree = $PIO->fetchPostListFromBoard($board, $tID);
-			$tree_cut = array_slice($tree, $RES_start, $RES_amount);
-			array_unshift($tree_cut, $tree[0]);
-			$posts = $PIO->fetchPosts($tree_cut);
-			
-			$overboardThreadTitle = '<span class="overboardThreadBoardTitle"><a href="'.$boardURL.'">'.$boardTitle.'</a></span>';
-			$crossLink = $boardURL;
-
-			$templateValues['{$THREADS}'] .= $globalHTML->arrangeThread(
-				$board,
-				$config,
-				$PIO,
-				$threadList,
-				$tree,
-				$tree_cut,
-				$posts,
-				$hiddenReply,
-				0,
-				$arr_kill,
-				$kill_sensor,
-				true,
-				$adminMode,
+		foreach ($threads as $iterator => $thread) {
+			$threadHTML = $this->renderOverboardThread(
+				$thread,
 				$iterator,
-				$overboardThreadTitle,
-				$crossLink
-				);
+				$pagenum,
+				$single_page,
+				$boardMap,
+				$postsByBoardAndThread,
+				$threadList,
+				$templateValues
+			);
+		
+			if (!empty($threadHTML)) {
+				$templateValues['{$THREADS}'] .= $threadHTML;
+			}
 		}
+		
+		
 		$templateValues['{$PAGENAV}'] = $globalHTML->drawPager($limit, $numberThreadsFiltered, $globalHTML->fullURL().$this->config['PHP_SELF'].'?mode=overboard');
 		$threadsHTML .= $this->templateEngine->ParseBlock('MAIN', $templateValues);
 		return $threadsHTML;
 	}
+
+	private function buildOverboardTemplateValues() {
+		return array(
+			'{$THREADFRONT}' => '',
+			'{$THREADREAR}' => '',
+			'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel">'._T('del_head'),
+			'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
+			'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
+			'{$FORMDAT}' => '',
+			'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" id="pwd2" value="">',
+			'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'">',
+			'{$THREADS}' => '',
+			'{$TITLE}' => 'Overboard',
+			'{$TITLESUB}' => 'Posts from all kokonotsuba boards',
+			'{$BOARD_URL}' => '',
+			'{$IS_THREAD}' => false
+		);
+	}
+
+	private function loadBoardsForThreads($threads) {
+		$boardIO = boardIO::getInstance();
+		$boardUIDs = array_column($threads, 'boardUID');
+		$boards = $boardIO->getBoardsFromUIDs($boardUIDs);
+		
+		$boardMap = array();
+		foreach ($boards as $board) {
+			$boardMap[$board->getBoardUID()] = $board;
+		}
+		return $boardMap;
+	}
+
+	private function loadPostsForThreads($threads) {
+		$PIO = PIOPDO::getInstance();
+		$tIDsByBoard = array();
+		
+		foreach ($threads as $thread) {
+			$tIDsByBoard[$thread['boardUID']][] = $thread['thread_uid'];
+		}
+		
+		$allPosts = $PIO->fetchPostsFromBoardsAndThreads($tIDsByBoard);
+		
+		$postsByBoardAndThread = array();
+		foreach ($allPosts as $post) {
+			$boardUID = $post['boardUID'];
+			$threadID = ($post['thread_uid'] == 0) ? $post['no'] : $post['thread_uid'];
+			$postsByBoardAndThread[$boardUID][$threadID][] = $post;
+		}
+		return $postsByBoardAndThread;
+	}
+
+	private function renderOverboardThread($thread, $iterator, $pagenum, $single_page, $boardMap, $postsByBoardAndThread, $threadList, $templateValues) {
+		$boardUID = $thread['boardUID'];
+		$threadID = $thread['thread_uid'];
+	
+		if (!isset($boardMap[$boardUID]) || !isset($postsByBoardAndThread[$boardUID][$threadID])) {
+			return '';
+		}
+	
+		$board = $boardMap[$boardUID];
+		$config = $board->loadBoardConfig();
+		$posts = $postsByBoardAndThread[$boardUID][$threadID];
+	
+		// Re-key posts by post_uid
+		$posts = array_column($posts, null, 'post_uid');
+
+		// Setup basic variables
+		$boardTitle = $board->getBoardTitle();
+		$boardURL = $board->getBoardURL();
+		$overboardThreadTitle = '<span class="overboardThreadBoardTitle"><a href="'.$boardURL.'">'.$boardTitle.'</a></span>';
+		$crossLink = $boardURL;
+	
+		$staffSession = new staffAccountFromSession;
+		$roleLevel = $staffSession->getRoleLevel();
+		$adminMode = $roleLevel >= $config['roles']['LEV_JANITOR'] && $pagenum != -1 && !$single_page;
+	
+		$templateValues['{$DEL_PASS_TEXT}'] = ($adminMode ? '<input type="hidden" name="func" value="delete">' : '')._T('del_pass');
+		$templateValues['{$SELF}'] = $config['PHP_SELF'];
+		$templateValues['{$BOARD_UID}'] = $board->getBoardUID();
+	
+		$kill_sensor = false;
+		$arr_kill = array();
+	
+		// Build tree and visible posts
+		$postUIDs = array_column($posts, 'post_uid');
+		$treeCount = count($postUIDs) - 1;
+	
+		$RES_start = $treeCount - $config['RE_DEF'];
+		if ($RES_start < 1) {
+			$RES_start = 1;
+		}
+	
+		$RES_amount = $config['RE_DEF'];
+		$hiddenReply = $RES_start - 1;
+	
+		$visiblePostUids = array_slice($postUIDs, $RES_start, $RES_amount);
+		array_unshift($visiblePostUids, $postUIDs[0]); // Always include OP
+	
+		// Build visible posts array
+		$visiblePosts = array();
+		foreach ($visiblePostUids as $post_uid) {
+			if (isset($posts[$post_uid])) {
+				$visiblePosts[$post_uid] = $posts[$post_uid];
+				//print_r($posts[$post_uid]);
+			}
+		}
+		$visiblePosts = array_values($visiblePosts);
+		//echo '<pre>'; print_r($visiblePosts); echo '</pre>'; exit;
+
+		return $this->threadRenderer->render(
+			$threadList,
+			$threadList,
+			$visiblePostUids,
+			$visiblePosts,
+			$hiddenReply,
+			0,
+			$arr_kill,
+			$kill_sensor,
+			true,
+			$adminMode,
+			$iterator,
+			$overboardThreadTitle,
+			$crossLink
+		);
+	}
+	
 	
 }
