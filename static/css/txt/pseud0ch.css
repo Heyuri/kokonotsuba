@@ -94,6 +94,13 @@ body {
 }
 
 /************************ Mobile **************************************/
+
+@media screen and (max-width: 768px) {
+	body {
+		line-height: normal;
+	}
+}
+
 /************************ Probably not needed *************************/
 
 /* .comment {

@@ -45,7 +45,7 @@ class mod_anigif extends moduleHelper {
 		&& $fh->value('agif')) {
 			$imgURL = $FileIO->getImageURL($post['tim'].$post['ext'], $this->board);
 			$arrLabels['{$IMG_SRC}'] = preg_replace('/<img src=".*"/U','<img src="'.$imgURL.'"',$arrLabels['{$IMG_SRC}']);
-			$arrLabels['{$IMG_BAR}'].= '<small>[Animated GIF]</small>';
+			$arrLabels['{$IMG_BAR}'].= '<span class="animatedGIFLabel imageOptions">[Animated GIF]</span>';
 		}
 	}
 
