@@ -174,7 +174,7 @@ class overboard {
 		$config = $board->loadBoardConfig();
 		$posts = $this->rekeyPostsByUID($postsByBoardAndThread[$boardUID][$threadID]);
 	
-		$threadRenderer = $this->createThreadRenderer($board, $config);
+		$threadRenderer = $this->createThreadRenderer($board, $config, $this->templateEngine);
 	
 		[$overboardThreadTitle, $crossLink] = $this->buildThreadTitleAndLink($board);
 	
@@ -208,10 +208,9 @@ class overboard {
 		return array_column($posts, null, 'post_uid');
 	}
 	
-	private function createThreadRenderer(board $board, array $config): threadRenderer {
+	private function createThreadRenderer(board $board, array $config, templateEngine $templateEngine): threadRenderer {
 		$globalHTML = new globalHTML($board);
 		$moduleEngine = new moduleEngine($board);
-		$templateEngine = $board->getBoardTemplateEngine();
 	
 		return new threadRenderer($board, $config, $globalHTML, $moduleEngine, $templateEngine);
 	}
