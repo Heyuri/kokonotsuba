@@ -319,6 +319,51 @@ class PIOPDO implements IPIO {
 		return $posts ?? [];
 	}
 	
+	/* Output posts for multiple boards and threads */
+	public function fetchPostsFromBoardsAndThreads(array $boardThreadMap, string $fields = '*') {
+		if (empty($boardThreadMap)) {
+			return array();
+		}
+
+		foreach ($boardThreadMap as $boardUID => $threadIDs) {
+			if (empty($threadIDs)) {
+				unset($boardThreadMap[$boardUID]);
+			}
+		}
+
+		$conditions = array();
+		$params = array();
+
+		foreach ($boardThreadMap as $boardUID => $threadIDs) {
+			if (empty($threadIDs)) {
+				continue;
+			}
+
+			$placeholders = implode(',', array_fill(0, count($threadIDs), '?'));
+			$conditions[] = "(boardUID = ? AND (post_uid IN ({$placeholders}) OR thread_uid IN ({$placeholders})))";
+
+			// First placeholder is boardUID
+			$params[] = $boardUID;
+			// Next placeholders are threadIDs twice (post_uid and thread_uid)
+			foreach ($threadIDs as $threadID) {
+				$params[] = $threadID;
+			}
+			foreach ($threadIDs as $threadID) {
+				$params[] = $threadID;
+			}
+		}
+
+		if (empty($conditions)) {
+			return array();
+		}
+
+		$whereClause = implode(' OR ', $conditions);
+		$query = "SELECT {$fields} FROM {$this->tablename} WHERE {$whereClause}";
+
+		return $this->databaseConnection->fetchAllAsArray($query, $params);
+	}
+
+
 	
 	/* Output article */
 	public function fetchPosts($postlist, $fields = '*') {
