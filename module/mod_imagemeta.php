@@ -35,15 +35,15 @@ class mod_imagemeta extends moduleHelper {
 		$isNotAReverseSearchableImage = in_array($ext, $nonReverseSearchableExtensions);
 		$isSwf = $ext == '.swf';
 	
-		//EXIF
+		// EXIF
 		if($this->enable_exif && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
 			$arrLabels['{$IMG_BAR}'] .= '<span class="exifLink imageOptions">[<a href="'.$this->myPage.'&file='.$file.'">EXIF</a>]</span> ';
 		}
-		//ImgOps
+		// ImgOps
 		if($this->enable_imgops && !$isNotAReverseSearchableImage && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
 			$arrLabels['{$IMG_BAR}'] .= '<span class="imgopsLink imageOptions">[<a href="http://imgops.com/'.$FileIO->getImageURL($file, $board).'" target="_blank">ImgOps</a>]</span> ';
 		}
-		//Anime/manga search engine
+		// Anime/manga search engine
 		if($this->enable_iqdb && !$isNotAReverseSearchableImage && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
 			$arrLabels['{$IMG_BAR}'] .= '<span class="iqdbLink imageOptions">[<a href="http://iqdb.org/?url='.$FileIO->getImageURL($file, $board).'" target="_blank">iqdb</a>]</span> ';
 		}
