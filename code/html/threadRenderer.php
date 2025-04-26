@@ -39,7 +39,8 @@ class threadRenderer {
 	 bool $adminMode = false, 
 	 int $threadIterator = 0, 
 	 string $overboardBoardTitleHTML = '', 
-	 string $crossLink = ''): string {
+	 string $crossLink = '',
+	 array $templateValues = []): string {
 		$thread_uid = $thread_uid ?: 0;
 		$thdat = '';
 		
@@ -78,7 +79,8 @@ class threadRenderer {
 				$replyCount,
 				$overboardBoardTitleHTML,
 				$thread_uid,
-				$crossLink
+				$crossLink,
+				$templateValues
 			);
 		}
 	
@@ -105,7 +107,8 @@ class threadRenderer {
 		int $replyCount,
 		string $overboardBoardTitleHTML,
 		string $thread_uid,
-		string $crossLink
+		string $crossLink,
+		array $templateValues,
 	): string {
 		$isReply = $i > 0;
 		$data = $this->preparePostData($post);
@@ -145,7 +148,7 @@ class threadRenderer {
 		}
 
 		// Template binding
-		$arrLabels = $isReply
+		$templateValues += $isReply
 			? bindReplyValuesToTemplate(
 				$this->board, $this->config, $data['post_uid'], $data['no'], $postOPNumber, $data['sub'], $data['name'], $data['now'],
 				$categoryHTML, $QUOTEBTN, $IMG_BAR, $data['imgsrc'] ?? '', $WARN_BEKILL, $data['com'], $POSTFORM_EXTRA, '', $BACKLINKS, $thread_uid
@@ -158,15 +161,15 @@ class threadRenderer {
 			);
 
 		// append board title to thread 
-		$arrLabels['{$BOARD_THREAD_NAME}'] = $overboardBoardTitleHTML;
+		$templateValues['{$BOARD_THREAD_NAME}'] = $overboardBoardTitleHTML;
 
 		// bind post op number to resto
 		if ($replyMode) {
-			$arrLabels['{$RESTO}'] = $postOPNumber;
+			$templateValues['{$RESTO}'] = $postOPNumber;
 		}
 
-		$this->moduleEngine->useModuleMethods($isReply ? 'ThreadReply' : 'ThreadPost', array(&$arrLabels, $post, $thread_uid));
-		return $this->templateEngine->ParseBlock($isReply ? 'REPLY' : 'THREAD', $arrLabels);
+		$this->moduleEngine->useModuleMethods($isReply ? 'ThreadReply' : 'ThreadPost', array(&$templateValues, $post, $thread_uid));
+		return $this->templateEngine->ParseBlock($isReply ? 'REPLY' : 'THREAD', $templateValues);
 	}
 
 	 /**
