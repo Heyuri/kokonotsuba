@@ -46,7 +46,8 @@ class overboard {
 			'{$STATUS}' => '[<a href="'.$this->config['PHP_SELF'].'?mode=status">'._T('head_info').'</a>]',
 			'{$ADMIN}' => '[<a href="'.$this->config['PHP_SELF'].'?mode=admin">'._T('head_admin').'</a>]',
 			'{$REFRESH}' => '[<a href="'.$this->config['PHP_SELF2'].'?">'._T('head_refresh').'</a>]',
-			'{$HOOKLINKS}' => '', '{$TITLE}' => htmlspecialchars($this->config['OVERBOARD_TITLE']), '{$TITLESUB}' => htmlspecialchars($this->config['OVERBOARD_SUBTITLE'])
+			'{$HOOKLINKS}' => '', '{$TITLE}' => htmlspecialchars($this->config['OVERBOARD_TITLE']), '{$TITLESUB}' => htmlspecialchars($this->config['OVERBOARD_SUBTITLE']),
+			 '{$SELF}' => $this->config['PHP_SELF']
 			);
 			
 		$this->moduleEngine->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
@@ -100,7 +101,6 @@ class overboard {
 			}
 		}
 		
-		
 		$templateValues['{$PAGENAV}'] = $globalHTML->drawPager($limit, $numberThreadsFiltered, $globalHTML->fullURL().$this->config['PHP_SELF'].'?mode=overboard');
 		$threadsHTML .= $this->templateEngine->ParseBlock('MAIN', $templateValues);
 		return $threadsHTML;
@@ -111,6 +111,7 @@ class overboard {
 			'{$THREADFRONT}' => '',
 			'{$THREADREAR}' => '',
 			'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel">'._T('del_head'),
+			'{$DEL_PASS_TEXT}' => '',
 			'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 			'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
 			'{$FORMDAT}' => '',
@@ -120,7 +121,8 @@ class overboard {
 			'{$TITLE}' => 'Overboard',
 			'{$TITLESUB}' => 'Posts from all kokonotsuba boards',
 			'{$BOARD_URL}' => '',
-			'{$IS_THREAD}' => false
+			'{$IS_THREAD}' => false,
+			'{$SELF}' => ''
 		);
 	}
 
@@ -155,7 +157,14 @@ class overboard {
 		return $postsByBoardAndThread;
 	}
 
-	private function renderOverboardThread($thread, $iterator, $pagenum, $single_page, $boardMap, $postsByBoardAndThread, $threadList, $templateValues) {
+	private function renderOverboardThread(array $thread, 
+	 int $iterator, 
+	 mixed $pagenum, 
+	 bool $single_page, 
+	 array $boardMap, 
+	 array $postsByBoardAndThread, 
+	 array $threadList, 
+	 array $templateValues): string {
 		$boardUID = $thread['boardUID'];
 		$threadID = $thread['thread_uid'];
 	
@@ -207,11 +216,9 @@ class overboard {
 		foreach ($visiblePostUids as $post_uid) {
 			if (isset($posts[$post_uid])) {
 				$visiblePosts[$post_uid] = $posts[$post_uid];
-				//print_r($posts[$post_uid]);
 			}
 		}
 		$visiblePosts = array_values($visiblePosts);
-		//echo '<pre>'; print_r($visiblePosts); echo '</pre>'; exit;
 
 		return $this->threadRenderer->render(
 			$threadList,
