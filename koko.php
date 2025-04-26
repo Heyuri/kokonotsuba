@@ -142,11 +142,10 @@ $adminTemplateEngine = new templateEngine(getBackendDir() . 'templates/admin.tpl
 	]
 ]);
 
-$threadRenderer		= new threadRenderer($board, $config, $globalHTML, $moduleEngine, $templateEngine);
 $pageRenderer		= new pageRenderer($templateEngine, $globalHTML);
 $adminPageRenderer	= new pageRenderer($adminTemplateEngine, $globalHTML);
 
-$overboard			= new overboard($config, $moduleEngine, $templateEngine, $threadRenderer);
+$overboard			= new overboard($config, $moduleEngine, $templateEngine);
 
 // ───────────────────────────────────────
 // IO / Core Systems

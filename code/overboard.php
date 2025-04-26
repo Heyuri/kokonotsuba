@@ -1,8 +1,8 @@
 <?php
 class overboard {
-	private $config, $moduleEngine, $templateEngine, $threadRenderer;
+	private $config, $moduleEngine, $templateEngine;
 	
-	public function __construct(array $config, moduleEngine $moduleEngine, templateEngine $templateEngine, threadRenderer $threadRenderer) {
+	public function __construct(array $config, moduleEngine $moduleEngine, templateEngine $templateEngine) {
 		$this->config = $config;
 
 		$this->moduleEngine = $moduleEngine;
@@ -20,8 +20,6 @@ class overboard {
 				},
 			],
 		]);
-
-		$this->threadRenderer = $threadRenderer;
 
 	}
 	
@@ -92,8 +90,7 @@ class overboard {
 				$single_page,
 				$boardMap,
 				$postsByBoardAndThread,
-				$threadList,
-				$templateValues
+				$threadList
 			);
 		
 			if (!empty($threadHTML)) {
@@ -157,14 +154,15 @@ class overboard {
 		return $postsByBoardAndThread;
 	}
 
-	private function renderOverboardThread(array $thread, 
-	 int $iterator, 
-	 mixed $pagenum, 
-	 bool $single_page, 
-	 array $boardMap, 
-	 array $postsByBoardAndThread, 
-	 array $threadList, 
-	 array $templateValues): string {
+	private function renderOverboardThread(
+		array $thread, 
+		int $iterator, 
+		mixed $pagenum, 
+		bool $single_page, 
+		array $boardMap, 
+		array $postsByBoardAndThread, 
+		array $threadList
+	): string {
 		$boardUID = $thread['boardUID'];
 		$threadID = $thread['thread_uid'];
 	
@@ -174,53 +172,21 @@ class overboard {
 	
 		$board = $boardMap[$boardUID];
 		$config = $board->loadBoardConfig();
-		$posts = $postsByBoardAndThread[$boardUID][$threadID];
+		$posts = $this->rekeyPostsByUID($postsByBoardAndThread[$boardUID][$threadID]);
 	
-		// Re-key posts by post_uid
-		$posts = array_column($posts, null, 'post_uid');
-
-		// Setup basic variables
-		$boardTitle = $board->getBoardTitle();
-		$boardURL = $board->getBoardURL();
-		$overboardThreadTitle = '<span class="overboardThreadBoardTitle"><a href="'.$boardURL.'">'.$boardTitle.'</a></span>';
-		$crossLink = $boardURL;
+		$threadRenderer = $this->createThreadRenderer($board, $config);
 	
-		$staffSession = new staffAccountFromSession;
-		$roleLevel = $staffSession->getRoleLevel();
-		$adminMode = $roleLevel >= $config['roles']['LEV_JANITOR'] && $pagenum != -1 && !$single_page;
+		[$overboardThreadTitle, $crossLink] = $this->buildThreadTitleAndLink($board);
 	
-		$templateValues['{$DEL_PASS_TEXT}'] = ($adminMode ? '<input type="hidden" name="func" value="delete">' : '')._T('del_pass');
-		$templateValues['{$SELF}'] = $config['PHP_SELF'];
-		$templateValues['{$BOARD_UID}'] = $board->getBoardUID();
+		$adminMode = $this->determineAdminMode($board, $pagenum, $single_page);
+		$templateValues = $this->buildTemplateValues($config, $board, $adminMode);
 	
 		$kill_sensor = false;
 		$arr_kill = array();
 	
-		// Build tree and visible posts
-		$postUIDs = array_column($posts, 'post_uid');
-		$treeCount = count($postUIDs) - 1;
+		[$visiblePostUids, $visiblePosts, $hiddenReply] = $this->sliceVisiblePosts($posts, $config);
 	
-		$RES_start = $treeCount - $config['RE_DEF'];
-		if ($RES_start < 1) {
-			$RES_start = 1;
-		}
-	
-		$RES_amount = $config['RE_DEF'];
-		$hiddenReply = $RES_start - 1;
-	
-		$visiblePostUids = array_slice($postUIDs, $RES_start, $RES_amount);
-		array_unshift($visiblePostUids, $postUIDs[0]); // Always include OP
-	
-		// Build visible posts array
-		$visiblePosts = array();
-		foreach ($visiblePostUids as $post_uid) {
-			if (isset($posts[$post_uid])) {
-				$visiblePosts[$post_uid] = $posts[$post_uid];
-			}
-		}
-		$visiblePosts = array_values($visiblePosts);
-
-		return $this->threadRenderer->render(
+		return $threadRenderer->render(
 			$threadList,
 			$threadList,
 			$visiblePostUids,
@@ -233,9 +199,71 @@ class overboard {
 			$adminMode,
 			$iterator,
 			$overboardThreadTitle,
-			$crossLink
+			$crossLink,
+			$templateValues
 		);
 	}
+
+	private function rekeyPostsByUID(array $posts): array {
+		return array_column($posts, null, 'post_uid');
+	}
+	
+	private function createThreadRenderer(board $board, array $config): threadRenderer {
+		$globalHTML = new globalHTML($board);
+		$moduleEngine = new moduleEngine($board);
+		$templateEngine = $board->getBoardTemplateEngine();
+	
+		return new threadRenderer($board, $config, $globalHTML, $moduleEngine, $templateEngine);
+	}
+	
+	private function buildThreadTitleAndLink(board $board): array {
+		$boardTitle = $board->getBoardTitle();
+		$boardURL = $board->getBoardURL();
+		$titleHTML = '<span class="overboardThreadBoardTitle"><a href="'.$boardURL.'">'.$boardTitle.'</a></span>';
+		return [$titleHTML, $boardURL];
+	}
+	
+	private function determineAdminMode(board $board, mixed $pagenum, bool $single_page): bool {
+		$staffSession = new staffAccountFromSession;
+		$roleLevel = $staffSession->getRoleLevel();
+		$config = $board->loadBoardConfig();
+	
+		return $roleLevel >= $config['roles']['LEV_JANITOR'] && $pagenum != -1 && !$single_page;
+	}
+	
+	private function buildTemplateValues(array $config, board $board, bool $adminMode): array {
+		return [
+			'{$DEL_PASS_TEXT}' => ($adminMode ? '<input type="hidden" name="func" value="delete">' : '')._T('del_pass'),
+			'{$SELF}' => $config['PHP_SELF'],
+			'{$BOARD_UID}' => $board->getBoardUID(),
+		];
+	}
+	
+	private function sliceVisiblePosts(array $posts, array $config): array {
+		$postUIDs = array_column($posts, 'post_uid');
+		$treeCount = count($postUIDs);
+	
+		$RES_start = $treeCount - $config['RE_DEF'];
+		if ($RES_start < 1) {
+			$RES_start = 1;
+		}
+	
+		$RES_amount = $config['RE_DEF'];
+		$hiddenReply = $RES_start - 1;
+	
+		$visiblePostUids = array_slice($postUIDs, $RES_start, $RES_amount);
+		array_unshift($visiblePostUids, $postUIDs[0]); // Always include OP
+	
+		$visiblePosts = array();
+		foreach ($visiblePostUids as $post_uid) {
+			if (isset($posts[$post_uid])) {
+				$visiblePosts[$post_uid] = $posts[$post_uid];
+			}
+		}
+		$visiblePosts = array_values($visiblePosts);
+	
+		return [$visiblePostUids, $visiblePosts, $hiddenReply];
+	}	
 	
 	
 }
