@@ -113,6 +113,8 @@ class threadRenderer {
 		$isReply = $i > 0;
 		$data = $this->preparePostData($post);
 
+		
+
 		[$REPLYBTN, $QUOTEBTN] = $this->buildQuoteAndReplyButtons($data['no'], $postOPNumber, $replyMode, $thread_uid, $showquotelink, $crossLink);
 
 		$categoryHTML = $this->processCategoryLinks($data['category'], $crossLink);
@@ -215,6 +217,8 @@ class threadRenderer {
 				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$thumbURL.'" width="'.$tw.'" height="'.$th.'" class="postimg" alt="'.$imgsize.'" title="Click to show full image"></a>';
 			} elseif ($ext === ".swf") {
 				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$this->config['SWF_THUMB'].'" class="postimg" alt="SWF Embed"></a>';
+			} else {
+				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$this->config['STATIC_URL'].'image/nothumb.gif" class="postimg" alt="'.$imgsize.'" hspace="20" vspace="3" border="0" align="left"></a>'; // Default display style 	(when no preview image)
 			}
 		}
 	
@@ -282,16 +286,28 @@ class threadRenderer {
 	 * Builds the attachment/file download bar with filename and size info.
 	 */
 	private function buildAttachmentBar($tim, $ext, $fname, $imgsize, $imgw, $imgh, $tw, $th, $img_thumb): string {
-		if (!$fname) $fname = $tim;
+		// if the filename isn't set, then use unix timestamp
+		if (!isset($fname)) $fname = $tim;
+		
+		// truncate filename for drawing
 		$truncated = strlen($fname) > 40 ? substr($fname, 0, 40).'(&hellip;)' : $fname;
+		
 		if ($fname !== 'SPOILERS') {
 			$truncated .= $ext;
 			$fname .= $ext;
 		}
+
+		// variables forjavascript
 		$fnameJS = str_replace('&#039;', '\\&#039;', $fname);
 		$truncatedJS = str_replace('&#039;', '\\&#039;', $truncated);
+		
+		// get image url
 		$imageURL = $this->FileIO->getImageURL($tim.$ext, $this->board);
+		
+		// image info dimensions
 		$imgwh_bar = ($this->config['SHOW_IMGWH'] && ($imgw || $imgh)) ? ', '.$imgw.'x'.$imgh : '';
-		return _T('img_filename').'<a href="'.$imageURL.'" target="_blank" rel="nofollow" onmouseover="this.textContent=\''.$fnameJS.'\';" onmouseout="this.textContent=\''.$truncatedJS.'\'"> '.$truncated.'</a> <a href="'.$imageURL.'" title="'.$fname.'" download="'.$fname.'"><div class="download"></div></a> <span class="fileProperties">('.$imgsize.$imgwh_bar.')</span> '.$img_thumb;
+		
+
+		return  _T('img_filename').'<a href="'.$imageURL.'" target="_blank" rel="nofollow" onmouseover="this.textContent=\''.$fnameJS.'\';" onmouseout="this.textContent=\''.$truncatedJS.'\'"> '.$truncated.'</a> <a href="'.$imageURL.'" title="'.$fname.'" download="'.$fname.'"><div class="download"></div></a> <span class="fileProperties">('.$imgsize.$imgwh_bar.')</span> '.$img_thumb;
 	}
 }
