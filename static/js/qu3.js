@@ -192,13 +192,26 @@ function findMatchingPostId(text, selfId, includeUnkfunc) {
 		const prefix  = selfId.split('_')[0]    // e.g. "p1" from "p1_53"
 		const postId  = `${prefix}_${num}`      // e.g. "p1_47"
 		const postElm = document.getElementById(postId)
-		return postElm ? postId : 'notFound'
+		if (postElm) {
+			// only allow if that post is before self in document order
+			const allPosts   = Array.from(document.querySelectorAll('.post.op, .post.reply'))
+			const selfIndex  = allPosts.findIndex(p => p.id === selfId)
+			const postIndex  = allPosts.findIndex(p => p.id === postId)
+			if (postIndex !== -1 && postIndex < selfIndex) {
+				return postId
+			}
+		}
+		return 'notFound'
 	}
 
-	const posts = Array.from(document.querySelectorAll('.post.op, .post.reply'))
-		.reverse()
+		const allPosts  = Array.from(document.querySelectorAll('.post.op, .post.reply'))
+		const selfIndex = allPosts.findIndex(p => p.id === selfId)
+		// take only those before selfId, then reverse so nearest is first
+		const posts     = allPosts
+			.slice(0, selfIndex !== -1 ? selfIndex : allPosts.length)
+			.reverse()
 	for (const p of posts) {
-		if (p.id === selfId) continue
+		if (includeUnkfunc && !p.querySelector('.comment .unkfunc')) continue
 		const comment = p.querySelector('.comment')
 		if (comment) {
 			let content
