@@ -4,7 +4,7 @@
  * exif.php from http://www.rjk-hosting.co.uk/programs/prog.php?id=4
  */
 class mod_imagemeta extends moduleHelper {
-	private $enable_exif, $enable_imgops, $enable_iqdb = false; // Enable iqdb
+	private $enable_exif, $enable_imgops, $enable_iqdb, $enable_swfchan = false; // Initialize options, actually defined in config files
 
 	private $myPage;
 	
@@ -14,6 +14,7 @@ class mod_imagemeta extends moduleHelper {
 		$this->enable_exif = $this->config['ModuleSettings']['EXIF_DATA_VIEWER'];
 		$this->enable_imgops = $this->config['ModuleSettings']['IMG_OPS'];
 		$this->enable_iqdb = $this->config['ModuleSettings']['IQDB'];
+		$this->enable_swfchan = $this->config['ModuleSettings']['SWFCHAN'];
 	}
 
 	public function getModuleName(){
@@ -27,22 +28,41 @@ class mod_imagemeta extends moduleHelper {
 	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$file = $post['tim'].$post['ext'];
-
+	
 		$board = searchBoardArrayForBoard($this->moduleBoardList, $post['boardUID']);
-
-		//EXIF
+		static $nonReverseSearchableExtensions = ['.swf', '.mp4', '.webm'];
+		$ext = strtolower($post['ext']);
+		$isNotAReverseSearchableImage = in_array($ext, $nonReverseSearchableExtensions);
+		$isSwf = $ext == '.swf';
+	
+		// EXIF
 		if($this->enable_exif && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
 			$arrLabels['{$IMG_BAR}'] .= '<span class="exifLink imageOptions">[<a href="'.$this->myPage.'&file='.$file.'">EXIF</a>]</span> ';
 		}
-		//ImgOps
-		if($this->enable_imgops && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
+		// ImgOps
+		if($this->enable_imgops && !$isNotAReverseSearchableImage && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
 			$arrLabels['{$IMG_BAR}'] .= '<span class="imgopsLink imageOptions">[<a href="http://imgops.com/'.$FileIO->getImageURL($file, $board).'" target="_blank">ImgOps</a>]</span> ';
 		}
-		//Anime/manga search engine
-		if($this->enable_iqdb && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
+		// Anime/manga search engine
+		if($this->enable_iqdb && !$isNotAReverseSearchableImage && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
 			$arrLabels['{$IMG_BAR}'] .= '<span class="iqdbLink imageOptions">[<a href="http://iqdb.org/?url='.$FileIO->getImageURL($file, $board).'" target="_blank">iqdb</a>]</span> ';
 		}
+		// swfchan archive
+		if($this->enable_swfchan && $isSwf && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
+			$imgsize = $post['imgsize'] ?? '';
+			$min = 0;
+			$max = 1;
+			if(stripos($imgsize, 'KB') !== false) {
+				preg_match('/(\d+)/', $imgsize, $matches);
+				if(isset($matches[1])) {
+					$min = (int)$matches[1];
+					$max = $min + 1;
+				}
+			}
+			$arrLabels['{$IMG_BAR}'] .= '<span class="swfchanLink imageOptions">[<a href="http://eye.swfchan.com/search/?q='.urlencode($post['fname']).'.swf&min='.$min.'&u1=k&max='.$max.'&u2=k" target="_blank">swfchan</a>]</span> ';
+		}
 	}
+	
 
 	public function autoHookThreadReply(&$arrLabels, $post, $isReply){
 		$this->autoHookThreadPost($arrLabels, $post, $isReply);
