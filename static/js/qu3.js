@@ -194,9 +194,10 @@ function findMatchingPostId(text, selfId, includeUnkfunc) {
 		const postElm = document.getElementById(postId)
 		if (postElm) {
 			// only allow if that post is before self in document order
-			const allPosts   = Array.from(document.querySelectorAll('.post.op, .post.reply'))
-			const selfIndex  = allPosts.findIndex(p => p.id === selfId)
-			const postIndex  = allPosts.findIndex(p => p.id === postId)
+			const threadElem  = document.getElementById(selfId).closest('.thread')
+			const allPosts    = Array.from((threadElem || document).querySelectorAll('.post.op, .post.reply'))
+			const selfIndex   = allPosts.findIndex(p => p.id === selfId)
+			const postIndex   = allPosts.findIndex(p => p.id === postId)
 			if (postIndex !== -1 && postIndex < selfIndex) {
 				return postId
 			}
@@ -204,8 +205,9 @@ function findMatchingPostId(text, selfId, includeUnkfunc) {
 		return 'notFound'
 	}
 
-		const allPosts  = Array.from(document.querySelectorAll('.post.op, .post.reply'))
-		const selfIndex = allPosts.findIndex(p => p.id === selfId)
+		const threadElem = document.getElementById(selfId).closest('.thread')
+		const allPosts   = Array.from((threadElem || document).querySelectorAll('.post.op, .post.reply'))
+		const selfIndex  = allPosts.findIndex(p => p.id === selfId)
 		// take only those before selfId, then reverse so nearest is first
 		const posts     = allPosts
 			.slice(0, selfIndex !== -1 ? selfIndex : allPosts.length)
