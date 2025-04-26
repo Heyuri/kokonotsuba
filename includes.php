@@ -53,6 +53,7 @@ require __DIR__.'/code/template/pageRenderer.php'; // page renderer
 
 /* html */
 require __DIR__.'/code/html/globalHTML.php'; // html class
+require __DIR__.'/code/html/threadRenderer.php'; // html library
 
 /* Handle soft error pages */
 require __DIR__.'/code/error/softErrorHandler.php';
