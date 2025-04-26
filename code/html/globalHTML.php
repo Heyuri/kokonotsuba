@@ -186,7 +186,7 @@ class globalHTML {
 		return $comment;
 	}
 	
-	public function buildThreadNavButtons($board, $threads, $threadInnerIterator, $PIO) {		
+	public function buildThreadNavButtons($threads, $threadInnerIterator) {		
 		$threadNumberList = $this->threadSingleton->mapThreadUidListToPostNumber($threads);
 		$upArrow = '';
 		$downArrow = '';
