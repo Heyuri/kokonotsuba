@@ -2,6 +2,7 @@
 
 /*
 * thread html renderer for Kokonotsuba!
+* Handles high-level output for threads. The actual html resides in templates/
 */ 
 
 class threadRenderer {
@@ -12,7 +13,6 @@ class threadRenderer {
 	private templateEngine $templateEngine;
 	private mixed $PIO;
 	private IFileIO $FileIO;
-	private mixed $threadSingleton;
 
 	public function __construct(board $board, array $config, globalHTML $globalHTML, moduleEngine $moduleEngine, templateEngine $templateEngine) {
 		$this->board = $board;
@@ -23,13 +23,13 @@ class threadRenderer {
 
 		$this->PIO = PIOPDO::getInstance();
 		$this->FileIO = PMCLibrary::getFileIOInstance();
-		$this->threadSingleton = threadSingleton::getInstance();
 	}
 
 	/**
 	 * Main render function to build full HTML of thread and replies.
 	 */
 	public function render(array $threads,
+	 array $currentPageThreads,
 	 mixed $tree_cut, 
 	 array $posts, int $hiddenReply, 
 	 string $thread_uid, 
@@ -56,77 +56,118 @@ class threadRenderer {
 		$postOPNumber = $posts[0]['no'];
 
 		// number of replies
-		$replyCount = $this->threadSingleton->getPostCountFromThread($thread_uid);
+		$replyCount = count($posts);
 	
-		if (is_array($tree_cut)) $tree_cut = array_flip($tree_cut);;
+		if (is_array($tree_cut)) $tree_cut = array_flip($tree_cut);
 	
+		// render posts for a thread
 		foreach ($posts as $i => $post) {
-			$isReply = $i > 0;
-			$data = $this->preparePostData($post);
-
-			[$REPLYBTN, $QUOTEBTN] = $this->buildQuoteAndReplyButtons($data['no'], $postOPNumber, $replyMode, $thread_uid, $showquotelink, $crossLink);
-
-			$categoryHTML = $this->processCategoryLinks($data['category'], $crossLink);
-			$IMG_BAR = ($data['ext']) ? $this->buildAttachmentBar($data['tim'], $data['ext'], $data['fname'], $data['imgsize'], $data['imgw'], $data['imgh'], $data['tw'], $data['th'], '') : '';
-			
-			$POSTFORM_EXTRA = $WARN_BEKILL = $WARN_OLD = $WARN_ENDREPLY = $WARN_HIDEPOST = $THREADNAV = $BACKLINKS = '';
-	
-			// Admin controls hook
-			if ($adminMode) {
-				$modFunc = '';
-				$this->moduleEngine->useModuleMethods('AdminList', array(&$modFunc, $post, $isReply));
-				$POSTFORM_EXTRA .= $modFunc;
-			}
-	
-			// File size warning
-			if ($this->config['STORAGE_LIMIT'] && $kill_sensor && isset($arr_kill[$data['no']])) {
-				$WARN_BEKILL = '<div class="warning">'._T('warn_sizelimit').'</div>';
-			}
-	
-			// Hidden reply notice
-			if (!$isReply && $hiddenReply) {
-				$WARN_HIDEPOST = '<div class="omittedposts">'._T('notice_omitted', $hiddenReply).'</div>';
-			}
-	
-			// Old thread warning
-			if (!$isReply && $this->config['MAX_AGE_TIME'] && $_SERVER['REQUEST_TIME'] - $post['time'] > ($this->config['MAX_AGE_TIME'] * 3600)) {
-				$data['com'] .= "<p class='markedDeletion'><span class='warning'>"._T('warn_oldthread')."</span></p>";
-			}
-	
-			// Navigation
-			if (!$isReply && !$thread_uid) {
-				$THREADNAV = $this->globalHTML->buildThreadNavButtons($this->board, $threads, $threadIterator, $this->PIO);
-			}
-	
-			// Template binding
-			$arrLabels = $isReply 
-				? bindReplyValuesToTemplate(
-					$this->board, $this->config, $data['post_uid'], $data['no'], $postOPNumber, $data['sub'], $data['name'], $data['now'],
-					$categoryHTML, $QUOTEBTN, $IMG_BAR, $data['imgsrc'] ?? '', $WARN_BEKILL, $data['com'], $POSTFORM_EXTRA, '', $BACKLINKS, $thread_uid
-				)
-				: bindOPValuesToTemplate(
-					$this->board, $this->config, $data['post_uid'], $data['no'], $data['sub'], $data['name'], $data['now'],
-					$categoryHTML, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $data['imgsrc'] ?? '', $data['fname'], $data['imgsize'],
-					$data['imgw'], $data['imgh'], $data['imageURL'] ?? '', $replyCount, $WARN_OLD, $WARN_BEKILL,
-					$WARN_ENDREPLY, $WARN_HIDEPOST, $data['com'], $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $thread_uid
-				);
-	
-			if (!$isReply) {
-				$arrLabels['{$BOARD_THREAD_NAME}'] = $overboardBoardTitleHTML;
-			}
-			if ($thread_uid) {
-				$arrLabels['{$RESTO}'] = $postOPNumber;
-			}
-	
-			$this->moduleEngine->useModuleMethods($isReply ? 'ThreadReply' : 'ThreadPost', array(&$arrLabels, $post, $thread_uid));
-			$thdat .= $this->templateEngine->ParseBlock($isReply ? 'REPLY' : 'THREAD', $arrLabels);
+			$thdat .= $this->renderSinglePost(
+				$post,
+				$i,
+				$threadMode,
+				$adminMode,
+				$showquotelink,
+				$currentPageThreads,
+				$threadIterator,
+				$hiddenReply,
+				$kill_sensor,
+				$arr_kill,
+				$postOPNumber,
+				$replyMode,
+				$replyCount,
+				$overboardBoardTitleHTML,
+				$thread_uid,
+				$crossLink
+			);
 		}
 	
 		$thdat .= $this->templateEngine->ParseBlock('THREADSEPARATE', $thread_uid ? array('{$RESTO}' => $postOPNumber) : array());
 		return $thdat;
 	}
 	
+	/*
+	* Render an individual post for a thread
+	*/
+	private function renderSinglePost(
+		array $post,
+		int $i,
+		bool $threadMode,
+		bool $adminMode,
+		bool $showquotelink,
+		array $currentPageThreads,
+		int $threadIterator,
+		int $hiddenReply,
+		bool $kill_sensor,
+		array $arr_kill,
+		int $postOPNumber,
+		bool $replyMode,
+		int $replyCount,
+		string $overboardBoardTitleHTML,
+		string $thread_uid,
+		string $crossLink
+	): string {
+		$isReply = $i > 0;
+		$data = $this->preparePostData($post);
 
+		[$REPLYBTN, $QUOTEBTN] = $this->buildQuoteAndReplyButtons($data['no'], $postOPNumber, $replyMode, $thread_uid, $showquotelink, $crossLink);
+
+		$categoryHTML = $this->processCategoryLinks($data['category'], $crossLink);
+		$IMG_BAR = ($data['ext']) ? $this->buildAttachmentBar($data['tim'], $data['ext'], $data['fname'], $data['imgsize'], $data['imgw'], $data['imgh'], $data['tw'], $data['th'], '') : '';
+
+		$POSTFORM_EXTRA = $WARN_BEKILL = $WARN_OLD = $WARN_ENDREPLY = $WARN_HIDEPOST = $THREADNAV = $BACKLINKS = '';
+
+		// Navigation
+		if ($threadMode) {
+			$THREADNAV = $this->globalHTML->buildThreadNavButtons($currentPageThreads, $threadIterator);
+		}
+
+		// Admin controls hook
+		if ($adminMode) {
+			$modFunc = '';
+			$this->moduleEngine->useModuleMethods('AdminList', array(&$modFunc, $post, $isReply));
+			$POSTFORM_EXTRA .= $modFunc;
+		}
+
+		// File size warning
+		if ($this->config['STORAGE_LIMIT'] && $kill_sensor && isset($arr_kill[$data['no']])) {
+			$WARN_BEKILL = '<div class="warning">'._T('warn_sizelimit').'</div>';
+		}
+
+		// Hidden reply notice
+		if (!$isReply && $hiddenReply) {
+			$WARN_HIDEPOST = '<div class="omittedposts">'._T('notice_omitted', $hiddenReply).'</div>';
+		}
+
+		// Old thread warning
+		if (!$isReply && $this->config['MAX_AGE_TIME'] && $_SERVER['REQUEST_TIME'] - $post['time'] > ($this->config['MAX_AGE_TIME'] * 3600)) {
+			$data['com'] .= "<p class='markedDeletion'><span class='warning'>"._T('warn_oldthread')."</span></p>";
+		}
+
+		// Template binding
+		$arrLabels = $isReply
+			? bindReplyValuesToTemplate(
+				$this->board, $this->config, $data['post_uid'], $data['no'], $postOPNumber, $data['sub'], $data['name'], $data['now'],
+				$categoryHTML, $QUOTEBTN, $IMG_BAR, $data['imgsrc'] ?? '', $WARN_BEKILL, $data['com'], $POSTFORM_EXTRA, '', $BACKLINKS, $thread_uid
+			)
+			: bindOPValuesToTemplate(
+				$this->board, $this->config, $data['post_uid'], $data['no'], $data['sub'], $data['name'], $data['now'],
+				$categoryHTML, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $data['imgsrc'] ?? '', $data['fname'], $data['imgsize'],
+				$data['imgw'], $data['imgh'], $data['imageURL'] ?? '', $replyCount, $WARN_OLD, $WARN_BEKILL,
+				$WARN_ENDREPLY, $WARN_HIDEPOST, $data['com'], $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $thread_uid
+			);
+
+		// append board title to thread 
+		$arrLabels['{$BOARD_THREAD_NAME}'] = $overboardBoardTitleHTML;
+
+		// bind post op number to resto
+		if ($replyMode) {
+			$arrLabels['{$RESTO}'] = $postOPNumber;
+		}
+
+		$this->moduleEngine->useModuleMethods($isReply ? 'ThreadReply' : 'ThreadPost', array(&$arrLabels, $post, $thread_uid));
+		return $this->templateEngine->ParseBlock($isReply ? 'REPLY' : 'THREAD', $arrLabels);
+	}
 
 	 /**
 	 * Sanitize and format post data for rendering using associative arrays.
@@ -197,8 +238,6 @@ class threadRenderer {
 			'imageURL' => $imageURL
 		];
 	}
-	
-
 
 	/**
 	 * Builds quote and reply links for post display.
