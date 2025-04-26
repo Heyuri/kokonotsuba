@@ -83,6 +83,7 @@ $config['ModuleList'] = array(
 $config['ModuleSettings']['EXIF_DATA_VIEWER'] = false;
 $config['ModuleSettings']['IMG_OPS'] = true; //imgops reverse image searcher portal
 $config['ModuleSettings']['IQDB'] = false; //iqdb reverse image search protal
+$config['ModuleSettings']['SWFCHAN'] = true; //swfchan archive
 
 //mod_countryflags
 $config['ModuleSettings']['FLAG_MODE'] = 1; // For the country flags module: 1 = hide flags on posts with "flag" in email field, 2 = show flags on posts with "flag" in email field
