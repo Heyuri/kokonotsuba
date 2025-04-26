@@ -27,7 +27,6 @@ class boardRebuilder {
 		$this->postRedirectIO = postRedirectIO::getInstance();
 
 
-
 		$this->templateEngine = $templateEngine;
 		$this->templateEngine->setFunctionCallbacks([
 			[
@@ -49,11 +48,13 @@ class boardRebuilder {
 	}
 
 	public function rebuildBoardHtml(int $resno = 0, mixed $pagenum = -1, bool $single_page = false, int $last = -1, bool $logRebuild = false): void {
+		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine);
+		
 		$roleLevel = $this->staffSession->getRoleLevel();
 		$adminMode = $roleLevel >=$this->config['roles']['LEV_JANITOR'] && $pagenum != -1 && !$single_page; // Front-end management mode
 		$thread_uid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
 		
-		
+		$threads = array();
 		$page_start = $page_end = 0; // Static page number
 		$inner_for_count = 1; // The number of inner loop executions
 		$RES_start = $RES_amount = $hiddenReply = $tree_count = 0;
@@ -179,23 +180,16 @@ class boardRebuilder {
 					array_unshift($tree_cut, $tree[0]);
 					$posts = $this->PIO->fetchPosts($tree_cut);
 				}
-				$threads = $this->threadSingleton->getThreadListFromBoard($this->board);
-				$pte_vals['{$THREADS}'] .= $this->globalHTML->arrangeThread(
-					$this->board,
-					$this->config,
-					$this->PIO,
-					$threads,
-					$tree,
-					$tree_cut,
-					$posts,
-					$hiddenReply,
-					$thread_uid,
-					$arr_kill,
-					$kill_sensor,
-					true,
-					$adminMode,
-					$i
-				);
+				$pte_vals['{$THREADS}'] .= $threadRenderer->render($threads,
+				 $tree_cut, 
+				 $posts, $hiddenReply, 
+				 $thread_uid, 
+				 $arr_kill, 
+				 $kill_sensor,
+				 true,
+				 $adminMode,
+				 $i); 
+				
 			}
 
 			$pte_vals['{$PAGENAV}'] = '';
