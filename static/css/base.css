@@ -851,11 +851,12 @@ caption h3 {
 	position: absolute;
 	z-index: 1000;
 	background-color: var(--color-bg-main);
+	border: 1px solid var(--color-lo-contrast-border) !important;
 	max-width: 90%;
 }
 
 .previewBox .post {
-	border: 1px solid var(--color-lo-contrast-border) !important;
+	border: none !important;
 }
 
 /************************ Post formatting *****************************/
