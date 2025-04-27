@@ -63,7 +63,7 @@ class threadRenderer {
 	
 		// render posts for a thread
 		foreach ($posts as $i => $post) {
-			$thdat .= $this->renderSinglePost(
+			$thdat .= $this->renderSinglePost($posts,
 				$post,
 				$i,
 				$threadMode,
@@ -91,7 +91,7 @@ class threadRenderer {
 	/*
 	* Render an individual post for a thread
 	*/
-	private function renderSinglePost(
+	private function renderSinglePost(array $threadPosts,
 		array $post,
 		int $i,
 		bool $threadMode,
@@ -170,7 +170,7 @@ class threadRenderer {
 			$templateValues['{$RESTO}'] = $postOPNumber;
 		}
 
-		$this->moduleEngine->useModuleMethods($isReply ? 'ThreadReply' : 'ThreadPost', array(&$templateValues, $post, $thread_uid));
+		$this->moduleEngine->useModuleMethods($isReply ? 'ThreadReply' : 'ThreadPost', array(&$templateValues, $post, $threadPosts, $isReply));
 		return $this->templateEngine->ParseBlock($isReply ? 'REPLY' : 'THREAD', $templateValues);
 	}
 
