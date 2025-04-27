@@ -11,6 +11,7 @@ class threadRenderer {
 	private globalHTML $globalHTML;
 	private moduleEngine $moduleEngine;
 	private templateEngine $templateEngine;
+	private mixed $threadSingleton;
 	private mixed $PIO;
 	private IFileIO $FileIO;
 
@@ -23,6 +24,7 @@ class threadRenderer {
 
 		$this->PIO = PIOPDO::getInstance();
 		$this->FileIO = PMCLibrary::getFileIOInstance();
+		$this->threadSingleton = threadSingleton::getInstance();
 	}
 
 	/**
@@ -59,11 +61,15 @@ class threadRenderer {
 		// number of replies
 		$replyCount = count($posts);
 	
+		// list of thread post op numbers
+		$threadNumberList = $this->threadSingleton->mapThreadUidListToPostNumber($currentPageThreads);
+
 		if (is_array($tree_cut)) $tree_cut = array_flip($tree_cut);
 	
 		// render posts for a thread
 		foreach ($posts as $i => $post) {
-			$thdat .= $this->renderSinglePost($posts,
+			$thdat .= $this->renderSinglePost($threadNumberList,
+			$posts,
 				$post,
 				$i,
 				$threadMode,
@@ -91,7 +97,8 @@ class threadRenderer {
 	/*
 	* Render an individual post for a thread
 	*/
-	private function renderSinglePost(array $threadPosts,
+	private function renderSinglePost(array $threadNumberList,
+		array $threadPosts,
 		array $post,
 		int $i,
 		bool $threadMode,
@@ -124,7 +131,7 @@ class threadRenderer {
 
 		// Navigation
 		if ($threadMode) {
-			$THREADNAV = $this->globalHTML->buildThreadNavButtons($currentPageThreads, $threadIterator);
+			$THREADNAV = $this->globalHTML->buildThreadNavButtons($threadNumberList, $threadIterator);
 		}
 
 		// Admin controls hook
