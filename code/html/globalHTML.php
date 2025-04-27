@@ -186,8 +186,7 @@ class globalHTML {
 		return $comment;
 	}
 	
-	public function buildThreadNavButtons($threads, $threadInnerIterator) {		
-		$threadNumberList = $this->threadSingleton->mapThreadUidListToPostNumber($threads);
+	public function buildThreadNavButtons($threadNumberList, $threadInnerIterator) {		
 		$upArrow = '';
 		$downArrow = '';
 		$postFormButton = '<a title="Go to post form" href="#postform">&#9632;</a>';
@@ -578,7 +577,7 @@ class globalHTML {
 				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=account">Account</a></li>
 				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=boards">Boards</a></li>
 				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?pagenum=0">Live frontend</a></li>
-				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=rebuild">Rebuild board</a></li>
+				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=rebuild&forceprofile=1">Rebuild board</a></li>
 				';
 		$this->moduleEngine->useModuleMethods('LinksAboveBar', array(&$linksAboveBar,'admin',$authRoleLevel));
 		$linksAboveBar .= "</ul>";
