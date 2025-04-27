@@ -29,20 +29,17 @@ class mod_showip extends moduleHelper {
 		return false;
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply){
-		$PIO = PIOPDO::getInstance();
-		$threadSingleton = threadSingleton::getInstance();
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply){
+		$opPost = $threadPosts[0];
 
-		$isThreadOP = $PIO->isThreadOP($post['post_uid']);
-
-		$email = (!$isThreadOP ? $threadSingleton->fetchPostsFromThread($post['thread_uid'])[0]['email'] : $post['email']);
+		$email = ($isReply ? $opPost['email'] : $post['email']);
 
 		$iphost = strtolower($post['host']);
 
 		if (!($this->IPTOGGLE == 2) && !($this->IPTOGGLE == 1 && stristr($email, 'displayip'))) {
 			return;
 		}
-		if ($isThreadOP && $this->IPTOGGLE == 1) $arrLabels['{$COM}'] .= '<p class="ipWarning">Posts in this thread will display IP addresses.</p>';
+		if (!$isReply && $this->IPTOGGLE == 1) $arrLabels['{$COM}'] .= '<p class="ipWarning">Posts in this thread will display IP addresses.</p>';
 		if(ip2long($iphost)!==false) {
 			$arrLabels['{$NOW}'] .= ' <span class="userIP">(IP: '.preg_replace('/\d+\.\d+$/','*.*',$iphost).')</span>';
 		} else if (inet_pton($iphost) !== false) { // ipv6
@@ -526,8 +523,8 @@ class mod_showip extends moduleHelper {
 		}
 	}
 
-	public function autoHookThreadReply(&$arrLabels, $post, $isReply){
-		$this->autoHookThreadPost($arrLabels, $post, $isReply);
+	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply){
+		$this->autoHookThreadPost($arrLabels, $post, $threadPosts, $isReply);
 	}
 } 
 
