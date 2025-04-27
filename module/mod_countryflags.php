@@ -31,7 +31,7 @@ class mod_countryflags  extends moduleHelper {
 		return false;
 	}
 	
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply){
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply){
 		if ($this->config['ModuleSettings']['FLAG_MODE'] == 1 && strstr($post['email'], 'flag')) return;
 		if ($this->config['ModuleSettings']['FLAG_MODE'] == 2 && !strstr($post['email'], 'flag')) return;
 		
@@ -538,8 +538,8 @@ class mod_countryflags  extends moduleHelper {
 			}
 	}
 
-	public function autoHookThreadReply(&$arrLabels, $post, $isReply){
-		$this->autoHookThreadPost($arrLabels, $post, $isReply);
+	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply){
+		$this->autoHookThreadPost($arrLabels, $post, $threadPosts, $isReply);
 	}
 	
 } 

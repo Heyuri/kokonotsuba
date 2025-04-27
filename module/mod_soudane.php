@@ -110,7 +110,7 @@ class mod_soudane extends moduleHelper {
 </script>';
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		$post_uid = $post['post_uid'];
 
 		$arrLabels['{$POSTINFO_EXTRA}'] .= ' <span class="soudaneContainer">';
@@ -148,8 +148,8 @@ class mod_soudane extends moduleHelper {
 		$arrLabels['{$POSTINFO_EXTRA}'] .= '</span>';
 	}
 
-	public function autoHookThreadReply(&$arrLabels, $post, $isReply) {
-		$this->autoHookThreadPost($arrLabels, $post, $isReply);
+	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply) {
+		$this->autoHookThreadPost($arrLabels, $post, $threadPosts, $isReply);
 	}
 	
 	public function ModulePage() {

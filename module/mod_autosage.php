@@ -28,7 +28,7 @@ class mod_autosage extends moduleHelper {
 		}
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		$fh = new FlagHelper($post['status']);
 		if($fh->value('as')) {
 			$arrLabels['{$POSTINFO_EXTRA}'].=' <span class="autosage" title="Autosage. This thread cannot be bumped.">AS</span>';

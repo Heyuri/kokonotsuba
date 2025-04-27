@@ -25,7 +25,7 @@ class mod_imagemeta extends moduleHelper {
 		return 'Koko BBS Release 1';
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$file = $post['tim'].$post['ext'];
 	
@@ -64,8 +64,8 @@ class mod_imagemeta extends moduleHelper {
 	}
 	
 
-	public function autoHookThreadReply(&$arrLabels, $post, $isReply){
-		$this->autoHookThreadPost($arrLabels, $post, $isReply);
+	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply){
+		$this->autoHookThreadPost($arrLabels, $post, $threadPosts, $isReply);
 	}
 
 	public function ModulePage(){

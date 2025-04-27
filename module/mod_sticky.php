@@ -19,7 +19,7 @@ class mod_sticky extends moduleHelper {
 		return 'Koko BBS Release 1';
 	}
 
-	public function autoHookThreadPost(array &$arrLabels, array $post, bool $isReply): void {
+	public function autoHookThreadPost(array &$arrLabels, array $post, array $threadPosts, bool $isReply): void {
 		$fh = new FlagHelper($post['status']);
 
 		if ($fh->value('sticky')) {

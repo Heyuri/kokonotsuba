@@ -30,7 +30,7 @@ class mod_pm extends moduleHelper {
 		$linkbar .= '[<a href="' . $this->myPage . '">Inbox</a>] [<a href="' . $this->myPage . '&amp;action=write">Write PM</a>]' . "\n";
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		if (!$this->config['ModuleSettings']['APPEND_TRIP_PM_BUTTON_TO_POST']) return;
 		if (strpos($post['name'], '◆') === false) return;
 
@@ -42,8 +42,8 @@ class mod_pm extends moduleHelper {
 		}
 	}
 
-	public function autoHookThreadReply(&$arrLabels, $post, $isReply) {
-		$this->autoHookThreadPost($arrLabels, $post, $isReply);
+	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply) {
+		$this->autoHookThreadPost($arrLabels, $post, $threadPosts, $isReply);
 	}
 
 	private function _tripping($str) {

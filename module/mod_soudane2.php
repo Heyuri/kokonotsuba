@@ -64,14 +64,14 @@ function sd2(sno) {
 </script>';
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		$log = $this->_soudane($post['no']);
 		$arrLabels['{$QUOTEBTN}'].= ' <a id="sd2'.$post['no'].'" class="sod" href="javascript:sd2('.$post['no'].');">'.
 			$this->_soudaneTxt($log).'</a>';
 	}
 
-	public function autoHookThreadReply(&$arrLabels, $post, $isReply){
-		$this->autoHookThreadPost($arrLabels, $post, $isReply);
+	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply){
+		$this->autoHookThreadPost($arrLabels, $post, $threadPosts, $isReply);
 	}
 	
 	public function ModulePage() {

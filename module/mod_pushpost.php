@@ -21,7 +21,7 @@ class mod_pushpost extends moduleHelper {
 		return '7th.Release (v140529)';
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		$PIO = PIOPDO::getInstance();
 		$pushcount = '';
 
@@ -56,8 +56,8 @@ class mod_pushpost extends moduleHelper {
 		}
 	}
 
-	public function autoHookThreadReply(&$arrLabels, $post, $isReply) {
-		$this->autoHookThreadPost($arrLabels, $post, $isReply);
+	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply) {
+		$this->autoHookThreadPost($arrLabels, $post, $threadPosts, $isReply);
 	}
 
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo, $isReply) {
