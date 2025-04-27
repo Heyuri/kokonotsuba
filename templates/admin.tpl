@@ -89,6 +89,7 @@
 
 <!--&BOARD_PAGE-->
 	{$CREATE_BOARD}
+	{$IMPORT_BOARD}
 	<h3>Existing boards</h3>
 	{$BOARD_LIST}
 <!--/&BOARD_PAGE-->
@@ -143,6 +144,55 @@
 
 	<p>After creating a new board, be sure to configure it at its configuration file</p>
 <!--/&CREATE_BOARD-->
+
+<!--&IMPORT_BOARD-->
+	<form id="board-import-form" action="{$PHP_SELF}?mode=handleBoardRequests" method="POST">
+		<h3>Import a board</h3>
+		<input type="hidden" name="board-import" value="{$BOARD_UID}">
+
+		<table id="board-import-table">
+			<tbody>
+				<tr>
+					<td class="postblock"><label for="import-board-title">Title</label></td>
+					<td>
+						<input required class="inputtext" id="import-board-title" name="import-board-title">
+					</td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="import-board-sub-title">Sub-title</label></td>
+					<td>
+						<input class="inputtext" id="import-board-sub-title" name="import-board-sub-title">
+					</td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="import-board-identifier">Identifier</label></td>
+					<td>
+						<input class="inputtext" id="import-board-identifier" name="import-board-identifier" placeholder="b">
+					</td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="import-board-path">Absolute directory</label></td>
+					<td>
+						<input class="inputtext" id="import-board-path" name="import-board-path" required class="url-input" placeholder="/var/www/html/boards/" value="{$DEFAULT_PATH}">
+					</td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="import-board-listed">Listed</label></td> 
+					<td><input type="checkbox" id="import-board-listed" name="import-board-listed" checked></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="import-board-file"><b>Board database file</b></label></td>
+					<td><input type="file" name="importedBoardDatabaseFile" id="import-board-file"></td> 
+				</tr>
+			</tbody>
+		</table>
+
+		<div class="buttonSection">
+			<input id="board-import-submit" type="submit" value="Import">
+		</div>
+		
+	</form>
+<!--/&IMPORT_BOARD-->
 
 <!--&EDIT_BOARD-->
 	<form id="board-action-form" action="{$PHP_SELF}?mode=handleBoardRequests" method="POST">
