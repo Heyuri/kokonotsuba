@@ -19,21 +19,19 @@ class mod_stop extends moduleHelper {
 	}
 
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $file, $ip, $thread_uid) {
-		$threadSingleton = threadSingleton::getInstance();
-
 		$staffSession = new staffAccountFromSession;
 		$globalHTML = new globalHTML($this->board);
 		$roleLevel = $staffSession->getRoleLevel();
 		
 
-		if ($thread_uid && $threadSingleton->isThread($thread_uid) && $roleLevel < $this->config['roles']['LEV_MODERATOR']) {
+		if ($thread_uid && $roleLevel < $this->config['roles']['LEV_MODERATOR']) {
 			$flags = getThreadStatus($thread_uid);
 
 			if($flags->value('stop')) $globalHTML->error('ERROR: This thread is locked.');
 		}
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		$fh = new FlagHelper($post['status']);
 		if ($fh->value('stop')) {
 			$arrLabels['{$POSTINFO_EXTRA}'].='<img src="'.$this->LOCKICON.'" class="icon" width="16" height="16" title="Locked">';
