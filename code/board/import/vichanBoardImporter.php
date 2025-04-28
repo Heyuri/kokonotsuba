@@ -11,7 +11,7 @@ class vichanBoardImporter extends abstractBoardImporter {
         return []; // return nothing, WIP
     }
 
-    public function importPostsToThreads(array $mappedRestoToThreadUids): void {
+    public function importRepliesToThreads(array $mappedRestoToThreadUids): void {
         // import posts from vichan to kokonotsuba
 	}
 }

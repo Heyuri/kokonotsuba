@@ -14,5 +14,5 @@ abstract class abstractBoardImporter {
     }
 
     abstract public function importThreadsToBoard(): array;
-    abstract public function importPostsToThreads(array $mappedRestoToThreadUids): void;
+    abstract public function importRepliesToThreads(array $mappedRestoToThreadUids): void;
 }
