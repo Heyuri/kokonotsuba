@@ -580,8 +580,10 @@ kkjs.setInitialMenuState = function() {
     
     if (classicMenu && neoMenu) {
       // Toggle visibility based on 'neomenu' setting
-      classicMenu.classList.toggle('hidden', neoMenuEnabled);
-      neoMenu.classList.toggle('hidden', !neoMenuEnabled);
+      classicMenu.hidden = neoMenuEnabled;
+			neoMenu.hidden = !neoMenuEnabled;
+			classicMenu.classList.toggle('hidden', neoMenuEnabled);
+			neoMenu.classList.toggle('hidden', !neoMenuEnabled);
     } else {
       console.warn('Menu elements not found. Skipping menu state initialization.');
     }
