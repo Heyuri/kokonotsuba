@@ -329,3 +329,11 @@ function getVideoDimensions(string $filePath): array {
 function formatFileSize(int $bytes): string {
 	return ($bytes >= 1024) ? (int)($bytes / 1024) . ' KB' : $bytes . ' B';
 }
+
+// truncate string for mysql TEXT column
+function truncateForText(string $input): string {
+	$maxBytes = 65535;
+
+	// Use mb_strcut to safely cut multibyte strings (like UTF-8) without breaking characters
+	return mb_strcut($input, 0, $maxBytes, 'UTF-8');
+}
