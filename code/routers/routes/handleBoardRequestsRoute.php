@@ -8,7 +8,10 @@ class handleBoardRequestsRoute {
 	private readonly array $config;
 	private readonly softErrorHandler $softErrorHandler;
 	private readonly boardIO $boardIO;
+	private readonly boardPathCachingIO $boardPathCachingIO;
 	private readonly globalHTML $globalHTML;
+
+	private readonly DatabaseConnection $databaseConnection;
 
 	public function __construct(
 		array $config,
@@ -19,21 +22,29 @@ class handleBoardRequestsRoute {
 		$this->config = $config;
 		$this->softErrorHandler = $softErrorHandler;
 		$this->boardIO = $boardIO;
+		$this->boardPathCachingIO = boardPathCachingIO::getInstance();
+		$this->databaseConnection = DatabaseConnection::getInstance();
 		$this->globalHTML = $globalHTML;
 	}
 
-	public function handleBoardRequests(): void {
-		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
-
 
 		// handle actions
+		public function handleBoardRequests(): void {
+		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
 
-		if (!empty($_POST['edit-board'])) {
+		// edit a board
+		if(!empty($_POST['edit-board'])) {
 			$this->editBoardFromRequest();
 		}
 
-		if (!empty($_POST['new-board'])) {
+		// create a new board
+		if(!empty($_POST['new-board'])) {
 			$this->createNewBoardFromRequest();
+		}
+
+		// import a board
+		if(!empty($_POST['import-board'])) {
+			$this->importBoardFromRequest();
 		}
 
 		// redirect
@@ -89,60 +100,83 @@ class handleBoardRequestsRoute {
 
 	// handle board creation
 	private function createNewBoardFromRequest() {
-		$boardPathCachingIO = boardPathCachingIO::getInstance();
-
+		// Get board information from the request
 		$boardTitle = $_POST['new-board-title'] ?? $this->globalHTML->error("Board title wasn't set!");
 		$boardSubTitle = $_POST['new-board-sub-title'] ?? '';
 		$boardIdentifier = $_POST['new-board-identifier'] ?? '';
 		$boardListed = isset($_POST['new-board-listed']) ? 1 : 0;
 		$boardPath = $_POST['new-board-path'] ?? $this->globalHTML->error("Board path wasn't set!");
-
-		$fullBoardPath = $boardPath . $boardIdentifier . '/';
-		$mockConfig = getTemplateConfigArray();
-		$backendDirectory = getBackendDir();
-		$cdnDir = $this->config['CDN_DIR'] . $boardIdentifier . '/';
-
-		$createdPaths = [];
-
-		try {
-			// create full board path
-			$createdPaths[] = createDirectoryWithErrorHandle($fullBoardPath, $this->globalHTML);
-
-			// create image storage paths
-			$imgDir = $this->config['USE_CDN'] ? $cdnDir . $mockConfig['IMG_DIR'] : $fullBoardPath . $mockConfig['IMG_DIR'];
-			$thumbDir = $this->config['USE_CDN'] ? $cdnDir . $mockConfig['THUMB_DIR'] : $fullBoardPath . $mockConfig['THUMB_DIR'];
-			$createdPaths[] = createDirectoryWithErrorHandle($imgDir, $this->globalHTML);
-			$createdPaths[] = createDirectoryWithErrorHandle($thumbDir, $this->globalHTML);
-
-			// create koko.php in the directory
-			$requireString = "\"$backendDirectory{$this->config['PHP_SELF']}\"";
-			createFileAndWriteText($fullBoardPath, $mockConfig['PHP_SELF'], "<?php require_once {$requireString}; ?>");
-
-			// create board-storage directory
-			$boardStorageDirectoryName = 'storage-' . $this->boardIO->getNextBoardUID();
-			$dataDir = getBoardStoragesDir() . $boardStorageDirectoryName;
-			$createdPaths[] = createDirectoryWithErrorHandle($dataDir, $this->globalHTML);
-
-			// generate config file
-			$boardConfigName = generateNewBoardConfigFile();
-			
-			// add board to database
-			$this->boardIO->addNewBoard($boardIdentifier, $boardTitle, $boardSubTitle, $boardListed, $boardConfigName, $boardStorageDirectoryName);
-
-			// initialize and create boardUID.ini
-			$newBoardUID = $this->boardIO->getLastBoardUID();
-			createFileAndWriteText($fullBoardPath, 'boardUID.ini', "board_uid = $newBoardUID");
-
-			// add the boards' physical path to path cache table
-			$boardPathCachingIO->addNewCachedBoardPath($newBoardUID, $fullBoardPath);
-
-
-			$newBoardFromDatabase = $this->boardIO->getBoardByUID($newBoardUID);
-			$newBoardFromDatabase->rebuildBoard();
-
-		} catch (Exception $e) {
-			rollbackCreatedPaths($createdPaths);
-			$this->globalHTML->error($e->getMessage());
-		}
+	
+		// Create an instance of the BoardCreator helper class
+		$boardCreator = new boardCreator($this->globalHTML, $this->config, $this->boardIO, $this->boardPathCachingIO);
+	
+		// Call the createNewBoard method in the BoardCreator class
+		$boardCreator->createNewBoard($boardTitle, $boardSubTitle, $boardIdentifier, $boardListed, $boardPath);
 	}
+	
+
+	// Import board from request
+	private function importBoardFromRequest() {
+		// get database settings
+		$dbSettings = getDatabaseSettings();
+		$postTableName = $dbSettings['POST_TABLE'];
+		$threadTableName = $dbSettings['THREAD_TABLE'];
+
+		// board creation object
+		$boardCreator = new boardCreator($this->globalHTML, 
+		 $this->config,
+		 $this->boardIO, 
+		 $this->boardPathCachingIO);
+
+		// Initialize board variables
+		$boardTitle = $_POST['import-board-title'] ?? $this->globalHTML->error("Board title wasn't set!");
+		$boardSubTitle = $_POST['import-board-sub-title'] ?? $this->globalHTML->error("Board subtitle wasn't set!");
+		$boardIdentifier = $_POST['import-board-identifier'] ?? $this->globalHTML->error("Board identifier wasn't set!");
+		$boardListed = isset($_POST['import-board-listed']) ? 1 : 0;
+		$boardPath = $_POST['import-board-path'] ?? $this->globalHTML->error("Board path wasn't set!");
+		$boardTableName = $_POST['import-board-tablename'] ?? $this->globalHTML->error("Table name wasn't set!");
+
+		// check board file
+		if (!isset($_FILES['import-board-file']) || $_FILES['import-board-file']['error'] !== UPLOAD_ERR_OK) {
+			$this->globalHTML->error("Board SQL file wasn't uploaded properly!");
+		}
+		$boardDatabaseFile = $_FILES['import-board-file'];
+		
+
+		// first, create the board and get new board uid
+		$importedBoard = $boardCreator->createNewBoard($boardTitle,
+		 $boardSubTitle, 
+		 $boardIdentifier, 
+		 $boardListed, 
+		 $boardPath);
+
+		// check board uid is valid
+		if(!$importedBoard) $this->globalHTML->error("Invalid board uid");
+
+		// Create board importer instance (for now, hard-coded to pixmicat)
+		$pixmicatBoardImporter = new pixmicatBoardImporter($this->databaseConnection,
+		 $importedBoard, 
+		 $threadTableName, 
+		 $postTableName);
+
+		// load mysql
+		$pixmicatBoardImporter->loadSQLDumpToTempTable($boardDatabaseFile['tmp_name'], $boardTableName);
+
+		// Import threads from original database to current database
+		// and get an assoc of 'resto' keys that resolve to thread Uids
+		try {
+			$mapRestoToThreadUids = $pixmicatBoardImporter->importThreadsToBoard();
+		} catch (Exception $e) {
+			$this->globalHTML->error('Error importing threads: ' . $e->getMessage());
+		}
+
+		// Import posts to threads
+		try {
+			$pixmicatBoardImporter->importPostsToThreads($mapRestoToThreadUids);
+		} catch (Exception $e) {
+			$this->globalHTML->error('Error importing posts: ' . $e->getMessage());
+		}
+
+	}
+
 }
