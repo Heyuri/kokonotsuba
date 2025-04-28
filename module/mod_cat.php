@@ -115,7 +115,7 @@ class mod_cat extends moduleHelper {
 				$sub = 'No Title';
 			
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'');
-			$this->moduleEngine->useModuleMethods('ThreadPost', array(&$arrLabels, $opPost, false)); // "ThreadPost" Hook Point
+			$this->moduleEngine->useModuleMethods('ThreadPost', array(&$arrLabels, $opPost, $threadPosts, false)); // "ThreadPost" Hook Point
 
 			$res = $threadSingleton->getPostCountFromThread($thread_uid) - 1;
 			$dat.= '<td class="thread">
