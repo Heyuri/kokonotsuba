@@ -16,7 +16,7 @@
 </div>
 
 <!-- Neomenu -->
-<ul class="neomenu hidden">
+<ul class="neomenu hidden" hidden>
   <li class="neomenuTitle"><h1><a class="extr" href="//www.example.com/" target="_top">Example!</a></h1></li>
   <li class="neomenuTopLevel">
     <h2>Bulletin Boards</h2>
