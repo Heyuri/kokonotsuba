@@ -53,7 +53,6 @@ class mod_cat extends moduleHelper {
 
 		$list_max = $threadSingleton->threadCountFromBoard($this->board);
 		$page = $_GET['page']??0;
-		$post_cnt = $PIO->postCountFromBoard($this->board);
 		$page_max = ceil($list_max / $this->PAGE_DEF) - 1;
 
 		$sort = $_POST['sort_by'] ?? $_GET['sort_by'] ?? $_COOKIE['cat_sort_by'] ?? '';
@@ -107,7 +106,7 @@ class mod_cat extends moduleHelper {
 			$opPost = $threadPosts[0];
 			extract($opPost);
 			
-			$resno = $threadSingleton->resolveThreadNumberFromUID($thread_uid);
+			$resno = $no;
 			if ( ($cat_cols!='auto') && !($i%intval($cat_cols)) )
 				$dat.= '</tr><tr>';
 
@@ -120,7 +119,7 @@ class mod_cat extends moduleHelper {
 			$res = $threadSingleton->getPostCountFromThread($thread_uid) - 1;
 			$dat.= '<td class="thread">
 	<!--<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>-->
-	<a href="'.$this->config['PHP_SELF'].'?res='.($resno?$resno:$no).'#p'.$no.'">'.
+	<a href="'.$this->config['PHP_SELF'].'?res='.($resno?$resno:$no).'#p'.$this->board->getBoardUID().$no.'">'.
 	($FileIO->imageExists($tim.$ext, $this->board) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim, $this->board), $this->board).'" width="'.min(150, $tw).'" vspace="3"	class="thumb">' : '***').
 	'</a>
 	<div class="catPostInfo"><span class="title">'.$sub.'</span>'.
