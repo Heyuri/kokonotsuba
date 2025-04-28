@@ -82,7 +82,7 @@ class PIOPDO implements IPIO {
 			$boardUID = $board->getBoardUID();
 			$time = (int)substr($tim, 0, -3);
 			$root = gmdate('Y-m-d H:i:s');
-			$postUID = $this->databaseConnection->getNextAutoIncrement($this->tablename);
+			$postUID = $this->getNextPostUid();
 			$thread_uid_for_database = null;
 			$isThread = false;
 			
@@ -586,4 +586,9 @@ class PIOPDO implements IPIO {
 		return $files;
 	}
 
+	public function getNextPostUid(): int {
+		return $this->databaseConnection->getNextAutoIncrement($this->tablename);
+	}
+
 }
+
