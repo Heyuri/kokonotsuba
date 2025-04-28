@@ -203,4 +203,22 @@ class board implements IBoard {
 
 		$this->databaseConnection->execute($query, $params);
 	}
+
+	public function incrementBoardPostNumberMultiple(int $count): void {
+		if ($count <= 0) {
+			return;
+		}
+	
+		$placeholders = [];
+		$params = [];
+		for ($i = 0; $i < $count; $i++) {
+			$placeholders[] = '(:board_uid' . $i . ')';
+			$params[':board_uid' . $i] = $this->getBoardUID();
+		}
+	
+		$query = "INSERT INTO {$this->postNumberTable} (board_uid) VALUES " . implode(',', $placeholders);
+	
+		$this->databaseConnection->execute($query, $params);		
+	}
+
 }
