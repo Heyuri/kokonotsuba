@@ -146,11 +146,11 @@
 <!--/&CREATE_BOARD-->
 
 <!--&IMPORT_BOARD-->
-	<form id="board-import-form" action="{$PHP_SELF}?mode=handleBoardRequests" method="POST">
+	<form id="import-board-form" action="{$PHP_SELF}?mode=handleBoardRequests" method="POST" enctype="multipart/form-data">
 		<h3>Import a board</h3>
-		<input type="hidden" name="board-import" value="{$BOARD_UID}">
+		<input type="hidden" name="import-board" value="1">
 
-		<table id="board-import-table">
+		<table id="import-board-table">
 			<tbody>
 				<tr>
 					<td class="postblock"><label for="import-board-title">Title</label></td>
@@ -182,13 +182,22 @@
 				</tr>
 				<tr>
 					<td class="postblock"><label for="import-board-file"><b>Board database file</b></label></td>
-					<td><input type="file" name="importedBoardDatabaseFile" id="import-board-file"></td> 
+					<td><input type="file" name="import-board-file" id="import-board-file" required><small>[<a href="javascript:void(0);" onclick="$id('import-board-file').value='';">X</a>]</small>
+						<div class="formItemDescription">The mysql dump of the pixmicat database you're importing.</div>
+					</td> 
+				</tr>
+				<tr>
+					<td class="postblock"><label for="import-board-tablename">Table name</label></td>
+					<td>
+						<input class="inputtext" id="import-board-tablename" name="import-board-tablename" required value="imglog">
+						<div class="formItemDescription">The table name of post table from the pixmicat database.</div>
+					</td>
 				</tr>
 			</tbody>
 		</table>
 
 		<div class="buttonSection">
-			<input id="board-import-submit" type="submit" value="Import">
+			<input id="import-board-submit" type="submit" value="Import">
 		</div>
 		
 	</form>
