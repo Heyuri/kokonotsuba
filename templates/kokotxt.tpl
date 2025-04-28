@@ -18,7 +18,7 @@
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/pseud0ch3.css?v=7" title="Pseud0ch (sans-serif)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/txt/tomorrow.css?v=7" title="Tomorrow">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css" title="Import Custom">
-	<script src="{$STATIC_URL}js/koko.js?v=7"></script>
+	<script src="{$STATIC_URL}js/koko.js?v=9"></script>
 	<script src="{$STATIC_URL}js/qr.js?v=8"></script>
 	<script src="{$STATIC_URL}js/qu.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/onlinecounter.js" defer></script>
