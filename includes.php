@@ -137,6 +137,11 @@ require __DIR__.'/code/board/boardClass.php';
 require __DIR__.'/code/board/boardRebuilder.php';
 require __DIR__.'/code/board/boardSingleton.php';
 require __DIR__.'/code/board/boardStoredFile.php';
+require __DIR__.'/code/board/boardCreator.php';
+// board import
+require __DIR__.'/code/board/import/abstractBoardImporter.php';
+require __DIR__.'/code/board/import/pixmicatBoardImporter.php';
+require __DIR__.'/code/board/import/vichanBoardImporter.php';
 
 /* IP */
 require __DIR__.'/code/ip/IPAddress.php';
