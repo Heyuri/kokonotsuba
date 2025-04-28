@@ -117,66 +117,85 @@ class handleBoardRequestsRoute {
 
 	// Import board from request
 	private function importBoardFromRequest() {
-		// get database settings
-		$dbSettings = getDatabaseSettings();
-		$postTableName = $dbSettings['POST_TABLE'];
-		$threadTableName = $dbSettings['THREAD_TABLE'];
-
-		// board creation object
-		$boardCreator = new boardCreator($this->globalHTML, 
-		 $this->config,
-		 $this->boardIO, 
-		 $this->boardPathCachingIO);
-
-		// Initialize board variables
-		$boardTitle = $_POST['import-board-title'] ?? $this->globalHTML->error("Board title wasn't set!");
-		$boardSubTitle = $_POST['import-board-sub-title'] ?? $this->globalHTML->error("Board subtitle wasn't set!");
-		$boardIdentifier = $_POST['import-board-identifier'] ?? $this->globalHTML->error("Board identifier wasn't set!");
-		$boardListed = isset($_POST['import-board-listed']) ? 1 : 0;
-		$boardPath = $_POST['import-board-path'] ?? $this->globalHTML->error("Board path wasn't set!");
-		$boardTableName = $_POST['import-board-tablename'] ?? $this->globalHTML->error("Table name wasn't set!");
-
-		// check board file
-		if (!isset($_FILES['import-board-file']) || $_FILES['import-board-file']['error'] !== UPLOAD_ERR_OK) {
-			$this->globalHTML->error("Board SQL file wasn't uploaded properly!");
-		}
-		$boardDatabaseFile = $_FILES['import-board-file'];
-		
-
-		// first, create the board and get new board uid
-		$importedBoard = $boardCreator->createNewBoard($boardTitle,
-		 $boardSubTitle, 
-		 $boardIdentifier, 
-		 $boardListed, 
-		 $boardPath);
-
-		// check board uid is valid
-		if(!$importedBoard) $this->globalHTML->error("Invalid board uid");
-
-		// Create board importer instance (for now, hard-coded to pixmicat)
-		$pixmicatBoardImporter = new pixmicatBoardImporter($this->databaseConnection,
-		 $importedBoard, 
-		 $threadTableName, 
-		 $postTableName);
-
-		// load mysql
-		$pixmicatBoardImporter->loadSQLDumpToTempTable($boardDatabaseFile['tmp_name'], $boardTableName);
-
-		// Import threads from original database to current database
-		// and get an assoc of 'resto' keys that resolve to thread Uids
 		try {
+			// get database settings
+			$dbSettings = getDatabaseSettings();
+			$postTableName = $dbSettings['POST_TABLE'];
+			$threadTableName = $dbSettings['THREAD_TABLE'];
+	
+			// board creation object
+			$boardCreator = new boardCreator($this->globalHTML, 
+			 $this->config,
+			 $this->boardIO, 
+			 $this->boardPathCachingIO);
+	
+			// Initialize board variables
+			$boardTitle = $_POST['import-board-title'] ?? $this->globalHTML->error("Board title wasn't set!");
+			$boardSubTitle = $_POST['import-board-sub-title'] ?? $this->globalHTML->error("Board subtitle wasn't set!");
+			$boardIdentifier = $_POST['import-board-identifier'] ?? $this->globalHTML->error("Board identifier wasn't set!");
+			$boardListed = isset($_POST['import-board-listed']) ? 1 : 0;
+			$boardPath = $_POST['import-board-path'] ?? $this->globalHTML->error("Board path wasn't set!");
+			$boardTableName = $_POST['import-board-tablename'] ?? $this->globalHTML->error("Table name wasn't set!");
+			$boardDatabaseFile = $_FILES['import-board-file'];
+	
+			// check if the file was uploaded correctly
+			if(!isset($boardDatabaseFile) || $boardDatabaseFile['error'] !== UPLOAD_ERR_OK) {
+				$this->globalHTML->error("Board SQL file wasn't uploaded properly!");
+			}
+	
+			// basic check to ensure it's a mysql dump
+			if(!isValidMySQLDumpFile($boardDatabaseFile['tmp_name'])) {
+				throw new Exception("Invalid database file");
+			}
+	
+			// first, create the board and get new board uid
+			$importedBoard = $boardCreator->createNewBoard($boardTitle,
+			 $boardSubTitle, 
+			 $boardIdentifier, 
+			 $boardListed, 
+			 $boardPath);
+	
+			// check board uid is valid
+			if(!$importedBoard) $this->globalHTML->error("Invalid board uid");
+	
+			// Create board importer instance (for now, hard-coded to pixmicat)
+			$pixmicatBoardImporter = new pixmicatBoardImporter($this->databaseConnection,
+			 $importedBoard, 
+			 $threadTableName, 
+			 $postTableName);
+	
+			// load mysql
+			$pixmicatBoardImporter->loadSQLDumpToTempTable($boardDatabaseFile['tmp_name'], $boardTableName);
+	
+			// Import threads from original database to current database
+			// and get an assoc of 'resto' keys that resolve to thread Uids
 			$mapRestoToThreadUids = $pixmicatBoardImporter->importThreadsToBoard();
-		} catch (Exception $e) {
-			$this->globalHTML->error('Error importing threads: ' . $e->getMessage());
-		}
+	
+			// Import posts to threads
+			$pixmicatBoardImporter->importRepliesToThreads($mapRestoToThreadUids);
+	
+			// Update the board post number
+			$pixmicatBoardImporter->updateBoardPostNumber();
 
-		// Import posts to threads
-		try {
-			$pixmicatBoardImporter->importPostsToThreads($mapRestoToThreadUids);
-		} catch (Exception $e) {
-			$this->globalHTML->error('Error importing posts: ' . $e->getMessage());
-		}
+			// now rebuild
+			$importedBoard->rebuildBoard();
 
+		} catch (Exception $e) {
+			// do clean-up if the board was created so theres no left-over files
+			if($importedBoard) {
+				$boardUid = $importedBoard->getBoardUID();
+				$boardPath = $importedBoard->getBoardCachedPath();
+				// delete new board from database
+				$this->boardIO->deleteBoardByUID($boardUid);
+			
+				// delete files
+				safeRmdir($boardPath);
+			}
+
+			// run error
+			$this->globalHTML->error('Error during board import: ' . $e->getMessage());
+		}
 	}
+	
 
 }
