@@ -199,3 +199,41 @@ function removeExifIfJpeg(string $filePath): void {
 		}
 	}
 }
+
+// check if file is a valid mysql dump
+function isValidMySQLDumpFile(string $filePath): bool {
+	// Open the file
+	$file = fopen($filePath, 'r');
+	if (!$file) {
+		throw new Exception("Unable to open the file: $filePath");
+	}
+
+	// Check for MySQL-specific comments and statements
+	$valid = false;
+	$patterns = [
+		'/^-- MySQL dump/',
+		'/^-- Server version/',
+		'/^CREATE DATABASE/',
+		'/^USE/',
+		'/^CREATE TABLE/',
+		'/^INSERT INTO/',
+	];
+
+	// Read the first few lines of the file to check for MySQL dump patterns
+	$linesChecked = 0;
+	while (($line = fgets($file)) !== false && $linesChecked < 20) {
+		$line = trim($line); // Trim whitespace from the line
+		foreach ($patterns as $pattern) {
+			if (preg_match($pattern, $line)) {
+				$valid = true;
+				break 2; // If a match is found, exit early
+			}
+		}
+		$linesChecked++;
+	}
+
+	fclose($file);
+
+	// Return if the file seems to be a valid MySQL dump
+	return $valid;
+}
