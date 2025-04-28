@@ -38,7 +38,6 @@ class adminPageHandler {
 			setcookie('filterboard', json_encode($filterBoard), time() + (86400 * 30), "/");
 
 			redirect($this->config['PHP_SELF'].'?mode=admin&admin=del');
-			exit;
 		} else if($_SERVER['REQUEST_METHOD'] === 'POST' && $filterAction === 'filterclear') {
 			setcookie('manage_filterip', "", time() - 3600, "/");
 			setcookie('manage_filtercomment', "", time() - 3600, "/");
@@ -47,7 +46,6 @@ class adminPageHandler {
 			setcookie('filterboard', "", time() - 3600, "/");
 
 			redirect($this->config['PHP_SELF'].'?mode=admin&admin=del');
-			exit;
 		}
 		$filtersBoards = (isset($_COOKIE['filterboard'])) ? json_decode($_COOKIE['filterboard'], true) : [$this->board->getBoardUID(), GLOBAL_BOARD_UID];
 		
@@ -82,7 +80,6 @@ class adminPageHandler {
 		$offset = $page * $postsPerPage;
 		
 		
-		$pass = $_POST['pass']??''; // Admin password
 		$onlyimgdel = $_POST['onlyimgdel']??''; // Only delete the image
 		$modFunc = '';
 		$delno = $thsno = array();
@@ -123,28 +120,34 @@ class adminPageHandler {
 								</thead>
 								<tbody>';
 		
-		for($j = 0; $j < $posts_count; $j++){
-			$bg = ($j % 2) ? 'row1' : 'row2'; // Background color
+		// Eager load all boards first
+		$allBoards = $boardIO->getAllRegularBoards();
+		$boardMap = array();
+		foreach($allBoards as $board){
+			$boardMap[$board->getBoardUID()] = $board;
+		}
+
+		for($j = 0; $j < $posts_count; $j++) {
 			extract($posts[$j]);
 			
-			//post board
-			$postBoard = $boardIO->getBoardByUID($boardUID);
+			// post board (from preloaded boards)
+			if(isset($boardMap[$boardUID])){
+				$postBoard = $boardMap[$boardUID];
+			}else{
+				continue; // Skip if board not found
+			}
 			$postBoardConfig = $postBoard->loadBoardConfig();
-			
+		
 			// Modify the field style
-			$name =substr($name, 0, 500);
+			$name = substr($name, 0, 500);
 			$sub = substr($sub, 0, 500);
 			if($email) $name = "<a href=\"mailto:$email\">$name</a>";
 			$com = substr($com, 0, 500);
-	
-			
+
 			// The first part of the discussion is the stop tick box and module function
 			$modFunc = ' ';
 			$this->moduleEngine->useModuleMethods('AdminList', array(&$modFunc, $posts[$j], !$PIO->isThreadOP($posts[$j]['post_uid']))); // "AdminList" Hook Point
-			if($thread_uid==0){ // $resto = 0 (the first part of the discussion string)
-				$flgh = $PIO->getPostStatus($status);
-			}
-	
+
 			// Extract additional archived image files and generate a link
 			if($ext && $FileIO->imageExists($tim.$ext, $postBoard)){
 				$clip = '<a href="'.$FileIO->getImageURL($tim.$ext, $postBoard).'" target="_blank">'.$tim.$ext.'</a>';
@@ -155,12 +158,12 @@ class adminPageHandler {
 				$clip = $md5chksum = '--';
 				$size = 0;
 			}
-	 
+
 			if ($roleLevel <= $this->config['roles']['LEV_JANITOR']) {
 				$host = substr(hash('sha256', $host), 0, 10);
 			}
-			
-				// Print out the interface
+
+			// Print out the interface
 			$dat .= '
 				<tr>
 					<td class="colFunc">' . $modFunc . '</td>
@@ -170,10 +173,11 @@ class adminPageHandler {
 					<td class="colSub"><span class="title">' . $sub . '</span></td>
 					<td class="colName"><b class="name">' . $name . '</b></td>
 					<td class="colComment">' . $com . '</td>
-					<td class="colHost">' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="?	mode=admin&admin=del&host=' . $host . '" title="See all posts">★</a></td>
+					<td class="colHost">' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="?mode=admin&admin=del&host=' . $host . '" title="See all posts">★</a></td>
 					<td class="colImage">' . $clip . ' (' . $size . ')<br>' . $md5chksum . '</td>
 				</tr>';
 		}
+
 		
 		if(!$posts) $dat .= '
 				<tr>
@@ -232,7 +236,6 @@ class adminPageHandler {
 			setcookie('filterboard', json_encode($filterBoard), time() + (86400 * 30), "/");
 
 			redirect($this->config['PHP_SELF'].'?admin=action&mode=admin');
-			exit;
 		} else if($_SERVER['REQUEST_METHOD'] === 'POST' && $filterAction === 'filterclear') {
 			setcookie('filterip', "", time() - 3600, "/");
 			setcookie('filterdatebefore', "", time() - 3600, "/");
@@ -244,7 +247,6 @@ class adminPageHandler {
 			setcookie('filterboard', "", time() - 3600, "/");
 			
 			redirect($this->config['PHP_SELF'].'?admin=action&mode=admin');
-			exit;
 		}
 		
 		$filtersBoards = (isset($_COOKIE['filterboard'])) ? json_decode($_COOKIE['filterboard'], true) : [$this->board->getBoardUID(), GLOBAL_BOARD_UID];
