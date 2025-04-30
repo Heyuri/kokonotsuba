@@ -4,109 +4,88 @@ class tripcodeProcessor {
 	private readonly array $config;
 	private readonly globalHTML $globalHTML;
 
+	// Constructor to initialize config and globalHTML instances
 	public function __construct(array $config, globalHTML $globalHTML) {
 		$this->config = $config;
 		$this->globalHTML = $globalHTML;
 	}
 
-	public function apply(string &$name, int $roleLevel = 0): void {
+	// Main method to apply tripcode processing to a given name
+	public function apply(string &$name, string &$tripcode, string &$secure_tripcode, string &$capcode, int $roleLevel = 0): void {
+		// Check for fraud symbols in the name and append " (fraudster)" if found
 		if ($this->containsFraudSymbol($name)) {
 			$name .= " (fraudster)";
+			return;
 		}
 
-		$name = $this->sanitizeNameBeforeTripParsing($name);
-		[$name, $trip, $sectrip] = $this->extractTripParts($name);
-		$name = $this->sanitizeNameAfterTripParsing($name);
-
-		if ($this->shouldApplyRoleCapcode($roleLevel, $sectrip)) {
-			if ($this->applyRoleCapcode($name, $roleLevel, $sectrip)) {
-				$name = "<span class=\"postername\">$name</span>";
-				return;
-			}
+		// Apply role capcode if conditions are met
+		$capcode = $this->setCapcodeIfExists($roleLevel, $secure_tripcode);
+		// now return
+		if($capcode) {
+			$tripcode = '';
+			$secure_tripcode = '';
+			return;
 		}
 
-		$trip = $this->generateTripcode($trip, $sectrip);
+		// Generate tripcode based on extracted trip parts
+		$this->generateTripcode($tripcode, $secure_tripcode);
 
+		// Ensure name is not empty or whitespace
 		$this->ensureNameSet($name);
-		$name = "<span class=\"postername\">$name</span><span class=\"postertrip\">$trip</span>";
-
-		$name = $this->applyCapcodeOverrides($name, $trip);
 
 	}
 
+	// Check if name contains fraud symbols
 	private function containsFraudSymbol(string $name): bool {
 		return preg_match('/[◆◇♢♦⟡★]/u', $name);
 	}
 
-	private function sanitizeNameBeforeTripParsing(string $name): string {
-		return str_replace('&#', '&&', $name);
+	// Set the capcode if it exists in the array key
+	private function setCapcodeIfExists(int $roleLevel, string $secure_tripcode): string {
+		if(array_key_exists($secure_tripcode, $this->config['staffCapcodes']) && $roleLevel >= $this->config['staffCapcodes'][$secure_tripcode]['requiredRole']) {
+			return $secure_tripcode;
+		}
+		return '';
 	}
 
-	private function extractTripParts(string $name): array {
-		return str_replace('&%', '&#', explode('#', $name . '##'));
-	}
-
-	private function sanitizeNameAfterTripParsing(string $name): string {
-		return str_replace('&&', '&#', $name);
-	}
-
-	private function shouldApplyRoleCapcode(int $roleLevel, ?string $sectrip): bool {
-		return $roleLevel >= ($this->config['roles']['LEV_JANITOR'] ?? 0) && !empty($sectrip);
-	}
-
-	private function applyRoleCapcode(string &$name, int $roleLevel, string $sectrip): bool {
-		$roleMap = [
-			'LEV_JANITOR'		=> 'JCAPCODE_FMT',
-			'LEV_MODERATOR'	=> 'MCAPCODE_FMT',
-			'LEV_ADMIN'			=> 'ACAPCODE_FMT',
-			'LEV_SYSTEM'		=> 'SCAPCODE_FMT',
-		];
-
-		foreach ($roleMap as $key => $format) {
-			if (
-				$roleLevel >= $this->config['roles'][$key] &&
-				$sectrip === ' ' . $this->globalHTML->roleNumberToRoleName($this->config['roles'][$key]) &&
-				!empty($this->config[$format])
-			) {
-				$name = sprintf($this->config[$format], $name);
-				return true;
-			}
+	// Generate regular and/or secure tripcodes
+	private function generateTripcode(string &$tripcode, string &$secure_tripcode): void {
+		if ($tripcode) {
+			// Convert trip to Shift_JIS and generate a salt for crypt
+			$tripcode = mb_convert_encoding($tripcode, 'Shift_JIS', 'UTF-8');
+			$salt = strtr(preg_replace('/[^\.-z]/', '.', substr($tripcode . 'H.', 1, 2)), ':;<=>?@[\\]^_`', 'ABCDEFGabcdef');
+			// Generate tripcode using crypt
+			$tripcode = substr(crypt($tripcode, $salt), -10);
 		}
 
-		return false;
-	}
-
-	private function generateTripcode(?string $trip, ?string $sectrip): string {
-		if ($trip) {
-			$trip = mb_convert_encoding($trip, 'Shift_JIS', 'UTF-8');
-			$salt = strtr(preg_replace('/[^\.-z]/', '.', substr($trip . 'H.', 1, 2)), ':;<=>?@[\\]^_`', 'ABCDEFGabcdef');
-			$trip = "◆" . substr(crypt($trip, $salt), -10);
+		if ($secure_tripcode) {
+			// Generate secure tripcode by hashing and encoding
+			$sha = str_rot13(base64_encode(pack("H*", sha1($secure_tripcode . $this->config['TRIPSALT']))));
+			$secure_tripcode = substr($sha, 0, 10);
 		}
 
-		if ($sectrip) {
-			$sha = str_rot13(base64_encode(pack("H*", sha1($sectrip . $this->config['TRIPSALT']))));
-			$trip = "★" . substr($sha, 0, 10);
-		}
-
-		return $trip;
 	}
 
+	// Ensure the name is set; use default or trigger error if not
 	private function ensureNameSet(string &$name): void {
 		if (!$name || preg_match("/^[ |　|]*$/", $name)) {
 			if ($this->config['ALLOW_NONAME']) {
+				// Assign default name if allowed
 				$name = $this->config['DEFAULT_NONAME'];
 			} else {
+				// Otherwise, trigger an error
 				$this->globalHTML->error(_T('regist_withoutname'));
 			}
 		}
 	}
 
+	// Apply capcode overrides if specific tripcode mappings exist
 	private function applyCapcodeOverrides(string $name, string $trip): string {
 		if (isset($this->config['CAPCODES'][$trip])) {
 			$cap = $this->config['CAPCODES'][$trip];
+			// Wrap name with capcode style information
 			return '<span class="capcodeSection" style="color:' . $cap['color'] . ';">' . $name . '<span class="postercap">' . $cap['cap'] . '</span></span>';
 		}
 		return $name;
 	}
-
 }
