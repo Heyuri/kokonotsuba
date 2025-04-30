@@ -329,15 +329,15 @@ class threadRenderer {
 
 	/* Generate html for the post name dynamically */
 	public function generateNameHtml(string $name = '', string $tripcode = '', string $secure_tripcode = '', string $capcode = ''): string {
-		$nameHtml = $name;
+		$nameHtml = '<span class="postername">'.$name.'</span>';
 	
 		// Check for secure tripcode first; use ★ symbol if present
 		if($secure_tripcode) {
-			$nameHtml = '<span class="postername">'.$name.'</span>★<span class="postertrip">'.$secure_tripcode.'</span>';
+			$nameHtml = $nameHtml.'★<span class="postertrip">'.$secure_tripcode.'</span>';
 		}
 		// Check for regular tripcode with ◆ symbol
 		else if($tripcode) {
-			$nameHtml = '<span class="postername">'.$name.'</span>◆<span class="postertrip">'.$tripcode.'</span>';
+			$nameHtml = $nameHtml.'◆<span class="postertrip">'.$tripcode.'</span>';
 		}
 
 		// Check if either tripcode or secure tripcode has a defined capcode
