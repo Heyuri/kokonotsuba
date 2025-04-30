@@ -71,7 +71,7 @@ class mod_sticky extends moduleHelper {
 			$globalHTML->error('ERROR: Post does not exist.');
 		}
 
-		if (!$PIO->isThreadOP($post['post_uid'])) {
+		if (!$post['is_op']) {
 			$globalHTML->error('ERROR: Cannot sticky a reply.');
 		}
 

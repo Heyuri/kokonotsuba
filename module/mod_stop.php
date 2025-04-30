@@ -58,7 +58,7 @@ class mod_stop extends moduleHelper {
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_LOCK']);
 
 		$post = $threadSingleton->fetchPostsFromThread(strval($_GET['thread_uid']))[0];
-		if(!$PIO->isThreadOP($post['post_uid'])) $globalHTML->error('ERROR: Cannot lock reply.');
+		if(!$post['is_op']) $globalHTML->error('ERROR: Cannot lock reply.');
 		if(!$post) $globalHTML->error('ERROR: Post does not exist.');
 		$flgh = $PIO->getPostStatus($post['post_uid']);
 		$flgh->toggle('stop');

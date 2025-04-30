@@ -44,9 +44,11 @@ class mod_movethread extends moduleHelper {
 		$no = $originalBoard->getLastPostNoFromBoard() + 1;
 
 		// Determine name and capcode
-		$capcodeRole = "System";
-		$username = $this->config['SYSTEMCHAN_NAME'];
-		$nameToInsert = "$username ## $capcodeRole";
+		$capcode = "";
+		$name = $this->config['SYSTEMCHAN_NAME'];
+
+		$tripcode = '';
+		$secure_tripcode = 'System';
 
 		// Generate link to the new thread
 		$newThreadUrl = $destinationBoard->getBoardThreadURL($newThread['post_op_number']);
@@ -55,7 +57,7 @@ class mod_movethread extends moduleHelper {
 		// Prepare post metadata
 		$ip = new IPAddress('127.0.0.1');
 
-		$tripcodeProcessor->apply($nameToInsert, $this->config['roles']['LEV_SYSTEM']);
+		$tripcodeProcessor->apply($name, $tripcode, $secure_tripcode, $capcode, $this->config['roles']['LEV_SYSTEM']);
 
 		// Get original thread UID
 		$originalThreadUid = $originalThread['thread_uid'];
@@ -64,10 +66,10 @@ class mod_movethread extends moduleHelper {
 		$PIO->addPost(
 			$originalBoard,
 			$no,
-			$originalThreadUid,
+			$originalThreadUid, 0, false,
 			'', '', 0, '', '',
 			0, 0, 0, 0, 0, 0, $now,
-			$nameToInsert,
+			$name, '', '', $capcode,
 			'', '', $moveComment,
 			$ip,
 			false,
@@ -99,15 +101,13 @@ class mod_movethread extends moduleHelper {
 		// Destination board paths and config
 		$destBasePath = $destinationBoard->getBoardUploadedFilesDirectory();
 		$destConfig = $destinationBoard->loadBoardConfig();
-	
 		$destImgPath = $destBasePath . $destConfig['IMG_DIR'];
 		$destThumbPath = $destBasePath . $destConfig['THUMB_DIR'];
 	
-		// All attachments are from the same source board
+		// Source board paths and config
 		$srcBoardUID = $attachments[0]['boardUID'];
 		$srcBoard = $boardIO->getBoardByUID($srcBoardUID);
 		$srcConfig = $srcBoard->loadBoardConfig();
-	
 		$srcBasePath = $srcBoard->getBoardUploadedFilesDirectory();
 		$srcImgPath = $srcBasePath . $srcConfig['IMG_DIR'];
 		$srcThumbPath = $srcBasePath . $srcConfig['THUMB_DIR'];
@@ -118,12 +118,11 @@ class mod_movethread extends moduleHelper {
 	
 			$srcImage = $srcImgPath . $imageFilename;
 			$destImage = $destImgPath . $imageFilename;
-	
 			$srcThumb = $srcThumbPath . $thumbFilename;
 			$destThumb = $destThumbPath . $thumbFilename;
 	
-			// Check for null/empty and existence before proceeding
-			if (!empty($srcImage) && file_exists($srcImage)) {
+			// Copy/move the image file if it exists
+			if (is_file($srcImage)) {
 				if ($isCopy) {
 					copy($srcImage, $destImage);
 				} else {
@@ -131,7 +130,8 @@ class mod_movethread extends moduleHelper {
 				}
 			}
 	
-			if (!empty($srcThumb) && file_exists($srcThumb)) {
+			// Copy/move the thumbnail file if it exists
+			if (is_file($srcThumb)) {
 				if ($isCopy) {
 					copy($srcThumb, $destThumb);
 				} else {
@@ -139,7 +139,8 @@ class mod_movethread extends moduleHelper {
 				}
 			}
 		}
-	}	
+	}
+	
 
 	private function handleThreadMove($thread, $hostBoard, $destinationBoard, $leaveShadowThread = true) {
 		$threadSingleton = threadSingleton::getInstance();

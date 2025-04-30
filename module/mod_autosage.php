@@ -54,7 +54,7 @@ class mod_autosage extends moduleHelper {
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_AUTO_SAGE']);
 		
 		$post = $threadSingleton->fetchPostsFromThread(strval($_GET['thread_uid']))[0];
-		if (!$PIO->isThreadOP($post['post_uid'])) $globalHTML->error('ERROR: Cannot autosage reply.');
+		if (!$post['is_op']) $globalHTML->error('ERROR: Cannot autosage reply.');
 		if (!$post) $globalHTML->error('ERROR: Post does not exist.');
 		$flgh = $PIO->getPostStatus($post['post_uid']);
 		$flgh->toggle('as');
