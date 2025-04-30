@@ -231,7 +231,7 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 
 				// Insert the OP post
 				$this->insertPost(
-					$boardUID, $no, $thread_uid, $root, $time, $md5chksum,
+					$boardUID, $no, $thread_uid, 0, true, $root, $time, $md5chksum,
 					$category, $tim, $fname, $ext, $imgw, $imgh, $imgsize,
 					$tw, $th, $pwd, $now, $name, $email, $sub, $com, $host, $status
 				);
@@ -295,7 +295,7 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 			
 				// insert post reply
 				$this->insertPost(
-					$boardUID, $no, $thread_uid, $root, $time, $md5chksum,
+					$boardUID, $no, $thread_uid, 0, false, $root, $time, $md5chksum,
 					$category, $tim, $fname, $ext, $imgw, $imgh, $imgsize,
 					$tw, $th, $pwd, $now, $name, $email, $sub, $com, $host, 
 					$status
@@ -319,6 +319,8 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 	private function insertPost(int $boardUID, 
 		int $no, 
 		string $thread_uid, 
+		int $post_position,
+		bool $is_op,
 		string $root,
 		int $time,
 		string $md5chksum, 
@@ -338,17 +340,19 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 		string $host,
 		string $status): void {
 	
-		$query = "INSERT INTO $this->postTableName (boardUID, no, thread_uid, root, time, md5chksum, category, tim, fname, ext,
-			imgw, imgh, imgsize, tw, th, pwd, now, name, email, sub, com, host, status)
+		$query = "INSERT INTO $this->postTableName (boardUID, no, thread_uid, post_position, is_op, root, time, md5chksum, category, tim, fname, ext,
+			imgw, imgh, imgsize, tw, th, pwd, now, name, tripcode, secure_tripcode, capcode, email, sub, com, host, status)
 			VALUES (
-			:boardUID, :no, :thread_uid, :root, :time, :md5chksum, :category, :tim, :fname, :ext,
-			:imgw, :imgh, :imgsize, :tw, :th, :pwd, :now, :name, :email, :sub, :com, :host, :status)";
+			:boardUID, :no, :thread_uid, :post_position, :is_op, :root, :time, :md5chksum, :category, :tim, :fname, :ext,
+			:imgw, :imgh, :imgsize, :tw, :th, :pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :status)";
 
 		// Bind parameters
 		$params = [
 			':boardUID' => $boardUID,
 			':no' => $no,
 			':thread_uid' => $thread_uid,
+			':post_position' => $post_position,
+			':is_op' => (int)$is_op,
 			':root' => $root,
 			':time' => $time,
 			':md5chksum' => $md5chksum,
@@ -364,6 +368,9 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 			':pwd' => $pwd,
 			':now' => $now,
 			':name' => $name,
+			':tripcode' => '',
+			':secure_tripcode' => '',
+			':capcode' => '',
 			':email' => $email,
 			':sub' => $sub,
 			':com' => truncateForText($com), // somehow it may be larger

@@ -59,13 +59,16 @@ interface IPIO {
 	public function removeAttachments($posts, $recursion = false);
 
 	/**
-	 * Add a new post/thread
+	 * Add a new post/reply
 	 *
+	 * @param board   $board     Board being posted to
 	 * @param int     $no        Post number
-	 * @param int     $resto     Reply to post number
+	 * @param string  $thread_uid Uid of the parent thread
+	 * @param int	  $post_position Position of the post in the thread
+	 * @param bool	  $is_op	 if the post is OP
 	 * @param string  $md5chksum Attachment image MD5
 	 * @param string  $category  Category
-	 * @param string  $tim       Timestamp
+	 * @param int	  $tim       Timestamp
 	 * @param string  $ext       Attachment file extension
 	 * @param int     $imgw      Image width
 	 * @param int     $imgh      Image height
@@ -75,6 +78,9 @@ interface IPIO {
 	 * @param string  $pwd       Password
 	 * @param string  $now       Post time string
 	 * @param string  $name      Name
+	 * @param string  $tripcode  Tripcode
+	 * @param string  $secure_tripcode  Secure tripcode
+	 * @param string  $capcode   Capcode
 	 * @param string  $email     Email
 	 * @param string  $sub       Title
 	 * @param string  $com       Comment
@@ -82,8 +88,8 @@ interface IPIO {
 	 * @param boolean $age       Bump thread
 	 * @param string  $status    Status flag
 	 */
-	public function addPost($boardUID, $no, $resto, $md5chksum, $category, $tim, $fname, $ext, $imgw, $imgh, 
-		$imgsize, $tw, $th, $pwd, $now, $name, $email, $sub, $com, $host, $age = false, $status = '');
+	public function addPost(board $board, int $no, string $thread_uid, int $post_position, bool $is_op, string $md5chksum, string $category, int $tim, string $fname, string $ext, int $imgw, int $imgh, 
+		string $imgsize, int $tw, int $th, string $pwd, string $now, string $name, string $tripcode, string $secure_tripcode, string $capcode, string $email, string $sub, string $com, string $host, bool $age = false, string $status = '');
 
 	/**
 	 * Check for successive posts

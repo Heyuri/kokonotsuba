@@ -72,8 +72,8 @@ class PIOPDO implements IPIO {
 	}
 	
 	/* Add a new post to a thread */
-	public function addPost($board, $no, $thread_uid_from_url, $md5chksum, $category, $tim, $fname, $ext, $imgw, $imgh, 
-		$imgsize, $tw, $th, $pwd, $now, $name, $email, $sub, $com, $host,  $age = false, $status = '') {
+	public function addPost(board $board, int $no, string $thread_uid_from_url, int $post_position, bool $is_op, string $md5chksum, string $category, int $tim, string $fname, string $ext, int $imgw, int $imgh, 
+		string $imgsize, int $tw, int $th, string $pwd, string $now, string $name, string $tripcode, string $secure_tripcode, string $capcode, string $email, string $sub, string $com, string $host,  bool $age = false, string $status = '') {
 		
 		$threadSingleton = threadSingleton::getInstance();
 
@@ -100,17 +100,19 @@ class PIOPDO implements IPIO {
 			}
 			
 			$query = "INSERT INTO {$this->tablename} 
-				(no, boardUID, thread_uid, root, time, md5chksum, 
+				(no, boardUID, thread_uid, post_position, is_op, root, time, md5chksum, 
 				category, tim, fname, ext, imgw, imgh, imgsize, tw, th, pwd, now, 
-				name, email, sub, com, host, status) 
-				VALUES (:no, :boardUID, :thread_uid, :root, :time,
+				name, tripcode, secure_tripcode, capcode, email, sub, com, host, status) 
+				VALUES (:no, :boardUID, :thread_uid, :post_position, :is_op, :root, :time,
 				:md5chksum, :category, :tim, :fname, :ext, :imgw, :imgh, :imgsize, :tw, :th, 
-				:pwd, :now, :name, :email, :sub, :com, :host, :status)";
+				:pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :status)";
 		
 			$params = [
 				':no'          => $no,
 				':boardUID'    => $boardUID,
 				':thread_uid'  => $thread_uid_for_database,
+				':post_position' => $post_position,
+				':is_op'	   => (int)$is_op,
 				':root'        => $root,
 				':time'        => $time,
 				':md5chksum'   => $md5chksum,
@@ -126,6 +128,9 @@ class PIOPDO implements IPIO {
 				':pwd'         => $pwd,
 				':now'         => $now,
 				':name'        => $name,
+				':tripcode'    => $tripcode,
+				':secure_tripcode' => $secure_tripcode,
+				':capcode'	   => $capcode,
 				':email'       => $email,
 				':sub'         => $sub,
 				':com'         => $com,
