@@ -337,3 +337,8 @@ function truncateForText(string $input): string {
 	// Use mb_strcut to safely cut multibyte strings (like UTF-8) without breaking characters
 	return mb_strcut($input, 0, $maxBytes, 'UTF-8');
 }
+
+// detect if a string contains html tags
+function containsHtmlTags($string) {
+	return $string !== strip_tags($string);
+}
