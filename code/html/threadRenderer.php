@@ -337,11 +337,11 @@ class threadRenderer {
 	
 		// Check for secure tripcode first; use ★ symbol if present
 		if($secure_tripcode) {
-			$nameHtml = $nameHtml.'★<span class="postertrip">'.$secure_tripcode.'</span>';
+			$nameHtml = $nameHtml.'<span class="postertrip">★'.$secure_tripcode.'</span>';
 		}
 		// Check for regular tripcode with ◆ symbol
 		else if($tripcode) {
-			$nameHtml = $nameHtml.'◆<span class="postertrip">'.$tripcode.'</span>';
+			$nameHtml = $nameHtml.'<span class="postertrip">◆'.$tripcode.'</span>';
 		}
 
 		// Check if either tripcode or secure tripcode has a defined capcode
