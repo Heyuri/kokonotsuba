@@ -68,7 +68,7 @@ class adminPageHandler {
 		$staffSession = new staffAccountFromSession;
 		$softErrorHandler = new softErrorHandler($this->board);
 		
-		 $roleLevel = $staffSession->getRoleLevel();
+		$roleLevel = $staffSession->getRoleLevel();
 		 
 		$postsPerPage = $this->config['ADMIN_PAGE_DEF'];
 		$numberOfFilteredPosts = $PIO->postCount($filters);
@@ -77,9 +77,7 @@ class adminPageHandler {
 		if (!filter_var($page, FILTER_VALIDATE_INT) && $page != 0) $globalHTML->error("Page number was not a valid int.");
 
 		$page = ($page >= 0) ? $page : 1;
-		$offset = $page * $postsPerPage;
-		
-		
+
 		$onlyimgdel = $_POST['onlyimgdel']??''; // Only delete the image
 		$modFunc = '';
 		$delno = $thsno = array();
@@ -100,7 +98,7 @@ class adminPageHandler {
 			$ActionLogger->logAction("Delete post posts: $delnoActionLogStr".($onlyimgdel?' (file only)':''), $this->board->getBoardUID());
 		}
 		if($onlyimgdel != 'on') $this->moduleEngine->useModuleMethods('PostOnDeletion', array($delno, 'backend')); // "PostOnDeletion" Hook Point
-		$files = ($onlyimgdel != 'on') ? $PIO->removePosts($delno) : $PIO->removeAttachments($delno);
+
 
 		if($searchHost) $posts = $PIO->getPostsFromIP($searchHost);
 		else $posts = $PIO->getFilteredPosts($postsPerPage, $page * $this->config['ADMIN_PAGE_DEF'], $filters) ?? array();
@@ -146,7 +144,7 @@ class adminPageHandler {
 
 			// The first part of the discussion is the stop tick box and module function
 			$modFunc = ' ';
-			$this->moduleEngine->useModuleMethods('AdminList', array(&$modFunc, $posts[$j], !$PIO->isThreadOP($posts[$j]['post_uid']))); // "AdminList" Hook Point
+			$this->moduleEngine->useModuleMethods('AdminList', array(&$modFunc, $posts[$j], !$posts[$j]['is_op'])); // "AdminList" Hook Point
 
 			// Extract additional archived image files and generate a link
 			if($ext && $FileIO->imageExists($tim.$ext, $postBoard)){
