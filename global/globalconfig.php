@@ -46,4 +46,46 @@ $config['roles']['LEV_MODERATOR'] = 3; //moderator
 $config['roles']['LEV_ADMIN'] = 4; //administrator
 $config['roles']['LEV_SYSTEM'] = 5; //system
 
+
+// Capcode formats (put '%s' where you want the original name)
+$config['JCAPCODE_FMT'] = '%s';
+$config['DCAPCODE_FMT'] = '<span class="capcode capcodeDev">%s ## Developer</span>';
+$config['MCAPCODE_FMT'] = '<span class="capcode capcodeMod">%s ## Mod</span>';
+$config['ACAPCODE_FMT'] = '<span class="capcode capcodeAdmin">%s ## Admin</span>';
+$config['SCAPCODE_FMT'] = '<span class="capcode capcodeSystem">%s ## System</span>';
+
+
+// mod capcode map
+// The key (e.g 'Admin') is that needs to go next to a "## " in the name field to trigger it
+// capcodeHtml is the html format for the name when drawing
+// requiredRole is what role the poster needs to be able to trigger it
+$config['staffCapcodes'] = [
+	'System' => [
+		'capcodeHtml' => $config['SCAPCODE_FMT'],
+		'requiredRole' => $config['roles']['LEV_SYSTEM'],
+	],
+
+	'Admin' => [
+		'capcodeHtml' => $config['ACAPCODE_FMT'],
+		'requiredRole' => $config['roles']['LEV_ADMIN'],
+	],
+
+	'Mod' => [
+		'capcodeHtml' => $config['MCAPCODE_FMT'],
+		'requiredRole' => $config['roles']['LEV_MODERATOR'],
+	],
+
+	'Developer' => [
+		'capcodeHtml' => $config['DCAPCODE_FMT'],
+		'requiredRole' => $config['roles']['LEV_MODERATOR'],
+	],
+
+	'Janitor' => [
+		'capcodeHtml' => $config['JCAPCODE_FMT'],
+		'requiredRole' => $config['roles']['LEV_JANITOR'],
+	],
+
+]; 
+
 $config['KILL_INCOMPLETE_UPLOAD'] = 1; // Automatically delete uploaded incomplete additional images
+

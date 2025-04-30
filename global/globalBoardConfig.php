@@ -204,11 +204,6 @@ $config['STORAGE_MAX'] = 300000; // Total storage limit
 $config['AUTO_LINK'] = 1; // Create urls (autolink)
 
 
-// Capcode formats (put '%s' where you want the original name)
-$config['JCAPCODE_FMT'] = '%s';
-$config['MCAPCODE_FMT'] = '<span class="capcode capcodeMod">%s ## Mod</span>';
-$config['ACAPCODE_FMT'] = '<span class="capcode capcodeAdmin">%s ## Admin</span>';
-$config['SCAPCODE_FMT'] = '<span class="capcode capcodeSystem">%s ## System</span>';
 $config['CAP_ISHTML'] = 1; // Whether to accept HTML tags in the comment if administrator module is enabled (Yes: 1 No: 0)
 
 // Footer at the bottom of the page
@@ -216,7 +211,7 @@ $config['FOOTTEXT'] = '';
 
 
 $config['CAPCODES'] = array( // tripcode=>color,cap // for secure tripcode hashes, put ★ instead of ◆
-	'◆tripcode' => array('color'=>'#fd0000', 'cap'=>' ## Admin'),
+	'tripcode' => array('color'=>'#fd0000', 'cap'=>' ## Admin'),
 );
 
 $config['REF_URL'] = ''; // URL prefix, eg: https://jump.heyuri.net
