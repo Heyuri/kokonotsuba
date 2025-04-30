@@ -94,6 +94,7 @@ class registRoute {
 			$this->PIO, $computedPostInfo['dest'], $postData['ThreadExistsBefore']
 		);
 	
+
 		// Age/sage logic
 		$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['chktime'], $postData['email'], $postData['name'], $postData['age']);
 	
@@ -107,14 +108,14 @@ class registRoute {
 			[$fileMeta['thumbWidth'], $fileMeta['thumbHeight'], $fileMeta['imgW'], $fileMeta['imgH'], $fileMeta['fileTimeInMilliseconds'], $fileMeta['ext']],
 			&$postData['status']
 		]);
-	
+
 		// Add post to storage
 		$this->PIO->addPost(
-			$this->board, $computedPostInfo['no'], $postData['thread_uid'], $fileMeta['md5'],
+			$this->board, $computedPostInfo['no'], $postData['thread_uid'], $computedPostInfo['post_position'], $computedPostInfo['is_op'],  $fileMeta['md5'],
 			$postData['category'], $fileMeta['fileTimeInMilliseconds'], $fileMeta['fileName'], $fileMeta['ext'],
 			$fileMeta['imgW'], $fileMeta['imgH'], $fileMeta['readableSize'], $fileMeta['thumbWidth'], $fileMeta['thumbHeight'],
 			$computedPostInfo['pass'], $computedPostInfo['now'],
-			$postData['name'], $postData['email'], $postData['sub'], $postData['comment'],
+			$postData['name'], $postData['tripcode'], $postData['secure_tripcode'], $postData['capcode'], $postData['email'], $postData['sub'], $postData['comment'],
 			$postData['ip'], $postData['age'], $postData['status']
 		);
 	
@@ -175,6 +176,8 @@ class registRoute {
 	
 		$ip = new IPAddress;
 		$host = gethostbyaddr($ip);
+		
+		$age = false;
 	
 		$thread_uid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
 		$isReply = $thread_uid ? true : false;
@@ -188,11 +191,20 @@ class registRoute {
 		$ThreadExistsBefore = false;
 		$up_incomplete = 0;
 		$is_admin = $roleLevel === $this->config['roles']['LEV_ADMIN'];
-	
-		return [ 'name' => $name, 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
+
+		// full name for cookie, it wont be processed by the tripcode processor
+		$nameCookie = $name;
+
+		$tripcode = '';
+		$secure_tripcode = '';
+		[$name, $tripcode, $secure_tripcode] = array_map('trim', explode('#', $name . '##'));
+
+
+		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode' => $tripcode, 'secure_tripcode' => $secure_tripcode, 
+			 'capcode' => '', 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
 			 'category' => $category, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip, 'host' => $host,
 			 'thread_uid' => $thread_uid, 'isReply' => $isReply, 'roleLevel' => $roleLevel, 'time' => $time,
-			 'timeInMilliseconds' => $timeInMilliseconds, 'chktime' => $chktime, 'flgh' => $flgh, 'age' => $age = false,
+			 'timeInMilliseconds' => $timeInMilliseconds, 'chktime' => $chktime, 'flgh' => $flgh, 'age' => $age, 'status' => '',
 			 'ThreadExistsBefore' => $ThreadExistsBefore, 'up_incomplete' => $up_incomplete, 'is_admin' => $is_admin
 		];
 	}
@@ -252,7 +264,7 @@ class registRoute {
 		if (strlenUnicode($postData['email']) > $this->config['INPUT_MAX']) $this->globalHTML->error(_T('regist_emailtoolong'));
 		if (strlenUnicode($postData['sub']) > $this->config['INPUT_MAX']) $this->globalHTML->error(_T('regist_topictoolong'));
 	
-		setrawcookie('namec', rawurlencode(htmlspecialchars_decode($postData['name'])), time() + 7 * 24 * 3600);
+		setrawcookie('namec', rawurlencode(htmlspecialchars_decode($postData['nameCookie'])), time() + 7 * 24 * 3600);
 	
 		$postData['email'] = str_replace("\r\n", '', $postData['email']);
 		$postData['sub'] = str_replace("\r\n", '', $postData['sub']);
@@ -261,7 +273,7 @@ class registRoute {
 	}
 
 	private function processPostDetails(array &$postData, tripcodeProcessor $tripcodeProcessor, defaultTextFiller $defaultTextFiller, postFilterApplier $postFilterApplier): void {
-		$tripcodeProcessor->apply($postData['name'], $postData['roleLevel']);
+		$tripcodeProcessor->apply($postData['name'], $postData['tripcode'], $postData['secure_tripcode'], $postData['capcode'], $postData['roleLevel']);
 		$defaultTextFiller->fill($postData['sub'], $postData['comment']);
 		$postFilterApplier->applyFilters($postData['comment'], $postData['email']);
 	
@@ -299,11 +311,15 @@ class registRoute {
 		$pass = substr(md5($postData['pwd']), 2, 8);
 	
 		$no = $this->board->getLastPostNoFromBoard() + 1;
+		$post_position = 0;
+		$is_op = $postData['resno'] ? false : true;
 		$now = $formatter->format($postData['time']);
 		$now .= $idGen->generate($postData['email'], $now, $postData['time'], $postData['thread_uid']);
 	
 		return [
 			'no' => $no,
+			'post_position' => $post_position,
+			'is_op' => $is_op,
 			'pass' => $pass,
 			'now' => $now,
 			'dest' => $file->getTemporaryFileName(),
