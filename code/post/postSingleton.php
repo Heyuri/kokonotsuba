@@ -305,12 +305,20 @@ class PIOPDO implements IPIO {
 		return $this->databaseConnection->fetchAllAsArray($query, $params) ?? [];
 	}
 	
-	public function getPostsFromIP(string $host, string $order = "post_uid"): array {
-		$query = "SELECT * FROM {$this->tablename} WHERE host = :ip_address ORDER BY $order";
-		$params = [':ip_address' => $host];
+	public function getPostsFromIP(string $host, int $limit = 10, int $offset = 0, string $order = "post_uid"): array {
+		// Ensure limit is not negative
+		$limit = max(1, $limit);
+		// Ensure offset is not negative
+		$offset = max(0, $offset);
 		
+		$query = "SELECT * FROM {$this->tablename} WHERE host = :ip_address ORDER BY $order LIMIT $limit OFFSET $offset";
+		$params = [
+			':ip_address' => $host,
+		];
+		
+		// Fetch results from the database and return them as an array, or an empty array if no results
 		return $this->databaseConnection->fetchAllAsArray($query, $params) ?? [];
-	}
+	}	
 	
 	public function getFilteredPosts(int $amount, int $offset = 0, array $filters = [], string $order = 'post_uid'): array {
 		$query = "SELECT * FROM {$this->tablename} WHERE 1";
