@@ -157,7 +157,7 @@ class threadRenderer {
 		}
 
 		//handle name/trip/capcode html
-		$nameHtml = $this->generateNameHtml($data['name'], $data['tripcode'], $data['secure_tripcode'], $data['capcode']);
+		$nameHtml = generatePostNameHtml($this->config['staffCapcodes'], $this->config['CAPCODES'], $data['name'], $data['tripcode'], $data['secure_tripcode'], $data['capcode']);
 
 		// Template binding
 		$templateValues += $isReply
@@ -325,56 +325,6 @@ class threadRenderer {
 		
 
 		return  _T('img_filename').'<a href="'.$imageURL.'" target="_blank" rel="nofollow" onmouseover="this.textContent=\''.$fnameJS.'\';" onmouseout="this.textContent=\''.$truncatedJS.'\'"> '.$truncated.'</a> <a href="'.$imageURL.'" title="'.$fname.'" download="'.$fname.'"><div class="download"></div></a> <span class="fileProperties">('.$imgsize.$imgwh_bar.')</span>';
-	}
-
-	/* Generate html for the post name dynamically */
-	public function generateNameHtml(string $name = '', string $tripcode = '', string $secure_tripcode = '', string $capcode = ''): string {
-		// For compatability reasons, names already containing html will just be displayed without any further processing.
-		// Because kokonotsuba previously stored name/trip/capcode html all in the name column, and this can cause double wrapped html
-		if(containsHtmlTags($name)) return $name;
-
-		$nameHtml = '<span class="postername">'.$name.'</span>';
-	
-		// Check for secure tripcode first; use ★ symbol if present
-		if($secure_tripcode) {
-			$nameHtml = $nameHtml.'<span class="postertrip">★'.$secure_tripcode.'</span>';
-		}
-		// Check for regular tripcode with ◆ symbol
-		else if($tripcode) {
-			$nameHtml = $nameHtml.'<span class="postertrip">◆'.$tripcode.'</span>';
-		}
-
-		// Check if either tripcode or secure tripcode has a defined capcode
-		if (array_key_exists($tripcode, $this->config['CAPCODES']) || array_key_exists($secure_tripcode, $this->config['CAPCODES'])) {
-			// Retrieve the corresponding capcode mapping (tripcode first, fallback to secure tripcode)
-			$capcodeMap = $this->config['CAPCODES'][$tripcode] ?? $this->config['CAPCODES'][$secure_tripcode];
-
-			// Extract the capcode color
-			$capcodeColor = $capcodeMap['color'];
-
-			// Extract the capcode text
-			$capcodeText = $capcodeMap['cap'];
-
-			// Wrap the name HTML and append capcode text, applying the capcode color
-			$nameHtml = '<span class="capcodeSection" style="color:'.$capcodeColor.';">'.$nameHtml. '<span class="postercap">' .$capcodeText.'</span> </span>';
-		}
-
-
-		// If a capcode is provided, format the name accordingly
-		if($capcode) {
-			// Handle staff capcodes if defined in the config
-			if(array_key_exists($capcode, $this->config['staffCapcodes'])) {
-				// Retrieve the corresponding capcode HTML template
-				$capcodeMap = $this->config['staffCapcodes'][$capcode];
-				$capcodeHtml = $capcodeMap['capcodeHtml'];
-
-				// Apply the capcode formatting (usually wraps or replaces nameHtml)
-				$nameHtml = '<span class="postername">'.sprintf($capcodeHtml, $name).'</span>';
-			}
-
-		}
-
-		return $nameHtml;
 	}
 
 }
