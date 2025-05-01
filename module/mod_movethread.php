@@ -172,7 +172,7 @@ class mod_movethread extends moduleHelper {
 
 			$postRedirectIO->addNewRedirect($hostBoard->getBoardUID(), $destinationBoard->getBoardUID(), $threadUid);
 			$this->copyThreadAttachmentsToBoard($attachments, $destinationBoard);
-			$threadSingleton->moveThreadAndUpdate($threadUid, $hostBoard, $destinationBoard);
+			$threadSingleton->moveThreadAndUpdate($threadUid, $destinationBoard);
 			
 			$threadRedirectUrl = $postRedirectIO->resolveRedirectedThreadLinkFromThreadUID($threadUid);
 		}
