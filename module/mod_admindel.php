@@ -32,7 +32,7 @@ class mod_admindel extends moduleHelper {
 		$postBoard = searchBoardArrayForBoard($this->moduleBoardList, $post['boardUID']);
 
 		$modfunc.= '<span class="adminDeleteFunctions">';
-		$modfunc.= '[<a href="'.$this->mypage.'&action=del&post_uid='.$post['post_uid'].'" title="Delete">D</a>]';
+		$modfunc.= '[<a href="'.$this->mypage.'&action=del&post_uid='.$post['post_uid'].'&excimer=1" title="Delete">D</a>]';
 		if ($post['ext'] && $FileIO->imageExists($post['tim'].$post['ext'], $postBoard)) $modfunc.= '[<a href="'.$this->mypage.'&action=imgdel&post_uid='.$post['post_uid'].'" title="Delete File">Df</a>]';
 		$modfunc.= '[<a href="'.$this->mypage.'&action=delmute&post_uid='.$post['post_uid'].'" title="Delete and Mute for '.$this->JANIMUTE_LENGTH.' minute'.($this->JANIMUTE_LENGTH == 1 ? "" : "s").'">DM</a>]';
 		$modfunc.= '</span>';
@@ -44,10 +44,8 @@ class mod_admindel extends moduleHelper {
 
 		$boardIO = boardIO::getInstance();
 		$ActionLogger = ActionLogger::getInstance();
-		$staffSession = new staffAccountFromSession;
 		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
-		$roleLevel = $staffSession->getRoleLevel();
 		
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_DELETE_POST']);
 		
@@ -89,6 +87,7 @@ class mod_admindel extends moduleHelper {
 			$FileIO->deleteImage($files, $board);
 		}
 		
+		deleteThreadCache($post['thread_uid']);
 		$this->board->rebuildBoard();
 		redirect('back', 0);
 	}
