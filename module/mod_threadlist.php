@@ -167,7 +167,7 @@ class mod_threadlist extends moduleHelper {
 			// Slice the list based on page
 			$plist = array_slice(array_keys($pc), $this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER);
 		} else {
-			$plist = $threadSingleton->fetchThreadListFromBoard($this->board, $this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER, $sort == 'date' ? false : true);
+			$plist = $threadSingleton->fetchThreadListFromBoard($this->board, $this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER, true, 'post_op_number');
 			$this->moduleEngine->useModuleMethods('ThreadOrder', array(0, $page, 0, &$plist)); // "ThreadOrder" Hook Point
 			$pc = $this->_getPostCounts($plist);
 		}
@@ -221,10 +221,13 @@ function checkall(){
 			$no = $opPost['no'];
 			$sub = $opPost['sub'];
 			$name = $opPost['name'];
+			$tripcode = $opPost['tripcode'];
+			$secure_tripcode = $opPost['secure_tripcode'];
+			$capcode = $opPost['capcode'];
 			$now = $opPost['now'];
 			$thread_uid = $opPost['thread_uid'];
 
-			$nameHtml = generatePostNameHtml($this->config['staffCapcodes'], $this->config['CAPCODES'], $opPost['name'], $opPost['tripcode'], $opPost['secure_tripcode'], $opPost['capcode']);
+			$nameHtml = generatePostNameHtml($this->config['staffCapcodes'], $this->config['CAPCODES'], $name, $tripcode, $secure_tripcode, $capcode);
 
 			$rescount = $pc[$thread_uid] - 1;
 			if ($this->HIGHLIGHT_COUNT > 0 && $rescount > $this->HIGHLIGHT_COUNT) {
