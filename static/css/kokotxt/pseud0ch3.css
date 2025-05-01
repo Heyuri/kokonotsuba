@@ -1,0 +1,23 @@
+@charset "UTF-8";
+@import "pseud0ch.css";
+
+:root {
+	--font-family-main: var(--font-family-sans-serif);
+}
+
+body {
+	font-size: 11pt;
+	line-height: revert;
+}
+
+.sod.noVotes {
+	font-family: inherit;
+}
+
+/************************ Mobile **************************************/
+
+@media screen and (max-width: 450px) {
+	body {
+		font-size: 12pt;
+	}
+}

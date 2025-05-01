@@ -73,7 +73,7 @@ class mod_onlinecounter extends moduleHelper {
 			<head>
 				<meta charset="utf-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<link rel="stylesheet" href="'.$this->config['STATIC_URL'].'css/base.css">
+				<link rel="stylesheet" href="'.$this->config['STATIC_URL'].'css/kokoimg/base.css">
 			</head>
 			<body id="counterIframeBody">';
 		$userCount = $this->getUserCount();

@@ -2,6 +2,11 @@
 
 /************************ Global **************************************/
 
+@font-face {
+	font-family: 'submona';
+	src: url("../fonts/submona/submona.woff") format('woff');
+}
+
 /* saitamaar_light from https://fonts.aahub.org */
 @font-face {
 	font-family: "saitamaar_light";
@@ -16,7 +21,7 @@
 	--font-family-serif: 'Times New Roman', 'Times', serif;
 	--font-family-sans-serif: system-ui, 'Segoe UI', Tahoma, Arial, sans-serif;
 	--font-family-msgothic: "MS Gothic", "IPAMonaGothic", "IPAGothic", "BIZ UDGothic", "Osaka-Mono", "Noto Sans Mono CJK JP", monospace;
-	--font-family-mspgothic: "MS PGothic", "Mona", "Monapo", "IPAMonaPGothic", "IPAPGothic", "submona", sans-serif;
+	--font-family-mspgothic: "MS PGothic", "Mona", "Monapo", "IPAMonaPGothic", "IPAPGothic", sans-serif;
 	--font-family-aa-2ch: "MS PGothic", "Mona", "Monapo", "IPAMonaPGothic", "IPAPGothic", "saitamaar_light", "submona", sans-serif;
 	--font-size-regular: 1em;
 	--font-size-small: 0.8125em;
@@ -42,6 +47,15 @@ body {
   font-size: var(--font-size-main);
 }
 
+body#txt {
+	background-image: var(--image-bg-main);
+}
+
+body#txtreply {
+  background-color: var(--color-bg-reply);
+	color: var(--color-fg-reply);
+}
+
 a,
 a:link,
 a:visited {
@@ -64,17 +78,69 @@ code {
 	word-break: break-all;
 }
 
-.hrThin {
-	border-top: none;
-	border-left: none;
-	border-right: none;
-}
-
 button,
 input,
 textarea,
 select {
 	font-size: var(--font-size-small);
+}
+
+/* input,
+button,
+summary,
+select,
+textarea,
+select,
+option,
+audio {
+	border-width: 1px;
+	border-radius: 0;
+	outline-style: none;
+	padding: 1;
+} */
+
+.nowrap {
+	display: inline-block;
+}
+
+.postlists,
+.outerbox {
+	border-width: 1px;
+	border-style: outset;
+	margin: 0 auto;
+	margin-bottom: 20px;
+	width: 95%;
+}
+
+.noVMargin {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.innerbox {
+	border-width: 1px;
+	border-style: inset;
+	margin: 7px;
+	padding: 3px;
+}
+
+.postlists {
+	border-spacing: 1px;
+	padding: 7px;
+	width: auto;
+}
+
+.postlists > thead > tr > th,
+.postlists > thead > tr > td,
+.postlists > tbody > tr > th,
+.postlists > tbody > tr > td {
+	border-width: 1px;
+	border-style: inset;
+	padding: 3px;
+}
+
+.postlists .title {
+	font-size: 1em;
 }
 
 caption h3 {
@@ -115,7 +181,10 @@ caption h3 {
 /************************ Navigation/admin bar ************************/
 
 .boardlist {
-  color: var(--color-fg-boardlist);
+	background-color: var(--color-bg-boardlist);
+  color: var(--color-hi-contrast-border);
+	margin: -8px;
+	margin-bottom: 0;
 	font-size: var(--font-size-small);
 }
 
@@ -131,31 +200,26 @@ caption h3 {
 	text-decoration: none;
 }
 
-.toplinks {
-	float: left;
-}
-
 .persistnav .boardlist {
-  background-color: var(--color-bg-boardlist);
-	border-color: inherit;
-  border-color: var(--color-hi-contrast-border);
 	border-bottom-style: solid;
 	border-width: 1px;
+	border-color: var(--color-lo-contrast-border);
 	position: sticky;
 	left: 0px;
 	top: 0px;
+	width: auto;
 	margin: -8px;
 	z-index: 1;
 }
 
-.persistnav .toplinks,
-.persistnav .adminbar {
-	margin: 0.25em;
+.persistnav #boxTitle {
+	margin-top: 0.5em;
+	margin-top: calc(0.5em - 1px);
 }
 
-.persistnav .logo {
-	margin-top: 1em;
-	margin-top: calc(1em + 0.5px);
+.toplinks {
+	margin: 0.25em;
+	float: left;
 }
 
 /******** Classic menu ********/
@@ -178,16 +242,11 @@ caption h3 {
 	display: flex;
 	align-items: baseline;
 	flex-wrap: wrap;
-  color: var(--color-fg-main);
-	margin: 0 0 -1px;
+	color: var(--color-fg-boardlist);
+	margin: 0.125em 0 0;
   padding: 0;
   list-style: none;
   z-index: 100;
-}
-
-.persistnav .neomenu {
-	margin: 0.25em 0 0;
-	margin: calc(0.25em - 0.5px) 0 0;
 }
 
 .neomenuTitle,
@@ -200,9 +259,18 @@ caption h3 {
 	padding-right: 2em;
 }
 
+/* .neomenuTitle a:hover {
+  background-color: transparent;
+} */
+
+.neomenuTopLevel,
+.neomenuList {
+	min-width: 12em;
+}
+
 .neomenuTopLevel {
-  background-color: var(--color-bg-boardlist);
-	border: 1px solid var(--color-lo-contrast-border);
+	background-color: var(--color-bg-boardlist);
+	border: 1px solid var(--color-hi-contrast-border);
 	border-top: none;
 	border-left: none;
 	user-select: none;
@@ -214,7 +282,6 @@ caption h3 {
 
 .neomenuTopLevel,
 .neomenuList {
-  border-color: var(--color-lo-contrast-border);
 	min-width: 12em;
 }
 
@@ -240,6 +307,7 @@ caption h3 {
 	background-color: inherit;
   border-width: 1px;
   border-style: solid;
+	border-color: var(--color-hi-contrast-border);
   list-style: none;
 	padding-left: 0;
 }
@@ -267,21 +335,12 @@ caption h3 {
 /******** Admin bar ********/
 
 .adminbar {
+	margin: 0.25em;
 	float: right;
 	text-align: right;
 }
 
 /************************ Board header ********************************/
-
-.logo {
-	color: var(--color-fg-logo);
-	clear: both;
-	text-align: center;
-}
-
-.logo hr {
-	width: 90%;
-}
 
 #bannerContainer {
 	max-height: 102px;
@@ -301,9 +360,11 @@ caption h3 {
 	border: 1px solid var(--color-fg-main);
 }
 
-.mtitle {
-	margin: 0.125em 0 0;
-	font-size: 1.666667em;
+.mtitle,
+.formTitle {
+	margin: 0;
+	font-size: 1.125em;
+	font-weight: bold;
 	word-break: break-word;
 }
 
@@ -339,35 +400,71 @@ caption h3 {
 	margin: 0;
 }
 
+.menu,
+.postlists,
+.postblock {
+	background-color: var(--color-bg-menu);
+	border-color: var(--color-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-lo-contrast-border);
+	border-style: solid;
+}
+
+.menu > thead > tr > th,
+.menu > thead > tr > td,
+.menu > tbody > tr > th,
+.menu > tbody > tr > td,
+.menu .innerbox,
+.postlists > thead > tr > th,
+.postlists > thead > tr > td,
+.postlists > tbody > tr > th,
+.postlists > tbody > tr > td {
+	border-color: var(--color-hi-contrast-border-menu) var(--color-lo-contrast-border-menu) var(--color-lo-contrast-border-menu) var(--color-hi-contrast-border-menu);
+	border-style: solid;
+}
+
 /************************ Post form ***********************************/
 
 #toggleFlagContainer {
 	text-align: center;
 }
 
-#postformTable {
-	border-spacing: 2px;
-	margin: 0 auto;
+#newReplyTitle {
+	margin: 0;
+	font-size: 1.125em;
 }
 
-#postformTable th,
-#postformTable td {
-	padding: 1px;
+/* #postformTable > tbody > tr > td:first-of-type {
+	vertical-align: top;
+} */
+
+#txtreply #postarea {
+	margin-bottom: 1em;
+	clear: both;
 }
 
-.postblock {
-	background-color: var(--color-bg-postblock);
+.postformItem {
+	display: block;
+	display: flex;
+	align-items: baseline;
 }
 
-.postblock label {
-	font-weight: bold;
+.postformItem > label {
+	min-width: 4.5em;
+	text-align: right;
+	padding-right: 0.125em;
 }
 
-#postformTable #name,
-#postformTable #email,
-#postformTable #sub {
-	width: 100%;
-	max-width: 16em;
+.postformCombinedItems {
+	display: flex;
+	flex-direction: row;
+}
+
+.postformCombinedItems .postformItem {
+	/* flex: 1; */
+  margin-right: 0.25em;
+}
+
+.postformCombinedItems label[for="email"] {
+	width: initial;
 }
 
 #postformTable #emailjs,
@@ -375,65 +472,36 @@ caption h3 {
 	display: inline-block;
 }
 
-#postformTable #com,
-#inputComment {
-	width: 30em;
-	height: 5em;
+#txtreply #rowPostNameEmail .postformItem > label[for="email"] {
+	min-width: 0;
 }
+
+.form-row .form-group:last-child {
+	margin-right: 0;
+}
+
+.commentArea {
+	display: inline;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
+/* .inputtext {
+	margin: 0;
+	margin-right: 2px;
+	padding: 1px 4px;
+} */
 
 #postformTable #com {
-	max-width: 100vw;
-	max-width: calc(100vw - 120px);
-}
-
-#postformTable #pwd {
 	width: 100%;
-	max-width: 5.5em;
+	max-width: 40em;
+	height: 8em;
 }
 
-#postformTable #upfile {
-	width: 100%;
-	max-width: 17.25em;
-}
-
-.file-input {
-	background-color: transparent;
-}
-
-.file-input.drag-over {
-	background-color: var(--color-bg-window-item-highlight);
-}
-
-#convert-to-png-button {
-	transition: opacity 0.3s;
-}
-
-#file-size-container,
-#filename-container {
-	display: flex;
-	flex-direction: row;
-}
-
-#file-size-container label,
-#filename-container label {
-	margin-right: 0.25em;
-}
-
-#file-size-container label::after,
-#filename-container label::after {
-	content: ":"
-}
-
-#filename-input {
-	flex: 1;
-}
-
-#file-preview {
-	display: block;
-	margin-top: 0.25em;
-	max-width: 250px;
-	max-height: 250px;
-	border: 1px solid var(--color-hi-contrast-border);
+#txtreply #postformTable #com {
+	width: 40em;
+	max-width: 100%;
 }
 
 #postarea2 {
@@ -457,7 +525,7 @@ caption h3 {
 
 .rules {
 	margin: 0;
-	margin-top: 0.25em;
+	margin-top: 0.5em;
 	padding: 0 1.2em;
 	font-size: var(--font-size-x-small);
 	font-size: max(var(--font-size-x-small), 8pt);
@@ -531,8 +599,8 @@ caption h3 {
 }
 
 #counterIframe {
+	display: table;
 	border: none;
-	width: 100%;
 	height: 1.2em;
 	vertical-align: bottom;
 }
@@ -543,7 +611,7 @@ caption h3 {
 }
 
 #usercounter {
-	display: block;
+	display: table;
 	background-color: #000000;
 	color: #00ff00;
 	padding: 0 0.125em;
@@ -583,28 +651,22 @@ caption h3 {
 
 .fullbannerIframe {
   display: table;
-	width: 470px;
+	border: none;
+	width: 468px;
 	max-height: 60px;
 	max-width: 100%;
-	margin: 0 auto;
+	margin: 1em auto;
 	aspect-ratio: 39 / 5;
 }
 
 /******** Thread list ********/
 
 #topiclist {
-	display: table;
 	font-size: var(--font-size-small);
-	margin: 0.5em auto;
 }
 
-#tableThreadlist td.colNum {
-	text-align: center;
-}
-
-
-#tableThreadlist td.colReply {
-	text-align: right;
+#txt .hrAds {
+	display: none;
 }
 
 /************************ Posts/replies *******************************/
@@ -624,6 +686,7 @@ caption h3 {
 	/* width: 75%; */
 	max-width: 1200px;
 	margin: 0 auto;
+	margin-bottom: 20px;
 }
 
 .centerthreads {
@@ -633,33 +696,48 @@ caption h3 {
 	padding: 0 8px;
 }
 
-.post.op:target,
-.post.op.replyhl {
-	margin: -1px;
+#txt .thread,
+#pager {
+	background-color: var(--color-bg-thread);
+	border-color: var(--color-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-lo-contrast-border);
+	border-style: solid;
 }
 
-.doubledash {
-	float: left;
-	padding-right: 2px;
+#txt .thread > thead > tr > th,
+#txt .thread > thead > tr > td,
+#txt .thread > tbody > tr > th,
+#txt .thread > tbody > tr > td,
+#pager > thead > tr > th,
+#pager > thead > tr > td,
+#pager > tbody > tr > th,
+#pager > tbody > tr > td,
+#txt .thread .innerbox {
+	border-color: var(--color-hi-contrast-border-thread) var(--color-lo-contrast-border-thread) var(--color-lo-contrast-border-thread) var(--color-hi-contrast-border-thread);
+	border-style: solid;
 }
 
-.reply-container {
-	display: table;
-	margin: 4px 0;	
+/* .postinfo {
+	margin-top: 0.5em;
+} */
+
+.del {
+	display: none;
+	float: right;
+	margin-right: 0.5em;
+	clear: both;
 }
 
-.reply {
-  background: var(--color-bg-reply);
-	padding: 2px;
-	display: table;
+.post:target .postinfo,
+.replyhl .postinfo {
+	background-color: var(--color-bg-reply-hl);
 }
 
-.reply:target {
-  background-color: var(--color-bg-reply-hl);
+.post:hover .del {
+	display: block;
 }
 
 .filesize {
-	margin-left: 20px;
+	margin-left: 2.5em;
 	word-break: break-word;
 }
 
@@ -670,7 +748,7 @@ caption h3 {
 	margin: 0;
 	padding: 0;
 	display: inline-block;
-	background-image: url(../image/download.png);
+	background-image: url(../../image/download.png);
 }
 
 .fileProperties,
@@ -682,12 +760,7 @@ caption h3 {
 .postimg {
 	max-width: 100%;
 	height: auto;
-	margin: 3px 20px 1em;
-	float: left;
-}
-
-.reply .postimg {
-	margin: 3px 20px 3px;
+	margin: 3px 3px 3px 2.5em;
 }
 
 .expandimg {
@@ -705,13 +778,20 @@ caption h3 {
 	z-index: 495;
 }
 
-.postinfo label {
-	display: contents;
+.postnum a {
+	color: inherit !important;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+.title,
+.title a {
+	color: var(--color-fg-title) !important;
 }
 
 .title {
-	color: var(--color-fg-title);
-	font-size: 1.2em;
+	margin: 0;
+	font-size: 1.5em;
 	font-weight: bold;
 }
 
@@ -736,7 +816,6 @@ caption h3 {
   image-rendering: pixelated;
 }
 
-.postnum a,
 .sod {
 	color: inherit !important;
 	text-decoration: none;
@@ -756,7 +835,10 @@ caption h3 {
 }
 
 .comment {
-	margin: 1em 2.5em;
+	margin-top: 0.25em;
+	margin-left: 2.5em;
+	margin-bottom: 1em;
+	margin-right: 0.25em;
 	word-break: break-all;
 	word-break: break-word;
 }
@@ -766,7 +848,6 @@ caption h3 {
 	vertical-align: text-bottom;
 }
 
-.post .title,
 .post .nameContainer,
 .post .time,
 .post .userIP,
@@ -789,7 +870,8 @@ caption h3 {
 .post .postertrip:empty,
 .post .postInfoExtra:empty,
 .post .backlinks:empty,
-.post .filesize:empty {
+.post .filesize:empty,
+.postformItem:empty {
 	display: none !important;
 }
 
@@ -807,10 +889,6 @@ caption h3 {
 	flex-wrap: wrap;
 	align-items: last baseline;
 } */
-
-.time > * {
-	display: inline-block;
-}
 
 .fortune,
 .roll {
@@ -840,23 +918,21 @@ caption h3 {
 	color: var(--color-fg-omitted);
 }
 
-.threadSeparator {
-	margin: 1em 0 0.5em;
-	clear: both;
-}
-
 .previewBox {
 	display: none;
 	box-sizing: border-box;
 	position: absolute;
 	z-index: 1000;
-	background-color: var(--color-bg-main);
-	border: 1px solid var(--color-lo-contrast-border) !important;
 	max-width: 90%;
 }
 
 .previewBox .post {
-	border: none !important;
+	background-color: var(--color-bg-thread);
+	border: 1px solid var(--color-lo-contrast-border) !important;
+}
+
+.previewBox .del {
+	display: none !important;
 }
 
 /************************ Post formatting *****************************/
@@ -876,10 +952,6 @@ caption h3 {
 	border: 1px dashed var(--color-hi-contrast-border);
 }
 
-.inline-quote .reply {
-	border: none;
-}
-
 .oplink:after {
 	content: " (OP)";
 	font-size: var(--font-size-small);
@@ -896,7 +968,6 @@ caption h3 {
 .spoiler {
 	background-color: var(--color-bg-spoiler);
 	color: var(--color-bg-spoiler);
-	/* transition: .3s; */
 }
 
 .spoiler:hover {
@@ -1042,7 +1113,6 @@ caption h3 {
 /************************ Footer **************************************/
 
 .persistpager #pager {
-	background-color: var(--color-bg-reply);
 	position: fixed;
 	left: 8px;
 	bottom: 8px;
@@ -1050,7 +1120,9 @@ caption h3 {
 }
 
 #pager {
+	background-color: var(--color-bg-thread);
 	border: 1px outset;
+	border-spacing: 3px;
 	float: left;
 	vertical-align: middle;
 	z-index: 1;
@@ -1101,7 +1173,7 @@ caption h3 {
 }
 
 .capcodeDev {
-	color: #0000FF;
+	color: #0000ff;
 }
 
 .capcodeJanitor {
@@ -1167,6 +1239,15 @@ caption h3 {
 	margin-top: 0.5em;
 }
 
+.postblock {
+	background-color: var(--color-bg-postblock);
+	border-width: 1px;
+}
+
+.postblock label {
+	font-weight: bold;
+}
+
 .formtable {
 	margin: 1em auto;
 }
@@ -1218,29 +1299,6 @@ caption h3 {
 .postlists {
 	max-width: 100%;
 	margin: 0 auto;
-	border-spacing: 1px;
-}
-
-.postlists th {
-	background-color: var(--color-bg-postlists-header);
-	color: var(--color-fg-postlists-header);
-}
-
-.postlists th a {
-	color: var(--color-fg-postlists-header-link);
-}
-
-.postlists tbody tr:nth-child(odd) {
-	background-color: var(--color-bg-postlists-odd);
-}
-
-.postlists tbody tr:nth-child(even) {
-	background-color: var(--color-bg-postlists-even);
-}
-
-.postlists th,
-.postlists td {
-	padding: 0.125em;
 }
 
 .postlists .title {
@@ -1250,13 +1308,11 @@ caption h3 {
 .error,
 .offline {
 	color: #ff0000;
-	font-weight: bold;
 }
 
 .good,
 .online {
 	color: #008000;
-	font-weight: bold;
 }
 
 #actionlogForm {
@@ -1270,10 +1326,6 @@ caption h3 {
 
 #accountManagementList {
 	margin: 0;
-}
-
-#inputGlobalMessage {
-	width: 100%;
 }
 
 /************************ Ban management*******************************/
@@ -1548,217 +1600,7 @@ caption h3 {
 }
 
 .exif {
-  background-color: var(--color-bg-main);
 	text-align: left;
-}
-
-/*********************** File board/flash board ***********************/
-
-.flashboardList {
-	text-align: center;
-	margin: 0 auto;
-}
-
-.flashboardList tr:nth-child(even) {
-	background-color: var(--color-bg-flashboard-even);
-}
-
-.flashboardList .title {
-	font-size: var(--font-size-regular);
-  font-weight: bold;
-  text-align: left;
-}
-
-.flashboardList .filecol,
-.flashboardList .title {
-  word-break: break-word;
-  max-width: 50ch;
-}
-
-.flashboardtd:nth-of-type(1) {
-  white-space: nowrap;
-}
-
-#swfWindow {
-	display: block;
-	position: fixed;
-
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-
-	background-color: rgba(255,255,255,0.9);
-	z-index: 1000;
-}
-
-#closeButton {
-	float: right;
-	cursor: pointer;
-	padding: 1px;
-	width: 18px;
-	height: 18px;
-}
-
-#swfContent {
-	display: flex;  
-	justify-content: center;
-	align-items: center;
-}
-
-#swf-embed-header {
-	border: 1px solid #d9bFb7;
-	background-color: rgba(240,224,214,0.9);
-	color: #0000ee;
-	font-size: var(--font-size-xx-small);
-}
-
-.flashboardEmbedText {
-	cursor: pointer;
-}
-
-#embed-swf-name {
-	max-width: 200px;
-	overflow: hidden;
-}
-
-#darken-embed-screen {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background-color: rgba(0, 0, 0, 0.7);
-	z-index: 900; 
-}
-
-/******************* File board/flash board (mobile) ******************/
-
-@media screen and (max-width: 900px) { 
-  .flashboardList th:nth-of-type(6),
-  .flashboardList td:nth-of-type(6),
-	.flashboardList th:nth-of-type(7),
-	.flashboardList td:nth-of-type(7) {
-    display: none;
-  }
-}
-
-/* @media screen and (max-width: 650px) {
-  .flashboardList {
-    font-size: var(--font-size-small);
-  }
-} */
-
-@media screen and (max-width: 470px) {
-	.flashboardList th:nth-of-type(2),
-	.flashboardList td:nth-of-type(2),
-  .flashboardList th:nth-of-type(5),
-  .flashboardList td:nth-of-type(5),
-  .flashboardList th:nth-of-type(8),
-	.flashboardList td:nth-of-type(8) {
-    display: none;
-  }
-
-	.flashboardList th,
-	.flashboardList td {
-		padding: 0.5em 0;
-	}
-}
-
-/************************ Gallery mode ********************************/
-
-#galframe {
-	display: none;
-	background-color: #000000aa;
-	color: #ffffff;
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100vw;
-	height: 100vh;
-	z-index: 490;
-	flex-direction: row;
-}
-
-#galmain {
-	width: calc(100% - 150px - 1em);
-}
-
-#galimgcontainer {
-	position: relative;
-}
-
-#galimgprev {
-	position: absolute;
-	left: 0;
-	top: 0;
-	width: 50%;
-	height: 100%;
-}
-
-#galimgnext {
-	position: absolute;
-	left: 50%;
-	top: 0;
-	width: 50%;
-	height: 100%;
-}
-
-#galimg {
-	max-width: 100%;
-	max-height: 100%;
-}
-
-#galctrl {
-	background-color: #111111ee;
-	height: 2em;
-}
-
-#galctrl .filesize {
-	display: block;
-	margin-top: 0.25em;
-}
-
-#galctrl * {
-	color: #ffffff !important;
-	text-decoration: none;
-}
-
-#galctrl a, #galctrl a:hover {
-	font-weight: bold;
-}
-
-#galctrl a:hover {
-	text-decoration: underline;
-}
-
-#galctrl2 {
-	font-family: Tahoma, Verdana;
-	font-size: larger;
-	float: right;
-}
-
-#galside {
-	border-style: inset;
-	background-color: #111111;
-	padding: 0 5px;
-	max-width: 150px;
-	overflow-x: hidden;
-	overflow-y: scroll;
-}
-
-#galside img {
-	border: 1px solid #000088;
-	opacity: 0.8;
-	width: 100%;
-}
-
-#galside img:hover {
-	border-color: #eeeeee;
-}
-
-#galside img.activethumb {
-	border-color: #ffffff;
-	opacity: 1;
 }
 
 /************************ Windows *************************************/
@@ -1819,7 +1661,8 @@ a.linkjs {
 	flex-wrap: wrap;
 	justify-content: space-between;
 	align-items: center;
-  background-color: var(--color-bg-postblock);
+	background-color:var(--color-bg-main);
+	border-color: var(--color-fg-main);
 	border-bottom: 1px solid;
 	cursor: move;
 	vertical-align: middle;
@@ -1827,6 +1670,7 @@ a.linkjs {
 
 .winname {
 	flex-grow: 1;
+	color: var(--color-fg-boardlist);
 	margin: 0.125em 0.25em;
 	font-weight: bold;
 	text-align: left;
@@ -2005,19 +1849,18 @@ width: 300px;
 /************************ Mobile **************************************/
 
 @media screen and (max-width: 768px) {
-	body {
+	body#txt {
 		margin: 0;
 		margin-bottom: 8px;
 	}
 
-	.boardlist {
-		margin: 8px;
-		margin-bottom: 0;
-		padding: 0;
-	}
-
+	.boardlist,
 	.persistnav .boardlist {
 		margin: 0;
+	}
+
+	.persistnav #top {
+		margin-top: 0;
 	}
 
 	.neomenuEnabled .toplinks {
@@ -2049,7 +1892,44 @@ width: 300px;
 		padding: 0.5em 0.25em;
 	}
 
-	#postformTable #com {
+	.postformItem {
+		flex-direction: column;
+		flex-wrap: wrap;
+	}
+
+	.postformItem > label {
+		text-align: left;
+		padding: 0;
+	}
+
+	.postformItem input[type="text"] {
+		width: 100%;
+	}
+
+	.postformItem button[value="regist"] {
+		margin-left: auto;
+	}
+
+	/* #txtreply .postformItem button[value="regist"] {
+		margin-left: 0;
+	} */
+
+	.postformCombinedItems {
+		flex-direction: column;
+    /* align-items: flex-start; */
+	}
+
+	.postformCombinedItems label[for="email"] {
+		width: 4.5em;
+		margin-right: 0;
+	}
+
+	#txtreply #rowPostNameEmail .postformItem {
+		gap: 0;
+	}
+
+	#postformTable #com,
+	#txtreply #postformTable #com {
 		height: 7.5em;
 		width: 100%;
 		max-width: 100%;
@@ -2058,33 +1938,9 @@ width: 300px;
 	#topiclist,
 	#topiclists {
 		max-height: 200px;
-		padding: 0 0.5em;
 		overflow: auto;
 	}
 
-	.thread,
-	.op {
-		margin: 0 4px;
-	}
-
-	.doubledash,
-	.serve5,
-	.galleryb {
-		display: none;
-	}
-
-	.postimg {
-		margin: 3px 0;
-		float: none;
-	}
-
-	.postinfo {
-		clear: both;
-	}
-
-	.comment {
-		margin: 1em 1.5em;
-	}
 
 	#catsett,
 	#catalogSortForm {
@@ -2100,20 +1956,10 @@ width: 300px;
 		line-height: 1.5;
 	}
 
-	/* .postblock label {
-		font-size: var(--font-size-small);
-	} */
-
-	.comment {
-		margin: 1em;
-	}
-
-	button,
-	input,
-	textarea,
-	select {
-		font-size: var(--font-size-regular);
-		line-height: 1.5;
+	.comment,
+	.filesize,
+	.postimg {
+		margin-left: 0.5em;
 	}
 
 	#topiclist {
@@ -2159,76 +2005,39 @@ width: 300px;
 		max-width: 100% !important;
 		max-height: 100% !important;
 	}
-
-	#qrcom {
-		width: 100%;
-	}
 }
 
 /************************ Probably not needed *************************/
 
-/* h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-	margin: 0;
+/* .post.op:target {
+	background-color: inherit; */
+	/* THIS HAS TO BE THE SAME MOTHERFUCKING COLOR AS THE MOTHERFUCKING BACKGROUND!!!!!!!!! */
+/* } */
+
+/* #update-status {
+	color: #af0a0f;
 } */
 
-/* input,
-button,
-summary,
-select,
-textarea,
-select,
-option,
-audio {
-	border-width: 1px;
-	border-radius: 0;
-	padding: 1;
+/* .hooklinks {
+	padding-top: 12px;
 } */
 
-/* button,
-input[type=submit],
-input[type=reset] {
-	padding: 1px 0.5em;
-	margin: 0;
-	margin-right: 2px;
+/* .penis {
+	font-size: 13pt;
+	background-color: #663399;
+	color: #00ffff;
 } */
 
-/* .mnav {
-	visibility: hidden;
-	margin: 0;
-	padding: 0;
-} */
-
-/* .boardNav,
-.boardlist,
-#boardmenu li a {
-  color: inherit;
-} */
-
-/* .boardNav.reply {
-  padding:0 !important;
-} */
-
-/* .inputtext {
-	margin: 0;
-	margin-right: 2px;
-	padding: 1px 4px;
-} */
-
-/* .imageurl {
-	vertical-align: middle; 
-}
-
-.imageurl img {
-	margin-bottom: 3px;
-} */
-
-/* .inlineborder {
-	color: #cccccc;
+/* .infosection {
+	background-color: #ffffff;
+	border-radius: 6px;
+	text-align: center;
+	width: 55%;
+	margin: auto;
+	padding: 7px;
+	font-weight: bold;
+	color: #666666;
+	font-size: 12pt;
 } */
 
 /* .nobr {
@@ -2240,27 +2049,48 @@ input[type=reset] {
 	text-overflow: ellipsis;
 } */
 
-/* .boardlisticon {
-	width: 16px;
-	height: 16px;
-	fill: #ff6600;
+/* .title2 {
+	background-color: #3399ff;
+	color: #fff;
+	border-radius: 6px;
+	padding: 3px;
 } */
 
-/* .u2l {
-	list-style-type: none;
-	display: inline-block;
-	text-align: left;
-	min-width: 600px;
+/* .info5ch {
+	background-color: #eeffee;
+	overflow-y: scroll;
+	height: 150px;
+	border-radius: 6px;
+	border: 1px solid #eeffee;
+	padding: 4px;
+	color: #333333;
+	font-weight: bold;
+	margin-right: auto;
+	width: 80%;
 } */
 
-/* .bbls {
-	text-align: center;
+/* .info5chheader {
+	color: #ff0000;
+	margin: 0;
+} */
+
+/* .menu2 {
+	background-color: #CFC;
+	height: 220px;
+} */
+
+/* .mnav,
+.mnav2,
+.galleryb,
+#expandall {
+	display: none;
 } */
 
 /* .auditlog {
-	margin: 0.5em;
-	padding: 1em;
-	max-width: 720px;
+	background-color: #EFEFEF;
+	border-color: #ffffff;
+	border-style: solid;
+	border-width: 1px;
 } */
 
 /************************ Hachi stuff *************************/
