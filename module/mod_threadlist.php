@@ -224,6 +224,8 @@ function checkall(){
 			$now = $opPost['now'];
 			$thread_uid = $opPost['thread_uid'];
 
+			$nameHtml = generatePostNameHtml($this->config['staffCapcodes'], $this->config['CAPCODES'], $opPost['name'], $opPost['tripcode'], $opPost['secure_tripcode'], $opPost['capcode']);
+
 			$rescount = $pc[$thread_uid] - 1;
 			if ($this->HIGHLIGHT_COUNT > 0 && $rescount > $this->HIGHLIGHT_COUNT) {
 				$rescount = '<span class="warning">'.$rescount.'</span>';
@@ -233,7 +235,7 @@ function checkall(){
 				($this->SHOW_FORM ? '<td class="colDel"><input type="checkbox" name="'.$no.'" value="delete"></td>' : '').
 				'<td class="colNum"><a href="'.$this->config['PHP_SELF'].'?res='.$no.'">'.$no.'</a></td>
 				<td class="colSub"><span class="title">'.( $sub ? $sub : 'No Title' ).'</span></td>
-				<td class="colName"><span class="name">'.$name.'</span></td>
+				<td class="colName"><span class="name">'.$nameHtml.'</span></td>
 				<td class="colReply">'.$rescount.'</td>
 				<td class="colDate">'.$now.'</td>
 			</tr>';
