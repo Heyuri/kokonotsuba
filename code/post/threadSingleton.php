@@ -14,7 +14,7 @@ class threadSingleton {
 		
 		$this->databaseConnection = DatabaseConnection::getInstance(); // Get the PDO instance
 	
-		$this->allowedOrderFields = ['last_bump_time', 'last_reply_time', 'thread_created_time'];
+		$this->allowedOrderFields = ['last_bump_time', 'last_reply_time', 'thread_created_time', 'post_op_number'];
 	}
 	
 	public static function createInstance($dbSettings) {
@@ -303,8 +303,10 @@ class threadSingleton {
 	}
 
 	/* Output discussion thread list */
-	public function fetchThreadListFromBoard(board $board, int $start = 0, int $amount = 0, bool $isDESC = false): array {
-		$query = "SELECT thread_uid FROM {$this->threadTable} WHERE boardUID = :board_uid ORDER BY last_bump_time";
+	public function fetchThreadListFromBoard(board $board, int $start = 0, int $amount = 0, bool $isDESC = false, string $order = 'last_bump_time'): array {
+		if(!in_array($order, $this->allowedOrderFields)) return [];
+		
+		$query = "SELECT thread_uid FROM {$this->threadTable} WHERE boardUID = :board_uid ORDER BY $order";
 		if ($isDESC) {
 				$query .= " DESC";
 		}
@@ -387,7 +389,7 @@ class threadSingleton {
 		return $lastThreadTime;
 	}
 
-	public function moveThreadAndUpdate($thread_uid, $sourceBoard, $destinationBoard) {
+	public function moveThreadAndUpdate($thread_uid, $destinationBoard) {
 		$this->beginTransaction();
 		try {
 			$posts = $this->fetchPostsFromThread($thread_uid);
