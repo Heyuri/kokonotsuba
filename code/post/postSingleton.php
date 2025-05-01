@@ -9,6 +9,8 @@ class PIOPDO implements IPIO {
 	private $threadTable, $tablename, $loadedBoards; // Table name
 	private $databaseConnection; // Database connection
 	private static $instance;
+	private array $allowedOrderFields;
+
 
 	public function __construct($dbSettings){
 		$boardIO = boardIO::getInstance();
@@ -19,6 +21,8 @@ class PIOPDO implements IPIO {
 		$this->loadedBoards = $boardIO->getAllBoards();
 		
 		$this->databaseConnection = DatabaseConnection::getInstance(); // Get the PDO instance
+
+		$this->allowedOrderFields = ['post_uid', 'root', 'no'];
 	}
 	
 	public static function createInstance($dbSettings) {
@@ -297,6 +301,8 @@ class PIOPDO implements IPIO {
 	}
 
 	public function getPostsFromBoard(board $board, int $start = 0, int $amount = 0, string $order = "no", string $sortOrder = "DESC"): array {
+		if(!in_array($order, $this->allowedOrderFields)) return [];
+		
 		$query = "SELECT * FROM {$this->tablename} WHERE boardUID = :board_uid ORDER BY $order $sortOrder";
 		if($amount) {
 			$query .= " LIMIT $start, $amount";
@@ -306,6 +312,8 @@ class PIOPDO implements IPIO {
 	}
 	
 	public function getPostsFromIP(string $host, int $limit = 10, int $offset = 0, string $order = "post_uid"): array {
+		if(!in_array($order, $this->allowedOrderFields)) return [];
+		
 		// Ensure limit is not negative
 		$limit = max(1, $limit);
 		// Ensure offset is not negative
@@ -321,6 +329,8 @@ class PIOPDO implements IPIO {
 	}	
 	
 	public function getFilteredPosts(int $amount, int $offset = 0, array $filters = [], string $order = 'post_uid'): array {
+		if(!in_array($order, $this->allowedOrderFields)) return [];
+
 		$query = "SELECT * FROM {$this->tablename} WHERE 1";
 		$params = [];
 		
