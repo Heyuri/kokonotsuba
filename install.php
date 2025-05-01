@@ -90,6 +90,8 @@ function getTemplateConfigArray() {
 }
 
 function createBoardAndFiles($boardTable) {
+    include ROOTPATH . '/code/libraries/lib_file.php';
+
     //create board
     $board_identifier = $_POST['board-identifier'] ?? '';
 	$board_title = $_POST['board-title'] ?? '';
@@ -327,6 +329,7 @@ class tableCreator {
 				`config_name` TEXT NOT NULL,
 				`storage_directory_name` TEXT NOT NULL,
 				`listed` BOOL DEFAULT TRUE,
+                `can_edit` BOOL DEFAULT FALSE,
 				`date_added` DATE DEFAULT CURRENT_DATE,
 				PRIMARY KEY(`board_uid`),
 				INDEX(date_added)
@@ -495,9 +498,9 @@ class boardTable {
         if ($count == 0) {
             // Insert the global board with a reserved UID
             $query = "INSERT INTO {$this->boardTableName} 
-                        (board_uid, board_identifier, board_title, board_sub_title, config_name, storage_directory_name, listed, can_edit) 
+                        (board_uid, board_identifier, board_title, board_sub_title, config_name, storage_directory_name, listed, can_edit, date_added) 
                       VALUES 
-                        (:board_uid, :board_identifier, :board_title, :board_sub_title, :config_name, :storage_directory_name, :listed, :can_edit)";
+                        (:board_uid, :board_identifier, :board_title, :board_sub_title, :config_name, :storage_directory_name, :listed, :can_edit, :date_added)";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindValue(':board_uid', GLOBAL_BOARD_UID);
@@ -506,8 +509,9 @@ class boardTable {
             $stmt->bindValue(':board_sub_title', 'Global board scope');
             $stmt->bindValue(':config_name', '');
             $stmt->bindValue(':storage_directory_name', '');
-            $stmt->bindValue(':listed', false);
-            $stmt->bindValue(':can_edit', false);
+            $stmt->bindValue(':listed', 0, PDO::PARAM_INT);
+            $stmt->bindValue(':can_edit', 0, PDO::PARAM_INT);
+            $stmt->bindValue(':date_added', date('Y-m-d'));
             
             return $stmt->execute(); // Return true if successful
         }
