@@ -117,6 +117,8 @@ class adminPageHandler {
 			if($email) $name = "<a href=\"mailto:$email\">$name</a>";
 			$com = substr($com, 0, 500);
 
+			$nameHtml = generatePostNameHtml($this->config['staffCapcodes'], $this->config['CAPCODES'], $name, $tripcode, $secure_tripcode, $capcode);
+
 			// The first part of the discussion is the stop tick box and module function
 			$modFunc = ' ';
 			$this->moduleEngine->useModuleMethods('AdminList', array(&$modFunc, $posts[$j], !$posts[$j]['is_op'])); // "AdminList" Hook Point
@@ -144,7 +146,7 @@ class adminPageHandler {
 					<td class="colBoard">/' . $postBoard->getBoardIdentifier() . '/ ('.$postBoard->getBoardUID().')</td>
 					<td class="colDate"><span class="time">' . $now . '</span></td>
 					<td class="colSub"><span class="title">' . $sub . '</span></td>
-					<td class="colName"><b class="name">' . $name . '</b></td>
+					<td class="colName"><span class="name">' . $nameHtml . '</span></td>
 					<td class="colComment">' . $com . '</td>
 					<td class="colHost">' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="?mode=admin&admin=del&host=' . $host . '" title="See all posts">★</a></td>
 					<td class="colImage">' . $clip . ' (' . $size . ')<br>' . $md5chksum . '</td>
