@@ -1,3 +1,11 @@
+<h1 align="center">★★★ Feature Freeze: May 15 ★★★</h1>
+<h1 align="center">+++ Release: June 1 +++</h1>
+<br>
+<br>
+<br>
+
+
+
 # Kokonotsuba
 
 ## About Kokonotsuba
