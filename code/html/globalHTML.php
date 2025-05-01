@@ -419,17 +419,20 @@ class globalHTML {
 	}
 	
 	public function drawManagePostsFilterForm(&$dat, $board) {
-		$filterIP = $_COOKIE['manage_filterip'] ?? '';
-		$filterComment = $_COOKIE['manage_filtercomment'] ?? '';
-		$filterName = $_COOKIE['manage_filtername'] ?? '';
-		$filterSubject = $_COOKIE['manage_filtersubject'] ?? '';
-		$filterBoard = json_decode($_COOKIE['filterboard'] ?? '', true); if(!is_array($filterBoard)) $filterBoard = [$board->getBoardUID()];
+		$filterIP = $_GET['manage_filterip'] ?? '';
+		$filterComment = $_GET['manage_filtercomment'] ?? '';
+		$filterName = $_GET['manage_filtername'] ?? '';
+		$filterSubject = $_GET['manage_filtersubject'] ?? '';
+		$filterBoard = $_GET['filterboard'] ?? [$board->getBoardUID()];
 		
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
 		$dat .= '
 		<details id="filtercontainer" class="detailsbox centerText">
 			<summary>Filter posts</summary>
-			<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=admin&admin=del" method="POST">
+			<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=admin&admin=del" method="GET">
+				<input type="hidden" name="mode" value="admin">
+				<input type="hidden" name="admin" value="del">
+
 				<table id="adminPostFilterTable" class="centerBlock">
 					<tbody>
 						<tr>
@@ -457,7 +460,7 @@ class globalHTML {
 						</tr>
 					</tbody>
 				</table>
-				<button type="submit" name="filterformsubmit" value="filter">Filter</button> <button type="submit" name="filterformsubmit" value="filterclear">Clear filter</button> <input type="reset" value="Reset">
+				<button type="submit" name="filterformsubmit" value="filter">Filter</button> <input type="reset" value="Reset">
 			</form>
 		</details>
 		';

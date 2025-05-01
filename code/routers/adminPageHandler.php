@@ -19,42 +19,14 @@ class adminPageHandler {
 
 		/* Manage article(threads) mode */
 	private function admindel(&$dat){		
-		$filterAction = $_POST['filterformsubmit'] ?? null;
-		
-		if ($_SERVER['REQUEST_METHOD'] === 'POST' && $filterAction === 'filter') {
-			$filterRoleFromPOST = $_POST['filterrole'] ?? '';
-			$filterBoardFromPOST = $_POST['filterboard'] ?? '';
-			
-			$filterIP = htmlspecialchars($_POST['manage_filterip'] ?? '');
-			$filterComment = htmlspecialchars($_POST['manage_filtercomment'] ?? '');
-			$filterName = htmlspecialchars($_POST['manage_filtername'] ?? '');
-			$filterSubject = htmlspecialchars($_POST['manage_filtersubject'] ?? '');
-			$filterBoard = (is_array($filterBoardFromPOST) ? array_map('htmlspecialchars', $filterBoardFromPOST) : [htmlspecialchars($filterBoardFromPOST)]);
-			
-			setcookie('manage_filterip', $filterIP, time() + (86400 * 30), "/");
-			setcookie('manage_filtercomment', $filterComment, time() + (86400 * 30), "/");
-			setcookie('manage_filtername', $filterName, time() + (86400 * 30), "/");
-			setcookie('manage_filtersubject', $filterSubject, time() + (86400 * 30), "/");
-			setcookie('filterboard', json_encode($filterBoard), time() + (86400 * 30), "/");
-
-			redirect($this->config['PHP_SELF'].'?mode=admin&admin=del');
-		} else if($_SERVER['REQUEST_METHOD'] === 'POST' && $filterAction === 'filterclear') {
-			setcookie('manage_filterip', "", time() - 3600, "/");
-			setcookie('manage_filtercomment', "", time() - 3600, "/");
-			setcookie('manage_filtername', "", time() - 3600, "/");
-			setcookie('manage_filtersubject', "", time() - 3600, "/");
-			setcookie('filterboard', "", time() - 3600, "/");
-
-			redirect($this->config['PHP_SELF'].'?mode=admin&admin=del');
-		}
-		$filtersBoards = (isset($_COOKIE['filterboard'])) ? json_decode($_COOKIE['filterboard'], true) : [$this->board->getBoardUID(), GLOBAL_BOARD_UID];
+		$filtersBoards = $_GET['filterboard'] ?? [$this->board->getBoardUID(), GLOBAL_BOARD_UID];
 		
 		//filter list for the database
 		$filters = [
-			'ip_address' => $_COOKIE['manage_filterip'] ?? null,
-			'name' => $_COOKIE['manage_filtername'] ?? null,
-			'comment' => $_COOKIE['manage_filtercomment'] ?? null,
-			'subject' => $_COOKIE['manage_filtersubject'] ?? null,
+			'ip_address' => $_GET['manage_filterip'] ?? null,
+			'name' => $_GET['manage_filtername'] ?? null,
+			'comment' => $_GET['manage_filtercomment'] ?? null,
+			'subject' => $_GET['manage_filtersubject'] ?? null,
 			'board' => $filtersBoards ?? '',
 		];
 
@@ -80,7 +52,7 @@ class adminPageHandler {
 
 		$onlyimgdel = $_POST['onlyimgdel']??''; // Only delete the image
 		$modFunc = '';
-		$delno = $thsno = array();
+		$delno = array();
 		$message = ''; // Display message after deletion
 		$host = $_GET['host'] ?? 0;
 		$posts = array(); //posts to display in the manage posts table
@@ -100,7 +72,10 @@ class adminPageHandler {
 		if($onlyimgdel != 'on') $this->moduleEngine->useModuleMethods('PostOnDeletion', array($delno, 'backend')); // "PostOnDeletion" Hook Point
 
 
-		if($searchHost) $posts = $PIO->getPostsFromIP($searchHost);
+		if($searchHost) {
+			$posts = $PIO->getPostsFromIP($searchHost, $postsPerPage. $page * $this->config['ADMIN_PAGE_DEF']);
+			$numberOfFilteredPosts = $PIO->postCount(['ip_address' => $searchHost]);
+		}
 		else $posts = $PIO->getFilteredPosts($postsPerPage, $page * $this->config['ADMIN_PAGE_DEF'], $filters) ?? array();
 		$posts_count = count($posts); // Number of cycles
 		
