@@ -49,8 +49,8 @@ class boardRebuilder
 			die("No board config for {$board->getBoardTitle()}:{$board->getBoardUID()}");
 
 	}
-	public function drawThread($resno)
-	{
+
+	public function drawThread(?string $resno): void {
 		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine);
 		$roleLevel = $this->staffSession->getRoleLevel();
 		$adminMode = $roleLevel >= $this->config['roles']['LEV_JANITOR'];
@@ -123,20 +123,18 @@ class boardRebuilder
 		echo $pageData;
 	}
 
-	public function drawPage($page)
-	{
+	public function drawPage(int $page = 0): void {
 		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine);
 		$roleLevel = $this->staffSession->getRoleLevel();
 		$adminMode = $roleLevel >= $this->config['roles']['LEV_JANITOR'];
 
-		$previewCount = $this->config['RE_DEF'];
-		$threads = $this->PIO->getThreadPreviewsFromBoard($this->board, $previewCount);
-
-		$totalThreads = count($threads);
 		$threadsPerPage = $this->config['PAGE_DEF'];
-		$totalPages = ceil($totalThreads / $threadsPerPage);
+		$threadPageOffset = $page * $threadsPerPage;
+		$previewCount = $this->config['RE_DEF'];
 
-		$threadsInPage = array_slice($threads, $page * $threadsPerPage, $threadsPerPage);
+		$threadsInPage = $this->PIO->getThreadPreviewsFromBoard($this->board, $previewCount);
+
+		$totalThreads = count($threadsInPage);
 
 		$pte_vals = [
 			'{$THREADS}' => '',
@@ -208,8 +206,7 @@ class boardRebuilder
 		echo $pageData;
 	}
 
-	private function buildNav($page, $totalPages)
-	{
+	private function buildNav($page, $totalPages): string {
 		$navData = '<table id="pager"><tbody><tr>';
 
 		$prev = $page - 1;
@@ -247,8 +244,7 @@ class boardRebuilder
 		$navData .= '</tr></tbody></table>';
 		return $navData;
 	}
-	private function buildDynamicPageNav(int $page, int $threadsCount, int $threadsPerPage, int $next, int $prev, bool $adminMode): string
-	{
+	private function buildDynamicPageNav(int $page, int $threadsCount, int $threadsPerPage, int $next, int $prev, bool $adminMode): string {
 		$totalPages = ceil($threadsCount / $threadsPerPage);
 		$nav = '<table id="pager"><tbody><tr>';
 
@@ -302,7 +298,7 @@ class boardRebuilder
 		return $nav;
 	}
 
-	public function rebuildBoardHtml($a = 0, $b = -1, bool $c = false, int $d = -1, bool $logRebuild = false): void
+	public function rebuildBoardHtml(bool $logRebuild = false): void
 	{
 		// we are not using passes in shit. we are just gonna rebuild all board, one way,
 		// if you want a special way of building a board. make it its own function.
@@ -313,8 +309,8 @@ class boardRebuilder
 
 		$previewCount = $this->config['RE_DEF'];
 		$threads = $this->PIO->getThreadPreviewsFromBoard($this->board, $previewCount);
-		//print_r($threads);
-		//exit();
+
+
 		$totalThreads = count($threads);
 		$threadsPerPage = $this->config['PAGE_DEF'];
 		$totalPages = ceil($totalThreads / $this->config['PAGE_DEF']);
@@ -334,8 +330,6 @@ class boardRebuilder
 			'{$IS_THREAD}' => false,
 		);
 
-		// prob for first page. just do sql querries for sticky
-		//$this->moduleEngine->useModuleMethods('ThreadFront', array(&$pte_vals['{$THREADFRONT}'], $resno)); // "ThreadFront" Hook Point
 
 		// Generate static pages one page at a time
 		for ($page = 0; $page < $totalPages; $page++) {
@@ -346,11 +340,15 @@ class boardRebuilder
 			$pageData = '';
 
 			$this->globalHTML->head($pageData);
+			
 			// form
 			$form_dat = '';
 			$this->globalHTML->form($form_dat, 0);
 
 			$form_dat .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
+
+			$this->moduleEngine->useModuleMethods('ThreadFront', array(&$pte_vals['{$THREADFRONT}'], 0)); // "ThreadFront" Hook Point
+
 			$pte_vals['{$FORMDAT}'] = $form_dat;
 
 			$pte_vals['{$THREADS}'] = '';
