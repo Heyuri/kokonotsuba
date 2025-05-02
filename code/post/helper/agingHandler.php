@@ -9,7 +9,7 @@ class agingHandler {
 		$this->threadSingleton = $threadSingleton;
 	}
 
-	public function apply(string $thread_uid, int $time, int $chktime, string &$email, string &$name, bool &$age): void {
+	public function apply(string $thread_uid, int $time, int $chktime, string &$email, bool &$age): void {
 		if (!$thread_uid) return;
 
 		if (

@@ -96,7 +96,7 @@ class registRoute {
 	
 
 		// Age/sage logic
-		$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['chktime'], $postData['email'], $postData['name'], $postData['age']);
+		$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['chktime'], $postData['email'], $postData['age']);
 	
 		// Generate redirect URL and sanitize
 		$redirect = $this->generateRedirectURL($computedPostInfo['no'], $postData['email'], $postData['resno'], $computedPostInfo['timeInMilliseconds']);
@@ -143,7 +143,7 @@ class registRoute {
 		$page_end = $postData['thread_uid']
 		? $this->getPageOfThread($postData['thread_uid'], $threads)
 		: max(0, (int) ceil($threadsCount / $this->config['PAGE_DEF']));
-	
+
 		// Rebuild pages from 0 to the one the thread is on
 		$this->board->rebuildBoard(0, -1, false, $page_end);
 	
