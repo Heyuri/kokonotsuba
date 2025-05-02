@@ -145,7 +145,7 @@ class registRoute {
 		: max(0, (int) ceil($threadsCount / $this->config['PAGE_DEF']));
 
 		// Rebuild pages from 0 to the one the thread is on
-		$this->board->rebuildBoard(0, -1, false, $page_end);
+		$this->board->rebuildBoard();
 	
 		// Final redirect
 		redirect($redirect, 0);

@@ -178,6 +178,18 @@ class board implements IBoard {
 		return $this->config;
 	}
 
+	public function drawThread($res)
+	{
+		$boardRebuilder = new boardRebuilder($this, $this->templateEngine);
+		$boardRebuilder->drawThread($res);
+	}
+	public function drawPage($pageNumber)
+	{
+		$boardRebuilder = new boardRebuilder($this, $this->templateEngine);
+		$boardRebuilder->drawPage($pageNumber);
+
+	}
+
 	public function getBoardThreadURL(int $threadNumber): string {
 		$phpSelf = $this->config['PHP_SELF'];
 		$threadUrl = $this->getBoardURL()."$phpSelf?res=$threadNumber";

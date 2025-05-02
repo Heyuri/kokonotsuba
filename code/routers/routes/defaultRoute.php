@@ -30,9 +30,9 @@ class defaultRoute {
 			$page = ($pageParam === 'all' || $pageParam === 'RE_PAGE_MAX')
 				? $pageParam
 				: intval($pageParam);
-			$this->board->rebuildBoard($res, $page);
+			$this->board->drawThread($res);
 		} elseif ($pageParam !== null && intval($pageParam) > -1) {
-			$this->board->rebuildBoard(0, intval($pageParam));
+			$this->board->drawPage(intval($pageParam));
 		} else {
 			if (!is_file($this->config['PHP_SELF2'])) {
 				$this->actionLogger->logAction("Rebuilt pages", $this->board->getBoardUID());

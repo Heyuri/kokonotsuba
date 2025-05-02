@@ -241,6 +241,68 @@ class PIOPDO implements IPIO {
 	    return $ip !== false ? $ip : null;
 	}
 
+	public function getThreadPreviewsFromBoard(board $board, int $previewCount): array {
+		$boardUID = $board->getBoardUID();
+	
+		// Step 1: fetch all threads + OP post + status
+		$query = "
+			SELECT t.thread_uid, t.post_op_post_uid, p.status
+			FROM {$this->threadTable} t
+			JOIN {$this->tablename} p ON t.post_op_post_uid = p.post_uid
+			WHERE t.boardUID = :boardUID
+			ORDER BY t.last_bump_time DESC
+		";
+		$threads = $this->databaseConnection->fetchAllAsArray($query, [':boardUID' => $boardUID]);
+	
+		if (empty($threads)) return [];
+	
+		$threadUIDs = array_column($threads, 'thread_uid');
+	
+		// Step 2: fetch all posts for these threads in one query
+		$inClause = implode(',', array_fill(0, count($threadUIDs), '?'));
+		$postQuery = "
+			SELECT *
+			FROM {$this->tablename}
+			WHERE thread_uid IN ($inClause)
+			ORDER BY thread_uid, post_position ASC
+		";
+		$postRows = $this->databaseConnection->fetchAllAsArray($postQuery, $threadUIDs);
+	
+		// Step 3: group posts by thread_uid
+		$postsByThread = [];
+		foreach ($postRows as $post) {
+			$postsByThread[$post['thread_uid']][] = $post;
+		}
+	
+		// Step 4: build result array in shape expected by render loop
+		$result = [];
+		foreach ($threads as $thread) {
+			$threadUID = $thread['thread_uid'];
+			$allPosts = $postsByThread[$threadUID] ?? [];
+	
+			$totalPosts = count($allPosts);
+			$omittedCount = max(0, $totalPosts - $previewCount);
+	
+			// Select OP + last N posts (skip OP in slice)
+			$opPost = array_filter($allPosts, fn($p) => $p['is_op']);
+			$nonOpPosts = array_filter($allPosts, fn($p) => !$p['is_op']);
+			$previewPosts = array_merge(
+				$opPost,
+				array_slice($nonOpPosts, max(0, count($nonOpPosts) - $previewCount))
+			);
+	
+			$result[] = [
+				'thread' => $thread, // has thread_uid, post_op_post_uid, status
+				'post_uids' => array_column($previewPosts, 'post_uid'),
+				'posts' => $previewPosts,
+				'hidden_reply_count' => $omittedCount,
+				'thread_uid' => $threadUID
+			];
+		}
+	
+		return $result;
+	}
+	
 
 	
 	/* Get number of posts */
@@ -253,7 +315,6 @@ class PIOPDO implements IPIO {
 			$query = "SELECT COUNT(post_uid) FROM {$this->tablename} WHERE boardUID = :board_uid";
 			return $this->databaseConnection->fetchColumn($query, [':board_uid' => $board->getBoardUID()]);
 		}
-		return 0;
 	}
 		/* Get number of posts */
 	public function postCount($filters = []) {

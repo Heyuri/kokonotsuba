@@ -188,7 +188,6 @@ class overboard {
 	
 		return $threadRenderer->render(
 			$threadList,
-			$threadList,
 			$visiblePostUids,
 			$visiblePosts,
 			$hiddenReply,

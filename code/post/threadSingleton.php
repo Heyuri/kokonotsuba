@@ -57,15 +57,34 @@ class threadSingleton {
 		$threads = $this->databaseConnection->fetchAllAsIndexArray($query);
 		return array_merge(...$threads);
 	}
-
-	public function getThreadByUID($thread_uid) {
+	public function getThreadByUID($thread_uid): ?array
+	{
 		$query = "SELECT * FROM {$this->threadTable} WHERE thread_uid = :thread_uid";
-		$params = [
-			':thread_uid' => (string) $thread_uid
-		];
+		$params = [':thread_uid' => (string) $thread_uid];
+		$threadMeta = $this->databaseConnection->fetchOne($query, $params);
 	
-		return $this->databaseConnection->fetchOne($query, $params);
+		if (!$threadMeta) {
+			return null;
+		}
+	
+		$postsQuery = "SELECT * FROM {$this->postTable} WHERE thread_uid = :thread_uid ORDER BY post_position ASC";
+		$posts = $this->databaseConnection->fetchAllAsArray($postsQuery, $params);
+	
+		$postUIDs = array_column($posts, 'post_uid');
+		$totalPosts = count($postUIDs);
+		$previewCount = $this->config['RE_DEF'] ?? 5;  // fallback if RE_DEF missing
+		$hiddenReplyCount = max(0, $totalPosts - $previewCount);
+	
+		return [
+			'thread' => $threadMeta,
+			'posts' => $posts,
+			'post_uids' => $postUIDs,
+			'hidden_reply_count' => $hiddenReplyCount,
+			'thread_uid' => $threadMeta['thread_uid'],
+		];
 	}
+	
+	
 	
 
 	/**
