@@ -5,7 +5,14 @@
 */
 
 /* Generate html for the post name dynamically */
-function generatePostNameHtml(array $staffCapcodes, array $userCapcodes, string $name = '', string $tripcode = '', string $secure_tripcode = '', string $capcode = ''): string {
+function generatePostNameHtml(array $staffCapcodes,
+	array $userCapcodes,
+	string $name = '', 
+	string $tripcode = '', 
+	string $secure_tripcode = '', 
+	string $capcode = '',
+	string $email = '',
+	bool $clearSage = false): string {
     // For compatability reasons, names already containing html will just be displayed without any further processing.
 	// Because kokonotsuba previously stored name/trip/capcode html all in the name column, and this can cause double wrapped html
 	if(containsHtmlTags($name)) return $name;
@@ -49,6 +56,16 @@ function generatePostNameHtml(array $staffCapcodes, array $userCapcodes, string 
 			$nameHtml = '<span class="postername">'.sprintf($capcodeHtml, $name).'</span>';
 		}
 
+	}
+
+	// wrap name in email
+	if($email) {
+		$nameHtml = '<a href="mailto:'.$email.'">'. $nameHtml .'</a>';
+	}
+	
+	// append SAGE!
+	if (!$clearSage && str_contains($email, "sage")) {
+		$nameHtml .= ' <span class="sageText">SAGE!</span>';
 	}
 
 	return $nameHtml;
