@@ -30,20 +30,22 @@ class threadRenderer {
 	/**
 	 * Main render function to build full HTML of thread and replies.
 	 */
-	public function render(array $threads,
-	 array $currentPageThreads,
-	 mixed $tree_cut, 
-	 array $posts, int $hiddenReply, 
-	 string $thread_uid, 
-	 mixed $arr_kill, 
-	 bool $kill_sensor, 
-	 bool $showquotelink = true, 
-	 bool $adminMode = false, 
-	 int $threadIterator = 0, 
-	 string $overboardBoardTitleHTML = '', 
-	 string $crossLink = '',
-	 array $templateValues = []): string {
-		$thread_uid = $thread_uid ?: 0;
+	public function render(
+			array $thread,
+			mixed $postUids, 
+			array $posts, 
+			int $hiddenReply, 
+			string $thread_uid, 
+			mixed $arr_kill, 
+			bool $kill_sensor, 
+			bool $showquotelink = true, 
+			bool $adminMode = false, 
+			int $threadIterator = 0, 
+			string $overboardBoardTitleHTML = '', 
+			string $crossLink = '',
+			array $templateValues = []): string 
+		{
+		$thread_uid = $thread['thread_uid'];
 		$thdat = '';
 		
 		// whether this is reply mode
@@ -52,9 +54,6 @@ class threadRenderer {
 		// whether this is thread (index) mode
 		$threadMode = $thread_uid ? false : true;
 
-		// thread uid
-		$thread_uid = $posts[0]['thread_uid'];
-		
 		// post op number
 		$postOPNumber = $posts[0]['no'];
 
@@ -62,31 +61,31 @@ class threadRenderer {
 		$replyCount = count($posts);
 	
 		// list of thread post op numbers
-		$threadNumberList = $this->threadSingleton->mapThreadUidListToPostNumber($currentPageThreads);
-
-		if (is_array($tree_cut)) $tree_cut = array_flip($tree_cut);
+		// N + 1 FUCK
+		// $threadNumberList = $this->threadSingleton->mapThreadUidListToPostNumber($thread);
 	
 		// render posts for a thread
 		foreach ($posts as $i => $post) {
-			$thdat .= $this->renderSinglePost($threadNumberList,
-			$posts,
-				$post,
-				$i,
-				$threadMode,
-				$adminMode,
-				$showquotelink,
-				$currentPageThreads,
-				$threadIterator,
-				$hiddenReply,
-				$kill_sensor,
-				$arr_kill,
-				$postOPNumber,
-				$replyMode,
-				$replyCount,
-				$overboardBoardTitleHTML,
-				$thread_uid,
-				$crossLink,
-				$templateValues
+				$thdat .= $this->renderSinglePost(
+						[],
+						$posts,
+						$post,
+						$i,
+						$threadMode,
+						$adminMode,
+						$showquotelink,
+						$thread,
+						$threadIterator,
+						$hiddenReply,
+						$kill_sensor,
+						$arr_kill,
+						$postOPNumber,
+						$replyMode,
+						$replyCount,
+						$overboardBoardTitleHTML,
+						$thread_uid,
+						$crossLink,
+						$templateValues
 			);
 		}
 	
@@ -97,7 +96,8 @@ class threadRenderer {
 	/*
 	* Render an individual post for a thread
 	*/
-	private function renderSinglePost(array $threadNumberList,
+	private function renderSinglePost(
+		array $threadNumberList,
 		array $threadPosts,
 		array $post,
 		int $i,
