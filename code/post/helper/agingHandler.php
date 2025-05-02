@@ -26,9 +26,7 @@ class agingHandler {
 
 		if ($this->config['NOTICE_SAGE'] && stristr($email, 'sage')) {
 			$age = false;
-			if (!$this->config['CLEAR_SAGE']) {
-				$name .= ' <span class="sageText">SAGE!</span>';
-			}
+
 		}
 	}
 }
