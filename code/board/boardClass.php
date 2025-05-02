@@ -178,12 +178,12 @@ class board implements IBoard {
 		return $this->config;
 	}
 
-	public function drawThread($res) {
+	public function drawThread($res): void {
 		$boardRebuilder = new boardRebuilder($this, $this->templateEngine);
 		$boardRebuilder->drawThread($res);
 	}
-	
-	public function drawPage($pageNumber) {
+
+	public function drawPage($pageNumber): void {
 		$boardRebuilder = new boardRebuilder($this, $this->templateEngine);
 		$boardRebuilder->drawPage($pageNumber);
 
