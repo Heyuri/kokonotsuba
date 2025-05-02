@@ -108,18 +108,18 @@ class overboard {
 			'{$THREADFRONT}' => '',
 			'{$THREADREAR}' => '',
 			'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel">'._T('del_head'),
-			'{$DEL_PASS_TEXT}' => '',
+			'{$DEL_PASS_TEXT}' => _T('del_pass'),
 			'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 			'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
 			'{$FORMDAT}' => '',
-			'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" id="pwd2" value="">',
+			'{$DEL_PASS_FIELD}' => '<input type="hidden" name="func" value="delete"> <input type="password" class="inputtext" name="pwd" id="pwd2" value="">',
 			'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'">',
 			'{$THREADS}' => '',
 			'{$TITLE}' => 'Overboard',
 			'{$TITLESUB}' => 'Posts from all kokonotsuba boards',
 			'{$BOARD_URL}' => '',
 			'{$IS_THREAD}' => false,
-			'{$SELF}' => ''
+			'{$SELF}' => $this->config['PHP_SELF']
 		);
 	}
 
@@ -179,7 +179,7 @@ class overboard {
 		[$overboardThreadTitle, $crossLink] = $this->buildThreadTitleAndLink($board);
 	
 		$adminMode = $this->determineAdminMode($board, $pagenum, $single_page);
-		$templateValues = $this->buildTemplateValues($config, $board, $adminMode);
+		$templateValues = $this->buildTemplateValues($board);
 	
 		$kill_sensor = false;
 		$arr_kill = array();
@@ -230,10 +230,8 @@ class overboard {
 		return $roleLevel >= $config['roles']['LEV_JANITOR'] && $pagenum != -1 && !$single_page;
 	}
 	
-	private function buildTemplateValues(array $config, board $board, bool $adminMode): array {
+	private function buildTemplateValues(board $board): array {
 		return [
-			'{$DEL_PASS_TEXT}' => ($adminMode ? '<input type="hidden" name="func" value="delete">' : '')._T('del_pass'),
-			'{$SELF}' => $config['PHP_SELF'],
 			'{$BOARD_UID}' => $board->getBoardUID(),
 		];
 	}
