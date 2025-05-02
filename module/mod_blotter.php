@@ -121,6 +121,11 @@ class mod_blotter extends moduleHelper {
 
 	public function autoHookBlotterPreview(&$html) {
 		$blotterData = $this->getBlotterFileData();
+		
+		usort($blotterData, function($a, $b) {
+			return strtotime($b['date']) - strtotime($a['date']);
+		});
+
 		$previewEntries = [];
 
 		foreach ($blotterData as $i => $entry) {
@@ -142,11 +147,10 @@ class mod_blotter extends moduleHelper {
 
 
 	public function ModulePage() {
-		$globalHTML = new globalHTML($this->board);
 		$staffSession = new staffAccountFromSession;
 		
 		$roleLevel = $staffSession->getRoleLevel();
-		$returnButton = $globalHTML->generateAdminLinkButtons();
+
 		
 		//If a regular user, draw blotter page
 		if ($roleLevel < $this->config['AuthLevels']['CAN_EDIT_BLOTTER']) {
