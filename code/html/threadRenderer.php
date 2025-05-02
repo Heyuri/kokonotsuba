@@ -157,7 +157,7 @@ class threadRenderer {
 		}
 
 		//handle name/trip/capcode html
-		$nameHtml = generatePostNameHtml($this->config['staffCapcodes'], $this->config['CAPCODES'], $data['name'], $data['tripcode'], $data['secure_tripcode'], $data['capcode']);
+		$nameHtml = generatePostNameHtml($this->config['staffCapcodes'], $this->config['CAPCODES'], $data['name'], $data['tripcode'], $data['secure_tripcode'], $data['capcode'], $data['email'], $this->config['CLEAR_SAGE']);
 
 		// Template binding
 		$templateValues += $isReply
@@ -211,8 +211,6 @@ class threadRenderer {
 		}
 		if ($this->config['ALLOW_NONAME'] == 2 && $email) {
 			$now = "<a href=\"mailto:$email\">$now</a>";
-		} elseif ($email) {
-			$name = "<a href=\"mailto:$email\">$name</a>";
 		}
 	
 		$com = $this->globalHTML->quote_link($this->board, $this->PIO, $com);
