@@ -106,6 +106,7 @@ boardIO::createInstance($dbSettings);
 AccountIO::createInstance($dbSettings);
 ActionLogger::createInstance($dbSettings);
 postRedirectIO::createInstance($dbSettings);
+threadCacheSingleton::createInstance($dbSettings);
 
 // ───────────────────────────────────────
 // Board Bootstrap

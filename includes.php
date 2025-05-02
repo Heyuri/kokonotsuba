@@ -40,6 +40,7 @@ require __DIR__.'/code/libraries/lib_errorhandler.php'; // error library
 require __DIR__.'/code/libraries/lib_compatible.php'; // compatability library
 require __DIR__.'/code/libraries/lib_file.php'; // file I/O library
 require __DIR__.'/code/libraries/lib_common.php'; // general-purpose functions
+require __DIR__.'/code/libraries/lib_cache.php'; // caching library
 require __DIR__.'/code/libraries/lib_post.php'; // post-related functions
 require __DIR__.'/code/libraries/lib_filter.php'; // filter-related functions
 
@@ -63,9 +64,11 @@ require __DIR__.'/code/error/softErrorHandler.php';
 require __DIR__. '/code/module_classes/moduleEngine.php'; // module manager class
 require __DIR__. '/code/module_classes/moduleHelper.php'; // module helper class
 
-/* Path caching */
-require __DIR__.'/code/path_cache/boardPathCachingIO.php';
-require __DIR__.'/code/path_cache/cachedBoardPath.php';
+/* Caching */
+require __DIR__.'/code/cache/path_cache/boardPathCachingIO.php';
+require __DIR__.'/code/cache/path_cache/cachedBoardPath.php';
+require __DIR__.'/code/cache/thread_cache/threadCacheSingleton.php';
+require __DIR__.'/code/cache/thread_cache/threadCache.php';
 
 
 /* Database singleton */

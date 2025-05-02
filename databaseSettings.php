@@ -16,6 +16,7 @@ return [
 	'BAN_TABLE' => 'bans', //ban table used by adminban module
 	'BOARD_TABLE' => 'boards', //board table for all boards active on an instance
 	'BOARD_PATH_CACHE_TABLE' => 'board_paths', //for caching board paths
+	'THREAD_CACHE_TABLE' => 'thread_cache', //for thread html caching
 	'POST_NUMBER_TABLE' => 'post_numbers', //used for futaba-like `No. XXXX` system
 	'ACCOUNT_TABLE' => 'accounts', //staff account table
 	'ACTIONLOG_TABLE' => 'actionlog', //user log
