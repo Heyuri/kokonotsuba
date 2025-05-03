@@ -102,15 +102,20 @@ class mod_bbcode extends moduleHelper {
 	public function bb2html($string, $file){
 		$this->urlcount=0; // Reset counter
 
-		// Extract [code] blocks before processing other BBCode
+		// Extract [code] and [code=lang] blocks before processing other BBCode
 		$codeBlocks = [];
-		$string = preg_replace_callback('#\[code\](.*?)\[/code\]#si', function($matches) use (&$codeBlocks) {
+		$string = preg_replace_callback('#\[code(?:=([a-zA-Z0-9_+\-]+))?\](.*?)\[/code\]#si', function($matches) use (&$codeBlocks) {
 			$key = '[[[CODEBLOCK_' . count($codeBlocks) . ']]]';
-			// Normalize any <br> tags back into real new-lines before escaping
-			$content = preg_replace('#<br\s*/?>#i', "\n", $matches[1]);
-			$codeBlocks[$key] = '<pre class="code">' . htmlspecialchars_decode(htmlspecialchars($content, ENT_NOQUOTES, 'UTF-8')) . '</pre>';
+			$lang = isset($matches[1]) ? strtolower($matches[1]) : null;
+			$content = preg_replace('#<br\s*/?>#i', "\n", $matches[2]);
+			if ($lang) {
+				$codeBlocks[$key] = '<pre class="code">' . $this->highlightCodeSyntax($content, $lang) . '</pre>';
+			} else {
+				$codeBlocks[$key] = '<pre class="code">' . htmlspecialchars_decode(htmlspecialchars($content, ENT_NOQUOTES, 'UTF-8')) . '</pre>';
+			}
 			return $key;
 		}, $string);
+
 		// Preprocess the BBCode to fix nesting issues
 		$string = $this->fixBBCodeNesting($string);
 
@@ -321,6 +326,84 @@ class mod_bbcode extends moduleHelper {
 		}
 		return $result;
 	}
+
+
+	private function highlightCodeSyntax($code, $lang) {
+		$lang = strtolower($lang);
+	
+		$keywords = [];
+		$commentPatterns = [];
+	
+		switch ($lang) {
+			case 'c':
+			case 'cpp':
+			case 'c++':
+				$keywords = ['int','char','float','double','if','else','for','while','return','struct','class','include'];
+				$commentPatterns = ['#//.*?$#m', '#/\*.*?\*/#s'];
+				break;
+			case 'php':
+				$keywords = ['function','echo','print','if','else','foreach','while','return','class','public','private','protected','static'];
+				$commentPatterns = ['#//.*?$#m', '#/\*.*?\*/#s', '#\#.*?$#m'];
+				break;
+			case 'js':
+			case 'javascript':
+				$keywords = ['function','var','let','const','if','else','for','while','return'];
+				$commentPatterns = ['#//.*?$#m', '#/\*.*?\*/#s'];
+				break;
+			case 'py':
+			case 'python':
+				$keywords = ['def','return','if','elif','else','for','while','import','from','as','class','try','except','with','lambda','pass','break','continue'];
+				$commentPatterns = ['#\#.*?$#m'];
+				break;
+			case 'pl':
+			case 'perl':
+				$keywords = ['sub','my','if','else','foreach','while','return','print','use','package'];
+				$commentPatterns = ['#\#.*?$#m'];
+				break;
+			case 'f':
+			case 'fortran':
+				$keywords = ['program','end','integer','real','double','do','if','then','else','print','call','subroutine','function','return'];
+				$commentPatterns = ['#^!.*?$#m'];
+				break;
+			case 'html':
+				$keywords = ['html','head','body','div','span','script','style','title','meta','link','h1','h2','h3','p','a','img','ul','li','table','tr','td','input','form'];
+				$commentPatterns = ['#<!--.*?-->#s'];
+				break;
+			case 'css':
+				$keywords = ['color','background','border','margin','padding','font','display','position','absolute','relative','inline','block','none','flex','grid'];
+				$commentPatterns = ['#/\*.*?\*/#s'];
+				break;
+			default:
+				return htmlspecialchars_decode(htmlspecialchars($code, ENT_NOQUOTES, 'UTF-8'));
+		}
+	
+		$escaped = htmlspecialchars_decode(htmlspecialchars($code, ENT_NOQUOTES, 'UTF-8'));
+	
+		// 1. Extract comments safely
+		$commentTokens = [];
+		foreach ($commentPatterns as $pattern) {
+			$escaped = preg_replace_callback($pattern, function($m) use (&$commentTokens) {
+				$key = '[[[COMMENT_' . count($commentTokens) . ']]]';
+				$commentTokens[$key] = '<span class="codeComment">' . $m[0] . '</span>';
+				return $key;
+			}, $escaped);
+		}
+	
+		// 2. Highlight keywords
+		if (!empty($keywords)) {
+			$pattern = '/\b(' . implode('|', array_map('preg_quote', $keywords)) . ')\b/';
+			$escaped = preg_replace($pattern, '<span class="codeKeyword">$1</span>', $escaped);
+		}
+	
+		// 3. Restore comment tokens
+		if (!empty($commentTokens)) {
+			$escaped = strtr($escaped, $commentTokens);
+		}
+	
+		return $escaped;
+	}
+	
+	
 
 	private function _URLConv1($m){
 		++$this->urlcount;
