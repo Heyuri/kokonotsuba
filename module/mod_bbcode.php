@@ -327,12 +327,12 @@ class mod_bbcode extends moduleHelper {
 		return $result;
 	}
 
-
 	private function highlightCodeSyntax($code, $lang) {
 		$lang = strtolower($lang);
 	
 		$keywords = [];
 		$commentPatterns = [];
+		$extraHighlighter = null;
 	
 		switch ($lang) {
 			case 'c':
@@ -341,45 +341,58 @@ class mod_bbcode extends moduleHelper {
 				$keywords = ['int','char','float','double','if','else','for','while','return','struct','class','include'];
 				$commentPatterns = ['#//.*?$#m', '#/\*.*?\*/#s'];
 				break;
+	
 			case 'php':
 				$keywords = ['function','echo','print','if','else','foreach','while','return','class','public','private','protected','static'];
 				$commentPatterns = ['#//.*?$#m', '#/\*.*?\*/#s', '#\#.*?$#m'];
 				break;
+	
 			case 'js':
 			case 'javascript':
 				$keywords = ['function','var','let','const','if','else','for','while','return'];
 				$commentPatterns = ['#//.*?$#m', '#/\*.*?\*/#s'];
 				break;
+	
 			case 'py':
 			case 'python':
 				$keywords = ['def','return','if','elif','else','for','while','import','from','as','class','try','except','with','lambda','pass','break','continue'];
-				$commentPatterns = ['#\#.*?$#m'];
+				$commentPatterns = ['#\#.*?$#m', '#(&quot;&quot;&quot;|&apos;&apos;&apos;)(.*?)\1#s'];
 				break;
+	
 			case 'pl':
 			case 'perl':
 				$keywords = ['sub','my','if','else','foreach','while','return','print','use','package'];
-				$commentPatterns = ['#\#.*?$#m'];
+				$commentPatterns = ['#\#.*?$#m', '#=begin(.*?)=end#s'];
 				break;
+
+
 			case 'f':
 			case 'fortran':
 				$keywords = ['program','end','integer','real','double','do','if','then','else','print','call','subroutine','function','return'];
 				$commentPatterns = ['#^!.*?$#m'];
 				break;
+	
 			case 'html':
-				$keywords = ['html','head','body','div','span','script','style','title','meta','link','h1','h2','h3','p','a','img','ul','li','table','tr','td','input','form'];
 				$commentPatterns = ['#&lt;!--.*?--&gt;#s'];
+				$extraHighlighter = function($text) {
+					return preg_replace('/(&lt;\/?)([a-zA-Z0-9\-]+)(?=[\s&>])/', '$1<span class="codeKeyword">$2</span>', $text);
+				};
 				break;
+	
 			case 'css':
-				$keywords = ['color','background','border','margin','padding','font','display','position','absolute','relative','inline','block','none','flex','grid'];
 				$commentPatterns = ['#/\*.*?\*/#s'];
+				$extraHighlighter = function($text) {
+					return preg_replace('/([{\s;])([a-zA-Z\-]+)(?=\s*:)/', '$1<span class="codeKeyword">$2</span>', $text);
+				};
 				break;
+	
 			default:
 				return htmlspecialchars_decode(htmlspecialchars($code, ENT_NOQUOTES, 'UTF-8'));
 		}
 	
 		$escaped = htmlspecialchars_decode(htmlspecialchars($code, ENT_NOQUOTES, 'UTF-8'));
 	
-		// 1. Extract comments safely
+		// Highlight comments
 		$commentTokens = [];
 		foreach ($commentPatterns as $pattern) {
 			$escaped = preg_replace_callback($pattern, function($m) use (&$commentTokens) {
@@ -389,20 +402,24 @@ class mod_bbcode extends moduleHelper {
 			}, $escaped);
 		}
 	
-		// 2. Highlight keywords
+		// Highlight keywords (if defined)
 		if (!empty($keywords)) {
 			$pattern = '/\b(' . implode('|', array_map('preg_quote', $keywords)) . ')\b/';
 			$escaped = preg_replace($pattern, '<span class="codeKeyword">$1</span>', $escaped);
 		}
 	
-		// 3. Restore comment tokens
+		// Highlight additional regex matches
+		if ($extraHighlighter) {
+			$escaped = $extraHighlighter($escaped);
+		}
+	
+		// Restore comments
 		if (!empty($commentTokens)) {
 			$escaped = strtr($escaped, $commentTokens);
 		}
 	
 		return $escaped;
 	}
-	
 	
 
 	private function _URLConv1($m){
