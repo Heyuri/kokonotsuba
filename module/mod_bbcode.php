@@ -102,6 +102,14 @@ class mod_bbcode extends moduleHelper {
 	public function bb2html($string, $file){
 		$this->urlcount=0; // Reset counter
 
+		// Extract [code] blocks before processing other BBCode
+		$codeBlocks = [];
+		$string = preg_replace_callback('#\[code\](.*?)\[/code\]#si', function($matches) use (&$codeBlocks) {
+			$key = '[[[CODEBLOCK_' . count($codeBlocks) . ']]]';
+			$codeBlocks[$key] = '<pre class="code">' . htmlspecialchars($matches[1]) . '</pre>';
+			return $key;
+		}, $string);
+
 		// Preprocess the BBCode to fix nesting issues
 		$string = $this->fixBBCodeNesting($string);
 
@@ -152,6 +160,11 @@ class mod_bbcode extends moduleHelper {
 
 		foreach ($this->emotes as $emo=>$url) {
 			$string = str_replace(":$emo:", "<img title=\":$emo:\" class=\"emote\" src=\"$url\" alt=\":$emo:\">", $string);
+		}
+
+		// Restore preserved code blocks
+		if (!empty($codeBlocks)) {
+			$string = strtr($string, $codeBlocks);
 		}
 
 		return $string;
