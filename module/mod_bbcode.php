@@ -367,7 +367,7 @@ class mod_bbcode extends moduleHelper {
 				break;
 			case 'html':
 				$keywords = ['html','head','body','div','span','script','style','title','meta','link','h1','h2','h3','p','a','img','ul','li','table','tr','td','input','form'];
-				$commentPatterns = ['#<!--.*?-->#s'];
+				$commentPatterns = ['#&lt;!--.*?--&gt;#s'];
 				break;
 			case 'css':
 				$keywords = ['color','background','border','margin','padding','font','display','position','absolute','relative','inline','block','none','flex','grid'];
