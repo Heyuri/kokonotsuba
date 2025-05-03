@@ -108,7 +108,7 @@ class mod_bbcode extends moduleHelper {
 			$key = '[[[CODEBLOCK_' . count($codeBlocks) . ']]]';
 			// Normalize any <br> tags back into real new-lines before escaping
 			$content = preg_replace('#<br\s*/?>#i', "\n", $matches[1]);
-			$codeBlocks[$key] = '<pre class="code">' . htmlspecialchars($content) . '</pre>';
+			$codeBlocks[$key] = '<pre class="code">' . htmlspecialchars_decode(htmlspecialchars($content, ENT_NOQUOTES, 'UTF-8')) . '</pre>';
 			return $key;
 		}, $string);
 		// Preprocess the BBCode to fix nesting issues
