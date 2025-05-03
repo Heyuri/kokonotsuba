@@ -106,10 +106,11 @@ class mod_bbcode extends moduleHelper {
 		$codeBlocks = [];
 		$string = preg_replace_callback('#\[code\](.*?)\[/code\]#si', function($matches) use (&$codeBlocks) {
 			$key = '[[[CODEBLOCK_' . count($codeBlocks) . ']]]';
-			$codeBlocks[$key] = '<pre class="code">' . htmlspecialchars($matches[1]) . '</pre>';
+			// Normalize any <br> tags back into real new-lines before escaping
+			$content = preg_replace('#<br\s*/?>#i', "\n", $matches[1]);
+			$codeBlocks[$key] = '<pre class="code">' . htmlspecialchars($content) . '</pre>';
 			return $key;
 		}, $string);
-
 		// Preprocess the BBCode to fix nesting issues
 		$string = $this->fixBBCodeNesting($string);
 
