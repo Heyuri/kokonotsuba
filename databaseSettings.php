@@ -2,7 +2,7 @@
 //database settings
 return [
 	'DATABASE_USERNAME' => 'user', //database user name
-	'DATABASE_PASSWORD' =>'password', //database user passowrd
+	'DATABASE_PASSWORD' =>'password', //database user password
 
 	'DATABASE_DRIVER' => 'mysql',
 	'DATABASE_HOST' => '127.0.0.1',
