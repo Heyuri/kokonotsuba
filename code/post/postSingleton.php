@@ -241,10 +241,14 @@ class PIOPDO implements IPIO {
 	    return $ip !== false ? $ip : null;
 	}
 
-	public function getThreadPreviewsFromBoard(board $board, int $previewCount): array {
+	public function getThreadPreviewsFromBoard(board $board, int $previewCount, int $amount = 0, int $offset = 0): array {
 		$boardUID = $board->getBoardUID();
 	
-		// Step 1: fetch all threads + OP post + status
+		// Sanitize LIMIT and OFFSET values
+		$amount = max(0, $amount);
+		$offset = max(0, $offset);
+	
+		// Step 1: fetch paginated threads with OP post + status
 		$query = "
 			SELECT t.thread_uid, t.post_op_post_uid, p.status
 			FROM {$this->threadTable} t
@@ -252,13 +256,20 @@ class PIOPDO implements IPIO {
 			WHERE t.boardUID = :boardUID
 			ORDER BY t.last_bump_time DESC
 		";
-		$threads = $this->databaseConnection->fetchAllAsArray($query, [':boardUID' => $boardUID]);
+
+		if($amount) {
+			$query .= " LIMIT $amount OFFSET $offset";
+		}
+	
+		$threads = $this->databaseConnection->fetchAllAsArray($query, [
+			':boardUID' => $boardUID
+		]);
 	
 		if (empty($threads)) return [];
 	
 		$threadUIDs = array_column($threads, 'thread_uid');
 	
-		// Step 2: fetch all posts for these threads in one query
+		// Step 2: fetch all posts for these threads
 		$inClause = implode(',', array_fill(0, count($threadUIDs), '?'));
 		$postQuery = "
 			SELECT *
@@ -274,7 +285,7 @@ class PIOPDO implements IPIO {
 			$postsByThread[$post['thread_uid']][] = $post;
 		}
 	
-		// Step 4: build result array in shape expected by render loop
+		// Step 4: assemble results
 		$result = [];
 		foreach ($threads as $thread) {
 			$threadUID = $thread['thread_uid'];
@@ -283,7 +294,6 @@ class PIOPDO implements IPIO {
 			$totalPosts = count($allPosts);
 			$omittedCount = max(0, $totalPosts - $previewCount);
 	
-			// Select OP + last N posts (skip OP in slice)
 			$opPost = array_filter($allPosts, fn($p) => $p['is_op']);
 			$nonOpPosts = array_filter($allPosts, fn($p) => !$p['is_op']);
 			$previewPosts = array_merge(
@@ -292,7 +302,7 @@ class PIOPDO implements IPIO {
 			);
 	
 			$result[] = [
-				'thread' => $thread, // has thread_uid, post_op_post_uid, status
+				'thread' => $thread,
 				'post_uids' => array_column($previewPosts, 'post_uid'),
 				'posts' => $previewPosts,
 				'hidden_reply_count' => $omittedCount,
@@ -302,6 +312,8 @@ class PIOPDO implements IPIO {
 	
 		return $result;
 	}
+	
+	
 	
 
 	
