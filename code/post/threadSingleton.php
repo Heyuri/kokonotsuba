@@ -57,8 +57,8 @@ class threadSingleton {
 		$threads = $this->databaseConnection->fetchAllAsIndexArray($query);
 		return array_merge(...$threads);
 	}
-	public function getThreadByUID($thread_uid): ?array
-	{
+	
+	public function getThreadByUID($thread_uid): ?array {
 		$query = "SELECT * FROM {$this->threadTable} WHERE thread_uid = :thread_uid";
 		$params = [':thread_uid' => (string) $thread_uid];
 		$threadMeta = $this->databaseConnection->fetchOne($query, $params);
@@ -67,7 +67,7 @@ class threadSingleton {
 			return null;
 		}
 	
-		$postsQuery = "SELECT * FROM {$this->postTable} WHERE thread_uid = :thread_uid ORDER BY post_position ASC";
+		$postsQuery = "SELECT * FROM {$this->postTable} WHERE thread_uid = :thread_uid ORDER BY post_uid ASC";
 		$posts = $this->databaseConnection->fetchAllAsArray($postsQuery, $params);
 	
 		$postUIDs = array_column($posts, 'post_uid');
