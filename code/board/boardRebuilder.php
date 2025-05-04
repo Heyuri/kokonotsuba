@@ -1,12 +1,9 @@
 <?php
 
-class boardRebuilder
-{
+class boardRebuilder {
 	private board $board;
 	private array $config;
 	private globalHTML $globalHTML;
-	private mixed $FileIO;
-	private mixed $postRedirectIO;
 	private moduleEngine $moduleEngine;
 	private mixed $PIO;
 	private mixed $threadSingleton;
@@ -25,8 +22,6 @@ class boardRebuilder
 		$this->threadSingleton = threadSingleton::getInstance();
 		$this->PIO = PIOPDO::getInstance();
 		$this->actionLogger = actionLogger::getInstance();
-		$this->FileIO = PMCLibrary::getFileIOInstance();
-		$this->postRedirectIO = postRedirectIO::getInstance();
 
 
 		$this->templateEngine = $templateEngine;
@@ -45,30 +40,29 @@ class boardRebuilder
 
 
 		$this->config = $board->loadBoardConfig();
-		if (empty($this->config))
+		if (empty($this->config)) {
 			die("No board config for {$board->getBoardTitle()}:{$board->getBoardUID()}");
-
+		}
 	}
 
-	public function drawThread(?string $resno): void {
+	public function drawThread(int $resno): void {
 		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine);
 		$roleLevel = $this->staffSession->getRoleLevel();
 		$adminMode = $roleLevel >= $this->config['roles']['LEV_JANITOR'];
 
-		// Get the full thread (including all posts)
 		$uid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
+
 
 		$threadData = $this->threadSingleton->getThreadByUID($uid);
 
 		if (!$threadData) {
-			echo "<h2>Thread not found</h2>";
+			$this->globalHTML->error("Thread not found!");
 			return;
 		}
 
 		$thread = $threadData['thread'];
-		$postUIDs = $threadData['post_uids'];
 		$posts = $threadData['posts'];
-		$hiddenReply = $threadData['hidden_reply_count'];
+		$hiddenReply = 0;
 
 		$pte_vals = [
 			'{$THREADS}' => '',
@@ -84,18 +78,20 @@ class boardRebuilder
 			'{$IS_THREAD}' => true,
 		];
 
+		$this->moduleEngine->useModuleMethods('ThreadFront', array(&$pte_vals['{$THREADFRONT}'], 0)); // "ThreadFront" Hook Point
+		$this->moduleEngine->useModuleMethods('ThreadRear', array(&$pte_vals['{$THREADREAR}'], 0)); // "ThreadRear" Hook Point
+
 		$pageData = '';
 		$this->globalHTML->head($pageData);
 
 		$form_dat = '';
-		$this->globalHTML->form($form_dat, 0);
+		$this->globalHTML->form($form_dat, $resno);
 		$form_dat .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
 		$pte_vals['{$FORMDAT}'] = $form_dat;
 
 		// Render the thread
-		$pte_vals['{$THREADS}'] .= $threadRenderer->render(
+		$pte_vals['{$THREADS}'] .= $threadRenderer->render(true,
 			$thread,
-			$postUIDs,
 			$posts,
 			$hiddenReply,
 			$uid,
@@ -132,9 +128,9 @@ class boardRebuilder
 		$threadPageOffset = $page * $threadsPerPage;
 		$previewCount = $this->config['RE_DEF'];
 
-		$threadsInPage = $this->PIO->getThreadPreviewsFromBoard($this->board, $previewCount);
-
-		$totalThreads = count($threadsInPage);
+		$threadsInPage = $this->PIO->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset);
+		
+		$totalThreads = count($this->threadSingleton->fetchThreadListFromBoard($this->board));
 
 		$pte_vals = [
 			'{$THREADS}' => '',
@@ -150,6 +146,9 @@ class boardRebuilder
 			'{$IS_THREAD}' => false,
 		];
 
+		$this->moduleEngine->useModuleMethods('ThreadFront', array(&$pte_vals['{$THREADFRONT}'], 0)); // "ThreadFront" Hook Point
+		$this->moduleEngine->useModuleMethods('ThreadRear', array(&$pte_vals['{$THREADREAR}'], 0)); // "ThreadRear" Hook Point
+
 		$pageData = '';
 		$this->globalHTML->head($pageData);
 
@@ -160,14 +159,12 @@ class boardRebuilder
 
 		foreach ($threadsInPage as $i => $data) {
 			$thread = $data['thread'];
-			$postUIDs = $data['post_uids'];
 			$posts = $data['posts'];
 			$hiddenReply = $data['hidden_reply_count'];
 			$threadUID = $data['thread_uid'];
 
-			$pte_vals['{$THREADS}'] .= $threadRenderer->render(
+			$pte_vals['{$THREADS}'] .= $threadRenderer->render(false,
 				$thread,
-				$postUIDs,
 				$posts,
 				$hiddenReply,
 				$threadUID,
@@ -208,42 +205,64 @@ class boardRebuilder
 
 	private function buildNav($page, $totalPages): string {
 		$navData = '<table id="pager"><tbody><tr>';
-
+	
 		$prev = $page - 1;
 		$next = $page + 1;
 		$totalPageCount = $totalPages;
-
+	
 		// Prev button
 		if ($prev >= 0) {
-			$prevFile = ($prev === 0) ? 'index.html' : $prev . '.html';
+			if ($prev <= $this->config['STATIC_HTML_UNTIL']) {
+				// Use .html for pages <= STATIC_HTML_UNTIL
+				$prevFile = ($prev === 0) ? 'index.html' : $prev . '.html';
+			} else {
+				// Use query parameter for pages > STATIC_HTML_UNTIL
+				$prevFile = $this->config['PHP_SELF'] . 'pagenum=' . $prev;
+			}
 			$navData .= '<td><a href="' . $prevFile . '">&laquo; Prev</a></td>';
 		} else {
 			$navData .= '<td><span class="disabled">&laquo; Prev</span></td>';
 		}
-
+	
 		// Page numbers
 		$navData .= '<td>';
 		for ($i = 0; $i < $totalPageCount; $i++) {
-			$file = ($i === 0) ? 'index.html' : $i . '.html';
-			if ($i === $page) {
-				$navData .= '[<b>' . ($i + 1) . '</b>] ';
+			if ($i <= $this->config['STATIC_HTML_UNTIL']) {
+				// Use .html for pages <= STATIC_HTML_UNTIL
+				$file = ($i === 0) ? 'index.html' : $i . '.html';
 			} else {
-				$navData .= '[<a href="' . $file . '">' . ($i + 1) . '</a>] ';
+				// Use query parameter for pages > STATIC_HTML_UNTIL
+				$file = $this->config['PHP_SELF'] . '?pagenum=' . $i;
+			}
+	
+			if ($i === $page) {
+				// Show current page as bold
+				$navData .= '[<b>' . $i . '</b>] ';  // Change to $i directly, so it starts at 0
+			} else {
+				$navData .= '[<a href="' . $file . '">' . $i . '</a>] ';  // Use $i for the page number
 			}
 		}
 		$navData .= '</td>';
-
+	
 		// Next button
 		if ($next < $totalPageCount) {
-			$nextFile = $next . '.html';
+			if ($next <= $this->config['STATIC_HTML_UNTIL']) {
+				// Use .html for pages <= STATIC_HTML_UNTIL
+				$nextFile = $next . '.html';
+			} else {
+				// Use query parameter for pages > STATIC_HTML_UNTIL
+				$nextFile = $this->config['PHP_SELF'] . 'pagenum=' . $next;
+			}
 			$navData .= '<td><a href="' . $nextFile . '">Next &raquo;</a></td>';
 		} else {
 			$navData .= '<td><span class="disabled">Next &raquo;</span></td>';
 		}
-
+	
 		$navData .= '</tr></tbody></table>';
 		return $navData;
 	}
+	
+	
 	private function buildDynamicPageNav(int $page, int $threadsCount, int $threadsPerPage, int $next, int $prev, bool $adminMode): string {
 		$totalPages = ceil($threadsCount / $threadsPerPage);
 		$nav = '<table id="pager"><tbody><tr>';
@@ -298,8 +317,7 @@ class boardRebuilder
 		return $nav;
 	}
 
-	public function rebuildBoardHtml(bool $logRebuild = false): void
-	{
+	public function rebuildBoardHtml(bool $logRebuild = false): void {
 		// we are not using passes in shit. we are just gonna rebuild all board, one way,
 		// if you want a special way of building a board. make it its own function.
 
@@ -313,7 +331,16 @@ class boardRebuilder
 
 		$totalThreads = count($threads);
 		$threadsPerPage = $this->config['PAGE_DEF'];
-		$totalPages = ceil($totalThreads / $this->config['PAGE_DEF']);
+		$totalPagesFromThreadCount = ceil($totalThreads / $this->config['PAGE_DEF']); 
+		$totalPagesToRebuild = 0;
+
+		if($this->config['STATIC_HTML_UNTIL'] === -1) {
+			$totalPagesToRebuild = $totalPagesFromThreadCount;
+		} else if ($this->config['STATIC_HTML_UNTIL'] === 0) {
+			$totalPagesToRebuild = 0;
+		} else {
+			$totalPagesToRebuild = min($this->config['STATIC_HTML_UNTIL'], $totalPagesFromThreadCount);
+		}
 
 		//hell idk what this is but keeping it for now...
 		$pte_vals = array(
@@ -330,9 +357,12 @@ class boardRebuilder
 			'{$IS_THREAD}' => false,
 		);
 
+		$this->moduleEngine->useModuleMethods('ThreadFront', array(&$pte_vals['{$THREADFRONT}'], 0)); // "ThreadFront" Hook Point
+		$this->moduleEngine->useModuleMethods('ThreadRear', array(&$pte_vals['{$THREADREAR}'], 0)); // "ThreadRear" Hook Point
+
 
 		// Generate static pages one page at a time
-		for ($page = 0; $page < $totalPages; $page++) {
+		for ($page = 0; $page < $totalPagesToRebuild; $page++) {
 
 			//load in next N threads for X page
 			$threadsInPage = array_slice($threads, $page * $threadsPerPage, $threadsPerPage);
@@ -347,23 +377,18 @@ class boardRebuilder
 
 			$form_dat .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
 
-			$this->moduleEngine->useModuleMethods('ThreadFront', array(&$pte_vals['{$THREADFRONT}'], 0)); // "ThreadFront" Hook Point
 
 			$pte_vals['{$FORMDAT}'] = $form_dat;
 
 			$pte_vals['{$THREADS}'] = '';
 			foreach ($threadsInPage as $i => $data) {
 				$thread = $data['thread'];
-				$postUIDs = $data['post_uids'];
 				$posts = $data['posts'];
 				$hiddenReply = $data['hidden_reply_count'];
 				$threadUID = $data['thread_uid'];
 
-				$threadUID = $data['thread_uid'];
-
-				$pte_vals['{$THREADS}'] .= $threadRenderer->render(
+				$pte_vals['{$THREADS}'] .= $threadRenderer->render(false,
 					$thread,
-					$postUIDs,
 					$posts,
 					$hiddenReply,
 					$threadUID,
@@ -375,7 +400,8 @@ class boardRebuilder
 				);
 			}
 
-			$pte_vals['{$PAGENAV}'] = $this->buildNav($page, $totalPages);
+
+			$pte_vals['{$PAGENAV}'] = $this->buildNav($page, $totalPagesFromThreadCount);
 
 			$pageData .= $this->templateEngine->ParseBlock('MAIN', $pte_vals);
 			$this->globalHTML->foot($pageData);
@@ -404,8 +430,9 @@ class boardRebuilder
 			chmod($logFilePath, 0666);
 		}
 
-		if ($logRebuild)
+		if ($logRebuild) {
 			$this->actionLogger->logAction("Rebuilt board: " . $this->board->getBoardTitle() . ' (' . $this->board->getBoardUID() . ')', $this->board->getBoardUID());
+		}
 	}
 
 }
