@@ -11,7 +11,6 @@ class threadRenderer {
 	private globalHTML $globalHTML;
 	private moduleEngine $moduleEngine;
 	private templateEngine $templateEngine;
-	private mixed $threadSingleton;
 	private mixed $PIO;
 	private IFileIO $FileIO;
 
@@ -24,15 +23,13 @@ class threadRenderer {
 
 		$this->PIO = PIOPDO::getInstance();
 		$this->FileIO = PMCLibrary::getFileIOInstance();
-		$this->threadSingleton = threadSingleton::getInstance();
 	}
 
 	/**
 	 * Main render function to build full HTML of thread and replies.
 	 */
-	public function render(
+	public function render(bool $isReplyMode,
 			array $thread,
-			mixed $postUids, 
 			array $posts, 
 			int $hiddenReply, 
 			string $thread_uid, 
@@ -49,10 +46,10 @@ class threadRenderer {
 		$thdat = '';
 		
 		// whether this is reply mode
-		$replyMode = $thread_uid ? true : false;
+		$replyMode = $isReplyMode;
 		
 		// whether this is thread (index) mode
-		$threadMode = $thread_uid ? false : true;
+		$threadMode = !$isReplyMode;
 
 		// post op number
 		$postOPNumber = $posts[0]['no'];
@@ -122,7 +119,7 @@ class threadRenderer {
 
 		
 
-		[$REPLYBTN, $QUOTEBTN] = $this->buildQuoteAndReplyButtons($data['no'], $postOPNumber, $replyMode, $thread_uid, $showquotelink, $crossLink);
+		[$REPLYBTN, $QUOTEBTN] = $this->buildQuoteAndReplyButtons($data['no'], $postOPNumber, $threadMode, $thread_uid, $showquotelink, $crossLink);
 
 		$categoryHTML = $this->processCategoryLinks($data['category'], $crossLink);
 		$IMG_BAR = ($data['ext']) ? $this->buildAttachmentBar($data['tim'], $data['ext'], $data['fname'], $data['imgsize'], $data['imgw'], $data['imgh'], $data['tw'], $data['th'], '') : '';
@@ -263,7 +260,7 @@ class threadRenderer {
 	/**
 	 * Builds quote and reply links for post display.
 	 */
-	private function buildQuoteAndReplyButtons(int $no, int $postOPNumber, bool $replyMode, string $thread_uid, bool $showquotelink, string $crossLink): array {
+	private function buildQuoteAndReplyButtons(int $no, int $postOPNumber, bool $threadMode, string $thread_uid, bool $showquotelink, string $crossLink): array {
 		$REPLYBTN = $QUOTEBTN = '';
 		$self = $this->config['PHP_SELF'];
 
@@ -279,7 +276,7 @@ class threadRenderer {
 		}
 
 		// add [Reply] button
-		if (!$replyMode) $REPLYBTN = '[<a href="'.$crossLink.$self.'?res='.$no.'">'._T('reply_btn').'</a>]';
+		if ($threadMode) $REPLYBTN = '[<a href="'.$crossLink.$self.'?res='.$no.'">'._T('reply_btn').'</a>]';
 
 		return [$REPLYBTN, $QUOTEBTN];
 	}
