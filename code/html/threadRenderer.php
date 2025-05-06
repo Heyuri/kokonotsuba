@@ -11,24 +11,26 @@ class threadRenderer {
 	private globalHTML $globalHTML;
 	private moduleEngine $moduleEngine;
 	private templateEngine $templateEngine;
-	private mixed $PIO;
 	private IFileIO $FileIO;
 
-	public function __construct(board $board, array $config, globalHTML $globalHTML, moduleEngine $moduleEngine, templateEngine $templateEngine) {
+	private array $quoteLinksFromBoard;
+
+	public function __construct(board $board, array $config, globalHTML $globalHTML, moduleEngine $moduleEngine, templateEngine $templateEngine, array $quoteLinksFromBoard) {
 		$this->board = $board;
 		$this->config = $config;
 		$this->globalHTML = $globalHTML;
 		$this->moduleEngine = $moduleEngine;
 		$this->templateEngine = $templateEngine;
+		$this->quoteLinksFromBoard = $quoteLinksFromBoard;
 
-		$this->PIO = PIOPDO::getInstance();
 		$this->FileIO = PMCLibrary::getFileIOInstance();
 	}
 
 	/**
 	 * Main render function to build full HTML of thread and replies.
 	 */
-	public function render(bool $isReplyMode,
+	public function render(array $threads,
+			bool $isReplyMode,
 			array $thread,
 			array $posts, 
 			int $hiddenReply, 
@@ -57,21 +59,15 @@ class threadRenderer {
 		// number of replies
 		$replyCount = count($posts);
 	
-		// list of thread post op numbers
-		// N + 1 FUCK
-		// $threadNumberList = $this->threadSingleton->mapThreadUidListToPostNumber($thread);
-	
 		// render posts for a thread
 		foreach ($posts as $i => $post) {
-				$thdat .= $this->renderSinglePost(
-						[],
-						$posts,
+				$thdat .= $this->renderSinglePost($posts,
 						$post,
 						$i,
 						$threadMode,
 						$adminMode,
 						$showquotelink,
-						$thread,
+						$threads,
 						$threadIterator,
 						$hiddenReply,
 						$kill_sensor,
@@ -94,7 +90,6 @@ class threadRenderer {
 	* Render an individual post for a thread
 	*/
 	private function renderSinglePost(
-		array $threadNumberList,
 		array $threadPosts,
 		array $post,
 		int $i,
@@ -117,7 +112,10 @@ class threadRenderer {
 		$isReply = $i > 0;
 		$data = $this->preparePostData($post);
 
-		
+		//apply quote and quote link
+		$data['com'] = $this->globalHTML->quote_link($this->quoteLinksFromBoard, $data, $threadPosts[0]['no']);
+		$data['com'] = $this->globalHTML->quote_unkfunc($data['com']);
+
 
 		[$REPLYBTN, $QUOTEBTN] = $this->buildQuoteAndReplyButtons($data['no'], $postOPNumber, $threadMode, $thread_uid, $showquotelink, $crossLink);
 
@@ -128,7 +126,7 @@ class threadRenderer {
 
 		// Navigation
 		if ($threadMode) {
-			$THREADNAV = $this->globalHTML->buildThreadNavButtons($threadNumberList, $threadIterator);
+			$THREADNAV = $this->globalHTML->buildThreadNavButtons($currentPageThreads, $threadIterator);
 		}
 
 		// Admin controls hook
@@ -209,9 +207,6 @@ class threadRenderer {
 		if ($this->config['ALLOW_NONAME'] == 2 && $email) {
 			$now = "<a href=\"mailto:$email\">$now</a>";
 		}
-	
-		$com = $this->globalHTML->quote_link($this->board, $this->PIO, $com);
-		$com = $this->globalHTML->quote_unkfunc($com);
 	
 		// Image setup
 		$imgsrc = '';
