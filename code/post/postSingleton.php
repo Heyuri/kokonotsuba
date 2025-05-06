@@ -250,7 +250,7 @@ class PIOPDO implements IPIO {
 	
 		// Step 1: fetch paginated threads with OP post + status
 		$query = "
-			SELECT t.thread_uid, t.post_op_post_uid, p.status
+			SELECT t.thread_uid, t.post_op_post_uid, t.post_op_number, p.status, p.boardUID
 			FROM {$this->threadTable} t
 			JOIN {$this->tablename} p ON t.post_op_post_uid = p.post_uid
 			WHERE t.boardUID = :boardUID
@@ -292,7 +292,7 @@ class PIOPDO implements IPIO {
 			$allPosts = $postsByThread[$threadUID] ?? [];
 	
 			$totalPosts = count($allPosts);
-			$omittedCount = max(0, $totalPosts - $previewCount);
+			$omittedCount = max(0, $totalPosts - $previewCount - 1);
 	
 			$opPost = array_filter($allPosts, fn($p) => $p['is_op']);
 			$nonOpPosts = array_filter($allPosts, fn($p) => !$p['is_op']);
@@ -624,6 +624,37 @@ class PIOPDO implements IPIO {
 		return $postUID;
 	}
 	
+	public function resolvePostUidsFromArray($board, array $postNumbers): array {
+		if (empty($postNumbers)) {
+			return [];
+		}
+
+		$board_uid = $board->getBoardUid();
+	
+		// Sanitize and deduplicate post numbers
+		$sanitizedNumbers = array_unique(array_map('intval', $postNumbers));
+		$inClause = implode(',', $sanitizedNumbers);
+	
+		$query = "
+			SELECT no, post_uid
+			FROM {$this->tablename}
+			WHERE no IN ($inClause)
+			AND boardUID = :board_uid";
+	
+		$params = [
+			':board_uid' => $board_uid
+		];
+
+		$rows = $this->databaseConnection->fetchAllAsArray($query, $params);
+	
+		// Map post_number (no) => post_uid
+		$resolved = [];
+		foreach ($rows as $row) {
+			$resolved[(int)$row['no']] = (int)$row['post_uid'];
+		}
+	
+		return $resolved;
+	}
 	public function resolvePostNumberFromUID($post_uid) {
 		$query = "SELECT no FROM {$this->tablename} WHERE post_uid = :post_uid";
 		$params = [
