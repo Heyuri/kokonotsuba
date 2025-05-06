@@ -118,16 +118,31 @@ class boardIO {
 	}
 
 	// Get board objects by UID array (cached per UID combination)
-	public function getBoardsFromUIDs($uidList) {
-		if (!is_array($uidList)) $uidList = [$uidList];
+	public function getBoardsFromUIDs(array $uidList): array {
+		// Ensure $uidList is an array
+		if (!is_array($uidList)) {
+			$uidList = [$uidList];
+		}
+	
+		// Sanitize each value to be an integer
+		$uidList = array_map('intval', $uidList);
+	
+		// Create a cache key based on the method and UID list
 		$cacheKey = __METHOD__ . ':' . implode(',', $uidList);
-
+	
 		return $this->cacheMethodResult($cacheKey, function () use ($uidList) {
-			$placeholders = implode(', ', array_fill(0, count($uidList), '?'));
-			$query = "SELECT * FROM {$this->tablename} WHERE board_uid IN ({$placeholders})";
-			return $this->databaseConnection->fetchAllAsClass($query, $uidList, 'board');
+			// Create a string of UIDs for the IN clause, separated by commas
+			$uids = implode(', ', $uidList);
+	
+			// Prepare the query with the sanitized UIDs
+			$query = "SELECT * FROM {$this->tablename} WHERE board_uid IN ($uids)";
+	
+			// Fetch the results using the constructed query
+			return $this->databaseConnection->fetchAllAsClass($query, [], 'board');
 		});
 	}
+	
+	
 
 	// Add a new board to the database
 	public function addNewBoard($board_identifier, $board_title, $board_sub_title, $listed, $config_name, $storage_directory_name) {
