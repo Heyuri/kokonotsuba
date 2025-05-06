@@ -21,7 +21,11 @@ class mod_blotter extends moduleHelper {
 	}
 
 	private function getBlotterFileData() {
-		$data = [];
+		static $data = [];
+		if (!empty($data)){
+			return $data;
+		}
+
 		if (file_exists($this->BLOTTER_PATH)) {
 			$lines = file($this->BLOTTER_PATH, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 			foreach ($lines as $line) {
@@ -120,12 +124,12 @@ class mod_blotter extends moduleHelper {
 	}
 
 	public function autoHookBlotterPreview(&$html) {
+		static $res;
+		if(!is_null($res)){
+			$html .= $res;
+			return;
+		}
 		$blotterData = $this->getBlotterFileData();
-		
-		usort($blotterData, function($a, $b) {
-			return strtotime($b['date']) - strtotime($a['date']);
-		});
-
 		$previewEntries = [];
 
 		foreach ($blotterData as $i => $entry) {
@@ -141,8 +145,8 @@ class mod_blotter extends moduleHelper {
 				'{$ENTRIES}' => $previewEntries,
 				'{$EMPTY}' => empty($previewEntries),
 		];
-
-		$html .= $this->adminPageRenderer->ParseBlock('BLOTTER_PREVIEW', $templateValues);
+		$res = $this->adminPageRenderer->ParseBlock('BLOTTER_PREVIEW', $templateValues);
+		$html .= $res;
 	}
 
 
