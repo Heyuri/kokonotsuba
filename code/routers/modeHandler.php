@@ -222,7 +222,8 @@ class modeHandler {
 			$defaultRoute = new defaultRoute(
 				$this->config, 
 				$this->board, 
-				$this->actionLogger, 
+				$this->threadSingleton,
+				$this->PIO, 
 				$this->globalHTML
 			);
 			$defaultRoute->handleDefault();
