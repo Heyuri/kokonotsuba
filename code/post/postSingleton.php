@@ -275,7 +275,7 @@ class PIOPDO implements IPIO {
 			SELECT *
 			FROM {$this->tablename}
 			WHERE thread_uid IN ($inClause)
-			ORDER BY post_uid ASC
+			ORDER BY no ASC
 		";
 		$postRows = $this->databaseConnection->fetchAllAsArray($postQuery, $threadUIDs);
 	
