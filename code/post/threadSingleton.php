@@ -376,7 +376,7 @@ class threadSingleton {
 			SELECT *
 			FROM {$this->postTable}
 			WHERE thread_uid IN ($inClause)
-			ORDER BY thread_uid, post_position ASC
+			ORDER BY post_uid ASC
 		";
 
 		$postRows = $this->databaseConnection->fetchAllAsArray($postQuery, $threadUIDs);
