@@ -156,7 +156,7 @@ class mod_movethread extends moduleHelper {
 			// lock original thread and duplicate contents to destination board
 			$newThreadUid = $this->copyThreadToBoard($threadUid, $destinationBoard);
 
-			$newThread = $threadSingleton->getThreadByUID($newThreadUid);
+			$newThread = $threadSingleton->getThreadByUID($newThreadUid)['thread'];
 
 			// leave shadow post
 			$this->leavePostInShadowThread($thread, $hostBoard, $newThread, $destinationBoard);
@@ -215,7 +215,7 @@ class mod_movethread extends moduleHelper {
 			}
 	
 			// Retrieve thread and validate
-			$thread = $threadSingleton->getThreadByUID($thread_uid);
+			$thread = $threadSingleton->getThreadByUID($thread_uid)['thread'];
 			if (!$thread) {
 				$globalHTML->error("Thread not found");
 			}
@@ -271,7 +271,7 @@ class mod_movethread extends moduleHelper {
 		if (!$thread_uid) {
 			$globalHTML->error("No thread uid selected");
 		}
-		$thread = $threadSingleton->getThreadByUID($thread_uid);
+		$thread = $threadSingleton->getThreadByUID($thread_uid)['thread'];
 		$threadNumber = $threadSingleton->resolveThreadNumberFromUID($thread_uid);
 		$threadParentBoard = $boardIO->getBoardByUID($thread['boardUID']);
 
