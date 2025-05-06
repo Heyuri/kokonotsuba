@@ -65,7 +65,7 @@ class postRedirectIO {
         $threadSingleton = threadSingleton::getInstance();
         $boardIO = boardIO::getInstance();
 
-        $thread = $threadSingleton->getThreadByUID($thread_uid);
+        $thread = $threadSingleton->getThreadByUID($thread_uid)['thread'];
 
         $threadBoard = $boardIO->getBoardByUID($thread['boardUID']);
         $threadBoardConfig = $threadBoard->loadBoardConfig();
@@ -93,7 +93,7 @@ class postRedirectIO {
         $newBoardURL = $newBoardFromRedirect->getBoardURL();
 
         $thread_uid = $redirect->getThreadUID();
-        $redirectThread = $threadSingleton->getThreadByUID($thread_uid);
+        $redirectThread = $threadSingleton->getThreadByUID($thread_uid)['thread'];
 
         $redirectNumber = $redirectThread['post_op_number'];
 
