@@ -37,12 +37,15 @@ class mod_anigif extends moduleHelper {
 	}
 
 	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
-		$PIO = PIOPDO::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 
 		$fh = new FlagHelper($post['status']);
-		if($FileIO->imageExists($post['tim'].$post['ext'], $this->board)
-		&& $fh->value('agif')) {
+		if($fh->value('agif')) {
+			// check if the file exists in here so time isn't wasted with checking if the file exists
+			if(!$FileIO->imageExists($post['tim'].$post['ext'], $this->board)) {
+				return;
+			}
+			
 			$imgURL = $FileIO->getImageURL($post['tim'].$post['ext'], $this->board);
 			$arrLabels['{$IMG_SRC}'] = preg_replace('/<img src=".*"/U','<img src="'.$imgURL.'"',$arrLabels['{$IMG_SRC}']);
 			$arrLabels['{$IMG_BAR}'].= '<span class="animatedGIFLabel imageOptions">[Animated GIF]</span>';
