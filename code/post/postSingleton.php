@@ -241,6 +241,80 @@ class PIOPDO implements IPIO {
 	    return $ip !== false ? $ip : null;
 	}
 
+	public function getThreadPreviewsFromBoard(board $board, int $previewCount, int $amount = 0, int $offset = 0): array {
+		$boardUID = $board->getBoardUID();
+	
+		// Sanitize LIMIT and OFFSET values
+		$amount = max(0, $amount);
+		$offset = max(0, $offset);
+	
+		// Step 1: fetch paginated threads with OP post + status
+		$query = "
+			SELECT t.thread_uid, t.post_op_post_uid, t.post_op_number, p.status, p.boardUID
+			FROM {$this->threadTable} t
+			JOIN {$this->tablename} p ON t.post_op_post_uid = p.post_uid
+			WHERE t.boardUID = :boardUID
+			ORDER BY t.last_bump_time DESC
+		";
+
+		if($amount) {
+			$query .= " LIMIT $amount OFFSET $offset";
+		}
+	
+		$threads = $this->databaseConnection->fetchAllAsArray($query, [
+			':boardUID' => $boardUID
+		]);
+	
+		if (empty($threads)) return [];
+	
+		$threadUIDs = array_column($threads, 'thread_uid');
+	
+		// Step 2: fetch all posts for these threads
+		$inClause = implode(',', array_fill(0, count($threadUIDs), '?'));
+		$postQuery = "
+			SELECT *
+			FROM {$this->tablename}
+			WHERE thread_uid IN ($inClause)
+			ORDER BY thread_uid, post_position ASC
+		";
+		$postRows = $this->databaseConnection->fetchAllAsArray($postQuery, $threadUIDs);
+	
+		// Step 3: group posts by thread_uid
+		$postsByThread = [];
+		foreach ($postRows as $post) {
+			$postsByThread[$post['thread_uid']][] = $post;
+		}
+	
+		// Step 4: assemble results
+		$result = [];
+		foreach ($threads as $thread) {
+			$threadUID = $thread['thread_uid'];
+			$allPosts = $postsByThread[$threadUID] ?? [];
+	
+			$totalPosts = count($allPosts);
+			$omittedCount = max(0, $totalPosts - $previewCount - 1);
+	
+			$opPost = array_filter($allPosts, fn($p) => $p['is_op']);
+			$nonOpPosts = array_filter($allPosts, fn($p) => !$p['is_op']);
+			$previewPosts = array_merge(
+				$opPost,
+				array_slice($nonOpPosts, max(0, count($nonOpPosts) - $previewCount))
+			);
+	
+			$result[] = [
+				'thread' => $thread,
+				'post_uids' => array_column($previewPosts, 'post_uid'),
+				'posts' => $previewPosts,
+				'hidden_reply_count' => $omittedCount,
+				'thread_uid' => $threadUID
+			];
+		}
+	
+		return $result;
+	}
+	
+	
+	
 
 	
 	/* Get number of posts */
@@ -253,7 +327,6 @@ class PIOPDO implements IPIO {
 			$query = "SELECT COUNT(post_uid) FROM {$this->tablename} WHERE boardUID = :board_uid";
 			return $this->databaseConnection->fetchColumn($query, [':board_uid' => $board->getBoardUID()]);
 		}
-		return 0;
 	}
 		/* Get number of posts */
 	public function postCount($filters = []) {
@@ -551,6 +624,37 @@ class PIOPDO implements IPIO {
 		return $postUID;
 	}
 	
+	public function resolvePostUidsFromArray($board, array $postNumbers): array {
+		if (empty($postNumbers)) {
+			return [];
+		}
+
+		$board_uid = $board->getBoardUid();
+	
+		// Sanitize and deduplicate post numbers
+		$sanitizedNumbers = array_unique(array_map('intval', $postNumbers));
+		$inClause = implode(',', $sanitizedNumbers);
+	
+		$query = "
+			SELECT no, post_uid
+			FROM {$this->tablename}
+			WHERE no IN ($inClause)
+			AND boardUID = :board_uid";
+	
+		$params = [
+			':board_uid' => $board_uid
+		];
+
+		$rows = $this->databaseConnection->fetchAllAsArray($query, $params);
+	
+		// Map post_number (no) => post_uid
+		$resolved = [];
+		foreach ($rows as $row) {
+			$resolved[(int)$row['no']] = (int)$row['post_uid'];
+		}
+	
+		return $resolved;
+	}
 	public function resolvePostNumberFromUID($post_uid) {
 		$query = "SELECT no FROM {$this->tablename} WHERE post_uid = :post_uid";
 		$params = [

@@ -73,13 +73,17 @@ class overboard {
 		
 		$single_page = false;
 		
-		$threads = $threadSingleton->getFilteredThreads($limit, $offset, $filters);
-		$threadList = array_column($threads, 'thread_uid');
+		$previewCount = $this->config['RE_DEF'];
+
+		$threads = $threadSingleton->getFilteredThreads($previewCount, $limit, $offset, $filters);
+		
+		
 		$numberThreadsFiltered = $threadSingleton->getFilteredThreadCount($filters);
 		
 		if (!$threads) return '<div class="bbls"> <b class="error"> - No threads - </b> </div>';
 		
 		$boardMap = $this->loadBoardsForThreads($threads);
+		$quoteLinksByBoardUID = $this->loadQuoteLinksForThreads($boardMap);
 		$postsByBoardAndThread = $this->loadPostsForThreads($threads);
 
 		foreach ($threads as $iterator => $thread) {
@@ -89,8 +93,9 @@ class overboard {
 				$pagenum,
 				$single_page,
 				$boardMap,
+				$quoteLinksByBoardUID,
 				$postsByBoardAndThread,
-				$threadList
+				$threads
 			);
 		
 			if (!empty($threadHTML)) {
@@ -123,24 +128,42 @@ class overboard {
 		);
 	}
 
-	private function loadBoardsForThreads($threads) {
+	private function loadBoardsForThreads(array $threads): array {
 		$boardIO = boardIO::getInstance();
-		$boardUIDs = array_column($threads, 'boardUID');
+	
+		// Extract thread.boardUID safely
+		$boardUIDs = array_map(fn($t) => $t['thread']['boardUID'] ?? null, $threads);
+
+		// Remove nulls and duplicates
+		$boardUIDs = array_unique(array_filter($boardUIDs));
+
+		// Fetch boards
 		$boards = $boardIO->getBoardsFromUIDs($boardUIDs);
-		
-		$boardMap = array();
+	
+		// Map boards by UID
+		$boardMap = [];
 		foreach ($boards as $board) {
 			$boardMap[$board->getBoardUID()] = $board;
 		}
+	
 		return $boardMap;
 	}
 
+	private function loadQuoteLinksForThreads(array $boardMap): array {
+		$quoteLinksByBoardUID = [];
+		foreach ($boardMap as $boardUID => $board) {
+			$quoteLinksByBoardUID[$boardUID] = getQuoteLinksFromBoard($board);
+		}
+
+		return $quoteLinksByBoardUID;
+	}
+	
 	private function loadPostsForThreads($threads) {
 		$PIO = PIOPDO::getInstance();
 		$tIDsByBoard = array();
 		
 		foreach ($threads as $thread) {
-			$tIDsByBoard[$thread['boardUID']][] = $thread['thread_uid'];
+			$tIDsByBoard[$thread['thread']['boardUID']][] = $thread['thread_uid'];
 		}
 		
 		$allPosts = $PIO->fetchPostsFromBoardsAndThreads($tIDsByBoard);
@@ -160,10 +183,11 @@ class overboard {
 		mixed $pagenum, 
 		bool $single_page, 
 		array $boardMap, 
+		array $quoteLinksByBoardUID,
 		array $postsByBoardAndThread, 
-		array $threadList
+		array $threads
 	): string {
-		$boardUID = $thread['boardUID'];
+		$boardUID = $thread['thread']['boardUID'];
 		$threadID = $thread['thread_uid'];
 	
 		if (!isset($boardMap[$boardUID]) || !isset($postsByBoardAndThread[$boardUID][$threadID])) {
@@ -172,9 +196,10 @@ class overboard {
 	
 		$board = $boardMap[$boardUID];
 		$config = $board->loadBoardConfig();
-		$posts = $this->rekeyPostsByUID($postsByBoardAndThread[$boardUID][$threadID]);
+		$posts = $thread['posts'];
+		$threadToRender = $thread['thread'];
 	
-		$threadRenderer = $this->createThreadRenderer($board, $config, $this->templateEngine);
+		$threadRenderer = $this->createThreadRenderer($board, $config, $this->templateEngine, $quoteLinksByBoardUID);
 	
 		[$overboardThreadTitle, $crossLink] = $this->buildThreadTitleAndLink($board);
 	
@@ -184,15 +209,14 @@ class overboard {
 		$kill_sensor = false;
 		$arr_kill = array();
 	
-		[$visiblePostUids, $visiblePosts, $hiddenReply] = $this->sliceVisiblePosts($posts, $config);
+		$hiddenReply = $thread['hidden_reply_count'];
 	
-		return $threadRenderer->render(
-			$threadList,
-			$threadList,
-			$visiblePostUids,
-			$visiblePosts,
+		return $threadRenderer->render($threads,
+			false,
+			$threadToRender,
+			$posts,
 			$hiddenReply,
-			0,
+			$threadID,
 			$arr_kill,
 			$kill_sensor,
 			true,
@@ -203,16 +227,15 @@ class overboard {
 			$templateValues
 		);
 	}
-
-	private function rekeyPostsByUID(array $posts): array {
-		return array_column($posts, null, 'post_uid');
-	}
 	
-	private function createThreadRenderer(board $board, array $config, templateEngine $templateEngine): threadRenderer {
+	private function createThreadRenderer(board $board, array $config, templateEngine $templateEngine, array $quoteLinksByBoardUID): threadRenderer {
 		$globalHTML = new globalHTML($board);
 		$moduleEngine = new moduleEngine($board);
-	
-		return new threadRenderer($board, $config, $globalHTML, $moduleEngine, $templateEngine);
+		
+		$boardUID = $board->getBoardUID();
+		$quoteLinksForBoard = $quoteLinksByBoardUID[$boardUID];
+
+		return new threadRenderer($board, $config, $globalHTML, $moduleEngine, $templateEngine, $quoteLinksForBoard);
 	}
 	
 	private function buildThreadTitleAndLink(board $board): array {
@@ -235,32 +258,6 @@ class overboard {
 			'{$BOARD_UID}' => $board->getBoardUID(),
 		];
 	}
-	
-	private function sliceVisiblePosts(array $posts, array $config): array {
-		$postUIDs = array_column($posts, 'post_uid');
-		$treeCount = count($postUIDs);
-	
-		$RES_start = $treeCount - $config['RE_DEF'];
-		if ($RES_start < 1) {
-			$RES_start = 1;
-		}
-	
-		$RES_amount = $config['RE_DEF'];
-		$hiddenReply = $RES_start - 1;
-	
-		$visiblePostUids = array_slice($postUIDs, $RES_start, $RES_amount);
-		array_unshift($visiblePostUids, $postUIDs[0]); // Always include OP
-	
-		$visiblePosts = array();
-		foreach ($visiblePostUids as $post_uid) {
-			if (isset($posts[$post_uid])) {
-				$visiblePosts[$post_uid] = $posts[$post_uid];
-			}
-		}
-		$visiblePosts = array_values($visiblePosts);
-	
-		return [$visiblePostUids, $visiblePosts, $hiddenReply];
-	}	
 	
 	
 }

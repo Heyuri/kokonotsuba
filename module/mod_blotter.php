@@ -21,7 +21,11 @@ class mod_blotter extends moduleHelper {
 	}
 
 	private function getBlotterFileData() {
-		$data = [];
+		static $data = [];
+		if (!empty($data)){
+			return $data;
+		}
+
 		if (file_exists($this->BLOTTER_PATH)) {
 			$lines = file($this->BLOTTER_PATH, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 			foreach ($lines as $line) {
@@ -120,6 +124,11 @@ class mod_blotter extends moduleHelper {
 	}
 
 	public function autoHookBlotterPreview(&$html) {
+		static $res;
+		if(!is_null($res)){
+			$html .= $res;
+			return;
+		}
 		$blotterData = $this->getBlotterFileData();
 		$previewEntries = [];
 
@@ -136,17 +145,16 @@ class mod_blotter extends moduleHelper {
 				'{$ENTRIES}' => $previewEntries,
 				'{$EMPTY}' => empty($previewEntries),
 		];
-
-		$html .= $this->adminPageRenderer->ParseBlock('BLOTTER_PREVIEW', $templateValues);
+		$res = $this->adminPageRenderer->ParseBlock('BLOTTER_PREVIEW', $templateValues);
+		$html .= $res;
 	}
 
 
 	public function ModulePage() {
-		$globalHTML = new globalHTML($this->board);
 		$staffSession = new staffAccountFromSession;
 		
 		$roleLevel = $staffSession->getRoleLevel();
-		$returnButton = $globalHTML->generateAdminLinkButtons();
+
 		
 		//If a regular user, draw blotter page
 		if ($roleLevel < $this->config['AuthLevels']['CAN_EDIT_BLOTTER']) {

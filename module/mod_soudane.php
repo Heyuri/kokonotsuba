@@ -49,10 +49,35 @@ class mod_soudane extends moduleHelper {
 	}
 
 	private function _loadVotes($post_uid, $type) {
+		// Determine the file path based on the vote type
 		$dir = $type === 'yeah' ? $this->SOUDANE_DIR_YEAH : $this->SOUDANE_DIR_NOPE;
-		$log = @file($dir . "$post_uid.dat");
-		return is_array($log) ? array_map('rtrim', $log) : [];
-	}
+		$filePath = $dir . "$post_uid.dat";
+	
+		// Check if the file exists and is readable
+		if (!file_exists($filePath)) {
+			// File doesn't exist, return an empty array
+			return [];
+		}
+	
+		if (!is_readable($filePath)) {
+			// File exists but is not readable, return an empty array
+			return [];
+		}
+	
+		// Try reading the file contents
+		try {
+			$log = file($filePath);
+			if (is_array($log)) {
+				return array_map('rtrim', $log); // Trim each line of the file
+			} else {
+				// If file is not an array, return empty array
+				return [];
+			}
+		} catch (Exception $e) {
+			// Handle any unexpected errors (e.g., permissions issues, filesystem errors)
+			return [];
+		}
+	}	
 
 	private function _getVoteButtonText($type, $count) {
 		// If no votes exist, display "+" or "-" regardless of settings

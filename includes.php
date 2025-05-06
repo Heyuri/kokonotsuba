@@ -102,6 +102,12 @@ require __DIR__.'/code/post/helper/thumbnailCreator.php';
 require __DIR__.'/code/post/helper/tripcodeProcessor.php';
 require __DIR__.'/code/post/helper/webhookDispatcher.php';
 
+/* quote link */
+require __DIR__.'/code/quote_link/quoteLinkSingleton.php';
+require __DIR__.'/code/quote_link/quoteLink.php';
+require __DIR__.'/code/quote_link/quoteLinkFunctions.php';
+
+
 /* Routers */
 require __DIR__.'/code/routers/adminPageHandler.php';
 require __DIR__.'/code/routers/modeHandler.php';

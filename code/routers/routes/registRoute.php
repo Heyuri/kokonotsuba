@@ -109,7 +109,7 @@ class registRoute {
 			&$postData['status']
 		]);
 
-		// Add post to storage
+		// Add post to database
 		$this->PIO->addPost(
 			$this->board, $computedPostInfo['no'], $postData['thread_uid'], $computedPostInfo['post_position'], $computedPostInfo['is_op'],  $fileMeta['md5'],
 			$postData['category'], $fileMeta['fileTimeInMilliseconds'], $fileMeta['fileName'], $fileMeta['ext'],
@@ -136,17 +136,19 @@ class registRoute {
 			$fileMeta['uploadController']->savePostFileToBoard();
 		}
 	
+		// Handle quote links
+		$this->handlePostQuoteLink($computedPostInfo['no'], $postData['comment']);
+
 		// Rebuild board
 		$threads = $this->threadSingleton->getThreadListFromBoard($this->board);
-		$threadsCount = count($threads);
-
-		$page_end = $postData['thread_uid']
-		? $this->getPageOfThread($postData['thread_uid'], $threads)
-		: max(0, (int) ceil($threadsCount / $this->config['PAGE_DEF']));
 
 		// Rebuild pages from 0 to the one the thread is on
-		$this->board->rebuildBoard(0, -1, false, $page_end);
-	
+		if($computedPostInfo['is_op']) {
+			$this->board->rebuildBoard();
+		} else {
+			$pageToRebuild = $this->getPageOfThread($postData['thread_uid'], $threads);
+			$this->board->rebuildBoardPage($pageToRebuild);
+		}
 		// Final redirect
 		redirect($redirect, 0);
 	}
@@ -161,8 +163,7 @@ class registRoute {
 		}
 	
 		return -1; // Thread not found
-	}	
-	
+	}
 
 	private function gatherPostInputData(): array {
 		$name = htmlspecialchars($_POST['name'] ?? '');
@@ -294,11 +295,15 @@ class registRoute {
 		$redirect = $this->config['PHP_SELF2'] . '?' . $timeInMilliseconds;
 	
 		if (strstr($email, 'noko') && !strstr($email, 'nonoko')) {
-			$redirect = $this->config['PHP_SELF'] . '?res=' . ($resno ?: $no);
+			$redirectResno = $resno ?: $no;
+			$redirectReplyNumber = 0;
 			if (!strstr($email, 'dump')) {
-				$redirect .= "#p" . $this->board->getBoardUID() . "_". $no;
+				$redirectReplyNumber = $no;
 			}
 		}
+
+		$redirect = $this->board->getBoardThreadURL($redirectResno, $redirectReplyNumber);
+
 		$email = preg_replace('/^(no)+ko\d*$/i', '', $email);
 		return $redirect;
 	}
@@ -325,6 +330,37 @@ class registRoute {
 			'dest' => $file->getTemporaryFileName(),
 			'timeInMilliseconds' => $postData['timeInMilliseconds']
 		];
+	}
+	
+	// Processes quote links (e.g., >>123 or >>No.123) in a post's comment
+	private function handlePostQuoteLink(int $postNumber, string $postComment) {
+		// Match all quote patterns like ">>123" or ">>No.123" in the comment
+		if(preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $postComment, $matches, PREG_SET_ORDER)) {
+			// Resolve the UID of the current post from its number
+			$postUid = $this->PIO->resolvePostUidFromPostNumber($this->board, $postNumber);
+	
+			$uniqueMatches = [];
+	
+			// Filter out duplicate matches
+			foreach ($matches as $match) {
+				if (!in_array($match, $uniqueMatches)) {
+					$uniqueMatches[] = $match;
+				}
+			}
+	
+			$quoteLinkedPostNumbers = [];
+	
+			// Extract just the numeric post number from each quote match
+			foreach ($uniqueMatches as $match) {
+				$quoteLinkedPostNumbers[] = $match[2]; // This is the quoted post number
+			}
+	
+			// Resolve the UIDs of all quoted post numbers
+			$quoteLinkedPostUids = $this->PIO->resolvePostUidsFromArray($this->board, $quoteLinkedPostNumbers);
+	
+			// Store quote link relationships in the database
+			createQuoteLinksFromArray($this->board, $postUid, $quoteLinkedPostUids);
+		}
 	}
 	
 

@@ -48,7 +48,6 @@ class globalHTML {
 
 	/* 輸出表頭 | document head */
 	public function head(&$dat, $resno=0){
-		$PIO = PIOPDO::getInstance();
 		$html = '';
 		
 		$pte_vals = array('{$RESTO}'=>$resno?$resno:'', '{$IS_THREAD}'=>boolval($resno));
@@ -162,61 +161,96 @@ class globalHTML {
 		return $comment;
 	}
 
-	/* quote links */
-	public function quote_link($board, $PIO, $comment){
-		if($this->config['USE_QUOTESYSTEM']){
-			if(preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $comment, $matches, PREG_SET_ORDER)){
-				$matches_unique = array();
-				foreach($matches as $val){ if(!in_array($val, $matches_unique)) array_push($matches_unique, $val); }
-				foreach($matches_unique as $val){
-					$postNum = $PIO->resolvePostUidFromPostNumber($board, $val[2]);
-					$post = $PIO->fetchPosts($postNum)[0] ?? false;
-
-					if(!$post) continue;
-					
-					$postResno = $this->threadSingleton->resolveThreadNumberFromUID($post['thread_uid']);
-					if($post){
-						$comment = str_replace($val[0], '<a href="'.$this->config['PHP_SELF'].'?res='.($postResno?$postResno:$post['no']).'#p'.$post['boardUID'].'_'.$post['no'].'" class="quotelink">'.$val[0].'</a>', $comment);
-					} else {
-						$comment = str_replace($val[0], '<a href="javascript:void(0);" class="quotelink"><del>'.$val[0].'</del></a>', $comment);
-					}
-				}
+	/**
+	 * Replace quote links in a post comment with anchor tags.
+	 * If the quoted post exists (based on quote links), it links to that post.
+	 * If not, the quote is displayed as a deleted reference using <del>.
+	 */
+	public function quote_link(array $quoteLinksFromBoard, array $post, int $threadNumber): string {
+		if (
+			empty($this->config['USE_QUOTESYSTEM']) ||
+			empty($post['com']) ||
+			empty($post['post_uid'])
+		) {
+			return $post['com'] ?? '';
+		}
+	
+		$comment = $post['com'];
+		$postUid = $post['post_uid'];
+	
+		// Safely get quoteLink entries for this specific post
+		$quoteLinkEntries = $quoteLinksFromBoard[$postUid] ?? [];
+	
+		// Index target post "no" values for O(1) lookup
+		$validTargetPostNumbers = [];
+		foreach ($quoteLinkEntries as $entry) {
+			if (
+				isset($entry['target_post']['no']) &&
+				is_numeric($entry['target_post']['no'])
+			) {
+				$validTargetPostNumbers[(int)$entry['target_post']['no']] = true;
 			}
 		}
-		return $comment;
+	
+		// Match all quote-like strings in the comment
+		if (!preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $comment, $matches, PREG_SET_ORDER)) {
+			return $comment;
+		}
+	
+		// Build all replacements in one pass
+		$replacements = [];
+		foreach ($matches as $match) {
+			$fullMatch = $match[0];      // Full match string, e.g., ">>123"
+			$postNumber = (int)$match[2]; // Extracted number only
+	
+			// Avoid re-processing duplicates
+			if (isset($replacements[$fullMatch])) {
+				continue;
+			}
+	
+			if (isset($validTargetPostNumbers[$postNumber])) {
+				$url = htmlspecialchars($this->board->getBoardThreadURL($threadNumber, $postNumber));
+				$replacements[$fullMatch] = '<a href="' . $url . '" class="quotelink">' . $fullMatch . '</a>';
+			} else {
+				// Post was not found in valid targets — strike it out
+				$replacements[$fullMatch] = '<a href="javascript:void(0);" class="quotelink"><del>' . $fullMatch . '</del></a>';
+			}
+		}
+	
+		// Do a single replacement pass using strtr
+		return strtr($comment, $replacements);
 	}
 	
-	public function buildThreadNavButtons($threadNumberList, $threadInnerIterator) {		
+	
+	
+	public function buildThreadNavButtons(array $threadList, int $threadInnerIterator): string {
+		if (!$threadList || !isset($threadList[$threadInnerIterator]['thread'])) return '';
+	
+		$threadsPerPage = $this->config['PAGE_DEF'] ?? 10;
+		$offset = intdiv($threadInnerIterator, $threadsPerPage) * $threadsPerPage;
+	
+		// Slice the list to only the current page range
+		$threadList = array_slice($threadList, $offset, $threadsPerPage);
+		$currentIndex = $threadInnerIterator % $threadsPerPage;
+	
 		$upArrow = '';
 		$downArrow = '';
 		$postFormButton = '<a title="Go to post form" href="#postform">&#9632;</a>';
-		
-		if(!$threadNumberList) return;
-		
-		// Determine if thread is at the 'top'
-		if ($threadInnerIterator == 0) {
-			$upArrow = ''; // No thread above the current thread
-		} else {
-			$aboveThreadID = isset($threadNumberList[$threadInnerIterator - 1]) ? $threadNumberList[$threadInnerIterator - 1] : '';
-			if ($aboveThreadID) {
-				$upArrow = '<a title="Go to above thread" href="#t'.$aboveThreadID['boardUID'].'_'.$aboveThreadID['post_op_number'].'">&#9650;</a>';
-			}
+	
+		// Up arrow (previous thread)
+		if ($currentIndex > 0 && isset($threadList[$currentIndex - 1]['thread'])) {
+			$aboveThread = $threadList[$currentIndex - 1]['thread'];
+			$upArrow = '<a title="Go to above thread" href="#t' . htmlspecialchars($aboveThread['boardUID']) . '_' . htmlspecialchars($aboveThread['post_op_number']) . '">&#9650;</a>';
 		}
-		
-		// Determine if thread is at the 'bottom'
-		if ($threadInnerIterator >= count($threadNumberList) - 1) {
-			$downArrow = ''; // No more threads below this one
-		} else {
-				$belowThreadID = isset($threadNumberList[$threadInnerIterator + 1]) ? $threadNumberList[$threadInnerIterator + 1] : '';
-			if ($belowThreadID) {
-				$downArrow = '<a title="Go to below thread" href="#t'.$belowThreadID['boardUID'].'_'.$belowThreadID['post_op_number'].'">&#9660;</a>';
-			}
+	
+		// Down arrow (next thread)
+		if ($currentIndex < count($threadList) - 1 && isset($threadList[$currentIndex + 1]['thread'])) {
+			$belowThread = $threadList[$currentIndex + 1]['thread'];
+			$downArrow = '<a title="Go to below thread" href="#t' . htmlspecialchars($belowThread['boardUID']) . '_' . htmlspecialchars($belowThread['post_op_number']) . '">&#9660;</a>';
 		}
-		
-		$THREADNAV = $postFormButton.$upArrow.$downArrow;
-		
-		return $THREADNAV;
-	}
+	
+		return $postFormButton . $upArrow . $downArrow;
+	}	
 	
 	/* 取得完整的網址 */
 	public function fullURL(){
@@ -310,7 +344,6 @@ class globalHTML {
 
 	public function drawPushPostForm(&$dat, $pushPostCharacterLimit,  $url) {
 		$PIO = PIOPDO::getInstance();
-		$boardIO = boardIO::getInstance();
 
 		$post_uid = $_GET['post_uid'] ?? null;
 		if(!$post_uid) $this->error("No post uid selected");
@@ -646,126 +679,7 @@ class globalHTML {
 	public function arrangeThread(board $board, array $config, LoggerInjector $PIO, array $threads, array $tree, mixed $tree_cut, array $posts, 
 									int $hiddenReply, string $resno, mixed $arr_kill,  bool $kill_sensor, bool $showquotelink=true, 
 									bool $adminMode=false, int $threadIterator = 0, string $overboardBoardTitleHTML = '', string $crossLink = '') {
-		$resno = isset($resno) && $resno ? $resno : 0;
-		$FileIO = PMCLibrary::getFileIOInstance();
-	
-		$thdat = ''; // Discuss serial output codes
-		$posts_count = count($posts); // Number of cycles
-		$thread_uid = $posts[0]['thread_uid'];
-		$postOPNumber = $posts[0]['no'];
-		$replyCount = $this->threadSingleton->getPostCountFromThread($thread_uid);
-		$imageURL = '';
-		
-		if(gettype($tree_cut) == 'array') $tree_cut = array_flip($tree_cut); // array_flip + isset Search Law
-		if(gettype($tree) == 'array') $tree_clone = array_flip($tree);
-		// $i = 0 (first article), $i = 1~n (response)
-		for($i = 0; $i < $posts_count; $i++){
-			$imgsrc = $img_thumb = $imgwh_bar = '';
-			$IMG_BAR = $REPLYBTN = $QUOTEBTN = $BACKLINKS = $POSTFORM_EXTRA = $WARN_OLD = $WARN_BEKILL = $WARN_ENDREPLY = $WARN_HIDEPOST = $THREADNAV = '';
-			extract($posts[$i]); // Take out the thread content setting variable
-			$isReply = $i === 0 ? false : true;
-		
-			// Set the field value
-			if($config['CLEAR_SAGE']) $email = preg_replace('/^sage( *)/i', '', trim($email)); // Clear the "sage" keyword from the e-mail
-			if($config['ALLOW_NONAME']==2){ // Forced beheading
-				if($email) $now = "<a href=\"mailto:$email\">$now</a>";
-			}else{
-				if($email) $name = "<a href=\"mailto:$email\">$name</a>";
-			}
-	
-			$com = $this->quote_link($board, $PIO, $com);
-			$com = $this->quote_unkfunc($com);
-			
-		// Mark threads that hit age limit (this replaces the old system for marking old threads)
-			if (!$i && $config['MAX_AGE_TIME'] && $_SERVER['REQUEST_TIME'] - $time > ($config['MAX_AGE_TIME'] * 60 * 60)) $com .= "<p class='markedDeletion'><span class='warning'>"._T('warn_oldthread')."</span></p>";
-			
-			// Configure attachment display
-			if ($ext) {
-				if(!$fname) $fname = $tim;
-				$truncated = (strlen($fname)>40 ? substr($fname,0,40).'(&hellip;)' : $fname);
-				if ($fname=='SPOILERS') {
-					$truncated=$fname;
-				} else {
-					$truncated.=$ext;
-					$fname.=$ext;
-				}
-	
-	 			$fnameJS = str_replace('&#039;', '\&#039;', $fname);
-	 			$truncatedJS = str_replace('&#039;', '\&#039;', $truncated);
-				$imageURL = $FileIO->getImageURL($tim.$ext, $board); // image URL
-				$thumbName = $FileIO->resolveThumbName($tim, $board); // thumb Name
-
-				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$config['STATIC_URL'].'image/nothumb.gif" class="postimg" alt="'.$imgsize.'"></a>'; // Default display style (when no preview image)
-				if($tw && $th){
-					if ($thumbName != false){ // There is a preview image
-						$thumbURL = $FileIO->getImageURL($thumbName, $board); // thumb URL
-						$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$thumbURL.'" width="'.$tw.'" height="'.$th.'" class="postimg" alt="'.$imgsize.'" title="Click to show full image"></a>';
-					}
-				} else if ($ext === ".swf") {
-					$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$config['SWF_THUMB'].'" class="postimg" alt="SWF Embed"></a>'; // Default display style (when no preview 	image)
-				} else $imgsrc = '';
-				if($config['SHOW_IMGWH'] && ($imgw || $imgh)) $imgwh_bar = ', '.$imgw.'x'.$imgh; // Displays the original length and width dimensions of the attached image file
-				$IMG_BAR = _T('img_filename').'<a href="'.$imageURL.'" target="_blank" rel="nofollow" onmouseover="this.textContent=\''.$fnameJS.'\';" onmouseout="this.textContent=\''.$truncatedJS.'\'"> '.$truncated.'</a> <a href="'.$imageURL.'" title="'.$fname.'" download="'.$fname.'"><div class="download"></div></a> <span class="fileProperties">('.$imgsize.$imgwh_bar.')</span> '.$img_thumb;
-			}
-	
-			// Set the response/reference link
-			if($config['USE_QUOTESYSTEM']) {
-				if($resno){ // Response mode
-					if($showquotelink) $QUOTEBTN = '<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$postOPNumber.'#q'.$boardUID.'_'.$no.'" class="qu" title="Quote">'.strval($no).'</a>';
-					else $QUOTEBTN = '<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$postOPNumber.'#q'.$no.'" title="Quote">'.strval($no).'</a>';
-				}else{
-					if(!$i)    $REPLYBTN = '[<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$no.'">'._T('reply_btn').'</a>]'; // First article
-					$QUOTEBTN = '<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$postOPNumber.'#q'.$no.'" class="qu" title="Quote">'.$no.'</a>';
-				}
-				
-			} else {
-				if($resno&&!$i)	$REPLYBTN = '[<a href="'.$crossLink.$config['PHP_SELF'].'?res='.$no.'">'._T('reply_btn').'</a>]';
-				$QUOTEBTN = $no;
-			}
-	
-			if($adminMode){ // Front-end management mode
-				$modFunc = '';
-				$this->moduleEngine->useModuleMethods('AdminList', array(&$modFunc, $posts[$i], $isReply)); // "AdminList" Hook Point
-				$POSTFORM_EXTRA .= $modFunc;
-			}
-	
-			// Set thread properties
-			if($config['STORAGE_LIMIT'] && $kill_sensor) if(isset($arr_kill[$no])) $WARN_BEKILL = '<div class="warning">'._T('warn_sizelimit').'</div>'; // Predict to delete too large files
-			if(!$i){ // 首篇 Only
-				$flgh = $PIO->getPostStatus($status);
-				if($hiddenReply) $WARN_HIDEPOST = '<div class="omittedposts">'._T('notice_omitted',$hiddenReply).'</div>'; // There is a hidden response
-			}
-			// Automatically link category labels
-			if($config['USE_CATEGORY']){
-				$ary_category = explode(',', str_replace('&#44;', ',', $category)); $ary_category = array_map('trim', $ary_category);
-				$ary_category_count = count($ary_category);
-				$ary_category2 = array();
-				for($p = 0; $p < $ary_category_count; $p++){
-					if($c = $ary_category[$p]) $ary_category2[] = '<a href="'.$crossLink.$config['PHP_SELF'].'?mode=module&load=mod_searchcategory&c='.urlencode($c).'">'.$c.'</a>';
-				}
-				$category = implode(', ', $ary_category2);
-			}else $category = '';
-			// Final output
-			if($i){ // Response
-				$arrLabels = bindReplyValuesToTemplate($board, $config, $post_uid, $no, $postOPNumber, $sub, $name, $now, $category, $QUOTEBTN, $IMG_BAR, $imgsrc, $WARN_BEKILL, $com, $POSTFORM_EXTRA, '', $BACKLINKS, $resno);
-				
-				if($resno) $arrLabels['{$RESTO}']=$postOPNumber;
-				$this->moduleEngine->useModuleMethods('ThreadReply', array(&$arrLabels, $posts[$i], $resno)); // "ThreadReply" Hook Point
-				$thdat .= $this->templateEngine->ParseBlock('REPLY', $arrLabels);
-			}else{ // First Article
-				
-				if($resno) $arrLabels['{$RESTO}']=$postOPNumber; else $THREADNAV = $this->buildThreadNavButtons($board, $threads, $threadIterator, $PIO);
-				$arrLabels = bindOPValuesToTemplate($board, $config, $post_uid, $no, $sub, $name, $now, $category, $QUOTEBTN, $REPLYBTN, $IMG_BAR, $imgsrc, $fname, $imgsize, $imgw, $imgh, $imageURL, 
-																					$replyCount, $WARN_OLD, $WARN_BEKILL, 	$WARN_ENDREPLY, $WARN_HIDEPOST, $com, $POSTFORM_EXTRA, $THREADNAV, $BACKLINKS, $resno); 
-				$arrLabels['{$BOARD_THREAD_NAME}'] = $overboardBoardTitleHTML;
-
-				$this->moduleEngine->useModuleMethods('ThreadPost', array(&$arrLabels, $posts[$i], $resno)); // "ThreadPost" Hook Point
-				
-				$thdat .= $this->templateEngine->ParseBlock('THREAD', $arrLabels);
-			}
-		}
-		$thdat .= $this->templateEngine->ParseBlock('THREADSEPARATE',($resno)?array('{$RESTO}'=>$postOPNumber):array());
-		return $thdat;
+										return '';
 	}
 	
 }		

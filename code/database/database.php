@@ -56,7 +56,7 @@ class DatabaseConnection {
 	}
 
 	// Public method to execute a query (for INSERT, UPDATE, DELETE)
-	public function execute($query, $params = []) {
+	public function execute(string $query, array $params = []) {
 		$stmt = $this->pdo->prepare($query);
 		return $stmt->execute($params);
 	}
@@ -74,38 +74,38 @@ class DatabaseConnection {
 		$this->pdo->rollBack();
 	}
 
-	public function fetchAllAsClass($query, $params = [], $className = '') {
+	public function fetchAllAsClass(string $query, array $params = [], string $className = '') {
 		$stmt = $this->pdo->prepare($query);
 		$stmt->execute($params);
 		return $stmt->fetchAll(PDO::FETCH_CLASS, $className);
 	}
 
-	public function fetchAllAsArray($query, $params = []) {
+	public function fetchAllAsArray(string $query, array $params = []) {
 		$stmt = $this->pdo->prepare($query);
 		$stmt->execute($params);
 		return $stmt->fetchAll(PDO::FETCH_ASSOC);
 	}
 	
-	public function fetchAllAsIndexArray($query, $params = []) {
+	public function fetchAllAsIndexArray(string $query, array $params = []) {
 		$stmt = $this->pdo->prepare($query);
 		$stmt->execute($params);
 		return $stmt->fetchAll(PDO::FETCH_NUM);
 	}
 	
-	public function fetchAsClass($query, $params = [], $className = '') {
+	public function fetchAsClass(string $query, array $params = [], string $className = '') {
 		$stmt = $this->pdo->prepare($query);
 		$stmt->execute($params);
 		$stmt->setFetchMode(PDO::FETCH_CLASS, $className);
 		return $stmt->fetch();
 	}
 
-	public function fetchColumn($query, $params = [], $columnIndex = 0) {
+	public function fetchColumn(string $query, array $params = [], int $columnIndex = 0) {
 		$stmt = $this->pdo->prepare($query);
 		$stmt->execute($params);
 		return $stmt->fetchColumn($columnIndex);
 	}
 
-	public function fetchOne($query, $params = [], $fetchMode = PDO::FETCH_ASSOC) {
+	public function fetchOne(string $query, array $params = [], int $fetchMode = PDO::FETCH_ASSOC) {
 		$stmt = $this->pdo->prepare($query);
 		$stmt->execute($params);
 		return $stmt->fetch($fetchMode);
@@ -119,7 +119,7 @@ class DatabaseConnection {
 		return $this->pdo;
 	}
 
-	public function getNextAutoIncrement($tableName) {
+	public function getNextAutoIncrement(string $tableName) {
 		try {
 			// Prepare the query to fetch AUTO_INCREMENT value from information_schema
 			$query = "SELECT AUTO_INCREMENT 

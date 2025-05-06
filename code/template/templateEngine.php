@@ -42,52 +42,77 @@ class templateEngine {
 	}
 
 	public function ParseBlock(string $blockName, array $ary_val) {
-		// Merge default placeholders
-		$ary_val = array_merge([
-				'{$LANGUAGE}'		=> $this->config['PIXMICAT_LANGUAGE'] ?? '',
-				'{$OVERBOARD}'		=> !empty($this->config['ADMINBAR_OVERBOARD_BUTTON']) ? '[<a href="'.$this->config['PHP_SELF'].'?mode=overboard">Overboard</a>]' : ' ',
-				'{$STATIC_URL}'		=> $this->config['STATIC_URL'] ?? '',
-				'{$REF_URL}'		=> $this->config['REF_URL'] ?? '',
-				'{$PHP_SELF}'		=> $this->config['PHP_SELF'] ?? '',
-				'{$PHP_SELF2}'		=> $this->config['PHP_SELF2'] ?? '',
-				'{$PHP_EXT}'		=> $this->config['PHP_EXT'] ?? '',
-				'{$TITLE}'			=> $this->boardData['title'] ?? '',
-				'{$TITLESUB}'		=> $this->boardData['subtitle'] ?? '',
-				'{$HOME}'			=> $this->config['HOME'] ?? '',
-				'{$TOP_LINKS}'		=> $this->config['TOP_LINKS'] ?? '',
-				'{$FOOTTEXT}'		=> $this->config['FOOTTEXT'] ?? '',
-				'{$BLOTTER}'		=> '',
-				'{$GLOBAL_MESSAGE}'	=> '',
-				'{$PAGE_TITLE}'		=> strip_tags($this->boardData['title'] ?? ''),
+		static $defaultPlaceholders = [
+			'{$LANGUAGE}'        => '',
+			'{$OVERBOARD}'       => '',
+			'{$STATIC_URL}'      => '',
+			'{$REF_URL}'         => '',
+			'{$PHP_SELF}'        => '',
+			'{$PHP_SELF2}'       => '',
+			'{$PHP_EXT}'         => '',
+			'{$TITLE}'           => '',
+			'{$TITLESUB}'        => '',
+			'{$HOME}'            => '',
+			'{$TOP_LINKS}'       => '',
+			'{$FOOTTEXT}'        => '',
+			'{$BLOTTER}'         => '',
+			'{$GLOBAL_MESSAGE}'  => '',
+			'{$PAGE_TITLE}'      => '',
+		];
+	
+		// Merge default placeholders with passed values, but only once for efficiency
+		$ary_val = array_merge($defaultPlaceholders, [
+			'{$LANGUAGE}'        => $this->config['PIXMICAT_LANGUAGE'] ?? '',
+			'{$OVERBOARD}'       => !empty($this->config['ADMINBAR_OVERBOARD_BUTTON']) ? '[<a href="'.$this->config['PHP_SELF'].'?mode=overboard">Overboard</a>]' : ' ',
+			'{$STATIC_URL}'      => $this->config['STATIC_URL'] ?? '',
+			'{$REF_URL}'         => $this->config['REF_URL'] ?? '',
+			'{$PHP_SELF}'        => $this->config['PHP_SELF'] ?? '',
+			'{$PHP_SELF2}'       => $this->config['PHP_SELF2'] ?? '',
+			'{$PHP_EXT}'         => $this->config['PHP_EXT'] ?? '',
+			'{$TITLE}'           => $this->boardData['title'] ?? '',
+			'{$TITLESUB}'        => $this->boardData['subtitle'] ?? '',
+			'{$HOME}'            => $this->config['HOME'] ?? '',
+			'{$TOP_LINKS}'       => $this->config['TOP_LINKS'] ?? '',
+			'{$FOOTTEXT}'        => $this->config['FOOTTEXT'] ?? '',
+			'{$BLOTTER}'         => '',
+			'{$GLOBAL_MESSAGE}'  => '',
+			'{$PAGE_TITLE}'      => strip_tags($this->boardData['title'] ?? ''),
 		], $ary_val);
-
+	
 		// Allow modules to modify the array
 		$this->runInjectedFunctions($ary_val);
-
+	
 		// Load template block
-		if (($tmp_block = $this->_readBlock($blockName)) === false) return '';
-
+		$tmp_block = $this->_readBlock($blockName);
+		if ($tmp_block === false) {
+			return '';
+		}
+	
 		// Escape {$ in template content to protect from premature replacement
 		$tmp_block = str_replace('{$', '{' . chr(1) . '$', $tmp_block);
-
-		// Process all logic blocks
+	
+		// Process all logic blocks (combined regex for replacements can be optimized further)
 		$tmp_block = $this->EvalFOREACH($tmp_block, $ary_val);
 		$tmp_block = $this->EvalIF($tmp_block, $ary_val);
 		$tmp_block = $this->EvalFile($tmp_block, $ary_val);
 		$tmp_block = $this->EvalInclude($tmp_block, $ary_val);
-
+	
+		// Build the search/replace array in one go for efficiency
+		$replacePairs = [];
 		foreach ($ary_val as $key => $val) {
-			$escapedKey = str_replace('{$', '{' . chr(1) . '$', $key);
 			if (is_scalar($val) || is_null($val)) {
-				$tmp_block = str_replace($escapedKey, strval($val), $tmp_block);
+				// Escape {$ for placeholders to prevent premature replacement
+				$escapedKey = str_replace('{$', '{' . chr(1) . '$', $key);
+				$replacePairs[$escapedKey] = strval($val);
 			}
-		}		
-
+		}
+	
+		// Perform all replacements in one go with strtr or a single str_replace
+		$tmp_block = strtr($tmp_block, $replacePairs);
+	
 		// Restore original placeholder syntax
 		return str_replace('{'.chr(1).'$','{$', $tmp_block);
-	}
-
-
+	}	
 
 	private function EvalIF(string $tpl, array $ary) {
 		$tmp_tpl = $tpl;

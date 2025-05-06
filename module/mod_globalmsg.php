@@ -38,8 +38,18 @@ class mod_globalmsg extends moduleHelper {
 	}
 
 	public function autoHookGlobalMessage(&$msg) {
-		$msg .= $this->getCurrentGlobalMsg() ?? '';
+		// Check if the cached message is available
+		static $cachedGlobalMsg = null;
+	
+		if ($cachedGlobalMsg === null) {
+			// If not cached, fetch the message and cache it
+			$cachedGlobalMsg = $this->getCurrentGlobalMsg();
+		}
+	
+		// Append the cached (or freshly fetched) message to $msg
+		$msg .= $cachedGlobalMsg ?? '';
 	}
+	
 
 	public function ModulePage() {
 		$softErrorHandler = new softErrorHandler($this->board);

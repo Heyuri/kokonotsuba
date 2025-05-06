@@ -11,82 +11,74 @@ class threadRenderer {
 	private globalHTML $globalHTML;
 	private moduleEngine $moduleEngine;
 	private templateEngine $templateEngine;
-	private mixed $threadSingleton;
-	private mixed $PIO;
 	private IFileIO $FileIO;
 
-	public function __construct(board $board, array $config, globalHTML $globalHTML, moduleEngine $moduleEngine, templateEngine $templateEngine) {
+	private array $quoteLinksFromBoard;
+
+	public function __construct(board $board, array $config, globalHTML $globalHTML, moduleEngine $moduleEngine, templateEngine $templateEngine, array $quoteLinksFromBoard) {
 		$this->board = $board;
 		$this->config = $config;
 		$this->globalHTML = $globalHTML;
 		$this->moduleEngine = $moduleEngine;
 		$this->templateEngine = $templateEngine;
+		$this->quoteLinksFromBoard = $quoteLinksFromBoard;
 
-		$this->PIO = PIOPDO::getInstance();
 		$this->FileIO = PMCLibrary::getFileIOInstance();
-		$this->threadSingleton = threadSingleton::getInstance();
 	}
 
 	/**
 	 * Main render function to build full HTML of thread and replies.
 	 */
 	public function render(array $threads,
-	 array $currentPageThreads,
-	 mixed $tree_cut, 
-	 array $posts, int $hiddenReply, 
-	 string $thread_uid, 
-	 mixed $arr_kill, 
-	 bool $kill_sensor, 
-	 bool $showquotelink = true, 
-	 bool $adminMode = false, 
-	 int $threadIterator = 0, 
-	 string $overboardBoardTitleHTML = '', 
-	 string $crossLink = '',
-	 array $templateValues = []): string {
-		$thread_uid = $thread_uid ?: 0;
+			bool $isReplyMode,
+			array $thread,
+			array $posts, 
+			int $hiddenReply, 
+			string $thread_uid, 
+			mixed $arr_kill, 
+			bool $kill_sensor, 
+			bool $showquotelink = true, 
+			bool $adminMode = false, 
+			int $threadIterator = 0, 
+			string $overboardBoardTitleHTML = '', 
+			string $crossLink = '',
+			array $templateValues = []): string 
+		{
+		$thread_uid = $thread['thread_uid'];
 		$thdat = '';
 		
 		// whether this is reply mode
-		$replyMode = $thread_uid ? true : false;
+		$replyMode = $isReplyMode;
 		
 		// whether this is thread (index) mode
-		$threadMode = $thread_uid ? false : true;
+		$threadMode = !$isReplyMode;
 
-		// thread uid
-		$thread_uid = $posts[0]['thread_uid'];
-		
 		// post op number
 		$postOPNumber = $posts[0]['no'];
 
 		// number of replies
 		$replyCount = count($posts);
 	
-		// list of thread post op numbers
-		$threadNumberList = $this->threadSingleton->mapThreadUidListToPostNumber($currentPageThreads);
-
-		if (is_array($tree_cut)) $tree_cut = array_flip($tree_cut);
-	
 		// render posts for a thread
 		foreach ($posts as $i => $post) {
-			$thdat .= $this->renderSinglePost($threadNumberList,
-			$posts,
-				$post,
-				$i,
-				$threadMode,
-				$adminMode,
-				$showquotelink,
-				$currentPageThreads,
-				$threadIterator,
-				$hiddenReply,
-				$kill_sensor,
-				$arr_kill,
-				$postOPNumber,
-				$replyMode,
-				$replyCount,
-				$overboardBoardTitleHTML,
-				$thread_uid,
-				$crossLink,
-				$templateValues
+				$thdat .= $this->renderSinglePost($posts,
+						$post,
+						$i,
+						$threadMode,
+						$adminMode,
+						$showquotelink,
+						$threads,
+						$threadIterator,
+						$hiddenReply,
+						$kill_sensor,
+						$arr_kill,
+						$postOPNumber,
+						$replyMode,
+						$replyCount,
+						$overboardBoardTitleHTML,
+						$thread_uid,
+						$crossLink,
+						$templateValues
 			);
 		}
 	
@@ -97,7 +89,7 @@ class threadRenderer {
 	/*
 	* Render an individual post for a thread
 	*/
-	private function renderSinglePost(array $threadNumberList,
+	private function renderSinglePost(
 		array $threadPosts,
 		array $post,
 		int $i,
@@ -120,9 +112,12 @@ class threadRenderer {
 		$isReply = $i > 0;
 		$data = $this->preparePostData($post);
 
-		
+		//apply quote and quote link
+		$data['com'] = $this->globalHTML->quote_link($this->quoteLinksFromBoard, $data, $threadPosts[0]['no']);
+		$data['com'] = $this->globalHTML->quote_unkfunc($data['com']);
 
-		[$REPLYBTN, $QUOTEBTN] = $this->buildQuoteAndReplyButtons($data['no'], $postOPNumber, $replyMode, $thread_uid, $showquotelink, $crossLink);
+
+		[$REPLYBTN, $QUOTEBTN] = $this->buildQuoteAndReplyButtons($data['no'], $postOPNumber, $threadMode, $thread_uid, $showquotelink, $crossLink);
 
 		$categoryHTML = $this->processCategoryLinks($data['category'], $crossLink);
 		$IMG_BAR = ($data['ext']) ? $this->buildAttachmentBar($data['tim'], $data['ext'], $data['fname'], $data['imgsize'], $data['imgw'], $data['imgh'], $data['tw'], $data['th'], '') : '';
@@ -131,7 +126,7 @@ class threadRenderer {
 
 		// Navigation
 		if ($threadMode) {
-			$THREADNAV = $this->globalHTML->buildThreadNavButtons($threadNumberList, $threadIterator);
+			$THREADNAV = $this->globalHTML->buildThreadNavButtons($currentPageThreads, $threadIterator);
 		}
 
 		// Admin controls hook
@@ -213,9 +208,6 @@ class threadRenderer {
 			$now = "<a href=\"mailto:$email\">$now</a>";
 		}
 	
-		$com = $this->globalHTML->quote_link($this->board, $this->PIO, $com);
-		$com = $this->globalHTML->quote_unkfunc($com);
-	
 		// Image setup
 		$imgsrc = '';
 		$imageURL = '';
@@ -263,7 +255,7 @@ class threadRenderer {
 	/**
 	 * Builds quote and reply links for post display.
 	 */
-	private function buildQuoteAndReplyButtons(int $no, int $postOPNumber, bool $replyMode, string $thread_uid, bool $showquotelink, string $crossLink): array {
+	private function buildQuoteAndReplyButtons(int $no, int $postOPNumber, bool $threadMode, string $thread_uid, bool $showquotelink, string $crossLink): array {
 		$REPLYBTN = $QUOTEBTN = '';
 		$self = $this->config['PHP_SELF'];
 
@@ -279,7 +271,7 @@ class threadRenderer {
 		}
 
 		// add [Reply] button
-		if (!$replyMode) $REPLYBTN = '[<a href="'.$crossLink.$self.'?res='.$no.'">'._T('reply_btn').'</a>]';
+		if ($threadMode) $REPLYBTN = '[<a href="'.$crossLink.$self.'?res='.$no.'">'._T('reply_btn').'</a>]';
 
 		return [$REPLYBTN, $QUOTEBTN];
 	}

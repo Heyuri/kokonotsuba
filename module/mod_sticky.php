@@ -34,8 +34,9 @@ class mod_sticky extends moduleHelper {
 
 		if (!$isres) {
 			$fh = new FlagHelper($post['status']);
-			$toggleLabel = $fh->value('sticky') ? 'Unsticky' : 'Sticky post';
-			$modfunc .= '<span class="adminStickyFunction">[<a href="' . $this->mypage . '&post_uid=' . $post['post_uid'] . '" title="' . $toggleLabel . '">S</a>]</span>';
+			$stickyTitle = $fh->value('sticky') ? 'Unsticky' : 'Sticky post';
+			$toggleLabel = $fh->value('sticky') ? 's' : 'S'; 
+			$modfunc .= '<span class="adminStickyFunction">[<a href="' . $this->mypage . '&post_uid=' . $post['post_uid'] . '" title="' . $stickyTitle . '">'.$toggleLabel.'</a>]</span>';
 		}
 	}
 
