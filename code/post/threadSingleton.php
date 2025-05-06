@@ -106,8 +106,8 @@ class threadSingleton {
 		$direction = $isDESC ? 'DESC' : 'ASC';
 
 		$query = "SELECT thread_uid FROM {$this->threadTable}
-		          WHERE boardUID = :board_uid
-		          ORDER BY {$orderBy} {$direction}";
+				  WHERE boardUID = :board_uid
+				  ORDER BY {$orderBy} {$direction}";
 
 		// Append LIMIT clause directly (safe because it's an int)
 		if ($amount > 0) {
@@ -231,28 +231,34 @@ class threadSingleton {
 	public function bumpThread(string $threadID, bool $sticky = false): void {
 		$posts = $this->fetchPostsFromThread($threadID);
 		if (empty($posts)) return;
-
-		$lastPost = end($posts);
-		$bumpTime = $lastPost['root'];
-
+	
 		if ($sticky) {
-				$bumpTimestamp = time() + 5; // add 5 seconds
-				$bumpTime = date('Y-m-d H:i:s', $bumpTimestamp);
+			// Use MySQL's NOW() + INTERVAL 5 SECOND for sticky bump
+			$query = "UPDATE {$this->threadTable}
+					  SET last_bump_time = NOW() + INTERVAL 5 SECOND,
+						  last_reply_time = NOW() + INTERVAL 5 SECOND
+					  WHERE thread_uid = :thread_uid";
+	
+			$params = [
+				':thread_uid' => $threadID
+			];
+		} else {
+			$lastPost = end($posts);
+			$bumpTime = $lastPost['root']; // must be MySQL datetime string
+	
+			$query = "UPDATE {$this->threadTable}
+					  SET last_bump_time = :bump_time,
+						  last_reply_time = :bump_time
+					  WHERE thread_uid = :thread_uid";
+	
+			$params = [
+				':bump_time'  => $bumpTime,
+				':thread_uid' => $threadID
+			];
 		}
-
-		$query = "UPDATE {$this->threadTable}
-				  SET last_bump_time = :bump_time,
-					  last_reply_time = :bump_time
-				  WHERE thread_uid = :thread_uid";
-
-		$params = [
-				':bump_time'   => $bumpTime,
-				':thread_uid'  => $threadID
-		];
-
+	
 		$this->databaseConnection->execute($query, $params);
 	}
-
 
 	public function updateThreadLastReplyTime($threadID) {
 		$query = "UPDATE {$this->threadTable} SET last_reply_time = CURRENT_TIMESTAMP WHERE thread_uid = :thread_uid";
@@ -336,17 +342,81 @@ class threadSingleton {
 		return array_merge(...$this->databaseConnection->fetchAllAsIndexArray($query, [':board_uid' => $board->getBoardUID()])) ?? [];
 	}
 
-	public function getFilteredThreads(int $amount, int $offset = 0, array $filters = [], string $order = 'last_bump_time'): array {
-		$query = "SELECT * FROM {$this->threadTable} WHERE 1";
+	public function getFilteredThreads(int $previewCount, int $amount, int $offset = 0, array $filters = [], string $order = 'last_bump_time'): array {
+		$query = "SELECT t.thread_uid, t.post_op_post_uid, t.post_op_number,
+		p.status, t.boardUID
+		FROM {$this->threadTable} t
+		JOIN {$this->postTable} p ON t.post_op_post_uid = p.post_uid
+		WHERE 1";
+
+		
 		$params = [];
 		
-		bindfiltersParameters($params, $query, $filters); //apply filtration to query
-		
-		$query .= " ORDER BY $order  DESC LIMIT $amount OFFSET $offset";
+		// Apply board filtering, if requested
+		if (!empty($filters['board']) && is_array($filters['board'])) {
+			bindBoardUIDFilter($params, $query, $filters['board'], 't.boardUID');
+		}
+	
+		// Pagination and ordering
+		$query .= " ORDER BY t.{$order} DESC LIMIT $amount OFFSET $offset";
+
 		$threads = $this->databaseConnection->fetchAllAsArray($query, $params);
 	
-		return $threads ?? [];
+		if (empty($threads)) return [];
+	
+		// Step 2: extract thread_uids
+		$threadUIDs = array_column($threads, 'thread_uid');
+
+		if (empty($threadUIDs)) {
+			return [];
+		}
+		
+		$inClause = implode(',', array_fill(0, count($threadUIDs), '?'));
+		$postQuery = "
+			SELECT *
+			FROM {$this->postTable}
+			WHERE thread_uid IN ($inClause)
+			ORDER BY thread_uid, post_position ASC
+		";
+
+		$postRows = $this->databaseConnection->fetchAllAsArray($postQuery, $threadUIDs);
+		
+		// Step 4: group posts by thread_uid
+		$postsByThread = [];
+		foreach ($postRows as $post) {
+			$postsByThread[$post['thread_uid']][] = $post;
+		}
+	
+		// Step 5: assemble results (preview logic)
+		$previewCount = $previewCount ?? 3; // Default to 3 if not set
+		$result = [];
+	
+		foreach ($threads as $thread) {
+			$threadUID = $thread['thread_uid'];
+			$allPosts = $postsByThread[$threadUID] ?? [];
+	
+			$totalPosts = count($allPosts);
+			$omittedCount = max(0, $totalPosts - $previewCount - 1);
+	
+			$opPost = array_filter($allPosts, fn($p) => $p['is_op']);
+			$nonOpPosts = array_filter($allPosts, fn($p) => !$p['is_op']);
+			$previewPosts = array_merge(
+				$opPost,
+				array_slice($nonOpPosts, max(0, count($nonOpPosts) - $previewCount))
+			);
+	
+			$result[] = [
+				'thread' => $thread,
+				'post_uids' => array_column($previewPosts, 'post_uid'),
+				'posts' => $previewPosts,
+				'hidden_reply_count' => $omittedCount,
+				'thread_uid' => $threadUID
+			];
+		}
+	
+		return $result;
 	}
+	
 	
 	public function getFilteredThreadUIDs(int $amount, int $offset = 0, array $filters = [], string $order = 'last_bump_time') {
 		$query = "SELECT thread_uid FROM {$this->threadTable} WHERE 1";
