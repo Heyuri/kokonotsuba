@@ -125,3 +125,35 @@ function bindActionLogFiltersParameters(array &$params, string &$query, array $f
 	}
 }
 
+/**
+ * Appends a boardUID IN (...) clause to the SQL query, binding the parameters safely.
+ *
+ * @param array  $params Reference to the array of PDO parameters
+ * @param string $query  Reference to the SQL query string (will be modified)
+ * @param array  $boardUIDs Array of board UIDs to filter by
+ * @param string $columnAlias Which table column to use (default: 't.boardUID')
+ */
+function bindBoardUIDFilter(array &$params, string &$query, array $boardUIDs, string $columnAlias = 't.boardUID'): void {
+	if (empty($boardUIDs)) {
+		$query .= " AND 0"; // Prevents IN () syntax error
+		return;
+	}
+
+	// Sanitize: filter integers only and remove duplicates
+	$boardUIDs = array_unique(array_filter($boardUIDs, fn($id) => is_int($id) || ctype_digit($id)));
+
+	if (empty($boardUIDs)) {
+		return;
+	}
+
+	// Create placeholders
+	$placeholders = [];
+	foreach ($boardUIDs as $index => $uid) {
+		$placeholder = ":boardUID$index";
+		$placeholders[] = $placeholder;
+		$params[$placeholder] = (int) $uid;
+	}
+
+	// Append to WHERE clause
+	$query .= " AND {$columnAlias} IN (" . implode(', ', $placeholders) . ")";
+}
