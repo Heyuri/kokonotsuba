@@ -178,27 +178,38 @@ class board implements IBoard {
 		return $this->config;
 	}
 
-	public function drawThread($res): void {
+	public function drawThread(int $res): void {
 		$boardRebuilder = new boardRebuilder($this, $this->templateEngine);
 		$boardRebuilder->drawThread($res);
 	}
 
-	public function drawPage($pageNumber): void {
+	public function drawPage(int $pageNumber): void {
 		$boardRebuilder = new boardRebuilder($this, $this->templateEngine);
 		$boardRebuilder->drawPage($pageNumber);
 
 	}
 
-	public function getBoardThreadURL(int $threadNumber): string {
-		$phpSelf = $this->config['PHP_SELF'];
-		$threadUrl = $this->getBoardURL()."$phpSelf?res=$threadNumber";
-		
-		return $threadUrl ?? '';
+	public function rebuildBoard(bool $logRebuild = false): void {
+		$boardRebuilder = new boardRebuilder($this, $this->templateEngine);
+		$boardRebuilder->rebuildBoardHtml($logRebuild);
 	}
 
-	public function rebuildBoard(int $resno = 0, mixed $pagenum = -1, bool $single_page = false, int $last = -1, bool $logRebuild = false): void {
+	public function rebuildBoardPage(int $pageNumber, bool $logRebuild = false): void {
 		$boardRebuilder = new boardRebuilder($this, $this->templateEngine);
-		$boardRebuilder->rebuildBoardHtml($resno, $pagenum, $single_page, $last, $logRebuild);
+		$boardRebuilder->rebuildBoardPageHtml($pageNumber, $logRebuild);
+	}
+
+	public function getBoardThreadURL(int $threadNumber, int $replyNumber = 0): string {
+		$phpSelf = $this->config['PHP_SELF'];
+		$replyString = '';
+
+		if($replyNumber) {
+			$replyString = '#p'.$this->getBoardUID().'_'.$replyNumber;
+		}
+
+		$threadUrl = $this->getBoardURL()."$phpSelf?res=$threadNumber$replyString";
+		
+		return $threadUrl ?? '';
 	}
 
 	public function getLastPostNoFromBoard(): int {
