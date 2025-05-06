@@ -27,41 +27,68 @@ class mod_imagemeta extends moduleHelper {
 
 	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		$FileIO = PMCLibrary::getFileIOInstance();
-		$file = $post['tim'].$post['ext'];
-	
+		
+		if($post['imgw'] + $post['imgh'] === 0) return;
+		
+		$file = $post['tim'] . $post['ext'];
 		$board = searchBoardArrayForBoard($this->moduleBoardList, $post['boardUID']);
+	
 		static $nonReverseSearchableExtensions = ['.swf', '.mp4', '.webm'];
 		$ext = strtolower($post['ext']);
 		$isNotAReverseSearchableImage = in_array($ext, $nonReverseSearchableExtensions);
-		$isSwf = $ext == '.swf';
+		$isSwf = $ext === '.swf';
+	
+		// Cache the condition for checking the FILEIO_BACKEND config
+		$isLocalBackend = ($this->config['FILEIO_BACKEND'] == 'normal' || $this->config['FILEIO_BACKEND'] == 'local');
+	
+		// Check once if the image exists, to avoid repeated checks
+		$imageExists = $FileIO->imageExists($file, $board);
+	
+		if (!$imageExists) {
+			// If the image does not exist, skip processing
+			return;
+		}
+	
+		// Prepare HTML parts for appending
+		$imgBarHtml = '';
 	
 		// EXIF
-		if($this->enable_exif && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-			$arrLabels['{$IMG_BAR}'] .= '<span class="exifLink imageOptions">[<a href="'.$this->myPage.'&file='.$file.'">EXIF</a>]</span> ';
+		if ($this->enable_exif && $isLocalBackend) {
+			$imgBarHtml .= '<span class="exifLink imageOptions">[<a href="' . $this->myPage . '&file=' . $file . '">EXIF</a>]</span> ';
 		}
+	
 		// ImgOps
-		if($this->enable_imgops && !$isNotAReverseSearchableImage && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-			$arrLabels['{$IMG_BAR}'] .= '<span class="imgopsLink imageOptions">[<a href="http://imgops.com/'.$FileIO->getImageURL($file, $board).'" target="_blank">ImgOps</a>]</span> ';
+		if ($this->enable_imgops && !$isNotAReverseSearchableImage && $isLocalBackend) {
+			$imgBarHtml .= '<span class="imgopsLink imageOptions">[<a href="http://imgops.com/' . $FileIO->getImageURL($file, $board) . '" target="_blank">ImgOps</a>]</span> ';
 		}
-		// Anime/manga search engine
-		if($this->enable_iqdb && !$isNotAReverseSearchableImage && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-			$arrLabels['{$IMG_BAR}'] .= '<span class="iqdbLink imageOptions">[<a href="http://iqdb.org/?url='.$FileIO->getImageURL($file, $board).'" target="_blank">iqdb</a>]</span> ';
+	
+		// Anime/manga search engine (iqdb)
+		if ($this->enable_iqdb && !$isNotAReverseSearchableImage && $isLocalBackend) {
+			$imgBarHtml .= '<span class="iqdbLink imageOptions">[<a href="http://iqdb.org/?url=' . $FileIO->getImageURL($file, $board) . '" target="_blank">iqdb</a>]</span> ';
 		}
-		// swfchan archive
-		if($this->enable_swfchan && $isSwf && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
+	
+		// SWFChan archive
+		if ($this->enable_swfchan && $isSwf && $isLocalBackend) {
 			$imgsize = $post['imgsize'] ?? '';
 			$min = 0;
 			$max = 1;
-			if(stripos($imgsize, 'KB') !== false) {
-				preg_match('/(\d+)/', $imgsize, $matches);
-				if(isset($matches[1])) {
-					$min = (int)$matches[1];
+	
+			// Only parse the imgsize if necessary
+			if (stripos($imgsize, 'KB') !== false) {
+				// Use a simple str_replace instead of preg_match for the numeric value extraction
+				$matches = [];
+				if (preg_match('/(\d+)/', $imgsize, $matches)) {
+					$min = (int) $matches[1];
 					$max = $min + 1;
 				}
 			}
-			$arrLabels['{$IMG_BAR}'] .= '<span class="swfchanLink imageOptions">[<a href="http://eye.swfchan.com/search/?q='.urlencode($post['fname']).'.swf&min='.$min.'&u1=k&max='.$max.'&u2=k" target="_blank">swfchan</a>]</span> ';
+	
+			$imgBarHtml .= '<span class="swfchanLink imageOptions">[<a href="http://eye.swfchan.com/search/?q=' . urlencode($post['fname']) . '.swf&min=' . $min . '&u1=k&max=' . $max . '&u2=k" target="_blank">swfchan</a>]</span> ';
 		}
-	}
+	
+		// Append the built HTML content to the final label
+		$arrLabels['{$IMG_BAR}'] .= $imgBarHtml;
+	}	
 	
 
 	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply){
