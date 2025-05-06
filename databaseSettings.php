@@ -12,6 +12,7 @@ return [
 
 	/* Tables used by various parts of kokonotsuba, do not change them after installing */
 	'POST_TABLE' => 'posts', //post table, contains all posts on an instance
+	'QUOTE_LINK_TABLE' => 'quote_links',
 	'REPORT_TABLE' => 'reports', //report table used by report module
 	'BAN_TABLE' => 'bans', //ban table used by adminban module
 	'BOARD_TABLE' => 'boards', //board table for all boards active on an instance
