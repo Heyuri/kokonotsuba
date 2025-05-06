@@ -12,8 +12,7 @@ class boardRebuilder {
 	private templateEngine $templateEngine;
 
 
-	public function __construct(board $board, templateEngine $templateEngine)
-	{
+	public function __construct(board $board, templateEngine $templateEngine) {
 		$this->board = $board;
 
 		$this->globalHTML = new globalHTML($board);
@@ -46,7 +45,9 @@ class boardRebuilder {
 	}
 
 	public function drawThread(int $resno): void {
-		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine);
+		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
+
+		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine, $quoteLinksFromBoard);
 		$roleLevel = $this->staffSession->getRoleLevel();
 		$adminMode = $roleLevel >= $this->config['roles']['LEV_JANITOR'];
 
@@ -90,7 +91,8 @@ class boardRebuilder {
 		$pte_vals['{$FORMDAT}'] = $form_dat;
 
 		// Render the thread
-		$pte_vals['{$THREADS}'] .= $threadRenderer->render(true,
+		$pte_vals['{$THREADS}'] .= $threadRenderer->render([],
+			true,
 			$thread,
 			$posts,
 			$hiddenReply,
@@ -120,7 +122,9 @@ class boardRebuilder {
 	}
 
 	public function drawPage(int $page = 0): void {
-		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine);
+		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
+
+		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine, $quoteLinksFromBoard);
 		$roleLevel = $this->staffSession->getRoleLevel();
 		$adminMode = $roleLevel >= $this->config['roles']['LEV_JANITOR'];
 
@@ -163,7 +167,8 @@ class boardRebuilder {
 			$hiddenReply = $data['hidden_reply_count'];
 			$threadUID = $data['thread_uid'];
 
-			$pte_vals['{$THREADS}'] .= $threadRenderer->render(false,
+			$pte_vals['{$THREADS}'] .= $threadRenderer->render($threadsInPage,
+				false,
 				$thread,
 				$posts,
 				$hiddenReply,
@@ -251,7 +256,7 @@ class boardRebuilder {
 				$nextFile = $next . '.html';
 			} else {
 				// Use query parameter for pages > STATIC_HTML_UNTIL
-				$nextFile = $this->config['PHP_SELF'] . 'pagenum=' . $next;
+				$nextFile = $this->config['PHP_SELF'] . '?pagenum=' . $next;
 			}
 			$navData .= '<td><a href="' . $nextFile . '">Next &raquo;</a></td>';
 		} else {
@@ -316,34 +321,134 @@ class boardRebuilder {
 		$nav .= '</tr></tbody></table>';
 		return $nav;
 	}
-
+	
 	public function rebuildBoardHtml(bool $logRebuild = false): void {
-		// we are not using passes in shit. we are just gonna rebuild all board, one way,
-		// if you want a special way of building a board. make it its own function.
-
-		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine);
-		$roleLevel = $this->staffSession->getRoleLevel();
-		$adminMode = $roleLevel >= $this->config['roles']['LEV_JANITOR'];
-
-		$previewCount = $this->config['RE_DEF'];
-		$threads = $this->PIO->getThreadPreviewsFromBoard($this->board, $previewCount);
-
-
+		$threads = $this->PIO->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF']);
 		$totalThreads = count($threads);
 		$threadsPerPage = $this->config['PAGE_DEF'];
-		$totalPagesFromThreadCount = ceil($totalThreads / $this->config['PAGE_DEF']); 
-		$totalPagesToRebuild = 0;
-
-		if($this->config['STATIC_HTML_UNTIL'] === -1) {
-			$totalPagesToRebuild = $totalPagesFromThreadCount;
-		} else if ($this->config['STATIC_HTML_UNTIL'] === 0) {
-			$totalPagesToRebuild = 0;
-		} else {
-			$totalPagesToRebuild = min($this->config['STATIC_HTML_UNTIL'], $totalPagesFromThreadCount);
+		$totalPages = ceil($totalThreads / $threadsPerPage);
+	
+		$totalPagesToRebuild = match (true) {
+			$this->config['STATIC_HTML_UNTIL'] === -1 => $totalPages,
+			$this->config['STATIC_HTML_UNTIL'] === 0 => 0,
+			default => min($this->config['STATIC_HTML_UNTIL'], $totalPages)
+		};
+	
+		$pte_vals = $this->buildPteVals();
+	
+		$headerHtml = '';
+		$this->globalHTML->head($headerHtml);
+	
+		$formHtml = '';
+		$this->globalHTML->form($formHtml, 0);
+		$formHtml .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
+	
+		$footHtml = '';
+		$this->globalHTML->foot($footHtml);
+	
+		for ($page = 0; $page < $totalPagesToRebuild; $page++) {
+			$this->renderStaticPage($page, $threads, $headerHtml, $formHtml, $footHtml, $pte_vals);
 		}
+	
+		if ($logRebuild) {
+			$this->actionLogger->logAction(
+				"Rebuilt board: " . $this->board->getBoardTitle() . ' (' . $this->board->getBoardUID() . ')',
+				$this->board->getBoardUID()
+			);
+		}
+	}
+	
 
-		//hell idk what this is but keeping it for now...
-		$pte_vals = array(
+	private function renderStaticPage(int $page, array $threads, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals): void {
+		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
+
+		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine, $quoteLinksFromBoard);
+		$threadsPerPage = $this->config['PAGE_DEF'];
+	
+		$threadsInPage = array_slice($threads, $page * $threadsPerPage, $threadsPerPage);
+	
+		$pte_vals['{$THREADS}'] = '';
+		foreach ($threadsInPage as $i => $data) {
+			$thread = $data['thread'];
+			$posts = $data['posts'];
+			$hiddenReply = $data['hidden_reply_count'];
+			$threadUID = $data['thread_uid'];
+	
+			$pte_vals['{$THREADS}'] .= $threadRenderer->render(
+				$threads,
+				false,
+				$thread,
+				$posts,
+				$hiddenReply,
+				$threadUID,
+				[],
+				false,
+				true,
+				false,
+				$i
+			);
+		}
+	
+		$pte_vals['{$PAGENAV}'] = $this->buildNav($page, ceil(count($threads) / $threadsPerPage));
+	
+		$pageData = $headerHtml;
+		$pageData .= $this->templateEngine->ParseBlock('MAIN', array_merge($pte_vals, ['{$FORMDAT}' => $formHtml]));
+		$pageData .= $footHtml;
+	
+		// Strip any user-entered form data
+		$pageData = preg_replace('/id="com" class="inputtext">(.*)<\/textarea>/', 'id="com" class="inputtext"></textarea>', $pageData);
+		$pageData = preg_replace('/name="email" id="email" value="(.*)" class="inputtext">/', 'name="email" id="email" value="" class="inputtext">', $pageData);
+		$pageData = preg_replace('/replyhl/', '', $pageData);
+	
+		if ($this->config['MINIFY_HTML']) {
+			$pageData = html_minify($pageData);
+		}
+	
+		$logfilename = ($page === 0) ? 'index.html' : $page . '.html';
+		$logFilePath = $this->board->getBoardCachedPath() . $logfilename;
+	
+		if (($fp = fopen($logFilePath, 'w')) === false) {
+			throw new \RuntimeException("Failed to open file for writing: $logFilePath");
+		}
+	
+		stream_set_write_buffer($fp, 0);
+		fwrite($fp, $pageData);
+		fclose($fp);
+		chmod($logFilePath, 0666);
+	}
+
+	public function rebuildBoardPageHtml(int $targetPage, bool $logRebuild): void {
+		if ($targetPage < 0) return;
+	
+		$threads = $this->PIO->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF']);
+		$totalPages = ceil(count($threads) / $this->config['PAGE_DEF']);
+	
+		if ($targetPage >= $totalPages) return; // Out of bounds
+	
+		$pte_vals = $this->buildPteVals();
+	
+	
+		$headerHtml = '';
+		$this->globalHTML->head($headerHtml);
+	
+		$formHtml = '';
+		$this->globalHTML->form($formHtml, 0);
+		$formHtml .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
+	
+		$footHtml = '';
+		$this->globalHTML->foot($footHtml);
+	
+		$this->renderStaticPage($targetPage, $threads, $headerHtml, $formHtml, $footHtml, $pte_vals);
+
+		if ($logRebuild) {
+			$this->actionLogger->logAction("Rebuilt board: " . $this->board->getBoardTitle() . ' (' . $this->board->getBoardUID() . ')', $this->board->getBoardUID());
+		}
+	}
+
+	private function buildPteVals(): array {
+		$adminMode = $this->staffSession->getRoleLevel() >= $this->config['roles']['LEV_JANITOR'];
+	
+		$pte_vals = [
 			'{$THREADS}' => '',
 			'{$THREADFRONT}' => '',
 			'{$THREADREAR}' => '',
@@ -355,84 +460,13 @@ class boardRebuilder {
 			'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" id="pwd2" value="">',
 			'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="' . _T('del_btn') . '">',
 			'{$IS_THREAD}' => false,
-		);
-
-		$this->moduleEngine->useModuleMethods('ThreadFront', array(&$pte_vals['{$THREADFRONT}'], 0)); // "ThreadFront" Hook Point
-		$this->moduleEngine->useModuleMethods('ThreadRear', array(&$pte_vals['{$THREADREAR}'], 0)); // "ThreadRear" Hook Point
-
-
-		// Generate static pages one page at a time
-		for ($page = 0; $page < $totalPagesToRebuild; $page++) {
-
-			//load in next N threads for X page
-			$threadsInPage = array_slice($threads, $page * $threadsPerPage, $threadsPerPage);
-
-			$pageData = '';
-
-			$this->globalHTML->head($pageData);
-			
-			// form
-			$form_dat = '';
-			$this->globalHTML->form($form_dat, 0);
-
-			$form_dat .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
-
-
-			$pte_vals['{$FORMDAT}'] = $form_dat;
-
-			$pte_vals['{$THREADS}'] = '';
-			foreach ($threadsInPage as $i => $data) {
-				$thread = $data['thread'];
-				$posts = $data['posts'];
-				$hiddenReply = $data['hidden_reply_count'];
-				$threadUID = $data['thread_uid'];
-
-				$pte_vals['{$THREADS}'] .= $threadRenderer->render(false,
-					$thread,
-					$posts,
-					$hiddenReply,
-					$threadUID,
-					[],
-					false,
-					true,
-					false,
-					$i
-				);
-			}
-
-
-			$pte_vals['{$PAGENAV}'] = $this->buildNav($page, $totalPagesFromThreadCount);
-
-			$pageData .= $this->templateEngine->ParseBlock('MAIN', $pte_vals);
-			$this->globalHTML->foot($pageData);
-			// Remove any preset form values (DO NOT CACHE PRIVATE DETAILS!!!)
-			$pageData = preg_replace('/id="com" class="inputtext">(.*)<\/textarea>/', 'id="com" class="inputtext"></textarea>', $pageData);
-			$pageData = preg_replace('/name="email" id="email" value="(.*)" class="inputtext">/', 'name="email" id="email" value="" class="inputtext">', $pageData);
-			$pageData = preg_replace('/replyhl/', '', $pageData);
-			// Minify
-			if ($this->config['MINIFY_HTML']) {
-				$pageData = html_minify($pageData);
-			}
-
-			//save to file
-			$logfilename = ($page === 0) ? 'index.html' : $page . '.html';
-			$prefix = $this->board->getBoardCachedPath();
-			$logFilePath = $prefix . $logfilename;
-
-			$fp = fopen($logFilePath, 'w');
-			if ($fp === false) {
-				throw new \RuntimeException("Failed to open file for writing: $logFilePath");
-			}
-
-			stream_set_write_buffer($fp, 0);
-			fwrite($fp, $pageData);
-			fclose($fp);
-			chmod($logFilePath, 0666);
-		}
-
-		if ($logRebuild) {
-			$this->actionLogger->logAction("Rebuilt board: " . $this->board->getBoardTitle() . ' (' . $this->board->getBoardUID() . ')', $this->board->getBoardUID());
-		}
+		];
+	
+		$this->moduleEngine->useModuleMethods('ThreadFront', [&$pte_vals['{$THREADFRONT}'], 0]);
+		$this->moduleEngine->useModuleMethods('ThreadRear', [&$pte_vals['{$THREADREAR}'], 0]);
+	
+		return $pte_vals;
 	}
+	
 
 }
