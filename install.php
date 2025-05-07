@@ -231,6 +231,10 @@ class html {
 			<td> <input id="database-post-table-input" name="POST_TABLE" value="'.htmlspecialchars($this->dbSettings['POST_TABLE']).'" required> </td>
 		</tr>
 		<tr>
+			<td class="postblock"> <label for "database-qotelink-table-input">Quotelink table</label></td>
+			<td> <input id="database-quotelink-table-input" name="QUOTE_LINK_TABLE" value="'.htmlspecialchars($this->dbSettings['QUOTE_LINK_TABLE']).'"> </td>
+		</tr>
+		<tr>
 			<td class="postblock"> <label for "database-report-table-input">Report table</label></td>
 			<td> <input id="database-report-table-input" name="REPORT_TABLE" value="'.htmlspecialchars($this->dbSettings['REPORT_TABLE']).'" required> </td>
 		</tr>
@@ -622,6 +626,7 @@ switch ($action) {
 			$tableCreator = new tableCreator($pdoConnection);
 			$tables = [
 				'POST_TABLE' => $_POST['POST_TABLE'],
+				'QUOTE_LINK_TABLE' => $_POST['QUOTE_LINK_TABLE'],
 				'REPORT_TABLE' => $_POST['REPORT_TABLE'],
 				'BAN_TABLE' => $_POST['BAN_TABLE'],
 				'BOARD_TABLE' => $_POST['BOARD_TABLE'],
