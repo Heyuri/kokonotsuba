@@ -141,3 +141,15 @@ function scaleThumbnail(thumbnail $thumbnail, bool $isReply, int $maxReplyWidth,
 	// return
 	return $thumbnail;
 }
+
+// method to get the pages to rebuild
+function getPageOfThread(string $thread_uid, array $threads, int $threadsPerPage): int {
+	$thread_list = array_values($threads); // Make sure it's zero-indexed
+	$index = array_search($thread_uid, $thread_list);
+		
+	if ($index !== false) {
+		return (int) floor($index / $threadsPerPage);
+	}
+	
+	return -1; // Thread not found
+}

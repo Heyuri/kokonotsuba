@@ -146,23 +146,11 @@ class registRoute {
 		if($computedPostInfo['is_op']) {
 			$this->board->rebuildBoard();
 		} else {
-			$pageToRebuild = $this->getPageOfThread($postData['thread_uid'], $threads);
+			$pageToRebuild = getPageOfThread($postData['thread_uid'], $threads, $this->config['PAGE_DEF']);
 			$this->board->rebuildBoardPage($pageToRebuild);
 		}
 		// Final redirect
 		redirect($redirect, 0);
-	}
-
-	// method to get the pages to rebuild
-	private function getPageOfThread(string $thread_uid, array $threads): int {
-		$thread_list = array_values($threads); // Make sure it's zero-indexed
-		$index = array_search($thread_uid, $thread_list);
-		
-		if ($index !== false) {
-			return (int) floor($index / $this->config['PAGE_DEF']);
-		}
-	
-		return -1; // Thread not found
 	}
 
 	private function gatherPostInputData(): array {
