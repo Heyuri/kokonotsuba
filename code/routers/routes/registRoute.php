@@ -293,16 +293,17 @@ class registRoute {
 	// generate url for redirect after post
 	private function generateRedirectURL(int $no, string &$email, int $resno, int $timeInMilliseconds): string {
 		$redirect = $this->config['PHP_SELF2'] . '?' . $timeInMilliseconds;
-	
+		
 		if (strstr($email, 'noko') && !strstr($email, 'nonoko')) {
 			$redirectResno = $resno ?: $no;
 			$redirectReplyNumber = 0;
 			if (!strstr($email, 'dump')) {
 				$redirectReplyNumber = $no;
 			}
+
+			$redirect = $this->board->getBoardThreadURL($redirectResno, $redirectReplyNumber);
 		}
 
-		$redirect = $this->board->getBoardThreadURL($redirectResno, $redirectReplyNumber);
 
 		$email = preg_replace('/^(no)+ko\d*$/i', '', $email);
 		return $redirect;
