@@ -339,20 +339,6 @@ class tableCreator {
 				INDEX(date_added)
 			) ENGINE=InnoDB;",
 
-			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['QUOTE_LINK_TABLE']} (
-				`quotelink_id` INT NOT NULL AUTO_INCREMENT,
-				`board_uid` INT NOT NULL,
-				`host_post_uid` INT NOT NULL,
-				`target_post_uid` INT NOT NULL,
-				PRIMARY KEY (`quotelink_id`),
-				INDEX (`host_post_uid`),
-				INDEX (`target_post_uid`),
-				CONSTRAINT `fk_quote_link_host_post_uid` FOREIGN KEY (`host_post_uid`)
-				REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE,
-				CONSTRAINT `fk_quote_link_target_post_uid` FOREIGN KEY (`target_post_uid`)
-				REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE
-			) ENGINE=InnoDB;",
-
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['THREAD_TABLE']} (
 				`insert_id` INT NOT NULL AUTO_INCREMENT,
 				`thread_uid` VARCHAR(255) NOT NULL,
@@ -406,6 +392,7 @@ class tableCreator {
 				INDEX (`thread_uid`),
 				INDEX (`no`)
 			) ENGINE=InnoDB;",
+			
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_NUMBER_TABLE']} (
 				`post_number` INT NOT NULL AUTO_INCREMENT,
 				`board_uid` INT NOT NULL,
@@ -414,6 +401,20 @@ class tableCreator {
 				INDEX(board_uid)
 			) ENGINE=InnoDB;",
 	
+			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['QUOTE_LINK_TABLE']} (
+				`quotelink_id` INT NOT NULL AUTO_INCREMENT,
+				`board_uid` INT NOT NULL,
+				`host_post_uid` INT NOT NULL,
+				`target_post_uid` INT NOT NULL,
+				PRIMARY KEY (`quotelink_id`),
+				INDEX (`host_post_uid`),
+				INDEX (`target_post_uid`),
+				CONSTRAINT `fk_quote_link_host_post_uid` FOREIGN KEY (`host_post_uid`)
+				REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE,
+				CONSTRAINT `fk_quote_link_target_post_uid` FOREIGN KEY (`target_post_uid`)
+				REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE
+			) ENGINE=InnoDB;",
+
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['ACTIONLOG_TABLE']} (
 				`id` INT NOT NULL AUTO_INCREMENT,
 				`time_added` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
