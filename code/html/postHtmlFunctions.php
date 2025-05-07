@@ -7,10 +7,10 @@
 /* Generate html for the post name dynamically */
 function generatePostNameHtml(array $staffCapcodes,
 	array $userCapcodes,
-	string $name = '', 
-	string $tripcode = '', 
-	string $secure_tripcode = '', 
-	string $capcode = '',
+	?string $name = '', 
+	?string $tripcode = '', 
+	?string $secure_tripcode = '', 
+	?string $capcode = '',
 	string $email = '',
 	bool $clearSage = false): string {
     // For compatability reasons, names already containing html will just be displayed without any further processing.
