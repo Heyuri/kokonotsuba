@@ -46,6 +46,8 @@ class mod_admindel extends moduleHelper {
 		$ActionLogger = ActionLogger::getInstance();
 		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
+
+		$threadSingleton = threadSingleton::getInstance();
 		
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_DELETE_POST']);
 		
@@ -88,7 +90,20 @@ class mod_admindel extends moduleHelper {
 		}
 		
 		deleteThreadCache($post['thread_uid']);
-		$this->board->rebuildBoard();
+
+		// if its a thread, rebuild all board pages
+		if($post['is_op']) {
+			$this->board->rebuildBoard();
+		} else {
+			// otherwise just rebuild the page the reply is on
+			$thread_uid = $post['thread_uid'];
+
+			$threads = $threadSingleton->getThreadListFromBoard($this->board);
+
+			$pageToRebuild = getPageOfThread($thread_uid, $threads, $this->config['PAGE_DEF']);
+			
+			$this->board->rebuildBoardPage($pageToRebuild);
+		}
 		redirect('back', 0);
 	}
 }
