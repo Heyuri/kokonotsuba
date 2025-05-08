@@ -36,8 +36,8 @@ class defaultRoute {
 		// Check for ?res= (thread view)
 		$res = intval($_GET['res'] ?? 0);
 
-		// Check for ?pagenum= (specific page number)
-		$pageParam = $_GET['pagenum'] ?? null;
+		// Check for ?page= (specific page number)
+		$pageParam = $_GET['page'] ?? null;
 
 		if ($res > 0) {
 			// Handle thread view (with potential redirection)
