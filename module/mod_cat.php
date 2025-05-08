@@ -3,11 +3,9 @@ class mod_cat extends moduleHelper {
 	private $mypage;
 	private $PAGE_DEF = 200;
 	private $RESICON = -1;
-	private $THUMB_EXT = -1;
 
 	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
 		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);				
-		$this->THUMB_EXT = $this->config['THUMB_SETTING']['Format'];
 		$this->RESICON = $this->config['STATIC_URL'].'image/replies.png';
 		$this->mypage = $this->getModulePageURL();
 	}
@@ -43,7 +41,6 @@ class mod_cat extends moduleHelper {
 	}
 
 	public function ModulePage(){
-		$PIO = PIOPDO::getInstance();
 		$threadSingleton = threadSingleton::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 		
@@ -128,27 +125,7 @@ class mod_cat extends moduleHelper {
 </td>';
 		}
 
-		$dat .= '</tr></tbody></table><hr>';
-
-		$dat .= '</div><table id="pager"><tbody><tr>';
-		$pageurl = $this->mypage."&sort_by={$sort}";
-		if($page)
-			$dat .= '<td><a href="'.$pageurl.'&page='.($page - 1).'">Previous</a></td>';
-		else
-			$dat .= '<td>First</td>';
-		$dat .= '<td>';
-		for($i = 0; $i <= $page_max; $i++){
-			if($i==$page)
-				$dat .= '[<b>'.$i.'</b>] ';
-			else
-				$dat .= '[<a href="'.$pageurl.'&page='.$i.'">'.$i.'</a>] ';
-		}
-		$dat .= '</td>';
-		if($page < $page_max)
-			$dat .= '<td><a href="'.$pageurl.'&page='.($page + 1).'">Next</a></td>';
-		else
-			$dat .= '<td>Last</td>';
-		$dat .= '</tr></tbody></table>';
+		$dat .= $globalHTML->drawPager($this->PAGE_DEF,$list_max, $this->mypage);
 		$globalHTML->foot($dat);
 		echo $dat;
 	}
