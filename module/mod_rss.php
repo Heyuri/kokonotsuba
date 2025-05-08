@@ -131,7 +131,7 @@ class mod_rss extends moduleHelper {
 				$post[$i]['no'],
 				$threadSingleton->resolveThreadNumberFromUID($post[$i]['thread_uid']),
 				$post[$i]['thread_uid'],
-				substr($post[$i]['tim'], 0, -3),
+				$post[$i]['time'],
 				$post[$i]['tw'],
 				$post[$i]['th'],
 				$post[$i]['tim'],
@@ -152,6 +152,7 @@ class mod_rss extends moduleHelper {
 			// Local time RFC standard format
 			$time = gmdate("D, d M Y H:i:s", $time + $this->config['TIME_ZONE'] * 60 * 60).$RFC_timezone;
 			$reslink = $this->BASEDIR.$this->config['PHP_SELF'].'?res='.($resno ? $resno : $no);
+
 			switch ($this->FEED_DISPLAYTYPE) {
 				case 'T':
 					// Title No. Number (Res: Number of Responses)
