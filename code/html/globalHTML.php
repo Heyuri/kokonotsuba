@@ -612,7 +612,7 @@ class globalHTML {
 				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF2'].'?'.$_SERVER['REQUEST_TIME'].'">Return</a></li>
 				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=account">Account</a></li>
 				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=boards">Boards</a></li>
-				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?pagenum=0">Live frontend</a></li>
+				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?page=0">Live frontend</a></li>
 				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=rebuild">Rebuild board</a></li>
 				';
 		$this->moduleEngine->useModuleMethods('LinksAboveBar', array(&$linksAboveBar,'admin',$authRoleLevel));
@@ -620,55 +620,87 @@ class globalHTML {
 		return $linksAboveBar;
 	}
 	
-	public function drawPager($entriesPerPage, $totalEntries, $url) {
-
-		if ((filter_var($totalEntries, FILTER_VALIDATE_INT) === false || $totalEntries < 0) 
-		|| (filter_var($entriesPerPage, FILTER_VALIDATE_INT) === false || $entriesPerPage < 0)) {
+	private function validateAndClampPagination(int $entriesPerPage, int $totalEntries): array {
+		if ((filter_var($totalEntries, FILTER_VALIDATE_INT) === false || $totalEntries < 0) ||
+			(filter_var($entriesPerPage, FILTER_VALIDATE_INT) === false || $entriesPerPage < 0)) {
 			$this->error("Total entries must be a valid non-negative integer.");
-		}		
+		}
 	
 		$totalPages = (int) ceil($totalEntries / $entriesPerPage);
 		$currentPage = $_REQUEST['page'] ?? 0;
-
+	
 		if (filter_var($currentPage, FILTER_VALIDATE_INT) === false) {
 			$this->error("Invalid page number");
 		}
+	
+		$currentPage = max(0, min($totalPages - 1, $currentPage));
+		return [$totalPages, $currentPage];
+	}
+	
+	private function getBoardPageLink(int $page, bool $isStaticAll, string $liveFrontEnd, bool $isLiveFrontend): string {
+		if ($isLiveFrontend) {
+			return $liveFrontEnd . '?page=' . $page;
+		}
+	
+		if ($isStaticAll || $page <= $this->config['STATIC_HTML_UNTIL']) {
+			return ($page === 0) ? 'index.html' : $page . '.html';
+		}
+	
+		return $liveFrontEnd . '?page=' . $page;
+	}
 
-		if ($currentPage < 0) $currentPage = 0;
-		if ($currentPage >= $totalPages) $currentPage = $totalPages - 1;
+	public function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, bool $isLiveFrontend = false): string {
+		list($totalPages, $currentPage) = $this->validateAndClampPagination($entriesPerPage, $totalEntries);
+	
+		$liveFrontEnd = $url . $this->config['PHP_SELF'];
+		$isStaticAll = ($this->config['STATIC_HTML_UNTIL'] == -1);
+	
+		$getLink = fn($page) => $this->getBoardPageLink($page, $isStaticAll, $liveFrontEnd, $isLiveFrontend);
 	
 		$pageHTML = '<table id="pager"><tbody><tr>';
 	
-		// First/Prev buttons
-		if ($currentPage <= 0) {
-			$pageHTML .= '<td>First</td>';
-			$pageHTML .= '<td>Prev</td>';
-		} else {
-			$pageHTML .= '<td><a href="'.$url.'&page=0">First</a></td>';
-			$pageHTML .= '<td><a href="'.$url.'&page='.($currentPage - 1).'">Prev</a></td>';
-		}
+		$pageHTML .= ($currentPage <= 0)
+			? '<td>First</td><td>Prev</td>'
+			: '<td><a href="' . $getLink(0) . '">First</a></td><td><a href="' . $getLink($currentPage - 1) . '">Prev</a></td>';
 	
-		// Page number links
 		$pageHTML .= '<td>';
-	
-		for ($pageIterator = 0; $pageIterator < $totalPages; $pageIterator++) {
-			if ($pageIterator == $currentPage) {
-				$pageHTML .= "<b> [$pageIterator] </b>";
-			} else {
-				$pageHTML .= ' [<a href="'.$url.'&page='.$pageIterator.'">'.$pageIterator.'</a>] ';
-			}
+		for ($i = 0; $i < $totalPages; $i++) {
+			$pageHTML .= ($i == $currentPage)
+				? "<b> [$i] </b>"
+				: ' [<a href="' . $getLink($i) . '">' . $i . '</a>] ';
 		}
-	
 		$pageHTML .= '</td>';
 	
-		// Next/Last buttons
-		if ($currentPage >= $totalPages - 1) {
-			$pageHTML .= '<td>Next</td>';
-			$pageHTML .= '<td>Last</td>';
-		} else {
-			$pageHTML .= '<td><a href="'.$url.'&page='.($currentPage + 1).'">Next</a></td>';
-			$pageHTML .= '<td><a href="'.$url.'&page='.($totalPages - 1).'">Last</a></td>';
+		$pageHTML .= ($currentPage >= $totalPages - 1)
+			? '<td>Next</td><td>Last</td>'
+			: '<td><a href="' . $getLink($currentPage + 1) . '">Next</a></td><td><a href="' . $getLink($totalPages - 1) . '">Last</a></td>';
+	
+		$pageHTML .= '</tr></tbody></table>';
+		return $pageHTML;
+	}
+
+	public function drawPager(int $entriesPerPage, int $totalEntries, string $url): string {
+		list($totalPages, $currentPage) = $this->validateAndClampPagination($entriesPerPage, $totalEntries);
+	
+		$getLink = fn($page) => $url . '&page=' . $page;
+	
+		$pageHTML = '<table id="pager"><tbody><tr>';
+	
+		$pageHTML .= ($currentPage <= 0)
+			? '<td>First</td><td>Prev</td>'
+			: '<td><a href="' . $getLink(0) . '">First</a></td><td><a href="' . $getLink($currentPage - 1) . '">Prev</a></td>';
+	
+		$pageHTML .= '<td>';
+		for ($i = 0; $i < $totalPages; $i++) {
+			$pageHTML .= ($i == $currentPage)
+				? "<b> [$i] </b>"
+				: ' [<a href="' . $getLink($i) . '">' . $i . '</a>] ';
 		}
+		$pageHTML .= '</td>';
+	
+		$pageHTML .= ($currentPage >= $totalPages - 1)
+			? '<td>Next</td><td>Last</td>'
+			: '<td><a href="' . $getLink($currentPage + 1) . '">Next</a></td><td><a href="' . $getLink($totalPages - 1) . '">Last</a></td>';
 	
 		$pageHTML .= '</tr></tbody></table>';
 		return $pageHTML;
