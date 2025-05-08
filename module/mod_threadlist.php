@@ -246,35 +246,9 @@ function checkall(){
 
 		$dat .= '</tbody></table>
 <hr>
-<table id="pager"><tr>
 ';
 
-		// Pagination
-		if ($page) {
-			$dat .= '<td><a href="'.$thisPage.'&page='.($page - 1).'&sort='.$sort.'">'._T('prev_page').'</a></td>';
-		} else {
-			$dat .= '<td>'._T('first_page').'</td>';
-		}
-
-		$dat .= '<td>';
-
-		for ($i = 0; $i <= $pageMax; $i++) {
-			if ($i == $page) {
-				$dat .= '[<b>'.$i.'</b>] ';
-			} else {
-				$dat .= '[<a href="'.$thisPage.'&page='.$i.'&sort='.$sort.'">'.$i.'</a>] ';
-			}
-		}
-
-		$dat .= '</td>';
-
-		if ($page < $pageMax) {
-			$dat .= '<td><a href="'.$thisPage.'&page='.($page + 1).'&sort='.$sort.'">'._T('next_page').'</a></td>';
-		} else {
-			$dat .= '<td>'._T('last_page').'</td>';
-		}
-
-		$dat .= '</tr></table>';
+		$dat .= $globalHTML->drawPager($this->THREADLIST_NUMBER, $listMax, $thisPage.'&sort='.$sort); 		
 
 		// Add delete form if necessary
 		if ($this->SHOW_FORM) {
