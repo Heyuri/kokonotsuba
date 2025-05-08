@@ -128,9 +128,15 @@ class boardRebuilder {
 		$roleLevel = $this->staffSession->getRoleLevel();
 		$adminMode = $roleLevel >= $this->config['roles']['LEV_JANITOR'];
 
+		$boardUrl = $this->board->getBoardURL();
+
 		$threadsPerPage = $this->config['PAGE_DEF'];
 		$threadPageOffset = $page * $threadsPerPage;
 		$previewCount = $this->config['RE_DEF'];
+
+
+		// whether to use the live frontend when viewing the page
+		$isLiveFrontend = isset($_GET['page']);
 
 		$threadsInPage = $this->PIO->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset);
 		
@@ -181,17 +187,7 @@ class boardRebuilder {
 			);
 		}
 
-		$prev = $page - 1;
-		$next = $page + 1;
-
-		$pte_vals['{$PAGENAV}'] = $this->buildDynamicPageNav(
-			$page,
-			$totalThreads,
-			$threadsPerPage,
-			$next,
-			$prev,
-			$adminMode
-		);
+		$pte_vals['{$PAGENAV}'] = $this->globalHTML->drawBoardPager($threadsPerPage, $totalThreads, $boardUrl, $isLiveFrontend);
 
 		$pageData .= $this->templateEngine->ParseBlock('MAIN', $pte_vals);
 		$this->globalHTML->foot($pageData);
@@ -206,120 +202,6 @@ class boardRebuilder {
 
 		// Directly echo output (dynamic)
 		echo $pageData;
-	}
-
-	private function buildNav($page, $totalPages): string {
-		$navData = '<table id="pager"><tbody><tr>';
-	
-		$prev = $page - 1;
-		$next = $page + 1;
-		$totalPageCount = $totalPages;
-	
-		// Prev button
-		if ($prev >= 0) {
-			if ($prev <= $this->config['STATIC_HTML_UNTIL']) {
-				// Use .html for pages <= STATIC_HTML_UNTIL
-				$prevFile = ($prev === 0) ? 'index.html' : $prev . '.html';
-			} else {
-				// Use query parameter for pages > STATIC_HTML_UNTIL
-				$prevFile = $this->config['PHP_SELF'] . 'pagenum=' . $prev;
-			}
-			$navData .= '<td><a href="' . $prevFile . '">&laquo; Prev</a></td>';
-		} else {
-			$navData .= '<td><span class="disabled">&laquo; Prev</span></td>';
-		}
-	
-		// Page numbers
-		$navData .= '<td>';
-		for ($i = 0; $i < $totalPageCount; $i++) {
-			if ($i <= $this->config['STATIC_HTML_UNTIL']) {
-				// Use .html for pages <= STATIC_HTML_UNTIL
-				$file = ($i === 0) ? 'index.html' : $i . '.html';
-			} else {
-				// Use query parameter for pages > STATIC_HTML_UNTIL
-				$file = $this->config['PHP_SELF'] . '?pagenum=' . $i;
-			}
-	
-			if ($i === $page) {
-				// Show current page as bold
-				$navData .= '[<b>' . $i . '</b>] ';  // Change to $i directly, so it starts at 0
-			} else {
-				$navData .= '[<a href="' . $file . '">' . $i . '</a>] ';  // Use $i for the page number
-			}
-		}
-		$navData .= '</td>';
-	
-		// Next button
-		if ($next < $totalPageCount) {
-			if ($next <= $this->config['STATIC_HTML_UNTIL']) {
-				// Use .html for pages <= STATIC_HTML_UNTIL
-				$nextFile = $next . '.html';
-			} else {
-				// Use query parameter for pages > STATIC_HTML_UNTIL
-				$nextFile = $this->config['PHP_SELF'] . '?pagenum=' . $next;
-			}
-			$navData .= '<td><a href="' . $nextFile . '">Next &raquo;</a></td>';
-		} else {
-			$navData .= '<td><span class="disabled">Next &raquo;</span></td>';
-		}
-	
-		$navData .= '</tr></tbody></table>';
-		return $navData;
-	}
-	
-	
-	private function buildDynamicPageNav(int $page, int $threadsCount, int $threadsPerPage, int $next, int $prev, bool $adminMode): string {
-		$totalPages = ceil($threadsCount / $threadsPerPage);
-		$nav = '<table id="pager"><tbody><tr>';
-
-		// Prev button
-		if ($prev >= 0) {
-			if (!$adminMode && $prev == 0) {
-				$nav .= '<td><form action="' . $this->config['PHP_SELF2'] . '" method="get">';
-			} else {
-				if ($adminMode || ($this->config['STATIC_HTML_UNTIL'] != -1 && $prev > $this->config['STATIC_HTML_UNTIL'])) {
-					$nav .= '<td><form action="' . $this->config['PHP_SELF'] . '?pagenum=' . $prev . '" method="post">';
-				} else {
-					$nav .= '<td><form action="' . $prev . $this->config['PHP_EXT'] . '" method="get">';
-				}
-			}
-			$nav .= '<div><input type="submit" value="' . _T('prev_page') . '"></div></form></td>';
-		} else {
-			$nav .= '<td>' . _T('first_page') . '</td>';
-		}
-
-		// Page numbers
-		$nav .= '<td>';
-		for ($i = 0; $i < $totalPages; $i++) {
-			$pageNext = ($i == $next) ? ' rel="next"' : '';
-			if ($page == $i) {
-				$nav .= '[<b>' . $i . '</b>] ';
-			} else {
-				if (!$adminMode && $i == 0) {
-					$nav .= '[<a href="' . $this->config['PHP_SELF2'] . '?">0</a>] ';
-				} elseif ($adminMode || ($this->config['STATIC_HTML_UNTIL'] != -1 && $i > $this->config['STATIC_HTML_UNTIL'])) {
-					$nav .= '[<a href="' . $this->config['PHP_SELF'] . '?pagenum=' . $i . '"' . $pageNext . '>' . $i . '</a>] ';
-				} else {
-					$nav .= '[<a href="' . $i . $this->config['PHP_EXT'] . '?"' . $pageNext . '>' . $i . '</a>] ';
-				}
-			}
-		}
-		$nav .= '</td>';
-
-		// Next button
-		if ($threadsCount > $next * $threadsPerPage) {
-			if ($adminMode || ($this->config['STATIC_HTML_UNTIL'] != -1 && $next > $this->config['STATIC_HTML_UNTIL'])) {
-				$nav .= '<td><form action="' . $this->config['PHP_SELF'] . '?pagenum=' . $next . '" method="post">';
-			} else {
-				$nav .= '<td><form action="' . $next . $this->config['PHP_EXT'] . '" method="get">';
-			}
-			$nav .= '<div><input type="submit" value="' . _T('next_page') . '"></div></form></td>';
-		} else {
-			$nav .= '<td>' . _T('last_page') . '</td>';
-		}
-
-		$nav .= '</tr></tbody></table>';
-		return $nav;
 	}
 	
 	public function rebuildBoardHtml(bool $logRebuild = false): void {
@@ -365,6 +247,10 @@ class boardRebuilder {
 		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine, $quoteLinksFromBoard);
 		$threadsPerPage = $this->config['PAGE_DEF'];
 	
+		$boardUrl = $this->board->getBoardURL();
+
+		$totalThreads = count($threads);
+
 		$threadsInPage = array_slice($threads, $page * $threadsPerPage, $threadsPerPage);
 	
 		$pte_vals['{$THREADS}'] = '';
@@ -389,7 +275,7 @@ class boardRebuilder {
 			);
 		}
 	
-		$pte_vals['{$PAGENAV}'] = $this->buildNav($page, ceil(count($threads) / $threadsPerPage));
+		$pte_vals['{$PAGENAV}'] = $this->globalHTML->drawBoardPager($threadsPerPage, $totalThreads, $boardUrl);
 	
 		$pageData = $headerHtml;
 		$pageData .= $this->templateEngine->ParseBlock('MAIN', array_merge($pte_vals, ['{$FORMDAT}' => $formHtml]));
