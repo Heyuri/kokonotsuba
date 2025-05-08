@@ -40,21 +40,20 @@ class mod_sticky extends moduleHelper {
 		}
 	}
 
-		public function autoHookRegistAfterCommit($lastno, $resto, $name, $email, $sub, $com): void {
-			$threadSingleton = threadSingleton::getInstance();
+	public function autoHookRegistAfterCommit($lastno, $resto, $name, $email, $sub, $com): void {
+		$threadSingleton = threadSingleton::getInstance();
 			
-			$threads = $threadSingleton->getThreadListFromBoard($this->board);
-			if (empty($threads)) return;
+		$threads = $threadSingleton->getThreadListFromBoard($this->board);
+		if (empty($threads)) return;
 
-			$opPosts = $threadSingleton->getFirstPostsFromThreads($threads);
-
-			foreach ($opPosts as $post) {
-				$flags = new FlagHelper($post['status']);
-				if ($flags->value('sticky')) {
-					$threadSingleton->bumpThread($post['thread_uid'], true);
-				}
+		$opPosts = $threadSingleton->getFirstPostsFromThreads($threads);
+		foreach ($opPosts as $post) {
+			$flags = new FlagHelper($post['status']);
+			if ($flags->value('sticky')) {
+				$threadSingleton->bumpThread($post['thread_uid'], true);
 			}
 		}
+	}
 
 	public function ModulePage(): void {
 		$PIO = PIOPDO::getInstance();
