@@ -659,25 +659,44 @@ class globalHTML {
 	
 		$pageHTML = '<table id="pager"><tbody><tr>';
 	
-		$pageHTML .= ($currentPage <= 0)
-			? '<td>[First]</td>'
-			: '<td><a href="' . $getLink($currentPage - 1) . '">Previous</a></td>';
+		// Previous
+		if ($currentPage <= 0) {
+			$pageHTML .= '<td>[First]</td>';
+		} else {
+			$pageHTML .= '<td><form action="' . $url . '" method="get">';
+			if ($isLiveFrontend) {
+				$pageHTML .= '<input type="hidden" name="page" value="' . ($currentPage - 1) . '">';
+			}
+			$pageHTML .= '<button type="submit">Previous</button></form></td>';
+		}
 	
+		// Page Numbers
 		$pageHTML .= '<td>';
 		for ($i = 0; $i < $totalPages; $i++) {
-			$pageHTML .= ($i == $currentPage)
-				? "<b> [$i] </b>"
-				: ' [<a href="' . $getLink($i) . '">' . $i . '</a>] ';
+			if ($i == $currentPage) {
+				$pageHTML .= "<b> [$i] </b>";
+			} else {
+				$pageHTML .= ' [<a href="' . $getLink($i) . '">' . $i . '</a>] ';
+			}
 		}
 		$pageHTML .= '</td>';
 	
-		$pageHTML .= ($currentPage >= $totalPages - 1)
-			? '<td>[Last]</td>'
-			: '<td><a href="' . $getLink($currentPage + 1) . '">Next</a></td>';
+		// Next
+		if ($currentPage >= $totalPages - 1) {
+			$pageHTML .= '<td>[Last]</td>';
+		} else {
+			$pageHTML .= '<td><form action="' . $url . '" method="get">';
+			if ($isLiveFrontend) {
+				$pageHTML .= '<input type="hidden" name="page" value="' . ($currentPage + 1) . '">';
+			}
+			$pageHTML .= '<button type="submit">Next</button></form></td>';
+		}
 	
 		$pageHTML .= '</tr></tbody></table>';
+	
 		return $pageHTML;
 	}
+	
 
 	public function drawPager(int $entriesPerPage, int $totalEntries, string $url): string {
 		list($totalPages, $currentPage) = $this->validateAndClampPagination($entriesPerPage, $totalEntries);
@@ -688,7 +707,12 @@ class globalHTML {
 	
 		$pageHTML .= ($currentPage <= 0)
 			? '<td>[First]</td>'
-			: '<td><a href="' . $getLink(0) . '">First</a></td><td><a href="' . $getLink($currentPage - 1) . '">Previous</a></td>';
+			: '<td>
+					<form action="' . $url . '" method="get">
+						<input type="hidden" name="page" value="'. ($currentPage + 1).'">
+						<button type="submit">Next</button>
+					</form>
+				</td>';
 	
 		$pageHTML .= '<td>';
 		for ($i = 0; $i < $totalPages; $i++) {
@@ -700,7 +724,12 @@ class globalHTML {
 	
 		$pageHTML .= ($currentPage >= $totalPages - 1)
 			? '<td>[Last]</td>'
-			: '<td><a href="' . $getLink($currentPage + 1) . '">Next</a></td>';
+			: '<td>
+					<form action="' . $url . '" method="get">
+						<input type="hidden" name="page" value="'. ($currentPage + 1).'">
+						<button type="submit">Next</button>
+					</form>
+				</td>';
 	
 		$pageHTML .= '</tr></tbody></table>';
 		return $pageHTML;
