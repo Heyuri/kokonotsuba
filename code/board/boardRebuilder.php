@@ -187,7 +187,7 @@ class boardRebuilder {
 			);
 		}
 
-		$pte_vals['{$PAGENAV}'] = $this->globalHTML->drawBoardPager($threadsPerPage, $totalThreads, $boardUrl, $isLiveFrontend);
+		$pte_vals['{$PAGENAV}'] = $this->globalHTML->drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl);
 
 		$pageData .= $this->templateEngine->ParseBlock('MAIN', $pte_vals);
 		$this->globalHTML->foot($pageData);
@@ -275,7 +275,7 @@ class boardRebuilder {
 			);
 		}
 	
-		$pte_vals['{$PAGENAV}'] = $this->globalHTML->drawBoardPager($threadsPerPage, $totalThreads, $boardUrl);
+		$pte_vals['{$PAGENAV}'] = $this->globalHTML->drawBoardPager($threadsPerPage, $totalThreads, $boardUrl, $page);
 	
 		$pageData = $headerHtml;
 		$pageData .= $this->templateEngine->ParseBlock('MAIN', array_merge($pte_vals, ['{$FORMDAT}' => $formHtml]));
