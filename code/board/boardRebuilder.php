@@ -128,7 +128,7 @@ class boardRebuilder {
 		$roleLevel = $this->staffSession->getRoleLevel();
 		$adminMode = $roleLevel >= $this->config['roles']['LEV_JANITOR'];
 
-		$boardUrl = $this->board->getBoardURL();
+		$boardUrl = $this->board->getBoardURL() . $this->config['PHP_SELF'];
 
 		$threadsPerPage = $this->config['PAGE_DEF'];
 		$threadPageOffset = $page * $threadsPerPage;
@@ -247,7 +247,7 @@ class boardRebuilder {
 		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine, $quoteLinksFromBoard);
 		$threadsPerPage = $this->config['PAGE_DEF'];
 	
-		$boardUrl = $this->board->getBoardURL();
+		$boardUrl = $this->board->getBoardURL() . $this->config['PHP_SELF'];
 
 		$totalThreads = count($threads);
 
