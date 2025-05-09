@@ -620,22 +620,25 @@ class globalHTML {
 		return $linksAboveBar;
 	}
 	
-	private function validateAndClampPagination(int $entriesPerPage, int $totalEntries): array {
+	private function validateAndClampPagination(int $entriesPerPage, int $totalEntries, int $currentPage): array {
 		if ((filter_var($totalEntries, FILTER_VALIDATE_INT) === false || $totalEntries < 0) ||
 			(filter_var($entriesPerPage, FILTER_VALIDATE_INT) === false || $entriesPerPage < 0)) {
 			$this->error("Total entries must be a valid non-negative integer.");
 		}
 	
 		$totalPages = (int) ceil($totalEntries / $entriesPerPage);
-		$currentPage = $_REQUEST['page'] ?? 0;
 	
+		// Validate current page number
 		if (filter_var($currentPage, FILTER_VALIDATE_INT) === false) {
 			$this->error("Invalid page number");
 		}
 	
+		// Clamp the current page to be within the valid range
 		$currentPage = max(0, min($totalPages - 1, $currentPage));
+	
 		return [$totalPages, $currentPage];
 	}
+	
 	
 	private function getBoardPageLink(int $page, bool $isStaticAll, string $liveFrontEnd, bool $isLiveFrontend): string {
 		if ($isLiveFrontend) {
@@ -649,13 +652,11 @@ class globalHTML {
 		return $liveFrontEnd . '?page=' . $page;
 	}
 
-	public function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, bool $isLiveFrontend = false): string {
-		list($totalPages, $currentPage) = $this->validateAndClampPagination($entriesPerPage, $totalEntries);
+	public function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int $currentPage): string {
+		[$totalPages, $currentPage] = $this->validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
 	
-		$liveFrontEnd = $url . $this->config['PHP_SELF'];
 		$isStaticAll = ($this->config['STATIC_HTML_UNTIL'] == -1);
-	
-		$getLink = fn($page) => $this->getBoardPageLink($page, $isStaticAll, $liveFrontEnd, $isLiveFrontend);
+		$getLink = fn($page) => $this->getBoardPageLink($page, $isStaticAll, $url . $this->config['PHP_SELF'], false);
 	
 		$pageHTML = '<table id="pager"><tbody><tr>';
 	
@@ -663,10 +664,7 @@ class globalHTML {
 		if ($currentPage <= 0) {
 			$pageHTML .= '<td>[First]</td>';
 		} else {
-			$pageHTML .= '<td><form action="' . $url . '" method="get">';
-			if ($isLiveFrontend) {
-				$pageHTML .= '<input type="hidden" name="page" value="' . ($currentPage - 1) . '">';
-			}
+			$pageHTML .= '<td><form action="' . $getLink($currentPage - 1) . '" method="get">';
 			$pageHTML .= '<button type="submit">Previous</button></form></td>';
 		}
 	
@@ -685,11 +683,56 @@ class globalHTML {
 		if ($currentPage >= $totalPages - 1) {
 			$pageHTML .= '<td>[Last]</td>';
 		} else {
-			$pageHTML .= '<td><form action="' . $url . '" method="get">';
-			if ($isLiveFrontend) {
-				$pageHTML .= '<input type="hidden" name="page" value="' . ($currentPage + 1) . '">';
-			}
+			$pageHTML .= '<td><form action="' . $getLink($currentPage + 1) . '" method="get">';
 			$pageHTML .= '<button type="submit">Next</button></form></td>';
+		}
+	
+		$pageHTML .= '</tr></tbody></table>';
+	
+		return $pageHTML;
+	}
+	
+	public function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url): string {
+		$currentPage = $_REQUEST['page'] ?? 0;
+
+		[$totalPages, $currentPage] = $this->validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
+	
+		$actionUrl = $url . $this->config['PHP_SELF'];
+	
+		$pageHTML = '<table id="pager"><tbody><tr>';
+
+		$isStaticAll = ($this->config['STATIC_HTML_UNTIL'] == -1);
+		$getLink = fn($page) => $this->getBoardPageLink($page, $isStaticAll, $actionUrl, true);
+	
+		// Previous
+		if ($currentPage <= 0) {
+			$pageHTML .= '<td>[First]</td>';
+		} else {
+			$pageHTML .= '<td><form action="' . $actionUrl . '" method="get">
+				<input type="hidden" name="page" value="' . ($currentPage - 1) . '">
+				<button type="submit">Previous</button>
+			</form></td>';
+		}
+	
+		// Page Numbers
+		$pageHTML .= '<td>';
+		for ($i = 0; $i < $totalPages; $i++) {
+			if ($i == $currentPage) {
+				$pageHTML .= "<b> [$i] </b>";
+			} else {
+				$pageHTML .= ' [<a href="' . $getLink($i) . '">' . $i . '</a>] ';
+			}
+		}
+		$pageHTML .= '</td>';
+	
+		// Next
+		if ($currentPage >= $totalPages - 1) {
+			$pageHTML .= '<td>[Last]</td>';
+		} else {
+			$pageHTML .= '<td><form action="' . $actionUrl . '" method="get">
+				<input type="hidden" name="page" value="' . ($currentPage + 1) . '">
+				<button type="submit">Next</button>
+			</form></td>';
 		}
 	
 		$pageHTML .= '</tr></tbody></table>';
@@ -699,7 +742,9 @@ class globalHTML {
 	
 
 	public function drawPager(int $entriesPerPage, int $totalEntries, string $url): string {
-		list($totalPages, $currentPage) = $this->validateAndClampPagination($entriesPerPage, $totalEntries);
+		$currentPage = $_REQUEST['page'] ?? 0;
+
+		[$totalPages, $currentPage] = $this->validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
 	
 		$getLink = fn($page) => $url . '&page=' . $page;
 	
