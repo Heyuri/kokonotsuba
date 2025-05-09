@@ -660,8 +660,8 @@ class globalHTML {
 		$pageHTML = '<table id="pager"><tbody><tr>';
 	
 		$pageHTML .= ($currentPage <= 0)
-			? '<td>First</td><td>Prev</td>'
-			: '<td><a href="' . $getLink(0) . '">First</a></td><td><a href="' . $getLink($currentPage - 1) . '">Prev</a></td>';
+			? '<td>[First]</td>'
+			: '<td><a href="' . $getLink($currentPage - 1) . '">Previous</a></td>';
 	
 		$pageHTML .= '<td>';
 		for ($i = 0; $i < $totalPages; $i++) {
@@ -672,8 +672,8 @@ class globalHTML {
 		$pageHTML .= '</td>';
 	
 		$pageHTML .= ($currentPage >= $totalPages - 1)
-			? '<td>Next</td><td>Last</td>'
-			: '<td><a href="' . $getLink($currentPage + 1) . '">Next</a></td><td><a href="' . $getLink($totalPages - 1) . '">Last</a></td>';
+			? '<td>[Last]</td>'
+			: '<td><a href="' . $getLink($currentPage + 1) . '">Next</a></td>';
 	
 		$pageHTML .= '</tr></tbody></table>';
 		return $pageHTML;
@@ -687,8 +687,8 @@ class globalHTML {
 		$pageHTML = '<table id="pager"><tbody><tr>';
 	
 		$pageHTML .= ($currentPage <= 0)
-			? '<td>First</td><td>Prev</td>'
-			: '<td><a href="' . $getLink(0) . '">First</a></td><td><a href="' . $getLink($currentPage - 1) . '">Prev</a></td>';
+			? '<td>[First]</td>'
+			: '<td><a href="' . $getLink(0) . '">First</a></td><td><a href="' . $getLink($currentPage - 1) . '">Previous</a></td>';
 	
 		$pageHTML .= '<td>';
 		for ($i = 0; $i < $totalPages; $i++) {
@@ -699,8 +699,8 @@ class globalHTML {
 		$pageHTML .= '</td>';
 	
 		$pageHTML .= ($currentPage >= $totalPages - 1)
-			? '<td>Next</td><td>Last</td>'
-			: '<td><a href="' . $getLink($currentPage + 1) . '">Next</a></td><td><a href="' . $getLink($totalPages - 1) . '">Last</a></td>';
+			? '<td>[Last]</td>'
+			: '<td><a href="' . $getLink($currentPage + 1) . '">Next</a></td>';
 	
 		$pageHTML .= '</tr></tbody></table>';
 		return $pageHTML;
