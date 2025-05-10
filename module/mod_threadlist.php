@@ -60,7 +60,6 @@ class mod_threadlist extends moduleHelper {
 
 	public function autoHookThreadFront(&$txt, $isReply) {
 		$threadSingleton = threadSingleton::getInstance();
-		$PIO = PIOPDO::getInstance();
 
 		if ($this->SHOW_IN_MAIN && !$isReply) {
 				$dat = '';
