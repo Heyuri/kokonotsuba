@@ -790,6 +790,13 @@ caption h3 {
 	z-index: 495;
 }
 
+.postinfo {
+	display: flex;
+  align-items: baseline;
+  gap: 0 0.25em;
+  flex-wrap: wrap;
+}
+
 .postnum a {
 	color: inherit !important;
 	text-decoration: none;
@@ -828,6 +835,10 @@ caption h3 {
   image-rendering: pixelated;
 }
 
+.postInfoExtra {
+	display: contents;
+}
+
 .sod {
 	color: inherit !important;
 	text-decoration: none;
@@ -864,13 +875,8 @@ caption h3 {
 .post .time,
 .post .userIP,
 .post .postnum,
-.post .adminDeleteFunctions,
-.post .adminBanFunction,
+.post .adminFunctions,
 .post .host,
-.post .adminMoveThreadFunction,
-.post .adminAutosageFunction,
-.post .adminLockFunction,
-.post .adminStickyFunction,
 .post .filterpostContainer,
 .post .soudaneContainer,
 .post .replyButton,

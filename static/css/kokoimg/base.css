@@ -717,6 +717,13 @@ caption h3 {
 	z-index: 495;
 }
 
+.postinfo {
+	display: flex;
+  align-items: baseline;
+  gap: 0 0.25em;
+  flex-wrap: wrap;
+}
+
 .postinfo label {
 	display: contents;
 }
@@ -746,6 +753,10 @@ caption h3 {
 	vertical-align: middle;
   image-rendering: crisp-edges; /* Pre-2022 Firefox */
   image-rendering: pixelated;
+}
+
+.postInfoExtra {
+	display: contents;
 }
 
 .postnum a,
@@ -783,13 +794,8 @@ caption h3 {
 .post .time,
 .post .userIP,
 .post .postnum,
-.post .adminDeleteFunctions,
-.post .adminBanFunction,
+.post .adminFunctions,
 .post .host,
-.post .adminMoveThreadFunction,
-.post .adminAutosageFunction,
-.post .adminLockFunction,
-.post .adminStickyFunction,
 .post .filterpostContainer,
 .post .soudaneContainer,
 .post .replyButton,
@@ -801,7 +807,8 @@ caption h3 {
 .post .postertrip:empty,
 .post .postInfoExtra:empty,
 .post .backlinks:empty,
-.post .filesize:empty {
+.post .filesize:empty,
+.postformItem:empty {
 	display: none !important;
 }
 
