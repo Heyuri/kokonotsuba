@@ -1073,9 +1073,11 @@ caption h3 {
 .persistpager #pager {
 	background-color: var(--color-bg-reply);
 	position: fixed;
+	position: sticky;
 	left: 8px;
 	bottom: 8px;
 	z-index: 1;
+	max-width: 75%;
 }
 
 #pager {
