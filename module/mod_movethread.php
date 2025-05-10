@@ -24,9 +24,9 @@ class mod_movethread extends moduleHelper {
 		if (!$isres) {
 			$threadStatus = new FlagHelper($post['status']); 
 			if($threadStatus->value('ghost')) {
-				$modfunc .= '<span class="adminMoveThreadFunction" title="Ghost threads cannot be moved.">[mt]</span>';
+				$modfunc .= '<span class="adminFunctions adminMoveThreadFunction" title="Ghost threads cannot be moved.">[mt]</span>';
 			} else {
-				$modfunc .= '<span class="adminMoveThreadFunction">[<a href="' . $this->mypage . '&thread_uid=' . $post['thread_uid'] . '" title="move thread">MT</a>]</span>';
+				$modfunc .= '<span class="adminFunctions adminMoveThreadFunction">[<a href="' . $this->mypage . '&thread_uid=' . $post['thread_uid'] . '" title="Move thread">MT</a>]</span>';
 			}
 		}
 	}
