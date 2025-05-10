@@ -134,10 +134,6 @@ class boardRebuilder {
 		$threadPageOffset = $page * $threadsPerPage;
 		$previewCount = $this->config['RE_DEF'];
 
-
-		// whether to use the live frontend when viewing the page
-		$isLiveFrontend = isset($_GET['page']);
-
 		$threadsInPage = $this->PIO->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset);
 		
 		$totalThreads = count($this->threadSingleton->fetchThreadListFromBoard($this->board));
