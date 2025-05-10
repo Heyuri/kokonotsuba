@@ -382,7 +382,7 @@ const kkhoverbacklink = {
 		div.innerHTML +=
 			'<label><input type="checkbox" onchange="localStorage.setItem(\'addbacklinks\',this.checked);kkhoverbacklink.reset();kkhoverbacklink.startup();" ' +
 			(localStorage.getItem("addbacklinks") === "true" ? 'checked' : '') +
-			' /> Add Backlinks</label>'
+			'>Add reply backlinks</label>'
 	}
 }
 

@@ -31,11 +31,9 @@ class mod_admindel extends moduleHelper {
 		
 		$postBoard = searchBoardArrayForBoard($this->moduleBoardList, $post['boardUID']);
 
-		$modfunc.= '<span class="adminDeleteFunctions">';
-		$modfunc.= '[<a href="'.$this->mypage.'&action=del&post_uid='.$post['post_uid'].'&excimer=1" title="Delete">D</a>]';
-		if ($post['ext'] && $FileIO->imageExists($post['tim'].$post['ext'], $postBoard)) $modfunc.= '[<a href="'.$this->mypage.'&action=imgdel&post_uid='.$post['post_uid'].'" title="Delete File">Df</a>]';
-		$modfunc.= '[<a href="'.$this->mypage.'&action=delmute&post_uid='.$post['post_uid'].'" title="Delete and Mute for '.$this->JANIMUTE_LENGTH.' minute'.($this->JANIMUTE_LENGTH == 1 ? "" : "s").'">DM</a>]';
-		$modfunc.= '</span>';
+		$modfunc.= '<span class="adminFunctions adminDeleteFunction">[<a href="'.$this->mypage.'&action=del&post_uid='.$post['post_uid'].'&excimer=1" title="Delete">D</a>]</span>';
+		if ($post['ext'] && $FileIO->imageExists($post['tim'].$post['ext'], $postBoard)) $modfunc.= '<span class="adminFunctions adminDeleteFileFunction">[<a href="'.$this->mypage.'&action=imgdel&post_uid='.$post['post_uid'].'" title="Delete file">DF</a>]</span>';
+		$modfunc.= '<span class="adminFunctions adminDeleteMuteFunction">[<a href="'.$this->mypage.'&action=delmute&post_uid='.$post['post_uid'].'" title="Delete and mute for '.$this->JANIMUTE_LENGTH.' minute'.($this->JANIMUTE_LENGTH == 1 ? "" : "s").'">DM</a>]</span>';
 	}
 
 	public function ModulePage() {

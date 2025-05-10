@@ -23,7 +23,7 @@ class mod_janitor extends moduleHelper {
 		$staffSession = new staffAccountFromSession;
 		if ($staffSession->getRoleLevel() != $this->config['roles']['LEV_JANITOR']) return;
 
-		$modfunc .= '<span class="adminWarnFunction">[<a href="' . $this->mypage . '&post_uid=' . $post['post_uid'] . '" title="Warn">W</a>]</span>';
+		$modfunc .= '<span class="adminFunctions adminWarnFunction">[<a href="' . $this->mypage . '&post_uid=' . $post['post_uid'] . '" title="Warn">W</a>]</span>';
 	}
 
 	public function ModulePage() {

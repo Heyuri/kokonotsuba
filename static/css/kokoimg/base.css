@@ -13,8 +13,8 @@
 }
 
 :root {
-	--font-family-serif: 'Times New Roman', 'Times', serif;
-	--font-family-sans-serif: system-ui, 'Segoe UI', Tahoma, Arial, sans-serif;
+	--font-family-serif: 'Times New Roman', 'Times', serif, "MS PGothic", "Mona", "Monapo", "IPAMonaPGothic", "IPAPGothic", "submona";
+	--font-family-sans-serif: system-ui, 'Segoe UI', Tahoma, Arial, sans-serif, Meiryo, 'Hiragino Sans', Osaka;
 	--font-family-msgothic: "MS Gothic", "IPAMonaGothic", "IPAGothic", "BIZ UDGothic", "Osaka-Mono", "Noto Sans Mono CJK JP", monospace;
 	--font-family-mspgothic: "MS PGothic", "Mona", "Monapo", "IPAMonaPGothic", "IPAPGothic", "submona", sans-serif;
 	--font-family-aa-2ch: "MS PGothic", "Mona", "Monapo", "IPAMonaPGothic", "IPAPGothic", "saitamaar_light", "submona", sans-serif;
@@ -22,6 +22,7 @@
 	--font-size-small: 0.8125em;
 	--font-size-x-small: 0.75em;
 	--font-size-xx-small: 0.625em;
+	--font-weight-bold: 700;
 }
 
 /*** Better sizing ***/
@@ -55,6 +56,17 @@ a:focus {
 
 a[href*="youtube.com"] {
 	text-decoration: underline dotted !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+b,
+strong {
+	font-weight: var(--font-weight-bold);
 }
 
 pre,
@@ -318,7 +330,7 @@ caption h3 {
 	margin: 4px 0;
 	padding: 1px 0;
 	font-size: var(--font-size-regular);
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 	text-align: center;
 }
 
@@ -360,7 +372,7 @@ caption h3 {
 }
 
 .postblock label {
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 #postformTable #name,
@@ -554,7 +566,7 @@ caption h3 {
 }
 
 #countnumber {
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 /******** Blotter ********/
@@ -670,7 +682,7 @@ caption h3 {
 	margin: 0;
 	padding: 0;
 	display: inline-block;
-	background-image: url(../image/download.png);
+	background-image: url(../../image/download.png);
 }
 
 .fileProperties,
@@ -705,6 +717,13 @@ caption h3 {
 	z-index: 495;
 }
 
+.postinfo {
+	display: flex;
+  align-items: baseline;
+  gap: 0 0.25em;
+  flex-wrap: wrap;
+}
+
 .postinfo label {
 	display: contents;
 }
@@ -712,7 +731,7 @@ caption h3 {
 .title {
 	color: var(--color-fg-title);
 	font-size: 1.2em;
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 .name {
@@ -721,19 +740,23 @@ caption h3 {
 
 .postername,
 .postercap {
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 .sageText,
 .autosage {
 	color: var(--color-fg-warning);
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 .staffico {
 	vertical-align: middle;
   image-rendering: crisp-edges; /* Pre-2022 Firefox */
   image-rendering: pixelated;
+}
+
+.postInfoExtra {
+	display: contents;
 }
 
 .postnum a,
@@ -771,13 +794,8 @@ caption h3 {
 .post .time,
 .post .userIP,
 .post .postnum,
-.post .adminDeleteFunctions,
-.post .adminBanFunction,
+.post .adminFunctions,
 .post .host,
-.post .adminMoveThreadFunction,
-.post .adminAutosageFunction,
-.post .adminLockFunction,
-.post .adminStickyFunction,
 .post .filterpostContainer,
 .post .soudaneContainer,
 .post .replyButton,
@@ -789,7 +807,8 @@ caption h3 {
 .post .postertrip:empty,
 .post .postInfoExtra:empty,
 .post .backlinks:empty,
-.post .filesize:empty {
+.post .filesize:empty,
+.postformItem:empty {
 	display: none !important;
 }
 
@@ -814,7 +833,7 @@ caption h3 {
 
 .fortune,
 .roll {
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 	margin-bottom: 0;
 }
 
@@ -824,7 +843,7 @@ caption h3 {
 
 .warning {
 	color: var(--color-fg-warning);
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 .banIcon {
@@ -833,7 +852,7 @@ caption h3 {
 
 .ipWarning {
 	color: var(--color-fg-warning-ip);
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 .omittedposts {
@@ -929,9 +948,8 @@ caption h3 {
 
 .codeKeyword {
 	color: #569cd6;
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
-
 
 .fontSize1 {
 	font-size: 0.625em;
@@ -966,7 +984,7 @@ caption h3 {
 	background-color: #ffe6f9;
 	color: #78376d;
 	font-family: serif;
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 .partybus {
@@ -1014,7 +1032,7 @@ caption h3 {
 }
 
 .boku {
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 .bokuGreen {
@@ -1055,9 +1073,11 @@ caption h3 {
 .persistpager #pager {
 	background-color: var(--color-bg-reply);
 	position: fixed;
+	position: sticky;
 	left: 8px;
 	bottom: 8px;
 	z-index: 1;
+	max-width: 75%;
 }
 
 #pager {
@@ -1191,7 +1211,7 @@ caption h3 {
 }
 
 #viewingAllFrom {
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 	text-align: center;
 }
 
@@ -1261,13 +1281,13 @@ caption h3 {
 .error,
 .offline {
 	color: #ff0000;
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 .good,
 .online {
 	color: #008000;
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 #actionlogForm {
@@ -1312,7 +1332,7 @@ caption h3 {
 	border-width: 3px;
 	font-family: Verdana, Tahoma, Arial, sans-serif;
 	font-size: 1.2em;
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 	cursor: pointer;
 }
 
@@ -1370,6 +1390,24 @@ caption h3 {
   #banimg {
     width: 100%; /* Makes the image container fill the width */
   }
+}
+
+/************************ Overboard ***********************************/
+
+#overboardFilterForm {
+	display: table;
+	margin: 0 auto;
+	text-align: center;
+}
+
+.overboardFilterList {
+	padding-left: 0;
+	text-align: left;
+  list-style: none;
+}
+
+.filterSelectBoardItem {
+	text-align: left;
 }
 
 /************************ Catalog *************************************/
@@ -1544,7 +1582,7 @@ caption h3 {
 }
 
 .blotterDate {
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 .blotterListShowAll {
@@ -1576,7 +1614,7 @@ caption h3 {
 
 .flashboardList .title {
 	font-size: var(--font-size-regular);
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
   text-align: left;
 }
 
@@ -1735,7 +1773,7 @@ caption h3 {
 }
 
 #galctrl a, #galctrl a:hover {
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 #galctrl a:hover {
@@ -1802,13 +1840,13 @@ a.linkjs {
 	max-width: 100vw;
 	max-height: 100vh;
 	overflow: hidden;
-	opacity: 0.9;
+	opacity: 0.75;
 	animation: fade 0.1s;
 }
 
-.wclosing {
+/* .wclosing {
 	animation: fadeout 0.1s;
-}
+} */
 
 #wintop,
 .window:hover {
@@ -1839,7 +1877,7 @@ a.linkjs {
 .winname {
 	flex-grow: 1;
 	margin: 0.125em 0.25em;
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 	text-align: left;
 }
 
@@ -1952,7 +1990,7 @@ a.linkjs {
 
 /* .filterpost {
   text-decoration: none;
-  font-weight: bold;
+  font-weight: var(--font-weight-bold);
 	font-size: 9pt;
 } */
 
@@ -1995,9 +2033,9 @@ a.linkjs {
 }
 
 #qrcom {
-	width: 240px;
+	width: 250px;
 	height: 110px;
-	min-width: 240px;
+	min-width: 250px;
 	min-height: 110px;
 	max-width: calc(100vw - 35px);
 	max-height: calc(100vh - 119px);
@@ -2276,9 +2314,9 @@ input[type=reset] {
 
 /************************ Hachi stuff *************************/
 
-/* .detailsbox {
+.detailsbox {
 	padding: 0.25em;
-} */
+}
 
 .detailsbox > summary {
   cursor: pointer;
@@ -2303,12 +2341,8 @@ input[type=reset] {
 	list-style: none;
 }
 
-.overboardFilterFormContainer {
-	text-align: center;
-}
-
 .overboardThreadBoardTitle {
-	font-weight: bold;
+	font-weight: var(--font-weight-bold);
 }
 
 .url-input {
