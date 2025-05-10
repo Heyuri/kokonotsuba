@@ -948,6 +948,7 @@ caption h3 {
 .previewBox .post {
 	background-color: var(--color-bg-thread);
 	border: 1px solid var(--color-lo-contrast-border) !important;
+	padding: 0.25em;
 }
 
 .previewBox .del {
@@ -1359,6 +1360,10 @@ caption h3 {
 
 #accountManagementList {
 	margin: 0;
+}
+
+#inputGlobalMessage {
+	width: 100%;
 }
 
 /************************ Ban management*******************************/
