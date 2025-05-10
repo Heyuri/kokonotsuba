@@ -993,6 +993,16 @@ caption h3 {
 	overflow: auto;
 }
 
+.codeComment {
+	color: #6a9955;
+	font-style: italic;
+}
+
+.codeKeyword {
+	color: #569cd6;
+	font-weight: bold;
+}
+
 .fontSize1 {
 	font-size: 0.625em;
 }
