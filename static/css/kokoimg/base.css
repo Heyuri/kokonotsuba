@@ -1392,6 +1392,24 @@ caption h3 {
   }
 }
 
+/************************ Overboard ***********************************/
+
+#overboardFilterForm {
+	display: table;
+	margin: 0 auto;
+	text-align: center;
+}
+
+.overboardFilterList {
+	padding-left: 0;
+	text-align: left;
+  list-style: none;
+}
+
+.filterSelectBoardItem {
+	text-align: left;
+}
+
 /************************ Catalog *************************************/
 
 #catsett {
@@ -2296,9 +2314,9 @@ input[type=reset] {
 
 /************************ Hachi stuff *************************/
 
-/* .detailsbox {
+.detailsbox {
 	padding: 0.25em;
-} */
+}
 
 .detailsbox > summary {
   cursor: pointer;
@@ -2321,10 +2339,6 @@ input[type=reset] {
 	margin: 0;
 	padding: 0;
 	list-style: none;
-}
-
-.overboardFilterFormContainer {
-	text-align: center;
 }
 
 .overboardThreadBoardTitle {

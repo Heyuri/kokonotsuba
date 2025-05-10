@@ -414,7 +414,8 @@ caption h3 {
 
 .menu,
 .postlists,
-.postblock {
+.postblock,
+.detailsbox {
 	background-color: var(--color-bg-menu);
 	border-color: var(--color-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-lo-contrast-border);
 	border-style: solid;
@@ -1445,6 +1446,24 @@ caption h3 {
   }
 }
 
+/************************ Overboard ***********************************/
+
+#overboardFilterForm {
+	display: table;
+	margin: 20px auto;
+	text-align: center;
+}
+
+.overboardFilterList {
+	padding-left: 0;
+	text-align: left;
+  list-style: none;
+}
+
+.filterSelectBoardItem {
+	text-align: left;
+}
+
 /************************ Catalog *************************************/
 
 #catsett {
@@ -2127,9 +2146,10 @@ width: 300px;
 
 /************************ Hachi stuff *************************/
 
-/* .detailsbox {
+.detailsbox {
+	border-width: 1px;
 	padding: 0.25em;
-} */
+}
 
 .detailsbox > summary {
   cursor: pointer;
@@ -2152,10 +2172,6 @@ width: 300px;
 	margin: 0;
 	padding: 0;
 	list-style: none;
-}
-
-.overboardFilterFormContainer {
-	text-align: center;
 }
 
 .overboardThreadBoardTitle {
