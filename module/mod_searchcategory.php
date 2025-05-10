@@ -1,4 +1,3 @@
-//
 <?php
 class mod_searchcategory extends moduleHelper {
 	private $mypage;
