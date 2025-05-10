@@ -670,7 +670,7 @@ caption h3 {
 	margin: 0;
 	padding: 0;
 	display: inline-block;
-	background-image: url(../image/download.png);
+	background-image: url(../../image/download.png);
 }
 
 .fileProperties,
@@ -931,7 +931,6 @@ caption h3 {
 	color: #569cd6;
 	font-weight: bold;
 }
-
 
 .fontSize1 {
 	font-size: 0.625em;
