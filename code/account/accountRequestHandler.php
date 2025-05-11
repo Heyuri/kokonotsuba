@@ -5,46 +5,38 @@
 use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
 
 class accountRequestHandler {
-	private $config;
+	private readonly AccountIO $AccountIO;
+	private actionLogger $actionLogger;
 	
-	public function __construct($board) { 
-		$this->config = $board->loadBoardConfig();
+	public function __construct(AccountIO $AccountIO, actionLogger $actionLogger) { 
+		$this->AccountIO = $AccountIO;
+		$this->actionLogger = $actionLogger;
 	}
 	
 	public function handleAccountDelete() {
-		$AccountIO = AccountIO::getInstance();
-	
 		$id = $_GET['del'] ??  '';
-		$AccountIO->deleteAccountByID($id);	
+		$this->AccountIO->deleteAccountByID($id);	
 	}
 
 	public function handleAccountDemote() {
-		$AccountIO = AccountIO::getInstance();
-	
 		$id = $_GET['dem'] ?? -1;
-		$account = $AccountIO->getAccountByID($id);
+		$account = $this->AccountIO->getAccountByID($id);
 		
-		if($account->getRoleLevel() - 1 == $this->config['roles']['LEV_NONE']) return; # == is for PHP7 compatibility, change to === in future for PHP8
+		if($account->getRoleLevel()->value - 1 == \Kokonotsuba\Root\Constants\userRole::LEV_NONE->value) return; # == is for PHP7 compatibility, change to === in future for PHP8
 		
-		$AccountIO->demoteAccountByID($id);
+		$this->AccountIO->demoteAccountByID($id);
 	}
 
 	public function handleAccountPromote() {
-		$AccountIO = AccountIO::getInstance();
-	
 		$id = $_GET['up'] ??  '';
-		$account = $AccountIO->getAccountByID($id);
+		$account = $this->AccountIO->getAccountByID($id);
 	
-		if($account->getRoleLevel() + 1 == $this->config['roles']['LEV_ADMIN'] + 1) return; # == is for PHP7 compatibility, change to === in future for PHP8
+		if($account->getRoleLevel()->value + 1 == \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN->value + 1) return; # == is for PHP7 compatibility, change to === in future for PHP8
 	
-		$AccountIO->promoteAccountByID($id);
+		$this->AccountIO->promoteAccountByID($id);
 	}
 
-	public function handleAccountCreation($board) {
-		$staffSession = new staffAccountFromSession;
-		$actionLogger = actionLogger::getInstance();
-		$AccountIO = AccountIO::getInstance();
-
+	public function handleAccountCreation() {
 		$passwordHash = $_POST['passwd'] ?? '';
 		$isHashed = $_POST['ishashed'] ?? '';
 		$username = $_POST['usrname'] ?? '';
@@ -52,32 +44,23 @@ class accountRequestHandler {
 	
 		if(!$isHashed) $passwordHash = password_hash($passwordHash, PASSWORD_DEFAULT);
 
-		$AccountIO->addNewAccount($username, $role, $passwordHash);
-		$actionLogger->logAction("Registered a new account ($username)", GLOBAL_BOARD_UID);
+		$this->AccountIO->addNewAccount($username, $role, $passwordHash);
+		$this->actionLogger->logAction("Registered a new account ($username)", GLOBAL_BOARD_UID);
 	}
 
-	public function handleAccountPasswordReset($board) {
-		$actionLogger = actionLogger::getInstance();
-		$AccountIO = AccountIO::getInstance();
-		
+	public function handleAccountPasswordReset() {
 		$loginSessionHandler = new loginSessionHandler;
 		$staffSession = new staffAccountFromSession;
-		$accountID = $_POST['id'] ?? -1;
+		$accountID = $staffSession->getUID();
 		$newAccountPassword = $_POST['new_account_password'] ?? -1;
-		$account = $AccountIO->getAccountById($accountID);
 		
-		$currentPasswordHash = $account->getPasswordHash();
-		$currentUserPasswordHashFromSession = $staffSession->getHashedPassword();
-		
-		if($currentPasswordHash !== $currentUserPasswordHashFromSession) throw new Exception("You cannot change the password of a different account!");
-
-		$AccountIO->updateAccountPasswordHashById($accountID, $newAccountPassword);
+		$this->AccountIO->updateAccountPasswordHashById($accountID, $newAccountPassword);
 
 		//refresh session values
-		$accountAfterPasswordUpdate = $AccountIO->getAccountById($accountID);
+		$accountAfterPasswordUpdate = $this->AccountIO->getAccountById($accountID);
 		$loginSessionHandler->login($accountAfterPasswordUpdate);
 
-		$actionLogger->logAction("Reset password", GLOBAL_BOARD_UID);
+		$this->actionLogger->logAction("Reset password", GLOBAL_BOARD_UID);
 	}
 	
 }
