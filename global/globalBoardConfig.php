@@ -164,6 +164,9 @@ $config['ModuleSettings']['ENABLE_NOPE'] = false;
 $config['ModuleSettings']['ENABLE_SCORE'] = false;
 $config['ModuleSettings']['SHOW_SCORE_ONLY'] = false;
 
+//mod_search
+$config['ModuleSettings']['SEARCH_POSTS_PER_PAGE'] = 50;
+
 //mod_readonly
 $config['ModuleSettings']['ALLOW_REPLY'] = false; // allow replies to threads but disallow creating threads when board is read-only
 $config['ModuleSettings']['MINIMUM_ROLE'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
