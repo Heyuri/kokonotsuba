@@ -1,22 +1,24 @@
 <?php
 //Soft error handler koko
 class softErrorHandler {
-	private $config, $board;
+	private globalHTML $globalHTML;
 
-	public function __construct($board) {
-		$config = $board->loadBoardConfig();
-		$this->board = $board;
-		$this->config = $config;
+	public function __construct(globalHTML $globalHTML) {
+		$this->globalHTML = $globalHTML;
 	}
 
-	public function handleAuthError($minimumRole) {
-		$globalHTML = new globalHTML($this->board);
+	public function handleAuthError(\Kokonotsuba\Root\Constants\userRole $minimumRole) {
 		$staffSession = new staffAccountFromSession;
-		$authRoleLevel = $staffSession->getRoleLevel() ?? $this->config['roles']['LEV_NONE'];
+		$authRoleLevel = $staffSession->getRoleLevel() ?? \Kokonotsuba\Root\Constants\userRole::LEV_NONE;
 		
 		//handle cases
-		if(!$authRoleLevel) $globalHTML->error("You aren't logged in!"); //this user isn't logged in!
-		if($authRoleLevel < $minimumRole) $globalHTML->error("You aren't authorized to view this page!"); //forbidden from viewing page
+		if($authRoleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_NONE) {
+			$this->globalHTML->error("You aren't logged in!"); //this user isn't logged in!
+		}
+		
+		if(!$authRoleLevel->isAtLeast($minimumRole)) {
+			$this->globalHTML->error("You aren't authorized to view this page!"); //forbidden from viewing page
+		}
 	}
 
 }
