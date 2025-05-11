@@ -20,7 +20,7 @@ class loginSessionHandler {
 
 		$_SESSION['accountUID'] = $account->getId();
 		$_SESSION['username'] = $account->getUsername();
-		$_SESSION['role_level'] = $account->getRoleLevel();
+		$_SESSION['role_level'] = $account->getRoleLevel()->value;
 		$_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
 		$_SESSION['last_activity'] = time();
 
