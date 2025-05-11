@@ -144,7 +144,6 @@ $adminTemplateEngine = new templateEngine(getBackendDir() . 'templates/admin.tpl
 	]
 ]);
 
-$pageRenderer		= new pageRenderer($templateEngine, $globalHTML);
 $adminPageRenderer	= new pageRenderer($adminTemplateEngine, $globalHTML);
 
 $overboard			= new overboard($config, $moduleEngine, $templateEngine);
@@ -162,7 +161,7 @@ $actionLogger		= ActionLogger::getInstance();
 // ───────────────────────────────────────
 // Error Handling & Authentication
 // ───────────────────────────────────────
-$softErrorHandler	= new softErrorHandler($board);
+$softErrorHandler	= new softErrorHandler($globalHTML);
 
 $loginSessionHandler	= new loginSessionHandler($config['STAFF_LOGIN_TIMEOUT']);
 $authenticationHandler	= new authenticationHandler();
@@ -194,7 +193,6 @@ try {
 		$templateEngine,
 		$adminTemplateEngine,
 		$overboard,
-		$pageRenderer,
 		$adminPageRenderer,
 		$softErrorHandler,
 		$boardIO,
