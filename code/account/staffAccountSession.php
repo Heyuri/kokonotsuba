@@ -12,10 +12,27 @@ class staffAccountFromSession {
 		$this->hash = $_SESSION['hash'] ?? null;
 	}
 	
-	public function getUID() { return $this->uid ?? "No UID"; }
-	public function getUsername() { return $this->username ?? "Nameless"; }
-	public function getLastActivity() { return $this->lastActivity ?? "N/A"; }
-	public function getRoleLevel() { return $this->roleLevel ?? 0; }
-	public function getUserAgent() { return $this->userAgent ?? ''; }
-	public function getHashedPassword() { return $this->hash ?? ''; }
+	public function getUID(): ?int { 
+		return $this->uid; 
+	}
+
+	public function getUsername(): string {
+		return $this->username ?? "Nameless";
+	}
+
+	public function getLastActivity(): string {
+		return $this->lastActivity ?? "N/A";
+	}
+
+	public function getRoleLevel(): \Kokonotsuba\Root\Constants\userRole {
+		return \Kokonotsuba\Root\Constants\userRole::tryFrom($this->roleLevel);
+	}
+
+	public function getUserAgent(): ?string {
+		return $this->userAgent;
+	}
+
+	public function getHashedPassword(): ?string {
+		return $this->hash;
+	}
 }
