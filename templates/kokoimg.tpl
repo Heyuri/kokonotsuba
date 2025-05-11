@@ -196,7 +196,7 @@
 							<span class="time">{$NOW}</span>
 						</label>
 						<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
-						<span class="postInfoExtra">{$POSTINFO_EXTRA}</span><span class="backlinks">{$BACKLINKS}</span>
+						<span class="postInfoExtra">{$POSTINFO_EXTRA}</span><span class="backlinks"></span>
 					</div>
 					<div class="filesize">{$IMG_BAR}</div>
 					{$IMG_SRC}
