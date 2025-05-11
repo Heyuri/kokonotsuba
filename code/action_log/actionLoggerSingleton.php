@@ -79,12 +79,13 @@ class actionLogger {
 		$IPAddress = new IPAddress;
 
 		$name = $staffSession->getUsername();
-		$role = $staffSession->getRoleLevel()->value;
+		$roleEnum = $staffSession->getRoleLevel();
+		$role = $roleEnum->value;
 		
-		if($role) {
+		if($roleEnum->isStaff()) {
 			$AccountIO->incrementAccountActionRecordByID($staffSession->getUID());
 		}
-		
+
 		$query = "INSERT INTO {$this->tableName} (name, role, log_action, ip_address, board_uid, board_title) VALUES(:name, :role, :log_action, :ip_address, :board_uid, (SELECT board_title FROM {$this->boardTableName} WHERE board_uid = :board_uid LIMIT 1))";
 		$params = [
 			':name' => $name,
