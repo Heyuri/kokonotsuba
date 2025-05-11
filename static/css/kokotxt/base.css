@@ -2033,9 +2033,9 @@ width: 300px;
 	}
 
 	.window {
-		top: 50% !important;
+		top: 0 !important;
 		left: 50% !important;
-		transform: translate(-50%, -50%) !important;
+		transform: translate(-50%, 0%) !important;
 		width: 100vw !important;
 		min-height: initial;
 		animation: none;
@@ -2046,7 +2046,11 @@ width: 300px;
 		bottom: 0;
 	}
 
-	.winbar {
+	.winname {
+		font-size: 1.25em;
+	}
+
+	.winctrl {
 		font-size: 1.5em;
 	}
 
@@ -2064,6 +2068,7 @@ width: 300px;
 
 	#qrcom {
 		width: 100%;
+		max-width: initial;
 	}
 }
 
