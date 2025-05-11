@@ -58,9 +58,9 @@ class mod_sticky extends moduleHelper {
 	public function ModulePage(): void {
 		$PIO = PIOPDO::getInstance();
 		$threadSingleton = threadSingleton::getInstance();
-		$softErrorHandler = new softErrorHandler($this->board);
-		$actionLogger = ActionLogger::getInstance();
 		$globalHTML = new globalHTML($this->board);
+		$softErrorHandler = new softErrorHandler($globalHTML);
+		$actionLogger = ActionLogger::getInstance();
 
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_STICKY']);
 
