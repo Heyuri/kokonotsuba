@@ -69,6 +69,10 @@ strong {
 	font-weight: var(--font-weight-bold);
 }
 
+pre {
+	white-space: pre-wrap;
+}
+
 pre,
 code {
 	padding: 0;
