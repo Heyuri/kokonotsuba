@@ -117,20 +117,6 @@ function strlenUnicode($str) {
     return mb_strlen($str, 'UTF-8');
 }
 
-function num2Role($roleNumber, $config) {
-	$num = intval($roleNumber);
-	$from = '';
-	
-	switch ($num) {
-			case $config['roles']['LEV_NONE']: $from = 'USER'; break;
-			case $config['roles']['LEV_USER']: $from = 'REGISTERED_USER'; break;
-			case $config['roles']['LEV_JANITOR']: $from = 'JANITOR'; break;
-			case $config['roles']['LEV_MODERATOR']: $from = 'MODERATOR'; break;
-			case $config['roles']['LEV_ADMIN']: $from = 'ADMIN'; break;
-	}
-	return $from;
-}
-
 /* redirect */
 function redirect($to, $time=0, $verbose=false) {
 	if($to=='back') {
