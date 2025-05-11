@@ -88,14 +88,14 @@ const bbcode = [
   {meaning:"<i>Italics</i>&nbsp;",code:"i"},
   {meaning:"<u>Underline</u>&nbsp;",code:"u"},
   {meaning:"<s>Strikethrough</s>&nbsp;",code:"del"},
-  {meaning:"<mark style='background-color:black;color:white'>&nbsp;Spoiler&nbsp;</mark>",code:"s"},
+  {meaning:"<span style='background-color:black;color:white'>&nbsp;Spoiler&nbsp;</span>",code:"s"},
   {meaning:"<pre style='display:inline'>Preformatted</pre>",code:"pre"},
   {meaning:"<q>Blockquote</q>&nbsp;",code:"quote"},
-  {meaning:"<code style='background-color:white;color:black'>&nbsp;Code&nbsp;</code>&nbsp;",code:"code"},
+  {meaning:"<code class='code'>Code</code>&nbsp;",code:"code"},
 ];
 const selector_bbcode = [ // BBCodes with selectors
-  {meaning:"<b style='display:inline;color:#489b67'>C<span style='color:#d30615'>o</span>l<span style='color:#d30615'>o</span>r</b>&nbsp;", code:"color",selector:"#800043"},
-  {meaning:"<h3 style='display:inline'>Size</h3>&nbsp;",code:"s",selector:"7"},
+  {meaning:"<span style='font-weight:bold'><span class='bokuRed'>C</span><span class='bokuGreen'>o</span><span class='bokuRed'>l</span><span class='bokuGreen'>o</span><span class='bokuRed'>r</span>&nbsp;", code:"color",selector:"#800043"},
+  {meaning:"<span class='fontSize5'>Size</span>&nbsp;",code:"s",selector:"7"},
 ];
 
 /* CONSTANTS */
@@ -174,7 +174,7 @@ emotes_list.forEach((emote,index) => {
   button.type = "button";
   button.title = emote.value;
   button.classList.add("emoteButton");
-  button.innerHTML += '<img class="emoteImage" src="'+STATIC_URL+'image/emote/'+emote.src+'" loading="lazy" title="'+emote.value+'" alt="'+emote.value+'" height="30px">';
+  button.innerHTML += '<img class="emoteImage" src="'+STATIC_URL+'image/emote/'+emote.src+'" loading="lazy" title="'+emote.value+'" alt="'+emote.value+'">';
   button.addEventListener("click", onClickHandler);
   emotes_container.appendChild(button);
 });
