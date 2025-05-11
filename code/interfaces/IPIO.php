@@ -123,7 +123,7 @@ interface IPIO {
 	 * @param  string $method   Search method
 	 * @return array            Array of post content
 	 */
-	public function searchPost($board, $keywords, $field, $method);
+	public function searchPosts(IBoard $board, array $keywords, string $field = 'com', string $method = 'OR', int $limit = 20, int $offset = 0): array;
 
 	/**
 	 * Search category tags
