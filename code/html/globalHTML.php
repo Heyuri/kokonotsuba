@@ -30,21 +30,6 @@ class globalHTML {
 		exit($dat);
 	}
 	
-	public function roleNumberToRoleName($roleNumber) {
-		$num = intval($roleNumber);
-		$from = '';
-	
-		switch ($num) {
-				case $this->config['roles']['LEV_NONE']: $from = 'None'; break;
-				case $this->config['roles']['LEV_USER']: $from = 'User'; break;
-				case $this->config['roles']['LEV_JANITOR']: $from = 'Janitor'; break;
-				case $this->config['roles']['LEV_MODERATOR']: $from = 'Moderator'; break;
-				case $this->config['roles']['LEV_ADMIN']: $from = 'Admin'; break;
-				case $this->config['roles']['LEV_SYSTEM']: $from = 'System'; break;
-				default: $from = '[UNKNOWN ROLE]'; break;
-		}
-		return $from;
-	}
 
 	/* 輸出表頭 | document head */
 	public function head(&$dat, $resno=0){
@@ -275,12 +260,17 @@ class globalHTML {
 	
 	public function drawAdminTheading(&$dat, $staffSession) {
 		$username = $staffSession->getUsername();
-		$role = $staffSession->getRoleLevel();
+		$roleEnum = $staffSession->getRoleLevel();
+		$roleName = $roleEnum->displayRoleName();
+
 		$loggedInInfo = '';
 		
-		if($role) $loggedInInfo = "<div class=\"username\">Logged in as $username ({$this->roleNumberToRoleName($role)})</div>";
-		
+		if($roleEnum !== \Kokonotsuba\Root\Constants\userRole::LEV_NONE) {
+			$loggedInInfo = "<div class=\"username\">Logged in as $username (".$roleName.")</div>";
+		}
+
 		$html = "<div class=\"theading3\"><h2>Administrator mode</h2>$loggedInInfo</div>";
+		
 		$dat .= $html;
 		return $html;
 	}
@@ -386,11 +376,11 @@ class globalHTML {
 		$filterDelete = $_COOKIE['filterdelete']	 ?? '';
 		
 		//role levels
-		$none = $this->config['roles']['LEV_NONE'];
-		$user = $this->config['roles']['LEV_USER'];
-		$janitor = $this->config['roles']['LEV_JANITOR'];
-		$moderator = $this->config['roles']['LEV_MODERATOR'];
-		$admin = $this->config['roles']['LEV_ADMIN'];
+		$none = \Kokonotsuba\Root\Constants\userRole::LEV_NONE->value;
+		$user = \Kokonotsuba\Root\Constants\userRole::LEV_USER->value;
+		$janitor = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR->value;
+		$moderator = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR->value;
+		$admin = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN->value;
 		
 		$filterRole = json_decode($_COOKIE['filterrole'] ?? '', true); if(!is_array($filterRole)) $filterRole = [$none, $user, $janitor, $moderator, $admin];
 		$filterBoard = json_decode($_COOKIE['filterboard'] ?? '', true); if(!is_array($filterBoard)) $filterBoard = [$board->getBoardUID(), GLOBAL_BOARD_UID];
@@ -534,13 +524,15 @@ class globalHTML {
 				$accountLastLogin = $account->getLastLogin() ?? '<i>Never</i>';
 		
 				$actionHTML = '[<a title="Delete account" href="' . $this->config['PHP_SELF'] . '?mode=handleAccountAction&del=' . $accountID . '">D</a>] ';
-				if ($accountRoleLevel + 1 <= $this->config['roles']['LEV_ADMIN']) $actionHTML .= '[<a title="Promote account" href="' . $this->config['PHP_SELF'] . '?mode=handleAccountAction&up=' . $accountID. '">▲</a>]';
-				if ($accountRoleLevel- 1 > $this->config['roles']['LEV_NONE']) $actionHTML .= '[<a title="Demote account" href="' . $this->config['PHP_SELF'] . '?mode=handleAccountAction&dem=' . $accountID . '">▼</a>]';
+				if ($accountRoleLevel->value + 1 <= \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN->value) $actionHTML .= '[<a title="Promote account" href="' . $this->config['PHP_SELF'] . '?mode=handleAccountAction&up=' . $accountID. '">▲</a>]';
+				if ($accountRoleLevel->value - 1 > \Kokonotsuba\Root\Constants\userRole::LEV_NONE->value) $actionHTML .= '[<a title="Demote account" href="' . $this->config['PHP_SELF'] . '?mode=handleAccountAction&dem=' . $accountID . '">▼</a>]';
 				
+				
+
 				$accountsHTML .= '<tr> 
 						<td class="colAccountID">' . $accountID . '</td>
 						<td class="colUsername">' . $accountUsername . ' </td>
-						<td class="colRoleLevel">' . $this->roleNumberToRoleName($accountRoleLevel) . '</td>
+						<td class="colRoleLevel">' . $accountRoleLevel->displayRoleName() . '</td>
 						<td class="colNumberofActions">' . $accountNumberOfActions . '</td>
 						<td class="colLastLogin">' . $accountLastLogin . '</td>
 						<td class="colActions">' . $actionHTML . '</td>
@@ -783,7 +775,7 @@ class globalHTML {
 	
 	/* Output thread schema */
 	public function arrangeThread(board $board, array $config, LoggerInjector $PIO, array $threads, array $tree, mixed $tree_cut, array $posts, 
-									int $hiddenReply, string $resno, mixed $arr_kill,  bool $kill_sensor, bool $showquotelink=true, 
+									int $hiddenReply, string $resno, mixed $arr_kill,  bool $killSensor, bool $showquotelink=true, 
 									bool $adminMode=false, int $threadIterator = 0, string $overboardBoardTitleHTML = '', string $crossLink = '') {
 										return '';
 	}
