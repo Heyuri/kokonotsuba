@@ -55,6 +55,7 @@ require __DIR__.'/code/template/pageRenderer.php'; // page renderer
 /* html */
 require __DIR__.'/code/html/globalHTML.php'; // html class
 require __DIR__.'/code/html/threadRenderer.php'; // thread rendering class
+require __DIR__.'/code/html/postRenderer.php'; // post rendering class
 require __DIR__.'/code/html/postHtmlFunctions.php'; // post html library
 
 /* Handle soft error pages */
