@@ -21,7 +21,7 @@ class mod_janitor extends moduleHelper {
 
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$staffSession = new staffAccountFromSession;
-		if ($staffSession->getRoleLevel() != $this->config['roles']['LEV_JANITOR']) return;
+		if ($staffSession->getRoleLevel() != \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR->value) return;
 
 		$modfunc .= '<span class="adminWarnFunction">[<a href="' . $this->mypage . '&post_uid=' . $post['post_uid'] . '" title="Warn">W</a>]</span>';
 	}
@@ -29,8 +29,10 @@ class mod_janitor extends moduleHelper {
 	public function ModulePage() {
 		$PIO = PIOPDO::getInstance();
 		$actionLogger = ActionLogger::getInstance();
-		$softErrorHandler = new softErrorHandler($this->board);
-		$softErrorHandler->handleAuthError($this->config['roles']['LEV_JANITOR']);
+		$globalHTML = new globalHTML($this->board);
+		$softErrorHandler = new softErrorHandler($globalHTML);
+
+		$softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR);
 
 		$postUidFromGET = $_GET['post_uid'] ?? '';
 		$postNumber = $PIO->resolvePostNumberFromUID($postUidFromGET);

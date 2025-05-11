@@ -3,7 +3,6 @@
 // account route - displays account info and actions
 
 class accountRoute {
-	private readonly array $config;
 	private readonly staffAccountFromSession $staffSession;
 	private readonly globalHTML $globalHTML;
 	private readonly softErrorHandler $softErrorHandler;
@@ -12,7 +11,6 @@ class accountRoute {
 	private readonly pageRenderer $adminPageRenderer;
 
 	public function __construct(
-		array $config,
 		staffAccountFromSession $staffSession,
 		globalHTML $globalHTML,
 		softErrorHandler $softErrorHandler,
@@ -20,7 +18,6 @@ class accountRoute {
 		templateEngine $adminTemplateEngine,
 		pageRenderer $adminPageRenderer
 	) {
-		$this->config = $config;
 		$this->staffSession = $staffSession;
 		$this->globalHTML = $globalHTML;
 		$this->softErrorHandler = $softErrorHandler;
@@ -33,9 +30,9 @@ class accountRoute {
 		$authRoleLevel = $this->staffSession->getRoleLevel();
 		$authUsername = htmlspecialchars($this->staffSession->getUsername());
 
-		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_USER']);
+		$this->softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_USER);
 
-		$accountTableList = ($authRoleLevel == $this->config['roles']['LEV_ADMIN']) 
+		$accountTableList = ($authRoleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN) 
 			? $this->globalHTML->drawAccountTable() 
 			: '';
 
@@ -44,20 +41,20 @@ class accountRoute {
 		$accountTemplateValues = [
 			'{$ACCOUNT_ID}' => htmlspecialchars($this->staffSession->getUID()),
 			'{$ACCOUNT_NAME}' => htmlspecialchars($authUsername),
-			'{$ACCOUNT_ROLE}' => htmlspecialchars($this->globalHTML->roleNumberToRoleName($authRoleLevel)),
+			'{$ACCOUNT_ROLE}' => htmlspecialchars($authRoleLevel->displayRoleName()),
 			'{$ACCOUNT_ACTIONS}' => htmlspecialchars($currentAccount->getNumberOfActions()),
 		];
 
 		$accountTemplateRoles = [
-			'{$USER}' => $this->config['roles']['LEV_USER'],
-			'{$JANITOR}' => $this->config['roles']['LEV_JANITOR'],
-			'{$MODERATOR}' => $this->config['roles']['LEV_MODERATOR'],
-			'{$ADMIN}' => $this->config['roles']['LEV_ADMIN'],
+			'{$USER}' => \Kokonotsuba\Root\Constants\userRole::LEV_USER->value,
+			'{$JANITOR}' => \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR->value,
+			'{$MODERATOR}' => \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR->value,
+			'{$ADMIN}' => \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN->value,
 		];
 
 		$template_values = [
 			'{$ACCOUNT_LIST}' => $accountTableList,
-			'{$CREATE_ACCOUNT}' => ($authRoleLevel == $this->config['roles']['LEV_ADMIN'])
+			'{$CREATE_ACCOUNT}' => ($authRoleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN)
 				? $this->adminTemplateEngine->ParseBlock('CREATE_ACCOUNT', $accountTemplateRoles)
 				: '',
 			'{$VIEW_OWN_ACCOUNT}' => $this->adminTemplateEngine->ParseBlock('VIEW_ACCOUNT', $accountTemplateValues),

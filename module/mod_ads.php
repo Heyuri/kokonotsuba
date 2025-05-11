@@ -6,10 +6,9 @@
 */
 
 class mod_ads extends moduleHelper {
-	private $mypage;
 	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
-		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		$this->mypage = $this->getModulePageURL();
-
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
+		
 		$this->config['ModuleSettings']['SHOW_TOP_AD'] = isset($config['ModuleSettings']['SHOW_TOP_AD']) ? $config['ModuleSettings']['SHOW_TOP_AD'] : true;
 		$this->config['ModuleSettings']['SHOW_BOTTOM_AD'] = isset($config['ModuleSettings']['SHOW_BOTTOM_AD']) ? $config['ModuleSettings']['SHOW_BOTTOM_AD'] : true;
 	}

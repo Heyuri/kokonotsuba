@@ -18,7 +18,9 @@ class mod_movethread extends moduleHelper {
 
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$staffSession = new staffAccountFromSession;
-		if ($staffSession->getRoleLevel() < $this->config['roles']['LEV_MODERATOR']) return;
+		$roleLevel = $staffSession->getRoleLevel();
+
+		if ($roleLevel->isLessThan(\Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR)) return;
 
 		// if it's a thread, apply admin hook list html
 		if (!$isres) {
@@ -57,7 +59,7 @@ class mod_movethread extends moduleHelper {
 		// Prepare post metadata
 		$ip = new IPAddress('127.0.0.1');
 
-		$tripcodeProcessor->apply($name, $tripcode, $secure_tripcode, $capcode, $this->config['roles']['LEV_SYSTEM']);
+		$tripcodeProcessor->apply($name, $tripcode, $secure_tripcode, $capcode, \Kokonotsuba\Root\Constants\userRole::LEV_SYSTEM);
 
 		// Get original thread UID
 		$originalThreadUid = $originalThread['thread_uid'];
@@ -194,11 +196,11 @@ class mod_movethread extends moduleHelper {
 		$actionLogger = ActionLogger::getInstance();
 		$boardIO = boardIO::getInstance();
 	
-		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
+		$softErrorHandler = new softErrorHandler($globalHTML);
 	
 		// Check user has proper permissions
-		$softErrorHandler->handleAuthError($this->config['roles']['LEV_MODERATOR']);
+		$softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR);
 	
 		// If form was submitted to move a thread
 		if (!empty($_POST['move-thread-submit'])) {

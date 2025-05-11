@@ -67,10 +67,10 @@ class mod_anigif extends moduleHelper {
 		$PIO = PIOPDO::getInstance();
 		$actionLogger = ActionLogger::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
-		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
+		$softErrorHandler = new softErrorHandler($globalHTML);
 		
-		$softErrorHandler->handleAuthError($this->config['roles']['LEV_JANITOR']);
+		$softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR);
 
 		$post = $PIO->fetchPosts($_GET['post_uid'] ?? 0)[0];
 		if(!count($post)) $globalHTML->error('ERROR: Post does not exist.');

@@ -39,8 +39,7 @@ class mod_adminban extends moduleHelper {
 	}
 
 	public function autoHookLinksAboveBar(&$link, $pageId, $level) {
-
-		if ($level >= $this->config['roles']['LEV_MODERATOR'] && $pageId === 'admin') {
+		if ($level->isAtLeast($this->config['AuthLevels']['CAN_BAN']) && $pageId === 'admin') {
 			$link .= '<li class="adminNavLink"><a href="' . $this->mypage . '">Manage bans</a></li>';
 		}
 	}
@@ -52,16 +51,17 @@ class mod_adminban extends moduleHelper {
 		$ip = htmlspecialchars($post['host']) ?? '';
 		$delMode = $_REQUEST['admin'] ?? '';
 
-		if ($roleLevel >= $this->config['AuthLevels']['CAN_BAN']) {
+		if ($roleLevel->isAtLeast($this->config['AuthLevels']['CAN_BAN'])) {
 			$modfunc .= '<span class="adminBanFunction">[<a href="' . $this->mypage . '&post_uid=' . htmlspecialchars($post['post_uid']) . '&ip=' . htmlspecialchars($ip) . '" title="Ban">B</a>]</span> ';
 		}
-		if (!empty($ip) && $roleLevel >= $this->config['AuthLevels']['CAN_VIEW_IP_ADDRESSES'] && $delMode !== 'del') {
+		if (!empty($ip) && $roleLevel->isAtLeast($this->config['AuthLevels']['CAN_VIEW_IP_ADDRESSES']) && $delMode !== 'del') {
 			$modfunc .= '<span class="host">[HOST: <a href="?mode=admin&admin=del&host=' . htmlspecialchars($ip) . '">' . htmlspecialchars($ip) . '</a>]</span>';
 		}
 	}
 
 	public function ModulePage() {
-		$softErrorHandler = new softErrorHandler($this->board);
+		$globalHTML = new globalHTML($this->board);
+		$softErrorHandler = new softErrorHandler($globalHTML);
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_BAN']);
 
 		$PIO = PIOPDO::getInstance();

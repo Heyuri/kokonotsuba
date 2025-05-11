@@ -49,7 +49,7 @@ class mod_autosage extends moduleHelper {
 		$threadSingleton = threadSingleton::getInstance();
 		$actionLogger = ActionLogger::getInstance();
 		$globalHTML = new globalHTML($this->board);
-		$softErrorHandler = new softErrorHandler($this->board);
+		$softErrorHandler = new softErrorHandler($globalHTML);
 		
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_AUTO_SAGE']);
 		

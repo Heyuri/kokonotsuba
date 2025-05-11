@@ -37,7 +37,7 @@ class boardsRoute {
 	public function drawBoardPage(): void {
 		$authRoleLevel = $this->staffSession->getRoleLevel();
 
-		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
+		$this->softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_ADMIN);
 
 		// draw board tablke
 		$boardTableList = $this->globalHTML->drawBoardTable();
@@ -49,7 +49,7 @@ class boardsRoute {
 			'{$IMPORT_BOARD}' =>  ''];
 
 		// admin forms for importing/creating boards
-		if($authRoleLevel == $this->config['roles']['LEV_ADMIN']) {
+		if($authRoleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN) {
 			$defaultPath = dirname(getcwd()) . '/';
 			// create board form
 			$templateValues['{$CREATE_BOARD}'] = $this->adminTemplateEngine->ParseBlock('CREATE_BOARD', [

@@ -66,7 +66,7 @@ class mod_searchcategory extends moduleHelper {
 				0, 							// int $hiddenReply
 				($posts[0]['resto'] ? $posts[0]['resto'] : $posts[0]['no']), // string $resno
 				array(), 					// mixed $arr_kill
-				false, 						// bool $kill_sensor
+				false, 						// bool $killSensor
 				false, 						// bool $showquotelink
 				false, 						// bool $adminMode
 				0, 							// int $threadIterator

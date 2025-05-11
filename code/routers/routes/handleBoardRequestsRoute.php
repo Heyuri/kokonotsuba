@@ -30,7 +30,7 @@ class handleBoardRequestsRoute {
 
 		// handle actions
 		public function handleBoardRequests(): void {
-		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_ADMIN']);
+		$this->softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_ADMIN);
 
 		// edit a board
 		if(!empty($_POST['edit-board'])) {

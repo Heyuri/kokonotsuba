@@ -49,32 +49,32 @@ class adminRoute {
 		
 		$dat.= '<div id="adminOptionContainer" class="centerText"><form action="'.$this->config['PHP_SELF'].'" method="POST" name="adminform">';
 		$admins = array(
-			array('name'=>'del', 'level'=>$this->config['roles']['LEV_JANITOR'], 'label'=>'Manage posts', 'func'=>'admindel'),
-			array('name'=>'action', 'level'=>$this->config['roles']['LEV_ADMIN'], 'label'=>'Action log', 'func'=>'actionlog'),
-			array('name'=>'logout', 'level'=>$this->config['roles']['LEV_USER'], 'label'=>'Logout', 'func'=>'adminLogout'),
+			array('name'=>'del', 'level'=>\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR, 'label'=>'Manage posts', 'func'=>'admindel'),
+			array('name'=>'action', 'level'=>\Kokonotsuba\Root\Constants\userRole::LEV_ADMIN, 'label'=>'Action log', 'func'=>'actionlog'),
+			array('name'=>'logout', 'level'=>\Kokonotsuba\Root\Constants\userRole::LEV_USER, 'label'=>'Logout', 'func'=>'adminLogout'),
 		);
 
 		foreach ($admins as $adminmode) {
-			if ($currentRoleLevel==$this->config['roles']['LEV_NONE'] && $adminmode['name']=='logout') continue;
+			if ($currentRoleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_NONE && $adminmode['name'] === 'logout') continue;
 			$checked = ($admin==$adminmode['name']) ? ' checked="checked"' : '';
 			$dat.= '<label><input type="radio" name="admin" value="'.$adminmode['name'].'"'.$checked.'>'.$adminmode['label'].'</label> ';
 		}
-		if ($currentRoleLevel==$this->config['roles']['LEV_NONE']) {
+		if ($currentRoleLevel==\Kokonotsuba\Root\Constants\userRole::LEV_NONE) {
 			$dat.= $this->globalHTML->drawAdminLoginForm()."</form>";
 		} else {
 			$dat.= '<button type="submit" name="mode" value="admin">Submit</button></form>';
 		}
-		$find = false;
 		
 		$dat.= '</div><hr>';
 
 		foreach ($admins as $adminmode) {
 			if ($admin!=$adminmode['name']) continue;
-			$find = true;
-			if ($adminmode['level']>$currentRoleLevel) {
-				$dat.= '<div class="centerText"><span class="error">ERROR: Access denied.</span></div><hr>';
+			
+			if (!$currentRoleLevel->isAtLeast($adminmode['level'])) {
+				$dat .= '<div class="centerText"><span class="error">ERROR: Access denied.</span></div><hr>';
 				break;
 			}
+				
 			if ($adminmode['func']) {
 				$adminPageHandler->handleAdminPageSelection($adminmode['func'], $dat);
 			}

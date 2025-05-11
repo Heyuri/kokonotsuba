@@ -21,10 +21,11 @@ class mod_rebuild extends moduleHelper {
 	}
 
 	public function ModulePage() {
-		$softErrorHandler = new softErrorHandler($this->board);
+		$globalHTML = new globalHTML($this->board);
+		$softErrorHandler = new softErrorHandler($globalHTML);
+		
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_MANAGE_REBUILD']);
 
-		$globalHTML = new globalHTML($this->board);
 		
 		$formSubmit = $_POST['formSubmit'] ?? false;
 		if($formSubmit) {

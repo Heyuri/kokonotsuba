@@ -165,8 +165,8 @@ $config['ModuleSettings']['ENABLE_SCORE'] = false;
 $config['ModuleSettings']['SHOW_SCORE_ONLY'] = false;
 
 //mod_readonly
-$config['ModuleSettings']['ALLOW_REPLY'] = false; //allow replies to threads but disallow creating threads when board is read-only
-$config['ModuleSettings']['MINIMUM_ROLE'] = $config['roles']['LEV_MODERATOR'];
+$config['ModuleSettings']['ALLOW_REPLY'] = false; // allow replies to threads but disallow creating threads when board is read-only
+$config['ModuleSettings']['MINIMUM_ROLE'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
 
 //mod_pushpost
 $config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'] = 250;
@@ -281,15 +281,15 @@ $config['ADMINBAR_OVERBOARD_BUTTON'] = true;
 $config['ACTIONLOG_MAX_PER_PAGE'] = 250; // the amount of actionlog entries per page
 
 // Role levels
-$config['AuthLevels']['CAN_VIEW_IP_ADDRESSES'] = $config['roles']['LEV_MODERATOR'];
-$config['AuthLevels']['CAN_BAN'] = $config['roles']['LEV_MODERATOR'];
-$config['AuthLevels']['CAN_DELETE_POST'] = $config['roles']['LEV_JANITOR'];
-$config['AuthLevels']['CAN_LOCK'] = $config['roles']['LEV_JANITOR'];
-$config['AuthLevels']['CAN_STICKY'] = $config['roles']['LEV_MODERATOR'];
-$config['AuthLevels']['CAN_AUTO_SAGE'] = $config['roles']['LEV_MODERATOR'];
-$config['AuthLevels']['CAN_MANAGE_REBUILD'] = $config['roles']['LEV_MODERATOR'];
-$config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE'] = $config['roles']['LEV_ADMIN'];
-$config['AuthLevels']['CAN_EDIT_BLOTTER'] = $config['roles']['LEV_ADMIN'];
+$config['AuthLevels']['CAN_VIEW_IP_ADDRESSES'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_BAN'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_DELETE_POST'] = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR;
+$config['AuthLevels']['CAN_LOCK'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_STICKY'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_AUTO_SAGE'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_MANAGE_REBUILD'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
+$config['AuthLevels']['CAN_EDIT_BLOTTER'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
 
 // The duration (in seconds) of inactivity allowed before automatically logging out a staff user
 // This value must not exceed the value of session.gc_maxlifetime in your php.ini

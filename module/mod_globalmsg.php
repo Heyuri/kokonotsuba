@@ -52,7 +52,9 @@ class mod_globalmsg extends moduleHelper {
 	
 
 	public function ModulePage() {
-		$softErrorHandler = new softErrorHandler($this->board);
+		$globalHTML = new globalHTML($this->board);
+		$softErrorHandler = new softErrorHandler($globalHTML);
+		
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE']);
 	
 		$action = $_GET['action'] ?? '';

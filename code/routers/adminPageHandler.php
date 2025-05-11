@@ -38,7 +38,7 @@ class adminPageHandler {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$boardIO = boardIO::getInstance();
 		$staffSession = new staffAccountFromSession;
-		$softErrorHandler = new softErrorHandler($this->board);
+		$softErrorHandler = new softErrorHandler($globalHTML);
 		
 		$roleLevel = $staffSession->getRoleLevel();
 		 
@@ -59,7 +59,7 @@ class adminPageHandler {
 		$noticeHost = "";
 		$searchHost = filter_var($host, FILTER_VALIDATE_IP) ?: filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME);
 		if ($searchHost) {
-			$softErrorHandler->handleAuthError($this->config['roles']['LEV_JANITOR']);
+			$softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR);
 			$noticeHost = '<h2>Viewing all posts from: '.$searchHost.'. Click submit to cancel.</h2><br>';
 		}
 		
@@ -134,7 +134,7 @@ class adminPageHandler {
 				$size = 0;
 			}
 
-			if ($roleLevel <= $this->config['roles']['LEV_JANITOR']) {
+			if($roleLevel->isAtMost(\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR)) {
 				$host = substr(hash('sha256', $host), 0, 10);
 			}
 
@@ -260,12 +260,15 @@ class adminPageHandler {
 		} else {
 			//generate table entry html
 			foreach($entriesFromDatabase as $actionLogEntry) {
+				$roleValue = $actionLogEntry->getRole();
+				$roleEnum = \Kokonotsuba\Root\Constants\userRole::tryFrom($roleValue);
+
 				$tableEntries .= "
 				<tr>
 					<td>{$actionLogEntry->getBoardTitle()}</td>
 					<td>{$actionLogEntry->getBoardUID()}</td>
 					<td>".htmlspecialchars($actionLogEntry->getName())."</td>
-					<td>{$globalHTML->roleNumberToRoleName($actionLogEntry->getRole())}</td>
+					<td>{$roleEnum->displayRoleName()}</td>
 					<td>{$actionLogEntry->getIpAddress()}</td>
 					<td>{$actionLogEntry->getLogAction()}</td>
 					<td>{$actionLogEntry->getTimeAdded()}</td>

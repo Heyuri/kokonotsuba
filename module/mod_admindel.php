@@ -44,8 +44,8 @@ class mod_admindel extends moduleHelper {
 
 		$boardIO = boardIO::getInstance();
 		$ActionLogger = ActionLogger::getInstance();
-		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
+		$softErrorHandler = new softErrorHandler($globalHTML);
 
 		$threadSingleton = threadSingleton::getInstance();
 		

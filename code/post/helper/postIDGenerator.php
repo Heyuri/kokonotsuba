@@ -13,13 +13,13 @@ class postIdGenerator {
         $this->staffSession = $staffSession;
     }
 
-	public function generate($email, $now, $time, $thread_uid) {
+	public function generate($email, $time, $thread_uid) {
 		$roleLevel = $this->staffSession->getRoleLevel();
 
         if ($this->config['DISP_ID']) { // ID display enabled
-			if ($roleLevel == $this->config['roles']['LEV_ADMIN'] && $this->config['DISP_ID'] == 2) {
+			if ($roleLevel == \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN && $this->config['DISP_ID'] == 2) {
 				return ' ID:ADMIN';
-			} elseif ($roleLevel == $this->config['roles']['LEV_MODERATOR'] && $this->config['DISP_ID'] == 2) {
+			} elseif ($roleLevel == \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR && $this->config['DISP_ID'] == 2) {
 				return ' ID:MODERATOR';
 			} elseif (stristr($email, 'sage') && $this->config['DISP_ID'] == 2) {
 				return ' ID:Heaven';

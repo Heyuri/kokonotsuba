@@ -1,14 +1,11 @@
 <?php
 // by komeo
 class mod_antiflood extends moduleHelper {
-	private $mypage;
 	private $RENZOKU3 = 0; // Seconds before a new thread can be made
 
 	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
 		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
 		$this->RENZOKU3 = $this->config['ModuleSettings']['RENZOKU3'];
-		
-		$this->mypage = $this->getModulePageURL();
 	}
 
 	public function getModuleName() {

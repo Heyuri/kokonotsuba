@@ -5,7 +5,6 @@ class modeHandler {
 	private readonly array $config;
 	private readonly globalHTML $globalHTML;
 	private readonly overboard $overboard;
-	private readonly pageRenderer $pageRenderer;
 	private readonly pageRenderer $adminPageRenderer;
 	private readonly mixed $FileIO;
 	private readonly mixed $PIO;
@@ -29,7 +28,6 @@ class modeHandler {
 		templateEngine $templateEngine,
 		templateEngine $adminTemplateEngine,
 		overboard $overboard,
-		pageRenderer $pageRenderer,
 		pageRenderer $adminPageRenderer,
 		softErrorHandler $softErrorHandler,
 		boardIO $boardIO,
@@ -52,7 +50,6 @@ class modeHandler {
 		$this->templateEngine = $templateEngine;
 		$this->adminTemplateEngine = $adminTemplateEngine;
 		$this->overboard = $overboard;
-		$this->pageRenderer = $pageRenderer;
 		$this->adminPageRenderer = $adminPageRenderer;
 		$this->softErrorHandler = $softErrorHandler;
 		$this->boardIO = $boardIO;
@@ -140,7 +137,6 @@ class modeHandler {
 			},
 			'account' => function() {
 				$route = new accountRoute(
-					$this->config,
 					$this->staffSession,
 					$this->globalHTML,
 					$this->softErrorHandler,
@@ -175,8 +171,10 @@ class modeHandler {
 			},
 			'handleAccountAction' => function() {
 				$route = new handleAccountActionRoute(
-					$this->config, 
+					$this->config,
 					$this->board, 
+					$this->AccountIO,
+					$this->actionLogger,
 					$this->softErrorHandler, 
 					$this->staffSession
 				);
@@ -195,7 +193,6 @@ class modeHandler {
 				$route = new usrdelRoute(
 					$this->config,
 					$this->board, 
-					$this->staffSession, 
 					$this->globalHTML, 
 					$this->moduleEngine, 
 					$this->actionLogger, 

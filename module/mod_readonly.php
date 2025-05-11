@@ -3,7 +3,7 @@
 Mod_Readonly - Add this to the boards config to make it admin-only
 */
 class mod_readonly extends moduleHelper {
-	private $ALLOWREPLY, $MINIMUM_ROLE = false; // Allow replies
+	private $ALLOWREPLY, $MINIMUM_ROLE; // Allow replies
 
 	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
 		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);
@@ -21,11 +21,18 @@ class mod_readonly extends moduleHelper {
 
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo){
 		$staffSession = new staffAccountFromSession;
+		
+		$roleLevel = $staffSession->getRoleLevel();
+
 		$globalHTML = new globalHTML($this->board);
 
 		$resto = $_POST['resto'] ?? 0;
 
+		
+
 		if($this->ALLOWREPLY && $resto) return;
-		if($staffSession->getRoleLevel() < $this->MINIMUM_ROLE){ $globalHTML->error('New posts cannot be made at this time.'); }
+		if($roleLevel->isAtLeast($this->MINIMUM_ROLE)){
+			$globalHTML->error('New posts cannot be made at this time.');
+		}
 	}
 }

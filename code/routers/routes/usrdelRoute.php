@@ -3,7 +3,6 @@
 class usrdelRoute {
 	private readonly array $config;
 	private readonly board $board;
-	private readonly staffAccountFromSession $staffSession;
 	private readonly globalHTML $globalHTML;
 	private readonly moduleEngine $moduleEngine;
 	private readonly actionLogger $actionLogger;
@@ -13,7 +12,6 @@ class usrdelRoute {
 	public function __construct(
 		array $config,
 		board $board,
-		staffAccountFromSession $staffSession,
 		globalHTML $globalHTML,
 		moduleEngine $moduleEngine,
 		actionLogger $actionLogger,
@@ -22,7 +20,6 @@ class usrdelRoute {
 	) {
 		$this->config = $config;
 		$this->board = $board;
-		$this->staffSession = $staffSession;
 		$this->globalHTML = $globalHTML;
 		$this->moduleEngine = $moduleEngine;
 		$this->actionLogger = $actionLogger;
@@ -44,8 +41,8 @@ class usrdelRoute {
 			}
 		}
 
-		$haveperm = $this->staffSession->getRoleLevel() >= $this->config['roles']['LEV_JANITOR'];
-		$this->moduleEngine->useModuleMethods('Authenticate', [$pwd, 'userdel', &$haveperm]);
+		$havePerm = isActiveStaffSession();
+		$this->moduleEngine->useModuleMethods('Authenticate', [$pwd, 'userdel', &$havePerm]);
 
 		if ($pwd === '' && $pwdc !== '') $pwd = $pwdc;
 		$pwd_md5 = substr(md5($pwd), 2, 8);
@@ -61,7 +58,7 @@ class usrdelRoute {
 		$posts = $this->PIO->fetchPosts($delno);
 
 		foreach ($posts as $post) {
-			if ($pwd_md5 == $post['pwd'] || $host == $post['host'] || $haveperm) {
+			if ($pwd_md5 == $post['pwd'] || $host == $post['host'] || $havePerm) {
 				$search_flag = true;
 				$delPostUIDs[] = intval($post['post_uid']);
 				$delPosts[] = $post;

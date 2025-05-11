@@ -155,9 +155,8 @@ class mod_blotter extends moduleHelper {
 		
 		$roleLevel = $staffSession->getRoleLevel();
 
-		
 		//If a regular user, draw blotter page
-		if ($roleLevel < $this->config['AuthLevels']['CAN_EDIT_BLOTTER']) {
+		if ($roleLevel->isAtLeast($this->config['AuthLevels']['CAN_EDIT_BLOTTER'])) {
 			$blotterTableHtml = $this->drawBlotterTable();
 
 			echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $blotterTableHtml]);
@@ -165,7 +164,7 @@ class mod_blotter extends moduleHelper {
 		}
 		
 		// Admin panel to manage blotter
-		if ($_SERVER['REQUEST_METHOD'] == 'POST' && $roleLevel >= $this->config['AuthLevels']['CAN_EDIT_BLOTTER']) {
+		if ($_SERVER['REQUEST_METHOD'] == 'POST' && $roleLevel->isAtLeast($this->config['AuthLevels']['CAN_EDIT_BLOTTER'])) {
 			if (!empty($_POST['new_blot_txt'])) {
 				$this->handleBlotterAddition();
 			}

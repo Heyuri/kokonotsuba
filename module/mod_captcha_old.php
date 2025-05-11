@@ -70,9 +70,12 @@ class mod_captcha extends moduleHelper {
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo){
 		if (defined('VIPDEF')) return;
 		$staffSession = new staffAccountFromSession;
+		$roleLevel = $staffSession->getRoleLevel();
+
+
 		$globalHTML = new globalHTML($this->board);
-		if ($staffSession->getRoleLevel() >= $this->config['roles']['LEV_JANITOR']) return; //no captcha for admin mode
-		@session_start();
+		if ($roleLevel->isAtLeast(\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR)) return; //no captcha for admin mode
+
 		$MD5code = isset($_SESSION['captcha_dcode']) ? $_SESSION['captcha_dcode'] : false;
 		if($MD5code===false || !isset($_POST['captchacode']) || md5(strtoupper($_POST['captchacode'])) !== $MD5code){ // Case insensitive check
 			unset($_SESSION['captcha_dcode']);

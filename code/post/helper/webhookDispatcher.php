@@ -10,7 +10,7 @@ class webhookDispatcher {
         $this->config = $config;
 	}
 
-	public function dispatch(int $threadNumber, int $no, string $sub): void {
+	public function dispatch(int $threadNumber, int $no): void {
 		$url = $this->board->getBoardURL() . $this->config['PHP_SELF'] . "?res=" . ($threadNumber ? $threadNumber : $no);
 		$msg = ($threadNumber ? 'New post' : 'New thread');
 

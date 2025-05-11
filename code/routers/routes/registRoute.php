@@ -128,7 +128,7 @@ class registRoute {
 		setcookie('emailc', htmlspecialchars_decode($postData['email']), time()+7*24*3600);
 	
 		// Dispatch webhook
-		$webhookDispatcher->dispatch($postData['resno'], $computedPostInfo['no'], $postData['sub']);
+		$webhookDispatcher->dispatch($postData['resno'], $computedPostInfo['no']);
 	
 		// Save files
 		if($fileMeta['file']->getExtention()) {
@@ -179,7 +179,7 @@ class registRoute {
 		$flgh = '';
 		$ThreadExistsBefore = false;
 		$up_incomplete = 0;
-		$is_admin = $roleLevel === $this->config['roles']['LEV_ADMIN'];
+		$is_admin = $roleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
 
 		// full name for cookie, it wont be processed by the tripcode processor
 		$nameCookie = $name;
@@ -308,7 +308,7 @@ class registRoute {
 		$post_position = 0;
 		$is_op = $postData['resno'] ? false : true;
 		$now = $formatter->format($postData['time']);
-		$now .= $idGen->generate($postData['email'], $now, $postData['time'], $postData['thread_uid']);
+		$now .= $idGen->generate($postData['email'], $postData['time'], $postData['thread_uid']);
 	
 		return [
 			'no' => $no,

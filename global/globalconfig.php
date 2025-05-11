@@ -38,15 +38,6 @@ $config['FILEIO_PARAMETER'] = ''; // FileIO Parameters (local storage)
 $config['IDSEED'] = 'setrandom'; // ID generation seed
 $config['TRIPSALT'] = ''; // Used for secure tripcodes. Don't change after setting!
 
-//these are moderator / elevated user roles
-$config['roles']['LEV_NONE'] = 0; //not logged in
-$config['roles']['LEV_USER'] = 1; //registered user
-$config['roles']['LEV_JANITOR'] = 2; //janitor
-$config['roles']['LEV_MODERATOR'] = 3; //moderator
-$config['roles']['LEV_ADMIN'] = 4; //administrator
-$config['roles']['LEV_SYSTEM'] = 5; //system
-
-
 // Capcode formats (put '%s' where you want the original name)
 $config['JCAPCODE_FMT'] = '%s';
 $config['DCAPCODE_FMT'] = '<span class="capcode capcodeDev">%s ## Developer</span>';
@@ -60,32 +51,32 @@ $config['SCAPCODE_FMT'] = '<span class="capcode capcodeSystem">%s ## System</spa
 // capcodeHtml is the html format for the name when drawing
 // requiredRole is what role the poster needs to be able to trigger it
 $config['staffCapcodes'] = [
-	'System' => [
-		'capcodeHtml' => $config['SCAPCODE_FMT'],
-		'requiredRole' => $config['roles']['LEV_SYSTEM'],
-	],
+    'System' => [
+        'capcodeHtml' => $config['SCAPCODE_FMT'],
+        'requiredRole' => \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN,
+    ],
 
-	'Admin' => [
-		'capcodeHtml' => $config['ACAPCODE_FMT'],
-		'requiredRole' => $config['roles']['LEV_ADMIN'],
-	],
+    'Admin' => [
+        'capcodeHtml' => $config['ACAPCODE_FMT'],
+        'requiredRole' => \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN,
+    ],
 
-	'Mod' => [
-		'capcodeHtml' => $config['MCAPCODE_FMT'],
-		'requiredRole' => $config['roles']['LEV_MODERATOR'],
-	],
+    'Mod' => [
+        'capcodeHtml' => $config['MCAPCODE_FMT'],
+        'requiredRole' => \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR,
+    ],
 
-	'Developer' => [
-		'capcodeHtml' => $config['DCAPCODE_FMT'],
-		'requiredRole' => $config['roles']['LEV_MODERATOR'],
-	],
+    'Developer' => [
+        'capcodeHtml' => $config['DCAPCODE_FMT'],
+        'requiredRole' => \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR,
+    ],
 
-	'Janitor' => [
-		'capcodeHtml' => $config['JCAPCODE_FMT'],
-		'requiredRole' => $config['roles']['LEV_JANITOR'],
-	],
+    'Janitor' => [
+        'capcodeHtml' => $config['JCAPCODE_FMT'],
+        'requiredRole' => \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR,
+    ],
+];
 
-]; 
 
 $config['KILL_INCOMPLETE_UPLOAD'] = 1; // Automatically delete uploaded incomplete additional images
 

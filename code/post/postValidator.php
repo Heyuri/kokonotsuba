@@ -49,7 +49,7 @@ class postValidator {
 		// Continuous submission / same additional image check
 	    $checkcount = 50; // Check 50 by default
 	    $pwdc = substr(md5($pwdc), 2, 8); // Cookies Password
-	    if ($roleLevel < $this->config['roles']['LEV_MODERATOR'])  {
+	    if ($roleLevel->isLessThan(\Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR))  {
 	        if($PIO->isSuccessivePost($this->board, $checkcount, $com, $time, $pass, $pwdc, $host, $upfile_name))
 	           $this->globalHTML->error(_T('regist_successivepost')); // Continuous submission check
 	        

@@ -167,25 +167,60 @@ class PIOPDO implements IPIO {
 	}
 
 	/* Search posts */
-	public function searchPost($board, $keywords, $field = 'com', $method = 'OR') {
-		// Validate the field and method inputs
+	public function searchPosts(IBoard $board, array $keywords, string $field = 'com', string $method = 'OR', int $limit = 20, int $offset = 0): array {
+		// Validate inputs for field and method
 		$allowedFields = ['com', 'name', 'sub', 'no'];
 		$field = in_array($field, $allowedFields) ? $field : 'com';
 		$method = in_array($method, ['AND', 'OR']) ? $method : 'OR';
 		$boardUID = $board->getBoardUID();
-
+	
+		// Prepare where clauses and parameters for SQL query
 		$whereClauses = [];
 		$params = [];
-		foreach ($keywords as $keyword) {
-			$whereClauses[] = "LOWER($field) LIKE :keyword";
-			$params[':keyword'] = '%' . strtolower($keyword) . '%';
+	
+		foreach ($keywords as $index => $keyword) {
+			$paramKey = ":keyword$index";
+			$whereClauses[] = "LOWER($field) LIKE $paramKey";
+			$params[$paramKey] = '%' . strtolower($keyword) . '%';
 		}
 		$whereClause = implode(" $method ", $whereClauses);
-
 		$params[':board_uid'] = $boardUID;
-
-		$query = "SELECT * FROM {$this->tablename} WHERE $whereClause AND boardUID = :board_uid ORDER BY no DESC";
-		return $this->databaseConnection->fetchAllAsArray($query, $params);
+	
+		// Perform the SQL query with a JOIN to fetch posts and their related threads
+		$query = "
+			SELECT p.*, t.*
+			FROM {$this->tablename} p
+			LEFT JOIN {$this->threadTable} t
+				ON p.thread_uid = t.thread_uid
+			WHERE $whereClause AND p.boardUID = :board_uid
+			ORDER BY p.no DESC
+			LIMIT $limit OFFSET $offset
+		";
+	
+		// Execute the query and fetch results
+		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
+		$results = [];
+	
+		// Iterate through the posts and include thread data
+		foreach ($posts as $post) {
+			$post_uid = $post['post_uid'];
+	
+			// The thread data is already included in the result due to the JOIN
+			$thread = [
+				'thread_uid' => $post['thread_uid'],
+				'thread_created_time' => $post['thread_created_time'],
+				'last_bump_time' => $post['last_bump_time'],
+				'last_reply_time' => $post['last_reply_time'],
+				'post_op_number' => $post['post_op_number']
+			];
+	
+			$results[$post_uid] = [
+				'post' => $post,
+				'thread' => $thread
+			];
+		}
+	
+		return $results;
 	}
 
 	/* Check if an attachment is duplicated */

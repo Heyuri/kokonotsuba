@@ -24,7 +24,7 @@ class rebuildRoute {
 	}
 
 	public function handleRebuild(): void {
-		$this->softErrorHandler->handleAuthError($this->config['roles']['LEV_JANITOR']);
+		$this->softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR);
 
 		$this->actionLogger->logAction("Rebuilt pages", $this->board->getBoardUID());
 		$this->board->updateBoardPathCache(); 

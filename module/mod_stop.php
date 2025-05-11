@@ -24,7 +24,7 @@ class mod_stop extends moduleHelper {
 		$roleLevel = $staffSession->getRoleLevel();
 		
 
-		if ($thread_uid && $roleLevel < $this->config['roles']['LEV_MODERATOR']) {
+		if ($thread_uid && $roleLevel->isLessThan(\Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR)) {
 			$flags = getThreadStatus($thread_uid);
 
 			if($flags->value('stop')) $globalHTML->error('ERROR: This thread is locked.');
@@ -52,8 +52,8 @@ class mod_stop extends moduleHelper {
 		$threadSingleton = threadSingleton::getInstance();
 
 		$actionLogger = ActionLogger::getInstance();
-		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
+		$softErrorHandler = new softErrorHandler($globalHTML);
 		
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_LOCK']);
 
