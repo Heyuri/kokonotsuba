@@ -11,7 +11,8 @@ const kkfilter = {
 			if (F.storagename=="filter_postnum") {
 				for (var post of $class("post")) {
 					var pi = post.getElementsByClassName("postInfoExtra")[0];
-					pi.insertAdjacentHTML("afterbegin", '<span class="filterpostContainer">[<a class="filterpost" href="javascript:void(0);" onclick="kkfilter.togglepostno(\'' + post.id.slice(1) + '\');">' + (post.classList.contains("filter") ? 'Show' : 'Hide') + '</a>]</span>');
+					pi.insertAdjacentHTML("afterbegin", '<span class="filterpostContainer">[<a class="filterpost" title="' + (post.classList.contains("filter") ? 'Show this post' : 'Hide this post') + '" href="javascript:void(0);" onclick="kkfilter.togglepostno(\'' + post.id.slice(1) + '\');">' + (post.classList.contains("filter") ? 'Show' : 'Hide') + '</a>]</span>');
+
 				}
 			}
 		});
@@ -100,7 +101,9 @@ const kkfilter = {
 		if (p.classList.contains('op')) {
 			p.parentNode.classList.remove('filter');
 		}
-		p.querySelector('.filterpost').innerText = 'Hide';
+		var link = p.querySelector('.filterpost');
+		link.innerText = 'Hide';
+		link.title = 'Hide this post';
 	},
 	hidepost: function(no) {
 		var p = $id('p' + no);
@@ -108,7 +111,9 @@ const kkfilter = {
 		if (p.classList.contains("op")) {
 			p.parentNode.classList.add("filter");
 		}
-		p.querySelector('.filterpost').innerText = 'Show';
+		var link = p.querySelector('.filterpost');
+		link.innerText = 'Show';
+		link.title = 'Show this post';
 	}
 };
 
