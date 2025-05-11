@@ -8,7 +8,6 @@ class boardRebuilder {
 	private mixed $PIO;
 	private mixed $threadSingleton;
 	private mixed $actionLogger;
-	private staffAccountFromSession $staffSession;
 	private templateEngine $templateEngine;
 
 
@@ -17,7 +16,6 @@ class boardRebuilder {
 
 		$this->globalHTML = new globalHTML($board);
 		$this->moduleEngine = new moduleEngine($board);
-		$this->staffSession = new staffAccountFromSession;
 		$this->threadSingleton = threadSingleton::getInstance();
 		$this->PIO = PIOPDO::getInstance();
 		$this->actionLogger = actionLogger::getInstance();
@@ -47,9 +45,16 @@ class boardRebuilder {
 	public function drawThread(int $resno): void {
 		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
 
-		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine, $quoteLinksFromBoard);
-		$roleLevel = $this->staffSession->getRoleLevel();
-		$adminMode = $roleLevel >= $this->config['roles']['LEV_JANITOR'];
+		$postRenderer = new postRenderer($this->board, 
+		 $this->config, 
+		 $this->globalHTML, 
+		 $this->moduleEngine, 
+		 $this->templateEngine, 
+		 $quoteLinksFromBoard);
+
+		$threadRenderer = new threadRenderer($this->globalHTML, $this->templateEngine, $postRenderer);
+		
+		$adminMode = isActiveStaffSession();
 
 		$uid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
 
@@ -62,7 +67,11 @@ class boardRebuilder {
 		}
 
 		$thread = $threadData['thread'];
+
+		$threadUid = $thread['thread_uid'];
+
 		$posts = $threadData['posts'];
+
 		$hiddenReply = 0;
 
 		$pte_vals = [
@@ -96,12 +105,13 @@ class boardRebuilder {
 			$thread,
 			$posts,
 			$hiddenReply,
-			$uid,
-			[],
+			$threadUid,
 			false,
-			true,
 			$adminMode,
-			0
+			0,
+			'',
+			'',
+			$pte_vals,
 		);
 		// No pagination for single thread view
 		$pte_vals['{$PAGENAV}'] = '';
@@ -124,9 +134,16 @@ class boardRebuilder {
 	public function drawPage(int $page = 0): void {
 		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
 
-		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine, $quoteLinksFromBoard);
-		$roleLevel = $this->staffSession->getRoleLevel();
-		$adminMode = $roleLevel >= $this->config['roles']['LEV_JANITOR'];
+		$postRenderer = new postRenderer($this->board, 
+		 $this->config, 
+		 $this->globalHTML, 
+		 $this->moduleEngine, 
+		 $this->templateEngine, 
+		 $quoteLinksFromBoard);
+
+		$threadRenderer = new threadRenderer($this->globalHTML, $this->templateEngine, $postRenderer);
+
+		$adminMode = isActiveStaffSession();
 
 		$boardUrl = $this->board->getBoardURL();
 
@@ -167,19 +184,20 @@ class boardRebuilder {
 			$thread = $data['thread'];
 			$posts = $data['posts'];
 			$hiddenReply = $data['hidden_reply_count'];
-			$threadUID = $data['thread_uid'];
+			$threadUid = $data['thread_uid'];
 
 			$pte_vals['{$THREADS}'] .= $threadRenderer->render($threadsInPage,
 				false,
 				$thread,
 				$posts,
 				$hiddenReply,
-				$threadUID,
-				[],
+				$threadUid,
 				false,
-				true,
 				$adminMode,
-				$i
+				$i,
+				'',
+				'',
+				$pte_vals
 			);
 		}
 
@@ -240,7 +258,15 @@ class boardRebuilder {
 	private function renderStaticPage(int $page, array $threads, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals): void {
 		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
 
-		$threadRenderer = new threadRenderer($this->board, $this->config, $this->globalHTML, $this->moduleEngine, $this->templateEngine, $quoteLinksFromBoard);
+		$postRenderer = new postRenderer($this->board, 
+		 $this->config, 
+		 $this->globalHTML, 
+		 $this->moduleEngine, 
+		 $this->templateEngine, 
+		 $quoteLinksFromBoard);
+		
+		 $threadRenderer = new threadRenderer($this->globalHTML, $this->templateEngine, $postRenderer);
+
 		$threadsPerPage = $this->config['PAGE_DEF'];
 	
 		$boardUrl = $this->board->getBoardURL();
@@ -254,20 +280,20 @@ class boardRebuilder {
 			$thread = $data['thread'];
 			$posts = $data['posts'];
 			$hiddenReply = $data['hidden_reply_count'];
-			$threadUID = $data['thread_uid'];
+			$threadUid = $data['thread_uid'];
 	
-			$pte_vals['{$THREADS}'] .= $threadRenderer->render(
-				$threads,
+			$pte_vals['{$THREADS}'] .= $threadRenderer->render($threads,
 				false,
 				$thread,
 				$posts,
 				$hiddenReply,
-				$threadUID,
-				[],
+				$threadUid,
 				false,
-				true,
 				false,
-				$i
+				$i,
+				'',
+				'',
+				$pte_vals
 			);
 		}
 	
@@ -328,7 +354,7 @@ class boardRebuilder {
 	}
 
 	private function buildPteVals(): array {
-		$adminMode = $this->staffSession->getRoleLevel() >= $this->config['roles']['LEV_JANITOR'];
+		$adminMode = isActiveStaffSession();
 	
 		$pte_vals = [
 			'{$THREADS}' => '',
