@@ -57,3 +57,14 @@ function getThreadStatus(string $thread_uid) {
 
 	return $flags;
 }
+
+
+/**
+* Check if the account session role is at least a janitor
+*/
+function isActiveStaffSession(): bool {
+	$staffSession = new staffAccountFromSession;
+	$roleLevel = $staffSession->getRoleLevel();
+	
+	return $roleLevel->isStaff();
+}
