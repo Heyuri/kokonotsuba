@@ -61,17 +61,16 @@ class overboard {
 	public function drawOverboardThreads(array $filters, globalHTML $globalHTML) {
 		$threadSingleton = threadSingleton::getInstance();
 
-		$pagenum = $_REQUEST['page'] ?? 0;
-		if (!filter_var($pagenum, FILTER_VALIDATE_INT) && $pagenum != 0) $globalHTML->error("Page number was not a valid int.");
-		$pagenum = ($pagenum >= 0) ? $pagenum : 1;
+		$page = $_REQUEST['page'] ?? 0;
+		if (!filter_var($page, FILTER_VALIDATE_INT) && $page != 0) $globalHTML->error("Page number was not a valid int.");
+		$page = ($page >= 0) ? $page : 1;
 		
 		$threadsHTML = '';
 		$limit = $this->config['OVERBOARD_THREADS_PER_PAGE'];
-		$offset = $pagenum * $limit;
+		$offset = $page * $limit;
 		
 		$templateValues = $this->buildOverboardTemplateValues();
 		
-		$single_page = false;
 		
 		$previewCount = $this->config['RE_DEF'];
 
@@ -90,8 +89,6 @@ class overboard {
 			$threadHTML = $this->renderOverboardThread(
 				$thread,
 				$iterator,
-				$pagenum,
-				$single_page,
 				$boardMap,
 				$quoteLinksByBoardUID,
 				$postsByBoardAndThread,
@@ -180,8 +177,6 @@ class overboard {
 	private function renderOverboardThread(
 		array $thread, 
 		int $iterator, 
-		mixed $pagenum, 
-		bool $single_page, 
 		array $boardMap, 
 		array $quoteLinksByBoardUID,
 		array $postsByBoardAndThread, 
@@ -203,11 +198,10 @@ class overboard {
 	
 		[$overboardThreadTitle, $crossLink] = $this->buildThreadTitleAndLink($board);
 	
-		$adminMode = $this->determineAdminMode($board, $pagenum, $single_page);
+		$adminMode = isActiveStaffSession();
 		$templateValues = $this->buildTemplateValues($board);
 	
-		$kill_sensor = false;
-		$arr_kill = array();
+		$killSensor = false;
 	
 		$hiddenReply = $thread['hidden_reply_count'];
 	
@@ -217,9 +211,7 @@ class overboard {
 			$posts,
 			$hiddenReply,
 			$threadID,
-			$arr_kill,
-			$kill_sensor,
-			true,
+			$killSensor,
 			$adminMode,
 			$iterator,
 			$overboardThreadTitle,
@@ -235,7 +227,15 @@ class overboard {
 		$boardUID = $board->getBoardUID();
 		$quoteLinksForBoard = $quoteLinksByBoardUID[$boardUID];
 
-		return new threadRenderer($board, $config, $globalHTML, $moduleEngine, $templateEngine, $quoteLinksForBoard);
+		$postRenderer = new postRenderer($board,
+		 $config, 
+		 $globalHTML, 
+		 $moduleEngine, 
+		 $templateEngine, 
+		 $quoteLinksForBoard
+		);
+
+		return new threadRenderer($globalHTML, $templateEngine, $postRenderer);
 	}
 	
 	private function buildThreadTitleAndLink(board $board): array {
@@ -245,13 +245,6 @@ class overboard {
 		return [$titleHTML, $boardURL];
 	}
 	
-	private function determineAdminMode(board $board, mixed $pagenum, bool $single_page): bool {
-		$staffSession = new staffAccountFromSession;
-		$roleLevel = $staffSession->getRoleLevel();
-		$config = $board->loadBoardConfig();
-	
-		return $roleLevel >= $config['roles']['LEV_JANITOR'] && $pagenum != -1 && !$single_page;
-	}
 	
 	private function buildTemplateValues(board $board): array {
 		return [
