@@ -155,27 +155,27 @@ class mod_blotter extends moduleHelper {
 		
 		$roleLevel = $staffSession->getRoleLevel();
 
-		//If a regular user, draw blotter page
-		if ($roleLevel->isAtLeast($this->config['AuthLevels']['CAN_EDIT_BLOTTER'])) {
-			$blotterTableHtml = $this->drawBlotterTable();
-
-			echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $blotterTableHtml]);
-			return;
-		}
-		
 		// Admin panel to manage blotter
 		if ($_SERVER['REQUEST_METHOD'] == 'POST' && $roleLevel->isAtLeast($this->config['AuthLevels']['CAN_EDIT_BLOTTER'])) {
 			if (!empty($_POST['new_blot_txt'])) {
 				$this->handleBlotterAddition();
 			}
-
 			if (!empty($_POST['delete_submit']) && !empty($_POST['entrydelete'])) {
 				$this->deleteBlotterEntries($_POST['entrydelete']);
 			}
 		}
-		$templateValues = $this->prepareAdminBlotterPlaceHolders();
-		$blotterAdminPageHtml = $this->adminPageRenderer->ParseBlock('BLOTTER_ADMIN_PAGE', $templateValues);
-		echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $blotterAdminPageHtml], true);
+
+		//If a regular user, draw blotter page
+		if ($roleLevel->isAtLeast($this->config['AuthLevels']['CAN_EDIT_BLOTTER'])) {
+			$templateValues = $this->prepareAdminBlotterPlaceHolders();
+			$blotterAdminPageHtml = $this->adminPageRenderer->ParseBlock('BLOTTER_ADMIN_PAGE', $templateValues);
+			echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $blotterAdminPageHtml], true);
+			return;
+		}
+
+		$blotterTableHtml = $this->drawBlotterTable();
+
+		echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $blotterTableHtml]);
 	}
 }
 ?>
