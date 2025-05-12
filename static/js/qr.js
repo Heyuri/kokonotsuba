@@ -12,7 +12,7 @@ const kkqr = { name: "KK Quick Reply",
 		if (!$id("postform")) return true;
 		$id("formfuncs").insertAdjacentHTML("beforeend", '<span id="qrfunc"> | <a href="javascript:kkqr.openqr();">Quick reply</a></span>');
 		if (localStorage.getItem("useqr")=="true") {
-			if (localStorage.getItem("alwaysqr")=="true") {
+			if (localStorage.getItem("alwaysqr")=="true" && !kkqr.closedOnce) {
 				kkqr.openqr();
 			}
 			var qu = $class("qu");
@@ -36,10 +36,11 @@ const kkqr = { name: "KK Quick Reply",
 	/* - */
 	qrs: $id("qrs"),
 	win: null,
+	closedOnce: false,
 	/* Settings */
 	sett: function (tab, div) { if (tab!="general") return;
-		div.innerHTML+= '<label><input type="checkbox" onchange="localStorage.setItem(\'useqr\',this.checked);location.reload();"'+(localStorage.getItem("useqr")=="true"?'checked="checked"':'')+'>Use quick reply</label>';
-		div.innerHTML+= '<label><input type="checkbox" onchange="localStorage.setItem(\'alwaysqr\',this.checked);if(this.checked&&!kkqr.win)kkqr.openqr();"'+(localStorage.getItem("alwaysqr")=="true"?'checked="checked"':'')+'>Persistent quick reply</label>';
+		div.innerHTML+= '<label><input id="useqr_cb" type="checkbox" onchange="localStorage.setItem(\'useqr\',this.checked);if(!this.checked)setTimeout(()=>kkqr.closeqr(), 0);"'+(localStorage.getItem("useqr")=="true"?'checked="checked"':'')+'>Use quick reply</label>';
+		div.innerHTML+= '<label><input type="checkbox" onchange="localStorage.setItem(\'alwaysqr\',this.checked);if(this.checked){localStorage.setItem(\'useqr\',true);document.getElementById(\'useqr_cb\').checked=true;if(!kkqr.win)kkqr.openqr();}"'+(localStorage.getItem("alwaysqr")=="true"?'checked="checked"':'')+'>Persistent quick reply</label>';
 	},
 	/* Function */
 	_evqr: function (event) {
@@ -87,7 +88,7 @@ const kkqr = { name: "KK Quick Reply",
 			if (typeof(upfile) != 'undefined') {
 				upfile.insertAdjacentHTML("beforebegin", '<span id="upfileDUMMY"></span>');
 				qrcontents.appendChild(upfile);
-				qrcontents.innerHTML += '<small>[<a href="javascript:void(0);" onclick="$id(\'upfile\').value=\'\';">X</a>]</small> <br>';
+				qrcontents.innerHTML += '[<a href="javascript:void(0);" onclick="$id(\'upfile\').value=\'\';">X</a>]<br>';
 			}
 			if (typeof(noimg) != 'undefined') {
 				qrcontents.innerHTML += '<nobr><label>[<input type="checkbox" name="noimg" id="qrnoimg" onclick="$id(\'noimg\').checked=this.checked;"' + (noimg.checked ? ' checked="checked"' : '') + '>No File]</label></nobr> ';
@@ -126,6 +127,7 @@ const kkqr = { name: "KK Quick Reply",
 	},
 	closeqr: function () {
 		kkqr.qrs.disabled = true;
+		kkqr.closedOnce = true;
 		if (!kkqr.win) return;
 		var up = $id("upfile"), pf = $id("postform"), chaimg = $id("chaimg");
 		if (up) {

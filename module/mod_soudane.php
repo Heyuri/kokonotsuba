@@ -144,7 +144,7 @@ class mod_soudane extends moduleHelper {
 			$logNope = $this->_loadVotes($post_uid, 'nope');
 			$classNope = count($logNope) > 0 ? 'hasVotes' : 'noVotes';
 			$buttonTextNope = $this->_getVoteButtonText('nope', count($logNope));
-			$arrLabels['{$POSTINFO_EXTRA}'] .= '<span class="soudane2"><a id="vote_nope_'.$post_uid.'" class="sod '.$classNope.'" href="javascript:vote(\''.$post_uid.'\', \'nope\');">'.$buttonTextNope.'</a></span>';
+			$arrLabels['{$POSTINFO_EXTRA}'] .= '<span class="soudane2" title="Disagree with this post"><a id="vote_nope_'.$post_uid.'" class="sod '.$classNope.'" href="javascript:vote(\''.$post_uid.'\', \'nope\');">'.$buttonTextNope.'</a></span>';
 		}
 
 		if ($this->enableNope && $this->enableYeah) {
@@ -161,7 +161,7 @@ class mod_soudane extends moduleHelper {
 			$logYeah = $this->_loadVotes($post_uid, 'yeah');
 			$classYeah = count($logYeah) > 0 ? 'hasVotes' : 'noVotes';
 			$buttonTextYeah = $this->_getVoteButtonText('yeah', count($logYeah));
-			$arrLabels['{$POSTINFO_EXTRA}'] .= '<span class="soudane"><a id="vote_yeah_'.$post_uid.'" class="sod '.$classYeah.'" href="javascript:vote(\''.$post_uid.'\', \'yeah\');">'.$buttonTextYeah.'</a></span>';
+			$arrLabels['{$POSTINFO_EXTRA}'] .= '<span class="soudane" title="Agree with this post"><a id="vote_yeah_'.$post_uid.'" class="sod '.$classYeah.'" href="javascript:vote(\''.$post_uid.'\', \'yeah\');">'.$buttonTextYeah.'</a></span>';
 		}
 
 		// If SHOW_SCORE_ONLY is not enabled, display the score separately

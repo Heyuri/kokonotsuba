@@ -91,7 +91,7 @@ class globalHTML {
 			'{$FORM_NAME_FIELD}' => '<input tabindex="1" maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="name" id="name" value="'.$name.'" class="inputtext">',
 			'{$FORM_EMAIL_FIELD}' => '<input tabindex="2" maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="email" id="email" value="'.$mail.'" class="inputtext">',
 			'{$FORM_TOPIC_FIELD}' => '<input tabindex="3" maxlength="'.$this->config['INPUT_MAX'].'"  type="text" name="sub" id="sub" value="'.$sub.'" class="inputtext">',
-			'{$FORM_SUBMIT}' => '<button tabindex="10" type="submit" name="mode" value="regist">'.($resno ? 'Post' : 'New Thread' ).'</button>',
+			'{$FORM_SUBMIT}' => '<button tabindex="10" type="submit" name="mode" value="regist">'.($resno ? 'Post' : 'New thread' ).'</button>',
 			'{$FORM_COMMENT_FIELD}' => '<textarea tabindex="6" maxlength="'.$this->config['COMM_MAX'].'" name="com" id="com" class="inputtext">'.$com.'</textarea>',
 			'{$FORM_DELETE_PASSWORD_FIELD}' => '<input tabindex="6" type="password" name="pwd" id="pwd" maxlength="8" value="" class="inputtext">',
 			'{$FORM_EXTRA_COLUMN}' => '',
@@ -289,7 +289,7 @@ class globalHTML {
 		
 			$isChecked = $selectAll || in_array($boardUID, $filterBoard) || ($boardUID == $currentBoard->getBoardUID() && empty($filterBoard));
 			
-			$listHTML .= '<label class="filterSelectBoardItem"><input name="filterboard[]" type="checkbox" value="' . $boardUID . '" ' . ($isChecked ? 'checked' : '') . '>' . $boardTitle . '</label>  ';
+			$listHTML .= '<li><label class="filterSelectBoardItem"><input name="filterboard[]" type="checkbox" value="' . $boardUID . '" ' . ($isChecked ? 'checked' : '') . '>' . $boardTitle . '</label></li>';
 		}
 	
 		return $listHTML;
@@ -496,17 +496,18 @@ class globalHTML {
 		$filterBoard = json_decode($_COOKIE['overboard_filterboards'] ?? ''); if(!is_array($filterBoard)) $filterBoard = $allListedBoards;
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard, $boardIO->getBoardsFromUIDs($allListedBoards));
 		$dat .= '
-		<div class="overboardFilterFormContainer">
-			<details id="overboard-filter-form" class="detailsbox"> <summary>Filter boards</summary>
-				<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=overboard" method="POST">
-					<div class="postblock">
-							<div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div>
-									'.$boardCheckboxHTML.'
+			<form id="overboardFilterForm" action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=overboard" method="POST">
+				<details class="detailsbox reply">
+					<summary>Filter boards</summary>
+					<div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div>
+					<ul class="overboardFilterList">
+						'.$boardCheckboxHTML.'
+					</ul>
+					<div class="buttonSection">
+						<button type="submit" name="filterformsubmit" value="filter">Filter</button> <input type="reset" value="Reset">
 					</div>
-					<button type="submit" name="filterformsubmit" value="filter">Filter</button> <input type="reset" value="Reset">
-				</form>
-			</details>
-		</div>
+				</details>
+			</form>
 		';
 	}
 	

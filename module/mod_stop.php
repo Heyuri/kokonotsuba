@@ -44,7 +44,7 @@ class mod_stop extends moduleHelper {
 		
 		if ($roleLevel < $this->config['AuthLevels']['CAN_LOCK']) return;
 		$fh = new FlagHelper($post['status']);
-		if(!$isReply) $modfunc.= '<span class="adminLockFunction">[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('stop')?' title="Unlock">l':' title="Lock thread">L').'</a>]</span>';
+		if(!$isReply) $modfunc.= '<span class="adminFunctions adminLockFunction">[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('stop')?' title="Unlock thread">l':' title="Lock thread">L').'</a>]</span>';
 	}
 
 	public function ModulePage() {

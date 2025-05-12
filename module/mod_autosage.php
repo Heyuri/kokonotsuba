@@ -41,7 +41,7 @@ class mod_autosage extends moduleHelper {
 
 		if ($roleLevel < $this->config['AuthLevels']['CAN_AUTO_SAGE']) return;
 		$fh = new FlagHelper($post['status']);
-		if(!$isres) $modfunc.= '<span class="adminAutosageFunction">[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('as')?' title="Allow age">as':' title="Autosage">AS').'</a>]</span>';
+		if(!$isres) $modfunc.= '<span class="adminFunctions adminAutosageFunction">[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('as')?' title="Allow age">as':' title="Autosage">AS').'</a>]</span>';
 	}
 
 	public function ModulePage() {

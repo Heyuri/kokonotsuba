@@ -36,11 +36,20 @@ const $p_class = function (el, c) {
 const kkwm = {
 	windows: Array(),
 	w_index: 1,
-	w_spawnoffx: 0, w_spawnoffy: 0,
-	w_spawnoffbouncex: false, w_spawnoffbouncey: false,
+	w_spawnoffx: 0,
+	w_spawnoffy: 0,
+	w_spawnoffbouncex: false,
+	w_spawnoffbouncey: false,
+	_focused: true,
 	startup: function () {
 		$doc.addEventListener("mouseup", kkwm._evdrag_end);
 		$doc.addEventListener("mousemove", kkwm._evmove);
+		$doc.addEventListener("mousedown", function (e) {
+			if (!e.target.closest(".window")) {
+				var wintop = $id("wintop");
+				if (wintop) wintop.id = "";
+			}
+		});
 		//kkwm.demo();
 	},
 	reset: function () {
@@ -59,7 +68,10 @@ const kkwm = {
 	top: function (name) {
 		var win = $kkwm_name(name);
 		if (!win) return;
-		if (wintop=$id("wintop")) wintop.id = "";
+
+		var wintop = $id("wintop");
+		if (wintop) wintop.id = "";
+
 		win.div.id = "wintop";
 		win.div.style.zIndex = 100 + kkwm.w_index++;
 	},
@@ -95,6 +107,10 @@ Feature list:
 	},
 	drag_end: function () {
 		if (!kkwm.wm_drag) return;
+		localStorage.setItem("kkwm_pos_" + kkwm.wm_drag.name, JSON.stringify({
+			x: kkwm.wm_drag.rect.x,
+			y: kkwm.wm_drag.rect.y
+		}));
 		kkwm.wm_drag = null;
 		kkwm.dx = 0; kkwm.dy = 0;
 		$doc.body.style.cursor = "";
@@ -133,6 +149,12 @@ class kkwmWindow {
 		// this.div.style.width = rect.w+"px"; // commented out to fix windows not fitting to contents on resize
 		// this.div.style.height = rect.h+"px";
 		var fontpointfive = FONTSIZE*3.5;
+		var storedPos = localStorage.getItem("kkwm_pos_" + name);
+		if (storedPos) {
+			var pos = JSON.parse(storedPos);
+			rect.x = pos.x;
+			rect.y = pos.y;
+		}
 		if (!rect.x) {
 			rect.x = Math.floor(d.clientWidth/2-rect.w/2)+kkwm.w_spawnoffx;
 			if (rect.x+rect.w+fontpointfive>d.clientWidth) kkwm.w_spawnoffbouncex = true;
@@ -149,7 +171,7 @@ class kkwmWindow {
 		}
 		this.move(rect.x, rect.y);
 		this.div.onmousedown = function () { kkwm.top(name); };
-		this.div.innerHTML = '<div class="winbar" data-name="'+name+'" onmousedown="kkwm.drag_start(\''+name+'\',event.clientX,event.clientY);">'+
+		this.div.innerHTML = '<div class="winbar" data-name="'+name+'" onmousedown="if (!(event.target.closest(\'.winctrl\'))) kkwm.drag_start(\''+name+'\',event.clientX,event.clientY);">'+
 		'<div class="winname">'+name+'</div><div class="winctrl">'+
 			'<button onclick="$kkwm_name(\''+name+'\').minimize();" class="winmin" title="Minimize/maximize"><img alt="-" width="16" height="16" src="'+STATIC_URL+'image/btn-min.svg"></button>'+
 			'<button onclick="$kkwm_name(\''+name+'\').remove();" class="winclose" title="Close"><img alt="X" width="16" height="16" src="'+STATIC_URL+'image/btn-close.svg"></button>'+
@@ -169,10 +191,11 @@ class kkwmWindow {
 		}
 	}
 	remove() {
-		kkwm.windows.pop(this);
+		// kkwm.windows.pop(this);
 		for (var i=0; i<kkwm.windows.length; i++) {
 			if (kkwm.windows[i].name == this.name) {
-				kkwm.windows.splice(i);
+				kkwm.windows.splice(i, 1);
+				break;
 			}
 		}
 		this.div.classList.add("wclosing");
