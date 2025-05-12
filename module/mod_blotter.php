@@ -38,15 +38,16 @@ class mod_blotter extends moduleHelper {
 					];
 			}
 		}
+
+		usort($data, function($a, $b) {
+			return strtotime($b['date']) - strtotime($a['date']);
+		});
+
 		return $data;
 	}
 
 	private function drawBlotterTable() {
 		$blotterData = $this->getBlotterFileData();
-
-		usort($blotterData, function($a, $b) {
-				return strtotime($b['date']) - strtotime($a['date']);
-		});
 
 		$rows = [];
 		foreach ($blotterData as $entry) {
@@ -85,10 +86,6 @@ class mod_blotter extends moduleHelper {
 	private function prepareAdminBlotterPlaceHolders() {
 		$blotterData = $this->getBlotterFileData();
 
-		usort($blotterData, function($a, $b) {
-			return strtotime($b['date']) - strtotime($a['date']);
-		});
-
 		$blotterPlaceholders = ['{$MODULE_URL}' => $this->mypage];
 		foreach($blotterData as $blotterEntry) {
 			$blotterPlaceholders['{$ROWS}'][] = [
@@ -97,6 +94,7 @@ class mod_blotter extends moduleHelper {
 				'{$UID}' => $blotterEntry['uid'],
 			];
 		}
+		
 		return $blotterPlaceholders;
 	}
 
@@ -145,6 +143,7 @@ class mod_blotter extends moduleHelper {
 				'{$ENTRIES}' => $previewEntries,
 				'{$EMPTY}' => empty($previewEntries),
 		];
+		
 		$res = $this->adminPageRenderer->ParseBlock('BLOTTER_PREVIEW', $templateValues);
 		$html .= $res;
 	}
@@ -165,7 +164,7 @@ class mod_blotter extends moduleHelper {
 			}
 		}
 
-		//If a regular user, draw blotter page
+		//If the user has the correct role -,draw blotter page
 		if ($roleLevel->isAtLeast($this->config['AuthLevels']['CAN_EDIT_BLOTTER'])) {
 			$templateValues = $this->prepareAdminBlotterPlaceHolders();
 			$blotterAdminPageHtml = $this->adminPageRenderer->ParseBlock('BLOTTER_ADMIN_PAGE', $templateValues);
