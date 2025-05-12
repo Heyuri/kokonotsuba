@@ -269,7 +269,7 @@ class postRenderer {
 			} elseif ($ext === ".swf") {
 				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$this->config['SWF_THUMB'].'" class="postimg" alt="SWF Embed"></a>';
 			} else {
-				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$this->config['STATIC_URL'].'image/nothumb.gif" class="postimg" alt="'.$imgsize.'" hspace="20" vspace="3" border="0" align="left"></a>'; // Default display style 	(when no preview image)
+				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$this->config['STATIC_URL'].'image/nothumb.gif" class="postimg" alt="'.$imgsize.'"></a>';
 			}
 		}
 	
