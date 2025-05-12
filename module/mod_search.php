@@ -88,7 +88,7 @@ class mod_search extends moduleHelper {
 
 		if($searchKeyword){
 			$searchPage = $_GET['page'] ?? 0;
-			$searchPostsPerPage = $this->config['SEARCH_POSTS_PER_PAGE'];
+			$searchPostsPerPage = $this->config['ModuleSettings']['SEARCH_POSTS_PER_PAGE'];
 			$searchPostOffset = $searchPostsPerPage * $searchPage;
 			$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
 
