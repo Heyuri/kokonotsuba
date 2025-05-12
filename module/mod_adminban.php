@@ -126,12 +126,12 @@ class mod_adminban extends moduleHelper {
 		return $bans;
 	}
 
-	private function handleBan(&$log, $ip, $banFile, $isGlobal = false) {
+	private function handleBan(&$log, $ip, $banFile) {
 		$htmlOutput = '';
 		foreach ($log as $i => $entry) {
 			list($banip, $starttime, $expires, $reason) = explode(',', $entry, 4);
 			if (strpos($ip, gethostbyname($banip)) !== false) {
-				$htmlOutput .= $this->drawBanPage($banip, $starttime, $expires, $reason, $this->BANIMG);
+				$htmlOutput .= $this->drawBanPage($starttime, $expires, $reason, $this->BANIMG);
 				if ($_SERVER['REQUEST_TIME'] > intval($expires)) {
 					unset($log[$i]);
 					file_put_contents($banFile, implode(PHP_EOL, $log));
@@ -240,7 +240,7 @@ class mod_adminban extends moduleHelper {
 		return $rows;
 	}
 
-	private function drawBanPage($banip, $starttime, $expires, $reason, $banImage = '') {
+	private function drawBanPage($starttime, $expires, $reason, $banImage = '') {
 		$isExpired = ($_SERVER['REQUEST_TIME'] > intval($expires));
 
 		$templateValues = [
@@ -254,7 +254,7 @@ class mod_adminban extends moduleHelper {
 						" and expires on " . date('Y/m/d \a\t H:i:s', $expires) . ".</p>"
 		];
 
-		return $this->adminPageRenderer->ParseBlock('BAN_PAGE', $templateValues);
+		return $this->adminPageRenderer->ParsePage('BAN_PAGE', $templateValues);
 	}
 
 }
