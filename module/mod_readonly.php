@@ -26,12 +26,10 @@ class mod_readonly extends moduleHelper {
 
 		$globalHTML = new globalHTML($this->board);
 
-		$resto = $_POST['resto'] ?? 0;
-
-		
+		$resto = $_POST['resto'] ?? 0;	
 
 		if($this->ALLOWREPLY && $resto) return;
-		if($roleLevel->isAtLeast($this->MINIMUM_ROLE)){
+		if($roleLevel->isLessThan(\Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR)){
 			$globalHTML->error('New posts cannot be made at this time.');
 		}
 	}
