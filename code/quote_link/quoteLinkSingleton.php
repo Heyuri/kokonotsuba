@@ -9,14 +9,14 @@ class quoteLinkSingleton {
 	private static $instance;
 	private string $quoteLinkTable;
 	private string $postTable;
-	private array $allowedOrderFields;
+	private string $threadTable;
 
 	public function __construct($dbSettings){
 		$this->databaseConnection = DatabaseConnection::getInstance();
 
 		$this->quoteLinkTable = $dbSettings['QUOTE_LINK_TABLE'];
 		$this->postTable = $dbSettings['POST_TABLE'];
-		$this->allowedOrderFields = ['quotelink_id'];
+		$this->threadTable = $dbSettings['THREAD_TABLE'];
 	}
 
 	public static function createInstance($dbSettings) {
@@ -106,64 +106,91 @@ class quoteLinkSingleton {
 	}	
 
 	public function getQuoteLinksByBoardUid(int $boardUid): array {
-		// Step 1: Fetch quoteLink rows for the board
-		$query = "
-			SELECT * 
-			FROM {$this->quoteLinkTable}
-			WHERE board_uid = :board_uid
-		";
-	
-		$params = [':board_uid' => $boardUid];
-	
-		/** @var quoteLink[] $quoteLinks */
-		$quoteLinks = $this->databaseConnection->fetchAllAsClass($query, $params, 'quoteLink');
+		// Step 1: Fetch quoteLink rows for this board
+		$quoteLinks = $this->databaseConnection->fetchAllAsClass(
+			"SELECT * FROM {$this->quoteLinkTable} WHERE board_uid = :board_uid",
+			[':board_uid' => $boardUid],
+			'quoteLink'
+		);
 	
 		if (empty($quoteLinks)) {
 			return [];
 		}
 	
-		// Step 2: Collect unique post UIDs involved
+		// Step 2: Extract all unique post UIDs (host and target)
 		$postUids = [];
-		foreach ($quoteLinks as $ql) {
-			$postUids[] = $ql->getTargetPostUid();
-			$postUids[] = $ql->getHostPostUid();
+		foreach ($quoteLinks as $link) {
+			$postUids[] = $link->getTargetPostUid();
+			$postUids[] = $link->getHostPostUid();
 		}
 		$postUids = array_unique($postUids);
 	
-		// Step 3: Fetch post data
-		$inClause = implode(',', array_map('intval', $postUids));
-		$postSql = "
-			SELECT * 
-			FROM {$this->postTable}
-			WHERE post_uid IN ($inClause)
-		";
-		$posts = $this->databaseConnection->fetchAllAsArray($postSql);
+		// Step 3: Fetch post data using post UIDs
+		$postIdList = implode(',', array_map('intval', $postUids));
+		$posts = $this->databaseConnection->fetchAllAsArray(
+			"SELECT * FROM {$this->postTable} WHERE post_uid IN ($postIdList)"
+		);
 	
-		// Step 4: Index posts by post_uid
+		// Step 4: Index posts by post_uid and gather all thread_uids
 		$postMap = [];
+		$threadUids = [];
 		foreach ($posts as $post) {
 			$postMap[$post['post_uid']] = $post;
+			if (!empty($post['thread_uid'])) {
+				$threadUids[] = $post['thread_uid'];
+			}
+		}
+		$threadUids = array_unique($threadUids);
+	
+		// Step 5: Fetch thread data using thread_uids with named placeholders
+		$placeholders = [];
+		$params = [];
+		foreach ($threadUids as $i => $uid) {
+			$placeholder = ":uid{$i}";
+			$placeholders[] = $placeholder;
+			$params[$placeholder] = $uid;
 		}
 	
-		// Step 5: Assemble result with host_post_uid as key (grouped)
-		$result = [];
-		foreach ($quoteLinks as $ql) {
-			$hostPostUid = $ql->getHostPostUid();
-			$targetPost = $postMap[$ql->getTargetPostUid()] ?? null;
-			$hostPost   = $postMap[$hostPostUid] ?? null;
+		$threadQuery = "
+			SELECT * FROM {$this->threadTable}
+			WHERE thread_uid IN (" . implode(',', $placeholders) . ")
+		";
 	
-			if ($targetPost && $hostPost) {
-				$result[$hostPostUid][] = [
-					'target_post' => $targetPost,
-					'host_post'   => $hostPost,
-					'quoteLink'   => $ql,
-				];
+		$threads = $this->databaseConnection->fetchAllAsArray($threadQuery, $params);
+	
+		// Step 6: Index threads by thread_uid
+		$threadMap = [];
+		foreach ($threads as $thread) {
+			$threadMap[$thread['thread_uid']] = $thread;
+		}
+	
+		// Step 7: Assemble result grouped by host_post_uid
+		$result = [];
+		foreach ($quoteLinks as $link) {
+			$hostUid   = $link->getHostPostUid();
+			$targetUid = $link->getTargetPostUid();
+	
+			$hostPost   = $postMap[$hostUid]   ?? null;
+			$targetPost = $postMap[$targetUid] ?? null;
+	
+			if (!$hostPost || !$targetPost) {
+				continue;
 			}
+	
+			$hostThread   = $threadMap[$hostPost['thread_uid']]   ?? null;
+			$targetThread = $threadMap[$targetPost['thread_uid']] ?? null;
+	
+			$result[$hostUid][] = [
+				'target_post'   => $targetPost,
+				'target_thread' => $targetThread,
+				'host_post'     => $hostPost,
+				'host_thread'   => $hostThread,
+				'quoteLink'     => $link,
+			];
 		}
 	
 		return $result;
-	}
-	
+	}	
 	
 	/**
 	 * Insert multiple quote links into the quoteLinkTable.
