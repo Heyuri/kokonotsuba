@@ -210,7 +210,6 @@ class overboard {
 			$threadToRender,
 			$posts,
 			$hiddenReply,
-			$threadID,
 			$killSensor,
 			$adminMode,
 			$iterator,

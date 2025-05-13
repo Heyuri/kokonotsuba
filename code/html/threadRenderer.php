@@ -26,7 +26,6 @@ class threadRenderer {
 			array $thread,
 			array $posts, 
 			int $hiddenReply, 
-			string $thread_uid, 
 			bool $killSensor,  
 			bool $adminMode = false, 
 			int $threadIterator = 0, 
@@ -34,11 +33,8 @@ class threadRenderer {
 			string $crossLink = '',
 			array $templateValues = []
 		): string {
-		$thread_uid = $thread['thread_uid'];
 
 		$threadResno = $thread['post_op_number'];
-
-		$thdat = '';
 		
 		// whether this is reply mode
 		$replyMode = $isReplyMode;
@@ -50,28 +46,49 @@ class threadRenderer {
 		// number of replies
 		$replyCount = count($posts);
 	
+		$threadHtml = '';
+
+		$templateValues['{$REPLIES}'] = '';
+
+		$templateValues['{$THREAD_OP}'] = '';
+		
 		// render posts for a thread
 		foreach ($posts as $i => $post) {
-				$thdat .= $this->renderSinglePost($posts,
+			$postHtml = $this->renderSinglePost($posts,
 						$post,
 						$i,
 						$threadMode,
 						$adminMode,
-						$threads,
-						$threadIterator,
 						$hiddenReply,
 						$killSensor,
 						$threadResno,
 						$replyMode,
 						$replyCount,
-						$overboardBoardTitleHTML,
 						$crossLink,
 						$templateValues
 			);
+			if($i === 0) {
+				$templateValues['{$THREAD_OP}'] = $postHtml;
+			} else {
+				$templateValues['{$REPLIES}'] .= $postHtml;
+			}
 		}
-	
-		$thdat .= $this->templateEngine->ParseBlock('THREADSEPARATE', $thread_uid ? array('{$RESTO}' => $threadResno) : array());
-		return $thdat;
+		
+		// append board title to thread 
+		$templateValues['{$BOARD_THREAD_NAME}'] = $overboardBoardTitleHTML;
+
+		$templateValues['{$THREAD_NO}'] = $threadResno;
+
+		$templateValues['{$THREADNAV}'] = '';
+
+		// Navigation
+		if ($threadMode) {
+			$templateValues['{$THREADNAV}'] = $this->globalHTML->buildThreadNavButtons($threads, $threadIterator);
+		}
+
+		$threadHtml .= $this->templateEngine->ParseBlock('THREAD', $templateValues);
+		$threadHtml .= $this->templateEngine->ParseBlock('THREADSEPARATE', []);
+		return $threadHtml;
 	}
 	
 	/*
@@ -83,34 +100,22 @@ class threadRenderer {
 		int $i,
 		bool $threadMode,
 		bool $adminMode,
-		array $currentPageThreads,
-		int $threadIterator,
 		int $hiddenReply,
 		bool $killSensor,
 		int $threadResno,
 		bool $replyMode,
 		int $replyCount,
-		string $overboardBoardTitleHTML,
 		string $crossLink,
-		array $templateValues,
+		array &$templateValues,
 	): string {
 		$isReply = $i > 0;
 
-
-		$postFormExtra = $warnBeKill = $warnOld = $warnEndReply = $warnHidePost = $threadNav = '';
-
-		// Navigation
-		if ($threadMode) {
-			$threadNav = $this->globalHTML->buildThreadNavButtons($currentPageThreads, $threadIterator);
-		}
+		$postFormExtra = $warnBeKill = $warnOld = $warnEndReply = $warnHidePost = '';
 
 		// Hidden reply notice
 		if (!$isReply && $hiddenReply) {
 			$warnHidePost = '<div class="omittedposts">'._T('notice_omitted', $hiddenReply).'</div>';
 		}
-
-		// append board title to thread 
-		$templateValues['{$BOARD_THREAD_NAME}'] = $overboardBoardTitleHTML;
 
 		// bind post op number to resto
 		if ($replyMode) {
@@ -129,7 +134,6 @@ class threadRenderer {
 			$warnOld,
 			$warnHidePost,
 			$warnEndReply,
-			$threadNav,
 			$replyCount,
 			$threadMode,
 			$crossLink
