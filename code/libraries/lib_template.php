@@ -63,8 +63,7 @@ function bindOPValuesToTemplate(IBoard $board,
     string $warnEndReply, 
     string $warnHidePost, 
     string $comment, 
-    string $postFormExtra, 
-    string $threadNav) 
+    string $postFormExtra) 
 {
     return [
         '{$BOARD_URL}' => $board->getBoardURL(),
@@ -96,8 +95,7 @@ function bindOPValuesToTemplate(IBoard $board,
         '{$CATEGORY_TEXT}' => _T('post_category'), 
         '{$SELF}' => $config['PHP_SELF'], 
         '{$COM}' => $comment, 
-        '{$POSTINFO_EXTRA}' => $postFormExtra, 
-        '{$THREADNAV}' => $threadNav, 
+        '{$POSTINFO_EXTRA}' => $postFormExtra,
         '{$IS_THREAD}' => true,
     ];
 }
