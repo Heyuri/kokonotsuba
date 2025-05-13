@@ -40,7 +40,6 @@ class postRenderer {
 		string $warnOld,
 		string $warnHidePost,
 		string $warnEndReply,
-		string $threadNav,
 		int $replyCount,
 		bool $threadMode = true,
 		string $crossLink = '',
@@ -123,14 +122,13 @@ class postRenderer {
 			 $warnOld, 
 			 $warnBeKill, 
 			 $warnEndReply, 
-			 $warnHidePost, 
-			 $threadNav);
+			 $warnHidePost);
 
 			// Module methods (thread OP)
 			$this->moduleEngine->useModuleMethods('ThreadPost', array(&$templateValues, $post, $threadPosts, $isThreadReply));
 		
 			// parse template values to THREAD template block to a thread OP post
-			return $this->templateEngine->ParseBlock('THREAD', $templateValues);
+			return $this->templateEngine->ParseBlock('OP', $templateValues);
 		}
 		
 	}
@@ -192,7 +190,6 @@ class postRenderer {
 		string $warnBeKill,
 		string $warnEndReply,
 		string $warnHidePost,
-		string $threadNav
 	): array {
 		return array_merge(
 			$templateValues,
@@ -220,8 +217,7 @@ class postRenderer {
 				$warnEndReply,
 				$warnHidePost,
 				$data['com'],
-				$postFormExtra,
-				$threadNav
+				$postFormExtra
 			)
 		);
 	}
@@ -355,7 +351,7 @@ class postRenderer {
 	private function generateQuoteButton(int $threadResno, int $no): string {
 		if ($this->config['USE_QUOTESYSTEM']) {
 			// Build the URL to the specific post
-			$threadUrl = $this->board->getBoardThreadURL($threadResno, $no);
+			$threadUrl = $this->board->getBoardThreadURL($threadResno, $no, true);
 			// Create the clickable quote button
 			$quoteButton = '<a href="'.$threadUrl.'" class="qu" title="Quote">'.$no.'</a>';
 		} else {
