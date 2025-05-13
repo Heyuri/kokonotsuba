@@ -195,16 +195,22 @@ class globalHTML {
 				continue; // Skip duplicates
 			}
 	
+			// Check if we have a known thread number for the quoted post number
 			if (isset($targetPostToThreadNumber[$postNumber])) {
-				$crossThreadIndicator = '';
+				// Get the thread number where the quoted post resides
 				$targetThreadNumber = $targetPostToThreadNumber[$postNumber];
 
-				if($targetThreadNumber !== $threadNumber) {
-					$crossThreadIndicator = ' (Cross-thread)';
-				}
+				// Determine if the quoted post is in a different thread (i.e. cross-thread)
+				$isCrossThread = $targetThreadNumber !== $threadNumber;
 
+				// Generate the full URL to the quoted post
 				$url = htmlspecialchars($this->board->getBoardThreadURL($targetThreadNumber, $postNumber));
-				$replacements[$fullMatch] = '<a href="' . $url . '" class="quotelink">' . $fullMatch . $crossThreadIndicator .'</a>';
+
+				// Assign a CSS class, adding 'crossThreadLink' if the post is in a different thread
+				$linkClass = 'quotelink' . ($isCrossThread ? ' crossThreadLink' : '');
+
+				// Build the final anchor tag for replacement
+				$replacements[$fullMatch] = '<a href="' . $url . '" class="' . $linkClass . '">' . $fullMatch . '</a>';
 			} else {
 				// Post was not found — strike out
 				$replacements[$fullMatch] = '<a href="javascript:void(0);" class="quotelink"><del>' . $fullMatch . '</del></a>';
