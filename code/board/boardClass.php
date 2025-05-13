@@ -199,12 +199,14 @@ class board implements IBoard {
 		$boardRebuilder->rebuildBoardPageHtml($pageNumber, $logRebuild);
 	}
 
-	public function getBoardThreadURL(int $threadNumber, int $replyNumber = 0): string {
+	public function getBoardThreadURL(int $threadNumber, int $replyNumber = 0, bool $isQuoteRedirect = false): string {
 		$phpSelf = $this->config['PHP_SELF'];
 		$replyString = '';
 
 		if($replyNumber) {
-			$replyString = '#p'.$this->getBoardUID().'_'.$replyNumber;
+			$replyString = $isQuoteRedirect ? '#q' . $replyNumber 
+				: '#p'.$this->getBoardUID().'_'.$replyNumber;
+		
 		}
 
 		$threadUrl = $this->getBoardURL()."$phpSelf?res=$threadNumber$replyString";

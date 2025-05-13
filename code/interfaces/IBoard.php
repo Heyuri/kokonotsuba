@@ -197,9 +197,10 @@ interface IBoard {
 	 *
 	 * @param int $threadNumber Thread number
 	 * @param int $replyNumber Optional reply number
+	 * @param bool $isQuoteRedirect To render the target post id with a board_uid + post_number or just the post number (for quote js)
 	 * @return string Thread URL
 	 */
-	public function getBoardThreadURL(int $threadNumber, int $replyNumber = 0): string;
+	public function getBoardThreadURL(int $threadNumber, int $replyNumber = 0, bool $isQuoteRedirect = false): string;
 
 	/**
 	 * Get the last post number issued on the board.
