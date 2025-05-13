@@ -166,14 +166,17 @@ class globalHTML {
 		// Safely get quoteLink entries for this specific post
 		$quoteLinkEntries = $quoteLinksFromBoard[$postUid] ?? [];
 	
-		// Index target post "no" values for O(1) lookup
-		$validTargetPostNumbers = [];
+		// Index target post numbers to their thread number
+		$targetPostToThreadNumber = [];
 		foreach ($quoteLinkEntries as $entry) {
 			if (
-				isset($entry['target_post']['no']) &&
-				is_numeric($entry['target_post']['no'])
+				isset($entry['target_post']['no'], $entry['target_thread']['post_op_number']) &&
+				is_numeric($entry['target_post']['no']) &&
+				is_numeric($entry['target_thread']['post_op_number'])
 			) {
-				$validTargetPostNumbers[(int)$entry['target_post']['no']] = true;
+				$postNo = (int)$entry['target_post']['no'];
+				$threadNo = (int)$entry['target_thread']['post_op_number'];
+				$targetPostToThreadNumber[$postNo] = $threadNo;
 			}
 		}
 	
@@ -182,31 +185,35 @@ class globalHTML {
 			return $comment;
 		}
 	
-		// Build all replacements in one pass
+		// Build replacements in one pass
 		$replacements = [];
 		foreach ($matches as $match) {
-			$fullMatch = $match[0];      // Full match string, e.g., ">>123"
-			$postNumber = (int)$match[2]; // Extracted number only
+			$fullMatch = $match[0];         // Full quoted text (e.g. ">>123")
+			$postNumber = (int)$match[2];   // Extracted numeric part (e.g. 123)
 	
-			// Avoid re-processing duplicates
 			if (isset($replacements[$fullMatch])) {
-				continue;
+				continue; // Skip duplicates
 			}
 	
-			if (isset($validTargetPostNumbers[$postNumber])) {
-				$url = htmlspecialchars($this->board->getBoardThreadURL($threadNumber, $postNumber));
-				$replacements[$fullMatch] = '<a href="' . $url . '" class="quotelink">' . $fullMatch . '</a>';
+			if (isset($targetPostToThreadNumber[$postNumber])) {
+				$crossThreadIndicator = '';
+				$targetThreadNumber = $targetPostToThreadNumber[$postNumber];
+
+				if($targetThreadNumber !== $threadNumber) {
+					$crossThreadIndicator = ' (Cross-thread)';
+				}
+
+				$url = htmlspecialchars($this->board->getBoardThreadURL($targetThreadNumber, $postNumber));
+				$replacements[$fullMatch] = '<a href="' . $url . '" class="quotelink">' . $fullMatch . $crossThreadIndicator .'</a>';
 			} else {
-				// Post was not found in valid targets — strike it out
+				// Post was not found — strike out
 				$replacements[$fullMatch] = '<a href="javascript:void(0);" class="quotelink"><del>' . $fullMatch . '</del></a>';
 			}
 		}
 	
-		// Do a single replacement pass using strtr
+		// Replace in one pass
 		return strtr($comment, $replacements);
 	}
-	
-	
 	
 	public function buildThreadNavButtons(array $threadList, int $threadInnerIterator): string {
 		if (!$threadList || !isset($threadList[$threadInnerIterator]['thread'])) return '';
