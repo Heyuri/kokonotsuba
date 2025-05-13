@@ -129,7 +129,6 @@ class mod_search extends moduleHelper {
 				 $warnOld,
 				 $warnHidePost,
 				 $warnEndReply,
-				 '',
 				 0,
 				 true);
 				$resultList .= $this->templateEngine->ParseBlock('THREADSEPARATE', []); 
@@ -138,6 +137,8 @@ class mod_search extends moduleHelper {
 			$dat .= '<div id="searchresult">';
 			$dat .= $resultList;
 			$dat .= '</div>';
+
+			// (WIP)$dat .= $globalHTML->drawPager($searchPostsPerPage, 1000, $this->mypage);
 		}
 
 		echo $dat;
