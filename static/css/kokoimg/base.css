@@ -908,6 +908,11 @@ caption h3 {
 	font-size: var(--font-size-small);
 }
 
+.crossThreadLink:after {
+	content: " (Cross-thread)";
+	font-size: var(--font-size-small);
+}
+
 .unkfunc {
 	color: var(--color-fg-quote);
 }
