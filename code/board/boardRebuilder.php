@@ -68,8 +68,6 @@ class boardRebuilder {
 
 		$thread = $threadData['thread'];
 
-		$threadUid = $thread['thread_uid'];
-
 		$posts = $threadData['posts'];
 
 		$hiddenReply = 0;
@@ -105,7 +103,6 @@ class boardRebuilder {
 			$thread,
 			$posts,
 			$hiddenReply,
-			$threadUid,
 			false,
 			$adminMode,
 			0,
@@ -184,14 +181,12 @@ class boardRebuilder {
 			$thread = $data['thread'];
 			$posts = $data['posts'];
 			$hiddenReply = $data['hidden_reply_count'];
-			$threadUid = $data['thread_uid'];
 
 			$pte_vals['{$THREADS}'] .= $threadRenderer->render($threadsInPage,
 				false,
 				$thread,
 				$posts,
 				$hiddenReply,
-				$threadUid,
 				false,
 				$adminMode,
 				$i,
@@ -280,14 +275,12 @@ class boardRebuilder {
 			$thread = $data['thread'];
 			$posts = $data['posts'];
 			$hiddenReply = $data['hidden_reply_count'];
-			$threadUid = $data['thread_uid'];
 	
 			$pte_vals['{$THREADS}'] .= $threadRenderer->render($threads,
 				false,
 				$thread,
 				$posts,
 				$hiddenReply,
-				$threadUid,
 				false,
 				false,
 				$i,
