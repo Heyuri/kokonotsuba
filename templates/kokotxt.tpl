@@ -120,21 +120,28 @@
 <!--/&ERROR-->
 
 <!--&THREAD-->
-	<div class="thread outerbox" id="t{$BOARD_UID}_{$NO}">
+	<div class="thread outerbox" id="t{$BOARD_UID}_{$THREAD_NO}">
 		<div class="innerbox">
+			{$BOARD_THREAD_NAME}
 			<div class="tnav">{$THREADNAV}</div>
-			<div class="post op" id="p{$BOARD_UID}_{$NO}">
-				{$BOARD_THREAD_NAME}
-				<h2 class="title"><a href="{$PHP_SELF}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No Title')--></a></h2>
-				<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
-				<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span><span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
-				<div class="filesize">{$IMG_BAR}</div>
-				<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
-				<div class="comment">{$COM}</div>
-				<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
-				{$WARN_OLD}{$WARN_BEKILL}{$WARN_ENDREPLY}{$WARN_HIDEPOST}
-			</div>
+			{$THREAD_OP}
+			{$REPLIES}
+		</div>
+	</div>
 <!--/&THREAD-->
+
+<!--&OP-->
+	<div class="post op" id="p{$BOARD_UID}_{$NO}">
+		<h2 class="title"><a href="{$PHP_SELF}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No Title')--></a></h2>
+		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
+		<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span><span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
+		<div class="filesize">{$IMG_BAR}</div>
+		<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
+		<div class="comment">{$COM}</div>
+		<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
+		{$WARN_OLD}{$WARN_BEKILL}{$WARN_ENDREPLY}{$WARN_HIDEPOST}
+	</div>
+<!--/&OP-->
 
 <!--&REPLY-->
 			<!--&IF($IS_PREVIEW,'<table class="thread"><tbody><tr><td>','')-->
@@ -163,8 +170,6 @@
 <!--/&SEARCHRESULT-->
 
 <!--&THREADSEPARATE-->
-	</div>
-</div>
 <!--/&THREADSEPARATE-->
 
 <!--&REALSEPARATE-->

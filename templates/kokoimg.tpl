@@ -157,29 +157,35 @@
 <!--/&ERROR-->
 
 <!--&THREAD-->
-		<div class="thread" id="t{$BOARD_UID}_{$NO}">
+		<div class="thread" id="t{$BOARD_UID}_{$THREAD_NO}">
 			{$BOARD_THREAD_NAME}
 			<div class="tnav">{$THREADNAV}</div>
-			<div class="post op" id="p{$BOARD_UID}_{$NO}">
-				<div class="filesize">{$IMG_BAR}</div>
-				{$IMG_SRC}
-				<div class="postinfo">
-					<label>
-						<input type="checkbox" name="{$POST_UID}" value="delete"><span class="title">{$SUB}</span>
-						<span class="nameContainer">
-							<!--{$NAME_TEXT}--><span class="name">{$NAME}</span>
-						</span>
-						<span class="time">{$NOW}</span>
-					</label>
-					<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
-					<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
-					<span class="replyButton">{$REPLYBTN}</span><span class="backlinks"></span>
-				</div>
-				<div class="comment">{$COM}</div>
-				<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
-				{$WARN_OLD}{$WARN_BEKILL}{$WARN_ENDREPLY}{$WARN_HIDEPOST}
-			</div>
+			{$THREAD_OP}
+			{$REPLIES}
+		</div>
 <!--/&THREAD-->
+
+<!--&OP-->
+		<div class="post op" id="p{$BOARD_UID}_{$NO}">
+			<div class="filesize">{$IMG_BAR}</div>
+			{$IMG_SRC}
+			<div class="postinfo">
+				<label>
+					<input type="checkbox" name="{$POST_UID}" value="delete"><span class="title">{$SUB}</span>
+					<span class="nameContainer">
+						<!--{$NAME_TEXT}--><span class="name">{$NAME}</span>
+					</span>
+					<span class="time">{$NOW}</span>
+				</label>
+				<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
+				<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
+				<span class="replyButton">{$REPLYBTN}</span><span class="backlinks"></span>
+			</div>
+			<div class="comment">{$COM}</div>
+			<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
+			{$WARN_OLD}{$WARN_BEKILL}{$WARN_ENDREPLY}{$WARN_HIDEPOST}
+		</div>
+<!--/&OP-->
 
 <!--&REPLY-->
 			<div id="pc{$BOARD_UID}_{$NO}" class="reply-container">
@@ -224,7 +230,6 @@
 <!--/&SEARCHRESULT-->
 
 <!--&THREADSEPARATE-->
-		</div>
 		<hr class="threadSeparator">
 <!--/&THREADSEPARATE-->
 

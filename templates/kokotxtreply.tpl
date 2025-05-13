@@ -95,8 +95,14 @@
 <!--/&ERROR-->
 
 <!--&THREAD-->
-<div class="thread" id="t{$BOARD_UID}_{$NO}">
-	<!-- <div class="tnav">{$THREADNAV}</div> -->
+	<div class="thread" id="t{$BOARD_UID}_{$THREAD_NO}">
+		<div class="tnav">{$THREADNAV}</div>
+		{$THREAD_OP}
+		{$REPLIES}
+	</div>
+<!--/&THREAD-->
+
+<!--&OP-->
 	<div class="post op" id="p{$BOARD_UID}_{$NO}">
 		<h1 class="title"><a href="{$PHP_SELF}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No Title')--></a></h1>
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
@@ -107,7 +113,7 @@
 		<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
 		{$WARN_OLD}{$WARN_BEKILL}{$WARN_ENDREPLY}{$WARN_HIDEPOST}
 	</div>
-<!--/&THREAD-->
+<!--/&OP-->
 
 <!--&REPLY-->
 <!--&IF($IS_PREVIEW,'<table class="thread" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3"><tbody><tr><td>','')-->
@@ -136,7 +142,6 @@
 <!--/&SEARCHRESULT-->
 
 <!--&THREADSEPARATE-->
-</div>
 <!--/&THREADSEPARATE-->
 
 <!--&REALSEPARATE-->
