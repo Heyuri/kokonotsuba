@@ -65,7 +65,7 @@
 
 <!--&POSTFORM-->
 	<div id="postarea">
-		<!--&IF($IS_THREAD,'[<a href="{$PHP_SELF2}">Return</a>]','')-->
+		<!--&IF($IS_THREAD,'<div class="threadNavBar">[<a href="{$PHP_SELF2}">Return</a>]</div>','')-->
 		<!--&IF($IS_THREAD,' <h2 class="theading">Posting mode: Reply</h2>','')-->
 		<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" <!--&IF($MAX_FILE_SIZE,' enctype="multipart/form-data"','')-->>
 			{$FORM_HIDDEN}

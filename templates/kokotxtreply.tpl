@@ -43,8 +43,7 @@
 <!--&BODYHEAD-->
 <body id="txtreply">
 	<!--&TOPLINKS/-->
-	
-	[<a href="{$PHP_SELF2}">Return</a>]  {$HOME}
+	<div class="threadNavBar">[<a href="{$PHP_SELF2}">Return</a>] {$HOME}</div>
 	<hr>
 <!--/&BODYHEAD-->
 
