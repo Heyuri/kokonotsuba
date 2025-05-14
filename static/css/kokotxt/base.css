@@ -1625,7 +1625,8 @@ caption h3 {
 
 .newPM {
 	color: #ff4444;
-	font-size: 0.923077em;
+	font-size: var(--font-size-small);
+	font-weight: var(--font-weight-bold);
 }
 
 /************************ Blotter *************************************/
