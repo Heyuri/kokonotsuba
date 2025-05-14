@@ -57,6 +57,7 @@ require __DIR__.'/code/html/globalHTML.php'; // html class
 require __DIR__.'/code/html/threadRenderer.php'; // thread rendering class
 require __DIR__.'/code/html/postRenderer.php'; // post rendering class
 require __DIR__.'/code/html/postHtmlFunctions.php'; // post html library
+require __DIR__.'/code/html/helperHtmlFunctions.php'; // html and string manip library
 
 /* Handle soft error pages */
 require __DIR__.'/code/error/softErrorHandler.php';
