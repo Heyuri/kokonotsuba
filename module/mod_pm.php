@@ -190,11 +190,12 @@ class mod_pm extends moduleHelper {
 						'{$WARN_ENDREPLY}' => '',
 						'{$WARN_HIDEPOST}' => '',
 						'{$NAME_TEXT}' => _T('post_name'),
-						'{$RESTO}' => 1
+						'{$RESTO}' => 1,
+						'{$POSTINFO_EXTRA}' => '',
 					];
 
-					$data .= $this->templateEngine->ParseBlock('THREAD', $arrLabels);
-					$data .= $this->templateEngine->ParseBlock('REALSEPARATE', []);
+					$data .= $this->templateEngine->ParseBlock('OP', $arrLabels);
+					$data .= $this->templateEngine->ParseBlock('THREADSEPARATE', []);
 				}
 			}
 		}
