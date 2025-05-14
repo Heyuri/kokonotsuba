@@ -228,6 +228,10 @@ caption h3 {
 	z-index: 1;
 }
 
+#txtreply .boardlist {
+	margin-bottom: 0.5em;
+}
+
 .persistnav #boxTitle {
 	margin-top: 0.5em;
 	margin-top: calc(0.5em - 1px);
