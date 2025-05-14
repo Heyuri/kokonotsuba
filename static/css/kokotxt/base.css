@@ -228,6 +228,10 @@ caption h3 {
 	z-index: 1;
 }
 
+#txtreply .boardlist {
+	margin-bottom: 0.5em;
+}
+
 .persistnav #boxTitle {
 	margin-top: 0.5em;
 	margin-top: calc(0.5em - 1px);
@@ -981,6 +985,11 @@ caption h3 {
 	font-size: var(--font-size-small);
 }
 
+.crossThreadLink:after {
+	content: " (Cross-thread)";
+	font-size: var(--font-size-small);
+}
+
 .unkfunc {
 	color: var(--color-fg-quote);
 }
@@ -1625,7 +1634,8 @@ caption h3 {
 
 .newPM {
 	color: #ff4444;
-	font-size: 0.923077em;
+	font-size: var(--font-size-small);
+	font-weight: var(--font-weight-bold);
 }
 
 /************************ Blotter *************************************/

@@ -12,24 +12,24 @@
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/kokotxt/base.css?v=50">
+	<link rel="stylesheet" href="{$STATIC_URL}css/kokotxt/base.css?v=57">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/kokotxt/pseud0ch.css?v=7" title="Pseud0ch">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/pseud0ch2.css?v=7" title="Pseud0ch (serif)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/pseud0ch3.css?v=7" title="Pseud0ch (sans-serif)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/tomorrow.css?v=7" title="Tomorrow">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">
-	<script src="{$STATIC_URL}js/koko.js?v=14"></script>
+	<script src="{$STATIC_URL}js/koko.js?v=15"></script>
 	<script src="{$STATIC_URL}js/qr.js?v=18"></script>
 	<script src="{$STATIC_URL}js/qu.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qu2.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qu3.js?v=23" defer></script>
 	<script src="{$STATIC_URL}js/style.js?v=3"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
-	<script src="{$STATIC_URL}js/filter.js?v=11" defer></script>
+	<script src="{$STATIC_URL}js/filter.js?v=16" defer></script>
 	<script src="{$STATIC_URL}js/catalog.js"></script>
 	<script src="{$STATIC_URL}js/insert.js"></script>
 	<script src="{$STATIC_URL}js/update-txt.js" defer></script>
-	<script src="{$STATIC_URL}js/addemotestxt.js" defer></script>
+	<script src="{$STATIC_URL}js/addemotestxt.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/admin.js?v=4" defer></script>
 <!--/&HEADER-->
 
@@ -43,8 +43,7 @@
 <!--&BODYHEAD-->
 <body id="txtreply">
 	<!--&TOPLINKS/-->
-	
-	[<a href="{$PHP_SELF2}">Return</a>]  {$HOME}
+	<div class="threadNavBar">[<a href="{$PHP_SELF2}">Return</a>] {$HOME}</div>
 	<hr>
 <!--/&BODYHEAD-->
 

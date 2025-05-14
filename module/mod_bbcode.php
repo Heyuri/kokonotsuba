@@ -7,7 +7,7 @@ class mod_bbcode extends moduleHelper {
 	private	$MaxURLCount = 2; // [url] tag upper limit (when the upper limit is exceeded, the tag is a trap tag [written to $URLTrapLog])
 	private	$URLTrapLog = './URLTrap.log'; // [url]trap label log file
 	private $AATagMode = 1; // Koko [0:Enabled 1:Disabled]
-	private $supportRuby = 0; // <ruby> tag (0: not supported 1: supported)
+	private $supportRuby = 1; // <ruby> tag (0: not supported 1: supported)
 	private $emotes = array();
 
 	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
@@ -179,7 +179,7 @@ class mod_bbcode extends moduleHelper {
 	// New function to fix improperly nested BBCode tags
 	private function fixBBCodeNesting($text){
 		// List of supported tags. Only these tags will be processed for nesting correction.
-		$supportedTags = array('b', 'i', 'spoiler', 'color', 's', 'u', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'code', 'pre', 'aa', 'kao', 'sw', 'quote');
+		$supportedTags = array('b', 'i', 'spoiler', 'color', 's', 'u', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'code', 'pre', 'aa', 'kao', 'sw', 'quote', 'ruby', 'rt', 'rp');
 		
 		$pattern = '/(\[\/?[a-zA-Z0-9]+\b(?:=[^\]]+)?\])/i';
 		$tokens = array();
