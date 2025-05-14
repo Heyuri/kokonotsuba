@@ -658,22 +658,16 @@ class globalHTML {
 		return $liveFrontEnd . '?page=' . $page;
 	}
 
-	public function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int $currentPage): string {
-		[$totalPages, $currentPage] = $this->validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
-	
-		$isStaticAll = ($this->config['STATIC_HTML_UNTIL'] == -1);
-		$getLink = fn($page) => $this->getBoardPageLink($page, $isStaticAll, $url . $this->config['PHP_SELF'], false);
-	
+	private function renderPager(int $currentPage, int $totalPages, callable $getLink, ?callable $getForm = null): string {
 		$pageHTML = '<table id="pager"><tbody><tr>';
-	
+
 		// Previous
 		if ($currentPage <= 0) {
 			$pageHTML .= '<td>[First]</td>';
 		} else {
-			$pageHTML .= '<td><form action="' . $getLink($currentPage - 1) . '" method="get">';
-			$pageHTML .= '<button type="submit">Previous</button></form></td>';
+			$pageHTML .= '<td>' . ($getForm ? $getForm($currentPage - 1, 'Previous') : '<form action="' . $getLink($currentPage - 1) . '" method="get"><button type="submit">Previous</button></form>') . '</td>';
 		}
-	
+
 		// Page Numbers
 		$pageHTML .= '<td>';
 		for ($i = 0; $i < $totalPages; $i++) {
