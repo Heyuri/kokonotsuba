@@ -173,11 +173,11 @@ class PIOPDO implements IPIO {
 		$field = in_array($field, $allowedFields) ? $field : 'com';
 		$method = in_array($method, ['AND', 'OR']) ? $method : 'OR';
 		$boardUID = $board->getBoardUID();
-	
+		
 		// Prepare where clauses and parameters for SQL query
 		$whereClauses = [];
 		$params = [];
-	
+		
 		foreach ($keywords as $index => $keyword) {
 			$paramKey = ":keyword$index";
 			$whereClauses[] = "LOWER($field) LIKE $paramKey";
@@ -185,8 +185,20 @@ class PIOPDO implements IPIO {
 		}
 		$whereClause = implode(" $method ", $whereClauses);
 		$params[':board_uid'] = $boardUID;
+		
+		// Perform the SQL query to count the total posts that match the criteria (without LIMIT/OFFSET)
+		$countQuery = "
+			SELECT COUNT(*) AS total_posts
+			FROM {$this->tablename} p
+			LEFT JOIN {$this->threadTable} t ON p.thread_uid = t.thread_uid
+			WHERE $whereClause AND p.boardUID = :board_uid
+		";
 	
-		// Perform the SQL query with a JOIN to fetch posts and their related threads
+		// Execute the count query
+		$totalPostCountResult = $this->databaseConnection->fetchOne($countQuery, $params);
+		$totalPostCount = $totalPostCountResult['total_posts'] ?? 0;
+	
+		// Perform the SQL query to fetch posts and their related threads (with LIMIT/OFFSET)
 		$query = "
 			SELECT p.*, t.*
 			FROM {$this->tablename} p
@@ -200,7 +212,7 @@ class PIOPDO implements IPIO {
 		// Execute the query and fetch results
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
 		$results = [];
-	
+		
 		// Iterate through the posts and include thread data
 		foreach ($posts as $post) {
 			$post_uid = $post['post_uid'];
@@ -216,12 +228,13 @@ class PIOPDO implements IPIO {
 	
 			$results[$post_uid] = [
 				'post' => $post,
-				'thread' => $thread
+				'thread' => $thread,
+				'total_posts' => $totalPostCount // Include the total post count here
 			];
 		}
 	
 		return $results;
-	}
+	}	
 
 	/* Check if an attachment is duplicated */
 	public function isDuplicateAttachment($board, $lcount, $md5hash) {
