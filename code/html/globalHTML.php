@@ -684,106 +684,57 @@ class globalHTML {
 			}
 		}
 		$pageHTML .= '</td>';
-	
+
 		// Next
 		if ($currentPage >= $totalPages - 1) {
 			$pageHTML .= '<td>[Last]</td>';
 		} else {
-			$pageHTML .= '<td><form action="' . $getLink($currentPage + 1) . '" method="get">';
-			$pageHTML .= '<button type="submit">Next</button></form></td>';
+			$pageHTML .= '<td>' . ($getForm ? $getForm($currentPage + 1, 'Next') : '<form action="' . $getLink($currentPage + 1) . '" method="get"><button type="submit">Next</button></form>') . '</td>';
 		}
-	
+
 		$pageHTML .= '</tr></tbody></table>';
-	
 		return $pageHTML;
 	}
-	
+
+	public function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int $currentPage): string {
+		[$totalPages, $currentPage] = $this->validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
+
+		$isStaticAll = ($this->config['STATIC_HTML_UNTIL'] == -1);
+		$getLink = fn($page) => $this->getBoardPageLink($page, $isStaticAll, $url . $this->config['PHP_SELF'], false);
+
+		return $this->renderPager($currentPage, $totalPages, $getLink);
+	}
+
 	public function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url): string {
 		$currentPage = $_REQUEST['page'] ?? 0;
 
 		[$totalPages, $currentPage] = $this->validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
-	
-		$actionUrl = $url . $this->config['PHP_SELF'];
-	
-		$pageHTML = '<table id="pager"><tbody><tr>';
 
+		$actionUrl = $url . $this->config['PHP_SELF'];
 		$isStaticAll = ($this->config['STATIC_HTML_UNTIL'] == -1);
 		$getLink = fn($page) => $this->getBoardPageLink($page, $isStaticAll, $actionUrl, true);
-	
-		// Previous
-		if ($currentPage <= 0) {
-			$pageHTML .= '<td>[First]</td>';
-		} else {
-			$pageHTML .= '<td><form action="' . $actionUrl . '" method="get">
-				<input type="hidden" name="page" value="' . ($currentPage - 1) . '">
-				<button type="submit">Previous</button>
-			</form></td>';
-		}
-	
-		// Page Numbers
-		$pageHTML .= '<td>';
-		for ($i = 0; $i < $totalPages; $i++) {
-			if ($i == $currentPage) {
-				$pageHTML .= "<b> [$i] </b>";
-			} else {
-				$pageHTML .= ' [<a href="' . $getLink($i) . '">' . $i . '</a>] ';
-			}
-		}
-		$pageHTML .= '</td>';
-	
-		// Next
-		if ($currentPage >= $totalPages - 1) {
-			$pageHTML .= '<td>[Last]</td>';
-		} else {
-			$pageHTML .= '<td><form action="' . $actionUrl . '" method="get">
-				<input type="hidden" name="page" value="' . ($currentPage + 1) . '">
-				<button type="submit">Next</button>
-			</form></td>';
-		}
-	
-		$pageHTML .= '</tr></tbody></table>';
-	
-		return $pageHTML;
+
+		$getForm = fn($page, $label) => '<form action="' . $actionUrl . '" method="get">
+			<input type="hidden" name="page" value="' . $page . '">
+			<button type="submit">' . $label . '</button>
+		</form>';
+
+		return $this->renderPager($currentPage, $totalPages, $getLink, $getForm);
 	}
-	
 
 	public function drawPager(int $entriesPerPage, int $totalEntries, string $url): string {
 		$currentPage = $_REQUEST['page'] ?? 0;
 
 		[$totalPages, $currentPage] = $this->validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
-	
+
 		$getLink = fn($page) => $url . '&page=' . $page;
-	
-		$pageHTML = '<table id="pager"><tbody><tr>';
-	
-		$pageHTML .= ($currentPage <= 0)
-			? '<td>[First]</td>'
-			: '<td>
-					<form action="' . $url . '" method="get">
-						<input type="hidden" name="page" value="'. ($currentPage + 1).'">
-						<button type="submit">Next</button>
-					</form>
-				</td>';
-	
-		$pageHTML .= '<td>';
-		for ($i = 0; $i < $totalPages; $i++) {
-			$pageHTML .= ($i == $currentPage)
-				? "<b> [$i] </b>"
-				: ' [<a href="' . $getLink($i) . '">' . $i . '</a>] ';
-		}
-		$pageHTML .= '</td>';
-	
-		$pageHTML .= ($currentPage >= $totalPages - 1)
-			? '<td>[Last]</td>'
-			: '<td>
-					<form action="' . $url . '" method="get">
-						<input type="hidden" name="page" value="'. ($currentPage + 1).'">
-						<button type="submit">Next</button>
-					</form>
-				</td>';
-	
-		$pageHTML .= '</tr></tbody></table>';
-		return $pageHTML;
+
+		$getForm = fn($page, $label) => '<form action="' . $url . '" method="get">
+			<input type="hidden" name="page" value="' . $page . '">
+			<button type="submit">' . $label . '</button>
+		</form>';
+
+		return $this->renderPager($currentPage, $totalPages, $getLink, $getForm);
 	}
 	
 	
