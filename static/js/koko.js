@@ -107,9 +107,11 @@ Feature list:
 	},
 	drag_end: function () {
 		if (!kkwm.wm_drag) return;
+		let xPct = kkwm.wm_drag.rect.x / window.innerWidth;
+		let yPct = kkwm.wm_drag.rect.y / window.innerHeight;
 		localStorage.setItem("kkwm_pos_" + kkwm.wm_drag.name, JSON.stringify({
-			x: kkwm.wm_drag.rect.x,
-			y: kkwm.wm_drag.rect.y
+			xPct: xPct,
+			yPct: yPct
 		}));
 		kkwm.wm_drag = null;
 		kkwm.dx = 0; kkwm.dy = 0;
@@ -152,8 +154,10 @@ class kkwmWindow {
 		var storedPos = localStorage.getItem("kkwm_pos_" + name);
 		if (storedPos) {
 			var pos = JSON.parse(storedPos);
-			rect.x = pos.x;
-			rect.y = pos.y;
+			if (typeof pos.xPct === 'number' && typeof pos.yPct === 'number') {
+				rect.x = pos.xPct * d.clientWidth;
+				rect.y = pos.yPct * d.clientHeight;
+			}
 		}
 		if (!rect.x) {
 			rect.x = Math.floor(d.clientWidth/2-rect.w/2)+kkwm.w_spawnoffx;
