@@ -233,16 +233,12 @@ class board implements IBoard {
 			return;
 		}
 	
-		$placeholders = [];
-		$params = [];
-		for ($i = 0; $i < $count; $i++) {
-			$placeholders[] = '(:board_uid' . $i . ')';
-			$params[':board_uid' . $i] = $this->getBoardUID();
-		}
-	
+		// Use a single placeholder multiple times
+		$placeholders = array_fill(0, $count, '(:board_uid)');
 		$query = "INSERT INTO {$this->postNumberTable} (board_uid) VALUES " . implode(',', $placeholders);
+		$params = [':board_uid' => $this->getBoardUID()];
 	
-		$this->databaseConnection->execute($query, $params);		
+		$this->databaseConnection->execute($query, $params);
 	}
 
 }
