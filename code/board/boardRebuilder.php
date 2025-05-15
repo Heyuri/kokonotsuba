@@ -58,7 +58,6 @@ class boardRebuilder {
 
 		$uid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
 
-
 		$threadData = $this->threadSingleton->getThreadByUID($uid);
 
 		if (!$threadData) {
@@ -220,9 +219,9 @@ class boardRebuilder {
 		$totalPages = ceil($totalThreads / $threadsPerPage);
 	
 		$totalPagesToRebuild = match (true) {
-			$this->config['STATIC_HTML_UNTIL'] === -1 => $totalPages,
+			$this->config['STATIC_HTML_UNTIL'] === -1 => max(1, $totalPages),
 			$this->config['STATIC_HTML_UNTIL'] === 0 => 0,
-			default => min($this->config['STATIC_HTML_UNTIL'], $totalPages)
+			default => max(1, min($this->config['STATIC_HTML_UNTIL'], $totalPages))
 		};
 	
 		$pte_vals = $this->buildPteVals();
@@ -248,7 +247,6 @@ class boardRebuilder {
 			);
 		}
 	}
-	
 
 	private function renderStaticPage(int $page, array $threads, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals): void {
 		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
@@ -260,7 +258,7 @@ class boardRebuilder {
 		 $this->templateEngine, 
 		 $quoteLinksFromBoard);
 		
-		 $threadRenderer = new threadRenderer($this->globalHTML, $this->templateEngine, $postRenderer);
+		$threadRenderer = new threadRenderer($this->globalHTML, $this->templateEngine, $postRenderer);
 
 		$threadsPerPage = $this->config['PAGE_DEF'];
 	
