@@ -80,19 +80,36 @@ class mod_movethread extends moduleHelper {
 	}
 
 
-	public function copyThreadToBoard(string $originalThreadUid, IBoard $destinationBoard): string {
+	private function copyThreadToBoard(string $originalThreadUid, IBoard $destinationBoard): string {
 		$threadSingleton = threadSingleton::getInstance();
-		// Step 1: Get attachments
+	
+		// Step 1: Gather attachments from the original thread
 		$filesToCopy = $threadSingleton->getAllAttachmentsFromThread($originalThreadUid);
 	
-		// Step 2: Copy the thread data
-		$newThreadUid = $threadSingleton->copyThreadAndPosts($originalThreadUid, $destinationBoard);
+		// Step 2: Copy the thread and posts, receiving new thread UID and post UID mapping
+		$copyResult = $threadSingleton->copyThreadAndPosts($originalThreadUid, $destinationBoard);
 	
-		// Step 3: Copy attachments
+		if (
+			!is_array($copyResult) ||
+			!isset($copyResult['threadUid'], $copyResult['postUidMap']) ||
+			!is_string($copyResult['threadUid']) ||
+			!is_array($copyResult['postUidMap'])
+		) {
+			throw new Exception("Invalid result returned from copyThreadAndPosts().");
+		}
+	
+		$newThreadUid   = $copyResult['threadUid'];
+		$postUidMapping = $copyResult['postUidMap'];
+	
+		// Step 3: Copy quote links using the post UID mapping
+		copyQuoteLinksFromThread($originalThreadUid, $destinationBoard, $postUidMapping);
+	
+		// Step 4: Copy attachments
 		$this->copyThreadAttachmentsToBoard($filesToCopy, $destinationBoard, true);
-		
+	
+		// Step 5: Return the UID of the newly created thread
 		return $newThreadUid;
-	}
+	}	
 	
 	private function copyThreadAttachmentsToBoard(array $attachments, IBoard $destinationBoard, bool $isCopy = false): void {
 		if (empty($attachments)) return;
@@ -173,8 +190,13 @@ class mod_movethread extends moduleHelper {
 			$attachments = $threadSingleton->getAllAttachmentsFromThread($threadUid);
 
 			$postRedirectIO->addNewRedirect($hostBoard->getBoardUID(), $destinationBoard->getBoardUID(), $threadUid);
+
 			$this->copyThreadAttachmentsToBoard($attachments, $destinationBoard);
+
 			$threadSingleton->moveThreadAndUpdate($threadUid, $destinationBoard);
+
+			moveQuoteLinksFromThread($threadUid, $destinationBoard);
+
 			
 			$threadRedirectUrl = $postRedirectIO->resolveRedirectedThreadLinkFromThreadUID($threadUid);
 		}
