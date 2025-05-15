@@ -645,7 +645,6 @@ class globalHTML {
 		return [$totalPages, $currentPage];
 	}
 	
-	
 	private function getBoardPageLink(int $page, bool $isStaticAll, string $liveFrontEnd, bool $isLiveFrontend): string {
 		if ($isLiveFrontend) {
 			return $liveFrontEnd . '?page=' . $page;
@@ -723,10 +722,21 @@ class globalHTML {
 
 		$getLink = fn($page) => $url . '&page=' . $page;
 
-		$getForm = fn($page, $label) => '<form action="' . $url . '" method="get">
-			<input type="hidden" name="page" value="' . $page . '">
-			<button type="submit">' . $label . '</button>
-		</form>';
+		$getForm = function($page, $label) use ($url) {
+			$params = $_GET;
+			unset($params['page']); // prevent duplicate 'page' inputs
+			$params['page'] = $page;
+		
+			$inputs = '';
+			foreach ($params as $key => $val) {
+				$inputs .= '<input type="hidden" name="' . htmlspecialchars($key) . '" value="' . htmlspecialchars($val) . '">' . "\n";
+			}
+		
+			return '<form action="' . htmlspecialchars($url) . '" method="get">' . $inputs . '
+				<button type="submit">' . htmlspecialchars($label) . '</button>
+			</form>';
+		};
+		
 
 		return $this->renderPager($currentPage, $totalPages, $getLink, $getForm);
 	}
