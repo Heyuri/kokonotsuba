@@ -224,6 +224,8 @@ class boardRebuilder {
 			default => max(1, min($this->config['STATIC_HTML_UNTIL'], $totalPages))
 		};
 	
+		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
+
 		$pte_vals = $this->buildPteVals();
 	
 		$headerHtml = '';
@@ -237,7 +239,7 @@ class boardRebuilder {
 		$this->globalHTML->foot($footHtml);
 	
 		for ($page = 0; $page < $totalPagesToRebuild; $page++) {
-			$this->renderStaticPage($page, $threads, $headerHtml, $formHtml, $footHtml, $pte_vals);
+			$this->renderStaticPage($page, $threads, $headerHtml, $formHtml, $footHtml, $pte_vals, $quoteLinksFromBoard);
 		}
 	
 		if ($logRebuild) {
@@ -248,9 +250,7 @@ class boardRebuilder {
 		}
 	}
 
-	private function renderStaticPage(int $page, array $threads, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals): void {
-		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
-
+	private function renderStaticPage(int $page, array $threads, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals, array $quoteLinksFromBoard): void {
 		$postRenderer = new postRenderer($this->board, 
 		 $this->config, 
 		 $this->globalHTML, 
@@ -324,8 +324,9 @@ class boardRebuilder {
 	
 		if ($targetPage >= $totalPages) return; // Out of bounds
 	
+		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
+
 		$pte_vals = $this->buildPteVals();
-	
 	
 		$headerHtml = '';
 		$this->globalHTML->head($headerHtml);
@@ -337,7 +338,7 @@ class boardRebuilder {
 		$footHtml = '';
 		$this->globalHTML->foot($footHtml);
 	
-		$this->renderStaticPage($targetPage, $threads, $headerHtml, $formHtml, $footHtml, $pte_vals);
+		$this->renderStaticPage($targetPage, $threads, $headerHtml, $formHtml, $footHtml, $pte_vals, $quoteLinksFromBoard);
 
 		if ($logRebuild) {
 			$this->actionLogger->logAction("Rebuilt board: " . $this->board->getBoardTitle() . ' (' . $this->board->getBoardUID() . ')', $this->board->getBoardUID());
