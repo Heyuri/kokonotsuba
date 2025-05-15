@@ -572,11 +572,12 @@ class threadSingleton {
 			$posts = $this->fetchPostsFromThread($originalThreadUid);
 			$this->validatePostsExist($posts, $originalThreadUid);
 	
-			$newThreadUid = generateUid();
-			$boardUID = $destinationBoard->getBoardUID();
-			$lastPostNo = $destinationBoard->getLastPostNoFromBoard();
+			$newThreadUid    = generateUid();
+			$boardUID        = $destinationBoard->getBoardUID();
+			$lastPostNo      = $destinationBoard->getLastPostNoFromBoard();
 			$postNumberMapping = [];
-			$newPostsData = [];
+			$postUidMapping    = [];
+			$newPostsData      = [];
 	
 			// Get new OP post number
 			$newOpPostNumber = $lastPostNo + 1;
@@ -590,28 +591,47 @@ class threadSingleton {
 				$postNumberMapping[$post['no']] = $newPostNumber;
 				$destinationBoard->incrementBoardPostNumber();
 	
-				$newPost = $this->mapPostData($post, $boardUID, $newPostNumber, $newThreadUid);
+				$newPost = $this->mapPostData(
+					$post,
+					$boardUID,
+					$newPostNumber,
+					$newThreadUid
+				);
+				$newPost['_original_uid'] = $post['post_uid']; // use correct key
 				$newPostsData[] = $newPost;
 			}
 	
-			// Update quote references
+			// Update quote references in comment text
 			foreach ($newPostsData as &$postData) {
-				$postData['com'] = $this->updateQuoteReferences($postData['com'], $postNumberMapping);
+				$postData['com'] = $this->updateQuoteReferences(
+					$postData['com'],
+					$postNumberMapping
+				);
 			}
 	
-			// Insert posts and get OP post UID
+			// Insert posts and capture UID mapping
 			$opPostUid = -1;
 			foreach ($newPostsData as $i => $postData) {
-				$columns = implode(', ', array_map(fn($k) => "`$k`", array_keys($postData)));
+				$originalUid = $postData['_original_uid'];
+				unset($postData['_original_uid']);
+	
+				$columns      = implode(', ', array_map(fn($k) => "`$k`", array_keys($postData)));
 				$placeholders = implode(', ', array_map(fn($k) => ":$k", array_keys($postData)));
-				$query = "INSERT INTO {$this->postTable} ($columns) VALUES ($placeholders)";
-				$this->databaseConnection->execute($query, array_combine(
-					array_map(fn($k) => ":$k", array_keys($postData)),
-					array_values($postData)
-				));
+				$query        = "INSERT INTO {$this->postTable} ($columns) VALUES ($placeholders)";
+	
+				$this->databaseConnection->execute(
+					$query,
+					array_combine(
+						array_map(fn($k) => ":$k", array_keys($postData)),
+						array_values($postData)
+					)
+				);
+	
+				$newPostUid = $this->databaseConnection->lastInsertId();
+				$postUidMapping[$originalUid] = $newPostUid;
 	
 				if ($i === 0) {
-					$opPostUid = $this->databaseConnection->lastInsertId();
+					$opPostUid = $newPostUid;
 				}
 			}
 	
@@ -619,14 +639,17 @@ class threadSingleton {
 			$this->updateThreadOpPostUid($newThreadUid, $opPostUid);
 	
 			$this->commit();
-			return $newThreadUid;
+	
+			return [
+				'threadUid'   => $newThreadUid,
+				'postUidMap'  => $postUidMapping
+			];
 		} catch (Exception $e) {
 			$this->rollBack();
 			throw $e;
 		}
 	}
 	
-
 	private function validatePostsExist($posts, $originalThreadUid) {
 		if (empty($posts)) {
 			throw new Exception("No posts found for thread UID: $originalThreadUid");
