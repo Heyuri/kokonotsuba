@@ -597,7 +597,7 @@ class threadSingleton {
 					$newPostNumber,
 					$newThreadUid
 				);
-				$newPost['_original_uid'] = $post['post_uid']; // use correct key
+				$newPost['_original_uid'] = $post['post_uid'];
 				$newPostsData[] = $newPost;
 			}
 	
@@ -608,6 +608,7 @@ class threadSingleton {
 					$postNumberMapping
 				);
 			}
+			unset($postData); // Prevents reference bug in the next loop
 	
 			// Insert posts and capture UID mapping
 			$opPostUid = -1;
@@ -636,7 +637,7 @@ class threadSingleton {
 			}
 	
 			// Update thread record with real OP post UID
-			$this->updateThreadOpPostUid($newThreadUid, $opPostUid);
+			$this->updateThreadOpPostUid($newThreadUid, $opPostUid, $newOpPostNumber);
 	
 			$this->commit();
 	
@@ -648,7 +649,7 @@ class threadSingleton {
 			$this->rollBack();
 			throw $e;
 		}
-	}
+	}	
 	
 	private function validatePostsExist($posts, $originalThreadUid) {
 		if (empty($posts)) {
@@ -669,13 +670,14 @@ class threadSingleton {
 		]);
 	}
 	
-	private function updateThreadOpPostUid($threadUid, $postUid) {
+	private function updateThreadOpPostUid(string $threadUid, string $postOpUid, int $postOpNumber) {
 		$this->databaseConnection->execute(
 			"UPDATE {$this->threadTable}
-			 SET post_op_post_uid = :post_uid
+			 SET post_op_post_uid = :post_uid, post_op_number = :post_op_number
 			 WHERE thread_uid = :thread_uid",
 			[
-				':post_uid'		=> $postUid,
+				':post_uid'		=> $postOpUid,
+				':post_op_number' => $postOpNumber,
 				':thread_uid'	=> $threadUid
 			]
 		);
