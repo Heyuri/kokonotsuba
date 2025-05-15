@@ -217,7 +217,7 @@ class quoteLinkSingleton {
 			) {
 				continue; // Skip invalid entries
 			}
-	
+			
 			$placeholders[] = "(?, ?, ?)";
 			$params[] = (int) $link['board_uid'];
 			$params[] = (int) $link['host_post_uid'];
@@ -234,5 +234,86 @@ class quoteLinkSingleton {
 	
 		return $this->databaseConnection->execute($query, $params);
 	}
+
+	/**
+	 * Moves quoteLink objects to a new board.
+	 * Deletes the original quote links by ID and re-inserts them with the new board UID.
+	 *
+	 * @param quoteLink[] $quoteLinks Array of quoteLink objects
+	 * @param int $boardUid Target board UID to move the links to
+	 */
+	public function moveQuoteLinksToBoard(array $quoteLinks, int $boardUid): void {
+		if (empty($quoteLinks)) {
+			return;
+		}
+	
+		$quotelinkIds = [];
+	
+		foreach ($quoteLinks as $ql) {
+			if (!$ql instanceof quoteLink) {
+				continue;
+			}
+	
+			$quotelinkIds[] = $ql->getQuoteLinkId();
+		}
+	
+		if (!empty($quotelinkIds)) {
+			$idList = implode(',', array_map('intval', $quotelinkIds));
+			$this->databaseConnection->execute(
+				"UPDATE {$this->quoteLinkTable} SET board_uid = {$boardUid} WHERE quotelink_id IN ($idList)"
+			);
+		}
+	}	
+
+	/**
+	 * Copies quoteLink objects to a new board.
+	 * Inserts duplicates of each quoteLink but with the specified board UID.
+	 *
+	 * @param quoteLink[] $quoteLinks Array of quoteLink objects
+	 * @param int $boardUid Target board UID to copy the links to
+	 */
+	public function copyQuoteLinksToBoard(array $quoteLinks, int $boardUid): void {
+		if (empty($quoteLinks)) {
+			return;
+		}
+
+		$newLinks = [];
+
+		foreach ($quoteLinks as $ql) {
+			if (!$ql instanceof quoteLink) {
+				continue;
+			}
+
+			$newLinks[] = [
+				'board_uid'       => $boardUid,
+				'host_post_uid'   => $ql->getHostPostUid(),
+				'target_post_uid' => $ql->getTargetPostUid(),
+			];
+		}
+
+		$this->insertQuoteLinks($newLinks);
+	}
+
+	/**
+	 * Retrieves quoteLink objects where host_post_uid is in the provided list of post UIDs.
+	 *
+	 * @param int[] $postUids List of post UIDs to match against host_post_uid
+	 * @return quoteLink[] Array of matching quoteLink objects
+	 */
+	public function getQuoteLinksFromPostUids(array $postUids): array {
+		if (empty($postUids)) {
+			return [];
+		}
+
+		$inClause = implode(',', array_map('intval', $postUids));
+
+		$query = "
+			SELECT * FROM {$this->quoteLinkTable}
+			WHERE host_post_uid IN ($inClause)
+		";
+
+		return $this->databaseConnection->fetchAllAsClass($query, [], 'quoteLink');
+	}
+
 	
 }
