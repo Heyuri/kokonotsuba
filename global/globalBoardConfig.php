@@ -66,7 +66,7 @@ $config['ModuleList'] = array(
 	'mod_showip' => true,
 	/* API */
 	'mod_api' => true,
-	'mod_rss' => true,
+	'mod_rss' => false,
 	/* misc */
 	'mod_pushpost' => false,
 	'mod_soudane' => true,
