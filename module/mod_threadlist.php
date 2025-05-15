@@ -170,8 +170,16 @@ class mod_threadlist extends moduleHelper {
 			$this->moduleEngine->useModuleMethods('ThreadOrder', array(0, $page, 0, &$plist)); // "ThreadOrder" Hook Point
 			$pc = $this->_getPostCounts($plist);
 		}
-		$threadOPs = $threadSingleton->getFirstPostsFromThreads($plist); // Fetch posts data
-
+		
+		$unorderedOPs = $threadSingleton->getFirstPostsFromThreads($plist);
+		$threadOPs = [];
+		
+		foreach ($plist as $threadUID) {
+			if (isset($unorderedOPs[$threadUID])) {
+				$threadOPs[] = $unorderedOPs[$threadUID];
+			}
+		}
+		
 		// Re-arrange posts based on the sorting option
 		if ($sort == 'date' || strpos($sort, 'post') !== false) {
 			$mypost = array();
