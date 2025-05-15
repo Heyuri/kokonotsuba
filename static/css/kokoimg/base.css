@@ -1483,7 +1483,8 @@ caption h3 {
 	text-align: center;
 	vertical-align: top;
 	overflow-y: hidden;
-	overflow-wrap: break-word;
+	overflow-wrap: break-all;
+	overflow-wrap: anywhere;
 }
 
 #catalogTable .thread:hover {
