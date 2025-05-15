@@ -32,6 +32,72 @@ function createQuoteLinksFromArray(IBoard $board, int $postUid, array $targetPos
 }
 
 /**
+ * Moves all quote links associated with a thread to the specified board.
+ *
+ * @param string $threadUid The unique identifier of the thread.
+ * @param IBoard $board The target board object to which quote links should be moved.
+ */
+function moveQuoteLinksFromThread(string $threadUid, IBoard $board): void {
+	// Get the singleton instance responsible for managing quote links
+	$quoteLinkSingleton = quoteLinkSingleton::getInstance();
+
+	// Retrieve the unique identifier of the board
+	$boardUid = $board->getBoardUID();
+
+	// Fetch the list of post UIDs that belong to the given thread
+	$postUids = getPostUidsFromThread($threadUid);
+
+	// Get all quote links associated with the thread's posts
+	$threadQuoteLinks = $quoteLinkSingleton->getQuoteLinksFromPostUids($postUids);
+
+	// Move the retrieved quote links to the specified board
+	$quoteLinkSingleton->moveQuoteLinksToBoard($threadQuoteLinks, $boardUid);
+}
+
+/**
+ * Copies all quote links associated with a thread to the specified board,
+ * remapping host and target post UIDs using the provided mapping.
+ *
+ * Only quote links where both the host and target post UIDs exist in the mapping
+ * will be copied to ensure foreign key integrity.
+ *
+ * @param string $threadUid        The unique identifier of the source thread.
+ * @param IBoard $board            The target board object to which quote links should be copied.
+ * @param array  $postUidMapping   An associative array mapping original post UIDs to new post UIDs.
+ */
+function copyQuoteLinksFromThread(string $threadUid, IBoard $board, array $postUidMapping): void {
+	$quoteLinkSingleton = quoteLinkSingleton::getInstance();
+	$boardUid = $board->getBoardUID();
+
+	// Step 1: Get the list of original post UIDs from the source thread
+	$postUids = getPostUidsFromThread($threadUid);
+
+	// Step 2: Get all quote links where the host post is in the thread
+	$quoteLinks = $quoteLinkSingleton->getQuoteLinksFromPostUids($postUids);
+
+	$newLinks = [];
+
+	foreach ($quoteLinks as $ql) {
+		$oldHostUid = $ql->getHostPostUid();
+		$oldTargetUid = $ql->getTargetPostUid();
+
+		// Ensure both old UIDs were mapped to new UIDs
+		if (isset($postUidMapping[$oldHostUid]) && isset($postUidMapping[$oldTargetUid])) {
+			$newLinks[] = [
+				'board_uid'       => $boardUid,
+				'host_post_uid'   => $postUidMapping[$oldHostUid],
+				'target_post_uid' => $postUidMapping[$oldTargetUid],
+			];
+		}
+	}
+
+	// Step 3: Insert the copied quote links with the new post UIDs
+	$quoteLinkSingleton->insertQuoteLinks($newLinks);
+}
+
+
+
+/**
  * Retrieves the QuoteLink associated with a given post.
  *
  * Validates the input post array and throws an exception if required fields are missing
