@@ -8,6 +8,7 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 	private string $tempTableName;
 	private readonly string $threadTableName;
 	private readonly string $postTableName;
+	private array $noToPostUidMap = [];
 
 	public function __construct(mixed $databaseConnection, 
 	 board $board, 
@@ -168,25 +169,18 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 	// import threads from pixmicat to kokonotsuba board
 	public function importThreadsToBoard(): array {
 		$PIO = PIOPDO::getInstance();
-
-		// board uid
 		$boardUID = $this->board->getBoardUID();
-
 		$pixmicatThreads = $this->getThreadsFromTempTable();
 		$mappedRestoToThreadUids = [];
-
+	
 		try {
-			// Begin transaction to ensure atomic import of threads and OP posts
 			$this->databaseConnection->beginTransaction();
-
-			// Loop over threads and insert into Kokonotsuba
-			foreach($pixmicatThreads as $thread) {
-				// thread data
+	
+			foreach ($pixmicatThreads as $thread) {
 				$no = $thread['no'];
 				$resto = $no;
 				$root = $thread['root'];
-
-				// post op data
+	
 				$time = $thread['time'];
 				$md5chksum = $thread['md5chksum'];
 				$category = $thread['category'];
@@ -206,71 +200,71 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 				$com = $thread['com'];
 				$host = $thread['host'];
 				$status = $thread['status'];
-
-				// data for koko thread row
-				$post_uid = $PIO->getNextPostUid();
-				$post_op_number = $no;
+	
 				$thread_uid = generateUid();
+				$post_op_number = $no;
 				$lastBumpTime = $root;
 				$lastReplyTime = $root;
-
-				// Insert thread
-				$query = "INSERT INTO $this->threadTableName (boardUID, thread_uid, post_op_number, post_op_post_uid, last_reply_time, last_bump_time) 
-					VALUES(:boardUID, :thread_uid, :post_op_number, :post_op_post_uid, :last_reply_time, :last_bump_time)";
-
+	
+				// Step 1: Insert thread FIRST
+				$query = "INSERT INTO $this->threadTableName 
+					(boardUID, thread_uid, post_op_number, post_op_post_uid, last_reply_time, last_bump_time)
+					VALUES (:boardUID, :thread_uid, :post_op_number, 0, :last_reply_time, :last_bump_time)";
 				$params = [
 					':boardUID' => $boardUID,
 					':thread_uid' => $thread_uid,
 					':post_op_number' => $post_op_number,
-					':post_op_post_uid' => $post_uid,
-					':last_bump_time' => $lastBumpTime,
-					':last_reply_time' => $lastReplyTime
+					':last_reply_time' => $lastReplyTime,
+					':last_bump_time' => $lastBumpTime
 				];
-
 				$this->databaseConnection->execute($query, $params);
-
-				// Insert the OP post
+	
+				// Step 2: Insert OP post
 				$this->insertPost(
 					$boardUID, $no, $thread_uid, 0, true, $root, $time, $md5chksum,
 					$category, $tim, $fname, $ext, $imgw, $imgh, $imgsize,
 					$tw, $th, $pwd, $now, $name, $email, $sub, $com, $host, $status
 				);
-
-				// Map resto to thread_uid
+	
+				$post_uid = $this->databaseConnection->lastInsertId();
+				$this->noToPostUidMap[$no] = $post_uid;
+	
+				// Step 3: Update thread with real OP post UID
+				$this->databaseConnection->execute(
+					"UPDATE $this->threadTableName SET post_op_post_uid = :post_uid WHERE thread_uid = :thread_uid",
+					[':post_uid' => $post_uid, ':thread_uid' => $thread_uid]
+				);
+	
 				$mappedRestoToThreadUids[$resto] = $thread_uid;
 			}
-
-			// Commit transaction
+	
 			$this->databaseConnection->commit();
-
 		} catch (Exception $e) {
-			// Roll back transaction if anything fails
 			$this->databaseConnection->rollBack();
 			throw $e;
 		}
-
+	
 		return $mappedRestoToThreadUids;
 	}
+	
+	
 
 	// import replies from pixmicat table to newly created koko threads
 	public function importRepliesToThreads(array $mappedRestoToThreadUids): void {
 		$boardUID = $this->board->getBoardUID();
 		$pixmicatPosts = $this->getRepliesFromTempTable();
-		
+	
 		try {
-			// Begin transaction for bulk insert of replies
 			$this->databaseConnection->beginTransaction();
 	
 			foreach ($pixmicatPosts as $post) {
 				$no = $post['no'];
 				$resto = $post['resto'];
-			
-				// Check if mapped resto exists, otherwise skip
+	
 				if (!isset($mappedRestoToThreadUids[$resto])) {
 					continue;
 				}
-				
-				// get reply data
+	
 				$thread_uid = $mappedRestoToThreadUids[$resto];
 				$root = $post['root'];
 				$time = $post['time'];
@@ -292,31 +286,29 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 				$com = $post['com'];
 				$host = $post['host'];
 				$status = $post['status'];
-			
-				// insert post reply
+	
 				$this->insertPost(
 					$boardUID, $no, $thread_uid, 0, false, $root, $time, $md5chksum,
 					$category, $tim, $fname, $ext, $imgw, $imgh, $imgsize,
-					$tw, $th, $pwd, $now, $name, $email, $sub, $com, $host, 
-					$status
+					$tw, $th, $pwd, $now, $name, $email, $sub, $com, $host, $status
 				);
-
-			}			
 	
-			// Commit after inserting all posts
+				$post_uid = $this->databaseConnection->lastInsertId();
+				$this->noToPostUidMap[$no] = $post_uid;
+			}
+	
+			$this->generateQuoteLinksFromComments();
 			$this->databaseConnection->commit();
-	
 		} catch (Exception $e) {
 			$this->databaseConnection->rollBack();
 			throw $e;
 		}
-		
 	}
+	
 
 	/*Helper methods*/
-
-	// insert post to post table
-	private function insertPost(int $boardUID, 
+	private function insertPost(
+		int $boardUID, 
 		int $no, 
 		string $thread_uid, 
 		int $post_position,
@@ -338,15 +330,16 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 		string $sub,
 		string $com,
 		string $host,
-		string $status): void {
-	
-		$query = "INSERT INTO $this->postTableName (boardUID, no, thread_uid, post_position, is_op, root, time, md5chksum, category, tim, fname, ext,
-			imgw, imgh, imgsize, tw, th, pwd, now, name, tripcode, secure_tripcode, capcode, email, sub, com, host, status)
-			VALUES (
+		string $status
+	): void {
+		$query = "INSERT INTO $this->postTableName (
+			boardUID, no, thread_uid, post_position, is_op, root, time, md5chksum, category, tim, fname, ext,
+			imgw, imgh, imgsize, tw, th, pwd, now, name, tripcode, secure_tripcode, capcode, email, sub, com, host, status
+		) VALUES (
 			:boardUID, :no, :thread_uid, :post_position, :is_op, :root, :time, :md5chksum, :category, :tim, :fname, :ext,
-			:imgw, :imgh, :imgsize, :tw, :th, :pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :status)";
-
-		// Bind parameters
+			:imgw, :imgh, :imgsize, :tw, :th, :pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :status
+		)";
+	
 		$params = [
 			':boardUID' => $boardUID,
 			':no' => $no,
@@ -373,14 +366,15 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 			':capcode' => '',
 			':email' => $email,
 			':sub' => $sub,
-			':com' => truncateForText($com), // somehow it may be larger
+			':com' => truncateForText($com),
 			':host' => $host,
 			':status' => $status
 		];
-
-		// insert post to database
+	
 		$this->databaseConnection->execute($query, $params);
 	}
+	
+		
 
 	// get posts replies from pixmicat posts (a reply is where resto > 0)
 	private function getRepliesFromTempTable(): array {
@@ -405,4 +399,68 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 
 		return $maxPostNumber;
 	}
+
+	private function generateQuoteLinksFromComments(): void {
+		$quoteLinksToInsert = [];
+		$boardUid = $this->board->getBoardUID();
+	
+		// Make sure we only use valid mappings
+		if (empty($this->noToPostUidMap)) {
+			error_log("No post UID mappings available — skipping quote link generation.");
+			return;
+		}
+	
+		// Get all no => post_uid for this board from internal mapping
+		$validPostNos = array_keys($this->noToPostUidMap);
+	
+		// Fetch all comments from post table (must match the inserted 'no's)
+		$placeholders = implode(', ', array_fill(0, count($validPostNos), '?'));
+		$query = "SELECT no, com FROM {$this->postTableName} WHERE boardUID = ? AND no IN ($placeholders)";
+		$params = array_merge([$boardUid], $validPostNos);
+	
+		$allPosts = $this->databaseConnection->fetchAllAsArray($query, $params);
+	
+		foreach ($allPosts as $post) {
+			$hostNo = (int)$post['no'];
+			$hostPostUid = $this->noToPostUidMap[$hostNo] ?? null;
+		
+			// Skip if there's no corresponding UID for this host post
+			if (!$hostPostUid) {
+				continue;
+			}
+		
+			// Match all quote references in the comment using standard site syntax
+			preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $post['com'], $matches, PREG_SET_ORDER);
+			
+			$quotedNos = [];
+		
+			// Extract quoted post numbers from each match
+			foreach ($matches as $match) {
+				$quotedNos[] = (int)$match[2]; // match[2] contains the quoted post number
+			}
+		
+			// Remove duplicates to avoid redundant inserts
+			$quotedNos = array_unique($quotedNos);
+		
+			// For each quoted post number, check if it maps to a UID and prepare insert row
+			foreach ($quotedNos as $quotedNo) {
+				$quotedNo = (int)$quotedNo;
+				if (isset($this->noToPostUidMap[$quotedNo])) {
+					$quoteLinksToInsert[] = [
+						'board_uid' => $boardUid,
+						'host_post_uid' => $hostPostUid,
+						'target_post_uid' => $this->noToPostUidMap[$quotedNo]
+					];
+				}
+			}
+		}		
+	
+		if (!empty($quoteLinksToInsert)) {
+			$count = quoteLinkSingleton::getInstance()->insertQuoteLinks($quoteLinksToInsert);
+			error_log("Inserted $count quote links.");
+		} else {
+			error_log("No quote links generated.");
+		}
+	}	
+	
 }
