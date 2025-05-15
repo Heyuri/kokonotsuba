@@ -32,6 +32,16 @@ function createBoardStoredFilesFromArray($posts) {
 	return $files;
 }
 
+function getPostUidsFromThread(string $threadUid) {
+	$threadSingleton = threadSingleton::getInstance();
+
+	$postsFromThread = $threadSingleton->fetchPostsFromThread($threadUid);
+
+	$postUids = array_column($postsFromThread, 'post_uid');
+
+	return $postUids;
+}
+
 function getUserFileFromRequest() {
 	// get file attributes
 	[$tempFilename, $fileName, $fileStatus] = loadUploadData();
