@@ -650,7 +650,7 @@ class globalHTML {
 			return $liveFrontEnd . '?page=' . $page;
 		}
 	
-		if ($isStaticAll || $page <= $this->config['STATIC_HTML_UNTIL']) {
+		if ($isStaticAll || $page <= $this->config['STATIC_HTML_UNTIL'] - 1) {
 			return ($page === 0) ? 'index.html' : $page . '.html';
 		}
 	
@@ -691,12 +691,31 @@ class globalHTML {
 
 	public function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int $currentPage): string {
 		[$totalPages, $currentPage] = $this->validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
-
-		$isStaticAll = ($this->config['STATIC_HTML_UNTIL'] == -1);
-		$getLink = fn($page) => $this->getBoardPageLink($page, $isStaticAll, $url . $this->config['PHP_SELF'], false);
-
-		return $this->renderPager($currentPage, $totalPages, $getLink);
-	}
+	
+		$staticUntil = (int)($this->config['STATIC_HTML_UNTIL'] ?? -1);
+	
+		$getLink = function($page) use ($url, $staticUntil) {
+			if ($staticUntil === -1 || $page >= $staticUntil) {
+				// Fallback to dynamic link
+				return $url . $this->config['PHP_SELF'] . '?page=' . $page;
+			}
+			// Static link
+			return $page . '.html';
+		};
+	
+		$getForm = function($page, $label) use ($url, $staticUntil) {
+			if ($staticUntil === -1 || $page >= $staticUntil) {
+				return '<form action="' . htmlspecialchars($url . $this->config['PHP_SELF']) . '" method="get">
+					<input type="hidden" name="page" value="' . intval($page) . '">
+					<button type="submit">' . htmlspecialchars($label) . '</button>
+				</form>';
+			}
+			// Static link fallback
+			return '<a href="' . htmlspecialchars($page . '.html') . '"><button type="button">' . htmlspecialchars($label) . '</button></a>';
+		};
+	
+		return $this->renderPager($currentPage, $totalPages, $getLink, $getForm);
+	}	
 
 	public function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url): string {
 		$currentPage = $_REQUEST['page'] ?? 0;
@@ -739,14 +758,6 @@ class globalHTML {
 		
 
 		return $this->renderPager($currentPage, $totalPages, $getLink, $getForm);
-	}
-	
-	
-	/* Output thread schema */
-	public function arrangeThread(board $board, array $config, LoggerInjector $PIO, array $threads, array $tree, mixed $tree_cut, array $posts, 
-									int $hiddenReply, string $resno, mixed $arr_kill,  bool $killSensor, bool $showquotelink=true, 
-									bool $adminMode=false, int $threadIterator = 0, string $overboardBoardTitleHTML = '', string $crossLink = '') {
-										return '';
 	}
 	
 }		
