@@ -34,7 +34,7 @@ class mod_pm extends moduleHelper {
 		if (!$this->config['ModuleSettings']['APPEND_TRIP_PM_BUTTON_TO_POST']) return;
 		if (strpos($post['name'], '◆') === false) return;
 
-		list($name, $trip) = explode('◆', $post['name']);
+		[$trip] = explode('◆', $post['name']);
 		$tripSanitized = strip_tags($trip);
 
 		if ($trip) {
@@ -81,7 +81,7 @@ class mod_pm extends moduleHelper {
 				}
 			}
 
-			usort($this->trips, function ($a, $b) {
+			uasort($this->trips, function ($a, $b) {
 				return $b['d'] <=> $a['d'] ?: $a['c'] <=> $b['c'];
 			});
 
