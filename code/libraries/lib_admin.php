@@ -68,3 +68,14 @@ function isActiveStaffSession(): bool {
 	
 	return $roleLevel->isStaff();
 }
+
+/**
+ * Check if account session has a valid user role
+ */
+
+function isLoggedIn() {
+	$staffSession = new staffAccountFromSession;
+	$roleLevel = $staffSession->getRoleLevel();
+	
+	return $roleLevel->isAtLeast(\Kokonotsuba\Root\Constants\userRole::LEV_USER);
+}
