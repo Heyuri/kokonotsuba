@@ -208,6 +208,34 @@ class modeHandler {
 					$this->globalHTML
 				);
 				$route->handleRebuild();
+			},
+
+			'actionLog' => function() {
+				$route = new actionLogRoute(
+					$this->board,
+					$this->config,
+					$this->globalHTML,
+					$this->actionLogger,
+					$this->softErrorHandler,
+					$this->adminPageRenderer
+				);
+				$route->drawActionLog();
+			},
+			'managePosts' => function() {
+				$route = new managePostsRoute(
+					$this->board,
+					$this->config,
+					$this->moduleEngine,
+					$this->globalHTML,
+					$this->boardIO,
+					$this->staffSession,
+					$this->FileIO,
+					$this->PIO,
+					$this->actionLogger,
+					$this->softErrorHandler,
+					$this->adminPageRenderer
+				);
+				$route->drawManagePostsPage();
 			}
 		];
 	
