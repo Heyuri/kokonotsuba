@@ -117,6 +117,8 @@ require __DIR__.'/code/routers/modeHandler.php';
 /* Routes */
 require __DIR__.'/code/routers/routes/accountRoute.php';
 require __DIR__.'/code/routers/routes/adminRoute.php';
+require __DIR__.'/code/routers/routes/managePostsRoute.php';
+require __DIR__.'/code/routers/routes/actionLogRoute.php';
 require __DIR__.'/code/routers/routes/boardsRoute.php';
 require __DIR__.'/code/routers/routes/defaultRoute.php';
 require __DIR__.'/code/routers/routes/handleAccountActionRoute.php';
