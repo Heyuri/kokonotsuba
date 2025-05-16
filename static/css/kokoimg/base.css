@@ -1086,7 +1086,6 @@ caption h3 {
 	left: 8px;
 	bottom: 8px;
 	z-index: 1;
-	max-width: 75%;
 }
 
 #pager {
@@ -1094,12 +1093,22 @@ caption h3 {
 	float: left;
 	vertical-align: middle;
 	z-index: 1;
+	max-width: 75%;
 }
 
 #pager th,
 #pager td {
 	border: 1px inset;
 	padding: 0.125em 0.25em;
+}
+
+#pagerPagesContainer {
+	overflow-y: auto;
+  max-height: 6em;
+}
+
+#pagerSelectedPage {
+	font-weight: var(--font-weight-bold);
 }
 
 #userdelete {
@@ -2159,6 +2168,14 @@ width: 300px;
 	#catalogSortForm {
 		float: none;
 		text-align: center;
+	}
+
+	#pager {
+		max-width: initial;
+	}
+
+	.persistpager #pager {
+		max-width: 75%;
 	}
 }
 
