@@ -231,7 +231,7 @@ $config['USE_QUOTESYSTEM'] = 1; // Enable >>1234
 $config['SHOW_IMGWH'] = 1; // Display the original length and width dimension of the additional image file
 
 $config['PAGE_DEF'] = 15; // How many threads per page
-$config['ADMIN_PAGE_DEF'] = 20; // How many replies per page on admin panel
+$config['ADMIN_PAGE_DEF'] = 100; // How many replies per page on admin panel
 $config['RE_DEF'] = 5; // Shown Replies on Index
 $config['RE_PAGE_DEF'] = 1000; // Shown replies on the thread index
 $config['MAX_RES'] = 1000; // How many replies before autosaged

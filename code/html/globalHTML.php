@@ -443,7 +443,9 @@ class globalHTML {
 						<tr id="boardrow">
 							<td class="postblock"><label for="filterboard">Boards</label><div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div></td>
 							<td>
-								'.$boardCheckboxHTML.'
+								<ul class="boardFilterList">
+									'.$boardCheckboxHTML.'
+								</ul>
 							</td>
 						</tr>
 					</tbody>
@@ -473,30 +475,37 @@ class globalHTML {
 					<tbody>
 						<tr>
 							<td class="postblock"><label for="manage_filterip">IP address</label></td>
-							<td><input  id="manage_filterip" name="manage_filterip" value="'.$filterIP.'"></td>
+							<td><input class="inputtext" id="manage_filterip" name="manage_filterip" value="'.$filterIP.'"></td>
 						</tr>
 						<tr>
 							<td class="postblock"><label for="manage_filtername">Name</label></td>
-							<td><input id="manage_filtername" name="manage_filtername" value="'.$filterName.'"></td>
+							<td><input class="inputtext" id="manage_filtername" name="manage_filtername" value="'.$filterName.'"></td>
 						</tr>
 						<tr>
 							<td class="postblock"><label for="manage_filtersubject">Subject</label></td>
-							<td><input  id="manage_filtersubject" name="manage_filtersubject" value="'.$filterSubject.'"></td>
+							<td><input class="inputtext" id="manage_filtersubject" name="manage_filtersubject" value="'.$filterSubject.'"></td>
 						</tr>
 						<tr>
 							<td class="postblock"><label for="manage_filtercomment">Comment</label></td>
-							<td><input id="manage_filtercomment" name="manage_filtercomment" value="'.$filterComment.'"></td>
+							<td><input class="inputtext" id="manage_filtercomment" name="manage_filtercomment" value="'.$filterComment.'"></td>
 						</tr>
 						<tr id="boardrow">
 							<td class="postblock">
 								<label for="filterboard">Boards</label>
 								<div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div>
 							</td>
-							<td>'.$boardCheckboxHTML.'</td>
+							<td>
+								<ul id="managePostsBoardFilterList" class="boardFilterList">
+									'.$boardCheckboxHTML.'
+								</ul>
+							</td>
 						</tr>
 					</tbody>
 				</table>
-				<button type="submit" name="filterformsubmit" value="filter">Filter</button> <input type="reset" value="Reset">
+				<div class="buttonSection">
+					<button type="submit" name="filterformsubmit" value="filter">Filter</button>
+					<input type="reset" value="Reset">
+				</div>
 			</form>
 		</details>
 		';
@@ -513,7 +522,7 @@ class globalHTML {
 				<details class="detailsbox reply">
 					<summary>Filter boards</summary>
 					<div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div>
-					<ul class="overboardFilterList">
+					<ul id="overboardFilterList" class="boardFilterList">
 						'.$boardCheckboxHTML.'
 					</ul>
 					<div class="buttonSection">

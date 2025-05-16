@@ -1233,6 +1233,15 @@ caption h3 {
 	overflow: auto;
 }
 
+#tableManagePosts {
+	font-size: var(--font-size-small);
+}
+
+#tableManagePosts .emoji,
+#tableManagePosts .emote {
+	max-height: 24px;
+}
+
 #tableManagePosts .colFunc,
 #tableManagePosts .colImage {
 	text-align: center;
@@ -1409,7 +1418,7 @@ caption h3 {
 	text-align: center;
 }
 
-.overboardFilterList {
+.boardFilterList {
 	padding-left: 0;
 	text-align: left;
   list-style: none;
