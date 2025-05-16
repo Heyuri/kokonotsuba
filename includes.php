@@ -111,7 +111,6 @@ require __DIR__.'/code/quote_link/quoteLinkFunctions.php';
 
 
 /* Routers */
-require __DIR__.'/code/routers/adminPageHandler.php';
 require __DIR__.'/code/routers/modeHandler.php';
 
 /* Routes */
