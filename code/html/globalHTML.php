@@ -405,7 +405,7 @@ class globalHTML {
 		$dat .= '
 		<details id="filtercontainer" class="detailsbox">
 			<summary class="postblock">Filter action log</summary>
-			<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'?admin=action&mode=admin" method="POST">
+			<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=actionLog" method="post">
 				<table>
 					<tbody>
 						<tr>
@@ -470,9 +470,8 @@ class globalHTML {
 		$dat .= '
 		<details id="filtercontainer" class="detailsbox centerText">
 			<summary>Filter posts</summary>
-			<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=admin&admin=del" method="GET">
-				<input type="hidden" name="mode" value="admin">
-				<input type="hidden" name="admin" value="del">
+			<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'" method="get">
+				<input type="hidden" name="mode" value="managePosts">
 
 				<table id="adminPostFilterTable" class="centerBlock">
 					<tbody>
