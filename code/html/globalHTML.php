@@ -671,27 +671,27 @@ class globalHTML {
 
 		// Previous
 		if ($currentPage <= 0) {
-			$pageHTML .= '<td>[First]</td>';
+			$pageHTML .= '<td id="pagerPreviousCell">First</td>';
 		} else {
-			$pageHTML .= '<td>' . ($getForm ? $getForm($currentPage - 1, 'Previous') : '<form action="' . $getLink($currentPage - 1) . '" method="get"><button type="submit">Previous</button></form>') . '</td>';
+			$pageHTML .= '<td id="pagerPreviousCell">' . ($getForm ? $getForm($currentPage - 1, 'Previous') : '<form action="' . $getLink($currentPage - 1) . '" method="get"><button type="submit">Previous</button></form>') . '</td>';
 		}
 
 		// Page Numbers
-		$pageHTML .= '<td>';
+		$pageHTML .= '<td id="pagerPagesCell"><div id="pagerPagesContainer">';
 		for ($i = 0; $i < $totalPages; $i++) {
 			if ($i == $currentPage) {
-				$pageHTML .= "<b> [$i] </b>";
+				$pageHTML .= "<span class=\"pagerPageLink\" id=\"pagerSelectedPage\">[$i]</span> ";
 			} else {
-				$pageHTML .= ' [<a href="' . $getLink($i) . '">' . $i . '</a>] ';
+				$pageHTML .= '<span class="pagerPageLink">[<a href="' . $getLink($i) . '">' . $i . '</a>]</span> ';
 			}
 		}
-		$pageHTML .= '</td>';
+		$pageHTML .= '</div></td>';
 
 		// Next
 		if ($currentPage >= $totalPages - 1) {
-			$pageHTML .= '<td>[Last]</td>';
+			$pageHTML .= '<td id="pagerNextCell">Last</td>';
 		} else {
-			$pageHTML .= '<td>' . ($getForm ? $getForm($currentPage + 1, 'Next') : '<form action="' . $getLink($currentPage + 1) . '" method="get"><button type="submit">Next</button></form>') . '</td>';
+			$pageHTML .= '<td id="pagerPreviousCell">' . ($getForm ? $getForm($currentPage + 1, 'Next') : '<form action="' . $getLink($currentPage + 1) . '" method="get"><button type="submit">Next</button></form>') . '</td>';
 		}
 
 		$pageHTML .= '</tr></tbody></table>';
