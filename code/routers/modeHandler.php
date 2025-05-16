@@ -99,13 +99,11 @@ class modeHandler {
 				$route->registerPostToDatabase();
 			},
 			'admin'	=> function() {
-				$route = new adminRoute(
-					$this->board,
-					$this->config,
+				$route = new adminRoute($this->config,
 					$this->globalHTML,
 					$this->adminLoginController,
 					$this->staffSession,
-					$this->moduleEngine,
+					$this->adminPageRenderer,
 				);
 				$route->drawAdminPage();
 			},
