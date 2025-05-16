@@ -3,84 +3,56 @@
 // admin route - shows log in page and a router using POST
 
 class adminRoute {
-    private readonly board $board;
     private readonly array $config;
     private readonly globalHTML $globalHTML;
 	private readonly adminLoginController $adminLoginController;
 	private readonly staffAccountFromSession $staffSession;
+	private readonly pageRenderer $adminPageRenderer;
 
-    private moduleEngine $moduleEngine;
 
-
-    public function __construct(board $board, 
-        array $config,
+    public function __construct(array $config,
         globalHTML $globalHTML, 
 		adminLoginController $adminLoginController,
         staffAccountFromSession $staffSession,
-        moduleEngine $moduleEngine) {
-        $this->board = $board;
+		pageRenderer $adminPageRenderer) {
         $this->config = $config;
         $this->globalHTML = $globalHTML;
 		$this->adminLoginController = $adminLoginController;
         $this->staffSession = $staffSession;
-
-        $this->moduleEngine = $moduleEngine;
+		$this->adminPageRenderer = $adminPageRenderer;
     }
 
-    public function drawAdminPage() {
+    public function drawAdminPage(): void {
 		$username = $_POST['username'] ?? '';
 		$password = $_POST['password'] ?? '';
 
+		$adminRouteUrl = $this->globalHTML->fullURL().$this->config['PHP_SELF'].'?mode=admin';
+
 		if(!empty($username) && !empty($password)) {
 			$this->adminLoginController->adminLogin($username, $password);
-			redirect($this->config['PHP_SELF'].'?mode=admin');
+			redirect($adminRouteUrl);
 		}
 
-		$currentRoleLevel = $this->staffSession->getRoleLevel(); // get the newly set role level if login was successful
-		$adminPageHandler = new adminPageHandler($this->board, $this->moduleEngine); // router for some admin pages, mostly legacy
-		$admin = $_REQUEST['admin']??'';
-		$dat = '';
-		$this->globalHTML->head($dat);
-		$links = $this->globalHTML->generateAdminLinkButtons();
-		
-		$dat .= $links; //hook above bar links
-		
-		$this->globalHTML->drawAdminTheading($dat, $this->staffSession);
-		
-		$dat.= '<div id="adminOptionContainer" class="centerText"><form action="'.$this->config['PHP_SELF'].'" method="POST" name="adminform">';
-		$admins = array(
-			array('name'=>'del', 'level'=>\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR, 'label'=>'Manage posts', 'func'=>'admindel'),
-			array('name'=>'action', 'level'=>\Kokonotsuba\Root\Constants\userRole::LEV_ADMIN, 'label'=>'Action log', 'func'=>'actionlog'),
-			array('name'=>'logout', 'level'=>\Kokonotsuba\Root\Constants\userRole::LEV_USER, 'label'=>'Logout', 'func'=>'adminLogout'),
-		);
-
-		foreach ($admins as $adminmode) {
-			if ($currentRoleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_NONE && $adminmode['name'] === 'logout') continue;
-			$checked = ($admin==$adminmode['name']) ? ' checked="checked"' : '';
-			$dat.= '<label><input type="radio" name="admin" value="'.$adminmode['name'].'"'.$checked.'>'.$adminmode['label'].'</label> ';
+		$modAction = $_GET['modAction'] ?? '';
+		if($modAction === 'logout') {
+			$this->adminLoginController->adminLogout();
+			redirect($adminRouteUrl);
 		}
-		if ($currentRoleLevel==\Kokonotsuba\Root\Constants\userRole::LEV_NONE) {
-			$dat.= $this->globalHTML->drawAdminLoginForm()."</form>";
+
+		$adminRouteHtml = '';
+
+		$adminRouteHtml.= '<div id="adminOptionContainer" class="centerText">';
+
+		if(isLoggedIn()) {
+			$adminRouteHtml .= '[<a href="'.$adminRouteUrl.'&modAction=logout">Log out</a>]';
 		} else {
-			$dat.= '<button type="submit" name="mode" value="admin">Submit</button></form>';
-		}
-		
-		$dat.= '</div><hr>';
-
-		foreach ($admins as $adminmode) {
-			if ($admin!=$adminmode['name']) continue;
-			
-			if (!$currentRoleLevel->isAtLeast($adminmode['level'])) {
-				$dat .= '<div class="centerText"><span class="error">ERROR: Access denied.</span></div><hr>';
-				break;
-			}
-				
-			if ($adminmode['func']) {
-				$adminPageHandler->handleAdminPageSelection($adminmode['func'], $dat);
-			}
+			$adminRouteHtml .= $this->globalHTML->drawAdminLoginForm($adminRouteUrl);
 		}
 
-		$this->globalHTML->foot($dat);
-		die($dat.'</body></html>');
+		$adminRouteHtml.= '</div>';
+
+		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $adminRouteHtml], true);
+
+		echo $htmlOutput;
 	}
 }
