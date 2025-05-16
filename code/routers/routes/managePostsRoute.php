@@ -34,7 +34,7 @@ class managePostsRoute {
 		$this->globalHTML = $globalHTML;
 		$this->boardIO = $boardIO;
 		$this->staffSession = $staffSession;
-		$this->FileIO = $this->FileIO;
+		$this->FileIO = $FileIO;
 		$this->PIO = $PIO;
 		$this->actionLogger = $actionLogger;
 		$this->softErrorHandler = $softErrorHandler;
@@ -42,8 +42,12 @@ class managePostsRoute {
 	}
 
 	public function drawManagePostsPage() {
+		$this->softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_MANAGE_POSTS']);
+		
 		$filtersBoards = $_GET['filterboard'] ?? [$this->board->getBoardUID(), GLOBAL_BOARD_UID];
 		
+		$managePostsUrl = $this->globalHTML->fullURL().$this->config['PHP_SELF'].'?mode=managePosts';
+
 		//filter list for the database
 		$filters = [
 			'ip_address' => $_GET['manage_filterip'] ?? null,
@@ -96,7 +100,7 @@ class managePostsRoute {
 		
 		
 		$this->globalHTML->drawManagePostsFilterForm($managePostsHtml, $this->board);
-		$managePostsHtml .= "<div id=\"reloadTable\" class=\"centerText\">[<a href=\"{$this->config['PHP_SELF']}?mode=admin&admin=del\">Reload table</a>]</div>";
+		$managePostsHtml .= "<div id=\"reloadTable\" class=\"centerText\">[<a href=\"$managePostsUrl\">Reload table</a>]</div>";
 		
 		$managePostsHtml .= '<form action="'.$this->config['PHP_SELF'].'" method="POST">';
 		$managePostsHtml .= '<input type="hidden" name="mode" value="admin">
@@ -163,7 +167,7 @@ class managePostsRoute {
 					<td class="colSub"><span class="title">' . $sub . '</span></td>
 					<td class="colName"><span class="name">' . $nameHtml . '</span></td>
 					<td class="colComment">' . $com . '</td>
-					<td class="colHost">' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="?mode=admin&admin=del&host=' . $host . '" title="See all posts">★</a></td>
+					<td class="colHost">' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="'.$managePostsUrl.'&host=' . $host . '" title="See all posts">★</a></td>
 					<td class="colImage">' . $clip . ' (' . $size . ')<br>' . $md5chksum . '</td>
 				</tr>';
 		}
@@ -196,10 +200,9 @@ class managePostsRoute {
 	</script>
 	';
 
-		$managePostsHtml .= $globalHTML->drawPager($postsPerPage, $numberOfFilteredPosts, $globalHTML->fullURL().$this->config['PHP_SELF'].'?mode=admin&admin=del');
-		
+		$managePostsHtml .= $this->globalHTML->drawPager($postsPerPage, $numberOfFilteredPosts, $managePostsUrl);
 
-		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $managePostsHtml]);
+		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $managePostsHtml], true);
 	
 		echo $htmlOutput;
 	}
