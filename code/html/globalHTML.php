@@ -255,20 +255,23 @@ class globalHTML {
 		return '//'.$_SERVER['HTTP_HOST'].substr($_SERVER['PHP_SELF'], 0, strpos($_SERVER['PHP_SELF'], $this->config['PHP_SELF']));
 	}
 	
-	public function drawAdminLoginForm() {
-		return "<table class=\"formtable centerBlock\">
-				<tbody>
-					<tr>
-						<td class='postblock'><label for=\"username\">Username</label></td>
-						<td><input tabindex=\"1\" maxlength=\"100\" type=\"text\" name=\"username\" id=\"username\" value=\"\" class=\"inputtext\"></td>
-					</tr>
-					<tr>
-						<td class='postblock'><label for=\"password\">Password</label></td>
-						<td><input tabindex=\"1\" maxlength=\"100\" type=\"password\" name=\"password\" id=\"password\" value=\"\" class=\"inputtext\"></td>
-					</tr>
-				</tbody>
-			</table>
-			<button type=\"submit\" name=\"mode\" value=\"admin\">Login</button>";
+	public function drawAdminLoginForm(string $adminUrl) {
+		return "
+			<form action=\"$adminUrl\" method=\"post\">
+				<table class=\"formtable centerBlock\">
+					<tbody>
+						<tr>
+							<td class='postblock'><label for=\"username\">Username</label></td>
+							<td><input tabindex=\"1\" type=\"text\" name=\"username\" id=\"username\" value=\"\" class=\"inputtext\"></td>
+						</tr>
+						<tr>
+							<td class='postblock'><label for=\"password\">Password</label></td>
+							<td><input tabindex=\"1\" type=\"password\" name=\"password\" id=\"password\" value=\"\" class=\"inputtext\"></td>
+						</tr>
+					</tbody>
+				</table>
+				<button type=\"submit\" name=\"mode\" value=\"admin\">Login</button>
+			</form>";
 	}
 	
 	public function drawAdminTheading(&$dat, $staffSession) {
