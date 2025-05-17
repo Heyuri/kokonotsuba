@@ -2,8 +2,6 @@
 
 // Handle misc html output for koko
 
-use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
-
 class globalHTML {
 	private $config, $board;
 
@@ -19,8 +17,7 @@ class globalHTML {
 	}
 
 	/* 輸出A錯誤畫面 */
-	public function error($mes, $dest=''){
-
+	public function error($mes, $dest='') {
 		if(is_file($dest)) unlink($dest);
 		$pte_vals = array('{$SELF2}'=>$this->config['PHP_SELF2'].'?'.time(), '{$MESG}'=>$mes, '{$RETURN_TEXT}'=>_T('return'), '{$BACK_TEXT}'=>_T('error_back'), '{$BACK_URL}'=>htmlspecialchars($_SERVER['HTTP_REFERER']??''));
 		$dat = '';
@@ -30,7 +27,6 @@ class globalHTML {
 		exit($dat);
 	}
 	
-
 	/* 輸出表頭 | document head */
 	public function head(&$dat, $resno=0){
 		$html = '';
@@ -303,9 +299,9 @@ class globalHTML {
 			$boardTitle = htmlspecialchars($board->getBoardTitle());
 			$boardUID = htmlspecialchars($board->getBoardUID());
 		
-			$isChecked = $selectAll || in_array($boardUID, $filterBoard) || ($boardUID == $currentBoard->getBoardUID() && empty($filterBoard));
+			$isChecked = $selectAll || in_array($boardUID, $filterBoard) || ($boardUID === $currentBoard->getBoardUID() && empty($filterBoard));
 			
-			$listHTML .= '<li><label class="filterSelectBoardItem"><input name="filterboard[]" type="checkbox" value="' . $boardUID . '" ' . ($isChecked ? 'checked' : '') . '>' . $boardTitle . '</label></li>';
+			$listHTML .= '<li><label class="filterSelectBoardItem"><input name="board[]" type="checkbox" value="' . $boardUID . '" ' . ($isChecked ? 'checked' : '') . '>' . $boardTitle . '</label></li>';
 		}
 	
 		return $listHTML;
@@ -383,81 +379,87 @@ class globalHTML {
 			</form>';
 	}
 
-	public function drawModFilterForm(&$dat, $board) {
-		$filterIP = $_COOKIE['filterip'] ?? '';
-		$filterDateBefore = $_COOKIE['filterdatebefore'] ?? '';
-		$filterDateAfter = $_COOKIE['filterdateafter'] ?? '';
-		$filterName = $_COOKIE['filtername'] ?? '';
-		$filterBan = $_COOKIE['filterban'] ?? '';
-		$filterDelete = $_COOKIE['filterdelete']	 ?? '';
-		
-		//role levels
+	public function drawModFilterForm(string &$dat, board $board, array $filters) {
+		$filterIP = $filters['ip_address'] ?? '';
+		$filterDateBefore = $filters['date_before'] ?? '';
+		$filterDateAfter = $filters['date_after'] ?? '';
+		$filterName = $filters['name'] ?? '';
+		$filterBan = !empty($filters['ban']) ? 'checked' : '';
+		$filterDelete = !empty($filters['deleted']) ? 'checked' : '';
+		$filterRole = is_array($filters['role'] ?? null) ? $filters['role'] : [];
+		$filterBoard = is_array($filters['board'] ?? null) ? $filters['board'] : [];
+
+		// role levels
 		$none = \Kokonotsuba\Root\Constants\userRole::LEV_NONE->value;
 		$user = \Kokonotsuba\Root\Constants\userRole::LEV_USER->value;
 		$janitor = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR->value;
 		$moderator = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR->value;
 		$admin = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN->value;
-		
-		$filterRole = json_decode($_COOKIE['filterrole'] ?? '', true); if(!is_array($filterRole)) $filterRole = [$none, $user, $janitor, $moderator, $admin];
-		$filterBoard = json_decode($_COOKIE['filterboard'] ?? '', true); if(!is_array($filterBoard)) $filterBoard = [$board->getBoardUID(), GLOBAL_BOARD_UID];
-
+	
+		if (empty($filterRole)) {
+			$filterRole = [$none, $user, $janitor, $moderator, $admin];
+		}
+	
+	
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
 		$dat .= '
 		<details id="filtercontainer" class="detailsbox">
 			<summary class="postblock">Filter action log</summary>
-			<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=actionLog" method="post">
+			<form action="' . $this->fullURL() . $this->config['PHP_SELF'] . '" method="get">
+				<input type="hidden" name="mode" value="actionLog">
 				<table>
 					<tbody>
 						<tr>
 							<td class="postblock"><label for="ip">IP address</label></td>
-							<td><input  id="ip" name="filterip" value="'.$filterIP.'"></td>
+							<td><input id="ip_address" name="ip_address" value="' . $filterIP . '"></td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="filtername">Name</label></td>
-							<td><input id="filtername" name="filtername" value="'.$filterName.'"></td>
+							<td class="postblock"><label for="filterName">Name</label></td>
+							<td><input id="filterName" name="filterName" value="' . $filterName . '"></td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="dateafter">From</label></td>
-							<td><input  type="date" id="dateafter" name="filterdateafter" value="'.$filterDateAfter.'"></td>
+							<td class="postblock"><label for="date_after">From</label></td>
+							<td><input type="date" id="date_after" name="date_after" value="' . $filterDateAfter . '"></td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="datebefore">To</label></td>
-							<td><input  type="date" id="datebefore" name="filterdatebefore" value="'.$filterDateBefore.'"></td>
+							<td class="postblock"><label for="date_before">To</label></td>
+							<td><input type="date" id="date_before" name="date_before" value="' . $filterDateBefore . '"></td>
 						</tr>
 						<tr>
 							<td class="postblock">Actions</td>
 							<td> 
-								<label><input type="checkbox" id="bans" name="bans" '.$filterBan.'>Bans</label>  
-								<label><input type="checkbox" id="deletions" name="deleted" '.$filterDelete.'>Deletions</label>
+								<label><input type="checkbox" id="ban" name="ban" ' . $filterBan . '>Bans</label>  
+								<label><input type="checkbox" id="deletions" name="deleted" ' . $filterDelete . '>Deletions</label>
 							</td>
 						</tr>
 						<tr id="rolerow">
 							<td class="postblock">Roles <br> <div class="selectlinktextjs" id="roleselectall">[<a>Select all</a>]</div></td>
 							<td>
-									<ul class="littlelist">
- 										<li> <label>	<input name="filterrole[]" type="checkbox" value="' . $none . '" '.(in_array($none, $filterRole) ? 'checked' : '').'>None</label> </li>
- 										<li> <label> 	<input name="filterrole[]"  type="checkbox" value="' . $user . '" '.(in_array($user, $filterRole) ? 'checked' : '').'>User</label> </li>
-										<li> <label>  <input name="filterrole[]"  type="checkbox" value="' . $janitor . '" '.(in_array($janitor, $filterRole) ? 'checked' : '').'>Janitor</label> </li>
-										<li> <label>	<input name="filterrole[]"  type="checkbox" value="' . $moderator . '" '.(in_array($moderator, $filterRole) ? 'checked' : '').'>Moderator</label> </li>
-										<li> <label>	<input name="filterrole[]"  type="checkbox" value="' . $admin . '" '.(in_array($admin, $filterRole) ? 'checked' : '').'>Admin</label> </li>
-									</ul>
+								<ul class="littlelist">
+									<li><label><input name="role[]" type="checkbox" value="' . $none . '" ' . (in_array($none, $filterRole) ? 'checked' : '') . '>None</label></li>
+									<li><label><input name="role[]" type="checkbox" value="' . $user . '" ' . (in_array($user, $filterRole) ? 'checked' : '') . '>User</label></li>
+									<li><label><input name="role[]" type="checkbox" value="' . $janitor . '" ' . (in_array($janitor, $filterRole) ? 'checked' : '') . '>Janitor</label></li>
+									<li><label><input name="role[]" type="checkbox" value="' . $moderator . '" ' . (in_array($moderator, $filterRole) ? 'checked' : '') . '>Moderator</label></li>
+									<li><label><input name="role[]" type="checkbox" value="' . $admin . '" ' . (in_array($admin, $filterRole) ? 'checked' : '') . '>Admin</label></li>
+								</ul>
 							</td>
 						</tr>
 						<tr id="boardrow">
 							<td class="postblock"><label for="filterboard">Boards</label><div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div></td>
 							<td>
 								<ul class="boardFilterList">
-									'.$boardCheckboxHTML.'
+									' . $boardCheckboxHTML . '
 								</ul>
 							</td>
 						</tr>
 					</tbody>
 				</table>
-				<button type="submit" name="filterformsubmit" value="filter">Filter</button> <button type="submit" name="filterformsubmit" value="filterclear">Clear filter</button> <input type="reset" value="Reset">
+				<input type="submit" value="Filter">
+				<input type="reset" value="Reset">
 			</form>
 		</details>
 		';
-	}
+	}	
 	
 	public function drawManagePostsFilterForm(&$dat, $board) {
 		$filterIP = $_GET['manage_filterip'] ?? '';
@@ -757,18 +759,24 @@ class globalHTML {
 
 		$getForm = function($page, $label) use ($url) {
 			$params = $_GET;
-			unset($params['page']); // prevent duplicate 'page' inputs
+			unset($params['page']);
 			$params['page'] = $page;
 		
 			$inputs = '';
 			foreach ($params as $key => $val) {
-				$inputs .= '<input type="hidden" name="' . htmlspecialchars($key) . '" value="' . htmlspecialchars($val) . '">' . "\n";
+				if (is_array($val)) {
+					foreach ($val as $subVal) {
+						$inputs .= '<input type="hidden" name="' . htmlspecialchars($key) . '[]" value="' . htmlspecialchars($subVal) . '">' . "\n";
+					}
+				} else {
+					$inputs .= '<input type="hidden" name="' . htmlspecialchars($key) . '" value="' . htmlspecialchars($val) . '">' . "\n";
+				}
 			}
 		
 			return '<form action="' . htmlspecialchars($url) . '" method="get">' . $inputs . '
 				<button type="submit">' . htmlspecialchars($label) . '</button>
 			</form>';
-		};
+		};		
 		
 
 		return $this->renderPager($currentPage, $totalPages, $getLink, $getForm);
