@@ -380,10 +380,10 @@ class globalHTML {
 	}
 
 	public function drawModFilterForm(string &$dat, board $board, array $filters) {
-		$filterIP = $filters['ip_address'] ?? '';
-		$filterDateBefore = $filters['date_before'] ?? '';
-		$filterDateAfter = $filters['date_after'] ?? '';
-		$filterName = $filters['name'] ?? '';
+		$filterIP = htmlspecialchars($filters['ip_address']) ?? '';
+		$filterDateBefore = htmlspecialchars($filters['date_before']) ?? '';
+		$filterDateAfter = htmlspecialchars($filters['date_after']) ?? '';
+		$filterName = htmlspecialchars($filters['name']) ?? '';
 		$filterBan = !empty($filters['ban']) ? 'checked' : '';
 		$filterDelete = !empty($filters['deleted']) ? 'checked' : '';
 		$filterRole = is_array($filters['role'] ?? null) ? $filters['role'] : [];
