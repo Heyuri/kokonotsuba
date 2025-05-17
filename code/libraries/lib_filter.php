@@ -66,9 +66,9 @@ function bindActionLogFiltersParameters(array &$params, string &$query, array $f
 		$params[':time_added'] = $filters['time_added'];
 	}
 
-	if (!empty($filters['name'])) {
-		$query .= " AND name = :name";
-		$params[':name'] = strval($filters['name']);
+	if (!empty($filters['log_name'])) {
+		$query .= " AND name = :log_name";
+		$params[':log_name'] = strval($filters['log_name']);
 	}
 
 	if (!empty($filters['role']) && is_array($filters['role'])) {
