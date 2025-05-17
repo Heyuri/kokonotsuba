@@ -380,10 +380,10 @@ class globalHTML {
 	}
 
 	public function drawModFilterForm(string &$dat, board $board, array $filters) {
-		$filterIP = htmlspecialchars($filters['ip_address']) ?? '';
-		$filterDateBefore = htmlspecialchars($filters['date_before']) ?? '';
-		$filterDateAfter = htmlspecialchars($filters['date_after']) ?? '';
-		$filterName = htmlspecialchars($filters['name']) ?? '';
+		$filterIP = $filters['ip_address'] ?? '';
+		$filterDateBefore = $filters['date_before'] ?? '';
+		$filterDateAfter = $filters['date_after'] ?? '';
+		$filterName = $filters['log_name'] ?? '';
 		$filterBan = !empty($filters['ban']) ? 'checked' : '';
 		$filterDelete = !empty($filters['deleted']) ? 'checked' : '';
 		$filterRole = is_array($filters['role'] ?? null) ? $filters['role'] : [];
@@ -396,40 +396,37 @@ class globalHTML {
 		$moderator = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR->value;
 		$admin = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN->value;
 	
-		if (empty($filterRole)) {
-			$filterRole = [$none, $user, $janitor, $moderator, $admin];
-		}
-	
-	
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
 		$dat .= '
 		<details id="filtercontainer" class="detailsbox">
 			<summary class="postblock">Filter action log</summary>
 			<form action="' . $this->fullURL() . $this->config['PHP_SELF'] . '" method="get">
 				<input type="hidden" name="mode" value="actionLog">
+				<input type="hidden" name="filterSubmissionFlag" value="true">
+
 				<table>
 					<tbody>
 						<tr>
 							<td class="postblock"><label for="ip">IP address</label></td>
-							<td><input id="ip_address" name="ip_address" value="' . $filterIP . '"></td>
+							<td><input id="ip_address" name="ip_address" value="' . htmlspecialchars($filterIP) . '"></td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="filterName">Name</label></td>
-							<td><input id="filterName" name="filterName" value="' . $filterName . '"></td>
+							<td class="postblock"><label for="log_name">Name</label></td>
+							<td><input id="log_name" name="log_name" value="' . htmlspecialchars($filterName) . '"></td>
 						</tr>
 						<tr>
 							<td class="postblock"><label for="date_after">From</label></td>
-							<td><input type="date" id="date_after" name="date_after" value="' . $filterDateAfter . '"></td>
+							<td><input type="date" id="date_after" name="date_after" value="' . htmlspecialchars($filterDateAfter) . '"></td>
 						</tr>
 						<tr>
 							<td class="postblock"><label for="date_before">To</label></td>
-							<td><input type="date" id="date_before" name="date_before" value="' . $filterDateBefore . '"></td>
+							<td><input type="date" id="date_before" name="date_before" value="' . htmlspecialchars($filterDateBefore) . '"></td>
 						</tr>
 						<tr>
 							<td class="postblock">Actions</td>
 							<td> 
-								<label><input type="checkbox" id="ban" name="ban" ' . $filterBan . '>Bans</label>  
-								<label><input type="checkbox" id="deletions" name="deleted" ' . $filterDelete . '>Deletions</label>
+								<label><input type="checkbox" id="ban" name="ban" ' . htmlspecialchars($filterBan) . '>Bans</label>  
+								<label><input type="checkbox" id="deletions" name="deleted" ' . htmlspecialchars($filterDelete) . '>Deletions</label>
 							</td>
 						</tr>
 						<tr id="rolerow">
