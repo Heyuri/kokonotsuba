@@ -49,14 +49,14 @@ function anti_sakura($str){
 原出處：Sea Otter @ 2005.05.10
 http://www.meyu.net/star/viewthread.php?tid=267&fpage=10 */
 function str_cut($str, $maxlen=20){
-    $i = $l = 0; $len = strlen($str); $f = true; $return_str = $str;
+	$i = $l = 0; $len = strlen($str); $f = true; $return_str = $str;
 	while($i < $len){
 		$chars = ord($str[$i]);
 		if($chars < 0x80){ $l++; $i++; }
 		elseif($chars < 0xe0){ $l++; $i += 2; }
 		elseif($chars < 0xf0){ $l += 2; $i += 3; }
 		elseif($chars < 0xf8){ $l++; $i += 4; }
-      	elseif($chars < 0xfc){ $l++; $i += 5; }
+		  elseif($chars < 0xfc){ $l++; $i += 5; }
 		elseif($chars < 0xfe){ $l++; $i += 6; }
 		if(($l >= $maxlen) && $f){
 			$return_str = substr($str, 0, $i);
@@ -66,7 +66,7 @@ function str_cut($str, $maxlen=20){
 			$return_str = $return_str.'…';
 			break;
 		}
-    }
+	}
 	return $return_str;
 }
 
@@ -90,13 +90,13 @@ function matchCIDR($addr, $cidr) {
 // converts inet_pton output to string with bits
 function inet_to_bits($inet) 
 {
-    $unpacked = unpack('A16', $inet);
-    $unpacked = str_split($unpacked[1]);
-    $binaryip = '';
-    foreach ($unpacked as $char) {
-        $binaryip .= str_pad(decbin(ord($char)), 8, '0', STR_PAD_LEFT);
-    }
-    return $binaryip;
+	$unpacked = unpack('A16', $inet);
+	$unpacked = str_split($unpacked[1]);
+	$binaryip = '';
+	foreach ($unpacked as $char) {
+		$binaryip .= str_pad(decbin(ord($char)), 8, '0', STR_PAD_LEFT);
+	}
+	return $binaryip;
 }
 
 /**
@@ -106,15 +106,15 @@ function inet_to_bits($inet)
  * @since 8th.Release
  */
 function getRemoteAddrOpenShift() {
-    if (isset($_ENV['OPENSHIFT_REPO_DIR'])) {
-        return $_SERVER['HTTP_X_FORWARDED_FOR'];
-    }
-    return '';
+	if (isset($_ENV['OPENSHIFT_REPO_DIR'])) {
+		return $_SERVER['HTTP_X_FORWARDED_FOR'];
+	}
+	return '';
 }
 
 
 function strlenUnicode($str) {
-    return mb_strlen($str, 'UTF-8');
+	return mb_strlen($str, 'UTF-8');
 }
 
 /* redirect */
@@ -155,20 +155,20 @@ function redirect($to, $time=0, $verbose=false) {
 
 // Currently a simple minify
 function html_minify($buffer){
-    $search = array(
-         
-        // Remove whitespaces after tags
-        '/\>[^\S ]+/s',
-         
-        // Remove whitespaces before tags
-        '/[^\S ]+\</s',
-         
-        // Remove multiple whitespace sequences
-        '/(\s)+/s',
-    );
-    $replace = array('>', '<', '\\1');
-    $buffer = preg_replace($search, $replace, $buffer);
-    return $buffer;
+	$search = array(
+		 
+		// Remove whitespaces after tags
+		'/\>[^\S ]+/s',
+		 
+		// Remove whitespaces before tags
+		'/[^\S ]+\</s',
+		 
+		// Remove multiple whitespace sequences
+		'/(\s)+/s',
+	);
+	$replace = array('>', '<', '\\1');
+	$buffer = preg_replace($search, $replace, $buffer);
+	return $buffer;
 }
 
 /**
@@ -177,43 +177,43 @@ function html_minify($buffer){
  * this is a replacement for getimagesize() to use on .swf files
  */
 function getswfsize($file) {
-    $swf = file_get_contents($file);
-    $swf = unpack(
-        'a3signature/'.
-        'Cversion/'.
-        'Vlength/'.
-        'a*payload', $swf);
-    extract($swf);
+	$swf = file_get_contents($file);
+	$swf = unpack(
+		'a3signature/'.
+		'Cversion/'.
+		'Vlength/'.
+		'a*payload', $swf);
+	extract($swf);
 
-    if ($signature == 'CWS') {
-        $type = IMAGETYPE_SWC;
-        $payload = gzuncompress($payload);
-    } else if ($signature == 'FWS') {
-        $type = IMAGETYPE_SWF;
-    } else {
-        return false;
-    }
-     
-    $payload = substr($payload, 0, 17);
-    $payload = array_values(unpack('C*', $payload));
+	if ($signature == 'CWS') {
+		$type = IMAGETYPE_SWC;
+		$payload = gzuncompress($payload);
+	} else if ($signature == 'FWS') {
+		$type = IMAGETYPE_SWF;
+	} else {
+		return false;
+	}
+	 
+	$payload = substr($payload, 0, 17);
+	$payload = array_values(unpack('C*', $payload));
 
-    $nbits = _getbits($payload, 0, 5);
-    $w = (_getbits($payload, 5 + $nbits * 1, $nbits) -
-          _getbits($payload, 5 + $nbits * 0, $nbits)) / 20;
-    $h = (_getbits($payload, 5 + $nbits * 3, $nbits) -
-          _getbits($payload, 5 + $nbits * 2, $nbits)) / 20;
-    return [$w, $h, $type, 'width="'.$w.'" height="'.$h.'"',
-        'mime' => 'application/x-shockwave-flash'];
+	$nbits = _getbits($payload, 0, 5);
+	$w = (_getbits($payload, 5 + $nbits * 1, $nbits) -
+		  _getbits($payload, 5 + $nbits * 0, $nbits)) / 20;
+	$h = (_getbits($payload, 5 + $nbits * 3, $nbits) -
+		  _getbits($payload, 5 + $nbits * 2, $nbits)) / 20;
+	return [$w, $h, $type, 'width="'.$w.'" height="'.$h.'"',
+		'mime' => 'application/x-shockwave-flash'];
 }
 
 function _getbits($buffer, $pos, $count){
-    $result = 0;
+	$result = 0;
  
-    for ($loop = $pos; $loop < $pos + $count; $loop++) {
-        $result = $result +
-            (((($buffer[$loop >> 3]) >> (7 - ($loop % 8))) & 0x01) << ($count - ($loop - $pos) - 1));
-    }
-    return $result;
+	for ($loop = $pos; $loop < $pos + $count; $loop++) {
+		$result = $result +
+			(((($buffer[$loop >> 3]) >> (7 - ($loop % 8))) & 0x01) << ($count - ($loop - $pos) - 1));
+	}
+	return $result;
 }
 
 function drawAlert($message) {
@@ -235,7 +235,7 @@ function generateUid($length = 8) {
 }
 
 function executeFunction(callable $func, ...$params) {
-    return $func(...$params);
+	return $func(...$params);
 }
 
 
@@ -327,4 +327,57 @@ function truncateForText(string $input): string {
 // detect if a string contains html tags
 function containsHtmlTags($string) {
 	return $string !== strip_tags($string);
+}
+
+/**
+ * Builds a URL with query parameters that differ from the defaults.
+ *
+ * @param string $baseUrl     The base URL without query parameters.
+ * @param array $defaults     Default values for each query parameter.
+ * @param array $userParams   User-specified parameters to compare with defaults.
+ * @param bool $isAppending  	 Whether the base URL already contains a '?' and to use a '?' when appending vs a '&'. Routes/modes in Kokonotsuba aready have ? set so this will be set true in most cases.
+ *
+ * @return string             The resulting URL with only non-default parameters.
+ */
+function buildSmartQuery(string $baseUrl, array $defaults, array $userParams, bool $isAppending = true): string {
+	$query = [];
+	
+	foreach ($userParams as $key => $value) {
+		// Skip empty values
+		if (empty($value)) {
+			continue;
+		}
+		
+		// Handle array parameters specially
+		if (is_array($value)) {
+			// Only include if different from defaults (order-insensitive)
+			if (!isset($defaults[$key]) || !array_equals($value, $defaults[$key] ?? [])) {
+				$query[$key] = implode(' ', $value);
+			}
+		} else {
+			// Only include if different from defaults
+			if (!isset($defaults[$key]) || $value !== $defaults[$key]) {
+				$query[$key] = $value;
+			}
+		}
+	}
+	
+	if($isAppending) {
+		$urlKey = '&';
+	} else {
+		$urlKey = '?';
+	}
+	
+	// Build URL using RFC1738 encoding
+	$url = $baseUrl . (empty($query) ? '' : $urlKey . http_build_query($query, '', '&', PHP_QUERY_RFC1738));
+	
+	return $url;
+}
+
+
+// Helper function for order-insensitive array comparison
+function array_equals(array $arr1, array $arr2): bool {
+	return count($arr1) === count($arr2) && 
+		   empty(array_diff($arr1, $arr2)) && 
+		   empty(array_diff($arr2, $arr1));
 }
