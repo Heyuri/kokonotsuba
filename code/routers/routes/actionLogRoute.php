@@ -30,58 +30,6 @@ class actionLogRoute {
 		$this->softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_VIEW_ACTION_LOG']);
 
 		$actionLogHtml = '';
-		
-		$defaultSelectedBoards = [$this->board->getBoardUID(), GLOBAL_BOARD_UID];
-
-		$actionLogUrl = $this->board->getBoardURL().$this->config['PHP_SELF'] . '?mode=actionLog';
-
-		$none = \Kokonotsuba\Root\Constants\userRole::LEV_NONE->value;
-		$user = \Kokonotsuba\Root\Constants\userRole::LEV_USER->value;
-		$janitor = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR->value;
-		$moderator = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR->value;
-		$admin = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN->value;
-
-		$defaultRoleSelections = [$none, $user, $janitor, $moderator, $admin];
-
-		$defaultFilters = [
-			'ip_address' => '',
-			'log_name' => '',
-			'ban' => '',
-			'deleted' => '',
-			'role' => $defaultRoleSelections,
-			'board' => $defaultSelectedBoards,
-			'date_before' => '',
-			'date_after' => '',
-		];
-
-		//filter list for the database
-		$filtersFromRequest = [
-			'ip_address' => $_GET['ip_address'] ?? '',
-			'log_name' => $_GET['log_name'] ?? '',
-			'ban' => $_GET['ban'] ?? '',
-			'deleted' => $_GET['deleted'] ?? '',
-			'role' => $_GET['role'] ?? $defaultFilters['role'],
-			'board' => $_GET['board'] ?? $defaultFilters['board'],
-			'date_before' => $_GET['date_before'] ?? '',
-			'date_after' => $_GET['date_after'] ?? '',
-		];
-
-		if(is_string($filtersFromRequest['role'])) {
-			$filtersFromRequest['role'] = explode(' ', $filtersFromRequest['role']);
-		}
-
-		if(is_string($filtersFromRequest['board'])) {
-			$filtersFromRequest['board'] = explode(' ', $filtersFromRequest['board']);
-		}
-
-		// redirect to cleaned URI
-		if (isset($_GET['filterSubmissionFlag'])) {
-			$cleanedUrl = buildSmartQuery($actionLogUrl, $defaultFilters, $filtersFromRequest);
-
-			// Redirect without the flag
-			redirect($cleanedUrl);
-			exit;
-		}		
 
 		$tableEntries = '';
 		$limit = $this->config['ACTIONLOG_MAX_PER_PAGE'];
@@ -89,6 +37,12 @@ class actionLogRoute {
 		$page = ($page >= 0) ? $page : 1;
 		$offset = $page * $limit;
 		
+		$actionLogUrl = $this->board->getBoardURL() . $this->config['PHP_SELF'] . '?mode=actionLog';
+
+		$defaultActionLogFilters = $this->initializeActionLogFilters();
+
+		$filtersFromRequest = getFiltersFromRequest($actionLogUrl, $defaultActionLogFilters);
+
 		$this->globalHTML->drawModFilterForm($actionLogHtml, $this->board, $filtersFromRequest);
 		
 		$entriesFromDatabase = $this->actionLogger->getSpecifiedLogEntries($limit, $offset, $filtersFromRequest);
@@ -146,4 +100,32 @@ class actionLogRoute {
 
 		echo $htmlOutput;
 	}
+
+	private function initializeActionLogFilters(): array {
+		// Default board selection: current board and global board
+		$defaultSelectedBoards = [$this->board->getBoardUID(), GLOBAL_BOARD_UID];
+	
+		// Define user roles (these constants should exist in your application)
+		$none = \Kokonotsuba\Root\Constants\userRole::LEV_NONE->value;
+		$user = \Kokonotsuba\Root\Constants\userRole::LEV_USER->value;
+		$janitor = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR->value;
+		$moderator = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR->value;
+		$admin = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN->value;
+	
+		// Default roles selection
+		$defaultRoleSelections = [$none, $user, $janitor, $moderator, $admin];
+	
+		return [
+			'ip_address' => '',
+			'log_name' => '',
+			'post_name' => '',
+			'ban' => '',
+			'deleted' => '',
+			'role' => $defaultRoleSelections,
+			'board' => $defaultSelectedBoards,
+			'date_before' => '',
+			'date_after' => '',
+		];
+	}
+
 }
