@@ -229,11 +229,12 @@ class PIOPDO implements IPIO {
 			$results[$post_uid] = [
 				'post' => $post,
 				'thread' => $thread,
-				'total_posts' => $totalPostCount // Include the total post count here
 			];
 		}
-	
-		return $results;
+		
+		$finalResult = ['results_data' => $results, 'total_posts' => $totalPostCount];
+
+		return $finalResult;
 	}	
 
 	/* Check if an attachment is duplicated */
