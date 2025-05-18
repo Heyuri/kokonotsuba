@@ -44,14 +44,13 @@ class managePostsRoute {
 	public function drawManagePostsPage() {
 		$this->softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_MANAGE_POSTS']);
 		
-		$filtersBoards = $_GET['filterboard'] ?? [$this->board->getBoardUID(), GLOBAL_BOARD_UID];
-		
+
 		$managePostsUrl = $this->globalHTML->fullURL().$this->config['PHP_SELF'].'?mode=managePosts';
 
 		//filter list for the database
 		$filters = [
-			'ip_address' => $_GET['manage_filterip'] ?? null,
-			'name' => $_GET['manage_filtername'] ?? null,
+			'ip_address' => $_GET['ip_address'] ?? null,
+			'name' => $_GET['post_name'] ?? null,
 			'comment' => $_GET['manage_filtercomment'] ?? null,
 			'subject' => $_GET['manage_filtersubject'] ?? null,
 			'board' => $filtersBoards ?? '',
@@ -99,7 +98,7 @@ class managePostsRoute {
 		$posts_count = count($posts); // Number of cycles
 		
 		
-		$this->globalHTML->drawManagePostsFilterForm($managePostsHtml, $this->board);
+		$this->globalHTML->drawManagePostsFilterForm($managePostsHtml, $this->board, $filters);
 		$managePostsHtml .= "<div id=\"reloadTable\" class=\"centerText\">[<a href=\"$managePostsUrl\">Reload table</a>]</div>";
 		
 		$managePostsHtml .= '<form action="'.$this->config['PHP_SELF'].'" method="POST">';
