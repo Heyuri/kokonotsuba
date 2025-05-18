@@ -95,19 +95,22 @@ class mod_search extends moduleHelper {
 			$searchKeyword = preg_split('/(　| )+/', strtolower(trim($searchKeyword))); // Search text is cut with spaces
 			if ($searchMethod == 'REG') $searchMethod = 'AND';
 			$hitPosts = $PIO->searchPosts($this->board, $searchKeyword, $searchField, $searchMethod, $searchPostsPerPage, $searchPostOffset) ?? []; // Directly return the matching article content array
-	
+
+			$totalPostHits = $hitPosts['total_posts'] ?? 0;
+
 			$resultList = '';
-	
+
 			$templateValues = ['{$BOARD_THREAD_NAME}' => ''];
 	
 			$postRenderer = new postRenderer($this->board, $this->config, $globalHTML, $this->moduleEngine, $this->templateEngine, $quoteLinksFromBoard);
 	
-			foreach ($hitPosts as $hitPost) {
+			$hitPostResultData = $hitPosts['results_data'];
+
+			foreach ($hitPostResultData as $hitPost) {
 				$hitPostThread = $hitPost['thread'];
 				$hitPostData = $hitPost['post'];
 	
 				$hitThreadResno = $hitPostThread['post_op_number'];
-				$totalPostHits = $hitPost['total_posts'];
 	
 				// Render the post
 				$resultList .= $postRenderer->render($hitPostData,
