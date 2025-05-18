@@ -380,14 +380,14 @@ class globalHTML {
 	}
 
 	public function drawModFilterForm(string &$dat, board $board, array $filters) {
-		$filterIP = $filters['ip_address'] ?? '';
-		$filterDateBefore = $filters['date_before'] ?? '';
-		$filterDateAfter = $filters['date_after'] ?? '';
-		$filterName = $filters['log_name'] ?? '';
+		$filterIP = $filters['ip_address'];
+		$filterDateBefore = $filters['date_before'];
+		$filterDateAfter = $filters['date_after'];
+		$filterName = $filters['log_name'];
 		$filterBan = !empty($filters['ban']) ? 'checked' : '';
 		$filterDelete = !empty($filters['deleted']) ? 'checked' : '';
-		$filterRole = is_array($filters['role'] ?? null) ? $filters['role'] : [];
-		$filterBoard = is_array($filters['board'] ?? null) ? $filters['board'] : [];
+		$filterRole = is_array($filters['role']) ? $filters['role'] : [];
+		$filterBoard = is_array($filters['board']) ? $filters['board'] : [];
 
 		// role levels
 		$none = \Kokonotsuba\Root\Constants\userRole::LEV_NONE->value;
@@ -458,12 +458,14 @@ class globalHTML {
 		';
 	}	
 	
-	public function drawManagePostsFilterForm(&$dat, $board) {
-		$filterIP = $_GET['manage_filterip'] ?? '';
-		$filterComment = $_GET['manage_filtercomment'] ?? '';
-		$filterName = $_GET['manage_filtername'] ?? '';
-		$filterSubject = $_GET['manage_filtersubject'] ?? '';
-		$filterBoard = $_GET['filterboard'] ?? [$board->getBoardUID()];
+	public function drawManagePostsFilterForm(&$dat, board $board, array $filters) {
+		$filterIP = $filters['ip_address'];
+		$filterName = $filters['post_name'];
+		$filterTripcode = $filters['tripcode'];
+		$filterCapcode = $filters['capcode'];
+		$filterSubject = $filters['subject'];
+		$filterComment = $filters['comment'];
+		$filterBoard = $filters['board'];
 		
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
 		$dat .= '
@@ -475,20 +477,28 @@ class globalHTML {
 				<table id="adminPostFilterTable" class="centerBlock">
 					<tbody>
 						<tr>
-							<td class="postblock"><label for="manage_filterip">IP address</label></td>
-							<td><input class="inputtext" id="manage_filterip" name="manage_filterip" value="'.$filterIP.'"></td>
+							<td class="postblock"><label for="ip_address">IP address</label></td>
+							<td><input class="inputtext" id="ip_address" name="ip_address" value="'.htmlspecialchars($filterIP).'"></td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="manage_filtername">Name</label></td>
-							<td><input class="inputtext" id="manage_filtername" name="manage_filtername" value="'.$filterName.'"></td>
+							<td class="postblock"><label for="post_name">Name</label></td>
+							<td><input class="inputtext" id="post_name" name="post_name" value="'.htmlspecialchars($filterName).'"></td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="manage_filtersubject">Subject</label></td>
-							<td><input class="inputtext" id="manage_filtersubject" name="manage_filtersubject" value="'.$filterSubject.'"></td>
+							<td class="postblock"><label for="tripcode">Name</label></td>
+							<td><input class="inputtext" id="tripcode" name="tripcode" value="'.htmlspecialchars($filterTripcode).'"></td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="manage_filtercomment">Comment</label></td>
-							<td><input class="inputtext" id="manage_filtercomment" name="manage_filtercomment" value="'.$filterComment.'"></td>
+							<td class="postblock"><label for="capcode">Name</label></td>
+							<td><input class="inputtext" id="capcode" name="capcode" value="'.htmlspecialchars($filterCapcode).'"></td>
+						</tr>
+						<tr>
+							<td class="postblock"><label for="subject">Subject</label></td>
+							<td><input class="inputtext" id="subject" name="subject" value="'.htmlspecialchars($filterSubject).'"></td>
+						</tr>
+						<tr>
+							<td class="postblock"><label for="comment">Comment</label></td>
+							<td><input class="inputtext" id="comment" name="comment" value="'.htmlspecialchars($filterComment).'"></td>
 						</tr>
 						<tr id="boardrow">
 							<td class="postblock">
