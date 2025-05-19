@@ -310,7 +310,7 @@ class PIOPDO implements IPIO {
 	public function postCount($filters = []) {
 		$query = "SELECT COUNT(post_uid) FROM {$this->tablename} WHERE 1 ";
 		$params = [];
-		bindfiltersParameters($params, $query, $filters);
+		bindPostFilterParameters($params, $query, $filters);
 		
 		return $this->databaseConnection->fetchColumn($query, $params);
 	}
@@ -370,7 +370,7 @@ class PIOPDO implements IPIO {
 		// Ensure offset is not negative
 		$offset = max(0, $offset);
 		
-		$query = "SELECT * FROM {$this->tablename} WHERE host = :ip_address ORDER BY $order LIMIT $limit OFFSET $offset";
+		$query = "SELECT * FROM {$this->tablename} WHERE host = :ip_address ORDER BY $order LIMIT $limit OFFSET $offset DESC";
 		$params = [
 			':ip_address' => $host,
 		];
@@ -385,7 +385,7 @@ class PIOPDO implements IPIO {
 		$query = "SELECT * FROM {$this->tablename} WHERE 1";
 		$params = [];
 		
-		bindfiltersParameters($params, $query, $filters); //apply filtration to query
+		bindPostFilterParameters($params, $query, $filters); //apply filtration to query
 		
 		$query .= " ORDER BY $order  DESC LIMIT $amount OFFSET $offset";
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
