@@ -104,7 +104,7 @@ $dbSettings = getDatabaseSettings();
 DatabaseConnection::createInstance($dbSettings);
 boardIO::createInstance($dbSettings);
 AccountIO::createInstance($dbSettings);
-ActionLogger::createInstance($dbSettings);
+actionLogger::createInstance($dbSettings);
 postRedirectIO::createInstance($dbSettings);
 threadCacheSingleton::createInstance($dbSettings);
 quoteLinkSingleton::createInstance($dbSettings);
@@ -116,6 +116,7 @@ $board = getBoardFromBootstrapFile();
 
 PMCLibrary::createFileIOInstance($board);
 PIOPDO::createInstance($dbSettings);
+postSearchService::createInstance($dbSettings);
 threadSingleton::createInstance($dbSettings);
 boardPathCachingIO::createInstance($dbSettings);
 
