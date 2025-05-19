@@ -422,7 +422,7 @@ class threadSingleton {
 		$query = "SELECT thread_uid FROM {$this->threadTable} WHERE 1";
 		$params = [];
 		
-		bindfiltersParameters($params, $query, $filters); //apply filtration to query
+		bindPostFilterParameters($params, $query, $filters); //apply filtration to query
 		
 		$query .= " ORDER BY $order  DESC LIMIT $amount OFFSET $offset";
 		$threads = $this->databaseConnection->fetchAllAsIndexArray($query, $params);
@@ -433,7 +433,7 @@ class threadSingleton {
 		$query = "SELECT COUNT(thread_uid) FROM {$this->threadTable} WHERE 1";
 		$params = [];
 		
-		bindfiltersParameters($params, $query, $filters); //apply filtration to query
+		bindPostFilterParameters($params, $query, $filters); //apply filtration to query
 		
 		$threads = $this->databaseConnection->fetchColumn($query, $params);
 	
