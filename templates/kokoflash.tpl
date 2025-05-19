@@ -34,6 +34,7 @@
 	<script src="{$STATIC_URL}js/qr.js?v=18"></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
 	<script src="{$STATIC_URL}js/flashembed.js?v=2"></script>
+	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
 <!--/&HEADER-->
 
 <!--&TOPLINKS-->
