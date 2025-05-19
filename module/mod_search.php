@@ -90,9 +90,9 @@ class mod_search extends moduleHelper {
 								</td>
 							</tr>
 							<tr>
-								<td class="postblock"><label for="searchWholeWord">' . _T('search_match_word') . '</label></td>
+								<td class="postblock"><label for="matchWholeWord">' . _T('search_match_word') . '</label></td>
 								<td>
-									<input type="checkbox" name="matchWholeWord" '. (isset($_GET['matchWholeWord']) ? 'checked' : '').'>
+									<input type="checkbox" id="matchWholeWord" name="matchWholeWord" '. (isset($_GET['matchWholeWord']) ? 'checked' : '').'>
 								</td>
 							</tr>
 						</tbody>
