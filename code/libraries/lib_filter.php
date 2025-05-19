@@ -251,12 +251,13 @@ function processRoleAndBoardFilters(array $filtersFromRequest): array {
  * Handle redirection to a cleaned URL based on the filters.
  *
  * @param array $filtersFromRequest The filters taken from the request.
+ * @param bool $isSubmission Whether the form is being submitted
  * @param array $defaultFilters The default filters.
  * @param string $actionLogUrl The base URL to which the cleaned URL will be appended.
  */
-function handleRedirection(array $filtersFromRequest, array $defaultFilters, string $actionLogUrl): void {
+function handleRedirection(array $filtersFromRequest, bool $isSubmission, array $defaultFilters, string $actionLogUrl): void {
     // Check if the 'filterSubmissionFlag' is set in the request (for redirection)
-    if (isset($_GET['filterSubmissionFlag'])) {
+    if ($isSubmission) {
         // Build the cleaned URL with the applied filters
         $cleanedUrl = buildSmartQuery($actionLogUrl, $defaultFilters, $filtersFromRequest);
 
@@ -273,7 +274,7 @@ function handleRedirection(array $filtersFromRequest, array $defaultFilters, str
  * @param string $url The base url of the page
  * @return array The filters array, processed and ready for use.
  */
-function getFiltersFromRequest(string $url, array $defaultFilters): array {
+function getFiltersFromRequest(string $url, bool $isSubmission, array $defaultFilters): array {
     // Build filters based on the GET request
     $filtersFromRequest = buildFiltersFromRequest($defaultFilters);
 
@@ -281,7 +282,7 @@ function getFiltersFromRequest(string $url, array $defaultFilters): array {
     $filtersFromRequest = processRoleAndBoardFilters($filtersFromRequest);
 
     // Handle redirection if the flag is set
-    handleRedirection($filtersFromRequest, $defaultFilters, $url);
+    handleRedirection($filtersFromRequest, $isSubmission, $defaultFilters, $url);
 
     return $filtersFromRequest;
 }
