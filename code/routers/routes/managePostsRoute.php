@@ -44,22 +44,20 @@ class managePostsRoute {
 	public function drawManagePostsPage() {
 		$this->softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_MANAGE_POSTS']);
 		
-
+		$isSubmission = isset($_GET['filterSubmissionFlag']);
+		
 		$managePostsUrl = $this->globalHTML->fullURL().$this->config['PHP_SELF'].'?mode=managePosts';
 
 		//filter list for the database
-		$filters = [
-			'ip_address' => $_GET['ip_address'] ?? null,
-			'name' => $_GET['post_name'] ?? null,
-			'comment' => $_GET['manage_filtercomment'] ?? null,
-			'subject' => $_GET['manage_filtersubject'] ?? null,
-			'board' => $filtersBoards ?? '',
-		];
+		$defaultFilters = $this->initializeManagePostsFilters();
 		
+		$filtersFromRequest = getFiltersFromRequest($managePostsUrl, $isSubmission, $defaultFilters);
+		$cleanUrl = buildSmartQuery($managePostsUrl, $defaultFilters, $filtersFromRequest, true);
+
 		$roleLevel = $this->staffSession->getRoleLevel();
 		 
 		$postsPerPage = $this->config['ADMIN_PAGE_DEF'];
-		$numberOfFilteredPosts = $this->PIO->postCount($filters);
+		$numberOfFilteredPosts = $this->PIO->postCount($filtersFromRequest);
 		$page = $_REQUEST['page'] ?? 0;
 
 		if (!filter_var($page, FILTER_VALIDATE_INT) && $page != 0) {
@@ -91,15 +89,14 @@ class managePostsRoute {
 
 
 		if($searchHost) {
-			$posts = $this->PIO->getPostsFromIP($searchHost, $postsPerPage. $page * $this->config['ADMIN_PAGE_DEF']);
+			$posts = $this->PIO->getPostsFromIP($searchHost, $postsPerPage, $page * $postsPerPage);
 			$numberOfFilteredPosts = $this->PIO->postCount(['ip_address' => $searchHost]);
 		}
-		else $posts = $this->PIO->getFilteredPosts($postsPerPage, $page * $this->config['ADMIN_PAGE_DEF'], $filters) ?? array();
+		else $posts = $this->PIO->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest) ?? array();
 		$posts_count = count($posts); // Number of cycles
 		
 		
-		$this->globalHTML->drawManagePostsFilterForm($managePostsHtml, $this->board, $filters);
-		$managePostsHtml .= "<div id=\"reloadTable\" class=\"centerText\">[<a href=\"$managePostsUrl\">Reload table</a>]</div>";
+		$this->globalHTML->drawManagePostsFilterForm($managePostsHtml, $this->board, $filtersFromRequest);
 		
 		$managePostsHtml .= '<form action="'.$this->config['PHP_SELF'].'" method="POST">';
 		$managePostsHtml .= '<input type="hidden" name="mode" value="admin">
@@ -132,10 +129,9 @@ class managePostsRoute {
 			// Modify the field style
 			$name = substr($name, 0, 500);
 			$sub = substr($sub, 0, 500);
-			if($email) $name = "<a href=\"mailto:$email\">$name</a>";
 			$com = substr($com, 0, 500);
 
-			$nameHtml = generatePostNameHtml($this->config['staffCapcodes'], $this->config['CAPCODES'], $name, $tripcode, $secure_tripcode, $capcode);
+			$nameHtml = generatePostNameHtml($this->config['staffCapcodes'], $this->config['CAPCODES'], $name, $tripcode, $secure_tripcode, $capcode, $email);
 
 			// The first part of the discussion is the stop tick box and module function
 			$modFunc = ' ';
@@ -199,10 +195,28 @@ class managePostsRoute {
 	</script>
 	';
 
-		$managePostsHtml .= $this->globalHTML->drawPager($postsPerPage, $numberOfFilteredPosts, $managePostsUrl);
+		$managePostsHtml .= $this->globalHTML->drawPager($postsPerPage, $numberOfFilteredPosts, $cleanUrl);
 
 		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $managePostsHtml], true);
 	
 		echo $htmlOutput;
+	}
+
+	private function initializeManagePostsFilters(): array {
+		// Default board selection: current board and global board
+		$defaultSelectedBoards = [$this->board->getBoardUID()];
+
+		return [
+			'ip_address' => '',
+			'post_name' => '',
+			'tripcode' => '',
+			'capcode' => '',
+			'subject' => '',
+			'comment' => '',
+			'board' => $defaultSelectedBoards,
+			'date_before' => '',
+			'date_after' => '',
+			'host' => ''
+		];
 	}
 }
