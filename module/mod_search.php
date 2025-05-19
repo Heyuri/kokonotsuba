@@ -117,7 +117,7 @@ class mod_search extends moduleHelper {
 		$searchKeywordArray = preg_split('/(　| )+/', strtolower(trim($searchKeyword)));
 		if ($searchMethod == 'REG') $searchMethod = 'AND';
 
-		$matchWholeWord = isset($_GET['matchWholeWord']) ? true : false;
+		$matchWholeWord = isset($_GET['matchWholeWord']);
 	
 		$hitPosts = $postSearchService->searchPosts($this->board, $searchKeywordArray, $matchWholeWord, $searchField, $searchMethod, $searchPostsPerPage, $searchPostOffset) ?? [];
 		
