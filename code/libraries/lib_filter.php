@@ -47,35 +47,42 @@ function applyRegexIPFilter(string $ip): ?string {
  * @param string $query The SQL query string to modify (by reference).
  * @param array $filters The filters array containing user input for filtering results.
  */
-function bindfiltersParameters(array &$params, string &$query, array $filters): void {
-    // Apply the 'board' filter and bind parameters
-    $boards = applyArrayFilter($filters, 'board');
-    if (!empty($boards)) {
-        $query .= " AND (";
-        foreach ($boards as $index => $board) {
-            $query .= ($index > 0 ? " OR " : "") . "boardUID = :board_$index";
-            $params[":board_$index"] = (int)$board;  // Bind the board UID as an integer
-        }
-        $query .= ")";
-    }
+function bindPostFilterParameters(array &$params, string &$query, array $filters): void {
+	// Apply the 'board' filter and bind parameters
+	$boards = applyArrayFilter($filters, 'board');
+	if (!empty($boards)) {
+		$query .= " AND (";
+		foreach ($boards as $index => $board) {
+			$query .= ($index > 0 ? " OR " : "") . "boardUID = :board_$index";
+			$params[":board_$index"] = (int)$board;  // Bind the board UID as an integer
+		}
+		$query .= ")";
+	}
 
-    // Apply filters for 'comment', 'subject', and 'name' by binding the LIKE clauses
-    foreach (['comment' => 'com', 'subject' => 'sub', 'name' => 'name'] as $key => $column) {
-        if (!empty($filters[$key]) && is_string($filters[$key])) {
-            $query .= " AND {$column} LIKE :{$key}";
-            $params[":{$key}"] = '%' . $filters[$key] . '%';  // Bind the filter as a LIKE clause
-        }
-    }
+	// Apply the 'tripcode' filter to both 'tripcode' and 'secure_tripcode' columns
+	if (!empty($filters['tripcode']) && is_string($filters['tripcode'])) {
+		$query .= " AND (tripcode LIKE :tripcode OR secure_tripcode LIKE :tripcode)";
+		$params[":tripcode"] = '%' . $filters['tripcode'] . '%';
+	}
 
-    // Apply the 'ip_address' filter using a regex pattern
-    if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
-        $regex = applyRegexIPFilter($filters['ip_address']);
-        if ($regex !== null) {
-            $query .= " AND host REGEXP :ip_regex";
-            $params[':ip_regex'] = $regex;  // Bind the regex for IP address
-        }
-    }
+	// Apply filters for 'comment', 'subject', and 'name' by binding the LIKE clauses
+	foreach (['capcode' => 'capcode', 'comment' => 'com', 'subject' => 'sub', 'post_name' => 'name'] as $key => $column) {
+		if (!empty($filters[$key]) && is_string($filters[$key])) {
+			$query .= " AND {$column} LIKE :{$key}";
+			$params[":{$key}"] = '%' . $filters[$key] . '%';  // Bind the filter as a LIKE clause
+		}
+	}
+
+	// Apply the 'ip_address' filter using a regex pattern
+	if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
+		$regex = applyRegexIPFilter($filters['ip_address']);
+		if ($regex !== null) {
+			$query .= " AND host REGEXP :ip_regex";
+			$params[':ip_regex'] = $regex;  // Bind the regex for IP address
+		}
+	}
 }
+
 
 /**
  * Bind action log filter parameters to a SQL query for execution.
@@ -235,12 +242,12 @@ function buildFiltersFromRequest(array $defaultFilters): array {
  */
 function processRoleAndBoardFilters(array $filtersFromRequest): array {
     // Ensure that 'role' is an array if it's provided as a space-separated string
-    if (is_string($filtersFromRequest['role'])) {
+    if (array_key_exists('role', $filtersFromRequest) && is_string($filtersFromRequest['role'])) {
         $filtersFromRequest['role'] = explode(' ', $filtersFromRequest['role']);
     }
 
     // Ensure that 'board' is an array if it's provided as a space-separated string
-    if (is_string($filtersFromRequest['board'])) {
+    if (array_key_exists('board', $filtersFromRequest) && is_string($filtersFromRequest['board'])) {
         $filtersFromRequest['board'] = explode(' ', $filtersFromRequest['board']);
     }
 
