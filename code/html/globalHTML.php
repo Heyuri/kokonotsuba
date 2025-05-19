@@ -467,12 +467,17 @@ class globalHTML {
 		$filterComment = $filters['comment'];
 		$filterBoard = $filters['board'];
 		
-		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
+		$boardIO = boardIO::getInstance();
+
+		$allListedBoards = $boardIO->getAllListedBoards();
+
+		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard, $allListedBoards);
 		$dat .= '
 		<details id="filtercontainer" class="detailsbox centerText">
 			<summary>Filter posts</summary>
 			<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'" method="get">
 				<input type="hidden" name="mode" value="managePosts">
+				<input type="hidden" name="filterSubmissionFlag" value="true">
 
 				<table id="adminPostFilterTable" class="centerBlock">
 					<tbody>
@@ -485,11 +490,11 @@ class globalHTML {
 							<td><input class="inputtext" id="post_name" name="post_name" value="'.htmlspecialchars($filterName).'"></td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="tripcode">Name</label></td>
+							<td class="postblock"><label for="tripcode">Tripcode</label></td>
 							<td><input class="inputtext" id="tripcode" name="tripcode" value="'.htmlspecialchars($filterTripcode).'"></td>
 						</tr>
 						<tr>
-							<td class="postblock"><label for="capcode">Name</label></td>
+							<td class="postblock"><label for="capcode">Capcode</label></td>
 							<td><input class="inputtext" id="capcode" name="capcode" value="'.htmlspecialchars($filterCapcode).'"></td>
 						</tr>
 						<tr>
@@ -526,6 +531,7 @@ class globalHTML {
 		$boardIO = boardIO::getInstance();
 		
 		$allListedBoards = $boardIO->getAllListedBoardUIDs();
+		
 		$filterBoard = json_decode($_COOKIE['overboard_filterboards'] ?? ''); if(!is_array($filterBoard)) $filterBoard = $allListedBoards;
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard, $boardIO->getBoardsFromUIDs($allListedBoards));
 		$dat .= '
