@@ -36,12 +36,17 @@ class actionLogRoute {
 		$page = isset($_REQUEST['page']) ? (int)$_REQUEST['page'] : 0;
 		$page = ($page >= 0) ? $page : 1;
 		$offset = $page * $limit;
+
+		// So we can see if the form is being submitted in the current request
+		$isSubmission = isset($_GET['filterSubmissionFlag']);
 		
 		$actionLogUrl = $this->board->getBoardURL() . $this->config['PHP_SELF'] . '?mode=actionLog';
 
 		$defaultActionLogFilters = $this->initializeActionLogFilters();
 
-		$filtersFromRequest = getFiltersFromRequest($actionLogUrl, $defaultActionLogFilters);
+		$filtersFromRequest = getFiltersFromRequest($actionLogUrl, $isSubmission, $defaultActionLogFilters);
+
+		$cleanUrl = buildSmartQuery($actionLogUrl, $defaultActionLogFilters, $filtersFromRequest, true);
 
 		$this->globalHTML->drawModFilterForm($actionLogHtml, $this->board, $filtersFromRequest);
 		
@@ -94,7 +99,7 @@ class actionLogRoute {
 			</table>
 		";
 
-		$actionLogHtml .= $this->globalHTML->drawPager($limit, $numberOfActionLogs, $this->globalHTML->fullURL().$this->config['PHP_SELF'].'?mode=actionlog');
+		$actionLogHtml .= $this->globalHTML->drawPager($limit, $numberOfActionLogs, $cleanUrl);
 	
 		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $actionLogHtml], true);
 
@@ -118,7 +123,6 @@ class actionLogRoute {
 		return [
 			'ip_address' => '',
 			'log_name' => '',
-			'post_name' => '',
 			'ban' => '',
 			'deleted' => '',
 			'role' => $defaultRoleSelections,
