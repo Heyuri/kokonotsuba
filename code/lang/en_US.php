@@ -102,6 +102,7 @@ $language['search_target_number']		= 'No.';
 $language['search_method']				= 'Method';
 $language['search_method_and']			= 'AND';
 $language['search_method_or']			= 'OR';
+$language['search_match_word']				= 'Match whole words?';
 $language['search_submit_btn']			= 'Search';
 $language['search_notfound']			= 'No search results for the specified keyword(s).';
 $language['search_back']				= 'Back';
