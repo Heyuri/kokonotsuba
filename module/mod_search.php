@@ -36,6 +36,8 @@ class mod_search extends moduleHelper {
 		if ($searchKeyword) {
 			$dat .= $this->handleSearchResults($postSearchService, $globalHTML, $adminMode, $searchKeyword);
 		}
+
+		$globalHTML->foot($dat);
 	
 		echo $dat;
 	}
