@@ -75,6 +75,13 @@ class postRenderer {
 			$this->moduleEngine->useModuleMethods('AdminList', array(&$modFunc, $post, $isThreadReply));
 			$postFormExtra .= $modFunc;
 		}
+
+		if($isThreadOp) {
+			$maxAgeLimit = $this->config['MAX_AGE_TIME'];
+			if ($maxAgeLimit && $_SERVER['REQUEST_TIME'] - $post['time'] > ($maxAgeLimit * 60 * 60)) {
+				$warnOld .= "<br><span class='warning'>"._T('warn_oldthread')."</span>";
+			}
+		}
 	
 		// Handle name/trip/capcode HTML generation
 		$nameHtml = generatePostNameHtml(
