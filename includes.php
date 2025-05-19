@@ -83,6 +83,7 @@ require __DIR__.'/code/overboard.php';
 require __DIR__.'/code/post/FlagHelper.php';
 require __DIR__.'/code/post/postValidator.php';
 require __DIR__.'/code/post/postSingleton.php';
+require __DIR__.'/code/post/postSearchService.php';
 require __DIR__.'/code/post/threadSingleton.php';
 require __DIR__.'/code/post/postRedirectIO.php';
 require __DIR__.'/code/post/threadRedirect.php';
