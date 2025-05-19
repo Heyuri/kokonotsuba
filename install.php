@@ -389,7 +389,10 @@ class tableCreator {
 				CONSTRAINT fk_boardUID FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
 				CONSTRAINT fk_thread_uid FOREIGN KEY (`thread_uid`) REFERENCES `{$sanitizedTableNames['THREAD_TABLE']}`(`thread_uid`) ON DELETE CASCADE,
 				INDEX (`thread_uid`),
-				INDEX (`no`)
+				INDEX (`no`),
+				FULLTEXT INDEX ft_com (com),
+				FULLTEXT INDEX ft_sub (sub),
+				FULLTEXT INDEX ft_name (name)
 			) ENGINE=InnoDB;",
 
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_NUMBER_TABLE']} (
