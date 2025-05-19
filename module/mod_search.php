@@ -20,29 +20,43 @@ class mod_search extends moduleHelper {
 	}
 
 	public function ModulePage() {
-		$PIO = PIOPDO::getInstance();
+		$postSearchService = postSearchService::getInstance();
+
 		$globalHTML = new globalHTML($this->board);
 	
 		$adminMode = isActiveStaffSession();
 	
-		$searchKeyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : ''; // The text you want to search
+		$searchKeyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 		$dat = '';
 		$globalHTML->head($dat);
-		$links = '[<a href="' . $this->config['PHP_SELF2'] . '?' . time() . '">' . _T('return') . '</a>]';
-		$dat .= $links;
+		$dat .= $this->renderReturnLink();
+		$dat .= $this->renderSearchHeader();
+		$dat .= $this->renderSearchForm();
 	
-		$dat .= '
+		if ($searchKeyword) {
+			$dat .= $this->handleSearchResults($postSearchService, $globalHTML, $adminMode, $searchKeyword);
+		}
+	
+		echo $dat;
+	}
+	
+	private function renderReturnLink() {
+		return '[<a href="' . $this->config['PHP_SELF2'] . '?' . time() . '">' . _T('return') . '</a>]';
+	}
+	
+	private function renderSearchHeader() {
+		return '
 			<h2 class="theading2">' . _T('search_top') . '</h2>
 			<div class="modulePageContent">
 		';
+	}
 	
-		// Get the filters (search filters in this case)
+	private function renderSearchForm() {
 		$keyword = $_GET['keyword'] ?? '';
 		$field = $_GET['field'] ?? 'com';
 		$method = $_GET['method'] ?? 'AND';
 	
-		// Form with search parameters
-		$dat .= '
+		return '
 			<form action="' . $this->config['PHP_SELF'] . '" method="get">
 				<input type="hidden" name="mode" value="module">
 				<input type="hidden" name="load" value="mod_search">
@@ -61,7 +75,6 @@ class mod_search extends moduleHelper {
 										<option value="com"' . ($field === 'com' ? ' selected="selected"' : '') . '>' . _T('search_target_comment') . '</option>
 										<option value="name"' . ($field === 'name' ? ' selected="selected"' : '') . '>' . _T('search_target_name') . '</option>
 										<option value="sub"' . ($field === 'sub' ? ' selected="selected"' : '') . '>' . _T('search_target_topic') . '</option>
-										<option value="no"' . ($field === 'no' ? ' selected="selected"' : '') . '>' . _T('search_target_number') . '</option>
 									</select>
 								</td>
 							</tr>
@@ -74,6 +87,12 @@ class mod_search extends moduleHelper {
 									</select>
 								</td>
 							</tr>
+							<tr>
+								<td class="postblock"><label for="searchWholeWord">' . _T('search_match_word') . '</label></td>
+								<td>
+									<input type="checkbox" name="matchWholeWord" '. (isset($_GET['matchWholeWord']) ? 'checked' : '').'>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 					<div class="buttonSection">
@@ -83,70 +102,72 @@ class mod_search extends moduleHelper {
 			</form>
 			<hr>
 		';
+	}
 	
-		if ($searchKeyword) {
-			$searchPage = $_GET['page'] ?? 0;
-			$searchPostsPerPage = $this->config['ModuleSettings']['SEARCH_POSTS_PER_PAGE'];
-			$searchPostOffset = $searchPostsPerPage * $searchPage;
-			$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
+	private function handleSearchResults(postSearchService $postSearchService, globalHTML $globalHTML, bool $adminMode, string $searchKeyword): string {
+		$searchPage = $_GET['page'] ?? 0;
+		$searchPostsPerPage = $this->config['ModuleSettings']['SEARCH_POSTS_PER_PAGE'];
+		$searchPostOffset = $searchPostsPerPage * $searchPage;
+		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
 	
-			$searchField = $_GET['field']; // Search target (no:number, name:name, sub:title, com:text)
-			$searchMethod = $_GET['method']; // Search method
-			$searchKeyword = preg_split('/(　| )+/', strtolower(trim($searchKeyword))); // Search text is cut with spaces
-			if ($searchMethod == 'REG') $searchMethod = 'AND';
-			$hitPosts = $PIO->searchPosts($this->board, $searchKeyword, $searchField, $searchMethod, $searchPostsPerPage, $searchPostOffset) ?? []; // Directly return the matching article content array
+		$searchField = $_GET['field'];
+		$searchMethod = $_GET['method'];
+		$searchKeywordArray = preg_split('/(　| )+/', strtolower(trim($searchKeyword)));
+		if ($searchMethod == 'REG') $searchMethod = 'AND';
 
-			$totalPostHits = $hitPosts['total_posts'] ?? 0;
+		$matchWholeWord = isset($_GET['matchWholeWord']) ? true : false;
+	
+		$hitPosts = $postSearchService->searchPosts($this->board, $searchKeywordArray, $matchWholeWord, $searchField, $searchMethod, $searchPostsPerPage, $searchPostOffset) ?? [];
+		
+		$totalPostHits = $hitPosts['total_posts'] ?? 0;
+		$resultList = '';
 
-			$resultList = '';
-
-			$templateValues = ['{$BOARD_THREAD_NAME}' => ''];
+		$templateValues = ['{$BOARD_THREAD_NAME}' => ''];
 	
-			$postRenderer = new postRenderer($this->board, $this->config, $globalHTML, $this->moduleEngine, $this->templateEngine, $quoteLinksFromBoard);
+		$postRenderer = new postRenderer($this->board, $this->config, $globalHTML, $this->moduleEngine, $this->templateEngine, $quoteLinksFromBoard);
+		$hitPostResultData = $hitPosts['results_data'];
 	
-			$hitPostResultData = $hitPosts['results_data'];
-
-			foreach ($hitPostResultData as $hitPost) {
-				$hitPostThread = $hitPost['thread'];
-				$hitPostData = $hitPost['post'];
+		foreach ($hitPostResultData as $hitPost) {
+			$hitPostThread = $hitPost['thread'];
+			$hitPostData = $hitPost['post'];
+			$hitThreadResno = $hitPostThread['post_op_number'];
 	
-				$hitThreadResno = $hitPostThread['post_op_number'];
+			$resultList .= $postRenderer->render($hitPostData,
+				$templateValues,
+				$hitThreadResno,
+				false,
+				[$hitPostData],
+				$adminMode,
+				'',
+				'',
+				'',
+				'',
+				'',
+				0,
+				true);
+			$resultList .= $this->templateEngine->ParseBlock('THREADSEPARATE', []);
+		}
 	
-				// Render the post
-				$resultList .= $postRenderer->render($hitPostData,
-					$templateValues,
-					$hitThreadResno,
-					false,
-					[$hitPostData],
-					$adminMode,
-					'',
-					'',
-					'',
-					'',
-					0,
-					true);
-				$resultList .= $this->templateEngine->ParseBlock('THREADSEPARATE', []);
-			}
+		if ($totalPostHits > 0) {
+			$out = '<div id="searchresult">' . $resultList . '</div>';
 	
-			$dat .= '<div id="searchresult">';
-			$dat .= $resultList;
-			$dat .= '</div>';
-	
-			// Create the filters array for the URL (without pagination)
 			$filters = [
-				'keyword' => implode('+', $searchKeyword),
+				'keyword' => implode('+', $searchKeywordArray),
 				'field'   => $searchField,
 				'method'  => $searchMethod
 			];
-
-			// Generate the base URL with the filters (no pagination yet)
-			$baseUrl = generateFilteredUrl($this->mypage, $filters);
-			
-			// Now, draw the pager (this will handle appending the page parameter automatically)
-			$dat .= $globalHTML->drawPager($searchPostsPerPage, $totalPostHits, $baseUrl);
-		}
 	
-		echo $dat;
+			$baseUrl = generateFilteredUrl($this->mypage, $filters);
+			$out .= $globalHTML->drawPager($searchPostsPerPage, $totalPostHits, $baseUrl);
+			return $out;
+		} else {
+			return $this->renderNoResultsMessage();
+		}
 	}
+	
+	private function renderNoResultsMessage(): string {
+		return '<div class="error">' . _T('search_notfound') . '</div>';
+	}
+	
 	
 }
