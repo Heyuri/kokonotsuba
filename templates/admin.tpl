@@ -461,12 +461,12 @@
 					<td><textarea class="inputtext" id="banmsg" name="banmsg" rows="4" cols="50">{$DEFAULT_BAN_MESSAGE}</textarea></td>
 				</tr>
 				<tr>
-					<td class="postblock"><label for="global">Global ban</label></td>
-					<td><input type="checkbox" id="global" name="global"></td>
-				</tr>
-				<tr>
 					<td class="postblock"><label for="public">Public ban</label></td>
 					<td><input type="checkbox" id="public" name="public"></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="global">Global ban</label></td>
+					<td><input type="checkbox" id="global" name="global"></td>
 				</tr>
 			</tbody>
 		</table>
