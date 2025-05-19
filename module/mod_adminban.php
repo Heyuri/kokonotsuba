@@ -49,12 +49,12 @@ class mod_adminban extends moduleHelper {
 		$roleLevel = $staffSession->getRoleLevel();
 
 		$ip = htmlspecialchars($post['host']) ?? '';
-		$delMode = $_REQUEST['admin'] ?? '';
+		$delMode = $_REQUEST['mode'] ?? '';
 
 		if ($roleLevel->isAtLeast($this->config['AuthLevels']['CAN_BAN'])) {
 			$modfunc .= '<span class="adminFunctions adminBanFunction">[<a href="' . $this->mypage . '&post_uid=' . htmlspecialchars($post['post_uid']) . '&ip=' . htmlspecialchars($ip) . '" title="Ban">B</a>]</span> ';
 		}
-		if (!empty($ip) && $roleLevel->isAtLeast($this->config['AuthLevels']['CAN_VIEW_IP_ADDRESSES']) && $delMode !== 'del') {
+		if (!empty($ip) && $roleLevel->isAtLeast($this->config['AuthLevels']['CAN_VIEW_IP_ADDRESSES']) && $delMode !== 'managePosts') {
 			$modfunc .= '<span class="adminFunctions host">[Host: <a href="?mode=managePosts&host=' . htmlspecialchars($ip) . '">' . htmlspecialchars($ip) . '</a>]</span>';
 		}
 	}
