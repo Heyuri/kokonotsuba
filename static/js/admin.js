@@ -106,73 +106,6 @@
 		}
 	});
 
-	// Role select all feature
-	const roleSelectAllLink = document.getElementById('roleselectall');
-
-	if (roleSelectAllLink) {
-		const updateLinkText = (link, checkboxes) => {
-			const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
-			link.innerHTML = allChecked ? '[<a>Unselect all</a>]' : '[<a>Select all</a>]';
-		};
-
-		roleSelectAllLink.addEventListener('click', function(event) {
-			if (event.target.tagName === 'A') {
-				event.preventDefault();
-				const roleRow = document.getElementById('rolerow');
-				if (roleRow) {
-					const checkboxes = roleRow.querySelectorAll('input[type="checkbox"]');
-					const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
-					checkboxes.forEach(checkbox => checkbox.checked = !allChecked);
-					updateLinkText(roleSelectAllLink, checkboxes);
-				}
-			}
-		});
-
-		const roleRow = document.getElementById('rolerow');
-		if (roleRow) {
-			const checkboxes = roleRow.querySelectorAll('input[type="checkbox"]');
-			checkboxes.forEach(checkbox => {
-				checkbox.addEventListener('change', () => {
-					updateLinkText(roleSelectAllLink, checkboxes);
-				});
-			});
-			updateLinkText(roleSelectAllLink, checkboxes);
-		}
-	}
-
-	// Board select all feature
-	const boardSelectAllLink = document.getElementById('boardselectall');
-
-	if (boardSelectAllLink) {
-		const updateLinkText = (link, checkboxes) => {
-			const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
-			link.innerHTML = allChecked ? '[<a>Unselect all</a>]' : '[<a>Select all</a>]';
-		};
-
-		boardSelectAllLink.addEventListener('click', function(event) {
-			if (event.target.tagName === 'A') {
-				event.preventDefault();
-				const boardRow = document.getElementById('boardrow');
-				if (boardRow) {
-					const checkboxes = boardRow.querySelectorAll('input[type="checkbox"]');
-					const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
-					checkboxes.forEach(checkbox => checkbox.checked = !allChecked);
-					updateLinkText(boardSelectAllLink, checkboxes);
-				}
-			}
-		});
-
-		const boardRow = document.getElementById('boardrow');
-		if (boardRow) {
-			const checkboxes = boardRow.querySelectorAll('input[type="checkbox"]');
-			checkboxes.forEach(checkbox => {
-				checkbox.addEventListener('change', () => {
-					updateLinkText(boardSelectAllLink, checkboxes);
-				});
-			});
-			updateLinkText(boardSelectAllLink, checkboxes);
-		}
-	}
 
 	// Filter Container Storage
 	const detailsElement = document.getElementById('filtercontainer');
@@ -185,6 +118,7 @@
 			localStorage.setItem('filtercontainer_open', detailsElement.open);
 		});
 	}
+
 
 	// Disable public ban message text area unless public ban is checked
 	const publicCheckbox   = document.getElementById('public');
