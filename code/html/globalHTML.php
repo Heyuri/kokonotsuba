@@ -538,7 +538,7 @@ class globalHTML {
 			<form id="overboardFilterForm" action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=overboard" method="POST">
 				<details class="detailsbox reply">
 					<summary>Filter boards</summary>
-					<div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div>
+					<div class="selectlinktextjs" id="overboardselectall">[<a>Select all</a>]</div>
 					<ul id="overboardFilterList" class="boardFilterList">
 						'.$boardCheckboxHTML.'
 					</ul>
