@@ -158,9 +158,11 @@ class mod_blotter extends moduleHelper {
 		if ($_SERVER['REQUEST_METHOD'] == 'POST' && $roleLevel->isAtLeast($this->config['AuthLevels']['CAN_EDIT_BLOTTER'])) {
 			if (!empty($_POST['new_blot_txt'])) {
 				$this->handleBlotterAddition();
+				redirect($this->mypage);
 			}
 			if (!empty($_POST['delete_submit']) && !empty($_POST['entrydelete'])) {
 				$this->deleteBlotterEntries($_POST['entrydelete']);
+				redirect($this->mypage);
 			}
 		}
 
