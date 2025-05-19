@@ -116,16 +116,6 @@ interface IPIO {
 	public function isDuplicateAttachment($board, $lcount, $md5hash);
 
 	/**
-	 * Search posts
-	 *
-	 * @param  array  $keyword  Array of keywords
-	 * @param  string $field    Field
-	 * @param  string $method   Search method
-	 * @return array            Array of post content
-	 */
-	public function searchPosts(IBoard $board, array $keywords, string $field = 'com', string $method = 'OR', int $limit = 20, int $offset = 0): array;
-
-	/**
 	 * Search category tags
 	 *
 	 * @param  string $category Category
