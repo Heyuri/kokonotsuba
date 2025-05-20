@@ -1448,10 +1448,6 @@ caption h3 {
 
 /************************ Ban screen **********************************/
 
-#banHeading {
-	color: #dd0000;
-}
-
 #banScreen {
 	display: flex;
 	gap: 0.5em;
