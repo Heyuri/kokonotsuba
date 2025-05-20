@@ -5510,6 +5510,7 @@ function createMomocan (opts) {
 		anchor.href = '#start-momocan';
 		anchor.textContent = 'Tegaki';
 		anchor.style.fontSize = '1em';
+		anchor.style.fontWeight = 'normal';
 		anchor.style.color = 'inherit';
 		anchor.addEventListener('click', e => {
 			e.preventDefault();

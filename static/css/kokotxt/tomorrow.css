@@ -50,6 +50,8 @@
 	--color-bg-spoiler: #000000;
   --color-bg-code: #0f1011;
   --color-fg-code: var(--color-fg-main);
+	/* Administrator mode */
+  --color-bg-postblock: #282a2e;
 	/* Windows */
   --color-bg-window-item-highlight: #373b41;
 }
@@ -213,6 +215,15 @@ fieldset {
 .good,
 .online {
   color: #b5bd68;
+}
+
+.detailsbox,
+.postblock {
+	border-color: var(--color-hi-contrast-border) var(--color-x-lo-contrast-border) var(--color-x-lo-contrast-border) var(--color-hi-contrast-border);
+}
+
+.detailsbox[open] > summary {
+  border-bottom: 1px solid var(--color-x-lo-contrast-border);
 }
 
 /************************ Catalog *************************************/

@@ -12,11 +12,11 @@
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/kokotxt/base.css?v=67">
-	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/kokotxt/pseud0ch.css?v=7" title="Pseud0ch">
+	<link rel="stylesheet" href="{$STATIC_URL}css/kokotxt/base.css?v=89">
+	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/kokotxt/pseud0ch.css?v=8" title="Pseud0ch">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/pseud0ch2.css?v=7" title="Pseud0ch (serif)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/pseud0ch3.css?v=7" title="Pseud0ch (sans-serif)">
-	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/tomorrow.css?v=7" title="Tomorrow">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/tomorrow.css?v=10" title="Tomorrow">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">
 	<script src="{$STATIC_URL}js/koko.js?v=15"></script>
 	<script src="{$STATIC_URL}js/qr.js?v=18"></script>
@@ -30,7 +30,7 @@
 	<script src="{$STATIC_URL}js/catalog.js"></script>
 	<script src="{$STATIC_URL}js/insert.js"></script>
 	<script src="{$STATIC_URL}js/addemotestxt.js?v=2" defer></script>
-	<script src="{$STATIC_URL}js/admin.js?v=4" defer></script>
+	<script src="{$STATIC_URL}js/admin.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
 <!--/&HEADER-->
 

@@ -84,12 +84,12 @@ class globalHTML {
 			'{$IS_THREAD}' => $resno!=0,
 			'{$FORM_HIDDEN}' => $hidinput,
 			'{$MAX_FILE_SIZE}' => strval($this->config['TEXTBOARD_ONLY'] ? 0 : $this->config['MAX_KB'] * 1024),
-			'{$FORM_NAME_FIELD}' => '<input tabindex="1" maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="name" id="name" value="'.$name.'" class="inputtext">',
-			'{$FORM_EMAIL_FIELD}' => '<input tabindex="2" maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="email" id="email" value="'.$mail.'" class="inputtext">',
-			'{$FORM_TOPIC_FIELD}' => '<input tabindex="3" maxlength="'.$this->config['INPUT_MAX'].'"  type="text" name="sub" id="sub" value="'.$sub.'" class="inputtext">',
-			'{$FORM_SUBMIT}' => '<button tabindex="10" type="submit" name="mode" value="regist">'.($resno ? 'Post' : 'New thread' ).'</button>',
-			'{$FORM_COMMENT_FIELD}' => '<textarea tabindex="6" maxlength="'.$this->config['COMM_MAX'].'" name="com" id="com" class="inputtext">'.$com.'</textarea>',
-			'{$FORM_DELETE_PASSWORD_FIELD}' => '<input tabindex="6" type="password" name="pwd" id="pwd" maxlength="8" value="" class="inputtext">',
+			'{$FORM_NAME_FIELD}' => '<input maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="name" id="name" value="'.$name.'" class="inputtext">',
+			'{$FORM_EMAIL_FIELD}' => '<input maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="email" id="email" value="'.$mail.'" class="inputtext">',
+			'{$FORM_TOPIC_FIELD}' => '<input maxlength="'.$this->config['INPUT_MAX'].'"  type="text" name="sub" id="sub" value="'.$sub.'" class="inputtext">',
+			'{$FORM_SUBMIT}' => '<button id="buttonPostFormSubmit" type="submit" name="mode" value="regist">'.($resno ? 'Post' : 'New thread' ).'</button>',
+			'{$FORM_COMMENT_FIELD}' => '<textarea maxlength="'.$this->config['COMM_MAX'].'" name="com" id="com" class="inputtext">'.$com.'</textarea>',
+			'{$FORM_DELETE_PASSWORD_FIELD}' => '<input type="password" name="pwd" id="pwd" maxlength="8" value="" class="inputtext">',
 			'{$FORM_EXTRA_COLUMN}' => '',
 			'{$FORM_FILE_EXTRA_FIELD}' => '',
 			'{$FORM_NOTICE}' => ($this->config['TEXTBOARD_ONLY'] ? '' :_T('form_notice',str_replace('|',', ',$this->config['ALLOW_UPLOAD_EXT']),$this->config['MAX_KB'],($resno ? $this->config['MAX_RW'] : $this->config['MAX_W']),($resno ? $this->config['MAX_RH'] : $this->config['MAX_H']))),
@@ -104,7 +104,7 @@ class globalHTML {
 		}
 		$this->moduleEngine->useModuleMethods('PostForm', array(&$pte_vals['{$FORM_EXTRA_COLUMN}'])); // "PostForm" Hook Point
 		if($this->config['USE_CATEGORY']) {
-			$pte_vals += array('{$FORM_CATEGORY_FIELD}' => '<input tabindex="5" type="text" name="category" id="category" value="'.$cat.'" class="inputtext">');
+			$pte_vals += array('{$FORM_CATEGORY_FIELD}' => '<input type="text" name="category" id="category" value="'.$cat.'" class="inputtext">');
 		}
 		if($this->config['STORAGE_LIMIT']) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',$FileIO->getCurrentStorageSize($this->board),$this->config['STORAGE_MAX']);
 		$this->moduleEngine->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
@@ -258,11 +258,11 @@ class globalHTML {
 					<tbody>
 						<tr>
 							<td class='postblock'><label for=\"username\">Username</label></td>
-							<td><input tabindex=\"1\" type=\"text\" name=\"username\" id=\"username\" value=\"\" class=\"inputtext\"></td>
+							<td><input type=\"text\" name=\"username\" id=\"username\" value=\"\" class=\"inputtext\"></td>
 						</tr>
 						<tr>
 							<td class='postblock'><label for=\"password\">Password</label></td>
-							<td><input tabindex=\"1\" type=\"password\" name=\"password\" id=\"password\" value=\"\" class=\"inputtext\"></td>
+							<td><input type=\"password\" name=\"password\" id=\"password\" value=\"\" class=\"inputtext\"></td>
 						</tr>
 					</tbody>
 				</table>
@@ -398,63 +398,67 @@ class globalHTML {
 	
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard);
 		$dat .= '
-		<details id="filtercontainer" class="detailsbox">
-			<summary class="postblock">Filter action log</summary>
-			<form action="' . $this->fullURL() . $this->config['PHP_SELF'] . '" method="get">
-				<input type="hidden" name="mode" value="actionLog">
-				<input type="hidden" name="filterSubmissionFlag" value="true">
+		<form class="detailsboxForm" id="actionLogFilterForm" action="' . $this->fullURL() . $this->config['PHP_SELF'] . '" method="get">
+			<details id="filtercontainer" class="detailsbox">
+				<summary>Filter action log</summary>
+				<div class="detailsboxContent">
+					<input type="hidden" name="mode" value="actionLog">
+					<input type="hidden" name="filterSubmissionFlag" value="true">
 
-				<table>
-					<tbody>
-						<tr>
-							<td class="postblock"><label for="ip">IP address</label></td>
-							<td><input id="ip_address" name="ip_address" value="' . htmlspecialchars($filterIP) . '"></td>
-						</tr>
-						<tr>
-							<td class="postblock"><label for="log_name">Name</label></td>
-							<td><input id="log_name" name="log_name" value="' . htmlspecialchars($filterName) . '"></td>
-						</tr>
-						<tr>
-							<td class="postblock"><label for="date_after">From</label></td>
-							<td><input type="date" id="date_after" name="date_after" value="' . htmlspecialchars($filterDateAfter) . '"></td>
-						</tr>
-						<tr>
-							<td class="postblock"><label for="date_before">To</label></td>
-							<td><input type="date" id="date_before" name="date_before" value="' . htmlspecialchars($filterDateBefore) . '"></td>
-						</tr>
-						<tr>
-							<td class="postblock">Actions</td>
-							<td> 
-								<label><input type="checkbox" id="ban" name="ban" ' . htmlspecialchars($filterBan) . '>Bans</label>  
-								<label><input type="checkbox" id="deletions" name="deleted" ' . htmlspecialchars($filterDelete) . '>Deletions</label>
-							</td>
-						</tr>
-						<tr id="rolerow">
-							<td class="postblock">Roles <br> <div class="selectlinktextjs" id="roleselectall">[<a>Select all</a>]</div></td>
-							<td>
-								<ul class="littlelist">
-									<li><label><input name="role[]" type="checkbox" value="' . $none . '" ' . (in_array($none, $filterRole) ? 'checked' : '') . '>None</label></li>
-									<li><label><input name="role[]" type="checkbox" value="' . $user . '" ' . (in_array($user, $filterRole) ? 'checked' : '') . '>User</label></li>
-									<li><label><input name="role[]" type="checkbox" value="' . $janitor . '" ' . (in_array($janitor, $filterRole) ? 'checked' : '') . '>Janitor</label></li>
-									<li><label><input name="role[]" type="checkbox" value="' . $moderator . '" ' . (in_array($moderator, $filterRole) ? 'checked' : '') . '>Moderator</label></li>
-									<li><label><input name="role[]" type="checkbox" value="' . $admin . '" ' . (in_array($admin, $filterRole) ? 'checked' : '') . '>Admin</label></li>
-								</ul>
-							</td>
-						</tr>
-						<tr id="boardrow">
-							<td class="postblock"><label for="filterboard">Boards</label><div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div></td>
-							<td>
-								<ul class="boardFilterList">
-									' . $boardCheckboxHTML . '
-								</ul>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<input type="submit" value="Filter">
-				<input type="reset" value="Reset">
-			</form>
-		</details>
+					<table>
+						<tbody>
+							<tr>
+								<td class="postblock"><label for="ip">IP address</label></td>
+								<td><input class="inputtext" id="ip_address" name="ip_address" value="' . htmlspecialchars($filterIP) . '"></td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="log_name">Name</label></td>
+								<td><input class="inputtext" id="log_name" name="log_name" value="' . htmlspecialchars($filterName) . '"></td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="date_after">From</label></td>
+								<td><input class="inputtext" type="date" id="date_after" name="date_after" value="' . htmlspecialchars($filterDateAfter) . '"></td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="date_before">To</label></td>
+								<td><input class="inputtext" type="date" id="date_before" name="date_before" value="' . htmlspecialchars($filterDateBefore) . '"></td>
+							</tr>
+							<tr>
+								<td class="postblock">Actions</td>
+								<td> 
+									<label><input type="checkbox" id="ban" name="ban" ' . htmlspecialchars($filterBan) . '>Bans</label>  
+									<label><input type="checkbox" id="deletions" name="deleted" ' . htmlspecialchars($filterDelete) . '>Deletions</label>
+								</td>
+							</tr>
+							<tr id="rolerow">
+								<td class="postblock">Roles <br> <div class="selectlinktextjs" id="roleselectall">[<a>Select all</a>]</div></td>
+								<td>
+									<ul class="littlelist">
+										<li><label><input name="role[]" type="checkbox" value="' . $none . '" ' . (in_array($none, $filterRole) ? 'checked' : '') . '>None</label></li>
+										<li><label><input name="role[]" type="checkbox" value="' . $user . '" ' . (in_array($user, $filterRole) ? 'checked' : '') . '>User</label></li>
+										<li><label><input name="role[]" type="checkbox" value="' . $janitor . '" ' . (in_array($janitor, $filterRole) ? 'checked' : '') . '>Janitor</label></li>
+										<li><label><input name="role[]" type="checkbox" value="' . $moderator . '" ' . (in_array($moderator, $filterRole) ? 'checked' : '') . '>Moderator</label></li>
+										<li><label><input name="role[]" type="checkbox" value="' . $admin . '" ' . (in_array($admin, $filterRole) ? 'checked' : '') . '>Admin</label></li>
+									</ul>
+								</td>
+							</tr>
+							<tr id="boardrow">
+								<td class="postblock"><label for="filterboard">Boards</label><div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div></td>
+								<td>
+									<ul class="boardFilterList">
+										' . $boardCheckboxHTML . '
+									</ul>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<div class="buttonSection">
+						<input type="submit" value="Filter">
+						<input type="reset" value="Reset">
+					</div>
+				</div>
+			</details>
+		</form>
 		';
 	}	
 	
@@ -473,57 +477,59 @@ class globalHTML {
 
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard, $allListedBoards);
 		$dat .= '
-		<details id="filtercontainer" class="detailsbox centerText">
-			<summary>Filter posts</summary>
-			<form action="' . $this->fullURL() . $this->config['PHP_SELF'].'" method="get">
-				<input type="hidden" name="mode" value="managePosts">
-				<input type="hidden" name="filterSubmissionFlag" value="true">
+		<form class="detailsboxForm" action="' . $this->fullURL() . $this->config['PHP_SELF'].'" method="get">
+			<details id="filtercontainer" class="detailsbox">
+				<summary>Filter posts</summary>
+				<div class="detailsboxContent">
+					<input type="hidden" name="mode" value="managePosts">
+					<input type="hidden" name="filterSubmissionFlag" value="true">
 
-				<table id="adminPostFilterTable" class="centerBlock">
-					<tbody>
-						<tr>
-							<td class="postblock"><label for="ip_address">IP address</label></td>
-							<td><input class="inputtext" id="ip_address" name="ip_address" value="'.htmlspecialchars($filterIP).'"></td>
-						</tr>
-						<tr>
-							<td class="postblock"><label for="post_name">Name</label></td>
-							<td><input class="inputtext" id="post_name" name="post_name" value="'.htmlspecialchars($filterName).'"></td>
-						</tr>
-						<tr>
-							<td class="postblock"><label for="tripcode">Tripcode</label></td>
-							<td><input class="inputtext" id="tripcode" name="tripcode" value="'.htmlspecialchars($filterTripcode).'"></td>
-						</tr>
-						<tr>
-							<td class="postblock"><label for="capcode">Capcode</label></td>
-							<td><input class="inputtext" id="capcode" name="capcode" value="'.htmlspecialchars($filterCapcode).'"></td>
-						</tr>
-						<tr>
-							<td class="postblock"><label for="subject">Subject</label></td>
-							<td><input class="inputtext" id="subject" name="subject" value="'.htmlspecialchars($filterSubject).'"></td>
-						</tr>
-						<tr>
-							<td class="postblock"><label for="comment">Comment</label></td>
-							<td><input class="inputtext" id="comment" name="comment" value="'.htmlspecialchars($filterComment).'"></td>
-						</tr>
-						<tr id="boardrow">
-							<td class="postblock">
-								<label for="filterboard">Boards</label>
-								<div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div>
-							</td>
-							<td>
-								<ul id="managePostsBoardFilterList" class="boardFilterList">
-									'.$boardCheckboxHTML.'
-								</ul>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				<div class="buttonSection">
-					<button type="submit" name="filterformsubmit" value="filter">Filter</button>
-					<input type="reset" value="Reset">
+					<table id="adminPostFilterTable" class="centerBlock">
+						<tbody>
+							<tr>
+								<td class="postblock"><label for="ip_address">IP address</label></td>
+								<td><input class="inputtext" id="ip_address" name="ip_address" value="'.htmlspecialchars($filterIP).'"></td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="post_name">Name</label></td>
+								<td><input class="inputtext" id="post_name" name="post_name" value="'.htmlspecialchars($filterName).'"></td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="tripcode">Tripcode</label></td>
+								<td><input class="inputtext" id="tripcode" name="tripcode" value="'.htmlspecialchars($filterTripcode).'"></td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="capcode">Capcode</label></td>
+								<td><input class="inputtext" id="capcode" name="capcode" value="'.htmlspecialchars($filterCapcode).'"></td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="subject">Subject</label></td>
+								<td><input class="inputtext" id="subject" name="subject" value="'.htmlspecialchars($filterSubject).'"></td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="comment">Comment</label></td>
+								<td><input class="inputtext" id="comment" name="comment" value="'.htmlspecialchars($filterComment).'"></td>
+							</tr>
+							<tr id="boardrow">
+								<td class="postblock">
+									<label for="filterboard">Boards</label>
+									<div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div>
+								</td>
+								<td>
+									<ul id="managePostsBoardFilterList" class="boardFilterList">
+										'.$boardCheckboxHTML.'
+									</ul>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<div class="buttonSection">
+						<button type="submit" name="filterformsubmit" value="filter">Filter</button>
+						<input type="reset" value="Reset">
+					</div>
 				</div>
-			</form>
-		</details>
+			</details>
+		</form>
 		';
 	}
 	
@@ -535,15 +541,17 @@ class globalHTML {
 		$filterBoard = json_decode($_COOKIE['overboard_filterboards'] ?? ''); if(!is_array($filterBoard)) $filterBoard = $allListedBoards;
 		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard, $boardIO->getBoardsFromUIDs($allListedBoards));
 		$dat .= '
-			<form id="overboardFilterForm" action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=overboard" method="POST">
-				<details class="detailsbox reply">
+			<form class="detailsboxForm" id="overboardFilterForm" action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=overboard" method="POST">
+				<details id="filtercontainer" class="detailsbox">
 					<summary>Filter boards</summary>
-					<div class="selectlinktextjs" id="overboardselectall">[<a>Select all</a>]</div>
-					<ul id="overboardFilterList" class="boardFilterList">
-						'.$boardCheckboxHTML.'
-					</ul>
-					<div class="buttonSection">
-						<button type="submit" name="filterformsubmit" value="filter">Filter</button> <input type="reset" value="Reset">
+					<div class="detailsboxContent">
+						<ul id="overboardFilterList" class="boardFilterList">
+							'.$boardCheckboxHTML.'
+						</ul>
+						<div class="selectlinktextjs" id="overboardselectall">[<a>Select all</a>]</div>
+						<div class="buttonSection">
+							<button type="submit" name="filterformsubmit" value="filter">Filter</button> <input type="reset" value="Reset">
+						</div>
 					</div>
 				</details>
 			</form>
