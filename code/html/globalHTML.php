@@ -84,12 +84,12 @@ class globalHTML {
 			'{$IS_THREAD}' => $resno!=0,
 			'{$FORM_HIDDEN}' => $hidinput,
 			'{$MAX_FILE_SIZE}' => strval($this->config['TEXTBOARD_ONLY'] ? 0 : $this->config['MAX_KB'] * 1024),
-			'{$FORM_NAME_FIELD}' => '<input tabindex="1" maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="name" id="name" value="'.$name.'" class="inputtext">',
-			'{$FORM_EMAIL_FIELD}' => '<input tabindex="2" maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="email" id="email" value="'.$mail.'" class="inputtext">',
-			'{$FORM_TOPIC_FIELD}' => '<input tabindex="3" maxlength="'.$this->config['INPUT_MAX'].'"  type="text" name="sub" id="sub" value="'.$sub.'" class="inputtext">',
-			'{$FORM_SUBMIT}' => '<button tabindex="10" type="submit" name="mode" value="regist">'.($resno ? 'Post' : 'New thread' ).'</button>',
-			'{$FORM_COMMENT_FIELD}' => '<textarea tabindex="6" maxlength="'.$this->config['COMM_MAX'].'" name="com" id="com" class="inputtext">'.$com.'</textarea>',
-			'{$FORM_DELETE_PASSWORD_FIELD}' => '<input tabindex="6" type="password" name="pwd" id="pwd" maxlength="8" value="" class="inputtext">',
+			'{$FORM_NAME_FIELD}' => '<input maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="name" id="name" value="'.$name.'" class="inputtext">',
+			'{$FORM_EMAIL_FIELD}' => '<input maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="email" id="email" value="'.$mail.'" class="inputtext">',
+			'{$FORM_TOPIC_FIELD}' => '<input maxlength="'.$this->config['INPUT_MAX'].'"  type="text" name="sub" id="sub" value="'.$sub.'" class="inputtext">',
+			'{$FORM_SUBMIT}' => '<button type="submit" name="mode" value="regist">'.($resno ? 'Post' : 'New thread' ).'</button>',
+			'{$FORM_COMMENT_FIELD}' => '<textarea maxlength="'.$this->config['COMM_MAX'].'" name="com" id="com" class="inputtext">'.$com.'</textarea>',
+			'{$FORM_DELETE_PASSWORD_FIELD}' => '<input type="password" name="pwd" id="pwd" maxlength="8" value="" class="inputtext">',
 			'{$FORM_EXTRA_COLUMN}' => '',
 			'{$FORM_FILE_EXTRA_FIELD}' => '',
 			'{$FORM_NOTICE}' => ($this->config['TEXTBOARD_ONLY'] ? '' :_T('form_notice',str_replace('|',', ',$this->config['ALLOW_UPLOAD_EXT']),$this->config['MAX_KB'],($resno ? $this->config['MAX_RW'] : $this->config['MAX_W']),($resno ? $this->config['MAX_RH'] : $this->config['MAX_H']))),
@@ -104,7 +104,7 @@ class globalHTML {
 		}
 		$this->moduleEngine->useModuleMethods('PostForm', array(&$pte_vals['{$FORM_EXTRA_COLUMN}'])); // "PostForm" Hook Point
 		if($this->config['USE_CATEGORY']) {
-			$pte_vals += array('{$FORM_CATEGORY_FIELD}' => '<input tabindex="5" type="text" name="category" id="category" value="'.$cat.'" class="inputtext">');
+			$pte_vals += array('{$FORM_CATEGORY_FIELD}' => '<input type="text" name="category" id="category" value="'.$cat.'" class="inputtext">');
 		}
 		if($this->config['STORAGE_LIMIT']) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',$FileIO->getCurrentStorageSize($this->board),$this->config['STORAGE_MAX']);
 		$this->moduleEngine->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
@@ -258,11 +258,11 @@ class globalHTML {
 					<tbody>
 						<tr>
 							<td class='postblock'><label for=\"username\">Username</label></td>
-							<td><input tabindex=\"1\" type=\"text\" name=\"username\" id=\"username\" value=\"\" class=\"inputtext\"></td>
+							<td><input type=\"text\" name=\"username\" id=\"username\" value=\"\" class=\"inputtext\"></td>
 						</tr>
 						<tr>
 							<td class='postblock'><label for=\"password\">Password</label></td>
-							<td><input tabindex=\"1\" type=\"password\" name=\"password\" id=\"password\" value=\"\" class=\"inputtext\"></td>
+							<td><input type=\"password\" name=\"password\" id=\"password\" value=\"\" class=\"inputtext\"></td>
 						</tr>
 					</tbody>
 				</table>
