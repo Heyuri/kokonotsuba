@@ -87,7 +87,7 @@ class globalHTML {
 			'{$FORM_NAME_FIELD}' => '<input maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="name" id="name" value="'.$name.'" class="inputtext">',
 			'{$FORM_EMAIL_FIELD}' => '<input maxlength="'.$this->config['INPUT_MAX'].'" type="text" name="email" id="email" value="'.$mail.'" class="inputtext">',
 			'{$FORM_TOPIC_FIELD}' => '<input maxlength="'.$this->config['INPUT_MAX'].'"  type="text" name="sub" id="sub" value="'.$sub.'" class="inputtext">',
-			'{$FORM_SUBMIT}' => '<button type="submit" name="mode" value="regist">'.($resno ? 'Post' : 'New thread' ).'</button>',
+			'{$FORM_SUBMIT}' => '<button id="buttonPostFormSubmit" type="submit" name="mode" value="regist">'.($resno ? 'Post' : 'New thread' ).'</button>',
 			'{$FORM_COMMENT_FIELD}' => '<textarea maxlength="'.$this->config['COMM_MAX'].'" name="com" id="com" class="inputtext">'.$com.'</textarea>',
 			'{$FORM_DELETE_PASSWORD_FIELD}' => '<input type="password" name="pwd" id="pwd" maxlength="8" value="" class="inputtext">',
 			'{$FORM_EXTRA_COLUMN}' => '',

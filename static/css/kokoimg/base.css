@@ -386,6 +386,14 @@ caption h3 {
 	max-width: 16em;
 }
 
+#postformTable #sub {
+	margin-right: 0.35em;
+}
+
+#postformTable #emailjs {
+	margin-left: auto;
+}
+
 #postformTable #emailjs,
 .nokosagedump {
 	display: inline-block;
