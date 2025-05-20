@@ -370,7 +370,7 @@ class PIOPDO implements IPIO {
 		// Ensure offset is not negative
 		$offset = max(0, $offset);
 		
-		$query = "SELECT * FROM {$this->tablename} WHERE host = :ip_address ORDER BY $order LIMIT $limit OFFSET $offset DESC";
+		$query = "SELECT * FROM {$this->tablename} WHERE host = :ip_address ORDER BY $order DESC LIMIT $limit OFFSET $offset";
 		$params = [
 			':ip_address' => $host,
 		];

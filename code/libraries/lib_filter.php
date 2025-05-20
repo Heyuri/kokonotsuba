@@ -197,10 +197,14 @@ function bindBoardUIDFilter(array &$params, string &$query, array $boardUIDs, st
 		return;
 	}
 
-	// Sanitize: filter integers only and remove duplicates
-	$boardUIDs = array_unique(array_filter($boardUIDs, fn($id) => is_int($id) || ctype_digit($id)));
+	// Sanitize and reindex: keep only integers or digit strings
+	$boardUIDs = array_values(array_unique(array_filter(
+		$boardUIDs,
+		fn($id) => is_int($id) || ctype_digit($id)
+	)));
 
 	if (empty($boardUIDs)) {
+		$query .= " AND 0";
 		return;
 	}
 
@@ -215,8 +219,6 @@ function bindBoardUIDFilter(array &$params, string &$query, array $boardUIDs, st
 	// Append to WHERE clause
 	$query .= " AND {$columnAlias} IN (" . implode(', ', $placeholders) . ")";
 }
-
-
 
 /**
  * Build the filters array from the incoming HTTP request parameters.

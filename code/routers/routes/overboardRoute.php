@@ -24,38 +24,50 @@ class overboardRoute {
 	}
 
 	public function drawOverboard(): void {
-		$filterAction = $_POST['filterformsubmit'] ?? null;
+		$this->handleOverboardFilterForm();
 
-		if ($_SERVER['REQUEST_METHOD'] === 'POST' && $filterAction === 'filter') {
-			$filterBoardFromPOST = $_POST['filterboard'] ?? '';
-			$filterBoard = (is_array($filterBoardFromPOST) ? array_map('htmlspecialchars', $filterBoardFromPOST) : [htmlspecialchars($filterBoardFromPOST)]);
+		$filtersBoards = (!empty($_COOKIE['overboard_filterboards'])) 
+			? json_decode($_COOKIE['overboard_filterboards'], true) 
+			: null;
+
+		$filters = [
+			'board' => $filtersBoards ?? $this->boardIO->getAllListedBoardUIDs(),
+		];
+
+		$html = '';
+		$this->overboard->drawOverboardHead($html, 0);
+		$this->globalHTML->drawOverboardFilterForm($html, $this->board);
+		$html .= $this->overboard->drawOverboardThreads($filters, $this->globalHTML);
+		$this->globalHTML->foot($html, 0);
+
+		echo $html;
+	}
+
+	private function handleOverboardFilterForm(): void {
+		if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+			return;
+		}
+
+		$action = $_POST['filterformsubmit'] ?? null;
+
+		if ($action === 'filter') {
+			$filterBoardFromPOST = $_POST['board'] ?? '';
+			$filterBoard = is_array($filterBoardFromPOST)
+				? array_map('htmlspecialchars', $filterBoardFromPOST)
+				: [htmlspecialchars($filterBoardFromPOST)];
 
 			setcookie('overboard_filterboards', json_encode($filterBoard), time() + (86400 * 30), "/");
 
 			redirect($this->config['PHP_SELF'] . '?mode=overboard');
 			exit;
-		} else if ($_SERVER['REQUEST_METHOD'] === 'POST' && $filterAction === 'filterclear') {
+
+		} elseif ($action === 'filterclear') {
 			setcookie('overboard_filterboards', "", time() - 3600, "/");
 
 			redirect($this->config['PHP_SELF'] . '?mode=overboard');
 			exit;
 		}
-
-		$filtersBoards = (!empty($_COOKIE['overboard_filterboards'])) ? json_decode($_COOKIE['overboard_filterboards'], true) : null;
-
-		$filters = [
-			'board' => $filtersBoards ?? $this->boardIO->getAllListedBoardUIDs(),
-		];
-		
-
-		$html = '';
-
-		$this->overboard->drawOverboardHead($html, 0);
-		$this->globalHTML->drawOverboardFilterForm($html, $this->board);
-		$html .= $this->overboard->drawOverboardThreads($filters, $this->globalHTML);
-
-		$this->globalHTML->foot($html, 0);
-		echo $html;
 	}
+
 }
 
