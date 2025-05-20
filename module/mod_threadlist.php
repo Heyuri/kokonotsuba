@@ -77,9 +77,9 @@ class mod_threadlist extends moduleHelper {
 						$post = $opPosts[$threadUID];
 
 						$cleanComment = strip_tags($post['com']);
-						$title = $post['sub'] ?: (mb_strlen($cleanComment) <= 10
+						$title = $post['sub'] ?: (mb_strlen($cleanComment) <= 100
 								? $cleanComment
-								: mb_substr($cleanComment, 0, 10, 'UTF-8') . '...');
+								: mb_substr($cleanComment, 0, 100, 'UTF-8') . '...');
 
 						$replyCount = isset($postCounts[$threadUID])
 								? $postCounts[$threadUID] - 1
