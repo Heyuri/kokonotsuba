@@ -271,21 +271,21 @@ class globalHTML {
 	}
 	
 	public function drawAdminTheading(&$dat, $staffSession) {
-		$username = $staffSession->getUsername();
+		$username = htmlspecialchars($staffSession->getUsername(), ENT_QUOTES, 'UTF-8');
 		$roleEnum = $staffSession->getRoleLevel();
-		$roleName = $roleEnum->displayRoleName();
-
+		$roleName = htmlspecialchars($roleEnum->displayRoleName(), ENT_QUOTES, 'UTF-8');
+	
 		$loggedInInfo = '';
 		
 		if($roleEnum !== \Kokonotsuba\Root\Constants\userRole::LEV_NONE) {
-			$loggedInInfo = "<div class=\"username\">Logged in as $username (".$roleName.")</div>";
+			$loggedInInfo = "<div class=\"username\">Logged in as $username ($roleName)</div>";
 		}
-
+	
 		$html = "<div class=\"theading3\"><h2>Administrator mode</h2>$loggedInInfo</div>";
 		
 		$dat .= $html;
 		return $html;
-	}
+	}	
 	
 	//for the board filter form
 	public function generateBoardListCheckBoxHTML($currentBoard, $filterBoard, $boards = null, $selectAll = false) {
