@@ -117,14 +117,15 @@ class mod_cat extends moduleHelper {
 			$dat.= '<td class="thread">
 	<!--<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>-->
 	<a href="'.$this->config['PHP_SELF'].'?res='.($resno?$resno:$no).'#p'.$this->board->getBoardUID() . '_' .$no.'">'.
-	($FileIO->imageExists($tim.$ext, $this->board) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim, $this->board), $this->board).'" width="'.min(150, $tw).'" vspace="3"	class="thumb">' : '***').
+	($FileIO->imageExists($tim.$ext, $this->board) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim, $this->board), $this->board).'" width="'.min(150, $tw).'" class="thumb" alt="Thumbnail">' : '***').
 	'</a>
 	<div class="catPostInfo"><span class="title">'.$sub.'</span>'.
-		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon"> '.$res.'</span></span></div>
+		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon" alt="Replies"> '.$res.'</span></div>
 	<div class="catComment">'.$com.'</div>
 </td>';
 		}
 
+		$dat .= '</tbody></table></div><hr>';
 		$dat .= $globalHTML->drawPager($this->PAGE_DEF,$list_max, $this->mypage);
 		$globalHTML->foot($dat);
 		echo $dat;

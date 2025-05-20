@@ -301,7 +301,8 @@ class mod_pm extends moduleHelper {
 </div>
 <script>
 	$g("pmform").from.value = getCookie("namec");
-</script>';
+</script>
+<hr>';
 					
 				break;
 
@@ -329,7 +330,8 @@ class mod_pm extends moduleHelper {
 			<tr><td class="postblock">' . _T('form_comment') . '</td><td><div class="comment">' . htmlspecialchars($_POST['content']) . '</div></td></tr>
 		</table>
 	</div>
-</div>';
+</div>
+<hr>';
 				
 						break;
 
@@ -369,8 +371,11 @@ class mod_pm extends moduleHelper {
 	$g("pmform").trip.value = getCookie("namec").replace(/^[^#]*#/, "#");
 </script>';
 
+
 						if ($action === 'check' && isset($_POST['trip']) && str_starts_with($_POST['trip'], '#')) {
 								$dat .= $this->_getPM($_POST['trip']);
+						} else {
+								$dat .= '<hr>';
 						}
 						break;
 		}
