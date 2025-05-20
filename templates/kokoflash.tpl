@@ -219,6 +219,6 @@
 		</div>
 		<!--&DELFORM/-->
 	</form>
-	<div id="postarea2"></div>
 	{$PAGENAV}
+	<div id="postarea2"></div>
 <!--/&MAIN-->
