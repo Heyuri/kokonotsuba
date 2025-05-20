@@ -4,6 +4,7 @@
 		{$PAGE_CONTENT}
 	</div>
 	<hr>
+	<!--&IF($PAGER,'{$PAGER}','')-->
 <!--/&GLOBAL_ADMIN_PAGE_CONTENT-->
 
 
