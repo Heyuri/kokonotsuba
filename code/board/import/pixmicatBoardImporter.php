@@ -168,7 +168,6 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 
 	// import threads from pixmicat to kokonotsuba board
 	public function importThreadsToBoard(): array {
-		$PIO = PIOPDO::getInstance();
 		$boardUID = $this->board->getBoardUID();
 		$pixmicatThreads = $this->getThreadsFromTempTable();
 		$mappedRestoToThreadUids = [];
@@ -205,17 +204,19 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 				$post_op_number = $no;
 				$lastBumpTime = $root;
 				$lastReplyTime = $root;
+				$threadCreatedTime = extractAndConvertTimestamp($now);
 	
 				// Step 1: Insert thread FIRST
 				$query = "INSERT INTO $this->threadTableName 
-					(boardUID, thread_uid, post_op_number, post_op_post_uid, last_reply_time, last_bump_time)
-					VALUES (:boardUID, :thread_uid, :post_op_number, 0, :last_reply_time, :last_bump_time)";
+					(boardUID, thread_uid, post_op_number, post_op_post_uid, last_reply_time, last_bump_time, thread_created_time)
+					VALUES (:boardUID, :thread_uid, :post_op_number, 0, :last_reply_time, :last_bump_time, :thread_created_time)";
 				$params = [
 					':boardUID' => $boardUID,
 					':thread_uid' => $thread_uid,
 					':post_op_number' => $post_op_number,
 					':last_reply_time' => $lastReplyTime,
-					':last_bump_time' => $lastBumpTime
+					':last_bump_time' => $lastBumpTime,
+					':thread_created_time' => $threadCreatedTime
 				];
 				$this->databaseConnection->execute($query, $params);
 	
