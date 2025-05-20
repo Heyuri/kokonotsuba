@@ -185,12 +185,19 @@ class managePostsRoute {
 		</div>
 	</form>
 	<script>
-	function selectAll() {
-		var checkboxes = document.querySelectorAll(\'input[name="clist[]"]\');
+		function selectAll() {
+			var checkboxes = document.querySelectorAll(\'input[name="clist[]"]\');
+			var btn = document.getElementById(\'selectAllButton\');
+			var allChecked = Array.from(checkboxes).every(function(checkbox) {
+				return checkbox.checked;
+			});
+			
 			checkboxes.forEach(function(checkbox) {
-			checkbox.checked = true;
-		});
-	}
+				checkbox.checked = !allChecked;
+			});
+
+			btn.textContent = allChecked ? "Select all" : "Unselect all";
+		}
 	</script>
 	';
 
