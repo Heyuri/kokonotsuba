@@ -36,6 +36,7 @@ require __DIR__.'/code/pmclibrary.php'; // factory
 require __DIR__.'/code/libraries/lib_admin.php'; // admin panel functions
 require __DIR__.'/code/libraries/lib_template.php'; // template library
 require __DIR__.'/code/libraries/lib_rebuild.php'; // rebuild library
+require __DIR__.'/code/libraries/lib_database.php'; // database library
 require __DIR__.'/code/libraries/lib_errorhandler.php'; // error library
 require __DIR__.'/code/libraries/lib_compatible.php'; // compatability library
 require __DIR__.'/code/libraries/lib_file.php'; // file I/O library

@@ -239,12 +239,6 @@ function executeFunction(callable $func, ...$params) {
 }
 
 
-function addSlashesToArray(&$arrayOfValuesForQuery) {
-	foreach ($arrayOfValuesForQuery as &$item) {
-		$item = "'" . addslashes($item) . "'";
-	}
-}
-
 function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = false): string {
 	// Trim whitespace from both ends of the string
 	$str = trim($str);
@@ -268,7 +262,6 @@ function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = fals
 
 	return $str;
 }
-
 
 function loadUploadData(): array {
 	$upfile = sanitizeStr($_FILES['upfile']['tmp_name'] ?? '');
@@ -314,14 +307,6 @@ function getVideoDimensions(string $filePath): array {
 // convert bytes to readable kilobytes
 function formatFileSize(int $bytes): string {
 	return ($bytes >= 1024) ? (int)($bytes / 1024) . ' KB' : $bytes . ' B';
-}
-
-// truncate string for mysql TEXT column
-function truncateForText(string $input): string {
-	$maxBytes = 65535;
-
-	// Use mb_strcut to safely cut multibyte strings (like UTF-8) without breaking characters
-	return mb_strcut($input, 0, $maxBytes, 'UTF-8');
 }
 
 // detect if a string contains html tags
