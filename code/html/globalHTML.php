@@ -727,32 +727,39 @@ class globalHTML {
 
 	public function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int $currentPage): string {
 		[$totalPages, $currentPage] = $this->validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
-	
+
 		$staticUntil = $this->config['STATIC_HTML_UNTIL'];
 
 		$isStaticAll = ($staticUntil === -1);
 
 		$getLink = function($page) use ($url, $staticUntil, $isStaticAll) {
+			if ($page === 0) {
+				return $url . $this->config['PHP_SELF2'];
+			}
 			if (!$isStaticAll && $page >= $staticUntil) {
 				// Fallback to dynamic link
 				return $url . $this->config['PHP_SELF'] . '?page=' . $page;
 			}
 			return $page . '.html';
 		};
-		
+
 		$getForm = function($page, $label) use ($url, $staticUntil, $isStaticAll) {
+			if ($page === 0) {
+				return '<a href="' . htmlspecialchars($url . $this->config['PHP_SELF2']) . '"><button type="button">' . htmlspecialchars($label) . '</button></a>';
+			}
 			if (!$isStaticAll && $page >= $staticUntil) {
 				return '<form action="' . htmlspecialchars($url . $this->config['PHP_SELF']) . '" method="get">
 					<input type="hidden" name="page" value="' . intval($page) . '">
 					<button type="submit">' . htmlspecialchars($label) . '</button>
 				</form>';
 			}
+
 			return '<a href="' . htmlspecialchars($page . '.html') . '"><button type="button">' . htmlspecialchars($label) . '</button></a>';
 		};
-		
-	
+
 		return $this->renderPager($currentPage, $totalPages, $getLink, $getForm);
-	}	
+	}
+
 
 	public function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url): string {
 		$currentPage = $_REQUEST['page'] ?? 0;
