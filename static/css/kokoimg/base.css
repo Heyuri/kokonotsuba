@@ -373,9 +373,6 @@ caption h3 {
 
 .postblock {
 	background-color: var(--color-bg-postblock);
-}
-
-.postblock label {
 	font-weight: var(--font-weight-bold);
 }
 
