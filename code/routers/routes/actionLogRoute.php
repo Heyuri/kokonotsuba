@@ -101,9 +101,14 @@ class actionLogRoute {
 			</div>
 		";
 
-		$actionLogHtml .= $this->globalHTML->drawPager($limit, $numberOfActionLogs, $cleanUrl);
-	
-		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $actionLogHtml], true);
+		$actionLogPager .= $this->globalHTML->drawPager($limit, $numberOfActionLogs, $cleanUrl);
+		
+		$templateValues = [
+			'{$PAGE_CONTENT}' => $actionLogHtml,
+			'{$PAGER}' => $actionLogPager
+		];
+		
+		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', $templateValues, true);
 
 		echo $htmlOutput;
 	}
