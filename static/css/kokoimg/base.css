@@ -1243,6 +1243,11 @@ caption h3 {
 	margin-top: 0;
 }
 
+#managePostsForm {
+	display: block !important;
+}
+
+#actionlogtableContainer,
 #tableManagePostsContainer {
 	max-width: 100%;
 	overflow: auto;

@@ -98,7 +98,7 @@ class managePostsRoute {
 		
 		$this->globalHTML->drawManagePostsFilterForm($managePostsHtml, $this->board, $filtersFromRequest);
 		
-		$managePostsHtml .= '<form action="'.$this->config['PHP_SELF'].'" method="POST">';
+		$managePostsHtml .= '<form id="managePostsForm" action="'.$this->config['PHP_SELF'].'" method="POST">';
 		$managePostsHtml .= '<input type="hidden" name="mode" value="admin">
 						<input type="hidden" name="admin" value="del">'.$message.$noticeHost.'
 						<div id="tableManagePostsContainer">

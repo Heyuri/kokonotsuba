@@ -281,7 +281,7 @@ $config['OVERBOARD_THREADS_PER_PAGE'] = 20;
 // A link to the overboard on the admin bar (next to [Admin] on the top right). Displayed as [Overboard]
 $config['ADMINBAR_OVERBOARD_BUTTON'] = true;
 
-$config['ACTIONLOG_MAX_PER_PAGE'] = 250; // the amount of actionlog entries per page
+$config['ACTIONLOG_MAX_PER_PAGE'] = 50; // the amount of actionlog entries per page
 
 // Role levels
 $config['AuthLevels']['CAN_VIEW_IP_ADDRESSES'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;

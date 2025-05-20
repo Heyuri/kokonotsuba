@@ -81,22 +81,24 @@ class actionLogRoute {
 		}
 		
 		$actionLogHtml .= "
-		<table class=\"postlists\" id=\"actionlogtable\">
-				<thead>
-					<tr>
-						<th>Board title</th>
-						<th>Board UID</th>
-						<th>Name</th>
-						<th>Role</th>
-						<th>IP</th>
-						<th>Action</th>
-						<th>Time</th>
-					</tr>
-				</thead>
-				<tbody>
-					$tableEntries
-				</tbody>
-			</table>
+			<div id=\"actionlogtableContainer\">
+				<table class=\"postlists\" id=\"actionlogtable\">
+					<thead>
+						<tr>
+							<th>Board title</th>
+							<th>Board UID</th>
+							<th>Name</th>
+							<th>Role</th>
+							<th>IP</th>
+							<th>Action</th>
+							<th>Time</th>
+						</tr>
+					</thead>
+					<tbody>
+						$tableEntries
+					</tbody>
+				</table>
+			</div>
 		";
 
 		$actionLogHtml .= $this->globalHTML->drawPager($limit, $numberOfActionLogs, $cleanUrl);
