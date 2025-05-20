@@ -422,7 +422,6 @@ caption h3 {
 
 .menu,
 .postlists,
-.postblock,
 .detailsbox {
 	background-color: var(--color-bg-menu);
 	border-color: var(--color-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-lo-contrast-border);
@@ -1261,10 +1260,10 @@ caption h3 {
 	text-align: center;
 }
 
-#adminPageContent form,
-.modulePageContent form {
+#adminPageContent > form,
+.modulePageContent > form {
 	display: table;
-	margin: 0 auto;
+	margin: 0.5em auto;
 }
 
 #adminPageContent ul,
@@ -1295,10 +1294,9 @@ caption h3 {
 
 .postblock {
 	background-color: var(--color-bg-postblock);
+	border-color: var(--color-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-lo-contrast-border);
+	border-style: solid;
 	border-width: 1px;
-}
-
-.postblock label {
 	font-weight: var(--font-weight-bold);
 }
 
@@ -2201,12 +2199,25 @@ width: 300px;
 /************************ Hachi stuff *************************/
 
 .detailsbox {
+	background-color: var(--color-bg-main);
+	border-color: var(--color-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-lo-contrast-border);
+  border-style: solid;
 	border-width: 1px;
-	padding: 0.25em;
 }
 
 .detailsbox > summary {
   cursor: pointer;
+	background-color: var(--color-bg-postblock);
+	padding: 2px 4px;
+	font-weight: var(--font-weight-bold);
+}
+
+.detailsbox[open] > summary {
+	border-bottom: 1px solid var(--color-hi-contrast-border);
+}
+
+.detailsboxContent {
+	padding: 0.25em;
 }
 
 .selectlinktextjs {

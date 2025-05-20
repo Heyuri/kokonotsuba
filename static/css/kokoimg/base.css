@@ -2357,15 +2357,28 @@ input[type=reset] {
 /************************ Hachi stuff *************************/
 
 .detailsbox {
-	padding: 0.25em;
+	background-color: var(--color-bg-main);
+	border: 1px solid var(--color-hi-contrast-border);
 }
 
 .detailsbox > summary {
   cursor: pointer;
+	background-color: var(--color-bg-postblock);
+	padding: 2px 4px;
+	font-weight: var(--font-weight-bold);
+}
+
+.detailsbox[open] > summary {
+	border-bottom: 1px solid var(--color-hi-contrast-border);
+}
+
+.detailsboxContent {
+	padding: 0.25em;
 }
 
 .selectlinktextjs {
 	font-size: var(--font-size-x-small);
+	font-weight: normal;
 	user-select: none;
 }
 
