@@ -156,7 +156,7 @@ $config['ModuleSettings']['ADD_INFO'] = array(
 $config['ModuleSettings']['GLOBAL_TXT'] = __DIR__.'/globalmsg.txt';
 
 //mod_adminban
-$config['DEFAULT_BAN_MESSAGE'] = '<br><br><b class="warning">(USER WAS BANNED FOR THIS POST)</b> <img style= "vertical-align: baseline;" src="'.$config['STATIC_URL'].'image'.DIRECTORY_SEPARATOR.'hammer.gif">';
+$config['DEFAULT_BAN_MESSAGE'] = '<p class="warning">(USER WAS BANNED FOR THIS POST) <img class="banIcon icon" alt="banhammer" src="'.$config['STATIC_URL'].'image'.DIRECTORY_SEPARATOR.'hammer.gif"></p>';
 
 //mod_soudane
 $config['ModuleSettings']['ENABLE_YEAH'] = true;
