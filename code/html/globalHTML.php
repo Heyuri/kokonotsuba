@@ -654,7 +654,7 @@ class globalHTML {
 				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=rebuild">Rebuild board</a></li>
 				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=managePosts">Manage posts</a></li>
 				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=actionLog">Action log</a></li>
-				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=account">Account</a></li>
+				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=account">Accounts</a></li>
 				<li class="adminNavLink"><a href="'.$this->config['PHP_SELF'].'?mode=boards">Boards</a></li>
 				';
 		$this->moduleEngine->useModuleMethods('LinksAboveBar', array(&$linksAboveBar,'admin',$authRoleLevel));
