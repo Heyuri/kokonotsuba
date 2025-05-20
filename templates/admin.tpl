@@ -553,7 +553,7 @@ window.onload = function () {
 <!--&BAN_PAGE-->
 	<div>[<a href="{$RETURN_URL}">Return</a>]</div>
 
-	<h2 id="banHeading" class="centerText">You have been {$BAN_TYPE}! ヽ(ー_ー )ノ</h2>
+	<h2 id="banHeading" class="centerText warning">You have been {$BAN_TYPE}! ヽ(ー_ー )ノ</h2>
 
 	<div id="banScreen">
 		<div id="banScreenText">

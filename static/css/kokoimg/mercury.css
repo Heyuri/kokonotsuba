@@ -87,8 +87,7 @@ fieldset {
 .sageText,
 .newPM,
 .roll,
-.autosage,
-#banHeading {
+.autosage {
   color: var(--color-fg-warning);
 }
 

@@ -79,7 +79,7 @@ class postRenderer {
 		if($isThreadOp) {
 			$maxAgeLimit = $this->config['MAX_AGE_TIME'];
 			if ($maxAgeLimit && $_SERVER['REQUEST_TIME'] - $post['time'] > ($maxAgeLimit * 60 * 60)) {
-				$warnOld .= "<span class='warning'>"._T('warn_oldthread')."</span>";
+				$warnOld .= "<div class='warning'>"._T('warn_oldthread')."</div>";
 			}
 		}
 	

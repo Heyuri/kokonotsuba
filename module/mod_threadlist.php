@@ -77,9 +77,9 @@ class mod_threadlist extends moduleHelper {
 						$post = $opPosts[$threadUID];
 
 						$cleanComment = strip_tags($post['com']);
-						$title = $post['sub'] ?: (mb_strlen($cleanComment) <= 10
+						$title = $post['sub'] ?: (mb_strlen($cleanComment) <= 100
 								? $cleanComment
-								: mb_substr($cleanComment, 0, 10, 'UTF-8') . '...');
+								: mb_substr($cleanComment, 0, 100, 'UTF-8') . '...');
 
 						$replyCount = isset($postCounts[$threadUID])
 								? $postCounts[$threadUID] - 1
@@ -244,7 +244,7 @@ function checkall(){
 			$dat .= '<tr>'.
 				($this->SHOW_FORM ? '<td class="colDel"><input type="checkbox" name="'.$no.'" value="delete"></td>' : '').
 				'<td class="colNum"><a href="'.$this->config['PHP_SELF'].'?res='.$no.'">'.$no.'</a></td>
-				<td class="colSub"><span class="title">'.( $sub ? $sub : 'No Title' ).'</span></td>
+				<td class="colSub"><span class="title">'.( $sub ? $sub : 'No subject' ).'</span></td>
 				<td class="colName"><span class="name">'.$nameHtml.'</span></td>
 				<td class="colReply">'.$rescount.'</td>
 				<td class="colDate">'.$now.'</td>

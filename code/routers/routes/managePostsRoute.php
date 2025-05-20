@@ -179,19 +179,25 @@ class managePostsRoute {
 			</tbody>
 		</table>
 		</div>
-		<p class="centerText">
-			<button type="button" onclick="selectAll()">Select all</button>
+		<div class="buttonSection">
+			<button type="button" id="selectAllButton" onclick="selectAll()">Select all</button>
 			<input type="submit" value="'._T('admin_submit_btn').'"> <input type="reset" value="'._T('admin_reset_btn').'"> [<label><input type="checkbox" name="onlyimgdel" id="onlyimgdel" 		value="on">'._T('del_img_only').'</label>]
-		</p>
+		</div>
 	</form>
-	<hr>
 	<script>
-	function selectAll() {
-		var checkboxes = document.querySelectorAll(\'input[name="clist[]"]\');
+		function selectAll() {
+			var checkboxes = document.querySelectorAll(\'input[name="clist[]"]\');
+			var btn = document.getElementById(\'selectAllButton\');
+			var allChecked = Array.from(checkboxes).every(function(checkbox) {
+				return checkbox.checked;
+			});
+			
 			checkboxes.forEach(function(checkbox) {
-			checkbox.checked = true;
-		});
-	}
+				checkbox.checked = !allChecked;
+			});
+
+			btn.textContent = allChecked ? "Select all" : "Unselect all";
+		}
 	</script>
 	';
 

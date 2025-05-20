@@ -108,7 +108,7 @@ class mod_cat extends moduleHelper {
 				$dat.= '</tr><tr>';
 
 			if (!$sub)
-				$sub = 'No Title';
+				$sub = 'No subject';
 			
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'', '{$IMG_SRC}' => '');
 			$this->moduleEngine->useModuleMethods('ThreadPost', array(&$arrLabels, $opPost, $threadPosts, false)); // "ThreadPost" Hook Point
