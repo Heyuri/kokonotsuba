@@ -13,7 +13,7 @@
 	<meta name="description" content="{$PAGE_TITLE}">
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/kokoimg/base.css?v=116">
+	<link rel="stylesheet" href="{$STATIC_URL}css/kokoimg/base.css?v=133">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/kokoimg/sakomoto.css?v=4" title="Sakomoto">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokoimg/heyuriclassic.css?v=5" title="Heyuri Classic">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokoimg/futaba.css?v=2" title="Futaba">
@@ -32,11 +32,11 @@
 	<script src="{$STATIC_URL}js/style.js?v=3"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
 	<script src="{$STATIC_URL}js/img.js?v=4"></script>
-	<script src="{$STATIC_URL}js/momo/tegaki.js?v=3" defer></script>
+	<script src="{$STATIC_URL}js/momo/tegaki.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/inline.js?v=9" defer></script>
 	<script src="{$STATIC_URL}js/update.js?v=2" defer></script>
-	<script src="{$STATIC_URL}js/addemotes.js?v=7" defer></script>
-	<script src="{$STATIC_URL}js/admin.js?v=4" defer></script>
+	<script src="{$STATIC_URL}js/addemotes.js?v=8" defer></script>
+	<script src="{$STATIC_URL}js/admin.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/filter.js?v=16" defer></script>
 	<script src="{$STATIC_URL}js/qr.js?v=18"></script>
 	<script src="{$STATIC_URL}js/clipboard.js?v=15" defer></script>
