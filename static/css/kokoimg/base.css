@@ -931,7 +931,6 @@ caption h3 {
 .spoiler {
 	background-color: var(--color-bg-spoiler);
 	color: var(--color-bg-spoiler);
-	/* transition: .3s; */
 }
 
 .spoiler:hover {
@@ -1111,7 +1110,7 @@ caption h3 {
 
 #pagerPagesContainer {
 	overflow-y: auto;
-  max-height: 6em;
+  max-height: 5em;
 }
 
 #pagerSelectedPage {
@@ -1191,10 +1190,10 @@ caption h3 {
 	text-align: center;
 }
 
-#adminPageContent form,
-.modulePageContent form {
+#adminPageContent > form,
+.modulePageContent > form {
 	display: table;
-	margin: 0 auto;
+	margin: 0.5em auto;
 }
 
 #adminPageContent ul,
@@ -1508,7 +1507,7 @@ caption h3 {
 	text-align: center;
 	vertical-align: top;
 	overflow-y: hidden;
-	overflow-wrap: break-all;
+	overflow-wrap: break-word;
 	overflow-wrap: anywhere;
 }
 
@@ -1552,7 +1551,7 @@ caption h3 {
 	font-size: var(--font-size-small);
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 600px) {
 	#catalogTable .thread {
 		width: 140px;
 		max-width: 140px;
@@ -2089,7 +2088,7 @@ width: 300px;
 
 /************************ Mobile **************************************/
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 600px) {
 	body {
 		margin: 0;
 		margin-bottom: 8px;

@@ -476,15 +476,19 @@ caption h3 {
 .postformCombinedItems {
 	display: flex;
 	flex-direction: row;
+	flex-wrap: wrap;
 }
 
 .postformCombinedItems .postformItem {
-	/* flex: 1; */
   margin-right: 0.25em;
 }
 
 .postformCombinedItems label[for="email"] {
 	width: initial;
+}
+
+#postformTable #emailjs {
+	margin-left: auto;
 }
 
 #postformTable #emailjs,
@@ -918,6 +922,10 @@ caption h3 {
 	align-items: last baseline;
 } */
 
+.time > * {
+	display: inline-block;
+}
+
 .fortune,
 .roll {
 	font-weight: var(--font-weight-bold);
@@ -1182,7 +1190,7 @@ caption h3 {
 
 #pagerPagesContainer {
 	overflow-y: auto;
-  max-height: 6em;
+  max-height: 5em;
 }
 
 #pagerSelectedPage {
@@ -1564,7 +1572,7 @@ caption h3 {
 	text-align: center;
 	vertical-align: top;
 	overflow-y: hidden;
-	overflow-wrap: break-all;
+	overflow-wrap: break-word;
 	overflow-wrap: anywhere;
 }
 
@@ -1608,7 +1616,7 @@ caption h3 {
 	font-size: var(--font-size-small);
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 600px) {
 	#catalogTable .thread {
 		width: 140px;
 		max-width: 140px;
@@ -1937,7 +1945,7 @@ width: 300px;
 
 /************************ Mobile **************************************/
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 600px) {
 	body#txt {
 		margin: 0;
 		margin-bottom: 8px;
@@ -1982,7 +1990,6 @@ width: 300px;
 	}
 
 	.postformItem {
-		flex-direction: column;
 		flex-wrap: wrap;
 	}
 
@@ -1991,9 +1998,9 @@ width: 300px;
 		padding: 0;
 	}
 
-	.postformItem input[type="text"] {
+	/* .postformItem input[type="text"] {
 		width: 100%;
-	}
+	} */
 
 	.postformItem button[value="regist"] {
 		margin-left: auto;
