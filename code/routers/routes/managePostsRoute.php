@@ -162,7 +162,7 @@ class managePostsRoute {
 					<td class="colSub"><span class="title">' . $sub . '</span></td>
 					<td class="colName"><span class="name">' . $nameHtml . '</span></td>
 					<td class="colComment">' . $com . '</td>
-					<td class="colHost">' . $host . ' <a target="_blank" href="https://otx.alienvault.com/indicator/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="'.$managePostsUrl.'&host=' . $host . '" title="See all posts">★</a></td>
+					<td class="colHost">' . $host . ' <a target="_blank" href="https://whatismyipaddress.com/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="'.$managePostsUrl.'&host=' . $host . '" title="See all posts">★</a></td>
 					<td class="colImage">' . $clip . ' (' . $size . ')<br>' . $md5chksum . '</td>
 				</tr>';
 		}
@@ -201,9 +201,14 @@ class managePostsRoute {
 	</script>
 	';
 
-		$managePostsHtml .= $this->globalHTML->drawPager($postsPerPage, $numberOfFilteredPosts, $cleanUrl);
+		$managePostsPager = $this->globalHTML->drawPager($postsPerPage, $numberOfFilteredPosts, $cleanUrl);
 
-		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $managePostsHtml], true);
+		$templateValues = [
+			'{$PAGE_CONTENT}' => $managePostsHtml,
+			'{$PAGER}' => $managePostsPager
+		];
+		
+		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', $templateValues, true);
 	
 		echo $htmlOutput;
 	}
