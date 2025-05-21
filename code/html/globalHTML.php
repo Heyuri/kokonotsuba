@@ -312,7 +312,7 @@ class globalHTML {
 		$listHTML = '<ul class="filterSelectBoardList">';
 
 		foreach($boards as $board) {
-			$boardTitle = htmlspecialchars($board->getBoardTitle());
+			$boardTitle = $board->getBoardTitle();
 			$boardUID = htmlspecialchars($board->getBoardUID());
 			
 			$listHTML .= '<li><label class="filterSelectBoardItem"><input name="rebuildBoardUIDs[]" type="checkbox" value="' . $boardUID . '" checked>' . $boardTitle . '</label></li>';
