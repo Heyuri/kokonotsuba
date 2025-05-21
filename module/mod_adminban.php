@@ -154,11 +154,16 @@ class mod_adminban extends moduleHelper {
 		$postUid = $_POST['post_uid'] ?? '';
 		$isGlobal = isset($_POST['global']);  // Check if global ban is selected
 
+		// Process the ban form (add to log, update post if public, etc.)
+		$this->processBanForm($reasonFromRequest, $newIp, $duration, $makePublic, $publicBanMessageHTML, $isGlobal, $postUid);
+	
 		// Log the ban action
 		$this->logBanAction($newIp, $duration, $isGlobal, $postUid);
 
-		// Process the ban form (add to log, update post if public, etc.)
-		$this->processBanForm($reasonFromRequest, $newIp, $duration, $makePublic, $publicBanMessageHTML, $isGlobal, $postUid);
+
+		// Redirect after processing
+		redirect($_SERVER['HTTP_REFERER']);
+		exit;
 	}
 
 	private function logBanAction($newIp, $duration, $isGlobal, $postUid) {
@@ -237,11 +242,7 @@ class mod_adminban extends moduleHelper {
 			}
 		}
 
-		// Redirect after processing
-		redirect($_SERVER['HTTP_REFERER']);
-		exit;
 	}
-
 
 	private function processBanDeletions() {
 		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
@@ -268,7 +269,9 @@ class mod_adminban extends moduleHelper {
 
 		file_put_contents($this->BANFILE, implode(PHP_EOL, $newLocalLog));
 		file_put_contents($this->GLOBAL_BANS, implode(PHP_EOL, $newGlobalLog));
+		
 		redirect($_SERVER['HTTP_REFERER']);
+		exit;
 	}
 
 	private function calculateBanDuration($duration) {
