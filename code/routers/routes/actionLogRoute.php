@@ -101,7 +101,7 @@ class actionLogRoute {
 			</div>
 		";
 
-		$actionLogPager .= $this->globalHTML->drawPager($limit, $numberOfActionLogs, $cleanUrl);
+		$actionLogPager = $this->globalHTML->drawPager($limit, $numberOfActionLogs, $cleanUrl);
 		
 		$templateValues = [
 			'{$PAGE_CONTENT}' => $actionLogHtml,
