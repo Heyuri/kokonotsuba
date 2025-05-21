@@ -69,21 +69,10 @@ class mod_imagemeta extends moduleHelper {
 	
 		// SWFChan archive
 		if ($this->enable_swfchan && $isSwf && $isLocalBackend) {
-			$imgsize = $post['imgsize'] ?? '';
-			$min = 0;
-			$max = 1;
+			$rawByteFileSize = $FileIO->getImageFilesize($file, $board);
+
 	
-			// Only parse the imgsize if necessary
-			if (stripos($imgsize, 'KB') !== false) {
-				// Use a simple str_replace instead of preg_match for the numeric value extraction
-				$matches = [];
-				if (preg_match('/(\d+)/', $imgsize, $matches)) {
-					$min = (int) $matches[1];
-					$max = $min + 1;
-				}
-			}
-	
-			$imgBarHtml .= '<span class="swfchanLink imageOptions">[<a href="http://eye.swfchan.com/search/?q=' . urlencode($post['fname']) . '.swf&min=' . $min . '&u1=k&max=' . $max . '&u2=k" target="_blank">swfchan</a>]</span> ';
+			$imgBarHtml .= '<span class="swfchanLink imageOptions">[<a href="http://eye.swfchan.com/search/?q=>' . $rawByteFileSize . '" target="_blank">swfchan</a>]</span> ';
 		}
 	
 		// Append the built HTML content to the final label
