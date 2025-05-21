@@ -63,21 +63,22 @@ class actionLogRoute {
 		
 		} else {
 			//generate table entry html
-			foreach($entriesFromDatabase as $actionLogEntry) {
+			foreach ($entriesFromDatabase as $actionLogEntry) {
 				$roleValue = $actionLogEntry->getRole();
 				$roleEnum = \Kokonotsuba\Root\Constants\userRole::tryFrom($roleValue);
 
 				$tableEntries .= "
 				<tr>
-					<td>{$actionLogEntry->getBoardTitle()}</td>
-					<td>{$actionLogEntry->getBoardUID()}</td>
-					<td>".htmlspecialchars($actionLogEntry->getName())."</td>
-					<td>{$roleEnum->displayRoleName()}</td>
-					<td>{$actionLogEntry->getIpAddress()}</td>
-					<td>{$actionLogEntry->getLogAction()}</td>
-					<td>{$actionLogEntry->getTimeAdded()}</td>
-				 </tr>";
+					<td>" . $actionLogEntry->getBoardTitle() . "</td>
+					<td>" . htmlspecialchars($actionLogEntry->getBoardUID()) . "</td>
+					<td>" . htmlspecialchars($actionLogEntry->getName()) . "</td>
+					<td>" . htmlspecialchars($roleEnum->displayRoleName()) . "</td>
+					<td>" . htmlspecialchars($actionLogEntry->getIpAddress()) . "</td>
+					<td>" . htmlspecialchars($actionLogEntry->getLogAction()) . "</td>
+					<td>" . htmlspecialchars($actionLogEntry->getTimeAdded()) . "</td>
+   			 	</tr>";
 			}
+
 		}
 		
 		$actionLogHtml .= "
