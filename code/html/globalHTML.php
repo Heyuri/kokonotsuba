@@ -296,7 +296,7 @@ class globalHTML {
 		if(!$boards) $boards = $BoardIO->getAllBoards();
 
 		foreach($boards as $board) {
-			$boardTitle = htmlspecialchars($board->getBoardTitle());
+			$boardTitle = $board->getBoardTitle();
 			$boardUID = htmlspecialchars($board->getBoardUID());
 		
 			$isChecked = $selectAll || in_array($boardUID, $filterBoard) || ($boardUID === $currentBoard->getBoardUID() && empty($filterBoard));
@@ -334,7 +334,7 @@ class globalHTML {
 		foreach($boards as $board) {
 			if($currentBoard && $board->getBoardUID() === $currentBoard->getBoardUID()) continue;
 			
-			$boardTitle = htmlspecialchars($board->getBoardTitle());
+			$boardTitle = $board->getBoardTitle();
 			$boardUID = htmlspecialchars($board->getBoardUID());
 			
 			$listHTML .= '<label> <input name="radio-board-selection" type="radio" value="' . $boardUID . '">'.$boardTitle.'</label>  ';
