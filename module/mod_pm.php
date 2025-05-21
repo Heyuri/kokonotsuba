@@ -177,6 +177,7 @@ class mod_pm extends moduleHelper {
 
 					$arrLabels = [
 						'{$NO}' => $mno,
+						'{$POST_UID}' => $mno,
 						'{$SUB}' => $topic,
 						'{$NAME}' => $from,
 						'{$NOW}' => date('Y-m-d H:i:s', $pdate),
@@ -199,6 +200,9 @@ class mod_pm extends moduleHelper {
 				}
 			}
 		}
+
+		// append form submit button
+		$data .= '<input type="submit" name="delete" value="Submit">';
 
 		return $data ?: "No information." . '</form>';
 	}
@@ -316,6 +320,8 @@ class mod_pm extends moduleHelper {
 								$from = '<span class="postername">' . htmlspecialchars($regs[1]) . '</span>';
 								$cap = strtr($regs[2], ['&amp;' => '&']);
 								$from .= '<span class="postertrip">' . _T('trip_pre') . $this->_tripping($cap) . '</span>';
+						} else {
+							$from = htmlspecialchars($from);
 						}
 
 						$dat .= '
