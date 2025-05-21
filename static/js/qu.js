@@ -36,6 +36,12 @@ function getSelectTxt() {
 const kkqu = {
 	name: "KK Quote",
 	startup: function () {
+
+		// Check if a hidden input with the name "resto" doesn't exist
+		if (!document.querySelector('input[name="resto"]')) {
+			return;
+		}
+
 		const com = $id("com");
 		if (!com) return true;
 		var q = window.location.hash.match(/^#q(\d+)/);

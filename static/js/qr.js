@@ -6,6 +6,11 @@ document.write(`<style id="qrs"></style>`);
 /* Module */
 const kkqr = { name: "KK Quick Reply",
 	startup: function () {
+		// Check if a hidden input with the name "resto" doesn't exist
+		if (!document.querySelector('input[name="resto"]')) {
+			return;
+		}
+
 		kkqr.qrs.disabled = true;
 		if (!localStorage.getItem("useqr"))
 			localStorage.setItem("useqr", true);
