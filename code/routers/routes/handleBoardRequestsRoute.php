@@ -104,7 +104,7 @@ class handleBoardRequestsRoute {
 		$boardTitle = $_POST['new-board-title'] ?? $this->globalHTML->error("Board title wasn't set!");
 		$boardSubTitle = $_POST['new-board-sub-title'] ?? '';
 		$boardIdentifier = $_POST['new-board-identifier'] ?? '';
-		$boardListed = isset($_POST['new-board-listed']) ? 1 : 0;
+		$boardListed = !empty($_POST['new-board-listed']) ? 1 : 0;
 		$boardPath = $_POST['new-board-path'] ?? $this->globalHTML->error("Board path wasn't set!");
 	
 		// Create an instance of the BoardCreator helper class
@@ -133,7 +133,7 @@ class handleBoardRequestsRoute {
 			$boardTitle = $_POST['import-board-title'] ?? $this->globalHTML->error("Board title wasn't set!");
 			$boardSubTitle = $_POST['import-board-sub-title'] ?? $this->globalHTML->error("Board subtitle wasn't set!");
 			$boardIdentifier = $_POST['import-board-identifier'] ?? $this->globalHTML->error("Board identifier wasn't set!");
-			$boardListed = isset($_POST['import-board-listed']) ? 1 : 0;
+			$boardListed = !empty($_POST['import-board-listed']) ? 1 : 0;
 			$boardPath = $_POST['import-board-path'] ?? $this->globalHTML->error("Board path wasn't set!");
 			$boardTableName = $_POST['import-board-tablename'] ?? $this->globalHTML->error("Table name wasn't set!");
 			$boardDatabaseFile = $_FILES['import-board-file'];
