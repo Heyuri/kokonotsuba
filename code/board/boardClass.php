@@ -22,11 +22,11 @@ class board implements IBoard {
 	}
 
 	public function getBoardTitle(): string {
-		return htmlspecialchars($this->board_title ?? '');
+		return $this->board_title ?? '';
 	}
 
 	public function getBoardSubTitle(): string {
-		return htmlspecialchars($this->board_sub_title ?? '');
+		return $this->board_sub_title ?? '';
 	}
 
 	public function getFullConfigPath(): string {
