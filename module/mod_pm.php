@@ -316,6 +316,8 @@ class mod_pm extends moduleHelper {
 								$from = '<span class="postername">' . htmlspecialchars($regs[1]) . '</span>';
 								$cap = strtr($regs[2], ['&amp;' => '&']);
 								$from .= '<span class="postertrip">' . _T('trip_pre') . $this->_tripping($cap) . '</span>';
+						} else {
+							$from = htmlspecialchars($from);
 						}
 
 						$dat .= '
