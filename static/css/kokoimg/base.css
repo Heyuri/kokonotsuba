@@ -2140,6 +2140,10 @@ width: 300px;
 		max-width: 100%;
 	}
 
+	.formattingDetails {
+		margin: 0.5em 0;
+	}
+
 	#topiclist,
 	#topiclists {
 		max-height: 200px;
