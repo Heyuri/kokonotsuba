@@ -61,7 +61,9 @@ class mod_adminban extends moduleHelper {
 
 	public function ModulePage() {
 		$globalHTML = new globalHTML($this->board);
+
 		$softErrorHandler = new softErrorHandler($globalHTML);
+
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_BAN']);
 
 		$PIO = PIOPDO::getInstance();
@@ -70,7 +72,7 @@ class mod_adminban extends moduleHelper {
 			$banAction = $_POST['adminban-action'] ?? '';
 			switch($banAction) {
 				case 'add-ban':
-					$this->processBanForm();
+					$this->handleBanAddition();
 					break;
 				case 'delete-ban':
 					$this->processBanDeletions();
@@ -142,43 +144,104 @@ class mod_adminban extends moduleHelper {
 		
 	}
 
-	private function processBanForm() {
+	private function handleBanAddition() {
+		// Extract data from the request
+		$reasonFromRequest = $_POST['privmsg'] ?? '';
+		$newIp = $_POST['ip'] ?? '';
+		$duration = $_POST['duration'] ?? '0';
+		$makePublic = $_POST['public'] ?? '';
+		$publicBanMessageHTML = $_POST['banmsg'] ?? '';
+		$postUid = $_POST['post_uid'] ?? '';
+		$isGlobal = isset($_POST['global']);  // Check if global ban is selected
+
+		// Log the ban action
+		$this->logBanAction($newIp, $duration, $isGlobal, $postUid);
+
+		// Process the ban form (add to log, update post if public, etc.)
+		$this->processBanForm($reasonFromRequest, $newIp, $duration, $makePublic, $publicBanMessageHTML, $isGlobal, $postUid);
+	}
+
+	private function logBanAction($newIp, $duration, $isGlobal, $postUid) {
+		// Get action logger and PIO instance
+		$actionLogger = actionLogger::getInstance();
 		$PIO = PIOPDO::getInstance();
 
+		// Build the action string based on whether it's a global ban or related to a post
+		$actionString = $this->buildActionString($newIp, $duration, $isGlobal, $postUid, $PIO);
+
+		// Log the action with the board UID
+		$boardUid = $this->board->getBoardUID();
+		$actionLogger->logAction($actionString, $boardUid);
+	}
+
+	private function buildActionString(string $newIp, string $duration, bool $isGlobal, int $postUid, mixed $PIO): string {
+		// Initial action string (basic information about the ban)
+		$actionString = "Banned $newIp for $duration";
+
+		if($duration == '0') {
+			$actionString = "Warned $newIp ";
+		}
+
+		// If it's a global ban, update the action string
+		if ($isGlobal) {
+			$actionString = "Banned $newIp from all boards for $duration";
+		}
+
+		// If the ban is related to a specific post, add post info to the action string
+		if ($postUid) {
+			$postNumber = $PIO->resolvePostNumberFromUID($postUid);
+			$actionString .= " for post $postNumber";
+		}
+
+		return $actionString;
+	}
+
+
+	private function processBanForm(string $reasonFromRequest, 
+		string $newip, 
+		string $duration, 
+		string $makePublic, 
+		string $publicBanMessageHTML, 
+		bool $isGlobal,
+		int $post_uid = 0): void {
+		$PIO = PIOPDO::getInstance();
+
+		// Load ban logs
 		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
 		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
 
-		$reasonFromRequest = $_POST['privmsg'] ?? '';
-		$newip = $_POST['ip'] ?? '';
+		// Set defaults if not provided
 		$reason = $reasonFromRequest ?: "No reason given.";
-		$duration = $_POST['duration'] ?? '0';
-		$starttime = $_SERVER['REQUEST_TIME'];
-		$makePublic = $_POST['public'] ?? '';
-		$publicBanMessageHTML = $_POST['banmsg'] ?? '';
+		$starttime = $_SERVER['REQUEST_TIME']; // This remains from the server, no change
 		$expires = $starttime + $this->calculateBanDuration($duration);
 
 		if (!empty($newip)) {
+			// Create the ban entry
 			$banEntry = "{$newip},{$starttime},{$expires},{$reason}";
-			if (!empty($_POST['global'])) {
+			if ($isGlobal) {  // Global ban
 				$glog[] = $banEntry;
 				file_put_contents($this->GLOBAL_BANS, implode(PHP_EOL, $glog));
-			} else {
+			} else {  // Local ban
 				$log[] = $banEntry;
 				file_put_contents($this->BANFILE, implode(PHP_EOL, $log));
 			}
 		}
 
 		if ($makePublic) {
-			$post_uid = $_POST['post_uid'] ?? 0;
-			$post = $PIO->fetchPosts($post_uid)[0];
-			$post['com'] .= $publicBanMessageHTML;
-			$PIO->updatePost($post_uid, $post);
-			$this->board->rebuildBoard();
+			if ($post_uid) {
+				// Fetch and update the post with the ban message
+				$post = $PIO->fetchPosts($post_uid)[0];
+				$post['com'] .= $publicBanMessageHTML;
+				$PIO->updatePost($post_uid, $post);
+				$this->board->rebuildBoard();
+			}
 		}
 
+		// Redirect after processing
 		redirect($_SERVER['HTTP_REFERER']);
 		exit;
 	}
+
 
 	private function processBanDeletions() {
 		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
