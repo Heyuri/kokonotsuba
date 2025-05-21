@@ -622,7 +622,9 @@ caption h3 {
 }
 
 .bbcodeButton {
-	min-width: 0.8125em;
+	min-width: 1.25em;
+  min-height: 1.25em;
+  padding: 0.0625em;
 }
 
 #delPasswordInfo {
