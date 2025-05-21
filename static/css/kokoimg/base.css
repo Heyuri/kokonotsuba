@@ -489,17 +489,17 @@ caption h3 {
 	text-decoration: underline !important;
 }
 
-.emotesContainer,
-.kaomojiContainer,
-#bbcode_container {
+#emotesContainer,
+#kaomojiContainer,
+#bbcodeContainer {
 	max-width: 390px;
 }
 
-.emojiContainer {
+#emojiContainer {
 	max-width: 300px;
 }
 
-.emojiContainer .row-end {
+#emojiContainer .row-end {
   margin-bottom: 1.5em;
 }
 
@@ -534,8 +534,12 @@ caption h3 {
 	max-width: 100%;
 }
 
-#bbcode_container label {
+#bbcodeContainer label {
 	display: inline-block;
+}
+
+.bbcodeButton {
+	min-width: 0.8125em;
 }
 
 #delPasswordInfo {
@@ -1063,7 +1067,7 @@ caption h3 {
 .ascii,
 .sw {
 	margin: 0;
-	word-break: break-all;
+	word-break: break-word;
 }
 
 /******** 2channel-style AA ********/
@@ -2138,6 +2142,14 @@ width: 300px;
 		height: 7.5em;
 		width: 100%;
 		max-width: 100%;
+	}
+
+	.formattingDetails {
+		margin: 0.5em 0;
+	}
+
+	.bbcodeButton {
+		font-size: var(--font-size-regular);
 	}
 
 	#topiclist,
