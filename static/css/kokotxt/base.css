@@ -1142,7 +1142,7 @@ caption h3 {
 .ascii,
 .sw {
 	margin: 0;
-	word-break: break-all;
+	word-break: break-word;
 }
 
 /******** 2channel-style AA ********/
