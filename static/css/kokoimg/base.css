@@ -534,6 +534,18 @@ caption h3 {
 	max-width: 100%;
 }
 
+#bbcodeButtonContainer {
+	display: flex;
+	gap: 2px;
+	flex-wrap: wrap;
+}
+
+#bbcodeContainer .code,
+#bbcodeContainer pre {
+	padding: 0;
+	font-size: var(--font-size-regular);
+}
+
 #bbcodeContainer label {
 	display: inline-block;
 }
