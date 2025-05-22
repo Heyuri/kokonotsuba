@@ -151,7 +151,7 @@ class mod_adminban extends moduleHelper {
 		$duration = $_POST['duration'] ?? '0';
 		$makePublic = $_POST['public'] ?? '';
 		$publicBanMessageHTML = $_POST['banmsg'] ?? '';
-		$postUid = $_POST['post_uid'] ?? '';
+		$postUid = intval($_POST['post_uid']) ?? null;
 		$isGlobal = isset($_POST['global']);  // Check if global ban is selected
 
 		// Process the ban form (add to log, update post if public, etc.)
@@ -179,7 +179,7 @@ class mod_adminban extends moduleHelper {
 		$actionLogger->logAction($actionString, $boardUid);
 	}
 
-	private function buildActionString(string $newIp, string $duration, bool $isGlobal, int $postUid, mixed $PIO): string {
+	private function buildActionString(string $newIp, string $duration, bool $isGlobal, ?int $postUid, mixed $PIO): string {
 		// Initial action string (basic information about the ban)
 		$actionString = "Banned $newIp for $duration";
 
@@ -208,7 +208,7 @@ class mod_adminban extends moduleHelper {
 		string $makePublic, 
 		string $publicBanMessageHTML, 
 		bool $isGlobal,
-		int $post_uid = 0): void {
+		?int $postUid = 0): void {
 		$PIO = PIOPDO::getInstance();
 
 		// Load ban logs
@@ -233,11 +233,11 @@ class mod_adminban extends moduleHelper {
 		}
 
 		if ($makePublic) {
-			if ($post_uid) {
+			if ($postUid) {
 				// Fetch and update the post with the ban message
-				$post = $PIO->fetchPosts($post_uid)[0];
+				$post = $PIO->fetchPosts($postUid)[0];
 				$post['com'] .= $publicBanMessageHTML;
-				$PIO->updatePost($post_uid, $post);
+				$PIO->updatePost($postUid, $post);
 				$this->board->rebuildBoard();
 			}
 		}
