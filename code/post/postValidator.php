@@ -69,14 +69,14 @@ class postValidator {
 	            if(!$this->threadSingleton->isThread($resto)){ // If the thread of the discussion you want to reply to has been deleted
 	                // Update the data source in advance, and this new addition is not recorded
 	                $this->board->rebuildBoard();
-	                $this->globalHTML->error(_T('regist_threaddeleted'), $dest);
+	                $this->globalHTML->error(_T('regist_threaddeleted'), 404);
 	            }else{ // Check that the thread is set to suppress response (by the way, take out the post time of the original post)
 	                $post = $PIO->fetchPosts($resto); // [Special] Take a single article content, but the $post of the return also relies on [$i] to switch articles!
 	                list($chkstatus, $chktime) = array($post[0]['status'], $post[0]['tim']);
 	                $chktime = intval(substr($chktime, 0, -3)); // Remove microseconds (the last three characters)
 	                $flgh = $PIO->getPostStatus($chkstatus);
 	            }
-	        }else $this->globalHTML->error(_T('thread_not_found'), $dest); // Does not exist
+	        }else $this->globalHTML->error(_T('thread_not_found'), 404); // Does not exist
 	    }
 	    return[$chktime];
 	}

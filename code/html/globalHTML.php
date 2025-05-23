@@ -17,21 +17,33 @@ class globalHTML {
 	}
 
 	/* 輸出A錯誤畫面 */
-	public function error($mes, $dest='') {
-		if(is_file($dest)) unlink($dest);
-		$pte_vals = array('{$SELF2}'=>$this->config['PHP_SELF2'].'?'.time(), '{$MESG}'=>$mes, '{$RETURN_TEXT}'=>_T('return'), '{$BACK_TEXT}'=>_T('error_back'), '{$BACK_URL}'=>htmlspecialchars($_SERVER['HTTP_REFERER']??''));
+	public function error(string $mes, int $statusCode = 0): void {
+		if ($statusCode > 0) {
+			http_response_code($statusCode);
+		} else {
+			http_response_code(500); // Default to generic error if none is specified
+		}
+
+		$pte_vals = array(
+			'{$SELF2}' => $this->config['PHP_SELF2'].'?'.time(),
+			'{$MESG}' => $mes,
+			'{$RETURN_TEXT}' => _T('return'),
+			'{$BACK_TEXT}' => _T('error_back'),
+			'{$BACK_URL}' => htmlspecialchars($_SERVER['HTTP_REFERER'] ?? '')
+		);
 		$dat = '';
 		$this->head($dat);
-		$dat .= $this->templateEngine->ParseBlock('ERROR',$pte_vals);
+		$dat .= $this->templateEngine->ParseBlock('ERROR', $pte_vals);
 		$this->foot($dat);
 		exit($dat);
 	}
+
 	
 	/* 輸出表頭 | document head */
 	public function head(&$dat, $resno=0){
 		$html = '';
 		
-		$pte_vals = array('{$RESTO}'=>$resno?$resno:'', '{$IS_THREAD}'=>boolval($resno));
+		$pte_vals = array('{$RESTO}'=>$resno?$resno:'', '{$IS_THREAD}'=>boolval($resno), '{$IS_STAFF}' => isActiveStaffSession());
 		if ($resno) {
 			$post = $this->threadSingleton->fetchPostsFromThread($resno);
 			if (mb_strlen($post[0]['com']) <= 10){
