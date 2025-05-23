@@ -27,7 +27,7 @@ class overboard {
 		$PIO = PIOPDO::getInstance();
 		$html = '';
 		
-		$pte_vals = array('{$RESTO}'=>$resno?$resno:'', '{$IS_THREAD}'=>boolval($resno));
+		$pte_vals = array('{$RESTO}'=>$resno?$resno:'', '{$IS_THREAD}'=>boolval($resno), '{$IS_STAFF}' => isActiveStaffSession());
 		if ($resno) {
 			$post = $PIO->fetchPostsFromThread($resno);
 			if (mb_strlen($post[0]['com']) <= 10){
