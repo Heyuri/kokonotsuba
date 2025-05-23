@@ -92,11 +92,7 @@ class registRoute {
 		}
 	
 		$this->postValidator->pruneOld($this->moduleEngine, $this->PIO, $this->FileIO);
-		$this->postValidator->threadSanityCheck(
-			$postData['chktime'], $postData['flgh'], $postData['thread_uid'],
-			$this->PIO, $computedPostInfo['dest'], $postData['ThreadExistsBefore']
-		);
-	
+		$this->postValidator->threadSanityCheck($postData['chktime'], $postData['flgh'], $postData['thread_uid'], $postData['ThreadExistsBefore']);
 
 		// Age/sage logic
 		$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['chktime'], $postData['email'], $postData['age']);
