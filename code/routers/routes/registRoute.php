@@ -61,22 +61,25 @@ class registRoute {
 		$agingHandler = new agingHandler($this->config, $this->threadSingleton);
 		$webhookDispatcher = new webhookDispatcher($this->board, $this->config);
 	
-		// Step 1: Gather POST input data
+		// Step 1: Validate regist request
+		$this->postValidator->registValidate();
+
+		// Step 2: Gather POST input data
 		$postData = $this->gatherPostInputData();
 	
-		// Step 2: Process uploaded file (if any)
+		// Step 3: Process uploaded file (if any)
 		$fileMeta = $this->handleFileUpload($postData['isReply'], $thumbnailCreator, $imgDir);
 
-		// Step 3: Validate & clean post content
+		// Step 4: Validate & clean post content
 		$this->validateAndCleanPostContent($postData, $fileMeta['status'], $fileMeta['file'], $postData['is_admin']);
 	
-		// Step 4: Handle tripcode, default text, filters, and categories
+		// Step 5: Handle tripcode, default text, filters, and categories
 		$this->processPostDetails($postData, $tripcodeProcessor, $defaultTextFiller, $postFilterApplier);
 	
-		// Step 5: Final data prep (timestamps, password hashing, unique ID)
+		// Step 6: Final data prep (timestamps, password hashing, unique ID)
 		$computedPostInfo = $this->preparePostMetadata($postData, $postDateFormatter, $postIdGenerator, $fileMeta['file']);
 	
-		// Step 6: Validate post for database storage
+		// Step 7: Validate post for database storage
 		$this->postValidator->validateForDatabase(
 			$postData['pwdc'], $postData['comment'], $postData['time'], $computedPostInfo['pass'],
 			$postData['ip'], $fileMeta['upfile'], $fileMeta['md5'], $computedPostInfo['dest'],
@@ -218,6 +221,12 @@ class registRoute {
 			$postFileUploadController->validateFile();
 			
 			[$upfile, $upfile_path, $upfile_status] = loadUploadData();
+
+		} else {
+			// show an error if the user tries to make a thread without an image in image-board mode
+			if($upfile_status === UPLOAD_ERR_NO_FILE && !$isReply && !$this->config['TEXTBOARD_ONLY']) {
+				$this->globalHTML->error(_T('regist_upload_noimg'));
+			}
 		}
 	
 		return [
