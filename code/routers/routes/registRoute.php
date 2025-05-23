@@ -295,15 +295,15 @@ class registRoute {
 		// if noko is inside the email-field then redirect to the thread
 		if(strstr($email, 'noko') && !strstr($email, 'nonoko')) {
 			$redirectReplyNumber = $no;
-		}
-
-		// if 'dump' is contained in the email-field then dont redirect to the reply by setting it to 0
-		if(strstr($email, 'dump')) {
+			$redirect = $this->board->getBoardThreadURL($threadResno, $redirectReplyNumber);
+		} elseif(strstr($email, 'dump')) {
+			// if 'dump' is contained in the email-field then dont redirect to the reply by setting it to 0
 			$redirectReplyNumber = 0;
+			$redirect = $this->board->getBoardThreadURL($threadResno, $redirectReplyNumber);
+		} else {
+			// default to board index if neither noko nor dump
+			$redirect = $this->config['PHP_SELF2'];
 		}
-
-		// get the thread url
-		$redirect = $this->board->getBoardThreadURL($threadResno, $redirectReplyNumber);
 
 		// remove "noko" from the post email since most posts will contain it
 		$email = preg_replace('/^(no)+ko\d*$/i', '', $email);
@@ -314,6 +314,7 @@ class registRoute {
 		// return processed redirect
 		return $redirect;
 	}
+
 
 	// prepare post meta data
 	private function preparePostMetadata(array &$postData, postDateFormatter $formatter, postIdGenerator $idGen, file $file): array {
