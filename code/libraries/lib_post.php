@@ -65,11 +65,11 @@ function getUserFileFromRequest() {
 	$imgW = 0;
 	$imgH = 0;
 
-	if (strpos($mimeType, 'image/') === 0) {
+	if (isImage($mimeType)) {
 		[$imgW, $imgH] = getimagesize($tempFilename);
 	} elseif (isVideo($mimeType)) {
 		[$imgW, $imgH] = getVideoDimensions($tempFilename); // You must implement this
-	} elseif ($extension === 'swf') {
+	} elseif (isSwf($mimeType, $extension)) {
 		[$imgW, $imgH] = getswfsize($tempFilename);
 	}
 
@@ -118,6 +118,13 @@ function isVideo(string $mimeType): bool {
 	return strpos($mimeType, 'video/') === 0;
 }
 
+function isSwf(string $mimeType, string $extension): bool {
+	return $mimeType === 'application/x-shockwave-flash' && $extension === 'swf';
+}
+
+function isImage(string $mimeType): bool {
+	return strpos($mimeType, 'image/') === 0;
+}
 
 function getThumbnailFromFile(file $file): thumbnail {
 	$width = $file->getImageWidth();
