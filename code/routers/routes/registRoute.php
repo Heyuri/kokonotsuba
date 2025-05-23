@@ -288,21 +288,27 @@ class registRoute {
 	}
 
 	// generate url for redirect after post
-	private function generateRedirectURL(int $no, string &$email, int $resno, int $timeInMilliseconds): string {
+	private function generateRedirectURL(int $no, string &$email, int $threadResno, int $timeInMilliseconds): string {
+		// get the board static index
 		$redirect = $this->config['PHP_SELF2'] . '?' . $timeInMilliseconds;
 		
-		if (strstr($email, 'noko') && !strstr($email, 'nonoko')) {
-			$redirectResno = $resno ?: $no;
-			$redirectReplyNumber = 0;
-			if (!strstr($email, 'dump')) {
-				$redirectReplyNumber = $no;
-			}
-
-			$redirect = $this->board->getBoardThreadURL($redirectResno, $redirectReplyNumber);
+		// if noko is inside the email-field then redirect to the thread
+		if(strstr($email, 'noko') && !strstr($email, 'nonoko')) {
+			$redirectReplyNumber = $no;
 		}
 
+		// if 'dump' is contained in the email-field then dont redirect to the reply by setting it to 0
+		if(strstr($email, 'dump')) {
+			$redirectReplyNumber = 0;
+		}
 
+		// get the thread url
+		$redirect = $this->board->getBoardThreadURL($threadResno, $redirectReplyNumber);
+
+		// remove noko from the post email since most posts will contain it
 		$email = preg_replace('/^(no)+ko\d*$/i', '', $email);
+
+		// return processed redirect
 		return $redirect;
 	}
 
