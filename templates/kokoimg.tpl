@@ -45,7 +45,7 @@
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
 	<!--&IF($IS_STAFF,'<script src="{$STATIC_URL}js/admin-frontend-enhancements.js" defer></script>','')-->
-<!--/&HEADER--> 
+<!--/&HEADER-->
 
 <!--&TOPLINKS-->
 	<div class="boardlist">

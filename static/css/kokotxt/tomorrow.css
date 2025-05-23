@@ -56,8 +56,6 @@
   --color-bg-window-item-highlight: #373b41;
 }
 
-
-
 hr {
   border-color: var(--color-hi-contrast-border);
 }
@@ -82,31 +80,52 @@ fieldset {
   color: var(--color-fg-warning);
 }
 
-.menu,
+.menu .innerbox {
+	margin: 7px;
+	padding: 3px;
+}
+
 .postlists,
+#txt .thread {
+	padding: 7px;
+}
+
+.outerbox,
+#txt .thread {
+	margin: 0 auto;
+	width: 95%;
+}
+
+#titleBox,
+#txt .thread {
+	margin-bottom: 20px;
+}
+
+#txt .thread .innerbox {
+	padding: 3px;
+}
+
+.outerbox,
 #txt .thread,
+.postlists,
 #pager {
+	border-width: 1px;
+	border-style: solid;
   border-color: var(--color-hi-contrast-border) var(--color-x-lo-contrast-border) var(--color-x-lo-contrast-border) var(--color-hi-contrast-border);
 }
 
-#txt .thread > thead > tr > th,
-#txt .thread > thead > tr > td,
-#txt .thread > tbody > tr > th,
-#txt .thread > tbody > tr > td,
 #txt .thread .innerbox,
-#pager > thead > tr > th,
-#pager > thead > tr > td,
-#pager > tbody > tr > th,
-#pager > tbody > tr > td,
-.menu > thead > tr > th,
-.menu > thead > tr > td,
-.menu > tbody > tr > th,
-.menu > tbody > tr > td,
+#pager td {
+	border-width: 1px;
+	border-style: solid;
+  border-color: var(--color-x-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-x-lo-contrast-border);
+}
+
 .menu .innerbox,
-.postlists > thead > tr > th,
-.postlists > thead > tr > td,
-.postlists > tbody > tr > th,
-.postlists > tbody > tr > td {
+.postlists th,
+.postlists td {
+	border-width: 1px;
+	border-style: solid;
   border-color: var(--color-x-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-x-lo-contrast-border);
 }
 
@@ -152,8 +171,16 @@ fieldset {
 	text-decoration: underline;
 }
 
+.sod.noVotes {
+	font-family: var(--font-family-msgothic);
+}
+
 .previewBox .post {
 	border: 1px solid var(--color-hi-contrast-border) !important;
+}
+
+.threadSeparator {
+	display: none;
 }
 
 /************************ Post formatting *****************************/
