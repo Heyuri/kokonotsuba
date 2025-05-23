@@ -58,6 +58,55 @@ body {
 	line-height: 1.2;
 }
 
+.menu .innerbox {
+	margin: 7px;
+	padding: 3px;
+}
+
+.postlists,
+#txt .thread {
+	padding: 7px;
+}
+
+.outerbox,
+#txt .thread {
+	margin: 0 auto;
+	width: 95%;
+}
+
+#titleBox,
+#txt .thread {
+	margin-bottom: 20px;
+}
+
+#txt .thread .innerbox {
+	padding: 3px;
+}
+
+.outerbox,
+#txt .thread,
+.postlists,
+#pager {
+	border-width: 1px;
+	border-style: solid;
+	border-color: var(--color-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-lo-contrast-border);
+}
+
+#txt .thread .innerbox,
+#pager td {
+	border-width: 1px;
+	border-style: solid;
+	border-color: var(--color-hi-contrast-border-thread) var(--color-lo-contrast-border-thread) var(--color-lo-contrast-border-thread) var(--color-hi-contrast-border-thread);
+}
+
+.menu .innerbox,
+.postlists th,
+.postlists td {
+	border-width: 1px;
+	border-style: solid;
+	border-color: var(--color-hi-contrast-border-menu) var(--color-lo-contrast-border-menu) var(--color-lo-contrast-border-menu) var(--color-hi-contrast-border-menu);
+}
+
 /************************ Navigation/admin bar ************************/
 /******** Classic menu ********/
 /******** Neomenu ********/
@@ -77,6 +126,10 @@ body {
 
 .sod.noVotes {
 	font-family: var(--font-family-msgothic);
+}
+
+.threadSeparator {
+	display: none;
 }
 
 /************************ Post formatting *****************************/

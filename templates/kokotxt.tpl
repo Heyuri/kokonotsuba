@@ -17,6 +17,8 @@
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/pseud0ch2.css?v=7" title="Pseud0ch (serif)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/pseud0ch3.css?v=7" title="Pseud0ch (sans-serif)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/tomorrow.css?v=10" title="Tomorrow">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/headline.css?v=37" title="Headline">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/vipper.css?v=2" title="VIPPER">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">
 	<script src="{$STATIC_URL}js/koko.js?v=15"></script>
 	<script src="{$STATIC_URL}js/qr.js?v=18"></script>
@@ -47,7 +49,7 @@
 	<!-- <script id="wz_tooltip" src="{$STATIC_URL}js/wz_tooltip.js"></script> -->
 	<div id="top"></div>
 	<!--&TOPLINKS/-->
-	<div id="boxTitle" class="menu outerbox">
+	<div id="titleBox" class="menu outerbox">
 		<div class="innerbox">
 			<!-- {$BANNER} -->
 			<h1 class="mtitle">{$TITLE}</h1>
@@ -57,7 +59,7 @@
 <!--/&BODYHEAD-->
 
 <!--&POSTFORM-->
-	<div class="menu outerbox">
+	<div id="postformBox" class="menu outerbox">
 		<div id="postarea" class="innerbox">
 			<h2 class="formTitle"><!--&IF($IS_THREAD,' New reply [<a href="{$PHP_SELF2}">Return</a>]','New thread')--></h2>
 			<!--&IF($MAX_FILE_SIZE,'<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" enctype="multipart/form-data">','<form id="postform" name="postform" action="{$PHP_SELF}" method="POST">')-->
@@ -122,26 +124,29 @@
 <!--/&ERROR-->
 
 <!--&THREAD-->
-	<div class="thread outerbox" id="t{$BOARD_UID}_{$THREAD_NO}">
+	<div class="thread" id="t{$BOARD_UID}_{$THREAD_NO}">
 		<div class="innerbox">
 			{$BOARD_THREAD_NAME}
 			<div class="tnav">{$THREADNAV}</div>
 			{$THREAD_OP}
-			{$REPLIES}
+			<div class="repliesOmitted"></div>
+			<div class="latestReplies">
+				{$REPLIES}
+			</div>
 		</div>
 	</div>
 <!--/&THREAD-->
 
 <!--&OP-->
+	<h2 class="title"><a href="{$PHP_SELF}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h2>
 	<div class="post op" id="p{$BOARD_UID}_{$NO}">
-		<h2 class="title"><a href="{$PHP_SELF}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h2>
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
 		<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span><span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
-		<div class="filesize">{$IMG_BAR}</div>
+		<!--&IF($IMG_BAR,'<div class="filesize">{$IMG_BAR}</div>','')-->
 		<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
 		<div class="comment">{$COM}</div>
 		<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
-		{$WARN_OLD}{$WARN_BEKILL}{$WARN_ENDREPLY}{$WARN_HIDEPOST}
+		<div class="warningsSection">{$WARN_OLD}{$WARN_BEKILL}{$WARN_ENDREPLY}{$WARN_HIDEPOST}</div>
 	</div>
 <!--/&OP-->
 
@@ -155,13 +160,13 @@
 				<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
 				<div class="comment">{$COM}</div>
 				<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
-				{$WARN_BEKILL}
+				<div class="warningsSection">{$WARN_BEKILL}</div>
 			</div>
 <!--/&REPLY-->
 
 <!--&SEARCHRESULT-->
-	<div class="thread outerbox">
-		<div class="post search innerbox">
+	<div class="thread">
+		<div class="post search">
 			<span class="title">{$SUB}</span>
 			<div class="postinfo"><span class="postnum">{$NO}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span></div>
 			<div class="comment">{$COM}</div>
@@ -172,6 +177,7 @@
 <!--/&SEARCHRESULT-->
 
 <!--&THREADSEPARATE-->
+	<hr class="threadSeparator">
 <!--/&THREADSEPARATE-->
 
 <!--&REALSEPARATE-->

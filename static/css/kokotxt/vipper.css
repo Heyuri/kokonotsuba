@@ -1,0 +1,12 @@
+@charset "UTF-8";
+@import "pseud0ch.css";
+
+:root {
+	/* Global */
+	--color-fg-main: #000080;
+	--color-fg-name: #ff0000;
+}
+
+body {
+	line-height: 1.2;
+}
