@@ -44,8 +44,9 @@ const kkgal = {
 		var df = $id("delform");
 		if (!df) return;
 		kkgal.contract();
-		$del($id("galfuncs"));
-		$del(kkgal.gframe);
+		var galfuncs = $id("galfuncs");
+		if (galfuncs) $del(galfuncs);
+		if (kkgal.gframe) $del(kkgal.gframe);
 		window.removeEventListener("resize", kkgal._evresize);
 	},
 	/* - */
@@ -160,8 +161,8 @@ const kkimg = { name: "KK Image Features",
 		}
 		$doc.body.insertAdjacentHTML("beforeend",
 			'<img id="hoverimg" src="" alt="Full Image" '
-		  + 'onerror="this.style.display=\\\'\\\';" '
-		  + 'onload="this.style.display=\\\'inline-block\\\';" border="1">'
+			+ 'onerror="this.style.display=\'\';" '
+			+ 'onload="this.style.display=\'inline-block\';" border="1">'
 		);
 		kkgal.startup();
 		return true;
