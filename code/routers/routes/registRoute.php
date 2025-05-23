@@ -305,8 +305,11 @@ class registRoute {
 		// get the thread url
 		$redirect = $this->board->getBoardThreadURL($threadResno, $redirectReplyNumber);
 
-		// remove noko from the post email since most posts will contain it
+		// remove "noko" from the post email since most posts will contain it
 		$email = preg_replace('/^(no)+ko\d*$/i', '', $email);
+
+		// remove "dump" from the email field
+		$email = preg_replace('/dump/i', '', $email);
 
 		// return processed redirect
 		return $redirect;
