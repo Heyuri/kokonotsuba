@@ -44,7 +44,13 @@
 
 
 		function handleRequest(url, onSuccess, onFailure, targetElement) {
-			fetch(url, { method: 'GET', credentials: 'same-origin' })
+			fetch(url, {
+				method: 'GET',
+				credentials: 'same-origin',
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				}
+			})
 						.then(response => {
 									if (response.ok) {
 												onSuccess();
@@ -111,28 +117,41 @@
 						e.preventDefault();
 
 						const isOp = post.classList.contains('op');
-						const hasResto = document.querySelector('input[name="resto"]') !== null;
 
 						let containerToHide = null;
+						let separatorToHide = null;
 
 						if (isOp) {
 									containerToHide = post.closest('.thread');
+									if (containerToHide && containerToHide.nextElementSibling?.classList.contains('threadSeparator')) {
+												separatorToHide = containerToHide.nextElementSibling;
+									}
 						} else {
 									containerToHide = post.closest('.reply-container');
 						}
 
 						if (containerToHide) containerToHide.style.display = 'none';
+						if (separatorToHide) separatorToHide.style.display = 'none';
 
 						handleRequest(deleteBtn.href, function () {
-									reloadPostElement();
-									showMessage('Post deleted successfully.', true);
+							const hasResto = document.querySelector('input[name="resto"]') !== null;
+
+							if (hasResto && isOp) {
+								window.location.href = window.location.pathname.split('/').slice(0, -1).join('/') + '/';
+								return;
+							}
+
+							reloadPostElement();
+							showMessage('Post deleted successfully.', true);
 						}, function () {
-									if (containerToHide) containerToHide.style.display = '';
-									showMessage('Failed to delete post.', false);
+							if (containerToHide) containerToHide.style.display = '';
+							if (separatorToHide) separatorToHide.style.display = '';
+							showMessage('Failed to delete post.', false);
 						}, post);
+
 			});
 		}
-		
+
 		if (deleteMuteBtn) {
 			deleteMuteBtn.addEventListener('click', function (e) {
 						e.preventDefault();
@@ -141,24 +160,31 @@
 						const hasResto = document.querySelector('input[name="resto"]') !== null;
 
 						let containerToHide = null;
+						let separatorToHide = null;
 
 						if (isOp) {
 									containerToHide = post.closest('.thread');
+									if (containerToHide && containerToHide.nextElementSibling?.classList.contains('threadSeparator')) {
+												separatorToHide = containerToHide.nextElementSibling;
+									}
 						} else {
 									containerToHide = post.closest('.reply-container');
 						}
 
 						if (containerToHide) containerToHide.style.display = 'none';
+						if (separatorToHide) separatorToHide.style.display = 'none';
 
 						handleRequest(deleteMuteBtn.href, function () {
 									reloadPostElement();
 									showMessage('Post deleted and user muted.', true);
 						}, function () {
 									if (containerToHide) containerToHide.style.display = '';
+									if (separatorToHide) separatorToHide.style.display = '';
 									showMessage('Failed to delete and mute post.', false);
 						}, post);
 			});
 		}
+
 
 		if (deleteFileBtn) {
 			deleteFileBtn.addEventListener('click', function (e) {
