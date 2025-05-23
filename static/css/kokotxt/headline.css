@@ -1,0 +1,194 @@
+@charset "UTF-8";
+
+:root {
+	/* Global */
+	--font-family-main: sans-serif;
+	--font-size-main: 12pt;
+	--image-bg-main: '';
+	--color-bg-main: #ffffff;
+	--color-bg-menu: #eeeeee;
+	--color-bg-thread: #ffffff;
+  --color-bg-reply: var(--color-bg-thread);
+	--color-fg-main: #000000;
+	--color-fg-thread: var(--color-fg-main);
+  --color-fg-reply: var(--color-fg-main);
+	--color-fg-link: #dd6600;
+	--color-fg-link-hover: #ffaa44;
+	--color-lo-contrast-border: #c0c0c0;
+	--color-hi-contrast-border: #8d8d8d;
+	--color-lo-contrast-border-menu: #e5ffe5;
+	--color-hi-contrast-border-menu: #708c70; 
+	--color-lo-contrast-border-thread: #f7f7f7;
+	--color-hi-contrast-border-thread: #838383;
+	--color-border-button: #e3e3e3;
+	/* Navigation/admin bar */
+	--color-bg-boardlist: #ffffff;
+	--color-fg-boardlist: #cc3300;
+	/* Board header */
+	--color-bg-theading: #e04000;
+	--color-bg-theading2: #0040e0;
+	--color-bg-theading3: #e08000;
+	--color-fg-theading: #ffffff;
+	/* Post form */
+	--color-fg-global-message: var(--color-fg-warning);
+	/* Posts/replies */
+	--color-bg-reply-hl: #ffefef;
+	--color-fg-title: #000000;
+	--color-fg-name: #000000;
+	--color-fg-warning: #ff0000;
+	--color-fg-warning-ip: #0000cc;
+	--color-fg-omitted: #707070;
+	/* Post formatting */
+	--color-fg-quotelink: var(--color-fg-link);
+	--color-fg-quotelink-hover: var(--color-fg-link-hover);
+	--color-fg-quote: #789922;
+	--color-fg-quote2: #dd00a9;
+	--color-bg-spoiler: #000000;
+	--color-bg-code: #eeeeee;
+	--color-fg-code: #000000;
+	/* Administrator mode */
+  --color-bg-postblock: #ccffcc;
+	/* Windows */
+	--color-bg-window-item-highlight: var(--color-bg-reply-hl);
+}
+
+hr {
+  border: 1px solid #ddd;
+  margin: 1em 2em;
+}
+
+input,
+textarea,
+button,
+select {
+  border: 1px solid #000000;
+}
+
+.comment,
+#footer {
+  font-family: serif;
+}
+
+.outerbox {
+  border-bottom: 2px solid #bbbbbb;
+}
+
+.thread.outerbox {
+  margin-bottom: 2em
+}
+
+.thread {
+  padding: 4px;
+  margin-bottom: 2em;
+}
+
+.innerbox {
+  padding: 0;
+}
+
+#txt .thread.outerbox {
+  border-bottom: 2px solid #bbbbbb;
+  margin-bottom: 2em;
+}
+
+.mtitle {
+  font-size: 2em;
+  text-align: center;
+  border-bottom: 2px solid #ff7700;
+  padding: 4px 4px 0px 4px;
+}
+
+.subtitle {
+  text-align: center;
+  margin: 0.5em 0;
+}
+
+.formTitle,
+#newReplyTitle {
+  border-bottom: 2px solid #ff7700;
+  margin: 0 0 0.7em 0;
+  padding: 0 0 0 3em;
+  font-size: 1.2em;
+}
+
+.rules,
+#blotter {
+  font-size: var(--font-size-small);
+}
+
+.mod-extra-info.innerbox {
+  margin-top: 0.5em;
+  padding: 0.5em;
+  border: 2px solid #bbb;
+  border-left: 0;
+  border-right: 0;
+}
+
+#globalmsg {
+  padding: 0.5em;
+}
+
+#topiclist {
+  font-size: var(--font-size-regular);
+}
+
+#topiclist .innerbox {
+  padding: 1em 0.5em;
+}
+
+h1.title,
+h2.title {
+  display: table;
+  background-color: var(--color-bg-menu);
+  border-bottom: 2px solid #ff7700;
+  font-size: 1.2em;
+  margin: 0px 0px 0.7em 0px;
+  padding: 0px 0.2em 0px 0px;
+}
+
+.title a {
+  text-decoration: none;
+}
+
+.title a:hover {
+  color: var(--color-fg-link-hover);
+}
+
+.comment {
+  margin: 0.7em 0em 1.5em 2em;
+}
+
+.op .comment::first-letter {
+  font-size: 1.5em;
+}
+
+.repliesOmitted {
+  clear: both;
+  background: #eeeeee;
+  height: 3px;
+  margin: 0em 2em 1em 2em;
+}
+
+.post {
+  margin-bottom: 1.2em;
+}
+
+.threadSeparator {
+  background-color: var(--color-bg-menu);
+  border: none;
+  border-bottom: 2px solid #BBBBBB;
+  height: 2em;
+  margin: 3px;
+  margin-bottom: 2em;
+}
+
+#txtreply #postarea {
+  background-color: var(--color-bg-menu);
+  border-bottom: 2px solid #bbbbbb;
+  margin: 0.5em 3px 3px;
+  padding: 3px;
+}
+
+#txtreply #userdelete {
+  float: none;
+}
