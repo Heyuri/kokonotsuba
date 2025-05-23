@@ -16,12 +16,13 @@ class postValidator {
 		$this->threadSingleton = $threadSingleton;
 	}
 	
-	public function registValidate() {
+	public function registValidate(): void {
     	if(!$_SERVER['HTTP_REFERER'] || !$_SERVER['HTTP_USER_AGENT'] || preg_match("/^(curl|wget)/i", $_SERVER['HTTP_USER_AGENT']) ){
-    	    $this->globalHTML->error('You look like a robot.', '');
+    	    $this->globalHTML->error('You look like a robot.');
     	}
  
     	if($_SERVER['REQUEST_METHOD'] != 'POST') $this->globalHTML->error(_T('regist_notpost')); // Informal POST method
+	
 	}
  
 	public function spamValidate(&$name, &$email, &$sub, &$com) {
@@ -85,7 +86,7 @@ class postValidator {
 			$this->globalHTML->error(_T('regist_commenttoolong'));
 		}
 
-		if(!$com && $upfile_status==4){ 
+		if(!$com && $upfile_status === UPLOAD_ERR_NO_FILE){ 
 			$this->globalHTML->error($this->config['TEXTBOARD_ONLY']?'ERROR: No text entered.':_T('regist_withoutcomment'));
 		}
 		
@@ -98,33 +99,6 @@ class postValidator {
 		$com = str_replace("\n", '', $com); // If there are still \n newline characters, cancel the newline
 		
 		return $com;
-	}
-	
-	public function validateFileUploadStatus($resto, $upfile_status) {
-		switch($upfile_status){
-    	    case UPLOAD_ERR_OK:
-    	        break;
-    	    case UPLOAD_ERR_FORM_SIZE:
-    	        $this->globalHTML->error('ERROR: The file is too large.(upfile)');
-    	        break;
-    	    case UPLOAD_ERR_INI_SIZE:
-    	        $this->globalHTML->error('ERROR: The file is too large.(php.ini)');
-    	        break;
-    	    case UPLOAD_ERR_PARTIAL:
-            	$this->globalHTML->error('ERROR: The uploaded file was only partially uploaded.');
-    	        break;
-    	    case UPLOAD_ERR_NO_FILE:
-				if(!$resto && !isset($_POST['noimg'])) $this->globalHTML->error(_T('regist_upload_noimg'));
-    	        break;
-    	    case UPLOAD_ERR_NO_TMP_DIR:
-    	        $this->globalHTML->error('ERROR: Missing a temporary folder.');
-    	        break;
-    	    case UPLOAD_ERR_CANT_WRITE:
-    	        $this->globalHTML->error('ERROR: Failed to write file to disk.');
-    	        break;
-    	    default:
-    	        $this->globalHTML->error('ERROR: Unable to save the uploaded file.');
-    	}
 	}
 
     function pruneOld(&$moduleEngine, &$PIO, &$FileIO){
