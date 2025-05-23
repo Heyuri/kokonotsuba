@@ -61,10 +61,10 @@ const bbcode = [
 	{meaning: "<s>S</s>", title: "Strikethrough", code:"del"},
 	{meaning: "<span style='background-color:black;color:white'>Spoiler</span>", title: "Spoiler", code:"s"},
 	{meaning: "<q>Quote</q>", title: "Blockquote", code:"quote"},
-	{meaning: "<code class='code'>Code</code>", title: "Code", code:"code"},
 ];
 
 const selector_bbcode = [ // BBCodes with selectors
+	{meaning: "<code class='code'>Code</code>", title: "Code", code: "code", selector: ""},
 	{meaning:"<span style='font-weight:bold'><span class='bokuRed'>C</span><span class='bokuGreen'>o</span><span class='bokuRed'>l</span><span class='bokuGreen'>o</span><span class='bokuRed'>r</span>", title:"Font color", code:"color", selector:"#800043"},
 	{meaning:"Size", title: "Font size", code:"s", selector:"3"},
 	{meaning: "<pre style='display:inline'>ASCII</pre>", title: "ASCII art", selector:"ASCII (monospace)"},
@@ -269,15 +269,19 @@ bbcode.forEach((code) => {
 
 bbcode_container.appendChild(bbcode_button_container);
 
-const [colorBtn, colorInput] = createSelectorButton(selector_bbcode[0], "color");
+const [codeBtn, codeInput] = createSelectorButton(selector_bbcode[0], "code");
+bbcode_button_container.appendChild(codeBtn);
+bbcode_button_container.appendChild(codeInput);
+
+const [colorBtn, colorInput] = createSelectorButton(selector_bbcode[1], "color");
 bbcode_button_container.appendChild(colorBtn);
 bbcode_button_container.appendChild(colorInput);
 
-const [sizeBtn, sizeInput] = createSelectorButton(selector_bbcode[1], "size");
+const [sizeBtn, sizeInput] = createSelectorButton(selector_bbcode[2], "size");
 bbcode_button_container.appendChild(sizeBtn);
 bbcode_button_container.appendChild(sizeInput);
 
-const [preBtn, preInput] = createSelectorButton(selector_bbcode[2], "pre");
+const [preBtn, preInput] = createSelectorButton(selector_bbcode[3], "pre");
 bbcode_button_container.appendChild(preBtn);
 bbcode_button_container.appendChild(preInput);
 
@@ -357,6 +361,35 @@ function createSelectorButton(selectorConfig, type) {
 			opt.textContent = option.label;
 			input.appendChild(opt);
 		});
+	} else if (type === "code") {
+		input = document.createElement("select");
+
+		let placeholder = document.createElement("option");
+		placeholder.disabled = true;
+		placeholder.selected = true;
+		placeholder.hidden = true;
+		placeholder.textContent = "Select a language";
+		input.appendChild(placeholder);
+
+		const langs = [
+			{label: "C", value: "c"},
+			{label: "C++", value: "cpp"},
+			{label: "PHP", value: "php"},
+			{label: "JavaScript", value: "js"},
+			{label: "Python", value: "py"},
+			{label: "Perl", value: "pl"},
+			{label: "Fortran", value: "f"},
+			{label: "HTML", value: "html"},
+			{label: "CSS", value: "css"},
+			{label: "Other", value: "other"}
+		];
+
+		langs.forEach(lang => {
+			let opt = document.createElement("option");
+			opt.value = lang.value;
+			opt.textContent = lang.label;
+			input.appendChild(opt);
+		});
 	}
 
 	input.style.display = "none";
@@ -374,12 +407,20 @@ function createSelectorButton(selectorConfig, type) {
 		COMMENT.setSelectionRange(saved.start, saved.end);
 
 		let val = e.target.value;
-		if (type !== "pre") {
+
+		if (type === "code") {
+			if (val === "other") {
+				wrapSelectionWithTags(COMMENT, "code");
+			} else {
+				wrapSelectionWithTags(COMMENT, "code", val);
+			}
+		} else if (type !== "pre") {
 			selectorConfig.selector = val;
 			wrapSelectionWithTags(COMMENT, selectorConfig.code, val);
 		} else {
 			wrapSelectionWithTags(COMMENT, val);
 		}
+
 		input.style.display = "none";
 	});
 
