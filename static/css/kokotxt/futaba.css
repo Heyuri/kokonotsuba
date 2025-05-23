@@ -1,0 +1,185 @@
+@charset "UTF-8";
+
+:root {
+	/* Global */
+	--font-family-main: var(--font-family-serif);
+	--font-size-main: 12pt;
+	--image-bg-main: '';
+	--color-bg-main: #ffffee;
+	--color-bg-menu: #f0e0d6;
+	--color-bg-thread: #f0e0d6;
+  --color-bg-reply: #f0e0d6;
+	--color-fg-main: #800000;
+	--color-fg-thread: var(--color-fg-main);
+  --color-fg-reply: var(--color-fg-main);
+	--color-fg-link: #0000ee;
+	--color-fg-link-hover: #dd0000;
+  --color-lo-contrast-border: #d9bfb7;
+  --color-hi-contrast-border: #be8080;
+	--color-lo-contrast-border-menu: #d9bfb7;
+	--color-hi-contrast-border-menu: #be8080; 
+	--color-lo-contrast-border-thread: #d9bfb7;
+	--color-hi-contrast-border-thread: #be8080;
+	--color-border-button: #e3e3e3;
+	/* Navigation/admin bar */
+  --color-bg-boardlist: var(--color-bg-reply);
+  --color-fg-boardlist: #bb8866;
+	/* Board header */
+	--color-bg-theading: #e04000;
+	--color-bg-theading2: #0040e0;
+	--color-bg-theading3: #e08000;
+	--color-fg-theading: #ffffff;
+	/* Post form */
+	--color-fg-global-message: var(--color-fg-warning);
+	/* Posts/replies */
+	--color-bg-reply-hl: #f0c0b0;
+	--color-fg-title: #cc1105;
+	--color-fg-name: #117743;
+	--color-fg-warning: #ff0000;
+	--color-fg-warning-ip: #0000cc;
+	--color-fg-omitted: #707070;
+	/* Post formatting */
+	--color-fg-quotelink: var(--color-fg-link);
+	--color-fg-quotelink-hover: var(--color-fg-link-hover);
+  --color-fg-quote: #789922;
+  --color-fg-quote2: #ff69b4;
+	--color-bg-spoiler: #000000;
+	--color-bg-code: #ffffff;
+	--color-fg-code: #000000;
+	/* Administrator mode */
+  --color-bg-postblock: #eeaa88;
+	/* Windows */
+  --color-bg-window-item-highlight: #ffdbb5;
+}
+
+input,
+textarea,
+button,
+select {
+  border: 1px solid #800000;
+}
+
+.outerbox {
+  padding: 4px;
+}
+
+.menu .innerbox {
+  background-color: var(--color-bg-menu);
+  margin: 3px;
+  padding: 6px;
+}
+
+.outerbox,
+#titleBox .innerbox,
+.mod-extra-info.innerbox,
+#globalmsg.innerbox {
+  background-color: var(--color-bg-postblock);
+}
+
+#titleBox {
+  padding: 0;
+}
+
+#titleBox .innerbox {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.mtitle {
+  padding: 0px;
+  margin: 0px;
+  font-size: 2em;
+  font-weight: normal;
+  text-align: center;
+}
+
+.subtitle {
+  text-align: center;
+}
+
+.formTitle {
+  margin: 0 0 0 2em;
+  font-size: 1.2em;
+}
+
+#postarea,
+#postarea2 {
+  background-color: var(--color-bg-menu);
+}
+
+.postformItem > label {
+  font-weight: var(--font-weight-bold);
+}
+
+#globalmsg {
+  color: #d00;
+}
+
+.thread {
+  padding: 4px;
+  margin-bottom: 2em;
+}
+
+.title {
+  margin: 0px 0px 0px 1em;
+  padding: 0px;
+  font-size: 1.2em;
+  font-weight: var(--font-weight-bold);
+}
+
+.title a {
+  text-decoration: none;
+}
+
+.title a:hover {
+  text-decoration: underline;
+}
+
+.op {
+  margin: 3px;
+  margin-bottom: 0;
+}
+
+.comment {
+  margin: 0.25em 0.25em 1em 2.5em;
+}
+
+.warningsSection {
+  margin-left: 2.5em;
+}
+
+.repliesOmitted {
+  background-color: var(--color-bg-main);
+  height: 4px;
+  margin: 0.5em 1em;
+}
+
+.latestReplies {
+  margin: 3px;
+  margin-top: 0;
+  padding: 3px;
+}
+
+.threadSeparator {
+  display: none;
+}
+
+.postnum {
+  margin: 0 0.3em;
+}
+
+body#txtreply {
+  background-color: var(--color-bg-main);
+}
+
+#txtreply .thread {
+  background-color: var(--color-bg-thread);
+}
+
+.winbar {
+  background-color: var(--color-bg-postblock);
+}
+
+.winname {
+  color: inherit;
+}
