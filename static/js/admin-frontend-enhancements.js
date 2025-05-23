@@ -10,39 +10,38 @@
 		const stickyBtn = post.querySelector('.adminStickyFunction a');
 
 		function reloadPostElement() {
-			const threadElement = post.closest('.thread');
-			if (!threadElement || !threadElement.id) {
-						console.warn('Could not locate thread container or missing ID.');
-						showMessage('Thread reload failed: no thread container.', false);
-						return;
+			const delform = document.getElementById('delform');
+			if (!delform) {
+				console.warn('Could not locate #delform.');
+				showMessage('Reload failed: no delform container.', false);
+				return;
 			}
 
-			const threadId = threadElement.id;
-
 			fetch(window.location.href, { credentials: 'same-origin' })
-						.then(res => res.text())
-						.then(html => {
-									const parser = new DOMParser();
-									const doc = parser.parseFromString(html, 'text/html');
-									const updatedThread = doc.querySelector(`#${threadId}`);
+				.then(res => res.text())
+				.then(html => {
+					const parser = new DOMParser();
+					const doc = parser.parseFromString(html, 'text/html');
+					const updatedForm = doc.getElementById('delform');
 
-									if (!updatedThread) {
-												console.warn(`No thread found with ID ${threadId} in fetched HTML.`);
-												showMessage('Thread reload failed: thread not found.', false);
-												return;
-									}
+					if (!updatedForm) {
+						console.warn('No #delform found in fetched HTML.');
+						showMessage('Reload failed: delform not found.', false);
+						return;
+					}
 
-									threadElement.innerHTML = updatedThread.innerHTML;
+					delform.innerHTML = updatedForm.innerHTML;
 
-									threadElement.querySelectorAll('.post').forEach(function (updatedPost) {
-												initializePostEvents(updatedPost); // reattach events
-									});
-						})
-						.catch(err => {
-									console.error('Fetch or DOM parse failed:', err);
-									showMessage('Failed to reload thread.', false);
-						});
+					delform.querySelectorAll('.post').forEach(function (updatedPost) {
+						initializePostEvents(updatedPost); // reattach events
+					});
+				})
+				.catch(err => {
+					console.error('Fetch or DOM parse failed:', err);
+					showMessage('Failed to reload form.', false);
+				});
 		}
+
 
 		function handleRequest(url, onSuccess, onFailure, targetElement) {
 			fetch(url, { method: 'GET', credentials: 'same-origin' })
@@ -125,6 +124,7 @@
 						if (containerToHide) containerToHide.style.display = 'none';
 
 						handleRequest(deleteBtn.href, function () {
+									reloadPostElement();
 									showMessage('Post deleted successfully.', true);
 						}, function () {
 									if (containerToHide) containerToHide.style.display = '';
@@ -151,6 +151,7 @@
 						if (containerToHide) containerToHide.style.display = 'none';
 
 						handleRequest(deleteMuteBtn.href, function () {
+									reloadPostElement();
 									showMessage('Post deleted and user muted.', true);
 						}, function () {
 									if (containerToHide) containerToHide.style.display = '';
