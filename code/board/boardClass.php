@@ -203,7 +203,7 @@ class board implements IBoard {
 		$phpSelf = $this->config['PHP_SELF'];
 		$replyString = '';
 
-		if($replyNumber) {
+		if($replyNumber > 0) {
 			$replyString = $isQuoteRedirect ? '#q' . $replyNumber 
 				: '#p'.$this->getBoardUID().'_'.$replyNumber;
 		
