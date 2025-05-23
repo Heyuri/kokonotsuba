@@ -17,6 +17,7 @@
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/pseud0ch2.css?v=7" title="Pseud0ch (serif)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/pseud0ch3.css?v=7" title="Pseud0ch (sans-serif)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/tomorrow.css?v=10" title="Tomorrow">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/futaba.css?v=1" title="Futaba">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/headline.css?v=37" title="Headline">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/vipper.css?v=2" title="VIPPER">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">
