@@ -692,6 +692,10 @@ caption h3 {
 	clear: both;
 }
 
+.post {
+	clear: both;
+}
+
 .post:target .postinfo,
 .replyhl .postinfo {
 	background-color: var(--color-bg-reply-hl);
