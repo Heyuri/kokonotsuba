@@ -102,6 +102,19 @@ class mod_admindel extends moduleHelper {
 			
 			$this->board->rebuildBoardPage($pageToRebuild);
 		}
-		redirect('back', 0);
+		
+		if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+			// Return JSON for AJAX requests
+			header('Content-Type: application/json');
+			echo json_encode([
+				'success' => true,
+				'is_op' => $post['is_op']
+			]);
+			exit;
+		} else {
+			// Fallback for non-JS users: redirect
+			redirect('back', 0);
+		}
+
 	}
 }
