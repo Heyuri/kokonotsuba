@@ -30,7 +30,19 @@ $config['FORTUNES'] = array( // Used for fortune function, selected at random.
 	'（　´_ゝ`）ﾌｰﾝ'
 );
 
-$config['ALLOW_UPLOAD_EXT'] = 'GIF|JPG|JPEG|PNG|BMP|SWF|WEBM|MP4'; // Allowed filetypes
+// Allowed filetypes and mimetypes
+// The key is the extention and the value is the associated mime-type
+$config['ALLOW_UPLOAD_EXT'] = [
+	'gif'  => 'image/gif',
+	'jpg'  => 'image/jpeg',
+	'jpeg' => 'image/jpeg',
+	'png'  => 'image/png',
+	'bmp'  => 'image/bmp',
+	'swf'  => 'application/x-shockwave-flash',
+	'webm' => 'video/webm',
+	'mp4'  => 'video/mp4'
+];
+
 
 // Module List
 // These are not all modules that come with kokonotsuba that you can enable, there are some unlisted ones too.

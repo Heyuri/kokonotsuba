@@ -92,7 +92,17 @@ class globalHTML {
 			'{$FORM_DELETE_PASSWORD_FIELD}' => '<input type="password" name="pwd" id="pwd" maxlength="8" value="" class="inputtext">',
 			'{$FORM_EXTRA_COLUMN}' => '',
 			'{$FORM_FILE_EXTRA_FIELD}' => '',
-			'{$FORM_NOTICE}' => ($this->config['TEXTBOARD_ONLY'] ? '' :_T('form_notice',str_replace('|',', ',$this->config['ALLOW_UPLOAD_EXT']),$this->config['MAX_KB'],($resno ? $this->config['MAX_RW'] : $this->config['MAX_W']),($resno ? $this->config['MAX_RH'] : $this->config['MAX_H']))),
+			'{$FORM_NOTICE}' => (
+				$this->config['TEXTBOARD_ONLY']
+					? ''
+					: _T(
+						'form_notice',
+						implode(', ', array_keys($this->config['ALLOW_UPLOAD_EXT'])),
+						$this->config['MAX_KB'],
+						$resno ? $this->config['MAX_RW'] : $this->config['MAX_W'],
+						$resno ? $this->config['MAX_RH'] : $this->config['MAX_H']
+					)
+			),
 			'{$HOOKPOSTINFO}' => '');
 		if(!$this->config['TEXTBOARD_ONLY'] && ($this->config['RESIMG'] || !$resno)){
 			$pte_vals += array('{$FORM_ATTECHMENT_FIELD}' => '<input type="file" name="upfile" id="upfile">');
