@@ -254,19 +254,32 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 	public function importRepliesToThreads(array $mappedRestoToThreadUids): void {
 		$boardUID = $this->board->getBoardUID();
 		$pixmicatPosts = $this->getRepliesFromTempTable();
-	
+
+		// Track post_position per thread_uid
+		$postPositionMap = [];
+
 		try {
 			$this->databaseConnection->beginTransaction();
-	
+
 			foreach ($pixmicatPosts as $post) {
 				$no = $post['no'];
 				$resto = $post['resto'];
-	
+
 				if (!isset($mappedRestoToThreadUids[$resto])) {
 					continue;
 				}
-	
+
 				$thread_uid = $mappedRestoToThreadUids[$resto];
+
+				// Increment post_position for this thread
+				if (!isset($postPositionMap[$thread_uid])) {
+					$postPositionMap[$thread_uid] = 1;
+				} else {
+					$postPositionMap[$thread_uid]++;
+				}
+				$post_position = $postPositionMap[$thread_uid];
+
+				// Extract post data
 				$root = $post['root'];
 				$time = $post['time'];
 				$md5chksum = $post['md5chksum'];
@@ -287,17 +300,17 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 				$com = $post['com'];
 				$host = $post['host'];
 				$status = $post['status'];
-	
+
 				$this->insertPost(
-					$boardUID, $no, $thread_uid, 0, false, $root, $time, $md5chksum,
+					$boardUID, $no, $thread_uid, $post_position, false, $root, $time, $md5chksum,
 					$category, $tim, $fname, $ext, $imgw, $imgh, $imgsize,
 					$tw, $th, $pwd, $now, $name, $email, $sub, $com, $host, $status
 				);
-	
+
 				$post_uid = $this->databaseConnection->lastInsertId();
 				$this->noToPostUidMap[$no] = $post_uid;
 			}
-	
+
 			$this->generateQuoteLinksFromComments();
 			$this->databaseConnection->commit();
 		} catch (Exception $e) {
@@ -305,6 +318,7 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 			throw $e;
 		}
 	}
+
 	
 
 	/*Helper methods*/
