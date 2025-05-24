@@ -1,7 +1,5 @@
 <?php
 
-use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
-
 class managePostsRoute {
 	private readonly board $board;
 	private readonly array $config;
