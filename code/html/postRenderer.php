@@ -54,6 +54,9 @@ class postRenderer {
 		// Apply quote and quote link
 		$data['com'] = $this->globalHTML->quote_link($this->quoteLinksFromBoard, $data, $threadResno);
 		$data['com'] = $this->globalHTML->quote_unkfunc($data['com']);
+
+		// Post position config
+		$postPositionEnabled = $this->config['RENDER_REPLY_NUMBER'];
 		
 		// Process category links
 		$categoryHTML = $this->processCategoryLinks($data['category'], $crossLink);
@@ -102,6 +105,7 @@ class postRenderer {
 		// Bind the template values based on whether it's a reply or OP
 		if ($isThreadReply) {
 			$templateValues = $this->renderReplyPost($data, 
+			 $postPositionEnabled,
 			 $templateValues, 
 			 $threadResno,
 			 $nameHtml, 
@@ -147,6 +151,7 @@ class postRenderer {
 	 * Adds name, quote, image, and comment information to the template.
 	 */
 	private function renderReplyPost(array $data,
+		bool $postPositionEnabled,
 		array $templateValues,
 		int $threadResno,
 		string $nameHtml,
@@ -164,6 +169,8 @@ class postRenderer {
 				$data['post_uid'],
 				$data['no'],
 				$threadResno,
+				$postPositionEnabled,
+				$data['post_position'],
 				$data['sub'],
 				$nameHtml,
 				$data['now'],
@@ -287,6 +294,7 @@ class postRenderer {
 			'com' => $com,
 			'no' => $post['no'],
 			'is_op' => $post['is_op'],
+			'post_position' => $post['post_position'],
 			'sub' => $post['sub'],
 			'status' => $post['status'],
 			'tim' => $tim,
