@@ -50,9 +50,9 @@ function getTemplateConfigArray() {
 require getBackendDir().'includes.php';
 
 
-function generateNewBoardConfigFile() {
+function generateNewBoardConfigFile(string $boardUid): ?string {
 	$templateConfigPath = getBoardConfigDir().'board-template.php';//config template
-	$newConfigFileName = 'board-'.generateUid().'.php';
+	$newConfigFileName = 'board-' . $boardUid . '.php';
 	$boardConfigsDirectory = getBoardConfigDir();
 
 	if(!copyFileWithNewName($templateConfigPath, $newConfigFileName, $boardConfigsDirectory)) throw new Exception("Failed to copy new config file");

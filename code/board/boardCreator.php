@@ -26,6 +26,8 @@ class boardCreator {
 
 		$boardListed = $boardListed ? 1 : 0;
 
+		$nextBoardUid = $this->boardIO->getNextBoardUID();
+
 		$createdPaths = [];
 
 		try {
@@ -43,12 +45,12 @@ class boardCreator {
 			$this->createFileAndWriteText($fullBoardPath, $mockConfig['PHP_SELF'], "<?php require_once {$requireString}; ?>");
 
 			// Create board-storage directory
-			$boardStorageDirectoryName = 'storage-' . $this->boardIO->getNextBoardUID();
+			$boardStorageDirectoryName = 'storage-' . $nextBoardUid;
 			$dataDir = getBoardStoragesDir() . $boardStorageDirectoryName;
 			$createdPaths[] = $this->createDirectory($dataDir);
 
 			// Generate config file
-			$boardConfigName = generateNewBoardConfigFile();
+			$boardConfigName = generateNewBoardConfigFile($nextBoardUid);
 
 			// Add board to database
 			$this->boardIO->addNewBoard($boardIdentifier, $boardTitle, $boardSubTitle, $boardListed, $boardConfigName, $boardStorageDirectoryName);
@@ -67,20 +69,29 @@ class boardCreator {
 			return $newBoardFromDatabase;
 		} catch (Exception $e) {
 			$this->rollbackCreatedPaths($createdPaths);
+			$this->deleteCreatedBoardConfig($boardConfigName);
 			$this->globalHTML->error($e->getMessage());
 		}
 		return null;
 	}
 
-	private function createDirectory(string $path) {
+	private function createDirectory(string $path): string {
 		return createDirectoryWithErrorHandle($path, $this->globalHTML);
 	}
 
-	private function createFileAndWriteText(string $directory, string $fileName, string $content) {
+	private function createFileAndWriteText(string $directory, string $fileName, string $content): void {
 		createFileAndWriteText($directory, $fileName, $content);
 	}
 
-	private function rollbackCreatedPaths(array $createdPaths) {
+	private function rollbackCreatedPaths(array $createdPaths): void {
 		rollbackCreatedPaths($createdPaths);
+	}
+
+	private function deleteCreatedBoardConfig(string $boardConfigName): void {
+		$boardConfigPath = getBoardConfigDir() . $boardConfigName;
+
+		if(file_exists($boardConfigPath)) {
+			unlink($boardConfigPath);
+		}
 	}
 }
