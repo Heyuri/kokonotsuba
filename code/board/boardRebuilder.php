@@ -250,6 +250,61 @@ class boardRebuilder {
 		}
 	}
 
+	public function rebuildBoardPages(int $amountOfPagesToRebuild): void {
+		if ($amountOfPagesToRebuild < 0) return;
+	
+		$amountOfThreads = $this->config['PAGE_DEF'] * $amountOfPagesToRebuild;
+
+		$threads = $this->PIO->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $amountOfThreads, 0);
+	
+		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
+
+		$pte_vals = $this->buildPteVals();
+	
+		$headerHtml = '';
+		$this->globalHTML->head($headerHtml);
+	
+		$formHtml = '';
+		$this->globalHTML->form($formHtml, 0);
+		$formHtml .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
+	
+		$footHtml = '';
+		$this->globalHTML->foot($footHtml);
+		
+		for ($page = 0; $page <= $amountOfPagesToRebuild; $page++) {
+			$this->renderStaticPage($page, $threads, $headerHtml, $formHtml, $footHtml, $pte_vals, $quoteLinksFromBoard);
+		}
+	}
+
+	public function rebuildBoardPageHtml(int $targetPage, bool $logRebuild): void {
+		if ($targetPage < 0) return;
+	
+		$threads = $this->PIO->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF']);
+		$totalPages = ceil(count($threads) / $this->config['PAGE_DEF']);
+	
+		if ($targetPage >= $totalPages) return; // Out of bounds
+	
+		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
+
+		$pte_vals = $this->buildPteVals();
+	
+		$headerHtml = '';
+		$this->globalHTML->head($headerHtml);
+	
+		$formHtml = '';
+		$this->globalHTML->form($formHtml, 0);
+		$formHtml .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
+	
+		$footHtml = '';
+		$this->globalHTML->foot($footHtml);
+	
+		$this->renderStaticPage($targetPage, $threads, $headerHtml, $formHtml, $footHtml, $pte_vals, $quoteLinksFromBoard);
+
+		if ($logRebuild) {
+			$this->actionLogger->logAction("Rebuilt board: " . $this->board->getBoardTitle() . ' (' . $this->board->getBoardUID() . ')', $this->board->getBoardUID());
+		}
+	}
+
 	private function renderStaticPage(int $page, array $threads, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals, array $quoteLinksFromBoard): void {
 		$postRenderer = new postRenderer($this->board, 
 		 $this->config, 
@@ -314,35 +369,6 @@ class boardRebuilder {
 		fwrite($fp, $pageData);
 		fclose($fp);
 		chmod($logFilePath, 0666);
-	}
-
-	public function rebuildBoardPageHtml(int $targetPage, bool $logRebuild): void {
-		if ($targetPage < 0) return;
-	
-		$threads = $this->PIO->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF']);
-		$totalPages = ceil(count($threads) / $this->config['PAGE_DEF']);
-	
-		if ($targetPage >= $totalPages) return; // Out of bounds
-	
-		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
-
-		$pte_vals = $this->buildPteVals();
-	
-		$headerHtml = '';
-		$this->globalHTML->head($headerHtml);
-	
-		$formHtml = '';
-		$this->globalHTML->form($formHtml, 0);
-		$formHtml .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
-	
-		$footHtml = '';
-		$this->globalHTML->foot($footHtml);
-	
-		$this->renderStaticPage($targetPage, $threads, $headerHtml, $formHtml, $footHtml, $pte_vals, $quoteLinksFromBoard);
-
-		if ($logRebuild) {
-			$this->actionLogger->logAction("Rebuilt board: " . $this->board->getBoardTitle() . ' (' . $this->board->getBoardUID() . ')', $this->board->getBoardUID());
-		}
 	}
 
 	private function buildPteVals(): array {

@@ -199,6 +199,11 @@ class board implements IBoard {
 		$boardRebuilder->rebuildBoardPageHtml($pageNumber, $logRebuild);
 	}
 
+	public function rebuildBoardPages(int $amountOfPagesToRebuild): void {
+		$boardRebuilder = new boardRebuilder($this, $this->templateEngine);
+		$boardRebuilder->rebuildBoardPages($amountOfPagesToRebuild);
+	}
+
 	public function getBoardThreadURL(int $threadNumber, int $replyNumber = 0, bool $isQuoteRedirect = false): string {
 		$phpSelf = $this->config['PHP_SELF'];
 		$replyString = '';
