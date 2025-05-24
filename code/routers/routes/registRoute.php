@@ -110,7 +110,7 @@ class registRoute {
 
 		// Add post to database
 		$this->PIO->addPost(
-			$this->board, $computedPostInfo['no'], $postData['thread_uid'], $computedPostInfo['post_position'], $computedPostInfo['is_op'],  $fileMeta['md5'],
+			$this->board, $computedPostInfo['no'], $postData['thread_uid'], $computedPostInfo['is_op'],  $fileMeta['md5'],
 			$postData['category'], $fileMeta['fileTimeInMilliseconds'], $fileMeta['fileName'], $fileMeta['ext'],
 			$fileMeta['imgW'], $fileMeta['imgH'], $fileMeta['readableSize'], $fileMeta['thumbWidth'], $fileMeta['thumbHeight'],
 			$computedPostInfo['pass'], $computedPostInfo['now'],
@@ -295,6 +295,11 @@ class registRoute {
 		// get the board static index
 		$redirect = $this->config['PHP_SELF2'] . '?' . $timeInMilliseconds;
 		
+		// If $threadResno is 0, this is a new thread; set it to the current post number ($no)
+		if($threadResno === 0) {
+			$threadResno = $no;
+		}
+
 		// if noko is inside the email-field then redirect to the thread
 		if(strstr($email, 'noko') && !strstr($email, 'nonoko')) {
 			$redirectReplyNumber = $no;
@@ -327,14 +332,12 @@ class registRoute {
 		$pass = substr(md5($postData['pwd']), 2, 8);
 	
 		$no = $this->board->getLastPostNoFromBoard() + 1;
-		$post_position = 0;
 		$is_op = $postData['resno'] ? false : true;
 		$now = $formatter->format($postData['time']);
 		$now .= $idGen->generate($postData['email'], $postData['time'], $postData['thread_uid']);
 	
 		return [
 			'no' => $no,
-			'post_position' => $post_position,
 			'is_op' => $is_op,
 			'pass' => $pass,
 			'now' => $now,
