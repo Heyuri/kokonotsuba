@@ -68,6 +68,7 @@ interface IPIO {
 	 * @param string  $md5chksum Attachment image MD5
 	 * @param string  $category  Category
 	 * @param int	  $tim       Timestamp
+	 * @param string  $fname	 File name
 	 * @param string  $ext       Attachment file extension
 	 * @param int     $imgw      Image width
 	 * @param int     $imgh      Image height
