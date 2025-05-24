@@ -146,7 +146,12 @@ class registRoute {
 			$this->board->rebuildBoard();
 		} else {
 			$pageToRebuild = getPageOfThread($postData['thread_uid'], $threads, $this->config['PAGE_DEF']);
-			$this->board->rebuildBoardPage($pageToRebuild);
+			
+			if($postData['age'] === false) {
+				$this->board->rebuildBoardPage($pageToRebuild);
+			} else {
+				$this->board->rebuildBoardPages($pageToRebuild);
+			}
 		}
 		// Final redirect
 		redirect($redirect, 0);
