@@ -699,6 +699,10 @@ caption h3 {
   background-color: var(--color-bg-reply-hl);
 }
 
+.replyPosition {
+	font-size: small;
+}
+
 .filesize {
 	margin-left: 20px;
 	word-break: break-word;

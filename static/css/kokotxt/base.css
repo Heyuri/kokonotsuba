@@ -705,6 +705,10 @@ caption h3 {
 	display: block;
 }
 
+.replyPosition {
+	font-size: small;
+}
+
 .filesize {
 	margin-left: 2.5em;
 	word-break: break-word;
