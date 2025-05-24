@@ -230,7 +230,6 @@ $config['REF_URL'] = ''; // URL prefix, eg: https://jump.heyuri.net
 
 $config['VIDEO_EXT'] = 'WEBM|MP4'; // What filetypes will be loaded as a video
 
-
 $config['ALLOW_NONAME'] = 1; // Allow posters to submit without names
 $config['DISP_ID'] = 0; // 2 enables, 0 disables
 $config['ID_MODE'] = 0; // Leave 0, do not change
@@ -238,6 +237,8 @@ $config['CLEAR_SAGE'] = 0; // Disable sage if true
 $config['NOTICE_SAGE'] = 1; // Visible sage ("SAGE!")
 $config['USE_QUOTESYSTEM'] = 1; // Enable >>1234
 $config['SHOW_IMGWH'] = 1; // Display the original length and width dimension of the additional image file
+$config['RENDER_REPLY_NUMBER'] = true; // Show the sequential reply number for each post within a thread (does not change if posts are deleted)
+
 
 $config['PAGE_DEF'] = 15; // How many threads per page
 $config['ADMIN_PAGE_DEF'] = 100; // How many replies per page on admin panel
