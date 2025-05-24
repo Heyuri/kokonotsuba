@@ -68,14 +68,14 @@ class mod_movethread extends moduleHelper {
 		$PIO->addPost(
 			$originalBoard,
 			$no,
-			$originalThreadUid, 0, false,
-			'', '', 0, '', '',
-			0, 0, 0, 0, 0, 0, $now,
-			$name, '', '', $capcode,
+			$originalThreadUid, false, '',
+			'', 0, '', '', 0, 0,
+			'', 0, 0, '', $now, $name,
+			'', '', $capcode,
 			'', '', $moveComment,
 			$ip,
 			false,
-			$now,
+			'',
 		);
 	}
 
