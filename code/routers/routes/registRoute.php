@@ -147,9 +147,11 @@ class registRoute {
 		} else {
 			$pageToRebuild = getPageOfThread($postData['thread_uid'], $threads, $this->config['PAGE_DEF']);
 			
+			// If saging, just rebuild that one page
 			if($postData['age'] === false) {
 				$this->board->rebuildBoardPage($pageToRebuild);
 			} else {
+				// If a non-sage reply, rebuild all pages until the page the thread is on
 				$this->board->rebuildBoardPages($pageToRebuild);
 			}
 		}
