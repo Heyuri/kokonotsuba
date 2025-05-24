@@ -86,8 +86,8 @@ class mod_admindel extends moduleHelper {
 		if ($files) {
 			$FileIO->deleteImage($files, $board);
 		}
-		
-		deleteThreadCache($post['thread_uid']);
+		// Will be implemented later
+		//deleteThreadCache($post['thread_uid']);
 
 		// if its a thread, rebuild all board pages
 		if($post['is_op']) {
