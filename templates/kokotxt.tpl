@@ -139,7 +139,7 @@
 <!--/&THREAD-->
 
 <!--&OP-->
-	<h2 class="title"><a href="{$PHP_SELF}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h2>
+	<h2 class="title"><a href="{$BOARD_URL}{$PHP_SELF}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h2>
 	<div class="post op" id="p{$BOARD_UID}_{$NO}">
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
 		<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span><span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
@@ -154,7 +154,7 @@
 <!--&REPLY-->
 			<!--&IF($IS_PREVIEW,'<table class="thread"><tbody><tr><td>','')-->
 			<div class="post reply" id="p{$BOARD_UID}_{$NO}">
-				<!-- <span class="title"><a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span> -->
+				<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')--> <span class="title"><a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span>
 				<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
 				<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span><span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
 				<div class="filesize">{$IMG_BAR}</div>

@@ -199,7 +199,7 @@
 				<div class="post reply" id="p{$BOARD_UID}_{$NO}">
 					<div class="postinfo">
 						<label>
-							<input type="checkbox" name="{$POST_UID}" value="delete"><span class="title">{$SUB}</span>
+							<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')--> <input type="checkbox" name="{$POST_UID}" value="delete"> <span class="title">{$SUB}</span>
 							<span class="nameContainer">
 								<!--{$NAME_TEXT}--><span class="name">{$NAME}</span>
 							</span>
