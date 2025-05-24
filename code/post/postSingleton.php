@@ -76,7 +76,7 @@ class PIOPDO implements IPIO {
 	}
 	
 	/* Add a new post to a thread */
-	public function addPost(board $board, int $no, string $thread_uid_from_url, int $post_position, bool $is_op, string $md5chksum, string $category, int $tim, string $fname, string $ext, int $imgw, int $imgh, 
+	public function addPost(board $board, int $no, string $thread_uid_from_url, bool $is_op, string $md5chksum, string $category, int $tim, string $fname, string $ext, int $imgw, int $imgh, 
 		string $imgsize, int $tw, int $th, string $pwd, string $now, string $name, string $tripcode, string $secure_tripcode, string $capcode, string $email, string $sub, string $com, string $host,  bool $age = false, string $status = '') {
 		
 		$threadSingleton = threadSingleton::getInstance();
@@ -101,6 +101,14 @@ class PIOPDO implements IPIO {
 			} else {
 				//post to an existing thread
 				$thread_uid_for_database = $thread_uid_from_url;
+			}
+
+			if (!$isThread) {
+				$postPositionQuery = "SELECT MAX(post_position) FROM {$this->tablename} WHERE thread_uid = :thread_uid";
+				$maxPosition = $this->databaseConnection->fetchValue($postPositionQuery, [':thread_uid' => $thread_uid_for_database]);
+				$post_position = $maxPosition !== null ? ((int)$maxPosition + 1) : 1;
+			} else {
+				$post_position = 0; // OP gets position 0
 			}
 			
 			$query = "INSERT INTO {$this->tablename} 
@@ -290,10 +298,6 @@ class PIOPDO implements IPIO {
 	
 		return $result;
 	}
-	
-	
-	
-
 	
 	/* Get number of posts */
 	public function postCountFromBoard($board, $threadUID = 0) {
