@@ -195,7 +195,9 @@ class mod_adminban extends moduleHelper {
 		// If the ban is related to a specific post, add post info to the action string
 		if ($postUid) {
 			$postNumber = $PIO->resolvePostNumberFromUID($postUid);
-			$actionString .= " for post $postNumber";
+			if(!empty($postNumber)) { 
+				$actionString .= " for post $postNumber";
+			}
 		}
 
 		return $actionString;
