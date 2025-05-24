@@ -64,7 +64,6 @@ interface IPIO {
 	 * @param board   $board     Board being posted to
 	 * @param int     $no        Post number
 	 * @param string  $thread_uid Uid of the parent thread
-	 * @param int	  $post_position Position of the post in the thread
 	 * @param bool	  $is_op	 if the post is OP
 	 * @param string  $md5chksum Attachment image MD5
 	 * @param string  $category  Category
@@ -88,7 +87,7 @@ interface IPIO {
 	 * @param boolean $age       Bump thread
 	 * @param string  $status    Status flag
 	 */
-	public function addPost(board $board, int $no, string $thread_uid, int $post_position, bool $is_op, string $md5chksum, string $category, int $tim, string $fname, string $ext, int $imgw, int $imgh, 
+	public function addPost(board $board, int $no, string $thread_uid, bool $is_op, string $md5chksum, string $category, int $tim, string $fname, string $ext, int $imgw, int $imgh, 
 		string $imgsize, int $tw, int $th, string $pwd, string $now, string $name, string $tripcode, string $secure_tripcode, string $capcode, string $email, string $sub, string $com, string $host, bool $age = false, string $status = '');
 
 	/**
