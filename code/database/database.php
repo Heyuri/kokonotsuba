@@ -1,4 +1,5 @@
 <?php
+
 class DatabaseConnection {
 	private static $instance = null;
 	private $pdo;
@@ -109,6 +110,12 @@ class DatabaseConnection {
 		$stmt = $this->pdo->prepare($query);
 		$stmt->execute($params);
 		return $stmt->fetch($fetchMode);
+	}
+
+	public function fetchValue(string $query, array $params = [], int $columnIndex = 0) {
+		$stmt = $this->pdo->prepare($query);
+		$stmt->execute($params);
+		return $stmt->fetchColumn($columnIndex);
 	}
 
 	public function lastInsertId() {
