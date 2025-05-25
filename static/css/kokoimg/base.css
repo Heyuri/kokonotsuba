@@ -602,7 +602,7 @@ caption h3 {
 	display: table;
 	margin: 0 auto;
 	padding: 0 8px;
-	max-width: 475px;
+	max-width: 600px;
 	font-size: var(--font-size-x-small);
 	font-size: max(var(--font-size-x-small), 8pt);
 	list-style: none;
