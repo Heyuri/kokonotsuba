@@ -145,7 +145,7 @@ $config['ModuleSettings']['FILTERS'] = array(
 $config['ModuleSettings']['THREADLIST_NUMBER'] = 50; // Number of lists displayed on one page
 $config['ModuleSettings']['FORCE_SUBJECT'] = true; // Whether to force a new string to have a title
 $config['ModuleSettings']['SHOW_IN_MAIN'] = true; // Whether to display on the main page
-$config['ModuleSettings']['THREADLIST_NUMBER_IN_MAIN'] = 40; // Display the number of lists on the main page\
+$config['ModuleSettings']['THREADLIST_NUMBER_IN_MAIN'] = 40; // Display the number of lists on the main page
 $config['ModuleSettings']['SHOW_FORM'] = false; // Whether to display the delete form
 $config['ModuleSettings']['HIGHLIGHT_COUNT'] = 15; // The number of popular responses, the number of responses exceeding this value will turn red (0 means not used)
 
