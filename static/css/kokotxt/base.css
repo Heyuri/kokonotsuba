@@ -706,7 +706,7 @@ caption h3 {
 }
 
 .replyPosition {
-	font-size: small;
+	font-size: var(--font-size-small);
 }
 
 .filesize {
