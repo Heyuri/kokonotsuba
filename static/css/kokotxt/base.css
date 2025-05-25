@@ -285,6 +285,7 @@ caption h3 {
 	border-color: var(--color-hi-contrast-border);
   list-style: none;
 	padding-left: 0;
+	z-index: 1;
 }
 
 .neomenuTopLevel:hover .neomenuList {

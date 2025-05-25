@@ -258,6 +258,7 @@ caption h3 {
   border-style: solid;
   list-style: none;
 	padding-left: 0;
+	z-index: 1;
 }
 
 .neomenuTopLevel:hover .neomenuList {
