@@ -24,19 +24,12 @@ class overboard {
 	}
 	
 	public function drawOverboardHead(&$dat, $resno = 0) {
-		$PIO = PIOPDO::getInstance();
 		$html = '';
 		
 		$pte_vals = array('{$RESTO}'=>$resno?$resno:'', '{$IS_THREAD}'=>boolval($resno), '{$IS_STAFF}' => isActiveStaffSession());
-		if ($resno) {
-			$post = $PIO->fetchPostsFromThread($resno);
-			if (mb_strlen($post[0]['com']) <= 10){
-				$CommentTitle = $post[0]['com'];
-			} else {
-				$CommentTitle = mb_substr($post[0]['com'],0,10,'UTF-8') . "...";
-			}
-			$pte_vals['{$PAGE_TITLE}'] = ($post[0]['sub'] ? $post[0]['sub'] : strip_tags($CommentTitle)).' - '.$this->config['TITLE'];
-		}
+
+		$pte_vals['{$PAGE_TITLE}'] = strip_tags($this->config['OVERBOARD_TITLE']);
+
 		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
 		$this->moduleEngine->useModuleMethods('Head', array(&$html, $resno)); // "Head" Hook Point
 		$html .= '</head>';
@@ -44,7 +37,7 @@ class overboard {
 			'{$STATUS}' => '[<a href="'.$this->config['PHP_SELF'].'?mode=status">'._T('head_info').'</a>]',
 			'{$ADMIN}' => '[<a href="'.$this->config['PHP_SELF'].'?mode=admin">'._T('head_admin').'</a>]',
 			'{$REFRESH}' => '[<a href="'.$this->config['PHP_SELF2'].'?">'._T('head_refresh').'</a>]',
-			'{$HOOKLINKS}' => '', '{$TITLE}' => htmlspecialchars($this->config['OVERBOARD_TITLE']), '{$TITLESUB}' => htmlspecialchars($this->config['OVERBOARD_SUBTITLE']),
+			'{$HOOKLINKS}' => '', '{$TITLE}' => $this->config['OVERBOARD_TITLE'], '{$TITLESUB}' => $this->config['OVERBOARD_SUBTITLE'],
 			 '{$SELF}' => $this->config['PHP_SELF']
 			);
 			
