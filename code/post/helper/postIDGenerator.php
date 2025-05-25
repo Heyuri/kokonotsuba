@@ -4,12 +4,12 @@
 // generate post id for a user/moderator
 class postIdGenerator {
 	private readonly array $config;
-	private readonly mixed $PIO;
+	private readonly board $board;
     private readonly staffAccountFromSession $staffSession;
 
-	public function __construct(array $config, mixed $PIO, staffAccountFromSession $staffSession) {
+	public function __construct(array $config, board $board, staffAccountFromSession $staffSession) {
 		$this->config = $config;
-		$this->PIO = $PIO;
+		$this->board = $board;
         $this->staffSession = $staffSession;
     }
 
@@ -26,7 +26,7 @@ class postIdGenerator {
 			} else {
 				$ip = new IPAddress;
 				$idSeed = $this->config['IDSEED'];
-				$postNo = $thread_uid ? $thread_uid : ($this->PIO->getLastPostNoFromBoard() + 1);
+				$postNo = $thread_uid ? $thread_uid : ($this->board->getLastPostNoFromBoard() + 1);
 				$baseString = $ip . $idSeed . $postNo;
 
 				switch ($this->config['ID_MODE']) {

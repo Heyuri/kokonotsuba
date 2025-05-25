@@ -57,7 +57,7 @@ class registRoute {
 		$fortuneGenerator = new fortuneGenerator($this->config['FORTUNES']);
 		$postFilterApplier = new postFilterApplier($this->config, $this->globalHTML, $fortuneGenerator);
 		$postDateFormatter = new postDateFormatter($this->config);
-		$postIdGenerator = new postIdGenerator($this->config, $this->PIO, $this->staffSession);
+		$postIdGenerator = new postIdGenerator($this->config, $this->board, $this->staffSession);
 		$agingHandler = new agingHandler($this->config, $this->threadSingleton);
 		$webhookDispatcher = new webhookDispatcher($this->board, $this->config);
 	
