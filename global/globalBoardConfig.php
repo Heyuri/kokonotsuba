@@ -1,6 +1,11 @@
 <?php
 require __DIR__.DIRECTORY_SEPARATOR.'globalconfig.php';
 
+// Default image directory name - this should be a relative path to your boards' directory
+$config['IMG_DIR'] = 'src/';
+// Thumb dir, same as IMG_DIR
+$config['THUMB_DIR'] = 'src/';
+
 $config['PROXYHEADERlist'] = array(
 	'HTTP_CLIENT_IP',
 	'HTTP_X_REAL_IP',
