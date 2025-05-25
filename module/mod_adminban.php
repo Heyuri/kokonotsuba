@@ -109,7 +109,7 @@ class mod_adminban extends moduleHelper {
 			'{$POST_NUMBER}' => $postNumber ? htmlspecialchars($postNumber) : "No post selected.  ",
 			'{$POST_UID}' => htmlspecialchars($_GET['post_uid'] ?? ''),
 			'{$IP}' => htmlspecialchars($_GET['ip'] ?? ''),
-			'{$DEFAULT_BAN_MESSAGE}' => htmlspecialchars($this->DEFAULT_BAN_MESSAGE),
+			'{$DEFAULT_BAN_MESSAGE}' => $this->DEFAULT_BAN_MESSAGE,
 			'{$MODULE_URL}' => $this->mypage,
 			'{$TABLES}' => $tables,
 		];
@@ -302,7 +302,7 @@ class mod_adminban extends moduleHelper {
 				'{$IP}' => htmlspecialchars($ip),
 				'{$START}' => date('Y/m/d H:i:s', intval($start)),
 				'{$EXPIRES}' => date('Y/m/d H:i:s', intval($expires)),
-				'{$REASON}' => htmlspecialchars($reason),
+				'{$REASON}' => $reason,
 			];
 		}
 		return $rows;
