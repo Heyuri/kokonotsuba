@@ -1,0 +1,279 @@
+@charset "UTF-8";
+
+/************************ Global **************************************/
+
+:root {
+	/* Global */
+	--font-family-main: var(--font-family-serif);
+	--font-size-main: 12pt;
+	--image-bg-main: '';
+  color-scheme: dark;
+	--color-bg-main: #1d1f21;
+	--color-bg-menu: #282a2e;
+	--color-bg-thread: #282a2e;
+  --color-bg-reply: var(--color-bg-main);
+	--color-fg-main: #c5c8c6;
+	--color-fg-thread: var(--color-fg-main);
+  --color-fg-reply: var(--color-fg-main);
+  --color-fg-link: #81a2be;
+  --color-fg-link-hover: #5f89ac;
+  --color-x-lo-contrast-border: #111314;
+	--color-lo-contrast-border: #27292c;
+	--color-hi-contrast-border: #656769;
+	--color-lo-contrast-border-menu: var(--color-x-lo-contrast-border);
+	--color-hi-contrast-border-menu: var(--color-hi-contrast-border); 
+	--color-lo-contrast-border-thread: var(--color-x-lo-contrast-border);
+	--color-hi-contrast-border-thread: var(--color-hi-contrast-border);
+	--color-border-button: #e3e3e3;
+	/* Navigation/admin bar */
+	--color-bg-boardlist: #27292c;
+	--color-fg-boardlist: #656769;
+	/* Board header */
+  --color-bg-theading: #373b41;
+  --color-bg-theading2: var(--color-bg-theading);
+  --color-bg-theading3: var(--color-bg-theading);
+  --color-fg-theading: #e0e0e0;
+	/* Post form */
+	--color-fg-global-message: var(--color-fg-warning);
+	/* Posts/replies */
+	--color-bg-reply-hl: #373b41;
+	--color-fg-title: #b294bb;
+	--color-fg-name: var(--color-fg-main);
+	--color-fg-warning: #ee7777;
+	--color-fg-warning-ip: #8abeb7;
+  --color-fg-omitted: #999999;
+	/* Post formatting */
+	--color-fg-quotelink: var(--color-fg-link);
+	--color-fg-quotelink-hover: var(--color-fg-link-hover);
+  --color-fg-quote: #b5bd68;
+  --color-fg-quote2: #d49eaf;
+	--color-bg-spoiler: #000000;
+  --color-bg-code: #0f1011;
+  --color-fg-code: var(--color-fg-main);
+	/* Administrator mode */
+  --color-bg-postblock: #282a2e;
+	/* Windows */
+  --color-bg-window-item-highlight: #373b41;
+}
+
+hr {
+  border-color: var(--color-hi-contrast-border);
+}
+
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"],
+progress {
+  accent-color: #b4b7b4;
+}
+
+fieldset {
+  border-color: var(--color-hi-contrast-border);
+}
+
+#globalmsg,
+.warning,
+.sageText,
+.newPM,
+.roll,
+.autosage {
+  color: var(--color-fg-warning);
+}
+
+.menu .innerbox {
+	margin: 7px;
+	padding: 3px;
+}
+
+.postlists,
+#txt .thread {
+	padding: 7px;
+}
+
+.outerbox,
+#txt .thread {
+	margin: 0 auto;
+	width: 95%;
+}
+
+#titleBox,
+#txt .thread {
+	margin-bottom: 20px;
+}
+
+#txt .thread .innerbox {
+	padding: 3px;
+}
+
+.outerbox,
+#txt .thread,
+.postlists,
+#pager {
+	border-width: 1px;
+	border-style: solid;
+  border-color: var(--color-hi-contrast-border) var(--color-x-lo-contrast-border) var(--color-x-lo-contrast-border) var(--color-hi-contrast-border);
+}
+
+#txt .thread .innerbox,
+#pager td {
+	border-width: 1px;
+	border-style: solid;
+  border-color: var(--color-x-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-x-lo-contrast-border);
+}
+
+.menu .innerbox,
+.postlists th,
+.postlists td {
+	border-width: 1px;
+	border-style: solid;
+  border-color: var(--color-x-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-x-lo-contrast-border);
+}
+
+/************************ Navigation/admin bar ************************/
+
+.persistnav .boardlist {
+  border-bottom: 1px solid var(--color-hi-contrast-border);
+}
+
+/******** Classic menu ********/
+/******** Neomenu ********/
+
+.neomenu {
+  color: var(--color-fg-main);
+}
+
+.neomenuTopLevel,
+.persistnav .neomenuTopLevel {
+  border: 1px solid;
+  border-color:  var(--color-hi-contrast-border) var(--color-x-lo-contrast-border) var(--color-x-lo-contrast-border)  var(--color-hi-contrast-border);
+}
+
+.neomenuList {
+  border-color: var(--color-hi-contrast-border);
+}
+
+.neomenu .neomenuTopLevel h2:hover,
+.neomenu .neomenuList li:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+/************************ Board header ********************************/
+/************************ Post form ***********************************/
+/************************ Board info **********************************/
+/************************ Posts/replies *******************************/
+
+.title,
+.title a {
+	text-decoration: none;
+}
+
+.title a:hover {
+	text-decoration: underline;
+}
+
+.sod.noVotes {
+	font-family: var(--font-family-msgothic);
+}
+
+.previewBox .post {
+	border: 1px solid var(--color-hi-contrast-border) !important;
+}
+
+.threadSeparator {
+	display: none;
+}
+
+/************************ Post formatting *****************************/
+
+.rabienrose {
+  background-color: #50394c;
+  color: #e9c9e1;
+}
+
+.partybusColor1 {
+  color: #ff80ff;
+}
+
+.partybusColor2 {
+  color: #ffffc0;
+}
+
+.partybusColor3 {
+  color: #80ffc0;
+}
+
+.partybusColor4 {
+  color: #c0ffff;
+}
+
+.partybusColor5 {
+  color: #c0c0ff;
+}
+
+.partybusColor6 {
+  color: #ff80c0;
+}
+
+.partybusColor7 {
+  color: #ffc0a0;
+}
+
+.partybusColor8 {
+  color: #80c0ff;
+}
+
+.bokuGreen {
+  color: #8abea0;
+}
+
+.bokuRed {
+  color: #cc6666;
+}
+
+/************************ Footer **************************************/
+/************************ Administrator mode **************************/
+
+.error,
+.offline {
+  color: #cc6666;
+}
+
+.good,
+.online {
+  color: #b5bd68;
+}
+
+.detailsbox,
+.postblock {
+	border-color: var(--color-hi-contrast-border) var(--color-x-lo-contrast-border) var(--color-x-lo-contrast-border) var(--color-hi-contrast-border);
+}
+
+.detailsbox[open] > summary {
+  border-bottom: 1px solid var(--color-x-lo-contrast-border);
+}
+
+/************************ Catalog *************************************/
+/************************ Windows *************************************/
+
+.window {
+	background-color: inherit;
+}
+
+.window,
+.winbar {
+  border-color: var(--color-hi-contrast-border);
+}
+
+.winbar {
+  background-color: var(--color-bg-menu);
+}
+
+.winname {
+  color: inherit;
+}
+
+.winctrl > * {
+  filter: invert(0.77);
+}
+
+/************************ Mobile **************************************/

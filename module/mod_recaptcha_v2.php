@@ -4,10 +4,8 @@ mod_recaptcha_v2.php
 */
 
 /* get the keys from https://www.google.com/recaptcha/admin/create */
-class mod_recaptcha_v2 extends ModuleHelper {
+class mod_recaptcha_v2 extends moduleHelper {
 	private $KEY_PUBLIC   = 'SITE KEY';
-	private $KEY_PRIVATE  = 'SECRET KEY';
-	private $reCaptcha;
 
 	public function getModuleName(){
 		return 'mod_recaptcha_v2 : reCAPTCHA v2';
@@ -33,9 +31,13 @@ class mod_recaptcha_v2 extends ModuleHelper {
 
 	/* Check whether it is correct as soon as you receive the request */
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo){
-		$AccountIO = PMCLibrary::getAccountIOInstance();
-		if ($AccountIO->valid() >= $this->config['roles']['LEV_MODERATOR'] ) return; //no captcha for admin mode
+		$staffSession = new staffAccountFromSession;
+		$globalHTML = new globalHTML($this->board);
+
+		$roleLevel = $staffSession->getRoleLevel();
+
+		if ($roleLevel->isAtLeast(\Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR)) return; //no captcha for admin mode
 		$resp = $this->validateCaptcha('SECRET KEY', $_POST['g-recaptcha-response']);
-		if($resp == null){ error('reCAPTCHA failed！You are not acting like a human!'); } // 檢查
+		if($resp == null){ $globalHTML->error('reCAPTCHA failed！You are not acting like a human!'); } // 檢查
 	}
 }

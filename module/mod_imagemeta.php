@@ -3,18 +3,18 @@
  * $Id$
  * exif.php from http://www.rjk-hosting.co.uk/programs/prog.php?id=4
  */
-class mod_imagemeta extends ModuleHelper {
-    private $enable_exif, $enable_imgops, $enable_iqdb = false; // Enable iqdb
-    
+class mod_imagemeta extends moduleHelper {
+	private $enable_exif, $enable_imgops, $enable_iqdb, $enable_swfchan = false; // Initialize options, actually defined in config files
+
 	private $myPage;
 	
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-		$this->myPage = $this->getModulePageURL(); // Base position
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		$this->myPage = $this->getModulePageURL(); // Base position
 		
 		$this->enable_exif = $this->config['ModuleSettings']['EXIF_DATA_VIEWER'];
 		$this->enable_imgops = $this->config['ModuleSettings']['IMG_OPS'];
 		$this->enable_iqdb = $this->config['ModuleSettings']['IQDB'];
+		$this->enable_swfchan = $this->config['ModuleSettings']['SWFCHAN'];
 	}
 
 	public function getModuleName(){
@@ -25,28 +25,63 @@ class mod_imagemeta extends ModuleHelper {
 		return 'Koko BBS Release 1';
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		$FileIO = PMCLibrary::getFileIOInstance();
-        $file = $post['tim'].$post['ext'];
-        
+		
+		if($post['imgw'] + $post['imgh'] === 0) return;
+		
+		$file = $post['tim'] . $post['ext'];
 		$board = searchBoardArrayForBoard($this->moduleBoardList, $post['boardUID']);
+	
+		static $nonReverseSearchableExtensions = ['.swf', '.mp4', '.webm'];
+		$ext = strtolower($post['ext']);
+		$isNotAReverseSearchableImage = in_array($ext, $nonReverseSearchableExtensions);
+		$isSwf = $ext === '.swf';
+	
+		// Cache the condition for checking the FILEIO_BACKEND config
+		$isLocalBackend = ($this->config['FILEIO_BACKEND'] == 'normal' || $this->config['FILEIO_BACKEND'] == 'local');
+	
+		// Check once if the image exists, to avoid repeated checks
+		$imageExists = $FileIO->imageExists($file, $board);
+	
+		if (!$imageExists) {
+			// If the image does not exist, skip processing
+			return;
+		}
+	
+		// Prepare HTML parts for appending
+		$imgBarHtml = '';
+	
+		// EXIF
+		if ($this->enable_exif && $isLocalBackend) {
+			$imgBarHtml .= '<span class="exifLink imageOptions">[<a href="' . $this->myPage . '&file=' . $file . '">EXIF</a>]</span> ';
+		}
+	
+		// ImgOps
+		if ($this->enable_imgops && !$isNotAReverseSearchableImage && $isLocalBackend) {
+			$imgBarHtml .= '<span class="imgopsLink imageOptions">[<a href="http://imgops.com/' . $FileIO->getImageURL($file, $board) . '" target="_blank">ImgOps</a>]</span> ';
+		}
+	
+		// Anime/manga search engine (iqdb)
+		if ($this->enable_iqdb && !$isNotAReverseSearchableImage && $isLocalBackend) {
+			$imgBarHtml .= '<span class="iqdbLink imageOptions">[<a href="http://iqdb.org/?url=' . $FileIO->getImageURL($file, $board) . '" target="_blank">iqdb</a>]</span> ';
+		}
+	
+		// SWFChan archive
+		if ($this->enable_swfchan && $isSwf && $isLocalBackend) {
+			$rawByteFileSize = $FileIO->getImageFilesize($file, $board);
 
-        //EXIF
-		if($this->enable_exif && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-			$arrLabels['{$IMG_BAR}'] .= '<small>[<a href="'.$this->myPage.'&file='.$file.'&boardUID='.$board->getBoardUID().'">EXIF</a>]</small> ';
+	
+			$imgBarHtml .= '<span class="swfchanLink imageOptions">[<a href="http://eye.swfchan.com/search/?q=>' . $rawByteFileSize . '" target="_blank">swfchan</a>]</span> ';
 		}
-		//ImgOps
-		if($this->enable_imgops && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-		    $arrLabels['{$IMG_BAR}'] .= '<small>[<a href="http://imgops.com/'.$FileIO->getImageURL($file, $board).'" target="_blank">ImgOps</a>]</small> ';
-		}
-		//Anime/manga search engine
-		if($this->enable_iqdb && $FileIO->imageExists($file, $board) && ($this->config['FILEIO_BACKEND']=='normal' || $this->config['FILEIO_BACKEND']=='local')) { // work for normal File I/O only
-			$arrLabels['{$IMG_BAR}'] .= '<small>[<a href="http://iqdb.org/?url='.$FileIO->getImageURL($file, $board).'" target="_blank">iqdb</a>]</small> ';
-		}
-	}
+	
+		// Append the built HTML content to the final label
+		$arrLabels['{$IMG_BAR}'] .= $imgBarHtml;
+	}	
+	
 
-	public function autoHookThreadReply(&$arrLabels, $post, $isReply){
-		$this->autoHookThreadPost($arrLabels, $post, $isReply);
+	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply){
+		$this->autoHookThreadPost($arrLabels, $post, $threadPosts, $isReply);
 	}
 
 	public function ModulePage(){
@@ -63,43 +98,43 @@ class mod_imagemeta extends ModuleHelper {
 		echo $h;
 		$file = $_GET['file'] ?? '';
 		echo '[<a href="'.$this->config['PHP_SELF2'].'">Return</a>]';
-		echo '<p>';
+		echo '<ul class="exifInfoList">';
 		if($file && $FileIO->imageExists($file, $board)){
 			$pfile = $board->getBoardUploadedFilesDirectory().$boardConfig['IMG_DIR'].'/'.$file;
 			if(function_exists("exif_read_data")) {
-				echo "DEBUG: Using exif_read_data()<br>";
+				echo "<li>DEBUG: Using exif_read_data()</li>";
 				$exif_data = exif_read_data($pfile, 0, true);
 
 				if(is_array($exif_data) && count($exif_data)) {
-					echo 'Image contains EXIF data:<br>';
-					echo '</p><table border="1" class="exif"><tbody>';
+					echo '<li>Image contains EXIF data:</li>';
+					echo '</ul><table class="exif postlists"><tbody>';
 					foreach($exif_data as $key=>$section) {
 						foreach($section as $name=>$value) {
-							echo "<tr><th align=\"RIGHT\">$key.$name</th><td>$value</td></tr>";
+							echo "<tr><th>$key.$name</th><td>$value</td></tr>";
 						}
 					}
 					echo '</tbody></table><p>';
 				} else {
-					echo 'No EXIF data found.';
+					echo '<li>No EXIF data found.</li>';
 				}
 			} else {
-				echo "DEBUG: Using built-in exif library<br>";
+				echo "<li>DEBUG: Using built-in exif library</li>";
 				$exif=new exif($pfile);
 				if(count($exif->exif_data)) {
-					echo 'Image contains EXIF data:<br>';
-					echo '</p><table border="1"><tbody>';
+					echo '<li>Image contains EXIF data:</li>';
+					echo '</ul><table border="1"><tbody>';
 					foreach($exif->exif_data as $key=>$value) {
-						echo "<tr><th align=\"RIGHT\">$key</th><td>$value</td></tr>";
+						echo "<tr><th>$key</th><td>$value</td></tr>";
 					}
 					echo '</tbody></table><p>';
 				} else {
-					echo 'No EXIF data found.';
+					echo '<li>No EXIF data found.</li>';
 				}
 			}
 		} else {
-			echo '<b class="error">File Not Found!</b>';
+			echo '<li><strong class="error">File Not Found!</strong></li>';
 		}
-		echo '</p>';
+		echo '</ul>';
 		if(isset($_SERVER['HTTP_REFERER'])) echo '[<a href="'.$_SERVER['HTTP_REFERER'].'" onclick="event.preventDefault();history.go(-1);">Back</a>]';
 		$f = '';
 		$globalHTML->foot($f);
@@ -270,8 +305,8 @@ class exif{
 			switch ($section_marker) {
 				case 225:
 					fclose($fp);
-			    	return $this->extractEXIFData(substr($data, 2), $section_length);
-			    	$ef = true;
+					return $this->extractEXIFData(substr($data, 2), $section_length);
+					$ef = true;
 					break;
 			}
 		}

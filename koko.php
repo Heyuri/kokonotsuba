@@ -6,75 +6,16 @@ YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE TH
 */
 session_start();
 
-/* Libraries */
-require __DIR__.'/lib/interfaces.php';
-require __DIR__.'/lib/lib_simplelogger.php';
-require __DIR__.'/lib/lib_loggerinterceptor.php';
-require __DIR__.'/lib/lib_admin.php'; // Admin panel functions
-require __DIR__.'/lib/lib_template.php'; // Template library
-require __DIR__.'/lib/lib_post.php'; // Post and thread functions
-require __DIR__.'/lib/lib_pte.php';
-require __DIR__.'/lib/lib_pms.php';
-require __DIR__.'/lib/lib_pio.php';
-require __DIR__.'/lib/lib_pio.cond.php';
-require __DIR__.'/lib/lib_common.php'; // Introduce common function archives
-require __DIR__.'/lib/pmclibrary.php'; // Ingest libraries
-require __DIR__.'/lib/lib_errorhandler.php'; // Introduce global error capture
-require __DIR__.'/lib/lib_compatible.php'; // Introduce compatible libraries
-
-/* Caching */
-require __DIR__.'/lib/boardPathCachingIO.php';
-require __DIR__.'/lib/cachedBoardPath.php';
-
-/* Database singleton */
-require __DIR__.'/lib/database.php';
-
-/* Handle soft error pages */
-require __DIR__.'/lib/softErrorHandler.php';
-
-/* HTML output */
-require __DIR__.'/lib/globalHTML.php';
-
-/* Main output */
-require __DIR__.'/lib/modeHandler.php';
-
-/* Overboard */
-require __DIR__.'/lib/overboard.php';
-
-/* Post objects and singletons */
-require __DIR__.'/lib/postValidator.php';
-require __DIR__.'/lib/postSingleton.php';
-require __DIR__.'/lib/postRedirectIO.php';
-require __DIR__.'/lib/threadRedirect.php';
-
-/* Admin page selector */
-require __DIR__.'/lib/adminPageHandler.php';
-
-/* Account Related */
-require __DIR__.'/lib/accountIO.php';
-require __DIR__.'/lib/accountClass.php';
-require __DIR__.'/lib/accountRequestHandler.php';
-require __DIR__.'/lib/staffAccountSession.php';
-require __DIR__.'/lib/loginHandler.php';
-require __DIR__.'/lib/authenticate.php';
-
-/* Action log */
-require __DIR__.'/lib/actionClass.php';
-require __DIR__.'/lib/actionLoggerSingleton.php';
-
-
-/* Board classes and singleton */
-require __DIR__.'/lib/boardClass.php';
-require __DIR__.'/lib/boardSingleton.php';
-require __DIR__.'/lib/boardStoredFile.php';
-
-
 function getBackendDir() {
 	return __DIR__.'/';
 }
 
+function getBackendCodeDir() {
+	return getBackendDir().'code/';
+}
+
 function getBackendGlobalDir() {
-	return __DIR__.'/global/';
+	return getBackendDir().'global/';
 }
 
 function getBoardConfigDir() {
@@ -86,13 +27,32 @@ function getBoardStoragesDir() {
 }
 
 function getTemplateConfigArray() {
-	require getBoardConfigDir().'board-template.php';
+	// Path to the board template configuration file
+	$configFile = getBoardConfigDir() . 'board-template.php';
+	
+	// Check if the file exists before including
+	if (!file_exists($configFile)) {
+		throw new Exception("Configuration file not found: " . $configFile);
+	}
+
+	require $configFile;
+	
+	// Ensure $config is set in the included file
+	if (!isset($config)) {
+		throw new Exception("Configuration array \$config is not defined in: " . $configFile);
+	}
+	
 	return $config;
 }
 
-function generateNewBoardConfigFile() {
+
+
+require getBackendDir().'includes.php';
+
+
+function generateNewBoardConfigFile(string $boardUid): ?string {
 	$templateConfigPath = getBoardConfigDir().'board-template.php';//config template
-	$newConfigFileName = 'board-'.generateUid().'.php';
+	$newConfigFileName = 'board-' . $boardUid . '.php';
 	$boardConfigsDirectory = getBoardConfigDir();
 
 	if(!copyFileWithNewName($templateConfigPath, $newConfigFileName, $boardConfigsDirectory)) throw new Exception("Failed to copy new config file");
@@ -113,9 +73,7 @@ function getGlobalConfig() {
 }
 
 function getBoardFromBootstrapFile() {
-	$dbSettings = getDatabaseSettings();	
-	
-	$BoardIO = boardIO::getInstance();
+	$boardIO = boardIO::getInstance();
 	$boardUIDIni = parse_ini_file('./boardUID.ini', true);
 	
 	//run some checks
@@ -123,44 +81,142 @@ function getBoardFromBootstrapFile() {
 	if(!isset($boardUIDIni['board_uid'])) die("Board UID value in the ini file is not be set or is null. Check boardUID.ini to ensure it has a valid board UID.");
 	
 	$boardUID = $boardUIDIni['board_uid'];
-	return $BoardIO->getBoardByUID($boardUID);
+
+	$board = $boardIO->getBoardByUID($boardUID);
+	if(!$board) die("Board ($boardUID) not found in database. Contact the Administrator if you believe this is a mistake."); //board was not found
+	return $board;
 }
 
-/* if the board isn't specified in POST, then get the board from bootstrap board file  */
-function getBoardFromPOST() {
-	$dbSettings = getDatabaseSettings();
-	$BoardIO = boardIO::getInstance($dbSettings);
 
-	$board = null;
-	$boardUIDFromPost = $_POST['board'] ?? '';
-	if(empty($boardUIDFromPost)) $board = getBoardFromBootstrapFile();
-	else $board = $BoardIO->getBoardByUID($boardUIDFromPost);
-	return $board;	
-}
+/*────────────────────────────────────────────────────────────
+	The main judgment of the functions of the program
+────────────────────────────────────────────────────────────*/
 
 //Check if this is the backend
 if(file_exists('.backend')) die("You are trying to access the instance's backend");
 
-/*-----------The main judgment of the functions of the program-------------*/
+
+// ───────────────────────────────────────
+// Database Setup
+// ───────────────────────────────────────
 $dbSettings = getDatabaseSettings();
-//database singletons
+
 DatabaseConnection::createInstance($dbSettings);
 boardIO::createInstance($dbSettings);
 AccountIO::createInstance($dbSettings);
-ActionLogger::createInstance($dbSettings);
-boardPathCachingIO::createInstance($dbSettings);
+actionLogger::createInstance($dbSettings);
 postRedirectIO::createInstance($dbSettings);
+threadCacheSingleton::createInstance($dbSettings);
+quoteLinkSingleton::createInstance($dbSettings);
 
+// ───────────────────────────────────────
+// Board Bootstrap
+// ───────────────────────────────────────
 $board = getBoardFromBootstrapFile();
 
-//board-related singletons
 PMCLibrary::createFileIOInstance($board);
-PMS::createInstance($board);
-PTELibrary::createInstance($board);
 PIOPDO::createInstance($dbSettings);
+postSearchService::createInstance($dbSettings);
+threadSingleton::createInstance($dbSettings);
+boardPathCachingIO::createInstance($dbSettings);
 
+// ───────────────────────────────────────
+// Validate Early
+// ───────────────────────────────────────
+if (!file_exists($board->getFullConfigPath()) || !file_exists($board->getBoardStoragePath())) {
+	die("Invalid board setup");
+}
 
-//handle user requests and gzip compression on request
-$modeHandler = new modeHandler($board);
-$modeHandler->handle();
+$config = $board->loadBoardConfig();
+
+// ───────────────────────────────────────
+// Dependencies
+// ───────────────────────────────────────
+$globalHTML			= new globalHTML($board);
+
+$moduleEngine		= new moduleEngine($board);
+$templateEngine		= $board->getBoardTemplateEngine();
+
+$adminTemplateEngine = new templateEngine(getBackendDir() . 'templates/admin.tpl', [
+	'config'	=> $config,
+	'boardData'	=> [
+		'title'		=> $board->getBoardTitle(),
+		'subtitle'	=> $board->getBoardSubTitle()
+	]
+]);
+
+$adminPageRenderer	= new pageRenderer($adminTemplateEngine, $globalHTML);
+
+$overboard			= new overboard($config, $moduleEngine, $templateEngine);
+
+// ───────────────────────────────────────
+// IO / Core Systems
+// ───────────────────────────────────────
+$boardIO			= boardIO::getInstance();
+$FileIO				= PMCLibrary::getFileIOInstance();
+$PIO				= PIOPDO::getInstance();
+$threadSingleton	= threadSingleton::getInstance();
+$AccountIO			= AccountIO::getInstance();
+$actionLogger		= ActionLogger::getInstance();
+
+// ───────────────────────────────────────
+// Error Handling & Authentication
+// ───────────────────────────────────────
+$softErrorHandler	= new softErrorHandler($globalHTML);
+
+$loginSessionHandler	= new loginSessionHandler($config['STAFF_LOGIN_TIMEOUT']);
+$authenticationHandler	= new authenticationHandler();
+
+$adminLoginController	= new adminLoginController(
+	$actionLogger,
+	$AccountIO,
+	$globalHTML,
+	$loginSessionHandler,
+	$authenticationHandler
+);
+
+// ───────────────────────────────────────
+// Session & Validation
+// ───────────────────────────────────────
+$staffSession		= new staffAccountFromSession;
+
+$IPValidator		= new IPValidator($config, new IPAddress);
+$postValidator		= new postValidator($board, $config, $globalHTML, $IPValidator, $threadSingleton);
+
+// ───────────────────────────────────────
+// Main Handler Execution
+// ───────────────────────────────────────
+try {
+	$modeHandler = new modeHandler(
+		$board,
+		$globalHTML,
+		$moduleEngine,
+		$templateEngine,
+		$adminTemplateEngine,
+		$overboard,
+		$adminPageRenderer,
+		$softErrorHandler,
+		$boardIO,
+		$FileIO,
+		$PIO,
+		$threadSingleton,
+		$AccountIO,
+		$actionLogger,
+		$adminLoginController,
+		$staffSession,
+		$postValidator
+	);
+
+	$modeHandler->handle();
+
+} catch (\Throwable $e) {
+	$globalConfig	= getGlobalConfig();
+	$globalHTML		= new globalHTML($board);
+
+	PMCLibrary::getLoggerInstance($globalConfig['ERROR_HANDLER_FILE'], 'Global')
+		->error($e->getMessage());
+
+	$globalHTML->error("There has been an error. (;´Д`)");
+}
+
 clearstatcache();

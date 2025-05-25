@@ -1,10 +1,9 @@
 <?php
-class mod_stat extends ModuleHelper {
+class mod_stat extends moduleHelper {
 	private $mypage;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-		$this->mypage = str_replace('&amp;', '&', $this->getModulePageURL());
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		$this->mypage = str_replace('&amp;', '&', $this->getModulePageURL());
 	}
 
 	public function getModuleName() {

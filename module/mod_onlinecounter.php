@@ -1,10 +1,9 @@
 <?php
-class mod_onlinecounter extends ModuleHelper {
+class mod_onlinecounter extends moduleHelper {
 	private $mypage, $usercounter, $timeout;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-		$this->usercounter = $this->board->getBoardStoragePath().$this->config['ModuleSettings']['USER_COUNT_DAT_FILE'];
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		$this->usercounter = $this->board->getBoardStoragePath().$this->config['ModuleSettings']['USER_COUNT_DAT_FILE'];
 		$this->timeout = $this->config['ModuleSettings']['USER_COUNT_TIMEOUT'];
 		$this->mypage = $this->getModulePageURL();
 	}
@@ -56,7 +55,7 @@ class mod_onlinecounter extends ModuleHelper {
 		$form .= '
 			<li id="counterListItemNoJS" class="">
 				<noscript>
-					<iframe id="counterIframe" src="'.$this->mypage.'" scrolling="no"></iframe>
+					<iframe id="counterIframe" title="User counter" src="'.$this->mypage.'"></iframe>
 				</noscript>
 			</li>';
 	}
@@ -74,7 +73,7 @@ class mod_onlinecounter extends ModuleHelper {
 			<head>
 				<meta charset="utf-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<link rel="stylesheet" href="'.$this->config['STATIC_URL'].'css/base.css">
+				<link rel="stylesheet" href="'.$this->config['STATIC_URL'].'css/kokoimg/base.css">
 			</head>
 			<body id="counterIframeBody">';
 		$userCount = $this->getUserCount();

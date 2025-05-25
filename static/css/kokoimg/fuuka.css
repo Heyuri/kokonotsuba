@@ -1,0 +1,93 @@
+@charset "UTF-8";
+
+/************************ Global **************************************/
+
+:root {
+  /* Global */
+  --font-family-main: var(--font-family-serif);
+  --font-size-main: 12pt;
+  --color-bg-main: #eefff2;
+  --color-bg-main-gradient: #d1eed5;
+  --color-fg-main: #000000;
+  --color-fg-link: #34345c;
+  --color-fg-link-hover: #ee0000;
+  --color-lo-contrast-border: #b7d9c5;
+  --color-hi-contrast-border: #88aa99;
+  --color-border-button: #e3e3e3;
+  /* Navigation/admin bar */
+  --color-bg-boardlist: #d5f0d9;
+  --color-fg-boardlist: #88aa99;
+  /* Board header */
+  --color-fg-logo: var(--color-fg-main);
+  --color-bg-theading: #e04000;
+  --color-bg-theading2: #0040e0;
+  --color-bg-theading3: #e08000;
+  --color-fg-theading: #ffffff;
+  /* Post form */
+  --color-bg-postblock: #bbddbb;
+  --color-fg-global-message: var(--color-fg-warning);
+  /* Posts/replies */
+  --color-bg-reply: #d6f0da;
+  --color-bg-reply-hl: #d6bad0;
+  --color-fg-title: #0f0c5d;
+  --color-fg-name: #117743;
+  --color-fg-warning: #f00000;
+  --color-fg-warning-ip: #0000cc;
+  --color-fg-omitted: #707070;
+  /* Post formatting */
+  --color-fg-quotelink: #dd0000;
+  --color-fg-quotelink-hover: var(--color-fg-quotelink);
+  --color-fg-quote: #789922;
+  --color-fg-quote2: #ff69b4;
+  --color-bg-spoiler: #000000;
+  --color-bg-code: #ffffff;
+  --color-fg-code: #000000;
+  /* Administrator mode */
+  --color-bg-postlists-header: #6080f6;
+  --color-fg-postlists-header: #ffffff;
+	--color-fg-postlists-header-link: #ffff00;
+  --color-bg-postlists-odd: #d6d6f6;
+  --color-bg-postlists-even: #f6f6f6;
+  /* File board/flash board */
+  --color-bg-flashboard-even: #e0f6e5;
+  /* Windows */
+  --color-bg-window-item-highlight: #c7f0ce;
+}
+ 
+/************************ Navigation/admin bar ************************/
+/******** Neomenu ********/
+/************************ Board header ********************************/
+/************************ Post form ***********************************/
+
+.rules,
+#blotter {
+  font-family: sans-serif;
+  font-size: var(--font-size-xx-small);
+}
+
+/************************ Posts/replies *******************************/
+/************************ Post formatting *****************************/
+/************************ Footer **************************************/
+/************************ Administrator mode **************************/
+/************************ Ban screen **********************************/
+/************************ Catalog *************************************/
+/********************** File board/flash board ************************/
+/************************ Windows *************************************/
+/************************ Mobile **************************************/
+
+@media screen and (max-width: 650px) {
+  .rules {
+    font-size: var(--font-size-x-small);
+  }
+}
+/************************ Probably not needed *************************/
+
+/* .top {
+  background-color: #060a0d;
+} */
+
+/* iframe,
+.rotating {
+  border-right: 1px solid var(--color-fg-main);
+  border-bottom: 1px solid var(--color-fg-main);
+} */

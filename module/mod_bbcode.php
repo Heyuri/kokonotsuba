@@ -1,5 +1,5 @@
 <?php
-class mod_bbcode extends ModuleHelper { 
+class mod_bbcode extends moduleHelper { 
 	private $myPage;
 	private $urlcount;
 	private	$ImgTagTagMode = 0; // [img] tag behavior (0: no conversion 1: conversion when no textures 2: always conversion)
@@ -7,12 +7,11 @@ class mod_bbcode extends ModuleHelper {
 	private	$MaxURLCount = 2; // [url] tag upper limit (when the upper limit is exceeded, the tag is a trap tag [written to $URLTrapLog])
 	private	$URLTrapLog = './URLTrap.log'; // [url]trap label log file
 	private $AATagMode = 1; // Koko [0:Enabled 1:Disabled]
-	private $supportRuby = 0; // <ruby> tag (0: not supported 1: supported)
+	private $supportRuby = 1; // <ruby> tag (0: not supported 1: supported)
 	private $emotes = array();
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-		
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
 		$this->emotes = array(
 			'nigra'=>$this->config['STATIC_URL'].'image/emote/nigra.gif',
 			'sage'=>$this->config['STATIC_URL'].'image/emote/sage.gif',
@@ -96,12 +95,30 @@ class mod_bbcode extends ModuleHelper {
 		return 'Koko BBS Release 1';
 	}
 
-	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $resto, $imgWH){
-		$com = $this->bb2html($com,$dest);
+	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $resto, $imgWH){
+		$com = $this->bb2html($com,$file);
 	}
 
-	public function bb2html($string, $dest){
+	public function bb2html($string, $file){
 		$this->urlcount=0; // Reset counter
+
+		// Extract [code] and [code=lang] blocks before processing other BBCode
+		$codeBlocks = [];
+		$string = preg_replace_callback('#\[code(?:=([a-zA-Z0-9_+\-]+))?\](.*?)\[/code\]#si', function($matches) use (&$codeBlocks) {
+			$key = '[[[CODEBLOCK_' . count($codeBlocks) . ']]]';
+			$lang = isset($matches[1]) ? strtolower($matches[1]) : null;
+			$content = preg_replace('#<br\s*/?>#i', "\n", $matches[2]);
+			if ($lang) {
+				$codeBlocks[$key] = '<pre class="code">' . $this->highlightCodeSyntax($content, $lang) . '</pre>';
+			} else {
+				$codeBlocks[$key] = '<pre class="code">' . htmlspecialchars_decode(htmlspecialchars($content, ENT_NOQUOTES, 'UTF-8')) . '</pre>';
+			}
+			return $key;
+		}, $string);
+
+		// Preprocess the BBCode to fix nesting issues
+		$string = $this->fixBBCodeNesting($string);
+
 		$string = preg_replace('#\[b\](.*?)\[/b\]#si', '<b>\1</b>', $string);
 		$string = preg_replace('#\[s\](.*?)\[/s\]#si', '<span class="spoiler">\1</span>', $string);
 		$string = preg_replace('#\[spoiler\](.*?)\[/spoiler\]#si', '<span class="spoiler">\1</span>', $string);
@@ -112,14 +129,14 @@ class mod_bbcode extends ModuleHelper {
 		$string = preg_replace('#\[sw\](.*?)\[/sw\]#si', '<pre class="sw">\1</pre>', $string);
 		$string = preg_replace('#\[kao\](.*?)\[/kao\]#si', '<span class="ascii">\1</span>', $string);
 		
-		$string = preg_replace('#\[color=(\S+?)\](.*?)\[/color\]#si', '<font color="\1">\2</font>', $string);
+		$string = preg_replace('#\[color=(\S+?)\](.*?)\[/color\]#si', '<span style="color:\1;">\2</span>', $string);
 
-		$string = preg_replace('#\[s([1-7])\](.*?)\[/s([1-7])\]#si', '<font size="\1">\2</font>', $string);
+		$string = preg_replace('#\[s([1-7])\](.*?)\[/s([1-7])\]#si', '<span class="fontSize\1">\2</span>', $string);
 
 		$string = preg_replace('#\[del\](.*?)\[/del\]#si', '<del>\1</del>', $string);
 		$string = preg_replace('#\[pre\](.*?)\[/pre\]#si', '<pre>\1</pre>', $string);
 		$string = preg_replace('#\[quote\](.*?)\[/quote\]#si', '<blockquote>\1</blockquote>', $string);
-		$string = preg_replace('#\[scroll\](.*?)\[/scroll\]#si', '<div style="overflow:scroll; max-height: 200px;">\1</div>', $string);
+		$string = preg_replace('#\[scroll\](.*?)\[/scroll\]#si', '<div class="scrollText">\1</div>', $string);
 
 		if ($this->supportRuby){
 		//add ruby tag
@@ -143,16 +160,267 @@ class mod_bbcode extends ModuleHelper {
 		$string = preg_replace('#\[email\](\S+?@\S+?\\.\S+?)\[/email\]#si', '<a href="mailto:\1">\1</a>', $string);
 
 		$string = preg_replace('#\[email=(\S+?@\S+?\\.\S+?)\](.*?)\[/email\]#si', '<a href="mailto:\1">\2</a>', $string);
-		if (($this->ImgTagTagMode == 2) || ($this->ImgTagTagMode && !$dest)){
+		if (($this->ImgTagTagMode == 2) || ($this->ImgTagTagMode && !$file)){
 			$string = preg_replace('#\[img\](([a-z]+?)://([^ \n\r]+?))\[\/img\]#si', '<img class="bbcodeIMG" src="\1" style="border:1px solid \#021a40;" alt="\1">', $string);
 		}
 
 		foreach ($this->emotes as $emo=>$url) {
-			$string = str_replace(":$emo:", "<img title=\":$emo:\" class=\"emote\" src=\"$url\" alt=\"$emo\" border=\"0\">", $string);
+			$string = str_replace(":$emo:", "<img title=\":$emo:\" class=\"emote\" src=\"$url\" alt=\":$emo:\">", $string);
+		}
+
+		// Restore preserved code blocks
+		if (!empty($codeBlocks)) {
+			$string = strtr($string, $codeBlocks);
 		}
 
 		return $string;
 	}
+
+	// New function to fix improperly nested BBCode tags
+	private function fixBBCodeNesting($text){
+		// List of supported tags. Only these tags will be processed for nesting correction.
+		$supportedTags = array('b', 'i', 'spoiler', 'color', 's', 'u', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'code', 'pre', 'aa', 'kao', 'sw', 'quote', 'ruby', 'rt', 'rp');
+		
+		$pattern = '/(\[\/?[a-zA-Z0-9]+\b(?:=[^\]]+)?\])/i';
+		$tokens = array();
+		$lastPos = 0;
+		if(preg_match_all($pattern, $text, $matches, PREG_OFFSET_CAPTURE)){
+			foreach($matches[0] as $match){
+				$pos = $match[1];
+				$tagStr = $match[0];
+				if($pos > $lastPos){
+					$tokens[] = array(
+						'type' => 'text',
+						'content' => substr($text, $lastPos, $pos - $lastPos)
+					);
+				}
+				// Check for closing tag
+				if(preg_match('/^\[\/([a-zA-Z0-9]+)\]/i', $tagStr, $m)){
+					$tag = strtolower($m[1]);
+					if(!in_array($tag, $supportedTags)){
+						$tokens[] = array(
+							'type' => 'text',
+							'content' => $tagStr
+						);
+					} else {
+						$tokens[] = array(
+							'type' => 'tag',
+							'closing' => true,
+							'tag' => $tag,
+							'full' => $tagStr
+						);
+					}
+				}else if(preg_match('/^\[([a-zA-Z0-9]+)(=[^\]]+)?\]/i', $tagStr, $m)){
+					$tag = strtolower($m[1]);
+					if(!in_array($tag, $supportedTags)){
+						$tokens[] = array(
+							'type' => 'text',
+							'content' => $tagStr
+						);
+					} else {
+						$tokens[] = array(
+							'type' => 'tag',
+							'closing' => false,
+							'tag' => $tag,
+							'attr' => isset($m[2]) ? $m[2] : '',
+							'full' => $tagStr
+						);
+					}
+				}else{
+					$tokens[] = array(
+						'type' => 'text',
+						'content' => $tagStr
+					);
+				}
+				$lastPos = $pos + strlen($tagStr);
+			}
+		}
+		if($lastPos < strlen($text)){
+			$tokens[] = array(
+				'type' => 'text',
+				'content' => substr($text, $lastPos)
+			);
+		}
+		
+		$outputTokens = array();
+		$stack = array();
+		$tokenCount = count($tokens);
+		for($i = 0; $i < $tokenCount; $i++){
+			$token = $tokens[$i];
+			if($token['type'] == 'text'){
+				$outputTokens[] = $token;
+			}else if(!$token['closing']){
+				$outputTokens[] = $token;
+				$stack[] = array(
+					'tag' => $token['tag'],
+					'attr' => $token['attr'],
+					'pos' => count($outputTokens)-1
+				);
+			}else{
+				$tagName = $token['tag'];
+				if(!empty($stack) && end($stack)['tag'] == $tagName){
+					array_pop($stack);
+					$outputTokens[] = $token;
+				}else{
+					$found = false;
+					$temp = array();
+					while(!empty($stack)){
+						$top = array_pop($stack);
+						$temp[] = $top;
+						if($top['tag'] == $tagName){
+							$found = true;
+							break;
+						}
+					}
+					if($found){
+						$toReopen = array();
+						$matchingTag = array_pop($temp);
+						while(!empty($temp)){
+							$misplaced = array_pop($temp);
+							$outputTokens[] = array(
+								'type' => 'tag',
+								'closing' => true,
+								'tag' => $misplaced['tag'],
+								'full' => '[/' . $misplaced['tag'] . ']'
+							);
+							$toReopen[] = $misplaced;
+						}
+						$outputTokens[] = $token;
+						foreach($toReopen as $tagToReopen){
+							$nextToken = ($i+1 < $tokenCount) ? $tokens[$i+1] : null;
+							if($nextToken && $nextToken['type'] == 'tag' && $nextToken['closing'] && $nextToken['tag'] == $tagToReopen['tag']){
+								$i++; // Skip the next closing tag
+							}else{
+								$outputTokens[] = array(
+									'type' => 'tag',
+									'closing' => false,
+									'tag' => $tagToReopen['tag'],
+									'attr' => $tagToReopen['attr'],
+									'full' => '[' . $tagToReopen['tag'] . $tagToReopen['attr'] . ']'
+								);
+								$stack[] = $tagToReopen;
+							}
+						}
+					}else{
+						// No matching opening tag found; ignore this closing tag.
+					}
+				}
+			}
+		}
+		while(!empty($stack)){
+			$open = array_pop($stack);
+			$outputTokens[] = array(
+				'type' => 'tag',
+				'closing' => true,
+				'tag' => $open['tag'],
+				'full' => '[/' . $open['tag'] . ']'
+			);
+		}
+		$result = '';
+		foreach($outputTokens as $tok){
+			if($tok['type'] == 'text'){
+				$result .= $tok['content'];
+			}else{
+				$result .= $tok['full'];
+			}
+		}
+		return $result;
+	}
+
+	private function highlightCodeSyntax($code, $lang) {
+		$lang = strtolower($lang);
+	
+		$keywords = [];
+		$commentPatterns = [];
+		$extraHighlighter = null;
+	
+		switch ($lang) {
+			case 'c':
+			case 'cpp':
+			case 'c++':
+				$keywords = ['int','char','float','double','if','else','for','while','return','struct','class','include'];
+				$commentPatterns = ['#//.*?$#m', '#/\*.*?\*/#s'];
+				break;
+	
+			case 'php':
+				$keywords = ['function','echo','print','if','else','foreach','while','return','class','public','private','protected','static'];
+				$commentPatterns = ['#//.*?$#m', '#/\*.*?\*/#s', '#\#.*?$#m'];
+				break;
+	
+			case 'js':
+			case 'javascript':
+				$keywords = ['function','var','let','const','if','else','for','while','return'];
+				$commentPatterns = ['#//.*?$#m', '#/\*.*?\*/#s'];
+				break;
+	
+			case 'py':
+			case 'python':
+				$keywords = ['def','return','if','elif','else','for','while','import','from','as','class','try','except','with','lambda','pass','break','continue'];
+				$commentPatterns = ['#\#.*?$#m', '#(&quot;&quot;&quot;|&apos;&apos;&apos;)(.*?)\1#s'];
+				break;
+	
+			case 'pl':
+			case 'perl':
+				$keywords = ['sub','my','if','else','foreach','while','return','print','use','package'];
+				$commentPatterns = ['#\#.*?$#m', '#=begin(.*?)=end#s'];
+				break;
+
+
+			case 'f':
+			case 'fortran':
+				$keywords = ['program','end','integer','real','double','do','if','then','else','print','call','subroutine','function','return'];
+				$commentPatterns = ['#^!.*?$#m'];
+				break;
+	
+			case 'html':
+				$commentPatterns = ['#&lt;!--.*?--&gt;#s'];
+				$extraHighlighter = function($text) {
+					return preg_replace('/(&lt;\/?)([a-zA-Z0-9\-]+)(?=[\s&>])/', '$1<span class="codeKeyword">$2</span>', $text);
+				};
+				break;
+	
+			case 'css':
+				$commentPatterns = ['#/\*.*?\*/#s'];
+				$extraHighlighter = function($text) {
+					return preg_replace('/([{\s;])([a-zA-Z\-]+)(?=\s*:)/', '$1<span class="codeKeyword">$2</span>', $text);
+				};
+				break;
+	
+			default:
+				return htmlspecialchars_decode(htmlspecialchars($code, ENT_NOQUOTES, 'UTF-8'));
+		}
+	
+		$escaped = htmlspecialchars_decode(htmlspecialchars($code, ENT_NOQUOTES, 'UTF-8'));
+	
+		// Highlight comments
+		$commentTokens = [];
+		foreach ($commentPatterns as $pattern) {
+			$escaped = preg_replace_callback($pattern, function($m) use (&$commentTokens) {
+				$key = '[[[COMMENT_' . count($commentTokens) . ']]]';
+				$commentTokens[$key] = '<span class="codeComment">' . $m[0] . '</span>';
+				return $key;
+			}, $escaped);
+		}
+	
+		// Highlight keywords (if defined)
+		if (!empty($keywords)) {
+			$pattern = '/\b(' . implode('|', array_map('preg_quote', $keywords)) . ')\b/';
+			$escaped = preg_replace($pattern, '<span class="codeKeyword">$1</span>', $escaped);
+		}
+	
+		// Highlight additional regex matches
+		if ($extraHighlighter) {
+			$escaped = $extraHighlighter($escaped);
+		}
+	
+		// Restore comments
+		if (!empty($commentTokens)) {
+			$escaped = strtr($escaped, $commentTokens);
+		}
+	
+		return $escaped;
+	}
+	
 
 	private function _URLConv1($m){
 		++$this->urlcount;
@@ -202,9 +470,9 @@ class mod_bbcode extends ModuleHelper {
 		$string = preg_replace('#<p>(.*?)</p>#si', '[p]\1[/p]', $string);
 		$string = preg_replace('#<pre class="sw">(.*?)</pre>#si', '[sw]\1[/sw]', $string);
 
-		$string = preg_replace('#<font color="(\S+?)">(.*?)</font>#si', '[color=\1]\2[/color]', $string);
+		$string = preg_replace('#<span style="color:(\S+?);">(.*?)</span>#si', '[color=\1]\2[/color]', $string);
 
-		$string = preg_replace('#<font size="([1-7])">(.*?)</font>#si', '[s\1]\2[/s\1]', $string);
+		$string = preg_replace('#<span class="fontSize([1-7])">(.*?)</span>#si', '[s\1]\2[/s\1]', $string);
 
 		$string = preg_replace('#<del>(.*?)</del>#si', '[del]\1[/del]', $string);
 		$string = preg_replace('#<pre>(.*?)</pre>#si', '[pre]\1[/pre]', $string);
@@ -224,17 +492,19 @@ class mod_bbcode extends ModuleHelper {
 
 
 	private function _URLExcced(){
+		$globalHTML = new globalHTML($this->board);
 		if($this->urlcount > $this->MaxURLCount) {
 		  	  $fh = fopen($this->URLTrapLog, 'a+b');
-		  	  fwrite($fh, time()."\t$_SERVER[REMOTE_ADDR]\t$cnt\n");
+		  	  fwrite($fh, time()."\t$_SERVER[REMOTE_ADDR]\t{$this->urlcount}\n");
 		  	  fclose($fh);
-		  	  error("URL:標籤超過上限");
+		  	  $globalHTML->error("URL: Tags exceed max limit");
 		}
 	}
 
 	public function ModulePage(){
+		$globalHTML = new globalHTML($this->board);
 		$dat='';
-		head($dat);
+		$globalHTML->head($dat);
 		$dat.='
 BBCODE Settings:
 <ul>
@@ -245,7 +515,7 @@ BBCODE Settings:
 	<li>[aa]Hello[/aa] will become</li>
 </ul>
 ';
-		foot($dat);
+		$globalHTML->foot($dat);
 		echo $dat;
 	}
 }

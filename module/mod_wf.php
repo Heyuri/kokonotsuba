@@ -1,11 +1,11 @@
 <?php
-    class mod_wf extends ModuleHelper {
+    class mod_wf extends moduleHelper {
       private $FILTERS;
      
-      public function __construct($PMS) {
-      	parent::__construct($PMS);
-      	$this->FILTERS = $this->config['ModuleSettings']['FILTERS'];
-      
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);
+
+        $this->FILTERS = $this->config['ModuleSettings']['FILTERS'];
         $this->addEmojiFilters();
       }
      
@@ -497,7 +497,7 @@
         }
       }
      
-      public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $isReply, $imgWH, &$status) {
+      public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, $imgWH, &$status) {
         //VAGINA filter
         $red1 = mt_rand(0, 255);
         $green1 = mt_rand(0, 255);

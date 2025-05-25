@@ -1,12 +1,11 @@
 <?php
 // animated gif module made for kokonotsuba by deadking
 // "forked" from the siokara mod for pixmicat
-class mod_anigif extends ModuleHelper {
+class mod_anigif extends moduleHelper {
 	private $mypage;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-		$this->mypage = $this->getModulePageURL();
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		$this->mypage = $this->getModulePageURL();
 	}
 
 	public function getModuleName() {
@@ -18,41 +17,49 @@ class mod_anigif extends ModuleHelper {
 	}
 
 	public function autoHookPostFormFile(&$file){
-		$file.= '<nobr>[<label><input type="checkbox" name="anigif" id="anigif" value="on">Animated GIF</label>]</nobr>';
+		$file.= '<div id="anigifContainer"><label id="anigifLabel" title="Makes GIF thumbnails animated"><input type="checkbox" name="anigif" id="anigif" value="on">Animated GIF</label></div>';
 	}
 
-	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $isReply, $imgWH, &$status) {
-		$fh = new FlagHelper($status);
-
-		$size =($dest && is_file($dest)) ? getimagesize($dest) :[];
-
-		if(isset($_POST['anigif']) && isset($size[2]) && ($size[2] == 1)) {
-			$fh->toggle('agif');
-			$status = $fh->toString();
+	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, $imgWH, &$status) {
+		$mimeType = $file->getMimeType();
+		
+		if($mimeType !== 'image/gif') {
+			return;
+		}
+		
+		$anigifRequested = isset($_POST['anigif']);
+		
+		$flagHelper = new FlagHelper($status);
+		if ($anigifRequested) {
+			$flagHelper->toggle('agif');
+			$status = $flagHelper->toString();
 		}
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
-		$PIO = PIOPDO::getInstance();
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		$FileIO = PMCLibrary::getFileIOInstance();
 
 		$fh = new FlagHelper($post['status']);
-		if($FileIO->imageExists($post['tim'].$post['ext'], $this->board)
-		&& $fh->value('agif')) {
+		if($fh->value('agif')) {
+			// check if the file exists in here so time isn't wasted with checking if the file exists
+			if(!$FileIO->imageExists($post['tim'].$post['ext'], $this->board)) {
+				return;
+			}
+			
 			$imgURL = $FileIO->getImageURL($post['tim'].$post['ext'], $this->board);
 			$arrLabels['{$IMG_SRC}'] = preg_replace('/<img src=".*"/U','<img src="'.$imgURL.'"',$arrLabels['{$IMG_SRC}']);
-			$arrLabels['{$IMG_BAR}'].= '<small>[Animated GIF]</small>';
+			$arrLabels['{$IMG_BAR}'].= '<span class="animatedGIFLabel imageOptions">[Animated GIF]</span>';
 		}
 	}
 
-	public function autoHookThreadReply(&$arrLabels, $post, $isReply){
-		$this->autoHookThreadPost($arrLabels, $post, $isReply);
+	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply){
+		$this->autoHookThreadPost($arrLabels, $post, $threadPosts, $isReply);
 	}
 	
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$fh = new FlagHelper($post['status']);
 		if ($post['ext'] == '.gif') {
-			$modfunc.= '[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('agif')?' title="Use still image of GIF">g':' title="Use Animated GIF">G').'</a>]';
+			$modfunc.= '<span class="adminFunctions adminGIFFunction">[<a href="'.$this->mypage.'&post_uid='.$post['post_uid'].'"'.($fh->value('agif')?' title="Use still image of GIF">g':' title="Use animated GIF">G').'</a>]</span>';
 		}
 	}
 
@@ -60,19 +67,18 @@ class mod_anigif extends ModuleHelper {
 		$PIO = PIOPDO::getInstance();
 		$actionLogger = ActionLogger::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
-		$staffSession = new staffAccountFromSession;
-		$softErrorHandler = new softErrorHandler($this->board);
-		$roleLevel = $staffSession->getRoleLevel();
+		$globalHTML = new globalHTML($this->board);
+		$softErrorHandler = new softErrorHandler($globalHTML);
 		
-		$softErrorHandler->handleAuthError($this->config['roles']['LEV_JANITOR']);
+		$softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR);
 
-		$post = $PIO->fetchPostsFromThread($_GET['thread_uid'])[0];
+		$post = $PIO->fetchPosts($_GET['post_uid'] ?? 0)[0];
 		if(!count($post)) $globalHTML->error('ERROR: Post does not exist.');
 		if($post['ext'] && $post['ext'] == '.gif') {
 			if(!$FileIO->imageExists($post['tim'].$post['ext'], $this->board)) {
 				$globalHTML->error('ERROR: attachment does not exist.');
 			}
-			$flgh = $PIO->getPostStatus($post['post_uid']);
+			$flgh = new FlagHelper($post['status']);
 			$flgh->toggle('agif');
 			$PIO->setPostStatus($post['post_uid'], $flgh->toString());
 			

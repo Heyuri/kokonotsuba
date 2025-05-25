@@ -1,14 +1,11 @@
 <?php
-class mod_cat extends ModuleHelper {
+class mod_cat extends moduleHelper {
 	private $mypage;
 	private $PAGE_DEF = 200;
 	private $RESICON = -1;
-	private $THUMB_EXT = -1;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-				
-		$this->THUMB_EXT = $this->config['THUMB_SETTING']['Format'];
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);				
 		$this->RESICON = $this->config['STATIC_URL'].'image/replies.png';
 		$this->mypage = $this->getModulePageURL();
 	}
@@ -33,9 +30,9 @@ class mod_cat extends ModuleHelper {
 			$timeSelected = ' selected';
 		}
 		return '
-			<form action="koko.php?mode=module&load=mod_cat" method="post">
+			<form id="catalogSortForm" action="koko.php?mode=module&load=mod_cat" method="post">
 				<span>Sort by:</span>
-				<select name="sort_by" style="display: inline-block">
+				<select name="sort_by">
 					<option value="bump"'.$bumpSelected.'>Bump order</option>
 					<option value="time"'.$timeSelected.'>Creation date</option>
 				</select>
@@ -44,18 +41,15 @@ class mod_cat extends ModuleHelper {
 	}
 
 	public function ModulePage(){
-		$PTE = PTELibrary::getInstance();
-		$PMS = PMS::getInstance();
-		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
 		
 		$globalHTML = new globalHTML($this->board);
 		
 		$dat = '';
 
-		$list_max = $PIO->threadCountFromBoard($this->board);
+		$list_max = $threadSingleton->threadCountFromBoard($this->board);
 		$page = $_GET['page']??0;
-		$post_cnt = $PIO->postCountFromBoard($this->board);
 		$page_max = ceil($list_max / $this->PAGE_DEF) - 1;
 
 		$sort = $_POST['sort_by'] ?? $_GET['sort_by'] ?? $_COOKIE['cat_sort_by'] ?? '';
@@ -74,18 +68,18 @@ class mod_cat extends ModuleHelper {
 		//sort threads. If sort is set to bump nothing will change because that is the default order returned by fetchThreadList
 		switch($sort) {
 			case 'time':
-				$plist = $PIO->getThreadListFromBoard($this->board, $this->PAGE_DEF * $page, $this->PAGE_DEF, true);
+				$plist = $threadSingleton->getThreadListFromBoard($this->board, $this->PAGE_DEF * $page, $this->PAGE_DEF, true);
 				$sortfcn = function ($a, $b) { return strtotime($b['thread_created_time']) - strtotime($a['thread_created_time']); };
 				
 			break;
 			case 'bump':
 			default:
-				$plist = $PIO->getThreadListFromBoard($this->board, $this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
+				$plist = $threadSingleton->getThreadListFromBoard($this->board, $this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
 				$sortfcn = function ($a, $b) { return strtotime($b['last_bump_time']) - strtotime($a['last_bump_time']); };
 			break;
 		}
 
-		$threadList = $PIO->fetchThreads($plist) ?? [];
+		$threadList = $threadSingleton->fetchThreads($plist) ?? [];
 		usort($threadList, $sortfcn);
 
 		$cat_cols = $_COOKIE['cat_cols']??0;
@@ -95,77 +89,44 @@ class mod_cat extends ModuleHelper {
 
 		$globalHTML->head($dat);
 		$dat.= '
-		<script type="text/javascript" src="'.$this->config['STATIC_URL'].'js/catalog.js"></script>
+		<script src="'.$this->config['STATIC_URL'].'js/catalog.js"></script>
 		<div id="catalog">
-[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">Return</a>] '.$this->drawSortOptions($sort).'
-<center class="theading2"><b>Catalog</b></center>';
-
-		$dat.= '<style>';
-		if ($cat_fw) {
-			$dat.= '#catalog>table { width: 100%; }';
-		}
-		if ($cat_cols=='auto') {
-			$dat.='
-#catalog>table {
-	text-align: center;
-}
-#catalog>table tr, #catalog>table tbody {
-	display: inline;
-}
-#catalog>table td {
-	display: inline-block;
-	margin: 0.5em;
-}';
-		}
-		$dat.= '</style>';
-		$dat.= '<table align="CENTER" cellpadding="0" cellspacing="20"><tbody><tr>';
+[<a href="'.$this->config['PHP_SELF2'].'?'.time().'">Return</a>]
+<h2 class="theading2">Catalog</h2> '.$this->drawSortOptions($sort).'';
+				
+		$dat.= '<table id="catalogTable" class="' . ($cat_fw ? 'full-width' : '') . ' ' . ($cat_cols === 'auto' ? 'auto-cols' : 'fixed-cols') . '"><tbody><tr>';
 		foreach($threadList as $i=>$thread){
-			$opPost = $PIO->fetchPostsFromThread($thread['thread_uid'])[0];
+			$threadPosts = $threadSingleton->fetchPostsFromThread($thread['thread_uid']);
+
+			if(!$threadPosts) continue;
+
+			$opPost = $threadPosts[0];
 			extract($opPost);
 			
-			$resno = $PIO->resolveThreadNumberFromUID($thread_uid);
+			$resno = $no;
 			if ( ($cat_cols!='auto') && !($i%intval($cat_cols)) )
 				$dat.= '</tr><tr>';
 
 			if (!$sub)
-				$sub = 'No Title';
+				$sub = 'No subject';
 			
-			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'');
-			$PMS->useModuleMethods('ThreadPost', array(&$arrLabels, $opPost, false)); // "ThreadPost" Hook Point
+			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'', '{$IMG_SRC}' => '');
+			$this->moduleEngine->useModuleMethods('ThreadPost', array(&$arrLabels, $opPost, $threadPosts, false)); // "ThreadPost" Hook Point
 
-			$res = $PIO->getPostCountFromThread($thread_uid) - 1;
-			$dat.= '<td class="thread" width="180" height="200" align="CENTER">
-	<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>
-	<a href="'.$this->config['PHP_SELF'].'?res='.($resno?$resno:$no).'#p'.$no.'">'.
-	($FileIO->imageExists($tim.$ext, $this->board) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim, $this->board), $this->board).'" width="'.min(150, $tw).'" vspace="3"	class="thumb">' : '***').
-	'</a><br>
-	<nobr><small><b class="title">'.substr($sub, 0, 20).'</b>:'.
-		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon"> '.$res.'</small></span></nobr><br>
-	<small>'.$com.'</small>
+			$res = $threadSingleton->getPostCountFromThread($thread_uid) - 1;
+			$dat.= '<td class="thread">
+	<!--<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>-->
+	<a href="'.$this->config['PHP_SELF'].'?res='.($resno?$resno:$no).'#p'.$this->board->getBoardUID() . '_' .$no.'">'.
+	($FileIO->imageExists($tim.$ext, $this->board) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim, $this->board), $this->board).'" width="'.min(150, $tw).'" class="thumb" alt="Thumbnail">' : '***').
+	'</a>
+	<div class="catPostInfo"><span class="title">'.$sub.'</span>'.
+		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon" alt="Replies"> '.$res.'</span></div>
+	<div class="catComment">'.$com.'</div>
 </td>';
 		}
 
-		$dat .= '</tr></tbody></table><hr>';
-
-		$dat .= '</div><table id="pager" border="1"><tbody><tr>';
-		$pageurl = $this->mypage."&sort_by={$sort}";
-		if($page)
-			$dat .= '<td nowrap="nowrap"><a href="'.$pageurl.'&page='.($page - 1).'">Previous</a></td>';
-		else
-			$dat .= '<td nowrap="nowrap">First</td>';
-		$dat .= '<td nowrap="nowrap">';
-		for($i = 0; $i <= $page_max; $i++){
-			if($i==$page)
-				$dat .= '[<b>'.$i.'</b>] ';
-			else
-				$dat .= '[<a href="'.$pageurl.'&page='.$i.'">'.$i.'</a>] ';
-		}
-		$dat .= '</td>';
-		if($page < $page_max)
-			$dat .= '<td><a href="'.$pageurl.'&page='.($page + 1).'">Next</a></td>';
-		else
-			$dat .= '<td nowrap="nowrap">Last</td>';
-		$dat .= '</tr></tbody></table><br clear="ALL">';
+		$dat .= '</tbody></table></div><hr>';
+		$dat .= $globalHTML->drawPager($this->PAGE_DEF,$list_max, $this->mypage);
 		$globalHTML->foot($dat);
 		echo $dat;
 	}

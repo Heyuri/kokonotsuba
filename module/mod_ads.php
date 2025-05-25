@@ -5,11 +5,12 @@
 	By: bobman (Yahoo! ^_^)
 */
 
-class mod_ads extends ModuleHelper {
-	
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-		$this->mypage = $this->getModulePageURL();
+class mod_ads extends moduleHelper {
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
+		
+		$this->config['ModuleSettings']['SHOW_TOP_AD'] = isset($config['ModuleSettings']['SHOW_TOP_AD']) ? $config['ModuleSettings']['SHOW_TOP_AD'] : true;
+		$this->config['ModuleSettings']['SHOW_BOTTOM_AD'] = isset($config['ModuleSettings']['SHOW_BOTTOM_AD']) ? $config['ModuleSettings']['SHOW_BOTTOM_AD'] : true;
 	}
 
 	// Names
@@ -23,15 +24,16 @@ class mod_ads extends ModuleHelper {
 
 	// Top Ad
 	public function autoHookThreadFront(&$txt) {		
-		$txt .= '<center>
-		<iframe id="spasob" src="'.$this->config['STATIC_URL'].'image/fullbanners/fullbanners.php" style="max-width: 100%;" frameborder="0" scrolling="no" width="468" height="60" style="border: 1px solid #000000;"></iframe>
-		</center>
-		<hr size="1">'."\n";
+		if ($this->config['ModuleSettings']['SHOW_TOP_AD']) { // Check if top ad is enabled
+			$txt .= '<iframe id="fullbannerIframeTop" class="fullbannerIframe" title="Banner" src="' . $this->config['STATIC_URL'] . 'image/fullbanners/fullbanners.php"></iframe><hr class="hrAds">'."\n";
+		}
 	}
 
 	// Bottom Ad
 	public function autoHookThreadRear(&$txt) {
-		//$txt .= '<center><a href="#">[AD] #02！</a></center><hr size="1">'."\n";
+		if ($this->config['ModuleSettings']['SHOW_BOTTOM_AD']) { // Check if bottom ad is enabled
+			$txt .= '<iframe id="fullbannerIframeBottom" class="fullbannerIframe" title="Banner" src="' . $this->config['STATIC_URL'] . 'image/fullbanners/fullbanners.php"></iframe><hr class="hrAds">'."\n";
+		}
 	}
 	
 }

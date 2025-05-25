@@ -1,15 +1,16 @@
 <?php
-class mod_pushpost extends ModuleHelper {
+class mod_pushpost extends moduleHelper {
 	// Tweet judgment start tag
 	private $PUSHPOST_SEPARATOR = '[MOD_PUSHPOST_USE]';
 	// The maximum number of tweets displayed in the discussion thread (if exceeded, it will be automatically hidden, all hidden: 0)
 	private $PUSHPOST_DEF = 5;
 	private $PUSH_POST_MAX_CHAR = 0;
+	private $mypage;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);
 		$this->PUSH_POST_MAX_CHAR = $this->config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'];
+		$this->mypage = $this->getModulePageURL();
 	}
 
 	public function getModuleName() {
@@ -20,7 +21,7 @@ class mod_pushpost extends ModuleHelper {
 		return '7th.Release (v140529)';
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		$PIO = PIOPDO::getInstance();
 		$pushcount = '';
 
@@ -55,8 +56,8 @@ class mod_pushpost extends ModuleHelper {
 		}
 	}
 
-	public function autoHookThreadReply(&$arrLabels, $post, $isReply) {
-		$this->autoHookThreadPost($arrLabels, $post, $isReply);
+	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply) {
+		$this->autoHookThreadPost($arrLabels, $post, $threadPosts, $isReply);
 	}
 
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo, $isReply) {
@@ -79,7 +80,7 @@ class mod_pushpost extends ModuleHelper {
 
 		$htmlOutput = '';
 
-		$globalHTML->drawPushPostForm($htmlOutput, $this->PUSH_POST_MAX_CHAR)
+		$globalHTML->drawPushPostForm($htmlOutput, $this->PUSH_POST_MAX_CHAR, $this->mypage);
 
 	}
 

@@ -1,10 +1,9 @@
 <?php
-class mod_addinfo extends ModuleHelper {
-	private $mypage, $usercounter, $timeout;
+class mod_addinfo extends moduleHelper {
+	private $mypage, $dotpoints;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-		$this->dotpoints = $this->config['ModuleSettings']['ADD_INFO'];
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		$this->dotpoints = $this->config['ModuleSettings']['ADD_INFO'];
 		$this->mypage = $this->getModulePageURL();
 	}
 
@@ -18,7 +17,7 @@ class mod_addinfo extends ModuleHelper {
 
 	public function autoHookPostInfo(&$form) {
 		$addinfoHTML = '';	
-		$addinfoHTML .= '<hr>';
+		$addinfoHTML .= '</ul><hr><ul class="rules">';
 		//begin list
 		foreach($this->dotpoints as $rule) {
 			$addinfoHTML .= '<li>'.$rule.'</li>';

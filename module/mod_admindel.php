@@ -1,14 +1,13 @@
 <?php
 // admin extra module made for kokonotsuba by deadking
-class mod_admindel extends ModuleHelper {
+class mod_admindel extends moduleHelper {
 	private $BANFILE = '';
 	private $JANIMUTE_LENGTH = '';
 	private $JANIMUTE_REASON = '';
 	private $mypage;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-		
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
 		$this->BANFILE = $this->board->getBoardStoragePath() . 'bans.log.txt';
 		$this->JANIMUTE_LENGTH = $this->config['ModuleSettings']['JANIMUTE_LENGTH'];
 		$this->JANIMUTE_REASON = $this->config['ModuleSettings']['JANIMUTE_REASON'];
@@ -32,21 +31,21 @@ class mod_admindel extends ModuleHelper {
 		
 		$postBoard = searchBoardArrayForBoard($this->moduleBoardList, $post['boardUID']);
 
-		$modfunc.= '[<a href="'.$this->mypage.'&action=del&post_uid='.$post['post_uid'].'" title="Delete">D</a>]';
-		if ($post['ext'] && $FileIO->imageExists($post['tim'].$post['ext'], $postBoard)) $modfunc.= '[<a href="'.$this->mypage.'&action=imgdel&post_uid='.$post['post_uid'].'" title="Delete File">Df</a>]';
-		$modfunc.= '[<a href="'.$this->mypage.'&action=delmute&post_uid='.$post['post_uid'].'" title="Delete and Mute for '.$this->JANIMUTE_LENGTH.' minute'.($this->JANIMUTE_LENGTH == 1 ? "" : "s").'">DM</a>]';
+		$modfunc.= '<span class="adminFunctions adminDeleteFunction">[<a href="'.$this->mypage.'&action=del&post_uid='.$post['post_uid'].'" title="Delete">D</a>]</span>';
+		if ($post['ext'] && $FileIO->imageExists($post['tim'].$post['ext'], $postBoard)) $modfunc.= '<span class="adminFunctions adminDeleteFileFunction">[<a href="'.$this->mypage.'&action=imgdel&post_uid='.$post['post_uid'].'" title="Delete file">DF</a>]</span>';
+		$modfunc.= '<span class="adminFunctions adminDeleteMuteFunction">[<a href="'.$this->mypage.'&action=delmute&post_uid='.$post['post_uid'].'" title="Delete and mute for '.$this->JANIMUTE_LENGTH.' minute'.($this->JANIMUTE_LENGTH == 1 ? "" : "s").'">DM</a>]</span>';
 	}
 
 	public function ModulePage() {
 		$PIO = PIOPDO::getInstance();
 		$FileIO = PMCLibrary::getFileIOInstance();
-		$PMS = PMS::getInstance();
+
 		$boardIO = boardIO::getInstance();
 		$ActionLogger = ActionLogger::getInstance();
-		$staffSession = new staffAccountFromSession;
-		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
-		$roleLevel = $staffSession->getRoleLevel();
+		$softErrorHandler = new softErrorHandler($globalHTML);
+
+		$threadSingleton = threadSingleton::getInstance();
 		
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_DELETE_POST']);
 		
@@ -58,12 +57,12 @@ class mod_admindel extends ModuleHelper {
 		$files = false;
 		switch ($_GET['action']??'') {
 			case 'del':
-				$PMS->useModuleMethods('PostOnDeletion', array($post['post_uid'], 'backend'));
+				$this->moduleEngine->useModuleMethods('PostOnDeletion', array($post['post_uid'], 'backend'));
 				$files = $PIO->removePosts(array($post['post_uid']));
 				$ActionLogger->logAction('Deleted post No.'.$post['no'], $boardUID);
 				break;
 			case 'delmute':
-				$PMS->useModuleMethods('PostOnDeletion', array($post['post_uid'], 'backend'));
+				$this->moduleEngine->useModuleMethods('PostOnDeletion', array($post['post_uid'], 'backend'));
 				$files = $PIO->removePosts(array($post['post_uid']));
 				$ip = $post['host'];
 				$starttime = $_SERVER['REQUEST_TIME'];
@@ -87,8 +86,35 @@ class mod_admindel extends ModuleHelper {
 		if ($files) {
 			$FileIO->deleteImage($files, $board);
 		}
+		// Will be implemented later
+		//deleteThreadCache($post['thread_uid']);
+
+		// if its a thread, rebuild all board pages
+		if($post['is_op']) {
+			$this->board->rebuildBoard();
+		} else {
+			// otherwise just rebuild the page the reply is on
+			$thread_uid = $post['thread_uid'];
+
+			$threads = $threadSingleton->getThreadListFromBoard($this->board);
+
+			$pageToRebuild = getPageOfThread($thread_uid, $threads, $this->config['PAGE_DEF']);
+			
+			$this->board->rebuildBoardPage($pageToRebuild);
+		}
 		
-		$this->board->rebuildBoard();
-		redirect('back', 0);
+		if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+			// Return JSON for AJAX requests
+			header('Content-Type: application/json');
+			echo json_encode([
+				'success' => true,
+				'is_op' => $post['is_op']
+			]);
+			exit;
+		} else {
+			// Fallback for non-JS users: redirect
+			redirect('back', 0);
+		}
+
 	}
 }

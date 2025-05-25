@@ -1,24 +1,21 @@
 <?php
 
-class mod_adminban extends ModuleHelper {
+class mod_adminban extends moduleHelper {
 	private string $BANFILE = '';
 	private string $GLOBAL_BANS = '';
 	private string $BANIMG = '';
 	private string $DEFAULT_BAN_MESSAGE = '';
 	private string $mypage;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);
 
-		// Ensure required configuration keys exist
 		$this->BANFILE = $this->board->getBoardStoragePath() . 'bans.log.txt';
 		$this->BANIMG = $this->config['STATIC_URL'] . "image/banned.jpg";
 		$this->GLOBAL_BANS = getBackendGlobalDir().$this->config['GLOBAL_BANS'];
 		$this->DEFAULT_BAN_MESSAGE = $this->config['DEFAULT_BAN_MESSAGE'];
-
 		$this->mypage = $this->getModulePageURL();
 
-		// Ensure ban files exist
 		@touch($this->BANFILE);
 		@touch($this->GLOBAL_BANS);
 	}
@@ -28,7 +25,7 @@ class mod_adminban extends ModuleHelper {
 	}
 
 	public function getModuleVersionInfo() {
-		return 'Koko BBS Release 1';
+		return 'Kokonotsuba 2025';
 	}
 
 	public function autoHookRegistBegin() {
@@ -41,137 +38,240 @@ class mod_adminban extends ModuleHelper {
 		$this->handleBan($glog, $ip, $this->GLOBAL_BANS, true);
 	}
 
-	private function handleBan(&$log, $ip, $banFile, $isGlobal = false) {
-		$globalHTML = new globalHTML($this->board);
-		foreach ($log as $i => $entry) {
-			list($banip, $starttime, $expires, $reason) = explode(',', $entry, 4);
-			if (str_contains($ip, gethostbyname($banip))) {
-				// Render the ban page
-				$dat = '';
-				$globalHTML->head($dat);
-				$globalHTML->drawBanPage($dat, $banip, $starttime, $expires, $reason, $this->BANIMG);
-				$globalHTML->foot($dat);
-				// If ban expired, remove it
-				if ($_SERVER['REQUEST_TIME'] > intval($expires)) {
-					unset($log[$i]);
-					file_put_contents($banFile, implode(PHP_EOL, $log));
-				}
-
-				die($dat);
-			}
-		}
-	}
-
-
-
 	public function autoHookLinksAboveBar(&$link, $pageId, $level) {
-		$staffSession = new staffAccountFromSession;
-
-		if ($staffSession->getRoleLevel() >= $this->config['roles']['LEV_MODERATOR'] && $pageId === 'admin') {
-			$link .= '[<a href="' . $this->mypage . '">Manage Bans</a>] ';
+		if ($level->isAtLeast($this->config['AuthLevels']['CAN_BAN']) && $pageId === 'admin') {
+			$link .= '<li class="adminNavLink"><a href="' . $this->mypage . '">Manage bans</a></li>';
 		}
 	}
+
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$staffSession = new staffAccountFromSession;
 		$roleLevel = $staffSession->getRoleLevel();
-		
+
 		$ip = htmlspecialchars($post['host']) ?? '';
-		$delMode = $_REQUEST['admin'] ?? '';
-		if ($roleLevel >= $this->config['AuthLevels']['CAN_BAN']) $modfunc .= '[<a href="' . $this->mypage . '&post_uid=' . $post['post_uid'] . '&ip=' . $ip . '" title="Ban">B</a>] ';
-		if (!empty($ip) && $roleLevel >= $this->config['AuthLevels']['CAN_VIEW_IP_ADDRESSES'] && $delMode !== 'del') $modfunc .= '<small>[HOST: <a href="?mode=admin&admin=del&host=' . $ip . '">' . $ip . '</a>]</small>';
+		$delMode = $_REQUEST['mode'] ?? '';
+
+		if ($roleLevel->isAtLeast($this->config['AuthLevels']['CAN_BAN'])) {
+			$modfunc .= '<span class="adminFunctions adminBanFunction">[<a href="' . $this->mypage . '&post_uid=' . htmlspecialchars($post['post_uid']) . '&ip=' . htmlspecialchars($ip) . '" title="Ban">B</a>]</span> ';
+		}
+		if (!empty($ip) && $roleLevel->isAtLeast($this->config['AuthLevels']['CAN_VIEW_IP_ADDRESSES']) && $delMode !== 'managePosts') {
+			$modfunc .= '<span class="adminFunctions host">[Host: <a href="?mode=managePosts&host=' . htmlspecialchars($ip) . '">' . htmlspecialchars($ip) . '</a>]</span>';
+		}
 	}
 
 	public function ModulePage() {
-		$softErrorHandler = new softErrorHandler($this->board);
 		$globalHTML = new globalHTML($this->board);
-		
-		
+
+		$softErrorHandler = new softErrorHandler($globalHTML);
+
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_BAN']);
-		
-		$dat = '';
-		$globalHTML->head($dat);
-		
-		$dat .= '			<script>
-var trolls = Array(
-	"Hatsune Miku is nothing more than an overated normie whore.",
-	"HAHA NIGGER MODS DELETING POSTS THEY CAN\'T TAKE CRITICISM LITERALLY YANDERE DEV OF IMAGE BOARDS",
-	"You\'re imposing on muh freedoms of speech! See you in court, buddy.",
-	"Being gay is okay.",
-	"<span class=\"unkfunc\">&gt;Soooooooooooy</span>",
-	"I know where you live.<br>I watch everything you do.<br>I know everything about you and I am coming!",
-	"Ooooh muh god! qLiterally can\'t even!<br>I didn\'t even break any of the rules and I was banned?!",
-	"Unrestricted access to the internet is a human right.",
-	"get live Child Pizza at http:/jbbait.gov<br>get live Child Pizza at http:/jbbait.gov<br>get live Child Pizza at http:/jbbait.gov<br>get live Child Pizza at http:/jbbait.gov",
-	"<span class=\"unkfunc\">&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br></span>"
-);
-var troll = trolls[Math.floor(Math.random()*trolls.length)];
 
-function updatepview(event=null) {
-	var msg = document.getElementById("banmsg");
-	var pview = document.getElementById("msgpview");
-	pview.innerHTML = troll+msg.value;
-}
+		$PIO = PIOPDO::getInstance();
 
-window.onload = function () {
-	var msg = document.getElementById("banmsg");
-	msg.insertAdjacentHTML("afterend", \'<br>Preview:<br><table><tbody><tr><td class="reply"><blockquote id="msgpview"></blockquote></td></tr></tbody></table>\');
-	msg.oninput = updatepview;
-	updatepview();
-}
-			</script>';
 		if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$banAction = $_POST['adminban-action'] ?? '';
 			switch($banAction) {
 				case 'add-ban':
-					$this->processBanForm($dat);
-				break;
+					$this->handleBanAddition();
+					break;
 				case 'delete-ban':
 					$this->processBanDeletions();
-				break;
+					break;
 			}
-		} else {
-			$globalHTML->drawBanManagementPage($dat, $this->BANFILE, $this->mypage, $this->DEFAULT_BAN_MESSAGE, $this->GLOBAL_BANS);
 		}
-		$globalHTML->foot($dat);
-		echo $dat;
+
+		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
+		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
+
+		$log = $this->sortBansByNewest($log);
+		$glog = $this->sortBansByNewest($glog);
+
+		$tables = [
+			[
+				'{$TITLE}' => 'Local bans',
+				'{$TABLE_ID}' => 'localBanTable',
+				'{$MODULE_URL}' => $this->mypage,
+				'{$ROWS}' => $this->convertBanLogToRows($log, 'del')
+			],
+			[
+				'{$TITLE}' => 'Global bans',
+				'{$TABLE_ID}' => 'globalBanTable',
+				'{$MODULE_URL}' => $this->mypage,
+				'{$ROWS}' => $this->convertBanLogToRows($glog, 'delg')
+			]
+		];
+
+		$post_uid = $_GET['post_uid'] ?? '';
+		$postNumber = $PIO->resolvePostNumberFromUID($post_uid);
+		
+
+		$templateData = [
+			'{$POST_NUMBER}' => $postNumber ? htmlspecialchars($postNumber) : "No post selected.  ",
+			'{$POST_UID}' => htmlspecialchars($_GET['post_uid'] ?? ''),
+			'{$IP}' => htmlspecialchars($_GET['ip'] ?? ''),
+			'{$DEFAULT_BAN_MESSAGE}' => htmlspecialchars($this->DEFAULT_BAN_MESSAGE),
+			'{$MODULE_URL}' => $this->mypage,
+			'{$TABLES}' => $tables,
+		];
+
+		$adminBanManagePageHtml = $this->adminPageRenderer->ParseBlock('ADMIN_BAN_MANAGEMENT_PAGE', $templateData);
+
+		echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $adminBanManagePageHtml], true);
 	}
 
-	private function processBanForm() {
+	private function sortBansByNewest(array $bans): array {
+		usort($bans, function($a, $b) {
+			[$ipA, $startA] = explode(',', $a, 3);
+			[$ipB, $startB] = explode(',', $b, 3);
+			return intval($startB) - intval($startA); // newest to oldest
+		});
+		return $bans;
+	}
+
+	private function handleBan(&$log, $ip, $banFile) {
+		$htmlOutput = '';
+		foreach ($log as $i => $entry) {
+			list($banip, $starttime, $expires, $reason) = explode(',', $entry, 4);
+			if (strpos($ip, gethostbyname($banip)) !== false) {
+				$htmlOutput .= $this->drawBanPage($starttime, $expires, $reason, $this->BANIMG);
+				if ($_SERVER['REQUEST_TIME'] > intval($expires)) {
+					unset($log[$i]);
+					file_put_contents($banFile, implode(PHP_EOL, $log));
+				}
+				die($htmlOutput);
+			}
+		}
+		
+	}
+
+	private function handleBanAddition() {
+		// Extract data from the request
+		$reasonFromRequest = $_POST['privmsg'] ?? '';
+		$newIp = $_POST['ip'] ?? '';
+		$duration = $_POST['duration'] ?? '0';
+		$makePublic = $_POST['public'] ?? '';
+		$publicBanMessageHTML = $_POST['banmsg'] ?? '';
+		$postUid = intval($_POST['post_uid']) ?? null;
+		$isGlobal = isset($_POST['global']);  // Check if global ban is selected
+
+		// Process the ban form (add to log, update post if public, etc.)
+		$this->processBanForm($reasonFromRequest, $newIp, $duration, $makePublic, $publicBanMessageHTML, $isGlobal, $postUid);
+	
+		// Log the ban action
+		$this->logBanAction($newIp, $duration, $isGlobal, $postUid);
+
+
+		// Redirect after processing
+		redirect($_SERVER['HTTP_REFERER']);
+		exit;
+	}
+
+	private function logBanAction($newIp, $duration, $isGlobal, $postUid) {
+		// Get action logger and PIO instance
+		$actionLogger = actionLogger::getInstance();
 		$PIO = PIOPDO::getInstance();
 
+		// Build the action string based on whether it's a global ban or related to a post
+		$actionString = $this->buildActionString($newIp, $duration, $isGlobal, $postUid, $PIO);
+
+		// Log the action with the board UID
+		$boardUid = $this->board->getBoardUID();
+		$actionLogger->logAction($actionString, $boardUid);
+	}
+
+	private function buildActionString(string $newIp, string $duration, bool $isGlobal, ?int $postUid, mixed $PIO): string {
+		// Initial action string (basic information about the ban)
+		$actionString = "Banned $newIp for $duration";
+
+		if($duration == '0') {
+			$actionString = "Warned $newIp ";
+		}
+
+		// If it's a global ban, update the action string
+		if ($isGlobal) {
+			$actionString = "Banned $newIp from all boards for $duration";
+		}
+
+		// If the ban is related to a specific post, add post info to the action string
+		if ($postUid) {
+			$postNumber = $PIO->resolvePostNumberFromUID($postUid);
+			if(!empty($postNumber)) { 
+				$actionString .= " for post $postNumber";
+			}
+		}
+
+		return $actionString;
+	}
+
+
+	private function processBanForm(string $reasonFromRequest, 
+		string $newip, 
+		string $duration, 
+		string $makePublic, 
+		string $publicBanMessageHTML, 
+		bool $isGlobal,
+		?int $postUid = 0): void {
+		$PIO = PIOPDO::getInstance();
+
+		// Load ban logs
 		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
 		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
 
-		$reasonFromRequest = $_POST['privmsg'] ?? '';
-		$newip = htmlspecialchars($_POST['ip'] ?? '');
-		$reason = htmlspecialchars($reasonFromRequest ? $reasonFromRequest : "No reason given.");
-		$duration = htmlspecialchars($_POST['duration'] ?? '0');
-		$starttime = $_SERVER['REQUEST_TIME'];
-		$makePublic = $_POST['public'] ?? '';
-		$publicBanMessageHTML = $_POST['banmsg'] ?? '';
-
+		// Set defaults if not provided
+		$reason = $reasonFromRequest ?: "No reason given.";
+		$starttime = $_SERVER['REQUEST_TIME']; // This remains from the server, no change
 		$expires = $starttime + $this->calculateBanDuration($duration);
 
 		if (!empty($newip)) {
+			// Create the ban entry
 			$banEntry = "{$newip},{$starttime},{$expires},{$reason}";
-			if (!empty($_POST['global'])) {
+			if ($isGlobal) {  // Global ban
 				$glog[] = $banEntry;
 				file_put_contents($this->GLOBAL_BANS, implode(PHP_EOL, $glog));
-			} else {
+			} else {  // Local ban
 				$log[] = $banEntry;
 				file_put_contents($this->BANFILE, implode(PHP_EOL, $log));
 			}
 		}
 
-		if($makePublic) {
-			$post_uid = $_POST['post_uid'] ?? 0;
-			$post = $PIO->fetchPosts($post_uid)[0];
-			
-			$post['com'] .= $publicBanMessageHTML;
-			$PIO->updatePost($post_uid, $post);
-			$this->board->rebuildBoard();
+		if ($makePublic) {
+			if ($postUid) {
+				// Fetch and update the post with the ban message
+				$post = $PIO->fetchPosts($postUid)[0];
+				$post['com'] .= $publicBanMessageHTML;
+				$PIO->updatePost($postUid, $post);
+				$this->board->rebuildBoard();
+			}
 		}
 
+	}
+
+	private function processBanDeletions() {
+		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
+		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
+
+		//lazy hack
+		$log = $this->sortBansByNewest($log);
+		$glog = $this->sortBansByNewest($glog);
+
+		$newLocalLog = [];
+		$newGlobalLog = [];
+
+		foreach ($log as $i => $entry) {
+			if (!isset($_POST["del$i"]) || $_POST["del$i"] !== 'on') {
+				$newLocalLog[] = $entry;
+			}
+		}
+
+		foreach ($glog as $i => $entry) {
+			if (!isset($_POST["delg$i"]) || $_POST["delg$i"] !== 'on') {
+				$newGlobalLog[] = $entry;
+			}
+		}
+
+		file_put_contents($this->BANFILE, implode(PHP_EOL, $newLocalLog));
+		file_put_contents($this->GLOBAL_BANS, implode(PHP_EOL, $newGlobalLog));
+		
 		redirect($_SERVER['HTTP_REFERER']);
 		exit;
 	}
@@ -183,50 +283,46 @@ window.onload = function () {
 		foreach ($matches as $match) {
 			$value = intval($match[1]);
 			switch ($match[2]) {
-				case 'w':
-					$seconds += $value * 604800;
-					break;
-				case 'd':
-					$seconds += $value * 86400;
-					break;
-				case 'h':
-					$seconds += $value * 3600;
-					break;
-				case 'm':
-					$seconds += $value * 60;
-					break;
+				case 'w': $seconds += $value * 604800; break;
+				case 'd': $seconds += $value * 86400; break;
+				case 'h': $seconds += $value * 3600; break;
+				case 'm': $seconds += $value * 60; break;
 			}
 		}
 
 		return $seconds;
 	}
-	
-	private function processBanDeletions() {
-		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
-		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
 
-		$newLocalLog = [];
-		$newGlobalLog = [];
-
-		foreach ($log as $i => $entry) {
-			if (isset($_POST["del$i"]) && $_POST["del$i"] === 'on') {
-				continue;
-			}
-			$newLocalLog[] = $entry;
+	private function convertBanLogToRows(array $bans, string $prefix): array {
+		$rows = [];
+		foreach ($bans as $i => $ban) {
+			list($ip, $start, $expires, $reason) = explode(',', $ban, 4);
+			$rows[] = [
+				'{$CHECKBOX_NAME}' => $prefix . $i,
+				'{$IP}' => htmlspecialchars($ip),
+				'{$START}' => date('Y/m/d H:i:s', intval($start)),
+				'{$EXPIRES}' => date('Y/m/d H:i:s', intval($expires)),
+				'{$REASON}' => htmlspecialchars($reason),
+			];
 		}
-
-		foreach ($glog as $i => $entry) {
-			if (isset($_POST["delg$i"]) && $_POST["delg$i"] === 'on') {
-				continue;
-			}
-			$newGlobalLog[] = $entry;
-		}
-
-		// Write the updated logs back to the respective files
-		file_put_contents($this->BANFILE, implode(PHP_EOL, $newLocalLog));
-		file_put_contents($this->GLOBAL_BANS, implode(PHP_EOL, $newGlobalLog));
-		redirect($_SERVER['HTTP_REFERER']);
+		return $rows;
 	}
 
+	private function drawBanPage($starttime, $expires, $reason, $banImage = '') {
+		$isExpired = ($_SERVER['REQUEST_TIME'] > intval($expires));
+
+		$templateValues = [
+				'{$RETURN_URL}'	=> $this->config['PHP_SELF2'] ?? './',
+				'{$BAN_TYPE}'		=> ($starttime == $expires) ? 'warned' : 'banned',
+				'{$REASON}'			=> $reason,
+				'{$BAN_IMAGE}'		=> $banImage,
+				'{$BAN_DETAIL}'	=> $isExpired
+					? 'Now that you have seen this message, you can post again.'
+					: "<p>Your ban was filed on " . date('Y/m/d \a\t H:i:s', $starttime) .
+						" and expires on " . date('Y/m/d \a\t H:i:s', $expires) . ".</p>"
+		];
+
+		return $this->adminPageRenderer->ParsePage('BAN_PAGE', $templateValues);
+	}
 
 }

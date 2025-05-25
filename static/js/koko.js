@@ -2,127 +2,7 @@
  */
 
 const KOKOJS = true;
-const STATIC_URL = './static/';
-
-document.write(`<style>
-#formfuncs a, a.linkjs {
-	text-decoration: underline;
-	color: inherit;
-}
-/* Window Manager */
-@keyframes fade {
-	0% { filter: opacity(0); transform: scale(0.95); }
-	100% { filter: opacity(1); transform: scale(1); }
-}
-@keyframes fadeout {
-	0% { filter: opacity(1); transform: scale(1); }
-	100% { filter: opacity(0); transform: scale(0.95); }
-}
-.window {
-	position: fixed;
-	z-index: 100;
-	padding: 1.5em 0.5em 0.5em;
-	background-color: inherit;
-	border-style: solid;
-	border-width: 1px;
-	opacity: 0.9;
-	overflow: hidden;
-	resize: both;
-	animation: fade 0.1s;
-}
-.wclosing {
-	animation: fadeout 0.1s;
-}
-#wintop, .window:hover {
-	opacity: 1;
-}
-.window.minimized {
-	width: 12em!important;
-	height: 0!important;
-	padding-bottom: 0;
-	resize: none;
-}
-.winbar {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	cursor: move;
-}
-.winctrl {
-	background-image: inherit;
-	display: inline-block;
-	float: right;
-	position: absolute;
-	line-height: 1.15em;
-	right: 0;
-	top: 0;
-}
-.winname {
-	display: inline-block;
-	margin: 0.2em 0.4em;
-	font-family: Trebuchet MS, Tohama, Verdana;
-}
-.winctrl>* {
-	display: inline-block;
-	text-decoration: none;
-	transition: all 0.1s;
-}
-.winmin {
-	border-right-style: solid;
-	border-width: 1px;
-	padding: 0 0.3em;
-}
-
-
-/* Settings */
-#settarea {
-	display: flex;
-	flex-direction: column;
-	padding-bottom: 1em;
-}
-#settarea>* {
-	display: flex;
-	flex-direction: row;
-	transition: all 0.1s;
-}
-#settarea [type=number] {
-	width: 5em;
-}
-</style>
-<style id="jscenterthreads">
-.thread {
-	width: 75%;
-	margin: auto;
-}
-</style>
-<style id="jspersistpager">
-#pager {
-	position: fixed;
-	left: 8px;
-	bottom: 8px;
-}
-</style>
-<style id="jspersistnav">
-.boardlist {
-	position: fixed;
-	left: 0px;
-	top: 0px;
-	width: calc( 100% - 0.4em);
-	padding: 0.2em;
-	border-bottom-style: solid;
-	border-width: 1px;
-}
-.toplinks, .adminbar {
-	height: auto;
-}
-
-.hooklinks {
-padding-top: 0px;
-}
-
-</style>`);
-
+const STATIC_URL = document.currentScript.src.split('?')[0].replace(/js\/[^/]+\.js$/, ''); // Get the script URL, and remove 'js/{filename}.js'
 
 /* - */
 if (typeof(FONTSIZE) === "undefined") { var FONTSIZE = 12; }
@@ -156,11 +36,20 @@ const $p_class = function (el, c) {
 const kkwm = {
 	windows: Array(),
 	w_index: 1,
-	w_spawnoffx: 0, w_spawnoffy: 0,
-	w_spawnoffbouncex: false, w_spawnoffbouncey: false,
+	w_spawnoffx: 0,
+	w_spawnoffy: 0,
+	w_spawnoffbouncex: false,
+	w_spawnoffbouncey: false,
+	_focused: true,
 	startup: function () {
 		$doc.addEventListener("mouseup", kkwm._evdrag_end);
 		$doc.addEventListener("mousemove", kkwm._evmove);
+		$doc.addEventListener("mousedown", function (e) {
+			if (!e.target.closest(".window")) {
+				var wintop = $id("wintop");
+				if (wintop) wintop.id = "";
+			}
+		});
 		//kkwm.demo();
 	},
 	reset: function () {
@@ -179,7 +68,10 @@ const kkwm = {
 	top: function (name) {
 		var win = $kkwm_name(name);
 		if (!win) return;
-		if (wintop=$id("wintop")) wintop.id = "";
+
+		var wintop = $id("wintop");
+		if (wintop) wintop.id = "";
+
 		win.div.id = "wintop";
 		win.div.style.zIndex = 100 + kkwm.w_index++;
 	},
@@ -215,6 +107,12 @@ Feature list:
 	},
 	drag_end: function () {
 		if (!kkwm.wm_drag) return;
+		let xPct = kkwm.wm_drag.rect.x / window.innerWidth;
+		let yPct = kkwm.wm_drag.rect.y / window.innerHeight;
+		localStorage.setItem("kkwm_pos_" + kkwm.wm_drag.name, JSON.stringify({
+			xPct: xPct,
+			yPct: yPct
+		}));
 		kkwm.wm_drag = null;
 		kkwm.dx = 0; kkwm.dy = 0;
 		$doc.body.style.cursor = "";
@@ -250,9 +148,17 @@ class kkwmWindow {
 		this.div.classList.add("window");
 		this.rect = rect;
 		var d = $doc.documentElement;
-		this.div.style.width = rect.w+"px";
-		this.div.style.height = rect.h+"px";
+		// this.div.style.width = rect.w+"px"; // commented out to fix windows not fitting to contents on resize
+		// this.div.style.height = rect.h+"px";
 		var fontpointfive = FONTSIZE*3.5;
+		var storedPos = localStorage.getItem("kkwm_pos_" + name);
+		if (storedPos) {
+			var pos = JSON.parse(storedPos);
+			if (typeof pos.xPct === 'number' && typeof pos.yPct === 'number') {
+				rect.x = pos.xPct * d.clientWidth;
+				rect.y = pos.yPct * d.clientHeight;
+			}
+		}
 		if (!rect.x) {
 			rect.x = Math.floor(d.clientWidth/2-rect.w/2)+kkwm.w_spawnoffx;
 			if (rect.x+rect.w+fontpointfive>d.clientWidth) kkwm.w_spawnoffbouncex = true;
@@ -269,10 +175,11 @@ class kkwmWindow {
 		}
 		this.move(rect.x, rect.y);
 		this.div.onmousedown = function () { kkwm.top(name); };
-		this.div.innerHTML = '<div class="winbar" data-name="'+name+'" onmousedown="kkwm.drag_start(\''+name+'\',event.clientX,event.clientY);">'+
-		'<span class="winname">'+name+'</span><span class="winctrl" onmousedown="event.stopPropagation();">'+
-			'<img onclick="$kkwm_name(\''+name+'\').remove();" class="winclose" onmouseover="Tip(\'Close\');" onmouseout="UnTip();" src="'+STATIC_URL+'/image/closebtn.png">'+
-		'</span></div>';
+		this.div.innerHTML = '<div class="winbar" data-name="'+name+'" onmousedown="if (!(event.target.closest(\'.winctrl\'))) kkwm.drag_start(\''+name+'\',event.clientX,event.clientY);">'+
+		'<div class="winname">'+name+'</div><div class="winctrl">'+
+			'<button onclick="$kkwm_name(\''+name+'\').minimize();" class="winmin" title="Minimize/maximize"><img alt="-" width="16" height="16" src="'+STATIC_URL+'image/btn-min.svg"></button>'+
+			'<button onclick="$kkwm_name(\''+name+'\').remove();" class="winclose" title="Close"><img alt="X" width="16" height="16" src="'+STATIC_URL+'image/btn-close.svg"></button>'+
+		'</div></div>';
 		$doc.body.appendChild(this.div);
 		kkwm.windows.push(this);
 		kkwm.top(name);
@@ -283,20 +190,18 @@ class kkwmWindow {
 		var winmin = this.div.getElementsByClassName("winmin")[0];
 		if (this.minimized) {
 			this.div.classList.add("minimized");
-			winmin.innerHTML = "&plus;";
 		} else {
 			this.div.classList.remove("minimized");
-			winmin.innerHTML = '&mdash;';
 		}
 	}
 	remove() {
-		kkwm.windows.pop(this);
+		// kkwm.windows.pop(this);
 		for (var i=0; i<kkwm.windows.length; i++) {
 			if (kkwm.windows[i].name == this.name) {
-				kkwm.windows.splice(i);
+				kkwm.windows.splice(i, 1);
+				break;
 			}
 		}
-		UnTip();
 		this.div.classList.add("wclosing");
 		var that = this;
 		setTimeout( function () {
@@ -360,96 +265,71 @@ const kkjs = {
 	modules: Array(),
 	posts: null,
 	startup: function () {
-		if (!(new URLSearchParams(window.location.search)).get("q") && document.querySelector("#com")) document.querySelector("#com").value="";
 		kkjs.posts = $class("post");
-		kkjs.l();
-		if (!localStorage.getItem("alwaysnoko"))
-			localStorage.setItem("alwaysnoko", "true");
-		kkjs.ee();
-		kkjs.fup();
-		kkwm.startup();
-		kkjs.sett_init();
-		$doc.postform &&
-			$id("rules").insertAdjacentHTML("beforeend",
-			'<span id="formfuncs"></span>');
-		kkjs.modules.forEach( function(mod) {
-			try {
-				if (!mod.startup()) {
-					console.log("ERROR: Fatal error in module '"+mod.name+"'.");
-					kkjs.modules.pop(mod);
-				}
-			} catch (error) {
-				console.log("ERROR: Fatal error in module '"+mod.name+"'");
-				kkjs.modules.pop(mod);
-			}
-		} );
-		
+		// Load stored name, email, and password
+    kkjs.l();
+
+    // Always Noko setting
+    if (!localStorage.getItem("alwaysnoko")) {
+        localStorage.setItem("alwaysnoko", "true");
+    }
+
+		// Initialize email behavior and file upload reset
+    kkjs.ee();
+    kkjs.fup();
+
+		// Initialization logic for centerthreads, persistpager, persistnav
+		const body = document.body;
+		if (localStorage.getItem("centerthreads") === "true") {
+			body.classList.add("centerthreads");
+		} else {
+			body.classList.remove("centerthreads");
+		}
+
+		if (localStorage.getItem("persistpager") === "true") {
+			body.classList.add("persistpager");
+		} else {
+			body.classList.remove("persistpager");
+		}
+
+		if (localStorage.getItem("persistnav") === "true") {
+			body.classList.add("persistnav");
+			// body.insertAdjacentHTML("afterbegin", '<br>');
+		} else {
+			body.classList.remove("persistnav");
+		}
+
+		if (localStorage.getItem("neomenu") === "true") {
+			body.classList.add("neomenuEnabled");
+			// body.insertAdjacentHTML("afterbegin", '<br>');
+		} else {
+			body.classList.remove("neomenuEnabled");
+		}
+
 		if (localStorage.getItem("tripkeys")=="true") {
 			kkjs.applyTripKeys();
 		}
-		
-		const overboardFilterElement = document.getElementById('overboard-filter-form');
 
-		if (overboardFilterElement) {
-			const isOpen = localStorage.getItem('overboard-filter_open') === 'true';
-			overboardFilterElement.open = isOpen;
-	
-			overboardFilterElement.addEventListener('toggle', function() {
-				localStorage.setItem('overboard-filter_open', overboardFilterElement.open);
-			});
-		}
-		
-		const boardSelectAllLink = document.getElementById('boardselectall');
-
-		if (boardSelectAllLink) {
-			const updateLinkText = (link, checkboxes) => {
-			const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
-			link.innerHTML = allChecked ? '[<a>Unselect All</a>]' : '[<a>Select All</a>]';
-		};
-
-			boardSelectAllLink.addEventListener('click', function (event) {
-				if (event.target.tagName === 'A') {
-					event.preventDefault();
-		
-					const filterContainer = document.getElementById('overboard-filter-form');
-					if (filterContainer) {
-						const checkboxes = filterContainer.querySelectorAll('input[type="checkbox"]');
-						const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
-		
-						if (allChecked) {
-							checkboxes.forEach(checkbox => checkbox.checked = false);
-						} else {
-							checkboxes.forEach(checkbox => checkbox.checked = true);
-						}
-						updateLinkText(boardSelectAllLink, checkboxes);
-					}
+		kkjs.modules.forEach(function (mod) {
+			try {
+				if (!mod.startup()) {
+						console.log("ERROR: Fatal error in module '" + mod.name + "'.");
+						kkjs.modules.pop(mod);
 				}
-			});
-		
-			const filterContainer = document.getElementById('overboard-filter-form');
-			if (filterContainer) {
-				const checkboxes = filterContainer.querySelectorAll('input[type="checkbox"]');
-		
-				checkboxes.forEach(checkbox => {
-					checkbox.addEventListener('change', () => {
-						updateLinkText(boardSelectAllLink, checkboxes);
-					});
-				});
-		
-				updateLinkText(boardSelectAllLink, checkboxes);
+			} catch (error) {
+				console.log("ERROR: Fatal error in module '" + mod.name + "'");
+				kkjs.modules.pop(mod);
 			}
-		}	
-	
-			
-		//kkjs.wztt();
-		$id("jscenterthreads").disabled = localStorage.getItem("centerthreads")!="true";
-		if (localStorage.getItem("persistnav")=="true") {
-			$id("jspersistnav").disabled = false;
-			$doc.body.insertAdjacentHTML("afterbegin", '<br>');
-		} else {
-			$id("jspersistnav").disabled = true;
-		}
-		$id("jspersistpager").disabled = localStorage.getItem("persistpager")!="true";
+		});
+
+		
+		kkjs.setInitialMenuState();
+
+		kkwm.startup();
+		kkjs.sett_init();
+
+		// Initialize tooltips if necessary
+    //kkjs.wztt();
 	},
 	reset: function () {
 		kkjs.modules.forEach( function(mod) {
@@ -489,8 +369,11 @@ const kkjs = {
 		if (!com) return false;
 		if (qrcom) com = qrcom;
 
-		if (typeof(kkgal)!="undefined")
+		// Check if kkgal exists and has the necessary properties
+		if (typeof kkgal !== 'undefined' && kkgal.gframe) {
 			kkgal.contract();
+		}
+
 		com.value+= str;
 		if (com != qrcom) // Don't scroll to the QR form
 			com.scrollIntoView({behavior:"smooth",block:"center"});
@@ -501,7 +384,7 @@ const kkjs = {
 		com.dispatchEvent(event);
 		return true;
 	},
-	
+
 	//futallaby tripkeys
 	applyTripKeys: function() {
 		let trips = document.getElementsByClassName("postertrip");
@@ -510,48 +393,112 @@ const kkjs = {
 			trips[i].innerHTML=trips[i].innerHTML.replace(RegExp("^"+"◆"),"!");
 		}
 	},
-	
+
 	// email
 	ee: function () {
 		var email = $id("email");
 		if (!email) return;
-		email.insertAdjacentHTML("afterend", '<nobr class="emailjs">'+
-			//'<label class="nokosagenoko2"><input type="checkbox" class="nokosagenoko2" onclick="kkjs.ee2(this.id, this.checked);" id="sage"> sage</label>'+
-			//'<label class="nokosagenoko2"><input type="checkbox" class="nokosagenoko2" onclick="kkjs.ee2(\'noko2\',false);kkjs.ee2(this.id,this.checked);" id="noko"> noko</label>'+
-		'</nobr>');
+		// Insert checkboxes after the email field
+		email.insertAdjacentHTML("afterend", '<div id="emailjs">'+
+			'<label class="nokosagedump" title="Thread will not bump on reply"><input type="checkbox" class="nokosagedump" onclick="kkjs.ee2(this.id, this.checked);" id="sage">sage</label>'+
+			'<label class="nokosagedump" title="Stay in thread after replying, jump to your reply"><input type="checkbox" class="nokosagedump" onclick="kkjs.ee2(this.id,this.checked);" id="noko">noko</label>'+
+			'<label class="nokosagedump" title="Stay in thread after replying, remain at top of page"><input type="checkbox" class="nokosagedump" onclick="kkjs.ee2(this.id,this.checked);" id="dump">dump</label>'+
+		'</div>');
+
+		// If 'alwaysnoko' is set to true in localStorage, and email field is empty, add 'noko' to email value
 		if (localStorage.getItem("alwaysnoko")=="true") {
 			if (email.value == "") // Only add if blank
-				email.value+= 'noko';
-			//$id('noko').checked = true;
+			email.value+= 'noko';
+			$id('noko').checked = true;
 		}
-		//email.addEventListener("input", kkjs.ee3);
+	
+		// Check if 'sage' or 'noko' are already in the email value, and check the corresponding checkboxes
+		if (email.value.includes("sage")) {
+			$id('sage').checked = true;
+		}
+		if (email.value.includes("noko")) {
+			$id('noko').checked = true;
+		}
+		if (email.value.includes("dump")) {
+			$id('dump').checked = true;
+		}
+
+		// Add input listener to the email field
+		email.addEventListener("input", kkjs.ee3);
 	},
+	
 	ee2: function (value, mode) {
-		if (mode) email.value+= value;
-		else email.value = email.value.replace(value, "");
+		// When a checkbox is toggled, add/remove the corresponding value ('sage', 'noko', 'dump') to/from the email field
+		if (mode) {
+			email.value += value;
+			// Uncheck the other checkbox if 'noko' or 'dump' is checked
+			if (value === "noko") {
+				$id("dump").checked = false;
+				email.value = email.value.replace("dump", ""); // Remove 'dump' from email field
+			} else if (value === "dump") {
+				$id("noko").checked = false;
+				email.value = email.value.replace("noko", ""); // Remove 'noko' from email field
+			}
+		} else {
+			email.value = email.value.replace(value, "");
+		}
 		$id(value).checked = mode;
 	},
+	
 	ee3: function (event) {
-		$id("noko2").checked = this.value.match("noko2");
+		$id("dump").checked = this.value.match("dump");
 		$id("noko").checked = this.value.match("noko");
-		if ($id("noko2").checked) $id("noko").checked = false;
+		if ($id("dump").checked) {
+			$id("noko").checked = false;
+		}		
 		$id("sage").checked = this.value.match("sage");
 	},
+
 	fup: function () {
 		var upf = $id("upfile");
 		if (upf) upf.insertAdjacentHTML('afterend',
-			'<small>[<a href="javascript:void(0);" onclick="$id(\'upfile\').value=\'\';">X</a>]</small> ');
+			'<span id="clearFile">[<a href="javascript:void(0);" onclick="$id(\'upfile\').value=\'\';" title="Clear file selection">X</a>]</span>');
 	},
 	
 	// form switch
 	form_index: 0,
+	previous_position: {
+		parent: null,
+		nextSibling: null
+	},
 	form_switch: function () {
 		const a = Array($id("postarea"), $id("postarea2"));
-		if (!(a[0]&&a[1])) return;
- 		const pform = $id("postform");
-		a[kkjs.form_index=kkjs.form_index?0:1].appendChild(pform);
-		pform.scrollIntoView({behavior:"smooth",block:"center"});
+		if (!(a[0] && a[1])) return;
+
+		const pform = $id("postform");
+
+		// Store the current position before moving
+		if (!kkjs.previous_position.parent) {
+			kkjs.previous_position.parent = pform.parentNode;
+			kkjs.previous_position.nextSibling = pform.nextSibling;
+		}
+
+		// Determine the target container
+		const targetContainer = a[kkjs.form_index = kkjs.form_index ? 0 : 1];
+
+		// Move the form to the new location
+		targetContainer.appendChild(pform);
+		pform.scrollIntoView({ behavior: "smooth", block: "center" });
+
+		// Swap logic: if moved back, restore to the original position
+		if (kkjs.form_index === 0 && kkjs.previous_position.parent) {
+			if (kkjs.previous_position.nextSibling) {
+				kkjs.previous_position.parent.insertBefore(pform, kkjs.previous_position.nextSibling);
+			} else {
+				kkjs.previous_position.parent.appendChild(pform);
+			}
+
+			// Clear the stored position after restoring
+			kkjs.previous_position.parent = null;
+			kkjs.previous_position.nextSibling = null;
+		}
 	},
+
 	
 	// wz_tooltip
 	wztt: function (el=$doc.body, reset=false) {
@@ -593,14 +540,14 @@ const kkjs = {
 		var offs = el.getBoundingClientRect();
 		var d = $doc.documentElement;
 		win = new kkwmWindow("Settings", {
-			x: offs.right - 300,
-			y: offs.bottom + 5,
+			x: offs.right - 125,
+			y: offs.bottom + 10,
 			w: 300,
 			h: 400,
 		});
-		win.div.innerHTML+= '<span id="settabs"><a href="javascript:kkjs.sett_tab(\'general\');" id="settab_general">General</a></span>'+
-			'<hr size="1">'+
-			'<div id="settarea"></div>';
+		win.div.innerHTML+= '<div id="settcontents"><div id="settabs"><a href="javascript:kkjs.sett_tab(\'general\');" id="settab_general">General</a></div>'+
+			'<hr class="hrThin">'+
+			'<div id="settarea"></div></div>';
 		for (var i=0; i<kkjs.modules.length; i++) {
 			var mod = kkjs.modules[i];
 			if (typeof(mod.sett_tab)=='function')
@@ -613,19 +560,26 @@ const kkjs = {
 		for (var i=0; i<tabar.childNodes.length; i++) {
 			var _ta = tabar.childNodes[i];
 			if (_ta.nodeName!="A") continue;
-			_ta.style.fontWeight = (_ta.id==("settab_"+tab) ? 'bold' : '');
+			// Remove the 'settab_selected' class from all tabs
+			_ta.classList.remove('settab_selected');
+	
+			// Add the 'settab_selected' class to the selected tab
+			if (_ta.id == "settab_" + tab) {
+				_ta.classList.add('settab_selected');
+			}
 		}
+
 		var div = $id("settarea");
 		div.innerHTML = '';
-		if (tab=="general") {
-			var _fso = localStorage.getItem("fontsizeoverride");
-			if (!_fso) _fso = parseInt(getComputedStyle($doc.body).fontSize);
-			div.innerHTML+= `<label><input type="checkbox" onchange="localStorage.setItem('alwaysnoko',this.checked);"`+(localStorage.getItem("alwaysnoko")=="true"?'checked="checked"':'')+`>Always noko</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('centerthreads',this.checked);$id('jscenterthreads').disabled=!this.checked;"`+(localStorage.getItem("centerthreads")=="true"?'checked="checked"':'')+`>Center threads</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('persistpager',this.checked);$id('jspersistpager').disabled=!this.checked;"`+(localStorage.getItem("persistpager")=="true"?'checked="checked"':'')+`>Persistent pager</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('persistnav',this.checked);location.reload();"`+(localStorage.getItem("persistnav")=="true"?'checked="checked"':'')+`>Persistent navigation</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('tripkeys', this.checked);location.reload();"`+(localStorage.getItem("tripkeys")=="true"?'checked="checked"':'')+`>Futallaby style tripkeys</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('neomenu',this.checked);location.reload();"`+(localStorage.getItem("neomenu")=="true"?'checked="checked"':'')+`>Use Neomenu</label>
+		
+		if (tab == "general") {
+			div.innerHTML += `
+				<label><input type="checkbox" onchange="localStorage.setItem('neomenu',this.checked);document.body.classList.toggle('neomenuEnabled', this.checked);kkjs.toggleNeomenu(this.checked);" ${(localStorage.getItem("neomenu") === "true" ? 'checked="checked"' : '')}>Use neomenu</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('persistnav',this.checked);document.body.classList.toggle('persistnav', this.checked);" ${(localStorage.getItem("persistnav") === "true" ? 'checked="checked"' : '')}>Persistent navigation</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('persistpager',this.checked);document.body.classList.toggle('persistpager', this.checked);" ${(localStorage.getItem("persistpager") === "true" ? 'checked="checked"' : '')}>Persistent pager</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('alwaysnoko',this.checked);document.body.classList.toggle('alwaysnoko', this.checked);" ${(localStorage.getItem("alwaysnoko") === "true" ? 'checked="checked"' : '')}>Always noko</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('centerthreads',this.checked);document.body.classList.toggle('centerthreads', this.checked);" ${(localStorage.getItem("centerthreads") === "true" ? 'checked="checked"' : '')}>Center threads</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('tripkeys', this.checked);" ${(localStorage.getItem("tripkeys") === "true" ? 'checked="checked"' : '')}>Futallaby style tripkeys</label>
 			`;
 		}
 		for (var i=0; i<kkjs.modules.length; i++) {
@@ -637,3 +591,36 @@ const kkjs = {
 };
 
 window.addEventListener("DOMContentLoaded", kkjs.startup);
+
+// Function to set initial menu state based on localStorage
+kkjs.setInitialMenuState = function() {
+  // Check if 'neomenu' exists in localStorage
+  let isNeoMenuEnabled = localStorage.getItem("neomenu");
+
+  // Only proceed if 'neomenu' is explicitly set
+  if (isNeoMenuEnabled !== null) {
+    let neoMenuEnabled = isNeoMenuEnabled === "true";
+    
+    // Ensure the classic and neo menus exist before toggling
+    const classicMenu = document.querySelector('.classicmenu');
+    const neoMenu = document.querySelector('.neomenu');
+    
+    if (classicMenu && neoMenu) {
+      // Toggle visibility based on 'neomenu' setting
+      classicMenu.hidden = neoMenuEnabled;
+			neoMenu.hidden = !neoMenuEnabled;
+			classicMenu.classList.toggle('hidden', neoMenuEnabled);
+			neoMenu.classList.toggle('hidden', !neoMenuEnabled);
+    } else {
+      console.warn('Menu elements not found. Skipping menu state initialization.');
+    }
+	}
+};
+
+// Function to toggle the Neo menu on demand
+kkjs.toggleNeomenu = function(enabled) {
+  // Update the 'neomenu' setting in localStorage
+  localStorage.setItem('neomenu', enabled);
+  // Re-run to update menu display based on new setting
+  kkjs.setInitialMenuState();
+};

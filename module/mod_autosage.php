@@ -1,12 +1,11 @@
 <?php
 // auto sage module made for kokonotsuba by deadking
-class mod_autosage extends ModuleHelper {
+class mod_autosage extends moduleHelper {
 	private $mypage;
 	private $LOCKICON = '';
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-		
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
 		$this->LOCKICON = $this->config['STATIC_URL'].'image/locked.png';
 		$this->mypage = $this->getModulePageURL();
 	}
@@ -19,20 +18,20 @@ class mod_autosage extends ModuleHelper {
 		return 'Koko BBS Release 1';
 	}
 
-	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, $img, &$status) {
-		$PIO = PIOPDO::getInstance();
+	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $thread_uid, $img, &$status) {
+		$threadSingleton = threadSingleton::getInstance();
 	
 		if ($thread_uid) {
-			$post = $PIO->fetchPostsFromThread($thread_uid)[0];
+			$post = $threadSingleton->fetchPostsFromThread($thread_uid)[0];
 			$fh = new FlagHelper($post['status']);
 			if($fh->value('as')) $age = false;
 		}
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		$fh = new FlagHelper($post['status']);
 		if($fh->value('as')) {
-			$arrLabels['{$POSTINFO_EXTRA}'].='&nbsp;<b title="AutoSage"><font color="#F00">AS</font></b>';
+			$arrLabels['{$POSTINFO_EXTRA}'].=' <span class="autosage" title="Autosage. This thread cannot be bumped.">AS</span>';
 		}
 	}
 
@@ -42,21 +41,20 @@ class mod_autosage extends ModuleHelper {
 
 		if ($roleLevel < $this->config['AuthLevels']['CAN_AUTO_SAGE']) return;
 		$fh = new FlagHelper($post['status']);
-		if(!$isres) $modfunc.= '[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('as')?' title="Allow age">as':' title="Autosage">AS').'</a>]';
+		if(!$isres) $modfunc.= '<span class="adminFunctions adminAutosageFunction">[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('as')?' title="Allow age">as':' title="Autosage">AS').'</a>]</span>';
 	}
 
 	public function ModulePage() {
 		$PIO = PIOPDO::getInstance();
+		$threadSingleton = threadSingleton::getInstance();
 		$actionLogger = ActionLogger::getInstance();
 		$globalHTML = new globalHTML($this->board);
-		$softErrorHandler = new softErrorHandler($this->board);
-		$staffSession = new staffAccountFromSession;
-		$roleLevel = $staffSession->getRoleLevel();
+		$softErrorHandler = new softErrorHandler($globalHTML);
 		
 		$softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_AUTO_SAGE']);
 		
-		$post = $PIO->fetchPostsFromThread(strval($_GET['thread_uid']))[0];
-		if (!$PIO->isThreadOP($post['post_uid'])) $globalHTML->error('ERROR: Cannot autosage reply.');
+		$post = $threadSingleton->fetchPostsFromThread(strval($_GET['thread_uid']))[0];
+		if (!$post['is_op']) $globalHTML->error('ERROR: Cannot autosage reply.');
 		if (!$post) $globalHTML->error('ERROR: Post does not exist.');
 		$flgh = $PIO->getPostStatus($post['post_uid']);
 		$flgh->toggle('as');

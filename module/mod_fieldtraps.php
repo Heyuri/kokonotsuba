@@ -1,7 +1,7 @@
 <?php
 // komeo 2024
 
-class mod_fieldtraps extends ModuleHelper {
+class mod_fieldtraps extends moduleHelper {
 	private $fields = array('e-mail', 'username', 'subject', 'comment', 'firstname', 'lastname', 'city', 'state', 'zipcode');
 
 	public function getModuleName(){

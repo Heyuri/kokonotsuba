@@ -8,7 +8,7 @@ The main basis is the content of this page:
 http://jmhoule314.blogspot.com/2006/05/easy-php-captcha-tutorial-today-im.html
 Added the result of Kris Knigga's modification in response.
 */
-class mod_captcha extends ModuleHelper {
+class mod_captcha extends moduleHelper {
 	private $CAPTCHA_WIDTH = 100; // Picture width
 	private $CAPTCHA_HEIGHT = 25; // Picture height
 	private $CAPTCHA_LENGTH = 4; // Number of plain words
@@ -18,6 +18,7 @@ class mod_captcha extends ModuleHelper {
 	private $CAPTCHA_FONTFACE = array(); // Fonts used (can be selected randomly, but the font types need to be the same and cannot be mixed)
 	private $CAPTCHA_ECOUNT = 2;
 	private $ALT_POSTAREA = '';
+	private $mypage;
 	private $LANGUAGE=array(
 			'zh_TW' => array(
 				'modcaptcha_captcha' => '發文驗證碼',
@@ -42,9 +43,8 @@ class mod_captcha extends ModuleHelper {
 			)
 		);
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);
 		$this->CAPTCHA_FONTFACE = array($this->config['ROOTPATH'].'module/font1.gdf'); 
 		$this->ALT_POSTAREA = stristr($this->config['TEMPLATE_FILE'], 'txt');
 		
@@ -62,19 +62,24 @@ class mod_captcha extends ModuleHelper {
 
 	/* Attach CAPTCHA image and function to page */
 	public function autoHookPostForm(&$form){
-		if ($this->ALT_POSTAREA) $form .= '<tr class="captchaarea"><td valign="TOP"><label for="captchacode">Captcha:</label></td><td><img src="'.$this->mypage.'" alt="'._T('modcaptcha_captcha_alt').'" id="chaimg"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&\';})();">'.$this->_T('modcaptcha_reload').'</a>]</small><br><input tabindex="7" type="text" id="captchacode" name="captchacode" autocomplete="off" class="inputtext">'.$this->_T('modcaptcha_enterword').'</td></tr>';
-		else $form .= '<tr><td class="postblock"><b><label for="captchacode">Captcha</label></b></td><td><img src="'.$this->mypage.'" alt="'._T('modcaptcha_captcha_alt').'" id="chaimg"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&\';})();">'.$this->_T('modcaptcha_reload').'</a>]</small><br><input tabindex="7" type="text" id="captchacode" name="captchacode" autocomplete="off" class="inputtext">'.$this->_T('modcaptcha_enterword').'</td></tr>';
+		if ($this->ALT_POSTAREA) $form .= '<tr class="captchaarea"><td valign="TOP"><label for="captchacode">Captcha:</label></td><td><img src="'.$this->mypage.'" alt="'._T('modcaptcha_captcha_alt').'" id="chaimg"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&\';})();">'.$this->_T('modcaptcha_reload').'</a>]</small><br><input type="text" id="captchacode" name="captchacode" autocomplete="off" class="inputtext">'.$this->_T('modcaptcha_enterword').'</td></tr>';
+		else $form .= '<tr><td class="postblock"><b><label for="captchacode">Captcha</label></b></td><td><img src="'.$this->mypage.'" alt="'._T('modcaptcha_captcha_alt').'" id="chaimg"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&\';})();">'.$this->_T('modcaptcha_reload').'</a>]</small><br><input type="text" id="captchacode" name="captchacode" autocomplete="off" class="inputtext">'.$this->_T('modcaptcha_enterword').'</td></tr>';
 	}
 
 	/* Check whether the light and dark codes meet the requirements immediately after receiving the request */
 	public function autoHookRegistBegin(&$name, &$email, &$sub, &$com, $upfileInfo, $accessInfo){
 		if (defined('VIPDEF')) return;
-		if (valid()>=$this->config['roles']['LEV_JANITOR']) return; //no captcha for admin mode
-		@session_start();
+		$staffSession = new staffAccountFromSession;
+		$roleLevel = $staffSession->getRoleLevel();
+
+
+		$globalHTML = new globalHTML($this->board);
+		if ($roleLevel->isAtLeast(\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR)) return; //no captcha for admin mode
+
 		$MD5code = isset($_SESSION['captcha_dcode']) ? $_SESSION['captcha_dcode'] : false;
 		if($MD5code===false || !isset($_POST['captchacode']) || md5(strtoupper($_POST['captchacode'])) !== $MD5code){ // Case insensitive check
 			unset($_SESSION['captcha_dcode']);
-			error($this->_T('modcaptcha_worderror'));
+			$globalHTML->error($this->_T('modcaptcha_worderror'));
 		}
 	}
 

@@ -1,0 +1,185 @@
+@charset "UTF-8";
+
+/************************ Global **************************************/
+
+:root {
+	/* Global */
+	--font-family-main: var(--font-family-mspgothic);
+	--font-size-main: 12pt;
+	--image-bg-main: url(data:image/gif;base64,R0lGODdhPAA8AJkAANCznMWtmbOektzApiwAAAAAPAA8AAAC/5SPqcvtCJ6c1IUAsgZ48wuG4qV1njYMZxmkbjYGQpipJeDmuo7zdYoTRSwiRGuFg3lio4HpswF9SJzhobpMSXsZAVQoS6KcpoH3MsPIZsAtVWAbDoVYziuZ3nhhnavWVASVFkYVNdbixKbH0mXQQ8I0FdERVnOi4tXWcqFVZXKAqAbJNEoTdUT28vSlZvUoFRmpxIdh87LXw1Z4cAc5wzFIulIbt+FS6MELVBJsMPK7utqTAmfrbAPoqAlCVknaOkWsclej7VzlRyYJAhc+slTllDNFbZBIq+10I3WGJks77cc4bCSgAcsUp1SESd9+hRv4Q9wiT/aWwWIHMEQaXP/GyNn52EEfjIrYoGGkpVHaGEuF2kTZiFASvm8qp+2YR4xlophqHEKpcwlFOWjO0IB6cGRQMBlMm86oAFXBnzVRHcwbs2xFDkQ8lt28aSzMPHWFCHHNKkaDo44etk5LM7DerFJ/6hSTM6xSWrUkgGDieOIIl46IgNJxl7JwrnY34tzViuQiw2c1+k662wmoVhqC3yD29YOPLnhIbqBE9hOl0tBmLht6VDqy5NPPOKmQYabFRko+I7OAtEQYoTZeTAaLPQslI3d8RHPWzXiQpc3DlnsD468Wy+g1p58S9WTL7yItG5E5DgPtxOa/v7u5sgSOP62ARWr+GFimUcEsurX/wraQcslVFxgVIdhSgg243GZfW7EBAo+BCwqFW3L+hSYGf0pYhAsT9ghESFo7CHRXNIq5ch86cCxw0FI0ZXdOEQlQtQCNMjqjwIvi6YgaSV/9qENIQA75VXCzxdBIgJ005NBF2rBz23MxKKVMN/14otYezXyYR4bAuccOfFFK80lZfWDAESAGAhQOAlvpFU1yKUmnJikuUjXNc5J0GSZT0iUE3gf9+IejRwO+duYay+3DzkWBIPSYkZHYc1h7NLGB0IEjPahHP0Zl9A4TrW2TJVmBYNTneJfSkGmKoi1ayjmqIjlZcaGwFxxtbjB1ymd2ihVprgaWEqqHUzZajSYFKYq3J7FgZneqn1zAgtxIomQEqilTFjcYcibimlodUjrKrXqyOWqZFAUAADs=);
+	--color-bg-main: #ffffff;
+	--color-bg-menu: #ccffcc;
+	--color-bg-thread: #efefef;
+  --color-bg-reply: var(--color-bg-thread);
+	--color-fg-main: #000000;
+	--color-fg-thread: var(--color-fg-main);
+  --color-fg-reply: var(--color-fg-main);
+	--color-fg-link: #0000ff;
+	--color-fg-link-hover: #ff0000;
+	--color-lo-contrast-border: #c0c0c0;
+	--color-hi-contrast-border: #8d8d8d;
+	--color-lo-contrast-border-menu: #e5ffe5;
+	--color-hi-contrast-border-menu: #708c70; 
+	--color-lo-contrast-border-thread: #f7f7f7;
+	--color-hi-contrast-border-thread: #838383;
+	--color-border-button: #e3e3e3;
+	/* Navigation/admin bar */
+	--color-bg-boardlist: #ffffff;
+	--color-fg-boardlist: #cc3300;
+	/* Board header */
+	--color-bg-theading: #e04000;
+	--color-bg-theading2: #0040e0;
+	--color-bg-theading3: #e08000;
+	--color-fg-theading: #ffffff;
+	/* Post form */
+	--color-fg-global-message: var(--color-fg-warning);
+	/* Posts/replies */
+	--color-bg-reply-hl: #ffefef;
+	--color-fg-title: #ff0000;
+	--color-fg-name: #008000;
+	--color-fg-warning: #ff0000;
+	--color-fg-warning-ip: #0000cc;
+	--color-fg-omitted: #707070;
+	/* Post formatting */
+	--color-fg-quotelink: var(--color-fg-link);
+	--color-fg-quotelink-hover: var(--color-fg-link-hover);
+	--color-fg-quote: #789922;
+	--color-fg-quote2: #dd00a9;
+	--color-bg-spoiler: #000000;
+	--color-bg-code: #ffffff;
+	--color-fg-code: #000000;
+	/* Administrator mode */
+  --color-bg-postblock: #ccffcc;
+	/* Windows */
+	--color-bg-window-item-highlight: var(--color-bg-reply-hl);
+}
+
+body {
+	line-height: 1.2;
+}
+
+.menu .innerbox {
+	margin: 7px;
+	padding: 3px;
+}
+
+.postlists,
+#txt .thread {
+	padding: 7px;
+}
+
+.outerbox,
+#txt .thread {
+	margin: 0 auto;
+	width: 95%;
+}
+
+#titleBox,
+#txt .thread {
+	margin-bottom: 20px;
+}
+
+#txt .thread .innerbox {
+	padding: 3px;
+}
+
+.outerbox,
+#txt .thread,
+.postlists,
+#pager {
+	border-width: 1px;
+	border-style: solid;
+	border-color: var(--color-lo-contrast-border) var(--color-hi-contrast-border) var(--color-hi-contrast-border) var(--color-lo-contrast-border);
+}
+
+#txt .thread .innerbox,
+#pager td {
+	border-width: 1px;
+	border-style: solid;
+	border-color: var(--color-hi-contrast-border-thread) var(--color-lo-contrast-border-thread) var(--color-lo-contrast-border-thread) var(--color-hi-contrast-border-thread);
+}
+
+.menu .innerbox,
+.postlists th,
+.postlists td {
+	border-width: 1px;
+	border-style: solid;
+	border-color: var(--color-hi-contrast-border-menu) var(--color-lo-contrast-border-menu) var(--color-lo-contrast-border-menu) var(--color-hi-contrast-border-menu);
+}
+
+/************************ Navigation/admin bar ************************/
+/******** Classic menu ********/
+/******** Neomenu ********/
+/************************ Board header ********************************/
+/************************ Post form ***********************************/
+/************************ Board info **********************************/
+/************************ Posts/replies *******************************/
+
+.title,
+.title a {
+	text-decoration: none;
+}
+
+.title a:hover {
+	text-decoration: underline;
+}
+
+.sod.noVotes {
+	font-family: var(--font-family-msgothic);
+}
+
+.threadSeparator {
+	display: none;
+}
+
+/************************ Post formatting *****************************/
+/************************ Footer **************************************/
+/************************ Administrator mode **************************/
+/************************ Catalog *************************************/
+/************************ Windows *************************************/
+
+.window {
+	background-color: inherit;
+}
+
+.winbar {
+	background-image: linear-gradient(var(--color-bg-thread), var(--color-bg-main));
+}
+
+/************************ Mobile **************************************/
+
+@media screen and (max-width: 768px) {
+	body {
+		line-height: normal;
+	}
+}
+
+/************************ Probably not needed *************************/
+
+/* .comment {
+	margin: 0.2em 0.5em 0.5em 3em;
+} */
+
+/* .auditlog {
+	width: calc(95% - 2em - 2px);
+	line-height: 1.2em;
+	padding: 1em;
+	margin: 1em auto;
+} */
+
+/* #catalog .thread {
+	width: 180px;
+	min-width: 180px;
+	max-width: 180px;
+	overflow-y: hidden;
+	vertical-align: top;
+	padding: 0.5em 0;
+	background-color: #dddfdf;
+}
+
+#catalog .thread:hover {
+	width: 180px;
+	min-width: 180px;
+	max-width: 180px;
+	overflow-y: auto;
+} */

@@ -1,0 +1,223 @@
+@charset "UTF-8";
+
+/************************ Global **************************************/
+
+:root {
+  /* Global */
+  --font-family-main: var(--font-family-serif);
+  --font-size-main: 12pt;
+  color-scheme: dark;
+  --color-bg-main: #1d1f21;
+  --color-bg-main-gradient: #111314;
+  --color-fg-main: #c5c8c6;
+  --color-fg-link: #81a2be;
+  --color-fg-link-hover: #5f89ac;
+  --color-x-lo-contrast-border: #111314;
+  --color-lo-contrast-border: #27292c;
+  --color-hi-contrast-border: #656769;
+  --color-border-button: #e3e3e3;
+  /* Navigation/admin bar */
+  --color-bg-boardlist: #27292c;
+  --color-fg-boardlist: #656769;
+  /* Board header */
+  --color-fg-logo: var(--color-fg-main);
+  --color-bg-theading: #373b41;
+  --color-bg-theading2: var(--color-bg-theading);
+  --color-bg-theading3: var(--color-bg-theading);
+  --color-fg-theading: #e0e0e0;
+  /* Post form */
+  --color-bg-postblock: #282a2e;
+  --color-fg-global-message: var(--color-fg-warning);
+  /* Posts/replies */
+  --color-bg-reply: #282a2e;
+  --color-bg-reply-hl: #1d1d21;
+  --color-fg-title: #b294bb;
+  --color-fg-name: var(--color-fg-main);
+  --color-fg-warning: #ee7777;
+  --color-fg-warning-ip: #8abeb7;
+  --color-fg-omitted: #999999;
+  /* Post formatting */
+  --color-fg-quotelink: #5f89ac;
+  --color-fg-quotelink-hover: #81a2be;
+  --color-fg-quote: #b5bd68;
+  --color-fg-quote2: #d49eaf;
+  --color-bg-spoiler: #0f1011;
+  --color-bg-code: #0f1011;
+  --color-fg-code: var(--color-fg-main);
+  /* Administrator mode */
+  --color-bg-postlists-header: #282a2e;
+  --color-fg-postlists-header: var(--color-fg-main);
+  --color-fg-postlists-header-link: var(--color-fg-main);
+  --color-bg-postlists-odd: #1b1c1f;
+  --color-bg-postlists-even: #242629;
+  /* File board/flash board */
+  --color-bg-flashboard-even: #242629;
+  /* Windows */
+  --color-bg-window-item-highlight: #373b41;
+}
+
+hr {
+  border-color: var(--color-hi-contrast-border);
+}
+
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"],
+progress {
+  accent-color: #b4b7b4;
+}
+
+fieldset {
+  border-color: var(--color-hi-contrast-border);
+}
+
+#globalmsg,
+.warning,
+.sageText,
+.newPM,
+.roll,
+.autosage {
+  color: var(--color-fg-warning);
+}
+ 
+/************************ Navigation/admin bar ************************/
+/******** Neomenu ********/
+
+.neomenuTopLevel,
+.persistnav .neomenuTopLevel {
+  border: 1px solid;
+  border-color:  var(--color-hi-contrast-border) var(--color-x-lo-contrast-border) var(--color-x-lo-contrast-border)  var(--color-hi-contrast-border);
+}
+
+.neomenuList {
+  border-color: var(--color-hi-contrast-border);
+}
+
+.neomenu .neomenuTopLevel h2:hover,
+.neomenu .neomenuList li:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+/************************ Board header ********************************/
+
+#banner,
+.fullbannerIframe {
+  border-color:  var(--color-hi-contrast-border);
+}
+
+/************************ Post form ***********************************/
+
+.rules,
+#blotter {
+  font-family: sans-serif;
+  font-size: var(--font-size-xx-small);
+}
+
+/************************ Posts/replies *******************************/
+
+.previewBox .post {
+	border: 1px solid var(--color-hi-contrast-border) !important;
+}
+
+/************************ Post formatting *****************************/
+
+.rabienrose {
+  background-color: #50394c;
+  color: #e9c9e1;
+}
+
+.partybusColor1 {
+  color: #ff80ff;
+}
+
+.partybusColor2 {
+  color: #ffffc0;
+}
+
+.partybusColor3 {
+  color: #80ffc0;
+}
+
+.partybusColor4 {
+  color: #c0ffff;
+}
+
+.partybusColor5 {
+  color: #c0c0ff;
+}
+
+.partybusColor6 {
+  color: #ff80c0;
+}
+
+.partybusColor7 {
+  color: #ffc0a0;
+}
+
+.partybusColor8 {
+  color: #80c0ff;
+}
+
+.bokuGreen {
+  color: #8abea0;
+}
+
+.bokuRed {
+  color: #cc6666;
+}
+
+/************************ Footer **************************************/
+
+#pager {
+  border-color: var(--color-hi-contrast-border);
+}
+
+#pager th,
+#pager td {
+  border-color: var(--color-hi-contrast-border);
+}
+
+/************************ Administrator mode **************************/
+
+.error,
+.offline {
+  color: #cc6666;
+}
+
+.good,
+.online {
+  color: #b5bd68;
+}
+
+/************************ Ban screen **********************************/
+/************************ Catalog *************************************/
+/********************** File board/flash board ************************/
+/************************ Windows *************************************/
+/************************ Mobile **************************************/
+
+@media screen and (max-width: 650px) {
+  .rules {
+    font-size: var(--font-size-x-small);
+  }
+}
+
+.window,
+.winbar {
+  border-color: var(--color-hi-contrast-border);
+}
+
+.winctrl > * {
+  filter: invert(0.77);
+}
+
+/************************ Probably not needed *************************/
+
+/* .top {
+  background-color: #060a0d;
+} */
+
+/* iframe,
+.rotating {
+  border-right: 1px solid var(--color-fg-main);
+  border-bottom: 1px solid var(--color-fg-main);
+} */

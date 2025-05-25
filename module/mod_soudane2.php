@@ -1,19 +1,19 @@
 <?php
-class mod_soudane2 extends ModuleHelper {
+class mod_soudane2 extends moduleHelper {
 	private $SOUDANE_DIR = '';
 	private $mypage;
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-		
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
 		$this->SOUDANE_DIR = $this->config['STORAGE_PATH'].'soudane2/';
 		
 		$this->mypage = str_replace('&amp;', '&', $this->getModulePageURL());
 		if (!is_dir($this->SOUDANE_DIR)) {
 			@mkdir($this->SOUDANE_DIR);
 		}
+		$globalHTML = new globalHTML($this->board);
 		if (!is_writable($this->SOUDANE_DIR)) {
-			error('ERROR: Cannot write to SOUDANE_DIR!');
+			$globalHTML->error('ERROR: Cannot write to SOUDANE_DIR!');
 		}
 	}
 
@@ -64,23 +64,23 @@ function sd2(sno) {
 </script>';
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		$log = $this->_soudane($post['no']);
 		$arrLabels['{$QUOTEBTN}'].= ' <a id="sd2'.$post['no'].'" class="sod" href="javascript:sd2('.$post['no'].');">'.
 			$this->_soudaneTxt($log).'</a>';
 	}
 
-	public function autoHookThreadReply(&$arrLabels, $post, $isReply){
-		$this->autoHookThreadPost($arrLabels, $post, $isReply);
+	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply){
+		$this->autoHookThreadPost($arrLabels, $post, $threadPosts, $isReply);
 	}
 	
 	public function ModulePage() {
-		$PIO = PMCLibrary::getPIOInstance();
+		$PIO = PIOPDO::getInstance();
 		$no = intval($_GET['no']??'');
 		if (!$no) die('Bad No.');
 		if (!count($PIO->fetchPosts($no))) die('Post not found!');
 		$log = $this->_soudane($no);
-		$ip = getREMOTE_ADDR();
+		$ip = new IPAddress;
 		if (!in_array($ip, $log)) array_push($log, $ip);
 		file_put_contents($this->SOUDANE_DIR."$no.dat", implode("\r\n", $log));
 		echo $this->_soudaneTxt($log);

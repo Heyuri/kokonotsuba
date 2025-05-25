@@ -1,775 +1,763 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en-US">
 <head>
-<link rel="shortcut icon" href="../image/favicon.png">
-<title>BBCode Reference</title>
-<link href="../css/oldheyuri.css" rel="stylesheet" type="text/css" media="all">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<meta name="description" content="Heyuri's BBCode">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="shortcut icon" href="../image/favicon.png">
+  <title>BBCode Reference</title>
+  <link rel="stylesheet" href="../css/kokoimg/base.css?v=133">
+  <link class="linkstyle" rel="stylesheet" href="../css/kokoimg/sakomoto.css?v=4" title="Sakomoto">
+  <link class="linkstyle" rel="stylesheet alternate" href="../css/kokoimg/heyuriclassic.css?v=5" title="Heyuri Classic">
+  <link class="linkstyle" rel="stylesheet alternate" href="../css/kokoimg/futaba.css?v=2" title="Futaba">
+  <link class="linkstyle" rel="stylesheet alternate" href="../css/kokoimg/burichan.css?v=4" title="Burichan">
+  <link class="linkstyle" rel="stylesheet alternate" href="../css/kokoimg/fuuka.css?v=4" title="Fuuka">
+  <link class="linkstyle" rel="stylesheet alternate" href="../css/kokoimg/tomorrow.css?v=4" title="Tomorrow">
+  <link class="linkstyle" rel="stylesheet alternate" href="../css/kokoimg/ayashii.css?v=4" title="Ayashii">
+  <link class="linkstyle" rel="stylesheet alternate" href="../css/kokoimg/mercury.css?v=4" title="Mercury">
+  <link class="linkstyle" rel="stylesheet alternate" href="../css/blank.css?v=2" title="Import Custom">
+  <meta name="description" content="Heyuri's BBCode">
+  <script src="../js/koko.js?v=15"></script>
+  <script src="../js/style.js?v=3"></script>
+  <style>
+    .centered {
+      text-align: center;
+    }
 
-<style>
-table, th, td {
-border: 1px solid black;
-text-align: center;
-}
-</style>
+    h1 {
+      font-size: 1em;
+      font-style: italic;
+      font-weight: normal;
+    }
+
+    h2, h3 {
+      text-align: center;
+    }
+
+    #emoteTable {
+      margin: 0 auto;
+    }
+
+    #emoteTable,
+    #emoteTable th,
+    #emoteTable td {
+      border: 1px solid var(--color-lo-contrast-border) !important;
+    }
+
+    #bbcodeExampleContainer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1em;
+      justify-content: center;
+    }
+
+    .bbcodeSection {
+      display: inline-block;
+      vertical-align: top;
+      border: 1px solid var(--color-lo-contrast-border);
+      padding: 0 0.5em;
+      max-width: 410px;
+    }
+
+    .bbcodeSection h3 {
+      margin: 0.25em 0;
+      background-color: var(--color-bg-postblock);
+    }
+
+    .bbcodeSection .com {
+      width: 30em;
+      height: 5.5em;
+      max-width: 100vw;
+      max-width: calc(100vw - 92px);
+    }
+
+    .bbcodeSection table {
+      margin-bottom: 0.5em;
+    }
+
+    .bbcodeSection p {
+      margin: 0;
+    }
+
+    .bbcodeSection .bbcodeNote {
+      margin: 0.5em 0;
+      font-size: var(--font-size-small);
+    }
+
+    @media screen and (max-width: 650px) {
+      
+      #emoteTable tbody {
+        display: flex;
+        flex-wrap: wrap;justify-content: space-between;
+        gap: 0.125em;
+        width: 100%;
+      }
+
+      #emoteTable tbody tr {
+        display: contents;
+      }
+
+      #emoteTable tbody td {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        flex: 1 1 0px;
+        box-sizing: border-box;
+      }
+
+      .emoteExampleText {
+        word-break: keep-all;
+      }
+
+      .bbcodeSection {
+        vertical-align: top;
+        border: none;
+        border-top: 1px solid;
+        padding: 0 0.5em;
+        width: 100%;
+      }
+
+      .bbcodeSection h3 {
+        margin-top: 0.5em;
+      }
+    }
+  </style>
 </head>
 <body>
-<center>
-<div style="font-family: Tahoma, Verdana, Arial, Helvetica; padding-top: 30px; padding-bottom: 20px;">
-<i><span style="font-size: 45pt; padding-right: 10px;">Heyuri</span>presentz...</i>
-</div>
+  <div class="centered">
+    <h1>
+      <span style="font-size: 3.75em;">Heyuri</span> presentz...
+    </h1>
 
+    <table id="emoteTable">
+      <thead>
+        <tr>
+          <th colspan="8">Emotes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-biggrin.gif"></div>
+            <div class="emoteExampleText">:biggrin:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-dark.gif"></div>
+            <div class="emoteExampleText">:dark:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-wink.gif"></div>
+            <div class="emoteExampleText">:wink:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-x3.gif"></div>
+            <div class="emoteExampleText">:x3:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-xd.gif"></div>
+            <div class="emoteExampleText">:xd:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-xp.gif"></div>
+            <div class="emoteExampleText">:xp:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-angry.gif"></div>
+            <div class="emoteExampleText">:angry:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-astonish.gif"></div>
+            <div class="emoteExampleText">:astonish:</div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-cry.gif"></div>
+            <div class="emoteExampleText">:cry:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-cool.gif"></div>
+            <div class="emoteExampleText">:cool:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-closed-eyes2.gif"></div>
+            <div class="emoteExampleText">:closed-eyes2:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-closed-eyes.gif"></div>
+            <div class="emoteExampleText">:closed-eyes:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-dizzy.gif"></div>
+            <div class="emoteExampleText">:dizzy:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-drool.gif"></div>
+            <div class="emoteExampleText">:drool:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-glare.gif"></div>
+            <div class="emoteExampleText">:glare:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-glare-01.gif"></div>
+            <div class="emoteExampleText">:glare1:</div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-glare-02.gif"></div>
+            <div class="emoteExampleText">:glare2:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-happy.gif"></div>
+            <div class="emoteExampleText">:happy:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-huh.gif"></div>
+            <div class="emoteExampleText">:huh:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-nosebleed.gif"></div>
+            <div class="emoteExampleText">:nosebleed:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-nyaoo.gif"></div>
+            <div class="emoteExampleText">:nyaoo:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-nyaoo2.gif"></div>
+            <div class="emoteExampleText">:nyaoo2:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-nyaoo-closedeyes.gif"></div>
+            <div class="emoteExampleText">:nyaoo-closedeyes:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-ph34r.gif"></div>
+            <div class="emoteExampleText">:ph34r:</div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-rolleyes.gif"></div>
+            <div class="emoteExampleText">:rolleyes:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-sad.gif"></div>
+            <div class="emoteExampleText">:sad:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-smile.gif"></div>
+            <div class="emoteExampleText">:smile:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-sweat.gif"></div>
+            <div class="emoteExampleText">:sweat:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-sweat2.gif"></div>
+            <div class="emoteExampleText">:sweat2:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-sweat3.gif"></div>
+            <div class="emoteExampleText">:sweat3:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-tongue.gif"></div>
+            <div class="emoteExampleText">:tongue:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-unsure.gif"></div>
+            <div class="emoteExampleText">:unsure:</div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-heart.gif"></div>
+            <div class="emoteExampleText">:love:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-blush3.gif"></div>
+            <div class="emoteExampleText">:blush:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-mask.gif"></div>
+            <div class="emoteExampleText">:mask:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/nagato.gif"></div>
+            <div class="emoteExampleText">:nagato:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo.gif"></div>
+            <div class="emoteExampleText">:emo:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-tomo.gif"></div>
+            <div class="emoteExampleText">:kuz:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/emo-yotsuba-lolico.gif"></div>
+            <div class="emoteExampleText">:lolico:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/egg.gif"></div>
+            <div class="emoteExampleText">:tehegg:</div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/heyuri-dance.gif"></div>
+            <div class="emoteExampleText">:dance:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/heyuri-dance-pantsu.gif"></div>
+            <div class="emoteExampleText">:dance2:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/nigra.gif"></div>
+            <div class="emoteExampleText">:nigra:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/sage.gif"></div>
+            <div class="emoteExampleText">:sage:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/longcat.gif"></div>
+            <div class="emoteExampleText">:longcat:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/tacgnol.gif"></div>
+            <div class="emoteExampleText">:tacgnol:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/mona2.gif"></div>
+            <div class="emoteExampleText">:mona2:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/nida.gif"></div>
+            <div class="emoteExampleText">:nida:</div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/iyahoo.gif"></div>
+            <div class="emoteExampleText">:iyahoo:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/banana.gif"></div>
+            <div class="emoteExampleText">:banana:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/onigiri.gif"></div>
+            <div class="emoteExampleText">:onigiri:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/anime_shii01.gif"></div>
+            <div class="emoteExampleText">:shii:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/anime_saitama05.gif"></div>
+            <div class="emoteExampleText">:saitama:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/foruda.gif"></div>
+            <div class="emoteExampleText">:foruda:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/kuma6.gif"></div>
+            <div class="emoteExampleText">:kuma6:</div>
+          </td>
+          <td>
+            <div class="emoteExampleImage"><img src="../image/emote/waha.gif"></div>
+            <div class="emoteExampleText">:waha:</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-<table style="width:60%">
-<th colspan="8">Emotes</th>
-</tr>
+    <p class="bbcodeNote">Note: Emotes are case-sensitive.</p>
+  </div>
+  
+  <hr>
 
+  <h2>BBCode</h2>
 
+  <div id="bbcodeExampleContainer">
+  
+    <!-- bold -->
+    <div class="bbcodeSection" id="bold">
+      <h3>Bold</h3>
 
-<tr>
+      <p>Input:</p>
 
-<td>
-<img src="../image/emote/emo-yotsuba-biggrin.gif"><br>
-:biggrin:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-dark.gif"><br>
-:dark:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-wink.gif"><br>
-:wink:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-x3.gif"><br>
-:x3:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-xd.gif"><br>
-:xd:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-xp.gif"><br>
-:xp:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-angry.gif"><br>
-:angry:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-astonish.gif"><br>
-:astonish:
-</td>
+      <textarea class="inputtext com" readonly>[b]Waha![/b]</textarea>
 
-</tr>
+      <p>Output:</p>
 
+      <div class="reply-container">
+        <div class="doubledash">&gt;&gt;</div>
+        <div class="post reply">
+          <div class="postinfo">
+            <label>
+              <input type="checkbox"><span class="title"></span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
+            </label>
+            <span class="postnum">
+              <a class="no">No.</a><a class="qu">1931</a>
+            </span>
+          </div>
+          <div class="comment"><b>Waha!</b></div>
+        </div>
+      </div>
+    </div>
 
+    <!-- italic -->
+    <div class="bbcodeSection" id="italics">
+      <h3>Italics</h3>
 
-<tr>
+      <p>Input:</p>
 
-<td>
-<img src="../image/emote/emo-yotsuba-cry.gif"><br>
-:cry:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-cool.gif"><br>
-:cool:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-closed-eyes2.gif"><br>
-:closed-eyes2:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-closed-eyes.gif"><br>
-:closed-eyes:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-dizzy.gif"><br>
-:dizzy:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-drool.gif"><br>
-:drool:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-glare.gif"><br>
-:glare:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-glare-01.gif"><br>
-:glare1:
-</td>
-</tr>
+      <textarea class="inputtext com" readonly>[i]Waha![/i]</textarea>
 
+      <p>Output:</p>
 
+      <div class="reply-container">
+        <div class="doubledash">&gt;&gt;</div>
+        <div class="post reply">
+          <div class="postinfo">
+            <label>
+              <input type="checkbox"><span class="title"></span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
+            </label>
+            <span class="postnum">
+              <a class="no">No.</a><a class="qu">1931</a>
+            </span>
+          </div>
+          <div class="comment"><i>Waha!</i></div>
+        </div>
+      </div>
+    </div>
 
+    <!-- underline -->
+    <div class="bbcodeSection" id="underline">
+      <h3>Underline</h3>
 
+      <p>Input:</p>
 
-<tr>
-<td>
-<img src="../image/emote/emo-yotsuba-glare-02.gif"><br>
-:glare2:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-happy.gif"><br>
-:happy:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-huh.gif"><br>
-:huh:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-nosebleed.gif"><br>
-:nosebleed:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-nyaoo.gif"><br>
-:nyaoo:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-nyaoo2.gif"><br>
-:nyaoo2:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-nyaoo-closedeyes.gif"><br>
-:nyaoo-closedeyes:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-ph34r.gif"><br>
-:ph34r:
-</td>
-</tr>
+      <textarea class="inputtext com" readonly>[u]Waha![/u]</textarea>
 
+      <p>Output:</p>
 
+      <div class="reply-container">
+        <div class="doubledash">&gt;&gt;</div>
+        <div class="post reply">
+          <div class="postinfo">
+            <label>
+              <input type="checkbox"><span class="title"></span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
+            </label>
+            <span class="postnum">
+              <a class="no">No.</a><a class="qu">1931</a>
+            </span>
+          </div>
+          <div class="comment"><u>Waha!</u></div>
+        </div>
+      </div>
+    </div>
 
+    <!-- Strikethrough -->
+    <div class="bbcodeSection" id="strikethrough">
+      <h3>Strikethrough</h3>
 
-<tr>
-<td>
-<img src="../image/emote/emo-yotsuba-rolleyes.gif"><br>
-:rolleyes:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-sad.gif"><br>
-:sad:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-smile.gif"><br>
-:smile:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-sweat.gif"><br>
-:sweat:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-sweat2.gif"><br>
-:sweat2:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-sweat3.gif"><br>
-:sweat3:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-tongue.gif"><br>
-:tongue:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-unsure.gif"><br>
-:unsure:
-</td>
-</tr>
+      <p>Input:</p>
 
+      <textarea class="inputtext com" readonly>[del]Desu![/del]</textarea>
 
+      <p>Output:</p>
 
-<tr>
+      <div class="reply-container">
+        <div class="doubledash">&gt;&gt;</div>
+        <div class="post reply">
+          <div class="postinfo">
+            <label>
+              <input type="checkbox"><span class="title"></span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
+            </label>
+            <span class="postnum">
+              <a class="no">No.</a><a class="qu">1931</a>
+            </span>
+          </div>
+          <div class="comment"><del>Desu!</del></div>
+        </div>
+      </div>
+    </div>
 
-<td>
-<img src="../image/emote/emo-yotsuba-heart.gif"><br>
-:love:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-blush3.gif"><br>
-:blush:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-mask.gif"><br>
-:mask:
-</td>
-<td>
-<img src="../image/emote/nagato.gif"><br>
-:nagato:
-</td>
-<td>
-<img src="../image/emote/emo.gif"><br>
-:emo:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-tomo.gif"><br>
-:kuz:
-</td>
-<td>
-<img src="../image/emote/emo-yotsuba-lolico.gif"><br>
-:lolico:
-</td>
-<td>
-<img src="../image/emote/egg.gif"><br>
-:tehegg:
-</td>
-</tr>
+    <!-- spoiler -->
+    <div class="bbcodeSection" id="spoiler">
+      <h3>Spoiler</h3>
 
+      <p>Input:</p>
 
+      <textarea class="inputtext com" readonly>[s]Waha![/s]</textarea>
 
+      <p>Output:</p>
 
-<tr>
-<td>
-<img src="../image/emote/heyuri-dance.gif"><br>
-:dance:
-</td>
-<td>
-<img src="../image/emote/heyuri-dance-pantsu.gif"><br>
-:dance2:
-</td>
-<td>
-<img src="../image/emote/nigra.gif"><br>
-:nigra:
-</td>
-<td>
-<img src="../image/emote/sage.gif"><br>
-:sage:
-</td>
-<td>
-<img src="../image/emote/longcat.gif"><br>
-:longcat:
-</td>
-<td>
-<img src="../image/emote/tacgnol.gif"><br>
-:tacgnol:
-</td>
-<td>
-<img src="../image/emote/mona2.gif"><br>
-:mona2:
-</td>
-<td>
-<img src="../image/emote/nida.gif"><br>
-:nida:
-</td>
+      <div class="reply-container">
+        <div class="doubledash">&gt;&gt;</div>
+        <div class="post reply">
+          <div class="postinfo">
+            <label>
+              <input type="checkbox"><span class="title"></span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
+            </label>
+            <span class="postnum">
+              <a class="no">No.</a><a class="qu">1931</a>
+            </span>
+          </div>
+          <div class="comment"><span class="spoiler">Waha!</span></div>
+        </div>
+      </div>
+    </div>
 
+    <!-- Pre -->
+    <div class="bbcodeSection" id="pre">
+      <h3>Pre</h3>
 
-</tr>
+      <p>Input:</p>
 
+      <textarea class="inputtext com" readonly>[pre]Waha![/pre]</textarea>
 
-<tr>
-<td>
-<img src="../image/emote/iyahoo.gif"><br>
-:iyahoo:
-</td>
-<td>
-<img src="../image/emote/banana.gif"><br>
-:banana:
-</td>
-<td>
-<img src="../image/emote/onigiri.gif"><br>
-:onigiri:
-</td>
-<td>
-<img src="../image/emote/anime_shii01.gif"><br>
-:shii:
-</td>
-<td>
-<img src="../image/emote/anime_saitama05.gif"><br>
-:saitama:
-</td>
-<td>
-<img src="../image/emote/foruda.gif"><br>
-:foruda:
-</td>
-<td>
-<img src="../image/emote/kuma6.gif"><br>
-:kuma6:
-</td>
-<td>
-<img src="../image/emote/waha.gif"><br>
-:waha:
-</td>
-</tr>
+      <p>Output:</p>
 
+      <div class="reply-container">
+        <div class="doubledash">&gt;&gt;</div>
+        <div class="post reply">
+          <div class="postinfo">
+            <label>
+              <input type="checkbox"><span class="title"></span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
+            </label>
+            <span class="postnum">
+              <a class="no">No.</a><a class="qu">1931</a>
+            </span>
+          </div>
+          <div class="comment"><pre>Waha!</pre></div>
+        </div>
+      </div>
 
-</table>
+      <p class="bbcodeNote">Note: This adds <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/pre">&lt;pre&gt;</a> to your post.</p>
 
+    </div>
 
-<div style="padding-right:45%; padding-top: 10px;">
-<b>Notice: Emotes are case-sensitive.</b>
-</div>
-</center><hr>
-<br><br>
-<h2>BBCode stuff</h2>
-<br>
-On this page, some of these may look b0rked or a little different than how it would look at boards.<hr>
-<br><br>
+    <!-- quote -->
+    <div class="bbcodeSection" id="blockquote">
+      <h3>Blockquote</h3>
 
-<!-- bold -->
-<b id="bold">Bold</b>
-<table>
-<tbody>
-<tr>
-<td class="postblock"><label for="quoteexample"><b>Comment</b></label></td>
-<td><textarea>
-[b]Waha![/b]
-</textarea></td>
-</tr>
-</tbody>
-</table><br>
-Will look like:
-<br>
-<table>
-<tbody>
-<tr>
-<td class="doubledash" valign="top">
-&gt;&gt;
-</td>
-<td class="post reply" id="p22275">
-<div class="postinfo"><label><input type="checkbox"><big class="title"><b></b></big> <span class="name"><b>Anonymous</b></span> <span class="time">202X/XX/XX(X)XX:XX</span></label>
-<nobr><span class="postnum">
-<a class="no">No.</a><a class="qu">XXXXX</a></span></nobr>
-<small><i class="backlinks"></i></small>
-</div>
-<blockquote class="comment">
-<b style="padding-right: 260px;">Waha!</b>
-</blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<hr><br><br>
+      <p>Input:</p>
 
+      <textarea class="inputtext com" readonly>[quote]Waha![/quote]</textarea>
 
+      <p>Output:</p>
 
-<!-- italic -->
-<b id="italics">Italics</b>
-<table>
-<tbody>
-<tr>
-<td class="postblock"><label for="quoteexample"><b>Comment</b></label></td>
-<td><textarea>
-[i]Waha![/i]
-</textarea></td>
-</tr>
-</tbody>
-</table><br>
-Will look like:
-<br>
-<table>
-<tbody>
-<tr>
-<td class="doubledash" valign="top">
-&gt;&gt;
-</td>
-<td class="post reply" id="p22275">
-<div class="postinfo"><label><input type="checkbox"><big class="title"><b></b></big> <span class="name"><b>Anonymous</b></span> <span class="time">202X/XX/XX(X)XX:XX</span></label>
-<nobr><span class="postnum">
-<a class="no">No.</a><a class="qu">XXXXX</a></span></nobr>
-<small><i class="backlinks"></i></small>
-</div>
-<blockquote class="comment">
-<i style="padding-right: 260px;">Waha!</i>
-</blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<hr><br><br>
+      <div class="reply-container">
+        <div class="doubledash">&gt;&gt;</div>
+        <div class="post reply">
+          <div class="postinfo">
+            <label>
+              <input type="checkbox"><span class="title"></span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
+            </label>
+            <span class="postnum">
+              <a class="no">No.</a><a class="qu">1931</a>
+            </span>
+          </div>
+          <div class="comment"><blockquote>Waha!</blockquote></div>
+        </div>
+      </div>
 
+      <p class="bbcodeNote">Note: This adds <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/blockquote">&lt;blockquote&gt;</a> to your post.</p>
 
+    </div>
 
-<!-- spoiler -->
-<b id="spoiler">Spoiler</b>
-<table>
-<tbody>
-<tr>
-<td class="postblock"><label for="quoteexample"><b>Comment</b></label></td>
-<td><textarea>
-[s]Waha![/s]
-</textarea></td>
-</tr>
-</tbody>
-</table><br>
-Will look like:
-<br>
-<table>
-<tbody>
-<tr>
-<td class="doubledash" valign="top">
-&gt;&gt;
-</td>
-<td class="post reply" id="p22275">
-<div class="postinfo"><label><input type="checkbox"><big class="title"><b></b></big> <span class="name"><b>Anonymous</b></span> <span class="time">202X/XX/XX(X)XX:XX</span></label>
-<nobr><span class="postnum">
-<a class="no">No.</a><a class="qu">XXXXX</a></span></nobr>
-<small><i class="backlinks"></i></small>
-</div>
-<blockquote class="comment">
-<span class="spoiler" style="padding-right: 260px;">Waha!</span>
-</blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<hr><br><br>
+    <!-- code -->
+    <div class="bbcodeSection" id="code">
+      <h3>Code</h3>
 
-<!-- Strikethrough -->
-<b id="strikethrough">Strikethrough</b>
-<table>
-<tbody>
-<tr>
-<td class="postblock"><label for="quoteexample"><b>Comment</b></label></td>
-<td><textarea>
-[del]Desu![/del]
-</textarea></td>
-</tr>
-</tbody>
-</table><br>
-Will look like:
-<br>
-<table>
-<tbody>
-<tr>
-<td class="doubledash" valign="top">
-&gt;&gt;
-</td>
-<td class="post reply" id="p22275">
-<div class="postinfo"><label><input type="checkbox"><big class="title"><b></b></big> <span class="name"><b>Anonymous</b></span> <span class="time">202X/XX/XX(X)XX:XX</span></label>
-<nobr><span class="postnum">
-<a class="no">No.</a><a class="qu">XXXXX</a></span></nobr>
-<small><i class="backlinks"></i></small>
-</div>
-<blockquote class="comment">
-<span style="padding-right: 260px; text-decoration: line-through;">Desu!</span>
-</blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<div style="padding-top: 10px;">
-<b>Note: The text would be readable on themes other than Sakomoto</b>
-</div>
-<hr><br><br>
+      <p>Input:</p>
 
-<!-- Pre -->
-<b id="pre">Pre</b>
-<table>
-<tbody>
-<tr>
-<td class="postblock"><label for="quoteexample"><b>Comment</b></label></td>
-<td><textarea>
-[pre]Waha![/pre]
-</textarea></td>
-</tr>
-</tbody>
-</table><br>
-Will look like:
-<br>
-<table>
-<tbody>
-<tr>
-<td class="doubledash" valign="top">
-&gt;&gt;
-</td>
-<td class="post reply" id="p22275">
-<div class="postinfo"><label><input type="checkbox"><big class="title"><b></b></big> <span class="name"><b>Anonymous</b></span> <span class="time">202X/XX/XX(X)XX:XX</span></label>
-<nobr><span class="postnum">
-<a class="no">No.</a><a class="qu">XXXXX</a></span></nobr>
-<small><i class="backlinks"></i></small>
-</div>
-<pre style="padding-right: 200px;">Waha!</pre>
-</td>
-</tr>
-</tbody>
-</table>
-<div style="padding-top: 10px;">
-<b>Note: This adds <a href="https://www.w3schools.com/tags/tag_pre.asp">&lt;pre&gt;</a> to your post.</b>
-</div>
-<hr><br><br>
+      <textarea class="inputtext com" readonly>[code]Waha![/code]</textarea>
 
-<!-- quote -->
-<b id="blockquote">Blockquote</b>
-<table>
-<tbody>
-<tr>
-<td class="postblock"><label for="quoteexample"><b>Comment</b></label></td>
-<td><textarea>
-[quote]Waha![/quote]
-</textarea></td>
-</tr>
-</tbody>
-</table><br>
-Will look like:
-<br>
-<table>
-<tbody>
-<tr>
-<td class="doubledash" valign="top">
-&gt;&gt;
-</td>
-<td class="post reply" id="p22275">
-<div class="postinfo"><label><input type="checkbox"><big class="title"><b></b></big> <span class="name"><b>Anonymous</b></span> <span class="time">202X/XX/XX(X)XX:XX</span></label>
-<nobr><span class="postnum">
-<a class="no">No.</a><a class="qu">XXXXX</a></span></nobr>
-<small><i class="backlinks"></i></small>
-</div>
-<blockquote class="comment">
-Waha!
-</blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<div style="padding-top: 10px;">
-<b>Note: This adds <a href="https://www.w3schools.com/TAGS/tag_blockquote.asp">&lt;blockquote&gt;</a> to your post.</b>
-</div>
-<hr><br><br>
+      <p>Output:</p>
 
+      <div class="reply-container">
+        <div class="doubledash">&gt;&gt;</div>
+        <div class="post reply">
+          <div class="postinfo">
+            <label>
+              <input type="checkbox"><span class="title"></span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
+            </label>
+            <span class="postnum">
+              <a class="no">No.</a><a class="qu">1931</a>
+            </span>
+          </div>
+          <div class="comment"><pre class="code">Waha!</pre></div>
+        </div>
+      </div>
+    </div>
 
+    <!-- AA -->
+    <div class="bbcodeSection" id="asciiart">
+      <h3>ASCII Art (Shift-JIS art)</h3>
 
-<!-- underline -->
-<b id="underline">Underline</b>
-<table>
-<tbody>
-<tr>
-<td class="postblock"><label for="quoteexample"><b>Comment</b></label></td>
-<td><textarea>
-[u]Waha![/u]
-</textarea></td>
-</tr>
-</tbody>
-</table><br>
-Will look like:
-<br>
-<table>
-<tbody>
-<tr>
-<td class="doubledash" valign="top">
-&gt;&gt;
-</td>
-<td class="post reply" id="p22275">
-<div class="postinfo"><label><input type="checkbox"><big class="title"><b></b></big> <span class="name"><b>Anonymous</b></span> <span class="time">202X/XX/XX(X)XX:XX</span></label>
-<nobr><span class="postnum">
-<a class="no">No.</a><a class="qu">XXXXX</a></span></nobr>
-<small><i class="backlinks"></i></small>
-</div>
-<blockquote class="comment">
-<span style="padding-right: 260px; text-decoration: underline;">Waha!</span>
-</blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<hr><br><br>
+      <p>Input:</p>
 
+      <textarea class="inputtext com" readonly>[aa]　／l、
+（ﾟ､ ｡ ７
+　l、~ ヽ
+　じじと ）ノ[/aa]</textarea>
 
-<!-- code -->
-<b id="code">Code</b>
-<table>
-<tbody>
-<tr>
-<td class="postblock"><label for="quoteexample"><b>Comment</b></label></td>
-<td><textarea>
-[code]Waha![/code]
-</textarea></td>
-</tr>
-</tbody>
-</table><br>
-Will look like:
-<br>
-<table>
-<tbody>
-<tr>
-<td class="doubledash" valign="top">
-&gt;&gt;
-</td>
-<td class="post reply" id="p22275">
-<div class="postinfo"><label><input type="checkbox"><big class="title"><b></b></big> <span class="name"><b>Anonymous</b></span> <span class="time">202X/XX/XX(X)XX:XX</span></label>
-<nobr><span class="postnum">
-<a class="no">No.</a><a class="qu">XXXXX</a></span></nobr>
-<small><i class="backlinks"></i></small>
-</div>
-<blockquote class="comment">
-<pre class="code" style="padding-right: 260px">Waha!</pre>
-</blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<hr><br><br>
+      <p>Output:</p>
 
+      <div class="reply-container">
+        <div class="doubledash">&gt;&gt;</div>
+        <div class="post reply">
+          <div class="postinfo">
+            <label>
+              <input type="checkbox"><span class="title"></span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
+            </label>
+            <span class="postnum">
+              <a class="no">No.</a><a class="qu">1931</a>
+            </span>
+          </div>
+          <div class="comment">
+            <pre class="ascii">　／l、<br>（ﾟ､ ｡ ７<br>　l、~ ヽ<br>　じじと ）ノ</pre>
+          </div>
+        </div>
+      </div>
 
-<!-- AA -->
-<b id="asciiart">Ascii Art</b>
-<table>
-<tbody>
-<tr>
-<td class="postblock"><label for="quoteexample"><b>Comment</b></label></td>
-<td><textarea>
-[aa]
-     ／l、
-    （ﾟ､ ｡ ７
-    　l、 ~ヽ
-    　じしf_, )ノ
-[/aa]
-</textarea></td>
-</tr>
-</tbody>
-</table><br>
-Will look like:
-<br>
-<table>
-<tbody>
-<tr>
-<td class="doubledash" valign="top">
-&gt;&gt;
-</td>
-<td class="post reply" id="p22275">
-<div class="postinfo"><label><input type="checkbox"><big class="title"><b></b></big> <span class="name"><b>Anonymous</b></span> <span class="time">202X/XX/XX(X)XX:XX</span></label>
-<nobr><span class="postnum">
-<a class="no">No.</a><a class="qu">XXXXX</a></span></nobr>
-<small><i class="backlinks"></i></small>
-</div>
-<blockquote class="comment">
-<span style="padding-right: 260px">
-     ／l、<br>
-    （ﾟ､ ｡ ７<br>
-    　l、 ~ヽ<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-&nbsp;&nbsp;
-じしf_, )ノ
-</span>
-</blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<hr><br><br>
+      <p class="bbcodeNote">Note: This is intended for <a href="https://en.wikipedia.org/wiki/2channel">2ch</a>-type AA.</p>
+      <p class="bbcodeNote">For Western ASCII art, use <code>[pre]</code> tags.</p>
+      <p class="bbcodeNote">For <a href="https://wiki.heyuri.net/index.php?title=Ayashii_World">Ayashii World</a>-type AA, use <code>[sw]</code> tags.</p>
 
+    </div>
 
-<!-- Colors -->
-<b id="colors">Colors</b>
-<table>
-<tbody>
-<tr>
-<td class="postblock"><label for="quoteexample"><b>Comment</b></label></td>
-<td><textarea>
-[color=red]Waha![/color] [color=#489b67]B[/color][color=#d30615]O[/color][color=#489b67]K[/color][color=#d30615]U[/color]!
-</textarea></td>
-</tr>
-</tbody>
-</table><br>
-Will look like:
-<br>
-<table>
-<tbody>
-<tr>
-<td class="doubledash" valign="top">
-&gt;&gt;
-</td>
-<td class="post reply" id="p22275">
-<div class="postinfo"><label><input type="checkbox"><big class="title"><b></b></big> <span class="name"><b>Anonymous</b></span> <span class="time">202X/XX/XX(X)XX:XX</span></label>
-<nobr><span class="postnum">
-<a class="no">No.</a><a class="qu">XXXXX</a></span></nobr>
-<small><i class="backlinks"></i></small>
-</div>
-<blockquote class="comment">
-<span style="padding-right: 260px;">
-<font color="red">Waha!</font> <font color="#489b67">B</font><font color="#d30615">O</font><font color="#489b67">K</font><font color="#d30615">U</font>!
-</span>
-</blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<hr><br><br>
+    <!-- Colors -->
+    <div class="bbcodeSection" id="colors">
+      <h3>Colors</h3>
 
-<!-- Sizes -->
-<b id="sizes">Sizes</b>
-<table>
-<tbody>
-<tr>
-<td class="postblock"><label for="quoteexample"><b>Comment</b></label></td>
-<td><textarea>
+      <p>Input:</p>
+
+      <textarea class="inputtext com" readonly>[color=red]Waha![/color] [color=#489b67]B[/color][color=#d30615]O[/color][color=#489b67]K[/color][color=#d30615]U[/color]!</textarea>
+
+      <p>Output:</p>
+
+      <div class="reply-container">
+        <div class="doubledash">&gt;&gt;</div>
+        <div class="post reply">
+          <div class="postinfo">
+            <label>
+              <input type="checkbox"><span class="title"></span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
+            </label>
+            <span class="postnum">
+              <a class="no">No.</a><a class="qu">1931</a>
+            </span>
+          </div>
+          <div class="comment">
+            <span style="color:red">Waha!</span> <span style="color:#489b67">B</span><span style="color:#d30615">O</span><span style="color:#489b67">K</span><span style="color:#d30615">U</span>!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sizes -->
+    <div class="bbcodeSection" id="sizes">
+      <h3>Sizes</h3>
+
+      <p>Input:</p>
+
+      <textarea class="inputtext com" readonly>[s1]WAHA[/s1]
+[s2]WAHA[/s2]
+[s3]WAHA[/s3] &lt;-- normal size
+[s4]WAHA[/s4]
 [s5]WAHA[/s5]
-</textarea></td>
-</tr>
-</tbody>
-</table><br>
-Will look like:
-<br>
-<table>
-<tbody>
-<tr>
-<td class="doubledash" valign="top">
-&gt;&gt;
-</td>
-<td class="post reply" id="p22275">
-<div class="postinfo"><label><input type="checkbox"><big class="title"><b></b></big> <span class="name"><b>Anonymous</b></span> <span class="time">202X/XX/XX(X)XX:XX</span></label>
-<nobr><span class="postnum">
-<a class="no">No.</a><a class="qu">XXXXX</a></span></nobr>
-<small><i class="backlinks"></i></small>
-</div>
-<blockquote class="comment">
-<span style="padding-right: 260px;">
-<font size="5">Waha!</font>
-</span>
-</blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<div style="padding-top: 10px;">
-<b>Note: You can change 5 with any number between 1 and 7.</b>
-</div>
-<hr><br><br>
+[s6]WAHA[/s6]
+[s7]WAHA[/s7]</textarea>
 
-<!-- Scrollable -->
-<b id="scroll">Scroll</b>
-<table>
-<tbody>
-<tr>
-<td class="postblock"><label for="quoteexample"><b>Comment</b></label></td>
-<td><textarea>
-[scroll]WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA[/scroll]
-</textarea></td>
-</tr>
-</tbody>
-</table><br>
-Will look like:
-<br>
-<table>
-<tbody>
-<tr>
-<td class="doubledash" valign="top">
-&gt;&gt;
-</td>
-<td class="post reply" id="p22275">
-<div class="postinfo"><label><input type="checkbox"><big class="title"><b></b></big> <span class="name"><b>Anonymous</b></span> <span class="time">202X/XX/XX(X)XX:XX</span></label>
-<nobr><span class="postnum">
-<a class="no">No.</a><a class="qu">XXXXX</a></span></nobr>
-<small><i class="backlinks"></i></small>
-</div>
-<blockquote class="comment">
-<span style="padding-right: 260px;">
-<div style="overflow:scroll; height: 200px;">WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA</div>
-</span>
-</blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<div style="padding-top: 10px;">
-<b>Note: This is intended to be used with extremely long posts.</b>
-</div>
+      <p>Output:</p>
+
+      <div class="reply-container">
+        <div class="doubledash">&gt;&gt;</div>
+        <div class="post reply">
+          <div class="postinfo">
+            <label>
+              <input type="checkbox"><span class="title"></span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
+            </label>
+            <span class="postnum">
+              <a class="no">No.</a><a class="qu">1931</a>
+            </span>
+          </div>
+          <div class="comment">
+            <span class="fontSize1">Waha!</span><br><span class="fontSize2">Waha!</span><br><span class="fontSize3">Waha!</span> &lt;-- normal size<br><span class="fontSize4">Waha!</span><br><span class="fontSize5">Waha!</span><br><span class="fontSize6">Waha!</span><br><span class="fontSize7">Waha!</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="bbcodeNote">Note: You can only use sizes between 1 and 7.</p>
+      <p class="bbcodeNote">1 is the smallest, 7 is the largest.</p>
+
+    </div>
+
+    <!-- Scrollable -->
+    <div class="bbcodeSection" id="scroll">
+      <h3>Scroll</h3>
+
+      <p>Input:</p>
+
+      <textarea class="inputtext com" readonly>[scroll]WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA[/scroll]</textarea>
+
+      <p>Output:</p>
+
+      <div class="reply-container">
+        <div class="doubledash">&gt;&gt;</div>
+        <div class="post reply">
+          <div class="postinfo">
+            <label>
+              <input type="checkbox"><span class="title"></span>
+              <span class="name"><span class="postername">Anonymous</span></span>
+              <span class="time"><span class="postDate">2020/05/25</span><span class="postDay">(Mon)</span><span class="postTime">01:23:45</span></span>
+            </label>
+            <span class="postnum">
+              <a class="no">No.</a><a class="qu">1931</a>
+            </span>
+          </div>
+          <div class="comment">
+            <div class="scrollText">WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA WAHA</div>
+          </div>
+        </div>
+      </div>
+      
+      <p class="bbcodeNote">Note: This is intended to be used with extremely long posts.</p>
+
+    </div>
+  </div>
+
+  <hr>
 
 </body>
 </html>

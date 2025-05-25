@@ -1,5 +1,5 @@
 <?php
-class mod_soudane extends ModuleHelper {
+class mod_soudane extends moduleHelper {
 	private $SOUDANE_DIR_YEAH = '';
 	private $SOUDANE_DIR_NOPE = '';
 	private $mypage;
@@ -8,9 +8,8 @@ class mod_soudane extends ModuleHelper {
 	private $enableScore;      // Renamed from "difference" to "score"
 	private $showScoreOnly;    // New property for showing "+" and "-" buttons only
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-		$globalHTML = new globalHTML($this->board);
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		$globalHTML = new globalHTML($this->board);
 
 		// Load settings to enable/disable each button, score display, and score-only mode
 		$this->enableYeah = $this->config['ModuleSettings']['ENABLE_YEAH'] ?? true;
@@ -50,10 +49,35 @@ class mod_soudane extends ModuleHelper {
 	}
 
 	private function _loadVotes($post_uid, $type) {
+		// Determine the file path based on the vote type
 		$dir = $type === 'yeah' ? $this->SOUDANE_DIR_YEAH : $this->SOUDANE_DIR_NOPE;
-		$log = @file($dir . "$post_uid.dat");
-		return is_array($log) ? array_map('rtrim', $log) : [];
-	}
+		$filePath = $dir . "$post_uid.dat";
+	
+		// Check if the file exists and is readable
+		if (!file_exists($filePath)) {
+			// File doesn't exist, return an empty array
+			return [];
+		}
+	
+		if (!is_readable($filePath)) {
+			// File exists but is not readable, return an empty array
+			return [];
+		}
+	
+		// Try reading the file contents
+		try {
+			$log = file($filePath);
+			if (is_array($log)) {
+				return array_map('rtrim', $log); // Trim each line of the file
+			} else {
+				// If file is not an array, return empty array
+				return [];
+			}
+		} catch (Exception $e) {
+			// Handle any unexpected errors (e.g., permissions issues, filesystem errors)
+			return [];
+		}
+	}	
 
 	private function _getVoteButtonText($type, $count) {
 		// If no votes exist, display "+" or "-" regardless of settings
@@ -86,6 +110,12 @@ class mod_soudane extends ModuleHelper {
 			if (xmlhttp.readyState == 4) {
 				elem.innerHTML = xmlhttp.responseText;
 				updateScore(post_uid);
+
+				// Check and update class from noVotes to hasVotes if needed
+				if (elem.classList.contains("noVotes")) {
+					elem.classList.remove("noVotes");
+					elem.classList.add("hasVotes");
+				}
 			}
 		};
 		xmlhttp.send(null);
@@ -105,7 +135,7 @@ class mod_soudane extends ModuleHelper {
 </script>';
 	}
 
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply) {
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply) {
 		$post_uid = $post['post_uid'];
 
 		$arrLabels['{$POSTINFO_EXTRA}'] .= ' <span class="soudaneContainer">';
@@ -114,7 +144,7 @@ class mod_soudane extends ModuleHelper {
 			$logNope = $this->_loadVotes($post_uid, 'nope');
 			$classNope = count($logNope) > 0 ? 'hasVotes' : 'noVotes';
 			$buttonTextNope = $this->_getVoteButtonText('nope', count($logNope));
-			$arrLabels['{$POSTINFO_EXTRA}'] .= '<span class="soudane2"><a id="vote_nope_'.$post_uid.'" class="sod '.$classNope.'" href="javascript:vote(\''.$post_uid.'\', \'nope\');">'.$buttonTextNope.'</a></span>';
+			$arrLabels['{$POSTINFO_EXTRA}'] .= '<span class="soudane2" title="Disagree with this post"><a id="vote_nope_'.$post_uid.'" class="sod '.$classNope.'" href="javascript:vote(\''.$post_uid.'\', \'nope\');">'.$buttonTextNope.'</a></span>';
 		}
 
 		if ($this->enableNope && $this->enableYeah) {
@@ -131,7 +161,7 @@ class mod_soudane extends ModuleHelper {
 			$logYeah = $this->_loadVotes($post_uid, 'yeah');
 			$classYeah = count($logYeah) > 0 ? 'hasVotes' : 'noVotes';
 			$buttonTextYeah = $this->_getVoteButtonText('yeah', count($logYeah));
-			$arrLabels['{$POSTINFO_EXTRA}'] .= '<span class="soudane"><a id="vote_yeah_'.$post_uid.'" class="sod '.$classYeah.'" href="javascript:vote(\''.$post_uid.'\', \'yeah\');">'.$buttonTextYeah.'</a></span>';
+			$arrLabels['{$POSTINFO_EXTRA}'] .= '<span class="soudane" title="Agree with this post"><a id="vote_yeah_'.$post_uid.'" class="sod '.$classYeah.'" href="javascript:vote(\''.$post_uid.'\', \'yeah\');">'.$buttonTextYeah.'</a></span>';
 		}
 
 		// If SHOW_SCORE_ONLY is not enabled, display the score separately
@@ -143,8 +173,8 @@ class mod_soudane extends ModuleHelper {
 		$arrLabels['{$POSTINFO_EXTRA}'] .= '</span>';
 	}
 
-	public function autoHookThreadReply(&$arrLabels, $post, $isReply) {
-		$this->autoHookThreadPost($arrLabels, $post, $isReply);
+	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply) {
+		$this->autoHookThreadPost($arrLabels, $post, $threadPosts, $isReply);
 	}
 	
 	public function ModulePage() {
@@ -161,7 +191,7 @@ class mod_soudane extends ModuleHelper {
 		}
 
 		$log = $this->_loadVotes($post_uid, $type);
-		$ip = getREMOTE_ADDR();
+		$ip = new IPAddress;
 		if (!in_array($ip, $log)) array_push($log, $ip);
 
 		$dir = $type === 'yeah' ? $this->SOUDANE_DIR_YEAH : $this->SOUDANE_DIR_NOPE;

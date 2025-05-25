@@ -3,11 +3,10 @@
 require_once("geoip/geoip2.phar");
 use GeoIp2\Database\Reader;
 
-class mod_countryflags  extends ModuleHelper {
+class mod_countryflags  extends moduleHelper {
 	
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-	}
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);	}
 
 	public function getModuleName(){
 		return 'mod_countryflags';
@@ -32,7 +31,7 @@ class mod_countryflags  extends ModuleHelper {
 		return false;
 	}
 	
-	public function autoHookThreadPost(&$arrLabels, $post, $isReply){
+	public function autoHookThreadPost(&$arrLabels, $post, $threadPosts, $isReply){
 		if ($this->config['ModuleSettings']['FLAG_MODE'] == 1 && strstr($post['email'], 'flag')) return;
 		if ($this->config['ModuleSettings']['FLAG_MODE'] == 2 && !strstr($post['email'], 'flag')) return;
 		
@@ -55,9 +54,9 @@ class mod_countryflags  extends ModuleHelper {
 			}
 						
 			if ($CountryName != "" || $record != ""){
-				$arrLabels['{$NAME}'] .= ' <img src="'.$this->config['STATIC_URL'].'image/flag/'.strtolower($CountryID).'.png" title="'.$CountryName.'" style="vertical-align: middle;margin-top: -2px;" alt="'.$CountryID.'">';
+				$arrLabels['{$NAME}'] .= ' <img class="countryFlag" src="'.$this->config['STATIC_URL'].'image/flag/'.strtolower($CountryID).'.png" title="'.$CountryName.'" alt="'.$CountryID.'">';
 			} else {
-				$arrLabels['{$NAME}'] .= ' <img src="'.$this->config['STATIC_URL'].'image/flag/xx.png" title="Unknown" style="vertical-align: middle;margin-top: -2px;" alt="XX">';
+				$arrLabels['{$NAME}'] .= ' <img class="countryFlag" src="'.$this->config['STATIC_URL'].'image/flag/xx.png" title="Unknown" alt="XX">';
 			}
 		} else { // host
 			$parthost=''; $iscctld = false; $isgtld = false;
@@ -539,8 +538,8 @@ class mod_countryflags  extends ModuleHelper {
 			}
 	}
 
-	public function autoHookThreadReply(&$arrLabels, $post, $isReply){
-		$this->autoHookThreadPost($arrLabels, $post, $isReply);
+	public function autoHookThreadReply(&$arrLabels, $post, $threadPosts, $isReply){
+		$this->autoHookThreadPost($arrLabels, $post, $threadPosts, $isReply);
 	}
 	
 } 

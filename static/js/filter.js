@@ -1,65 +1,51 @@
-/* LOL HEYURI
- */
-
-document.write(`<style>
-#settuserfilter {
-    height: 300px;
-}
-.filter .comment, .filter .post, .filter .omittedposts, .filter .filesize, .filter .postimg, .filter>table {
-    display: none;
-}
-.filter .post.op {
-    display: block;
-}
-.filter .postinfo, .filter .category {
-    opacity: 0.5;
-}
-.filterpost {
-    text-decoration: none;
-    font-weight: bold;
-	font-size: 9pt;
-}
-.filterpost:hover {
-    opacity: 1;
-}
-</style>`);
+/* LOL HEYURI */
 
 /* Module */
-const kkfilter = { name: "KK Filter",
+const kkfilter = {
+	name: "KK Filter",
 	F: Array(),
 	die: '',
-    startup: function () {
+	startup: function () {
 		kkfilter.F.forEach(function(F){
 			F.exec();
 			if (F.storagename=="filter_postnum") {
 				for (var post of $class("post")) {
-					var pi = post.getElementsByClassName("postinfo")[0];
-					if (typeof(pi) === "undefined") continue;
-					pi.insertAdjacentHTML("beforeend", '<a class="filterpost" href="javascript:void(0);" onclick="kkfilter.togglepostno('+post.id.substr(1)+');">'+
-						(post.classList.contains("filter")?'[F]':'[F]')+
-					'</a>');
+					var pi = post.getElementsByClassName("postInfoExtra")[0];
+					pi.insertAdjacentHTML("afterbegin", '<span class="filterpostContainer">[<a class="filterpost" title="' + (post.classList.contains("filter") ? 'Show this post' : 'Hide this post') + '" href="javascript:void(0);" onclick="kkfilter.togglepostno(\'' + post.id.slice(1) + '\');">' + (post.classList.contains("filter") ? 'Show' : 'Hide') + '</a>]</span>');
+
 				}
 			}
 		});
 		return true;
-    },
-    reset: function () {
+	},
+	reset: function () {
 		var f = $class("filter");
 		for (var i=f.length; i; i--) {
 			f[i-1].classList.remove("filter");
 		}
-		var fp = $class("filterpost");
+		var fp = $class("filterpostContainer");
 		for (var i=fp.length; i; i--) {
 			fp[i-1].remove();
 		}
 		kkfilter.die = '';
-    },
-    sett_tab: function (id) {
-        $id(id).innerHTML+= ' | <a href="javascript:kkjs.sett_tab(\'filter\');" id="settab_filter">Filter</a>';
-    },
-    sett: function (tab, div) { if (tab!="filter") return;
-		div.innerHTML+= `<textarea cols="48" rows="6" id="settuserfilter" oninput="kkfilter.update_filter(this.value);" placeholder="Regex filters">`+_usercss+`</textarea>
-<select id="filtermode" onchange="kkfilter.update_textarea(this.value);"></select><div id="filterdie"></div>`;
+	},
+	sett_tab: function (id) {
+		$id(id).innerHTML+= ' | <a href="javascript:kkjs.sett_tab(\'filter\');" id="settab_filter">Filter</a>';
+	},
+	sett: function (tab, div) {
+		if (tab!="filter") return;
+		div.innerHTML+= `
+			<details>
+				<summary>Guide</summary>
+				<ul>
+					<li>Use <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions" target="_blank">regular expressions</a>, one per line.</li>
+					<li>Lines starting with a # will be ignored.</li>
+					<li>For example, <code class="code">/weeaboo/i</code> will filter posts containing the string <code class="code">weeaboo</code>, case-insensitive.</li>
+				</ul>
+			</details>
+			<select id="filtermode" onchange="kkfilter.update_textarea(this.value);"></select>
+			<textarea id="settuserfilter" oninput="kkfilter.update_filter(this.value);" placeholder="Regex filters"></textarea>
+			<div id="filterdie"></div>`;
 		var sel = $id("filtermode");
 		kkfilter.F.forEach(function(F){
 			var opt = $doc.createElement("OPTION");
@@ -69,10 +55,11 @@ const kkfilter = { name: "KK Filter",
 		});
 		kkfilter.update_textarea(sel.value);
 		$id("filterdie").innerHTML = kkfilter.die;
-    },
+	},
 	update_filter: function (value) {
 		var FM = $id("filtermode").value;
 		localStorage.setItem(FM, value);
+    console.log("Filter saved to localStorage:", FM, value);
 		kkfilter.reset();
 		kkfilter.startup();
 		var filterdie = $id("filterdie");
@@ -83,33 +70,50 @@ const kkfilter = { name: "KK Filter",
 	},
 	togglepostno: function (no) {
 		var p = $id("p"+no);
-		var a = localStorage.getItem("filter_postnum"); if (a===null) a = '';
+		var a = localStorage.getItem("filter_postnum");
+		if (a===null) a = '';
 		var b = a.split("\n");
-		var hack = true;
-		if (p.classList.contains("filter")) {
-			for (var i=0; i<b.length; i++) {
-				var line = b[i];
-				var m = line.match(/^\/(.*)\/([a-z]*)/i);
-				if (m===null) continue;
-				if (m[1] != "\\b"+no+"\\b") continue;
-				b.splice(i, 1);
-				i--;
-			}
-		} else {
-			b.push("/\\b"+no+"\\b/");
-			hack = false;
+		var hide = false;
+		var filter = `/^p${no}$/`;
+		if (!p.classList.contains("filter")) {
+			hide = true;
 		}
+		if (hide) {
+			kkfilter.hidepost(no);
+			b.push(filter);
+		} else {
+			kkfilter.showpost(no);
+			if (b.indexOf(filter) >= 0) {
+				b.splice(b.indexOf(filter), 1);
+			}
+		}
+
 		localStorage.setItem("filter_postnum", b.join("\n"));
-		kkfilter.reset();
-		kkfilter.startup();
 		var fm = $id("filtermode");
 		if (fm) {
 			fm.value = "filter_postnum";
 			kkfilter.update_textarea("filter_postnum");
 		}
-		if (hack) {
-			p.classList.remove("filter");
+	},
+	showpost: function (no) {
+		var p = $id('p' + no);
+		p.classList.remove('filter');
+		if (p.classList.contains('op')) {
+			p.parentNode.classList.remove('filter');
 		}
+		var link = p.querySelector('.filterpost');
+		link.innerText = 'Hide';
+		link.title = 'Hide this post';
+	},
+	hidepost: function(no) {
+		var p = $id('p' + no);
+		p.classList.add("filter");
+		if (p.classList.contains("op")) {
+			p.parentNode.classList.add("filter");
+		}
+		var link = p.querySelector('.filterpost');
+		link.innerText = 'Show';
+		link.title = 'Show this post';
 	}
 };
 
@@ -125,7 +129,8 @@ class kkFilter {
 		kkfilter.F.push(this);
 	}
 	exec () {
-		var a = localStorage.getItem(this.storagename); if (a===null) a = '';
+		var a = localStorage.getItem(this.storagename);
+		if (a===null) a = '';
 		var b = a.split("\n");
 		var that = this;
 		b.forEach( function (line, i) {
@@ -143,11 +148,10 @@ class kkFilter {
 							post.parentNode.classList.add("filter");
 							post.classList.add("filter");
 						}
-					}
-					else post.classList.add("filter");
+					} else post.classList.add("filter");
 				}
 			}
-		} );
+		});
 	}
 }
 
@@ -161,9 +165,7 @@ new kkFilter("General", "filter_general", function(post, r) {
 });
 
 new kkFilter("Post number", "filter_postnum", function(post, r) {
-	var pnum = post.getElementsByClassName("postnum")[0];
-	if (typeof(pnum) === "undefined") return false;
-	return pnum.textContent.match(r) !== null;
+	return post.id.match(r) !== null;
 });
 
 new kkFilter("Name", "filter_name", function(post, r) {
@@ -201,4 +203,8 @@ new kkFilter("Category", "filter_category", function(post, r) {
 });
 
 /* Register */
-if(typeof(KOKOJS)!="undefined"){kkjs.modules.push(kkfilter);}else{console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");}
+if (typeof(KOKOJS) != "undefined"){
+	kkjs.modules.push(kkfilter);
+} else {
+	console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");
+}

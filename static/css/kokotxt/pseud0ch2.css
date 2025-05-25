@@ -1,0 +1,14 @@
+@charset "UTF-8";
+@import "pseud0ch.css";
+
+:root {
+	--font-family-main: var(--font-family-serif);
+}
+
+body {
+	line-height: revert;
+}
+
+.sod.noVotes {
+	font-family: inherit;
+}

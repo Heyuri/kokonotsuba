@@ -1,15 +1,11 @@
 <?php
 // by komeo
-class mod_antiflood extends ModuleHelper {
-	private $mypage;
+class mod_antiflood extends moduleHelper {
 	private $RENZOKU3 = 0; // Seconds before a new thread can be made
 
-	public function __construct($PMS) {
-		parent::__construct($PMS);
-		
+	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
+		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
 		$this->RENZOKU3 = $this->config['ModuleSettings']['RENZOKU3'];
-		
-		$this->mypage = $this->getModulePageURL();
 	}
 
 	public function getModuleName() {
@@ -20,12 +16,14 @@ class mod_antiflood extends ModuleHelper {
 		return 'Koko BBS Release 1';
 	}
 	
-	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $dest, $thread_uid, $imgWH){
+	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $thread_uid, $imgWH){
 		if (!$thread_uid) {
-			$PIO = PIOPDO::getInstance();
+			$threadSingleton = threadSingleton::getInstance();
 			$globalHTML = new globalHTML($this->board);
 
-			$lastThreadTimestamp = $PIO->getLastThreadTimeFromBoard($this->board);
+			$tempFileName = $file->getTemporaryFileName();
+
+			$lastThreadTimestamp = $threadSingleton->getLastThreadTimeFromBoard($this->board);
 			if(!$lastThreadTimestamp) return;
 			$currentTimestamp = new DateTime();
 			$timestampFromDatabase = new DateTime($lastThreadTimestamp);
@@ -35,8 +33,9 @@ class mod_antiflood extends ModuleHelper {
 			
 			$timeDifference = $currentTimestampUnix - $timestampFromDatabaseUnix;
 			if ($timeDifference < $this->RENZOKU3) {
-				if ($dest != NULL) {
-					unlink($dest);
+				
+				if ($tempFileName != NULL) {
+					unlink($tempFileName);
 				}
 				$globalHTML->error('ERROR: Please wait a few seconds before creating a new thread.');
 			}
