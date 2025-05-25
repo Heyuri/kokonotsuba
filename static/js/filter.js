@@ -44,7 +44,7 @@ const kkfilter = {
 				</ul>
 			</details>
 			<select id="filtermode" onchange="kkfilter.update_textarea(this.value);"></select>
-			<textarea id="settuserfilter" oninput="kkfilter.update_filter(this.value);" placeholder="Regex filters"></textarea>
+			<textarea id="settuserfilter" class="inputtext" oninput="kkfilter.update_filter(this.value);" placeholder="Regex filters"></textarea>
 			<div id="filterdie"></div>`;
 		var sel = $id("filtermode");
 		kkfilter.F.forEach(function(F){
