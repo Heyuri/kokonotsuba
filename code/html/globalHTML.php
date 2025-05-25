@@ -651,15 +651,17 @@ class globalHTML {
 		}
 		$dat .= '
 				<table class="postlists">
+					<thead>
+						<tr>
+							<th>Board UID</th>
+							<th>Board identifier</th>
+							<th>Board title</th>
+							<th>Date added</th>
+							<th>View</th>
+						</tr>
+					</thead>
 					<tbody>
-					<tr>
-						<th>Board UID</th>
-						<th>Board identifier</th>
-						<th>Board title</th>
-						<th>Date added</th>
-						<th>View</th>
-					</tr>
-					' . $boardsHTML . '
+						' . $boardsHTML . '
 					</tbody>
 				</table>';
 		return $dat;
