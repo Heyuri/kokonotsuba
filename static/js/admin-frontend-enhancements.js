@@ -5,43 +5,6 @@
 		const deleteBtn = post.querySelector('.adminDeleteFunction a');
 		const deleteMuteBtn = post.querySelector('.adminDeleteMuteFunction a');
 		const deleteFileBtn = post.querySelector('.adminDeleteFileFunction a');
-		const autosageBtn = post.querySelector('.adminAutosageFunction a');
-		const lockBtn = post.querySelector('.adminLockFunction a');
-		const stickyBtn = post.querySelector('.adminStickyFunction a');
-
-		function reloadPostElement() {
-			const delform = document.getElementById('delform');
-			if (!delform) {
-				console.warn('Could not locate #delform.');
-				showMessage('Reload failed: no delform container.', false);
-				return;
-			}
-
-			fetch(window.location.href, { credentials: 'same-origin' })
-				.then(res => res.text())
-				.then(html => {
-					const parser = new DOMParser();
-					const doc = parser.parseFromString(html, 'text/html');
-					const updatedForm = doc.getElementById('delform');
-
-					if (!updatedForm) {
-						console.warn('No #delform found in fetched HTML.');
-						showMessage('Reload failed: delform not found.', false);
-						return;
-					}
-
-					delform.innerHTML = updatedForm.innerHTML;
-
-					delform.querySelectorAll('.post').forEach(function (updatedPost) {
-						initializePostEvents(updatedPost); // reattach events
-					});
-				})
-				.catch(err => {
-					console.error('Fetch or DOM parse failed:', err);
-					showMessage('Failed to reload form.', false);
-				});
-		}
-
 
 		function handleRequest(url, onSuccess, onFailure, targetElement) {
 			fetch(url, {
@@ -51,33 +14,87 @@
 					'X-Requested-With': 'XMLHttpRequest'
 				}
 			})
-						.then(response => {
-									if (response.ok) {
-												onSuccess();
-									} else {
-												onFailure();
-									}
-						})
-						.catch(error => {
-									console.error('Request failed:', error);
-									onFailure();
-						});
+				.then(response => {
+					if (response.ok) {
+						onSuccess();
+					} else {
+						onFailure();
+					}
+				})
+				.catch(error => {
+					console.error('Request failed:', error);
+					onFailure();
+				});
+		}
+
+		function reloadPostImgElement(post) {
+			if (!post) return;
+
+			const postId = post.id;
+			if (!postId) return;
+
+			fetch(window.location.href, {
+				method: 'GET',
+				credentials: 'same-origin',
+				headers: {
+					'X-Requested-With': 'XMLHttpRequest'
+				}
+			})
+				.then(response => response.text())
+				.then(html => {
+					const parser = new DOMParser();
+					const doc = parser.parseFromString(html, 'text/html');
+					const newPost = doc.querySelector(`#${postId}`);
+					if (!newPost) return;
+
+					// Replace .filesize content
+					const newFilesize = newPost.querySelector('.filesize');
+					const oldFilesize = post.querySelector('.filesize');
+					if (newFilesize && oldFilesize) {
+						oldFilesize.innerHTML = newFilesize.innerHTML;
+					}
+
+					// Replace the thumbnail anchor (sibling of .filesize)
+					const oldThumbAnchor = post.querySelector('a > img.postimg')?.parentElement;
+					const newThumbAnchor = newPost.querySelector('a > img.postimg')?.parentElement;
+
+					if (oldThumbAnchor) {
+						oldThumbAnchor.remove();
+					}
+
+					if (newThumbAnchor) {
+						const insertAfter = post.querySelector('.filesize');
+						if (insertAfter) {
+							insertAfter.insertAdjacentElement('afterend', newThumbAnchor.cloneNode(true));
+						}
+					}
+				})
+				.catch(error => console.error('Failed to reload post image and filesize:', error));
+		}
+
+		function removeDeleteFileButton(post) {
+			if (!post) return;
+
+			const deleteFileContainer = post.querySelector('.adminDeleteFileFunction');
+			if (deleteFileContainer) {
+				deleteFileContainer.remove();
+			}
 		}
 
 		function showMessage(text, isSuccess) {
 			let stackContainer = document.getElementById('messageStackContainer');
 			if (!stackContainer) {
-						stackContainer = document.createElement('div');
-						stackContainer.id = 'messageStackContainer';
-						stackContainer.style.position = 'fixed';
-						stackContainer.style.top = '0';
-						stackContainer.style.left = '0';
-						stackContainer.style.right = '0';
-						stackContainer.style.display = 'flex';
-						stackContainer.style.flexDirection = 'column';
-						stackContainer.style.alignItems = 'center';
-						stackContainer.style.zIndex = '1000';
-						document.body.prepend(stackContainer);
+				stackContainer = document.createElement('div');
+				stackContainer.id = 'messageStackContainer';
+				stackContainer.style.position = 'fixed';
+				stackContainer.style.top = '0';
+				stackContainer.style.left = '0';
+				stackContainer.style.right = '0';
+				stackContainer.style.display = 'flex';
+				stackContainer.style.flexDirection = 'column';
+				stackContainer.style.alignItems = 'center';
+				stackContainer.style.zIndex = '1000';
+				document.body.prepend(stackContainer);
 			}
 
 			const messageContainer = document.createElement('div');
@@ -106,9 +123,9 @@
 			stackContainer.appendChild(messageContainer);
 
 			setTimeout(() => {
-						if (messageContainer.parentNode) {
-									messageContainer.remove();
-						}
+				if (messageContainer.parentNode) {
+					messageContainer.remove();
+				}
 			}, 5000);
 		}
 
@@ -122,12 +139,12 @@
 						let separatorToHide = null;
 
 						if (isOp) {
-									containerToHide = post.closest('.thread');
-									if (containerToHide && containerToHide.nextElementSibling?.classList.contains('threadSeparator')) {
-												separatorToHide = containerToHide.nextElementSibling;
-									}
+							containerToHide = post.closest('.thread');
+							if (containerToHide && containerToHide.nextElementSibling?.classList.contains('threadSeparator')) {
+								separatorToHide = containerToHide.nextElementSibling;
+							}
 						} else {
-									containerToHide = post.closest('.reply-container');
+							containerToHide = post.closest('.reply-container');
 						}
 
 						if (containerToHide) containerToHide.style.display = 'none';
@@ -141,7 +158,6 @@
 								return;
 							}
 
-							reloadPostElement();
 							showMessage('Post deleted successfully.', true);
 						}, function () {
 							if (containerToHide) containerToHide.style.display = '';
@@ -157,25 +173,23 @@
 						e.preventDefault();
 
 						const isOp = post.classList.contains('op');
-						const hasResto = document.querySelector('input[name="resto"]') !== null;
 
 						let containerToHide = null;
 						let separatorToHide = null;
 
 						if (isOp) {
-									containerToHide = post.closest('.thread');
-									if (containerToHide && containerToHide.nextElementSibling?.classList.contains('threadSeparator')) {
-												separatorToHide = containerToHide.nextElementSibling;
-									}
+							containerToHide = post.closest('.thread');
+							if (containerToHide && containerToHide.nextElementSibling?.classList.contains('threadSeparator')) {
+								separatorToHide = containerToHide.nextElementSibling;
+							}
 						} else {
-									containerToHide = post.closest('.reply-container');
+							containerToHide = post.closest('.reply-container');
 						}
 
 						if (containerToHide) containerToHide.style.display = 'none';
 						if (separatorToHide) separatorToHide.style.display = 'none';
 
 						handleRequest(deleteMuteBtn.href, function () {
-									reloadPostElement();
 									showMessage('Post deleted and user muted.', true);
 						}, function () {
 									if (containerToHide) containerToHide.style.display = '';
@@ -190,7 +204,8 @@
 			deleteFileBtn.addEventListener('click', function (e) {
 				e.preventDefault();
 				handleRequest(deleteFileBtn.href, function () {
-					reloadPostElement();
+					reloadPostImgElement(post);
+					removeDeleteFileButton(post);
 					showMessage('File deleted successfully.', true);
 				}, function () {
 					showMessage('Failed to delete file.', false);
@@ -198,41 +213,6 @@
 			});
 		}
 
-		if (autosageBtn) {
-			autosageBtn.addEventListener('click', function (e) {
-				e.preventDefault();
-				handleRequest(autosageBtn.href, function () {
-					reloadPostElement();
-					showMessage('Autosage status updated.', true);
-				}, function () {
-					showMessage('Failed to update autosage status.', false);
-				});
-			});
-		}
-
-		if (lockBtn) {
-			lockBtn.addEventListener('click', function (e) {
-				e.preventDefault();
-				handleRequest(lockBtn.href, function () {
-					reloadPostElement();
-					showMessage('Lock status updated.', true);
-				}, function () {
-					showMessage('Failed to update lock status.', false);
-				});
-			});
-		}
-
-		if (stickyBtn) {
-			stickyBtn.addEventListener('click', function (e) {
-				e.preventDefault();
-				handleRequest(stickyBtn.href, function () {
-					reloadPostElement();
-					showMessage('Sticky status updated.', true);
-				}, function () {
-					showMessage('Failed to update sticky status.', false);
-				});
-			});
-		}
 	}
 
 
