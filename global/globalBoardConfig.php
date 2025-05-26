@@ -244,7 +244,6 @@ $config['USE_QUOTESYSTEM'] = 1; // Enable >>1234
 $config['SHOW_IMGWH'] = 1; // Display the original length and width dimension of the additional image file
 $config['RENDER_REPLY_NUMBER'] = true; // Show the sequential reply number for each post within a thread (does not change if posts are deleted)
 
-
 $config['PAGE_DEF'] = 15; // How many threads per page
 $config['ADMIN_PAGE_DEF'] = 100; // How many replies per page on admin panel
 $config['RE_DEF'] = 5; // Shown Replies on Index
@@ -271,6 +270,7 @@ $config['MAX_AGE_TIME'] = 0; // How long will thread accept age replies? (hours)
 
 $config['USE_CATEGORY'] = 0; // Enable Categories
 
+$config['PREVENT_DUPLICATE_FILE_UPLOADS'] = false; // Disallow the same file was being posted twice 
 
 // Ban Settings
 $config['BAN_CHECK'] = 1; // Comprehensive ban check function

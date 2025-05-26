@@ -54,7 +54,7 @@ class postValidator {
 			if($PIO->isSuccessivePost($this->board, $checkcount, $com, $time, $pass, $pwdc, $host, $upfile_name))
 			   $this->globalHTML->error(_T('regist_successivepost')); // Continuous submission check
 			
-			if($dest){ 
+			if($dest && $this->config['PREVENT_DUPLICATE_FILE_UPLOADS']) { 
 				if($PIO->isDuplicateAttachment($this->board, $checkcount, $md5chksum)){
 					$this->globalHTML->error(_T('regist_duplicatefile')); 
 				}
