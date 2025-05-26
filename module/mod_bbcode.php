@@ -382,7 +382,7 @@ class mod_bbcode extends moduleHelper {
 			case 'css':
 				$commentPatterns = ['#/\*.*?\*/#s'];
 				$extraHighlighter = function($text) {
-					return preg_replace('/([{\s;])([a-zA-Z\-]+)(?=\s*:)/', '$1<span class="codeKeyword">$2</span>', $text);
+					return preg_replace('/([{\s;])([a-zA-Z0-9\-]+)(?=\s*:)/', '$1<span class="codeKeyword">$2</span>', $text);
 				};
 				break;
 	
