@@ -61,6 +61,7 @@ const bbcode = [
 	{meaning: "<s>S</s>", title: "Strikethrough", code:"del"},
 	{meaning: "<span style='background-color:black;color:white'>Spoiler</span>", title: "Spoiler", code:"s"},
 	{meaning: "<q>Quote</q>", title: "Blockquote", code:"quote"},
+	{meaning: "Scroll", title: "Scrollbar for long passages of text", code:"scroll"},
 ];
 
 const selector_bbcode = [ // BBCodes with selectors
