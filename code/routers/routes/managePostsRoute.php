@@ -127,7 +127,7 @@ class managePostsRoute {
 			// Modify the field style
 			$name = substr($name, 0, 500);
 			$sub = substr($sub, 0, 500);
-			$com = substr($com, 0, 500);
+			// $com = substr($com, 0, 500);
 
 			$nameHtml = generatePostNameHtml($this->config['staffCapcodes'], $this->config['CAPCODES'], $name, $tripcode, $secure_tripcode, $capcode, $email);
 
@@ -159,7 +159,7 @@ class managePostsRoute {
 					<td class="colDate"><span class="time">' . $now . '</span></td>
 					<td class="colSub"><span class="title">' . $sub . '</span></td>
 					<td class="colName"><span class="name">' . $nameHtml . '</span></td>
-					<td class="colComment">' . $com . '</td>
+					<td class="colComment"><div class="managepostsCommentWrapper">' . $com . '</div></td>
 					<td class="colHost">' . $host . ' <a target="_blank" href="https://whatismyipaddress.com/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="'.$managePostsUrl.'&host=' . $host . '" title="See all posts">★</a></td>
 					<td class="colImage">' . $clip . ' (' . $size . ')<br>' . $md5chksum . '</td>
 				</tr>';
