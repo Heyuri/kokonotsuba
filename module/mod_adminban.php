@@ -222,6 +222,9 @@ class mod_adminban extends moduleHelper {
 		$starttime = $_SERVER['REQUEST_TIME']; // This remains from the server, no change
 		$expires = $starttime + $this->calculateBanDuration($duration);
 
+		// replace comma so it doesnt break the explode
+		$reason = str_replace(',', '&#44;', $reason);
+
 		if (!empty($newip)) {
 			// Create the ban entry
 			$banEntry = "{$newip},{$starttime},{$expires},{$reason}";
