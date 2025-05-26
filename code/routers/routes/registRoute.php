@@ -92,10 +92,10 @@ class registRoute {
 		}
 	
 		$this->postValidator->pruneOld($this->moduleEngine, $this->PIO, $this->FileIO);
-		$this->postValidator->threadSanityCheck($postData['chktime'], $postData['flgh'], $postData['thread_uid'], $postData['ThreadExistsBefore']);
+		$this->postValidator->threadSanityCheck($postData['postOpRoot'], $postData['flgh'], $postData['thread_uid'], $postData['ThreadExistsBefore']);
 
 		// Age/sage logic
-		$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['chktime'], $postData['email'], $postData['age']);
+		$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['postOpRoot'], $postData['email'], $postData['age']);
 	
 		// Generate redirect URL and sanitize
 		$redirect = $this->generateRedirectURL($computedPostInfo['no'], $postData['email'], $postData['resno'], $computedPostInfo['timeInMilliseconds']);
@@ -181,7 +181,7 @@ class registRoute {
 		$time = $_SERVER['REQUEST_TIME'];
 		$timeInMilliseconds = intval($_SERVER['REQUEST_TIME_FLOAT'] * 1000);
 	
-		$chktime = 0;
+		$postOpRoot = 0;
 		$flgh = '';
 		$ThreadExistsBefore = false;
 		$up_incomplete = 0;
@@ -199,7 +199,7 @@ class registRoute {
 			 'capcode' => '', 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
 			 'category' => $category, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip, 'host' => $host,
 			 'thread_uid' => $thread_uid, 'isReply' => $isReply, 'roleLevel' => $roleLevel, 'time' => $time,
-			 'timeInMilliseconds' => $timeInMilliseconds, 'chktime' => $chktime, 'flgh' => $flgh, 'age' => $age, 'status' => '',
+			 'timeInMilliseconds' => $timeInMilliseconds, 'postOpRoot' => $postOpRoot, 'flgh' => $flgh, 'age' => $age, 'status' => '',
 			 'ThreadExistsBefore' => $ThreadExistsBefore, 'up_incomplete' => $up_incomplete, 'is_admin' => $is_admin
 		];
 	}
