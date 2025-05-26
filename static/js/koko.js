@@ -590,6 +590,87 @@ const kkjs = {
 	}
 };
 
+const kkjs_copycode = {
+	name: "copycode",
+	startup: function () {
+		const copyToClipboard = (text, button) => {
+			navigator.clipboard.writeText(text).then(() => {
+				button.textContent = 'Copied!';
+				setTimeout(() => {
+					button.textContent = '';
+					button.appendChild(getSVGIcon());
+				}, 2000);
+			}, (err) => {
+				console.error('Failed to copy code: ', err);
+			});
+		};
+
+		const getSVGIcon = () => {
+			const svgIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			svgIcon.setAttribute('width', '24');
+			svgIcon.setAttribute('height', '24');
+			svgIcon.setAttribute('fill', 'none');
+			svgIcon.setAttribute('viewBox', '0 0 24 24');
+			const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+			path.setAttribute('fill', 'currentColor');
+			path.setAttribute('fill-rule', 'evenodd');
+			path.setAttribute('d', 'M7 5a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-2v2a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h2zm2 2h5a3 3 0 0 1 3 3v5h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-9a1 1 0 0 0-1 1zM5 9a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1z');
+			path.setAttribute('clip-rule', 'evenodd');
+			svgIcon.appendChild(path);
+			return svgIcon;
+		};
+
+		const addButton = (elem) => {
+			if (elem.querySelector('.copyButton')) return;
+
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'copyButton';
+			button.appendChild(getSVGIcon());
+
+			button.addEventListener('click', (e) => {
+				e.stopPropagation();
+				const codeElem = elem.querySelector('code');
+				const text = codeElem ? codeElem.innerText : elem.innerText;
+				copyToClipboard(text, button);
+			});
+
+			elem.style.position = 'relative';
+			elem.appendChild(button);
+		};
+
+		const processCodeBlocks = () => {
+			const codeBlocks = document.querySelectorAll('pre.code');
+			codeBlocks.forEach(addButton);
+		};
+
+		const observer = new MutationObserver((mutations) => {
+			mutations.forEach((mutation) => {
+				mutation.addedNodes.forEach((node) => {
+					if (node.nodeType === 1) {
+						if (node.matches('pre.code')) {
+							addButton(node);
+						} else {
+							node.querySelectorAll('pre.code').forEach(addButton);
+						}
+					}
+				});
+			});
+		});
+
+		processCodeBlocks();
+		observer.observe(document.body, { childList: true, subtree: true });
+
+		return true;
+	},
+	reset: function () {
+		// No-op
+	}
+};
+
+kkjs.modules.push(kkjs_copycode);
+
+
 window.addEventListener("DOMContentLoaded", kkjs.startup);
 
 // Function to set initial menu state based on localStorage
