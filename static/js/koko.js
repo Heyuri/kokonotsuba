@@ -626,6 +626,7 @@ const kkjs_copycode = {
 			const button = document.createElement('button');
 			button.type = 'button';
 			button.className = 'copyButton';
+			button.title = 'Copy text';
 			button.appendChild(getSVGIcon());
 
 			button.addEventListener('click', (e) => {

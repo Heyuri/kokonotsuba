@@ -995,25 +995,14 @@ caption h3 {
 }
 
 .copyButton {
-	position: absolute;
-	bottom: 8px;
-	right: 8px;
-	font-size: 12px;
-	padding: 4px 8px;
-	border: 1px solid #ccc;
-	border-radius: 3px;
-	background: rgba(0, 0, 0, 0.1);
-	color: white;
-	cursor: pointer;
-	z-index: 10;
-	transition: background-color 0.3s ease;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-}
-
-.copyButton:hover {
-	background-color: rgba(0, 0, 0, 0.3);
+	position: absolute;
+	z-index: 1;
+	bottom: 8px;
+	right: 8px;
+	font-size: var(--font-size-regular);
 }
 
 .fontSize1 {
