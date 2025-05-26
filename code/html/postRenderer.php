@@ -81,10 +81,12 @@ class postRenderer {
 
 		if($isThreadOp) {
 			$maxAgeLimit = $this->config['MAX_AGE_TIME'];
-			if ($maxAgeLimit && $_SERVER['REQUEST_TIME'] - $post['time'] > ($maxAgeLimit * 60 * 60)) {
+			$postUnixTimestamp = is_numeric($post['root']) ? $post['root'] : strtotime($post['root']);
+			if ($maxAgeLimit && $_SERVER['REQUEST_TIME'] - $postUnixTimestamp > ($maxAgeLimit * 60 * 60)) {
 				$warnOld .= "<div class='warning'>"._T('warn_oldthread')."</div>";
 			}
 		}
+
 	
 		// Handle name/trip/capcode HTML generation
 		$nameHtml = generatePostNameHtml(
