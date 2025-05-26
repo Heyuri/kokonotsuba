@@ -62,7 +62,7 @@ class postValidator {
 		}
 	}
 	
-	public function threadSanityCheck(&$chktime, &$flgh, &$thread_uid, &$ThreadExistsBefore){
+	public function threadSanityCheck(&$postOpRoot, &$flgh, &$thread_uid, &$ThreadExistsBefore){
 			// Determine whether the article you want to respond to has just been deleted
 		if($thread_uid){
 			if($ThreadExistsBefore){ // If the thread of the discussion you want to reply to exists
@@ -73,13 +73,12 @@ class postValidator {
 				}else{ // Check that the thread is set to suppress response (by the way, take out the post time of the original post)
 					$post = $this->threadSingleton->fetchPostsFromThread($thread_uid)[0]; // [Special] Take a single article content, but the $post of the return also relies on [$i] to switch articles!
 
-					list($chkstatus, $chktime) = array($post['status'], $post['time']);
-					$chktime = intval($chktime);
-					$flgh = new FlagHelper($chkstatus);
+					[$postOpStatus, $postOpRoot] = array($post['status'], $post['root']);
+					$flgh = new FlagHelper($postOpStatus);
 				}
 			}else $this->globalHTML->error(_T('thread_not_found'), 404); // Does not exist
 		}
-		return[$chktime];
+		return[$postOpRoot];
 	}
 	public function cleanComment(string $com, int $upfile_status, bool $is_admin){
 		// Text trimming
