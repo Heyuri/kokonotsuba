@@ -74,15 +74,61 @@ function bindPostFilterParameters(array &$params, string &$query, array $filters
 	}
 
 	// Apply the 'ip_address' filter using a regex pattern
-	if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
+    if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
 		$regex = applyRegexIPFilter($filters['ip_address']);
 		if ($regex !== null) {
 			$query .= " AND host REGEXP :ip_regex";
 			$params[':ip_regex'] = $regex;  // Bind the regex for IP address
 		}
 	}
+
 }
 
+/**
+ * Binds filter parameters and appends WHERE conditions to a thread-related SQL query.
+ *
+ * @param array  &$params  The array to store bound parameters for the PDO statement.
+ * @param string &$query   The SQL query string to which filter conditions will be appended.
+ * @param array  $filters  The filters to apply (e.g., 'board', 'thread_uid', 'created_before').
+ * @param string $orderBy  The column by which to order the results (default: 'last_bump_time').
+ * @param bool   $isCount  Whether the query is a count query (avoids ORDER BY if true).
+ */
+function bindThreadFilterParameters(array &$params, string &$query, array $filters): void {
+	// Apply the 'board' filter and bind parameters
+	$boards = applyArrayFilter($filters, 'board');
+	if (!empty($boards)) {
+		$query .= " AND (";
+		foreach ($boards as $index => $board) {
+			$query .= ($index > 0 ? " OR " : "") . "boardUID = :board_$index";
+			$params[":board_$index"] = (int)$board;
+		}
+		$query .= ")";
+	}
+
+	// Apply 'thread_uid' partial match
+	if (!empty($filters['thread_uid']) && is_string($filters['thread_uid'])) {
+		$query .= " AND thread_uid LIKE :thread_uid";
+		$params[':thread_uid'] = '%' . $filters['thread_uid'] . '%';
+	}
+
+	// Apply timestamp filters
+	if (!empty($filters['created_before']) && is_string($filters['created_before'])) {
+		$query .= " AND thread_created_time < :created_before";
+		$params[':created_before'] = $filters['created_before'];
+	}
+	if (!empty($filters['created_after']) && is_string($filters['created_after'])) {
+		$query .= " AND thread_created_time > :created_after";
+		$params[':created_after'] = $filters['created_after'];
+	}
+	if (!empty($filters['bumped_after']) && is_string($filters['bumped_after'])) {
+		$query .= " AND last_bump_time > :bumped_after";
+		$params[':bumped_after'] = $filters['bumped_after'];
+	}
+	if (!empty($filters['replied_after']) && is_string($filters['replied_after'])) {
+		$query .= " AND last_reply_time > :replied_after";
+		$params[':replied_after'] = $filters['replied_after'];
+	}
+}
 
 /**
  * Bind action log filter parameters to a SQL query for execution.
