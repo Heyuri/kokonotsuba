@@ -132,10 +132,7 @@
 	<div class="mod-extra-info">
 		{$BLOTTER}
 		<hr>
-		<div id="globalmsg">
-			{$GLOBAL_MESSAGE}
-		</div>
-		<hr>
+		<!--&IF($GLOBAL_MESSAGE,'<div id="globalmsg">{$GLOBAL_MESSAGE}</div><hr id="globalmsgSeparator">','')-->
 	</div>
 <!--/&MODULE_INFO_HOOK-->
 
