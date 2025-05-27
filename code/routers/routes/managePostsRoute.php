@@ -67,15 +67,8 @@ class managePostsRoute {
 		$onlyimgdel = $_POST['onlyimgdel']??''; // Only delete the image
 		$modFunc = '';
 		$delno = array();
-		$message = ''; // Display message after deletion
 		$host = $_GET['host'] ?? 0;
 		$posts = array(); //posts to display in the manage posts table
-		$noticeHost = "";
-		$searchHost = filter_var($host, FILTER_VALIDATE_IP) ?: filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME);
-		if ($searchHost) {
-			$this->softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR);
-			$noticeHost = '<h2>Viewing all posts from: '.$searchHost.'. Click submit to cancel.</h2><br>';
-		}
 		
 		// Delete the article(thread) block
 		$delno = array_merge($delno, $_POST['clist']??array());
@@ -86,11 +79,7 @@ class managePostsRoute {
 		if($onlyimgdel != 'on') $this->moduleEngine->useModuleMethods('PostOnDeletion', array($delno, 'backend')); // "PostOnDeletion" Hook Point
 
 
-		if($searchHost) {
-			$posts = $this->PIO->getPostsFromIP($searchHost, $postsPerPage, $page * $postsPerPage);
-			$numberOfFilteredPosts = $this->PIO->postCount(['ip_address' => $searchHost]);
-		}
-		else $posts = $this->PIO->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest) ?? array();
+		$posts = $this->PIO->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest) ?? array();
 		$posts_count = count($posts); // Number of cycles
 		
 		
@@ -98,7 +87,7 @@ class managePostsRoute {
 		
 		$managePostsHtml .= '<form id="managePostsForm" action="'.$this->config['PHP_SELF'].'" method="POST">';
 		$managePostsHtml .= '<input type="hidden" name="mode" value="admin">
-						<input type="hidden" name="admin" value="del">'.$message.$noticeHost.'
+						<input type="hidden" name="admin" value="del">
 						<div id="tableManagePostsContainer">
 							<table id="tableManagePosts" class="postlists">
 								<thead>
