@@ -1,0 +1,280 @@
+:root {
+	/* Global */
+	--font-family-main: var(--font-family-serif);
+	--font-size-main: 12pt;
+	--image-bg-main: '';
+	--color-bg-main: #ffffff;
+	--color-bg-menu: #ffffff;
+	--color-bg-thread: #e7efff;
+  --color-bg-reply: var(--color-bg-thread);
+	--color-fg-main: #000000;
+	--color-fg-thread: var(--color-fg-main);
+  --color-fg-reply: var(--color-fg-main);
+	--color-fg-link: #cc0000;
+	--color-fg-link-hover: #ff7f7f;
+	--color-lo-contrast-border: #c0c0c0;
+	--color-hi-contrast-border: #8d8d8d;
+	--color-lo-contrast-border-menu: #e5ffe5;
+	--color-hi-contrast-border-menu: #708c70; 
+	--color-lo-contrast-border-thread: #f7f7f7;
+	--color-hi-contrast-border-thread: #838383;
+	--color-border-button: #e3e3e3;
+	/* Navigation/admin bar */
+	--color-bg-boardlist: #ffffff;
+	--color-fg-boardlist: #cc3300;
+	/* Board header */
+	--color-bg-theading: #e04000;
+	--color-bg-theading2: #0040e0;
+	--color-bg-theading3: #e08000;
+	--color-fg-theading: #ffffff;
+	/* Post form */
+	--color-fg-global-message: var(--color-fg-warning);
+	/* Posts/replies */
+	--color-bg-reply-hl: #ffefe7;
+	--color-fg-title: #cc1105;
+	--color-fg-name: #228854;
+	--color-fg-warning: #ff0000;
+	--color-fg-warning-ip: #0000cc;
+	--color-fg-omitted: #707070;
+	/* Post formatting */
+	--color-fg-quotelink: var(--color-fg-link);
+	--color-fg-quotelink-hover: var(--color-fg-link-hover);
+	--color-fg-quote: #789922;
+	--color-fg-quote2: #dd00a9;
+	--color-bg-spoiler: #000000;
+	--color-bg-code: #ffffff;
+	--color-fg-code: #000000;
+	/* Administrator mode */
+  --color-bg-postblock: #e7ffef;
+	/* Windows */
+	--color-bg-window-item-highlight: var(--color-bg-reply-hl);
+}
+
+.menu input,
+.menu textarea,
+.menu button,
+.menu select {
+  border: 1px solid #008000;
+}
+
+#posts input[type="submit"],
+#posts input[type="button"]
+
+.outerbox {
+  padding: 4px;
+}
+
+.menu .innerbox {
+  background-color: var(--color-bg-menu);
+  margin: 0 6px;
+  padding: 6px;
+}
+
+.outerbox,
+#titleBox .innerbox,
+.mod-extra-info.innerbox,
+#globalmsg.innerbox,
+#pager {
+  background-color: var(--color-bg-postblock);
+  color: #008000;
+}
+
+#titleBox {
+  padding: 0;
+}
+
+#titleBox .innerbox {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.mtitle {
+  color: #005f00;
+  padding: 0px;
+  margin: 0px;
+  font-family: sans-serif;
+  font-size: 2em;
+  font-weight: normal;
+  text-align: center;
+}
+
+.subtitle {
+  text-align: center;
+}
+
+.formTitle {
+  margin: 0 0 0 2em;
+  font-size: 1.2em;
+}
+
+#postarea {
+  margin: 6px;
+  margin-top: 0;
+  padding: 6px;
+}
+
+#postarea,
+#postarea2 {
+  background-color: var(--color-bg-menu);
+}
+
+.postformItem > label {
+  font-weight: normal;
+}
+
+#topiclist {
+  padding-bottom: 6px;
+}
+
+#globalmsg {
+  color: #d00;
+  margin: 0;
+}
+
+.thread {
+  color: #000080;
+  padding: 4px;
+  margin-bottom: 2em;
+}
+
+.op {
+  margin: 3px;
+  margin-bottom: 6px;
+  padding: 3px;
+}
+
+.op,
+.latestReplies {
+  background-color: var(--color-bg-main)
+}
+
+.repliesOmitted {
+  display: none;
+}
+
+.title {
+  margin: 0px 0px 0px 1em;
+  padding: 0px;
+  font-size: 1.2em;
+  font-weight: var(--font-weight-bold);
+}
+
+.reply .title {
+  margin: 0;
+}
+
+.title a {
+  text-decoration: none;
+}
+
+.title a:hover {
+  text-decoration: underline;
+}
+
+.comment {
+  margin: 0.25em 0.25em 1em 2.5em;
+}
+
+.warningsSection {
+  margin-left: 2.5em;
+}
+
+.repliesOmitted {
+  background-color: var(--color-bg-main);
+  height: 4px;
+  margin: 0.5em 1em;
+}
+
+.latestReplies {
+  margin: 3px;
+  margin-top: 0;
+  padding: 3px;
+}
+
+.latestReplies:empty {
+  display: none;
+}
+
+.threadSeparator {
+  display: none;
+}
+
+.postnum {
+  margin: 0 0.3em;
+}
+
+#pager {
+  border: none;
+  border-spacing: 6px;
+}
+
+#pager td {
+  border: none;
+  background-color: #d6f0e0;
+}
+
+.winbar {
+  background-color: var(--color-bg-postblock);
+}
+
+.winname {
+  color: inherit;
+}
+
+.postlists {
+  background-color: var(--color-bg-thread);
+  color: #000080;
+  border-spacing: 3px;
+  padding: 6px;
+}
+
+.postlists th,
+.postlists td {
+  padding: 3px;
+}
+
+.postlists th {
+  background-color: #d6e0f0;
+}
+
+.postlists td {
+  background-color: var(--color-bg-main);
+}
+
+body#txtreply {
+  background-color: var(--color-bg-main);
+}
+
+#txtreply .thread {
+  background-color: var(--color-bg-thread);
+  padding-bottom: 6px;
+}
+
+#txtreply .reply {
+  background-color: var(--color-bg-main);
+  margin: 0 3px;
+  padding: 3px;
+}
+
+#txtreply .comment {
+  margin: 0.25em 0.25em 0 2.5em;
+  padding-bottom: 1em;
+}
+
+#txtreply #postarea {
+  background-color: var(--color-bg-thread);
+  color: #000080;
+  padding: 6px;
+}
+
+#txtreply #postform {
+  background-color: #d6e0f0;
+  padding: 3px;
+}
+
+#txtreply #postarea input,
+#txtreply #postarea textarea,
+#txtreply #postarea button,
+#txtreply #postarea select {
+  border: 1px solid #000080;
+}
