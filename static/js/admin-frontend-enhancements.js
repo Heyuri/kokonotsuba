@@ -132,74 +132,90 @@
 
 		if (deleteBtn) {
 			deleteBtn.addEventListener('click', function (e) {
-						e.preventDefault();
+				e.preventDefault();
 
-						const isOp = post.classList.contains('op');
+				const isOp = post.classList.contains('op');
 
-						let containerToHide = null;
-						let separatorToHide = null;
+				let containerToHandle = null;
+				let separatorToHandle = null;
 
-						if (isOp) {
-							containerToHide = post.closest('.thread');
-							if (containerToHide && containerToHide.nextElementSibling?.classList.contains('threadSeparator')) {
-								separatorToHide = containerToHide.nextElementSibling;
-							}
-						} else {
-							containerToHide = post.closest('.reply-container');
-						}
+				if (isOp) {
+					containerToHandle = post.closest('.thread');
+					if (containerToHandle && containerToHandle.nextElementSibling?.classList.contains('threadSeparator')) {
+						separatorToHandle = containerToHandle.nextElementSibling;
+					}
+				} else {
+					containerToHandle = post.closest('.reply-container');
+				}
 
-						if (containerToHide) containerToHide.style.display = 'none';
-						if (separatorToHide) separatorToHide.style.display = 'none';
+				if (containerToHandle) containerToHandle.classList.add('pendingDeletion');
+				if (separatorToHandle) separatorToHandle.classList.add('pendingDeletion');
 
-						handleRequest(deleteBtn.href, function () {
-							const hasResto = document.querySelector('input[name="resto"]') !== null;
+				handleRequest(deleteBtn.href, function () {
+					const hasResto = document.querySelector('input[name="resto"]') !== null;
 
-							if (hasResto && isOp) {
-								window.location.href = window.location.pathname.split('/').slice(0, -1).join('/') + '/';
-								return;
-							}
+					if (hasResto && isOp) {
+						window.location.href = window.location.pathname.split('/').slice(0, -1).join('/') + '/';
+						return;
+					}
 
-							showMessage('Post deleted successfully.', true);
-						}, function () {
-							if (containerToHide) containerToHide.style.display = '';
-							if (separatorToHide) separatorToHide.style.display = '';
-							showMessage('Failed to delete post.', false);
-						}, post);
+					if (containerToHandle) {
+						containerToHandle.classList.remove('pendingDeletion');
+						containerToHandle.classList.add('hidden');
+					}
+					if (separatorToHandle) {
+						separatorToHandle.classList.remove('pendingDeletion');
+						separatorToHandle.classList.add('hidden');
+					}
 
+					showMessage('Post deleted successfully.', true);
+				}, function () {
+					if (containerToHandle) containerToHandle.classList.remove('pendingDeletion');
+					if (separatorToHandle) separatorToHandle.classList.remove('pendingDeletion');
+					showMessage('Failed to delete post.', false);
+				}, post);
 			});
 		}
 
 		if (deleteMuteBtn) {
 			deleteMuteBtn.addEventListener('click', function (e) {
-						e.preventDefault();
+				e.preventDefault();
 
-						const isOp = post.classList.contains('op');
+				const isOp = post.classList.contains('op');
 
-						let containerToHide = null;
-						let separatorToHide = null;
+				let containerToHandle = null;
+				let separatorToHandle = null;
 
-						if (isOp) {
-							containerToHide = post.closest('.thread');
-							if (containerToHide && containerToHide.nextElementSibling?.classList.contains('threadSeparator')) {
-								separatorToHide = containerToHide.nextElementSibling;
-							}
-						} else {
-							containerToHide = post.closest('.reply-container');
-						}
+				if (isOp) {
+					containerToHandle = post.closest('.thread');
+					if (containerToHandle && containerToHandle.nextElementSibling?.classList.contains('threadSeparator')) {
+						separatorToHandle = containerToHandle.nextElementSibling;
+					}
+				} else {
+					containerToHandle = post.closest('.reply-container');
+				}
 
-						if (containerToHide) containerToHide.style.display = 'none';
-						if (separatorToHide) separatorToHide.style.display = 'none';
+				if (containerToHandle) containerToHandle.classList.add('pendingDeletion');
+				if (separatorToHandle) separatorToHandle.classList.add('pendingDeletion');
 
-						handleRequest(deleteMuteBtn.href, function () {
-									showMessage('Post deleted and user muted.', true);
-						}, function () {
-									if (containerToHide) containerToHide.style.display = '';
-									if (separatorToHide) separatorToHide.style.display = '';
-									showMessage('Failed to delete and mute post.', false);
-						}, post);
+				handleRequest(deleteMuteBtn.href, function () {
+					if (containerToHandle) {
+						containerToHandle.classList.remove('pendingDeletion');
+						containerToHandle.classList.add('hidden');
+					}
+					if (separatorToHandle) {
+						separatorToHandle.classList.remove('pendingDeletion');
+						separatorToHandle.classList.add('hidden');
+					}
+
+					showMessage('Post deleted and user muted.', true);
+				}, function () {
+					if (containerToHandle) containerToHandle.classList.remove('pendingDeletion');
+					if (separatorToHandle) separatorToHandle.classList.remove('pendingDeletion');
+					showMessage('Failed to delete and mute post.', false);
+				}, post);
 			});
 		}
-
 
 		if (deleteFileBtn) {
 			deleteFileBtn.addEventListener('click', function (e) {
