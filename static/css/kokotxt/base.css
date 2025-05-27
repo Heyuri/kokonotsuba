@@ -1376,6 +1376,11 @@ caption h3 {
 	width: 100%;
 }
 
+.pendingDeletion {
+	opacity: 0.6;
+	transition: opacity 0.3s ease;
+}
+
 /************************ Ban management*******************************/
 
 #banForm {
