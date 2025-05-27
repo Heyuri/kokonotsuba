@@ -97,9 +97,7 @@
 		<div class="mod-extra-info innerbox">
 			{$BLOTTER}
 		</div>
-		<div id="globalmsg" class="innerbox">
-			{$GLOBAL_MESSAGE}
-		</div>
+		<!--&IF($GLOBAL_MESSAGE,'<div id="globalmsg" class="innerbox">{$GLOBAL_MESSAGE}</div>','')-->	
 	</div>
 <!--/&POSTFORM-->
 
