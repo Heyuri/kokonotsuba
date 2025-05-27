@@ -19,6 +19,7 @@
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/tomorrow.css?v=10" title="Tomorrow">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/futaba.css?v=1" title="Futaba">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/headline.css?v=37" title="Headline">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/toothpaste.css?v=1" title="Toothpaste">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/vipper.css?v=2" title="VIPPER">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">
 	<script src="{$STATIC_URL}js/koko.js?v=15"></script>
