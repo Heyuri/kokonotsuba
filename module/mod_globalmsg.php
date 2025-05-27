@@ -33,7 +33,7 @@ class mod_globalmsg extends moduleHelper {
 	}
 
 	public function autoHookLinksAboveBar(&$link, $pageId, $level) {
-		if ($level < $this->config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE'] || $pageId != 'admin') return;
+		if ($level->isLessThan($this->config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE']) || $pageId != 'admin') return;
 		$link .= '<li class="adminNavLink"><a title="Manage the global warning/message that will appear across all boards" href="'.$this->mypage.'">Manage global message</a></li>';
 	}
 
