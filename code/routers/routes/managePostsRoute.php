@@ -97,6 +97,10 @@ class managePostsRoute {
 		
 		// Eager load all boards first
 		$allBoards = $this->boardIO->getAllRegularBoards();
+
+		$allBoardUids = array_column($allBoards, 'board_uid');
+		$boardList = implode('+', $allBoardUids);
+
 		$boardMap = array();
 		foreach($allBoards as $board){
 			$boardMap[$board->getBoardUID()] = $board;
@@ -149,7 +153,7 @@ class managePostsRoute {
 					<td class="colSub"><span class="title">' . $sub . '</span></td>
 					<td class="colName"><span class="name">' . $nameHtml . '</span></td>
 					<td class="colComment"><div class="managepostsCommentWrapper">' . $com . '</div></td>
-					<td class="colHost">' . $host . ' <a target="_blank" href="https://whatismyipaddress.com/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="'.$managePostsUrl.'&host=' . $host . '" title="See all posts">★</a></td>
+					<td class="colHost">' . $host . ' <a target="_blank" href="https://whatismyipaddress.com/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="'.$managePostsUrl.'&ip_address=' . $host . '&board=' . $boardList . '" title="See all posts">★</a></td>
 					<td class="colImage">' . $clip . ' (' . $size . ')<br>' . $md5chksum . '</td>
 				</tr>';
 		}
