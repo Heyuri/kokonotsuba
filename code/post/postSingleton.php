@@ -236,7 +236,8 @@ class PIOPDO implements IPIO {
 	
 		// Step 1: fetch paginated threads with OP post + status
 		$query = "
-			SELECT t.thread_uid, t.post_op_post_uid, t.post_op_number, p.status, p.boardUID
+			SELECT t.thread_uid, t.post_op_post_uid, t.post_op_number, t.thread_created_time,
+					t.last_bump_time, t.last_reply_time, p.status, p.boardUID
 			FROM {$this->threadTable} t
 			JOIN {$this->tablename} p ON t.post_op_post_uid = p.post_uid
 			WHERE t.boardUID = :boardUID
@@ -576,11 +577,9 @@ class PIOPDO implements IPIO {
 						$email = strtolower(trim($opPostCheck['email'] ?? ''));
 						$status = strtolower(trim($opPostCheck['status'] ?? ''));
 
-						$postStatus = new FlagHelper($status);
+						
 
-						$autoSageStatus = $postStatus->value('as');
-
-						if (strstr($email, 'sage') || $autoSageStatus) {
+						if (strstr($email, 'sage') || strstr($status, 'as')) {
 							$suppressBump = true;
 						}
 					}

@@ -415,7 +415,7 @@ class threadSingleton {
 	}
 
 	public function getFilteredThreads(int $previewCount, int $amount, int $offset = 0, array $filters = [], string $order = 'last_bump_time'): array {
-		$query = "SELECT t.thread_uid, t.post_op_post_uid, t.post_op_number,
+		$query = "SELECT t.thread_uid, t.post_op_post_uid, t.thread_created_time, t.last_bump_time, t.last_reply_time, t.post_op_number,
 		p.status, t.boardUID
 		FROM {$this->threadTable} t
 		JOIN {$this->postTable} p ON t.post_op_post_uid = p.post_uid
