@@ -6,12 +6,14 @@
 */ 
 
 class threadRenderer {
+	private array $config;
 	private globalHTML $globalHTML;
 	private templateEngine $templateEngine;
 	private postRenderer $postRenderer;
 
 
-	public function __construct(globalHTML $globalHTML, templateEngine $templateEngine, postRenderer $postRenderer) {
+	public function __construct(array $config, globalHTML $globalHTML, templateEngine $templateEngine, postRenderer $postRenderer) {
+		$this->config = $config;
 		$this->globalHTML = $globalHTML;
 		$this->templateEngine = $templateEngine;
 
@@ -51,6 +53,8 @@ class threadRenderer {
 		$templateValues['{$REPLIES}'] = '';
 
 		$templateValues['{$THREAD_OP}'] = '';
+
+		$templateValues = $this->getThreadPlaceholders($thread, $templateValues);
 		
 		// render posts for a thread
 		foreach ($posts as $i => $post) {
@@ -121,7 +125,6 @@ class threadRenderer {
 		if ($replyMode) {
 			$templateValues['{$RESTO}'] = $threadResno;
 		}
-		
 
 		$postHtml = $this->postRenderer->render($post,
 			$templateValues,
@@ -142,4 +145,29 @@ class threadRenderer {
 		return $postHtml;
 	}
 
+
+	private function getThreadPlaceholders(array $thread, array $templateValues): array {
+		$threadUid = $thread['thread_uid'];
+		$postOpNumber = $thread['post_op_number'];
+		$postOpPostUid = $thread['post_op_post_uid'];
+		$boardUid = $thread['boardUID'];
+		$lastReplyTime = $thread['last_reply_time'];
+		$lastBumpTime = $thread['last_bump_time'];
+		$threadCreatedTime = $thread['thread_created_time'];
+
+		// format thread created time
+		$postDateFormatter = new postDateFormatter($this->config);
+		$formattedThreadCreatedTime = $postDateFormatter->formatFromDateString($threadCreatedTime);
+
+		$threadPlaceholders = bindThreadValuesToTemplate($threadUid, 
+			$postOpNumber, 
+			$postOpPostUid, 
+			$boardUid, 
+			$lastReplyTime, 
+			$lastBumpTime, 
+			$threadCreatedTime,
+			$formattedThreadCreatedTime);
+		
+		return array_merge($templateValues, $threadPlaceholders);
+	}
 }
