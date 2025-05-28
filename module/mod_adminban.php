@@ -226,8 +226,8 @@ class mod_adminban extends moduleHelper {
 		$starttime = $_SERVER['REQUEST_TIME']; // This remains from the server, no change
 		$expires = $starttime + $this->calculateBanDuration($duration);
 
-		// Remove new lines from ban messages
-		$reason = nl2br($reasonFromRequest);
+		// Replace all newlines with literal <br /> tags, and remove the actual newlines
+		$reason = str_replace(["\r\n", "\n", "\r"], '<br />', $reason);
 
 		// replace comma so it doesnt break the explode
 		$reason = str_replace(',', '&#44;', $reason);
