@@ -40,7 +40,7 @@ class mod_movethread extends moduleHelper {
 		$tripcodeProcessor = new tripcodeProcessor($this->config, $globalHTML);
 		
 		$time = $_SERVER['REQUEST_TIME'];
-		$now = $postDateFormatter->format($time);
+		$now = $postDateFormatter->formatFromTimestamp($time);
 
 		// Generate new post number
 		$no = $originalBoard->getLastPostNoFromBoard() + 1;
