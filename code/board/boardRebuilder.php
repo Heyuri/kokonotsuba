@@ -52,7 +52,7 @@ class boardRebuilder {
 		 $this->templateEngine, 
 		 $quoteLinksFromBoard);
 
-		$threadRenderer = new threadRenderer($this->globalHTML, $this->templateEngine, $postRenderer);
+		$threadRenderer = new threadRenderer($this->config, $this->globalHTML, $this->templateEngine, $postRenderer);
 		
 		$adminMode = isActiveStaffSession();
 
@@ -137,7 +137,7 @@ class boardRebuilder {
 		 $this->templateEngine, 
 		 $quoteLinksFromBoard);
 
-		$threadRenderer = new threadRenderer($this->globalHTML, $this->templateEngine, $postRenderer);
+		$threadRenderer = new threadRenderer($this->config, $this->globalHTML, $this->templateEngine, $postRenderer);
 
 		$adminMode = isActiveStaffSession();
 
@@ -313,7 +313,7 @@ class boardRebuilder {
 		 $this->templateEngine, 
 		 $quoteLinksFromBoard);
 		
-		$threadRenderer = new threadRenderer($this->globalHTML, $this->templateEngine, $postRenderer);
+		$threadRenderer = new threadRenderer($this->config, $this->globalHTML, $this->templateEngine, $postRenderer);
 
 		$threadsPerPage = $this->config['PAGE_DEF'];
 	
