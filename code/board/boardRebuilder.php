@@ -89,7 +89,7 @@ class boardRebuilder {
 		$this->moduleEngine->useModuleMethods('ThreadRear', array(&$pte_vals['{$THREADREAR}'], $resno)); // "ThreadRear" Hook Point
 
 		$pageData = '';
-		$this->globalHTML->head($pageData);
+		$this->globalHTML->head($pageData, $resno);
 
 		$form_dat = '';
 		$this->globalHTML->form($form_dat, $resno);
