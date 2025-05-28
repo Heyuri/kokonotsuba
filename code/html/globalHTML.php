@@ -45,13 +45,14 @@ class globalHTML {
 		
 		$pte_vals = array('{$RESTO}'=>$resno?$resno:'', '{$IS_THREAD}'=>boolval($resno), '{$IS_STAFF}' => isActiveStaffSession());
 		if ($resno) {
-			$post = $this->threadSingleton->fetchPostsFromThread($resno);
-			if (mb_strlen($post[0]['com']) <= 10){
-				$CommentTitle = $post[0]['com'];
+			$threadUid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
+			$threadOpPost = $this->threadSingleton->fetchPostsFromThread($threadUid)[0];
+			if (mb_strlen($threadOpPost['com']) <= 10){
+				$CommentTitle = $threadOpPost['com'];
 			} else {
-				$CommentTitle = mb_substr($post[0]['com'],0,10,'UTF-8') . "...";
+				$CommentTitle = mb_substr($threadOpPost['com'],0,10,'UTF-8') . "...";
 			}
-			$pte_vals['{$PAGE_TITLE}'] = ($post[0]['sub'] ? $post[0]['sub'] : strip_tags($CommentTitle)).' - '.$this->board->getBoardTitle();
+			$pte_vals['{$PAGE_TITLE}'] = ($threadOpPost['sub'] ? $threadOpPost['sub'] : strip_tags($CommentTitle)).' - '.$this->board->getBoardTitle();
 		}
 		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
 		$this->moduleEngine->useModuleMethods('Head', array(&$html, $resno)); // "Head" Hook Point
