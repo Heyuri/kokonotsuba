@@ -541,9 +541,9 @@ class PIOPDO implements IPIO {
 
 			$this->databaseConnection->execute("DELETE FROM {$this->tablename} WHERE post_uid IN ({$postUIDsList})");
 			$this->databaseConnection->execute("DELETE FROM {$this->threadTable} WHERE post_op_post_uid IN ({$postUIDsList})");
-			$this->databaseConnection->execute("DELETE FROM {$this->threadTable} WHERE thread_uid IN ({$postUIDsList})");
 
 			if(!is_array($threadUIDs)) $threadUIDs = [$threadUIDs];
+
 			foreach ($threadUIDs as $threadUID) {
 				$newReplyData = $this->databaseConnection->fetchOne("
 					SELECT `root`
@@ -559,11 +559,47 @@ class PIOPDO implements IPIO {
 						WHERE thread_uid = ?
 					", [$threadUID]);
 				} else {
-					$this->databaseConnection->execute("
-						UPDATE {$this->threadTable}
-						SET last_bump_time = ?, last_reply_time = ?
-						WHERE thread_uid = ?
-					", [$newReplyData['root'], $newReplyData['root'], $threadUID]);
+					// Check if the OP post has 'sage' email or 'autosage' status
+					$opPostCheck = $this->databaseConnection->fetchOne("
+						SELECT email, status
+						FROM {$this->tablename}
+						WHERE post_uid = (
+							SELECT post_op_post_uid
+							FROM {$this->threadTable}
+							WHERE thread_uid = ?
+						)
+						LIMIT 1
+					", [$threadUID]);
+
+					$suppressBump = false;
+					if ($opPostCheck) {
+						$email = strtolower(trim($opPostCheck['email'] ?? ''));
+						$status = strtolower(trim($opPostCheck['status'] ?? ''));
+
+						$postStatus = new FlagHelper($status);
+
+						$autoSageStatus = $postStatus->value('as');
+
+						if (strstr($email, 'sage') || $autoSageStatus) {
+							$suppressBump = true;
+						}
+					}
+
+					if ($suppressBump) {
+						// Only update last_reply_time (no bump)
+						$this->databaseConnection->execute("
+							UPDATE {$this->threadTable}
+							SET last_reply_time = ?
+							WHERE thread_uid = ?
+						", [$newReplyData['root'], $threadUID]);
+					} else {
+							// Normal bump
+							$this->databaseConnection->execute("
+								UPDATE {$this->threadTable}
+								SET last_bump_time = ?, last_reply_time = ?
+								WHERE thread_uid = ?
+							", [$newReplyData['root'], $newReplyData['root'], $threadUID]);
+					}
 				}
 			}
 
