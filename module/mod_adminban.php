@@ -59,7 +59,7 @@ class mod_adminban extends moduleHelper {
 			$modfunc .= '<span class="adminFunctions adminBanFunction">[<a href="' . $this->mypage . '&post_uid=' . htmlspecialchars($post['post_uid']) . '&ip=' . htmlspecialchars($ip) . '" title="Ban">B</a>]</span> ';
 		}
 		if (!empty($ip) && $roleLevel->isAtLeast($this->config['AuthLevels']['CAN_VIEW_IP_ADDRESSES']) && $delMode !== 'managePosts') {
-			$modfunc .= '<span class="adminFunctions host">[Host: <a href="?mode=managePosts&boards&board='. $boardList .'ip_address=' . htmlspecialchars($ip) . '">' . htmlspecialchars($ip) . '</a>]</span>';
+			$modfunc .= '<span class="adminFunctions host">[Host: <a href="?mode=managePosts&boards&board='. $boardList .'&ip_address=' . htmlspecialchars($ip) . '">' . htmlspecialchars($ip) . '</a>]</span>';
 		}
 	}
 
