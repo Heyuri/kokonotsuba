@@ -84,8 +84,80 @@ class threadSingleton {
 		];
 	}
 	
-	
-	
+	public function getThreadsWithAllRepliesFromBoard(
+		board $board,
+		int $amount = 0,
+		int $offset = 0,
+		string $orderBy = 'last_bump_time',
+		bool $desc = true
+	): array {
+		$boardUID = $board->getBoardUID();
+
+		// Sanitize LIMIT and OFFSET values
+		$amount = max(0, $amount);
+		$offset = max(0, $offset);
+
+		// Validate orderBy column
+		if (!in_array($orderBy, $this->allowedOrderFields, true)) {
+			$orderBy = 'last_bump_time'; // default column
+		}
+
+		// Determine direction
+		$direction = $desc ? 'DESC' : 'ASC';
+
+		// Step 1: fetch paginated threads with OP post + status
+		$query = "
+			SELECT t.thread_uid, t.post_op_post_uid, t.post_op_number, p.status, p.boardUID
+			FROM {$this->threadTable} t
+			JOIN {$this->postTable} p ON t.post_op_post_uid = p.post_uid
+			WHERE t.boardUID = :boardUID
+			ORDER BY t.$orderBy $direction
+		";
+
+		if ($amount) {
+			$query .= " LIMIT $amount OFFSET $offset";
+		}
+
+		$threads = $this->databaseConnection->fetchAllAsArray($query, [
+			':boardUID' => $boardUID
+		]);
+
+		if (empty($threads)) return [];
+
+		$threadUIDs = array_column($threads, 'thread_uid');
+
+		// Step 2: fetch all posts for these threads
+		$inClause = implode(',', array_fill(0, count($threadUIDs), '?'));
+		$postQuery = "
+			SELECT *
+			FROM {$this->postTable}
+			WHERE thread_uid IN ($inClause)
+			ORDER BY no ASC
+		";
+		$postRows = $this->databaseConnection->fetchAllAsArray($postQuery, $threadUIDs);
+
+		// Step 3: group posts by thread_uid
+		$postsByThread = [];
+		foreach ($postRows as $post) {
+			$postsByThread[$post['thread_uid']][] = $post;
+		}
+
+		// Step 4: assemble results
+		$result = [];
+		foreach ($threads as $thread) {
+			$threadUID = $thread['thread_uid'];
+			$allPosts = $postsByThread[$threadUID] ?? [];
+
+			$result[] = [
+				'thread' => $thread,
+				'post_uids' => array_column($allPosts, 'post_uid'),
+				'posts' => $allPosts,
+				'thread_uid' => $threadUID
+			];
+		}
+
+		return $result;
+	}
 
 	/**
  	* Fetch thread UIDs for a given board with optional sorting and pagination.
@@ -137,7 +209,7 @@ class threadSingleton {
 		
 		return $this->databaseConnection->fetchAllAsArray($query, $threadUidArray);
 	}
-	
+
 	// insert a new thread into the thread table
 	public function addThread($boardUID, $post_uid, $thread_uid, $post_op_number) {
 		$query = "INSERT INTO {$this->threadTable} (boardUID, post_op_post_uid, post_op_number, thread_uid) VALUES (:board_uid, :post_op_post_uid, :post_op_number, :thread_uid)";
@@ -722,5 +794,4 @@ class threadSingleton {
 		}, $comment);
 	}
 	
-
 }
