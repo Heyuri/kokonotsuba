@@ -64,23 +64,19 @@ class mod_cat extends moduleHelper {
 		if (isset($_POST['sort_by'])) {
 			setcookie('cat_sort_by', $sort, time() + 365 * 86400);
 		}
+
+		$sortingColumn = 'last_bump_time';
  
 		//sort threads. If sort is set to bump nothing will change because that is the default order returned by fetchThreadList
 		switch($sort) {
 			case 'time':
-				$plist = $threadSingleton->getThreadListFromBoard($this->board, $this->PAGE_DEF * $page, $this->PAGE_DEF, true);
-				$sortfcn = function ($a, $b) { return strtotime($b['thread_created_time']) - strtotime($a['thread_created_time']); };
-				
+				$sortingColumn = 'thread_created_time'; 
 			break;
 			case 'bump':
 			default:
-				$plist = $threadSingleton->getThreadListFromBoard($this->board, $this->PAGE_DEF * $page, $this->PAGE_DEF); //thread list
-				$sortfcn = function ($a, $b) { return strtotime($b['last_bump_time']) - strtotime($a['last_bump_time']); };
+				$sortingColumn = 'last_bump_time';
 			break;
 		}
-
-		$threadList = $threadSingleton->fetchThreads($plist) ?? [];
-		usort($threadList, $sortfcn);
 
 		$cat_cols = $_COOKIE['cat_cols']??0;
 		$cat_fw = ($_COOKIE['cat_fw']??'false')=='true';
@@ -95,12 +91,16 @@ class mod_cat extends moduleHelper {
 <h2 class="theading2">Catalog</h2> '.$this->drawSortOptions($sort).'';
 				
 		$dat.= '<table id="catalogTable" class="' . ($cat_fw ? 'full-width' : '') . ' ' . ($cat_cols === 'auto' ? 'auto-cols' : 'fixed-cols') . '"><tbody><tr>';
-		foreach($threadList as $i=>$thread){
-			$threadPosts = $threadSingleton->fetchPostsFromThread($thread['thread_uid']);
 
-			if(!$threadPosts) continue;
-
+		$threads = $threadSingleton->getThreadsWithAllRepliesFromBoard($this->board, $this->PAGE_DEF, $page * $this->PAGE_DEF, $sortingColumn);
+		
+		foreach($threads as $i=>$thread){
+			$threadPosts = $thread['posts'];
+			
 			$opPost = $threadPosts[0];
+
+			if(!$opPost) continue;
+
 			extract($opPost);
 			
 			$resno = $no;
@@ -113,7 +113,7 @@ class mod_cat extends moduleHelper {
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'', '{$IMG_SRC}' => '');
 			$this->moduleEngine->useModuleMethods('ThreadPost', array(&$arrLabels, $opPost, $threadPosts, false)); // "ThreadPost" Hook Point
 
-			$res = $threadSingleton->getPostCountFromThread($thread_uid) - 1;
+			$res = count($threadPosts);
 			$dat.= '<td class="thread">
 	<!--<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>-->
 	<a href="'.$this->config['PHP_SELF'].'?res='.($resno?$resno:$no).'#p'.$this->board->getBoardUID() . '_' .$no.'">'.
@@ -131,13 +131,4 @@ class mod_cat extends moduleHelper {
 		echo $dat;
 	}
 
-	/* Optimize the display size of the picture */
-	private function OptimizeImageWH($w, $h){
-		if($w > $this->config['MAX_RW'] || $h > $this->config['MAX_RH']){
-			$W2 = $this->config['MAX_RW'] / $w; $H2 = $this->config['MAX_RH'] / $h;
-			$tkey = ($W2 < $H2) ? $W2 : $H2;
-			$w = ceil($w * $tkey); $h = ceil($h * $tkey);
-		}
-		return 'width: '.$w.'px; height: '.$h.'px;';
-	}
 }
