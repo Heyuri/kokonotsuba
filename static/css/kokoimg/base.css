@@ -1282,7 +1282,8 @@ caption h3 {
 }
 
 #actionlogtableContainer,
-#tableManagePostsContainer {
+#tableManagePostsContainer,
+#tableThreadlistContainer {
 	max-width: 100%;
 	overflow: auto;
 }
