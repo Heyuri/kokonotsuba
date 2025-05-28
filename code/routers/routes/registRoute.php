@@ -325,7 +325,7 @@ class registRoute {
 
 
 	// prepare post meta data
-	private function preparePostMetadata(array &$postData, postDateFormatter $formatter, postIdGenerator $idGen, file $file): array {
+	private function preparePostMetadata(array &$postData, postDateFormatter $postDateFormatter, postIdGenerator $postIdGenerator, file $file): array {
 		if ($postData['pwd'] == '') {
 			$postData['pwd'] = ($postData['pwdc'] == '') ? substr(rand(), 0, 8) : $postData['pwdc'];
 		}
@@ -333,8 +333,8 @@ class registRoute {
 	
 		$no = $this->board->getLastPostNoFromBoard() + 1;
 		$is_op = $postData['resno'] ? false : true;
-		$now = $formatter->format($postData['time']);
-		$now .= $idGen->generate($postData['email'], $postData['time'], $postData['thread_uid']);
+		$now = $postDateFormatter->formatFromTimestamp($postData['time']);
+		$now .= $postIdGenerator->generate($postData['email'], $postData['time'], $postData['thread_uid']);
 	
 		return [
 			'no' => $no,
