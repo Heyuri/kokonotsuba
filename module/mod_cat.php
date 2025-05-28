@@ -116,7 +116,7 @@ class mod_cat extends moduleHelper {
 			$res = count($threadPosts);
 			$dat.= '<td class="thread">
 	<!--<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>-->
-	<a href="'.$this->config['PHP_SELF'].'?res='.($resno?$resno:$no).'#p'.$this->board->getBoardUID() . '_' .$no.'">'.
+	<a href="'.$this->board->getBoardThreadURL($resno, $no).'">'.
 	($FileIO->imageExists($tim.$ext, $this->board) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim, $this->board), $this->board).'" width="'.min(150, $tw).'" class="thumb" alt="Thumbnail">' : '***').
 	'</a>
 	<div class="catPostInfo"><span class="title">'.$sub.'</span>'.
