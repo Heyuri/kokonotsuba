@@ -1,0 +1,156 @@
+:root {
+  /* Global */
+  --font-family-main: var(--font-family-mspgothic);
+  --font-size-main: 12pt;
+  --image-bg-main: '';
+  --color-bg-main: #004040;
+  --color-bg-menu: inherit;
+  --color-bg-thread: #004040;
+  --color-bg-reply: var(--color-bg-thread);
+  --color-fg-main: #ffffff;
+  --color-fg-thread: var(--color-fg-main);
+  --color-fg-reply: var(--color-fg-main);
+  --color-fg-link: #eeffee;
+  --color-fg-link-hover: #ff0000;
+  --color-lo-contrast-border: #307070;
+  --color-hi-contrast-border: #609090;
+  --color-lo-contrast-border-menu: #e5ffe5;
+  --color-hi-contrast-border-menu: #708c70; 
+  --color-lo-contrast-border-thread: #f7f7f7;
+  --color-hi-contrast-border-thread: #838383;
+  --color-border-button: #e3e3e3;
+  /* Navigation/admin bar */
+  --color-bg-boardlist: #004040;
+  --color-fg-boardlist: #ffffff;
+  /* Board header */
+  --color-bg-theading: #e04000;
+  --color-bg-theading2: #0040e0;
+  --color-bg-theading3: #e08000;
+  --color-fg-theading: #ffffff;
+  /* Post form */
+  --color-fg-global-message: var(--color-fg-warning);
+  /* Posts/replies */
+  --color-bg-reply-hl: #ffefef;
+  --color-fg-title: #fffffe;
+  --color-fg-name: var(--color-fg-main);
+  --color-fg-warning: #ff0000;
+  --color-fg-warning-ip: #00ffff;
+  --color-fg-omitted: #a0a0a0;
+  /* Post formatting */
+  --color-fg-quotelink: var(--color-fg-link);
+  --color-fg-quotelink-hover: var(--color-fg-link-hover);
+  --color-fg-quote: #d1d1d1;
+  --color-fg-quote2: #ff80ff;
+  --color-bg-spoiler: #000000;
+  --color-bg-code: #000000;
+  --color-fg-code: var(--color-fg-main);
+  /* Administrator mode */
+  --color-bg-postblock: #007f7f;
+  /* Windows */
+  --color-bg-window-item-highlight: #006060;
+}
+
+hr {
+  border-color: var(--color-hi-contrast-border);
+}
+
+:focus,
+:focus-visible {
+  outline-color: var(--color-fg-link);
+}
+
+fieldset {
+  border-color: var(--color-hi-contrast-border);
+}
+
+.neomenuTopLevel,
+.persistnav .neomenuTopLevel {
+  border: 1px solid;
+  border-color:  var(--color-lo-contrast-border) var(--color-x-lo-contrast-border) var(--color-x-lo-contrast-border)  var(--color-lo-contrast-border);
+}
+
+.neomenuList {
+  border: 1px solid var(--color-lo-contrast-border);
+}
+
+.neomenu .neomenuTopLevel h2:hover,
+.neomenu .neomenuList li:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+#blotter {
+  margin: 1em auto;
+}
+
+.title {
+  font-size: 1.125em;
+}
+
+.del,
+.tnav,
+.post .time,
+.postInfoExtra {
+  font-size: var(--font-size-small);
+}
+
+.comment {
+  margin: 1em 2.5em;
+  font-family: var(--font-family-msgothic);
+}
+
+.rabienrose {
+  background-color: #660033;
+  color: #ffccff;
+}
+
+.bokuGreen {
+  color: #00cc00;
+}
+
+.bokuRed {
+  color: #ff6666;
+}
+
+#pager {
+  border-color: var(--color-hi-contrast-border);
+}
+
+#pager th,
+#pager td {
+  border-color: #609090;
+}
+
+.good,
+.online {
+  color: #00ff00;
+}
+
+.window,
+.winbar {
+  border-color: var(--color-hi-contrast-border);
+}
+
+.winbar {
+  background-color: var(--color-bg-postblock);
+}
+
+.winctrl img {
+  filter: invert(1);
+}
+
+.postlists th {
+  background-color: var(--color-bg-postblock);
+}
+
+.postlists td {
+  background-color: #005050;
+  font-size: var(--font-size-small);
+}
+
+#tableManagePosts {
+  font-size: inherit;
+}
+
+#tableManagePosts td:not(.colComment) {
+  min-width:max-content;
+}
