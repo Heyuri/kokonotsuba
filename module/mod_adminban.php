@@ -59,7 +59,7 @@ class mod_adminban extends moduleHelper {
 			$modfunc .= '<span class="adminFunctions adminBanFunction">[<a href="' . $this->mypage . '&post_uid=' . htmlspecialchars($post['post_uid']) . '&ip=' . htmlspecialchars($ip) . '" title="Ban">B</a>]</span> ';
 		}
 		if (!empty($ip) && $roleLevel->isAtLeast($this->config['AuthLevels']['CAN_VIEW_IP_ADDRESSES']) && $delMode !== 'managePosts') {
-			$modfunc .= '<span class="adminFunctions host">[Host: <a href="?mode=managePosts&ip_address=' . htmlspecialchars($ip) . '&board='. $boardList .'">' . htmlspecialchars($ip) . '</a>]</span>';
+			$modfunc .= '<span class="adminFunctions host">[Host: <a href="?mode=managePosts&boards&board='. $boardList .'ip_address=' . htmlspecialchars($ip) . '">' . htmlspecialchars($ip) . '</a>]</span>';
 		}
 	}
 
@@ -225,6 +225,9 @@ class mod_adminban extends moduleHelper {
 		$reason = $reasonFromRequest ?: "No reason given.";
 		$starttime = $_SERVER['REQUEST_TIME']; // This remains from the server, no change
 		$expires = $starttime + $this->calculateBanDuration($duration);
+
+		// Remove new lines from ban messages
+		$reason = nl2br($reasonFromRequest);
 
 		// replace comma so it doesnt break the explode
 		$reason = str_replace(',', '&#44;', $reason);
