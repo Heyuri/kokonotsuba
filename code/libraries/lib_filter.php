@@ -213,19 +213,26 @@ function bindActionLogFiltersParameters(array &$params, string &$query, array $f
         }
     }
 
-    // Apply filter for deleted logs
+    $actionConditions = [];
+    
     if (!empty($filters['deleted'])) {
-        $query .= " AND log_action LIKE :delete";
-        $params[':delete'] = '%delete%';  // Bind the 'delete' action in the log
+        $actionConditions[] = "log_action LIKE :delete";
+        $params[':delete'] = '%delete%';
     }
 
-    // Apply filter for ban, mute, or warn actions
     if (!empty($filters['ban'])) {
-        $query .= " AND (log_action LIKE :ban OR log_action LIKE :mute OR log_action LIKE :warn)";
-        $params[':ban'] = '%ban%';  // Bind the 'ban' action
-        $params[':mute'] = '%mute%';  // Bind the 'mute' action
-        $params[':warn'] = '%warn%';  // Bind the 'warn' action
+        $actionConditions[] = "log_action LIKE :ban";
+        $actionConditions[] = "log_action LIKE :mute";
+        $actionConditions[] = "log_action LIKE :warn";
+        $params[':ban'] = '%ban%';
+        $params[':mute'] = '%mute%';
+        $params[':warn'] = '%warn%';
     }
+
+    if (!empty($actionConditions)) {
+        $query .= " AND (" . implode(" OR ", $actionConditions) . ")";
+    }
+
 }
 
 
