@@ -91,7 +91,7 @@ class mod_admindel extends moduleHelper {
 
 		// if its a thread, rebuild all board pages
 		if($post['is_op']) {
-			$this->board->rebuildBoard();
+			$board->rebuildBoard();
 		} else {
 			// otherwise just rebuild the page the reply is on
 			$thread_uid = $post['thread_uid'];
@@ -100,7 +100,7 @@ class mod_admindel extends moduleHelper {
 
 			$pageToRebuild = getPageOfThread($thread_uid, $threads, $this->config['PAGE_DEF']);
 			
-			$this->board->rebuildBoardPage($pageToRebuild);
+			$board->rebuildBoardPage($pageToRebuild);
 		}
 		
 		if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
