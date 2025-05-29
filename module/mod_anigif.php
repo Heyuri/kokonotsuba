@@ -22,16 +22,12 @@ class mod_anigif extends moduleHelper {
 
 	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, $imgWH, &$status) {
 		$mimeType = $file->getMimeType();
-		$fileSize = $file->getFileSize();
 
 		// Don't include it directly on the page if its not a GIF
 		if($mimeType !== 'image/gif') {
 			return;
 		}
 
-		if($fileSize >= $this->config['ModuleSettings']['MAX_SIZE_FOR_ANIMATED_GIF'] * 1024 * 1024) {
-			return;
-		}
 		
 		$anigifRequested = isset($_POST['anigif']);
 		
@@ -47,8 +43,15 @@ class mod_anigif extends moduleHelper {
 
 		$fh = new FlagHelper($post['status']);
 		if($fh->value('agif')) {
+			$fileName = $post['tim'] . $post['ext'];
 			// check if the file exists in here so time isn't wasted with checking if the file exists
-			if(!$FileIO->imageExists($post['tim'].$post['ext'], $this->board)) {
+			if(!$FileIO->imageExists($fileName, $this->board)) {
+				return;
+			}
+
+			$fileSize = $FileIO->getImageFilesize($fileName, $this->board);
+			
+			if($fileSize >= $this->config['ModuleSettings']['MAX_SIZE_FOR_ANIMATED_GIF'] * 1024 * 1024) {
 				return;
 			}
 			
