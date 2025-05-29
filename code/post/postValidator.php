@@ -62,21 +62,23 @@ class postValidator {
 		}
 	}
 	
-	public function threadSanityCheck(&$postOpRoot, &$flgh, &$thread_uid, &$ThreadExistsBefore){
-			// Determine whether the article you want to respond to has just been deleted
+	public function threadSanityCheck(&$postOpRoot, &$flgh, &$thread_uid, &$resno, &$ThreadExistsBefore){
+		if($resno && !$ThreadExistsBefore) {
+			// Update the data source in advance, and this new addition is not recorded
+			$this->globalHTML->error(_T('regist_threaddeleted'), 404);
+		} 
+		
+		// Determine whether the article you want to respond to has just been deleted
 		if($thread_uid){
-			if($ThreadExistsBefore){ // If the thread of the discussion you want to reply to exists
-				if(!$this->threadSingleton->isThread($thread_uid)){ // If the thread of the discussion you want to reply to has been deleted
-					// Update the data source in advance, and this new addition is not recorded
-					$this->board->rebuildBoard();
-					$this->globalHTML->error(_T('regist_threaddeleted'), 404);
-				}else{ // Check that the thread is set to suppress response (by the way, take out the post time of the original post)
-					$post = $this->threadSingleton->fetchPostsFromThread($thread_uid)[0]; // [Special] Take a single article content, but the $post of the return also relies on [$i] to switch articles!
+			if($ThreadExistsBefore) { // If the thread of the discussion you want to reply to exists
+				// Check that the thread is set to suppress response (by the way, take out the post time of the original post)
+				$post = $this->threadSingleton->fetchPostsFromThread($thread_uid)[0]; // [Special] Take a single article content, but the $post of the return also relies on [$i] to switch articles!
 
-					[$postOpStatus, $postOpRoot] = array($post['status'], $post['root']);
-					$flgh = new FlagHelper($postOpStatus);
-				}
-			}else $this->globalHTML->error(_T('thread_not_found'), 404); // Does not exist
+				[$postOpStatus, $postOpRoot] = array($post['status'], $post['root']);
+				$flgh = new FlagHelper($postOpStatus);
+			} else {
+				$this->globalHTML->error(_T('thread_not_found'), 404); // Does not exist
+			}
 		}
 		return[$postOpRoot];
 	}
