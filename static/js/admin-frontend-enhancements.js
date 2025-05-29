@@ -217,14 +217,18 @@
 			});
 		}
 
+
 		if (deleteFileBtn) {
 			deleteFileBtn.addEventListener('click', function (e) {
 				e.preventDefault();
+				const img = post.querySelector('img.postimg');
+				if (img) img.classList.add('pendingDeletion');
 				handleRequest(deleteFileBtn.href, function () {
 					reloadPostImgElement(post);
 					removeDeleteFileButton(post);
 					showMessage('File deleted successfully.', true);
 				}, function () {
+					if (img) img.classList.remove('pendingDeletion');
 					showMessage('Failed to delete file.', false);
 				});
 			});
