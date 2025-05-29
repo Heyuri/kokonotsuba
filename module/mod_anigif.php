@@ -51,7 +51,7 @@ class mod_anigif extends moduleHelper {
 
 			$fileSize = $FileIO->getImageFilesize($fileName, $this->board);
 			
-			if($fileSize >= $this->config['ModuleSettings']['MAX_SIZE_FOR_ANIMATED_GIF'] * 1024 * 1024) {
+			if($fileSize >= $this->config['ModuleSettings']['MAX_SIZE_FOR_ANIMATED_GIF'] * 1024) {
 				return;
 			}
 			
