@@ -130,8 +130,12 @@ class registRoute {
 		$webhookDispatcher->dispatch($postData['resno'], $computedPostInfo['no']);
 	
 		// Save files
-		if($fileMeta['file']->getExtention()) {
-			$fileMeta['uploadController']->savePostThumbnailToBoard();
+		$fileExtention = $fileMeta['file']->getExtention();
+		if($fileExtention) {
+			// Don't try to save the
+			if($fileExtention !== '.swf') {
+				$fileMeta['uploadController']->savePostThumbnailToBoard();
+			}
 			$fileMeta['uploadController']->savePostFileToBoard();
 		}
 	
@@ -376,6 +380,5 @@ class registRoute {
 			createQuoteLinksFromArray($this->board, $postUid, $quoteLinkedPostUids);
 		}
 	}
-	
 
 }
