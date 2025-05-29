@@ -21,6 +21,7 @@
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/bluemoon.css?v=1" title="Blue Moon">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/futaba.css?v=1" title="Futaba">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/headline.css?v=37" title="Headline">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/mercury.css?v=1" title="Mercury">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/toothpaste.css?v=1" title="Toothpaste">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/vipper.css?v=2" title="VIPPER">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">
