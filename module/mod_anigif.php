@@ -22,8 +22,14 @@ class mod_anigif extends moduleHelper {
 
 	public function autoHookRegistBeforeCommit(&$name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, $imgWH, &$status) {
 		$mimeType = $file->getMimeType();
-		
+		$fileSize = $file->getFileSize();
+
+		// Don't include it directly on the page if its not a GIF
 		if($mimeType !== 'image/gif') {
+			return;
+		}
+
+		if($fileSize >= $this->config['ModuleSettings']['MAX_SIZE_FOR_ANIMATED_GIF'] * 1024 * 1024) {
 			return;
 		}
 		

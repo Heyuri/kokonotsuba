@@ -96,6 +96,9 @@ $config['ModuleList'] = array(
 );
 
 /* Module-specific options */
+//mod_anigif
+$config['ModuleSettings']['MAX_SIZE_FOR_ANIMATED_GIF'] = 10; // Max file size for animated gifs (in megabytes)
+
 //mod_imagemeta
 $config['ModuleSettings']['EXIF_DATA_VIEWER'] = false;
 $config['ModuleSettings']['IMG_OPS'] = true; //imgops reverse image searcher portal
