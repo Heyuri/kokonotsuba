@@ -65,7 +65,7 @@ $language['fri']						= 'Fri';
 $language['sat']						= 'Sat';
 $language['regist_successivepost']		= 'Please wait for a while for continuous posting.';
 $language['regist_duplicatefile']		= 'Upload failed.<br>Same file uploaded lately.';
-$language['regist_threaddeleted']		= 'This thread is too old that it is deleted!';
+$language['regist_threaddeleted']		= 'This thread has been deleted!';
 $language['regist_threadlocked']		= 'Thread is locked by administrator!';
 $language['regist_redirect']			= '%1$s Redirecting... <p>If your browser don\'t redirect for you, please click: <a href="%2$s">Return</a></p>';
 $language['del_notchecked']				= 'Nothing selected for deletion. Please go back and select again.';
