@@ -59,6 +59,11 @@ class postFileUploadController {
 
 		$thumbnailPath = $this->thumbnail->getThumbnailFileName();
 
+		// If the thumbnail size is 0, either being an error or intentionally invalidated (i,e a shockwave flash file)
+		if($thumbnailWidth === 0 || $thumbnailHeight === 0) {
+			return;
+		}
+
 		$this->thumbnailCreator->makeAndUpload(
 			$thumbnailPath,
 			$thumbnailDestinationName,
