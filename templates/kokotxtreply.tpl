@@ -42,7 +42,7 @@
 <!--/&HEADER-->
 
 <!--&TOPLINKS-->
-	<div class="boardlist"<!--&IF($IS_THREAD,' style="display:none"','')-->>
+	<div class="boardlist">
 		<div class="toplinks">{$TOP_LINKS}</div>
 		<div class="adminbar">{$HOME} {$OVERBOARD} {$HOOKLINKS} {$ADMIN}</div>
 	</div>
