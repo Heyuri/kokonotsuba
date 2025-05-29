@@ -66,33 +66,31 @@ class registRoute {
 
 		// Step 2: Gather POST input data
 		$postData = $this->gatherPostInputData();
-	
-		// Step 3: Process uploaded file (if any)
+		
+		// Step 3: Verify that thread exists
+		$this->postValidator->threadSanityCheck($postData['postOpRoot'], $postData['flgh'], $postData['thread_uid'], $postData['resno'], $postData['ThreadExistsBefore']);
+
+		// Step 4: Process uploaded file (if any)
 		$fileMeta = $this->handleFileUpload($postData['isReply'], $thumbnailCreator, $imgDir);
 
-		// Step 4: Validate & clean post content
+		// Step 5: Validate & clean post content
 		$this->validateAndCleanPostContent($postData, $fileMeta['status'], $fileMeta['file'], $postData['is_admin']);
 	
-		// Step 5: Handle tripcode, default text, filters, and categories
+		// Step 6: Handle tripcode, default text, filters, and categories
 		$this->processPostDetails($postData, $tripcodeProcessor, $defaultTextFiller, $postFilterApplier);
 	
-		// Step 6: Final data prep (timestamps, password hashing, unique ID)
+		// Step 7: Final data prep (timestamps, password hashing, unique ID)
 		$computedPostInfo = $this->preparePostMetadata($postData, $postDateFormatter, $postIdGenerator, $fileMeta['file']);
 	
-		// Step 7: Validate post for database storage
+		// Step 8: Validate post for database storage
 		$this->postValidator->validateForDatabase(
 			$postData['pwdc'], $postData['comment'], $postData['time'], $computedPostInfo['pass'],
 			$postData['ip'], $fileMeta['upfile'], $fileMeta['md5'], $computedPostInfo['dest'],
 			$this->PIO, $postData['roleLevel']
 		);
-	
-		// Thread-related checks
-		if($postData['thread_uid']){
-			$postData['ThreadExistsBefore'] = $this->threadSingleton->isThread($postData['thread_uid']);
-		}
-	
+
+		// Prune old threads
 		$this->postValidator->pruneOld($this->moduleEngine, $this->PIO, $this->FileIO);
-		$this->postValidator->threadSanityCheck($postData['postOpRoot'], $postData['flgh'], $postData['thread_uid'], $postData['ThreadExistsBefore']);
 
 		// Age/sage logic
 		$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['postOpRoot'], $postData['email'], $postData['age']);
@@ -130,35 +128,14 @@ class registRoute {
 		$webhookDispatcher->dispatch($postData['resno'], $computedPostInfo['no']);
 	
 		// Save files
-		$fileExtention = $fileMeta['file']->getExtention();
-		if($fileExtention) {
-			// Don't try to save the
-			if($fileExtention !== '.swf') {
-				$fileMeta['uploadController']->savePostThumbnailToBoard();
-			}
-			$fileMeta['uploadController']->savePostFileToBoard();
-		}
+		$this->saveUploadedPostFiles($fileMeta['postFileUploadController'], $fileMeta['file']->getExtention());
 	
 		// Handle quote links
 		$this->handlePostQuoteLink($computedPostInfo['no'], $postData['comment']);
 
-		// Rebuild board
-		$threads = $this->threadSingleton->getThreadListFromBoard($this->board);
+		// Rebuild board pages
+		$this->handlePageRebuilding($computedPostInfo, $postData);
 
-		// Rebuild pages from 0 to the one the thread is on
-		if($computedPostInfo['is_op']) {
-			$this->board->rebuildBoard();
-		} else {
-			$pageToRebuild = getPageOfThread($postData['thread_uid'], $threads, $this->config['PAGE_DEF']);
-			
-			// If saging, just rebuild that one page
-			if($postData['age'] === false) {
-				$this->board->rebuildBoardPage($pageToRebuild);
-			} else {
-				// If a non-sage reply, rebuild all pages until the page the thread is on
-				$this->board->rebuildBoardPages($pageToRebuild);
-			}
-		}
 		// Final redirect
 		redirect($redirect, 0);
 	}
@@ -187,7 +164,7 @@ class registRoute {
 	
 		$postOpRoot = 0;
 		$flgh = '';
-		$ThreadExistsBefore = false;
+		$ThreadExistsBefore = $this->threadSingleton->isThread($thread_uid);
 		$up_incomplete = 0;
 		$is_admin = $roleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
 
@@ -239,7 +216,7 @@ class registRoute {
 		return [
 			'file' => $file,
 			'thumbnail' => $thumbnail,
-			'uploadController' => $postFileUploadController,
+			'postFileUploadController' => $postFileUploadController,
 			'upfile' => $upfile,
 			'path' => $upfile_path,
 			'name' => $upfile_name,
@@ -378,6 +355,34 @@ class registRoute {
 	
 			// Store quote link relationships in the database
 			createQuoteLinksFromArray($this->board, $postUid, $quoteLinkedPostUids);
+		}
+	}
+
+	// Handle page rebuilding logic
+	private function handlePageRebuilding(array $computedPostInfo, array $postData): void {
+		$threads = $this->threadSingleton->getThreadListFromBoard($this->board);
+
+		// Rebuild pages from 0 to the one the thread is on
+		if($computedPostInfo['is_op']) {
+			$this->board->rebuildBoard();
+		} else {
+			$pageToRebuild = getPageOfThread($postData['thread_uid'], $threads, $this->config['PAGE_DEF']);
+			
+			// If saging, just rebuild that one page
+			if($postData['age'] === false) {
+				$this->board->rebuildBoardPage($pageToRebuild);
+			} else {
+				// If a non-sage reply, rebuild all pages until the page the thread is on
+				$this->board->rebuildBoardPages($pageToRebuild);
+			}
+		}
+	}
+
+	// If the extention is set (i.e the file is set), then save the files
+	private function saveUploadedPostFiles(?postFileUploadController $postFileUploadController, ?string $fileExtention): void {
+		if($fileExtention) {
+			$postFileUploadController->savePostThumbnailToBoard();
+			$postFileUploadController->savePostFileToBoard();
 		}
 	}
 
