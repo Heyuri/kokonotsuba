@@ -77,6 +77,12 @@ class mod_admindel extends moduleHelper {
 				break;
 			case 'imgdel':
 				$files = $PIO->removeAttachments(array($post['post_uid']));
+
+				$postStatus = new FlagHelper($post['status']);
+				$postStatus->toggle('fileDeleted');
+
+				$PIO->setPostStatus($post['post_uid'], $postStatus->toString());
+
 				$ActionLogger->logAction('Deleted file for post No.'.$post['no'], $boardUID);
 				break;
 			default:
