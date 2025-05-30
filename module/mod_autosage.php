@@ -2,11 +2,9 @@
 // auto sage module made for kokonotsuba by deadking
 class mod_autosage extends moduleHelper {
 	private $mypage;
-	private $LOCKICON = '';
 
 	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
 		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
-		$this->LOCKICON = $this->config['STATIC_URL'].'image/locked.png';
 		$this->mypage = $this->getModulePageURL();
 	}
 
