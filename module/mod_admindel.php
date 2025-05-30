@@ -1,14 +1,14 @@
 <?php
 // admin extra module made for kokonotsuba by deadking
 class mod_admindel extends moduleHelper {
-	private $BANFILE = '';
+	private $GLOBAL_BANS = '';
 	private $JANIMUTE_LENGTH = '';
 	private $JANIMUTE_REASON = '';
 	private $mypage;
 
 	public function __construct(moduleEngine $moduleEngine, boardIO $boardIO, pageRenderer $pageRenderer, pageRenderer $adminPageRenderer) {
 		parent::__construct($moduleEngine, $boardIO, $pageRenderer, $adminPageRenderer);		
-		$this->BANFILE = $this->board->getBoardStoragePath() . 'bans.log.txt';
+		$this->GLOBAL_BANS = getBackendGlobalDir() . $this->config['GLOBAL_BANS'];
 		$this->JANIMUTE_LENGTH = $this->config['ModuleSettings']['JANIMUTE_LENGTH'];
 		$this->JANIMUTE_REASON = $this->config['ModuleSettings']['JANIMUTE_REASON'];
 		
@@ -67,7 +67,7 @@ class mod_admindel extends moduleHelper {
 				$ip = $post['host'];
 				$starttime = $_SERVER['REQUEST_TIME'];
 				$expires = $starttime+intval($this->JANIMUTE_LENGTH)*60;
-				$f = fopen($this->BANFILE, 'w');
+				$f = fopen($this->GLOBAL_BANS, 'a');
 				if ($ip) {
 					$reason = $this->JANIMUTE_REASON;
 					fwrite($f, "$ip,$starttime,$expires,$reason\r\n");
