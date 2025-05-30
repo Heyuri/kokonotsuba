@@ -259,6 +259,7 @@ class postRenderer {
 		$tw = $post['tw'] ?? 0;
 		$th = $post['th'] ?? 0;
 		$imgsize = $post['imgsize'] ?? '';
+		$status = new FlagHelper($post['status']);
 	
 		// Mailto formatting
 		if ($this->config['CLEAR_SAGE']) {
@@ -275,14 +276,15 @@ class postRenderer {
 			$imageURL = $this->FileIO->getImageURL($tim . $ext, $this->board);
 			$thumbName = $this->FileIO->resolveThumbName($tim, $this->board);
 	
-			if ($tw && $th && $thumbName) {
+			if($status->value('fileDeleted')) {
+				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$this->config['STATIC_URL'].'image/nothumb.gif" class="postimg" alt="'.$imgsize.'"></a>';
+			} elseif ($tw && $th && $thumbName) {
 				$thumbURL = $this->FileIO->getImageURL($thumbName, $this->board);
 				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$thumbURL.'" width="'.$tw.'" height="'.$th.'" class="postimg" alt="'.$imgsize.'" title="Click to show full image"></a>';
 			} elseif ($ext === ".swf") {
 				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$this->config['SWF_THUMB'].'" class="postimg" alt="SWF Embed"></a>';
-			} else {
-				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$this->config['STATIC_URL'].'image/nothumb.gif" class="postimg" alt="'.$imgsize.'"></a>';
 			}
+			
 		}
 	
 		// Return everything needed
