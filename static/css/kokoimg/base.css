@@ -2088,6 +2088,11 @@ a.linkjs {
   opacity: 1;
 }
 
+#filterdie {
+  display: block;
+  font-size: var(--font-size-small);
+}
+
 /************************ Quick reply  ********************************/
 
 #qrinputs {

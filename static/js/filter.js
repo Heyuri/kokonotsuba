@@ -140,7 +140,12 @@ class kkFilter {
 				kkfilter.die = 'Invalid Regex in <q>'+that.name+'</q> on line '+i;
 				return; // continue
 			}
-			var r = new RegExp(m[1], m[2]);
+			try {
+				var r = new RegExp(m[1], m[2]);
+			} catch (e) {
+				kkfilter.die = 'Invalid Regex in <q>' + that.name + '</q> on line ' + i + ':<div>' + e.message + '</div>';
+				return; // continue
+			}
 			for (var post of kkjs.posts) {
 				if (that.func(post, r)) {
 					if (post.classList.contains("op")) {
