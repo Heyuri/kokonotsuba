@@ -173,3 +173,32 @@ function disableButtonActionsDuringDrag(button, action, threshold = 20) {
 		isDragging = false;
 	};
 }
+
+// fix filenames with apostrophes in inline onclick
+window.addEventListener("DOMContentLoaded", () => {
+	// Find every <a class="flashboardEmbedText" onclick="openFlashEmbedWindow('…','…',w,h)">
+	const embedLinks = document.querySelectorAll(".flashboardEmbedText");
+	embedLinks.forEach((el) => {
+		const rawOnclick = el.getAttribute("onclick");
+		if (!rawOnclick) return;
+
+		// Try to match: openFlashEmbedWindow('FILE_URL', 'NAME_WITH_&#039;', WIDTH, HEIGHT)
+		// We use a non-greedy capture for both quoted strings.
+		const re = /openFlashEmbedWindow\(\s*'(.+?)'\s*,\s*'(.+?)'\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/;
+		const match = rawOnclick.match(re);
+		if (!match) return;
+
+		let [_, fileUrl, rawName, w, h] = match;
+		// Decode any HTML‐escaped apostrophes (&#039;) into actual apostrophes
+		const decodedName = rawName.replace(/&#039;/g, "'");
+
+		// Remove the broken inline onclick
+		el.removeAttribute("onclick");
+
+		// Add a proper click handler that calls openFlashEmbedWindow(...) with the correct arguments
+		el.addEventListener("click", (evt) => {
+			evt.preventDefault();
+			openFlashEmbedWindow(fileUrl, decodedName, parseInt(w, 10), parseInt(h, 10));
+		});
+	});
+});
