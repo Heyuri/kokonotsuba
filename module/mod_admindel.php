@@ -61,19 +61,20 @@ class mod_admindel extends moduleHelper {
 				$files = $PIO->removePosts(array($post['post_uid']));
 				$ActionLogger->logAction('Deleted post No.'.$post['no'], $boardUID);
 				break;
-			case 'delmute':
+		case 'delmute':
 				$this->moduleEngine->useModuleMethods('PostOnDeletion', array($post['post_uid'], 'backend'));
 				$files = $PIO->removePosts(array($post['post_uid']));
 				$ip = $post['host'];
 				$starttime = $_SERVER['REQUEST_TIME'];
-				$expires = $starttime+intval($this->JANIMUTE_LENGTH)*60;
-				$f = fopen($this->GLOBAL_BANS, 'a');
+				$expires = $starttime + intval($this->JANIMUTE_LENGTH) * 60;
+				$reason = $this->JANIMUTE_REASON;
+
 				if ($ip) {
-					$reason = $this->JANIMUTE_REASON;
-					fwrite($f, "$ip,$starttime,$expires,$reason\r\n");
+					$this->appendGlobalBan($ip, $starttime, $expires, $reason);
 				}
-				fclose($f);
+
 				$ActionLogger->logAction('Muted '.$ip.' and deleted post No.'.$post['no'], $boardUID);
+
 				break;
 			case 'imgdel':
 				$files = $PIO->removeAttachments(array($post['post_uid']));
@@ -123,4 +124,21 @@ class mod_admindel extends moduleHelper {
 		}
 
 	}
+
+	private function appendGlobalBan($ip, $starttime, $expires, $reason) {
+		$needsNewline = file_exists($this->GLOBAL_BANS) && filesize($this->GLOBAL_BANS) > 0;
+
+		$f = fopen($this->GLOBAL_BANS, 'a');
+		if (!$f) {
+			return;
+		}
+
+		if ($needsNewline) {
+			fwrite($f, "\n");
+		}
+
+		fwrite($f, "$ip,$starttime,$expires,$reason");
+		fclose($f);
+	}
+
 }
