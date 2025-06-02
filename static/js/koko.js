@@ -269,11 +269,6 @@ const kkjs = {
 		// Load stored name, email, and password
     kkjs.l();
 
-    // Always Noko setting
-    if (!localStorage.getItem("alwaysnoko")) {
-        localStorage.setItem("alwaysnoko", "true");
-    }
-
 		// Initialize email behavior and file upload reset
     kkjs.ee();
     kkjs.fup();
@@ -404,13 +399,6 @@ const kkjs = {
 			'<label class="nokosagedump" title="Stay in thread after replying, jump to your reply"><input type="checkbox" class="nokosagedump" onclick="kkjs.ee2(this.id,this.checked);" id="noko">noko</label>'+
 			'<label class="nokosagedump" title="Stay in thread after replying, remain at top of page"><input type="checkbox" class="nokosagedump" onclick="kkjs.ee2(this.id,this.checked);" id="dump">dump</label>'+
 		'</div>');
-
-		// If 'alwaysnoko' is set to true in localStorage, and email field is empty, add 'noko' to email value
-		if (localStorage.getItem("alwaysnoko")=="true") {
-			if (email.value == "") // Only add if blank
-			email.value+= 'noko';
-			$id('noko').checked = true;
-		}
 	
 		// Check if 'sage' or 'noko' are already in the email value, and check the corresponding checkboxes
 		if (email.value.includes("sage")) {
@@ -446,6 +434,7 @@ const kkjs = {
 	},
 	
 	ee3: function (event) {
+	
 		$id("dump").checked = this.value.match("dump");
 		$id("noko").checked = this.value.match("noko");
 		if ($id("dump").checked) {
@@ -577,7 +566,6 @@ const kkjs = {
 				<label><input type="checkbox" onchange="localStorage.setItem('neomenu',this.checked);document.body.classList.toggle('neomenuEnabled', this.checked);kkjs.toggleNeomenu(this.checked);" ${(localStorage.getItem("neomenu") === "true" ? 'checked="checked"' : '')}>Use neomenu</label>
 				<label><input type="checkbox" onchange="localStorage.setItem('persistnav',this.checked);document.body.classList.toggle('persistnav', this.checked);" ${(localStorage.getItem("persistnav") === "true" ? 'checked="checked"' : '')}>Persistent navigation</label>
 				<label><input type="checkbox" onchange="localStorage.setItem('persistpager',this.checked);document.body.classList.toggle('persistpager', this.checked);" ${(localStorage.getItem("persistpager") === "true" ? 'checked="checked"' : '')}>Persistent pager</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('alwaysnoko',this.checked);document.body.classList.toggle('alwaysnoko', this.checked);" ${(localStorage.getItem("alwaysnoko") === "true" ? 'checked="checked"' : '')}>Always noko</label>
 				<label><input type="checkbox" onchange="localStorage.setItem('centerthreads',this.checked);document.body.classList.toggle('centerthreads', this.checked);" ${(localStorage.getItem("centerthreads") === "true" ? 'checked="checked"' : '')}>Center threads</label>
 				<label><input type="checkbox" onchange="localStorage.setItem('tripkeys', this.checked);" ${(localStorage.getItem("tripkeys") === "true" ? 'checked="checked"' : '')}>Futallaby style tripkeys</label>
 			`;
