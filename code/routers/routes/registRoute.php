@@ -98,6 +98,9 @@ class registRoute {
 		// Generate redirect URL and sanitize
 		$redirect = $this->generateRedirectURL($computedPostInfo['no'], $postData['email'], $postData['resno'], $computedPostInfo['timeInMilliseconds']);
 
+		// Remove noko/nonoko and dump
+		$emailForInsertion = $this->preparePostEmail($postData['email']);
+
 		// Commit pre-write hook
 		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', [
 			&$postData['name'], &$postData['email'], &$postData['sub'], &$postData['comment'],
@@ -112,7 +115,7 @@ class registRoute {
 			$postData['category'], $fileMeta['fileTimeInMilliseconds'], $fileMeta['fileName'], $fileMeta['ext'],
 			$fileMeta['imgW'], $fileMeta['imgH'], $fileMeta['readableSize'], $fileMeta['thumbWidth'], $fileMeta['thumbHeight'],
 			$computedPostInfo['pass'], $computedPostInfo['now'],
-			$postData['name'], $postData['tripcode'], $postData['secure_tripcode'], $postData['capcode'], $postData['email'], $postData['sub'], $postData['comment'],
+			$postData['name'], $postData['tripcode'], $postData['secure_tripcode'], $postData['capcode'], $emailForInsertion, $postData['sub'], $postData['comment'],
 			$postData['ip'], $postData['age'], $postData['status']
 		);
 	
@@ -272,7 +275,7 @@ class registRoute {
 	}
 
 	// generate url for redirect after post
-	private function generateRedirectURL(int $no, string &$email, int $threadResno, int $timeInMilliseconds): string {
+	private function generateRedirectURL(int $no, string $email, int $threadResno, int $timeInMilliseconds): string {
 		// get the board static index
 		$redirect = $this->config['PHP_SELF2'] . '?' . $timeInMilliseconds;
 		
@@ -294,16 +297,20 @@ class registRoute {
 			$redirect = $this->config['PHP_SELF2'];
 		}
 
-		// remove "noko" from the post email since most posts will contain it
-		$email = preg_replace('/^(no)+ko\d*$/i', '', $email);
-
-		// remove "dump" from the email field
-		$email = preg_replace('/dump/i', '', $email);
-
 		// return processed redirect
 		return $redirect;
 	}
 
+	// remove options from email
+	private function preparePostEmail(string $email): string {
+		// remove "noko" from the post email since most posts will contain it
+		$email = preg_replace('/^(no)+ko\d*$/i', '', $email);
+
+		// remove "dump" from the email field
+		$email = preg_replace('/(?<!\S)dump(?!\S)/i', '', $email);
+
+		return $email;
+	}
 
 	// prepare post meta data
 	private function preparePostMetadata(array &$postData, postDateFormatter $postDateFormatter, postIdGenerator $postIdGenerator, file $file): array {
