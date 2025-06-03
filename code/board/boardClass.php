@@ -220,30 +220,42 @@ class board implements IBoard {
 	}
 
 	public function getLastPostNoFromBoard(): int {
-		$query = "SELECT COUNT(post_number) FROM {$this->postNumberTable} WHERE board_uid = :board_uid";
+		$query = "SELECT post_number FROM {$this->postNumberTable} WHERE board_uid = :board_uid";
 		$params = [':board_uid' => $this->getBoardUID()];
 
 		return (int) $this->databaseConnection->fetchColumn($query, $params);
 	}
 
+
 	public function incrementBoardPostNumber(): void {
-		$query = "INSERT INTO {$this->postNumberTable} (board_uid) VALUES(:board_uid)";
+		$query = "
+			INSERT INTO {$this->postNumberTable} (board_uid, post_number)
+			VALUES (:board_uid, 1)
+			ON DUPLICATE KEY UPDATE post_number = post_number + 1
+		";
 		$params = [':board_uid' => $this->getBoardUID()];
 
 		$this->databaseConnection->execute($query, $params);
 	}
+
 
 	public function incrementBoardPostNumberMultiple(int $count): void {
 		if ($count <= 0) {
 			return;
 		}
-	
-		// Use a single placeholder multiple times
-		$placeholders = array_fill(0, $count, '(:board_uid)');
-		$query = "INSERT INTO {$this->postNumberTable} (board_uid) VALUES " . implode(',', $placeholders);
-		$params = [':board_uid' => $this->getBoardUID()];
-	
+
+		$query = "
+			INSERT INTO {$this->postNumberTable} (board_uid, post_number)
+			VALUES (:board_uid, :count)
+			ON DUPLICATE KEY UPDATE post_number = post_number + VALUES(post_number)
+		";
+		$params = [
+			':board_uid' => $this->getBoardUID(),
+			':count' => $count
+		];
+
 		$this->databaseConnection->execute($query, $params);
 	}
+
 
 }
