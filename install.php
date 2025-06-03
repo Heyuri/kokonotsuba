@@ -396,11 +396,10 @@ class tableCreator {
 			) ENGINE=InnoDB;",
 
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_NUMBER_TABLE']} (
-				`post_number` INT NOT NULL AUTO_INCREMENT,
 				`board_uid` INT NOT NULL,
-				PRIMARY KEY(`post_number`),
-				CONSTRAINT fk_post_count_board_uid FOREIGN KEY (`board_uid`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
-				INDEX(board_uid)
+				`post_number` INT NOT NULL DEFAULT 0,
+				PRIMARY KEY (`board_uid`),
+				CONSTRAINT fk_post_count_board_uid FOREIGN KEY (`board_uid`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
 			) ENGINE=InnoDB;",
 	
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['QUOTE_LINK_TABLE']} (
