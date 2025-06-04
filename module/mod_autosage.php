@@ -44,6 +44,7 @@ class mod_autosage extends moduleHelper {
 
 	public function ModulePage() {
 		$PIO = PIOPDO::getInstance();
+		$boardIO = boardIO::getInstance();
 		$threadSingleton = threadSingleton::getInstance();
 		$actionLogger = ActionLogger::getInstance();
 		$globalHTML = new globalHTML($this->board);
@@ -53,15 +54,18 @@ class mod_autosage extends moduleHelper {
 		
 		$post = $threadSingleton->fetchPostsFromThread(strval($_GET['thread_uid']))[0];
 		if (!$post['is_op']) $globalHTML->error('ERROR: Cannot autosage reply.');
+
+		$board = $boardIO->getBoardByUID($post['boardUID']);
+
 		if (!$post) $globalHTML->error('ERROR: Post does not exist.');
 		$flgh = $PIO->getPostStatus($post['post_uid']);
 		$flgh->toggle('as');
 		$PIO->setPostStatus($post['post_uid'], $flgh->toString());
 		
 		$logMessage = $flgh->value('as') ? "Autosaged No. {$post['no']}" : "Took off autosage on No. {$post['no']}";
-		$actionLogger->logAction($logMessage, $this->board->getBoardUID());
+		$actionLogger->logAction($logMessage, $board->getBoardUID());
 		
-		$this->board->rebuildBoard();	
+		$board->rebuildBoard();	
 		redirect('back', 1);
 	}
 }
