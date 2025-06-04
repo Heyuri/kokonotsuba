@@ -132,20 +132,32 @@ class mod_adminban extends moduleHelper {
 		return $bans;
 	}
 
-	private function handleBan(&$log, $ip, $banFile) {
+	private function handleBan(&$log, $ip, $banFile, $isGlobalBan = false) {
 		$htmlOutput = '';
+		
+		// Loop through each ban entry in the log
 		foreach ($log as $i => $entry) {
-			list($banip, $starttime, $expires, $reason) = explode(',', $entry, 4);
-			if (strpos($ip, gethostbyname($banip)) !== false) {
+			// Each entry is expected to be in the format: ip,starttime,expires,reason
+			[$banip, $starttime, $expires, $reason] = explode(',', $entry, 4);
+
+			// For global bans, match by prefix (e.g. "127.0.0.")
+			// For regular bans, match the full IP exactly
+			$match = $isGlobalBan ? (strpos($ip, $banip) === 0) : ($ip === $banip);
+			
+			if ($match) {
+				// If IP matches, show ban page
 				$htmlOutput .= $this->drawBanPage($starttime, $expires, $reason, $this->BANIMG);
+				
+				// If the ban has expired, remove it from the log and save
 				if ($_SERVER['REQUEST_TIME'] > intval($expires)) {
 					unset($log[$i]);
 					file_put_contents($banFile, implode(PHP_EOL, $log));
 				}
+				
+				// Stop further execution and show the ban page
 				die($htmlOutput);
 			}
 		}
-		
 	}
 
 	private function handleBanAddition() {
