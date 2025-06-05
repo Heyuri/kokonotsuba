@@ -199,14 +199,16 @@ class mod_adminban extends moduleHelper {
 		// Initial action string (basic information about the ban)
 		$actionString = "Banned $newIp for $duration";
 
-		if($duration == '0') {
-			$actionString = "Warned $newIp ";
-		}
-
 		// If it's a global ban, update the action string
 		if ($isGlobal) {
 			$actionString = "Banned $newIp from all boards for $duration";
 		}
+
+		// Log it as a warn if the duration string is zero
+		if($duration == '0') {
+			$actionString = "Warned $newIp ";
+		}
+
 
 		// If the ban is related to a specific post, add post info to the action string
 		if ($postUid) {
