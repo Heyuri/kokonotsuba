@@ -356,7 +356,12 @@ class postRenderer {
 		// Image info dimensions
 		$imgwh_bar = ($this->config['SHOW_IMGWH'] && ($imgw || $imgh)) ? ', ' . $imgw . 'x' . $imgh : '';
 
-		return _T('img_filename') . '<a href="' . $imageURL . '" target="_blank" rel="nofollow" onmouseover="this.textContent=\'' . $fnameJS . '\';" onmouseout="this.textContent=\'' . $truncatedJS . '\'"> ' . $truncated . '</a> <a href="' . $imageURL . '" title="' . $fname . '" download="' . $fname . '"><div class="download"></div></a> <span class="fileProperties">(' . $imgsize . $imgwh_bar . ')</span>';
+		return _T('img_filename') . 
+			'<a href="' . htmlspecialchars($imageURL) . '" target="_blank" rel="nofollow" onmouseover="this.textContent=\'' . htmlspecialchars($fnameJS) . '\';" onmouseout="this.textContent=\'' . htmlspecialchars($truncatedJS) . '\'">' . 
+   			htmlspecialchars($truncated) . 
+			'</a> <a href="' . htmlspecialchars($imageURL) . '" title="' . htmlspecialchars($fname) . '" download="' . htmlspecialchars($fname) . '">
+			<div class="download"></div></a> 
+			<span class="fileProperties">(' . htmlspecialchars($imgsize) . htmlspecialchars($imgwh_bar) . ')</span>';
 	}
 
 
