@@ -64,7 +64,7 @@ class managePostsRoute {
 
 		$page = ($page >= 0) ? $page : 1;
 
-		$onlyimgdel = $_POST['onlyimgdel'] ? true : false ; // Only delete the image
+		$onlyimgdel = !empty($_POST['onlyimgdel']); // Only delete the image
 		$modFunc = '';
 		$host = $_GET['host'] ?? 0;
 		$posts = array(); //posts to display in the manage posts table
