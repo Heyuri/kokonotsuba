@@ -64,20 +64,16 @@ class managePostsRoute {
 
 		$page = ($page >= 0) ? $page : 1;
 
-		$onlyimgdel = $_POST['onlyimgdel']??''; // Only delete the image
+		$onlyimgdel = $_POST['onlyimgdel'] ? true : false ; // Only delete the image
 		$modFunc = '';
-		$delno = array();
 		$host = $_GET['host'] ?? 0;
 		$posts = array(); //posts to display in the manage posts table
 		
 		// Delete the article(thread) block
-		$delno = array_merge($delno, $_POST['clist']??array());
-		if($delno) {
-			$delnoActionLogStr = is_array($delno) ? implode(', No. ',$delno) : $delno;
-			$this->actionLogger->logAction("Delete post posts: $delnoActionLogStr".($onlyimgdel?' (file only)':''), $this->board->getBoardUID());
+		$postUidsFromCheckbox = $_POST['clist'] ?? array();
+		if($postUidsFromCheckbox) {
+			$this->deletePostsFromCheckboxes($postUidsFromCheckbox, $onlyimgdel);
 		}
-		if($onlyimgdel != 'on') $this->moduleEngine->useModuleMethods('PostOnDeletion', array($delno, 'backend')); // "PostOnDeletion" Hook Point
-
 
 		$posts = $this->PIO->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest) ?? array();
 		$posts_count = count($posts); // Number of cycles
@@ -85,9 +81,8 @@ class managePostsRoute {
 		
 		$this->globalHTML->drawManagePostsFilterForm($managePostsHtml, $this->board, $filtersFromRequest);
 		
-		$managePostsHtml .= '<form id="managePostsForm" action="'.$this->config['PHP_SELF'].'" method="POST">';
+		$managePostsHtml .= '<form id="managePostsForm" action="' . $cleanUrl . '" method="POST">';
 		$managePostsHtml .= '<input type="hidden" name="mode" value="admin">
-						<input type="hidden" name="admin" value="del">
 						<div id="tableManagePostsContainer">
 							<table id="tableManagePosts" class="postlists">
 								<thead>
@@ -220,5 +215,23 @@ class managePostsRoute {
 			'date_after' => '',
 			'host' => ''
 		];
+	}
+
+	private function deletePostsFromCheckboxes(array $postUids, bool $onlyDeleteImages): void {
+		$postsData = $this->PIO->fetchPosts($postUids);
+		$postNumbers = array_column($postsData, 'no');
+
+		$checkboxDeletionActionLogStr = is_array($postNumbers) ? implode(', No. ',$postNumbers) : $postNumbers;
+		$this->actionLogger->logAction("Delete posts: $checkboxDeletionActionLogStr".($onlyDeleteImages?' (file only)':''), $this->board->getBoardUID());
+
+		if($onlyDeleteImages) {
+			$files = $this->PIO->removeAttachments($postUids);
+
+			if ($files) {
+				$this->FileIO->deleteImage($files, $this->board);
+			}
+		} else {
+			$this->PIO->removePosts($postUids);
+		}
 	}
 }
