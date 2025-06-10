@@ -28,10 +28,10 @@ function applyArrayFilter(array $filters, string $key): array {
  */
 function applyRegexIPFilter(string $ip): ?string {
 	// Validate the format of the IP address (digits, periods, asterisks, or colons)
-	if (!preg_match('/^[\d\.\*\:]+$/', $ip)) {
+	if (!preg_match('/^[\d\.\*\:a-fA-F]+$/', $ip)) {
 		return null;
 	}
-
+	
 	// Escape for regex, so dots, asterisks, etc. are not treated as regex
 	$pattern = preg_quote($ip, '/');
 
