@@ -322,12 +322,13 @@ const kkimg = { name: "KK Image Features",
 		var p   = $id("p"+no),
 			exp = p.getElementsByClassName("expand")[0];
 		if (!exp) return;
+		var scroll = p.getBoundingClientRect().top < 0;
 		var rp = exp.querySelector(".ruffleContainer>*");
 		if (rp && rp._resizeObserver) rp._resizeObserver.disconnect();
 		exp.remove();
 		var a = p.getElementsByClassName("postimg")[0].parentNode;
 		a.style.display = "";
-		if (p.getBoundingClientRect().top < 0) p.scrollIntoView();
+		if (scroll) p.scrollIntoView();
 	},
 	error: function (no) {
 		var p   = $id("p"+no),
