@@ -10,13 +10,13 @@
  * @return array The filtered array, containing only numeric keys and values.
  */
 function applyArrayFilter(array $filters, string $key): array {
-    // Check if the key exists and if the value at the key is an array
-    if (!isset($filters[$key]) || !is_array($filters[$key])) {
-        return [];  // Return an empty array if the key is not set or the value is not an array
-    }
-    
-    // Filter the array, keeping only numeric keys and numeric values
-    return array_values(array_filter($filters[$key], fn($v, $k) => is_numeric($k) && is_numeric($v), ARRAY_FILTER_USE_BOTH));
+	// Check if the key exists and if the value at the key is an array
+	if (!isset($filters[$key]) || !is_array($filters[$key])) {
+		return [];  // Return an empty array if the key is not set or the value is not an array
+	}
+	
+	// Filter the array, keeping only numeric keys and numeric values
+	return array_values(array_filter($filters[$key], fn($v, $k) => is_numeric($k) && is_numeric($v), ARRAY_FILTER_USE_BOTH));
 }
 
 /**
@@ -27,16 +27,18 @@ function applyArrayFilter(array $filters, string $key): array {
  * @return string|null A regex pattern string if valid, null if the IP is invalid.
  */
 function applyRegexIPFilter(string $ip): ?string {
-    // Validate the format of the IP address (must only contain digits, periods, or asterisks)
-    if (!preg_match('/^[\d\.\*]+$/', $ip)) {
-        return null;  // Return null if the IP address is invalid
-    }
+	// Validate the format of the IP address (digits, periods, asterisks, or colons)
+	if (!preg_match('/^[\d\.\*\:]+$/', $ip)) {
+		return null;
+	}
 
-    // Escape the IP address to be safely used in a regex pattern
-    $pattern = preg_quote($ip, '/');
-    
-    // Replace '*' with '.*' for wildcard matching
-    return "^" . str_replace('\*', '.*', $pattern) . "$";
+	// Escape for regex, so dots, asterisks, etc. are not treated as regex
+	$pattern = preg_quote($ip, '/');
+
+	// Replace the escaped asterisk (\*) with .*
+	$ipPattern = "^" . str_replace('\*', '.*', $pattern) . "$";
+
+	return $ipPattern;
 }
 
 /**
@@ -74,7 +76,7 @@ function bindPostFilterParameters(array &$params, string &$query, array $filters
 	}
 
 	// Apply the 'ip_address' filter using a regex pattern
-    if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
+	if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
 		$regex = applyRegexIPFilter($filters['ip_address']);
 		if ($regex !== null) {
 			$query .= " AND host REGEXP :ip_regex";
@@ -139,99 +141,99 @@ function bindThreadFilterParameters(array &$params, string &$query, array $filte
  * @param array $filters The filters array containing user input for filtering action logs.
  */
 function bindActionLogFiltersParameters(array &$params, string &$query, array $filters): void {
-    // Apply the 'board' filter and bind parameters
-    $boards = applyArrayFilter($filters, 'board');
-    if (!empty($boards)) {
-        $query .= " AND (";
-        foreach ($boards as $index => $board) {
-            $query .= ($index > 0 ? " OR " : "") . "board_uid = :board_$index";
-            $params[":board_$index"] = (int)$board;  // Bind the board UID as an integer
-        }
-        $query .= ")";
-    }
+	// Apply the 'board' filter and bind parameters
+	$boards = applyArrayFilter($filters, 'board');
+	if (!empty($boards)) {
+		$query .= " AND (";
+		foreach ($boards as $index => $board) {
+			$query .= ($index > 0 ? " OR " : "") . "board_uid = :board_$index";
+			$params[":board_$index"] = (int)$board;  // Bind the board UID as an integer
+		}
+		$query .= ")";
+	}
 
-    // Apply filters for action log ID and other parameters
-    if (!empty($filters['id'])) {
-        $query .= " AND id = :id";
-        $params[':id'] = (int)$filters['id'];  // Bind the action log ID
-    }
+	// Apply filters for action log ID and other parameters
+	if (!empty($filters['id'])) {
+		$query .= " AND id = :id";
+		$params[':id'] = (int)$filters['id'];  // Bind the action log ID
+	}
 
-    // Apply filter for the time the action was added
-    if (!empty($filters['time_added'])) {
-        $query .= " AND time_added = :time_added";
-        $params[':time_added'] = $filters['time_added'];  // Bind the time added
-    }
+	// Apply filter for the time the action was added
+	if (!empty($filters['time_added'])) {
+		$query .= " AND time_added = :time_added";
+		$params[':time_added'] = $filters['time_added'];  // Bind the time added
+	}
 
-    // Apply filter for the log name
-    if (!empty($filters['log_name'])) {
-        $query .= " AND name = :log_name";
-        $params[':log_name'] = strval($filters['log_name']);  // Bind the log name as a string
-    }
+	// Apply filter for the log name
+	if (!empty($filters['log_name'])) {
+		$query .= " AND name = :log_name";
+		$params[':log_name'] = strval($filters['log_name']);  // Bind the log name as a string
+	}
 
-    // Apply filters for 'role' and bind them as OR conditions
-    if (!empty($filters['role']) && is_array($filters['role'])) {
-        $query .= " AND (";
-        foreach ($filters['role'] as $index => $role) {
-            $query .= ($index > 0 ? " OR " : "") . "role = :role_$index";
-            $params[":role_$index"] = (int)$role;  // Bind the role ID as an integer
-        }
-        $query .= ")";
-    }
+	// Apply filters for 'role' and bind them as OR conditions
+	if (!empty($filters['role']) && is_array($filters['role'])) {
+		$query .= " AND (";
+		foreach ($filters['role'] as $index => $role) {
+			$query .= ($index > 0 ? " OR " : "") . "role = :role_$index";
+			$params[":role_$index"] = (int)$role;  // Bind the role ID as an integer
+		}
+		$query .= ")";
+	}
 
-    // Apply filter for the log action and bind it as a LIKE clause
-    if (!empty($filters['log_action'])) {
-        $query .= " AND log_action LIKE :log_action";
-        $params[':log_action'] = '%' . $filters['log_action'] . '%';  // Bind the action log
-    }
+	// Apply filter for the log action and bind it as a LIKE clause
+	if (!empty($filters['log_action'])) {
+		$query .= " AND log_action LIKE :log_action";
+		$params[':log_action'] = '%' . $filters['log_action'] . '%';  // Bind the action log
+	}
 
-    // Apply date range filters
-    if (!empty($filters['date_after']) || !empty($filters['date_before'])) {
-        $after = $filters['date_after'] ?? null;
-        $before = $filters['date_before'] ?? null;
+	// Apply date range filters
+	if (!empty($filters['date_after']) || !empty($filters['date_before'])) {
+		$after = $filters['date_after'] ?? null;
+		$before = $filters['date_before'] ?? null;
 
-        if ($after && $before) {
-            $minDate = min($after, $before);
-            $maxDate = max($after, $before);
-            $query .= " AND date_added BETWEEN :date_before AND :date_after";
-            $params[':date_before'] = $minDate;  // Bind the 'before' date
-            $params[':date_after'] = $maxDate;  // Bind the 'after' date
-        } elseif ($after) {
-            $query .= " AND date_added >= :date_after";
-            $params[':date_after'] = $after;  // Bind the 'after' date
-        } elseif ($before) {
-            $query .= " AND date_added <= :date_before";
-            $params[':date_before'] = $before;  // Bind the 'before' date
-        }
-    }
+		if ($after && $before) {
+			$minDate = min($after, $before);
+			$maxDate = max($after, $before);
+			$query .= " AND date_added BETWEEN :date_before AND :date_after";
+			$params[':date_before'] = $minDate;  // Bind the 'before' date
+			$params[':date_after'] = $maxDate;  // Bind the 'after' date
+		} elseif ($after) {
+			$query .= " AND date_added >= :date_after";
+			$params[':date_after'] = $after;  // Bind the 'after' date
+		} elseif ($before) {
+			$query .= " AND date_added <= :date_before";
+			$params[':date_before'] = $before;  // Bind the 'before' date
+		}
+	}
 
-    // Apply filter for the IP address using regex
-    if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
-        $regex = applyRegexIPFilter($filters['ip_address']);
-        if ($regex !== null) {
-            $query .= " AND ip_address REGEXP :ip_regex";
-            $params[':ip_regex'] = $regex;  // Bind the regex for IP address
-        }
-    }
+	// Apply filter for the IP address using regex
+	if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
+		$regex = applyRegexIPFilter($filters['ip_address']);
+		if ($regex !== null) {
+			$query .= " AND ip_address REGEXP :ip_regex";
+			$params[':ip_regex'] = $regex;  // Bind the regex for IP address
+		}
+	}
 
-    $actionConditions = [];
-    
-    if (!empty($filters['deleted'])) {
-        $actionConditions[] = "log_action LIKE :delete";
-        $params[':delete'] = '%delete%';
-    }
+	$actionConditions = [];
+	
+	if (!empty($filters['deleted'])) {
+		$actionConditions[] = "log_action LIKE :delete";
+		$params[':delete'] = '%delete%';
+	}
 
-    if (!empty($filters['ban'])) {
-        $actionConditions[] = "log_action LIKE :ban";
-        $actionConditions[] = "log_action LIKE :mute";
-        $actionConditions[] = "log_action LIKE :warn";
-        $params[':ban'] = '%ban%';
-        $params[':mute'] = '%mute%';
-        $params[':warn'] = '%warn%';
-    }
+	if (!empty($filters['ban'])) {
+		$actionConditions[] = "log_action LIKE :ban";
+		$actionConditions[] = "log_action LIKE :mute";
+		$actionConditions[] = "log_action LIKE :warn";
+		$params[':ban'] = '%ban%';
+		$params[':mute'] = '%mute%';
+		$params[':warn'] = '%warn%';
+	}
 
-    if (!empty($actionConditions)) {
-        $query .= " AND (" . implode(" OR ", $actionConditions) . ")";
-    }
+	if (!empty($actionConditions)) {
+		$query .= " AND (" . implode(" OR ", $actionConditions) . ")";
+	}
 
 }
 
@@ -280,13 +282,13 @@ function bindBoardUIDFilter(array &$params, string &$query, array $boardUIDs, st
  * @return array An array containing the filters taken from the request or default values.
  */
 function buildFiltersFromRequest(array $defaultFilters): array {
-    $filtersArray = [];
+	$filtersArray = [];
 
-    foreach($defaultFilters as $key=>$filter) {
-        $filtersArray[$key] = $_GET[$key] ?? $filter;
-    }
-    
-    return $filtersArray;
+	foreach($defaultFilters as $key=>$filter) {
+		$filtersArray[$key] = $_GET[$key] ?? $filter;
+	}
+	
+	return $filtersArray;
 }
 
 /**
@@ -296,17 +298,17 @@ function buildFiltersFromRequest(array $defaultFilters): array {
  * @return array The processed filters with 'role' and 'board' as arrays.
  */
 function processRoleAndBoardFilters(array $filtersFromRequest): array {
-    // Ensure that 'role' is an array if it's provided as a space-separated string
-    if (array_key_exists('role', $filtersFromRequest) && is_string($filtersFromRequest['role'])) {
-        $filtersFromRequest['role'] = explode(' ', $filtersFromRequest['role']);
-    }
+	// Ensure that 'role' is an array if it's provided as a space-separated string
+	if (array_key_exists('role', $filtersFromRequest) && is_string($filtersFromRequest['role'])) {
+		$filtersFromRequest['role'] = explode(' ', $filtersFromRequest['role']);
+	}
 
-    // Ensure that 'board' is an array if it's provided as a space-separated string
-    if (array_key_exists('board', $filtersFromRequest) && is_string($filtersFromRequest['board'])) {
-        $filtersFromRequest['board'] = explode(' ', $filtersFromRequest['board']);
-    }
+	// Ensure that 'board' is an array if it's provided as a space-separated string
+	if (array_key_exists('board', $filtersFromRequest) && is_string($filtersFromRequest['board'])) {
+		$filtersFromRequest['board'] = explode(' ', $filtersFromRequest['board']);
+	}
 
-    return $filtersFromRequest;
+	return $filtersFromRequest;
 }
 
 /**
@@ -318,15 +320,15 @@ function processRoleAndBoardFilters(array $filtersFromRequest): array {
  * @param string $actionLogUrl The base URL to which the cleaned URL will be appended.
  */
 function handleRedirection(array $filtersFromRequest, bool $isSubmission, array $defaultFilters, string $actionLogUrl): void {
-    // Check if the 'filterSubmissionFlag' is set in the request (for redirection)
-    if ($isSubmission) {
-        // Build the cleaned URL with the applied filters
-        $cleanedUrl = buildSmartQuery($actionLogUrl, $defaultFilters, $filtersFromRequest);
+	// Check if the 'filterSubmissionFlag' is set in the request (for redirection)
+	if ($isSubmission) {
+		// Build the cleaned URL with the applied filters
+		$cleanedUrl = buildSmartQuery($actionLogUrl, $defaultFilters, $filtersFromRequest);
 
-        // Redirect to the cleaned URL
-        redirect($cleanedUrl);
-        exit;
-    }
+		// Redirect to the cleaned URL
+		redirect($cleanedUrl);
+		exit;
+	}
 }
 
 /**
@@ -337,14 +339,14 @@ function handleRedirection(array $filtersFromRequest, bool $isSubmission, array 
  * @return array The filters array, processed and ready for use.
  */
 function getFiltersFromRequest(string $url, bool $isSubmission, array $defaultFilters): array {
-    // Build filters based on the GET request
-    $filtersFromRequest = buildFiltersFromRequest($defaultFilters);
+	// Build filters based on the GET request
+	$filtersFromRequest = buildFiltersFromRequest($defaultFilters);
 
-    // Process the 'role' and 'board' filters to ensure they are arrays
-    $filtersFromRequest = processRoleAndBoardFilters($filtersFromRequest);
+	// Process the 'role' and 'board' filters to ensure they are arrays
+	$filtersFromRequest = processRoleAndBoardFilters($filtersFromRequest);
 
-    // Handle redirection if the flag is set
-    handleRedirection($filtersFromRequest, $isSubmission, $defaultFilters, $url);
+	// Handle redirection if the flag is set
+	handleRedirection($filtersFromRequest, $isSubmission, $defaultFilters, $url);
 
-    return $filtersFromRequest;
+	return $filtersFromRequest;
 }
