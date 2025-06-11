@@ -73,8 +73,9 @@ class managePostsRoute {
 		$postUidsFromCheckbox = $_POST['clist'] ?? array();
 		if($postUidsFromCheckbox) {
 			$this->deletePostsFromCheckboxes($postUidsFromCheckbox, $onlyimgdel);
+			$this->board->rebuildBoard();
 		}
-
+		
 		$posts = $this->PIO->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest) ?? array();
 		$posts_count = count($posts); // Number of cycles
 		
