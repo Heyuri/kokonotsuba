@@ -45,7 +45,10 @@ class registRoute {
     /* Write to post table */
 	public function registerPostToDatabase() {
 		$this->board->updateBoardPathCache(); // Upload board cached path
-	
+
+		// Get the thread list before insert
+		$threadList = $this->threadSingleton->getThreadListFromBoard($this->board);
+
 		// Initialize file directories
 		$thumbDir = $this->board->getBoardUploadedFilesDirectory() . $this->config['THUMB_DIR'];
 		$imgDir = $this->board->getBoardUploadedFilesDirectory() . $this->config['IMG_DIR'];
@@ -137,7 +140,7 @@ class registRoute {
 		$this->handlePostQuoteLink($computedPostInfo['no'], $postData['comment']);
 
 		// Rebuild board pages
-		$this->handlePageRebuilding($computedPostInfo, $postData);
+		$this->handlePageRebuilding($computedPostInfo, $postData, $threadList);
 
 		// Final redirect
 		redirect($redirect, 0);
@@ -366,15 +369,12 @@ class registRoute {
 	}
 
 	// Handle page rebuilding logic
-	private function handlePageRebuilding(array $computedPostInfo, array $postData): void {
-		$threads = $this->threadSingleton->getThreadListFromBoard($this->board);
-
+	private function handlePageRebuilding(array $computedPostInfo, array $postData, array $threadList): void {
 		// Rebuild pages from 0 to the one the thread is on
 		if($computedPostInfo['is_op']) {
 			$this->board->rebuildBoard();
 		} else {
-			$pageToRebuild = getPageOfThread($postData['thread_uid'], $threads, $this->config['PAGE_DEF']);
-			
+			$pageToRebuild = getPageOfThread($postData['thread_uid'], $threadList, $this->config['PAGE_DEF']);
 			// If saging, just rebuild that one page
 			if($postData['age'] === false) {
 				$this->board->rebuildBoardPage($pageToRebuild);
