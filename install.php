@@ -41,6 +41,11 @@ $extensions = [
 	'bcmath',
 ];
 
+$commands = [
+	'ffmpeg',
+	'exiftool'
+];
+
 function checkExtensions(array $extensions) {
 	$results = [];
 	foreach ($extensions as $extension) {
@@ -49,11 +54,19 @@ function checkExtensions(array $extensions) {
 	return $results;
 }
 
-function isFFmpegInstalled() {
+function checkCommands(array $commands) {
+	$results = [];
+	foreach ($commands as $command) {
+		$results[$command] = isCommandAvailable($command);
+	}
+	return $results;
+}
+
+function isCommandAvailable(string $command): bool {
 	$output = null;
-	$returnVar = null;
-	exec("ffmpeg -version", $output, $returnVar);
-	return $returnVar === 0;
+	$status = null;
+	exec("which " . escapeshellarg($command), $output, $status);
+	return $status === 0 && !empty($output);
 }
 
 function getGlobalConfig() {
@@ -176,22 +189,27 @@ class html {
 		echo '<div class="notice-text">
 			<h2>Notice!</h2>
 			<p>Kokonotsuba is a BBS software</p>
-			<p>Read the instructions, other documentation or open a Pull Request on the <a href="https://github.com/Heyuri/kokonotsuba">repo</a> if there are any problems</p>
+			<p>Read the instructions, other documentation or open an Issue on the <a href="https://github.com/Heyuri/kokonotsuba">repo</a> if there are any problems</p>
 			<p>For more info: <a href="https://kokonotsuba.github.io/">see here</a></p>
 		</div><hr size=1>';
 	}
 
 	public function drawRequiredExtentions() {
-		global $extensions; 
-		$results = checkExtensions($extensions);
+		global $extensions, $commands;
+		$extentionResults = checkExtensions($extensions);
+		$commandResults = checkCommands($commands);
 
 		echo '<h3>Required Extensions</h3>
 		<p>These are the extensions required for Kokonotsuba to work fully:</p>
 		<ul>';
-		foreach ($results as $extension => $isEnabled) {
+		foreach ($extentionResults as $extension => $isEnabled) {
 			echo "<li>$extension: " . ($isEnabled ? 'enabled' : 'not enabled') . '</li>';
 		}
-		echo '<li>ffmpeg: ' . (isFFmpegInstalled() ? 'enabled' : 'not enabled') . '</li></ul>';
+
+		foreach($commandResults as $command => $isInstalled) {
+			echo '<li>' . $command . ': ' . ($isInstalled ? 'enabled' : 'not enabled') . '</li>';
+		}
+		echo '</ul>';
 	}
 
 	public function drawImportantConfigValuesPreview() {
