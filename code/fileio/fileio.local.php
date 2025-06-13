@@ -79,10 +79,26 @@ class FileIOlocal extends AbstractFileIO {
 	}
 
 	public function resolveThumbName($thumbPattern, $board) {
+		// Load the board configuration settings
 		$config = $board->loadBoardConfig();
-		$find = glob($board->getBoardUploadedFilesDirectory().$config['THUMB_DIR'] . $thumbPattern . 's.*');
-		return ($find !== false && count($find) != 0) ? basename($find[0]) : false;
+
+		// Get the configured thumbnail file extension
+		$thumbnailExtention = $config['THUMB_SETTING']['Format'];
+
+		// Construct the full path to the thumbnail file
+		$thumbnailPath = $board->getBoardUploadedFilesDirectory().$config['THUMB_DIR'] . $thumbPattern . 's.' . $thumbnailExtention;
+		
+		// Return false if the thumbnail file does not exist at the constructed path
+		if(!file_exists($thumbnailPath)) {
+			return false;
+		}
+		
+		// Extract and return just the filename from the full path
+		$thumbnailName = basename($thumbnailPath);
+
+		return $thumbnailName;
 	}
+
 
 	
 }
