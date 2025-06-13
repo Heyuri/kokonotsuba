@@ -75,14 +75,12 @@ class postFileUploadController {
 	}
 
 	public function validateFile(): void {
-		$fileTemporaryName = $this->file->getTemporaryFileName();
 		$md5Hash = $this->file->getMd5Chksum();
 		$fileExtention = $this->file->getExtention();
 		$fileSize = $this->file->getFileSize();
 		$mimeType = $this->file->getMimeType();
 		$upfileStatus = $this->file->getFileStatus();
 
-		removeExifIfJpeg($fileTemporaryName);
 		$this->validateFileHash($md5Hash);
 		$this->validateFileSize($fileSize);
 		$this->validateFileExtentionAndMimeType($fileExtention, $mimeType);
