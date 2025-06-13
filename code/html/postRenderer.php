@@ -277,7 +277,7 @@ class postRenderer {
 			$thumbName = $this->FileIO->resolveThumbName($tim, $this->board);
 	
 			if($status->value('fileDeleted')) {
-				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$this->config['STATIC_URL'].'image/nothumb.gif" class="postimg" alt="'.$imgsize.'"></a>';
+				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$this->config['STATIC_URL'].'image/nofile.gif" class="postimg" alt="'.$imgsize.'"></a>';
 			} elseif ($tw && $th && $thumbName) {
 				$thumbURL = $this->FileIO->getImageURL($thumbName, $this->board);
 				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$thumbURL.'" width="'.$tw.'" height="'.$th.'" class="postimg" alt="'.$imgsize.'" title="Click to show full image"></a>';
