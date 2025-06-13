@@ -42,44 +42,83 @@ function getPostUidsFromThread(string $threadUid) {
 	return $postUids;
 }
 
-function getUserFileFromRequest() {
+function getUserFileFromRequest(): fileFromUpload {
 	// get file attributes
 	[$tempFilename, $fileName, $fileStatus] = loadUploadData();
 
 	$md5chksum = md5_file($tempFilename);
-	$extension = pathinfo($fileName, PATHINFO_EXTENSION);
-	$extension = strtolower(trim($extension)); // Normalize extension
-	$timeInMillisecond = intval($_SERVER['REQUEST_TIME_FLOAT'] * 1000);
+	$extension = normalizeExtension($fileName);
+	$timeInMillisecond = (int) ($_SERVER['REQUEST_TIME_FLOAT'] * 1000);
+
+	// remove exif if its a jpeg
+	if (isJpegExtension($extension) && isExiftoolAvailable()) {
+		removeGpsDataFromJpeg($tempFilename);
+	}
+
+	// get file name
+	$fileName = pathinfo($fileName, PATHINFO_FILENAME);
+
+	// get mime type
+	$mimeType = detectMimeType($tempFilename);
 
 	// get file size
 	$fileSize = filesize($tempFilename);
 
-	$fileName = pathinfo($fileName, PATHINFO_FILENAME);
-
-	// get mime type
-	$finfo = finfo_open(FILEINFO_MIME_TYPE);
-	$mimeType = finfo_file($finfo, $tempFilename);
-	finfo_close($finfo);
-
 	// get dimensions
+	[$imgW, $imgH] = getMediaDimensions($tempFilename, $mimeType, $extension);
+
+	$file = new file(
+		$extension,
+		$timeInMillisecond,
+		$tempFilename,
+		$fileName,
+		$fileSize,
+		$imgW,
+		$imgH,
+		$md5chksum,
+		$mimeType,
+		$fileStatus
+	);
+
+	return new fileFromUpload($file);
+}
+
+function normalizeExtension(string $fileName): string {
+	$extension = pathinfo($fileName, PATHINFO_EXTENSION);
+	return strtolower(trim($extension));
+}
+
+function isJpegExtension(string $extension): bool {
+	return $extension === 'jpeg' || $extension === 'jpg';
+}
+
+function detectMimeType(string $filePath): string {
+	$finfo = finfo_open(FILEINFO_MIME_TYPE);
+	$mimeType = finfo_file($finfo, $filePath);
+	finfo_close($finfo);
+	return $mimeType;
+}
+
+function getMediaDimensions(string $filePath, string $mimeType, string $extension): array {
 	$imgW = 0;
 	$imgH = 0;
 
 	if (isImage($mimeType)) {
-		[$imgW, $imgH] = getimagesize($tempFilename);
+		[$imgW, $imgH] = getimagesize($filePath);
 	} elseif (isVideo($mimeType)) {
-		[$imgW, $imgH] = getVideoDimensions($tempFilename); // You must implement this
+		[$imgW, $imgH] = getVideoDimensions($filePath); // You must implement this
 	} elseif (isSwf($mimeType, $extension)) {
-		[$imgW, $imgH] = getswfsize($tempFilename);
+		[$imgW, $imgH] = getswfsize($filePath);
 	}
 
-	$file = new file($extension, $timeInMillisecond, $tempFilename, $fileName, $fileSize, $imgW, $imgH, $md5chksum, $mimeType, $fileStatus);
-
-	$fileFromUpload = new fileFromUpload($file);
-
-	return $fileFromUpload;
+	return [$imgW, $imgH];
 }
 
+function isExiftoolAvailable(): bool {
+	// Check if 'exiftool' is available in the system path
+	exec("which exiftool", $output, $status);
+	return $status === 0 && !empty($output);
+}
 
 function createVideoThumbnail(string $videoPath, string $outputImagePath, string $format = 'mp4', string $timestamp = '00:00:01'): bool {
 	// Check if video file exists and is readable
