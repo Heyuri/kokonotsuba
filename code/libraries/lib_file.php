@@ -187,17 +187,36 @@ function rollbackCreatedPaths(array $paths): void {
 	}
 }
 
-function removeExifIfJpeg(string $filePath): void {
-	if (!function_exists('exif_read_data') || !function_exists('exif_imagetype')) return;
-
-	if (exif_imagetype($filePath) === IMAGETYPE_JPEG) {
-		$exif = @exif_read_data($filePath);
-		if ($exif !== false) {
-			$image = imagecreatefromjpeg($filePath);
-			imagejpeg($image, $filePath, 100);
-			imagedestroy($image);
-		}
+/**
+ * Removes GPS metadata from a JPEG image using exiftool.
+ *
+ * This function targets only the GPS-related EXIF tags and removes them from the file.
+ * It uses exiftool with the -gps:all= and -overwrite_original flags to modify the image in-place.
+ */
+function removeGpsDataFromJpeg($imagePath) {
+	// Check if the provided file path exists
+	if (!file_exists($imagePath)) {
+		throw new Exception("File does not exist: " . $imagePath);
 	}
+
+	// Escape the file path to safely use in shell command
+	$escapedPath = escapeshellarg($imagePath);
+
+	// Construct the exiftool command to remove all GPS-related tags
+	// -gps:all= deletes all GPS tags
+	// -overwrite_original ensures the original file is updated (no backup created)
+	$command = "exiftool -gps:all= -overwrite_original $escapedPath";
+
+	// Execute the command and capture output and return status
+	exec($command, $output, $returnVar);
+
+	// Check if the command executed successfully
+	if ($returnVar !== 0) {
+		throw new Exception("Failed to remove GPS data. Error code: $returnVar");
+	}
+
+	// Return true on success
+	return true;
 }
 
 // check if file is a valid mysql dump
