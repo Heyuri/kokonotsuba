@@ -272,20 +272,9 @@ class postRenderer {
 		// Image setup
 		$imgsrc = '';
 		$imageURL = '';
-		if ($ext) {
-			$imageURL = $this->FileIO->getImageURL($tim . $ext, $this->board);
-			$thumbName = $this->FileIO->resolveThumbName($tim, $this->board);
-	
-			if($status->value('fileDeleted')) {
-				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$this->config['STATIC_URL'].'image/nofile.gif" class="postimg" alt="'.$imgsize.'"></a>';
-			} elseif ($tw && $th && $thumbName) {
-				$thumbURL = $this->FileIO->getImageURL($thumbName, $this->board);
-				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$thumbURL.'" width="'.$tw.'" height="'.$th.'" class="postimg" alt="'.$imgsize.'" title="Click to show full image"></a>';
-			} elseif ($ext === ".swf") {
-				$imgsrc = '<a href="'.$imageURL.'" target="_blank" rel="nofollow"><img src="'.$this->config['SWF_THUMB'].'" class="postimg" alt="SWF Embed"></a>';
-			}
-			
-		}
+		
+		$imgsrc = $this->generateImageHTML($ext, $tim, $status, $tw, $th, $imgsize);
+
 	
 		// Return everything needed
 		return [
@@ -314,6 +303,68 @@ class postRenderer {
 			'imgsrc' => $imgsrc,
 			'imageURL' => $imageURL
 		];
+	}
+
+	/**
+	 * Generates the appropriate HTML <a><img></a> tag for a post image or thumbnail,
+	 * depending on the file type, thumbnail availability, and file deletion status.
+	 */
+	private function generateImageHTML($ext, $tim, $status, $tw, $th, $imgsize): string {
+		// If there's no file extension, no image to display
+		if (!$ext) {
+			return '';
+		}
+
+		// Get full image URL and thumbnail name for this file
+		$imageURL = $this->FileIO->getImageURL($tim . $ext, $this->board);
+		$thumbName = $this->FileIO->resolveThumbName($tim, $this->board);
+
+		// Case: File has been deleted, use placeholder image
+		if ($status->value('fileDeleted')) {
+			$thumbURL = $this->config['STATIC_URL'] . 'image/nofile.gif';
+			return $this->buildImageTag($imageURL, $thumbURL, $imgsize);
+		}
+		// Case: Thumbnail exists and dimensions are known
+		elseif ($tw && $th && $thumbName) {
+			$thumbURL = $this->FileIO->getImageURL($thumbName, $this->board);
+			return $this->buildImageTag($imageURL, $thumbURL, $imgsize, $tw, $th, 'Click to show full image');
+		}
+		// Case: Special handling for SWF files
+		elseif ($ext === ".swf") {
+			$thumbURL = $this->config['SWF_THUMB'];
+			return $this->buildImageTag($imageURL, $thumbURL, 'SWF Embed');
+		}
+		// Case: No thumbnail available, use generic placeholder
+		elseif (!$thumbName) {
+			$thumbURL = $this->config['STATIC_URL'] . 'image/nothumb.gif';
+			return $this->buildImageTag($imageURL, $thumbURL, $imgsize);
+		}
+
+		// Default fallback (shouldn't be reached under normal conditions)
+		return '';
+	}
+
+	/**
+	 * Builds an HTML anchor tag wrapping an image, with optional sizing and tooltip.
+	 */
+	private function buildImageTag($imageURL, $thumbURL, $altText, $width = null, $height = null, $title = null): string {
+		// Start building the <img> tag
+		$imgTag = '<img src="' . $thumbURL . '" class="postimg" alt="' . $altText . '"';
+
+		// Add optional width and height
+		if ($width && $height) {
+			$imgTag .= ' width="' . $width . '" height="' . $height . '"';
+		}
+
+		// Add optional title (used as tooltip)
+		if ($title) {
+			$imgTag .= ' title="' . $title . '"';
+		}
+
+		$imgTag .= '>';
+
+		// Wrap the image in a clickable link to the full image
+		return '<a href="' . $imageURL . '" target="_blank" rel="nofollow">' . $imgTag . '</a>';
 	}
 
 	/**
