@@ -2,7 +2,7 @@
 var scriptUrl = document.currentScript.src; // Get the current script's URL
 const closebuttan = scriptUrl.substring(0, scriptUrl.lastIndexOf('/')).replace('/js', '/image/cross2embed.png'); // Construct the URL for close button
 
-function openFlashEmbedWindow(file, name, w, h) {
+function openFlashEmbedWindow(file, name, extension, w, h) {
 	if (!document.getElementById("swfWindow")) {
 		const darkenoverlay = document.createElement("div");
 		darkenoverlay.id = "darken-embed-screen";
@@ -39,7 +39,7 @@ function openFlashEmbedWindow(file, name, w, h) {
 		swfWindow.innerHTML = `
 			<div id="swf-embed-header" style="cursor: move;">
 				<img src="${closebuttan}" id="closeButton" style="float: right; cursor: pointer;">
-				<div id="embed-swf-details">${name}, ${w}x${h} <a href="${file}" download="${name}" id="downloadButton"><div class="download"></div></a></div>
+				<div id="embed-swf-details">${name}, ${w}x${h} <a href="${file}" download="${name}${extension}" id="downloadButton"><div class="download"></div></a></div>
 			</div>
 			<div id="ruffleContainer" style="width: 100%; height: calc(100% - 20px);"></div>
 		`;
@@ -176,19 +176,19 @@ function disableButtonActionsDuringDrag(button, action, threshold = 20) {
 
 // fix filenames with apostrophes in inline onclick
 window.addEventListener("DOMContentLoaded", () => {
-	// Find every <a class="flashboardEmbedText" onclick="openFlashEmbedWindow('…','…',w,h)">
+	// Find every <a class="flashboardEmbedText" onclick="openFlashEmbedWindow('…','…','…',w,h)">
 	const embedLinks = document.querySelectorAll(".flashboardEmbedText");
 	embedLinks.forEach((el) => {
 		const rawOnclick = el.getAttribute("onclick");
 		if (!rawOnclick) return;
 
-		// Try to match: openFlashEmbedWindow('FILE_URL', 'NAME_WITH_&#039;', WIDTH, HEIGHT)
-		// We use a non-greedy capture for both quoted strings.
-		const re = /openFlashEmbedWindow\(\s*'(.+?)'\s*,\s*'(.+?)'\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/;
+		// Match: openFlashEmbedWindow('FILE_URL', 'ESCAPED_FILE_NAME', 'EXTENSION', WIDTH, HEIGHT)
+		const re = /openFlashEmbedWindow\(\s*'(.+?)'\s*,\s*'(.+?)'\s*,\s*'(.+?)'\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/;
 		const match = rawOnclick.match(re);
 		if (!match) return;
 
-		let [_, fileUrl, rawName, w, h] = match;
+		let [_, fileUrl, rawName, ext, w, h] = match;
+
 		// Decode any HTML‐escaped apostrophes (&#039;) into actual apostrophes
 		const decodedName = rawName.replace(/&#039;/g, "'");
 
@@ -198,7 +198,7 @@ window.addEventListener("DOMContentLoaded", () => {
 		// Add a proper click handler that calls openFlashEmbedWindow(...) with the correct arguments
 		el.addEventListener("click", (evt) => {
 			evt.preventDefault();
-			openFlashEmbedWindow(fileUrl, decodedName, parseInt(w, 10), parseInt(h, 10));
+			openFlashEmbedWindow(fileUrl, decodedName, ext, parseInt(w, 10), parseInt(h, 10));
 		});
 	});
 });
