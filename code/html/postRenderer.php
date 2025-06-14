@@ -326,13 +326,13 @@ class postRenderer {
 		// check if the image exists
 		$imageExists = $this->FileIO->imageExists($fullFileName, $this->board);
 
-		// Case: File does not exist, use placeholder image
-		if (!$imageExists) {
+		// Case: File has been deleted, use placeholder image
+		if ($status->value('fileDeleted')) {
 			$thumbURL = $this->config['STATIC_URL'] . 'image/nofile.gif';
 			return $this->buildImageTag($imageURL, $thumbURL, $imgsize);
 		}
-		// Case: File has been deleted, use placeholder image
-		else if ($status->value('fileDeleted')) {
+		// Case: File does not exist, use placeholder image
+		elseif (!$imageExists) {
 			$thumbURL = $this->config['STATIC_URL'] . 'image/nofile.gif';
 			return $this->buildImageTag($imageURL, $thumbURL, $imgsize);
 		}
