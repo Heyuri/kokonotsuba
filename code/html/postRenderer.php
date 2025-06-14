@@ -320,8 +320,19 @@ class postRenderer {
 		// Get thumbnail name
 		$thumbName = $this->FileIO->resolveThumbName($tim, $this->board);
 
+		// file name + extension
+		$fullFileName = $tim . $ext;
+
+		// check if the image exists
+		$imageExists = $this->FileIO->imageExists($fullFileName, $this->board);
+
+		// Case: File does not exist, use placeholder image
+		if (!$imageExists) {
+			$thumbURL = $this->config['STATIC_URL'] . 'image/nofile.gif';
+			return $this->buildImageTag($imageURL, $thumbURL, $imgsize);
+		}
 		// Case: File has been deleted, use placeholder image
-		if ($status->value('fileDeleted')) {
+		else if ($status->value('fileDeleted')) {
 			$thumbURL = $this->config['STATIC_URL'] . 'image/nofile.gif';
 			return $this->buildImageTag($imageURL, $thumbURL, $imgsize);
 		}
