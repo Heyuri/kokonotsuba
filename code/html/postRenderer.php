@@ -223,6 +223,7 @@ class postRenderer {
 				$imageBar,
 				$data['imgsrc'] ?? '',
 				$data['fname'],
+				$data['ext'],
 				$data['imgsize'],
 				$data['imgw'],
 				$data['imgh'],
