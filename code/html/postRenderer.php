@@ -328,7 +328,7 @@ class postRenderer {
 
 		// Case: File has been deleted, use placeholder image
 		if ($status->value('fileDeleted')) {
-			$thumbURL = $this->config['STATIC_URL'] . 'image/nofile.gif';
+			$thumbURL = $this->config['STATIC_URL'] . 'image/filedeleted.gif';
 			return $this->buildImageTag($imageURL, $thumbURL, $imgsize);
 		}
 		// Case: File does not exist, use placeholder image
