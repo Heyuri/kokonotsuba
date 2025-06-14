@@ -269,11 +269,12 @@ class postRenderer {
 			$now = "<a href=\"mailto:$email\">$now</a>";
 		}
 	
-		// Image setup
-		$imgsrc = '';
-		$imageURL = '';
 		
-		$imgsrc = $this->generateImageHTML($ext, $tim, $status, $tw, $th, $imgsize);
+		// Get full image URL
+		$imageURL = $this->FileIO->getImageURL($tim . $ext, $this->board);
+		
+		// Build image html
+		$imgsrc = $this->generateImageHTML($ext, $tim, $status, $tw, $th, $imgsize, $imageURL);
 
 	
 		// Return everything needed
@@ -309,14 +310,13 @@ class postRenderer {
 	 * Generates the appropriate HTML <a><img></a> tag for a post image or thumbnail,
 	 * depending on the file type, thumbnail availability, and file deletion status.
 	 */
-	private function generateImageHTML($ext, $tim, $status, $tw, $th, $imgsize): string {
+	private function generateImageHTML($ext, $tim, $status, $tw, $th, $imgsize, $imageURL): string {
 		// If there's no file extension, no image to display
 		if (!$ext) {
 			return '';
 		}
 
-		// Get full image URL and thumbnail name for this file
-		$imageURL = $this->FileIO->getImageURL($tim . $ext, $this->board);
+		// Get thumbnail name
 		$thumbName = $this->FileIO->resolveThumbName($tim, $this->board);
 
 		// Case: File has been deleted, use placeholder image
