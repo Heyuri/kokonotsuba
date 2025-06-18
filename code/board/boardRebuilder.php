@@ -59,7 +59,7 @@ class boardRebuilder {
 		$posts = $threadData['posts'];
 		$hiddenReply = 0;
 
-		$pte_vals = $this->buildPteVals(true, $adminMode);
+		$pte_vals = $this->buildPteVals(true);
 		
 		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml($resno, $pte_vals);
 
@@ -97,7 +97,7 @@ class boardRebuilder {
 		$threadsInPage = $this->PIO->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset);
 		$totalThreads = count($this->threadSingleton->fetchThreadListFromBoard($this->board));
 
-		$pte_vals = $this->buildPteVals(false, $adminMode);
+		$pte_vals = $this->buildPteVals(false);
 
 		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml(0, $pte_vals);
 
@@ -207,7 +207,7 @@ class boardRebuilder {
 		chmod($logFilePath, 0666);
 	}
 
-	private function buildPteVals(): array {
+	private function buildPteVals(bool $isThreadView): array {
 		$adminMode = isActiveStaffSession();
 	
 		$pte_vals = [
@@ -224,7 +224,7 @@ class boardRebuilder {
 			'{$IS_THREAD}' => false,
 		];
 
-		$this->runThreadModuleHooks($pte_vals, 0);
+		$this->runThreadModuleHooks($pte_vals, $isThreadView);
 	
 		return $pte_vals;
 	}
@@ -286,7 +286,7 @@ class boardRebuilder {
 	}
 
 	private function prepareStaticPageRenderContext(): array {
-		$pte_vals = $this->buildPteVals();
+		$pte_vals = $this->buildPteVals(false);
 
 		$headerHtml = '';
 		$this->globalHTML->head($headerHtml);
