@@ -10,7 +10,7 @@ function rebuildAllBoards() {
 
     // rebuild boards
     foreach($allBoards as $board) {
-        $board->rebuildBoard(0, -1, false, -1, true);
+        $board->rebuildBoard(true);
     }
 
 }
@@ -24,7 +24,7 @@ function rebuildBoardsByUIDs(array $boardUIDs) {
 
     // rebuild boards
     foreach($boardsToRebuild as $board) {
-        $board->rebuildBoard(0, -1, false, -1, true);;
+        $board->rebuildBoard(true);;
     }
 
 }
