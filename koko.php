@@ -6,6 +6,9 @@ YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE TH
 */
 session_start();
 
+/* Prevent the user from aborting script execution */
+ignore_user_abort(true); 
+
 function getBackendDir() {
 	return __DIR__.'/';
 }
