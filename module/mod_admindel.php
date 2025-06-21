@@ -26,8 +26,9 @@ class mod_admindel extends moduleHelper {
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$FileIO = PMCLibrary::getFileIOInstance();
 		$staffSession = new staffAccountFromSession;
-		
-		if ($staffSession->getRoleLevel() < $this->config['AuthLevels']['CAN_DELETE_POST']) return;
+		$roleLevel = $staffSession->getRoleLevel();
+
+		if ($roleLevel->isLessThan($this->config['AuthLevels']['CAN_DELETE_POST'])) return;
 		
 		$postBoard = searchBoardArrayForBoard($this->moduleBoardList, $post['boardUID']);
 

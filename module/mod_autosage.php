@@ -37,7 +37,7 @@ class mod_autosage extends moduleHelper {
 		$staffSession = new staffAccountFromSession;
 		$roleLevel = $staffSession->getRoleLevel();
 
-		if ($roleLevel < $this->config['AuthLevels']['CAN_AUTO_SAGE']) return;
+		if ($roleLevel->isLessThan($this->config['AuthLevels']['CAN_AUTO_SAGE'])) return;
 		$fh = new FlagHelper($post['status']);
 		if(!$isres) $modfunc.= '<span class="adminFunctions adminAutosageFunction">[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('as')?' title="Allow age">as':' title="Autosage">AS').'</a>]</span>';
 	}

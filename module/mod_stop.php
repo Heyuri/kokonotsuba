@@ -42,7 +42,7 @@ class mod_stop extends moduleHelper {
 		$staffSession = new staffAccountFromSession;
 		$roleLevel = $staffSession->getRoleLevel();
 		
-		if ($roleLevel < $this->config['AuthLevels']['CAN_LOCK']) return;
+		if ($roleLevel->isLessThan($this->config['AuthLevels']['CAN_LOCK'])) return;
 		$fh = new FlagHelper($post['status']);
 		if(!$isReply) $modfunc.= '<span class="adminFunctions adminLockFunction">[<a href="'.$this->mypage.'&thread_uid='.$post['thread_uid'].'"'.($fh->value('stop')?' title="Unlock thread">l':' title="Lock thread">L').'</a>]</span>';
 	}

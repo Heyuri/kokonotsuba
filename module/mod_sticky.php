@@ -29,8 +29,10 @@ class mod_sticky extends moduleHelper {
 
 	public function autoHookAdminList(string &$modfunc, array $post, bool $isres): void {
 		$staffSession = new staffAccountFromSession;
+		$roleLevel = $staffSession->getRoleLevel();
 
-		if ($staffSession->getRoleLevel() < $this->config['AuthLevels']['CAN_STICKY']) return;
+
+		if ($roleLevel->isLessThan($this->config['AuthLevels']['CAN_STICKY'])) return;
 
 		if (!$isres) {
 			$fh = new FlagHelper($post['status']);

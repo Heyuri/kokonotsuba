@@ -21,7 +21,9 @@ class mod_janitor extends moduleHelper {
 
 	public function autoHookAdminList(&$modfunc, $post, $isres) {
 		$staffSession = new staffAccountFromSession;
-		if ($staffSession->getRoleLevel() != \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR->value) return;
+		$roleLevel = $staffSession->getRoleLevel();
+
+		if ($roleLevel !== \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR) return;
 
 		$modfunc .= '<span class="adminFunctions adminWarnFunction">[<a href="' . $this->mypage . '&post_uid=' . $post['post_uid'] . '" title="Warn">W</a>]</span>';
 	}
