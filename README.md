@@ -11,7 +11,7 @@ Kokonotsuba is designed and tested on the following stack, and isn't guaranteed 
 - OS: Debian 10\~12
 - Web server: nginx (but seems to work fine on Apache)
 - DB: MariaDB
-- PHP: PHP7.2\~PHP8.3
+- PHP: PHP8\~PHP8.3
 
 If you are going to suggest pull requests, please make sure the change would work on the above stack first.
 
