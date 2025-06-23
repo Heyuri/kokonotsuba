@@ -113,14 +113,15 @@ class mod_cat extends moduleHelper {
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'', '{$IMG_SRC}' => '');
 			$this->moduleEngine->useModuleMethods('ThreadPost', array(&$arrLabels, $opPost, $threadPosts, false)); // "ThreadPost" Hook Point
 
-			$res = count($threadPosts);
+			// number of replies (excluding OP)
+			$replyCount = count($threadPosts) - 1;
 			$dat.= '<td class="thread">
 	<!--<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>-->
 	<a href="'.$this->board->getBoardThreadURL($resno, $no).'">'.
 	($FileIO->imageExists($tim.$ext, $this->board) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim, $this->board), $this->board).'" width="'.min(150, $tw).'" class="thumb" alt="Thumbnail">' : '***').
 	'</a>
 	<div class="catPostInfo"><span class="title">'.$sub.'</span>'.
-		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon" alt="Replies"> '.$res.'</span></div>
+		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon" alt="Replies"> '.$replyCount.'</span></div>
 	<div class="catComment">'.$com.'</div>
 </td>';
 		}
