@@ -1,5 +1,7 @@
 <?php
 
+use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
+
 class mod_adminban extends moduleHelper {
 	private string $BANFILE = '';
 	private string $GLOBAL_BANS = '';
@@ -186,16 +188,36 @@ class mod_adminban extends moduleHelper {
 		// Get action logger and PIO instance
 		$actionLogger = actionLogger::getInstance();
 		$PIO = PIOPDO::getInstance();
+		$boardIO = boardIO::getInstance();
+
+		if($postUid) {
+			$postData = $PIO->fetchPosts($postUid)[0];
+
+			$boardUid = $postData['boardUID'];
+
+			$postBoard = $boardIO->getBoardByUID($boardUid);
+
+			$boardIdentifier = $postBoard->getBoardIdentifier();
+
+		} else {
+			$boardUid = $this->board->getBoardUID();
+
+			$boardIdentifier = $this->board->getBoardTitle();
+		}
 
 		// Build the action string based on whether it's a global ban or related to a post
-		$actionString = $this->buildActionString($newIp, $duration, $isGlobal, $postUid, $PIO);
+		$actionString = $this->buildActionString($newIp, $duration, $isGlobal, $postUid, $PIO, $boardIdentifier, $boardUid);
 
-		// Log the action with the board UID
-		$boardUid = $this->board->getBoardUID();
+
+		// Log in the global scope if its a global ban
+		if($isGlobal) {
+			$boardUid = GLOBAL_BOARD_UID;
+		}
+
 		$actionLogger->logAction($actionString, $boardUid);
 	}
 
-	private function buildActionString(string $newIp, string $duration, bool $isGlobal, ?int $postUid, mixed $PIO): string {
+	private function buildActionString(string $newIp, string $duration, bool $isGlobal, ?int $postUid, mixed $PIO, string $boardIdentifier, int $boardUid): string {
 		// Initial action string (basic information about the ban)
 		$actionString = "Banned $newIp for $duration";
 
@@ -214,7 +236,7 @@ class mod_adminban extends moduleHelper {
 		if ($postUid) {
 			$postNumber = $PIO->resolvePostNumberFromUID($postUid);
 			if(!empty($postNumber)) { 
-				$actionString .= " for post $postNumber";
+				$actionString .= " for post: $postNumber /$boardIdentifier/ ($boardUid)";
 			}
 		}
 
