@@ -190,7 +190,7 @@ class mod_adminban extends moduleHelper {
 		$PIO = PIOPDO::getInstance();
 		$boardIO = boardIO::getInstance();
 
-		if($postUid) {
+		if($postUid && $PIO->postExists($postUid)) {
 			$postData = $PIO->fetchPosts($postUid)[0];
 
 			$boardUid = $postData['boardUID'];
