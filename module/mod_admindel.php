@@ -1,5 +1,8 @@
 <?php
 // admin extra module made for kokonotsuba by deadking
+
+use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
+
 class mod_admindel extends moduleHelper {
 	private $GLOBAL_BANS = '';
 	private $JANIMUTE_LENGTH = '';
@@ -54,6 +57,8 @@ class mod_admindel extends moduleHelper {
 		$board = $boardIO->getBoardByUID($post['boardUID']);
 		$boardUID = $board->getBoardUID();
 
+		$boardIdentifier = $board->getBoardIdentifier();
+
 		if (!$post) $globalHTML->error('ERROR: That post does not exist.');
 		$files = false;
 		switch ($_GET['action']??'') {
@@ -74,7 +79,7 @@ class mod_admindel extends moduleHelper {
 					$this->appendGlobalBan($ip, $starttime, $expires, $reason);
 				}
 
-				$ActionLogger->logAction('Muted '.$ip.' and deleted post No.'.$post['no'], $boardUID);
+				$ActionLogger->logAction('Muted '.$ip.' and deleted post post '.$post['no'] . ' /'.$boardIdentifier.'/ ('. $boardUID .')', GLOBAL_BOARD_UID);
 
 				break;
 			case 'imgdel':
@@ -108,7 +113,7 @@ class mod_admindel extends moduleHelper {
 
 			$pageToRebuild = getPageOfThread($thread_uid, $threads, $this->config['PAGE_DEF']);
 			
-			$board->rebuildBoardPage($pageToRebuild);
+			$board->rebuildBoardPages($pageToRebuild);
 		}
 		
 		if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
