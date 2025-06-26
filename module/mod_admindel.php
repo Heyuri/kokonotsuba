@@ -79,7 +79,7 @@ class mod_admindel extends moduleHelper {
 					$this->appendGlobalBan($ip, $starttime, $expires, $reason);
 				}
 
-				$ActionLogger->logAction('Muted '.$ip.' and deleted post post '.$post['no'] . ' /'.$boardIdentifier.'/ ('. $boardUID .')', GLOBAL_BOARD_UID);
+				$ActionLogger->logAction('Muted '.$ip.' and deleted post No.'.$post['no'] . ' /'.$boardIdentifier.'/ ('. $boardUID .')', GLOBAL_BOARD_UID);
 
 				break;
 			case 'imgdel':

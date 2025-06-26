@@ -62,7 +62,7 @@ class usrdelRoute {
 				$search_flag = true;
 				$delPostUIDs[] = intval($post['post_uid']);
 				$delPosts[] = $post;
-				$this->actionLogger->logAction("Delete post No." . $post['no'] . ($onlyimgdel ? ' (file only)' : ''), $this->board->getBoardUID());
+				$this->actionLogger->logAction("Deleted post No." . $post['no'] . ($onlyimgdel ? ' (file only)' : ''), $this->board->getBoardUID());
 			}
 		}
 
