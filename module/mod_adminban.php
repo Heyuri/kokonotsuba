@@ -236,7 +236,7 @@ class mod_adminban extends moduleHelper {
 		if ($postUid) {
 			$postNumber = $PIO->resolvePostNumberFromUID($postUid);
 			if(!empty($postNumber)) { 
-				$actionString .= " for post: $postNumber /$boardIdentifier/ ($boardUid)";
+				$actionString .= " for post No.$postNumber /$boardIdentifier/ ($boardUid)";
 			}
 		}
 
