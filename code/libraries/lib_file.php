@@ -202,17 +202,25 @@ function removeGpsDataFromJpeg($imagePath) {
 	// Escape the file path to safely use in shell command
 	$escapedPath = escapeshellarg($imagePath);
 
-	// Construct the exiftool command to remove all GPS-related tags
-	// -gps:all= deletes all GPS tags
-	// -overwrite_original ensures the original file is updated (no backup created)
-	$command = "exiftool -gps:all= -overwrite_original $escapedPath";
+	// Redirect stderr to stdout to capture all output
+	$command = "exiftool -gps:all= -overwrite_original $escapedPath 2>&1";
 
 	// Execute the command and capture output and return status
 	exec($command, $output, $returnVar);
 
-	// Check if the command executed successfully
+	// Convert output array to string
+	$errorOutput = implode("\n", $output);
+
+	// Treat "0 image files updated" as non-fatal if it's due to no GPS data
 	if ($returnVar !== 0) {
-		throw new Exception("Failed to remove GPS data. Error code: $returnVar");
+		foreach ($output as $line) {
+			if (strpos($line, '0 image files updated') !== false && strpos($line, "weren't updated due to errors") === false) {
+				// No GPS data to remove, not an error
+				return true;
+			}
+		}
+		// If it's a real error, throw
+		throw new Exception("Failed to remove GPS data. Error code: $returnVar\nOutput:\n$errorOutput");
 	}
 
 	// Return true on success
