@@ -26,12 +26,19 @@ class overboardRoute {
 	public function drawOverboard(): void {
 		$this->handleOverboardFilterForm();
 
-		$filtersBoards = (!empty($_COOKIE['overboard_filterboards'])) 
-			? json_decode($_COOKIE['overboard_filterboards'], true) 
-			: null;
+		$blacklistBoards = (!empty($_COOKIE['overboard_black_list'])) 
+			? json_decode($_COOKIE['overboard_black_list'], true) 
+			: [];
+
+		if (!is_array($blacklistBoards)) {
+			$blacklistBoards = [];
+		}
+
+		$allBoards = $this->boardIO->getAllListedBoardUIDs();
+		$allowedBoards = array_values(array_diff($allBoards, $blacklistBoards));
 
 		$filters = [
-			'board' => $filtersBoards ?? $this->boardIO->getAllListedBoardUIDs(),
+			'board' => $allowedBoards,
 		];
 
 		$html = '';
@@ -43,6 +50,7 @@ class overboardRoute {
 		echo $html;
 	}
 
+
 	private function handleOverboardFilterForm(): void {
 		if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 			return;
@@ -51,23 +59,30 @@ class overboardRoute {
 		$action = $_POST['filterformsubmit'] ?? null;
 
 		if ($action === 'filter') {
-			$filterBoardFromPOST = $_POST['board'] ?? '';
-			$filterBoard = is_array($filterBoardFromPOST)
-				? array_map('htmlspecialchars', $filterBoardFromPOST)
-				: [htmlspecialchars($filterBoardFromPOST)];
+			$selectedBoards = $_POST['board'] ?? '';
+			$selectedBoards = is_array($selectedBoards)
+				? array_map('intval', $selectedBoards)
+				: [intval($selectedBoards)];
 
-			setcookie('overboard_filterboards', json_encode($filterBoard), time() + (86400 * 30), "/");
+			$boardIO = boardIO::getInstance();
+			$allBoards = $boardIO->getAllListedBoardUIDs();
+
+			// Blacklist = all - selected
+			$blacklist = array_values(array_diff($allBoards, $selectedBoards));
+
+			setcookie('overboard_black_list', json_encode($blacklist), time() + (86400 * 30), "/");
 
 			redirect($this->config['PHP_SELF'] . '?mode=overboard');
 			exit;
 
 		} elseif ($action === 'filterclear') {
-			setcookie('overboard_filterboards', "", time() - 3600, "/");
+			setcookie('overboard_black_list', "", time() - 3600, "/");
 
 			redirect($this->config['PHP_SELF'] . '?mode=overboard');
 			exit;
 		}
 	}
+
 
 }
 
