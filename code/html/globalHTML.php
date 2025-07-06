@@ -558,11 +558,16 @@ class globalHTML {
 	
 	public function drawOverboardFilterForm(&$dat, $board) {
 		$boardIO = boardIO::getInstance();
-		
+
 		$allListedBoards = $boardIO->getAllListedBoardUIDs();
-		
-		$filterBoard = json_decode($_COOKIE['overboard_filterboards'] ?? ''); if(!is_array($filterBoard)) $filterBoard = $allListedBoards;
-		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $filterBoard, $boardIO->getBoardsFromUIDs($allListedBoards));
+
+		$blacklistBoards = json_decode($_COOKIE['overboard_black_list'] ?? '');
+		if (!is_array($blacklistBoards)) $blacklistBoards = [];
+
+		// Compute boards to show = all - blacklist
+		$shownBoards = array_values(array_diff($allListedBoards, $blacklistBoards));
+
+		$boardCheckboxHTML = $this->generateBoardListCheckBoxHTML($board, $shownBoards, $boardIO->getBoardsFromUIDs($allListedBoards));
 		$dat .= '
 			<form class="detailsboxForm" id="overboardFilterForm" action="' . $this->fullURL() . $this->config['PHP_SELF'].'?mode=overboard" method="POST">
 				<details id="filtercontainer" class="detailsbox">
@@ -580,7 +585,7 @@ class globalHTML {
 			</form>
 		';
 	}
-	
+
 	public function drawAccountTable() {
 		$AccountIO = AccountIO::getInstance();
 
