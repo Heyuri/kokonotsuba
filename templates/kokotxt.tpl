@@ -94,8 +94,8 @@
 						</ul>
 					</div>
 				</div>
-				<!--&IF($FORMBOTTOM,'{$FORMBOTTOM}','')-->
 			</form>
+			<!--&IF($MODULE_INFO_HOOK,'{$MODULE_INFO_HOOK}','')-->
 		</div>
 		<div class="mod-extra-info innerbox">
 			{$BLOTTER}
