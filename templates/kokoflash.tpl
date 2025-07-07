@@ -117,8 +117,8 @@
 			</table>
 			<hr>
 		</form>
+		<!--&IF($MODULE_INFO_HOOK,'{$MODULE_INFO_HOOK}','')-->
 	</div>
-	<!--&IF($FORMBOTTOM,'{$FORMBOTTOM}','')-->
 <!--/&POSTFORM-->
 
 <!--&MODULE_INFO_HOOK-->

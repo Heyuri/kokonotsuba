@@ -77,11 +77,10 @@
 				<div class="postformItem"><label for="pwd">Password:</label>{$FORM_DELETE_PASSWORD_FIELD}<span id="delPasswordInfo">(for deletion, 8 chars max)</span></div>
 				<div class="postformItem">{$FORM_EXTRA_COLUMN}</div>
 			</div>
-			<!--&IF($FORMBOTTOM,'{$FORMBOTTOM}','')-->
 		</form>
+		<!--&IF($MODULE_INFO_HOOK,'{$MODULE_INFO_HOOK}','')-->
 	</div>
 <!--/&POSTFORM-->
-
 
 <!--&FOOTER-->
 	<div id="footer">
