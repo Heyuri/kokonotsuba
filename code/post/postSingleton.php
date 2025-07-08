@@ -526,6 +526,10 @@ class PIOPDO implements IPIO {
 		if (!is_array($posts)) {
 			$posts = [$posts];
 		}
+
+		$posts = array_filter($posts, function($value) {
+			return filter_var($value, FILTER_VALIDATE_INT) !== false;
+		});
 		
 		$this->databaseConnection->beginTransaction();
 		try {
