@@ -134,7 +134,9 @@ class globalHTML {
 		if($this->config['STORAGE_LIMIT']) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',$FileIO->getCurrentStorageSize($this->board),$this->config['STORAGE_MAX']);
 		$this->moduleEngine->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
 		
-		$dat .= $this->templateEngine->ParseBlock('POSTFORM',$pte_vals);
+		$pte_vals['{$POST_FORM}'] .= $this->templateEngine->ParseBlock('POSTFORM',$pte_vals);
+
+		$dat .= $this->templateEngine->ParseBlock('POST_AREA',$pte_vals);
 	}
 	
 		/* 網址自動連結 */

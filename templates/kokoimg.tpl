@@ -67,8 +67,14 @@
 	</div>
 <!--/&BODYHEAD-->
 
-<!--&POSTFORM-->
+<!--&POST_AREA-->
 	<div id="postarea">
+		<!--&IF($POST_FORM,'{$POST_FORM}','')-->
+		<!--&IF($MODULE_INFO_HOOK,'{$MODULE_INFO_HOOK}','')-->
+	</div>
+<!--/&POST_AREA-->
+
+<!--&POSTFORM-->
 		<!--&IF($IS_THREAD,'<div class="threadNavBar">[<a href="{$PHP_SELF2}">Return</a>]</div>','')-->
 		<!--&IF($IS_THREAD,' <h2 class="theading">Posting mode: Reply</h2>','')-->
 		<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" <!--&IF($MAX_FILE_SIZE,' enctype="multipart/form-data"','')-->>
@@ -124,8 +130,6 @@
 			</table>
 			<hr>
 		</form>
-		<!--&IF($MODULE_INFO_HOOK,'{$MODULE_INFO_HOOK}','')-->
-	</div>
 <!--/&POSTFORM-->
 
 <!--&MODULE_INFO_HOOK-->
