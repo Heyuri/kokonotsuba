@@ -64,7 +64,7 @@
 <!--/&POST_AREA-->
 
 <!--&POSTFORM-->
-	<div id="postarea">
+	<div id="postformBox">
 		<!--&IF($MAX_FILE_SIZE,'<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" enctype="multipart/form-data">','<form id="postform" name="postform" action="{$PHP_SELF}" method="POST">')-->
 			<h2 id="newReplyTitle"><!--&IF($IS_THREAD,'New reply','New thread')--></h2>
 			{$FORM_HIDDEN}
@@ -85,7 +85,6 @@
 				<div class="postformItem">{$FORM_EXTRA_COLUMN}</div>
 			</div>
 		</form>
-		<!--&IF($MODULE_INFO_HOOK,'{$MODULE_INFO_HOOK}','')-->
 	</div>
 <!--/&POSTFORM-->
 
