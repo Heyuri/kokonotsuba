@@ -63,6 +63,13 @@
 	</div>
 <!--/&BODYHEAD-->
 
+<!--&POST_AREA-->
+	<div id="postarea">
+		<!--&IF($POST_FORM,'{$POST_FORM}','')-->
+		<!--&IF($MODULE_INFO_HOOK,'{$MODULE_INFO_HOOK}','')-->
+	</div>
+<!--/&POST_AREA-->
+
 <!--&POSTFORM-->
 	<div id="postformBox" class="menu outerbox">
 		<div id="postarea" class="innerbox">

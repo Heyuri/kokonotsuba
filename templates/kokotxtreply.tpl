@@ -56,6 +56,13 @@
 	<hr>
 <!--/&BODYHEAD-->
 
+<!--&POST_AREA-->
+	<div id="postarea">
+		<!--&IF($POST_FORM,'{$POST_FORM}','')-->
+		<!--&IF($MODULE_INFO_HOOK,'{$MODULE_INFO_HOOK}','')-->
+	</div>
+<!--/&POST_AREA-->
+
 <!--&POSTFORM-->
 	<div id="postarea">
 		<!--&IF($MAX_FILE_SIZE,'<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" enctype="multipart/form-data">','<form id="postform" name="postform" action="{$PHP_SELF}" method="POST">')-->
