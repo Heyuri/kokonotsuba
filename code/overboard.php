@@ -43,8 +43,13 @@ class overboard {
 			
 		$this->moduleEngine->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
 		$this->moduleEngine->useModuleMethods('AboveTitle', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
+		
 		$html .= $this->templateEngine->ParseBlock('BODYHEAD',$pte_vals);
-		$html .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK',$pte_vals);
+		
+		$pte_vals['{$MODULE_INFO_HOOK}'] = $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
+		
+		$html .= $this->templateEngine->ParseBlock('POST_AREA', $pte_vals);
+
 		$html .= $this->config['OVERBOARD_SUB_HEADER_HTML'];
 
 		$dat .= $html;
