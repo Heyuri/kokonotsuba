@@ -3,23 +3,21 @@
 class boardRebuilder {
 	private board $board;
 	private array $config;
-	private globalHTML $globalHTML;
 	private moduleEngine $moduleEngine;
-	private mixed $PIO;
-	private mixed $threadSingleton;
+	private postService $postService;
+	private threadRepository $threadRepository;
+	private threadService $threadService;
 	private mixed $actionLogger;
 	private templateEngine $templateEngine;
 
 
-	public function __construct(board $board, templateEngine $templateEngine) {
+	public function __construct(board $board, templateEngine $templateEngine, postService $postService, threadRepository $threadRepository, threadService $threadService) {
 		$this->board = $board;
 
-		$this->globalHTML = new globalHTML($board);
 		$this->moduleEngine = new moduleEngine($board);
-		$this->threadSingleton = threadSingleton::getInstance();
-		$this->PIO = PIOPDO::getInstance();
+		$this->threadService = $threadService;
+		$this->postService = $postService;
 		$this->actionLogger = actionLogger::getInstance();
-
 
 		$this->templateEngine = $templateEngine;
 		$this->templateEngine->setFunctionCallbacks([
@@ -47,11 +45,11 @@ class boardRebuilder {
 
 		$adminMode = isActiveStaffSession();
 
-		$uid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
-		$threadData = $this->threadSingleton->getThreadByUID($uid);
+		$uid = $this->threadRepository->resolveThreadUidFromResno($this->board, $resno);
+		$threadData = $this->threadService->getThreadByUID($uid);
 
 		if (!$threadData) {
-			$this->globalHTML->error("Thread not found!");
+			$this->softErrorHandler->errorAndExit("Thread not found!");
 			return;
 		}
 
@@ -94,8 +92,8 @@ class boardRebuilder {
 		$threadPageOffset = $page * $threadsPerPage;
 		$previewCount = $this->config['RE_DEF'];
 
-		$threadsInPage = $this->PIO->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset);
-		$totalThreads = count($this->threadSingleton->fetchThreadListFromBoard($this->board));
+		$threadsInPage = $this->postService->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset);
+		$totalThreads = count($this->threadService->getThreadListFromBoard($this->board));
 
 		$pte_vals = $this->buildPteVals(false);
 
@@ -103,7 +101,7 @@ class boardRebuilder {
 
 		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threadsInPage, $pte_vals, $adminMode);
 
-		$pte_vals['{$PAGENAV}'] = $this->globalHTML->drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl);
+		$pte_vals['{$PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl);
 
 		$pageData = $this->buildFullPage($pte_vals);
 		echo $this->finalizePageData($pageData);
@@ -111,7 +109,7 @@ class boardRebuilder {
 
 	
 	public function rebuildBoardHtml(bool $logRebuild = false): void {
-		$threads = $this->PIO->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF']);
+		$threads = $this->postService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF']);
 		$totalThreads = count($threads);
 		$threadsPerPage = $this->config['PAGE_DEF'];
 		$totalPages = ceil($totalThreads / $threadsPerPage);
@@ -139,11 +137,11 @@ class boardRebuilder {
 	public function rebuildBoardPages(int $lastPageToRebuild): void {
 		if ($lastPageToRebuild < 0) return;
 
-		$totalThreadCountForBoard = $this->threadSingleton->threadCountFromBoard($this->board);
+		$totalThreadCountForBoard = $this->threadRepository->threadCountFromBoard($this->board);
 		$threadsPerPage = $this->config['PAGE_DEF'];
 		$amountOfThreads = $threadsPerPage * ($lastPageToRebuild + 1);
 
-		$threads = $this->PIO->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $amountOfThreads, 0);
+		$threads = $this->postService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $amountOfThreads, 0);
 
 		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
 
@@ -155,12 +153,12 @@ class boardRebuilder {
 	public function rebuildBoardPageHtml(int $targetPage, bool $logRebuild): void {
 		if ($targetPage < 0) return;
 
-		$totalThreadCountForBoard = $this->threadSingleton->threadCountFromBoard($this->board);
+		$totalThreadCountForBoard = $this->threadRepository->threadCountFromBoard($this->board);
 
 		$offset = $targetPage * $this->config['PAGE_DEF'];
 		$limit = $this->config['PAGE_DEF'];
 
-		$threads = $this->PIO->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $limit, $offset);
+		$threads = $this->postService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $limit, $offset);
 		$totalPages = ceil($totalThreadCountForBoard / $this->config['PAGE_DEF']);
 
 		if ($targetPage >= $totalPages) return;
@@ -190,7 +188,7 @@ class boardRebuilder {
 
 		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threads, $pte_vals);
 
-		$pte_vals['{$PAGENAV}'] = $this->globalHTML->drawBoardPager($threadsPerPage, $totalThreadCountForBoard, $boardUrl, $page);
+		$pte_vals['{$PAGENAV}'] = drawBoardPager($threadsPerPage, $totalThreadCountForBoard, $boardUrl, $page);
 
 		$pageData = $this->buildStaticPageHtml($pte_vals, $headerHtml, $formHtml, $footHtml);
 
@@ -244,14 +242,12 @@ class boardRebuilder {
 		$postRenderer = new postRenderer(
 			$this->board,
 			$this->config,
-			$this->globalHTML,
 			$this->moduleEngine,
 			$this->templateEngine,
 			$quoteLinksFromBoard
 		);
 		$threadRenderer = new threadRenderer(
 			$this->config,
-			$this->globalHTML,
 			$this->templateEngine,
 			$postRenderer
 		);
@@ -261,7 +257,7 @@ class boardRebuilder {
 	private function buildFormHtml(int $resno, array &$pte_vals): string {
 		$form_dat = '';
 		
-		$this->globalHTML->form($form_dat, $resno);
+		form($form_dat, $resno);
 		
 		$form_dat .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
 		
@@ -276,11 +272,11 @@ class boardRebuilder {
 	private function buildFullPage(array $pte_vals, int $resno = 0): string {
 		$pageData = '';
 		
-		$this->globalHTML->head($pageData, $resno);
+		head($pageData, $resno);
 		
 		$pageData .= $this->templateEngine->ParseBlock('MAIN', $pte_vals);
 		
-		$this->globalHTML->foot($pageData);
+		foot($pageData);
 		
 		return $pageData;
 	}
@@ -289,12 +285,12 @@ class boardRebuilder {
 		$pte_vals = $this->buildPteVals(false);
 
 		$headerHtml = '';
-		$this->globalHTML->head($headerHtml);
+		head($headerHtml);
 
 		$formHtml = $this->buildFormHtml(0, $pte_vals);
 
 		$footHtml = '';
-		$this->globalHTML->foot($footHtml);
+		foot($footHtml);
 
 		return [$pte_vals, $headerHtml, $formHtml, $footHtml];
 	}
