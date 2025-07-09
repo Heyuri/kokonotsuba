@@ -64,15 +64,14 @@
 <!--/&BODYHEAD-->
 
 <!--&POST_AREA-->
-	<div id="postarea">
+	<div id="postarea" class="menu outerbox">
 		<!--&IF($POST_FORM,'{$POST_FORM}','')-->
 		<!--&IF($MODULE_INFO_HOOK,'{$MODULE_INFO_HOOK}','')-->
 	</div>
 <!--/&POST_AREA-->
 
 <!--&POSTFORM-->
-	<div id="postformBox" class="menu outerbox">
-		<div id="postarea" class="innerbox">
+		<div id="postformBox" class="innerbox">
 			<h2 class="formTitle"><!--&IF($IS_THREAD,' New reply [<a href="{$PHP_SELF2}">Return</a>]','New thread')--></h2>
 			<!--&IF($MAX_FILE_SIZE,'<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" enctype="multipart/form-data">','<form id="postform" name="postform" action="{$PHP_SELF}" method="POST">')-->
 				{$FORM_HIDDEN}
@@ -102,16 +101,14 @@
 					</div>
 				</div>
 			</form>
-			<!--&IF($MODULE_INFO_HOOK,'{$MODULE_INFO_HOOK}','')-->
 		</div>
-		<div class="mod-extra-info innerbox">
-			{$BLOTTER}
-		</div>
-		<!--&IF($GLOBAL_MESSAGE,'<div id="globalmsg" class="innerbox">{$GLOBAL_MESSAGE}</div>','')-->	
-	</div>
 <!--/&POSTFORM-->
 
 <!--&MODULE_INFO_HOOK-->
+		<div class="mod-extra-info innerbox">
+			{$BLOTTER}
+		</div>
+		<!--&IF($GLOBAL_MESSAGE,'<div id="globalmsg" class="innerbox">{$GLOBAL_MESSAGE}</div>','')-->
 <!--/&MODULE_INFO_HOOK-->
 
 <!--&FOOTER-->
