@@ -752,7 +752,7 @@ class globalHTML {
 		if ($currentPage >= $totalPages - 1) {
 			$pageHTML .= '<td id="pagerNextCell">Last</td>';
 		} else {
-			$pageHTML .= '<td id="pagerPreviousCell">' . ($getForm ? $getForm($currentPage + 1, 'Next') : '<form action="' . $getLink($currentPage + 1) . '" method="get"><button type="submit">Next</button></form>') . '</td>';
+			$pageHTML .= '<td id="pagerNextCell">' . ($getForm ? $getForm($currentPage + 1, 'Next') : '<form action="' . $getLink($currentPage + 1) . '" method="get"><button type="submit">Next</button></form>') . '</td>';
 		}
 
 		$pageHTML .= '</tr></tbody></table>';
@@ -779,7 +779,7 @@ class globalHTML {
 
 		$getForm = function($page, $label) use ($url, $staticUntil, $isStaticAll) {
 			if ($page === 0) {
-				return '<a href="' . htmlspecialchars($url . $this->config['PHP_SELF2']) . '"><button type="button">' . htmlspecialchars($label) . '</button></a>';
+				return '<form action="' . htmlspecialchars($url . $this->config['PHP_SELF2']) . '" method="get"><button type="submit">' . htmlspecialchars($label) . '</button></form>';
 			}
 			if (!$isStaticAll && $page >= $staticUntil) {
 				return '<form action="' . htmlspecialchars($url . $this->config['PHP_SELF']) . '" method="get">
@@ -788,7 +788,7 @@ class globalHTML {
 				</form>';
 			}
 
-			return '<a href="' . htmlspecialchars($page . '.html') . '"><button type="button">' . htmlspecialchars($label) . '</button></a>';
+			return '<form action="' . htmlspecialchars($page . '.html') . '" method="get"><button type="submit">' . htmlspecialchars($label) . '</button></form>';
 		};
 
 		return $this->renderPager($currentPage, $totalPages, $getLink, $getForm);
