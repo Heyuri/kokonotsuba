@@ -257,9 +257,9 @@ class boardRebuilder {
 	private function buildFormHtml(int $resno, array &$pte_vals): string {
 		$form_dat = '';
 		
-		form($form_dat, $resno);
-		
-		$form_dat .= $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
+		$moduleInfoHook = $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
+
+		$this->globalHTML->form($form_dat, $resno, '', '', '', '', '', $moduleInfoHook);		
 		
 		return $form_dat;
 	}

@@ -526,6 +526,10 @@ class PIOPDO implements IPIO {
 		if (!is_array($posts)) {
 			$posts = [$posts];
 		}
+
+		$posts = array_filter($posts, function($value) {
+			return filter_var($value, FILTER_VALIDATE_INT) !== false;
+		});
 		
 		$this->databaseConnection->beginTransaction();
 		try {
@@ -534,11 +538,16 @@ class PIOPDO implements IPIO {
 			addSlashesToArray($posts);
 			$postUIDsList = implode(', ', $posts);
 
-			$threadUIDs = $this->databaseConnection->fetchColumn("
+			$threadUIDsResult = $this->databaseConnection->fetchAllAsArray("
 				SELECT DISTINCT thread_uid
 				FROM {$this->tablename}
 				WHERE post_uid IN ({$postUIDsList})
 			");
+
+			$threadUIDs = [];
+			foreach ($threadUIDsResult as $row) {
+				$threadUIDs[] = $row['thread_uid'];
+			}
 
 			$this->databaseConnection->execute("DELETE FROM {$this->tablename} WHERE post_uid IN ({$postUIDsList})");
 			$this->databaseConnection->execute("DELETE FROM {$this->threadTable} WHERE post_op_post_uid IN ({$postUIDsList})");

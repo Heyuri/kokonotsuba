@@ -85,7 +85,7 @@ class globalHTML {
 	}
 	
 		/* 發表用表單輸出 | user contribution form */
-	function form(&$dat, $resno, $name='', $mail='', $sub='', $com='', $cat=''){
+	function form(&$dat, $resno, $name='', $mail='', $sub='', $com='', $cat='', $moduleInfoHook = ''){
 		$FileIO = PMCLibrary::getFileIOInstance();
 		
 		$hidinput = ($resno ? '<input type="hidden" name="resto" value="'.$resno.'">' : '');
@@ -116,7 +116,9 @@ class globalHTML {
 						$resno ? $this->config['MAX_RH'] : $this->config['MAX_H']
 					)
 			),
-			'{$HOOKPOSTINFO}' => '');
+			'{$HOOKPOSTINFO}' => '',
+			'{$MODULE_INFO_HOOK}' => $moduleInfoHook);
+
 		if(!$this->config['TEXTBOARD_ONLY'] && ($this->config['RESIMG'] || !$resno)){
 			$pte_vals += array('{$FORM_ATTECHMENT_FIELD}' => '<input type="file" name="upfile" id="upfile">');
 	
@@ -132,7 +134,9 @@ class globalHTML {
 		if($this->config['STORAGE_LIMIT']) $pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T('form_notice_storage_limit',$FileIO->getCurrentStorageSize($this->board),$this->config['STORAGE_MAX']);
 		$this->moduleEngine->useModuleMethods('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // "PostInfo" Hook Point
 		
-		$dat .= $this->templateEngine->ParseBlock('POSTFORM',$pte_vals);
+		$pte_vals['{$POST_FORM}'] .= $this->templateEngine->ParseBlock('POSTFORM',$pte_vals);
+
+		$dat .= $this->templateEngine->ParseBlock('POST_AREA',$pte_vals);
 	}
 	
 		/* 網址自動連結 */
