@@ -51,11 +51,11 @@ class overboard {
 		return $html;
 	}
 
-	public function drawOverboardThreads(array $filters, globalHTML $globalHTML) {
+	public function drawOverboardThreads(array $filters) {
 		$threadSingleton = threadSingleton::getInstance();
 
 		$page = $_REQUEST['page'] ?? 0;
-		if (!filter_var($page, FILTER_VALIDATE_INT) && $page != 0) $globalHTML->error("Page number was not a valid int.");
+		if (!filter_var($page, FILTER_VALIDATE_INT) && $page != 0) $softErrorHandler->errorAndExit("Page number was not a valid int.");
 		$page = ($page >= 0) ? $page : 1;
 		
 		$threadsHTML = '';
@@ -93,7 +93,7 @@ class overboard {
 			}
 		}
 		
-		$templateValues['{$PAGENAV}'] = $globalHTML->drawPager($limit, $numberThreadsFiltered, $globalHTML->fullURL().$this->config['PHP_SELF'].'?mode=overboard');
+		$templateValues['{$PAGENAV}'] = drawPager($limit, $numberThreadsFiltered, fullURL().$this->config['PHP_SELF'].'?mode=overboard');
 		$threadsHTML .= $this->templateEngine->ParseBlock('MAIN', $templateValues);
 		return $threadsHTML;
 	}
@@ -213,7 +213,6 @@ class overboard {
 	}
 	
 	private function createThreadRenderer(board $board, array $config, templateEngine $templateEngine, array $quoteLinksByBoardUID): threadRenderer {
-		$globalHTML = new globalHTML($board);
 		$moduleEngine = new moduleEngine($board);
 		
 		$boardUID = $board->getBoardUID();
@@ -221,13 +220,12 @@ class overboard {
 
 		$postRenderer = new postRenderer($board,
 		 $config, 
-		 $globalHTML, 
 		 $moduleEngine, 
 		 $templateEngine, 
 		 $quoteLinksForBoard
 		);
 
-		return new threadRenderer($config, $globalHTML, $templateEngine, $postRenderer);
+		return new threadRenderer($config, $templateEngine, $postRenderer);
 	}
 	
 	private function buildThreadTitleAndLink(board $board): array {
