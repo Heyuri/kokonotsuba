@@ -103,8 +103,7 @@ hr {
   font-size: var(--font-size-regular);
 }
 
-#postarea {
-  border-bottom: 2px solid var(--color-lo-contrast-border);
+#postformBox {
   padding: 0.5em;
   padding-top: 0;
 }
@@ -118,7 +117,7 @@ hr {
   padding: 0.5em 0;
 }
 
-#postarea,
+#postformBox,
 .mod-extra-info,
 #globalmsg,
 #topiclist {
@@ -206,7 +205,7 @@ h2.title {
   background-color: var(--color-bg-main);
 }
 
-#txtreply #postarea {
+#txtreply #postformBox {
   background: var(--color-bg-postblock) var(--image-bg-rose-big) no-repeat scroll top right;
   margin: 3px 100px 3px 3px;
   padding: 0 3px 3px 3px;

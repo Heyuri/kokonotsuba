@@ -107,15 +107,11 @@
   font-size: 1.2em;
 }
 
-#postarea {
+#postformBox {
+  background-color: var(--color-bg-menu);
   margin: 6px;
   margin-top: 0;
   padding: 6px;
-}
-
-#postarea,
-#postarea2 {
-  background-color: var(--color-bg-menu);
 }
 
 .postformItem > label {
@@ -261,7 +257,7 @@ body#txtreply {
   padding-bottom: 1em;
 }
 
-#txtreply #postarea {
+#txtreply #postformBox {
   background-color: var(--color-bg-thread);
   color: #000080;
   padding: 6px;
