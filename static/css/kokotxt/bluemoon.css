@@ -240,7 +240,7 @@ body#txtreply {
   padding-top: 6px
 }
 
-#txtreply #postarea {
+#txtreply #postformBox {
   background-color: #99a9ba;
   color: #49525d;
   border: 6px solid #49525d;

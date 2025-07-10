@@ -72,8 +72,8 @@
 
 <!--&POSTFORM-->
 		<div id="postformBox" class="innerbox">
-			<h2 class="formTitle"><!--&IF($IS_THREAD,' New reply [<a href="{$PHP_SELF2}">Return</a>]','New thread')--></h2>
 			<!--&IF($MAX_FILE_SIZE,'<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" enctype="multipart/form-data">','<form id="postform" name="postform" action="{$PHP_SELF}" method="POST">')-->
+				<h2 class="formTitle"><!--&IF($IS_THREAD,' New reply [<a href="{$PHP_SELF2}">Return</a>]','New thread')--></h2>
 				{$FORM_HIDDEN}
 				<div id="postformTable">
 					<div class="postformItem"><label for="sub">Topic:</label>{$FORM_TOPIC_FIELD}{$FORM_SUBMIT}</div>
