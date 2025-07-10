@@ -182,7 +182,7 @@ h2.title {
   margin-bottom: 2em;
 }
 
-#txtreply #postarea {
+#txtreply #postformBox {
   background-color: var(--color-bg-menu);
   border-bottom: 2px solid #bbbbbb;
   margin: 0.5em 3px 3px;
