@@ -102,8 +102,7 @@ select {
   font-size: 1.2em;
 }
 
-#postarea,
-#postarea2 {
+#postformBox {
   background-color: var(--color-bg-menu);
 }
 
