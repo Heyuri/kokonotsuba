@@ -221,10 +221,10 @@ class PIOPDO implements IPIO {
 	}
 	
 	public function getPostIP($no) {
-	    $query = "SELECT host FROM {$this->tablename} WHERE no = ?";
-	    $ip = $this->databaseConnection->fetchColumn($query, [intval($no)]);
-    
-	    return $ip !== false ? $ip : null;
+		$query = "SELECT host FROM {$this->tablename} WHERE no = ?";
+		$ip = $this->databaseConnection->fetchColumn($query, [intval($no)]);
+	
+		return $ip !== false ? $ip : null;
 	}
 
 	public function getThreadPreviewsFromBoard(board $board, int $previewCount, int $amount = 0, int $offset = 0): array {
@@ -539,22 +539,44 @@ class PIOPDO implements IPIO {
 			$postUIDsList = implode(', ', $posts);
 
 			$threadUIDsResult = $this->databaseConnection->fetchAllAsArray("
-				SELECT DISTINCT thread_uid
+				SELECT DISTINCT thread_uid, boardUID
 				FROM {$this->tablename}
 				WHERE post_uid IN ({$postUIDsList})
 			");
+			
+			// Extract unique boardUIDs from the result
+			$boardUIDs = array_unique(array_column($threadUIDsResult, 'boardUID'));
 
-			$threadUIDs = [];
-			foreach ($threadUIDsResult as $row) {
-				$threadUIDs[] = $row['thread_uid'];
+			// Fetch boards using the unique UIDs
+			$boards = boardIO::getInstance()->getBoardsFromUIDs($boardUIDs);
+
+			// Create a board map: boardUID => board
+			$boardMap = [];
+			foreach ($boards as $board) {
+				$boardMap[$board->getBoardUID()] = $board;
 			}
+
+			// Build deletionRows array with board mapping
+			$deletionRows = [];
+			foreach ($threadUIDsResult as $row) {
+				$deletionRows[] = [
+					'thread_uid' => $row['thread_uid'],
+					'board' => $boardMap[$row['boardUID']]
+				];
+			}
+
 
 			$this->databaseConnection->execute("DELETE FROM {$this->tablename} WHERE post_uid IN ({$postUIDsList})");
 			$this->databaseConnection->execute("DELETE FROM {$this->threadTable} WHERE post_op_post_uid IN ({$postUIDsList})");
 
-			if(!is_array($threadUIDs)) $threadUIDs = [$threadUIDs];
+			if(!is_array($deletionRows)) $deletionRows = [$deletionRows];
 
-			foreach ($threadUIDs as $threadUID) {
+			foreach ($deletionRows as $deletionRow) {
+				$threadUID = $deletionRow['thread_uid'];
+				$board = $deletionRow['board'];
+
+				$config = $board->loadBoardConfig();
+
 				$newReplyData = $this->databaseConnection->fetchOne("
 					SELECT `root`
 					FROM {$this->tablename}
@@ -581,14 +603,19 @@ class PIOPDO implements IPIO {
 						LIMIT 1
 					", [$threadUID]);
 
+					$threadTimestamps = $this->databaseConnection->fetchOne("
+						SELECT thread_created_time, last_reply_time FROM {$this->threadTable} WHERE thread_uid = ?
+					", [$threadUID]);
+
 					$suppressBump = false;
 					if ($opPostCheck) {
 						$email = strtolower(trim($opPostCheck['email'] ?? ''));
-						$status = strtolower(trim($opPostCheck['status'] ?? ''));
+						$status = new FlagHelper($opPostCheck['status']);
+						$threadCreatedTime = $threadTimestamps['thread_created_time'];
 
-						
+						$maxAgeLimit = $config['MAX_AGE_TIME'];
 
-						if (strstr($email, 'sage') || strstr($status, 'as')) {
+						if (strstr($email, 'sage') || $status->value('as') || $maxAgeLimit && $_SERVER['REQUEST_TIME'] - $threadCreatedTime > ($maxAgeLimit * 60 * 60)) {
 							$suppressBump = true;
 						}
 					}
