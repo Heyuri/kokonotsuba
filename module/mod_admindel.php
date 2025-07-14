@@ -113,6 +113,9 @@ class mod_admindel extends moduleHelper {
 
 			$pageToRebuild = getPageOfThread($thread_uid, $threads, $this->config['PAGE_DEF']);
 			
+			// make sure it isn't above the static page limit - this prevents a potential DOS vulnerability where a request can trigger a resource intensive operation
+			$pageToRebuild = min($pageToRebuild, $this->config['STATIC_HTML_UNTIL']);
+
 			$board->rebuildBoardPages($pageToRebuild);
 		}
 		
