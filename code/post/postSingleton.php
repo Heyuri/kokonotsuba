@@ -611,11 +611,11 @@ class PIOPDO implements IPIO {
 					if ($opPostCheck) {
 						$email = strtolower(trim($opPostCheck['email'] ?? ''));
 						$status = new FlagHelper($opPostCheck['status']);
-						$threadCreatedTime = $threadTimestamps['thread_created_time'];
+						$threadCreatedTime = strtotime($threadTimestamps['thread_created_time']);
 
 						$maxAgeLimit = $config['MAX_AGE_TIME'];
 
-						if (strstr($email, 'sage') || $status->value('as') || $maxAgeLimit && $_SERVER['REQUEST_TIME'] - $threadCreatedTime > ($maxAgeLimit * 60 * 60)) {
+						if (strstr($email, 'sage') || $status->value('as') || ($maxAgeLimit && $_SERVER['REQUEST_TIME'] - $threadCreatedTime > ($maxAgeLimit * 60 * 60))) {
 							$suppressBump = true;
 						}
 					}
