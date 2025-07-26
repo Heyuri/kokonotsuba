@@ -19,15 +19,15 @@ class postFileUploadController {
 	private file $file;
 	private thumbnail $thumbnail;
 
-	private readonly globalHTML $globalHTML;
-
+	// error handler
+	private softErrorHandler $softErrorHandler;
 
 	public function __construct(array $config,
 	 fileFromUpload $fileFromUpload,
 	 thumbnailCreator $thumbnailCreator,
 	 thumbnail $thumbnail,
-	 globalHTML $globalHTML,
-	 string $boardImagePath) {
+	 string $boardImagePath,
+	 softErrorHandler $softErrorHandler) {
 		$this->config = $config;
 
 		$this->fileFromUpload = $fileFromUpload;
@@ -38,7 +38,7 @@ class postFileUploadController {
 
 		$this->boardImagePath = $boardImagePath;
 		
-		$this->globalHTML = $globalHTML;
+		$this->softErrorHandler = $softErrorHandler;
 	}
 
 	public function savePostFileToBoard(): void {
@@ -126,24 +126,24 @@ class postFileUploadController {
 
 		// Check if the extension is allowed
 		if (!array_key_exists($ext, $this->config['ALLOW_UPLOAD_EXT'])) {
-			$this->globalHTML->error(_T('regist_upload_notsupport'));
+			$this->softErrorHandler->errorAndExit(_T('regist_upload_notsupport'));
 		}
 
 		// Check if the MIME type matches the one configured for the extension
 		if ($this->config['ALLOW_UPLOAD_EXT'][$ext] !== $mimeType) {
-			$this->globalHTML->error(_T('regist_upload_notsupport'));
+			$this->softErrorHandler->errorAndExit(_T('regist_upload_notsupport'));
 		}
 	}
 
 	private function validateFileSize(int $fileSize): void {
 		if ($fileSize > $this->config['MAX_KB'] * 1024) {
-			$this->globalHTML->error(_T('regist_upload_exceedcustom'));
+			$this->softErrorHandler->errorAndExit(_T('regist_upload_exceedcustom'));
 		}
 	}
 
 	private function validateFileHash(string $md5Hash) {
 		if (in_array($md5Hash, $this->config['BAD_FILEMD5'])) {
-			$this->globalHTML->error(_T('regist_upload_blocked'));
+			$this->softErrorHandler->errorAndExit(_T('regist_upload_blocked'));
 		}
 	}
 
@@ -152,22 +152,22 @@ class postFileUploadController {
     	    case UPLOAD_ERR_OK:
     	        break;
     	    case UPLOAD_ERR_FORM_SIZE:
-    	        $this->globalHTML->error('ERROR: The file is too large.(upfile)');
+    	        $this->softErrorHandler->errorAndExit('ERROR: The file is too large.(upfile)');
     	        break;
     	    case UPLOAD_ERR_INI_SIZE:
-    	        $this->globalHTML->error('ERROR: The file is too large.(php.ini)');
+    	        $this->softErrorHandler->errorAndExit('ERROR: The file is too large.(php.ini)');
     	        break;
     	    case UPLOAD_ERR_PARTIAL:
-            	$this->globalHTML->error('ERROR: The uploaded file was only partially uploaded.');
+            	$this->softErrorHandler->errorAndExit('ERROR: The uploaded file was only partially uploaded.');
     	        break;
     	    case UPLOAD_ERR_NO_TMP_DIR:
-    	        $this->globalHTML->error('ERROR: Missing a temporary folder.');
+    	        $this->softErrorHandler->errorAndExit('ERROR: Missing a temporary folder.');
     	        break;
     	    case UPLOAD_ERR_CANT_WRITE:
-    	        $this->globalHTML->error('ERROR: Failed to write file to disk.');
+    	        $this->softErrorHandler->errorAndExit('ERROR: Failed to write file to disk.');
     	        break;
     	    default:
-    	        $this->globalHTML->error('ERROR: Unable to save the uploaded file.');
+    	        $this->softErrorHandler->errorAndExit('ERROR: Unable to save the uploaded file.');
     	}
 	}
 	
