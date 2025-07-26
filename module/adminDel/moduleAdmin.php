@@ -42,6 +42,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		$postUid = $post['post_uid'];
 		$muteMinutes = $this->JANIMUTE_LENGTH;
 		$plural = $muteMinutes == 1 ? '' : 's';
+
+		$board = searchBoardArrayForBoard($post['boardUID']);
 		
 		$url = fn(array $params) => $this->getModulePageURL($params);
 
@@ -54,7 +56,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		if (!empty($post['ext'])) {
 			// this check needs to stay inside this if statement or else it'll read from disk for every post
-			if($this->moduleContext->FileIO->imageExists($post['tim'] . $post['ext'], $this->moduleContext->board)) {
+			if($this->moduleContext->FileIO->imageExists($post['tim'] . $post['ext'], $board)) {
 				$addControl('imgdel', 'DF', 'Delete file', 'adminDeleteFileFunction');
 			}
 		}
