@@ -2,6 +2,7 @@
 //encapsulate action from db
 class loggedActionEntry {
 	public readonly string $time_added;
+	public readonly string $date_added; 
 	public readonly string $name;
 	public readonly string $role;
 	public readonly string $log_action;
@@ -11,6 +12,7 @@ class loggedActionEntry {
 	public readonly string $board_title;
 
 	public function getTimeAdded(): string { return $this->time_added; }
+	public function getDateAdded(): string { return $this->date_added; }
 	public function getName(): string { return $this->name; }
 	public function getRole(): string { return $this->role; }
 	public function getLogAction(): string { return $this->log_action; }
