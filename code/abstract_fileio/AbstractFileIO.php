@@ -50,10 +50,9 @@ abstract class AbstractFileIO implements IFileIO {
     //get board storage size in KB
     public function getCurrentStorageSize($board) {
 		$config = $board->loadBoardConfig();
-        $globalHTML = new globalHTML($board);
 
-        if(!file_exists($board->getBoardUploadedFilesDirectory().$config['THUMB_DIR'])) $globalHTML->error("Thumb directory not found or created ".$board->getBoardUploadedFilesDirectory().$config['THUMB_DIR']);
-        if(!file_exists($board->getBoardUploadedFilesDirectory().$config['IMG_DIR'])) $globalHTML->error("Image directory not found or created ".$board->getBoardUploadedFilesDirectory().$config['IMG_DIR']);
+        if(!file_exists($board->getBoardUploadedFilesDirectory().$config['THUMB_DIR'])) throw new Exception("Thumb directory not found or created ".$board->getBoardUploadedFilesDirectory().$config['THUMB_DIR']);
+        if(!file_exists($board->getBoardUploadedFilesDirectory().$config['IMG_DIR'])) throw new Exception("Image directory not found or created ".$board->getBoardUploadedFilesDirectory().$config['IMG_DIR']);
 		
         $totalSize = 0;
 		$dirs = array(
