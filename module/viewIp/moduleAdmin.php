@@ -29,11 +29,29 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function onRenderPostAdminControls(string &$modControlSection, array &$post): void {
-		$postLink = $this->getModulePageURL(['ip_addess' => $post['host']]);
+		// Return early if the user is viewing the manage posts screen
+		// This is so the IP doesnt show up in the func column
+		if($this->isManagePostsRoute()) {
+			return;
+		}
+		
+		$postLink = $this->getModulePageURL(['ip_address' => $post['host']]);
 		
 		$ipButton = '[<a href="' . $postLink . '">' . htmlspecialchars($post['host']) . '</a>]';
 		
 		$modControlSection .= $ipButton;
+	}
+
+	private function isManagePostsRoute(): bool {
+		// Get the mode
+		$mode = $_GET['mode'] ?? '';
+		
+		// Check if its manage posts
+		if($mode === 'managePosts') {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	public function ModulePage(): void {
@@ -41,7 +59,20 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$ip_address = $_GET['ip_address'] ?? '';
 
-		$query = http_build_query(['mode' => 'managePosts', 'ip_address' => $ip_address]);
+		$allBoardUids = [];
+
+		foreach(GLOBAL_BOARD_ARRAY as $board) {
+			$allBoardUids[] = $board->getBoardUID();
+		}
+		
+		$boardList = implode(' ', $allBoardUids);
+		
+		$query = http_build_query(
+			[
+				'mode' => 'managePosts',
+				'ip_address' => $ip_address,
+				'board' => $boardList
+			]);
 		
 		$url = $boardUrl . '?' . $query;
 
