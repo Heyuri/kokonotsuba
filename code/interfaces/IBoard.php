@@ -17,7 +17,7 @@ interface IBoard {
 	 *
 	 * @return templateEngine Template engine instance
 	 */
-	public function getBoardTemplateEngine(): templateEngine;
+	public function getBoardTemplateEngine(): ?templateEngine;
 
 	/**
 	 * Get the title of the board.
@@ -223,4 +223,7 @@ interface IBoard {
 	 * @return void
 	 */
 	public function incrementBoardPostNumberMultiple(int $count): void;
+
+	public function getConfigValue(string $key, $default = null, bool $throwOnMissing = false): mixed;
+
 }
