@@ -1,27 +1,23 @@
 <?php
-class overboard {
-	private $config, $moduleEngine, $templateEngine;
-	
-	public function __construct(array $config, moduleEngine $moduleEngine, templateEngine $templateEngine) {
-		$this->config = $config;
-
-		$this->moduleEngine = $moduleEngine;
-		$this->templateEngine = $templateEngine;
-
-		$this->templateEngine->setFunctionCallbacks([
-			[
-				'callback' => function (&$ary_val) {
-					$this->moduleEngine->useModuleMethods('BlotterPreview', [ &$ary_val['{$BLOTTER}'] ]);
-				},
-			],
-			[
-				'callback' => function (&$ary_val) {
-					$this->moduleEngine->useModuleMethods('GlobalMessage', [ &$ary_val['{$GLOBAL_MESSAGE}'] ]);
-				},
-			],
-		]);
-
-	}
+class overboard {	
+	public function __construct(
+		private board $board,
+		private readonly array $config, 
+		private readonly softErrorHandler $softErrorHandler,
+		private readonly threadRepository $threadRepository,
+		private readonly boardService $boardService,
+		private readonly postRepository $postRepository,
+		private readonly postService $postService,
+		private readonly quoteLinkService $quoteLinkService,
+		private readonly threadService $threadService,
+		private readonly postSearchService $postSearchService,
+		private readonly attachmentService $attachmentService,
+		private readonly actionLoggerService $actionLoggerService,
+		private readonly postRedirectService $postRedirectService,
+		private transactionManager $transactionManager,
+		private moduleEngine $moduleEngine, 
+		private ?templateEngine $templateEngine
+	) {}
 	
 	public function drawOverboardHead(&$dat, $resno = 0) {
 		$html = '';
@@ -31,18 +27,18 @@ class overboard {
 		$pte_vals['{$PAGE_TITLE}'] = strip_tags($this->config['OVERBOARD_TITLE']);
 
 		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
-		$this->moduleEngine->useModuleMethods('Head', array(&$html, $resno)); // "Head" Hook Point
+		$this->moduleEngine->dispatch('Head', array(&$html, $resno)); // "Head" Hook Point
 		$html .= '</head>';
 		$pte_vals += array('{$HOME}' => '[<a href="'.$this->config['HOME'].'" target="_top">'._T('head_home').'</a>]',
-			'{$STATUS}' => '[<a href="'.$this->config['PHP_SELF'].'?mode=status">'._T('head_info').'</a>]',
-			'{$ADMIN}' => '[<a href="'.$this->config['PHP_SELF'].'?mode=admin">'._T('head_admin').'</a>]',
-			'{$REFRESH}' => '[<a href="'.$this->config['PHP_SELF2'].'?">'._T('head_refresh').'</a>]',
+			'{$STATUS}' => '[<a href="'.$this->config['LIVE_INDEX_FILE'].'?mode=status">'._T('head_info').'</a>]',
+			'{$ADMIN}' => '[<a href="'.$this->config['LIVE_INDEX_FILE'].'?mode=admin">'._T('head_admin').'</a>]',
+			'{$REFRESH}' => '[<a href="'.$this->config['STATIC_INDEX_FILE'].'?">'._T('head_refresh').'</a>]',
 			'{$HOOKLINKS}' => '', '{$TITLE}' => $this->config['OVERBOARD_TITLE'], '{$TITLESUB}' => $this->config['OVERBOARD_SUBTITLE'],
-			 '{$SELF}' => $this->config['PHP_SELF']
+			 '{$LIVE_INDEX_FILE}' => $this->config['LIVE_INDEX_FILE'], '{$BANNER}' => '',
 			);
 			
-		$this->moduleEngine->useModuleMethods('Toplink', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
-		$this->moduleEngine->useModuleMethods('AboveTitle', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
+		$this->moduleEngine->dispatch('TopLinks', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
+		$this->moduleEngine->dispatch('PageTop', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
 		
 		$html .= $this->templateEngine->ParseBlock('BODYHEAD',$pte_vals);
 		
@@ -57,10 +53,8 @@ class overboard {
 	}
 
 	public function drawOverboardThreads(array $filters) {
-		$threadSingleton = threadSingleton::getInstance();
-
 		$page = $_REQUEST['page'] ?? 0;
-		if (!filter_var($page, FILTER_VALIDATE_INT) && $page != 0) $softErrorHandler->errorAndExit("Page number was not a valid int.");
+		if (!filter_var($page, FILTER_VALIDATE_INT) && $page != 0) $this->softErrorHandler->errorAndExit("Page number was not a valid int.");
 		$page = ($page >= 0) ? $page : 1;
 		
 		$threadsHTML = '';
@@ -69,15 +63,17 @@ class overboard {
 		
 		$templateValues = $this->buildOverboardTemplateValues();
 		
-		
+		// If no boards are selected, return prematurely
+		if (!$filters['board']) {
+			return '<div class="bbls"> <b class="error"> - No threads - </b> </div>';
+		}
+
 		$previewCount = $this->config['RE_DEF'];
 
-		$threads = $threadSingleton->getFilteredThreads($previewCount, $limit, $offset, $filters);
+		$threads = $this->threadService->getFilteredThreads($previewCount, $limit, $offset, $filters);
 		
+		$numberThreadsFiltered = $this->threadRepository->getFilteredThreadCount($filters);
 		
-		$numberThreadsFiltered = $threadSingleton->getFilteredThreadCount($filters);
-		
-		if (!$threads) return '<div class="bbls"> <b class="error"> - No threads - </b> </div>';
 		
 		$boardMap = $this->loadBoardsForThreads($threads);
 		$quoteLinksByBoardUID = $this->loadQuoteLinksForThreads($boardMap);
@@ -98,7 +94,7 @@ class overboard {
 			}
 		}
 		
-		$templateValues['{$PAGENAV}'] = drawPager($limit, $numberThreadsFiltered, fullURL().$this->config['PHP_SELF'].'?mode=overboard');
+		$templateValues['{$PAGENAV}'] = drawPager($limit, $numberThreadsFiltered, $this->board->getBoardURL(true) . '?mode=overboard', [$this->softErrorHandler, 'errorAndExit']);
 		$threadsHTML .= $this->templateEngine->ParseBlock('MAIN', $templateValues);
 		return $threadsHTML;
 	}
@@ -119,13 +115,11 @@ class overboard {
 			'{$TITLESUB}' => 'Posts from all kokonotsuba boards',
 			'{$BOARD_URL}' => '',
 			'{$IS_THREAD}' => false,
-			'{$SELF}' => $this->config['PHP_SELF']
+			'{$LIVE_INDEX_FILE}' => $this->config['LIVE_INDEX_FILE']
 		);
 	}
 
 	private function loadBoardsForThreads(array $threads): array {
-		$boardIO = boardIO::getInstance();
-	
 		// Extract thread.boardUID safely
 		$boardUIDs = array_map(fn($t) => $t['thread']['boardUID'] ?? null, $threads);
 
@@ -133,7 +127,7 @@ class overboard {
 		$boardUIDs = array_unique(array_filter($boardUIDs));
 
 		// Fetch boards
-		$boards = $boardIO->getBoardsFromUIDs($boardUIDs);
+		$boards = $this->boardService->getBoardsFromUIDs($boardUIDs);
 	
 		// Map boards by UID
 		$boardMap = [];
@@ -146,22 +140,23 @@ class overboard {
 
 	private function loadQuoteLinksForThreads(array $boardMap): array {
 		$quoteLinksByBoardUID = [];
-		foreach ($boardMap as $boardUID => $board) {
-			$quoteLinksByBoardUID[$boardUID] = getQuoteLinksFromBoard($board);
+
+		$boardUids = array_keys($boardMap);
+		foreach ($boardUids as $boardUid) {
+			$quoteLinksByBoardUID[$boardUid] = $this->quoteLinkService->getQuoteLinksFromBoard($boardUid);
 		}
 
 		return $quoteLinksByBoardUID;
 	}
 	
 	private function loadPostsForThreads($threads) {
-		$PIO = PIOPDO::getInstance();
 		$tIDsByBoard = array();
 		
 		foreach ($threads as $thread) {
 			$tIDsByBoard[$thread['thread']['boardUID']][] = $thread['thread_uid'];
 		}
 		
-		$allPosts = $PIO->fetchPostsFromBoardsAndThreads($tIDsByBoard);
+		$allPosts = $this->postRepository->fetchPostsFromBoardsAndThreads($tIDsByBoard);
 		
 		$postsByBoardAndThread = array();
 		foreach ($allPosts as $post) {
@@ -217,8 +212,25 @@ class overboard {
 		);
 	}
 	
-	private function createThreadRenderer(board $board, array $config, templateEngine $templateEngine, array $quoteLinksByBoardUID): threadRenderer {
-		$moduleEngine = new moduleEngine($board);
+	private function createThreadRenderer(board $board, array $config, ?templateEngine $templateEngine, array $quoteLinksByBoardUID): threadRenderer {
+		$moduleEngineContext = new moduleEngineContext($config, 
+			$board->getConfigValue('LIVE_INDEX_FILE'), 
+			$board->getConfigValue('moduleList'), 
+			$this->postRepository, 
+			$this->postService, 
+			$this->threadRepository, 
+			$this->threadService, 
+			$this->postSearchService,
+			$this->quoteLinkService,
+			$this->boardService,
+			$this->attachmentService,
+			$this->actionLoggerService,
+			$this->postRedirectService,
+			$this->transactionManager,
+			$templateEngine, 
+			$board);
+
+		$moduleEngine = new moduleEngine($moduleEngineContext);
 		
 		$boardUID = $board->getBoardUID();
 		$quoteLinksForBoard = $quoteLinksByBoardUID[$boardUID];
