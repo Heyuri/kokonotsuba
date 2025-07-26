@@ -6,158 +6,185 @@
 /* Constants */
 require __DIR__.'/constants.php';
 
-/* Interfaces */
-require __DIR__.'/code/interfaces/IBoard.php'; // board interface
-require __DIR__.'/code/interfaces/IFileIO.php'; // FileIO inteface
-require __DIR__.'/code/interfaces/ILogger.php'; // Logger interface
-require __DIR__.'/code/interfaces/IModule.php'; // ModuleHelper interface
-require __DIR__.'/code/interfaces/IPIO.php'; // postSingleton interface
-require __DIR__.'/code/interfaces/IPIOCondition.php'; // pio condition interface
-require __DIR__.'/code/interfaces/MethodInterceptor.php'; // method interceptor interface
+// interfaces
+require __DIR__ . '/code/interfaces/IBoard.php';
+require __DIR__ . '/code/interfaces/IFileIO.php';
+require __DIR__ . '/code/interfaces/ILogger.php';
+require __DIR__ . '/code/interfaces/IModule.php';
+require __DIR__ . '/code/interfaces/IPIO.php';
+require __DIR__ . '/code/interfaces/IPIOCondition.php';
+require __DIR__ . '/code/interfaces/MethodInterceptor.php';
 
-/* Loggers */
-require __DIR__.'/code/logger/SimpleLogger.php'; // simple logger class
-require __DIR__.'/code/logger/LoggerInterceptor.php'; // logger incterceptor class
-require __DIR__.'/code/logger/NopLogger.php'; // no logging class
+// pmclibrary
+require __DIR__ . '/code/pmclibrary.php';
 
-/* Language */
-require __DIR__.'/code/lang/LanguageLoader.php';
+// abstract_fileio
+require __DIR__ . '/code/abstract_fileio/AbstractFileIO.php';
+require __DIR__ . '/code/abstract_fileio/AbstractIfsFileIO.php';
 
-/* FileIO */
-require __DIR__.'/code/abstract_fileio/AbstractFileIO.php';
-require __DIR__.'/code/abstract_fileio/AbstractIfsFileIO.php';
-require __DIR__.'/code/fileio/fileio.local.php';
+// account
+require __DIR__ . '/code/account/accountRepository.php';
+require __DIR__ . '/code/account/accountService.php';
+require __DIR__ . '/code/account/staffAccount.php';
+require __DIR__ . '/code/account/staffAccountSession.php';
 
+// action_log
+require __DIR__ . '/code/action_log/actionLoggerRepository.php';
+require __DIR__ . '/code/action_log/actionLoggerService.php';
+require __DIR__ . '/code/action_log/loggedActionEntry.php';
 
-/* PMC library (singleton factory) */
-require __DIR__.'/code/pmclibrary.php'; // factory
+// board
+require __DIR__ . '/code/board/board.php';
+require __DIR__ . '/code/board/boardCreator.php';
+require __DIR__ . '/code/board/boardData.php';
+require __DIR__ . '/code/board/boardPostNumbers.php';
+require __DIR__ . '/code/board/boardRebuilder.php';
+require __DIR__ . '/code/board/boardRepository.php';
+require __DIR__ . '/code/board/boardService.php';
+require __DIR__ . '/code/board/boardStoredFile.php';
+require __DIR__ . '/code/board/import/abstractBoardImporter.php';
+require __DIR__ . '/code/board/import/pixmicatBoardImporter.php';
+require __DIR__ . '/code/board/import/vichanBoardImporter.php';
 
-/* Libraries */
-require __DIR__.'/code/libraries/lib_admin.php'; // admin panel functions
-require __DIR__.'/code/libraries/lib_template.php'; // template library
-require __DIR__.'/code/libraries/lib_rebuild.php'; // rebuild library
-require __DIR__.'/code/libraries/lib_database.php'; // database library
-require __DIR__.'/code/libraries/lib_errorhandler.php'; // error library
-require __DIR__.'/code/libraries/lib_compatible.php'; // compatability library
-require __DIR__.'/code/libraries/lib_file.php'; // file I/O library
-require __DIR__.'/code/libraries/lib_common.php'; // general-purpose functions
-require __DIR__.'/code/libraries/lib_cache.php'; // caching library
-require __DIR__.'/code/libraries/lib_post.php'; // post-related functions
-require __DIR__.'/code/libraries/lib_filter.php'; // filter-related functions
+// cache/path_cache
+require __DIR__ . '/code/cache/path_cache/boardPathRepository.php';
+require __DIR__ . '/code/cache/path_cache/boardPathService.php';
+require __DIR__ . '/code/cache/path_cache/cachedBoardPath.php';
 
-/* Sensors */
-require __DIR__.'/code/sensor/PIOSensor.php'; // PIO senssor
-require __DIR__.'/code/sensor/postConditions.php'; // post/thread conditions classes
+// cache/thread_cache
+require __DIR__ . '/code/cache/thread_cache/threadCache.php';
+require __DIR__ . '/code/cache/thread_cache/threadCacheSingleton.php';
 
-/* Templating */
-require __DIR__.'/code/template/templateEngine.php'; // post and thread functions
-require __DIR__.'/code/template/pageRenderer.php'; // page renderer
+// containers
+require __DIR__ . '/code/containers/boardDiContainer.php';
+require __DIR__ . '/code/containers/moduleEngineContext.php';
+require __DIR__ . '/code/containers/routeDiContainer.php';
 
-/* html */
-require __DIR__.'/code/html/globalHTML.php'; // html class
-require __DIR__.'/code/html/threadRenderer.php'; // thread rendering class
-require __DIR__.'/code/html/postRenderer.php'; // post rendering class
-require __DIR__.'/code/html/postHtmlFunctions.php'; // post html library
-require __DIR__.'/code/html/helperHtmlFunctions.php'; // html and string manip library
+// database
+require __DIR__ . '/code/database/database.php';
+require __DIR__ . '/code/database/transactionManager.php';
 
-/* Handle soft error pages */
-require __DIR__.'/code/error/softErrorHandler.php';
+// error
+require __DIR__ . '/code/error/softErrorHandler.php';
+require __DIR__ . '/code/error/BoardException.php';
 
-/* Module related */
-require __DIR__. '/code/module_classes/moduleEngine.php'; // module manager class
-require __DIR__. '/code/module_classes/moduleHelper.php'; // module helper class
+// file
+require __DIR__ . '/code/file/file.php';
+require __DIR__ . '/code/file/fileFromUpload.php';
+require __DIR__ . '/code/file/postFileUploadController.php';
+require __DIR__ . '/code/file/thumbnail.php';
 
-/* Caching */
-require __DIR__.'/code/cache/path_cache/boardPathCachingIO.php';
-require __DIR__.'/code/cache/path_cache/cachedBoardPath.php';
-require __DIR__.'/code/cache/thread_cache/threadCacheSingleton.php';
-require __DIR__.'/code/cache/thread_cache/threadCache.php';
+// fileio (only include fileio.local.php)
+require __DIR__ . '/code/fileio/fileio.local.php';
 
+// html
+require __DIR__ . '/code/html/boardList.php';
+require __DIR__ . '/code/html/filterForms.php';
+require __DIR__ . '/code/html/formAndLayout.php';
+require __DIR__ . '/code/html/helperHtmlFunctions.php';
+require __DIR__ . '/code/html/miscPartials.php';
+require __DIR__ . '/code/html/moduleHtmlFunctions.php';
+require __DIR__ . '/code/html/pagers.php';
+require __DIR__ . '/code/html/postHtmlFunctions.php';
+require __DIR__ . '/code/html/postRenderer.php';
+require __DIR__ . '/code/html/threadRenderer.php';
 
-/* Database singleton */
-require __DIR__.'/code/database/database.php';
+// ip
+require __DIR__ . '/code/ip/IPAddress.php';
+require __DIR__ . '/code/ip/IPValidator.php';
 
-/* Overboard */
-require __DIR__.'/code/overboard.php';
+// lang (only LanguageLoader.php)
+require __DIR__ . '/code/lang/LanguageLoader.php';
 
-/* Post objects and singletons */
-require __DIR__.'/code/post/FlagHelper.php';
-require __DIR__.'/code/post/postValidator.php';
-require __DIR__.'/code/post/postSingleton.php';
-require __DIR__.'/code/post/postSearchService.php';
-require __DIR__.'/code/post/threadSingleton.php';
-require __DIR__.'/code/post/postRedirectIO.php';
-require __DIR__.'/code/post/threadRedirect.php';
+// libraries
+require __DIR__ . '/code/libraries/lib_admin.php';
+require __DIR__ . '/code/libraries/lib_cache.php';
+require __DIR__ . '/code/libraries/lib_common.php';
+require __DIR__ . '/code/libraries/lib_compatible.php';
+require __DIR__ . '/code/libraries/lib_database.php';
+require __DIR__ . '/code/libraries/lib_errorhandler.php';
+require __DIR__ . '/code/libraries/lib_file.php';
+require __DIR__ . '/code/libraries/lib_filter.php';
+require __DIR__ . '/code/libraries/lib_post.php';
+require __DIR__ . '/code/libraries/lib_rebuild.php';
+require __DIR__ . '/code/libraries/lib_template.php';
 
-/* files */
-require __DIR__.'/code/file/file.php';
-require __DIR__.'/code/file/thumbnail.php';
-require __DIR__.'/code/file/fileFromUpload.php';
-require __DIR__.'/code/file/postFileUploadController.php';
+// log_in
+require __DIR__ . '/code/log_in/adminLoginController.php';
+require __DIR__ . '/code/log_in/authenticate.php';
+require __DIR__ . '/code/log_in/loginHandler.php';
 
-/* regist/post helper classes */
-require __DIR__.'/code/post/helper/agingHandler.php';
-require __DIR__.'/code/post/helper/defaultTextFillter.php';
-require __DIR__.'/code/post/helper/fortuneGenerator.php';
-require __DIR__.'/code/post/helper/postDateFormatter.php';
-require __DIR__.'/code/post/helper/postFilterApplier.php';
-require __DIR__.'/code/post/helper/postIDGenerator.php';
-require __DIR__.'/code/post/helper/thumbnailCreator.php';
-require __DIR__.'/code/post/helper/tripcodeProcessor.php';
-require __DIR__.'/code/post/helper/webhookDispatcher.php';
+// logger
+require __DIR__ . '/code/logger/LoggerInterceptor.php';
+require __DIR__ . '/code/logger/NopLogger.php';
+require __DIR__ . '/code/logger/SimpleLogger.php';
 
-/* quote link */
-require __DIR__.'/code/quote_link/quoteLinkSingleton.php';
-require __DIR__.'/code/quote_link/quoteLink.php';
-require __DIR__.'/code/quote_link/quoteLinkFunctions.php';
+// module_classes
+require __DIR__ . '/code/module_classes/abstractModule.php';
+require __DIR__ . '/code/module_classes/abstractModuleMain.php';
+require __DIR__ . '/code/module_classes/abstractModuleJavascript.php';
+require __DIR__ . '/code/module_classes/abstractModuleAdmin.php';
+require __DIR__ . '/code/module_classes/moduleContext.php';
+require __DIR__ . '/code/module_classes/moduleEngine.php';
+require __DIR__ . '/code/module_classes/hookDispatcher.php';
 
+// overboard
+require __DIR__ . '/code/overboard.php';
 
-/* Routers */
-require __DIR__.'/code/routers/modeHandler.php';
+// post
+require __DIR__ . '/code/post/FlagHelper.php';
+require __DIR__ . '/code/post/attachmentRepository.php';
+require __DIR__ . '/code/post/attachmentService.php';
+require __DIR__ . '/code/post/helper/agingHandler.php';
+require __DIR__ . '/code/post/helper/defaultTextFillter.php';
+require __DIR__ . '/code/post/helper/fortuneGenerator.php';
+require __DIR__ . '/code/post/helper/postDateFormatter.php';
+require __DIR__ . '/code/post/helper/postFilterApplier.php';
+require __DIR__ . '/code/post/helper/postIDGenerator.php';
+require __DIR__ . '/code/post/helper/thumbnailCreator.php';
+require __DIR__ . '/code/post/helper/tripcodeProcessor.php';
+require __DIR__ . '/code/post/helper/webhookDispatcher.php';
+require __DIR__ . '/code/post/post.php';
+require __DIR__ . '/code/post/postRedirectRepository.php';
+require __DIR__ . '/code/post/postRedirectService.php';
+require __DIR__ . '/code/post/postRegistData.php';
+require __DIR__ . '/code/post/postRepository.php';
+require __DIR__ . '/code/post/postRow.php';
+require __DIR__ . '/code/post/postSearchRepository.php';
+require __DIR__ . '/code/post/postSearchService.php';
+require __DIR__ . '/code/post/postService.php';
+require __DIR__ . '/code/post/postValidator.php';
 
-/* Routes */
-require __DIR__.'/code/routers/routes/accountRoute.php';
-require __DIR__.'/code/routers/routes/adminRoute.php';
-require __DIR__.'/code/routers/routes/managePostsRoute.php';
-require __DIR__.'/code/routers/routes/actionLogRoute.php';
-require __DIR__.'/code/routers/routes/boardsRoute.php';
-require __DIR__.'/code/routers/routes/defaultRoute.php';
-require __DIR__.'/code/routers/routes/handleAccountActionRoute.php';
-require __DIR__.'/code/routers/routes/handleBoardRequestsRoute.php';
-require __DIR__.'/code/routers/routes/moduleloadedRoute.php';
-require __DIR__.'/code/routers/routes/moduleRoute.php';
-require __DIR__.'/code/routers/routes/overboardRoute.php';
-require __DIR__.'/code/routers/routes/rebuildRoute.php';
-require __DIR__.'/code/routers/routes/registRoute.php';
-require __DIR__.'/code/routers/routes/statusRoute.php';
-require __DIR__.'/code/routers/routes/usrdelRoute.php';
+// quote_link
+require __DIR__ . '/code/quote_link/quoteLink.php';
+require __DIR__ . '/code/quote_link/quoteLinkRepository.php';
+require __DIR__ . '/code/quote_link/quoteLinkService.php';
 
-/* Account Related */
-require __DIR__.'/code/account/accountClass.php';
-require __DIR__.'/code/account/accountIO.php';
-require __DIR__.'/code/account/accountRequestHandler.php';
-require __DIR__.'/code/account/staffAccountSession.php';
+// routers
+require __DIR__ . '/code/routers/modeHandler.php';
+require __DIR__ . '/code/routers/routes/accountRoute.php';
+require __DIR__ . '/code/routers/routes/actionLogRoute.php';
+require __DIR__ . '/code/routers/routes/adminRoute.php';
+require __DIR__ . '/code/routers/routes/boardsRoute.php';
+require __DIR__ . '/code/routers/routes/defaultRoute.php';
+require __DIR__ . '/code/routers/routes/handleAccountActionRoute.php';
+require __DIR__ . '/code/routers/routes/handleBoardRequestsRoute.php';
+require __DIR__ . '/code/routers/routes/managePostsRoute.php';
+require __DIR__ . '/code/routers/routes/moduleRoute.php';
+require __DIR__ . '/code/routers/routes/moduleloadedRoute.php';
+require __DIR__ . '/code/routers/routes/overboardRoute.php';
+require __DIR__ . '/code/routers/routes/rebuildRoute.php';
+require __DIR__ . '/code/routers/routes/registRoute.php';
+require __DIR__ . '/code/routers/routes/statusRoute.php';
+require __DIR__ . '/code/routers/routes/usrdelRoute.php';
 
-/* Log in */
-require __DIR__.'/code/log_in/authenticate.php';
-require __DIR__.'/code/log_in/loginHandler.php';
-require __DIR__.'/code/log_in/adminLoginController.php';
+// template
+require __DIR__ . '/code/template/pageRenderer.php';
+require __DIR__ . '/code/template/templateEngine.php';
 
-/* Action log */
-require __DIR__.'/code/action_log/actionClass.php';
-require __DIR__.'/code/action_log/actionLoggerSingleton.php';
-
-/* Board classes and singleton */
-require __DIR__.'/code/board/boardClass.php';
-require __DIR__.'/code/board/boardRebuilder.php';
-require __DIR__.'/code/board/boardSingleton.php';
-require __DIR__.'/code/board/boardStoredFile.php';
-require __DIR__.'/code/board/boardCreator.php';
-// board import
-require __DIR__.'/code/board/import/abstractBoardImporter.php';
-require __DIR__.'/code/board/import/pixmicatBoardImporter.php';
-require __DIR__.'/code/board/import/vichanBoardImporter.php';
-
-/* IP */
-require __DIR__.'/code/ip/IPAddress.php';
-require __DIR__.'/code/ip/IPValidator.php';
+// thread
+require __DIR__ . '/code/thread/thread.php';
+require __DIR__ . '/code/thread/threadRedirect.php';
+require __DIR__ . '/code/thread/threadRepository.php';
+require __DIR__ . '/code/thread/threadRow.php';
+require __DIR__ . '/code/thread/threadService.php';
