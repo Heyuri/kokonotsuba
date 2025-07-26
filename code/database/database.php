@@ -63,6 +63,10 @@ class DatabaseConnection {
 	}
 
 	// Transaction methods
+	public function inTransaction(): bool {
+		return $this->pdo->inTransaction();
+	}
+
 	public function beginTransaction() {
 		$this->pdo->beginTransaction();
 	}
