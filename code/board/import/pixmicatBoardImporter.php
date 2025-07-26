@@ -5,20 +5,16 @@
 */
 
 class pixmicatBoardImporter extends abstractBoardImporter {
-	private string $tempTableName;
-	private readonly string $threadTableName;
-	private readonly string $postTableName;
 	private array $noToPostUidMap = [];
+	private string $tempTableName;
 
-	public function __construct(mixed $databaseConnection, 
-	 board $board, 
-	 string $threadTableName, 
-	 string $postTableName) {
-		$this->databaseConnection = $databaseConnection;
-		$this->board = $board;
-
-		$this->threadTableName = $threadTableName;
-		$this->postTableName = $postTableName;
+	public function __construct(
+		protected DatabaseConnection $databaseConnection, 
+		protected board $board, 
+		private readonly quoteLinkRepository $quoteLinkRepository,
+		private readonly string $threadTableName, 
+		private readonly string $postTableName
+	 ) {
 	}
 
 	// load an sql dump into a temporary table in koko's db
@@ -471,7 +467,7 @@ class pixmicatBoardImporter extends abstractBoardImporter {
 		}		
 	
 		if (!empty($quoteLinksToInsert)) {
-			$count = quoteLinkSingleton::getInstance()->insertQuoteLinks($quoteLinksToInsert);
+			$count = $this->quoteLinkRepository->insertQuoteLinks($quoteLinksToInsert);
 			error_log("Inserted $count quote links.");
 		} else {
 			error_log("No quote links generated.");

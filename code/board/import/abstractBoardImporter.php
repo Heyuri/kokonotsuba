@@ -5,10 +5,10 @@
 */
 
 abstract class abstractBoardImporter {
-    protected mixed $databaseConnection;
+    protected DatabaseConnection $databaseConnection;
     protected board $board;
 
-	public function __construct(mixed $databaseConnection, board $board) {
+	public function __construct(DatabaseConnection $databaseConnection, board $board) {
         $this->databaseConnection = $databaseConnection;
         $this->board = $board;
     }
