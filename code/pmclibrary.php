@@ -22,23 +22,13 @@ class PMCLibrary {
 		return self::$instFileIO;
 	}
 	
-	public static function createFileIOInstance($board) {
+	public static function createFileIOInstance() {
 		if (self::$instFileIO == null) {
-			$config = $board->loadBoardConfig();
+			$config = getGlobalConfig();
+
 			$fileIoExactClass = 'FileIO'.$config['FILEIO_BACKEND'];
-			$imgDir = $config['IMG_DIR'];
-			$thumbDir = $config['THUMB_DIR'];
-			if ($config['USE_CDN']) {
-				$imgDir = $config['CDN_DIR'].$imgDir;
-				$thumbDir = $config['CDN_DIR'].$thumbDir;
-			}
-			self::$instFileIO = new $fileIoExactClass(unserialize($config['FILEIO_PARAMETER']),
-				array( // FileIO 環境常數
-					'IFS.PATH' => __DIR__.'/fileio/ifs.php',
-					'IFS.LOG' => $board->getBoardStoragePath().$config['FILEIO_INDEXLOG'],
-					'IMG' => $imgDir,
-					'THUMB' => $thumbDir
-				)
+
+			self::$instFileIO = new $fileIoExactClass(unserialize($config['FILEIO_PARAMETER'])
 			);
 		}
 	}
