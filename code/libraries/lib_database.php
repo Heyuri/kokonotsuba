@@ -29,7 +29,7 @@ function truncateForText(string $input): string {
 	return mb_strcut($input, 0, $maxBytes, 'UTF-8');
 }
 
-function addSlashesToArray(&$arrayOfValuesForQuery) {
+function addApostropheToArray(&$arrayOfValuesForQuery) {
 	foreach ($arrayOfValuesForQuery as &$item) {
 		$item = "'" . addslashes($item) . "'";
 	}

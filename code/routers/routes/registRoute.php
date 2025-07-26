@@ -3,148 +3,176 @@
 // regist route - inserts a post/thread from user input
 
 class registRoute {
-    private readonly board $board;
-    private readonly array $config;
-    private readonly globalHTML $globalHTML;
-    private readonly postValidator $postValidator;
-    private readonly staffAccountFromSession $staffSession;
-
-    private moduleEngine $moduleEngine;
-
-    private readonly actionLogger $actionLogger;
-    private readonly mixed $FileIO;
-    private readonly mixed $PIO;
-	private readonly mixed $threadSingleton;
-
-
-    public function __construct(board $board, 
-        array $config,
-        globalHTML $globalHTML, 
-        postValidator $postValidator,
-        staffAccountFromSession $staffSession,
-        moduleEngine $moduleEngine,
-        actionLogger $actionLogger,
-        mixed $FileIO,
-        mixed $PIO,
-		mixed $threadSingleton) {
-        $this->board = $board;
-        $this->config = $config;
-
-        $this->globalHTML = $globalHTML;
-        $this->postValidator = $postValidator;
-        $this->staffSession = $staffSession;
-
-        $this->moduleEngine = $moduleEngine;
-        
-        $this->actionLogger = $actionLogger;
-        $this->FileIO = $FileIO;
-        $this->PIO = $PIO;
-		$this->threadSingleton = $threadSingleton;
-	}
+    public function __construct(private board $board, 
+        private readonly array $config,
+        private readonly postValidator $postValidator,
+        private readonly staffAccountFromSession $staffSession,
+		private transactionManager $transactionManager,
+        private moduleEngine $moduleEngine,
+        private readonly actionLoggerService $actionLoggerService,
+        private mixed $FileIO,
+		private readonly postRepository $postRepository,
+        private readonly postService $postService,
+		private readonly threadRepository $threadRepository,
+		private readonly threadService $threadService,
+		private readonly quoteLinkService $quoteLinkService,
+		private readonly softErrorHandler $softErrorHandler) {}
 
     /* Write to post table */
 	public function registerPostToDatabase() {
-		$this->board->updateBoardPathCache(); // Upload board cached path
-
-		// Get the thread list before insert
-		$threadList = $this->threadSingleton->getThreadListFromBoard($this->board);
+		// Upload board cached path
+		$this->board->updateBoardPathCache();
 
 		// Initialize file directories
 		$thumbDir = $this->board->getBoardUploadedFilesDirectory() . $this->config['THUMB_DIR'];
 		$imgDir = $this->board->getBoardUploadedFilesDirectory() . $this->config['IMG_DIR'];
-	
+
 		// Initialize core handlers
 		$thumbnailCreator = new thumbnailCreator($this->config['USE_THUMB'], $this->config['THUMB_SETTING'], $thumbDir);
-		$tripcodeProcessor = new tripcodeProcessor($this->config, $this->globalHTML);
+		$tripcodeProcessor = new tripcodeProcessor($this->config, $this->softErrorHandler);
 		$defaultTextFiller = new defaultTextFiller($this->config);
 		$fortuneGenerator = new fortuneGenerator($this->config['FORTUNES']);
-		$postFilterApplier = new postFilterApplier($this->config, $this->globalHTML, $fortuneGenerator);
+		$postFilterApplier = new postFilterApplier($this->config, $fortuneGenerator);
 		$postDateFormatter = new postDateFormatter($this->config);
 		$postIdGenerator = new postIdGenerator($this->config, $this->board, $this->staffSession);
-		$agingHandler = new agingHandler($this->config, $this->threadSingleton);
+		$agingHandler = new agingHandler($this->config, $this->threadRepository);
 		$webhookDispatcher = new webhookDispatcher($this->board, $this->config);
-	
-		// Step 1: Validate regist request
-		$this->postValidator->registValidate();
 
-		// Step 2: Gather POST input data
-		$postData = $this->gatherPostInputData();
-		
-		// Step 3: Verify that thread exists
-		$this->postValidator->threadSanityCheck($postData['postOpRoot'], $postData['flgh'], $postData['thread_uid'], $postData['resno'], $postData['ThreadExistsBefore']);
+		// Declare variables to be passed by reference
+		$postData = [];
+		$fileMeta = [];
+		$computedPostInfo = [];
+		$emailForInsertion = '';
+		$redirect = '';
 
-		// Step 4: Process uploaded file (if any)
-		$fileMeta = $this->handleFileUpload($postData['isReply'], $thumbnailCreator, $imgDir);
+		// Begin transaction
+		$this->transactionManager->run(function () use (
+			&$postData,
+			&$fileMeta,
+			&$computedPostInfo,
+			&$emailForInsertion,
+			&$redirect,
+			$imgDir,
+			$thumbnailCreator,
+			$tripcodeProcessor,
+			$defaultTextFiller,
+			$postFilterApplier,
+			$postDateFormatter,
+			$postIdGenerator,
+			$agingHandler,
+		) {
 
-		// Step 5: Validate & clean post content
-		$this->validateAndCleanPostContent($postData, $fileMeta['status'], $fileMeta['file'], $postData['is_admin']);
-	
-		// Step 6: Handle tripcode, default text, filters, and categories
-		$this->processPostDetails($postData, $tripcodeProcessor, $defaultTextFiller, $postFilterApplier);
-	
-		// Step 7: Final data prep (timestamps, password hashing, unique ID)
-		$computedPostInfo = $this->preparePostMetadata($postData, $postDateFormatter, $postIdGenerator, $fileMeta['file']);
-	
-		// Step 8: Validate post for database storage
-		$this->postValidator->validateForDatabase(
-			$postData['pwdc'], $postData['comment'], $postData['time'], $computedPostInfo['pass'],
-			$postData['ip'], $fileMeta['upfile'], $fileMeta['md5'], $computedPostInfo['dest'],
-			$this->PIO, $postData['roleLevel']
-		);
+			// Get the thread list before insert
+			$threadList = $this->threadService->getThreadListFromBoard($this->board);
 
-		// Prune old threads
-		$this->postValidator->pruneOld($this->moduleEngine, $this->PIO, $this->FileIO);
+			// Step 1: Validate regist request
+			$this->postValidator->registValidate();
 
-		// Age/sage logic
-		$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['postOpRoot'], $postData['email'], $postData['age']);
-	
-		// Generate redirect URL and sanitize
-		$redirect = $this->generateRedirectURL($computedPostInfo['no'], $postData['email'], $postData['resno'], $computedPostInfo['timeInMilliseconds']);
+			// Step 2: Gather POST input data
+			$postData = $this->gatherPostInputData();
 
-		// Remove noko/nonoko and dump
-		$emailForInsertion = $this->preparePostEmail($postData['email']);
+			// Get the thread data (if it exists)
+			$thread = $this->threadService->getThreadByUID($postData['thread_uid']);
 
-		// Commit pre-write hook
-		$this->moduleEngine->useModuleMethods('RegistBeforeCommit', [
-			&$postData['name'], &$postData['email'], &$postData['sub'], &$postData['comment'],
-			&$postData['category'], &$postData['age'], $fileMeta['file'], $postData['thread_uid'],
-			[$fileMeta['thumbWidth'], $fileMeta['thumbHeight'], $fileMeta['imgW'], $fileMeta['imgH'], $fileMeta['fileTimeInMilliseconds'], $fileMeta['ext']],
-			&$postData['status']
-		]);
+			// Step 3: Verify that thread exists
+			$this->postValidator->threadSanityCheck($postData['postOpRoot'], $postData['flgh'], $postData['thread_uid'], $postData['resno'], $postData['ThreadExistsBefore']);
 
-		// Add post to database
-		$this->PIO->addPost(
-			$this->board, $computedPostInfo['no'], $postData['thread_uid'], $computedPostInfo['is_op'],  $fileMeta['md5'],
-			$postData['category'], $fileMeta['fileTimeInMilliseconds'], $fileMeta['fileName'], $fileMeta['ext'],
-			$fileMeta['imgW'], $fileMeta['imgH'], $fileMeta['readableSize'], $fileMeta['thumbWidth'], $fileMeta['thumbHeight'],
-			$computedPostInfo['pass'], $computedPostInfo['now'],
-			$postData['name'], $postData['tripcode'], $postData['secure_tripcode'], $postData['capcode'], $emailForInsertion, $postData['sub'], $postData['comment'],
-			$postData['ip'], $postData['age'], $postData['status']
-		);
-	
-		// Log and hooks
-		$this->actionLogger->logAction("Post No.{$computedPostInfo['no']} registered", $this->board->getBoardUID());
-		$this->moduleEngine->useModuleMethods('RegistAfterCommit', [$this->board->getLastPostNoFromBoard(), $postData['thread_uid'], $postData['name'], $postData['email'], $postData['sub'], $postData['comment']]);
-	
+			// Step 4: Process uploaded file (if any)
+			$fileMeta = $this->handleFileUpload($postData['isReply'], $thumbnailCreator, $imgDir);
+
+			// Step 5: Validate & clean post content
+			$this->validateAndCleanPostContent($postData, $fileMeta['status'], $fileMeta['file'], $postData['is_admin'], $thread);
+
+			// Step 6: Handle tripcode, default text, filters, and categories
+			$this->processPostDetails($postData, $tripcodeProcessor, $defaultTextFiller, $postFilterApplier);
+
+			// Step 7: Final data prep (timestamps, password hashing, unique ID)
+			$computedPostInfo = $this->preparePostMetadata($postData, $postDateFormatter, $postIdGenerator, $fileMeta['file']);
+
+			// Step 8: Validate post for database storage
+			$this->postValidator->validateForDatabase(
+				$postData['pwdc'], $postData['comment'], $postData['time'], $computedPostInfo['pass'],
+				$postData['ip'], $fileMeta['upfile'], $fileMeta['md5'], $computedPostInfo['dest'], $postData['roleLevel']
+			);
+
+			// Prune old threads
+			$this->postValidator->pruneOld($threadList);
+
+			// Age/sage logic
+			$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['postOpRoot'], $postData['email'], $postData['age']);
+
+			// Generate redirect URL and sanitize
+			$redirect = $this->generateRedirectURL($computedPostInfo['no'], $postData['email'], $postData['resno'], $computedPostInfo['timeInMilliseconds']);
+
+			// Remove noko/nonoko and dump
+			$emailForInsertion = $this->preparePostEmail($postData['email']);
+
+			// Commit pre-write hook
+			$this->moduleEngine->dispatch('RegistBeforeCommit', [
+				&$postData['name'], &$postData['email'], &$postData['sub'], &$postData['comment'],
+				&$postData['category'], &$postData['age'], $fileMeta['file'],
+				$postData['isReply'], &$postData['status'], $thread
+			]);
+
+			$postRegistData = new postRegistData(
+				$computedPostInfo['no'],
+				$postData['thread_uid'],
+				$computedPostInfo['is_op'],
+				$fileMeta['md5'],
+				$postData['category'],
+				$fileMeta['fileTimeInMilliseconds'],
+				$fileMeta['fileName'],
+				$fileMeta['ext'],
+				$fileMeta['imgW'],
+				$fileMeta['imgH'],
+				$fileMeta['readableSize'],
+				$fileMeta['thumbWidth'],
+				$fileMeta['thumbHeight'],
+				$computedPostInfo['pass'],
+				$computedPostInfo['now'],
+				$postData['name'],
+				$postData['tripcode'],
+				$postData['secure_tripcode'],
+				$postData['capcode'],
+				$emailForInsertion,
+				$postData['sub'],
+				$postData['comment'],
+				$postData['ip'],
+				$postData['age'],
+				$postData['status']
+			);
+ 
+			// Add post to database
+			$this->postService->addPostToThread($this->board, $postRegistData);
+			
+			// Log and hooks
+			$this->actionLoggerService->logAction("Post No.{$computedPostInfo['no']} registered", $this->board->getBoardUID());
+			$this->moduleEngine->dispatch('RegistAfterCommit', [$this->board->getLastPostNoFromBoard(), $postData['thread_uid'], $postData['name'], $postData['email'], $postData['sub'], $postData['comment']]);
+
+			// Handle quote links
+			$this->handlePostQuoteLink($computedPostInfo['no'], $postData['comment']);
+		});
+
 		// Set cookies for password and email
 		setcookie('pwdc', $postData['pwd'], time()+7*24*3600);
 		setcookie('emailc', htmlspecialchars_decode($postData['email']), time()+7*24*3600);
-	
-		// Dispatch webhook
-		$webhookDispatcher->dispatch($postData['resno'], $computedPostInfo['no']);
-	
+
 		// Save files
 		$this->saveUploadedPostFiles($fileMeta['postFileUploadController'], $fileMeta['file']->getExtention());
-	
-		// Handle quote links
-		$this->handlePostQuoteLink($computedPostInfo['no'], $postData['comment']);
+
+		// Dispatch webhook
+		$webhookDispatcher->dispatch($postData['resno'], $computedPostInfo['no']);
+
+		// Get the after-insert (current) thread list
+		$presentThreadList = $this->threadService->getThreadListFromBoard($this->board);
 
 		// Rebuild board pages
-		$this->handlePageRebuilding($computedPostInfo, $postData, $threadList);
+		$this->handlePageRebuilding($computedPostInfo, $postData, $presentThreadList);
 
 		// Final redirect
 		redirect($redirect, 0);
 	}
+
 
 	private function gatherPostInputData(): array {
 		$name = htmlspecialchars($_POST['name'] ?? '');
@@ -161,7 +189,7 @@ class registRoute {
 		
 		$age = false;
 	
-		$thread_uid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
+		$thread_uid = $this->threadRepository->resolveThreadUidFromResno($this->board, $resno);
 		$isReply = $thread_uid ? true : false;
 	
 		$roleLevel = $this->staffSession->getRoleLevel();
@@ -170,7 +198,7 @@ class registRoute {
 	
 		$postOpRoot = 0;
 		$flgh = '';
-		$ThreadExistsBefore = $this->threadSingleton->isThread($thread_uid);
+		$ThreadExistsBefore = $this->threadRepository->isThread($thread_uid);
 		$up_incomplete = 0;
 		$is_admin = $roleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
 
@@ -207,7 +235,7 @@ class registRoute {
 			$thumbnail = getThumbnailFromFile($file, $this->config['THUMB_SETTING']['Method']);
 			$thumbnail = scaleThumbnail($thumbnail, $isReply, $this->config['MAX_RW'], $this->config['MAX_RH'], $this->config['MAX_W'], $this->config['MAX_H']);
 	
-			$postFileUploadController = new postFileUploadController($this->config, $fileFromUpload, $thumbnailCreator, $thumbnail, $this->globalHTML, $boardFileDirectory);
+			$postFileUploadController = new postFileUploadController($this->config, $fileFromUpload, $thumbnailCreator, $thumbnail, $boardFileDirectory, $this->softErrorHandler);
 			$postFileUploadController->validateFile();
 			
 			[$upfile, $upfile_path, $upfile_status] = loadUploadData();
@@ -215,7 +243,7 @@ class registRoute {
 		} else {
 			// show an error if the user tries to make a thread without an image in image-board mode
 			if($upfile_status === UPLOAD_ERR_NO_FILE && !$isReply && !$this->config['TEXTBOARD_ONLY']) {
-				$this->globalHTML->error(_T('regist_upload_noimg'));
+				$this->softErrorHandler->errorAndExit(_T('regist_upload_noimg'));
 			}
 		}
 	
@@ -239,18 +267,28 @@ class registRoute {
 		];
 	}
 
-	private function validateAndCleanPostContent(array &$postData, string $upfileStatus, file $file, bool $isAdmin): void {
+	private function validateAndCleanPostContent(array &$postData, string $upfileStatus, file $file, bool $isAdmin, bool|array $thread): void {
 		$this->postValidator->spamValidate($postData['name'], $postData['email'], $postData['sub'], $postData['comment']);
 	
-		$this->moduleEngine->useModuleMethods('RegistBegin', [
-			&$postData['name'], &$postData['email'], &$postData['sub'], &$postData['comment'],
-			['file' => '', 'path' => '', 'name' => '', 'status' => $upfileStatus],
-			['ip' => $postData['ip'], 'host' => $postData['host']], $postData['thread_uid']
-		]);
+		$registInfo = [
+			'name' => &$postData['name'], 
+			'email' => &$postData['email'], 
+			'sub' => &$postData['sub'],
+			'com' => &$postData['comment'],
+			'age' => &$postData['age'],
+			'file' => $file,
+			'ip' => $postData['ip'], 
+			'host' => $postData['host'], 
+			'isThreadSubmit' => empty($postData['thread_uid']),
+			'roleLevel' => $postData['roleLevel'],
+			'thread' => $thread
+		];
+
+		$this->moduleEngine->dispatch('RegistBegin', [&$registInfo]);
 	
-		if (strlenUnicode($postData['name']) > $this->config['INPUT_MAX']) $this->globalHTML->error(_T('regist_nametoolong'));
-		if (strlenUnicode($postData['email']) > $this->config['INPUT_MAX']) $this->globalHTML->error(_T('regist_emailtoolong'));
-		if (strlenUnicode($postData['sub']) > $this->config['INPUT_MAX']) $this->globalHTML->error(_T('regist_topictoolong'));
+		if (strlenUnicode($postData['name']) > $this->config['INPUT_MAX']) $this->softErrorHandler->errorAndExit(_T('regist_nametoolong'));
+		if (strlenUnicode($postData['email']) > $this->config['INPUT_MAX']) $this->softErrorHandler->errorAndExit(_T('regist_emailtoolong'));
+		if (strlenUnicode($postData['sub']) > $this->config['INPUT_MAX']) $this->softErrorHandler->errorAndExit(_T('regist_topictoolong'));
 	
 		setrawcookie('namec', rawurlencode(htmlspecialchars_decode($postData['nameCookie'])), time() + 7 * 24 * 3600);
 	
@@ -280,7 +318,7 @@ class registRoute {
 	// generate url for redirect after post
 	private function generateRedirectURL(int $no, string $email, int $threadResno, int $timeInMilliseconds): string {
 		// get the board static index
-		$redirect = $this->config['PHP_SELF2'] . '?' . $timeInMilliseconds;
+		$redirect = $this->config['STATIC_INDEX_FILE'] . '?' . $timeInMilliseconds;
 		
 		// If $threadResno is 0, this is a new thread; set it to the current post number ($no)
 		if($threadResno === 0) {
@@ -297,7 +335,7 @@ class registRoute {
 			$redirect = $this->board->getBoardThreadURL($threadResno, $redirectReplyNumber);
 		} else {
 			// default to board index if neither noko nor dump
-			$redirect = $this->config['PHP_SELF2'];
+			$redirect = $this->config['STATIC_INDEX_FILE'];
 		}
 
 		// return processed redirect
@@ -342,7 +380,7 @@ class registRoute {
 		// Match all quote patterns like ">>123" or ">>No.123" in the comment
 		if(preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $postComment, $matches, PREG_SET_ORDER)) {
 			// Resolve the UID of the current post from its number
-			$postUid = $this->PIO->resolvePostUidFromPostNumber($this->board, $postNumber);
+			$postUid = $this->postRepository->resolvePostUidFromPostNumber($this->board, $postNumber);
 	
 			$uniqueMatches = [];
 	
@@ -361,10 +399,10 @@ class registRoute {
 			}
 	
 			// Resolve the UIDs of all quoted post numbers
-			$quoteLinkedPostUids = $this->PIO->resolvePostUidsFromArray($this->board, $quoteLinkedPostNumbers);
+			$quoteLinkedPostUids = $this->postRepository->resolvePostUidsFromArray($this->board, $quoteLinkedPostNumbers);
 	
 			// Store quote link relationships in the database
-			createQuoteLinksFromArray($this->board, $postUid, $quoteLinkedPostUids);
+			$this->quoteLinkService->createQuoteLinksFromArray($this->board->getBoardUID(), $postUid, $quoteLinkedPostUids);
 		}
 	}
 

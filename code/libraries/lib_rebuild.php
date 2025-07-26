@@ -4,9 +4,8 @@
 */
 
 // rebuild all boards' html pages
-function rebuildAllBoards() {
-    $boardIO = boardIO::getInstance();
-    $allBoards = $boardIO->getAllRegularBoards();
+function rebuildAllBoards(): void {
+    $allBoards = GLOBAL_BOARD_ARRAY;
 
     // rebuild boards
     foreach($allBoards as $board) {
@@ -16,15 +15,10 @@ function rebuildAllBoards() {
 }
 
 // rebuild selected boards from board uid array
-function rebuildBoardsByUIDs(array $boardUIDs) {
-    $boardIO = boardIO::getInstance();
-    $boardsToRebuild = $boardIO->getBoardsFromUIDs($boardUIDs);
-
-    if(!$boardsToRebuild) return; // no boards found
-
+function rebuildBoardsByArray(array $boardsToRebuild): void {
     // rebuild boards
     foreach($boardsToRebuild as $board) {
-        $board->rebuildBoard(true);;
+        $board->rebuildBoard(true);
     }
 
 }

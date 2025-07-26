@@ -1,4 +1,8 @@
 <?php
+
+use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
+use Kokonotsuba\ModuleClasses\moduleContext;
+
 /**
  * Kokonotsuba! Module Engine, derived from pixmicat's moduleEngine
  *
@@ -8,42 +12,28 @@
 	public array $ENV;
 	public array $moduleInstance;
 	public array $moduleLists;
-	public array $hookPoints;
-	public bool $loaded;
-	public array $CHPList;
-	public array $hooks;
-	public board $board;
+	private bool $loaded;
+	private readonly moduleEngineContext $moduleEngineContext;
+	private hookDispatcher $hookDispatcher;
 
 	/* Constructor */
-	public function __construct(IBoard $board, array $ENV = []) {
+	public function __construct(moduleEngineContext $moduleEngineContext, array $ENV = []) {
 		$this->loaded = false; // Has the modules and hooks been loaded
-		$this->board = $board; // Board page is loaded from
-		
-		$config = $board->loadBoardConfig();
-		$moduleList = $config['ModuleList'];
-
+		$this->moduleEngineContext = $moduleEngineContext;
+		$this->hookDispatcher = new HookDispatcher(); // Initialize the hook dispatcher
 
 		// Default environment values
 		$defaultENV = array(
 			'MODULE.PATH' => getBackendDir().'module/',
-			'MODULE.PAGE' =>  $config['PHP_SELF'].'?mode=module&load=',
-			'MODULE.LOADLIST' => $moduleList,
+			'MODULE.PAGE' =>  $moduleEngineContext->liveIndexFile.'?mode=module&load=',
+			'MODULE.LOADLIST' => $moduleEngineContext->moduleList,
 		);
 
 		$this->ENV = array_merge($defaultENV, $ENV);
-		
-		$this->hooks = array_flip(array(
-			'Head', 'Toplink', 'LinksAboveBar', 'PostInfo', 'AboveTitle',
-			'PostForm', 'PostFormFile', 'PostFormSubmit',
-			'GlobalMessage', 'BlotterPreview', 'ThreadFront', 'ThreadRear', 'ThreadPost', 'ThreadReply',
-			'Foot', 'ModulePage', 'RegistBegin', 'RegistBeforeCommit', 'RegistAfterCommit', 'PostOnDeletion',
-			'AdminList', 'AdminFunction', 'Authenticate', 'ThreadOrder'
-		));
+		$this->moduleLists = [];
+		$this->moduleInstance = [];
 
-		$this->hookPoints = array(); // Hook points
-		$this->moduleInstance = array(); // Module instances
-		$this->moduleLists = array(); // Module class name list
-		$this->CHPList = array(); // Custom hook point list
+		$this->init();
 	}
 
 	/* Initialize and load modules */
@@ -53,154 +43,144 @@
 		$this->loadModules();
 		return true;
 	}
-	
 
 	/* Load a specific module only */
 	public function onlyLoad(string $specificModule): bool {
 		if (!array_key_exists($specificModule, $this->ENV['MODULE.LOADLIST'])) return false;
-		$this->loadModules($specificModule);
-		return isset($this->hookPoints['ModulePage']);
-	}
 
-	/* Get module data by name from LOADLIST */
-	public function getModuleDataByName(string $moduleName): array {
-		return array($moduleName => $this->ENV['MODULE.LOADLIST'][$moduleName]);
+		$this->loadModules($specificModule);
+
+		return in_array($specificModule, $this->moduleLists, true);
 	}
 
 	/* Load extension modules */
 	public function loadModules(mixed $specificModule = false): void {
 		$loadlist = $this->ENV['MODULE.LOADLIST'];
-	
-		foreach ($loadlist as $moduleFileName => $moduleStatus) {
+
+		if($loadlist === null) {
+			return;
+		}
+		
+		$adminTemplatePath = getBackendDir() . 'templates/admin.tpl';
+
+		$dependencies = [
+			'config' => $this->moduleEngineContext->config
+		];
+
+		$adminTemplateEngine = new templateEngine($adminTemplatePath, $dependencies);
+
+		// Create the admin page renderer
+		$adminPageRenderer = new pageRenderer($adminTemplateEngine, $this, $this->moduleEngineContext->board);
+
+		// Prepare the module context
+		$moduleContext = new moduleContext(
+			$this->moduleEngineContext->board, 
+			$this->moduleEngineContext->templateEngine, 
+			$this->moduleEngineContext->config, 
+			$this->moduleEngineContext->postRepository, 
+			$this->moduleEngineContext->postService,
+			$this->moduleEngineContext->threadRepository, 
+			$this->moduleEngineContext->threadService,
+			$adminPageRenderer, // Pass adminPageRenderer here
+			$this,
+			$this->moduleEngineContext->boardService,
+			$this->moduleEngineContext->postSearchService,
+			$this->moduleEngineContext->quoteLinkService,
+			PMCLibrary::getFileIOInstance(),
+			$this->moduleEngineContext->attachmentService,
+			$this->moduleEngineContext->actionLoggerService,
+			$this->moduleEngineContext->postRedirectService,
+			$this->moduleEngineContext->transactionManager,
+
+		);
+
+		foreach ($loadlist as $moduleName => $moduleStatus) {
 			// Skip if loading a specific module and this one isn't it
-			if ($specificModule !== false && $moduleFileName !== $specificModule) {
+			if ($specificModule !== false && $moduleName !== $specificModule) {
 				continue;
 			}
-	
+
 			// Skip if not enabled
 			if (!$moduleStatus) {
 				continue;
 			}
-	
+
 			// Skip if already instantiated
-			if (isset($this->moduleInstance[$moduleFileName])) {
+			if (isset($this->moduleInstance[$moduleName])) {
 				continue;
 			}
-	
-			$mpath = $this->ENV['MODULE.PATH'] . $moduleFileName . '.php';
-	
+
+			$modulePath = $this->ENV['MODULE.PATH'] . $moduleName . '/';
+			
 			// Safely include once and instantiate if file exists
-			if (is_file($mpath)) {
-				include_once($mpath);
-	
-				// Check if class exists and hasn’t already been declared
-				if (!class_exists($moduleFileName)) {
-					error_log("Module class '$moduleFileName' does not exist after include.");
-					continue;
+			if (is_dir($modulePath)) {
+				$moduleAdminPath = $modulePath . 'moduleAdmin.php';
+				$moduleJavascriptPath = $modulePath . 'moduleJavascript.php';
+				$moduleMainPath = $modulePath . 'moduleMain.php';
+
+				if (file_exists($moduleMainPath)) {
+					include_once $moduleMainPath;
 				}
-	
+				
+				if (file_exists($moduleJavascriptPath)) {
+					include_once $moduleJavascriptPath;
+				}
+				
+				if (file_exists($moduleAdminPath)) {
+					include_once $moduleAdminPath;
+				}
+
 				// Track it
-				$this->moduleLists[] = $moduleFileName;
+				$this->moduleLists[] = $moduleName;
+				
+				$moduleNamespace = "\\Kokonotsuba\\Modules\\{$moduleName}\\";
 
-				$adminTemplatePath = getBackendDir() . 'templates/admin.tpl';
+				$moduleMain = $moduleNamespace . 'moduleMain';
+				$moduleJavascript = $moduleNamespace . 'moduleJavascript';
+				$moduleAdmin = $moduleNamespace . 'moduleAdmin';
 
-				$dependencies = [
-					'config' => $this->board->loadBoardConfig()
-				];
-			
-				$adminTemplateEngine = new templateEngine($adminTemplatePath, $dependencies);
-			
-				$globalHTML = new globalHTML($this->board);
-				$boardPageRenderer = new pageRenderer($this->board->getBoardTemplateEngine(), $globalHTML);
-				$adminPageRenderer = new pageRenderer($adminTemplateEngine, $globalHTML);
-				$boardIOInstance = boardIO::getInstance();
-			
-				$this->moduleInstance[$moduleFileName] = new $moduleFileName(
-					$this,
-					$boardIOInstance,
-					$boardPageRenderer,
-					$adminPageRenderer,
-				);
-			
-			}
-		}
-	}	
-
-	/* Get loaded module list */
-	public function getLoadedModules(): array {
-		if (!$this->loaded) $this->init();
-		return $this->moduleLists;
-	}
-
-	/* Get module instance */
-	public function getModuleInstance(string $module): mixed {
-		return $this->moduleInstance[$module] ?? null;
-	}
-
-	/* Get method list for a specific module */
-	public function getModuleMethods(string $module): array {
-		if (!$this->loaded) $this->init();
-		return array_search($module, $this->moduleLists) !== false ? get_class_methods($module) : array();
-	}
-
-	/* Get the URL for a module's standalone page */
-	public function getModulePageURL(string $name): string {
-		return $this->ENV['MODULE.PAGE'] . $name;
-	}
-
-	/* Automatically hook module methods to a hook point and return the reference */
-	private function &__autoHookMethods(string $hookPoint): array {
-		if (!isset($this->hookPoints[$hookPoint])) {
-			$this->hookPoints[$hookPoint] = array();
-		}
-	
-		if (isset($this->hooks[$hookPoint]) && empty($this->hookPoints[$hookPoint])) {
-			foreach ($this->moduleLists as $m) {
-				if (method_exists($this->moduleInstance[$m], 'autoHook' . $hookPoint)) {
-					$this->hookModuleMethod(
-						$hookPoint,
-						array(&$this->moduleInstance[$m], 'autoHook' . $hookPoint)
-					);
+				// Instantiate and store module instances if classes exist
+				if (class_exists($moduleMain)) {
+					$this->moduleInstance[$moduleName]['moduleMain'] = new $moduleMain($moduleContext, $moduleName);
+				}
+				if (class_exists($moduleJavascript)) {
+					$this->moduleInstance[$moduleName]['moduleJavascript'] = new $moduleJavascript($moduleContext, $moduleName);
+				}
+				if (class_exists($moduleAdmin)) {
+					$this->moduleInstance[$moduleName]['moduleAdmin'] = new $moduleAdmin($moduleContext, $moduleName);
 				}
 			}
-		}
-	
-		return $this->hookPoints[$hookPoint];
-	}
-	
 
-	/* Attach module method to a specific hook point */
-	public function hookModuleMethod(string $hookPoint, array $methodObject): void {
-		if (!isset($this->hooks[$hookPoint])) {
-			if (!isset($this->CHPList[$hookPoint])) $this->CHPList[$hookPoint] = 1;
-		} else if (!isset($this->hookPoints[$hookPoint]) && $hookPoint != 'ModulePage') {
-			if (!$this->loaded) $this->init();
-			$this->__autoHookMethods($hookPoint);
-		}
-		$this->hookPoints[$hookPoint][] = $methodObject;
-	}
-
-	/* Execute module methods at a hook point */
-	public function useModuleMethods(string $hookPoint, array $parameter): void {
-		if (!$this->loaded) $this->init();
-		$arrMethod =& $this->__autoHookMethods($hookPoint);
-		$imax = count($arrMethod);
-		for ($i = 0; $i < $imax; $i++) {
-			call_user_func_array($arrMethod[$i], $parameter);
 		}
 	}
 
-	/* Add a custom hook point */
-	public function addCHP(string $CHPName, array $methodObject): void {
-		$this->hookModuleMethod($CHPName, $methodObject);
+	/* Add a listener to a hook */
+	public function addListener(string $hookPoint, callable $listener, int $priority = 0): void {
+		$this->hookDispatcher->addListener($hookPoint, $listener, $priority);
+	}
+
+	public function addRoleProtectedListener(abstractModuleAdmin $module, string $event, callable $listener, int $priority = 0, bool $throwException = false): void {
+		$requiredRole = $module->getRequiredRole();
+		$currentRole = getRoleLevelFromSession();
+
+		$this->hookDispatcher->addRoleProtectedListener(
+			$event,
+			$listener,
+			$requiredRole,
+			$currentRole,
+			$priority,
+			$throwException
+		);
+	}
+
+	/* Dispatch an event (trigger hook point) */
+	public function dispatch(string $hookPoint, array $parameters = []): void {
+		$this->hookDispatcher->dispatch($hookPoint, $parameters);
 	}
 
 	/* Call a custom hook point */
-	public function callCHP(string $CHPName, array $parameter): void {
-		if (!$this->loaded) $this->init();
-		if (isset($this->CHPList[$CHPName])) {
-			$this->useModuleMethods($CHPName, $parameter);
-		}
+	public function callCHP(string $CHPName, array $parameters): void {
+		$this->dispatch($CHPName, $parameters);
 	}
 
 }

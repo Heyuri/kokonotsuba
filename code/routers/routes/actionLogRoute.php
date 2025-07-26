@@ -3,28 +3,14 @@
 use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
 
 class actionLogRoute {
-	private readonly board $board;
-	private readonly array $config;
-	private readonly globalHTML $globalHTML;
-	private readonly actionLogger $actionLogger;
-	private readonly softErrorHandler $softErrorHandler;
-	private readonly pageRenderer $adminPageRenderer;
-
 	public function __construct(
-		board $board,
-		array $config,
-		globalHTML $globalHTML,
-		actionLogger $actionLogger,
-		softErrorHandler $softErrorHandler,
-		pageRenderer $adminPageRenderer
-	) {
-		$this->board = $board;
-		$this->config = $config;
-		$this->globalHTML = $globalHTML;
-		$this->actionLogger = $actionLogger;
-		$this->softErrorHandler = $softErrorHandler;
-		$this->adminPageRenderer = $adminPageRenderer;
-	}
+		private board $board,
+		private readonly array $config,
+		private readonly actionLoggerService $actionLoggerService,
+		private readonly softErrorHandler $softErrorHandler,
+		private readonly pageRenderer $adminPageRenderer,
+		private readonly boardService $boardService
+	) {}
 
 	public function drawActionLog() {
 		$this->softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_VIEW_ACTION_LOG']);
@@ -40,7 +26,7 @@ class actionLogRoute {
 		// So we can see if the form is being submitted in the current request
 		$isSubmission = isset($_GET['filterSubmissionFlag']);
 		
-		$actionLogUrl = $this->board->getBoardURL() . $this->config['PHP_SELF'] . '?mode=actionLog';
+		$actionLogUrl = $this->board->getBoardURL(true) . '?mode=actionLog';
 
 		$defaultActionLogFilters = $this->initializeActionLogFilters();
 
@@ -48,10 +34,12 @@ class actionLogRoute {
 
 		$cleanUrl = buildSmartQuery($actionLogUrl, $defaultActionLogFilters, $filtersFromRequest, true);
 
-		$this->globalHTML->drawModFilterForm($actionLogHtml, $this->board, $filtersFromRequest);
+		$regularBoards = $this->boardService->getAllRegularBoards();
+
+		drawActionLogFilterForm($actionLogHtml, $this->board, $regularBoards, $filtersFromRequest);
 		
-		$entriesFromDatabase = $this->actionLogger->getSpecifiedLogEntries($limit, $offset, $filtersFromRequest);
-		$numberOfActionLogs = $this->actionLogger->getAmountOfLogEntries($filtersFromRequest);
+		$entriesFromDatabase = $this->actionLoggerService->getSpecifiedLogEntries($limit, $offset, $filtersFromRequest);
+		$numberOfActionLogs = $this->actionLoggerService->getAmountOfLogEntries($filtersFromRequest);
 	
 		if(!$entriesFromDatabase) {
 			$tableEntries .= 
@@ -102,7 +90,7 @@ class actionLogRoute {
 			</div>
 		";
 
-		$actionLogPager = $this->globalHTML->drawPager($limit, $numberOfActionLogs, $cleanUrl);
+		$actionLogPager = drawPager($limit, $numberOfActionLogs, $cleanUrl, [$this->softErrorHandler, 'errorAndExit']);
 		
 		$templateValues = [
 			'{$PAGE_CONTENT}' => $actionLogHtml,

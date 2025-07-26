@@ -28,12 +28,26 @@ set_error_handler('errorHandler');
 function fatalErrorHandler() {
 	$globalconfig = getGlobalConfig();
 	$e = error_get_last();
-	if($e !== NULL) {
-	    PMCLibrary::getLoggerInstance($globalconfig['ERROR_HANDLER_FILE'],'Global')->
-	    	error('Fatal error caught: #%d: %s in %s on line %d',
-	    	$e['type'], $e['message'], $e['file'], $e['line']);
+	if ($e !== NULL) {
+		// Log the fatal error
+		PMCLibrary::getLoggerInstance($globalconfig['ERROR_HANDLER_FILE'], 'Global')->
+			error('Fatal error caught: #%d: %s in %s on line %d',
+			$e['type'], $e['message'], $e['file'], $e['line']);
+
+		// If it's a string conversion error, print backtrace
+		if (strpos($e['message'], 'could not be converted to string') !== false) {
+			// Capture backtrace
+			ob_start();
+			debug_print_backtrace();
+			$trace = ob_get_clean();
+
+			// Log the trace as a separate error
+			PMCLibrary::getLoggerInstance($globalconfig['ERROR_HANDLER_FILE'], 'Global')->
+				error("Backtrace for string conversion error:\n%s", $trace);
+		}
 	}
 }
+
 register_shutdown_function('fatalErrorHandler');
 
 /**

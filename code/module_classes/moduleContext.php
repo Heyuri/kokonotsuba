@@ -1,0 +1,41 @@
+<?php
+
+namespace Kokonotsuba\ModuleClasses;
+
+use actionLoggerService;
+use attachmentService;
+use \board;
+use boardService;
+use \moduleEngine;
+use \pageRenderer;
+use postRedirectService;
+use \postRepository;
+use postSearchService;
+use \postService;
+use quoteLinkService;
+use \templateEngine;
+use \threadRepository;
+use \threadService;
+use transactionManager;
+
+class moduleContext {
+	public function __construct(
+		public board $board,
+		public ?templateEngine $templateEngine,
+		public readonly array $config,
+		public readonly postRepository $postRepository,
+		public readonly postService $postService,
+		public readonly threadRepository $threadRepository,
+		public readonly threadService $threadService,
+		public readonly pageRenderer $adminPageRenderer,
+		public readonly moduleEngine $moduleEngine,
+		public readonly boardService $boardService,
+		public readonly postSearchService $postSearchService,
+		public readonly quoteLinkService $quoteLinkService,
+		public readonly mixed $FileIO,
+		public readonly attachmentService $attachmentService,
+		public readonly actionLoggerService $actionLoggerService,
+		public readonly postRedirectService $postRedirectService,
+		public transactionManager $transactionManager
+	) {}
+}

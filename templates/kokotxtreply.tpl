@@ -52,7 +52,7 @@
 <!--&BODYHEAD-->
 <body id="txtreply">
 	<!--&TOPLINKS/-->
-	<div class="threadNavBar">[<a href="{$PHP_SELF2}">Return</a>] {$HOME}</div>
+	<div class="threadNavBar">[<a href="{$STATIC_INDEX_FILE}">Return</a>] {$HOME}</div>
 	<hr>
 <!--/&BODYHEAD-->
 
@@ -65,7 +65,7 @@
 
 <!--&POSTFORM-->
 	<div id="postformBox">
-		<!--&IF($MAX_FILE_SIZE,'<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" enctype="multipart/form-data">','<form id="postform" name="postform" action="{$PHP_SELF}" method="POST">')-->
+		<!--&IF($MAX_FILE_SIZE,'<form id="postform" name="postform" action="{$LIVE_INDEX_FILE}" method="POST" enctype="multipart/form-data">','<form id="postform" name="postform" action="{$LIVE_INDEX_FILE}" method="POST">')-->
 			<h2 id="newReplyTitle"><!--&IF($IS_THREAD,'New reply','New thread')--></h2>
 			{$FORM_HIDDEN}
 			<div id="postformTable">
@@ -117,7 +117,7 @@
 
 <!--&OP-->
 	<div class="post op" id="p{$BOARD_UID}_{$NO}">
-		<h1 class="title"><a href="{$PHP_SELF}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h1>
+		<h1 class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h1>
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
 		<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span><span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
 		<div class="filesize">{$IMG_BAR}</div>
@@ -131,7 +131,7 @@
 <!--&REPLY-->
 <!--&IF($IS_PREVIEW,'<table class="thread" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3"><tbody><tr><td>','')-->
 <div class="post reply" id="p{$BOARD_UID}_{$NO}">
-	<span class="title"><a href="{$PHP_SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span>
+	<span class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span>
 	<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
 	<div class="postinfo">
 	<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')--> <span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span><span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
@@ -169,7 +169,7 @@
 
 <!--&MAIN-->
 	{$THREADFRONT}
-	<form name="delform" id="delform" action="{$SELF}" method="post">
+	<form name="delform" id="delform" action="{$LIVE_INDEX_FILE}" method="post">
 		{$THREADS}
 		<hr>
 		{$THREADREAR}

@@ -1,31 +1,18 @@
 <?php
 
 class usrdelRoute {
-	private readonly array $config;
-	private readonly board $board;
-	private readonly globalHTML $globalHTML;
-	private readonly moduleEngine $moduleEngine;
-	private readonly actionLogger $actionLogger;
-	private readonly mixed $PIO;
-	private readonly mixed $FileIO;
-
 	public function __construct(
-		array $config,
-		board $board,
-		globalHTML $globalHTML,
-		moduleEngine $moduleEngine,
-		actionLogger $actionLogger,
-		mixed $PIO,
-		mixed $FileIO
-	) {
-		$this->config = $config;
-		$this->board = $board;
-		$this->globalHTML = $globalHTML;
-		$this->moduleEngine = $moduleEngine;
-		$this->actionLogger = $actionLogger;
-		$this->PIO = $PIO;
-		$this->FileIO = $FileIO;
-	}
+		private readonly array $config,
+		private board $board,
+		private moduleEngine $moduleEngine,
+		private readonly actionLoggerService $actionLoggerService,
+		private readonly postRepository $postRepository,
+		private readonly postService $postService,
+		private readonly attachmentService $attachmentService,
+		private readonly softErrorHandler $softErrorHandler,
+		private readonly array $regularBoards,
+		private mixed $FileIO
+	) {}
 
 	/* User post deletion */
 	public function userPostDeletion(): void {
@@ -41,8 +28,10 @@ class usrdelRoute {
 			}
 		}
 
+		$delno = array_map('intval', $delno);
+
 		$havePerm = isActiveStaffSession();
-		$this->moduleEngine->useModuleMethods('Authenticate', [$pwd, 'userdel', &$havePerm]);
+		$this->moduleEngine->dispatch('Authenticate', [$pwd, 'userdel', &$havePerm]);
 
 		if ($pwd === '' && $pwdc !== '') $pwd = $pwdc;
 		$pwd_md5 = substr(md5($pwd), 2, 8);
@@ -51,37 +40,40 @@ class usrdelRoute {
 		$delPosts = [];
 		$delPostUIDs = [];
 
+
 		if (!count($delno)) {
-			$this->globalHTML->error(_T('del_notchecked'));
+			$this->softErrorHandler->errorAndExit(_T('del_notchecked'));
 		}
 
-		$posts = $this->PIO->fetchPosts($delno);
+		$delno = implode(',', $delno);
+
+		$posts = $this->postRepository->getPostsByUids(strval($delno));
 
 		foreach ($posts as $post) {
 			if ($pwd_md5 == $post['pwd'] || $host == $post['host'] || $havePerm) {
 				$search_flag = true;
 				$delPostUIDs[] = intval($post['post_uid']);
 				$delPosts[] = $post;
-				$this->actionLogger->logAction("Deleted post No." . $post['no'] . ($onlyimgdel ? ' (file only)' : ''), $this->board->getBoardUID());
+				$this->actionLoggerService->logAction("Deleted post No." . $post['no'] . ($onlyimgdel ? ' (file only)' : ''), $this->board->getBoardUID());
 			}
 		}
 
 		if ($search_flag) {
 			if (!$onlyimgdel) {
-				$this->moduleEngine->useModuleMethods('PostOnDeletion', [$delPosts, 'frontend']);
+				$this->moduleEngine->dispatch('PostOnDeletion', [$delPosts, 'frontend']);
 			}
 
-			$files = createBoardStoredFilesFromArray($delPosts);
+			$files = createBoardStoredFilesFromArray($delPosts, $this->regularBoards);
 
 			if ($onlyimgdel) {
-				$this->PIO->removeAttachments($delPostUIDs);
+				$this->attachmentService->removeAttachments($delPostUIDs);
 			} else {
-				$this->PIO->removePosts($delPostUIDs);
+				$this->postService->removePosts($delPostUIDs);
 			}
 
 			$this->FileIO->deleteImagesByBoardFiles($files);
 		} else {
-			$this->globalHTML->error(_T('del_wrongpwornotfound'));
+			$this->softErrorHandler->errorAndExit(_T('del_wrongpwornotfound'));
 		}
 
 		$this->board->rebuildBoard();
@@ -92,7 +84,7 @@ class usrdelRoute {
 				header('Location: ' . $_SERVER['HTTP_REFERER']);
 			}
 		} else {
-			redirect($this->config['PHP_SELF']);
+			redirect($this->config['LIVE_INDEX_FILE']);
 		}
 	}
 }

@@ -1,7 +1,7 @@
 <?php
 
 class webhookDispatcher {
-    private readonly board $board;
+    private board $board;
 	private readonly array $config;
     
 
@@ -11,7 +11,7 @@ class webhookDispatcher {
 	}
 
 	public function dispatch(int $threadNumber, int $no): void {
-		$url = $this->board->getBoardURL() . $this->config['PHP_SELF'] . "?res=" . ($threadNumber ? $threadNumber : $no);
+		$url = $this->board->getBoardURL() . $this->config['LIVE_INDEX_FILE'] . "?res=" . ($threadNumber ? $threadNumber : $no);
 		$msg = ($threadNumber ? 'New post' : 'New thread');
 
 		$this->sendWebhook($this->config['IRC_WH'], $msg . " <$url#p$no>", true);

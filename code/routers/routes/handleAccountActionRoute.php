@@ -3,53 +3,45 @@
 // handleAccountAction route - handles actions on accounts
 
 class handleAccountActionRoute {
-	private readonly array $config;
-	private readonly board $board;
-	private readonly AccountIO $AccountIO;
-	private readonly actionLogger $actionLogger;
-	private readonly softErrorHandler $softErrorHandler;
-	private readonly staffAccountFromSession $staffSession;
-
 	public function __construct(
-		array $config,
-		board $board,
-		AccountIO $AccountIO,
-		actionLogger $actionLogger,
-		softErrorHandler $softErrorHandler,
-		staffAccountFromSession $staffSession
-	) {
-		$this->config = $config;
-		$this->board = $board;
-		$this->AccountIO = $AccountIO;
-		$this->actionLogger = $actionLogger;
-		$this->softErrorHandler = $softErrorHandler;
-		$this->staffSession = $staffSession;
-	}
+		private readonly array $config,
+		private board $board,
+		private readonly accountService $accountService,
+		private readonly actionLoggerService $actionLoggerService,
+		private readonly softErrorHandler $softErrorHandler,
+		private readonly staffAccountFromSession $staffAccountFromSession
+	) {}
 
 	public function handleAccountRequests(): void {
-		$accountRequestHandler = new accountRequestHandler($this->AccountIO, $this->actionLogger);
-
 		$this->softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_USER);
 
-		if ($this->staffSession->getRoleLevel() === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN) {
-			if (isset($_GET['del'])) {
-				$accountRequestHandler->handleAccountDelete();
+		if ($this->staffAccountFromSession->getRoleLevel() === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN) {
+			$accountIdToDelete = $_GET['del'] ?? null;
+			$accountIdToDemote = $_GET['dem'] ?? null;
+			$accountIdToPromote = $_GET['up'] ?? null;
+
+			$newAccountUsername = $_POST['usrname'] ?? null;
+			$newAccountPassword = $_POST['passwd'] ?? null;
+			$newAccountIsAlreadyHashed = $_POST['ishashed'] ?? null;
+
+			if (isset($accountIdToDelete)) {
+				$this->accountService->handleAccountDelete($accountIdToPromote);
 			}
-			if (isset($_GET['dem'])) {
-				$accountRequestHandler->handleAccountDemote();
+			if (isset($accountIdToDemote)) {
+				$this->accountService->handleAccountDemote($accountIdToDemote);
 			}
-			if (isset($_GET['up'])) {
-				$accountRequestHandler->handleAccountPromote();
+			if (isset($accountIdToPromote)) {
+				$this->accountService->handleAccountPromote($accountIdToPromote);
 			}
-			if (!empty($_POST['usrname']) && !empty($_POST['passwd'])) {
-				$accountRequestHandler->handleAccountCreation($this->board);
+			if (!empty($newAccountUsername) && !empty($newAccountPassword)) {
+				$this->accountService->handleAccountCreation($this->board);
 			}
 		}
 
-		if (!empty($_POST['new_account_password'] ?? '')) {
-			$accountRequestHandler->handleAccountPasswordReset($this->board);
+		if (!empty($newAccountIsAlreadyHashed ?? '')) {
+			$this->accountService->handleAccountPasswordReset($this->board);
 		}
 
-		redirect($this->config['PHP_SELF'] . '?mode=account');
+		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=account');
 	}
 }

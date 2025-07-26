@@ -3,25 +3,13 @@
 // overboard route - shows threads from all/selected/listed boards
 
 class overboardRoute {
-	private readonly array $config;
-	private readonly boardIO $boardIO;
-	private readonly board $board;
-	private readonly overboard $overboard;
-	private readonly globalHTML $globalHTML;
-
 	public function __construct(
-		array $config,
-		boardIO $boardIO,
-		board $board,
-		overboard $overboard,
-		globalHTML $globalHTML
-	) {
-		$this->config = $config;
-		$this->boardIO = $boardIO;
-		$this->board = $board;
-		$this->overboard = $overboard;
-		$this->globalHTML = $globalHTML;
-	}
+		private readonly array $config,
+		private readonly array $visibleBoards,
+		private readonly boardRepository $boardRepository,
+		private board $board,
+		private overboard $overboard,
+	) {}
 
 	public function drawOverboard(): void {
 		$this->handleOverboardFilterForm();
@@ -34,7 +22,7 @@ class overboardRoute {
 			$blacklistBoards = [];
 		}
 
-		$allBoards = $this->boardIO->getAllListedBoardUIDs();
+		$allBoards = $this->boardRepository->getAllListedBoardUIDs();
 		$allowedBoards = array_values(array_diff($allBoards, $blacklistBoards));
 
 		$filters = [
@@ -42,10 +30,14 @@ class overboardRoute {
 		];
 
 		$html = '';
-		$this->overboard->drawOverboardHead($html, 0);
-		$this->globalHTML->drawOverboardFilterForm($html, $this->board);
-		$html .= $this->overboard->drawOverboardThreads($filters, $this->globalHTML);
-		$this->globalHTML->foot($html, 0);
+
+		$this->overboard->drawOverboardHead($html);
+
+		drawOverboardFilterForm($html, $this->board, $this->visibleBoards, $allowedBoards);
+
+		$html .= $this->overboard->drawOverboardThreads($filters);
+
+		$html .= $this->board->getBoardFooter();
 
 		echo $html;
 	}
@@ -64,21 +56,20 @@ class overboardRoute {
 				? array_map('intval', $selectedBoards)
 				: [intval($selectedBoards)];
 
-			$boardIO = boardIO::getInstance();
-			$allBoards = $boardIO->getAllListedBoardUIDs();
+			$allBoards = $this->boardRepository->getAllListedBoardUIDs();
 
 			// Blacklist = all - selected
 			$blacklist = array_values(array_diff($allBoards, $selectedBoards));
 
 			setcookie('overboard_black_list', json_encode($blacklist), time() + (86400 * 30), "/");
 
-			redirect($this->config['PHP_SELF'] . '?mode=overboard');
+			redirect($this->config['LIVE_INDEX_FILE'] . '?mode=overboard');
 			exit;
 
 		} elseif ($action === 'filterclear') {
 			setcookie('overboard_black_list', "", time() - 3600, "/");
 
-			redirect($this->config['PHP_SELF'] . '?mode=overboard');
+			redirect($this->config['LIVE_INDEX_FILE'] . '?mode=overboard');
 			exit;
 		}
 	}

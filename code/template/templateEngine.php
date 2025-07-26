@@ -10,12 +10,10 @@ class templateEngine {
 	private $tpl;
 	private $config;
 	private $boardData;
-	private $functionCalls;
 
-	public function __construct(string $tplname, array $dependencies, array $functionCalls = array()) {
+	public function __construct(string $tplname, array $dependencies) {
 		$this->config = $dependencies['config'] ?? [];
 		$this->boardData = $dependencies['boardData'] ?? [];
-		$this->functionCalls = $functionCalls;
 
 		static $tplCache = [];
 
@@ -47,8 +45,8 @@ class templateEngine {
 			'{$OVERBOARD}'       => '',
 			'{$STATIC_URL}'      => '',
 			'{$REF_URL}'         => '',
-			'{$PHP_SELF}'        => '',
-			'{$PHP_SELF2}'       => '',
+			'{$LIVE_INDEX_FILE}'        => '',
+			'{$STATIC_INDEX_FILE}'       => '',
 			'{$PHP_EXT}'         => '',
 			'{$TITLE}'           => '',
 			'{$TITLESUB}'        => '',
@@ -63,11 +61,11 @@ class templateEngine {
 		// Merge default placeholders with passed values, but only once for efficiency
 		$ary_val = array_merge($defaultPlaceholders, [
 			'{$LANGUAGE}'        => $this->config['PIXMICAT_LANGUAGE'] ?? '',
-			'{$OVERBOARD}'       => !empty($this->config['ADMINBAR_OVERBOARD_BUTTON']) ? '[<a href="'.$this->config['PHP_SELF'].'?mode=overboard">Overboard</a>]' : ' ',
+			'{$OVERBOARD}'       => !empty($this->config['ADMINBAR_OVERBOARD_BUTTON']) ? '[<a href="'.$this->config['LIVE_INDEX_FILE'].'?mode=overboard">Overboard</a>]' : ' ',
 			'{$STATIC_URL}'      => $this->config['STATIC_URL'] ?? '',
 			'{$REF_URL}'         => $this->config['REF_URL'] ?? '',
-			'{$PHP_SELF}'        => $this->config['PHP_SELF'] ?? '',
-			'{$PHP_SELF2}'       => $this->config['PHP_SELF2'] ?? '',
+			'{$LIVE_INDEX_FILE}'        => $this->config['LIVE_INDEX_FILE'] ?? '',
+			'{$STATIC_INDEX_FILE}'       => $this->config['STATIC_INDEX_FILE'] ?? '',
 			'{$PHP_EXT}'         => $this->config['PHP_EXT'] ?? '',
 			'{$TITLE}'           => $this->boardData['title'] ?? '',
 			'{$TITLESUB}'        => $this->boardData['subtitle'] ?? '',
@@ -78,9 +76,6 @@ class templateEngine {
 			'{$GLOBAL_MESSAGE}'  => '',
 			'{$PAGE_TITLE}'      => strip_tags($this->boardData['title'] ?? ''),
 		], $ary_val);
-	
-		// Allow modules to modify the array
-		$this->runInjectedFunctions($ary_val);
 	
 		// Load template block
 		$tmp_block = $this->_readBlock($blockName);
@@ -169,15 +164,4 @@ class templateEngine {
 		return $tmp_tpl;
 	}
 
-	private function runInjectedFunctions(&$ary_val) {
-		if(!isset($this->functionCalls)) return;
-
-		foreach($this->functionCalls as $call) {
-			$call['callback']($ary_val);
-		}
-	}
-
-	public function setFunctionCallbacks(array $callbacks) {
-		$this->functionCalls = $callbacks;
-	}
 }

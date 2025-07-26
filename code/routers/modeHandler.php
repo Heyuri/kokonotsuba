@@ -1,69 +1,11 @@
 <?php
 //Handle GET mode values for koko
 class modeHandler {
-	private readonly board $board;
-	private readonly array $config;
-	private readonly globalHTML $globalHTML;
-	private readonly overboard $overboard;
-	private readonly pageRenderer $adminPageRenderer;
-	private readonly mixed $FileIO;
-	private readonly mixed $PIO;
-	private readonly mixed $threadSingleton;
-	private readonly boardIO $boardIO;
-	private readonly AccountIO $AccountIO;
-	private readonly ActionLogger $actionLogger;
-	private readonly softErrorHandler $softErrorHandler;
-	private readonly adminLoginController $adminLoginController;
-	private readonly staffAccountFromSession $staffSession;
-	private readonly postValidator $postValidator;
-
-	private moduleEngine $moduleEngine;
-	private templateEngine $templateEngine;
-	private templateEngine $adminTemplateEngine;
-
 	public function __construct(
-		board $board,
-		globalHTML $globalHTML,
-		moduleEngine $moduleEngine,
-		templateEngine $templateEngine,
-		templateEngine $adminTemplateEngine,
-		overboard $overboard,
-		pageRenderer $adminPageRenderer,
-		softErrorHandler $softErrorHandler,
-		boardIO $boardIO,
-		mixed $FileIO,
-		mixed $PIO,
-		mixed $threadSingleton,
-		AccountIO $AccountIO,
-		ActionLogger $actionLogger,
-		adminLoginController $adminLoginController,
-		staffAccountFromSession $staffSession,
-		postValidator $postValidator
-	) {
-		$this->validateBoard($board);
+		private routeDiContainer $routeDiContainer	
+	) {}
 
-		$this->board = $board;
-		$this->config = $board->loadBoardConfig();
-
-		$this->globalHTML = $globalHTML;
-		$this->moduleEngine = $moduleEngine;
-		$this->templateEngine = $templateEngine;
-		$this->adminTemplateEngine = $adminTemplateEngine;
-		$this->overboard = $overboard;
-		$this->adminPageRenderer = $adminPageRenderer;
-		$this->softErrorHandler = $softErrorHandler;
-		$this->boardIO = $boardIO;
-		$this->FileIO = $FileIO;
-		$this->PIO = $PIO;
-		$this->threadSingleton = $threadSingleton;
-		$this->AccountIO = $AccountIO;
-		$this->actionLogger = $actionLogger;
-		$this->adminLoginController = $adminLoginController;
-		$this->staffSession = $staffSession;
-		$this->postValidator = $postValidator;
-	}
-
-	private function validateBoard(board $board): void {
+	public function validateBoard(board $board): void {
 		if (!file_exists($board->getFullConfigPath())) {
 			die("Board's config file <i>" . $board->getFullConfigPath() . "</i> was not found.");
 		}
@@ -73,9 +15,8 @@ class modeHandler {
 		}
 	}
 
-
 	public function handle() {
-		if ($this->config['GZIP_COMPRESS_LEVEL'] && ($Encoding = CheckSupportGZip())) {
+		if ($this->routeDiContainer->config['GZIP_COMPRESS_LEVEL'] && ($Encoding = CheckSupportGZip())) {
 			ob_start();
 			ob_implicit_flush(0);
 		}
@@ -85,155 +26,156 @@ class modeHandler {
 		$routes = [
 			'regist'	=> function() {
 				$route = new registRoute(
-					$this->board,
-					$this->config,
-					$this->globalHTML,
-					$this->postValidator,
-					$this->staffSession,
-					$this->moduleEngine,
-					$this->actionLogger,
-					$this->FileIO,
-					$this->PIO,
-					$this->threadSingleton
+					$this->routeDiContainer->board,
+					$this->routeDiContainer->config,
+					$this->routeDiContainer->postValidator,
+					$this->routeDiContainer->staffAccountFromSession,
+					$this->routeDiContainer->transactionManager,
+					$this->routeDiContainer->moduleEngine,
+					$this->routeDiContainer->actionLoggerService,
+					$this->routeDiContainer->FileIO,
+					$this->routeDiContainer->postRepository,
+					$this->routeDiContainer->postService,
+					$this->routeDiContainer->threadRepository,
+					$this->routeDiContainer->threadService,
+					$this->routeDiContainer->quoteLinkService,
+					$this->routeDiContainer->softErrorHandler
 				);
 				$route->registerPostToDatabase();
 			},
 			'admin'	=> function() {
-				$route = new adminRoute($this->config,
-					$this->globalHTML,
-					$this->adminLoginController,
-					$this->staffSession,
-					$this->adminPageRenderer,
+				$route = new adminRoute(
+					$this->routeDiContainer->board,
+					$this->routeDiContainer->config,
+					$this->routeDiContainer->adminLoginController,
+					$this->routeDiContainer->adminPageRenderer,
 				);
 				$route->drawAdminPage();
 			},
-			'status' => function() {
-				$route = new statusRoute(
-					$this->board,
-					$this->config,
-					$this->globalHTML,
-					$this->staffSession,
-					$this->templateEngine,
-					$this->moduleEngine,
-					$this->PIO,
-					$this->FileIO
-				);
-				$route->drawStatus();
-			},
 			'module' => function() {
-				$route = new moduleRoute($this->globalHTML, $this->moduleEngine);
+				$route = new moduleRoute(
+					$this->routeDiContainer->moduleEngine,
+					$this->routeDiContainer->softErrorHandler
+				);
 				$route->handleModule();
 			},
 			'moduleloaded' => function() {
 				$route = new moduleloadedRoute(
-					$this->config, 
-					$this->globalHTML, 
-					$this->staffSession, 
-					$this->moduleEngine
+					$this->routeDiContainer->config, 
+					$this->routeDiContainer->board,
+					$this->routeDiContainer->moduleEngine,
+					$this->routeDiContainer->staffAccountFromSession, 
+					$this->routeDiContainer->moduleEngine
 				);
 				$route->listModules();
 			},
 			'account' => function() {
 				$route = new accountRoute(
-					$this->staffSession,
-					$this->globalHTML,
-					$this->softErrorHandler,
-					$this->AccountIO,
-					$this->adminTemplateEngine,
-					$this->adminPageRenderer
+					$this->routeDiContainer->config,
+					$this->routeDiContainer->staffAccountFromSession,
+					$this->routeDiContainer->softErrorHandler,
+					$this->routeDiContainer->accountRepository,
+					$this->routeDiContainer->adminTemplateEngine,
+					$this->routeDiContainer->adminPageRenderer
 				);
 				$route->drawAccountPage();
 			},
 			'boards' => function() {
 				$route = new boardsRoute(
-					$this->config, 
-					$this->staffSession, 
-					$this->softErrorHandler, 
-					$this->globalHTML, 
-					$this->adminTemplateEngine, 
-					$this->adminPageRenderer, 
-					$this->boardIO, 
-					$this->board
+					$this->routeDiContainer->config, 
+					$this->routeDiContainer->staffAccountFromSession, 
+					$this->routeDiContainer->softErrorHandler, 
+					$this->routeDiContainer->adminTemplateEngine, 
+					$this->routeDiContainer->adminPageRenderer, 
+					$this->routeDiContainer->boardService,
+					$this->routeDiContainer->board
 				);
 				$route->drawBoardPage();
 			},
 			'overboard' => function() {
 				$route = new overboardRoute(
-					$this->config, 
-					$this->boardIO, 
-					$this->board, 
-					$this->overboard, 
-					$this->globalHTML
+					$this->routeDiContainer->config, 
+					$this->routeDiContainer->visibleBoards,
+					$this->routeDiContainer->boardRepository,
+					$this->routeDiContainer->board, 
+					$this->routeDiContainer->overboard
 				);
 				$route->drawOverboard();
 			},
 			'handleAccountAction' => function() {
 				$route = new handleAccountActionRoute(
-					$this->config,
-					$this->board, 
-					$this->AccountIO,
-					$this->actionLogger,
-					$this->softErrorHandler, 
-					$this->staffSession
+					$this->routeDiContainer->config,
+					$this->routeDiContainer->board, 
+					$this->routeDiContainer->accountService,
+					$this->routeDiContainer->actionLoggerService,
+					$this->routeDiContainer->softErrorHandler, 
+					$this->routeDiContainer->staffAccountFromSession
 				);
 				$route->handleAccountRequests();
 			},
 			'handleBoardRequests' => function() {
 				$route = new handleBoardRequestsRoute(
-					$this->config, 
-					$this->softErrorHandler, 
-					$this->boardIO, 
-					$this->globalHTML
+					$this->routeDiContainer->databaseConnection,
+					$this->routeDiContainer->config, 
+					$this->routeDiContainer->softErrorHandler,
+					$this->routeDiContainer->boardService, 
+					$this->routeDiContainer->boardPathService,
+					$this->routeDiContainer->quoteLinkRepository
 				);
 				$route->handleBoardRequests();
 			},
 			'usrdel' => function() {
 				$route = new usrdelRoute(
-					$this->config,
-					$this->board, 
-					$this->globalHTML, 
-					$this->moduleEngine, 
-					$this->actionLogger, 
-					$this->PIO, 
-					$this->FileIO
+					$this->routeDiContainer->config,
+					$this->routeDiContainer->board, 
+					$this->routeDiContainer->moduleEngine, 
+					$this->routeDiContainer->actionLoggerService, 
+					$this->routeDiContainer->postRepository, 
+					$this->routeDiContainer->postService, 
+					$this->routeDiContainer->attachmentService,
+					$this->routeDiContainer->softErrorHandler,
+					$this->routeDiContainer->regularBoards,
+					$this->routeDiContainer->FileIO
 				);
 				$route->userPostDeletion();
 			},
 			'rebuild' => function() {
 				$route = new rebuildRoute(
-					$this->config, 
-					$this->board, 
-					$this->softErrorHandler, 
-					$this->actionLogger, 
-					$this->globalHTML
+					$this->routeDiContainer->board,
+					$this->routeDiContainer->softErrorHandler, 
+					$this->routeDiContainer->actionLoggerService 
 				);
+
 				$route->handleRebuild();
 			},
 
 			'actionLog' => function() {
 				$route = new actionLogRoute(
-					$this->board,
-					$this->config,
-					$this->globalHTML,
-					$this->actionLogger,
-					$this->softErrorHandler,
-					$this->adminPageRenderer
+					$this->routeDiContainer->board,
+					$this->routeDiContainer->config,
+					$this->routeDiContainer->actionLoggerService,
+					$this->routeDiContainer->softErrorHandler,
+					$this->routeDiContainer->adminPageRenderer,
+					$this->routeDiContainer->boardService
 				);
 				$route->drawActionLog();
 			},
 			'managePosts' => function() {
 				$route = new managePostsRoute(
-					$this->board,
-					$this->config,
-					$this->moduleEngine,
-					$this->globalHTML,
-					$this->boardIO,
-					$this->staffSession,
-					$this->FileIO,
-					$this->PIO,
-					$this->actionLogger,
-					$this->softErrorHandler,
-					$this->adminPageRenderer
+					$this->routeDiContainer->board,
+					$this->routeDiContainer->config,
+					$this->routeDiContainer->moduleEngine,
+					$this->routeDiContainer->boardService,
+					$this->routeDiContainer->staffAccountFromSession,
+					$this->routeDiContainer->postRedirectService,
+					$this->routeDiContainer->postRepository,
+					$this->routeDiContainer->postService,
+					$this->routeDiContainer->softErrorHandler,
+					$this->routeDiContainer->FileIO,
+					$this->routeDiContainer->actionLoggerService,
+					$this->routeDiContainer->attachmentService,
+					$this->routeDiContainer->adminPageRenderer,
+					$this->routeDiContainer->regularBoards
 				);
 				$route->drawManagePostsPage();
 			}
@@ -243,16 +185,17 @@ class modeHandler {
 			$routes[$mode]();
 		} else {
 			$defaultRoute = new defaultRoute(
-				$this->config, 
-				$this->board, 
-				$this->threadSingleton,
-				$this->PIO, 
-				$this->globalHTML
+				$this->routeDiContainer->config, 
+				$this->routeDiContainer->board, 
+				$this->routeDiContainer->threadRepository,
+				$this->routeDiContainer->postRepository,
+				$this->routeDiContainer->softErrorHandler,
+				$this->routeDiContainer->postRedirectService
 			);
 			$defaultRoute->handleDefault();
 		}
 	
-		if ($this->config['GZIP_COMPRESS_LEVEL'] && $Encoding) {
+		if ($this->routeDiContainer->config['GZIP_COMPRESS_LEVEL'] && $Encoding) {
 			$this->finalizeGzip($Encoding);
 		}
 	}	
@@ -260,9 +203,9 @@ class modeHandler {
 	private function finalizeGzip($Encoding) {
 		if (!ob_get_length()) exit; // No content, no need to compress
 		header('Content-Encoding: ' . $Encoding);
-		header('X-Content-Encoding-Level: ' . $this->config['GZIP_COMPRESS_LEVEL']);
+		header('X-Content-Encoding-Level: ' . $this->routeDiContainer->config['GZIP_COMPRESS_LEVEL']);
 		header('Vary: Accept-Encoding');
-		print gzencode(ob_get_clean(), $this->config['GZIP_COMPRESS_LEVEL']); // Compressed content
+		print gzencode(ob_get_clean(), $this->routeDiContainer->config['GZIP_COMPRESS_LEVEL']); // Compressed content
 	}
 
 }

@@ -16,7 +16,7 @@
 <!--/&ACCOUNT_PAGE-->
 
 <!--&VIEW_ACCOUNT-->
-<form id="account-modify-form" action="{$PHP_SELF}?mode=handleAccountAction" method="POST">
+<form id="account-modify-form" action="{$LIVE_INDEX_FILE}?mode=handleAccountAction" method="POST">
 		<h3>Your account</h3>
 
 		<input type="hidden" name="password_reset_form" value="1">
@@ -50,7 +50,7 @@
 <!--/&VIEW_ACCOUNT-->
 
 <!--&CREATE_ACCOUNT-->
-	<form action="{$PHP_SELF}?mode=handleAccountAction" method="POST">
+	<form action="{$LIVE_INDEX_FILE}?mode=handleAccountAction" method="POST">
 		<h3>Create a new staff account</h3>
 
 		<table id="account-create-table">
@@ -96,7 +96,7 @@
 <!--/&BOARD_PAGE-->
 
 <!--&CREATE_BOARD-->
-	<form action="{$PHP_SELF}?mode=handleBoardRequests" method="POST">
+	<form action="{$LIVE_INDEX_FILE}?mode=handleBoardRequests" method="POST">
 		<h3>Create a new board</h3>
 
 		<input type="hidden" name="new-board" value="1">
@@ -147,7 +147,7 @@
 <!--/&CREATE_BOARD-->
 
 <!--&IMPORT_BOARD-->
-	<form id="import-board-form" action="{$PHP_SELF}?mode=handleBoardRequests" method="POST" enctype="multipart/form-data">
+	<form id="import-board-form" action="{$LIVE_INDEX_FILE}?mode=handleBoardRequests" method="POST" enctype="multipart/form-data">
 		<h3>Import a board</h3>
 		<input type="hidden" name="import-board" value="1">
 
@@ -205,7 +205,7 @@
 <!--/&IMPORT_BOARD-->
 
 <!--&EDIT_BOARD-->
-	<form id="board-action-form" action="{$PHP_SELF}?mode=handleBoardRequests" method="POST">
+	<form id="board-action-form" action="{$LIVE_INDEX_FILE}?mode=handleBoardRequests" method="POST">
 		<h3>Edit board</h3>
 	
 		<input type="hidden" name="edit-board-uid" value="{$BOARD_UID}">
@@ -249,7 +249,7 @@
 <!--/&EDIT_BOARD-->
 
 <!--&VIEW_BOARD-->
-	[<a id="board-back-button" href="{$PHP_SELF}?mode=boards">Back to board list</a>]
+	[<a id="board-back-button" href="{$LIVE_INDEX_FILE}?mode=boards">Back to board list</a>]
 
 	<h3>Board info</h3>
 
@@ -412,7 +412,7 @@
 <!--/&BLOTTER_TABLE_ROW-->
 
 <!--&BLOTTER_PAGE-->
-	[<a href="{$PHP_SELF2}">Return</a>]
+	[<a href="{$STATIC_INDEX_FILE}">Return</a>]
 
 	<h2 class="theading2">Blotter</h2>
 
@@ -573,8 +573,6 @@ window.onload = function () {
 	<form action="{$FORM_ACTION}" method="POST">
 		<h3>Warn user</h3>
 
-		<input type="hidden" name="mode" value="module">
-		<input type="hidden" name="load" value="mod_janitor">
 		<label> <span>Post Number {$POST_NUMBER}</span> </label><br>
 		<input type="hidden" name="post_uid" value="{$POST_UID}"><br>
 		<label>Reason:<br>

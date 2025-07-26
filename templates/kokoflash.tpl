@@ -68,9 +68,8 @@
 <!--/&POST_AREA-->
 
 <!--&POSTFORM-->
-		<!--&IF($IS_THREAD,'<div class="threadNavBar">[<a href="{$PHP_SELF2}">Return</a>]</div>','')-->
 		<!--&IF($IS_THREAD,' <h2 class="theading">Posting mode: Reply</h2>','')-->
-		<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" <!--&IF($MAX_FILE_SIZE,' enctype="multipart/form-data"','')-->>
+		<form id="postform" name="postform" action="{$LIVE_INDEX_FILE}" method="POST" <!--&IF($MAX_FILE_SIZE,' enctype="multipart/form-data"','')-->>
 			{$FORM_HIDDEN}
 			<table id="postformTable">
 				<tbody>
@@ -156,7 +155,7 @@
 
 <!--&THREAD-->
 	<tr class="thread" id="t{$BOARD_UID}_{$THREAD_NO}">
-		<td><a href="{$SELF}?res={$THREAD_NO}#p{$BOARD_UID}_{$THREAD_NO}" class="no">{$THREAD_NO}</a></td>
+		<td><a href="{$LIVE_INDEX_FILE}?res={$THREAD_NO}#p{$BOARD_UID}_{$THREAD_NO}" class="no">{$THREAD_NO}</a></td>
 		{$THREAD_OP}
 	</tr>
 <!--/&THREAD-->
@@ -200,9 +199,10 @@
 <!--/&DELFORM-->
 
 <!--&MAIN-->
+	<!--&IF($IS_THREAD,'<div class="threadNavBar">[<a href="{$STATIC_INDEX_FILE}">Return</a>]</div>','')-->
 	{$FORMDAT}
 	{$THREADFRONT}
-	<form name="delform" id="delform" action="{$SELF}" method="post">
+	<form name="delform" id="delform" action="{$LIVE_INDEX_FILE}" method="post">
 		<div class="centerText">
 			<table class="flashboardList" id="filelist">
 				<thead>

@@ -75,9 +75,8 @@
 <!--/&POST_AREA-->
 
 <!--&POSTFORM-->
-		<!--&IF($IS_THREAD,'<div class="threadNavBar">[<a href="{$PHP_SELF2}">Return</a>]</div>','')-->
 		<!--&IF($IS_THREAD,' <h2 class="theading">Posting mode: Reply</h2>','')-->
-		<form id="postform" name="postform" action="{$PHP_SELF}" method="POST" <!--&IF($MAX_FILE_SIZE,' enctype="multipart/form-data"','')-->>
+		<form id="postform" name="postform" action="{$LIVE_INDEX_FILE}" method="POST" <!--&IF($MAX_FILE_SIZE,' enctype="multipart/form-data"','')-->>
 			{$FORM_HIDDEN}
 			<table id="postformTable">
 				<tbody>
@@ -182,7 +181,7 @@
 					</span>
 					<span class="time">{$NOW}</span>
 				</label>
-				<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
+				<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
 				<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
 				<span class="replyButton">{$REPLYBTN}</span><span class="backlinks"></span>
 			</div>
@@ -206,7 +205,7 @@
 							</span>
 							<span class="time">{$NOW}</span>
 						</label>
-						<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$SELF}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
+						<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
 						<span class="postInfoExtra">{$POSTINFO_EXTRA}</span><span class="backlinks"></span>
 					</div>
 					<div class="filesize">{$IMG_BAR}</div>
@@ -250,9 +249,10 @@
 <!--/&DELFORM-->
 
 <!--&MAIN-->
+	<!--&IF($IS_THREAD,'<div class="threadNavBar">[<a href="{$STATIC_INDEX_FILE}">Return</a>]</div>','')-->
 	{$FORMDAT}
 	{$THREADFRONT}
-	<form name="delform" id="delform" action="{$SELF}" method="post">
+	<form name="delform" id="delform" action="{$LIVE_INDEX_FILE}" method="post">
 		{$THREADS}
 		{$THREADREAR}
 		<!--&DELFORM/-->

@@ -66,22 +66,6 @@ function getDirectorySize($directory): int|false {
 }
 
 /**
- * Create a directory, reporting errors through $globalHTML.
- *
- * @param string $directoryName
- * @param globalHTML $globalHTML
- * @return string
- */
-function createDirectoryWithErrorHandle(string $directoryName, globalHTML $globalHTML): string {
-	if (!file_exists($directoryName)) {
-		if (!mkdir($directoryName, 0755, true)) {
-			$globalHTML->error("Failed to create directory: $directoryName");
-		}
-	}
-	return $directoryName;
-}
-
-/**
  * Simple directory creation (die on failure).
  *
  * @param string $directoryName
@@ -92,7 +76,7 @@ function createDirectory(string $directoryName): void {
 		return;
 	}
 	if (!mkdir($directoryName, 0755, true)) {
-		die("Could not create $directoryName");
+		throw new Exception("Could not create $directoryName");
 	}
 }
 
@@ -263,4 +247,12 @@ function isValidMySQLDumpFile(string $filePath): bool {
 
 	// Return if the file seems to be a valid MySQL dump
 	return $valid;
+}
+
+function deleteCreatedBoardConfig(string $boardConfigName): void {
+	$boardConfigPath = getBoardConfigDir() . $boardConfigName;
+
+	if(file_exists($boardConfigPath)) {
+		unlink($boardConfigPath);
+	}
 }

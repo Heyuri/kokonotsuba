@@ -3,28 +3,17 @@
 // default route - live front end / redirect to static html
 
 class defaultRoute {
-	private readonly array $config;
-	private readonly board $board;
-	private readonly mixed $threadSingleton;
-	private readonly mixed $PIO;
-	private readonly globalHTML $globalHTML;
-
 	/**
 	 * Constructor to initialize required dependencies.
 	 */
 	public function __construct(
-		array $config,
-		board $board,
-		mixed $threadSingleton,
-		mixed $PIO,
-		globalHTML $globalHTML
-	) {
-		$this->config = $config;
-		$this->board = $board;
-		$this->threadSingleton = $threadSingleton;
-		$this->PIO = $PIO;
-		$this->globalHTML = $globalHTML;
-	}
+		private readonly array $config,
+		private board $board,
+		private readonly threadRepository $threadRepository,
+		private readonly postRepository $postRepository,
+		private readonly softErrorHandler $softErrorHandler,
+		private readonly postRedirectService $postRedirectService
+	) {}
 
 	/**
 	 * Main entry point to handle default board access.
@@ -48,14 +37,14 @@ class defaultRoute {
 			$this->board->drawPage(intval($pageParam));
 		} else {
 			// If the static index page is missing, regenerate it
-			if (!is_file($this->config['PHP_SELF2'])) {
+			if (!is_file($this->config['STATIC_INDEX_FILE'])) {
 				$this->board->updateBoardPathCache();
 				$this->board->rebuildBoard(true);
 			}
 
 			// Redirect to static index page with cache-busting timestamp
 			header('HTTP/1.1 302 Moved Temporarily');
-			header('Location: ' . $this->globalHTML->fullURL() . $this->config['PHP_SELF2'] . '?' . $_SERVER['REQUEST_TIME']);
+			header('Location: ' . $this->board->getBoardURL(false, true) . '?' . $_SERVER['REQUEST_TIME']);
 		}
 	}
 
@@ -64,31 +53,29 @@ class defaultRoute {
 	 * This includes resolving moved threads or trying to find threads by child posts.
 	 */
 	private function handleThreadRedirect(int $resno) {
-		$postRedirectIO = postRedirectIO::getInstance();
-
 		// Check if the thread has been moved (redirect registered)
-		$movedThreadRedirect = $postRedirectIO->resolveRedirectedThreadLinkFromPostOpNumber($this->board, $resno);
+		$movedThreadRedirect = $this->postRedirectService->resolveRedirectedThreadLinkFromPostOpNumber($this->board, $resno);
 		if ($movedThreadRedirect) {
 			redirect($movedThreadRedirect);
 		}
 
 		// Try to resolve the thread UID directly from the post number
-		$thread_uid = $this->threadSingleton->resolveThreadUidFromResno($this->board, $resno);
+		$thread_uid = $this->threadRepository->resolveThreadUidFromResno($this->board, $resno);
 
 		// If the thread UID is not valid, try to resolve from a child post
-		if (!$this->threadSingleton->isThread($thread_uid)) {
-			$post_uid = $this->PIO->resolvePostUidFromPostNumber($this->board, $resno);
+		if (!$this->threadRepository->isThread($thread_uid)) {
+			$post_uid = $this->postRepository->resolvePostUidFromPostNumber($this->board, $resno);
 
 			// Fetch the thread UID from the post's data
-			$thread_uid_new = $this->PIO->fetchPosts($post_uid)[0]['thread_uid'] ?? false;
+			$thread_uid_new = $this->postRepository->getPostByUid($post_uid)['thread_uid'] ?? false;
 
 			// If still not valid, show error
-			if (!$this->threadSingleton->isThread($thread_uid_new)) {
-				$this->globalHTML->error("Thread not found!");
+			if (!$this->threadRepository->isThread($thread_uid_new)) {
+				$this->softErrorHandler->errorAndExit("Thread not found!");
 			}
 
 			// Otherwise, redirect to the correct thread page and scroll to post
-			$resnoNew = $this->threadSingleton->resolveThreadNumberFromUID($thread_uid_new); 
+			$resnoNew = $this->threadRepository->resolveThreadNumberFromUID($thread_uid_new); 
 			$redirectString = $this->board->getBoardThreadURL($resnoNew, $resno);
 			redirect($redirectString);
 		}

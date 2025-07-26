@@ -5,42 +5,25 @@
 use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
 
 class boardsRoute {
-	private readonly array $config;
-	private readonly staffAccountFromSession $staffSession;
-	private readonly softErrorHandler $softErrorHandler;
-	private readonly globalHTML $globalHTML;
-	private readonly templateEngine $adminTemplateEngine;
-	private readonly pageRenderer $adminPageRenderer;
-	private readonly boardIO $boardIO;
-	private readonly board $board;
-
 	public function __construct(
-		array $config,
-		staffAccountFromSession $staffSession,
-		softErrorHandler $softErrorHandler,
-		globalHTML $globalHTML,
-		templateEngine $adminTemplateEngine,
-		pageRenderer $adminPageRenderer,
-		boardIO $boardIO,
-		board $board
-	) {
-		$this->config = $config;
-		$this->staffSession = $staffSession;
-		$this->softErrorHandler = $softErrorHandler;
-		$this->globalHTML = $globalHTML;
-		$this->adminTemplateEngine = $adminTemplateEngine;
-		$this->adminPageRenderer = $adminPageRenderer;
-		$this->boardIO = $boardIO;
-		$this->board = $board;
-	}
+		private readonly array $config,
+		private readonly staffAccountFromSession $staffSession,
+		private readonly softErrorHandler $softErrorHandler,
+		private ?templateEngine $adminTemplateEngine,
+		private readonly pageRenderer $adminPageRenderer,
+		private readonly boardService $boardService,
+		private board $board
+	) {}
 
 	public function drawBoardPage(): void {
 		$authRoleLevel = $this->staffSession->getRoleLevel();
 
 		$this->softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_ADMIN);
 
+		$boards = $this->boardService->getAllRegularBoards();
+
 		// draw board tablke
-		$boardTableList = $this->globalHTML->drawBoardTable();
+		$boardTableList = drawBoardTable($this->config['LIVE_INDEX_FILE'], $boards);
 		
 		// set template values
 		$templateValues = [
@@ -73,7 +56,7 @@ class boardsRoute {
 				throw new Exception("Board UID from GET was not set or invalid. " . __CLASS__ . ' ' . __LINE__);
 			}
 
-			$board = $this->boardIO->getBoardByUID($id);
+			$board = $this->boardService->getBoard($id);
 
 			$boardUID = $board->getBoardUID() ?? '';
 			$boardIdentifier = $board->getBoardIdentifier() ?? '';

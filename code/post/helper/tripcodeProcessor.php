@@ -1,14 +1,10 @@
 <?php
 
 class tripcodeProcessor {
-	private readonly array $config;
-	private readonly globalHTML $globalHTML;
 
-	// Constructor to initialize config and globalHTML instances
-	public function __construct(array $config, globalHTML $globalHTML) {
-		$this->config = $config;
-		$this->globalHTML = $globalHTML;
-	}
+	// Constructor to initialize config instance
+	public function __construct(
+		private readonly array $config) {}
 
 	// Main method to apply tripcode processing to a given name
 	public function apply(string &$name, string &$tripcode, string &$secure_tripcode, string &$capcode, \Kokonotsuba\Root\Constants\userRole $roleLevel): void {
@@ -74,7 +70,7 @@ class tripcodeProcessor {
 				$name = $this->config['DEFAULT_NONAME'];
 			} else {
 				// Otherwise, trigger an error
-				$this->globalHTML->error(_T('regist_withoutname'));
+				throw new BoardException(_T('regist_withoutname'));
 			}
 		}
 	}

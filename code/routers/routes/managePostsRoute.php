@@ -1,50 +1,29 @@
 <?php
 
 class managePostsRoute {
-	private readonly board $board;
-	private readonly array $config;
-	private readonly moduleEngine $moduleEngine;
-	private readonly globalHTML $globalHTML;
-	private readonly boardIO $boardIO;
-	private readonly staffAccountFromSession $staffSession;
-	private readonly mixed $FileIO;
-	private readonly mixed $PIO;
-	private readonly actionLogger $actionLogger;
-	private readonly softErrorHandler $softErrorHandler;
-	private readonly pageRenderer $adminPageRenderer;
-
 	public function __construct(
-		board $board,
-		array $config,
-		moduleEngine $moduleEngine,
-		globalHTML $globalHTML,
-		boardIO $boardIO,
-		staffAccountFromSession $staffSession,
-		mixed $FileIO,
-		mixed $PIO,
-		actionLogger $actionLogger,
-		softErrorHandler $softErrorHandler,
-		pageRenderer $adminPageRenderer
-	) {
-		$this->board = $board;
-		$this->config = $config;
-		$this->moduleEngine = $moduleEngine;
-		$this->globalHTML = $globalHTML;
-		$this->boardIO = $boardIO;
-		$this->staffSession = $staffSession;
-		$this->FileIO = $FileIO;
-		$this->PIO = $PIO;
-		$this->actionLogger = $actionLogger;
-		$this->softErrorHandler = $softErrorHandler;
-		$this->adminPageRenderer = $adminPageRenderer;
-	}
+		private board $board,
+		private readonly array $config,
+		private moduleEngine $moduleEngine,
+		private readonly boardService $boardService,
+		private readonly staffAccountFromSession $staffAccountFromSession,
+		private readonly postRedirectService $postRedirectService,
+		private readonly postRepository $postRepository,
+		private readonly postService $postService,
+		private readonly softErrorHandler $softErrorHandler,
+		private mixed $FileIO,
+		private readonly actionLoggerService $actionLoggerService,
+		private attachmentService $attachmentService,
+		private readonly pageRenderer $adminPageRenderer,
+		private readonly array $allRegularBoards
+	) {}
 
 	public function drawManagePostsPage() {
 		$this->softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_MANAGE_POSTS']);
 		
 		$isSubmission = isset($_GET['filterSubmissionFlag']);
 		
-		$managePostsUrl = $this->globalHTML->fullURL().$this->config['PHP_SELF'].'?mode=managePosts';
+		$managePostsUrl = $this->board->getBoardURL(true) . '?mode=managePosts';
 
 		//filter list for the database
 		$defaultFilters = $this->initializeManagePostsFilters();
@@ -52,14 +31,14 @@ class managePostsRoute {
 		$filtersFromRequest = getFiltersFromRequest($managePostsUrl, $isSubmission, $defaultFilters);
 		$cleanUrl = buildSmartQuery($managePostsUrl, $defaultFilters, $filtersFromRequest, true);
 
-		$roleLevel = $this->staffSession->getRoleLevel();
+		$roleLevel = $this->staffAccountFromSession->getRoleLevel();
 		 
 		$postsPerPage = $this->config['ADMIN_PAGE_DEF'];
-		$numberOfFilteredPosts = $this->PIO->postCount($filtersFromRequest);
+		$numberOfFilteredPosts = $this->postRepository->postCount($filtersFromRequest);
 		$page = $_REQUEST['page'] ?? 0;
 
 		if (!filter_var($page, FILTER_VALIDATE_INT) && $page != 0) {
-			$this->globalHTML->error("Page number was not a valid int.");
+			$this->softErrorHandler->errorAndExit("Page number was not a valid int.");
 		}
 
 		$page = ($page >= 0) ? $page : 1;
@@ -76,11 +55,11 @@ class managePostsRoute {
 			$this->board->rebuildBoard();
 		}
 		
-		$posts = $this->PIO->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest) ?? array();
+		$posts = $this->postRepository->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest) ?? array();
 		$posts_count = count($posts); // Number of cycles
 		
 		
-		$this->globalHTML->drawManagePostsFilterForm($managePostsHtml, $this->board, $filtersFromRequest);
+		drawManagePostsFilterForm($managePostsHtml, $this->board, $filtersFromRequest, $this->allRegularBoards);
 		
 		$managePostsHtml .= '<form id="managePostsForm" action="' . $cleanUrl . '" method="POST">';
 		$managePostsHtml .= '<input type="hidden" name="mode" value="admin">
@@ -92,7 +71,7 @@ class managePostsRoute {
 								<tbody>';
 		
 		// Eager load all boards first
-		$allBoards = $this->boardIO->getAllRegularBoards();
+		$allBoards = $this->boardService->getAllRegularBoards();
 
 		$allBoardUids = array_column($allBoards, 'board_uid');
 		$boardList = implode('+', $allBoardUids);
@@ -122,7 +101,12 @@ class managePostsRoute {
 
 			// The first part of the discussion is the stop tick box and module function
 			$modFunc = ' ';
-			$this->moduleEngine->useModuleMethods('AdminList', array(&$modFunc, $posts[$j], !$posts[$j]['is_op'])); // "AdminList" Hook Point
+
+			if($is_op) {
+				$this->moduleEngine->dispatch('ThreadAdminControls', [&$modFunc, &$posts[$j]]);
+			} else {
+				$this->moduleEngine->dispatch('ReplyAdminControls', [&$modFunc, &$posts[$j]]);
+			}
 
 			// Extract additional archived image files and generate a link
 			if($ext && $this->FileIO->imageExists($tim.$ext, $postBoard)){
@@ -143,7 +127,7 @@ class managePostsRoute {
 			$managePostsHtml .= '
 				<tr>
 					<td class="colFunc">' . $modFunc . '</td>
-					<td class="colDel"><input type="checkbox" name="clist[]" value="' . $post_uid . '"><a target="_blank" href="'.$postBoard->getBoardURL().$postBoardConfig['PHP_SELF'].'?res=' . $no . '">' . $no . '</a></td>
+					<td class="colDel"><input type="checkbox" name="clist[]" value="' . $post_uid . '"><a target="_blank" href="'.$postBoard->getBoardURL().$postBoardConfig['LIVE_INDEX_FILE'].'?res=' . $no . '">' . $no . '</a></td>
 					<td class="colBoard">/' . $postBoard->getBoardIdentifier() . '/ ('.$postBoard->getBoardUID().')</td>
 					<td class="colDate"><span class="time">' . $now . '</span></td>
 					<td class="colSub"><span class="title">' . $sub . '</span></td>
@@ -188,7 +172,7 @@ class managePostsRoute {
 	</script>
 	';
 
-		$managePostsPager = $this->globalHTML->drawPager($postsPerPage, $numberOfFilteredPosts, $cleanUrl);
+		$managePostsPager = drawPager($postsPerPage, $numberOfFilteredPosts, $cleanUrl, [$this->softErrorHandler, 'errorAndExit']);
 
 		$templateValues = [
 			'{$PAGE_CONTENT}' => $managePostsHtml,
@@ -219,20 +203,20 @@ class managePostsRoute {
 	}
 
 	private function deletePostsFromCheckboxes(array $postUids, bool $onlyDeleteImages): void {
-		$postsData = $this->PIO->fetchPosts($postUids);
+		$postsData = $this->postService->getPostsByUids($postUids);
 		$postNumbers = array_column($postsData, 'no');
 
 		$checkboxDeletionActionLogStr = is_array($postNumbers) ? implode(', No. ',$postNumbers) : $postNumbers;
-		$this->actionLogger->logAction("Delete posts: $checkboxDeletionActionLogStr".($onlyDeleteImages?' (file only)':''), $this->board->getBoardUID());
+		$this->actionLoggerService->logAction("Delete posts: $checkboxDeletionActionLogStr".($onlyDeleteImages?' (file only)':''), $this->board->getBoardUID());
 
 		if($onlyDeleteImages) {
-			$files = $this->PIO->removeAttachments($postUids);
+			$files = $this->attachmentService->removeAttachments($postUids);
 
 			if ($files) {
 				$this->FileIO->deleteImage($files, $this->board);
 			}
 		} else {
-			$this->PIO->removePosts($postUids);
+			$this->postService->removePosts($postUids);
 		}
 	}
 }

@@ -3,28 +3,14 @@
 // account route - displays account info and actions
 
 class accountRoute {
-	private readonly staffAccountFromSession $staffSession;
-	private readonly globalHTML $globalHTML;
-	private readonly softErrorHandler $softErrorHandler;
-	private readonly AccountIO $AccountIO;
-	private readonly templateEngine $adminTemplateEngine;
-	private readonly pageRenderer $adminPageRenderer;
-
 	public function __construct(
-		staffAccountFromSession $staffSession,
-		globalHTML $globalHTML,
-		softErrorHandler $softErrorHandler,
-		AccountIO $AccountIO,
-		templateEngine $adminTemplateEngine,
-		pageRenderer $adminPageRenderer
-	) {
-		$this->staffSession = $staffSession;
-		$this->globalHTML = $globalHTML;
-		$this->softErrorHandler = $softErrorHandler;
-		$this->AccountIO = $AccountIO;
-		$this->adminTemplateEngine = $adminTemplateEngine;
-		$this->adminPageRenderer = $adminPageRenderer;
-	}
+		private readonly array $config,
+		private readonly staffAccountFromSession $staffSession,
+		private readonly softErrorHandler $softErrorHandler,
+		private readonly accountRepository $accountRepository,
+		private readonly ?templateEngine $adminTemplateEngine,
+		private readonly pageRenderer $adminPageRenderer
+	) {}
 
 	public function drawAccountPage(): void {
 		$authRoleLevel = $this->staffSession->getRoleLevel();
@@ -32,11 +18,13 @@ class accountRoute {
 
 		$this->softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_USER);
 
+		$accounts = $this->accountRepository->getAllAccounts();
+
 		$accountTableList = ($authRoleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN) 
-			? $this->globalHTML->drawAccountTable() 
+			? drawAccountTable($this->config['LIVE_INDEX_FILE'], $accounts) 
 			: '';
 
-		$currentAccount = $this->AccountIO->getAccountByID($this->staffSession->getUID());
+		$currentAccount = $this->accountRepository->getAccountByID($this->staffSession->getUID());
 
 		$accountTemplateValues = [
 			'{$ACCOUNT_ID}' => htmlspecialchars($this->staffSession->getUID()),

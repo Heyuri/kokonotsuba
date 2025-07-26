@@ -26,8 +26,8 @@ $config['THUMB_SETTING'] = array( // Thumbnail Gen. Settings
 $config['CDN_DIR'] = '/var/www/website/cdn/'; // absolute path to the folder for boards' dirs for imgs & thumbs (e.g. /var/www/cdn/heyuri/)
 $config['CDN_URL'] = 'https://cdn.example.net/'; // img/thumb CDN url (e.g https://cdn.heyuri.net/)
 
-$config['PHP_SELF'] = 'koko.php'; // Name of the main script
-$config['PHP_SELF2'] = 'index.html'; // Defines PHP_SELF
+$config['LIVE_INDEX_FILE'] = 'koko.php'; // Name of the main script
+$config['STATIC_INDEX_FILE'] = 'index.html'; // Defines LIVE_INDEX_FILE
 $config['PHP_EXT'] = '.html'; // File extension for static pages
 
 

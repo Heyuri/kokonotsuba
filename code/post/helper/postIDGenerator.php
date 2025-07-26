@@ -4,7 +4,7 @@
 // generate post id for a user/moderator
 class postIdGenerator {
 	private readonly array $config;
-	private readonly board $board;
+	private board $board;
     private readonly staffAccountFromSession $staffSession;
 
 	public function __construct(array $config, board $board, staffAccountFromSession $staffSession) {

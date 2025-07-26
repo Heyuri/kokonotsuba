@@ -5,31 +5,18 @@
 use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
 
 class handleBoardRequestsRoute {
-	private readonly array $config;
-	private readonly softErrorHandler $softErrorHandler;
-	private readonly boardIO $boardIO;
-	private readonly boardPathCachingIO $boardPathCachingIO;
-	private readonly globalHTML $globalHTML;
-
-	private readonly DatabaseConnection $databaseConnection;
-
 	public function __construct(
-		array $config,
-		softErrorHandler $softErrorHandler,
-		boardIO $boardIO,
-		globalHTML $globalHTML
-	) {
-		$this->config = $config;
-		$this->softErrorHandler = $softErrorHandler;
-		$this->boardIO = $boardIO;
-		$this->boardPathCachingIO = boardPathCachingIO::getInstance();
-		$this->databaseConnection = DatabaseConnection::getInstance();
-		$this->globalHTML = $globalHTML;
-	}
+		private DatabaseConnection $databaseConnection,
+		private readonly array $config,
+		private readonly softErrorHandler $softErrorHandler,
+		private readonly boardService $boardService,
+		private readonly boardPathService $boardPathService,
+		private readonly quoteLinkRepository $quoteLinkRepository
+	) {}
 
 
-		// handle actions
-		public function handleBoardRequests(): void {
+	// handle actions
+	public function handleBoardRequests(): void {
 		$this->softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_ADMIN);
 
 		// edit a board
@@ -48,7 +35,7 @@ class handleBoardRequestsRoute {
 		}
 
 		// redirect
-		redirect($this->config['PHP_SELF'] . '?mode=boards');
+		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=boards');
 	}
 
 	// handle board editing
@@ -64,12 +51,12 @@ class handleBoardRequestsRoute {
 				throw new \InvalidArgumentException("Cannot reserved board.");
 			}
 
-			$modifiedBoard = $this->boardIO->getBoardByUID($modifiedBoardIdFromPOST);
+			$modifiedBoard = $this->boardService->getBoard($modifiedBoardIdFromPOST);
 
 
 			if (isset($_POST['board-action-submit']) && $_POST['board-action-submit'] === 'delete-board') {
-				$this->boardIO->deleteBoardByUID($modifiedBoard->getBoardUID());
-				redirect($this->config['PHP_SELF'] . '?mode=boards');
+				$this->boardService->deleteBoard($modifiedBoard->getBoardUID());
+				redirect($this->config['LIVE_INDEX_FILE'] . '?mode=boards');
 			}
 
 			$fields = [
@@ -82,33 +69,33 @@ class handleBoardRequestsRoute {
 			];
 
 			if (!file_exists(getBoardConfigDir() . $fields['config_name'])) {
-				$this->globalHTML->error("Invalid config file, doesn't exist.");
+				$this->softErrorHandler->errorAndExit("Invalid config file, doesn't exist.");
 			}
 			if (!file_exists(getBoardStoragesDir() . $fields['storage_directory_name'])) {
-				$this->globalHTML->error("Invalid storage directory, doesn't exist.");
+				$this->softErrorHandler->errorAndExit("Invalid storage directory, doesn't exist.");
 			}
 
-			$this->boardIO->editBoardValues($modifiedBoard, $fields);
+			$this->boardService->editBoard($modifiedBoard, $fields);
 		} catch (Exception $e) {
 			http_response_code(500);
 			echo "Error: " . $e->getMessage();
 		}
 
 		$boardRedirectUID = $_POST['edit-board-uid-for-redirect'] ?? '';
-		redirect($this->config['PHP_SELF'] . '?mode=boards&view=' . $boardRedirectUID);
+		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=boards&view=' . $boardRedirectUID);
 	}
 
 	// handle board creation
 	private function createNewBoardFromRequest() {
 		// Get board information from the request
-		$boardTitle = $_POST['new-board-title'] ?? $this->globalHTML->error("Board title wasn't set!");
+		$boardTitle = $_POST['new-board-title'] ?? $this->softErrorHandler->errorAndExit("Board title wasn't set!");
 		$boardSubTitle = $_POST['new-board-sub-title'] ?? '';
 		$boardIdentifier = $_POST['new-board-identifier'] ?? '';
 		$boardListed = !empty($_POST['new-board-listed']) ? 1 : 0;
-		$boardPath = $_POST['new-board-path'] ?? $this->globalHTML->error("Board path wasn't set!");
+		$boardPath = $_POST['new-board-path'] ?? $this->softErrorHandler->errorAndExit("Board path wasn't set!");
 	
 		// Create an instance of the BoardCreator helper class
-		$boardCreator = new boardCreator($this->globalHTML, $this->config, $this->boardIO, $this->boardPathCachingIO);
+		$boardCreator = new boardCreator($this->boardService, $this->boardPathService);
 	
 		// Call the createNewBoard method in the BoardCreator class
 		$boardCreator->createNewBoard($boardTitle, $boardSubTitle, $boardIdentifier, $boardListed, $boardPath);
@@ -124,23 +111,22 @@ class handleBoardRequestsRoute {
 			$threadTableName = $dbSettings['THREAD_TABLE'];
 	
 			// board creation object
-			$boardCreator = new boardCreator($this->globalHTML, 
-			 $this->config,
-			 $this->boardIO, 
-			 $this->boardPathCachingIO);
+			$boardCreator = new boardCreator(
+			 $this->boardService, 
+			 $this->boardPathService);
 	
 			// Initialize board variables
-			$boardTitle = $_POST['import-board-title'] ?? $this->globalHTML->error("Board title wasn't set!");
-			$boardSubTitle = $_POST['import-board-sub-title'] ?? $this->globalHTML->error("Board subtitle wasn't set!");
-			$boardIdentifier = $_POST['import-board-identifier'] ?? $this->globalHTML->error("Board identifier wasn't set!");
+			$boardTitle = $_POST['import-board-title'] ?? $this->softErrorHandler->errorAndExit("Board title wasn't set!");
+			$boardSubTitle = $_POST['import-board-sub-title'] ?? $this->softErrorHandler->errorAndExit("Board subtitle wasn't set!");
+			$boardIdentifier = $_POST['import-board-identifier'] ?? $this->softErrorHandler->errorAndExit("Board identifier wasn't set!");
 			$boardListed = !empty($_POST['import-board-listed']) ? 1 : 0;
-			$boardPath = $_POST['import-board-path'] ?? $this->globalHTML->error("Board path wasn't set!");
-			$boardTableName = $_POST['import-board-tablename'] ?? $this->globalHTML->error("Table name wasn't set!");
+			$boardPath = $_POST['import-board-path'] ?? $this->softErrorHandler->errorAndExit("Board path wasn't set!");
+			$boardTableName = $_POST['import-board-tablename'] ?? $this->softErrorHandler->errorAndExit("Table name wasn't set!");
 			$boardDatabaseFile = $_FILES['import-board-file'];
 	
 			// check if the file was uploaded correctly
 			if(!isset($boardDatabaseFile) || $boardDatabaseFile['error'] !== UPLOAD_ERR_OK) {
-				$this->globalHTML->error("Board SQL file wasn't uploaded properly!");
+				$this->softErrorHandler->errorAndExit("Board SQL file wasn't uploaded properly!");
 			}
 	
 			// basic check to ensure it's a mysql dump
@@ -156,13 +142,15 @@ class handleBoardRequestsRoute {
 			 $boardPath);
 	
 			// check board uid is valid
-			if(!$importedBoard) $this->globalHTML->error("Invalid board uid");
+			if(!$importedBoard) $this->softErrorHandler->errorAndExit("Invalid board uid");
 	
 			// Create board importer instance (for now, hard-coded to pixmicat)
-			$pixmicatBoardImporter = new pixmicatBoardImporter($this->databaseConnection,
-			 $importedBoard, 
-			 $threadTableName, 
-			 $postTableName);
+			$pixmicatBoardImporter = new pixmicatBoardImporter(
+				$this->databaseConnection,
+				$importedBoard,
+				$this->quoteLinkRepository, 
+				$threadTableName, 
+				$postTableName);
 	
 			// load mysql
 			$pixmicatBoardImporter->loadSQLDumpToTempTable($boardDatabaseFile['tmp_name'], $boardTableName);
@@ -184,16 +172,12 @@ class handleBoardRequestsRoute {
 			// do clean-up if the board was created so theres no left-over files
 			if($importedBoard) {
 				$boardUid = $importedBoard->getBoardUID();
-				$boardPath = $importedBoard->getBoardCachedPath();
 				// delete new board from database
-				$this->boardIO->deleteBoardByUID($boardUid);
-			
-				// delete files
-				safeRmdir($boardPath);
+				$this->boardService->deleteBoard($boardUid);
 			}
 
 			// run error
-			$this->globalHTML->error('Error during board import: ' . $e->getMessage());
+			$this->softErrorHandler->errorAndExit('Error during board import: ' . $e->getMessage());
 		}
 	}
 	

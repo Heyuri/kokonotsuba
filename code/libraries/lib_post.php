@@ -11,7 +11,10 @@ function catchFraudsters(&$name) {
 	if (preg_match('/[◆◇♢♦⟡★]/u', $name)) $name .= " (fraudster)";
 }
 
-function searchBoardArrayForBoard($boards, $targetBoardUID) {
+function searchBoardArrayForBoard(int $targetBoardUID) {
+	// Using the global board array
+	$boards = GLOBAL_BOARD_ARRAY;
+
 	foreach ($boards as $board) {
 		if ($board->getBoardUID() === intval($targetBoardUID)) {
 			return $board;
@@ -19,27 +22,30 @@ function searchBoardArrayForBoard($boards, $targetBoardUID) {
 	}
 }
 
-function createBoardStoredFilesFromArray($posts) {
-	$boardIO = boardIO::getInstance();
+function getBoardsByUIDs(array $targetBoardUIDs): array {
+    $boards = GLOBAL_BOARD_ARRAY;
+    $matchedBoards = [];
 
-	$boards = $boardIO->getAllRegularBoards();
+    // Normalize target UIDs to integers for reliable comparison
+    $uidSet = array_map('intval', $targetBoardUIDs);
+
+    foreach ($boards as $board) {
+        if (in_array($board->getBoardUID(), $uidSet, true)) {
+            $matchedBoards[] = $board;
+        }
+    }
+
+    return $matchedBoards;
+}
+
+function createBoardStoredFilesFromArray(array $posts, array $boards) {
 	$files = [];
 	foreach($posts as $post) {
-		$board = searchBoardArrayForBoard($boards, $post['boardUID']);
+		$board = searchBoardArrayForBoard($post['boardUID']);
 
 		$files[] = new boardStoredFile($post['tim'], $post['ext'], $board);
 	}
 	return $files;
-}
-
-function getPostUidsFromThread(string $threadUid) {
-	$threadSingleton = threadSingleton::getInstance();
-
-	$postsFromThread = $threadSingleton->fetchPostsFromThread($threadUid);
-
-	$postUids = array_column($postsFromThread, 'post_uid');
-
-	return $postUids;
 }
 
 function getUserFileFromRequest(): fileFromUpload {

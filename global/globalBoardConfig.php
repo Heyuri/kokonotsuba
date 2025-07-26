@@ -54,45 +54,43 @@ $config['ALLOW_UPLOAD_EXT'] = [
 // See: https://github.com/Heyuri/kokonotsuba/wiki/All-modules
 $config['ModuleList'] = array(
 	/* modes */
-	'mod_cat' => true,
-	'mod_search' => true,
-	'mod_searchcategory' => false,
-	'mod_stat' => true,
-	'mod_threadlist' => true,
+	'catalog' => true,
+	'search' => true,
+	'threadList' => true,
 	/* admin */
-	'mod_rebuild' => true,
-	'mod_admindel' => true,
-	'mod_adminban' => true,
-	'mod_globalmsg' => true,
-	'mod_blotter' => true,
-	'mod_janitor' => true,
-	'mod_movethread' => true,
+	'rebuild' => true,
+	'adminDel' => true,
+	'adminBan' => true,
+	'globalMessage' => true,
+	'blotter' => true,
+	'janitor' => true,
+	'moveThread' => true,
 	/* thread modes */
-	'mod_autosage' => true,
-	'mod_stop' => true,
-	'mod_sticky' => true,
+	'autoSage' => true,
+	'stop' => true,
+	'sticky' => true,
 	/* posting */
-	'mod_csrf_prevent' => true,
-	'mod_bbcode' => true,
-	'mod_wf' => true,
-	'mod_countryflags' => false,
-	'mod_anigif' => true,
-	'mod_antiflood' => true,
-	'mod_fieldtraps' => true,
-	'mod_readonly' => false,
-	'mod_showip' => true,
+	'csrfPrevent' => true,
+	'bbCode' => true,
+	'wordFilter' => true,
+	'countryFlags' => false,
+	'animatedGif' => true,
+	'antiFlood' => true,
+	'fieldTraps' => true,
+	'readOnly' => false,
+	'showIp' => true,
 	/* API */
-	'mod_api' => true,
-	'mod_rss' => false,
+	'api' => true,
+	'rss' => false,
 	/* misc */
-	'mod_pushpost' => false,
-	'mod_soudane' => true,
-	'mod_pm' => true,
-	'mod_ads' => true,
-	'mod_imagemeta' => true,
-	'mod_onlinecounter' => true,
-	'mod_banner' => true,
-	'mod_addinfo' => true,
+	'pushPost' => false,
+	'soundane' => true,
+	'privateMessage' => true,
+	'ads' => true,
+	'imageMeta' => true,
+	'onlineCounter' => true,
+	'banner' => true,
+	'addinfo' => true,
 );
 
 /* Module-specific options */
@@ -264,7 +262,7 @@ $config['RENZOKU2'] = 0; // Post limit for images, intervals in seconds
 $config['TRUST_HTTP_X_FORWARDED_FOR'] = 0; //Whether to use HTTP_X_FORWARDED_FOR to grab the real IP after the Proxy. Note that the file head may be forged, do not open if there is no special need.
 
 // Appearance
-$config['LIMIT_SENSOR'] = array('ByThreadCountCondition'=>150); // AutoDelete, defaults to 10 pages
+$config['MAX_THREAD_AMOUNT'] = 150; // Auto deletes the last thread from a board that exceed this limit, defaults to 10 pages
 
 // Appearance
 $config['TEMPLATE_FILE'] = 'kokoimg.tpl'; // Template File. Set this and the next line to 'kokotxt.tpl' and 'kokotxtreply.tpl' respectively to use Kokonotsuba as a textboard.
