@@ -238,7 +238,7 @@ class html {
 	}
 
 	public function drawInstallForm() {
-		echo '<form id="installation-form" action="'.$_SERVER['PHP_SELF'].'" method="POST">
+		echo '<form id="installation-form" action="' . htmlspecialchars($_SERVER['PHP_SELF']) . '" method="POST">
 			<input type="hidden" name="action" value="install">
 			<h3>Database Options</h3>
 			<p>If you make any changes to these - make sure to update databaseSettings.php afterwards to match what you set</p>
@@ -673,25 +673,25 @@ switch ($action) {
 			
 			touch('.installed');
 			
-			if(file_exists(dirname(__FILE__) . '/' .$globalConfig['PHP_SELF2'])) {
+			if(file_exists(dirname(__FILE__) . '/' .$globalConfig['STATIC_INDEX_FILE'])) {
 
-				unlink('./'.$globalConfig['PHP_SELF2']);
-				createFileAndWriteText(dirname(__FILE__) . '/', $globalConfig['PHP_SELF2'], '
+				unlink('./'.$globalConfig['STATIC_INDEX_FILE']);
+				createFileAndWriteText(dirname(__FILE__) . '/', $globalConfig['STATIC_INDEX_FILE'], '
 					<!DOCTYPE html>
 					<html lang="en">
 						<head>
 							<meta charset="UTF-8">
-							<meta http-equiv="refresh" content="url='.$globalConfig['PHP_SELF'].'">
+							<meta http-equiv="refresh" content="url='.$globalConfig['LIVE_INDEX_FILE'].'">
 							<title>Redirecting...</title>
 						</head>
 						<body>
-							<p>If you are not redirected automatically, follow this <a href="'.$globalConfig['PHP_SELF'].'">link</a>.</p>
+							<p>If you are not redirected automatically, follow this <a href="'.$globalConfig['LIVE_INDEX_FILE'].'">link</a>.</p>
 						</body>
 					</html>
 				');
 			}
 			
-			redirect($globalConfig['PHP_SELF']);
+			redirect($globalConfig['LIVE_INDEX_FILE']);
 		} catch (Exception $e) {
 			throw $e;
 		}
