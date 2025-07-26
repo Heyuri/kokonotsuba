@@ -108,6 +108,9 @@ class managePostsRoute {
 				$this->moduleEngine->dispatch('ReplyAdminControls', [&$modFunc, &$posts[$j]]);
 			}
 
+			// dispatch post admin hook point
+			$this->moduleEngine->dispatch('PostAdminControls', [&$modFunc, &$posts[$j]]);
+
 			// Extract additional archived image files and generate a link
 			if($ext && $this->FileIO->imageExists($tim.$ext, $postBoard)){
 				$clip = '<a href="'.$this->FileIO->getImageURL($tim.$ext, $postBoard).'" target="_blank">'.$tim.$ext.'</a>';
