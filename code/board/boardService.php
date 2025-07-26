@@ -83,7 +83,7 @@ class boardService {
 
         // Define directory paths
         $boardCdnDir = $templateBoardConfig['CDN_DIR'] . '/' . $boardIdentifier;
-        $fullBoardPath = $boardPath . $boardIdentifier . '/';
+        $fullBoardPath = $boardPath . '/' . $boardIdentifier . '/';
 
         // Get next board UID
         $nextBoardUid = $this->boardRepository->getNextBoardUID();
