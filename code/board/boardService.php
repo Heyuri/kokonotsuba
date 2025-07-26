@@ -58,87 +58,104 @@ class boardService {
 		unlink($boardConfigPath);
 	}
 
-	public function createBoard(array $inputFields, array $templateBoardConfig, string $backendDirectory, \Kokonotsuba\Root\Constants\userRole $requiredRoleLevel, \Kokonotsuba\Root\Constants\userRole $userRoleLevel): ?board {
-		if (empty($inputFields['boardIdentifier']) || empty($inputFields['boardTitle'])) {
-			throw new Exception("Required fields missing.");
-		}
+    public function createBoard(array $inputFields, array $templateBoardConfig, string $backendDirectory, \Kokonotsuba\Root\Constants\userRole $requiredRoleLevel, \Kokonotsuba\Root\Constants\userRole $userRoleLevel): ?board {
+        // Check for missing required fields
+        if (empty($inputFields['boardIdentifier']) || empty($inputFields['boardTitle'])) {
+            throw new Exception("Required fields missing.");
+        }
 
-		// authenticate user
-		if($userRoleLevel->isLessThan($requiredRoleLevel)) {
-			throw new Exception("User not authorized for board creation.");
-		}
+        // Authenticate user role
+        if($userRoleLevel->isLessThan($requiredRoleLevel)) {
+            throw new Exception("User not authorized for board creation.");
+        }
 
-		// extract input from input field array
-		$boardIdentifier = $inputFields['boardIdentifier'];
-		$boardPath = $inputFields['boardPath'];
-		$boardTitle = $inputFields['boardTitle'];
-		$boardSubTitle = $inputFields['boardSubTitle'];
-		$boardListed = $inputFields['boardListed'];
+        // Sanitize input fields
+        $boardIdentifier = $this->sanitizeBoardIdentifier($inputFields['boardIdentifier']);
+        $boardPath = $this->sanitizeBoardPath($inputFields['boardPath']);
+        $boardTitle = $this->sanitizeTextField($inputFields['boardTitle']);
+        $boardSubTitle = isset($inputFields['boardSubTitle']) ? $this->sanitizeTextField($inputFields['boardSubTitle']) : '';
+        $boardListed = isset($inputFields['boardListed']) ? (int) $inputFields['boardListed'] : 0;
+
+        // Ensure valid `boardListed` (0 or 1)
+        if (!in_array($boardListed, [0, 1], true)) {
+            throw new Exception("Invalid value for 'boardListed'. Expected 0 or 1.");
+        }
+
+        // Define directory paths
+        $boardCdnDir = $templateBoardConfig['CDN_DIR'] . '/' . $boardIdentifier;
+        $fullBoardPath = $boardPath . $boardIdentifier . '/';
+
+        // Get next board UID
+        $nextBoardUid = $this->boardRepository->getNextBoardUID();
+        $createdPaths = [];
+
+        try {
+            // Create necessary directories
+            $createdPaths[] = createDirectory($fullBoardPath);
+            $imgDir = $templateBoardConfig['USE_CDN'] ? $boardCdnDir . $templateBoardConfig['IMG_DIR'] : $fullBoardPath . $templateBoardConfig['IMG_DIR'];
+            $thumbDir = $templateBoardConfig['USE_CDN'] ? $boardCdnDir . $templateBoardConfig['THUMB_DIR'] : $fullBoardPath . $templateBoardConfig['THUMB_DIR'];
+            $createdPaths[] = createDirectory($imgDir);
+            $createdPaths[] = createDirectory($thumbDir);
+
+            // Create the PHP file
+            $requireString = "\"$backendDirectory{$templateBoardConfig['LIVE_INDEX_FILE']}\"";
+            createFileAndWriteText($fullBoardPath, $templateBoardConfig['LIVE_INDEX_FILE'], "<?php require_once {$requireString}; ?>");
+
+            // Create board storage directory
+            $boardStorageDirectoryName = 'storage-' . $nextBoardUid;
+            $dataDir = getBoardStoragesDir() . $boardStorageDirectoryName;
+            $createdPaths[] = createDirectory($dataDir);
+
+            // Generate config file for the board
+            $boardConfigName = generateNewBoardConfigFile($nextBoardUid);
+
+            // Add board to the database
+            $this->boardRepository->addNewBoard($boardIdentifier, $boardTitle, $boardSubTitle, $boardListed, $boardConfigName, $boardStorageDirectoryName);
+
+            // Initialize boardUID.ini
+            $newBoardUID = $this->boardRepository->getLastBoardUID();
+            createFileAndWriteText($fullBoardPath, 'boardUID.ini', "board_uid = $newBoardUID");
+
+            // Add the board's physical path to the path cache table
+            $this->boardPathService->addNew($newBoardUID, $fullBoardPath);
+
+            // Rebuild the new board from the database
+            $newBoardFromDatabase = $this->getBoard($newBoardUID);
+            $newBoardFromDatabase->rebuildBoard();
+
+            return $newBoardFromDatabase;
+        } catch (Exception $e) {
+            // Handle rollback and cleanup
+            rollbackCreatedPaths($createdPaths);
+            deleteCreatedBoardConfig($boardConfigName);
+            throw $e;
+        }
+    }
 
 
-		// sanitize fields
+	    // Sanitize board identifier (alphanumeric, dashes, underscores)
+    private function sanitizeBoardIdentifier($input) {
+        $input = trim($input);
+        // Only allow alphanumeric, underscores, and dashes
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $input)) {
+            throw new Exception("Invalid board identifier.");
+        }
+        return $input;
+    }
 
-		$boardCdnDir = $templateBoardConfig['CDN_DIR'] . '/' . $boardIdentifier;
-		
-		$fullBoardPath = $boardPath . $boardIdentifier . '/';
+    // Sanitize board path (ensure it's a valid directory path)
+    private function sanitizeBoardPath($input) {
+        $input = rtrim(trim($input), '/');  // Remove any trailing slashes
+        if (!is_dir($input)) {
+            throw new Exception("Invalid board path.");
+        }
+        return $input;
+    }
 
-		$nextBoardUid = $this->boardRepository->getNextBoardUID();
-
-		$createdPaths = [];
-
-		try {
-			// Create full board path
-			$createdPaths[] = createDirectory($fullBoardPath);
-
-			// Create image storage paths
-			$imgDir = $templateBoardConfig['USE_CDN'] ? $boardCdnDir . $templateBoardConfig['IMG_DIR'] : $fullBoardPath . $templateBoardConfig['IMG_DIR'];
-			$thumbDir = $templateBoardConfig['USE_CDN'] ? $boardCdnDir . $templateBoardConfig['THUMB_DIR'] : $fullBoardPath . $templateBoardConfig['THUMB_DIR'];
-			$createdPaths[] = createDirectory($imgDir);
-			$createdPaths[] = createDirectory($thumbDir);
-
-			// Create koko.php in the directory
-			$requireString = "\"$backendDirectory{$templateBoardConfig['LIVE_INDEX_FILE']}\"";
-			createFileAndWriteText($fullBoardPath, $templateBoardConfig['LIVE_INDEX_FILE'], "<?php require_once {$requireString}; ?>");
-
-			// Create board-storage directory
-			$boardStorageDirectoryName = 'storage-' . $nextBoardUid;
-			$dataDir = getBoardStoragesDir() . $boardStorageDirectoryName;
-			$createdPaths[] = createDirectory($dataDir);
-
-			// Generate config file
-			$boardConfigName = generateNewBoardConfigFile($nextBoardUid);
-
-			// Add board to database
-			$this->boardRepository->addNewBoard($boardIdentifier, $boardTitle, $boardSubTitle, $boardListed, $boardConfigName, $boardStorageDirectoryName);
-
-			// Initialize and create boardUID.ini
-			$newBoardUID = $this->boardRepository->getLastBoardUID();
-			createFileAndWriteText($fullBoardPath, 'boardUID.ini', "board_uid = $newBoardUID");
-
-			// Add the board's physical path to the path cache table
-			$this->boardPathService->addNew($newBoardUID, $fullBoardPath);
-
-			// Rebuild the new board
-			$newBoardFromDatabase = $this->getBoard($newBoardUID);
-			$newBoardFromDatabase->rebuildBoard();
-
-			return $newBoardFromDatabase;
-		} catch (Exception $e) {
-			rollbackCreatedPaths($createdPaths);
-			deleteCreatedBoardConfig($boardConfigName);
-			throw $e;
-		}
-
-
-		$this->boardRepository->addNewBoard(
-			$inputFields['board_identifier'],
-			$inputFields['board_title'],
-			$inputFields['board_sub_title'] ?? '',
-			$inputFields['listed'] ?? 0,
-			$inputFields['config_name'] ?? '',
-			$inputFields['storage_directory_name'] ?? ''
-		);
-	}
+    // Sanitize text fields (remove unwanted HTML tags)
+    private function sanitizeTextField($input) {
+        return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');  // Convert special chars to HTML entities
+    }
 
 	public function getBoardsFromUIDs(array $boardUIDs): ?array {
 		// Ensure $uidList is an array
