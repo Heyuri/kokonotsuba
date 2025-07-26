@@ -75,21 +75,6 @@ function getGlobalConfig() {
 	return $config;
 }
 
-function getBoardFromBootstrapFile() {
-	$boardIO = boardIO::getInstance();
-	$boardUIDIni = parse_ini_file('./boardUID.ini', true);
-	
-	//run some checks
-	if(!$boardUIDIni) die("There was an error parsing boardUID.ini");
-	if(!isset($boardUIDIni['board_uid'])) die("Board UID value in the ini file is not be set or is null. Check boardUID.ini to ensure it has a valid board UID.");
-	
-	$boardUID = $boardUIDIni['board_uid'];
-
-	$board = $boardIO->getBoardByUID($boardUID);
-	if(!$board) die("Board ($boardUID) not found in database. Contact the Administrator if you believe this is a mistake."); //board was not found
-	return $board;
-}
-
 
 /*────────────────────────────────────────────────────────────
 	The main judgment of the functions of the program
@@ -99,29 +84,93 @@ function getBoardFromBootstrapFile() {
 if(file_exists('.backend')) die("You are trying to access the instance's backend");
 
 
+// Global configuration file
+$globalConfig	= getGlobalConfig();
+
 // ───────────────────────────────────────
 // Database Setup
 // ───────────────────────────────────────
 $dbSettings = getDatabaseSettings();
 
 DatabaseConnection::createInstance($dbSettings);
-boardIO::createInstance($dbSettings);
-AccountIO::createInstance($dbSettings);
-actionLogger::createInstance($dbSettings);
-postRedirectIO::createInstance($dbSettings);
-threadCacheSingleton::createInstance($dbSettings);
-quoteLinkSingleton::createInstance($dbSettings);
+
+$databaseConnection = DatabaseConnection::getInstance();
+
+$transactionManager = new transactionManager($databaseConnection);
+
+
+
+// ───────────────────────────────────────
+// IO / Core Systems
+// ───────────────────────────────────────
+PMCLibrary::createFileIOInstance();
+$FileIO				= PMCLibrary::getFileIOInstance();
+
+// ───────────────────────────────────────
+// Account and action log Bootstrap
+// ───────────────────────────────────────
+$accountRepository = new accountRepository($databaseConnection, $dbSettings['ACCOUNT_TABLE']);
+
+$actionLoggerRepository = new actionLoggerRepository($databaseConnection, $dbSettings['ACTIONLOG_TABLE'], $dbSettings['BOARD_TABLE']);
+$actionLoggerService = new actionLoggerService($actionLoggerRepository, $accountRepository); 
+
+$accountService = new accountService($accountRepository, $actionLoggerService);
+
+// ───────────────────────────────────────
+// Post/Thread Bootstrap
+// ───────────────────────────────────────
+$attachmentRepository = new attachmentRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE']);
+$attachmentService = new attachmentService($attachmentRepository);
+$threadRepository = new threadRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE']);
+$postRepository = new postRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE']);
+$postService = new postService($postRepository, $transactionManager, $threadRepository, $attachmentService);
+$threadService = new threadService($databaseConnection, $threadRepository, $postRepository, $postService, $transactionManager, $dbSettings['THREAD_TABLE'], $dbSettings['POST_TABLE']);
+$quoteLinkRepository = new quoteLinkRepository($databaseConnection, $dbSettings['QUOTE_LINK_TABLE'], $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE']);
+$quoteLinkService = new quoteLinkService($quoteLinkRepository, $postRepository);
+$postSearchRepository = new postSearchRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE']);
+$postSearchService = new postSearchService($postSearchRepository);
+$postRedirectRepository = new postRedirectRepository($databaseConnection, $dbSettings['THREAD_REDIRECT_TABLE'], $dbSettings['THREAD_TABLE']);
+$postRedirectService = new postRedirectService($postRedirectRepository, $threadService);
 
 // ───────────────────────────────────────
 // Board Bootstrap
 // ───────────────────────────────────────
-$board = getBoardFromBootstrapFile();
+$boardPostNumbers = new boardPostNumbers($databaseConnection, $dbSettings['POST_NUMBER_TABLE']);
 
-PMCLibrary::createFileIOInstance($board);
-PIOPDO::createInstance($dbSettings);
-postSearchService::createInstance($dbSettings);
-threadSingleton::createInstance($dbSettings);
-boardPathCachingIO::createInstance($dbSettings);
+$boardPathRepository = new boardPathRepository($databaseConnection, $dbSettings['BOARD_PATH_CACHE_TABLE']);
+
+$boardPathService = new boardPathService($boardPathRepository);
+
+$boardRepository = new boardRepository($databaseConnection, $dbSettings['BOARD_TABLE']);
+
+$boardDiContainer = new boardDiContainer(
+	$postRepository, 
+	$postService, 
+	$actionLoggerService, 
+	$threadRepository, 
+	$threadService, 
+	$quoteLinkService, 
+	$boardPostNumbers, 
+	$boardPathService, 
+	$postSearchService,
+	$attachmentService,
+	$postRedirectService,
+	$transactionManager
+);
+
+
+$boardService = new boardService($boardRepository, $boardDiContainer, $boardPathService);
+
+$boardList = $boardService->getAllRegularBoards();
+
+$visibleBoards = $boardService->getAllListedBoards();
+
+// Get the board that's currently being accessed by the request
+$board = $boardService->getBoardFromBootstrapFile('./boardUID.ini');
+
+// Globally accessible board array, it exists to avoid managing complicated dependencies and circular dependencies
+// Defines and globals are to be avoided, but this is an exception
+define('GLOBAL_BOARD_ARRAY', $boardService->getAllRegularBoards());
 
 // ───────────────────────────────────────
 // Validate Early
@@ -135,10 +184,8 @@ $config = $board->loadBoardConfig();
 // ───────────────────────────────────────
 // Dependencies
 // ───────────────────────────────────────
-$globalHTML			= new globalHTML($board);
-
-$moduleEngine		= new moduleEngine($board);
 $templateEngine		= $board->getBoardTemplateEngine();
+$moduleEngine		= $board->getModuleEngine();
 
 $adminTemplateEngine = new templateEngine(getBackendDir() . 'templates/admin.tpl', [
 	'config'	=> $config,
@@ -148,78 +195,105 @@ $adminTemplateEngine = new templateEngine(getBackendDir() . 'templates/admin.tpl
 	]
 ]);
 
-$adminPageRenderer	= new pageRenderer($adminTemplateEngine, $globalHTML);
-
-$overboard			= new overboard($config, $moduleEngine, $templateEngine);
-
-// ───────────────────────────────────────
-// IO / Core Systems
-// ───────────────────────────────────────
-$boardIO			= boardIO::getInstance();
-$FileIO				= PMCLibrary::getFileIOInstance();
-$PIO				= PIOPDO::getInstance();
-$threadSingleton	= threadSingleton::getInstance();
-$AccountIO			= AccountIO::getInstance();
-$actionLogger		= ActionLogger::getInstance();
+$adminPageRenderer	= new pageRenderer($adminTemplateEngine, $moduleEngine, $board);
 
 // ───────────────────────────────────────
 // Error Handling & Authentication
 // ───────────────────────────────────────
-$softErrorHandler	= new softErrorHandler($globalHTML);
-
+$softErrorHandler = new softErrorHandler($board->getBoardHead('Error!'), $board->getBoardFooter(), $board->getConfigValue('STATIC_INDEX_FILE'), $templateEngine);
 $loginSessionHandler	= new loginSessionHandler($config['STAFF_LOGIN_TIMEOUT']);
 $authenticationHandler	= new authenticationHandler();
 
 $adminLoginController	= new adminLoginController(
-	$actionLogger,
-	$AccountIO,
-	$globalHTML,
+	$actionLoggerService,
+	$accountRepository,
 	$loginSessionHandler,
-	$authenticationHandler
+	$authenticationHandler,
+	$softErrorHandler
 );
+
 
 // ───────────────────────────────────────
 // Session & Validation
 // ───────────────────────────────────────
-$staffSession		= new staffAccountFromSession;
+$staffAccountFromSession		= new staffAccountFromSession;
 
 $IPValidator		= new IPValidator($config, new IPAddress);
-$postValidator		= new postValidator($board, $config, $globalHTML, $IPValidator, $threadSingleton);
+$postValidator		= new postValidator($board, $config, $IPValidator, $threadRepository, $softErrorHandler, $threadService, $postService, $attachmentService, $FileIO);
+
+$overboard			= new overboard(
+		$board, 
+		$config, 
+		$softErrorHandler, 
+		$threadRepository, 
+		$boardService, 
+		$postRepository, 
+		$postService, 
+		$quoteLinkService, 
+		$threadService,
+		$postSearchService,
+		$attachmentService,
+		$actionLoggerService,
+		$postRedirectService,
+		$transactionManager,
+		$moduleEngine, 
+		$templateEngine
+	);
+
+// ───────────────────────────────────────
+// DI containers
+// ───────────────────────────────────────
+$routeDiContainer = new routeDiContainer(
+	$board,
+	$config,
+	$moduleEngine,
+	$templateEngine,
+	$adminTemplateEngine,
+	$overboard,
+	$adminPageRenderer,
+	$softErrorHandler,
+	$boardRepository,
+	$boardService,
+	$FileIO,
+	$postRepository,
+	$postService,
+	$threadRepository,
+	$threadService,
+	$accountRepository,
+	$accountService,
+	$actionLoggerRepository,
+	$actionLoggerService,
+	$adminLoginController,
+	$staffAccountFromSession,
+	$postValidator,
+	$transactionManager,
+	$postRedirectService,
+	$databaseConnection,
+	$boardPathService,
+	$attachmentService,
+	$visibleBoards,
+	$boardList,
+	$quoteLinkRepository,
+	$quoteLinkService
+);
 
 // ───────────────────────────────────────
 // Main Handler Execution
 // ───────────────────────────────────────
 try {
-	$modeHandler = new modeHandler(
-		$board,
-		$globalHTML,
-		$moduleEngine,
-		$templateEngine,
-		$adminTemplateEngine,
-		$overboard,
-		$adminPageRenderer,
-		$softErrorHandler,
-		$boardIO,
-		$FileIO,
-		$PIO,
-		$threadSingleton,
-		$AccountIO,
-		$actionLogger,
-		$adminLoginController,
-		$staffSession,
-		$postValidator
-	);
+	$modeHandler = new modeHandler($routeDiContainer);
 
+	$modeHandler->validateBoard($board);
 	$modeHandler->handle();
 
-} catch (\Throwable $e) {
-	$globalConfig	= getGlobalConfig();
-	$globalHTML		= new globalHTML($board);
+} catch(\BoardException $boardException) {
+	$errorMessage = $boardException->getMessage();
 
+	$softErrorHandler->errorAndExit($errorMessage);
+} catch (\Throwable $e) {
 	PMCLibrary::getLoggerInstance($globalConfig['ERROR_HANDLER_FILE'], 'Global')
 		->error($e->getMessage());
 
-	$globalHTML->error("There has been an error. (;´Д`)");
+	$softErrorHandler->errorAndExit("There has been an error. (;´Д`)");
 }
-
 clearstatcache();
