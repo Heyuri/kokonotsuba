@@ -90,7 +90,7 @@ class actionLogRoute {
 			</div>
 		";
 
-		$actionLogPager = drawPager($limit, $numberOfActionLogs, $cleanUrl, [$this->softErrorHandler, 'errorAndExit']);
+		$actionLogPager = drawPager($limit, $numberOfActionLogs, $cleanUrl);
 		
 		$templateValues = [
 			'{$PAGE_CONTENT}' => $actionLogHtml,

@@ -139,7 +139,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		$dat .= '</tbody></table></div><hr>';
-		$dat .= drawPager($this->PAGE_DEF,$list_max, $this->myPage, function() {});
+		$dat .= drawPager($this->PAGE_DEF,$list_max, $this->myPage);
 		$dat .= $this->moduleContext->board->getBoardFooter();
 		echo $dat;
 	}

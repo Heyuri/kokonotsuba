@@ -1,15 +1,15 @@
 <?php
 
-function validateAndClampPagination(int $entriesPerPage, int $totalEntries, int $currentPage, callable $errorHandler): array {
+function validateAndClampPagination(int $entriesPerPage, int $totalEntries, int $currentPage): array {
 	if ((filter_var($totalEntries, FILTER_VALIDATE_INT) === false || $totalEntries < 0) ||
 		(filter_var($entriesPerPage, FILTER_VALIDATE_INT) === false || $entriesPerPage < 0)) {
-		$errorHandler("Total entries must be a valid non-negative integer.");
+		throw new BoardException("Total entries must be a valid non-negative integer.");
 	}
 
 	$totalPages = (int) ceil($totalEntries / $entriesPerPage);
 
 	if (filter_var($currentPage, FILTER_VALIDATE_INT) === false) {
-		$errorHandler("Invalid page number");
+		throw new BoardException("Invalid page number");
 	}
 
 	$currentPage = max(0, min($totalPages - 1, $currentPage));
@@ -58,8 +58,8 @@ function renderPager(int $currentPage, int $totalPages, callable $getLink, ?call
 	return $pageHTML;
 }
 
-function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int $currentPage, int $staticPagesToRebuild, string $liveIndexFile, string $staticIndexFile, callable $errorHandler): string {
-	[$totalPages, $currentPage] = validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage, $errorHandler);
+function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int $currentPage, int $staticPagesToRebuild, string $liveIndexFile, string $staticIndexFile): string {
+	[$totalPages, $currentPage] = validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
 
 	$staticUntil = $staticPagesToRebuild;
 	$isStaticAll = ($staticUntil === -1);
@@ -91,10 +91,10 @@ function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int
 	return renderPager($currentPage, $totalPages, $getLink, $getForm);
 }
 
-function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url, int $staticPagesToRebuild, string $liveIndexFile, callable $errorHandler): string {
+function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url, int $staticPagesToRebuild, string $liveIndexFile): string {
 	$currentPage = $_REQUEST['page'] ?? 0;
 
-	[$totalPages, $currentPage] = validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage, $errorHandler);
+	[$totalPages, $currentPage] = validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
 
 	$actionUrl = $url . $liveIndexFile;
 	$isStaticAll = ($staticPagesToRebuild == -1);
@@ -109,10 +109,10 @@ function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url,
 	return renderPager($currentPage, $totalPages, $getLink, $getForm);
 }
 
-function drawPager(int $entriesPerPage, int $totalEntries, string $url, callable $errorHandler): string {
+function drawPager(int $entriesPerPage, int $totalEntries, string $url): string {
 	$currentPage = $_REQUEST['page'] ?? 0;
 
-	[$totalPages, $currentPage] = validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage, $errorHandler);
+	[$totalPages, $currentPage] = validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
 
 	$getLink = fn($page) => $url . '&page=' . $page;
 

@@ -174,7 +174,7 @@ class moduleMain extends abstractModuleMain {
 			];
 	
 			$baseUrl = generateFilteredUrl($this->myPage, $filters);
-			$out .= drawPager($searchPostsPerPage, $totalPostHits, $baseUrl, function() {});
+			$out .= drawPager($searchPostsPerPage, $totalPostHits, $baseUrl);
 			return $out;
 		} else {
 			return $this->renderNoResultsMessage();

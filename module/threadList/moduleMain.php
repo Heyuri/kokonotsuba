@@ -242,7 +242,7 @@ function checkall(){
 <hr>
 ';
 
-		$dat .= drawPager($this->THREADLIST_NUMBER, $listMax, $thisPage.'&sort='.$sort, function() {}); 		
+		$dat .= drawPager($this->THREADLIST_NUMBER, $listMax, $thisPage . '&sort=' . $sort); 		
 
 		// Add delete form if necessary
 		if ($this->SHOW_FORM) {

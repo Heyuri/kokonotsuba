@@ -172,7 +172,7 @@ class managePostsRoute {
 	</script>
 	';
 
-		$managePostsPager = drawPager($postsPerPage, $numberOfFilteredPosts, $cleanUrl, [$this->softErrorHandler, 'errorAndExit']);
+		$managePostsPager = drawPager($postsPerPage, $numberOfFilteredPosts, $cleanUrl);
 
 		$templateValues = [
 			'{$PAGE_CONTENT}' => $managePostsHtml,
