@@ -1,38 +1,18 @@
 <?php
 
 class boardRebuilder {
-	private board $board;
 	private array $config;
-	private moduleEngine $moduleEngine;
-	private postService $postService;
-	private threadRepository $threadRepository;
-	private threadService $threadService;
-	private mixed $actionLogger;
-	private templateEngine $templateEngine;
 
-
-	public function __construct(board $board, templateEngine $templateEngine, postService $postService, threadRepository $threadRepository, threadService $threadService) {
-		$this->board = $board;
-
-		$this->moduleEngine = new moduleEngine($board);
-		$this->threadService = $threadService;
-		$this->postService = $postService;
-		$this->actionLogger = actionLogger::getInstance();
-
-		$this->templateEngine = $templateEngine;
-		$this->templateEngine->setFunctionCallbacks([
-			[
-				'callback' => function (&$ary_val) {
-					$this->moduleEngine->useModuleMethods('BlotterPreview', [&$ary_val['{$BLOTTER}']]);
-				},
-			],
-			[
-				'callback' => function (&$ary_val) {
-					$this->moduleEngine->useModuleMethods('GlobalMessage', [&$ary_val['{$GLOBAL_MESSAGE}']]);
-				},
-			],
-		]);
-
+	public function __construct(
+		private board $board, 
+		private moduleEngine $moduleEngine, 
+		private ?templateEngine $templateEngine, 
+		private readonly postService $postService, 
+		private readonly actionLoggerService $actionLoggerService, 
+		private readonly threadRepository $threadRepository, 
+		private readonly threadService $threadService,
+		private readonly softErrorHandler $softErrorHandler,
+		private readonly quoteLinkService $quoteLinkService) {
 
 		$this->config = $board->loadBoardConfig();
 		if (empty($this->config)) {
@@ -61,6 +41,8 @@ class boardRebuilder {
 		
 		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml($resno, $pte_vals);
 
+		$this->moduleEngine->dispatch('ViewedThread', [&$pte_vals, &$threadData]);
+
 		$pte_vals['{$THREADS}'] .= $threadRenderer->render([],
 			true,
 			$thread,
@@ -74,14 +56,44 @@ class boardRebuilder {
 			$pte_vals
 		);
 		
-
 		$pte_vals['{$PAGENAV}'] = '';
 
-		$pageData = $this->buildFullPage($pte_vals, $resno);
+		$opPost = $posts[0];
+		$boardTitle = $this->board->getBoardTitle();
+
+		$pageTitle = $this->getThreadPageTitle($opPost, $boardTitle);
+
+		$pageData = $this->buildFullPage($pte_vals, $pageTitle, $resno, true);
 		echo $this->finalizePageData($pageData);
 	}
 
+	private function getThreadPageTitle(array $opPost, string $boardTitle): string {
+		$subject = strip_tags($opPost['sub']); // thread subject/topic
+		$comment = strip_tags($opPost['com']); // op post comment
+		$fileName = strip_tags($opPost['fname'] . $opPost['ext']); // op post file name as unix timestamp
 
+
+		// no sanitization is done here because kokonotsuba stores them sanitized
+		// first, have it include the subject + board title 
+		if(!empty($subject)) {
+			$threadTitle = "$subject - $boardTitle";
+		} 
+		// then try the comment
+		else if(!empty($comment) && $comment !== $this->config['DEFAULT_NOCOMMENT']) {
+			$threadTitle = $comment . ' - ' . $boardTitle;
+		} 
+		// then try the file name (useful for dump/flash boards)
+		else if(!empty($fileName)) {
+			$threadTitle = $fileName . ' - ' . $boardTitle;
+		}
+		// otherwise, just use the board title
+		else { 
+			$threadTitle = $boardTitle;
+		}
+
+		return $threadTitle;
+
+	}
 
 	public function drawPage(int $page = 0): void {
 		$threadRenderer = $this->getThreadRenderer();
@@ -101,9 +113,9 @@ class boardRebuilder {
 
 		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threadsInPage, $pte_vals, $adminMode);
 
-		$pte_vals['{$PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl);
+		$pte_vals['{$PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'), [$this->softErrorHandler, 'errorAndExit']);
 
-		$pageData = $this->buildFullPage($pte_vals);
+		$pageData = $this->buildFullPage($pte_vals, $this->board->getBoardTitle());
 		echo $this->finalizePageData($pageData);
 	}
 
@@ -127,7 +139,7 @@ class boardRebuilder {
 		}
 
 		if ($logRebuild) {
-			$this->actionLogger->logAction(
+			$this->actionLoggerService->logAction(
 				"Rebuilt board: " . $this->board->getBoardTitle() . ' (' . $this->board->getBoardUID() . ')',
 				$this->board->getBoardUID()
 			);
@@ -168,7 +180,7 @@ class boardRebuilder {
 		$this->renderStaticPage($targetPage, $threads, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals, true);
 
 		if ($logRebuild) {
-			$this->actionLogger->logAction(
+			$this->actionLoggerService->logAction(
 				"Rebuilt board: " . $this->board->getBoardTitle() . ' (' . $this->board->getBoardUID() . ')',
 				$this->board->getBoardUID()
 			);
@@ -188,7 +200,7 @@ class boardRebuilder {
 
 		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threads, $pte_vals);
 
-		$pte_vals['{$PAGENAV}'] = drawBoardPager($threadsPerPage, $totalThreadCountForBoard, $boardUrl, $page);
+		$pte_vals['{$PAGENAV}'] = drawBoardPager($threadsPerPage, $totalThreadCountForBoard, $boardUrl, $page,  $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'), $this->board->getConfigValue('STATIC_INDEX_FILE'), [$this->softErrorHandler, 'errorAndExit']);
 
 		$pageData = $this->buildStaticPageHtml($pte_vals, $headerHtml, $formHtml, $footHtml);
 
@@ -212,14 +224,13 @@ class boardRebuilder {
 			'{$THREADS}' => '',
 			'{$THREADFRONT}' => '',
 			'{$THREADREAR}' => '',
-			'{$SELF}' => $this->config['PHP_SELF'],
 			'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel">' . _T('del_head'),
 			'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 			'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
 			'{$DEL_PASS_TEXT}' => ($adminMode ? '<input type="hidden" name="func" value="delete">' : '') . _T('del_pass'),
 			'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" id="pwd2" value="">',
 			'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="' . _T('del_btn') . '">',
-			'{$IS_THREAD}' => false,
+			'{$IS_THREAD}' => $isThreadView,
 		];
 
 		$this->runThreadModuleHooks($pte_vals, $isThreadView);
@@ -238,7 +249,7 @@ class boardRebuilder {
 	}
 
 	private function getThreadRenderer(): threadRenderer {
-		$quoteLinksFromBoard = getQuoteLinksFromBoard($this->board);
+		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksFromBoard($this->board->getBoardUID());
 		$postRenderer = new postRenderer(
 			$this->board,
 			$this->config,
@@ -255,28 +266,27 @@ class boardRebuilder {
 	}
 
 	private function buildFormHtml(int $resno, array &$pte_vals): string {
-		$form_dat = '';
-		
 		$moduleInfoHook = $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
 
-		$this->globalHTML->form($form_dat, $resno, '', '', '', '', '', $moduleInfoHook);		
+		$postFormHtml = $this->board->getBoardPostForm($resno, $moduleInfoHook, '', '', '', '', '', );
 		
-		return $form_dat;
+		return $postFormHtml;
 	}
 
 	private function runThreadModuleHooks(array &$pte_vals, int $resno): void {
-		$this->moduleEngine->useModuleMethods('ThreadFront', array(&$pte_vals['{$THREADFRONT}'], $resno));
-		$this->moduleEngine->useModuleMethods('ThreadRear', array(&$pte_vals['{$THREADREAR}'], $resno));
+		$this->moduleEngine->dispatch('AboveThreadArea', array(&$pte_vals['{$THREADFRONT}'], empty($resno)));
+		$this->moduleEngine->dispatch('BelowThreadArea', array(&$pte_vals['{$THREADREAR}'], empty($resno)));
+		$this->moduleEngine->dispatch('PlaceHolderIntercept', [&$pte_vals]);
 	}
 
-	private function buildFullPage(array $pte_vals, int $resno = 0): string {
+	private function buildFullPage(array $pte_vals, string $pageTitle, int $resno = 0, bool $isThreadView = false): string {
 		$pageData = '';
 		
-		head($pageData, $resno);
-		
+		$pageData .= $this->board->getBoardHead($pageTitle, $resno);
+
 		$pageData .= $this->templateEngine->ParseBlock('MAIN', $pte_vals);
 		
-		foot($pageData);
+		$pageData .= $this->board->getBoardFooter($isThreadView);
 		
 		return $pageData;
 	}
@@ -284,13 +294,11 @@ class boardRebuilder {
 	private function prepareStaticPageRenderContext(): array {
 		$pte_vals = $this->buildPteVals(false);
 
-		$headerHtml = '';
-		head($headerHtml);
+		$headerHtml = $this->board->getBoardHead($this->board->getBoardTitle());
 
 		$formHtml = $this->buildFormHtml(0, $pte_vals);
 
-		$footHtml = '';
-		foot($footHtml);
+		$footHtml = $this->board->getBoardFooter();
 
 		return [$pte_vals, $headerHtml, $formHtml, $footHtml];
 	}
