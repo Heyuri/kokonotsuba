@@ -1,32 +1,10 @@
 <?php
-/**
- * Account API
- *
- *
- * @package PMCLibrary
- * @version $Id$
- * @date $Date$
- */
 
-class AccountIO {
-	private $config, $dbSettings, $accountTable, $databaseConnection;
-	private static $instance = null;
-
-	public static function createInstance($dbSettings) {
-		if (self::$instance === null) {
-			self::$instance = new self($dbSettings);
-		}
-		return self::$instance;
-	}
-	
-	public static function getInstance() {
-		return self::$instance;
-	}
-
-	private function __construct($dbSettings) {
-		$this->databaseConnection = DatabaseConnection::getInstance(); // Get the PDO instance
-		$this->accountTable = $dbSettings['ACCOUNT_TABLE'];
-	}
+class accountRepository {
+	public function __construct(
+        private DatabaseConnection $databaseConnection,
+        private readonly string $accountTable,
+	) {}
 
 	public function getAllAccounts() {
 		$query = "SELECT * FROM {$this->accountTable} ORDER BY role DESC";
@@ -68,13 +46,11 @@ class AccountIO {
 		return $this->databaseConnection->execute($query, $params);
 	}
 	
-	public function updateAccountPasswordHashById($id, $password) {
-		if(!$password) throw new Exception("Password was somehow left blank when resetting it.");
-	
+	public function updateAccountPasswordHashById($id, $passwordHash) {
 		$query = "UPDATE {$this->accountTable} SET password_hash = :hash WHERE id = :id";
 		$params = [
 			':id' => $id,
-			':hash' => password_hash($password, PASSWORD_DEFAULT),
+			':hash' => $passwordHash
 		];
 		return $this->databaseConnection->execute($query, $params);
 	}
@@ -96,6 +72,4 @@ class AccountIO {
 		$params = [':id' => $id];
 		return $this->databaseConnection->execute($query, $params);
 	}
-
 }
-
