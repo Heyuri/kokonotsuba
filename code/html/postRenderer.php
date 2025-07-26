@@ -7,21 +7,18 @@
 class postRenderer {
 	private readonly IBoard $board;
 	private readonly array $config;
-	private readonly globalHTML $globalHTML;
 	private readonly moduleEngine $moduleEngine;
-	private readonly templateEngine $templateEngine;
+	private readonly ?templateEngine $templateEngine;
 	private readonly array $quoteLinksFromBoard;
 	private readonly mixed $FileIO;
 
 	public function __construct(IBoard $board, 
 		array $config, 
-		globalHTML $globalHTML, 
 		moduleEngine $moduleEngine, 
-		templateEngine $templateEngine,
+		?templateEngine $templateEngine,
 		array $quoteLinksFromBoard) {
 		$this->board = $board;
 		$this->config = $config;
-		$this->globalHTML = $globalHTML;
 		$this->moduleEngine = $moduleEngine;
 		$this->templateEngine = $templateEngine;
 		$this->quoteLinksFromBoard = $quoteLinksFromBoard;
@@ -29,7 +26,8 @@ class postRenderer {
 		$this->FileIO = PMCLibrary::getFileIOInstance();
 	}
 
-	public function render(array $post,
+	public function render(
+		array $post,
 		array &$templateValues,
 		int $threadResno,
 		bool $killSensor,
@@ -42,7 +40,7 @@ class postRenderer {
 		string $warnEndReply,
 		int $replyCount,
 		bool $threadMode = true,
-		string $crossLink = '',
+		string $crossLink = ''
 	) {
 		// Prepare post data
 		$data = $this->preparePostData($post);
@@ -52,18 +50,18 @@ class postRenderer {
 		$isThreadReply = !$isThreadOp;  // Inverse of $isThreadOp
 
 		// Apply quote and quote link
-		$data['com'] = $this->globalHTML->quote_link($this->quoteLinksFromBoard, $data, $threadResno);
-		$data['com'] = $this->globalHTML->quote_unkfunc($data['com']);
+		$data['com'] = generateQuoteLinkHtml($this->quoteLinksFromBoard, $data, $threadResno, $this->board->getConfigValue('USE_QUOTESYSTEM'), $this->board);
+		$data['com'] = quote_unkfunc($data['com']);
 
 		// Post position config
 		$postPositionEnabled = $this->config['RENDER_REPLY_NUMBER'];
-		
+	
 		// Process category links
 		$categoryHTML = $this->processCategoryLinks($data['category'], $crossLink);
-	
+
 		// Attachment bar (if any)
 		$imageBar = ($data['ext']) ? $this->buildAttachmentBar($data['tim'], $data['ext'], $data['fname'], $data['imgsize'], $data['imgw'], $data['imgh'], $data['tw'], $data['th'], '') : '';
-	
+
 		// File size warning (if necessary)
 		$warnBeKill = '';
 		if ($this->config['STORAGE_LIMIT'] && $killSensor) {
@@ -75,11 +73,19 @@ class postRenderer {
 		// Admin controls hook (if admin mode is on)
 		if ($adminMode) {
 			$modFunc = '';
-			$this->moduleEngine->useModuleMethods('AdminList', array(&$modFunc, $post, $isThreadReply));
+			
+			if($isThreadOp) {
+				$this->moduleEngine->dispatch('ThreadAdminControls', [&$modFunc, &$post]);
+			} else {
+				$this->moduleEngine->dispatch('ReplyAdminControls', [&$modFunc, &$post]);
+			}
+
+			$this->moduleEngine->dispatch('PostAdminControls', [&$modFunc, &$post]);
+			
 			$postFormExtra .= $modFunc;
 		}
 
-		if($isThreadOp) {
+		if ($isThreadOp) {
 			$maxAgeLimit = $this->config['MAX_AGE_TIME'];
 			$postUnixTimestamp = is_numeric($post['root']) ? $post['root'] : strtotime($post['root']);
 			if ($maxAgeLimit && $_SERVER['REQUEST_TIME'] - $postUnixTimestamp > ($maxAgeLimit * 60 * 60)) {
@@ -87,7 +93,6 @@ class postRenderer {
 			}
 		}
 
-	
 		// Handle name/trip/capcode HTML generation
 		$nameHtml = generatePostNameHtml(
 			$this->config['staffCapcodes'],
@@ -99,51 +104,55 @@ class postRenderer {
 			$data['email'],
 			$this->config['CLEAR_SAGE']
 		);
-	
+
 		// Generate the quote and reply buttons
 		$quoteButton = $this->generateQuoteButton($threadResno, $data['no']);
 		$replyButton = $threadMode ? $this->generateReplyButton($crossLink, $threadResno) : '';
 
 		// Bind the template values based on whether it's a reply or OP
 		if ($isThreadReply) {
-			$templateValues = $this->renderReplyPost($data, 
-			 $postPositionEnabled,
-			 $templateValues, 
-			 $threadResno,
-			 $nameHtml, 
-			 $categoryHTML, 
-			 $quoteButton, 
-			 $imageBar, 
-			 $warnBeKill, 
-			 $postFormExtra);
+			$templateValues = $this->renderReplyPost(
+				$data, 
+				$postPositionEnabled,
+				$templateValues, 
+				$threadResno,
+				$nameHtml, 
+				$categoryHTML, 
+				$quoteButton, 
+				$imageBar, 
+				$warnBeKill, 
+				$postFormExtra
+			);
+		} elseif ($isThreadOp) {
+			$templateValues = $this->renderOpPost(
+				$data, 
+				$templateValues, 
+				$nameHtml, 
+				$categoryHTML, 
+				$quoteButton, 
+				$replyButton, 
+				$imageBar, 
+				$postFormExtra, 
+				$replyCount, 
+				$warnOld, 
+				$warnBeKill, 
+				$warnEndReply, 
+				$warnHidePost
+			);
+		}
 
-			// Module methods (if thread reply)
-			$this->moduleEngine->useModuleMethods('ThreadReply', array(&$templateValues, $post, $threadPosts, $isThreadReply));
-	
-			// parse template values to REPLY template block for a post reply
+		// Dispatch Post event, which is a hook point that will affect every post
+		$this->moduleEngine->dispatch('Post', [&$templateValues, $post, $threadPosts, $this->board]);
+
+		// Dispatch specific hook and return template
+		if ($isThreadReply) {
+			$this->moduleEngine->dispatch('ThreadReply', [&$templateValues, $post, $threadPosts, $isThreadReply]);
 			return $this->templateEngine->ParseBlock('REPLY', $templateValues);
 		} elseif ($isThreadOp) {
-			$templateValues = $this->renderOpPost($data, 
-			 $templateValues, 
-			 $nameHtml, 
-			 $categoryHTML, 
-			 $quoteButton, 
-			 $replyButton, 
-			 $imageBar, 
-			 $postFormExtra, 
-			 $replyCount, 
-			 $warnOld, 
-			 $warnBeKill, 
-			 $warnEndReply, 
-			 $warnHidePost);
-
-			// Module methods (thread OP)
-			$this->moduleEngine->useModuleMethods('ThreadPost', array(&$templateValues, $post, $threadPosts, $isThreadReply));
-		
-			// parse template values to THREAD template block to a thread OP post
+			$this->moduleEngine->dispatch('OpeningPost', [&$templateValues, $post, $threadPosts, $isThreadReply]);
 			return $this->templateEngine->ParseBlock('OP', $templateValues);
 		}
-		
+
 	}
 	
 	/**
@@ -387,7 +396,7 @@ class postRenderer {
 		$categories = explode(',', str_replace('&#44;', ',', $category));
 		$categories = array_map('trim', $categories);
 		return implode(', ', array_map(function ($c) use ($crossLink) {
-			return '<a href="'.$crossLink.$this->config['PHP_SELF'].'?mode=module&load=mod_searchcategory&c='.urlencode($c).'">'.$c.'</a>';
+			return '<a href="'.$crossLink.$this->config['LIVE_INDEX_FILE'].'?mode=module&load=mod_searchcategory&c='.urlencode($c).'">'.$c.'</a>';
 		}, array_filter($categories)));
 	}
 
@@ -457,7 +466,7 @@ class postRenderer {
 	 */
 	private function generateReplyButton(string $crossLink, int $threadResno): string {
 		// Build the URL to the thread's reply form
-		$replyUrl = $crossLink . $this->config['PHP_SELF'] . '?res=' . $threadResno;
+		$replyUrl = $crossLink . $this->config['LIVE_INDEX_FILE'] . '?res=' . $threadResno;
 		// Return the reply button HTML
 		$replyButton = '[<a href="' . $replyUrl . '">' . _T('reply_btn') . '</a>]';
 

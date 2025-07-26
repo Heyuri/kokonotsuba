@@ -7,14 +7,12 @@
 
 class threadRenderer {
 	private array $config;
-	private globalHTML $globalHTML;
-	private templateEngine $templateEngine;
+	private ?templateEngine $templateEngine;
 	private postRenderer $postRenderer;
 
 
-	public function __construct(array $config, globalHTML $globalHTML, templateEngine $templateEngine, postRenderer $postRenderer) {
+	public function __construct(array $config, ?templateEngine $templateEngine, postRenderer $postRenderer) {
 		$this->config = $config;
-		$this->globalHTML = $globalHTML;
 		$this->templateEngine = $templateEngine;
 
 		$this->postRenderer = $postRenderer;
@@ -87,7 +85,7 @@ class threadRenderer {
 
 		// Navigation
 		if ($threadMode) {
-			$templateValues['{$THREADNAV}'] = $this->globalHTML->buildThreadNavButtons($threads, $threadIterator);
+			$templateValues['{$THREADNAV}'] = buildThreadNavButtons($threads, $threadIterator, $this->config['PAGE_DEF']);
 		}
 
 		$threadHtml .= $this->templateEngine->ParseBlock('THREAD', $templateValues);

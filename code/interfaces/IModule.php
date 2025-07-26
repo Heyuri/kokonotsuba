@@ -16,5 +16,5 @@ interface IModule {
 	 *
 	 * @return string Module version number
 	 */
-	public function getModuleVersionInfo();
+	public function getVersion(): string ;
 }
