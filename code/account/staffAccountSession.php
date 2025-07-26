@@ -1,15 +1,14 @@
 <?php
 // Represent active staff session
 class staffAccountFromSession {
-	private $uid, $username, $lastActivity, $roleLevel, $userAgent, $hash;
+	private $uid, $username, $lastActivity, $roleLevel, $userAgent;
 	
 	public function __construct() {
 		$this->uid = $_SESSION['accountUID'] ?? null;
 		$this->username = $_SESSION['username'] ?? null;
 		$this->lastActivity = $_SESSION['last_activity'] ?? null;
-		$this->roleLevel = $_SESSION['role_level'] ?? null;
+		$this->roleLevel = $_SESSION['role_level'] ?? 0;
 		$this->userAgent = $_SESSION['user_agent'] ?? null;
-		$this->hash = $_SESSION['hash'] ?? null;
 	}
 	
 	public function getUID(): ?int { 
@@ -32,7 +31,4 @@ class staffAccountFromSession {
 		return $this->userAgent;
 	}
 
-	public function getHashedPassword(): ?string {
-		return $this->hash;
-	}
 }
