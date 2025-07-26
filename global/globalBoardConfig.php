@@ -52,7 +52,7 @@ $config['ALLOW_UPLOAD_EXT'] = [
 // Module List
 // These are not all modules that come with kokonotsuba that you can enable, there are some unlisted ones too.
 // See: https://github.com/Heyuri/kokonotsuba/wiki/All-modules
-$config['ModuleList'] = array(
+$config['moduleList'] = array(
 	/* modes */
 	'catalog' => true,
 	'search' => true,
@@ -78,19 +78,15 @@ $config['ModuleList'] = array(
 	'antiFlood' => true,
 	'fieldTraps' => true,
 	'readOnly' => false,
-	'showIp' => true,
-	/* API */
-	'api' => true,
-	'rss' => false,
+	'viewIp' => true,
 	/* misc */
-	'pushPost' => false,
 	'soundane' => true,
 	'privateMessage' => true,
-	'ads' => true,
+	'fullBanner' => true,
 	'imageMeta' => true,
 	'onlineCounter' => true,
 	'banner' => true,
-	'addinfo' => true,
+	'addInfo' => true,
 );
 
 /* Module-specific options */
