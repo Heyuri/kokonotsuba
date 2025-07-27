@@ -183,6 +183,7 @@ class moduleMain extends abstractModuleMain {
 					$arrLabels = [
 						'{$NO}' => $mno,
 						'{$POST_UID}' => $mno,
+						'{$BOARD_UID}' => 'privateMessage',
 						'{$SUB}' => $topic,
 						'{$NAME}' => $from,
 						'{$NOW}' => date('Y-m-d H:i:s', $pdate),
