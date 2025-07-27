@@ -43,6 +43,18 @@ class modeHandler {
 				);
 				$route->registerPostToDatabase();
 			},
+			'status' => function() {
+				$route = new statusRoute(
+					$this->routeDiContainer->board,
+					$this->routeDiContainer->config,
+					$this->routeDiContainer->templateEngine,
+					$this->routeDiContainer->moduleEngine,
+					$this->routeDiContainer->threadRepository,
+					$this->routeDiContainer->postRepository,
+					$this->routeDiContainer->FileIO
+				);
+				$route->drawStatus();
+			},
 			'admin'	=> function() {
 				$route = new adminRoute(
 					$this->routeDiContainer->board,
