@@ -8,6 +8,7 @@ class threadService {
 		private readonly threadRepository $threadRepository,
 		private readonly postRepository $postRepository,
 		private readonly postService $postService,
+		private readonly attachmentService $attachmentService,
 		private readonly transactionManager $transactionManager,
 		private readonly string $threadTable,
 		private readonly string $postTable,
@@ -271,12 +272,18 @@ class threadService {
 		}, $comment);
 	}
 
-	public function deleteThreads(): void {
+	public function deleteThreads(array $threadUidList): void {
+		$this->attachmentService->removeAttachmentsFromThreads($threadUidList);
 
+		$this->threadRepository->deleteThreadsByUidList($threadUidList);
 	}
 
 	public function pruneByAmount(array $threadUidList, int $maxThreadAmount): ?array {
 		$threadsToPrune = $this->getThreadAmountToPrune($threadUidList, $maxThreadAmount);
+
+		if(empty($threadsToPrune)) {
+			return [];
+		}
 
 		$this->deleteThreads($threadsToPrune);
 
@@ -286,6 +293,13 @@ class threadService {
 	private function getThreadAmountToPrune(array $threadUidList, int $maxThreadAmount): ?array {
 		$amountOfThreads = count($threadUidList);
 
+		if ($amountOfThreads <= $maxThreadAmount) {
+			return [];
+		}
+
+		// If threads are in newest-to-oldest order, reverse to prune the oldest ones
+		$threadUidList = array_reverse($threadUidList);
+
 		$threadsToPrune = array_slice(
 			$threadUidList,
 			0,
@@ -294,5 +308,6 @@ class threadService {
 
 		return $threadsToPrune;
 	}
+
 	
 }
