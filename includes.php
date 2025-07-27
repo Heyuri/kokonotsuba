@@ -186,5 +186,4 @@ require __DIR__ . '/code/template/templateEngine.php';
 require __DIR__ . '/code/thread/thread.php';
 require __DIR__ . '/code/thread/threadRedirect.php';
 require __DIR__ . '/code/thread/threadRepository.php';
-require __DIR__ . '/code/thread/threadRow.php';
 require __DIR__ . '/code/thread/threadService.php';
