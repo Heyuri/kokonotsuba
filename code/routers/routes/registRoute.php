@@ -39,6 +39,7 @@ class registRoute {
 		$webhookDispatcher = new webhookDispatcher($this->board, $this->config);
 
 		// Declare variables to be passed by reference
+		$threadList = [];
 		$postData = [];
 		$fileMeta = [];
 		$computedPostInfo = [];
@@ -47,6 +48,7 @@ class registRoute {
 
 		// Begin transaction
 		$this->transactionManager->run(function () use (
+			&$threadList,
 			&$postData,
 			&$fileMeta,
 			&$computedPostInfo,
@@ -94,9 +96,6 @@ class registRoute {
 				$postData['pwdc'], $postData['comment'], $postData['time'], $computedPostInfo['pass'],
 				$postData['ip'], $fileMeta['upfile'], $fileMeta['md5'], $computedPostInfo['dest'], $postData['roleLevel']
 			);
-
-			// Prune old threads
-			$this->postValidator->pruneOld($threadList);
 
 			// Age/sage logic
 			$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['postOpRoot'], $postData['email'], $postData['age']);
@@ -151,6 +150,12 @@ class registRoute {
 
 			// Handle quote links
 			$this->handlePostQuoteLink($computedPostInfo['no'], $postData['comment']);
+
+			// Get the updated thread list
+			$threadList = $this->threadService->getThreadListFromBoard($this->board);
+
+			// Prune old threads
+			$this->postValidator->pruneOld($threadList);
 		});
 
 		// Set cookies for password and email
@@ -163,11 +168,8 @@ class registRoute {
 		// Dispatch webhook
 		$webhookDispatcher->dispatch($postData['resno'], $computedPostInfo['no']);
 
-		// Get the after-insert (current) thread list
-		$presentThreadList = $this->threadService->getThreadListFromBoard($this->board);
-
 		// Rebuild board pages
-		$this->handlePageRebuilding($computedPostInfo, $postData, $presentThreadList);
+		$this->handlePageRebuilding($computedPostInfo, $postData, $threadList);
 
 		// Final redirect
 		redirect($redirect, 0);
