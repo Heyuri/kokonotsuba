@@ -59,7 +59,7 @@ const kkfilter = {
 	update_filter: function (value) {
 		var FM = $id("filtermode").value;
 		localStorage.setItem(FM, value);
-    console.log("Filter saved to localStorage:", FM, value);
+	console.log("Filter saved to localStorage:", FM, value);
 		kkfilter.reset();
 		kkfilter.startup();
 		var filterdie = $id("filterdie");
@@ -108,9 +108,15 @@ const kkfilter = {
 	hidepost: function(no) {
 		var p = $id('p' + no);
 		p.classList.add("filter");
+		
 		if (p.classList.contains("op")) {
-			p.parentNode.classList.add("filter");
+			if (p.parentNode.classList.contains("thread")) {
+				p.parentNode.classList.add("filter");
+			} else {
+				p.classList.add("filter");  // Hide the node itself if parent doesn't have 'thread'
+			}
 		}
+
 		var link = p.querySelector('.filterpost');
 		link.innerText = 'Show';
 		link.title = 'Show this post';
