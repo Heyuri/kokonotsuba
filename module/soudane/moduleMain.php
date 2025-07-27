@@ -26,10 +26,10 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		// Load settings to enable/disable each button, score display, and score-only mode
-		$this->enableYeah = $this->config['ModuleSettings']['ENABLE_YEAH'] ?? true;
-		$this->enableNope = $this->config['ModuleSettings']['ENABLE_NOPE'] ?? true;
-		$this->enableScore = $this->config['ModuleSettings']['ENABLE_SCORE'] ?? false;        // Score display toggle
-		$this->showScoreOnly = $this->config['ModuleSettings']['SHOW_SCORE_ONLY'] ?? false;   // Score-only button mode
+		$this->enableYeah = $this->getConfig('ModuleSettings.ENABLE_YEAH', true);
+		$this->enableNope = $this->getConfig('ModuleSettings.ENABLE_NOPE', true);
+		$this->enableScore = $this->getConfig('ModuleSettings.ENABLE_SCORE', false);        // Score display toggle
+		$this->showScoreOnly = $this->getConfig('ModuleSettings.SHOW_SCORE_ONLY', false);   // Score-only button mode
 
 		// Define storage directories
 		$this->SOUDANE_DIR_YEAH = getBackendGlobalDir().'soudane/';
