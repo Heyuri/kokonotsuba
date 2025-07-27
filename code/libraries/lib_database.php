@@ -34,3 +34,11 @@ function addApostropheToArray(&$arrayOfValuesForQuery) {
 		$item = "'" . addslashes($item) . "'";
 	}
 }
+
+function pdoPlaceholdersForIn(array $values): string {
+	if (empty($values)) {
+		// Handle empty array safely, e.g. 'IN (NULL)' or throw exception
+		return '(NULL)';
+	}
+	return '(' . implode(', ', array_fill(0, count($values), '?')) . ')';
+}
