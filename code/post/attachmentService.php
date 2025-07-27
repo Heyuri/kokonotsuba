@@ -48,10 +48,22 @@ class attachmentService {
 
 	/* Delete attachments */
 	public function removeAttachments(array $posts, bool $recursion = false) {
-		$FileIO = PMCLibrary::getFileIOInstance();
 		if (empty($posts)) return [];
 
 		$records = $this->attachmentRepository->getAttachmentRecords($posts, $recursion);
+
+		$this->deleteAttachments($records);
+	}
+
+	public function removeAttachmentsFromThreads(array $threadUids): void {
+		$threadAttachments = $this->attachmentRepository->getAttachmentsFromThreads($threadUids);
+			
+		$this->deleteAttachments($threadAttachments);
+	}
+
+
+	private function deleteAttachments(array $records): void {
+		$FileIO = PMCLibrary::getFileIOInstance();
 
 		foreach ($records as $row) {
 			$board = searchBoardArrayForBoard($row['boardUID']);
@@ -66,6 +78,6 @@ class attachmentService {
 			if($dthumb && $FileIO->imageExists($dthumb, $board)) {
 				$FileIO->deleteImage($dthumb, $board);
 			}
-		}		
+		}
 	}
 }
