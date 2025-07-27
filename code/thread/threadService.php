@@ -13,7 +13,7 @@ class threadService {
 		private readonly string $threadTable,
 		private readonly string $postTable,
 	) {
-		$this->allowedOrderFields = ['last_bump_time', 'last_reply_time', 'insert_id', 'post_uid'];
+		$this->allowedOrderFields = ['post_op_number', 'post_op_post_uid', 'last_bump_time', 'last_reply_time', 'insert_id', 'post_uid'];
 	}
 
 	public function getThreadByUID($thread_uid): array|false {
