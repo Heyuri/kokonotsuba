@@ -187,6 +187,15 @@ class threadRepository {
 	}
 
 
+	public function deleteThreadsByUidList(array $threadUidList): void {
+		$inClause = pdoPlaceholdersForIn($threadUidList);
+		
+		$this->databaseConnection->execute("
+			DELETE FROM {$this->threadTable}
+			WHERE thread_uid IN $inClause", $threadUidList);
+	}
+
+
 	public function updateThreadReplyTime(string $threadUID, $time): void {
 		$this->databaseConnection->execute("
 			UPDATE {$this->threadTable}
