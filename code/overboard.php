@@ -215,7 +215,7 @@ class overboard {
 	private function createThreadRenderer(board $board, array $config, ?templateEngine $templateEngine, array $quoteLinksByBoardUID): threadRenderer {
 		$moduleEngineContext = new moduleEngineContext($config, 
 			$board->getConfigValue('LIVE_INDEX_FILE'), 
-			$board->getConfigValue('moduleList'), 
+			$board->getConfigValue('ModuleList'), 
 			$this->postRepository, 
 			$this->postService, 
 			$this->threadRepository, 

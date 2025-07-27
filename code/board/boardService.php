@@ -233,7 +233,7 @@ class boardService {
 		$liveIndexFile = $board->getConfigValue('LIVE_INDEX_FILE');
 
 		$moduleEngineContext = new moduleEngineContext($board->loadBoardConfig(), 
-			$liveIndexFile, $board->getConfigValue('moduleList'), 
+			$liveIndexFile, $board->getConfigValue('ModuleList'), 
 			$this->boardDiContainer->postRepository, 
 			$this->boardDiContainer->postService, 
 			$this->boardDiContainer->threadRepository, 
