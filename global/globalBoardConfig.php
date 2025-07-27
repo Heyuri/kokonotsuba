@@ -80,7 +80,7 @@ $config['ModuleList'] = array(
 	'readOnly' => false,
 	'viewIp' => true,
 	/* misc */
-	'soundane' => true,
+	'soudane' => true,
 	'privateMessage' => true,
 	'fullBanner' => true,
 	'imageMeta' => true,
