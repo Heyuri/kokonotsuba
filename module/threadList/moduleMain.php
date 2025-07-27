@@ -146,7 +146,7 @@ class moduleMain extends abstractModuleMain {
 
 		// Sort and fetch threads based on sorting options
 		if (strpos($sort, 'post') !== false) {
-			$plist = $this->moduleContext->threadService->getThreadListFromBoard($this->moduleContext->board);
+			$plist = $this->moduleContext->threadService->getThreadListFromBoard($this->moduleContext->board, $this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER, true, 'post_op_number');
 			$pc = $this->_getPostCounts($plist);
 			$this->_kasort($pc, $sort == 'postdesc', true);
 
