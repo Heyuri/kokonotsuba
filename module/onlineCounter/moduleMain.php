@@ -69,7 +69,7 @@ class moduleMain extends abstractModuleMain {
 				</noscript>
 			</li>';
 
-		$hookPostInfoHtml .= '<ul class="rules">' . $noScriptHtml . $userCounterHTML . '</ul>';
+		$hookPostInfoHtml .= $noScriptHtml . $userCounterHTML;
 
 	}
 	
