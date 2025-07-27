@@ -46,4 +46,13 @@ class attachmentRepository {
 		return $this->databaseConnection->fetchAllAsArray($query);
 	}
 
+	public function getAttachmentsFromThreads(array $threadUidList): array|false {
+		$inClause = pdoPlaceholdersForIn($threadUidList);
+		$query = "SELECT tim, ext, boardUID FROM {$this->postTable} WHERE thread_uid IN $inClause AND ext <> ''";
+
+		$attachments = $this->databaseConnection->fetchAllAsArray($query, $threadUidList);
+
+		return $attachments;
+	}
+
 }
