@@ -52,6 +52,11 @@ function updateAccountSession(accountRepository $accountRepository, loginSession
 
 	$account = $accountRepository->getAccountByID($accountId);
 
+	// just destroy the session if the account no longer exists
+	if(!$account) {
+		$loginSessionHandler->logout();
+	}
+
 	// now update the session
 	$loginSessionHandler->login($account);
 }
