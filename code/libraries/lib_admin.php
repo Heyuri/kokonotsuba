@@ -26,16 +26,32 @@ function isActiveStaffSession(): bool {
  * Check if account session has a valid user role
  */
 
-function isLoggedIn() {
+function isLoggedIn(): bool {
 	$staffSession = new staffAccountFromSession;
 	$roleLevel = $staffSession->getRoleLevel();
 	
 	return $roleLevel->isAtLeast(\Kokonotsuba\Root\Constants\userRole::LEV_USER);
 }
 
-function getRoleLevelFromSession() {
+function getRoleLevelFromSession(): \Kokonotsuba\Root\Constants\userRole {
 	$staffSession = new staffAccountFromSession;
 	$roleLevel = $staffSession->getRoleLevel();
 
 	return $roleLevel;
+}
+
+function updateAccountSession(accountRepository $accountRepository, loginSessionHandler $loginSessionHandler): void {
+	// don't bother if the user isn't logged in
+	if(!isLoggedIn()) {
+		return;
+	}
+
+	$staffSession = new staffAccountFromSession;
+
+	$accountId = $staffSession->getUID();
+
+	$account = $accountRepository->getAccountByID($accountId);
+
+	// now update the session
+	$loginSessionHandler->login($account);
 }
