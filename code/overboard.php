@@ -36,7 +36,8 @@ class overboard {
 			'{$HOOKLINKS}' => '', '{$TITLE}' => $this->config['OVERBOARD_TITLE'], '{$TITLESUB}' => $this->config['OVERBOARD_SUBTITLE'],
 			 '{$LIVE_INDEX_FILE}' => $this->config['LIVE_INDEX_FILE'], '{$BANNER}' => '',
 			);
-			
+		
+		$this->moduleEngine->dispatch('PlaceHolderIntercept', [&$pte_vals]);
 		$this->moduleEngine->dispatch('TopLinks', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
 		$this->moduleEngine->dispatch('PageTop', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
 		
