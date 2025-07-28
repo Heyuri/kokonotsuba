@@ -4,6 +4,7 @@
 YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE THIS SOFTWARE.
 
 */
+
 session_start();
 
 /* Prevent the user from aborting script execution */
@@ -49,7 +50,6 @@ function getTemplateConfigArray() {
 }
 
 
-
 require getBackendDir().'includes.php';
 
 
@@ -77,7 +77,7 @@ function getGlobalConfig() {
 
 
 /*────────────────────────────────────────────────────────────
-	The main judgment of the functions of the program
+	The main judgment of the functions of the program			
 ────────────────────────────────────────────────────────────*/
 
 //Check if this is the backend
@@ -203,6 +203,9 @@ $adminPageRenderer	= new pageRenderer($adminTemplateEngine, $moduleEngine, $boar
 $softErrorHandler = new softErrorHandler($board->getBoardHead('Error!'), $board->getBoardFooter(), $board->getConfigValue('STATIC_INDEX_FILE'), $templateEngine);
 $loginSessionHandler	= new loginSessionHandler($config['STAFF_LOGIN_TIMEOUT']);
 $authenticationHandler	= new authenticationHandler();
+
+// Update session
+updateAccountSession($accountRepository, $loginSessionHandler);
 
 $adminLoginController	= new adminLoginController(
 	$actionLoggerService,
