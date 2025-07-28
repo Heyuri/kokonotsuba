@@ -67,7 +67,7 @@ $config['ModuleList'] = array(
 	'moveThread' => true,
 	/* thread modes */
 	'autoSage' => true,
-	'stop' => true,
+	'lockThread' => true,
 	'sticky' => true,
 	/* posting */
 	'csrfPrevent' => true,
