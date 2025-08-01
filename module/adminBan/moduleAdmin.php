@@ -152,6 +152,12 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// Log the action with the board UID
 		$boardUid = $this->moduleContext->board->getBoardUID();
+
+		// Log globally if its a global ban 
+		if($isGlobal) {
+			$boardUid = -1;
+		}
+
 		$this->moduleContext->actionLoggerService->logAction($actionString, $boardUid);
 	}
 
