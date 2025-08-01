@@ -47,7 +47,7 @@ class moduleMain  extends abstractModuleMain {
 		if ($this->getConfig('ModuleSettings.FLAG_MODE') == 1 && strstr($post['email'], 'flag')) return;
 		if ($this->getConfig('ModuleSettings.FLAG_MODE') == 2 && !strstr($post['email'], 'flag')) return;
 
-		$reader = new Reader(__DIR__ . '/../geoip/GeoLite2-Country.mmdb');
+		$reader = new Reader(__DIR__ . '/geoip/GeoLite2-Country.mmdb');
 		
 		$iphost = strtolower($post['host']);
 		
