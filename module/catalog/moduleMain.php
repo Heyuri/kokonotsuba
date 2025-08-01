@@ -126,7 +126,7 @@ class moduleMain extends abstractModuleMain {
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'', '{$IMG_SRC}' => '');
 			$this->moduleContext->moduleEngine->dispatch('ThreadPost', array(&$arrLabels, $opPost, $threadPosts, false)); // "ThreadPost" Hook Point
 
-			$res = count($threadPosts);
+			$res = count($threadPosts) - 1; // subtract by one so we dont count the OP
 			$dat.= '<td class="thread">
 	<!--<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>-->
 	<a href="'.$this->moduleContext->board->getBoardThreadURL($resno, $no).'">'.
