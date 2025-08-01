@@ -2,7 +2,7 @@
 
 namespace Kokonotsuba\Modules\countryFlags;
 
-require_once(__DIR__ . "/../geoip/geoip2.phar");
+require_once(__DIR__ . "/geoip/geoip2.phar");
 
 use Exception;
 use GeoIp2\Database\Reader;
