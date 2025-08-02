@@ -215,3 +215,14 @@ function getPageOfThread(string $thread_uid, array $threads, int $threadsPerPage
 	
 	return -1; // Thread not found
 }
+
+function getPostUidsFromThreadArrays(array $threads): array {
+	$postUids = array_unique(array_reduce($threads, function($carry, $thread) {
+		if (isset($thread['posts']) && is_array($thread['posts'])) {
+			return array_merge($carry, array_column($thread['posts'], 'post_uid'));
+		}
+		return $carry;
+	}, []));
+
+	return $postUids;
+}
