@@ -45,7 +45,9 @@ class moduleAdmin extends abstractModuleAdmin {
 			
 			rebuildBoardsByArray($boardsToRebuild);
 
-			redirect($this->myPage);
+			$moduleUrlForRedirect = $this->getModulePageURL([], false);
+
+			redirect($moduleUrlForRedirect);
 			/* Add more things here. TODO: Add thread cache rebuilding when those are added */
 		} else {
 			$templateValues = [
