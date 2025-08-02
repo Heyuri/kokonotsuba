@@ -213,6 +213,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$threadData = $thread['thread'];
 		$threadUid = $threadData['thread_uid'];
 
+		// board uid of the destination board
+		$destinationBoardUID = $destinationBoard->getBoardUID();
+
 		// use thread redirection
 		if($leaveShadowThread) { 
 			// lock original thread and duplicate contents to destination board
@@ -242,7 +245,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 			$this->moduleContext->threadService->moveThreadAndUpdate($threadUid, $destinationBoard);
 
-			$this->moduleContext->quoteLinkService->moveQuoteLinksFromThread($threadUid, $destinationBoard);
+			$this->moduleContext->quoteLinkService->moveQuoteLinksFromThread($threadUid, $destinationBoardUID);
 
 			
 			$threadRedirectUrl = $this->moduleContext->postRedirectService->resolveRedirectedThreadLinkFromThreadUID($threadUid);
