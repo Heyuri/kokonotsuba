@@ -32,6 +32,17 @@ class quoteLinkRepository {
 		return $query;
 	}
 
+	private function indexQuoteLinksByHostPostUid(array $quoteLinks): array {
+		$indexed = [];
+		foreach ($quoteLinks as $entry) {
+			if (isset($entry['host_post']['post_uid'])) {
+				$hostPostUid = $entry['host_post']['post_uid'];
+				$indexed[$hostPostUid][] = $entry;
+			}
+		}
+		return $indexed;
+	}
+
 	private function prepareResults(array $rows): array {
 		$results = [];
 		foreach ($rows as $row) {
@@ -55,7 +66,10 @@ class quoteLinkRepository {
 			];
 		}
 
-		return $results;
+		// index the results by host_post_uid
+		$indexedQuoteLinks = $this->indexQuoteLinksByHostPostUid($results);
+
+		return $indexedQuoteLinks;
 	}
 
 	public function getQuoteLinksByPostUids(array $postUids): array {

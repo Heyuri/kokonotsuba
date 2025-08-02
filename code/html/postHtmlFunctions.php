@@ -90,10 +90,8 @@ function generateQuoteLinkHtml(array $quoteLinksFromBoard, array $post, int $thr
 	$postUid = $post['post_uid'];
 	
 	// Safely get quoteLink entries for this specific post
-	$quoteLinkEntries = array_filter($quoteLinksFromBoard, function($entry) use ($postUid) {
-		return isset($entry['host_post']['post_uid']) && $entry['host_post']['post_uid'] === $postUid;
-	});
-	
+	$quoteLinkEntries = $quoteLinksFromBoard[$postUid];
+
 	// Index target post numbers to their thread number
 	$targetPostToThreadNumber = [];
 	foreach ($quoteLinkEntries as $entry) {
