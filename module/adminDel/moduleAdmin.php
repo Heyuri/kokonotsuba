@@ -130,6 +130,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 			$pageToRebuild = getPageOfThread($thread_uid, $threads, $board->getConfigValue('PAGE_DEF', 15));
 			
+			// make sure it isn't above the static page limit - this prevents a potential DOS vulnerability where a request can trigger a resource intensive operation
+			$pageToRebuild = min($pageToRebuild, $this->getConfig('STATIC_HTML_UNTIL'));
+
 			$board->rebuildBoardPage($pageToRebuild);
 		}
 		
