@@ -7,110 +7,15 @@ class quoteLinkService {
 	) {}
 
 	public function getQuoteLinksByPostUids(array $postUids): array {
-		if (empty($postUids)) {
-			return [];
-		}
-
-		$quoteLinks = $this->quoteLinkRepository->getQuoteLinksByTargetPostUids($postUids);
-
-		if (empty($quoteLinks)) {
-			return [];
-		}
-
-		$targetPostUids = [];
-		$hostPostUids = [];
-
-		foreach ($quoteLinks as $ql) {
-			$targetPostUids[] = $ql->getTargetPostUid();
-			$hostPostUids[] = $ql->getHostPostUid();
-		}
-
-		$allPostUids = array_unique(array_merge($targetPostUids, $hostPostUids));
-		$posts = $this->quoteLinkRepository->getPostsByPostUids($allPostUids);
-
-		$postMap = [];
-		foreach ($posts as $post) {
-			$postMap[$post['post_uid']] = $post;
-		}
-
-		$result = [];
-		foreach ($quoteLinks as $ql) {
-			$targetPost = $postMap[$ql->getTargetPostUid()] ?? null;
-			$hostPost = $postMap[$ql->getHostPostUid()] ?? null;
-
-			if ($targetPost && $hostPost) {
-				$result[] = [
-					[
-						'target_post' => $targetPost,
-						'host_post'   => $hostPost,
-					],
-					'quoteLink' => $ql
-				];
-			}
-		}
-
-		return $result;
+		$quoteLinks = $this->quoteLinkRepository->getQuoteLinksByPostUids($postUids);
+	
+		return $quoteLinks;
 	}
 
 	public function getQuoteLinksByBoardUid(int $boardUid): array {
 		$quoteLinks = $this->quoteLinkRepository->getQuoteLinksByBoardUid($boardUid);
 
-		if (empty($quoteLinks)) {
-			return [];
-		}
-
-		$postUids = [];
-		foreach ($quoteLinks as $link) {
-			$postUids[] = $link->getTargetPostUid();
-			$postUids[] = $link->getHostPostUid();
-		}
-
-		$postUids = array_unique($postUids);
-		$posts = $this->quoteLinkRepository->getPostsByPostUids($postUids);
-
-		$postMap = [];
-		$threadUids = [];
-
-		foreach ($posts as $post) {
-			$postMap[$post['post_uid']] = $post;
-			if (!empty($post['thread_uid'])) {
-				$threadUids[] = $post['thread_uid'];
-			}
-		}
-
-		$threadUids = array_unique($threadUids);
-		$threads = $this->quoteLinkRepository->getThreadsByUids($threadUids);
-
-		$threadMap = [];
-		foreach ($threads as $thread) {
-			$threadMap[$thread['thread_uid']] = $thread;
-		}
-
-		$result = [];
-		foreach ($quoteLinks as $link) {
-			$hostUid = $link->getHostPostUid();
-			$targetUid = $link->getTargetPostUid();
-
-			$hostPost = $postMap[$hostUid] ?? null;
-			$targetPost = $postMap[$targetUid] ?? null;
-
-			if (!$hostPost || !$targetPost) {
-				continue;
-			}
-
-			$hostThread = $threadMap[$hostPost['thread_uid']] ?? null;
-			$targetThread = $threadMap[$targetPost['thread_uid']] ?? null;
-
-			$result[$hostUid][] = [
-				'target_post'   => $targetPost,
-				'target_thread' => $targetThread,
-				'host_post'     => $hostPost,
-				'host_thread'   => $hostThread,
-				'quoteLink'     => $link,
-			];
-		}
-
-		return $result;
+		return $quoteLinks;
 	}
 
 	public function insertQuoteLinks(array $quoteLinks): int {
@@ -145,10 +50,6 @@ class quoteLinkService {
 		}
 
 		$this->quoteLinkRepository->insertQuoteLinks($newLinks);
-	}
-
-	public function getQuoteLinksFromPostUids(array $postUids): array {
-		return $this->quoteLinkRepository->getQuoteLinksFromHostPostUids($postUids);
 	}
 
 	public function createQuoteLinksFromArray(int $boardUid, int $postUid, array $targetPostUids): void {
