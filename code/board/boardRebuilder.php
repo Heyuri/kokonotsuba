@@ -136,7 +136,7 @@ class boardRebuilder {
 		
 		// post uids of posts that are rendered
 		$postUidsInPage = getPostUidsFromThreadArrays($threadsInPage);
-		
+
 		// get all associated quote links for the page
 		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage);
 
@@ -178,10 +178,13 @@ class boardRebuilder {
 			default => max(1, min($this->config['STATIC_HTML_UNTIL'], $totalPages))
 		};
 
+		// get all associated quote links for the page
+		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByBoardUid($this->board->getBoardUID());
+
 		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
 
 		for ($page = 0; $page < $totalPagesToRebuild; $page++) {
-			$this->renderStaticPage($page, $threads, $totalThreads, $headerHtml, $formHtml, $footHtml, $pte_vals, false);
+			$this->renderStaticPage($page, $threads, $totalThreads, $headerHtml, $formHtml, $footHtml, $pte_vals, false, $quoteLinksFromBoard);
 		}
 
 		if ($logRebuild) {
@@ -201,10 +204,16 @@ class boardRebuilder {
 
 		$threads = $this->postService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $amountOfThreads, 0);
 
+		// post uids of posts that are rendered
+		$postUidsInPage = getPostUidsFromThreadArrays($threads);
+
+		// get all associated quote links for the page
+		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage);
+
 		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
 
 		for ($page = 0; $page <= $lastPageToRebuild; $page++) {
-			$this->renderStaticPage($page, $threads, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals, false);
+			$this->renderStaticPage($page, $threads, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals, false, $quoteLinksFromPage);
 		}
 	}
 
@@ -221,9 +230,15 @@ class boardRebuilder {
 
 		if ($targetPage >= $totalPages) return;
 
+		// post uids of posts that are rendered
+		$postUidsInPage = getPostUidsFromThreadArrays($threads);
+
+		// get all associated quote links for the page
+		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage);
+
 		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
 		
-		$this->renderStaticPage($targetPage, $threads, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals, true);
+		$this->renderStaticPage($targetPage, $threads, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals, true, $quoteLinksFromPage);
 
 		if ($logRebuild) {
 			$this->actionLoggerService->logAction(
@@ -234,8 +249,8 @@ class boardRebuilder {
 	}
 
 
-	private function renderStaticPage(int $page, array $threads, int $totalThreadCountForBoard, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals, bool $threadsAreSliced): void {
-		$threadRenderer = $this->getThreadRenderer(); // reuses quoteLinksFromBoard internally
+	private function renderStaticPage(int $page, array $threads, int $totalThreadCountForBoard, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals, bool $threadsAreSliced, array $quoteLinksFromBoard): void {
+		$threadRenderer = $this->getThreadRenderer($quoteLinksFromBoard);
 
 		$threadsPerPage = $this->config['PAGE_DEF'];
 		$boardUrl = $this->board->getBoardURL();
