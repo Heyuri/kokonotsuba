@@ -75,9 +75,11 @@ class overboard {
 		
 		$numberThreadsFiltered = $this->threadRepository->getFilteredThreadCount($filters);
 		
+		$postUidsInPage =  getPostUidsFromThreadArrays($threads);
+
+		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage);
 		
 		$boardMap = $this->loadBoardsForThreads($threads);
-		$quoteLinksByBoardUID = $this->loadQuoteLinksForThreads($boardMap);
 		$postsByBoardAndThread = $this->loadPostsForThreads($threads);
 
 		foreach ($threads as $iterator => $thread) {
@@ -85,7 +87,7 @@ class overboard {
 				$thread,
 				$iterator,
 				$boardMap,
-				$quoteLinksByBoardUID,
+				$quoteLinksFromPage,
 				$postsByBoardAndThread,
 				$threads
 			);
@@ -138,17 +140,6 @@ class overboard {
 	
 		return $boardMap;
 	}
-
-	private function loadQuoteLinksForThreads(array $boardMap): array {
-		$quoteLinksByBoardUID = [];
-
-		$boardUids = array_keys($boardMap);
-		foreach ($boardUids as $boardUid) {
-			$quoteLinksByBoardUID[$boardUid] = $this->quoteLinkService->getQuoteLinksFromBoard($boardUid);
-		}
-
-		return $quoteLinksByBoardUID;
-	}
 	
 	private function loadPostsForThreads($threads) {
 		$tIDsByBoard = array();
@@ -172,7 +163,7 @@ class overboard {
 		array $thread, 
 		int $iterator, 
 		array $boardMap, 
-		array $quoteLinksByBoardUID,
+		array $quoteLinksFromPage,
 		array $postsByBoardAndThread, 
 		array $threads
 	): string {
@@ -188,7 +179,7 @@ class overboard {
 		$posts = $thread['posts'];
 		$threadToRender = $thread['thread'];
 	
-		$threadRenderer = $this->createThreadRenderer($board, $config, $this->templateEngine, $quoteLinksByBoardUID);
+		$threadRenderer = $this->createThreadRenderer($board, $config, $this->templateEngine, $quoteLinksFromPage);
 	
 		[$overboardThreadTitle, $crossLink] = $this->buildThreadTitleAndLink($board);
 	
@@ -213,7 +204,7 @@ class overboard {
 		);
 	}
 	
-	private function createThreadRenderer(board $board, array $config, ?templateEngine $templateEngine, array $quoteLinksByBoardUID): threadRenderer {
+	private function createThreadRenderer(board $board, array $config, ?templateEngine $templateEngine, array $quoteLinksFromPage): threadRenderer {
 		$moduleEngineContext = new moduleEngineContext($config, 
 			$board->getConfigValue('LIVE_INDEX_FILE'), 
 			$board->getConfigValue('ModuleList'), 
@@ -233,14 +224,11 @@ class overboard {
 
 		$moduleEngine = new moduleEngine($moduleEngineContext);
 		
-		$boardUID = $board->getBoardUID();
-		$quoteLinksForBoard = $quoteLinksByBoardUID[$boardUID];
-
 		$postRenderer = new postRenderer($board,
 		 $config, 
 		 $moduleEngine, 
 		 $templateEngine, 
-		 $quoteLinksForBoard
+		 $quoteLinksFromPage
 		);
 
 		return new threadRenderer($config, $templateEngine, $postRenderer);
