@@ -315,7 +315,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			// Log the action
 			$destinationBoardTitle = htmlspecialchars($destinationBoard->getBoardTitle());
 			$this->moduleContext->actionLoggerService->logAction(
-				"Moved thread {$thread['post_op_number']} to board $destinationBoardTitle",
+				"Moved thread {$thread['thread']['post_op_number']} to board $destinationBoardTitle",
 				$hostBoard->getBoardUID()
 			);
 	
