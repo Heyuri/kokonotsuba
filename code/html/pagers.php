@@ -92,7 +92,7 @@ function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int
 }
 
 function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url, int $staticPagesToRebuild, string $liveIndexFile): string {
-	$currentPage = $_REQUEST['page'] ?? 0;
+	$currentPage = (int)$_REQUEST['page'] ?? 0;
 
 	[$totalPages, $currentPage] = validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
 
