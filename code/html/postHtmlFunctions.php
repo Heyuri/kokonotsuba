@@ -13,7 +13,7 @@ function generatePostNameHtml(array $staffCapcodes,
 	?string $capcode = '',
 	string $email = '',
 	bool $clearSage = false): string {
-    // For compatability reasons, names already containing html will just be displayed without any further processing.
+	// For compatability reasons, names already containing html will just be displayed without any further processing.
 	// Because kokonotsuba previously stored name/trip/capcode html all in the name column, and this can cause double wrapped html
 	if(containsHtmlTags($name)) return $name;
 
@@ -33,7 +33,7 @@ function generatePostNameHtml(array $staffCapcodes,
 		// Retrieve the corresponding capcode mapping (tripcode first, fallback to secure tripcode)
 		$capcodeMap = $userCapcodes[$tripcode] ?? $userCapcodes[$secure_tripcode];
 	
-        // Extract the capcode color
+		// Extract the capcode color
 		$capcodeColor = $capcodeMap['color'];
 
 		// Extract the capcode text
@@ -90,22 +90,24 @@ function generateQuoteLinkHtml(array $quoteLinksFromBoard, array $post, int $thr
 	$postUid = $post['post_uid'];
 	
 	// Safely get quoteLink entries for this specific post
-	$quoteLinkEntries = $quoteLinksFromBoard[$postUid] ?? [];
+	$quoteLinkEntries = array_filter($quoteLinksFromBoard, function($entry) use ($postUid) {
+		return isset($entry['host_post']['post_uid']) && $entry['host_post']['post_uid'] === $postUid;
+	});
 	
 	// Index target post numbers to their thread number
 	$targetPostToThreadNumber = [];
 	foreach ($quoteLinkEntries as $entry) {
 		if (
-			isset($entry['target_post']['no'], $entry['target_thread']['post_op_number']) &&
+			isset($entry['target_post']['no'], $entry['target_post']['post_op_number']) &&
 			is_numeric($entry['target_post']['no']) &&
-			is_numeric($entry['target_thread']['post_op_number'])
+			is_numeric($entry['target_post']['post_op_number'])
 		) {
 			$postNo = (int)$entry['target_post']['no'];
-			$threadNo = (int)$entry['target_thread']['post_op_number'];
+			$threadNo = (int)$entry['target_post']['post_op_number'];
 			$targetPostToThreadNumber[$postNo] = $threadNo;
 		}
 	}
-	
+
 	// Match all quote-like strings in the comment
 	if (!preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $comment, $matches, PREG_SET_ORDER)) {
 		return $comment;
