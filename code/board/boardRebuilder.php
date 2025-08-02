@@ -21,28 +21,48 @@ class boardRebuilder {
 	}
 
 	public function drawThread(int $resno): void {
-		$threadRenderer = $this->getThreadRenderer();
 
 		$adminMode = isActiveStaffSession();
 
 		$uid = $this->threadRepository->resolveThreadUidFromResno($this->board, $resno);
 		$threadData = $this->threadService->getThreadByUID($uid);
 
+
+		// Throw a 404 error if the thread isn't found
 		if (!$threadData) {
-			$this->softErrorHandler->errorAndExit("Thread not found!");
+			$this->softErrorHandler->errorAndExit("Thread not found!", 404);
 			return;
 		}
 
+		// get the thread row
 		$thread = $threadData['thread'];
+
+		// get the posts from the thread
 		$posts = $threadData['posts'];
+		
+		// get the post uids from the thread posts
+		$postUids = array_column($posts, 'post_uid');
+
+		// init hidden reply var
 		$hiddenReply = 0;
 
+		// get quote links for thread
+		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByPostUids($postUids);
+
+		// init thread and post renderer
+		$threadRenderer = $this->getThreadRenderer($quoteLinksFromBoard);
+
+		// init template placeholders
 		$pte_vals = $this->buildPteVals(true);
 		
+		// get form html
 		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml($resno, $pte_vals);
 
+		// Dispatch viewed thread hook
+		// This hook is one that only gets dispatched for threads that are being viewed through drawThread
 		$this->moduleEngine->dispatch('ViewedThread', [&$pte_vals, &$threadData]);
 
+		// Render threads
 		$pte_vals['{$THREADS}'] .= $threadRenderer->render([],
 			true,
 			$thread,
@@ -96,26 +116,52 @@ class boardRebuilder {
 	}
 
 	public function drawPage(int $page = 0): void {
-		$threadRenderer = $this->getThreadRenderer();
+		// whether the user is logged in
 		$adminMode = isActiveStaffSession();
 
+		// url of the board
 		$boardUrl = $this->board->getBoardURL();
+
+		// threads to show per page
 		$threadsPerPage = $this->config['PAGE_DEF'];
+
+		// thread offset for pagination query
 		$threadPageOffset = $page * $threadsPerPage;
+		
+		// max amounts of reply previews to show for each thread
 		$previewCount = $this->config['RE_DEF'];
 
+		// get threads + previews for this page
 		$threadsInPage = $this->postService->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset);
+		
+		// post uids of posts that are rendered
+		$postUidsInPage = getPostUidsFromThreadArrays($threadsInPage);
+		
+		// get all associated quote links for the page
+		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage);
+
+		// init thread renderer + post renderer
+		$threadRenderer = $this->getThreadRenderer($quoteLinksFromPage);
+
+		// total thread count
 		$totalThreads = count($this->threadService->getThreadListFromBoard($this->board));
 
+		// init placeholder template values
 		$pte_vals = $this->buildPteVals(false);
 
+		// build form html
 		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml(0, $pte_vals);
 
+		// render thread html
 		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threadsInPage, $pte_vals, $adminMode);
 
+		// thread pager
 		$pte_vals['{$PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'), [$this->softErrorHandler, 'errorAndExit']);
 
+		// generate the whole page's html
 		$pageData = $this->buildFullPage($pte_vals, $this->board->getBoardTitle());
+		
+		// now output the page's html
 		echo $this->finalizePageData($pageData);
 	}
 
@@ -248,8 +294,7 @@ class boardRebuilder {
 		return $pageData;
 	}
 
-	private function getThreadRenderer(): threadRenderer {
-		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksFromBoard($this->board->getBoardUID());
+	private function getThreadRenderer(array $quoteLinksFromBoard = []): threadRenderer {
 		$postRenderer = new postRenderer(
 			$this->board,
 			$this->config,
