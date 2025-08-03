@@ -134,11 +134,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		$postUid = intval($_POST['post_uid']) ?? null;
 		$isGlobal = isset($_POST['global']);  // Check if global ban is selected
 
+		$post = $this->moduleContext->postRepository->getPostByUid($postUid);
+
 		// Process the ban form (add to log, update post if public, etc.)
-		$this->processBanForm($reasonFromRequest, $newIp, $duration, $makePublic, $publicBanMessageHTML, $isGlobal, $postUid);
+		$this->processBanForm($reasonFromRequest, $newIp, $duration, $makePublic, $publicBanMessageHTML, $isGlobal, $post);
 	
 		// Log the ban action
-		$this->logBanAction($newIp, $duration, $isGlobal, $postUid);
+		$this->logBanAction($newIp, $duration, $isGlobal, $post);
 
 
 		// Redirect after processing
@@ -146,9 +148,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		exit;
 	}
 
-	private function logBanAction($newIp, $duration, $isGlobal, $postUid) {
+	private function logBanAction(string $newIp, string $duration, bool $isGlobal, ?array $post) {
 		// Build the action string based on whether it's a global ban or related to a post
-		$actionString = $this->buildActionString($newIp, $duration, $isGlobal, $postUid);
+		$actionString = $this->buildActionString($newIp, $duration, $isGlobal, $post);
 
 		// Log the action with the board UID
 		$boardUid = $this->moduleContext->board->getBoardUID();
@@ -164,7 +166,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function buildActionString(string $newIp, 
 		string $duration, 
 		bool $isGlobal, 
-		?int $postUid): string {
+		?array $post): string {
 		// Initial action string (basic information about the ban)
 		$actionString = "Banned $newIp for $duration";
 
@@ -180,10 +182,25 @@ class moduleAdmin extends abstractModuleAdmin {
 
 
 		// If the ban is related to a specific post, add post info to the action string
-		if ($postUid) {
-			$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($postUid);
+		if ($post) {
+			// post number
+			$postNumber = $post['no'];
+
+			// board uid of the post
+			$boardUID = $post['boardUID'];
+			
+			// fetch the board from memory
+			$board = searchBoardArrayForBoard($post['boardUID']);
+			
+			// board title
+			$boardTitle = $board->getBoardTitle();	
+
 			if(!empty($postNumber)) { 
-				$actionString .= " for post $postNumber";
+				$actionString .= " for post No.$postNumber";
+			
+				if($isGlobal) {
+					$actionString .= " $boardTitle ($boardUID)";
+				}
 			}
 		}
 
@@ -198,7 +215,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		string $makePublic, 
 		string $publicBanMessageHTML, 
 		bool $isGlobal,
-		?int $postUid = 0): void {
+		?array $post = []): void {
 		// Load ban logs
 		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
 		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
@@ -227,13 +244,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		if ($makePublic) {
-			if ($postUid) {
-				// Fetch and update the post with the ban message
-				$post = $this->moduleContext->postRepository->getPostByUid($postUid);
+			if ($post) {
 				
 				$post['com'] .= $publicBanMessageHTML;
 				
-				$this->moduleContext->postRepository->updatePost($postUid, $post);
+				$this->moduleContext->postRepository->updatePost($post['post_uid'], $post);
 				
 				$board = searchBoardArrayForBoard($post['boardUID']);
 				

@@ -7,6 +7,8 @@ use FlagHelper;
 use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
 use Kokonotsuba\Root\Constants\userRole;
 
+use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
+
 class moduleAdmin extends abstractModuleAdmin {
 	private readonly int $JANIMUTE_LENGTH;
 	private readonly string $JANIMUTE_REASON;
@@ -99,7 +101,7 @@ class moduleAdmin extends abstractModuleAdmin {
 					$this->appendGlobalBan($ip, $starttime, $expires, $reason);
 				}
 
-				$this->moduleContext->actionLoggerService->logAction('Muted '.$ip.' and deleted post No.'.$post['no'], $boardUID);
+				$this->moduleContext->actionLoggerService->logAction('Muted '.$ip.' and deleted post No.'.$post['no'] . ' ' . $board->getBoardTitle() . '(' . $board->getBoardIdentifier() . ')', GLOBAL_BOARD_UID);
 
 				break;
 			case 'imgdel':
