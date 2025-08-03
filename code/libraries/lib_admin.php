@@ -53,7 +53,7 @@ function updateAccountSession(accountRepository $accountRepository, loginSession
 	$account = $accountRepository->getAccountByID($accountId);
 
 	// just destroy the session if the account no longer exists
-	if(!$account) {
+	if(!$account || !($account instanceof staffAccount)) {
 		$loginSessionHandler->logout();
 	}
 
