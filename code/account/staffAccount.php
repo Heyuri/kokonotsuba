@@ -7,7 +7,7 @@ class staffAccount {
 	public readonly int $id;
 	public readonly int $number_of_actions;
 	public readonly string $date_added; 
-	public readonly string $last_login;
+	public readonly ?string $last_login;
 	
 	public function getUsername(): string { 
 		return $this->username; 
