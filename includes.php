@@ -144,12 +144,10 @@ require __DIR__ . '/code/post/helper/postIDGenerator.php';
 require __DIR__ . '/code/post/helper/thumbnailCreator.php';
 require __DIR__ . '/code/post/helper/tripcodeProcessor.php';
 require __DIR__ . '/code/post/helper/webhookDispatcher.php';
-require __DIR__ . '/code/post/post.php';
 require __DIR__ . '/code/post/postRedirectRepository.php';
 require __DIR__ . '/code/post/postRedirectService.php';
 require __DIR__ . '/code/post/postRegistData.php';
 require __DIR__ . '/code/post/postRepository.php';
-require __DIR__ . '/code/post/postRow.php';
 require __DIR__ . '/code/post/postSearchRepository.php';
 require __DIR__ . '/code/post/postSearchService.php';
 require __DIR__ . '/code/post/postService.php';
@@ -183,7 +181,6 @@ require __DIR__ . '/code/template/pageRenderer.php';
 require __DIR__ . '/code/template/templateEngine.php';
 
 // thread
-require __DIR__ . '/code/thread/thread.php';
 require __DIR__ . '/code/thread/threadRedirect.php';
 require __DIR__ . '/code/thread/threadRepository.php';
 require __DIR__ . '/code/thread/threadService.php';
