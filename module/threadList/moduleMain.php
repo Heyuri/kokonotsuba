@@ -69,9 +69,10 @@ class moduleMain extends abstractModuleMain {
 						$post = $opPosts[$threadUID];
 
 						$cleanComment = strip_tags($post['com']);
-						$title = $post['sub'] ?: (mb_strlen($cleanComment) <= 100
-								? $cleanComment
-								: mb_substr($cleanComment, 0, 100, 'UTF-8') . '...');
+						$truncatedComment = truncateText($cleanComment, 100);
+						$truncatedSubject = truncateText($post['sub'], 100);
+
+						$title = $truncatedSubject ?: $truncatedComment;
 
 						$replyCount = isset($postCounts[$threadUID])
 								? $postCounts[$threadUID] - 1
