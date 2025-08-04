@@ -117,6 +117,38 @@ function strlenUnicode($str) {
 	return mb_strlen($str, 'UTF-8');
 }
 
+
+/**
+ * Safely truncates a string to a maximum length without breaking multibyte characters (e.g., emojis, non-Latin chars).
+ * Optionally appends an ellipsis (…) if truncation occurs.
+ *
+ * @param string $text The input text to truncate.
+ * @param int $maxLength The maximum number of characters to keep.
+ * @param string $encoding The character encoding (default is UTF-8).
+ * @param bool $addEllipsis Whether to append "…" if the text was truncated.
+ * @return string The safely truncated string.
+ */
+function truncateText(
+    string $text,
+    int $maxLength,
+    string $encoding = 'UTF-8',
+    bool $addEllipsis = true
+): string {
+    // If the text length is within the limit, return as is
+    if (mb_strlen($text, $encoding) <= $maxLength) {
+        return $text;
+    }
+
+    // Truncate to the desired length (minus 1 if we're adding an ellipsis)
+    $truncatedLength = $addEllipsis ? $maxLength - 1 : $maxLength;
+
+    // Use mb_substr to avoid breaking multibyte characters
+    $truncated = mb_substr($text, 0, $truncatedLength, $encoding);
+
+    // Append ellipsis if desired
+    return $addEllipsis ? $truncated . '(' . html_entity_decode('&hellip;', ENT_QUOTES, $encoding) . ')' : $truncated;
+}
+
 /* redirect */
 function redirect($to, $time=0, $verbose=false) {
 	if($to=='back') {
