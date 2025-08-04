@@ -92,19 +92,30 @@ class boardRebuilder {
 		$comment = strip_tags($opPost['com']); // op post comment
 		$fileName = strip_tags($opPost['fname'] . $opPost['ext']); // op post file name as unix timestamp
 
-
+		// Max length before truncating strings
+		$maxTitleLength = 20;
+		
 		// no sanitization is done here because kokonotsuba stores them sanitized
 		// first, have it include the subject + board title 
 		if(!empty($subject)) {
-			$threadTitle = "$subject - $boardTitle";
+			// truncate the subject
+			$truncateSubject = truncateText($subject, $maxTitleLength);
+
+			$threadTitle = "$truncateSubject - $boardTitle";
 		} 
 		// then try the comment
 		else if(!empty($comment) && $comment !== $this->config['DEFAULT_NOCOMMENT']) {
-			$threadTitle = $comment . ' - ' . $boardTitle;
+			// truncate the comment
+			$truncatedComment = truncateText($comment, $maxTitleLength);
+
+			$threadTitle = $truncatedComment . ' - ' . $boardTitle;
 		} 
 		// then try the file name (useful for dump/flash boards)
 		else if(!empty($fileName)) {
-			$threadTitle = $fileName . ' - ' . $boardTitle;
+			// truncate file name
+			$truncateFileName = truncateText($fileName, $maxTitleLength);
+
+			$threadTitle = $truncateFileName . ' - ' . $boardTitle;
 		}
 		// otherwise, just use the board title
 		else { 
