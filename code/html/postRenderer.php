@@ -406,14 +406,12 @@ class postRenderer {
 	private function buildAttachmentBar(int $tim, string $ext, string $fname, string $imgsize, int $imgw, int $imgh): string {
 		// if the filename isn't set, then use unix timestamp
 		if (!isset($fname)) $fname = $tim;
-	
-		// Use mbstring functions to safely handle multi-byte characters
+
+		// Max file name length before truncating
 		$maxLength = 40;
-		if (mb_strlen($fname, 'UTF-8') > $maxLength) {
-			$truncated = mb_substr($fname, 0, $maxLength, 'UTF-8') . '(' . html_entity_decode('&hellip;', ENT_QUOTES, 'UTF-8') . ')';
-		} else {
-			$truncated = $fname;
-		}
+
+		// truncate the file name as per maxLength
+		$truncated = truncateText($fname, $maxLength);
 
 		$truncated .= $ext;
 		$fname .= $ext;
