@@ -204,9 +204,6 @@ $softErrorHandler = new softErrorHandler($board->getBoardHead('Error!'), $board-
 $loginSessionHandler	= new loginSessionHandler($config['STAFF_LOGIN_TIMEOUT']);
 $authenticationHandler	= new authenticationHandler();
 
-// Update session
-updateAccountSession($accountRepository, $loginSessionHandler);
-
 $adminLoginController	= new adminLoginController(
 	$actionLoggerService,
 	$accountRepository,
@@ -284,9 +281,16 @@ $routeDiContainer = new routeDiContainer(
 // Main Handler Execution
 // ───────────────────────────────────────
 try {
-	$modeHandler = new modeHandler($routeDiContainer);
+	// Update session
+	updateAccountSession($accountRepository, $loginSessionHandler);
 
+	// init mode handler
+	$modeHandler = new modeHandler($routeDiContainer);
+	
+	// validate the currently selected board
 	$modeHandler->validateBoard($board);
+
+	// run the mode router
 	$modeHandler->handle();
 
 } catch(\BoardException $boardException) {
@@ -299,4 +303,5 @@ try {
 
 	$softErrorHandler->errorAndExit("There has been an error. (;´Д`)");
 }
+
 clearstatcache();
