@@ -58,5 +58,5 @@ function updateAccountSession(accountRepository $accountRepository, loginSession
 	}
 
 	// now update the session
-	$loginSessionHandler->login($account);
+	$loginSessionHandler->updateSessionData($account);
 }
