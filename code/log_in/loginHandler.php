@@ -24,7 +24,6 @@ class loginSessionHandler {
 		$_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
 		$_SESSION['last_activity'] = time();
 
-		session_write_close();
 		return true;
 	}
 
@@ -75,5 +74,17 @@ class loginSessionHandler {
 			session_start();
 		}
 	}
+
+	public function updateSessionData(staffAccount $account): void {
+		$this->startSession();
+
+		// Only update fields that can change during a session, e.g. username, role level, last activity
+		$_SESSION['username'] = $account->getUsername();
+		$_SESSION['role_level'] = $account->getRoleLevel()->value;
+		$_SESSION['last_activity'] = time();
+
+		// Keep user_agent and accountUID intact, no session_regenerate_id() here
+	}
+
 }
 
