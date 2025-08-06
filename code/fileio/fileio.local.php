@@ -86,10 +86,16 @@ class FileIOlocal extends AbstractFileIO {
 		$thumbnailExtention = $config['THUMB_SETTING']['Format'];
 
 		// Construct the full path to the thumbnail file
-		$thumbnailPath = $board->getBoardUploadedFilesDirectory().$config['THUMB_DIR'] . $thumbPattern . 's.' . $thumbnailExtention;
+		$thumbnailBaseName = $board->getBoardUploadedFilesDirectory().$config['THUMB_DIR'] . $thumbPattern . 's.';
 		
 		// Return false if the thumbnail file does not exist at the constructed path
-		if(!file_exists($thumbnailPath)) {
+		if(file_exists($thumbnailBaseName . $thumbnailExtention)) {
+			$thumbnailPath = $thumbnailBaseName . $thumbnailExtention;
+		} 
+		// For backwards compatability for older posts on Heyuri when it used to generate thumbnails in PNG format 
+		else if(file_exists($thumbnailBaseName . 'png')) {
+			$thumbnailPath = $thumbnailBaseName . 'png';
+		} else {
 			return false;
 		}
 		
