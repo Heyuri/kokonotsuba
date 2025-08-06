@@ -91,14 +91,16 @@ class postFileUploadController {
 	private function generateVideoThumbnail(file $file): void {
 		// Get original temporary file path and extension
 		$videoPath = $file->getTemporaryFileName();
-		$videoExtention = substr($file->getExtention(), 1);
 
 		// Build thumbnail output path
 		$formatSuffix = $this->config['THUMB_SETTING']['Format'];
 		$thumbnailPath = $videoPath . '_thumbnail.' . $formatSuffix;
 
-		// Generate the thumbnail from video
-		createVideoThumbnail($videoPath, $thumbnailPath, $videoExtention);
+		// get the halfway timestamp of the video
+		$medianDuration = getMedianTime($videoPath);
+
+		// Generate the thumbnail from video from the frame in the middle of the video
+		createVideoThumbnail($videoPath, $thumbnailPath, $medianDuration);
 
 		// Update the thumbnail file reference
 		$this->thumbnail->setThumbnailFileName($thumbnailPath);
