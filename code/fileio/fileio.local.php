@@ -92,9 +92,9 @@ class FileIOlocal extends AbstractFileIO {
 		if(file_exists($thumbnailBaseName . $thumbnailExtention)) {
 			$thumbnailPath = $thumbnailBaseName . $thumbnailExtention;
 		} 
-		// For backwards compatability for older posts on Heyuri when it used to generate thumbnails in PNG format 
-		else if(file_exists($thumbnailBaseName . 'png')) {
-			$thumbnailPath = $thumbnailBaseName . 'png';
+		// For backwards compatibility, if the expected extension doesn't exist, check the alternative format
+		else if(file_exists($thumbnailBaseName . ($thumbnailExtention === 'png' ? 'jpg' : 'png'))) {
+			$thumbnailPath = $thumbnailBaseName . ($thumbnailExtention === 'png' ? 'jpg' : 'png');
 		} else {
 			return false;
 		}
@@ -108,3 +108,4 @@ class FileIOlocal extends AbstractFileIO {
 
 	
 }
+
