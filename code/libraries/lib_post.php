@@ -126,38 +126,52 @@ function isExiftoolAvailable(): bool {
 	return $status === 0 && !empty($output);
 }
 
-function createVideoThumbnail(string $videoPath, string $outputImagePath, string $format = 'mp4', string $timestamp = '00:00:01'): bool {
-	// Check if video file exists and is readable
-	if (!file_exists($videoPath) || !is_readable($videoPath)) {
-		throw new RuntimeException("Video file not found or not readable: $videoPath");
-	}
+function getMedianTime($videoPath) {
+	// Escape the path to prevent command injection
+	$cmd = "ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . escapeshellarg($videoPath);
+	
+	// Execute the command and capture output
+	$duration = (float)exec($cmd);
 
-	// Escape args
-	$escapedVideo = escapeshellarg($videoPath);
-	$escapedOutput = escapeshellarg($outputImagePath);
-	$escapedTimestamp = escapeshellarg($timestamp);
-
-	// Build format command without quotes around format
-	$formatCmd = '';
-	if (!empty($format)) {
-		$formatCmd = "-f $format ";
-	}
-
-	// Use fast seeking by placing -ss before -i
-	$cmd = "ffmpeg -y -ss {$escapedTimestamp} {$formatCmd}-i {$escapedVideo} -vframes 1 {$escapedOutput} 2>&1";
-
-	// Execute and capture output
-	exec($cmd, $output, $returnCode);
-
-	// Debug
-	if ($returnCode !== 0) {
-		throw new RuntimeException("FFmpeg error: " . implode("\n", $output));
+	// If duration is not valid, return false
+	if ($duration <= 0) {
 		return false;
 	}
 
-	return file_exists($outputImagePath);
+	// Calculate median time (in seconds)
+	$median = $duration / 2;
+
+	// Format median time as H:i:s
+	return gmdate("H:i:s", $median);
 }
 
+function createVideoThumbnail(string $videoPath, string $outputImagePath, string $timestamp = '00:00:00'): bool {
+    // Check if video file exists and is readable
+    if (!file_exists($videoPath) || !is_readable($videoPath)) {
+        throw new RuntimeException("Video file not found or not readable: $videoPath");
+    }
+
+    // Escape args
+    $escapedVideo = escapeshellarg($videoPath);
+    $escapedOutput = escapeshellarg($outputImagePath);
+    $escapedTimestamp = escapeshellarg($timestamp);
+
+    // Build the command without -f for format unless really necessary
+    $cmd = "ffmpeg -y -ss {$escapedTimestamp} -i {$escapedVideo} -vframes 1 {$escapedOutput} 2>&1";
+
+    // Execute and capture output
+    exec($cmd, $output, $returnCode);
+
+    // Debugging: log and print more details if an error occurs
+    if ($returnCode !== 0) {
+        $errorDetails = implode("\n", $output);
+        error_log("FFmpeg failed with error code {$returnCode}: {$errorDetails}");
+        throw new RuntimeException("FFmpeg error: " . $errorDetails);
+    }
+
+    // Return whether the thumbnail image file exists
+    return file_exists($outputImagePath);
+}
 
 function isVideo(string $mimeType): bool {
 	return strpos($mimeType, 'video/') === 0;
