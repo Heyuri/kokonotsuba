@@ -148,7 +148,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		exit;
 	}
 
-	private function logBanAction(string $newIp, string $duration, bool $isGlobal, ?array $post) {
+	private function logBanAction(string $newIp, string $duration, bool $isGlobal, array|false $post) {
 		// Build the action string based on whether it's a global ban or related to a post
 		$actionString = $this->buildActionString($newIp, $duration, $isGlobal, $post);
 
@@ -166,7 +166,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function buildActionString(string $newIp, 
 		string $duration, 
 		bool $isGlobal, 
-		?array $post): string {
+		array|false $post): string {
 		// Initial action string (basic information about the ban)
 		$actionString = "Banned $newIp for $duration";
 
@@ -215,7 +215,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		string $makePublic, 
 		string $publicBanMessageHTML, 
 		bool $isGlobal,
-		?array $post = []): void {
+		array|false $post = []): void {
 		// Load ban logs
 		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
 		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
