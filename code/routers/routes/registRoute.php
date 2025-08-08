@@ -23,6 +23,10 @@ class registRoute {
 		// Upload board cached path
 		$this->board->updateBoardPathCache();
 
+		// get the thread list before the insertion
+		// this is used so the correct page is rebuilt for threads bumped to the top of the index
+		$preInsertThreadList = $this->threadService->getThreadListFromBoard($this->board);
+
 		// Initialize file directories
 		$thumbDir = $this->board->getBoardUploadedFilesDirectory() . $this->config['THUMB_DIR'];
 		$imgDir = $this->board->getBoardUploadedFilesDirectory() . $this->config['IMG_DIR'];
@@ -39,7 +43,6 @@ class registRoute {
 		$webhookDispatcher = new webhookDispatcher($this->board, $this->config);
 
 		// Declare variables to be passed by reference
-		$threadList = [];
 		$postData = [];
 		$fileMeta = [];
 		$computedPostInfo = [];
@@ -48,7 +51,6 @@ class registRoute {
 
 		// Begin transaction
 		$this->transactionManager->run(function () use (
-			&$threadList,
 			&$postData,
 			&$fileMeta,
 			&$computedPostInfo,
@@ -169,7 +171,7 @@ class registRoute {
 		$webhookDispatcher->dispatch($postData['resno'], $computedPostInfo['no']);
 
 		// Rebuild board pages
-		$this->handlePageRebuilding($computedPostInfo, $postData, $threadList);
+		$this->handlePageRebuilding($computedPostInfo, $postData, $preInsertThreadList);
 
 		// Final redirect
 		redirect($redirect, 0);
