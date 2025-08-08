@@ -156,7 +156,12 @@ class postService {
 				$threadUID = $deletionRow['thread_uid'];
 				$board = $deletionRow['board'];
 
-				$newReplyData = $this->postRepository->getLatestReplyInThread($threadUID);
+				$replies = $this->threadRepository->getPostsFromThread($threadUID);
+
+				// remove sage replies so the bump restoration only takes into account posts that caused a bump
+				$replies = $this->removeSagedReplies($replies);
+
+				$newReplyData = end($replies);
 
 				if (!$newReplyData) {
 					$this->threadRepository->deleteThreadByUID($threadUID);
@@ -190,6 +195,25 @@ class postService {
 		});
 	}
 
+	private function removeSagedReplies(array $threadReplies): array {
+		$replies = [];
+		foreach($threadReplies as $reply) {
+			// get post email
+			$email = $reply['email'];
+
+			// if the email contains sage, then its a sage post
+			$isSage = str_contains($email, 'sage');
+
+			// if its a sage, continue
+			if($isSage) {
+				continue;
+			}
+
+			$replies[] = $reply;
+		}
+
+		return $replies;
+	}
 
 	public function getThreadPreviewsFromBoard(board $board, int $previewCount, int $amount = 0, int $offset = 0): array {
 		$boardUID = $board->getBoardUID();
