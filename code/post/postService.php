@@ -171,7 +171,6 @@ class postService {
 
 					$suppressBump = false;
 					if ($opPostCheck) {
-						$email = strtolower(trim($opPostCheck['email'] ?? ''));
 						$status = new FlagHelper($opPostCheck['status']);
 						$threadCreatedTime = strtotime($threadData['thread_created_time']);
 						
@@ -179,7 +178,7 @@ class postService {
 
 						$threadExpired = ($maxAgeLimit && ($_SERVER['REQUEST_TIME'] - $threadCreatedTime > ($maxAgeLimit * 60 * 60)));
 
-						if (strstr($email, 'sage') || $status->value('as') || $threadExpired) {
+						if ($status->value('as') || $threadExpired) {
 							$suppressBump = true;
 						}
 					}
