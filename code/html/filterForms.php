@@ -17,7 +17,7 @@ function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, a
 	$moderator = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR->value;
 	$admin = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN->value;
 	
-	$boardCheckboxHTML = generateBoardListCheckBoxHTML($board, $filterBoard, $allBoards);
+	$boardCheckboxHTML = generateBoardListCheckBoxHTML($board, $filterBoard, $allBoards, false, true);
 	$dat .= '
 		<form class="detailsboxForm" id="actionLogFilterForm" action="' . $board->getBoardURL(true) . '" method="get">
 			<details id="filtercontainer" class="detailsbox">
