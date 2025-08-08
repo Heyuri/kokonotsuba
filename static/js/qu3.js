@@ -185,7 +185,7 @@ function showAggregated(trigger, e) {
 }
 
 function findMatchingPostId(text, selfId, includeUnkfunc) {
-	const nm = text.match(/^No\. ?(\d+)$/)
+	const nm = text.match(/^(?:No\. ?)?(\d+)$/)
 	if (nm) {
 		// restore >No.X quoting by reusing the same thread prefix as selfId
 		const num     = nm[1]
