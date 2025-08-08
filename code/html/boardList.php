@@ -1,7 +1,7 @@
 <?php
 
 //for the board filter form
-function generateBoardListCheckBoxHTML(board $currentBoard, array $filterBoard, array $boards, bool $selectAll = false) {
+function generateBoardListCheckBoxHTML(board $currentBoard, array $filterBoard, array $boards, bool $selectAll = false, bool $includeGlobal = false) {
 	$listHTML = '';
 
 	foreach($boards as $board) {
@@ -13,6 +13,10 @@ function generateBoardListCheckBoxHTML(board $currentBoard, array $filterBoard, 
 		$listHTML .= '<li><label class="filterSelectBoardItem"><input name="board[]" type="checkbox" value="' . $boardUID . '" ' . ($isChecked ? 'checked' : '') . '>' . $boardTitle . '</label></li>';
 	}
 	
+	if($includeGlobal) {
+		$listHTML .= '<li><label class="filterSelectBoardItem"><input name="board[]" type="checkbox" value="-1" ' . ($isChecked ? 'checked' : '') . '>Global</label></li>';
+	}
+
 	return $listHTML;
 }
 
