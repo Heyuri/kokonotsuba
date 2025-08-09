@@ -76,12 +76,15 @@ function generateFilteredUrl($baseUrl, array $filters = []) {
 }
 
 function autoLink(string $text): string {
-    // Regular expression to match URLs
-    $pattern = '/https?\:\/\/([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,6})([\/\w\-\.\?&%=]*)/';
+	// Regex to match full URLs (keep query params and fragments)
+	$pattern = '~https?://[^\s<]+~i';
 
-    // Replace matched URLs with anchor tags
-    $replacement = '<a href="$0" rel="nofollow noreferrer" target="_blank">$0</a>';
-    return preg_replace($pattern, $replacement, $text);
+	return preg_replace_callback($pattern, function ($matches) {
+		$url = $matches[0];
+		// Escape for HTML attribute context
+		$href = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+		return '<a href="' . $href . '" rel="nofollow noreferrer" target="_blank">' . $url . '</a>';
+	}, $text);
 }
 
 /* Add quote class to quoted text */
