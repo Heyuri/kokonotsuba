@@ -37,8 +37,25 @@ class moduleAdmin extends abstractModuleAdmin {
 		
 		$postLink = $this->getModulePageURL(['ip_address' => $post['host']]);
 		
-		$ipButton = '[<a href="' . $postLink . '">' . htmlspecialchars($post['host']) . '</a>]';
+		// manually build the query so it doesn't redirect to the other board.
+		$query = http_build_query(
+			[
+				'ip_address' => $post['host'],
+				'mode' => 'module',
+				'load' => 'viewIp',
+				'moduleMode' => 'admin'
+			]
+		);
+
+		// get the current url for the base
+		$boardUrl = getCurrentUrlNoQuery();
+
+		$postLink = $boardUrl . '?' . $query;
+
+		// generate the <a> link that shows the IP address and redirect link to manage posts
+		$ipButton = '[<a href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars($post['host']) . '</a>]';
 		
+		// append it to the hook point
 		$modControlSection .= $ipButton;
 	}
 
