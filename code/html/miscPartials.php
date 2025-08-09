@@ -131,6 +131,20 @@ function fullURL(): string {
 	return '//'.$_SERVER['HTTP_HOST'];
 }
 
+function getCurrentUrlNoQuery(): string {
+	// Scheme
+	$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+	
+	// Host (includes port if non-standard)
+	$host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'];
+	
+	// Path to the current script
+	$path = $_SERVER['SCRIPT_NAME']; // e.g. /folder/file.php
+	
+	return $scheme . '://' . $host . $path;
+}
+
+
 function drawAdminLoginForm(string $adminUrl) {
 	return "
 		<form action=\"$adminUrl\" method=\"post\">
