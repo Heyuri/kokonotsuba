@@ -76,14 +76,22 @@ function generateFilteredUrl($baseUrl, array $filters = []) {
 }
 
 function autoLink(string $text): string {
-	// Regex to match full URLs (keep query params and fragments)
 	$pattern = '~https?://[^\s<]+~i';
 
-	return preg_replace_callback($pattern, function ($matches) {
-		$url = $matches[0];
-		// Escape for HTML attribute context
+	return preg_replace_callback($pattern, function ($m) {
+		// 1) Normalize any pre-escaped entities in the matched URL
+		$url = html_entity_decode($m[0], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+		// 2) (Optional) Allow only http/https
+		if (!preg_match('~^https?://~i', $url)) {
+			return $m[0];
+		}
+
+		// 3) Escape once for HTML attribute; also escape label to be safe in HTML text
 		$href = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-		return '<a href="' . $href . '" rel="nofollow noreferrer" target="_blank">' . $url . '</a>';
+		$label = htmlspecialchars($url, ENT_NOQUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+		return '<a href="' . $href . '" rel="nofollow noreferrer" target="_blank">' . $label . '</a>';
 	}, $text);
 }
 
