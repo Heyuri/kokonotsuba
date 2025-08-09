@@ -5,10 +5,31 @@ YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE TH
 
 */
 
-session_start();
-
 /* Prevent the user from aborting script execution */
-ignore_user_abort(true); 
+ignore_user_abort(true);
+
+// Get host from request
+$host = $_SERVER['HTTP_HOST'] ?? '';
+
+// Strip port if present
+$host = preg_replace('/:\d+$/', '', $host);
+
+// Remove first label to get base domain if you want it for all subdomains
+$parts = explode('.', $host);
+if (count($parts) > 2) {
+	$host = implode('.', array_slice($parts, -2));
+}
+
+// Set cookie params for whole domain
+session_set_cookie_params([
+	'lifetime' => 0,
+	'path'     => '/',
+	'domain'   => $host, // applies to apex + all subdomains
+	'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+	'httponly' => true
+]);
+
+session_start(); 
 
 function getBackendDir() {
 	return __DIR__.'/';
