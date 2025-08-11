@@ -41,15 +41,15 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {
-		$postUidFromGET = $_GET['post_uid'] ?? '';
-		$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($postUidFromGET);
+		$post_uid = $_REQUEST['post_uid'] ?? 0;
+		$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($post_uid);
 
 		
 		if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 			$templateValues = [
 				'{$FORM_ACTION}'			=> $this->getModulePageURL(),
 				'{$POST_NUMBER}'			=> $postNumber ? htmlspecialchars($postNumber) : "No post selected.",
-				'{$POST_UID}'				=> htmlspecialchars($postUidFromGET),
+				'{$POST_UID}'				=> htmlspecialchars($post_uid),
 				'{$REASON_DEFAULT}'	=> 'No reason given.'
 			];
 
@@ -58,8 +58,6 @@ class moduleAdmin extends abstractModuleAdmin {
 			return;
 		}
 
-		// POST processing
-		$post_uid = $_POST['post_uid'] ?? '';
 		$post = $this->moduleContext->postRepository->getPostByUid($post_uid);
 		if (!$post) {
 			throw new BoardException('ERROR: That post does not exist.');
@@ -85,7 +83,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$log[] = "$ip,$rtime,$rtime,$reason";
 		file_put_contents($BANFILE, implode(PHP_EOL, $log) . PHP_EOL);
 
-		$this->moduleContext->actionLoggerService->logAction('Warned ' . htmlspecialchars($ip) . ' for post: ' . htmlspecialchars($postNumber), $board->getBoardUID());
+		$this->moduleContext->actionLoggerService->logAction('Warned ' . $ip . ' for post No. ' . $postNumber, $board->getBoardUID());
 
 		$board->rebuildBoard();
 		redirect($board->getBoardURL());
