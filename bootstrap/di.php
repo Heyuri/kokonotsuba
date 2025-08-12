@@ -1,0 +1,37 @@
+<?php
+// ───────────────────────────────────────
+// DI containers
+// ───────────────────────────────────────
+$routeDiContainer = new routeDiContainer(
+	$board,
+	$config,
+	$moduleEngine,
+	$templateEngine,
+	$adminTemplateEngine,
+	$overboard,
+	$adminPageRenderer,
+	$softErrorHandler,
+	$boardRepository,
+	$boardService,
+	$FileIO,
+	$postRepository,
+	$postService,
+	$threadRepository,
+	$threadService,
+	$accountRepository,
+	$accountService,
+	$actionLoggerRepository,
+	$actionLoggerService,
+	$adminLoginController,
+	$staffAccountFromSession,
+	$postValidator,
+	$transactionManager,
+	$postRedirectService,
+	$databaseConnection,
+	$boardPathService,
+	$attachmentService,
+	$visibleBoards,
+	$boardList,
+	$quoteLinkRepository,
+	$quoteLinkService
+);
