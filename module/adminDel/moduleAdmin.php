@@ -101,7 +101,7 @@ class moduleAdmin extends abstractModuleAdmin {
 					$this->appendGlobalBan($ip, $starttime, $expires, $reason);
 				}
 
-				$this->moduleContext->actionLoggerService->logAction('Muted '.$ip.' and deleted post No.'.$post['no'] . ' ' . $board->getBoardTitle() . ' (' . $board->getBoardIdentifier() . ')', GLOBAL_BOARD_UID);
+				$this->moduleContext->actionLoggerService->logAction('Muted '.$ip.' and deleted post No.'.$post['no'] . ' ' . $board->getBoardTitle() . ' (' . $board->getBoardUID() . ')', GLOBAL_BOARD_UID);
 
 				break;
 			case 'imgdel':
