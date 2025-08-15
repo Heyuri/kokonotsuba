@@ -26,26 +26,38 @@ set_error_handler('errorHandler');
  * Handles fatal PHP errors. Only PHP 5.2+ supports this method.
  */
 function fatalErrorHandler() {
-	$globalconfig = getGlobalConfig();
-	$e = error_get_last();
-	if ($e !== NULL) {
-		// Log the fatal error
-		PMCLibrary::getLoggerInstance($globalconfig['ERROR_HANDLER_FILE'], 'Global')->
-			error('Fatal error caught: #%d: %s in %s on line %d',
-			$e['type'], $e['message'], $e['file'], $e['line']);
+    // Get global config
+    $globalconfig = getGlobalConfig();
+    
+    // Get the last error (if any)
+    $e = error_get_last();
+    if ($e !== NULL) {
+        // Track and log memory usage at the time of the error
+        $currentMemoryUsage = memory_get_usage(true);
+        $peakMemoryUsage = memory_get_peak_usage(true);
 
-		// If it's a string conversion error, print backtrace
-		if (strpos($e['message'], 'could not be converted to string') !== false) {
-			// Capture backtrace
-			ob_start();
-			debug_print_backtrace();
-			$trace = ob_get_clean();
+        // Log the fatal error with memory info
+        PMCLibrary::getLoggerInstance($globalconfig['ERROR_HANDLER_FILE'], 'Global')->
+            error('Fatal error caught: #%d: %s in %s on line %d',
+                $e['type'], $e['message'], $e['file'], $e['line']);
+        
+        // Log current memory and peak memory usage
+        PMCLibrary::getLoggerInstance($globalconfig['ERROR_HANDLER_FILE'], 'Global')->
+            error("Memory usage at the time of error: Current = %d bytes, Peak = %d bytes",
+                $currentMemoryUsage, $peakMemoryUsage);
 
-			// Log the trace as a separate error
-			PMCLibrary::getLoggerInstance($globalconfig['ERROR_HANDLER_FILE'], 'Global')->
-				error("Backtrace for string conversion error:\n%s", $trace);
-		}
-	}
+        // If it's a string conversion error, print backtrace
+        if (strpos($e['message'], 'could not be converted to string') !== false) {
+            // Capture backtrace
+            ob_start();
+            debug_print_backtrace();
+            $trace = ob_get_clean();
+
+            // Log the trace as a separate error
+            PMCLibrary::getLoggerInstance($globalconfig['ERROR_HANDLER_FILE'], 'Global')->
+                error("Backtrace for string conversion error:\n%s", $trace);
+        }
+    }
 }
 
 register_shutdown_function('fatalErrorHandler');
