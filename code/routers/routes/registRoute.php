@@ -189,7 +189,6 @@ class registRoute {
 		$pwdc = $_COOKIE['pwdc'] ?? '';
 	
 		$ip = new IPAddress;
-		$host = gethostbyaddr($ip);
 		
 		$age = false;
 	
@@ -216,7 +215,7 @@ class registRoute {
 
 		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode' => $tripcode, 'secure_tripcode' => $secure_tripcode, 
 			 'capcode' => '', 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
-			 'category' => $category, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip, 'host' => $host,
+			 'category' => $category, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip,
 			 'thread_uid' => $thread_uid, 'isReply' => $isReply, 'roleLevel' => $roleLevel, 'time' => $time,
 			 'timeInMilliseconds' => $timeInMilliseconds, 'postOpRoot' => $postOpRoot, 'flgh' => $flgh, 'age' => $age, 'status' => '',
 			 'ThreadExistsBefore' => $ThreadExistsBefore, 'up_incomplete' => $up_incomplete, 'is_admin' => $is_admin
@@ -282,7 +281,6 @@ class registRoute {
 			'age' => &$postData['age'],
 			'file' => $file,
 			'ip' => $postData['ip'], 
-			'host' => $postData['host'], 
 			'isThreadSubmit' => empty($postData['thread_uid']),
 			'roleLevel' => $postData['roleLevel'],
 			'thread' => $thread
