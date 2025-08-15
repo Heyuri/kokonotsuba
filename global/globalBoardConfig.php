@@ -205,7 +205,7 @@ $config['TOP_LINKS'] = @file_get_contents(__DIR__.'/toplinks.txt'); // Navigatio
 $config['COMM_MAX'] = 5000; // How many characters in comment
 $config['INPUT_MAX'] = 100; // Maximum non-message characters
 $config['BR_CHECK'] = 0; // How many lines to show
-$config['STATIC_HTML_UNTIL'] = -1; // Static web pages automatically generated when a new article to the first few pages (all generated:-1 only portal pages: 0)
+$config['STATIC_HTML_UNTIL'] = 10; // Static web pages automatically generated when a new article to the first few pages (all generated:-1 only portal pages: 0)
 $config['GZIP_COMPRESS_LEVEL'] = 0; // Compression level with gzip 1 - 9
 
 $config['DEFAULT_NOTITLE'] = ''; // Default title if none is inputted
