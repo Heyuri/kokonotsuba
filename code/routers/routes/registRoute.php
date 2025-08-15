@@ -412,7 +412,17 @@ class registRoute {
 	private function handlePageRebuilding(array $computedPostInfo, array $postData, array $threadList): void {
 		// Rebuild pages from 0 to the one the thread is on
 		if($computedPostInfo['is_op']) {
-			$this->board->rebuildBoard();
+			// static board pages to rebuild
+			$staticHtmlUntil = $this->config['STATIC_HTML_UNTIL'];
+
+			// if the amount of pages to rebuild is bounded, then use rebuildBoardPages
+			if($staticHtmlUntil !== -1) {
+				//then rebuild the amount of static pages
+				$this->board->rebuildBoardPages($staticHtmlUntil);
+			} else {
+				// just rebuild the whole board
+				$this->board->rebuildBoard();
+			}
 		} else {
 			$pageToRebuild = getPageOfThread($postData['thread_uid'], $threadList, $this->config['PAGE_DEF']);
 			// If saging, just rebuild that one page
