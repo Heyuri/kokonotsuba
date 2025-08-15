@@ -32,8 +32,6 @@ class IPValidator {
 		if (!$this->config['BAN_CHECK']) return false; // Disabled
 
 		$IP = (string) $this->ip;
-		$HOST = strtolower(gethostbyaddr($IP));
-		$checkTwice = ($IP !== $HOST);
 		$IsBanned = false;
 
 		foreach ($this->config['BANPATTERN'] as $pattern) {
@@ -50,14 +48,14 @@ class IPValidator {
 			} elseif (strpos($pattern, '*') !== false || strpos($pattern, '?') !== false) { // Wildcard
 				$pattern = '/^' . str_replace(['.', '*', '?'], ['\.', '.*', '.?'], $pattern) . '$/i';
 			} else { // Full-text
-				if ($IP == $pattern || ($checkTwice && $HOST == strtolower($pattern))) {
+				if ($IP == $pattern) {
 					$IsBanned = true;
 					break;
 				}
 				continue;
 			}
 
-			if (preg_match($pattern, $HOST) || ($checkTwice && preg_match($pattern, $IP))) {
+			if (preg_match($pattern, $IP)) {
 				$IsBanned = true;
 				break;
 			}
