@@ -1,20 +1,19 @@
 <?php
 
 //for the board filter form
-function generateBoardListCheckBoxHTML(board $currentBoard, array $filterBoard, array $boards, bool $selectAll = false, bool $includeGlobal = false) {
+
+use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
+
+function generateBoardListCheckBoxHTML(board $currentBoard, array $filterBoard, array $boards, bool $selectAll = false) {
 	$listHTML = '';
 
 	foreach($boards as $board) {
-		$boardTitle = $board->getBoardTitle();
-		$boardUID = htmlspecialchars($board->getBoardUID());
+		$boardTitle = $board['board_title'];
+		$boardUID = $board['board_uid'];
 		
 		$isChecked = $selectAll || in_array($boardUID, $filterBoard) || ($boardUID === $currentBoard->getBoardUID() && empty($filterBoard));
 			
 		$listHTML .= '<li><label class="filterSelectBoardItem"><input name="board[]" type="checkbox" value="' . $boardUID . '" ' . ($isChecked ? 'checked' : '') . '>' . $boardTitle . '</label></li>';
-	}
-	
-	if($includeGlobal) {
-		$listHTML .= '<li><label class="filterSelectBoardItem"><input name="board[]" type="checkbox" value="-1" ' . ($isChecked ? 'checked' : '') . '>Global</label></li>';
 	}
 
 	return $listHTML;
