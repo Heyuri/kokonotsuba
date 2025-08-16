@@ -31,12 +31,18 @@ class overboardRoute {
 
 		$html = '';
 
+		// draw the overboard header
 		$this->overboard->drawOverboardHead($html);
 
-		drawOverboardFilterForm($html, $this->board, $this->visibleBoards, $allowedBoards);
+		$arrayForFilter = createAssocArrayFromBoardArray($this->visibleBoards);
 
+		// draw filter form
+		drawOverboardFilterForm($html, $this->board, $arrayForFilter, $allowedBoards);
+
+		// draw threads
 		$html .= $this->overboard->drawOverboardThreads($filters);
 
+		// draw footer
 		$html .= $this->board->getBoardFooter();
 
 		echo $html;
