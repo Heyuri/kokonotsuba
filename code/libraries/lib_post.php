@@ -22,6 +22,23 @@ function searchBoardArrayForBoard(int $targetBoardUID) {
 	}
 }
 
+function createAssocArrayFromBoardArray(array $boards): array {
+	$assocBoardArray = [];
+
+	// loop over each board and extract its title and uid
+	foreach($boards as $board) {
+		$boardUid = $board->getBoardUID();
+		$boardTitle = $board->getBoardTitle();
+
+		$assocBoardArray[] = [
+			'board_uid' => $boardUid,
+			'board_title' => $boardTitle
+		];
+	}
+
+	return $assocBoardArray;
+}
+
 function getBoardsByUIDs(array $targetBoardUIDs): array {
     $boards = GLOBAL_BOARD_ARRAY;
     $matchedBoards = [];
