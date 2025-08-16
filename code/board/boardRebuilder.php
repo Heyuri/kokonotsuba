@@ -178,10 +178,9 @@ class boardRebuilder {
 
 	
 	public function rebuildBoardHtml(bool $logRebuild = false): void {
-		$threads = $this->postService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF']);
-		$totalThreads = count($threads);
+		$totalThreadCount = $this->threadRepository->threadCountFromBoard($this->board);
 		$threadsPerPage = $this->config['PAGE_DEF'];
-		$totalPages = ceil($totalThreads / $threadsPerPage);
+		$totalPages = ceil($totalThreadCount / $threadsPerPage);
 
 		$totalPagesToRebuild = match (true) {
 			$this->config['STATIC_HTML_UNTIL'] === -1 => max(1, $totalPages),
@@ -189,13 +188,19 @@ class boardRebuilder {
 			default => max(1, min($this->config['STATIC_HTML_UNTIL'], $totalPages))
 		};
 
+		// database offset
+		$threadPreviewAmount = $totalPagesToRebuild * $threadsPerPage;
+
+		// get paginated thread previews
+		$threads = $this->postService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $threadPreviewAmount);
+
 		// get all associated quote links for the page
 		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByBoardUid($this->board->getBoardUID());
 
 		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
 
 		for ($page = 0; $page < $totalPagesToRebuild; $page++) {
-			$this->renderStaticPage($page, $threads, $totalThreads, $headerHtml, $formHtml, $footHtml, $pte_vals, false, $quoteLinksFromBoard);
+			$this->renderStaticPage($page, $threads, $totalThreadCount, $headerHtml, $formHtml, $footHtml, $pte_vals, false, $quoteLinksFromBoard);
 		}
 
 		if ($logRebuild) {
@@ -261,33 +266,68 @@ class boardRebuilder {
 
 
 	private function renderStaticPage(int $page, array $threads, int $totalThreadCountForBoard, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals, bool $threadsAreSliced, array $quoteLinksFromBoard): void {
-		$threadRenderer = $this->getThreadRenderer($quoteLinksFromBoard);
+    	$threadRenderer = $this->getThreadRenderer($quoteLinksFromBoard);
 
-		$threadsPerPage = $this->config['PAGE_DEF'];
-		$boardUrl = $this->board->getBoardURL();
+    	$threadsPerPage = $this->config['PAGE_DEF'];
+    	$boardUrl = $this->board->getBoardURL();
 
-		$threadsInPage = $threadsAreSliced
-			? $threads
-			: array_slice($threads, $page * $threadsPerPage, $threadsPerPage);
+    	// Slice threads or use all of them depending on the flag
+    	$threadsInPage = $threadsAreSliced
+    	    ? $threads
+    	    : array_slice($threads, $page * $threadsPerPage, $threadsPerPage);
 
-		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threads, $pte_vals);
+    	// Render thread data to PTE values
+    	$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threads, $pte_vals);
 
-		$pte_vals['{$PAGENAV}'] = drawBoardPager($threadsPerPage, $totalThreadCountForBoard, $boardUrl, $page,  $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'), $this->board->getConfigValue('STATIC_INDEX_FILE'), [$this->softErrorHandler, 'errorAndExit']);
+    	// Render page navigation
+    	$pte_vals['{$PAGENAV}'] = drawBoardPager(
+    	    $threadsPerPage,
+    	    $totalThreadCountForBoard,
+    	    $boardUrl,
+    	    $page,
+    	    $this->board->getConfigValue('STATIC_HTML_UNTIL'),
+    	    $this->board->getConfigValue('LIVE_INDEX_FILE'),
+    	    $this->board->getConfigValue('STATIC_INDEX_FILE')
+    	);
 
-		$pageData = $this->buildStaticPageHtml($pte_vals, $headerHtml, $formHtml, $footHtml);
+    	// Build static page HTML
+    	$pageData = $this->buildStaticPageHtml($pte_vals, $headerHtml, $formHtml, $footHtml);
 
-		$logfilename = ($page === 0) ? 'index.html' : $page . '.html';
-		$logFilePath = $this->board->getBoardCachedPath() . $logfilename;
+    	// Determine file name
+    	$logfilename = ($page === 0) ? 'index.html' : $page . '.html';
+    	$logFilePath = $this->board->getBoardCachedPath() . $logfilename;
 
-		if (($fp = fopen($logFilePath, 'w')) === false) {
-			throw new \RuntimeException("Failed to open file for writing: $logFilePath");
-		}
+    	// Open file for writing
+    	if (($fp = fopen($logFilePath, 'w')) === false) {
+    	    throw new \RuntimeException("Failed to open file for writing: $logFilePath");
+    	}
 
-		stream_set_write_buffer($fp, 0);
-		fwrite($fp, $pageData);
-		fclose($fp);
-		chmod($logFilePath, 0666);
+    	// Disable internal write buffering
+    	stream_set_write_buffer($fp, 0);
+
+    	// Write in chunks if $pageData is large
+    	$chunkSize = 1024 * 1024; // 1 MB chunks (adjust as needed)
+    	$pageDataLen = strlen($pageData);
+    	$offset = 0;
+
+    	while ($offset < $pageDataLen) {
+    	    fwrite($fp, substr($pageData, $offset, $chunkSize));
+    	    $offset += $chunkSize;
+    	}
+
+    	// Close the file after writing
+    	fclose($fp);
+
+    	// Set file permissions
+    	chmod($logFilePath, 0666);
+
+	    // Free memory
+	    unset($pageData);
+	    unset($pte_vals);
+	    unset($threadsInPage);
+	    unset($threadRenderer);
 	}
+
 
 	private function buildPteVals(bool $isThreadView): array {
 		$adminMode = isActiveStaffSession();
