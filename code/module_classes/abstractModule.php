@@ -34,16 +34,19 @@ abstract class abstractModule {
 		return $this->moduleContext->board->getConfigValue($key, $default);
 	}
 
-	protected function getModulePageURL(array $params = [], bool $forHtml = true): string {
-		$boardUrl = $this->moduleContext->board->getBoardURL(true);
-
+	protected function getModulePageURL(array $params = [], bool $forHtml = true, bool $useRequestUri = false): string {
 		$params['mode'] = 'module';
 		$params['load'] = $this->moduleName;
 
 		$separator = $forHtml ? '&amp;' : '&';
 		$query = http_build_query($params, '', $separator);
 
-		return $boardUrl . '?' . $query;
+		$boardUrl = $this->moduleContext->board->getBoardURL(true);
+		$requestUri = getCurrentUrlNoQuery(); 
+
+		$baseUrl = $useRequestUri ? $requestUri : $boardUrl;
+
+		return $baseUrl . '?' . $query;
 	}
 
 }
