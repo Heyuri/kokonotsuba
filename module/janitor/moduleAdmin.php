@@ -34,7 +34,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$janitorWarnUrl = $this->getModulePageURL(
 			[
 				'post_uid' => $post['post_uid']
-			]
+			],
+			true,
+			true
 		);
 		
 		$modfunc .= '<span class="adminFunctions adminWarnFunction">[<a href="' . $janitorWarnUrl . '" title="Warn">W</a>]</span>';

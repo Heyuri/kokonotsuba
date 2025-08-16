@@ -36,7 +36,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$lockThreadLink = $this->getModulePageURL(
 			[
 				'post_uid' => $post['post_uid']
-			]
+			],
+			true,
+			true
 		);
 
 		$modfunc.= '<span class="adminFunctions adminLockFunction">[<a href="' . $lockThreadLink . '"' . ($status->value('stop') ? ' title="Unlock thread">l' : ' title="Lock thread">L').'</a>]</span>';

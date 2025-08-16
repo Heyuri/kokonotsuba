@@ -47,11 +47,11 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$board = searchBoardArrayForBoard($post['boardUID']);
 		
-		$url = fn(array $params) => $this->getModulePageURL($params);
+		$url = fn(array $params) => $this->getModulePageURL($params, false, true);
 
 		$addControl = function(string $action, string $label, string $title, string $class) use (&$modFunc, $postUid, $url) {
 			$buttonUrl = $url(['action' => $action, 'post_uid' => $postUid]);
-			$modFunc .= '<span class="adminFunctions ' . $class . '">[<a href="' . $buttonUrl . '" title="' . $title . '">' . $label . '</a>]</span>';
+			$modFunc .= '<span class="adminFunctions ' . htmlspecialchars($class) . '">[<a href="' . htmlspecialchars($buttonUrl) . '" title="' . htmlspecialchars($title) . '">' . htmlspecialchars($label) . '</a>]</span>';
 		};
 
 		$addControl('del', 'D', 'Delete', 'adminDeleteFunction');

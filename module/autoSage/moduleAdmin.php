@@ -37,7 +37,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$autoSageLink = $this->getModulePageURL(
 			[
 				'post_uid' => $post['post_uid']
-			]
+			],
+			true,
+			true
 		);
 
 		$modfunc.= '<span class="adminFunctions adminAutosageFunction">[<a href="' . $autoSageLink . '"' . ($status->value('as') ? ' title="Allow age">as' : ' title="Autosage">AS') . '</a>]</span>';

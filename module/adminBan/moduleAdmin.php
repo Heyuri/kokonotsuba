@@ -24,7 +24,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->myPage = $this->getModulePageURL();
+		$this->myPage = $this->getModulePageURL([], true, true);
 		$this->BANFILE = $this->moduleContext->board->getBoardStoragePath() . 'bans.log.txt';
 		$this->GLOBAL_BANS = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
 		$this->DEFAULT_BAN_MESSAGE = $this->getConfig('DEFAULT_BAN_MESSAGE');
@@ -55,8 +55,10 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$modulePageUrl = $this->getModulePageURL([
 			'post_uid' => $post['post_uid'],
-			'ip' => $ip
-		]);
+			'ip' => $ip,
+			],
+			true,
+			true);
 
 		$modfunc .= '<span class="adminFunctions adminBanFunction">[<a href="' . $modulePageUrl . '" title="Ban">B</a>]</span> ';
 	}

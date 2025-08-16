@@ -49,7 +49,14 @@ class moduleAdmin extends abstractModuleAdmin {
 		if($threadStatus->value('ghost')) {
 			$modfunc .= '<span class="adminFunctions adminMoveThreadFunction" title="Ghost threads cannot be moved.">[mt]</span>';
 		} else {
-			$modfunc .= '<span class="adminFunctions adminMoveThreadFunction">[<a href="' . $this->myPage . '&thread_uid=' . $post['thread_uid'] . '" title="Move thread">MT</a>]</span>';
+			$moveThreadButtonUrl = $this->getModulePageURL(
+				[
+					'thread_uid' => $post['thread_uid']
+				], 
+				false, 
+				true);
+
+			$modfunc .= '<span class="adminFunctions adminMoveThreadFunction">[<a href="' . $moveThreadButtonUrl . '" title="Move thread">MT</a>]</span>';
 		}
 	}
 

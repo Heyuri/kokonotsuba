@@ -38,7 +38,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$stickyButtonUrl = $this->getModulePageURL(
 			[
 				'post_uid' => $post['post_uid']
-			]
+			],
+			true,
+			true
 		);
 
 		$modfunc .= '<span class="adminFunctions adminStickyFunction">[<a href="' . $stickyButtonUrl . '" title="' . $stickyTitle . '">'.$toggleLabel.'</a>]</span>';

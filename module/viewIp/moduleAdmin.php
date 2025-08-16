@@ -35,23 +35,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			return;
 		}
 		
-		$postLink = $this->getModulePageURL(['ip_address' => $post['host']]);
+		$postLink = $this->getModulePageURL(['ip_address' => $post['host']], false, true);
 		
-		// manually build the query so it doesn't redirect to the other board.
-		$query = http_build_query(
-			[
-				'ip_address' => $post['host'],
-				'mode' => 'module',
-				'load' => 'viewIp',
-				'moduleMode' => 'admin'
-			]
-		);
-
-		// get the current url for the base
-		$boardUrl = getCurrentUrlNoQuery();
-
-		$postLink = $boardUrl . '?' . $query;
-
 		// generate the <a> link that shows the IP address and redirect link to manage posts
 		$ipButton = '[<a href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars($post['host']) . '</a>]';
 		
