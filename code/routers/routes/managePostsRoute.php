@@ -58,8 +58,11 @@ class managePostsRoute {
 		$posts = $this->postRepository->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest) ?? array();
 		$posts_count = count($posts); // Number of cycles
 		
+		// get the associate array for the checkbox generator
+		$arrayForFilter = createAssocArrayFromBoardArray($this->allRegularBoards);
 		
-		drawManagePostsFilterForm($managePostsHtml, $this->board, $filtersFromRequest, $this->allRegularBoards);
+		// draw post filter form
+		drawManagePostsFilterForm($managePostsHtml, $this->board, $filtersFromRequest, $arrayForFilter);
 		
 		$managePostsHtml .= '<form id="managePostsForm" action="' . $cleanUrl . '" method="POST">';
 		$managePostsHtml .= '<input type="hidden" name="mode" value="admin">
