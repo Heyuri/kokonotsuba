@@ -9,7 +9,8 @@ class actionLogRoute {
 		private readonly actionLoggerService $actionLoggerService,
 		private readonly softErrorHandler $softErrorHandler,
 		private readonly pageRenderer $adminPageRenderer,
-		private readonly boardService $boardService
+		private readonly boardService $boardService,
+		private readonly array $regularBoards
 	) {}
 
 	public function drawActionLog() {
@@ -34,9 +35,17 @@ class actionLogRoute {
 
 		$cleanUrl = buildSmartQuery($actionLogUrl, $defaultActionLogFilters, $filtersFromRequest, true);
 
-		$regularBoards = $this->boardService->getAllRegularBoards();
+		// get the associate array for the checkbox generator
+		$arrayForFilter = createAssocArrayFromBoardArray($this->regularBoards);
 
-		drawActionLogFilterForm($actionLogHtml, $this->board, $regularBoards, $filtersFromRequest);
+		// Add the global board
+		$arrayForFilter[] = [
+			'board_title' => "Global",
+			'board_uid' => GLOBAL_BOARD_UID
+		];
+
+		// draw action log entry filter form
+		drawActionLogFilterForm($actionLogHtml, $this->board, $arrayForFilter, $filtersFromRequest);
 		
 		$entriesFromDatabase = $this->actionLoggerService->getSpecifiedLogEntries($limit, $offset, $filtersFromRequest);
 		$numberOfActionLogs = $this->actionLoggerService->getAmountOfLogEntries($filtersFromRequest);
