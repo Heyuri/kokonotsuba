@@ -10,8 +10,6 @@ use Kokonotsuba\ModuleClasses\abstractModuleMain;
 use PMCLibrary;
 
 class moduleMain extends abstractModuleMain {
-	private readonly string $myPage;
-
 	public function getName(): string {
 		return 'Kokonotsuba Animated GIF';
 	}
@@ -21,7 +19,6 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->myPage = $this->getModulePageURL();
 
 		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread) {
 			$this->onBeforeCommit($file, $status);  // Call the method to modify the form
@@ -80,33 +77,4 @@ class moduleMain extends abstractModuleMain {
 			$arrLabels['{$IMG_BAR}'].= '<span class="animatedGIFLabel imageOptions">[Animated GIF]</span>';
 		}
 	}
-	
-	/*public function autoHookAdminList(&$modfunc, $post) {
-		$fh = new FlagHelper($post['status']);
-		if ($post['ext'] == '.gif') {
-			$modfunc.= '<span class="adminFunctions adminGIFFunction">[<a href="' . $this->myPage . '&post_uid=' . htmlspecialchars($post['post_uid']) . '"'.($fh->value('agif')?' title="Use still image of GIF">g':' title="Use animated GIF">G').'</a>]</span>';
-		}
-	}
-
-	public function ModulePage() {
-		$softErrorHandler->handleAuthError(\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR);
-
-		$post = $PIO->fetchPosts($_GET['post_uid'] ?? 0)[0];
-		if(!count($post)) $softErrorHandler->errorAndExit('ERROR: Post does not exist.');
-		if($post['ext'] && $post['ext'] == '.gif') {
-			if(!$FileIO->imageExists($post['tim'].$post['ext'], $this->board)) {
-				$softErrorHandler->errorAndExit('ERROR: attachment does not exist.');
-			}
-			$flgh = new FlagHelper($post['status']);
-			$flgh->toggle('agif');
-			$PIO->setPostStatus($post['post_uid'], $flgh->toString());
-			
-			$logMessage = $flgh->value('agif') ? "Animated gif activated on No. {$post['no']}" : "Animated gif taken off of No. {$post['no']}";
-			$actionLoggerService->logAction($logMessage, $this->board->getBoardUID());
-			
-			redirect('back', 0);
-		} else {
-			$softErrorHandler->errorAndExit('ERROR: Post does not have attechment.');
-		}
-	}*/
 }
