@@ -157,7 +157,7 @@ class board implements IBoard {
 		if (!isset($this->config['CDN_URL']) || !$this->boardData->getBoardIdentifier()) {
 			return null;
 		}
-		return $this->config['CDN_URL'] . $this->getBoardUID() . '-' . $this->boardData->getBoardIdentifier() . '/';
+		return $this->config['CDN_URL'] $this->boardData->getBoardIdentifier() . '/';
 	}
 
 	public function getBoardLocalUploadURL(): ?string {
