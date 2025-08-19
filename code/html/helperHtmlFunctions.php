@@ -76,9 +76,10 @@ function generateFilteredUrl($baseUrl, array $filters = []) {
 }
 
 function autoLink(string $text): string {
+	global $config;
 	$pattern = '~https?://[^\s<]+~i';
 
-	return preg_replace_callback($pattern, function ($m) {
+	return preg_replace_callback($pattern, function ($m) use ($config) {
 		// 1) Normalize any pre-escaped entities in the matched URL
 		$url = html_entity_decode($m[0], ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
@@ -91,7 +92,7 @@ function autoLink(string $text): string {
 		$href = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 		$label = htmlspecialchars($url, ENT_NOQUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
-		return '<a href="' . $href . '" rel="nofollow noreferrer" target="_blank">' . $label . '</a>';
+		return '<a href="'. $config['REF_URL'] . $href . '" rel="nofollow noreferrer" target="_blank">' . $label . '</a>';
 	}, $text);
 }
 
