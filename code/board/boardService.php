@@ -81,12 +81,13 @@ class boardService {
             throw new Exception("Invalid value for 'boardListed'. Expected 0 or 1.");
         }
 
-        // Define directory paths
-        $boardCdnDir = $templateBoardConfig['CDN_DIR'] . '/' . $boardIdentifier;
-        $fullBoardPath = $boardPath . '/' . $boardIdentifier . '/';
-
         // Get next board UID
         $nextBoardUid = $this->boardRepository->getNextBoardUID();
+        
+		 // Define directory paths
+        $boardCdnDir = $templateBoardConfig['CDN_DIR']  .  '/'  .  $nextBoardUid . '/';
+        $fullBoardPath = $boardPath  .  '/'  .  $boardIdentifier  . '/';
+        
         $createdPaths = [];
 
         try {
