@@ -147,7 +147,7 @@ class board implements IBoard {
 	}
 
 	public function getBoardCdnDir(): ?string {
-		if (!isset($this->config['CDN_DIR']) || !$this->boardData->getBoardIdentifier()) {
+		if (!isset($this->config['CDN_DIR']) || !$this->boardData->getBoardUID()) {
 			return null;
 		}
 		return $this->config['CDN_DIR'] . $this->boardData->getBoardUID() . '/';
