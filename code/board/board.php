@@ -150,14 +150,14 @@ class board implements IBoard {
 		if (!isset($this->config['CDN_DIR']) || !$this->boardData->getBoardIdentifier()) {
 			return null;
 		}
-		return $this->config['CDN_DIR'] . $this->boardData->getBoardIdentifier() . '/';
+		return $this->config['CDN_DIR'] . $this->boardData->getBoardUID() . '/';
 	}
 
 	public function getBoardCdnUrl(): ?string {
-		if (!isset($this->config['CDN_URL']) || !$this->boardData->getBoardIdentifier()) {
+		if (!isset($this->config['CDN_URL']) || !$this->boardData->getBoardUID()) {
 			return null;
 		}
-		return $this->config['CDN_URL'] . $this->getBoardUID() . '-' . $this->boardData->getBoardIdentifier() . '/';
+		return $this->config['CDN_URL'] . $this->getBoardUID(). '/';
 	}
 
 	public function getBoardLocalUploadURL(): ?string {
