@@ -48,13 +48,15 @@ class boardService {
 		$boardPath = $board->getBoardCachedPath();
 		$boardStoragePath = $board->getBoardStoragePath();
 		$boardConfigPath = $board->getFullConfigPath();
-
+		$boardCdnDir = $board->getBoardCdnDir();
+		
 		// Delete board from the database
 		$this->boardRepository->deleteBoardByUID($boardUid);
 
-		// delete files
+		// delete files and directories
 		safeRmdir($boardPath);
 		safeRmDir($boardStoragePath);
+		safeRmDir($boardCdnDir);
 		unlink($boardConfigPath);
 	}
 
