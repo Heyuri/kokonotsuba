@@ -107,6 +107,7 @@ class moduleMain extends abstractModuleMain {
 			'dance2'=>$this->staticUrl.'image/emote/heyuri-dance-pantsu.gif',
 			'kuma6'=>$this->staticUrl.'image/emote/kuma6.gif',
 			'waha'=>$this->staticUrl.'image/emote/waha.gif',
+			'hokke'=>$this->staticUrl.'image/emote/hokke.gif',
 		);
 		
 	}
@@ -536,3 +537,4 @@ BBCODE Settings:
 		echo $htmlOutput;
 	}
 }
+
