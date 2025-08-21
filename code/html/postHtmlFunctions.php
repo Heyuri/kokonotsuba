@@ -88,11 +88,6 @@ function generateQuoteLinkHtml(array $quoteLinksFromBoard, array $post, int $thr
 	
 	$comment = $post['com'];
 	$postUid = $post['post_uid'];
-	
-	// return the comment unmodified if the post doesn't have a quote link 
-	if(!array_key_exists($postUid, $quoteLinksFromBoard)) {
-		return $comment;
-	}
 
 	// Safely get quoteLink entries for this specific post	
 	$quoteLinkEntries = $quoteLinksFromBoard[$postUid] ?? [];
