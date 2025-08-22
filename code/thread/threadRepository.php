@@ -282,8 +282,7 @@ class threadRepository {
 		if ($sticky) {
 			// Use MySQL's NOW() + INTERVAL 5 SECOND for sticky bump
 			$query = "UPDATE {$this->threadTable}
-					  SET last_bump_time = NOW() + INTERVAL 5 SECOND,
-						  last_reply_time = NOW() + INTERVAL 5 SECOND
+					  SET last_bump_time = NOW() + INTERVAL 5 SECOND
 					  WHERE thread_uid = :thread_uid";
 	
 			$params = [
