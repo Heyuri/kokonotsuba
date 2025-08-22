@@ -13,7 +13,7 @@ class postIdGenerator {
         $this->staffSession = $staffSession;
     }
 
-	public function generate($email, $time, $thread_uid) {
+	public function generate($email, $time, int $threadNumber) {
 		$roleLevel = $this->staffSession->getRoleLevel();
 
         if ($this->config['DISP_ID']) { // ID display enabled
@@ -26,7 +26,7 @@ class postIdGenerator {
 			} else {
 				$ip = new IPAddress;
 				$idSeed = $this->config['IDSEED'];
-				$postNo = $thread_uid ? $thread_uid : ($this->board->getLastPostNoFromBoard() + 1);
+				$postNo = $threadNumber ? $threadNumber : ($this->board->getLastPostNoFromBoard() + 1);
 				$baseString = $ip . $idSeed . $postNo;
 
 				switch ($this->config['ID_MODE']) {

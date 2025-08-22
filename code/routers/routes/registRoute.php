@@ -365,7 +365,7 @@ class registRoute {
 		$no = $this->board->getLastPostNoFromBoard() + 1;
 		$is_op = $postData['resno'] ? false : true;
 		$now = $postDateFormatter->formatFromTimestamp($postData['time']);
-		$now .= $postIdGenerator->generate($postData['email'], $postData['time'], $postData['thread_uid']);
+		$now .= $postIdGenerator->generate($postData['email'], $postData['time'], $postData['resno']);
 	
 		return [
 			'no' => $no,
