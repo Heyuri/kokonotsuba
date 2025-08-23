@@ -102,7 +102,7 @@ class postRenderer {
 			$data['secure_tripcode'],
 			$data['capcode'],
 			$data['email'],
-			$this->config['CLEAR_SAGE']
+			$this->config['NOTICE_SAGE']
 		);
 
 		// Generate the quote and reply buttons
