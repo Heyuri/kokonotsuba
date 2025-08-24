@@ -37,7 +37,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$stickyButtonUrl = $this->getModulePageURL(
 			[
-				'post_uid' => $post['post_uid']
+				'thread_uid' => $post['thread_uid']
 			],
 			true,
 			true
@@ -47,32 +47,60 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
     public function ModulePage(): void {
-		$post_uid = $_GET['post_uid'];
-		$post = $this->moduleContext->postRepository->getPostByUID($post_uid);
+		$thread_uid = $_GET['thread_uid'] ?? null;
 
-		if (!$post) {
-			throw new BoardException('ERROR: Post does not exist.');
+		// no thread uid selected - throw exception
+		if($thread_uid === null) {
+			throw new BoardException("No thread was selected!");
+		}
+		
+		// get the thread and associated data (thread data, posts, etc)
+		$thread = $this->moduleContext->threadService->getThreadByUID($thread_uid);
+		
+		// throw an exception if the thread doesn't exist
+		if (!$thread) {
+			throw new BoardException('ERROR: Thread does not exist.');
 		}
 
-		if (!$post['is_op']) {
-			throw new BoardException('ERROR: Cannot sticky a reply.');
+		// get the thread data itself
+		$threadData = $thread['thread'];
+		
+		// get the posts
+		$posts = $thread['posts'];
+
+		// select the opening post
+		$openingPost = $posts[0];
+
+		// bool column for if the thread is stickied
+		$is_sticky = $threadData['is_sticky'];
+
+		// if it's already sticky'd, then unsticky it
+		if($is_sticky) {
+			$this->moduleContext->threadRepository->unStickyThread($thread_uid);
+		}
+		// sticky the thread
+		else {
+			$this->moduleContext->threadRepository->stickyThread($thread_uid);
 		}
 
-		$flags = new FlagHelper($post['status']);
+		// toggles OP post status too so we don't have to refactor too much code for rendering in the time being
+		$flags = new FlagHelper($openingPost['status']);
 		$flags->toggle('sticky');
-		$this->moduleContext->postRepository->setPostStatus($post['post_uid'], $flags->toString());
+		$this->moduleContext->postRepository->setPostStatus($openingPost['post_uid'], $flags->toString());
 
-		// Reset bump if sticky is removed
-		if (!$flags->value('sticky')) {
-			$this->moduleContext->threadRepository->bumpThread($post['thread_uid']);
-		}
+
+		// post op number of the thread
+		$post_op_number = $threadData['post_op_number'];
+
+		// board uid of the thread
+		$boardUid = $threadData['boardUID'];
 
 		$this->moduleContext->actionLoggerService->logAction(
-			'Changed sticky status on post No.' . $post['no'] . ' (' . ($flags->value('sticky') ? 'true' : 'false') . ')',
-			$post['boardUID']
+			'Changed sticky status on post No.' . $post_op_number . ' (' . ($is_sticky ? 'true' : 'false') . ')',
+			$boardUid
 		);
 
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($boardUid);
 
 		$board->rebuildBoard();
 
