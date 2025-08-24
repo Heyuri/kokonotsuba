@@ -365,6 +365,7 @@ class tableCreator {
 				`last_reply_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 				`last_bump_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 				`thread_created_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+				`is_sticky` BOOL DEFAULT FALSE,
 				PRIMARY KEY (`insert_id`),
 				CONSTRAINT fk_thread_boardUID FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
 				INDEX (`thread_uid`),
