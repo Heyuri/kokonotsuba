@@ -275,33 +275,22 @@ class threadRepository {
 		/**
 	* Bump a discussion thread to the top.
 	*/
-	public function bumpThread(string $threadID, bool $sticky = false): void {
+	public function bumpThread(string $threadID): void {
 		$posts = $this->getPostsFromThread($threadID);
 		if (empty($posts)) return;
 	
-		if ($sticky) {
-			// Use MySQL's NOW() + INTERVAL 5 SECOND for sticky bump
-			$query = "UPDATE {$this->threadTable}
-					  SET last_bump_time = NOW() + INTERVAL 5 SECOND
-					  WHERE thread_uid = :thread_uid";
+		$lastPost = end($posts);
+		$bumpTime = $lastPost['root']; // must be MySQL datetime string
 	
-			$params = [
-				':thread_uid' => $threadID
-			];
-		} else {
-			$lastPost = end($posts);
-			$bumpTime = $lastPost['root']; // must be MySQL datetime string
+		$query = "UPDATE {$this->threadTable}
+					SET last_bump_time = :bump_time,
+					last_reply_time = :bump_time
+				WHERE thread_uid = :thread_uid";
 	
-			$query = "UPDATE {$this->threadTable}
-					  SET last_bump_time = :bump_time,
-						  last_reply_time = :bump_time
-					  WHERE thread_uid = :thread_uid";
-	
-			$params = [
-				':bump_time'  => $bumpTime,
-				':thread_uid' => $threadID
-			];
-		}
+		$params = [
+			':bump_time'  => $bumpTime,
+			':thread_uid' => $threadID
+		];
 	
 		$this->databaseConnection->execute($query, $params);
 	}
@@ -326,7 +315,7 @@ class threadRepository {
 			SELECT * 
 			FROM {$this->threadTable}
 			WHERE boardUID = :board_uid
-			ORDER BY $orderBy {$direction}
+			ORDER BY is_sticky DESC, $orderBy $direction
 		";
 
 		if($limit) {
@@ -472,14 +461,38 @@ class threadRepository {
 
 	public function updateThreadForBoardMove($threadUid, $newBoardUID, $newPostOpNumber): void {
 		$query = "UPDATE {$this->threadTable} 
-				  SET boardUID = :new_boardUID, post_op_number = :new_post_op_number
-				  WHERE thread_uid = :thread_uid";
+					SET boardUID = :new_boardUID, post_op_number = :new_post_op_number
+					WHERE thread_uid = :thread_uid";
 		$params = [
 			':new_boardUID' => intval($newBoardUID),
 			':new_post_op_number' => intval($newPostOpNumber),
 			':thread_uid' => $threadUid,
 		];
+		
 		$this->databaseConnection->execute($query, $params);
 	}
 
+	public function stickyThread(string $thread_uid): void {
+		$query = "UPDATE {$this->threadTable}
+					SET is_sticky = TRUE
+					WHERE thread_uid = :thread_uid";
+		
+		$params = [
+			':thread_uid' => $thread_uid
+		];
+
+		$this->databaseConnection->execute($query, $params);
+	}
+
+	public function unstickyThread(string $thread_uid): void {
+		$query = "UPDATE {$this->threadTable}
+					SET is_sticky = FALSE
+					WHERE thread_uid = :thread_uid";
+		
+		$params = [
+			':thread_uid' => $thread_uid
+		];
+
+		$this->databaseConnection->execute($query, $params);
+	}
 }
