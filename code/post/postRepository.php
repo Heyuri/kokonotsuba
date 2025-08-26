@@ -267,10 +267,10 @@ class postRepository {
 
 	public function insertPost(array $params): void {
 		$query = "INSERT INTO {$this->postTable} 
-			(no, boardUID, thread_uid, post_position, is_op, root, time, md5chksum, 
+			(no, poster_hash, boardUID, thread_uid, post_position, is_op, root, time, md5chksum, 
 			category, tim, fname, ext, imgw, imgh, imgsize, tw, th, pwd, now, 
 			name, tripcode, secure_tripcode, capcode, email, sub, com, host, status) 
-			VALUES (:no, :boardUID, :thread_uid, :post_position, :is_op, :root, :time,
+			VALUES (:no, :poster_hash, :boardUID, :thread_uid, :post_position, :is_op, :root, :time,
 			:md5chksum, :category, :tim, :fname, :ext, :imgw, :imgh, :imgsize, :tw, :th, 
 			:pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :status)";
 		
