@@ -50,7 +50,7 @@ class postValidator {
 			   $this->softErrorHandler->errorAndExit(_T('regist_successivepost')); // Continuous submission check
 			
 			if($dest && $this->config['PREVENT_DUPLICATE_FILE_UPLOADS']) { 
-				if($this->attachmentService->isDuplicateAttachment($this->board, $checkcount, $md5chksum)){
+				if($this->attachmentService->isDuplicateAttachment($this->board, $checkcount)){
 					$this->softErrorHandler->errorAndExit(_T('regist_duplicatefile')); 
 				}
 			} // Same additional image file check
