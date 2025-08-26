@@ -71,7 +71,7 @@ class postRenderer {
 		$templateValues['{$POSTINFO_EXTRA}'] = '';
 
 		// bind the poster_hash value to placeholder
-		$templateValues['{$POSTER_HASH}'] = $data['poster_hash'];
+		$templateValues['{$POSTER_HASH}'] = htmlspecialchars($data['poster_hash']);
 
 		// Admin controls hook (if admin mode is on)
 		if ($adminMode) {
