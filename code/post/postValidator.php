@@ -46,7 +46,7 @@ class postValidator {
 		$checkcount = 50; // Check 50 by default
 		$pwdc = substr(md5($pwdc), 2, 8); // Cookies Password
 		if ($roleLevel->isLessThan(\Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR))  {
-			if($this->postService->isSuccessivePost($this->board, $checkcount, $com, $time, $pass, $pwdc, $host, $upfile_name))
+			if($this->postService->isSuccessivePost($this->board, $checkcount, $com, $time, $pass, $pwdc))
 			   $this->softErrorHandler->errorAndExit(_T('regist_successivepost')); // Continuous submission check
 			
 			if($dest && $this->config['PREVENT_DUPLICATE_FILE_UPLOADS']) { 
