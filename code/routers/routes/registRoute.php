@@ -236,7 +236,7 @@ class registRoute {
 			$fileFromUpload = getUserFileFromRequest();
 	
 			$file = $fileFromUpload->getFile();
-			$thumbnail = getThumbnailFromFile($file, $this->config['THUMB_SETTING']['Method']);
+			$thumbnail = getThumbnailFromFile($file);
 			$thumbnail = scaleThumbnail($thumbnail, $isReply, $this->config['MAX_RW'], $this->config['MAX_RH'], $this->config['MAX_W'], $this->config['MAX_H']);
 	
 			$postFileUploadController = new postFileUploadController($this->config, $fileFromUpload, $thumbnailCreator, $thumbnail, $boardFileDirectory, $this->softErrorHandler);
