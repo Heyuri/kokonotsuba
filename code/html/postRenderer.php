@@ -484,10 +484,10 @@ class postRenderer {
  	 * Returns the poster hash if poster IDs are enabled; otherwise,
  	 * returns it unchanged to prevent displaying the ID.
  	*/
-	private function validatePosterHash(?string $posterHash): string {
+	private function validatePosterHash(?string $posterHash): ?string {
 		// set the hash to blank so it wont display if displaying IDs is not enabled
 		if($this->config['DISP_ID'] === 0) {
-			return $posterHash;
+			return null;
 		} else {
 			// otherwise - return it unchanged
 			return $posterHash;
