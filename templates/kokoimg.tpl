@@ -180,6 +180,7 @@
 						<!--{$NAME_TEXT}--><span class="name">{$NAME}</span>
 					</span>
 					<span class="time">{$NOW}</span>
+					<!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')-->
 				</label>
 				<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
 				<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
@@ -204,6 +205,7 @@
 								<!--{$NAME_TEXT}--><span class="name">{$NAME}</span>
 							</span>
 							<span class="time">{$NOW}</span>
+							<!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')-->
 						</label>
 						<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
 						<span class="postInfoExtra">{$POSTINFO_EXTRA}</span><span class="backlinks"></span>

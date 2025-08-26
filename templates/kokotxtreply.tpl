@@ -119,7 +119,7 @@
 	<div class="post op" id="p{$BOARD_UID}_{$NO}">
 		<h1 class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h1>
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
-		<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span><span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
+		<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span> <!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')--> <span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
 		<div class="filesize">{$IMG_BAR}</div>
 		<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
 		<div class="comment">{$COM}</div>
@@ -134,7 +134,7 @@
 	<span class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span>
 	<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
 	<div class="postinfo">
-	<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')--> <span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span><span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
+	<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')--> <span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span> <!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')--> <span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
 	<div class="filesize">{$IMG_BAR}</div>
 	<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
 	<div class="comment">{$COM}</div>
