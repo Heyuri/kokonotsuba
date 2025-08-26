@@ -70,6 +70,9 @@ class postRenderer {
 
 		$templateValues['{$POSTINFO_EXTRA}'] = '';
 
+		// bind the poster_hash value to placeholder
+		$templateValues['{$POSTER_HASH}'] = $data['poster_hash'];
+
 		// Admin controls hook (if admin mode is on)
 		if ($adminMode) {
 			$modFunc = '';
@@ -254,6 +257,7 @@ class postRenderer {
 	 */
 	private function preparePostData(array $post): array {
 		// Basic fields
+		$poster_hash = $post['poster_hash'];
 		$email = isset($post['email']) ? trim($post['email']) : '';
 		$name = $post['name'] ?? '';
 		$tripcode = $post['tripcode'] ?? '';
@@ -279,6 +283,8 @@ class postRenderer {
 			$now = "<a href=\"mailto:$email\">$now</a>";
 		}
 	
+		// validate the poster hash
+		$poster_hash = $this->validatePosterHash($poster_hash);
 		
 		// Get full image URL
 		$imageURL = $this->FileIO->getImageURL($tim . $ext, $this->board);
@@ -297,6 +303,7 @@ class postRenderer {
 			'now' => $now,
 			'com' => $com,
 			'no' => $post['no'],
+			'poster_hash' => $poster_hash,
 			'is_op' => $post['is_op'],
 			'post_position' => $post['post_position'],
 			'sub' => $post['sub'],
@@ -469,6 +476,22 @@ class postRenderer {
 		$replyButton = '[<a href="' . $replyUrl . '">' . _T('reply_btn') . '</a>]';
 
 		return $replyButton;
+	}
+	
+	/**
+ 	 * Validates the poster hash based on display settings.
+ 	 *
+ 	 * Returns the poster hash if poster IDs are enabled; otherwise,
+ 	 * returns it unchanged to prevent displaying the ID.
+ 	*/
+	private function validatePosterHash(?string $posterHash): string {
+		// set the hash to blank so it wont display if displaying IDs is not enabled
+		if($this->config['DISP_ID'] === 0) {
+			return $posterHash;
+		} else {
+			// otherwise - return it unchanged
+			return $posterHash;
+		}
 	}
 
 }
