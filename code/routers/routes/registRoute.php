@@ -33,7 +33,7 @@ class registRoute {
 
 		// Initialize core handlers
 		$thumbnailCreator = new thumbnailCreator($this->config['USE_THUMB'], $this->config['THUMB_SETTING'], $thumbDir);
-		$tripcodeProcessor = new tripcodeProcessor($this->config, $this->softErrorHandler);
+		$tripcodeProcessor = new tripcodeProcessor($this->config);
 		$defaultTextFiller = new defaultTextFiller($this->config);
 		$fortuneGenerator = new fortuneGenerator($this->config['FORTUNES']);
 		$postFilterApplier = new postFilterApplier($this->config, $fortuneGenerator);
