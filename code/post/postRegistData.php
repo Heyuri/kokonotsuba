@@ -2,6 +2,7 @@
 
 class postRegistData {
 	private int $no;
+	private string $poster_hash;
 	private string $threadUIDFromUrl;
 	private bool $is_op;
 	private string $md5chksum, $category, $tim, $fname, $ext, $imgsize;
@@ -12,13 +13,14 @@ class postRegistData {
 	private int $post_position;
 
 	public function __construct(
-		int $no, string $threadUIDFromUrl, bool $is_op, string $md5chksum, string $category,
+		int $no, string $poster_hash, string $threadUIDFromUrl, bool $is_op, string $md5chksum, string $category,
 		string $tim, string $fname, string $ext, int $imgw, int $imgh, string $imgsize,
 		int $tw, int $th, string $pwd, string $now, string $name, string $tripcode,
 		string $secure_tripcode, string $capcode, string $email, string $sub, string $com,
 		string $host, bool $age, string $status
 	) {
 		$this->no = $no;
+		$this->poster_hash = $poster_hash;
 		$this->threadUIDFromUrl = $threadUIDFromUrl;
 		$this->is_op = $is_op;
 		$this->md5chksum = $md5chksum;
@@ -87,6 +89,7 @@ class postRegistData {
 	public function toParams(int $boardUID, string $root, int $time, bool $isThread): array {
 		return [
 			':no' => $this->no,
+			'poster_hash' => $this->poster_hash,
 			':boardUID' => $boardUID,
 			':thread_uid' => $this->threadUIDFromUrl,
 			':post_position' => $this->post_position,
