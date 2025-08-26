@@ -377,6 +377,7 @@ class tableCreator {
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_TABLE']} (
 				`post_uid` INT NOT NULL AUTO_INCREMENT,
 				`no` INT NOT NULL,
+				`poster_hash` VARCHAR(255) NOT NULL,
 				`boardUID` INT NOT NULL,
 				`thread_uid` VARCHAR(255) NOT NULL,
 				`post_position` INT DEFAULT 0,
