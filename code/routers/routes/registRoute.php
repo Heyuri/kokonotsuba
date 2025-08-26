@@ -117,6 +117,7 @@ class registRoute {
 
 			$postRegistData = new postRegistData(
 				$computedPostInfo['no'],
+				$computedPostInfo['poster_hash'],
 				$postData['thread_uid'],
 				$computedPostInfo['is_op'],
 				$fileMeta['md5'],
@@ -365,13 +366,14 @@ class registRoute {
 		$no = $this->board->getLastPostNoFromBoard() + 1;
 		$is_op = $postData['resno'] ? false : true;
 		$now = $postDateFormatter->formatFromTimestamp($postData['time']);
-		$now .= $postIdGenerator->generate($postData['email'], $postData['time'], $postData['resno']);
+		$poster_hash = $postIdGenerator->generate($postData['email'], $postData['time'], $postData['resno']);
 	
 		return [
 			'no' => $no,
 			'is_op' => $is_op,
 			'pass' => $pass,
 			'now' => $now,
+			'poster_hash' => $poster_hash,
 			'dest' => $file->getTemporaryFileName(),
 			'timeInMilliseconds' => $postData['timeInMilliseconds']
 		];
