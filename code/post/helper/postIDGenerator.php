@@ -13,7 +13,7 @@ class postIdGenerator {
         $this->staffSession = $staffSession;
     }
 
-	public function generate($email, $time, int $threadNumber) {
+	public function generate(?string $email, int $time, int $threadNumber): string {
 		$roleLevel = $this->staffSession->getRoleLevel();
 
         if ($this->config['DISP_ID']) { // ID display enabled
