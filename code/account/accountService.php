@@ -7,13 +7,11 @@ class accountService {
         private readonly accountRepository $accountRepository, 
         private readonly actionLoggerService $actionLoggerService) {}
 	
-	public function handleAccountDelete() {
-		$id = $_GET['del'] ??  '';
+	public function handleAccountDelete(int $id) {
 		$this->accountRepository->deleteAccountByID($id);	
 	}
 
-	public function handleAccountDemote() {
-		$id = $_GET['dem'] ?? -1;
+	public function handleAccountDemote(int $id) {
 		$account = $this->accountRepository->getAccountByID($id);
 		
 		if($account->getRoleLevel()->value - 1 == \Kokonotsuba\Root\Constants\userRole::LEV_NONE->value) return; # == is for PHP7 compatibility, change to === in future for PHP8
@@ -21,8 +19,7 @@ class accountService {
 		$this->accountRepository->demoteAccountByID($id);
 	}
 
-	public function handleAccountPromote() {
-		$id = $_GET['up'] ??  '';
+	public function handleAccountPromote(int $id) {
 		$account = $this->accountRepository->getAccountByID($id);
 	
 		if($account->getRoleLevel()->value + 1 == \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN->value + 1) return; # == is for PHP7 compatibility, change to === in future for PHP8
@@ -30,25 +27,18 @@ class accountService {
 		$this->accountRepository->promoteAccountByID($id);
 	}
 
-	public function handleAccountCreation() {
-		$passwordHash = $_POST['passwd'] ?? '';
-		$isHashed = $_POST['ishashed'] ?? '';
-		$username = $_POST['usrname'] ?? '';
-		$role = $_POST['role'] ?? '';
-	
-		if(!$isHashed) $passwordHash = password_hash($passwordHash, PASSWORD_DEFAULT);
+	public function handleAccountCreation(bool $isHashed, string $password, string $username, int $role) {
+		if(!$isHashed) $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
 		$this->accountRepository->addNewAccount($username, $role, $passwordHash);
 		$this->actionLoggerService->logAction("Registered a new account ($username)", GLOBAL_BOARD_UID);
 	}
 
-	public function handleAccountPasswordReset() {
+	public function handleAccountPasswordReset(staffAccountFromSession $staffAccountFromSession, string $newAccountPasswordForReset) {
 		$loginSessionHandler = new loginSessionHandler;
-		$staffSession = new staffAccountFromSession;
-		$accountID = $staffSession->getUID();
-		$newAccountPassword = $_POST['new_account_password'] ?? -1;
+		$accountID = $staffAccountFromSession->getUID();
 		
-		$this->accountRepository->updateAccountPasswordHashById($accountID, $newAccountPassword);
+		$this->accountRepository->updateAccountPasswordHashById($accountID, $newAccountPasswordForReset);
 
 		//refresh session values
 		$accountAfterPasswordUpdate = $this->accountRepository->getAccountById($accountID);
