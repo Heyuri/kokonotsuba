@@ -69,7 +69,7 @@ function isCommandAvailable(string $command): bool {
 	return $status === 0 && !empty($output);
 }
 
-function getGlobalConfig() {
+function getGlobalConfig(): array {
 	require ROOTPATH . '/global/globalconfig.php';
 	return $config;
 }
