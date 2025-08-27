@@ -60,7 +60,7 @@ class postRenderer {
 		$categoryHTML = $this->processCategoryLinks($data['category'], $crossLink);
 
 		// Attachment bar (if any)
-		$imageBar = ($data['ext']) ? $this->buildAttachmentBar($data['tim'], $data['ext'], $data['fname'], $data['imgsize'], $data['imgw'], $data['imgh'], $data['tw'], $data['th'], '') : '';
+		$imageBar = ($data['ext']) ? $this->buildAttachmentBar($data['tim'], $data['ext'], $data['fname'], $data['imgsize'], $data['imgw'], $data['imgh']) : '';
 
 		// File size warning (if necessary)
 		$warnBeKill = '';
