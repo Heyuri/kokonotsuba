@@ -12,7 +12,7 @@
  * @param args 翻譯資源檔索引、其餘變數
  * @see LanguageLoader->getTranslation
  */
-function _T(/*$args[]*/) {
+function _T(string $translationLable) {
 	// 因為 5.3 以前 func_get_args 無法直接指派，故需要由變數 $args 承接再帶入
 	$args = func_get_args();
 	return call_user_func_array(
