@@ -23,6 +23,7 @@ class handleAccountActionRoute {
 			$newAccountUsername = $_POST['usrname'] ?? null;
 			$newAccountPassword = $_POST['passwd'] ?? null;
 			$newAccountIsAlreadyHashed = $_POST['ishashed'] ?? null;
+			$newAccountRole = $_POST['role'] ?? null;
 
 			if (isset($accountIdToDelete)) {
 				$this->accountService->handleAccountDelete($accountIdToPromote);
@@ -34,12 +35,15 @@ class handleAccountActionRoute {
 				$this->accountService->handleAccountPromote($accountIdToPromote);
 			}
 			if (!empty($newAccountUsername) && !empty($newAccountPassword)) {
-				$this->accountService->handleAccountCreation($this->board);
+				$this->accountService->handleAccountCreation($newAccountIsAlreadyHashed, $newAccountPassword, $newAccountUsername, $newAccountRole);
 			}
 		}
 
-		if (!empty($newAccountIsAlreadyHashed ?? '')) {
-			$this->accountService->handleAccountPasswordReset($this->board);
+		// used for password reset
+		$newAccountPasswordForReset = $_POST['new_account_password'] ?? null;
+
+		if ($newAccountPassword) {
+			$this->accountService->handleAccountPasswordReset($this->staffAccountFromSession, $newAccountPasswordForReset);
 		}
 
 		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=account');
