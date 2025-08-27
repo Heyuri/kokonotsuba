@@ -19,7 +19,7 @@ function getBoardStoragesDir() {
 	return getBackendGlobalDir().'board-storages/';
 }
 
-function getTemplateConfigArray() {
+function getTemplateConfigArray(): array {
 	// Path to the board template configuration file
 	$configFile = getBoardConfigDir() . 'board-template.php';
 	
