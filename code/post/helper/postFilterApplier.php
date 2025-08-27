@@ -15,7 +15,7 @@ class postFilterApplier {
 		}
 
 		if ($this->config['FORTUNES'] && stristr($email, 'fortune')) {
-			$this->fortune->apply($com, $email);
+			$this->fortune->apply($com);
 		}
 		
 		if ($this->config['ROLL'] && stristr($email, 'roll')) {
