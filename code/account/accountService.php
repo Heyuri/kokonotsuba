@@ -28,7 +28,12 @@ class accountService {
 	}
 
 	public function handleAccountCreation(bool $isHashed, string $password, string $username, int $role) {
-		if(!$isHashed) $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+		// don't hash the password if its being passed as hashed from the request
+		if(!$isHashed) {
+			$passwordHash = password_hash($password, PASSWORD_DEFAULT);
+		} else {
+			$passwordHash = $password;
+		}
 
 		$this->accountRepository->addNewAccount($username, $role, $passwordHash);
 		$this->actionLoggerService->logAction("Registered a new account ($username)", GLOBAL_BOARD_UID);
@@ -38,7 +43,11 @@ class accountService {
 		$loginSessionHandler = new loginSessionHandler;
 		$accountID = $staffAccountFromSession->getUID();
 		
-		$this->accountRepository->updateAccountPasswordHashById($accountID, $newAccountPasswordForReset);
+		// hash the password
+		$passwordHash = password_hash($newAccountPasswordForReset, PASSWORD_DEFAULT);
+
+		// update the account in database
+		$this->accountRepository->updateAccountPasswordHashById($accountID, $passwordHash);
 
 		//refresh session values
 		$accountAfterPasswordUpdate = $this->accountRepository->getAccountById($accountID);
