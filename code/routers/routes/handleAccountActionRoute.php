@@ -22,7 +22,7 @@ class handleAccountActionRoute {
 
 			$newAccountUsername = $_POST['usrname'] ?? null;
 			$newAccountPassword = $_POST['passwd'] ?? null;
-			$newAccountIsAlreadyHashed = $_POST['ishashed'] ?? null;
+			$newAccountIsAlreadyHashed = !empty($_POST['ishashed']);
 			$newAccountRole = $_POST['role'] ?? null;
 
 			if (isset($accountIdToDelete)) {
@@ -42,7 +42,7 @@ class handleAccountActionRoute {
 		// used for password reset
 		$newAccountPasswordForReset = $_POST['new_account_password'] ?? null;
 
-		if ($newAccountPassword) {
+		if (!empty($newAccountPasswordForReset)) {
 			$this->accountService->handleAccountPasswordReset($this->staffAccountFromSession, $newAccountPasswordForReset);
 		}
 
