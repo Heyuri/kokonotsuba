@@ -12,9 +12,9 @@ class postService {
 	}
 
 	public function getPostsByUids(array $postUids): ?array {
-		$postUidStringList = $this->sanitizeAndImplodeIDs($postUids);
+		$postUidList = $this->sanitizeAndImplodeIDs($postUids);
 
-		$postsFromList = $this->postRepository->getPostsByUids($postUidStringList);
+		$postsFromList = $this->postRepository->getPostsByUids($postUidList);
 
 		return $postsFromList;
 	}
@@ -22,27 +22,20 @@ class postService {
 	public function getPostsByThreadUIDs(array $threadUids): ?array {
 		if(empty($threadUids)) return [];
 
-		$threadUidStringList = $this->sanitizeAndImplodeIDs($threadUids, false);
+		$threadUidList = $this->sanitizeAndImplodeIDs($threadUids);
 
-		$postsFromList = $this->postRepository->getPostsByThreadUIDs($threadUidStringList);
+		$postsFromList = $this->postRepository->getPostsByThreadUIDs($threadUidList);
 
 		return $postsFromList;
 	}
 
-	private function sanitizeAndImplodeIDs(array $list, bool $sanitizeInteger = true): string {
+	private function sanitizeAndImplodeIDs(array $list): array {
 		// filter for ints
-		if($sanitizeInteger) {
-			$list = array_filter($list, function($item) {
-				return is_int($item);
-			});
-		} else {
-			// if string, add apostrophes
-			addApostropheToArray($list);
-		}
+		$list = array_filter($list, function($item) {
+			return is_int($item);
+		});
 		
-		$stringList = implode(',', $list);
-
-		return $stringList;
+		return $list;
 	}
 
 		/* Check if the post is successive (rate limiting mechanism) */
@@ -119,10 +112,7 @@ class postService {
 		$this->attachmentService->removeAttachments($posts, true);
 
 		$this->transactionManager->run(function () use ($posts) {
-			addApostropheToArray($posts);
-			$postUIDsList = implode(', ', $posts);
-
-			$threadUIDsResult = $this->postRepository->getUniquePairFromPostUids($postUIDsList);
+			$threadUIDsResult = $this->postRepository->getUniquePairFromPostUids($posts);
 
 			// Extract unique boardUIDs from the result
 			$boardUIDs = array_unique(array_column($threadUIDsResult, 'boardUID'));
@@ -145,10 +135,10 @@ class postService {
 				];
 			}
 
-			$threadUIDs = $this->postRepository->getThreadUIDsByPostUIDs($postUIDsList);
+			$threadUIDs = $this->postRepository->getThreadUIDsByPostUIDs($posts);
 
-			$this->postRepository->deletePostsByUIDs($postUIDsList);
-			$this->threadRepository->deleteThreadsByOpPostUIDs($postUIDsList);
+			$this->postRepository->deletePostsByUIDs($posts);
+			$this->threadRepository->deleteThreadsByOpPostUIDs($posts);
 
 			if (!is_array($threadUIDs)) $threadUIDs = [$threadUIDs];
 
