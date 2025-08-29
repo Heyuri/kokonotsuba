@@ -205,13 +205,6 @@ class postRepository {
 		return array_column($foundPosts, 'no'); // Return post numbers
 	}
 
-	/* Get the status of a post */
-	public function getPostStatus($post_uid) {
-		$query = "SELECT status FROM {$this->postTable} WHERE post_uid = ?";
-		$status = $this->databaseConnection->fetchColumn($query, [$post_uid]);
-		return new FlagHelper($status !== false ? $status : null);
-	}
-
 	/* Set the status of a post */
 	public function setPostStatus($post_uid, $newStatus) {
 		$query = "UPDATE {$this->postTable} SET status = ? WHERE post_uid = ?";
@@ -231,18 +224,6 @@ class postRepository {
 		}
 		$params[] = strval($post_uid);
 		$query = "UPDATE {$this->postTable} SET " . implode(', ', $setClause) . " WHERE post_uid = ?";
-		$this->databaseConnection->execute($query, $params);
-	}
-
-	public function updatePostBoardUIDsFromThread($thread_uid, $destinationBoard) {
-		$query = "UPDATE {$this->postTable} SET boardUID = :board_uid WHERE thread_uid = :thread_uid";
-		$params = [
-			':thread_uid' => $thread_uid,
-			':board_uid' => $destinationBoard->getBoardUID()
-		];
-		$this->databaseConnection->execute($query, $params);
-
-		$query = "UPDATE {$this->threadTable} SET boardUID = :board_uid WHERE thread_uid = :thread_uid";
 		$this->databaseConnection->execute($query, $params);
 	}
 
@@ -284,16 +265,6 @@ class postRepository {
 				FROM {$this->threadTable}
 				WHERE thread_uid = ?
 			)
-			LIMIT 1
-		", [$threadUID]);
-	}
-
-	public function getLatestReplyInThread(string $threadUID): array|false {
-		return $this->databaseConnection->fetchOne("
-			SELECT `root`
-			FROM {$this->postTable}
-			WHERE thread_uid = ?
-			ORDER BY `root` DESC
 			LIMIT 1
 		", [$threadUID]);
 	}
