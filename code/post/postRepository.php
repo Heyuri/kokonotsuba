@@ -36,35 +36,6 @@ class postRepository {
 		return $this->databaseConnection->fetchColumn($query, $params);
 	}
 
-	/* Output list of articles */
-	public function fetchPostListFromBoard(board $board, mixed $resno = 0, int $start = 0, int $amount = 0, string $host = ''): array {
-		$resno = strval($resno);
-
-		if ($resno) {
-				$query = "SELECT post_uid FROM {$this->postTable} WHERE `thread_uid` = :thread_uid AND boardUID = :board_uid ORDER BY no";
-				$posts = $this->databaseConnection->fetchAllAsArray($query, [':thread_uid' => $resno, ':board_uid' => $board->getBoardUID()]);
-		} else {
-				$query = "SELECT post_uid FROM {$this->postTable} WHERE `boardUID` = :board_uid" . ($host ? " AND `host` = :host" : "") . " ORDER BY no DESC";
-				$params = $host ? [':host' => $host, ':board_uid' => $board->getBoardUID()] : [':board_uid' => $board->getBoardUID()];
-				if ($amount) {
-						$query .= " LIMIT {$start}, {$amount}";
-				}
-				$posts = $this->databaseConnection->fetchAllAsArray($query, $params) ?? [];
-		}
-		return array_column($posts, 'post_uid') ?? [];
-	}
-
-	public function getPostsFromBoard(board $board, int $start = 0, int $amount = 0, string $order = "no", string $sortOrder = "DESC"): array {
-		if(!in_array($order, $this->allowedOrderFields)) return [];
-		
-		$query = "SELECT * FROM {$this->postTable} WHERE boardUID = :board_uid ORDER BY $order $sortOrder";
-		if($amount) {
-			$query .= " LIMIT $start, $amount";
-		}
-		$params[':board_uid'] = intval($board->getBoardUID());
-		return $this->databaseConnection->fetchAllAsArray($query, $params) ?? [];
-	}
-	
 	public function getFilteredPosts(int $amount, int $offset = 0, array $filters = [], string $order = 'post_uid'): array {
 		if(!in_array($order, $this->allowedOrderFields)) return [];
 
