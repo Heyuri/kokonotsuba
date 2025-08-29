@@ -99,8 +99,8 @@ class postRepository {
 				continue;
 			}
 
-			$placeholders = implode(',', array_fill(0, count($threadIDs), '?'));
-			$conditions[] = "(boardUID = ? AND (post_uid IN ({$placeholders}) OR thread_uid IN ({$placeholders})))";
+			$inClause = pdoPlaceholdersForIn($threadIDs);
+			$conditions[] = "(boardUID = ? AND (post_uid IN $inClause OR thread_uid IN $inClause))";
 
 			// First placeholder is boardUID
 			$params[] = $boardUID;
@@ -155,20 +155,26 @@ class postRepository {
 	
 		// Sanitize and deduplicate post numbers
 		$sanitizedNumbers = array_unique(array_map('intval', $postNumbers));
-		$inClause = implode(',', $sanitizedNumbers);
-	
+
+		// Get IN clause placeholders and parameter bindings
+		$inParams = [];
+		$inClause = '(' . implode(', ', array_map(function($i) use (&$inParams, $sanitizedNumbers) {
+		    $param = ":no_$i";
+		    $inParams[$param] = $sanitizedNumbers[$i];
+		    return $param;
+		}, array_keys($sanitizedNumbers))) . ')';
+
 		$query = "
-			SELECT no, post_uid
-			FROM {$this->postTable}
-			WHERE no IN ($inClause)
-			AND boardUID = :board_uid";
-	
-		$params = [
-			':board_uid' => $board_uid
-		];
+    		SELECT no, post_uid
+		    FROM {$this->postTable}
+		    WHERE no IN $inClause
+		    AND boardUID = :board_uid";
+
+		// Merge board UID with IN clause parameters
+		$params = array_merge([':board_uid' => $board_uid], $inParams);
 
 		$rows = $this->databaseConnection->fetchAllAsArray($query, $params);
-	
+
 		// Map post_number (no) => post_uid
 		$resolved = [];
 		foreach ($rows as $row) {
@@ -238,19 +244,6 @@ class postRepository {
 
 		$query = "UPDATE {$this->threadTable} SET boardUID = :board_uid WHERE thread_uid = :thread_uid";
 		$this->databaseConnection->execute($query, $params);
-	}
-
-	public function getPostOpUIDsFromThreadList($threadList) {
-		if (!is_array($threadList)) {
-			$threadList = [$threadList];
-		}
-	
-		addApostropheToArray($threadList);
-	
-		$postlist = implode(',', $threadList);
-		$query = "SELECT post_op_post_uid FROM {$this->threadTable} WHERE thread_uid IN ({$postlist})";
-		
-		return array_merge(...$this->databaseConnection->fetchAllAsIndexArray($query));
 	}
 
 	public function fetchRecentPosts($timeLimit, $timeLimitUpload = null): array {
@@ -330,7 +323,7 @@ class postRepository {
 		$this->databaseConnection->execute("
 			DELETE FROM {$this->postTable}
 			WHERE post_uid IN $inClause
-		");
+		", $postUIDsList);
 	}
 	
 	public function getPostsByThreadUIDs(array $threadUids): array|false {	
@@ -338,7 +331,7 @@ class postRepository {
 
 		$query = "SELECT * FROM {$this->postTable} WHERE thread_uid IN $inClause";
 
-		$posts = $this->databaseConnection->fetchAllAsArray($query);
+		$posts = $this->databaseConnection->fetchAllAsArray($query, $threadUids);
 
 		return $posts;
 	}
