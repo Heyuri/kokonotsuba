@@ -171,11 +171,13 @@ class threadRepository {
 		", [$time, $time, $threadUID]);
 	}
 
-	public function deleteThreadsByOpPostUIDs(string $postUIDsList): void {
+	public function deleteThreadsByOpPostUIDs(array $postUIDsList): void {
+		$inClause = pdoPlaceholdersForIn($postUIDsList);
+		
 		$this->databaseConnection->execute("
 			DELETE FROM {$this->threadTable}
-			WHERE post_op_post_uid IN ({$postUIDsList})
-		");
+			WHERE post_op_post_uid IN $inClause
+		", $postUIDsList);
 	}
 
 
