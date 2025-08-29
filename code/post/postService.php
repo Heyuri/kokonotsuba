@@ -22,9 +22,7 @@ class postService {
 	public function getPostsByThreadUIDs(array $threadUids): ?array {
 		if(empty($threadUids)) return [];
 
-		$threadUidList = $this->sanitizeAndImplodeIDs($threadUids);
-
-		$postsFromList = $this->postRepository->getPostsByThreadUIDs($threadUidList);
+		$postsFromList = $this->postRepository->getPostsByThreadUIDs($threadUids);
 
 		return $postsFromList;
 	}
