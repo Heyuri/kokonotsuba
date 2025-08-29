@@ -305,30 +305,38 @@ class postRepository {
 		", [$threadUID]);
 	}
 
-	public function getPostsByUids(string $postUIDsList): array|false {
+	public function getPostsByUids(array $postUIDsList): array|false {
+		$inClause = pdoPlaceholdersForIn($postUIDsList);
+		
 		return $this->databaseConnection->fetchAllAsArray("
 			SELECT * FROM {$this->postTable}
-			WHERE post_uid IN ({$postUIDsList})
-		");
+			WHERE post_uid IN $inClause
+		", $postUIDsList);
 	}
 
-	public function getThreadUIDsByPostUIDs(string $postUIDsList): ?string {
+	public function getThreadUIDsByPostUIDs(array $postUIDsList): ?string {
+		$inClause = pdoPlaceholdersForIn($postUIDsList);
+
 		return $this->databaseConnection->fetchColumn("
 			SELECT DISTINCT thread_uid
 			FROM {$this->postTable}
-			WHERE post_uid IN ({$postUIDsList})
-		");
+			WHERE post_uid IN $inClause
+		", $postUIDsList);
 	}
 
-	public function deletePostsByUIDs(string $postUIDsList): void {
+	public function deletePostsByUIDs(array $postUIDsList): void {
+		$inClause = pdoPlaceholdersForIn($postUIDsList);
+
 		$this->databaseConnection->execute("
 			DELETE FROM {$this->postTable}
-			WHERE post_uid IN ({$postUIDsList})
+			WHERE post_uid IN $inClause
 		");
 	}
 	
-	public function getPostsByThreadUIDs(string $threadUids): array|false {	
-		$query = "SELECT * FROM {$this->postTable} WHERE thread_uid IN ({$threadUids})";
+	public function getPostsByThreadUIDs(array $threadUids): array|false {	
+		$inClause = pdoPlaceholdersForIn($threadUids);
+
+		$query = "SELECT * FROM {$this->postTable} WHERE thread_uid IN $inClause";
 
 		$posts = $this->databaseConnection->fetchAllAsArray($query);
 
@@ -359,14 +367,16 @@ class postRepository {
 		return $post;
 	}
 
-	public function getUniquePairFromPostUids(string $post_uid_list): array|false {
+	public function getUniquePairFromPostUids(array $postUIDsList): array|false {
+		$inClause = pdoPlaceholdersForIn($postUIDsList);
+
 		$query = "
 			SELECT DISTINCT thread_uid, boardUID
 			FROM {$this->postTable}
-			WHERE post_uid IN ({$post_uid_list})
+			WHERE post_uid IN $inClause
 		";
 
-		$pair = $this->databaseConnection->fetchAllAsArray($query);
+		$pair = $this->databaseConnection->fetchAllAsArray($query, $postUIDsList);
 		
 		return $pair;
 	}
