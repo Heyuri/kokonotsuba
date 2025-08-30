@@ -45,9 +45,7 @@ class usrdelRoute {
 			$this->softErrorHandler->errorAndExit(_T('del_notchecked'));
 		}
 
-		$delno = implode(',', $delno);
-
-		$posts = $this->postRepository->getPostsByUids(strval($delno));
+		$posts = $this->postRepository->getPostsByUids($delno);
 
 		foreach ($posts as $post) {
 			if ($pwd_md5 == $post['pwd'] || $host == $post['host'] || $havePerm) {
