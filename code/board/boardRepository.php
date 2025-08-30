@@ -92,16 +92,19 @@ class boardRepository {
 	}
 
 	// Get board objects by UID array (cached per UID combination)
-	public function getBoardsFromUIDs(string $uidList): array {
+	public function getBoardsFromUIDs(array $uidList): array {
 		// Create a cache key based on the method and UID list
 		$cacheKey = __METHOD__ . ':' . $uidList;
 	
 		return $this->cacheMethodResult($cacheKey, function () use ($uidList) {
+			// Generate the in clause
+			$inClause = pdoPlaceholdersForIn($uidList);
+
 			// Prepare the query with the sanitized UIDs
-			$query = "SELECT * FROM {$this->boardTable} WHERE board_uid IN ($uidList)";
+			$query = "SELECT * FROM {$this->boardTable} WHERE board_uid IN $inClause";
 	
 			// Fetch the results using the constructed query
-			return $this->databaseConnection->fetchAllAsClass($query, [], 'boardData');
+			return $this->databaseConnection->fetchAllAsClass($query, $uidList, 'boardData');
 		});
 	}
 	
