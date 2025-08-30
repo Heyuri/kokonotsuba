@@ -165,17 +165,6 @@ class postRepository {
 		return $postUID;
 	}
 
-		/* Search posts by category */
-	public function searchCategory($category) {
-		// Prepare the query to search for posts that have the category
-		$query = "SELECT post_uid FROM {$this->postTable} WHERE boardUID = :board_uid AND LOWER(category) LIKE :expression";
-		
-		$params[':expression'] = ['%' . strtolower($category) . '%'];
-
-		$foundPosts = $this->databaseConnection->fetchAllAsArray($query, $params);
-		return array_column($foundPosts, 'no'); // Return post numbers
-	}
-
 	/* Set the status of a post */
 	public function setPostStatus($post_uid, $newStatus) {
 		$query = "UPDATE {$this->postTable} SET status = ? WHERE post_uid = ?";
