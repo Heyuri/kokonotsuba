@@ -169,9 +169,6 @@ class boardService {
 		// Sanitize each value to be an integer
 		$boardUIDs = array_map('intval', $boardUIDs);
 
-		// Create a string of UIDs for the IN clause, separated by commas
-		$boardUIDs = implode(', ', $boardUIDs);
-
 		$boardDataList = $this->boardRepository->getBoardsFromUIDs($boardUIDs);
 
 		$boards = $this->assembleBoardsFromArray($boardDataList);
