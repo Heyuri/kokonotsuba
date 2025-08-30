@@ -94,6 +94,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$postRegistData = new postRegistData(
 				$no,
+				'SYSTEM',
 				$originalThreadUid,
 				false,
 				'',
