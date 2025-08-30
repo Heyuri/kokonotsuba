@@ -94,7 +94,7 @@ class boardRepository {
 	// Get board objects by UID array (cached per UID combination)
 	public function getBoardsFromUIDs(array $uidList): array {
 		// Create a cache key based on the method and UID list
-		$cacheKey = __METHOD__ . ':' . $uidList;
+		$cacheKey = __METHOD__ . ':' . implode(',', $uidList);
 	
 		return $this->cacheMethodResult($cacheKey, function () use ($uidList) {
 			// Generate the in clause
