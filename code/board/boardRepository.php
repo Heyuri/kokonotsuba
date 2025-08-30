@@ -103,6 +103,9 @@ class boardRepository {
 			// Prepare the query with the sanitized UIDs
 			$query = "SELECT * FROM {$this->boardTable} WHERE board_uid IN $inClause";
 	
+			// re-index the array to avoid parameter errors
+			$uidList = array_values($uidList);
+
 			// Fetch the results using the constructed query
 			return $this->databaseConnection->fetchAllAsClass($query, $uidList, 'boardData');
 		});
