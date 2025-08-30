@@ -235,6 +235,7 @@ class threadService {
 	private function mapPostData($post, $boardUID, $newPostNumber, $newThreadUid) {
 		return [
 			'no'			=> $newPostNumber,
+			'poster_hash'	=> $post['poster_hash'],
 			'boardUID'		=> $boardUID,
 			'thread_uid'	=> $newThreadUid,
 			'post_position' => $post['post_position'],
