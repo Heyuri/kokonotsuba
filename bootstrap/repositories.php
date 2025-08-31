@@ -24,3 +24,5 @@ $postSearchRepository = new postSearchRepository($databaseConnection, $dbSetting
 $postSearchService = new postSearchService($postSearchRepository);
 $postRedirectRepository = new postRedirectRepository($databaseConnection, $dbSettings['THREAD_REDIRECT_TABLE'], $dbSettings['THREAD_TABLE']);
 $postRedirectService = new postRedirectService($postRedirectRepository, $threadService);
+$deletedPostsRepository = new deletedPostsRepository($databaseConnection, 'test', 'test');
+$deletedPostsService = new deletedPostsService($transactionManager, $deletedPostsRepository, $attachmentService, $actionLoggerService, $postRepository);

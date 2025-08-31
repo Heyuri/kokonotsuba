@@ -624,3 +624,32 @@ window.onload = function () {
 		</div>
 	</form>
 <!--/&THREAD_MOVE_FORM-->
+
+<!--&DELETED_POST_ENTRY-->
+	<div id="deletedPostContainer{$ID}" class="deletedPostEntry">
+		<input type="hidden" name="deletedPostIdList[]" value="{$ID}">
+		<div id="deletedPost{$ID}" class="deletedPost">
+			<div class="deletedPostButtons">
+				<span class="adminFunctions adminPurgeFunction"> [<a href="{$PURGE_URL}" title="Purge from system">P</a>] </span>
+				<span class="adminFunctions adminRestoreFunction"> [<a href="{$RESTORE_URL}" title="Restore">R</a>] </span>
+			</div>
+			<label for="deletedPostNumber{$ID}"> Name: </label> <span id="deletedPostNumber{$ID}">{$NO}</span>
+			<label for="deletedPostSubject{$ID}"> Subject: </label> <span id="deletedPostSubject{$ID}">{$SUBJECT}</span>
+			<label for="deletedPostName{$ID}"> Name: </label> <span id="deletedPostName{$ID}">{$NAME_HTML}</span>
+			<label for="deletedPostComment{$ID}"> Comment: </label> <span id="deletedPostComment{$ID}">{$COMMENT}</span>
+			<!--&IF($FILE_NAME,<label for="deletedPostFile{$ID}"> File: </label> <span id="deletedPostFile{$ID}"><img src="{$THUMB_URL}"></span>,'')-->
+		</div>
+	</div>
+<!--/&DELETED_POST_ENTRY-->
+
+<!--&DELETED_POSTS_MOD_PAGE-->
+	<h3>Deleted posts</h3>
+	<form id="deletedPostsForm">
+		<div class="deletedPostsListContainer">
+			<div class="deletedPostsList">
+				<!--&FOREACH($DELETED_POSTS,'DELETED_POST_ENTRY')-->
+				<!--&IF($ARE_NO_POSTS,'<div class="centerText">No posts currently in queue.</div>','')-->
+			</div>
+		</div>
+	</form>
+<!--/&DELETED_POSTS_MOD_PAGE-->

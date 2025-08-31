@@ -152,6 +152,8 @@ require __DIR__ . '/code/post/postSearchRepository.php';
 require __DIR__ . '/code/post/postSearchService.php';
 require __DIR__ . '/code/post/postService.php';
 require __DIR__ . '/code/post/postValidator.php';
+require __DIR__ . '/code/post/deletion/deletedPostsRepository.php';
+require __DIR__ . '/code/post/deletion/deletedPostsService.php';
 
 // quote_link
 require __DIR__ . '/code/quote_link/quoteLink.php';
@@ -175,6 +177,7 @@ require __DIR__ . '/code/routers/routes/rebuildRoute.php';
 require __DIR__ . '/code/routers/routes/registRoute.php';
 require __DIR__ . '/code/routers/routes/statusRoute.php';
 require __DIR__ . '/code/routers/routes/usrdelRoute.php';
+require __DIR__ . '/code/routers/routes/deletedPostsRoute.php';
 
 // template
 require __DIR__ . '/code/template/pageRenderer.php';

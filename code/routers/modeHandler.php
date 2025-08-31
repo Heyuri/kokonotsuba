@@ -191,6 +191,16 @@ class modeHandler {
 					$this->routeDiContainer->regularBoards
 				);
 				$route->drawManagePostsPage();
+			},
+			'deletedPosts' => function() {
+				$route = new deletedPostsRoute(
+					$this->routeDiContainer->board,
+					$this->routeDiContainer->adminPageRenderer,
+					$this->routeDiContainer->softErrorHandler,
+					$this->routeDiContainer->deletedPostsService,
+					$this->routeDiContainer->staffAccountFromSession
+				);
+				$route->deletedPostsModPage();
 			}
 		];
 	
