@@ -61,7 +61,8 @@ class moduleMain extends abstractModuleMain {
 		$dat = '';
 
 		$list_max = $this->moduleContext->threadRepository->threadCountFromBoard($this->moduleContext->board);
-		$page = $_GET['page']??0;
+		$page = filter_var($_GET['page'] ?? 0, FILTER_VALIDATE_INT);
+		$page = ($page === false) ? 0 : $page;
 		$page_max = ceil($list_max / $this->PAGE_DEF) - 1;
 
 		$sort = $_POST['sort_by'] ?? $_GET['sort_by'] ?? $_COOKIE['cat_sort_by'] ?? '';
