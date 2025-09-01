@@ -21,29 +21,28 @@ class attachmentRepository {
 	}
 
 	public function getAttachmentRecords(array $posts, bool $recursion): array {
-		addApostropheToArray($posts);
-		$placeholders = implode(', ', $posts);
+		$inClause = pdoPlaceholdersForIn($posts);
 
 		$query = $recursion
 			? "SELECT ext, tim, boardUID 
 			   FROM {$this->postTable} 
 			   WHERE 
 				   ext <> '' AND (
-					   post_uid IN ($placeholders)
+					   post_uid IN $inClause
 					   OR thread_uid IN (
 						   SELECT thread_uid
 						   FROM {$this->threadTable}
-						   WHERE post_op_post_uid IN ($placeholders)
+						   WHERE post_op_post_uid IN $inClause
 					   )
 				   )"
 			: "SELECT ext, tim, boardUID 
 				FROM {$this->postTable} 
 				WHERE 
-				   post_uid IN ($placeholders)
+				   post_uid IN $inClause
 				   AND ext <> ''
 				";
 
-		return $this->databaseConnection->fetchAllAsArray($query);
+		return $this->databaseConnection->fetchAllAsArray($query, $posts);
 	}
 
 	public function getAttachmentsFromThreads(array $threadUidList): array|false {
