@@ -8,6 +8,7 @@ class actionLoggerRepository {
 	) {}
 
 	public function getAmountOfLogEntries($filters = []): int {
+		$query = "SELECT COUNT(*) FROM {$this->actionLogTable} WHERE 1";
 		$params = [];
 		bindActionLogFiltersParameters($params, $query, $filters);
 		$count = $this->databaseConnection->fetchColumn($query, $params);
