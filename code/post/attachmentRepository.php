@@ -21,28 +21,32 @@ class attachmentRepository {
 	}
 
 	public function getAttachmentRecords(array $posts, bool $recursion): array {
-		$inClause = pdoPlaceholdersForIn($posts);
+		$postPlaceholders = pdoNamedPlaceholdersForIn($posts, 'post');
+		$params = $postPlaceholders['params'];
 
-		$query = $recursion
-			? "SELECT ext, tim, boardUID 
-			   FROM {$this->postTable} 
-			   WHERE 
-				   ext <> '' AND (
-					   post_uid IN $inClause
-					   OR thread_uid IN (
-						   SELECT thread_uid
-						   FROM {$this->threadTable}
-						   WHERE post_op_post_uid IN $inClause
-					   )
-				   )"
-			: "SELECT ext, tim, boardUID 
+		// Build the SQL query
+		if ($recursion) {
+			// If recursion is enabled, we need to use the same placeholders in both IN clauses
+			$query = "
+				SELECT ext, tim, boardUID 
 				FROM {$this->postTable} 
-				WHERE 
-				   post_uid IN $inClause
-				   AND ext <> ''
-				";
-
-		return $this->databaseConnection->fetchAllAsArray($query, $posts);
+				WHERE ext <> '' AND (
+					post_uid IN ({$postPlaceholders['placeholders']})
+					OR thread_uid IN (
+						SELECT thread_uid
+						FROM {$this->threadTable}
+						WHERE post_op_post_uid IN ({$postPlaceholders['placeholders']})
+					)
+   			 )";
+		} else {
+			// Without recursion, we only use the placeholders for the main IN clause
+			$query = "
+				SELECT ext, tim, boardUID 
+				FROM {$this->postTable} 
+				WHERE post_uid IN ({$postPlaceholders['placeholders']})
+				AND ext <> ''";
+		}
+		return $this->databaseConnection->fetchAllAsArray($query, $params);
 	}
 
 	public function getAttachmentsFromThreads(array $threadUidList): array|false {
