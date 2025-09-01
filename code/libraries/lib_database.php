@@ -42,3 +42,22 @@ function pdoPlaceholdersForIn(array $values): string {
 	}
 	return '(' . implode(', ', array_fill(0, count($values), '?')) . ')';
 }
+
+function pdoNamedPlaceholdersForIn(array $values, string $prefix): array {
+    $placeholders = [];
+    $params = [];
+
+    foreach ($values as $index => $value) {
+        // Sanitize the placeholder name using the prefix and index
+        $placeholder = ':' . $prefix . $index;
+
+        // Build the list of placeholders and their corresponding parameter values
+        $placeholders[] = $placeholder;
+        $params[$placeholder] = $value;
+    }
+
+    return [
+        'placeholders' => implode(',', $placeholders),
+        'params' => $params
+    ];
+}
