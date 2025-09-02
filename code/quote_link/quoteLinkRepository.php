@@ -153,14 +153,14 @@ class quoteLinkRepository {
 			return;
 		}
 
-		$idList = implode(',', array_map('intval', $quoteLinkIds));
-		$query = "UPDATE {$this->quoteLinkTable} SET board_uid = {$boardUid} WHERE quotelink_id IN ($idList)";
-		$this->databaseConnection->execute($query);
+		$inClause = pdoPlaceholdersForIn($quoteLinkIds);
+		$query = "UPDATE {$this->quoteLinkTable} SET board_uid = {$boardUid} WHERE quotelink_id IN $inClause";
+		$this->databaseConnection->execute($query, $quoteLinkIds);
 	}
 
 	public function getQuoteLinksFromHostPostUids(array $postUids): array {
-		$inClause = implode(',', array_map('intval', $postUids));
-		$query = "SELECT * FROM {$this->quoteLinkTable} WHERE host_post_uid IN ($inClause)";
-		return $this->databaseConnection->fetchAllAsClass($query, [], 'quoteLink');
+		$inClause = pdoPlaceholdersForIn($postUids);
+		$query = "SELECT * FROM {$this->quoteLinkTable} WHERE host_post_uid IN $inClause";
+		return $this->databaseConnection->fetchAllAsClass($query, $postUids, 'quoteLink');
 	}
 }
