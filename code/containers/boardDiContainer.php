@@ -13,6 +13,7 @@ class boardDiContainer {
 		public readonly postSearchService $postSearchService,
 		public readonly attachmentService $attachmentService,
 		public readonly postRedirectService $postRedirectService,
+		public readonly deletedPostsService $deletedPostsService,
 		public readonly transactionManager $transactionManager
     ) {}
 }

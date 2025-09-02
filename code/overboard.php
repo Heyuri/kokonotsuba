@@ -14,6 +14,7 @@ class overboard {
 		private readonly attachmentService $attachmentService,
 		private readonly actionLoggerService $actionLoggerService,
 		private readonly postRedirectService $postRedirectService,
+		private readonly deletedPostsService $deletedPostsService,
 		private transactionManager $transactionManager,
 		private moduleEngine $moduleEngine, 
 		private ?templateEngine $templateEngine
@@ -218,6 +219,7 @@ class overboard {
 			$this->attachmentService,
 			$this->actionLoggerService,
 			$this->postRedirectService,
+			$this->deletedPostsService,
 			$this->transactionManager,
 			$templateEngine, 
 			$board);

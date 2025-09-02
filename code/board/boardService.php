@@ -244,6 +244,7 @@ class boardService {
 			$this->boardDiContainer->attachmentService,
 			$this->boardDiContainer->actionLoggerService,
 			$this->boardDiContainer->postRedirectService,
+			$this->boardDiContainer->deletedPostsService,
 			$this->boardDiContainer->transactionManager,
 			$templateEngine, 
 			$board);

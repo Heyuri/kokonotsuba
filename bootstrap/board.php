@@ -21,6 +21,7 @@ $boardDiContainer = new boardDiContainer(
 	$boardPathService, 
 	$postSearchService,
 	$attachmentService,
+	$deletedPostsService,
 	$postRedirectService,
 	$transactionManager
 );
