@@ -33,6 +33,5 @@ $routeDiContainer = new routeDiContainer(
 	$visibleBoards,
 	$boardList,
 	$quoteLinkRepository,
-	$quoteLinkService,
-	$deletedPostsService
+	$quoteLinkService
 );
