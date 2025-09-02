@@ -154,8 +154,12 @@ class quoteLinkRepository {
 		}
 
 		$inClause = pdoPlaceholdersForIn($quoteLinkIds);
-		$query = "UPDATE {$this->quoteLinkTable} SET board_uid = {$boardUid} WHERE quotelink_id IN $inClause";
-		$this->databaseConnection->execute($query, $quoteLinkIds);
+		$query = "UPDATE {$this->quoteLinkTable} SET board_uid = ? WHERE quotelink_id IN $inClause";
+
+		// merge board uid into parameters
+		$parameters = array_merge([$boardUid], $quoteLinkIds);
+
+		$this->databaseConnection->execute($query, $parameters);
 	}
 
 	public function getQuoteLinksFromHostPostUids(array $postUids): array {
