@@ -70,9 +70,6 @@ class postRenderer {
 
 		$templateValues['{$POSTINFO_EXTRA}'] = '';
 
-		// bind the poster_hash value to placeholder
-		$templateValues['{$POSTER_HASH}'] = htmlspecialchars($data['poster_hash']);
-
 		// Admin controls hook (if admin mode is on)
 		if ($adminMode) {
 			$modFunc = '';
@@ -257,7 +254,6 @@ class postRenderer {
 	 */
 	private function preparePostData(array $post): array {
 		// Basic fields
-		$poster_hash = $post['poster_hash'];
 		$email = isset($post['email']) ? trim($post['email']) : '';
 		$name = $post['name'] ?? '';
 		$tripcode = $post['tripcode'] ?? '';
@@ -282,9 +278,6 @@ class postRenderer {
 		if ($this->config['ALLOW_NONAME'] == 2 && $email) {
 			$now = "<a href=\"mailto:$email\">$now</a>";
 		}
-	
-		// validate the poster hash
-		$poster_hash = $this->validatePosterHash($poster_hash);
 		
 		// Get full image URL
 		$imageURL = $this->FileIO->getImageURL($tim . $ext, $this->board);
@@ -303,7 +296,6 @@ class postRenderer {
 			'now' => $now,
 			'com' => $com,
 			'no' => $post['no'],
-			'poster_hash' => $poster_hash,
 			'is_op' => $post['is_op'],
 			'post_position' => $post['post_position'],
 			'sub' => $post['sub'],
