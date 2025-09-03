@@ -38,10 +38,10 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function renderPostFormCheckbox(string &$adminPostFormCheckbox): void {
 		// cookie for whether the checkbox is selected
-		$overidePostIdCookie = $_COOKIE['rawHtml'] ?? null;
+		$rawHtmlCookie = $_COOKIE['rawHtml'] ?? null;
 
 		// string for 'checked'
-		$checked = $overidePostIdCookie ? 'checked=""' : '';
+		$checked = $rawHtmlCookie ? 'checked=""' : '';
 
 		// checkbox html
 		$adminPostFormCheckbox .= '
@@ -57,13 +57,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		// if a post has been submitted with it selected, then set the cookie so its persistent
 		if($formRawHtml) {
 			setcookie("rawHtml", "1", time() + 86400, "/");
+
+            // html decode the comment html
+            $comment = htmlspecialchars_decode($comment);
 		}
 		// clear the cookie if it wasn't selected
 		else {
 			setcookie("rawHtml", "", time() - 3600, "/");
 		}
-
-        // html decode the comment html
-        $comment = htmlspecialchars_decode($comment);
 	}
 }
