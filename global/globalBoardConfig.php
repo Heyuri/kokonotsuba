@@ -309,6 +309,7 @@ $config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE'] = \Kokonotsuba\Root\Constants\u
 $config['AuthLevels']['CAN_EDIT_BLOTTER'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
 $config['AuthLevels']['CAN_MANAGE_POSTS'] = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR;
 $config['AuthLevels']['CAN_VIEW_ACTION_LOG'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_RAW_HTML'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
 
 // The duration (in seconds) of inactivity allowed before automatically logging out a staff user
 // This value must not exceed the value of session.gc_maxlifetime in your php.ini
