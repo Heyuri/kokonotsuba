@@ -20,6 +20,11 @@ class templateEngine {
 		if (isset($tplCache[$tplname])) {
 			$this->tpl = $tplCache[$tplname];
 		} else {
+			// die if the template file doesn't exist
+			if(!file_exists($tplname)) {
+				die("Template file ($tplname) doesn't exist for {$dependencies['boardData']['title']}");
+			}
+
 			$this->tpl = file_get_contents($tplname);
 			$tplCache[$tplname] = $this->tpl;
 		}
