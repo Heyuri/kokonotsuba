@@ -140,7 +140,6 @@ require __DIR__ . '/code/post/helper/defaultTextFillter.php';
 require __DIR__ . '/code/post/helper/fortuneGenerator.php';
 require __DIR__ . '/code/post/helper/postDateFormatter.php';
 require __DIR__ . '/code/post/helper/postFilterApplier.php';
-require __DIR__ . '/code/post/helper/postIDGenerator.php';
 require __DIR__ . '/code/post/helper/thumbnailCreator.php';
 require __DIR__ . '/code/post/helper/tripcodeProcessor.php';
 require __DIR__ . '/code/post/helper/webhookDispatcher.php';
