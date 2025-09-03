@@ -56,7 +56,7 @@ class boardRebuilder {
 		$pte_vals = $this->buildPteVals(true);
 		
 		// get form html
-		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml($resno, $pte_vals);
+		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml($resno, $pte_vals, $adminMode);
 
 		// Dispatch viewed thread hook
 		// This hook is one that only gets dispatched for threads that are being viewed through drawThread
@@ -83,7 +83,7 @@ class boardRebuilder {
 
 		$pageTitle = $this->getThreadPageTitle($opPost, $boardTitle);
 
-		$pageData = $this->buildFullPage($pte_vals, $pageTitle, $resno, true);
+		$pageData = $this->buildFullPage($pte_vals, $pageTitle, $resno, true, $adminMode);
 		echo $this->finalizePageData($pageData);
 	}
 
@@ -161,7 +161,7 @@ class boardRebuilder {
 		$pte_vals = $this->buildPteVals(false);
 
 		// build form html
-		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml(0, $pte_vals);
+		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml(0, $pte_vals, $adminMode);
 
 		// render thread html
 		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threadsInPage, $pte_vals, $adminMode);
@@ -170,7 +170,7 @@ class boardRebuilder {
 		$pte_vals['{$PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'));
 
 		// generate the whole page's html
-		$pageData = $this->buildFullPage($pte_vals, $this->board->getBoardTitle());
+		$pageData = $this->buildFullPage($pte_vals, $this->board->getBoardTitle(), $adminMode);
 		
 		// now output the page's html
 		echo $this->finalizePageData($pageData);
@@ -376,10 +376,10 @@ class boardRebuilder {
 		return $threadRenderer;
 	}
 
-	private function buildFormHtml(int $resno, array &$pte_vals): string {
+	private function buildFormHtml(int $resno, array &$pte_vals, bool $isStaff = false): string {
 		$moduleInfoHook = $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
 
-		$postFormHtml = $this->board->getBoardPostForm($resno, $moduleInfoHook, '', '', '', '', '', );
+		$postFormHtml = $this->board->getBoardPostForm($resno, $moduleInfoHook, '', '', '', '', '', $isStaff);
 		
 		return $postFormHtml;
 	}
@@ -390,10 +390,10 @@ class boardRebuilder {
 		$this->moduleEngine->dispatch('PlaceHolderIntercept', [&$pte_vals]);
 	}
 
-	private function buildFullPage(array $pte_vals, string $pageTitle, int $resno = 0, bool $isThreadView = false): string {
+	private function buildFullPage(array $pte_vals, string $pageTitle, int $resno = 0, bool $isThreadView = false, bool $isStaff = false): string {
 		$pageData = '';
 		
-		$pageData .= $this->board->getBoardHead($pageTitle, $resno);
+		$pageData .= $this->board->getBoardHead($pageTitle, $resno, $isStaff);
 
 		$pageData .= $this->templateEngine->ParseBlock('MAIN', $pte_vals);
 		

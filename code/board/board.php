@@ -251,14 +251,14 @@ class board implements IBoard {
 		return $threadUrl ?? '';
 	}
 
-	public function getBoardHead(string $pageTitle = '', int $threadNumber = 0): string {
-		$headHtml = generateHeadHtml($this->config, $this->templateEngine, $this->moduleEngine, $pageTitle, $threadNumber);
+	public function getBoardHead(string $pageTitle = '', int $threadNumber = 0, bool $isStaff = false): string {
+		$headHtml = generateHeadHtml($this->config, $this->templateEngine, $this->moduleEngine, $pageTitle, $threadNumber, $isStaff);
 
 		return $headHtml;
 	}
 
-	public function getBoardPostForm(int $resno = 0, string $moduleInfoHook = '', string $name = '', string $email = '', string $subject = '', string $comment = '', string $category = ''): string {
-		$postFormHtml = generatePostFormHTML($resno, $this, $this->config, $this->templateEngine, $this->moduleEngine, $moduleInfoHook, $name, $email, $subject, $comment, $category);
+	public function getBoardPostForm(int $resno = 0, string $moduleInfoHook = '', string $name = '', string $email = '', string $subject = '', string $comment = '', string $category = '', bool $isStaff = false): string {
+		$postFormHtml = generatePostFormHTML($resno, $this, $this->config, $this->templateEngine, $this->moduleEngine, $moduleInfoHook, $name, $email, $subject, $comment, $category, $isStaff);
 	
 		return $postFormHtml;
 	}

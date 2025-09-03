@@ -1,9 +1,9 @@
 <?php
 
-function generateHeadHtml(array $config, ?templateEngine $templateEngine, moduleEngine $moduleEngine, string $pageTitle = '', int $resno = 0) {
+function generateHeadHtml(array $config, ?templateEngine $templateEngine, moduleEngine $moduleEngine, string $pageTitle = '', int $resno = 0, bool $isStaff = false) {
 	$html = '';
 
-	$pte_vals = prepareBaseTemplateValues($resno);
+	$pte_vals = prepareBaseTemplateValues($resno, $isStaff);
 
 	$pte_vals['{$PAGE_TITLE}'] = $pageTitle;
 
@@ -27,11 +27,11 @@ function generateHeadHtml(array $config, ?templateEngine $templateEngine, module
 	return $html;
 }
 
-function prepareBaseTemplateValues($resno) {
+function prepareBaseTemplateValues(int $resno, bool $isStaff) {
 	return array(
 		'{$RESTO}' => $resno ? $resno : '',
 		'{$IS_THREAD}' => boolval($resno),
-		'{$IS_STAFF}' => isActiveStaffSession()
+		'{$IS_STAFF}' => $isStaff
 	);
 }
 
@@ -69,12 +69,13 @@ function generatePostFormHTML(int $resno,
 	string $email = '',
 	string $subject = '',
 	string $comment = '',
-	string $category = ''
+	string $category = '',
+	bool $isStaff = false
 ) {
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$isThread = $resno != 0;
 
-	$pte_vals = preparePostFormTemplateValues($resno, $config['LIVE_INDEX_FILE'], $name, $email, $subject, $comment, $config, $isThread, $moduleInfoHook);
+	$pte_vals = preparePostFormTemplateValues($resno, $config['LIVE_INDEX_FILE'], $name, $email, $subject, $comment, $config, $isThread, $moduleInfoHook, $isStaff);
 
 	if (!$config['TEXTBOARD_ONLY'] && ($config['RESIMG'] || !$resno)) {
 		$pte_vals['{$FORM_ATTECHMENT_FIELD}'] = '<input type="file" name="upfile" id="upfile">';
@@ -109,12 +110,12 @@ function generatePostFormHTML(int $resno,
 	return $templateEngine->ParseBlock('POST_AREA', $pte_vals);
 }
 
-function preparePostFormTemplateValues(int $resno, ?string $liveIndexFile, ?string $name, ?string $email, ?string $subject, ?string $comment, array $config, bool $isThread, ?string $moduleInfoHook) {
+function preparePostFormTemplateValues(int $resno, ?string $liveIndexFile, ?string $name, ?string $email, ?string $subject, ?string $comment, array $config, bool $isThread, ?string $moduleInfoHook, bool $isStaff = false) {
 	$hidinput = $resno ? '<input type="hidden" name="resto" value="' . $resno . '">' : '';
 
 	return array(
 		'{$RESTO}' => strval($resno),
-		'{$IS_STAFF}' => isActiveStaffSession(),
+		'{$IS_STAFF}' => $isStaff,
 		'{$FORM_STAFF_CHECKBOXES}' => '',
 		'{$GLOBAL_MESSAGE}' => '',
 		'{$PHP_SELF}' => $liveIndexFile,
