@@ -188,6 +188,9 @@ $config['ModuleSettings']['MINIMUM_ROLE'] = \Kokonotsuba\Root\Constants\userRole
 //mod_pushpost
 $config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'] = 250;
 
+// posterID
+$config['ModuleSettings']['DISP_ID'] = false; // Display IDs
+
 $config['BAD_STRING'] = array(); // Deprecated by spamdb
 $config['BAD_FILEMD5'] = array(); // Deprecated by spamdb
 $config['BANPATTERN'] = array(); // Deprecated by adminban module
@@ -233,8 +236,6 @@ $config['REF_URL'] = ''; // URL prefix, eg: https://jump.heyuri.net
 $config['VIDEO_EXT'] = 'WEBM|MP4'; // What filetypes will be loaded as a video
 
 $config['ALLOW_NONAME'] = 1; // Allow posters to submit without names
-$config['DISP_ID'] = 0; // 2 enables, 0 disables
-$config['ID_MODE'] = 0; // Leave 0, do not change
 $config['CLEAR_SAGE'] = 0; // Disable sage if true
 $config['NOTICE_SAGE'] = 1; // Visible sage ("SAGE!")
 $config['USE_QUOTESYSTEM'] = 1; // Enable >>1234
