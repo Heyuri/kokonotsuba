@@ -46,7 +46,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// checkbox html
 		$adminPostFormCheckbox .= '
 			<span class="postFormAdminFunc overidePostId">
-				<label class="filterSelectBoardItem" title="If enabled, your post\'s hash will be generated normally"><input name="formModIdOveride" type="checkbox" value="on" ' . htmlspecialchars($checked) . '>Hide ID</label>
+				<label title="If enabled, your post\'s hash will be generated normally"><input name="formModIdOveride" type="checkbox" value="on" ' . htmlspecialchars($checked) . '>Hide ID</label>
 			</span>';
 	}
 
