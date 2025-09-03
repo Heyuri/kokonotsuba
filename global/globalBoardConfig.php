@@ -79,6 +79,7 @@ $config['ModuleList'] = array(
 	'fieldTraps' => true,
 	'readOnly' => false,
 	'viewIp' => true,
+	'posterID' => true,
 	/* misc */
 	'soudane' => true,
 	'privateMessage' => true,
