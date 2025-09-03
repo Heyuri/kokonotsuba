@@ -38,7 +38,6 @@ class registRoute {
 		$fortuneGenerator = new fortuneGenerator($this->config['FORTUNES']);
 		$postFilterApplier = new postFilterApplier($this->config, $fortuneGenerator);
 		$postDateFormatter = new postDateFormatter($this->config);
-		$postIdGenerator = new postIdGenerator($this->config, $this->board, $this->staffSession);
 		$agingHandler = new agingHandler($this->config, $this->threadRepository);
 		$webhookDispatcher = new webhookDispatcher($this->board, $this->config);
 
@@ -62,7 +61,6 @@ class registRoute {
 			$defaultTextFiller,
 			$postFilterApplier,
 			$postDateFormatter,
-			$postIdGenerator,
 			$agingHandler,
 		) {
 
@@ -91,7 +89,7 @@ class registRoute {
 			$this->processPostDetails($postData, $tripcodeProcessor, $defaultTextFiller, $postFilterApplier);
 
 			// Step 7: Final data prep (timestamps, password hashing, unique ID)
-			$computedPostInfo = $this->preparePostMetadata($postData, $postDateFormatter, $postIdGenerator, $fileMeta['file']);
+			$computedPostInfo = $this->preparePostMetadata($postData, $postDateFormatter, $fileMeta['file']);
 
 			// Step 8: Validate post for database storage
 			$this->postValidator->validateForDatabase(
@@ -112,7 +110,7 @@ class registRoute {
 			$this->moduleEngine->dispatch('RegistBeforeCommit', [
 				&$postData['name'], &$postData['email'], &$postData['sub'], &$postData['comment'],
 				&$postData['category'], &$postData['age'], $fileMeta['file'],
-				$postData['isReply'], &$postData['status'], $thread
+				$postData['isReply'], &$postData['status'], $thread, &$computedPostInfo['poster_hash']
 			]);
 
 			$postRegistData = new postRegistData(
@@ -284,7 +282,7 @@ class registRoute {
 			'ip' => $postData['ip'], 
 			'isThreadSubmit' => empty($postData['thread_uid']),
 			'roleLevel' => $postData['roleLevel'],
-			'thread' => $thread
+			'thread' => $thread,
 		];
 
 		$this->moduleEngine->dispatch('RegistBegin', [&$registInfo]);
@@ -357,7 +355,7 @@ class registRoute {
 	}
 
 	// prepare post meta data
-	private function preparePostMetadata(array &$postData, postDateFormatter $postDateFormatter, postIdGenerator $postIdGenerator, file $file): array {
+	private function preparePostMetadata(array &$postData, postDateFormatter $postDateFormatter, file $file): array {
 		if ($postData['pwd'] == '') {
 			$postData['pwd'] = ($postData['pwdc'] == '') ? substr(rand(), 0, 8) : $postData['pwdc'];
 		}
@@ -366,14 +364,16 @@ class registRoute {
 		$no = $this->board->getLastPostNoFromBoard() + 1;
 		$is_op = $postData['resno'] ? false : true;
 		$now = $postDateFormatter->formatFromTimestamp($postData['time']);
-		$poster_hash = $postIdGenerator->generate($postData['email'], $postData['time'], $postData['resno']);
-	
+
+		// empty poster hash (the value gets set by the module)
+		$poster_hash = '';
+
 		return [
 			'no' => $no,
 			'is_op' => $is_op,
 			'pass' => $pass,
 			'now' => $now,
-			'poster_hash' => $poster_hash,
+			'poster_hash' => '',
 			'dest' => $file->getTemporaryFileName(),
 			'timeInMilliseconds' => $postData['timeInMilliseconds']
 		];
