@@ -40,7 +40,7 @@ class moduleMain extends abstractModuleMain {
 		$arrLabels['{$POSTER_HASH}'] = htmlspecialchars($post['poster_hash']);
 	}
 
-	private function onBeforeCommit(string &$poster_hash, string $email, array $thread): void {
+	private function onBeforeCommit(string &$poster_hash, string $email, array|false $thread): void {
 		// get the role level from the session
 		$roleLevel = getRoleLevelFromSession();
 
