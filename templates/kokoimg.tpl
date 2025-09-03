@@ -116,6 +116,16 @@
 						<td class="postblock"><label for="pwd">Password</label></td>
 						<td class="postformInputCell">{$FORM_DELETE_PASSWORD_FIELD}<span id="delPasswordInfo">(for deletion, 8 chars max)</span>{$FORM_EXTRA_COLUMN}</td>
 					</tr>
+					<!--&IF($IS_STAFF,'<tr>
+						<td class="postblock"><label for="postFormAdmin">Magic</label></td>
+						<td class="postformInputCell">
+							<div class="postFormAdminContainer">
+								<span class="postFormAdminCheckboxes"> 
+									{$FORM_STAFF_CHECKBOXES} 
+								</span>
+							</div>
+						</td>
+					</tr>','')-->
 					<tr>
 						<td id="rules" colspan="2">
 							<ul class="rules">
