@@ -65,6 +65,7 @@ $config['ModuleList'] = array(
 	'blotter' => true,
 	'janitor' => true,
 	'moveThread' => true,
+	'rawHtml' => true,
 	/* thread modes */
 	'autoSage' => true,
 	'lockThread' => true,
