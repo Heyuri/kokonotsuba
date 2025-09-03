@@ -9,7 +9,6 @@ use Kokonotsuba\Root\Constants\userRole;
 use RuntimeException;
 use staffAccountFromSession;
 
-// auto sage module made for kokonotsuba by deadking
 class moduleAdmin extends abstractModuleAdmin {
     // property to store the url of the module
     private string $myPage;
