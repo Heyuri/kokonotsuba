@@ -44,6 +44,5 @@ class routeDiContainer {
 		public array $regularBoards,
 		public quoteLinkRepository $quoteLinkRepository,
 		public quoteLinkService $quoteLinkService,
-		public deletedPostsService $deletedPostsService
 	) {}
 }
