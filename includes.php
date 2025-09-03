@@ -176,7 +176,6 @@ require __DIR__ . '/code/routers/routes/rebuildRoute.php';
 require __DIR__ . '/code/routers/routes/registRoute.php';
 require __DIR__ . '/code/routers/routes/statusRoute.php';
 require __DIR__ . '/code/routers/routes/usrdelRoute.php';
-require __DIR__ . '/code/routers/routes/deletedPostsRoute.php';
 
 // template
 require __DIR__ . '/code/template/pageRenderer.php';
