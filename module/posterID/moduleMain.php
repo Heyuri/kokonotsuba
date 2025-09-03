@@ -44,14 +44,30 @@ class moduleMain extends abstractModuleMain {
 		// get the role level from the session
 		$roleLevel = getRoleLevelFromSession();
 
-		// get the thread data
-		$threadData = $thread['thread'];
-
-		// get the thread number for the hash
-		$threadNumber = $threadData['post_op_number'];
+		// get the thread number for the hash method
+		$threadNumber = $this->getThreadNumber($thread);
 
 		// generate the hash for a user's post
 		$poster_hash = $this->generatePostHash($threadNumber, $email, $roleLevel);
+	}
+
+	private function getThreadNumber(array|false $thread): int {
+		// if the thread doesn't exist then this means the post is a new thread - so the thread number will be the next post number
+		if(!$thread) {
+			// return the next post number
+			return $this->moduleContext->board->getLastPostNoFromBoard() + 1;
+		} 
+		// if we're replying to a thread then get the thread number from the thread data
+		else {
+			// get the thread data
+			$threadData = $thread['thread'];
+
+			// get the thread number for the hash
+			$threadNumber = $threadData['post_op_number'];
+		
+			// return threead number
+			return $threadNumber;
+		}
 	}
 
 	private function generatePostHash(int $threadNumber, string $email, userRole $roleLevel): string {
@@ -65,8 +81,7 @@ class moduleMain extends abstractModuleMain {
 		} else {
 			$ip = new IPAddress;
 			$idSeed = $this->getConfig('IDSEED');
-			$postNo = $threadNumber ? $threadNumber : ($this->moduleContext->board->getLastPostNoFromBoard() + 1);
-			$baseString = $ip . $idSeed . $postNo;
+			$baseString = $ip . $idSeed . $threadNumber;
 
 			return substr(crypt(md5($baseString), 'id'), -8);
 		}
