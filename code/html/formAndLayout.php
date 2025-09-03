@@ -88,6 +88,8 @@ function generatePostFormHTML(int $resno,
 
 	$moduleEngine->dispatch('PostForm', array(&$pte_vals['{$FORM_EXTRA_COLUMN}'])); // Hook: PostForm
 
+	$moduleEngine->dispatch('PostFormAdmin', array(&$pte_vals['{$FORM_STAFF_CHECKBOXES}'])); // Hook: PostFormAdmin
+
 	if ($config['USE_CATEGORY']) {
 		$pte_vals['{$FORM_CATEGORY_FIELD}'] = '<input type="text" name="category" id="category" value="' . $category . '" class="inputtext">';
 	}
@@ -112,6 +114,8 @@ function preparePostFormTemplateValues(int $resno, ?string $liveIndexFile, ?stri
 
 	return array(
 		'{$RESTO}' => strval($resno),
+		'{$IS_STAFF}' => isActiveStaffSession(),
+		'{$FORM_STAFF_CHECKBOXES}' => '',
 		'{$GLOBAL_MESSAGE}' => '',
 		'{$PHP_SELF}' => $liveIndexFile,
 		'{$BLOTTER}' => '',
