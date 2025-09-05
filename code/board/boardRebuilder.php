@@ -170,7 +170,7 @@ class boardRebuilder {
 		$pte_vals['{$PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'));
 
 		// generate the whole page's html
-		$pageData = $this->buildFullPage($pte_vals, $this->board->getBoardTitle(), $adminMode);
+		$pageData = $this->buildFullPage($pte_vals, $this->board->getBoardTitle(), 0, false, $adminMode);
 		
 		// now output the page's html
 		echo $this->finalizePageData($pageData);
