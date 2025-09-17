@@ -23,6 +23,7 @@ $boardDiContainer = new boardDiContainer(
 	$attachmentService,
 	$postRedirectService,
 	$deletedPostsService,
+	$fileService,
 	$transactionManager
 );
 
