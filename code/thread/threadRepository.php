@@ -1,25 +1,91 @@
 <?php
 
 class threadRepository {
-	private string $postTable;
-	private string $threadTable;
 	private array $allowedOrderFields;
-	private DatabaseConnection $databaseConnection;
 
-	public function __construct(DatabaseConnection $databaseConnection, string $postTable, string $threadTable) {
-		$this->databaseConnection = $databaseConnection;
-		$this->postTable = $postTable;
-		$this->threadTable = $threadTable;
+	public function __construct(
+		private DatabaseConnection $databaseConnection, 
+		private string $postTable, 
+		private string $threadTable, 
+		private string $deletedPostsTable,
+		private string $fileTable) {
 		$this->allowedOrderFields = ['last_bump_time', 'last_reply_time', 'thread_created_time', 'post_op_number'];
 	}
 
+	private function getBaseThreadQuery(): string {
+		// generate thread query
+		$query = "
+				SELECT 
+					t.*,
+					dp.open_flag AS thread_deleted,
+					dp.file_only AS thread_attachment_deleted,
+					dp.by_proxy
+				FROM {$this->threadTable} t
+				LEFT JOIN (
+			 	   SELECT dp1.post_uid, dp1.open_flag, dp1.file_only, dp1.by_proxy
+			 	   FROM {$this->deletedPostsTable} dp1
+			 	   INNER JOIN (
+			 		   SELECT post_uid, MAX(deleted_at) AS max_deleted_at
+			 		   FROM {$this->deletedPostsTable}
+			 		   GROUP BY post_uid
+			 	   ) dp2 ON dp1.post_uid = dp2.post_uid AND dp1.deleted_at = dp2.max_deleted_at
+				) dp ON t.post_op_post_uid = dp.post_uid
+		";
+
+		// return query
+		return $query;
+	}
+
+	private function getBaseCountThreadQuery(): string {
+		// get join clause
+		$joinClause = $this->getBaseThreadJoinClause();
+		
+		// generate thread count query
+		$query = "
+			SELECT COUNT(thread_uid),
+					t.*,					
+					dp.open_flag AS thread_deleted,
+					dp.file_only AS thread_attachment_deleted
+			FROM {$this->threadTable} t
+			$joinClause 
+		";
+
+		// return query
+		return $query;
+	}
+
+	private function getBaseThreadJoinClause(): string {
+		// join clause for thread data
+		$joinClause = "
+			LEFT JOIN (
+			 	   SELECT dp1.post_uid, dp1.open_flag, dp1.file_only, dp1.by_proxy
+			 	   FROM {$this->deletedPostsTable} dp1
+			 	   INNER JOIN (
+			 		   SELECT post_uid, MAX(deleted_at) AS max_deleted_at
+			 		   FROM {$this->deletedPostsTable}
+			 		   GROUP BY post_uid
+			 	   ) dp2 ON dp1.post_uid = dp2.post_uid AND dp1.deleted_at = dp2.max_deleted_at
+			) dp ON t.post_op_post_uid = dp.post_uid";
+	
+		// return join clause
+		return $joinClause;
+	}
+
 	public function getThreadByUid(string $thread_uid): array|false {
-		$query = "SELECT * FROM {$this->threadTable} WHERE thread_uid = :thread_uid";
+		// get base thread query
+		$query = $this->getBaseThreadQuery();
+
+		// append WHERE query
+		// select thread by `thread_uid`
+		$query .= " WHERE thread_uid = :thread_uid";
+
 		$params = [':thread_uid' => (string) $thread_uid];
+		
 		$threadData = $this->databaseConnection->fetchOne($query, $params);	
 	
 		return $threadData;
 	}
+
 	/* Get all threads from all boards */
 	public function getAllThreads() {
 		$query = "SELECT * FROM {$this->threadTable} ORDER BY last_bump_time DESC";
@@ -105,8 +171,19 @@ class threadRepository {
 		return $lastThreadTime;
 	}
 
-	public function getFilteredThreadCount($filters = []) {
-		$query = "SELECT COUNT(thread_uid) FROM {$this->threadTable} WHERE 1";
+	public function getFilteredThreadCount($filters = [], bool $includeDeleted = false) {
+		// get base count query
+		$query = $this->getBaseCountThreadQuery();
+
+		// append WHERE clause
+		// filter the whole db if not filtered
+		$query .= " WHERE 1";
+
+		// exclude the threads where the op post was deleted
+		if(!$includeDeleted) {
+			$query = $this->excludeDeletedPostsCondition($query);
+		}
+
 		$params = [];
 		
 		bindThreadFilterParameters($params, $query, $filters); //apply filtration to query
@@ -116,14 +193,18 @@ class threadRepository {
 		return $threads;
 	}
 
-	public function fetchFilteredThreads(array $filters, string $order, int $amount, int $offset): array {
-		$query = "
-			SELECT t.thread_uid, t.post_op_post_uid, t.thread_created_time, t.last_bump_time, t.last_reply_time, 
-				   t.post_op_number, p.status, t.boardUID
-			FROM {$this->threadTable} t
-			JOIN {$this->postTable} p ON t.post_op_post_uid = p.post_uid
-			WHERE 1";
+	public function fetchFilteredThreads(array $filters, string $order, int $amount, int $offset, bool $includeDeleted = false): array {
+		// get thread query
+		$query = $this->getBaseThreadQuery();
 	
+		// apppend WHERE
+		$query .= " WHERE 1";
+
+		// exclude the threads where the op post was deleted
+		if(!$includeDeleted) {
+			$query = $this->excludeDeletedPostsCondition($query);
+		}
+
 		$params = [];
 
 		if (!empty($filters['board']) && is_array($filters['board'])) {
@@ -240,41 +321,7 @@ class threadRepository {
 		return $indexed;
 	}
 
-
-	// get all replies from a thread
-	public function getAllPostsFromThreads(array $threadUIDs): array {
-		if (empty($threadUIDs)) {
-			return [];
-		}
-	
-		// Ensure values are unique and sanitized
-		$threadUIDs = array_map('strval', array_unique($threadUIDs));
-		$placeholders = implode(',', array_fill(0, count($threadUIDs), '?'));
-	
-		// Fetch all posts for the given threads
-		$query = "
-			SELECT p.*
-			FROM {$this->postTable} p
-			WHERE p.thread_uid IN ($placeholders)
-			ORDER BY p.thread_uid, p.post_uid
-		";
-	
-		$results = $this->databaseConnection->fetchAllAsArray($query, $threadUIDs);
-	
-		// Group all posts by thread_uid
-		$grouped = [];
-		foreach ($results as $row) {
-			$threadUID = $row['thread_uid'];
-			if (!isset($grouped[$threadUID])) {
-				$grouped[$threadUID] = [];
-			}
-			$grouped[$threadUID][] = $row;
-		}
-	
-		return $grouped;
-	}
-
-		/**
+	/**
 	* Bump a discussion thread to the top.
 	*/
 	public function bumpThread(string $threadID): void {
@@ -297,7 +344,7 @@ class threadRepository {
 		$this->databaseConnection->execute($query, $params);
 	}
 
-	public function getThreadsFromBoard(int $boardUid, int $limit = 50, int $offset = 0, string $orderBy = 'last_bump_time', string $direction = 'DESC'): array|null {
+	public function getThreadsFromBoard(int $boardUid, int $limit = 50, int $offset = 0, string $orderBy = 'last_bump_time', string $direction = 'DESC', bool $includeDeleted = false): array|null {
 		// Ensure limit and offset are non-negative integers
 		$limit = max(0, (int)$limit);
 		$offset = max(0, (int)$offset);
@@ -315,13 +362,30 @@ class threadRepository {
 		// Construct the SQL query with ORDER BY, LIMIT, and OFFSET
 		$query = "
 			SELECT * 
-			FROM {$this->threadTable}
-			WHERE boardUID = :board_uid
-			ORDER BY is_sticky DESC, $orderBy $direction
+			FROM {$this->threadTable} t
+			LEFT JOIN (
+				SELECT dp1.post_uid, dp1.open_flag, dp1.file_only, dp1.by_proxy
+				FROM {$this->deletedPostsTable} dp1
+				INNER JOIN (
+					SELECT post_uid, MAX(deleted_at) AS max_deleted_at
+					FROM {$this->deletedPostsTable}
+					GROUP BY post_uid
+				) dp2 ON dp1.post_uid = dp2.post_uid AND dp1.deleted_at = dp2.max_deleted_at
+			) dp ON t.post_op_post_uid = dp.post_uid
+			WHERE boardUID = :board_uid 
 		";
 
+		// exclude the threads where the op post was deleted
+		if(!$includeDeleted) {
+			$query = $this->excludeDeletedPostsCondition($query);
+		}
+
+		// add thread order
+		$query .= " ORDER BY is_sticky DESC, $orderBy $direction";
+
+		// add thread limit
 		if($limit) {
-			$query .= "LIMIT {$limit} OFFSET {$offset}";
+			$query .= " LIMIT {$limit} OFFSET {$offset}";
 		}
 
 		// Bind parameters to prevent SQL injection
@@ -333,42 +397,55 @@ class threadRepository {
 		return $threads;
 	}
 
-
-	public function getPostsFromThread(string $threadUID): array|null {
-		$query = "SELECT * FROM {$this->postTable} WHERE thread_uid = :thread_uid";
-		$params = [
-			':thread_uid' => $threadUID
-		];
-		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
-		
-		//get posts from parent thread
-		if(!$posts) {
-			$query = "SELECT * FROM {$this->postTable} 
-								WHERE thread_uid = (
-								SELECT thread_uid 
-								FROM {$this->postTable} 
-								WHERE post_uid = :post_uid
-								)";
-			$params = [':post_uid' => $threadUID]; // Rename to avoid confusion
-			$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
-		}
-		
-		return $posts ?? false;
+	private function excludeDeletedPostsCondition(string $query): string {
+		$query .= " AND (COALESCE(dp.open_flag, 0) = 0
+					OR COALESCE(dp.file_only, 0) = 1
+					OR COALESCE(dp.by_proxy, 0) = 1)";
+		// return modified query
+		return $query;
 	}
 
-	public function getPostsForThreads(array $threadUIDs): array {
+	public function getPostsFromThread(string $threadUID, bool $includeDeleted = false): array|null {
+		// Generate the base query
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
+
+		// Add the condition specific to this method (fetching posts for a single thread)
+		$query .= " WHERE p.thread_uid = :thread_uid";
+
+		// If we do not want to include deleted posts, add the condition to exclude them
+		if(!$includeDeleted) {
+			$query = $this->excludeDeletedPostsCondition($query);
+		}
+
+		// append ORDER BY clause
+		$query .= " ORDER BY p.post_uid ASC";
+
+		$params = [':thread_uid' => $threadUID];
+
+		// Execute the query and return results
+		return $this->databaseConnection->fetchAllAsArray($query, $params) ?? [];
+	}
+
+	public function getPostsForThreads(array $threadUIDs, bool $includeDeleted = false): array {
 		if (empty($threadUIDs)) return [];
 
-		$inClause = implode(',', array_fill(0, count($threadUIDs), '?'));
+		// Generate the base query
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
 
-		$query = "
-			SELECT *
-			FROM {$this->postTable}
-			WHERE thread_uid IN ($inClause)
-			ORDER BY no ASC
-		";
+		// Add the condition specific to this method (fetching posts for multiple threads)
+		$inClause = pdoPlaceholdersForIn($threadUIDs);
+		$query .= " WHERE p.thread_uid IN $inClause";
 
-		return $this->databaseConnection->fetchAllAsArray($query, $threadUIDs);
+		// If we do not want to include deleted posts, add the condition to exclude them
+		if(!$includeDeleted) {
+			$query = $this->excludeDeletedPostsCondition($query);
+		}
+
+		// add adirection/order
+		$query .= " ORDER BY p.no ASC";
+
+		// Execute the query and return results
+		return $this->databaseConnection->fetchAllAsArray($query, $threadUIDs) ?? [];
 	}
 
 	public function getAllAttachmentsFromThread($thread_uid) {
@@ -380,9 +457,29 @@ class threadRepository {
 	}
 
 	/* Get number of discussion threads */
-	public function threadCountFromBoard($board) {
-		$query = "SELECT COUNT(thread_uid) FROM {$this->threadTable} WHERE boardUID = :board_uid";
-		return $this->databaseConnection->fetchColumn($query, [':board_uid' => $board->getBoardUID()]);
+	public function threadCountFromBoard(board $board, bool $includeDeleted = false) {
+		// get board uid
+		$boardUid = $board->getBoardUID();
+
+		// get base count query
+		$query = $this->getBaseCountThreadQuery();
+
+		// append WHERE query
+		// filter by boardUID
+		$query .= " WHERE t.boardUID = :board_uid";
+
+
+		
+		// params
+		$params = [
+			':board_uid' => $boardUid,
+		];
+
+		// fetch column from db
+		$threadCount = $this->databaseConnection->fetchValue($query, $params);
+
+		// return threadCount
+		return $threadCount;
 	}
 
 	public function getPostCountFromThread($threadUID) {

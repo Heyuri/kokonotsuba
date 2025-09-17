@@ -2,6 +2,7 @@
 
 class boardRebuilder {
 	private array $config;
+	private bool $adminMode;
 
 	public function __construct(
 		private board $board, 
@@ -18,24 +19,28 @@ class boardRebuilder {
 		if (empty($this->config)) {
 			die("No board config for {$board->getBoardTitle()}:{$board->getBoardUID()}");
 		}
+
+		// whether its a mod thats logged in
+		// used for admin-specific views
+		$this->adminMode = isActiveStaffSession();
 	}
 
 	public function drawThread(int $resno): void {
-
-		$adminMode = isActiveStaffSession();
-
 		$uid = $this->threadRepository->resolveThreadUidFromResno($this->board, $resno);
-		$threadData = $this->threadService->getThreadByUID($uid);
+		$threadData = $this->threadService->getThreadByUID($uid, $this->adminMode);
+		
+		// get the thread row
+		$thread = $threadData['thread'];
 
+		// whether the thread has been deleted
+		$threadDeleted = $thread['thread_deleted'] ?? null;
 
 		// Throw a 404 error if the thread isn't found
-		if (!$threadData) {
+		// Also throw a 404 if the thread was deleted
+		if (!$threadData || ($threadDeleted && !$this->adminMode)) {
 			$this->softErrorHandler->errorAndExit("Thread not found!", 404);
 			return;
 		}
-
-		// get the thread row
-		$thread = $threadData['thread'];
 
 		// get the posts from the thread
 		$posts = $threadData['posts'];
@@ -47,7 +52,7 @@ class boardRebuilder {
 		$hiddenReply = 0;
 
 		// get quote links for thread
-		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByPostUids($postUids);
+		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByPostUids($postUids, $this->adminMode);
 
 		// init thread and post renderer
 		$threadRenderer = $this->getThreadRenderer($quoteLinksFromBoard);
@@ -56,7 +61,7 @@ class boardRebuilder {
 		$pte_vals = $this->buildPteVals(true);
 		
 		// get form html
-		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml($resno, $pte_vals, $adminMode);
+		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml($resno, $pte_vals, $this->adminMode);
 
 		// Dispatch viewed thread hook
 		// This hook is one that only gets dispatched for threads that are being viewed through drawThread
@@ -69,7 +74,7 @@ class boardRebuilder {
 			$posts,
 			$hiddenReply,
 			false,
-			$adminMode,
+			$this->adminMode,
 			0,
 			'',
 			'',
@@ -83,7 +88,7 @@ class boardRebuilder {
 
 		$pageTitle = $this->getThreadPageTitle($opPost, $boardTitle);
 
-		$pageData = $this->buildFullPage($pte_vals, $pageTitle, $resno, true, $adminMode);
+		$pageData = $this->buildFullPage($pte_vals, $pageTitle, $resno, true, $this->adminMode);
 		echo $this->finalizePageData($pageData);
 	}
 
@@ -127,9 +132,6 @@ class boardRebuilder {
 	}
 
 	public function drawPage(int $page = 0): void {
-		// whether the user is logged in
-		$adminMode = isActiveStaffSession();
-
 		// url of the board
 		$boardUrl = $this->board->getBoardURL();
 
@@ -143,34 +145,34 @@ class boardRebuilder {
 		$previewCount = $this->config['RE_DEF'];
 
 		// get threads + previews for this page
-		$threadsInPage = $this->postService->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset);
+		$threadsInPage = $this->postService->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset, $this->adminMode);
 		
 		// post uids of posts that are rendered
 		$postUidsInPage = getPostUidsFromThreadArrays($threadsInPage);
 
 		// get all associated quote links for the page
-		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage);
+		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage, $this->adminMode);
 
 		// init thread renderer + post renderer
 		$threadRenderer = $this->getThreadRenderer($quoteLinksFromPage);
 
 		// total thread count
-		$totalThreads = count($this->threadService->getThreadListFromBoard($this->board));
+		$totalThreads = $this->threadRepository->threadCountFromBoard($this->board, $this->adminMode);
 
 		// init placeholder template values
 		$pte_vals = $this->buildPteVals(false);
 
 		// build form html
-		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml(0, $pte_vals, $adminMode);
+		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml(0, $pte_vals, $this->adminMode);
 
 		// render thread html
-		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threadsInPage, $pte_vals, $adminMode);
+		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threadsInPage, $pte_vals, $this->adminMode);
 
 		// thread pager
 		$pte_vals['{$PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'));
 
 		// generate the whole page's html
-		$pageData = $this->buildFullPage($pte_vals, $this->board->getBoardTitle(), 0, false, $adminMode);
+		$pageData = $this->buildFullPage($pte_vals, $this->board->getBoardTitle(), 0, false, $this->adminMode);
 		
 		// now output the page's html
 		echo $this->finalizePageData($pageData);
@@ -330,8 +332,6 @@ class boardRebuilder {
 
 
 	private function buildPteVals(bool $isThreadView): array {
-		$adminMode = isActiveStaffSession();
-	
 		$pte_vals = [
 			'{$THREADS}' => '',
 			'{$THREADFRONT}' => '',
@@ -339,7 +339,7 @@ class boardRebuilder {
 			'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel">' . _T('del_head'),
 			'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 			'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
-			'{$DEL_PASS_TEXT}' => ($adminMode ? '<input type="hidden" name="func" value="delete">' : '') . _T('del_pass'),
+			'{$DEL_PASS_TEXT}' => ($this->adminMode ? '<input type="hidden" name="func" value="delete">' : '') . _T('del_pass'),
 			'{$DEL_PASS_FIELD}' => '<input type="password" class="inputtext" name="pwd" id="pwd2" value="">',
 			'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="' . _T('del_btn') . '">',
 			'{$IS_THREAD}' => $isThreadView,

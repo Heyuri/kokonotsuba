@@ -5,32 +5,9 @@ class quoteLinkRepository {
 		private DatabaseConnection $databaseConnection,
 		private readonly string $quoteLinkTable,
 		private readonly string $postTable,
-		private readonly string $threadTable
+		private readonly string $threadTable,
+		private readonly string $deletedPostsTable
 	) {}
-
-	private function getQuoteLinkQuery(): string {
-		$query = "
-			SELECT 
-				q.quotelink_id,
-				q.board_uid,
-				q.target_post_uid,
-				q.host_post_uid,
-
-				tp.no AS target_no,
-				tt.post_op_number AS target_post_op_number,
-
-				hp.no AS host_no,
-				ht.post_op_number AS host_post_op_number
-			FROM {$this->quoteLinkTable} q
-			JOIN {$this->postTable} tp ON q.target_post_uid = tp.post_uid
-			JOIN {$this->threadTable} tt ON tp.thread_uid = tt.thread_uid
-
-			JOIN {$this->postTable} hp ON q.host_post_uid = hp.post_uid
-			JOIN {$this->threadTable} ht ON hp.thread_uid = ht.thread_uid
-		";
-
-		return $query;
-	}
 
 	private function indexQuoteLinksByHostPostUid(array $quoteLinks): array {
 		$indexed = [];
@@ -72,7 +49,38 @@ class quoteLinkRepository {
 		return $indexedQuoteLinks;
 	}
 
-	public function getQuoteLinksByPostUids(array $postUids): array {
+	private function getQuoteLinkQuery(): string {
+		$query = "
+			SELECT 
+				q.quotelink_id,
+				q.board_uid,
+				q.target_post_uid,
+				q.host_post_uid,
+
+				tp.no AS target_no,
+				tt.post_op_number AS target_post_op_number,
+
+				hp.no AS host_no,
+				ht.post_op_number AS host_post_op_number,
+
+				hdp.open_flag AS host_open_flag,
+				tdp.open_flag AS target_open_flag
+
+			FROM {$this->quoteLinkTable} q
+			JOIN {$this->postTable} tp ON q.target_post_uid = tp.post_uid
+			JOIN {$this->threadTable} tt ON tp.thread_uid = tt.thread_uid
+
+			JOIN {$this->postTable} hp ON q.host_post_uid = hp.post_uid
+			JOIN {$this->threadTable} ht ON hp.thread_uid = ht.thread_uid
+
+			LEFT JOIN {$this->deletedPostsTable} hdp ON q.host_post_uid = hdp.post_uid AND hdp.open_flag = 1
+			LEFT JOIN {$this->deletedPostsTable} tdp ON q.target_post_uid = tdp.post_uid AND tdp.open_flag = 1
+		";
+
+		return $query;
+	}
+
+	public function getQuoteLinksByPostUids(array $postUids, bool $includeDeletedPostQuotelinks = false): array {
 		if (empty($postUids)) {
 			return [];
 		}
@@ -85,6 +93,11 @@ class quoteLinkRepository {
 
 		// add the IN clause for getting the posts by uids
 		$query .= "WHERE q.target_post_uid IN $inClause OR q.host_post_uid IN $inClause";
+
+		// if we want to exclude quote links from deleted posts
+		if(!$includeDeletedPostQuotelinks) {
+			$query .= " AND (hdp.open_flag IS NULL AND tdp.open_flag IS NULL)";
+		}
 
 		// fetch the data from the database
 		$rows = $this->databaseConnection->fetchAllAsArray($query, $allParams);

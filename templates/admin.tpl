@@ -626,30 +626,109 @@ window.onload = function () {
 <!--/&THREAD_MOVE_FORM-->
 
 <!--&DELETED_POST_ENTRY-->
-	<div id="deletedPostContainer{$ID}" class="deletedPostEntry">
-		<input type="hidden" name="deletedPostIdList[]" value="{$ID}">
-		<div id="deletedPost{$ID}" class="deletedPost">
-			<div class="deletedPostButtons">
-				<span class="adminFunctions adminPurgeFunction"> [<a href="{$PURGE_URL}" title="Purge from system">P</a>] </span>
-				<span class="adminFunctions adminRestoreFunction"> [<a href="{$RESTORE_URL}" title="Restore">R</a>] </span>
+	<hr class="threadSeparator">
+	<div class="deletedPostContainer">
+		<div class="deletedPostEntry">
+			<form method="POST" action="<!--&IF($IS_VIEW,'{$VIEW_URL}','{$URL}')-->">
+				<input type="hidden" name="deletedPostId" value="{$ID}">
+				<table class="deletedPostTable">
+					<tbody>
+						<tr>
+							<td class="postblock">Board</td>
+							<td> {$BOARD_TITLE} ({$BOARD_UID})</td>
+						</tr>
+						<tr>
+							<td class="postblock">Deleted by</td>
+							<td>{$DELETED_BY}</td>
+						</tr>
+						<tr>
+							<td class="postblock">Deleted at</td>
+							<td>{$DELETED_AT}</td>
+						</tr>
+						<!--&IF($SHOW_ALL,'
+							<!--&ADDITIONAL_DELETED_POST_INFO/-->
+						','')-->
+						<tr>
+							<td class="postblock"></td>
+							<td>
+								<div class="deletedPostButtons">
+
+
+									<!--&IF($FILE_ONLY,'[<button type="submit"
+										name="action"
+										value="purgeAttachment"
+										class="adminFunctions adminPurgeFunction buttonLink"
+										title="Purge attachment from system">
+										Purge file
+									</button>]','
+									[<button type="submit"
+										name="action"
+										value="purge"
+										class="adminFunctions adminPurgeFunction buttonLink"
+										title="Purge from system">
+										Purge
+									</button>]
+									')-->
+									
+									<!--&IF($IS_OPEN,'[<button type="submit"
+										name="action"
+				 						value="restore"
+										class="adminFunctions adminRestoreFunction buttonLink"
+										title="Restore the post to the board">
+										Restore
+									</button>]','')-->
+									<!--&IF($IS_VIEW,'','[<a href="{$VIEW_MORE_URL}">View</a>]')-->
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</form>
+			<div class="deletedPostHtmlContainer alignLeft">
+				{$POST_HTML}
 			</div>
-			<label for="deletedPostNumber{$ID}"> Name: </label> <span id="deletedPostNumber{$ID}">{$NO}</span>
-			<label for="deletedPostSubject{$ID}"> Subject: </label> <span id="deletedPostSubject{$ID}">{$SUBJECT}</span>
-			<label for="deletedPostName{$ID}"> Name: </label> <span id="deletedPostName{$ID}">{$NAME_HTML}</span>
-			<label for="deletedPostComment{$ID}"> Comment: </label> <span id="deletedPostComment{$ID}">{$COMMENT}</span>
-			<!--&IF($FILE_NAME,<label for="deletedPostFile{$ID}"> File: </label> <span id="deletedPostFile{$ID}"><img src="{$THUMB_URL}"></span>,'')-->
 		</div>
 	</div>
 <!--/&DELETED_POST_ENTRY-->
 
+<!--&ADDITIONAL_DELETED_POST_INFO-->
+	<tr>
+		<td class="postblock">Staff note</td>
+		<td> 
+			<textarea class="inputtext" name="note" placeholder="Optionally, leave a note."><!--&IF($NOTE,'{$NOTE}','')--></textarea>
+			<br><button type="submit" name="action" value="saveNote">Save</button>
+		</td>
+	</tr>
+	<tr>
+		<td class="postblock">Restored?</td>
+		<td>{$IS_OPEN}</td>
+	</tr>
+	<tr>
+		<td class="postblock">Restored at</td>
+		<td>
+			<!--&IF($RESTORED_AT,'{$RESTORED_AT}','<i>N/A</i>')-->
+		</td>
+	</tr>
+	<tr>
+		<td class="postblock">Restored by</td>
+		<td>
+			<!--&IF($RESTORED_AT,'{$RESTORED_BY}','<i>N/A</i>')-->
+		</td>
+	</tr>
+<!--/&ADDITIONAL_DELETED_POST_INFO-->
+
+<!--&DELETED_POST_VIEW_ENTRY-->
+	[<a href="{$URL}">Back</a>]
+	<h3>View deleted post</h3>
+	{$DELETED_POST}
+<!--/&DELETED_POST_VIEW_ENTRY-->
+
 <!--&DELETED_POSTS_MOD_PAGE-->
 	<h3>Deleted posts</h3>
-	<form id="deletedPostsForm">
-		<div class="deletedPostsListContainer">
-			<div class="deletedPostsList">
-				<!--&FOREACH($DELETED_POSTS,'DELETED_POST_ENTRY')-->
-				<!--&IF($ARE_NO_POSTS,'<div class="centerText">No posts currently in queue.</div>','')-->
-			</div>
+	<div class="deletedPostsListContainer">
+		<div class="deletedPostsList">
+			<!--&FOREACH($DELETED_POSTS,'DELETED_POST_ENTRY')-->
+			<!--&IF($ARE_NO_POSTS,'<div class="centerText">No posts currently in queue.</div>','')-->
 		</div>
-	</form>
+	</div>
 <!--/&DELETED_POSTS_MOD_PAGE-->

@@ -6,7 +6,9 @@ class postRepository {
 	public function __construct(
 		private databaseConnection $databaseConnection, 
 		private readonly string $postTable, 
-		private readonly string $threadTable
+		private readonly string $threadTable,
+		private readonly string $deletedPostsTable,
+		private readonly string $fileTable
 	) {
 		$this->allowedOrderFields = ['root' , 'no', 'post_uid'];
 	}
@@ -260,7 +262,11 @@ class postRepository {
 	public function getPostsByThreadUIDs(array $threadUids): array|false {	
 		$inClause = pdoPlaceholdersForIn($threadUids);
 
-		$query = "SELECT * FROM {$this->postTable} WHERE thread_uid IN $inClause";
+		// base post query
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
+
+		// append where clause
+		$query .= "WHERE thread_uid IN $inClause";
 
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $threadUids);
 

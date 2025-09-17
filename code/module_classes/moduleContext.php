@@ -7,6 +7,7 @@ use attachmentService;
 use \board;
 use boardService;
 use deletedPostsService;
+use fileService;
 use \moduleEngine;
 use \pageRenderer;
 use postRedirectService;
@@ -38,6 +39,7 @@ class moduleContext {
 		public readonly actionLoggerService $actionLoggerService,
 		public readonly postRedirectService $postRedirectService,
 		public readonly deletedPostsService $deletedPostsService,
+		public readonly fileService $fileService,
 		public transactionManager $transactionManager,
 	) {}
 }

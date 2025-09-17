@@ -31,6 +31,7 @@ class usrdelRoute {
 		$delno = array_map('intval', $delno);
 
 		$havePerm = isActiveStaffSession();
+		
 		$this->moduleEngine->dispatch('Authenticate', [$pwd, 'userdel', &$havePerm]);
 
 		if ($pwd === '' && $pwdc !== '') $pwd = $pwdc;
@@ -67,7 +68,7 @@ class usrdelRoute {
 			if ($onlyimgdel) {
 				$this->attachmentService->removeAttachments($delPostUIDs);
 			} else {
-				$this->postService->removePosts($delPostUIDs);
+				$this->postService->removePosts($delPostUIDs, );
 			}
 
 			$this->FileIO->deleteImagesByBoardFiles($files);

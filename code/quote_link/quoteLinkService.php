@@ -6,14 +6,14 @@ class quoteLinkService {
 		private readonly postRepository $postRepository
 	) {}
 
-	public function getQuoteLinksByPostUids(array $postUids): array {
-		$quoteLinks = $this->quoteLinkRepository->getQuoteLinksByPostUids($postUids);
+	public function getQuoteLinksByPostUids(array $postUids, bool $includeDeletedPostQuotelinks = false): array {
+		$quoteLinks = $this->quoteLinkRepository->getQuoteLinksByPostUids($postUids, $includeDeletedPostQuotelinks);
 	
 		return $quoteLinks;
 	}
 
-	public function getQuoteLinksByBoardUid(int $boardUid): array {
-		$quoteLinks = $this->quoteLinkRepository->getQuoteLinksByBoardUid($boardUid);
+	public function getQuoteLinksByBoardUid(int $boardUid, bool $includeDeletedPostQuotelinks = false): array {
+		$quoteLinks = $this->quoteLinkRepository->getQuoteLinksByBoardUid($boardUid, $includeDeletedPostQuotelinks);
 
 		return $quoteLinks;
 	}

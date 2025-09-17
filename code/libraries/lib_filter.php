@@ -101,7 +101,7 @@ function bindThreadFilterParameters(array &$params, string &$query, array $filte
 	if (!empty($boards)) {
 		$query .= " AND (";
 		foreach ($boards as $index => $board) {
-			$query .= ($index > 0 ? " OR " : "") . "boardUID = :board_$index";
+			$query .= ($index > 0 ? " OR " : "") . "t.boardUID = :board_$index";
 			$params[":board_$index"] = (int)$board;
 		}
 		$query .= ")";
@@ -109,25 +109,25 @@ function bindThreadFilterParameters(array &$params, string &$query, array $filte
 
 	// Apply 'thread_uid' partial match
 	if (!empty($filters['thread_uid']) && is_string($filters['thread_uid'])) {
-		$query .= " AND thread_uid LIKE :thread_uid";
-		$params[':thread_uid'] = '%' . $filters['thread_uid'] . '%';
+		$query .= " AND t.thread_uid = :thread_uid";
+		$params[':thread_uid'] = $filters['thread_uid'];
 	}
 
 	// Apply timestamp filters
 	if (!empty($filters['created_before']) && is_string($filters['created_before'])) {
-		$query .= " AND thread_created_time < :created_before";
+		$query .= " AND t.thread_created_time < :created_before";
 		$params[':created_before'] = $filters['created_before'];
 	}
 	if (!empty($filters['created_after']) && is_string($filters['created_after'])) {
-		$query .= " AND thread_created_time > :created_after";
+		$query .= " AND t.thread_created_time > :created_after";
 		$params[':created_after'] = $filters['created_after'];
 	}
 	if (!empty($filters['bumped_after']) && is_string($filters['bumped_after'])) {
-		$query .= " AND last_bump_time > :bumped_after";
+		$query .= " AND t.last_bump_time > :bumped_after";
 		$params[':bumped_after'] = $filters['bumped_after'];
 	}
 	if (!empty($filters['replied_after']) && is_string($filters['replied_after'])) {
-		$query .= " AND last_reply_time > :replied_after";
+		$query .= " AND t.last_reply_time > :replied_after";
 		$params[':replied_after'] = $filters['replied_after'];
 	}
 }

@@ -16,14 +16,14 @@ class threadService {
 		$this->allowedOrderFields = ['post_op_number', 'post_op_post_uid', 'last_bump_time', 'last_reply_time', 'insert_id', 'post_uid'];
 	}
 
-	public function getThreadByUID($thread_uid): array|false {
+	public function getThreadByUID(string $thread_uid, bool $adminMode = false): array|false {
 		$threadMeta = $this->threadRepository->getThreadByUID($thread_uid);
 
 		if (!$threadMeta) {
 			return false;
 		}
 	
-		$posts = $this->threadRepository->getPostsFromThread($thread_uid);
+		$posts = $this->threadRepository->getPostsFromThread($thread_uid, $adminMode);
 	
 		$postUIDs = array_column($posts, 'post_uid');
 		$totalPosts = count($postUIDs);
@@ -39,8 +39,8 @@ class threadService {
 		];
 	}
 
-	public function getFilteredThreads(int $previewCount, int $amount, int $offset = 0, array $filters = [], string $order = 'last_bump_time'): array {
-		$threads = $this->threadRepository->fetchFilteredThreads($filters, $order, $amount, $offset);
+	public function getFilteredThreads(int $previewCount, int $amount, int $offset = 0, array $filters = [], bool $includeDeleted, string $order = 'last_bump_time'): array {
+		$threads = $this->threadRepository->fetchFilteredThreads($filters, $order, $amount, $offset, $includeDeleted);
 
 		if (empty($threads)) return [];
 

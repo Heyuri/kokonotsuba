@@ -11,7 +11,7 @@ function catchFraudsters(&$name) {
 	if (preg_match('/[◆◇♢♦⟡★]/u', $name)) $name .= " (fraudster)";
 }
 
-function searchBoardArrayForBoard(int $targetBoardUID) {
+function searchBoardArrayForBoard(int $targetBoardUID): ?board {
 	// Using the global board array
 	$boards = GLOBAL_BOARD_ARRAY;
 
@@ -20,6 +20,9 @@ function searchBoardArrayForBoard(int $targetBoardUID) {
 			return $board;
 		}
 	}
+
+	// not found
+	return null;
 }
 
 function createAssocArrayFromBoardArray(array $boards): array {

@@ -6,6 +6,7 @@ use BoardException;
 use FlagHelper;
 use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
 use Kokonotsuba\Root\Constants\userRole;
+use staffAccountFromSession;
 
 use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
 
@@ -41,6 +42,17 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function onRenderPostAdminControls(string &$modFunc, array &$post): void {
+		// whether the post is deleted or not
+		$openFlag = $post['open_flag'] ?? 0;
+
+		// whether it was a file only deletion
+		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
+
+		// don't render anything if the post is already deleted
+		if($openFlag && !$onlyFileDeleted) {
+			return;
+		}
+		
 		$postUid = $post['post_uid'];
 		$muteMinutes = $this->JANIMUTE_LENGTH;
 		$plural = $muteMinutes == 1 ? '' : 's';
@@ -56,7 +68,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$addControl('del', 'D', 'Delete', 'adminDeleteFunction');
 
-		if (!empty($post['ext'])) {
+		if (!empty($post['ext']) && !$onlyFileDeleted) {
 			// this check needs to stay inside this if statement or else it'll read from disk for every post
 			if($this->moduleContext->FileIO->imageExists($post['tim'] . $post['ext'], $board)) {
 				$addControl('imgdel', 'DF', 'Delete file', 'adminDeleteFileFunction');
@@ -73,6 +85,10 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 	
 	public function ModulePage() {
+		$staffAccountFromSession = new staffAccountFromSession;
+
+		$accountId = $staffAccountFromSession->getUID();
+
 		$post = $this->moduleContext->postRepository->getPostByUid($_GET['post_uid']);
 		
 		$board = searchBoardArrayForBoard($post['boardUID']);
@@ -86,12 +102,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		switch ($_GET['action']??'') {
 			case 'del':
 				$this->moduleContext->moduleEngine->dispatch('PostOnDeletion', array($post['post_uid'], 'backend'));
-				$this->moduleContext->postService->removePosts([$post['post_uid']]);
+				$this->moduleContext->postService->removePosts([$post['post_uid']], $accountId);
 				$this->moduleContext->actionLoggerService->logAction('Deleted post No.'.$post['no'], $boardUID);
 				break;
 		case 'delmute':
 				$this->moduleContext->moduleEngine->dispatch('PostOnDeletion', array($post['post_uid'], 'backend'));
-				$this->moduleContext->postService->removePosts([$post['post_uid']]);
+				$this->moduleContext->postService->removePosts([$post['post_uid']], $accountId);
 				$ip = $post['host'];
 				$starttime = $_SERVER['REQUEST_TIME'];
 				$expires = $starttime + intval($this->JANIMUTE_LENGTH) * 60;
@@ -105,12 +121,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 				break;
 			case 'imgdel':
-				$this->moduleContext->attachmentService->removeAttachments([$post['post_uid']]);
-
-				$postStatus = new FlagHelper($post['status']);
-				$postStatus->toggle('fileDeleted');
-
-				$this->moduleContext->postRepository->setPostStatus($post['post_uid'], $postStatus->toString());
+				$this->moduleContext->deletedPostsService->removeFileOnly($post, $accountId);
 
 				$this->moduleContext->actionLoggerService->logAction('Deleted file for post No.'.$post['no'], $boardUID);
 				break;

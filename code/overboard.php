@@ -1,5 +1,7 @@
 <?php
-class overboard {	
+class overboard {
+	private bool $adminMode;
+	
 	public function __construct(
 		private board $board,
 		private readonly array $config, 
@@ -15,15 +17,19 @@ class overboard {
 		private readonly actionLoggerService $actionLoggerService,
 		private readonly postRedirectService $postRedirectService,
 		private readonly deletedPostsService $deletedPostsService,
+		private readonly fileService $fileService,
 		private transactionManager $transactionManager,
 		private moduleEngine $moduleEngine, 
 		private ?templateEngine $templateEngine
-	) {}
+	) {
+		// whether staff is logged in or not
+		$this->adminMode = isActiveStaffSession();
+	}
 	
 	public function drawOverboardHead(&$dat, $resno = 0) {
 		$html = '';
 		
-		$pte_vals = array('{$RESTO}'=>$resno?$resno:'', '{$IS_THREAD}'=>boolval($resno), '{$IS_STAFF}' => isActiveStaffSession());
+		$pte_vals = array('{$RESTO}'=>$resno?$resno:'', '{$IS_THREAD}'=>boolval($resno), '{$IS_STAFF}' => $this->adminMode);
 
 		$pte_vals['{$PAGE_TITLE}'] = strip_tags($this->config['OVERBOARD_TITLE']);
 
@@ -72,9 +78,9 @@ class overboard {
 
 		$previewCount = $this->config['RE_DEF'];
 
-		$threads = $this->threadService->getFilteredThreads($previewCount, $limit, $offset, $filters);
+		$threads = $this->threadService->getFilteredThreads($previewCount, $limit, $offset, $filters, $this->adminMode);
 		
-		$numberThreadsFiltered = $this->threadRepository->getFilteredThreadCount($filters);
+		$numberThreadsFiltered = $this->threadRepository->getFilteredThreadCount($filters, $this->adminMode);
 		
 		$postUidsInPage =  getPostUidsFromThreadArrays($threads);
 
@@ -220,6 +226,7 @@ class overboard {
 			$this->actionLoggerService,
 			$this->postRedirectService,
 			$this->deletedPostsService,
+			$this->fileService,
 			$this->transactionManager,
 			$templateEngine, 
 			$board);

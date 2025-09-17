@@ -53,6 +53,7 @@ $overboard = new overboard(
 	$actionLoggerService,
 	$postRedirectService,
 	$deletedPostsService,
+	$fileService,
 	$transactionManager,
 	$moduleEngine, 
 	$templateEngine

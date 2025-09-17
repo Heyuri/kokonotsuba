@@ -6,8 +6,9 @@ class postService {
 	public function __construct(
 		private readonly postRepository $postRepository, 
 		private readonly transactionManager $transactionManager, 
-		private readonly threadRepository $threadRepository, 
-		private readonly attachmentService $attachmentService) {
+		private readonly threadRepository $threadRepository,
+		private readonly attachmentService $attachmentService,
+		private readonly deletedPostsService $deletedPostsService) {
 		$this->allowedOrderFields = ['post_uid', 'root', 'no', 'tim', 'time'];
 	}
 
@@ -96,7 +97,7 @@ class postService {
 	}
 
 	/* Delete post */
-	public function removePosts($posts): void {
+	public function removePosts($posts, int $accountId = 0): void {
 		if (count($posts) == 0) return;
 		if (!is_array($posts)) {
 			$posts = [$posts];
@@ -106,14 +107,11 @@ class postService {
 			return filter_var($value, FILTER_VALIDATE_INT) !== false;
 		});
 
-		// Remove files
-		$this->attachmentService->removeAttachments($posts, true);
-
-		$this->transactionManager->run(function () use ($posts) {
-			$threadUIDsResult = $this->postRepository->getUniquePairFromPostUids($posts);
+		$this->transactionManager->run(function () use ($posts, $accountId) {
+			$postsData = $this->postRepository->getPostsByUids($posts);
 
 			// Extract unique boardUIDs from the result
-			$boardUIDs = array_unique(array_column($threadUIDsResult, 'boardUID'));
+			$boardUIDs = array_unique(array_column($postsData, 'boardUID'));
 
 			// Fetch boards using the unique UIDs
 			$boards = getBoardsByUIDs($boardUIDs);
@@ -126,17 +124,16 @@ class postService {
 
 			// Build deletionRows array with board mapping
 			$deletionRows = [];
-			foreach ($threadUIDsResult as $row) {
+			foreach ($postsData as $row) {
 				$deletionRows[] = [
 					'thread_uid' => $row['thread_uid'],
-					'board' => $boardMap[$row['boardUID']]
+					'board' => $boardMap[$row['boardUID']],
 				];
 			}
 
 			$threadUIDs = $this->postRepository->getThreadUIDsByPostUIDs($posts);
 
-			$this->postRepository->deletePostsByUIDs($posts);
-			$this->threadRepository->deleteThreadsByOpPostUIDs($posts);
+			$this->deletedPostsService->flagPostsAsDeleted($postsData, $accountId);
 
 			if (!is_array($threadUIDs)) $threadUIDs = [$threadUIDs];
 
@@ -147,12 +144,13 @@ class postService {
 				$replies = $this->threadRepository->getPostsFromThread($threadUID);
 
 				// remove sage replies so the bump restoration only takes into account posts that caused a bump
-				$replies = $this->removeSagedReplies($replies);
+				// also remove deleted replies so it reflects what the user can see
+				$replies = $this->removeSagedAndDeletedReplies($replies);
 
 				$newReplyData = end($replies);
 
 				if (!$newReplyData) {
-					$this->threadRepository->deleteThreadByUID($threadUID);
+					return;
 				} else {
 					$opPostCheck = $this->postRepository->getOpeningPostFromThread($threadUID);
 					$threadData = $this->threadRepository->getThreadByUid($threadUID);
@@ -182,7 +180,7 @@ class postService {
 		});
 	}
 
-	private function removeSagedReplies(array $threadReplies): array {
+	private function removeSagedAndDeletedReplies(array $threadReplies): array {
 		$replies = [];
 		foreach($threadReplies as $reply) {
 			// get post email
@@ -191,8 +189,11 @@ class postService {
 			// if the email contains sage, then its a sage post
 			$isSage = str_contains($email, 'sage');
 
-			// if its a sage, continue
-			if($isSage) {
+			// if the post is flagged as deleted, its deleted
+			$isDeleted = $reply['open_flag'] ?? 0;
+
+			// if its a sage or a deleted post, continue
+			if($isSage || $isDeleted) {
 				continue;
 			}
 
@@ -202,18 +203,18 @@ class postService {
 		return $replies;
 	}
 
-	public function getThreadPreviewsFromBoard(board $board, int $previewCount, int $amount = 0, int $offset = 0): array {
+	public function getThreadPreviewsFromBoard(board $board, int $previewCount, int $amount = 0, int $offset = 0, bool $adminMode = false): array {
 		$boardUID = $board->getBoardUID();
 
 		$amount = max(0, $amount);
 		$offset = max(0, $offset);
 
-		$threads = $this->threadRepository->getThreadsFromBoard($boardUID, $amount, $offset);
+		$threads = $this->threadRepository->getThreadsFromBoard($boardUID, $amount, $offset, 'last_bump_time', 'DESC', $adminMode);
 
 		if (empty($threads)) return [];
 
 		$threadUIDs = array_column($threads, 'thread_uid');
-		$postRows = $this->threadRepository->getPostsForThreads($threadUIDs);
+		$postRows = $this->threadRepository->getPostsForThreads($threadUIDs, $adminMode);
 		$postsByThread = $this->groupPostsByThread($postRows);
 
 		return $this->buildPreviewResults($threads, $postsByThread, $previewCount);
@@ -225,7 +226,7 @@ class postService {
 		int $amount = 0,
 		int $offset = 0,
 		string $orderBy = 'last_bump_time',
-		bool $desc = true
+		bool $desc = true,
 	): array {
 		$boardUID = $board->getBoardUID();
 

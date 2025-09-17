@@ -2245,3 +2245,7 @@ width: 300px;
 .mod-extra-info {
 	text-align: center;
 }
+
+.deletedPostEntry {
+	text-align: left;
+}

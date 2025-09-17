@@ -91,6 +91,7 @@ use Kokonotsuba\ModuleClasses\moduleContext;
 			$this->moduleEngineContext->actionLoggerService,
 			$this->moduleEngineContext->postRedirectService,
 			$this->moduleEngineContext->deletedPostsService,
+			$this->moduleEngineContext->fileService,
 			$this->moduleEngineContext->transactionManager,
 
 		);
