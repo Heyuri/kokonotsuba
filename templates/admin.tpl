@@ -639,7 +639,7 @@ window.onload = function () {
 						</tr>
 						<tr>
 							<td class="postblock">Deleted by</td>
-							<td>{$DELETED_BY}</td>
+							<td><!--&IF($DELETED_BY,'{$DELETED_BY}','<i>User</i>')--></td>
 						</tr>
 						<tr>
 							<td class="postblock">Deleted at</td>
