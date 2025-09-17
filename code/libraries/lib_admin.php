@@ -40,6 +40,13 @@ function getRoleLevelFromSession(): \Kokonotsuba\Root\Constants\userRole {
 	return $roleLevel;
 }
 
+function getIdFromSession(): int {
+	$staffSession = new staffAccountFromSession;
+	$accountUid = $staffSession->getUID();
+
+	return $accountUid;
+}
+
 function updateAccountSession(accountRepository $accountRepository, loginSessionHandler $loginSessionHandler): void {
 	// don't bother if the user isn't logged in
 	if(!isLoggedIn()) {
