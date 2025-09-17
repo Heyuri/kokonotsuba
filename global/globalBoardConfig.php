@@ -66,6 +66,7 @@ $config['ModuleList'] = array(
 	'janitor' => true,
 	'moveThread' => true,
 	'rawHtml' => true,
+	'deletedPosts' => true,
 	/* thread modes */
 	'autoSage' => true,
 	'lockThread' => true,
@@ -89,6 +90,7 @@ $config['ModuleList'] = array(
 	'onlineCounter' => true,
 	'banner' => true,
 	'addInfo' => true,
+	'imageServer' => true
 );
 
 /* Module-specific options */
