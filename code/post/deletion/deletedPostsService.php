@@ -202,31 +202,6 @@ class deletedPostsService {
 		$this->logAction($purgeActionString, $replyPostData['boardUID']);
 	}
 
-	private function purgeRepliesFromThread(array $postData): void {
-		// if the post is a thread OP
-		$isOp = $postData['is_op'] ?? 0;
-
-		// return early if its not an OP
-		if(!$isOp) {
-			return;
-		}
-
-		// all posts from the thread of the specified OP post(s)
-		$posts = $this->getThreadsFromOPs([$postData]);
-
-		// filter out non-replies (which includes the OP)
-		$replies = $this->extractReplies($posts);
-
-		// get the deleted post IDs
-		$deletedPostIds = array_column($replies, 'deleted_post_id');
-
-		// loop through and purge replies
-		foreach($deletedPostIds as $id) {
-			// purge reply
-			$this->purgePost($id);
-		}
-	}
-
 	private function generateActionLoggingString(int $no, bool $isPurge, bool $isThread): string {
 		// post type
 		$postType = '';
@@ -254,7 +229,7 @@ class deletedPostsService {
 
 
 		// generate purge action for logger
-		$actionString = "$actionType $postType No.$no from system";
+		$actionString = "$actionType $postType No.$no";
 
 		// return the result
 		return $actionString;
