@@ -108,6 +108,7 @@ require __DIR__ . '/code/libraries/lib_filter.php';
 require __DIR__ . '/code/libraries/lib_post.php';
 require __DIR__ . '/code/libraries/lib_rebuild.php';
 require __DIR__ . '/code/libraries/lib_template.php';
+require __DIR__ . '/code/libraries/lib_query.php';
 
 // log_in
 require __DIR__ . '/code/log_in/adminLoginController.php';
@@ -133,8 +134,12 @@ require __DIR__ . '/code/overboard.php';
 
 // post
 require __DIR__ . '/code/post/FlagHelper.php';
-require __DIR__ . '/code/post/attachmentRepository.php';
-require __DIR__ . '/code/post/attachmentService.php';
+require __DIR__ . '/code/post/attachment/attachmentRepository.php';
+require __DIR__ . '/code/post/attachment/attachmentService.php';
+require __DIR__ . '/code/post/attachment/attachment.php';
+require __DIR__ . '/code/post/attachment/fileEntry.php';
+require __DIR__ . '/code/post/attachment/fileRepository.php';
+require __DIR__ . '/code/post/attachment/fileService.php';
 require __DIR__ . '/code/post/helper/agingHandler.php';
 require __DIR__ . '/code/post/helper/defaultTextFillter.php';
 require __DIR__ . '/code/post/helper/fortuneGenerator.php';
