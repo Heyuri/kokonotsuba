@@ -61,3 +61,11 @@ function getGlobalConfig() {
 	
 	return $config;
 }
+
+function getGlobalAttachmentDirectory(): string {
+	$globalDir = getBackendGlobalDir();
+
+	$globalAttachmentDirectory = $globalDir . 'attachments/';
+
+	return $globalAttachmentDirectory;
+}
