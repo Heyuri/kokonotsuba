@@ -12,6 +12,7 @@ return [
 
 	/* Tables used by various parts of kokonotsuba, do not change them after installing */
 	'POST_TABLE' => 'posts', //post table, contains all posts on an instance
+	'FILE_TABLE' => 'files', //file table, stores meta data on files  
 	'QUOTE_LINK_TABLE' => 'quote_links',
 	'REPORT_TABLE' => 'reports', //report table used by report module
 	'BAN_TABLE' => 'bans', //ban table used by adminban module
@@ -23,4 +24,5 @@ return [
 	'ACTIONLOG_TABLE' => 'actionlog', //user log
 	'THREAD_TABLE' => 'threads', //holds all threads
 	'THREAD_REDIRECT_TABLE' => 'redirects', //for thread redirecting
+	'DELETED_POSTS_TABLE' => 'deleted_posts', // for storing meta-data on deleted posts
 ];
