@@ -20,10 +20,10 @@ class postService {
 		return $postsFromList;
 	}
 
-	public function getPostsByThreadUIDs(array $threadUids): ?array {
+	public function getPostsByThreadUIDs(array $threadUids, bool $includeDeleted = false): ?array {
 		if(empty($threadUids)) return [];
 
-		$postsFromList = $this->postRepository->getPostsByThreadUIDs($threadUids);
+		$postsFromList = $this->postRepository->getPostsByThreadUIDs($threadUids, $includeDeleted);
 
 		return $postsFromList;
 	}

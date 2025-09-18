@@ -259,14 +259,19 @@ class postRepository {
 		", $postUIDsList);
 	}
 	
-	public function getPostsByThreadUIDs(array $threadUids): array|false {	
+	public function getPostsByThreadUIDs(array $threadUids, bool $includeDeleted = false): array|false {	
 		$inClause = pdoPlaceholdersForIn($threadUids);
 
 		// base post query
 		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
 
 		// append where clause
-		$query .= "WHERE thread_uid IN $inClause";
+		$query .= " WHERE thread_uid IN $inClause";
+
+		// exlude deleted posts
+		if(!$includeDeleted) {
+			$query = excludeDeletedPostsCondition($query);
+		}
 
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $threadUids);
 
@@ -310,4 +315,6 @@ class postRepository {
 		
 		return $pair;
 	}
+
+	
 }
