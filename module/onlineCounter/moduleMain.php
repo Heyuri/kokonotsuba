@@ -52,8 +52,6 @@ class moduleMain extends abstractModuleMain {
 	}
 	
 	public function onRenderPostInfo(string &$hookPostInfoHtml): void {
-		$pageHTML = '';
-				
 		$userCount = $this->getUserCount();
 		$userCounterHTML = '
 			<li id="counterListItemJS" class="hidden">
@@ -70,7 +68,6 @@ class moduleMain extends abstractModuleMain {
 			</li>';
 
 		$hookPostInfoHtml .= $noScriptHtml . $userCounterHTML;
-
 	}
 	
 	public function ModulePage() {
