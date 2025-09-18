@@ -3,7 +3,7 @@
 	<div id="adminPageContent">
 		{$PAGE_CONTENT}
 	</div>
-	<hr>
+	<hr class="threadSeparator">
 	<!--&IF($PAGER,'{$PAGER}','')-->
 <!--/&GLOBAL_ADMIN_PAGE_CONTENT-->
 
