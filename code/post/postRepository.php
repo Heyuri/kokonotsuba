@@ -38,14 +38,19 @@ class postRepository {
 		return $this->databaseConnection->fetchColumn($query, $params);
 	}
 
-	public function getFilteredPosts(int $amount, int $offset = 0, array $filters = [], string $order = 'post_uid'): array {
+	public function getFilteredPosts(int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'post_uid'): array {
 		if(!in_array($order, $this->allowedOrderFields)) return [];
 
-		$query = "SELECT * FROM {$this->postTable} WHERE 1";
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
 		$params = [];
 		
 		bindPostFilterParameters($params, $query, $filters); //apply filtration to query
 		
+		// exclude deleted posts
+		if(!$includeDeleted) {
+			$query = excludeDeletedPostsCondition($query);
+		}
+
 		$query .= " ORDER BY $order  DESC LIMIT $amount OFFSET $offset";
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
 	

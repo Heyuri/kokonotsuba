@@ -1,5 +1,7 @@
 <?php
 
+use Kokonotsuba\Root\Constants\userRole;
+
 class managePostsRoute {
 	public function __construct(
 		private board $board,
@@ -32,6 +34,12 @@ class managePostsRoute {
 		$cleanUrl = buildSmartQuery($managePostsUrl, $defaultFilters, $filtersFromRequest, true);
 
 		$roleLevel = $this->staffAccountFromSession->getRoleLevel();
+
+		// can delete all
+		$canDeleteAll = $this->board->getConfigValue('AuthLevels.CAN_DELETE_ALL', userRole::LEV_MODERATOR);
+
+		// whether the user can view all deleted posts
+		$canViewDeleted = $roleLevel->isAtLeast($canDeleteAll);
 		 
 		$postsPerPage = $this->config['ADMIN_PAGE_DEF'];
 		$numberOfFilteredPosts = $this->postRepository->postCount($filtersFromRequest);
@@ -55,7 +63,7 @@ class managePostsRoute {
 			$this->board->rebuildBoard();
 		}
 		
-		$posts = $this->postRepository->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest) ?? array();
+		$posts = $this->postRepository->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest, $canViewDeleted) ?? array();
 		$posts_count = count($posts); // Number of cycles
 		
 		// get the associate array for the checkbox generator
