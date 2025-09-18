@@ -39,13 +39,13 @@ class threadService {
 		];
 	}
 
-	public function getFilteredThreads(int $previewCount, int $amount, int $offset = 0, array $filters = [], bool $includeDeleted, string $order = 'last_bump_time'): array {
+	public function getFilteredThreads(int $previewCount, int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'last_bump_time'): array {
 		$threads = $this->threadRepository->fetchFilteredThreads($filters, $order, $amount, $offset, $includeDeleted);
 
 		if (empty($threads)) return [];
 
 		$threadUIDs = array_column($threads, 'thread_uid');
-		$allPosts = $this->postService->getPostsByThreadUIDs($threadUIDs);
+		$allPosts = $this->postService->getPostsByThreadUIDs($threadUIDs, $includeDeleted);
 		$postsByThread = $this->groupPostsByThread($allPosts);
 
 		$result = [];
