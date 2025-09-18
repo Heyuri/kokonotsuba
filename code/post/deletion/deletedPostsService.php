@@ -622,6 +622,18 @@ class deletedPostsService {
 	public function updateNote(int $deletedPostId, string $note): void {
 		// update the note for that deleted post
 		$this->deletedPostsRepository->updateDeletedPostNoteById($deletedPostId, $note);
+
+		// get the post data from the associated deleted posts row
+		$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
+
+		// board uid of the post
+		$boardUid = $postData['boardUID'];
+
+		// post number
+		$no = $postData['no'];
+
+		// log adding the note
+		$this->actionLoggerService->logAction("Updated note on post No.$no", $boardUid);
 	}
 
 	public function removeFileOnly(array $post, ?int $deletedBy ): void {
