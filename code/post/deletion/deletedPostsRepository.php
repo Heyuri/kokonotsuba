@@ -337,7 +337,7 @@ class deletedPostsRepository {
 		$this->databaseConnection->execute($query, $parameters);
 	}
 
-	public function insertDeletedPostEntry(int $postUid, int $boardUid, int $deletedBy, bool $fileOnly, bool $byProxy): void {
+	public function insertDeletedPostEntry(int $postUid, int $boardUid, ?int $deletedBy , bool $fileOnly, bool $byProxy): void {
 		// query to insert a deleted post entry
 		$query = "INSERT INTO {$this->deletedPostsTable} 
 			(post_uid, board_uid, deleted_by, file_only, by_proxy) 

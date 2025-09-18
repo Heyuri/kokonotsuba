@@ -42,7 +42,7 @@ function getRoleLevelFromSession(): \Kokonotsuba\Root\Constants\userRole {
 	return $roleLevel;
 }
 
-function getIdFromSession(): int {
+function getIdFromSession(): ?int {
 	$staffSession = new staffAccountFromSession;
 	$accountUid = $staffSession->getUID();
 

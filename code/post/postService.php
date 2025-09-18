@@ -97,7 +97,7 @@ class postService {
 	}
 
 	/* Delete post */
-	public function removePosts($posts, int $accountId = 0): void {
+	public function removePosts($posts, ?int $accountId = 0): void {
 		if (count($posts) == 0) return;
 		if (!is_array($posts)) {
 			$posts = [$posts];

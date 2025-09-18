@@ -235,7 +235,7 @@ class deletedPostsService {
 		return $actionString;
 	}
 
-	public function purgeFileOnly(int $deletedPostId, int $deletedBy): void {
+	public function purgeFileOnly(int $deletedPostId, ?int $deletedBy ): void {
 		// get post data and attachments for file-only purge
 		[$postData, $attachments] = $this->getPostDataAndAttachments($deletedPostId);
 
@@ -380,7 +380,7 @@ class deletedPostsService {
 		return $rowExists;
 	}
 
-	public function flagPostsAsDeleted(array $posts, int $deletedBy): void {
+	public function flagPostsAsDeleted(array $posts, ?int $deletedBy ): void {
 		// get all posts from the thread if any of the posts are thread OPs
 		$threadPosts = $this->getThreadsFromOPs($posts);
 
@@ -599,7 +599,7 @@ class deletedPostsService {
 		return true;
 	}
 
-	private function deleteMultiplePosts(array $posts, int $deletedBy, bool $fileOnly = false, bool $byProxy = false): void {
+	private function deleteMultiplePosts(array $posts, ?int $deletedBy , bool $fileOnly = false, bool $byProxy = false): void {
 		// loop through posts and delete each one
 		foreach($posts as $p) {
 			// mark post as deletd
@@ -607,7 +607,7 @@ class deletedPostsService {
 		}
 	}
 
-	private function deletePost(array $post, int $deletedBy, bool $fileOnly = false, bool $byProxy = false): void {
+	private function deletePost(array $post, ?int $deletedBy , bool $fileOnly = false, bool $byProxy = false): void {
 		// the post uid
 		$postUid = $post['post_uid'];
 
@@ -624,7 +624,7 @@ class deletedPostsService {
 		$this->deletedPostsRepository->updateDeletedPostNoteById($deletedPostId, $note);
 	}
 
-	public function removeFileOnly(array $post, int $deletedBy): void {
+	public function removeFileOnly(array $post, ?int $deletedBy ): void {
 		// add a new deleted posts but make it File Only	
 		$this->deletePost($post, $deletedBy, true);
 
