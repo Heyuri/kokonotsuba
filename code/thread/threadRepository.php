@@ -181,7 +181,7 @@ class threadRepository {
 
 		// exclude the threads where the op post was deleted
 		if(!$includeDeleted) {
-			$query = $this->excludeDeletedPostsCondition($query);
+			$query = excludeDeletedPostsCondition($query);
 		}
 
 		$params = [];
@@ -202,7 +202,7 @@ class threadRepository {
 
 		// exclude the threads where the op post was deleted
 		if(!$includeDeleted) {
-			$query = $this->excludeDeletedPostsCondition($query);
+			$query = excludeDeletedPostsCondition($query);
 		}
 
 		$params = [];
@@ -377,7 +377,7 @@ class threadRepository {
 
 		// exclude the threads where the op post was deleted
 		if(!$includeDeleted) {
-			$query = $this->excludeDeletedPostsCondition($query);
+			$query = excludeDeletedPostsCondition($query);
 		}
 
 		// add thread order
@@ -397,14 +397,6 @@ class threadRepository {
 		return $threads;
 	}
 
-	private function excludeDeletedPostsCondition(string $query): string {
-		$query .= " AND (COALESCE(dp.open_flag, 0) = 0
-					OR COALESCE(dp.file_only, 0) = 1
-					OR COALESCE(dp.by_proxy, 0) = 1)";
-		// return modified query
-		return $query;
-	}
-
 	public function getPostsFromThread(string $threadUID, bool $includeDeleted = false): array|null {
 		// Generate the base query
 		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
@@ -414,7 +406,7 @@ class threadRepository {
 
 		// If we do not want to include deleted posts, add the condition to exclude them
 		if(!$includeDeleted) {
-			$query = $this->excludeDeletedPostsCondition($query);
+			$query = excludeDeletedPostsCondition($query);
 		}
 
 		// append ORDER BY clause
@@ -438,7 +430,7 @@ class threadRepository {
 
 		// If we do not want to include deleted posts, add the condition to exclude them
 		if(!$includeDeleted) {
-			$query = $this->excludeDeletedPostsCondition($query);
+			$query = excludeDeletedPostsCondition($query);
 		}
 
 		// add adirection/order
@@ -468,7 +460,9 @@ class threadRepository {
 		// filter by boardUID
 		$query .= " WHERE t.boardUID = :board_uid";
 
-
+		if(!$includeDeleted) {
+			$query = excludeDeletedPostsCondition($query);
+		}
 		
 		// params
 		$params = [
