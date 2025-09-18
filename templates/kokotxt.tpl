@@ -39,7 +39,7 @@
 	<script src="{$STATIC_URL}js/addemotestxt.js?v=35" defer></script>
 	<script src="{$STATIC_URL}js/admin.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
-	<!--&IF($IS_STAFF,'<script src="{$STATIC_URL}js/admin-frontend-enhancements.js" defer></script>','')-->
+	
 <!--/&HEADER-->
 
 <!--&TOPLINKS-->
