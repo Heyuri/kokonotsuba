@@ -31,7 +31,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function initialize(): void {
 		// initialize role property
-		$this->requiredRoleForAll = userRole::LEV_MODERATOR;
+		$this->requiredRoleForAll = $this->getConfig('AuthLevels.CAN_DELETE_ALL');
 
 		// initialize url
 		$this->myPage = $this->getModulePageURL([], false);
