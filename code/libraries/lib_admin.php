@@ -49,20 +49,6 @@ function getIdFromSession(): ?int {
 	return $accountUid;
 }
 
-function canViewAllDeletedPosts(): bool {
-	// get the role level
-	$roleLevel = getRoleLevelFromSession();
-
-	// required role
-	$requiredRole = userRole::LEV_MODERATOR;
-
-	// is high enough role
-	$isAuthorized = $roleLevel->isAtLeast($requiredRole);
-
-	// return condition
-	return $isAuthorized;
-}
-
 function updateAccountSession(accountRepository $accountRepository, loginSessionHandler $loginSessionHandler): void {
 	// don't bother if the user isn't logged in
 	if(!isLoggedIn()) {
