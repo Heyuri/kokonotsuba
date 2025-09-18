@@ -645,6 +645,14 @@ window.onload = function () {
 							<td class="postblock">Deleted at</td>
 							<td>{$DELETED_AT}</td>
 						</tr>
+						<!--&IF($IS_VIEW,'
+							<!--&DELETED_POST_NOTE_INPUT/-->
+						','
+							<tr>
+								<td class="postblock">Note</td>
+								<td><p class="postNote">{$NOTE}</p></td>
+							</tr>						
+						')-->
 						<!--&IF($SHOW_ALL,'
 							<!--&ADDITIONAL_DELETED_POST_INFO/-->
 						','')-->
@@ -663,6 +671,16 @@ window.onload = function () {
 		</div>
 	</div>
 <!--/&DELETED_POST_ENTRY-->
+
+<!--&DELETED_POST_NOTE_INPUT-->
+	<tr>
+		<td class="postblock">Staff note</td>
+		<td> 
+			<textarea class="inputtext" name="note" placeholder="Optionally, leave a note."><!--&IF($NOTE,'{$NOTE}','')--></textarea>
+			<br><button type="submit" name="action" value="saveNote">Save</button>
+		</td>
+	</tr>
+<!--/&DELETED_POST_NOTE_INPUT-->
 
 <!--&DELETE_POST_BUTTONS-->
 	<div class="deletedPostButtons">
@@ -705,13 +723,6 @@ window.onload = function () {
 <!--/&DELETE_POST_RESTORE_BUTTON-->
 
 <!--&ADDITIONAL_DELETED_POST_INFO-->
-	<tr>
-		<td class="postblock">Staff note</td>
-		<td> 
-			<textarea class="inputtext" name="note" placeholder="Optionally, leave a note."><!--&IF($NOTE,'{$NOTE}','')--></textarea>
-			<br><button type="submit" name="action" value="saveNote">Save</button>
-		</td>
-	</tr>
 	<tr>
 		<td class="postblock">Restored?</td>
 		<td>{$IS_OPEN}</td>
