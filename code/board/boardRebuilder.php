@@ -2,7 +2,7 @@
 
 class boardRebuilder {
 	private array $config;
-	private bool $adminMode;
+	private bool $adminMode, $canViewDeleted;
 
 	public function __construct(
 		private board $board, 
@@ -23,11 +23,14 @@ class boardRebuilder {
 		// whether its a mod thats logged in
 		// used for admin-specific views
 		$this->adminMode = isActiveStaffSession();
+
+		// can view deleted
+		$this->canViewDeleted = canViewAllDeletedPosts();
 	}
 
 	public function drawThread(int $resno): void {
 		$uid = $this->threadRepository->resolveThreadUidFromResno($this->board, $resno);
-		$threadData = $this->threadService->getThreadByUID($uid, $this->adminMode);
+		$threadData = $this->threadService->getThreadByUID($uid, $this->canViewDeleted);
 		
 		// get the thread row
 		$thread = $threadData['thread'];
@@ -37,7 +40,7 @@ class boardRebuilder {
 
 		// Throw a 404 error if the thread isn't found
 		// Also throw a 404 if the thread was deleted
-		if (!$threadData || ($threadDeleted && !$this->adminMode)) {
+		if (!$threadData || ($threadDeleted && !$this->canViewDeleted)) {
 			$this->softErrorHandler->errorAndExit("Thread not found!", 404);
 			return;
 		}
@@ -52,7 +55,7 @@ class boardRebuilder {
 		$hiddenReply = 0;
 
 		// get quote links for thread
-		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByPostUids($postUids, $this->adminMode);
+		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByPostUids($postUids, $this->canViewDeleted);
 
 		// init thread and post renderer
 		$threadRenderer = $this->getThreadRenderer($quoteLinksFromBoard);
@@ -145,19 +148,19 @@ class boardRebuilder {
 		$previewCount = $this->config['RE_DEF'];
 
 		// get threads + previews for this page
-		$threadsInPage = $this->postService->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset, $this->adminMode);
+		$threadsInPage = $this->postService->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset, $this->canViewDeleted);
 		
 		// post uids of posts that are rendered
 		$postUidsInPage = getPostUidsFromThreadArrays($threadsInPage);
 
 		// get all associated quote links for the page
-		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage, $this->adminMode);
+		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage, $this->canViewDeleted);
 
 		// init thread renderer + post renderer
 		$threadRenderer = $this->getThreadRenderer($quoteLinksFromPage);
 
 		// total thread count
-		$totalThreads = $this->threadRepository->threadCountFromBoard($this->board, $this->adminMode);
+		$totalThreads = $this->threadRepository->threadCountFromBoard($this->board, $this->canViewDeleted);
 
 		// init placeholder template values
 		$pte_vals = $this->buildPteVals(false);

@@ -1,6 +1,8 @@
 <?php
 //This file contains functions for koko management mode and related features
 
+use Kokonotsuba\Root\Constants\userRole;
+
 function getCurrentStorageSizeFromSelectedBoards(array $boards) {
 	$FileIO = PMCLibrary::getFileIOInstance();
 	$totalBoardsStorageSize = 0;
@@ -45,6 +47,20 @@ function getIdFromSession(): int {
 	$accountUid = $staffSession->getUID();
 
 	return $accountUid;
+}
+
+function canViewAllDeletedPosts(): bool {
+	// get the role level
+	$roleLevel = getRoleLevelFromSession();
+
+	// required role
+	$requiredRole = userRole::LEV_MODERATOR;
+
+	// is high enough role
+	$isAuthorized = $roleLevel->isAtLeast($requiredRole);
+
+	// return condition
+	return $isAuthorized;
 }
 
 function updateAccountSession(accountRepository $accountRepository, loginSessionHandler $loginSessionHandler): void {

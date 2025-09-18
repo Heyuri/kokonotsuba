@@ -1,6 +1,6 @@
 <?php
 class overboard {
-	private bool $adminMode;
+	private bool $adminMode, $canViewDeleted;
 	
 	public function __construct(
 		private board $board,
@@ -24,6 +24,9 @@ class overboard {
 	) {
 		// whether staff is logged in or not
 		$this->adminMode = isActiveStaffSession();
+		
+		// can view deleted posts
+		$this->canViewDeleted = canViewAllDeletedPosts();
 	}
 	
 	public function drawOverboardHead(&$dat, $resno = 0) {
@@ -78,9 +81,9 @@ class overboard {
 
 		$previewCount = $this->config['RE_DEF'];
 
-		$threads = $this->threadService->getFilteredThreads($previewCount, $limit, $offset, $filters, $this->adminMode);
+		$threads = $this->threadService->getFilteredThreads($previewCount, $limit, $offset, $filters, $this->canViewDeleted);
 		
-		$numberThreadsFiltered = $this->threadRepository->getFilteredThreadCount($filters, $this->adminMode);
+		$numberThreadsFiltered = $this->threadRepository->getFilteredThreadCount($filters, $this->canViewDeleted);
 		
 		$postUidsInPage =  getPostUidsFromThreadArrays($threads);
 
