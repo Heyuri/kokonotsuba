@@ -312,7 +312,7 @@ class postRenderer {
 			$fileName = $data['file_name'];
 
 			// file size
-			$fileSize = $data['file_size'];
+			$fileSize = (string) $data['file_size'] . ' KB';
 
 			// file width
 			$fileWidth = $data['file_width'];
@@ -524,7 +524,7 @@ class postRenderer {
 				$imageHtml ?? '',
 				$fileData['fileName'] ?? '',
 				$data['fileExtension'] ?? '',
-				(string) $fileData['fileSize'] ?? '',
+				$fileData['fileSize'] ?? '',
 				$data['imageWidth'] ?? 0,
 				$data['imageHeight'] ?? 0,
 				$imageURL ?? '',
