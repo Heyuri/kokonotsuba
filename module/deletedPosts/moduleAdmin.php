@@ -151,7 +151,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			// if not, throw excepton
 			$this->authenticateDeletedPost($deletedPostId, $roleLevel, $accountId);
 
-			$this->handleAction($deletedPostId, $accountId, $action);
+			$this->handleAction($deletedPostId, $accountId, $roleLevel, $action);
 
 			return;
 		}
@@ -177,20 +177,20 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 	}
 
-	private function handleAction(int $deletedPostId, int $accountId, string $action): void {
+	private function handleAction(int $deletedPostId, int $accountId, userRole $roleLevel, string $action): void {
 		// If its a restore action, handle the restoring of the post
 		if($action === 'restore') {
 			$this->moduleContext->deletedPostsService->restorePost($deletedPostId, $accountId);
 		}
 
 		// if it's a purge action, handle the purging and associated actions 
-		else if ($action === 'purge') {
+		else if ($action === 'purge' && $roleLevel->isAtLeast($this->requiredRoleForAll)) {
 			$this->moduleContext->deletedPostsService->purgePost($deletedPostId);
 		}
 
 		// if it's an attachment purge then delete the file only
 		// then mark it as 'restored' by the mod since theres no more action to do on it
-		else if ($action === 'purgeAttachment') {
+		else if ($action === 'purgeAttachment' && $roleLevel->isAtLeast($this->requiredRoleForAll)) {
 			$this->moduleContext->deletedPostsService->purgeFileOnly($deletedPostId, $accountId);
 		}
 
@@ -264,7 +264,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			}
 
 			// draw it
-			$this->drawDeletedPostView($deletedPost, $postRenderer, $threadRenderer);
+			$this->drawDeletedPostView($roleLevel, $deletedPost, $postRenderer, $threadRenderer);
 
 			// return early so other drawing methods dont run
 			return;
@@ -290,7 +290,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// finalize html output
-		$this->handleHtmlOutput($deletedPosts, $deletedPostsCount, $postRenderer, $threadRenderer);
+		$this->handleHtmlOutput($roleLevel, $deletedPosts, $deletedPostsCount, $postRenderer, $threadRenderer);
 	}
 
 	private function outputAdminPage(string $pageContentHtml, string $pagerHtml = ''): void {
@@ -307,7 +307,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		echo $pageHtml;
 	}
 
-	private function drawDeletedPostView(array $deletedPost, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
+	private function drawDeletedPostView(userRole $roleLevel, array $deletedPost, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
 		// if its a thread then get the thread data
 		if($deletedPost['is_op']) {
 			$thread = $this->moduleContext->threadService->getThreadByUID($deletedPost['thread_uid'], true);
@@ -331,6 +331,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// get the template values for the deleted post entry
 		$deletedPostTemplateValues = $this->prepareDeletedEntryPlaceholders(
+			$roleLevel,
 			$deletedPost, 
 			$postRenderer, 
 			$threadRenderer, 
@@ -373,7 +374,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $url;
 	}
 
-	private function handleHtmlOutput(array $deletedPosts, int $deletedPostsCount, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
+	private function handleHtmlOutput(userRole $roleLevel, array $deletedPosts, int $deletedPostsCount, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
 		// flag for if there's no posts.
 		$areNoPosts = empty($deletedPosts);
 		
@@ -383,7 +384,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// don't bother trying to parse if there's no posts
 		if(!$areNoPosts) {
 			// get deleted posts html
-			$deletedPostListValues = $this->renderDeletedPosts($deletedPosts, $postRenderer, $threadRenderer);
+			$deletedPostListValues = $this->renderDeletedPosts($roleLevel, $deletedPosts, $postRenderer, $threadRenderer);
 		}
 		
 		// bind deted posts list html to placeholder
@@ -402,14 +403,18 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->outputAdminPage($deletedPostsPageHtml, $pager);
 	}
 
-	private function renderDeletedPosts(array $deletedPostEntries, postRenderer $postRenderer, threadRenderer $threadRenderer): array {
+	private function renderDeletedPosts(userRole $roleLevel, array $deletedPostEntries, postRenderer $postRenderer, threadRenderer $threadRenderer): array {
 		// array to store the template values
 		$deletedPostsTemplateValues = [];
 		
 		// loop through the deleted posts data and generate placeholder-to-value elements
 		foreach($deletedPostEntries as $deletedEntry) {
 			// prepare the entry placeholders
-			$deletedPostsTemplateValues[] = $this->prepareDeletedEntryPlaceholders($deletedEntry, $postRenderer, $threadRenderer);
+			$deletedPostsTemplateValues[] = $this->prepareDeletedEntryPlaceholders(
+				$roleLevel, 
+				$deletedEntry, 
+				$postRenderer, 
+				$threadRenderer);
 		}
 
 		// now, return the template values
@@ -417,6 +422,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function prepareDeletedEntryPlaceholders(
+		userRole $roleLevel,
 		array $deletedEntry, 
 		postRenderer $postRenderer, 
 		threadRenderer $threadRenderer, 
@@ -456,6 +462,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$DELETED_AT}' => htmlspecialchars($deletedTimestamp),
 			'{$ID}' => htmlspecialchars($id),
 			'{$BOARD_UID}' => htmlspecialchars($boardUID),
+			'{$CAN_PURGE}' => $roleLevel->isAtLeast($this->requiredRoleForAll),
 			'{$BOARD_TITLE}' => $boardTitle,
 			'{$VIEW_MORE_URL}' => htmlspecialchars($viewMoreUrl),
 			'{$POST_HTML}' => $postHtml,

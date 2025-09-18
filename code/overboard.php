@@ -26,7 +26,7 @@ class overboard {
 		$this->adminMode = isActiveStaffSession();
 		
 		// can view deleted posts
-		$this->canViewDeleted = $this->board->getConfigValue('AuthLevels.CAN_DELETE_ALL');
+		$this->canViewDeleted = getRoleLevelFromSession()->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_DELETE_ALL'));
 	}
 	
 	public function drawOverboardHead(&$dat, $resno = 0) {

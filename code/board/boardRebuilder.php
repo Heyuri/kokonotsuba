@@ -25,7 +25,7 @@ class boardRebuilder {
 		$this->adminMode = isActiveStaffSession();
 
 		// can view deleted
-		$this->canViewDeleted = $this->board->getConfigValue('AuthLevels.CAN_DELETE_ALL');
+		$this->canViewDeleted = getRoleLevelFromSession()->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_DELETE_ALL'));
 	}
 
 	public function drawThread(int $resno): void {

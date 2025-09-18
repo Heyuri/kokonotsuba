@@ -651,34 +651,7 @@ window.onload = function () {
 						<tr>
 							<td class="postblock"></td>
 							<td>
-								<div class="deletedPostButtons">
-
-
-									<!--&IF($FILE_ONLY,'[<button type="submit"
-										name="action"
-										value="purgeAttachment"
-										class="adminFunctions adminPurgeFunction buttonLink"
-										title="Purge attachment from system">
-										Purge file
-									</button>]','
-									[<button type="submit"
-										name="action"
-										value="purge"
-										class="adminFunctions adminPurgeFunction buttonLink"
-										title="Purge from system">
-										Purge
-									</button>]
-									')-->
-									
-									<!--&IF($IS_OPEN,'[<button type="submit"
-										name="action"
-				 						value="restore"
-										class="adminFunctions adminRestoreFunction buttonLink"
-										title="Restore the post to the board">
-										Restore
-									</button>]','')-->
-									<!--&IF($IS_VIEW,'','[<a href="{$VIEW_MORE_URL}">View</a>]')-->
-								</div>
+								<!--&DELETE_POST_BUTTONS/-->
 							</td>
 						</tr>
 					</tbody>
@@ -690,6 +663,46 @@ window.onload = function () {
 		</div>
 	</div>
 <!--/&DELETED_POST_ENTRY-->
+
+<!--&DELETE_POST_BUTTONS-->
+	<div class="deletedPostButtons">
+		<!--&IF($CAN_PURGE,'
+			<!--&DELETE_POST_PURGE_BUTTON/-->
+		','')-->
+
+		<!--&DELETE_POST_RESTORE_BUTTON/-->
+		
+		<!--&IF($IS_VIEW,'','[<a href="{$VIEW_MORE_URL}">View</a>]')-->
+	</div>
+<!--/&DELETE_POST_BUTTONS-->
+
+<!--&DELETE_POST_PURGE_BUTTON-->
+	<!--&IF($FILE_ONLY,'[<button type="submit"
+			name="action"
+			value="purgeAttachment"
+			class="adminFunctions adminPurgeFunction buttonLink"
+			title="Purge attachment from system">
+			Purge file
+		</button>]','
+		[<button type="submit"
+			name="action"
+			value="purge"
+			class="adminFunctions adminPurgeFunction buttonLink"
+			title="Purge from system">
+			Purge
+		</button>]
+	')-->	
+<!--/&DELETE_POST_PURGE_BUTTON-->
+
+<!--&DELETE_POST_RESTORE_BUTTON-->
+	<!--&IF($IS_OPEN,'[<button type="submit"
+		name="action"
+		value="restore"
+		class="adminFunctions adminRestoreFunction buttonLink"
+		title="Restore the post to the board">
+		Restore
+	</button>]','')-->
+<!--/&DELETE_POST_RESTORE_BUTTON-->
 
 <!--&ADDITIONAL_DELETED_POST_INFO-->
 	<tr>
