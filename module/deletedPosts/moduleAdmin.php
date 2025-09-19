@@ -330,7 +330,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// get the quotelinks
-		$quoteLinks = $this->moduleContext->quoteLinkService->getQuoteLinksByPostUids($postUids);
+		$quoteLinks = $this->moduleContext->quoteLinkService->getQuoteLinksByPostUids($postUids, true);
 
 		// set the quotelinks
 		$postRenderer->setQuoteLinks($quoteLinks);
