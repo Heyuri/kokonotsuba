@@ -121,7 +121,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 				break;
 			case 'imgdel':
-				$this->moduleContext->deletedPostsService->removeFileOnly($post, $accountId);
+				$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$post], $accountId);
 
 				$this->moduleContext->actionLoggerService->logAction('Deleted file for post No.'.$post['no'], $boardUID);
 				break;
