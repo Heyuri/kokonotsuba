@@ -5,9 +5,13 @@ namespace Kokonotsuba\Modules\search;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;
 use postRenderer;
 use postSearchService;
+use templateEngine;
 
 class moduleMain extends abstractModuleMain {
 	private readonly string $myPage;
+
+	// used for rendering posts
+	private templateEngine $moduleTemplateEngine;
 
 	public function getName(): string {
 		return 'Kokonotsuba Search';
@@ -19,6 +23,9 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		$this->myPage = $this->getModulePageURL();
+
+		// init the module template engine
+		$this->moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.SEARCH_TEMPLATE', 'kokoimg.tpl');
 
 		$this->moduleContext->moduleEngine->addListener('TopLinks', function(string &$topLinkHookHtml, bool $isReply) {
 			$this->onRenderTopLinks($topLinkHookHtml);
@@ -138,7 +145,7 @@ class moduleMain extends abstractModuleMain {
 			$this->moduleContext->board, 
 			$this->moduleContext->board->loadBoardConfig(), 
 			$this->moduleContext->moduleEngine, 
-			$this->moduleContext->templateEngine, 
+			$this->moduleTemplateEngine, 
 			$quoteLinksFromBoard);
 
 		$hitPostResultData = $hitPosts['results_data'];
