@@ -8,11 +8,15 @@ use Kokonotsuba\Root\Constants\userRole;
 use postRenderer;
 use RuntimeException;
 use staffAccountFromSession;
+use templateEngine;
 use threadRenderer;
 
 class moduleAdmin extends abstractModuleAdmin {
 	// property to store the url of the module
 	private string $myPage;
+
+	// template engine property used for rendering posts
+	private templateEngine $moduleTemplateEngine;
 	
 	// property for the role required to modify all deleted posts
 	private userRole $requiredRoleForAll;
@@ -36,6 +40,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		// initialize url
 		$this->myPage = $this->getModulePageURL([], false);
 
+		// init the module template engine
+		$this->initModuleTemplateEngine();
+
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this,
 			'LinksAboveBar',
@@ -53,11 +60,24 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	} 
 
+	private function initModuleTemplateEngine(): void {
+		// get the desired template for the module
+		$moduleTemplateName = $this->getConfig('ModuleSettings.DELETED_POSTS_TEMPLATE', 'kokoimg.tpl');
+
+		// create a copy of the templateEngine from the module context
+		$moduleTemplateEngine = clone $this->moduleContext->templateEngine;
+
+		// then set the template to use for the deleted posts page
+		$moduleTemplateEngine->setTemplateFile($moduleTemplateName);
+
+		// now set the property
+		$this->moduleTemplateEngine = $moduleTemplateEngine;
+	}
+
 	private function onRenderLinksAboveBar(string &$linkHtml): void {
 		// modify the "links above bar" html to have a [Deleted Posts] button
 		$linkHtml .= '<li class="adminNavLink"><a title="Manage posts that have been deleted" href="' . htmlspecialchars($this->myPage) . '">Manage deleted posts</a></li>';
 	}
-
 
 	private function onRenderPostAdminControls(string &$modFunc, array &$post): void {
 		// whether the post is deleted or not
@@ -235,7 +255,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// certain actions involve drawing/GET
 		$action = $_GET['action'] ?? null;
 
-		$postRenderer = new postRenderer($this->moduleContext->board, $this->moduleContext->config, $this->moduleContext->moduleEngine, $this->moduleContext->templateEngine, []);
+		$postRenderer = new postRenderer($this->moduleContext->board, $this->moduleContext->config, $this->moduleContext->moduleEngine, $this->moduleTemplateEngine, []);
 		$threadRenderer = new threadRenderer($this->moduleContext->board->loadBoardConfig(), $this->moduleContext->templateEngine, $postRenderer);
 
 		// view a single deleted post in full detail
