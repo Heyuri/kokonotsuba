@@ -49,13 +49,20 @@ function applyRegexIPFilter(string $ip): ?string {
  * @param string $query The SQL query string to modify (by reference).
  * @param array $filters The filters array containing user input for filtering results.
  */
-function bindPostFilterParameters(array &$params, string &$query, array $filters): void {
+function bindPostFilterParameters(array &$params, string &$query, array $filters, bool $prefixColumn = false): void {
+	// Some join queries group post related stuff with 'p.'
+	if($prefixColumn) {
+		$columnPrefix = 'p.';
+	} else {
+		$columnPrefix = '';
+	}
+
 	// Apply the 'board' filter and bind parameters
 	$boards = applyArrayFilter($filters, 'board');
 	if (!empty($boards)) {
 		$query .= " AND (";
 		foreach ($boards as $index => $board) {
-			$query .= ($index > 0 ? " OR " : "") . "boardUID = :board_$index";
+			$query .= ($index > 0 ? " OR " : "") . $columnPrefix . "boardUID = :board_$index";
 			$params[":board_$index"] = (int)$board;  // Bind the board UID as an integer
 		}
 		$query .= ")";
@@ -63,12 +70,12 @@ function bindPostFilterParameters(array &$params, string &$query, array $filters
 
 	// Apply the 'tripcode' filter to both 'tripcode' and 'secure_tripcode' columns
 	if (!empty($filters['tripcode']) && is_string($filters['tripcode'])) {
-		$query .= " AND (tripcode LIKE :tripcode OR secure_tripcode LIKE :tripcode)";
+		$query .= " AND (" . $columnPrefix . "tripcode LIKE :tripcode OR " . $columnPrefix . "secure_tripcode LIKE :tripcode)";
 		$params[":tripcode"] = '%' . $filters['tripcode'] . '%';
 	}
 
 	// Apply filters for 'comment', 'subject', and 'name' by binding the LIKE clauses
-	foreach (['capcode' => 'capcode', 'comment' => 'com', 'subject' => 'sub', 'post_name' => 'name'] as $key => $column) {
+	foreach (['capcode' => $columnPrefix . 'capcode', 'comment' => $columnPrefix . 'com', 'subject' => $columnPrefix . 'sub', 'post_name' => $columnPrefix . 'name'] as $key => $column) {
 		if (!empty($filters[$key]) && is_string($filters[$key])) {
 			$query .= " AND {$column} LIKE :{$key}";
 			$params[":{$key}"] = '%' . $filters[$key] . '%';  // Bind the filter as a LIKE clause
@@ -79,11 +86,10 @@ function bindPostFilterParameters(array &$params, string &$query, array $filters
 	if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
 		$regex = applyRegexIPFilter($filters['ip_address']);
 		if ($regex !== null) {
-			$query .= " AND host REGEXP :ip_regex";
+			$query .= " AND " . $columnPrefix . "host REGEXP :ip_regex";
 			$params[':ip_regex'] = $regex;  // Bind the regex for IP address
 		}
 	}
-
 }
 
 /**
