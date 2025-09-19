@@ -185,6 +185,7 @@ $config['ModuleSettings']['SHOW_SCORE_ONLY'] = false;
 //mod_search
 $config['ModuleSettings']['SEARCH_POSTS_PER_PAGE'] = 50;
 $config['ModuleSettings']['SEARCH_TEMPLATE'] = 'kokoimg.tpl';
+$config['ModuleSettings']['DISPLAY_THREADED_FORMAT'] = false;
 
 //mod_readonly
 $config['ModuleSettings']['ALLOW_REPLY'] = false; // allow replies to threads but disallow creating threads when board is read-only
