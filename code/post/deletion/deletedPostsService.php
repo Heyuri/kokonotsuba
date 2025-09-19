@@ -107,6 +107,12 @@ class deletedPostsService {
 		// restore the reply
 		$this->deletedPostsRepository->restorePostData($deletedPostId, $accountId);
 
+		// thread_uid of the post
+		$threadUid = $postData['thread_uid'];
+		
+		// now update the thread's bump order
+		$this->threadRepository->bumpThread($threadUid);
+
 		// generate the logging string
 		$restoreActionString = $this->generateActionLoggingString($postData['no'], false, false);
 
