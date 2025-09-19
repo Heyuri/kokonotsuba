@@ -648,10 +648,7 @@ window.onload = function () {
 						<!--&IF($IS_VIEW,'
 							<!--&DELETED_POST_NOTE_INPUT/-->
 						','
-							<tr>
-								<td class="postblock">Note</td>
-								<td><p class="postNote">{$NOTE}</p></td>
-							</tr>						
+							<!--&DELETED_POST_NOTE_PREVIEW/-->					
 						')-->
 						<!--&IF($SHOW_ALL,'
 							<!--&ADDITIONAL_DELETED_POST_INFO/-->
@@ -681,6 +678,17 @@ window.onload = function () {
 		</td>
 	</tr>
 <!--/&DELETED_POST_NOTE_INPUT-->
+
+<!--&DELETED_POST_NOTE_PREVIEW-->
+	<!--&IF($NOTE_PREVIEW,'
+		<tr>
+			<td class="postblock">Note</td>
+			<td>
+				<p class="postNote">{$NOTE_PREVIEW}</p>
+			</td>
+		</tr>	
+	','')-->
+<!--/&DELETED_POST_NOTE_PREVIEW-->
 
 <!--&DELETE_POST_BUTTONS-->
 	<div class="deletedPostButtons">
@@ -723,6 +731,12 @@ window.onload = function () {
 <!--/&DELETE_POST_RESTORE_BUTTON-->
 
 <!--&ADDITIONAL_DELETED_POST_INFO-->
+		<!--&IF($RESTORED_AT,'
+			<!--&DELETED_POST_RESTORE_INFO/-->
+		','')-->
+<!--/&ADDITIONAL_DELETED_POST_INFO-->
+
+<!--&DELETED_POST_RESTORE_INFO-->
 	<tr>
 		<td class="postblock">Restored?</td>
 		<td>{$IS_OPEN}</td>
@@ -739,7 +753,7 @@ window.onload = function () {
 			<!--&IF($RESTORED_AT,'{$RESTORED_BY}','<i>N/A</i>')-->
 		</td>
 	</tr>
-<!--/&ADDITIONAL_DELETED_POST_INFO-->
+<!--/&DELETED_POST_RESTORE_INFO-->
 
 <!--&DELETED_POST_VIEW_ENTRY-->
 	[<a href="{$URL}">Back</a>]
