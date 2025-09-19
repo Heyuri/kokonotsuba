@@ -8,7 +8,7 @@ class usrdelRoute {
 		private readonly actionLoggerService $actionLoggerService,
 		private readonly postRepository $postRepository,
 		private readonly postService $postService,
-		private readonly attachmentService $attachmentService,
+		private readonly deletedPostsService $deletedPostsService,
 		private readonly softErrorHandler $softErrorHandler,
 		private readonly array $regularBoards,
 		private mixed $FileIO
@@ -48,7 +48,7 @@ class usrdelRoute {
 			$this->softErrorHandler->errorAndExit(_T('del_notchecked'));
 		}
 
-		$posts = $this->postRepository->getPostsByUids($delno);
+		$posts = $this->postService->getPostsByUids($delno);
 
 		foreach ($posts as $post) {
 			if ($pwd_md5 == $post['pwd'] || $host == $post['host'] || $havePerm) {
@@ -65,15 +65,12 @@ class usrdelRoute {
 				$this->moduleEngine->dispatch('PostOnDeletion', [$delPosts, 'frontend']);
 			}
 
-			$files = createBoardStoredFilesFromArray($delPosts, $this->regularBoards);
-
 			if ($onlyimgdel) {
-				$this->attachmentService->removeAttachments($delPostUIDs);
+				$this->deletedPostsService->deleteFilesFromPosts($posts, $accountId);
 			} else {
 				$this->postService->removePosts($delPostUIDs, $accountId);
 			}
 
-			$this->FileIO->deleteImagesByBoardFiles($files);
 		} else {
 			$this->softErrorHandler->errorAndExit(_T('del_wrongpwornotfound'));
 		}

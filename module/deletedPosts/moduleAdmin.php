@@ -62,8 +62,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this,
 			'Post',
-			function (&$arrLabels, $post, $threadPosts, $board) {
-				$this->onRenderPost($arrLabels, $post, $board);
+			function(&$arrLabels, $post, $threadPosts, $board) {
+				$this->onRenderPost($arrLabels, $post);
 			}
 		);
 

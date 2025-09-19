@@ -15,9 +15,9 @@ class managePostsRoute {
 		private readonly softErrorHandler $softErrorHandler,
 		private mixed $FileIO,
 		private readonly actionLoggerService $actionLoggerService,
-		private attachmentService $attachmentService,
 		private readonly pageRenderer $adminPageRenderer,
-		private readonly array $allRegularBoards
+		private readonly array $allRegularBoards,
+		private readonly deletedPostsService $deletedPostsService
 	) {}
 
 	public function drawManagePostsPage() {
@@ -26,6 +26,9 @@ class managePostsRoute {
 		$isSubmission = isset($_GET['filterSubmissionFlag']);
 		
 		$managePostsUrl = $this->board->getBoardURL(true) . '?mode=managePosts';
+
+		// account id of the current user (can be null)
+		$accountId = getIdFromSession();
 
 		//filter list for the database
 		$defaultFilters = $this->initializeManagePostsFilters();
@@ -59,7 +62,7 @@ class managePostsRoute {
 		// Delete the article(thread) block
 		$postUidsFromCheckbox = $_POST['clist'] ?? array();
 		if($postUidsFromCheckbox) {
-			$this->deletePostsFromCheckboxes($postUidsFromCheckbox, $onlyimgdel);
+			$this->deletePostsFromCheckboxes($postUidsFromCheckbox, $onlyimgdel, $accountId);
 			$this->board->rebuildBoard();
 		}
 		
@@ -216,7 +219,7 @@ class managePostsRoute {
 		];
 	}
 
-	private function deletePostsFromCheckboxes(array $postUids, bool $onlyDeleteImages): void {
+	private function deletePostsFromCheckboxes(array $postUids, bool $onlyDeleteImages, int $accountId): void {
 		$postsData = $this->postService->getPostsByUids($postUids);
 		$postNumbers = array_column($postsData, 'no');
 
@@ -224,7 +227,7 @@ class managePostsRoute {
 		$this->actionLoggerService->logAction("Delete posts: $checkboxDeletionActionLogStr".($onlyDeleteImages?' (file only)':''), $this->board->getBoardUID());
 
 		if($onlyDeleteImages) {
-			$files = $this->attachmentService->removeAttachments($postUids);
+			$files = $this->deletedPostsService->deleteFilesFromPosts($postsData, $accountId);
 
 			if ($files) {
 				$this->FileIO->deleteImage($files, $this->board);

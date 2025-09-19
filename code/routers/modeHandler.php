@@ -143,8 +143,8 @@ class modeHandler {
 					$this->routeDiContainer->moduleEngine, 
 					$this->routeDiContainer->actionLoggerService, 
 					$this->routeDiContainer->postRepository, 
-					$this->routeDiContainer->postService, 
-					$this->routeDiContainer->attachmentService,
+					$this->routeDiContainer->postService,
+					$this->routeDiContainer->deletedPostsService, 
 					$this->routeDiContainer->softErrorHandler,
 					$this->routeDiContainer->regularBoards,
 					$this->routeDiContainer->FileIO
@@ -186,9 +186,9 @@ class modeHandler {
 					$this->routeDiContainer->softErrorHandler,
 					$this->routeDiContainer->FileIO,
 					$this->routeDiContainer->actionLoggerService,
-					$this->routeDiContainer->attachmentService,
 					$this->routeDiContainer->adminPageRenderer,
-					$this->routeDiContainer->regularBoards
+					$this->routeDiContainer->regularBoards,
+					$this->routeDiContainer->deletedPostsService
 				);
 				$route->drawManagePostsPage();
 			}

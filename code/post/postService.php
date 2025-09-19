@@ -1,16 +1,11 @@
 <?php
 
 class postService {
-	private array $allowedOrderFields;
-
 	public function __construct(
 		private readonly postRepository $postRepository, 
 		private readonly transactionManager $transactionManager, 
 		private readonly threadRepository $threadRepository,
-		private readonly attachmentService $attachmentService,
-		private readonly deletedPostsService $deletedPostsService) {
-		$this->allowedOrderFields = ['post_uid', 'root', 'no', 'tim', 'time'];
-	}
+		private readonly deletedPostsService $deletedPostsService) {}
 
 	public function getPostsByUids(array $postUids): ?array {
 		$postUidList = $this->sanitizeAndImplodeIDs($postUids);

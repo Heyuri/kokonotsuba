@@ -386,7 +386,7 @@ class deletedPostsService {
 		return $rowExists;
 	}
 
-	public function flagPostsAsDeleted(array $posts, ?int $deletedBy ): void {
+	public function flagPostsAsDeleted(array $posts, ?int $deletedBy): void {
 		// get all posts from the thread if any of the posts are thread OPs
 		$threadPosts = $this->getThreadsFromOPs($posts);
 
@@ -642,18 +642,18 @@ class deletedPostsService {
 		$this->actionLoggerService->logAction("Updated note on post No.$no", $boardUid);
 	}
 
-	public function removeFileOnly(array $post, ?int $deletedBy ): void {
-		// add a new deleted posts but make it File Only	
-		$this->deletePost($post, $deletedBy, true);
+	public function deleteFilesFromPosts(array $posts, ?int $deletedBy): void {
+		// mark posts as file-only deleted
+		$this->deleteMultiplePosts($posts, $deletedBy, true, false);
 
 		// add the attachments
-		$this->addDeletedAttach($post);
+		$this->addDeletedAttachments($posts);
 
-		// get the post uid of the post
-		$postUid = $post['post_uid'];
+		// get the post uids
+		$postUids = array_column($posts, 'post_uid');
 
-		// get the newly added attachments from the database
-		$attachments = $this->fileService->getAttachmentsForPost($postUid);
+		// now get the newly inserted attachments
+		$attachments = $this->fileService->getAttachmentsFromPostUids($postUids);
 
 		if(!empty($attachments)) {
 			// move the attachment itself
