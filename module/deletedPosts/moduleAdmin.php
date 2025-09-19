@@ -41,7 +41,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->myPage = $this->getModulePageURL([], false);
 
 		// init the module template engine
-		$this->initModuleTemplateEngine();
+		$this->moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.DELETED_POSTS_TEMPLATE', 'kokoimg.tpl');
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this,
@@ -58,20 +58,6 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->onRenderPostAdminControls($modControlSection, $post);
 			}
 		);
-	} 
-
-	private function initModuleTemplateEngine(): void {
-		// get the desired template for the module
-		$moduleTemplateName = $this->getConfig('ModuleSettings.DELETED_POSTS_TEMPLATE', 'kokoimg.tpl');
-
-		// create a copy of the templateEngine from the module context
-		$moduleTemplateEngine = clone $this->moduleContext->templateEngine;
-
-		// then set the template to use for the deleted posts page
-		$moduleTemplateEngine->setTemplateFile($moduleTemplateName);
-
-		// now set the property
-		$this->moduleTemplateEngine = $moduleTemplateEngine;
 	}
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {

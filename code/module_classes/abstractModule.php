@@ -15,6 +15,7 @@
 namespace Kokonotsuba\ModuleClasses;
 
 use Kokonotsuba\ModuleClasses\moduleContext;
+use templateEngine;
 
 abstract class abstractModule {
 	public function __construct(
@@ -49,4 +50,17 @@ abstract class abstractModule {
 		return $baseUrl . '?' . $query;
 	}
 
+	protected function initModuleTemplateEngine(string $configKey, string $defaultValue): templateEngine {
+		// get the desired template for the module
+		$moduleTemplateName = $this->getConfig($configKey, $defaultValue);
+
+		// create a copy of the templateEngine from the module context
+		$moduleTemplateEngine = clone $this->moduleContext->templateEngine;
+
+		// then set the template to use for the module page page
+		$moduleTemplateEngine->setTemplateFile($moduleTemplateName);
+
+		// now return the clone
+		return $moduleTemplateEngine;
+	}
 }
