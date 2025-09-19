@@ -44,4 +44,9 @@ class pageRenderer {
 	
 		return $htmlOutput;
 	}
+
+	public function setTemplate(string $templateName): void {
+		// set the template that templateEngine is using to the specified
+		$this->templateEngine->setTemplateFile($templateName);
+	}
 }
