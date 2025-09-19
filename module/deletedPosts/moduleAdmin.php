@@ -512,9 +512,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		
 		// if the post is a reply then render it as an OP
 		if(!$deletedEntry['is_op'] || !$showAll) {
-			$deletedEntry['is_op'] = 1;
+			// flag to make sure the reply gets rendered using the OP template block
+			$renderAsOp = true;
+
 			// html of the post / thread
-			$postHtml = $postRenderer->render($deletedEntry, $templateValues, 0, false, [$deletedEntry], true, '', '', '', '', '', 0, false);
+			$postHtml = $postRenderer->render($deletedEntry, $templateValues, 0, false, [$deletedEntry], true, '', '', '', '', '', 0, false, '', $renderAsOp);
 		}
 		// if its a thread (and we're showing all) then render it along with its replies
 		elseif ($deletedEntry['is_op'] && $showAll) {
