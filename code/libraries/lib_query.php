@@ -36,13 +36,14 @@ function getBasePostQuery(string $postTable, string $deletedPostsTable, string $
 			dp.open_flag,
 			dp.file_only AS file_only_deleted,
 			dp.id AS deleted_post_id,
-			dp.by_proxy
+			dp.by_proxy,
+			dp.note AS deleted_note
 		
 		FROM $postTable p
 		
 		-- Join latest deleted_post info
 		LEFT JOIN (
-			SELECT dp1.post_uid, dp1.open_flag, dp1.file_only, dp1.by_proxy, dp1.id
+			SELECT dp1.post_uid, dp1.open_flag, dp1.file_only, dp1.by_proxy, dp1.note, dp1.id
 			FROM $deletedPostsTable dp1
 			INNER JOIN (
 				SELECT post_uid, MAX(deleted_at) AS max_deleted_at
