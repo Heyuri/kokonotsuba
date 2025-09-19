@@ -58,6 +58,15 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->onRenderPostAdminControls($modControlSection, $post);
 			}
 		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this,
+			'Post',
+			function (&$arrLabels, $post, $threadPosts, $board) {
+				$this->onRenderPost($arrLabels, $post, $board);
+			}
+		);
+
 	}
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {
@@ -67,21 +76,35 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function onRenderPostAdminControls(string &$modFunc, array &$post): void {
 		// whether the post is deleted or not
-		$openFlag = $post['open_flag'] ?? 0;
+		$isPostDeleted = $this->isPostDeleted($post);
+
+		// don't bother if the post isn't deleted
+		if(!$isPostDeleted) {
+			return;
+		}
 
 		// whether only the file was deleted
 		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
-		
-		// don't bother if the post isn't deleted
-		if($openFlag === 0) {
-			return;
-		}
 
 		// render the <a> button to take the user to the entry in the module
 		$modFunc .= $this->adminPostViewModuleButton($post);
 
 		// render the [DELETED] indicator
 		$modFunc .= $this->renderDeletionIndicator($onlyFileDeleted);
+	}
+
+	private function isPostDeleted(array $post): bool {
+		// has a value of 1 if the post is deleted
+		$openFlag = $post['open_flag'] ?? 0;
+
+		// return true if its value is 1
+		if((int)$openFlag === 1) {
+			return true;
+		} 
+		// not deleted / restored
+		else {
+			return false;
+		}
 	}
 
 	private function adminPostViewModuleButton(array $post): string {
@@ -145,6 +168,34 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// return html
 		return '<span class="warning" title="' . htmlspecialchars($spanTitle) . '">[' . htmlspecialchars($message) . ']</span>';
+	}
+
+	private function onRenderPost(array &$templateValues, array $post): void {
+		// whether the post is deleted or not
+		$isPostDeleted = $this->isPostDeleted($post);
+
+		// don't bother if the post isn't deleted
+		if(!$isPostDeleted) {
+			return;
+		}
+
+		// OK - this post is deleted. Proceed
+
+		// Append the staff note to the comment
+		if(isset($post['deleted_note'])) {
+			$templateValues['{$COM}'] .= $this->renderStaffNoteOnPost($post);
+		}
+	}
+
+	private function renderStaffNoteOnPost(array $post): string {
+		// get the note
+		$note = $post['deleted_note'] ?? '';
+
+		// generate the string
+		$noteHtml = '<br><br><small class="noteOnPost warning" title="This is a note left by staff"> ' . htmlspecialchars($note) . ' </small>';
+
+		// return the generate message
+		return $noteHtml;
 	}
 
 	private function handleModPageRequests(int $accountId, userRole $roleLevel): void {
