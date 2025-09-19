@@ -95,6 +95,9 @@ class postValidator {
 		}
 		$com = str_replace("\n", '', $com); // If there are still \n newline characters, cancel the newline
 		
+		// strip unicode zero width characters and some control characters
+		$com = stripZeroWidthCharacters($com);
+
 		return $com;
 	}
 
