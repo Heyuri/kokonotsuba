@@ -15,14 +15,21 @@ class templateEngine {
 		$this->config = $dependencies['config'] ?? [];
 		$this->boardData = $dependencies['boardData'] ?? [];
 
+		// load the template
+		$this->loadTemplate($tplname);
+	}
+
+	private function loadTemplate(string $tplname): void {
+		// cache to store template file contents
 		static $tplCache = [];
 
+		// if its cached then load the ecache
 		if (isset($tplCache[$tplname])) {
 			$this->tpl = $tplCache[$tplname];
 		} else {
 			// die if the template file doesn't exist
 			if(!file_exists($tplname)) {
-				die("Template file ($tplname) doesn't exist for {$dependencies['boardData']['title']}");
+				die("Template file ($tplname) doesn't exist for {$this->boardData['title']}");
 			}
 
 			$this->tpl = file_get_contents($tplname);
@@ -38,6 +45,17 @@ class templateEngine {
 				$this->tpl_block[$blockName] = false;
 		}
 		return $this->tpl_block[$blockName];
+	}
+
+	public function setTemplateFile(string $templateName): void {
+		// generate template path
+		$templatePath = getBackendDir() . 'templates/' . $templateName;
+
+		// clear the block cache
+		$this->tpl_block = [];
+		
+		// load the specified template
+		$this->loadTemplate($templatePath);
 	}
 
 	public function BlockValue($blockName) {
