@@ -165,7 +165,14 @@ class postRenderer {
 		}
 
 		// Dispatch Post event, which is a hook point that will affect every post
-		$this->moduleEngine->dispatch('Post', [&$templateValues, $post, $threadPosts, $this->board]);
+		$board = $this->board;
+		$this->moduleEngine->dispatch('Post', [
+			&$templateValues,
+			&$post,
+			&$threadPosts,
+			&$board
+		]);
+
 
 		// Dispatch specific hook and return template
 		if ($isThreadReply) {
