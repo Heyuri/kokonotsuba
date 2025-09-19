@@ -31,7 +31,8 @@ class postRepository {
 
 	/* Get number of posts */
 	public function postCount($filters = []) {
-		$query = "SELECT COUNT(post_uid) FROM {$this->postTable} WHERE 1 ";
+		$query = "SELECT COUNT(post_uid) FROM posts WHERE 1";
+
 		$params = [];
 		bindPostFilterParameters($params, $query, $filters);
 		
@@ -44,14 +45,17 @@ class postRepository {
 		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
 		$params = [];
 		
-		bindPostFilterParameters($params, $query, $filters); //apply filtration to query
-		
+		// add WHERE so the AND conditions can be appended without sissue
+		$query .= " WHERE 1";
+
+		bindPostFilterParameters($params, $query, $filters, true); //apply filtration to query
+
 		// exclude deleted posts
 		if(!$includeDeleted) {
 			$query = excludeDeletedPostsCondition($query);
 		}
 
-		$query .= " ORDER BY $order  DESC LIMIT $amount OFFSET $offset";
+		$query .= " ORDER BY p.$order  DESC LIMIT $amount OFFSET $offset";
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
 	
 		return $posts ?? [];
