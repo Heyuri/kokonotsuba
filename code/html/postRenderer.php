@@ -35,7 +35,8 @@ class postRenderer {
 		string $warnEndReply,
 		int $replyCount,
 		bool $threadMode = true,
-		string $crossLink = ''
+		string $crossLink = '',
+		bool $renderAsOp = false
 	) {
 		// Prepare post data
 		$data = $this->preparePostData($post);
@@ -116,8 +117,12 @@ class postRenderer {
 		$quoteButton = $this->generateQuoteButton($threadResno, $data['no']);
 		$replyButton = $threadMode ? $this->generateReplyButton($crossLink, $threadResno) : '';
 
+		// Variables to used for the condition for whether to use OP/Reply template block
+		$shouldRenderReply = $isThreadReply && !$renderAsOp;
+		$shouldRenderOp = $isThreadOp || $renderAsOp;
+
 		// Bind the template values based on whether it's a reply or OP
-		if ($isThreadReply) {
+		if ($shouldRenderReply) {
 			$templateValues = $this->renderReplyPost(
 				$data, 
 				$postPositionEnabled,
@@ -132,7 +137,13 @@ class postRenderer {
 				$imageHtml,
 				$imageURL
 			);
-		} elseif ($isThreadOp) {
+		} 
+		// render the thread using the OP template block if its a thread OP.
+		//
+		// also optionally pass the $renderAsOp flag to force it to use the OP template block -
+		// - in order to various HTML problems that can occur across various themes. Which is useful 
+		// - when we're not rendering in a thread format.
+		elseif ($shouldRenderOp) {
 			$templateValues = $this->renderOpPost(
 				$data, 
 				$fileData,
@@ -159,12 +170,18 @@ class postRenderer {
 		// Dispatch specific hook and return template
 		if ($isThreadReply) {
 			$this->moduleEngine->dispatch('ThreadReply', [&$templateValues, $post, $threadPosts, $isThreadReply]);
-			return $this->templateEngine->ParseBlock('REPLY', $templateValues);
 		} elseif ($isThreadOp) {
 			$this->moduleEngine->dispatch('OpeningPost', [&$templateValues, $post, $threadPosts, $isThreadReply]);
-			return $this->templateEngine->ParseBlock('OP', $templateValues);
 		}
 
+		// Return HTML based on render intent (allow forcing OP layout via $renderAsOp)
+		if ($isThreadReply && !$renderAsOp) {
+			return $this->templateEngine->ParseBlock('REPLY', $templateValues);
+		} 
+		// Render as OP
+		else {
+			return $this->templateEngine->ParseBlock('OP', $templateValues);
+		}
 	}
 
 	private function generateAttachmentHtml(array $fileData, bool $isDeleted, bool $fileOnlyDeleted, bool $adminMode): array {
