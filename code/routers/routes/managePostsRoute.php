@@ -82,9 +82,9 @@ class managePostsRoute {
 								<tbody>';
 		
 		// Eager load all boards first
-		$allBoards = $this->boardService->getAllRegularBoards();
+		$allBoards = GLOBAL_BOARD_ARRAY;
 
-		$allBoardUids = array_column($allBoards, 'board_uid');
+		$allBoardUids = array_map(fn($board) => $board->getBoardUID(), $this->allRegularBoards);;
 		$boardList = implode('+', $allBoardUids);
 
 		$boardMap = array();
