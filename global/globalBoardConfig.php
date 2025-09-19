@@ -195,6 +195,9 @@ $config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'] = 250;
 // posterID
 $config['ModuleSettings']['DISP_ID'] = false; // Display IDs
 
+// deletedPosts
+$config['ModuleSettings']['DELETED_POSTS_TEMPLATE'] = 'kokoimg.tpl';
+
 $config['BAD_STRING'] = array(); // Deprecated by spamdb
 $config['BAD_FILEMD5'] = array(); // Deprecated by spamdb
 $config['BANPATTERN'] = array(); // Deprecated by adminban module
