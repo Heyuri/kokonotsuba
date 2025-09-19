@@ -456,6 +456,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		// handle post html rendering logic
 		$postHtml = $this->generatePostHtml($deletedEntry, $thread, $showAll, $postRenderer, $threadRenderer);
 
+		// note for the deleted post
+		$note = $deletedEntry['note'] ?? '';
+
+		// init a truncated one for the preview
+		$notePreview = $this->generateNotePreview($note);
+
 		// put together the placeholder => value
 		$templateValues = [
 			'{$DELETED_BY}' => htmlspecialchars($deletedByUsername),
@@ -470,13 +476,28 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$FILE_ONLY}' => $deletedEntry['file_only_deleted'],
 			'{$RESTORED_AT}' => htmlspecialchars($deletedEntry['restored_at']),
 			'{$RESTORED_BY}' => htmlspecialchars($restoredByUsername),
-			'{$NOTE}' => htmlspecialchars($deletedEntry['note']),
+			'{$NOTE}' => htmlspecialchars($note),
+			'{$NOTE_PREVIEW}' => $notePreview,
 			'{$SHOW_ALL}' => htmlspecialchars($showAll),
 			'{$URL}' => htmlspecialchars($this->myPage)
 		];
 
 		// return results
 		return $templateValues;
+	}
+
+	private function generateNotePreview(string $note): string {
+		// limit it to 100 chars
+		$notePreview = truncateText($note, 100);
+
+		// sanitize the preview
+		$notePreview = htmlspecialchars($notePreview);
+
+		// convert new lines to <br> for preview
+		$notePreview = nl2br($notePreview);
+
+		// return note preview string
+		return $notePreview;
 	}
 
 	private function generatePostHtml(array $deletedEntry, array $thread, bool $showAll, postRenderer $postRenderer, threadRenderer $threadRenderer): string {
