@@ -191,8 +191,14 @@ class moduleAdmin extends abstractModuleAdmin {
 		// get the note
 		$note = $post['deleted_note'] ?? '';
 
+		// sanitize the note
+		$sanitizedNote = sanitizeStr($note);
+
+		// convert new lines to break lines
+		$sanitizedNote = nl2br($sanitizedNote);
+
 		// generate the string
-		$noteHtml = '<br><br><small class="noteOnPost warning" title="This is a note left by staff"> ' . htmlspecialchars($note) . ' </small>';
+		$noteHtml = '<br><br><small class="noteOnPost warning" title="This is a note left by staff"> ' . $sanitizedNote . ' </small>';
 
 		// return the generate message
 		return $noteHtml;
