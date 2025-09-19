@@ -150,13 +150,16 @@ class moduleMain extends abstractModuleMain {
 
 		$hitPostResultData = $hitPosts['results_data'];
 	
+		// config option for displaying all posts as OPs
+		$displayThreadedFormat = $this->getConfig('ModuleSettings.DISPLAY_THREADED_FORMAT', false);
+
+		// whether to render all posts with the OP html since searching isn't a threaded format
+		$renderAsOp = !$displayThreadedFormat;
+
 		foreach ($hitPostResultData as $hitPost) {
 			$hitPostThread = $hitPost['thread'];
 			$hitPostData = $hitPost['post'];
 			$hitThreadResno = $hitPostThread['post_op_number'];
-	
-			// Render all posts with the OP html since searching isn't a threaded format
-			$renderAsOp = true;
 
 			$resultList .= $postRenderer->render($hitPostData,
 				$templateValues,
