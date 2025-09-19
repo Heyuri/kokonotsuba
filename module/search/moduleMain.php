@@ -155,6 +155,9 @@ class moduleMain extends abstractModuleMain {
 			$hitPostData = $hitPost['post'];
 			$hitThreadResno = $hitPostThread['post_op_number'];
 	
+			// Render all posts with the OP html since searching isn't a threaded format
+			$renderAsOp = true;
+
 			$resultList .= $postRenderer->render($hitPostData,
 				$templateValues,
 				$hitThreadResno,
@@ -167,8 +170,10 @@ class moduleMain extends abstractModuleMain {
 				'',
 				'',
 				0,
-				true);
-			$resultList .= $this->moduleContext->templateEngine->ParseBlock('THREADSEPARATE', []);
+				true,
+				'',
+				$renderAsOp);
+			$resultList .= $this->moduleTemplateEngine->ParseBlock('THREADSEPARATE', []);
 		}
 	
 		if ($totalPostHits > 0) {
