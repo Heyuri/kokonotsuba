@@ -38,9 +38,15 @@ class boardRebuilder {
 		// whether the thread has been deleted
 		$threadDeleted = $thread['thread_deleted'] ?? null;
 
+		// whether it was a file-only deletion
+		$fileOnly = $thread['thread_attachment_deleted'] ?? null;
+
+		// hard deleted (a la, thread itself was deleted and the file isn't what was deleted)
+		$hardDeleted = $threadDeleted && !$fileOnly;
+
 		// Throw a 404 error if the thread isn't found
 		// Also throw a 404 if the thread was deleted
-		if (!$threadData || ($threadDeleted && !$this->canViewDeleted)) {
+		if (!$threadData || ($hardDeleted)) {
 			$this->softErrorHandler->errorAndExit("Thread not found!", 404);
 			return;
 		}
