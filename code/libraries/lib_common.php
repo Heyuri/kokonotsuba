@@ -295,7 +295,7 @@ function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = fals
 	return $str;
 }
 
-function stripZeroWidthCharacters($text) {
+function stripZeroWidthCharacters(string $text): string {
 	// List of common zero-width characters to remove
 	$zeroWidthCharacters = [
 		"\u{200B}", // ZERO WIDTH SPACE
