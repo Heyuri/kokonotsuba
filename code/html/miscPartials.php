@@ -1,22 +1,50 @@
 <?php
 
-function generateAdminLinkButtons(string $liveIndexFile, string $staticIndexFile, moduleEngine $moduleEngine): string {
+use Kokonotsuba\Root\Constants\userRole;
+
+function generateAdminLinkButtons(string $liveIndexFile, string $staticIndexFile, moduleEngine $moduleEngine, string $adminLinkHtml): string {
 	$linksAboveBar =  '
 		<ul id="adminNavBar">
 			<li class="adminNavLink"><a href="'.$staticIndexFile.'?'.$_SERVER['REQUEST_TIME'].'">Return</a></li>
 			<li class="adminNavLink"><a href="'.$liveIndexFile.'?page=0">Live frontend</a></li>
-			<li class="adminNavLink"><a href="'.$liveIndexFile.'?mode=rebuild">Rebuild board</a></li>
-			<li class="adminNavLink"><a href="'.$liveIndexFile.'?mode=managePosts">Manage posts</a></li>
-			<li class="adminNavLink"><a href="'.$liveIndexFile.'?mode=actionLog">Action log</a></li>
-			<li class="adminNavLink"><a href="'.$liveIndexFile.'?mode=account">Accounts</a></li>
-			<li class="adminNavLink"><a href="'.$liveIndexFile.'?mode=boards">Boards</a></li>
-			';
+			' . $adminLinkHtml;
 
 	$moduleEngine->dispatch('LinksAboveBar', array(&$linksAboveBar));
 	
     $linksAboveBar .= "</ul>";
 	return $linksAboveBar;
 }
+
+function generateAdminNavLink(string $liveIndexFile, string $mode, string $navTitle, userRole $requiredRole): string {
+	// role level
+	$roleLevel = getRoleLevelFromSession();
+
+	// check if the user doesnt have the required role
+	$isAuthorized = $roleLevel->isAtLeast($requiredRole);
+
+	// return early
+	if(!$isAuthorized) {
+		return '';
+	}
+
+	// base url
+	$baseUrl = $liveIndexFile;
+
+	// parameters
+	$parameters = [
+		'mode' => $mode
+	];
+
+	// generate the url parameters
+	$urlParameters = http_build_query($parameters);
+
+	// generate url
+	$modeUrl = $baseUrl . '?' . $urlParameters;
+	
+	// generate the action log entry html
+	return '<li class="adminNavLink"><a href="' . htmlspecialchars($modeUrl) . '">' . htmlspecialchars($navTitle) . '</a></li>';
+}
+
 
 function drawAccountTable(string $liveIndexFile, array $accounts) {
 	$dat = '';
