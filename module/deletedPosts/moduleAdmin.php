@@ -438,6 +438,15 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function handleHtmlOutput(userRole $roleLevel, array $deletedPosts, int $deletedPostsCount, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
+		// get post uids
+		$postUids = array_column($deletedPosts, 'post_uid');
+
+		// then get the quote links for the posts
+		$quoteLinks = $this->moduleContext->quoteLinkService->getQuoteLinksByPostUids($postUids, true);
+
+		// set the post renderer quote links
+		$postRenderer->setQuoteLinks($quoteLinks);
+		
 		// flag for if there's no posts.
 		$areNoPosts = empty($deletedPosts);
 		
