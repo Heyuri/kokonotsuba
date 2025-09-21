@@ -16,6 +16,7 @@
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/kokotxt/pseud0ch.css?v=8" title="Pseud0ch">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/pseud0ch2.css?v=7" title="Pseud0ch (serif)">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/pseud0ch3.css?v=7" title="Pseud0ch (sans-serif)">
+	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/gochannel.css?v=1" title="Gochannel">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/tomorrow.css?v=10" title="Tomorrow">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/ayashii.css?v=1" title="Ayashii">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/bluemoon.css?v=1" title="Blue Moon">
@@ -109,7 +110,6 @@
 
 <!--&THREAD-->
 	<div class="thread" id="t{$BOARD_UID}_{$THREAD_NO}">
-		<div class="tnav">{$THREADNAV}</div>
 		{$THREAD_OP}
 		{$REPLIES}
 	</div>
