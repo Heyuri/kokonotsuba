@@ -20,7 +20,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function initialize(): void {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this,
+			$this->getRequiredRole(),
 			'PostFormAdmin',
 			function(string &$postFormAdminSection) {
 				$this->renderPostFormCheckbox($postFormAdminSection);
@@ -28,7 +28,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this,
+			$this->getRequiredRole(),
 			'RegistBegin',
 			function() {
 				$this->onRegistBegin();

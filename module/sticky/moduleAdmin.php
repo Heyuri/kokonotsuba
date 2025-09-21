@@ -22,7 +22,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function initialize(): void {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this,
+			$this->getRequiredRole(),
 			'ThreadAdminControls',
 			function(string &$modControlSection, array &$post) {
 				$this->onRenderThreadAdminControls($modControlSection, $post);

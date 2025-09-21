@@ -2,6 +2,7 @@
 
 use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
 use Kokonotsuba\ModuleClasses\moduleContext;
+use Kokonotsuba\Root\Constants\userRole;
 
 /**
  * Kokonotsuba! Module Engine, derived from pixmicat's moduleEngine
@@ -161,8 +162,7 @@ use Kokonotsuba\ModuleClasses\moduleContext;
 		$this->hookDispatcher->addListener($hookPoint, $listener, $priority);
 	}
 
-	public function addRoleProtectedListener(abstractModuleAdmin $module, string $event, callable $listener, int $priority = 0, bool $throwException = false): void {
-		$requiredRole = $module->getRequiredRole();
+	public function addRoleProtectedListener(userRole $requiredRole, string $event, callable $listener, int $priority = 0, bool $throwException = false): void {;
 		$currentRole = getRoleLevelFromSession();
 
 		$this->hookDispatcher->addRoleProtectedListener(

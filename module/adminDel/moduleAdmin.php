@@ -33,7 +33,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->GLOBAL_BANS = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this,
+			$this->getRequiredRole(),
 			'PostAdminControls',
 			function(string &$modControlSection, array &$post) {
 				$this->onRenderPostAdminControls($modControlSection, $post);

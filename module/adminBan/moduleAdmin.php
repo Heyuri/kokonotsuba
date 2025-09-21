@@ -30,7 +30,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->DEFAULT_BAN_MESSAGE = $this->getConfig('DEFAULT_BAN_MESSAGE');
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this,
+			$this->getRequiredRole(),
 			'PostAdminControls',
 			function(string &$modControlSection, array &$post) {
 				$this->onRenderPostAdminControls($modControlSection, $post);
@@ -38,7 +38,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this,
+			$this->getRequiredRole(),
 			'LinksAboveBar',
 			function(string &$linkHtml) {
 				$this->onRenderLinksAboveBar($linkHtml);

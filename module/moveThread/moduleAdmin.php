@@ -34,7 +34,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->myPage = $this->getModulePageURL();
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this,
+			$this->getRequiredRole(),
 			'ThreadAdminControls',
 			function(string &$modControlSection, array &$post) {
 				$this->renderMoveThreadButton($modControlSection, $post);

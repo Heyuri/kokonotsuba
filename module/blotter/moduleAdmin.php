@@ -33,7 +33,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->myPage = $this->getModulePageURL();
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this,
+			$this->getRequiredRole(),
 			'LinksAboveBar',
 			function(string &$linkHtml) {
 				$this->onRenderLinksAboveBar($linkHtml);

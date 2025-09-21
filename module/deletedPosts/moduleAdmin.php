@@ -44,7 +44,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.DELETED_POSTS_TEMPLATE', 'kokoimg.tpl');
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this,
+			$this->getRequiredRole(),
 			'LinksAboveBar',
 			function(string &$linkHtml) {
 				$this->onRenderLinksAboveBar($linkHtml);
@@ -52,7 +52,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this,
+			$this->getRequiredRole(),
 			'PostAdminControls',
 			function(string &$modControlSection, array &$post) {
 				$this->onRenderPostAdminControls($modControlSection, $post);
@@ -60,7 +60,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this,
+			$this->getRequiredRole(),
 			'Post',
 			function(&$arrLabels, $post, $threadPosts, $board) {
 				$this->onRenderPost($arrLabels, $post);
