@@ -32,10 +32,10 @@ class pageRenderer {
 			// there'll be a more modular way (that doesn't require modules) later 
 			$adminLinkHtml = '';
 			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'actionLog', 'Action log', $this->board->getConfigValue('AuthLevels.CAN_VIEW_ACTION_LOG', userRole::LEV_MODERATOR));
-			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'account', 'Acccounts', userRole::LEV_USER);
+			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'account', 'Accounts', userRole::LEV_USER);
 			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'managePosts', 'Manage posts', userRole::LEV_JANITOR);
 			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'rebuild', 'Rebuild board', userRole::LEV_JANITOR);
-			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'boards', 'Boards', userRole::LEV_JANITOR);
+			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'boards', 'Boards', userRole::LEV_ADMIN);
 
 			// add the admin links to html output
 			$htmlOutput .= generateAdminLinkButtons($liveIndexFile, $staticIndexFile, $this->moduleEngine, $adminLinkHtml);
