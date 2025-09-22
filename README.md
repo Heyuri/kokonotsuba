@@ -48,8 +48,8 @@ In mariadb, run these:
 3. Move install.php from the backend directory into the new board's directory (in this case, `test`)
 
 4. Now, create koko.php and make its contents `require` the koko.php located in the backend directory. Lets say the backend is located at `/var/www/kokonotsuba`.
- 4a. open it in vim `vim /var/www/html/test/koko.php`
- 4b. then paste this into it `<?php require '/var/www/kokonotsuba/koko.php';` then save it.
+ - open it in vim `vim /var/www/html/test/koko.php`
+ - then paste this into it `<?php require '/var/www/kokonotsuba/koko.php';` then save it.
 
 ### 3. Permissions & Ownership
 For the backend's global directory:
