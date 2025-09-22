@@ -43,11 +43,11 @@ In mariadb, run these:
 
 2. Move the `static` directory out of the backend to somewhere web-accessible.
 
-2. Create the directory for the first board, which will be where your boards will be (MUST be in web root to be accessible) E.g if the base directory for your boards is `/var/www/html/`, if your board's uri will be /test/ then: `mkdir /var/www/html/test`
+3. Create the directory for the first board, which will be where your boards will be (MUST be in web root to be accessible) E.g if the base directory for your boards is `/var/www/html/`, if your board's uri will be /test/ then: `mkdir /var/www/html/test`
 
-3. Move install.php from the backend directory into the new board's directory (in this case, `test`)
+4. Move install.php from the backend directory into the new board's directory (in this case, `test`)
 
-4. Now, create koko.php and make its contents `require` the koko.php located in the backend directory. Lets say the backend is located at `/var/www/kokonotsuba`.
+5. Now, create koko.php and make its contents `require` the koko.php located in the backend directory. Lets say the backend is located at `/var/www/kokonotsuba`.
  - open it in vim `vim /var/www/html/test/koko.php`
  - then paste this into it `<?php require '/var/www/kokonotsuba/koko.php';` then save it.
 
