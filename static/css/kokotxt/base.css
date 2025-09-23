@@ -2249,3 +2249,7 @@ width: 300px;
 .deletedPostEntry {
 	text-align: left;
 }
+
+.deletedPost, .deletedFile { 
+	opacity: 0.5;
+}

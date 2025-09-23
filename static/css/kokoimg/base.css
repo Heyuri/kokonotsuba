@@ -2486,3 +2486,7 @@ input[type=reset] {
 .alignLeft {
 	text-align: left;
 }
+
+.deletedPost, .deletedFile { 
+	opacity: 0.5;
+}
