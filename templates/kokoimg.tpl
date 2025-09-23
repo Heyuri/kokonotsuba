@@ -171,7 +171,8 @@
 <!--/&ERROR-->
 
 <!--&THREAD-->
-		<div class="thread" id="t{$BOARD_UID}_{$THREAD_NO}">
+			
+		<div class="thread<!--&IF($MODULE_THREAD_CSS_CLASSES,'{$MODULE_THREAD_CSS_CLASSES}','')-->" id="t{$BOARD_UID}_{$THREAD_NO}">
 			{$BOARD_THREAD_NAME}
 			<div class="tnav">{$THREADNAV}</div>
 			{$THREAD_OP}
@@ -180,9 +181,11 @@
 <!--/&THREAD-->
 
 <!--&OP-->
-		<div class="post op" id="p{$BOARD_UID}_{$NO}">
-			<div class="filesize">{$IMG_BAR}</div>
-			{$IMG_SRC}
+		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}">
+			<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
+				<div class="filesize">{$IMG_BAR}</div>
+				{$IMG_SRC}
+			</div>
 			<div class="postinfo">
 				<label>
 					<input type="checkbox" name="{$POST_UID}" value="delete"><span class="title">{$SUB}</span>
@@ -207,7 +210,7 @@
 				<div class="doubledash">
 					&gt;&gt;
 				</div>
-				<div class="post reply" id="p{$BOARD_UID}_{$NO}">
+				<div class="post reply <!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}">
 					<div class="postinfo">
 						<label>
 							<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')--> <input type="checkbox" name="{$POST_UID}" value="delete"> <span class="title">{$SUB}</span>
@@ -220,8 +223,10 @@
 						<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
 						<span class="postInfoExtra">{$POSTINFO_EXTRA}</span><span class="backlinks"></span>
 					</div>
-					<div class="filesize">{$IMG_BAR}</div>
-					{$IMG_SRC}
+					<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
+						<div class="filesize">{$IMG_BAR}</div>
+						{$IMG_SRC}
+					</div>
 					<div class="comment">{$COM}</div>
 					<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
 					{$WARN_BEKILL}
