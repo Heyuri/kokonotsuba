@@ -6,17 +6,12 @@
 */ 
 
 class threadRenderer {
-	private array $config;
-	private ?templateEngine $templateEngine;
-	private postRenderer $postRenderer;
 
-
-	public function __construct(array $config, ?templateEngine $templateEngine, postRenderer $postRenderer) {
-		$this->config = $config;
-		$this->templateEngine = $templateEngine;
-
-		$this->postRenderer = $postRenderer;
-	}
+	public function __construct(
+		private array $config, 
+		private ?templateEngine $templateEngine, 
+		private postRenderer $postRenderer,
+		private moduleEngine $moduleEngine) {}
 
 	/**
 	 * Main render function to build full HTML of thread and replies.
@@ -54,6 +49,15 @@ class threadRenderer {
 
 		$templateValues = $this->getThreadPlaceholders($thread, $templateValues);
 		
+		// thread CSS reference
+		$threadCss = &$templateValues['{$MODULE_THREAD_CSS_CLASSES}'];
+
+		// Dispatch post css event
+		$this->moduleEngine->dispatch('ThreadCssClass', [
+			&$threadCss,
+			&$thread
+		]);
+
 		// render posts for a thread
 		foreach ($posts as $i => $post) {
 			$postHtml = $this->renderSinglePost($posts,

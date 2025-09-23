@@ -243,7 +243,7 @@ class overboard {
 		 $quoteLinksFromPage
 		);
 
-		return new threadRenderer($config, $templateEngine, $postRenderer);
+		return new threadRenderer($config, $templateEngine, $postRenderer, $moduleEngine);
 	}
 	
 	private function buildThreadTitleAndLink(board $board): array {

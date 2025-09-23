@@ -380,7 +380,8 @@ class boardRebuilder {
 		$threadRenderer = new threadRenderer(
 			$this->config,
 			$this->templateEngine,
-			$postRenderer
+			$postRenderer,
+			$this->moduleEngine
 		);
 		return $threadRenderer;
 	}
