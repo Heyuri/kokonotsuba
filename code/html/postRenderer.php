@@ -174,6 +174,28 @@ class postRenderer {
 		]);
 
 
+		// CSS hook point placeholders
+		$templateValues['{$MODULE_ATTACHMENT_CSS_CLASSES}'] = '';
+		$templateValues['{$MODULE_POST_CSS_CLASSES}'] = '';
+
+		// attachment CSS reference
+		$attachmentCss = &$templateValues['{$MODULE_ATTACHMENT_CSS_CLASSES}'];
+
+		// Dispatch attachment css event
+		$this->moduleEngine->dispatch('AttachmentCssClass', [
+			&$attachmentCss,
+			&$post
+		]);
+
+		// post CSS reference
+		$postCss = &$templateValues['{$MODULE_POST_CSS_CLASSES}'];
+
+		// Dispatch post css event
+		$this->moduleEngine->dispatch('PostCssClass', [
+			&$postCss,
+			&$post
+		]);
+
 		// Dispatch specific hook and return template
 		if ($isThreadReply) {
 			$this->moduleEngine->dispatch('ThreadReply', [&$templateValues, $post, $threadPosts, $isThreadReply]);

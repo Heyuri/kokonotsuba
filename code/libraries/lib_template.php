@@ -120,6 +120,7 @@ function bindThreadValuesToTemplate(string $threadUid,
 		'{$LAST_REPLY_TIME}' => $lastReplyTime,
 		'{$LAST_BUMP_TIME}' => $lastBumpTime,
 		'{$THREAD_CREATED_TIME}' => $threadCreatedTime,
-		'{$FORMATTED_THREAD_CREATED_TIME}' => $formattedThreadCreatedTime
+		'{$FORMATTED_THREAD_CREATED_TIME}' => $formattedThreadCreatedTime,
+		'{$MODULE_THREAD_CSS_CLASSES}' => ''
 	];
 }
