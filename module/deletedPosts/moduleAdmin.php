@@ -67,6 +67,29 @@ class moduleAdmin extends abstractModuleAdmin {
 			}
 		);
 
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'AttachmentCssClass',
+			function(&$postCssClasses, $post) {
+				$this->onRenderAttachmentCssClass($postCssClasses, $post);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'PostCssClass',
+			function(&$postCssClasses, $post) {
+				$this->onRenderPostCssClass($postCssClasses, $post);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ThreadCssClass',
+			function(&$threadCssClasses, $thread) {
+				$this->onRenderThreadCssClass($threadCssClasses, $thread);
+			}
+		);
 	}
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {
@@ -187,6 +210,45 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 	}
 
+	private function appendCssClassIf(string &$cssClasses, bool $condition, string $className): void {
+		// don't bother if condition is not met
+		if(!$condition) {
+			return;
+		}
+
+		// append hidden css class
+		// space separated on each side
+		$cssClasses .= " $className ";
+	}
+
+	private function onRenderAttachmentCssClass(string &$attachmentCssClasses, array $post): void {
+		// whether the post is deleted or not
+		$isPostDeleted = $this->isPostDeleted($post);
+
+		// whether only the file was deleted
+		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
+
+		$this->appendCssClassIf($attachmentCssClasses, $isPostDeleted && $onlyFileDeleted, 'deletedFile');
+	}
+
+	private function onRenderPostCssClass(string &$postCssClasses, array $post): void {
+		// whether only the file was deleted
+		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
+
+		// whether the post is deleted or not
+		$isPostDeleted = $this->isPostDeleted($post) && $onlyFileDeleted === 0;
+
+		$this->appendCssClassIf($postCssClasses, $isPostDeleted, 'deletedPost');
+	}
+	
+	private function onRenderThreadCssClass(string &$threadCssClasses, array $thread): void {
+		// whether the thread is deleted or not
+		$isThreadDeleted = !empty($thread['thread_deleted']) && empty($thread['thread_attachment_deleted']);
+
+		$this->appendCssClassIf($threadCssClasses, $isThreadDeleted, 'deletedPost');
+	}
+
+
 	private function renderStaffNoteOnPost(array $post): string {
 		// get the note
 		$note = $post['deleted_note'] ?? '';
@@ -299,7 +361,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$action = $_GET['action'] ?? null;
 
 		$postRenderer = new postRenderer($this->moduleContext->board, $this->moduleContext->config, $this->moduleContext->moduleEngine, $this->moduleTemplateEngine, []);
-		$threadRenderer = new threadRenderer($this->moduleContext->board->loadBoardConfig(), $this->moduleContext->templateEngine, $postRenderer);
+		$threadRenderer = new threadRenderer($this->moduleContext->board->loadBoardConfig(), $this->moduleContext->templateEngine, $postRenderer, $this->moduleContext->moduleEngine);
 
 		// view a single deleted post in full detail
 		if($action === 'viewMore') {
