@@ -184,7 +184,8 @@ class postRenderer {
 		// Dispatch attachment css event
 		$this->moduleEngine->dispatch('AttachmentCssClass', [
 			&$attachmentCss,
-			&$post
+			&$post,
+			&$adminMode
 		]);
 
 		// post CSS reference

@@ -70,8 +70,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'AttachmentCssClass',
-			function(&$postCssClasses, $post) {
-				$this->onRenderAttachmentCssClass($postCssClasses, $post);
+			function(&$postCssClasses, &$post, $isLiveFrontend) {
+				$this->onRenderAttachmentCssClass($postCssClasses, $post, $isLiveFrontend);
 			}
 		);
 
@@ -106,6 +106,14 @@ class moduleAdmin extends abstractModuleAdmin {
 			return;
 		}
 
+		// is this being viewed from the module page?
+		$isModulePage = $this->isModulePage();
+
+		// if this the module page, then return coz it should render like normal here
+		if($isModulePage) {
+			return;
+		}
+
 		// whether only the file was deleted
 		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
 
@@ -130,13 +138,28 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 	}
 
-	private function adminPostViewModuleButton(array $post): string {
+	private function isModulePage(): bool {
 		// get current module
 		$loadedModule = $_REQUEST['load'] ?? '';
 
+		// return true if its the module
+		if($loadedModule === 'deletedPosts') {
+			return true;
+		}
+		// return false otherwise
+		else {
+			return false;
+		}
+
+	}
+
+	private function adminPostViewModuleButton(array $post): string {
+		// whether we're viewing from the module page
+		$isModulePage = $this->isModulePage();
+
 		// don't display it if we're in the module view - 
 		// coz we can already see all the infos or we're already on the page it'd take the user to
-		if($loadedModule === 'deletedPosts') {
+		if($isModulePage) {
 			return '';
 		}
 
@@ -221,7 +244,20 @@ class moduleAdmin extends abstractModuleAdmin {
 		$cssClasses .= " $className ";
 	}
 
-	private function onRenderAttachmentCssClass(string &$attachmentCssClasses, array $post): void {
+	private function onRenderAttachmentCssClass(string &$attachmentCssClasses, array &$post, bool $isLiveFrontend): void {
+		// return early if this isn't done from the live frontend
+		if(!$isLiveFrontend) {
+			return;
+		}
+
+		// is this being viewed from the module page?
+		$isModulePage = $this->isModulePage();
+
+		// if this the module page, then return coz it should render like normal here
+		if($isModulePage) {
+			return;
+		}
+
 		// whether the post is deleted or not
 		$isPostDeleted = $this->isPostDeleted($post);
 
@@ -232,6 +268,14 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function onRenderPostCssClass(string &$postCssClasses, array $post): void {
+		// is this being viewed from the module page?
+		$isModulePage = $this->isModulePage();
+
+		// if this the module page, then return coz it should render like normal here
+		if($isModulePage) {
+			return;
+		}
+
 		// whether only the file was deleted
 		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
 
@@ -242,6 +286,14 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 	
 	private function onRenderThreadCssClass(string &$threadCssClasses, array $thread): void {
+		// is this being viewed from the module page?
+		$isModulePage = $this->isModulePage();
+
+		// if this the module page, then return coz it should render like normal here
+		if($isModulePage) {
+			return;
+		}
+
 		// whether the thread is deleted or not
 		$isThreadDeleted = !empty($thread['thread_deleted']) && empty($thread['thread_attachment_deleted']);
 
