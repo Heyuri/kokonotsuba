@@ -31,7 +31,10 @@ const kkgal = {
 		var sideInnerHTML = "";
 		for (var i = 0; i < kkimg.postimg.length; i++) {
 			var a   = kkimg.postimg[i].parentNode;
-			var pno = a.parentNode.id.substr(1);
+
+			var postEl = a.closest('.post[id^="p"]');
+			if (!postEl) continue;
+			var pno = postEl.id.substr(1);
 
 			sideInnerHTML += '<a href="javascript:kkgal.expand(\''+pno+'\');"><img id="galthumb'+pno+'" class="" src="'+kkimg.postimg[i].src+'" alt="'+kkimg.postimg[i].src+'"></a>';
 			kkgal.imgindex[i] = pno;
@@ -110,10 +113,21 @@ const kkgal = {
 		$doc.addEventListener("keydown", kkgal._evkeydown);
 		var _a = $class("activethumb");
 		if (_a.length) _a[0].classList.remove("activethumb");
-		if (!no) no = ($class("postimg")[0].parentNode).parentNode.id.substr(1);
+		
+		if (!no) {
+		   var firstImg = $class("postimg")[0];
+		   if (firstImg) {
+			   var postEl0 = firstImg.closest('.post[id^="p"]');
+			   if (postEl0) no = postEl0.id.substr(1);
+		   }
+		}
+
 		for (var i = 0; i < kkimg.postimg.length; i++) {
 			var a   = kkimg.postimg[i].parentNode;
-			var pno = a.parentNode.id.substr(1);
+			
+			var postEl = a.closest('.post[id^="p"]');
+			if (!postEl) continue;
+			var pno = postEl.id.substr(1);
 
 			if (pno == no) {
 				var thumb = $id("galthumb" + no);
@@ -121,11 +135,11 @@ const kkgal = {
 				thumb.scrollIntoView({ behavior: "smooth", block: "center" });
 				var fs   = $q("#p" + pno + " .filesize")[0].cloneNode(true);
 				var prev = typeof(kkgal.imgindex[i-1]) != "undefined"
-				         ? kkgal.imgindex[i-1]
-				         : kkgal.imgindex[kkgal.imgindex.length-1];
+						 ? kkgal.imgindex[i-1]
+						 : kkgal.imgindex[kkgal.imgindex.length-1];
 				var next = typeof(kkgal.imgindex[i+1]) != "undefined"
-				         ? kkgal.imgindex[i+1]
-				         : kkgal.imgindex[0];
+						 ? kkgal.imgindex[i+1]
+						 : kkgal.imgindex[0];
 				kkgal.gimg.src               = a.href;
 				$id("galimgprev").href       = "javascript:kkgal.expand('" + prev + "');";
 				$id("galimgnext").href       = "javascript:kkgal.expand('" + next + "');";
@@ -175,7 +189,13 @@ const kkimg = { name: "KK Image Features",
 		kkgal.reset();
 		for (var i = 0; i < kkimg.postimg.length; i++) {
 			var a  = kkimg.postimg[i].parentNode;
-			var no = a.parentNode.id.substr(1);
+			
+			var postEl = a.closest('.post[id^="p"]');
+			if (postEl) {
+				var no = postEl.id.substr(1);
+				kkimg.contract(no);
+			}
+
 			kkimg.contract(no);
 			a.removeEventListener("click",    kkimg._evexpand);
 			a.removeEventListener("mouseover",kkimg._evhover1);
@@ -197,7 +217,11 @@ const kkimg = { name: "KK Image Features",
 	/* event */
 	_evexpand: function (event) {
 		var p  = this.parentNode;
-		var no = p.id.substr(1);
+
+		var postEl = p.closest('.post[id^="p"]');
+		if (!postEl) return;
+		var no = postEl.id.substr(1);
+		
 		if (localStorage.getItem("galmode")=="true") {
 			kkgal.expand(no);
 			event.preventDefault();
@@ -242,18 +266,18 @@ const kkimg = { name: "KK Image Features",
 		} else if (kkimg.swfext.includes(ext)) {
 			// pull native dims from the existing filesize text (leave it visible)
 			var fsNode = $q("#p"+no+" .filesize")[0],
-			    m      = fsNode.textContent.match(/(\d+)\s*x\s*(\d+)/i),
-			    realW  = m ? parseInt(m[1],10) : 550,
-			    realH  = m ? parseInt(m[2],10) : 400;
+				m      = fsNode.textContent.match(/(\d+)\s*x\s*(\d+)/i),
+				realW  = m ? parseInt(m[1],10) : 550,
+				realH  = m ? parseInt(m[2],10) : 400;
 
 			// cap at 95%
 			var vw    = document.documentElement.clientWidth,
-			    vh    = document.documentElement.clientHeight,
-			    maxW  = vw * 0.95,
-			    maxH  = vh * 0.95,
-			    ratio = realW / realH,
-			    dispW = Math.min(realW, maxW),
-			    dispH = dispW / ratio;
+				vh    = document.documentElement.clientHeight,
+				maxW  = vw * 0.95,
+				maxH  = vh * 0.95,
+				ratio = realW / realH,
+				dispW = Math.min(realW, maxW),
+				dispH = dispW / ratio;
 
 			if (dispH > maxH) {
 				dispH = maxH;
@@ -262,8 +286,8 @@ const kkimg = { name: "KK Image Features",
 
 			// build container
 			var hdr       = 20,
-			    container = document.createElement("div"),
-			    header    = document.createElement("div");
+				container = document.createElement("div"),
+				header    = document.createElement("div");
 
 			container.className      = "expand swf-expand";
 			container.style.width    = dispW + "px";
@@ -285,8 +309,8 @@ const kkimg = { name: "KK Image Features",
 			// build a host that fills the container and holds either native Flash or Ruffle
 			// using CSS absolute fill ensures resizing always works
 			var host      = document.createElement("div"),
-			    useNative = !!(navigator.mimeTypes['application/x-shockwave-flash'] ||
-			                   navigator.plugins['Shockwave Flash']);
+				useNative = !!(navigator.mimeTypes['application/x-shockwave-flash'] ||
+							   navigator.plugins['Shockwave Flash']);
 
 			host.className      = "ruffleContainer";
 			host.style.position = "absolute";
@@ -307,7 +331,7 @@ const kkimg = { name: "KK Image Features",
 			} else {
 				// ruffle emulator, fill host
 				var ruffle = window.RufflePlayer.newest(),
-				    player = ruffle.createPlayer();
+					player = ruffle.createPlayer();
 				player.style.width  = "100%";
 				player.style.height = "100%";
 				host.appendChild(player);
