@@ -2488,5 +2488,5 @@ input[type=reset] {
 }
 
 .deletedPost, .deletedFile { 
-	opacity: 0.5;
+	opacity: 0.75;
 }
