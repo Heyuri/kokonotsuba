@@ -87,7 +87,7 @@ class overboard {
 		
 		$postUidsInPage =  getPostUidsFromThreadArrays($threads);
 
-		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage);
+		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage, $this->canViewDeleted);
 		
 		$boardMap = $this->loadBoardsForThreads($threads);
 		$postsByBoardAndThread = $this->loadPostsForThreads($threads);
