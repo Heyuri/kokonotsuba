@@ -37,7 +37,7 @@
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
 	<script src="{$STATIC_URL}js/flashembed.js?v=2"></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
-	
+	<!--&IF($MODULE_HEADER_HTML,'{$MODULE_HEADER_HTML}','')-->
 <!--/&HEADER-->
 
 <!--&TOPLINKS-->
