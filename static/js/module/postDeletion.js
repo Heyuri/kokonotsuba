@@ -33,6 +33,30 @@
 		}
 	}
 
+	// Utility: hide admin delete controls as required
+	function hideDeleteControls(postEl, type) {
+        if (!postEl) return;
+        // Hide all delete and delete-mute controls if needed
+        const deleteSpans = postEl.querySelectorAll('.adminDeleteFunction, #adminDeleteFunction, .adminDeleteMuteFunction, #adminDeleteMuteFunction');
+        // Hide all file-delete controls if needed
+        const fileDeleteSpans = postEl.querySelectorAll('.adminDeleteFileFunction, #adminDeleteFileFunction');
+
+        if (type === 'post') {
+            // Hide both delete and file delete controls
+            for (let i = 0; i < deleteSpans.length; i++) {
+                deleteSpans[i].classList.add('hidden');
+            }
+            for (let i = 0; i < fileDeleteSpans.length; i++) {
+                fileDeleteSpans[i].classList.add('hidden');
+            }
+        } else if (type === 'file') {
+            // Hide only the file delete control(s)
+            for (let i = 0; i < fileDeleteSpans.length; i++) {
+                fileDeleteSpans[i].classList.add('hidden');
+            }
+        }
+	}
+
 	// Main delegated click handler (handles all admin controls dynamically)
 	document.addEventListener('click', function (e) {
 		const control = e.target.closest(
@@ -68,6 +92,8 @@
 				postEl.classList.add('deletedPost');
 				appendWarning(postEl, 'post');
 			}
+			// Hide both delete + file delete controls
+			hideDeleteControls(postEl, 'post');
 		}
 
 		// ====== FILE DELETION ======
@@ -77,6 +103,8 @@
 				imgContainer.classList.add('deletedFile');
 			}
 			appendWarning(postEl, 'file');
+			// Hide only the file delete control
+			hideDeleteControls(postEl, 'file');
 		}
 
 		// ====== SEND DELETE REQUEST (AJAX) ======
