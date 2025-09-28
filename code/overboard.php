@@ -36,6 +36,10 @@ class overboard {
 
 		$pte_vals['{$PAGE_TITLE}'] = strip_tags($this->config['OVERBOARD_TITLE']);
 
+		$pte_vals['{$MODULE_HEADER_HTML}'] = '';
+
+		$this->moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
+
 		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
 		$this->moduleEngine->dispatch('Head', array(&$html, $resno)); // "Head" Hook Point
 		$html .= '</head>';
