@@ -351,6 +351,14 @@ function getFiltersFromRequest(string $url, bool $isSubmission, array $defaultFi
 	// Process the 'role' and 'board' filters to ensure they are arrays
 	$filtersFromRequest = processRoleAndBoardFilters($filtersFromRequest);
 
+	// trim trailing/prepended spaces
+	$filtersFromRequest = array_map(function($item) {
+		if (is_string($item)) {
+			return trim($item);
+		}
+		return $item;
+	}, $filtersFromRequest);
+
 	// Handle redirection if the flag is set
 	handleRedirection($filtersFromRequest, $isSubmission, $defaultFilters, $url);
 
