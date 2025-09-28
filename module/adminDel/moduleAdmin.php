@@ -90,13 +90,21 @@ class moduleAdmin extends abstractModuleAdmin {
 		$accountId = $staffAccountFromSession->getUID();
 
 		$post = $this->moduleContext->postRepository->getPostByUid($_GET['post_uid']);
-		
+
+		// whether the post has been deleted
+		$isDeleted = !empty($post['open_flag']) && empty($post['file_only_deleted']);
+
 		$board = searchBoardArrayForBoard($post['boardUID']);
 		
 		$boardUID = $board->getBoardUID();
 
 		if (!$post) {
 			throw new BoardException('ERROR: That post does not exist.');
+		}
+
+		// throw an error if the post was already deleted
+		if ($isDeleted) {
+			throw new BoardException('Post already deleted!');
 		}
 		
 		switch ($_GET['action']??'') {
