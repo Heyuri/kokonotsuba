@@ -5,6 +5,8 @@ function generateHeadHtml(array $config, ?templateEngine $templateEngine, module
 
 	$pte_vals = prepareBaseTemplateValues($resno, $isStaff);
 
+	$moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
+
 	$pte_vals['{$PAGE_TITLE}'] = $pageTitle;
 
 	$html .= $templateEngine->ParseBlock('HEADER', $pte_vals);
@@ -16,7 +18,7 @@ function generateHeadHtml(array $config, ?templateEngine $templateEngine, module
 		'{$STATUS}' => '[<a href="' . $config['LIVE_INDEX_FILE'] . '?mode=status">' . _T('head_info') . '</a>]',
 		'{$ADMIN}' => '[<a href="' . $config['LIVE_INDEX_FILE'] . '?mode=admin">' . _T('head_admin') . '</a>]',
 		'{$REFRESH}' => '[<a href="' . $config['STATIC_INDEX_FILE'] . '?">' . _T('head_refresh') . '</a>]',
-		'{$HOOKLINKS}' => '', '{$BANNER}' => '',
+		'{$HOOKLINKS}' => '', '{$BANNER}' => ''
 	);
 
 	$moduleEngine->dispatch('TopLinks', array(&$pte_vals['{$HOOKLINKS}'], !empty($resto)));
@@ -31,11 +33,12 @@ function prepareBaseTemplateValues(int $resno, bool $isStaff) {
 	return array(
 		'{$RESTO}' => $resno ? $resno : '',
 		'{$IS_THREAD}' => boolval($resno),
-		'{$IS_STAFF}' => $isStaff
+		'{$IS_STAFF}' => $isStaff,
+		'{$MODULE_HEADER_HTML}' => ''
 	);
 }
 
-function generateFooterHtml($templateEngine, $moduleEngine, $isThread = false) {
+function generateFooterHtml(?templateEngine $templateEngine, moduleEngine $moduleEngine, bool $isThread = false) {
 	$html = '';
 
 	$pte_vals = array(

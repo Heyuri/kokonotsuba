@@ -90,6 +90,14 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->onRenderThreadCssClass($threadCssClasses, $thread);
 			}
 		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModuleHeader',
+			function(&$moduleHeader) {
+				$this->onGenerateModuleHeader($moduleHeader);
+			}
+		);
 	}
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {
@@ -233,6 +241,23 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 	}
 
+	private function renderStaffNoteOnPost(array $post): string {
+		// get the note
+		$note = $post['deleted_note'] ?? '';
+
+		// sanitize the note
+		$sanitizedNote = sanitizeStr($note);
+
+		// convert new lines to break lines
+		$sanitizedNote = nl2br($sanitizedNote);
+
+		// generate the string
+		$noteHtml = '<br><br><small class="noteOnPost warning" title="This is a note left by staff"> ' . $sanitizedNote . ' </small>';
+
+		// return the generate message
+		return $noteHtml;
+	}
+
 	private function appendCssClassIf(string &$cssClasses, bool $condition, string $className): void {
 		// don't bother if condition is not met
 		if(!$condition) {
@@ -300,22 +325,29 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->appendCssClassIf($threadCssClasses, $isThreadDeleted, 'deletedPost');
 	}
 
+	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		// can view deleted poss
+		$canViewDeleted = getRoleLevelFromSession()->isAtLeast($this->getConfig('AuthLevels.CAN_DELETE_ALL'));
 
-	private function renderStaffNoteOnPost(array $post): string {
-		// get the note
-		$note = $post['deleted_note'] ?? '';
+		// add requiredForAll js for the live frontend
+		// this js will add the deletedPost/deletedFile classes and deletion indicator to posts on the livefrontend
+		if($canViewDeleted) {
+			// generate the url path of the deleted posts javascript
+			$jsFileUrl = $this->generateJavascriptUrl('postDeletion.js');
+		} 
+		// otherwise, include the old js for post deletion
+		// This just hides the post with css and shows small pop-ups indicating success or faliure
+		else {
+			// generate old deletion js url
+			$jsFileUrl = $this->generateJavascriptUrl('basicPostDeletion.js');
+		}
 
-		// sanitize the note
-		$sanitizedNote = sanitizeStr($note);
+		// generate the script html for including the deleted posts js
+		// defer
+		$jsHtml = $this->generateScriptHtml($jsFileUrl, true);
 
-		// convert new lines to break lines
-		$sanitizedNote = nl2br($sanitizedNote);
-
-		// generate the string
-		$noteHtml = '<br><br><small class="noteOnPost warning" title="This is a note left by staff"> ' . $sanitizedNote . ' </small>';
-
-		// return the generate message
-		return $noteHtml;
+		// then append it to the header
+		$moduleHeader .= $jsHtml;
 	}
 
 	private function handleModPageRequests(int $accountId, userRole $roleLevel): void {
