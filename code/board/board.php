@@ -27,7 +27,7 @@ class board implements IBoard {
 	private boardPathService $boardPathService;
 	private ?boardRebuilder $boardRebuilder;
 	private ?moduleEngine $moduleEngine;
-	private ?templateEngine $templateEngine;
+	private templateEngine $templateEngine;
 
 	public function __construct(boardPostNumbers $boardPostNumbers, boardData $boardData, boardPathService $boardPathService) {
 		$this->boardData = $boardData;
@@ -58,7 +58,7 @@ class board implements IBoard {
 	}
 
 	// Must be set for rebuilding and html methods to work
-	public function setTemplateEngine(?templateEngine $templateEngine): void {
+	public function setTemplateEngine(templateEngine $templateEngine): void {
 		$this->templateEngine = $templateEngine;
 	}
 
@@ -99,7 +99,7 @@ class board implements IBoard {
 		return $this->boardData->getBoardListed();
 	}
 
-	public function getBoardTemplateEngine(): ?templateEngine {
+	public function getBoardTemplateEngine(): templateEngine {
 		return $this->templateEngine;
 	}
 

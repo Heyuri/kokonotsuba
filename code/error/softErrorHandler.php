@@ -5,7 +5,7 @@ class softErrorHandler {
 		private readonly string $boardHtmlHeader, 
 		private readonly string $boardHtmlFooter, 
 		private readonly string $boardIndexFile, 
-		private ?templateEngine $templateEngine) {}
+		private templateEngine $templateEngine) {}
 
 	public function handleAuthError(\Kokonotsuba\Root\Constants\userRole $minimumRole) {
 		$staffSession = new staffAccountFromSession;

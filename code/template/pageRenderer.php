@@ -3,12 +3,12 @@
 use Kokonotsuba\Root\Constants\userRole;
 
 class pageRenderer {
-	private ?templateEngine $templateEngine;
+	private templateEngine $templateEngine;
 	private moduleEngine $moduleEngine;
 	private board $board;
 
 	// depend on templateEngine
-	public function __construct(?templateEngine $templateEngine, moduleEngine $moduleEngine, IBoard $board) {
+	public function __construct(templateEngine $templateEngine, moduleEngine $moduleEngine, IBoard $board) {
 		$this->templateEngine = $templateEngine;
 		$this->moduleEngine = $moduleEngine;
 		$this->board = $board;

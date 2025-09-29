@@ -1,6 +1,6 @@
 <?php
 
-function generateHeadHtml(array $config, ?templateEngine $templateEngine, moduleEngine $moduleEngine, string $pageTitle = '', int $resno = 0, bool $isStaff = false) {
+function generateHeadHtml(array $config, templateEngine $templateEngine, moduleEngine $moduleEngine, string $pageTitle = '', int $resno = 0, bool $isStaff = false) {
 	$html = '';
 
 	$pte_vals = prepareBaseTemplateValues($resno, $isStaff);
@@ -38,7 +38,7 @@ function prepareBaseTemplateValues(int $resno, bool $isStaff) {
 	);
 }
 
-function generateFooterHtml(?templateEngine $templateEngine, moduleEngine $moduleEngine, bool $isThread = false) {
+function generateFooterHtml(templateEngine $templateEngine, moduleEngine $moduleEngine, bool $isThread = false) {
 	$html = '';
 
 	$pte_vals = array(
@@ -65,7 +65,7 @@ function getDefaultFooterLinks() {
 function generatePostFormHTML(int $resno,
 	board $board,
 	array $config,
-	?templateEngine $templateEngine,
+	templateEngine $templateEngine,
 	moduleEngine $moduleEngine,
 	string $moduleInfoHook = '',
 	string $name = '',

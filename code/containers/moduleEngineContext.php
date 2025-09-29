@@ -18,7 +18,7 @@ class moduleEngineContext {
         public readonly deletedPostsService $deletedPostsService,
         public readonly fileService $fileService,
         public transactionManager $transactionManager,
-        public ?templateEngine $templateEngine,
+        public templateEngine $templateEngine,
         public board $board,
     ) {}
 }

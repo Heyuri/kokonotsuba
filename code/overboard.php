@@ -20,7 +20,7 @@ class overboard {
 		private readonly fileService $fileService,
 		private transactionManager $transactionManager,
 		private moduleEngine $moduleEngine, 
-		private ?templateEngine $templateEngine
+		private templateEngine $templateEngine
 	) {
 		// whether staff is logged in or not
 		$this->adminMode = isActiveStaffSession();
@@ -218,7 +218,7 @@ class overboard {
 		);
 	}
 	
-	private function createThreadRenderer(board $board, array $config, ?templateEngine $templateEngine, array $quoteLinksFromPage): threadRenderer {
+	private function createThreadRenderer(board $board, array $config, templateEngine $templateEngine, array $quoteLinksFromPage): threadRenderer {
 		$moduleEngineContext = new moduleEngineContext($config, 
 			$board->getConfigValue('LIVE_INDEX_FILE'), 
 			$board->getConfigValue('ModuleList'), 

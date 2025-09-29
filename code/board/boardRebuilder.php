@@ -7,7 +7,7 @@ class boardRebuilder {
 	public function __construct(
 		private board $board, 
 		private moduleEngine $moduleEngine, 
-		private ?templateEngine $templateEngine, 
+		private templateEngine $templateEngine, 
 		private readonly postService $postService, 
 		private readonly actionLoggerService $actionLoggerService, 
 		private readonly threadRepository $threadRepository, 

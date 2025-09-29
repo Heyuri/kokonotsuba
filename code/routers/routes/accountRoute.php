@@ -8,7 +8,7 @@ class accountRoute {
 		private readonly staffAccountFromSession $staffSession,
 		private readonly softErrorHandler $softErrorHandler,
 		private readonly accountRepository $accountRepository,
-		private readonly ?templateEngine $adminTemplateEngine,
+		private readonly templateEngine $adminTemplateEngine,
 		private readonly pageRenderer $adminPageRenderer
 	) {}
 

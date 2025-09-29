@@ -9,7 +9,7 @@ class threadRenderer {
 
 	public function __construct(
 		private array $config, 
-		private ?templateEngine $templateEngine, 
+		private templateEngine $templateEngine, 
 		private postRenderer $postRenderer,
 		private moduleEngine $moduleEngine) {}
 

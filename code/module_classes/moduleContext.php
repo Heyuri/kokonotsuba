@@ -23,7 +23,7 @@ use transactionManager;
 class moduleContext {
 	public function __construct(
 		public board $board,
-		public ?templateEngine $templateEngine,
+		public templateEngine $templateEngine,
 		public readonly array $config,
 		public readonly postRepository $postRepository,
 		public readonly postService $postService,

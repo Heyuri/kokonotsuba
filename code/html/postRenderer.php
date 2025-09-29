@@ -11,7 +11,7 @@ class postRenderer {
 		private readonly IBoard $board, 
 		private readonly array $config, 
 		private readonly moduleEngine $moduleEngine, 
-		private readonly ?templateEngine $templateEngine,
+		private readonly templateEngine $templateEngine,
 		private array $quoteLinksFromBoard) {
 			$this->FileIO = PMCLibrary::getFileIOInstance();
 		}

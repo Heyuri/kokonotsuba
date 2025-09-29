@@ -274,7 +274,7 @@ class boardService {
 		return $board;
 	}
 
-	private function initializeTemplateEngine(board $board): ?templateEngine {
+	private function initializeTemplateEngine(board $board): templateEngine {
 		$config = $board->loadBoardConfig();
 
 		$templateFile = null;
