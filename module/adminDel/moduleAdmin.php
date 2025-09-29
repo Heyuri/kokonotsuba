@@ -39,6 +39,14 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->onRenderPostAdminControls($modControlSection, $post);
 			}
 		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModuleHeader',
+			function(&$moduleHeader) {
+				$this->onGenerateModuleHeader($moduleHeader);
+			}
+		);
 	}
 
 	private function onRenderPostAdminControls(string &$modFunc, array &$post): void {
@@ -84,6 +92,31 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	}
 	
+	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		// can view deleted poss
+		$canViewDeleted = getRoleLevelFromSession()->isAtLeast($this->getConfig('AuthLevels.CAN_DELETE_ALL'));
+
+		// add requiredForAll js for the live frontend
+		// this js will add the deletedPost/deletedFile classes and deletion indicator to posts on the livefrontend
+		if($canViewDeleted) {
+			// generate the url path of the deleted posts javascript
+			$jsFileUrl = $this->generateJavascriptUrl('postDeletion.js');
+		} 
+		// otherwise, include the old js for post deletion
+		// This just hides the post with css and shows small pop-ups indicating success or faliure
+		else {
+			// generate old deletion js url
+			$jsFileUrl = $this->generateJavascriptUrl('basicPostDeletion.js');
+		}
+
+		// generate the script html for including the deleted posts js
+		// defer
+		$jsHtml = $this->generateScriptHtml($jsFileUrl, true);
+
+		// then append it to the header
+		$moduleHeader .= $jsHtml;
+	}
+
 	public function ModulePage() {
 		$staffAccountFromSession = new staffAccountFromSession;
 
