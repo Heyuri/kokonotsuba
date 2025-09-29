@@ -264,11 +264,15 @@ const kkimg = { name: "KK Image Features",
 				'</div>');
 			return true;
 		} else if (kkimg.swfext.includes(ext)) {
-			// pull native dims from the existing filesize text (leave it visible)
-			var fsNode = $q("#p"+no+" .filesize")[0],
-				m      = fsNode.textContent.match(/(\d+)\s*x\s*(\d+)/i),
-				realW  = m ? parseInt(m[1],10) : 550,
-				realH  = m ? parseInt(m[2],10) : 400;
+		// pull native dims from the existing filesize text (leave it visible)
+		var fsNode = $q("#p"+no+" .filesize")[0],
+			re     = /(\d+)\s*x\s*(\d+)/ig,
+			m      = null, tmp;
+
+		// grab the *last* NxM in the text so filenames like " 0x40 Hues of Halloween.swf" don't confuse us
+		while ((tmp = re.exec(fsNode.textContent)) !== null) m = tmp;
+		var	realW  = m ? parseInt(m[1],10) : 550,
+			realH  = m ? parseInt(m[2],10) : 400;
 
 			// cap at 95%
 			var vw    = document.documentElement.clientWidth,
