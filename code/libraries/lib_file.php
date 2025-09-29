@@ -257,76 +257,107 @@ function deleteCreatedBoardConfig(string $boardConfigName): void {
 	}
 }
 
-function serveImage(string $imagePath) {
-    // Check if the file exists and is a valid image
-    if (file_exists($imagePath) && is_file($imagePath)) {
-        // Get image information (MIME type, etc.)
-        $imageInfo = getimagesize($imagePath);
-        if ($imageInfo) {
-            // Set the correct content-type header based on image MIME type
-            header("Content-Type: " . $imageInfo['mime']);
-            
-            // Output the image
-            readfile($imagePath);
-        } else {
-            // If the file isn't a valid image
-            header("HTTP/1.0 415 Unsupported Media Type");
-        }
-    } else {
-        // If the image doesn't exist
-        header("HTTP/1.0 404 Not Found");
-    }
+// Helper to send a file response with common headers
+function sendInlineFile(string $path, string $mimeType, string $fileName): void {
+	// Set headers
+	header("Content-Type: " . $mimeType);
+	header("Content-Length: " . filesize($path));
+	header("Content-Disposition: inline; filename=\"" . $fileName . "\"");
+
+	// Output the file
+	readfile($path);
+	exit;
 }
 
-function serveVideo(string $videoPath) {
-    // Check if the file exists and is a valid video file
-    if (file_exists($videoPath) && is_file($videoPath)) {
-        // Get video file MIME type
-        $fileExtension = strtolower(pathinfo($videoPath, PATHINFO_EXTENSION));
-        switch ($fileExtension) {
-            case 'mp4':
-                $mimeType = 'video/mp4';
-                break;
-            case 'webm':
-                $mimeType = 'video/webm';
-                break;
-            case 'ogg':
-                $mimeType = 'video/ogg';
-                break;
-            default:
-                header("HTTP/1.0 415 Unsupported Media Type");
-                exit;
-        }
+function serveImage(string $imagePath): void {
+	// Check if the file exists and is a valid image
+	if (file_exists($imagePath) && is_file($imagePath)) {
+		// Get image information (MIME type, etc.)
+		$imageInfo = getimagesize($imagePath);
+		if ($imageInfo) {
+			// Output the image
+			sendInlineFile($imagePath, $imageInfo['mime'], basename($imagePath));
+		} else {
+			// If the file isn't a valid image
+			header("HTTP/1.0 415 Unsupported Media Type");
+			exit;
+		}
+	} else {
+		// If the image doesn't exist
+		header("HTTP/1.0 404 Not Found");
+		exit;
+	}
+}
 
-        // Set the correct content-type header for video
-        header("Content-Type: " . $mimeType);
+function serveVideo(string $videoPath): void {
+	// Check if the file exists and is a valid video file
+	if (file_exists($videoPath) && is_file($videoPath)) {
+		// Get video file MIME type
+		$fileExtension = strtolower(pathinfo($videoPath, PATHINFO_EXTENSION));
+		switch ($fileExtension) {
+			case 'mp4':
+				$mimeType = 'video/mp4';
+				break;
+			case 'webm':
+				$mimeType = 'video/webm';
+				break;
+			case 'ogg':
+				$mimeType = 'video/ogg';
+				break;
+			default:
+				header("HTTP/1.0 415 Unsupported Media Type");
+				exit;
+		}
 
-        // Output the video
-        readfile($videoPath);
-    } else {
-        // If the video doesn't exist
-        header("HTTP/1.0 404 Not Found");
-    }
+		// Output the video
+		sendInlineFile($videoPath, $mimeType, basename($videoPath));
+	} else {
+		// If the video doesn't exist
+		header("HTTP/1.0 404 Not Found");
+		exit;
+	}
+}
+
+function serveSWF(string $swfPath): void {
+	// Check if the file exists and is a valid SWF
+	if (file_exists($swfPath) && is_file($swfPath)) {
+		$fileExtension = strtolower(pathinfo($swfPath, PATHINFO_EXTENSION));
+		$fileName = basename($swfPath);
+
+		if ($fileExtension !== 'swf') {
+			header("HTTP/1.0 415 Unsupported Media Type");
+			exit;
+		}
+
+		// Output the SWF file
+		sendInlineFile($swfPath, 'application/x-shockwave-flash', $fileName);
+	} else {
+		header("HTTP/1.0 404 Not Found");
+		exit;
+	}
 }
 
 function serveMedia(string $mediaPath) {
-    // Ensure the file exists
-    if (file_exists($mediaPath) && is_file($mediaPath)) {
-        // Get file extension
-        $fileExtension = strtolower(pathinfo($mediaPath, PATHINFO_EXTENSION));
+	// Ensure the file exists
+	if (file_exists($mediaPath) && is_file($mediaPath)) {
+		// Get file extension
+		$fileExtension = strtolower(pathinfo($mediaPath, PATHINFO_EXTENSION));
 
-        // Decide if it's an image or video
-        if (in_array($fileExtension, ['png', 'jpg', 'jpeg', 'gif'])) {
-            // Serve image
-            serveImage($mediaPath);
-        } elseif (in_array($fileExtension, ['mp4', 'webm', 'ogg'])) {
-            // Serve video
-            serveVideo($mediaPath);
-        } else {
-            header("HTTP/1.0 415 Unsupported Media Type");
-        }
-    } else {
-        // If the file doesn't exist
-        header("HTTP/1.0 404 Not Found");
-    }
+		// Decide if it's an image or video
+		if (in_array($fileExtension, ['png', 'jpg', 'jpeg', 'gif'])) {
+			// Serve image
+			serveImage($mediaPath);
+		} elseif (in_array($fileExtension, ['mp4', 'webm', 'ogg'])) {
+			// Serve video
+			serveVideo($mediaPath);
+		} elseif ($fileExtension === 'swf') {
+			// Serve flash
+			serveSWF($mediaPath);
+		} else {
+			header("HTTP/1.0 415 Unsupported Media Type");
+		}
+	} else {
+		// If the file doesn't exist
+		header("HTTP/1.0 404 Not Found");
+	}
 }
