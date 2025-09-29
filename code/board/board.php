@@ -38,7 +38,6 @@ class board implements IBoard {
 		$this->boardPostNumbers = $boardPostNumbers;
 		$this->boardPathService = $boardPathService;
 		
-		$this->templateEngine = null;
 		$this->boardRebuilder = null;
 		$this->moduleEngine = null;
 	}

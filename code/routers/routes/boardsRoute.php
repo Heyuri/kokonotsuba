@@ -9,7 +9,7 @@ class boardsRoute {
 		private readonly array $config,
 		private readonly staffAccountFromSession $staffSession,
 		private readonly softErrorHandler $softErrorHandler,
-		private ?templateEngine $adminTemplateEngine,
+		private templateEngine $adminTemplateEngine,
 		private readonly pageRenderer $adminPageRenderer,
 		private readonly boardService $boardService,
 		private board $board
