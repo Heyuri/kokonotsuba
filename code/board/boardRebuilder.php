@@ -205,8 +205,11 @@ class boardRebuilder {
 		// get paginated thread previews
 		$threads = $this->postService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $threadPreviewAmount);
 
+		// all post uids from the threads
+		$postUidsFromThreads = getPostUidsFromThreadArrays($threads);
+
 		// get all associated quote links for the page
-		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByBoardUid($this->board->getBoardUID());
+		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsFromThreads);
 
 		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
 
