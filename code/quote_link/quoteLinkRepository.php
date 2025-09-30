@@ -64,7 +64,9 @@ class quoteLinkRepository {
 				ht.post_op_number AS host_post_op_number,
 
 				hdp.open_flag AS host_open_flag,
-				tdp.open_flag AS target_open_flag
+				tdp.open_flag AS target_open_flag,
+				hdp.file_only AS host_file_only,
+				tdp.file_only AS target_file_only
 
 			FROM {$this->quoteLinkTable} q
 			JOIN {$this->postTable} tp ON q.target_post_uid = tp.post_uid
@@ -96,7 +98,14 @@ class quoteLinkRepository {
 
 		// if we want to exclude quote links from deleted posts
 		if(!$includeDeletedPostQuotelinks) {
-			$query .= " AND (hdp.open_flag IS NULL AND tdp.open_flag IS NULL)";
+			$query .= " AND (
+				COALESCE(hdp.open_flag, tdp.open_flag) IS NULL
+				OR (
+					COALESCE(hdp.file_only, 0) = 1
+					AND COALESCE(tdp.file_only, 0) = 1
+					AND COALESCE(hdp.open_flag, tdp.open_flag) IS NOT TRUE
+				)
+			)";
 		}
 
 		// fetch the data from the database
