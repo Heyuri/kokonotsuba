@@ -44,6 +44,7 @@
 	<script src="{$STATIC_URL}js/clipboard.js?v=15" defer></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
+	<script src="{$STATIC_URL}js/message.js" defer></script>
 	<!--&IF($MODULE_HEADER_HTML,'{$MODULE_HEADER_HTML}','')-->
 	
 <!--/&HEADER-->
