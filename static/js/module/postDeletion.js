@@ -150,6 +150,17 @@
 				return a ? a.href : null;
 			})();
 
+		
+		function onFail() {
+			// show the fail message
+			showMessage("Post deletion failed!", false);
+		}
+
+		function onSuccess() {
+			// show the success message
+			showMessage("Post deleted!", true);
+		}
+
 		// Revert optimistic UI if the request fails or returns non-OK
 		function revertUI() {
 			// Remove classes we added
@@ -180,9 +191,18 @@
 				}).then(function (res) {
 					// If server responded but not OK, undo optimistic UI
 					if (!res.ok) {
+						// FAIL message
+						onFail();
+						
 						revertUI();
+					} else {
+						// SUCCESS
+						onSuccess();
 					}
 				}).catch(function () {
+					// FAIL message
+					onFail();
+
 					// On network or other fetch errors, undo optimistic UI
 					revertUI();
 				});
