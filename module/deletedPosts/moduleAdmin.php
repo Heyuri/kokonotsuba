@@ -90,6 +90,14 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->onRenderThreadCssClass($threadCssClasses, $thread);
 			}
 		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModuleHeader',
+			function(&$moduleHeader) {
+				$this->onGenerateModuleHeader($moduleHeader);
+			}
+		);
 	}
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {
@@ -315,6 +323,19 @@ class moduleAdmin extends abstractModuleAdmin {
 		$isThreadDeleted = !empty($thread['thread_deleted']) && empty($thread['thread_attachment_deleted']);
 
 		$this->appendCssClassIf($threadCssClasses, $isThreadDeleted, 'deletedPost');
+	}
+
+	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		// generate the url path of the deleted posts javascript
+		// this prevents the user from needing to refresh + wait through the rebuild
+		$jsFileUrl = $this->generateJavascriptUrl('deletedPosts.js');
+
+		// generate the script html for including the deleted posts js
+		// defer
+		$jsHtml = $this->generateScriptHtml($jsFileUrl, true);
+
+		// then append it to the header
+		$moduleHeader .= $jsHtml;
 	}
 
 	private function handleModPageRequests(int $accountId, userRole $roleLevel): void {
@@ -754,7 +775,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		// request vs draw
 		if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$this->handleModPageRequests($accountId, $roleLevel);
+			
 			redirect($this->myPage);
+		} elseif (isset($_GET['json'])) {
+			// handle json output (API)
+			// to do
 		} else {
 			// draw the overview of the deleted posts
 			$this->drawModPage($accountId, $roleLevel);
