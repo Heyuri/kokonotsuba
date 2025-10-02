@@ -391,4 +391,23 @@ class deletedPostsRepository {
 		 // return result
 		 return $boardUid;
 	}
+
+	public function getDeletedPostRowByPostUid(int $postUid): false|array {
+		// query to fetch the deleted post by post uid
+		$query = $this->getBaseDeletedPostsQuery();
+
+		// select the post by post uid
+		$query .= " WHERE base.post_uid = :post_uid";
+
+		// query parameteres
+		$params = [
+			':post_uid' => $postUid
+		];
+
+		// fetch the row
+		$deletedPost = $this->databaseConnection->fetchOne($query, $params);
+
+		// return result
+		return $deletedPost;
+	}
 }

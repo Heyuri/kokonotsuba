@@ -689,4 +689,19 @@ class deletedPostsService {
 			return $boardUid;
 		}
 	}
+
+	public function getDeletedPostRowByPostUid(int $postUid): ?array {
+		// fetch the row by post uid
+		$deletedPost = $this->deletedPostsRepository->getDeletedPostRowByPostUid($postUid);
+		
+		// if its false then return null
+		if(!$deletedPost) {
+			return null;
+		} 
+		// otherwise it was successful
+		else {
+			// return result
+			return $deletedPost;
+		}
+	}
 }
