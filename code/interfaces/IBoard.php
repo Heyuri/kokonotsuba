@@ -17,7 +17,7 @@ interface IBoard {
 	 *
 	 * @return templateEngine Template engine instance
 	 */
-	public function getBoardTemplateEngine(): ?templateEngine;
+	public function getBoardTemplateEngine(): templateEngine;
 
 	/**
 	 * Get the title of the board.
