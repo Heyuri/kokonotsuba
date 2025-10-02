@@ -195,7 +195,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			header('Content-Type: application/json');
 			echo json_encode([
 				'success' => true,
-				'is_op' => $post['is_op']
+				'is_op' => $post['is_op'],
+				'deleted_link' => $this->getDeletedPostViewUrl($post)
 			]);
 			exit;
 		} else {
@@ -219,5 +220,37 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		fwrite($f, "$ip,$starttime,$expires,$reason");
 		fclose($f);
+	}
+
+	private function getDeletedPostViewUrl(array $post): string {
+		// post uid
+		$postUid = $post['post_uid'];
+
+		// fetch the deleted post by post uid
+		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByPostUid($postUid);
+
+		// get the deleted post id for the url
+		$deletedPostId = $deletedPost['deleted_post_id'];
+
+		// base url
+		$baseUrl = getCurrentUrlNoQuery();
+
+		// parameters for the link
+		$urlParameters = [
+			'action' => 'viewMore',
+			'deletedPostId' => $deletedPostId,
+			'moduleMode' => 'admin',
+			'mode' => 'module',
+			'load' => 'deletedPosts'
+		];
+
+		// build the query parameters
+		$queryParameters = http_build_query($urlParameters);
+
+		// construct the link
+		$viewUrl = $baseUrl . '?' . $queryParameters;
+
+		// return the url
+		return $viewUrl;
 	}
 }
