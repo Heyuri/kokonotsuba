@@ -173,23 +173,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// Will be implemented later
 		//deleteThreadCache($post['thread_uid']);
 
-		// if its a thread, rebuild all board pages
-		if($post['is_op']) {
-			$board->rebuildBoard();
-		} else {
-			// otherwise just rebuild the page the reply is on
-			$thread_uid = $post['thread_uid'];
-
-			$threads = $this->moduleContext->threadService->getThreadListFromBoard($board);
-
-			$pageToRebuild = getPageOfThread($thread_uid, $threads, $board->getConfigValue('PAGE_DEF', 15));
-			
-			// make sure it isn't above the static page limit - this prevents a potential DOS vulnerability where a request can trigger a resource intensive operation
-			$pageToRebuild = min($pageToRebuild, $this->getConfig('STATIC_HTML_UNTIL'));
-
-			$board->rebuildBoardPage($pageToRebuild);
-		}
-		
+		// AJAX first: send JSON, flush to client, then rebuild in the background of this request.
 		if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
 			// Return JSON for AJAX requests
 			header('Content-Type: application/json');
@@ -198,12 +182,57 @@ class moduleAdmin extends abstractModuleAdmin {
 				'is_op' => $post['is_op'],
 				'deleted_link' => $this->getDeletedPostViewUrl($post)
 			]);
+		
+			// Let the client go on; we keep working server-side.
+			if (session_status() === PHP_SESSION_ACTIVE) {
+				session_write_close();
+			}
+			if (function_exists('fastcgi_finish_request')) {
+				fastcgi_finish_request();
+			} else {
+				// Best-effort flush for non-FPM SAPIs
+				ob_flush();
+				flush();
+			}
+		
+			// ===== rebuild after the response has been sent =====
+			// if its a thread, rebuild all board pages
+			if ($post['is_op']) {
+				$board->rebuildBoard();
+			} else {
+				// otherwise just rebuild the page the reply is on
+				$thread_uid = $post['thread_uid'];
+			
+				$threads = $this->moduleContext->threadService->getThreadListFromBoard($board);
+			
+				$pageToRebuild = getPageOfThread($thread_uid, $threads, $board->getConfigValue('PAGE_DEF', 15));
+
+				// make sure it isn't above the static page limit - this prevents a potential DOS vulnerability where a request can trigger a resource intensive operation
+				$pageToRebuild = min($pageToRebuild, $this->getConfig('STATIC_HTML_UNTIL'));
+			
+				$board->rebuildBoardPage($pageToRebuild);
+			}
 			exit;
-		} else {
-			// Fallback for non-JS users: redirect
-			redirect('back', 0);
 		}
 
+		// Non-AJAX fallback: do the rebuild first, then redirect (unchanged)
+		if ($post['is_op']) {
+			$board->rebuildBoard();
+		} else {
+			$thread_uid = $post['thread_uid'];
+		
+			$threads = $this->moduleContext->threadService->getThreadListFromBoard($board);
+		
+			$pageToRebuild = getPageOfThread($thread_uid, $threads, $board->getConfigValue('PAGE_DEF', 15));
+
+			// make sure it isn't above the static page limit - this prevents a potential DOS vulnerability where a request can trigger a resource intensive operation
+			$pageToRebuild = min($pageToRebuild, $this->getConfig('STATIC_HTML_UNTIL'));
+		
+			$board->rebuildBoardPage($pageToRebuild);
+		}
+
+		// Fallback for non-JS users: redirect
+		redirect('back', 0);
 	}
 
 	private function appendGlobalBan($ip, $starttime, $expires, $reason) {
