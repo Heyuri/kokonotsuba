@@ -182,7 +182,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function handleCommentDiceRoll(string &$comment): void {
-		// Find and replace futaba-style dice roll tokens, but ignore ones escaped with a leading "!"
+		// Find and replace futaba-style dice roll tokens
 		$comment = preg_replace_callback(
 			'/(?:^|<br\s*\/?>)\K\s*(?<!\!)dice(\d+)d(\d+)([+-]\d+)?=/i',
 			fn($m) => $this->processCommentDiceMatch($m),
