@@ -22,13 +22,13 @@ class moduleMain extends abstractModuleMain {
 		// get the die face config value and set it
 		$this->dieFaceLimit = $this->getConfig('ModuleSettings.DICE_FACE_LIMIT', 50);
 
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread) {
-			$this->onBeforeCommit($email, $com);
+		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
+			$this->onBeforeCommit($email, $emailForInsertion, $com);
 		});
 
 	}
 
-	public function onBeforeCommit(string $email, string &$comment): void {
+	public function onBeforeCommit(string &$email, string &$emailForInsertion, string &$comment): void {
 		// return early if the email doesn't contain 'dice'
 		if(!str_contains($email, 'dice')) {
 			return;
@@ -50,6 +50,12 @@ class moduleMain extends abstractModuleMain {
 
 		// generate dice text
 		$diceText = $this->generateDiceText($dieAmount, $dieFaces);
+
+		// remove the dice text from the email field
+		$email = $this->removeDiceRollText($email);
+
+		// remove it from the insertion email too
+		$emailForInsertion = $this->removeDiceRollText($emailForInsertion);
 
 		// append dice text to comment
 		$comment .= $diceText;
@@ -142,6 +148,14 @@ class moduleMain extends abstractModuleMain {
 	    // If there are multiple dice values, join them with commas and return the HTML
 	    $separatedDiceValues = implode(', ', array_map('sanitizeStr', $diceValues)); // Apply sanitizeStr to each value for safety
 	    return '<p class="roll" title="This is a dice roll">[NUMBERS: ' . $separatedDiceValues . ']</p>';
+	}
+
+	private function removeDiceRollText(string $input): string {
+	    // Regex to match and remove 'dice+NdM' pattern
+	    $output = preg_replace('/dice\+\d+d\d+/', '', $input);
+
+	    // Trim any extra spaces left behind after removal
+	    return preg_replace('/\s+/', ' ', trim($output));
 	}
 
 }
