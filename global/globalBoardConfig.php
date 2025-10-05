@@ -202,8 +202,8 @@ $config['ModuleSettings']['DISP_ID'] = false; // Display IDs
 $config['ModuleSettings']['DELETED_POSTS_TEMPLATE'] = 'kokoimg.tpl';
 
 // dice
-$config['ModuleSettings']['DICE_AMOUNT_LIMIT'] = 10;
-$config['ModuleSettings']['DICE_FACE_LIMIT'] = 50;
+$config['ModuleSettings']['DICE_AMOUNT_LIMIT'] = 30;
+$config['ModuleSettings']['DICE_FACE_LIMIT'] = 9999;
 $config['ModuleSettings']['EMAIL_DICE_ROLL'] = false;
 $config['ModuleSettings']['COMMENT_DICE_ROLL'] = true;
 
