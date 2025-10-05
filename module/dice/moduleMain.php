@@ -144,7 +144,7 @@ class moduleMain extends abstractModuleMain {
 		// loop and append random dice values
 		for($i = 0; $i < $dieAmount; $i++) {
 			// generate individual roll number
-			$rollNumber = rand(1, $dieFaces);
+			$rollNumber = random_int(1, $dieFaces);
 
 			// append to array
 			$diceValues[] = $rollNumber;
