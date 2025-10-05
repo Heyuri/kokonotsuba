@@ -264,7 +264,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function validateModifier(int $modifier): bool {
-		// Prevent pathological values; adjust bounds if you prefer
+		// prevent pathological values
 		return $modifier >= -100000 && $modifier <= 100000;
 	}
 
