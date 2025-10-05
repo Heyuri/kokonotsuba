@@ -83,23 +83,23 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function validateDiceDetails(int $dieAmount, int $dieFaces): bool {
-	    // Check if the number of dice is a positive integer
-	    if ($dieAmount <= 0) {
-	        return false;  // Invalid dice amount
-	    }
+		// Check if the number of dice is a positive integer
+		if ($dieAmount <= 0) {
+			return false;  // Invalid dice amount
+		}
 
-	    // Check if the number of faces is a valid integer (e.g., 4, 6, 8, 10, 12, 20, etc.)
-	    if ($dieFaces <= 0) {
-	        return false;  // Invalid dice faces
-	    }
+		// Check if the number of faces is a valid integer (e.g., 4, 6, 8, 10, 12, 20, etc.)
+		if ($dieFaces <= 0) {
+			return false;  // Invalid dice faces
+		}
 
 		// check if either is above the limits and return early
 		if($dieAmount > $this->dieAmountLimit || $dieFaces > $this->dieFaceLimit) {
 			return false;
 		}
 
-	    // All checks passed, return true
-	    return true;
+		// All checks passed, return true
+		return true;
 	}
 
 	private function isValidDice(string $diceInput): bool {
@@ -155,19 +155,19 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function generateDieHtml(array $diceValues): string {
-	    // Generate a single dice number HTML if there's only one value
-	    if (count($diceValues) === 1) {
-	        $diceNumber = (string)$diceValues[0];
-	        return $this->rollEmailHtmlTag('[NUMBER: ' . $diceNumber . ']');
-	    }
+		// Generate a single dice number HTML if there's only one value
+		if (count($diceValues) === 1) {
+			$diceNumber = (string)$diceValues[0];
+			return $this->rollEmailHtmlTag('[NUMBER: ' . $diceNumber . ']');
+		}
 
-	    // If there are multiple dice values, join them with commas and return the HTML
-	    $separatedDiceValues = implode(', ', $diceValues);
-	    return $this->rollEmailHtmlTag('[NUMBERS: ' . $separatedDiceValues . ']');
+		// If there are multiple dice values, join them with commas and return the HTML
+		$separatedDiceValues = implode(', ', $diceValues);
+		return $this->rollEmailHtmlTag('[NUMBERS: ' . $separatedDiceValues . ']');
 	}
 
 	private function rollEmailHtmlTag(string $contents): string {
-	    return '
+		return '
 			<div class="rollContainer">
 				<p class="roll" title="This is a dice roll">' . sanitizeStr($contents) . '</p>
 			</div>';
@@ -239,9 +239,7 @@ class moduleMain extends abstractModuleMain {
 		// keep the prefix "dice2d6=" part just in the container
 		// the content (the dice numbers + sum) in the roll span
 		return '
-			<span class="rollContainer">
-				' . sanitizeStr($dicePrefix) . '<span class="roll" title="This is a dice roll">' . sanitizeStr($content) . '</span>
-			</span>';
+			<span class="rollContainer">' . sanitizeStr($dicePrefix) . '<span class="roll" title="This is a dice roll">' . sanitizeStr($content) . '</span></span>';
 	}
 
 }
