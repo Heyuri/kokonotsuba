@@ -21,7 +21,7 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		$this->RENZOKU3 = $this->getConfig('ModuleSettings.RENZOKU3', 0);
 
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread) {
+		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
 			$this->onBeforeCommit($isReply);  // Call the method to modify the form
 		});
 	}

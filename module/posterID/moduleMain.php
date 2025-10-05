@@ -30,7 +30,7 @@ class moduleMain extends abstractModuleMain {
 
 		// run the hook point to gen an ID.
 		// IDs are generated for every post when the module is enabled
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
+		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
 			$this->onBeforeCommit($poster_hash, $email, $thread);
 		});
 	}

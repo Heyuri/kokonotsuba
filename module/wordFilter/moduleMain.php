@@ -15,7 +15,7 @@ class moduleMain extends abstractModuleMain {
 		
 		$this->addEmojiFilters();
 
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread) {
+		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
 			$this->onBeforeCommit($com);  // Call the method to modify the form
 		});
 	}

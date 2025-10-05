@@ -108,7 +108,7 @@ class registRoute {
 
 			// Commit pre-write hook
 			$this->moduleEngine->dispatch('RegistBeforeCommit', [
-				&$postData['name'], &$postData['email'], &$postData['sub'], &$postData['comment'],
+				&$postData['name'], &$postData['email'], &$emailForInsertion, &$postData['sub'], &$postData['comment'],
 				&$postData['category'], &$postData['age'], $fileMeta['file'],
 				$postData['isReply'], &$postData['status'], $thread, &$computedPostInfo['poster_hash']
 			]);

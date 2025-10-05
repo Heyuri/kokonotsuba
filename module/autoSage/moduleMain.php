@@ -15,7 +15,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
  	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread) {
+		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
 			if(!$isReply) {
 				return;
 			}

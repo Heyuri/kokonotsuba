@@ -31,7 +31,7 @@ class moduleMain extends abstractModuleMain {
 		$this->initializeEmotes();
 
 		// Register the listener for the PostInfo hook
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread) {
+		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
 			$this->onBeforeCommit($com, $file);  // Call the method to modify the form
 		});
 	}

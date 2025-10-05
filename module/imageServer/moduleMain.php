@@ -43,7 +43,10 @@ class moduleMain extends abstractModuleMain {
 
 	public function ModulePage() {
 		// file id of the file row
-		$fileId = (int)$_GET['file'] ?? null;
+		$fileId = $_GET['file'] ?? null;
+
+		// cast to int
+		$fileId = (int)$fileId;
 
 		// throw error if no file id is selected
 		if($fileId === null || !is_int($fileId)) {
@@ -61,8 +64,14 @@ class moduleMain extends abstractModuleMain {
 		// authentication logic
 		$this->authenticateUserForAttachment($attachment);
 
+		// whether we're accessing the thumbnail via GET
+		$isThumb = $_GET['isThumb'] ?? false;
+
+		// cast to bool
+		$isThumb = (bool)$isThumb;
+
 		// get the raw file path
-		$fullPath = $attachment->getPath();
+		$fullPath = $attachment->getPath($isThumb);
 
 		// run it through realpath to prevent path traversal
 		$fullPath = realpath($fullPath);

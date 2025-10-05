@@ -27,7 +27,7 @@ class moduleMain extends abstractModuleMain {
 		$this->HIGHLIGHT_COUNT = $this->getConfig('ModuleSettings.HIGHLIGHT_COUNT');
 		$this->SHOW_IN_MAIN = $this->getConfig('ModuleSettings.SHOW_IN_MAIN');
 
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread) {
+		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
 			$this->onBeforeCommit($sub, $isReply);
 		});
 
