@@ -184,7 +184,7 @@ class moduleMain extends abstractModuleMain {
 	private function handleCommentDiceRoll(string &$comment): void {
 		// Find and replace futaba-style dice roll tokens, but ignore ones escaped with a leading "!"
 		$comment = preg_replace_callback(
-			'/(?:^|<br\s*\/?>)\K\s*(?<!\!)dice(\d+)d(\d+)=/i',
+			'/(?:^|<br\s*\/?>)\K\s*(?<!\!)dice(\d+)d(\d+)([+-]\d+)?=/i',
 			fn($m) => $this->processCommentDiceMatch($m),
 			$comment
 		);
@@ -193,6 +193,15 @@ class moduleMain extends abstractModuleMain {
 	private function processCommentDiceMatch(array $matches): string {
 		$dieAmount = (int)$matches[1];
 		$dieFaces = (int)$matches[2];
+		$modifier = 0;
+
+		if (isset($matches[3]) && $matches[3] !== '') {
+			$modifier = (int)$matches[3];
+			if (!$this->validateModifier($modifier)) {
+				// Keep the original text if modifier is unreasonable
+				return $matches[0];
+			}
+		}
 
 		if (!$this->validateDiceDetails($dieAmount, $dieFaces)) {
 			// Keep the original text if invalid
@@ -200,17 +209,23 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		$values = $this->generateDiceArray($dieAmount, $dieFaces);
-		return $this->formatCommentDiceRoll($dieAmount, $dieFaces, $values);
+		return $this->formatCommentDiceRoll($dieAmount, $dieFaces, $values, $modifier);
 	}
 
-	private function formatCommentDiceRoll(int $dieAmount, int $dieFaces, array $values): string {
+	private function formatCommentDiceRoll(int $dieAmount, int $dieFaces, array $values, int $modifier = 0): string {
 		// For single dice rolls
 		if (count($values) === 1) {
 			// Dice prefix
-			$dicePrefix = 'dice' . $dieAmount . 'd' . $dieFaces . '=';
+			$dicePrefix = 'dice' . $dieAmount . 'd' . $dieFaces . ($modifier !== 0 ? ($modifier > 0 ? '+' . $modifier : (string)$modifier) : '') . '=';
 
 			// Single die: 4
-			$diceContent = $values[0];
+			$diceContent = (string)$values[0];
+
+			// If there is a modifier, show final result in parentheses
+			if ($modifier !== 0) {
+				$final = $values[0] + $modifier;
+				$diceContent .= ' (' . $final . ')';
+			}
 
 			// generate the html span
 			$diceHtml = $this->rollCommentHtmlTag($dicePrefix, $diceContent);
@@ -223,10 +238,16 @@ class moduleMain extends abstractModuleMain {
 		$diceSum = array_sum($values);
 
 		// dice prefix
-		$dicePrefix = 'dice' . $dieAmount . 'd' . $dieFaces . '=';
+		$dicePrefix = 'dice' . $dieAmount . 'd' . $dieFaces . ($modifier !== 0 ? ($modifier > 0 ? '+' . $modifier : (string)$modifier) : '') . '=';
 
 		// build the dice content
-		$diceContent = implode(', ', $values) . ' (' . $diceSum . ')';
+		$diceContent = implode(', ', $values);
+		if ($modifier !== 0) {
+			$final = $diceSum + $modifier;
+			$diceContent .= ' (' . $final . ')';
+		} else {
+			$diceContent .= ' (' . $diceSum . ')';
+		}
 
 		// generate the html span
 		$diceHtml = $this->rollCommentHtmlTag($dicePrefix, $diceContent);
@@ -240,6 +261,11 @@ class moduleMain extends abstractModuleMain {
 		// the content (the dice numbers + sum) in the roll span
 		return '
 			<span class="rollContainer">' . sanitizeStr($dicePrefix) . '<span class="roll" title="This is a dice roll">' . sanitizeStr($content) . '</span></span>';
+	}
+
+	private function validateModifier(int $modifier): bool {
+		// Prevent pathological values; adjust bounds if you prefer
+		return $modifier >= -100000 && $modifier <= 100000;
 	}
 
 }
