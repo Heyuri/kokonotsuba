@@ -201,6 +201,10 @@ $config['ModuleSettings']['DISP_ID'] = false; // Display IDs
 // deletedPosts
 $config['ModuleSettings']['DELETED_POSTS_TEMPLATE'] = 'kokoimg.tpl';
 
+// dice
+$config['ModuleSettings']['DICE_AMOUNT_LIMIT'] = 10;
+$config['ModuleSettings']['DICE_FACE_LIMIT'] = 50;
+
 $config['BAD_STRING'] = array(); // Deprecated by spamdb
 $config['BAD_FILEMD5'] = array(); // Deprecated by spamdb
 $config['BANPATTERN'] = array(); // Deprecated by adminban module
