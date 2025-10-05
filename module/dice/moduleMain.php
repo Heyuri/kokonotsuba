@@ -158,18 +158,18 @@ class moduleMain extends abstractModuleMain {
 	    // Generate a single dice number HTML if there's only one value
 	    if (count($diceValues) === 1) {
 	        $diceNumber = (string)$diceValues[0];
-	        return $this->rollEmailHtmlTag('[NUMBER: ' . sanitizeStr($diceNumber) . ']');
+	        return $this->rollEmailHtmlTag('[NUMBER: ' . $diceNumber . ']');
 	    }
 
 	    // If there are multiple dice values, join them with commas and return the HTML
-	    $separatedDiceValues = implode(', ', array_map('sanitizeStr', $diceValues)); // Apply sanitizeStr to each value for safety
+	    $separatedDiceValues = implode(', ', $diceValues);
 	    return $this->rollEmailHtmlTag('[NUMBERS: ' . $separatedDiceValues . ']');
 	}
 
 	private function rollEmailHtmlTag(string $contents): string {
 	    return '
 			<div class="rollContainer">
-				<p class="roll" title="This is a dice roll">' . $contents . '</p>
+				<p class="roll" title="This is a dice roll">' . sanitizeStr($contents) . '</p>
 			</div>';
 	}
 
