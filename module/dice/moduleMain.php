@@ -36,7 +36,6 @@ class moduleMain extends abstractModuleMain {
 
 		// check if its a valid dice text
 		if(!$this->isValidDice($email)) {
-			echo $email; exit;
 			return;
 		}
 
