@@ -204,6 +204,8 @@ $config['ModuleSettings']['DELETED_POSTS_TEMPLATE'] = 'kokoimg.tpl';
 // dice
 $config['ModuleSettings']['DICE_AMOUNT_LIMIT'] = 10;
 $config['ModuleSettings']['DICE_FACE_LIMIT'] = 50;
+$config['ModuleSettings']['EMAIL_DICE_ROLL'] = false;
+$config['ModuleSettings']['COMMENT_DICE_ROLL'] = true;
 
 $config['BAD_STRING'] = array(); // Deprecated by spamdb
 $config['BAD_FILEMD5'] = array(); // Deprecated by spamdb
