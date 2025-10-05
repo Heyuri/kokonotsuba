@@ -240,7 +240,7 @@ class moduleMain extends abstractModuleMain {
 		// the content (the dice numbers + sum) in the roll span
 		return '
 			<span class="rollContainer">
-				' . $dicePrefix . '<span class="roll" tite="This is a dice roll">' . $content . '</span>
+				' . sanitizeStr($dicePrefix) . '<span class="roll" tite="This is a dice roll">' . sanitizeStr($content) . '</span>
 			</span>';
 	}
 
