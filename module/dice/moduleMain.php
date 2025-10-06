@@ -144,7 +144,7 @@ class moduleMain extends abstractModuleMain {
 		// loop and append random dice values
 		for($i = 0; $i < $dieAmount; $i++) {
 			// generate individual roll number
-			$rollNumber = rand(1, $dieFaces);
+			$rollNumber = random_int(1, $dieFaces);
 
 			// append to array
 			$diceValues[] = $rollNumber;
@@ -182,7 +182,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function handleCommentDiceRoll(string &$comment): void {
-		// Find and replace futaba-style dice roll tokens, but ignore ones escaped with a leading "!"
+		// Find and replace futaba-style dice roll tokens
 		$comment = preg_replace_callback(
 			'/(?:^|<br\s*\/?>)\K\s*(?<!\!)dice(\d+)d(\d+)([+-]\d+)?=/i',
 			fn($m) => $this->processCommentDiceMatch($m),
@@ -264,7 +264,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function validateModifier(int $modifier): bool {
-		// Prevent pathological values; adjust bounds if you prefer
+		// prevent pathological values
 		return $modifier >= -100000 && $modifier <= 100000;
 	}
 
