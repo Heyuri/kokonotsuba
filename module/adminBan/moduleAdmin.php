@@ -250,7 +250,12 @@ class moduleAdmin extends abstractModuleAdmin {
 				
 				$post['com'] .= $publicBanMessageHTML;
 				
-				$this->moduleContext->postRepository->updatePost($post['post_uid'], $post);
+				// parameters to update in the query
+				$updatePostParameters = [
+					'com' => $post['com']
+				];
+
+				$this->moduleContext->postRepository->updatePost($post['post_uid'], $updatePostParameters);
 				
 				$board = searchBoardArrayForBoard($post['boardUID']);
 				

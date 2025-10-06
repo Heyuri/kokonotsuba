@@ -72,7 +72,13 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		if (!empty($_POST['public'])) {
 			$post['com'] .= "<p class=\"warning\">($reason) <img class=\"banIcon icon\" alt=\"banhammer\" src=\"" . $this->getConfig('STATIC_URL') . "/image/hammer.gif\"></p>";
-			$this->moduleContext->postRepository->updatePost($post_uid, $post);
+			
+			// parameters to update in the query
+			$updatePostParameters = [
+				'com' => $post['com']
+			];
+			
+			$this->moduleContext->postRepository->updatePost($post['post_uid'], $updatePostParameters);
 		}
 
 		$board = searchBoardArrayForBoard($post['boardUID']);
