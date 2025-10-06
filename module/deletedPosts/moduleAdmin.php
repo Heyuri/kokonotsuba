@@ -715,8 +715,14 @@ class moduleAdmin extends abstractModuleAdmin {
 			// flag to make sure the reply gets rendered using the OP template block
 			$renderAsOp = true;
 
+			// get the board of the post
+			$board = searchBoardArrayForBoard($deletedEntry['boardUID']);
+
+			// get the base url of the board
+			$boardUrl = $board->getBoardURL();
+
 			// html of the post / thread
-			$postHtml = $postRenderer->render($deletedEntry, $templateValues, 0, false, [$deletedEntry], true, '', '', '', '', '', 0, false, '', $renderAsOp);
+			$postHtml = $postRenderer->render($deletedEntry, $templateValues, 0, false, [$deletedEntry], true, '', '', '', '', '', 0, false, $boardUrl, $renderAsOp);
 		}
 		// if its a thread (and we're showing all) then render it along with its replies
 		elseif ($deletedEntry['is_op'] && $showAll) {
