@@ -526,10 +526,6 @@ class deletedPostsService {
 		// get the main file directory
 		$boardMainUploadDirectory = $board->getBoardUploadedFilesDirectory() . $board->getConfigValue('IMG_DIR');
 
-		// get the thumbnail file directory
-		// (these are often the same but we'll just make sure)
-		$boardThumbUploadDirectory = $board->getBoardUploadedFilesDirectory() . $board->getConfigValue('THUMB_DIR');
-
 		// attachment-related data from the post row
 		$postUid = $post['post_uid'];
 		$extension = $post['ext'];
@@ -569,37 +565,13 @@ class deletedPostsService {
 			$md5Hash,
 			$width,
 			$height,
+			$thumbWidth,
+			$thumbHeight,
 			$fileSize,
 			$mimeType,
 			$isHidden,
 			false
 		);
-
-		// get the thumbnail extension from config
-		$thumbnailExtension = $board->getConfigValue('THUMB_SETTING.Format');
-
-		// thumbnail stored filename
-		$thumbStoredFileName = $storedFileName . 's';
-
-		// thumbnail path + filename
-		$thumbnailPath = $boardThumbUploadDirectory . $thumbStoredFileName . '.' . $thumbnailExtension;
-
-		// also add thumbnail if it exists
-		if(file_exists($thumbnailPath)) {
-			$this->fileService->addFile(
-				$postUid,
-				$fileName,
-				$thumbStoredFileName,
-				$thumbnailExtension,
-				$md5Hash,
-				$thumbWidth,
-				$thumbHeight,
-				$fileSize,
-				$mimeType,
-				$isHidden,
-				true
-			);
-		}
 
 		// succeeded
 		return true;
@@ -617,12 +589,9 @@ class deletedPostsService {
 		// the post uid
 		$postUid = $post['post_uid'];
 
-		// get the board uid of the post
-		$boardUid = $post['boardUID'];
-
 		// add a new row to the deleted posts table
 		// this will automatically mark the post as deleted and make it hidden from regular users
-		$this->deletedPostsRepository->insertDeletedPostEntry($postUid, $boardUid, $deletedBy, $fileOnly, $byProxy);
+		$this->deletedPostsRepository->insertDeletedPostEntry($postUid, $deletedBy, $fileOnly, $byProxy);
 	}
 
 	public function updateNote(int $deletedPostId, string $note): void {

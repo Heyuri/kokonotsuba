@@ -10,10 +10,11 @@ class fileEntry {
 	public string $file_md5;
 	public int $file_width;
 	public int $file_height;
+	public int $thumb_file_width;
+	public int $thumb_file_height;
 	public string|int $file_size;
 	public string $mime_type;
 	public int $is_hidden;
-	public int $is_thumb;
 
 	public function __construct() {
 
@@ -28,10 +29,11 @@ class fileEntry {
 		string $file_md5,
 		int $file_width,
 		int $file_height,
+		int $thumb_file_width,
+		int $thumb_file_height,
 		string|int $file_size,
 		string $mime_type,
-		int $is_hidden,
-		int $is_thumb
+		int $is_hidden
 	): void {
 		$this->id = $id;
 		$this->post_uid = $post_uid;
@@ -42,10 +44,11 @@ class fileEntry {
 		$this->file_md5 = $file_md5;
 		$this->file_width = $file_width;
 		$this->file_height = $file_height;
+		$this->thumb_file_width = $thumb_file_width;
+		$this->thumb_file_height = $thumb_file_height;
 		$this->file_size = $file_size;
 		$this->mime_type = $mime_type;
 		$this->is_hidden = $is_hidden;
-		$this->is_thumb = $is_thumb;
 	}
 
 	public function getId(): int {
@@ -96,7 +99,4 @@ class fileEntry {
 		return (bool)$this->is_hidden;
 	}
 
-	public function isThumb(): bool {
-		return (bool)$this->is_thumb;
-	}
 }

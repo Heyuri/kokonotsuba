@@ -14,23 +14,11 @@ function getBasePostQuery(string $postTable, string $deletedPostsTable, string $
 			f_main.file_md5,
 			f_main.file_width,
 			f_main.file_height,
+			f_main.thumb_file_width,
+			f_main.thumb_file_height,
 			f_main.file_size,
 			f_main.mime_type,
 			f_main.is_hidden AS main_is_hidden,
-			f_main.is_thumb AS main_is_thumb,
-		
-			-- Thumbnail file info
-			f_thumb.id AS thumb_file_id,
-			f_thumb.file_name AS thumb_file_name,
-			f_thumb.stored_filename AS thumb_stored_filename,
-			f_thumb.file_ext AS thumb_file_ext,
-			f_thumb.file_md5 AS thumb_file_md5,
-			f_thumb.file_width AS thumb_file_width,
-			f_thumb.file_height AS thumb_file_height,
-			f_thumb.file_size AS thumb_file_size,
-			f_thumb.mime_type AS thumb_mime_type,
-			f_thumb.is_hidden AS thumb_is_hidden,
-			f_thumb.is_thumb AS thumb_is_thumb,
 		
 			-- Deleted post info
 			dp.open_flag,
@@ -59,23 +47,9 @@ function getBasePostQuery(string $postTable, string $deletedPostsTable, string $
 			INNER JOIN (
 				SELECT post_uid, MIN(id) AS min_id
 				FROM $fileTable
-				WHERE is_thumb = FALSE OR is_thumb IS NULL
 				GROUP BY post_uid
 			) f2 ON f1.post_uid = f2.post_uid AND f1.id = f2.min_id
 		) f_main ON p.post_uid = f_main.post_uid
-		
-		-- Thumbnail file join
-		LEFT JOIN (
-			SELECT f1.*
-			FROM $fileTable f1
-			INNER JOIN (
-				SELECT post_uid, MIN(id) AS min_id
-				FROM $fileTable
-				WHERE is_thumb = TRUE
-				GROUP BY post_uid
-			) f2 ON f1.post_uid = f2.post_uid AND f1.id = f2.min_id
-		) f_thumb ON p.post_uid = f_thumb.post_uid
-
 		";
 	return $query;
 }

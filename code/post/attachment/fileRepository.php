@@ -141,10 +141,11 @@ class fileRepository {
 		string $file_md5,
 		?int $file_width,
 		?int $file_height,
+		?int $thumb_file_width,
+		?int $thumb_file_height,
 		int $file_size,
 		string $mime_type,
-		bool $is_hidden,
-		bool $is_thumb
+		bool $is_hidden
 	): void {
 		// query to insert a file row
 		$query = "INSERT INTO {$this->fileTable} 
@@ -156,10 +157,11 @@ class fileRepository {
 						file_md5,
 						file_width,
 						file_height,
+						thumb_file_width,
+						thumb_file_height,
 						file_size,
 						mime_type,
-						is_hidden,
-						is_thumb
+						is_hidden
 					) 
 					VALUES (
 						:post_uid,
@@ -169,10 +171,11 @@ class fileRepository {
 						:file_md5,
 						:file_width,
 						:file_height,
+						:thumb_file_width,
+						:thumb_file_height,
 						:file_size,
 						:mime_type,
-						:is_hidden,
-						:is_thumb
+						:is_hidden
 					)";
 
 		// parameters
@@ -184,10 +187,11 @@ class fileRepository {
 			':file_md5' => $file_md5,
 			':file_width' => $file_width,
 			':file_height' => $file_height,
+			':thumb_file_width' => $thumb_file_width,
+			':thumb_file_height' => $thumb_file_height,
 			':file_size' => $file_size,
 			':mime_type' => $mime_type,
 			':is_hidden' => (int) $is_hidden,
-			':is_thumb' => (int) $is_thumb
 		];
 
 		// execute query

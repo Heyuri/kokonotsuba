@@ -229,7 +229,7 @@ class postRenderer {
 			$isDeleted || $fileOnlyDeleted);
 
 		// get the thumbnail URL
-		$thumbURL = $this->generateImageUrl($fileData['thumbnailFileId'],
+		$thumbURL = $this->generateImageUrl($fileData['fileId'],
 			$fileData['thumbName'], 
 			true, 
 			$isDeleted || $fileOnlyDeleted);
@@ -244,6 +244,8 @@ class postRenderer {
 			$fileData['fileMd5'], 
 			$fileData['fileWidth'], 
 			$fileData['fileHeight'], 
+			$fileData['thumbnailWidth'],
+			$fileData['thumbnailHeight'],
 			$fileData['fileSize'], 
 			$fileData['mimeType'], 
 			$fileData['isHidden'], 
@@ -280,10 +282,11 @@ class postRenderer {
     	string $fileMd5,
     	int $fileWidth,
     	int $fileHeight,
+		int $thumbnailFileWidth,
+		int	$thumbnailFileHeight,
     	string|int $fileSize,
     	string $mimeType,
-    	bool $isHidden,
-    	bool $isThumb
+    	bool $isHidden
 	): attachment {
 		// create fileEntry instance
 		$fileEntry = new fileEntry;
@@ -299,10 +302,11 @@ class postRenderer {
 			$fileMd5,
 			$fileWidth,
 			$fileHeight,
+			$thumbnailFileWidth,
+			$thumbnailFileHeight,
 			$fileSize,
 			$mimeType,
-			$isHidden,
-			$isThumb
+			$isHidden
 		);
 
 		// construct attachment
@@ -374,16 +378,13 @@ class postRenderer {
 			$thumbnailHeight = $data['thumb_file_height'] ?? 0;
 
 			// thumbnail file name
-			$thumbnailStoredFileName = $data['thumb_stored_filename'] ?? '';
+			$thumbnailStoredFileName = $storedFileName . 's';
 
 			// Get thumbnail name
 			$thumbName = $thumbnailStoredFileName . '.' . $thumbnailExtension;
 
 			// file id
 			$fileId = $data['file_id'] ?? 0;
-
-			// thumbnail file id
-			$thumbnailFileId = $data['thumb_file_id'] ?? 0;
 
 			// is hidden
 			$isHidden = $data['main_is_hidden'] ?? false;
@@ -432,9 +433,6 @@ class postRenderer {
 			// file id
 			$fileId = 0;
 
-			// thumb id
-			$thumbnailFileId = 0;
-
 			// this is using the legacy post file stuff
 			$isLegacy = true;
 		} 
@@ -456,7 +454,6 @@ class postRenderer {
 			'fileMd5' => $fileMd5,
 			'thumbnailWidth' => $thumbnailWidth,
 			'thumbnailHeight' => $thumbnailHeight,
-			'thumbnailFileId' => $thumbnailFileId,
 			'thumbnailStoredFileName' => $thumbnailStoredFileName,
 			'thumbnailExtension' => $thumbnailExtension,
 			'thumbName' => $thumbName,
@@ -755,7 +752,7 @@ class postRenderer {
 
 	private function generateImageUrl(int $fileId, 
 		string $fullFileName,
-		bool $isThumb, 
+		bool $isThumb,
 		bool $serveThroughPHP): string {
 		// url of the image to be served
 		$imageURL = '';

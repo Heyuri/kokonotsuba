@@ -29,14 +29,19 @@ class fileService {
 			$currentPath = $attach->getHiddenPath();
 
 			// full path of the new attachment path
-			$destinationDirectory = $attach->getUploadDirectory();
+			$destinationImgDirectory = $attach->getUploadDirectory();
+		
+			// move the file
+			$this->sanitizeAndMove($currentPath, $destinationImgDirectory);
+	
+			// full path of the hidden thumbnail
+			$currentThumbPath = $attach->getHiddenPath(true);
 
-			// sanitize to prevent path traversal
-			$currentPath = realpath($currentPath);
-			$destinationDirectory = realpath($destinationDirectory);
+			// full path of the new thumb directory
+			$destinationThumbDirectory = $attach->getUploadDirectory(true);
 
-			// move the file from the hidden attachment dir to board dir 
-			moveFileOnly($currentPath, $destinationDirectory);
+			// move the thumbnail
+			$this->sanitizeAndMove($currentThumbPath, $destinationThumbDirectory);
 		}
 	}
 
@@ -59,6 +64,12 @@ class fileService {
 
 			// remove the file
 			$this->removeFile($filePath);
+
+			// and remove the thumbnail
+			$thumbnailPath = $attach->getPath(true);
+
+			// remove the thumb
+			$this->removeFile($thumbnailPath);
 		}
 	}
 
@@ -110,15 +121,25 @@ class fileService {
 			// full path of the file
 			$fullPath = $attach->getUploadPath();
 
-			// sanitize to prevent path traversal
-			$fullPath = realpath($fullPath);
-			$destination = realpath($destination);
+			// sanitize and move attachment
+			$this->sanitizeAndMove($fullPath, $destination);
 
-			// move the file itself to the attachment directory
-			moveFileOnly($fullPath, $destination);
+			// get the thumbnail path
+			$thumbnailPath = $attach->getUploadPath(true);
+
+			// sanitize and move attachment thumbnail
+			$this->sanitizeAndMove($thumbnailPath, $destination);
 		}
 	}
 
+	private function sanitizeAndMove(string $fullPath, string $destination): void {
+		// sanitize to prevent path traversal
+		$fullPath = realpath($fullPath);
+		$destination = realpath($destination);
+
+		// move the file itself to the attachment directory
+		moveFileOnly($fullPath, $destination);
+	}
 
 	public function getAttachment(int $fileId): ?attachment {
 		// get the file by id
@@ -182,12 +203,26 @@ class fileService {
 		string $fileMd5,
 		?int $fileWidth,
 		?int $fileHeight,
+		?int $thumbFileWidth,
+		?int $thumbFileHeight,
 		int $fileSize,
 		string $mimeType,
 		bool $isHidden,
 		bool $isThumb): void {
 		// add the row to database
-		$this->fileRepository->insertFileRow($postUid, $fileName, $storedFileName, $fileExtension, $fileMd5, $fileWidth, $fileHeight, $fileSize, $mimeType, $isHidden, $isThumb);
+		$this->fileRepository->insertFileRow($postUid, 
+			$fileName, 
+			$storedFileName, 
+			$fileExtension, 
+			$fileMd5, 
+			$fileWidth, 
+			$fileHeight,
+			$thumbFileWidth,
+			$thumbFileHeight, 
+			$fileSize, 
+			$mimeType, 
+			$isHidden, 
+			$isThumb);
 	}
 
 	public function getAttachmentsFromPostUids(array $postUids): ?array {

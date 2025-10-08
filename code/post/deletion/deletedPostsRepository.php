@@ -337,11 +337,11 @@ class deletedPostsRepository {
 		$this->databaseConnection->execute($query, $parameters);
 	}
 
-	public function insertDeletedPostEntry(int $postUid, int $boardUid, ?int $deletedBy , bool $fileOnly, bool $byProxy): void {
+	public function insertDeletedPostEntry(int $postUid, ?int $deletedBy , bool $fileOnly, bool $byProxy): void {
 		// query to insert a deleted post entry
 		$query = "INSERT INTO {$this->deletedPostsTable} 
-			(post_uid, board_uid, deleted_by, file_only, by_proxy) 
-			VALUES (:post_uid, :board_uid, :deleted_by, :file_only, :by_proxy)
+			(post_uid, deleted_by, file_only, by_proxy) 
+			VALUES (:post_uid, :deleted_by, :file_only, :by_proxy)
 			ON DUPLICATE KEY UPDATE
 				file_only = LEAST(file_only, VALUES(file_only)),
 				deleted_by = VALUES(deleted_by),
@@ -352,7 +352,6 @@ class deletedPostsRepository {
 		// bind parameters
 		$parameters = [
 			':post_uid' => $postUid,
-			':board_uid' => $boardUid,
 			':deleted_by' => $deletedBy,
 			':file_only' => (int) $fileOnly,
 			':by_proxy' => (int) $byProxy
@@ -377,19 +376,24 @@ class deletedPostsRepository {
 	}
 
 	public function getBoardUidByDeletedPostId(int $deletedPostId): false|int {
-		 // query to get the board uid from the deleted post row by its id
-		 $query = "SELECT board_uid FROM {$this->deletedPostsTable} WHERE id = :deleted_post_id";
+	    // query to get boardUID from post table via post_uid in deletedPosts table
+	    $query = "
+	        SELECT p.boardUID
+	        FROM {$this->deletedPostsTable} dp
+	        INNER JOIN {$this->postTable} p ON p.post_uid = dp.post_uid
+	        WHERE dp.id = :deleted_post_id
+	    ";
 
-		 // parameters
-		 $parameters = [
-			':deleted_post_id' => $deletedPostId
-		 ];
+	    // parameters
+	    $parameters = [
+	        ':deleted_post_id' => $deletedPostId
+	    ];
 
-		 // query database
-		 $boardUid = $this->databaseConnection->fetchValue($query, $parameters);
+	    // query database
+	    $boardUid = $this->databaseConnection->fetchValue($query, $parameters);
 
-		 // return result
-		 return $boardUid;
+	    // return result
+	    return $boardUid;
 	}
 
 	public function getDeletedPostRowByPostUid(int $postUid): false|array {

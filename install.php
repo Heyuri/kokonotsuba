@@ -488,9 +488,8 @@ class tableCreator {
 		
 			"CREATE TABLE deleted_posts (
 				id INT AUTO_INCREMENT PRIMARY KEY,
-				post_uid INT NOT NULL,          -- FK to posts(id)
-				board_uid INT NOT NULL,         -- FK to boards(id) (copied from post at delete time)
-				deleted_by INT NULL,            -- FK to users(id)
+				post_uid INT NOT NULL,
+				deleted_by INT NULL,
 				deleted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				file_only TINYINT(1) DEFAULT 0,
 				by_proxy TINYINT(1) DEFAULT 0,
@@ -510,11 +509,9 @@ class tableCreator {
 
 				-- FKs (adjust ON DELETE as you prefer)
 				CONSTRAINT fk_dp_post FOREIGN KEY (post_uid) REFERENCES posts(post_uid) ON DELETE CASCADE,
-				CONSTRAINT fk_dp_board FOREIGN KEY (board_uid) REFERENCES boards(board_uid) ON DELETE CASCADE,
 
 				-- Handy indexes
 				KEY idx_post_uid (post_uid),
-				KEY idx_board_deleted_at (board_uid, deleted_at),
 				KEY idx_deleted_by_deleted_at (deleted_by, deleted_at),
 				KEY idx_restored_at (restored_at),
 
@@ -531,10 +528,11 @@ class tableCreator {
 				file_md5 VARCHAR(600) NOT NULL,
 				file_width INT DEFAULT NULL,
 				file_height INT DEFAULT NULL,
+				thumb_file_width INT DEFAULT NULL,
+				thumb_file_height INT DEFAULT NULL,
 				file_size BIGINT UNSIGNED NULL,
 				mime_type VARCHAR(255) NULL,
 				is_hidden TINYINT(1)  NOT NULL DEFAULT 0,
-				is_thumb TINYINT(1) NOT NULL DEFAULT 0,
 
 				CONSTRAINT fk_file_post_uid FOREIGN KEY (post_uid) REFERENCES posts(post_uid) ON DELETE CASCADE,
 

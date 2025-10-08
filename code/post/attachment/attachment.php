@@ -6,29 +6,29 @@ class attachment {
 		private readonly board $board
 	) {}
 
-	public function getPath(): string {
+	public function getPath(bool $isThumb = false): string {
 		// whether the file is hidden or not
 		$isHidden = $this->fileEntry->isHidden();
 
 		// if its hidden then adjust paths / dirs accordingly
 		if($isHidden) {
 			// set the upload directory to  be the `global/hidden/` directory
-			$path = $this->getHiddenPath();
+			$path = $this->getHiddenPath($isThumb);
 		} else {
 			// full directory for the uploaded file
-			$path= $this->getUploadPath();
+			$path= $this->getUploadPath($isThumb);
 		}
 
 		// return path
 		return $path;
 	}
 
-	public function getHiddenPath(): string {
+	public function getHiddenPath(bool $isThumb = false): string {
 		// the directory for hidden attachments
 		$hiddenDirectory = $this->getHiddenDirectory();
 
 		// generate the hidden attachment path for the attachment
-		$hiddenPath = $this->getBasePath($hiddenDirectory);
+		$hiddenPath = $this->generateFullPath($hiddenDirectory, $isThumb);
 
 		// return path
 		return $hiddenPath;
@@ -42,20 +42,20 @@ class attachment {
 		return $hiddenDirectory;
 	}
 
-	public function getUploadPath(): string {
+	public function getUploadPath(bool $isThumb = false): string {
 		// get the upload directory
-		$uploadDirectory = $this->getUploadDirectory();
+		$uploadDirectory = $this->getUploadDirectory($isThumb);
 
 		// generate the upload path
-		$uploadPath = $this->getBasePath($uploadDirectory);
+		$uploadPath = $this->generateFullPath($uploadDirectory, $isThumb);
 
 		// return path
 		return $uploadPath;
 	}
 
-	public function getUploadDirectory(): string {
+	public function getUploadDirectory(bool $isThumb = false): string {
 		// postfix dir
-		$postfixDirectory = $this->generatePostfixDirectory();
+		$postfixDirectory = $this->generatePostfixDirectory($isThumb);
 
 		// get the base path for uploaded files
 		$baseDirectory = $this->board->getBoardUploadedFilesDirectory();
@@ -67,15 +67,12 @@ class attachment {
 		return $uploadDirectory;
 	}
 
-	private function generatePostfixDirectory(): string {
+	private function generatePostfixDirectory(bool $isThumb = false): string {
 		// relative image directory
 		$imageDirectory = $this->board->getConfigValue('IMG_DIR');
 
 		// relative thumbnail directory
 		$thumbnailDirectory = $this->board->getConfigValue('THUMB_DIR');
-
-		// wheather its a thumbnail or not
-		$isThumb = $this->fileEntry->isThumb();
 
 		// postfix directory
 		if($isThumb) {
@@ -90,15 +87,33 @@ class attachment {
 		return $postfixDirectory;
 	}
 
-	private function getBasePath(string $uploadDirectory): string {
+	private function generateFullPath(string $uploadDirectory, bool $isThumb = false): string {
 		// file stored name
 		$storedFileName = $this->fileEntry->getStoredFileName();
 
 		// file extension
 		$fileExtension = $this->fileEntry->getFileExt();
 
+		// use a thumbnail filename + extension for a thumbnail
+		if($isThumb) {
+			// thumbnail file name with the s appended
+			$pathFileName = $storedFileName . 's';
+
+			// thumbnail extension from config 
+			$pathExtension = $this->board->getConfigValue('THUMB_SETTING.Format', 'jpg');
+
+		} 
+		// get the regular filename + extension
+		else {
+			// file name
+			$pathFileName = $storedFileName;
+
+			// extension
+			$pathExtension = $fileExtension;
+		}
+
 		// build the full path
-		$filePath = $uploadDirectory . $storedFileName . '.' . $fileExtension;
+		$filePath = $uploadDirectory . $pathFileName . '.' . $pathExtension;
 
 		// return result
 		return $filePath;
