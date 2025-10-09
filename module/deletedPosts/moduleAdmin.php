@@ -770,7 +770,19 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $actionUrl;	
 	}
 
+	private function pruneDeletedPosts(): void {
+		// get time limit config variable (hours)
+		// default to 1 week
+		$timeLimit = $this->getConfig('ModuleSettings.PRUNE_TIME', 336);
+
+		// prune the expired deleted posts in the system
+		$this->moduleContext->deletedPostsService->pruneExpiredPosts($timeLimit);
+	}
+
 	public function ModulePage(): void {
+		// first things first, prune posts from the table that have expired
+		$this->pruneDeletedPosts();
+
 		// Account session values
 		$staffAccountFromSession = new staffAccountFromSession;
 

@@ -120,7 +120,7 @@ class deletedPostsService {
 		$this->logAction($restoreActionString, $postData['boardUID']);
 	}
 
-	public function purgePost(int $deletedPostId): void {
+	public function purgePost(int $deletedPostId, bool $logAction = true): void {
 		// get the post data from the associated deleted posts row
 		$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
 		
@@ -137,11 +137,22 @@ class deletedPostsService {
 
 		// if its a thread then purge the thread
 		if($isOp) {
-			$this->purgeThread($postData);
+			$this->purgeThread($postData, $logAction);
 		} 
 		// purge singular reply
 		else {
-			$this->purgeReply($postData, $deletedPostId);
+			$this->purgeReply($postData, $deletedPostId, $logAction);
+		}
+	}
+
+	private function purgePostsFromList(array $deletedPostIdList, bool $logAction = true): void {
+		// There could be a query to do it all in one swoop but there's some things that need fine-grained logic (a la OP vs reply) which is tricky to recreate with a single query
+		// will look into re-implementing a different way later
+		
+		// loop through IDs and purge the post
+		foreach($deletedPostIdList as $id) {
+			// purge the post
+			$this->purgePost($id, $logAction);
 		}
 	}
 
@@ -161,7 +172,7 @@ class deletedPostsService {
 		}
 	}
 
-	private function purgeThread(array $opPostData): void {
+	private function purgeThread(array $opPostData, bool $logAction = true): void {
 		// thread uid
 		$threadUid = $opPostData['thread_uid'];
 
@@ -177,14 +188,16 @@ class deletedPostsService {
 		// then purge the thread data (including the posts)
 		$this->threadRepository->deleteThreadByUID($threadUid);
 
-		// generate the logging string
-		$purgeActionString = $this->generateActionLoggingString($opPostData['no'], true, true);
+		if($logAction) {
+			// generate the logging string
+			$purgeActionString = $this->generateActionLoggingString($opPostData['no'], true, true);
 
-		// Log the purge action to the logging table
-		$this->logAction($purgeActionString, $opPostData['boardUID']);
+			// Log the purge action to the logging table
+			$this->logAction($purgeActionString, $opPostData['boardUID']);
+		}
 	}
 
-	private function purgeReply(array $replyPostData, int $deletedPostId): void {
+	private function purgeReply(array $replyPostData, int $deletedPostId, bool $logAction = true): void {
 		// post uid of the post
 		$postUid = $replyPostData['post_uid'];
 
@@ -201,11 +214,13 @@ class deletedPostsService {
 		// this will also delete the post from the posts table rather than hiding it
 		$this->deletedPostsRepository->purgeDeletedPostById($deletedPostId);
 
-		// generate the logging string
-		$purgeActionString = $this->generateActionLoggingString($replyPostData['no'], true, false);
+		if($logAction) {
+			// generate the logging string
+			$purgeActionString = $this->generateActionLoggingString($replyPostData['no'], true, false);
 
-		// Log the purge action to the logging table
-		$this->logAction($purgeActionString, $replyPostData['boardUID']);
+			// Log the purge action to the logging table
+			$this->logAction($purgeActionString, $replyPostData['boardUID']);
+		}
 	}
 
 	private function generateActionLoggingString(int $no, bool $isPurge, bool $isThread): string {
@@ -281,18 +296,31 @@ class deletedPostsService {
 		$this->actionLoggerService->logAction($actionString, $boardUid);
 	}
 
+/*	The following can possibly be salvaged later
+	
 	public function purgePostsFromList(array $deletedPostsList): void {
 		// get the post data from the list
-		$postList = $this->postRepository->getPostsByUids($deletedPostsList);
+		$posts = $this->deletedPostsRepository->getPostsByIdList($deletedPostsList);
+		//echo '<pre>'; print_r($posts); exit;
+		// filter specifically for the post uids
+		$postUidList = array_column($posts, 'post_uid');
+
+		// get the attachments
+		$attachments = $this->fileService->getAttachmentsFromPostUids($postUidList);
+
+		// purge all attachments from list
+		// now purge the attachments
+		// check again just in case
+		if(!empty($attachments)) {
+			// purge attachment
+			$this->fileService->purgeAttachmentsFromPurgatory($attachments);
+		}
 
 		// purge the posts in the list
 		$this->deletedPostsRepository->purgeDeletedPostsFromList($deletedPostsList);
 
-		// purge all attachments from list
-		$this->fileService->purgeAttachmentsFromPurgatory($deletedPostsList);
-
 		// log the list purging action to the logging table
-		$this->logMultiplePurges($postList);
+		$this->logMultiplePurges($posts);
 	}
 
 	private function logMultiplePurges(array $postList): void {
@@ -313,7 +341,7 @@ class deletedPostsService {
 			// log the purge
 			$this->logAction($purgeActionString, $boardUid);
 		}
-	}
+	}*/
 
 	private function getPaginationParams(int $page, int $entriesPerPage): array {
 		$page = max($page, 0);
@@ -672,5 +700,18 @@ class deletedPostsService {
 			// return result
 			return $deletedPost;
 		}
+	}
+
+	public function pruneExpiredPosts(int $timeLimit): void {
+		// get IDs from entires that are older than the time limit
+		$prunedEntryIDs = $this->deletedPostsRepository->getExpiredEntryIDs($timeLimit);
+
+		// return early if there were none
+		if(!$prunedEntryIDs) {
+			return;
+		}
+
+		// purge those posts from the ID list
+		$this->purgePostsFromList($prunedEntryIDs, false);
 	}
 }

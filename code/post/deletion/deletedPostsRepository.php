@@ -136,6 +136,28 @@ class deletedPostsRepository {
 		return $postData;
 	}
 
+	public function getPostsByIdList(array $postUids): array|false {
+		// base query to get the posts data by deleted post id
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
+		
+		// generate IN clause for post uids
+		$inClause = pdoPlaceholdersForIn($postUids);
+
+		// append WHERE clause
+		$query .= " WHERE p.post_uid IN (
+					SELECT post_uid FROM {$this->deletedPostsTable} WHERE id IN $inClause
+				)";
+
+		// parameters
+		$params = $postUids;
+
+		// fetch the posts as an array
+		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
+
+		// return posts
+		return $posts;
+	}
+
 	public function getDeletedPosts(int $amount, int $offset, string $orderBy = 'id', string $direction = 'DESC', bool $showRestored = false): array|false {
 		// Hide restored posts
 		if(!$showRestored) {
@@ -321,7 +343,7 @@ class deletedPostsRepository {
 
 		// query to purge the deleted posts
 		$query = "
-			DELETE FROM posts
+			DELETE FROM {$this->postTable}
 				WHERE post_uid IN (
 				SELECT post_uid
 				FROM {$this->deletedPostsTable}
@@ -413,5 +435,22 @@ class deletedPostsRepository {
 
 		// return result
 		return $deletedPost;
+	}
+
+	public function getExpiredEntryIDs(int $timeLimit): false|array {
+		// query ot get entries older than the time limit (in hours) 
+		$query = "SELECT id
+    		FROM {$this->deletedPostsTable}
+    		WHERE deleted_at < NOW() - INTERVAL {$timeLimit} HOUR
+			AND COALESCE(open_flag, 0) = 1";
+
+		// fetch the results as array
+		$entries = $this->databaseConnection->fetchAllAsIndexArray($query);
+
+		// unpack
+		$entries = array_merge(...$entries);
+
+		// return the entries
+		return $entries;
 	}
 }

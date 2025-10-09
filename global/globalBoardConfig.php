@@ -200,6 +200,7 @@ $config['ModuleSettings']['DISP_ID'] = false; // Display IDs
 
 // deletedPosts
 $config['ModuleSettings']['DELETED_POSTS_TEMPLATE'] = 'kokoimg.tpl';
+$config['ModuleSettings']['PRUNE_TIME'] = 336;
 
 // dice
 $config['ModuleSettings']['DICE_AMOUNT_LIMIT'] = 30;
