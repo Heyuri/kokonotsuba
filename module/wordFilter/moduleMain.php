@@ -58,9 +58,10 @@ class moduleMain extends abstractModuleMain {
 		$base	= $this->firstCodepointPattern($char);	// e.g. \x{1F645}
 		$skin	= '[\x{1F3FB}-\x{1F3FF}]?';				// optional skin tone
 		$vs		= '\x{FE0F}?';							// optional VS16
+		$keycap	= '\x{20E3}?';							// optional keycap combining mark
 
-		// After stripping ZWJ+gender, we only need base + optional skin tone + optional VS16
-		return '(?:' . $base . $skin . $vs . ')';
+		// After stripping ZWJ+gender, we only need base + optional skin tone + optional VS16 (+ optional keycap)
+		return '(?:' . $base . $skin . $vs . $keycap . ')';
 	}
 
 	private function cleanEmojiArtifacts(string $comment): string {
