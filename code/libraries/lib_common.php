@@ -295,30 +295,6 @@ function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = fals
 	return $str;
 }
 
-function stripZeroWidthCharacters(string $text): string {
-	// List of common zero-width characters to remove
-	$zeroWidthCharacters = [
-		"\u{200B}", // ZERO WIDTH SPACE
-		"\u{200C}", // ZERO WIDTH NON-JOINER
-		"\u{200D}", // ZERO WIDTH JOINER
-		"\u{200E}", // LEFT-TO-RIGHT MARK
-		"\u{200F}", // RIGHT-TO-LEFT MARK
-		"\u{202A}", // LEFT-TO-RIGHT EMBEDDING
-		"\u{202B}", // RIGHT-TO-LEFT EMBEDDING
-		"\u{202C}", // POP DIRECTIONAL FORMATTING
-		"\u{202D}", // LEFT-TO-RIGHT OVERRIDE
-		"\u{202E}", // RIGHT-TO-LEFT OVERRIDE
-		"\u{2060}", // WORD JOINER
-		"\u{2061}", // FUNCTION APPLICATION
-		"\u{2062}", // INVISIBLE TIMES
-		"\u{2063}", // INVISIBLE SEPARATOR
-		"\u{2064}", // INVISIBLE PLUS
-		"\u{FEFF}"  // ZERO WIDTH NO-BREAK SPACE
-	];
-
-	return str_replace($zeroWidthCharacters, '', $text);
-}
-
 function loadUploadData(): array {
 	$upfile = sanitizeStr($_FILES['upfile']['tmp_name'] ?? '');
 	$upfile_name = $_FILES['upfile']['name'] ?? '';
