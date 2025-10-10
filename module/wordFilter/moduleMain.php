@@ -544,37 +544,13 @@ class moduleMain extends abstractModuleMain {
 
 			public function onBeforeCommit(&$com): void {
 				//VAGINA filter
-				$red1 = mt_rand(0, 255);
-				$green1 = mt_rand(0, 255);
-				$blue1 = mt_rand(0, 255);
-				$red2 = mt_rand(0, 255);
-				$green2 = mt_rand(0, 255);
-				$blue2 = mt_rand(0, 255);
-				$bgstyle = sprintf('background-color: rgb(%d, %d, %d);', $red1, $green1, $blue1);
-				$fontstyle = sprintf('color: rgb(%d, %d, %d);', $red2, $green2, $blue2);
-				$this->FILTERS['/vagina/i'] = '<span style="'.$bgstyle.' '.$fontstyle.'">VAGINA</span>';
+				$this->FILTERS['/vagina/i'] = $this->generateColorSpan('VAGINA');
 		 
 				//PENIS filter
-				$red3 = mt_rand(0, 255);
-				$green3 = mt_rand(0, 255);
-				$blue3 = mt_rand(0, 255);
-				$red4 = mt_rand(0, 255);
-				$green4 = mt_rand(0, 255);
-				$blue4 = mt_rand(0, 255);
-				$bgstyle = sprintf('background-color: rgb(%d, %d, %d);', $red3, $green3, $blue3);
-				$fontstyle = sprintf('color: rgb(%d, %d, %d);', $red4, $green4, $blue4);
-				$this->FILTERS['/penis/i'] = '<span style="'.$bgstyle.' '.$fontstyle.'">PENIS</span>';
+				$this->FILTERS['/penis/i'] = $this->generateColorSpan('PENIS');
 		 
 				//ANUS filter
-				$red5 = mt_rand(0, 255);
-				$green5 = mt_rand(0, 255);
-				$blue5 = mt_rand(0, 255);
-				$red6 = mt_rand(0, 255);
-				$green6 = mt_rand(0, 255);
-				$blue6 = mt_rand(0, 255);
-				$bgstyle = sprintf('background-color: rgb(%d, %d, %d);', $red5, $green5, $blue5);
-				$fontstyle = sprintf('color: rgb(%d, %d, %d);', $red6, $green6, $blue6);
-				$this->FILTERS['/anus/i'] = '<span style="'.$bgstyle.' '.$fontstyle.'">ANUS</span>';
+				$this->FILTERS['/anus/i'] = $this->generateColorSpan('ANUS');
 		 
 				// Apply each filter in $FILTERS array to user's comment
 				foreach ($this->FILTERS as $filterin => $filterout) {
@@ -584,5 +560,25 @@ class moduleMain extends abstractModuleMain {
 					// clean artifacts (gender and race modifiers)
 					$com = $this->cleanEmojiArtifacts($com);
 				}
+			}
+
+			private function generateColorSpan(string $textContent): string {
+				// generate random color values
+				$red5 = mt_rand(0, 255);
+				$green5 = mt_rand(0, 255);
+				$blue5 = mt_rand(0, 255);
+				$red6 = mt_rand(0, 255);
+				$green6 = mt_rand(0, 255);
+				$blue6 = mt_rand(0, 255);
+				
+				// style for span
+				$bgstyle = sprintf('background-color: rgb(%d, %d, %d);', $red5, $green5, $blue5);
+				$fontstyle = sprintf('color: rgb(%d, %d, %d);', $red6, $green6, $blue6);
+
+				// construct span
+				$span = '<span style="' . $bgstyle . ' ' . $fontstyle . '"> ' . htmlspecialchars($textContent) . '</span>';
+
+				// return the span html
+				return $span;
 			}
 		}
