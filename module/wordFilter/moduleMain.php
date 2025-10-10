@@ -504,10 +504,44 @@ class moduleMain extends abstractModuleMain {
 				];
 		 
 				foreach ($emojis as $char => $name) {
-					$this->FILTERS["/$char/"] = "<img class=\"emoji\" src=\" " . $this->staticUrl . "image/emoji/$name.gif\" title=\"$name\" alt=\"$char\">";
+					// generate pattern
+					$pattern = $this->buildPersonEmojiPattern($char);
+
+					// add filter
+					$this->FILTERS["/$pattern/u"] = "<img class=\"emoji\" src=\" " . $this->staticUrl . "image/emoji/$name.gif\" title=\"$name\" alt=\"$char\">";
 				}
 			}
-		 
+
+			private function firstCodepointPattern(string $s): string {
+				$ucs4 = mb_convert_encoding($s, 'UCS-4BE', 'UTF-8');
+				if ($ucs4 === false || strlen($ucs4) < 4) {
+					return preg_quote($s, '/');
+				}
+				$cp = current(unpack('N', substr($ucs4, 0, 4)));
+				return sprintf('\\x{%X}', $cp);
+			}
+
+			private function buildPersonEmojiPattern(string $char): string {
+				$base	= $this->firstCodepointPattern($char);	// e.g. \x{1F645}
+				$skin	= '[\x{1F3FB}-\x{1F3FF}]?';				// optional skin tone
+				$vs		= '\x{FE0F}?';							// optional VS16
+
+				// After stripping ZWJ+gender, we only need base + optional skin tone + optional VS16
+				return '(?:' . $base . $skin . $vs . ')';
+			}
+
+			private function cleanEmojiArtifacts(string $comment): string {
+				// Remove ZWJ + gender or standalone gender signs that remain
+				return preg_replace(
+					[
+						'/\x{200D}(?:\x{2640}|\x{2642})\x{FE0F}?/u',	// joined gender sequence
+						'/(?:\x{2640}|\x{2642})\x{FE0F}?/u'			// leftover gender alone
+					],
+					'',
+					$comment
+				);
+			}
+
 			public function onBeforeCommit(&$com): void {
 				//VAGINA filter
 				$red1 = mt_rand(0, 255);
@@ -544,7 +578,11 @@ class moduleMain extends abstractModuleMain {
 		 
 				// Apply each filter in $FILTERS array to user's comment
 				foreach ($this->FILTERS as $filterin => $filterout) {
+					// apply filter
 					$com = preg_replace($filterin, $filterout, $com);
+
+					// clean artifacts (gender and race modifiers)
+					$com = $this->cleanEmojiArtifacts($com);
 				}
 			}
 		}
