@@ -34,11 +34,20 @@ class moduleMain extends abstractModuleMain {
 		
 		// loop through and add emoji filters
 		foreach ($emojis as $char => $name) {
-			// generate pattern
-			$pattern = $this->buildPersonEmojiPattern($char);
+			// only apply person pattern if the emoji name contains 'person'
+			if (str_contains($name, 'Person')) {
+				// generate pattern (with capturing group)
+				$pattern = '(' . $this->buildPersonEmojiPattern($char) . ')';
+			} 
+			// default to regular pattern
+			else {
+				// escape the char and wrap in a capturing group
+				$pattern = '(' . preg_quote($char, '/') . ')';
+			}
 
-			// add filter
-			$this->FILTERS["/$pattern/u"] = "<img class=\"emoji\" src=\" " . $this->staticUrl . "image/emoji/$name.gif\" title=\"$name\" alt=\"$char\">";
+			// add filter — use $1 (matched text) for the alt attribute
+			$this->FILTERS["/$pattern/u"] =
+				"<img class=\"emoji\" src=\"" . $this->staticUrl . "image/emoji/$name.gif\" title=\"$name\" alt=\"$1\">";
 		}
 	}
 
