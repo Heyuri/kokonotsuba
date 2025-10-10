@@ -34,8 +34,8 @@ class moduleMain extends abstractModuleMain {
 		
 		// loop through and add emoji filters
 		foreach ($emojis as $char => $name) {
-			// add filter — use $1 (matched text) for the alt attribute
-			$this->FILTERS["/$pattern/u"] =
+			// add filter
+			$this->FILTERS["/$char/u"] =
 				"<img class=\"emoji\" src=\"" . $this->staticUrl . "image/emoji/$name.gif\" title=\"$name\" alt=\"$char\">";
 		}
 	}
