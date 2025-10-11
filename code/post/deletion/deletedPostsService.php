@@ -33,14 +33,8 @@ class deletedPostsService {
 		// get the post uids from the table
 		$postUids = $this->deletedPostsRepository->getAllPostUidsFromAccountId($accountId);
 
-		// return null if its false
-		if(!$postUids) {
-			return null;
-		} 
-		// otherwise return the actual result
-		else {
-			return $postUids;
-		}
+		// return post uids
+		return $this->returnOrNull($postUids);
 	}
 
 	public function restorePost(int $deletedPostId, int $accountId): void {
@@ -351,30 +345,51 @@ class deletedPostsService {
 		return [$entriesPerPage, $offset];
 	}
 
-	private function returnOrNull($result): ?array {
+	private function returnOrNull($result): mixed {
 		return $result === false ? null : $result;
 	}
 
 	public function getDeletedPosts(int $page, int $entriesPerPage): ?array {
-		// Calculate pagination values (LIMIT and OFFSET)
-		[$pageAmount, $pageOffset] = $this->getPaginationParams($page, $entriesPerPage);
-
 		// Fetch deleted posts for the given page range
-		$deletedPosts = $this->deletedPostsRepository->getDeletedPosts($pageAmount, $pageOffset);
+		$deletedPosts = $this->getPagedEntries($page, $entriesPerPage);
 
 		// Return the result array or null if empty
-		return $this->returnOrNull($deletedPosts);
+		return $deletedPosts;
 	}
 
+	public function getRestoredPosts(int $page, int $entriesPerPage): ?array {
+		// get paged restored posts
+		$restoredPosts = $this->getPagedEntries($page, $entriesPerPage, true);
+
+		// return the results
+		return $restoredPosts;
+	}
+	
 	public function getDeletedPostsByAccount(int $accountId, int $page, int $entriesPerPage): ?array {
+		// Fetch deleted posts for a specific account ID within the given page range
+		$deletedPosts = $this->getPagedEntries($page, $entriesPerPage, false, $accountId);
+		
+		// return the deleted posts
+		return $deletedPosts;
+	}
+
+	public function getRestoredPostsByAccount(int $accountId, int $page, int $entriesPerPage): ?array {
+		// fetch the restored posts for a specific account by page
+		$restoredPosts = $this->getPagedEntries($page, $entriesPerPage, true, $accountId);
+
+		// return restored posts
+		return $restoredPosts;
+	}
+
+	private function getPagedEntries(int $page, int $entriesPerPage, bool $restoredPostsOnly = false, ?int $accountId = null): ?array {
 		// Calculate pagination values (LIMIT and OFFSET)
 		[$pageAmount, $pageOffset] = $this->getPaginationParams($page, $entriesPerPage);
 
-		// Fetch deleted posts for a specific account ID within the given page range
-		$deletedPosts = $this->deletedPostsRepository->getDeletedPostsByAccountId($accountId, $pageAmount, $pageOffset);
-		
+		// Fetch entries for the given page range
+		$entries = $this->deletedPostsRepository->getPagedEntries($pageAmount, $pageOffset, 'id', 'DESC', $restoredPostsOnly, $accountId);
+	
 		// Return the result array or null if empty
-		return $this->returnOrNull($deletedPosts);
+		return $this->returnOrNull($entries);
 	}
 
 	public function getDeletedPostRowById(int $deletedPostId): ?array {
@@ -390,20 +405,36 @@ class deletedPostsService {
 		}
 	}
 
-	public function getTotalAmount(): int {
+	public function getTotalAmountOfDeletedPosts(): int {
 		// get the total amount of deleted posts stored in the table
-		$totalDeletedPosts = $this->deletedPostsRepository->getTotalAmountOfDeletedPosts();
+		$totalDeletedPosts = $this->deletedPostsRepository->getTotalAmount();
 
 		// return the amount
 		return $totalDeletedPosts;
 	}
 
-	public function getTotalAmountFromAccountId(int $accountId): int {
+	public function getTotalAmountOfRestoredPosts(): int {
+		// get the total amount of restored posts stored in the table
+		$totalAmount = $this->deletedPostsRepository->getTotalAmount(null, true);
+
+		// return the amount
+		return $totalAmount;
+	}
+
+	public function getTotalAmountOfDeletedPostsFromAccountId(int $accountId): int {
 		// get the total amount of deleleted posts 
-		$totalAmountOfDeletedPostsByAccountId = $this->deletedPostsRepository->getTotalAmountOfDeletedPostsByAccountId($accountId);
+		$totalAmount = $this->deletedPostsRepository->getTotalAmount($accountId);
 	
 		// return result
-		return $totalAmountOfDeletedPostsByAccountId;
+		return $totalAmount;
+	}
+
+	public function getTotalAmountOfRestoredPostsFromAccountId(int $accountId): int {
+		// get the total amount of restored posts by account id
+		$totalAmount = $this->deletedPostsRepository->getTotalAmount($accountId, true);
+	
+		// return result
+		return $totalAmount;
 	}
 
 	public function authenticateDeletedPost(int $deletedPostId, int $accountId): bool {
@@ -676,30 +707,16 @@ class deletedPostsService {
 		// fetch board uid from database based on the deleted id
 		$boardUid = $this->deletedPostsRepository->getBoardUidByDeletedPostId($deletedPostId);
 
-		// if its false then return null
-		if(!$boardUid) {
-			return null;
-		} 
-		// otherwise it was successful
-		else {
-			// return result
-			return $boardUid;
-		}
+		// return board uid
+		return $this->returnOrNull($boardUid);
 	}
 
 	public function getDeletedPostRowByPostUid(int $postUid): ?array {
 		// fetch the row by post uid
 		$deletedPost = $this->deletedPostsRepository->getDeletedPostRowByPostUid($postUid);
-		
-		// if its false then return null
-		if(!$deletedPost) {
-			return null;
-		} 
-		// otherwise it was successful
-		else {
-			// return result
-			return $deletedPost;
-		}
+
+		// return row
+		return $this->returnOrNull($deletedPost);
 	}
 
 	public function pruneExpiredPosts(int $timeLimit): void {
@@ -713,5 +730,10 @@ class deletedPostsService {
 
 		// purge those posts from the ID list
 		$this->purgePostsFromList($prunedEntryIDs, false);
+	}
+
+	public function removeEntry(int $deletedPostId): void {
+		// run the method to delete the entry from the database
+		$this->deletedPostsRepository->removeRowById($deletedPostId);
 	}
 }

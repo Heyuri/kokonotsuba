@@ -19,7 +19,10 @@ class moduleAdmin extends abstractModuleAdmin {
 	private templateEngine $moduleTemplateEngine;
 	
 	// property for the role required to modify all deleted posts
-	private userRole $requiredRoleForAll;
+	private userRole $requiredRoleActionForModAll;
+
+	// property for the role required to delete restored posts
+	private userRole $requiredRoleForDeleteRestoredRecord;
 
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('AuthLevels.CAN_DELETE_POST');
@@ -35,7 +38,10 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function initialize(): void {
 		// initialize role property
-		$this->requiredRoleForAll = $this->getConfig('AuthLevels.CAN_DELETE_ALL');
+		$this->requiredRoleActionForModAll = $this->getConfig('AuthLevels.CAN_DELETE_ALL', userRole::LEV_MODERATOR);
+
+		// init role property
+		$this->requiredRoleForDeleteRestoredRecord = $this->getConfig('AuthLevels.CAN_DELETE_RESTORE_RECORDS', userRole::LEV_ADMIN);
 
 		// initialize url
 		$this->myPage = $this->getModulePageURL([], false);
@@ -187,7 +193,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		
 		// url parameters
 		$urlParameters = [
-			'action' => 'viewMore',
+			'pageName' => 'viewMore',
 			'deletedPostId' => $deletedPostId,
 		];
 
@@ -361,7 +367,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function authenticateDeletedPost(int $deletedPostId, userRole $roleLevel, int $accountId): void {
 		// don't loop if the user has the required permission to restore/purge any post regardless of their role
-		if($roleLevel->isAtLeast($this->requiredRoleForAll)) {
+		if($roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {
 			return;
 		}
 
@@ -381,13 +387,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// if it's a purge action, handle the purging and associated actions 
-		else if ($action === 'purge' && $roleLevel->isAtLeast($this->requiredRoleForAll)) {
+		else if ($action === 'purge' && $roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {
 			$this->moduleContext->deletedPostsService->purgePost($deletedPostId);
 		}
 
 		// if it's an attachment purge then delete the file only
 		// then mark it as 'restored' by the mod since theres no more action to do on it
-		else if ($action === 'purgeAttachment' && $roleLevel->isAtLeast($this->requiredRoleForAll)) {
+		else if ($action === 'purgeAttachment' && $roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {
 			$this->moduleContext->deletedPostsService->purgeFileOnly($deletedPostId, $accountId);
 		}
 
@@ -402,7 +408,21 @@ class moduleAdmin extends abstractModuleAdmin {
 			// url of the deleted post
 			$url = $this->generateDeletedPostViewUrl($deletedPostId);
 
+			// redirect early to the url - theres no need to rebuild
 			redirect($url);
+		}
+
+		// if it's a delete record action - then delete the record directly from the database
+		// this is only intended for restore records
+		else if ($action === 'deleteRecord') {
+			// delete the row, the post remains intact
+			$this->moduleContext->deletedPostsService->removeEntry($deletedPostId);
+
+			// generate the restored index url
+			$restoredIndexUrl = $this->getModulePageURL(['pageName' => 'restoredIndex'], false);
+
+			// then redirect to the restored index
+			redirect($restoredIndexUrl);
 		}
 
 		// rebuild board
@@ -430,64 +450,121 @@ class moduleAdmin extends abstractModuleAdmin {
 		$page = $_GET['page'] ?? 0;
 
 		// certain actions involve drawing/GET
-		$action = $_GET['action'] ?? null;
+		$pageName = $_GET['pageName'] ?? null;
 
 		$postRenderer = new postRenderer($this->moduleContext->board, $this->moduleContext->config, $this->moduleContext->moduleEngine, $this->moduleTemplateEngine, []);
 		$threadRenderer = new threadRenderer($this->moduleContext->board->loadBoardConfig(), $this->moduleContext->templateEngine, $postRenderer, $this->moduleContext->moduleEngine);
 
 		// view a single deleted post in full detail
-		if($action === 'viewMore') {
-			// to view a deleted post in full detail we need the deleted post id
-			$deletedPostId = (int)$_GET['deletedPostId'] ?? null;
-
-			// throw error if its null
-			// also throw it if its not an integer
-			if(is_null($deletedPostId) || !is_int($deletedPostId)) {
-				// throw user-facing error
-				throw new BoardException("Invalid id selected!");
-			}
-
-			// make sure the user is authorized to view this post
-			// theres a possibility staff that either didn't delete the post or arent authorized
-			$this->authenticateDeletedPost($deletedPostId, $roleLevel, $accountId);
-
-			// get the deleted post row
-			$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowById($deletedPostId);
-
-			// throw exception if the post wasn't found
-			if(is_null($deletedPost)) {
-				// now throw it
-				throw new BoardException("Post not found!");
-			}
-
-			// draw it
-			$this->drawDeletedPostView($roleLevel, $deletedPost, $postRenderer, $threadRenderer);
+		if($pageName === 'viewMore') {
+			$this->handlePostView($roleLevel, $accountId, $postRenderer, $threadRenderer);
 
 			// return early so other drawing methods dont run
 			return;
 		}
 
-		// get paginated results
-		// If the user is at least a moderator, get all deleted posts
-		elseif($roleLevel->isAtLeast($this->requiredRoleForAll)) {
-			// get the deleted posts from the database
-			$deletedPosts = $this->moduleContext->deletedPostsService->getDeletedPosts($page, $this->moduleContext->board->getConfigValue('PAGE_DEF', 40));
+		// view restore posts index
+		else if($pageName === 'restoredIndex') {
+			// handle restored post index logic
+			$this->handleRestoredPostIndex($roleLevel, $page, $accountId, $postRenderer, $threadRenderer);
+		} 
 
-			// get the total amount of deleted posts
-			$deletedPostsCount = $this->moduleContext->deletedPostsService->getTotalAmount();
+		// view deleted post index
+		else {
+			// handle deleted post index logic
+			$this->handleDeletedPostIndex($roleLevel, $page, $accountId, $postRenderer, $threadRenderer);
+		}
+	}
+
+	private function handlePostView(userRole $roleLevel, int $accountId, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
+		// to view a deleted post in full detail we need the deleted post id
+		$deletedPostId = $_GET['deletedPostId'] ?? null;
+
+		// cast to int
+		$deletedPostId = (int)$deletedPostId;
+
+		// throw error if its null
+		// also throw it if its not an integer
+		if(is_null($deletedPostId) || !is_int($deletedPostId)) {
+			// throw user-facing error
+			throw new BoardException("Invalid id selected!");
+		}
+
+		// make sure the user is authorized to view this post
+		// theres a possibility staff that either didn't delete the post or arent authorized
+		$this->authenticateDeletedPost($deletedPostId, $roleLevel, $accountId);
+
+		// get the deleted post row
+		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowById($deletedPostId);
+
+		// throw exception if the post wasn't found
+		if(is_null($deletedPost)) {
+			// now throw it
+			throw new BoardException("Post not found!");
+		}
+
+		// draw it
+		$this->drawDeletedPostView($roleLevel, $deletedPost, $postRenderer, $threadRenderer);
+	}
+
+	private function handleRestoredPostIndex(userRole $roleLevel, int $page, int $accountId, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
+		$this->handlePostIndex($roleLevel, $page, $accountId, $postRenderer, $threadRenderer, 'restored', 'Restored posts');
+	}
+
+	private function handleDeletedPostIndex(userRole $roleLevel, int $page, int $accountId, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
+		$this->handlePostIndex($roleLevel, $page, $accountId, $postRenderer, $threadRenderer, 'deleted', 'Deleted posts');
+	}
+
+	private function handlePostIndex(
+		userRole $roleLevel,
+		int $page,
+		int $accountId,
+		postRenderer $postRenderer,
+		threadRenderer $threadRenderer,
+		string $type,
+		string $title
+	): void {
+		// get paginated results
+		$isRestored = $type === 'restored';
+		$deletedPostsService = $this->moduleContext->deletedPostsService;
+		$pageDef = $this->moduleContext->board->getConfigValue('PAGE_DEF', 40);
+
+		// If the user is at least a moderator, get all posts
+		if($roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {
+			if($isRestored) {
+				// get the restored posts from the database
+				$posts = $deletedPostsService->getRestoredPosts($page, $pageDef);
+
+				// get the total amount of restored posts
+				$postsCount = $deletedPostsService->getTotalAmountOfRestoredPosts();
+			} else {
+				// get the deleted posts from the database
+				$posts = $deletedPostsService->getDeletedPosts($page, $pageDef);
+
+				// get the total amount of deleted posts
+				$postsCount = $deletedPostsService->getTotalAmountOfDeletedPosts();
+			}
 		} 
 		
-		// get and draw paginated results of posts that the current user has deleted
+		// get and draw paginated results of posts that the current user has affected
 		else {
-			// only get posts deleted by the staff
-			$deletedPosts = $this->moduleContext->deletedPostsService->getDeletedPostsByAccount($accountId, $page, $this->moduleContext->board->getConfigValue('PAGE_DEF', 40));
+			if($isRestored) {
+				// only get posts restored by the staff
+				$posts = $deletedPostsService->getRestoredPostsByAccount($accountId, $page, $pageDef);
 
-			// get the total amount
-			$deletedPostsCount = $this->moduleContext->deletedPostsService->getTotalAmountFromAccountId($accountId);
+				// get the total amount
+				$postsCount = $deletedPostsService->getTotalAmountOfRestoredPostsFromAccountId($accountId);
+			} else {
+				// only get posts deleted by the staff
+				$posts = $deletedPostsService->getDeletedPostsByAccount($accountId, $page, $pageDef);
+
+				// get the total amount
+				$postsCount = $deletedPostsService->getTotalAmountOfDeletedPostsFromAccountId($accountId);
+			}
 		}
 
 		// finalize html output
-		$this->handleHtmlOutput($roleLevel, $deletedPosts, $deletedPostsCount, $postRenderer, $threadRenderer);
+		$this->handleHtmlOutput($roleLevel, $posts, $postsCount, $postRenderer, $threadRenderer, $title);
 	}
 
 	private function outputAdminPage(string $pageContentHtml, string $pagerHtml = ''): void {
@@ -550,7 +627,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		// generate page section html
 		$deletedPostEntryPage = $this->moduleContext->adminPageRenderer->ParseBlock('DELETED_POST_VIEW_ENTRY', [
 			'{$DELETED_POST}' => $deletedPostHtml,
-			'{$URL}' => htmlspecialchars($this->myPage),
+			'{$BACK_URL}' => htmlspecialchars($_SERVER['HTTP_REFERER']),
+			'{$URL}' => htmlspecialchars($this->myPage)
 		]);
 
 		// output the admin page
@@ -562,7 +640,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$url = $this->getModulePageURL(
 			[
 				'deletedPostId' => $deletedPostId,
-				'action' => 'viewMore'
+				'pageName' => 'viewMore'
 			],
 			false
 		);
@@ -571,7 +649,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $url;
 	}
 
-	private function handleHtmlOutput(userRole $roleLevel, array $deletedPosts, int $deletedPostsCount, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
+	private function handleHtmlOutput(
+		userRole $roleLevel, 
+		array $deletedPosts, 
+		int $deletedPostsCount, 
+		postRenderer $postRenderer, 
+		threadRenderer $threadRenderer,
+		string $moduleHeader = 'Deleted posts'): void {
 		// get post uids
 		$postUids = array_column($deletedPosts, 'post_uid');
 
@@ -597,6 +681,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$deletedPostsPageHtml = $this->moduleContext->adminPageRenderer->ParseBlock('DELETED_POSTS_MOD_PAGE', [
 			'{$DELETED_POSTS}' => $deletedPostListValues,
 			'{$ARE_NO_POSTS}' => $areNoPosts,
+			'{$MODULE_HEADER_TEXT}' => $moduleHeader,
 			'{$URL}' => htmlspecialchars($this->myPage)
 		]);
 
@@ -674,18 +759,19 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$DELETED_AT}' => htmlspecialchars($deletedTimestamp),
 			'{$ID}' => htmlspecialchars($id),
 			'{$BOARD_UID}' => htmlspecialchars($boardUID),
-			'{$CAN_PURGE}' => $roleLevel->isAtLeast($this->requiredRoleForAll),
+			'{$CAN_PURGE}' => $roleLevel->isAtLeast($this->requiredRoleActionForModAll),
 			'{$BOARD_TITLE}' => $boardTitle,
 			'{$VIEW_MORE_URL}' => htmlspecialchars($viewMoreUrl),
 			'{$POST_HTML}' => $postHtml,
-			'{$IS_OPEN}' => $deletedEntry['open_flag'] ? "No" : "Yes",
+			'{$IS_OPEN}' => $deletedEntry['open_flag'] ? 1 : null,
 			'{$FILE_ONLY}' => $deletedEntry['file_only_deleted'],
 			'{$RESTORED_AT}' => htmlspecialchars($deletedEntry['restored_at']),
 			'{$RESTORED_BY}' => htmlspecialchars($restoredByUsername),
 			'{$NOTE}' => htmlspecialchars($note),
 			'{$NOTE_PREVIEW}' => $notePreview,
 			'{$SHOW_ALL}' => htmlspecialchars($showAll),
-			'{$URL}' => htmlspecialchars($this->myPage)
+			'{$URL}' => htmlspecialchars($this->myPage),
+			'{$CAN_PURGE_RESTORE_RECORD}' => $roleLevel->isAtLeast($this->requiredRoleForDeleteRestoredRecord)
 		];
 
 		// return results
@@ -706,7 +792,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $notePreview;
 	}
 
-	private function generatePostHtml(array $deletedEntry, array $thread, bool $showAll, postRenderer $postRenderer, threadRenderer $threadRenderer): string {
+	private function generatePostHtml(
+		array $deletedEntry, 
+		array $thread, 
+		bool $showAll, 
+		postRenderer $postRenderer, 
+		threadRenderer $threadRenderer
+	): string {
 		// init template values
 		$templateValues = [];
 		
@@ -745,13 +837,13 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function generateViewMoreUrl(int $id, string $baseUrl): string {
 		// generate the view more url
-		$viewMoreUrl = $this->generateActionUrl($id, $baseUrl, 'viewMore');
+		$viewMoreUrl = $this->generatePageNameUrl($id, $baseUrl, 'viewMore');
 
 		// return generated view more url
 		return $viewMoreUrl;
 	}
 
-	private function generateActionUrl(int $id, string $baseUrl, string $action): string {
+	private function generatePageNameUrl(int $id, string $baseUrl, string $action): string {
 		// if the action (which is used as an array key) is blank then something has gone very wrong 
 		if(empty($action)) {
 			throw new RuntimeException("Invalid action when generating action URLs");
@@ -760,7 +852,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// generate the url parameters
 		$purgeParams = http_build_query([
 			'deletedPostId' => $id,
-			'action' => $action
+			'pageName' => $action
 		]);
 
 		// get the base url
@@ -793,7 +885,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// request vs draw
 		if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$this->handleModPageRequests($accountId, $roleLevel);
-			
+
 			redirect($this->myPage);
 		} elseif (isset($_GET['json'])) {
 			// handle json output (API)

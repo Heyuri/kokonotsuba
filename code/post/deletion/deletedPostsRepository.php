@@ -33,7 +33,7 @@ class deletedPostsRepository {
 
 	public function getAllPostUidsFromAccountId(int $accountId): array|false {
 		// query to get all post uids from posts deleted by the specified account id
-		$query = "DELETE FROM {$this->deletedPostsTable} WHERE deleted_by = :account_id";
+		$query = "SELECT post_uid FROM {$this->deletedPostsTable} WHERE deleted_by = :account_id";
 
 		// parameters
 		$params = [
@@ -99,7 +99,7 @@ class deletedPostsRepository {
 	public function purgeDeletedPostById(int $deletedPostId): void {
 		// query to purge the post
 		// there's a foreign key with ON DELETE CASCADE on the deleted posts table so we only need to delete the post from the post table and it'll handle the associated row on its own
-		$query = "DELETE FROM posts
+		$query = "DELETE FROM {$this->postTable}
 			WHERE post_uid = (
 				SELECT post_uid
 				FROM deleted_posts
@@ -158,24 +158,36 @@ class deletedPostsRepository {
 		return $posts;
 	}
 
-	public function getDeletedPosts(int $amount, int $offset, string $orderBy = 'id', string $direction = 'DESC', bool $showRestored = false): array|false {
+	public function getPagedEntries(int $amount, int $offset, string $orderBy = 'id', string $direction = 'DESC', bool $restoredOnly = false, ?int $accountId = null): array|false {
 		// Hide restored posts
-		if(!$showRestored) {
+		if(!$restoredOnly) {
 			// append where clause to exclude restored posts
 			$whereClause = " WHERE base.open_flag = 1 AND base.by_proxy = 0";
 		} else {
-			// otherwise leave it blank
-			$whereClause = '';
+			// otherwise filter for closed flags
+			$whereClause = 'WHERE base.open_flag = 0 AND base.by_proxy = 0';
 		}
 
-		// Get the query for deleted posts
+		// init params array 
+		$params = [];
+
+		// append accound if if we're filtering for those
+		if($accountId) {
+			// append to WHERE clause
+			$whereClause .= ' AND dp_meta.deleted_by = :account_id';
+
+			// add :account_id placeholder to params
+			$params[':account_id'] = $accountId;
+		}
+
+		// Get the query for entries
 		$query = $this->buildDeletedPostsQuery($amount, $offset, $orderBy, $direction, $whereClause);
 
 		// fetch all the data as an array
-		$deletedPosts = $this->databaseConnection->fetchAllAsArray($query);
+		$entries = $this->databaseConnection->fetchAllAsArray($query, $params);
 
 		// return results
-		return $deletedPosts;
+		return $entries;
 	}
 
 	public function getDeletedPostRowById(int $deletedPostId): array|false {
@@ -192,29 +204,6 @@ class deletedPostsRepository {
 
 		// return data
 		return $deletedPost;
-	}
-
-	public function getDeletedPostsByAccountId(int $accountId, int $amount, int $offset, string $orderBy = 'id', string $direction = 'DESC', bool $showRestored = false): array|false {
-		// Generate WHERE clause for filtering by the account id
-		$whereClause = " WHERE dp_meta.deleted_by = :account_id ";
-		
-		// Hide restored posts
-		if(!$showRestored) {
-			// add AND condition to WHERE clause
-			$whereClause .= " AND base.open_flag = 1 ";
-		}
-
-		// Get the query for deleted posts by account ID
-		$query = $this->buildDeletedPostsQuery($amount, $offset, $orderBy, $direction, $whereClause);
-	
-		// params
-		$params = $accountId ? [':account_id' => $accountId] : [];
-	
-		// fetch all the data as an array
-		$deletedPosts = $this->databaseConnection->fetchAllAsArray($query, $params);
-	
-		// return results
-		return $deletedPosts;
 	}
 
 	private function getBaseDeletedPostsQuery(): string {
@@ -308,6 +297,40 @@ class deletedPostsRepository {
 		$params = [
 			':account_id' => $accountId
 		];
+
+		// fetch the count value
+		$totalAmount = $this->databaseConnection->fetchColumn($query, $params);
+
+		// return it
+		return $totalAmount;
+	}
+
+	public function getTotalAmount(?int $accountId = null, bool $restoredOnly = false): int {
+		// query to get the total amount
+		$query = "SELECT COUNT(*) FROM {$this->deletedPostsTable}";
+
+		// init params
+		$params = [];
+
+		// only count deleted posts
+		if(!$restoredOnly) {
+			// search for rows where open_flag is 1 (open, not restored)
+			$whereClause = " WHERE open_flag = 1 AND by_proxy = 0";
+		}
+		// only count restored posts
+		else {
+			// search for rows where open_flag is 0 (restored)
+			$whereClause = " WHERE open_flag = 0 AND by_proxy = 0";
+		}
+
+		// if an account id is selected then append the account id to the search query for who deleted it
+		if($accountId) {
+			// append to where clause
+			$whereClause .= " AND deleted_by = :account_id";
+
+			// add account id paramter
+			$params[':account_id'] = $accountId;
+		}
 
 		// fetch the count value
 		$totalAmount = $this->databaseConnection->fetchColumn($query, $params);
@@ -438,7 +461,7 @@ class deletedPostsRepository {
 	}
 
 	public function getExpiredEntryIDs(int $timeLimit): false|array {
-		// query ot get entries older than the time limit (in hours) 
+		// query to get entries older than the time limit (in hours) 
 		$query = "SELECT id
     		FROM {$this->deletedPostsTable}
     		WHERE deleted_at < NOW() - INTERVAL {$timeLimit} HOUR
@@ -452,5 +475,18 @@ class deletedPostsRepository {
 
 		// return the entries
 		return $entries;
+	}
+
+	public function removeRowById(int $id): void {
+		// query to remove a row by its ID
+		$query = "DELETE FROM {$this->deletedPostsTable} WHERE id = :id";
+		
+		// parameter
+		$params = [
+			':id' => $id
+		];
+
+		// execute query
+		$this->databaseConnection->execute($query, $params);
 	}
 }

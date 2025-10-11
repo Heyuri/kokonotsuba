@@ -317,6 +317,7 @@ $config['AuthLevels']['CAN_VIEW_IP_ADDRESSES'] = \Kokonotsuba\Root\Constants\use
 $config['AuthLevels']['CAN_BAN'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_DELETE_POST'] = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR;
 $config['AuthLevels']['CAN_DELETE_ALL'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_DELETE_RESTORE_RECORDS'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
 $config['AuthLevels']['CAN_LOCK'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_STICKY'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_AUTO_SAGE'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;

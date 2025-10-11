@@ -70,67 +70,52 @@
 	if (document.querySelector('.deletedPostContainer')) {
 		const purgeBtnList = document.querySelectorAll('.adminPurgeFunction');
 		const restoreBtnList = document.querySelectorAll('.adminRestoreFunction');
-
-		// Handle Purge Button Click
-		purgeBtnList.forEach(function(purgeBtn) {
-			purgeBtn.addEventListener('click', function (e) {
+		const deleteRecordBtnList = document.querySelectorAll('.adminDeleteRecordFunction');
+	
+		function handleAdminAction(btn, successMsg, failureMsg) {
+			btn.addEventListener('click', function (e) {
 				e.preventDefault();
-				const formData = createFormData(purgeBtn);
-
+				const formData = createFormData(btn);
+			
 				// Use the form's action ATTRIBUTE to avoid RadioNodeList shadowing
-				const form = purgeBtn.closest('form');
-				const url = form ? form.getAttribute('action') : purgeBtn.formAction;
-
+				const form = btn.closest('form');
+				const url = form ? form.getAttribute('action') : btn.formAction;
+			
 				// mark as pending (container + possible trailing separator)
-				const postContainer = purgeBtn.closest('.deletedPostContainer');
+				const postContainer = btn.closest('.deletedPostContainer');
 				const sep = postContainer && postContainer.nextElementSibling && postContainer.nextElementSibling.matches('hr.threadSeparator')
 					? postContainer.nextElementSibling
 					: null;
 				if (postContainer) postContainer.classList.add('pendingDeletion');
 				if (sep) sep.classList.add('pendingDeletion');
-
+			
 				handleRequest(url, formData, function () {
 					// hide it with css
 					hideDeletedPost(postContainer);
-					showMessage('Post purged successfully.', true);
+					showMessage(successMsg, true);
 				}, function () {
 					// revert pending state on failure
 					if (postContainer) postContainer.classList.remove('pendingDeletion');
 					if (sep) sep.classList.remove('pendingDeletion');
-					showMessage('Failed to purge post.', false);
+					showMessage(failureMsg, false);
 				});
 			});
+		}
+	
+		// Handle Purge Button Click
+		purgeBtnList.forEach(function (purgeBtn) {
+			handleAdminAction(purgeBtn, 'Post purged successfully.', 'Failed to purge post.');
+		});
+	
+		// Handle Restore Button Click
+		restoreBtnList.forEach(function (restoreBtn) {
+			handleAdminAction(restoreBtn, 'Post restored successfully.', 'Failed to restore post.');
 		});
 
 		// Handle Restore Button Click
-		restoreBtnList.forEach(function(restoreBtn) {
-			restoreBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-				const formData = createFormData(restoreBtn);
-
-				// Use the form's action ATTRIBUTE to avoid RadioNodeList shadowing
-				const form = restoreBtn.closest('form');
-				const url = form ? form.getAttribute('action') : restoreBtn.formAction;
-
-				// mark as pending (container + possible trailing separator)
-				const postContainer = restoreBtn.closest('.deletedPostContainer');
-				const sep = postContainer && postContainer.nextElementSibling && postContainer.nextElementSibling.matches('hr.threadSeparator')
-					? postContainer.nextElementSibling
-					: null;
-				if (postContainer) postContainer.classList.add('pendingDeletion');
-				if (sep) sep.classList.add('pendingDeletion');
-
-				handleRequest(url, formData, function () {
-					// hide it with css (restore should also hide)
-					hideDeletedPost(postContainer);
-					showMessage('Post restored successfully.', true);
-				}, function () {
-					// revert pending state on failure
-					if (postContainer) postContainer.classList.remove('pendingDeletion');
-					if (sep) sep.classList.remove('pendingDeletion');
-					showMessage('Failed to restore post.', false);
-				});
-			});
+		deleteRecordBtnList.forEach(function (deleteRecordBtn) {
+			handleAdminAction(deleteRecordBtn, 'Restored post record removed from database.', 'Failed to remove record.');
 		});
 	}
+
 })();

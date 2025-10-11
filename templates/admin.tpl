@@ -669,6 +669,18 @@ window.onload = function () {
 	</div>
 <!--/&DELETED_POST_ENTRY-->
 
+<!--&PURGE_RESTORE_ENTRY_BUTTON-->
+	<!--&IF($CAN_PURGE_RESTORE_RECORD,'
+		[<button type="submit"
+			name="action"
+			value="deleteRecord"
+			class="adminFunctions adminDeleteRecordFunction buttonLink"
+			title="Delete this restore record from the database (post is left intact)">
+			Delete
+		</button>]
+	','')-->
+<!--/&PURGE_RESTORE_ENTRY_BUTTON-->
+
 <!--&DELETED_POST_NOTE_INPUT-->
 	<tr>
 		<td class="postblock">Staff note</td>
@@ -692,15 +704,23 @@ window.onload = function () {
 
 <!--&DELETE_POST_BUTTONS-->
 	<div class="deletedPostButtons">
-		<!--&IF($CAN_PURGE,'
-			<!--&DELETE_POST_PURGE_BUTTON/-->
-		','')-->
 
-		<!--&DELETE_POST_RESTORE_BUTTON/-->
+		<!--&IF($IS_OPEN,'
+			<!--&DELETE_POST_OPEN_BUTTONS/-->
+		','
+			<!--&PURGE_RESTORE_ENTRY_BUTTON/-->					
+		')-->
 		
 		<!--&IF($IS_VIEW,'','[<a href="{$VIEW_MORE_URL}">View</a>]')-->
 	</div>
 <!--/&DELETE_POST_BUTTONS-->
+
+<!--&DELETE_POST_OPEN_BUTTONS-->
+	<!--&IF($CAN_PURGE,'
+		<!--&DELETE_POST_PURGE_BUTTON/-->
+	','')-->
+	<!--&DELETE_POST_RESTORE_BUTTON/-->
+<!--/&DELETE_POST_OPEN_BUTTONS-->
 
 <!--&DELETE_POST_PURGE_BUTTON-->
 	<!--&IF($FILE_ONLY,'[<button type="submit"
@@ -739,7 +759,9 @@ window.onload = function () {
 <!--&DELETED_POST_RESTORE_INFO-->
 	<tr>
 		<td class="postblock">Restored?</td>
-		<td>{$IS_OPEN}</td>
+		<td>
+			<!--&IF($IS_OPEN,'No','Yes')-->
+		</td>
 	</tr>
 	<tr>
 		<td class="postblock">Restored at</td>
@@ -756,13 +778,14 @@ window.onload = function () {
 <!--/&DELETED_POST_RESTORE_INFO-->
 
 <!--&DELETED_POST_VIEW_ENTRY-->
-	[<a href="{$URL}">Back</a>]
 	<h3>View deleted post</h3>
+	[<a href="{$BACK_URL}">Back</a>]
 	{$DELETED_POST}
 <!--/&DELETED_POST_VIEW_ENTRY-->
 
 <!--&DELETED_POSTS_MOD_PAGE-->
-	<h3>Deleted posts</h3>
+	<h3>{$MODULE_HEADER_TEXT}</h3>
+	<div class="deletedPostIndexLinks">[<a href="{$URL}">Deleted</a>] [<a href="{$URL}&pageName=restoredIndex">Restored</a>]</div> 
 	<div class="deletedPostsListContainer">
 		<div class="deletedPostsList">
 			<!--&FOREACH($DELETED_POSTS,'DELETED_POST_ENTRY')-->
