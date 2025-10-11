@@ -41,7 +41,7 @@ function openFlashEmbedWindow(file, name, extension, w, h) {
 				<img src="${closebuttan}" id="closeButton" style="float: right; cursor: pointer;">
 				<div id="embed-swf-details">${name}, ${w}x${h} <a href="${file}" download="${name}${extension}" id="downloadButton"><div class="download"></div></a></div>
 			</div>
-			<div id="ruffleContainer" style="width: 100%; height: calc(100% - 20px);"></div>
+			<div id="ruffleContainer" style="width: 100%; height: calc(100% - 20px); position: relative;"></div>
 		`;
 
 		document.body.appendChild(swfWindow);
@@ -52,14 +52,63 @@ function openFlashEmbedWindow(file, name, extension, w, h) {
 			// Load and resize the flash player inside the container
 			const ruffle        = window.RufflePlayer.newest();
 			const rufflePlayer  = ruffle.createPlayer();
-
 			container.appendChild(rufflePlayer);
 
-			rufflePlayer.load(file).then(() => {
-				console.log("Flash file loaded successfully");
-			}).catch((err) => {
-				console.error("Failed to load Flash file:", err);
-			});
+			// --- ADD LOADER UI ---
+			const overlay = document.createElement("div");
+			overlay.id = "ruffleLoadingOverlay";
+			overlay.textContent = "Loading 0%";
+			container.appendChild(overlay);
+
+			function setStatus(msg) {
+				overlay.textContent = msg;
+			}
+			function hideStatus() {
+				overlay.remove();
+			}
+
+			// Hide player until fully loaded
+			rufflePlayer.style.visibility = "hidden";
+
+			// --- Streamed fetch for progress display ---
+			async function streamedFetch(url) {
+				setStatus("Loading 0%");
+				const resp = await fetch(url);
+				const totalBytes = +resp.headers.get("Content-Length") || 0;
+				const reader = resp.body.getReader();
+				let loadedBytes = 0;
+				const chunks = [];
+
+				while (true) {
+					const { done, value } = await reader.read();
+					if (done) break;
+					chunks.push(value);
+					loadedBytes += value.byteLength;
+					if (totalBytes) {
+						const percent = Math.min(100, Math.floor((loadedBytes / totalBytes) * 100));
+						setStatus(`Loading ${percent}%`);
+					}
+				}
+				setStatus("Preparing…");
+				const blob = new Blob(chunks);
+				return blob.arrayBuffer();
+			}
+
+			// --- Load SWF data with streaming loader ---
+			(async () => {
+				try {
+					const data = await streamedFetch(file);
+					const settings = { autoplay: true, letterbox: "on", data: new Uint8Array(data) };
+					setStatus("Loading Ruffle…");
+					await rufflePlayer.load(settings);
+					hideStatus();
+					rufflePlayer.style.visibility = "visible";
+					console.log("Flash file loaded successfully");
+				} catch (err) {
+					setStatus("Failed to load file");
+					console.error("Failed to load Flash file:", err);
+				}
+			})();
 
 			// Resize the flash player along with the container
 			const resizeObserver = new ResizeObserver(() => {
