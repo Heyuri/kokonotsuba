@@ -1762,6 +1762,21 @@ caption h3 {
 	z-index: 900; 
 }
 
+#ruffleLoadingOverlay {
+	position: absolute;
+	inset: 0;
+	background: #fff;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #000;
+	font-family: monospace;
+	font-size: 12px;
+	z-index: 10;
+	pointer-events: none;
+}
+
+
 /******************* File board/flash board (mobile) ******************/
 
 @media screen and (max-width: 900px) { 
