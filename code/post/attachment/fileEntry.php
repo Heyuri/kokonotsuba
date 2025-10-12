@@ -12,7 +12,7 @@ class fileEntry {
 	public ?int $file_height;
 	public ?int $thumb_file_width;
 	public ?int $thumb_file_height;
-	public ?int $file_size;
+	public string|int $file_size;
 	public string $mime_type;
 	public int $is_hidden;
 
@@ -31,7 +31,7 @@ class fileEntry {
 		?int $file_height,
 		?int $thumb_file_width,
 		?int $thumb_file_height,
-		?int $file_size,
+		string|int $file_size,
 		string $mime_type,
 		int $is_hidden
 	): void {
