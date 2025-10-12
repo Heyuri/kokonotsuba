@@ -650,9 +650,9 @@ window.onload = function () {
 						','
 							<!--&DELETED_POST_NOTE_PREVIEW/-->					
 						')-->
-						<!--&IF($SHOW_ALL,'
-							<!--&ADDITIONAL_DELETED_POST_INFO/-->
-						','')-->
+						<!--&IF($IS_OPEN,'','
+							<!--&DELETED_POST_RESTORE_INFO/-->
+						')-->
 						<tr>
 							<td class="postblock"></td>
 							<td>
@@ -750,19 +750,7 @@ window.onload = function () {
 	</button>]','')-->
 <!--/&DELETE_POST_RESTORE_BUTTON-->
 
-<!--&ADDITIONAL_DELETED_POST_INFO-->
-		<!--&IF($RESTORED_AT,'
-			<!--&DELETED_POST_RESTORE_INFO/-->
-		','')-->
-<!--/&ADDITIONAL_DELETED_POST_INFO-->
-
 <!--&DELETED_POST_RESTORE_INFO-->
-	<tr>
-		<td class="postblock">Restored?</td>
-		<td>
-			<!--&IF($IS_OPEN,'No','Yes')-->
-		</td>
-	</tr>
 	<tr>
 		<td class="postblock">Restored at</td>
 		<td>
@@ -778,7 +766,7 @@ window.onload = function () {
 <!--/&DELETED_POST_RESTORE_INFO-->
 
 <!--&DELETED_POST_VIEW_ENTRY-->
-	<h3>View deleted post</h3>
+	<h3>View <!--&IF($IS_OPEN,'deleted','restored')--> post</h3>
 	[<a href="{$BACK_URL}">Back</a>]
 	{$DELETED_POST}
 <!--/&DELETED_POST_VIEW_ENTRY-->
