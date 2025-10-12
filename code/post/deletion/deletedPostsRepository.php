@@ -332,6 +332,9 @@ class deletedPostsRepository {
 			$params[':account_id'] = $accountId;
 		}
 
+		// append where clause to query
+		$query .= $whereClause;
+
 		// fetch the count value
 		$totalAmount = $this->databaseConnection->fetchColumn($query, $params);
 

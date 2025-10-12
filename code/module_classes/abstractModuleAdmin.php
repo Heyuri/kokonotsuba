@@ -20,7 +20,7 @@ abstract class abstractModuleAdmin extends abstractModule {
 		
 	}
 
-	protected function getModulePageURL(array $params = [], bool $forHtml = true, bool $useRequestUri = false): string {
+	public function getModulePageURL(array $params = [], bool $forHtml = true, bool $useRequestUri = false): string {
 		$params['moduleMode'] = 'admin';
 		return parent::getModulePageURL($params, $forHtml, $useRequestUri);
 	}

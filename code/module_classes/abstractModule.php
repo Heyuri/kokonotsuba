@@ -35,7 +35,7 @@ abstract class abstractModule {
 		return $this->moduleContext->board->getConfigValue($key, $default);
 	}
 
-	protected function getModulePageURL(array $params = [], bool $forHtml = true, bool $useRequestUri = false): string {
+	public function getModulePageURL(array $params = [], bool $forHtml = true, bool $useRequestUri = false): string {
 		$params['mode'] = 'module';
 		$params['load'] = $this->moduleName;
 
@@ -64,7 +64,7 @@ abstract class abstractModule {
 		return $moduleTemplateEngine;
 	}
 
-	protected function generateJavascriptUrl(string $fileName): string {
+	public function generateJavascriptUrl(string $fileName): string {
 		// get the static url value
 		$staticUrl = $this->getConfig('STATIC_URL');
 
@@ -81,7 +81,7 @@ abstract class abstractModule {
 		return $javascriptFileUrl;
 	}
 
-	protected function generateScriptHtml(string $url, bool $defer = false): string {
+	public function generateScriptHtml(string $url, bool $defer = false): string {
 		// specify whether it should be defered
 		if($defer) {
 			// set the flag as 'defer'
