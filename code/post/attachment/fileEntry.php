@@ -8,11 +8,11 @@ class fileEntry {
 	public string $stored_filename;
 	public string $file_ext;
 	public string $file_md5;
-	public int $file_width;
-	public int $file_height;
-	public int $thumb_file_width;
-	public int $thumb_file_height;
-	public string|int $file_size;
+	public ?int $file_width;
+	public ?int $file_height;
+	public ?int $thumb_file_width;
+	public ?int $thumb_file_height;
+	public ?int $file_size;
 	public string $mime_type;
 	public int $is_hidden;
 
@@ -27,11 +27,11 @@ class fileEntry {
 		string $stored_filename,
 		string $file_ext,
 		string $file_md5,
-		int $file_width,
-		int $file_height,
-		int $thumb_file_width,
-		int $thumb_file_height,
-		string|int $file_size,
+		?int $file_width,
+		?int $file_height,
+		?int $thumb_file_width,
+		?int $thumb_file_height,
+		?int $file_size,
 		string $mime_type,
 		int $is_hidden
 	): void {
