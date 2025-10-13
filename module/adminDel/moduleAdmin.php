@@ -266,7 +266,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// parameters for the link
 		$urlParameters = [
-			'action' => 'viewMore',
+			'pageName' => 'viewMore',
 			'deletedPostId' => $deletedPostId,
 			'moduleMode' => 'admin',
 			'mode' => 'module',
