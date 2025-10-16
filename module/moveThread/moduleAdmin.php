@@ -64,7 +64,6 @@ class moduleAdmin extends abstractModuleAdmin {
 		$originalBoardConfig = $originalBoard->loadBoardConfig();
 
 		$postDateFormatter = new postDateFormatter($originalBoardConfig);
-		$tripcodeProcessor = new tripcodeProcessor($originalBoardConfig);
 		
 		$time = $_SERVER['REQUEST_TIME'];
 		$now = $postDateFormatter->formatFromTimestamp($time);
