@@ -28,3 +28,8 @@ $postSearchRepository = new postSearchRepository($databaseConnection, $dbSetting
 $postSearchService = new postSearchService($postSearchRepository);
 $postRedirectRepository = new postRedirectRepository($databaseConnection, $dbSettings['THREAD_REDIRECT_TABLE'], $dbSettings['THREAD_TABLE']);
 $postRedirectService = new postRedirectService($postRedirectRepository, $threadService);
+$capcodeRepository = new capcodeRepository($databaseConnection, $dbSettings['CAPCODE_TABLE'], $dbSettings['ACCOUNT_TABLE']);
+$capcodeService = new capcodeService($capcodeRepository, $transactionManager);
+
+// init user capcodes as well
+$userCapcodes = $capcodeService->listCapcodes();

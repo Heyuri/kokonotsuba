@@ -216,13 +216,22 @@ function checkall(){
 			$no = $opPost['no'];
 			$sub = $opPost['sub'];
 			$name = $opPost['name'];
+			$email = $opPost['email'];
 			$tripcode = $opPost['tripcode'];
 			$secure_tripcode = $opPost['secure_tripcode'];
 			$capcode = $opPost['capcode'];
 			$now = $opPost['now'];
 			$thread_uid = $opPost['thread_uid'];
 
-			$nameHtml = generatePostNameHtml($this->getConfig('staffCapcodes'), $this->getConfig('CAPCODES'), $name, $tripcode, $secure_tripcode, $capcode);
+			$nameHtml = generatePostNameHtml(
+				$this->moduleContext->moduleEngine, 
+				$name, 
+				$tripcode, 
+				$secure_tripcode, 
+				$capcode,
+				$email,
+				$this->getConfig('NOTICE_SAGE', false)
+			);
 
 			$rescount = $pc[$thread_uid] - 1;
 			if ($this->HIGHLIGHT_COUNT > 0 && $rescount > $this->HIGHLIGHT_COUNT) {

@@ -103,8 +103,7 @@ class postRenderer {
 
 		// Handle name/trip/capcode HTML generation
 		$nameHtml = generatePostNameHtml(
-			$this->config['staffCapcodes'],
-			$this->config['CAPCODES'],
+			$this->moduleEngine,
 			$data['name'],
 			$data['tripcode'],
 			$data['secure_tripcode'],

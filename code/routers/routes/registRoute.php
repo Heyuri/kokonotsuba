@@ -33,7 +33,6 @@ class registRoute {
 
 		// Initialize core handlers
 		$thumbnailCreator = new thumbnailCreator($this->config['USE_THUMB'], $this->config['THUMB_SETTING'], $thumbDir);
-		$tripcodeProcessor = new tripcodeProcessor($this->config);
 		$defaultTextFiller = new defaultTextFiller($this->config);
 		$fortuneGenerator = new fortuneGenerator($this->config['FORTUNES']);
 		$postFilterApplier = new postFilterApplier($this->config, $fortuneGenerator);
@@ -57,7 +56,6 @@ class registRoute {
 			&$redirect,
 			$imgDir,
 			$thumbnailCreator,
-			$tripcodeProcessor,
 			$defaultTextFiller,
 			$postFilterApplier,
 			$postDateFormatter,
@@ -86,7 +84,7 @@ class registRoute {
 			$this->validateAndCleanPostContent($postData, $fileMeta['status'], $fileMeta['file'], $postData['is_admin'], $thread);
 
 			// Step 6: Handle tripcode, default text, filters, and categories
-			$this->processPostDetails($postData, $tripcodeProcessor, $defaultTextFiller, $postFilterApplier);
+			$this->processPostDetails($postData, $defaultTextFiller, $postFilterApplier);
 
 			// Step 7: Final data prep (timestamps, password hashing, unique ID)
 			$computedPostInfo = $this->preparePostMetadata($postData, $postDateFormatter, $fileMeta['file']);
@@ -131,8 +129,8 @@ class registRoute {
 				$computedPostInfo['pass'],
 				$computedPostInfo['now'],
 				$postData['name'],
-				$postData['tripcode'],
-				$postData['secure_tripcode'],
+				$postData['tripcode'] ?? '',
+				$postData['secure_tripcode'] ?? '',
 				$postData['capcode'],
 				$emailForInsertion,
 				$postData['sub'],
@@ -212,8 +210,8 @@ class registRoute {
 		[$name, $tripcode, $secure_tripcode] = array_map('trim', explode('#', $name . '##'));
 
 
-		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode' => $tripcode, 'secure_tripcode' => $secure_tripcode, 
-			 'capcode' => '', 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
+		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode_input' => $tripcode, 'secure_tripcode_input' => $secure_tripcode,
+			 'tripcode' => '', 'secure_tripcode' => '', 'capcode' => '', 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
 			 'category' => $category, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip,
 			 'thread_uid' => $thread_uid, 'isReply' => $isReply, 'roleLevel' => $roleLevel, 'time' => $time,
 			 'timeInMilliseconds' => $timeInMilliseconds, 'postOpRoot' => $postOpRoot, 'flgh' => $flgh, 'age' => $age, 'status' => '',
@@ -277,6 +275,13 @@ class registRoute {
 			'email' => &$postData['email'], 
 			'sub' => &$postData['sub'],
 			'com' => &$postData['comment'],
+			'tripcode' => &$postData['tripcode'],
+			'secure_tripcode' => &$postData['secure_tripcode'],
+			'tripcode_input' => &$postData['tripcode_input'],
+			'secure_tripcode_input' => &$postData['secure_tripcode_input'],
+			'tripcode' => &$postData['tripcode'],
+			'secure_tripcode' => &$postData['secure_tripcode'],
+			'capcode' => &$postData['capcode'],
 			'age' => &$postData['age'],
 			'file' => $file,
 			'ip' => $postData['ip'], 
@@ -299,8 +304,7 @@ class registRoute {
 		$postData['comment'] = $this->postValidator->cleanComment($postData['comment'], $upfileStatus, $isAdmin);
 	}
 
-	private function processPostDetails(array &$postData, tripcodeProcessor $tripcodeProcessor, defaultTextFiller $defaultTextFiller, postFilterApplier $postFilterApplier): void {
-		$tripcodeProcessor->apply($postData['name'], $postData['tripcode'], $postData['secure_tripcode'], $postData['capcode'], $postData['roleLevel']);
+	private function processPostDetails(array &$postData, defaultTextFiller $defaultTextFiller, postFilterApplier $postFilterApplier): void {
 		$defaultTextFiller->fill($postData['sub'], $postData['comment']);
 		$postFilterApplier->applyFilters($postData['comment'], $postData['email']);
 	

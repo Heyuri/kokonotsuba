@@ -83,6 +83,7 @@ $config['ModuleList'] = array(
 	'viewIp' => true,
 	'posterID' => true,
 	'dice' => true,
+	'tripcode' => true,
 	/* misc */
 	'soudane' => true,
 	'privateMessage' => true,
@@ -242,11 +243,6 @@ $config['AUTO_LINK'] = 1; // Create urls (autolink)
 // Footer at the bottom of the page
 $config['FOOTTEXT'] = '';
 
-
-$config['CAPCODES'] = array( // tripcode=>color,cap // for secure tripcode hashes, put ★ instead of ◆
-	'tripcode' => array('color'=>'#fd0000', 'cap'=>' ## Admin'),
-);
-
 $config['REF_URL'] = ''; // URL prefix, eg: https://jump.heyuri.net
 
 $config['VIDEO_EXT'] = 'WEBM|MP4'; // What filetypes will be loaded as a video
@@ -327,6 +323,7 @@ $config['AuthLevels']['CAN_EDIT_BLOTTER'] = \Kokonotsuba\Root\Constants\userRole
 $config['AuthLevels']['CAN_MANAGE_POSTS'] = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR;
 $config['AuthLevels']['CAN_VIEW_ACTION_LOG'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_RAW_HTML'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
+$config['AuthLevels']['CAN_MANAGE_CAPCODES'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
 
 // The duration (in seconds) of inactivity allowed before automatically logging out a staff user
 // This value must not exceed the value of session.gc_maxlifetime in your php.ini

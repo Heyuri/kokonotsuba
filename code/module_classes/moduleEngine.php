@@ -93,6 +93,8 @@ use Kokonotsuba\Root\Constants\userRole;
 			$this->moduleEngineContext->postRedirectService,
 			$this->moduleEngineContext->deletedPostsService,
 			$this->moduleEngineContext->fileService,
+			$this->moduleEngineContext->capcodeService,
+			$this->moduleEngineContext->userCapcodes,
 			$this->moduleEngineContext->transactionManager,
 
 		);

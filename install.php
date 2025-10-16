@@ -549,6 +549,21 @@ class tableCreator {
 				-- Composite index for queries filtering by both post_uid and file_md5
 				KEY idx_post_uid_file_md5 (post_uid, file_md5)
 			) ENGINE=InnoDB;
+			",
+
+			"CREATE TABLE capcodes (
+				id INT AUTO_INCREMENT PRIMARY KEY,
+				tripcode VARCHAR(255),
+				is_secure TINYINT(1) DEFAULT 0,
+				date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+				added_by INT NULL,
+				color_hex CHAR(7) NOT NULL,
+				cap_text TEXT,
+
+				UNIQUE KEY unique_tripcode_is_secure (tripcode, is_secure),
+				CONSTRAINT fk_capcodes_added_by FOREIGN KEY (added_by) REFERENCES accounts(id) ON DELETE SET NULL;
+			) ENGINE=InnoDB;
+			
 			"
 		];
 	

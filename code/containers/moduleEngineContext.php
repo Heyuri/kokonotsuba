@@ -17,6 +17,8 @@ class moduleEngineContext {
         public readonly postRedirectService $postRedirectService,
         public readonly deletedPostsService $deletedPostsService,
         public readonly fileService $fileService,
+        public capcodeService $capcodeService,
+        public array $userCapcodes,
         public transactionManager $transactionManager,
         public templateEngine $templateEngine,
         public board $board,

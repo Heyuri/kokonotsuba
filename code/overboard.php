@@ -18,6 +18,8 @@ class overboard {
 		private readonly postRedirectService $postRedirectService,
 		private readonly deletedPostsService $deletedPostsService,
 		private readonly fileService $fileService,
+		private capcodeService $capcodeService,
+		private array $userCapcodes,
 		private transactionManager $transactionManager,
 		private moduleEngine $moduleEngine, 
 		private templateEngine $templateEngine
@@ -234,6 +236,8 @@ class overboard {
 			$this->postRedirectService,
 			$this->deletedPostsService,
 			$this->fileService,
+			$this->capcodeService,
+			$this->userCapcodes,
 			$this->transactionManager,
 			$templateEngine, 
 			$board);

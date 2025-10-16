@@ -5,78 +5,63 @@
 */
 
 /* Generate html for the post name dynamically */
-function generatePostNameHtml(array $staffCapcodes,
-	array $userCapcodes,
-	?string $name = '', 
-	?string $tripcode = '', 
-	?string $secure_tripcode = '', 
-	?string $capcode = '',
-	string $email = '',
+function generatePostNameHtml(
+	moduleEngine $moduleEngine, 
+	string $name,
+	string $tripcode,
+	string $secure_tripcode,
+	string $capcode,
+	string $email,
 	bool $noticeSage = false): string {
 	// For compatability reasons, names already containing html will just be displayed without any further processing.
 	// Because kokonotsuba previously stored name/trip/capcode html all in the name column, and this can cause double wrapped html
 	if(containsHtmlTags($name)) return $name;
 
-	$nameHtml = '<span class="postername">'.$name.'</span>';
-	
-	// Check for secure tripcode first; use ★ symbol if present
-	if($secure_tripcode) {
-		$nameHtml = $nameHtml.'<span class="postertrip">★'.$secure_tripcode.'</span>';
-	}
-	// Check for regular tripcode with ◆ symbol
-	else if($tripcode) {
-		$nameHtml = $nameHtml.'<span class="postertrip">◆'.$tripcode.'</span>';
-	}
+	// generate poster name
+	$nameHtml = '<span class="postername">' . $name . '</span>';
 
-	// Check if either tripcode or secure tripcode has a defined capcode
-	if (array_key_exists($tripcode, $userCapcodes) || array_key_exists($secure_tripcode, $userCapcodes)) {
-		// Retrieve the corresponding capcode mapping (tripcode first, fallback to secure tripcode)
-		$capcodeMap = $userCapcodes[$tripcode] ?? $userCapcodes[$secure_tripcode];
-	
-		// Extract the capcode color
-		$capcodeColor = $capcodeMap['color'];
-
-		// Extract the capcode text
-		$capcodeText = $capcodeMap['cap'];
-
-		// Wrap the name HTML and append capcode text, applying the capcode color
-		$nameHtml = '<span class="capcodeSection" style="color:'.$capcodeColor.';">'.$nameHtml. '<span class="postercap">' .$capcodeText.'</span> </span>';
-	}
-
-
-	// If a capcode is provided, format the name accordingly
-	if($capcode) {
-		// Handle staff capcodes if defined in the config
-		if(array_key_exists($capcode,$staffCapcodes)) {
-			// Retrieve the corresponding capcode HTML template
-			$capcodeMap = $staffCapcodes[$capcode];
-			$capcodeHtml = $capcodeMap['capcodeHtml'];
-
-			// Apply the capcode formatting (usually wraps or replaces nameHtml)
-			$nameHtml = '<span class="postername">'.sprintf($capcodeHtml, $name).'</span>';
-		}
-
-	}
+	// run tripcode/capcode hook point
+	$moduleEngine->dispatch('RenderTripcode', [&$nameHtml, &$tripcode, &$secure_tripcode, &$capcode]);
 
 	// wrap name in email
-	if($email) {
-		$nameHtml = '<a href="mailto:'.$email.'">'. $nameHtml .'</a>';
-	}
+	$nameHtml = generateEmailName($nameHtml, $email);
 	
 	// append SAGE!
-	if ($noticeSage && str_contains($email, "sage")) {
-		$nameHtml .= ' <span class="sageText">SAGE!</span>';
-	}
+	$nameHtml .= generateNoticeSage($noticeSage, $email);
 
+	// return the name html
 	return $nameHtml;
 }
 
+function generateEmailName(string $nameHtml, string $email): string {
+	// if the email isn't empty then wrap it in an <a>
+	if($email) {
+		return '<a href="mailto:' . $email . '">'. $nameHtml . '</a>';
+	} 
+	// no email
+	else {
+		return $nameHtml;
+	}
+}
 
-	/**
-	 * Replace quote links in a post comment with anchor tags.
-	 * If the quoted post exists (based on quote links), it links to that post.
-	 * If not, the quote is displayed as a deleted reference using <del>.
-	 */
+function generateNoticeSage(bool $noticeSage, string $email): string {
+	// notice sage
+	// return sageText span
+	if ($noticeSage && str_contains($email, "sage")) {
+		return ' <span class="sageText">SAGE!</span>';
+	}
+	// notice sage disabled or the post isn't a sage
+	else {
+		// so return nothing
+		return '';
+	}
+}
+
+/**
+ * Replace quote links in a post comment with anchor tags.
+ * If the quoted post exists (based on quote links), it links to that post.
+ * If not, the quote is displayed as a deleted reference using <del>.
+ */
 function generateQuoteLinkHtml(array $quoteLinksFromBoard, array $post, int $threadNumber, bool $useQuoteSystem, board $board): string {
 	if (
 		empty($useQuoteSystem) ||

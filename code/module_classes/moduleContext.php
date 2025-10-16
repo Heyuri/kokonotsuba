@@ -6,6 +6,7 @@ use actionLoggerService;
 use attachmentService;
 use \board;
 use boardService;
+use capcodeService;
 use deletedPostsService;
 use fileService;
 use \moduleEngine;
@@ -40,6 +41,8 @@ class moduleContext {
 		public readonly postRedirectService $postRedirectService,
 		public readonly deletedPostsService $deletedPostsService,
 		public readonly fileService $fileService,
-		public transactionManager $transactionManager,
+		public capcodeService $capcodeService,
+		public array $userCapcodes, 
+		public transactionManager $transactionManager
 	) {}
 }

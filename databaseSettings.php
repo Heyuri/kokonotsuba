@@ -25,4 +25,5 @@ return [
 	'THREAD_TABLE' => 'threads', //holds all threads
 	'THREAD_REDIRECT_TABLE' => 'redirects', //for thread redirecting
 	'DELETED_POSTS_TABLE' => 'deleted_posts', // for storing meta-data on deleted posts
+	'CAPCODE_TABLE' => 'capcodes', // for storing capcode-related data
 ];

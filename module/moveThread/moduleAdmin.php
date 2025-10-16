@@ -76,9 +76,6 @@ class moduleAdmin extends abstractModuleAdmin {
 		$capcode = "";
 		$name = $originalBoardConfig['SYSTEMCHAN_NAME'];
 
-		$tripcode = '';
-		$secure_tripcode = 'System';
-
 		// Generate link to the new thread
 		$newThreadUrl = $destinationBoard->getBoardThreadURL($newThread['post_op_number']);
 		$moveComment = 'Thread moved to <a href="' . $newThreadUrl . '">'.$destinationBoard->getBoardTitle().'</a>';
@@ -86,7 +83,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		// Prepare post metadata
 		$ip = new IPAddress('127.0.0.1');
 
-		$tripcodeProcessor->apply($name, $tripcode, $secure_tripcode, $capcode, \Kokonotsuba\Root\Constants\userRole::LEV_SYSTEM);
+		// set the capcode to System-chan's capcode label
+		$capcode = 'System';
 
 		// Get original thread UID
 		$originalThreadUid = $originalThread['thread_uid'];
@@ -110,8 +108,8 @@ class moduleAdmin extends abstractModuleAdmin {
 				'',
 				$now,
 				$name,
-				$tripcode,
-				$secure_tripcode,
+				'',
+				'',
 				$capcode,
 				'',
 				'',

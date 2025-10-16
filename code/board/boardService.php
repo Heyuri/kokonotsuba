@@ -246,6 +246,8 @@ class boardService {
 			$this->boardDiContainer->postRedirectService,
 			$this->boardDiContainer->deletedPostsService,
 			$this->boardDiContainer->fileService,
+			$this->boardDiContainer->capcodeService,
+			$this->boardDiContainer->userCapcodes,
 			$this->boardDiContainer->transactionManager,
 			$templateEngine, 
 			$board);
@@ -288,7 +290,7 @@ class boardService {
 		}
 
 		if ($templateFile === null) {
-			return null;
+			throw new BoardException("Template file path is null!");
 		}
 
 		$dependencies = [

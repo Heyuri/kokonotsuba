@@ -111,7 +111,15 @@ class managePostsRoute {
 			$sub = substr($sub, 0, 500);
 			// $com = substr($com, 0, 500);
 
-			$nameHtml = generatePostNameHtml($this->config['staffCapcodes'], $this->config['CAPCODES'], $name, $tripcode, $secure_tripcode, $capcode, $email);
+			$nameHtml = generatePostNameHtml(
+				$this->moduleEngine,  
+				$name, 
+				$tripcode, 
+				$secure_tripcode, 
+				$capcode, 
+				$email,
+				$this->config['NOTICE_SAGE']
+			);
 
 			// The first part of the discussion is the stop tick box and module function
 			$modFunc = ' ';

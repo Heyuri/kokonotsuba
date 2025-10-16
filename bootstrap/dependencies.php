@@ -54,6 +54,8 @@ $overboard = new overboard(
 	$postRedirectService,
 	$deletedPostsService,
 	$fileService,
+	$capcodeService,
+	$userCapcodes,
 	$transactionManager,
 	$moduleEngine, 
 	$templateEngine

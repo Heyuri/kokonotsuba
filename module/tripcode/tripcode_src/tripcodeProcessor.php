@@ -74,14 +74,4 @@ class tripcodeProcessor {
 			}
 		}
 	}
-
-	// Apply capcode overrides if specific tripcode mappings exist
-	private function applyCapcodeOverrides(string $name, string $trip): string {
-		if (isset($this->config['CAPCODES'][$trip])) {
-			$cap = $this->config['CAPCODES'][$trip];
-			// Wrap name with capcode style information
-			return '<span class="capcodeSection" style="color:' . $cap['color'] . ';">' . $name . '<span class="postercap">' . $cap['cap'] . '</span></span>';
-		}
-		return $name;
-	}
 }

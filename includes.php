@@ -55,6 +55,10 @@ require __DIR__ . '/code/cache/path_cache/cachedBoardPath.php';
 require __DIR__ . '/code/cache/thread_cache/threadCache.php';
 require __DIR__ . '/code/cache/thread_cache/threadCacheSingleton.php';
 
+// capcode backend classes
+require __DIR__ . '/code/capcode_backend/capcodeRepository.php';
+require __DIR__ . '/code/capcode_backend/capcodeService.php';
+
 // containers
 require __DIR__ . '/code/containers/boardDiContainer.php';
 require __DIR__ . '/code/containers/moduleEngineContext.php';
@@ -146,7 +150,6 @@ require __DIR__ . '/code/post/helper/fortuneGenerator.php';
 require __DIR__ . '/code/post/helper/postDateFormatter.php';
 require __DIR__ . '/code/post/helper/postFilterApplier.php';
 require __DIR__ . '/code/post/helper/thumbnailCreator.php';
-require __DIR__ . '/code/post/helper/tripcodeProcessor.php';
 require __DIR__ . '/code/post/helper/webhookDispatcher.php';
 require __DIR__ . '/code/post/postRedirectRepository.php';
 require __DIR__ . '/code/post/postRedirectService.php';

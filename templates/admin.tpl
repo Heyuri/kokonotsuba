@@ -781,3 +781,158 @@ window.onload = function () {
 		</div>
 	</div>
 <!--/&DELETED_POSTS_MOD_PAGE-->
+
+<!--&CAPCODE_ENTRY-->
+	<h3>View capcode</h3>
+	[<a href="{$MODULE_URL}">Back</a>]
+	<div class="capcodeEntryContainer">
+		<form method="POST" action="{$MODULE_URL}">
+			<input name="capcodeId" value="{$ID}" type="hidden">
+			<table class="capcodeEntry">
+				<tr>
+					<td class="postblock"><label for="rawTripcode">Tripcode</label></td>
+					<td><input id="rawTripcode" name="rawTripcode" value="{$TRIP_KEY}{$TRIPCODE}"></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="capcodeColorHex">Capcode color</label></td>
+					<td><input type="color" id="capcodeColorHex" name="capcodeColorHex" value="{$CAPCODE_COLOR}"></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="capcodeText">Capcode text</label></td>
+					<td><input id="capcodeText" name="capcodeText" value="{$CAPCODE_TEXT}"></td>
+				</tr>
+				<tr>
+					<td class="postblock">Preview</td>
+					<td><span class="capcodeEntryPreview">{$PREVIEW}</span></td>
+				</tr>
+				<tr>
+					<td class="postblock">ID</td>
+					<td><span class="capcodeEntryId">{$ID}</span></td>
+				</tr>
+				<tr>
+					<td class="postblock">Date added</td>
+					<td><span class="capcodeEntryDateAdded">{$DATE_ADDED}</span></td>
+				</tr>
+				<tr>
+					<td class="postblock">Added by</td>
+					<td><span class="capcodeEntryAddedBy"><!--&IF($ADDED_BY_USERNAME,'{$ADDED_BY_USERNAME}','<i>N/A</i>')--></span></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="capcodeSubmitButtons"></label></td>
+					<td>
+						<div id="capcodeSubmitButtons">
+							<button type="submit"
+								name="action"
+								value="editCapcode"
+								class="adminFunctions adminEditCapcodeFunction"
+								title="Delete the capcode">
+								Submit edit
+							</button>
+							<button type="submit"
+								name="action"
+								value="deleteCapcode"
+								class="adminFunctions adminDeleteCapcodeFunction"
+								title="Delete the capcode">
+								Delete
+							</button>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</form>
+	</div>
+<!--/&CAPCODE_ENTRY-->
+
+<!--&CAPCODE_CREATE_FORM-->
+	<div class="capcodeCreateFormContainer">
+		<h4>Add capcode</h4>
+		<p>Create a capcode that will be added to the capcode list.</p>
+		<form method="POST" action="{$MODULE_URL}">
+			<table class="capcodeCreateForm">
+				<tr>
+					<td class="postblock">Tripcode</td>
+					<td><input name="rawTripcode" required="" maxlength=11></td>
+					<td><small class="formNote">The tripcode along with the trip key. Like "{$REGULAR_TRIP_KEY}.CzKQna1OU" or "{$SECURE_TRIP_KEY}dHdC5plkz6"</small><td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="capcodeColorHex">Capcode color</label></td>
+					<td><input type="color" id="capcodeColorHex" name="capcodeColorHex"></td>
+					<td><small class="formNote">Color that the post name will have.</small></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="capcodeText">Capcode text</label></td>
+					<td><input id="capcodeText" name="capcodeText"></td>
+					<td><small class="formNote">Text that gets appended to the name after '##'. E.g 'User{$SECURE_TRIP_KEY}dHdC5plkz6 ## Pezident'</small></td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="capcodeSubmitButtons"></label></td>
+					<td>
+						<div id="capcodeSubmitButtons" class="capcodeSubmitButtons">
+							<button type="submit"
+								name="action"
+								value="createCapcode"
+								class="adminFunctions adminCreateCapcodeFunction"
+								title="Create capcode">
+								Submit
+							</button>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</form>
+	</div>
+<!--/&CAPCODE_CREATE_FORM-->
+
+<!--&STAFF_CAPCODE_ROW-->
+	<tr>
+		<td>{$STAFF_CAPCODE_LABEL}</td>
+		<td>{$STAFF_CAPCODE_PREVIEW}</td>
+		<td>{$STAFF_CAPCODE_REQUIRED_ROLE}</td>
+	</tr>
+<!--/&STAFF_CAPCODE_ROW-->
+
+<!--&CAPCODE_ROW-->
+	<tr>
+		<td><span class="postertrip">{$TRIP_KEY}{$TRIPCODE}</span></td>
+		<td>{$CAPCODE_COLOR}</td>
+		<td>{$CAPCODE_TEXT}</td>
+		<td>{$PREVIEW}</td>
+		<td>[<a href="{$VIEW_ENTRY_URL}">View</a>]</td>
+	</tr>
+<!--/&CAPCODE_ROW-->
+
+<!--&CAPCODE_INDEX-->
+	<h3>Capcodes</h3> 
+	<!--&CAPCODE_CREATE_FORM/-->
+	<div class="capcodeListContainer">
+		<h4>Capcode list</h4>
+		<p>User capcodes that can be used as long as the user knows the trip password.</p>
+		<table class="capcodeList postlists">
+			<thead>
+				<th>Tripcode</th> <th>Color hexadecimal</th> <th>Capcode text</th> <th>Preview</th> <th></th>
+			</thead>
+			<tbody>
+				<!--&FOREACH($CAPCODES,'CAPCODE_ROW')-->
+				<!--&IF($ARE_NO_CAPCODES,'
+					<tr>
+						<td colspan="5" class="centerText">No capcodes found.</td>
+					</tr>','')-->
+			</tbody>
+		</table>
+	</div>
+	
+	<div class="staffCapcodeListContainer">
+		<h4>Staff capcode list</h4>
+		<p>Only usable by staff. Can be edited in <code>globalconfig.php</code></p>
+
+		<table class="staffCapcodeList postlists">
+			<thead>
+				<th>Capcode</th> <th>Preview</th> <th>Required role to use</th>
+			</thead>
+			<tbody>
+			<!--&FOREACH($STAFF_CAPCODES,'STAFF_CAPCODE_ROW')-->
+			</tbody>
+		</table>
+	</div>
+
+<!--/&CAPCODE_INDEX-->

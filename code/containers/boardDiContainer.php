@@ -14,6 +14,8 @@ class boardDiContainer {
 		public readonly attachmentService $attachmentService,
 		public readonly postRedirectService $postRedirectService,
 		public readonly deletedPostsService $deletedPostsService,
+		public capcodeService $capcodeService,
+		public array $userCapcodes,
 		public readonly fileService $fileService,
 		public readonly transactionManager $transactionManager
     ) {}
