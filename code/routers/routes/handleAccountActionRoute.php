@@ -26,7 +26,7 @@ class handleAccountActionRoute {
 			$newAccountRole = $_POST['role'] ?? null;
 
 			if (isset($accountIdToDelete)) {
-				$this->accountService->handleAccountDelete($accountIdToPromote);
+				$this->accountService->handleAccountDelete($accountIdToDelete);
 			}
 			if (isset($accountIdToDemote)) {
 				$this->accountService->handleAccountDemote($accountIdToDemote);
