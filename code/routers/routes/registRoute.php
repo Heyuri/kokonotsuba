@@ -302,6 +302,25 @@ class registRoute {
 		$postData['sub'] = str_replace("\r\n", '', $postData['sub']);
 	
 		$postData['comment'] = $this->postValidator->cleanComment($postData['comment'], $upfileStatus, $isAdmin);
+		
+		// Ensure name is not empty or whitespace
+		$postData['name'] = $this->ensureNameSet($postData['name']);
+	}
+
+	// Ensure the name is set; use default or trigger error if not
+	private function ensureNameSet(string $name): string {
+		if (!$name || preg_match("/^[ |　|]*$/", $name)) {
+			if ($this->config['ALLOW_NONAME']) {
+				// Assign default name if allowed
+				$name = $this->config['DEFAULT_NONAME'];
+			} else {
+				// Otherwise, trigger an error
+				throw new BoardException(_T('regist_withoutname'));
+			}
+		}
+
+		// return modified name
+		return $name;
 	}
 
 	private function processPostDetails(array &$postData, defaultTextFiller $defaultTextFiller, postFilterApplier $postFilterApplier): void {

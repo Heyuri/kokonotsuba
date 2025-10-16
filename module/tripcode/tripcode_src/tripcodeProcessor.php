@@ -26,9 +26,6 @@ class tripcodeProcessor {
 		// Generate tripcode based on extracted trip parts
 		$this->generateTripcode($tripcode, $secure_tripcode);
 
-		// Ensure name is not empty or whitespace
-		$this->ensureNameSet($name);
-
 	}
 
 	// Check if name contains fraud symbols
@@ -62,16 +59,4 @@ class tripcodeProcessor {
 
 	}
 
-	// Ensure the name is set; use default or trigger error if not
-	private function ensureNameSet(string &$name): void {
-		if (!$name || preg_match("/^[ |　|]*$/", $name)) {
-			if ($this->config['ALLOW_NONAME']) {
-				// Assign default name if allowed
-				$name = $this->config['DEFAULT_NONAME'];
-			} else {
-				// Otherwise, trigger an error
-				throw new BoardException(_T('regist_withoutname'));
-			}
-		}
-	}
 }

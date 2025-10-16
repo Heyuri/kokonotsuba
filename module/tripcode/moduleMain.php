@@ -43,7 +43,7 @@ class moduleMain extends abstractModuleMain {
 		// add hookpoint for tripcode generatoring 
 		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (array &$registInfo) {
 			$this->onGenerateTripcode(
-				$registInfo['ip'], 
+				$registInfo['name'], 
 				$registInfo['tripcode_input'], 
 				$registInfo['secure_tripcode_input'], 
 				$registInfo['tripcode'], 
