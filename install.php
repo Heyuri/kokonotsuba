@@ -561,7 +561,7 @@ class tableCreator {
 				cap_text TEXT,
 
 				UNIQUE KEY unique_tripcode_is_secure (tripcode, is_secure),
-				CONSTRAINT fk_capcodes_added_by FOREIGN KEY (added_by) REFERENCES accounts(id) ON DELETE SET NULL;
+				CONSTRAINT fk_capcodes_added_by FOREIGN KEY (added_by) REFERENCES accounts(id) ON DELETE SET NULL
 			) ENGINE=InnoDB;
 			
 			"
