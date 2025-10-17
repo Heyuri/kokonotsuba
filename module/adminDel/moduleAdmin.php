@@ -142,12 +142,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		
 		switch ($_GET['action']??'') {
 			case 'del':
-				$this->moduleContext->moduleEngine->dispatch('PostOnDeletion', array($post['post_uid'], 'backend'));
 				$this->moduleContext->postService->removePosts([$post['post_uid']], $accountId);
 				$this->moduleContext->actionLoggerService->logAction('Deleted post No.'.$post['no'], $boardUID);
 				break;
 		case 'delmute':
-				$this->moduleContext->moduleEngine->dispatch('PostOnDeletion', array($post['post_uid'], 'backend'));
 				$this->moduleContext->postService->removePosts([$post['post_uid']], $accountId);
 				$ip = $post['host'];
 				$starttime = $_SERVER['REQUEST_TIME'];
