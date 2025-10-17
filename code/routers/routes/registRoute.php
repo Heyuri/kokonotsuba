@@ -384,9 +384,9 @@ class registRoute {
 			$postData['pwd'] = ($postData['pwdc'] == '') ? substr(rand(), 0, 12) : $postData['pwdc'];
 		}
 
-		// hash the password
-		$passwordHash = password_hash($postData['pwd'], PASSWORD_DEFAULT);
-	
+		// generate the password hash
+		$passwordHash = $this->generatePasswordHash($postData['pwd']);
+
 		$no = $this->board->getLastPostNoFromBoard() + 1;
 		$is_op = $postData['resno'] ? false : true;
 		$now = $postDateFormatter->formatFromTimestamp($postData['time']);
@@ -402,6 +402,24 @@ class registRoute {
 		];
 	}
 	
+	private function generatePasswordHash(string $password): string {
+		// cost of the password
+		// the higher the cost - the longer it takes to generate, but harder to bruteforce
+		// since a password is generated for everyone post, we'll keep the cost low
+		$cost = 9;
+
+		// options for the bcrypt hash
+		$options = [
+			'cost' => $cost,
+		];
+
+		// hash the password
+		$passwordHash = password_hash($password, PASSWORD_BCRYPT, $options);
+
+		// return hash
+		return $passwordHash;
+	}
+
 	// Processes quote links (e.g., >>123 or >>No.123) in a post's comment
 	private function handlePostQuoteLink(int $postNumber, string $postComment) {
 		// Match all quote patterns like ">>123" or ">>No.123" in the comment
