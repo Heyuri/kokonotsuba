@@ -104,8 +104,14 @@ class usrdelRoute {
 		return $postUidsForDeletion;
 	}
 
-	private function authenticateAndLogPostDeletions(array $posts, string $password, bool $onlyImgDel, 
-		bool &$postWasDeleted, array &$authenticatedDeletedPostUids, array &$authenticatedPostData): void {
+	private function authenticateAndLogPostDeletions(
+		array $posts, 
+		string $password, 
+		bool $onlyImgDel, 
+		bool &$postWasDeleted, 
+		array &$authenticatedDeletedPostUids, 
+		array &$authenticatedPostData
+	): void {
 
 		// Loop through each post and authenticate whether it can be deleted by the user
 		foreach ($posts as $post) {
@@ -138,7 +144,13 @@ class usrdelRoute {
 		}
 	}
 	
-	private function handlePostDeletion(bool $postWasDeleted, bool $deleteAttachment, array $postData, array $postUids, ?int $accountId): void {
+	private function handlePostDeletion(
+		bool $postWasDeleted, 
+		bool $deleteAttachment, 
+		array $postData, 
+		array $postUids, 
+		?int $accountId
+	): void {
 		// if any of the selected posts were authenticated, then delete the posts that were authenticated - unauthenticated posts will not get deleted and just be ignored
 		if ($postWasDeleted) {
 			// only delete the attachments for posts that have an attachment
