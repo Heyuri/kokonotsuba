@@ -84,7 +84,7 @@ class usrdelRoute {
 		$this->handleDeleteRedirect();
 	}
 
-	private function collectPostUidsForDeletion() {
+	private function collectPostUidsForDeletion(): array {
 		// Initialize an array to store the UIDs marked for deletion
 		$postUidsForDeletion = [];
 
