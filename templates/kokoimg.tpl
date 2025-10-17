@@ -116,7 +116,7 @@
 					</tr>','')-->
 					<tr>
 						<td class="postblock"><label for="pwd">Password</label></td>
-						<td class="postformInputCell">{$FORM_DELETE_PASSWORD_FIELD}<span id="delPasswordInfo">(for deletion, 8 chars max)</span>{$FORM_EXTRA_COLUMN}</td>
+						<td class="postformInputCell"><input type="password" name="pwd" id="pwd" value="" class="inputtext" maxlength="{$INPUT_MAX}"><span id="delPasswordInfo">(for deletion)</span>{$FORM_EXTRA_COLUMN}</td>
 					</tr>
 					<!--&IF($IS_STAFF,'<tr>
 						<td class="postblock"><label for="postFormAdmin">Magic</label></td>
@@ -263,7 +263,7 @@
 <!--&DELFORM-->
 		<div id="userdelete">
 			<div id="fileOnlyRow">{$DEL_HEAD_TEXT}[<label>{$DEL_IMG_ONLY_FIELD}{$DEL_IMG_ONLY_TEXT}</label>]</div>
-			<div id="passwordRow"><label>{$DEL_PASS_TEXT}{$DEL_PASS_FIELD}</label>{$DEL_SUBMIT_BTN}</div>
+			<div id="passwordRow"><label>{$DEL_PASS_TEXT}<input type="hidden" name="func" value="delete"> <input type="password" class="inputtext" name="pwd" id="pwd2" value=""></label>{$DEL_SUBMIT_BTN}</div>
 		</div>
 <!--/&DELFORM-->
 

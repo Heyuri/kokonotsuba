@@ -147,7 +147,8 @@ class modeHandler {
 					$this->routeDiContainer->deletedPostsService, 
 					$this->routeDiContainer->softErrorHandler,
 					$this->routeDiContainer->regularBoards,
-					$this->routeDiContainer->FileIO
+					$this->routeDiContainer->FileIO,
+					$this->routeDiContainer->postPolicy
 				);
 				$route->userPostDeletion();
 			},

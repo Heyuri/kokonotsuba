@@ -44,7 +44,7 @@ class postValidator {
 	public function validateForDatabase(&$pwdc, &$com, &$time, &$pass, &$host, &$upfile_name, &$md5chksum, &$dest, $roleLevel){
 		// Continuous submission / same additional image check
 		$checkcount = 50; // Check 50 by default
-		$pwdc = substr(md5($pwdc), 2, 8); // Cookies Password
+		$pwdc = substr(md5($pwdc), 2, 12); // Cookies Password
 		if ($roleLevel->isLessThan(\Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR))  {
 			if($this->postService->isSuccessivePost($this->board, $checkcount, $com, $time, $pass, $pwdc))
 			   $this->softErrorHandler->errorAndExit(_T('regist_successivepost')); // Continuous submission check

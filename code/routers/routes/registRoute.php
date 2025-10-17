@@ -91,7 +91,7 @@ class registRoute {
 
 			// Step 8: Validate post for database storage
 			$this->postValidator->validateForDatabase(
-				$postData['pwdc'], $postData['comment'], $postData['time'], $computedPostInfo['pass'],
+				$postData['pwdc'], $postData['comment'], $postData['time'], $computedPostInfo['password_hash'],
 				$postData['ip'], $fileMeta['upfile'], $fileMeta['md5'], $computedPostInfo['dest'], $postData['roleLevel']
 			);
 
@@ -126,7 +126,7 @@ class registRoute {
 				$fileMeta['readableSize'],
 				$fileMeta['thumbWidth'],
 				$fileMeta['thumbHeight'],
-				$computedPostInfo['pass'],
+				$computedPostInfo['password_hash'],
 				$computedPostInfo['now'],
 				$postData['name'],
 				$postData['tripcode'] ?? '',
@@ -295,7 +295,8 @@ class registRoute {
 		if (strlenUnicode($postData['name']) > $this->config['INPUT_MAX']) $this->softErrorHandler->errorAndExit(_T('regist_nametoolong'));
 		if (strlenUnicode($postData['email']) > $this->config['INPUT_MAX']) $this->softErrorHandler->errorAndExit(_T('regist_emailtoolong'));
 		if (strlenUnicode($postData['sub']) > $this->config['INPUT_MAX']) $this->softErrorHandler->errorAndExit(_T('regist_topictoolong'));
-	
+		if (strlenUnicode($postData['pwd']) > $this->config['INPUT_MAX']) $this->softErrorHandler->errorAndExit(_T('regist_passtoolong'));
+
 		setrawcookie('namec', rawurlencode(htmlspecialchars_decode($postData['nameCookie'])), time() + 7 * 24 * 3600);
 	
 		$postData['email'] = str_replace("\r\n", '', $postData['email']);
@@ -380,21 +381,20 @@ class registRoute {
 	// prepare post meta data
 	private function preparePostMetadata(array &$postData, postDateFormatter $postDateFormatter, file $file): array {
 		if ($postData['pwd'] == '') {
-			$postData['pwd'] = ($postData['pwdc'] == '') ? substr(rand(), 0, 8) : $postData['pwdc'];
+			$postData['pwd'] = ($postData['pwdc'] == '') ? substr(rand(), 0, 12) : $postData['pwdc'];
 		}
-		$pass = substr(md5($postData['pwd']), 2, 8);
+
+		// hash the password
+		$passwordHash = password_hash($postData['pwd'], PASSWORD_DEFAULT);
 	
 		$no = $this->board->getLastPostNoFromBoard() + 1;
 		$is_op = $postData['resno'] ? false : true;
 		$now = $postDateFormatter->formatFromTimestamp($postData['time']);
 
-		// empty poster hash (the value gets set by the module)
-		$poster_hash = '';
-
 		return [
 			'no' => $no,
 			'is_op' => $is_op,
-			'pass' => $pass,
+			'password_hash' => $passwordHash,
 			'now' => $now,
 			'poster_hash' => '',
 			'dest' => $file->getTemporaryFileName(),

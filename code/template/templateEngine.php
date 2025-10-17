@@ -98,6 +98,7 @@ class templateEngine {
 			'{$BLOTTER}'         => '',
 			'{$GLOBAL_MESSAGE}'  => '',
 			'{$PAGE_TITLE}'      => strip_tags($this->boardData['title'] ?? ''),
+			'{$INPUT_MAX}' => htmlspecialchars($this->config['INPUT_MAX'])
 		], $ary_val);
 	
 		// Load template block

@@ -131,7 +131,6 @@ function preparePostFormTemplateValues(int $resno, ?string $liveIndexFile, ?stri
 		'{$FORM_TOPIC_FIELD}' => '<input maxlength="' . $config['INPUT_MAX'] . '"  type="text" name="sub" id="sub" value="' . $subject . '" class="inputtext">',
 		'{$FORM_SUBMIT}' => '<button id="buttonPostFormSubmit" type="submit" name="mode" value="regist">' . ($resno ? 'Post' : 'New thread') . '</button>',
 		'{$FORM_COMMENT_FIELD}' => '<textarea maxlength="' . $config['COMM_MAX'] . '" name="com" id="com" class="inputtext">' . $comment . '</textarea>',
-		'{$FORM_DELETE_PASSWORD_FIELD}' => '<input type="password" name="pwd" id="pwd" maxlength="8" value="" class="inputtext">',
 		'{$FORM_EXTRA_COLUMN}' => '',
 		'{$FORM_FILE_EXTRA_FIELD}' => '',
 		'{$FORM_NOTICE}' => (

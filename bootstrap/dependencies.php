@@ -38,6 +38,14 @@ $staffAccountFromSession = new staffAccountFromSession;
 $IPValidator = new IPValidator($config, new IPAddress);
 $postValidator = new postValidator($board, $config, $IPValidator, $threadRepository, $softErrorHandler, $threadService, $postService, $attachmentService, $FileIO);
 
+// ───────────────────────────────────────
+// Policies
+// ───────────────────────────────────────
+$postPolicy = new postPolicy($config['AuthLevels'], $staffAccountFromSession->getRoleLevel());
+
+// ───────────────────────────────────────
+// Overboard
+// ───────────────────────────────────────
 $overboard = new overboard(
 	$board, 
 	$config, 

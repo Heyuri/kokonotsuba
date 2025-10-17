@@ -105,7 +105,7 @@ const kkqr = { name: "KK Quick Reply",
 				qrcontents.innerHTML += '';
 			}
 			if (typeof(pwd) != 'undefined') {
-				qrcontents.innerHTML += '<div><input type="password" name="pwd" id="qrpwd" size="8" maxlength="8" value="' + pwd.value + '" class="inputtext" placeholder="Password" oninput="kkqr.input(this);"> <span id="delPasswordInfo">(for deletion, 8 chars max)</span></div>';
+				qrcontents.innerHTML += '<div><input type="password" name="pwd" id="qrpwd" size="8" value="' + pwd.value + '" class="inputtext" placeholder="Password" oninput="kkqr.input(this);"> <span id="delPasswordInfo">(for deletion)</span></div>';
 			}
 			if (typeof(captchacode) != 'undefined') {
 				qrcontents.innerHTML += '<div id="qrcaptcha" class="postblock"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&amp;\';})();">Reload</a>]</small><br><input type="text" name="captchacode" id="qrcaptchacode" value="' + captchacode.value + '" autocomplete="off" class="inputtext" placeholder="Captcha" oninput="kkqr.input(this);"><nobr><small>(Please enter the words. Case-insensitive.)</small></nobr></div>';

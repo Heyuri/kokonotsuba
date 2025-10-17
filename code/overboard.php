@@ -127,7 +127,6 @@ class overboard {
 			'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 			'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
 			'{$FORMDAT}' => '',
-			'{$DEL_PASS_FIELD}' => '<input type="hidden" name="func" value="delete"> <input type="password" class="inputtext" name="pwd" id="pwd2" value="">',
 			'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="'._T('del_btn').'">',
 			'{$THREADS}' => '',
 			'{$TITLE}' => 'Overboard',

@@ -108,7 +108,7 @@
 					</tr>','')-->
 					<tr>
 						<td class="postblock"><label for="pwd">Password</label></td>
-						<td class="postformInputCell">{$FORM_DELETE_PASSWORD_FIELD}<span id="delPasswordInfo">(for deletion, 8 chars max)</span>{$FORM_EXTRA_COLUMN}</td>
+						<td class="postformInputCell"><input type="password" name="pwd" id="pwd" value="" class="inputtext" maxlength="{$INPUT_MAX}"><span id="delPasswordInfo">(for deletion)</span>{$FORM_EXTRA_COLUMN}</td>
 					</tr>
 					<tr>
 						<td id="rules" colspan="2">

@@ -84,7 +84,7 @@
 				<!--&IF($FORM_ATTECHMENT_FIELD,'</div>','')-->
 				<!--&IF($FORM_CATEGORY_FIELD,'<div class="postformItem"><label for="category">Category:</label>{$FORM_CATEGORY_FIELD}<small>(Use , to separate)</small></div>','')-->
 				<div class="postformItem"><label for="com">Comment:</label><div class="commentArea">{$FORM_COMMENT_FIELD}</div></div>
-				<div class="postformItem"><label for="pwd">Password:</label>{$FORM_DELETE_PASSWORD_FIELD}<span id="delPasswordInfo">(for deletion, 8 chars max)</span></div>
+				<div class="postformItem"><label for="pwd">Password:</label><input type="password" name="pwd" id="pwd" value="" class="inputtext" maxlength="{$INPUT_MAX}"><span id="delPasswordInfo">(for deletion)</span></div>
 				<div class="postformItem">{$FORM_EXTRA_COLUMN}</div>
 			</div>
 		</form>
@@ -169,7 +169,7 @@
 
 <!--&DELFORM-->
 	<div id="userdelete">
-		<div id="passwordRow"><label>{$DEL_HEAD_TEXT}{$DEL_PASS_FIELD}</label>{$DEL_SUBMIT_BTN}</div>
+		<div id="passwordRow"><label>{$DEL_HEAD_TEXT}<input type="hidden" name="func" value="delete"> <input type="password" class="inputtext" name="pwd" id="pwd2" value=""></label>{$DEL_SUBMIT_BTN}</div>
 	</div>
 <!--/&DELFORM-->
 
