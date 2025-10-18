@@ -90,7 +90,11 @@ require __DIR__ . '/code/html/miscPartials.php';
 require __DIR__ . '/code/html/moduleHtmlFunctions.php';
 require __DIR__ . '/code/html/pagers.php';
 require __DIR__ . '/code/html/postHtmlFunctions.php';
-require __DIR__ . '/code/html/postRenderer.php';
+require __DIR__ . '/code/html/post_html/attachmentRenderer.php';
+require __DIR__ . '/code/html/post_html/postDataPreparer.php';
+require __DIR__ . '/code/html/post_html/postElementGenerator.php';
+require __DIR__ . '/code/html/post_html/postRenderer.php';
+require __DIR__ . '/code/html/post_html/postTemplateBinder.php';
 require __DIR__ . '/code/html/threadRenderer.php';
 
 // ip
