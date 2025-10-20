@@ -51,14 +51,14 @@ class moduleMain extends abstractModuleMain {
 		// Read all lines from the counter file (ignore empty lines)
 		$usr_arr = file($this->usercounter, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
-		$currentTimeInMinutes = floor(time() / 60);
+		$currentTime = time();
 		$addr = $_SERVER['REMOTE_ADDR'];
 
 		// Clean and rebuild the list of active users
-		$activeUsers = $this->filterActiveUsers($usr_arr, $currentTimeInMinutes, $addr);
+		$activeUsers = $this->filterActiveUsers($usr_arr, $currentTime, $addr);
 
 		// Add or update the current user's timestamp
-		$activeUsers[$addr] = $currentTimeInMinutes;
+		$activeUsers[$addr] = $currentTime;
 
 		// Rewrite the entire file with the updated list
 		$this->writeActiveUsers($fp, $activeUsers);
@@ -75,11 +75,11 @@ class moduleMain extends abstractModuleMain {
 	 * Filters the list of user entries, keeping only those still active within the timeout.
 	 * 
 	 * @param array $usr_arr Lines read from the user counter file.
-	 * @param int $currentTimeInMinutes Current timestamp in minutes.
+	 * @param int $currentTime Current timestamp in minutes.
 	 * @param string $currentAddr IP address of the current user.
 	 * @return array Array of active users in [ip => timestamp] format.
 	 */
-	private function filterActiveUsers($usr_arr, $currentTimeInMinutes, $currentAddr) {
+	private function filterActiveUsers($usr_arr, $currentTime, $currentAddr) {
 		$activeUsers = [];
 
 		foreach ($usr_arr as $line) {
@@ -90,7 +90,7 @@ class moduleMain extends abstractModuleMain {
 			list($ip_addr, $stamp) = explode("|", $line) + [null, null];
 
 			// Validate and retain only active, non-duplicate IPs
-			if (is_numeric($stamp) && ($currentTimeInMinutes - $stamp) < $this->timeout && $ip_addr != $currentAddr) {
+			if (is_numeric($stamp) && ($currentTime - $stamp) < ($this->timeout * 60) && $ip_addr != $currentAddr) {
 				$activeUsers[$ip_addr] = $stamp;
 			}
 		}
