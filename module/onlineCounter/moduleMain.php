@@ -41,15 +41,15 @@ class moduleMain extends abstractModuleMain {
 		// Ensure the counter file exists
 		touch($this->usercounter);
 
-		// Read all lines from the counter file (ignore empty lines)
-		$usr_arr = file($this->usercounter, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
 		// Open file for both reading and writing; "c+" creates it if missing
 		$fp = fopen($this->usercounter, "c+");
 		if (!$fp) return 0;
 
 		// Lock file to prevent concurrent access (important under high traffic)
 		flock($fp, LOCK_EX);
+
+		// Read all lines from the counter file (ignore empty lines)
+		$usr_arr = file($this->usercounter, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
 		$currentTimeInMinutes = floor(time() / 60);
 		$addr = $_SERVER['REMOTE_ADDR'];
