@@ -48,9 +48,12 @@ const kkUserUpdate = {  name: "KK online user updating",
 		
 			const data = await response.json();
 		
-			if (data !== 'undefined') {
+			// Check for success and update with active_users from the response
+			if (data.success && typeof data.active_users !== 'undefined') {
 				let onlinecounterelement = document.getElementById(this.countid);
-				onlinecounterelement.innerHTML = data;
+				onlinecounterelement.innerHTML = data.active_users;
+			} else {
+				console.warn('Unexpected response format or unsuccessful request:', data);
 			}
 		} catch (error) {
 			console.error('Error fetching data:', error);
