@@ -50,8 +50,8 @@ function openFlashEmbedWindow(file, name, extension, w, h) {
 
 		if (container) {
 			// Load and resize the flash player inside the container
-			const ruffle        = window.RufflePlayer.newest();
-			const rufflePlayer  = ruffle.createPlayer();
+			const ruffle       = window.RufflePlayer.newest();
+			const rufflePlayer = ruffle.createPlayer();
 			container.appendChild(rufflePlayer);
 
 			// --- ADD LOADER UI ---
@@ -74,6 +74,7 @@ function openFlashEmbedWindow(file, name, extension, w, h) {
 			async function streamedFetch(url) {
 				setStatus("Loading 0%");
 				const resp = await fetch(url);
+				if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 				const totalBytes = +resp.headers.get("Content-Length") || 0;
 				const reader = resp.body.getReader();
 				let loadedBytes = 0;
@@ -87,23 +88,35 @@ function openFlashEmbedWindow(file, name, extension, w, h) {
 					if (totalBytes) {
 						const percent = Math.min(100, Math.floor((loadedBytes / totalBytes) * 100));
 						setStatus(`Loading ${percent}%`);
+					} else {
+						setStatus(`Loading ${Math.floor(loadedBytes / 1024)} KB`);
 					}
 				}
+
 				setStatus("Preparing…");
 				const blob = new Blob(chunks);
 				return blob.arrayBuffer();
 			}
 
-			// --- Load SWF data with streaming loader ---
+			// --- Load SWF data into Ruffle ---
 			(async () => {
 				try {
 					const data = await streamedFetch(file);
-					const settings = { autoplay: true, letterbox: "on", data: new Uint8Array(data) };
+			
+					// Create a Blob URL instead of raw data
+					const blob = new Blob([data], { type: "application/x-shockwave-flash" });
+					const blobUrl = URL.createObjectURL(blob);
+			
 					setStatus("Loading Ruffle…");
-					await rufflePlayer.load(settings);
+					await rufflePlayer.load(blobUrl);
+			
 					hideStatus();
 					rufflePlayer.style.visibility = "visible";
+			
 					console.log("Flash file loaded successfully");
+			
+					// Revoke the blob URL after loading to free memory
+					URL.revokeObjectURL(blobUrl);
 				} catch (err) {
 					setStatus("Failed to load file");
 					console.error("Failed to load Flash file:", err);
@@ -201,7 +214,6 @@ function disableButtonActionsDuringDrag(button, action, threshold = 20) {
 		document.onmousemove = (moveEvent) => {
 			const distanceX = Math.abs(moveEvent.clientX - startX);
 			const distanceY = Math.abs(moveEvent.clientY - startY);
-
 			if (distanceX > threshold || distanceY > threshold) {
 				isDragging = true;
 			}
@@ -212,12 +224,10 @@ function disableButtonActionsDuringDrag(button, action, threshold = 20) {
 		document.onmousemove = null;
 		const distanceX = Math.abs(e.clientX - startX);
 		const distanceY = Math.abs(e.clientY - startY);
-
+		
 		// Trigger action if it's not a drag or drag distance is within the threshold
 		if (!isDragging || (distanceX <= threshold && distanceY <= threshold)) {
-			if (action) {
-				action();
-			}
+			if (action) action();
 		}
 		isDragging = false;
 	};
