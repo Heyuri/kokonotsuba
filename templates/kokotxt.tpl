@@ -29,7 +29,6 @@
 	<script src="{$STATIC_URL}js/koko.js?v=15"></script>
 	<script src="{$STATIC_URL}js/qr.js?v=18"></script>
 	<script src="{$STATIC_URL}js/qu.js?v=2" defer></script>
-	<script src="{$STATIC_URL}js/onlinecounter.js" defer></script>
 	<script src="{$STATIC_URL}js/qu2.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qu3.js?v=23" defer></script>
 	<script src="{$STATIC_URL}js/style.js?v=3"></script>

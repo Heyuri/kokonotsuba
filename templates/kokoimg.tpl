@@ -27,7 +27,6 @@
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">
 	<script src="{$STATIC_URL}js/koko.js?v=15"></script>
 	<script src="{$STATIC_URL}js/qu.js?v=2" defer></script>
-	<script src="{$STATIC_URL}js/onlinecounter.js" defer></script>
 	<script src="{$STATIC_URL}js/banners.js?v=3"></script>
 	<script src="{$STATIC_URL}js/qu2.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qu3.js?v=23" defer></script>

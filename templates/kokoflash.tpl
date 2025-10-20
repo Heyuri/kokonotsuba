@@ -26,7 +26,6 @@
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokoimg/mercury.css?v=5" title="Mercury">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">
 	<script src="{$STATIC_URL}js/koko.js?v=15"></script>
-	<script src="{$STATIC_URL}js/onlinecounter.js" defer></script>
 	<script src="{$STATIC_URL}js/banners.js?v=3"></script>
 	<script src="{$STATIC_URL}js/style.js?v=3"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
