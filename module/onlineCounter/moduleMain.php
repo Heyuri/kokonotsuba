@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\onlineCounter;
 
+use IPAddress;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;
 
 class moduleMain extends abstractModuleMain {
@@ -52,16 +53,21 @@ class moduleMain extends abstractModuleMain {
 		$usr_arr = file($this->usercounter, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
 		$currentTime = time();
-		$addr = $_SERVER['REMOTE_ADDR'];
+
+		// get IP object
+		$addr = new IPAddress;
+		
+		// get addr string
+		$addrString = $addr->__toString();
 
 		// Clean and rebuild the list of active users
-		$activeUsers = $this->filterActiveUsers($usr_arr, $currentTime, $addr);
+		$activeUsers = $this->filterActiveUsers($usr_arr, $currentTime, $addrString);
 
 		// Add or update the current user's timestamp
-		$activeUsers[$addr] = $currentTime;
+		$activeUsers[$addrString] = $currentTime;
 
 		// Rewrite the entire file with the updated list
-		$this->writeActiveUsers($fp, $activeUsers);
+		$this->writeActiveUsers($activeUsers);
 
 		// Release file lock and close handle
 		flock($fp, LOCK_UN);
@@ -99,29 +105,50 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	/**
-	 * Writes the current list of active users back to the file.
-	 * 
-	 * @param resource $fp File pointer (already open and locked).
-	 * @param array $activeUsers Array of active users in [ip => timestamp] format.
+	 * Safely writes the current list of active users to the counter file.
+	 *
+	 * This function performs an atomic write operation to prevent file corruption
+	 * or data loss during concurrent access or unexpected process termination.
+	 * It first writes the updated user data to a temporary file, then replaces
+	 * the original counter file using a rename operation — which is atomic
+	 * on most file systems.
+	 *
+	 * Each user entry is written in the format "ip|timestamp", one per line.
+	 * The timestamp should represent the user's last active time in seconds.
+	 *
+	 * @param array $activeUsers Associative array of active users in [ip => timestamp] format.
+	 *                           Keys are IP addresses, and values are integer timestamps.
+	 *
+	 * @return void
 	 */
-	private function writeActiveUsers($fp, $activeUsers) {
-		// Clear file contents before writing
-		ftruncate($fp, 0);
-		rewind($fp);
+	private function writeActiveUsers(array $activeUsers): void {
+		// Create a temporary file for atomic replacement
+		$tempFile = $this->usercounter . '.tmp';
+		$fpTmp = fopen($tempFile, 'w');
 
-		// Write each active user entry as "ip|timestamp"
-		foreach ($activeUsers as $ip_addr => $stamp) {
-			fputs($fp, $ip_addr . '|' . $stamp . "\n");
+		// Write all active users to the temporary file
+		foreach ($activeUsers as $ip => $stamp) {
+			fputs($fpTmp, "$ip|$stamp\n");
 		}
-	}
 
+		// Close temporary file handle
+		fclose($fpTmp);
+
+		// Atomically replace the original file with the new one
+		rename($tempFile, $this->usercounter);
+	}
 	
 	private function onRenderPostInfo(string &$hookPostInfoHtml): void {
 		$userCount = $this->getUserCount();
+
+		// Handle pluralization
+		$userWord = $userCount === 1 ? 'user' : 'users';
+		$minuteWord = $this->timeout === 1 ? 'minute' : 'minutes';
+
 		$userCounterHTML = '
 			<li id="counterListItemJS" class="hidden">
 				<div data-timeout="'.$this->timeout.'" data-modurl="'.$this->modulePageUrl.'&usercountjson" id="usercounter">
-					<span id="countnumber">' . $userCount . '</span> unique user' . ($userCount > 1 ? 's' : '') . ' in the last '.$this->timeout.' minute'.($this->timeout > 1 ? 's' : '').' (including lurkers)
+					<span id="countnumber">' . $userCount . '</span> unique ' . $userWord . ' in the last ' . $this->timeout . ' ' . $minuteWord . ' (including lurkers)
 				</div>
 			</li>';
 
@@ -179,7 +206,7 @@ class moduleMain extends abstractModuleMain {
 
 		$pageHTML = '<!DOCTYPE html><html>';
 		
-		//add css so it appears properly inside iframe
+		// Add CSS so it appears properly inside the iframe
 		$pageHTML .= '
 			<head>
 				<meta charset="utf-8">
@@ -187,12 +214,15 @@ class moduleMain extends abstractModuleMain {
 				<link rel="stylesheet" href="' . $this->staticUrl . 'css/kokoimg/base.css">
 			</head>
 			<body id="counterIframeBody">';
+
 		$userCount = $this->getUserCount();
-		$userCounterHTML = '<div id="usercounter" value="'.$this->timeout.'"><span id="countnumber">' . $userCount . '</span> unique user' . ($userCount > 1 ? 's' : '') . ' in the last '.$this->timeout.' minutes (including lurkers)</div>';
+		$userWord = $userCount === 1 ? 'user' : 'users';
+		$minuteWord = $this->timeout === 1 ? 'minute' : 'minutes';
+
+		$userCounterHTML = '<div id="usercounter" value="'.$this->timeout.'"><span id="countnumber">' . $userCount . '</span> unique ' . $userWord . ' in the last ' . $this->timeout . ' ' . $minuteWord . ' (including lurkers)</div>';
 		$pageHTML .= $userCounterHTML;
 		$pageHTML .= '</body></html>';
 		
 		echo $pageHTML;
 	}
-
 }
