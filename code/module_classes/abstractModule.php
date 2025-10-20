@@ -99,4 +99,17 @@ abstract class abstractModule {
 		// return the script html
 		return $scriptHtml;
 	}
+
+	public function generateScriptHeader(string $jsFileName, bool $defer = false): string {
+		// generate the url path of the module javascript
+		// this prevents the user from needing to refresh + wait through the rebuild
+		$jsFileUrl = $this->generateJavascriptUrl($jsFileName);
+
+		// generate the script html for including the module js
+		// defer
+		$jsHtml = $this->generateScriptHtml($jsFileUrl, $defer);
+
+		// return the link html
+		return $jsHtml;
+	}
 }

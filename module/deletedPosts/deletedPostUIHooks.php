@@ -224,16 +224,10 @@ class deletedPostUIHooks {
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// generate the url path of the deleted posts javascript
-		// this prevents the user from needing to refresh + wait through the rebuild
-		$jsFileUrl = $this->moduleAdmin->generateJavascriptUrl('deletedPosts.js');
-
-		// generate the script html for including the deleted posts js
-		// defer
-		$jsHtml = $this->moduleAdmin->generateScriptHtml($jsFileUrl, true);
+		// generate the script header
+		$jsHtml = $this->moduleAdmin->generateScriptHeader('deletedPosts.js', true);
 
 		// then append it to the header
 		$moduleHeader .= $jsHtml;
 	}
-
 }
