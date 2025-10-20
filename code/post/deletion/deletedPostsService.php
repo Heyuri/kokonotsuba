@@ -152,7 +152,7 @@ class deletedPostsService {
 
 	private function checkIfPostIsProxyDeleted(array $post): bool {
 		// if the post has bee deleted by proxy
-		$byProxy = $postData['by_proxy'] ?? 0;
+		$byProxy = $post['by_proxy'] ?? 0;
 
 		// don't do anything if its trying to restore a post thats deleted by-proxy
 		// otherwise, there will be unexpected behavior (potentially)
