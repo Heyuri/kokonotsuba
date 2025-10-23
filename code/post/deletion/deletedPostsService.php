@@ -41,6 +41,11 @@ class deletedPostsService {
 		// get the post data from the associated deleted posts row
 		$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
 		
+		// return early if postData is null for whatever reason
+		if(!$postData) {
+			return;
+		}
+
 		// check if the post was a reply to a deleted thread
 		$isByProxy = $this->checkIfPostIsProxyDeleted($postData);
 
@@ -118,6 +123,11 @@ class deletedPostsService {
 		// get the post data from the associated deleted posts row
 		$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
 		
+		// return early if postData is null for whatever reason
+		if(!$postData) {
+			return;
+		}
+
 		// check if the post was a reply to a deleted thread
 		$isByProxy = $this->checkIfPostIsProxyDeleted($postData);
 
