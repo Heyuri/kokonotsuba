@@ -2,6 +2,7 @@
 //template convenience library
 function bindReplyValuesToTemplate(IBoard $board, 
 	array $config, 
+	string $boardUrl, 
 	int $post_uid, 
 	int $no, 
 	int $resto, 
@@ -18,7 +19,7 @@ function bindReplyValuesToTemplate(IBoard $board,
 	string $comment, 
 	string $postFormExtra): array {
 	return [
-		'{$BOARD_URL}' => $board->getBoardURL(),
+		'{$BOARD_URL}' => $boardUrl,
 		'{$BOARD_UID}' => $board->getBoardUID(),
 		'{$BOARD_IDENTIFIER}' => $board->getBoardIdentifier(),
 		'{$POST_UID}' => $post_uid,
@@ -45,6 +46,7 @@ function bindReplyValuesToTemplate(IBoard $board,
 
 function bindOPValuesToTemplate(IBoard $board, 
 	array $config, 
+	string $boardUrl,
 	int $post_uid, 
 	int $no, 
 	string $sub, 
@@ -69,7 +71,7 @@ function bindOPValuesToTemplate(IBoard $board,
 	string $comment, 
 	string $postFormExtra): array {
 	return [
-		'{$BOARD_URL}' => $board->getBoardURL(),
+		'{$BOARD_URL}' => $boardUrl,
 		'{$BOARD_UID}' => $board->getBoardUID(),
 		'{$BOARD_IDENTIFIER}' => $board->getBoardIdentifier(),
 		'{$POST_UID}' => $post_uid,

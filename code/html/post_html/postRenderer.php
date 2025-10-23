@@ -140,6 +140,7 @@ class postRenderer {
 		if ($shouldRenderReply) {
 			$templateValues = $this->postTemplateBinder->renderReplyPost(
 				$data, 
+				$crossLink,
 				$postPositionEnabled,
 				$templateValues, 
 				$threadResno,
@@ -162,6 +163,7 @@ class postRenderer {
 			$templateValues = $this->postTemplateBinder->renderOpPost(
 				$data, 
 				$fileData,
+				$crossLink,
 				$templateValues, 
 				$nameHtml, 
 				$categoryHTML, 

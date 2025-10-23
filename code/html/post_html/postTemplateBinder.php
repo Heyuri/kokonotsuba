@@ -13,6 +13,7 @@ class postTemplateBinder {
 	 * Adds name, quote, image, and comment information to the template.
 	 */
 	public function renderReplyPost(array $data,
+		string $crossLink,
 		bool $postPositionEnabled,
 		array $templateValues,
 		int $threadResno,
@@ -29,6 +30,7 @@ class postTemplateBinder {
 			bindReplyValuesToTemplate(
 				$this->board,
 				$this->config,
+				$crossLink,
 				$data['post_uid'],
 				$data['no'],
 				$threadResno,
@@ -56,6 +58,7 @@ class postTemplateBinder {
 	 */
 	public function renderOpPost(array $data,
 		?array $fileData,
+		string $crossLink,
 		array $templateValues,
 		string $nameHtml,
 		string $categoryHTML,
@@ -76,6 +79,7 @@ class postTemplateBinder {
 			bindOPValuesToTemplate(
 				$this->board,
 				$this->config,
+				$crossLink,
 				$data['post_uid'],
 				$data['no'],
 				$data['sub'],
