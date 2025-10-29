@@ -329,10 +329,18 @@ const kkjs = {
 		// Make selected pager page visible on load
 		var _selPage = $id("pagerSelectedPage");
 		if (_selPage) {
-			_selPage.scrollIntoView({
-				block: "center",
-				inline: "center"
-			});
+			var _cont = $id("pagerPagesContainer");
+			if (_cont) {
+				var selRect = _selPage.getBoundingClientRect();
+				var contRect = _cont.getBoundingClientRect();
+				var selTop = selRect.top - contRect.top + _cont.scrollTop;
+				var selCenter = selTop + (selRect.height / 2);
+				var targetScrollTop = selCenter - (_cont.clientHeight / 2);
+				if (targetScrollTop < 0) targetScrollTop = 0;
+				var maxScrollTop = _cont.scrollHeight - _cont.clientHeight;
+				if (targetScrollTop > maxScrollTop) targetScrollTop = maxScrollTop;
+				_cont.scrollTop = targetScrollTop;
+			}
 		}
 
 	},
@@ -704,3 +712,4 @@ kkjs.toggleNeomenu = function(enabled) {
   // Re-run to update menu display based on new setting
   kkjs.setInitialMenuState();
 };
+
