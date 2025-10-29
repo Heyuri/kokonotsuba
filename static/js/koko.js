@@ -324,7 +324,17 @@ const kkjs = {
 		kkjs.sett_init();
 
 		// Initialize tooltips if necessary
-    //kkjs.wztt();
+		 //kkjs.wztt();
+
+		// Make selected pager page visible on load
+		var _selPage = $id("pagerSelectedPage");
+		if (_selPage) {
+			_selPage.scrollIntoView({
+				block: "center",
+				inline: "center"
+			});
+		}
+
 	},
 	reset: function () {
 		kkjs.modules.forEach( function(mod) {
