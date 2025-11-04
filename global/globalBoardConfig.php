@@ -92,7 +92,8 @@ $config['ModuleList'] = array(
 	'onlineCounter' => true,
 	'banner' => true,
 	'addInfo' => true,
-	'imageServer' => true
+	'imageServer' => true,
+	'filter' => true,
 );
 
 /* Module-specific options */
@@ -127,9 +128,17 @@ $config['ModuleSettings']['BLOTTER_PREVIEW_AMOUNT'] = 5; //Number of previewed b
 $config['ModuleSettings']['PM_DIR'] = __DIR__.DIRECTORY_SEPARATOR;
 $config['ModuleSettings']['APPEND_TRIP_PM_BUTTON_TO_POST'] = false;
 
-//mod_ads
+//fullBanner
 $config['ModuleSettings']['SHOW_TOP_AD'] = true; // Whether to show the top full banner ad
 $config['ModuleSettings']['SHOW_BOTTOM_AD'] = true; // Whether to show the bottom full banner ad
+
+// These banners *must* be in the web-accessible static/fullbanners/ directory
+// image name => URL the banner will lead to when clicked
+$config['ModuleSettings']['BANNER_ADS'] = array(
+	'rules2.png' => 'https://www.heyuri.net/index.php?p=rules',
+	'nominate1.png' => 'https://cgi.heyuri.net/nominate/',
+	'sw2.png' => 'https://dis.heyuri.net/sw/',
+);
 
 //mod_wf
 $config['ModuleSettings']['FILTERS'] = array( 
