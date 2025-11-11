@@ -5,8 +5,15 @@ Pixmicat! language file - English (U.S.) [en_US]
 if (!isset($language)) $language = Array();
 
 // pixmicat.php
+$language['board_not_found']            = 'Board not found!';
+$language['no_boards_found']            = 'Boards not found!';
+$language['error_board_api']            = 'Error during rendering of board API';
+$language['error_invalid_board_id']     = 'Invalid board UID!';
+$language['error_invalid_board_endpoint'] = 'Invalid board API endpoint page';
+$language['error_invalid_thread_id']    = 'Invalid thread ID supplied to system';
 $language['page_not_found']				= 'Sorry, the page you requested is not found.';
-$language['thread_not_found']			= 'The thread you want to reply does not exist!';
+$language['thread_not_found']			= 'Thread not found!';
+$language['thread_deleted']			    = 'This thread was deleted!';
 $language['del_head']					= 'Delete post: ';
 $language['del_img_only']				= 'File only';
 $language['del_pass']					= 'Password: ';
