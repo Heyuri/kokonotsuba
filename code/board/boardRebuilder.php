@@ -47,7 +47,7 @@ class boardRebuilder {
 		// Throw a 404 error if the thread isn't found
 		// Also throw a 404 if the thread was deleted
 		if (!$threadData || ($hardDeleted)) {
-			$this->softErrorHandler->errorAndExit("Thread not found!", 404);
+			$this->softErrorHandler->errorAndExit(_T('thread_not_found'), 404);
 			return;
 		}
 
