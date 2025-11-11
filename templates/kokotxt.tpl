@@ -12,6 +12,7 @@
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
+	<link rel="stylesheet" href="{$STATIC_URL}css/globalBase.css">
 	<link rel="stylesheet" href="{$STATIC_URL}css/kokotxt/base.css?v=97">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/kokotxt/pseud0ch.css?v=8" title="Pseud0ch">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/pseud0ch2.css?v=7" title="Pseud0ch (serif)">
@@ -33,15 +34,17 @@
 	<script src="{$STATIC_URL}js/qu3.js?v=23" defer></script>
 	<script src="{$STATIC_URL}js/style.js?v=3"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
-	<script src="{$STATIC_URL}js/filter.js?v=16" defer></script>
 	<script src="{$STATIC_URL}js/catalog.js"></script>
 	<script src="{$STATIC_URL}js/insert.js"></script>
 	<script src="{$STATIC_URL}js/addemotestxt.js?v=35" defer></script>
 	<script src="{$STATIC_URL}js/admin.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
 	<script src="{$STATIC_URL}js/message.js" defer></script>
+	<script src="{$STATIC_URL}js/postWidget.js" defer></script>
+	<script src="{$STATIC_URL}js/threadToggle.js" defer></script>
+	<script src="{$STATIC_URL}js/banWindowLibrary.js" defer></script>
 	<!--&IF($MODULE_HEADER_HTML,'{$MODULE_HEADER_HTML}','')-->
-	
+</head>
 <!--/&HEADER-->
 
 <!--&TOPLINKS-->
@@ -107,10 +110,12 @@
 <!--/&POSTFORM-->
 
 <!--&MODULE_INFO_HOOK-->
-		<div class="mod-extra-info innerbox">
-			{$BLOTTER}
-		</div>
-		<!--&IF($GLOBAL_MESSAGE,'<div id="globalmsg" class="innerbox">{$GLOBAL_MESSAGE}</div>','')-->
+	<div class="mod-extra-info innerbox">
+		<!--&IF($BLOTTER,'{$BLOTTER}','')-->
+		<hr>
+		<!--&IF($GLOBAL_MESSAGE,'<div id="globalmsg" class="innerbox">{$GLOBAL_MESSAGE}</div><hr id="globalmsgSeparator">','')-->
+		<!--&IF($TOP_BANNER_AD,'{$TOP_BANNER_AD}','')-->
+	</div>
 <!--/&MODULE_INFO_HOOK-->
 
 <!--&FOOTER-->
@@ -133,7 +138,7 @@
 <!--/&ERROR-->
 
 <!--&THREAD-->
-	<div class="thread<!--&IF($MODULE_THREAD_CSS_CLASSES,'{$MODULE_THREAD_CSS_CLASSES}','')-->" id="t{$BOARD_UID}_{$THREAD_NO}">
+	<div class="thread<!--&IF($MODULE_THREAD_CSS_CLASSES,'{$MODULE_THREAD_CSS_CLASSES}','')-->" id="t{$BOARD_UID}_{$THREAD_NO}" data-thread-uid="{$THREAD_UID}">
 		<div class="innerbox">
 			{$BOARD_THREAD_NAME}
 			<div class="tnav">{$THREADNAV}</div>
@@ -148,9 +153,14 @@
 
 <!--&OP-->
 	<h2 class="title"><a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h2>
-	<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}">
+	<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}">
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
-		<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span> <!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')--> <span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
+		<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span>
+			<span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span>
+			<span class="time">{$NOW}</span> <!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')--> 
+			<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
+			<span class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></span>
+		</div>
 		<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
 			<!--&IF($IMG_BAR,'<div class="filesize">{$IMG_BAR}</div>','')-->
 			<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
