@@ -1,0 +1,38 @@
+.menuToggle {
+	cursor: pointer;
+	display: inline-block;
+	transition: transform 0.15s ease;
+	font-size: 12px;
+	line-height: 1;
+	user-select: none;
+}
+
+.menuToggle.menuOpen {
+	transform: rotate(90deg); /* ▸ rotates to ▾ */
+}
+
+/* The dropdown container */
+.postMenuDropdown {
+	position: absolute;
+	background: var(--color-bg-reply);
+	border: 1px solid var(--color-hi-contrast-border);
+	box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+	min-width: 120px;
+	z-index: 9999;
+	padding: 2px 0;
+	font-size: 13px;
+}
+
+/* Individual menu items */
+.postMenuDropdown a {
+	display: block;            /* stack vertically */
+	padding: 2px 4px;
+	text-decoration: none;
+	color: inherit;
+	white-space: nowrap;       /* prevent text wrapping */
+	cursor: pointer;
+}
+
+.postMenuDropdown a:hover {
+	background: rgba(0, 0, 0, 0.05);
+}
