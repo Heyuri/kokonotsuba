@@ -5,13 +5,19 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 
 	$pte_vals = prepareBaseTemplateValues($resno, $isStaff);
 
-	$moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
+	// dispatch module header hook point for (staff) live frontend
+	if($isStaff) {
+		$moduleEngine->dispatch('ModuleAdminHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
+	}
+	// dispatch module header hook point for static html
+	else {
+		$moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
+	}
 
 	$pte_vals['{$PAGE_TITLE}'] = $pageTitle;
 
 	$html .= $templateEngine->ParseBlock('HEADER', $pte_vals);
 	$moduleEngine->dispatch('Head', array(&$html, $resno)); // Hook: Head
-	$html .= '</head>';
 
 	$pte_vals += array(
 		'{$HOME}' => '[<a href="' . $config['HOME'] . '" target="_top">' . _T('head_home') . '</a>]',

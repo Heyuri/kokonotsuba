@@ -71,7 +71,7 @@ class defaultRoute {
 
 			// If still not valid, show error
 			if (!$this->threadRepository->isThread($thread_uid_new)) {
-				$this->softErrorHandler->errorAndExit("Thread not found!");
+				$this->softErrorHandler->errorAndExit(_T('thread_not_found'));
 			}
 
 			// Otherwise, redirect to the correct thread page and scroll to post

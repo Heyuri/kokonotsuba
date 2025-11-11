@@ -3,14 +3,14 @@
 
 namespace Kokonotsuba\Modules\lockThread;
 
+require_once __DIR__ . '/lockThreadLibrary.php';
+
 use BoardException;
 use FlagHelper;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;
 use Kokonotsuba\Root\Constants\userRole;
 
 class moduleMain extends abstractModuleMain {
-	private $LOCKICON = '';
-
 	public function getName(): string {
 		return 'K! Stop Threads';
 	}
@@ -20,8 +20,6 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->LOCKICON = $this->getConfig('STATIC_URL') . '/image/locked.png';
-
 		$this->moduleContext->moduleEngine->addListener('ViewedThread', function (array &$templateValues, array &$threadData) {
 			$this->overRidePostForm($templateValues['{$FORMDAT}'], $threadData['posts'][0]);
 		});
@@ -71,10 +69,17 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function renderLockIcon(string &$postInfoExtra, $post): void {
+		// post OP status
 		$status = new FlagHelper($post['status']);
 		
+		// get static url
+		$staticUrl = $this->getConfig('STATIC_URL');
+
+		// get lock icon html
+		$lockIconHtml = getLockIndicator($staticUrl);
+
 		if ($status->value('stop')) {
-			$postInfoExtra .= '<img src="'.$this->LOCKICON.'" class="icon" width="16" height="16" title="Locked">';
+			$postInfoExtra .= $lockIconHtml;
 		}
 	}
 

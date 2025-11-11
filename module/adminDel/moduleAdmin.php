@@ -3,7 +3,6 @@
 namespace Kokonotsuba\Modules\adminDel;
 
 use BoardException;
-use FlagHelper;
 use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
 use Kokonotsuba\Root\Constants\userRole;
 use staffAccountFromSession;
@@ -42,7 +41,15 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
-			'ModuleHeader',
+			'ModeratePostWidget',
+			function(array &$widgetArray, array &$post) {
+				$this->onRenderPostWidget($widgetArray, $post);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModuleAdminHeader',
 			function(&$moduleHeader) {
 				$this->onGenerateModuleHeader($moduleHeader);
 			}
@@ -50,14 +57,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function onRenderPostAdminControls(string &$modFunc, array &$post): void {
-		// whether the post is deleted or not
-		$openFlag = $post['open_flag'] ?? 0;
-
-		// whether it was a file only deletion
-		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
-
-		// don't render anything if the post is already deleted
-		if($openFlag && !$onlyFileDeleted) {
+		// whether to render the admin controls or not
+		if(!$this->canRenderButton($post)) {
 			return;
 		}
 		
@@ -67,16 +68,15 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$board = searchBoardArrayForBoard($post['boardUID']);
 		
-		$url = fn(array $params) => $this->getModulePageURL($params, false, true);
 
-		$addControl = function(string $action, string $label, string $title, string $class) use (&$modFunc, $postUid, $url) {
-			$buttonUrl = $url(['action' => $action, 'post_uid' => $postUid]);
-			$modFunc .= '<span class="adminFunctions ' . htmlspecialchars($class) . '">[<a href="' . htmlspecialchars($buttonUrl) . '" title="' . htmlspecialchars($title) . '">' . htmlspecialchars($label) . '</a>]</span>';
+		$addControl = function(string $action, string $label, string $title, string $class) use (&$modFunc, $postUid) {
+			$buttonUrl = $this->generateDeletionUrl($action, $postUid);
+			$modFunc .= '<noscript><span class="adminFunctions ' . htmlspecialchars($class) . '">[<a href="' . htmlspecialchars($buttonUrl) . '" title="' . htmlspecialchars($title) . '">' . htmlspecialchars($label) . '</a>]</span></noscript>';
 		};
 
 		$addControl('del', 'D', 'Delete', 'adminDeleteFunction');
 
-		if (!empty($post['ext']) && !$onlyFileDeleted) {
+		if($this->canRenderAttachmentButton($post)) {
 			// this check needs to stay inside this if statement or else it'll read from disk for every post
 			if($this->moduleContext->FileIO->imageExists($post['tim'] . $post['ext'], $board)) {
 				$addControl('imgdel', 'DF', 'Delete file', 'adminDeleteFileFunction');
@@ -92,6 +92,113 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	}
 	
+	private function canRenderButton(array $post): bool {
+		// whether the post is deleted or not
+		$openFlag = $post['open_flag'] ?? 0;
+
+		// whether it was a file only deletion
+		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
+
+		// don't render anything if the post is already deleted
+		if($openFlag && !$onlyFileDeleted) {
+			return false;
+		}
+
+		// all korrect
+		// render!
+		return true;
+	}
+
+	private function canRenderAttachmentButton(array $post): bool {
+		// get the board of the post
+		$board = searchBoardArrayForBoard($post['boardUID']);
+
+		// if the post has an attachment and its not already file-only deleted
+		if(!empty($post['ext']) && !$post['file_only_deleted']) {
+			// put together the file name
+			$storedFileName = $post['tim'] . $post['ext'];
+
+			// this check needs to stay inside this if statement or else it'll read from disk for every post
+			if($this->moduleContext->FileIO->imageExists($storedFileName, $board)) {
+				return true;
+			} 
+			// otherwise it doesnt exist - so dont render
+			else {
+				return false;
+			}
+		}
+
+		// don't render
+		return false;
+	}
+
+	private function generateDeletionUrl(string $action, int $postUid): string {
+		// build parameters for the url
+		$params = [
+			'action' => $action,
+			'post_uid' => $postUid
+		];
+
+		// generate the url
+		$deletionUrl = $this->getModulePageURL($params, false, true);
+
+		// return the url
+		return $deletionUrl;
+	}
+
+	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+		// whether to render the button
+		if(!$this->canRenderButton($post)) {
+			return;
+		}
+
+		// generate deletion url
+		$deletionUrl = $this->generateDeletionUrl('del', $post['post_uid']);
+
+		// build the widget entry for deletion
+		$deletionWidgets[] = $this->buildWidgetEntry(
+			$deletionUrl, 
+			'delete', 
+			'Delete', 
+			'Moderate'
+		);
+		
+		// whether to render the attachment deletion button
+		if($this->canRenderAttachmentButton($post)) {
+			$deletionWidgets[] = $this->generateAttachmentWidget($post['post_uid']);
+		}
+
+		// generate mute url
+		$muteUrl = $this->generateDeletionUrl('delmute', $post['post_uid']);
+
+		// build the widget entry for muting
+		$deletionWidgets[] = $this->buildWidgetEntry(
+			$muteUrl, 
+			'mute', 
+			'Mute', 
+			'Moderate'
+		);
+
+		// add the widget to the array
+		$widgetArray = array_merge($deletionWidgets, $widgetArray);
+	}
+
+	private function generateAttachmentWidget(int $postUid): array {
+		// generate attachment deletion url
+		$attachmentDeletionUrl = $this->generateDeletionUrl('imgdel', $postUid);
+
+		// build the widget entry for file deletion
+		$attachmentDeletionWidget = $this->buildWidgetEntry(
+			$attachmentDeletionUrl, 
+			'deleteAttachment', 
+			'Delete attachment', 
+			'Moderate'
+		);
+
+		// return widget
+		return $attachmentDeletionWidget;
+	}
+
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		// can view deleted poss
 		$canViewDeleted = getRoleLevelFromSession()->isAtLeast($this->getConfig('AuthLevels.CAN_DELETE_ALL'));
@@ -140,12 +247,12 @@ class moduleAdmin extends abstractModuleAdmin {
 			throw new BoardException('Post already deleted!');
 		}
 		
-		switch ($_GET['action']??'') {
+		switch ($_REQUEST['action']??'') {
 			case 'del':
 				$this->moduleContext->postService->removePosts([$post['post_uid']], $accountId);
 				$this->moduleContext->actionLoggerService->logAction('Deleted post No.'.$post['no'], $boardUID);
 				break;
-		case 'delmute':
+			case 'delmute':
 				$this->moduleContext->postService->removePosts([$post['post_uid']], $accountId);
 				$ip = $post['host'];
 				$starttime = $_SERVER['REQUEST_TIME'];

@@ -40,6 +40,14 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->renderMoveThreadButton($modControlSection, $post);
 			}
 		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModerateThreadWidget',
+			function(array &$widgetArray, array &$post) {
+				$this->onRenderThreadWidget($widgetArray, $post);
+			}
+		);
 	}
 
 	public function renderMoveThreadButton(string &$modfunc, array $post): void {
@@ -47,17 +55,36 @@ class moduleAdmin extends abstractModuleAdmin {
 		$threadStatus = new FlagHelper($post['status']);
 
 		if($threadStatus->value('ghost')) {
-			$modfunc .= '<span class="adminFunctions adminMoveThreadFunction" title="Ghost threads cannot be moved.">[mt]</span>';
+			$modfunc .= '<noscript><span class="adminFunctions adminMoveThreadFunction" title="Ghost threads cannot be moved.">[mt]</span></noscript>';
 		} else {
-			$moveThreadButtonUrl = $this->getModulePageURL(
+			$moveThreadButtonUrl = $this->generateMoveThreadUrl($post['thread_uid']);
+
+			$modfunc .= '<noscript><span class="adminFunctions adminMoveThreadFunction">[<a href="' . $moveThreadButtonUrl . '" title="Move thread">MT</a>]</span></noscript>';
+		}
+	}
+
+	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
+		// generate move thread url
+		$moveThreadUrl = $this->generateMoveThreadUrl($post['thread_uid']);
+
+		// build the widget entry
+		$moveThreadWidget = $this->buildWidgetEntry($moveThreadUrl, 'moveThread', 'Move thread', 'Moderate');
+
+		// add the widget to the array
+		$widgetArray[] = $moveThreadWidget;
+	}
+
+	private function generateMoveThreadUrl(string $thread_uid): string {
+		// generate the move thread url
+		$url = $this->getModulePageURL(
 				[
-					'thread_uid' => $post['thread_uid']
+					'thread_uid' => $thread_uid
 				], 
 				false, 
 				true);
-
-			$modfunc .= '<span class="adminFunctions adminMoveThreadFunction">[<a href="' . $moveThreadButtonUrl . '" title="Move thread">MT</a>]</span>';
-		}
+		
+		// return url
+		return $url;
 	}
 
 	private function leavePostInShadowThread(array $originalThread, IBoard $originalBoard, array $newThread, IBoard $destinationBoard) {

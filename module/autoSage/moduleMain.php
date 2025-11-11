@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\Modules\autoSage;
 
+require_once __DIR__ . '/autoSageLibrary.php';
+
 use FlagHelper;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;
 
@@ -32,7 +34,7 @@ class moduleMain extends abstractModuleMain {
 		$status = new FlagHelper($post['status']);
 		
 		if($status->value('as')) {
-			$postInfoExtra .= ' <span class="autosage" title="Autosage. This thread cannot be bumped.">AS</span>';
+			$postInfoExtra .= getAutoSageIndicator();
 		}
 	}
 

@@ -28,23 +28,114 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->onRenderPostAdminControls($modControlSection, $post);
 			}
 		);
+		
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModeratePostWidget',
+			function(array &$widgetArray, array &$post) {
+				$this->onRenderPostWidget($widgetArray, $post);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModuleAdminHeader',
+			function(&$moduleHeader) {
+				$this->onGenerateModuleHeader($moduleHeader);
+			}
+		);
 	}
 	
 	private function onRenderPostAdminControls(&$modfunc, $post): void {
-		$fh = new FlagHelper($post['status']);
+		// post flag helper
+		$postStatus = new FlagHelper($post['status']);
+
+		// whether the post can have its gif animated
+		$canAnimate = $this->isAnimatedGif($postStatus, $post['ext']);
 
 		// attach the button if the post has a gif and the file hasn't deleted
-		if ($post['ext'] === '.gif' && !$fh->value('fileDeleted')) {
-			$animatedGifButtonUrl = $this->getModulePageURL(
-				[
-					'post_uid' => $post['post_uid']
-				],
-				false,
-				true
-			);
+		if ($canAnimate) {
+			// anigif url
+			$animatedGifButtonUrl = $this->generateAnimatedGifUrl($post['post_uid']);
 
-			$modfunc.= '<span class="adminFunctions adminGIFFunction">[<a href="' . htmlspecialchars($animatedGifButtonUrl) . '&post_uid=' . htmlspecialchars($post['post_uid']) . '"' . ($fh->value('agif') ? ' title="Use still image of GIF">g' : ' title="Use animated GIF">G') . '</a>]</span>';
+			// add control to postinfoextra
+			$modfunc.= '<noscript><span class="adminFunctions adminGIFFunction">[<a href="' . htmlspecialchars($animatedGifButtonUrl) . '"' . ($postStatus->value('agif') ? ' title="Use still image of GIF">g' : ' title="Use animated GIF">G') . '</a>]</span></noscript>';
 		}
+	}
+
+	private function isAnimatedGif(FlagHelper $postStatus, string $extension): bool {
+		// the following condition:
+		// true if the extension is a gif - and the post doesn't have the fileDeleted attribute (i.e it hasn't been deleted)
+		$canAnimate = $extension === '.gif' && !$postStatus->value('fileDeleted');
+	
+		// return condition
+		return $canAnimate;
+	}
+
+	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+		// get post status
+		$postStatus = new FlagHelper($post['status']);
+
+		// whether the post can have its gif animated
+		$canAnimate = $this->isAnimatedGif($postStatus, $post['ext']);
+
+		// return early if this post can't have its attachment animated
+		if(!$canAnimate) {
+			return;
+		}
+
+		// get anigif label
+		$animatedGifLabel = $this->getAnimatedGifLabel($postStatus);
+		
+		// generate anigif url
+		$animatedGifUrl = $this->generateAnimatedGifUrl($post['post_uid']);
+
+		// build the widget entry
+		$animatedGifWidget = $this->buildWidgetEntry(
+			$animatedGifUrl, 
+			'animateGif', 
+			$animatedGifLabel, 
+			'Moderate'
+		);
+
+		// add the widget to the array
+		$widgetArray[] = $animatedGifWidget;
+	}
+
+	private function getAnimatedGifLabel(FlagHelper $postStatus): string {
+		// anigif flag
+		$isAnimated = $postStatus->value('agif');
+
+		// if the attachment is already animated then the action is to un-animated it
+		if($isAnimated) {
+			return 'Disable gif animation';
+		}
+		// if the thread isn't already animated then the action is to animate it
+		else {
+			return 'Animate gif';
+		}
+	}
+
+	private function generateAnimatedGifUrl(int $postUid): string {
+		// generate animated gif url
+		$animatedGifUrl = $this->getModulePageURL(
+			[
+				'post_uid' => $postUid
+			],
+			false,
+			true
+		);
+
+		// return url
+		return $animatedGifUrl;
+	}
+
+	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		// generate the script header
+		$jsHtml = $this->generateScriptHeader('animatedGif.js', true);
+
+		// then append it to the header
+		$moduleHeader .= $jsHtml;
 	}
 
 	public function ModulePage() {

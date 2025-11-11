@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\Modules\lockThread;
 
+require_once __DIR__ . '/lockThreadLibrary.php';
+
 use BoardException;
 use FlagHelper;
 use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
@@ -28,20 +30,102 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->addLockButtonToAdminControls($modControlSection, $post);
 			}
 		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModerateThreadWidget',
+			function(array &$widgetArray, array &$post) {
+				$this->onRenderThreadWidget($widgetArray, $post);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModuleAdminHeader',
+			function(&$moduleHeader) {
+				$this->onGenerateModuleHeader($moduleHeader);
+			}
+		);
 	}
 
-	public function addLockButtonToAdminControls(&$modfunc, $post) {
+	private function addLockButtonToAdminControls(&$modfunc, $post) {
 		$status = new FlagHelper($post['status']);
 
+		$lockThreadLink = $this->generateLockUrl($post['post_uid']);
+
+		$modfunc.= '<noscript><span class="adminFunctions adminLockFunction">[<a href="' . htmlspecialchars($lockThreadLink) . '"' . ($status->value('stop') ? ' title="Unlock thread">l' : ' title="Lock thread">L').'</a>]</span></noscript>';
+	}
+
+	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
+		// generate lock url
+		$lockUrl = $this->generateLockUrl($post['post_uid']);
+
+		// get the post status
+		$postStatus = new FlagHelper($post['status']);
+
+		// get the lock label
+		$lockLabel = $this->generateLockLabel($postStatus);
+
+		// build the widget entry
+		$lockWidget = $this->buildWidgetEntry(
+			$lockUrl, 
+			'lock', 
+			$lockLabel, 
+			'Moderate'
+		);
+
+		// add the widget to the array
+		$widgetArray[] = $lockWidget;
+	}
+
+	private function generateLockLabel(FlagHelper $postStatus): string {
+		// if the locked or not
+		$isLocked = $postStatus->value('stop');
+
+		// if the thread is already locked then the action is to unlock it
+		if($isLocked) {
+			return 'Unlock thread';
+		}
+		// if the thread isn't locked then the action is to lock it
+		else {
+			return 'Lock thread';
+		}
+	}
+
+	private function generateLockUrl(int $postUid): string {
+		// generate lock thread url
 		$lockThreadLink = $this->getModulePageURL(
 			[
-				'post_uid' => $post['post_uid']
+				'post_uid' => $postUid
 			],
-			true,
+			false,
 			true
 		);
 
-		$modfunc.= '<span class="adminFunctions adminLockFunction">[<a href="' . $lockThreadLink . '"' . ($status->value('stop') ? ' title="Unlock thread">l' : ' title="Lock thread">L').'</a>]</span>';
+		// return url
+		return $lockThreadLink;
+	}
+	
+	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		// generate the lock img <template> html
+		$templateHtml = $this->generateLockTemplate();
+
+		// generate toggle widget + js
+		$this->generateToggleWidget($moduleHeader, 'lock.js', $templateHtml);
+	}
+	
+	private function generateLockTemplate(): string {
+		// get static url
+		$staticUrl = $this->getConfig('STATIC_URL');
+
+		// get the locked indicator tag
+		$lockIndicator = getLockIndicator($staticUrl);
+		
+		// get lock icon template
+		$lockIconTemplate = $this->generateTemplate('lockIconTemplate', $lockIndicator);
+
+		// return template
+		return $lockIconTemplate;
 	}
 
 	public function ModulePage() {		
@@ -67,6 +151,25 @@ class moduleAdmin extends abstractModuleAdmin {
 		
 		$this->moduleContext->actionLoggerService->logAction($logMessage, $board->getBoardUID());
 		
+		// ===== AJAX handling updated to use helper =====
+		if (
+			isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+			strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+		) {
+			// whether the post-action thread is locked or not
+			$isLocked = $status->value('stop');
+
+			// send json first
+			$this->sendAjaxAndDetach([
+				'active' => $isLocked
+			]);
+
+			// rebuild after client already received JSON
+			$board->rebuildBoard();
+			exit;
+		}
+		// ===== end AJAX handling =====
+
 		$board->rebuildBoard();
 
 		redirect('back', 0);

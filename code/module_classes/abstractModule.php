@@ -112,4 +112,67 @@ abstract class abstractModule {
 		// return the link html
 		return $jsHtml;
 	}
+
+	public function buildWidgetEntry(
+		string $url,
+		string $action,
+		string $label,
+		string $subMenu
+	): array {
+		// assemble the widget
+		$widget = [
+			// url
+			'href' => $url,
+			
+			// action, essentially a label the js will use internally
+			'action' => $action,
+
+			// label, what appears in the drop-menu list
+			'label' => $label,
+
+			// sub-menu
+			'subMenu' => $subMenu
+		];
+
+		// return assembled widget
+		return $widget;
+	}
+
+	public function sendAjaxAndDetach(array $payload): void {
+		header('Content-Type: application/json');
+		echo json_encode($payload);
+
+		if (session_status() === PHP_SESSION_ACTIVE) {
+			session_write_close();
+		}
+
+		if (function_exists('fastcgi_finish_request')) {
+			fastcgi_finish_request();
+		} else {
+			ob_flush();
+			flush();
+		}
+	}
+
+	public function generateToggleWidget(string &$moduleHeader, string $jsName, string $templateHtml): void {
+		// generate the script header
+		$jsHtml = $this->generateScriptHeader($jsName, true);
+
+		// then append it to the header
+		$moduleHeader .= $jsHtml;
+
+		// append template html to header
+		$moduleHeader .= $templateHtml;
+	}
+
+	public function generateTemplate(string $templateClass, string $content): string {
+		// wrap it in template tags
+		$templateHtml = '
+			<template id="' . $templateClass . '">
+			' . $content . '
+			</template>';
+
+		// return html
+		return $templateHtml;
+	}
 }

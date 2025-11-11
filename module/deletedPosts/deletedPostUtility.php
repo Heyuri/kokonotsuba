@@ -43,13 +43,40 @@ class deletedPostUtility {
 	}
 
 	public function adminPostViewModuleButton(array $post): string {
+		// whether to render it
+		if(!$this->canRenderButton($post)) {
+			return '';
+		}
+
+		// get the deleted post id
+		$deletedPostId = $post['deleted_post_id'];
+
+		// get url
+		$modulePageUrl = $this->generateViewDeletedPostUrl($deletedPostId);
+
+		// render the html
+		$buttonUrl = '<noscript><span class="adminFunctions adminViewDeletedPostFunction">[<a href="' . htmlspecialchars($modulePageUrl) . '" title="View deleted post">VD</a>]</span></noscript>';
+
+		// return string
+		return $buttonUrl;
+	}
+
+	public function canRenderButton(array $post): bool {
+		// whether the post is deleted or not
+		$isPostDeleted = $this->isPostDeleted($post);
+
+		// don't bother if the post isn't deleted
+		if(!$isPostDeleted) {
+			return false;
+		}
+
 		// whether we're viewing from the module page
 		$isModulePage = $this->isModulePage();
 
 		// don't display it if we're in the module view - 
 		// coz we can already see all the infos or we're already on the page it'd take the user to
 		if($isModulePage) {
-			return '';
+			return false;
 		}
 
 		// is a reply of a deleted thread
@@ -60,12 +87,15 @@ class deletedPostUtility {
 		// in other words, they're bound to whatever action happens to the OP post
 		// e.g, OP purged = reply also purged
 		if($byProxy) {
-			return '';
+			return false;
 		}
 
-		// get the deleted post id
-		$deletedPostId = $post['deleted_post_id'];
-		
+		// all korrect!
+		// can be rendered
+		return true;
+	}
+
+	public function generateViewDeletedPostUrl(int $deletedPostId): string {
 		// url parameters
 		$urlParameters = [
 			'pageName' => 'viewMore',
@@ -78,11 +108,8 @@ class deletedPostUtility {
 			true
 		);
 
-		// render the html
-		$buttonUrl = '<span class="adminFunctions adminViewDeletedPostFunction">[<a href="' . htmlspecialchars($modulePageUrl) . '" title="View deleted post">VD</a>]</span> ';
-
-		// return string
-		return $buttonUrl;
+		// return url
+		return $modulePageUrl;
 	}
 
 	public function generateDeletedPostViewUrl(int $deletedPostId): string {

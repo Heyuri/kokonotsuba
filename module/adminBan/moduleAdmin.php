@@ -44,23 +44,103 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->onRenderLinksAboveBar($linkHtml);
 			}
 		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModeratePostWidget',
+			function(array &$widgetArray, array &$post) {
+				$this->onRenderPostWidget($widgetArray, $post);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModuleAdminHeader',
+			function(&$moduleHeader) {
+				$this->onGenerateModuleHeader($moduleHeader);
+			}
+		);
 	}
 
-	public function onRenderLinksAboveBar(string &$linkHtml): void {
+	private function onRenderPostAdminControls(string &$modfunc, array &$post) {
+		$ip = htmlspecialchars($post['host']) ?? '';
+
+		$modulePageUrl = $this->generateBanUrl($ip, $post['post_uid']);
+
+		$modfunc .= '<noscript><span class="adminFunctions adminBanFunction">[<a href="' . htmlspecialchars($modulePageUrl) . '" title="Ban">B</a>]</span></noscript>';
+	}
+
+	private function onRenderLinksAboveBar(string &$linkHtml): void {
 		$linkHtml .= '<li class="adminNavLink"><a href="' . $this->myPage . '">Manage bans</a></li>';
 	}
 
-	public function onRenderPostAdminControls(string &$modfunc, array &$post) {
-		$ip = htmlspecialchars($post['host']) ?? '';
+	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+		// generate ban url
+		$banUrl = $this->generateBanUrl($post['host'], $post['post_uid']);
 
-		$modulePageUrl = $this->getModulePageURL([
-			'post_uid' => $post['post_uid'],
-			'ip' => $ip,
-			],
-			true,
-			true);
+		// build the widget entry for deletion
+		$banWidget = $this->buildWidgetEntry(
+			$banUrl, 
+			'ban', 
+			'Ban', 
+			'Moderate'
+		);
+		
+		// add the widget to the array
+		$widgetArray[] = $banWidget;
+	}
+	
+	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		// get base module url
+		$moduleUrl = $this->myPage;
 
-		$modfunc .= '<span class="adminFunctions adminBanFunction">[<a href="' . $modulePageUrl . '" title="Ban">B</a>]</span> ';
+		// get ban template
+		$banTemplate = $this->generateBanJsTemplate($moduleUrl);
+
+		// append ban template to header
+		$moduleHeader .= $banTemplate;
+
+		// generate js link tag
+		$banJs = $this->generateScriptHeader('ban.js', true);
+
+		// append js link to module header
+		$moduleHeader .= $banJs;
+	}
+
+	private function generateBanJsTemplate(string $moduleUrl): string {
+		// template placeholders
+		// Leave most values blank/zero - the js will fill these values/fields
+		$templateValues = $this->getBanFormTemplateValues(
+			0,
+			0,
+			'',
+			$this->DEFAULT_BAN_MESSAGE,
+			$moduleUrl
+		);
+
+		// generate an empty ban form (parse block)
+		$banFormHtml = $this->moduleContext->adminPageRenderer->ParseBlock('ADMIN_BAN_FORM', $templateValues);
+
+		// generate template
+		// wraps content in HTML <template> tags
+		$banTemplate = $this->generateTemplate('banFormTemplate', $banFormHtml);
+
+		// return the HTML template
+		return $banTemplate;
+	}
+	
+	private function generateBanUrl(string $ipAddress, int $postUid): string {
+		// build parameters for the url
+		$params = [
+			'ip' => $ipAddress,
+			'post_uid' => $postUid
+		];
+
+		// generate the url
+		$deletionUrl = $this->getModulePageURL($params, false, true);
+
+		// return the url
+		return $deletionUrl;
 	}
 
 	public function ModulePage() {
@@ -97,22 +177,49 @@ class moduleAdmin extends abstractModuleAdmin {
 			]
 		];
 
-		$post_uid = $_GET['post_uid'] ?? '';
-		$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($post_uid);
+		$postUid = $_GET['post_uid'] ?? 0;
+		$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($postUid);
 		
+		// IP address from GET
+		$ipAddress = $_GET['ip'] ?? '';
 
-		$templateData = [
-			'{$POST_NUMBER}' => $postNumber ? htmlspecialchars($postNumber) : "No post selected.  ",
-			'{$POST_UID}' => htmlspecialchars($_GET['post_uid'] ?? ''),
-			'{$IP}' => htmlspecialchars($_GET['ip'] ?? ''),
-			'{$DEFAULT_BAN_MESSAGE}' => $this->DEFAULT_BAN_MESSAGE,
-			'{$MODULE_URL}' => $this->myPage,
-			'{$TABLES}' => $tables,
-		];
+		// get module url
+		$moduleUrl = $this->myPage;
+
+		$templateData = $this->getBanFormTemplateValues(
+			$postNumber,
+			$postUid,
+			$ipAddress,
+			$this->DEFAULT_BAN_MESSAGE,
+			$moduleUrl
+		);
+
+		// add tables template value 
+		// (exclusive to the full ban page)
+		// which are the Ban/Mute tables
+		$templateData['{$TABLES}'] = $tables;
+
 
 		$adminBanManagePageHtml = $this->moduleContext->adminPageRenderer->ParseBlock('ADMIN_BAN_MANAGEMENT_PAGE', $templateData);
 
 		echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $adminBanManagePageHtml], true);
+	}
+
+	private function getBanFormTemplateValues(
+		int $postNumber, 
+		int $postUid, 
+		string $ipAddress, 
+		string $defaultBanMessage, 
+		string $moduleUrl
+	): array {
+		// ban form template values
+		return [
+			'{$POST_NUMBER}' => htmlspecialchars($postNumber),
+			'{$POST_UID}' => htmlspecialchars($postUid),
+			'{$IP}' => htmlspecialchars($ipAddress),
+			'{$DEFAULT_BAN_MESSAGE}' => $defaultBanMessage,
+			'{$MODULE_URL}' => $this->myPage,
+		];
 	}
 
 	private function sortBansByNewest(array $bans): array {
@@ -123,8 +230,6 @@ class moduleAdmin extends abstractModuleAdmin {
 		});
 		return $bans;
 	}
-
-
 
 	private function handleBanAddition() {
 		// Extract data from the request

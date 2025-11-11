@@ -9,6 +9,7 @@ class postRenderer {
 	private attachmentRenderer $attachmentRenderer;
 	private postTemplateBinder $postTemplateBinder;
 	private postElementGenerator $postElementGenerator;
+	private postWidget $postWidget;
 
 	public function __construct(
 		private readonly IBoard $board, 
@@ -30,6 +31,9 @@ class postRenderer {
 
 			// intialize post element generator class
 			$this->postElementGenerator = new postElementGenerator($board);
+			
+			// initialize post widget generator class
+			$this->postWidget = new postWidget($moduleEngine);
 		}
 
 	public function setQuoteLinks(array $quoteLinks): void {
@@ -95,20 +99,12 @@ class postRenderer {
 		$templateValues['{$POSTINFO_EXTRA}'] = '';
 
 		// Admin controls hook (if admin mode is on)
-		if ($adminMode) {
-			$modFunc = '';
-			
-			if($isThreadOp) {
-				$this->moduleEngine->dispatch('ThreadAdminControls', [&$modFunc, &$post]);
-			} else {
-				$this->moduleEngine->dispatch('ReplyAdminControls', [&$modFunc, &$post]);
-			}
+		$postFormExtra .= $this->generateAdminControls($post, $adminMode, $isThreadOp);
 
-			$this->moduleEngine->dispatch('PostAdminControls', [&$modFunc, &$post]);
-			
-			$postFormExtra .= $modFunc;
-		}
+		// staff widgets
+		$widgetDataHtml = $this->generateAdminWidgets($post, $threadPosts, $adminMode, $isThreadOp);
 
+		// handle thread max-age message
 		if ($isThreadOp) {
 			$maxAgeLimit = $this->config['MAX_AGE_TIME'];
 			$postUnixTimestamp = is_numeric($post['root']) ? $post['root'] : strtotime($post['root']);
@@ -214,12 +210,27 @@ class postRenderer {
 			&$post
 		]);
 
-		// Dispatch specific hook and return template
+		// Dispatch reply hook + widget
 		if ($isThreadReply) {
-			$this->moduleEngine->dispatch('ThreadReply', [&$templateValues, $post, $threadPosts, $isThreadReply]);
-		} elseif ($isThreadOp) {
-			$this->moduleEngine->dispatch('OpeningPost', [&$templateValues, $post, $threadPosts, $isThreadReply]);
+			// thread reply hook dispatch
+			$this->moduleEngine->dispatch('ThreadReply', [&$templateValues, &$post, &$threadPosts]);
+		
+			// run reply widget
+			$this->postWidget->addThreadReplyWidget($widgetDataHtml, $post);
+		} 
+		// dispatch opening post hook point and widget
+		elseif ($isThreadOp) {
+			$this->moduleEngine->dispatch('OpeningPost', [&$templateValues, &$post, &$threadPosts]);
+
+			// run opening post widget
+			$this->postWidget->addOpeningPostWidget($widgetDataHtml, $post, $threadPosts);
 		}
+
+		// run post widget
+		$this->postWidget->addPostWidget($widgetDataHtml, $post);
+
+		// then, generate the full widget html
+		$templateValues['{$POST_MENU}'] = $this->postWidget->generatePostMenuHtml($widgetDataHtml);
 
 		// Return HTML based on render intent (allow forcing OP layout via $renderAsOp)
 		if ($isThreadReply && !$renderAsOp) {
@@ -231,4 +242,45 @@ class postRenderer {
 		}
 	}
 
+	private function generateAdminControls(array $post, bool $adminMode, bool $isThreadOp): string {
+		// if the user is logged in as a mod, then run thread admin controls
+		if ($adminMode) {
+			$modFunc = '';
+			
+			if($isThreadOp) {
+				$this->moduleEngine->dispatch('ThreadAdminControls', [&$modFunc, &$post]);
+			} else {
+				$this->moduleEngine->dispatch('ReplyAdminControls', [&$modFunc, &$post]);
+			}
+
+			$this->moduleEngine->dispatch('PostAdminControls', [&$modFunc, &$post]);
+			
+			return $modFunc;
+		}
+		// otherwise, return empty string
+		else {
+			return '';
+		}
+	}
+
+	private function generateAdminWidgets(array $post, array $threadPosts, bool $adminMode, bool $isThreadOp): string {
+		// if the user is logged in as a mod, then run moderator widgets
+		if ($adminMode) {
+			$widgetDataHtml = '';
+			
+			if($isThreadOp) {
+				$this->postWidget->addThreadModerateWidget($widgetDataHtml, $post, $threadPosts);
+			} else {
+				$this->postWidget->addReplyModerateWidget($widgetDataHtml, $post);
+			}
+
+			$this->postWidget->addPostModerateWidget($widgetDataHtml, $post);
+
+			return $widgetDataHtml;
+		}
+		// otherwise, return empty string
+		else {
+			return '';
+		}
+	}
 }

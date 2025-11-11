@@ -28,32 +28,112 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->renderWarnButton($modControlSection, $post);
 			}
 		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModeratePostWidget',
+			function(array &$widgetArray, array &$post) {
+				$this->onRenderPostWidget($widgetArray, $post);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModuleAdminHeader',
+			function(&$moduleHeader) {
+				$this->onGenerateModuleHeader($moduleHeader);
+			}
+		);
 	}
 
-	public function renderWarnButton(string &$modfunc, array $post) {
-		$janitorWarnUrl = $this->getModulePageURL(
-			[
-				'post_uid' => $post['post_uid']
-			],
-			true,
-			true
+	private function renderWarnButton(string &$modfunc, array &$post): void {
+		$janitorWarnUrl = $this->generateWarnUrl($post['post_uid']);
+		
+		$modfunc .= '<noscript><span class="adminFunctions adminWarnFunction">[<a href="' . htmlspecialchars($janitorWarnUrl) . '" title="Warn">W</a>]</span></noscript>';
+	}
+
+	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+		// generate warn url
+		$warnUrl = $this->generateWarnUrl($post['post_uid']);
+
+		// build the widget entry for warn
+		$warnWidget = $this->buildWidgetEntry(
+			$warnUrl, 
+			'warn', 
+			'Warn', 
+			'Moderate'
 		);
 		
-		$modfunc .= '<span class="adminFunctions adminWarnFunction">[<a href="' . $janitorWarnUrl . '" title="Warn">W</a>]</span>';
+		// add the widget to the array
+		$widgetArray[] = $warnWidget;
+	}
+
+	private function generateWarnUrl(int $postUid): string {
+		// get the warn url + post uid paramter
+		$warnUrl = $this->getModulePageURL(
+			[
+				'post_uid' => $postUid
+			],
+			false,
+			true
+		);
+
+		// return url
+		return $warnUrl;
+	}
+
+	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		// get warn template
+		$warnTemplate = $this->generateWarnJsTemplate();
+
+		// append warn template to header
+		$moduleHeader .= $warnTemplate;
+
+		// generate warn link tag
+		$warnJs = $this->generateScriptHeader('warn.js', true);
+
+		// append js link to module header
+		$moduleHeader .= $warnJs;
+	}
+
+	private function generateWarnJsTemplate(): string {
+		// warn template placeholders
+		$templateValues = $this->getWarnTemplateValues();
+
+		// generate an empty warn form (parse block)
+		$warnFormHtml = $this->moduleContext->adminPageRenderer->ParseBlock('JANITOR_WARN_FORM', $templateValues);
+
+		// generate template
+		// wraps content in HTML <template> tags
+		$warnTemplate = $this->generateTemplate('warnFormTemplate', $warnFormHtml);
+
+		// return the HTML template
+		return $warnTemplate;
+	}
+	
+	private function getWarnTemplateValues(): array {
+		// return shared warn template values
+		return [
+			'{$REASON_DEFAULT}'	=> 'No reason given.',
+			'{$FORM_ACTION}'	=> $this->getModulePageURL(),
+		];
 	}
 
 	public function ModulePage() {
 		$post_uid = $_REQUEST['post_uid'] ?? 0;
 		$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($post_uid);
 
-		
 		if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-			$templateValues = [
-				'{$FORM_ACTION}'			=> $this->getModulePageURL(),
-				'{$POST_NUMBER}'			=> $postNumber ? htmlspecialchars($postNumber) : "No post selected.",
-				'{$POST_UID}'				=> htmlspecialchars($post_uid),
-				'{$REASON_DEFAULT}'	=> 'No reason given.'
-			];
+			// get shared template values for this module
+			$templateValues = $this->getWarnTemplateValues();
+
+			// merge template values specific to this page into the array
+			$templateValues = array_merge($templateValues, 
+				[
+					'{$POST_NUMBER}'	=> htmlspecialchars($postNumber),
+					'{$POST_UID}'		=> htmlspecialchars($post_uid),
+				]
+			);
 
 			$janitorWarnFormHtml = $this->moduleContext->adminPageRenderer->ParseBlock('JANITOR_WARN_FORM', $templateValues);
 			echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $janitorWarnFormHtml], true);

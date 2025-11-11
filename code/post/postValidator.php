@@ -12,14 +12,24 @@ class postValidator {
 		private readonly mixed $FileIO) {}
 	
 	public function registValidate(): void {
-		if(!$_SERVER['HTTP_REFERER'] || !$_SERVER['HTTP_USER_AGENT'] || preg_match("/^(curl|wget)/i", $_SERVER['HTTP_USER_AGENT']) ){
+		// Ensure required server keys exist before accessing them
+		$httpReferer = $_SERVER['HTTP_REFERER'] ?? null;	// May be null if header is missing
+		$userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;	// May be null if header is missing
+		$requestMethod = $_SERVER['REQUEST_METHOD'] ?? null;	// May be null in unusual environments
+
+		// Validate referer and user agent; block common CLI tools and missing headers
+		// If referer or user agent is missing OR user agent looks like curl/wget → treat as bot
+		if(!$httpReferer || !$userAgent || preg_match("/^(curl|wget)/i", $userAgent)) {
 			$this->softErrorHandler->errorAndExit('You look like a robot.');
 		}
- 
-		if($_SERVER['REQUEST_METHOD'] != 'POST') $this->softErrorHandler->errorAndExit(_T('regist_notpost')); // Informal POST method
-	
+
+		// Validate the request method; must be POST
+		// If the method is missing or not POST → error out
+		if($requestMethod != 'POST') {
+			$this->softErrorHandler->errorAndExit(_T('regist_notpost')); // Informal POST method
+		}
 	}
- 
+
 	public function spamValidate(&$name, &$email, &$sub, &$com) {
 		// Blocking: IP/Hostname/DNSBL Check Function
 		$baninfo = '';

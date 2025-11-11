@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\Modules\autoSage;
 
+require_once __DIR__ . '/autoSageLibrary.php';
+
 use BoardException;
 use FlagHelper;
 use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
@@ -29,20 +31,100 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->renderAutoSageButton($modControlSection, $post);
 			}
 		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModerateThreadWidget',
+			function(array &$widgetArray, array &$post) {
+				$this->onRenderThreadWidget($widgetArray, $post);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModuleAdminHeader',
+			function(&$moduleHeader) {
+				$this->onGenerateModuleHeader($moduleHeader);
+			}
+		);
 	} 
 
-	public function renderAutoSageButton(string &$modfunc, array $post) {
+	private function renderAutoSageButton(string &$modfunc, array $post) {
 		$status = new FlagHelper($post['status']);
 
-		$autoSageLink = $this->getModulePageURL(
+		$autoSageLink = $this->generateAutoSageUrl($post['post_uid']);
+
+		$modfunc.= '<noscript><span class="adminFunctions adminAutosageFunction">[<a href="' . htmlspecialchars($autoSageLink) . '"' . ($status->value('as') ? ' title="Allow age">as' : ' title="Autosage">AS') . '</a>]</span></noscript>';
+	}
+
+	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
+		// get post status
+		$postStatus = new FlagHelper($post['status']);
+
+		// get autosage label
+		$autoSageLabel = $this->getAutoSageLabel($postStatus);
+		
+		// generate autosage url
+		$autoSageUrl = $this->generateAutoSageUrl($post['post_uid']);
+
+		// build the widget entry
+		$autoSageWidget = $this->buildWidgetEntry(
+			$autoSageUrl, 
+			'autosage', 
+			$autoSageLabel, 
+			'Moderate'
+		);
+
+		// add the widget to the array
+		$widgetArray[] = $autoSageWidget;
+	}
+
+	private function getAutoSageLabel(FlagHelper $postStatus): string {
+		// autosage flag
+		$isAutosaged = $postStatus->value('as');
+
+		// if the thread is already autosaged then the action is to unautosage it
+		if($isAutosaged) {
+			return 'Un-autosage thread';
+		}
+		// if the thread isn't autosaged then the action is to autosage it
+		else {
+			return 'Autosage thread';
+		}
+
+	}
+
+	private function generateAutoSageUrl(int $postUid): string {
+		// get AS url
+		$autoSageUrl = $this->getModulePageURL(
 			[
-				'post_uid' => $post['post_uid']
+				'post_uid' => $postUid
 			],
-			true,
+			false,
 			true
 		);
 
-		$modfunc.= '<span class="adminFunctions adminAutosageFunction">[<a href="' . $autoSageLink . '"' . ($status->value('as') ? ' title="Allow age">as' : ' title="Autosage">AS') . '</a>]</span>';
+		// return url
+		return $autoSageUrl;
+	}
+
+	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		// generate the autosage <template> html
+		$templateHtml = $this->generateAutoSageTemplate();
+
+		// generate toggle widget + js
+		$this->generateToggleWidget($moduleHeader, 'autosage.js', $templateHtml);
+	}
+
+	private function generateAutoSageTemplate(): string {
+		// get the autosage indicator tag
+		$autoSageIndicator = getAutoSageIndicator();
+		
+		// generate the autosage template html
+		$autoSageTemplateHtml = $this->generateTemplate('autoSageTemplate', $autoSageIndicator);
+
+		// return AS template
+		return $autoSageTemplateHtml;
 	}
 
 	public function ModulePage() {
@@ -67,7 +149,26 @@ class moduleAdmin extends abstractModuleAdmin {
 		$logMessage = $status->value('as') ? "Autosaged No. {$post['no']}" : "Took off autosage on No. {$post['no']}";
 		
 		$this->moduleContext->actionLoggerService->logAction($logMessage, $board->getBoardUID());
-		
+
+		// ===== AJAX handling updated to use helper =====
+		if (
+			isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+			strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+		) {
+			// whether the post-action thread is AS'd or not
+			$isAutosaged = $status->value('as');
+
+			// send json first
+			$this->sendAjaxAndDetach([
+				'active' => $isAutosaged
+			]);
+
+			// rebuild after client already received JSON
+			$board->rebuildBoard();
+			exit;
+		}
+		// ===== end AJAX handling =====
+
 		$board->rebuildBoard();	
 		
 		redirect('back', 1);

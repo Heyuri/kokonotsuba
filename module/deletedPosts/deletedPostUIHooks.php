@@ -68,6 +68,14 @@ class deletedPostUIHooks {
 				$this->onGenerateModuleHeader($moduleHeader);
 			}
 		);
+
+		$moduleEngine->addRoleProtectedListener(
+			$requiredRole,
+			'ModeratePostWidget',
+			function(array &$widgetArray, array &$post) {
+				$this->onRenderPostWidget($widgetArray, $post);
+			}
+		);
 	}
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {
@@ -229,5 +237,26 @@ class deletedPostUIHooks {
 
 		// then append it to the header
 		$moduleHeader .= $jsHtml;
+	}
+
+	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+		// whether to render it
+		if(!$this->deletedPostUtility->canRenderButton($post)) {
+			return;
+		}
+
+		// generate view deleted url
+		$deletedEntryUrl = $this->deletedPostUtility->generateViewDeletedPostUrl($post['deleted_post_id']);
+
+		// build the widget entry
+		$viewDeletedPostWidget = $this->moduleAdmin->buildWidgetEntry(
+			$deletedEntryUrl, 
+			'viewDeletedPost', 
+			'View deleted post', 
+			'Moderate'
+		);
+
+		// add the widget to the array
+		$widgetArray[] = $viewDeletedPostWidget;
 	}
 }
