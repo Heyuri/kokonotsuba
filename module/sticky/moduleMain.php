@@ -4,12 +4,12 @@
 
 namespace Kokonotsuba\Modules\sticky;
 
+require_once __DIR__ . '/stickyLibrary.php';
+
 use FlagHelper;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;
 
 class moduleMain extends abstractModuleMain {
-	private readonly string $STICKYICON;
-
 	public function getName(): string {
 		return 'Sticky';
 	}
@@ -19,18 +19,20 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->STICKYICON = $this->getConfig('STATIC_URL') . 'image/sticky.png';
-	
 		$this->moduleContext->moduleEngine->addListener('OpeningPost', function(array &$templateValues, array $post) {
 			$this->onRenderOpeningPost($templateValues['{$POSTINFO_EXTRA}'], $post);
 		});
 	}
 
 	public function onRenderOpeningPost(string &$postInfoExtra, array $post): void {
-		$fh = new FlagHelper($post['status']);
+		// indicates whether the thread is sticky'd or not 
+		$stickyFlag = new FlagHelper($post['status']);
 
-		if ($fh->value('sticky')) {
-			$postInfoExtra .= '<img src="' . $this->STICKYICON . '" class="icon" height="18" width="18" title="Sticky">';
+		// get the sticky indicator
+		$stickyIndicator = getStickyIndicator($this->getConfig('STATIC_URL'));
+
+		if ($stickyFlag->value('sticky')) {
+			$postInfoExtra .= $stickyIndicator;
 		}
 	}
 
