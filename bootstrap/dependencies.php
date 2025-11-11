@@ -68,3 +68,9 @@ $overboard = new overboard(
 	$moduleEngine, 
 	$templateEngine
 );
+
+// ───────────────────────────────────────
+// API
+// ───────────────────────────────────────
+$boardApi = new boardApi($boardService);
+$threadApi = new threadApi($threadService);
