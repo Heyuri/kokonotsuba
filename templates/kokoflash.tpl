@@ -13,6 +13,7 @@
 	<meta name="description" content="{$PAGE_TITLE}">
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
+	<link rel="stylesheet" href="{$STATIC_URL}css/globalBase.css">
 	<link rel="stylesheet" href="{$STATIC_URL}css/kokoimg/base.css?v=139">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/kokoimg/sakomoto.css?v=4" title="Sakomoto">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokoimg/heyuriclassic.css?v=5" title="Heyuri Classic">
@@ -37,7 +38,11 @@
 	<script src="{$STATIC_URL}js/flashembed.js?v=2"></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
 	<script src="{$STATIC_URL}js/message.js" defer></script>
+	<script src="{$STATIC_URL}js/postWidget.js" defer></script>
+	<script src="{$STATIC_URL}js/threadToggle.js" defer></script>
+	<script src="{$STATIC_URL}js/banWindowLibrary.js" defer></script>
 	<!--&IF($MODULE_HEADER_HTML,'{$MODULE_HEADER_HTML}','')-->
+</head>
 <!--/&HEADER-->
 
 <!--&TOPLINKS-->
@@ -126,9 +131,10 @@
 
 <!--&MODULE_INFO_HOOK-->
 	<div class="mod-extra-info">
-		{$BLOTTER}
+		<!--&IF($BLOTTER,'{$BLOTTER}','')-->
 		<hr>
 		<!--&IF($GLOBAL_MESSAGE,'<div id="globalmsg">{$GLOBAL_MESSAGE}</div><hr id="globalmsgSeparator">','')-->
+		<!--&IF($TOP_BANNER_AD,'{$TOP_BANNER_AD}','')-->
 	</div>
 <!--/&MODULE_INFO_HOOK-->
 
@@ -154,7 +160,7 @@
 <!--/&ERROR-->
 
 <!--&THREAD-->
-	<tr class="thread" id="t{$BOARD_UID}_{$THREAD_NO}">
+	<tr class="thread" id="t{$BOARD_UID}_{$THREAD_NO}" data-thread-uid="{$THREAD_UID}">
 		<td><a href="{$LIVE_INDEX_FILE}?res={$THREAD_NO}#p{$BOARD_UID}_{$THREAD_NO}" class="no">{$THREAD_NO}</a></td>
 		{$THREAD_OP}
 	</tr>

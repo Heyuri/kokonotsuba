@@ -13,6 +13,7 @@
 	<meta name="description" content="{$PAGE_TITLE}">
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
+	<link rel="stylesheet" href="{$STATIC_URL}css/globalBase.css">
 	<link rel="stylesheet" href="{$STATIC_URL}css/kokoimg/base.css?v=139">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/kokoimg/sakomoto.css?v=4" title="Sakomoto">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokoimg/heyuriclassic.css?v=5" title="Heyuri Classic">
@@ -38,14 +39,16 @@
 	<script src="{$STATIC_URL}js/update.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/addemotes.js?v=9" defer></script>
 	<script src="{$STATIC_URL}js/admin.js?v=5" defer></script>
-	<script src="{$STATIC_URL}js/filter.js?v=16" defer></script>
 	<script src="{$STATIC_URL}js/qr.js?v=18"></script>
 	<script src="{$STATIC_URL}js/clipboard.js?v=15" defer></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
 	<script src="{$STATIC_URL}js/message.js" defer></script>
+	<script src="{$STATIC_URL}js/postWidget.js" defer></script>
+	<script src="{$STATIC_URL}js/threadToggle.js" defer></script>
+	<script src="{$STATIC_URL}js/banWindowLibrary.js" defer></script>
 	<!--&IF($MODULE_HEADER_HTML,'{$MODULE_HEADER_HTML}','')-->
-	
+</head>
 <!--/&HEADER-->
 
 <!--&TOPLINKS-->
@@ -144,9 +147,10 @@
 
 <!--&MODULE_INFO_HOOK-->
 	<div class="mod-extra-info">
-		{$BLOTTER}
+		<!--&IF($BLOTTER,'{$BLOTTER}','')-->
 		<hr>
 		<!--&IF($GLOBAL_MESSAGE,'<div id="globalmsg">{$GLOBAL_MESSAGE}</div><hr id="globalmsgSeparator">','')-->
+		<!--&IF($TOP_BANNER_AD,'{$TOP_BANNER_AD}','')-->
 	</div>
 <!--/&MODULE_INFO_HOOK-->
 
@@ -173,7 +177,7 @@
 
 <!--&THREAD-->
 			
-		<div class="thread<!--&IF($MODULE_THREAD_CSS_CLASSES,'{$MODULE_THREAD_CSS_CLASSES}','')-->" id="t{$BOARD_UID}_{$THREAD_NO}">
+		<div class="thread<!--&IF($MODULE_THREAD_CSS_CLASSES,'{$MODULE_THREAD_CSS_CLASSES}','')-->" id="t{$BOARD_UID}_{$THREAD_NO}" data-thread-uid="{$THREAD_UID}">
 			{$BOARD_THREAD_NAME}
 			<div class="tnav">{$THREADNAV}</div>
 			{$THREAD_OP}
@@ -182,7 +186,7 @@
 <!--/&THREAD-->
 
 <!--&OP-->
-		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}">
+		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}">
 			<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
 				<div class="filesize">{$IMG_BAR}</div>
 				{$IMG_SRC}
@@ -198,6 +202,7 @@
 				</label>
 				<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
 				<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
+				<span class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></span>
 				<span class="replyButton">{$REPLYBTN}</span><span class="backlinks"></span>
 			</div>
 			<div class="comment">{$COM}</div>
@@ -223,6 +228,7 @@
 						</label>
 						<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
 						<span class="postInfoExtra">{$POSTINFO_EXTRA}</span><span class="backlinks"></span>
+						<span class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></span>
 					</div>
 					<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
 						<div class="filesize">{$IMG_BAR}</div>

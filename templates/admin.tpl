@@ -431,20 +431,21 @@
 <!--/&BLOTTER_PAGE-->
 
 <!--&ADMIN_BAN_FORM-->
+<div class="banFormContainer">
 	<form method="POST" action="{$MODULE_URL}">
-		<h3>Add a ban</h3>
+		<h3 class="centerText">Add a ban</h3>
 
 		<table id="banForm">
 			<tbody>
 				<input type="hidden" name="adminban-action" value="add-ban">
 				<tr>
 					<td class="postblock"><label for="post_number">Post number</label></td>
-					<td><span id="post_number">{$POST_NUMBER}</span></td>
-					<td><input type="hidden" name="post_uid" id="post_uid" value="{$POST_UID}"></td>
+					<td><span id="post_number"><!--&IF($POST_NUMBER,'{$POST_NUMBER}','')--></span></td>
+					<td><input type="hidden" name="post_uid" id="post_uid" value="<!--&IF($POST_UID,'{$POST_UID}','')-->"></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="ip">IP address</label></td>
-					<td><input type="text" class="inputtext" id="ip" name="ip" placeholder="Enter IP address" value="{$IP}" required></td>
+					<td><input type="text" class="inputtext" id="ip" name="ip" placeholder="Enter IP address" value="<!--&IF($IP,'{$IP}','')-->" required></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="duration">Ban duration</label></td>
@@ -459,7 +460,7 @@
 				</tr>
 				<tr>
 					<td class="postblock"><label for="banmsg">Public ban message</label></td>
-					<td><textarea class="inputtext" id="banmsg" name="banmsg" rows="4" cols="50">{$DEFAULT_BAN_MESSAGE}</textarea></td>
+					<td><textarea class="inputtext" id="banmsg" name="banmsg" rows="4" cols="50"><!--&IF($DEFAULT_BAN_MESSAGE,'{$DEFAULT_BAN_MESSAGE}','')--></textarea></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="public">Public ban</label></td>
@@ -472,7 +473,7 @@
 			</tbody>
 		</table>
 
-		<div class="buttonSection">
+		<div class="buttonSection centerText">
 			<input id="bigredbutton" type="submit" value="BAN!">
 		</div>
 	</form>
@@ -505,6 +506,7 @@ window.onload = function () {
 	updatepview();
 }
 	</script>
+</div>
 <!--/&ADMIN_BAN_FORM-->
 
 <!--&ADMIN_BAN_ROW-->
@@ -570,29 +572,32 @@ window.onload = function () {
 
 
 <!--&JANITOR_WARN_FORM-->
-	<form action="{$FORM_ACTION}" method="POST">
-		<h3>Warn user</h3>
+<div class="warnFormContainer">
+	<form action="<!--&IF($FORM_ACTION,'{$FORM_ACTION}','')-->" method="POST">
+		<h3 class="centerText">Warn user</h3>
 
-		<label> <span>Post Number {$POST_NUMBER}</span> </label><br>
-		<input type="hidden" name="post_uid" value="{$POST_UID}"><br>
+		<label> Post No. <span id="post_number"><!--&IF($POST_NUMBER,'{$POST_NUMBER}','')--></span> </label><br>
+		<input type="hidden" name="post_uid" value="<!--&IF($POST_NUMBER,'{$POST_NUMBER}','')-->"><br>
 		<label>Reason:<br>
-			<textarea name="msg" cols="80" rows="6">{$REASON_DEFAULT}</textarea>
+			<textarea name="msg" cols="80" rows="6"><!--&IF($REASON_DEFAULT,'{$REASON_DEFAULT}','')--></textarea>
 		</label><br>
 		<label>Public? <input type="checkbox" name="public"></label>
 
-		<div class="buttonSection">
+		<div class="buttonSection centerText">
 			<input type="submit" value="Warn">
 		</div>
 	</form>
+</div>
 <!--/&JANITOR_WARN_FORM-->
 
 
 <!--&THREAD_MOVE_FORM-->
-	<form id="thread-move-form" method="POST" action="{$FORM_ACTION}">
-		<h3>Move thread</h3>
+<div class="moveThreadContainer">
+	<form id="thread-move-form" method="POST" action="<!--&IF($FORM_ACTION,'{$FORM_ACTION}','')-->">
+		<h3 class="centerText">Move thread</h3>
 
-		<input type="hidden" name="move-thread-uid" value="{$THREAD_UID}">
-		<input type="hidden" name="move-thread-board-uid" value="{$CURRENT_BOARD_UID}">
+		<input type="hidden" name="move-thread-uid" value="<!--&IF($THREAD_UID,'{$THREAD_UID}','')-->">
+		<input type="hidden" name="move-thread-board-uid" value="<!--&IF($CURRENT_BOARD_UID,'{$CURRENT_BOARD_UID}','')-->">
 
 		<table>
 			<tbody>
@@ -619,10 +624,11 @@ window.onload = function () {
 			</tbody>
 		</table>
 
-		<div class="buttonSection">
+		<div class="buttonSection centerText">
 			<button type="submit" name="move-thread-submit" value="move it!">Move thread</button>
 		</div>
 	</form>
+</div>
 <!--/&THREAD_MOVE_FORM-->
 
 <!--&DELETED_POST_ENTRY-->

@@ -12,6 +12,7 @@
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
+	<link rel="stylesheet" href="{$STATIC_URL}css/globalBase.css">
 	<link rel="stylesheet" href="{$STATIC_URL}css/kokotxt/base.css?v=97">
 	<link class="linkstyle" rel="stylesheet" href="{$STATIC_URL}css/kokotxt/pseud0ch.css?v=8" title="Pseud0ch">
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/kokotxt/pseud0ch2.css?v=7" title="Pseud0ch (serif)">
@@ -33,7 +34,6 @@
 	<script src="{$STATIC_URL}js/qu3.js?v=23" defer></script>
 	<script src="{$STATIC_URL}js/style.js?v=3"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
-	<script src="{$STATIC_URL}js/filter.js?v=16" defer></script>
 	<script src="{$STATIC_URL}js/catalog.js"></script>
 	<script src="{$STATIC_URL}js/insert.js"></script>
 	<script src="{$STATIC_URL}js/update-txt.js" defer></script>
@@ -41,8 +41,11 @@
 	<script src="{$STATIC_URL}js/admin.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
 	<script src="{$STATIC_URL}js/message.js" defer></script>
+	<script src="{$STATIC_URL}js/postWidget.js" defer></script>
+	<script src="{$STATIC_URL}js/threadToggle.js" defer></script>
+	<script src="{$STATIC_URL}js/banWindowLibrary.js" defer></script>
 	<!--&IF($MODULE_HEADER_HTML,'{$MODULE_HEADER_HTML}','')-->
-	
+</head>
 <!--/&HEADER-->
 
 <!--&TOPLINKS-->
@@ -111,7 +114,7 @@
 <!--/&ERROR-->
 
 <!--&THREAD-->
-	<div class="thread" id="t{$BOARD_UID}_{$THREAD_NO}">
+	<div class="thread" id="t{$BOARD_UID}_{$THREAD_NO}" data-thread-uid="{$THREAD_UID}">
 		{$THREAD_OP}
 		{$REPLIES}
 	</div>
@@ -121,7 +124,13 @@
 	<div class="post op" id="p{$BOARD_UID}_{$NO}">
 		<h1 class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h1>
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
-		<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span> <!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')--> <span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
+		<div class="postinfo">
+			<span class="postnum">{$QUOTEBTN}</span>
+			<span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> 
+			<span class="time">{$NOW}</span> 
+			<!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')--> 
+			<span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
+			<span class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></span>
 		<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
 			<div class="filesize">{$IMG_BAR}</div>
 			<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
@@ -138,7 +147,14 @@
 	<span class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span>
 	<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
 	<div class="postinfo">
-	<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')--> <span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span> <!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')--> <span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
+		<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')--> 
+		<span class="postnum">{$QUOTEBTN}</span>
+		<span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span>
+		<span class="time">{$NOW}</span>
+		<!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')-->
+		<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
+	</div>
+	<span class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></span>
 	<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
 		<div class="filesize">{$IMG_BAR}</div>
 		<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
