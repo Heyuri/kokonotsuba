@@ -90,6 +90,7 @@ require __DIR__ . '/code/html/miscPartials.php';
 require __DIR__ . '/code/html/moduleHtmlFunctions.php';
 require __DIR__ . '/code/html/pagers.php';
 require __DIR__ . '/code/html/postHtmlFunctions.php';
+require __DIR__ . '/code/html/post_html/postWidget.php';
 require __DIR__ . '/code/html/post_html/attachmentRenderer.php';
 require __DIR__ . '/code/html/post_html/postDataPreparer.php';
 require __DIR__ . '/code/html/post_html/postElementGenerator.php';
@@ -115,6 +116,7 @@ require __DIR__ . '/code/libraries/lib_file.php';
 require __DIR__ . '/code/libraries/lib_filter.php';
 require __DIR__ . '/code/libraries/lib_post.php';
 require __DIR__ . '/code/libraries/lib_rebuild.php';
+require __DIR__ . '/code/libraries/lib_json.php';
 require __DIR__ . '/code/libraries/lib_template.php';
 require __DIR__ . '/code/libraries/lib_query.php';
 
@@ -188,6 +190,7 @@ require __DIR__ . '/code/routers/routes/rebuildRoute.php';
 require __DIR__ . '/code/routers/routes/registRoute.php';
 require __DIR__ . '/code/routers/routes/statusRoute.php';
 require __DIR__ . '/code/routers/routes/usrdelRoute.php';
+require __DIR__ . '/code/routers/routes/jsonApiRoute.php';
 
 // template
 require __DIR__ . '/code/template/pageRenderer.php';
@@ -200,3 +203,7 @@ require __DIR__ . '/code/thread/threadService.php';
 
 // policies
 require __DIR__ . '/code/policy/postPolicy.php';
+
+// api
+require __DIR__ . '/code/api/boardApi.php';
+require __DIR__ . '/code/api/threadApi.php';
