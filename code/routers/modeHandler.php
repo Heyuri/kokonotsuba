@@ -192,6 +192,16 @@ class modeHandler {
 					$this->routeDiContainer->deletedPostsService
 				);
 				$route->drawManagePostsPage();
+			},
+
+			'api' => function() {
+				$route = new jsonApiRoute(
+					[
+						'boardApi' => $this->routeDiContainer->boardApi,
+						'threadApi' => $this->routeDiContainer->threadApi,
+					]
+				);
+				$route->routeApiRequests();
 			}
 		];
 	

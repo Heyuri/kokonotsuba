@@ -45,6 +45,8 @@ class routeDiContainer {
 		public quoteLinkRepository $quoteLinkRepository,
 		public quoteLinkService $quoteLinkService,
 		public deletedPostsService $deletedPostsService,
-		public postPolicy $postPolicy
+		public postPolicy $postPolicy,
+		public threadApi $threadApi,
+		public boardApi $boardApi,
 	) {}
 }
