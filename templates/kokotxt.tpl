@@ -176,7 +176,15 @@
 			<div class="post reply<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}"><span class="title"><a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span>
 				<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
 				<div class="postinfo">
-				<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')--> <span class="postnum">{$QUOTEBTN}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span> <!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')--> <span class="postInfoExtra">{$POSTINFO_EXTRA}</span></div>
+				<!--&IF($POST_POSITION_ENABLED,'
+					<span class="replyPosition">{$POST_POSITION}</span>','')-->
+					<span class="postnum">{$QUOTEBTN}</span>
+					<span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> 
+					<span class="time">{$NOW}</span> 
+					<!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')-->
+					<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
+					<span class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></span>
+				</div>
 				<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
 					<div class="filesize">{$IMG_BAR}</div>
 					<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
