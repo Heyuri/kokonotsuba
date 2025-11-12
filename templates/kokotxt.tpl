@@ -159,7 +159,7 @@
 			<span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span>
 			<span class="time">{$NOW}</span> <!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')--> 
 			<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
-			<span class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></span>
+			<div class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></div>
 		</div>
 		<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
 			<!--&IF($IMG_BAR,'<div class="filesize">{$IMG_BAR}</div>','')-->
@@ -183,7 +183,7 @@
 					<span class="time">{$NOW}</span> 
 					<!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')-->
 					<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
-					<span class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></span>
+					<div class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></div>
 				</div>
 				<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
 					<div class="filesize">{$IMG_BAR}</div>

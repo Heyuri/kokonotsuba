@@ -202,7 +202,7 @@
 				</label>
 				<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
 				<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
-				<span class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></span>
+				<div class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></div>
 				<span class="replyButton">{$REPLYBTN}</span><span class="backlinks"></span>
 			</div>
 			<div class="comment">{$COM}</div>
@@ -228,7 +228,7 @@
 						</label>
 						<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
 						<span class="postInfoExtra">{$POSTINFO_EXTRA}</span><span class="backlinks"></span>
-						<span class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></span>
+						<div class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></div>
 					</div>
 					<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
 						<div class="filesize">{$IMG_BAR}</div>

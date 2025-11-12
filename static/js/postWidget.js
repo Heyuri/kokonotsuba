@@ -224,7 +224,6 @@
 				const containerRect = postMenu.getBoundingClientRect();
 				const mainMenuRect = menu.getBoundingClientRect();
 
-				subDiv.style.position = 'absolute';
 				subDiv.style.top = ((wrapperRect.top - containerRect.top)) + 'px';
 				subDiv.style.left = ((mainMenuRect.right - containerRect.left) + 2) + 'px';
 

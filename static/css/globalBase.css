@@ -1,3 +1,7 @@
+.postMenuContainer {
+	display: inline-block;
+}
+
 .menuToggle {
 	cursor: pointer;
 	display: inline-block;
@@ -175,4 +179,10 @@
 
 .alignLeft {
 	text-align: left;
+}
+
+/************************ Mobile **************************************/
+
+@media screen and (max-width: 650px) {
+	.postMenuDropdown a { line-height: 2 }
 }
