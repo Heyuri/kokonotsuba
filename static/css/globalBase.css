@@ -164,3 +164,16 @@
 	margin-left: 10px;
 	font-weight: bold;
 }
+
+.buttonLink {
+    background: none;       /* No background */
+    border: none;           /* No border */
+    color: var(--color-fg-link);         /* Link-like blue color */
+    font: inherit;          /* Inherit font styles */
+    cursor: pointer;       /* Pointer cursor to show it's clickable */
+    padding: 0;             /* Remove padding */
+}
+
+.alignLeft {
+	text-align: left;
+}
