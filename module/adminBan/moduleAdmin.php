@@ -83,7 +83,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$banUrl, 
 			'ban', 
 			'Ban', 
-			'Moderate'
+			''
 		);
 		
 		// add the widget to the array

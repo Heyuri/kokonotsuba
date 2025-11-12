@@ -68,7 +68,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$moveThreadUrl = $this->generateMoveThreadUrl($post['thread_uid']);
 
 		// build the widget entry
-		$moveThreadWidget = $this->buildWidgetEntry($moveThreadUrl, 'moveThread', 'Move thread', 'Moderate');
+		$moveThreadWidget = $this->buildWidgetEntry($moveThreadUrl, 'moveThread', 'Move thread', '');
 
 		// add the widget to the array
 		$widgetArray[] = $moveThreadWidget;

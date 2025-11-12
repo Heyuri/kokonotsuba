@@ -253,7 +253,7 @@ class deletedPostUIHooks {
 			$deletedEntryUrl, 
 			'viewDeletedPost', 
 			'View deleted post', 
-			'Moderate'
+			''
 		);
 
 		// add the widget to the array

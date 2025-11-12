@@ -72,7 +72,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$autoSageUrl, 
 			'autosage', 
 			$autoSageLabel, 
-			'Moderate'
+			''
 		);
 
 		// add the widget to the array

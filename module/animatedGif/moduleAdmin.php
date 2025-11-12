@@ -95,7 +95,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$animatedGifUrl, 
 			'animateGif', 
 			$animatedGifLabel, 
-			'Moderate'
+			''
 		);
 
 		// add the widget to the array

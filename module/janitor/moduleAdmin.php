@@ -61,7 +61,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$warnUrl, 
 			'warn', 
 			'Warn', 
-			'Moderate'
+			''
 		);
 		
 		// add the widget to the array

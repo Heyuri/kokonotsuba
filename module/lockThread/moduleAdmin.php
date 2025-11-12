@@ -71,7 +71,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$lockUrl, 
 			'lock', 
 			$lockLabel, 
-			'Moderate'
+			''
 		);
 
 		// add the widget to the array

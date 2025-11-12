@@ -160,7 +160,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$deletionUrl, 
 			'delete', 
 			'Delete', 
-			'Moderate'
+			''
 		);
 		
 		// whether to render the attachment deletion button
@@ -176,7 +176,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$muteUrl, 
 			'mute', 
 			'Mute', 
-			'Moderate'
+			''
 		);
 
 		// add the widget to the array
@@ -192,7 +192,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$attachmentDeletionUrl, 
 			'deleteAttachment', 
 			'Delete attachment', 
-			'Moderate'
+			''
 		);
 
 		// return widget

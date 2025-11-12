@@ -71,7 +71,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$stickyUrl, 
 			'sticky', 
 			$stickyLabel, 
-			'Moderate'
+			''
 		);
 
 		// add the widget to the array
