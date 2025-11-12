@@ -2,7 +2,7 @@
 	cursor: pointer;
 	display: inline-block;
 	transition: transform 0.15s ease;
-	font-size: 12px;
+	font-family: var(--font-family-sans-serif);
 	line-height: 1;
 	user-select: none;
 }
@@ -20,7 +20,6 @@
 	min-width: 120px;
 	z-index: 9999;
 	padding: 2px 0;
-	font-size: 13px;
 }
 
 /* Individual menu items */
