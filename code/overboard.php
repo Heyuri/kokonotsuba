@@ -40,7 +40,14 @@ class overboard {
 
 		$pte_vals['{$MODULE_HEADER_HTML}'] = '';
 
-		$this->moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
+		// dispatch module header hook point for (staff) live frontend
+		if($this->adminMode) {
+			$this->moduleEngine->dispatch('ModuleAdminHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
+		}
+		// dispatch module header hook point for static html
+		else {
+			$this->moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
+		}
 
 		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
 		$this->moduleEngine->dispatch('Head', array(&$html, $resno)); // "Head" Hook Point
