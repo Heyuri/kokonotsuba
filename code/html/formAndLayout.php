@@ -9,10 +9,9 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 	if($isStaff) {
 		$moduleEngine->dispatch('ModuleAdminHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
 	}
+	
 	// dispatch module header hook point for static html
-	else {
-		$moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
-	}
+	$moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
 
 	$pte_vals['{$PAGE_TITLE}'] = $pageTitle;
 
