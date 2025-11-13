@@ -89,11 +89,28 @@ class moduleAdmin extends abstractModuleAdmin {
 		// append warn template to header
 		$moduleHeader .= $warnTemplate;
 
+		// get public message template
+		$warnMessageTemplate = $this->generatePublicWarnTemplate();
+
+		// append pub warn message to header
+		$moduleHeader .= $warnMessageTemplate;
+
 		// generate warn link tag
 		$warnJs = $this->generateScriptHeader('warn.js', true);
 
 		// append js link to module header
 		$moduleHeader .= $warnJs;
+	}
+
+	private function generatePublicWarnTemplate(): string {
+		// get empty public warn
+		$warnHtml = $this->getPublicWarnMessageHtml();
+		
+		// create template
+		$warnMessageTemplate = $this->generateTemplate('publicMessage', $warnHtml);
+
+		// return warn message template
+		return $warnMessageTemplate;
 	}
 
 	private function generateWarnJsTemplate(): string {
@@ -151,7 +168,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		if (!$reason) $reason = 'No reason given.';
 
 		if (!empty($_POST['public'])) {
-			$post['com'] .= "<p class=\"warning\">($reason) <img class=\"banIcon icon\" alt=\"banhammer\" src=\"" . $this->getConfig('STATIC_URL') . "/image/hammer.gif\"></p>";
+			$post['com'] .= $this->getPublicWarnMessageHtml($reason); 
 			
 			// parameters to update in the query
 			$updatePostParameters = [
@@ -175,5 +192,13 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$board->rebuildBoard();
 		redirect($board->getBoardURL());
+	}
+
+	private function getPublicWarnMessageHtml(string $reason = ''): string {
+		// put together public warn message
+		$warnHtml = "<p class=\"warning\">(<span class=\"reasonText\">$reason</span>) <img class=\"banIcon icon\" alt=\"banhammer\" src=\"" . $this->getConfig('STATIC_URL') . "/image/hammer.gif\"></p>";
+	
+		// return message
+		return $warnHtml;
 	}
 }
