@@ -160,7 +160,7 @@
 					href: link,
 					action: 'viewdeleted',
 					label: 'View deleted post',
-					subMenu: 'Moderate'
+					subMenu: ''
 				}
 			];
 		});
