@@ -75,7 +75,7 @@ class registRoute {
 			$thread = $this->threadService->getThreadByUID($postData['thread_uid']);
 
 			// Step 3: Verify that thread exists
-			$this->postValidator->threadSanityCheck($postData['postOpRoot'], $postData['flgh'], $postData['thread_uid'], $postData['resno'], $postData['ThreadExistsBefore']);
+			$this->postValidator->threadSanityCheck($postData['postOpRoot'], $postData['flgh'], $postData['thread_uid'], $postData['resno'], $postData['ThreadExistsBefore'], $thread);
 
 			// Step 4: Process uploaded file (if any)
 			$fileMeta = $this->handleFileUpload($postData['isReply'], $thumbnailCreator, $imgDir);

@@ -67,8 +67,8 @@ class postValidator {
 		}
 	}
 	
-	public function threadSanityCheck(&$postOpRoot, &$flgh, &$thread_uid, &$resno, &$ThreadExistsBefore){
-		if($resno && !$ThreadExistsBefore) {
+	public function threadSanityCheck(&$postOpRoot, &$flgh, &$thread_uid, &$resno, &$ThreadExistsBefore, &$thread){
+		if(($resno && !$ThreadExistsBefore) || !empty($thread)) {
 			// Update the data source in advance, and this new addition is not recorded
 			$this->softErrorHandler->errorAndExit(_T('regist_threaddeleted'), 404);
 		} 
