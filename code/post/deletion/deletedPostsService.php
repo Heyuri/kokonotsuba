@@ -13,20 +13,24 @@ class deletedPostsService {
 	) {}
 
 	public function purgeDeletedPostsByAccountId(int $accountId): void {
-		// get the post uids
-		$postUids = $this->getAllDeletedUidsByAccountId($accountId);
+		// run transaction
+		$this->transactionManager->run(function() use ($accountId) {
+			// get the post uids
+			$postUids = $this->getAllDeletedUidsByAccountId($accountId);
 
-		// purge files from file system
-		$this->fileService->purgeAttachmentsFromPurgatory($postUids);
+			// purge files from file system
+			$this->fileService->purgeAttachmentsFromPurgatory($postUids);
 
-		// purge the data from database
-		$this->deletedPostsRepository->purgeDeletedPostsByAccountId($accountId);
+			// purge the data from database
+			$this->deletedPostsRepository->purgeDeletedPostsByAccountId($accountId);
 
-		// generate purge all action string
-		$actionString = "Purged all posts they've deleted.";
+			// generate purge all action string
+			$actionString = "Purged all posts they've deleted.";
 
-		// log it to the database
-		$this->logAction($actionString, GLOBAL_BOARD_UID);
+			// log it to the database
+			$this->logAction($actionString, GLOBAL_BOARD_UID);
+		});
+
 	}
 
 	private function getAllDeletedUidsByAccountId(int $accountId): ?array {
@@ -38,33 +42,36 @@ class deletedPostsService {
 	}
 
 	public function restorePost(int $deletedPostId, int $accountId): void {
-		// get the post data from the associated deleted posts row
-		$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
-		
-		// return early if postData is null for whatever reason
-		if(!$postData) {
-			return;
-		}
+		// run transaction
+		$this->transactionManager->run(function() use($deletedPostId, $accountId) {
+			// get the post data from the associated deleted posts row
+			$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
+			
+			// return early if postData is null for whatever reason
+			if(!$postData) {
+				return;
+			}
 
-		// check if the post was a reply to a deleted thread
-		$isByProxy = $this->checkIfPostIsProxyDeleted($postData);
+			// check if the post was a reply to a deleted thread
+			$isByProxy = $this->checkIfPostIsProxyDeleted($postData);
 
-		// return early if by proxy
-		if($isByProxy) {
-			return;
-		}
-		
-		// whether its an op or not
-		$isOp = $postData['is_op'] ?? 0;
+			// return early if by proxy
+			if($isByProxy) {
+				return;
+			}
+			
+			// whether its an op or not
+			$isOp = $postData['is_op'] ?? 0;
 
-		// if its a thread then restore all posts in it
-		if($isOp) {
-			$this->restoreThread($postData, $accountId);
-		} 
-		// restore singular reply
-		else {
-			$this->restoreReply($postData, $deletedPostId, $accountId);
-		}
+			// if its a thread then restore all posts in it
+			if($isOp) {
+				$this->restoreThread($postData, $accountId);
+			} 
+			// restore singular reply
+			else {
+				$this->restoreReply($postData, $deletedPostId, $accountId);
+			}
+		});
 	}
 
 	private function restoreThread(array $opPostData, int $accountId): void {
@@ -120,33 +127,36 @@ class deletedPostsService {
 	}
 
 	public function purgePost(int $deletedPostId, bool $logAction = true): void {
-		// get the post data from the associated deleted posts row
-		$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
-		
-		// return early if postData is null for whatever reason
-		if(!$postData) {
-			return;
-		}
+		// run transaction
+		$this->transactionManager->run(function() use($deletedPostId, $logAction) {
+			// get the post data from the associated deleted posts row
+			$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
+			
+			// return early if postData is null for whatever reason
+			if(!$postData) {
+				return;
+			}
 
-		// check if the post was a reply to a deleted thread
-		$isByProxy = $this->checkIfPostIsProxyDeleted($postData);
+			// check if the post was a reply to a deleted thread
+			$isByProxy = $this->checkIfPostIsProxyDeleted($postData);
 
-		// return early if by proxy
-		if($isByProxy) {
-			return;
-		}
+			// return early if by proxy
+			if($isByProxy) {
+				return;
+			}
 
-		// whether its an op or not
-		$isOp = $postData['is_op'] ?? 0;
+			// whether its an op or not
+			$isOp = $postData['is_op'] ?? 0;
 
-		// if its a thread then purge the thread
-		if($isOp) {
-			$this->purgeThread($postData, $logAction);
-		} 
-		// purge singular reply
-		else {
-			$this->purgeReply($postData, $deletedPostId, $logAction);
-		}
+			// if its a thread then purge the thread
+			if($isOp) {
+				$this->purgeThread($postData, $logAction);
+			} 
+			// purge singular reply
+			else {
+				$this->purgeReply($postData, $deletedPostId, $logAction);
+			}
+		});
 	}
 
 	private function purgePostsFromList(array $deletedPostIdList, bool $logAction = true): void {
@@ -260,31 +270,35 @@ class deletedPostsService {
 		return $actionString;
 	}
 
-	public function purgeFileOnly(int $deletedPostId, ?int $deletedBy ): void {
-		// get post data and attachments for file-only purge
-		[$postData, $attachments] = $this->getPostDataAndAttachments($deletedPostId);
+	public function purgeFileOnly(int $deletedPostId, ?int $deletedBy): void {
+		// run transaction
+		$this->transactionManager->run(function() use($deletedPostId, $deletedBy) {
+			// get post data and attachments for file-only purge
+			[$postData, $attachments] = $this->getPostDataAndAttachments($deletedPostId);
 
-		// if there's no attachments then this isn't a file-only purge
-		if(!$attachments) {
-			// throw exception
-			throw new BoardException("This post doesn't have any attachments!");
-		}
+			// if there's no attachments then this isn't a file-only purge
+			if(!$attachments) {
+				// throw exception
+				throw new BoardException("This post doesn't have any attachments!");
+			}
 
-		// flag the post as no longer deleted - special case
-		$this->deletedPostsRepository->restorePostData($deletedPostId, $deletedBy);
+			// flag the post as no longer deleted - special case
+			$this->deletedPostsRepository->restorePostData($deletedPostId, $deletedBy);
 
-		// now purge the attachments
-		// check again just in case
-		if(!empty($attachments)) {
-			// purge attachment
-			$this->fileService->purgeAttachmentsFromPurgatory($attachments);
-		}
+			// now purge the attachments
+			// check again just in case
+			if(!empty($attachments)) {
+				// purge attachment
+				$this->fileService->purgeAttachmentsFromPurgatory($attachments);
+			}
 
-		// generate the logging string for the file purge
-		$purgeActionString = $this->generateFilePurgeLoggingString($postData['no']);
+			// generate the logging string for the file purge
+			$purgeActionString = $this->generateFilePurgeLoggingString($postData['no']);
 
-		// Log the purge action to the logging table
-		$this->logAction($purgeActionString, $postData['boardUID']);
+			// Log the purge action to the logging table
+			$this->logAction($purgeActionString, $postData['boardUID']);
+		});
+
 	}
 
 	private function generateFilePurgeLoggingString(int $no): string {
@@ -664,39 +678,45 @@ class deletedPostsService {
 	}
 
 	public function updateNote(int $deletedPostId, string $note): void {
-		// update the note for that deleted post
-		$this->deletedPostsRepository->updateDeletedPostNoteById($deletedPostId, $note);
+		// run transaction
+		$this->transactionManager->run(function() use($deletedPostId, $note) {
+			// update the note for that deleted post
+			$this->deletedPostsRepository->updateDeletedPostNoteById($deletedPostId, $note);
 
-		// get the post data from the associated deleted posts row
-		$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
+			// get the post data from the associated deleted posts row
+			$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
 
-		// board uid of the post
-		$boardUid = $postData['boardUID'];
+			// board uid of the post
+			$boardUid = $postData['boardUID'];
 
-		// post number
-		$no = $postData['no'];
+			// post number
+			$no = $postData['no'];
 
-		// log adding the note
-		$this->actionLoggerService->logAction("Updated note on post No.$no", $boardUid);
+			// log adding the note
+			$this->actionLoggerService->logAction("Updated note on post No.$no", $boardUid);
+		});
 	}
 
 	public function deleteFilesFromPosts(array $posts, ?int $deletedBy): void {
-		// mark posts as file-only deleted
-		$this->deleteMultiplePosts($posts, $deletedBy, true, false);
+		// run transaction
+		$this->transactionManager->run(function() use($posts, $deletedBy) {
+			// mark posts as file-only deleted
+			$this->deleteMultiplePosts($posts, $deletedBy, true, false);
 
-		// add the attachments
-		$this->addDeletedAttachments($posts);
+			// add the attachments
+			$this->addDeletedAttachments($posts);
 
-		// get the post uids
-		$postUids = array_column($posts, 'post_uid');
+			// get the post uids
+			$postUids = array_column($posts, 'post_uid');
 
-		// now get the newly inserted attachments
-		$attachments = $this->fileService->getAttachmentsFromPostUids($postUids);
+			// now get the newly inserted attachments
+			$attachments = $this->fileService->getAttachmentsFromPostUids($postUids);
 
-		if(!empty($attachments)) {
-			// move the attachment itself
-			$this->fileService->moveFilesToPurgatory($attachments);
-		}
+			if(!empty($attachments)) {
+				// move the attachment itself
+				$this->fileService->moveFilesToPurgatory($attachments);
+			}
+		});
 	}
 
 	private function getPostDataAndAttachments(int $deletedPostId): array {
@@ -730,20 +750,27 @@ class deletedPostsService {
 	}
 
 	public function pruneExpiredPosts(int $timeLimit): void {
-		// get IDs from entires that are older than the time limit
-		$prunedEntryIDs = $this->deletedPostsRepository->getExpiredEntryIDs($timeLimit);
+		// run transaction
+		$this->transactionManager->run(function() use($timeLimit) {
+			// get IDs from entires that are older than the time limit
+			$prunedEntryIDs = $this->deletedPostsRepository->getExpiredEntryIDs($timeLimit);
 
-		// return early if there were none
-		if(!$prunedEntryIDs) {
-			return;
-		}
+			// return early if there were none
+			if(!$prunedEntryIDs) {
+				return;
+			}
 
-		// purge those posts from the ID list
-		$this->purgePostsFromList($prunedEntryIDs, false);
+			// purge those posts from the ID list
+			$this->purgePostsFromList($prunedEntryIDs, false);
+		});
+
 	}
 
 	public function removeEntry(int $deletedPostId): void {
-		// run the method to delete the entry from the database
-		$this->deletedPostsRepository->removeRowById($deletedPostId);
+		// run transaction
+		$this->transactionManager->run(function() use($deletedPostId) {
+			// run the method to delete the entry from the database
+			$this->deletedPostsRepository->removeRowById($deletedPostId);
+		});
 	}
 }
