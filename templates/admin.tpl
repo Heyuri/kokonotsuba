@@ -456,11 +456,15 @@
 				</tr>
 				<tr>
 					<td class="postblock"><label for="banprivmsg">Reason for ban</label></td>
-					<td><textarea class="inputtext" id="banprivmsg" name="privmsg" rows="4" cols="50" placeholder="Enter reason for the ban"></textarea></td>
+					<td>
+						<textarea class="inputtext" id="banprivmsg" name="privmsg" rows="4" cols="50" placeholder="Enter reason for the ban"></textarea>
+					</td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="banmsg">Public ban message</label></td>
-					<td><textarea class="inputtext" id="banmsg" name="banmsg" rows="4" cols="50"><!--&IF($DEFAULT_BAN_MESSAGE,'{$DEFAULT_BAN_MESSAGE}','')--></textarea></td>
+					<td>
+						<textarea class="inputtext" id="banmsg" name="banmsg" rows="4" cols="50"><!--&IF($DEFAULT_BAN_MESSAGE,'{$DEFAULT_BAN_MESSAGE}','')--></textarea>
+					</td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="public">Public ban</label></td>
