@@ -181,6 +181,13 @@
 	text-align: left;
 }
 
+/* Define the fixed position class with padding and bottom-right placement */
+.fixedPosition {
+    position: fixed;
+    bottom: 5px; /* Adjust the distance from the bottom */
+    right: 5px;  /* Adjust the distance from the right */
+}
+
 /************************ Mobile **************************************/
 
 @media screen and (max-width: 650px) {

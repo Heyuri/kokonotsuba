@@ -47,6 +47,7 @@
 	<script src="{$STATIC_URL}js/postWidget.js" defer></script>
 	<script src="{$STATIC_URL}js/threadToggle.js" defer></script>
 	<script src="{$STATIC_URL}js/banWindowLibrary.js" defer></script>
+	<script src="{$STATIC_URL}js/checkboxDeletion.js" defer></script>
 	<!--&IF($MODULE_HEADER_HTML,'{$MODULE_HEADER_HTML}','')-->
 </head>
 <!--/&HEADER-->
@@ -193,7 +194,8 @@
 			</div>
 			<div class="postinfo">
 				<label>
-					<input type="checkbox" name="{$POST_UID}" value="delete"><span class="title">{$SUB}</span>
+					<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete">
+					<span class="title">{$SUB}</span>
 					<span class="nameContainer">
 						<!--{$NAME_TEXT}--><span class="name">{$NAME}</span>
 					</span>
@@ -219,7 +221,9 @@
 				<div class="post reply <!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}">
 					<div class="postinfo">
 						<label>
-							<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')--> <input type="checkbox" name="{$POST_UID}" value="delete"> <span class="title">{$SUB}</span>
+							<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')-->
+							<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete">
+							<span class="title">{$SUB}</span>
 							<span class="nameContainer">
 								<!--{$NAME_TEXT}--><span class="name">{$NAME}</span>
 							</span>
