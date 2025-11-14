@@ -44,6 +44,7 @@
 	<script src="{$STATIC_URL}js/postWidget.js" defer></script>
 	<script src="{$STATIC_URL}js/threadToggle.js" defer></script>
 	<script src="{$STATIC_URL}js/banWindowLibrary.js" defer></script>
+	<script src="{$STATIC_URL}js/checkboxDeletion.js" defer></script>
 	<!--&IF($MODULE_HEADER_HTML,'{$MODULE_HEADER_HTML}','')-->
 </head>
 <!--/&HEADER-->
@@ -123,7 +124,7 @@
 <!--&OP-->
 	<div class="post op" id="p{$BOARD_UID}_{$NO}">
 		<h1 class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h1>
-		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
+		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]</div>
 		<div class="postinfo">
 			<span class="postnum">{$QUOTEBTN}</span>
 			<span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> 
@@ -146,7 +147,7 @@
 <!--&IF($IS_PREVIEW,'<table class="thread" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3"><tbody><tr><td>','')-->
 <div class="post reply" id="p{$BOARD_UID}_{$NO}">
 	<span class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span>
-	<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" value="delete"></label>]</div>
+	<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]</div>
 	<div class="postinfo">
 		<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')--> 
 		<span class="postnum">{$QUOTEBTN}</span>
