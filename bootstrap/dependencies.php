@@ -36,7 +36,7 @@ $adminLoginController = new adminLoginController(
 $staffAccountFromSession = new staffAccountFromSession;
 
 $IPValidator = new IPValidator($config, new IPAddress);
-$postValidator = new postValidator($board, $config, $IPValidator, $threadRepository, $softErrorHandler, $threadService, $postService, $attachmentService, $FileIO);
+$postValidator = new postValidator($board, $config, $IPValidator, $threadRepository, $softErrorHandler, $threadService, $postService, $fileService);
 
 // ───────────────────────────────────────
 // Policies
@@ -55,9 +55,8 @@ $overboard = new overboard(
 	$postRepository, 
 	$postService, 
 	$quoteLinkService, 
-      	$threadService,
+    $threadService,
 	$postSearchService,
-	$attachmentService,
 	$actionLoggerService,
 	$postRedirectService,
 	$deletedPostsService,

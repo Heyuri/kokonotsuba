@@ -76,6 +76,19 @@ class deletedPostUIHooks {
 				$this->onRenderPostWidget($widgetArray, $post);
 			}
 		);
+
+		$moduleEngine->addRoleProtectedListener(
+			$requiredRole,
+			'ModerateAttachment',
+			function(
+				string &$attachmentProperties, 
+				string &$attachmentImage, 
+				string &$attachmentUrl, 
+				array &$attachment
+			) {
+				$this->onRenderAttachment($attachmentProperties, $attachment);
+			}
+		);
 	}
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {
@@ -106,26 +119,13 @@ class deletedPostUIHooks {
 		// render the <a> button to take the user to the entry in the module
 		$modFunc .= $this->deletedPostUtility->adminPostViewModuleButton($post);
 
-		// render the [DELETED] indicator
-		$modFunc .= $this->renderDeletionIndicator($onlyFileDeleted);
+		// render the [DELETED] indicator if the file wasn't deleted
+		if(!$onlyFileDeleted) {
+			$modFunc .= $this->renderIndicator('DELETED', "This post was deleted!");
+		}
 	}
 
-	private function renderDeletionIndicator(bool $onlyFileDeleted): string {
-		// generate message for file-only
-		if($onlyFileDeleted) {
-			// message for within the square brackets
-			$message = "FILE DELETED";
-
-			// the title
-			$spanTitle = "This post's file was deleted";
-		} 
-		// default - post was simply deleted
-		else {
-			$message = "DELETED";
-
-			$spanTitle = "This post was deleted";
-		}
-
+	private function renderIndicator(string $message, string $spanTitle): string {
 		// return html
 		return '<span class="warning" title="' . htmlspecialchars($spanTitle) . '">[' . htmlspecialchars($message) . ']</span>';
 	}
@@ -258,5 +258,12 @@ class deletedPostUIHooks {
 
 		// add the widget to the array
 		$widgetArray[] = $viewDeletedPostWidget;
+	}
+
+	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
+		// append to attachment properties file deletion if the file is deleted
+		if($attachment['isDeleted'] && $attachment['onlyFileDeleted']) {
+			$attachmentProperties .= $this->renderIndicator('FILE DELETED', 'This post\'s file was deleted!');
+		}
 	}
 }

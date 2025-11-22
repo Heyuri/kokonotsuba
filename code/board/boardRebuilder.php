@@ -104,7 +104,15 @@ class boardRebuilder {
 	private function getThreadPageTitle(array $opPost, string $boardTitle): string {
 		$subject = strip_tags($opPost['sub']); // thread subject/topic
 		$comment = strip_tags($opPost['com']); // op post comment
-		$fileName = strip_tags($opPost['fname'] . $opPost['ext']); // op post file name as unix timestamp
+		
+		// first array key
+		$firstAttachmentArrKey = array_key_first($opPost['attachments']);
+
+		// get the first attachment
+		$firstAttachment = $opPost['attachments'][$firstAttachmentArrKey] ?? null; 
+
+		// set first filename if it exists
+		$firstAttachment ? $fileName = strip_tags($firstAttachment['fileName'] . '.' . $firstAttachment['fileExtension']) : $fileName = null;
 
 		// Max length before truncating strings
 		$maxTitleLength = 20;

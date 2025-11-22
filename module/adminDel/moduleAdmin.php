@@ -54,6 +54,19 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->onGenerateModuleHeader($moduleHeader);
 			}
 		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ModerateAttachment',
+			function(
+				string &$attachmentProperties, 
+				string &$attachmentImage, 
+				string &$attachmentUrl, 
+				array &$attachment
+			) {
+				$this->onRenderAttachment($attachmentProperties, $attachment);
+			}
+		);
 	}
 
 	private function onRenderPostAdminControls(string &$modFunc, array &$post): void {
@@ -66,22 +79,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		$muteMinutes = $this->JANIMUTE_LENGTH;
 		$plural = $muteMinutes == 1 ? '' : 's';
 
-		$board = searchBoardArrayForBoard($post['boardUID']);
-		
-
 		$addControl = function(string $action, string $label, string $title, string $class) use (&$modFunc, $postUid) {
 			$buttonUrl = $this->generateDeletionUrl($action, $postUid);
 			$modFunc .= '<noscript><span class="adminFunctions ' . htmlspecialchars($class) . '">[<a href="' . htmlspecialchars($buttonUrl) . '" title="' . htmlspecialchars($title) . '">' . htmlspecialchars($label) . '</a>]</span></noscript>';
 		};
 
 		$addControl('del', 'D', 'Delete', 'adminDeleteFunction');
-
-		if($this->canRenderAttachmentButton($post)) {
-			// this check needs to stay inside this if statement or else it'll read from disk for every post
-			if($this->moduleContext->FileIO->imageExists($post['tim'] . $post['ext'], $board)) {
-				$addControl('imgdel', 'DF', 'Delete file', 'adminDeleteFileFunction');
-			}
-		}
 
 		$addControl(
 			'delmute',
@@ -96,11 +99,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		// whether the post is deleted or not
 		$openFlag = $post['open_flag'] ?? 0;
 
-		// whether it was a file only deletion
-		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
-
 		// don't render anything if the post is already deleted
-		if($openFlag && !$onlyFileDeleted) {
+		if($openFlag && empty($post['file_only_deleted'])) {
 			return false;
 		}
 
@@ -109,17 +109,56 @@ class moduleAdmin extends abstractModuleAdmin {
 		return true;
 	}
 
-	private function canRenderAttachmentButton(array $post): bool {
-		// get the board of the post
-		$board = searchBoardArrayForBoard($post['boardUID']);
+	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
+		// if we can't render the attachment button then don't bother
+		if($this->canRenderAttachmentButton($attachment) === false) {
+			return;
+		}
 
+		// get file id
+		$fileId = $attachment['fileId'];		
+
+		// get post uid
+		$postUid = $attachment['postUid'];
+
+		// render Delete Attachment button
+		$deleteAttachButton = $this->generateDeleteAttachButton($fileId, $postUid);
+
+		// append button to below attachment properties
+		$attachmentProperties .= $deleteAttachButton;
+	}
+
+	private function generateDeleteAttachButton(int $fileId, int $postUid): string {
+		// generate delete attachment url
+		$url = $this->generateDeleteAttachUrl($fileId, $postUid);
+
+		// button html
+		$button = ' <span class="adminFunctions adminDeleteFileFunction attachmentButton">[<a href="' . htmlspecialchars($url) . '" title="Delete attachment">DF</a>]</span>';
+	
+		// return button
+		return $button;
+	}
+
+	private function generateDeleteAttachUrl(int $fileId, int $postUid): string {
+		// params
+		$params = [
+			'post_uid' => $postUid,
+			'fileId' => $fileId,
+			'action' => 'attachmentDel'
+		];
+
+		// then generate url
+		$url = $this->getModulePageURL($params, false, true);
+
+		// return
+		return $url;
+	}
+
+	private function canRenderAttachmentButton(array $attachment): bool {
 		// if the post has an attachment and its not already file-only deleted
-		if(!empty($post['ext']) && !$post['file_only_deleted']) {
-			// put together the file name
-			$storedFileName = $post['tim'] . $post['ext'];
-
+		if(!empty($attachment)) {
 			// this check needs to stay inside this if statement or else it'll read from disk for every post
-			if($this->moduleContext->FileIO->imageExists($storedFileName, $board)) {
+			if(attachmentFileExists($attachment) && !$attachment['isDeleted']) {
 				return true;
 			} 
 			// otherwise it doesnt exist - so dont render
@@ -162,11 +201,6 @@ class moduleAdmin extends abstractModuleAdmin {
 			'Delete', 
 			''
 		);
-		
-		// whether to render the attachment deletion button
-		if($this->canRenderAttachmentButton($post)) {
-			$deletionWidgets[] = $this->generateAttachmentWidget($post['post_uid']);
-		}
 
 		// generate mute url
 		$muteUrl = $this->generateDeletionUrl('delmute', $post['post_uid']);
@@ -182,7 +216,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		// add the widget to the array
 		$widgetArray = array_merge($deletionWidgets, $widgetArray);
 	}
-
+/*
+ * Can perhaps re-implement as a 'delete all attachments from post' option 
 	private function generateAttachmentWidget(int $postUid): array {
 		// generate attachment deletion url
 		$attachmentDeletionUrl = $this->generateDeletionUrl('imgdel', $postUid);
@@ -198,7 +233,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// return widget
 		return $attachmentDeletionWidget;
 	}
-
+*/
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		// can view deleted poss
 		$canViewDeleted = getRoleLevelFromSession()->isAtLeast($this->getConfig('AuthLevels.CAN_DELETE_ALL'));
@@ -266,8 +301,26 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->moduleContext->actionLoggerService->logAction('Muted '.$ip.' and deleted post No.'.$post['no'] . ' ' . $board->getBoardTitle() . ' (' . $board->getBoardUID() . ')', GLOBAL_BOARD_UID);
 
 				break;
-			case 'imgdel':
-				$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$post], $accountId);
+			case 'attachmentDel':
+				// get the file Id
+				$fileId = $_GET['fileId'] ?? null;
+				
+				// cast to int
+				$fileId = (int)$fileId;
+
+				// throw board exception if its null/empty/zero or isn't an integer
+				if(empty($fileId) || !is_int($fileId)) {
+					throw new BoardException("Invalid file ID supplied!");
+				}
+
+				// get the attachment to deleted
+				$attachment = $post['attachments'][$fileId] ?? false;
+
+				if(!$attachment) {
+					throw new BoardException(_T('attachment_not_found'));
+				}
+
+				$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$attachment], $accountId);
 
 				$this->moduleContext->actionLoggerService->logAction('Deleted file for post No.'.$post['no'], $boardUID);
 				break;

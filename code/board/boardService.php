@@ -241,7 +241,6 @@ class boardService {
 			$this->boardDiContainer->postSearchService,
 			$this->boardDiContainer->quoteLinkService,
 			$this,
-			$this->boardDiContainer->attachmentService,
 			$this->boardDiContainer->actionLoggerService,
 			$this->boardDiContainer->postRedirectService,
 			$this->boardDiContainer->deletedPostsService,

@@ -1,5 +1,14 @@
 <?php
 /*
+* ==== ---------------====
+* ====!NOT MAINTAINED!====
+* ==== ^ ^ ^ ^ ^ ^ ^ ^====
+*
+*
+*
+*
+*
+*
 * Pixmicat board importing object for Kokonotsuba!
 * Used to migrate a piximcat table to kokonotsuba's database
 */

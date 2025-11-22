@@ -10,29 +10,6 @@
  */
 
 class PMCLibrary {
-	private static $instFileIO;
-
-	/**
-	 * 取得 FileIO 函式庫物件
-	 *
-	 * @return IFileIO FileIO 函式庫物件
-	 */
-	public static function getFileIOInstance() {
-		if(!self::$instFileIO) die("Tried to get FileIO instance on null.");
-		return self::$instFileIO;
-	}
-	
-	public static function createFileIOInstance() {
-		if (self::$instFileIO == null) {
-			$config = getGlobalConfig();
-
-			$fileIoExactClass = 'FileIO'.$config['FILEIO_BACKEND'];
-
-			self::$instFileIO = new $fileIoExactClass(unserialize($config['FILEIO_PARAMETER'])
-			);
-		}
-	}
-	
 	/**
 	 * 取得 Logger 函式庫物件
 	 *

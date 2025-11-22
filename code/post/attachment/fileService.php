@@ -13,10 +13,13 @@ class fileService {
 
 	public function restoreAttachmentsFromPurgatory(array $attachments): void {
 		// get file IDs
-		$fileIds = $this->getFileIdsFromAttachments($attachments);
+		$fileIDs = $this->getFileIDsFromAttachments($attachments);
 
 		// mark each file row as no longer hidden
-		$this->fileRepository->setHiddenStatuses($fileIds, false);
+		$this->fileRepository->setHiddenStatuses($fileIDs, false);
+
+		// also mark each file
+		$this->markAttachmentsAsRestored($fileIDs);
 		
 		// move the files out of the attachment directory back to their respective boards
 		$this->restoreFileLocation($attachments);
@@ -49,11 +52,10 @@ class fileService {
 		// delete the actual files
 		$this->deleteAttachmentFiles($attachments);
 
-		// get file IDs
-		$fileIds = $this->getFileIdsFromAttachments($attachments);
-
-		// delete the file rows from the database
-		$this->fileRepository->deleteFileRows($fileIds);
+		// leave the file rows
+		// the file rows can be deleted when the associated post is purged.
+		// This is so file-deletions will still retain the file name and 'file deleted' .
+		// otherwise it'd be rendered as if there never was an attachment since there's no way to track it after purging
 	}
 
 	private function deleteAttachmentFiles(array $attachments): void {
@@ -86,10 +88,13 @@ class fileService {
 
 	public function moveFilesToPurgatory(array $attachments): void {
 		// get file IDs
-		$fileIds = $this->getFileIdsFromAttachments($attachments);
+		$fileIDs = $this->getFileIDsFromAttachments($attachments);
 
-		// mark the file as hidden so it knows its in purgatory
-		$this->fileRepository->setHiddenStatuses($fileIds, true);
+		// mark the files as hidden so it knows its in purgatory
+		$this->fileRepository->setHiddenStatuses($fileIDs, true);
+
+		// mark the files as deleted
+		$this->markAttachmentsAsDeleted($fileIDs); 
 
 		// get the global attachment directory
 		$globalAttachmentDirectory = getGlobalAttachmentDirectory();
@@ -98,7 +103,7 @@ class fileService {
 		$this->moveFilesToDirectory($attachments, $globalAttachmentDirectory);
 	}
 
-	private function getFileIdsFromAttachments(array $attachments): array {
+	private function getFileIDsFromAttachments(array $attachments): array {
 		// init array to store file ids
 		$fileIds = [];
 
@@ -207,8 +212,8 @@ class fileService {
 		?int $thumbFileHeight,
 		int $fileSize,
 		string $mimeType,
-		bool $isHidden,
-		bool $isThumb): void {
+		bool $isHidden
+	): void {
 		// add the row to database
 		$this->fileRepository->insertFileRow($postUid, 
 			$fileName, 
@@ -221,8 +226,7 @@ class fileService {
 			$thumbFileHeight, 
 			$fileSize, 
 			$mimeType, 
-			$isHidden, 
-			$isThumb);
+			$isHidden);
 	}
 
 	public function getAttachmentsFromPostUids(array $postUids): ?array {
@@ -260,5 +264,34 @@ class fileService {
 
 		// return attachments
 		return $attachments;
+	}
+
+	public function animateFile(int $fileId): void {
+		// run repo method
+		$this->fileRepository->toggleAnimatedFileById($fileId, true);
+	}
+
+	public function disableAnimatedFile(int $fileId): void {
+		// run repo method
+		$this->fileRepository->toggleAnimatedFileById($fileId, false);
+	}
+
+	public function markAttachmentsAsDeleted(array $fileIDs): void {
+		// run internal repository method
+		$this->fileRepository->toggleIsDeleted($fileIDs, true);
+	}
+
+	public function markAttachmentsAsRestored(array $fileIDs): void {
+		// run internal repository method
+		$this->fileRepository->toggleIsDeleted($fileIDs, false);
+	}
+
+	public function isDuplicateAttachment(string $md5Hash, bool $countDeleted = true, ?int $timeRangeInSeconds = null): bool {
+		// check the files table for if the attachment was previously posted.
+		// this also counts files that have been deleted if $countDeleted is true.
+		$isDuplicate = $this->fileRepository->checkDuplicateHash($md5Hash, $countDeleted, $timeRangeInSeconds);
+
+		// then return the condition
+		return $isDuplicate;
 	}
 }

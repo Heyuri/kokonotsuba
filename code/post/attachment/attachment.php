@@ -142,4 +142,12 @@ class attachment {
 		// return result
 		return $fileId;
 	}
+
+	public function getPostUid(): int {
+		// get the post uid value from fileEntry
+		$postUid = $this->fileEntry->getPostUid();
+
+		// return post uid
+		return $postUid;
+	}
 }

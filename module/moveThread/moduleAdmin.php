@@ -145,9 +145,12 @@ class moduleAdmin extends abstractModuleAdmin {
 				''
 			);
 
+		// get next post uid
+		$postUid = $this->moduleContext->postRepository->getNextPostUid();
+
 		// Add shadow post
 		$this->moduleContext->postService->addPostToThread(
-			$originalBoard, $postRegistData);
+			$originalBoard, $postRegistData, $postUid);
 	}
 
 
@@ -208,9 +211,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$srcImgPath = $srcBasePath . $srcConfig['IMG_DIR'];
 		$srcThumbPath = $srcBasePath . $srcConfig['THUMB_DIR'];
 	
-		foreach ($attachments as $file) {
-			$imageFilename = $file['tim'] . $file['ext'];
-			$thumbFilename = $this->moduleContext->FileIO->resolveThumbName($file['tim'], $srcBoard);
+		foreach ($attachments as $att) {
+			$imageFilename = $att['storedFileName'] . '.' . $att['fileExtension'];
+			$thumbFilename = resolveThumbName($att);
 	
 			$srcImage = $srcImgPath . $imageFilename;
 			$destImage = $destImgPath . $imageFilename;

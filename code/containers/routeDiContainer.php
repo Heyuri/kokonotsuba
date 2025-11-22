@@ -23,7 +23,6 @@ class routeDiContainer {
 		public softErrorHandler $softErrorHandler,
 		public boardRepository $boardRepository,
 		public boardService $boardService,
-		public mixed $FileIO,
 		public postRepository $postRepository,
 		public postService $postService,
 		public threadRepository $threadRepository,
@@ -39,7 +38,6 @@ class routeDiContainer {
 		public postRedirectService $postRedirectService,
 		public DatabaseConnection $databaseConnection,
 		public boardPathService $boardPathService,
-		public attachmentService $attachmentService,
 		public array $visibleBoards,
 		public array $regularBoards,
 		public quoteLinkRepository $quoteLinkRepository,
@@ -48,5 +46,6 @@ class routeDiContainer {
 		public postPolicy $postPolicy,
 		public threadApi $threadApi,
 		public boardApi $boardApi,
+		public fileService $fileService,
 	) {}
 }

@@ -4,14 +4,11 @@ class threadService {
 	private array $allowedOrderFields;
 
 	public function __construct(
-		private DatabaseConnection $databaseConnection,
 		private readonly threadRepository $threadRepository,
 		private readonly postRepository $postRepository,
 		private readonly postService $postService,
-		private readonly attachmentService $attachmentService,
 		private readonly transactionManager $transactionManager,
-		private readonly string $threadTable,
-		private readonly string $postTable,
+		private readonly fileService $fileService
 	) {
 		$this->allowedOrderFields = ['post_op_number', 'post_op_post_uid', 'last_bump_time', 'last_reply_time', 'insert_id', 'post_uid'];
 	}
@@ -241,7 +238,6 @@ class threadService {
 			'post_position' => $post['post_position'],
 			'is_op'			=> $post['is_op'],
 			'root'			=> $post['root'],
-			'time'			=> $post['time'],
 			'md5chksum'		=> $post['md5chksum'],
 			'category'		=> $post['category'],
 			'tim'			=> $post['tim'],
@@ -273,21 +269,25 @@ class threadService {
 		}, $comment);
 	}
 
-	public function deleteThreads(array $threadUidList): void {
-		$this->attachmentService->removeAttachmentsFromThreads($threadUidList);
-
-		$this->threadRepository->deleteThreadsByUidList($threadUidList);
-	}
-
 	public function pruneByAmount(array $threadUidList, int $maxThreadAmount): ?array {
+		// slice array to filter amount threads that are over the max thread amount limit.
+		// Threads are ordered on last bump time
 		$threadsToPrune = $this->getThreadAmountToPrune($threadUidList, $maxThreadAmount);
 
+		// no threads to prune
+		// so dont bother and return an empty array
 		if(empty($threadsToPrune)) {
 			return [];
 		}
 
-		$this->deleteThreads($threadsToPrune);
+		// get all the opening posts
+		$postUids = $this->threadRepository->getOpPostUidsFromThreads($threadsToPrune);
 
+		// then delete them
+		// use -1 to represent the system
+		$this->postService->removePosts($postUids);
+
+		// return the deleted thread uids
 		return $threadsToPrune;
 	}
 

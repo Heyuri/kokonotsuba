@@ -15,6 +15,8 @@ class fileEntry {
 	public string|int $file_size;
 	public string $mime_type;
 	public int $is_hidden;
+	public int $is_deleted;
+	public string $timestamp_added;
 
 	public function __construct() {
 
@@ -33,7 +35,9 @@ class fileEntry {
 		?int $thumb_file_height,
 		string|int $file_size,
 		string $mime_type,
-		int $is_hidden
+		int $is_hidden,
+		int $is_deleted,
+		string $timestamp_added,
 	): void {
 		$this->id = $id;
 		$this->post_uid = $post_uid;
@@ -49,6 +53,9 @@ class fileEntry {
 		$this->file_size = $file_size;
 		$this->mime_type = $mime_type;
 		$this->is_hidden = $is_hidden;
+		$this->is_deleted = $is_deleted;
+		$this->timestamp_added = $timestamp_added;
+
 	}
 
 	public function getId(): int {
@@ -97,6 +104,22 @@ class fileEntry {
 
 	public function isHidden(): bool {
 		return (bool)$this->is_hidden;
+	}
+
+	public function getThumbFileWidth(): ?int {
+		return $this->thumb_file_width;
+	}
+
+	public function getThumbFileHeight(): ?int {
+		return $this->thumb_file_height;
+	}
+
+	public function isDeleted(): bool {
+		return (bool)$this->is_deleted;
+	}
+
+	public function getTimestampAdded(): int {
+		return $this->timestamp_added;
 	}
 
 }

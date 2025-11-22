@@ -729,11 +729,14 @@ window.onload = function () {
 	<!--&IF($CAN_PURGE,'
 		<!--&DELETE_POST_PURGE_BUTTON/-->
 	','')-->
-	<!--&DELETE_POST_RESTORE_BUTTON/-->
+
+	<!--&IF($IS_OPEN,'
+		<!--&DELETE_POST_RESTORE_BUTTON/-->
+	','')-->
 <!--/&DELETE_POST_OPEN_BUTTONS-->
 
 <!--&DELETE_POST_PURGE_BUTTON-->
-	<!--&IF($FILE_ONLY,'[<button type="submit"
+	<!--&IF($IS_ATTACHMENT_ONLY,'[<button type="submit"
 			name="action"
 			value="purgeAttachment"
 			class="adminFunctions adminPurgeFunction buttonLink"
@@ -751,13 +754,19 @@ window.onload = function () {
 <!--/&DELETE_POST_PURGE_BUTTON-->
 
 <!--&DELETE_POST_RESTORE_BUTTON-->
-	<!--&IF($IS_OPEN,'[<button type="submit"
+	<!--&IF($IS_ATTACHMENT_ONLY,'[<button type="submit"
+		name="action"
+		value="restoreAttachment"
+		class="adminFunctions adminRestoreFunction buttonLink"
+		title="Restore this attachment to the board">
+		Restore attachment
+	</button>]','[<button type="submit"
 		name="action"
 		value="restore"
 		class="adminFunctions adminRestoreFunction buttonLink"
-		title="Restore the post to the board">
+		title="Restore the attachment to the board">
 		Restore
-	</button>]','')-->
+	</button>]')-->
 <!--/&DELETE_POST_RESTORE_BUTTON-->
 
 <!--&DELETED_POST_RESTORE_INFO-->

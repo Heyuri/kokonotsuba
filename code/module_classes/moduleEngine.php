@@ -87,8 +87,6 @@ use Kokonotsuba\Root\Constants\userRole;
 			$this->moduleEngineContext->boardService,
 			$this->moduleEngineContext->postSearchService,
 			$this->moduleEngineContext->quoteLinkService,
-			PMCLibrary::getFileIOInstance(),
-			$this->moduleEngineContext->attachmentService,
 			$this->moduleEngineContext->actionLoggerService,
 			$this->moduleEngineContext->postRedirectService,
 			$this->moduleEngineContext->deletedPostsService,

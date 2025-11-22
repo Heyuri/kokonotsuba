@@ -8,8 +8,8 @@ class postValidator {
 		private readonly softErrorHandler $softErrorHandler,
 		private readonly threadService $threadService,
 		private readonly postService $postService,
-		private readonly attachmentService $attachmentService,
-		private readonly mixed $FileIO) {}
+		private readonly fileService $fileService,
+	) {}
 	
 	public function registValidate(): void {
 		// Ensure required server keys exist before accessing them
@@ -51,24 +51,24 @@ class postValidator {
 		}
 	}
 
-	public function validateForDatabase(&$pwdc, &$com, &$time, &$pass, &$host, &$upfile_name, &$md5chksum, &$dest, $roleLevel){
+	public function validateForDatabase(&$pwdc, &$md5chksum, &$dest, $roleLevel){
 		// Continuous submission / same additional image check
-		$checkcount = 50; // Check 50 by default
 		$pwdc = substr(md5($pwdc), 2, 12); // Cookies Password
 		if ($roleLevel->isLessThan(\Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR))  {
-			if($this->postService->isSuccessivePost($this->board, $checkcount, $com, $time, $pass, $pwdc))
-			   $this->softErrorHandler->errorAndExit(_T('regist_successivepost')); // Continuous submission check
-			
 			if($dest && $this->config['PREVENT_DUPLICATE_FILE_UPLOADS']) { 
-				if($this->attachmentService->isDuplicateAttachment($this->board, $checkcount)){
+				if($this->fileService->isDuplicateAttachment($md5chksum, true, $this->config['DUPLICATE_FILE_TIME'])){
 					$this->softErrorHandler->errorAndExit(_T('regist_duplicatefile')); 
 				}
 			} // Same additional image file check
 		}
 	}
 	
-	public function threadSanityCheck(&$postOpRoot, &$flgh, &$thread_uid, &$resno, &$ThreadExistsBefore, &$thread){
-		if(($resno && !$ThreadExistsBefore) || !empty($thread)) {
+	public function threadSanityCheck(&$postOpRoot, &$flgh, &$thread_uid, &$resno, &$ThreadExistsBefore, &$thread) {
+		if(
+			(
+				$resno && (!$ThreadExistsBefore || empty($thread))
+			)
+		) {
 			// Update the data source in advance, and this new addition is not recorded
 			$this->softErrorHandler->errorAndExit(_T('regist_threaddeleted'), 404);
 		} 
@@ -115,13 +115,21 @@ class postValidator {
 		}
 
 		// Additional image file capacity limit function is enabled: delete oversized files
-		if($this->config['STORAGE_LIMIT'] && $this->config['STORAGE_MAX'] > 0){
-			$tmp_total_size = $this->FileIO->getCurrentStorageSize($this->board); // Get the current size of additional images
-			if($tmp_total_size > $this->config['STORAGE_MAX']){
-				$files = $this->attachmentService->delOldAttachments($this->board, $tmp_total_size, $this->config['STORAGE_MAX'], false);
-				$this->FileIO->deleteImage($files, $this->board);
+		/*if($this->config['STORAGE_LIMIT'] && $this->config['STORAGE_MAX'] > 0){
+			$totalAttachmentStorage = $this->board->getTotalAttachmentSpace(); // Get the current size of additional images
+			
+			if($totalAttachmentStorage > $this->config['STORAGE_MAX']){
+				$this->fileService->pruneExcessAttachments(
+					$this->board, 
+					$totalAttachmentStorage, 
+					$this->config['STORAGE_MAX'], 
+					false
+				);
 			}
 		}
+		*
+		* Dev note: this can be re-implemented at a later date if needed	
+		*/
 	}
 
 

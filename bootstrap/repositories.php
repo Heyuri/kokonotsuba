@@ -12,8 +12,6 @@ $accountService = new accountService($accountRepository, $actionLoggerService);
 // ───────────────────────────────────────
 // Post/Thread Bootstrap
 // ───────────────────────────────────────
-$attachmentRepository = new attachmentRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE']);
-$attachmentService = new attachmentService($attachmentRepository);
 $fileRepository = new fileRepository($databaseConnection, $dbSettings['FILE_TABLE'], $dbSettings['POST_TABLE']);
 $fileService = new fileService($fileRepository);
 $threadRepository = new threadRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE']);
@@ -21,7 +19,7 @@ $postRepository = new postRepository($databaseConnection, $dbSettings['POST_TABL
 $deletedPostsRepository = new deletedPostsRepository($databaseConnection, $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['POST_TABLE'], $dbSettings['ACCOUNT_TABLE'], $dbSettings['FILE_TABLE']);
 $deletedPostsService = new deletedPostsService($transactionManager, $deletedPostsRepository, $fileService, $actionLoggerService, $postRepository, $threadRepository);
 $postService = new postService($postRepository, $transactionManager, $threadRepository, $deletedPostsService);
-$threadService = new threadService($databaseConnection, $threadRepository, $postRepository, $postService, $attachmentService, $transactionManager, $dbSettings['THREAD_TABLE'], $dbSettings['POST_TABLE']);
+$threadService = new threadService($threadRepository, $postRepository, $postService, $transactionManager, $fileService);
 $quoteLinkRepository = new quoteLinkRepository($databaseConnection, $dbSettings['QUOTE_LINK_TABLE'], $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE']);
 $quoteLinkService = new quoteLinkService($quoteLinkRepository, $postRepository);
 $postSearchRepository = new postSearchRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE']);

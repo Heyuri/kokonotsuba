@@ -50,7 +50,12 @@ class deletedPostActionHandler {
 		// if it's an attachment purge then delete the file only
 		// then mark it as 'restored' by the mod since theres no more action to do on it
 		else if ($action === 'purgeAttachment' && $roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {
-			$this->deletedPostsService->purgeFileOnly($deletedPostId, $accountId);
+			$this->deletedPostsService->purgeAttachmentOnly($deletedPostId);
+		}
+
+		// if its a restore attachment action then restore the specifc attachment
+		else if ($action === 'restoreAttachment') {
+			$this->deletedPostsService->restoreAttachment($deletedPostId, $accountId);
 		}
 
 		// if it's a saveNote action. handle saving a new note tied to that post

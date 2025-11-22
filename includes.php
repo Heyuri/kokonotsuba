@@ -8,19 +8,12 @@ require __DIR__.'/constants.php';
 
 // interfaces
 require __DIR__ . '/code/interfaces/IBoard.php';
-require __DIR__ . '/code/interfaces/IFileIO.php';
 require __DIR__ . '/code/interfaces/ILogger.php';
 require __DIR__ . '/code/interfaces/IModule.php';
-require __DIR__ . '/code/interfaces/IPIO.php';
-require __DIR__ . '/code/interfaces/IPIOCondition.php';
 require __DIR__ . '/code/interfaces/MethodInterceptor.php';
 
 // pmclibrary
 require __DIR__ . '/code/pmclibrary.php';
-
-// abstract_fileio
-require __DIR__ . '/code/abstract_fileio/AbstractFileIO.php';
-require __DIR__ . '/code/abstract_fileio/AbstractIfsFileIO.php';
 
 // account
 require __DIR__ . '/code/account/accountRepository.php';
@@ -78,9 +71,6 @@ require __DIR__ . '/code/file/fileFromUpload.php';
 require __DIR__ . '/code/file/postFileUploadController.php';
 require __DIR__ . '/code/file/thumbnail.php';
 
-// fileio (only include fileio.local.php)
-require __DIR__ . '/code/fileio/fileio.local.php';
-
 // html
 require __DIR__ . '/code/html/boardList.php';
 require __DIR__ . '/code/html/filterForms.php';
@@ -119,6 +109,7 @@ require __DIR__ . '/code/libraries/lib_rebuild.php';
 require __DIR__ . '/code/libraries/lib_json.php';
 require __DIR__ . '/code/libraries/lib_template.php';
 require __DIR__ . '/code/libraries/lib_query.php';
+require __DIR__ . '/code/libraries/lib_attachment.php';
 
 // log_in
 require __DIR__ . '/code/log_in/adminLoginController.php';
@@ -144,8 +135,6 @@ require __DIR__ . '/code/overboard.php';
 
 // post
 require __DIR__ . '/code/post/FlagHelper.php';
-require __DIR__ . '/code/post/attachment/attachmentRepository.php';
-require __DIR__ . '/code/post/attachment/attachmentService.php';
 require __DIR__ . '/code/post/attachment/attachment.php';
 require __DIR__ . '/code/post/attachment/fileEntry.php';
 require __DIR__ . '/code/post/attachment/fileRepository.php';

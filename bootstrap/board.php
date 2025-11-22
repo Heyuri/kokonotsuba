@@ -20,7 +20,6 @@ $boardDiContainer = new boardDiContainer(
 	$boardPostNumbers, 
 	$boardPathService, 
 	$postSearchService,
-	$attachmentService,
 	$postRedirectService,
 	$deletedPostsService,
 	$capcodeService,

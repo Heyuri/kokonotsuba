@@ -7,13 +7,10 @@ class managePostsRoute {
 		private board $board,
 		private readonly array $config,
 		private moduleEngine $moduleEngine,
-		private readonly boardService $boardService,
 		private readonly staffAccountFromSession $staffAccountFromSession,
-		private readonly postRedirectService $postRedirectService,
 		private readonly postRepository $postRepository,
 		private readonly postService $postService,
 		private readonly softErrorHandler $softErrorHandler,
-		private mixed $FileIO,
 		private readonly actionLoggerService $actionLoggerService,
 		private readonly pageRenderer $adminPageRenderer,
 		private readonly array $allRegularBoards,
@@ -95,9 +92,40 @@ class managePostsRoute {
 			$boardMap[$board->getBoardUID()] = $board;
 		}
 
-		for($j = 0; $j < $posts_count; $j++) {
-			extract($posts[$j]);
+		foreach($posts as $key => $p) {		
+			// get the board uid
+			$boardUID = $p['boardUID'];
 			
+			// get tripcode
+			$tripcode = $p['tripcode'];
+			
+			// get the secure tripcode
+			$secure_tripcode = $p['secure_tripcode'];
+
+			// get the capcode
+			$capcode = $p['capcode'];
+
+			// get the email
+			$email = $p['email'];
+
+			// get is_op condition
+			$is_op = $p['is_op'];
+
+			// get host
+			$host = $p['host'];
+
+			// get comment
+			$com = $p['com'];
+
+			// get post uid
+			$post_uid = $p['post_uid'];
+
+			// get now
+			$now = $p['now'];
+
+			// get no
+			$no = $p['no'];
+
 			// post board (from preloaded boards)
 			if(isset($boardMap[$boardUID])){
 				$postBoard = $boardMap[$boardUID];
@@ -125,28 +153,20 @@ class managePostsRoute {
 			$modFunc = ' ';
 
 			if($is_op) {
-				$this->moduleEngine->dispatch('ThreadAdminControls', [&$modFunc, &$posts[$j]]);
+				$this->moduleEngine->dispatch('ThreadAdminControls', [&$modFunc, &$p]);
 			} else {
-				$this->moduleEngine->dispatch('ReplyAdminControls', [&$modFunc, &$posts[$j]]);
+				$this->moduleEngine->dispatch('ReplyAdminControls', [&$modFunc, &$p]);
 			}
 
 			// dispatch post admin hook point
-			$this->moduleEngine->dispatch('PostAdminControls', [&$modFunc, &$posts[$j]]);
-
-			// Extract additional archived image files and generate a link
-			if($ext && $this->FileIO->imageExists($tim.$ext, $postBoard)){
-				$clip = '<a href="'.$this->FileIO->getImageURL($tim.$ext, $postBoard).'" target="_blank">'.$tim.$ext.'</a>';
-				$size = $this->FileIO->getImageFilesize($tim.$ext, $postBoard);
-				$thumbName = $this->FileIO->resolveThumbName($tim, $postBoard);
-				if($thumbName != false) $size += $this->FileIO->getImageFilesize($thumbName, $postBoard);
-			}else{
-				$clip = $md5chksum = '--';
-				$size = 0;
-			}
+			$this->moduleEngine->dispatch('PostAdminControls', [&$modFunc, &$p]);
 
 			if($roleLevel->isAtMost(\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR)) {
 				$host = substr(hash('sha256', $host), 0, 10);
 			}
+
+			// generate attachments info html
+			$attachmentsHtml = $this->renderAttachments($p['attachments']);
 
 			// Print out the interface
 			$managePostsHtml .= '
@@ -159,7 +179,7 @@ class managePostsRoute {
 					<td class="colName"><span class="name">' . $nameHtml . '</span></td>
 					<td class="colComment"><div class="managepostsCommentWrapper">' . $com . '</div></td>
 					<td class="colHost">' . $host . ' <a target="_blank" href="https://whatismyipaddress.com/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="'.$managePostsUrl.'&ip_address=' . $host . '&board=' . $boardList . '" title="See all posts">★</a></td>
-					<td class="colImage">' . $clip . ' (' . $size . ')<br>' . $md5chksum . '</td>
+					' . $attachmentsHtml . '
 				</tr>';
 		}
 
@@ -227,6 +247,52 @@ class managePostsRoute {
 		];
 	}
 
+	private function renderAttachments(array $attachments): string {
+		// return default no-file attachment row
+		if(empty($attachments)) {
+			return '<td class="colImage">---</td>';
+		}
+		
+		// init attachments html
+		$attachmentsHtml = '';
+
+		// loop through attachments and 
+		foreach($attachments as $att) {
+			// continue early if empty
+			// probably invalid / a bug if that happens but may as well prevent error page on mod tools in case of failing at critial times
+			if(empty($att)) {
+				continue;
+			}
+
+			// get md5 hash
+			$fileMd5 = $att['fileMd5'];
+
+			// get file extension
+			$fileExtension = $att['fileExtension'];
+
+			// get stored file name
+			$storedFileName = $att['storedFileName'];
+
+			// Extract additional archived image files and generate a link
+			if($fileExtension && attachmentFileExists($att)){
+				$clip = '<a href="'. getAttachmentUrl($att).'" target="_blank">' . $storedFileName . $fileExtension . '</a>';
+				$size = $att['fileSize'];
+			}
+
+			// then put together the attachments list
+			$attachmentInfoEntry = '<div class="attachmentListEntry">' . $clip . ' (' . $size . ')<br>' . $fileMd5 . '</div>';
+
+			// append to attachments html
+			$attachmentsHtml .= $attachmentInfoEntry;
+		}
+
+		// wrap html in td
+		$attachmentsHtml = '<td class="colImage">' . $attachmentsHtml . '</td>';
+
+		// return attachments html
+		return $attachmentsHtml;
+	}
+	
 	private function deletePostsFromCheckboxes(array $postUids, bool $onlyDeleteImages, int $accountId): void {
 		$postsData = $this->postService->getPostsByUids($postUids);
 		$postNumbers = array_column($postsData, 'no');
@@ -235,11 +301,7 @@ class managePostsRoute {
 		$this->actionLoggerService->logAction("Delete posts: $checkboxDeletionActionLogStr".($onlyDeleteImages?' (file only)':''), $this->board->getBoardUID());
 
 		if($onlyDeleteImages) {
-			$files = $this->deletedPostsService->deleteFilesFromPosts($postsData, $accountId);
-
-			if ($files) {
-				$this->FileIO->deleteImage($files, $this->board);
-			}
+			$this->deletedPostsService->deleteFilesFromPosts($postsData, $accountId);
 		} else {
 			$this->postService->removePosts($postUids);
 		}

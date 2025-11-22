@@ -58,7 +58,7 @@ function createBoardStoredFilesFromArray(array $posts, array $boards) {
 	foreach($posts as $post) {
 		$board = searchBoardArrayForBoard($post['boardUID']);
 
-		$files[] = new boardStoredFile($post['tim'], $post['ext'], $board);
+		$files[] = new boardStoredFile($post['storedFileName'], $post['fileExtension'], $board);
 	}
 	return $files;
 }

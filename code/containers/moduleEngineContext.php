@@ -12,7 +12,6 @@ class moduleEngineContext {
         public readonly postSearchService $postSearchService,
         public readonly quoteLinkService $quoteLinkService,
         public readonly boardService $boardService,
-        public readonly attachmentService $attachmentService,
         public readonly actionLoggerService $actionLoggerService,
         public readonly postRedirectService $postRedirectService,
         public readonly deletedPostsService $deletedPostsService,

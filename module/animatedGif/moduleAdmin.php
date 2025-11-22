@@ -3,9 +3,9 @@
 namespace Kokonotsuba\Modules\animatedGif;
 
 use BoardException;
-use FlagHelper;
 use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
 use Kokonotsuba\Root\Constants\userRole;
+
 
 class moduleAdmin extends abstractModuleAdmin {
 	public function getRequiredRole(): userRole {
@@ -23,17 +23,14 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function initialize(): void {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
-			'PostAdminControls',
-			function(string &$modControlSection, array &$post) {
-				$this->onRenderPostAdminControls($modControlSection, $post);
-			}
-		);
-		
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, array &$post) {
-				$this->onRenderPostWidget($widgetArray, $post);
+			'ModerateAttachment',
+			function(
+				string &$attachmentProperties, 
+				string &$attachmentImage, 
+				string &$attachmentUrl, 
+				array &$attachment,
+			) {
+				$this->onRenderAttachment($attachmentProperties, $attachment);
 			}
 		);
 
@@ -46,81 +43,30 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 	
-	private function onRenderPostAdminControls(&$modfunc, $post): void {
-		// post flag helper
-		$postStatus = new FlagHelper($post['status']);
-
-		// whether the post can have its gif animated
-		$canAnimate = $this->isAnimatedGif($postStatus, $post['ext']);
-
-		// attach the button if the post has a gif and the file hasn't deleted
-		if ($canAnimate) {
-			// anigif url
-			$animatedGifButtonUrl = $this->generateAnimatedGifUrl($post['post_uid']);
-
-			// add control to postinfoextra
-			$modfunc.= '<noscript><span class="adminFunctions adminGIFFunction">[<a href="' . htmlspecialchars($animatedGifButtonUrl) . '"' . ($postStatus->value('agif') ? ' title="Use still image of GIF">g' : ' title="Use animated GIF">G') . '</a>]</span></noscript>';
+	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
+		if ($this->canAnimateAttachment($attachment)) {
+			// append animate gif button
+			$attachmentProperties .= $this->generateAnimateGifButton($attachment);
 		}
 	}
 
-	private function isAnimatedGif(FlagHelper $postStatus, string $extension): bool {
-		// the following condition:
-		// true if the extension is a gif - and the post doesn't have the fileDeleted attribute (i.e it hasn't been deleted)
-		$canAnimate = $extension === '.gif' && !$postStatus->value('fileDeleted');
-	
-		// return condition
-		return $canAnimate;
+	private function canAnimateAttachment(array $attachment): bool {
+		return $attachment['fileExtension'] === 'gif';
 	}
 
-	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
-		// get post status
-		$postStatus = new FlagHelper($post['status']);
-
-		// whether the post can have its gif animated
-		$canAnimate = $this->isAnimatedGif($postStatus, $post['ext']);
-
-		// return early if this post can't have its attachment animated
-		if(!$canAnimate) {
-			return;
-		}
-
-		// get anigif label
-		$animatedGifLabel = $this->getAnimatedGifLabel($postStatus);
+	private function generateAnimateGifButton(array $attachment): string {
+		$animatedGifButtonUrl = $this->generateAnimatedGifUrl($attachment['postUid'], $attachment['fileId']);
+		$flag = ($attachment['isAnimated']) ? 'title="Use still image of GIF">g' : 'title="Use animated GIF">G';
 		
-		// generate anigif url
-		$animatedGifUrl = $this->generateAnimatedGifUrl($post['post_uid']);
-
-		// build the widget entry
-		$animatedGifWidget = $this->buildWidgetEntry(
-			$animatedGifUrl, 
-			'animateGif', 
-			$animatedGifLabel, 
-			''
-		);
-
-		// add the widget to the array
-		$widgetArray[] = $animatedGifWidget;
+		return '<span class="adminFunctions adminGIFFunction">[<a href="' . htmlspecialchars($animatedGifButtonUrl) . '" ' . $flag . '</a>]</span>';
 	}
 
-	private function getAnimatedGifLabel(FlagHelper $postStatus): string {
-		// anigif flag
-		$isAnimated = $postStatus->value('agif');
-
-		// if the attachment is already animated then the action is to un-animated it
-		if($isAnimated) {
-			return 'Disable gif animation';
-		}
-		// if the thread isn't already animated then the action is to animate it
-		else {
-			return 'Animate gif';
-		}
-	}
-
-	private function generateAnimatedGifUrl(int $postUid): string {
+	private function generateAnimatedGifUrl(int $postUid, int $fileId): string {
 		// generate animated gif url
 		$animatedGifUrl = $this->getModulePageURL(
 			[
-				'post_uid' => $postUid
+				'postUid' => $postUid,
+				'fileId' => $fileId
 			],
 			false,
 			true
@@ -139,48 +85,106 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {
-		// get the post uid from request
-		$postUid = $_GET['post_uid'] ?? null;
+		// get post uid from request
+		$postUid = $_GET['postUid'] ?? null;
+		
+		// get file id from request
+		$fileId = $_GET['fileId'] ?? null;
 
-		// No post selected, so throw exception
-		if($postUid === null) {
+		// throw exception if post uid is blank
+		if ($postUid === null || $postUid <= 0) {
 			throw new BoardException("No post selected.");
 		}
 
-		// get the post
+		// throw exception if file id is blank		
+		if($fileId === null || $fileId <= 0) {
+			throw new BoardException("No attachment selected.");
+		}
+
+		// get post
 		$post = $this->moduleContext->postRepository->getPostByUid($postUid);
 		
-		// throw an exception if the post doesn't exist (i.e it got deleted by the time the request was sent)
-		if(!$post) {
+		// throw exception if post isn't found
+		if (!$post) {
 			throw new BoardException("ERROR: Post does not exist.");
 		}
 
-		// only run the toggle code if the file is a gif
-		if($post['ext'] && $post['ext'] == '.gif') {
-			$flgh = new FlagHelper($post['status']);
+		// throw exception if the post has no attachments
+		if (empty($post['attachments'])) {
+			throw new BoardException('ERROR: No attachments on post.');
+		}
 
-			// throw exception if the file has been deleted
-			if($flgh->value('fileDeleted')) {
-				throw new BoardException('ERROR: attachment does not exist.');
-			}
+		// now select the attachment on this post
+		$attachment = $post['attachments'][$fileId] ?? null;
 
-			// toggle the flag variable
-			$flgh->toggle('agif');
+		// if attachment isn't found or blank then throw exception
+		if($attachment === null || $attachment <= 0) {
+			throw new BoardException("ERROR: Attachment not found in post!");
+		}
 
-			// update the post status in database
-			$this->moduleContext->postRepository->setPostStatus($post['post_uid'], $flgh->toString());
-			
-			// generate log message
-			$logMessage = $flgh->value('agif') ? 'Animated gif activated on No. ' . htmlspecialchars($post['no']) : 'Animated gif taken off of No. ' . htmlspecialchars($post['no']);
-			
-			// log mod action to database
-			$this->moduleContext->actionLoggerService->logAction($logMessage, $post['boardUID']);
-			
-			// redirect back
-			redirect('back', 0);
-		} else {
-			// it wasn't a gif, so throw an exception
-			throw new BoardException('ERROR: Attached file is not a gif.');
+		// alright now we're through so far
+		// set isAnimated flag
+		$isAnimated = &$attachment['isAnimated'];
+
+		// if the attachment is already animated then the action is to disable the is_animated flag
+		if($isAnimated) {
+			$this->moduleContext->fileService->disableAnimatedFile($fileId);
+		}
+		// however if its not animated then its time to animate the attachment
+		else {
+			$this->moduleContext->fileService->animateFile($fileId);
+		}
+
+		// toggle/invert the value so it aligns with the switch
+		$isAnimated = !$isAnimated;
+
+		$logMessage = $isAnimated
+			? 'Animated GIF activated on No. ' . htmlspecialchars($post['no'])
+			: 'Animated GIF deactivated on No. ' . htmlspecialchars($post['no']);
+
+		$this->moduleContext->actionLoggerService->logAction($logMessage, $post['boardUID']);
+
+		// get the board of the post
+		$board = searchBoardArrayForBoard($post['boardUID']);
+
+		// ===== AJAX handling updated to use helper =====
+		if (
+			isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+			strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+		) {
+			// get url
+			$attachmentUrl = $this->getAnimatedAttachmentUrl($attachment, $isAnimated);
+
+			// send json first
+			$this->sendAjaxAndDetach([
+				'active' => $isAnimated,
+				'attachmentUrl' => $attachmentUrl,
+				'newGifButton' => $this->generateAnimateGifButton($attachment)
+			]);
+
+			// rebuild after client already received JSON
+			$board->rebuildBoard();
+			exit;
+		}
+		// ===== end AJAX handling =====
+
+		// rebuild board
+		$board->rebuildBoard();
+
+		redirect('back', 0);
+	}
+
+	private function getAnimatedAttachmentUrl(array $attachment, bool $isAnimated): string {
+		// if its animated then get the true attachment url
+		if($isAnimated) {
+			// return attachment url
+			return getAttachmentUrl($attachment, false);
+		}
+		// otherwise get the thumb url
+		else {
+			// return thumb url
+			return getAttachmentUrl($attachment, true);
 		}
 	}
+
 }

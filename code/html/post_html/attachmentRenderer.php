@@ -2,33 +2,37 @@
 
 class attachmentRenderer {
 	public function __construct(
-		private mixed $FileIO,
 		private board $board,
 		private moduleEngine $moduleEngine
 	) {}
 
-	public function generateAttachmentHtml(array $fileData, bool $isDeleted, bool $fileOnlyDeleted, bool $adminMode): array {
-		// add a dot (full stop) if the extension
-		// (compatability)
-		$fullStop = str_contains($fileData['fileExtension'], '.') ? '' : '.';
+	public function generateAttachmentHtml(
+		array $fileData, 
+		bool $isDeleted, 
+		bool $adminMode, 
+		int $index = 0,
+		bool $multipleAttachments = false,
+	): string {
+		// check whether only the attachment is currently deleted
+		$isAttachmentDeleted = $fileData['isDeleted'];
 
-		// file name + extension
-		$fullFileName = $fileData['storedFileName'] . $fullStop . $fileData['fileExtension'];
+		// thumb filename + extension
+		$thumbName = resolveThumbName($fileData);
 
 		// Get image URL
-		$imageURL = $this->generateImageUrl($fileData['fileId'], 
-			$fullFileName,
+		$imageURL = $this->generateImageUrl( 
+			$fileData,
 			false,
-			$isDeleted || $fileOnlyDeleted);
+			$isDeleted || $isAttachmentDeleted);
 
 		// get the thumbnail URL
-		$thumbURL = $this->generateImageUrl($fileData['fileId'],
-			$fileData['thumbName'], 
+		$thumbURL = $this->generateImageUrl(
+			$fileData, 
 			true, 
-			$isDeleted || $fileOnlyDeleted);
+			$isDeleted || $isAttachmentDeleted);
 
 		// build file attachment
-		$fileAttachment = $this->constructAttachment($fileData['fileId'], 
+		$fileAttachment = constructAttachment($fileData['fileId'], 
 			$fileData['postUid'], 
 			$fileData['boardUID'], 
 			$fileData['fileName'], 
@@ -37,11 +41,13 @@ class attachmentRenderer {
 			$fileData['fileMd5'], 
 			$fileData['fileWidth'], 
 			$fileData['fileHeight'], 
-			$fileData['thumbnailWidth'],
-			$fileData['thumbnailHeight'],
+			$fileData['thumbWidth'],
+			$fileData['thumbHeight'],
 			$fileData['fileSize'], 
 			$fileData['mimeType'], 
 			$fileData['isHidden'], 
+			$fileData['isDeleted'],
+			$fileData['timestampAdded'],
 			false);
 
 
@@ -49,67 +55,76 @@ class attachmentRenderer {
 		$imageBar = $this->handleFileBar($fileData, $imageURL);
 
 		// check if the image exists
-		$imageExists = $this->checkIfAttachmentExists($fullFileName, $fileAttachment, $isDeleted, $fileOnlyDeleted);
+		$imageExists = $this->checkIfAttachmentExists($fileData, $fileAttachment, $isDeleted, $isAttachmentDeleted);
 
 		// Build image html
-		$imageHtml = $this->generateImageHTML($fileData['fileExtension'], 
-			$fileData['thumbnailWidth'], 
-			$fileData['thumbnailHeight'], 
+		$imageHtml = $this->generateImageHTML(
+			$fileData['fileExtension'], 
+			$fileData['thumbWidth'], 
+			$fileData['thumbHeight'], 
 			$fileData['fileSize'],
-			$fileData['thumbName'],
+			$thumbName,
 			$thumbURL,
 			$imageURL,
 			$imageExists,
-			(!$adminMode && $fileOnlyDeleted));
+			(!$adminMode && $isAttachmentDeleted));
 	
-		// return html
-		return [$imageBar, $imageURL, $imageHtml];
-	}
+		// run attachment hook point
+		$this->moduleEngine->dispatch('Attachment', [&$imageBar, &$imageHtml, &$imageURL, &$fileData]);
 
-	private function constructAttachment(int $fileId,
-		int $postUid,
-		string $boardUID,
-		string $fileName,
-		string $storedFileName,
-		string $fileExtension,
-		string $fileMd5,
-		int $fileWidth,
-		int $fileHeight,
-		int $thumbnailFileWidth,
-		int	$thumbnailFileHeight,
-		string|int $fileSize,
-		string $mimeType,
-		bool $isHidden
-	): attachment {
-		// create fileEntry instance
-		$fileEntry = new fileEntry;
+		// run moderation attachment hook point
+		if($adminMode) {
+			$this->moduleEngine->dispatch('ModerateAttachment', [&$imageBar, &$imageHtml, &$imageURL, &$fileData]);
+		}
 
-		// hydrate the object
-		$fileEntry->hydrateFileEntry(
-			$fileId,
-			$postUid,
-			$boardUID,
-			$fileName,
-			$storedFileName,
-			$fileExtension,
-			$fileMd5,
-			$fileWidth,
-			$fileHeight,
-			$thumbnailFileWidth,
-			$thumbnailFileHeight,
-			$fileSize,
-			$mimeType,
-			$isHidden
+		// wrap in attachment container
+		$attachmentHtml = $this->wrapAttachmentContent(
+			$imageHtml, 
+			$imageBar, 
+			$index, 
+			$multipleAttachments
 		);
 
-		// construct attachment
-		$attachment = new attachment($fileEntry, $this->board);
-
-		// return attachment
-		return $attachment;
+		// return html
+		return $attachmentHtml;
 	}
 
-	private function checkIfAttachmentExists(string $fullFileName, 
+	private function wrapAttachmentContent(
+		string $imageHtml, 
+		string $imageBar, 
+		int $index, 
+		bool $multipleAttachments
+	): string {
+		// init attachment html
+		$attachmentHtml = '';
+
+		// css classes for the attachment container
+		$attachmentClasses = 'attachmentContainer';
+
+		// append the multi-attachment css class if the post has more than 1 attachment
+		if($multipleAttachments) {
+			$attachmentClasses .= ' multiAttachment';
+		}
+
+		// begin container wrap
+		// data-attachment-index is so js knows whether its the first, second, and so on, attachment of the post
+		$attachmentHtml .= '<div class="' . $attachmentClasses . '" data-attachment-index="' . htmlspecialchars($index) . '">';
+
+		// append attachment info html
+		$attachmentHtml .= '<div class="filesize">' . $imageBar . '</div>';
+
+		// append main attachment html (image/thumbnail itself)
+		$attachmentHtml .= $imageHtml;
+
+		// end container wrap
+		$attachmentHtml .= '</div>';
+
+		// now, return the attachment container/html
+		return $attachmentHtml;
+	}
+
+	private function checkIfAttachmentExists(
+		array $attachmentData, 
 		attachment $fileAttachment, 
 		bool $isDeleted,
 		bool $fileOnlyDeleted,
@@ -122,9 +137,9 @@ class attachmentRenderer {
 			// check if it exists
 			$imageExists = file_exists($attachmentPath);
 		} 
-		// if its being served through the web server like normal then use FileIO to check if it exists
+		// if its being served through the web server like normal then use function to check if it exists
 		else {
-			$imageExists = $this->FileIO->imageExists($fullFileName, $this->board);
+			$imageExists = attachmentFileExists($attachmentData);
 		}
 
 		// return result
@@ -137,12 +152,15 @@ class attachmentRenderer {
 			return '';
 		}
 
+		// format file size
+		$formattedFileSize = formatFileSize($fileData['fileSize']);
+
 		// generate file bar html 
 		$imageBar = $this->buildAttachmentBar(
 			$fileData['storedFileName'], 
 			$fileData['fileExtension'], 
 			$fileData['fileName'], 
-			$fileData['fileSize'], 
+			$formattedFileSize, 
 			$fileData['fileWidth'], 
 			$fileData['fileHeight'], 
 			$imageURL);
@@ -164,7 +182,6 @@ class attachmentRenderer {
 		string $imageURL,
 		bool $imageExists,
 		bool $fileDeleted): string {
-
 		// Case: File has been deleted, use placeholder image
 		if ($fileDeleted) {
 			$thumbURL = $this->board->getConfigValue('STATIC_URL') . 'image/filedeleted.gif';
@@ -176,11 +193,11 @@ class attachmentRenderer {
 			return $this->buildImageTag($imageURL, $thumbURL, $imgsize);
 		}
 		// Case: Thumbnail exists and dimensions are known
-		elseif ($tw && $th && $thumbName) {
+		elseif ($tw && $th && !empty($thumbName)) {
 			return $this->buildImageTag($imageURL, $thumbURL, $imgsize, $tw, $th, 'Click to show full image');
 		}
 		// Case: Special handling for SWF files
-		elseif ($ext === ".swf" || $ext === "swf") {
+		elseif ($ext === "swf") {
 			$thumbURL = $this->board->getConfigValue('SWF_THUMB');
 			return $this->buildImageTag($imageURL, $thumbURL, 'SWF Embed');
 		}
@@ -197,7 +214,7 @@ class attachmentRenderer {
 	/**
 	 * Builds an HTML anchor tag wrapping an image, with optional sizing and tooltip.
 	 */
-	private function buildImageTag($imageURL, $thumbURL, $altText, $width = null, $height = null, $title = null): string {
+	private function buildImageTag($imageURL, $thumbURL, $altText, $width = null, $height = null, $title = null): string {		
 		// Start building the <img> tag
 		$imgTag = '<img src="' . $thumbURL . '" class="postimg" alt="' . $altText . '"';
 
@@ -251,10 +268,15 @@ class attachmentRenderer {
 			<span class="fileProperties">(' . htmlspecialchars($imgsize) . htmlspecialchars($imgwh_bar) . ')</span>';
 	}
 
-	private function generateImageUrl(int $fileId, 
-		string $fullFileName,
+	public function generateImageUrl(
+		array $attachment,
 		bool $isThumb,
 		bool $serveThroughPHP): string {
+		// return empty string if attachment is empty
+		if(empty($attachment)) {
+			return '';
+		}
+
 		// url of the image to be served
 		$imageURL = '';
 
@@ -262,12 +284,12 @@ class attachmentRenderer {
 		if($serveThroughPHP) {
 			// dipatch hook point
 			// primarily just for the imageServer module
-			$this->moduleEngine->dispatch('ImageUrl', [&$imageURL, $fileId, $isThumb]);
+			$this->moduleEngine->dispatch('ImageUrl', [&$imageURL, $attachment['fileId'], $isThumb]);
 		} 
 		// otherwise just generate the regular URL to the image on the server
 		else {
-			// get the image url directly to the image file
-			$imageURL = $this->FileIO->getImageURL($fullFileName, $this->board);
+			// get the url directly to the image file  
+			$imageURL = getAttachmentUrl($attachment, $isThumb);
 		}
 
 		// return generated image url

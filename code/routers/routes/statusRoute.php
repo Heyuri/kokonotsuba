@@ -10,14 +10,13 @@ class statusRoute {
 		private moduleEngine $moduleEngine,
         private readonly threadRepository $threadRepository,
         private readonly postRepository $postRepository,
-		private readonly mixed $FileIO
         ) {}
 
 	/* Show instance/board information */
 	public function drawStatus() {
 		$countline = $this->postRepository->postCountFromBoard($this->board); // Calculate the current number of data entries in the submitted text log file
 		$counttree = $this->threadRepository->threadCountFromBoard($this->board); // Calculate the current number of data entries in the tree structure log file
-		$tmp_total_size = $this->FileIO->getCurrentStorageSize($this->board); // The total size of the attached image file usage
+		$tmp_total_size = $this->board->getCurrentStorageSize(); // The total size of the attached image file usage
 		$tmp_ts_ratio = $this->config['STORAGE_MAX'] > 0 ? $tmp_total_size / $this->config['STORAGE_MAX'] : 0; // Additional image file usage
 
 		// Determines the color of the "Additional Image File Usage" prompt
@@ -138,13 +137,13 @@ class statusRoute {
 		</tr>
 		<tr class="centerText">
 			<td>' . _T('info_fileusage_count') . '</td>
-			<td colspan="2"><span style="color:#' . $clrflag_sl . '">' . $tmp_total_size . ' KB</span></td>
+			<td colspan="2"><span style="color:#' . $clrflag_sl . '">' . formatFileSize($tmp_total_size) . '</span></td>
 		</tr>';
 		} else {
 				$dat .= '
 		<tr class="centerText">
 			<td>' . _T('info_fileusage_count') . '</td>
-			<td>' . $tmp_total_size . ' KB</td>
+			<td>' . formatFileSize($tmp_total_size) . '</td>
 			<td colspan="2">' . _T('info_dsusage_usage') . '<br><span class="green">' . _T('info_fileusage_unlimited') . '</span></td>
 		</tr>';
 		}

@@ -33,9 +33,9 @@ class modeHandler {
 					$this->routeDiContainer->transactionManager,
 					$this->routeDiContainer->moduleEngine,
 					$this->routeDiContainer->actionLoggerService,
-					$this->routeDiContainer->FileIO,
 					$this->routeDiContainer->postRepository,
 					$this->routeDiContainer->postService,
+					$this->routeDiContainer->fileService,
 					$this->routeDiContainer->threadRepository,
 					$this->routeDiContainer->threadService,
 					$this->routeDiContainer->quoteLinkService,
@@ -50,8 +50,7 @@ class modeHandler {
 					$this->routeDiContainer->templateEngine,
 					$this->routeDiContainer->moduleEngine,
 					$this->routeDiContainer->threadRepository,
-					$this->routeDiContainer->postRepository,
-					$this->routeDiContainer->FileIO
+					$this->routeDiContainer->postRepository
 				);
 				$route->drawStatus();
 			},
@@ -140,14 +139,10 @@ class modeHandler {
 				$route = new usrdelRoute(
 					$this->routeDiContainer->config,
 					$this->routeDiContainer->board, 
-					$this->routeDiContainer->moduleEngine, 
 					$this->routeDiContainer->actionLoggerService, 
-					$this->routeDiContainer->postRepository, 
 					$this->routeDiContainer->postService,
 					$this->routeDiContainer->deletedPostsService, 
 					$this->routeDiContainer->softErrorHandler,
-					$this->routeDiContainer->regularBoards,
-					$this->routeDiContainer->FileIO,
 					$this->routeDiContainer->postPolicy
 				);
 				$route->userPostDeletion();
@@ -179,13 +174,10 @@ class modeHandler {
 					$this->routeDiContainer->board,
 					$this->routeDiContainer->config,
 					$this->routeDiContainer->moduleEngine,
-					$this->routeDiContainer->boardService,
 					$this->routeDiContainer->staffAccountFromSession,
-					$this->routeDiContainer->postRedirectService,
 					$this->routeDiContainer->postRepository,
 					$this->routeDiContainer->postService,
 					$this->routeDiContainer->softErrorHandler,
-					$this->routeDiContainer->FileIO,
 					$this->routeDiContainer->actionLoggerService,
 					$this->routeDiContainer->adminPageRenderer,
 					$this->routeDiContainer->regularBoards,

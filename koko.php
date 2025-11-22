@@ -13,7 +13,6 @@ require __DIR__ . '/paths.php';
 require __DIR__ . '/includes.php';
 require __DIR__ . '/bootstrap/checks.php';
 require __DIR__ . '/bootstrap/database.php';
-require __DIR__ . '/bootstrap/io.php';
 require __DIR__ . '/bootstrap/repositories.php';
 require __DIR__ . '/bootstrap/board.php';
 require __DIR__ . '/bootstrap/dependencies.php';

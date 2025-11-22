@@ -25,7 +25,7 @@ class fileFromUpload {
 		$timestamp	= $this->file->getTimeInMilliseconds();
 		$extension	= $this->file->getExtention();
 		$tmpPath	= $this->file->getTemporaryFileName();
-		$fileName	= $timestamp . $extension;
+		$fileName	= $timestamp . '.' . $extension;
 		$destPath	= rtrim($directory, '/') . '/' . $fileName;
 
 		// Validate existence

@@ -36,7 +36,7 @@ class file {
 	}
 
 	public function getExtention(): string {
-		$extention = $this->extention ? '.' . $this->extention : '';
+		$extention = $this->extention ?? '';
 		return $extention;
 	}
 

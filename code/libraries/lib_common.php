@@ -336,9 +336,28 @@ function getVideoDimensions(string $filePath): array {
 	return $dimensions;
 }
 
-// convert bytes to readable kilobytes
+/**
+ * Format a file size in bytes into a human-readable string (B, KB, MB).
+ *
+ * @param int $bytes The file size in bytes.
+ * @return string Formatted file size string.
+ */
 function formatFileSize(int $bytes): string {
-	return ($bytes >= 1024) ? (int)($bytes / 1024) . ' KB' : $bytes . ' B';
+    // If the size is 1 MB (1024 * 1024 bytes) or more
+    if ($bytes >= 1024 * 1024) {
+        // Divide by 1 MB and round to 2 decimal places
+        return round($bytes / (1024 * 1024), 2) . ' MB';
+    } 
+    // If the size is 1 KB (1024 bytes) or more, but less than 1 MB
+    elseif ($bytes >= 1024) {
+        // Divide by 1 KB and cast to integer
+        return (int)($bytes / 1024) . ' KB';
+    } 
+    // If the size is less than 1 KB
+    else {
+        // Return the size in bytes
+        return $bytes . ' B';
+    }
 }
 
 // detect if a string contains html tags

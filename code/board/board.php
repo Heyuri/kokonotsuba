@@ -279,4 +279,27 @@ class board implements IBoard {
 	public function getLastPostNoFromBoard(): int {
 		return $this->boardPostNumbers->getLastPostNoFromBoard($this->getBoardUID());
 	}
+
+	public function getCurrentStorageSize(): int {
+		// board upload directory
+		$baseUploadDirectory = $this->getBoardUploadedFilesDirectory();
+		
+		// get thumb directory
+		$thumbDir = $baseUploadDirectory . $this->getConfigValue('THUMB_DIR');
+
+		// get main attachment directory
+		$attachmentDir = $baseUploadDirectory . $this->getConfigValue('IMG_DIR');
+		
+		// get thumb directory size
+		$thumbDirSize = getDirectorySize($thumbDir);
+
+		// get attachment directory size
+		$attachmentDirSize = getDirectorySize($attachmentDir);
+
+		// add together to get total storage size
+		$totalSize = $attachmentDirSize + $thumbDirSize;
+
+		// then return
+		return $totalSize;
+	}
 }

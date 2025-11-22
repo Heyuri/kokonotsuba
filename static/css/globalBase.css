@@ -169,12 +169,12 @@
 }
 
 .buttonLink {
-    background: none;       /* No background */
-    border: none;           /* No border */
-    color: var(--color-fg-link);         /* Link-like blue color */
-    font: inherit;          /* Inherit font styles */
-    cursor: pointer;       /* Pointer cursor to show it's clickable */
-    padding: 0;             /* Remove padding */
+	background: none;       /* No background */
+	border: none;           /* No border */
+	color: var(--color-fg-link);         /* Link-like blue color */
+	font: inherit;          /* Inherit font styles */
+	cursor: pointer;       /* Pointer cursor to show it's clickable */
+	padding: 0;             /* Remove padding */
 }
 
 .alignLeft {
@@ -183,11 +183,24 @@
 
 /* Define the fixed position class with padding and bottom-right placement */
 .fixedPosition {
-    position: fixed;
-    bottom: 5px; /* Adjust the distance from the bottom */
-    right: 5px;  /* Adjust the distance from the right */
+	position: fixed;
+	bottom: 5px; /* Adjust the distance from the bottom */
+	right: 5px;  /* Adjust the distance from the right */
 }
 
+.multiAttachment {
+	display: inline-block;
+	vertical-align: top;
+}
+
+.multiAttachment .postimg {
+	float: none;
+}
+
+
+.multiAttachment .fileProperties {
+	display: block;
+}
 /************************ Mobile **************************************/
 
 @media screen and (max-width: 650px) {

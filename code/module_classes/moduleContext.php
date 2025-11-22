@@ -3,7 +3,6 @@
 namespace Kokonotsuba\ModuleClasses;
 
 use actionLoggerService;
-use attachmentService;
 use \board;
 use boardService;
 use capcodeService;
@@ -35,8 +34,6 @@ class moduleContext {
 		public readonly boardService $boardService,
 		public readonly postSearchService $postSearchService,
 		public readonly quoteLinkService $quoteLinkService,
-		public readonly mixed $FileIO,
-		public readonly attachmentService $attachmentService,
 		public readonly actionLoggerService $actionLoggerService,
 		public readonly postRedirectService $postRedirectService,
 		public readonly deletedPostsService $deletedPostsService,

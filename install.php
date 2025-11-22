@@ -386,14 +386,6 @@ class tableCreator {
 				`time` INT NOT NULL,
 				`md5chksum` TEXT,
 				`category` TEXT,
-				`tim` BIGINT NOT NULL,
-				`fname` TEXT NOT NULL,
-				`ext` TEXT NOT NULL,
-				`imgw` SMALLINT NOT NULL,
-				`imgh` SMALLINT NOT NULL,
-				`imgsize` TEXT NOT NULL,
-				`tw` SMALLINT NOT NULL,
-				`th` SMALLINT NOT NULL,
 				`pwd` TEXT NOT NULL,
 				`now` TEXT NOT NULL,
 				`name` TEXT NOT NULL,
@@ -485,69 +477,75 @@ class tableCreator {
 				PRIMARY KEY (`id`),
 				CONSTRAINT path_cache_board_uid FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
 			) ENGINE=InnoDB;",
-		
-			"CREATE TABLE deleted_posts (
-				id INT AUTO_INCREMENT PRIMARY KEY,
-				post_uid INT NOT NULL,
-				deleted_by INT NULL,
-				deleted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-				file_only TINYINT(1) DEFAULT 0,
-				by_proxy TINYINT(1) DEFAULT 0,
-
-				note TEXT NULL,                 -- optional moderator note
-
-				-- restore fields (NULL until restored)
-				restored_at TIMESTAMP NULL,
-				restored_by INT NULL,           -- FK to users(id)
-
-				-- generated flag: 1 when open (restored_at IS NULL), 0 otherwise
-				open_flag TINYINT(1) AS (IF(restored_at IS NULL, 1, 0)) STORED,
-
-
-				-- helper column for uniqueness: only filled when open
-				open_post_uid INT AS (CASE WHEN restored_at IS NULL THEN post_uid ELSE NULL END) STORED,
-
-				-- FKs (adjust ON DELETE as you prefer)
-				CONSTRAINT fk_dp_post FOREIGN KEY (post_uid) REFERENCES posts(post_uid) ON DELETE CASCADE,
-
-				-- Handy indexes
-				KEY idx_post_uid (post_uid),
-				KEY idx_deleted_by_deleted_at (deleted_by, deleted_at),
-				KEY idx_restored_at (restored_at),
-
-				-- Enforce: at most one open row per post_uid
-				UNIQUE KEY uq_open_post_uid (open_post_uid)
-			) ENGINE=InnoDB;",
 
 			"CREATE TABLE files (
 				id INT AUTO_INCREMENT PRIMARY KEY,
 				post_uid INT NOT NULL,
-				file_name TEXT NOT NULL,
+				file_name VARCHAR(255) NOT NULL,  -- Changed to VARCHAR(255)
 				stored_filename TEXT NOT NULL,
 				file_ext VARCHAR(16) NOT NULL,
-				file_md5 VARCHAR(600) NOT NULL,
+				file_md5 VARCHAR(32) NOT NULL,
 				file_width INT DEFAULT NULL,
 				file_height INT DEFAULT NULL,
 				thumb_file_width INT DEFAULT NULL,
 				thumb_file_height INT DEFAULT NULL,
 				file_size BIGINT UNSIGNED NULL,
 				mime_type VARCHAR(255) NULL,
-				is_hidden TINYINT(1)  NOT NULL DEFAULT 0,
+				is_hidden TINYINT(1) NOT NULL DEFAULT 0,
+				is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+				timestamp_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,  -- Removed parentheses for CURRENT_TIMESTAMP
 
 				CONSTRAINT fk_file_post_uid FOREIGN KEY (post_uid) REFERENCES posts(post_uid) ON DELETE CASCADE,
 
 				-- Index for file_md5
-				KEY idx_md5 (file_md5),
+				INDEX idx_md5 (file_md5),
 
 				-- Additional indexes
-				KEY idx_post_uid (post_uid),  -- For queries filtering by post_uid
-				KEY idx_file_ext (file_ext),  -- For queries filtering by file extension
-				KEY idx_file_size (file_size), -- For queries filtering by file size
-				KEY idx_file_name_prefix (file_name(255)), -- Prefix index for file_name (adjust length as necessary)
-				KEY idx_mime_type (mime_type), -- For queries filtering by mime_type
+				INDEX idx_post_uid (post_uid),  -- For queries filtering by post_uid
+				INDEX idx_file_ext (file_ext),  -- For queries filtering by file extension
+				INDEX idx_file_size (file_size), -- For queries filtering by file size
+				INDEX idx_file_name_prefix (file_name(255)), -- Prefix index for file_name (adjust length as necessary)
+				INDEX idx_mime_type (mime_type), -- For queries filtering by mime_type
 
 				-- Composite index for queries filtering by both post_uid and file_md5
-				KEY idx_post_uid_file_md5 (post_uid, file_md5)
+				INDEX idx_post_uid_file_md5 (post_uid, file_md5)
+			) ENGINE=InnoDB;
+			",
+
+			"CREATE TABLE IF NOT EXISTS deleted_posts (
+				id INT AUTO_INCREMENT PRIMARY KEY,
+				post_uid INT NOT NULL,
+				deleted_by INT NULL,
+				deleted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				file_only TINYINT(1) DEFAULT 0,
+				by_proxy TINYINT(1) DEFAULT 0,
+				note TEXT NULL,
+
+				-- restore fields
+				restored_at TIMESTAMP NULL,
+				restored_by INT NULL, -- FK to users(id)
+				
+				-- optional attachment-level deletion
+				file_id INT NULL,
+
+				-- generated flag: 1 when open (restored_at IS NULL), 0 otherwise
+				open_flag TINYINT(1) AS (IF(restored_at IS NULL, 1, 0)) STORED,
+
+				-- helper column for uniqueness: only filled when open and post-level deletion
+				open_key INT AS (CASE WHEN restored_at IS NULL AND file_id IS NULL THEN post_uid ELSE NULL END) STORED,
+
+				-- FKs
+				CONSTRAINT fk_dp_post FOREIGN KEY (post_uid) REFERENCES posts(post_uid) ON DELETE CASCADE,
+				CONSTRAINT fk_dp_file FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE,
+
+				-- Indexes
+				KEY idx_post_uid (post_uid),
+				KEY idx_deleted_by_deleted_at (deleted_by, deleted_at),
+				KEY idx_restored_at (restored_at),
+				KEY idx_file_id (file_id),
+
+				-- Enforce: at most one open row per post-level deletion
+				UNIQUE KEY uq_open_post (open_key)
 			) ENGINE=InnoDB;
 			",
 

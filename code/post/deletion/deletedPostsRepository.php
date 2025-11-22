@@ -130,10 +130,13 @@ class deletedPostsRepository {
 		];
 
 		// fetch the data as a single row
-		$postData = $this->databaseConnection->fetchOne($query, $params);
+		$postData = $this->databaseConnection->fetchAllAsArray($query, $params);
 	
+		// merge attachment row
+		$postData = mergeDeletedPostRows($postData);
+
 		// return it
-		return $postData;
+		return $postData[0] ?? false;
 	}
 
 	public function getPostsByIdList(array $postUids): array|false {
@@ -154,6 +157,9 @@ class deletedPostsRepository {
 		// fetch the posts as an array
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
 
+		// merge attachment rows
+		$posts = mergeDeletedPostRows($posts);
+
 		// return posts
 		return $posts;
 	}
@@ -162,10 +168,10 @@ class deletedPostsRepository {
 		// Hide restored posts
 		if(!$restoredOnly) {
 			// append where clause to exclude restored posts
-			$whereClause = " WHERE base.open_flag = 1 AND base.by_proxy = 0";
+			$whereClause = " WHERE dp.open_flag = 1 AND dp.by_proxy = 0";
 		} else {
 			// otherwise filter for closed flags
-			$whereClause = 'WHERE base.open_flag = 0 AND base.by_proxy = 0';
+			$whereClause = ' WHERE dp.open_flag = 0 AND dp.by_proxy = 0';
 		}
 
 		// init params array 
@@ -174,7 +180,7 @@ class deletedPostsRepository {
 		// append accound if if we're filtering for those
 		if($accountId) {
 			// append to WHERE clause
-			$whereClause .= ' AND dp_meta.deleted_by = :account_id';
+			$whereClause .= ' AND dp.deleted_by = :account_id';
 
 			// add :account_id placeholder to params
 			$params[':account_id'] = $accountId;
@@ -185,6 +191,9 @@ class deletedPostsRepository {
 
 		// fetch all the data as an array
 		$entries = $this->databaseConnection->fetchAllAsArray($query, $params);
+
+		// merge attachment
+		$entries = mergeDeletedPostRows($entries);
 
 		// return results
 		return $entries;
@@ -200,45 +209,67 @@ class deletedPostsRepository {
 		];
 
 		// fetch the single row
-		$deletedPost = $this->databaseConnection->fetchOne($query, $params);
+		$deletedPost = $this->databaseConnection->fetchAllAsArray($query, $params);
+
+		// merge attachment rows
+		$deletedPost = mergeDeletedPostRows($deletedPost);
 
 		// return data
-		return $deletedPost;
+		return $deletedPost[0] ?? false;
 	}
 
 	private function getBaseDeletedPostsQuery(): string {
-		$query = "
+		return "
 			SELECT
-				base.*,
-				-- Optional: expose deleted/restored timestamps & actor IDs
-				dp_meta.deleted_at,
-				dp_meta.deleted_by,
-				dp_meta.restored_at,
-				dp_meta.restored_by,
-				dp_meta.id AS deleted_post_id,
-				dp_meta.note,
-				dp_meta.by_proxy,
+				dp.open_flag,
+				dp.id                AS deleted_post_id,
+				dp.post_uid          AS post_uid,
+				dp.deleted_at        AS deleted_at,
+				dp.deleted_by        AS deleted_by,
+				dp.restored_at,
+				dp.restored_by,
+				dp.by_proxy,
+				dp.file_only         AS file_only_deleted,
+				dp.file_id           AS file_id,
+				dp.note,
 
-				-- Usernames
+				-- Post data (may be null if the post itself is gone)
+				p.*,
+
+				-- Attachment belonging specifically to THIS dp row
+				f.id                 AS attachment_id,
+				f.file_name          AS attachment_file_name,
+				f.stored_filename    AS attachment_stored_filename,
+				f.file_ext           AS attachment_file_ext,
+				f.file_md5           AS attachment_file_md5,
+				f.file_size          AS attachment_file_size,
+				f.file_width         AS attachment_file_width,
+				f.file_height        AS attachment_file_height,
+				f.thumb_file_width   AS attachment_thumb_width,
+				f.thumb_file_height  AS attachment_thumb_height,
+				f.mime_type          AS attachment_mime_type,
+				f.is_hidden          AS attachment_is_hidden,
+				f.is_animated        AS attachment_is_animated,
+				f.is_deleted         AS attachment_is_deleted,
+				f.timestamp_added    AS attachment_timestamp_added,
+
 				da.username AS deleted_by_username,
 				ra.username AS restored_by_username
-			FROM (
-				" . getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable) . "
-			) base
-			-- Pull only the extra dp fields we didn't already include in base
-			LEFT JOIN (
-				SELECT dp1.post_uid, dp1.deleted_at, dp1.deleted_by, dp1.restored_at, dp1.restored_by, dp1.id, dp1.note, dp1.by_proxy
-				FROM {$this->deletedPostsTable} dp1
-				INNER JOIN (
-					SELECT post_uid, MAX(deleted_at) AS max_deleted_at
-					FROM {$this->deletedPostsTable}
-					GROUP BY post_uid
-				) dp2 ON dp1.post_uid = dp2.post_uid AND dp1.deleted_at = dp2.max_deleted_at
-			) dp_meta ON base.post_uid = dp_meta.post_uid
-			LEFT JOIN {$this->accountTable} da ON dp_meta.deleted_by = da.id
-			LEFT JOIN {$this->accountTable} ra ON dp_meta.restored_by = ra.id
+
+			FROM {$this->deletedPostsTable} dp
+
+			-- Post content
+			LEFT JOIN {$this->postTable} p
+				ON p.post_uid = dp.post_uid
+
+			-- Attachments belonging to THIS deletion event
+			-- (file_id will be null for post-level deletes)
+			LEFT JOIN {$this->fileTable} f
+				ON f.post_uid = dp.post_uid
+
+			LEFT JOIN {$this->accountTable} da ON dp.deleted_by = da.id
+			LEFT JOIN {$this->accountTable} ra ON dp.restored_by = ra.id
 		";
-		return $query;
 	}
 
 	private function buildDeletedPostsQuery(
@@ -266,14 +297,14 @@ class deletedPostsRepository {
 		$query .= $whereClause;
 
 		// Add ordering and pagination
-		$query .= " ORDER BY dp_meta.{$orderBy} {$direction} LIMIT {$amount} OFFSET {$offset}";
+		$query .= " ORDER BY dp.{$orderBy} {$direction} LIMIT {$amount} OFFSET {$offset}";
 
 		return $query;
 	}
 
 	private function buildDeletedPostByIdQuery(): string {
 		$query = $this->getBaseDeletedPostsQuery();
-		$query .= " WHERE dp_meta.id = :id LIMIT 1";
+		$query .= " WHERE dp.id = :id LIMIT 1";
 		
 		return $query;
 	}
@@ -385,27 +416,26 @@ class deletedPostsRepository {
 		$this->databaseConnection->execute($query, $parameters);
 	}
 
-	public function insertDeletedPostEntry(int $postUid, ?int $deletedBy , bool $fileOnly, bool $byProxy): void {
-		// query to insert a deleted post entry
-		$query = "INSERT INTO {$this->deletedPostsTable} 
-			(post_uid, deleted_by, file_only, by_proxy) 
-			VALUES (:post_uid, :deleted_by, :file_only, :by_proxy)
-			ON DUPLICATE KEY UPDATE
-				file_only = LEAST(file_only, VALUES(file_only)),
-				deleted_by = VALUES(deleted_by),
-				deleted_at = VALUES(deleted_at)
-		";
+	public function insertDeletedPostEntry(
+		int $postUid, 
+		?int $deletedBy, 
+		bool $fileOnly, 
+		bool $byProxy,
+		?int $fileId = null
+	): void {
 
-	
-		// bind parameters
+		$query = "INSERT INTO {$this->deletedPostsTable} 
+			(post_uid, deleted_by, file_only, by_proxy, file_id) 
+			VALUES (:post_uid, :deleted_by, :file_only, :by_proxy, :file_id)";
+
 		$parameters = [
-			':post_uid' => $postUid,
+			':post_uid'   => $postUid,
 			':deleted_by' => $deletedBy,
-			':file_only' => (int) $fileOnly,
-			':by_proxy' => (int) $byProxy
+			':file_only'  => (int)$fileOnly,
+			':by_proxy'   => (int)$byProxy,
+			':file_id'    => $fileId,   // leave NULL as NULL
 		];
 
-		// execute query and insert entry
 		$this->databaseConnection->execute($query, $parameters);
 	}
 
@@ -424,24 +454,24 @@ class deletedPostsRepository {
 	}
 
 	public function getBoardUidByDeletedPostId(int $deletedPostId): false|int {
-	    // query to get boardUID from post table via post_uid in deletedPosts table
-	    $query = "
-	        SELECT p.boardUID
-	        FROM {$this->deletedPostsTable} dp
-	        INNER JOIN {$this->postTable} p ON p.post_uid = dp.post_uid
-	        WHERE dp.id = :deleted_post_id
-	    ";
+		// query to get boardUID from post table via post_uid in deletedPosts table
+		$query = "
+			SELECT p.boardUID
+			FROM {$this->deletedPostsTable} dp
+			INNER JOIN {$this->postTable} p ON p.post_uid = dp.post_uid
+			WHERE dp.id = :deleted_post_id
+		";
 
-	    // parameters
-	    $parameters = [
-	        ':deleted_post_id' => $deletedPostId
-	    ];
+		// parameters
+		$parameters = [
+			':deleted_post_id' => $deletedPostId
+		];
 
-	    // query database
-	    $boardUid = $this->databaseConnection->fetchValue($query, $parameters);
+		// query database
+		$boardUid = $this->databaseConnection->fetchValue($query, $parameters);
 
-	    // return result
-	    return $boardUid;
+		// return result
+		return $boardUid;
 	}
 
 	public function getDeletedPostRowByPostUid(int $postUid): false|array {
@@ -449,7 +479,7 @@ class deletedPostsRepository {
 		$query = $this->getBaseDeletedPostsQuery();
 
 		// select the post by post uid
-		$query .= " WHERE base.post_uid = :post_uid";
+		$query .= " WHERE p.post_uid = :post_uid";
 
 		// query parameteres
 		$params = [
@@ -457,17 +487,20 @@ class deletedPostsRepository {
 		];
 
 		// fetch the row
-		$deletedPost = $this->databaseConnection->fetchOne($query, $params);
+		$deletedPost = $this->databaseConnection->fetchAllAsArray($query, $params);
+
+		// merge attachment rows
+		$deletedPost = mergeDeletedPostRows($deletedPost);
 
 		// return result
-		return $deletedPost;
+		return $deletedPost[0] ?? false;
 	}
 
 	public function getExpiredEntryIDs(int $timeLimit): false|array {
 		// query to get entries older than the time limit (in hours) 
 		$query = "SELECT id
-    		FROM {$this->deletedPostsTable}
-    		WHERE deleted_at < NOW() - INTERVAL {$timeLimit} HOUR
+			FROM {$this->deletedPostsTable}
+			WHERE deleted_at < NOW() - INTERVAL {$timeLimit} HOUR
 			AND COALESCE(open_flag, 0) = 1";
 
 		// fetch the results as array
@@ -491,5 +524,18 @@ class deletedPostsRepository {
 
 		// execute query
 		$this->databaseConnection->execute($query, $params);
+	}
+
+	public function removeOpenRows(int $postUid): void {
+		// query to remove open post deletions under this post uid
+		$query = "DELETE FROM {$this->deletedPostsTable} WHERE post_uid = :post_uid AND open_flag = 1";
+
+		// parameter
+		$params = [
+			':post_uid' => $postUid
+		];
+
+		// execute query
+		$this->databaseConnection->execute($query, $params);	
 	}
 }

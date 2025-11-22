@@ -189,8 +189,7 @@
 <!--&OP-->
 		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}">
 			<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
-				<div class="filesize">{$IMG_BAR}</div>
-				{$IMG_SRC}
+				<!--&IF($POST_ATTACHMENTS,'{$POST_ATTACHMENTS}','')-->
 			</div>
 			<div class="postinfo">
 				<label>
@@ -235,8 +234,7 @@
 						<div class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></div>
 					</div>
 					<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
-						<div class="filesize">{$IMG_BAR}</div>
-						{$IMG_SRC}
+						<!--&IF($POST_ATTACHMENTS,'{$POST_ATTACHMENTS}','')-->
 					</div>
 					<div class="comment">{$COM}</div>
 					<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->

@@ -4,14 +4,10 @@ class usrdelRoute {
 	public function __construct(
 		private readonly array $config,
 		private board $board,
-		private moduleEngine $moduleEngine,
 		private readonly actionLoggerService $actionLoggerService,
-		private readonly postRepository $postRepository,
 		private readonly postService $postService,
 		private readonly deletedPostsService $deletedPostsService,
 		private readonly softErrorHandler $softErrorHandler,
-		private readonly array $regularBoards,
-		private mixed $FileIO,
 		private postPolicy $postPolicy
 	) {}
 

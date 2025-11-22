@@ -1,96 +1,81 @@
-(function () {
-	const gifStates = new WeakMap();
+document.addEventListener('DOMContentLoaded', function () {
+    // Add event listener for all the admin GIF toggle links
+    document.querySelectorAll('.adminGIFFunction a').forEach(function (anchor) {
+        anchor.addEventListener('click', handleGifToggle);
+    });
 
-	// Helper: detect initial GIF state
-	function detectGifState(post) {
-		if (!post) return false;
-		const img = post.querySelector('.postimg');
-		if (!img) return false;
-		// if current src ends with .gif → it's animated
-		const isGif = /\.gif$/i.test(new URL(img.src, location.href).pathname);
-		gifStates.set(post, isGif);
-		return isGif;
-	}
+    // Function to handle the GIF toggle request
+    function handleGifToggle(e) {
+        e.preventDefault(); // Prevent the default anchor redirect behavior
 
-	window.postWidget.registerActionHandler('animateGif', async ({ url, post }) => {
-		if (!post) return;
-		const img = post.querySelector('.postimg');
-		if (!img) {
-			showMessage('No image found in post.', false);
-			return;
-		}
+        const anchor = e.target; // The clicked anchor
+        const anchorUrl = anchor.href; // Get the URL from the href attribute
+        const attachmentContainer = anchor.closest('.attachmentContainer'); // Find the parent container for the attachment
+        const imageElement = attachmentContainer.querySelector('img'); // Find the associated image
+        const filesizeDiv = attachmentContainer.querySelector('.filesize'); // Find the filesize div
 
-		// detect current state if we haven't yet
-		if (!gifStates.has(post)) detectGifState(post);
-		const isEnabled = gifStates.get(post) === true;
+        // Set opacity to 0.5 while the request is being processed
+        imageElement.style.opacity = 0.5;
 
-		let newSrc = null;
-		let preloadImg = null;
+        // Perform the fetch request
+        fetch(anchorUrl, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest' // Indicate that this is an AJAX request
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Reset the opacity of the image
+                imageElement.style.opacity = 1;
 
-		// Find full and thumbnail URLs
-		const fullLink = post.querySelector('.imageSourceContainer a[href$=".gif"]');
-		const thumbBase = fullLink ? fullLink.href.replace(/\.gif$/i, '') : null;
-		const thumbCandidates = thumbBase
-			? [thumbBase + 's.png', thumbBase + 's.jpg']
-			: [];
+                // Show a success message based on whether the GIF is animated
+                const message = data.active
+                    ? 'GIF animated!'
+                    : 'GIF animation disabled';
 
-		if (isEnabled) {
-			// Disable animation: restore thumbnail
-			newSrc = thumbCandidates.find(src => src !== img.src) || img.src;
-		} else if (fullLink) {
-			// Enable animation: use full GIF
-			newSrc = fullLink.href;
-		} else {
-			showMessage('GIF URL not found.', false);
-			return;
-		}
+                showMessage(message, true);
 
-		// visual feedback
-		img.style.transition = 'opacity 0.25s ease';
-		img.style.opacity = '0.5';
+                // Update the image source to the new attachmentUrl from the response
+                imageElement.src = data.attachmentUrl;
 
-		// preload new image
-		preloadImg = new Image();
-		const preloadPromise = new Promise(resolve => {
-			preloadImg.onload = () => resolve(true);
-			preloadImg.onerror = () => resolve(false);
-			preloadImg.src = newSrc;
-		});
+                // Replace the old GIF toggle button with the new one
+                const oldGifButtonContainer = anchor.closest('.adminGIFFunction');
+                oldGifButtonContainer.innerHTML = data.newGifButton;
 
-		try {
-			// run preload and fetch together
-			const [preloadSuccess, res] = await Promise.all([
-				preloadPromise,
-				fetch(url, { method: 'GET', credentials: 'same-origin' })
-			]);
+                // Reattach the event listener to the new anchor (in case it has been replaced)
+                const newAnchor = oldGifButtonContainer.querySelector('a');
+                newAnchor.addEventListener('click', handleGifToggle);
 
-			if (!res.ok) throw new Error('Server returned ' + res.status);
+                // Add or remove the "[Animated GIF]" label
+                if (data.active) {
+                    // Add the label if it's not already there
+                    if (!filesizeDiv.querySelector('.animatedGIFLabel')) {
+                        const label = document.createElement('span');
+                        label.className = 'animatedGIFLabel imageOptions';
+                        label.textContent = '[Animated GIF]';
+                        filesizeDiv.appendChild(label);
+                    }
+                } else {
+                    // Remove the label if it exists
+                    const label = filesizeDiv.querySelector('.animatedGIFLabel');
+                    if (label) {
+                        filesizeDiv.removeChild(label);
+                    }
+                }
+            })
+            .catch(error => {
+                // Reset the opacity if there's an error
+                imageElement.style.opacity = 1;
 
-			if (isEnabled) {
-				img.src = newSrc;
-				gifStates.set(post, false);
-				showMessage('GIF animation disabled', true);
-			} else {
-				if (!preloadSuccess) console.warn('GIF preload failed, loading anyway.');
-				img.src = newSrc;
-				gifStates.set(post, true);
-				showMessage('GIF animation enabled', true);
-			}
-
-			// restore opacity when image is ready
-			img.onload = () => (img.style.opacity = '1');
-			if (img.complete) img.style.opacity = '1';
-
-		} catch (err) {
-			console.error('animateGif error:', err);
-			showMessage('Failed to toggle GIF animation', false);
-			img.style.opacity = '1';
-		}
-	});
-
-	window.postWidget.registerLabelProvider('animateGif', ({ post }) => {
-		if (!gifStates.has(post)) detectGifState(post);
-		const isEnabled = gifStates.get(post) === true;
-		return isEnabled ? 'Disable gif animation' : 'Animate gif';
-	});
-})();
+                // Show an error message
+                showMessage('Error while toggling GIF animate status', false);
+                console.error(error);
+            });
+    }
+});

@@ -13,7 +13,6 @@ $routeDiContainer = new routeDiContainer(
 	$softErrorHandler,
 	$boardRepository,
 	$boardService,
-	$FileIO,
 	$postRepository,
 	$postService,
 	$threadRepository,
@@ -29,7 +28,6 @@ $routeDiContainer = new routeDiContainer(
 	$postRedirectService,
 	$databaseConnection,
 	$boardPathService,
-	$attachmentService,
 	$visibleBoards,
 	$boardList,
 	$quoteLinkRepository,
@@ -38,4 +36,5 @@ $routeDiContainer = new routeDiContainer(
 	$postPolicy,
 	$threadApi,
 	$boardApi,
+	$fileService,
 );

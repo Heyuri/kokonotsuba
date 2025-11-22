@@ -10,9 +10,9 @@ class registRoute {
 		private transactionManager $transactionManager,
         private moduleEngine $moduleEngine,
         private readonly actionLoggerService $actionLoggerService,
-        private mixed $FileIO,
 		private readonly postRepository $postRepository,
         private readonly postService $postService,
+		private readonly fileService $fileService,
 		private readonly threadRepository $threadRepository,
 		private readonly threadService $threadService,
 		private readonly quoteLinkService $quoteLinkService,
@@ -91,8 +91,7 @@ class registRoute {
 
 			// Step 8: Validate post for database storage
 			$this->postValidator->validateForDatabase(
-				$postData['pwdc'], $postData['comment'], $postData['time'], $computedPostInfo['password_hash'],
-				$postData['ip'], $fileMeta['upfile'], $fileMeta['md5'], $computedPostInfo['dest'], $postData['roleLevel']
+				$postData['pwdc'], $fileMeta['md5'], $computedPostInfo['dest'], $postData['roleLevel']
 			);
 
 			// Age/sage logic
@@ -111,21 +110,13 @@ class registRoute {
 				$postData['isReply'], &$postData['status'], $thread, &$computedPostInfo['poster_hash']
 			]);
 
+			// regist data for post
 			$postRegistData = new postRegistData(
 				$computedPostInfo['no'],
 				$computedPostInfo['poster_hash'],
 				$postData['thread_uid'],
 				$computedPostInfo['is_op'],
-				$fileMeta['md5'],
 				$postData['category'],
-				$fileMeta['fileTimeInMilliseconds'],
-				$fileMeta['fileName'],
-				$fileMeta['ext'],
-				$fileMeta['imgW'],
-				$fileMeta['imgH'],
-				$fileMeta['readableSize'],
-				$fileMeta['thumbWidth'],
-				$fileMeta['thumbHeight'],
 				$computedPostInfo['password_hash'],
 				$computedPostInfo['now'],
 				$postData['name'],
@@ -139,14 +130,44 @@ class registRoute {
 				$postData['age'],
 				$postData['status']
 			);
- 
+
+			// get the post uid
+			$nextPostUid = $this->postRepository->getNextPostUid();
+
 			// Add post to database
-			$this->postService->addPostToThread($this->board, $postRegistData);
-			
+			$this->postService->addPostToThread($this->board, $postRegistData, $nextPostUid);
+
+			// Add attachment to database if it has a non-empty extension
+			if($fileMeta['ext']) {
+				$this->fileService->addFile(
+					$nextPostUid,
+					$fileMeta['fileName'],
+					$fileMeta['fileTimeInMilliseconds'],
+					$fileMeta['ext'],
+					$fileMeta['md5'],
+					$fileMeta['imgW'],
+					$fileMeta['imgH'],
+					$fileMeta['thumbWidth'],
+					$fileMeta['thumbHeight'],
+					$fileMeta['fileSize'],
+					$fileMeta['mimeType'],
+					false,
+				);
+			}
+
 			// Log and hooks
 			$this->actionLoggerService->logAction("Post No.{$computedPostInfo['no']} registered", $this->board->getBoardUID());
 			$this->moduleEngine->dispatch('RegistAfterCommit', [$this->board->getLastPostNoFromBoard(), $postData['thread_uid'], $postData['name'], $postData['email'], $postData['sub'], $postData['comment']]);
-
+			
+			// get post-insert post data
+			$afterInsertPost = $this->postRepository->getPostByUid($nextPostUid);
+			
+			// get post-insert attachments
+			$attachments = $afterInsertPost['attachments'] ?? [];
+			
+			// run attachments after insert hook point
+			$this->moduleEngine->dispatch('AttachmentsAfterInsert', [&$attachments]);
+			
 			// Handle quote links
 			$this->handlePostQuoteLink($computedPostInfo['no'], $postData['comment']);
 
@@ -263,7 +284,8 @@ class registRoute {
 			'md5' => $file->getMd5Chksum(),
 			'thumbWidth' => $thumbnail->getThumbnailWidth(),
 			'thumbHeight' => $thumbnail->getThumbnailHeight(),
-			'readableSize' => formatFileSize($file->getFileSize())
+			'fileSize' => $file->getFileSize(),
+			'mimeType' => $file->getMimeType(),
 		];
 	}
 

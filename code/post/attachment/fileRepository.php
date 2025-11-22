@@ -197,4 +197,77 @@ class fileRepository {
 		// execute query
 		$this->databaseConnection->execute($query, $params);
 	}
+
+	public function toggleAnimatedFileById(int $fileId, bool $animate): void {
+		// get query to set is animated
+		$query = "UPDATE {$this->fileTable} SET is_animated = :animate";
+
+		// append where clause
+		$query .= " WHERE id = :file_id";
+
+		// parameters
+		$params = [
+			':file_id' => $fileId,
+			':animate' => (int)$animate,
+		];
+
+		// execute query
+		$this->databaseConnection->execute($query, $params);
+	}
+
+	public function toggleIsDeleted(array $fileIDs, bool $delete): void {
+		// get query to set is deleted
+		$query = "UPDATE {$this->fileTable} SET is_deleted = :delete";
+
+		// generate clause
+		$clause = pdoNamedPlaceholdersForIn($fileIDs, 'file');
+
+		// get file placeholders
+		$filePlaceholders = $clause['placeholders'];
+
+		// get parameters
+		$fileParameters = $clause['params'];
+
+		// append where clause
+		$query .= " WHERE id IN ($filePlaceholders)";
+
+		// append to parameter
+		$fileParameters[':delete'] = (int)$delete;
+
+		// execute query
+		$this->databaseConnection->execute($query, $fileParameters);
+	}
+
+    public function checkDuplicateHash(string $md5Hash, bool $countDeleted = true, ?int $timeRangeInSeconds = null): bool {
+        // Base query to check for duplicates
+        $query = "SELECT COUNT(*) FROM {$this->fileTable} WHERE file_md5 = :md5_hash";
+
+        // Add condition for checking if the file is deleted
+        if (!$countDeleted) {
+            $query .= " AND is_deleted = 0";
+        }
+
+        // Add time range filter if provided
+        if ($timeRangeInSeconds !== null) {
+            $timeThreshold = time() - $timeRangeInSeconds;
+            $query .= " AND timestamp_added >= FROM_UNIXTIME(:time_threshold)";
+        }
+
+        // Prepare parameters
+        $params = [
+            ':md5_hash' => $md5Hash,
+        ];
+
+        // If a time range is specified, include it in the parameters
+        if ($timeRangeInSeconds !== null) {
+            $params[':time_threshold'] = $timeThreshold;
+        }
+
+        // Execute the query and check the result
+        $result = $this->databaseConnection->fetchColumn($query, $params);
+
+		// If the count is greater than 0, it means the hash already exists
+        return $result > 0;
+    }
+
 }

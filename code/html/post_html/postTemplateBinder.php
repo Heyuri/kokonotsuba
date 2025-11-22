@@ -20,10 +20,9 @@ class postTemplateBinder {
 		string $nameHtml,
 		string $categoryHTML,
 		string $quoteButton,
-		string $imageBar,
+		?string $attachmentHtml,
 		string $warnBeKill,
-		string $postFormExtra,
-		string $imageHtml
+		string $postFormExtra
 	): array {
 		return array_merge(
 			$templateValues,
@@ -41,8 +40,7 @@ class postTemplateBinder {
 				$data['now'],
 				$categoryHTML,
 				$quoteButton,
-				$imageBar,
-				$imageHtml,
+				$attachmentHtml, 
 				$warnBeKill,
 				$data['com'],
 				$postFormExtra
@@ -63,16 +61,15 @@ class postTemplateBinder {
 		string $nameHtml,
 		string $categoryHTML,
 		string $quoteButton,
+		?string $attachmentHtml,
+		?string $attachmentUrl,
 		string $replyButton,
-		string $imageBar,
 		string $postFormExtra,
 		int $replyCount,
 		string $warnOld,
 		string $warnBeKill,
 		string $warnEndReply,
 		string $warnHidePost,
-		string $imageHtml,
-		string $imageURL
 	): array {
 		return array_merge(
 			$templateValues,
@@ -87,9 +84,9 @@ class postTemplateBinder {
 				$data['now'],
 				$categoryHTML,
 				$quoteButton,
+				$attachmentHtml,
+				$attachmentUrl,
 				$replyButton,
-				$imageBar ?? '',
-				$imageHtml ?? '',
 				$fileData['fileName'] ?? '',
 				$fileData['fileExtension'] ?? '',
 				$fileData['fileSize'] ?? '',

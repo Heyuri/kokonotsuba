@@ -1,7 +1,5 @@
 <?php
 
-use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
-
 class deletedPostsService {
 	public function __construct(
 		private transactionManager $transactionManager,
@@ -11,35 +9,6 @@ class deletedPostsService {
 		private readonly postRepository $postRepository,
 		private readonly threadRepository $threadRepository
 	) {}
-
-	public function purgeDeletedPostsByAccountId(int $accountId): void {
-		// run transaction
-		$this->transactionManager->run(function() use ($accountId) {
-			// get the post uids
-			$postUids = $this->getAllDeletedUidsByAccountId($accountId);
-
-			// purge files from file system
-			$this->fileService->purgeAttachmentsFromPurgatory($postUids);
-
-			// purge the data from database
-			$this->deletedPostsRepository->purgeDeletedPostsByAccountId($accountId);
-
-			// generate purge all action string
-			$actionString = "Purged all posts they've deleted.";
-
-			// log it to the database
-			$this->logAction($actionString, GLOBAL_BOARD_UID);
-		});
-
-	}
-
-	private function getAllDeletedUidsByAccountId(int $accountId): ?array {
-		// get the post uids from the table
-		$postUids = $this->deletedPostsRepository->getAllPostUidsFromAccountId($accountId);
-
-		// return post uids
-		return $this->returnOrNull($postUids);
-	}
 
 	public function restorePost(int $deletedPostId, int $accountId): void {
 		// run transaction
@@ -88,6 +57,8 @@ class deletedPostsService {
 		}
 
 		// restore the thread data
+		// this will only restore replies that were deleted by proxy
+		// replies deleted before the thread was deleted will stay deleted until manually restore
 		$this->deletedPostsRepository->restorePostsByThreadUid($threadUid, $accountId);
 
 		// generate the logging string
@@ -124,6 +95,56 @@ class deletedPostsService {
 
 		// Log the restore action to the logging table
 		$this->logAction($restoreActionString, $postData['boardUID']);
+	}
+
+	public function restoreAttachment(int $deletedPostId, int $accountId): void {
+		// get post data
+		$deletedPostEntry = $this->deletedPostsRepository->getDeletedPostRowById($deletedPostId);
+
+		// get file ID
+		$fileId = $deletedPostEntry['file_id'] ?? null;
+
+		if(!$fileId) {
+			throw new BoardException(_T('no_attachment_ever'));
+		}
+
+		// get attachment array by file ID
+		$fileData = $deletedPostEntry['attachments'][$fileId] ?? false;
+
+		// return early if the attachment isn't found
+		if(!$fileData) {
+			throw new BoardException(_T('no_attachment_ever'));
+		}
+
+		// fetch the attachment from db
+		$attachment = constructAttachment(
+			$fileData['fileId'],
+			$fileData['postUid'],
+			$fileData['boardUID'],
+			$fileData['fileName'],
+			$fileData['storedFileName'],
+			$fileData['fileExtension'],
+			$fileData['fileMd5'],
+			$fileData['fileWidth'],
+			$fileData['fileHeight'],
+			$fileData['thumbWidth'],
+			$fileData['thumbHeight'],
+			$fileData['fileSize'],
+			$fileData['mimeType'],
+			(bool)$fileData['isHidden'],
+			$fileData['isDeleted'],
+			$fileData['timestampAdded']
+		);
+
+		// move thread back to upload dir
+		// also mark the file entry as restored
+		$this->fileService->restoreAttachmentsFromPurgatory([$attachment]);
+
+		// then mark the attachment data as restored
+		$this->deletedPostsRepository->restorePostData($deletedPostId, $accountId);
+
+		// Log the restore
+		$this->logAction("Restored attachment $fileId on post No.{$deletedPostEntry['no']}", $deletedPostEntry['boardUID']);
 	}
 
 	public function purgePost(int $deletedPostId, bool $logAction = true): void {
@@ -270,40 +291,66 @@ class deletedPostsService {
 		return $actionString;
 	}
 
-	public function purgeFileOnly(int $deletedPostId, ?int $deletedBy): void {
+	public function purgeAttachmentOnly(int $deletedPostId): void {
 		// run transaction
-		$this->transactionManager->run(function() use($deletedPostId, $deletedBy) {
-			// get post data and attachments for file-only purge
-			[$postData, $attachments] = $this->getPostDataAndAttachments($deletedPostId);
+		$this->transactionManager->run(function() use($deletedPostId) {
+			// get deletion row
+			$row = $this->deletedPostsRepository->getDeletedPostRowById($deletedPostId);
+
+			// get attachments data
+			$attachmentsData = $row['attachments'];
+
+			// get file id
+			// this is the file id that will be used to select the attachment to purge
+			$fileId = $row['file_id'];
+
+			// the select attachment
+			$fileData = $attachmentsData[$fileId] ?? false;
 
 			// if there's no attachments then this isn't a file-only purge
-			if(!$attachments) {
+			if(!$fileData) {
 				// throw exception
-				throw new BoardException("This post doesn't have any attachments!");
+				throw new BoardException(_T('attachment_not_found'));
 			}
 
-			// flag the post as no longer deleted - special case
-			$this->deletedPostsRepository->restorePostData($deletedPostId, $deletedBy);
+			// construct attachment object
+			$attachmentToPurge = constructAttachment(
+				$fileData['fileId'],
+				$fileData['postUid'],
+				$fileData['boardUID'],
+				$fileData['fileName'],
+				$fileData['storedFileName'],
+				$fileData['fileExtension'],
+				$fileData['fileMd5'],
+				$fileData['fileWidth'],
+				$fileData['fileHeight'],
+				$fileData['thumbWidth'],
+				$fileData['thumbHeight'],
+				$fileData['fileSize'],
+				$fileData['mimeType'],
+				(bool)$fileData['isHidden'],
+				$fileData['isDeleted'],
+				$fileData['timestampAdded']
+			);
 
-			// now purge the attachments
-			// check again just in case
-			if(!empty($attachments)) {
-				// purge attachment
-				$this->fileService->purgeAttachmentsFromPurgatory($attachments);
-			}
+			// delete the dp entry
+			$this->deletedPostsRepository->removeRowById($deletedPostId);
+
+			// purge attachment
+			$this->fileService->purgeAttachmentsFromPurgatory([$attachmentToPurge]);
 
 			// generate the logging string for the file purge
-			$purgeActionString = $this->generateFilePurgeLoggingString($postData['no']);
+			$purgeActionString = $this->generateFilePurgeLoggingString($row['no']);
 
 			// Log the purge action to the logging table
-			$this->logAction($purgeActionString, $postData['boardUID']);
+			$this->logAction($purgeActionString, $row['boardUID']);
 		});
 
 	}
 
 	private function generateFilePurgeLoggingString(int $no): string {
 		// generate file purge action for logger
-		$actionString = "Purged file from post No.$no from system";
+		$actionString = "Purged attachment from post No.$no from system";
 
 		// return the result
 		return $actionString;
@@ -313,53 +360,6 @@ class deletedPostsService {
 		// log the action
 		$this->actionLoggerService->logAction($actionString, $boardUid);
 	}
-
-/*	The following can possibly be salvaged later
-	
-	public function purgePostsFromList(array $deletedPostsList): void {
-		// get the post data from the list
-		$posts = $this->deletedPostsRepository->getPostsByIdList($deletedPostsList);
-		//echo '<pre>'; print_r($posts); exit;
-		// filter specifically for the post uids
-		$postUidList = array_column($posts, 'post_uid');
-
-		// get the attachments
-		$attachments = $this->fileService->getAttachmentsFromPostUids($postUidList);
-
-		// purge all attachments from list
-		// now purge the attachments
-		// check again just in case
-		if(!empty($attachments)) {
-			// purge attachment
-			$this->fileService->purgeAttachmentsFromPurgatory($attachments);
-		}
-
-		// purge the posts in the list
-		$this->deletedPostsRepository->purgeDeletedPostsFromList($deletedPostsList);
-
-		// log the list purging action to the logging table
-		$this->logMultiplePurges($posts);
-	}
-
-	private function logMultiplePurges(array $postList): void {
-		// loop through and log each purge
-		foreach($postList as $post) {
-			// get the post number
-			$no = $post['no'];
-
-			// board uid of the post
-			$boardUid = $post['boardUID'];
-
-			// whether its an op
-			$isOp = $post['is_op'];
-
-			// purge string for log
-			$purgeActionString = $this->generateActionLoggingString($no, true, $isOp);
-
-			// log the purge
-			$this->logAction($purgeActionString, $boardUid);
-		}
-	}*/
 
 	private function getPaginationParams(int $page, int $entriesPerPage): array {
 		$page = max($page, 0);
@@ -420,13 +420,7 @@ class deletedPostsService {
 		// get the single row from the db
 		$deletedPostRow = $this->deletedPostsRepository->getDeletedPostRowById($deletedPostId);
 		
-		// doesn't exist, return null
-		if(!$deletedPostRow) {
-			return null;
-		} else {
-			// return the data if it exists, return null if not
-			return $deletedPostRow;
-		}
+		return $this->returnOrNull($deletedPostRow);
 	}
 
 	public function getTotalAmountOfDeletedPosts(): int {
@@ -498,10 +492,10 @@ class deletedPostsService {
 		$this->deleteAttachments($mergedPosts);
 	}
 
-	private function getThreadsFromOPs(array $posts): ?array {
+	private function getThreadsFromOPs(array $posts): array {
 		// filter for OP posts
 		$openingPosts = array_filter($posts, function($item) {
-		    return array_key_exists('is_op', $item) && $item['is_op'];
+			return array_key_exists('is_op', $item) && $item['is_op'];
 		});
 
 		// get their thread uids
@@ -510,8 +504,14 @@ class deletedPostsService {
 		// then fetch posts from those threads
 		$threadPosts = $this->postRepository->getPostsByThreadUIDs($threadUids);
 
-		// return thread posts
-		return $threadPosts;
+		// return empty array if false
+		if(!$threadPosts) {
+			return [];
+		}
+		else {
+			// return thread posts
+			return $threadPosts;
+		}
 	}
 
 	private function removeDuplicatesByPostUid(array $posts): array {
@@ -567,10 +567,6 @@ class deletedPostsService {
 	}
 
 	private function deleteAttachments(array $posts): void {
-		// add attachments to the fiels table and mark them as hidden (deleted)
-		// in the future we'll only need to mark them as deleted instead of adding new rows
-		$this->addDeletedAttachments($posts);
-
 		// post uids
 		$postUids = array_column($posts, 'post_uid');
 
@@ -583,87 +579,10 @@ class deletedPostsService {
 		}
 	}
 
-	private function addDeletedAttachments(array $posts): void {
-		// loop through and insert new files to table (as hidden)
-		foreach($posts as $post) {
-			// it doesn't have an attachment - skip
-			if(empty($post['ext'])) {
-				continue;
-			}
-
-			// add deleted attachment + thumbnail
-			// continue loop if the adding failed
-			if(!$this->addDeletedAttach($post)) {
-				continue;
-			}
-		}
-	}
-
-	private function addDeletedAttach(array $post): bool {
-		// board uid
-		$boardUid = $post['boardUID'];
-		
-		// get the board
-		$board = searchBoardArrayForBoard($boardUid);
-
-		// get the main file directory
-		$boardMainUploadDirectory = $board->getBoardUploadedFilesDirectory() . $board->getConfigValue('IMG_DIR');
-
-		// attachment-related data from the post row
-		$postUid = $post['post_uid'];
-		$extension = $post['ext'];
-		$fileName = $post['fname'];
-		$storedFileName = $post['tim'];
-		$md5Hash = $post['md5chksum'];
-		$width = $post['imgw'];
-		$height = $post['imgh'];
-		$thumbWidth = $post['tw'];
-		$thumbHeight = $post['th'];
-		$fileSize = $post['imgsize'];
-		$mimeType = '';
-
-		// since the file is deleted - make sure its hidden
-		$isHidden = true; 
-
-		// remove the beginning full stop in ext
-		$extension = substr($extension, 1);
-
-		// extract digits from the fimgsize and cast it to an integer
-		$fileSize = (int) preg_replace('/\D/', '', $fileSize);
-
-		// file path + filename
-		$filePath = $boardMainUploadDirectory . $storedFileName . '.' . $extension;
-
-		// if the file doesn't exist then skip
-		if(!file_exists($filePath)) {
-			return false;
-		}
-
-		// then add the file to the row - with is_hidden set to true
-		$this->fileService->addFile(
-			$postUid,
-			$fileName,
-			$storedFileName,
-			$extension,
-			$md5Hash,
-			$width,
-			$height,
-			$thumbWidth,
-			$thumbHeight,
-			$fileSize,
-			$mimeType,
-			$isHidden,
-			false
-		);
-
-		// succeeded
-		return true;
-	}
-
 	private function deleteMultiplePosts(array $posts, ?int $deletedBy , bool $fileOnly = false, bool $byProxy = false): void {
 		// loop through posts and delete each one
 		foreach($posts as $p) {
-			// mark post as deletd
+			// mark post as deleted
 			$this->deletePost($p, $deletedBy, $fileOnly, $byProxy);
 		}
 	}
@@ -671,6 +590,11 @@ class deletedPostsService {
 	private function deletePost(array $post, ?int $deletedBy , bool $fileOnly = false, bool $byProxy = false): void {
 		// the post uid
 		$postUid = $post['post_uid'];
+
+		// delete any pre-existing open entries in order to avoid conflicts
+		// "open" meaning they aren't restored and are
+		// aside from preventing duplicates it 'merges' attachment-only deletions on this post into one
+		$this->deletedPostsRepository->removeOpenRows($postUid);
 
 		// add a new row to the deleted posts table
 		// this will automatically mark the post as deleted and make it hidden from regular users
@@ -697,40 +621,30 @@ class deletedPostsService {
 		});
 	}
 
-	public function deleteFilesFromPosts(array $posts, ?int $deletedBy): void {
-		// run transaction
-		$this->transactionManager->run(function() use($posts, $deletedBy) {
-			// mark posts as file-only deleted
-			$this->deleteMultiplePosts($posts, $deletedBy, true, false);
+	public function deleteFilesFromPosts(array $attachments, ?int $deletedBy): void {
+		$this->transactionManager->run(function() use ($attachments, $deletedBy) {
+			// Construct file objects from the attachments array
+			$attachmentsToMove = constructAttachmentsFromArray($attachments);
 
-			// add the attachments
-			$this->addDeletedAttachments($posts);
+			// Insert deleted_posts rows for each attachment
+			$this->insertDeletedPostRowsForFiles($attachmentsToMove, $deletedBy);
 
-			// get the post uids
-			$postUids = array_column($posts, 'post_uid');
-
-			// now get the newly inserted attachments
-			$attachments = $this->fileService->getAttachmentsFromPostUids($postUids);
-
-			if(!empty($attachments)) {
-				// move the attachment itself
-				$this->fileService->moveFilesToPurgatory($attachments);
-			}
+			// Move files to purgatory
+			$this->fileService->moveFilesToPurgatory($attachmentsToMove);
 		});
 	}
 
-	private function getPostDataAndAttachments(int $deletedPostId): array {
-		// get the post data from the associated deleted posts row
-		$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
-
-		// post uid of the post
-		$postUid = $postData['post_uid'];
-
-		// get attachments for the post
-		$attachments = $this->fileService->getAttachmentsForPost($postUid);
-
-		// return the pairs
-		return [$postData, $attachments];
+	private function insertDeletedPostRowsForFiles(array $files, ?int $deletedBy): void {
+		// Insert deleted_posts row for each attachment
+		foreach ($files as $f) {
+			$this->deletedPostsRepository->insertDeletedPostEntry(
+				$f->getPostUid(),
+				$deletedBy,
+				true,       // file-only
+				false,      // byProxy
+				$f->getFileId()   // file_id
+			);
+		}
 	}
 
 	public function getBoardUidByDeletedPostId(int $deletedPostId): ?int {

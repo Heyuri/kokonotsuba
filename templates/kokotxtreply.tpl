@@ -134,8 +134,7 @@
 			<div class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></div>
 		</div>
 		<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
-			<div class="filesize">{$IMG_BAR}</div>
-			<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
+			<!--&IF($POST_ATTACHMENTS,'{$POST_ATTACHMENTS}','')-->
 		</div>
 		<div class="comment">{$COM}</div>
 		<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
@@ -158,8 +157,7 @@
 		<div class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></div>
 	</div>
 	<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
-		<div class="filesize">{$IMG_BAR}</div>
-		<!--&IF($IMG_SRC,'{$IMG_SRC}','')-->
+		<!--&IF($POST_ATTACHMENTS,'{$POST_ATTACHMENTS}','')-->
 	</div>
 	<div class="comment">{$COM}</div>
 	<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->

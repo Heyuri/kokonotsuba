@@ -56,8 +56,6 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function ModulePage(){
-		$FileIO = PMCLibrary::getFileIOInstance();
-		
 		$dat = '';
 
 		$list_max = $this->moduleContext->threadRepository->threadCountFromBoard($this->moduleContext->board);
@@ -113,15 +111,19 @@ class moduleMain extends abstractModuleMain {
 			
 			$opPost = $threadPosts[0];
 
+			$firstKey = array_key_first($opPost['attachments']);
+
+			$opAttachment = $opPost['attachments'][$firstKey] ?? null;
+
 			if(!$opPost) continue;
 
-			extract($opPost);
-			
-			$resno = $no;
+			$threadNumber = $thread['thread']['post_op_number'];
 			if ( ($cat_cols!='auto') && !($i%intval($cat_cols)) )
 				$dat.= '</tr><tr>';
 
-			if (!$sub)
+			$sub = '';
+
+			if (!$opPost['sub'])
 				$sub = 'No subject';
 			
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'', '{$IMG_SRC}' => '');
@@ -130,12 +132,12 @@ class moduleMain extends abstractModuleMain {
 			$res = count($threadPosts) - 1; // subtract by one so we dont count the OP
 			$dat.= '<td class="thread">
 	<!--<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>-->
-	<a href="'.$this->moduleContext->board->getBoardThreadURL($resno, $no).'">'.
-	($FileIO->imageExists($tim.$ext, $this->moduleContext->board) ? '<img src="'.$FileIO->getImageURL($FileIO->resolveThumbName($tim, $this->moduleContext->board), $this->moduleContext->board).'" width="'.min(150, $tw).'" class="thumb" alt="Thumbnail">' : '***').
+	<a href="'.$this->moduleContext->board->getBoardThreadURL($threadNumber).'">'.
+	(attachmentFileExists($opAttachment) ? '<img src="' . getAttachmentUrl($opAttachment, true) . '" width="'.min(150, $opAttachment['fileWidth']).'" class="thumb" alt="Thumbnail">' : '***').
 	'</a>
 	<div class="catPostInfo"><span class="title">'.$sub.'</span>'.
 		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon" alt="Replies"> '.$res.'</span></div>
-	<div class="catComment">'.$com.'</div>
+	<div class="catComment">'.$opPost['com'].'</div>
 </td>';
 		}
 

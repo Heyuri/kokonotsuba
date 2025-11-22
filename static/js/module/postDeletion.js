@@ -25,15 +25,16 @@
 			return { warn, spacer1, vd: null, spacer2: null };
 
 		} else if (type === 'file' && !existsFileDel) {
-			const warn = document.createElement('span');
-			warn.className = 'warning';
-			warn.title = "This post's file was deleted";
-			warn.textContent = '[FILE DELETED]';
-
-			const spacer1 = document.createTextNode(' ');
-			infoExtra.appendChild(spacer1);
-			infoExtra.appendChild(warn);
-			return { warn, spacer1, vd: null, spacer2: null };
+            // Target the filesize section for appending the "[FILE DELETED]" message
+            const filesizeEl = postEl.querySelector('.filesize');  // This assumes .filesize is where the file size is displayed
+            if (filesizeEl) {
+                const warn = document.createElement('span');
+                warn.className = 'warning';
+                warn.title = "This post's file was deleted";
+                warn.textContent = '[FILE DELETED]';
+                filesizeEl.appendChild(warn);
+                return { warn, spacer1: null, vd: null, spacer2: null };
+            }
 		}
 		return null;
 	}

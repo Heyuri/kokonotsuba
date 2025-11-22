@@ -11,7 +11,6 @@ class boardDiContainer {
 		public readonly boardPostNumbers $boardPostNumbers,
 		public readonly boardPathService $boardPathService,
 		public readonly postSearchService $postSearchService,
-		public readonly attachmentService $attachmentService,
 		public readonly postRedirectService $postRedirectService,
 		public readonly deletedPostsService $deletedPostsService,
 		public capcodeService $capcodeService,

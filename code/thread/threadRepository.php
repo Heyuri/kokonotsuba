@@ -151,15 +151,6 @@ class threadRepository {
 		$this->databaseConnection->execute($query, $params);
 	}
 
-	public function isThreadOP($post_uid) {
-		$query = "SELECT post_op_post_uid FROM {$this->threadTable} WHERE post_op_post_uid = :post_op_post_uid";
-		$params = [
-			':post_op_post_uid' => strval($post_uid)
-		];
-		$threadExists = $this->databaseConnection->fetchColumn($query, $params) ? true : false;
-		return $threadExists;
-	}
-
 	public function getLastThreadTimeFromBoard($board) {
 		$boardUID = $board->getBoardUID();
 		
@@ -252,30 +243,11 @@ class threadRepository {
 		", [$time, $time, $threadUID]);
 	}
 
-	public function deleteThreadsByOpPostUIDs(array $postUIDsList): void {
-		$inClause = pdoPlaceholdersForIn($postUIDsList);
-		
-		$this->databaseConnection->execute("
-			DELETE FROM {$this->threadTable}
-			WHERE post_op_post_uid IN $inClause
-		", $postUIDsList);
-	}
-
-
 	public function deleteThreadByUID(string $threadUID): void {
 		$this->databaseConnection->execute("
 			DELETE FROM {$this->threadTable}
 			WHERE thread_uid = ?
 		", [$threadUID]);
-	}
-
-
-	public function deleteThreadsByUidList(array $threadUidList): void {
-		$inClause = pdoPlaceholdersForIn($threadUidList);
-		
-		$this->databaseConnection->execute("
-			DELETE FROM {$this->threadTable}
-			WHERE thread_uid IN $inClause", $threadUidList);
 	}
 
 
@@ -295,7 +267,7 @@ class threadRepository {
 
 		// Ensure values are unique and sanitized
 		$threadUIDs = array_map('strval', array_unique($threadUIDs));
-		$placeholders = implode(',', array_fill(0, count($threadUIDs), '?'));
+		$placeholders = pdoPlaceholdersForIn($threadUIDs);
 
 		// Subquery to get the first (oldest) post of each thread
 		$query = "
@@ -304,13 +276,16 @@ class threadRepository {
 			INNER JOIN (
 				SELECT thread_uid, MIN(post_uid) AS first_post_uid
 				FROM {$this->postTable}
-				WHERE thread_uid IN ($placeholders)
+				WHERE thread_uid IN $placeholders
 				GROUP BY thread_uid
 			) first_posts
 			ON p.thread_uid = first_posts.thread_uid AND p.post_uid = first_posts.first_post_uid
 		";
 
 		$results = $this->databaseConnection->fetchAllAsArray($query, $threadUIDs);
+
+		// merge rows (in cases of multiple attachments)
+		$results = mergeMultiplePostRows($results);
 
 		// Index results by thread_uid for fast lookup
 		$indexed = [];
@@ -321,11 +296,31 @@ class threadRepository {
 		return $indexed;
 	}
 
+	public function getOpPostUidsFromThreads(array $threadUIDs): array {
+		if (empty($threadUIDs)) {
+				return [];
+		}
+
+		$placeholders = pdoPlaceholdersForIn($threadUIDs);
+
+		// Subquery to get the first (oldest) post of each thread
+		$query = "
+			SELECT post_op_post_uid
+			FROM {$this->threadTable}
+			WHERE thread_uid IN $placeholders
+		";
+
+		$results = $this->databaseConnection->fetchAllAsIndexArray($query, $threadUIDs);
+
+		return array_merge(...$results);
+	}
+
 	/**
 	* Bump a discussion thread to the top.
 	*/
 	public function bumpThread(string $threadID): void {
 		$posts = $this->getPostsFromThread($threadID);
+
 		if (empty($posts)) return;
 	
 		$lastPost = end($posts);
@@ -414,8 +409,14 @@ class threadRepository {
 
 		$params = [':thread_uid' => $threadUID];
 
-		// Execute the query and return results
-		return $this->databaseConnection->fetchAllAsArray($query, $params) ?? [];
+		// fetch post rows
+		$posts = $this->databaseConnection->fetchAllAsArray($query, $params) ?? [];
+
+		// merge attachment rows
+		$posts = mergeMultiplePostRows($posts);
+
+		// return results
+		return $posts;
 	}
 
 	public function getPostsForThreads(array $threadUIDs, bool $includeDeleted = false): array {
@@ -436,8 +437,14 @@ class threadRepository {
 		// add adirection/order
 		$query .= " ORDER BY p.no ASC";
 
-		// Execute the query and return results
-		return $this->databaseConnection->fetchAllAsArray($query, $threadUIDs) ?? [];
+		// fetch posts
+		$posts = $this->databaseConnection->fetchAllAsArray($query, $threadUIDs) ?? [];
+
+		// merge attachment rows
+		$posts = mergeMultiplePostRows($posts);
+
+		// return results
+		return $posts;
 	}
 
 	public function getAllAttachmentsFromThread($thread_uid) {

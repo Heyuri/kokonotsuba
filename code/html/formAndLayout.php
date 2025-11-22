@@ -80,7 +80,6 @@ function generatePostFormHTML(int $resno,
 	string $category = '',
 	bool $isStaff = false
 ) {
-	$FileIO = PMCLibrary::getFileIOInstance();
 	$isThread = $resno != 0;
 
 	$pte_vals = preparePostFormTemplateValues($resno, $config['LIVE_INDEX_FILE'], $name, $email, $subject, $comment, $config, $isThread, $moduleInfoHook, $isStaff);
@@ -106,7 +105,7 @@ function generatePostFormHTML(int $resno,
 	if ($config['STORAGE_LIMIT']) {
 		$pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T(
 			'form_notice_storage_limit',
-			$FileIO->getCurrentStorageSize($board),
+			$board->getCurrentStorageSize(),
 			$config['STORAGE_MAX']
 		);
 	}

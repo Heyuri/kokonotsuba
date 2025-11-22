@@ -17,14 +17,11 @@ class postRenderer {
 		private readonly moduleEngine $moduleEngine, 
 		private readonly templateEngine $templateEngine,
 		private array $quoteLinksFromBoard) {
-			// get file IO instance
-			$FileIO = PMCLibrary::getFileIOInstance();
-
 			// initialize post data preperation class
-			$this->postDataPreparer = new postDataPreparer($board, $FileIO);
+			$this->postDataPreparer = new postDataPreparer($board);
 
 			// initialize attachment rendering class
-			$this->attachmentRenderer = new attachmentRenderer($FileIO, $board, $moduleEngine);
+			$this->attachmentRenderer = new attachmentRenderer($board, $moduleEngine);
 
 			// intialize post template binding class
 			$this->postTemplateBinder = new postTemplateBinder($board, $config);
@@ -75,20 +72,15 @@ class postRenderer {
 		// Process category links
 		$categoryHTML = $this->postElementGenerator->processCategoryLinks($data['category'], $crossLink);
 
-		// get file properties
-		$fileData = $data['fileData'];
-
-		// whether theres an attachment
-		$hasAttachment = !empty($fileData);
-
 		// this post is deleted
-		$isDeleted = $data['open_flag'] && $adminMode;
+		$isDeleted = $data['open_flag'] && !$data['file_only_deleted'] && $adminMode;
 
-		// this post's attachment was deleted
-		$fileOnlyDeleted = $data['open_flag'] && $data['file_only_deleted'];
-
-		// handle attachment related rendering
-		[$imageBar, $imageURL, $imageHtml] = $hasAttachment ? $this->attachmentRenderer->generateAttachmentHtml($fileData, $isDeleted, $fileOnlyDeleted, $adminMode) : ['', '', ''];
+		// process attachment data
+		$attachmentsHtml = $this->processAttachments(
+			$data['attachments'],
+			$isDeleted,
+			$adminMode
+		);
 
 		// File size warning (if necessary)
 		$warnBeKill = '';
@@ -128,6 +120,16 @@ class postRenderer {
 		$quoteButton = $this->postElementGenerator->generateQuoteButton($threadResno, $data['no']);
 		$replyButton = $threadMode ? $this->postElementGenerator->generateReplyButton($crossLink, $threadResno) : '';
 
+		// get first attachment array key
+		$firstAttachmentArrKey = array_key_first($data['attachments']);
+
+		// get the first attachment
+		// This is needed for the flash board template which uses various 
+		$firstAttachment = $data['attachments'][$firstAttachmentArrKey] ?? [];
+
+		// generate first attachment URL
+		$firstAttachmentUrl = $this->attachmentRenderer->generateImageUrl($firstAttachment, false, $isDeleted);
+
 		// Variables to used for the condition for whether to use OP/Reply template block
 		$shouldRenderReply = $isThreadReply && !$renderAsOp;
 		$shouldRenderOp = $isThreadOp || $renderAsOp;
@@ -136,18 +138,16 @@ class postRenderer {
 		if ($shouldRenderReply) {
 			$templateValues = $this->postTemplateBinder->renderReplyPost(
 				$data, 
-				$crossLink,
-				$postPositionEnabled,
+				$crossLink, 
+				$postPositionEnabled, 
 				$templateValues, 
 				$threadResno,
 				$nameHtml, 
 				$categoryHTML,
 				$quoteButton, 
-				$imageBar, 
+				$attachmentsHtml, 
 				$warnBeKill, 
-				$postFormExtra,
-				$imageHtml,
-				$imageURL
+				$postFormExtra, 
 			);
 		} 
 		// render the thread using the OP template block if its a thread OP.
@@ -158,22 +158,21 @@ class postRenderer {
 		elseif ($shouldRenderOp) {
 			$templateValues = $this->postTemplateBinder->renderOpPost(
 				$data, 
-				$fileData,
+				$firstAttachment,
 				$crossLink,
 				$templateValues, 
 				$nameHtml, 
 				$categoryHTML, 
 				$quoteButton, 
+				$attachmentsHtml,
+				$firstAttachmentUrl,
 				$replyButton, 
-				$imageBar, 
 				$postFormExtra, 
 				$replyCount, 
 				$warnOld, 
 				$warnBeKill, 
 				$warnEndReply, 
 				$warnHidePost,
-				$imageHtml,
-				$imageURL
 			);
 		}
 
@@ -240,6 +239,54 @@ class postRenderer {
 		else {
 			return $this->templateEngine->ParseBlock('OP', $templateValues);
 		}
+	}
+
+	/**
+	 * Process all attachments for a post and return a normalized set of
+	 * imageBars, imageHtml, and imageURLs usable by template binders.
+	 *
+	 * @param array $attachments  List of attachments from post data
+	 * @param bool $isDeleted     Whether post is deleted
+	 * @param bool $adminMode     Whether viewer is admin
+	 *
+	 * @return string $postAttachmentsHtml
+	 */
+	public function processAttachments(
+		array $attachments, 
+		bool $isDeleted, 
+		bool $adminMode
+	): string {
+		// return empty string of attachments is empty
+		if(empty($attachments)) {
+			return '';
+		}
+
+		// init variable to be used for attachment html in template
+		$postAttachmentsHtml = '';
+
+		// if the attachments array length is larger than 1 then there are multiple attachments for this post
+		if(count($attachments) > 1) {
+			$hasMultipleAttachments = true;
+		} 
+		// otherwise theres only a single attachment
+		else {
+			$hasMultipleAttachments = false;
+		}
+
+		// Render each attachment individually
+		foreach ($attachments as $index=>$att) {
+			// generateAttachmentHtml()
+			$postAttachmentsHtml .= $this->attachmentRenderer->generateAttachmentHtml(
+				$att,
+				$isDeleted,
+				$adminMode,
+				$index,
+				$hasMultipleAttachments
+			);
+		}
+
+		// return attachments html
+		return $postAttachmentsHtml;
 	}
 
 	private function generateAdminControls(array $post, bool $adminMode, bool $isThreadOp): string {

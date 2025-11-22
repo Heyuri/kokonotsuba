@@ -193,10 +193,11 @@ const kkimg = { name: "KK Image Features",
 			var postEl = a.closest('.post[id^="p"]');
 			if (postEl) {
 				var no = postEl.id.substr(1);
-				kkimg.contract(no);
+				var container = a.closest('.attachmentContainer');
+				var index = container?.dataset.attachmentIndex;
+				kkimg.contract(no, index);
 			}
 
-			kkimg.contract(no);
 			a.removeEventListener("click",    kkimg._evexpand);
 			a.removeEventListener("mouseover",kkimg._evhover1);
 			a.removeEventListener("mouseout", kkimg._evhover2);
@@ -216,9 +217,8 @@ const kkimg = { name: "KK Image Features",
 	swfext: Array("swf"),
 	/* event */
 	_evexpand: function (event) {
-		var p  = this.parentNode;
+		var postEl = this.closest('.post[id^="p"]');
 
-		var postEl = p.closest('.post[id^="p"]');
 		if (!postEl) return;
 		var no = postEl.id.substr(1);
 		
@@ -228,7 +228,11 @@ const kkimg = { name: "KK Image Features",
 			return;
 		}
 		if (localStorage.getItem("imgexpand")!="true") return;
-		if (kkimg.expand(no)) event.preventDefault();
+		// get the attachment container wrapping this <a><img>
+		let container = this.closest(".attachmentContainer");
+		let index = container?.dataset.attachmentIndex;
+
+		if (kkimg.expand(no, index)) event.preventDefault();
 	},
 	_evhover1: function (event) {
 		if (localStorage.getItem("imghover")!="true") return;
@@ -240,9 +244,13 @@ const kkimg = { name: "KK Image Features",
 		hi.src = "";
 	},
 	/* function */
-	expand: function (no) {
-		var p    = $id("p"+no),
-			thumb= p.getElementsByClassName("postimg")[0];
+	expand: function (no, index) {
+		var p = $id("p" + no);
+		var container = p.querySelector('.attachmentContainer[data-attachment-index="'+index+'"]');
+		if (!container) return;
+
+		var thumb = container.querySelector(".postimg");
+
 		if (!thumb) return;
 		var a    = thumb.parentNode;
 		if (!a||a.tagName!=="A") return;
@@ -252,14 +260,14 @@ const kkimg = { name: "KK Image Features",
 		if (p.getBoundingClientRect().top < 0) p.scrollIntoView();
 
 		if (kkimg.imgext.includes(ext)) {
-			a.insertAdjacentHTML("afterend", '<div class="expand">'+
-				'<a href="'+a.href+'" onclick="event.preventDefault();kkimg.contract(\''+no+'\');">'+
+			a.insertAdjacentHTML("afterend", '<div class="expand" data-attachment-index="'+index+'">'+
+				'<a href="'+a.href+'" onclick="event.preventDefault();kkimg.contract(\''+no+'\', '+index+');">'+
 				'<img src="'+a.href+'" alt="Full image" onerror="kkimg.error(\''+no+'\');" class="expandimg" title="Click to contract" border="0">'+
 				'</a></div>');
 			return true;
 		} else if (kkimg.vidext.includes(ext)) {
-			a.insertAdjacentHTML("afterend", '<div class="expand">'+
-				'<div>[<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]</div>'+
+			a.insertAdjacentHTML("afterend", '<div class="expand" data-attachment-index="'+index+'">'+
+				'<div>[<a href="javascript:kkimg.contract(\''+no+'\', '+index+');">Close</a>]</div>'+
 				'<video class="expandimg" controls="controls" loop="loop" autoplay="autoplay" src="'+a.href+'"></video>'+
 				'</div>');
 			return true;
@@ -304,7 +312,7 @@ const kkimg = { name: "KK Image Features",
 			// close header
 			header.className    = "swf-expand-header";
 			header.style.height = hdr + "px";
-			header.innerHTML    = '[<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]';
+			header.innerHTML    = '[<a href="javascript:kkimg.contract(\''+no+'\', '+index+');">Close</a>]';
 			container.appendChild(header);
 
 			// insert & hide original link
@@ -346,22 +354,25 @@ const kkimg = { name: "KK Image Features",
 		}
 		return false;
 	},
-	contract: function (no) {
-		var p   = $id("p"+no),
-			exp = p.getElementsByClassName("expand")[0];
+	contract: function (no, index) {
+		var p   = $id("p" + no);
+		var exp = p.querySelector('.expand[data-attachment-index="'+index+'"]');
 		if (!exp) return;
-		var scroll = p.getBoundingClientRect().top < 0;
-		var rp = exp.querySelector(".ruffleContainer>*");
-		if (rp && rp._resizeObserver) rp._resizeObserver.disconnect();
+
+		// Restore the original <a>
+		var a = exp.previousElementSibling;
+		if (a && a.tagName === "A") a.style.display = "";
+
+		// Remove the expanded container
 		exp.remove();
-		var a = p.getElementsByClassName("postimg")[0].parentNode;
-		a.style.display = "";
-		if (scroll) p.scrollIntoView();
+
+		// Scroll into view if needed
+		if (p.getBoundingClientRect().top < 0) p.scrollIntoView();
 	},
 	error: function (no) {
 		var p   = $id("p"+no),
 			exp = p.getElementsByClassName("expand")[0];
-		exp.innerHTML = '<span class="error">Error loading file!</span> [<a href="javascript:kkimg.contract(\''+no+'\');">Close</a>]';
+		exp.innerHTML = '<span class="error">Error loading file!</span> [<a href="javascript:kkimg.contract(\''+no+'\', '+index+');">Close</a>]';
 	}
 };
 

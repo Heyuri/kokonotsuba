@@ -58,6 +58,9 @@ class postRepository {
 		$query .= " ORDER BY p.$order  DESC LIMIT $amount OFFSET $offset";
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
 	
+		// merge attachment rows
+		$posts = mergeMultiplePostRows($posts);
+
 		return $posts ?? [];
 	}
 
@@ -112,11 +115,22 @@ class postRepository {
 		// append WHERE clause to get it by the post uid
 		$query .= " WHERE p.post_uid = :post_uid";
 		
+		// parameter
 		$params = [
 			':post_uid' => $post_uid
 		];
 
-		return $this->databaseConnection->fetchOne($query, $params);
+		// fetch row(s)
+		// it has to have fetch all instead of fetchOne because multiple attachments = multiple rows returned
+		// its up to mergeMultiplePostRows to take care of those extra attachment rows
+		$post = $this->databaseConnection->fetchAllAsArray($query, $params);
+
+		// merge attachment row
+		$post = mergeMultiplePostRows($post);
+
+		// return row
+		// make sure to return the first
+		return $post[0] ?? false;
 	}
 
 	public function getNextPostUid(): int {
@@ -216,12 +230,10 @@ class postRepository {
 
 	public function insertPost(array $params): void {
 		$query = "INSERT INTO {$this->postTable} 
-			(no, poster_hash, boardUID, thread_uid, post_position, is_op, root, time, md5chksum, 
-			category, tim, fname, ext, imgw, imgh, imgsize, tw, th, pwd, now, 
+			(no, poster_hash, boardUID, thread_uid, post_position, is_op, root, category, pwd, now, 
 			name, tripcode, secure_tripcode, capcode, email, sub, com, host, status) 
-			VALUES (:no, :poster_hash, :boardUID, :thread_uid, :post_position, :is_op, :root, :time,
-			:md5chksum, :category, :tim, :fname, :ext, :imgw, :imgh, :imgsize, :tw, :th, 
-			:pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :status)";
+			VALUES (:no, :poster_hash, :boardUID, :thread_uid, :post_position, :is_op, :root,
+			:category, :pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :status)";
 		
 		$this->databaseConnection->execute($query, $params);
 	}
@@ -245,12 +257,23 @@ class postRepository {
 	}
 
 	public function getPostsByUids(array $postUIDsList): array|false {
+		// get base query
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
+
+		// generate in clause
 		$inClause = pdoPlaceholdersForIn($postUIDsList);
+
+		// append where clause
+		$query .= " WHERE p.post_uid IN $inClause";
+
+		// fetch posts
+		$posts = $this->databaseConnection->fetchAllAsArray($query, $postUIDsList);
+
+		// merge multiple rows
+		$posts = mergeMultiplePostRows($posts);
 		
-		return $this->databaseConnection->fetchAllAsArray("
-			SELECT * FROM {$this->postTable}
-			WHERE post_uid IN $inClause
-		", $postUIDsList);
+		// return posts
+		return $posts;
 	}
 
 	public function getThreadUIDsByPostUIDs(array $postUIDsList): ?string {
@@ -286,7 +309,11 @@ class postRepository {
 			$query = excludeDeletedPostsCondition($query);
 		}
 
+		// fetch post rows
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $threadUids);
+
+		// merge attachment rows
+		$posts = mergeMultiplePostRows($posts);
 
 		return $posts;
 	}

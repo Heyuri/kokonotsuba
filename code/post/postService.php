@@ -31,30 +31,13 @@ class postService {
 		
 		return $list;
 	}
-
-		/* Check if the post is successive (rate limiting mechanism) */
-	public function isSuccessivePost($board, $timestamp, $pass, $passcookie, $host, $isupload) {
-		$config = $board->loadBoardConfig();
-
-		$timeLimit = $timestamp - $config['RENZOKU'];
-		$timeLimitUpload = $timestamp - $config['RENZOKU2'];
-
-		$recentPosts = $this->postRepository->fetchRecentPosts($timeLimit, $isupload ? $timeLimitUpload : null);
-
-		foreach ($recentPosts as $post) {
-			if ($host === $post['host'] || $pass === $post['pwd'] || $passcookie === $post['pwd']) {
-				return true; // Post is successive
-			}
-		}
-
-		return false; // Not a successive post
-	}
-
 	
-	public function addPostToThread(board $board, postRegistData $postRegistData): void {
+	public function addPostToThread(
+		board $board, 
+		postRegistData $postRegistData,
+		int $postUID 
+	): void {
 		$boardUID = $board->getBoardUID();
-		$postUID = $this->postRepository->getNextPostUid();  // this would also need refactoring
-		$time = (int)substr($postRegistData->getTim(), 0, -3);
 		$root = gmdate('Y-m-d H:i:s');
 		$isThread = false;
 
@@ -80,7 +63,7 @@ class postService {
 			$postRegistData->setPostPosition(0);
 		}
 
-		$params = $postRegistData->toParams($boardUID, $root, $time, $isThread); // convert DTO to SQL params
+		$params = $postRegistData->toParams($boardUID, $root, $isThread); // convert DTO to SQL params
 
 		$this->postRepository->insertPost($params);
 

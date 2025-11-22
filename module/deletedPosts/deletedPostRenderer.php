@@ -163,7 +163,7 @@ class deletedPostRenderer {
 				$postsCount = $deletedPostsService->getTotalAmountOfDeletedPostsFromAccountId($accountId);
 			}
 		}
-
+		
 		// finalize html output
 		$this->handleHtmlOutput($roleLevel, $posts, $postsCount, $postRenderer, $threadRenderer, $title);
 	}
@@ -181,8 +181,6 @@ class deletedPostRenderer {
 		// echo output to browser
 		echo $pageHtml;
 	}
-
-
 
 	private function drawDeletedPostView(userRole $roleLevel, array $deletedPost, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
 		// if its a thread then get the thread data
@@ -259,11 +257,15 @@ class deletedPostRenderer {
 
 	private function handleHtmlOutput(
 		userRole $roleLevel, 
-		array $deletedPosts, 
+		?array $deletedPosts, 
 		int $deletedPostsCount, 
 		postRenderer $postRenderer, 
 		threadRenderer $threadRenderer,
-		string $moduleHeader = 'Deleted posts'): void {
+		string $moduleHeader = 'Deleted posts'
+	): void {
+		// Normalize null to empty array
+		$deletedPosts = $deletedPosts ?? [];
+
 		// get post uids
 		$postUids = array_column($deletedPosts, 'post_uid');
 
@@ -280,18 +282,26 @@ class deletedPostRenderer {
 		$deletedPostListValues = [];
 
 		// don't bother trying to parse if there's no posts
-		if(!$areNoPosts) {
+		if (!$areNoPosts) {
 			// get deleted posts html
-			$deletedPostListValues = $this->renderDeletedPosts($roleLevel, $deletedPosts, $postRenderer, $threadRenderer);
+			$deletedPostListValues = $this->renderDeletedPosts(
+				$roleLevel,
+				$deletedPosts,
+				$postRenderer,
+				$threadRenderer
+			);
 		}
 		
-		// bind deted posts list html to placeholder
-		$deletedPostsPageHtml = $this->adminPageRenderer->ParseBlock('DELETED_POSTS_MOD_PAGE', [
-			'{$DELETED_POSTS}' => $deletedPostListValues,
-			'{$ARE_NO_POSTS}' => $areNoPosts,
-			'{$MODULE_HEADER_TEXT}' => $moduleHeader,
-			'{$URL}' => htmlspecialchars($this->modulePageUrl)
-		]);
+		// bind deleted posts list html to placeholder
+		$deletedPostsPageHtml = $this->adminPageRenderer->ParseBlock(
+			'DELETED_POSTS_MOD_PAGE',
+			[
+				'{$DELETED_POSTS}' => $deletedPostListValues,
+				'{$ARE_NO_POSTS}' => $areNoPosts,
+				'{$MODULE_HEADER_TEXT}' => $moduleHeader,
+				'{$URL}' => htmlspecialchars($this->modulePageUrl)
+			]
+		);
 
 		// pager
 		$entriesPerPage = $this->board->getConfigValue('PAGE_DEF');
@@ -361,6 +371,9 @@ class deletedPostRenderer {
 		// init a truncated one for the preview
 		$notePreview = $this->generateNotePreview($note);
 
+		// attachment only deletion
+		$isAttachmentOnly = !empty($deletedEntry['file_id']) && !empty($deletedEntry['file_only_deleted']);
+
 		// put together the placeholder => value
 		$templateValues = [
 			'{$DELETED_BY}' => htmlspecialchars($deletedByUsername),
@@ -372,7 +385,7 @@ class deletedPostRenderer {
 			'{$VIEW_MORE_URL}' => htmlspecialchars($viewMoreUrl),
 			'{$POST_HTML}' => $postHtml,
 			'{$IS_OPEN}' => $deletedEntry['open_flag'] ? 1 : null,
-			'{$FILE_ONLY}' => $deletedEntry['file_only_deleted'],
+			'{$IS_ATTACHMENT_ONLY}' => $isAttachmentOnly,
 			'{$RESTORED_AT}' => htmlspecialchars($deletedEntry['restored_at']),
 			'{$RESTORED_BY}' => htmlspecialchars($restoredByUsername),
 			'{$NOTE}' => htmlspecialchars($note),
@@ -407,9 +420,14 @@ class deletedPostRenderer {
 		postRenderer $postRenderer, 
 		threadRenderer $threadRenderer
 	): string {
+		// Attachment-only view
+		if ($deletedEntry['file_only_deleted']) {
+			return $this->renderAttachmentDeletion($deletedEntry, $postRenderer);
+		}
+
 		// init template values
 		$templateValues = [];
-		
+
 		// get the board of the post
 		$board = searchBoardArrayForBoard($deletedEntry['boardUID']);
 
@@ -441,6 +459,38 @@ class deletedPostRenderer {
 
 		// return post/thread html
 		return $postHtml;
+	}
+
+	/**
+	 * Render ONLY the deleted attachment for an attachment-only deletion entry.
+	 * The post itself is NOT marked deleted — only the attachment.
+	 */
+	private function renderAttachmentDeletion(array $deletedEntry, postRenderer $postRenderer): string {
+		// file id of the deleted attachment
+		$fileId = $deletedEntry['file_id'];
+
+		// if deleted_attachments[field] doesn’t exist, return empty
+		if (empty($deletedEntry['deleted_attachments'][$fileId])) {
+			return '<div class="error centerText">' . _T('attachment_not_found') . '</div>';
+		}
+
+		// get the deleted attachment metadata
+		$deletedAttachmentMeta = $deletedEntry['deleted_attachments'][$fileId];
+
+		// get attachment
+		$attachment = $deletedEntry['attachments'][$fileId];
+
+		// But overwrite fields to indicate that it's deleted
+		$attachment['is_deleted'] = true;
+		$attachment['deleted_at'] = $deletedAttachmentMeta['deleted_at'];
+		$attachment['deleted_note'] = $deletedAttachmentMeta['note'];
+		$attachment['deleted_post_id'] = $deletedAttachmentMeta['deleted_post_id'];
+
+		// Render the attachment using postRenderer’s normal function
+		// Arguments: attachments[], renderDeleted=true, forceSingle=true
+		$attachmentHtml = $postRenderer->processAttachments([$attachment], true, true);
+
+		return $attachmentHtml;
 	}
 
 	private function generateViewMoreUrl(int $id, string $baseUrl): string {

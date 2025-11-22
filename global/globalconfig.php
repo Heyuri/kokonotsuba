@@ -31,10 +31,6 @@ $config['STATIC_INDEX_FILE'] = 'index.html'; // Defines LIVE_INDEX_FILE
 $config['PHP_EXT'] = '.html'; // File extension for static pages
 
 
-$config['FILEIO_BACKEND'] = 'local'; // FileIO backend specification (local, ftp)
-$config['FILEIO_INDEXLOG'] = 'fileioindex.dat'; // FileIO Index Log file
-$config['FILEIO_PARAMETER'] = ''; // FileIO Parameters (local storage)
-
 $config['IDSEED'] = 'setrandom'; // ID generation seed
 $config['TRIPSALT'] = ''; // Used for secure tripcodes. Don't change after setting!
 

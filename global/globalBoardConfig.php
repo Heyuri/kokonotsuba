@@ -290,6 +290,7 @@ $config['MAX_AGE_TIME'] = 0; // How long will thread accept age replies? (hours)
 $config['USE_CATEGORY'] = 0; // Enable Categories
 
 $config['PREVENT_DUPLICATE_FILE_UPLOADS'] = false; // Disallow the same file was being posted twice 
+$config['DUPLICATE_FILE_TIME'] = 7200; // The time a duplicate attachment cant be uploaded
 
 // Ban Settings
 $config['BAN_CHECK'] = 1; // Comprehensive ban check function
