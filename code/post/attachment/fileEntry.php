@@ -4,16 +4,16 @@ class fileEntry {
 	public int $id;
 	public int $post_uid;
 	public int $boardUID;
-	public string $file_name;
-	public string $stored_filename;
-	public string $file_ext;
-	public string $file_md5;
+	public ?string $file_name;
+	public ?string $stored_filename;
+	public ?string $file_ext;
+	public ?string $file_md5;
 	public ?int $file_width;
 	public ?int $file_height;
 	public ?int $thumb_file_width;
 	public ?int $thumb_file_height;
 	public string|int $file_size;
-	public string $mime_type;
+	public ?string $mime_type;
 	public int $is_hidden;
 	public int $is_deleted;
 	public string $timestamp_added;
@@ -25,16 +25,16 @@ class fileEntry {
 	public function hydrateFileEntry(int $id,
 		int $post_uid,
 		int $boardUID,
-		string $file_name,
-		string $stored_filename,
-		string $file_ext,
-		string $file_md5,
+		?string $file_name,
+		?string $stored_filename,
+		?string $file_ext,
+		?string $file_md5,
 		?int $file_width,
 		?int $file_height,
 		?int $thumb_file_width,
 		?int $thumb_file_height,
 		string|int $file_size,
-		string $mime_type,
+		?string $mime_type,
 		int $is_hidden,
 		int $is_deleted,
 		string $timestamp_added,
