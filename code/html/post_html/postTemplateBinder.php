@@ -92,7 +92,6 @@ class postTemplateBinder {
 				$fileData['fileSize'] ?? '',
 				$fileData['fileWidth'] ?? 0,
 				$fileData['fileHeight'] ?? 0,
-				$imageURL ?? '',
 				$replyCount,
 				$warnOld,
 				$warnBeKill,
