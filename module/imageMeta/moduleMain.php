@@ -83,7 +83,33 @@ class moduleMain extends abstractModuleMain {
 
 		// SWFChan archive
 		if ($this->enable_swfchan && $isSwf) {
-			$rawByteFileSize = $attachment['fileSize'];
+			// construct attachment object
+			$constructedAttachment = constructAttachment(
+				$attachment['fileId'],
+				$attachment['postUid'],
+				$attachment['boardUID'],
+				$attachment['fileName'],
+				$attachment['storedFileName'],
+				$attachment['fileExtension'],
+				$attachment['fileMd5'],
+				$attachment['fileWidth'],
+				$attachment['fileHeight'],
+				$attachment['thumbWidth'],
+				$attachment['thumbHeight'],
+				$attachment['fileSize'],
+				$attachment['mimeType'],
+				(bool)$attachment['isHidden'],
+				$attachment['isDeleted'],
+				$attachment['timestampAdded']
+			);
+
+			// get the attachment path
+			$attachmentPath = $constructedAttachment->getPath();
+
+			// read disk for file size
+			$rawByteFileSize = filesize($attachmentPath);
+
+			// append html
 			$sauceHtml .= '<span class="swfchanLink imageOptions">[<a href="http://eye.swfchan.com/search/?q=>' . $rawByteFileSize . '" target="_blank">swfchan</a>]</span> ';
 		}
 
