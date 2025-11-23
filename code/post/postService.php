@@ -103,6 +103,12 @@ class postService {
 			// Build deletionRows array with board mapping
 			$deletionRows = [];
 			foreach ($postsData as $row) {
+				// don't bother including it if the post is already deleted
+				if($row['open_flag'] === 1) {
+					continue;
+				}
+
+				// add deletion row
 				$deletionRows[] = [
 					'thread_uid' => $row['thread_uid'],
 					'board' => $boardMap[$row['boardUID']],
@@ -120,7 +126,7 @@ class postService {
 				$board = $deletionRow['board'];
 
 				// get posts from the associated thread uid
-				$replies = $this->threadRepository->getPostsFromThread($threadUID);
+				$replies = $this->threadRepository->getPostsFromThread($threadUID, true);
 
 				// skip post early if there are no posts/replies
 				if(is_null($replies) || $replies === false) {
