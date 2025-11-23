@@ -209,7 +209,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$deletionWidgets[] = $this->buildWidgetEntry(
 			$muteUrl, 
 			'mute', 
-			'Mute', 
+			'Delete & Mute', 
 			''
 		);
 
