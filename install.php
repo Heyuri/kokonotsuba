@@ -539,10 +539,10 @@ class tableCreator {
 				CONSTRAINT fk_dp_file FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE,
 
 				-- Indexes
-				KEY idx_post_uid (post_uid),
-				KEY idx_deleted_by_deleted_at (deleted_by, deleted_at),
-				KEY idx_restored_at (restored_at),
-				KEY idx_file_id (file_id),
+				INDEX idx_post_uid (post_uid),
+				INDEX idx_deleted_by_deleted_at (deleted_by, deleted_at),
+				INDEX idx_restored_at (restored_at),
+				INDEX idx_file_id (file_id),
 
 				-- Enforce: at most one open row per post-level deletion
 				UNIQUE KEY uq_open_post (open_key)
