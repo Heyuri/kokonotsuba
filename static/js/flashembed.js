@@ -39,7 +39,7 @@ function openFlashEmbedWindow(file, name, extension, w, h) {
 		swfWindow.innerHTML = `
 			<div id="swf-embed-header" style="cursor: move;">
 				<img src="${closebuttan}" id="closeButton" style="float: right; cursor: pointer;">
-				<div id="embed-swf-details">${name}, ${w}x${h} <a href="${file}" download="${name}${extension}" id="downloadButton"><div class="download"></div></a></div>
+				<div id="embed-swf-details">${name}, ${w}x${h} <a href="${file}" download="${name}.${extension}" id="downloadButton"><div class="download"></div></a></div>
 			</div>
 			<div id="ruffleContainer" style="width: 100%; height: calc(100% - 20px); position: relative;"></div>
 		`;
