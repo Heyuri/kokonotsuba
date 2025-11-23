@@ -119,7 +119,13 @@ class postService {
 				$threadUID = $deletionRow['thread_uid'];
 				$board = $deletionRow['board'];
 
+				// get posts from the associated thread uid
 				$replies = $this->threadRepository->getPostsFromThread($threadUID);
+
+				// skip post early if there are no posts/replies
+				if(is_null($replies) || $replies === false) {
+					continue;
+				}
 
 				// remove sage replies so the bump restoration only takes into account posts that caused a bump
 				// also remove deleted replies so it reflects what the user can see
@@ -128,7 +134,7 @@ class postService {
 				$newReplyData = end($replies);
 
 				if (!$newReplyData) {
-					return;
+					continue;
 				} else {
 					$opPostCheck = $this->postRepository->getOpeningPostFromThread($threadUID);
 					$threadData = $this->threadRepository->getThreadByUid($threadUID);
