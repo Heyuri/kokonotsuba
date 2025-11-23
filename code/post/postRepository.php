@@ -42,7 +42,7 @@ class postRepository {
 	public function getFilteredPosts(int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'post_uid'): array {
 		if(!in_array($order, $this->allowedOrderFields)) return [];
 
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
 		$params = [];
 		
 		// add WHERE so the AND conditions can be appended without sissue
@@ -110,7 +110,7 @@ class postRepository {
 
 	public function getPostByUid(int $post_uid): array|false {
 		// get base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
 		
 		// append WHERE clause to get it by the post uid
 		$query .= " WHERE p.post_uid = :post_uid";
@@ -258,7 +258,7 @@ class postRepository {
 
 	public function getPostsByUids(array $postUIDsList): array|false {
 		// get base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
 
 		// generate in clause
 		$inClause = pdoPlaceholdersForIn($postUIDsList);
@@ -299,10 +299,10 @@ class postRepository {
 		$inClause = pdoPlaceholdersForIn($threadUids);
 
 		// base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
 
 		// append where clause
-		$query .= " WHERE thread_uid IN $inClause";
+		$query .= " WHERE p.thread_uid IN $inClause";
 
 		// exlude deleted posts
 		if(!$includeDeleted) {

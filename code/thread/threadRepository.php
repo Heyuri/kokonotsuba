@@ -394,7 +394,7 @@ class threadRepository {
 
 	public function getPostsFromThread(string $threadUID, bool $includeDeleted = false): ?array {
 		// Generate the base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
 
 		// Add the condition specific to this method (fetching posts for a single thread)
 		$query .= " WHERE p.thread_uid = :thread_uid";
@@ -429,7 +429,7 @@ class threadRepository {
 		if (empty($threadUIDs)) return [];
 
 		// Generate the base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
 
 		// Add the condition specific to this method (fetching posts for multiple threads)
 		$inClause = pdoPlaceholdersForIn($threadUIDs);

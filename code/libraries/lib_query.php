@@ -1,10 +1,13 @@
 <?php
 
 // A helper function to generate the base query part for posts
-function getBasePostQuery(string $postTable, string $deletedPostsTable, string $fileTable): string {
+function getBasePostQuery(string $postTable, string $deletedPostsTable, string $fileTable, string $threadTable): string {
 	$query = "
 		SELECT 
 			p.*,
+
+			-- Get thread post op number
+			t.post_op_number,
 		
 			-- All attachment rows
 			f.id AS attachment_id,
@@ -46,6 +49,8 @@ function getBasePostQuery(string $postTable, string $deletedPostsTable, string $
 		-- Additional file rows (all attachments)
 		LEFT JOIN $fileTable f ON f.post_uid = p.post_uid
 
+		-- Thread data
+		INNER JOIN $threadTable t ON p.thread_uid = t.thread_uid
 
 		";
 	return $query;

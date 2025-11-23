@@ -7,8 +7,7 @@ class threadService {
 		private readonly threadRepository $threadRepository,
 		private readonly postRepository $postRepository,
 		private readonly postService $postService,
-		private readonly transactionManager $transactionManager,
-		private readonly fileService $fileService
+		private readonly transactionManager $transactionManager
 	) {
 		$this->allowedOrderFields = ['post_op_number', 'post_op_post_uid', 'last_bump_time', 'last_reply_time', 'insert_id', 'post_uid'];
 	}

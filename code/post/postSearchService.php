@@ -107,17 +107,9 @@ class postSearchService {
 		$results = [];
 		foreach ($posts as $post) {
 			$post_uid = $post['post_uid'];
-			$thread = [
-				'thread_uid' => $post['thread_uid'],
-				'thread_created_time' => $post['thread_created_time'],
-				'last_bump_time' => $post['last_bump_time'],
-				'last_reply_time' => $post['last_reply_time'],
-				'post_op_number' => $post['post_op_number']
-			];
 
 			$results[$post_uid] = [
 				'post' => $post,
-				'thread' => $thread,
 			];
 		}
 		return ['results_data' => $results, 'total_posts' => $totalPostCount];

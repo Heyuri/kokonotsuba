@@ -157,9 +157,8 @@ class moduleMain extends abstractModuleMain {
 		$renderAsOp = !$displayThreadedFormat;
 
 		foreach ($hitPostResultData as $hitPost) {
-			$hitPostThread = $hitPost['thread'];
 			$hitPostData = $hitPost['post'];
-			$hitThreadResno = $hitPostThread['post_op_number'];
+			$hitThreadResno = $hitPostData['post_op_number'];
 
 			$resultList .= $postRenderer->render($hitPostData,
 				$templateValues,
