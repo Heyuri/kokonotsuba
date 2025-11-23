@@ -126,6 +126,12 @@ class managePostsRoute {
 			// get no
 			$no = $p['no'];
 
+			// get sub
+			$sub = $p['sub'];
+
+			// get name
+			$name = $p['name'];
+
 			// post board (from preloaded boards)
 			if(isset($boardMap[$boardUID])){
 				$postBoard = $boardMap[$boardUID];
