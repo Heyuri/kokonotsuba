@@ -392,7 +392,7 @@ class threadRepository {
 		return $threads;
 	}
 
-	public function getPostsFromThread(string $threadUID, bool $includeDeleted = false): array|null {
+	public function getPostsFromThread(string $threadUID, bool $includeDeleted = false): ?array {
 		// Generate the base query
 		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable);
 
@@ -415,8 +415,14 @@ class threadRepository {
 		// merge attachment rows
 		$posts = mergeMultiplePostRows($posts);
 
-		// return results
-		return $posts;
+		// return null if posts is false/null
+		if(!$posts) {
+			return null;
+		}
+		else {
+			// return results
+			return $posts;
+		}
 	}
 
 	public function getPostsForThreads(array $threadUIDs, bool $includeDeleted = false): array {

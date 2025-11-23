@@ -150,9 +150,12 @@ class usrdelRoute {
 		// if any of the selected posts were authenticated, then delete the posts that were authenticated - unauthenticated posts will not get deleted and just be ignored
 		if ($postWasDeleted) {
 			// only delete the attachments for posts that have an attachment
-			if ($deleteAttachment) {
+			if ($deleteAttachment && $postData) {
+				// get all the attachments (if they exist)
+				$attachments = $this->getAttachmentsFromPosts($postData);
+
 				// only mark attachments as deleted
-				$this->deletedPostsService->deleteFilesFromPosts($postData, $accountId);
+				$this->deletedPostsService->deleteFilesFromPosts($attachments, $accountId);
 			} 
 			
 			// delete the posts
@@ -167,6 +170,32 @@ class usrdelRoute {
 		else {
 			$this->softErrorHandler->errorAndExit(_T('del_wrongpwornotfound'));
 		}
+	}
+
+	private function getAttachmentsFromPosts(array $posts): array {
+		$all = [];
+
+		foreach ($posts as $post) {
+			// Ensure $post is array-like
+			if (!is_array($post)) {
+				continue;
+			}
+
+			// Ensure attachments key exists and is an array
+			$attachments = $post['attachments'] ?? null;
+			if (!is_array($attachments)) {
+				continue;
+			}
+
+			// Filter out null values and non-attachment data
+			foreach ($attachments as $attachment) {
+				if ($attachment !== null) {
+					$all[] = $attachment;
+				}
+			}
+		}
+
+		return $all;
 	}
 
 	private function handleDeleteRedirect(): void {
@@ -186,5 +215,7 @@ class usrdelRoute {
 			redirect($this->config['LIVE_INDEX_FILE']);
 		}
 	}
+
+
 }
 
