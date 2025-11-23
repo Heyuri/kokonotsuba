@@ -201,6 +201,12 @@
 .multiAttachment .fileProperties {
 	display: block;
 }
+
+
+.adminFunctions {
+font-size: var(--font-size-small);
+}
+
 /************************ Mobile **************************************/
 
 @media screen and (max-width: 650px) {
