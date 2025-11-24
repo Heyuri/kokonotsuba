@@ -50,6 +50,8 @@ class postFileUploadController {
 		
 		$imageWidth = $this->file->getImageWidth();
 		$imageHeight = $this->file->getImageHeight();
+		$imageExtension = $this->file->getExtention();
+		$imageMimeType = $this->file->getMimeType();
 
 		$thumbnailExtention = $this->config['THUMB_SETTING']['Format'];
 		$thumbnailWidth = $this->thumbnail->getThumbnailWidth();
@@ -64,6 +66,15 @@ class postFileUploadController {
 			return;
 		}
 
+		// generate video thumb if the uploaded attachment is a video
+		$videoExts = explode('|', strtolower($this->config['VIDEO_EXT']));
+
+		// generate thumbnail for video
+		if(isVideo($imageMimeType) && in_array(substr($imageExtension, 1), $videoExts)) {
+			$this->generateVideoThumbnail($this->file);
+		}
+		
+		// generate image thumbnail
 		$this->thumbnailCreator->makeAndUpload(
 			$thumbnailPath,
 			$thumbnailDestinationName,
@@ -85,7 +96,7 @@ class postFileUploadController {
 		$this->validateFileSize($fileSize);
 		$this->validateFileExtentionAndMimeType($fileExtention, $mimeType);
 		$this->validateFileUploadStatus($upfileStatus);
-		$this->validateThumbnail($fileExtention, $mimeType);
+		$this->validateThumbnail($fileExtention);
 	}
 
 	private function generateVideoThumbnail(file $file): void {
@@ -107,18 +118,11 @@ class postFileUploadController {
 	}
 	
 
-	private function validateThumbnail(string $fileExtention, string $mimeType): void {
-		$videoExts = explode('|', strtolower($this->config['VIDEO_EXT']));
-		
+	private function validateThumbnail(string $fileExtention): void {
 		// swf cannot have a thumbnail, so invalidate
-		if ($fileExtention === '.swf') {
+		if ($fileExtention === 'swf') {
 			$this->thumbnail->setThumbnailWidth(0);
 			$this->thumbnail->setThumbnailHeight(0);
-		}
-
-		// generate thumbnail for video
-		if(isVideo($mimeType) && in_array(substr($fileExtention, 1), $videoExts)) {
-			$this->generateVideoThumbnail($this->file);
 		}
 	}
 
