@@ -19,7 +19,7 @@ class postSearchService {
 		private readonly postSearchRepository $postSearchRepository
 	) {}
 
-	public function searchPosts(IBoard $board, array $keywords, bool $matchWholeWord, string $field = 'com', string $method = 'OR', int $limit = 20, int $offset = 0): array {
+	public function searchPosts(IBoard $board, array $keywords, bool $matchWholeWord, string $field = 'com', string $method = 'OR', int $limit = 20, int $offset = 0): ?array {
 		$field = $this->sanitizeField($field);
 		$boardUID = $board->getBoardUID();
 		$rawInput = implode(' ', $keywords);
@@ -58,7 +58,7 @@ class postSearchService {
 		return false;
 	}
 
-	private function searchByLike(string $field, string $boardUID, string $phrase, int $limit, int $offset): array {
+	private function searchByLike(string $field, string $boardUID, string $phrase, int $limit, int $offset): ?array {
 		$clean = mb_strtolower(trim($phrase, '"'));
 		$encoded = htmlspecialchars($clean, ENT_QUOTES | ENT_HTML5);
 
@@ -69,12 +69,22 @@ class postSearchService {
 		$posts = $this->postSearchRepository->fetchPostsByLike($field, $boardUID, $encoded, $limit, $offset);
 		$count = $this->postSearchRepository->countPostsByLike($field, $boardUID, $encoded);
 
+		// no posts found
+		if(!$posts || $count === 0) {
+			return null;
+		}
+
 		return $this->formatResults($posts, $count);
 	}
 
-	private function searchByFullText(string $field, string $boardUID, string $searchString, int $limit, int $offset): array {
+	private function searchByFullText(string $field, string $boardUID, string $searchString, int $limit, int $offset): ?array {
 		$posts = $this->postSearchRepository->fetchPostsByFullText($field, $boardUID, $searchString, $limit, $offset);
 		$count = $this->postSearchRepository->countPostsByFullText($field, $boardUID, $searchString);
+
+		// no posts found - return null
+		if(!$posts || $count === 0) {
+			return null;
+		}
 
 		return $this->formatResults($posts, $count);
 	}

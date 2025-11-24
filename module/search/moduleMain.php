@@ -147,38 +147,38 @@ class moduleMain extends abstractModuleMain {
 			$this->moduleContext->moduleEngine, 
 			$this->moduleTemplateEngine, 
 			$quoteLinksFromBoard);
-
-		$hitPostResultData = $hitPosts['results_data'];
-	
-		// config option for displaying all posts as OPs
-		$displayThreadedFormat = $this->getConfig('ModuleSettings.DISPLAY_THREADED_FORMAT', false);
-
-		// whether to render all posts with the OP html since searching isn't a threaded format
-		$renderAsOp = !$displayThreadedFormat;
-
-		foreach ($hitPostResultData as $hitPost) {
-			$hitPostData = $hitPost['post'];
-			$hitThreadResno = $hitPostData['post_op_number'];
-
-			$resultList .= $postRenderer->render($hitPostData,
-				$templateValues,
-				$hitThreadResno,
-				false,
-				[$hitPostData],
-				$adminMode,
-				'',
-				'',
-				'',
-				'',
-				'',
-				0,
-				true,
-				'',
-				$renderAsOp);
-			$resultList .= $this->moduleTemplateEngine->ParseBlock('THREADSEPARATE', []);
-		}
 	
 		if ($totalPostHits > 0) {
+			$hitPostResultData = $hitPosts['results_data'];
+		
+			// config option for displaying all posts as OPs
+			$displayThreadedFormat = $this->getConfig('ModuleSettings.DISPLAY_THREADED_FORMAT', false);
+
+			// whether to render all posts with the OP html since searching isn't a threaded format
+			$renderAsOp = !$displayThreadedFormat;
+
+			foreach ($hitPostResultData as $hitPost) {
+				$hitPostData = $hitPost['post'];
+				$hitThreadResno = $hitPostData['post_op_number'];
+
+				$resultList .= $postRenderer->render($hitPostData,
+					$templateValues,
+					$hitThreadResno,
+					false,
+					[$hitPostData],
+					$adminMode,
+					'',
+					'',
+					'',
+					'',
+					'',
+					0,
+					true,
+					'',
+					$renderAsOp);
+				$resultList .= $this->moduleTemplateEngine->ParseBlock('THREADSEPARATE', []);
+			}
+
 			$out = '<div id="searchresult">' . $resultList . '</div>';
 	
 			$filters = [

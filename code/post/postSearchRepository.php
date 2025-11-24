@@ -9,7 +9,7 @@ class postSearchRepository {
         private readonly string $fileTable,
     ) {}
 
-	public function fetchPostsByLike(string $field, string $boardUID, string $encoded, int $limit, int $offset): array {
+	public function fetchPostsByLike(string $field, string $boardUID, string $encoded, int $limit, int $offset): false|array {
 		$params = [
 			':phrase' => '[[:<:]]' . $encoded . '[[:>:]]',
 			':board_uid' => $boardUID
@@ -55,7 +55,7 @@ class postSearchRepository {
 		return $this->databaseConnection->fetchOne($countQuery, $params)['total_posts'] ?? 0;
 	}
 
-	public function fetchPostsByFullText(string $field, string $boardUID, string $searchString, int $limit, int $offset): array {
+	public function fetchPostsByFullText(string $field, string $boardUID, string $searchString, int $limit, int $offset): false|array {
 		$params = [
 			':search' => $searchString,
 			':board_uid' => $boardUID
