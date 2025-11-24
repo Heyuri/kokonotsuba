@@ -39,7 +39,7 @@ class postRepository {
 		return $this->databaseConnection->fetchColumn($query, $params);
 	}
 
-	public function getFilteredPosts(int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'post_uid'): array {
+	public function getFilteredPosts(int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'post_uid'): false|array {
 		if(!in_array($order, $this->allowedOrderFields)) return [];
 
 		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);

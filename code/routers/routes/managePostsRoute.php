@@ -63,8 +63,7 @@ class managePostsRoute {
 			$this->board->rebuildBoard();
 		}
 		
-		$posts = $this->postRepository->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest, $canViewDeleted) ?? array();
-		$posts_count = count($posts); // Number of cycles
+		$posts = $this->postRepository->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest, $canViewDeleted) ?? [];
 		
 		// get the associate array for the checkbox generator
 		$arrayForFilter = createAssocArrayFromBoardArray($this->allRegularBoards);
