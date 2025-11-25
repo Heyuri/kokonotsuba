@@ -23,7 +23,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function initialize(): void {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
-			'PostAdminControls',
+			'ManagePostsControls',
 			function(string &$modControlSection, array &$post) {
 				$this->renderWarnButton($modControlSection, $post);
 			}

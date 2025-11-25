@@ -57,7 +57,7 @@ class managePostsRoute {
 		$posts = array(); //posts to display in the manage posts table
 		
 		// Delete the article(thread) block
-		$postUidsFromCheckbox = $_POST['clist'] ?? array();
+		$postUidsFromCheckbox = $_POST['clist'] ?? [];
 		if($postUidsFromCheckbox) {
 			$this->deletePostsFromCheckboxes($postUidsFromCheckbox, $onlyimgdel, $accountId);
 			$this->board->rebuildBoard();
@@ -71,7 +71,7 @@ class managePostsRoute {
 		// draw post filter form
 		drawManagePostsFilterForm($managePostsHtml, $this->board, $filtersFromRequest, $arrayForFilter);
 		
-		$managePostsHtml .= '<form id="managePostsForm" action="' . $cleanUrl . '" method="POST">';
+		$managePostsHtml .= '<form id="managePostsForm" action="' . htmlspecialchars($cleanUrl) . '" method="POST">';
 		$managePostsHtml .= '<input type="hidden" name="mode" value="admin">
 						<div id="tableManagePostsContainer">
 							<table id="tableManagePosts" class="postlists">
@@ -158,13 +158,13 @@ class managePostsRoute {
 			$modFunc = ' ';
 
 			if($is_op) {
-				$this->moduleEngine->dispatch('ThreadAdminControls', [&$modFunc, &$p]);
+				$this->moduleEngine->dispatch('ManagePostsThreadControls', [&$modFunc, &$p]);
 			} else {
-				$this->moduleEngine->dispatch('ReplyAdminControls', [&$modFunc, &$p]);
+				$this->moduleEngine->dispatch('ManagePostsReplyControls', [&$modFunc, &$p]);
 			}
 
 			// dispatch post admin hook point
-			$this->moduleEngine->dispatch('PostAdminControls', [&$modFunc, &$p]);
+			$this->moduleEngine->dispatch('ManagePostsControls', [&$modFunc, &$p]);
 
 			if($roleLevel->isAtMost(\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR)) {
 				$host = substr(hash('sha256', $host), 0, 10);
@@ -279,14 +279,17 @@ class managePostsRoute {
 			$storedFileName = $att['storedFileName'];
 
 			// Extract additional archived image files and generate a link
-			if($fileExtension && attachmentFileExists($att)){
-				$clip = '<a href="'. getAttachmentUrl($att).'" target="_blank">' . $storedFileName . $fileExtension . '</a>';
-				$size = $att['fileSize'];
-			}
+			$clip = '<a href="'. getAttachmentUrl($att).'" target="_blank">' . $storedFileName . $fileExtension . '</a>';
+			$size = $att['fileSize'];
 
 			// then put together the attachments list
 			$attachmentInfoEntry = '<div class="attachmentListEntry">' . $clip . ' (' . $size . ')<br>' . $fileMd5 . '</div>';
 
+			// wrap in strike-through if the attachment doesn't exist
+			if(!attachmentFileExists($att)) {
+				$attachmentInfoEntry = '<s title="Attachment file doesn\'t exist">' . $attachmentInfoEntry . '</s>';
+			}
+		
 			// append to attachments html
 			$attachmentsHtml .= $attachmentInfoEntry;
 		}
@@ -299,16 +302,27 @@ class managePostsRoute {
 	}
 	
 	private function deletePostsFromCheckboxes(array $postUids, bool $onlyDeleteImages, int $accountId): void {
+		// fetch data for selected posts
 		$postsData = $this->postService->getPostsByUids($postUids);
+		
+		// no post data found
+		if(!$postsData) {
+			throw new BoardException("Posts not found while deleting!");
+		}
+
+		// get the attachments
+		$attachments = getAttachmentsFromPosts($postsData);
+
 		$postNumbers = array_column($postsData, 'no');
 
 		$checkboxDeletionActionLogStr = is_array($postNumbers) ? implode(', No. ',$postNumbers) : $postNumbers;
-		$this->actionLoggerService->logAction("Delete posts: $checkboxDeletionActionLogStr".($onlyDeleteImages?' (file only)':''), $this->board->getBoardUID());
 
 		if($onlyDeleteImages) {
-			$this->deletedPostsService->deleteFilesFromPosts($postsData, $accountId);
+			$this->deletedPostsService->deleteFilesFromPosts($attachments, $accountId);
 		} else {
 			$this->postService->removePosts($postUids);
 		}
+
+		$this->actionLoggerService->logAction("Delete posts: $checkboxDeletionActionLogStr".($onlyDeleteImages?' (file only)':''), $this->board->getBoardUID());
 	}
 }

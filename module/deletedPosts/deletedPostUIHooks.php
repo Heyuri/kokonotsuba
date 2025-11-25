@@ -23,7 +23,7 @@ class deletedPostUIHooks {
 
 		$moduleEngine->addRoleProtectedListener(
 			$requiredRole,
-			'PostAdminControls',
+			'ManagePostsControls',
 			function(string &$modControlSection, array &$post) {
 				$this->onRenderPostAdminControls($modControlSection, $post);
 			}

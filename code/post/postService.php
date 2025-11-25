@@ -7,10 +7,8 @@ class postService {
 		private readonly threadRepository $threadRepository,
 		private readonly deletedPostsService $deletedPostsService) {}
 
-	public function getPostsByUids(array $postUids): ?array {
-		$postUidList = $this->sanitizeAndImplodeIDs($postUids);
-
-		$postsFromList = $this->postRepository->getPostsByUids($postUidList);
+	public function getPostsByUids(array $postUids): false|array {
+		$postsFromList = $this->postRepository->getPostsByUids($postUids);
 
 		return $postsFromList;
 	}
@@ -23,15 +21,6 @@ class postService {
 		return $postsFromList;
 	}
 
-	private function sanitizeAndImplodeIDs(array $list): array {
-		// filter for ints
-		$list = array_filter($list, function($item) {
-			return is_int($item);
-		});
-		
-		return $list;
-	}
-	
 	public function addPostToThread(
 		board $board, 
 		postRegistData $postRegistData,
