@@ -53,7 +53,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$stickyButtonUrl = $this->generateStickyUrl($post['thread_uid']);
 
-		$modfunc .= '<noscript><span class="adminFunctions adminStickyFunction">[<a href="' . htmlspecialchars($stickyButtonUrl) . '" title="' . $stickyTitle . '">'.$toggleLabel.'</a>]</span></noscript>';
+		$modfunc .= '<span class="adminFunctions adminStickyFunction">[<a href="' . htmlspecialchars($stickyButtonUrl) . '" title="' . $stickyTitle . '">'.$toggleLabel.'</a>]</span>';
 	}
 
 	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
@@ -197,15 +197,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		$board = searchBoardArrayForBoard($boardUid);
 	
 		// ===== AJAX handling updated to use helper =====
-		if (
-			isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-			strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
-		) {
+		if(isJavascriptRequest()) {
 			// whether the post-action thread is stickied or not
 			$isStickied = $flags->value('sticky');
 
 			// send json first
-			$this->sendAjaxAndDetach([
+			sendAjaxAndDetach([
 				'active' => $isStickied
 			]);
 

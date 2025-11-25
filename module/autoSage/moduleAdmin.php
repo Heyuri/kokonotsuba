@@ -54,7 +54,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$autoSageLink = $this->generateAutoSageUrl($post['post_uid']);
 
-		$modfunc.= '<noscript><span class="adminFunctions adminAutosageFunction">[<a href="' . htmlspecialchars($autoSageLink) . '"' . ($status->value('as') ? ' title="Allow age">as' : ' title="Autosage">AS') . '</a>]</span></noscript>';
+		$modfunc.= '<span class="adminFunctions adminAutosageFunction">[<a href="' . htmlspecialchars($autoSageLink) . '"' . ($status->value('as') ? ' title="Allow age">as' : ' title="Autosage">AS') . '</a>]</span>';
 	}
 
 	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
@@ -151,15 +151,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->actionLoggerService->logAction($logMessage, $board->getBoardUID());
 
 		// ===== AJAX handling updated to use helper =====
-		if (
-			isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-			strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
-		) {
+		if(isJavascriptRequest()) {
 			// whether the post-action thread is AS'd or not
 			$isAutosaged = $status->value('as');
 
 			// send json first
-			$this->sendAjaxAndDetach([
+			sendAjaxAndDetach([
 				'active' => $isAutosaged
 			]);
 

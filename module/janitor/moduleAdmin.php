@@ -49,7 +49,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function renderWarnButton(string &$modfunc, array &$post): void {
 		$janitorWarnUrl = $this->generateWarnUrl($post['post_uid']);
 		
-		$modfunc .= '<noscript><span class="adminFunctions adminWarnFunction">[<a href="' . htmlspecialchars($janitorWarnUrl) . '" title="Warn">W</a>]</span></noscript>';
+		$modfunc .= '<span class="adminFunctions adminWarnFunction">[<a href="' . htmlspecialchars($janitorWarnUrl) . '" title="Warn">W</a>]</span>';
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, array &$post): void {

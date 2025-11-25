@@ -67,7 +67,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$modulePageUrl = $this->generateBanUrl($ip, $post['post_uid']);
 
-		$modfunc .= '<noscript><span class="adminFunctions adminBanFunction">[<a href="' . htmlspecialchars($modulePageUrl) . '" title="Ban">B</a>]</span></noscript>';
+		$modfunc .= '<span class="adminFunctions adminBanFunction">[<a href="' . htmlspecialchars($modulePageUrl) . '" title="Ban">B</a>]</span>';
 	}
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {

@@ -55,7 +55,7 @@ class deletedPostUtility {
 		$modulePageUrl = $this->generateViewDeletedPostUrl($deletedPostId);
 
 		// render the html
-		$buttonUrl = '<noscript><span class="adminFunctions adminViewDeletedPostFunction">[<a href="' . htmlspecialchars($modulePageUrl) . '" title="View deleted post">VD</a>]</span></noscript>';
+		$buttonUrl = '<span class="adminFunctions adminViewDeletedPostFunction">[<a href="' . htmlspecialchars($modulePageUrl) . '" title="View deleted post">VD</a>]</span>';
 
 		// return string
 		return $buttonUrl;

@@ -53,7 +53,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$lockThreadLink = $this->generateLockUrl($post['post_uid']);
 
-		$modfunc.= '<noscript><span class="adminFunctions adminLockFunction">[<a href="' . htmlspecialchars($lockThreadLink) . '"' . ($status->value('stop') ? ' title="Unlock thread">l' : ' title="Lock thread">L').'</a>]</span></noscript>';
+		$modfunc.= '<span class="adminFunctions adminLockFunction">[<a href="' . htmlspecialchars($lockThreadLink) . '"' . ($status->value('stop') ? ' title="Unlock thread">l' : ' title="Lock thread">L').'</a>]</span>';
 	}
 
 	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
@@ -152,15 +152,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->actionLoggerService->logAction($logMessage, $board->getBoardUID());
 		
 		// ===== AJAX handling updated to use helper =====
-		if (
-			isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-			strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
-		) {
+		if(isJavascriptRequest()) {
 			// whether the post-action thread is locked or not
 			$isLocked = $status->value('stop');
 
 			// send json first
-			$this->sendAjaxAndDetach([
+			sendAjaxAndDetach([
 				'active' => $isLocked
 			]);
 

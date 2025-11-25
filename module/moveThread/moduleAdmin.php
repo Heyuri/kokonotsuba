@@ -55,11 +55,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		$threadStatus = new FlagHelper($post['status']);
 
 		if($threadStatus->value('ghost')) {
-			$modfunc .= '<noscript><span class="adminFunctions adminMoveThreadFunction" title="Ghost threads cannot be moved.">[mt]</span></noscript>';
+			$modfunc .= '<span class="adminFunctions adminMoveThreadFunction" title="Ghost threads cannot be moved.">[mt]</span>';
 		} else {
 			$moveThreadButtonUrl = $this->generateMoveThreadUrl($post['thread_uid']);
 
-			$modfunc .= '<noscript><span class="adminFunctions adminMoveThreadFunction">[<a href="' . $moveThreadButtonUrl . '" title="Move thread">MT</a>]</span></noscript>';
+			$modfunc .= '<span class="adminFunctions adminMoveThreadFunction">[<a href="' . $moveThreadButtonUrl . '" title="Move thread">MT</a>]</span>';
 		}
 	}
 

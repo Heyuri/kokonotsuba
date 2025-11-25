@@ -81,7 +81,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$addControl = function(string $action, string $label, string $title, string $class) use (&$modFunc, $postUid) {
 			$buttonUrl = $this->generateDeletionUrl($action, $postUid);
-			$modFunc .= '<noscript><span class="adminFunctions ' . htmlspecialchars($class) . '">[<a href="' . htmlspecialchars($buttonUrl) . '" title="' . htmlspecialchars($title) . '">' . htmlspecialchars($label) . '</a>]</span></noscript>';
+			$modFunc .= '<span class="adminFunctions ' . htmlspecialchars($class) . '">[<a href="' . htmlspecialchars($buttonUrl) . '" title="' . htmlspecialchars($title) . '">' . htmlspecialchars($label) . '</a>]</span>';
 		};
 
 		$addControl('del', 'D', 'Delete', 'adminDeleteFunction');

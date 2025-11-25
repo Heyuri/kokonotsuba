@@ -148,15 +148,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		$board = searchBoardArrayForBoard($post['boardUID']);
 
 		// ===== AJAX handling updated to use helper =====
-		if (
-			isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-			strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
-		) {
+		if(isJavascriptRequest()) {
 			// get url
 			$attachmentUrl = $this->getAnimatedAttachmentUrl($attachment, $isAnimated);
 
 			// send json first
-			$this->sendAjaxAndDetach([
+			sendAjaxAndDetach([
 				'active' => $isAnimated,
 				'attachmentUrl' => $attachmentUrl,
 				'newGifButton' => $this->generateAnimateGifButton($attachment)
