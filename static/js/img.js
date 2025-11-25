@@ -302,6 +302,7 @@ const kkimg = { name: "KK Image Features",
 				header    = document.createElement("div");
 
 			container.className      = "expand swf-expand";
+			container.setAttribute('data-attachment-index', index);
 			container.style.width    = dispW + "px";
 			container.style.height   = (dispH + hdr) + "px";
 			container.style.resize   = "both";
