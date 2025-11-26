@@ -232,7 +232,7 @@ class deletedPostsRepository {
 				dp.by_proxy,
 				dp.file_only         AS file_only_deleted,
 				dp.file_id           AS file_id,
-				dp.note,
+				dp.note				 AS deleted_note,
 
 				-- Post data (may be null if the post itself is gone)
 				p.*,
