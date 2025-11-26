@@ -23,9 +23,17 @@ class deletedPostUIHooks {
 
 		$moduleEngine->addRoleProtectedListener(
 			$requiredRole,
-			'ManagePostsControls',
+			'PostAdminControls',
 			function(string &$modControlSection, array &$post) {
 				$this->onRenderPostAdminControls($modControlSection, $post);
+			}
+		);
+
+		$moduleEngine->addRoleProtectedListener(
+			$requiredRole,
+			'ManagePostsControls',
+			function(string &$modControlSection, array &$post) {
+				$this->onRenderManagePostsControls($modControlSection, $post);
 			}
 		);
 
@@ -96,33 +104,55 @@ class deletedPostUIHooks {
 		$linkHtml .= '<li class="adminNavLink"><a title="Manage posts that have been deleted" href="' . htmlspecialchars($this->modulePageUrl) . '">Manage deleted posts</a></li>';
 	}
 
+	/**
+	 * Run common deleted-post checks and execute a callback if needed.
+	 *
+	 * @param array $post
+	 * @param callable $callback Receives the post array by reference
+	 */
+	private function handleDeletedPost(array &$post, callable $callback): void {
+		// Skip if the post isn't deleted
+		if (!$this->deletedPostUtility->isPostDeleted($post)) {
+			return;
+		}
+
+		// Skip if viewing from the module page
+		if ($this->deletedPostUtility->isModulePage()) {
+			return;
+		}
+
+		// Call the custom callback for this post
+		$callback($post);
+	}
+
+	private function onRenderManagePostsControls(string &$modFunc, array &$post): void {
+		$this->handleDeletedPost($post, function(array &$post) use (&$modFunc) {
+			// render the <a> button to take the user to the entry in the module
+			$modFunc .= $this->deletedPostUtility->adminPostViewModuleButton($post);
+
+			// also render indicator if conditions apply
+			$modFunc .= $this->renderDeletedIndicator($post);
+		});
+	}
+
 	private function onRenderPostAdminControls(string &$modFunc, array &$post): void {
-		// whether the post is deleted or not
-		$isPostDeleted = $this->deletedPostUtility->isPostDeleted($post);
+		$this->handleDeletedPost($post, function(array &$post) use (&$modFunc) {
+			// render indicator
+			$modFunc .= $this->renderDeletedIndicator($post);
+		});
+	}
 
-		// don't bother if the post isn't deleted
-		if(!$isPostDeleted) {
-			return;
-		}
-
-		// is this being viewed from the module page?
-		$isModulePage = $this->deletedPostUtility->isModulePage();
-
-		// if this the module page, then return coz it should render like normal here
-		if($isModulePage) {
-			return;
-		}
-
+	private function renderDeletedIndicator($post): string {
 		// whether only the file was deleted
 		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
 
-		// render the <a> button to take the user to the entry in the module
-		$modFunc .= $this->deletedPostUtility->adminPostViewModuleButton($post);
-
 		// render the [DELETED] indicator if the file wasn't deleted
-		if(!$onlyFileDeleted) {
-			$modFunc .= $this->renderIndicator('DELETED', "This post was deleted!");
+		if (!$onlyFileDeleted) {
+			return $this->renderIndicator('DELETED', "This post was deleted!");
 		}
+
+		// otherwise dont render any indicaztor
+		return '';
 	}
 
 	private function renderIndicator(string $message, string $spanTitle): string {
