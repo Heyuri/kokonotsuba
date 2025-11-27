@@ -40,6 +40,12 @@ class managePostsRoute {
 
 		// whether the user can view all deleted posts
 		$canViewDeleted = $roleLevel->isAtLeast($canDeleteAll);
+
+		// required level for viewing IPs
+		$canViewIpAddresses = $this->board->getConfigValue('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_JANITOR);
+
+		// can view ip
+		$canViewIp = $roleLevel->isAtLeast($canViewIpAddresses);
 		 
 		$postsPerPage = $this->config['ADMIN_PAGE_DEF'];
 		$numberOfFilteredPosts = $this->postRepository->postCount($filtersFromRequest);
@@ -112,9 +118,9 @@ class managePostsRoute {
 
 			// get host
 			// hash if the user can't view IPs
-			$host = $this->board->getConfigValue('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_JANITOR)
-				? substr(md5($p['host']), 0, 8) 
-				: $p['bost'];
+			$host = $canViewIp
+				? $p['host']
+				: substr(md5($p['host']), 0, 8);
 
 			// get comment
 			$com = $p['com'];
