@@ -8,10 +8,10 @@
  * @return void
  */
 function sendJsonResponse($data, $statusCode = 200) {
-    http_response_code($statusCode);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-    exit;
+	http_response_code($statusCode);
+	header('Content-Type: application/json; charset=utf-8');
+	echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+	exit;
 }
 
 /**
@@ -24,16 +24,16 @@ function sendJsonResponse($data, $statusCode = 200) {
  * @return void
  */
 function sendCachedJsonResponse($data, $cacheSeconds = 3600, $statusCode = 200) {
-    http_response_code($statusCode);
-    header('Content-Type: application/json; charset=utf-8');
+	http_response_code($statusCode);
+	header('Content-Type: application/json; charset=utf-8');
 
-    // Cache headers
-    header('Cache-Control: public, max-age=' . (int)$cacheSeconds);
-    header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $cacheSeconds) . ' GMT');
-    header('Last-Modified: ' . gmdate('D, d M Y H:i:s', time()) . ' GMT');
+	// Cache headers
+	header('Cache-Control: public, max-age=' . (int)$cacheSeconds);
+	header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $cacheSeconds) . ' GMT');
+	header('Last-Modified: ' . gmdate('D, d M Y H:i:s', time()) . ' GMT');
 
-    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-    exit;
+	echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+	exit;
 }
 
 /**
@@ -45,13 +45,13 @@ function sendCachedJsonResponse($data, $cacheSeconds = 3600, $statusCode = 200) 
  * @return void
  */
 function renderJsonErrorPage($message, $statusCode = 400) {
-    $errorData = [
-        'error'   => true,
-        'code'    => $statusCode,
-        'message' => $message
-    ];
+	$errorData = [
+		'error'   => true,
+		'code'    => $statusCode,
+		'message' => $message
+	];
 
-    sendJsonResponse($errorData, $statusCode);
+	sendJsonResponse($errorData, $statusCode);
 }
 
 /**
@@ -63,7 +63,7 @@ function renderJsonErrorPage($message, $statusCode = 400) {
  * @return void
  */
 function renderJsonPage($data, $statusCode = 200) {
-    sendJsonResponse($data, $statusCode);
+	sendJsonResponse($data, $statusCode);
 }
 
 /**
@@ -76,5 +76,42 @@ function renderJsonPage($data, $statusCode = 200) {
  * @return void
  */
 function renderCachedJsonPage($data, $cacheSeconds = 3600, $statusCode = 200) {
-    sendCachedJsonResponse($data, $cacheSeconds, $statusCode);
+	sendCachedJsonResponse($data, $cacheSeconds, $statusCode);
+}
+
+function sendAjaxAndDetach(array $payload): void {
+	header('Content-Type: application/json');
+	echo json_encode($payload);
+
+	if (session_status() === PHP_SESSION_ACTIVE) {
+		session_write_close();
+	}
+
+	if (function_exists('fastcgi_finish_request')) {
+		fastcgi_finish_request();
+	} else {
+		ob_flush();
+		flush();
+	}
+}
+
+/**
+ * Checks whether the current request was made via JavaScript (AJAX).
+ *
+ * Many JS libraries (e.g., jQuery) send the "X-Requested-With: XMLHttpRequest"
+ * header during AJAX calls. This function detects that.
+ *
+ * @return bool True if request is an AJAX/JavaScript request, false otherwise.
+ */
+function isJavascriptRequest(): bool {
+	// Verify the header exists and matches the standard AJAX identifier
+	if (
+		isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+		strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+	) {
+		return true;
+	}
+
+	// Not an AJAX request
+	return false;
 }

@@ -125,118 +125,13 @@ function mergeMultiplePostRows(false|array $rows): false|array {
         }
 
         /**
-         * -------------------------------------------
-         * NORMAL ATTACHMENTS
-         * -------------------------------------------
-         * We only add an attachment if the row contains a real f.* row.
-         * This is safe because attachment_id comes from f.id.
+         * Delegate the repeated logic to one helper
          */
-        if (!empty($row['attachment_id'])) {
-            $posts[$uid]['attachments'][$row['attachment_id']] = buildAttachment($row);
-        }
-
-        /**
-         * -------------------------------------------
-         * DELETED ATTACHMENTS
-         * -------------------------------------------
-         * file_id comes from deleted_posts.file_id and indicates a deleted attachment.
-         * We only store metadata here — NOT the file itself.
-         */
-        if (!empty($row['file_id'])) {
-            $posts[$uid]['deleted_attachments'][$row['file_id']] = [
-                'deleted_post_id'   => $row['deleted_post_id'],
-                'deleted_by'        => $row['deleted_by'],
-                'deleted_at'        => $row['deleted_at'],
-                'restored_at'       => $row['restored_at'],
-                'file_only_deleted' => (bool)$row['file_only_deleted'],
-                'by_proxy'          => (bool)$row['by_proxy'],
-                'note'              => $row['deleted_note'],
-            ];
-        }
+        mergeRowIntoPost($posts[$uid], $row);
     }
 
     // Return flat array of merged posts
     return array_values($posts);
-}
-
-/**
- * Merge a single SQL row into a structured post array with an
- * attachments[] list (always created).
- *
- * @param false|array $row
- * @return false|array
- */
-function mergeSinglePostRow(false|array $row): false|array {
-    if (!$row) {
-        return false;
-    }
-
-    // Copy all base post fields
-    $post = $row;
-
-    // Always create an attachment list
-    $post['attachments'] = [];
-
-    /**
-     * Add a single attachment only if the f.* row exists
-     * attachment_id == f.id
-     */
-    if (!empty($row['attachment_id'])) {
-        $post['attachments'][$row['attachment_id']] = buildAttachment($row);
-    }
-
-    return $post;
-}
-
-
-/**
- * Merge attachment and deleted-attachment data from a database row
- * into an existing post array. This keeps logic shared between
- * mergeSinglePostRow() and mergeMultiplePostRows().
- *
- * @param array $post Reference to the post array being built
- * @param array $row  A single database query row containing post + attachment data
- *
- * Expected fields:
- *   attachment_id      → live attachment file ID (from files table)
- *   file_id            → deleted attachment file ID (from deleted_posts table)
- *   deleted_post_id    → deleted_posts row ID for this attachment deletion
- *   deleted_by         → account ID who deleted it
- *   deleted_at         → timestamp of deletion
- *   restored_at        → timestamp of restoration (if restored)
- *   file_only_deleted  → whether this deletion is attachment-only
- *   by_proxy           → whether deletion was done via proxy
- *   deleted_note       → moderator note
- */
-function mergeAttachmentData(array &$post, array $row): void {
-	// Ensure arrays exist to avoid undefined index errors
-	$post['attachments'] ??= [];
-	$post['deleted_attachments'] ??= [];
-
-	/**
-	 * LIVE ATTACHMENT
-	 * This means the file still exists on the post.
-	 */
-	if (!empty($row['attachment_id'])) {
-		$post['attachments'][$row['attachment_id']] = buildAttachment($row);
-	}
-
-	/**
-	 * DELETED ATTACHMENT ENTRY
-	 * This indicates a file-only deletion in deleted_posts.
-	 * Multiple of these can exist for a single post_uid.
-	 */
-	if (!empty($row['file_id'])) {
-		$post['deleted_attachments'][$row['file_id']] = [
-			'deleted_post_id'     => $row['deleted_post_id'],
-			'deleted_by'          => $row['deleted_by'],
-			'deleted_at'          => $row['deleted_at'],
-			'restored_at'         => $row['restored_at'],
-			'file_only_deleted'   => (bool) $row['file_only_deleted'],
-			'by_proxy'            => (bool) $row['by_proxy'],
-			'note'                => $row['deleted_note'],
-		];
-	}
 }
 
 /**
@@ -256,7 +151,6 @@ function mergeDeletedPostRows(array $rows): array {
 
     foreach ($rows as $row) {
         $postUid = $row['post_uid'];
-        $fileId  = $row['file_id'] ?? null;
 
         // Initialize entry if it doesn’t exist
         if (!isset($results[$postUid])) {
@@ -265,28 +159,73 @@ function mergeDeletedPostRows(array $rows): array {
             $results[$postUid]['deleted_attachments'] = [];
         }
 
-        // Always merge normal attachments
-        if (!empty($row['attachment_id'])) {
-            $results[$postUid]['attachments'][$row['attachment_id']] = buildAttachment($row);
-        }
-
-        // Merge deleted attachment metadata if present
-        if ($fileId !== null) {
-            $results[$postUid]['deleted_attachments'][$fileId] = [
-                'file_id'              => $fileId,
-                'deleted_post_id'      => $row['deleted_post_id'],
-                'deleted_at'           => $row['deleted_at'],
-                'deleted_by'           => $row['deleted_by'],
-                'deleted_by_username'  => $row['deleted_by_username'],
-                'restored_at'          => $row['restored_at'],
-                'restored_by'          => $row['restored_by'],
-                'restored_by_username' => $row['restored_by_username'],
-                'note'                 => $row['note'],
-                'by_proxy'             => (bool)$row['by_proxy'],
-                'file_only_deleted'    => !empty($row['file_only_deleted']),
-            ];
-        }
+        // Delegate the repeated logic to one helper
+        mergeRowIntoPost($results[$postUid], $row);
     }
 
     return array_values($results);
+}
+
+/**
+ * Merge a single $row into a post structure:
+ *  - ensures attachments[] exists
+ *  - ensures deleted_attachments[] exists
+ *  - merges attachment data
+ *  - merges deleted-attachment metadata
+ *  - strips attachment_* columns
+ *
+ * @param array $target The post entry being built
+ * @param array $row    The SQL row
+ */
+function mergeRowIntoPost(array &$target, array $row): void {
+
+    // normal attachments
+    if (!empty($row['attachment_id'])) {
+        $target['attachments'][$row['attachment_id']] = buildAttachment($row);
+    }
+
+    // deleted attachments
+    if (!empty($row['file_id'])) {
+        $target['deleted_attachments'][$row['file_id']] = [
+            'deleted_post_id'   => $row['deleted_post_id'] ?? null,
+            'deleted_by'        => $row['deleted_by'] ?? null,
+            'deleted_at'        => $row['deleted_at'] ?? null,
+            'restored_at'       => $row['restored_at'] ?? null,
+            'file_only_deleted' => (bool)($row['file_only_deleted'] ?? false),
+            'by_proxy'          => (bool)($row['by_proxy'] ?? false),
+            'note'              => $row['deleted_note'] ?? ($row['note'] ?? null),
+        ];
+    }
+
+    // remove raw attachment_* columns
+    stripAttachmentColumns($target);
+}
+
+/**
+ * Remove all attachment_* columns from a post row.
+ *
+ * @param array &$row  Row to clean (modified in-place)
+ */
+function stripAttachmentColumns(array &$row): void {
+    static $cols = [
+        'attachment_id',
+        'attachment_file_name',
+        'attachment_stored_filename',
+        'attachment_file_ext',
+        'attachment_file_md5',
+        'attachment_file_size',
+        'attachment_file_width',
+        'attachment_file_height',
+        'attachment_thumb_width',
+        'attachment_thumb_height',
+        'attachment_mime_type',
+        'attachment_is_hidden',
+        'attachment_is_animated',
+        'attachment_is_deleted',
+        'attachment_timestamp_added',
+    ];
+
+    foreach ($cols as $c) {
+        unset($row[$c]);
+    }
 }
