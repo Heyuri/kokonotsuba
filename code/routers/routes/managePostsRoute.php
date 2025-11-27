@@ -111,7 +111,10 @@ class managePostsRoute {
 			$is_op = $p['is_op'];
 
 			// get host
-			$host = $p['host'];
+			// hash if the user can't view IPs
+			$host = $this->board->getConfigValue('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_JANITOR)
+				? substr(md5($p['host']), 0, 8) 
+				: $p['bost'];
 
 			// get comment
 			$com = $p['com'];
