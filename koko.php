@@ -35,9 +35,21 @@ try {
 	$modeHandler->handle();
 
 } catch(\BoardException $boardException) {
+	// get error message
 	$errorMessage = $boardException->getMessage();
 
-	$softErrorHandler->errorAndExit($errorMessage);
+	// if its a request made by js, then serve json error
+	if(isJavascriptRequest()) {
+		// strip html tags - message.js doesn't accept any raw html
+		$errorMessage = strip_tags($errorMessage);
+
+		// render the json page
+		renderJsonErrorPage($errorMessage);
+	}
+	// otherwise its a regular request - serve html error page
+	else {
+		$softErrorHandler->errorAndExit($errorMessage);
+	}
 } catch (\Throwable $e) {
 	PMCLibrary::getLoggerInstance($globalConfig['ERROR_HANDLER_FILE'], 'Global')
 		->error($e->getMessage());
