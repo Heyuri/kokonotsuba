@@ -151,6 +151,46 @@ class threadRepository {
 		$this->databaseConnection->execute($query, $params);
 	}
 
+	/**
+	 * Batch insert threads and return auto-incremented post_op_post_uid values.
+	 *
+	 * @param array $threads Each item:
+	 *   [
+	 *      'board_uid' => int,
+	 *      'post_op_number' => int,
+	 *      'thread_uid' => string
+	 *   ]
+	 * @return array Returned post_op_post_uid values in same order
+	 */
+	public function addThreadsBatch(array $threads): array {
+		if (empty($threads)) return [];
+
+		$query = "INSERT INTO {$this->threadTable}
+			(boardUID, post_op_post_uid, post_op_number, thread_uid)
+			VALUES ";
+
+		$values = [];
+		$params = [];
+
+		foreach ($threads as $i => $t) {
+			$values[] = "(:board_uid_$i, 0, :post_op_number_$i, :thread_uid_$i)";
+			$params[":board_uid_$i"] = $t['board_uid'];
+			$params[":post_op_number_$i"] = $t['post_op_number'];
+			$params[":thread_uid_$i"] = $t['thread_uid'];
+		}
+
+		$query .= implode(',', $values);
+
+		// Execute insert
+		$this->databaseConnection->execute($query, $params);
+
+		// Retrieve the INSERT IDs
+		$firstId = $this->databaseConnection->lastInsertId();
+		$count = count($threads);
+
+		return range($firstId, $firstId + $count - 1);
+	}
+
 	public function getLastThreadTimeFromBoard($board) {
 		$boardUID = $board->getBoardUID();
 		
@@ -601,4 +641,28 @@ class threadRepository {
 
 		$this->databaseConnection->execute($query, $params);
 	}
+
+	/**
+	 * Update the post_op_post_uid in the thread table for a given thread.
+	 *
+	 * @param string $threadUid The unique identifier for the thread
+	 * @param int $postOpPostUid The post UID for the thread OP (original post)
+	 * @return void
+	 */
+	public function updatePostOpUid(string $threadUid, int $postOpPostUid): void {
+		// Prepare the query to update the post_op_post_uid for the specific thread
+		$query = "UPDATE {$this->threadTable} 
+				SET post_op_post_uid = :postOpPostUid
+				WHERE thread_uid = :threadUid";
+
+		// Parameters to bind to the query
+		$params = [
+			':postOpPostUid' => $postOpPostUid,
+			':threadUid' => $threadUid
+		];
+
+		// Execute the query
+		$this->databaseConnection->execute($query, $params);
+	}
+
 }

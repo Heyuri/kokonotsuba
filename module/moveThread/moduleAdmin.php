@@ -12,7 +12,6 @@ use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
 use Kokonotsuba\Root\Constants\userRole;
 use postDateFormatter;
 use postRegistData;
-use tripcodeProcessor;
 
 //move thread module
 class moduleAdmin extends abstractModuleAdmin {
@@ -90,7 +89,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function leavePostInShadowThread(array $originalThread, IBoard $originalBoard, array $newThread, IBoard $destinationBoard) {
 		$originalBoardConfig = $originalBoard->loadBoardConfig();
 
-		$postDateFormatter = new postDateFormatter($originalBoardConfig);
+		$postDateFormatter = new postDateFormatter($originalBoardConfig['TIME_ZONE']);
 		
 		$time = $_SERVER['REQUEST_TIME'];
 		$now = $postDateFormatter->formatFromTimestamp($time);

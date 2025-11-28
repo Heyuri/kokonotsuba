@@ -7,8 +7,8 @@
 
 class boardCreator {
 	public function __construct(
-		private readonly boardService $boardService, 
-		private readonly boardPathService $boardPathService) {}
+		private readonly boardService $boardService
+	) {}
 
 	public function createNewBoard(string $boardTitle, string $boardSubTitle, string $boardIdentifier, bool $boardListed, string $boardPath): board|null {
 		$templateConfig = getTemplateConfigArray();

@@ -383,7 +383,6 @@ class tableCreator {
 				`post_position` INT DEFAULT 0,
 				`is_op` BOOLEAN NOT NULL,
 				`root` TIMESTAMP NOT NULL,
-				`time` INT NOT NULL,
 				`md5chksum` TEXT,
 				`category` TEXT,
 				`pwd` TEXT NOT NULL,

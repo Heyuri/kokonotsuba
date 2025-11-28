@@ -7,11 +7,15 @@ use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
 class handleBoardRequestsRoute {
 	public function __construct(
 		private DatabaseConnection $databaseConnection,
-		private readonly array $config,
-		private readonly softErrorHandler $softErrorHandler,
-		private readonly boardService $boardService,
-		private readonly boardPathService $boardPathService,
-		private readonly quoteLinkRepository $quoteLinkRepository
+		private array $config,
+		private softErrorHandler $softErrorHandler,
+		private boardService $boardService,
+		private boardPathService $boardPathService,
+		private transactionManager $transactionManager,
+		private postRepository $postRepository,
+		private threadRepository $threadRepository,
+		private fileService $fileService,
+		private quoteLinkRepository $quoteLinkRepository,
 	) {}
 
 
@@ -69,10 +73,10 @@ class handleBoardRequestsRoute {
 			];
 
 			if (!file_exists(getBoardConfigDir() . $fields['config_name'])) {
-				$this->softErrorHandler->errorAndExit("Invalid config file, doesn't exist.");
+				throw new BoardException("Invalid config file, doesn't exist.");
 			}
 			if (!file_exists(getBoardStoragesDir() . $fields['storage_directory_name'])) {
-				$this->softErrorHandler->errorAndExit("Invalid storage directory, doesn't exist.");
+				throw new BoardException("Invalid storage directory, doesn't exist.");
 			}
 
 			$this->boardService->editBoard($modifiedBoard, $fields);
@@ -88,14 +92,14 @@ class handleBoardRequestsRoute {
 	// handle board creation
 	private function createNewBoardFromRequest() {
 		// Get board information from the request
-		$boardTitle = $_POST['new-board-title'] ?? $this->softErrorHandler->errorAndExit("Board title wasn't set!");
+		$boardTitle = $_POST['new-board-title'] ?? throw new BoardException("Board title wasn't set!");
 		$boardSubTitle = $_POST['new-board-sub-title'] ?? '';
 		$boardIdentifier = $_POST['new-board-identifier'] ?? '';
 		$boardListed = !empty($_POST['new-board-listed']) ? 1 : 0;
-		$boardPath = $_POST['new-board-path'] ?? $this->softErrorHandler->errorAndExit("Board path wasn't set!");
+		$boardPath = $_POST['new-board-path'] ?? throw new BoardException("Board path wasn't set!");
 	
 		// Create an instance of the BoardCreator helper class
-		$boardCreator = new boardCreator($this->boardService, $this->boardPathService);
+		$boardCreator = new boardCreator($this->boardService);
 	
 		// Call the createNewBoard method in the BoardCreator class
 		$boardCreator->createNewBoard($boardTitle, $boardSubTitle, $boardIdentifier, $boardListed, $boardPath);
@@ -105,79 +109,38 @@ class handleBoardRequestsRoute {
 	// Import board from request
 	private function importBoardFromRequest() {
 		try {
-			// get database settings
-			$dbSettings = getDatabaseSettings();
-			$postTableName = $dbSettings['POST_TABLE'];
-			$threadTableName = $dbSettings['THREAD_TABLE'];
-	
 			// board creation object
 			$boardCreator = new boardCreator(
 			 $this->boardService, 
 			 $this->boardPathService);
 	
 			// Initialize board variables
-			$boardTitle = $_POST['import-board-title'] ?? $this->softErrorHandler->errorAndExit("Board title wasn't set!");
-			$boardSubTitle = $_POST['import-board-sub-title'] ?? $this->softErrorHandler->errorAndExit("Board subtitle wasn't set!");
-			$boardIdentifier = $_POST['import-board-identifier'] ?? $this->softErrorHandler->errorAndExit("Board identifier wasn't set!");
-			$boardListed = !empty($_POST['import-board-listed']) ? 1 : 0;
-			$boardPath = $_POST['import-board-path'] ?? $this->softErrorHandler->errorAndExit("Board path wasn't set!");
-			$boardTableName = $_POST['import-board-tablename'] ?? $this->softErrorHandler->errorAndExit("Table name wasn't set!");
-			$boardDatabaseFile = $_FILES['import-board-file'];
-	
-			// check if the file was uploaded correctly
-			if(!isset($boardDatabaseFile) || $boardDatabaseFile['error'] !== UPLOAD_ERR_OK) {
-				$this->softErrorHandler->errorAndExit("Board SQL file wasn't uploaded properly!");
-			}
+			$boardPath = $_POST['import-board-path'] ?? throw new BoardException("Board path wasn't set!");
+			$dumpPath = $_POST['import-dump-path'] ?? throw new BoardException("Dump path wasn't set!");
 	
 			// basic check to ensure it's a mysql dump
-			if(!isValidMySQLDumpFile($boardDatabaseFile['tmp_name'])) {
+			if(!isValidMySQLDumpFile($dumpPath)) {
 				throw new Exception("Invalid database file");
 			}
 	
-			// first, create the board and get new board uid
-			$importedBoard = $boardCreator->createNewBoard($boardTitle,
-			 $boardSubTitle, 
-			 $boardIdentifier, 
-			 $boardListed, 
-			 $boardPath);
-	
-			// check board uid is valid
-			if(!$importedBoard) $this->softErrorHandler->errorAndExit("Invalid board uid");
-	
-			// Create board importer instance (for now, hard-coded to pixmicat)
-			$pixmicatBoardImporter = new pixmicatBoardImporter(
+			// Create board importer instance
+			$vichanBoardImporter = new vichanBoardImporter(
 				$this->databaseConnection,
-				$importedBoard,
-				$this->quoteLinkRepository, 
-				$threadTableName, 
-				$postTableName);
-	
-			// load mysql
-			$pixmicatBoardImporter->loadSQLDumpToTempTable($boardDatabaseFile['tmp_name'], $boardTableName);
-	
-			// Import threads from original database to current database
-			// and get an assoc of 'resto' keys that resolve to thread Uids
-			$mapRestoToThreadUids = $pixmicatBoardImporter->importThreadsToBoard();
-	
-			// Import posts to threads
-			$pixmicatBoardImporter->importRepliesToThreads($mapRestoToThreadUids);
-	
-			// Update the board post number
-			$pixmicatBoardImporter->updateBoardPostNumber();
+				$boardCreator,
+				$this->boardService,
+				$this->postRepository,
+				$this->threadRepository,
+				$this->fileService,
+				$this->transactionManager,
+				$this->quoteLinkRepository
+			);
 
-			// now rebuild
-			$importedBoard->rebuildBoard();
-
+			// import the instance!
+			// the contents are wrapped in a transaction to it shouldn't cause any database problems
+			$vichanBoardImporter->importVichanInstance($dumpPath, $boardPath);
 		} catch (Exception $e) {
-			// do clean-up if the board was created so theres no left-over files
-			if($importedBoard) {
-				$boardUid = $importedBoard->getBoardUID();
-				// delete new board from database
-				$this->boardService->deleteBoard($boardUid);
-			}
-
 			// run error
-			$this->softErrorHandler->errorAndExit('Error during board import: ' . $e->getMessage());
+			throw new BoardException('Error during board import: ' . $e->getMessage());
 		}
 	}
 	

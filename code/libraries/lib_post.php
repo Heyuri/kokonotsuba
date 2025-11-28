@@ -1,7 +1,10 @@
 <?php
 //post lib
 
-/* Catch impersonators and modify name to display such */ 
+/* Catch impersonators and modify name to display such */
+
+use Kokonotsuba\Root\Constants\userRole;
+
 function catchFraudsters(&$name) {
 	if (preg_match('/[◆◇♢♦⟡★]/u', $name)) $name .= " (fraudster)";
 }
@@ -254,4 +257,24 @@ function getPostUidsFromThreadArrays(array $threads): array {
 	}, []));
 
 	return $postUids;
+}
+
+function generatePostHash(
+	IPAddress $ip,
+	int $threadNumber, 
+	string $email, 
+	userRole $roleLevel, 
+	string $idSeed, 
+	bool $formModOveride): string {
+	if (stristr($email, 'sage')) {
+		return ' Heaven';
+	} elseif ($roleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN && !$formModOveride) {
+		return ' ADMIN';
+	} elseif ($roleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR && !$formModOveride) {
+		return ' MODERATOR';
+	} else {
+		$baseString = $ip . $idSeed . $threadNumber;
+
+		return substr(crypt(md5($baseString), 'id'), -8);
+	}
 }

@@ -12,7 +12,6 @@ class boardRebuilder {
 		private readonly actionLoggerService $actionLoggerService, 
 		private readonly threadRepository $threadRepository, 
 		private readonly threadService $threadService,
-		private readonly softErrorHandler $softErrorHandler,
 		private readonly quoteLinkService $quoteLinkService) {
 
 		$this->config = $board->loadBoardConfig();
@@ -47,7 +46,7 @@ class boardRebuilder {
 		// Throw a 404 error if the thread isn't found
 		// Also throw a 404 if the thread was deleted
 		if (!$threadData || ($hardDeleted)) {
-			$this->softErrorHandler->errorAndExit(_T('thread_not_found'), 404);
+			throw new BoardException(_T('thread_not_found'), 404);
 			return;
 		}
 

@@ -138,22 +138,6 @@ abstract class abstractModule {
 		return $widget;
 	}
 
-	public function sendAjaxAndDetach(array $payload): void {
-		header('Content-Type: application/json');
-		echo json_encode($payload);
-
-		if (session_status() === PHP_SESSION_ACTIVE) {
-			session_write_close();
-		}
-
-		if (function_exists('fastcgi_finish_request')) {
-			fastcgi_finish_request();
-		} else {
-			ob_flush();
-			flush();
-		}
-	}
-
 	public function generateToggleWidget(string &$moduleHeader, string $jsName, string $templateHtml): void {
 		// generate the script header
 		$jsHtml = $this->generateScriptHeader($jsName, true);

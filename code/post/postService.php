@@ -52,7 +52,7 @@ class postService {
 			$postRegistData->setPostPosition(0);
 		}
 
-		$params = $postRegistData->toParams($boardUID, $root, $isThread); // convert DTO to SQL params
+		$params = $postRegistData->toParams($boardUID, $root); // convert DTO to SQL params
 
 		$this->postRepository->insertPost($params);
 

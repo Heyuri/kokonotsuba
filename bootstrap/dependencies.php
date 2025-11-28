@@ -36,7 +36,7 @@ $adminLoginController = new adminLoginController(
 $staffAccountFromSession = new staffAccountFromSession;
 
 $IPValidator = new IPValidator($config, new IPAddress);
-$postValidator = new postValidator($board, $config, $IPValidator, $threadRepository, $softErrorHandler, $threadService, $postService, $fileService);
+$postValidator = new postValidator($config, $IPValidator, $threadRepository, $threadService, $fileService);
 
 // ───────────────────────────────────────
 // Policies

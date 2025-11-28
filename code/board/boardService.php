@@ -211,8 +211,13 @@ class boardService {
 		return $boards;
 	}
 
-	public function getBoard(int $boardUid): board {
+	public function getBoard(int $boardUid): ?board {
 		$boardData = $this->boardRepository->getBoardByUID($boardUid);
+
+		// return null if board data doesn't exist
+		if(!$boardData) {
+			return null;
+		}
 
 		$board = $this->assembleBoard($boardData);
 
@@ -266,7 +271,6 @@ class boardService {
 			$this->boardDiContainer->actionLoggerService,
 			$this->boardDiContainer->threadRepository,
 			$this->boardDiContainer->threadService,
-			$softErrorHandler,
 			$this->boardDiContainer->quoteLinkService);
 
 		$board->setBoardRebuilder($boardRebuilder);

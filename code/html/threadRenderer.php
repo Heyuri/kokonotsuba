@@ -158,7 +158,7 @@ class threadRenderer {
 		$threadCreatedTime = $thread['thread_created_time'];
 
 		// format thread created time
-		$postDateFormatter = new postDateFormatter($this->config);
+		$postDateFormatter = new postDateFormatter($this->config['TIME_ZONE']);
 		$formattedThreadCreatedTime = $postDateFormatter->formatFromDateString($threadCreatedTime);
 
 		$threadPlaceholders = bindThreadValuesToTemplate($threadUid, 

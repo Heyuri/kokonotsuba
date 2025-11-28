@@ -48,7 +48,14 @@ class moduleMain extends abstractModuleMain {
 		$threadNumber = $this->getThreadNumber($thread);
 
 		// generate the hash for a user's post
-		$poster_hash = $this->generatePostHash($threadNumber, $email, $roleLevel);
+		$poster_hash = generatePostHash(
+			new IPAddress,
+			$threadNumber, 
+			$email, 
+			$roleLevel,
+			$this->getConfig('IDSEED'),
+			empty($_POST['formModIdOveride']),
+		);
 	}
 
 	private function getThreadNumber(array|false $thread): int {
@@ -70,20 +77,4 @@ class moduleMain extends abstractModuleMain {
 		}
 	}
 
-	private function generatePostHash(int $threadNumber, string $email, userRole $roleLevel): string {
-		
-		if (stristr($email, 'sage')) {
-			return ' Heaven';
-		} elseif ($roleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN && empty($_POST['formModIdOveride'])) {
-			return ' ADMIN';
-		} elseif ($roleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR && empty($_POST['formModIdOveride'])) {
-			return ' MODERATOR';
-		} else {
-			$ip = new IPAddress;
-			$idSeed = $this->getConfig('IDSEED');
-			$baseString = $ip . $idSeed . $threadNumber;
-
-			return substr(crypt(md5($baseString), 'id'), -8);
-		}
-	}
 }

@@ -1,13 +1,10 @@
 <?php
 class postValidator {
 	public function __construct(
-		private board $board,
 		private readonly array $config,
 		private readonly IPValidator $IPValidator,
 		private readonly threadRepository $threadRepository,
-		private readonly softErrorHandler $softErrorHandler,
 		private readonly threadService $threadService,
-		private readonly postService $postService,
 		private readonly fileService $fileService,
 	) {}
 	
@@ -20,13 +17,13 @@ class postValidator {
 		// Validate referer and user agent; block common CLI tools and missing headers
 		// If referer or user agent is missing OR user agent looks like curl/wget → treat as bot
 		if(!$httpReferer || !$userAgent || preg_match("/^(curl|wget)/i", $userAgent)) {
-			$this->softErrorHandler->errorAndExit('You look like a robot.');
+			throw new BoardException('You look like a robot.');
 		}
 
 		// Validate the request method; must be POST
 		// If the method is missing or not POST → error out
 		if($requestMethod != 'POST') {
-			$this->softErrorHandler->errorAndExit(_T('regist_notpost')); // Informal POST method
+			throw new BoardException(_T('regist_notpost')); // Informal POST method
 		}
 	}
 
@@ -34,19 +31,19 @@ class postValidator {
 		// Blocking: IP/Hostname/DNSBL Check Function
 		$baninfo = '';
 		if($this->IPValidator->isBanned($baninfo)){
-			$this->softErrorHandler->errorAndExit(_T('regist_ipfiltered', $baninfo));
+			throw new BoardException(_T('regist_ipfiltered', $baninfo));
 		}
 		// Block: Restrict the text that appears (text filter?)
 		foreach($this->config['BAD_STRING'] as $value){
 			if(preg_match($value, $com) || preg_match($value, $sub) || preg_match($value, $name) || preg_match($value, $email)){
-				$this->softErrorHandler->errorAndExit(_T('regist_wordfiltered'));
+				throw new BoardException(_T('regist_wordfiltered'));
 			}
 		}
 	 
 		// Check if you enter Sakura Japanese kana (kana = Japanese syllabary)
 		foreach(array($name, $email, $sub, $com) as $anti){
 			if(anti_sakura($anti)){
-				$this->softErrorHandler->errorAndExit(_T('regist_sakuradetected'));
+				throw new BoardException(_T('regist_sakuradetected'));
 			}
 		}
 	}
@@ -57,7 +54,7 @@ class postValidator {
 		if ($roleLevel->isLessThan(\Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR))  {
 			if($dest && $this->config['PREVENT_DUPLICATE_FILE_UPLOADS']) { 
 				if($this->fileService->isDuplicateAttachment($md5chksum, true, $this->config['DUPLICATE_FILE_TIME'])){
-					$this->softErrorHandler->errorAndExit(_T('regist_duplicatefile')); 
+					throw new BoardException(_T('regist_duplicatefile')); 
 				}
 			} // Same additional image file check
 		}
@@ -70,7 +67,7 @@ class postValidator {
 			)
 		) {
 			// Update the data source in advance, and this new addition is not recorded
-			$this->softErrorHandler->errorAndExit(_T('regist_threaddeleted'), 404);
+			throw new BoardException(_T('regist_threaddeleted'), 404);
 		} 
 		
 		// Determine whether the article you want to respond to has just been deleted
@@ -82,7 +79,7 @@ class postValidator {
 				[$postOpStatus, $postOpRoot] = array($post['status'], $post['root']);
 				$flgh = new FlagHelper($postOpStatus);
 			} else {
-				$this->softErrorHandler->errorAndExit(_T('thread_not_found'), 404); // Does not exist
+				throw new BoardException(_T('thread_not_found'), 404); // Does not exist
 			}
 		}
 		return[$postOpRoot];
@@ -90,11 +87,11 @@ class postValidator {
 	public function cleanComment(string $com, int $upfile_status, bool $is_admin){
 		// Text trimming
 		if((strlenUnicode($com) > $this->config['COMM_MAX']) && !$is_admin){
-			$this->softErrorHandler->errorAndExit(_T('regist_commenttoolong'));
+			throw new BoardException(_T('regist_commenttoolong'));
 		}
 
 		if(!$com && $upfile_status === UPLOAD_ERR_NO_FILE){ 
-			$this->softErrorHandler->errorAndExit($this->config['TEXTBOARD_ONLY']?'ERROR: No text entered.':_T('regist_withoutcomment'));
+			throw new BoardException($this->config['TEXTBOARD_ONLY']?'ERROR: No text entered.':_T('regist_withoutcomment'));
 		}
 		
 		$com = str_replace(array("\r\n", "\r"), "\n", $com);

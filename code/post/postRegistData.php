@@ -1,12 +1,11 @@
 <?php
 
-class postRegistData
-{
+class postRegistData {
     public function __construct(
         private int $no,
         private string $poster_hash,
         private string $threadUIDFromUrl,
-        private bool $is_op,
+        private int $is_op,
         private string $category,
         private string $pwd,
         private string $now,
@@ -27,7 +26,7 @@ class postRegistData
     public function getNo(): int { return $this->no; }
     public function getPosterHash(): string { return $this->poster_hash; }
     public function getThreadUIDFromUrl(): string { return $this->threadUIDFromUrl; }
-    public function getIsOp(): bool { return $this->is_op; }
+    public function getIsOp(): int { return $this->is_op; }
     public function getCategory(): string { return $this->category; }
     public function getPwd(): string { return $this->pwd; }
     public function getNow(): string { return $this->now; }
@@ -53,14 +52,15 @@ class postRegistData
     }
 
     // Convert DTO to SQL parameter array
-    public function toParams(int $boardUID, string $root, bool $isThread): array {
-        return [
+    public function toParams(int $boardUID, string $root, ?int $placeholderIndex = null): array {
+        // Initialize an empty array to hold the parameters
+        $params = [
             ':no' => $this->no,
             ':poster_hash' => $this->poster_hash,
             ':boardUID' => $boardUID,
             ':thread_uid' => $this->threadUIDFromUrl,
             ':post_position' => $this->post_position,
-            ':is_op' => (int)$isThread,
+            ':is_op' => (int)$this->is_op,
             ':root' => $root,
             ':category' => $this->category,
             ':pwd' => $this->pwd,
@@ -75,5 +75,17 @@ class postRegistData
             ':host' => $this->host,
             ':status' => $this->status
         ];
+
+        // If $placeholderIndex is not null, append it to each key
+        if ($placeholderIndex !== null) {
+            $paramsWithIndex = [];
+            foreach ($params as $key => $value) {
+                $paramsWithIndex["{$key}_{$placeholderIndex}"] = $value;
+            }
+            return $paramsWithIndex;  // Return the updated parameters with indexed placeholders
+        }
+
+        return $params;  // Return the original params if $placeholderIndex is null
     }
+
 }

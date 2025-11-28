@@ -79,18 +79,7 @@
             showMessage("Network error during deletion.", false); // Show failure message
         });
     }
-
-    /**
-     * Adds a message for success or error feedback
-     */
-    function showMessage(message, isSuccess) {
-        const messageElement = document.createElement('div');
-        messageElement.className = isSuccess ? 'successMessage' : 'errorMessage';
-        messageElement.textContent = message;
-        document.body.appendChild(messageElement);
-        setTimeout(() => messageElement.remove(), 3000); // Remove the message after 3 seconds
-    }
-
+	
     /**
      * Unified deletion/mute/attachment handler
      */

@@ -38,8 +38,7 @@ class modeHandler {
 					$this->routeDiContainer->fileService,
 					$this->routeDiContainer->threadRepository,
 					$this->routeDiContainer->threadService,
-					$this->routeDiContainer->quoteLinkService,
-					$this->routeDiContainer->softErrorHandler
+					$this->routeDiContainer->quoteLinkService
 				);
 				$route->registerPostToDatabase();
 			},
@@ -131,6 +130,10 @@ class modeHandler {
 					$this->routeDiContainer->softErrorHandler,
 					$this->routeDiContainer->boardService, 
 					$this->routeDiContainer->boardPathService,
+					$this->routeDiContainer->transactionManager,
+					$this->routeDiContainer->postRepository,
+					$this->routeDiContainer->threadRepository,
+					$this->routeDiContainer->fileService,
 					$this->routeDiContainer->quoteLinkRepository
 				);
 				$route->handleBoardRequests();

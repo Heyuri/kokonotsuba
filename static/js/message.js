@@ -1,3 +1,37 @@
+function parseMessageWithLinks(text) {
+    const container = document.createElement('span');
+
+    // Regex: [url=URL]TEXT[/url]
+    const urlRegex = /\[url=(.+?)\](.+?)\[\/url\]/g;
+
+    let lastIndex = 0;
+    let match;
+
+    while ((match = urlRegex.exec(text)) !== null) {
+        // Add text before the link
+        if (match.index > lastIndex) {
+            container.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+        }
+
+        // Create the link element
+        const a = document.createElement('a');
+        a.href = match[1];
+        a.textContent = match[2];
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+
+        container.appendChild(a);
+        lastIndex = urlRegex.lastIndex;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+        container.appendChild(document.createTextNode(text.substring(lastIndex)));
+    }
+
+    return container;
+}
+
 function showMessage(text, isSuccess) {
 	let stackContainer = document.getElementById('messageStackContainer');
 	if (!stackContainer) {
@@ -15,7 +49,7 @@ function showMessage(text, isSuccess) {
 
 	const messageText = document.createElement('span');
 	messageText.classList.add('messageText');
-	messageText.textContent = text;
+	messageText.appendChild(parseMessageWithLinks(text));
 
 	const closeBtn = document.createElement('span');
 	closeBtn.classList.add('messageClose');

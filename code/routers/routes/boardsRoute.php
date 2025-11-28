@@ -58,6 +58,11 @@ class boardsRoute {
 
 			$board = $this->boardService->getBoard($id);
 
+			// throw exception if board's not found
+			if(!$board) {
+				throw new BoardException(_T('board_not_found'));
+			}
+
 			$boardUID = $board->getBoardUID() ?? '';
 			$boardIdentifier = $board->getBoardIdentifier() ?? '';
 			$boardTitle = $board->getBoardTitle() ?? '';

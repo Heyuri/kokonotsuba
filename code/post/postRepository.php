@@ -216,18 +216,6 @@ class postRepository {
 		$this->databaseConnection->execute($query, $params);
 	}
 
-	public function fetchRecentPosts($timeLimit, $timeLimitUpload = null): array {
-		$query = "SELECT pwd, host FROM {$this->postTable} WHERE time > ?";
-		$params = [$timeLimit];
-
-		if ($timeLimitUpload !== null) {
-			$query .= " OR (fname != '' AND time > ?)";
-			$params[] = $timeLimitUpload;
-		}
-
-		return $this->databaseConnection->fetchAllAsArray($query, $params);
-	}
-
 	public function insertPost(array $params): void {
 		$query = "INSERT INTO {$this->postTable} 
 			(no, poster_hash, boardUID, thread_uid, post_position, is_op, root, category, pwd, now, 
@@ -356,5 +344,64 @@ class postRepository {
 		return $pair;
 	}
 
-	
+
+	/**
+	 * Insert posts in batch (DTO params) and return assigned post_uids.
+	 *
+	 * @param array $posts Array of param arrays from postRegistData::toParams()
+	 * @return array post_uids in same order
+	 */
+	public function insertPostsBatch(array $posts): array {
+		if (empty($posts)) return [];
+
+		// Manually define the columns
+		$columns = [
+			'no', 'poster_hash', 'boardUID', 'thread_uid', 'post_position', 'is_op',
+			'root', 'category', 'pwd', 'now', 'name', 'tripcode', 'secure_tripcode',
+			'capcode', 'email', 'sub', 'com', 'host', 'status'
+		];
+
+		// Reindex the array
+		$posts = array_values($posts);
+
+		// Create the column list for the query
+		$fieldList = implode(', ', $columns);
+
+		$rows = [];
+		
+		foreach ($posts as $post) {
+			// get param array keys
+			$params = array_keys($post);
+
+			// Add the placeholders for this row
+			$rows[] = '(' . implode(', ', $params) . ')';
+		}
+
+		// Construct the full SQL query
+		$query = "INSERT INTO {$this->postTable} ($fieldList) VALUES " . implode(',', $rows);
+
+		// flatten into 1d array so we can pass it as regular query params
+		$paramsForQuery = array_merge(...$posts);
+
+		//echo '<br><br><br>'; echo '<pre>'; echo $query . '<br>'; print_r($paramsForQuery); echo '</pre>';
+
+		// Execute the query with the parameters
+		$this->databaseConnection->execute($query, $paramsForQuery);
+
+		// Get the first inserted ID and generate the range of post_uids
+		$firstId = $this->databaseConnection->lastInsertId();
+		return range($firstId, $firstId + count($posts) - 1);
+	}
+
+	/**
+	 * Get next post UID once and then increment locally.
+	 *
+	 * @param int $count Number of UIDs you need
+	 * @return array Array of post_uids
+	 */
+	public function getNextPostUids(int $count): array {
+		$startUid = $this->getNextPostUid();
+		return range($startUid, $startUid + $count - 1);
+	}
+
 }

@@ -15,8 +15,8 @@ class registRoute {
 		private readonly fileService $fileService,
 		private readonly threadRepository $threadRepository,
 		private readonly threadService $threadService,
-		private readonly quoteLinkService $quoteLinkService,
-		private readonly softErrorHandler $softErrorHandler) {}
+		private readonly quoteLinkService $quoteLinkService
+	) {}
 
     /* Write to post table */
 	public function registerPostToDatabase() {
@@ -36,7 +36,7 @@ class registRoute {
 		$defaultTextFiller = new defaultTextFiller($this->config);
 		$fortuneGenerator = new fortuneGenerator($this->config['FORTUNES']);
 		$postFilterApplier = new postFilterApplier($this->config, $fortuneGenerator);
-		$postDateFormatter = new postDateFormatter($this->config);
+		$postDateFormatter = new postDateFormatter($this->config['TIME_ZONE']);
 		$agingHandler = new agingHandler($this->config, $this->threadRepository);
 		$webhookDispatcher = new webhookDispatcher($this->board, $this->config);
 
@@ -188,11 +188,21 @@ class registRoute {
 		// Dispatch webhook
 		$webhookDispatcher->dispatch($postData['resno'], $computedPostInfo['no']);
 
+		// Handle javascript/json request
+		// It will exit after a successful javascript request
+		$this->handleJsonOutput(
+			$computedPostInfo['no'], 
+			$this->board->getBoardUID(),
+			$redirect
+		);
+
 		// Rebuild board pages
 		$this->handlePageRebuilding($computedPostInfo, $postData, $preInsertThreadList);
-
-		// Final redirect
-		redirect($redirect, 0);
+		
+		// Final redirect (only for non-js requests)
+		if(isJavascriptRequest() === false) {
+			redirect($redirect, 0);
+		}
 	}
 
 
@@ -256,7 +266,7 @@ class registRoute {
 			$thumbnail = getThumbnailFromFile($file);
 			$thumbnail = scaleThumbnail($thumbnail, $isReply, $this->config['MAX_RW'], $this->config['MAX_RH'], $this->config['MAX_W'], $this->config['MAX_H']);
 	
-			$postFileUploadController = new postFileUploadController($this->config, $fileFromUpload, $thumbnailCreator, $thumbnail, $boardFileDirectory, $this->softErrorHandler);
+			$postFileUploadController = new postFileUploadController($this->config, $fileFromUpload, $thumbnailCreator, $thumbnail, $boardFileDirectory);
 			$postFileUploadController->validateFile();
 			
 			[$upfile, $upfile_path, $upfile_status] = loadUploadData();
@@ -264,7 +274,7 @@ class registRoute {
 		} else {
 			// show an error if the user tries to make a thread without an image in image-board mode
 			if($upfile_status === UPLOAD_ERR_NO_FILE && !$isReply && !$this->config['TEXTBOARD_ONLY']) {
-				$this->softErrorHandler->errorAndExit(_T('regist_upload_noimg'));
+				throw new BoardException(_T('regist_upload_noimg'));
 			}
 		}
 	
@@ -314,10 +324,10 @@ class registRoute {
 
 		$this->moduleEngine->dispatch('RegistBegin', [&$registInfo]);
 	
-		if (strlenUnicode($postData['name']) > $this->config['INPUT_MAX']) $this->softErrorHandler->errorAndExit(_T('regist_nametoolong'));
-		if (strlenUnicode($postData['email']) > $this->config['INPUT_MAX']) $this->softErrorHandler->errorAndExit(_T('regist_emailtoolong'));
-		if (strlenUnicode($postData['sub']) > $this->config['INPUT_MAX']) $this->softErrorHandler->errorAndExit(_T('regist_topictoolong'));
-		if (strlenUnicode($postData['pwd']) > $this->config['INPUT_MAX']) $this->softErrorHandler->errorAndExit(_T('regist_passtoolong'));
+		if (strlenUnicode($postData['name']) > $this->config['INPUT_MAX']) throw new BoardException(_T('regist_nametoolong'));
+		if (strlenUnicode($postData['email']) > $this->config['INPUT_MAX']) throw new BoardException(_T('regist_emailtoolong'));
+		if (strlenUnicode($postData['sub']) > $this->config['INPUT_MAX']) throw new BoardException(_T('regist_topictoolong'));
+		if (strlenUnicode($postData['pwd']) > $this->config['INPUT_MAX']) throw new BoardException(_T('regist_passtoolong'));
 
 		setrawcookie('namec', rawurlencode(htmlspecialchars_decode($postData['nameCookie'])), time() + 7 * 24 * 3600);
 	
@@ -470,6 +480,21 @@ class registRoute {
 	
 			// Store quote link relationships in the database
 			$this->quoteLinkService->createQuoteLinksFromArray($this->board->getBoardUID(), $postUid, $quoteLinkedPostUids);
+		}
+	}
+
+	private function handleJsonOutput(int $postNumber, int $boardUid, string $redirectUrl): void {
+		if(isJavascriptRequest()) {
+			// build the array to be encoded as json
+			$registJsonData = [
+				// we want to build the post id so we can redirect to it when noko'ing
+				'postId' => "p{$boardUid}_{$postNumber}",
+				// in case of no noko or dump we'll want the js to redirect the user
+				'redirectUrl' => $redirectUrl,
+			];
+
+			// then send ajax (and detach)
+			sendAjaxAndDetach($registJsonData);
 		}
 	}
 

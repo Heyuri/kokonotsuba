@@ -1,11 +1,9 @@
 <?php
 
 class postDateFormatter {
-	private readonly array $config;
-
-	public function __construct(array $config) {
-		$this->config = $config;
-	}
+	public function __construct(
+		private string $timeZone
+	) {}
 
 	/**
 	 * Format a Unix timestamp (as int or string) into HTML
@@ -47,7 +45,7 @@ class postDateFormatter {
 	 * Core formatting logic shared by both methods
 	 */
 	private function formatFromDateTime(DateTime $datetime): string {
-		$offsetSeconds = $this->config['TIME_ZONE'] * 3600;
+		$offsetSeconds = $this->timeZone * 3600;
 
 		// Clone and apply offset
 		$adjusted = clone $datetime;

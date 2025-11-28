@@ -36,6 +36,7 @@
 	<script src="{$STATIC_URL}js/img.js?v=4"></script>
 	<script src="{$STATIC_URL}js/momo/tegaki.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/inline.js?v=9" defer></script>
+	<script src="{$STATIC_URL}js/updateThread.js" defer></script>
 	<script src="{$STATIC_URL}js/update.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/addemotes.js?v=9" defer></script>
 	<script src="{$STATIC_URL}js/admin.js?v=5" defer></script>
@@ -48,6 +49,7 @@
 	<script src="{$STATIC_URL}js/threadToggle.js" defer></script>
 	<script src="{$STATIC_URL}js/banWindowLibrary.js" defer></script>
 	<script src="{$STATIC_URL}js/checkboxDeletion.js" defer></script>
+	<script src="{$STATIC_URL}js/posting.js" defer></script>
 	<!--&IF($MODULE_HEADER_HTML,'{$MODULE_HEADER_HTML}','')-->
 </head>
 <!--/&HEADER-->

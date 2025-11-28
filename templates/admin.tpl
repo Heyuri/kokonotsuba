@@ -149,28 +149,10 @@
 <!--&IMPORT_BOARD-->
 	<form id="import-board-form" action="{$LIVE_INDEX_FILE}?mode=handleBoardRequests" method="POST" enctype="multipart/form-data">
 		<h3>Import a board</h3>
+		<p>This imports the entirety of a vichan's boards and posts - please ensure there are no conflicting board URIs</p>
 		<input type="hidden" name="import-board" value="1">
-
 		<table id="import-board-table">
 			<tbody>
-				<tr>
-					<td class="postblock"><label for="import-board-title">Title</label></td>
-					<td>
-						<input required class="inputtext" id="import-board-title" name="import-board-title">
-					</td>
-				</tr>
-				<tr>
-					<td class="postblock"><label for="import-board-sub-title">Sub-title</label></td>
-					<td>
-						<input class="inputtext" id="import-board-sub-title" name="import-board-sub-title">
-					</td>
-				</tr>
-				<tr>
-					<td class="postblock"><label for="import-board-identifier">Identifier</label></td>
-					<td>
-						<input class="inputtext" id="import-board-identifier" name="import-board-identifier" placeholder="b">
-					</td>
-				</tr>
 				<tr>
 					<td class="postblock"><label for="import-board-path">Absolute directory</label></td>
 					<td>
@@ -178,20 +160,9 @@
 					</td>
 				</tr>
 				<tr>
-					<td class="postblock"><label for="import-board-listed">Listed</label></td> 
-					<td><input type="checkbox" id="import-board-listed" name="import-board-listed" checked></td>
-				</tr>
-				<tr>
-					<td class="postblock"><label for="import-board-file"><b>Board database file</b></label></td>
-					<td><input type="file" name="import-board-file" id="import-board-file" required><small>[<a href="javascript:void(0);" onclick="$id('import-board-file').value='';">X</a>]</small>
-						<div class="formItemDescription">The mysql dump of the pixmicat database you're importing.</div>
-					</td> 
-				</tr>
-				<tr>
-					<td class="postblock"><label for="import-board-tablename">Table name</label></td>
+					<td class="postblock"><label for="import-dump-path">Dump path</label></td>
 					<td>
-						<input class="inputtext" id="import-board-tablename" name="import-board-tablename" required value="imglog">
-						<div class="formItemDescription">The table name of post table from the pixmicat database.</div>
+						<input class="inputtext" id="import-dump-path" name="import-dump-path" required class="url-input" placeholder="/srv/kokonotsuba/bkp-kereste.sql">
 					</td>
 				</tr>
 			</tbody>
@@ -560,12 +531,14 @@ window.onload = function () {
 <!--&BAN_PAGE-->
 	<div>[<a href="{$RETURN_URL}">Return</a>]</div>
 
-	<h2 id="banHeading" class="centerText warning">You have been {$BAN_TYPE}! ヽ(ー_ー )ノ</h2>
+	<h2 id="banHeading" class="centerText warning">
+		<!--&IF($IS_BANNED,'You have been {$BAN_TYPE}! ヽ(ー_ー )ノ','You are not banned! <span class="ascii">ヽ(´∇`)ノ</span>')-->
+	</h2>
 
 	<div id="banScreen">
 		<div id="banScreenText">
-			<p>{$REASON}</p>
-			{$BAN_DETAIL}
+			<p><!--&IF($REASON,'{$REASON}','')--></p>
+			<!--&IF($IS_BANNED,'{$BAN_DETAIL}','')-->
 		</div>
 
 		<img id="banimg" src="{$BAN_IMAGE}" alt="BANNED!">
@@ -573,7 +546,6 @@ window.onload = function () {
 
 	<hr id="hrBan">
 <!--/&BAN_PAGE-->
-
 
 <!--&JANITOR_WARN_FORM-->
 <div class="warnFormContainer">

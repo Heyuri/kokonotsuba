@@ -100,10 +100,14 @@ class tripcodeRenderer {
 		
 			// Apply the capcode formatting (usually wraps or replaces nameHtml)
 			$capcodeHtml = '<span class="postername">' . $capcodePlaceholder . '</span>';
-		}
 		
-		// return the capcode html
-		return $capcodeHtml;
+			// return the html
+			return $capcodeHtml;
+		} 
+		// no staff capcode found - return normal capcode
+		else {
+			return $capcode;
+		}		
 	}
 
 	private function findUserCapcode(string $tripcode, string $secure_tripcode): ?array {
