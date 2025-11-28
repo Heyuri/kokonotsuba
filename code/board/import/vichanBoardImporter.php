@@ -480,6 +480,9 @@ class vichanBoardImporter {
 		// get comment/body
 		$com = $p['body'] ?? '';
 
+		// regex out 'quote' css class
+		$com = preg_replace('/class="([^"]*\b)quote(\b[^"]*)"/i', 'class="${1}unkfunc${2}"', $com);
+
 		// get age/sage
 		$age = !$p['sage'];
 
