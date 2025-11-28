@@ -217,10 +217,6 @@ class vichanBoardImporter {
 			// update bump time to the last reply
 			$this->threadRepository->bumpThread($uid);
 		}
-
-		// all done!
-		// rebuild board html
-		$board->rebuildBoard();
 	}
 
 	private function getChunkedVichanThreads(string $postTableName): \Generator {
