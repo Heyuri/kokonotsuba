@@ -2,18 +2,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const postForm = document.getElementById("postform");
     if (!postForm) return;
 
+    const subInput = document.getElementById("sub");
+    const comInput = document.getElementById("com");
+    const emailInput = document.getElementById("email");
+    const nokoBox  = document.getElementById("noko");
+    const dumpBox  = document.getElementById("dump");
     const restoField = document.querySelector("input[name='resto']");
-    const isReply = restoField && restoField.value !== "0";
-
-    // ------------------------------------------------------
-    // Only apply AJAX posting for replies.
-    // New thread posts should submit normally.
-    // ------------------------------------------------------
-    if (!isReply) return;
 
     /**
      * Safely parse JSON from a fetch Response.
-     * Returns null if not valid JSON.
      */
     function safeJSON(response) {
         return response.text().then(text => {
@@ -23,27 +20,64 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     /**
-     * Main AJAX reply handler
+     * Clear subject & comment fields
      */
-    function submitHandler(event) {
-        const emailInput = document.getElementById("email");
-        const emailValue = emailInput?.value.trim().toLowerCase() || "";
+    function clearForm() {
+        // Clear text inputs
+        if (subInput) subInput.value = "";
+        if (comInput) comInput.value = "";
 
-        // ----------------------------------------------------------
-        // Submit normally if email is empty or contains "nonoko"
-        // ----------------------------------------------------------
-        if (!emailValue || emailValue.includes("nonoko")) {
-            // Allow normal form submission
-            return;
+        // --- Remove file-related UI elements ---
+        const filePreview = document.getElementById("file-preview");
+        if (filePreview) filePreview.remove();
+
+        const fileSizeContainer = document.getElementById("file-size-container");
+        if (fileSizeContainer) fileSizeContainer.remove();
+
+        const filenameContainer = document.getElementById("filename-container");
+        if (filenameContainer) filenameContainer.remove();
+
+        // Optionally clear the file input itself
+        const fileInput = document.getElementById("upfile");
+        if (fileInput) fileInput.value = "";
+
+        // Optionally reset the animated GIF checkbox
+        const anigifCheckbox = document.getElementById("anigif");
+        if (anigifCheckbox) anigifCheckbox.checked = false;
+
+        // also clear the quick reply form for good measure
+        if(kkqr) {
+            // clear the form
+            kkqr.resetQRFields();
         }
+    }
 
-        // Prevent default only if we are doing AJAX
-        event.preventDefault();
+    /**
+     * Update thread with new replies and scroll to post
+     */
+    function updateThreadAndScroll(postId) {
+        fetchNewReplies().then(() => {
+            const postEl =
+                document.getElementById(postId) ||
+                document.querySelector(`#p${postId}`) ||
+                document.querySelector(`[id$="${postId}"]`);
 
-        const subInput   = document.getElementById("sub");
-        const comInput   = document.getElementById("com");
-        const nokoBox    = document.getElementById("noko") || null;
-        const dumpBox    = document.getElementById("dump") || null;
+            if (postEl) {
+                postEl.scrollIntoView({ behavior: "smooth" });
+                window.location.hash = postId;
+            }
+        });
+    }
+
+    /**
+     * Main AJAX submit handler
+     */
+    async function submitHandler(event) {
+        event.preventDefault(); // Always AJAX
+
+        const emailValue = emailInput?.value.trim().toLowerCase() || "";
+        const threadId = restoField ? restoField.value : "0";
+        const isReply = threadId !== "0";
 
         const isNoko = (nokoBox && nokoBox.checked) || (emailValue.includes("noko") && !emailValue.includes("nonoko"));
         const isDump = (dumpBox && dumpBox.checked) || emailValue.includes("dump");
@@ -60,90 +94,71 @@ document.addEventListener("DOMContentLoaded", () => {
             if (submitButton) submitButton.style.opacity = value;
         }
 
-        // ----------------------------------------------------------
         // Perform AJAX POST
-        // ----------------------------------------------------------
-        function ajaxPost() {
+        async function ajaxPost() {
             setButtonOpacity(0.5);
+            try {
+                const resp = await fetch(postForm.action, {
+                    method: "POST",
+                    body: formData,
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                });
 
-            return fetch(postForm.action, {
-                method: "POST",
-                body: formData,
-                headers: {
-                    "X-Requested-With": "XMLHttpRequest"
-                }
-            })
-            .then(async resp => {
                 const data = await safeJSON(resp);
 
-                // ---- Handle HTTP errors (400, 403, 500, etc.) ----
                 if (!resp.ok) {
-                    // if JSON contains message, use it
-                    if (data?.message) {
-                        showMessage(data.message, false);
-                    } else {
-                        showMessage(`Error ${resp.status}: Post failed.`, false);
-                    }
+                    if (data?.message) showMessage(data.message, false);
+                    else showMessage(`Error ${resp.status}: Post failed.`, false);
                     throw new Error(`HTTP ${resp.status}`);
                 }
 
-                // ---- Handle server JSON errors ----
                 if (data?.error) {
                     showMessage(data.message || "An error occurred.", false);
                     throw new Error(`Server error: ${data.code}`);
                 }
 
                 return data;
-            })
-            .finally(() => {
-                setButtonOpacity(1);
-            })
-            .catch(err => {
+            } catch (err) {
                 console.error("AJAX posting error:", err);
-            });
+                return null;
+            } finally {
+                setButtonOpacity(1);
+            }
         }
 
-        // ----------------------------------------------------------
-        // Handle Noko / Dump submission types
-        // ----------------------------------------------------------
+        // Handle post response
+        function handleSuccessfulPost(data) {
+            if (!data) return;
 
-        // Noko reply → update thread and scroll to new post
-        if (isNoko) {
-            ajaxPost().then(data => {
-                if (!data?.postId) return;
+            // --- DUMP: silent, clear form ---
+            if (isDump) {
+                fetchNewReplies();
+                clearForm();
+                return;
+            }
 
-                if (typeof kkupdate !== "undefined") {
-                    fetchNewReplies().then(() => {
-                        const postEl = document.getElementById(data.postId);
-                        if (postEl) {
-                            postEl.scrollIntoView({ behavior: "smooth" });
-                            window.location.hash = data.postId;
-                        }
-                    });
-                }
+            // --- NOKO reply ---
+            if (isNoko && isReply) {
+                updateThreadAndScroll(data.postId);
+                clearForm();
+                return;
+            }
 
-                // Clear subject and comment
-                if (subInput) subInput.value = "";
-                if (comInput) comInput.value = "";
-            });
-            return;
+            // --- Otherwise, redirect if redirectUrl exists ---
+            if (data.redirectUrl) {
+                window.location.href = data.redirectUrl;
+                return;
+            }
+
+            // fallback: still clear form if needed
+            clearForm();
         }
 
-        // Dump reply → silent, no scrolling
-        if (isDump) {
-            ajaxPost().then(data => {
-                // Clear subject and comment
-                if (subInput) subInput.value = "";
-                if (comInput) comInput.value = "";
-            });
-            return;
-        }
-
-        // Regular reply → normal submission
-        postForm.removeEventListener("submit", submitHandler);
-        postForm.submit();
+        // Execute AJAX and handle response
+        const data = await ajaxPost();
+        handleSuccessfulPost(data);
     }
 
-    // Attach listener for REPLY posts only
+    // Attach submit listener
     postForm.addEventListener("submit", submitHandler);
 });

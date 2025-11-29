@@ -90,10 +90,19 @@ const kkqr = { name: "KK Quick Reply",
 			if (typeof(com) != 'undefined') {
 				qr.innerHTML += '<textarea name="com" id="qrcom" cols="48" rows="6" class="inputtext" placeholder="Comment" oninput="kkqr.input(this);">' + com.value + '</textarea>';
 			}
+			// --- File input ---
 			if (typeof(upfile) != 'undefined') {
-				upfile.insertAdjacentHTML("beforebegin", '<span id="upfileDUMMY"></span>');
-				qrcontents.appendChild(upfile);
-				qrcontents.innerHTML += '[<a href="javascript:void(0);" onclick="$id(\'upfile\').value=\'\';">X</a>]<br>';
+				// Create a fresh file input for the QR
+				const qrUpfile = document.createElement("input");
+				qrUpfile.type = "file";
+				qrUpfile.name = "upfile";
+				qrUpfile.id = "qr_upfile";
+				qrUpfile.className = "inputtext";
+
+				qrcontents.appendChild(qrUpfile);
+
+				// optional: add clear link
+				qrcontents.innerHTML += '[<a href="javascript:void(0);" onclick="$id(\'qr_upfile\').value=\'\';">X</a>]<br>';
 			}
 			if (typeof(noimg) != 'undefined') {
 				qrcontents.innerHTML += '<nobr><label>[<input type="checkbox" name="noimg" id="qrnoimg" onclick="$id(\'noimg\').checked=this.checked;"' + (noimg.checked ? ' checked="checked"' : '') + '>No File]</label></nobr> ';
@@ -134,19 +143,30 @@ const kkqr = { name: "KK Quick Reply",
 		kkqr.qrs.disabled = true;
 		kkqr.closedOnce = true;
 		if (!kkqr.win) return;
-		var up = $id("upfile"), pf = $id("postform"), chaimg = $id("chaimg");
+
+		// Restore the original file input to its place
+		const up = $id("upfile");
 		if (up) {
-			var dummy = $id("upfileDUMMY");
-			dummy.insertAdjacentElement("afterend", up);
-			$del(dummy);
+			const dummy = $id("upfileDUMMY");
+			if (dummy) {
+				dummy.insertAdjacentElement("afterend", up);
+				$del(dummy);
+			}
 		}
+
+		// Original main form file stays untouched, no dummy needed
+		const chaimg = $id("chaimg");
 		if (chaimg) {
 			var dummy = $id("chaimgDUMMY");
-			dummy.insertAdjacentElement("afterend", chaimg);
-			$del(dummy);
+			if (dummy) {
+				dummy.insertAdjacentElement("afterend", chaimg);
+				$del(dummy);
+			}
 		}
+
 		kkqr.win = null;
-		var inputs = $q("#postform .inputtext");
+
+		const inputs = $q("#postform .inputtext");
 		for (var i=0; i<inputs.length; i++) {
 			inputs[i].removeEventListener('input', kkqr._evinput2);
 		}
@@ -175,6 +195,22 @@ const kkqr = { name: "KK Quick Reply",
 		if (!kkqr.input2(this))
 			console.log("ERROR: Cannot set value of quick reply");
 	},
+
+	/**
+	 * Clear Quick Reply fields without touching the main form.
+	 * Resets comment, subject, and file input.
+	 */
+	resetQRFields: function() {
+		const qrcom = document.getElementById("qrcom");
+		if (qrcom) qrcom.value = "";
+
+		const qrsub = document.getElementById("qrsub");
+		if (qrsub) qrsub.value = "";
+
+		const qrFile = document.getElementById("qr_upfile");
+		if (qrFile) qrFile.value = "";
+	},
+
 };
 
 /* Register */
