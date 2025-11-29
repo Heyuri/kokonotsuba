@@ -271,8 +271,6 @@ class ThumbWrapper{
 			ImageJPEG($im_out, $destFile, $this->thumbQuality);	
 			break;
 	   }
-	   ImageDestroy($im_in); 
-	   ImageDestroy($im_out);
 	   return true;
 	}
 }
