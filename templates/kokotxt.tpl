@@ -45,6 +45,7 @@
 	<script src="{$STATIC_URL}js/banWindowLibrary.js" defer></script>
 	<script src="{$STATIC_URL}js/checkboxDeletion.js" defer></script>
 	<script src="{$STATIC_URL}js/posting.js" defer></script>
+	<script src="{$STATIC_URL}js/youtubeEmbed.js" defer></script>
 	<!--&IF($MODULE_HEADER_HTML,'{$MODULE_HEADER_HTML}','')-->
 </head>
 <!--/&HEADER-->
