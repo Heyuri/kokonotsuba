@@ -122,15 +122,6 @@ class moduleAdmin extends abstractModuleAdmin {
 				false,
 				'',
 				'',
-				0,
-				'',
-				'',
-				0,
-				0,
-				'',
-				0,
-				0,
-				'',
 				$now,
 				$name,
 				'',
@@ -141,7 +132,8 @@ class moduleAdmin extends abstractModuleAdmin {
 				$moveComment,
 				$ip,
 				false,
-				''
+				'',
+
 			);
 
 		// get next post uid
@@ -153,11 +145,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 
-	private function copyThreadToBoard(string $originalThreadUid, IBoard $destinationBoard): string {
-		// Step 1: Gather attachments from the original thread
-		$filesToCopy = $this->moduleContext->threadRepository->getAllAttachmentsFromThread($originalThreadUid);
-	
-		// Step 2: Copy the thread and posts, receiving new thread UID and post UID mapping
+	private function copyThreadToBoard(array $filesToCopy, string $originalThreadUid, IBoard $destinationBoard): string {	
+		// Step 1: Copy the thread and posts, receiving new thread UID and post UID mapping
 		$copyResult = $this->moduleContext->threadService->copyThreadAndPosts($originalThreadUid, $destinationBoard);
 
 		if (!is_array($copyResult)) {
@@ -183,19 +172,65 @@ class moduleAdmin extends abstractModuleAdmin {
 		$newThreadUid   = $copyResult['threadUid'];
 		$postUidMapping = $copyResult['postUidMap'];
 	
-		// Step 3: Copy quote links using the post UID mapping
+		// Step 2: Copy quote links using the post UID mapping
 		$this->moduleContext->quoteLinkService->copyQuoteLinksFromThread($originalThreadUid, $destinationBoard->getBoardUID(), $postUidMapping);
 	
-		// Step 4: Copy attachments
-		$this->copyThreadAttachmentsToBoard($filesToCopy, $destinationBoard, true);
-	
-		// Step 5: Return the UID of the newly created thread
+		// Step 3: Copy attachment files
+		$this->copyThreadAttachmentsToBoard($filesToCopy, $postUidMapping, $destinationBoard,  true);
+
+		// Step 4: Return the UID of the newly created thread
 		return $newThreadUid;
 	}	
 	
-	private function copyThreadAttachmentsToBoard(array $attachments, IBoard $destinationBoard, bool $isCopy = false): void {
+	private function copyThreadAttachmentsToBoard(array $attachments, array $postUidMapping, IBoard $destinationBoard, bool $isCopy = false): void {
 		if (empty($attachments)) return;
 	
+
+		// copy attachments data if this is a copy call
+		if($isCopy) {
+			// copy the data
+			$this->copyAttachmentsData($attachments, $postUidMapping);
+		}
+
+		// then copy the files
+		$this->copyAttachmentsFiles($attachments, $destinationBoard, $isCopy);
+	}
+
+	private function copyAttachmentsData(array $attachments, array $postUidMapping): void {
+		// loop through attachments and add them - the only difference being between the original being the post uid
+		foreach($attachments as $att) {
+			// the post uid of the post we copied
+			$oldPostUid = $att['postUid'];
+
+			// Check if the old post uid exists in the mapping
+			if (isset($postUidMapping[$oldPostUid])) {
+				// the post uid of the new copied post
+				$newPostUid = $postUidMapping[$oldPostUid];
+
+				// then add the file
+				$this->moduleContext->fileService->addFile(
+					$newPostUid,
+					$att['fileName'],
+					$att['storedFileName'],
+					$att['fileExtension'],
+					$att['fileMd5'],
+					$att['fileWidth'],
+					$att['fileHeight'],
+					$att['thumbWidth'],
+					$att['thumbHeight'],
+					$att['fileSize'],
+					$att['mimeType'],
+					$att['isHidden']
+				);
+			} else {
+				// Handle the case where the old post uid is not found in the mapping (optional)
+				// You can log an error or take other actions depending on your needs
+				error_log("Post UID {$oldPostUid} not found in mapping.");
+			}
+		}
+	}
+
+	private function copyAttachmentsFiles(array $attachments, IBoard $destinationBoard, bool $isCopy): void {
 		// Destination board paths and config
 		$destBasePath = $destinationBoard->getBoardUploadedFilesDirectory();
 		$destConfig = $destinationBoard->loadBoardConfig();
@@ -238,7 +273,6 @@ class moduleAdmin extends abstractModuleAdmin {
 			}
 		}
 	}
-	
 
 	private function handleThreadMove($thread, $hostBoard, $destinationBoard, $leaveShadowThread = true) {
 		// redirect for url
@@ -246,19 +280,22 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$threadData = $thread['thread'];
 		$threadUid = $threadData['thread_uid'];
+		$threadPosts = $thread['posts'];
 
 		// board uid of the destination board
 		$destinationBoardUID = $destinationBoard->getBoardUID();
 
+		$attachments = getAttachmentsFromPosts($threadPosts);
+
 		// use thread redirection
 		if($leaveShadowThread) { 
 			// lock original thread and duplicate contents to destination board
-			$newThreadUid = $this->copyThreadToBoard($threadUid, $destinationBoard);
+			$newThreadUid = $this->copyThreadToBoard($attachments, $threadUid, $destinationBoard);
 
-			$newThread = $this->moduleContext->threadService->getThreadByUID($newThreadUid)['thread'];
+			$newThreadData = $this->moduleContext->threadService->getThreadByUID($newThreadUid)['thread'];
 
 			// leave shadow post
-			$this->leavePostInShadowThread($threadData, $hostBoard, $newThread, $destinationBoard);
+			$this->leavePostInShadowThread($threadData, $hostBoard, $newThreadData, $destinationBoard);
 			
 			// opening post
 			$openingPost = $thread['posts'][0];
@@ -269,13 +306,11 @@ class moduleAdmin extends abstractModuleAdmin {
 			// make unmoveable
 			$openingPost['status'] = $this->toggleThreadStatus($openingPost, 'ghost');
 
-			$threadRedirectUrl = $destinationBoard->getBoardThreadURL($newThread['post_op_number']); 
+			$threadRedirectUrl = $destinationBoard->getBoardThreadURL($newThreadData['post_op_number']); 
 		} else {
-			$attachments = $this->moduleContext->threadRepository->getAllAttachmentsFromThread($threadUid);
-
 			$this->moduleContext->postRedirectService->addNewRedirect($hostBoard->getBoardUID(), $destinationBoard->getBoardUID(), $threadUid);
 
-			$this->copyThreadAttachmentsToBoard($attachments, $destinationBoard);
+			$this->copyThreadAttachmentsToBoard($attachments, [], $destinationBoard);
 
 			$this->moduleContext->threadService->moveThreadAndUpdate($threadUid, $destinationBoard);
 
@@ -290,6 +325,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$hostBoard,
 			$destinationBoard
 		];
+
 		rebuildBoardsByArray($boardsToRebuild);
 
 		// return redirect

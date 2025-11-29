@@ -493,14 +493,6 @@ class threadRepository {
 		return $posts;
 	}
 
-	public function getAllAttachmentsFromThread($thread_uid) {
-		$query = "SELECT ext, tim, boardUID FROM {$this->postTable} WHERE thread_uid = :thread_uid";
-		$params[':thread_uid'] = $thread_uid;
-
-		$threadAttachments = $this->databaseConnection->fetchAllAsArray($query, $params);
-		return $threadAttachments;
-	}
-
 	/* Get number of discussion threads */
 	public function threadCountFromBoard(board $board, bool $includeDeleted = false) {
 		// get board uid
