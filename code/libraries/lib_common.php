@@ -297,7 +297,7 @@ function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = fals
 
 /**
  * Load uploaded file data from the request.
- * Checks both the main 'upfile' input and the quick reply 'qr_upfile'.
+ * Checks both the main 'upfile' input and the quick reply 'quickReplyUpFile'.
  *
  * @return array [$upfile, $upfile_name, $upfile_status]
  */
@@ -311,11 +311,11 @@ function loadUploadData(): array {
         // File upload status code (UPLOAD_ERR_* constants)
         $upfile_status = $_FILES['upfile']['error'];
     } 
-    // If no main form file, check the Quick Reply file input 'qr_upfile'
-    elseif (!empty($_FILES['qr_upfile']['tmp_name'])) {
-        $upfile = sanitizeStr($_FILES['qr_upfile']['tmp_name']);
-        $upfile_name = $_FILES['qr_upfile']['name'];
-        $upfile_status = $_FILES['qr_upfile']['error'];
+    // If no main form file, check the Quick Reply file input 'quickReplyUpFile'
+    elseif (!empty($_FILES['quickReplyUpFile']['tmp_name'])) {
+        $upfile = sanitizeStr($_FILES['quickReplyUpFile']['tmp_name']);
+        $upfile_name = $_FILES['quickReplyUpFile']['name'];
+        $upfile_status = $_FILES['quickReplyUpFile']['error'];
     } 
     // If neither file input has a file, return defaults
     else {

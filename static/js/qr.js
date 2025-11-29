@@ -95,14 +95,14 @@ const kkqr = { name: "KK Quick Reply",
 				// Create a fresh file input for the QR
 				const qrUpfile = document.createElement("input");
 				qrUpfile.type = "file";
-				qrUpfile.name = "upfile";
-				qrUpfile.id = "qr_upfile";
+				qrUpfile.name = "quickReplyUpFile";
+				qrUpfile.id = "quickReplyUpFile";
 				qrUpfile.className = "inputtext";
 
 				qrcontents.appendChild(qrUpfile);
 
 				// optional: add clear link
-				qrcontents.innerHTML += '[<a href="javascript:void(0);" onclick="$id(\'qr_upfile\').value=\'\';">X</a>]<br>';
+				qrcontents.innerHTML += '[<a href="javascript:void(0);" onclick="$id(\'quickReplyUpFile\').value=\'\';">X</a>]<br>';
 			}
 			if (typeof(noimg) != 'undefined') {
 				qrcontents.innerHTML += '<nobr><label>[<input type="checkbox" name="noimg" id="qrnoimg" onclick="$id(\'noimg\').checked=this.checked;"' + (noimg.checked ? ' checked="checked"' : '') + '>No File]</label></nobr> ';
@@ -134,10 +134,39 @@ const kkqr = { name: "KK Quick Reply",
 			$id("qrinputs").insertAdjacentHTML("beforeend", '<div id="qrsubmit"></div>');
 			submitqr = $id("qrsubmit"); // Fallback to new container
 		}
+		
 		for (var i=0; i<submitbtns.length; i++) {
-			submitqr.insertAdjacentHTML("beforeend",
-				'<button value="'+submitbtns[i].value+'" onclick="kkqr.closeqr();$q(\'#postform button[value=\'+this.value+\']\')[0].click();">'+submitbtns[i].innerText+'</button>');
+			const btn = submitbtns[i];
+			const qrBtn = document.createElement("button");
+			qrBtn.type = "button"; // prevent automatic form submit
+			qrBtn.innerText = btn.innerText;
+			qrBtn.onclick = function() {
+				const qrFile = document.getElementById("quickReplyUpFile");
+				let placeholder;
+
+				if (qrFile) {
+					// temporarily move QR file into main form
+					placeholder = document.createElement("div");
+					placeholder.id = "quickReplyUpFile_placeholder";
+					qrFile.parentNode.insertBefore(placeholder, qrFile);
+					$id("postform").appendChild(qrFile);
+				}
+
+				// trigger the real form submit button
+				btn.click();
+
+				// move the QR file back to the QR window
+				if (qrFile && placeholder) {
+					placeholder.parentNode.insertBefore(qrFile, placeholder);
+					placeholder.remove();
+				}
+
+				// DO NOT close QR window
+			};
+			submitqr.appendChild(qrBtn);
 		}
+
+
 	},
 	closeqr: function () {
 		kkqr.qrs.disabled = true;
@@ -207,7 +236,7 @@ const kkqr = { name: "KK Quick Reply",
 		const qrsub = document.getElementById("qrsub");
 		if (qrsub) qrsub.value = "";
 
-		const qrFile = document.getElementById("qr_upfile");
+		const qrFile = document.getElementById("quickReplyUpFile");
 		if (qrFile) qrFile.value = "";
 	},
 
