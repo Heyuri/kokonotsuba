@@ -1,4 +1,4 @@
-function toggle_youtube(el) {
+function embed_youtube(el) {
   const comment = el.closest('.comment');
   const videoId = el.getAttribute('data-uid');
   const existingContainer = comment.querySelector('.youtube-container');
