@@ -483,6 +483,18 @@ class vichanBoardImporter {
 		// regex out 'quote' css class
 		$com = preg_replace('/class="([^"]*\b)quote(\b[^"]*)"/i', 'class="${1}unkfunc${2}"', $com);
 
+		// get post embed
+		$embed = $p['embed'] ?? '';
+
+		// if embed exists prepend it onto the comment
+		if(!empty($embed)) {
+			// linkify
+			$embedLink = autoLink($embed);
+
+			// add to comment
+			$com = $embedLink . '<br>' . $com;
+		}
+
 		// get age/sage
 		$age = !$p['sage'];
 
