@@ -46,7 +46,6 @@ const kkqu = {
 		if (!com) return true;
 		var q = window.location.hash.match(/^#q(\d+)/);
 		if (q) {
-			console.log(q);
 			kkqu.quote(q[1]);
 		}
 		kkqu.qu = $class("qu");
