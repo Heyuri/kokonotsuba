@@ -25,6 +25,36 @@ const kkqr = { name: "KK Quick Reply",
 				qu[i].addEventListener("click", kkqr._evqr);
 			}
 		}
+
+		// Only trigger on threads (resto input exists)
+		const resto = document.querySelector('input[name="resto"]');
+		if (!resto) return;
+
+		const hash = window.location.hash;
+		const match = hash.match(/^#q(\d+)$/);
+		if (!match) return;
+
+		const postNum = match[1];
+
+		// Find real post (id pattern *_123)
+		const quotedPost = document.querySelector(`[id$="_${postNum}"]`);
+		if (quotedPost) {
+			quotedPost.scrollIntoView({ behavior: "smooth", block: "center" });
+		}
+
+		// Open Quick Reply
+		kkqr.openqr();
+
+		// Trigger ONE sync so comment mirroring picks up whatever the page adds
+		setTimeout(() => {
+			const com = document.getElementById("com");
+			if (!com) return;
+
+			// Fire input event → QR mirrors main form comment automatically
+			const ev = new Event("input", { bubbles: true });
+			com.dispatchEvent(ev);
+		}, 50);
+
 		return true;
 	},
 	reset: function () {
