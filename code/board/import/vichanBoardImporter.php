@@ -592,8 +592,12 @@ class vichanBoardImporter {
 			// get file name
 			$fileName = $file['name'] ?? '';
 
-			// we have to take the last 4 characters off the name since it includes the extension
-			$fileName = substr($fileName, 0, -4); 
+			// Remove the final file extension from the filename.
+			// Explanation of the regex:
+			//   \.       → match a literal dot
+			//   [^.]+    → match one or more characters that are NOT a dot (the extension)
+			//   $        → anchor to the end of the string (ensures only the last extension is removed)
+			$fileName = preg_replace('/\.[^.]+$/', '', $fileName);
 
 			// get mime type
 			$mimeType = $file['type'] ?? '';
