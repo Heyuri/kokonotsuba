@@ -93,7 +93,12 @@ function getAttachmentUrl(?array $attachment, bool $isThumb = false): false|stri
 	}
 }
 
-function attachmentFileExists(array $attachment): bool {
+function attachmentFileExists(?array $attachment): bool {
+	// if theres no valid attachment then return false
+	if(!$attachment) {
+		return false;
+	}
+
 	// get board
 	$board = getAttachmentBoard($attachment);
 
