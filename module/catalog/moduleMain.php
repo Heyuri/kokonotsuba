@@ -4,7 +4,6 @@ namespace Kokonotsuba\Modules\catalog;
 
 use BoardException;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;
-use PMCLibrary;
 
 class moduleMain extends abstractModuleMain {
 	private readonly string $staticUrl;
