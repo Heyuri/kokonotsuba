@@ -541,7 +541,7 @@ window.onload = function () {
 			<!--&IF($IS_BANNED,'{$BAN_DETAIL}','')-->
 		</div>
 
-		<img id="banimg" src="{$BAN_IMAGE}" alt="BANNED!">
+		<img id="banimg" src="{$BAN_IMAGE}" alt="<!--&IF($IS_BANNED,'BANNED!','NOT BANNED!')-->">
 	</div>
 
 	<hr id="hrBan">
