@@ -56,7 +56,8 @@ class moduleMain extends abstractModuleMain {
 			
 			if ($match) {
 				// If the ban has expired, remove it from the log and save
-				if ($_SERVER['REQUEST_TIME'] > intval($expires)) {
+				// only clear it for non-js requests (i.e the user is viewing it)
+				if ($_SERVER['REQUEST_TIME'] > intval($expires) && !isJavascriptRequest()) {
 					unset($log[$i]);
 					file_put_contents($banFile, implode(PHP_EOL, $log));
 				}
