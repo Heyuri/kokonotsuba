@@ -295,12 +295,37 @@ function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = fals
 	return $str;
 }
 
+/**
+ * Load uploaded file data from the request.
+ * Checks both the main 'upfile' input and the quick reply 'qr_upfile'.
+ *
+ * @return array [$upfile, $upfile_name, $upfile_status]
+ */
 function loadUploadData(): array {
-	$upfile = sanitizeStr($_FILES['upfile']['tmp_name'] ?? '');
-	$upfile_name = $_FILES['upfile']['name'] ?? '';
-	$upfile_status = $_FILES['upfile']['error'] ?? UPLOAD_ERR_NO_FILE;
+    // Check if the main form file input 'upfile' exists and has a file uploaded
+    if (!empty($_FILES['upfile']['tmp_name'])) {
+        // Sanitize the temporary file path to prevent any malicious input
+        $upfile = sanitizeStr($_FILES['upfile']['tmp_name']);
+        // Original filename as uploaded by the user
+        $upfile_name = $_FILES['upfile']['name'];
+        // File upload status code (UPLOAD_ERR_* constants)
+        $upfile_status = $_FILES['upfile']['error'];
+    } 
+    // If no main form file, check the Quick Reply file input 'qr_upfile'
+    elseif (!empty($_FILES['qr_upfile']['tmp_name'])) {
+        $upfile = sanitizeStr($_FILES['qr_upfile']['tmp_name']);
+        $upfile_name = $_FILES['qr_upfile']['name'];
+        $upfile_status = $_FILES['qr_upfile']['error'];
+    } 
+    // If neither file input has a file, return defaults
+    else {
+        $upfile = '';                // No uploaded temp file
+        $upfile_name = '';           // No original filename
+        $upfile_status = UPLOAD_ERR_NO_FILE; // Constant indicating no file uploaded
+    }
 
-	return [$upfile, $upfile_name, $upfile_status];
+    // Return the temp path, original filename, and upload status
+    return [$upfile, $upfile_name, $upfile_status];
 }
 
 function getVideoDimensions(string $filePath): array {
