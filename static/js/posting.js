@@ -73,6 +73,10 @@ document.addEventListener("DOMContentLoaded", () => {
      * Main AJAX submit handler
      */
     async function submitHandler(event) {
+        if (!window.fetch || !window.FormData || !window.Promise) {
+            return;
+        }
+
         event.preventDefault(); // Always AJAX
 
         const emailValue = emailInput?.value.trim().toLowerCase() || "";
@@ -120,6 +124,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 return data;
             } catch (err) {
                 console.error("AJAX posting error:", err);
+
+                // fallback for older browsers
+                try {
+                    postForm.submit(); // this does NOT re-trigger the submit handler
+                } catch (e) {
+                    console.error("Fallback submit failed:", e);
+                }
+
                 return null;
             } finally {
                 setButtonOpacity(1);
@@ -159,6 +171,8 @@ document.addEventListener("DOMContentLoaded", () => {
         handleSuccessfulPost(data);
     }
 
-    // Attach submit listener
-    postForm.addEventListener("submit", submitHandler);
+    // Attach submit listener only if basic AJAX APIs exist
+    if (window.fetch && window.FormData && window.Promise) {
+        postForm.addEventListener("submit", submitHandler);
+    }
 });
