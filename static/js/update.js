@@ -72,6 +72,9 @@ const kkupdate = { name: "KK Thread Updating",
 						let quoteButton = document.getElementById(frs[i].id).querySelector(`.qu`);
 						quoteButton.addEventListener("click", kkqu._evquote);
 					}
+					// re add scroll liseners
+					kkqr.addScrollListener();
+
 					document.querySelector("#update-status").innerText = npc+" new post"+(npc>1 ? "s" : "");
 					if (kkupdate.total > 0) document.title = "("+kkupdate.total+") "+kkupdate.otitle;
 					if (kkimg) kkimg.startup();

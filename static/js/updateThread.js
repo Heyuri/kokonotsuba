@@ -41,6 +41,8 @@ function fetchNewReplies() {
 						threadElement.appendChild(reply); // Append each new reply
 					});
 
+					// re add scroll listeners
+					if(kkqr) kkqr.addScrollListener();
 
 					// start up image expanding js
 					if (kkimg) kkimg.startup();

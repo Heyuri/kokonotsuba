@@ -94,6 +94,8 @@ document.addEventListener("DOMContentLoaded", () => {
             formData.append(submitButton.name, submitButton.value);
         }
 
+        if (submitButton) submitButton.disabled = true;
+
         function setButtonOpacity(value) {
             if (submitButton) submitButton.style.opacity = value;
         }
@@ -135,6 +137,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 return null;
             } finally {
                 setButtonOpacity(1);
+                if (submitButton) submitButton.disabled = false;
+                if (window.kkqrLastSubmitButton) window.kkqrLastSubmitButton.disabled = false;
             }
         }
 

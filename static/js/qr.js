@@ -2,6 +2,8 @@
  */
 
 document.write(`<style id="qrs"></style>`);
+window.kkqrLastSubmitButton = null;
+
 
 /* Module */
 const kkqr = { name: "KK Quick Reply",
@@ -30,17 +32,7 @@ const kkqr = { name: "KK Quick Reply",
 		const resto = document.querySelector('input[name="resto"]');
 		if (!resto) return;
 
-		const hash = window.location.hash;
-		const match = hash.match(/^#q(\d+)$/);
-		if (!match) return;
-
-		const postNum = match[1];
-
-		// Find real post (id pattern *_123)
-		const quotedPost = document.querySelector(`[id$="_${postNum}"]`);
-		if (quotedPost) {
-			quotedPost.scrollIntoView({ behavior: "smooth", block: "center" });
-		}
+		kkqr.addScrollListener();
 
 		// Open Quick Reply
 		if (localStorage.getItem("useqr") == "true")
@@ -57,6 +49,19 @@ const kkqr = { name: "KK Quick Reply",
 		}, 50);
 
 		return true;
+	},
+	addScrollListener: function() {
+		const hash = window.location.hash;
+		const match = hash.match(/^#q(\d+)$/);
+		if (!match) return;
+
+		const postNum = match[1];
+
+		// Find real post (id pattern *_123)
+		const quotedPost = document.querySelector(`[id$="_${postNum}"]`);
+		if (quotedPost) {
+			quotedPost.scrollIntoView({ behavior: "smooth", block: "center" });
+		}
 	},
 	reset: function () {
 		if (!$id("postform")) return true;
@@ -172,6 +177,10 @@ const kkqr = { name: "KK Quick Reply",
 			qrBtn.type = "button"; // prevent automatic form submit
 			qrBtn.innerText = btn.innerText;
 			qrBtn.onclick = function() {
+				// disable the QR button to prevent repeat clicks
+				qrBtn.disabled = true;
+				window.kkqrLastSubmitButton = qrBtn;
+
 				const qrFile = document.getElementById("quickReplyUpFile");
 				let placeholder;
 
