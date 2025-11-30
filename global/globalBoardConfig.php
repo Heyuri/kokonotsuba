@@ -267,6 +267,14 @@ $config['ModuleSettings']['supportEmail'] = false;
 // enable conversion of <img src="..."> into [img]...[/img]
 $config['ModuleSettings']['supportImg'] = false;
 
+// enable [scroll] conversion
+$config['ModuleSettings']['supportScroll'] = true;
+
+// enable complete code-block system ([code], [code=lang], syntax highlighting, extraction)
+$config['ModuleSettings']['supportCodeBlocks'] = true;
+
+// enable conversion of [kao]...[/kao] into <span class="ascii">...</span>
+$config['ModuleSettings']['supportKao'] = true;
 
 $config['BAD_STRING'] = array(); // Deprecated by spamdb
 $config['BAD_FILEMD5'] = array(); // Deprecated by spamdb

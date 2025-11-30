@@ -30,7 +30,9 @@ class moduleMain extends abstractModuleMain {
 	private bool $supportURL = false;
 	private bool $supportEmail = false;
 	private bool $supportImg = false;
-
+	private bool $supportScroll = false;
+	private bool $supportCodeBlocks = false;
+	private bool $supportKao = false;
 
 	private readonly ?string $staticUrl;
 
@@ -70,6 +72,9 @@ class moduleMain extends abstractModuleMain {
 		$this->supportURL = $this->getConfig('ModuleSettings.supportURL', false);
 		$this->supportEmail = $this->getConfig('ModuleSettings.supportEmail', false);
 		$this->supportImg = $this->getConfig('ModuleSettings.supportImg', false);
+		$this->supportScroll = $this->getConfig('ModuleSettings.supportScroll', false);
+		$this->supportCodeBlocks = $this->getConfig('ModuleSettings.supportCodeBlocks', false);
+		$this->supportKao = $this->getConfig('ModuleSettings.supportKao', false);
 	}
 
 	private function initializeEmotes(): void {
@@ -148,57 +153,114 @@ class moduleMain extends abstractModuleMain {
 		
 	}
 	
-	public function onBeforeCommit(&$com, $file){
+	private function onBeforeCommit(&$com, $file){
 		$com = $this->bb2html($com, $file);
 	}
 
-	public function bb2html($string, $file){
+	private function bb2html($string, $file): string {
 		$this->urlcount=0; // Reset counter
 
 		// Extract [code] and [code=lang] blocks before processing other BBCode
-		$codeBlocks = [];
-		$string = preg_replace_callback('#\[code(?:=([a-zA-Z0-9_+\-]+))?\](.*?)\[/code\]#si', function($matches) use (&$codeBlocks) {
-			$key = '[[[CODEBLOCK_' . count($codeBlocks) . ']]]';
-			$lang = isset($matches[1]) ? strtolower($matches[1]) : null;
-			$content = preg_replace('#<br\s*/?>#i', "\n", $matches[2]);
-			if ($lang) {
-				$codeBlocks[$key] = '<pre class="code">' . $this->highlightCodeSyntax($content, $lang) . '</pre>';
-			} else {
-				$codeBlocks[$key] = '<pre class="code">' . htmlspecialchars_decode(htmlspecialchars($content, ENT_NOQUOTES, 'UTF-8')) . '</pre>';
-			}
-			return $key;
-		}, $string);
+		if($this->supportCodeBlocks) {
+			$codeBlocks = [];
+			$string = preg_replace_callback('#\[code(?:=([a-zA-Z0-9_+\-]+))?\](.*?)\[/code\]#si', function($matches) use (&$codeBlocks) {
+				$key = '[[[CODEBLOCK_' . count($codeBlocks) . ']]]';
+				$lang = isset($matches[1]) ? strtolower($matches[1]) : null;
+				$content = preg_replace('#<br\s*/?>#i', "\n", $matches[2]);
+				if ($lang) {
+					$codeBlocks[$key] = '<pre class="code">' . $this->highlightCodeSyntax($content, $lang) . '</pre>';
+				} else {
+					$codeBlocks[$key] = '<pre class="code">' . htmlspecialchars_decode(htmlspecialchars($content, ENT_NOQUOTES, 'UTF-8')) . '</pre>';
+				}
+				return $key;
+			}, $string);
+		} else {
+			$codeBlocks = [];
+		}
 
 		// Preprocess the BBCode to fix nesting issues
 		$string = $this->fixBBCodeNesting($string);
 
-		$string = preg_replace('#\[b\](.*?)\[/b\]#si', '<b>\1</b>', $string);
-		$string = preg_replace('#\[s\](.*?)\[/s\]#si', '<span class="spoiler">\1</span>', $string);
-		$string = preg_replace('#\[spoiler\](.*?)\[/spoiler\]#si', '<span class="spoiler">\1</span>', $string);
-		$string = preg_replace('#\[code\](.*?)\[/code\]#si', '<pre class="code">\1</pre>', $string);
-		$string = preg_replace('#\[i\](.*?)\[/i\]#si', '<i>\1</i>', $string);
-		$string = preg_replace('#\[u\](.*?)\[/u\]#si', '<u>\1</u>', $string);
-		$string = preg_replace('#\[p\](.*?)\[/p\]#si', '<p>\1</p>', $string);
-		$string = preg_replace('#\[sw\](.*?)\[/sw\]#si', '<pre class="sw">\1</pre>', $string);
-		$string = preg_replace('#\[kao\](.*?)\[/kao\]#si', '<span class="ascii">\1</span>', $string);
-		
-		$string = preg_replace('#\[color=(\S+?)\](.*?)\[/color\]#si', '<span style="color:\1;">\2</span>', $string);
+		// bold
+		if($this->supportBold) {
+			$string = preg_replace('#\[b\](.*?)\[/b\]#si', '<b>\1</b>', $string);
+		}
 
-		$string = preg_replace('#\[s([1-7])\](.*?)\[/s([1-7])\]#si', '<span class="fontSize\1">\2</span>', $string);
+		// spoiler
+		if($this->supportSpoiler) {
+			$string = preg_replace('#\[s\](.*?)\[/s\]#si', '<span class="spoiler">\1</span>', $string);
+			$string = preg_replace('#\[spoiler\](.*?)\[/spoiler\]#si', '<span class="spoiler">\1</span>', $string);
+		}
 
-		$string = preg_replace('#\[del\](.*?)\[/del\]#si', '<del>\1</del>', $string);
-		$string = preg_replace('#\[pre\](.*?)\[/pre\]#si', '<pre>\1</pre>', $string);
-		$string = preg_replace('#\[quote\](.*?)\[/quote\]#si', '<blockquote>\1</blockquote>', $string);
-		$string = preg_replace('#\[scroll\](.*?)\[/scroll\]#si', '<div class="scrollText">\1</div>', $string);
+		// code block (simple non-highlight tag)
+		if($this->supportCodeBlocks) {
+			$string = preg_replace('#\[code\](.*?)\[/code\]#si', '<pre class="code">\1</pre>', $string);
+		}
 
+		// italic
+		if($this->supportItalic) {
+			$string = preg_replace('#\[i\](.*?)\[/i\]#si', '<i>\1</i>', $string);
+		}
+
+		// underline
+		if($this->supportUnderline) {
+			$string = preg_replace('#\[u\](.*?)\[/u\]#si', '<u>\1</u>', $string);
+		}
+
+		// paragraph
+		if($this->supportParagraph) {
+			$string = preg_replace('#\[p\](.*?)\[/p\]#si', '<p>\1</p>', $string);
+		}
+
+		// sw block
+		if($this->supportSw) {
+			$string = preg_replace('#\[sw\](.*?)\[/sw\]#si', '<pre class="sw">\1</pre>', $string);
+		}
+
+		// kao/ascii
+		if($this->supportKao) {
+			$string = preg_replace('#\[kao\](.*?)\[/kao\]#si', '<span class="ascii">\1</span>', $string);
+		}
+
+		// color
+		if($this->supportColor) {
+			$string = preg_replace('#\[color=(\S+?)\](.*?)\[/color\]#si', '<span style="color:\1;">\2</span>', $string);
+		}
+
+		// font size
+		if($this->supportFontSize) {
+			$string = preg_replace('#\[s([1-7])\](.*?)\[/s([1-7])\]#si', '<span class="fontSize\1">\2</span>', $string);
+		}
+
+		// deleted text
+		if($this->supportDel) {
+			$string = preg_replace('#\[del\](.*?)\[/del\]#si', '<del>\1</del>', $string);
+		}
+
+		// preformatted
+		if($this->supportPre) {
+			$string = preg_replace('#\[pre\](.*?)\[/pre\]#si', '<pre>\1</pre>', $string);
+		}
+
+		// quote
+		if($this->supportQuote) {
+			$string = preg_replace('#\[quote\](.*?)\[/quote\]#si', '<blockquote>\1</blockquote>', $string);
+		}
+
+		// scroll
+		if($this->supportScroll) {
+			$string = preg_replace('#\[scroll\](.*?)\[/scroll\]#si', '<div class="scrollText">\1</div>', $string);
+		}
+
+		// ruby tags
 		if ($this->supportRuby){
-		//add ruby tag
 			$string = preg_replace('#\[ruby\](.*?)\[/ruby\]#si', '<ruby>\1</ruby>', $string);
 			$string = preg_replace('#\[rt\](.*?)\[/rt\]#si', '<rt>\1</rt>', $string);
 			$string = preg_replace('#\[rp\](.*?)\[/rp\]#si', '<rp>\1</rp>', $string);
 		}
 
-		if($this->URLTagMode){
+		// url tags
+		if($this->supportURL && $this->URLTagMode){
 			$string=preg_replace_callback('#\[url\](https?|ftp)(://\S+?)\[/url\]#si', array(&$this, '_URLConv1'), $string);
 			$string=preg_replace_callback('#\[url\](\S+?)\[/url\]#si', array(&$this, '_URLConv2'), $string);
 			$string=preg_replace_callback('#\[url=(https?|ftp)(://\S+?)\](.*?)\[/url\]#si', array(&$this, '_URLConv3'), $string);
@@ -206,22 +268,28 @@ class moduleMain extends abstractModuleMain {
 			$this->_URLExcced();
 		}
 
-		if($this->AATagMode){
+		// aa block
+		if($this->supportCodeBlocks && $this->AATagMode){
 			$string=preg_replace('#\[aa\](.*?)\[/aa\]#si', '<pre class="ascii">\1</pre>', $string);
 		}
 
-		$string = preg_replace('#\[email\](\S+?@\S+?\\.\S+?)\[/email\]#si', '<a href="mailto:\1">\1</a>', $string);
+		// email
+		if($this->supportEmail) {
+			$string = preg_replace('#\[email\](\S+?@\S+?\\.\S+?)\[/email\]#si', '<a href="mailto:\1">\1</a>', $string);
+			$string = preg_replace('#\[email=(\S+?@\S+?\\.\S+?)\](.*?)\[/email\]#si', '<a href="mailto:\1">\2</a>', $string);
+		}
 
-		$string = preg_replace('#\[email=(\S+?@\S+?\\.\S+?)\](.*?)\[/email\]#si', '<a href="mailto:\1">\2</a>', $string);
-		if (($this->ImgTagTagMode == 2) || ($this->ImgTagTagMode && !$file)){
+		// image
+		if($this->supportImg && (($this->ImgTagTagMode == 2) || ($this->ImgTagTagMode && !$file))){
 			$string = preg_replace('#\[img\](([a-z]+?)://([^ \n\r]+?))\[\/img\]#si', '<img class="bbcodeIMG" src="\1" style="border:1px solid \#021a40;" alt="\1">', $string);
 		}
 
+		// emotes
 		foreach ($this->emotes as $emo=>$url) {
 			$string = str_replace(":$emo:", "<img title=\":$emo:\" class=\"emote\" src=\"$url\" alt=\":$emo:\">", $string);
 		}
 
-		// Restore preserved code blocks
+		// restore preserved code blocks
 		if (!empty($codeBlocks)) {
 			$string = strtr($string, $codeBlocks);
 		}
