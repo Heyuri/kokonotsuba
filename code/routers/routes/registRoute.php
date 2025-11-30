@@ -259,8 +259,8 @@ class registRoute {
 
 		$postFileUploadController = null;
 	
-		if ((isset($_FILES['upfile']) || isset($_FILES['quickReplyUpFile'])) 
-			&& (is_uploaded_file($_FILES['upfile']['tmp_name']) || is_uploaded_file($_FILES['quickReplyUpFile']['tmp_name']))) {
+		if ((isset($_FILES['upfile']) || isset($_FILES['qr_upfile'])) 
+			&& (is_uploaded_file($_FILES['upfile']['tmp_name']) || is_uploaded_file($_FILES['qr_upfile']['tmp_name']))) {
 			$fileFromUpload = getUserFileFromRequest();
 	
 			$file = $fileFromUpload->getFile();
@@ -374,10 +374,7 @@ class registRoute {
 	}
 
 	// generate url for redirect after post
-	private function generateRedirectURL(int $no, string $email, int $threadResno, int $timeInMilliseconds): string {
-		// get the board static index
-		$redirect = $this->config['STATIC_INDEX_FILE'] . '?' . $timeInMilliseconds;
-		
+	private function generateRedirectURL(int $no, string $email, int $threadResno, int $timeInMilliseconds): string {		
 		// If $threadResno is 0, this is a new thread; set it to the current post number ($no)
 		if($threadResno === 0) {
 			$threadResno = $no;
@@ -393,7 +390,7 @@ class registRoute {
 			$redirect = $this->board->getBoardThreadURL($threadResno, $redirectReplyNumber);
 		} else {
 			// default to board index if neither noko nor dump
-			$redirect = $this->config['STATIC_INDEX_FILE'];
+			$redirect = $this->config['STATIC_INDEX_FILE'] . '?' . $timeInMilliseconds;
 		}
 
 		// return processed redirect
