@@ -11,8 +11,26 @@ class moduleMain extends abstractModuleMain {
 	private	$MaxURLCount = 2; // [url] tag upper limit (when the upper limit is exceeded, the tag is a trap tag [written to $URLTrapLog])
 	private	$URLTrapLog = './URLTrap.log'; // [url]trap label log file
 	private $AATagMode = 1; // Koko [0:Enabled 1:Disabled]
-	private $supportRuby = 1; // <ruby> tag (0: not supported 1: supported)
 	private $emotes = array();
+
+	// feature flags
+	private bool $supportBold = false;
+	private bool $supportSpoiler = false;
+	private bool $supportCode = false;
+	private bool $supportItalic = false;
+	private bool $supportUnderline = false;
+	private bool $supportParagraph = false;
+	private bool $supportSw = false;
+	private bool $supportColor = false;
+	private bool $supportFontSize = false;
+	private bool $supportDel = false;
+	private bool $supportPre = false;
+	private bool $supportQuote = false;
+	private bool $supportRuby = false;
+	private bool $supportURL = false;
+	private bool $supportEmail = false;
+	private bool $supportImg = false;
+
 
 	private readonly ?string $staticUrl;
 
@@ -34,6 +52,24 @@ class moduleMain extends abstractModuleMain {
 		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
 			$this->onBeforeCommit($com, $file);  // Call the method to modify the form
 		});
+
+		// initialize bbcode feature flags
+		$this->supportBold = $this->getConfig('ModuleSettings.supportBold', false);
+		$this->supportSpoiler = $this->getConfig('ModuleSettings.supportSpoiler', false);
+		$this->supportCode = $this->getConfig('ModuleSettings.supportCode', false);
+		$this->supportItalic = $this->getConfig('ModuleSettings.supportItalic', false);
+		$this->supportUnderline = $this->getConfig('ModuleSettings.supportUnderline', false);
+		$this->supportParagraph = $this->getConfig('ModuleSettings.supportParagraph', false);
+		$this->supportSw = $this->getConfig('ModuleSettings.supportSw', false);
+		$this->supportColor = $this->getConfig('ModuleSettings.supportColor', false);
+		$this->supportFontSize = $this->getConfig('ModuleSettings.supportFontSize', false);
+		$this->supportDel = $this->getConfig('ModuleSettings.supportDel', false);
+		$this->supportPre = $this->getConfig('ModuleSettings.supportPre', false);
+		$this->supportQuote = $this->getConfig('ModuleSettings.supportQuote', false);
+		$this->supportRuby = $this->getConfig('ModuleSettings.supportRuby', false);
+		$this->supportURL = $this->getConfig('ModuleSettings.supportURL', false);
+		$this->supportEmail = $this->getConfig('ModuleSettings.supportEmail', false);
+		$this->supportImg = $this->getConfig('ModuleSettings.supportImg', false);
 	}
 
 	private function initializeEmotes(): void {
@@ -478,35 +514,101 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function html2bb(&$string){
-		$string = preg_replace('#<b>(.*?)</b>#si', '[b]\1[/b]', $string);
-		$string = preg_replace('#<span class="spoiler">(.*?)</span>#si', '[s]\1[/s]', $string);
-		$string = preg_replace('#<span class="spoiler">(.*?)</span>#si', '[spoiler]\1[/spoiler]', $string);
-		$string = preg_replace('#<pre class="code">(.*?)</pre>#si', '[aa]\1[/aa]', $string);
-		$string = preg_replace('#<i>(.*?)</i>#si', '[i]\1[/i]', $string);
-		$string = preg_replace('#<u>(.*?)</u>#si', '[u]\1[/u]', $string);
-		$string = preg_replace('#<p>(.*?)</p>#si', '[p]\1[/p]', $string);
-		$string = preg_replace('#<pre class="sw">(.*?)</pre>#si', '[sw]\1[/sw]', $string);
+		// bold
+		if($this->supportBold) {
+			$string = preg_replace('#<b>(.*?)</b>#si', '[b]\1[/b]', $string);
+		}
 
-		$string = preg_replace('#<span style="color:(\S+?);">(.*?)</span>#si', '[color=\1]\2[/color]', $string);
+		// spoiler
+		if($this->supportSpoiler) {
+			$string = preg_replace('#<span class="spoiler">(.*?)</span>#si', '[s]\1[/s]', $string);
+			$string = preg_replace('#<span class="spoiler">(.*?)</span>#si', '[spoiler]\1[/spoiler]', $string);
+		}
 
-		$string = preg_replace('#<span class="fontSize([1-7])">(.*?)</span>#si', '[s\1]\2[/s\1]', $string);
+		// aa code block
+		if($this->supportCode) {
+			$string = preg_replace('#<pre class="code">(.*?)</pre>#si', '[aa]\1[/aa]', $string);
+		}
 
-		$string = preg_replace('#<del>(.*?)</del>#si', '[del]\1[/del]', $string);
-		$string = preg_replace('#<pre>(.*?)</pre>#si', '[pre]\1[/pre]', $string);
-		$string = preg_replace('#<blockquote>(.*?)</blockquote>#si', '[quote]\1[/quote]', $string);
+		// italic
+		if($this->supportItalic) {
+			$string = preg_replace('#<i>(.*?)</i>#si', '[i]\1[/i]', $string);
+		}
 
+		// underline
+		if($this->supportUnderline) {
+			$string = preg_replace('#<u>(.*?)</u>#si', '[u]\1[/u]', $string);
+		}
+
+		// paragraph
+		if($this->supportParagraph) {
+			$string = preg_replace('#<p>(.*?)</p>#si', '[p]\1[/p]', $string);
+		}
+
+		// sw code block
+		if($this->supportSw) {
+			$string = preg_replace('#<pre class="sw">(.*?)</pre>#si', '[sw]\1[/sw]', $string);
+		}
+
+		// color
+		if($this->supportColor) {
+			$string = preg_replace('#<span style="color:(\S+?);">(.*?)</span>#si', '[color=\1]\2[/color]', $string);
+		}
+
+		// font size
+		if($this->supportFontSize) {
+			$string = preg_replace('#<span class="fontSize([1-7])">(.*?)</span>#si', '[s\1]\2[/s\1]', $string);
+		}
+
+		// delete
+		if($this->supportDel) {
+			$string = preg_replace('#<del>(.*?)</del>#si', '[del]\1[/del]', $string);
+		}
+
+		// preformatted
+		if($this->supportPre) {
+			$string = preg_replace('#<pre>(.*?)</pre>#si', '[pre]\1[/pre]', $string);
+		}
+
+		// quote
+		if($this->supportQuote) {
+			$string = preg_replace('#<blockquote>(.*?)</blockquote>#si', '[quote]\1[/quote]', $string);
+		}
+
+		// ruby-related tags
 		if ($this->supportRuby){
 			$string = preg_replace('#<ruby>(.*?)</ruby>#si', '[ruby]\1[/ruby]', $string);
 			$string = preg_replace('#<rt>(.*?)</rt>#si', '[rt]\1[/rt]', $string);
 			$string = preg_replace('#<rp>(.*?)</rp>#si', '[rp]\1[/rp]', $string);
 		}
 
-		$string = preg_replace_callback('#<a class="bbcodeA" href="(https?|ftp)(://\S+?)" rel="nofollow noreferrer" target="_blank">(.*?)</a>#si', array(&$this, '_URLRevConv'), $string);
-		$string = preg_replace_callback('#<a class="bbcodeA" href="mailto:(\S+?@\S+?\\.\S+?)" rel="nofollow noreferrer" target="_blank">(.*?)</a>#si', array(&$this, '_EMailRevConv'), $string);
-		$string = preg_replace('#<img class="bbcodeIMG" src="(([a-z]+?)://([^ \n\r]+?))" style="border:1px solid \#021a40;" alt=".*?">#si', '[img]\1[/img]', $string);
+		// URL
+		if($this->supportURL) {
+			$string = preg_replace_callback(
+				'#<a class="bbcodeA" href="(https?|ftp)(://\S+?)" rel="nofollow noreferrer" target="_blank">(.*?)</a>#si',
+				array(&$this, '_URLRevConv'),
+				$string
+			);
+		}
 
+		// Email
+		if($this->supportEmail) {
+			$string = preg_replace_callback(
+				'#<a class="bbcodeA" href="mailto:(\S+?@\S+?\\.\S+?)" rel="nofollow noreferrer" target="_blank">(.*?)</a>#si',
+				array(&$this, '_EMailRevConv'),
+				$string
+			);
+		}
+
+		// image
+		if($this->supportImg) {
+			$string = preg_replace(
+				'#<img class="bbcodeIMG" src="(([a-z]+?)://([^ \n\r]+?))" style="border:1px solid \#021a40;" alt=".*?">#si',
+				'[img]\1[/img]',
+				$string
+			);
+		}
 	}
-
 
 	private function _URLExcced(){
 		if($this->urlcount > $this->MaxURLCount) {
