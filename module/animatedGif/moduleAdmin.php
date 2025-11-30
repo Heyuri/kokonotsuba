@@ -58,7 +58,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$animatedGifButtonUrl = $this->generateAnimatedGifUrl($attachment['postUid'], $attachment['fileId']);
 		$flag = ($attachment['isAnimated']) ? 'title="Use still image of GIF">g' : 'title="Use animated GIF">G';
 		
-		return '<span class="adminFunctions adminGIFFunction">[<a href="' . htmlspecialchars($animatedGifButtonUrl) . '" ' . $flag . '</a>]</span>';
+		return '<span class="adminFunctions adminGIFFunction attachmentButton">[<a href="' . htmlspecialchars($animatedGifButtonUrl) . '" ' . $flag . '</a>]</span>';
 	}
 
 	private function generateAnimatedGifUrl(int $postUid, int $fileId): string {
