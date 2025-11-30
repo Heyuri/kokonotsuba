@@ -492,6 +492,7 @@ class tableCreator {
 				mime_type VARCHAR(255) NULL,
 				is_hidden TINYINT(1) NOT NULL DEFAULT 0,
 				is_deleted TINYINT(1) NOT NULL DEFAULT 0,
+				is_animated TINYINT(1) NOT NULL DEFAULT 0,
 				timestamp_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,  -- Removed parentheses for CURRENT_TIMESTAMP
 
 				CONSTRAINT fk_file_post_uid FOREIGN KEY (post_uid) REFERENCES posts(post_uid) ON DELETE CASCADE,
