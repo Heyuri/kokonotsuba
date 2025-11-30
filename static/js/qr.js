@@ -12,8 +12,8 @@ const kkqr = { name: "KK Quick Reply",
 		}
 
 		kkqr.qrs.disabled = true;
-		if (!localStorage.getItem("useqr"))
-			localStorage.setItem("useqr", true);
+		if (localStorage.getItem("useqr") === null)
+			localStorage.setItem("useqr", false);
 		if (!$id("postform")) return true;
 		$id("formfuncs").insertAdjacentHTML("beforeend", '<span id="qrfunc"> | <a href="javascript:kkqr.openqr();">Quick reply</a></span>');
 		if (localStorage.getItem("useqr")=="true") {
@@ -43,7 +43,8 @@ const kkqr = { name: "KK Quick Reply",
 		}
 
 		// Open Quick Reply
-		kkqr.openqr();
+		if (localStorage.getItem("useqr") == "true")
+			kkqr.openqr();
 
 		// Trigger ONE sync so comment mirroring picks up whatever the page adds
 		setTimeout(() => {
