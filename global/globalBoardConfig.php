@@ -218,6 +218,56 @@ $config['ModuleSettings']['DICE_FACE_LIMIT'] = 9999;
 $config['ModuleSettings']['EMAIL_DICE_ROLL'] = false;
 $config['ModuleSettings']['COMMENT_DICE_ROLL'] = true;
 
+/* bbCode */
+// enable conversion of <b>...</b> into [b]...[/b]
+$config['ModuleSettings']['supportBold'] = true;
+
+// enable conversion of <span class="spoiler">...</span> into spoiler-related BBCodes
+$config['ModuleSettings']['supportSpoiler'] = true;
+
+// enable conversion of <pre class="code">...</pre> into [aa]...[/aa]
+$config['ModuleSettings']['supportCode'] = true;
+
+// enable conversion of <i>...</i> into [i]...[/i]
+$config['ModuleSettings']['supportItalic'] = true;
+
+// enable conversion of <u>...</u> into [u]...[/u]
+$config['ModuleSettings']['supportUnderline'] = true;
+
+// enable conversion of <p>...</p> into [p]...[/p]
+$config['ModuleSettings']['supportParagraph'] = true;
+
+// enable conversion of <pre class="sw">...</pre> into [sw]...[/sw]
+$config['ModuleSettings']['supportSw'] = true;
+
+// enable conversion of <span style="color:X;">...</span> into [color=X]...[/color]
+$config['ModuleSettings']['supportColor'] = true;
+
+// enable conversion of <span class="fontSizeN">...</span> into [sN]...[/sN]
+$config['ModuleSettings']['supportFontSize'] = true;
+
+// enable conversion of <del>...</del> into [del]...[/del]
+$config['ModuleSettings']['supportDel'] = true;
+
+// enable conversion of plain <pre>...</pre> into [pre]...[/pre]
+$config['ModuleSettings']['supportPre'] = true;
+
+// enable conversion of <blockquote>...</blockquote> into [quote]...[/quote]
+$config['ModuleSettings']['supportQuote'] = true;
+
+// enable conversion of <ruby> / <rt> / <rp> tags into ruby-related BBCodes
+$config['ModuleSettings']['supportRuby'] = true;
+
+// enable conversion of <a href="http(s)/ftp://...">...</a> into URL BBCodes via callback
+$config['ModuleSettings']['supportURL'] = false;
+
+// enable conversion of <a href="mailto:...">...</a> into email BBCodes via callback
+$config['ModuleSettings']['supportEmail'] = false;
+
+// enable conversion of <img src="..."> into [img]...[/img]
+$config['ModuleSettings']['supportImg'] = false;
+
+
 $config['BAD_STRING'] = array(); // Deprecated by spamdb
 $config['BAD_FILEMD5'] = array(); // Deprecated by spamdb
 $config['BANPATTERN'] = array(); // Deprecated by adminban module
