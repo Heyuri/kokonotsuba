@@ -34,9 +34,14 @@ const kkqr = { name: "KK Quick Reply",
 
 		kkqr.addScrollListener();
 
-		// Open Quick Reply
-		if (localStorage.getItem("useqr") == "true")
+		// Open Quick Reply only when arriving with a q-link (e.g. #q12345)
+		if (
+			localStorage.getItem("useqr") == "true"
+			&& /^#q\d+$/.test(location.hash)
+		)
 			kkqr.openqr();
+
+
 
 		// Trigger ONE sync so comment mirroring picks up whatever the page adds
 		setTimeout(() => {
