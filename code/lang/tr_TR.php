@@ -5,8 +5,15 @@ Pixmicat! dil dosyası - Turkish (TR) [tr_TR]
 if (!isset($language)) $language = Array();
 
 // pixmicat.php
+$language['board_not_found']            = 'Tahta bulunamadı!';
+$language['no_boards_found']            = 'Tahtalar bulunamadı!';
+$language['error_board_api']            = 'Tahta API\'si oluşturulurken hata meydana geldi';
+$language['error_invalid_board_id']     = 'Geçersiz tahta UID\'i!';
+$language['error_invalid_board_endpoint'] = 'Geçersiz tahta API endpoint sayfası';
+$language['error_invalid_thread_id']    = 'Sisteme geçersiz thread ID\'si verilmiş';
 $language['page_not_found']				= 'Üzgünüz, ulaşmaya çalıştığınız sayfa bulunamadı.';
-$language['thread_not_found']			= 'Yanıt vermeye çalıştığınız thread bulunamadı!';
+$language['thread_not_found']			= 'Thread bulunamadı!';
+$language['thread_deleted']			    = 'Bu thread silinmiş!';
 $language['del_head']					= 'Postu Sil: ';
 $language['del_img_only']				= 'Sadece Dosyayı Sil';
 $language['del_pass']					= 'Şifre: ';
@@ -23,7 +30,7 @@ $language['warn_sizelimit']				= 'Resim, depolama sınırı yüzünden yakında 
 $language['warn_oldthread']				= 'Thread eski olduğu için yakında silinecek.';
 $language['warn_locked']				= 'Thread admin tarafından kilitlendi.';
 $language['notice_omitted']				= '%1$ post dahil edilmedi. Görmek için yanıt butonuna basınız.';
-$language['post_name']					= '';
+$language['post_name']					= 'İsim: ';
 $language['post_category']				= 'Kategori: ';
 $language['regist_notpost']				= 'Post atabilmek için lütfen board üzerindeki formu kullanın.';
 $language['regist_nospam']				= 'Spambot karşıt sistemi aktive edildi.';
@@ -33,7 +40,7 @@ $language['regist_upload_exceedphp']	= 'Yükleme başarısız.<br>Dosya boyutu s
 $language['regist_upload_exceedcustom']	= 'Yükleme başarısız.<br>Dosya boyutu limiti aşıyor.';
 $language['regist_upload_incompelete']	= 'Yükleme başarısız.<br>Yükleme tamamlanamadı. Lütfen yeniden deneyin.';
 $language['regist_upload_direrror']		= 'Yükleme başarısız.<br>Yanlış dosya yükleme dizin ayarı. Lütfen sistem adminine haber verin.';
-$language['regist_upload_noimg']		= 'Eğer resim yüklemeden postlamaya çalışıyorsanız lütfen Resim Yok butonuna basın!';
+$language['regist_upload_noimg']		= 'Yeni threadler için bir resim gerekli!';
 $language['regist_upload_filenotfound']	= 'Yükleme başarısız.<br>Sunucu dosya yüklemeye izin vermiyor, erişim reddedildi, veya desteklenmeyen dosya türü.';
 $language['regist_upload_killincomp']	= 'DİKKAT: Yüklemeniz yanlış dosya boyutundan ötürü iptal edildi.';
 $language['regist_upload_notimage']		= 'Yükleme başarısız.<br>Resim dışında dosya türleri desteklenmiyor.';
@@ -43,9 +50,11 @@ $language['regist_uploaded']			= '%1$s Resmi Yüklendi.<br>';
 $language['regist_sakuradetected']		= 'Big5 sakura Japonca karakterleri tespit edildi.';
 $language['regist_withoutname']			= 'Lütfen isminizi girin.';
 $language['regist_withoutcomment']		= 'Eğer bir resim yüklemiyorsanız lütfen yanıt alanını doldurun.';
+$language['regist_withoutimage']		= 'Lütfen bir resim seçin.';
 $language['regist_nametoolong']			= 'İsim çok uzun.';
 $language['regist_emailtoolong']		= 'E-mail çok uzun.';
 $language['regist_topictoolong']		= 'Konu çok uzun.';
+$language['regist_passtoolong']		    = 'Şifre çok uzun.';
 $language['regist_longthreadnum']		= 'Yanıt verdiğiniz thread yanlış olabilir.';
 $language['admin']						= 'Admin';
 $language['deletor']					= 'Mod';
@@ -64,7 +73,7 @@ $language['fri']						= 'Cum';
 $language['sat']						= 'Cmt';
 $language['regist_successivepost']		= 'Kesintisiz postlamak için lütfen biraz bekleyin.';
 $language['regist_duplicatefile']		= 'Yükleme başarısız.<br>Aynı dosya yakın geçmişte yüklenmiş.';
-$language['regist_threaddeleted']		= 'Bu thread çok eski olduğu için silinmiş!';
+$language['regist_threaddeleted']		= 'Bu thread silinmiş!';
 $language['regist_threadlocked']		= 'Thread admin tarafından kilitlenmiş!';
 $language['regist_redirect']			= '%1$s Yönlendiriliyor... <p>Eğer tarayıcınız otomatik olarak yönlendirmiyorsa tıklayın: <a href="%2$s">Geri dön</a></p>';
 $language['del_notchecked']				= 'Silinmek üzere bir şey seçilmedi. Lütfen geri dönüp seçin.';
@@ -102,6 +111,7 @@ $language['search_target_number']		= 'No.';
 $language['search_method']				= 'Metod';
 $language['search_method_and']			= 'VE';
 $language['search_method_or']			= 'YA DA';
+$language['search_match_word']			= 'Tam kelime eşleşsin mi?';
 $language['search_submit_btn']			= 'Ara';
 $language['search_notfound']			= 'Belirtilen anahatar kelimeler için sonuç bulunamadı.';
 $language['search_back']				= 'Geri';
@@ -133,7 +143,7 @@ $language['info_basic_urllinking']		= 'URL Auto Linking';
 $language['info_0no1yes']				= '(Yes:1 No:0)';
 $language['info_basic_com_limit']		= 'Maksimum yorum boyutu';
 $language['info_basic_com_after']		= ' Bayt';
-$language['info_basic_anonpost']		= 'Anonim  Paylaşma';
+$language['info_basic_anonpost']		= 'Anonim Paylaşma';
 $language['info_basic_anonpost_opt']	= '(Force anonim:2 evet:1 hayır:0)';
 $language['info_basic_del_incomplete']	= 'Delete incomplete images';
 $language['info_basic_use_sample']		= 'Küçük resimleri kullan (Kalite: %1$s)';
@@ -187,7 +197,7 @@ $language['form_contpost']				= 'Continuous';
 $language['form_category']				= 'kategori';
 $language['form_category_notice']		= ' (ayırmak, için kullanın)';
 $language['form_delete_password']		= 'Şifre';
-$language['form_delete_password_notice']= ' (for deletion)';
+$language['form_delete_password_notice']= ' (silebilmek için)';
 $language['form_notice']				= '<li>İzin verilen dosya boyutları: %1$s</li><li>Maximum file size allowed is %2$s KB.</li><li>Images greater than %3$s * %4$s pixels will be thumbnailed.</li>';
 $language['form_notice_storage_limit']	= '<li>Current storage usage: %1$s KB / %2$s KB</li>';
 $language['form_notice_noscript']		= '*** You disabled JavaScript, but this won\'t affect you when browsing and posting.';
@@ -197,5 +207,8 @@ $language['ip_dnsbl_banned']			= 'Listed in DNSBL(%1$s) Blacklist';
 
 // mainscript.js // regist_withoutcomment,regist_upload_notsupport,js_convert_sakura
 $language['js_convert_sakura']			= 'Big5 sakura Japanese characters detected, please try to convert to standard one.';
+
+$language['attachment_not_found']       = 'Dosya bulunamadı!';
+$language['no_attachment_ever']         = 'Bu gönderide zaten hiçbir dosya yoktu!'
 
 ?>
