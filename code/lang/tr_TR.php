@@ -29,7 +29,7 @@ $language['reply_btn']					= 'Yanıtla';
 $language['warn_sizelimit']				= 'Resim, depolama sınırı yüzünden yakında silinecek.';
 $language['warn_oldthread']				= 'Thread eski olduğu için yakında silinecek.';
 $language['warn_locked']				= 'Thread admin tarafından kilitlendi.';
-$language['notice_omitted']				= '%1$ post dahil edilmedi. Görmek için yanıt butonuna basınız.';
+$language['notice_omitted']				= '%1$s post dahil edilmedi. Görmek için yanıt butonuna basınız.';
 $language['post_name']					= 'İsim: ';
 $language['post_category']				= 'Kategori: ';
 $language['regist_notpost']				= 'Post atabilmek için lütfen board üzerindeki formu kullanın.';
@@ -212,4 +212,5 @@ $language['attachment_not_found']       = 'Dosya bulunamadı!';
 $language['no_attachment_ever']         = 'Bu postta zaten hiçbir dosya yoktu!'
 
 ?>
+
 
