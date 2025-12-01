@@ -25,7 +25,7 @@ $language['next_page']					= 'Sonraki';
 $language['last_page']					= 'Son';
 $language['img_sample']					= 'Önizleme';
 $language['img_filename']				= 'Dosya: ';
-$language['reply_btn']					= 'Yanıt';
+$language['reply_btn']					= 'Yanıtla';
 $language['warn_sizelimit']				= 'Resim, depolama sınırı yüzünden yakında silinecek.';
 $language['warn_oldthread']				= 'Thread eski olduğu için yakında silinecek.';
 $language['warn_locked']				= 'Thread admin tarafından kilitlendi.';
@@ -100,7 +100,7 @@ $language['admin_archive_btn']			= 'A';
 $language['admin_stop_btn']				= 'Stop';
 $language['admin_totalsize']			= '[Total size of images: <b>%1$s</b> KB ]';
 $language['search_disabled']			= 'Search is disabled!';
-$language['search_top']					= 'Search';
+$language['search_top']					= 'Ara';
 $language['search_notice']				= '<li>Lütfen anahtar kelimeleri girip aramanın hedefini seçin, ve <q>Ara</q> butonuna basın.</li><li>Aralarında boşluk bırakarak birden fazla anahtar kelimeyi arayabilirsiniz.</li><li>Arama metodunu (<q>VE araması</q> ve <q>YA DA araması</q>) yaparak farklı şekillerde birden fazla anahtar kelime arayabilirsiniz.</li>';
 $language['search_keyword']				= 'Anahtar kelime';
 $language['search_target']				= 'Hedef';
@@ -179,7 +179,7 @@ $language['action_main_failed']			= 'başarısız oldu!';
 
 // lib_common.php
 $language['head_home']					= 'Home';
-$language['head_search']				= 'arama';
+$language['head_search']				= 'Ara';
 $language['head_info']					= 'Bilgi';
 $language['head_admin']					= 'Admin';
 $language['head_refresh']				= 'Dön';
@@ -198,7 +198,7 @@ $language['form_category']				= 'kategori';
 $language['form_category_notice']		= ' (ayırmak, için kullanın)';
 $language['form_delete_password']		= 'Şifre';
 $language['form_delete_password_notice']= ' (silebilmek için)';
-$language['form_notice']				= '<li>İzin verilen dosya boyutları: %1$s</li><li>Maximum file size allowed is %2$s KB.</li><li>Images greater than %3$s * %4$s pixels will be thumbnailed.</li>';
+$language['form_notice']				= '<li>İzin verilen dosya türleri: %1$s</li><li>En fazla %2$s KB yüklenebilir.</li><li>%3$s * %4$s piksel boyutlarından büyük resimler önizlenecek.</li>';
 $language['form_notice_storage_limit']	= '<li>Current storage usage: %1$s KB / %2$s KB</li>';
 $language['form_notice_noscript']		= '*** You disabled JavaScript, but this won\'t affect you when browsing and posting.';
 $language['error_back']					= 'Dön';
@@ -209,6 +209,7 @@ $language['ip_dnsbl_banned']			= 'Listed in DNSBL(%1$s) Blacklist';
 $language['js_convert_sakura']			= 'Big5 sakura Japanese characters detected, please try to convert to standard one.';
 
 $language['attachment_not_found']       = 'Dosya bulunamadı!';
-$language['no_attachment_ever']         = 'Bu gönderide zaten hiçbir dosya yoktu!'
+$language['no_attachment_ever']         = 'Bu postta zaten hiçbir dosya yoktu!'
 
 ?>
+
