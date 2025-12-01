@@ -621,10 +621,10 @@ class vichanBoardImporter {
 			$fileHeight = $file['height'] ?? 0;
 
 			// get thumb width
-			$thumbWidth = $file['thumbWidth'] ?? 0;
+			$thumbWidth = $file['thumbwidth'] ?? 0;
 
 			// get thumb height
-			$thumbHeight = $file['thumbHeight'] ?? 0;
+			$thumbHeight = $file['thumbheight'] ?? 0;
 
 			// finally, insert the extracted data
 			$this->fileService->addFile(
