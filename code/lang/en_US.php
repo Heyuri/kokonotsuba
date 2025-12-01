@@ -209,6 +209,7 @@ $language['ip_dnsbl_banned']			= 'Listed in DNSBL(%1$s) Blacklist';
 $language['js_convert_sakura']			= 'Big5 sakura Japanese characters detected, please try to convert to standard one.';
 
 $language['attachment_not_found']        = 'Attachment not found!';
-$language['no_attachment_ever']         = 'There was no attachment on this post in the first place!'
+$language['no_attachment_ever']         = 'There was no attachment on this post in the first place!';
+$language['blanket_error'] = "There has been an error. (;´Д`)";
 
 ?>

@@ -54,7 +54,7 @@ try {
 	PMCLibrary::getLoggerInstance($globalConfig['ERROR_HANDLER_FILE'], 'Global')
 		->error($e->getMessage());
 
-	$softErrorHandler->errorAndExit("There has been an error. (;´Д`)");
+	$softErrorHandler->errorAndExit(_T('blanket_error'));
 }
 
 clearstatcache();
