@@ -259,8 +259,11 @@ class registRoute {
 
 		$postFileUploadController = null;
 	
-		if ((isset($_FILES['upfile']) || isset($_FILES['qr_upfile'])) 
-			&& (is_uploaded_file($_FILES['upfile']['tmp_name']) || is_uploaded_file($_FILES['qr_upfile']['tmp_name']))) {
+		$hasUpfile = !empty($_FILES['upfile']['tmp_name']) && is_uploaded_file($_FILES['upfile']['tmp_name']);
+		$hasQuickReplyFile = !empty($_FILES['qr_upfile']['tmp_name']) && is_uploaded_file($_FILES['qr_upfile']['tmp_name']);
+
+		if ($hasUpfile || $hasQuickReplyFile) {
+
 			$fileFromUpload = getUserFileFromRequest();
 	
 			$file = $fileFromUpload->getFile();
