@@ -260,7 +260,7 @@ class registRoute {
 		$postFileUploadController = null;
 	
 		$hasUpfile = !empty($_FILES['upfile']['tmp_name']) && is_uploaded_file($_FILES['upfile']['tmp_name']);
-		$hasQuickReplyFile = !empty($_FILES['qr_upfile']['tmp_name']) && is_uploaded_file($_FILES['qr_upfile']['tmp_name']);
+		$hasQuickReplyFile = !empty($_FILES['quickReplyUpFile']['tmp_name']) && is_uploaded_file($_FILES['quickReplyUpFile']['tmp_name']);
 
 		if ($hasUpfile || $hasQuickReplyFile) {
 
