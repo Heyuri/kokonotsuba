@@ -25,7 +25,7 @@ $language['next_page']					= 'Sonraki';
 $language['last_page']					= 'Son';
 $language['img_sample']					= 'Önizleme';
 $language['img_filename']				= 'Dosya: ';
-$language['reply_btn']					= 'Yanıt';
+$language['reply_btn']					= 'Yanıtla';
 $language['warn_sizelimit']				= 'Resim, depolama sınırı yüzünden yakında silinecek.';
 $language['warn_oldthread']				= 'Thread eski olduğu için yakında silinecek.';
 $language['warn_locked']				= 'Thread admin tarafından kilitlendi.';
@@ -212,3 +212,4 @@ $language['attachment_not_found']       = 'Dosya bulunamadı!';
 $language['no_attachment_ever']         = 'Bu postta zaten hiçbir dosya yoktu!'
 
 ?>
+
