@@ -84,7 +84,7 @@ $config['ModuleList'] = array(
 	'posterID' => true,
 	'dice' => true,
 	'tripcode' => true,
-	'showIp' => true,
+	'displayIp' => true,
 	/* misc */
 	'soudane' => true,
 	'privateMessage' => true,
