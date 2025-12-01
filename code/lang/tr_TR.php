@@ -7,11 +7,11 @@ if (!isset($language)) $language = Array();
 // pixmicat.php
 $language['board_not_found']            = 'Tahta bulunamadı!';
 $language['no_boards_found']            = 'Tahtalar bulunamadı!';
-$language['error_board_api']            = 'Tahta API\'si oluşturulurken hata meydana geldi.';
-$language['page_not_found']				= 'Üzgünüz, ulaşmaya çalıştığınız sayfa bulunamadı.';
+$language['error_board_api']            = 'Tahta API\'si oluşturulurken hata meydana geldi';
 $language['error_invalid_board_id']     = 'Geçersiz tahta UID\'i!';
 $language['error_invalid_board_endpoint'] = 'Geçersiz tahta API endpoint sayfası';
 $language['error_invalid_thread_id']    = 'Sisteme geçersiz thread ID\'si verilmiş';
+$language['page_not_found']				= 'Üzgünüz, ulaşmaya çalıştığınız sayfa bulunamadı.';
 $language['thread_not_found']			= 'Thread bulunamadı!';
 $language['thread_deleted']			    = 'Bu thread silinmiş!';
 $language['del_head']					= 'Postu Sil: ';
