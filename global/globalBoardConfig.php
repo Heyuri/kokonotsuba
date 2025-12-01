@@ -361,7 +361,6 @@ $config['IRC_WH'] = '';
 
 
 $config['TIME_ZONE'] = '0'; // Timezones, 0 is UTC. Example: '-4' for New York, or '9' for Japan
-$config['PIXMICAT_LANGUAGE'] = 'en_US'; // Language (available languages in /lib/lang/)
 $config['HTTP_UPLOAD_DIFF'] = 50; 
 
 
