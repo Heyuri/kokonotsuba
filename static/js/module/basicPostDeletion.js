@@ -139,7 +139,15 @@
                 // hide entire post after deletion
                 postEl.style.transition = 'opacity 0.3s ease';
                 postEl.style.opacity = '0';
-                setTimeout(() => postEl.remove(), 300);
+                
+                setTimeout(() => {
+                    const parent = postEl.closest('.reply-container');
+                    if (parent) {
+                        parent.remove();
+                    } else {
+                        postEl.remove();
+                    }
+                }, 300);
             }
         } catch (err) {
             console.error("Error: " + (failMessages[action] || 'Failed to process deletion.') + " Reason: " + err.message);
