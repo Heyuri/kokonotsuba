@@ -292,7 +292,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			// lock original thread and duplicate contents to destination board
 			$newThreadUid = $this->copyThreadToBoard($attachments, $threadUid, $destinationBoard);
 
-			$newThreadData = $this->moduleContext->threadService->getThreadByUID($newThreadUid)['thread'];
+			$newThreadData = $this->moduleContext->threadService->getThreadByUID($newThreadUid, true)['thread'];
 
 			// leave shadow post
 			$this->leavePostInShadowThread($threadData, $hostBoard, $newThreadData, $destinationBoard);
@@ -349,7 +349,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			}
 	
 			// Retrieve thread and validate
-			$thread = $this->moduleContext->threadService->getThreadByUID($thread_uid);
+			$thread = $this->moduleContext->threadService->getThreadByUID($thread_uid, true);
 			if (!$thread) {
 				throw new BoardException("Thread not found");
 			}
@@ -410,7 +410,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		if (!$thread_uid) {
 			throw new InvalidArgumentException("No thread uid selected");
 		}
-		$thread = $this->moduleContext->threadService->getThreadByUID($thread_uid)['thread'];
+		$thread = $this->moduleContext->threadService->getThreadByUID($thread_uid, true)['thread'];
 		$threadNumber = $this->moduleContext->threadRepository->resolveThreadNumberFromUID($thread_uid);
 		$threadParentBoard = searchBoardArrayForBoard($thread['boardUID']);
 
