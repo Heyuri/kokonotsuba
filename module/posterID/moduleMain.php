@@ -54,7 +54,7 @@ class moduleMain extends abstractModuleMain {
 			$email, 
 			$roleLevel,
 			$this->getConfig('IDSEED'),
-			empty($_POST['formModIdOveride']),
+			!empty($_POST['formModIdOveride']),
 		);
 	}
 
