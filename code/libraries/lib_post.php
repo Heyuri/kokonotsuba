@@ -267,9 +267,9 @@ function generatePostHash(
 	bool $formModOveride): string {
 	if (stristr($email, 'sage')) {
 		return ' Heaven';
-	} elseif ($roleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN && !$formModOveride) {
+	} elseif ($roleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN && $formModOveride) {
 		return ' ADMIN';
-	} elseif ($roleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR && !$formModOveride) {
+	} elseif ($roleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR && $formModOveride) {
 		return ' MODERATOR';
 	} else {
 		$baseString = $ip . $idSeed . $threadNumber;
