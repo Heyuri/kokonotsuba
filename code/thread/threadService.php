@@ -4,10 +4,10 @@ class threadService {
 	private array $allowedOrderFields;
 
 	public function __construct(
-		private readonly threadRepository $threadRepository,
-		private readonly postRepository $postRepository,
-		private readonly postService $postService,
-		private readonly transactionManager $transactionManager
+		private threadRepository $threadRepository,
+		private postRepository $postRepository,
+		private postService $postService,
+		private transactionManager $transactionManager
 	) {
 		$this->allowedOrderFields = ['post_op_number', 'post_op_post_uid', 'last_bump_time', 'last_reply_time', 'insert_id', 'post_uid'];
 	}
@@ -122,7 +122,7 @@ class threadService {
 			$thread_uid,
 			$destinationBoard
 		) {
-			$posts = $this->threadRepository->getPostsFromThread($thread_uid);
+			$posts = $this->threadRepository->getPostsFromThread($thread_uid, true);
 			if (empty($posts)) {
 				throw new Exception("No posts found for thread UID: $thread_uid");
 			}
@@ -171,7 +171,9 @@ class threadService {
 			$destinationBoard,
 			&$moveData
 		) {
-			$posts = $this->threadRepository->getPostsFromThread($originalThreadUid);
+			// get all posts from the original thread
+			$posts = $this->threadRepository->getPostsFromThread($originalThreadUid, true);
+						
 			if (empty($posts)) {
 				throw new Exception("No posts found for thread UID: $originalThreadUid");
 			}
@@ -219,6 +221,9 @@ class threadService {
 
 			$this->threadRepository->updateThreadOpPostUid($newThreadUid, $opPostUid);
 
+			// go through and mark replies in the new thread that were deleted in the old one
+			$this->markDeletedPosts($newPostsData, $posts, $postUidMapping);
+
 			$moveData = [
 				'threadUid'   => $newThreadUid,
 				'postUidMap'  => $postUidMapping
@@ -257,6 +262,13 @@ class threadService {
 			$oldQuote = $matches[1];
 			return isset($postNumberMapping[$oldQuote]) ? '&gt;&gt;' . $postNumberMapping[$oldQuote] : $matches[0];
 		}, $comment);
+	}
+
+	private function markDeletedPosts(array $newPostsData, array $oldPosts, array $postUidMapping): void {
+		// loop through and insert new deleted post entries for each new post that was deleted in the original thread
+		foreach($newPostsData as $newPost) {
+
+		}
 	}
 
 	public function pruneByAmount(array $threadUidList, int $maxThreadAmount): ?array {
