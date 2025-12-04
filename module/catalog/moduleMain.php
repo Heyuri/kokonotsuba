@@ -33,7 +33,7 @@ class moduleMain extends abstractModuleMain {
 
 	private function onRenderTopLink(string &$linkbar): void {
 
-		$linkbar .= ' [<a href="'.$this->myPage.'">Catalog</a>] ';
+		$linkbar .= ' [<a href="'.$this->myPage.'">' . _T('head_catalog') . '</a>] ';
 	}
 
 	private function drawSortOptions($sort = 'bump') {
@@ -145,5 +145,6 @@ class moduleMain extends abstractModuleMain {
 		$dat .= $this->moduleContext->board->getBoardFooter();
 		echo $dat;
 	}
+
 
 }
