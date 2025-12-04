@@ -179,6 +179,7 @@ $language['action_main_failed']			= 'failed!';
 
 // lib_common.php
 $language['head_home']					= 'Home';
+$language['head_catalog']				= 'Catalog';
 $language['head_search']				= 'Search';
 $language['head_info']					= 'Info';
 $language['head_admin']					= 'Admin';
@@ -213,3 +214,4 @@ $language['no_attachment_ever']         = 'There was no attachment on this post 
 $language['blanket_error'] = "There has been an error. (;´Д`)";
 
 ?>
+
