@@ -50,7 +50,6 @@
 	<script src="{$STATIC_URL}js/banWindowLibrary.js" defer></script>
 	<script src="{$STATIC_URL}js/checkboxDeletion.js" defer></script>
 	<script src="{$STATIC_URL}js/posting.js" defer></script>
-	<script src="{$STATIC_URL}js/youtubeEmbed.js" defer></script>
 	<script src="{$STATIC_URL}js/postDeletionLib.js" defer></script>
 	<!--&IF($MODULE_HEADER_HTML,'{$MODULE_HEADER_HTML}','')-->
 </head>
@@ -290,3 +289,4 @@
 	{$PAGENAV}
 	<div id="postarea2"></div>
 <!--/&MAIN-->
+

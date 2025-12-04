@@ -178,7 +178,8 @@ $language['action_main_success']		= 'başarılı!';
 $language['action_main_failed']			= 'başarısız oldu!';
 
 // lib_common.php
-$language['head_home']					= 'Home';
+$language['head_home']					= 'Ana Sayfa';
+$language['head_catalog']				= 'Katalog';
 $language['head_search']				= 'Ara';
 $language['head_info']					= 'Bilgi';
 $language['head_admin']					= 'Admin';
@@ -205,6 +206,15 @@ $language['error_back']					= 'Dön';
 $language['ip_banned']					= 'IP/Ana Bilgisayar Adı Kara Listesinde Listelendi';
 $language['ip_dnsbl_banned']			= 'Listed in DNSBL(%1$s) Blacklist';
 
+/* modules */
+// onlineCounter
+$language['online_counter_text']            = 'Son %3$s %4$s içinde %1$s özgün %2$s (sadece okuyanlar dahil)';
+$language['online_counter_user_singular']   = 'kullanıcı';
+$language['online_counter_user_multiple']   = 'kullanıcı';
+$language['online_counter_minute_singular'] = 'dakika';
+$language['online_counter_minute_multiple'] = 'dakika';
+
+
 // mainscript.js // regist_withoutcomment,regist_upload_notsupport,js_convert_sakura
 $language['js_convert_sakura']			= 'Big5 sakura Japanese characters detected, please try to convert to standard one.';
 
@@ -213,3 +223,5 @@ $language['no_attachment_ever']         = 'Bu postta zaten hiçbir dosya yoktu!'
 $language['blanket_error'] = "Bir yerlerde bir şeyler yanlış gitti. (;´Д`)";
 
 ?>
+
+

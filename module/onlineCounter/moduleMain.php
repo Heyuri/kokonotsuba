@@ -142,13 +142,25 @@ class moduleMain extends abstractModuleMain {
 		$userCount = $this->getUserCount();
 
 		// Handle pluralization
-		$userWord = $userCount === 1 ? 'user' : 'users';
-		$minuteWord = $this->timeout === 1 ? 'minute' : 'minutes';
+		$userWordKey   = $userCount === 1 ? 'online_counter_user_singular'   : 'online_counter_user_multiple';
+		$minuteWordKey = $this->timeout === 1 ? 'online_counter_minute_singular' : 'online_counter_minute_multiple';
+
+		$userWord   = _T($userWordKey);
+		$minuteWord = _T($minuteWordKey);
+
+		// Build full localized counter text
+        $userCounterText = _T(
+			'online_counter_text',
+			'<span id="countnumber">'.$userCount.'</span>',
+			$userWord,
+			$this->timeout,
+			$minuteWord
+		);
 
 		$userCounterHTML = '
 			<li id="counterListItemJS" class="hidden">
 				<div data-timeout="'.$this->timeout.'" data-modurl="'.$this->modulePageUrl.'&usercountjson" id="usercounter">
-					<span id="countnumber">' . $userCount . '</span> unique ' . $userWord . ' in the last ' . $this->timeout . ' ' . $minuteWord . ' (including lurkers)
+					' . $userCounterText . '
 				</div>
 			</li>';
 
@@ -216,10 +228,23 @@ class moduleMain extends abstractModuleMain {
 			<body id="counterIframeBody">';
 
 		$userCount = $this->getUserCount();
-		$userWord = $userCount === 1 ? 'user' : 'users';
-		$minuteWord = $this->timeout === 1 ? 'minute' : 'minutes';
 
-		$userCounterHTML = '<div id="usercounter" value="'.$this->timeout.'"><span id="countnumber">' . $userCount . '</span> unique ' . $userWord . ' in the last ' . $this->timeout . ' ' . $minuteWord . ' (including lurkers)</div>';
+		// Handle pluralization
+		$userWordKey   = $userCount === 1 ? 'online_counter_user_singular'   : 'online_counter_user_multiple';
+		$minuteWordKey = $this->timeout === 1 ? 'online_counter_minute_singular' : 'online_counter_minute_multiple';
+
+		$userWord   = _T($userWordKey);
+		$minuteWord = _T($minuteWordKey);
+
+		$userCounterText = _T(
+			'online_counter_text',
+			'<span id="countnumber">'.$userCount.'</span>',
+			$userWord,
+			$this->timeout,
+			$minuteWord
+		);
+
+		$userCounterHTML = '<div id="usercounter" value="'.$this->timeout.'">'.$userCounterText.'</div>';
 		$pageHTML .= $userCounterHTML;
 		$pageHTML .= '</body></html>';
 		

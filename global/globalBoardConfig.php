@@ -220,62 +220,25 @@ $config['ModuleSettings']['EMAIL_DICE_ROLL'] = false;
 $config['ModuleSettings']['COMMENT_DICE_ROLL'] = true;
 
 /* bbCode */
-// enable conversion of <b>...</b> into [b]...[/b]
-$config['ModuleSettings']['supportBold'] = true;
-
-// enable conversion of <span class="spoiler">...</span> into spoiler-related BBCodes
-$config['ModuleSettings']['supportSpoiler'] = true;
-
-// enable conversion of <pre class="code">...</pre> into [aa]...[/aa]
-$config['ModuleSettings']['supportCode'] = true;
-
-// enable conversion of <i>...</i> into [i]...[/i]
-$config['ModuleSettings']['supportItalic'] = true;
-
-// enable conversion of <u>...</u> into [u]...[/u]
-$config['ModuleSettings']['supportUnderline'] = true;
-
-// enable conversion of <p>...</p> into [p]...[/p]
-$config['ModuleSettings']['supportParagraph'] = true;
-
-// enable conversion of <pre class="sw">...</pre> into [sw]...[/sw]
-$config['ModuleSettings']['supportSw'] = true;
-
-// enable conversion of <span style="color:X;">...</span> into [color=X]...[/color]
-$config['ModuleSettings']['supportColor'] = true;
-
-// enable conversion of <span class="fontSizeN">...</span> into [sN]...[/sN]
-$config['ModuleSettings']['supportFontSize'] = true;
-
-// enable conversion of <del>...</del> into [del]...[/del]
-$config['ModuleSettings']['supportDel'] = true;
-
-// enable conversion of plain <pre>...</pre> into [pre]...[/pre]
-$config['ModuleSettings']['supportPre'] = true;
-
-// enable conversion of <blockquote>...</blockquote> into [quote]...[/quote]
-$config['ModuleSettings']['supportQuote'] = true;
-
-// enable conversion of <ruby> / <rt> / <rp> tags into ruby-related BBCodes
-$config['ModuleSettings']['supportRuby'] = true;
-
-// enable conversion of <a href="http(s)/ftp://...">...</a> into URL BBCodes via callback
-$config['ModuleSettings']['supportURL'] = false;
-
-// enable conversion of <a href="mailto:...">...</a> into email BBCodes via callback
-$config['ModuleSettings']['supportEmail'] = false;
-
-// enable conversion of <img src="..."> into [img]...[/img]
-$config['ModuleSettings']['supportImg'] = false;
-
-// enable [scroll] conversion
-$config['ModuleSettings']['supportScroll'] = true;
-
-// enable complete code-block system ([code], [code=lang], syntax highlighting, extraction)
-$config['ModuleSettings']['supportCodeBlocks'] = true;
-
-// enable conversion of [kao]...[/kao] into <span class="ascii">...</span>
-$config['ModuleSettings']['supportKao'] = true;
+$config['ModuleSettings']['supportBold'] = true; // [b]...[/b] into <b>...</b>
+$config['ModuleSettings']['supportSpoiler'] = true; // [spoiler]...[/spoiler] into <span class="spoiler">...</span>
+$config['ModuleSettings']['supportCode'] = true; // [code]...[/code] into <pre class="code">...</pre>
+$config['ModuleSettings']['supportCodeBlocks'] = true; // complete code-block system ([code], [code=lang], syntax highlighting, extraction)
+$config['ModuleSettings']['supportItalic'] = true; // [i]...[/i] into <i>...</i>
+$config['ModuleSettings']['supportUnderline'] = true; // [u]...[/u] into <u>...</u>
+$config['ModuleSettings']['supportParagraph'] = true; // [p]...[/p] into <p>...</p>
+$config['ModuleSettings']['supportSw'] = true; // [sw]...[/sw] into <pre class="sw">...</pre> (Strange World-style AA)
+$config['ModuleSettings']['supportColor'] = true; // [color=X]...[/color] into <span style="color:X;">...</span>
+$config['ModuleSettings']['supportFontSize'] = true; // [sN]...[/sN] into <span class="fontSizeN">...</span>
+$config['ModuleSettings']['supportDel'] = true; // [del]...[/del] into <del>...</del>
+$config['ModuleSettings']['supportPre'] = true; // [pre]...[/pre] into <pre>...</pre>
+$config['ModuleSettings']['supportQuote'] = true; // [quote]...[/quote] into <blockquote>...</blockquote>
+$config['ModuleSettings']['supportRuby'] = true; // ruby-related BBCodes into <ruby> / <rt> / <rp> tags
+$config['ModuleSettings']['supportURL'] = false; // URL BBCodes via callback into <a href="http(s)/ftp://...">...</a>
+$config['ModuleSettings']['supportEmail'] = false; // email BBCodes via callback into <a href="mailto:...">...</a>
+$config['ModuleSettings']['supportImg'] = false; // [img]...[/img] into <img src="...">
+$config['ModuleSettings']['supportScroll'] = true; // [scroll] conversion
+$config['ModuleSettings']['supportKao'] = true; // [kao]...[/kao] into <span class="ascii">...</span>
 
 $config['BAD_STRING'] = array(); // Deprecated by spamdb
 $config['BAD_FILEMD5'] = array(); // Deprecated by spamdb
