@@ -422,18 +422,22 @@ class deletedPostsRepository {
 		?int $deletedBy, 
 		bool $fileOnly, 
 		bool $byProxy,
-		?int $fileId = null
+		?int $fileId = null,
+		?int $restoredBy = null, 
+		?string $note = null
 	): void {
 
 		$query = "INSERT INTO {$this->deletedPostsTable} 
-			(post_uid, deleted_by, file_only, by_proxy, file_id) 
-			VALUES (:post_uid, :deleted_by, :file_only, :by_proxy, :file_id)";
+			(post_uid, deleted_by, file_only, by_proxy, restored_by, note, file_id) 
+			VALUES (:post_uid, :deleted_by, :file_only, :by_proxy, :restored_by, :note, :file_id)";
 
 		$parameters = [
 			':post_uid'   => $postUid,
 			':deleted_by' => $deletedBy,
 			':file_only'  => (int)$fileOnly,
 			':by_proxy'   => (int)$byProxy,
+			':restored_by'=> $restoredBy,
+			':note'		  => $note,
 			':file_id'    => $fileId,   // leave NULL as NULL
 		];
 
@@ -539,4 +543,62 @@ class deletedPostsRepository {
 		// execute query
 		$this->databaseConnection->execute($query, $params);	
 	}
+
+	public function copyDeletionEntries(
+		array $oldPostUids, 
+		array $newPostUids, 
+		array $oldFileIDs, 
+		array $newFileIDs
+	): void {
+		// SQL to copy deletion entries from old post_uid/file_id to new post_uid/file_id.
+		// This duplicates historical deletion rows when a post (and its attachments) is cloned or moved.
+		$query = "
+			INSERT INTO {$this->deletedPostsTable} (
+				post_uid,
+				deleted_by,
+				deleted_at,
+				file_only,
+				by_proxy,
+				note,
+				restored_at,
+				restored_by,
+				file_id
+			)
+			SELECT
+				:new_post_uid,
+				dp.deleted_by,
+				dp.deleted_at,
+				dp.file_only,
+				dp.by_proxy,
+				dp.note,
+				dp.restored_at,
+				dp.restored_by,
+				:new_file_id
+			FROM {$this->deletedPostsTable} dp
+			WHERE dp.post_uid = :old_post_uid
+				-- Match post-level deletion (file_id NULL)
+				AND (
+					(:old_file_id IS NULL AND dp.file_id IS NULL)
+					-- Or match attachment-level deletion (specific file_id)
+					OR (:old_file_id IS NOT NULL AND dp.file_id = :old_file_id)
+				)
+		";
+
+		// Process each mapped pair of old→new post_uid + file_id
+		$count = count($oldPostUids);
+
+		for ($i = 0; $i < $count; $i++) {
+			// Parameters for the current deletion row copy
+			$params = [
+				':old_post_uid' => $oldPostUids[$i],
+				':new_post_uid' => $newPostUids[$i],
+				':old_file_id'  => $oldFileIDs[$i],   // may be NULL for post-level deletion
+				':new_file_id'  => $newFileIDs[$i]    // may be NULL for post-level deletion
+			];
+
+			// Execute the INSERT...SELECT to copy the deletion history row(s)
+			$this->databaseConnection->execute($query, $params);
+		}
+	}
+
 }

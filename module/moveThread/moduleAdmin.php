@@ -169,91 +169,85 @@ class moduleAdmin extends abstractModuleAdmin {
 			throw new Exception("'postUidMap' in copyThreadAndPosts() result is not an array.");
 		}
 
+		if (!isset($copyResult['fileIdMapping'])) {
+			throw new Exception("copyThreadAndPosts() result is missing 'fileIdMapping'.");
+		}
+
+		if (!is_array($copyResult['fileIdMapping'])) {
+			throw new Exception("'fileIdMapping' in copyThreadAndPosts() result is not an array.");
+		}
+
 		$newThreadUid   = $copyResult['threadUid'];
 		$postUidMapping = $copyResult['postUidMap'];
+		$fileIdMapping	= $copyResult['fileIdMapping'];
 	
 		// Step 2: Copy quote links using the post UID mapping
 		$this->moduleContext->quoteLinkService->copyQuoteLinksFromThread($originalThreadUid, $destinationBoard->getBoardUID(), $postUidMapping);
 	
 		// Step 3: Copy attachment files
-		$this->copyThreadAttachmentsToBoard($filesToCopy, $postUidMapping, $destinationBoard,  true);
+		$this->copyThreadAttachmentsToBoard($filesToCopy, $fileIdMapping, $destinationBoard,  true);
 
 		// Step 4: Return the UID of the newly created thread
 		return $newThreadUid;
 	}	
 	
-	private function copyThreadAttachmentsToBoard(array $attachments, array $postUidMapping, IBoard $destinationBoard, bool $isCopy = false): void {
+	private function copyThreadAttachmentsToBoard(array $attachments, array $fileIdMapping, IBoard $destinationBoard, bool $isCopy = false): void {
 		if (empty($attachments)) return;
 	
-
-		// copy attachments data if this is a copy call
-		if($isCopy) {
-			// copy the data
-			$this->copyAttachmentsData($attachments, $postUidMapping);
-		}
-
 		// then copy the files
-		$this->copyAttachmentsFiles($attachments, $destinationBoard, $isCopy);
+		$this->copyAttachmentsFiles($attachments, $fileIdMapping, $destinationBoard, $isCopy);
 	}
 
-	private function copyAttachmentsData(array $attachments, array $postUidMapping): void {
-		// loop through attachments and add them - the only difference being between the original being the post uid
-		foreach($attachments as $att) {
-			// the post uid of the post we copied
-			$oldPostUid = $att['postUid'];
-
-			// Check if the old post uid exists in the mapping
-			if (isset($postUidMapping[$oldPostUid])) {
-				// the post uid of the new copied post
-				$newPostUid = $postUidMapping[$oldPostUid];
-
-				// then add the file
-				$this->moduleContext->fileService->addFile(
-					$newPostUid,
-					$att['fileName'],
-					$att['storedFileName'],
-					$att['fileExtension'],
-					$att['fileMd5'],
-					$att['fileWidth'],
-					$att['fileHeight'],
-					$att['thumbWidth'],
-					$att['thumbHeight'],
-					$att['fileSize'],
-					$att['mimeType'],
-					$att['isHidden']
-				);
-			} else {
-				// Handle the case where the old post uid is not found in the mapping (optional)
-				// You can log an error or take other actions depending on your needs
-				error_log("Post UID {$oldPostUid} not found in mapping.");
-			}
-		}
-	}
-
-	private function copyAttachmentsFiles(array $attachments, IBoard $destinationBoard, bool $isCopy): void {
+	private function copyAttachmentsFiles(array $attachments, array $fileIdMapping, IBoard $destinationBoard, bool $isCopy): void {
 		// Destination board paths and config
 		$destBasePath = $destinationBoard->getBoardUploadedFilesDirectory();
 		$destConfig = $destinationBoard->loadBoardConfig();
 		$destImgPath = $destBasePath . $destConfig['IMG_DIR'];
 		$destThumbPath = $destBasePath . $destConfig['THUMB_DIR'];
-	
+
 		// Source board paths and config
-		$srcBoardUID = $attachments[0]['boardUID'];
-		$srcBoard = $this->moduleContext->boardService->getBoard($srcBoardUID);
-		$srcConfig = $srcBoard->loadBoardConfig();
-		$srcBasePath = $srcBoard->getBoardUploadedFilesDirectory();
-		$srcImgPath = $srcBasePath . $srcConfig['IMG_DIR'];
-		$srcThumbPath = $srcBasePath . $srcConfig['THUMB_DIR'];
-	
 		foreach ($attachments as $att) {
-			$imageFilename = $att['storedFileName'] . '.' . $att['fileExtension'];
-			$thumbFilename = resolveThumbName($att);
-	
-			$srcImage = $srcImgPath . $imageFilename;
-			$destImage = $destImgPath . $imageFilename;
-			$srcThumb = $srcThumbPath . $thumbFilename;
-			$destThumb = $destThumbPath . $thumbFilename;
-	
+			// fetch board that the attachment belongs to
+			$board = searchBoardArrayForBoard($att['boardUID']);
+
+			// get the mapped file id value
+			$newFileId = $fileIdMapping[$att['fileId']] ?? null;
+
+			// if the mapping doesn't exist then continue
+			if(!$newFileId) {
+				continue;
+			}
+
+			// build the final stored filename, including the hidden-file suffix when needed
+			$baseDestinationFilename =
+				$att['storedFileName']
+				. ($att['isHidden'] ? '_' . $newFileId : '');
+
+			$baseSrcFilename =
+				$att['storedFileName']
+				. ($att['isHidden'] ? '_' . $att['fileId'] : '');
+
+			// determine base directories for full images and thumbnails
+			$srcImgPath = $att['isHidden']
+				? getGlobalAttachmentDirectory()
+				: $board->getBoardUploadedFilesDirectory() . $board->getConfigValue('IMG_DIR');
+
+			$srcThumbPath = $att['isHidden']
+				? getGlobalAttachmentDirectory()
+				: $board->getBoardUploadedFilesDirectory() . $board->getConfigValue('THUMB_DIR');
+
+
+			// if the attachment is hidden then set both destination paths to be the global attachment directory
+			if($att['isHidden']) {
+				$destImgPath = getGlobalAttachmentDirectory();
+				$destThumbPath = getGlobalAttachmentDirectory();
+			}
+
+			$srcImage = $srcImgPath . $baseSrcFilename . '.' . $att['fileExtension'];
+			$destImage = $destImgPath . $baseDestinationFilename . '.' . $att['fileExtension'];
+			$srcThumb = $srcThumbPath . $baseSrcFilename . 's.' . $destinationBoard->getConfigValue('THUMB_SETTING.Format');
+			$destThumb = $destThumbPath . $baseDestinationFilename . 's.' . $destinationBoard->getConfigValue('THUMB_SETTING.Format');
+
 			// Copy/move the image file if it exists
 			if (is_file($srcImage)) {
 				if ($isCopy) {

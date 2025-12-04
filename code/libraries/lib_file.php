@@ -142,20 +142,34 @@ function copyFileWithNewName(string $sourceFilePath, string $newFileName, string
 }
 
 /**
- * Move a single file into a directory, creating it if needed.
+ * Move a file to an exact destination path.
+ * Can optionally overwrite existing files.
  *
  * @param string $sourceFile
- * @param string $destDir
+ * @param string $destPath
+ * @param bool $overwrite
  * @return bool
  */
-function moveFileOnly(string $sourceFile, string $destDir): bool {
+function moveFileOnly(string $sourceFile, string $destPath, bool $overwrite = false): bool {
 	if (!is_file($sourceFile)) {
 		return false;
 	}
+
+	$destDir = dirname($destPath);
+
 	if (!is_dir($destDir) && !mkdir($destDir, 0777, true)) {
 		return false;
 	}
-	$destPath = $destDir . '/' . basename($sourceFile);
+
+	if (file_exists($destPath)) {
+		if (!$overwrite) {
+			return false;
+		}
+		if (!unlink($destPath)) {
+			return false;
+		}
+	}
+
 	return rename($sourceFile, $destPath);
 }
 

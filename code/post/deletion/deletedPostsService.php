@@ -598,7 +598,12 @@ class deletedPostsService {
 
 		// add a new row to the deleted posts table
 		// this will automatically mark the post as deleted and make it hidden from regular users
-		$this->deletedPostsRepository->insertDeletedPostEntry($postUid, $deletedBy, $fileOnly, $byProxy);
+		$this->deletedPostsRepository->insertDeletedPostEntry(
+			$postUid, 
+			$deletedBy,
+			$fileOnly, 
+			$byProxy,
+		);
 	}
 
 	public function updateNote(int $deletedPostId, string $note): void {
@@ -642,7 +647,7 @@ class deletedPostsService {
 				$deletedBy,
 				true,       // file-only
 				false,      // byProxy
-				$f->getFileId()   // file_id
+				$f->getFileId()  // file_id
 			);
 		}
 	}
@@ -686,5 +691,15 @@ class deletedPostsService {
 			// run the method to delete the entry from the database
 			$this->deletedPostsRepository->removeRowById($deletedPostId);
 		});
+	}
+
+	public function copyDeletionEntries(
+		array $hostPostUids, 
+		array $newPostUids, 
+		array $hostFileIDs, 
+		array $newFileIDs
+	): void {
+		// copy the deletion entries - include the map so it knows which values to set the new entires to
+		$this->deletedPostsRepository->copyDeletionEntries($hostPostUids, $newPostUids, $hostFileIDs, $newFileIDs);
 	}
 }

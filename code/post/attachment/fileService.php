@@ -32,7 +32,7 @@ class fileService {
 			$currentPath = $attach->getHiddenPath();
 
 			// full path of the new attachment path
-			$destinationImgDirectory = $attach->getUploadDirectory();
+			$destinationImgDirectory = $attach->getUploadPath();
 		
 			// move the file
 			$this->sanitizeAndMove($currentPath, $destinationImgDirectory);
@@ -41,7 +41,7 @@ class fileService {
 			$currentThumbPath = $attach->getHiddenPath(true);
 
 			// full path of the new thumb directory
-			$destinationThumbDirectory = $attach->getUploadDirectory(true);
+			$destinationThumbDirectory = $attach->getUploadPath(true);
 
 			// move the thumbnail
 			$this->sanitizeAndMove($currentThumbPath, $destinationThumbDirectory);
@@ -96,11 +96,8 @@ class fileService {
 		// mark the files as deleted
 		$this->markAttachmentsAsDeleted($fileIDs); 
 
-		// get the global attachment directory
-		$globalAttachmentDirectory = getGlobalAttachmentDirectory();
-		
 		// move the files
-		$this->moveFilesToDirectory($attachments, $globalAttachmentDirectory);
+		$this->moveFilesToDirectory($attachments);
 	}
 
 	private function getFileIDsFromAttachments(array $attachments): array {
@@ -120,30 +117,35 @@ class fileService {
 		return $fileIds;
 	}
 
-	private function moveFilesToDirectory(array $attachments, string $destination): void {	
+	private function moveFilesToDirectory(array $attachments): void {	
 		// loop through attachments and move the file
 		foreach($attachments as $attach) {
 			// full path of the file
 			$fullPath = $attach->getUploadPath();
+			
+			// get the path of the hidden attachment
+			$attachmentDestinationPath = $attach->getHiddenPath();
 
 			// sanitize and move attachment
-			$this->sanitizeAndMove($fullPath, $destination);
+			$this->sanitizeAndMove($fullPath, $attachmentDestinationPath);
 
 			// get the thumbnail path
 			$thumbnailPath = $attach->getUploadPath(true);
 
+			// get the path of the hidden thumbnail
+			$thumbDestinationPath = $attach->getHiddenPath(true);
+
 			// sanitize and move attachment thumbnail
-			$this->sanitizeAndMove($thumbnailPath, $destination);
+			$this->sanitizeAndMove($thumbnailPath, $thumbDestinationPath);
 		}
 	}
 
-	private function sanitizeAndMove(string $fullPath, string $destination): void {
+	private function sanitizeAndMove(string $fullPath, string $destinationPath): void {
 		// sanitize to prevent path traversal
 		$fullPath = realpath($fullPath);
-		$destination = realpath($destination);
 
 		// move the file itself to the attachment directory
-		moveFileOnly($fullPath, $destination);
+		rename($fullPath, $destinationPath);
 	}
 
 	public function getAttachment(int $fileId): ?attachment {
@@ -212,7 +214,8 @@ class fileService {
 		?int $thumbFileHeight,
 		int $fileSize,
 		string $mimeType,
-		bool $isHidden
+		bool $isHidden,
+		bool $isDeleted = false,
 	): void {
 		// add the row to database
 		$this->fileRepository->insertFileRow($postUid, 
@@ -226,7 +229,9 @@ class fileService {
 			$thumbFileHeight, 
 			$fileSize, 
 			$mimeType, 
-			$isHidden);
+			$isHidden,
+			$isDeleted,
+		);
 	}
 
 	public function getAttachmentsFromPostUids(array $postUids): ?array {
@@ -293,5 +298,13 @@ class fileService {
 
 		// then return the condition
 		return $isDuplicate;
+	}
+
+	public function getNextId(): int {
+		// use repo to check database for the last inserted id for the files table
+		$nextId = $this->fileRepository->getNextId();
+
+		// then return it
+		return $nextId;
 	}
 }

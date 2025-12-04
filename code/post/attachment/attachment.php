@@ -28,7 +28,7 @@ class attachment {
 		$hiddenDirectory = $this->getHiddenDirectory();
 
 		// generate the hidden attachment path for the attachment
-		$hiddenPath = $this->generateFullPath($hiddenDirectory, $isThumb);
+		$hiddenPath = $this->generateFullPath(true, $hiddenDirectory, $isThumb);
 
 		// return path
 		return $hiddenPath;
@@ -47,7 +47,7 @@ class attachment {
 		$uploadDirectory = $this->getUploadDirectory($isThumb);
 
 		// generate the upload path
-		$uploadPath = $this->generateFullPath($uploadDirectory, $isThumb);
+		$uploadPath = $this->generateFullPath(false, $uploadDirectory, $isThumb);
 
 		// return path
 		return $uploadPath;
@@ -87,12 +87,17 @@ class attachment {
 		return $postfixDirectory;
 	}
 
-	private function generateFullPath(string $uploadDirectory, bool $isThumb = false): string {
+	private function generateFullPath(bool $isHidden, string $uploadDirectory, bool $isThumb = false): string {
 		// file stored name
 		$storedFileName = $this->fileEntry->getStoredFileName();
 
 		// file extension
 		$fileExtension = $this->fileEntry->getFileExt();
+
+		// if its hidden - append the file id to avoid conflicts with attachments from deleted threads
+		if($isHidden) {
+			$storedFileName .= '_' . $this->fileEntry->getId();
+		}
 
 		// use a thumbnail filename + extension for a thumbnail
 		if($isThumb) {

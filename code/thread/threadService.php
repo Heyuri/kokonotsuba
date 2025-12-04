@@ -7,7 +7,9 @@ class threadService {
 		private threadRepository $threadRepository,
 		private postRepository $postRepository,
 		private postService $postService,
-		private transactionManager $transactionManager
+		private transactionManager $transactionManager,
+		private deletedPostsService $deletedPostsService,
+		private fileService $fileService,
 	) {
 		$this->allowedOrderFields = ['post_op_number', 'post_op_post_uid', 'last_bump_time', 'last_reply_time', 'insert_id', 'post_uid'];
 	}
@@ -221,12 +223,19 @@ class threadService {
 
 			$this->threadRepository->updateThreadOpPostUid($newThreadUid, $opPostUid);
 
+			// get attachments
+			$attachments = getAttachmentsFromPosts($posts);
+			
+			// copy attachments and build file id mapping
+			$fileIdMapping = $this->copyAttachmentsData($attachments, $postUidMapping);
+
 			// go through and mark replies in the new thread that were deleted in the old one
-			$this->markDeletedPosts($newPostsData, $posts, $postUidMapping);
+			$this->markDeletedPosts($postUidMapping, $fileIdMapping);
 
 			$moveData = [
 				'threadUid'   => $newThreadUid,
-				'postUidMap'  => $postUidMapping
+				'postUidMap'  => $postUidMapping,
+				'fileIdMapping' => $fileIdMapping,
 			];
 		});
 
@@ -264,11 +273,80 @@ class threadService {
 		}, $comment);
 	}
 
-	private function markDeletedPosts(array $newPostsData, array $oldPosts, array $postUidMapping): void {
-		// loop through and insert new deleted post entries for each new post that was deleted in the original thread
-		foreach($newPostsData as $newPost) {
+	private function copyAttachmentsData(array $attachments, array $postUidMapping): array {
+		// init file id map
+		$fileIdMapping = [];
+		
+		// get the next file id
+		$nextFileId = $this->fileService->getNextId();
 
+		// loop through attachments and add them - the only difference being between the original being the post uid
+		foreach($attachments as $att) {
+			// the post uid of the post we copied
+			$oldPostUid = $att['postUid'];
+
+			// Check if the old post uid exists in the mapping
+			if (isset($postUidMapping[$oldPostUid])) {
+				// the post uid of the new copied post
+				$newPostUid = $postUidMapping[$oldPostUid];
+
+				// then add the file
+				$this->fileService->addFile(
+					$newPostUid,
+					$att['fileName'],
+					$att['storedFileName'],
+					$att['fileExtension'],
+					$att['fileMd5'],
+					$att['fileWidth'],
+					$att['fileHeight'],
+					$att['thumbWidth'],
+					$att['thumbHeight'],
+					$att['fileSize'],
+					$att['mimeType'],
+					$att['isHidden'],
+					$att['isDeleted'],
+				);
+
+				// get original file id
+				$oldFileId = $att['fileId'];
+
+				// set fileId map entry
+				// old file_id => new file_id
+				$fileIdMapping[$oldFileId] = $nextFileId;
+
+				// then increment the file id by 1
+				$nextFileId++;
+			} else {
+				// Handle the case where the old post uid is not found in the mapping (optional)
+				// You can log an error or take other actions depending on your needs
+				error_log("Post UID {$oldPostUid} not found in mapping.");
+			}
 		}
+
+		// then return the file id mapping so deleted attachments can be ported over
+		return $fileIdMapping;
+	}
+
+	private function markDeletedPosts(array $postUidMapping, array $fileIdMapping): void {
+		// get the post uids of the old posts
+		$oldPostUids = array_keys($postUidMapping);
+
+		// get the new post uids
+		$newPostUids = array_values($postUidMapping);
+
+		// get the old file IDs
+		$oldFileIDs = array_keys($fileIdMapping);
+
+		// get the new file IDs
+		$newFileIDs = array_values($fileIdMapping);
+
+		// then run the dp service method to copy over the old deletion entries
+		$this->deletedPostsService->copyDeletionEntries(
+			$oldPostUids, 
+			$newPostUids, 
+			$oldFileIDs, 
+			$newFileIDs
+		);
 	}
 
 	public function pruneByAmount(array $threadUidList, int $maxThreadAmount): ?array {

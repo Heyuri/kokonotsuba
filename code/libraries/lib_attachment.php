@@ -13,10 +13,11 @@ function resolveThumbName(?array $attachment): false|string {
 	$thumbnailExtention = $board->getConfigValue('THUMB_SETTING.Format');
 
 	// attachment file name on disk
-	$storedFileName = $attachment['storedFileName'];
+	$storedFileName = $attachment['isHidden'] ? $attachment['storedFileName'] . '_' . $attachment['fileId']
+	: $attachment['storedFileName'];
 
 	// decide base directory
-	$baseDirectory = $attachment['isDeleted'] ? 
+	$baseDirectory = $attachment['isHidden'] ? 
 		// global attachments directory (where deleted attachments are stored)
 		getGlobalAttachmentDirectory()
 		// regular board upload directory

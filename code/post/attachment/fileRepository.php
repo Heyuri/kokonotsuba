@@ -145,7 +145,8 @@ class fileRepository {
 		?int $thumb_file_height,
 		int $file_size,
 		string $mime_type,
-		bool $is_hidden
+		bool $is_hidden,
+		bool $is_deleted = false,
 	): void {
 		// query to insert a file row
 		$query = "INSERT INTO {$this->fileTable} 
@@ -161,7 +162,8 @@ class fileRepository {
 						thumb_file_height,
 						file_size,
 						mime_type,
-						is_hidden
+						is_hidden,
+						is_deleted
 					) 
 					VALUES (
 						:post_uid,
@@ -175,7 +177,8 @@ class fileRepository {
 						:thumb_file_height,
 						:file_size,
 						:mime_type,
-						:is_hidden
+						:is_hidden,
+						:is_deleted
 					)";
 
 		// parameters
@@ -192,6 +195,7 @@ class fileRepository {
 			':file_size' => $file_size,
 			':mime_type' => $mime_type,
 			':is_hidden' => (int) $is_hidden,
+			':is_deleted' => (int) $is_deleted,
 		];
 
 		// execute query
@@ -270,4 +274,11 @@ class fileRepository {
         return $result > 0;
     }
 
+	public function getNextId(): int {
+		// use database connection to get next id for the file table
+		$nextId = $this->databaseConnection->getNextAutoIncrement($this->fileTable);
+	
+		// return result
+		return $nextId;
+	}
 }
