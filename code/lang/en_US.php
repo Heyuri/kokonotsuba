@@ -206,6 +206,15 @@ $language['error_back']					= 'Back';
 $language['ip_banned']					= 'Listed in IP/Hostname Blacklist';
 $language['ip_dnsbl_banned']			= 'Listed in DNSBL(%1$s) Blacklist';
 
+/* modules */
+// onlineCounter
+$language['online_counter_text']        = '%1$s unique %2$s in the last %3$s %4$s (including lurkers)';
+$language['online_counter_user_singular'] = 'user';
+$language['online_counter_user_multiple'] = 'users';
+$language['online_counter_minute_singular'] = 'minute';
+$language['online_counter_minute_multiple'] = 'minutes';
+
+
 // mainscript.js // regist_withoutcomment,regist_upload_notsupport,js_convert_sakura
 $language['js_convert_sakura']			= 'Big5 sakura Japanese characters detected, please try to convert to standard one.';
 
@@ -214,4 +223,5 @@ $language['no_attachment_ever']         = 'There was no attachment on this post 
 $language['blanket_error'] = "There has been an error. (;´Д`)";
 
 ?>
+
 
