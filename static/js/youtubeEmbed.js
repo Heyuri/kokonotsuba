@@ -4,12 +4,17 @@
 	const ytRegex =
 		/^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/;
 
-	// Create the thumbnail block
+	// Create the thumbnail with a real <a> link
 	function makeThumb(id) {
 		const box = document.createElement('div');
 		box.className = 'video-container';
 		box.dataset.video = id;
-		box.style.pointerEvents = "none";  // div not clickable
+		box.style.pointerEvents = "none"; // div itself is not clickable
+
+		const link = document.createElement('a');
+		link.href = "https://youtu.be/" + id;
+		link.target = "_blank"; // middle-click opens properly, left-click overridden
+		link.style.pointerEvents = "auto";
 
 		const img = document.createElement('img');
 		img.className = 'post-image';
@@ -17,19 +22,20 @@
 		img.style.width = '360px';
 		img.style.height = '270px';
 		img.style.cursor = "pointer";
-		img.style.pointerEvents = "auto"; // ONLY the image is clickable
+		img.style.pointerEvents = "auto"; // only this is clickable
 
-		box.appendChild(img);
+		link.appendChild(img);
+		box.appendChild(link);
+
 		return box;
 	}
 
-	// Create the expanded iframe block (matches MP4 expand style)
+	// Expanded iframe
 	function makeExpand(id) {
 		const wrap = document.createElement('div');
 		wrap.className = 'expand youtube-expand';
 		wrap.dataset.videoId = id;
 
-		// [Close] bar just like MP4
 		const bracket = document.createElement('div');
 		bracket.innerHTML = '[<a href="javascript:void(0)" class="yt-close">Close</a>]';
 
@@ -48,24 +54,31 @@
 		return wrap;
 	}
 
-	// Connect thumbnail image to open the embed
+	// Only left-click on the IMAGE opens the embed
 	function attachHandlers(thumb, id) {
-		const img = thumb.querySelector('img'); // only image clickable
+		const img = thumb.querySelector('img');
+		const link = thumb.querySelector('a');
 
-		img.addEventListener('click', function open() {
+		img.addEventListener('click', function(evt) {
+			// Only left-click should expand
+			if (evt.button !== 0) return;
+
+			// Prevent navigating to YouTube for left-click only
+			evt.preventDefault();
+
 			const exp = makeExpand(id);
 			thumb.replaceWith(exp);
 
-			// Close button returns to thumbnail
-			exp.querySelector('.yt-close').addEventListener('click', function close() {
+			// Close → restore thumbnail
+			exp.querySelector('.yt-close').addEventListener('click', () => {
 				const newThumb = makeThumb(id);
 				exp.replaceWith(newThumb);
-				attachHandlers(newThumb, id); // reattach
+				attachHandlers(newThumb, id);
 			});
 		});
 	}
 
-	// Process posts
+	// Detect first-YouTube-link posts
 	function processComment(comment) {
 		const first = comment.firstChild;
 		if (!first || first.nodeType !== Node.ELEMENT_NODE || first.tagName !== 'A') return;
@@ -83,7 +96,6 @@
 		attachHandlers(thumb, id);
 	}
 
-	// Apply to all comments and future elements
 	function apply() {
 		document.querySelectorAll('.comment').forEach(processComment);
 	}
