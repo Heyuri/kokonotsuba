@@ -48,7 +48,7 @@ class deletedPostsService {
 		$threadUid = $opPostData['thread_uid'];
 
 		// get attachments from the thread in order to restore them
-		$threadAttachments = $this->fileService->getAttachmentsForThread($threadUid);
+		$threadAttachments = $this->fileService->getAttachmentsForThread($threadUid, true);
 
 		// check if the attachments exist
 		if(!empty($threadAttachments)) {
@@ -180,14 +180,22 @@ class deletedPostsService {
 		});
 	}
 
-	private function purgePostsFromList(array $deletedPostIdList, bool $logAction = true): void {
+	private function purgePostsFromList(array $deletedPostIdList, bool $attachmentsOnly = false): void {
 		// There could be a query to do it all in one swoop but there's some things that need fine-grained logic (a la OP vs reply) which is tricky to recreate with a single query
 		// will look into re-implementing a different way later
 		
 		// loop through IDs and purge the post
 		foreach($deletedPostIdList as $id) {
-			// purge the post
-			$this->purgePost($id, $logAction);
+			// if we're doing attachment-only pruning then only purge the attachment
+			// leave the post intact
+			if($attachmentsOnly) {
+				$this->purgeAttachmentOnly($id);
+			}
+			// otherwise just purge the whole post
+			else {
+				// purge the post
+				$this->purgePost($id, false);
+			}
 		}
 	}
 
@@ -680,7 +688,13 @@ class deletedPostsService {
 			}
 
 			// purge those posts from the ID list
-			$this->purgePostsFromList($prunedEntryIDs, false);
+			$this->purgePostsFromList($prunedEntryIDs);
+			
+			// now take care of attachment only deletions
+			$prunedAttachmentIDs = $this->deletedPostsRepository->getExpiredEntryIDs($timeLimit, true);
+		
+			// then purge the files only
+			$this->purgePostsFromList($prunedAttachmentIDs, true);
 		});
 
 	}

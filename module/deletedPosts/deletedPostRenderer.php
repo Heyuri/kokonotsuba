@@ -366,7 +366,7 @@ class deletedPostRenderer {
 		$postHtml = $this->generatePostHtml($deletedEntry, $thread, $showAll, $postRenderer, $threadRenderer);
 
 		// note for the deleted post
-		$note = $deletedEntry['note'] ?? '';
+		$note = $deletedEntry['deleted_note'] ?? '';
 
 		// init a truncated one for the preview
 		$notePreview = $this->generateNotePreview($note);

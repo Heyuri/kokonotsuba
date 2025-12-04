@@ -182,7 +182,8 @@ class postRenderer {
 			&$templateValues,
 			&$post,
 			&$threadPosts,
-			&$board
+			&$board,
+			&$adminMode,
 		]);
 
 

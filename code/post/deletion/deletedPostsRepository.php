@@ -67,14 +67,16 @@ class deletedPostsRepository {
 
 	public function restorePostsByThreadUid(string $threadUid, int $accountId): void {
 		// query to mark posts as restored by thread uid
-		$query = $this->getBaseRestoreQuery();
-
-		// appened where clause
-		// only restore posts that hold the specified `thread_uid`
-		$query .= " WHERE post_uid 
-				IN( SELECT post_uid FROM {$this->postTable} 
-					WHERE thread_uid = :thread_uid
-		)";
+		$query = "
+			UPDATE {$this->deletedPostsTable} dp
+			INNER JOIN {$this->postTable} p ON p.post_uid = dp.post_uid
+			SET dp.restored_at = CURRENT_TIMESTAMP,
+				dp.restored_by = :account_id,
+				dp.file_only = 0
+			WHERE p.thread_uid = :thread_uid
+			AND (dp.by_proxy = 1
+			OR p.is_op = 1)
+		";
 
 		// parameters
 		$params = [
@@ -103,7 +105,7 @@ class deletedPostsRepository {
 		$query = "DELETE FROM {$this->postTable}
 			WHERE post_uid = (
 				SELECT post_uid
-				FROM deleted_posts
+				FROM {$this->deletedPostsTable}
 				WHERE id = :deleted_post_id
 			);
 		";
@@ -501,12 +503,23 @@ class deletedPostsRepository {
 		return $deletedPost[0] ?? false;
 	}
 
-	public function getExpiredEntryIDs(int $timeLimit): false|array {
+	public function getExpiredEntryIDs(int $timeLimit, bool $attachmentsOnly = false): false|array {
 		// query to get entries older than the time limit (in hours) 
 		$query = "SELECT id
 			FROM {$this->deletedPostsTable}
 			WHERE deleted_at < NOW() - INTERVAL {$timeLimit} HOUR
 			AND COALESCE(open_flag, 0) = 1";
+
+		// if we only want the attachments then append a condition to get attachment-level deletions 
+		if($attachmentsOnly) {
+			// append condition for file_only = 1
+			$query .= " AND file_only = 1";
+		}
+		// otherwise filter for post level deletion
+		else {
+			// append condition for file_only = 0
+			$query .= " AND file_only = 0";
+		}
 
 		// fetch the results as array
 		$entries = $this->databaseConnection->fetchAllAsIndexArray($query);

@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\deletedPosts;
 
+use board;
 use Kokonotsuba\Root\Constants\userRole;
 use moduleEngine;
 
@@ -40,8 +41,8 @@ class deletedPostUIHooks {
 		$moduleEngine->addRoleProtectedListener(
 			$requiredRole,
 			'Post',
-			function(&$arrLabels, $post, $threadPosts, $board) {
-				$this->onRenderPost($arrLabels, $post);
+			function(array &$arrLabels, array &$post, array &$threadPosts, board &$board, bool &$adminMode) {
+				$this->onRenderPost($arrLabels, $post, $adminMode);
 			}
 		);
 
@@ -160,7 +161,7 @@ class deletedPostUIHooks {
 		return '<span class="warning" title="' . htmlspecialchars($spanTitle) . '">[' . htmlspecialchars($message) . ']</span>';
 	}
 
-	private function onRenderPost(array &$templateValues, array $post): void {
+	private function onRenderPost(array &$templateValues, array $post, bool $adminMode): void {
 		// whether the post is deleted or not
 		$isPostDeleted = $this->deletedPostUtility->isPostDeleted($post);
 
@@ -169,8 +170,13 @@ class deletedPostUIHooks {
 			return;
 		}
 
-		// OK - this post is deleted. Proceed
+		// also don't bother if this isn't a staff session
+		if(!$adminMode) {
+			return;
+		}
 
+		// OK - this post is deleted and this is a staff session. Proceed
+		
 		// Append the staff note to the comment
 		if(isset($post['deleted_note'])) {
 			$templateValues['{$COM}'] .= $this->renderStaffNoteOnPost($post);

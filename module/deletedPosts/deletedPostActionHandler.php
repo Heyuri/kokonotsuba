@@ -65,7 +65,7 @@ class deletedPostActionHandler {
 
 			// update the note
 			$this->deletedPostsService->updateNote($deletedPostId, $note);
-			
+
 			// url of the deleted post
 			$url = $this->deletedPostUtility->generateDeletedPostViewUrl($deletedPostId);
 
