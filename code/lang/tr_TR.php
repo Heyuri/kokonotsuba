@@ -178,7 +178,8 @@ $language['action_main_success']		= 'başarılı!';
 $language['action_main_failed']			= 'başarısız oldu!';
 
 // lib_common.php
-$language['head_home']					= 'Home';
+$language['head_home']					= 'Ana Sayfa';
+$language['head_catalog']				= 'Katalog';
 $language['head_search']				= 'Ara';
 $language['head_info']					= 'Bilgi';
 $language['head_admin']					= 'Admin';
