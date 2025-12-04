@@ -77,6 +77,11 @@ class postService {
 		$this->transactionManager->run(function () use ($posts, $accountId) {
 			$postsData = $this->postRepository->getPostsByUids($posts);
 
+			// return early if posts data is null for whatever reason
+			if(!$postsData) {
+				return;
+			}
+
 			// Extract unique boardUIDs from the result
 			$boardUIDs = array_unique(array_column($postsData, 'boardUID'));
 
