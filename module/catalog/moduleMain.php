@@ -116,10 +116,14 @@ class moduleMain extends abstractModuleMain {
 
 			if(!$opPost) continue;
 
+			// get OP subject
+			$subject = $opPost['sub'] ?? '';
+
 			$threadNumber = $thread['thread']['post_op_number'];
 			if ( ($cat_cols!='auto') && !($i%intval($cat_cols)) )
 				$dat.= '</tr><tr>';
 
+			
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'', '{$IMG_SRC}' => '');
 			$this->moduleContext->moduleEngine->dispatch('ThreadPost', array(&$arrLabels, $opPost, $threadPosts, false)); // "ThreadPost" Hook Point
 
@@ -129,7 +133,7 @@ class moduleMain extends abstractModuleMain {
 	<a href="'.$this->moduleContext->board->getBoardThreadURL($threadNumber).'">'.
 	(attachmentFileExists($opAttachment) ? '<img src="' . getAttachmentUrl($opAttachment, true) . '" width="'.min(150, $opAttachment['fileWidth']).'" class="thumb" alt="Thumbnail">' : '***').
 	'</a>
-	<div class="catPostInfo">'.
+	<div class="catPostInfo"><span class="title">' . $subject . '</span>'.
 		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon" alt="Replies"> '.$res.'</span></div>
 	<div class="catComment">'.$opPost['com'].'</div>
 </td>';
