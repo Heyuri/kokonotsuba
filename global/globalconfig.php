@@ -20,7 +20,8 @@ $config['MAX_RH'] = 200; // Reply Max Height
 $config['THUMB_SETTING'] = array( // Thumbnail Gen. Settings
 	'Method' => 'gd', //gd (default), imagemagick, imagick, magickwand, repng2jpeg
 	'Format' => 'png',
-	'Quality' => 75
+	'Quality' => 75,
+    'TransparentBackgroundColor' => '#F0E0D6'
 );
 
 $config['CDN_DIR'] = '/var/www/website/cdn/'; // absolute path to the folder for boards' dirs for imgs & thumbs (e.g. /var/www/cdn/heyuri/)

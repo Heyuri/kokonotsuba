@@ -259,7 +259,11 @@ class ThumbWrapper{
 		case 'jpg':
 		case 'jpeg':
 		default:
-			$backgroundColor = imagecolorallocate($im_out, 240, 224, 214); // make a config for this.  this is the defualt heyuri post background
+			// get transparent background color for jpeg
+			// default to #F0E0D6 if not set
+			$transparentHex = $this->thumbSetting['TransparentBackgroundColor'] ?? '#F0E0D6';
+			
+			$backgroundColor = $this->imagecolorallocateHex($im_out, $transparentHex); // make a config for this.  this is the defualt heyuri post background
 			imagefill($im_out, 0, 0, $backgroundColor);
 	
 			// Enable blending for images with transparency
@@ -273,5 +277,39 @@ class ThumbWrapper{
 	   }
 	   return true;
 	}
+
+	/**
+	 * Allocate a color in a GD image using a hexadecimal color string.
+	 *
+	 * Accepts formats like:
+	 *   "#RRGGBB"
+	 *   "RRGGBB"
+	 *   "#fff"  (short form)
+	 *   "fff"
+	 *
+	 * @param resource|GdImage $im  The GD image resource to allocate the color for.
+	 * @param string $hex           The hex color string.
+	 *
+	 * @return int                  The allocated GD color identifier.
+	 */
+	private function imagecolorallocateHex(GdImage $im, string $hex): int {
+		// Remove '#' if present
+		$hex = ltrim($hex, '#');
+
+		// Expand shorthand hex "fff" → "ffffff"
+		if (strlen($hex) === 3) {
+			$hex = $hex[0] . $hex[0]
+				. $hex[1] . $hex[1]
+				. $hex[2] . $hex[2];
+		}
+
+		// Parse the hex into RGB components
+		// sscanf reads pairs of hex digits and converts them to decimals
+		list($r, $g, $b) = sscanf($hex, "%02x%02x%02x");
+
+		// Allocate and return the GD color
+		return imagecolorallocate($im, $r, $g, $b);
+	}
+
 }
 ?>
