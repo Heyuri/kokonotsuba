@@ -60,6 +60,7 @@ class attachmentRenderer {
 		// Build image html
 		$imageHtml = $this->generateImageHTML(
 			$fileData['fileExtension'], 
+			$fileData['mimeType'],
 			$fileData['thumbWidth'], 
 			$fileData['thumbHeight'], 
 			$fileData['fileSize'],
@@ -173,7 +174,8 @@ class attachmentRenderer {
 	 * Generates the appropriate HTML <a><img></a> tag for a post image or thumbnail,
 	 * depending on the file type, thumbnail availability, and file deletion status.
 	 */
-	private function generateImageHTML(string $ext,   
+	private function generateImageHTML(string $ext,
+		string $mimeType,   
 		int $tw, 
 		int $th, 
 		string  $imgsize, 
@@ -200,6 +202,14 @@ class attachmentRenderer {
 		elseif ($ext === "swf") {
 			$thumbURL = $this->board->getConfigValue('SWF_THUMB');
 			return $this->buildImageTag($imageURL, $thumbURL, 'SWF Embed');
+		}
+		// Case: Handling for audio files
+		elseif (str_contains($mimeType, 'audio')) {
+			// get audio thumbnail
+			$thumbURL = $this->board->getConfigValue('AUDIO_THUMB');
+
+			// then build image tag
+			return $this->buildImageTag($imageURL, $thumbURL, 'Audio file', 128, 128);
 		}
 		// Case: No thumbnail available, use generic placeholder
 		elseif (!$thumbName) {

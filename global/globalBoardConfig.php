@@ -48,7 +48,8 @@ $config['ALLOW_UPLOAD_EXT'] = [
 	'bmp'  => 'image/bmp',
 	'swf'  => 'application/x-shockwave-flash',
 	'webm' => 'video/webm',
-	'mp4'  => 'video/mp4'
+	'mp4'  => 'video/mp4',
+	'mp3'  => 'audio/mpeg',
 ];
 
 
@@ -251,6 +252,7 @@ $config['DNSBLWHlist'] = array(); // Deprecated by adminban module
 
 
 $config['SWF_THUMB'] = $config['STATIC_URL']."image/swf_thumb.png";
+$config['AUDIO_THUMB'] = $config['STATIC_URL']."image/audio.png";
 
 /*---- Part 2：Board Functions ----*/
 $config['HOME'] = 'index.html'; // What the [Home] button links to
