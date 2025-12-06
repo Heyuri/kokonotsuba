@@ -201,7 +201,7 @@ class attachmentRenderer {
 		// Case: Special handling for SWF files
 		elseif ($ext === "swf") {
 			$thumbURL = $this->board->getConfigValue('SWF_THUMB');
-			return $this->buildImageTag($imageURL, $thumbURL, 'SWF Embed');
+			return $this->buildImageTag($imageURL, $thumbURL, 'SWF Embed', 128, 128);
 		}
 		// Case: Handling for audio files
 		elseif (str_contains($mimeType, 'audio')) {
