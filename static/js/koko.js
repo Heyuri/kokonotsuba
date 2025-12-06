@@ -271,7 +271,6 @@ const kkjs = {
 
 		// Initialize email behavior and file upload reset
     kkjs.ee();
-    kkjs.fup();
 
 		// Initialization logic for centerthreads, persistpager, persistnav
 		const body = document.body;
@@ -459,12 +458,6 @@ const kkjs = {
 			$id("noko").checked = false;
 		}		
 		$id("sage").checked = this.value.match("sage");
-	},
-
-	fup: function () {
-		var upf = $id("upfile");
-		if (upf) upf.insertAdjacentHTML('afterend',
-			'<span id="clearFile">[<a href="javascript:void(0);" onclick="$id(\'upfile\').value=\'\';" title="Clear file selection">X</a>]</span>');
 	},
 	
 	// form switch
@@ -712,4 +705,5 @@ kkjs.toggleNeomenu = function(enabled) {
   // Re-run to update menu display based on new setting
   kkjs.setInitialMenuState();
 };
+
 

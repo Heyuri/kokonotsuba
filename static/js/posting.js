@@ -31,28 +31,20 @@ document.addEventListener("DOMContentLoaded", () => {
 	 * Clear subject & comment fields
 	 */
 	function clearForm() {
-		// Clear text inputs
+		// Clear text fields
 		if (subInput) subInput.value = "";
 		if (comInput) comInput.value = "";
 
-		// --- Remove file-related UI elements ---
-		const filePreview = document.getElementById("file-preview");
-		if (filePreview) filePreview.remove();
+		// File Cleanup
+		var list = document.getElementById("userscript-file-list-container");
+		if (list) list.remove();
+	
+		var dz = document.getElementById("userscript-dropzone-wrap");
+		if (dz) dz.style.display = "block";
 
-		const fileSizeContainer = document.getElementById("file-size-container");
-		if (fileSizeContainer) fileSizeContainer.remove();
-
-		const filenameContainer = document.getElementById("filename-container");
-		if (filenameContainer) filenameContainer.remove();
-
-		// Optionally clear the file input itself
-		const fileInput = document.getElementById("upfile");
-		if (fileInput) fileInput.value = "";
-
-		// Optionally reset the animated GIF checkbox
-		const anigifCheckbox = document.getElementById("anigif");
-		if (anigifCheckbox) anigifCheckbox.checked = false;
-
+		var realInput = document.querySelector("input[type='file'][name^='upfile']");
+		if (realInput) realInput.value = "";
+		
 		// also clear the quick reply form for good measure
 		if(kkqr) {
 			// clear the form
