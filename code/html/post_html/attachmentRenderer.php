@@ -175,7 +175,7 @@ class attachmentRenderer {
 	 * depending on the file type, thumbnail availability, and file deletion status.
 	 */
 	private function generateImageHTML(string $ext,
-		string $mimeType,   
+		?string $mimeType,   
 		int $tw, 
 		int $th, 
 		string  $imgsize, 
@@ -204,7 +204,7 @@ class attachmentRenderer {
 			return $this->buildImageTag($imageURL, $thumbURL, 'SWF Embed', 128, 128);
 		}
 		// Case: Handling for audio files
-		elseif (str_contains($mimeType, 'audio')) {
+		elseif (!is_null($mimeType) && str_contains($mimeType, 'audio')) {
 			// get audio thumbnail
 			$thumbURL = $this->board->getConfigValue('AUDIO_THUMB');
 
