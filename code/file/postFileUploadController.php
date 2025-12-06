@@ -49,7 +49,13 @@ class postFileUploadController {
 		$thumbnailWidth = $this->thumbnail->getThumbnailWidth();
 		$thumbnailHeight = $this->thumbnail->getThumbnailHeight(); 
 
-		$thumbnailDestinationName = $timeInMilliseconds . 's.' . $thumbnailExtention;
+		// get file index
+		$index = $this->file->getIndex();
+
+		// assemble stored file name
+		$storedFileName = $timeInMilliseconds . '_' . $index;
+
+		$thumbnailDestinationName = $storedFileName . 's.' . $thumbnailExtention;
 
 		$thumbnailPath = $this->thumbnail->getThumbnailFileName();
 

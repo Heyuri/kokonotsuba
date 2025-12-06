@@ -2,38 +2,18 @@
 
 // encapsulation of a file from a request, needed for inserting posts
 class file {
-	private readonly string $extention;	// file extension
-	private readonly int $timeInMillisecond; // unix time in miliseconds
-	private readonly string $temporaryFileName;	// tmp file name/path
-	private readonly string $fileName;	// file name
-	private readonly int $fileSize;	// file size
-	private int $imgW;		// width of the image
-	private int $imgH;		// height of the image
-	private readonly string $md5chksum;		// md5 hash of the image
-	private readonly string $mimeType; // mime type of the file
-	private readonly int $fileStatus; // upfile status
-	
-	public function __construct(string $extention = '',
-	 int $timeInMillisecond = 0,
-	 string $temporaryFileName = '',
-	 string $fileName = '',
-	 int $fileSize = 0,
-	 int $imgW = 0,
-	 int $imgH = 0,
-	 string $md5chksum = '',
-	 string $mimeType = '',
-	 int $fileStatus = 0) {
-		$this->extention = $extention;
-		$this->timeInMillisecond = $timeInMillisecond;
-		$this->temporaryFileName = $temporaryFileName;
-		$this->fileName = $fileName;
-        $this->fileSize = $fileSize;
-		$this->imgW = $imgW;
-		$this->imgH = $imgH;
-		$this->md5chksum = $md5chksum;
-		$this->mimeType = $mimeType;
-		$this->fileStatus = $fileStatus;
-	}
+	public function __construct(
+		private string $extention = '',
+	 	private int $timeInMillisecond = 0,
+		private string $temporaryFileName = '',
+		private string $fileName = '',
+		private int $fileSize = 0,
+		private int $imgW = 0,
+		private int $imgH = 0,
+		private string $md5chksum = '',
+		private string $mimeType = '',
+		private int $fileStatus = 0,
+		private int $index = 0) {}
 
 	public function getExtention(): string {
 		$extention = $this->extention ?? '';
@@ -74,5 +54,9 @@ class file {
 
 	public function getFileStatus(): int {
 		return $this->fileStatus ?? 0;
+	}
+
+	public function getIndex(): int {
+		return $this->index ?? 0;
 	}
 }

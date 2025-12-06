@@ -81,13 +81,13 @@ class registRoute {
 			$fileMeta = $this->handleFileUpload($postData['isReply'], $thumbnailCreator, $imgDir);
 
 			// Step 5: Validate & clean post content
-			$this->validateAndCleanPostContent($postData, $fileMeta['status'], $fileMeta['file'], $postData['is_admin'], $thread);
+			$this->validateAndCleanPostContent($postData, $fileMeta['files'], $postData['is_admin'], $thread);
 
 			// Step 6: Handle tripcode, default text, filters, and categories
 			$this->processPostDetails($postData, $defaultTextFiller, $postFilterApplier);
 
 			// Step 7: Final data prep (timestamps, password hashing, unique ID)
-			$computedPostInfo = $this->preparePostMetadata($postData, $postDateFormatter, $fileMeta['file']);
+			$computedPostInfo = $this->preparePostMetadata($postData, $postDateFormatter, $fileMeta['files']);
 
 			// Step 8: Validate post for database storage
 			$this->postValidator->validateForDatabase(
@@ -106,7 +106,7 @@ class registRoute {
 			// Commit pre-write hook
 			$this->moduleEngine->dispatch('RegistBeforeCommit', [
 				&$postData['name'], &$postData['email'], &$emailForInsertion, &$postData['sub'], &$postData['comment'],
-				&$postData['category'], &$postData['age'], $fileMeta['file'],
+				&$postData['category'], &$postData['age'], $fileMeta['files'],
 				$postData['isReply'], &$postData['status'], $thread, &$computedPostInfo['poster_hash']
 			]);
 
@@ -137,23 +137,8 @@ class registRoute {
 			// Add post to database
 			$this->postService->addPostToThread($this->board, $postRegistData, $nextPostUid);
 
-			// Add attachment to database if it has a non-empty extension
-			if($fileMeta['ext']) {
-				$this->fileService->addFile(
-					$nextPostUid,
-					$fileMeta['fileName'],
-					$fileMeta['fileTimeInMilliseconds'],
-					$fileMeta['ext'],
-					$fileMeta['md5'],
-					$fileMeta['imgW'],
-					$fileMeta['imgH'],
-					$fileMeta['thumbWidth'],
-					$fileMeta['thumbHeight'],
-					$fileMeta['fileSize'],
-					$fileMeta['mimeType'],
-					false,
-				);
-			}
+			// Handle adding attachments
+			$this->handleAttachments($fileMeta['files'], $nextPostUid); 
 
 			// Log and hooks
 			$this->actionLoggerService->logAction("Post No.{$computedPostInfo['no']} registered", $this->board->getBoardUID());
@@ -183,8 +168,13 @@ class registRoute {
 		setcookie('emailc', htmlspecialchars_decode($postData['email']), time()+7*24*3600);
 
 		// Save files
-		$this->saveUploadedPostFiles($fileMeta['postFileUploadController'], $fileMeta['file']->getExtention());
+		foreach($fileMeta['files'] as $entry) {
+			// get file object
+			$file = $entry['file'];
 
+			// save attachment + thumbnail 
+			$this->saveUploadedPostFiles($entry['postFileUploadController'], $file->getExtention());
+		}
 		// Dispatch webhook
 		$webhookDispatcher->dispatch($postData['resno'], $computedPostInfo['no']);
 
@@ -251,59 +241,114 @@ class registRoute {
 	}
 
 	private function handleFileUpload(bool $isReply, thumbnailCreator $thumbnailCreator, string $boardFileDirectory): array {
-		$file = new file();
-		$thumbnail = new thumbnail();
+		// init file arrays
+		$fileMetaList = [];
+		$postFileUploadControllerList = [];
 
-		$upfile = $upfile_path = $upfile_name = '';
-		$upfile_status = UPLOAD_ERR_NO_FILE;
+		// determine if multiple files are uploaded on the main input
+		$hasMultiUpfile =
+			isset($_FILES['upfile']['tmp_name']) &&
+			is_array($_FILES['upfile']['tmp_name']) &&
+			count($_FILES['upfile']['tmp_name']) > 0;
 
-		$postFileUploadController = null;
-	
-		$hasUpfile = !empty($_FILES['upfile']['tmp_name']) && is_uploaded_file($_FILES['upfile']['tmp_name']);
-		$hasQuickReplyFile = !empty($_FILES['quickReplyUpFile']['tmp_name']) && is_uploaded_file($_FILES['quickReplyUpFile']['tmp_name']);
+		// determine if multiple files are uploaded on quick reply
+		$hasMultiQuickReply =
+			isset($_FILES['quickReplyUpFile']['tmp_name']) &&
+			is_array($_FILES['quickReplyUpFile']['tmp_name']) &&
+			count($_FILES['quickReplyUpFile']['tmp_name']) > 0;
 
-		if ($hasUpfile || $hasQuickReplyFile) {
+		// pick which input to use
+		$inputName = $hasMultiUpfile ? 'upfile' : ($hasMultiQuickReply ? 'quickReplyUpFile' : null);
 
-			$fileFromUpload = getUserFileFromRequest();
-	
-			$file = $fileFromUpload->getFile();
-			$thumbnail = getThumbnailFromFile($file);
-			$thumbnail = scaleThumbnail($thumbnail, $isReply, $this->config['MAX_RW'], $this->config['MAX_RH'], $this->config['MAX_W'], $this->config['MAX_H']);
-	
-			$postFileUploadController = new postFileUploadController($this->config, $fileFromUpload, $thumbnailCreator, $thumbnail, $boardFileDirectory);
-			$postFileUploadController->validateFile();
-			
-			[$upfile, $upfile_path, $upfile_status] = loadUploadData();
-
-		} else {
-			// show an error if the user tries to make a thread without an image in image-board mode
-			if($upfile_status === UPLOAD_ERR_NO_FILE && !$isReply && !$this->config['TEXTBOARD_ONLY']) {
+		// NO FILES → if OP post & imageboard mode, throw exception
+		if ($inputName === null) {
+			if (!$isReply && !$this->config['TEXTBOARD_ONLY']) {
 				throw new BoardException(_T('regist_upload_noimg'));
 			}
+
+			// still return required structure
+			return ['files' => []];
 		}
-	
-		return [
-			'file' => $file,
-			'thumbnail' => $thumbnail,
-			'postFileUploadController' => $postFileUploadController,
-			'upfile' => $upfile,
-			'path' => $upfile_path,
-			'name' => $upfile_name,
-			'status' => $upfile_status,
-			'imgW' => $file->getImageWidth(),
-			'imgH' => $file->getImageHeight(),
-			'fileName' => $file->getFileName(),
-			'ext' => $file->getExtention(),
-			'fileTimeInMilliseconds' => $file->getTimeInMilliseconds(),
-			'md5' => $file->getMd5Chksum(),
-			'thumbWidth' => $thumbnail->getThumbnailWidth(),
-			'thumbHeight' => $thumbnail->getThumbnailHeight(),
-			'fileSize' => $file->getFileSize(),
-			'mimeType' => $file->getMimeType(),
-		];
+
+		// ----------------------------------------
+		// LOOP THROUGH ALL FILES IN THE INPUT
+		// ----------------------------------------
+		$fileCount = count($_FILES[$inputName]['tmp_name']);
+
+		// get attachment limit
+		$attachmentUploadLimit = $this->board->getConfigValue('ATTACHMENT_UPLOAD_LIMIT', 1);
+
+		for ($i = 0; $i < $fileCount; $i++) {
+			// break loop if iterator is above limit
+			if($i >= $attachmentUploadLimit) {
+				break;
+			}
+
+			// load indexed upload data
+			[$tmp, $name, $status] = loadUploadData($inputName, $i);
+
+			// skip empty slots
+			if ($status === UPLOAD_ERR_NO_FILE || !$tmp) {
+				continue;
+			}
+
+			// convert raw PHP file into fileFromUpload object
+			$fileFromUpload = getUserFileFromRequest($tmp, $name, $status, $i);
+
+			// extract file object
+			$file = $fileFromUpload->getFile();
+
+			// generate thumbnail
+			$thumbnail = getThumbnailFromFile($file);
+			$thumbnail = scaleThumbnail(
+				$thumbnail,
+				$isReply,
+				$this->config['MAX_RW'],
+				$this->config['MAX_RH'],
+				$this->config['MAX_W'],
+				$this->config['MAX_H']
+			);
+
+			// create upload controller per file
+			$postFileUploadController = new postFileUploadController(
+				$this->config,
+				$fileFromUpload,
+				$thumbnailCreator,
+				$thumbnail,
+				$boardFileDirectory
+			);
+
+			// validate this specific file
+			$postFileUploadController->validateFile();
+
+			// store reference for saving later
+			$postFileUploadControllerList[] = $postFileUploadController;
+
+			// push file meta block
+			$fileMetaList[] = [
+				'index' => $i,
+				'file' => $file,
+				'thumbnail' => $thumbnail,
+				'postFileUploadController' => $postFileUploadController,
+				'status' => $status,
+				'fileName' => $file->getFileName(),
+				'ext' => $file->getExtention(),
+				'fileTimeInMilliseconds' => $file->getTimeInMilliseconds(),
+				'md5' => $file->getMd5Chksum(),
+				'imgW' => $file->getImageWidth(),
+				'imgH' => $file->getImageHeight(),
+				'thumbWidth' => $thumbnail->getThumbnailWidth(),
+				'thumbHeight' => $thumbnail->getThumbnailHeight(),
+				'fileSize' => $file->getFileSize(),
+				'mimeType' => $file->getMimeType(),
+			];
+		}
+
+		// return all files
+		return ['files' => $fileMetaList];
 	}
 
-	private function validateAndCleanPostContent(array &$postData, string $upfileStatus, file $file, bool $isAdmin, bool|array $thread): void {
+	private function validateAndCleanPostContent(array &$postData, array $files, bool $isAdmin, bool|array $thread): void {
 		$this->postValidator->spamValidate($postData['name'], $postData['email'], $postData['sub'], $postData['comment']);
 	
 		$registInfo = [
@@ -319,7 +364,7 @@ class registRoute {
 			'secure_tripcode' => &$postData['secure_tripcode'],
 			'capcode' => &$postData['capcode'],
 			'age' => &$postData['age'],
-			'file' => $file,
+			'files' => $files,
 			'ip' => $postData['ip'], 
 			'isThreadSubmit' => empty($postData['thread_uid']),
 			'roleLevel' => $postData['roleLevel'],
@@ -338,7 +383,7 @@ class registRoute {
 		$postData['email'] = str_replace("\r\n", '', $postData['email']);
 		$postData['sub'] = str_replace("\r\n", '', $postData['sub']);
 	
-		$postData['comment'] = $this->postValidator->cleanComment($postData['comment'], $upfileStatus, $isAdmin);
+		$postData['comment'] = $this->postValidator->cleanComment($postData['comment'], $files, $isAdmin);
 		
 		// Ensure name is not empty or whitespace
 		$postData['name'] = $this->ensureNameSet($postData['name']);
@@ -411,8 +456,33 @@ class registRoute {
 		return $email;
 	}
 
+	private function handleAttachments(array $files, int $postUid): void {
+		// loop through files and insert attachments
+		foreach($files as $f) {
+			// construct the the stored file name
+			// milisecond timestamp + index
+			$storedFileName = $f['fileTimeInMilliseconds'] . '_' . $f['index'];
+
+			// select the file object
+			$this->fileService->addFile(
+				$postUid,
+				$f['fileName'],
+				$storedFileName,
+				$f['ext'],
+				$f['md5'],
+				$f['imgW'],
+				$f['imgH'],
+				$f['thumbWidth'],
+				$f['thumbHeight'],
+				$f['fileSize'],
+				$f['mimeType'],
+				false,
+			);
+		}
+	}
+
 	// prepare post meta data
-	private function preparePostMetadata(array &$postData, postDateFormatter $postDateFormatter, file $file): array {
+	private function preparePostMetadata(array &$postData, postDateFormatter $postDateFormatter, array $files): array {
 		if ($postData['pwd'] == '') {
 			$postData['pwd'] = ($postData['pwdc'] == '') ? substr(rand(), 0, 12) : $postData['pwdc'];
 		}
@@ -430,7 +500,7 @@ class registRoute {
 			'password_hash' => $passwordHash,
 			'now' => $now,
 			'poster_hash' => '',
-			'dest' => $file->getTemporaryFileName(),
+			'dest' => !empty($files),
 			'timeInMilliseconds' => $postData['timeInMilliseconds']
 		];
 	}

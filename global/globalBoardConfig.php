@@ -6,6 +6,9 @@ $config['IMG_DIR'] = 'src/';
 // Thumb dir, same as IMG_DIR
 $config['THUMB_DIR'] = 'src/';
 
+// The amount of attachments a user can post at once per post
+$config['ATTACHMENT_UPLOAD_LIMIT'] = 1;
+
 $config['PROXYHEADERlist'] = array(
 	'HTTP_CLIENT_IP',
 	'HTTP_X_REAL_IP',

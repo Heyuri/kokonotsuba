@@ -66,31 +66,45 @@ function createBoardStoredFilesFromArray(array $posts, array $boards) {
 	return $files;
 }
 
-function getUserFileFromRequest(): fileFromUpload {
-	// get file attributes
-	[$tempFilename, $fileName, $fileStatus] = loadUploadData();
-
+/**
+ * Create a fileFromUpload object from explicit uploaded file data.
+ * Caller must supply the temp filename, original name, and upload status.
+ * This allows reuse for multiple uploaded files.
+ *
+ * @param string $tempFilename  Temporary file path from PHP.
+ * @param string $fileName      Original filename.
+ * @param int $fileStatus       File upload status code.
+ *
+ * @return fileFromUpload
+ */
+function getUserFileFromRequest(string $tempFilename, string $fileName, int $fileStatus, int $index): fileFromUpload {
+	// generate md5 hash of uploaded file
 	$md5chksum = md5_file($tempFilename);
+
+	// normalize file extension
 	$extension = normalizeExtension($fileName);
+
+	// get timestamp in ms
 	$timeInMillisecond = (int) ($_SERVER['REQUEST_TIME_FLOAT'] * 1000);
 
-	// remove exif if its a jpeg
+	// remove EXIF if jpeg AND exiftool available
 	if (isJpegExtension($extension) && isExiftoolAvailable()) {
 		removeGpsDataFromJpeg($tempFilename);
 	}
 
-	// get file name
+	// get filename without extension
 	$fileName = pathinfo($fileName, PATHINFO_FILENAME);
 
-	// get mime type
+	// detect mime type
 	$mimeType = detectMimeType($tempFilename);
 
 	// get file size
 	$fileSize = filesize($tempFilename);
 
-	// get dimensions
+	// get image/video dimensions
 	[$imgW, $imgH] = getMediaDimensions($tempFilename, $mimeType, $extension);
 
+	// build file object
 	$file = new file(
 		$extension,
 		$timeInMillisecond,
@@ -101,7 +115,8 @@ function getUserFileFromRequest(): fileFromUpload {
 		$imgH,
 		$md5chksum,
 		$mimeType,
-		$fileStatus
+		$fileStatus,
+		$index
 	);
 
 	return new fileFromUpload($file);

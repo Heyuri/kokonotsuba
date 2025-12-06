@@ -85,7 +85,13 @@ function generatePostFormHTML(int $resno,
 	$pte_vals = preparePostFormTemplateValues($resno, $config['LIVE_INDEX_FILE'], $name, $email, $subject, $comment, $config, $isThread, $moduleInfoHook, $isStaff);
 
 	if (!$config['TEXTBOARD_ONLY'] && ($config['RESIMG'] || !$resno)) {
-		$pte_vals['{$FORM_ATTECHMENT_FIELD}'] = '<input type="file" name="upfile" id="upfile">';
+		// get attachment limit
+		$attachmentUploadLimit = $board->getConfigValue('ATTACHMENT_UPLOAD_LIMIT', 1);
+
+		// whether to use 'multiple'
+		$multipleAttribute = ($attachmentUploadLimit > 1) ? 'multiple' : ''; 
+		
+		$pte_vals['{$FORM_ATTECHMENT_FIELD}'] = '<input type="file" name="upfile[]" id="upfile" data-attachment-limit="' . htmlspecialchars($attachmentUploadLimit) . '" ' . htmlspecialchars($multipleAttribute) . '>';
 
 		if (!$resno) {
 			$pte_vals['{$FORM_NOATTECHMENT_FIELD}'] = '<input type="checkbox" name="noimg" id="noimg" value="on">';

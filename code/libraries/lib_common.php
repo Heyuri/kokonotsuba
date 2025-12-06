@@ -296,36 +296,34 @@ function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = fals
 }
 
 /**
- * Load uploaded file data from the request.
- * Checks both the main 'upfile' input and the quick reply 'quickReplyUpFile'.
+ * Load uploaded file data for a specific file input and index.
+ * Supports multiple files for both 'upfile' and 'quickReplyUpFile'.
+ *
+ * @param string $inputName  The name of the file input (e.g. 'upfile').
+ * @param int $index         Index for multiple file uploads.
  *
  * @return array [$upfile, $upfile_name, $upfile_status]
  */
-function loadUploadData(): array {
-    // Check if the main form file input 'upfile' exists and has a file uploaded
-    if (!empty($_FILES['upfile']['tmp_name'])) {
-        // Sanitize the temporary file path to prevent any malicious input
-        $upfile = sanitizeStr($_FILES['upfile']['tmp_name']);
-        // Original filename as uploaded by the user
-        $upfile_name = $_FILES['upfile']['name'];
-        // File upload status code (UPLOAD_ERR_* constants)
-        $upfile_status = $_FILES['upfile']['error'];
-    } 
-    // If no main form file, check the Quick Reply file input 'quickReplyUpFile'
-    elseif (!empty($_FILES['quickReplyUpFile']['tmp_name'])) {
-        $upfile = sanitizeStr($_FILES['quickReplyUpFile']['tmp_name']);
-        $upfile_name = $_FILES['quickReplyUpFile']['name'];
-        $upfile_status = $_FILES['quickReplyUpFile']['error'];
-    } 
-    // If neither file input has a file, return defaults
-    else {
-        $upfile = '';                // No uploaded temp file
-        $upfile_name = '';           // No original filename
-        $upfile_status = UPLOAD_ERR_NO_FILE; // Constant indicating no file uploaded
-    }
+function loadUploadData(string $inputName, int $index): array {
+	// Ensure input exists and is a proper file upload entry
+	if (
+		isset($_FILES[$inputName]['tmp_name']) &&
+		is_array($_FILES[$inputName]['tmp_name']) &&
+		!empty($_FILES[$inputName]['tmp_name'][$index])
+	) {
+		$upfile = sanitizeStr($_FILES[$inputName]['tmp_name'][$index]);
+		$upfile_name = $_FILES[$inputName]['name'][$index];
+		$upfile_status = $_FILES[$inputName]['error'][$index];
 
-    // Return the temp path, original filename, and upload status
-    return [$upfile, $upfile_name, $upfile_status];
+		return [$upfile, $upfile_name, $upfile_status];
+	}
+
+	// No file uploaded for this input/index
+	return [
+		'',
+		'',
+		UPLOAD_ERR_NO_FILE
+	];
 }
 
 function getVideoDimensions(string $filePath): array {

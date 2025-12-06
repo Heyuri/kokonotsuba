@@ -84,16 +84,34 @@ class postValidator {
 		}
 		return[$postOpRoot];
 	}
-	public function cleanComment(string $com, int $upfile_status, bool $is_admin){
+	public function cleanComment(string $com, array $files, bool $is_admin){
 		// Text trimming
 		if((strlenUnicode($com) > $this->config['COMM_MAX']) && !$is_admin){
 			throw new BoardException(_T('regist_commenttoolong'));
 		}
 
-		if(!$com && $upfile_status === UPLOAD_ERR_NO_FILE){ 
-			throw new BoardException($this->config['TEXTBOARD_ONLY']?'ERROR: No text entered.':_T('regist_withoutcomment'));
+		// get file statuses from your $fileMeta['files'] list
+		$fileStatuses = array_column($files, 'status');
+
+		// true if no files were uploaded AT ALL
+		$noFilesUploaded = empty($fileStatuses);
+
+		// true if every file has UPLOAD_ERR_NO_FILE
+		$allFilesEmpty = (
+			!$noFilesUploaded &&
+			count(array_unique($fileStatuses)) === 1 &&
+			reset($fileStatuses) === UPLOAD_ERR_NO_FILE
+		);
+
+		// If there is no comment AND no usable files → reject
+		if (!$com && ($noFilesUploaded || $allFilesEmpty)) {
+			throw new BoardException(
+				$this->config['TEXTBOARD_ONLY']
+					? 'ERROR: No text entered.'
+					: _T('regist_withoutcomment')
+			);
 		}
-		
+
 		$com = str_replace(array("\r\n", "\r"), "\n", $com);
 		$com = preg_replace("/\n((　| )*\n){3,}/", "\n", $com);
 
