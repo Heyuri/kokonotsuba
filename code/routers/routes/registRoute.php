@@ -315,7 +315,8 @@ class registRoute {
 				$fileFromUpload,
 				$thumbnailCreator,
 				$thumbnail,
-				$boardFileDirectory
+				$boardFileDirectory,
+				$fileCount
 			);
 
 			// validate this specific file
@@ -460,8 +461,13 @@ class registRoute {
 		// loop through files and insert attachments
 		foreach($files as $f) {
 			// construct the the stored file name
-			// milisecond timestamp + index
-			$storedFileName = $f['fileTimeInMilliseconds'] . '_' . $f['index'];
+			// milisecond timestamp
+			$storedFileName = $f['fileTimeInMilliseconds'];
+
+			// append index if theres more than 1 attachment being uploaded
+			if(count($files) > 1) {
+				$storedFileName .= '_' . $f['index'];
+			}
 
 			// select the file object
 			$this->fileService->addFile(

@@ -19,11 +19,16 @@ class postFileUploadController {
 	private file $file;
 	private thumbnail $thumbnail;
 
+	// file count
+	// its the total amount of files uploaded in the request
+	private int $fileAmount;
+
 	public function __construct(array $config,
 	 fileFromUpload $fileFromUpload,
 	 thumbnailCreator $thumbnailCreator,
 	 thumbnail $thumbnail,
-	 string $boardImagePath,) {
+	 string $boardImagePath,
+	 int $fileAmount) {
 		$this->config = $config;
 
 		$this->fileFromUpload = $fileFromUpload;
@@ -33,10 +38,12 @@ class postFileUploadController {
 		$this->thumbnail = $thumbnail;
 
 		$this->boardImagePath = $boardImagePath;
+
+		$this->fileAmount = $fileAmount;
 	}
 
 	public function savePostFileToBoard(): void {
-		$this->fileFromUpload->saveFile($this->boardImagePath);
+		$this->fileFromUpload->saveFile($this->boardImagePath, $this->fileAmount);
 	}
 
 	public function savePostThumbnailToBoard(): void {
@@ -53,7 +60,12 @@ class postFileUploadController {
 		$index = $this->file->getIndex();
 
 		// assemble stored file name
-		$storedFileName = $timeInMilliseconds . '_' . $index;
+		$storedFileName = $timeInMilliseconds;
+
+		// if the file count is more than 1 then append '_$index' name
+		if($this->fileAmount > 1) {
+			$storedFileName .= '_' . $index;
+		}
 
 		$thumbnailDestinationName = $storedFileName . 's.' . $thumbnailExtention;
 

@@ -21,12 +21,12 @@ class fileFromUpload {
 	}
 
 	// Upload image
-	public function saveFile(string $directory): void {
+	public function saveFile(string $directory, int $fileAmount): void {
 		$timestamp	= $this->file->getTimeInMilliseconds();
 		$index		= $this->file->getIndex();
 		$extension	= $this->file->getExtention();
 		$tmpPath	= $this->file->getTemporaryFileName();
-		$fileName	= $timestamp . '_' . $index . '.' . $extension;
+		$fileName	= $timestamp . (($fileAmount > 1) ? '_' . $index : '') . '.' . $extension;
 		$destPath	= rtrim($directory, '/') . '/' . $fileName;
 
 		// Validate existence
