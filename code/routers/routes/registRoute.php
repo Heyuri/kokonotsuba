@@ -249,13 +249,13 @@ class registRoute {
 		$hasMultiUpfile =
 			isset($_FILES['upfile']['tmp_name']) &&
 			is_array($_FILES['upfile']['tmp_name']) &&
-			count($_FILES['upfile']['tmp_name']) > 0;
+			count(array_filter($_FILES['upfile']['tmp_name'])) > 0;
 
 		// determine if multiple files are uploaded on quick reply
 		$hasMultiQuickReply =
 			isset($_FILES['quickReplyUpFile']['tmp_name']) &&
 			is_array($_FILES['quickReplyUpFile']['tmp_name']) &&
-			count($_FILES['quickReplyUpFile']['tmp_name']) > 0;
+			count(array_filter($_FILES['quickReplyUpFile']['tmp_name'])) > 0;
 
 		// pick which input to use
 		$inputName = $hasMultiUpfile ? 'upfile' : ($hasMultiQuickReply ? 'quickReplyUpFile' : null);

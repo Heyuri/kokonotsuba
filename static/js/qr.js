@@ -136,7 +136,8 @@ const kkqr = { name: "KK Quick Reply",
 				// Create a fresh file input for the QR
 				const qrUpfile = document.createElement("input");
 				qrUpfile.type = "file";
-				qrUpfile.name = "quickReplyUpFile";
+				qrUpfile.multiple = true
+				qrUpfile.name = "quickReplyUpFile[]";
 				qrUpfile.id = "quickReplyUpFile";
 				qrUpfile.className = "inputtext";
 
