@@ -51,8 +51,8 @@ class moduleMain extends abstractModuleMain {
 		$this->initializeEmotes();
 
 		// Register the listener for the PostInfo hook
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
-			$this->onBeforeCommit($com, $file);  // Call the method to modify the form
+		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $files, $isReply, &$status, $thread, &$poster_hash) {
+			$this->onBeforeCommit($com, $files);  // Call the method to modify the form
 		});
 
 		// initialize bbcode feature flags
@@ -153,11 +153,11 @@ class moduleMain extends abstractModuleMain {
 		
 	}
 	
-	private function onBeforeCommit(&$com, $file){
-		$com = $this->bb2html($com, $file);
+	private function onBeforeCommit(&$com, $files){
+		$com = $this->bb2html($com, $files);
 	}
 
-	private function bb2html($string, $file): string {
+	private function bb2html($string, $files): string {
 		$this->urlcount=0; // Reset counter
 
 		// Extract [code] and [code=lang] blocks before processing other BBCode
@@ -280,7 +280,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		// image
-		if($this->supportImg && (($this->ImgTagTagMode == 2) || ($this->ImgTagTagMode && !$file))){
+		if($this->supportImg && (($this->ImgTagTagMode == 2) || ($this->ImgTagTagMode && !$files))){
 			$string = preg_replace('#\[img\](([a-z]+?)://([^ \n\r]+?))\[\/img\]#si', '<img class="bbcodeIMG" src="\1" style="border:1px solid \#021a40;" alt="\1">', $string);
 		}
 
