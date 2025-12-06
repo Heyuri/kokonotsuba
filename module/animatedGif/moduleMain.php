@@ -42,7 +42,11 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function onRenderPostFormFile(string &$file): void {
-		$file.= '<div id="anigifContainer"><label id="anigifLabel" title="Makes GIF thumbnails animated"><input type="checkbox" name="anigif" id="anigif" value="on">Animated GIF</label></div>';
+		// get size limit for animated gifs (in kb)
+		$animatedGifSizeLimit = $this->getConfig('MAX_SIZE_FOR_ANIMATED_GIF', 2000);
+
+		// append checkbox to post form
+		$file .= '<div id="anigifContainer"><label id="anigifLabel" title="Makes GIF thumbnails animated"><input type="checkbox" name="anigif" id="anigif" data-size-limit="' . htmlspecialchars($animatedGifSizeLimit) . '" value="on">Animated GIF</label></div>';
 	}
 
 	private function onAttachmentsAfterInsert(?array &$attachments): void {
