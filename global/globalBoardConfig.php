@@ -346,6 +346,7 @@ $config['ACTIONLOG_MAX_PER_PAGE'] = 50; // the amount of actionlog entries per p
 
 // Role levels
 $config['AuthLevels']['CAN_VIEW_IP_ADDRESSES'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_MOVE_THREAD'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_BAN'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_DELETE_POST'] = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR;
 $config['AuthLevels']['CAN_DELETE_ALL'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
@@ -360,6 +361,7 @@ $config['AuthLevels']['CAN_MANAGE_POSTS'] = \Kokonotsuba\Root\Constants\userRole
 $config['AuthLevels']['CAN_VIEW_ACTION_LOG'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_RAW_HTML'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
 $config['AuthLevels']['CAN_MANAGE_CAPCODES'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
+
 
 // The duration (in seconds) of inactivity allowed before automatically logging out a staff user
 // This value must not exceed the value of session.gc_maxlifetime in your php.ini

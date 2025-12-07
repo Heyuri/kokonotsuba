@@ -18,11 +18,11 @@ class moduleAdmin extends abstractModuleAdmin {
 	private readonly string $myPage;
 
     public function getRequiredRole(): userRole {
-        return $this->getConfig('AuthLevels.CAN_MANAGE_REBUILD');
+        return $this->getConfig('AuthLevels.CAN_MOVE_THREAD', userRole::LEV_MODERATOR);
     }
 
 	public function getName(): string {
-		return 'Rebuild tools';
+		return 'Move thread tools';
 	}
 
 	public function getVersion(): string {
