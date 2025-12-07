@@ -185,36 +185,41 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->quoteLinkService->copyQuoteLinksFromThread($originalThreadUid, $destinationBoard->getBoardUID(), $postUidMapping);
 	
 		// Step 3: Copy attachment files
-		$this->copyThreadAttachmentsToBoard($filesToCopy, $fileIdMapping, $destinationBoard,  true);
+		$this->copyAttachmentsFiles($filesToCopy, $fileIdMapping, $destinationBoard);
 
 		// Step 4: Return the UID of the newly created thread
 		return $newThreadUid;
 	}	
 	
-	private function copyThreadAttachmentsToBoard(array $attachments, array $fileIdMapping, IBoard $destinationBoard, bool $isCopy = false): void {
-		if (empty($attachments)) return;
-	
-		// then copy the files
-		$this->copyAttachmentsFiles($attachments, $fileIdMapping, $destinationBoard, $isCopy);
+	private function copyAttachmentsFiles(array $attachments, array $fileIdMapping, IBoard $destinationBoard): void {
+		$this->processAttachmentFiles($attachments, $fileIdMapping, $destinationBoard, true);
 	}
 
-	private function copyAttachmentsFiles(array $attachments, array $fileIdMapping, IBoard $destinationBoard, bool $isCopy): void {
+	private function moveAttachmentFiles(array $attachments, IBoard $destinationBoard): void {
+		$this->processAttachmentFiles($attachments, null, $destinationBoard, false);
+	}
+
+	private function processAttachmentFiles(array $attachments, ?array $fileIdMapping, IBoard $destinationBoard, bool $isCopy): void {
+		// return early if there's no attachments to process
+		if(empty($attachments)) {
+			return;
+		}
+
 		// Destination board paths and config
 		$destBasePath = $destinationBoard->getBoardUploadedFilesDirectory();
 		$destConfig = $destinationBoard->loadBoardConfig();
 		$destImgPath = $destBasePath . $destConfig['IMG_DIR'];
 		$destThumbPath = $destBasePath . $destConfig['THUMB_DIR'];
 
-		// Source board paths and config
 		foreach ($attachments as $att) {
 			// fetch board that the attachment belongs to
 			$board = searchBoardArrayForBoard($att['boardUID']);
 
-			// get the mapped file id value
-			$newFileId = $fileIdMapping[$att['fileId']] ?? null;
+			// determine new file id
+			$newFileId = $fileIdMapping[$att['fileId']] ?? $att['fileId'];
 
-			// if the mapping doesn't exist then continue
-			if(!$newFileId) {
+			// if this is a copy and mapping is required but missing, skip
+			if ($isCopy && $fileIdMapping !== null && empty($fileIdMapping[$att['fileId']])) {
 				continue;
 			}
 
@@ -236,7 +241,6 @@ class moduleAdmin extends abstractModuleAdmin {
 				? getGlobalAttachmentDirectory()
 				: $board->getBoardUploadedFilesDirectory() . $board->getConfigValue('THUMB_DIR');
 
-
 			// if the attachment is hidden then set both destination paths to be the global attachment directory
 			if($att['isHidden']) {
 				$destImgPath = getGlobalAttachmentDirectory();
@@ -249,22 +253,28 @@ class moduleAdmin extends abstractModuleAdmin {
 			$destThumb = $destThumbPath . $baseDestinationFilename . 's.' . $destinationBoard->getConfigValue('THUMB_SETTING.Format');
 
 			// Copy/move the image file if it exists
-			if (is_file($srcImage)) {
-				if ($isCopy) {
-					copy($srcImage, $destImage);
-				} else {
-					moveFileOnly($srcImage, $destImgPath);
-				}
-			}
-	
+			$this->processFileOperation($srcImage, $destImage, $isCopy);
+
 			// Copy/move the thumbnail file if it exists
-			if (is_file($srcThumb)) {
-				if ($isCopy) {
-					copy($srcThumb, $destThumb);
-				} else {
-					moveFileOnly($srcThumb, $destThumbPath);
-				}
-			}
+			$this->processFileOperation($srcThumb, $destThumb, $isCopy);
+		}
+	}
+
+	private function processFileOperation(string $srcFull, string $destFull, bool $isCopy): void {
+		// file must exist
+		if (!is_file($srcFull)) {
+			return;
+		}
+
+		// skip if source and destination refer to the same file
+		if (realpath($srcFull) === realpath($destFull)) {
+			return;
+		}
+
+		if ($isCopy) {
+			copy($srcFull, $destFull);
+		} else {
+			rename($srcFull, $destFull);
 		}
 	}
 
@@ -304,7 +314,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		} else {
 			$this->moduleContext->postRedirectService->addNewRedirect($hostBoard->getBoardUID(), $destinationBoard->getBoardUID(), $threadUid);
 
-			$this->copyThreadAttachmentsToBoard($attachments, [], $destinationBoard);
+			$this->moveAttachmentFiles($attachments, $destinationBoard);
 
 			$this->moduleContext->threadService->moveThreadAndUpdate($threadUid, $destinationBoard);
 
