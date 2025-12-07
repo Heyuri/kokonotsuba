@@ -171,24 +171,24 @@ class fileService {
 	}
 
 	public function getAttachmentsForPost(int $postUid): ?array {
-		// get the file and thumbnail pair
-		$fileThumbPair = $this->fileRepository->getFilesForPost($postUid);
+		// get the attachments for the post
+		$fileEntries = $this->fileRepository->getFilesForPost($postUid);
 
 		// return null if the entry wasn't found
-		if(!$fileThumbPair) {
+		if(!$fileEntries) {
 			return null;
 		}
 
-		// construct the attachment pair
-		$attachments = $this->buildAttachments($fileThumbPair);
+		// construct the attachments
+		$attachments = $this->buildAttachments($fileEntries);
 
-		// return the attachment pair
+		// return the attachments
 		return $attachments;
 	}
 
-	public function getAttachmentsForThread(string $threadUid): ?array {
+	public function getAttachmentsForThread(string $threadUid, bool $excludeAlreadyDeleted = false): ?array {
 		// get the fileEntries from posts in the thread
-		$threadFileEntries = $this->fileRepository->getFilesForThread($threadUid);
+		$threadFileEntries = $this->fileRepository->getFilesForThread($threadUid, $excludeAlreadyDeleted);
 
 		// return null if the entries weren't found
 		if(!$threadFileEntries) {
@@ -204,16 +204,16 @@ class fileService {
 
 	public function addFile(
 		int $postUid,
-		string $fileName,
-		string $storedFileName,
-		string $fileExtension,
-		string $fileMd5,
+		?string $fileName,
+		?string $storedFileName,
+		?string $fileExtension,
+		?string $fileMd5,
 		?int $fileWidth,
 		?int $fileHeight,
 		?int $thumbFileWidth,
 		?int $thumbFileHeight,
-		int $fileSize,
-		string $mimeType,
+		?int $fileSize,
+		?string $mimeType,
 		bool $isHidden,
 		bool $isDeleted = false,
 	): void {

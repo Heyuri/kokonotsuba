@@ -546,7 +546,7 @@ class deletedPostsRepository {
 
 	public function removeOpenRows(int $postUid): void {
 		// query to remove open post deletions under this post uid
-		$query = "DELETE FROM {$this->deletedPostsTable} WHERE post_uid = :post_uid AND open_flag = 1";
+		$query = "DELETE FROM {$this->deletedPostsTable} WHERE post_uid = :post_uid AND open_flag = 1 AND file_only = 0";
 
 		// parameter
 		$params = [

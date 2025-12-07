@@ -470,7 +470,7 @@ class deletedPostRenderer {
 		$fileId = $deletedEntry['file_id'];
 
 		// if deleted_attachments[field] doesn’t exist, return empty
-		if (empty($deletedEntry['deleted_attachments'][$fileId])) {
+		if (empty($deletedEntry['deleted_attachments'][$fileId]) || empty($deletedEntry['attachments'][$fileId])) {
 			return '<div class="error centerText">' . _T('attachment_not_found') . '</div>';
 		}
 
@@ -478,6 +478,7 @@ class deletedPostRenderer {
 		$deletedAttachmentMeta = $deletedEntry['deleted_attachments'][$fileId];
 
 		// get attachment
+		// null if its not found
 		$attachment = $deletedEntry['attachments'][$fileId];
 
 		// But overwrite fields to indicate that it's deleted

@@ -4,7 +4,8 @@ class fileRepository {
 	public function __construct(
 		private DatabaseConnection $databaseConnection,
 		private readonly string $fileTable,
-		private readonly string $postTable
+		private readonly string $postTable,
+		private readonly string $deletedPostsTable,
 	) {}
 
 	public function getFileById(int $fileId): false|fileEntry {
@@ -31,7 +32,7 @@ class fileRepository {
 		$query = $this->buildBaseFileQuery();
 
 		// WHERE clause
-		$query .= " WHERE f.post_uid = :post_uid LIMIT 2";
+		$query .= " WHERE f.post_uid = :post_uid";
 
 		// parameters
 		$params = [
@@ -45,22 +46,36 @@ class fileRepository {
 		return $fileEntries;
 	}
 
-	public function getFilesForThread(string $threadUid): false|array {
+	public function getFilesForThread(string $threadUid, bool $excludeAlreadyDeleted = false): false|array {
 		// query to get inner joined file rows
 		$query = $this->buildBaseFileQuery();
 
 		// WHERE clause for the thread
-		$query .= " WHERE f.post_uid 
-				IN( SELECT post_uid FROM {$this->postTable} 
-					WHERE p.thread_uid = :thread_uid
-		)";
+		$query .= " WHERE p.thread_uid = :thread_uid";
+
+		// option to exclude posts not deleted by proxy
+		if ($excludeAlreadyDeleted) {
+			$query .= "
+				AND NOT EXISTS (
+					SELECT 1
+					FROM {$this->deletedPostsTable} dp1
+					WHERE dp1.open_flag = 1
+					AND dp1.by_proxy = 0
+					AND p.is_op = 0
+					AND (
+						dp1.file_id = f.id
+						OR (dp1.file_id IS NULL AND dp1.post_uid = p.post_uid)
+					)
+				)
+			";
+		}
 
 		// parameters
 		$params = [
 			':thread_uid' => $threadUid
 		];
 
-		// fetch all as calss
+		// fetch all as class
 		$fileEntries = $this->databaseConnection->fetchAllAsClass($query, $params, 'fileEntry');
 
 		// return results
@@ -89,8 +104,9 @@ class fileRepository {
 
 	private function buildBaseFileQuery(): string {
 		// define base query the repo will use
-		$query = "SELECT f.*, p.boardUID, p.thread_uid  FROM {$this->fileTable} f
-				INNER JOIN {$this->postTable} p ON p.post_uid = f.post_uid";
+		$query = "SELECT DISTINCT f.*, p.boardUID, p.thread_uid  FROM {$this->fileTable} f
+				INNER JOIN {$this->postTable} p ON p.post_uid = f.post_uid
+				LEFT JOIN {$this->deletedPostsTable} dp ON dp.post_uid = f.post_uid ";
 
 		// return query
 		return $query;
@@ -135,16 +151,16 @@ class fileRepository {
 
 	public function insertFileRow(
 		int $post_uid,
-		string $file_name,
-		string $stored_filename,
-		string $file_ext,
-		string $file_md5,
+		?string $file_name,
+		?string $stored_filename,
+		?string $file_ext,
+		?string $file_md5,
 		?int $file_width,
 		?int $file_height,
 		?int $thumb_file_width,
 		?int $thumb_file_height,
-		int $file_size,
-		string $mime_type,
+		?int $file_size,
+		?string $mime_type,
 		bool $is_hidden,
 		bool $is_deleted = false,
 	): void {

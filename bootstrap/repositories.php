@@ -12,7 +12,7 @@ $accountService = new accountService($accountRepository, $actionLoggerService);
 // ───────────────────────────────────────
 // Post/Thread Bootstrap
 // ───────────────────────────────────────
-$fileRepository = new fileRepository($databaseConnection, $dbSettings['FILE_TABLE'], $dbSettings['POST_TABLE']);
+$fileRepository = new fileRepository($databaseConnection, $dbSettings['FILE_TABLE'], $dbSettings['POST_TABLE'], $dbSettings['DELETED_POSTS_TABLE']);
 $fileService = new fileService($fileRepository);
 $threadRepository = new threadRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE']);
 $postRepository = new postRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE']);

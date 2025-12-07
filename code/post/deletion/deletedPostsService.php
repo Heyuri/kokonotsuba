@@ -487,6 +487,7 @@ class deletedPostsService {
 		
 		// take replies gotten through thread posts
 		// get all posts where `is_op` is 0 or null
+		// as well as not already being deleted
 		$replyPosts = $this->extractReplies($threadPosts);
 
 		// make sure none were included in posts
@@ -547,13 +548,27 @@ class deletedPostsService {
 		$result = [];
 
 		foreach ($posts as $post) {
+			// Determine whether this post is an OP post (thread starter)
 			$isOp = $post['is_op'] ?? null;
 
-			if ($isOp === 0 || $isOp === '0' || $isOp === null) {
+			// Check if the post is already deleted:
+			// open_flag must be non-empty AND by_proxy must be 0 or null
+			// (meaning it wasn’t deleted by a proxy process)
+			$isAlreadyDeleted = !empty($post['open_flag']) 
+								&& ($post['by_proxy'] === 0 || is_null($post['by_proxy']));
+
+			// A reply is any post that is not an OP.
+			// OP can be represented as 1, "1", or true depending on source,
+			// so treat anything that is 0, "0", or null as a non-OP.
+			$isNotOp = $isOp === 0 || $isOp === '0' || $isOp === null; 
+
+			// Only include replies that are not already deleted
+			if ($isNotOp && !$isAlreadyDeleted) {
 				$result[] = $post;
 			}
 		}
 
+		// Return the filtered list of replies
 		return $result;
 	}
 
@@ -601,7 +616,6 @@ class deletedPostsService {
 
 		// delete any pre-existing open entries in order to avoid conflicts
 		// "open" meaning they aren't restored and are
-		// aside from preventing duplicates it 'merges' attachment-only deletions on this post into one
 		$this->deletedPostsRepository->removeOpenRows($postUid);
 
 		// add a new row to the deleted posts table
