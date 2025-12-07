@@ -273,6 +273,11 @@ function deleteCreatedBoardConfig(string $boardConfigName): void {
 
 // Helper to send a file response with common headers
 function sendInlineFile(string $path, string $mimeType, string $fileName): void {
+	// Clear all output buffers to prevent corruption of binary data
+	while (ob_get_level() > 0) {
+		ob_end_clean();
+	}
+
 	// Set headers
 	header("Content-Type: " . $mimeType);
 	header("Content-Length: " . filesize($path));
