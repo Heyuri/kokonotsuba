@@ -40,10 +40,10 @@ function getBasePostQuery(string $postTable, string $deletedPostsTable, string $
 			SELECT dp1.post_uid, dp1.open_flag, dp1.file_only, dp1.by_proxy, dp1.note, dp1.id
 			FROM $deletedPostsTable dp1
 			INNER JOIN (
-				SELECT post_uid, MAX(deleted_at) AS max_deleted_at
+				SELECT post_uid, MAX(id) AS max_deleted_id
 				FROM $deletedPostsTable
 				GROUP BY post_uid
-			) dp2 ON dp1.post_uid = dp2.post_uid AND dp1.deleted_at = dp2.max_deleted_at
+			) dp2 ON dp1.post_uid = dp2.post_uid AND dp1.id = dp2.max_deleted_id
 		) dp ON p.post_uid = dp.post_uid
 		
 		-- Additional file rows (all attachments)
