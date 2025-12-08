@@ -209,6 +209,12 @@ class attachmentRenderer {
 
 			// then build image tag
 			return $this->buildImageTag($imageURL, $thumbURL, 'Audio file', 128, 128);
+		} elseif (!is_null($mimeType) && isArchiveFile($ext, $mimeType)) {
+			// get archive thumbnail
+			$thumbURL = $this->board->getConfigValue('ARCHIVE_THUMB');
+
+			// then build archive thumb image tag
+			return $this->buildImageTag($imageURL, $thumbURL, 'Archive file', 128, 128);
 		}
 		// Case: No thumbnail available, use generic placeholder
 		elseif (!$thumbName) {

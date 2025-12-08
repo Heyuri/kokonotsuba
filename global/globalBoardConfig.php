@@ -253,6 +253,7 @@ $config['DNSBLWHlist'] = array(); // Deprecated by adminban module
 
 $config['SWF_THUMB'] = $config['STATIC_URL']."image/swf_thumb.png";
 $config['AUDIO_THUMB'] = $config['STATIC_URL']."image/audio.png";
+$config['ARCHIVE_THUMB'] = $config['STATIC_URL']."image/archive.png";
 
 /*---- Part 2：Board Functions ----*/
 $config['HOME'] = 'index.html'; // What the [Home] button links to

@@ -380,3 +380,46 @@ function serveMedia(string $mediaPath) {
 		header("HTTP/1.0 404 Not Found");
 	}
 }
+
+/**
+ * Determine whether the given extension or MIME type represents an archive file.
+ *
+ * @param string $extension File extension without the dot (e.g., "zip", "rar")
+ * @param string $mime      MIME type detected for the file
+ *
+ * @return bool True if the file is recognized as an archive, otherwise false
+ */
+function isArchiveFile(string $extension, string $mime) {
+	// known archive extensions
+	$extList = [
+		'zip','rar','7z','tar','gz','tgz','bz2','tbz','xz','txz'
+	];
+
+	// known archive MIME types
+	$mimeList = [
+		'application/zip',
+		'application/x-rar-compressed',
+		'application/x-7z-compressed',
+		'application/x-tar',
+		'application/gzip',
+		'application/x-bzip2',
+		'application/x-xz'
+	];
+
+	// normalize values for comparison
+	$ext = strtolower($extension);
+	$mime = strtolower($mime);
+
+	// check extension match
+	if (in_array($ext, $extList, true)) {
+		return true;
+	}
+
+	// check MIME type match
+	if (in_array($mime, $mimeList, true)) {
+		return true;
+	}
+
+	// no match found
+	return false;
+}
