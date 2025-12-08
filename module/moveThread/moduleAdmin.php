@@ -208,8 +208,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		// Destination board paths and config
 		$destBasePath = $destinationBoard->getBoardUploadedFilesDirectory();
 		$destConfig = $destinationBoard->loadBoardConfig();
-		$destImgPath = $destBasePath . $destConfig['IMG_DIR'];
-		$destThumbPath = $destBasePath . $destConfig['THUMB_DIR'];
+		$baseDestImgPath = $destBasePath . $destConfig['IMG_DIR'];
+		$baseDestThumbPath = $destBasePath . $destConfig['THUMB_DIR'];
 
 		foreach ($attachments as $att) {
 			// fetch board that the attachment belongs to
@@ -223,29 +223,43 @@ class moduleAdmin extends abstractModuleAdmin {
 				continue;
 			}
 
-			// build the final stored filename, including the hidden-file suffix when needed
-			$baseDestinationFilename =
-				$att['storedFileName']
-				. ($att['isHidden'] ? '_' . $newFileId : '');
+			// handle all hidden vs non-hidden behavior in one place
+			if ($att['isHidden']) {
+				// Hidden attachments live in the global attachment directory,
+				// and both the image and thumbnail must use it as the source and destination.
 
-			$baseSrcFilename =
-				$att['storedFileName']
-				. ($att['isHidden'] ? '_' . $att['fileId'] : '');
+				$srcImgPath = getGlobalAttachmentDirectory();
+				$srcThumbPath = getGlobalAttachmentDirectory();
 
-			// determine base directories for full images and thumbnails
-			$srcImgPath = $att['isHidden']
-				? getGlobalAttachmentDirectory()
-				: $board->getBoardUploadedFilesDirectory() . $board->getConfigValue('IMG_DIR');
-
-			$srcThumbPath = $att['isHidden']
-				? getGlobalAttachmentDirectory()
-				: $board->getBoardUploadedFilesDirectory() . $board->getConfigValue('THUMB_DIR');
-
-			// if the attachment is hidden then set both destination paths to be the global attachment directory
-			if($att['isHidden']) {
 				$destImgPath = getGlobalAttachmentDirectory();
 				$destThumbPath = getGlobalAttachmentDirectory();
+
+				// Hidden files encode their fileId into the stored filename
+				$baseSrcFilename =
+					$att['storedFileName'] . '_' . $att['fileId'];
+
+				$baseDestinationFilename =
+					$att['storedFileName'] . '_' . $newFileId;
 			}
+			else {
+				// Visible attachments are stored under the board’s normal directories.
+				// Use the board where the attachment originated to determine the correct source paths.
+
+				$srcImgPath =
+					$board->getBoardUploadedFilesDirectory() . $board->getConfigValue('IMG_DIR');
+
+				$srcThumbPath =
+					$board->getBoardUploadedFilesDirectory() . $board->getConfigValue('THUMB_DIR');
+
+				// Destination is always the destination board’s normal attachment dirs.
+				$destImgPath = $baseDestImgPath;
+				$destThumbPath = $baseDestThumbPath;
+
+				// Non-hidden files do not append their fileId
+				$baseSrcFilename = $att['storedFileName'];
+				$baseDestinationFilename = $att['storedFileName'];
+			}
+
 
 			$srcImage = $srcImgPath . $baseSrcFilename . '.' . $att['fileExtension'];
 			$destImage = $destImgPath . $baseDestinationFilename . '.' . $att['fileExtension'];
