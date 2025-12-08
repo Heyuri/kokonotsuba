@@ -45,3 +45,27 @@ function removeWidgetActions(postEl, actions) {
 		});
 	});
 }
+
+function createViewFileButton(url) {
+	const span = document.createElement('span');
+	span.className = 'adminFunctions attachmentButton viewDeletedFileButton';
+
+	// leading bracket
+	const left = document.createTextNode('[');
+
+	// the actual link
+	const a = document.createElement('a');
+	a.href = url;
+	a.target = '_blank';
+	a.textContent = 'VF';
+	a.title = 'View deleted attachment';
+
+	// trailing bracket
+	const right = document.createTextNode(']');
+
+	span.appendChild(left);
+	span.appendChild(a);
+	span.appendChild(right);
+
+	return span;
+}
