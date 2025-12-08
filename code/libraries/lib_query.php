@@ -8,7 +8,7 @@ function getBasePostQuery(string $postTable, string $deletedPostsTable, string $
 
 			-- Get thread post op number
 			t.post_op_number,
-		
+			
 			-- All attachment rows
 			f.id AS attachment_id,
 			f.file_name AS attachment_file_name,
@@ -25,33 +25,33 @@ function getBasePostQuery(string $postTable, string $deletedPostsTable, string $
 			f.is_animated AS attachment_is_animated,
 			f.is_deleted AS attachment_is_deleted,
 			f.timestamp_added AS attachment_timestamp_added,
-					
-			-- Deleted post info
+
+			-- Deleted post info (per-row)
 			dp.open_flag,
 			dp.file_only AS file_only_deleted,
 			dp.id AS deleted_post_id,
 			dp.by_proxy,
-			dp.note AS deleted_note
-		
+			dp.note AS deleted_note,
+
+			-- Required for mergeRowIntoPost
+			dp.file_id,
+			dp.deleted_by,
+			dp.deleted_at,
+			dp.restored_at
+
 		FROM $postTable p
-		
-		-- Join latest deleted_post info
-		LEFT JOIN (
-			SELECT dp1.post_uid, dp1.open_flag, dp1.file_only, dp1.by_proxy, dp1.note, dp1.id
-			FROM $deletedPostsTable dp1
-			INNER JOIN (
-				SELECT post_uid, MAX(id) AS max_deleted_id
-				FROM $deletedPostsTable
-				GROUP BY post_uid
-			) dp2 ON dp1.post_uid = dp2.post_uid AND dp1.id = dp2.max_deleted_id
-		) dp ON p.post_uid = dp.post_uid
-		
+
+		-- Return *all* deletion entries for this post (post-level AND attachment-level)
+		LEFT JOIN $deletedPostsTable dp
+			ON dp.post_uid = p.post_uid
+
 		-- Additional file rows (all attachments)
-		LEFT JOIN $fileTable f ON f.post_uid = p.post_uid
+		LEFT JOIN $fileTable f
+			ON f.post_uid = p.post_uid
 
 		-- Thread data
-		INNER JOIN $threadTable t ON p.thread_uid = t.thread_uid
-
+		INNER JOIN $threadTable t
+			ON p.thread_uid = t.thread_uid
 		";
 	return $query;
 }
@@ -107,63 +107,34 @@ function buildAttachment(array $row): array {
  * @param false|array $rows
  * @return false|array
  */
-function mergeMultiplePostRows(false|array $rows): false|array {
-    if (!$rows) {
-        return false;
-    }
+function mergeMultiplePostRows(null|false|array $rows): false|array {
+	if (!$rows) {
+		return false;
+	}
 
-    $posts = [];
+	$posts = [];
 
-    foreach ($rows as $row) {
-        $uid = $row['post_uid'];
+	foreach ($rows as $row) {
+		$uid = $row['post_uid'];
 
-        // Initialize the post entry if we haven't seen it yet
-        if (!isset($posts[$uid])) {
-            $posts[$uid] = $row;              // copy base post data
-            $posts[$uid]['attachments'] = []; // normal attachments
-            $posts[$uid]['deleted_attachments'] = []; // attachment deletion metadata
-        }
+		// Initialize the post entry if we haven't seen it yet
+		if (!isset($posts[$uid])) {
+			$posts[$uid] = $row;              // copy base post data
+			$posts[$uid]['attachments'] = []; // normal attachments
+			$posts[$uid]['deleted_attachments'] = []; // attachment deletion metadata
+		}
 
-        /**
-         * Delegate the repeated logic to one helper
-         */
-        mergeRowIntoPost($posts[$uid], $row);
-    }
+		/**
+		 * Delegate the repeated logic to one helper
+		 */
+		mergeRowIntoPost($posts[$uid], $row);
+	}
 
-    // Return flat array of merged posts
-    return array_values($posts);
-}
+	// apply deletion meta data to attachments
+	applyDeletionMetadata($posts);
 
-/**
- * Merge rows from deleted-posts query into structured entries.
- *
- * The query now returns:
- *   • One row per deleted_posts.id
- *   • At most one attachment per row (the one referenced by dp.file_id)
- *
- * This function:
- *   • Groups post-level deletions by post_uid
- *   • Creates separate entries for attachment-only deletions
- *   • Preserves all attachments and deleted_attachments metadata
- */
-function mergeDeletedPostRows(array $rows): array {
-    $results = [];
-
-    foreach ($rows as $row) {
-        $postUid = $row['post_uid'];
-
-        // Initialize entry if it doesn’t exist
-        if (!isset($results[$postUid])) {
-            $results[$postUid] = $row;
-            $results[$postUid]['attachments'] = [];
-            $results[$postUid]['deleted_attachments'] = [];
-        }
-
-        // Delegate the repeated logic to one helper
-        mergeRowIntoPost($results[$postUid], $row);
-    }
-
-    return array_values($results);
+	// Return flat array of merged posts
+	return array_values($posts);
 }
 
 /**
@@ -179,26 +150,26 @@ function mergeDeletedPostRows(array $rows): array {
  */
 function mergeRowIntoPost(array &$target, array $row): void {
 
-    // normal attachments
-    if (!empty($row['attachment_id'])) {
-        $target['attachments'][$row['attachment_id']] = buildAttachment($row);
-    }
+	// normal attachments
+	if (!empty($row['attachment_id'])) {
+		$target['attachments'][$row['attachment_id']] = buildAttachment($row);
+	}
 
-    // deleted attachments
-    if (!empty($row['file_id'])) {
-        $target['deleted_attachments'][$row['file_id']] = [
-            'deleted_post_id'   => $row['deleted_post_id'] ?? null,
-            'deleted_by'        => $row['deleted_by'] ?? null,
-            'deleted_at'        => $row['deleted_at'] ?? null,
-            'restored_at'       => $row['restored_at'] ?? null,
-            'file_only_deleted' => (bool)($row['file_only_deleted'] ?? false),
-            'by_proxy'          => (bool)($row['by_proxy'] ?? false),
-            'note'              => $row['deleted_note'] ?? ($row['note'] ?? null),
-        ];
-    }
+	// deleted attachments
+	if (!empty($row['file_id'])) {
+		$target['deleted_attachments'][$row['file_id']] = [
+			'deleted_post_id'   => $row['deleted_post_id'] ?? null,
+			'deleted_by'        => $row['deleted_by'] ?? null,
+			'deleted_at'        => $row['deleted_at'] ?? null,
+			'restored_at'       => $row['restored_at'] ?? null,
+			'file_only_deleted' => (bool)($row['file_only_deleted'] ?? false),
+			'by_proxy'          => (bool)($row['by_proxy'] ?? false),
+			'note'              => $row['deleted_note'] ?? ($row['note'] ?? null),
+		];
+	}
 
-    // remove raw attachment_* columns
-    stripAttachmentColumns($target);
+	// remove raw attachment_* columns
+	stripAttachmentColumns($target);
 }
 
 /**
@@ -207,25 +178,89 @@ function mergeRowIntoPost(array &$target, array $row): void {
  * @param array &$row  Row to clean (modified in-place)
  */
 function stripAttachmentColumns(array &$row): void {
-    static $cols = [
-        'attachment_id',
-        'attachment_file_name',
-        'attachment_stored_filename',
-        'attachment_file_ext',
-        'attachment_file_md5',
-        'attachment_file_size',
-        'attachment_file_width',
-        'attachment_file_height',
-        'attachment_thumb_width',
-        'attachment_thumb_height',
-        'attachment_mime_type',
-        'attachment_is_hidden',
-        'attachment_is_animated',
-        'attachment_is_deleted',
-        'attachment_timestamp_added',
-    ];
+	static $cols = [
+		'attachment_id',
+		'attachment_file_name',
+		'attachment_stored_filename',
+		'attachment_file_ext',
+		'attachment_file_md5',
+		'attachment_file_size',
+		'attachment_file_width',
+		'attachment_file_height',
+		'attachment_thumb_width',
+		'attachment_thumb_height',
+		'attachment_mime_type',
+		'attachment_is_hidden',
+		'attachment_is_animated',
+		'attachment_is_deleted',
+		'attachment_timestamp_added',
+	];
 
-    foreach ($cols as $c) {
-        unset($row[$c]);
-    }
+	foreach ($cols as $c) {
+		unset($row[$c]);
+	}
+}
+
+function applyDeletionMetadata(array &$posts): void {
+	// loop through post rows by reference
+	foreach ($posts as &$post) {
+		// Apply metadata to every attachment
+		if (!empty($post['attachments'])) {
+			foreach ($post['attachments'] as $attachmentId => &$att) {
+				// attachment-level deletion
+				$att['deletedPostId'] =
+					$post['deleted_attachments'][$attachmentId]['deleted_post_id']
+					?? null;
+			}
+		}
+	}
+}
+
+/**
+ * Merge rows for deleted_posts entries into one structure per deleted_post_id.
+ *
+ * This is used for the deleted-posts (DP) pages where we want one row per
+ * deleted_posts.id (dp row), not one row per post_uid.
+ *
+ * For each dp row:
+ *  - the base dp + post columns are kept
+ *  - attachments[] is filled (if attachment_id present)
+ *  - deleted_attachments[] is filled (if file_id present)
+ *
+ * @param null|false|array $rows
+ * @return false|array
+ */
+function mergeDeletedPostRows(null|false|array $rows): false|array {
+	if (!$rows) {
+		return false;
+	}
+
+	$entries = [];
+
+	foreach ($rows as $row) {
+		// Group by dp.id (aliased as deleted_post_id in your SELECT)
+		$dpId = $row['deleted_post_id'] ?? null;
+
+		// Fallback: if for some reason alias missing, group by post_uid
+		if ($dpId === null && isset($row['post_uid'])) {
+			$dpId = $row['post_uid'];
+		}
+
+		if ($dpId === null) {
+			// Nothing sensible to group by; skip this row
+			continue;
+		}
+
+		// Initialize this dp entry if we haven't seen it yet
+		if (!isset($entries[$dpId])) {
+			$entries[$dpId] = $row;
+			$entries[$dpId]['attachments'] = [];
+			$entries[$dpId]['deleted_attachments'] = [];
+		}
+
+		// Reuse your existing logic for wiring up attachments + deleted_attachments
+		mergeRowIntoPost($entries[$dpId], $row);
+	}
+
+	return array_values($entries);
 }

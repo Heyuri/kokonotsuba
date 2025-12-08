@@ -50,7 +50,6 @@ class attachmentRenderer {
 			$fileData['timestampAdded'],
 			false);
 
-
 		// Attachment bar (if any)
 		$imageBar = $this->handleFileBar($fileData, $imageURL);
 
@@ -69,7 +68,7 @@ class attachmentRenderer {
 			$imageURL,
 			$imageExists,
 			(!$adminMode && $isAttachmentDeleted));
-	
+			
 		// run attachment hook point
 		$this->moduleEngine->dispatch('Attachment', [&$imageBar, &$imageHtml, &$imageURL, &$fileData]);
 

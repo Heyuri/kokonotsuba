@@ -690,6 +690,14 @@ class deletedPostsService {
 		return $this->returnOrNull($deletedPost);
 	}
 
+	public function getDeletedPostRowByFileId(int $fileId): ?array {
+		// fetch the row by file id
+		$deletedPost = $this->deletedPostsRepository->getDeletedPostRowByFileId($fileId);
+
+		// return row
+		return $this->returnOrNull($deletedPost);
+	}
+
 	public function pruneExpiredPosts(int $timeLimit): void {
 		// run transaction
 		$this->transactionManager->run(function() use($timeLimit) {

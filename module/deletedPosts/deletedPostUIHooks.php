@@ -225,13 +225,20 @@ class deletedPostUIHooks {
 			return;
 		}
 
-		// whether the post is deleted or not
-		$isPostDeleted = $this->deletedPostUtility->isPostDeleted($post);
+		// Check if the post contains any deleted attachments
+		if (empty($post['deleted_attachments'])) {
+			return;
+		}
 
-		// whether only the file was deleted
-		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
+		// Loop through the deleted_attachments to check 'open_flag' value
+		foreach ($post['attachments'] as $attachment) {
+			if (!isset($attachment['deletedPostId']) && !$attachment['deletedPostId']) {
+				// Handle the case where 'open_flag' is not 1
+				return;
+			}
+		}
 
-		$this->appendCssClassIf($attachmentCssClasses, $isPostDeleted && $onlyFileDeleted, 'deletedFile');
+		$this->appendCssClassIf($attachmentCssClasses, true, 'deletedFile');
 	}
 
 	private function onRenderPostCssClass(string &$postCssClasses, array $post): void {
@@ -297,9 +304,34 @@ class deletedPostUIHooks {
 	}
 
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
-		// append to attachment properties file deletion if the file is deleted
-		if($attachment['isDeleted'] && $attachment['onlyFileDeleted']) {
-			$attachmentProperties .= $this->renderIndicator('FILE DELETED', 'This post\'s file was deleted!');
+		// return early if the attachment isn't deleted
+		if((!$attachment['isDeleted'] && !$attachment['onlyFileDeleted']) || empty($attachment['deletedPostId'])) {
+			return;
 		}
+
+		// append indicator to attachment
+		$attachmentProperties .= $this->renderIndicator('FILE DELETED', 'This post\'s file was deleted!');
+
+		// get deleted post id of the attachment
+		$deletedPostId = $attachment['deletedPostId'] ?? null;
+
+		// append view deleted attachment button
+		$attachmentProperties .= $this->generateViewDelAttachmentButton($deletedPostId);
+	}
+
+	private function generateViewDelAttachmentButton(?int $deletedPostId): string {
+		// return empty string if null
+		if(!$deletedPostId) {
+			return '';
+		}
+		
+		// generate delete attachment url
+		$deletedEntryUrl = $this->deletedPostUtility->generateViewDeletedPostUrl($deletedPostId);
+
+		// button html
+		$button = ' <span class="adminFunctions adminViewDeletedAttachment attachmentButton">[<a href="' . htmlspecialchars($deletedEntryUrl) . '" title="View deleted attachment">VF</a>]</span>';
+	
+		// return button
+		return $button;
 	}
 }

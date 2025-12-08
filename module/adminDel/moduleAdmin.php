@@ -281,8 +281,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		if ($isDeleted) {
 			throw new BoardException('Post already deleted!');
 		}
+
+		// get action
+		$action = $_REQUEST['action'] ?? '';
 		
-		switch ($_REQUEST['action']??'') {
+		switch ($action) {
 			case 'del':
 				$this->moduleContext->postService->removePosts([$post['post_uid']], $accountId);
 				$this->moduleContext->actionLoggerService->logAction('Deleted post No.'.$post['no'], $boardUID);
@@ -332,13 +335,22 @@ class moduleAdmin extends abstractModuleAdmin {
 		//deleteThreadCache($post['thread_uid']);
 
 		// AJAX first: send JSON, flush to client, then rebuild in the background of this request.
-		if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+		if (isJavascriptRequest()) {
+			// if it was an attachment deletion then use the appropriate method to generate the url
+			if($action === 'attachmentDel' && $fileId) {
+				$deletionUrl = $this->getDeletionUrlForAttachment($fileId);
+			}
+			// otherwise just get the regular deletion url
+			else {
+				$deletionUrl = $this->getDeletionUrlForPost($post['post_uid']);
+			}
+
 			// Return JSON for AJAX requests
 			header('Content-Type: application/json');
 			echo json_encode([
 				'success' => true,
 				'is_op' => $post['is_op'],
-				'deleted_link' => $this->getDeletedPostViewUrl($post)
+				'deleted_link' => $deletionUrl
 			]);
 		
 			// Let the client go on; we keep working server-side.
@@ -409,13 +421,23 @@ class moduleAdmin extends abstractModuleAdmin {
 		fclose($f);
 	}
 
-	private function getDeletedPostViewUrl(array $post): string {
-		// post uid
-		$postUid = $post['post_uid'];
-
+	private function getDeletionUrlForPost(int $postUid): string {
 		// fetch the deleted post by post uid
 		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByPostUid($postUid);
 
+		// now get the deleted post url and return
+		return $this->getDeletionViewUrl($deletedPost);
+	}
+
+	private function getDeletionUrlForAttachment(int $fileId): string {
+		// fetch the deleted post by file id
+		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
+
+		// now get the deleted post url and return
+		return $this->getDeletionViewUrl($deletedPost);
+	}
+
+	private function getDeletionViewUrl(array $deletedPost): string {
 		// get the deleted post id for the url
 		$deletedPostId = $deletedPost['deleted_post_id'];
 

@@ -136,7 +136,7 @@ class deletedPostsRepository {
 		$postData = $this->databaseConnection->fetchAllAsArray($query, $params);
 	
 		// merge attachment row
-		$postData = mergeDeletedPostRows($postData);
+		$postData = mergeMultiplePostRows($postData);
 
 		// return it
 		return $postData[0] ?? false;
@@ -161,45 +161,225 @@ class deletedPostsRepository {
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
 
 		// merge attachment rows
-		$posts = mergeDeletedPostRows($posts);
+		$posts = mergeMultiplePostRows($posts);
 
 		// return posts
 		return $posts;
 	}
 
-	public function getPagedEntries(int $amount, int $offset, string $orderBy = 'id', string $direction = 'DESC', bool $restoredOnly = false, ?int $accountId = null): array|false {
-		// Hide restored posts
-		if(!$restoredOnly) {
-			// append where clause to exclude restored posts
-			$whereClause = " WHERE dp.open_flag = 1 AND dp.by_proxy = 0";
-		} else {
-			// otherwise filter for closed flags
-			$whereClause = ' WHERE dp.open_flag = 0 AND dp.by_proxy = 0';
+	/**
+	 * Retrieve a paginated list of deleted posts. Pagination is done by post_uid
+	 * (logical posts), not by individual deleted_posts rows. For each post_uid on
+	 * the page, we load all related deleted_posts rows (post-level + attachment-level)
+	 * and then merge them.
+	 *
+	 * @param int      $amount       Number of top-level posts to return.
+	 * @param int      $offset       Pagination offset.
+	 * @param string   $orderBy      Column to order by (validated).
+	 * @param string   $direction    ASC/DESC.
+	 * @param bool     $restoredOnly Whether to show restored instead of open.
+	 * @param int|null $accountId    Optional filter for deleted_by.
+	 *
+	 * @return array|false           Merged deleted-post entries or false if none.
+	 */
+	public function getPagedEntries(
+		int $amount,
+		int $offset,
+		string $orderBy = 'id',
+		string $direction = 'DESC',
+		bool $restoredOnly = false,
+		?int $accountId = null
+	): array|false {
+
+		// Validate ordering field
+		if (!in_array($orderBy, $this->allowedOrderFields, true)) {
+			$orderBy = 'id';
 		}
 
-		// init params array 
+		// Validate direction
+		$direction = strtoupper($direction);
+		if (!in_array($direction, ['ASC', 'DESC'], true)) {
+			$direction = 'DESC';
+		}
+
+		// Parameters get accumulated here
 		$params = [];
 
-		// append accound if if we're filtering for those
-		if($accountId) {
-			// append to WHERE clause
-			$whereClause .= ' AND dp.deleted_by = :account_id';
+		// Step 1: build WHERE clause for deleted_posts
+		$filterClause = $this->buildDeletedPostsFilter($restoredOnly, $accountId, $params);
 
-			// add :account_id placeholder to params
+		// Step 2: get a page of post_uid values representing logical deleted posts
+		$postUids = $this->getPagedPostUids(
+			$amount,
+			$offset,
+			$orderBy,
+			$direction,
+			$filterClause,
+			$params
+		);
+
+		if (!$postUids) {
+			return false;
+		}
+
+		// Step 3: fetch all deleted_posts rows for those post_uids
+		$rows = $this->fetchDeletedPostsForUids(
+			$postUids,
+			$filterClause,
+			$orderBy,
+			$direction,
+			$params
+		);
+
+		// Step 4: merge into proper post entries with attachments + deletion metadata
+		$merged = mergeDeletedPostRows($rows);
+
+		return $merged ?: false;
+	}
+
+	/**
+	 * Build the WHERE clause that filters deleted_posts rows.
+	 *
+	 * This determines whether we show open or restored entries, and optionally
+	 * filters by which account deleted the entry. The method appends parameters
+	 * into $params by reference.
+	 *
+	 * @param bool      $restoredOnly  If true, return only restored rows; otherwise only open rows.
+	 * @param int|null  $accountId     Optional filter for dp.deleted_by.
+	 * @param array     $params        Parameter array passed by reference.
+	 *
+	 * @return string   A complete WHERE clause beginning with "WHERE".
+	 */
+	private function buildDeletedPostsFilter(bool $restoredOnly, ?int $accountId, array &$params): string {
+		$parts = [];
+
+		// Choose open vs restored deleted entries.
+		if (!$restoredOnly) {
+			$parts[] = 'dp.open_flag = 1';	// include only non-restored
+		} else {
+			$parts[] = 'dp.open_flag = 0';	// include only restored
+		}
+
+		// Always exclude proxy records.
+		$parts[] = 'dp.by_proxy = 0';
+
+		// Optionally filter by the deleting account.
+		if ($accountId !== null) {
+			$parts[] = 'dp.deleted_by = :account_id';
 			$params[':account_id'] = $accountId;
 		}
 
-		// Get the query for entries
-		$query = $this->buildDeletedPostsQuery($amount, $offset, $orderBy, $direction, $whereClause);
+		// Build final WHERE string.
+		if (!$parts) {
+			return '';
+		}
 
-		// fetch all the data as an array
-		$entries = $this->databaseConnection->fetchAllAsArray($query, $params);
+		return ' WHERE ' . implode(' AND ', $parts);
+	}
 
-		// merge attachment
-		$entries = mergeDeletedPostRows($entries);
+	/**
+	 * Retrieve a single "page" of post_uid values. Each post_uid represents one
+	 * logical deleted-post entry for the UI. We group deleted_posts rows by post_uid
+	 * and order by a chosen field so pagination is stable.
+	 *
+	 * @param int    $amount       Number of entries to load.
+	 * @param int    $offset       Starting offset.
+	 * @param string $orderBy      Column name to order by (validated beforehand).
+	 * @param string $direction    ASC or DESC.
+	 * @param string $filterClause The WHERE clause generated by buildDeletedPostsFilter().
+	 * @param array  $params       Bound parameters for the query.
+	 *
+	 * @return array|false         A flat array of post_uid values, or false if none.
+	 */
+	private function getPagedPostUids(
+		int $amount,
+		int $offset,
+		string $orderBy,
+		string $direction,
+		string $filterClause,
+		array $params
+	): array|false {
 
-		// return results
-		return $entries;
+		// Map orderBy field into the appropriate grouped expression.
+		switch ($orderBy) {
+			case 'post_uid':
+				$sortExpr = 'dp.post_uid';
+				break;
+			case 'deleted_at':
+				$sortExpr = 'MAX(dp.deleted_at)';
+				break;
+			case 'restored_at':
+				$sortExpr = 'MAX(dp.restored_at)';
+				break;
+			case 'id':
+			default:
+				$sortExpr = 'MAX(dp.id)';
+				break;
+		}
+
+		// Query returns one post_uid per logical deleted entry.
+		$query = "
+			SELECT dp.post_uid
+			FROM {$this->deletedPostsTable} dp
+			{$filterClause}
+			GROUP BY dp.post_uid
+			ORDER BY {$sortExpr} {$direction}
+			LIMIT {$amount} OFFSET {$offset}
+		";
+
+		// Returns structured array like [ ['post_uid' => 123], ['post_uid' => 456] ]
+		$rows = $this->databaseConnection->fetchAllAsIndexArray($query, $params);
+
+		if (!$rows) {
+			return false;
+		}
+
+		// Flatten into [123, 456, ...]
+		return array_merge(...$rows);
+	}
+
+	/**
+	 * Given a page of post_uid values, fetch all deleted_posts rows (post-level
+	 * and attachment-level) for those posts. Then the caller merges them.
+	 *
+	 * @param array  $postUids     Array of post_uid integers.
+	 * @param string $filterClause WHERE clause for deleted_posts.
+	 * @param string $orderBy      Validated order-by field.
+	 * @param string $direction    ASC/DESC.
+	 * @param array  $params       Parameters including filters from step 1.
+	 *
+	 * @return array               Raw SQL rows for merging.
+	 */
+	private function fetchDeletedPostsForUids(
+		array $postUids,
+		string $filterClause,
+		string $orderBy,
+		string $direction,
+		array $params
+	): array {
+
+		// Build named placeholders for dp.post_uid IN (...)
+		$named = pdoNamedPlaceholdersForIn($postUids, 'uid');
+		$inClause = $named['placeholders'];
+
+		// Merge IN parameters with filter parameters
+		$params = array_merge($params, $named['params']);
+
+		// Base SELECT/JOIN for deleted-posts rows
+		$query = $this->getBaseDeletedPostsQuery();
+
+		// Apply filters + restrict to the selected post_uid list
+		if ($filterClause) {
+			$query .= " {$filterClause} AND dp.post_uid IN ($inClause)";
+		} else {
+			$query .= " WHERE dp.post_uid IN ($inClause)";
+		}
+
+		// Deterministic ordering of the detailed rows
+		$query .= " ORDER BY dp.{$orderBy} {$direction}, dp.id {$direction}";
+
+		// Retrieve all rows for mergeMultiplePostRows()
+		return $this->databaseConnection->fetchAllAsArray($query, $params);
 	}
 
 	public function getDeletedPostRowById(int $deletedPostId): array|false {
@@ -215,7 +395,7 @@ class deletedPostsRepository {
 		$deletedPost = $this->databaseConnection->fetchAllAsArray($query, $params);
 
 		// merge attachment rows
-		$deletedPost = mergeDeletedPostRows($deletedPost);
+		$deletedPost = mergeMultiplePostRows($deletedPost);
 
 		// return data
 		return $deletedPost[0] ?? false;
@@ -239,7 +419,8 @@ class deletedPostsRepository {
 				-- Post data (may be null if the post itself is gone)
 				p.*,
 
-				-- Attachment belonging specifically to THIS dp row
+				-- Attachment belonging to THIS deletion event or, for post-level,
+				-- all attachments belonging to the post.
 				f.id                 AS attachment_id,
 				f.file_name          AS attachment_file_name,
 				f.stored_filename    AS attachment_stored_filename,
@@ -265,10 +446,14 @@ class deletedPostsRepository {
 			LEFT JOIN {$this->postTable} p
 				ON p.post_uid = dp.post_uid
 
-			-- Attachments belonging to THIS deletion event
-			-- (file_id will be null for post-level deletes)
+			-- Attachments:
+			--  - for attachment-only deletion: match specific file_id
+			--  - for post-level deletion (file_id IS NULL): match all files of the post
 			LEFT JOIN {$this->fileTable} f
-				ON f.post_uid = dp.post_uid
+				ON (
+					(dp.file_id IS NOT NULL AND f.id = dp.file_id)
+					OR (dp.file_id IS NULL AND f.post_uid = dp.post_uid)
+				)
 
 			LEFT JOIN {$this->accountTable} da ON dp.deleted_by = da.id
 			LEFT JOIN {$this->accountTable} ra ON dp.restored_by = ra.id
@@ -486,7 +671,7 @@ class deletedPostsRepository {
 		$query = $this->getBaseDeletedPostsQuery();
 
 		// select the post by post uid
-		$query .= " WHERE p.post_uid = :post_uid";
+		$query .= " WHERE p.post_uid = :post_uid ORDER BY dp.id DESC LIMIT 1";
 
 		// query parameteres
 		$params = [
@@ -497,7 +682,29 @@ class deletedPostsRepository {
 		$deletedPost = $this->databaseConnection->fetchAllAsArray($query, $params);
 
 		// merge attachment rows
-		$deletedPost = mergeDeletedPostRows($deletedPost);
+		$deletedPost = mergeMultiplePostRows($deletedPost);
+
+		// return result
+		return $deletedPost[0] ?? false;
+	}
+
+	public function getDeletedPostRowByFileId(int $fileId): false|array {
+		// query to fetch the deleted post by post uid
+		$query = $this->getBaseDeletedPostsQuery();
+
+		// select the post by post uid
+		$query .= " WHERE dp.file_id = :file_id ORDER BY dp.id DESC LIMIT 1";
+
+		// query parameteres
+		$params = [
+			':file_id' => $fileId
+		];
+
+		// fetch the row
+		$deletedPost = $this->databaseConnection->fetchAllAsArray($query, $params);
+
+		// merge attachment rows
+		$deletedPost = mergeMultiplePostRows($deletedPost);
 
 		// return result
 		return $deletedPost[0] ?? false;
@@ -557,15 +764,45 @@ class deletedPostsRepository {
 		$this->databaseConnection->execute($query, $params);	
 	}
 
-	public function copyDeletionEntries(
-		array $oldPostUids, 
-		array $newPostUids, 
-		array $oldFileIDs, 
-		array $newFileIDs
-	): void {
-		// SQL to copy deletion entries from old post_uid/file_id to new post_uid/file_id.
-		// This duplicates historical deletion rows when a post (and its attachments) is cloned or moved.
-		$query = "
+	private function buildMapSql(array $oldValues, array $newValues, string $oldKey, string $newKey, string $paramPrefix, array &$params): string {
+		// This helper builds a temporary inline table using UNION ALL.
+		// Each row maps one old identifier to its new counterpart.
+		// Example:
+		//   SELECT :p_old_0 AS old_uid, :p_new_0 AS new_uid
+		//   UNION ALL
+		//   SELECT :p_old_1 AS old_uid, :p_new_1 AS new_uid
+		// The caller provides the desired column names and the parameter prefix.
+		// All parameters are placed into the referenced params array for the query execution.
+		$parts = [];
+
+		foreach ($oldValues as $i => $oldVal) {
+			// Retrieve the corresponding new value using the same index
+			$newVal = $newValues[$i];
+
+			// Create a SELECT row for this mapping pair
+			$parts[] =
+				"SELECT :{$paramPrefix}_old_{$i} AS {$oldKey}, :{$paramPrefix}_new_{$i} AS {$newKey}";
+
+			// Attach the parameter values to the outgoing $params array
+			$params[":{$paramPrefix}_old_{$i}"] = $oldVal;
+			$params[":{$paramPrefix}_new_{$i}"] = $newVal;
+		}
+
+		// Join all SELECT statements with UNION ALL to form an inline table
+		return implode("\nUNION ALL\n", $parts);
+	}
+
+	private function insertPostLevelDeletions(array $oldPostUids, array $newPostUids): void {
+		// This method handles deletion records that belong to entire posts (no file_id).
+		// It replicates past deletions for new posts created during a copy/clone action.
+
+		// First, build the mapping between old and new post UIDs
+		$postParams = [];
+		$postMapSql = $this->buildMapSql($oldPostUids, $newPostUids, 'old_uid', 'new_uid', 'p', $postParams);
+
+		// The SQL inserts into the deletion table by selecting from the old records
+		// and replacing each old post UID with the corresponding new UID.
+		$sql = "
 			INSERT INTO {$this->deletedPostsTable} (
 				post_uid,
 				deleted_by,
@@ -578,40 +815,115 @@ class deletedPostsRepository {
 				file_id
 			)
 			SELECT
-				:new_post_uid,
-				dp.deleted_by,
+				pm.new_uid,         -- new post UID
+				dp.deleted_by,       -- copy metadata from old deletion entry
 				dp.deleted_at,
 				dp.file_only,
 				dp.by_proxy,
 				dp.note,
 				dp.restored_at,
 				dp.restored_by,
-				:new_file_id
-			FROM {$this->deletedPostsTable} dp
-			WHERE dp.post_uid = :old_post_uid
-				-- Match post-level deletion (file_id NULL)
-				AND (
-					(:old_file_id IS NULL AND dp.file_id IS NULL)
-					-- Or match attachment-level deletion (specific file_id)
-					OR (:old_file_id IS NOT NULL AND dp.file_id = :old_file_id)
-				)
+				NULL                 -- file_id remains NULL at post level
+			FROM ({$postMapSql}) AS pm
+			INNER JOIN {$this->deletedPostsTable} dp
+				ON dp.post_uid = pm.old_uid  -- match old post UID
+			WHERE dp.file_id IS NULL         -- only post-level deletions
 		";
 
-		// Process each mapped pair of old→new post_uid + file_id
-		$count = count($oldPostUids);
+		// Execute the insert with the parameterized mapping
+		$this->databaseConnection->execute($sql, $postParams);
+	}
 
-		for ($i = 0; $i < $count; $i++) {
-			// Parameters for the current deletion row copy
-			$params = [
-				':old_post_uid' => $oldPostUids[$i],
-				':new_post_uid' => $newPostUids[$i],
-				':old_file_id'  => $oldFileIDs[$i],   // may be NULL for post-level deletion
-				':new_file_id'  => $newFileIDs[$i]    // may be NULL for post-level deletion
-			];
+	private function insertFileLevelDeletions(
+		array $oldPostUids,
+		array $newPostUids,
+		array $oldFileIDs,
+		array $newFileIDs
+	): void {
+		// This method handles file-level deletion records (dp.file_id IS NOT NULL).
+		// It replicates deletion states for each attachment linked to the copied posts.
 
-			// Execute the INSERT...SELECT to copy the deletion history row(s)
-			$this->databaseConnection->execute($query, $params);
+		// First build file ID mapping inline table
+		$fileParams = [];
+		$fileMapSql = $this->buildMapSql($oldFileIDs, $newFileIDs, 'old_fid', 'new_fid', 'f', $fileParams);
+
+		// Then build post UID mapping for file's parent post lookups
+		$postParams = [];
+		$postMapSql = $this->buildMapSql($oldPostUids, $newPostUids, 'old_uid', 'new_uid', 'p2', $postParams);
+
+		// Merge parameters for both mapping sources
+		$params = array_merge($fileParams, $postParams);
+
+		// The SQL replicates file-level deletions.
+		// It joins:
+		//    fm (file mapping) to map file IDs
+		//    dp (deletedPosts table) to reuse deletion metadata
+		//    f  (files table) so we know which post a file belonged to
+		//    pm (post mapping) so we can map the old post UID from f.post_uid to the new one
+		$sql = "
+			INSERT INTO {$this->deletedPostsTable} (
+				post_uid,
+				deleted_by,
+				deleted_at,
+				file_only,
+				by_proxy,
+				note,
+				restored_at,
+				restored_by,
+				file_id
+			)
+			SELECT
+				pm.new_uid,         -- new owning post UID for the file
+				dp.deleted_by,       -- copy deletion metadata from old record
+				dp.deleted_at,
+				dp.file_only,
+				dp.by_proxy,
+				dp.note,
+				dp.restored_at,
+				dp.restored_by,
+				fm.new_fid          -- new file ID
+			FROM ({$fileMapSql}) AS fm
+			INNER JOIN {$this->deletedPostsTable} dp
+				ON dp.file_id = fm.old_fid      -- match old file-level deletion entry
+			INNER JOIN {$this->fileTable} f
+				ON f.id = dp.file_id            -- find old file's post UID
+			INNER JOIN ({$postMapSql}) AS pm
+				ON pm.old_uid = f.post_uid      -- map old post UID to new post UID
+		";
+
+		// Execute the insert with the merged parameters
+		$this->databaseConnection->execute($sql, $params);
+	}
+
+	public function copyDeletionEntries(
+		array $oldPostUids,
+		array $newPostUids,
+		array $oldFileIDs,
+		array $newFileIDs
+	): void {
+
+		/*
+			POST LEVEL DELETIONS
+			(file_id IS NULL)
+
+			The following block copies deletion entries tied directly to posts,
+			such as when a post was soft-deleted.
+		*/
+		if (!empty($oldPostUids)) {
+			$this->insertPostLevelDeletions($oldPostUids, $newPostUids);
+		}
+
+		/*
+			ATTACHMENT LEVEL DELETIONS
+			(file_id IS NOT NULL)
+
+			This block handles the replication of deletion entries for attached files.
+			It ensures that each copied file inherits prior deletion metadata.
+		*/
+		if (!empty($oldFileIDs)) {
+			$this->insertFileLevelDeletions($oldPostUids, $newPostUids, $oldFileIDs, $newFileIDs);
 		}
 	}
+
 
 }
