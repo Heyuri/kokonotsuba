@@ -99,6 +99,7 @@ $config['ModuleList'] = array(
 	'addInfo' => true,
 	'imageServer' => true,
 	'filter' => true,
+	'indexCommentTruncator' => true,
 );
 
 /* Module-specific options */
@@ -243,6 +244,10 @@ $config['ModuleSettings']['supportEmail'] = false; // email BBCodes via callback
 $config['ModuleSettings']['supportImg'] = false; // [img]...[/img] into <img src="...">
 $config['ModuleSettings']['supportScroll'] = true; // [scroll] conversion
 $config['ModuleSettings']['supportKao'] = true; // [kao]...[/kao] into <span class="ascii">...</span>
+
+/* indexCommentTruncator */
+$config['ModuleSettings']['CHARACTER_PREVIEW_LIMIT'] = 2500;
+$config['ModuleSettings']['LINE_PREVIEW_LIMIT'] = 10;
 
 $config['BAD_STRING'] = array(); // Deprecated by spamdb
 $config['BAD_FILEMD5'] = array(); // Deprecated by spamdb

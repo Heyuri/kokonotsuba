@@ -221,6 +221,8 @@ $language['js_convert_sakura']			= 'Big5 sakura Japanese characters detected, pl
 $language['attachment_not_found']        = 'Attachment not found!';
 $language['no_attachment_ever']         = 'There was no attachment on this post in the first place!';
 $language['blanket_error'] = "There has been an error. (;´Д`)";
+$language['comment_too_long'] = "Comment too long, view post %s to see the full comment.";
+
 
 ?>
 

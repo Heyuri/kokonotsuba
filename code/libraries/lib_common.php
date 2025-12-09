@@ -117,7 +117,6 @@ function strlenUnicode($str) {
 	return mb_strlen($str, 'UTF-8');
 }
 
-
 /**
  * Safely truncates a string to a maximum length without breaking multibyte characters (e.g., emojis, non-Latin chars).
  * Optionally appends an ellipsis (…) if truncation occurs.
@@ -147,6 +146,193 @@ function truncateText(
 
     // Append ellipsis if desired
     return $addEllipsis ? $truncated . '(' . html_entity_decode('&hellip;', ENT_QUOTES, $encoding) . ')' : $truncated;
+}
+
+/**
+ * Create a DOMDocument from an HTML fragment.
+ *
+ * @param string $html The source HTML
+ * @return DOMDocument The loaded DOMDocument instance
+ */
+function createDomFromHtml(string $html): DOMDocument {
+	$dom = new DOMDocument();
+	$dom->loadHTML(
+		'<?xml encoding="utf-8" ?>' . $html,
+		LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+	);
+	return $dom;
+}
+
+/**
+ * Get the actual root node that contains the HTML fragment.
+ * Works even when DOMDocument silently wraps content in <html>/<body>.
+ *
+ * @param DOMDocument $dom
+ * @return DOMNode
+ */
+function getDomRoot(DOMDocument $dom): DOMNode {
+	$body = $dom->getElementsByTagName('body')->item(0);
+
+	if ($body !== null) {
+		// find the FIRST real element (your comment <div>) inside <body>
+		foreach ($body->childNodes as $child) {
+			if ($child->nodeType === XML_ELEMENT_NODE) {
+				return $child;
+			}
+		}
+		// fallback if body contains no elements
+		return $body;
+	}
+
+	return $dom->documentElement;
+}
+
+/**
+ * Truncate an HTML string to a fixed number of text characters
+ * while keeping the resulting markup valid. Tags remain balanced
+ * and entities are not split.
+ *
+ * @param string $html  The source HTML to truncate
+ * @param int    $limit Maximum number of text characters allowed
+ * @return string       The truncated, valid HTML
+ */
+function truncateHtml(string $html, int $limit): string {
+	$dom = createDomFromHtml($html);
+	$root = getDomRoot($dom);
+
+	$count = 0;
+	$end   = false;
+
+	$walker = function(DOMNode $node) use (&$walker, &$count, $limit, &$end) {
+		if ($end) {
+			return;
+		}
+
+		if ($node->nodeType === XML_TEXT_NODE) {
+			$len = mb_strlen($node->nodeValue);
+
+			if ($count + $len > $limit) {
+				$node->nodeValue = mb_substr($node->nodeValue, 0, $limit - $count);
+				$end = true;
+			}
+
+			$count += $len;
+			return;
+		}
+
+		for ($i = 0; $i < $node->childNodes->length; $i++) {
+			$child = $node->childNodes->item($i);
+			$walker($child);
+
+			if ($end) {
+				while ($node->childNodes->length > $i + 1) {
+					$node->removeChild($node->lastChild);
+				}
+				break;
+			}
+		}
+	};
+
+	$walker($root);
+
+	return $dom->saveHTML();
+}
+
+/**
+ * Truncate an HTML fragment by limiting the number of <br> line breaks.
+ * Everything after the allowed number of breaks is removed.
+ *
+ * @param string $html        The source HTML fragment
+ * @param int    $maxLines    Maximum number of <br>-separated lines to keep
+ * @return string             The truncated HTML fragment
+ */
+function truncateHtmlByLineBreak(string $html, int $maxLines): string {
+	// Load HTML fragment into DOMDocument
+	$dom = createDomFromHtml($html);
+
+	// Select the actual fragment root (first real element inside <body>)
+	$root = getDomRoot($dom);
+
+	// Counter for how many <br> tags have been encountered
+	$count = 0;
+
+	// Flag indicating that we've passed the limit and should stop traversal
+	$end   = false;
+
+	// Recursive DOM walker that traverses the tree depth-first
+	$walker = function(DOMNode $node) use (&$walker, &$count, $maxLines, &$end) {
+		// If truncation already triggered, do not process any more nodes
+		if ($end) {
+			return;
+		}
+
+		// Detect a <br> element in any common casing/form
+		if ($node->nodeType === XML_ELEMENT_NODE && strtolower($node->nodeName) === 'br') {
+			$count++;
+
+			// If this <br> exceeds the allowed limit, signal truncation
+			if ($count > $maxLines) {
+				$end = true;
+				return;
+			}
+		}
+
+		// Iterate through the current node’s children in document order
+		for ($i = 0; $i < $node->childNodes->length && !$end; $i++) {
+			$child = $node->childNodes->item($i);
+
+			// Recursively process the child
+			$walker($child);
+
+			// Once truncation begins, remove all siblings after the cutoff point
+			if ($end) {
+				while ($node->childNodes->length > $i + 1) {
+					$node->removeChild($node->lastChild);
+				}
+
+				// Stop processing further siblings
+				break;
+			}
+		}
+	};
+
+	// Begin recursive traversal from the content root
+	$walker($root);
+
+	// Return the full HTML (DOMDocument auto-generates correct closing tags)
+	return $dom->saveHTML();
+}
+
+/**
+ * Count the number of <br> elements in an HTML fragment.
+ *
+ * @param string $html The source HTML
+ * @return int         The number of <br> tags found
+ */
+function countHtmlLineBreaks(string $html): int {
+	$dom = new DOMDocument();
+	$dom->loadHTML(
+		'<?xml encoding="utf-8" ?>' . $html,
+		LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+	);
+
+	$count = 0;
+
+	$walker = function(DOMNode $node) use (&$walker, &$count) {
+		// Count <br> elements
+		if ($node->nodeType === XML_ELEMENT_NODE && strtolower($node->nodeName) === 'br') {
+			$count++;
+		}
+
+		// Traverse children
+		for ($i = 0; $i < $node->childNodes->length; $i++) {
+			$walker($node->childNodes->item($i));
+		}
+	};
+
+	$walker($dom->documentElement);
+
+	return $count;
 }
 
 /* redirect */
