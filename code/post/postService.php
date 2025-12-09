@@ -198,34 +198,13 @@ class postService {
 		if (empty($threads)) return [];
 
 		$threadUIDs = array_column($threads, 'thread_uid');
-		$postRows = $this->threadRepository->getPostsForThreads($threadUIDs, $adminMode);
+		
+		$postRows = $this->threadRepository->getPostsForThreads($threadUIDs, $previewCount, $adminMode);
 		$postsByThread = $this->groupPostsByThread($postRows);
+		
+		$postCountsByThread = $this->threadRepository->getPostCountsForThreads($threadUIDs);
 
-		return $this->buildPreviewResults($threads, $postsByThread, $previewCount);
-	}
-
-
-	public function getThreadsWithAllRepliesFromBoard(
-		board $board,
-		int $amount = 0,
-		int $offset = 0,
-		string $orderBy = 'last_bump_time',
-		bool $desc = true,
-	): array {
-		$boardUID = $board->getBoardUID();
-
-		$amount = max(0, $amount);
-		$offset = max(0, $offset);
-
-		$direction = $desc ? 'DESC' : 'ASC';
-		$threads = $this->threadRepository->getThreadsFromBoard($boardUID, $amount, $offset, $orderBy, $direction);
-		if (empty($threads)) return [];
-
-		$threadUIDs = array_column($threads, 'thread_uid');
-		$postRows = $this->getPostsByThreadUIDs($threadUIDs);
-		$postsByThread = $this->groupPostsByThread($postRows);
-
-		return $this->buildFullResults($threads, $postsByThread);
+		return $this->buildPreviewResults($threads, $postsByThread, $postCountsByThread, $previewCount);
 	}
 
 	private function groupPostsByThread(array $postRows): array {
@@ -236,49 +215,24 @@ class postService {
 		return $postsByThread;
 	}
 
-	private function buildPreviewResults(array $threads, array $postsByThread, int $previewCount): array {
+	private function buildPreviewResults(array $threads, array $postsByThread, array $postCountsByThread, int $previewCount): array {
 		$result = [];
 		foreach ($threads as $thread) {
 			$threadUID = $thread['thread_uid'];
-			$allPosts = $postsByThread[$threadUID] ?? [];
+			$previewPosts = $postsByThread[$threadUID] ?? [];
 
-			$totalPosts = count($allPosts);
+			$totalPosts = $postCountsByThread[$threadUID];
 			$omittedCount = max(0, $totalPosts - $previewCount - 1);
-
-			$opPost = array_filter($allPosts, fn($p) => $p['is_op']);
-			$nonOpPosts = array_filter($allPosts, fn($p) => !$p['is_op']);
-			$previewPosts = array_merge(
-				$opPost,
-				array_slice($nonOpPosts, max(0, count($nonOpPosts) - $previewCount))
-			);
 
 			$result[] = [
 				'thread' => $thread,
 				'post_uids' => array_column($previewPosts, 'post_uid'),
 				'posts' => $previewPosts,
 				'hidden_reply_count' => $omittedCount,
+				'post_count' => $totalPosts,
 				'thread_uid' => $threadUID
 			];
 		}
 		return $result;
 	}
-
-	private function buildFullResults(array $threads, array $postsByThread): array {
-		$result = [];
-		foreach ($threads as $thread) {
-			$threadUID = $thread['thread_uid'];
-			$allPosts = $postsByThread[$threadUID] ?? [];
-
-			$result[] = [
-				'thread' => $thread,
-				'post_uids' => array_column($allPosts, 'post_uid'),
-				'posts' => $allPosts,
-				'thread_uid' => $threadUID
-			];
-		}
-		return $result;
-	}
-
-
-
 }

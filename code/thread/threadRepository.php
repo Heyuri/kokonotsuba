@@ -465,26 +465,45 @@ class threadRepository {
 		}
 	}
 
-	public function getPostsForThreads(array $threadUIDs, bool $includeDeleted = false): array {
+	public function getPostsForThreads(array $threadUIDs, int $previewCount, bool $includeDeleted = false): array {
 		if (empty($threadUIDs)) return [];
 
+		// add to preview count by 1 so we include OP
+		$previewCount++;
+
 		// Generate the base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+		$base = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
 
 		// Add the condition specific to this method (fetching posts for multiple threads)
 		$inClause = pdoPlaceholdersForIn($threadUIDs);
-		$query .= " WHERE p.thread_uid IN $inClause";
+		$base .= " WHERE p.thread_uid IN $inClause";
 
 		// If we do not want to include deleted posts, add the condition to exclude them
 		if(!$includeDeleted) {
-			$query = excludeDeletedPostsCondition($query);
+			$base = excludeDeletedPostsCondition($base);
 		}
 
-		// add adirection/order
-		$query .= " ORDER BY p.no ASC";
+		// wrap with row_number partition to limit posts per thread (OP + preview replies)
+		$query = "
+			SELECT *
+			FROM (
+				SELECT
+					t.*,
+					ROW_NUMBER() OVER (
+						PARTITION BY t.thread_uid
+						ORDER BY t.is_op DESC, t.post_uid DESC
+					) AS rn
+				FROM (
+					$base
+				) t
+			) x
+			WHERE x.rn <= ?
+			ORDER BY x.no ASC
+		";
 
 		// fetch posts
-		$posts = $this->databaseConnection->fetchAllAsArray($query, $threadUIDs) ?? [];
+		$params = array_merge($threadUIDs, [$previewCount]);
+		$posts = $this->databaseConnection->fetchAllAsArray($query, $params) ?? [];
 
 		// merge attachment rows
 		$posts = mergeMultiplePostRows($posts);
@@ -540,12 +559,13 @@ class threadRepository {
 	public function getPostCountsForThreads(array $threadUIDs): array {
 		if (empty($threadUIDs)) return [];
 
-		$placeholders = implode(',', array_fill(0, count($threadUIDs), '?'));
+		// get in placeholders
+		$inPlaceholders = pdoPlaceholdersForIn($threadUIDs); 
 
 		$query = "
 			SELECT thread_uid, COUNT(post_uid) AS post_count
 			FROM {$this->postTable}
-			WHERE thread_uid IN ($placeholders)
+			WHERE thread_uid IN $inPlaceholders
 			GROUP BY thread_uid
 		";
 
