@@ -393,7 +393,7 @@ class tableCreator {
 				`capcode` TEXT,
 				`email` TEXT NOT NULL,
 				`sub` TEXT NOT NULL,
-				`com` TEXT NOT NULL,
+				`com` MEDIUMTEXT NOT NULL,
 				`host` TEXT NOT NULL,
 				`status` TEXT,
 				PRIMARY KEY (`post_uid`),
