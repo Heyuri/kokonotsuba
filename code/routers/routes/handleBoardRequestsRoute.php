@@ -102,7 +102,7 @@ class handleBoardRequestsRoute {
 		$boardCreator = new boardCreator($this->boardService);
 	
 		// Call the createNewBoard method in the BoardCreator class
-		$boardCreator->createNewBoard($boardTitle, $boardSubTitle, $boardIdentifier, $boardListed, $boardPath);
+		$boardCreator->createNewBoard($boardTitle, $boardSubTitle, $boardIdentifier, $boardListed, $boardPath, getRoleLevelFromSession());
 	}
 	
 

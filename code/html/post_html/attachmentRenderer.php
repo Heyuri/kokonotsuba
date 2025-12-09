@@ -206,7 +206,7 @@ class attachmentRenderer {
 		elseif (!is_null($mimeType) && str_contains($mimeType, 'audio')) {
 			// get audio thumbnail
 			$thumbURL = $this->board->getConfigValue('AUDIO_THUMB');
-
+			
 			// then build image tag
 			return $this->buildImageTag($imageURL, $thumbURL, 'Audio file', 128, 128);
 		} elseif (!is_null($mimeType) && isArchiveFile($ext, $mimeType)) {

@@ -28,6 +28,9 @@ class vichanBoardImporter {
 			// get the temp board table name
 			$boardTable = $tableNames['boards'];
 
+			// init board uri map
+			$boardUriMap = [];
+
 			// wrap in try catch so we can pune failed boards
 			try {
 				// loop through boards and import to koko
@@ -35,12 +38,23 @@ class vichanBoardImporter {
 
 				// loop through the table posts to create posts
 				$this->importPosts($tableNames, $boardUriMap);
-			} catch (Throwable) {
+
+				// update thread op post uids
+				$this->updateThreadOpValues();
+
+				// update thread bump times
+				$this->updateThreadBumpTimes();
+
+				// update thread created times
+				$this->updateThreadCreatedTimes();
+			} catch (Throwable $e) {
 				// loop over board uids
 				foreach($boardUriMap as $boardUid) {
 					// then delete the associated board
 					$this->boardService->deleteBoard($boardUid);
 				}
+
+				throw $e;
 			}
 		});
 	}
@@ -122,7 +136,8 @@ class vichanBoardImporter {
 				$boardSubTitle,
 				$boardIdentifier, 
 				true, 
-				$boardPathFromRequest
+				$boardPathFromRequest,
+				userRole::LEV_ADMIN // Just pass admin so we can run this from a terminal - no session required
 			);
 
 			// if the new koko board isn't null then create uri => board_uid map entry
@@ -211,12 +226,6 @@ class vichanBoardImporter {
 
 		// then handle post position (thread reply numbers)
 		$this->updatePostPositions();
-
-		// loop through and correct bump order
-		foreach($threadMap as $uid) {
-			// update bump time to the last reply
-			$this->threadRepository->bumpThread($uid);
-		}
 	}
 
 	private function getChunkedVichanThreads(string $postTableName): \Generator {
@@ -642,5 +651,29 @@ class vichanBoardImporter {
 				false
 			);
 		}
+	}
+
+	private function updateThreadOpValues(): void {
+		// get query to update thread op values
+		$query = "UPDATE threads AS t JOIN posts AS p ON p.thread_uid = t.thread_uid AND p.is_op = 1 SET t.post_op_post_uid = p.post_uid";
+
+		// execute
+		$this->databaseConnection->execute($query);
+	}
+
+	private function updateThreadBumpTimes(): void {
+		// query to update thread bump times
+		$query = "UPDATE threads t JOIN ( SELECT thread_uid, root FROM posts WHERE email NOT LIKE '%sage%' AND (thread_uid, post_uid) IN ( SELECT thread_uid, MAX(post_uid) FROM posts WHERE email NOT LIKE '%sage%' GROUP BY thread_uid ) ) p ON p.thread_uid = t.thread_uid SET t.last_bump_time = p.root";
+
+		// execute update query
+		$this->databaseConnection->execute($query);
+	}
+
+	private function updateThreadCreatedTimes(): void {
+		// query to update thread created times
+		$query = "UPDATE threads t JOIN ( SELECT thread_uid, root FROM posts WHERE (thread_uid, post_uid) IN ( SELECT thread_uid, MIN(post_uid) FROM posts GROUP BY thread_uid ) ) p ON p.thread_uid = t.thread_uid SET t.thread_created_time = p.root";
+
+		// execute
+		$this->databaseConnection->execute($query);
 	}
 }

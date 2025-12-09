@@ -164,7 +164,7 @@ function getCurrentUrlNoQuery(): string {
 	$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 	
 	// Host (includes port if non-standard)
-	$host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'];
+	$host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
 	
 	// Path to the current script
 	$path = $_SERVER['SCRIPT_NAME']; // e.g. /folder/file.php

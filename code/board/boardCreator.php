@@ -4,13 +4,14 @@
 * Handles board creationss
 */
 
+use Kokonotsuba\Root\Constants\userRole;
 
 class boardCreator {
 	public function __construct(
 		private readonly boardService $boardService
 	) {}
 
-	public function createNewBoard(string $boardTitle, string $boardSubTitle, string $boardIdentifier, bool $boardListed, string $boardPath): board|null {
+	public function createNewBoard(string $boardTitle, string $boardSubTitle, string $boardIdentifier, bool $boardListed, string $boardPath, userRole $currentRoleLevel): board|null {
 		$templateConfig = getTemplateConfigArray();
 		$backendDirectory = getBackendDir();
 
@@ -23,7 +24,7 @@ class boardCreator {
 		];
 		
 		
-		$newBoard = $this->boardService->createBoard($inputFields, $templateConfig, $backendDirectory, \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN, getRoleLevelFromSession());
+		$newBoard = $this->boardService->createBoard($inputFields, $templateConfig, $backendDirectory, \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN, $currentRoleLevel);
 
 		return $newBoard;
 	}
