@@ -15,8 +15,12 @@ require __DIR__ . '/bootstrap/checks.php';
 require __DIR__ . '/bootstrap/database.php';
 require __DIR__ . '/bootstrap/repositories.php';
 require __DIR__ . '/bootstrap/board.php';
+require __DIR__ . '/bootstrap/requestBoard.php';
 require __DIR__ . '/bootstrap/dependencies.php';
 require __DIR__ . '/bootstrap/di.php';
+
+// Global configuration file
+$globalConfig = getGlobalConfig();
 
 /*────────────────────────────────────────────────────────────
 	Main Handler Execution
