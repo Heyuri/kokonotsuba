@@ -130,16 +130,6 @@ class postRenderer {
 		// generate first attachment URL
 		$firstAttachmentUrl = $this->attachmentRenderer->generateImageUrl($firstAttachment, false, $isDeleted);
 
-		// Dispatch Post event, which is a hook point that will affect every post
-		$board = $this->board;
-		$this->moduleEngine->dispatch('Post', [
-			&$templateValues,
-			&$data,
-			&$threadPosts,
-			&$board,
-			&$adminMode,
-		]);
-
 		// Variables to used for the condition for whether to use OP/Reply template block
 		$shouldRenderReply = $isThreadReply && !$renderAsOp;
 		$shouldRenderOp = $isThreadOp || $renderAsOp;
@@ -185,6 +175,16 @@ class postRenderer {
 				$warnHidePost,
 			);
 		}
+
+		// Dispatch Post event, which is a hook point that will affect every post
+		$board = $this->board;
+		$this->moduleEngine->dispatch('Post', [
+			&$templateValues,
+			&$data,
+			&$threadPosts,
+			&$board,
+			&$adminMode,
+		]);
 
 		// CSS hook point placeholders
 		$templateValues['{$MODULE_ATTACHMENT_CSS_CLASSES}'] = '';
