@@ -288,7 +288,7 @@ class managePostsRoute {
 			$storedFileName = $att['storedFileName'];
 
 			// Extract additional archived image files and generate a link
-			$clip = '<a href="'. getAttachmentUrl($att).'" target="_blank">' . $storedFileName . $fileExtension . '</a>';
+			$clip = '<a href="'. getAttachmentUrl($att).'" target="_blank">' . $storedFileName . '.' . $fileExtension . '</a>';
 			$size = $att['fileSize'];
 
 			// then put together the attachments list
