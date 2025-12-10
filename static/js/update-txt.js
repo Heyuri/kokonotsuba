@@ -16,7 +16,8 @@ const kkupdate = { name: "KK Thread Updating",
 		if (!document.postform.resto) {return true;}
 		var controls = document.createElement("div");
 		controls.id = "controls";
-		document.querySelector("#delform").lastElementChild.insertAdjacentElement("beforeBegin", controls);
+		controls.classList.add("threadUpdater");
+		document.querySelector(".threadRear").appendChild(controls);
 		controls.innerHTML += "[<a onclick=\"kkupdate.update();return false;\" href=\"\">Update</a>] [<label><input onchange=\"kkupdate.toggleAuto();\" checked type=\"checkbox\">Auto</label>] <span id=\"update-status\"></span><hr>";
 		document.addEventListener("scroll", function () {
 			if ((window.innerHeight + document.documentElement.scrollTop) >= (document.documentElement.scrollHeight - 2)) {

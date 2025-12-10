@@ -209,7 +209,6 @@
 <!--/&DELFORM-->
 
 <!--&MAIN-->
-	<!--&IF($IS_THREAD,'<div class="threadNavBar">[<a href="{$STATIC_INDEX_FILE}">Return</a>]</div>','')-->
 	{$FORMDAT}
 	{$THREADFRONT}
 	<form name="delform" id="delform" action="{$LIVE_INDEX_FILE}" method="post">
