@@ -151,21 +151,31 @@ function truncateText(
 /**
  * Create a DOMDocument from an HTML fragment.
  *
+ * A temporary wrapper element is added around the fragment to prevent
+ * DOMDocument from discarding or rearranging the user's original root
+ * elements when normalizing the HTML. This wrapper is later removed
+ * before returning the final truncated output.
+ *
  * @param string $html The source HTML
  * @return DOMDocument The loaded DOMDocument instance
  */
 function createDomFromHtml(string $html): DOMDocument {
 	$dom = new DOMDocument();
 	$dom->loadHTML(
-		'<?xml encoding="utf-8" ?>' . $html,
+		'<?xml encoding="utf-8" ?><div id="__root_wrapper__">' . $html . '</div>',
 		LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
 	);
+
 	return $dom;
 }
 
 /**
  * Get the actual root node that contains the HTML fragment.
- * Works even when DOMDocument silently wraps content in <html>/<body>.
+ *
+ * In this implementation, the traversal root remains <body> because the
+ * recursive truncation logic already functions correctly starting from
+ * the body element. The wrapper exists only to keep the fragment stable
+ * during parsing and is stripped after traversal.
  *
  * @param DOMDocument $dom
  * @return DOMNode
@@ -174,13 +184,6 @@ function getDomRoot(DOMDocument $dom): DOMNode {
 	$body = $dom->getElementsByTagName('body')->item(0);
 
 	if ($body !== null) {
-		// find the FIRST real element (your comment <div>) inside <body>
-		foreach ($body->childNodes as $child) {
-			if ($child->nodeType === XML_ELEMENT_NODE) {
-				return $child;
-			}
-		}
-		// fallback if body contains no elements
 		return $body;
 	}
 
@@ -188,9 +191,11 @@ function getDomRoot(DOMDocument $dom): DOMNode {
 }
 
 /**
- * Truncate an HTML string to a fixed number of text characters
- * while keeping the resulting markup valid. Tags remain balanced
- * and entities are not split.
+ * Truncate an HTML string to a fixed number of text characters while
+ * keeping the resulting markup valid. Tags remain balanced, entities
+ * remain intact, and the DOM is walked recursively from the traversal
+ * root returned by getDomRoot(). The wrapper introduced in
+ * createDomFromHtml() is removed before returning the final result.
  *
  * @param string $html  The source HTML to truncate
  * @param int    $limit Maximum number of text characters allowed
@@ -208,11 +213,14 @@ function truncateHtml(string $html, int $limit): string {
 			return;
 		}
 
+		// Handle plain text nodes
 		if ($node->nodeType === XML_TEXT_NODE) {
 			$len = mb_strlen($node->nodeValue);
 
+			// If the limit would be exceeded, truncate this text node
 			if ($count + $len > $limit) {
-				$node->nodeValue = mb_substr($node->nodeValue, 0, $limit - $count);
+				$keep = max(0, $limit - $count);
+				$node->nodeValue = mb_substr($node->nodeValue, 0, $keep);
 				$end = true;
 			}
 
@@ -220,12 +228,14 @@ function truncateHtml(string $html, int $limit): string {
 			return;
 		}
 
+		// Recursively walk element child nodes
 		for ($i = 0; $i < $node->childNodes->length; $i++) {
 			$child = $node->childNodes->item($i);
 			$walker($child);
 
+			// After truncation, remove any remaining siblings
 			if ($end) {
-				while ($node->childNodes->length > $i + 1) {
+                while ($node->childNodes->length > $i + 1) {
 					$node->removeChild($node->lastChild);
 				}
 				break;
@@ -235,7 +245,25 @@ function truncateHtml(string $html, int $limit): string {
 
 	$walker($root);
 
-	return $dom->saveHTML();
+	// Remove the wrapper and return only its child content
+	$wrapper = $dom->getElementById('__root_wrapper__');
+
+	if ($wrapper !== null) {
+		// If wrapper has a single child, return only that child's HTML
+		if ($wrapper->childNodes->length === 1) {
+			return $dom->saveHTML($wrapper->firstChild);
+		}
+
+		// Otherwise concatenate all children
+		$out = '';
+		for ($i = 0; $i < $wrapper->childNodes->length; $i++) {
+			$out .= $dom->saveHTML($wrapper->childNodes->item($i));
+		}
+		return $out;
+	}
+
+	// Fallback: return the traversal root if wrapper is missing
+	return $dom->saveHTML($root);
 }
 
 /**
@@ -250,57 +278,84 @@ function truncateHtmlByLineBreak(string $html, int $maxLines): string {
 	// Load HTML fragment into DOMDocument
 	$dom = createDomFromHtml($html);
 
-	// Select the actual fragment root (first real element inside <body>)
+	// Select the actual fragment root
 	$root = getDomRoot($dom);
 
-	// Counter for how many <br> tags have been encountered
-	$count = 0;
+	// Find all <br> elements under the root, in document order
+	$xpath = new DOMXPath($dom);
+	$brNodes = $xpath->query('.//br', $root);
 
-	// Flag indicating that we've passed the limit and should stop traversal
-	$end   = false;
+	// If there are not more than $maxLines <br> tags, no truncation needed
+	if ($brNodes === false || $brNodes->length <= $maxLines) {
+		$wrapper = $dom->getElementById('__root_wrapper__');
 
-	// Recursive DOM walker that traverses the tree depth-first
-	$walker = function(DOMNode $node) use (&$walker, &$count, $maxLines, &$end) {
-		// If truncation already triggered, do not process any more nodes
-		if ($end) {
-			return;
-		}
-
-		// Detect a <br> element in any common casing/form
-		if ($node->nodeType === XML_ELEMENT_NODE && strtolower($node->nodeName) === 'br') {
-			$count++;
-
-			// If this <br> exceeds the allowed limit, signal truncation
-			if ($count > $maxLines) {
-				$end = true;
-				return;
+		if ($wrapper !== null) {
+			if ($wrapper->childNodes->length === 1) {
+				return $dom->saveHTML($wrapper->firstChild);
 			}
+
+			$out = '';
+			for ($i = 0; $i < $wrapper->childNodes->length; $i++) {
+				$out .= $dom->saveHTML($wrapper->childNodes->item($i));
+			}
+			return $out;
 		}
 
-		// Iterate through the current node’s children in document order
-		for ($i = 0; $i < $node->childNodes->length && !$end; $i++) {
+		return $dom->saveHTML($root);
+	}
+
+	// This is the first <br> that should be removed (the (maxLines + 1)-th one)
+	$limitNode = $brNodes->item($maxLines);
+
+	// Recursive pruner: walks the tree and, once it finds $limitNode,
+	// removes it and everything that comes after it in document order.
+	$prune = function(DOMNode $node) use (&$prune, $limitNode): bool {
+		for ($i = 0; $i < $node->childNodes->length; $i++) {
 			$child = $node->childNodes->item($i);
 
-			// Recursively process the child
-			$walker($child);
-
-			// Once truncation begins, remove all siblings after the cutoff point
-			if ($end) {
-				while ($node->childNodes->length > $i + 1) {
+			// If we've reached the limit <br>, remove it and all following siblings
+			if ($child === $limitNode) {
+				while ($node->childNodes->length > $i) {
 					$node->removeChild($node->lastChild);
 				}
+				return true;
+			}
 
-				// Stop processing further siblings
-				break;
+			// Recurse into children
+			if ($child->hasChildNodes()) {
+				if ($prune($child)) {
+					// Truncation happened inside this child; remove all siblings after it
+					while ($node->childNodes->length > $i + 1) {
+						$node->removeChild($node->lastChild);
+					}
+					return true;
+				}
 			}
 		}
+
+		// No truncation triggered in this subtree
+		return false;
 	};
 
-	// Begin recursive traversal from the content root
-	$walker($root);
+	// Perform the pruning starting from the fragment root
+	$prune($root);
 
-	// Return the full HTML (DOMDocument auto-generates correct closing tags)
-	return $dom->saveHTML();
+	// Strip the wrapper and return only the fragment content (same pattern as truncateHtml)
+	$wrapper = $dom->getElementById('__root_wrapper__');
+
+	if ($wrapper !== null) {
+		if ($wrapper->childNodes->length === 1) {
+			return $dom->saveHTML($wrapper->firstChild);
+		}
+
+		$out = '';
+		for ($i = 0; $i < $wrapper->childNodes->length; $i++) {
+			$out .= $dom->saveHTML($wrapper->childNodes->item($i));
+		}
+		return $out;
+	}
+
+	return $dom->saveHTML($root);
 }
 
 /**
@@ -310,29 +365,17 @@ function truncateHtmlByLineBreak(string $html, int $maxLines): string {
  * @return int         The number of <br> tags found
  */
 function countHtmlLineBreaks(string $html): int {
-	$dom = new DOMDocument();
-	$dom->loadHTML(
-		'<?xml encoding="utf-8" ?>' . $html,
-		LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
-	);
+	$dom = createDomFromHtml($html);
+	$root = getDomRoot($dom);
 
-	$count = 0;
+	$xpath = new DOMXPath($dom);
+	$brNodes = $xpath->query('.//br', $root);
 
-	$walker = function(DOMNode $node) use (&$walker, &$count) {
-		// Count <br> elements
-		if ($node->nodeType === XML_ELEMENT_NODE && strtolower($node->nodeName) === 'br') {
-			$count++;
-		}
+	if ($brNodes === false) {
+		return 0;
+	}
 
-		// Traverse children
-		for ($i = 0; $i < $node->childNodes->length; $i++) {
-			$walker($node->childNodes->item($i));
-		}
-	};
-
-	$walker($dom->documentElement);
-
-	return $count;
+	return $brNodes->length;
 }
 
 /* redirect */
