@@ -27,13 +27,13 @@ class moduleMain extends abstractModuleMain {
 
 		// add hook point listener for post
 		$this->moduleContext->moduleEngine->addListener('Post', function(array &$templateValues, array &$post, array &$threadPosts, board &$board, bool &$adminMode) {
-			$this->onRenderPost($post);
+			$this->onRenderPost($templateValues['{$COM}'], $post);
 		});
 	}
 
-	private function onRenderPost(array &$post): void {
+	private function onRenderPost(string &$comment, array &$post): void {
 		// truncate post comment for index view
-		$this->truncatePostComment($post['com'], $post['post_op_number'], $post['no']);
+		$this->truncatePostComment($comment, $post['post_op_number'], $post['no']);
 	}
 
 	private function truncatePostComment(string &$comment, ?int $threadNumber, int $postNumber): void {
