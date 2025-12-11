@@ -26,9 +26,21 @@ class moduleMain extends abstractModuleMain {
 
 		$this->staticUrl = $this->getConfig('STATIC_URL');
 
+		$this->moduleContext->moduleEngine->addListener('ModuleHeader', function(string &$moduleHeader) {
+			$this->onGenerateModuleHeader($moduleHeader);
+		});
+
 		$this->moduleContext->moduleEngine->addListener('PageTop', function (string &$pageTopHtml) {
 			$this->onRenderPageTop($pageTopHtml);  // Call the method to modify the form
 		});
+	}
+
+	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		// generate banner js script tag
+		$jsHtml = $this->generateScriptHeader('banners.js', true);
+
+		// append to module header
+		$moduleHeader .= $jsHtml;
 	}
 
 	private function getAllFilesFromDirectory($directory) {
@@ -101,5 +113,4 @@ class moduleMain extends abstractModuleMain {
 		} else $this->drawBannerRedirect();
 
 	}
-
 }
