@@ -142,6 +142,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 			// --- DUMP: silent, clear form ---
 			if (isDump) {
+				if (!isReply && data.redirectUrl) {
+					window.location.href = data.redirectUrl;
+					return;
+				}
+
 				fetchNewReplies();
 				clearForm();
 				return;
