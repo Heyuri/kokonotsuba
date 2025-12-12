@@ -51,8 +51,8 @@ class moduleMain extends abstractModuleMain {
 		$this->initializeEmotes();
 
 		// Register the listener for the PostInfo hook
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $files, $isReply, &$status, $thread, &$poster_hash) {
-			$this->onBeforeCommit($com, $files);  // Call the method to modify the form
+		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (array &$registInfo) {
+			$this->onRegistBegin($registInfo['com'], $registInfo['files']);  // Call the method to modify the form
 		});
 
 		// initialize bbcode feature flags
@@ -153,7 +153,7 @@ class moduleMain extends abstractModuleMain {
 		
 	}
 	
-	private function onBeforeCommit(&$com, $files){
+	private function onRegistBegin(&$com, $files){
 		$com = $this->bb2html($com, $files);
 	}
 
