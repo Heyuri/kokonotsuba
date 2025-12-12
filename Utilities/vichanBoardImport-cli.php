@@ -1,5 +1,11 @@
 
 <?php
+/***************
+ * !NOTICE!
+ * 
+ * This script outlived its use and isn't maintained. If you want to use it, move it back into the root directory of koko and run it 
+ *
+****************/
 
 // init regular dependencies
 // aside from session.php since thats exclusively a request
