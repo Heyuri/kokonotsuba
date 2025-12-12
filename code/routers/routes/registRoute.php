@@ -262,7 +262,14 @@ class registRoute {
 
 		// NO FILES → if OP post & imageboard mode, throw exception
 		if ($inputName === null) {
-			if (!$isReply && !$this->config['TEXTBOARD_ONLY']) {
+			// text-board only mode flag
+			$textBoardOnly = $this->board->getConfigValue('TEXTBOARD_ONLY');
+
+			// whether its optional to post an attachment when posting a thread OP
+			$threadAttachmentRequired = $this->board->getConfigValue('THREAD_ATTACHMENT_REQUIRED', true);
+
+			// if its not a reply, board isn't in textboard only mode, and OP attachments aren't optional then throw an error		
+			if (!$isReply && !$textBoardOnly && $threadAttachmentRequired) {
 				throw new BoardException(_T('regist_upload_noimg'));
 			}
 
