@@ -8,7 +8,6 @@ class boardRebuilder {
 		private board $board, 
 		private moduleEngine $moduleEngine, 
 		private templateEngine $templateEngine, 
-		private readonly postService $postService, 
 		private readonly actionLoggerService $actionLoggerService, 
 		private readonly threadRepository $threadRepository, 
 		private readonly threadService $threadService,
@@ -27,9 +26,34 @@ class boardRebuilder {
 		$this->canViewDeleted = getRoleLevelFromSession()->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_DELETE_ALL'));
 	}
 
-	public function drawThread(int $resno): void {
-		$uid = $this->threadRepository->resolveThreadUidFromResno($this->board, $resno);
-		$threadData = $this->threadService->getThreadByUID($uid, $this->canViewDeleted);
+	public function drawRecentReplies(int $threadNumber, int $amountOfRepliesToRender, bool $showPostForm = true): void {
+		// draw the most thread with only OP + the most recent replies
+		// in this instance page can be null since we're fetching posts regardless of page
+		$this->drawBaseThread(
+			$threadNumber, 
+			null, 
+			$amountOfRepliesToRender, 
+			$showPostForm
+		);
+	}
+
+	public function drawThread(int $threadNumber, ?int $page = null, bool $showPostForm = true): void {
+		// draw the thread at the targetted page
+		// a null page value will fetch all posts in the thread
+		$this->drawBaseThread($threadNumber, $page, null, $showPostForm);
+	}
+
+	private function drawBaseThread(
+		int $threadNumber, 
+		?int $page = null, 
+		?int $amountOfRepliesToRender = null, 
+		bool $showPostForm = true
+	): void {
+		// resolve the thread uid from the thread number
+		$uid = $this->threadRepository->resolveThreadUidFromResno($this->board, $threadNumber);
+		
+		// get the thread and decide how to fetch its data based on the provided parameters
+		$threadData = $this->getThreadForRendering($uid, $page, $amountOfRepliesToRender);
 		
 		// get the thread row
 		$thread = $threadData['thread'];
@@ -54,7 +78,7 @@ class boardRebuilder {
 		$posts = $threadData['posts'];
 		
 		// get the post uids from the thread posts
-		$postUids = array_column($posts, 'post_uid');
+		$postUids = $threadData['post_uids'];
 
 		// init hidden reply var
 		$hiddenReply = 0;
@@ -68,8 +92,11 @@ class boardRebuilder {
 		// init template placeholders
 		$pte_vals = $this->buildPteVals(true);
 		
-		// get form html
-		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml($resno, $pte_vals, $this->adminMode);
+		// if we want to render the post form then build form html and bind to template parameter
+		if($showPostForm) {
+			// get form html
+			$pte_vals['{$FORMDAT}'] = $this->buildFormHtml($threadNumber, $pte_vals, $this->adminMode);
+		}
 
 		// Dispatch viewed thread hook
 		// This hook is one that only gets dispatched for threads that are being viewed through drawThread
@@ -96,8 +123,35 @@ class boardRebuilder {
 
 		$pageTitle = $this->getThreadPageTitle($opPost, $boardTitle);
 
-		$pageData = $this->buildFullPage($pte_vals, $pageTitle, $resno, true, $this->adminMode);
+		$pageData = $this->buildFullPage($pte_vals, $pageTitle, $threadNumber, true, $this->adminMode);
 		echo $this->finalizePageData($pageData);
+	}
+
+	private function getThreadForRendering(string $threadUid, ?int $page, ?int $amountOfRepliesToRender): array {
+		// Fetch thread with a limited amount of replies	
+		if(!is_null($amountOfRepliesToRender)) {
+			// fetch a 'last X replies' thread
+			$threadData = $this->threadService->getThreadLastReplies(
+				$threadUid, 
+				$this->canViewDeleted, 
+				$previewCount, 
+				$amountOfRepliesToRender
+			);
+
+		}
+		// Fetch thread with pages
+		else if(!is_null($page)) {
+			// fetch a paged thread
+			$threadData = $this->threadService->getThreadPaged($threadUid, $this->canViewDeleted, $previewCount, $repliesPerPage, $page);
+		}
+		// Fetch unpaged thread (intensive)
+		else {
+			// get the while thing
+			$threadData = $this->threadService->getThreadByUID($threadUid, $this->canViewDeleted, null);
+		}
+
+		// then return the thread data
+		return $threadData;
 	}
 
 	private function getThreadPageTitle(array $opPost, string $boardTitle): string {
@@ -161,7 +215,7 @@ class boardRebuilder {
 		$previewCount = $this->config['RE_DEF'];
 
 		// get threads + previews for this page
-		$threadsInPage = $this->postService->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset, $this->canViewDeleted);
+		$threadsInPage = $this->threadService->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset, $this->canViewDeleted);
 		
 		// post uids of posts that are rendered
 		$postUidsInPage = getPostUidsFromThreadArrays($threadsInPage);
@@ -210,7 +264,7 @@ class boardRebuilder {
 		$threadPreviewAmount = $totalPagesToRebuild * $threadsPerPage;
 
 		// get paginated thread previews
-		$threads = $this->postService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $threadPreviewAmount);
+		$threads = $this->threadService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $threadPreviewAmount);
 
 		// all post uids from the threads
 		$postUidsFromThreads = getPostUidsFromThreadArrays($threads);
@@ -239,7 +293,7 @@ class boardRebuilder {
 		$threadsPerPage = $this->config['PAGE_DEF'];
 		$amountOfThreads = $threadsPerPage * ($lastPageToRebuild + 1);
 
-		$threads = $this->postService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $amountOfThreads, 0);
+		$threads = $this->threadService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $amountOfThreads, 0);
 
 		// post uids of posts that are rendered
 		$postUidsInPage = getPostUidsFromThreadArrays($threads);
@@ -262,7 +316,7 @@ class boardRebuilder {
 		$offset = $targetPage * $this->config['PAGE_DEF'];
 		$limit = $this->config['PAGE_DEF'];
 
-		$threads = $this->postService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $limit, $offset);
+		$threads = $this->threadService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $limit, $offset);
 		$totalPages = ceil($totalThreadCountForBoard / $this->config['PAGE_DEF']);
 
 		if ($targetPage >= $totalPages) return;

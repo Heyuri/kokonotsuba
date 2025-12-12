@@ -74,7 +74,7 @@ class postValidator {
 		if($thread_uid){
 			if($ThreadExistsBefore) { // If the thread of the discussion you want to reply to exists
 				// Check that the thread is set to suppress response (by the way, take out the post time of the original post)
-				$post = $this->threadRepository->getPostsFromThread($thread_uid)[0]; // [Special] Take a single article content, but the $post of the return also relies on [$i] to switch articles!
+				$post = $this->threadRepository->getPostsFromThread($thread_uid, false, 0, 0)[0]; // [Special] Take a single article content, but the $post of the return also relies on [$i] to switch articles!
 
 				[$postOpStatus, $postOpRoot] = array($post['status'], $post['root']);
 				$flgh = new FlagHelper($postOpStatus);

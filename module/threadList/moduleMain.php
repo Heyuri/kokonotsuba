@@ -56,17 +56,14 @@ class moduleMain extends abstractModuleMain {
 		if ($this->SHOW_IN_MAIN && $isThreadView) {
 				$dat = '';
 
-				$threadUIDs = $this->moduleContext->threadService->getThreadListFromBoard($this->moduleContext->board, 0, $this->THREADLIST_NUMBER_IN_MAIN);
-				$this->moduleContext->moduleEngine->dispatch('ThreadOrder', array($isThreadView, 0, 0, &$threadUIDs));
-
-				$opPosts = $this->moduleContext->threadRepository->getFirstPostsFromThreads($threadUIDs);
-				$postCounts = $this->moduleContext->threadRepository->getPostCountsForThreads($threadUIDs);
+				// fetch thread previews - only get OP post
+				$threads = $this->moduleContext->threadService->getThreadPreviewsFromBoard($this->moduleContext->board, 0, $this->THREADLIST_NUMBER_IN_MAIN);
 
 				$dat .= '<div class="menu outerbox" id="topiclist"><div class="innerbox">';
 
-				foreach ($threadUIDs as $threadUID) {
-						if (!isset($opPosts[$threadUID])) continue;
-						$post = $opPosts[$threadUID];
+				foreach ($threads as $t) {
+						if (!isset($t['posts'][0])) continue;
+						$post = $t['posts'][0];
 
 						$cleanComment = strip_tags($post['com']);
 						$truncatedComment = truncateText($cleanComment, 100);
@@ -74,8 +71,8 @@ class moduleMain extends abstractModuleMain {
 
 						$title = $truncatedSubject ?: $truncatedComment;
 
-						$replyCount = isset($postCounts[$threadUID])
-								? $postCounts[$threadUID] - 1
+						$replyCount = isset($t['number_of_posts'])
+								? $t['number_of_posts'] - 1
 								: 0;
 
 						$dat .= sprintf(
@@ -93,46 +90,6 @@ class moduleMain extends abstractModuleMain {
 		}
 	}
 
-
-	// Helper function to get post counts
-	private function _getPostCounts($posts) {
-		$pc = array();
-
-		foreach($posts as $post) {
-			$pc[$post] = $this->moduleContext->threadRepository->getPostCountFromThread($post);
-		}
-		return $pc;
-	}
-
-	// Sorts an array based on values or keys
-	private function _kasort(&$a, $revkey = false, $revval = false) {
-		$t = $u = array();
-
-		// Flip the array
-		foreach ($a as $k => &$v) {
-			if (!isset($t[$v])) $t[$v] = array($k);
-			else $t[$v][] = $k;
-		}
-
-		// Sort by key or value in reverse order if specified
-		if ($revkey) krsort($t);
-		else ksort($t);
-
-		foreach ($t as $k => &$vv) {
-			if ($revval) rsort($vv);
-			else sort($vv);
-		}
-
-		// Reconstruct the array
-		foreach ($t as $k => &$vv) {
-			foreach ($vv as &$v) {
-				$u[$v] = $k;
-			}
-		}
-
-		$a = $u;
-	}
-
 	// Handles the module page display and pagination
 	public function ModulePage() {
 		$thisPage = $this->getModulePageURL(); // Base position
@@ -140,48 +97,61 @@ class moduleMain extends abstractModuleMain {
 		$listMax = $this->moduleContext->threadRepository->threadCountFromBoard($this->moduleContext->board); // Total number of threads
 		$pageMax = ceil($listMax / $this->THREADLIST_NUMBER) - 1; // Maximum page number
 		$page = isset($_GET['page']) ? intval($_GET['page']) : 0; // Current page number
-		$sort = isset($_GET['sort']) ? $_GET['sort'] : 'no'; // Sorting option
 
 		// Check if the page number is out of range
 		if ($page < 0 || $page > $pageMax) throw new BoardException('Page out of range.');
 
-		// Sort and fetch threads based on sorting options
-		if (strpos($sort, 'post') !== false) {
-			$plist = $this->moduleContext->threadService->getThreadListFromBoard($this->moduleContext->board, $this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER, true, 'post_op_number');
-			$pc = $this->_getPostCounts($plist);
-			$this->_kasort($pc, $sort == 'postdesc', true);
+		// init sorting descending variable
+		// this is so we can change the direction (ASC vs DESC) if we want to for certain sorting options
+		// default is true (DESC)
+		//
+		// (ASC = where sortDescending = false)
+		// (DESC = where sortDescending = true)
+		$sortDescending = true;
 
-			// Slice the list based on page
-			$plist = array_slice(array_keys($pc), $this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER);
-		} else {
-			$plist = $this->moduleContext->threadService->getThreadListFromBoard($this->moduleContext->board, $this->THREADLIST_NUMBER * $page, $this->THREADLIST_NUMBER, true, 'post_op_number');
-			$this->moduleContext->moduleEngine->dispatch('ThreadOrder', array(0, $page, 0, &$plist)); // "ThreadOrder" Hook Point
-			$pc = $this->_getPostCounts($plist);
+		// init sorting column variable
+		$sortingColumn = '';
+
+		// get sorting value from request
+		$sortingMethod = $_GET['sort'] ?? 'no';
+
+		// decide which column to use based on the request
+		if($sortingMethod === 'no') {
+			// set to post op number so it sorts by thread number
+			$sortingColumn = 'post_op_number';
 		}
-		
-		$unorderedOPs = $this->moduleContext->threadRepository->getFirstPostsFromThreads($plist);
-		$threadOPs = [];
-		
-		foreach ($plist as $threadUID) {
-			if (isset($unorderedOPs[$threadUID])) {
-				$threadOPs[] = $unorderedOPs[$threadUID];
-			}
+		else if($sortingMethod === 'replyMost') {
+			// set to be number-of-posts column (generated from JOIN query)
+			$sortingColumn = 'number_of_posts';
+
+			// set direction to be DESC so the threads with highest amount of posts get sorted first.
+			// it's value will be true anyway but it's good to be explicit
+			$sortDescending = true;
 		}
-		
-		// Re-arrange posts based on the sorting option
-		if ($sort == 'date' || strpos($sort, 'post') !== false) {
-			$mypost = array();
-			foreach ($plist as $p) {
-				foreach ($threadOPs as $k => $v) {
-					if ($v['thread_uid'] == $p) {
-						$mypost[] = $v;
-						unset($threadOPs[$k]);
-						break;
-					}
-				}
-			}
-			$threadOPs = $mypost;
+		else if($sortingMethod === 'replyLeast') {
+			// set to be number-of-posts column (generated from JOIN query)
+			$sortingColumn = 'number_of_posts';
+
+			// set direction to be ASC so the threads with the least posts/replies get sorted first
+			$sortDescending = false;
 		}
+		else if($sortingMethod === 'creationDate') {
+			// set to thread_creation_date so it
+			$sortingColumn = 'thread_created_time';
+		}
+
+		// now fetch the threads
+		// set preview count to 0 so it just gets OPs.
+		// pass column/direction parameters (sanitized by threadService)
+		$threads = $this->moduleContext->threadService->getThreadPreviewsFromBoard(
+			$this->moduleContext->board, 
+			0, 
+			$this->THREADLIST_NUMBER, 
+			$this->THREADLIST_NUMBER * $page,
+			false,
+			$sortingColumn,
+			$sortDescending
+		);
 
 		// Start output HTML
 		$dat .= $this->moduleContext->board->getBoardHead("Thread list");
@@ -203,16 +173,24 @@ function checkall(){
 			<h2 class="theading2">Thread list</h2>'.
 			($this->SHOW_FORM ? '<form action="'.$this->getConfig('LIVE_INDEX_FILE').'" method="post">' : '').'<div id="tableThreadlistContainer"><table id="tableThreadlist" class="postlists"><thead><tr>
 			'.($this->SHOW_FORM ? '<th class="colDel"><a href="javascript:checkall()">↓</a></th>' : '').'
-			<th class="colNum"><a href="'.$thisPage.'&sort=no">No.'.($sort == 'no' ? ' ▼' : '').'</a></th>
+			<th class="colNum"><a href="'.$thisPage.'&sort=no">No.'.($sortingMethod == 'no' ? ' ▼' : '').'</a></th>
 			<th class="colSub">'._T('form_topic').'</th>
 			<th class="colName">'._T('form_name').'</th>
-			<th class="colReply"><a href="'.$thisPage.'&sort='.($sort == 'postdesc' ? 'postasc' : 'postdesc').'">'._T('reply_btn').($sort == 'postdesc' ? ' ▼' : ($sort == 'postasc' ? ' ▲' : '')).'</a></th>
-			<th class="colDate"><a href="'.$thisPage.'&sort=date">Date' . ($sort == 'date' ? ' ▼' : '').'</a></th></tr>
+			<th class="colReply"><a href="'.$thisPage.'&sort='.($sortingMethod === 'replyMost' ? 'replyLeast' : 'replyMost').'">'._T('reply_btn').($sortingMethod == 'replyMost' ? ' ▼' : ($sortingMethod == 'replyLeast' ? ' ▲' : '')).'</a></th>
+			<th class="colDate"><a href="'.$thisPage.'&sort=creationDate">Date' . ($sortingMethod == 'creationDate' ? ' ▼' : '').'</a></th></tr>
 		</thead><tbody>
 		';
 
-		// Loop through and display each post
-		foreach($threadOPs as $opPost) {
+		// Loop through and display each thread data
+		foreach($threads as $t) {
+			// get opening post from data
+			$opPost = $t['posts'][0] ?? false;
+
+			// not found or data invalid (falsey value) - continue
+			if(!$opPost) {
+				continue;
+			}
+
 			$no = $opPost['no'];
 			$sub = $opPost['sub'];
 			$name = $opPost['name'];
@@ -233,7 +211,7 @@ function checkall(){
 				$this->getConfig('NOTICE_SAGE', false)
 			);
 
-			$rescount = $pc[$thread_uid] - 1;
+			$rescount = $t['number_of_posts'] - 1;
 			if ($this->HIGHLIGHT_COUNT > 0 && $rescount > $this->HIGHLIGHT_COUNT) {
 				$rescount = '<span class="warning">'.$rescount.'</span>';
 			}
@@ -252,7 +230,7 @@ function checkall(){
 <hr>
 ';
 
-		$dat .= drawPager($this->THREADLIST_NUMBER, $listMax, $thisPage . '&sort=' . $sort); 		
+		$dat .= drawPager($this->THREADLIST_NUMBER, $listMax, $thisPage . '&sort=' . $sortingMethod); 		
 
 		// Add delete form if necessary
 		if ($this->SHOW_FORM) {

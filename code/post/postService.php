@@ -120,7 +120,7 @@ class postService {
 				$board = $deletionRow['board'];
 
 				// get posts from the associated thread uid
-				$replies = $this->threadRepository->getPostsFromThread($threadUID, true);
+				$replies = $this->threadRepository->getAllPostsFromThread($threadUID, true);
 
 				// skip post early if there are no posts/replies
 				if(is_null($replies) || $replies === false) {
@@ -185,54 +185,5 @@ class postService {
 		}
 
 		return $replies;
-	}
-
-	public function getThreadPreviewsFromBoard(board $board, int $previewCount, int $amount = 0, int $offset = 0, bool $adminMode = false): array {
-		$boardUID = $board->getBoardUID();
-
-		$amount = max(0, $amount);
-		$offset = max(0, $offset);
-
-		$threads = $this->threadRepository->getThreadsFromBoard($boardUID, $amount, $offset, 'last_bump_time', 'DESC', $adminMode);
-
-		if (empty($threads)) return [];
-
-		$threadUIDs = array_column($threads, 'thread_uid');
-		
-		$postRows = $this->threadRepository->getPostsForThreads($threadUIDs, $previewCount, $adminMode);
-		$postsByThread = $this->groupPostsByThread($postRows);
-		
-		$postCountsByThread = $this->threadRepository->getPostCountsForThreads($threadUIDs);
-
-		return $this->buildPreviewResults($threads, $postsByThread, $postCountsByThread, $previewCount);
-	}
-
-	private function groupPostsByThread(array $postRows): array {
-		$postsByThread = [];
-		foreach ($postRows as $post) {
-			$postsByThread[$post['thread_uid']][] = $post;
-		}
-		return $postsByThread;
-	}
-
-	private function buildPreviewResults(array $threads, array $postsByThread, array $postCountsByThread, int $previewCount): array {
-		$result = [];
-		foreach ($threads as $thread) {
-			$threadUID = $thread['thread_uid'];
-			$previewPosts = $postsByThread[$threadUID] ?? [];
-
-			$totalPosts = $postCountsByThread[$threadUID];
-			$omittedCount = max(0, $totalPosts - $previewCount - 1);
-
-			$result[] = [
-				'thread' => $thread,
-				'post_uids' => array_column($previewPosts, 'post_uid'),
-				'posts' => $previewPosts,
-				'hidden_reply_count' => $omittedCount,
-				'post_count' => $totalPosts,
-				'thread_uid' => $threadUID
-			];
-		}
-		return $result;
 	}
 }

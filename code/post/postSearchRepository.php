@@ -66,7 +66,7 @@ class postSearchRepository {
 
 		// append base WHERE condition
 		$query .= "
-			WHERE MATCH(p.$field) AGAINST (:search IN BOOLEAN MODE) 
+			WHERE MATCH(p.$field) AGAINST (:search IN NATURAL LANGUAGE MODE) 
 			AND p.boardUID = :board_uid";
 
 		// exclude deleted posts
@@ -74,7 +74,6 @@ class postSearchRepository {
 
 		// append order / limit / offset
 		$query .= "
-			ORDER BY p.no DESC
 			LIMIT $limit OFFSET $offset
 		";
 

@@ -11,7 +11,6 @@ class defaultRoute {
 		private board $board,
 		private readonly threadRepository $threadRepository,
 		private readonly postRepository $postRepository,
-		private readonly softErrorHandler $softErrorHandler,
 		private readonly postRedirectService $postRedirectService
 	) {}
 
@@ -26,12 +25,28 @@ class defaultRoute {
 		$res = intval($_GET['res'] ?? 0);
 
 		// Check for ?page= (specific page number)
-		$pageParam = $_GET['page'] ?? null;
+		$pageParam = $_GET['page'] ?? 0;
 
 		if ($res > 0) {
 			// Handle thread view (with potential redirection)
 			$this->handleThreadRedirect($res);
-			$this->board->drawThread($res);
+
+			// get thread mode from GET request.
+			// thread mode is typically blank just for regular thread rendering
+			$threadMode = $_GET['threadMode'] ?? '';
+
+			// Render the last X amount of replies
+			if($threadMode === 'recentReplies') {
+				// fetch the amount of replies to render
+				$amountOfRepliesToRender = $this->board->getConfigValue('LAST_AMOUNT_OF_REPLIES', 50);
+
+				// then draw the last X replies page
+				$this->board->drawRecentReplies($res, $amountOfRepliesToRender);
+			}
+			else {
+				// draw the regular thread page	
+				$this->board->drawThread($res, $pageParam);
+			}
 		} elseif ($pageParam !== null && intval($pageParam) > -1) {
 			// Handle specific board page
 			$this->board->drawPage(intval($pageParam));
@@ -71,7 +86,7 @@ class defaultRoute {
 
 			// If still not valid, show error
 			if (!$this->threadRepository->isThread($thread_uid_new)) {
-				$this->softErrorHandler->errorAndExit(_T('thread_not_found'));
+				throw new BoardException(_T('thread_not_found'));
 			}
 
 			// Otherwise, redirect to the correct thread page and scroll to post

@@ -267,7 +267,6 @@ class boardService {
 		$boardRebuilder = new boardRebuilder($board,
 			$moduleEngine,
 			$templateEngine,
-			$this->boardDiContainer->postService,
 			$this->boardDiContainer->actionLoggerService,
 			$this->boardDiContainer->threadRepository,
 			$this->boardDiContainer->threadService,

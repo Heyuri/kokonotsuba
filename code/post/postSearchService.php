@@ -32,7 +32,7 @@ class postSearchService {
 			return $this->searchByLike($field, $boardUID, $rawInput, $limit, $offset);
 		}
 
-		$searchString = $this->buildFullTextSearchString($rawInput, $method, $matchWholeWord);
+		$searchString = $this->buildFullTextSearchString($rawInput, $method, $matchWholeWord, true);
 		if (!$searchString) {
 			return ['results_data' => [], 'total_posts' => 0];
 		}
@@ -89,27 +89,79 @@ class postSearchService {
 		return $this->formatResults($posts, $count);
 	}
 
-	private function buildFullTextSearchString(string $rawInput, string $method, bool $matchWholeWord): ?string {
+	/**
+	 * Build a FULLTEXT search string for BOOLEAN MODE or NATURAL LANGUAGE MODE.
+	 *
+	 * NATURAL MODE cannot contain boolean operators (+, -, *).
+	 * BOOLEAN MODE allows all of them.
+	 *
+	 * This method detects whether BOOLEAN syntax is being used by checking:
+	 * - $matchWholeWord (which controls '*' wildcard)
+	 * - $method (which controls '+' for AND)
+	 *
+	 * If NATURAL MODE is used later, the caller must pass $forceNatural = true.
+	 */
+	private function buildFullTextSearchString(
+		string $rawInput,
+		string $method,
+		bool $matchWholeWord,
+		bool $forceNaturalMode = false // <-- NEW argument
+	): ?string {
+
+		// Remove unwanted characters while keeping quotes and word chars
 		$rawInput = preg_replace('/[^\p{L}\p{N}\s"]+/u', '', $rawInput);
+
+		// Extract quoted phrases or individual word tokens
 		preg_match_all('/"([^"]+)"|[\p{L}\p{N}]+/u', $rawInput, $matches);
 		$terms = $matches[0] ?? [];
 
 		$cleanedTerms = [];
+
 		foreach ($terms as $term) {
+
 			$isQuoted = $term[0] === '"';
+
+			// Normalize inside-phrase content
 			$clean = mb_strtolower(trim($term, '"'));
 
+			// Ignore tiny terms that MySQL won't index anyway (< 3 chars)
 			if (mb_strlen($clean) < 3) continue;
 
+			// ---------------------------------------------------------------------
+			// CASE 1: Quoted phrase — leave as-is (MySQL supports it in both modes)
+			// ---------------------------------------------------------------------
 			if ($isQuoted) {
 				$cleanedTerms[] = '"' . $clean . '"';
-			} else {
-				$token = strtoupper($method) === 'AND' ? '+' . $clean : $clean;
-				if (!$matchWholeWord) $token .= '*';
-				$cleanedTerms[] = $token;
+				continue;
 			}
+
+			// ---------------------------------------------------------------------
+			// CASE 2: NATURAL LANGUAGE MODE
+			// - BOOLEAN symbols are NOT allowed in this mode.
+			// - We strip + and * to avoid SQL errors.
+			// ---------------------------------------------------------------------
+			if ($forceNaturalMode) {
+				// NATURAL MODE requires plain terms only
+				$cleanedTerms[] = $clean;
+				continue;
+			}
+
+			// ---------------------------------------------------------------------
+			// CASE 3: BOOLEAN MODE (default behavior)
+			// - '+' for AND
+			// - '*' wildcard when whole-word matching is off
+			// ---------------------------------------------------------------------
+			$token = strtoupper($method) === 'AND' ? '+' . $clean : $clean;
+
+			if (!$matchWholeWord) {
+				// '*' wildcard allowed only in BOOLEAN mode
+				$token .= '*';
+			}
+
+			$cleanedTerms[] = $token;
 		}
 
+		// Return cleaned token list or null if empty
 		return $cleanedTerms ? implode(' ', $cleanedTerms) : null;
 	}
 

@@ -9,30 +9,41 @@ class threadRepository {
 		private string $threadTable, 
 		private string $deletedPostsTable,
 		private string $fileTable) {
-		$this->allowedOrderFields = ['last_bump_time', 'last_reply_time', 'thread_created_time', 'post_op_number'];
+		$this->allowedOrderFields = ['last_bump_time', 'last_reply_time', 'thread_created_time', 'post_op_number', 'number_of_posts'];
 	}
 
-	private function getBaseThreadQuery(): string {
-		// generate thread query
+	private function getBaseThreadQuery(bool $includeDeletedCount = true): string {
+		$latestDel   = sqlLatestDeletionEntry($this->deletedPostsTable);
+		$visibleCond = sqlVisiblePostCondition('d');
+
+		// conditional filter
+		$countFilter = $includeDeletedCount
+			? ""                    // include all posts
+			: "AND {$visibleCond}"; // restrict to visible posts only
+
 		$query = "
-				SELECT 
-					t.*,
-					dp.open_flag AS thread_deleted,
-					dp.file_only AS thread_attachment_deleted,
-					dp.by_proxy
-				FROM {$this->threadTable} t
-				LEFT JOIN (
-			 	   SELECT dp1.post_uid, dp1.open_flag, dp1.file_only, dp1.by_proxy
-			 	   FROM {$this->deletedPostsTable} dp1
-			 	   INNER JOIN (
-			 		   SELECT post_uid, MAX(deleted_at) AS max_deleted_at
-			 		   FROM {$this->deletedPostsTable}
-			 		   GROUP BY post_uid
-			 	   ) dp2 ON dp1.post_uid = dp2.post_uid AND dp1.deleted_at = dp2.max_deleted_at
-				) dp ON t.post_op_post_uid = dp.post_uid
+			SELECT 
+				t.*,
+				dp.open_flag AS thread_deleted,
+				dp.file_only AS thread_attachment_deleted,
+				dp.by_proxy,
+
+				(
+					SELECT COUNT(*)
+					FROM {$this->postTable} p
+					LEFT JOIN (
+						{$latestDel}
+					) d ON p.post_uid = d.post_uid
+					WHERE p.thread_uid = t.thread_uid
+					{$countFilter}
+				) AS number_of_posts
+
+			FROM {$this->threadTable} t
+			LEFT JOIN (
+				{$latestDel}
+			) dp ON t.post_op_post_uid = dp.post_uid
 		";
 
-		// return query
 		return $query;
 	}
 
@@ -71,9 +82,9 @@ class threadRepository {
 		return $joinClause;
 	}
 
-	public function getThreadByUid(string $thread_uid): array|false {
+	public function getThreadByUid(string $thread_uid, bool $includeDeleted = false): array|false {
 		// get base thread query
-		$query = $this->getBaseThreadQuery();
+		$query = $this->getBaseThreadQuery($includeDeleted);
 
 		// append WHERE query
 		// select thread by `thread_uid`
@@ -85,21 +96,6 @@ class threadRepository {
 	
 		return $threadData;
 	}
-
-	/* Get all threads from all boards */
-	public function getAllThreads() {
-		$query = "SELECT * FROM {$this->threadTable} ORDER BY last_bump_time DESC";
-		$threads = $this->databaseConnection->fetchAllAsArray($query);
-		return $threads;
-	}
-	
-	/* Get all thread uids from all boards */
-	public function getAllThreadUIDs() {
-		$query = "SELECT thread_uid FROM {$this->threadTable} ORDER BY last_bump_time DESC";
-		$threads = $this->databaseConnection->fetchAllAsIndexArray($query);
-		return array_merge(...$threads);
-	}
-
 
 	public function mapThreadUidListToPostNumber($threadUidArray) {
 		if (empty($threadUidArray)) {
@@ -226,7 +222,7 @@ class threadRepository {
 
 	public function fetchFilteredThreads(array $filters, string $order, int $amount, int $offset, bool $includeDeleted = false): array {
 		// get thread query
-		$query = $this->getBaseThreadQuery();
+		$query = $this->getBaseThreadQuery($includeDeleted);
 	
 		// apppend WHERE
 		$query .= " WHERE 1";
@@ -356,83 +352,98 @@ class threadRepository {
 	}
 
 	/**
-	* Bump a discussion thread to the top.
+	 * Bump a discussion thread to the top.
 	*/
 	public function bumpThread(string $threadID): void {
-		$posts = $this->getPostsFromThread($threadID);
+		/*
+			We fetch the latest post time using MAX(root).
+			This gets the newest post's timestamp without needing ORDER BY or LIMIT.
+		*/
+		$query = "
+			UPDATE {$this->threadTable}
+			SET
+				last_bump_time = (
+					SELECT MAX(p.root)
+					FROM {$this->postTable} p
+					WHERE p.thread_uid = :thread_uid
+				),
+				last_reply_time = (
+					SELECT MAX(p.root)
+					FROM {$this->postTable} p
+					WHERE p.thread_uid = :thread_uid
+				)
+			WHERE thread_uid = :thread_uid
+		";
 
-		if (empty($posts)) return;
-	
-		$lastPost = end($posts);
-		$bumpTime = $lastPost['root']; // must be MySQL datetime string
-	
-		$query = "UPDATE {$this->threadTable}
-					SET last_bump_time = :bump_time,
-					last_reply_time = :bump_time
-				WHERE thread_uid = :thread_uid";
-	
 		$params = [
-			':bump_time'  => $bumpTime,
 			':thread_uid' => $threadID
 		];
-	
+
 		$this->databaseConnection->execute($query, $params);
 	}
 
-	public function getThreadsFromBoard(int $boardUid, int $limit = 50, int $offset = 0, string $orderBy = 'last_bump_time', string $direction = 'DESC', bool $includeDeleted = false): array|null {
-		// Ensure limit and offset are non-negative integers
+	public function getThreadsFromBoard(
+		int $boardUid,
+		int $limit = 50,
+		int $offset = 0,
+		string $orderBy = 'last_bump_time',
+		string $direction = 'DESC',
+		bool $includeDeleted = false,
+	): array|null {
+		// sanitize limit and offset
 		$limit = max(0, (int)$limit);
 		$offset = max(0, (int)$offset);
 
-		// Sanitize and validate direction
+		// santitize/validate direction
 		$direction = strtoupper($direction);
 		if ($direction !== 'ASC' && $direction !== 'DESC') {
-			$direction = 'DESC'; // Default direction
+			$direction = 'DESC';
 		}
 
-		if(!in_array($orderBy, $this->allowedOrderFields)) {
+		// validate order by
+		if (!in_array($orderBy, $this->allowedOrderFields)) {
 			throw new RuntimeException("Invalid order by field.");
 		}
 
-		// Construct the SQL query with ORDER BY, LIMIT, and OFFSET
+		// build the base thread query (includes number_of_posts)
+		$base = $this->getBaseThreadQuery($includeDeleted);
+
+		// start full query
 		$query = "
-			SELECT * 
-			FROM {$this->threadTable} t
-			LEFT JOIN (
-				SELECT dp1.post_uid, dp1.open_flag, dp1.file_only, dp1.by_proxy
-				FROM {$this->deletedPostsTable} dp1
-				INNER JOIN (
-					SELECT post_uid, MAX(deleted_at) AS max_deleted_at
-					FROM {$this->deletedPostsTable}
-					GROUP BY post_uid
-				) dp2 ON dp1.post_uid = dp2.post_uid AND dp1.deleted_at = dp2.max_deleted_at
-			) dp ON t.post_op_post_uid = dp.post_uid
-			WHERE boardUID = :board_uid 
+			SELECT *
+			FROM (
+				{$base}
+			) t
+			WHERE t.boardUID = :board_uid
 		";
 
-		// exclude the threads where the op post was deleted
-		if(!$includeDeleted) {
-			$query = excludeDeletedPostsCondition($query);
+		// optionally exclude threads where OP is fully deleted
+		if (!$includeDeleted) {
+			// deleted = dp.open_flag = 0 AND dp.file_only = 0
+			$query .= " AND (t.thread_deleted IS NULL OR t.thread_deleted = 1 OR t.thread_attachment_deleted = 1)";
 		}
 
-		// add thread order
-		$query .= " ORDER BY is_sticky DESC, $orderBy $direction";
+		// add ordering (sticky first)
+		$query .= " ORDER BY t.is_sticky DESC, t.{$orderBy} {$direction}";
 
-		// add thread limit
-		if($limit) {
+		// add limits
+		if ($limit) {
 			$query .= " LIMIT {$limit} OFFSET {$offset}";
 		}
 
-		// Bind parameters to prevent SQL injection
+		// add param
 		$params = [':board_uid' => $boardUid];
 
-		// Execute the query and return results as an array
-		$threads = $this->databaseConnection->fetchAllAsArray($query, $params);
-
-		return $threads;
+		// return db query fetching the thread data
+		return $this->databaseConnection->fetchAllAsArray($query, $params);
 	}
 
-	public function getPostsFromThread(string $threadUID, bool $includeDeleted = false): ?array {
+
+	public function getPostsFromThread(string $threadUID, bool $includeDeleted = false, int $amount = 500, int $offset = 0): ?array {
+		// sanitize numeric inputs
+		$amount = max(0, (int)$amount);
+		$offset = max(0, (int)$offset);
+
 		// Generate the base query
 		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
 
@@ -444,10 +455,32 @@ class threadRepository {
 			$query = excludeDeletedPostsCondition($query);
 		}
 
-		// append ORDER BY clause
-		$query .= " ORDER BY p.post_uid ASC";
+		/*
+			We UNION the OP (p.is_op = 1) with the replies (p.is_op = 0).
+			The OP is always returned first and is not affected by reply LIMIT/OFFSET.
+		*/
+		$query = "
+			(
+				{$query}
+				AND p.is_op = 1
+				ORDER BY p.post_uid ASC
+			)
+			UNION ALL
+			(
+				" . getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable) . "
+				WHERE p.thread_uid = :thread_uid
+				" . (!$includeDeleted ? excludeDeletedPostsCondition("") : "") . "
+				AND p.is_op = 0
+				ORDER BY p.post_uid ASC
+				LIMIT :amount OFFSET :offset
+			)
+		";
 
-		$params = [':thread_uid' => $threadUID];
+		$params = [
+			':thread_uid' => $threadUID,
+			':amount' => $amount,
+			':offset' => $offset
+		];
 
 		// fetch post rows
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $params) ?? [];
@@ -463,6 +496,40 @@ class threadRepository {
 			// return results
 			return $posts;
 		}
+	}
+
+	public function getAllPostsFromThread(string $threadUID, bool $includeDeleted = false): ?array {
+		// Generate the base query
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+
+		// Add thread condition
+		$query .= " WHERE p.thread_uid = :thread_uid";
+
+		// Exclude deleted posts if requested
+		if(!$includeDeleted) {
+			$query = excludeDeletedPostsCondition($query);
+		}
+
+		// Order results by post id
+		$query .= " ORDER BY p.post_uid ASC";
+
+		$params = [
+			':thread_uid' => $threadUID
+		];
+
+		// Fetch rows
+		$posts = $this->databaseConnection->fetchAllAsArray($query, $params) ?? [];
+
+		// Merge attachment rows
+		$posts = mergeMultiplePostRows($posts);
+
+		// Return null when empty
+		if(!$posts) {
+			return null;
+		}
+
+		// Return all posts
+		return $posts;
 	}
 
 	public function getPostsForThreads(array $threadUIDs, int $previewCount, bool $includeDeleted = false): array {
@@ -554,29 +621,6 @@ class threadRepository {
 		]; 
 	
 		$this->databaseConnection->execute($query, $params);
-	}
-
-	public function getPostCountsForThreads(array $threadUIDs): array {
-		if (empty($threadUIDs)) return [];
-
-		// get in placeholders
-		$inPlaceholders = pdoPlaceholdersForIn($threadUIDs); 
-
-		$query = "
-			SELECT thread_uid, COUNT(post_uid) AS post_count
-			FROM {$this->postTable}
-			WHERE thread_uid IN $inPlaceholders
-			GROUP BY thread_uid
-		";
-
-		$results = $this->databaseConnection->fetchAllAsArray($query, $threadUIDs);
-
-		$postCounts = [];
-		foreach ($results as $row) {
-				$postCounts[$row['thread_uid']] = (int)$row['post_count'];
-		}
-
-		return $postCounts;
 	}
 
 	public function insertThread($threadUid, $postOpNumber, $boardUID) {
@@ -677,4 +721,30 @@ class threadRepository {
 		$this->databaseConnection->execute($query, $params);
 	}
 
+	public function getPageOfThread(string $threadUid, int $threadsPerPage): null|false|int {
+		// get the query to get the page of the thread
+		$query = "
+			SELECT CEIL(
+				(
+					SELECT COUNT(*)
+					FROM {$this->threadTable} t2
+					WHERE t2.last_bump_time <= t1.last_bump_time
+				) / :threads_per_page
+			) AS page
+			FROM {$this->threadTable} t1
+			WHERE t1.thread_uid = :thread_uid
+		";
+
+		// bind param
+		$params = [
+			':thread_uid' => $threadUid,
+			':threads_per_page' => $threadsPerPage,
+		];
+
+		// fetch value
+		$threadPage = $this->databaseConnection->fetchValue($query, $params);
+
+		// return it
+		return $threadPage;
+	}
 }

@@ -39,7 +39,8 @@ class threadRenderer {
 
 
 		// number of replies
-		$replyCount = count($posts);
+		// number of posts excluding OP
+		$replyCount = $thread['number_of_posts'] - 1;
 	
 		$threadHtml = '';
 

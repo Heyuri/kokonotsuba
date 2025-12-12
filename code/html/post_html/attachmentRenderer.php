@@ -186,12 +186,12 @@ class attachmentRenderer {
 		// Case: File has been deleted, use placeholder image
 		if ($fileDeleted) {
 			$thumbURL = $this->board->getConfigValue('STATIC_URL') . 'image/filedeleted.gif';
-			return $this->buildImageTag($imageURL, $thumbURL, $imgsize);
+			return $this->buildImageTag($imageURL, $thumbURL, $imgsize, 200, 150);
 		}
 		// Case: File does not exist, use placeholder image
 		elseif (!$imageExists) {
 			$thumbURL = $this->board->getConfigValue('STATIC_URL') . 'image/nofile.gif';
-			return $this->buildImageTag($imageURL, $thumbURL, $imgsize);
+			return $this->buildImageTag($imageURL, $thumbURL, $imgsize, 200, 150);
 		}
 		// Case: Thumbnail exists and dimensions are known
 		elseif ($tw && $th && !empty($thumbName)) {

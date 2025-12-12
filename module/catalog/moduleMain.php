@@ -103,7 +103,7 @@ class moduleMain extends abstractModuleMain {
 				
 		$dat.= '<table id="catalogTable" class="' . ($cat_fw ? 'full-width' : '') . ' ' . ($cat_cols === 'auto' ? 'auto-cols' : 'fixed-cols') . '"><tbody><tr>';
 
-		$threads = $this->moduleContext->postService->getThreadPreviewsFromBoard($this->moduleContext->board, 0, $this->PAGE_DEF, $page * $this->PAGE_DEF, $sortingColumn);
+		$threads = $this->moduleContext->threadService->getThreadPreviewsFromBoard($this->moduleContext->board, 0, $this->PAGE_DEF, $page * $this->PAGE_DEF, $sortingColumn);
 		
 		foreach($threads as $i=>$thread){
 			$threadPosts = $thread['posts'];
@@ -127,7 +127,7 @@ class moduleMain extends abstractModuleMain {
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'', '{$IMG_SRC}' => '');
 			$this->moduleContext->moduleEngine->dispatch('ThreadPost', array(&$arrLabels, $opPost, $threadPosts, false)); // "ThreadPost" Hook Point
 
-			$res = $thread['post_count'] - 1; // subtract by one so we dont count the OP
+			$res = $thread['number_of_posts'] - 1; // subtract by one so we dont count the OP
 			$dat.= '<td class="thread">
 	<!--<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>-->
 	<a href="'.$this->moduleContext->board->getBoardThreadURL($threadNumber).'">'.

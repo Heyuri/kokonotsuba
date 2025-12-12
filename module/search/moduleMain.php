@@ -182,7 +182,7 @@ class moduleMain extends abstractModuleMain {
 			$out = '<div id="searchresult">' . $resultList . '</div>';
 	
 			$filters = [
-				'keyword' => implode('+', $searchKeywordArray),
+				'keyword' => $searchKeyword,
 				'field'   => $searchField,
 				'method'  => $searchMethod
 			];

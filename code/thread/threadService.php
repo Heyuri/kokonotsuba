@@ -11,30 +11,190 @@ class threadService {
 		private deletedPostsService $deletedPostsService,
 		private fileService $fileService,
 	) {
-		$this->allowedOrderFields = ['post_op_number', 'post_op_post_uid', 'last_bump_time', 'last_reply_time', 'insert_id', 'post_uid'];
+		$this->allowedOrderFields = ['post_op_number', 'post_op_post_uid', 'last_bump_time', 'last_reply_time', 'thread_created_time', 'insert_id', 'post_uid', 'number_of_posts'];
 	}
 
-	public function getThreadByUID(string $thread_uid, bool $adminMode = false): array|false {
-		$threadMeta = $this->threadRepository->getThreadByUID($thread_uid);
 
+	/**
+		* Fetch a thread and include only the last X replies.
+		*
+		* @param string $thread_uid				The UID of the thread to fetch.
+		* @param bool $adminMode					Whether admin mode is enabled (affects visibility of deleted posts).
+		* @param int $previewCount				How many posts should be included in the preview result.
+		* @param int $amountOfRepliesToRender	Number of latest replies to include (OP not counted).
+		*
+		* @return array|false						Thread data structure or false if not found.
+		*/
+	public function getThreadLastReplies(
+		string $thread_uid,
+		bool $adminMode,
+		int $previewCount,
+		int $amountOfRepliesToRender
+	): array|false {
+		return $this->getThreadByUidInternal(
+			$thread_uid,
+			$adminMode,
+			$previewCount,
+			$amountOfRepliesToRender,
+			null,
+			null
+		);
+	}
+
+	/**
+		* Fetch a thread using pagination.
+		*
+		* @param string $thread_uid		The UID of the thread to fetch.
+		* @param bool $adminMode			Whether admin mode is enabled (affects visibility of deleted posts).
+		* @param int $previewCount		How many posts should be included in the preview result.
+		* @param int $repliesPerPage		How many replies should be shown per page.
+		* @param int $page				The page index to load (0-based external, automatically offset internally).
+		*
+		* @return array|false				Thread data structure or false if not found.
+		*/
+	public function getThreadPaged(
+		string $thread_uid,
+		bool $adminMode,
+		int $previewCount,
+		int $repliesPerPage,
+		int $page
+	): array|false {
+		return $this->getThreadByUidInternal(
+			$thread_uid,
+			$adminMode,
+			$previewCount,
+			null,
+			$repliesPerPage,
+			$page
+		);
+	}
+
+	/**
+		* Fetch a thread with all replies (no limits or pagination).
+		*
+		* @param string $thread_uid		The UID of the thread to fetch.
+		* @param bool $adminMode			Whether admin mode is enabled (affects visibility of deleted posts).
+		* @param int $previewCount		How many posts should be included in the preview result.
+		*
+		* @return array|false				Thread data structure or false if not found.
+		*/
+	public function getThreadAllReplies(
+		string $thread_uid,
+		bool $adminMode,
+		int $previewCount
+	): array|false {
+		return $this->getThreadByUidInternal(
+			$thread_uid,
+			$adminMode,
+			$previewCount,
+			null,
+			null,
+			null
+		);
+	}
+
+
+	public function getThreadByUidInternal(
+		string $thread_uid, 
+		bool $adminMode = false, 
+		int $previewCount = 5, 
+		?int $amountOfRepliesToRender = 50, 
+		?int $repliesPerPage = 500,
+		?int $page = 0 
+	): array|false {
+		// get thread meta data
+		$threadMeta = $this->threadRepository->getThreadByUID($thread_uid, $adminMode);
+
+		// return false if thread data is falsey
 		if (!$threadMeta) {
 			return false;
 		}
 	
-		$posts = $this->threadRepository->getPostsFromThread($thread_uid, $adminMode);
-	
-		$postUIDs = array_column($posts, 'post_uid');
-		$totalPosts = count($postUIDs);
-		$previewCount = $this->config['RE_DEF'] ?? 5;  // fallback if RE_DEF missing
-		$hiddenReplyCount = max(0, $totalPosts - $previewCount);
-	
-		return [
-			'thread' => $threadMeta,
-			'posts' => $posts,
-			'post_uids' => $postUIDs,
-			'hidden_reply_count' => $hiddenReplyCount,
-			'thread_uid' => $threadMeta['thread_uid'],
-		];
+
+		// if the reply amount parameter is set then fetch last X amount of posts
+		if($amountOfRepliesToRender) {
+			$posts = $this->threadRepository->getPostsForThreads([$thread_uid], $amountOfRepliesToRender, $adminMode);
+		}
+		// otherwise if paged results are fetched then fetch paged results
+		else if ($page) {
+			$posts = $this->threadRepository->getPostsFromThread($thread_uid, $adminMode, $repliesPerPage, (max(1, $page)) * $repliesPerPage);
+		}
+		// no parameters set - fetch all replies
+		else {
+			$posts = $this->threadRepository->getAllPostsFromThread($thread_uid, $adminMode);
+		}
+
+		// group posts by thread
+		$groupedPosts = $this->groupPostsByThread($posts);
+
+		return $this->buildPreviewResults([$threadMeta], $groupedPosts, $previewCount)[0] ?? false;
+	}
+
+	public function getThreadPreviewsFromBoard(board $board, int $previewCount, int $amount = 0, int $offset = 0, bool $adminMode = false, string $orderBy = 'last_bump_time', bool $isDescending = true): array {
+		$boardUID = $board->getBoardUID();
+
+		$amount = max(0, $amount);
+		$offset = max(0, $offset);
+
+		if (!in_array($orderBy, $this->allowedOrderFields, true)) {
+			$orderBy = 'last_bump_time';
+		}
+
+		$threads = $this->threadRepository->getThreadsFromBoard(
+			$boardUID, 
+			$amount, 
+			$offset, 
+			$orderBy, 
+			$isDescending ? 'DESC' : 'ASC', 
+			$adminMode
+		);
+
+		if (empty($threads)) return [];
+
+		$threadUIDs = array_column($threads, 'thread_uid');
+		
+		$postRows = $this->threadRepository->getPostsForThreads($threadUIDs, $previewCount, $adminMode);
+		$postsByThread = $this->groupPostsByThread($postRows);
+
+		return $this->buildPreviewResults($threads, $postsByThread, $previewCount);
+	}
+
+	private function groupPostsByThread(array $postRows): array {
+		$postsByThread = [];
+		foreach ($postRows as $post) {
+			$postsByThread[$post['thread_uid']][] = $post;
+		}
+		return $postsByThread;
+	}
+
+	private function buildPreviewResults(array $threads, array $postsByThread, ?int $previewCount): array {
+		$result = [];
+		foreach ($threads as $thread) {
+			$threadUID = $thread['thread_uid'];
+			$previewPosts = $postsByThread[$threadUID] ?? [];
+			
+			// get total posts
+			$totalPosts = $thread['number_of_posts'];
+
+			// if theres a preview limit then generate hidden amount
+			if($previewCount) {
+				$omittedCount = max(0, $totalPosts - $previewCount - 1);
+			}
+			// otherwise leave null
+			else {
+				$omittedCount = null;
+			}
+
+			$result[] = [
+				'thread' => $thread,
+				'post_uids' => array_column($previewPosts, 'post_uid'),
+				'posts' => $previewPosts,
+				'hidden_reply_count' => $omittedCount,
+				'number_of_posts' => $totalPosts,
+				'thread_uid' => $threadUID
+			];
+		}
+		return $result;
 	}
 
 	public function getFilteredThreads(int $previewCount, int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'last_bump_time'): array {
@@ -43,49 +203,16 @@ class threadService {
 		if (empty($threads)) return [];
 
 		$threadUIDs = array_column($threads, 'thread_uid');
-		$allPosts = $this->postService->getPostsByThreadUIDs($threadUIDs, $includeDeleted);
+
+		// get posts from thread
+		$allPosts = $this->threadRepository->getPostsForThreads($threadUIDs, $previewCount, $includeDeleted);
+		
+		// get post counts
 		$postsByThread = $this->groupPostsByThread($allPosts);
 
-		$result = [];
-
-		foreach ($threads as $thread) {
-			$threadUID = $thread['thread_uid'];
-			$threadPosts = $postsByThread[$threadUID] ?? [];
-
-			$preview = $this->buildThreadPreview($threadPosts, $previewCount);
-
-			$result[] = array_merge($preview, [
-				'thread' => $thread,
-				'thread_uid' => $threadUID
-			]);
-		}
+		$result = $this->buildPreviewResults($threads, $postsByThread, $previewCount);
 
 		return $result;
-	}
-
-	private function groupPostsByThread(array $posts): array {
-		$grouped = [];
-		foreach ($posts as $post) {
-			$grouped[$post['thread_uid']][] = $post;
-		}
-		return $grouped;
-	}
-
-	private function buildThreadPreview(array $posts, int $previewCount): array {
-		$totalPosts = count($posts);
-		$opPost = array_filter($posts, fn($p) => $p['is_op']);
-		$nonOpPosts = array_filter($posts, fn($p) => !$p['is_op']);
-
-		$previewPosts = array_merge(
-			$opPost,
-			array_slice($nonOpPosts, max(0, count($nonOpPosts) - $previewCount))
-		);
-
-		return [
-			'posts' => $previewPosts,
-			'post_uids' => array_column($previewPosts, 'post_uid'),
-			'hidden_reply_count' => max(0, $totalPosts - $previewCount - 1),
-		];
 	}
 
 	public function getThreadListFromBoard(
@@ -117,14 +244,12 @@ class threadService {
 		);
 	}
 
-
-
 	public function moveThreadAndUpdate($thread_uid, $destinationBoard) {
 		$this->transactionManager->run(function () use (
 			$thread_uid,
 			$destinationBoard
 		) {
-			$posts = $this->threadRepository->getPostsFromThread($thread_uid, true);
+			$posts = $this->threadRepository->getAllPostsFromThread($thread_uid, true);
 			if (empty($posts)) {
 				throw new Exception("No posts found for thread UID: $thread_uid");
 			}
@@ -174,7 +299,7 @@ class threadService {
 			&$moveData
 		) {
 			// get all posts from the original thread
-			$posts = $this->threadRepository->getPostsFromThread($originalThreadUid, true);
+			$posts = $this->threadRepository->getAllPostsFromThread($originalThreadUid, true);
 						
 			if (empty($posts)) {
 				throw new Exception("No posts found for thread UID: $originalThreadUid");
@@ -390,5 +515,11 @@ class threadService {
 		return $threadsToPrune;
 	}
 
+	public function getPageOfThread(string $threadUid, int $threadsPerPage): int {
+		// run repository method to get the page of the thread
+		$threadPage = $this->threadRepository->getPageOfThread($threadUid, $threadsPerPage);
 	
+		// then return int (default to 0 if falsey/null)
+		return $threadPage ?? 0;
+	}	
 }

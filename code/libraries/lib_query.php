@@ -264,3 +264,20 @@ function mergeDeletedPostRows(null|false|array $rows): false|array {
 
 	return array_values($entries);
 }
+
+function sqlLatestDeletionEntry(string $deletedPostsTable): string {
+	return "
+		SELECT d1.post_uid, d1.open_flag, d1.file_only, d1.by_proxy
+		FROM {$deletedPostsTable} d1
+		INNER JOIN (
+			SELECT post_uid, MAX(deleted_at) AS max_deleted_at
+			FROM {$deletedPostsTable}
+			GROUP BY post_uid
+		) d2 ON d1.post_uid = d2.post_uid
+		     AND d1.deleted_at = d2.max_deleted_at
+	";
+}
+
+function sqlVisiblePostCondition(string $alias = 'd'): string {
+	return "({$alias}.post_uid IS NULL OR {$alias}.file_only = 1)";
+}
