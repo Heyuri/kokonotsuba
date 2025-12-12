@@ -11,7 +11,6 @@ class moduleMain extends abstractModuleMain {
 	private	$MaxURLCount = 2; // [url] tag upper limit (when the upper limit is exceeded, the tag is a trap tag [written to $URLTrapLog])
 	private	$URLTrapLog = './URLTrap.log'; // [url]trap label log file
 	private $AATagMode = 1; // Koko [0:Enabled 1:Disabled]
-	private $emotes = array();
 
 	// feature flags
 	private bool $supportBold = false;
@@ -46,13 +45,11 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		// Load configuration values
-		$this->staticUrl = $this->getConfig('STATIC_URL', []);
+		$this->staticUrl = $this->getConfig('STATIC_URL');
 		
-		$this->initializeEmotes();
-
 		// Register the listener for the PostInfo hook
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $files, $isReply, &$status, $thread, &$poster_hash) {
-			$this->onBeforeCommit($com, $files);  // Call the method to modify the form
+		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (array &$registInfo) {
+			$this->onRegistBegin($registInfo['com'], $registInfo['files']);  // Call the method to modify the form
 		});
 
 		// initialize bbcode feature flags
@@ -77,83 +74,7 @@ class moduleMain extends abstractModuleMain {
 		$this->supportKao = $this->getConfig('ModuleSettings.supportKao', false);
 	}
 
-	private function initializeEmotes(): void {
-		$this->emotes = array(
-			'nigra'=>$this->staticUrl.'image/emote/nigra.gif',
-			'sage'=>$this->staticUrl.'image/emote/sage.gif',
-			'longcat'=>$this->staticUrl.'image/emote/longcat.gif',
-			'tacgnol'=>$this->staticUrl.'image/emote/tacgnol.gif',
-			'angry'=>$this->staticUrl.'image/emote/emo-yotsuba-angry.gif',
-			'astonish'=>$this->staticUrl.'image/emote/emo-yotsuba-astonish.gif',
-			'biggrin'=>$this->staticUrl.'image/emote/emo-yotsuba-biggrin.gif',
-			'closed-eyes'=>$this->staticUrl.'image/emote/emo-yotsuba-closed-eyes.gif',
-			'closed-eyes2'=>$this->staticUrl.'image/emote/emo-yotsuba-closed-eyes2.gif',
-			'cool'=>$this->staticUrl.'image/emote/emo-yotsuba-cool.gif',
-			'cry'=>$this->staticUrl.'image/emote/emo-yotsuba-cry.gif',
-			'dark'=>$this->staticUrl.'image/emote/emo-yotsuba-dark.gif',
-			'dizzy'=>$this->staticUrl.'image/emote/emo-yotsuba-dizzy.gif',
-			'drool'=>$this->staticUrl.'image/emote/emo-yotsuba-drool.gif',
-			'love'=>$this->staticUrl.'image/emote/emo-yotsuba-heart.gif',
-			'blush'=>$this->staticUrl.'image/emote/emo-yotsuba-blush3.gif',
-			'mask'=>$this->staticUrl.'image/emote/emo-yotsuba-mask.gif',
-			'lolico'=>$this->staticUrl.'image/emote/emo-yotsuba-lolico.gif',
-			'glare'=>$this->staticUrl.'image/emote/emo-yotsuba-glare.gif',
-			'glare1'=>$this->staticUrl.'image/emote/emo-yotsuba-glare-01.gif',
-			'glare2'=>$this->staticUrl.'image/emote/emo-yotsuba-glare-02.gif',
-			'happy'=>$this->staticUrl.'image/emote/emo-yotsuba-happy.gif',
-			'huh'=>$this->staticUrl.'image/emote/emo-yotsuba-huh.gif',
-			'nosebleed'=>$this->staticUrl.'image/emote/emo-yotsuba-nosebleed.gif',
-			'nyaoo-closedeyes'=>$this->staticUrl.'image/emote/emo-yotsuba-nyaoo-closedeyes.gif',
-			'nyaoo-closed-eyes'=>$this->staticUrl.'image/emote/emo-yotsuba-nyaoo-closedeyes.gif',
-			'nyaoo'=>$this->staticUrl.'image/emote/emo-yotsuba-nyaoo.gif',
-			'nyaoo2'=>$this->staticUrl.'image/emote/emo-yotsuba-nyaoo2.gif',
-			'ph34r'=>$this->staticUrl.'image/emote/emo-yotsuba-ph34r.gif',
-			'ninja'=>$this->staticUrl.'image/emote/emo-yotsuba-ph34r.gif',
-			'rolleyes'=>$this->staticUrl.'image/emote/emo-yotsuba-rolleyes.gif',
-			'rollseyes'=>$this->staticUrl.'image/emote/emo-yotsuba-rolleyes.gif',
-			'sad'=>$this->staticUrl.'image/emote/emo-yotsuba-sad.gif',
-			'smile'=>$this->staticUrl.'image/emote/emo-yotsuba-smile.gif',
-			'sweat'=>$this->staticUrl.'image/emote/emo-yotsuba-sweat.gif',
-			'sweat2'=>$this->staticUrl.'image/emote/emo-yotsuba-sweat2.gif',
-			'sweat3'=>$this->staticUrl.'image/emote/emo-yotsuba-sweat3.gif',
-			'tongue'=>$this->staticUrl.'image/emote/emo-yotsuba-tongue.gif',
-			'unsure'=>$this->staticUrl.'image/emote/emo-yotsuba-unsure.gif',
-			'wink'=>$this->staticUrl.'image/emote/emo-yotsuba-wink.gif',
-			'x3'=>$this->staticUrl.'image/emote/emo-yotsuba-x3.gif',
-			'xd'=>$this->staticUrl.'image/emote/emo-yotsuba-xd.gif',
-			'xp'=>$this->staticUrl.'image/emote/emo-yotsuba-xp.gif',
-			'party'=>$this->staticUrl.'image/emote/emo-yotsuba-partyhat.png',
-			'mona2'=>$this->staticUrl.'image/emote/mona2.gif',
-			'nida'=>$this->staticUrl.'image/emote/nida.gif',
-			'saitama'=>$this->staticUrl.'image/emote/anime_saitama05.gif',
-			'banana'=>$this->staticUrl.'image/emote/banana.gif',
-			'onigiri'=>$this->staticUrl.'image/emote/onigiri.gif',
-			'shii'=>$this->staticUrl.'image/emote/anime_shii01.gif',
-			'af2'=>$this->staticUrl.'image/emote/af2.gif',
-			'pata'=>$this->staticUrl.'image/emote/u_pata.gif',
-			'depression'=>$this->staticUrl.'image/emote/u_sasu.gif',
-			'saitama2'=>$this->staticUrl.'image/emote/anime_saitama06.gif',
-			'monapc'=>$this->staticUrl.'image/emote/anime_miruna_pc.gif',
-			'purin'=>$this->staticUrl.'image/emote/purin.gif',
-			'ranta'=>$this->staticUrl.'image/emote/anime_imanouchi04.gif',
-			'nagato'=>$this->staticUrl.'image/emote/nagato.gif',
-			'foruda'=>$this->staticUrl.'image/emote/foruda.gif',
-			'sofa'=>$this->staticUrl.'image/emote/sofa.gif',
-			'hardgay'=>$this->staticUrl.'image/emote/hg.gif',
-			'iyahoo'=>$this->staticUrl.'image/emote/iyahoo.gif',
-			'tehegg'=>$this->staticUrl.'image/emote/egg.gif',
-			'kuz'=>$this->staticUrl.'image/emote/emo-yotsuba-tomo.gif',
-			'emo'=>$this->staticUrl.'image/emote/emo.gif',
-			'dance'=>$this->staticUrl.'image/emote/heyuri-dance.gif',
-			'dance2'=>$this->staticUrl.'image/emote/heyuri-dance-pantsu.gif',
-			'kuma6'=>$this->staticUrl.'image/emote/kuma6.gif',
-			'waha'=>$this->staticUrl.'image/emote/waha.gif',
-			'hokke'=>$this->staticUrl.'image/emote/hokke.gif',
-		);
-		
-	}
-	
-	private function onBeforeCommit(&$com, $files){
+	private function onRegistBegin(&$com, $files){
 		$com = $this->bb2html($com, $files);
 	}
 
@@ -282,11 +203,6 @@ class moduleMain extends abstractModuleMain {
 		// image
 		if($this->supportImg && (($this->ImgTagTagMode == 2) || ($this->ImgTagTagMode && !$files))){
 			$string = preg_replace('#\[img\](([a-z]+?)://([^ \n\r]+?))\[\/img\]#si', '<img class="bbcodeIMG" src="\1" style="border:1px solid \#021a40;" alt="\1">', $string);
-		}
-
-		// emotes
-		foreach ($this->emotes as $emo=>$url) {
-			$string = str_replace(":$emo:", "<img title=\":$emo:\" class=\"emote\" src=\"$url\" alt=\":$emo:\">", $string);
 		}
 
 		// restore preserved code blocks

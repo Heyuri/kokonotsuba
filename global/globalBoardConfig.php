@@ -9,6 +9,9 @@ $config['THUMB_DIR'] = 'src/';
 // The amount of attachments a user can post at once per post
 $config['ATTACHMENT_UPLOAD_LIMIT'] = 1;
 
+// Require new threads to have a file attached
+$config['THREAD_ATTACHMENT_REQUIRED'] = true;
+
 $config['PROXYHEADERlist'] = array(
 	'HTTP_CLIENT_IP',
 	'HTTP_X_REAL_IP',
@@ -244,6 +247,84 @@ $config['ModuleSettings']['supportEmail'] = false; // email BBCodes via callback
 $config['ModuleSettings']['supportImg'] = false; // [img]...[/img] into <img src="...">
 $config['ModuleSettings']['supportScroll'] = true; // [scroll] conversion
 $config['ModuleSettings']['supportKao'] = true; // [kao]...[/kao] into <span class="ascii">...</span>
+
+
+// Emotes that will show up if the emote module is enabled
+// it works when the user puts the name of the emote between :: in their post comment
+// e.g :nigra: gets turned into '<img src="nigra.gif">'
+// NOTE: Emotes *must* be in `static/image/emotes/`
+$config['ModuleSettings']['EMOTES'] = [
+	'nigra' => 'nigra.gif',
+	'sage'	=> 'sage.gif',
+	'longcat'	=>'longcat.gif',
+	'tacgnol'	=>'tacgnol.gif',
+	'angry'		=>'emo-yotsuba-angry.gif',
+	'astonish'	=>'emo-yotsuba-astonish.gif',
+	'biggrin'	=>'emo-yotsuba-biggrin.gif',
+	'closed-eyes'=>'emo-yotsuba-closed-eyes.gif',
+	'closed-eyes2'=>'emo-yotsuba-closed-eyes2.gif',
+	'cool'		=> 'emo-yotsuba-cool.gif',
+	'cry'		=> 'emo-yotsuba-cry.gif',
+	'dark'		=>'emo-yotsuba-dark.gif',
+	'dizzy'		=>'emo-yotsuba-dizzy.gif',
+	'drool'		=>'emo-yotsuba-drool.gif',
+	'love'		=>'emo-yotsuba-heart.gif',
+	'blush'		=>'emo-yotsuba-blush3.gif',
+	'mask'		=>'emo-yotsuba-mask.gif',
+	'lolico'	=>'emo-yotsuba-lolico.gif',
+	'glare'		=>'emo-yotsuba-glare.gif',
+	'glare1'	=>'emo-yotsuba-glare-01.gif',
+	'glare2'	=>'emo-yotsuba-glare-02.gif',
+	'happy'		=>'emo-yotsuba-happy.gif',
+	'huh'		=>'emo-yotsuba-huh.gif',
+	'nosebleed'	=>'emo-yotsuba-nosebleed.gif',
+	'nyaoo-closedeyes'	=>'emo-yotsuba-nyaoo-closedeyes.gif',
+	'nyaoo-closed-eyes'	=>'emo-yotsuba-nyaoo-closedeyes.gif',
+	'nyaoo'		=>'emo-yotsuba-nyaoo.gif',
+	'nyaoo2'	=>'emo-yotsuba-nyaoo2.gif',
+	'ph34r'		=>'emo-yotsuba-ph34r.gif',
+	'ninja'		=>'emo-yotsuba-ph34r.gif',
+	'rolleyes'	=>'emo-yotsuba-rolleyes.gif',
+	'rollseyes'	=>'emo-yotsuba-rolleyes.gif',
+	'sad'		=>'emo-yotsuba-sad.gif',
+	'smile'		=>'emo-yotsuba-smile.gif',
+	'sweat'		=>'emo-yotsuba-sweat.gif',
+	'sweat2'	=>'emo-yotsuba-sweat2.gif',
+	'sweat3'	=>'emo-yotsuba-sweat3.gif',
+	'tongue'	=>'emo-yotsuba-tongue.gif',
+	'unsure'	=>'emo-yotsuba-unsure.gif',
+	'wink'		=>'emo-yotsuba-wink.gif',
+	'x3'		=>'emo-yotsuba-x3.gif',
+	'xd'		=>'emo-yotsuba-xd.gif',
+	'xp'		=>'emo-yotsuba-xp.gif',
+	'party'		=>'emo-yotsuba-partyhat.png',
+	'mona2'		=>'mona2.gif',
+	'nida'		=>'nida.gif',
+	'saitama'	=>'anime_saitama05.gif',
+	'banana'	=>'banana.gif',
+	'onigiri'	=>'onigiri.gif',
+	'shii'		=>'anime_shii01.gif',
+	'af2'		=>'af2.gif',
+	'pata'		=>'u_pata.gif',
+	'depression'=>'u_sasu.gif',
+	'saitama2'	=>'anime_saitama06.gif',
+	'monapc'	=>'anime_miruna_pc.gif',
+	'purin'		=>'purin.gif',
+	'ranta'		=>'anime_imanouchi04.gif',
+	'nagato'	=>'nagato.gif',
+	'foruda'	=>'foruda.gif',
+	'sofa'		=>'sofa.gif',
+	'hardgay'	=>'hg.gif',
+	'iyahoo'	=>'iyahoo.gif',
+	'tehegg'	=>'egg.gif',
+	'kuz'		=>'emo-yotsuba-tomo.gif',
+	'emo'		=>'emo.gif',
+	'dance'		=>'heyuri-dance.gif',
+	'dance2'	=>'heyuri-dance-pantsu.gif',
+	'kuma6'		=>'kuma6.gif',
+	'waha'		=>'waha.gif',
+	'hokke'		=>'hokke.gif'
+];
 
 /* indexCommentTruncator */
 $config['ModuleSettings']['CHARACTER_PREVIEW_LIMIT'] = 2500;
