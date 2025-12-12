@@ -9,6 +9,9 @@ $config['THUMB_DIR'] = 'src/';
 // The amount of attachments a user can post at once per post
 $config['ATTACHMENT_UPLOAD_LIMIT'] = 1;
 
+// Require new threads to have a file attached
+$config['THREAD_ATTACHMENT_REQUIRED'] = true;
+
 $config['PROXYHEADERlist'] = array(
 	'HTTP_CLIENT_IP',
 	'HTTP_X_REAL_IP',
