@@ -116,9 +116,16 @@ class postRenderer {
 			$this->config['NOTICE_SAGE']
 		);
 
+		// get replies per page value
+		$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
+
+		// get the total thread pages
+		$totalThreadPages = $replyCount / $repliesPerPage;
+
 		// Generate the quote and reply buttons
 		$quoteButton = $this->postElementGenerator->generateQuoteButton($threadResno, $data['no']);
-		$replyButton = $threadMode ? $this->postElementGenerator->generateReplyButton($crossLink, $threadResno) : '';
+		$replyButton = $threadMode ? $this->postElementGenerator->generateReplyButton($crossLink, $threadResno, $totalThreadPages) : '';
+		$recentRepliesButton = $threadMode ? $this->postElementGenerator->generateRecentRepliesButton($crossLink, $threadResno, $replyCount) : '';
 
 		// get first attachment array key
 		$firstAttachmentArrKey = array_key_first($data['attachments']);
@@ -167,6 +174,7 @@ class postRenderer {
 				$attachmentsHtml,
 				$firstAttachmentUrl,
 				$replyButton, 
+				$recentRepliesButton,
 				$postFormExtra, 
 				$replyCount, 
 				$warnOld, 

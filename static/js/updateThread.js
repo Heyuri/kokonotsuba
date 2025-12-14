@@ -7,8 +7,12 @@ function fetchNewReplies() {
 				return reject("Thread is pruned or deleted"); // Reject if the thread is not found
 			} else {
 				data.text().then(text => {
-					var d = document.createElement("html");
-					d.innerHTML = text;
+					var tmp = document.createElement("div");
+					tmp.innerHTML = text;
+					
+					var threadHTML = tmp.querySelector(".thread");
+					var frs = threadHTML.querySelectorAll(".reply-container");
+
 
 					// Get the current last reply id in the current page
 					var rs = document.querySelectorAll(".reply-container");
@@ -16,7 +20,6 @@ function fetchNewReplies() {
 					if (rs.length) lid = rs[rs.length - 1].id.slice(1);
 
 					// Get the new replies from the fetched HTML
-					var frs = d.querySelectorAll(".reply-container");
 					var newReplies = [];
 					var i;
 

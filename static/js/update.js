@@ -29,7 +29,7 @@ const kkupdate = { name: "KK Thread Updating",
 		return true;
 	},
 	reset: function () {
-		document.querySelector("#controls").remove();
+		document.getElementById("controls").remove();
 	},
 	auto: null,
 	inc: [5,10,30,60,120,180],
@@ -66,7 +66,7 @@ const kkupdate = { name: "KK Thread Updating",
 					}
 					kkupdate.total += npc;
 					kkupdate.inci = 0;
-					var ptable;
+
 					for (i = i; i <= frs.length-1; i++) {
 						document.querySelector(".thread").insertAdjacentElement("beforeEnd", frs[i]);
 						

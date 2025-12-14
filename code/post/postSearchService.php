@@ -32,7 +32,7 @@ class postSearchService {
 			return $this->searchByLike($field, $boardUID, $rawInput, $limit, $offset);
 		}
 
-		$searchString = $this->buildFullTextSearchString($rawInput, $method, $matchWholeWord, true);
+		$searchString = $rawInput; //$this->buildFullTextSearchString($rawInput, $method, $matchWholeWord, true);
 		if (!$searchString) {
 			return ['results_data' => [], 'total_posts' => 0];
 		}

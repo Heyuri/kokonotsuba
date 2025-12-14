@@ -52,11 +52,20 @@ class boardRebuilder {
 		// resolve the thread uid from the thread number
 		$uid = $this->threadRepository->resolveThreadUidFromResno($this->board, $threadNumber);
 		
+		// get preview count
+		$previewCount = $this->board->getConfigValue('RE_DEF', 5);
+
+		// get replies per thread page
+		$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
+		
 		// get the thread and decide how to fetch its data based on the provided parameters
-		$threadData = $this->getThreadForRendering($uid, $page, $amountOfRepliesToRender);
+		$threadData = $this->getThreadForRendering($uid, $previewCount, $repliesPerPage, $page, $amountOfRepliesToRender);
 		
 		// get the thread row
 		$thread = $threadData['thread'];
+
+		// get the total amount of posts in the thread
+		$totalPosts = $thread['number_of_posts'];
 
 		// whether the thread has been deleted
 		$threadDeleted = $thread['thread_deleted'] ?? null;
@@ -82,6 +91,9 @@ class boardRebuilder {
 
 		// init hidden reply var
 		$hiddenReply = 0;
+
+		// generate thread url
+		$threadUrl = $this->board->getBoardThreadURL($threadNumber);
 
 		// get quote links for thread
 		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByPostUids($postUids, $this->canViewDeleted);
@@ -116,7 +128,19 @@ class boardRebuilder {
 			$pte_vals
 		);
 		
-		$pte_vals['{$PAGENAV}'] = '';
+		// if a non-null page value is set - then draw the pager
+		if(!is_null($page)) {
+			// get 'top pager for threads' config value
+			$enableTopPager = $this->board->getConfigValue('TOP_THREAD_PAGER', false);
+
+			// if the top pager for threads is enabled, render it
+			if($enableTopPager) {
+				$pte_vals['{$TOP_PAGENAV}'] = drawPager($repliesPerPage, $totalPosts, $threadUrl);
+			}
+
+			// always draw bottom pager
+			$pte_vals['{$BOTTOM_PAGENAV}'] = drawPager($repliesPerPage, $totalPosts, $threadUrl);
+		}
 
 		$opPost = $posts[0];
 		$boardTitle = $this->board->getBoardTitle();
@@ -127,7 +151,13 @@ class boardRebuilder {
 		echo $this->finalizePageData($pageData);
 	}
 
-	private function getThreadForRendering(string $threadUid, ?int $page, ?int $amountOfRepliesToRender): array {
+	private function getThreadForRendering(
+		string $threadUid, 
+		int $previewCount, 
+		int $repliesPerPage, 
+		?int $page, 
+		?int $amountOfRepliesToRender
+	): array {
 		// Fetch thread with a limited amount of replies	
 		if(!is_null($amountOfRepliesToRender)) {
 			// fetch a 'last X replies' thread
@@ -147,7 +177,7 @@ class boardRebuilder {
 		// Fetch unpaged thread (intensive)
 		else {
 			// get the while thing
-			$threadData = $this->threadService->getThreadByUID($threadUid, $this->canViewDeleted, null);
+			$threadData = $this->threadService->getThreadAllReplies($threadUid, $this->canViewDeleted, $previewCount);
 		}
 
 		// then return the thread data
@@ -239,7 +269,7 @@ class boardRebuilder {
 		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threadsInPage, $pte_vals, $this->adminMode);
 
 		// thread pager
-		$pte_vals['{$PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'));
+		$pte_vals['{$BOTTOM_PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'));
 
 		// generate the whole page's html
 		$pageData = $this->buildFullPage($pte_vals, $this->board->getBoardTitle(), 0, false, $this->adminMode);

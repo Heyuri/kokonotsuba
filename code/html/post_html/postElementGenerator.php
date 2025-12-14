@@ -44,12 +44,36 @@ class postElementGenerator {
 	 * Builds a URL based on the thread number and returns it as a clickable
 	 * [Reply] link.
 	 */
-	public function generateReplyButton(string $crossLink, int $threadResno): string {
+	public function generateReplyButton(string $crossLink, int $threadResno, int $totalThreadPages = 0): string {
 		// Build the URL to the thread's reply form
-		$replyUrl = $crossLink . $this->board->getConfigValue('LIVE_INDEX_FILE') . '?res=' . $threadResno;
+		$replyUrl = $this->getBaseThreadUrl($crossLink, $threadResno) . '&page=' . $totalThreadPages;
+		
 		// Return the reply button HTML
-		$replyButton = '[<a href="' . $replyUrl . '">' . _T('reply_btn') . '</a>]';
+		$replyButton = '[<a href="' . htmlspecialchars($replyUrl) . '">' . _T('reply_btn') . '</a>]';
 
 		return $replyButton;
 	}
+
+	public function generateRecentRepliesButton(string $crossLink, int $threadResno, int $replyAmount): string {
+		// get the config value for the default/max-range for the amount of replies to be shown
+		$recentReplies = $this->board->getConfigValue('LAST_AMOUNT_OF_REPLIES', 50);
+		
+		// if the thread has less replies than the default max value then don't bother rendering it
+		if($replyAmount < $recentReplies) {
+			return '';
+		}
+
+		// build the url for the 'last X replies' anchor
+		$url = $this->getBaseThreadUrl($crossLink, $threadResno) . '&recentReplies=' . htmlspecialchars($recentReplies);
+
+		// then assemble the anchor html
+		$recentRepliesAnchor = '[<a href="' . htmlspecialchars($url) . '">' . _T('recent_btn', $recentReplies) . '</a>]';
+
+		// return anchor
+		return $recentRepliesAnchor;
+	}
+
+	private function getBaseThreadUrl(string $crossLink, int $threadResno): string {
+		return $crossLink . $this->board->getConfigValue('LIVE_INDEX_FILE') . '?res=' . $threadResno;
+	} 
 }

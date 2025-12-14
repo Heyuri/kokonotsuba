@@ -56,12 +56,10 @@ function getBasePostQuery(string $postTable, string $deletedPostsTable, string $
 	return $query;
 }
 
-function excludeDeletedPostsCondition(string $query): string {
-	$query .= " AND (COALESCE(dp.open_flag, 0) = 0
-					OR COALESCE(dp.file_only, 0) = 1
-					OR COALESCE(dp.by_proxy, 0) = 1)";
-	// return modified query
-	return $query;
+function excludeDeletedPostsCondition(string $alias = 'dp'): string {
+	return " AND (COALESCE($alias.open_flag, 0) = 0
+					OR COALESCE($alias.file_only, 0) = 1
+					OR COALESCE($alias.by_proxy, 0) = 1)";
 }
 
 /**
@@ -276,8 +274,4 @@ function sqlLatestDeletionEntry(string $deletedPostsTable): string {
 		) d2 ON d1.post_uid = d2.post_uid
 		     AND d1.deleted_at = d2.max_deleted_at
 	";
-}
-
-function sqlVisiblePostCondition(string $alias = 'd'): string {
-	return "({$alias}.post_uid IS NULL OR {$alias}.file_only = 1)";
 }

@@ -94,7 +94,7 @@ class threadService {
 	}
 
 
-	public function getThreadByUidInternal(
+	private function getThreadByUidInternal(
 		string $thread_uid, 
 		bool $adminMode = false, 
 		int $previewCount = 5, 
@@ -116,8 +116,8 @@ class threadService {
 			$posts = $this->threadRepository->getPostsForThreads([$thread_uid], $amountOfRepliesToRender, $adminMode);
 		}
 		// otherwise if paged results are fetched then fetch paged results
-		else if ($page) {
-			$posts = $this->threadRepository->getPostsFromThread($thread_uid, $adminMode, $repliesPerPage, (max(1, $page)) * $repliesPerPage);
+		else if (!is_null($page)) {
+			$posts = $this->threadRepository->getPostsFromThread($thread_uid, $adminMode, $repliesPerPage, $page * $repliesPerPage);
 		}
 		// no parameters set - fetch all replies
 		else {

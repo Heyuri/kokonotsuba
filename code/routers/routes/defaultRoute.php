@@ -31,17 +31,23 @@ class defaultRoute {
 			// Handle thread view (with potential redirection)
 			$this->handleThreadRedirect($res);
 
-			// get thread mode from GET request.
+			// get recent replies mode from GET request.
 			// thread mode is typically blank just for regular thread rendering
-			$threadMode = $_GET['threadMode'] ?? '';
+			$recentReplies = $_GET['recentReplies'] ?? null;
 
 			// Render the last X amount of replies
-			if($threadMode === 'recentReplies') {
+			if($recentReplies) {
 				// fetch the amount of replies to render
 				$amountOfRepliesToRender = $this->board->getConfigValue('LAST_AMOUNT_OF_REPLIES', 50);
 
+				// prevent values going higher than the config value
+				$recentReplies = min($recentReplies, $amountOfRepliesToRender);
+
+				// also prevent it from being negative
+				$recentReplies = max($recentReplies, 1);
+
 				// then draw the last X replies page
-				$this->board->drawRecentReplies($res, $amountOfRepliesToRender);
+				$this->board->drawRecentReplies($res, $recentReplies);
 			}
 			else {
 				// draw the regular thread page	

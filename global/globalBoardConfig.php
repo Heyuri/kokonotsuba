@@ -12,6 +12,9 @@ $config['ATTACHMENT_UPLOAD_LIMIT'] = 1;
 // Require new threads to have a file attached
 $config['THREAD_ATTACHMENT_REQUIRED'] = true;
 
+// Render a thread pager at the top of the thread, useful for large thread page sizes
+$config['TOP_THREAD_PAGER'] = false;
+
 $config['PROXYHEADERlist'] = array(
 	'HTTP_CLIENT_IP',
 	'HTTP_X_REAL_IP',

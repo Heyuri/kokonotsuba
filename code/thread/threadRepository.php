@@ -14,12 +14,12 @@ class threadRepository {
 
 	private function getBaseThreadQuery(bool $includeDeletedCount = true): string {
 		$latestDel   = sqlLatestDeletionEntry($this->deletedPostsTable);
-		$visibleCond = sqlVisiblePostCondition('d');
+		$visibleCond = excludeDeletedPostsCondition('d');
 
 		// conditional filter
 		$countFilter = $includeDeletedCount
 			? ""                    // include all posts
-			: "AND {$visibleCond}"; // restrict to visible posts only
+			: $visibleCond; // restrict to visible posts only
 
 		$query = "
 			SELECT 
@@ -118,12 +118,20 @@ class threadRepository {
 		int $amount = 0,
 		string $orderBy = 'last_bump_time',
 		string $direction = 'DESC'): array {
-		
+			
 		// Note: You should still validate $orderBy and $direction before calling this method in Service!
 
-		$query = "SELECT thread_uid FROM {$this->threadTable}
-				  WHERE boardUID = :board_uid
-				  ORDER BY {$orderBy} {$direction}";
+		// join latest deletion entry for the thread OP post, and exclude deleted threads
+		$latestDeletionSQL = sqlLatestDeletionEntry($this->deletedPostsTable);
+		$visibleCond = excludeDeletedPostsCondition('d');
+
+		$query = "SELECT t.thread_uid
+				FROM {$this->threadTable} t
+				LEFT JOIN ({$latestDeletionSQL}) d
+					ON d.post_uid = t.post_op_post_uid
+				WHERE t.boardUID = :board_uid
+					{$visibleCond}
+				ORDER BY {$orderBy} {$direction}";
 
 		if ($amount > 0) {
 			$query .= " LIMIT {$start}, {$amount}";
@@ -208,7 +216,7 @@ class threadRepository {
 
 		// exclude the threads where the op post was deleted
 		if(!$includeDeleted) {
-			$query = excludeDeletedPostsCondition($query);
+			$query .= excludeDeletedPostsCondition();
 		}
 
 		$params = [];
@@ -229,7 +237,7 @@ class threadRepository {
 
 		// exclude the threads where the op post was deleted
 		if(!$includeDeleted) {
-			$query = excludeDeletedPostsCondition($query);
+			$query .= excludeDeletedPostsCondition();
 		}
 
 		$params = [];
@@ -420,7 +428,7 @@ class threadRepository {
 		// optionally exclude threads where OP is fully deleted
 		if (!$includeDeleted) {
 			// deleted = dp.open_flag = 0 AND dp.file_only = 0
-			$query .= " AND (t.thread_deleted IS NULL OR t.thread_deleted = 1 OR t.thread_attachment_deleted = 1)";
+			$query .= " AND (t.thread_deleted IS NULL OR (t.thread_deleted = 1 AND t.thread_attachment_deleted = 1))";
 		}
 
 		// add ordering (sticky first)
@@ -452,7 +460,7 @@ class threadRepository {
 
 		// If we do not want to include deleted posts, add the condition to exclude them
 		if(!$includeDeleted) {
-			$query = excludeDeletedPostsCondition($query);
+			$query .= excludeDeletedPostsCondition();
 		}
 
 		/*
@@ -469,17 +477,15 @@ class threadRepository {
 			(
 				" . getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable) . "
 				WHERE p.thread_uid = :thread_uid
-				" . (!$includeDeleted ? excludeDeletedPostsCondition("") : "") . "
+				" . (!$includeDeleted ? excludeDeletedPostsCondition() : "") . "
 				AND p.is_op = 0
 				ORDER BY p.post_uid ASC
-				LIMIT :amount OFFSET :offset
+				LIMIT $amount OFFSET $offset
 			)
 		";
 
 		$params = [
 			':thread_uid' => $threadUID,
-			':amount' => $amount,
-			':offset' => $offset
 		];
 
 		// fetch post rows
@@ -507,7 +513,7 @@ class threadRepository {
 
 		// Exclude deleted posts if requested
 		if(!$includeDeleted) {
-			$query = excludeDeletedPostsCondition($query);
+			$query .= excludeDeletedPostsCondition();
 		}
 
 		// Order results by post id
@@ -547,7 +553,7 @@ class threadRepository {
 
 		// If we do not want to include deleted posts, add the condition to exclude them
 		if(!$includeDeleted) {
-			$base = excludeDeletedPostsCondition($base);
+			$base .= excludeDeletedPostsCondition();
 		}
 
 		// wrap with row_number partition to limit posts per thread (OP + preview replies)
@@ -592,7 +598,7 @@ class threadRepository {
 		$query .= " WHERE t.boardUID = :board_uid";
 
 		if(!$includeDeleted) {
-			$query = excludeDeletedPostsCondition($query);
+			$query .= excludeDeletedPostsCondition();
 		}
 		
 		// params

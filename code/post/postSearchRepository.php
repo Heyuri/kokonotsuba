@@ -22,7 +22,7 @@ class postSearchRepository {
 		$query .= " WHERE p.$field REGEXP :phrase AND p.boardUID = :board_uid";
 
 		// exclude deleted posts
-		$query = excludeDeletedPostsCondition($query);
+		$query .= excludeDeletedPostsCondition();
 
 		// append order, limit and offset
 		$query .= "
@@ -70,7 +70,7 @@ class postSearchRepository {
 			AND p.boardUID = :board_uid";
 
 		// exclude deleted posts
-		$query = excludeDeletedPostsCondition($query);
+		$query .= excludeDeletedPostsCondition();
 
 		// append order / limit / offset
 		$query .= "

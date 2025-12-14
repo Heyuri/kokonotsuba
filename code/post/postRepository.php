@@ -52,7 +52,7 @@ class postRepository {
 
 		// exclude deleted posts
 		if(!$includeDeleted) {
-			$query = excludeDeletedPostsCondition($query);
+			$query .= excludeDeletedPostsCondition();
 		}
 
 		$query .= " ORDER BY p.$order  DESC LIMIT $amount OFFSET $offset";
@@ -294,7 +294,7 @@ class postRepository {
 
 		// exlude deleted posts
 		if(!$includeDeleted) {
-			$query = excludeDeletedPostsCondition($query);
+			$query .= excludeDeletedPostsCondition();
 		}
 
 		// fetch post rows

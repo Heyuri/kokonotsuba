@@ -200,6 +200,6 @@
 		<div class="threadNavBar threadRear">[<a href="#top">Top</a>]</div>
 		<!--&DELFORM/-->
 	</form>
-	{$PAGENAV}
+	{$BOTTOM_PAGENAV}
 	{$FORMDAT}
 <!--/&MAIN-->

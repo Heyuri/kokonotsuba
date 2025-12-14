@@ -27,9 +27,17 @@ class moduleMain extends abstractModuleMain {
 	}
 	
 	private function onBeforeCommit(bool $isReply): void{
+		//$this->preventFloodPost();
+
+		
 		if($isReply) {
-			return;
+		//	$this->preventFloodThread();
 		}
+		else {
+
+		//	$this->preventFloodReply();
+		}
+		return;
 		
 		$lastThreadTimestamp = $this->moduleContext->threadRepository->getLastThreadTimeFromBoard($this->moduleContext->board);
 		if(!$lastThreadTimestamp) return;

@@ -206,7 +206,7 @@
 				<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
 				<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
 				<div class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></div>
-				<span class="replyButton">{$REPLYBTN}</span><span class="backlinks"></span>
+				<span class="replyButton">{$REPLYBTN}</span> <span class="recentRepliesButton">{$RECENT_REPLIES}</span><span class="backlinks"></span>
 			</div>
 			<div class="comment">{$COM}</div>
 			<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
@@ -280,13 +280,14 @@
 	<!--&IF($IS_THREAD,'<div class="threadNavBar">[<a href="{$STATIC_INDEX_FILE}">Return</a>] [<a href="#bottom">Bottom</a>]</div>','')-->
 	{$FORMDAT}
 	{$THREADFRONT}
+	<!--&IF($TOP_PAGENAV,'{$TOP_PAGENAV}<hr class="threadSeparator topPagerSeparator">','')-->
 	<form name="delform" id="delform" action="{$LIVE_INDEX_FILE}" method="post">
 		{$THREADS}
 		{$THREADREAR}
 		<!--&IF($IS_THREAD,'<div class="threadNavBar threadRear">[<a href="#top">Top</a>]</div>','')-->
 		<!--&DELFORM/-->
 	</form>
-	{$PAGENAV}
+	<!--&IF($BOTTOM_PAGENAV,'{$BOTTOM_PAGENAV}','')-->
 	<div id="postarea2"></div>
 <!--/&MAIN-->
 

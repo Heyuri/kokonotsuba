@@ -185,7 +185,7 @@ class deletedPostRenderer {
 	private function drawDeletedPostView(userRole $roleLevel, array $deletedPost, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
 		// if its a thread then get the thread data
 		if($deletedPost['is_op']) {
-			$thread = $this->threadService->getThreadByUID($deletedPost['thread_uid'], true);
+			$thread = $this->threadService->getThreadAllReplies($deletedPost['thread_uid'], true, 0);
 
 			// get the post uids from the thread
 			$postUids = $thread['post_uids'];

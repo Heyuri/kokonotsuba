@@ -26,6 +26,7 @@ $language['last_page']					= 'Last';
 $language['img_sample']					= 'Thumbnail';
 $language['img_filename']				= 'File: ';
 $language['reply_btn']					= 'Reply';
+$language['recent_btn']                 = 'Last %s posts';
 $language['warn_sizelimit']				= 'Image will be deleted soon because of the storage limit of image.';
 $language['warn_oldthread']				= 'Marked for deletion (Old)';
 $language['warn_locked']				= 'Thread is locked by administrator.';

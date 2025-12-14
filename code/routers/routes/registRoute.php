@@ -71,8 +71,11 @@ class registRoute {
 			// Step 2: Gather POST input data
 			$postData = $this->gatherPostInputData();
 
+			// get preview count
+			$previewCount = $this->board->getConfigValue('RE_DEF', 5);
+
 			// Get the thread data (if it exists)
-			$thread = $this->threadService->getThreadByUID($postData['thread_uid']);
+			$thread = $this->threadService->getThreadAllReplies($postData['thread_uid'], false, $previewCount);
 
 			// Step 3: Verify that thread exists
 			$this->postValidator->threadSanityCheck($postData['postOpRoot'], $postData['flgh'], $postData['thread_uid'], $postData['resno'], $postData['ThreadExistsBefore'], $thread);
@@ -194,7 +197,6 @@ class registRoute {
 			redirect($redirect, 0);
 		}
 	}
-
 
 	private function gatherPostInputData(): array {
 		$name = htmlspecialchars($_POST['name'] ?? '');
