@@ -483,13 +483,13 @@ class threadRepository {
 			$base = excludeDeletedPostsCondition($base);
 		}
 
-		// wrap with row_number partition to limit posts per thread (OP + preview replies)
+		// wrap with dense_rank partition to limit posts per thread (OP + preview replies)
 		$query = "
 			SELECT *
 			FROM (
 				SELECT
 					t.*,
-					ROW_NUMBER() OVER (
+					DENSE_RANK() OVER (
 						PARTITION BY t.thread_uid
 						ORDER BY t.is_op DESC, t.post_uid DESC
 					) AS rn
