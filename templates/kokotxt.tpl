@@ -230,6 +230,6 @@
 		{$THREADREAR}
 		<!--&DELFORM/-->
 	</form>
-	{$PAGENAV}
+	{$BOTTOM_PAGENAV}
 	<div id="postarea2"></div>
 <!--/&MAIN-->
