@@ -106,6 +106,7 @@ $config['ModuleList'] = array(
 	'imageServer' => true,
 	'filter' => true,
 	'indexCommentTruncator' => true,
+	'emotes' => true,
 );
 
 /* Module-specific options */
