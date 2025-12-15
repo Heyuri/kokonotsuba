@@ -22,26 +22,39 @@ class postRedirectService {
 		$this->postRedirectRepository->deleteRedirectByThreadUID($thread_uid);
 	}
 
-	public function resolveRedirectedThreadLinkFromThreadUID($thread_uid) {
-		$thread = $this->threadService->getThreadByUID($thread_uid)['thread'];
+	public function resolveRedirectUrlFromThreadUID(string $threadUid) {
+		// fetch redirected thread from database
+		$thread = $this->threadService->getThreadData($threadUid);
 		
+		// get thread board
         $threadBoard = searchBoardArrayForBoard($thread['boardUID']);
 		
-        $url = $threadBoard->getBoardURL();
+		// get thread number
+		$threadNumber = $thread['post_op_number'];
 
-		return $url . $threadBoard->getConfigValue('LIVE_INDEX_FILE') . '?res=' . $thread['post_op_number'];
+		// build thread url
+        $url = $threadBoard->getBoardThreadURL($threadNumber);
+
+		// return url
+		return $url;
 	}
 
-	public function resolveRedirectedThreadLinkFromPostOpNumber($board, $resno) {
+	public function resolveRedirectUrlByPostNumber(board $board, int $resno) {
 		$redirect = $this->postRedirectRepository->getRedirectByBoardAndPostOpNumber($board->getBoardUID(), $resno);
 		if (!$redirect) return;
 
 		$newBoard = searchBoardArrayForBoard($redirect->getNewBoardUID());
-		$newURL = $newBoard->getBoardURL();
 
 		$thread_uid = $redirect->getThreadUID();
-		$thread = $this->threadService->getThreadByUID($thread_uid)['thread'];
+		$thread = $this->threadService->getThreadData($thread_uid);
 
-		return $newURL . $newBoard->getConfigValue('LIVE_INDEX_FILE') . '?res=' . $thread['post_op_number'];
+		// get thread number
+		$threadNumber = $thread['post_op_number'];
+
+		// generate url
+		$newURL = $newBoard->getBoardThreadURL($threadNumber);
+
+		// return new url
+		return $newURL;
 	}
 }

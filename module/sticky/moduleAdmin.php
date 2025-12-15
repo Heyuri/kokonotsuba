@@ -150,21 +150,15 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 		
 		// get the thread and associated data (thread data, posts, etc)
-		$thread = $this->moduleContext->threadService->getThreadByUID($thread_uid);
+		$threadData = $this->moduleContext->threadService->getThreadData($thread_uid, true);
 		
 		// throw an exception if the thread doesn't exist
-		if (!$thread) {
+		if (!$threadData) {
 			throw new BoardException('ERROR: Thread does not exist.');
 		}
 	
-		// get the thread data itself
-		$threadData = $thread['thread'];
-		
-		// get the posts
-		$posts = $thread['posts'];
-	
-		// select the opening post
-		$openingPost = $posts[0];
+		// fetch the opening post
+		$openingPost = $this->moduleContext->postRepository->getOpeningPostFromThread($thread_uid);
 	
 		// bool column for if the thread is stickied
 		$is_sticky = $threadData['is_sticky'];

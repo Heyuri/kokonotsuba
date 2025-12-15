@@ -319,14 +319,21 @@ class postRepository {
 	}
 
 	public function getOpeningPostFromThread(string $threadUid): bool|array {
-		$query = "SELECT * FROM {$this->postTable} WHERE post_uid = (SELECT post_op_post_uid FROM {$this->threadTable} WHERE thread_uid = :thread_uid)";
+		// get base post query
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+
+		// append WHERE clause
+		$query .= " WHERE p.post_uid = (SELECT post_op_post_uid FROM {$this->threadTable} WHERE thread_uid = :thread_uid)";
 
 		$params = [
 			':thread_uid' => $threadUid
 		];
 
-		$post = $this->databaseConnection->fetchOne($query, $params);
+		$post = $this->databaseConnection->fetchAllAsArray($query, $params);
 	
+		// merge data
+		$post = mergeMultiplePostRows($post)[0];
+
 		return $post;
 	}
 

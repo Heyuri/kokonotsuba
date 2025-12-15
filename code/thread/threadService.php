@@ -521,5 +521,13 @@ class threadService {
 	
 		// then return int (default to 0 if falsey/null)
 		return $threadPage ?? 0;
-	}	
+	}
+	
+	public function getThreadData(string $threadUid, bool $includeDeleted = false): array|false {
+		// get thread by uid
+		$threadData = $this->threadRepository->getThreadByUid($threadUid, $includeDeleted);
+
+		// then return the result
+		return $threadData;
+	}
 }

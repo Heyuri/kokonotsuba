@@ -57,7 +57,7 @@ class threadApi {
 	*/
 	private function fetchThread(string $threadUid): array|false {
 		// get thread data from database
-		$thread = $this->threadService->getThreadByUID($threadUid, isActiveStaffSession());
+		$thread = $this->threadService->getThreadLastReplies($threadUid, isActiveStaffSession(), 5, 500);
 
 		// return false early if the thread wasn't found
 		if(!$thread) {
@@ -109,7 +109,7 @@ class threadApi {
 
 			// amount of replies in the thread (not counting OP)
 			// subtract count by 1 to exclude OP from count
-			'amount_of_replies' => count($thread['posts']) - 1
+			'amount_of_replies' => $threadMetaData['number_of_posts'] - 1
 		];
 
 		// append to array posts (includes OP) if specified

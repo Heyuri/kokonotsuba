@@ -75,7 +75,7 @@ class defaultRoute {
 	 */
 	private function handleThreadRedirect(int $resno) {
 		// Check if the thread has been moved (redirect registered)
-		$movedThreadRedirect = $this->postRedirectService->resolveRedirectedThreadLinkFromPostOpNumber($this->board, $resno);
+		$movedThreadRedirect = $this->postRedirectService->resolveRedirectUrlByPostNumber($this->board, $resno);
 		if ($movedThreadRedirect) {
 			redirect($movedThreadRedirect);
 		}
