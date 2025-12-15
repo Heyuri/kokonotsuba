@@ -385,7 +385,7 @@ class boardRebuilder {
     	$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threads, $pte_vals);
 
     	// Render page navigation
-    	$pte_vals['{$PAGENAV}'] = drawBoardPager(
+    	$pte_vals['{$BOTTOM_PAGENAV}'] = drawBoardPager(
     	    $threadsPerPage,
     	    $totalThreadCountForBoard,
     	    $boardUrl,
