@@ -26,6 +26,7 @@ $language['last_page']					= 'Son';
 $language['img_sample']					= 'Önizleme';
 $language['img_filename']				= 'Dosya: ';
 $language['reply_btn']					= 'Yanıtla';
+$language['recent_btn']                 = 'Son %s post';
 $language['warn_sizelimit']				= 'Resim, depolama sınırı yüzünden yakında silinecek.';
 $language['warn_oldthread']				= 'Thread eski olduğu için yakında silinecek.';
 $language['warn_locked']				= 'Thread admin tarafından kilitlendi.';
@@ -224,6 +225,7 @@ $language['blanket_error'] = "Bir yerlerde bir şeyler yanlış gitti. (;´Д`)"
 $language['comment_too_long'] = "Yorum fazla uzun, tümünü görüntülemek için %s postuna bakın.";
 
 ?>
+
 
 
 
