@@ -156,7 +156,7 @@
 <!--/&THREAD-->
 
 <!--&OP-->
-	<h2 class="title"><a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h2>
+	<h2 class="title"><a href="{$POST_URL}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h2>
 	<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}">
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]</div>
 		<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span>
@@ -176,7 +176,7 @@
 
 <!--&REPLY-->
 			<!--&IF($IS_PREVIEW,'<table class="thread"><tbody><tr><td>','')-->
-			<div class="post reply<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}"><span class="title"><a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span>
+			<div class="post reply<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}"><span class="title"><a href="{$POST_URL}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span>
 				<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]</div>
 				<div class="postinfo">
 				<!--&IF($POST_POSITION_ENABLED,'

@@ -203,7 +203,7 @@
 					<span class="time">{$NOW}</span>
 					<!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')-->
 				</label>
-				<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$POST_URL}" class="no">No.</a>{$QUOTEBTN}','<a href="{$BOARD_URL}{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">No.{$NO}</a>')--></span>
+				<span class="postnum"><!--&IF($QUOTEBTN,'<a href="{$POST_URL}" class="no">No.</a>{$QUOTEBTN}','<a href="{$POST_URL}">No.{$NO}</a>')--></span>
 				<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
 				<div class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></div>
 				<span class="replyButton">{$REPLYBTN}</span> <span class="recentRepliesButton">{$RECENT_REPLIES}</span><span class="backlinks"></span>

@@ -164,7 +164,7 @@
 
 <!--&THREAD-->
 	<tr class="thread" id="t{$BOARD_UID}_{$THREAD_NO}" data-thread-uid="{$THREAD_UID}">
-		<td><a href="{$LIVE_INDEX_FILE}?res={$THREAD_NO}#p{$BOARD_UID}_{$THREAD_NO}" class="no">{$THREAD_NO}</a></td>
+		<td><a href="{$POST_URL}" class="no">{$THREAD_NO}</a></td>
 		{$THREAD_OP}
 	</tr>
 <!--/&THREAD-->
