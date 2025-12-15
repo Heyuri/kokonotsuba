@@ -34,11 +34,13 @@ class quoteLinkRepository {
 					'post_uid' => (int)$row['target_post_uid'],
 					'no' => (int)$row['target_no'],
 					'post_op_number' => (int)$row['target_post_op_number'],
+					'post_position' => (int)$row['target_post_position'],
 				],
 				'host_post' => [
 					'post_uid' => (int)$row['host_post_uid'],
 					'no' => (int)$row['host_no'],
 					'post_op_number' => (int)$row['host_post_op_number'],
+					'post_position' => (int)$row['host_post_position'],
 				]
 			];
 		}
@@ -62,6 +64,9 @@ class quoteLinkRepository {
 
 				hp.no AS host_no,
 				ht.post_op_number AS host_post_op_number,
+
+				tp.post_position AS target_post_position,
+				hp.post_position AS host_post_position,
 
 				hdp.open_flag AS host_open_flag,
 				tdp.open_flag AS target_open_flag,

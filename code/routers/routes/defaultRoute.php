@@ -87,17 +87,34 @@ class defaultRoute {
 		if (!$this->threadRepository->isThread($thread_uid)) {
 			$post_uid = $this->postRepository->resolvePostUidFromPostNumber($this->board, $resno);
 
-			// Fetch the thread UID from the post's data
-			$thread_uid_new = $this->postRepository->getPostByUid($post_uid)['thread_uid'] ?? false;
+			// get the post
+			$post = $this->postRepository->getPostByUid($post_uid);
 
-			// If still not valid, show error
-			if (!$this->threadRepository->isThread($thread_uid_new)) {
+			// throw error if the post still isn't found
+			if (!$post) {
 				throw new BoardException(_T('thread_not_found'));
 			}
 
+			// Fetch the thread UID from the post's data
+			$newThread = $this->threadRepository->getThreadByUid($post['thread_uid']) ?? false;
+
+			// new thread uid
+			$newThreadUid = $newThread['thread_uid'];
+
+			// If still not valid, show error
+			if (!$this->threadRepository->isThread($newThreadUid)) {
+				throw new BoardException(_T('thread_not_found'));
+			}
+
+			// then get replies per page config value
+			$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
+
+			// get the page of the post
+			$page = floor($post['post_position'] / $repliesPerPage);
+
 			// Otherwise, redirect to the correct thread page and scroll to post
-			$resnoNew = $this->threadRepository->resolveThreadNumberFromUID($thread_uid_new); 
-			$redirectString = $this->board->getBoardThreadURL($resnoNew, $resno);
+			$resnoNew = $this->threadRepository->resolveThreadNumberFromUID($newThreadUid); 
+			$redirectString = $this->board->getBoardThreadURL($resnoNew, $resno, false, $page);
 			redirect($redirectString);
 		}
 	}

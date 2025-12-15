@@ -15,6 +15,9 @@ $config['THREAD_ATTACHMENT_REQUIRED'] = true;
 // Render a thread pager at the top of the thread, useful for large thread page sizes
 $config['TOP_THREAD_PAGER'] = false;
 
+// Replies shown (not including OP) per thread page
+$config['REPLIES_PER_PAGE'] = 200;
+
 $config['PROXYHEADERlist'] = array(
 	'HTTP_CLIENT_IP',
 	'HTTP_X_REAL_IP',

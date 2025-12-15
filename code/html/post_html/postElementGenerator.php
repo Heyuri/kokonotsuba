@@ -24,10 +24,10 @@ class postElementGenerator {
 	 * pointing to the thread/post. Otherwise, it just returns the post number
 	 * as plain text.
 	 */
-	public function generateQuoteButton(int $threadResno, int $no): string {
+	public function generateQuoteButton(int $threadResno, int $no, int $totalThreadPages = 0): string {
 		if ($this->board->getConfigValue('USE_QUOTESYSTEM')) {
 			// Build the URL to the specific post
-			$threadUrl = $this->board->getBoardThreadURL($threadResno, $no, true);
+			$threadUrl = $this->board->getBoardThreadURL($threadResno, $no, true, $totalThreadPages);
 			// Create the clickable quote button
 			$quoteButton = '<a href="'.$threadUrl.'" class="qu" title="Quote">'.$no.'</a>';
 		} else {
@@ -46,7 +46,7 @@ class postElementGenerator {
 	 */
 	public function generateReplyButton(string $crossLink, int $threadResno, int $totalThreadPages = 0): string {
 		// Build the URL to the thread's reply form
-		$replyUrl = $this->getBaseThreadUrl($crossLink, $threadResno) . '&page=' . $totalThreadPages;
+		$replyUrl = $this->getBaseThreadUrl($crossLink, $threadResno, $totalThreadPages);
 		
 		// Return the reply button HTML
 		$replyButton = '[<a href="' . htmlspecialchars($replyUrl) . '">' . _T('reply_btn') . '</a>]';
@@ -73,7 +73,16 @@ class postElementGenerator {
 		return $recentRepliesAnchor;
 	}
 
-	private function getBaseThreadUrl(string $crossLink, int $threadResno): string {
-		return $crossLink . $this->board->getConfigValue('LIVE_INDEX_FILE') . '?res=' . $threadResno;
-	} 
+	private function getBaseThreadUrl(string $crossLink, int $threadResno, ?int $page = null): string {
+		// build url
+		$url = $crossLink . $this->board->getConfigValue('LIVE_INDEX_FILE') . '?res=' . $threadResno;
+		
+		// append page if set
+		if(!is_null($page)) {
+			$url .= '&page=' . $page;
+		}
+
+		// then return url
+		return $url;
+	}
 }

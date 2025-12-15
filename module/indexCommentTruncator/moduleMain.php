@@ -92,13 +92,13 @@ class moduleMain extends abstractModuleMain {
 		// if either condition was triggered then append the 'comment too long' message
 		if($commentTooLong) {
 			// append the message
-			$this->appendLimitMessage($comment, $threadNumber, $postNumber);
+			$this->appendLimitMessage($comment, $postNumber);
 		}
 	}
 
-	private function appendLimitMessage(string &$comment, int $threadNumber, int $postNumber): void {
+	private function appendLimitMessage(string &$comment, int $postNumber): void {
 		// generate the post anchor tag in the thread
-		$postAnchor = $this->generatePostAnchor($threadNumber, $postNumber);
+		$postAnchor = $this->generatePostAnchor($postNumber);
 		
 		// get message text from language loader
 		$warning = _T('comment_too_long', $postAnchor);
@@ -107,9 +107,9 @@ class moduleMain extends abstractModuleMain {
 		$comment .= "<br><br>$warning";
 	}
 
-	private function generatePostAnchor(int $threadNumber, int $postNumber): string {
+	private function generatePostAnchor(int $postNumber): string {
 		// get post url
-		$postUrl = $this->moduleContext->board->getBoardThreadURL($threadNumber, $postNumber);
+		$postUrl = $this->moduleContext->board->getBoardThreadURL($postNumber);
 
 		// build anchor tag
 		$postAnchor = '<a href="' . htmlspecialchars($postUrl) . '">No.' . htmlspecialchars($postNumber) . ' </a>';

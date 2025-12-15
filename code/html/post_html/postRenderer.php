@@ -62,8 +62,11 @@ class postRenderer {
 		$isThreadOp = $data['is_op'] ? true : false;
 		$isThreadReply = !$isThreadOp;  // Inverse of $isThreadOp
 		
+		// get replies per page value
+		$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
+
 		// Apply quote and quote link
-		$data['com'] = generateQuoteLinkHtml($this->quoteLinksFromBoard, $data, $threadResno, $this->board->getConfigValue('USE_QUOTESYSTEM'), $this->board);
+		$data['com'] = generateQuoteLinkHtml($this->quoteLinksFromBoard, $data, $threadResno, $this->board->getConfigValue('USE_QUOTESYSTEM'), $this->board, $repliesPerPage, $replyCount);
 		$data['com'] = quote_unkfunc($data['com']);
 
 		// Post position config
@@ -116,16 +119,23 @@ class postRenderer {
 			$this->config['NOTICE_SAGE']
 		);
 
-		// get replies per page value
-		$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
-
 		// get the total thread pages
+		// used to place the user on the last page for certain actions
 		$totalThreadPages = $replyCount / $repliesPerPage;
 
 		// Generate the quote and reply buttons
-		$quoteButton = $this->postElementGenerator->generateQuoteButton($threadResno, $data['no']);
+		$quoteButton = $this->postElementGenerator->generateQuoteButton($threadResno, $data['no'], $totalThreadPages);
 		$replyButton = $threadMode ? $this->postElementGenerator->generateReplyButton($crossLink, $threadResno, $totalThreadPages) : '';
 		$recentRepliesButton = $threadMode ? $this->postElementGenerator->generateRecentRepliesButton($crossLink, $threadResno, $replyCount) : '';
+
+		// get the page of the post
+		$page = floor($data['post_position'] / $repliesPerPage);
+
+		// Generate the post url
+		$postUrl = $this->board->getBoardThreadURL($threadResno, $data['no'], false, $page);
+
+		// bind post url 
+		$templateValues['{$POST_URL}'] = $postUrl;
 
 		// get first attachment array key
 		$firstAttachmentArrKey = array_key_first($data['attachments']);

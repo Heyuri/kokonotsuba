@@ -58,11 +58,37 @@ function generateNoticeSage(bool $noticeSage, string $email): string {
 }
 
 /**
- * Replace quote links in a post comment with anchor tags.
- * If the quoted post exists (based on quote links), it links to that post.
- * If not, the quote is displayed as a deleted reference using <del>.
+ * Generate HTML for quote links inside a post comment.
+ *
+ * This function scans a post's comment text for quote patterns such as ">>123"
+ * and replaces them with clickable <a> links pointing to the quoted posts.
+ *
+ * Behavior:
+ * - Uses quote link metadata from $quoteLinksFromBoard to determine which thread
+ *   a quoted post belongs to, and what its position in that thread is.
+ * - Calculates the correct page number for the quoted post using post_position,
+ *   ensuring that links always include "&page=X" for imageboard-style pagination.
+ * - Handles cross-thread quotes, strike-through of missing posts, and CSS classes.
+ *
+ * Requirements:
+ * - $quoteLinksFromBoard must contain entries keyed by source post_uid, each
+ *   containing an array of quote metadata including:
+ *     - target_post['no']
+ *     - target_post['post_op_number']
+ *     - target_post['post_position'] (Nth post within the thread, 0-based)
+ *
+ * @param array $quoteLinksFromBoard All quote metadata for the thread, indexed by post_uid.
+ * @param array $post The current post's data, including 'post_uid' and 'com'.
+ * @param int $threadNumber Thread number (OP's post number) of the current thread.
+ * @param bool $useQuoteSystem Whether quote links should be transformed.
+ * @param board $board Board object used to generate URLs.
+ * @param int $repliesPerPage Number of replies per page (e.g. 200).
+ * @param int $totalReplies Total number of replies in the thread (not required for core logic).
+ *
+ * @return string The comment HTML with quote links replaced.
  */
-function generateQuoteLinkHtml(array $quoteLinksFromBoard, array $post, int $threadNumber, bool $useQuoteSystem, board $board): string {
+function generateQuoteLinkHtml(array $quoteLinksFromBoard, array $post, int $threadNumber, bool $useQuoteSystem, board $board, int $repliesPerPage, int $totalReplies): string {
+	// If quoting system disabled, or comment missing, or post missing an ID → return original content.
 	if (
 		empty($useQuoteSystem) ||
 		empty($post['com']) ||
@@ -74,60 +100,88 @@ function generateQuoteLinkHtml(array $quoteLinksFromBoard, array $post, int $thr
 	$comment = $post['com'];
 	$postUid = $post['post_uid'];
 
-	// Safely get quoteLink entries for this specific post	
+	// Get all quote references originating from this specific post.
+	// This contains all metadata about the quoted posts.
 	$quoteLinkEntries = $quoteLinksFromBoard[$postUid] ?? [];
 
-	// Index target post numbers to their thread number
+	// Maps:
+	//   - quoted post number → thread OP number
+	//   - quoted post number → post_position (Nth post inside thread)
 	$targetPostToThreadNumber = [];
+	$targetPostToPosition = [];
+
+	// Extract metadata for all quoted posts referenced from this post.
 	foreach ($quoteLinkEntries as $entry) {
+		// Validate required fields exist and are numeric.
 		if (
 			isset($entry['target_post']['no'], $entry['target_post']['post_op_number']) &&
 			is_numeric($entry['target_post']['no']) &&
 			is_numeric($entry['target_post']['post_op_number'])
 		) {
-			$postNo = (int)$entry['target_post']['no'];
-			$threadNo = (int)$entry['target_post']['post_op_number'];
+			$postNo = (int)$entry['target_post']['no'];               // Quoted post number
+			$threadNo = (int)$entry['target_post']['post_op_number']; // OP number of target thread
 			$targetPostToThreadNumber[$postNo] = $threadNo;
+
+			// If available, store the quoted post's position within its thread (0-based)
+			if (isset($entry['target_post']['post_position']) && is_numeric($entry['target_post']['post_position'])) {
+                $targetPostToPosition[$postNo] = (int)$entry['target_post']['post_position'];
+            }
 		}
 	}
 
-	// Match all quote-like strings in the comment
+	// Find all ">>123" or "＞＞123" style quote markers inside the comment.
 	if (!preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $comment, $matches, PREG_SET_ORDER)) {
-		return $comment;
+		return $comment; // No quote patterns found
 	}
 	
-	// Build replacements in one pass
+	// We'll build a map of original-string → replacement-string to replace them in one pass.
 	$replacements = [];
+
 	foreach ($matches as $match) {
-		$fullMatch = $match[0];         // Full quoted text (e.g. ">>123")
-		$postNumber = (int)$match[2];   // Extracted numeric part (e.g. 123)
+		$fullMatch = $match[0];         // e.g. ">>123"
+		$postNumber = (int)$match[2];   // Extracted "123"
 	
+		// Avoid duplicate replacements for the same ">>123" sequence.
 		if (isset($replacements[$fullMatch])) {
-			continue; // Skip duplicates
+			continue;
 		}
 	
-		// Check if we have a known thread number for the quoted post number
+		// Check whether we know the thread and metadata for the quoted post.
 		if (isset($targetPostToThreadNumber[$postNumber])) {
-			// Get the thread number where the quoted post resides
 			$targetThreadNumber = $targetPostToThreadNumber[$postNumber];
 
-			// Determine if the quoted post is in a different thread (i.e. cross-thread)
+			// Determine whether the quoted post belongs to another thread.
 			$isCrossThread = $targetThreadNumber !== $threadNumber;
 
-			// Generate the full URL to the quoted post
-			$url = htmlspecialchars($board->getBoardThreadURL($targetThreadNumber, $postNumber));
+			// Retrieve the post_position (Nth reply in its thread).
+			// If not provided, default to 0 (OP).
+			$postPosition = $targetPostToPosition[$postNumber] ?? 0;
 
-			// Assign a CSS class, adding 'crossThreadLink' if the post is in a different thread
+			// Calculate page number:
+			// - pages are 0-based
+			// - page = floor(post_position / repliesPerPage)
+			$page = ($postPosition < 0)
+				? 0
+				: (int)floor($postPosition / $repliesPerPage);
+
+			// Build the final quoted post URL including the "&page=X" parameter.
+			$url = htmlspecialchars(
+				$board->getBoardThreadURL($targetThreadNumber, $postNumber, false, $page)
+			);
+
+			// Assign CSS classes — add crossThreadLink if needed.
 			$linkClass = 'quotelink' . ($isCrossThread ? ' crossThreadLink' : '');
 
-			// Build the final anchor tag for replacement
+			// Final anchor tag replacement.
 			$replacements[$fullMatch] = '<a href="' . $url . '" class="' . $linkClass . '">' . $fullMatch . '</a>';
+
 		} else {
-			// Post was not found — strike out
+			// No metadata found → quoted post does not exist or cannot be resolved.
+			// Strike-through the quote.
 			$replacements[$fullMatch] = '<a href="javascript:void(0);" class="quotelink"><del>' . $fullMatch . '</del></a>';
 		}
 	}
 	
-	// Replace in one pass
+	// Perform all replacements at once.
 	return strtr($comment, $replacements);
 }

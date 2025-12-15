@@ -441,11 +441,11 @@ class registRoute {
 		// if noko is inside the email-field then redirect to the thread
 		if(strstr($email, 'noko') && !strstr($email, 'nonoko')) {
 			$redirectReplyNumber = $no;
-			$redirect = $this->board->getBoardThreadURL($threadResno, $redirectReplyNumber);
+			$redirect = $this->board->getBoardThreadURL($redirectReplyNumber);
 		} elseif(strstr($email, 'dump')) {
 			// if 'dump' is contained in the email-field then dont redirect to the reply by setting it to 0
 			$redirectReplyNumber = 0;
-			$redirect = $this->board->getBoardThreadURL($threadResno, $redirectReplyNumber);
+			$redirect = $this->board->getBoardThreadURL($redirectReplyNumber);
 		} else {
 			// default to board index if neither noko nor dump
 			$redirect = $this->config['STATIC_INDEX_FILE'] . '?' . $timeInMilliseconds;

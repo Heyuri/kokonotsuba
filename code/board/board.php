@@ -239,18 +239,39 @@ class board implements IBoard {
 		$this->boardRebuilder->rebuildBoardPages($amountOfPagesToRebuild);
 	}
 
-	public function getBoardThreadURL(int $threadNumber, int $replyNumber = 0, bool $isQuoteRedirect = false): string {
+	public function getBoardThreadURL(
+		int $threadNumber, 
+		int $replyNumber = 0, 
+		bool $isQuoteRedirect = false, 
+		?int $page = null
+	): string {
 		$liveIndexFile = $this->config['LIVE_INDEX_FILE'];
 		$replyString = '';
 
-		if($replyNumber > 0) {
-			$replyString = $isQuoteRedirect ? '#q' . $replyNumber 
-				: '#p'.$this->getBoardUID().'_'.$replyNumber;
-		
+		// Build query parameters
+		// Always include res thread number
+		$queryParams = [
+			'res' => $threadNumber
+		];
+
+		// If page is given, include it
+		if ($page !== null) {
+			$queryParams['page'] = $page;
 		}
 
-		$threadUrl = $this->getBoardURL()."$liveIndexFile?res=$threadNumber$replyString";
-		
+		// Build query string via http_build_query
+		$queryString = http_build_query($queryParams);
+
+		// Append reply hash LAST
+		if ($replyNumber > 0) {
+			$replyString = $isQuoteRedirect
+				? '#q' . $replyNumber
+				: '#p' . $this->getBoardUID() . '_' . $replyNumber;
+		}
+
+		// Final URL
+		$threadUrl = $this->getBoardURL() . $liveIndexFile . '?' . $queryString . $replyString;
+
 		return $threadUrl ?? '';
 	}
 
