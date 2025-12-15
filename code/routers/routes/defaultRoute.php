@@ -25,7 +25,7 @@ class defaultRoute {
 		$res = intval($_GET['res'] ?? 0);
 
 		// Check for ?page= (specific page number)
-		$pageParam = $_GET['page'] ?? 0;
+		$pageParam = intval($_GET['page'] ?? 0);
 
 		if ($res > 0) {
 			// Handle thread view (with potential redirection)
@@ -49,7 +49,7 @@ class defaultRoute {
 				// then draw the last X replies page
 				$this->board->drawRecentReplies($res, $recentReplies);
 			}
-			elseif ($pageParam !== null && intval($pageParam) > -1) {
+			else {
 				// draw the regular thread page	
 				$this->board->drawThread($res, $pageParam);
 			}
