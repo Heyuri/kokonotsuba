@@ -48,7 +48,7 @@ class overboard {
 
 		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
 		$this->moduleEngine->dispatch('Head', array(&$html, $resno)); // "Head" Hook Point
-		$html .= '</head>';
+
 		$pte_vals += array('{$HOME}' => '[<a href="'.$this->config['HOME'].'" target="_top">'._T('head_home').'</a>]',
 			'{$STATUS}' => '[<a href="'.$this->config['LIVE_INDEX_FILE'].'?mode=status">'._T('head_info').'</a>]',
 			'{$ADMIN}' => '[<a href="'.$this->config['LIVE_INDEX_FILE'].'?mode=admin">'._T('head_admin').'</a>]',
