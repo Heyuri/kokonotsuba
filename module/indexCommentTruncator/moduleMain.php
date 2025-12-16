@@ -33,10 +33,10 @@ class moduleMain extends abstractModuleMain {
 
 	private function onRenderPost(string &$comment, array &$post): void {
 		// truncate post comment for index view
-		$this->truncatePostComment($comment, $post['post_op_number'], $post['no']);
+		$this->truncatePostComment($comment, $post['no']);
 	}
 
-	private function truncatePostComment(string &$comment, ?int $threadNumber, int $postNumber): void {
+	private function truncatePostComment(string &$comment, int $postNumber): void {
 		// return early if "res" is set in GET request
 		// ("res" = 'response')
 		// its only set when viewing/targetting a thread.
@@ -47,12 +47,6 @@ class moduleMain extends abstractModuleMain {
 		
 		// return early if the comment is empty because theres no comment/html to truncate
 		if(empty($comment)) {
-			return;
-		}
-
-		// in certain instances the thread number may be null (like from dp page)
-		// so return early if its null in any case
-		if(!$threadNumber) {
 			return;
 		}
 
