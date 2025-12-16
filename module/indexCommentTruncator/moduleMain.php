@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\indexCommentTruncator;
 
 use board;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Throwable;
 
 class moduleMain extends abstractModuleMain {
 	// post comments over these limits are truncated (if viewed from the index)
@@ -50,6 +51,10 @@ class moduleMain extends abstractModuleMain {
 			return;
 		}
 
+		// Init copy of comment to be used during truncating
+		// comment gets set to it if nothing fails
+		$truncatedComment = $comment;
+
 		// this flag exists to be checked later in the method
 		// the check appends the message to the post
 		$commentTooLong = false;
@@ -61,27 +66,36 @@ class moduleMain extends abstractModuleMain {
 
 		// get the raw comment character length for check
 		$commentLength = mb_strlen($rawComment);
+		try {
+			// if its over the character limit - truncate comment and set flag to true
+			if($commentLength > $this->characterPreviewLimit) {
+				// flag as too long
+				$commentTooLong = true;
 
-		// if its over the character limit - truncate comment and set flag to true
-		if($commentLength > $this->characterPreviewLimit) {
-			// flag as too long
-			$commentTooLong = true;
+				// truncate comment
+				$truncatedComment = truncateHtml($comment, $this->characterPreviewLimit);
+			}
 
-			// truncate comment
-			$comment = truncateHtml($comment, $this->characterPreviewLimit);
+			// get the amount of break lines in the post
+			$commentBreakLineCount = countHtmlLineBreaks($comment);
+
+			// if its over the line limit - truncate comment line size and set flag to true
+			if($commentBreakLineCount > $this->breakLinePreviewLimit) {
+				// flag as too long
+				$commentTooLong = true;
+
+				// truncate comment past the line limit
+				$truncatedComment = truncateHtmlByLineBreak($comment, $this->breakLinePreviewLimit - 1);
+			}
+		} 
+		// If a throwable exception is caught then just end execution of the method
+		catch (Throwable) {
+			return;
 		}
 
-		// get the amount of break lines in the post
-		$commentBreakLineCount = countHtmlLineBreaks($comment);
-
-		// if its over the line limit - truncate comment line size and set flag to true
-		if($commentBreakLineCount > $this->breakLinePreviewLimit) {
-			// flag as too long
-			$commentTooLong = true;
-
-			// truncate comment past the line limit
-			$comment = truncateHtmlByLineBreak($comment, $this->breakLinePreviewLimit - 1);
-		}
+		// All successful
+		// truncate!
+		$comment = $truncatedComment;
 
 		// if either condition was triggered then append the 'comment too long' message
 		if($commentTooLong) {
