@@ -405,10 +405,10 @@
 <div class="banFormContainer">
 	<form method="POST" action="{$MODULE_URL}">
 		<h3 class="centerText">Add a ban</h3>
+		<input type="hidden" name="adminban-action" value="add-ban">
 
 		<table id="banForm">
 			<tbody>
-				<input type="hidden" name="adminban-action" value="add-ban">
 				<tr>
 					<td class="postblock"><label for="post_number">Post number</label></td>
 					<td><span id="post_number"><!--&IF($POST_NUMBER,'{$POST_NUMBER}','')--></span></td>
