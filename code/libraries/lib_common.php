@@ -161,10 +161,18 @@ function truncateText(
  */
 function createDomFromHtml(string $html): DOMDocument {
 	$dom = new DOMDocument();
+
+	// Suppress libxml warnings during HTML parsing
+	$prev = libxml_use_internal_errors(true);
+
 	$dom->loadHTML(
 		'<?xml encoding="utf-8" ?><div id="__root_wrapper__">' . $html . '</div>',
 		LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
 	);
+
+	// Clear any collected errors and restore previous state
+	libxml_clear_errors();
+	libxml_use_internal_errors($prev);
 
 	return $dom;
 }
