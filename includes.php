@@ -102,6 +102,7 @@ require __DIR__ . '/code/libraries/lib_common.php';
 require __DIR__ . '/code/libraries/lib_compatible.php';
 require __DIR__ . '/code/libraries/lib_database.php';
 require __DIR__ . '/code/libraries/lib_errorhandler.php';
+require __DIR__ . '/code/libraries/lib_external.php';
 require __DIR__ . '/code/libraries/lib_file.php';
 require __DIR__ . '/code/libraries/lib_filter.php';
 require __DIR__ . '/code/libraries/lib_post.php';
