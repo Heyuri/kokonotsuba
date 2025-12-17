@@ -54,6 +54,12 @@ class usrdelRoute {
 		// get post data for posts that were checked
 		$posts = $this->postService->getPostsByUids($postUidsForDeletion);
 
+		// throw an exception if posts is falsey.
+		// in this case its likely already been deleted or doesn't exist
+		if(!$posts) {
+			throw new BoardException(_T('post_not_found'));
+		}
+
 		// Call the method to authenticate the posts and log actions
 		$this->authenticateAndLogPostDeletions(
 			$posts, 

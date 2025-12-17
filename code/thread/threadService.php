@@ -124,9 +124,17 @@ class threadService {
 			$posts = $this->threadRepository->getAllPostsFromThread($thread_uid, $adminMode);
 		}
 
-		// group posts by thread
-		$groupedPosts = $this->groupPostsByThread($posts);
-
+		// initialize groupedPosts as an empty array to prevent groupPostsByThread from logging an error.
+		// this never happens on normal kokonotsuba databases but in cases of irregular databases or
+		// some kind of corruption its important to stop it from spewing a shit ton of errors
+		if(!$posts) {
+			$groupedPosts = [];
+		}
+		// group posts if the posts array isn't falsey since its (likely) all good
+		else {
+			// group posts by thread
+			$groupedPosts = $this->groupPostsByThread($posts);
+		}
 		return $this->buildPreviewResults([$threadMeta], $groupedPosts, $previewCount)[0] ?? false;
 	}
 
