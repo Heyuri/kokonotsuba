@@ -329,7 +329,7 @@ class managePostsRoute {
 		if($onlyDeleteImages) {
 			$this->deletedPostsService->deleteFilesFromPosts($attachments, $accountId);
 		} else {
-			$this->postService->removePosts($postUids);
+			$this->postService->removePosts($postUids, $accountId);
 		}
 
 		$this->actionLoggerService->logAction("Delete posts: $checkboxDeletionActionLogStr".($onlyDeleteImages?' (file only)':''), $this->board->getBoardUID());
