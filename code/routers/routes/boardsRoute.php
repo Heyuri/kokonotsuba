@@ -41,13 +41,6 @@ class boardsRoute {
 				'{$DEFAULT_ROOT_URL}' => $this->board->getBoardRootURL(),
 				'{$DEFAULT_PATH}' => $defaultPath
 			]);
-
-			// import board form
-			$templateValues['{$IMPORT_BOARD}'] = $this->adminTemplateEngine->ParseBlock('IMPORT_BOARD', [
-				'{$DEFAULT_ROOT_URL}' => $this->board->getBoardRootURL(),
-				'{$DEFAULT_PATH}' => $defaultPath
-			]);
-
 		}
 
 		if (isset($_GET['view'])) {
