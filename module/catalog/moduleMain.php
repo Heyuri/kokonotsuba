@@ -103,7 +103,7 @@ class moduleMain extends abstractModuleMain {
 				
 		$dat.= '<table id="catalogTable" class="' . ($cat_fw ? 'full-width' : '') . ' ' . ($cat_cols === 'auto' ? 'auto-cols' : 'fixed-cols') . '"><tbody><tr>';
 
-		$threads = $this->moduleContext->threadService->getThreadPreviewsFromBoard($this->moduleContext->board, 0, $this->PAGE_DEF, $page * $this->PAGE_DEF, $sortingColumn);
+		$threads = $this->moduleContext->threadService->getThreadPreviewsFromBoard($this->moduleContext->board, 0, $this->PAGE_DEF, $page * $this->PAGE_DEF, false, $sortingColumn);
 		
 		foreach($threads as $i=>$thread){
 			$threadPosts = $thread['posts'];
