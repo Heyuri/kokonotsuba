@@ -52,6 +52,8 @@ function getLatestPosts(array $sources) {
 			'</b> ago ' . $source['suffix'] . '<br>';
 	}
 
+	$output = substr($output, 0, -4) . '<hr class="hrThin">';
+
 	return $output;
 }
 
