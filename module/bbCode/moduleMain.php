@@ -217,7 +217,7 @@ class moduleMain extends abstractModuleMain {
 	// New function to fix improperly nested BBCode tags
 	private function fixBBCodeNesting($text){
 		// List of supported tags. Only these tags will be processed for nesting correction.
-		$supportedTags = array('b', 'i', 'spoiler', 'color', 's', 'u', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'code', 'pre', 'aa', 'kao', 'sw', 'quote', 'ruby', 'rt', 'rp');
+		$supportedTags = array('b', 'i', 'spoiler', 'h', 'color', 's', 'u', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'code', 'pre', 'aa', 'kao', 'sw', 'quote', 'ruby', 'rt', 'rp');
 		
 		$pattern = '/(\[\/?[a-zA-Z0-9]+\b(?:=[^\]]+)?\])/i';
 		$tokens = array();
@@ -619,4 +619,5 @@ BBCODE Settings:
 		echo $htmlOutput;
 	}
 }
+
 
