@@ -238,6 +238,7 @@ $config['ModuleSettings']['COMMENT_DICE_ROLL'] = true;
 $config['ModuleSettings']['supportBold'] = true; // [b]...[/b] into <b>...</b>
 $config['ModuleSettings']['supportSpoiler'] = true; // [spoiler]...[/spoiler] into <span class="spoiler">...</span>
 $config['ModuleSettings']['supportStrikeThrough'] = true; // [s]...[/s] into <s>...</s>
+$config['ModuleSettings']['supportHeadLine'] = true; // [h]...[/h] into <span class="headline">...</span>
 $config['ModuleSettings']['supportCode'] = true; // [code]...[/code] into <pre class="code">...</pre>
 $config['ModuleSettings']['supportCodeBlocks'] = true; // complete code-block system ([code], [code=lang], syntax highlighting, extraction)
 $config['ModuleSettings']['supportItalic'] = true; // [i]...[/i] into <i>...</i>
