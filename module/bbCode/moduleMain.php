@@ -15,6 +15,7 @@ class moduleMain extends abstractModuleMain {
 	// feature flags
 	private bool $supportBold = false;
 	private bool $supportStrikeThrough = false;
+	private bool $supportHeadLine = false;
 	private bool $supportSpoiler = false;
 	private bool $supportCode = false;
 	private bool $supportItalic = false;
@@ -50,6 +51,7 @@ class moduleMain extends abstractModuleMain {
 		// initialize bbcode feature flags
 		$this->supportBold = $this->getConfig('ModuleSettings.supportBold', false);
 		$this->supportStrikeThrough = $this->getConfig('ModuleSettings.supportStrikeThrough', false);
+		$this->supportHeadLine = $this->getConfig('ModuleSettings.supportHeadLine', false);
 		$this->supportSpoiler = $this->getConfig('ModuleSettings.supportSpoiler', false);
 		$this->supportCode = $this->getConfig('ModuleSettings.supportCode', false);
 		$this->supportItalic = $this->getConfig('ModuleSettings.supportItalic', false);
@@ -105,6 +107,11 @@ class moduleMain extends abstractModuleMain {
 		// strikethrough
 		if($this->supportStrikeThrough) {
 			$string = preg_replace('#\[s\](.*?)\[/s\]#si', '<s>\1</s>', $string);
+		}
+
+		// headline
+		if($this->supportHeadLine) {
+			$string = preg_replace('#\[h\](.*?)\[/h\]#si', '<span class="headline">\1</span>', $string);
 		}
 
 		// spoiler
