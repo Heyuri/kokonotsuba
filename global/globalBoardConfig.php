@@ -237,6 +237,7 @@ $config['ModuleSettings']['COMMENT_DICE_ROLL'] = true;
 /* bbCode */
 $config['ModuleSettings']['supportBold'] = true; // [b]...[/b] into <b>...</b>
 $config['ModuleSettings']['supportSpoiler'] = true; // [spoiler]...[/spoiler] into <span class="spoiler">...</span>
+$config['ModuleSettings']['supportStrikeThrough'] = true; // [s]...[/s] into <s>...</s>
 $config['ModuleSettings']['supportCode'] = true; // [code]...[/code] into <pre class="code">...</pre>
 $config['ModuleSettings']['supportCodeBlocks'] = true; // complete code-block system ([code], [code=lang], syntax highlighting, extraction)
 $config['ModuleSettings']['supportItalic'] = true; // [i]...[/i] into <i>...</i>
@@ -245,7 +246,6 @@ $config['ModuleSettings']['supportParagraph'] = true; // [p]...[/p] into <p>...<
 $config['ModuleSettings']['supportSw'] = true; // [sw]...[/sw] into <pre class="sw">...</pre> (Strange World-style AA)
 $config['ModuleSettings']['supportColor'] = true; // [color=X]...[/color] into <span style="color:X;">...</span>
 $config['ModuleSettings']['supportFontSize'] = true; // [sN]...[/sN] into <span class="fontSizeN">...</span>
-$config['ModuleSettings']['supportDel'] = true; // [del]...[/del] into <del>...</del>
 $config['ModuleSettings']['supportPre'] = true; // [pre]...[/pre] into <pre>...</pre>
 $config['ModuleSettings']['supportQuote'] = true; // [quote]...[/quote] into <blockquote>...</blockquote>
 $config['ModuleSettings']['supportRuby'] = true; // ruby-related BBCodes into <ruby> / <rt> / <rp> tags

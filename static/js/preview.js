@@ -66,7 +66,7 @@ function preview() {
 	c = c.replaceAll(/\[p\](.*?)\[\/p\]/gi, "<p>$1</p>");
 	c = c.replaceAll(/\[color=(\S+?)\](.*?)\[\/color\]/gi, "<span style=\"color:$1;\">$2</span>");
 	c = c.replaceAll(/\[s([1-7])\](.*?)\[\/s([1-7])\]/gi, "<span class=\"fontSize$1\">$2</span>");
-	c = c.replaceAll(/\[del\](.*?)\[\/del\]/gi, "<del>$1</del>");
+	c = c.replaceAll(/\[s\](.*?)\[\/s\]/gi, "<s>$1</s>");
 	c = c.replaceAll(/\[pre\](.*?)\[\/pre\]/gi, "<pre>$1</pre>");
 	c = c.replaceAll(/\[blockquote\](.*?)\[\/blockquote\]/gi, "<blockquote>$1</blockquote>");
 	c = c.replaceAll(/\[aa\](.*?)\[\/aa\]/gi, "<pre class=\"ascii\">$1</pre>");

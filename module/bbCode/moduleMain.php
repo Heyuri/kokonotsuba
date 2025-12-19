@@ -14,6 +14,7 @@ class moduleMain extends abstractModuleMain {
 
 	// feature flags
 	private bool $supportBold = false;
+	private bool $supportStrikeThrough = false;
 	private bool $supportSpoiler = false;
 	private bool $supportCode = false;
 	private bool $supportItalic = false;
@@ -22,7 +23,6 @@ class moduleMain extends abstractModuleMain {
 	private bool $supportSw = false;
 	private bool $supportColor = false;
 	private bool $supportFontSize = false;
-	private bool $supportDel = false;
 	private bool $supportPre = false;
 	private bool $supportQuote = false;
 	private bool $supportRuby = false;
@@ -33,8 +33,6 @@ class moduleMain extends abstractModuleMain {
 	private bool $supportCodeBlocks = false;
 	private bool $supportKao = false;
 
-	private readonly ?string $staticUrl;
-
 	public function getName(): string {
 		return 'Kokonotsuba BBCode module';
 	}
@@ -44,9 +42,6 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		// Load configuration values
-		$this->staticUrl = $this->getConfig('STATIC_URL');
-		
 		// Register the listener for the PostInfo hook
 		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (array &$registInfo) {
 			$this->onRegistBegin($registInfo['com'], $registInfo['files']);  // Call the method to modify the form
@@ -54,6 +49,7 @@ class moduleMain extends abstractModuleMain {
 
 		// initialize bbcode feature flags
 		$this->supportBold = $this->getConfig('ModuleSettings.supportBold', false);
+		$this->supportStrikeThrough = $this->getConfig('ModuleSettings.supportStrikeThrough', false);
 		$this->supportSpoiler = $this->getConfig('ModuleSettings.supportSpoiler', false);
 		$this->supportCode = $this->getConfig('ModuleSettings.supportCode', false);
 		$this->supportItalic = $this->getConfig('ModuleSettings.supportItalic', false);
@@ -62,7 +58,6 @@ class moduleMain extends abstractModuleMain {
 		$this->supportSw = $this->getConfig('ModuleSettings.supportSw', false);
 		$this->supportColor = $this->getConfig('ModuleSettings.supportColor', false);
 		$this->supportFontSize = $this->getConfig('ModuleSettings.supportFontSize', false);
-		$this->supportDel = $this->getConfig('ModuleSettings.supportDel', false);
 		$this->supportPre = $this->getConfig('ModuleSettings.supportPre', false);
 		$this->supportQuote = $this->getConfig('ModuleSettings.supportQuote', false);
 		$this->supportRuby = $this->getConfig('ModuleSettings.supportRuby', false);
@@ -107,9 +102,13 @@ class moduleMain extends abstractModuleMain {
 			$string = preg_replace('#\[b\](.*?)\[/b\]#si', '<b>\1</b>', $string);
 		}
 
+		// strikethrough
+		if($this->supportStrikeThrough) {
+			$string = preg_replace('#\[s\](.*?)\[/s\]#si', '<s>\1</s>', $string);
+		}
+
 		// spoiler
 		if($this->supportSpoiler) {
-			$string = preg_replace('#\[s\](.*?)\[/s\]#si', '<span class="spoiler">\1</span>', $string);
 			$string = preg_replace('#\[spoiler\](.*?)\[/spoiler\]#si', '<span class="spoiler">\1</span>', $string);
 		}
 
@@ -151,11 +150,6 @@ class moduleMain extends abstractModuleMain {
 		// font size
 		if($this->supportFontSize) {
 			$string = preg_replace('#\[s([1-7])\](.*?)\[/s([1-7])\]#si', '<span class="fontSize\1">\2</span>', $string);
-		}
-
-		// deleted text
-		if($this->supportDel) {
-			$string = preg_replace('#\[del\](.*?)\[/del\]#si', '<del>\1</del>', $string);
 		}
 
 		// preformatted
@@ -544,11 +538,6 @@ class moduleMain extends abstractModuleMain {
 			$string = preg_replace('#<span class="fontSize([1-7])">(.*?)</span>#si', '[s\1]\2[/s\1]', $string);
 		}
 
-		// delete
-		if($this->supportDel) {
-			$string = preg_replace('#<del>(.*?)</del>#si', '[del]\1[/del]', $string);
-		}
-
 		// preformatted
 		if($this->supportPre) {
 			$string = preg_replace('#<pre>(.*?)</pre>#si', '[pre]\1[/pre]', $string);
@@ -614,7 +603,7 @@ BBCODE Settings:
 	<li>[b]Hello[/b] will become <b>Hello</b></li>
 	<li>[u]Hello[/u] will become <u>Hello</u></li>
 	<li>[i]Hello[/i] will become <i>Hello</i></li>
-	<li>[del]Hello[/del] will become <s>Hello</s></li>
+	<li>[s]Hello[/s] will become <s>Hello</s></li>
 	<li>[aa]Hello[/aa] will become</li>
 </ul>
 ';
