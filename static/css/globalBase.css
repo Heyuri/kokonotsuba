@@ -212,8 +212,9 @@
 }
 
 .headline {
-	font-size: 1.25rem;
-	font-weight: var(--font-weight-bold);
+	color: #af0a0f;
+	font-size: 1.125em;
+	font-weight: bold;
 }
 
 /************************ Mobile **************************************/
