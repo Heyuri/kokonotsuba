@@ -97,7 +97,94 @@ class managePostsRoute {
 			$boardMap[$board->getBoardUID()] = $board;
 		}
 
-		foreach($posts as $key => $p) {		
+		// if there's any posts - render them
+		if($posts && is_array($posts)) {
+			$managePostsHtml .= $this->renderPostEntries(
+				$posts, 
+				$boardMap, 
+				$canViewIp, 
+				$roleLevel, 
+				$managePostsUrl,
+				$boardList
+			);
+		} 
+		// otherwise display error since there's no (valid) posts found
+		else {
+			$managePostsHtml .= '
+				<tr>
+					<td colspan="9"><b class="error" id="no-posts-found"> - No posts found! - </b></td>
+				</tr>';
+		}
+		
+		$managePostsHtml.= '
+			</tbody>
+		</table>
+		</div>
+		<div class="buttonSection">
+			<button type="button" id="selectAllButton" onclick="selectAll()">Select all</button>
+			<input type="submit" value="'._T('admin_submit_btn').'"> <input type="reset" value="'._T('admin_reset_btn').'"> [<label><input type="checkbox" name="onlyimgdel" id="onlyimgdel" 		value="on">'._T('del_img_only').'</label>]
+		</div>
+	</form>
+	<script>
+		function selectAll() {
+			var checkboxes = document.querySelectorAll(\'input[name="clist[]"]\');
+			var btn = document.getElementById(\'selectAllButton\');
+			var allChecked = Array.from(checkboxes).every(function(checkbox) {
+				return checkbox.checked;
+			});
+			
+			checkboxes.forEach(function(checkbox) {
+				checkbox.checked = !allChecked;
+			});
+
+			btn.textContent = allChecked ? "Select all" : "Unselect all";
+		}
+	</script>
+	';
+
+		$managePostsPager = drawPager($postsPerPage, $numberOfFilteredPosts, $cleanUrl);
+
+		$templateValues = [
+			'{$PAGE_CONTENT}' => $managePostsHtml,
+			'{$PAGER}' => $managePostsPager
+		];
+		
+		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', $templateValues, true);
+	
+		echo $htmlOutput;
+	}
+
+	private function initializeManagePostsFilters(): array {
+		// Default board selection: current board and global board
+		$defaultSelectedBoards = [$this->board->getBoardUID()];
+
+		return [
+			'ip_address' => '',
+			'post_name' => '',
+			'tripcode' => '',
+			'capcode' => '',
+			'subject' => '',
+			'comment' => '',
+			'board' => $defaultSelectedBoards,
+			'date_before' => '',
+			'date_after' => '',
+			'host' => ''
+		];
+	}
+
+	private function renderPostEntries(
+		array $posts, 
+		array $boardMap, 
+		bool $canViewIp, 
+		userRole $roleLevel, 
+		string $managePostsUrl, 
+		string $boardList
+	): string {
+		// init html stored var
+		$postsHtml = '';
+
+		// loop through posts
+		foreach($posts as $p) {		
 			// get the board uid
 			$boardUID = $p['boardUID'];
 			
@@ -183,7 +270,7 @@ class managePostsRoute {
 			$attachmentsHtml = $this->renderAttachments($p['attachments']);
 
 			// Print out the interface
-			$managePostsHtml .= '
+			$postsHtml .= '
 				<tr>
 					<td class="colFunc">' . $modFunc . '</td>
 					<td class="colDel"><input type="checkbox" name="clist[]" value="' . $post_uid . '"><a target="_blank" href="'.$postBoard->getBoardURL().$postBoardConfig['LIVE_INDEX_FILE'].'?res=' . $no . '">' . $no . '</a></td>
@@ -197,68 +284,8 @@ class managePostsRoute {
 				</tr>';
 		}
 
-		
-		if(!$posts) {
-			$managePostsHtml .= '
-				<tr>
-					<td colspan="9"><b class="error" id="no-posts-found"> - No posts found! - </b></td>
-				</tr>';
-		}
-		
-		$managePostsHtml.= '
-			</tbody>
-		</table>
-		</div>
-		<div class="buttonSection">
-			<button type="button" id="selectAllButton" onclick="selectAll()">Select all</button>
-			<input type="submit" value="'._T('admin_submit_btn').'"> <input type="reset" value="'._T('admin_reset_btn').'"> [<label><input type="checkbox" name="onlyimgdel" id="onlyimgdel" 		value="on">'._T('del_img_only').'</label>]
-		</div>
-	</form>
-	<script>
-		function selectAll() {
-			var checkboxes = document.querySelectorAll(\'input[name="clist[]"]\');
-			var btn = document.getElementById(\'selectAllButton\');
-			var allChecked = Array.from(checkboxes).every(function(checkbox) {
-				return checkbox.checked;
-			});
-			
-			checkboxes.forEach(function(checkbox) {
-				checkbox.checked = !allChecked;
-			});
-
-			btn.textContent = allChecked ? "Select all" : "Unselect all";
-		}
-	</script>
-	';
-
-		$managePostsPager = drawPager($postsPerPage, $numberOfFilteredPosts, $cleanUrl);
-
-		$templateValues = [
-			'{$PAGE_CONTENT}' => $managePostsHtml,
-			'{$PAGER}' => $managePostsPager
-		];
-		
-		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', $templateValues, true);
-	
-		echo $htmlOutput;
-	}
-
-	private function initializeManagePostsFilters(): array {
-		// Default board selection: current board and global board
-		$defaultSelectedBoards = [$this->board->getBoardUID()];
-
-		return [
-			'ip_address' => '',
-			'post_name' => '',
-			'tripcode' => '',
-			'capcode' => '',
-			'subject' => '',
-			'comment' => '',
-			'board' => $defaultSelectedBoards,
-			'date_before' => '',
-			'date_after' => '',
-			'host' => ''
-		];
+		// then return the html
+		return $postsHtml;
 	}
 
 	private function renderAttachments(array $attachments): string {
