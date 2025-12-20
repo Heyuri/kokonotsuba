@@ -310,7 +310,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			// lock original thread and duplicate contents to destination board
 			$newThreadUid = $this->copyThreadToBoard($attachments, $threadUid, $destinationBoard);
 
-			$newThreadData = $this->moduleContext->threadService->getThreadAllReplies($newThreadUid, true, $this->moduleContext->board->getConfigValue('RE_DEF'));
+			$newThreadData = $this->moduleContext->threadRepository->getThreadByUid($newThreadUid, true);
 
 			// leave shadow post
 			$this->leavePostInShadowThread($threadData, $hostBoard, $newThreadData, $destinationBoard);
