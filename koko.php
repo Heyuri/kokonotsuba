@@ -55,9 +55,11 @@ try {
 		$softErrorHandler->errorAndExit($errorMessage);
 	}
 } catch (\Throwable $e) {
+	// log message
 	PMCLibrary::getLoggerInstance($globalConfig['ERROR_HANDLER_FILE'], 'Global')
-		->error($e->getMessage());
+		->error($e->__toString());
 
+	// throw blanket error message
 	$softErrorHandler->errorAndExit(_T('blanket_error'));
 }
 
