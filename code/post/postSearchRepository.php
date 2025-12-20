@@ -96,7 +96,7 @@ class postSearchRepository {
 		$countQuery = "
 			SELECT COUNT(*) AS total_posts
 			FROM {$this->postTable}
-			WHERE MATCH($field) AGAINST (:search IN BOOLEAN MODE)
+			WHERE MATCH($field) AGAINST (:search IN NATURAL LANGUAGE MODE)
 			AND boardUID = :board_uid
 		";
 
