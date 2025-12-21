@@ -214,7 +214,9 @@ $language['online_counter_user_singular'] = 'user';
 $language['online_counter_user_multiple'] = 'users';
 $language['online_counter_minute_singular'] = 'minute';
 $language['online_counter_minute_multiple'] = 'minutes';
-
+// search
+$language['no_search_field'] = "No target search field was selected!";
+$language['no_search_method'] = "No search method was selected!";
 
 // mainscript.js // regist_withoutcomment,regist_upload_notsupport,js_convert_sakura
 $language['js_convert_sakura']			= 'Big5 sakura Japanese characters detected, please try to convert to standard one.';
@@ -224,10 +226,10 @@ $language['no_attachment_ever']         = 'There was no attachment on this post 
 $language['blanket_error'] = "There has been an error. (;´Д`)";
 $language['comment_too_long'] = "Comment too long, view post %s to see the full comment.";
 $language['post_not_found'] = "Post not found!";
-$language['no_search_field'] = "No target search field was selected!";
-$language['no_search_method'] = "No search method was selected!";
+
 
 
 ?>
+
 
 
