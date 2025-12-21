@@ -107,8 +107,7 @@ class quoteLinkRepository {
 				COALESCE(hdp.open_flag, tdp.open_flag) IS NULL
 				OR (
 					COALESCE(hdp.file_only, 0) = 1
-					AND COALESCE(tdp.file_only, 0) = 1
-					AND COALESCE(hdp.open_flag, tdp.open_flag) IS NOT TRUE
+					OR COALESCE(tdp.file_only, 0) = 1
 				)
 			)";
 		}
