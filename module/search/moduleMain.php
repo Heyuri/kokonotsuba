@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\search;
 
+use BoardException;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;
 use postRenderer;
 use postSearchService;
@@ -127,8 +128,18 @@ class moduleMain extends abstractModuleMain {
 		$searchPostOffset = $searchPostsPerPage * $searchPage;
 		$quoteLinksFromBoard = $this->moduleContext->quoteLinkService->getQuoteLinksFromBoard($this->moduleContext->board->getBoardUID());
 	
-		$searchField = $_GET['field'];
-		$searchMethod = $_GET['method'];
+		$searchField = $_GET['field'] ?? null;
+
+		if(!$searchField) {
+			throw new BoardException(_T('no_search_field'));
+		}
+
+		$searchMethod = $_GET['method'] ?? null;
+
+		if(!$searchMethod) {
+			throw new BoardException(_T('no_search_method'));
+		}
+
 		$searchKeywordArray = preg_split('/(　| )+/', strtolower(trim($searchKeyword)));
 		if ($searchMethod == 'REG') $searchMethod = 'AND';
 
