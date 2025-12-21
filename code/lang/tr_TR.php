@@ -214,7 +214,9 @@ $language['online_counter_user_singular']   = 'kullanıcı';
 $language['online_counter_user_multiple']   = 'kullanıcı';
 $language['online_counter_minute_singular'] = 'dakika';
 $language['online_counter_minute_multiple'] = 'dakika';
-
+// search
+$language['no_search_field']                = "Arama yapılacak alan seçilmedi!";
+$language['no_search_method']               = "Arama yöntemi seçilmedi!";
 
 // mainscript.js // regist_withoutcomment,regist_upload_notsupport,js_convert_sakura
 $language['js_convert_sakura']			= 'Big5 sakura Japanese characters detected, please try to convert to standard one.';
@@ -226,6 +228,7 @@ $language['comment_too_long'] = "Yorum fazla uzun, tümünü görüntülemek iç
 $language['post_not_found'] = "Post bulunamadı!";
 
 ?>
+
 
 
 
