@@ -9,6 +9,9 @@ $config['THUMB_DIR'] = 'src/';
 // The amount of attachments a user can post at once per post
 $config['ATTACHMENT_UPLOAD_LIMIT'] = 1;
 
+// whether to redirect to the reply by default
+$config['ALWAYS_NOKO'] = false;
+
 // Require new threads to have a file attached
 $config['THREAD_ATTACHMENT_REQUIRED'] = true;
 
