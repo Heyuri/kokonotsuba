@@ -60,6 +60,12 @@ class moduleMain extends abstractModuleMain {
 	public function onRegistBegin(?array &$thread, userRole $roleLevel) {
 		if (!empty($thread) && $roleLevel->isLessThan($this->getConfig('AuthLevels.CAN_LOCK'))) {
 			$openingPost = $thread['posts'][0];
+
+			// return early if opening post wasn't found
+			if(!$openingPost) {
+				return;
+			}
+
 			$status = new FlagHelper($openingPost['status']);
 
 			if($status->value('stop')) {
