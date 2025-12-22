@@ -9,8 +9,9 @@ class agingHandler {
 		$this->threadRepository = $threadRepository;
 	}
 
-	public function apply(string $thread_uid, int $unixTime, string $postOpRoot, string &$email, bool &$age): void {
+	public function apply(string $thread_uid, int $unixTime, ?string $postOpRoot, string &$email, bool &$age): void {
 		if (!$thread_uid) return;
+		if (!$postOpRoot) return;
 
 		if (
 			$this->threadRepository->getPostCountFromThread($thread_uid) <= $this->config['MAX_RES']
