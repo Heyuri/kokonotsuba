@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	const nokoBox  = document.getElementById("noko");
 	const dumpBox  = document.getElementById("dump");
 	const restoField = document.querySelector("input[name='resto']");
+	const alwaysNoko = postForm.dataset.alwaysnoko;
 
 	const oldBrowser = (
 		!window.fetch ||
@@ -84,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		const threadId = restoField ? restoField.value : "0";
 		const isReply = threadId !== "0";
 
-		const isNoko = (nokoBox && nokoBox.checked) || (emailValue.includes("noko") && !emailValue.includes("nonoko"));
+		const isNoko = (nokoBox && nokoBox.checked) || (emailValue.includes("noko") && !emailValue.includes("nonoko")) || alwaysNoko;
 		const isDump = (dumpBox && dumpBox.checked) || emailValue.includes("dump");
 
 		const submitButton = event.submitter;

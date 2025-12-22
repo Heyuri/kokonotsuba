@@ -83,7 +83,7 @@
 
 <!--&POSTFORM-->
 		<!--&IF($IS_THREAD,' <h2 class="theading">Posting mode: Reply</h2>','')-->
-		<form id="postform" name="postform" action="{$LIVE_INDEX_FILE}" method="POST" <!--&IF($MAX_FILE_SIZE,' enctype="multipart/form-data"','')-->>
+		<form id="postform" name="postform" action="{$LIVE_INDEX_FILE}" method="POST" <!--&IF($MAX_FILE_SIZE,' enctype="multipart/form-data"','')--> {$ALWAYS_NOKO}>
 			{$FORM_HIDDEN}
 			<table id="postformTable">
 				<tbody>

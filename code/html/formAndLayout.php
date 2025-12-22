@@ -156,5 +156,6 @@ function preparePostFormTemplateValues(int $resno, ?string $liveIndexFile, ?stri
 		),
 		'{$HOOKPOSTINFO}' => '',
 		'{$MODULE_INFO_HOOK}' => $moduleInfoHook,
+		'{$ALWAYS_NOKO}' => $config['ALWAYS_NOKO'] ? 'data-alwaysnoko="true"' : '',
 		'{$POST_FORM}' => '');
 }

@@ -81,7 +81,7 @@
 
 <!--&POSTFORM-->
 		<div id="postformBox" class="innerbox">
-			<!--&IF($MAX_FILE_SIZE,'<form id="postform" name="postform" action="{$LIVE_INDEX_FILE}" method="POST" enctype="multipart/form-data">','<form id="postform" name="postform" action="{$LIVE_INDEX_FILE}" method="POST">')-->
+			<!--&IF($MAX_FILE_SIZE,'<form id="postform" name="postform" action="{$LIVE_INDEX_FILE}" method="POST" enctype="multipart/form-data" {$ALWAYS_NOKO}>','<form id="postform" name="postform" action="{$LIVE_INDEX_FILE}" method="POST" {$ALWAYS_NOKO}>')-->
 				<h2 class="formTitle"><!--&IF($IS_THREAD,' New reply [<a href="{$STATIC_INDEX_FILE}">Return</a>]','New thread')--></h2>
 				{$FORM_HIDDEN}
 				<div id="postformTable">
