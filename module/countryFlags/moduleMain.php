@@ -59,7 +59,9 @@ class moduleMain  extends abstractModuleMain {
 		}
 		
 		if(ip2long($iphost)!==false) {
-			
+			// initialize CountryName variable as blank string
+			$CountryName = '';
+
 			if ($record != ""){
 				$CountryID = $record->country->isoCode;
 				$CountryName = $record->country->name;
