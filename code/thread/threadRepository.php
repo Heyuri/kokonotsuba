@@ -428,7 +428,7 @@ class threadRepository {
 		// optionally exclude threads where OP is fully deleted
 		if (!$includeDeleted) {
 			// deleted = dp.open_flag = 0 AND dp.file_only = 0
-			$query .= " AND (t.thread_deleted IS NULL OR (t.thread_deleted = 1 AND t.thread_attachment_deleted = 1))";
+			$query .= " AND (COALESCE(t.thread_deleted, 0) = 0 OR COALESCE(t.thread_attachment_deleted, 0) = 1)";
 		}
 
 		// add ordering (sticky first)

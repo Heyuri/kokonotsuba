@@ -268,10 +268,10 @@ function sqlLatestDeletionEntry(string $deletedPostsTable): string {
 		SELECT d1.post_uid, d1.open_flag, d1.file_only, d1.by_proxy
 		FROM {$deletedPostsTable} d1
 		INNER JOIN (
-			SELECT post_uid, MAX(deleted_at) AS max_deleted_at
+			SELECT post_uid, MAX(id) AS max_id
 			FROM {$deletedPostsTable}
 			GROUP BY post_uid
 		) d2 ON d1.post_uid = d2.post_uid
-		     AND d1.deleted_at = d2.max_deleted_at
+		     AND d1.id = d2.max_id
 	";
 }
