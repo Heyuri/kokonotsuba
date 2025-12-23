@@ -418,6 +418,8 @@ class deletedPostsRepository {
 
 				-- Post data (may be null if the post itself is gone)
 				p.*,
+				-- thread op number
+				t.post_op_number,
 
 				-- Attachment belonging to THIS deletion event or, for post-level,
 				-- all attachments belonging to the post.
@@ -457,6 +459,8 @@ class deletedPostsRepository {
 
 			LEFT JOIN {$this->accountTable} da ON dp.deleted_by = da.id
 			LEFT JOIN {$this->accountTable} ra ON dp.restored_by = ra.id
+
+			LEFT JOIN {$this->threadTable} t on p.thread_uid = t.thread_uid
 		";
 	}
 

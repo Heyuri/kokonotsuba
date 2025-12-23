@@ -439,8 +439,11 @@ class deletedPostRenderer {
 			// flag to make sure the reply gets rendered using the OP template block
 			$renderAsOp = true;
 
+			// fetch thread number and default to zero if it isn't there for some reason
+			$threadNumber = $deletedEntry['post_op_number'] ?? 0;
+
 			// html of the post / thread
-			$postHtml = $postRenderer->render($deletedEntry, $templateValues, 0, false, [$deletedEntry], true, '', '', '', '', '', 0, false, $boardUrl, $renderAsOp);
+			$postHtml = $postRenderer->render($deletedEntry, $templateValues, $threadNumber, false, [$deletedEntry], true, '', '', '', '', '', 0, false, $boardUrl, $renderAsOp);
 		}
 		// if its a thread (and we're showing all) then render it along with its replies
 		elseif ($deletedEntry['is_op'] && $showAll) {
