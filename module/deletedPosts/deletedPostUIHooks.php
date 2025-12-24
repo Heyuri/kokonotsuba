@@ -232,7 +232,7 @@ class deletedPostUIHooks {
 
 		// Loop through the deleted_attachments to check 'open_flag' value
 		foreach ($post['attachments'] as $attachment) {
-			if (!isset($attachment['deletedPostId']) && !$attachment['deletedPostId']) {
+			if ((!isset($attachment['deletedPostId']) && !$attachment['deletedPostId']) || !$attachment['isDeleted']) {
 				// Handle the case where 'open_flag' is not 1
 				return;
 			}
