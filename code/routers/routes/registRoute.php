@@ -443,7 +443,7 @@ class registRoute {
 		$alwaysNoko = $this->board->getConfigValue('ALWAYS_NOKO', false);
 
 		// if noko is inside the email-field or always noko is enabled, then redirect to the thread
-		if((strstr($email, 'noko') && !strstr($email, 'nonoko')) || $alwaysNoko) {
+		if((strstr($email, 'noko') && !strstr($email, 'nonoko')) || ($alwaysNoko && !strstr($email, 'nonoko'))) {
 			$redirectReplyNumber = $no;
 			$redirect = $this->board->getBoardThreadURL($redirectReplyNumber);
 		} elseif(strstr($email, 'dump')) {

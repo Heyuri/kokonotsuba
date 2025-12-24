@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
 		const threadId = restoField ? restoField.value : "0";
 		const isReply = threadId !== "0";
 
-		const isNoko = (nokoBox && nokoBox.checked) || (emailValue.includes("noko") && !emailValue.includes("nonoko")) || alwaysNoko;
+		const isNoko = ((nokoBox && nokoBox.checked) || (emailValue.includes("noko") && !emailValue.includes("nonoko"))) || (alwaysNoko && !emailValue.includes("nonoko"));
 		const isDump = (dumpBox && dumpBox.checked) || emailValue.includes("dump");
 
 		const submitButton = event.submitter;
