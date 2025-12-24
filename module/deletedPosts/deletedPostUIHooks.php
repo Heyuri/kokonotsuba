@@ -64,14 +64,6 @@ class deletedPostUIHooks {
 
 		$moduleEngine->addRoleProtectedListener(
 			$requiredRole,
-			'ThreadCssClass',
-			function(&$threadCssClasses, $thread) {
-				$this->onRenderThreadCssClass($threadCssClasses, $thread);
-			}
-		);
-
-		$moduleEngine->addRoleProtectedListener(
-			$requiredRole,
 			'ModuleHeader',
 			function(&$moduleHeader) {
 				$this->onGenerateModuleHeader($moduleHeader);
@@ -257,21 +249,6 @@ class deletedPostUIHooks {
 		$isPostDeleted = $this->deletedPostUtility->isPostDeleted($post) && $onlyFileDeleted === 0;
 
 		$this->appendCssClassIf($postCssClasses, $isPostDeleted, 'deletedPost');
-	}
-	
-	private function onRenderThreadCssClass(string &$threadCssClasses, array $thread): void {
-		// is this being viewed from the module page?
-		$isModulePage = $this->deletedPostUtility->isModulePage();
-
-		// if this the module page, then return coz it should render like normal here
-		if($isModulePage) {
-			return;
-		}
-
-		// whether the thread is deleted or not
-		$isThreadDeleted = !empty($thread['thread_deleted']) && empty($thread['thread_attachment_deleted']);
-
-		$this->appendCssClassIf($threadCssClasses, $isThreadDeleted, 'deletedPost');
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
