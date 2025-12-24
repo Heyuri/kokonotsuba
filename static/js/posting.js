@@ -161,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			}
 
 			// --- Otherwise, redirect if redirectUrl exists ---
-			if (data.redirectUrl) {
+			if (data.redirectUrl || emailValue.includes("nonoko")) {
 				window.location.href = data.redirectUrl;
 				return;
 			}
