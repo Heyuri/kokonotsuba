@@ -43,7 +43,7 @@ function getBasePostQuery(string $postTable, string $deletedPostsTable, string $
 
 		-- Return *all* deletion entries for this post (post-level AND attachment-level)
 		LEFT JOIN $deletedPostsTable dp
-			ON dp.post_uid = p.post_uid
+			ON dp.post_uid = p.post_uid AND dp.open_flag = 1
 
 		-- Additional file rows (all attachments)
 		LEFT JOIN $fileTable f
