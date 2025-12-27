@@ -1,265 +1,149 @@
-/* LOL HEYURI
+/* 
+ * LOL HEYURI
  */
 
-/* Gallery (submodule) */
-const kkgal = {
-	startup: function () {
-		var df = $id("delform");
-		if (!df) return;
-		if (document.querySelector("#galfuncs")) return;
-		//df.insertAdjacentHTML("beforebegin", '<div id="galfuncs"><label><input type="checkbox" onchange="localStorage.setItem(\'galmode\',this.checked);"'+( localStorage.getItem("galmode")=="true" ? ' checked="checked"' : '')+'>Gallery mode</label></div>'); // disable "Gallery mode" checkbox in thread
-		$doc.body.insertAdjacentHTML("beforeend", `
-<div id="galframe">
-	<table id="galmain" cellspacing="0" cellpadding="5" height="100%"><tbody>
-		<tr><td id="galimgcontainer" style="text-align: center">
-			<a href="" id="galimgprev"></a>
-			<a href="" id="galimgnext"></a>
-			<img src="" alt="Gallery Image" id="galimg">
-		</td></tr>
-		<tr><td id="galctrl">
-			<div id="galctrl2"><a href="javascript:kkgal.contract();" title="close">&times;</a></div>
-		</td></tr>
-	</tbody></table>
-	<div id="galside">
-	</div>
-</div>
-		`);
-		kkgal.gframe = $id("galframe");
-		kkgal.gimg   = $id("galimg");
-		kkgal.gctrl  = $id("galctrl");
-		var side = $id("galside");
-		var sideInnerHTML = "";
-		for (var i = 0; i < kkimg.postimg.length; i++) {
-			var a   = kkimg.postimg[i].parentNode;
+(function() {
+	// declare namespace
+	var attachmentExpander = attachmentExpander || {};
 
-			var postEl = a.closest('.post[id^="p"]');
-			if (!postEl) continue;
-			var pno = postEl.id.substr(1);
-
-			sideInnerHTML += '<a href="javascript:kkgal.expand(\''+pno+'\');"><img id="galthumb'+pno+'" class="" src="'+kkimg.postimg[i].src+'" alt="'+kkimg.postimg[i].src+'"></a>';
-			kkgal.imgindex[i] = pno;
-		}
-		side.insertAdjacentHTML("beforeend", sideInnerHTML);
-		kkgal.getfit();
-		window.addEventListener("resize", kkgal._evresize);
-	},
-	reset: function () {
-		var df = $id("delform");
-		if (!df) return;
-		kkgal.contract();
-		var galfuncs = $id("galfuncs");
-		if (galfuncs) $del(galfuncs);
-		if (kkgal.gframe) $del(kkgal.gframe);
-		window.removeEventListener("resize", kkgal._evresize);
-	},
-	/* - */
-	gframe:	null,
-	gimg:	null,
-	gctrl:	null,
-	imgindex: Array(),
-	/* Event */
-	_evresize: function (event) {
-		kkgal.getfit();
-	},
-	_evkeydown: function (event) {
-		switch (event.key) {
-			case "ArrowLeft": case "ArrowUp": case "PageUp": // normal person keys (:^|)
-			case "h": case "k": // autist keys (hjkl)
-			case "<": case "[": // chad keys (*pounds keyboard*)
-			case "w": case "a": // gamer keys (wasd)
-				$id("galimgprev").click();
-				event.preventDefault();
-				break;
-			case "ArrowRight": case "ArrowDown": case "PageDown":
-			case "l": case "j":
-			case ">": case "]":
-			case "s": case "d":
-				$id("galimgnext").click();
-				event.preventDefault();
-				break;
-			case "Escape":
-			case "q":
-			case "x":
-				kkgal.contract();
-				event.preventDefault();
-				break;
-			case "Home":
-			case "^":
-				kkgal.expand(kkgal.imgindex[0]);
-				event.preventDefault();
-				break;
-			case "End":
-			case "$":
-				kkgal.expand(kkgal.imgindex[kkgal.imgindex.length-1]);
-				event.preventDefault();
-				break;
-			default:
-				if (event.key.match(/^\d$/i)) {
-					var i = parseInt(event.key) - 1;
-					if (typeof(kkgal.imgindex[i]) != "undefined")
-						kkgal.expand(kkgal.imgindex[i]);
-					event.preventDefault();
-				}
-				break;
-		}
-	},
-	/* Function */
-	getfit: function () {
-		var d = $doc.documentElement;
-		kkgal.gimg.style.maxWidth  = (d.clientWidth  - 300) + "px";
-		kkgal.gimg.style.maxHeight = (d.clientHeight - FONTSIZE*2.5) + "px";
-	},
-	expand: function (no = 0) {
-		$doc.addEventListener("keydown", kkgal._evkeydown);
-		var _a = $class("activethumb");
-		if (_a.length) _a[0].classList.remove("activethumb");
-		
-		if (!no) {
-		   var firstImg = $class("postimg")[0];
-		   if (firstImg) {
-			   var postEl0 = firstImg.closest('.post[id^="p"]');
-			   if (postEl0) no = postEl0.id.substr(1);
-		   }
-		}
-
-		for (var i = 0; i < kkimg.postimg.length; i++) {
-			var a   = kkimg.postimg[i].parentNode;
-			
-			var postEl = a.closest('.post[id^="p"]');
-			if (!postEl) continue;
-			var pno = postEl.id.substr(1);
-
-			if (pno == no) {
-				var thumb = $id("galthumb" + no);
-				thumb.classList.add("activethumb");
-				thumb.scrollIntoView({ behavior: "smooth", block: "center" });
-				var fs   = $q("#p" + pno + " .filesize")[0].cloneNode(true);
-				var prev = typeof(kkgal.imgindex[i-1]) != "undefined"
-						 ? kkgal.imgindex[i-1]
-						 : kkgal.imgindex[kkgal.imgindex.length-1];
-				var next = typeof(kkgal.imgindex[i+1]) != "undefined"
-						 ? kkgal.imgindex[i+1]
-						 : kkgal.imgindex[0];
-				kkgal.gimg.src               = a.href;
-				$id("galimgprev").href       = "javascript:kkgal.expand('" + prev + "');";
-				$id("galimgnext").href       = "javascript:kkgal.expand('" + next + "');";
-				kkgal.gctrl.innerHTML        =
-					'<div id="galctrl2"><a href="javascript:kkgal.expand(\''+prev+'\');" title="Previous">&#9664;</a> '
-				  + '<a href="javascript:kkgal.expand(\''+next+'\');" title="Next">&#9654;</a> '
-				  + '<a href="javascript:kkgal.contract();" title="Close">&times;</a></div>';
-				kkgal.gctrl.appendChild(fs);
-			}
-		}
-		kkgal.gframe.style.display    = "flex";
-		$doc.body.style.overflow      = "hidden";
-		$id("hoverimg").style.display = "none";
-	},
-	contract: function (no = 0) {
-		$doc.removeEventListener("keydown", kkgal._evkeydown);
-		kkgal.gframe.style.display = "none";
-		$doc.body.style.overflow   = "";
-	},
-};
-
-/* Module */
-const kkimg = { name: "KK Image Features",
-	startup: function () {
-		if (!localStorage.getItem("imgexpand"))
+	attachmentExpander.startUpimageExpanding = function () {
+		// declare its localstorage value if its non-existant
+		if (!localStorage.getItem("imgexpand")) {
 			localStorage.setItem("imgexpand", "true");
-		kkimg.postimg = $class("postimg");
-		for (var i = 0; i < kkimg.postimg.length; i++) {
-			var a = kkimg.postimg[i].parentNode;
-			a.addEventListener("click",    kkimg._evexpand);
-			a.addEventListener("mouseover",kkimg._evhover1);
-			a.addEventListener("mouseout", kkimg._evhover2);
 		}
-		$doc.body.insertAdjacentHTML("beforeend",
+
+		// fetch all post images
+		let postAttachmentAnchors = document.getElementsByClassName("attachmentAnchor");
+		
+		// loop through anchors so we can add listeners for all of them
+		postAttachmentAnchors.forEach(anchor => {
+			// image expand listener
+			anchor.addEventListener("click",    attachmentExpander.expandAttachment(anchor));
+			
+			// image hover expansion listener
+			anchor.addEventListener("mouseover",attachmentExpander.hoverMouseOver(anchor));
+			
+			// clear image hover listener
+			anchor.addEventListener("mouseout", attachmentExpander.hoverMouseOut());
+		});
+
+		// append image hover element 
+		document.body.insertAdjacentHTML("beforeend",
 			'<img id="hoverimg" src="" alt="Full Image" '
 			+ 'onerror="this.style.display=\'\';" '
 			+ 'onload="this.style.display=\'inline-block\';" border="1">'
 		);
-		kkgal.startup();
-		return true;
 	},
-	reset: function () {
-		if (!kkimg.postimg) {
-			console.log("ERROR: Reset expand not initialized!");
-			return;
-		}
-		kkgal.reset();
-		for (var i = 0; i < kkimg.postimg.length; i++) {
-			var a  = kkimg.postimg[i].parentNode;
-			
-			var postEl = a.closest('.post[id^="p"]');
-			if (postEl) {
-				var no = postEl.id.substr(1);
-				var container = a.closest('.attachmentContainer');
-				var index = container?.dataset.attachmentIndex;
-				kkimg.contract(no, index);
+
+	attachmentExpander.expandAttachmentError = function([no, index]) {
+		// get the post element by its id
+		let postElement = document.getElementById("p"+no);
+		
+		// then select the expanded element so we can display an error within it
+		let expandedAttachment = postElement.getElementsByClassName("expand")[0];
+		
+		// append error span
+		expandedAttachment.innerHTML = '<span class="error">Error loading file!</span> [<a class="attachmentCloseButton">Close</a>]';
+	},
+
+	attachmentExpander.hoverMouseOn = function (anchor) {
+		// exit if hover previews are disabled in user settings
+		if (localStorage.getItem("imghover") != "true") return;
+
+		// fetch the hover image
+		let hoverImage = document.getElementById("hoverimg");
+
+		// set preview image source to the hovered link's URL
+		// this triggers the image's onload handler to display it
+		hoverImage.src = anchor.href;
+	},
+
+	attachmentExpander.hoverMouseOut = function () {
+		// get the shared hover preview image
+		let hoverImage = document.getElementById("hoverimg");
+
+		// hide the preview image
+		hoverImage.style.display = "";
+
+		// clear the image source to stop displaying the preview
+		hoverImage.src = "";
+	},
+
+	attachmentExpander.resetAttachmentExpansion = function () {
+		// get all attachment anchors
+		let postAttachmentAnchors = document.getElementsByClassName("attachmentAnchor");
+
+		postAttachmentAnchors.forEach(anchor => {
+			// get post element so we can get the post uid
+			let post = anchor.closest('.post[id^="p"]');
+			if (post) {
+				// get index data-* attribute
+				let index = anchor.dataset.attachmentIndex;
+				
+				// then contract the attachment
+				attachmentExpander.contractAttachment(post, index);
 			}
 
-			a.removeEventListener("click",    kkimg._evexpand);
-			a.removeEventListener("mouseover",kkimg._evhover1);
-			a.removeEventListener("mouseout", kkimg._evhover2);
-		}
-		$del($id("hoverimg"));
+			// remove image expand listener
+			anchor.removeEventListener("click", attachmentExpander.expandAttachment(anchor));
+			
+			// remove image hover expansion listener
+			anchor.removeEventListener("mouseover",attachmentExpander.hoverMouseOver(anchor));
+			
+			// remove clear image hover listener
+			anchor.removeEventListener("mouseout", attachmentExpander.hoverMouseOut());
+		});
+
+		// get hover img element
+		let hoverImage = document.getElementById("hoverimg");
+
+		// delete it
+		hoverImage.remove();
 	},
-	sett: function(tab, div) { if (tab!="general") return;
+
+	attachmentExpander.appendSettings = function(tab, div) { if (tab!="general") return;
 		div.innerHTML+= `
 			<label><input type="checkbox" onchange="localStorage.setItem('imgexpand',this.checked);kkimg.reset();kkimg.startup();"`+(localStorage.getItem("imgexpand")=="true"?' checked="checked"':'')+`>Inline image expansion</label>
 			<label><input type="checkbox" onchange="localStorage.setItem('imghover',this.checked);$id('hoverimg').src='';"`+(localStorage.getItem("imghover")=="true"?' checked="checked"':'')+`>Image hover</label>
 			<label><input type="checkbox" onchange="localStorage.setItem('galmode',this.checked);kkgal.reset();kkgal.startup();"`+(localStorage.getItem("galmode")=="true"?' checked="checked"':'')+`>Gallery mode</label>`;
 	},
-	/* - */
-	postimg: null,
-	imgext: Array("png","jpg","jpeg","gif","giff","bmp","jfif"),
-	vidext: Array("webm","mp4"),
-	swfext: Array("swf"),
-	/* event */
-	_evexpand: function (event) {
-		var postEl = this.closest('.post[id^="p"]');
 
-		if (!postEl) return;
-		var no = postEl.id.substr(1);
-		
-		if (localStorage.getItem("galmode")=="true") {
-			kkgal.expand(no);
-			event.preventDefault();
-			return;
-		}
+	attachmentExpander.expandAttachment = function (anchor) {
+		let post = anchor.closest('.post[id^="p"]');
+
+		if (!post) return;
+		let no = postEl.id.substr(1);
+
 		if (localStorage.getItem("imgexpand")!="true") return;
-		// get the attachment container wrapping this <a><img>
-		let container = this.closest(".attachmentContainer");
-		let index = container?.dataset.attachmentIndex;
 
-		if (kkimg.expand(no, index)) event.preventDefault();
-	},
-	_evhover1: function (event) {
-		if (localStorage.getItem("imghover")!="true") return;
-		$id("hoverimg").src = this.href;
-	},
-	_evhover2: function (event) {
-		var hi = $id("hoverimg");
-		hi.style.display = "";
-		hi.src = "";
-	},
-	/* function */
-	expand: function (no, index) {
-		var p = $id("p" + no);
-		var container = p.querySelector('.attachmentContainer[data-attachment-index="'+index+'"]');
+		let index = anchor.dataset.attachmentIndex;
+
+		if (attachmentExpander.handleExpansion(post, no, anchor, index)) {
+			anchor.preventDefault();
+		}
+	}
+
+	attachmentExpander.handleExpansion = function (post, no, anchor, index) {
+		// select the attachment container at the index
+		var container = post.querySelector('.attachmentContainer[data-attachment-index="'+index+'"]');
+		
+		// if the container doesn't exist then return early
 		if (!container) return;
 
-		var thumb = container.querySelector(".postimg");
+		// no anchor - return
+		if (!anchor) return;
 
-		if (!thumb) return;
-		var a    = thumb.parentNode;
-		if (!a||a.tagName!=="A") return;
-		var ext  = a.href.split(".").pop().toLowerCase();
+		// get extension from the href link
+		let ext  = anchor.href.split(".").pop().toLowerCase();
 
-		a.style.display = "none";
-		if (p.getBoundingClientRect().top < 0) p.scrollIntoView();
+		// hide anchor
+		anchor.style.display = "none";
 
-		if (kkimg.imgext.includes(ext)) {
+		// scroll the post into view
+		if (post.getBoundingClientRect().top < 0) post.scrollIntoView();
+
+		// add expanded image html
+		if (attachmentExpander.imageExtensions.includes(ext)) {
 			a.insertAdjacentHTML("afterend", '<div class="expand" data-attachment-index="'+index+'">'+
 				'<a href="'+a.href+'" onclick="event.preventDefault();kkimg.contract(\''+no+'\', '+index+');">'+
 				'<img src="'+a.href+'" alt="Full image" onerror="kkimg.error(\''+no+'\');" class="expandimg" title="Click to contract" border="0">'+
@@ -313,7 +197,7 @@ const kkimg = { name: "KK Image Features",
 			// close header
 			header.className    = "swf-expand-header";
 			header.style.height = hdr + "px";
-			header.innerHTML    = '[<a href="javascript:kkimg.contract(\''+no+'\', '+index+');">Close</a>]';
+			header.innerHTML    = '[<a>Close</a>]';
 			container.appendChild(header);
 
 			// insert & hide original link
@@ -354,32 +238,22 @@ const kkimg = { name: "KK Image Features",
 			return true;
 		}
 		return false;
-	},
-	contract: function (no, index) {
-		var p   = $id("p" + no);
-		var exp = p.querySelector('.expand[data-attachment-index="'+index+'"]');
+	}
+
+	attachmentExpander.contractAttachment = function () {
+		var anchor = p.querySelector('.expand[data-attachment-index="'+index+'"]');
 		if (!exp) return;
 
 		// Restore the original <a>
 		var a = exp.previousElementSibling;
-		if (a && a.tagName === "A") a.style.display = "";
+		if (anchor) a.style.display = "";
 
 		// Remove the expanded container
 		exp.remove();
 
 		// Scroll into view if needed
 		if (p.getBoundingClientRect().top < 0) p.scrollIntoView();
-	},
-	error: function (no) {
-		var p   = $id("p"+no),
-			exp = p.getElementsByClassName("expand")[0];
-		exp.innerHTML = '<span class="error">Error loading file!</span> [<a href="javascript:kkimg.contract(\''+no+'\', '+index+');">Close</a>]';
 	}
-};
 
-/* Register */
-if (typeof(KOKOJS)!="undefined") {
-	kkjs.modules.push(kkimg);
-} else {
-	console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");
-}
+	attachmentExpander.startUpimageExpanding();
+})

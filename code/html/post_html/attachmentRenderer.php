@@ -246,7 +246,7 @@ class attachmentRenderer {
 		$imgTag .= '>';
 
 		// Wrap the image in a clickable link to the full image
-		return '<a href="' . $imageURL . '" target="_blank" rel="nofollow">' . $imgTag . '</a>';
+		return '<a href="' . $imageURL . '" target="_blank" rel="nofollow" class="attachmentAnchor">' . $imgTag . '</a>';
 	}
 
 	/**
