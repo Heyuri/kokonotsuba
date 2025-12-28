@@ -217,6 +217,13 @@
 	font-weight: bold;
 }
 
+.managepostsCommentWrapper {
+	max-height: 200px;
+	overflow: auto;
+	word-wrap: break-word;
+	word-break: break-word;
+}
+
 /************************ Mobile **************************************/
 
 @media screen and (max-width: 650px) {
