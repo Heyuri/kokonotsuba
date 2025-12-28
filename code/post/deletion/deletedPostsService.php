@@ -653,6 +653,12 @@ class deletedPostsService {
 			// Construct file objects from the attachments array
 			$attachmentsToMove = constructAttachmentsFromArray($attachments);
 
+			// return early if theres no attachments to move
+			// doing this prevents query errors since an IN clause cant take no values
+			if(!$attachmentsToMove) {
+				return;
+			}
+
 			// Insert deleted_posts rows for each attachment
 			$this->insertDeletedPostRowsForFiles($attachmentsToMove, $deletedBy);
 

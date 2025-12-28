@@ -226,7 +226,7 @@ $language['no_attachment_ever']         = 'There was no attachment on this post 
 $language['blanket_error'] = "There has been an error. (;´Д`)";
 $language['comment_too_long'] = "Comment too long, view post %s to see the full comment.";
 $language['post_not_found'] = "Post not found!";
-
+$language['module_route_not_found'] = "Module route not found!";
 
 
 ?>

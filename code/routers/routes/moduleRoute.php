@@ -17,17 +17,19 @@ class moduleRoute {
 			$moduleMode = $_REQUEST['moduleMode'] ?? '';
 
 			if ($moduleMode === 'admin') {
-				if (method_exists($moduleInstance['moduleAdmin'], 'ModulePage')) {
+				if (isset($moduleInstance['moduleAdmin']) && method_exists($moduleInstance['moduleAdmin'], 'ModulePage')) {
 					$moduleInstance['moduleAdmin']->authenticateRequest();
 					$moduleInstance['moduleAdmin']->ModulePage();
 				}
 			} elseif ($moduleMode === 'javascript') {
-				if (method_exists($moduleInstance['moduleJavascript'], 'ModulePage')) {
+				if (isset($moduleInstance['moduleJavascript']) && method_exists($moduleInstance['moduleJavascript'], 'ModulePage')) {
 					$moduleInstance['moduleJavascript']->ModulePage();
 				}
 			} else {
-				if (method_exists($moduleInstance['moduleMain'], 'ModulePage')) {
+				if (isset($moduleInstance['moduleMain']) && method_exists($moduleInstance['moduleMain'], 'ModulePage')) {
 					$moduleInstance['moduleMain']->ModulePage();
+				} else {
+					throw new BoardException(_T('module_route_not_found'), 404);
 				}
 			}
 
