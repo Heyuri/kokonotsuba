@@ -226,8 +226,10 @@ $language['no_attachment_ever']         = 'Bu postta zaten hiçbir dosya yoktu!'
 $language['blanket_error'] = "Bir yerlerde bir şeyler yanlış gitti. (;´Д`)";
 $language['comment_too_long'] = "Yorum fazla uzun, tümünü görüntülemek için %s postuna bakın.";
 $language['post_not_found'] = "Post bulunamadı!";
+$language['module_route_not_found'] = "Modül rotası bulunamadı!";
 
 ?>
+
 
 
 
