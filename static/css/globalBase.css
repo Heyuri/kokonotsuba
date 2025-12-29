@@ -40,6 +40,10 @@
 	background: rgba(0, 0, 0, 0.05);
 }
 
+.managepostsCommentWrapper {
+	word-break: break-word;
+}
+
 /************************ Hachi stuff *************************/
 
 .detailsbox {
