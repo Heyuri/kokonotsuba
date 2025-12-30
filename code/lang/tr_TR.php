@@ -217,6 +217,8 @@ $language['online_counter_minute_multiple'] = 'dakika';
 // search
 $language['no_search_field']                = "Arama yapılacak alan seçilmedi!";
 $language['no_search_method']               = "Arama yöntemi seçilmedi!";
+// displayIp
+$language['posts_itt_display_ip']           = "Bu threaddeki postlar IP adreslerini gösterecektir.";
 
 // mainscript.js // regist_withoutcomment,regist_upload_notsupport,js_convert_sakura
 $language['js_convert_sakura']			= 'Big5 sakura Japanese characters detected, please try to convert to standard one.';
@@ -229,6 +231,7 @@ $language['post_not_found'] = "Post bulunamadı!";
 $language['module_route_not_found'] = "Modül rotası bulunamadı!";
 
 ?>
+
 
 
 
