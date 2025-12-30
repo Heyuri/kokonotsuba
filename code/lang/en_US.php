@@ -217,6 +217,8 @@ $language['online_counter_minute_multiple'] = 'minutes';
 // search
 $language['no_search_field'] = "No target search field was selected!";
 $language['no_search_method'] = "No search method was selected!";
+// displayIp
+$language['posts_itt_display_ip'] = "Posts in this thread will display IP addresses.";
 
 // mainscript.js // regist_withoutcomment,regist_upload_notsupport,js_convert_sakura
 $language['js_convert_sakura']			= 'Big5 sakura Japanese characters detected, please try to convert to standard one.';
@@ -230,6 +232,7 @@ $language['module_route_not_found'] = "Module route not found!";
 
 
 ?>
+
 
 
 
