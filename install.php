@@ -561,7 +561,36 @@ class tableCreator {
 				UNIQUE KEY unique_tripcode_is_secure (tripcode, is_secure),
 				CONSTRAINT fk_capcodes_added_by FOREIGN KEY (added_by) REFERENCES accounts(id) ON DELETE SET NULL
 			) ENGINE=InnoDB;
-			
+			",
+			"
+			CREATE TABLE spam_string_rules (
+				id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+				pattern TEXT NOT NULL,
+				max_distance TINYINT UNSIGNED DEFAULT NULL,
+				match_type ENUM('contains','exact', 'fuzzy', 'regex') NOT NULL DEFAULT 'contains',
+				apply_subject TINYINT(1) NOT NULL DEFAULT 1,
+				apply_comment TINYINT(1) NOT NULL DEFAULT 1,
+				apply_name TINYINT(1) NOT NULL DEFAULT 1,
+				apply_email TINYINT(1) NOT NULL DEFAULT 1,
+				case_sensitive TINYINT(1) NOT NULL DEFAULT 0,
+				is_active TINYINT(1) NOT NULL DEFAULT 1,
+				user_message TEXT DEFAULT NULL,
+				description TEXT DEFAULT NULL,
+				action ENUM('mute','reject','ban') NOT NULL DEFAULT 'reject',
+				created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				created_by INT NULL,
+
+				PRIMARY KEY (id),
+				INDEX idx_spam_active (is_active),
+				INDEX idx_spam_match_type (match_type),
+				INDEX idx_spam_created_by (created_by),
+
+				CONSTRAINT fk_spam_string_rules_created_by
+					FOREIGN KEY (created_by)
+					REFERENCES {$sanitizedTableNames['ACCOUNT_TABLE']}(id)
+					ON DELETE SET NULL
+					ON UPDATE CASCADE
+			) ENGINE=InnoDB;
 			"
 		];
 	
