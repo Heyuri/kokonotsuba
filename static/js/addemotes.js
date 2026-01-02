@@ -55,6 +55,7 @@ const emotes_list = [
 	{src:"nagato.gif", value:":nagato:"},
 	{src:"kuma6.gif", value:":kuma6:"},
 	{src:"waha.gif", value:":waha:"},
+	{src:"hokke.gif", value:":hokke:"},
 ];
 
 const shift_jis = [
