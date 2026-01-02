@@ -698,3 +698,23 @@ function find_row_by_key_value(array $rows, string $key, $value): ?array {
 	// if no matching row is found, return null
 	return null;
 }
+
+/**
+ * Check whether the current HTTP request is a POST request.
+ *
+ * @return bool True if the request method is POST, false otherwise
+ */
+function isPostRequest(): bool {
+	// REQUEST_METHOD is set by the web server (e.g. GET, POST, PUT)
+	return ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
+}
+
+/**
+ * Check whether the current HTTP request is a GET request.
+ *
+ * @return bool True if the request method is GET, false otherwise
+ */
+function isGetRequest(): bool {
+	// Use null coalescing to avoid notices in non-HTTP contexts (CLI, tests)
+	return ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET';
+}
