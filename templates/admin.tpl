@@ -979,8 +979,8 @@ window.onload = function () {
 						<td>
 							<select id="spamAction" name="spamAction">
 								<option value="reject"<!--&IF($REJECT_SELECTED,' selected','')-->>Reject</option>
-								<option value="mute"<!--&IF($MUTE_SELECTED,' selected','')-->>Mute</option>
-								<option value="ban"<!--&IF($BAN_SELECTED,' selected','')-->>Ban</option>
+								<!--<option value="mute"<!--&IF($MUTE_SELECTED,' selected','')-->>Mute</option>-->
+								<!--<option value="ban"<!--&IF($BAN_SELECTED,' selected','')-->>Ban</option>-->
 							</select>
 						</td>
 					</tr>
@@ -1074,8 +1074,8 @@ window.onload = function () {
 							<div class="formItemDescription">What happens to the user or their post once its caught by the spam rule.</div>
 							<select id="spamAction" name="spamAction">
 								<option value="reject">Reject</option>
-								<option value="mute">Mute</option>
-								<option value="ban">Ban</option>
+								<!--<option value="mute">Mute</option>-->
+								<!--<option value="ban">Ban</option>-->
 							</select>
 						</td>
 					</tr>
