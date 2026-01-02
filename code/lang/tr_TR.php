@@ -229,8 +229,10 @@ $language['blanket_error'] = "Bir yerlerde bir şeyler yanlış gitti. (;´Д`)"
 $language['comment_too_long'] = "Yorum fazla uzun, tümünü görüntülemek için %s postuna bakın.";
 $language['post_not_found'] = "Post bulunamadı!";
 $language['module_route_not_found'] = "Modül rotası bulunamadı!";
+$language['anti_spam_message'] = "Postunuz anti-spam kurallarına takıldı. Bunun bir hata olduğunu düşünüyorsanız yetkililerle iletişime geçin.";
 
 ?>
+
 
 
 
