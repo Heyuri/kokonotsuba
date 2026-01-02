@@ -26,4 +26,5 @@ return [
 	'THREAD_REDIRECT_TABLE' => 'redirects', //for thread redirecting
 	'DELETED_POSTS_TABLE' => 'deleted_posts', // for storing meta-data on deleted posts
 	'CAPCODE_TABLE' => 'capcodes', // for storing capcode-related data
+	'SPAM_STRING_TABLE' => 'spam_string_rules',
 ];
