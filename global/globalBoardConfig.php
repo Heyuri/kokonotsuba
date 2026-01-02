@@ -88,6 +88,7 @@ $config['ModuleList'] = array(
 	'lockThread' => true,
 	'sticky' => true,
 	/* posting */
+	'antiSpam' => true,
 	'csrfPrevent' => true,
 	'bbCode' => true,
 	'wordFilter' => true,
