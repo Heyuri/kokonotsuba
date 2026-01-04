@@ -30,8 +30,6 @@ class postService {
 		$root = gmdate('Y-m-d H:i:s');
 		$isThread = false;
 
-		$board->incrementBoardPostNumber();
-
 		$threadUidFromUrl = $postRegistData->getThreadUidFromUrl();
 
 		if (!$threadUidFromUrl) {

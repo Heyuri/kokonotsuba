@@ -6,26 +6,30 @@ class boardPostNumbers {
 		private readonly string $postNumberTable
 	) {}
 
-	public function incrementBoardPostNumber(int $boardUid): void {
+	public function incrementBoardPostNumber(int $boardUid): int {
 		$query = "
 			INSERT INTO {$this->postNumberTable} (board_uid, post_number)
 			VALUES (:board_uid, 1)
-			ON DUPLICATE KEY UPDATE post_number = post_number + 1
+			ON DUPLICATE KEY UPDATE
+				post_number = LAST_INSERT_ID(post_number + 1)
 		";
 		$params = [':board_uid' => $boardUid];
 
 		$this->databaseConnection->execute($query, $params);
+
+		return (int) $this->databaseConnection->lastInsertId();
 	}
 
-	public function incrementBoardPostNumberMultiple(int $boardUid, int $count): void {
+	public function incrementBoardPostNumberMultiple(int $boardUid, int $count): int {
 		if ($count <= 0) {
-			return;
+			return 0;
 		}
 
 		$query = "
 			INSERT INTO {$this->postNumberTable} (board_uid, post_number)
 			VALUES (:board_uid, :count)
-			ON DUPLICATE KEY UPDATE post_number = post_number + VALUES(post_number)
+			ON DUPLICATE KEY UPDATE
+				post_number = LAST_INSERT_ID(post_number + VALUES(post_number))
 		";
 		$params = [
 			':board_uid' => $boardUid,
@@ -33,6 +37,8 @@ class boardPostNumbers {
 		];
 
 		$this->databaseConnection->execute($query, $params);
+
+		return (int) $this->databaseConnection->LastInsertId();
 	}
 
 	public function getLastPostNoFromBoard(int $boardUid): int {
