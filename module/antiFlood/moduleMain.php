@@ -69,7 +69,7 @@ class moduleMain extends abstractModuleMain {
 			// get the index file name (default to returning them to the last page if not)
 			$index = $this->getConfig('LIVE_INDEX_FILE', 'back');
 			
-			// send dummy json output for ajax uers
+			// send dummy json output for ajax users
 			if(isJavascriptRequest()) {
 				sendAjaxAndDetach(['redirectUrl' => $index]);
 			} else {
