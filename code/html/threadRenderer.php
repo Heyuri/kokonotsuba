@@ -16,7 +16,7 @@ class threadRenderer {
 	/**
 	 * Main render function to build full HTML of thread and replies.
 	 */
-	public function render(array $threads,
+	public function render(array $threadsInPage,
 			bool $isReplyMode,
 			array $thread,
 			array $posts, 
@@ -90,7 +90,7 @@ class threadRenderer {
 
 		// Navigation
 		if ($threadMode) {
-			$templateValues['{$THREADNAV}'] = buildThreadNavButtons($threads, $threadIterator, $this->config['PAGE_DEF']);
+			$templateValues['{$THREADNAV}'] = buildThreadNavButtons($threadsInPage, $threadIterator);
 		}
 
 		$threadHtml .= $this->templateEngine->ParseBlock('THREAD', $templateValues);

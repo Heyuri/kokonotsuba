@@ -266,7 +266,7 @@ class boardRebuilder {
 		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml(0, $pte_vals, $this->adminMode);
 
 		// render thread html
-		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threadsInPage, $pte_vals, $this->adminMode);
+		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $pte_vals, $this->adminMode);
 
 		// thread pager
 		$pte_vals['{$BOTTOM_PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'));
@@ -382,7 +382,7 @@ class boardRebuilder {
     	    : array_slice($threads, $page * $threadsPerPage, $threadsPerPage);
 
     	// Render thread data to PTE values
-    	$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $threads, $pte_vals);
+    	$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $pte_vals);
 
     	// Render page navigation
     	$pte_vals['{$BOTTOM_PAGENAV}'] = drawBoardPager(
@@ -518,10 +518,10 @@ class boardRebuilder {
 		return [$pte_vals, $headerHtml, $formHtml, $footHtml];
 	}
 
-	private function renderThreadsToPteVals(array $threadsInPage, threadRenderer $threadRenderer, array $allThreads, array $pte_vals, bool $adminMode = false): string {
+	private function renderThreadsToPteVals(array $threadsInPage, threadRenderer $threadRenderer, array $pte_vals, bool $adminMode = false): string {
 		$output = '';
 		foreach ($threadsInPage as $i => $data) {
-			$output .= $threadRenderer->render($allThreads,
+			$output .= $threadRenderer->render($threadsInPage,
 				false,
 				$data['thread'],
 				$data['posts'],
