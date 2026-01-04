@@ -400,7 +400,7 @@ class tableCreator {
 				CONSTRAINT fk_boardUID FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
 				CONSTRAINT fk_thread_uid FOREIGN KEY (`thread_uid`) REFERENCES `{$sanitizedTableNames['THREAD_TABLE']}`(`thread_uid`) ON DELETE CASCADE,
 				INDEX (`thread_uid`),
-				INDEX (`no`),
+				UNIQUE KEY uniq_board_no (boardUID, no),
 				FULLTEXT INDEX ft_com (com),
 				FULLTEXT INDEX ft_sub (sub),
 				FULLTEXT INDEX ft_name (name)
