@@ -411,4 +411,50 @@ class postRepository {
 		return range($startUid, $startUid + $count - 1);
 	}
 
+
+	/**
+	 * Fetch post UIDs that have the exact same comment content within a given time window.
+	 *
+	 * This is primarily used for spam detection by identifying repeated posts
+	 * made in a short period of time.
+	 *
+	 * - Matches posts by exact comment equality
+	 * - Restricts results to posts newer than the given time window (in seconds)
+	 * - Optionally excludes a known default comment if provided
+	 *
+	 * @param string      $comment        The comment content to match against existing posts
+	 * @param string|null $defaultComment A default/boilerplate comment to exclude, or null to disable exclusion
+	 * @param int         $timeWindow     Time window in seconds to look back from now
+	 *
+	 * @return array|null Returns an array of matching post UIDs, or null if none are found
+	 */
+	public function getRepeatedPosts(string $comment, ?string $defaultComment, int $timeWindow): ?array {
+		// Base query: find posts with the same comment within the given time window
+		$query = "
+			SELECT post_uid
+			FROM {$this->postTable}
+			WHERE com = :comment
+			AND root >= (UTC_TIMESTAMP() - INTERVAL :timeWindow SECOND)
+		";
+
+		// Base parameters for the query
+		$params = [
+			':comment' => $comment,
+			':timeWindow' => $timeWindow
+		];
+
+		// If a default comment is provided, explicitly exclude it
+		// This allows callers to skip spam checks for known boilerplate content
+		if ($defaultComment !== null) {
+			$query .= " AND com != :defaultComment";
+			$params[':defaultComment'] = $defaultComment;
+		}
+
+		// Execute the query and fetch results as a numeric index array
+		$result = $this->databaseConnection->fetchAllAsIndexArray($query, $params);
+
+		// Normalize empty result sets to null for easier upstream handling
+		return array_merge(...$result) ?: null;
+	}
+
 }
