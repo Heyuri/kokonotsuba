@@ -1324,12 +1324,6 @@ caption h3 {
 	min-width: 9.5em;
 }
 
-.managepostsCommentWrapper {
-	max-height: 200px;
-	overflow: auto;
-	word-wrap: break-word;
-}
-
 .username {
 	font-size: var(--font-size-small);
 }

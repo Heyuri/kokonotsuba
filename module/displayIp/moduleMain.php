@@ -44,7 +44,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function onRenderOpeningPost(array &$templateValues, array $post): void {
 		if ($this->IPTOGGLE == 1 && str_contains($post['email'], 'displayip')) {
-			$templateValues['{$COM}'] .= '<p class="ipWarning">Posts in this thread will display IP addresses.</p>';
+			$templateValues['{$COM}'] .= '<p class="ipWarning">'._T('posts_itt_display_ip').'</p>';
 		}
 	}
 

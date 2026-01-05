@@ -212,17 +212,17 @@ interface IBoard {
 	/**
 	 * Insert one new post number row into the board's counter table.
 	 *
-	 * @return void
+	 * @return int
 	 */
-	public function incrementBoardPostNumber(): void;
+	public function incrementBoardPostNumber(): int;
 
 	/**
 	 * Insert multiple new post number rows into the board's counter table.
 	 *
 	 * @param int $count Number of post numbers to reserve
-	 * @return void
+	 * @return int
 	 */
-	public function incrementBoardPostNumberMultiple(int $count): void;
+	public function incrementBoardPostNumberMultiple(int $count): int;
 
 	public function getConfigValue(string $key, $default = null, bool $throwOnMissing = false): mixed;
 

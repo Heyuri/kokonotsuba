@@ -925,5 +925,215 @@ window.onload = function () {
 			</tbody>
 		</table>
 	</div>
-
 <!--/&CAPCODE_INDEX-->
+
+<!--&ANTI_SPAM_ENTRY-->
+	<h3>View rule</h3>
+	[<a href="{$MODULE_URL}">Back</a>]
+	<div class="rulesetEntryContainer">
+		<form method="POST" action="{$MODULE_URL}">
+			<input name="entryId" value="{$ID}" type="hidden">
+			<input name="action" value="update" type="hidden">
+			<table class="ruleEntry">
+				<tbody>
+					<tr>
+						<td class="postblock"><label for="pattern">Pattern</label></td>
+						<td><textarea id="pattern" name="pattern"><!--&IF($PATTERN,'{$PATTERN}','')--></textarea></td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="matchType">Match type</label></td>
+						<td>
+							<select name="matchType">
+								<option value="contains"<!--&IF($CONTAINS_SELECTED,' selected','')-->>Contains</option>
+								<option value="exact"<!--&IF($EXACT_SELECTED,' selected','')-->>Exact match</option>
+								<option value="fuzzy"<!--&IF($FUZZY_SELECTED,' selected','')-->>Fuzzy</option>
+								<option value="regex"<!--&IF($REGEX_SELECTED,' selected','')-->>Regex</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="maxDistance">Distance</label></td>
+						<td>
+							<input id="maxDistance" name="maxDistance" min="0" max="4" type="number" value="<!--&IF($MAX_DISTANCE,'{$MAX_DISTANCE}','')-->">
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="fields">Fields</label></td>
+						<td>
+							<ul class="boardFilterList" id="fields">
+								<li><label><input type="checkbox" name="matchField[]" value="subject"<!--&IF($SUBJECT_SELECTED,' checked','')-->>Subject</label></li>
+								<li><label><input type="checkbox" name="matchField[]" value="comment"<!--&IF($COMMENT_SELECTED,' checked','')-->>Comment</label></li>
+								<li><label><input type="checkbox" name="matchField[]" value="name"<!--&IF($NAME_SELECTED,' checked','')-->>Name</label></li>
+								<li><label><input type="checkbox" name="matchField[]" value="email"<!--&IF($EMAIL_SELECTED,' checked','')-->>Email</label></li>
+							</ul>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="matchCase">Match case</label></td>
+						<td>
+							<label><input type="checkbox" id="matchCase" name="matchCase" value="1"<!--&IF($CASE_SENSITIVE,' checked','')-->>Case sensitive</label>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="spamAction">Action</label></td>
+						<td>
+							<select id="spamAction" name="spamAction">
+								<option value="reject"<!--&IF($REJECT_SELECTED,' selected','')-->>Reject</option>
+								<!--<option value="mute"<!--&IF($MUTE_SELECTED,' selected','')-->>Mute</option>-->
+								<!--<option value="ban"<!--&IF($BAN_SELECTED,' selected','')-->>Ban</option>-->
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="description">Description</label></td>
+						<td>
+							<textarea id="description" name="description" placeholder="Stops an advertising bot."><!--&IF($DESCRIPTION,'{$DESCRIPTION}','')--></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="isActive">Status</label></td>
+						<td>
+							<label><input type="checkbox" id="isActive" name="isActive" value="1"<!--&IF($IS_ACTIVE,' checked','')-->>Active</label>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="userMessage">User message</label></td>
+						<td>
+							<textarea id="userMessage" name="userMessage" placeholder="Your post contained content that tripped spam filters."><!--&IF($USER_MESSAGE,'{$USER_MESSAGE}','')--></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock">Date added</td>
+						<td><span class="spamRuleCreatedAt">{$CREATED_AT}</span></td>
+					</tr>
+					<tr>
+						<td class="postblock">Created by</td>
+						<td><span class="spamRuleCreatedBy"><!--&IF($CREATED_BY,'{$CREATED_BY}','<i>N/A</i>')--></span></td>
+					</tr>
+				</tbody>
+			</table>
+			<input type="submit" value="Submit">
+		</form>
+	</div>
+<!--/&ANTI_SPAM_ENTRY-->
+
+<!--&NEW_ENTRY_FORM-->
+	<div class="newEntryForm">
+		<form method="POST" action="{$MODULE_URL}">
+			<input name="action" value="addEntry" type="hidden">
+			<table>
+				<tbody>
+					<tr>
+						<td class="postblock"><label for="pattern">Pattern</label></td>
+						<td>
+							<div class="formItemDescription">The string you want to ban. Enter raw regex if using the regex match type.</div>
+							<textarea id="pattern" name="pattern" placeholder="Spicy viagra pills for just 19.31! a pop!" required><!--&IF($PATTERN_VALUE,'{$PATTERN_VALUE}','')--></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="matchType">Match type</label></td>
+						<td>
+							<div class="formItemDescription">The way strings are checked. </div>
+							<select name="matchType">
+								<option value="contains">Contains</option>
+								<option value="exact">Exact match</option>
+								<option value="fuzzy">Fuzzy</option>
+								<option value="regex">Regex</option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="maxDistance">Distance</label></td>
+						<td>
+							<div class="formItemDescription">For the fuzzy match type. The higher the distance, the less strict it is. Higher values may increase cases of false positives.</div>
+							<input id="maxDistance" name="maxDistance" min="0" max="4" type="number" value="3">
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="fields">Fields</label></td>
+						<td>
+							<div class="formItemDescription">The fields that will be checked when the post is submitted.</div>
+							<ul class="boardFilterList" id="fields">
+								<li><label><input type="checkbox" name="matchField[]" value="subject" checked>Subject</label></li>
+								<li><label><input type="checkbox" name="matchField[]" value="comment" checked>Comment</label></li>
+								<li><label><input type="checkbox" name="matchField[]" value="name" checked>Name</label></li>
+								<li><label><input type="checkbox" name="matchField[]" value="email" checked>Email</label></li>
+							</ul>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="matchCase">Match case</label></td>
+						<td>
+							<div class="formItemDescription">Whether it should be case sensitive.</div>
+							<label><input type="checkbox" id="matchCase" name="matchCase" value="1">Case sensitive</label>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="spamAction">Action</label></td>
+						<td>
+							<div class="formItemDescription">What happens to the user or their post once its caught by the spam rule.</div>
+							<select id="spamAction" name="spamAction">
+								<option value="reject">Reject</option>
+								<!--<option value="mute">Mute</option>-->
+								<!--<option value="ban">Ban</option>-->
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="description">Description</label></td>
+						<td>
+							<div class="formItemDescription">Describes what the filter is for.</div>
+							<textarea id="description" name="description" placeholder="Stops an advertising bot."></textarea>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="userMessage">User message</label></td>
+						<td>
+							<div class="formItemDescription">The error message a user will see if they trip the spam rule. (Leave blank for a default message)</div>
+							<textarea id="userMessage" name="userMessage" placeholder="Your post contained content that tripped spam filters."></textarea>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<div class="buttonSection">
+				<input type="submit" value="Submit">
+			</div>
+		</form>
+	</div>
+<!--/&NEW_ENTRY_FORM-->
+
+<!--&SPAM_ROW-->
+	<tr>
+		<td><div class="centerText"><input name="entryIDs[]" type="checkbox" value="{$ID}"></div></td>
+		<td>{$PATTERN}</td>
+		<td><!--&IF($IS_ACTIVE,'Yes','No')--></td>
+		<td><!--&IF($DESCRIPTION,'{$DESCRIPTION}','')--></td>
+		<td><!--&IF($ACTION,'{$ACTION}','')--></td>
+		<td><!--&IF($MATCH_TYPE,'{$MATCH_TYPE}','')--></td>
+		<td><!--&IF($APPLIED_FIELDS,'{$APPLIED_FIELDS}','')--></td>
+		<td><a href="{$VIEW_ENTRY_URL}">View</a></td>
+	</tr>
+<!--/&SPAM_ROW-->
+
+<!--&ANTI_SPAM_INDEX-->
+	<h3>Anti-spam management</h3>
+	<h4>Add new rule</h4>
+	<!--&NEW_ENTRY_FORM/--> 
+	<div class="spamRulesContainer">
+		<h4>Spam ruleset</h4>
+		<p>Anti-spam rules that every new post submission is checked against for active entries.</p>
+		<form action="{$MODULE_URL}" method="POST">
+			<input type="hidden" name="action" value="delete">
+			<table class="spamList postlists">
+				<thead>
+					<th>Delete</th> <th>Pattern</th> <th>Active?</th> <th>Description</th> <th>Action</th> <th>Match type</th> <th>Fields</th> <th></th>
+				</thead>
+				<tbody>
+					<!--&FOREACH($ROWS,'SPAM_ROW')-->
+				</tbody>
+			</table>
+			<input type="submit" value="Submit">
+		</form>
+	</div>
+<!--/&ANTI_SPAM_INDEX-->

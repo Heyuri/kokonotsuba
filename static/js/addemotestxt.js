@@ -58,8 +58,8 @@ const bbcode = [
 	{meaning: "<b>B</b>", title: "Bold", code:"b"},
 	{meaning: "<i>I</i>", title: "Italics", code:"i"},
 	{meaning: "<u>U</u>", title: "Underline", code:"u"},
-	{meaning: "<s>S</s>", title: "Strikethrough", code:"del"},
-	{meaning: "<span style='background-color:black;color:white'>Spoiler</span>", title: "Spoiler", code:"s"},
+	{meaning: "<s>S</s>", title: "Strikethrough", code:"s"},
+	{meaning: "<span style='background-color:black;color:white'>Spoiler</span>", title: "Spoiler", code:"spoiler"},
 	{meaning: "<q>Quote</q>", title: "Blockquote", code:"quote"},
 	{meaning: "Scroll", title: "Scrollbar for long passages of text", code:"scroll"},
 ];

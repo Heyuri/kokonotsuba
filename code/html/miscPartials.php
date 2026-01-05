@@ -127,33 +127,27 @@ function drawBoardTable(string $liveIndexFile, array $boards): string {
 	return $dat;
 }
 
-function buildThreadNavButtons(array $threadList, int $threadInnerIterator, int $threadsPerPage): string {
+function buildThreadNavButtons(array $threadList, int $threadInnerIterator): string {
 	if (!$threadList || !isset($threadList[$threadInnerIterator]['thread'])) return '';
-	
-	$offset = intdiv($threadInnerIterator, $threadsPerPage) * $threadsPerPage;
-
-	// Slice the list to only the current page range
-	$threadList = array_slice($threadList, $offset, $threadsPerPage);
-	$currentIndex = $threadInnerIterator % $threadsPerPage;
 	
 	$upArrow = '';
 	$downArrow = '';
 	$postFormButton = '<a title="Go to post form" href="#postform">&#9632;</a>';
 	
-	// Up arrow (previous thread)
-	if ($currentIndex > 0 && isset($threadList[$currentIndex - 1]['thread'])) {
-		$aboveThread = $threadList[$currentIndex - 1]['thread'];
+	// Up arrow (previous thread on this page)
+	if ($threadInnerIterator > 0 && isset($threadList[$threadInnerIterator - 1]['thread'])) {
+		$aboveThread = $threadList[$threadInnerIterator - 1]['thread'];
 		$upArrow = '<a title="Go to above thread" href="#t' . htmlspecialchars($aboveThread['boardUID']) . '_' . htmlspecialchars($aboveThread['post_op_number']) . '">&#9650;</a>';
 	}
 	
-	// Down arrow (next thread)
-	if ($currentIndex < count($threadList) - 1 && isset($threadList[$currentIndex + 1]['thread'])) {
-		$belowThread = $threadList[$currentIndex + 1]['thread'];
+	// Down arrow (next thread on this page)
+	if ($threadInnerIterator < count($threadList) - 1 && isset($threadList[$threadInnerIterator + 1]['thread'])) {
+		$belowThread = $threadList[$threadInnerIterator + 1]['thread'];
 		$downArrow = '<a title="Go to below thread" href="#t' . htmlspecialchars($belowThread['boardUID']) . '_' . htmlspecialchars($belowThread['post_op_number']) . '">&#9660;</a>';
 	}
 	
 	return $postFormButton . $upArrow . $downArrow;
-}	
+}
 
 function fullURL(): string {
 	return '//'.$_SERVER['HTTP_HOST'];

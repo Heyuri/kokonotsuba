@@ -22,36 +22,82 @@ class moduleMain extends abstractModuleMain {
 		$this->RENZOKU3 = $this->getConfig('ModuleSettings.RENZOKU3', 0);
 
 		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
-			$this->onBeforeCommit($isReply);  // Call the method to modify the form
+			$this->onBeforeCommit($isReply, $com);
 		});
 	}
 	
-	private function onBeforeCommit(bool $isReply): void{
-		//$this->preventFloodPost();
-
+	private function onBeforeCommit(bool $isReply, string $comment): void{
+		// flood/spam-prevention logic for posts (replies and threads) as a whole
+		$this->preventFloodPost($comment);
 		
+		// reply-specific logic
+		// Commented out for now
 		if($isReply) {
-		//	$this->preventFloodThread();
+			//$this->preventFloodReply();
 		}
+		// prevent flooding for thread submissions
 		else {
-
-		//	$this->preventFloodReply();
+			$this->preventFloodThread();
 		}
 		return;
+	}
+
+	private function preventFloodPost(string $comment): void {
+		// get the time window for comments it'll grab.
+		// measured in seconds
+		$timeWindow = $this->getConfig('ModuleSettings.SAME_COMMENT_TIME_WINDOW', 30);
+
+		// return early if its 0 or negative
+		if(!$timeWindow || $timeWindow <= 0) {
+			return;
+		}
+
+		// get the default comment
+		$defaultComment = $this->getConfig('DEFAULT_NOCOMMENT');
+
+		// check if the comment is repeated in a certain time period
+		// it needs to be instance wide - mainly to prevent stuff like lazy bot spammers
+		$repeatedPosts = $this->moduleContext->postService->getRepeatedPosts($comment, $defaultComment, $timeWindow);
+
+		// if its a repeated comment and isn't the default comment - silently delete the previous threads and redirect
+		// Deleted posts are still visible to moderators so false-positives can be restored
+		// It doesn't serve an error because the bot or bot operator may have an automated way of detecting server errors and adjusting output
+		if($repeatedPosts) {
+			// now delete the posts themselves
+			$this->moduleContext->postService->removePosts($repeatedPosts);
+			
+			// get the index file name (default to returning them to the last page if not)
+			$index = $this->getConfig('LIVE_INDEX_FILE', 'back');
+			
+			// send dummy json output for ajax users
+			if(isJavascriptRequest()) {
+				sendAjaxAndDetach(['redirectUrl' => $index]);
+			} else {
+				// redirect to index
+				redirect($index);
+			}
+		}
+	}
+
+	private function preventFloodThread(): void {	
+		// get time difference from latest thread from board				
+		$timeDifference = $this->calculateTimeDifference();
 		
+		// if the time diference is a valid integer and the difference is below the minimum time window then prevent the thread creation 
+		if (is_int($timeDifference) && $timeDifference < $this->RENZOKU3) {
+			throw new BoardException('ERROR: Please wait a few seconds before creating a new thread.');
+		}
+	}
+
+	private function calculateTimeDifference(): ?int {
 		$lastThreadTimestamp = $this->moduleContext->threadRepository->getLastThreadTimeFromBoard($this->moduleContext->board);
-		if(!$lastThreadTimestamp) return;
+		if(!$lastThreadTimestamp) return null;
 		$currentTimestamp = new DateTime();
 		$timestampFromDatabase = new DateTime($lastThreadTimestamp);
 
 		$currentTimestampUnix      = $currentTimestamp->getTimestamp();
 		$timestampFromDatabaseUnix = $timestampFromDatabase->getTimestamp();
 			
-		$timeDifference = $currentTimestampUnix - $timestampFromDatabaseUnix;
-			
-		if ($timeDifference < $this->RENZOKU3) {
-			throw new BoardException('ERROR: Please wait a few seconds before creating a new thread.');
-		}
+		return $currentTimestampUnix - $timestampFromDatabaseUnix;
 	}
 }
-?>

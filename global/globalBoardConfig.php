@@ -88,6 +88,7 @@ $config['ModuleList'] = array(
 	'lockThread' => true,
 	'sticky' => true,
 	/* posting */
+	'antiSpam' => true,
 	'csrfPrevent' => true,
 	'bbCode' => true,
 	'wordFilter' => true,
@@ -134,6 +135,7 @@ $config['ModuleSettings']['JANIMUTE_REASON'] = 'You have been muted temporarily!
 
 //mod_antiflood
 $config['ModuleSettings']['RENZOKU3'] = 30; // How many seconds between new threads?
+$config['ModuleSettings']['SAME_COMMENT_TIME_WINDOW'] = 10; // How many seconds between posts that can have the same comment?
 
 //mod_showip
 $config['ModuleSettings']['IPTOGGLE'] = 1; // 1 to have OPs toggle IP display, 2 enables for all posts

@@ -293,12 +293,12 @@ class board implements IBoard {
 		return $footerHtml;
 	}
 
-	public function incrementBoardPostNumber(): void {
-		$this->boardPostNumbers->incrementBoardPostNumber($this->getBoardUID());
+	public function incrementBoardPostNumber(): int {
+		return $this->boardPostNumbers->incrementBoardPostNumber($this->getBoardUID());
 	}
 
-	public function incrementBoardPostNumberMultiple(int $count): void {
-		$this->boardPostNumbers->incrementBoardPostNumberMultiple($this->getBoardUID(), $count);
+	public function incrementBoardPostNumberMultiple(int $count): int {
+		return $this->boardPostNumbers->incrementBoardPostNumberMultiple($this->getBoardUID(), $count);
 	}
 
 	public function getLastPostNoFromBoard(): int {

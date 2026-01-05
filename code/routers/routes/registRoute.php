@@ -509,7 +509,7 @@ class registRoute {
 		// generate the password hash
 		$passwordHash = $this->generatePasswordHash($postData['pwd']);
 
-		$no = $this->board->getLastPostNoFromBoard() + 1;
+		$no = $this->board->incrementBoardPostNumber();
 		$is_op = $postData['resno'] ? false : true;
 		$now = $postDateFormatter->formatFromTimestamp($postData['time']);
 

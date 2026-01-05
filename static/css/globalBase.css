@@ -40,6 +40,10 @@
 	background: rgba(0, 0, 0, 0.05);
 }
 
+.managepostsCommentWrapper {
+	word-break: break-word;
+}
+
 /************************ Hachi stuff *************************/
 
 .detailsbox {
@@ -215,6 +219,13 @@
 	color: #af0a0f;
 	font-size: 1.125em;
 	font-weight: bold;
+}
+
+.managepostsCommentWrapper {
+	max-height: 200px;
+	overflow: auto;
+	word-wrap: break-word;
+	word-break: break-word;
 }
 
 /************************ Mobile **************************************/

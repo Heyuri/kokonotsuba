@@ -217,6 +217,8 @@ $language['online_counter_minute_multiple'] = 'minutes';
 // search
 $language['no_search_field'] = "No target search field was selected!";
 $language['no_search_method'] = "No search method was selected!";
+// displayIp
+$language['posts_itt_display_ip'] = "Posts in this thread will display IP addresses.";
 
 // mainscript.js // regist_withoutcomment,regist_upload_notsupport,js_convert_sakura
 $language['js_convert_sakura']			= 'Big5 sakura Japanese characters detected, please try to convert to standard one.';
@@ -227,9 +229,6 @@ $language['blanket_error'] = "There has been an error. (;´Д`)";
 $language['comment_too_long'] = "Comment too long, view post %s to see the full comment.";
 $language['post_not_found'] = "Post not found!";
 $language['module_route_not_found'] = "Module route not found!";
-
+$language['anti_spam_message'] = "Your post was caught by anti-spam rules. Contact staff if you think it was a mistake.";
 
 ?>
-
-
-

@@ -30,8 +30,6 @@ class postService {
 		$root = gmdate('Y-m-d H:i:s');
 		$isThread = false;
 
-		$board->incrementBoardPostNumber();
-
 		$threadUidFromUrl = $postRegistData->getThreadUidFromUrl();
 
 		if (!$threadUidFromUrl) {
@@ -185,5 +183,18 @@ class postService {
 		}
 
 		return $replies;
+	}
+
+	public function getRepeatedPosts(string $comment, ?string $defaultComment, int $timeWindow): ?array {
+		// if the comment equals the default comment then return null since it can't be spam
+		if(strip_tags($comment) === $defaultComment) {
+			return null;
+		}
+		
+		// fetch post uids of posts with the same comment
+		$repeatedPosts = $this->postRepository->getRepeatedPosts($comment, $defaultComment, $timeWindow);
+	
+		// return the posts
+		return $repeatedPosts;
 	}
 }
