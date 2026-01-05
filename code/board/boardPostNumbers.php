@@ -9,7 +9,7 @@ class boardPostNumbers {
 	public function incrementBoardPostNumber(int $boardUid): int {
 		$query = "
 			INSERT INTO {$this->postNumberTable} (board_uid, post_number)
-			VALUES (:board_uid, 1)
+			VALUES (:board_uid, LAST_INSERT_ID(1))
 			ON DUPLICATE KEY UPDATE
 				post_number = LAST_INSERT_ID(post_number + 1)
 		";

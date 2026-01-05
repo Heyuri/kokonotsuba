@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\antiFlood;
 
 use BoardException;
 use DateTime;
+use DateTimeZone;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;
 
 class moduleMain extends abstractModuleMain {
@@ -71,33 +72,64 @@ class moduleMain extends abstractModuleMain {
 			
 			// send dummy json output for ajax users
 			if(isJavascriptRequest()) {
+				// send ajax
 				sendAjaxAndDetach(['redirectUrl' => $index]);
+
+				$this->handlePageRebuilding($repeatedPosts);
+
+				exit;
 			} else {
+				$this->handlePageRebuilding($repeatedPosts);
+				
 				// redirect to index
 				redirect($index);
 			}
 		}
 	}
 
+	private function handlePageRebuilding(array $postUids): void {
+		// get the board uids of posts
+		$boardUids = $this->moduleContext->postRepository->getBoardUidsFromPostUids($postUids);
+
+		// dont bother if they dont exist
+		if(!$boardUids) {
+			return;
+		}
+
+		// now get the boards
+		$boardsToRebuild = getBoardsByUIDs($boardUids);
+
+		// then rebuild
+		rebuildBoardsByArray($boardsToRebuild);
+	}
+
 	private function preventFloodThread(): void {	
 		// get time difference from latest thread from board				
 		$timeDifference = $this->calculateTimeDifference();
-		
+
 		// if the time diference is a valid integer and the difference is below the minimum time window then prevent the thread creation 
-		if (is_int($timeDifference) && $timeDifference < $this->RENZOKU3) {
+		if (is_int($timeDifference) &&  $this->RENZOKU3 && $timeDifference < $this->RENZOKU3) {
 			throw new BoardException('ERROR: Please wait a few seconds before creating a new thread.');
 		}
 	}
 
 	private function calculateTimeDifference(): ?int {
+		// fetch the last timezone (local DB/server timezone)
 		$lastThreadTimestamp = $this->moduleContext->threadRepository->getLastThreadTimeFromBoard($this->moduleContext->board);
+
+		// don't bother if theres no last timezone - theres no anti-flooding to calcuate
 		if(!$lastThreadTimestamp) return null;
-		$currentTimestamp = new DateTime();
-		$timestampFromDatabase = new DateTime($lastThreadTimestamp);
+		
+		// init UTC timezone
+		$utcTimezone = new DateTimeZone('UTC');
+
+		$currentTimestamp = new DateTime('now', $utcTimezone);
+		$timestampFromDatabase = new DateTime($lastThreadTimestamp, $utcTimezone);
+
 
 		$currentTimestampUnix      = $currentTimestamp->getTimestamp();
 		$timestampFromDatabaseUnix = $timestampFromDatabase->getTimestamp();
-			
+
 		return $currentTimestampUnix - $timestampFromDatabaseUnix;
 	}
 }
