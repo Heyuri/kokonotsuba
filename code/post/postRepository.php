@@ -457,4 +457,22 @@ class postRepository {
 		return array_merge(...$result) ?: null;
 	}
 
+	public function getBoardUidsFromPostUids(array $postUids): false|array {
+		// declare base query
+		$query = "SELECT boardUID FROM {$this->postTable}";
+
+		// add where clause
+		$placeholders = pdoPlaceholdersForIn($postUids);
+		$query .= " WHERE post_uid IN $placeholders";
+
+		// fetch board uids
+		$boardUids = $this->databaseConnection->fetchAllAsIndexArray($query, $postUids);
+
+		if(!$boardUids) {
+			return false;
+		} else {
+			// return result
+			return array_merge(...$boardUids);
+		}
+	}
 }
