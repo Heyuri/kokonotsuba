@@ -221,7 +221,7 @@ class registRoute {
 	
 		$postOpRoot = 0;
 		$flgh = '';
-		$threadDeleted = $this->threadRepository->getThreadByUid($thread_uid)['thread_deleted'];
+		$threadDeleted = $this->threadRepository->getThreadByUid($thread_uid, true)['thread_deleted'] ?? false;
 		$up_incomplete = 0;
 		$is_admin = $roleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
 
