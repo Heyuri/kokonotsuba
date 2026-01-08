@@ -78,7 +78,7 @@ class registRoute {
 			$thread = $this->threadService->getThreadAllReplies($postData['thread_uid'], false, $previewCount);
 
 			// Step 3: Verify that thread exists
-			$this->postValidator->threadSanityCheck($postData['postOpRoot'], $postData['flgh'], $postData['thread_uid'], $postData['resno'], $postData['ThreadExistsBefore'], $thread);
+			$this->postValidator->threadSanityCheck($postData['postOpRoot'], $postData['flgh'], $postData['thread_uid'], $postData['resno'], $postData['threadDeleted'], $thread);
 
 			// Step 4: Process uploaded file (if any)
 			$fileMeta = $this->handleFileUpload($postData['isReply'], $thumbnailCreator, $imgDir);
@@ -221,7 +221,7 @@ class registRoute {
 	
 		$postOpRoot = 0;
 		$flgh = '';
-		$ThreadExistsBefore = $this->threadRepository->isThread($thread_uid);
+		$threadDeleted = $this->threadRepository->getThreadByUid($thread_uid, true)['thread_deleted'] ?? false;
 		$up_incomplete = 0;
 		$is_admin = $roleLevel === \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
 
@@ -238,7 +238,7 @@ class registRoute {
 			 'category' => $category, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip,
 			 'thread_uid' => $thread_uid, 'isReply' => $isReply, 'roleLevel' => $roleLevel, 'time' => $time,
 			 'timeInMilliseconds' => $timeInMilliseconds, 'postOpRoot' => $postOpRoot, 'flgh' => $flgh, 'age' => $age, 'status' => '',
-			 'ThreadExistsBefore' => $ThreadExistsBefore, 'up_incomplete' => $up_incomplete, 'is_admin' => $is_admin
+			 'threadDeleted' => $threadDeleted, 'up_incomplete' => $up_incomplete, 'is_admin' => $is_admin
 		];
 	}
 

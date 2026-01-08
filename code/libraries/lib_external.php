@@ -43,12 +43,22 @@ function getLatestPosts(array $sources) {
 		} else {
 			$date = (new DateTime())->setTimestamp($parts[0]);
 		}
+		
+		//  calculate time difference and generate string
+		if($date) {
+			$now = new DateTime();
 
-		$now = new DateTime();
-		$diff = $date->diff($now);
+			$diff = $date->diff($now);
+	
+			$differenceString = buildTimeDiffString($diff);
+		} 
+		// time difference couldn't be calculated
+		else {
+			$differenceString = 'N/A';
+		}
 
 		$output .= 'Last <a href="' . $source['url'] . '">' . $source['label'] . '</a> post was <b>' .
-			buildTimeDiffString($diff) .
+			$differenceString .
 			'</b> ago ' . $source['suffix'] . '<br>';
 	}
 
@@ -63,7 +73,7 @@ function getLatestPosts(array $sources) {
  * @param DateInterval $diff
  * @return string
  */
-function buildTimeDiffString($diff) {
+function buildTimeDiffString(DateInterval $diff) {
 	if ($diff->i == 0 && $diff->h == 0 && $diff->d == 0) {
 		return 'a few seconds';
 	}

@@ -74,7 +74,7 @@ class moduleMain extends abstractModuleMain {
 		fclose($fp);
 
 		// Return total active user count
-		return count($activeUsers);
+		return $this->countUniqueUsers($activeUsers);
 	}
 
 	/**
@@ -102,6 +102,38 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		return $activeUsers;
+	}
+
+	/**
+	 * Counts unique active users, grouping IPv4 addresses by /24
+	 * to prevent dynamic IPs from inflating the total.
+	 *
+	 * @param array $activeUsers Associative array in [ip => timestamp] format.
+	 * @return int Number of unique users.
+	 */
+	private function countUniqueUsers(array $activeUsers): int {
+		$uniqueUsers = [];
+
+		// get IPs
+		$activeIPs = array_keys($activeUsers);
+
+		foreach ($activeIPs as $ip) {
+			if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+				// Group IPv4 addresses by first three octets (/24)
+				$parts = explode('.', $ip);
+				$key = $parts[0] . '.' . $parts[1] . '.' . $parts[2];
+			} else {
+				// IPv6 addresses are counted individually
+				$key = $ip;
+			}
+
+			// Only count the first user seen per group
+			if (!isset($uniqueUsers[$key])) {
+				$uniqueUsers[$key] = true;
+			}
+		}
+
+		return count($uniqueUsers);
 	}
 
 	/**

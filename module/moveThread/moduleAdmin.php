@@ -95,7 +95,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$now = $postDateFormatter->formatFromTimestamp($time);
 
 		// Generate new post number
-		$no = $originalBoard->getLastPostNoFromBoard() + 1;
+		$no = $originalBoard->incrementBoardPostNumber();
 
 		// Determine name and capcode
 		$capcode = "";
