@@ -35,7 +35,7 @@
 		);
 	},
 
-	attachmentExpander.expandAttachmentError = function([no, index]) {
+	attachmentExpander.expandAttachmentError = function([no]) {
 		// get the post element by its id
 		let postElement = document.getElementById("p"+no);
 		
