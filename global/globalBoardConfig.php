@@ -91,6 +91,7 @@ $config['ModuleList'] = array(
 	'antiSpam' => true,
 	'csrfPrevent' => true,
 	'bbCode' => true,
+	'emoji' => true,
 	'wordFilter' => true,
 	'countryFlags' => false,
 	'animatedGif' => true,

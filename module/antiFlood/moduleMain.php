@@ -46,7 +46,7 @@ class moduleMain extends abstractModuleMain {
 	private function preventFloodPost(string $comment): void {
 		// get the time window for comments it'll grab.
 		// measured in seconds
-		$timeWindow = $this->getConfig('ModuleSettings.SAME_COMMENT_TIME_WINDOW', 30);
+		$timeWindow = $this->getConfig('ModuleSettings.SAME_COMMENT_TIME_WINDOW', 10);
 
 		// return early if its 0 or negative
 		if(!$timeWindow || $timeWindow <= 0) {

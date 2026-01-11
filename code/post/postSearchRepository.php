@@ -72,6 +72,9 @@ class postSearchRepository {
 		// exclude deleted posts
 		$query .= excludeDeletedPostsCondition();
 
+		// order it
+		$query .= " ORDER BY p.root DESC";
+
 		// append order / limit / offset
 		$query .= "
 			LIMIT $limit OFFSET $offset
