@@ -6,17 +6,12 @@ use Kokonotsuba\ModuleClasses\abstractModuleMain;
 
 class moduleMain extends abstractModuleMain {
 	private array $FILTERS;
-	private readonly string $staticUrl;
 
 	public function initialize(): void {
-		$this->staticUrl = $this->getConfig('STATIC_URL');
-		
 		$this->FILTERS = $this->getConfig('ModuleSettings.FILTERS');
 		
-		$this->addEmojiFilters();
-
 		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
-			$this->onBeforeCommit($com);  // Call the method to modify the form
+			$this->onBeforeCommit($com);
 		});
 	}
 		 
@@ -28,27 +23,15 @@ class moduleMain extends abstractModuleMain {
 		return 'Koko BBS Release 1';
 	}
 
-	private function addEmojiFilters() {
-		// get the emoji array from the file
-		$emojis = require __DIR__ . '/emojis.php';
-		
-		// loop through and add emoji filters
-		foreach ($emojis as $char => $name) {
-			// add filter
-			$this->FILTERS["/$char/u"] =
-				"<img class=\"emoji\" src=\"" . $this->staticUrl . "image/emoji/$name.gif\" title=\"$name\" alt=\"$char\">";
-		}
-	}
-
 	public function onBeforeCommit(&$com): void {
 		//VAGINA filter
-		$this->FILTERS['/vagina/i'] = $this->generateColorSpan('VAGINA');
+		$this->FILTERS['~<a\b[^>]*>.*?</a>(*SKIP)(*F)|vagina~i'] = $this->generateColorSpan('VAGINA');
 		 
 		//PENIS filter
-		$this->FILTERS['/penis/i'] = $this->generateColorSpan('PENIS');
+		$this->FILTERS['~<a\b[^>]*>.*?</a>(*SKIP)(*F)|penis~i'] = $this->generateColorSpan('PENIS');
 		 
 		//ANUS filter
-		$this->FILTERS['/anus/i'] = $this->generateColorSpan('ANUS');
+		$this->FILTERS['~<a\b[^>]*>.*?</a>(*SKIP)(*F)|anus~i'] = $this->generateColorSpan('ANUS');
 		 
 		// Apply each filter in $FILTERS array to user's comment
 		foreach ($this->FILTERS as $filterin => $filterout) {
