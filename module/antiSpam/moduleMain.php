@@ -146,6 +146,9 @@ class moduleMain extends abstractModuleMain {
 				return $value === $pattern;
 				break;
 			case 'regex':
+				// wrapped pattern with delimiters
+				$pattern = '/' . str_replace('/', '\/', $pattern) . '/u';
+
 				// Treat pattern as raw regex (admin responsibility)
 				return preg_match($pattern, $value) === 1;
 				break;
