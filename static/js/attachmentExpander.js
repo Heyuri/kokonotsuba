@@ -10,6 +10,7 @@
 
 	attachmentExpander.imageExtensions = Array("png","jpg","jpeg","gif","giff","bmp","jfif");
 	attachmentExpander.videoExtensions = Array("webm","mp4");
+	attachmentExpander.audioExtensions = Array("mp3","ogg","wav", "flac", "m4a");
 	attachmentExpander.flashExtensions = Array("swf");
 
 	attachmentExpander.startUpimageExpanding = function () {
@@ -61,17 +62,28 @@
 		errorElement.className = "attachmentError";
 		errorElement.title = "There was an error while expanding this attachment!";
 		errorElement.classList.add('error');
-		// build inner content (error text + close link)
-		errorElement.innerHTML = 'Error loading file! [<a class="attachmentCloseButton" href="#">Close</a>]';
+
+		attachmentExpander.addCloseButton(errorElement, anchor);
 
 		// insert it where the expanded element would go
 		anchor.insertAdjacentElement("afterend", errorElement);
+	};
+
+	attachmentExpander.addCloseButton = function(element, anchor) {
+		let closeButton = document.createElement("a");
+		closeButton.href = "#";
+		closeButton.textContent = "Close";
+		closeButton.className = "attachmentCloseButton";
+
+		// now append it
+		element.appendChild(document.createTextNode("["));
+		element.appendChild(closeButton);
+		element.appendChild(document.createTextNode("]"));
 
 		// make the close button contract like normal
-		let closeBtn = errorElement.querySelector(".attachmentCloseButton");
-		closeBtn.addEventListener("click", function(event) {
+		closeButton.addEventListener("click", function(event) {
 			event.preventDefault();
-			errorElement.remove();
+			element.remove();
 			anchor.style.display = ""; // show the thumbnail again
 		});
 	};
@@ -153,7 +165,7 @@
 		if (!anchor) return;
 
 		// get extension from the href link
-		let ext  = anchor.href.split(".").pop().toLowerCase();
+		let extension = anchor.dataset.extension;
 
 		// hide anchor
 		anchor.style.display = "none";
@@ -162,7 +174,7 @@
 		if (post.getBoundingClientRect().top < 0) post.scrollIntoView();
 
 		// add expanded image html
-		if (attachmentExpander.imageExtensions.includes(ext)) {
+		if (attachmentExpander.imageExtensions.includes(extension)) {
 			return attachmentExpander.createExpandable(anchor, post, index, true, function() {
 				var img = document.createElement("img");
 				img.className = "expandimg";
@@ -172,7 +184,7 @@
 				return img;
 			});
 		}
-		else if (attachmentExpander.videoExtensions.includes(ext)) {
+		else if (attachmentExpander.videoExtensions.includes(extension)) {
 			return attachmentExpander.createExpandable(anchor, post, index, false, function() {
 				var video = document.createElement("video");
 				video.className = "expandimg";
@@ -183,89 +195,92 @@
 				return video;
 			});
 		}
- 		else if (attachmentExpander.flashExtensions.includes(ext)) {
-			// pull native dims from the existing filesize text (leave it visible)
-			var fsNode = Document.querySelectorAll("#p"+no+" .filesize")[0],
-				re     = /(\d+)\s*x\s*(\d+)/ig,
-				m      = null, tmp;
-
-			// grab the *last* NxM in the text so filenames like " 0x40 Hues of Halloween.swf" don't confuse us
-			while ((tmp = re.exec(fsNode.textContent)) !== null) m = tmp;
-			var	realW  = m ? parseInt(m[1],10) : 550,
-				realH  = m ? parseInt(m[2],10) : 400;
-			
-			// cap at 95%
-			var vw    = document.documentElement.clientWidth,
-				vh    = document.documentElement.clientHeight,
-				maxW  = vw * 0.95,
-				maxH  = vh * 0.95,
-				ratio = realW / realH,
-				dispW = Math.min(realW, maxW),
-				dispH = dispW / ratio;
-
-			if (dispH > maxH) {
-				dispH = maxH;
-				dispW = dispH * ratio;
-			}
-
-			// build container
-			var hdr       = 20,
-				container = document.createElement("div"),
-				header    = document.createElement("div");
-
-			container.className      = "expand swf-expand";
-			container.setAttribute('data-attachment-index', index);
-			container.style.width    = dispW + "px";
-			container.style.height   = (dispH + hdr) + "px";
-			container.style.resize   = "both";
-			container.style.overflow = "hidden";
-			// ensure children absolute‐fill works
-			container.style.position = "relative";
-
-			// close header
-			header.className    = "swf-expand-header";
-			header.style.height = hdr + "px";
-			header.innerHTML    = '[<a>Close</a>]';
-			container.appendChild(header);
-
-			// insert & hide original link
-			anchor.insertAdjacentElement("afterend", container);
-
-			// build a host that fills the container and holds either native Flash or Ruffle
-			// using CSS absolute fill ensures resizing always works
-			var host      = document.createElement("div"),
-				useNative = !!(navigator.mimeTypes['application/x-shockwave-flash'] ||
-							   navigator.plugins['Shockwave Flash']);
-
-			host.className      = "ruffleContainer";
-			host.style.position = "absolute";
-			host.style.top      = hdr + "px";
-			host.style.left     = "0";
-			host.style.right    = "0";
-			host.style.bottom   = "0";
-			container.appendChild(host);
-
-			if (useNative) {
-				// native Flash via <object>, fill host
-				var obj = document.createElement("object");
-				obj.data   = anchor.href;
-				obj.type   = "application/x-shockwave-flash";
-				obj.style.width  = "100%";
-				obj.style.height = "100%";
-				host.appendChild(obj);
-			} else {
-				// ruffle emulator, fill host
-				var ruffle = window.RufflePlayer.newest(),
-					player = ruffle.createPlayer();
-				player.style.width  = "100%";
-				player.style.height = "100%";
-				host.appendChild(player);
-				player.load(anchor.href);
-			}
-
-			return true;
+ 		else if (attachmentExpander.flashExtensions.includes(extension)) {
+			return attachmentExpander.handleFlashExpansion(anchor, no, index);
 		}
 		return false;
+	};
+
+	attachmentExpander.handleFlashExpansion = function (anchor, no, index) {
+		// pull native dims from the existing filesize text (leave it visible)
+		var fsNode = Document.querySelectorAll("#p"+no+" .filesize")[0],
+			re     = /(\d+)\s*x\s*(\d+)/ig,
+			m      = null, tmp;
+
+		// grab the *last* NxM in the text so filenames like " 0x40 Hues of Halloween.swf" don't confuse us
+		while ((tmp = re.exec(fsNode.textContent)) !== null) m = tmp;
+		var	realW  = m ? parseInt(m[1],10) : 550,
+			realH  = m ? parseInt(m[2],10) : 400;
+		
+		// cap at 95%
+		var vw    = document.documentElement.clientWidth,
+			vh    = document.documentElement.clientHeight,
+			maxW  = vw * 0.95,
+			maxH  = vh * 0.95,
+			ratio = realW / realH,
+			dispW = Math.min(realW, maxW),
+			dispH = dispW / ratio;
+
+		if (dispH > maxH) {
+			dispH = maxH;
+			dispW = dispH * ratio;
+		}
+
+		// build container
+		var hdr       = 20,
+			container = document.createElement("div"),
+			header    = document.createElement("div");
+
+		container.className      = "expand swf-expand";
+		container.setAttribute('data-attachment-index', index);
+		container.style.width    = dispW + "px";
+		container.style.height   = (dispH + hdr) + "px";
+		container.style.resize   = "both";
+		container.style.overflow = "hidden";
+		// ensure children absolute‐fill works
+		container.style.position = "relative";
+
+		// close header
+		header.className    = "swf-expand-header";
+		header.style.height = hdr + "px";
+		container.appendChild(header);
+
+		// insert & hide original link
+		anchor.insertAdjacentElement("afterend", container);
+
+		// build a host that fills the container and holds either native Flash or Ruffle
+		// using CSS absolute fill ensures resizing always works
+		var host      = document.createElement("div"),
+			useNative = !!(navigator.mimeTypes['application/x-shockwave-flash'] ||
+						   navigator.plugins['Shockwave Flash']);
+
+		host.className      = "ruffleContainer";
+		host.style.position = "absolute";
+		host.style.top      = hdr + "px";
+		host.style.left     = "0";
+		host.style.right    = "0";
+		host.style.bottom   = "0";
+		container.appendChild(host);
+
+		if (useNative) {
+			// native Flash via <object>, fill host
+			var obj = document.createElement("object");
+			obj.data   = anchor.href;
+			obj.type   = "application/x-shockwave-flash";
+			obj.style.width  = "100%";
+			obj.style.height = "100%";
+			host.appendChild(obj);
+		} else {
+			// ruffle emulator, fill host
+			var ruffle = window.RufflePlayer.newest(),
+			player = ruffle.createPlayer();
+			player.style.width  = "100%";
+			player.style.height = "100%";
+			host.appendChild(player);
+			player.load(anchor.href);
+		}
+
+		return true;
 	};
 
 	attachmentExpander.createExpandable = function(anchor, post, index, isImage, contentBuilder) {
@@ -277,21 +292,12 @@
 		if(!isImage) {
 			// header with close link
 			let header = document.createElement("div");
-			header.appendChild(document.createTextNode("["));
 
-			let closeLink = document.createElement("a");
-			closeLink.href = "#";
-			closeLink.textContent = "Close";
-			header.appendChild(closeLink);
-			header.appendChild(document.createTextNode("]"));
+			let closeButton = attachmentExpander.getCloseButton();
 
-			// close behavior
-			closeLink.addEventListener("click", function(event) {
-			event.preventDefault();
-			attachmentExpander.contractAttachment(expandDiv, post);
+			header.appendChild(closeButton);
 
 			expandDiv.appendChild(header);
-			});
 		}
 		else {
 			expandDiv.addEventListener("click", function(event) {

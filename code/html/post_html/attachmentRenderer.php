@@ -58,7 +58,8 @@ class attachmentRenderer {
 
 		// Build image html
 		$imageHtml = $this->generateImageHTML(
-			$fileData['fileExtension'], 
+			$fileData['fileExtension'],
+			$index,
 			$fileData['mimeType'],
 			$fileData['thumbWidth'], 
 			$fileData['thumbHeight'], 
@@ -81,7 +82,6 @@ class attachmentRenderer {
 		$attachmentHtml = $this->wrapAttachmentContent(
 			$imageHtml, 
 			$imageBar, 
-			$index, 
 			$multipleAttachments
 		);
 
@@ -92,7 +92,6 @@ class attachmentRenderer {
 	private function wrapAttachmentContent(
 		string $imageHtml, 
 		string $imageBar, 
-		int $index, 
 		bool $multipleAttachments
 	): string {
 		// init attachment html
@@ -107,8 +106,7 @@ class attachmentRenderer {
 		}
 
 		// begin container wrap
-		// data-attachment-index is so js knows whether its the first, second, and so on, attachment of the post
-		$attachmentHtml .= '<div class="' . $attachmentClasses . '" data-attachment-index="' . htmlspecialchars($index) . '">';
+		$attachmentHtml .= '<div class="' . $attachmentClasses . '">';
 
 		// append attachment info html
 		$attachmentHtml .= '<div class="filesize">' . $imageBar . '</div>';
@@ -174,6 +172,7 @@ class attachmentRenderer {
 	 * depending on the file type, thumbnail availability, and file deletion status.
 	 */
 	private function generateImageHTML(string $ext,
+		int $index,
 		?string $mimeType,   
 		int $tw, 
 		int $th, 
@@ -186,21 +185,21 @@ class attachmentRenderer {
 		// Case: File has been deleted, use placeholder image
 		if ($fileDeleted) {
 			$thumbURL = $this->board->getConfigValue('STATIC_URL') . 'image/filedeleted.gif';
-			return $this->buildImageTag($imageURL, $thumbURL, $imgsize, 200, 150);
+			return $this->buildImageTag($imageURL, $thumbURL, $imgsize, $index, $ext, 200, 150);
 		}
 		// Case: File does not exist, use placeholder image
 		elseif (!$imageExists) {
 			$thumbURL = $this->board->getConfigValue('STATIC_URL') . 'image/nofile.gif';
-			return $this->buildImageTag($imageURL, $thumbURL, $imgsize, 200, 150);
+			return $this->buildImageTag($imageURL, $thumbURL, $imgsize, $index, $ext, 200, 150);
 		}
 		// Case: Thumbnail exists and dimensions are known
 		elseif ($tw && $th && !empty($thumbName)) {
-			return $this->buildImageTag($imageURL, $thumbURL, $imgsize, $tw, $th, 'Click to show full image');
+			return $this->buildImageTag($imageURL, $thumbURL, $imgsize, $index, $ext, $tw, $th, 'Click to show full image');
 		}
 		// Case: Special handling for SWF files
 		elseif ($ext === "swf") {
 			$thumbURL = $this->board->getConfigValue('SWF_THUMB');
-			return $this->buildImageTag($imageURL, $thumbURL, 'SWF Embed', 128, 128);
+			return $this->buildImageTag($imageURL, $thumbURL, 'SWF Embed', $index, $ext, 128, 128);
 		}
 		// Case: Handling for audio files
 		elseif (!is_null($mimeType) && str_contains($mimeType, 'audio')) {
@@ -208,7 +207,7 @@ class attachmentRenderer {
 			$thumbURL = $this->board->getConfigValue('AUDIO_THUMB');
 			
 			// then build image tag
-			return $this->buildImageTag($imageURL, $thumbURL, 'Audio file', 128, 128);
+			return $this->buildImageTag($imageURL, $thumbURL, 'Audio file', $index, $ext, 128, 128);
 		} elseif (!is_null($mimeType) && isArchiveFile($ext, $mimeType)) {
 			// get archive thumbnail
 			$thumbURL = $this->board->getConfigValue('ARCHIVE_THUMB');
@@ -219,7 +218,7 @@ class attachmentRenderer {
 		// Case: No thumbnail available, use generic placeholder
 		elseif (!$thumbName) {
 			$thumbURL = $this->board->getConfigValue('STATIC_URL') . 'image/nothumb.gif';
-			return $this->buildImageTag($imageURL, $thumbURL, $imgsize);
+			return $this->buildImageTag($imageURL, $thumbURL, $imgsize, $index, $ext);
 		}
 
 		// Default fallback (shouldn't be reached under normal conditions)
@@ -229,7 +228,16 @@ class attachmentRenderer {
 	/**
 	 * Builds an HTML anchor tag wrapping an image, with optional sizing and tooltip.
 	 */
-	private function buildImageTag($imageURL, $thumbURL, $altText, $width = null, $height = null, $title = null): string {		
+	private function buildImageTag(
+		?string $imageURL, 
+		?string $thumbURL, 
+		?string $altText, 
+		int $index,
+		?string $extension,
+		?int $width = null, 
+		?int $height = null, 
+		?string $title = null
+	): string {		
 		// Start building the <img> tag
 		$imgTag = '<img src="' . $thumbURL . '" class="postimg" alt="' . $altText . '"';
 
@@ -246,7 +254,11 @@ class attachmentRenderer {
 		$imgTag .= '>';
 
 		// Wrap the image in a clickable link to the full image
-		return '<a href="' . $imageURL . '" target="_blank" rel="nofollow" class="attachmentAnchor">' . $imgTag . '</a>';
+		// data-attachment-index is so js knows whether its the first, second, and so on, attachment of the post
+		// data-extension is for the attachment expander js to know what type of file it is
+		return '<a href="' . $imageURL . '" target="_blank" rel="nofollow" class="attachmentAnchor" 
+			data-attachment-index="' . htmlspecialchars($index) . '" 
+			data-extension="' . htmlspecialchars($extension) .'">' . $imgTag . '</a>';
 	}
 
 	/**
