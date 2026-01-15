@@ -450,7 +450,7 @@ class threadRepository {
 		$offset = max(0, (int)$offset);
 
 		// Generate the base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $includeDeleted);
 
 		// Add the condition specific to this method (fetching posts for a single thread)
 		$query .= " WHERE p.thread_uid = :thread_uid";
@@ -472,7 +472,7 @@ class threadRepository {
 			)
 			UNION ALL
 			(
-				" . getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable) . "
+				" . getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $includeDeleted) . "
 				WHERE p.thread_uid = :thread_uid
 				" . (!$includeDeleted ? excludeDeletedThreadsCondition($this->deletedPostsTable) : "") . "
 				AND p.is_op = 0
@@ -503,7 +503,7 @@ class threadRepository {
 
 	public function getAllPostsFromThread(string $threadUID, bool $includeDeleted = false): ?array {
 		// Generate the base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $includeDeleted);
 
 		// Add thread condition
 		$query .= " WHERE p.thread_uid = :thread_uid";
@@ -542,7 +542,7 @@ class threadRepository {
 		$previewCount++;
 
 		// Generate the base query
-		$base = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+		$base = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $includeDeleted);
 
 		// Add the condition specific to this method (fetching posts for multiple threads)
 		$inClause = pdoPlaceholdersForIn($threadUIDs);

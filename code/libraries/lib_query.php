@@ -10,14 +10,40 @@
  * @param bool $viewDeleted  Whether to include deleted posts (default false)
  * @return string
  */
-function getBasePostQuery(string $postTable, string $deletedPostsTable, string $fileTable, string $threadTable, bool $viewDeleted = false): string {
+function getBasePostQuery(
+    string $postTable,
+    string $deletedPostsTable,
+    string $fileTable,
+    string $threadTable,
+    bool $viewDeleted = false
+): string {
 
-    // Base SELECT
+    // Base subquery: filtered posts (excludes deleted if $viewDeleted = false)
+    $postFilterSubquery = $viewDeleted
+        ? "SELECT * FROM $postTable"
+        : "
+        SELECT p1.*
+        FROM $postTable p1
+        LEFT JOIN (
+            -- latest post-level deletions only
+            SELECT d1.post_uid
+            FROM $deletedPostsTable d1
+            INNER JOIN (
+                SELECT post_uid, MAX(id) AS max_id
+                FROM $deletedPostsTable
+                GROUP BY post_uid
+            ) d2 ON d1.post_uid = d2.post_uid AND d1.id = d2.max_id
+            WHERE d1.file_id IS NULL AND d1.open_flag = 1
+        ) deleted_latest ON deleted_latest.post_uid = p1.post_uid
+        WHERE deleted_latest.post_uid IS NULL
+        ";
+
+    // Main query: join threads, attachments, and all deletion rows (for mergeRowIntoPost)
     $query = "
         SELECT 
             p.*,
             
-            -- Thread data
+            -- Thread info
             t.post_op_number,
             
             -- Attachments
@@ -37,7 +63,7 @@ function getBasePostQuery(string $postTable, string $deletedPostsTable, string $
             f.is_deleted AS attachment_is_deleted,
             f.timestamp_added AS attachment_timestamp_added,
             
-            -- Deleted post info
+            -- Deleted post info (all rows)
             dp.open_flag,
             dp.file_only AS file_only_deleted,
             dp.id AS deleted_post_id,
@@ -48,7 +74,7 @@ function getBasePostQuery(string $postTable, string $deletedPostsTable, string $
             dp.deleted_at,
             dp.restored_at
 
-        FROM $postTable p
+        FROM ($postFilterSubquery) p
 
         -- Attachments
         LEFT JOIN $fileTable f ON f.post_uid = p.post_uid
@@ -56,26 +82,14 @@ function getBasePostQuery(string $postTable, string $deletedPostsTable, string $
         -- Thread info
         INNER JOIN $threadTable t ON p.thread_uid = t.thread_uid
 
-        -- All deletion entries (for mergeRowIntoPost)
+        -- All deletion entries
         LEFT JOIN $deletedPostsTable dp 
             ON dp.post_uid = p.post_uid AND dp.open_flag = 1
     ";
 
-    // Optional exclusion of deleted posts
-    if (!$viewDeleted) {
-        $query .= "
-            AND NOT EXISTS (
-                SELECT 1
-                FROM $deletedPostsTable dpx
-                WHERE dpx.post_uid = p.post_uid
-                  AND dpx.open_flag = 1
-                  AND dpx.file_id IS NULL
-            )
-        ";
-    }
-
     return $query;
 }
+
 
 function excludeDeletedThreadsCondition(string $deletedPostsTable): string {
 	return " AND NOT EXISTS (
