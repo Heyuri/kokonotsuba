@@ -1,65 +1,90 @@
 <?php
 
-// A helper function to generate the base query part for posts
-function getBasePostQuery(string $postTable, string $deletedPostsTable, string $fileTable, string $threadTable): string {
-	$query = "
-		SELECT 
-			p.*,
+/**
+ * Generate the base query for posts, optionally hiding deleted posts.
+ *
+ * @param string $postTable
+ * @param string $deletedPostsTable
+ * @param string $fileTable
+ * @param string $threadTable
+ * @param bool $viewDeleted  Whether to include deleted posts (default false)
+ * @return string
+ */
+function getBasePostQuery(string $postTable, string $deletedPostsTable, string $fileTable, string $threadTable, bool $viewDeleted = false): string {
 
-			-- Get thread post op number
-			t.post_op_number,
-			
-			-- All attachment rows
-			f.id AS attachment_id,
-			f.file_name AS attachment_file_name,
-			f.stored_filename AS attachment_stored_filename,
-			f.file_ext AS attachment_file_ext,
-			f.file_md5 AS attachment_file_md5,
-			f.file_size AS attachment_file_size,
-			f.file_width AS attachment_file_width,
-			f.file_height AS attachment_file_height,
-			f.thumb_file_width AS attachment_thumb_width,
-			f.thumb_file_height AS attachment_thumb_height,
-			f.mime_type AS attachment_mime_type,
-			f.is_hidden AS attachment_is_hidden,
-			f.is_animated AS attachment_is_animated,
-			f.is_deleted AS attachment_is_deleted,
-			f.timestamp_added AS attachment_timestamp_added,
+    // Base SELECT
+    $query = "
+        SELECT 
+            p.*,
+            
+            -- Thread data
+            t.post_op_number,
+            
+            -- Attachments
+            f.id AS attachment_id,
+            f.file_name AS attachment_file_name,
+            f.stored_filename AS attachment_stored_filename,
+            f.file_ext AS attachment_file_ext,
+            f.file_md5 AS attachment_file_md5,
+            f.file_size AS attachment_file_size,
+            f.file_width AS attachment_file_width,
+            f.file_height AS attachment_file_height,
+            f.thumb_file_width AS attachment_thumb_width,
+            f.thumb_file_height AS attachment_thumb_height,
+            f.mime_type AS attachment_mime_type,
+            f.is_hidden AS attachment_is_hidden,
+            f.is_animated AS attachment_is_animated,
+            f.is_deleted AS attachment_is_deleted,
+            f.timestamp_added AS attachment_timestamp_added,
+            
+            -- Deleted post info
+            dp.open_flag,
+            dp.file_only AS file_only_deleted,
+            dp.id AS deleted_post_id,
+            dp.by_proxy,
+            dp.note AS deleted_note,
+            dp.file_id,
+            dp.deleted_by,
+            dp.deleted_at,
+            dp.restored_at
 
-			-- Deleted post info (per-row)
-			dp.open_flag,
-			dp.file_only AS file_only_deleted,
-			dp.id AS deleted_post_id,
-			dp.by_proxy,
-			dp.note AS deleted_note,
+        FROM $postTable p
 
-			-- Required for mergeRowIntoPost
-			dp.file_id,
-			dp.deleted_by,
-			dp.deleted_at,
-			dp.restored_at
+        -- Attachments
+        LEFT JOIN $fileTable f ON f.post_uid = p.post_uid
 
-		FROM $postTable p
+        -- Thread info
+        INNER JOIN $threadTable t ON p.thread_uid = t.thread_uid
 
-		-- Return *all* deletion entries for this post (post-level AND attachment-level)
-		LEFT JOIN $deletedPostsTable dp
-			ON dp.post_uid = p.post_uid AND dp.open_flag = 1
+        -- All deletion entries (for mergeRowIntoPost)
+        LEFT JOIN $deletedPostsTable dp 
+            ON dp.post_uid = p.post_uid AND dp.open_flag = 1
+    ";
 
-		-- Additional file rows (all attachments)
-		LEFT JOIN $fileTable f
-			ON f.post_uid = p.post_uid
+    // Optional exclusion of deleted posts
+    if (!$viewDeleted) {
+        $query .= "
+            AND NOT EXISTS (
+                SELECT 1
+                FROM $deletedPostsTable dpx
+                WHERE dpx.post_uid = p.post_uid
+                  AND dpx.open_flag = 1
+                  AND dpx.file_id IS NULL
+            )
+        ";
+    }
 
-		-- Thread data
-		INNER JOIN $threadTable t
-			ON p.thread_uid = t.thread_uid
-		";
-	return $query;
+    return $query;
 }
 
-function excludeDeletedPostsCondition(string $alias = 'dp'): string {
-	return " AND (COALESCE($alias.open_flag, 0) = 0
-					OR COALESCE($alias.file_only, 0) = 1
-					OR COALESCE($alias.by_proxy, 0) = 1)";
+function excludeDeletedThreadsCondition(string $deletedPostsTable): string {
+	return " AND NOT EXISTS (
+		SELECT 1
+		FROM $deletedPostsTable dpx
+		WHERE dpx.post_uid = t.post_op_post_uid
+		  AND dpx.open_flag = 1
+		  AND dpx.file_id IS NULL
+	)";
 }
 
 /**

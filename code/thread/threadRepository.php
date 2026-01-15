@@ -14,7 +14,7 @@ class threadRepository {
 
 	private function getBaseThreadQuery(bool $includeDeletedCount = true): string {
 		$latestDel   = sqlLatestDeletionEntry($this->deletedPostsTable);
-		$visibleCond = excludeDeletedPostsCondition('d');
+		$visibleCond = excludeDeletedThreadsCondition($this->deletedPostsTable);
 
 		// conditional filter
 		$countFilter = $includeDeletedCount
@@ -31,9 +31,6 @@ class threadRepository {
 				(
 					SELECT COUNT(*)
 					FROM {$this->postTable} p
-					LEFT JOIN (
-						{$latestDel}
-					) d ON p.post_uid = d.post_uid
 					WHERE p.thread_uid = t.thread_uid
 					{$countFilter}
 				) AS number_of_posts
@@ -123,7 +120,7 @@ class threadRepository {
 
 		// join latest deletion entry for the thread OP post, and exclude deleted threads
 		$latestDeletionSQL = sqlLatestDeletionEntry($this->deletedPostsTable);
-		$visibleCond = excludeDeletedPostsCondition('d');
+		$visibleCond = excludeDeletedThreadsCondition($this->deletedPostsTable);
 
 		$query = "SELECT t.thread_uid
 				FROM {$this->threadTable} t
@@ -216,7 +213,7 @@ class threadRepository {
 
 		// exclude the threads where the op post was deleted
 		if(!$includeDeleted) {
-			$query .= excludeDeletedPostsCondition();
+			$query .= excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 
 		$params = [];
@@ -237,7 +234,7 @@ class threadRepository {
 
 		// exclude the threads where the op post was deleted
 		if(!$includeDeleted) {
-			$query .= excludeDeletedPostsCondition();
+			$query .= excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 
 		$params = [];
@@ -460,7 +457,7 @@ class threadRepository {
 
 		// If we do not want to include deleted posts, add the condition to exclude them
 		if(!$includeDeleted) {
-			$query .= excludeDeletedPostsCondition();
+			$query .= excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 
 		/*
@@ -477,7 +474,7 @@ class threadRepository {
 			(
 				" . getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable) . "
 				WHERE p.thread_uid = :thread_uid
-				" . (!$includeDeleted ? excludeDeletedPostsCondition() : "") . "
+				" . (!$includeDeleted ? excludeDeletedThreadsCondition($this->deletedPostsTable) : "") . "
 				AND p.is_op = 0
 				ORDER BY p.post_uid ASC
 				LIMIT $amount OFFSET $offset
@@ -513,7 +510,7 @@ class threadRepository {
 
 		// Exclude deleted posts if requested
 		if(!$includeDeleted) {
-			$query .= excludeDeletedPostsCondition();
+			$query .= excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 
 		// Order results by post id
@@ -553,7 +550,7 @@ class threadRepository {
 
 		// If we do not want to include deleted posts, add the condition to exclude them
 		if(!$includeDeleted) {
-			$base .= excludeDeletedPostsCondition();
+			$base .= excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 
 		// wrap with dense_rank partition to limit posts per thread (OP + preview replies)
@@ -598,7 +595,7 @@ class threadRepository {
 		$query .= " WHERE t.boardUID = :board_uid";
 
 		if(!$includeDeleted) {
-			$query .= excludeDeletedPostsCondition();
+			$query .= excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 		
 		// params

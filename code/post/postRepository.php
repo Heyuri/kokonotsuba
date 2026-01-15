@@ -42,18 +42,13 @@ class postRepository {
 	public function getFilteredPosts(int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'post_uid'): false|array {
 		if(!in_array($order, $this->allowedOrderFields)) return [];
 
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $includeDeleted);
 		$params = [];
 		
 		// add WHERE so the AND conditions can be appended without sissue
 		$query .= " WHERE 1";
 
 		bindPostFilterParameters($params, $query, $filters, true); //apply filtration to query
-
-		// exclude deleted posts
-		if(!$includeDeleted) {
-			$query .= excludeDeletedPostsCondition();
-		}
 
 		$query .= " ORDER BY p.$order  DESC LIMIT $amount OFFSET $offset";
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
@@ -287,15 +282,10 @@ class postRepository {
 		$inClause = pdoPlaceholdersForIn($threadUids);
 
 		// base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $includeDeleted);
 
 		// append where clause
 		$query .= " WHERE p.thread_uid IN $inClause";
-
-		// exlude deleted posts
-		if(!$includeDeleted) {
-			$query .= excludeDeletedPostsCondition();
-		}
 
 		// fetch post rows
 		$posts = $this->databaseConnection->fetchAllAsArray($query, $threadUids);
