@@ -1,59 +1,104 @@
 <?php
 
-// A helper function to generate the base query part for posts
-function getBasePostQuery(string $postTable, string $deletedPostsTable, string $fileTable, string $threadTable): string {
-	$query = "
-		SELECT 
-			p.*,
+/**
+ * Generate the base query for posts, optionally hiding deleted posts.
+ *
+ * @param string $postTable
+ * @param string $deletedPostsTable
+ * @param string $fileTable
+ * @param string $threadTable
+ * @param bool $viewDeleted  Whether to include deleted posts (default false)
+ * @return string
+ */
+function getBasePostQuery(
+    string $postTable,
+    string $deletedPostsTable,
+    string $fileTable,
+    string $threadTable,
+    bool $viewDeleted = false
+): string {
 
-			-- Get thread post op number
-			t.post_op_number,
-			
-			-- All attachment rows
-			f.id AS attachment_id,
-			f.file_name AS attachment_file_name,
-			f.stored_filename AS attachment_stored_filename,
-			f.file_ext AS attachment_file_ext,
-			f.file_md5 AS attachment_file_md5,
-			f.file_size AS attachment_file_size,
-			f.file_width AS attachment_file_width,
-			f.file_height AS attachment_file_height,
-			f.thumb_file_width AS attachment_thumb_width,
-			f.thumb_file_height AS attachment_thumb_height,
-			f.mime_type AS attachment_mime_type,
-			f.is_hidden AS attachment_is_hidden,
-			f.is_animated AS attachment_is_animated,
-			f.is_deleted AS attachment_is_deleted,
-			f.timestamp_added AS attachment_timestamp_added,
+    // Base subquery: filtered posts (excludes deleted if $viewDeleted = false)
+    $postFilterSubquery = $viewDeleted
+        ? "SELECT * FROM $postTable"
+        : "
+        SELECT p1.*
+        FROM $postTable p1
+        LEFT JOIN (
+            -- latest post-level deletions only
+            SELECT d1.post_uid
+            FROM $deletedPostsTable d1
+            INNER JOIN (
+                SELECT post_uid, MAX(id) AS max_id
+                FROM $deletedPostsTable
+                GROUP BY post_uid
+            ) d2 ON d1.post_uid = d2.post_uid AND d1.id = d2.max_id
+            WHERE d1.file_id IS NULL AND d1.open_flag = 1
+        ) deleted_latest ON deleted_latest.post_uid = p1.post_uid
+        WHERE deleted_latest.post_uid IS NULL
+        ";
 
-			-- Deleted post info (per-row)
-			dp.open_flag,
-			dp.file_only AS file_only_deleted,
-			dp.id AS deleted_post_id,
-			dp.by_proxy,
-			dp.note AS deleted_note,
+    // Main query: join threads, attachments, and all deletion rows (for mergeRowIntoPost)
+    $query = "
+        SELECT 
+            p.*,
+            
+            -- Thread info
+            t.post_op_number,
+            
+            -- Attachments
+            f.id AS attachment_id,
+            f.file_name AS attachment_file_name,
+            f.stored_filename AS attachment_stored_filename,
+            f.file_ext AS attachment_file_ext,
+            f.file_md5 AS attachment_file_md5,
+            f.file_size AS attachment_file_size,
+            f.file_width AS attachment_file_width,
+            f.file_height AS attachment_file_height,
+            f.thumb_file_width AS attachment_thumb_width,
+            f.thumb_file_height AS attachment_thumb_height,
+            f.mime_type AS attachment_mime_type,
+            f.is_hidden AS attachment_is_hidden,
+            f.is_animated AS attachment_is_animated,
+            f.is_deleted AS attachment_is_deleted,
+            f.timestamp_added AS attachment_timestamp_added,
+            
+            -- Deleted post info (all rows)
+            dp.open_flag,
+            dp.file_only AS file_only_deleted,
+            dp.id AS deleted_post_id,
+            dp.by_proxy,
+            dp.note AS deleted_note,
+            dp.file_id,
+            dp.deleted_by,
+            dp.deleted_at,
+            dp.restored_at
 
-			-- Required for mergeRowIntoPost
-			dp.file_id,
-			dp.deleted_by,
-			dp.deleted_at,
-			dp.restored_at
+        FROM ($postFilterSubquery) p
 
-		FROM $postTable p
+        -- Attachments
+        LEFT JOIN $fileTable f ON f.post_uid = p.post_uid
 
-		-- Return *all* deletion entries for this post (post-level AND attachment-level)
-		LEFT JOIN $deletedPostsTable dp
-			ON dp.post_uid = p.post_uid AND dp.open_flag = 1
+        -- Thread info
+        INNER JOIN $threadTable t ON p.thread_uid = t.thread_uid
 
-		-- Additional file rows (all attachments)
-		LEFT JOIN $fileTable f
-			ON f.post_uid = p.post_uid
+        -- All deletion entries
+        LEFT JOIN $deletedPostsTable dp 
+            ON dp.post_uid = p.post_uid AND dp.open_flag = 1
+    ";
 
-		-- Thread data
-		INNER JOIN $threadTable t
-			ON p.thread_uid = t.thread_uid
-		";
-	return $query;
+    return $query;
+}
+
+
+function excludeDeletedThreadsCondition(string $deletedPostsTable): string {
+	return " AND NOT EXISTS (
+		SELECT 1
+		FROM $deletedPostsTable dpx
+		WHERE dpx.post_uid = t.post_op_post_uid
+		  AND dpx.open_flag = 1
+		  AND dpx.file_id IS NULL
+	)";
 }
 
 function excludeDeletedPostsCondition(string $alias = 'dp'): string {
