@@ -101,6 +101,12 @@ function excludeDeletedThreadsCondition(string $deletedPostsTable): string {
 	)";
 }
 
+function excludeDeletedPostsCondition(string $alias = 'dp'): string {
+	return " AND (COALESCE($alias.open_flag, 0) = 0
+					OR COALESCE($alias.file_only, 0) = 1
+					OR COALESCE($alias.by_proxy, 0) = 1)";
+}
+
 /**
  * Build a normalized attachment array from a database row.
  *

@@ -14,7 +14,7 @@ class threadRepository {
 
 	private function getBaseThreadQuery(bool $includeDeletedCount = true): string {
 		$latestDel   = sqlLatestDeletionEntry($this->deletedPostsTable);
-		$visibleCond = excludeDeletedThreadsCondition($this->deletedPostsTable);
+		$visibleCond = excludeDeletedPostsCondition('d');
 
 		// conditional filter
 		$countFilter = $includeDeletedCount
@@ -31,6 +31,9 @@ class threadRepository {
 				(
 					SELECT COUNT(*)
 					FROM {$this->postTable} p
+					LEFT JOIN (
+						{$latestDel}
+					) d ON p.post_uid = d.post_uid
 					WHERE p.thread_uid = t.thread_uid
 					{$countFilter}
 				) AS number_of_posts
