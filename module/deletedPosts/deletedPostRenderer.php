@@ -187,6 +187,11 @@ class deletedPostRenderer {
 		if($deletedPost['is_op']) {
 			$thread = $this->threadService->getThreadAllReplies($deletedPost['thread_uid'], true, 0);
 
+			// throw error if thread not found
+			if(!$thread) {
+				throw new BoardException(_T('thread_not_found_for_deletion'));
+			}
+
 			// get the post uids from the thread
 			$postUids = $thread['post_uids'];
 		} 

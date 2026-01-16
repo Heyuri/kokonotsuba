@@ -90,7 +90,10 @@ class threadRepository {
 		// select thread by `thread_uid`
 		$query .= " WHERE thread_uid = :thread_uid";
 
-		$query .= excludeDeletedPostsCondition();
+		// exclude deleted threads if needed
+		if(!$includeDeleted) {
+			$query .= excludeDeletedPostsCondition();
+		}
 
 		$params = [':thread_uid' => (string) $thread_uid];
 		

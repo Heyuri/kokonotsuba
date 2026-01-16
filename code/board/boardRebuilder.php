@@ -61,6 +61,13 @@ class boardRebuilder {
 		// get the thread and decide how to fetch its data based on the provided parameters
 		$threadData = $this->getThreadForRendering($uid, $previewCount, $repliesPerPage, $page, $amountOfRepliesToRender);
 		
+		// throw 404 error if no thread data is found
+		// otherwise it'll just dump errors to error log - its data-related and not code-related
+		if ($threadData === false) {
+			throw new BoardException(_T('thread_not_found'), 404);
+			return;
+		}
+
 		// get the thread row
 		$thread = $threadData['thread'];
 
@@ -157,7 +164,7 @@ class boardRebuilder {
 		int $repliesPerPage, 
 		?int $page, 
 		?int $amountOfRepliesToRender
-	): array {
+	): false|array {
 		// Fetch thread with a limited amount of replies	
 		if(!is_null($amountOfRepliesToRender)) {
 			// fetch a 'last X replies' thread
