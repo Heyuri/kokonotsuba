@@ -48,7 +48,7 @@ function fetchNewReplies() {
 					if(kkqr) kkqr.addScrollListener();
 
 					// start up image expanding js
-					if (kkimg) kkimg.startup();
+					if (attachmentExpander) attachmentExpander.startUpimageExpanding();
 
 					// restart inline js
 					if (kkinline) kkinline.startup();

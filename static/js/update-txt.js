@@ -75,7 +75,7 @@ const kkupdate = { name: "KK Thread Updating",
 					}
 					document.querySelector("#update-status").innerText = npc+" new post"+(npc>1 ? "s" : "");
 					if (kkupdate.total > 0) document.title = "("+kkupdate.total+") "+kkupdate.otitle;
-					if (kkimg) kkimg.startup();
+					if (attachmentExpander) attachmentExpander.startUpimageExpanding();
 					if (kkinline) kkinline.startup();
 					return true;
 				});
