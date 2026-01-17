@@ -260,17 +260,35 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {
+		// get staff account from session
 		$staffAccountFromSession = new staffAccountFromSession;
 
+		// get account id
 		$accountId = $staffAccountFromSession->getUID();
 
-		$post = $this->moduleContext->postRepository->getPostByUid($_GET['post_uid']);
+		// get post uid from request
+		$postUid = $_GET['post_uid'] ?? null;
+
+		// throw error if post uid is empty
+		if(empty($postUid)) {
+			throw new BoardException(_T('post_not_found'));
+		}
+
+		// fetch the post to be deleted
+		$post = $this->moduleContext->postRepository->getPostByUid($postUid, false);
+
+		// throw error if post not found
+		if(!$post) {
+			throw new BoardException(_T('post_not_found'));
+		}
 
 		// whether the post has been deleted
 		$isDeleted = !empty($post['open_flag']) && empty($post['file_only_deleted']);
 
+		// get board object
 		$board = searchBoardArrayForBoard($post['boardUID']);
 		
+		// get board uid
 		$boardUID = $board->getBoardUID();
 
 		if (!$post) {

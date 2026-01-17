@@ -129,7 +129,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {		
-		$post = $this->moduleContext->postRepository->getPostByUid($_GET['post_uid']);
+		$post = $this->moduleContext->postRepository->getPostByUid($_GET['post_uid'], true);
 
 		$board = searchBoardArrayForBoard($post['boardUID']);
 

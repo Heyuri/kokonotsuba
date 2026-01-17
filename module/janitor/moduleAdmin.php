@@ -157,7 +157,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			return;
 		}
 
-		$post = $this->moduleContext->postRepository->getPostByUid($post_uid);
+		$post = $this->moduleContext->postRepository->getPostByUid($post_uid, true);
 		if (!$post) {
 			throw new BoardException('ERROR: That post does not exist.');
 			return;

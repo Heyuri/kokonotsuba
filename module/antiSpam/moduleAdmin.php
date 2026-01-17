@@ -302,7 +302,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// if the post uid is set then try to get the comment and set the pattern value to it
 		if(!empty($postUid)) {
 			// get the post
-			$post = $this->moduleContext->postRepository->getPostByUid($postUid);
+			$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
 
 			// set the pattern value to the comment so it shows up the comment in the form
 			$patternValue = $post['com'] ?? '';

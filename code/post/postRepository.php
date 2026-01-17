@@ -103,9 +103,9 @@ class postRepository {
 		return $this->databaseConnection->fetchAllAsArray($query, $params);
 	}
 
-	public function getPostByUid(int $post_uid): array|false {
+	public function getPostByUid(int $post_uid, bool $viewDeleted = false): array|false {
 		// get base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $viewDeleted);
 		
 		// append WHERE clause to get it by the post uid
 		$query .= " WHERE p.post_uid = :post_uid";

@@ -102,7 +102,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// get post
-		$post = $this->moduleContext->postRepository->getPostByUid($postUid);
+		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
 		
 		// throw exception if post isn't found
 		if (!$post) {

@@ -128,7 +128,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {
-		$post = $this->moduleContext->postRepository->getPostByUid($_GET['post_uid']);
+		$post = $this->moduleContext->postRepository->getPostByUid($_GET['post_uid'], true);
 
 		if (!$post['is_op']) { 
 			throw new BoardException('ERROR: Cannot autosage reply.');
