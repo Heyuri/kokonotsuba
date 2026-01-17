@@ -187,7 +187,7 @@
 
 /* Define the fixed position class with padding and bottom-right placement */
 .fixedPosition {
-	position: fixed;
+	position: sticky;
 	bottom: 5px; /* Adjust the distance from the bottom */
 	right: 5px;  /* Adjust the distance from the right */
 }
