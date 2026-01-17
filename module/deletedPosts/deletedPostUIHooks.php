@@ -135,7 +135,7 @@ class deletedPostUIHooks {
 		});
 	}
 
-	private function renderDeletedIndicator($post): string {
+	private function renderDeletedIndicator(?array $post): string {
 		// whether only the file was deleted
 		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
 

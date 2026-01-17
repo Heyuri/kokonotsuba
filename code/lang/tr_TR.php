@@ -230,8 +230,10 @@ $language['comment_too_long'] = "Yorum fazla uzun, tümünü görüntülemek iç
 $language['post_not_found'] = "Post bulunamadı!";
 $language['module_route_not_found'] = "Modül rotası bulunamadı!";
 $language['anti_spam_message'] = "Postunuz anti-spam kurallarına takıldı. Bunun bir hata olduğunu düşünüyorsanız yetkililerle iletişime geçin.";
+$language['thread_not_found_for_deletion'] = "Silinen post önizlemesi için thread bulunamadı!";
 
 ?>
+
 
 
 

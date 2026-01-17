@@ -16,13 +16,10 @@ class postSearchRepository {
 		];
 
 		// get the base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, true);
 
 		// append WHERE
 		$query .= " WHERE p.$field REGEXP :phrase AND p.boardUID = :board_uid";
-
-		// exclude deleted posts
-		$query .= excludeDeletedPostsCondition();
 
 		// append order, limit and offset
 		$query .= "
@@ -62,15 +59,12 @@ class postSearchRepository {
 		];
 
 		// get base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, false);
 
 		// append base WHERE condition
 		$query .= "
 			WHERE MATCH(p.$field) AGAINST (:search IN NATURAL LANGUAGE MODE) 
 			AND p.boardUID = :board_uid";
-
-		// exclude deleted posts
-		$query .= excludeDeletedPostsCondition();
 
 		// order it
 		$query .= " ORDER BY p.root DESC";

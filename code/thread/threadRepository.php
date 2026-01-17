@@ -90,6 +90,11 @@ class threadRepository {
 		// select thread by `thread_uid`
 		$query .= " WHERE thread_uid = :thread_uid";
 
+		// exclude deleted threads if needed
+		if(!$includeDeleted) {
+			$query .= excludeDeletedPostsCondition();
+		}
+
 		$params = [':thread_uid' => (string) $thread_uid];
 		
 		$threadData = $this->databaseConnection->fetchOne($query, $params);	
@@ -123,7 +128,7 @@ class threadRepository {
 
 		// join latest deletion entry for the thread OP post, and exclude deleted threads
 		$latestDeletionSQL = sqlLatestDeletionEntry($this->deletedPostsTable);
-		$visibleCond = excludeDeletedPostsCondition('d');
+		$visibleCond = excludeDeletedThreadsCondition($this->deletedPostsTable);
 
 		$query = "SELECT t.thread_uid
 				FROM {$this->threadTable} t
@@ -216,7 +221,7 @@ class threadRepository {
 
 		// exclude the threads where the op post was deleted
 		if(!$includeDeleted) {
-			$query .= excludeDeletedPostsCondition();
+			$query .= excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 
 		$params = [];
@@ -237,7 +242,7 @@ class threadRepository {
 
 		// exclude the threads where the op post was deleted
 		if(!$includeDeleted) {
-			$query .= excludeDeletedPostsCondition();
+			$query .= excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 
 		$params = [];
@@ -453,14 +458,14 @@ class threadRepository {
 		$offset = max(0, (int)$offset);
 
 		// Generate the base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $includeDeleted);
 
 		// Add the condition specific to this method (fetching posts for a single thread)
 		$query .= " WHERE p.thread_uid = :thread_uid";
 
 		// If we do not want to include deleted posts, add the condition to exclude them
 		if(!$includeDeleted) {
-			$query .= excludeDeletedPostsCondition();
+			$query .= excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 
 		/*
@@ -475,9 +480,9 @@ class threadRepository {
 			)
 			UNION ALL
 			(
-				" . getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable) . "
+				" . getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $includeDeleted) . "
 				WHERE p.thread_uid = :thread_uid
-				" . (!$includeDeleted ? excludeDeletedPostsCondition() : "") . "
+				" . (!$includeDeleted ? excludeDeletedThreadsCondition($this->deletedPostsTable) : "") . "
 				AND p.is_op = 0
 				ORDER BY p.post_uid ASC
 				LIMIT $amount OFFSET $offset
@@ -506,14 +511,14 @@ class threadRepository {
 
 	public function getAllPostsFromThread(string $threadUID, bool $includeDeleted = false): ?array {
 		// Generate the base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $includeDeleted);
 
 		// Add thread condition
 		$query .= " WHERE p.thread_uid = :thread_uid";
 
 		// Exclude deleted posts if requested
 		if(!$includeDeleted) {
-			$query .= excludeDeletedPostsCondition();
+			$query .= excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 
 		// Order results by post id
@@ -545,7 +550,7 @@ class threadRepository {
 		$previewCount++;
 
 		// Generate the base query
-		$base = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable);
+		$base = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $includeDeleted);
 
 		// Add the condition specific to this method (fetching posts for multiple threads)
 		$inClause = pdoPlaceholdersForIn($threadUIDs);
@@ -553,7 +558,7 @@ class threadRepository {
 
 		// If we do not want to include deleted posts, add the condition to exclude them
 		if(!$includeDeleted) {
-			$base .= excludeDeletedPostsCondition();
+			$base .= excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 
 		// wrap with dense_rank partition to limit posts per thread (OP + preview replies)
@@ -598,7 +603,7 @@ class threadRepository {
 		$query .= " WHERE t.boardUID = :board_uid";
 
 		if(!$includeDeleted) {
-			$query .= excludeDeletedPostsCondition();
+			$query .= excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 		
 		// params
