@@ -12,6 +12,7 @@
 	attachmentExpander.videoExtensions = Array("webm","mp4");
 	attachmentExpander.audioExtensions = Array("mp3","ogg","wav", "flac", "m4a");
 	attachmentExpander.flashExtensions = Array("swf");
+	attachmentExpander.archiveExtensions = Array("zip","rar","7z","tar","gz","bz2","xz");
 
 	// some koko js settings
 	// Register settings function
@@ -33,6 +34,11 @@
 		
 		// loop through anchors so we can add listeners for all of them
 		Array.from(postAttachmentAnchors).forEach(anchor => {
+			// Remove existing listeners to prevent duplicates
+			if (anchor._expandHandler) anchor.removeEventListener("click", anchor._expandHandler);
+			if (anchor._hoverOnHandler) anchor.removeEventListener("mouseover", anchor._hoverOnHandler);
+			if (anchor._hoverOffHandler) anchor.removeEventListener("mouseout", anchor._hoverOffHandler);
+
 			// Store the click handler so it can be removed later
 			anchor._expandHandler = function(event) {
 				// Call the expander logic for this anchor
@@ -216,6 +222,12 @@
  		else if (attachmentExpander.flashExtensions.includes(extension)) {
 			return attachmentExpander.handleFlashExpansion(anchor, no, index);
 		}
+		else if (attachmentExpander.archiveExtensions.includes(extension)) {
+			// for archives, just show the archive image thumb again
+			anchor.style.display = "";
+			return true;
+		}
+
 		return false;
 	};
 

@@ -213,7 +213,7 @@ class attachmentRenderer {
 			$thumbURL = $this->board->getConfigValue('ARCHIVE_THUMB');
 
 			// then build archive thumb image tag
-			return $this->buildImageTag($imageURL, $thumbURL, 'Archive file', 128, 128);
+			return $this->buildImageTag($imageURL, $thumbURL, 'Archive file', $index, $ext, 128, 128);
 		}
 		// Case: No thumbnail available, use generic placeholder
 		elseif (!$thumbName) {
