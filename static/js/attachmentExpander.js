@@ -191,7 +191,7 @@
 		if (attachmentExpander.imageExtensions.includes(extension)) {
 			return attachmentExpander.createExpandable(anchor, post, index, true, function() {
 				var img = document.createElement("img");
-				img.className = "expandImage";
+				img.className = "expandimg";
 				img.src = anchor.href;
 				img.alt = "Full image";
 				img.title = "Click to contract";
@@ -201,7 +201,7 @@
 		else if (attachmentExpander.videoExtensions.includes(extension)) {
 			return attachmentExpander.createExpandable(anchor, post, index, false, function() {
 				var video = document.createElement("video");
-				video.className = "expandVideo";
+				video.className = "expandimg";
 				video.controls = true;
 				video.loop = true;
 				video.autoplay = true;
