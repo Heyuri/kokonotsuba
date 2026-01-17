@@ -32,6 +32,8 @@ const $p_class = function (el, c) {
 	return false;
 }
 
+window.settingsHooks = [];
+
 /* Window Manager */
 const kkwm = {
 	windows: Array(),
@@ -369,11 +371,10 @@ const kkjs = {
 	l: function () {
 		var P=kkjs.get_cookie("pwdc"), N=kkjs.get_cookie("namec"), E=kkjs.get_cookie("emailc"), i;
 		for (i=0; i<$doc.forms.length; i++) {
-			with ($doc.forms[i]) {
-				if (typeof(pwd)!='undefined') { pwd.value=P; }
-				if (typeof(name)!='undefined') { name.value=decodeURIComponent(escape(N)); }
-				if (typeof(email)!='undefined') { email.value=E; }
-			}
+			var form = $doc.forms[i];
+			if (typeof(form.pwd)!='undefined') { form.pwd.value=P; }
+			if (typeof(form.name)!='undefined') { form.name.value=decodeURIComponent(escape(N)); }
+			if (typeof(form.email)!='undefined') { form.email.value=E; }
 		}
 	},
 	com_insert: function (str) {
@@ -581,10 +582,16 @@ const kkjs = {
 				<label><input type="checkbox" onchange="localStorage.setItem('tripkeys', this.checked);" ${(localStorage.getItem("tripkeys") === "true" ? 'checked="checked"' : '')}>Futallaby style tripkeys</label>
 			`;
 		}
+		// loop through modules and add their settings
 		for (var i=0; i<kkjs.modules.length; i++) {
 			var mod = kkjs.modules[i];
 			if (typeof(mod.sett)=="function")
 				mod.sett(tab, div);
+		}
+
+		// loop through hooks and call them
+		for (var i=0; i<window.settingsHooks.length; i++) {
+			window.settingsHooks[i](tab, div);
 		}
 	}
 };

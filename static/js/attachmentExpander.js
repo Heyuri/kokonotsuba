@@ -13,6 +13,15 @@
 	attachmentExpander.audioExtensions = Array("mp3","ogg","wav", "flac", "m4a");
 	attachmentExpander.flashExtensions = Array("swf");
 
+	// some koko js settings
+	// Register settings function
+	window.settingsHooks.push(function(tab, div) { 
+		if (tab!="general") return;
+		div.innerHTML+= `
+			<label><input type="checkbox" onchange="localStorage.setItem('imgexpand',this.checked);attachmentExpander.resetAttachmentExpansion();attachmentExpander.startUpimageExpanding();"`+(localStorage.getItem("imgexpand")=="true"?' checked="checked"':'')+`>Inline image expansion</label>
+			<label><input type="checkbox" onchange="localStorage.setItem('imghover',this.checked);document.getElementById('hoverimg').src='';"`+(localStorage.getItem("imghover")=="true"?' checked="checked"':'')+`>Image hover</label>`;
+	});
+
 	attachmentExpander.startUpimageExpanding = function () {
 		// declare its localstorage value if its non-existant
 		if (!localStorage.getItem("imgexpand")) {
@@ -63,27 +72,27 @@
 		errorElement.title = "There was an error while expanding this attachment!";
 		errorElement.classList.add('error');
 
-		attachmentExpander.addCloseButton(errorElement, anchor);
+		attachmentExpander.addCloseButton(errorElement, errorElement, anchor);
 
 		// insert it where the expanded element would go
 		anchor.insertAdjacentElement("afterend", errorElement);
 	};
 
-	attachmentExpander.addCloseButton = function(element, anchor) {
+	attachmentExpander.addCloseButton = function(appendElement, targetElement, anchor) {
 		let closeButton = document.createElement("a");
 		closeButton.href = "#";
 		closeButton.textContent = "Close";
 		closeButton.className = "attachmentCloseButton";
 
 		// now append it
-		element.appendChild(document.createTextNode("["));
-		element.appendChild(closeButton);
-		element.appendChild(document.createTextNode("]"));
+		appendElement.appendChild(document.createTextNode("["));
+		appendElement.appendChild(closeButton);
+		appendElement.appendChild(document.createTextNode("]"));
 
 		// make the close button contract like normal
 		closeButton.addEventListener("click", function(event) {
 			event.preventDefault();
-			element.remove();
+			targetElement.remove();
 			anchor.style.display = ""; // show the thumbnail again
 		});
 	};
@@ -139,19 +148,19 @@
 		hoverImage.remove();
 	};
 
-	attachmentExpander.appendSettings = function(tab, div) { if (tab!="general") return;
-		div.innerHTML+= `
-			<label><input type="checkbox" onchange="localStorage.setItem('imgexpand',this.checked);kkimg.reset();kkimg.startup();"`+(localStorage.getItem("imgexpand")=="true"?' checked="checked"':'')+`>Inline image expansion</label>
-			<label><input type="checkbox" onchange="localStorage.setItem('imghover',this.checked);$id('hoverimg').src='';"`+(localStorage.getItem("imghover")=="true"?' checked="checked"':'')+`>Image hover</label>
-			<label><input type="checkbox" onchange="localStorage.setItem('galmode',this.checked);kkgal.reset();kkgal.startup();"`+(localStorage.getItem("galmode")=="true"?' checked="checked"':'')+`>Gallery mode</label>`;
-	};
-
 	attachmentExpander.expandAttachment = function (anchor, event) {
 		let post = anchor.closest('.post[id^="p"]');
 
 		if (!post) return;
 		let no = post.id.substr(1);
-		//if (localStorage.getItem("imgexpand")!="true") return;
+		if (localStorage.getItem("imgexpand")!="true") return;
+
+		if (localStorage.getItem("galmode")=="true") {
+			console.log("kkgal expand called from attachmentExpander");
+			kkgal.expand(no);
+			event.preventDefault();
+			return;
+		}
 
 		let index = anchor.dataset.attachmentIndex;
 
@@ -177,7 +186,7 @@
 		if (attachmentExpander.imageExtensions.includes(extension)) {
 			return attachmentExpander.createExpandable(anchor, post, index, true, function() {
 				var img = document.createElement("img");
-				img.className = "expandimg";
+				img.className = "expandImage";
 				img.src = anchor.href;
 				img.alt = "Full image";
 				img.title = "Click to contract";
@@ -187,12 +196,22 @@
 		else if (attachmentExpander.videoExtensions.includes(extension)) {
 			return attachmentExpander.createExpandable(anchor, post, index, false, function() {
 				var video = document.createElement("video");
-				video.className = "expandimg";
+				video.className = "expandVideo";
 				video.controls = true;
 				video.loop = true;
 				video.autoplay = true;
 				video.src = anchor.href;
 				return video;
+			});
+		}
+		else if(attachmentExpander.audioExtensions.includes(extension)) {
+			return attachmentExpander.createExpandable(anchor, post, index, false, function() {
+				var audio = document.createElement("audio");
+				audio.className = "expandAudio";
+				audio.controls = true;
+				audio.autoplay = true;
+				audio.src = anchor.href;
+				return audio;
 			});
 		}
  		else if (attachmentExpander.flashExtensions.includes(extension)) {
@@ -203,9 +222,10 @@
 
 	attachmentExpander.handleFlashExpansion = function (anchor, no, index) {
 		// pull native dims from the existing filesize text (leave it visible)
-		var fsNode = Document.querySelectorAll("#p"+no+" .filesize")[0],
-			re     = /(\d+)\s*x\s*(\d+)/ig,
-			m      = null, tmp;
+		var fsNode = anchor.parentNode.querySelector(".filesize");
+		if (!fsNode) return false;
+			var re     = /(\d+)\s*x\s*(\d+)/ig,
+				m      = null, tmp;
 
 		// grab the *last* NxM in the text so filenames like " 0x40 Hues of Halloween.swf" don't confuse us
 		while ((tmp = re.exec(fsNode.textContent)) !== null) m = tmp;
@@ -230,6 +250,9 @@
 		var hdr       = 20,
 			container = document.createElement("div"),
 			header    = document.createElement("div");
+
+		// add close button
+		attachmentExpander.addCloseButton(header, container, anchor);
 
 		container.className      = "expand swf-expand";
 		container.setAttribute('data-attachment-index', index);
@@ -260,6 +283,7 @@
 		host.style.left     = "0";
 		host.style.right    = "0";
 		host.style.bottom   = "0";
+	
 		container.appendChild(host);
 
 		if (useNative) {
@@ -279,7 +303,7 @@
 			host.appendChild(player);
 			player.load(anchor.href);
 		}
-
+		
 		return true;
 	};
 
@@ -293,9 +317,7 @@
 			// header with close link
 			let header = document.createElement("div");
 
-			let closeButton = attachmentExpander.getCloseButton();
-
-			header.appendChild(closeButton);
+			attachmentExpander.addCloseButton(expandDiv, expandDiv, anchor);
 
 			expandDiv.appendChild(header);
 		}

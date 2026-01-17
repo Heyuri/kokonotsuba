@@ -1,6 +1,11 @@
 /* Gallery (submodule) */
 const kkgal = {
+	name: "KK Gallery",
+	
 	startup: function () {
+		//get post images
+		kkgal.postImages = $class("postimg");
+
 		var df = $id("delform");
 		if (!df) return;
 		if (document.querySelector("#galfuncs")) return;
@@ -26,19 +31,21 @@ const kkgal = {
 		kkgal.gctrl  = $id("galctrl");
 		var side = $id("galside");
 		var sideInnerHTML = "";
-		for (var i = 0; i < kkimg.postimg.length; i++) {
-			var a   = kkimg.postimg[i].parentNode;
+		for (var i = 0; i < kkgal.postImages.length; i++) {
+			var a   = kkgal.postImages[i].parentNode;
 
 			var postEl = a.closest('.post[id^="p"]');
 			if (!postEl) continue;
 			var pno = postEl.id.substr(1);
 
-			sideInnerHTML += '<a href="javascript:kkgal.expand(\''+pno+'\');"><img id="galthumb'+pno+'" class="" src="'+kkimg.postimg[i].src+'" alt="'+kkimg.postimg[i].src+'"></a>';
+			sideInnerHTML += '<a href="javascript:kkgal.expand(\''+pno+'\');"><img id="galthumb'+pno+'" class="" src="'+kkgal.postImages[i].src+'" alt="'+kkgal.postImages[i].src+'"></a>';
 			kkgal.imgindex[i] = pno;
 		}
 		side.insertAdjacentHTML("beforeend", sideInnerHTML);
 		kkgal.getfit();
 		window.addEventListener("resize", kkgal._evresize);
+
+		return true;
 	},
 	reset: function () {
 		var df = $id("delform");
@@ -48,6 +55,10 @@ const kkgal = {
 		if (galfuncs) $del(galfuncs);
 		if (kkgal.gframe) $del(kkgal.gframe);
 		window.removeEventListener("resize", kkgal._evresize);
+	},
+	sett: function(tab, div) {
+		if (tab!="general") return;
+		div.innerHTML+= `<label><input type="checkbox" onchange="localStorage.setItem('galmode',this.checked);kkgal.reset();kkgal.startup();"`+(localStorage.getItem("galmode")=="true"?' checked="checked"':'')+`>Gallery mode</label>`;
 	},
 	/* - */
 	gframe:	null,
@@ -119,8 +130,8 @@ const kkgal = {
 		   }
 		}
 
-		for (var i = 0; i < kkimg.postimg.length; i++) {
-			var a   = kkimg.postimg[i].parentNode;
+		for (var i = 0; i < kkgal.postImages.length; i++) {
+			var a   = kkgal.postImages[i].parentNode;
 			
 			var postEl = a.closest('.post[id^="p"]');
 			if (!postEl) continue;
@@ -157,3 +168,9 @@ const kkgal = {
 		$doc.body.style.overflow   = "";
 	},
 };
+
+if (typeof(KOKOJS)!="undefined") {
+	kkjs.modules.push(kkgal);
+} else {
+	console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");
+}
