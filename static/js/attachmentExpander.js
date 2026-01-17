@@ -156,7 +156,6 @@
 		if (localStorage.getItem("imgexpand")!="true") return;
 
 		if (localStorage.getItem("galmode")=="true") {
-			console.log("kkgal expand called from attachmentExpander");
 			kkgal.expand(no);
 			event.preventDefault();
 			return;
