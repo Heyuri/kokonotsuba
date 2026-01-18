@@ -231,5 +231,7 @@ $language['post_not_found'] = "Post not found!";
 $language['module_route_not_found'] = "Module route not found!";
 $language['anti_spam_message'] = "Your post was caught by anti-spam rules. Contact staff if you think it was a mistake.";
 $language['thread_not_found_for_deletion'] = "Thread not found for deleted post preview!";
-
+$language['post_singular'] = 'post';
+$language['post_multiple'] = 'posts';
+$language['poster_hash_count'] = 'There\'s %1$s %2$s by this ID.';
 ?>

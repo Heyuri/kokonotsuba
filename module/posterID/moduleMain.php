@@ -23,8 +23,13 @@ class moduleMain extends abstractModuleMain {
 
 		// only add the listener for displaying IDs if displaying IDs is enabled
 		if($this->DISPLAY_ID) {
-			$this->moduleContext->moduleEngine->addListener('Post', function (&$arrLabels, $post) {
-				$this->onRenderPost($arrLabels, $post);
+			$this->moduleContext->moduleEngine->addListener('Post', function (
+				&$templateValues,
+				&$data,
+				&$threadPosts,
+				&$board,
+				&$adminMode) {
+				$this->onRenderPost($templateValues, $data, $threadPosts);
 			});
 		}
 
@@ -35,9 +40,28 @@ class moduleMain extends abstractModuleMain {
 		});
 	}
 
-	private function onRenderPost(array &$arrLabels, array $post): void {
+	private function onRenderPost(array &$templateValues, array $post, array $threadPosts): void {
 		// bind the poster_hash to the placeholder
-		$arrLabels['{$POSTER_HASH}'] = htmlspecialchars($post['poster_hash']);
+		$templateValues['{$POSTER_HASH}'] = htmlspecialchars($post['poster_hash']);
+
+		// get count of posts by this poster hash
+		$posterHashCount = $this->getPosterHashCount($threadPosts, $post['poster_hash']);
+
+		// then bind the total amount of posts by that ID
+		$templateValues['{$POSTER_HASH_COUNT}'] = htmlspecialchars(_T('poster_hash_count', $posterHashCount, _T($posterHashCount === 1 ? 'post_singular' : 'post_multiple')));
+	}
+
+	private function getPosterHashCount(array $threadPosts, string $posterHash): int {
+		$count = 0;
+
+		// loop through posts in the thread and count how many times this poster hash appears
+		foreach($threadPosts as $post) {
+			if($post['poster_hash'] === $posterHash) {
+				$count++;
+			}
+		}
+
+		return $count;
 	}
 
 	private function onBeforeCommit(string &$poster_hash, string $email, array|false $thread): void {
