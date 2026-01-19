@@ -77,7 +77,7 @@
 		errorElement.className = "attachmentError";
 		errorElement.title = "There was an error while expanding this attachment!";
 		errorElement.classList.add('error');
-		errorElement.textContent = "Error loading attachment";
+		errorElement.textContent = "Error loading attachment ";
 
 		attachmentExpander.addCloseButton(errorElement, errorElement, anchor);
 
