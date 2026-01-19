@@ -134,9 +134,7 @@ class moduleMain extends abstractModuleMain {
 
 		// normalize spacing for non-regex rules
 		if ($rule['match_type'] !== 'regex') {
-			$value = $this->normalizeWhitespace($value);
-			$value = $this->collapseSpacedLetters($value);
-			$value = $this->normalizeObfuscatedUrls($value);
+			$value = $this->normalizeField($value);
 		}
 
 		// Apply matching strategy
@@ -203,6 +201,22 @@ class moduleMain extends abstractModuleMain {
 		}
 	}
 
+	private function normalizeField(string $text): string {
+		// normalize whitespace
+		$text = $this->normalizeWhitespace($text);
+
+		// collapse spaced letters
+		$text = $this->collapseSpacedLetters($text);
+
+		// normalize obfuscated URLs
+		$text = $this->normalizeObfuscatedUrls($text);
+
+		// strip zero width spaces
+		$text = $this->stripZeroWidthSpaces($text);
+
+		return $text;
+	}
+
 	private function normalizeWhitespace(string $text): string {
 		// collapse all whitespace into single spaces
 		$text = preg_replace('/\s+/u', ' ', $text);
@@ -240,6 +254,11 @@ class moduleMain extends abstractModuleMain {
 		);
 
 		return $text;
+	}
+
+	private function stripZeroWidthSpaces(string $text): string {
+		// remove zero-width space characters
+		return str_replace("\u{200B}", '', $text);
 	}
 
 }
