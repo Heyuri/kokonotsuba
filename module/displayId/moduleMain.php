@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\Modules\posterID;
+namespace Kokonotsuba\Modules\displayId;
 
 use IPAddress;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;

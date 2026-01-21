@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\Modules\posterID;
+namespace Kokonotsuba\Modules\displayId;
 
 use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
 use Kokonotsuba\Root\Constants\userRole;
