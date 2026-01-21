@@ -56,12 +56,12 @@ class moduleMain extends abstractModuleMain {
 		// get the opening post
 		$openingPost = $threadPosts[0];
 
-		// check if the thread OP post's email contains 'showid'
-		$threadShowId = !empty($openingPost['email']) && str_contains($openingPost['email'], 'showid');
+		// check if the thread OP post's email contains 'displayid'
+		$threadDisplayId = !empty($openingPost['email']) && str_contains($openingPost['email'], 'displayid');
 
 		// return early if displaying IDs is disabled
 		// allow if the OP post's email contains 'displayid' to always show the ID
-		if ($this->DISPLAY_ID === false && $threadShowId === false) {
+		if ($this->DISPLAY_ID === false && $threadDisplayId === false) {
 			return;
 		}
 
