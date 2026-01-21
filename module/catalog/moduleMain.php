@@ -108,13 +108,15 @@ class moduleMain extends abstractModuleMain {
 		foreach($threads as $i=>$thread){
 			$threadPosts = $thread['posts'];
 			
-			$opPost = $threadPosts[0];
+			$opPost = $threadPosts[0] ?? null;
+
+			if(!$opPost) continue;
 
 			$firstKey = array_key_first($opPost['attachments']);
 
 			$opAttachment = $opPost['attachments'][$firstKey] ?? null;
 
-			if(!$opPost) continue;
+			$comment = quote_unkfunc($opPost['com']);
 
 			// get OP subject
 			$subject = $opPost['sub'] ?? '';
@@ -135,7 +137,7 @@ class moduleMain extends abstractModuleMain {
 	'</a>
 	<div class="catPostInfo"><span class="title">' . $subject . '</span>'.
 		$arrLabels['{$POSTINFO_EXTRA}'].'&nbsp;<span title="Replies"><img src="'.$this->RESICON.'" class="icon" alt="Replies"> '.$res.'</span></div>
-	<div class="catComment">'.$opPost['com'].'</div>
+	<div class="catComment">' . $comment . '</div>
 </td>';
 		}
 
