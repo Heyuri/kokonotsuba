@@ -228,7 +228,7 @@ $config['ModuleSettings']['MINIMUM_ROLE'] = \Kokonotsuba\Root\Constants\userRole
 $config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'] = 250;
 
 // posterID
-$config['ModuleSettings']['DISP_ID'] = false; // Display IDs
+$config['ModuleSettings']['DISP_ID'] = false; // if posterID is enabled: false = OPs can open by putting displayid to mail, true = IDs always ON
 
 // deletedPosts
 $config['ModuleSettings']['DELETED_POSTS_TEMPLATE'] = 'kokoimg.tpl';
