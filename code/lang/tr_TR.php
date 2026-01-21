@@ -231,8 +231,12 @@ $language['post_not_found'] = "Post bulunamadı!";
 $language['module_route_not_found'] = "Modül rotası bulunamadı!";
 $language['anti_spam_message'] = "Postunuz anti-spam kurallarına takıldı. Bunun bir hata olduğunu düşünüyorsanız yetkililerle iletişime geçin.";
 $language['thread_not_found_for_deletion'] = "Silinen post önizlemesi için thread bulunamadı!";
+$language['post_singular'] = 'post';
+$language['post_multiple'] = 'post';
+$language['poster_hash_count'] = 'Bu ID ile %1$s %2$s var.';
 
 ?>
+
 
 
 
