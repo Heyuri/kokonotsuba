@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\search;
 
 use BoardException;
+use DatabaseConnection;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;
 use postRenderer;
 use postSearchService;
@@ -23,7 +24,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->myPage = $this->getModulePageURL();
+		$this->myPage = $this->getModulePageURL([], false);
 
 		// init the module template engine
 		$this->moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.SEARCH_TEMPLATE', 'kokoimg.tpl');
@@ -34,24 +35,73 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function onRenderTopLinks(&$topLinkHookHtml){
-		$topLinkHookHtml .= ' [<a href="' . $this->myPage . '">' . _T('head_search') . '</a>] ';
+		$topLinkHookHtml .= ' [<a href="' . htmlspecialchars($this->myPage) . '">' . _T('head_search') . '</a>] ';
 	}
 
 	public function ModulePage() {
 		$adminMode = isActiveStaffSession();
-	
-		$searchKeyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
+
+		// build board checkbox HTML
+		$isSubmission = isset($_GET['filterSubmissionFlag']);
+
+		$defaultFilters = [
+			'searchGeneral' => '',
+			'searchComment' => '',
+			'searchName' => '',
+			'searchEmail' => '',
+			'searchSubject' => '',
+			'searchFileName' => '',
+			'searchPostNumber' => '',
+			'searchMatchWord' => $isSubmission ? '' : 'on',
+			'board' => $this->getUidsFromBoards(GLOBAL_BOARD_ARRAY),
+			'page' => 0,
+		];
+
+		// get filters from request
+		$filtersFromRequest = getFiltersFromRequest($this->myPage, $isSubmission, $defaultFilters);
+
+		// build clean url
+		$cleanUrl = buildSmartQuery($this->myPage, $defaultFilters, $filtersFromRequest, true);
+
 		$dat = '';
 
 		$dat .= $this->moduleContext->board->getBoardHead("Search");
 		
 		$dat .= $this->renderReturnLink();
 		$dat .= $this->renderSearchHeader();
-		$dat .= $this->renderSearchForm();
-	
-		if ($searchKeyword) {
-			$dat .= $this->handleSearchResults($this->moduleContext->postSearchService, $adminMode, $searchKeyword);
+		$dat .= $this->renderSearchForm($filtersFromRequest, $cleanUrl);
+
+		$searchFields = [
+			'general' => $_GET['searchGeneral'] ?? '',
+			'com' => $_GET['searchComment'] ?? '',
+			'name' => $_GET['searchName'] ?? '',
+			'email' => $_GET['searchEmail'] ?? '',
+			'sub' => $_GET['searchSubject'] ?? '',
+			'file_name' => $_GET['searchFileName'] ?? '',
+			'no' => $_GET['searchPostNumber'] ?? '',
+		];
+
+		// get selected boards from request
+		$boardUids = $_GET['board'] ?? $this->getUidsFromBoards(GLOBAL_BOARD_ARRAY);
+
+		// convert to array of integers
+		if (!is_array($boardUids) && !empty($boardUids)) {
+			// convert to array of integers
+			$boardUids = explode(' ', $boardUids);
+		} 
+
+		if (!empty(array_filter($searchFields))) {
+			// fetch database stop words.
+			// This is to prevent the engine from trying to search for words it can't index
+			// note: this is statically cached per request
+			$stopWords = DatabaseConnection::getInstance()->fetchFulltextStopWords();
+
+			// handle search result fetching and displaying
+			$dat .= $this->handleSearchResults($this->moduleContext->postSearchService, $stopWords, $searchFields, $boardUids, $cleanUrl, $adminMode);
 		}
+
+		// close tag
+		$dat .= "</div>";
 
 		$dat .= $this->moduleContext->board->getBoardFooter();
 	
@@ -69,46 +119,88 @@ class moduleMain extends abstractModuleMain {
 		';
 	}
 	
-	private function renderSearchForm() {
-		$keyword = $_GET['keyword'] ?? '';
-		$field = $_GET['field'] ?? 'com';
-		$method = $_GET['method'] ?? 'AND';
-	
+	private function renderSearchForm(array $filtersFromRequest, string $cleanUrl): string {
+		// retrieve previous search values
+		$searchGeneral = $filtersFromRequest['searchGeneral'] ?? '';
+		$searchComment = $filtersFromRequest['searchComment'] ?? '';
+		$searchName = $filtersFromRequest['searchName'] ?? '';
+		$searchEmail = $filtersFromRequest['searchEmail'] ?? '';
+		$searchSubject = $filtersFromRequest['searchSubject'] ?? '';
+		$searchFileName = $filtersFromRequest['searchFileName'] ?? '';
+		$searchPostNumber = $filtersFromRequest['searchPostNumber'] ?? '';
+		$searchMatchWord = $filtersFromRequest['searchMatchWord'] ?? '';
+
+		// get all boards as associative arrays
+		$allBoards = createAssocArrayFromBoardArray(GLOBAL_BOARD_ARRAY);
+
+		// generate board list checkboxes
+		$boardCheckboxHTML = generateBoardListCheckBoxHTML($filtersFromRequest['board'], $allBoards, false);
+
+		// render the form
 		return '
-			<form action="' . $this->getConfig('LIVE_INDEX_FILE') . '" method="get">
+			<form action="' . htmlspecialchars($cleanUrl) . '" method="GET">
 				<input type="hidden" name="mode" value="module">
 				<input type="hidden" name="load" value="search">
+				<input type="hidden" name="filterSubmissionFlag" value="1">
 				<div id="search">
 					<ul>' . _T('search_notice') . '</ul>
 					<table>
 						<tbody>
 							<tr>
-								<td class="postblock"><label for="searchKeyword">' . _T('search_keyword') . '</label></td>
-								<td><input type="text" class="inputtext" id="searchKeyword" name="keyword" value="' . htmlspecialchars($keyword, ENT_QUOTES) . '"></td>
-							</tr>
-							<tr>
-								<td class="postblock"><label for="searchTarget">' . _T('search_target') . '</label></td>
+								<td class="postblock"><label for="searchGeneral">' . _T('search_target_general') . '</label></td>
 								<td>
-									<select id="searchTarget" name="field">
-										<option value="com"' . ($field === 'com' ? ' selected="selected"' : '') . '>' . _T('search_target_comment') . '</option>
-										<option value="name"' . ($field === 'name' ? ' selected="selected"' : '') . '>' . _T('search_target_name') . '</option>
-										<option value="sub"' . ($field === 'sub' ? ' selected="selected"' : '') . '>' . _T('search_target_topic') . '</option>
-									</select>
+									<input id="searchGeneral" name="searchGeneral" value="' . htmlspecialchars($searchGeneral) . '">
 								</td>
 							</tr>
 							<tr>
-								<td class="postblock"><label for="searchMethod">' . _T('search_method') . '</label></td>
+								<td class="postblock"><label for="searchComment">' . _T('search_target_comment') . '</label></td>
 								<td>
-									<select id="searchMethod" name="method">
-										<option value="AND"' . ($method === 'AND' ? ' selected="selected"' : '') . '>' . _T('search_method_and') . '</option>
-										<option value="OR"' . ($method === 'OR' ? ' selected="selected"' : '') . '>' . _T('search_method_or') . '</option>
-									</select>
+									<input id="searchComment" name="searchComment" value="' . htmlspecialchars($searchComment) . '">
 								</td>
 							</tr>
 							<tr>
-								<td class="postblock"><label for="matchWholeWord">' . _T('search_match_word') . '</label></td>
+								<td class="postblock"><label for="searchName">' . _T('search_target_name') . '</label></td>
 								<td>
-									<input type="checkbox" id="matchWholeWord" name="matchWholeWord" '. (isset($_GET['matchWholeWord']) ? 'checked' : '').'>
+									<input id="searchName" name="searchName" value="' . htmlspecialchars($searchName) . '">
+								</td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="searchEmail">' . _T('search_target_email') . '</label></td>
+								<td>
+									<input id="searchEmail" name="searchEmail" value="' . htmlspecialchars($searchEmail) . '">
+								</td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="searchSubject">' . _T('search_target_subject') . '</label></td>
+								<td>
+									<input id="searchSubject" name="searchSubject" value="' . htmlspecialchars($searchSubject) . '">
+								</td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="searchFileName">' . _T('search_target_file_name') . '</label></td>
+								<td>
+									<input id="searchFileName" name="searchFileName" value="' . htmlspecialchars($searchFileName) . '">
+								</td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="searchPostNumber">' . _T('search_target_number') . '</label></td>
+								<td>
+									<input type="number" min="1" id="searchPostNumber" name="searchPostNumber" value="' . htmlspecialchars($searchPostNumber) . '">
+								</td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="searchMatchWord">' . _T('search_target_matchword') . '</label></td>
+								<td>
+									<input type="hidden" name="searchMatchWord" value="off">
+									<input type="checkbox" id="searchMatchWord" name="searchMatchWord" value="on"' . ($searchMatchWord === 'on' ? 'checked' : '') . '>
+								</td>
+							</tr>
+							<tr id="boardrow">
+								<td class="postblock"><label for="filterboard">Boards</label><div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div></td>
+								<td>
+									<ul class="boardFilterList" id="boardFilterList">
+										' . $boardCheckboxHTML . '
+									</ul>
 								</td>
 							</tr>
 						</tbody>
@@ -122,42 +214,43 @@ class moduleMain extends abstractModuleMain {
 		';
 	}
 	
-	private function handleSearchResults(postSearchService $postSearchService, bool $adminMode, string $searchKeyword): string {
+	private function handleSearchResults(
+		postSearchService $postSearchService, 
+		array $stopWords,
+		array $fields, 
+		array $boardUids, 
+		string $searchUrl,
+		bool $adminMode
+	): string {
 		$searchPage = $_GET['page'] ?? 0;
 		$searchPostsPerPage = $this->getConfig('ModuleSettings.SEARCH_POSTS_PER_PAGE');
-		$searchPostOffset = $searchPostsPerPage * $searchPage;
-		$quoteLinksFromBoard = $this->moduleContext->quoteLinkService->getQuoteLinksFromBoard($this->moduleContext->board->getBoardUID());
-	
-		$searchField = $_GET['field'] ?? null;
 
-		if(!$searchField) {
-			throw new BoardException(_T('no_search_field'));
-		}
+		// determine search method
+		$matchWholeWords = isset($_GET['searchMatchWord']) && $_GET['searchMatchWord'] === 'on';
 
-		$searchMethod = $_GET['method'] ?? null;
+		// chop the extension off of the file_name field
+		$fields['file_name'] = stripExtension($fields['file_name']);
 
-		if(!$searchMethod) {
-			throw new BoardException(_T('no_search_method'));
-		}
-
-		$searchKeywordArray = preg_split('/(　| )+/', strtolower(trim($searchKeyword)));
-		if ($searchMethod == 'REG') $searchMethod = 'AND';
-
-		$matchWholeWord = isset($_GET['matchWholeWord']);
-	
-		$hitPosts = $postSearchService->searchPosts($this->moduleContext->board, $searchKeywordArray, $matchWholeWord, $searchField, $searchMethod, $searchPostsPerPage, $searchPostOffset) ?? [];
+		// search database
+		$hitPosts = $postSearchService->searchPosts($stopWords, $fields, $boardUids, $matchWholeWords, $searchPage, $searchPostsPerPage) ?? [];
 		
 		$totalPostHits = $hitPosts['total_posts'] ?? 0;
 		$resultList = '';
 
-		$templateValues = ['{$BOARD_THREAD_NAME}' => ''];
-	
+		// fetch hit post uids
+		$postUids = array_column($hitPosts, 'post_uid');
+
+		// get quote links
+		$quoteLinks = $this->moduleContext->quoteLinkService->getQuoteLinksByPostUids($postUids);
+
+		$templateValues = [];
+
 		$postRenderer = new postRenderer(
 			$this->moduleContext->board, 
 			$this->moduleContext->board->loadBoardConfig(), 
 			$this->moduleContext->moduleEngine, 
 			$this->moduleTemplateEngine, 
-			$quoteLinksFromBoard);
+			$quoteLinks);
 	
 		if ($totalPostHits > 0) {
 			$hitPostResultData = $hitPosts['results_data'];
@@ -169,9 +262,22 @@ class moduleMain extends abstractModuleMain {
 			$renderAsOp = !$displayThreadedFormat;
 
 			foreach ($hitPostResultData as $hitPost) {
+				// extract post data
 				$hitPostData = $hitPost['post'];
+				
+				// get the thread resno for linking
 				$hitThreadResno = $hitPostData['post_op_number'];
 
+				// get board object
+				$board = searchBoardArrayForBoard($hitPostData['boardUID']);
+
+				// set board/thread name for template
+				$templateValues['{$BOARD_THREAD_NAME}'] = getThreadTitle(
+					$board->getBoardURL(),
+					$board->getBoardTitle()
+				);
+
+				// set board/thread name for template
 				$resultList .= $postRenderer->render($hitPostData,
 					$templateValues,
 					$hitThreadResno,
@@ -185,21 +291,14 @@ class moduleMain extends abstractModuleMain {
 					'',
 					0,
 					true,
-					'',
+					$board->getBoardURL(),
 					$renderAsOp);
 				$resultList .= $this->moduleTemplateEngine->ParseBlock('THREADSEPARATE', []);
 			}
 
 			$out = '<div id="searchresult">' . $resultList . '</div>';
 	
-			$filters = [
-				'keyword' => $searchKeyword,
-				'field'   => $searchField,
-				'method'  => $searchMethod
-			];
-	
-			$baseUrl = generateFilteredUrl($this->myPage, $filters);
-			$out .= drawPager($searchPostsPerPage, $totalPostHits, $baseUrl);
+			$out .= drawPager($searchPostsPerPage, $totalPostHits, $searchUrl);
 			return $out;
 		} else {
 			return $this->renderNoResultsMessage();
@@ -209,6 +308,13 @@ class moduleMain extends abstractModuleMain {
 	private function renderNoResultsMessage(): string {
 		return '<div class="error">' . _T('search_notfound') . '</div>';
 	}
-	
+
+	private function getUidsFromBoards(array $boards): array {
+		$boardUids = [];
+		foreach ($boards as $board) {
+			$boardUids[] = $board->getBoardUID();
+		}
+		return $boardUids;
+	}
 	
 }
