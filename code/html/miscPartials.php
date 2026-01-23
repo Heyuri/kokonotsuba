@@ -230,4 +230,6 @@ function drawPushPostForm(&$dat, $pushPostCharacterLimit, $url, $postNumber, $po
 		</form>';
 }
 
-	
+function getThreadTitle(string $boardUrl, string $boardTitle): string {
+	return '<span class="overboardThreadBoardTitle"><a href="' . htmlspecialchars($boardUrl).'">' . $boardTitle . '</a></span>';
+}

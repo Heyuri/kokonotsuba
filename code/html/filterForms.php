@@ -17,7 +17,7 @@ function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, a
 	$moderator = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR->value;
 	$admin = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN->value;
 	
-	$boardCheckboxHTML = generateBoardListCheckBoxHTML($board, $filterBoard, $allBoards, false);
+	$boardCheckboxHTML = generateBoardListCheckBoxHTML($filterBoard, $allBoards, false);
 	$dat .= '
 		<form class="detailsboxForm" id="actionLogFilterForm" action="' . $board->getBoardURL(true) . '" method="get">
 			<details id="filtercontainer" class="detailsbox">
@@ -92,7 +92,7 @@ function drawManagePostsFilterForm(&$dat, board $board, array $filters, array $b
 	$filterComment = $filters['comment'];
 	$filterBoard = $filters['board'];
 	
-	$boardCheckboxHTML = generateBoardListCheckBoxHTML($board, $filterBoard, $boards);
+	$boardCheckboxHTML = generateBoardListCheckBoxHTML($filterBoard, $boards);
 	$dat .= '
 	<form class="detailsboxForm" action="' . $board->getBoardURL(true) . '" method="get">
 		<details id="filtercontainer" class="detailsbox">
@@ -150,7 +150,7 @@ function drawManagePostsFilterForm(&$dat, board $board, array $filters, array $b
 }
 	
 function drawOverboardFilterForm(&$dat, board $board, array $boards, array $allowedBoards) {
-	$boardCheckboxHTML = generateBoardListCheckBoxHTML($board, $allowedBoards, $boards);
+	$boardCheckboxHTML = generateBoardListCheckBoxHTML($allowedBoards, $boards);
 
 	$dat .= '
 		<form class="detailsboxForm" id="overboardFilterForm" action="' . $board->getBoardURL(true) . '?mode=overboard" method="POST">

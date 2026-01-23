@@ -153,6 +153,7 @@ require __DIR__ . '/code/post/postRegistData.php';
 require __DIR__ . '/code/post/postRepository.php';
 require __DIR__ . '/code/post/postSearchRepository.php';
 require __DIR__ . '/code/post/postSearchService.php';
+require __DIR__ . '/code/post/searchLogic.php';
 require __DIR__ . '/code/post/postService.php';
 require __DIR__ . '/code/post/postValidator.php';
 require __DIR__ . '/code/post/deletion/deletedPostsRepository.php';

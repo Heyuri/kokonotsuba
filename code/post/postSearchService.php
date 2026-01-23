@@ -1,85 +1,77 @@
 <?php
-/**
- * postSearchService
- *
- *  Service class responsible for performing secure and efficient post searches.
- *
- * Features:
- * - Utilizes MySQL full-text search in BOOLEAN MODE for general keyword searches.
- * - Falls back to REGEXP/LIKE queries for:
- *   - Single quoted phrases (e.g., "unit-01")
- *   - Japanese (CJK) text inputs
- *
- * All input is sanitized and encoded to ensure safety and compatibility with stored post data.
- * Supports field targeting, word boundary enforcement, and flexible keyword logic (AND/OR).
- */
 
 class postSearchService {
 	public function __construct(
 		private readonly postSearchRepository $postSearchRepository
 	) {}
 
-	public function searchPosts(IBoard $board, array $keywords, bool $matchWholeWord, string $field = 'com', string $method = 'OR', int $limit = 20, int $offset = 0): ?array {
-		$field = $this->sanitizeField($field);
-		$boardUID = $board->getBoardUID();
-		$rawInput = implode(' ', $keywords);
+	public function searchPosts(
+		array $stopWords, 
+		array $fields, 
+		array $boardUids, 
+		bool $matchWholeWords, 
+		int $page = 0, 
+		int $postsPerPage = 20
+	): ?array {
+		// sanitize fields
+		$fields = $this->sanitizeFields($fields);
 
-		if ($this->isQuotedPhraseOnly($keywords)) {
-			return $this->searchByLike($field, $boardUID, $keywords[0], $limit, $offset);
-		}
-
-		if ($this->isJapaneseInput($keywords)) {
-			return $this->searchByLike($field, $boardUID, $rawInput, $limit, $offset);
-		}
-
-		$searchString = $rawInput; //$this->buildFullTextSearchString($rawInput, $method, $matchWholeWord, true);
-		if (!$searchString) {
-			return ['results_data' => [], 'total_posts' => 0];
-		}
-
-		return $this->searchByFullText($field, $boardUID, $searchString, $limit, $offset);
-	}
-
-	private function sanitizeField(string $field): string {
-		$allowedFields = ['com', 'name', 'sub', 'no'];
-		return in_array($field, $allowedFields) ? $field : 'com';
-	}
-
-	private function isQuotedPhraseOnly(array $keywords): bool {
-		return count($keywords) === 1 && preg_match('/^".+"$/', $keywords[0]);
-	}
-
-	private function isJapaneseInput(array $keywords): bool {
-		foreach ($keywords as $term) {
-			if (preg_match('/[\p{Hiragana}\p{Katakana}\p{Han}]/u', $term)) {
-				return true;
+		// tokenize and compile each field for boolean full-text search
+		foreach ($fields as $field => $value) {
+			// dont parse post number
+			if($field === 'no') {
+				continue;
 			}
+
+			$fields[$field] = parseToBooleanFulltext($value, $matchWholeWords, $stopWords);
 		}
-		return false;
+
+		// calculate pagination parameters
+		$offset = $page * $postsPerPage;
+
+		return $this->searchByFullText($fields, $boardUids, $postsPerPage, $offset);
 	}
 
-	private function searchByLike(string $field, string $boardUID, string $phrase, int $limit, int $offset): ?array {
-		$clean = mb_strtolower(trim($phrase, '"'));
-		$encoded = htmlspecialchars($clean, ENT_QUOTES | ENT_HTML5);
+	private function sanitizeFields(array $fields): array {
+		// Define allowed fields
+		$allowedFields = [
+			// general, searches all text fields
+			'general', 
 
-		if (mb_strlen($encoded) < 3) {
-			return ['results_data' => [], 'total_posts' => 0];
-		}
+			// comment field
+			'com', 
+			
+			// name field
+			'name', 
+			
+			// email field
+			'email',
+			
+			// subject field
+			'sub', 
+			
+			// post number
+			'no', 
+			
+			// file name field for any files attached to the post
+			'file_name', 
+			
+			// timestamp of the post
+			'root'
+		];
 
-		$posts = $this->postSearchRepository->fetchPostsByLike($field, $boardUID, $encoded, $limit, $offset);
-		$count = $this->postSearchRepository->countPostsByLike($field, $boardUID, $encoded);
+		// Remove any fields that are not allowed
+		$fields = array_intersect_key($fields, array_flip($allowedFields));
 
-		// no posts found
-		if(!$posts || $count === 0) {
-			return null;
-		}
+		// loop through and remove empty fields
+		$fields = array_filter($fields, fn($field) => !empty($field));
 
-		return $this->formatResults($posts, $count);
+		return $fields;
 	}
 
-	private function searchByFullText(string $field, string $boardUID, string $searchString, int $limit, int $offset): ?array {
-		$posts = $this->postSearchRepository->fetchPostsByFullText($field, $boardUID, $searchString, $limit, $offset);
-		$count = $this->postSearchRepository->countPostsByFullText($field, $boardUID, $searchString);
+	private function searchByFullText(array $fields, array $boardUids, int $limit, int $offset): ?array {
+		$posts = $this->postSearchRepository->fetchPostsByFullText($fields, $boardUids, $limit, $offset);
+		$count = $this->postSearchRepository->countPostsByFullText($fields, $boardUids);
 
 		// no posts found - return null
 		if(!$posts || $count === 0) {
@@ -87,82 +79,6 @@ class postSearchService {
 		}
 
 		return $this->formatResults($posts, $count);
-	}
-
-	/**
-	 * Build a FULLTEXT search string for BOOLEAN MODE or NATURAL LANGUAGE MODE.
-	 *
-	 * NATURAL MODE cannot contain boolean operators (+, -, *).
-	 * BOOLEAN MODE allows all of them.
-	 *
-	 * This method detects whether BOOLEAN syntax is being used by checking:
-	 * - $matchWholeWord (which controls '*' wildcard)
-	 * - $method (which controls '+' for AND)
-	 *
-	 * If NATURAL MODE is used later, the caller must pass $forceNatural = true.
-	 */
-	private function buildFullTextSearchString(
-		string $rawInput,
-		string $method,
-		bool $matchWholeWord,
-		bool $forceNaturalMode = false // <-- NEW argument
-	): ?string {
-
-		// Remove unwanted characters while keeping quotes and word chars
-		$rawInput = preg_replace('/[^\p{L}\p{N}\s"]+/u', '', $rawInput);
-
-		// Extract quoted phrases or individual word tokens
-		preg_match_all('/"([^"]+)"|[\p{L}\p{N}]+/u', $rawInput, $matches);
-		$terms = $matches[0] ?? [];
-
-		$cleanedTerms = [];
-
-		foreach ($terms as $term) {
-
-			$isQuoted = $term[0] === '"';
-
-			// Normalize inside-phrase content
-			$clean = mb_strtolower(trim($term, '"'));
-
-			// Ignore tiny terms that MySQL won't index anyway (< 3 chars)
-			if (mb_strlen($clean) < 3) continue;
-
-			// ---------------------------------------------------------------------
-			// CASE 1: Quoted phrase — leave as-is (MySQL supports it in both modes)
-			// ---------------------------------------------------------------------
-			if ($isQuoted) {
-				$cleanedTerms[] = '"' . $clean . '"';
-				continue;
-			}
-
-			// ---------------------------------------------------------------------
-			// CASE 2: NATURAL LANGUAGE MODE
-			// - BOOLEAN symbols are NOT allowed in this mode.
-			// - We strip + and * to avoid SQL errors.
-			// ---------------------------------------------------------------------
-			if ($forceNaturalMode) {
-				// NATURAL MODE requires plain terms only
-				$cleanedTerms[] = $clean;
-				continue;
-			}
-
-			// ---------------------------------------------------------------------
-			// CASE 3: BOOLEAN MODE (default behavior)
-			// - '+' for AND
-			// - '*' wildcard when whole-word matching is off
-			// ---------------------------------------------------------------------
-			$token = strtoupper($method) === 'AND' ? '+' . $clean : $clean;
-
-			if (!$matchWholeWord) {
-				// '*' wildcard allowed only in BOOLEAN mode
-				$token .= '*';
-			}
-
-			$cleanedTerms[] = $token;
-		}
-
-		// Return cleaned token list or null if empty
-		return $cleanedTerms ? implode(' ', $cleanedTerms) : null;
 	}
 
 	private function formatResults(array $posts, int $totalPostCount): array {

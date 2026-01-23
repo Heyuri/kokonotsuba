@@ -259,7 +259,7 @@ class overboard {
 	private function buildThreadTitleAndLink(board $board): array {
 		$boardTitle = $board->getBoardTitle();
 		$boardURL = $board->getBoardURL();
-		$titleHTML = '<span class="overboardThreadBoardTitle"><a href="'.$boardURL.'">'.$boardTitle.'</a></span>';
+		$titleHTML = getThreadTitle($boardURL, $boardTitle);
 		return [$titleHTML, $boardURL];
 	}
 	

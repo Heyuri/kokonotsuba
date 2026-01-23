@@ -159,4 +159,33 @@ class DatabaseConnection {
 			return null;
 		}
 	}
+
+	/**
+	 * Fetches the default MySQL InnoDB FULLTEXT stopwords.
+	 *
+	 * The result is cached for the lifetime of the request to avoid
+	 * repeated INFORMATION_SCHEMA queries.
+	 *
+	 * @return string[] List of stopwords
+	 */
+	public function fetchFulltextStopWords(): array {
+		static $cache = null;
+
+		if ($cache !== null) {
+			return $cache;
+		}
+
+		// Only supported for MySQL / InnoDB
+		$query = 'SELECT value FROM INFORMATION_SCHEMA.INNODB_FT_DEFAULT_STOPWORD';
+
+		$rows = $this->fetchAllAsIndexArray($query);
+
+		$cache = array_map(
+			fn($row) => mb_strtolower($row[0]),
+			$rows
+		);
+
+		return $cache;
+	}
+
 }

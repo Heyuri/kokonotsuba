@@ -2,16 +2,14 @@
 
 //for the board filter form
 
-use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
-
-function generateBoardListCheckBoxHTML(board $currentBoard, array $filterBoard, array $boards, bool $selectAll = false) {
+function generateBoardListCheckBoxHTML(array $filterBoard, array $boards, bool $selectAll = false) {
 	$listHTML = '';
 
 	foreach($boards as $board) {
 		$boardTitle = $board['board_title'];
 		$boardUID = $board['board_uid'];
 		
-		$isChecked = $selectAll || in_array($boardUID, $filterBoard) || ($boardUID === $currentBoard->getBoardUID() && empty($filterBoard));
+		$isChecked = $selectAll || in_array($boardUID, $filterBoard) || empty($filterBoard);
 			
 		$listHTML .= '<li><label class="filterSelectBoardItem"><input name="board[]" type="checkbox" value="' . $boardUID . '" ' . ($isChecked ? 'checked' : '') . '>' . $boardTitle . '</label></li>';
 	}

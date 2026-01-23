@@ -181,7 +181,7 @@
 <!--&THREAD-->
 			
 		<div class="thread<!--&IF($MODULE_THREAD_CSS_CLASSES,'{$MODULE_THREAD_CSS_CLASSES}','')-->" id="t{$BOARD_UID}_{$THREAD_NO}" data-thread-uid="{$THREAD_UID}">
-			{$BOARD_THREAD_NAME}
+			<!--&IF($BOARD_THREAD_NAME,'{$BOARD_THREAD_NAME}','')-->
 			<div class="tnav">{$THREADNAV}</div>
 			{$THREAD_OP}
 			{$REPLIES}
@@ -190,6 +190,7 @@
 
 <!--&OP-->
 		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}">
+			<!--&IF($BOARD_THREAD_NAME,'{$BOARD_THREAD_NAME}','')-->
 			<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
 				<!--&IF($POST_ATTACHMENTS,'{$POST_ATTACHMENTS}','')-->
 			</div>

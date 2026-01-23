@@ -423,3 +423,20 @@ function isArchiveFile(string $extension, string $mime) {
 	// no match found
 	return false;
 }
+
+/**
+ * Removes the extension from a string if it has one.
+ *
+ * A "file extension" is considered anything after the last dot.
+ * If there’s no dot, the original string is returned.
+ *
+ * @param string $input String that may have a "file extension"
+ * @return string String without the extension
+ */
+function stripExtension(string $input): string {
+    $pos = strrpos($input, '.');
+    if ($pos === false) {
+        return $input; // no dot, return as-is
+    }
+    return substr($input, 0, $pos);
+}

@@ -58,8 +58,6 @@ class managePostsRoute {
 		$page = ($page >= 0) ? $page : 1;
 
 		$onlyimgdel = !empty($_POST['onlyimgdel']); // Only delete the image
-		$modFunc = '';
-		$host = $_GET['host'] ?? 0;
 		$posts = array(); //posts to display in the manage posts table
 		
 		// Delete the article(thread) block
