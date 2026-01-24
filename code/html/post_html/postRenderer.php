@@ -124,7 +124,7 @@ class postRenderer {
 		$totalThreadPages = $replyCount / $repliesPerPage;
 
 		// Generate the quote and reply buttons
-		$quoteButton = $this->postElementGenerator->generateQuoteButton($threadResno, $data['no'], $totalThreadPages);
+		$quoteButton = $this->postElementGenerator->generateQuoteButton($threadResno, $data['no'], $totalThreadPages, $crossLink);
 		$replyButton = $threadMode ? $this->postElementGenerator->generateReplyButton($crossLink, $threadResno, $totalThreadPages) : '';
 		$recentRepliesButton = $threadMode ? $this->postElementGenerator->generateRecentRepliesButton($crossLink, $threadResno, $replyCount) : '';
 
@@ -132,7 +132,7 @@ class postRenderer {
 		$page = floor($data['post_position'] / $repliesPerPage);
 
 		// Generate the post url
-		$postUrl = $this->board->getBoardThreadURL($threadResno, $data['no'], false, $page);
+		$postUrl = $this->board->getBoardThreadURL($threadResno, $data['no'], false, $page, $crossLink);
 
 		// bind post url 
 		$templateValues['{$POST_URL}'] = $postUrl;

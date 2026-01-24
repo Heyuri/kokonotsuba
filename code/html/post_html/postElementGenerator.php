@@ -24,10 +24,10 @@ class postElementGenerator {
 	 * pointing to the thread/post. Otherwise, it just returns the post number
 	 * as plain text.
 	 */
-	public function generateQuoteButton(int $threadResno, int $no, int $totalThreadPages = 0): string {
+	public function generateQuoteButton(int $threadResno, int $no, int $totalThreadPages = 0, ?string $crossLink = null): string {
 		if ($this->board->getConfigValue('USE_QUOTESYSTEM')) {
 			// Build the URL to the specific post
-			$threadUrl = $this->board->getBoardThreadURL($threadResno, $no, true, $totalThreadPages);
+			$threadUrl = $this->board->getBoardThreadURL($threadResno, $no, true, $totalThreadPages, $crossLink);
 			// Create the clickable quote button
 			$quoteButton = '<a href="'.$threadUrl.'" class="qu" title="Quote">'.$no.'</a>';
 		} else {

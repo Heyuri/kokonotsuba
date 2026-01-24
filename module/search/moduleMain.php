@@ -242,12 +242,6 @@ class moduleMain extends abstractModuleMain {
 		$totalPostHits = $hitPosts['total_posts'] ?? 0;
 		$resultList = '';
 
-		// fetch hit post uids
-		$postUids = array_column($hitPosts, 'post_uid');
-
-		// get quote links
-		$quoteLinks = $this->moduleContext->quoteLinkService->getQuoteLinksByPostUids($postUids);
-
 		$templateValues = [];
 
 		$postRenderer = new postRenderer(
@@ -255,11 +249,20 @@ class moduleMain extends abstractModuleMain {
 			$this->moduleContext->board->loadBoardConfig(), 
 			$this->moduleContext->moduleEngine, 
 			$this->moduleTemplateEngine, 
-			$quoteLinks);
+			[]);
 	
 		if ($totalPostHits > 0) {
 			$hitPostResultData = $hitPosts['results_data'];
 		
+			// fetch hit post uids
+			$postUids = array_keys($hitPostResultData);
+
+			// get quote links
+			$quoteLinks = $this->moduleContext->quoteLinkService->getQuoteLinksByPostUids($postUids);
+
+			// set quote links
+			$postRenderer->setQuoteLinks($quoteLinks);
+
 			// config option for displaying all posts as OPs
 			$displayThreadedFormat = $this->getConfig('ModuleSettings.DISPLAY_THREADED_FORMAT', false);
 

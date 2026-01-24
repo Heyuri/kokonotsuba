@@ -243,7 +243,8 @@ class board implements IBoard {
 		int $threadNumber, 
 		int $replyNumber = 0, 
 		bool $isQuoteRedirect = false, 
-		?int $page = null
+		?int $page = null,
+		?string $crossLink = null,
 	): string {
 		$liveIndexFile = $this->config['LIVE_INDEX_FILE'];
 		$replyString = '';
@@ -258,6 +259,14 @@ class board implements IBoard {
 		if ($page !== null) {
 			$queryParams['page'] = $page;
 		}
+		
+		// init link
+		$baseUrl = $this->getBoardURL();
+
+		// use the target link if defined
+		if(!empty($crossLink)) {
+			$baseUrl = $crossLink;
+		}
 
 		// Build query string via http_build_query
 		$queryString = http_build_query($queryParams);
@@ -270,7 +279,7 @@ class board implements IBoard {
 		}
 
 		// Final URL
-		$threadUrl = $this->getBoardURL() . $liveIndexFile . '?' . $queryString . $replyString;
+		$threadUrl = $baseUrl . $liveIndexFile . '?' . $queryString . $replyString;
 
 		return $threadUrl ?? '';
 	}
