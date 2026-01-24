@@ -41,6 +41,11 @@ class moduleMain extends abstractModuleMain {
 	public function ModulePage() {
 		$adminMode = isActiveStaffSession();
 
+		// fetch boards
+		// for staff it shows all boards
+		// for non-staff it only shows listed boards
+		$boards = $adminMode ? GLOBAL_BOARD_ARRAY : $this->moduleContext->boardService->getAllListedBoards();
+
 		// build board checkbox HTML
 		$isSubmission = isset($_GET['filterSubmissionFlag']);
 
@@ -53,7 +58,7 @@ class moduleMain extends abstractModuleMain {
 			'searchFileName' => '',
 			'searchPostNumber' => '',
 			'searchMatchWord' => $isSubmission ? '' : 'on',
-			'board' => $this->getUidsFromBoards(GLOBAL_BOARD_ARRAY),
+			'board' => $this->getUidsFromBoards($boards),
 			'page' => 0,
 		];
 
@@ -69,7 +74,7 @@ class moduleMain extends abstractModuleMain {
 		
 		$dat .= $this->renderReturnLink();
 		$dat .= $this->renderSearchHeader();
-		$dat .= $this->renderSearchForm($filtersFromRequest, $cleanUrl);
+		$dat .= $this->renderSearchForm($filtersFromRequest, $cleanUrl, $boards);
 
 		$searchFields = [
 			'general' => $_GET['searchGeneral'] ?? '',
@@ -82,7 +87,7 @@ class moduleMain extends abstractModuleMain {
 		];
 
 		// get selected boards from request
-		$boardUids = $_GET['board'] ?? $this->getUidsFromBoards(GLOBAL_BOARD_ARRAY);
+		$boardUids = $_GET['board'] ?? $this->getUidsFromBoards($boards);
 
 		// convert to array of integers
 		if (!is_array($boardUids) && !empty($boardUids)) {
@@ -119,7 +124,7 @@ class moduleMain extends abstractModuleMain {
 		';
 	}
 	
-	private function renderSearchForm(array $filtersFromRequest, string $cleanUrl): string {
+	private function renderSearchForm(array $filtersFromRequest, string $cleanUrl, array $boards): string {
 		// retrieve previous search values
 		$searchGeneral = $filtersFromRequest['searchGeneral'] ?? '';
 		$searchComment = $filtersFromRequest['searchComment'] ?? '';
@@ -131,7 +136,7 @@ class moduleMain extends abstractModuleMain {
 		$searchMatchWord = $filtersFromRequest['searchMatchWord'] ?? '';
 
 		// get all boards as associative arrays
-		$allBoards = createAssocArrayFromBoardArray(GLOBAL_BOARD_ARRAY);
+		$allBoards = createAssocArrayFromBoardArray($boards);
 
 		// generate board list checkboxes
 		$boardCheckboxHTML = generateBoardListCheckBoxHTML($filtersFromRequest['board'], $allBoards, false);
