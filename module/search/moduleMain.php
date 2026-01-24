@@ -59,7 +59,6 @@ class moduleMain extends abstractModuleMain {
 			'searchPostNumber' => '',
 			'searchMatchWord' => $isSubmission ? '' : 'on',
 			'board' => $this->getUidsFromBoards($boards),
-			'page' => 0,
 		];
 
 		// get filters from request
