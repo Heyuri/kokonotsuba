@@ -84,6 +84,7 @@ class postValidator {
 		}
 		return[$postOpRoot];
 	}
+
 	public function cleanComment(string $com, array $files, bool $is_admin){
 		// Text trimming
 		if((strlenUnicode($com) > $this->config['COMM_MAX']) && !$is_admin){
@@ -112,7 +113,12 @@ class postValidator {
 			);
 		}
 
+		
 		$com = str_replace(array("\r\n", "\r"), "\n", $com);
+
+		// trip traili9ng new lines and spaces
+		$com = rtrim($com, " \t\n");
+
 		$com = preg_replace("/\n((　| )*\n){3,}/", "\n", $com);
 
 		if(!$this->config['BR_CHECK'] || substr_count($com,"\n") < $this->config['BR_CHECK']){
