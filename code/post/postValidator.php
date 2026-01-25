@@ -113,10 +113,10 @@ class postValidator {
 			);
 		}
 
-		
+
 		$com = str_replace(array("\r\n", "\r"), "\n", $com);
 
-		// trip traili9ng new lines and spaces
+		// trip trailing new lines and spaces
 		$com = rtrim($com, " \t\n");
 
 		$com = preg_replace("/\n((　| )*\n){3,}/", "\n", $com);
