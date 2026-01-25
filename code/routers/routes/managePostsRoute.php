@@ -260,6 +260,12 @@ class managePostsRoute {
 			// dispatch post admin hook point
 			$this->moduleEngine->dispatch('ManagePostsControls', [&$modFunc, &$p]);
 
+			// dispatch post comment hook point
+			$this->moduleEngine->dispatch('PostComment', [
+				&$com,
+				&$p
+			]);
+
 			if($roleLevel->isAtMost(\Kokonotsuba\Root\Constants\userRole::LEV_JANITOR)) {
 				$host = substr(hash('sha256', $host), 0, 10);
 			}

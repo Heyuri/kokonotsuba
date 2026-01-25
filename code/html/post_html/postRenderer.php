@@ -204,6 +204,12 @@ class postRenderer {
 			&$adminMode,
 		]);
 
+		// Dispatch comment event, which affects comments specifically
+		$this->moduleEngine->dispatch('PostComment', [
+				&$templateValues['{$COM}'],
+				&$data
+		]);
+
 		// CSS hook point placeholders
 		$templateValues['{$MODULE_ATTACHMENT_CSS_CLASSES}'] = '';
 		$templateValues['{$MODULE_POST_CSS_CLASSES}'] = '';

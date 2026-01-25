@@ -28,12 +28,12 @@ class moduleMain extends abstractModuleMain {
         $this->baseEmoteUrl = $this->getConfig('STATIC_URL') . 'image/emote/';
 
         // add hook point listener for post
-		$this->moduleContext->moduleEngine->addListener('Post', function(array &$templateValues, array &$post, array &$threadPosts, board &$board, bool &$adminMode) {
-			$this->onRenderPost($templateValues['{$COM}']);
+		$this->moduleContext->moduleEngine->addListener('PostComment', function(string &$postComment, array &$post) {
+			$this->onRenderComment($postComment);
 		});
 	}
 
-    private function onRenderPost(string &$comment): void {
+    private function onRenderComment(string &$comment): void {
         // modify rendered comment to include emotes
         $this->searchAndReplaceEmotes($comment);
     }
