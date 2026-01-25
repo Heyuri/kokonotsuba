@@ -114,6 +114,7 @@ class postValidator {
 		}
 
 
+		// normalize windows/mac line endings to be unix line endings
 		$com = str_replace(array("\r\n", "\r"), "\n", $com);
 
 		// trip trailing new lines and spaces
