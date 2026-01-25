@@ -119,6 +119,9 @@ class postValidator {
 		// trip trailing new lines and spaces
 		$com = rtrim($com, " \t\n");
 
+		// Collapse excessive blank lines:
+		// Replace 3 or more consecutive empty lines (including lines with spaces or full-width spaces)
+		// with a single newline to prevent large vertical gaps in comments.
 		$com = preg_replace("/\n((　| )*\n){3,}/", "\n", $com);
 
 		if(!$this->config['BR_CHECK'] || substr_count($com,"\n") < $this->config['BR_CHECK']){
