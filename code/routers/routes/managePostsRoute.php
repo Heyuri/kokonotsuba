@@ -64,7 +64,6 @@ class managePostsRoute {
 		$postUidsFromCheckbox = $_POST['clist'] ?? [];
 		if($postUidsFromCheckbox) {
 			$this->deletePostsFromCheckboxes($postUidsFromCheckbox, $onlyimgdel, $accountId);
-			$this->board->rebuildBoard();
 		}
 		
 		$posts = $this->postRepository->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest, $canViewDeleted) ?? [];
@@ -363,6 +362,16 @@ class managePostsRoute {
 			$this->postService->removePosts($postUids, $accountId);
 		}
 
+		// get board uids
+		$boardUids = $this->postRepository->getBoardUidsFromPostUids($postUids);
+		
+		// get boards by uids
+		$boards = getBoardsByUIDs($boardUids);
+
+		// rebuild the boards
+		rebuildBoardsByArray($boards);
+
+		// log action
 		$this->actionLoggerService->logAction("Delete posts: $checkboxDeletionActionLogStr".($onlyDeleteImages?' (file only)':''), $this->board->getBoardUID());
 	}
 }
