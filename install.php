@@ -403,7 +403,8 @@ class tableCreator {
 				UNIQUE KEY uniq_board_no (boardUID, no),
 				FULLTEXT INDEX ft_com (com),
 				FULLTEXT INDEX ft_sub (sub),
-				FULLTEXT INDEX ft_name (name)
+				FULLTEXT INDEX ft_name (name),
+				FULLTEXT INDEX ft_email (email)
 			) ENGINE=InnoDB;",
 
 			"CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_NUMBER_TABLE']} (
@@ -508,7 +509,9 @@ class tableCreator {
 				INDEX idx_mime_type (mime_type), -- For queries filtering by mime_type
 
 				-- Composite index for queries filtering by both post_uid and file_md5
-				INDEX idx_post_uid_file_md5 (post_uid, file_md5)
+				INDEX idx_post_uid_file_md5 (post_uid, file_md5),
+
+				FULLTEXT INDEX ft_file_name (file_name)
 			) ENGINE=InnoDB;
 			",
 
