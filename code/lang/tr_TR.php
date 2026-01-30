@@ -113,7 +113,7 @@ $language['search_method']				= 'Metod';
 $language['search_method_and']			= 'VE';
 $language['search_method_or']			= 'YA DA';
 $language['search_target_matchword']	= 'Tam kelime eşleşmesi';
-$language['search_target_opening_post'] = 'Yalnızca thread açış postları (OPler)';
+$language['search_target_opening_post'] = 'Sadece OPler';
 $language['search_submit_btn']			= 'Ara';
 $language['search_notfound']			= 'Belirtilen anahatar kelimeler için sonuç bulunamadı.';
 $language['search_back']				= 'Geri';
@@ -237,6 +237,7 @@ $language['post_multiple'] = 'post';
 $language['poster_hash_count'] = 'Bu ID ile %1$s %2$s var.';
 
 ?>
+
 
 
 
