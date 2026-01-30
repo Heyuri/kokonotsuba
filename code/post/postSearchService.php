@@ -10,6 +10,7 @@ class postSearchService {
 		array $fields, 
 		array $boardUids, 
 		bool $matchWholeWords, 
+		bool $openingPostOnly = false,
 		int $page = 0, 
 		int $postsPerPage = 20
 	): ?array {
@@ -29,7 +30,7 @@ class postSearchService {
 		// calculate pagination parameters
 		$offset = $page * $postsPerPage;
 
-		return $this->searchByFullText($fields, $boardUids, $postsPerPage, $offset);
+		return $this->searchByFullText($fields, $boardUids, $openingPostOnly, $postsPerPage, $offset);
 	}
 
 	private function sanitizeFields(array $fields): array {
@@ -69,9 +70,9 @@ class postSearchService {
 		return $fields;
 	}
 
-	private function searchByFullText(array $fields, array $boardUids, int $limit, int $offset): ?array {
-		$posts = $this->postSearchRepository->fetchPostsByFullText($fields, $boardUids, $limit, $offset);
-		$count = $this->postSearchRepository->countPostsByFullText($fields, $boardUids);
+	private function searchByFullText(array $fields, array $boardUids, bool $openingPostsOnly, int $limit, int $offset): ?array {
+		$posts = $this->postSearchRepository->fetchPostsByFullText($fields, $boardUids, $openingPostsOnly, $limit, $offset);
+		$count = $this->postSearchRepository->countPostsByFullText($fields, $boardUids, $openingPostsOnly);
 
 		// no posts found - return null
 		if(!$posts || $count === 0) {

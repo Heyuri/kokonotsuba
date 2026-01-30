@@ -2,7 +2,6 @@
 
 namespace Kokonotsuba\Modules\search;
 
-use BoardException;
 use DatabaseConnection;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;
 use postRenderer;
@@ -58,6 +57,7 @@ class moduleMain extends abstractModuleMain {
 			'searchFileName' => '',
 			'searchPostNumber' => '',
 			'searchMatchWord' => $isSubmission ? '' : 'on',
+			'searchOpeningPost' => $isSubmission ? '' : 'off',
 			'board' => $this->getUidsFromBoards($boards),
 		];
 
@@ -133,6 +133,7 @@ class moduleMain extends abstractModuleMain {
 		$searchFileName = $filtersFromRequest['searchFileName'] ?? '';
 		$searchPostNumber = $filtersFromRequest['searchPostNumber'] ?? '';
 		$searchMatchWord = $filtersFromRequest['searchMatchWord'] ?? '';
+		$searchOpeningPost = $filtersFromRequest['searchOpeningPost'] ?? '';
 
 		// get all boards as associative arrays
 		$allBoards = createAssocArrayFromBoardArray($boards);
@@ -199,6 +200,13 @@ class moduleMain extends abstractModuleMain {
 									<input type="checkbox" id="searchMatchWord" name="searchMatchWord" value="on"' . ($searchMatchWord === 'on' ? 'checked' : '') . '>
 								</td>
 							</tr>
+							<tr>
+								<td class="postblock"><label for="searchOpeningPost">' . _T('search_target_opening_post') . '</label></td>
+								<td>
+									<input type="hidden" name="searchOpeningPost" value="off">
+									<input type="checkbox" id="searchOpeningPost" name="searchOpeningPost" value="on"' . ($searchOpeningPost === 'on' ? 'checked' : '') . '>
+								</td>
+							</tr>
 							<tr id="boardrow">
 								<td class="postblock"><label for="filterboard">Boards</label><div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div></td>
 								<td>
@@ -232,11 +240,14 @@ class moduleMain extends abstractModuleMain {
 		// determine search method
 		$matchWholeWords = isset($_GET['searchMatchWord']) && $_GET['searchMatchWord'] === 'on';
 
+		// only search opening posts
+		$openingPostsOnly = isset($_GET['searchOpeningPost']) && $_GET['searchOpeningPost'] === 'on';
+
 		// chop the extension off of the file_name field
 		$fields['file_name'] = stripExtension($fields['file_name']);
 
 		// search database
-		$hitPosts = $postSearchService->searchPosts($stopWords, $fields, $boardUids, $matchWholeWords, $searchPage, $searchPostsPerPage) ?? [];
+		$hitPosts = $postSearchService->searchPosts($stopWords, $fields, $boardUids, $matchWholeWords, $openingPostsOnly, $searchPage, $searchPostsPerPage) ?? [];
 		
 		$totalPostHits = $hitPosts['total_posts'] ?? 0;
 		$resultList = '';

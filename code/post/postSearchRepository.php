@@ -30,7 +30,7 @@ class postSearchRepository {
 		return $params;
 	}
 
-	public function fetchPostsByFullText(array $fields, array $boardUids, int $limit, int $offset): false|array {
+	public function fetchPostsByFullText(array $fields, array $boardUids, bool $openingPostsOnly, int $limit, int $offset): false|array {
 		// build the search field and parameters
 		$params = $this->buildParamters($fields, $boardUids);
 
@@ -38,7 +38,7 @@ class postSearchRepository {
 		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, false);
 
 		// build the search field WHERE clause
-		$searchClause = $this->buildSearchClause($fields, $boardUids);
+		$searchClause = $this->buildSearchClause($fields, $boardUids, $openingPostsOnly);
 
 		// append WHERE
 		$query .= " WHERE $searchClause";
@@ -61,12 +61,12 @@ class postSearchRepository {
 		return $mergedPosts;
 	}
 
-	public function countPostsByFullText(array $fields, array $boardUids): int {
+	public function countPostsByFullText(array $fields, array $boardUids, bool $openingPostsOnly): int {
 		// get base post query
 		$postQuery = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, false);
 
 		// build the search field WHERE clause
-		$searchClause = $this->buildSearchClause($fields, $boardUids);
+		$searchClause = $this->buildSearchClause($fields, $boardUids, $openingPostsOnly);
 
 		// build the search field WHERE clause
 		$countQuery = "
@@ -83,7 +83,7 @@ class postSearchRepository {
 		return $this->databaseConnection->fetchOne($countQuery, $params)['total_posts'] ?? 0;
 	}
 
-	private function buildSearchClause(array $fields, array $boardUids): string {
+	private function buildSearchClause(array $fields, array $boardUids, bool $openingPostsOnly): string {
 		// init caluses
 		$clauses = [];
 
@@ -146,6 +146,12 @@ class postSearchRepository {
 			}
 			// combine board clauses with OR
 			$clauses[] = '(' . implode(' OR ', $boardClauses) . ')';
+		}
+
+		// build opening posts filter clause
+		// if onlyOpeningPosts is true then only OPs will be fetched
+		if($openingPostsOnly === true) {
+			$clauses[] = '(p.is_op = 1)';
 		}
 
 		// combine all clauses with AND by default
