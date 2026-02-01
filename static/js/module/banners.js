@@ -9,7 +9,7 @@ const kkBannerSwitch = {
 
         if (!bannerElement) {
             console.log("ERROR: Banner element not found.");
-            return false;
+            return;
         }
 
         // Store the original src attribute value

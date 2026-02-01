@@ -17,7 +17,7 @@ const kkqr = { name: "KK Quick Reply",
 		if (!localStorage.getItem("useqr"))
 			localStorage.setItem("useqr", true);
 		if (!$id("postform")) return true;
-		$id("formfuncs").insertAdjacentHTML("beforeend", '<span id="qrfunc"> | <a href="javascript:kkqr.openqr();">Quick reply</a></span>');
+		if ($id("formfuncs")) $id("formfuncs").insertAdjacentHTML("beforeend", '<span id="qrfunc"> | <a href="javascript:kkqr.openqr();">Quick reply</a></span>');
 		if (localStorage.getItem("useqr")=="true") {
 			if (localStorage.getItem("alwaysqr")=="true" && !kkqr.closedOnce) {
 				kkqr.openqr();

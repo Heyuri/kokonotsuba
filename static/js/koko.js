@@ -309,11 +309,18 @@ const kkjs = {
 		kkjs.modules.forEach(function (mod) {
 			try {
 				if (!mod.startup()) {
-						console.log("ERROR: Fatal error in module '" + mod.name + "'.");
-						kkjs.modules.pop(mod);
+					console.error(
+						`Fatal error in module startup "${mod.name}"`,
+					);
+					
+					kkjs.modules.pop(mod);
 				}
-			} catch (error) {
-				console.log("ERROR: Fatal error in module '" + mod.name + "'");
+			}catch (error) {
+				console.error(
+					`Fatal error in module "${mod.name}"`,
+					error
+				);
+
 				kkjs.modules.pop(mod);
 			}
 		});
