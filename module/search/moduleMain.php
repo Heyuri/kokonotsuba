@@ -4,9 +4,12 @@ namespace Kokonotsuba\Modules\search;
 
 use DatabaseConnection;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use moduleEngine;
+use moduleEngineContext;
 use postRenderer;
 use postSearchService;
 use templateEngine;
+use board;
 
 class moduleMain extends abstractModuleMain {
 	private readonly string $myPage;
@@ -225,7 +228,99 @@ class moduleMain extends abstractModuleMain {
 			<hr>
 		';
 	}
-	
+
+	/**
+	 * Build a unique postRenderer (and moduleEngine) for each board.
+	 *
+	 * @param Board[] $boards
+	 * @return postRenderer[] keyed by board UID
+	 */
+	private function buildPostRenderers(array $boards, array $quoteLinks): array {
+		// init post renderers array
+		$postRenderers = [];
+
+		// loop through boards and create 
+		foreach ($boards as $board) {
+			$boardUID = $board->getBoardUID();
+
+			// Skip if we already created it (safety)
+			if (isset($postRenderers[$boardUID])) {
+				continue;
+			}
+
+			// Build the module engine context
+			$moduleEngineContext = new moduleEngineContext(
+				$this->moduleContext->config,
+				$board->getConfigValue('LIVE_INDEX_FILE'),
+				$board->getConfigValue('ModuleList'),
+				$this->moduleContext->postRepository,
+				$this->moduleContext->postService,
+				$this->moduleContext->threadRepository,
+				$this->moduleContext->threadService,
+				$this->moduleContext->postSearchService,
+				$this->moduleContext->quoteLinkService,
+				$this->moduleContext->boardService,
+				$this->moduleContext->actionLoggerService,
+				$this->moduleContext->postRedirectService,
+				$this->moduleContext->deletedPostsService,
+				$this->moduleContext->fileService,
+				$this->moduleContext->capcodeService,
+				$this->moduleContext->userCapcodes,
+				$this->moduleContext->transactionManager,
+				$this->moduleContext->templateEngine,
+				$board
+			);
+
+			// moduleEngine is unique per board
+			$moduleEngine = new moduleEngine($moduleEngineContext);
+
+			// postRenderer is unique per board
+			$postRenderer = new postRenderer(
+				$board,
+				$this->moduleContext->config,
+				$moduleEngine,
+				$this->moduleContext->templateEngine,
+				$quoteLinks
+			);
+
+			// Store it keyed by board UID
+			$postRenderers[$boardUID] = $postRenderer;
+		}
+
+		return $postRenderers;
+	}
+
+	/**
+	 * Extract unique board UIDs from hit post result data.
+	 *
+	 * @param array $hitPostResultData
+	 * @return array<int|string> Unique board UIDs
+	 */
+	private function extractBoardUids(array $hitPostResultData): array {
+		$boardUids = [];
+
+		foreach ($hitPostResultData as $row) {
+			if (!isset($row['post']) || !is_array($row['post'])) {
+				continue;
+			}
+
+			if (!isset($row['post']['boardUID'])) {
+				continue;
+			}
+
+			$boardUID = $row['post']['boardUID'];
+
+			if (!is_string($boardUID) && !is_int($boardUID)) {
+				continue;
+			}
+
+			// dedupe
+			$boardUids[$boardUID] = true;
+		}
+
+		return array_keys($boardUids);
+	}
+
 	private function handleSearchResults(
 		postSearchService $postSearchService, 
 		array $stopWords,
@@ -254,24 +349,24 @@ class moduleMain extends abstractModuleMain {
 
 		$templateValues = [];
 
-		$postRenderer = new postRenderer(
-			$this->moduleContext->board, 
-			$this->moduleContext->board->loadBoardConfig(), 
-			$this->moduleContext->moduleEngine, 
-			$this->moduleTemplateEngine, 
-			[]);
-	
 		if ($totalPostHits > 0) {
+			// extract the plain posts
 			$hitPostResultData = $hitPosts['results_data'];
-		
+
 			// fetch hit post uids
 			$postUids = array_keys($hitPostResultData);
 
 			// get quote links
 			$quoteLinks = $this->moduleContext->quoteLinkService->getQuoteLinksByPostUids($postUids);
 
-			// set quote links
-			$postRenderer->setQuoteLinks($quoteLinks);
+			// extract board uids
+			$boardUids = $this->extractBoardUids($hitPostResultData);
+
+			// fetch the boards for searched posts
+			$boards = getBoardsByUIDs($boardUids);
+
+			// build post renderers (keyed by board_uid)
+			$postRenderersForResults = $this->buildPostRenderers($boards, $quoteLinks);
 
 			// config option for displaying all posts as OPs
 			$displayThreadedFormat = $this->getConfig('ModuleSettings.DISPLAY_THREADED_FORMAT', false);
@@ -281,8 +376,29 @@ class moduleMain extends abstractModuleMain {
 
 			foreach ($hitPostResultData as $hitPost) {
 				// extract post data
-				$hitPostData = $hitPost['post'];
+				$hitPostData = $hitPost['post'] ?? null;
 				
+				// no post data - don't render
+				if(empty($hitPostData)) {
+					continue;
+				}
+
+				// get the board uid
+				$boardUid = $hitPostData['boardUID'] ?? null;
+
+				// no board uid = invalid search result
+				if(!$boardUid) {
+					continue;
+				}
+
+				// dont render if the post renderer doesn't exist for this board
+				if(isset($postRenderersForResults[$boardUid]) === false || !is_object($postRenderersForResults[$boardUid])) {
+					continue;
+				}
+
+				// now select the post renderer for this board
+				$postRenderer = $postRenderersForResults[$boardUid];
+
 				// get the thread resno for linking
 				$hitThreadResno = $hitPostData['post_op_number'];
 
