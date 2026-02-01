@@ -131,8 +131,8 @@
 		// initial load
 		soudane.updatePosts();
 
-		// repeat every 10 seconds
-		setInterval(soudane.updatePosts, 10000);
+		// repeat every minute
+		setInterval(soudane.updatePosts, 60000);
 	});
 
 })();
