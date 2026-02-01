@@ -31,9 +31,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
-			'ManagePostsThreadControls',
+			'ManagePostsControls',
 			function(string &$modControlSection, array &$post) {
-				$this->renderMoveThreadButton($modControlSection, $post);
+				$this->renderFilterPostButton($modControlSection, $post);
 			}
 		);
 
@@ -57,10 +57,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->antiSpamService = getAntiSpamService();
 	}
 	
-	public function renderMoveThreadButton(string &$modfunc, array $post): void {
+	public function renderFilterPostButton(string &$modfunc, array $post): void {
 		$filterPostUrl = $this->generateFilterPostUrl($post['post_uid']);
 
-		$modfunc .= '<span class="adminFunctions adminFilterPostFunction">[<a href="' . htmlspecialchars($filterPostUrl) . '" title="Move thread">MT</a>]</span>';
+		$modfunc .= '<span class="adminFunctions adminFilterPostFunction">[<a href="' . htmlspecialchars($filterPostUrl) . '" title="Filter post content">FP</a>]</span>';
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
