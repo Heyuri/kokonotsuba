@@ -189,7 +189,7 @@
 <!--/&THREAD-->
 
 <!--&OP-->
-		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}">
+		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}" data-post-uid="{$POST_UID}">
 			<!--&IF($BOARD_THREAD_NAME,'{$BOARD_THREAD_NAME}','')-->
 			<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
 				<!--&IF($POST_ATTACHMENTS,'{$POST_ATTACHMENTS}','')-->
@@ -220,7 +220,7 @@
 				<div class="doubledash">
 					&gt;&gt;
 				</div>
-				<div class="post reply <!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}">
+				<div class="post reply <!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-post-uid="{$POST_UID}">
 					<div class="postinfo">
 						<label>
 							<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')-->

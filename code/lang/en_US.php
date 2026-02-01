@@ -235,4 +235,6 @@ $language['thread_not_found_for_deletion'] = "Thread not found for deleted post 
 $language['post_singular'] = 'post';
 $language['post_multiple'] = 'posts';
 $language['poster_hash_count'] = 'There\'s %1$s %2$s by this ID.';
+$language['score_pre_text'] = 'Score: %1$s';
+
 ?>

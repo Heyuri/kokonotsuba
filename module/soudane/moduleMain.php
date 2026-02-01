@@ -3,21 +3,23 @@
 namespace Kokonotsuba\Modules\soudane;
 
 use BoardException;
-use Exception;
+use DatabaseConnection;
 use IPAddress;
 use Kokonotsuba\ModuleClasses\abstractModuleMain;
 
+require_once __DIR__ . '/soudaneRepository.php';
+require_once __DIR__ . '/soudaneService.php';
+
 class moduleMain extends abstractModuleMain {
-	private $SOUDANE_DIR_YEAH = '';
-	private $SOUDANE_DIR_NOPE = '';
-	private $mypage;
-	private $enableYeah;
-	private $enableNope;
-	private $enableScore;      // Renamed from "difference" to "score"
-	private $showScoreOnly;    // New property for showing "+" and "-" buttons only
+	private string $moduleUrl;
+	private bool $enableYeah;
+	private bool $enableNope;
+	private bool $enableScore;      // score
+	private bool $showScoreOnly;    // property for showing "+" and "-" buttons only
+	private soudaneService $soudaneService;
 
 	public function getName(): string {
-		return 'K! Soudane Merged';
+		return 'Soundane';
 	}
 
 	public function getVersion(): string  {
@@ -31,69 +33,134 @@ class moduleMain extends abstractModuleMain {
 		$this->enableScore = $this->getConfig('ModuleSettings.ENABLE_SCORE', false);        // Score display toggle
 		$this->showScoreOnly = $this->getConfig('ModuleSettings.SHOW_SCORE_ONLY', false);   // Score-only button mode
 
-		// Define storage directories
-		$this->SOUDANE_DIR_YEAH = getBackendGlobalDir().'soudane/';
-		$this->SOUDANE_DIR_NOPE = getBackendGlobalDir().'soudane2/';
-		
-		$this->mypage = str_replace('&amp;', '&', $this->getModulePageURL());
+		$this->moduleUrl = $this->getModulePageURL([], false);
 
-		// Create directories if they do not exist
-		if ($this->enableYeah && !is_dir($this->SOUDANE_DIR_YEAH)) {
-			@mkdir($this->SOUDANE_DIR_YEAH);
-		}
-		if ($this->enableNope && !is_dir($this->SOUDANE_DIR_NOPE)) {
-			@mkdir($this->SOUDANE_DIR_NOPE);
-		}
+		// get database connection and database setting
+		$databaseConnection = DatabaseConnection::getInstance();
+		$soudaneTable = getDatabaseSettings()['SOUDANE_TABLE'];
 
-		// Check write permissions
-		if ($this->enableYeah && !is_writable($this->SOUDANE_DIR_YEAH)) {
-			throw new BoardException('ERROR: Cannot write to SOUDANE_DIR_YEAH!');
-		}
-		if ($this->enableNope && !is_writable($this->SOUDANE_DIR_NOPE)) {
-			throw new BoardException('ERROR: Cannot write to SOUDANE_DIR_NOPE!');
-		}
+		// init soudane repo
+		$soudaneRepository = new soudaneRepository($databaseConnection, $soudaneTable);
+
+		// init soudane service
+		$soudaneService = new soudaneService($soudaneRepository);
+
+		// set property
+		$this->soudaneService = $soudaneService;
 
 		$this->moduleContext->moduleEngine->addListener('Post', function (&$arrLabels, $post) {
 			$this->onRenderPost($arrLabels, $post);
 		});
 		
-		$this->moduleContext->moduleEngine->addListener('Head', function (&$headHtml) {
-			$this->onRenderHead($headHtml);
-		});
+		$this->moduleContext->moduleEngine->addListener('ModuleHeader', function(string &$moduleHeader) {
+			$this->onGenerateModuleHeader($moduleHeader);
+		});	
 	}
 
-	private function _loadVotes($post_uid, $type) {
-		// Determine the file path based on the vote type
-		$dir = $type === 'yeah' ? $this->SOUDANE_DIR_YEAH : $this->SOUDANE_DIR_NOPE;
-		$filePath = $dir . "$post_uid.dat";
-	
-		// Check if the file exists and is readable
-		if (!file_exists($filePath)) {
-			// File doesn't exist, return an empty array
-			return [];
+	private function renderVoteButton(
+		int $postUid,
+		string $type, // 'yeah' | 'nope'
+		int $voteCount,
+		string $title,
+		string $wrapperClass
+	): string {
+		$class = $voteCount > 0 ? 'hasVotes' : 'noVotes';
+		$buttonText = $this->getVoteButtonText($type, $voteCount);
+
+		$postUidEsc = htmlspecialchars((string) $postUid, ENT_QUOTES, 'UTF-8');
+		$moduleUrlEsc = htmlspecialchars($this->moduleUrl, ENT_QUOTES, 'UTF-8');
+
+		return
+			'<span class="' . htmlspecialchars($wrapperClass) . '" title="' . htmlspecialchars($title) . '">' .
+				'<a id="vote_' . $type . '_' . $postUidEsc . '" ' .
+				'class="sod ' . htmlspecialchars($class) . '" ' .
+				'href="javascript:soudane.vote(\'' . $postUidEsc . '\', \'' . $type . '\', \'' . $moduleUrlEsc . '\');">' .
+					htmlspecialchars($buttonText) .
+				'</a>' .
+			'</span>';
+	}
+
+	private function renderScore(int $postUid, string $scoreText): string {
+    	return
+    	    '<span class="soundaneScoreContainer">
+				<span id="vote_score_' . htmlspecialchars((string) $postUid, ENT_QUOTES, 'UTF-8') . '" ' .
+    	          'class="voteScore">' .
+    	        htmlspecialchars($scoreText) . '
+				</span>
+			</span>';
+	}
+
+	private function onRenderPost(array &$arrLabels, array $post): void {
+		$postUid = $post['post_uid'];
+
+		$arrLabels['{$POSTINFO_EXTRA}'] .= ' <span class="soudaneContainer">';
+
+		// enable nope
+		if ($this->enableNope) {
+			$logNope = $this->loadVotes($postUid, 'nope');
+			$arrLabels['{$POSTINFO_EXTRA}'] .= $this->renderVoteButton(
+				$postUid,
+				'nope',
+				count($logNope),
+				'Disagree with this post',
+				'soudaneNope'
+			);
 		}
-	
-		if (!is_readable($filePath)) {
-			// File exists but is not readable, return an empty array
-			return [];
+
+		// add a space so Nope & Yeah aren't touching each other
+		if ($this->enableNope && $this->enableYeah) {
+			$arrLabels['{$POSTINFO_EXTRA}'] .= ' ';
 		}
-	
-		// Try reading the file contents
-		try {
-			$log = file($filePath);
-			if (is_array($log)) {
-				return array_map('rtrim', $log); // Trim each line of the file
-			} else {
-				// If file is not an array, return empty array
-				return [];
-			}
-		} catch (Exception $e) {
-			// Handle any unexpected errors (e.g., permissions issues, filesystem errors)
-			return [];
+
+		// If SHOW_SCORE_ONLY is enabled, show score in between the "-" and "+"
+		if ($this->enableScore && $this->showScoreOnly) {
+			$score = $this->getScore($postUid);
+			$arrLabels['{$POSTINFO_EXTRA}'] .=
+				$this->renderScore($postUid, $score) . ' ';
 		}
+
+		// yeah vote
+		if ($this->enableYeah) {
+			$logYeah = $this->loadVotes($postUid, 'yeah');
+			$arrLabels['{$POSTINFO_EXTRA}'] .= $this->renderVoteButton(
+				$postUid,
+				'yeah',
+				count($logYeah),
+				'Agree with this post',
+				'soudane'
+			);
+		}
+
+		// If SHOW_SCORE_ONLY is not enabled, display the score separately
+		if ($this->enableScore && !$this->showScoreOnly) {
+			$score = _T('score_pre_text', $this->getScore($postUid));
+			$arrLabels['{$POSTINFO_EXTRA}'] .=
+				' ' . $this->renderScore($postUid, $score);
+		}
+
+		$arrLabels['{$POSTINFO_EXTRA}'] .= '</span>';
+	}
+
+	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		// generate the soudane js <script> include
+		$jsHtml = $this->generateScriptHeader('soudane.js', true);
+
+		// append to module header
+		$moduleHeader .= $jsHtml;
+
+		// now build a meta tag to store the API endpoint for fetching votes
+		$moduleHeader .= '<meta name="soudaneUrl" content="' . $this->getModulePageURL(['modPage' => 'soudaneApi']) . '">';
+	}
+	
+	private function loadVotes(int $postUid, string $type): ?array {
+		// fetch the votes and return them based on type
+		$votes = $this->soudaneService->getVotes($postUid, $type);
+
+		// return the votes
+		return $votes;
 	}	
 
-	private function _getVoteButtonText($type, $count) {
+	private function getVoteButtonText(string $type, int $count): string {
 		// If no votes exist, display "+" or "-" regardless of settings
 		if ($count === 0) {
 			return $type === 'yeah' ? '+' : '-';
@@ -106,110 +173,130 @@ class moduleMain extends abstractModuleMain {
 		return $type === 'yeah' ? "Yeah x$count" : "Nope x$count";
 	}
 
-	private function _getScore(string $post_uid) {
-		$yeahVotes = count($this->_loadVotes($post_uid, 'yeah'));
-		$nopeVotes = count($this->_loadVotes($post_uid, 'nope'));
+	private function getScore(string $postUid): int {
+		$yeahVotes = count($this->loadVotes($postUid, 'yeah'));
+		$nopeVotes = count($this->loadVotes($postUid, 'nope'));
 		return $yeahVotes - $nopeVotes;
 	}
 
-	private function onRenderHead(string &$headHtml) {
-		$headHtml .= '
-<script>
-	function vote(post_uid, type) {
-		var xmlhttp = new XMLHttpRequest();
-		xmlhttp.open("GET", "'.$this->mypage.'&post_uid=" + encodeURIComponent(post_uid) + "&type=" + type);
-		var elem = document.getElementById("vote_" + type + "_" + post_uid);
-		elem.innerHTML = "&hellip;";
-		xmlhttp.onreadystatechange = function() {
-			if (xmlhttp.readyState == 4) {
-				elem.innerHTML = xmlhttp.responseText;
-				updateScore(post_uid);
+	private function handleSoudaneApi(): void {
+		// extract the post uids from url
+		$postUidsParameter = $_GET['posts'] ?? [];
 
-				// Check and update class from noVotes to hasVotes if needed
-				if (elem.classList.contains("noVotes")) {
-					elem.classList.remove("noVotes");
-					elem.classList.add("hasVotes");
-				}
-			}
-		};
-		xmlhttp.send(null);
-	}
-
-	function updateScore(post_uid) {
-		var scoreElem = document.getElementById("vote_score_" + post_uid);
-		var xmlhttp = new XMLHttpRequest();
-		xmlhttp.open("GET", "'.$this->mypage.'&post_uid=" + encodeURIComponent(post_uid) + "&type=score");
-		xmlhttp.onreadystatechange = function() {
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-				scoreElem.innerHTML = xmlhttp.responseText;
-			}
-		};
-		xmlhttp.send(null);
-	}
-</script>';
-	}
-
-	private function onRenderPost(array &$arrLabels, array $post): void {
-		$post_uid = $post['post_uid'];
-
-		$arrLabels['{$POSTINFO_EXTRA}'] .= ' <span class="soudaneContainer">';
-
-		if ($this->enableNope) {
-			$logNope = $this->_loadVotes($post_uid, 'nope');
-			$classNope = count($logNope) > 0 ? 'hasVotes' : 'noVotes';
-			$buttonTextNope = $this->_getVoteButtonText('nope', count($logNope));
-			$arrLabels['{$POSTINFO_EXTRA}'] .= '<span class="soudane2" title="Disagree with this post"><a id="vote_nope_'.$post_uid.'" class="sod '.$classNope.'" href="javascript:vote(\''.$post_uid.'\', \'nope\');">'.$buttonTextNope.'</a></span>';
+		// exit if none are found
+		if (empty($postUidsParameter)) {
+			renderJsonPage(['error' => 'No post IDs provided']);
+			return;
 		}
 
-		if ($this->enableNope && $this->enableYeah) {
-			$arrLabels['{$POSTINFO_EXTRA}'] .= ' ';
+		// explode post uids to get array
+		$postUids = explode(' ', $postUidsParameter);
+
+		// sanitize for integers using array mapping
+		$postUids = array_map('intval', $postUids);
+
+		// now fetch associated vote counts
+		$yeahCounts = $this->soudaneService->getYeahCounts($postUids); // array of yeah counts per post
+		$nopeCounts = $this->soudaneService->getNopeCounts($postUids); // array of nope counts per post
+
+		// init nope and yeah html arrays
+		$yeahHtml = [];
+		$nopeHtml = [];
+
+		// calculate score per post by subtracting nope from yeah
+		$scores = [];
+		foreach ($postUids as $uid) {
+			$yeahCount = $yeahCounts[$uid] ?? 0;
+			$nopeCount = $nopeCounts[$uid] ?? 0;
+
+			$yeahHtml[$uid] = $this->renderVoteButton(
+				$uid,
+				'yeah',
+				$yeahCount,
+				'Agree with this post',
+				'soudane'
+			);
+
+			$nopeHtml[$uid] = $this->renderVoteButton(
+				$uid,
+				'nope',
+				$nopeCount,
+				'Disagree with this post',
+				'soudaneNope'
+			);
+
+			$scores[$uid] = $this->renderScore(
+				$uid,
+				_T('score_pre_text', $yeahCount - $nopeCount)
+			);
 		}
 
-		// If SHOW_SCORE_ONLY is enabled, show score in between the "-" and "+"
-		if ($this->enableScore && $this->showScoreOnly) {
-			$score = $this->_getScore($post_uid);
-			$arrLabels['{$POSTINFO_EXTRA}'] .= '<span id="vote_score_'.$post_uid.'" class="voteScore">'.$score.'</span> ';
+		// form the json data
+		$data = [];
+		foreach ($postUids as $uid) {
+			$data[$uid] = [
+				'yeah' => $yeahHtml[$uid] ?? 0,
+				'nope' => $nopeHtml[$uid] ?? 0,
+				'score' => $scores[$uid]
+			];
 		}
 
-		if ($this->enableYeah) {
-			$logYeah = $this->_loadVotes($post_uid, 'yeah');
-			$classYeah = count($logYeah) > 0 ? 'hasVotes' : 'noVotes';
-			$buttonTextYeah = $this->_getVoteButtonText('yeah', count($logYeah));
-			$arrLabels['{$POSTINFO_EXTRA}'] .= '<span class="soudane" title="Agree with this post"><a id="vote_yeah_'.$post_uid.'" class="sod '.$classYeah.'" href="javascript:vote(\''.$post_uid.'\', \'yeah\');">'.$buttonTextYeah.'</a></span>';
-		}
-
-		// If SHOW_SCORE_ONLY is not enabled, display the score separately
-		if ($this->enableScore && !$this->showScoreOnly) {
-			$score = $this->_getScore($post_uid);
-			$arrLabels['{$POSTINFO_EXTRA}'] .= '<span id="vote_score_'.$post_uid.'" class="voteScore">Score: '.$score.'</span>';
-		}
-
-		$arrLabels['{$POSTINFO_EXTRA}'] .= '</span>';
+		// now render the json page
+		renderJsonPage($data);
 	}
 
 	public function ModulePage() {
-		$post_uid = $_GET['post_uid'] ?? '';
+		// get mod page parameter
+		$modPage = $_GET['modPage'] ?? '';
+
+		// if the mod page parameter is targetting the api endpoint then call a method to generate json
+		if($modPage === 'soudaneApi') {
+			$this->handleSoudaneApi();
+		}
+
+		// Retrieve the postUid from GET parameters, default to empty string if not provided
+		$postUid = $_GET['postUid'] ?? '';
+
+		// Retrieve the type from GET parameters, default to empty string if not provided
 		$type = $_GET['type'] ?? '';
-		if (!$post_uid || !in_array($type, ['yeah', 'nope', 'score'])) {
+		
+		// Validate that postUid is not empty and type is one of the allowed values
+		if (!$postUid || !in_array($type, ['yeah', 'nope', 'score'])) {
 			throw new BoardException('Invalid parameters.');
 		}
 
-		if (!count($this->moduleContext->postRepository->getPostByUid($post_uid))) {
-			throw new BoardException('Post not found!');
+		// Check if the post exists in the repository
+		if (!$this->moduleContext->postRepository->getPostByUid(
+			$postUid, 
+			isActiveStaffSession()
+			)) {
+			throw new BoardException(_T('post_not_found'));
 		}
 
+		// If the type is 'score', calculate and output the score, then exit
 		if ($type === 'score') {
-			echo $this->_getScore($post_uid);
+			echo _T('score_pre_text', $this->getScore($postUid));
 			exit;
 		}
 
-		$log = $this->_loadVotes($post_uid, $type);
-		$ip = new IPAddress;
-		if (!in_array($ip, $log)) array_push($log, $ip);
+		// Load existing votes for the post and type
+		$log = $this->loadVotes($postUid, $type);
 
-		$dir = $type === 'yeah' ? $this->SOUDANE_DIR_YEAH : $this->SOUDANE_DIR_NOPE;
-		file_put_contents($dir . "$post_uid.dat", implode("\r\n", $log));
-		
-		echo $this->_getVoteButtonText($type, count($log));
+		// Get the current user's IP address
+		$ip = new IPAddress;
+
+		$yeahIPs = !empty($log) ? array_column($log, 'ip_address') : [];
+
+		// Check if the current IP has already voted; if not, add it to the log
+		if (!in_array($ip, $yeahIPs)) {
+			// add to yeah IPs so we can render changes upon a new vote right away
+			$yeahIPs[] = $ip;
+
+			// Save the new vote using the service
+			$this->soudaneService->addVote($postUid, $ip, $type);
+		}
+
+		// Output the updated button text with the new vote count
+		echo $this->getVoteButtonText($type, count($yeahIPs));
 	}
 }

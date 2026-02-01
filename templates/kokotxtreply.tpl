@@ -128,7 +128,7 @@
 <!--/&THREAD-->
 
 <!--&OP-->
-	<div class="post op" id="p{$BOARD_UID}_{$NO}">
+	<div class="post op" id="p{$BOARD_UID}_{$NO}" data-post-uid="{$POST_UID}">
 		<h1 class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h1>
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]</div>
 		<div class="postinfo">
@@ -151,7 +151,7 @@
 <!--&REPLY-->
 <div id="pc{$BOARD_UID}_{$NO}" class="reply-container">
 	<!--&IF($IS_PREVIEW,'<table class="thread" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3"><tbody><tr><td>','')-->
-	<div class="post reply" id="p{$BOARD_UID}_{$NO}">
+	<div class="post reply" id="p{$BOARD_UID}_{$NO}" data-post-uid="{$POST_UID}">
 		<span class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span>
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]</div>
 		<div class="postinfo">
