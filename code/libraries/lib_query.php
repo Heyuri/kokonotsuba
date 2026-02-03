@@ -83,8 +83,19 @@ function getBasePostQuery(
         INNER JOIN $threadTable t ON p.thread_uid = t.thread_uid
 
         -- All deletion entries
-        LEFT JOIN $deletedPostsTable dp 
-            ON dp.post_uid = p.post_uid AND dp.open_flag = 1
+		LEFT JOIN $deletedPostsTable dp
+		ON dp.post_uid = p.post_uid
+		AND dp.open_flag = 1
+		AND (
+			dp.file_id IS NULL
+			OR NOT EXISTS (
+				SELECT 1
+				FROM $deletedPostsTable dp2
+				WHERE dp2.post_uid = p.post_uid
+					AND dp2.file_id IS NULL
+					AND dp2.open_flag = 1
+			)
+		)
     ";
 
     return $query;
