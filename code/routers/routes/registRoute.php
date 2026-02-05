@@ -596,6 +596,12 @@ class registRoute {
 			$this->board->rebuildBoard();
 		} else {
 			$pageToRebuild = getPageOfThread($postData['thread_uid'], $threadList, $this->config['PAGE_DEF']);
+
+			// dont even bother if the page is larger than the static page limit
+			if($pageToRebuild > $this->board->getConfigValue('STATIC_HTML_UNTIL', 10)) {
+				return;
+			}
+
 			// If saging, just rebuild that one page
 			if($postData['age'] === false) {
 				$this->board->rebuildBoardPage($pageToRebuild);
