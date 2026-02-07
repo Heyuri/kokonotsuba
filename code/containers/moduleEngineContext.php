@@ -21,5 +21,6 @@ class moduleEngineContext {
         public transactionManager $transactionManager,
         public templateEngine $templateEngine,
         public board $board,
+        public postRenderingPolicy $postRenderingPolicy,
     ) {}
 }

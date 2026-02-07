@@ -64,7 +64,6 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// init action handler
 		$this->deletedPostActionHandler = new deletedPostActionHandler(
-			$this, 
 			$this->requiredRoleActionForModAll, 
 			$this->moduleContext->deletedPostsService, 
 			$deletedPostUtility,
@@ -111,6 +110,22 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->deletedPostsService->pruneExpiredPosts($timeLimit);
 	}
 
+	private function handleDpToggle(): void {
+		$current = isset($_COOKIE['viewDeletedPosts']) && $_COOKIE['viewDeletedPosts'] === '1';
+		$newValue = $current ? '0' : '1';
+
+		// Adjust parameters as needed (path, domain, secure, httponly)
+		setcookie(
+			'viewDeletedPosts',
+			$newValue,
+			time() + (86400 * 30), // 30 days
+			'/'
+		);
+
+		// Update the superglobal so the new value is available immediately
+		$_COOKIE['viewDeletedPosts'] = $newValue;
+	}
+
 	public function ModulePage(): void {
 		// first things first, prune posts from the table that have expired
 		$this->pruneDeletedPosts();
@@ -122,15 +137,21 @@ class moduleAdmin extends abstractModuleAdmin {
 		$accountId = $staffAccountFromSession->getUID();
 		$roleLevel = $staffAccountFromSession->getRoleLevel();
 
-		// request vs draw
+		// handle POST requests
 		if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$this->deletedPostActionHandler->handleModPageRequests($accountId, $roleLevel);
 
 			redirect($this->modulePageUrl);
-		} elseif (isset($_GET['json'])) {
-			// handle json output (API)
-			// to do
-		} else {
+		} 
+		// handle DP visibilty toggle
+		else if(isset($_GET['toggleVisibility'])) {
+			$this->handleDpToggle();
+
+			// redirect back to module index
+			redirect($this->modulePageUrl);
+		}
+		// handle drawing
+		else {
 			// draw the overview of the deleted posts
 			$this->deletedPostRenderer->drawModPage($accountId, $roleLevel);
 		}

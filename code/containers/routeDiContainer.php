@@ -47,5 +47,6 @@ class routeDiContainer {
 		public threadApi $threadApi,
 		public boardApi $boardApi,
 		public fileService $fileService,
+		public postRenderingPolicy $postRenderingPolicy,
 	) {}
 }

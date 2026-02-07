@@ -37,4 +37,5 @@ $routeDiContainer = new routeDiContainer(
 	$threadApi,
 	$boardApi,
 	$fileService,
+	$postRenderingPolicy,
 );

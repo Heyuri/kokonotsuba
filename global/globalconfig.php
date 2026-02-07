@@ -35,13 +35,31 @@ $config['PHP_EXT'] = '.html'; // File extension for static pages
 $config['IDSEED'] = 'setrandom'; // ID generation seed
 $config['TRIPSALT'] = ''; // Used for secure tripcodes. Don't change after setting!
 
+
+// Role levels
+$config['AuthLevels']['CAN_VIEW_IP_ADDRESSES'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_MOVE_THREAD'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_BAN'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_DELETE_POST'] = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR;
+$config['AuthLevels']['CAN_DELETE_ALL'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_DELETE_RESTORE_RECORDS'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
+$config['AuthLevels']['CAN_LOCK'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_STICKY'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_AUTO_SAGE'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_MANAGE_REBUILD'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
+$config['AuthLevels']['CAN_EDIT_BLOTTER'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
+$config['AuthLevels']['CAN_MANAGE_POSTS'] = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR;
+$config['AuthLevels']['CAN_VIEW_ACTION_LOG'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_RAW_HTML'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
+$config['AuthLevels']['CAN_MANAGE_CAPCODES'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
+
 // Capcode formats (put '%s' where you want the original name)
 $config['JCAPCODE_FMT'] = '%s';
 $config['DCAPCODE_FMT'] = '<span class="capcode capcodeDev">%s ## Developer</span>';
 $config['MCAPCODE_FMT'] = '<span class="capcode capcodeMod">%s ## Mod</span>';
 $config['ACAPCODE_FMT'] = '<span class="capcode capcodeAdmin">%s ## Admin</span>';
 $config['SCAPCODE_FMT'] = '<span class="capcode capcodeSystem">%s ## System</span>';
-
 
 // mod capcode map
 // The key (e.g 'Admin') is that needs to go next to a "## " in the name field to trigger it

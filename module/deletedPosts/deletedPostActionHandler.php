@@ -8,7 +8,6 @@ use Kokonotsuba\Root\Constants\userRole;
 
 class deletedPostActionHandler {
 	public function __construct(
-		private moduleAdmin $moduleAdmin,
 		private userRole $requiredRoleActionForModAll,
 		private deletedPostsService $deletedPostsService,
 		private deletedPostUtility $deletedPostUtility,
@@ -102,5 +101,4 @@ class deletedPostActionHandler {
 		// rebuild the board html
 		$board->rebuildBoard();
 	}
-
 }

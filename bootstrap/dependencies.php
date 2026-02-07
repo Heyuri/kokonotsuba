@@ -30,18 +30,8 @@ $adminLoginController = new adminLoginController(
 	$softErrorHandler
 );
 
-// ───────────────────────────────────────
-// Session & Validation
-// ───────────────────────────────────────
-$staffAccountFromSession = new staffAccountFromSession;
-
 $IPValidator = new IPValidator($config, new IPAddress);
 $postValidator = new postValidator($config, $IPValidator, $threadRepository, $threadService, $fileService);
-
-// ───────────────────────────────────────
-// Policies
-// ───────────────────────────────────────
-$postPolicy = new postPolicy($config['AuthLevels'], $staffAccountFromSession->getRoleLevel());
 
 // ───────────────────────────────────────
 // Overboard
@@ -65,7 +55,8 @@ $overboard = new overboard(
 	$userCapcodes,
 	$transactionManager,
 	$moduleEngine, 
-	$templateEngine
+	$templateEngine,
+	$postRenderingPolicy,
 );
 
 // ───────────────────────────────────────

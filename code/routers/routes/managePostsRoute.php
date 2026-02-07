@@ -14,7 +14,8 @@ class managePostsRoute {
 		private readonly actionLoggerService $actionLoggerService,
 		private readonly pageRenderer $adminPageRenderer,
 		private readonly array $allRegularBoards,
-		private readonly deletedPostsService $deletedPostsService
+		private readonly deletedPostsService $deletedPostsService,
+		private postRenderingPolicy $postRenderingPolicy
 	) {}
 
 	public function drawManagePostsPage() {
@@ -35,11 +36,8 @@ class managePostsRoute {
 
 		$roleLevel = $this->staffAccountFromSession->getRoleLevel();
 
-		// can delete all
-		$canDeleteAll = $this->board->getConfigValue('AuthLevels.CAN_DELETE_ALL', userRole::LEV_MODERATOR);
-
 		// whether the user can view all deleted posts
-		$canViewDeleted = $roleLevel->isAtLeast($canDeleteAll);
+		$canViewDeleted = $this->postRenderingPolicy->viewDeleted();
 
 		// required level for viewing IPs
 		$canViewIpAddresses = $this->board->getConfigValue('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_JANITOR);

@@ -11,6 +11,7 @@ ignore_user_abort(true);
 require __DIR__ . '/bootstrap/session.php';
 require __DIR__ . '/paths.php';
 require __DIR__ . '/includes.php';
+require __DIR__ . '/bootstrap/global.php';
 require __DIR__ . '/bootstrap/checks.php';
 require __DIR__ . '/bootstrap/database.php';
 require __DIR__ . '/bootstrap/repositories.php';
@@ -18,9 +19,6 @@ require __DIR__ . '/bootstrap/board.php';
 require __DIR__ . '/bootstrap/requestBoard.php';
 require __DIR__ . '/bootstrap/dependencies.php';
 require __DIR__ . '/bootstrap/di.php';
-
-// Global configuration file
-$globalConfig = getGlobalConfig();
 
 /*────────────────────────────────────────────────────────────
 	Main Handler Execution

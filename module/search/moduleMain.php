@@ -268,7 +268,8 @@ class moduleMain extends abstractModuleMain {
 				$this->moduleContext->userCapcodes,
 				$this->moduleContext->transactionManager,
 				$this->moduleContext->templateEngine,
-				$board
+				$board,
+				$this->moduleContext->postRenderingPolicy
 			);
 
 			// moduleEngine is unique per board

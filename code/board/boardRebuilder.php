@@ -11,7 +11,8 @@ class boardRebuilder {
 		private readonly actionLoggerService $actionLoggerService, 
 		private readonly threadRepository $threadRepository, 
 		private readonly threadService $threadService,
-		private readonly quoteLinkService $quoteLinkService) {
+		private readonly quoteLinkService $quoteLinkService,
+		private postRenderingPolicy $postRenderingPolicy) {
 
 		$this->config = $board->loadBoardConfig();
 		if (empty($this->config)) {
@@ -23,7 +24,7 @@ class boardRebuilder {
 		$this->adminMode = isActiveStaffSession();
 
 		// can view deleted
-		$this->canViewDeleted = getRoleLevelFromSession()->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_DELETE_ALL'));
+		$this->canViewDeleted = $this->postRenderingPolicy->viewDeleted();
 	}
 
 	public function drawRecentReplies(int $threadNumber, int $amountOfRepliesToRender, bool $showPostForm = true): void {

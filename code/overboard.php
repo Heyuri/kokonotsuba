@@ -21,13 +21,14 @@ class overboard {
 		private array $userCapcodes,
 		private transactionManager $transactionManager,
 		private moduleEngine $moduleEngine, 
-		private templateEngine $templateEngine
+		private templateEngine $templateEngine,
+		private postRenderingPolicy $postRenderingPolicy
 	) {
 		// whether staff is logged in or not
 		$this->adminMode = isActiveStaffSession();
 		
 		// can view deleted posts
-		$this->canViewDeleted = getRoleLevelFromSession()->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_DELETE_ALL'));
+		$this->canViewDeleted = $postRenderingPolicy->viewDeleted();
 	}
 	
 	public function drawOverboardHead(&$dat, $resno = 0) {
@@ -224,7 +225,8 @@ class overboard {
 	}
 	
 	private function createThreadRenderer(board $board, array $config, templateEngine $templateEngine, array $quoteLinksFromPage): threadRenderer {
-		$moduleEngineContext = new moduleEngineContext($config, 
+		$moduleEngineContext = new moduleEngineContext(
+			$config, 
 			$board->getConfigValue('LIVE_INDEX_FILE'), 
 			$board->getConfigValue('ModuleList'), 
 			$this->postRepository, 
@@ -242,7 +244,8 @@ class overboard {
 			$this->userCapcodes,
 			$this->transactionManager,
 			$templateEngine, 
-			$board);
+			$board,
+			$this->postRenderingPolicy);
 
 		$moduleEngine = new moduleEngine($moduleEngineContext);
 		

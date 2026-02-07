@@ -184,7 +184,8 @@ class modeHandler {
 					$this->routeDiContainer->actionLoggerService,
 					$this->routeDiContainer->adminPageRenderer,
 					$this->routeDiContainer->regularBoards,
-					$this->routeDiContainer->deletedPostsService
+					$this->routeDiContainer->deletedPostsService,
+					$this->routeDiContainer->postRenderingPolicy
 				);
 				$route->drawManagePostsPage();
 			},

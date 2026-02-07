@@ -94,7 +94,7 @@ use Kokonotsuba\Root\Constants\userRole;
 			$this->moduleEngineContext->capcodeService,
 			$this->moduleEngineContext->userCapcodes,
 			$this->moduleEngineContext->transactionManager,
-
+			$this->moduleEngineContext->postRenderingPolicy,
 		);
 
 		foreach ($loadlist as $moduleName => $moduleStatus) {

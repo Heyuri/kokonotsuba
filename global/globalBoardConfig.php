@@ -445,25 +445,6 @@ $config['ADMINBAR_OVERBOARD_BUTTON'] = true;
 
 $config['ACTIONLOG_MAX_PER_PAGE'] = 50; // the amount of actionlog entries per page
 
-// Role levels
-$config['AuthLevels']['CAN_VIEW_IP_ADDRESSES'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_MOVE_THREAD'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_BAN'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_DELETE_POST'] = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR;
-$config['AuthLevels']['CAN_DELETE_ALL'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_DELETE_RESTORE_RECORDS'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
-$config['AuthLevels']['CAN_LOCK'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_STICKY'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_AUTO_SAGE'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_MANAGE_REBUILD'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
-$config['AuthLevels']['CAN_EDIT_BLOTTER'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
-$config['AuthLevels']['CAN_MANAGE_POSTS'] = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR;
-$config['AuthLevels']['CAN_VIEW_ACTION_LOG'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_RAW_HTML'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
-$config['AuthLevels']['CAN_MANAGE_CAPCODES'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
-
-
 // The duration (in seconds) of inactivity allowed before automatically logging out a staff user
 // This value must not exceed the value of session.gc_maxlifetime in your php.ini
 $config['STAFF_LOGIN_TIMEOUT'] = 86400;

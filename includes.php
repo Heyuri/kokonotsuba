@@ -194,6 +194,7 @@ require __DIR__ . '/code/thread/threadService.php';
 
 // policies
 require __DIR__ . '/code/policy/postPolicy.php';
+require __DIR__ . '/code/policy/postRenderingPolicy.php';
 
 // api
 require __DIR__ . '/code/api/boardApi.php';

@@ -254,7 +254,8 @@ class boardService {
 			$this->boardDiContainer->userCapcodes,
 			$this->boardDiContainer->transactionManager,
 			$templateEngine, 
-			$board);
+			$board,
+			$this->boardDiContainer->postRenderingPolicy);
 			
 		$moduleEngine = new moduleEngine($moduleEngineContext);
 		
@@ -262,15 +263,14 @@ class boardService {
 		$board->setTemplateEngine($templateEngine);
 		$board->setModuleEngine($moduleEngine);
 
-		$softErrorHandler	= new softErrorHandler($board->getBoardHead('Error!'), $board->getBoardFooter(), $board->getConfigValue('STATIC_INDEX_FILE'), $templateEngine);
-
 		$boardRebuilder = new boardRebuilder($board,
 			$moduleEngine,
 			$templateEngine,
 			$this->boardDiContainer->actionLoggerService,
 			$this->boardDiContainer->threadRepository,
 			$this->boardDiContainer->threadService,
-			$this->boardDiContainer->quoteLinkService);
+			$this->boardDiContainer->quoteLinkService,
+			$this->boardDiContainer->postRenderingPolicy);
 
 		$board->setBoardRebuilder($boardRebuilder);
 

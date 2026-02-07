@@ -25,7 +25,8 @@ $boardDiContainer = new boardDiContainer(
 	$capcodeService,
 	$userCapcodes,
 	$fileService,
-	$transactionManager
+	$transactionManager,
+	$postRenderingPolicy,
 );
 
 $boardService = new boardService($boardRepository, $boardDiContainer, $boardPathService);

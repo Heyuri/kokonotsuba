@@ -16,6 +16,7 @@ class boardDiContainer {
 		public capcodeService $capcodeService,
 		public array $userCapcodes,
 		public readonly fileService $fileService,
-		public readonly transactionManager $transactionManager
+		public readonly transactionManager $transactionManager,
+		public postRenderingPolicy $postRenderingPolicy,
     ) {}
 }

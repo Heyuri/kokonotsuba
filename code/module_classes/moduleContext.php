@@ -11,6 +11,7 @@ use fileService;
 use \moduleEngine;
 use \pageRenderer;
 use postRedirectService;
+use postRenderingPolicy;
 use \postRepository;
 use postSearchService;
 use \postService;
@@ -40,6 +41,7 @@ class moduleContext {
 		public readonly fileService $fileService,
 		public capcodeService $capcodeService,
 		public array $userCapcodes, 
-		public transactionManager $transactionManager
+		public transactionManager $transactionManager,
+		public postRenderingPolicy $postRenderingPolicy,
 	) {}
 }

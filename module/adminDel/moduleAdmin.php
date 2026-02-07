@@ -236,7 +236,7 @@ class moduleAdmin extends abstractModuleAdmin {
 */
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		// can view deleted poss
-		$canViewDeleted = getRoleLevelFromSession()->isAtLeast($this->getConfig('AuthLevels.CAN_DELETE_ALL'));
+		$canViewDeleted = $this->moduleContext->postRenderingPolicy->viewDeleted();
 
 		// add requiredForAll js for the live frontend
 		// this js will add the deletedPost/deletedFile classes and deletion indicator to posts on the livefrontend
