@@ -130,7 +130,7 @@ class antiSpamRepository {
 	public function getTotalEntries(): int {
 		// total entries count query
 		$query = "
-			SELECT COUNT(*) AS total
+			SELECT COUNT(*)
 				FROM {$this->spamStringRulesTable}
 		";
 
@@ -138,7 +138,7 @@ class antiSpamRepository {
 		$row = $this->databaseConnection->fetchValue($query);
 
 		// return total
-		return (int) ($row['total'] ?? 0);
+		return (int) ($row ?? 0);
 	}
 
 	public function deleteEntries(array $entryIDs): void {
