@@ -49,7 +49,7 @@ class defaultRoute {
 				// then draw the last X replies page
 				$this->board->drawRecentReplies($res, $recentReplies);
 			}
-			elseif {
+			else {
 				// draw the regular thread page	
 				$this->board->drawThread($res, intval($pageParam));
 			}
