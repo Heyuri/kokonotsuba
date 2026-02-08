@@ -597,8 +597,11 @@ class registRoute {
 		} else {
 			$pageToRebuild = getPageOfThread($postData['thread_uid'], $threadList, $this->config['PAGE_DEF']);
 
+			// static page limit
+			$staticHtmlUntil = $this->board->getConfigValue('STATIC_HTML_UNTIL', 10);
+
 			// dont even bother if the page is larger than the static page limit
-			if($pageToRebuild > $this->board->getConfigValue('STATIC_HTML_UNTIL', 10)) {
+			if(($pageToRebuild > $staticHtmlUntil) && $staticHtmlUntil > 0) {
 				return;
 			}
 
