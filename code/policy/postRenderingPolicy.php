@@ -29,11 +29,6 @@ class postRenderingPolicy {
 		// init default value
 		$defaultCookieValue = '1';
 
-		// initialize the cookie value if it doesn't exist
-		if(!isset($_COOKIE['viewDeletedPosts'])) {
-			setcookie('viewDeletedPosts', $defaultCookieValue, time() + (86400 * 30), "/");
-		}
-
 		// extract the value
 		$viewDeletedPosts = $_COOKIE['viewDeletedPosts'] ?? $defaultCookieValue;
 
