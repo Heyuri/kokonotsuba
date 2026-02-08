@@ -306,25 +306,22 @@ const kkjs = {
 			kkjs.applyTripKeys();
 		}
 
-		kkjs.modules.forEach(function (mod) {
+		kkjs.modules.forEach(function (mod, index) {
 			try {
+				// If startup fails, log the error, and remove module at current index
 				if (!mod.startup()) {
-					console.error(
-						`Fatal error in module startup "${mod.name}"`,
-					);
-					
-					kkjs.modules.pop(mod);
-				}
-			}catch (error) {
-				console.error(
-					`Fatal error in module "${mod.name}"`,
-					error
-				);
+					console.error(`Fatal error in module startup "${mod.name}"`);
 
-				kkjs.modules.pop(mod);
+					// remove the module from the array using splice
+					kkjs.modules.splice(index, 1);
+				}
+			} catch (error) {
+				console.error(`Fatal error in module "${mod.name}"`, error);
+
+				// remove the module from the array using splice
+				kkjs.modules.splice(index, 1);
 			}
 		});
-
 		
 		kkjs.setInitialMenuState();
 
