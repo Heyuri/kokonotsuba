@@ -426,13 +426,15 @@ const kkjs = {
 		'</div>');
 	
 		// Check if 'sage' or 'noko' are already in the email value, and check the corresponding checkboxes
-		if (email.value.includes("sage")) {
+		if (email.value.includes("sage") && $id('sage')) {
 			$id('sage').checked = true;
 		}
-		if (email.value.includes("noko")) {
+
+		if (email.value.includes("noko") && $id('noko')) {
 			$id('noko').checked = true;
 		}
-		if (email.value.includes("dump")) {
+
+		if (email.value.includes("dump") && $id('dump')) {
 			$id('dump').checked = true;
 		}
 
