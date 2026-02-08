@@ -9,6 +9,7 @@ YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE TH
 ignore_user_abort(true);
 
 require __DIR__ . '/bootstrap/session.php';
+require __DIR__ . '/bootstrap/cookies.php';
 require __DIR__ . '/paths.php';
 require __DIR__ . '/includes.php';
 require __DIR__ . '/bootstrap/global.php';
@@ -19,6 +20,7 @@ require __DIR__ . '/bootstrap/board.php';
 require __DIR__ . '/bootstrap/requestBoard.php';
 require __DIR__ . '/bootstrap/dependencies.php';
 require __DIR__ . '/bootstrap/di.php';
+
 
 /*────────────────────────────────────────────────────────────
 	Main Handler Execution
