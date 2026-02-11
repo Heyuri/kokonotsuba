@@ -45,8 +45,12 @@ const kkupdate = { name: "KK Thread Updating",
 				return true;
 			} else {
 				data.text().then(text => {
-					var d = document.createElement("html");
-					d.innerHTML = text;
+					const parser = new DOMParser();
+					const d = parser.parseFromString(text, "text/html");
+
+					// kill audio immediately to prevent repeats
+					d.querySelectorAll("audio").forEach(a => a.remove());
+
 					var rs = document.querySelectorAll(".reply-container");
 					var lid = 0;
  					if (rs.length) lid = rs[rs.length-1].id.slice(1);

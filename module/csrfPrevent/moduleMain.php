@@ -2,7 +2,10 @@
 
 namespace Kokonotsuba\Modules\csrfPrevent;
 
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\module_classes\abstractModuleMain;
+
+use function Kokonotsuba\html\fullURL;
 
 class moduleMain extends abstractModuleMain {
 	public function getName(): string {
@@ -31,7 +34,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		if($CSRFdetectd) {
-			throw new \BoardException('ERROR: CSRF detected!');
+			throw new BoardException('ERROR: CSRF detected!');
 		}
 	}
 }//End-Of-Module

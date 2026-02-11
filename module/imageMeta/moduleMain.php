@@ -8,8 +8,13 @@ namespace Kokonotsuba\Modules\imageMeta;
 
 require __DIR__ . '/exif.php';
 
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\module_classes\abstractModuleMain;
 use RuntimeException;
+
+use function Kokonotsuba\libraries\attachmentFileExists;
+use function Kokonotsuba\libraries\constructAttachment;
+use function Kokonotsuba\libraries\getAttachmentUrl;
+use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 
 class moduleMain extends abstractModuleMain {
 	private $enable_exif, $enable_imgops, $enable_iqdb, $enable_swfchan = false; // Initialize options, actually defined in config files

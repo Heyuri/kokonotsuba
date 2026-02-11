@@ -5,7 +5,7 @@ namespace Kokonotsuba\Modules\globalMessage;
 // include helper functions
 include_once __DIR__ . '/globalMessageLibrary.php';
 
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\module_classes\abstractModuleMain;
 
 class moduleMain extends abstractModuleMain {
 	private readonly string $globalMessageFile;

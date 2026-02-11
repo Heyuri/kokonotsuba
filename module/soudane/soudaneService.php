@@ -2,7 +2,9 @@
 
 namespace Kokonotsuba\Modules\soudane;
 
-use BoardException;
+use Kokonotsuba\error\BoardException;
+
+use function Kokonotsuba\libraries\_T;
 
 class soudaneService {
 	public function __construct(

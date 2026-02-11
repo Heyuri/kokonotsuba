@@ -2,7 +2,8 @@
 
 namespace Kokonotsuba\Modules\bbCode;
 
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\module_classes\abstractModuleMain;
 
 class moduleMain extends abstractModuleMain { 
 	private $urlcount;
@@ -595,7 +596,7 @@ class moduleMain extends abstractModuleMain {
 		  	  $fh = fopen($this->URLTrapLog, 'a+b');
 		  	  fwrite($fh, time()."\t$_SERVER[REMOTE_ADDR]\t{$this->urlcount}\n");
 		  	  fclose($fh);
-		  	  throw new \BoardException("URL: Tags exceed max limit");
+		  	  throw new BoardException("URL: Tags exceed max limit");
 		}
 	}
 

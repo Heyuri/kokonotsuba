@@ -2,20 +2,30 @@
 
 namespace Kokonotsuba\Modules\search;
 
-use DatabaseConnection;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
-use moduleEngine;
-use moduleEngineContext;
-use postRenderer;
-use postSearchService;
-use templateEngine;
-use board;
+use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\containers\moduleEngineContext;
+use Kokonotsuba\renderers\postRenderer;
+use Kokonotsuba\post\postSearchService;
+use Kokonotsuba\board\board;
+use function Kokonotsuba\libraries\_T;
+use function Puchiko\strings\buildSmartQuery;
+use function Kokonotsuba\libraries\getFiltersFromRequest;
+use function Kokonotsuba\libraries\createAssocArrayFromBoardArray;
+use function Kokonotsuba\html\generateBoardListCheckBoxHTML;
+use function Kokonotsuba\libraries\stripExtension;
+use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Kokonotsuba\html\getThreadTitle;
+use function Kokonotsuba\html\drawPager;
+use function Kokonotsuba\libraries\getBoardsByUIDs;
+use function Kokonotsuba\libraries\isActiveStaffSession;
 
 class moduleMain extends abstractModuleMain {
 	private readonly string $myPage;
 
 	// used for rendering posts
-	private templateEngine $moduleTemplateEngine;
+	private \Kokonotsuba\template\templateEngine $moduleTemplateEngine;
 
 	public function getName(): string {
 		return 'Kokonotsuba Search';
@@ -101,7 +111,7 @@ class moduleMain extends abstractModuleMain {
 			// fetch database stop words.
 			// This is to prevent the engine from trying to search for words it can't index
 			// note: this is statically cached per request
-			$stopWords = DatabaseConnection::getInstance()->fetchFulltextStopWords();
+			$stopWords = databaseConnection::getInstance()->fetchFulltextStopWords();
 
 			// handle search result fetching and displaying
 			$dat .= $this->handleSearchResults($this->moduleContext->postSearchService, $stopWords, $searchFields, $boardUids, $cleanUrl, $adminMode);

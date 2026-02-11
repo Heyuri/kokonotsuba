@@ -2,8 +2,8 @@
 
 namespace Kokonotsuba\Modules\emotes;
 
-use board;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\board\board;
+use Kokonotsuba\module_classes\abstractModuleMain;
 
 class moduleMain extends abstractModuleMain {
     // The assoc emotes list used for the search and replace in comment

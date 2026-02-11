@@ -1,7 +1,24 @@
 <?php
+
+
+
 // ───────────────────────────────────────
 // Dependencies
 // ───────────────────────────────────────
+
+use Kokonotsuba\api\boardApi;
+use Kokonotsuba\api\threadApi;
+use Kokonotsuba\error\softErrorHandler;
+use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\ip\IPValidator;
+use Kokonotsuba\log_in\adminLoginController;
+use Kokonotsuba\log_in\authenticationHandler;
+use Kokonotsuba\log_in\loginSessionHandler;
+use Kokonotsuba\overboard;
+use Kokonotsuba\post\postValidator;
+use Kokonotsuba\template\pageRenderer;
+use Kokonotsuba\template\templateEngine;
+
 $templateEngine = $board->getBoardTemplateEngine();
 $moduleEngine = $board->getModuleEngine();
 

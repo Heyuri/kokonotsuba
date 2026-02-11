@@ -2,8 +2,11 @@
 
 namespace Kokonotsuba\Modules\adminBan;
 
-use IPAddress;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\module_classes\abstractModuleMain;
+
+use function Puchiko\json\isJavascriptRequest;
+use function Puchiko\json\renderJsonErrorPage;
 
 class moduleMain extends abstractModuleMain {
 	private string $BANFILE = '';

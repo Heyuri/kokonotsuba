@@ -222,7 +222,7 @@ $config['ModuleSettings']['DISPLAY_THREADED_FORMAT'] = false;
 
 //mod_readonly
 $config['ModuleSettings']['ALLOW_REPLY'] = false; // allow replies to threads but disallow creating threads when board is read-only
-$config['ModuleSettings']['MINIMUM_ROLE'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
+$config['ModuleSettings']['MINIMUM_ROLE'] = Kokonotsuba\userRole::LEV_MODERATOR;
 
 //mod_pushpost
 $config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'] = 250;

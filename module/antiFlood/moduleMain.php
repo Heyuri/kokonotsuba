@@ -3,10 +3,16 @@
 
 namespace Kokonotsuba\Modules\antiFlood;
 
-use BoardException;
+use Kokonotsuba\error\BoardException;
 use DateTime;
 use DateTimeZone;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\module_classes\abstractModuleMain;
+
+use function Kokonotsuba\libraries\getBoardsByUIDs;
+use function Kokonotsuba\libraries\rebuildBoardsByArray;
+use function Puchiko\json\isJavascriptRequest;
+use function Puchiko\json\sendAjaxAndDetach;
+use function Puchiko\request\redirect;
 
 class moduleMain extends abstractModuleMain {
 	private readonly int $RENZOKU3; // Seconds before a new thread can be made

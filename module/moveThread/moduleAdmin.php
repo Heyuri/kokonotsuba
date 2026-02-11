@@ -2,16 +2,22 @@
 
 namespace Kokonotsuba\Modules\moveThread;
 
-use BoardException;
+use Kokonotsuba\error\BoardException;
 use Exception;
-use FlagHelper;
-use IBoard;
+use Kokonotsuba\post\FlagHelper;
+use Kokonotsuba\interfaces\IBoard;
 use InvalidArgumentException;
-use IPAddress;
-use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
-use Kokonotsuba\Root\Constants\userRole;
-use postDateFormatter;
-use postRegistData;
+use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\userRole;
+use Kokonotsuba\post\helper\postDateFormatter;
+use Kokonotsuba\post\postRegistData;
+
+use function Kokonotsuba\html\generateBoardListRadioHTML;
+use function Kokonotsuba\libraries\getAttachmentsFromPosts;
+use function Kokonotsuba\libraries\rebuildBoardsByArray;
+use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Puchiko\request\redirect;
 
 //move thread module
 class moduleAdmin extends abstractModuleAdmin {

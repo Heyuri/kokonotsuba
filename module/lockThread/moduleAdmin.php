@@ -4,10 +4,15 @@ namespace Kokonotsuba\Modules\lockThread;
 
 require_once __DIR__ . '/lockThreadLibrary.php';
 
-use BoardException;
-use FlagHelper;
-use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
-use Kokonotsuba\Root\Constants\userRole;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\post\FlagHelper;
+use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\userRole;
+
+use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Puchiko\json\isJavascriptRequest;
+use function Puchiko\json\sendAjaxAndDetach;
+use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
 	public function getRequiredRole(): userRole {
@@ -169,6 +174,6 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$board->rebuildBoard();
 
-		redirect('back', 0);
+		redirect('back');
 	}
 }

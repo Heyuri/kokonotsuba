@@ -2,11 +2,13 @@
 
 namespace Kokonotsuba\Modules\soudane;
 
-use DatabaseConnection;
+use Kokonotsuba\database\databaseConnection;
+
+use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
 class soudaneRepository {
 	public function __construct(
-		private DatabaseConnection $databaseConnection,
+		private databaseConnection $databaseConnection,
 		private string $soudaneTable
 	) {}
 

@@ -2,7 +2,7 @@
 
 namespace Kokonotsuba\Modules\antiSpam;
 
-use DatabaseConnection;
+use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\Modules\antiSpam\antiSpamRepository;
 use Kokonotsuba\Modules\antiSpam\antiSpamService;
 
@@ -11,7 +11,7 @@ function getAntiSpamService(): antiSpamService {
 	$databaseSettings = getDatabaseSettings();
 
 	// get database connection
-	$databaseConnection = DatabaseConnection::getInstance();
+	$databaseConnection = databaseConnection::getInstance();
 
 	// initialize repo
 	$antiSpamRepository = new antiSpamRepository($databaseConnection, $databaseSettings['SPAM_STRING_TABLE'], $databaseSettings['ACCOUNT_TABLE']);

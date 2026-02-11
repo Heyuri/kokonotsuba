@@ -6,9 +6,15 @@ require_once __DIR__ . '/antiSpamRepository.php';
 require_once __DIR__ . '/antiSpamService.php';
 require_once __DIR__ . '/antiSpamLib.php';
 
-use BoardException;
-use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
-use Kokonotsuba\Root\Constants\userRole;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\userRole;
+
+use function Kokonotsuba\html\drawPager;
+use function Kokonotsuba\libraries\getIdFromSession;
+use function Puchiko\request\isGetRequest;
+use function Puchiko\request\isPostRequest;
+use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
 	private antiSpamService $antiSpamService;

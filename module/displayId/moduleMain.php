@@ -2,8 +2,12 @@
 
 namespace Kokonotsuba\Modules\displayId;
 
-use IPAddress;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\module_classes\abstractModuleMain;
+
+use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\generatePostHash;
+use function Kokonotsuba\libraries\getRoleLevelFromSession;
 
 class moduleMain extends abstractModuleMain {
 	// Property for whether to display IDs or not

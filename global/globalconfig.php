@@ -2,6 +2,9 @@
 /*
 * This is for global settings that should not be overwritten by any board's config, and thus can be accessed without needing to access the board.
 */
+
+use Kokonotsuba\Kokonotsuba\userRole;
+
 $config['PIXMICAT_LANGUAGE'] = 'en_US'; // Language (available languages in /lib/lang/)
 $config['ERROR_HANDLER_FILE'] = __DIR__.'/error.log';
 
@@ -37,22 +40,22 @@ $config['TRIPSALT'] = ''; // Used for secure tripcodes. Don't change after setti
 
 
 // Role levels
-$config['AuthLevels']['CAN_VIEW_IP_ADDRESSES'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_MOVE_THREAD'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_BAN'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_DELETE_POST'] = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR;
-$config['AuthLevels']['CAN_DELETE_ALL'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_DELETE_RESTORE_RECORDS'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
-$config['AuthLevels']['CAN_LOCK'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_STICKY'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_AUTO_SAGE'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_MANAGE_REBUILD'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
-$config['AuthLevels']['CAN_EDIT_BLOTTER'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
-$config['AuthLevels']['CAN_MANAGE_POSTS'] = \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR;
-$config['AuthLevels']['CAN_VIEW_ACTION_LOG'] = \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR;
-$config['AuthLevels']['CAN_RAW_HTML'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
-$config['AuthLevels']['CAN_MANAGE_CAPCODES'] = \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN;
+$config['AuthLevels']['CAN_VIEW_IP_ADDRESSES'] = Kokonotsuba\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_MOVE_THREAD'] = Kokonotsuba\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_BAN'] = Kokonotsuba\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_DELETE_POST'] = Kokonotsuba\userRole::LEV_JANITOR;
+$config['AuthLevels']['CAN_DELETE_ALL'] = Kokonotsuba\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_DELETE_RESTORE_RECORDS'] = Kokonotsuba\userRole::LEV_ADMIN;
+$config['AuthLevels']['CAN_LOCK'] = Kokonotsuba\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_STICKY'] = Kokonotsuba\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_AUTO_SAGE'] = Kokonotsuba\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_MANAGE_REBUILD'] = Kokonotsuba\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE'] = Kokonotsuba\userRole::LEV_ADMIN;
+$config['AuthLevels']['CAN_EDIT_BLOTTER'] = Kokonotsuba\userRole::LEV_ADMIN;
+$config['AuthLevels']['CAN_MANAGE_POSTS'] = Kokonotsuba\userRole::LEV_JANITOR;
+$config['AuthLevels']['CAN_VIEW_ACTION_LOG'] = Kokonotsuba\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_RAW_HTML'] = Kokonotsuba\userRole::LEV_ADMIN;
+$config['AuthLevels']['CAN_MANAGE_CAPCODES'] = Kokonotsuba\userRole::LEV_ADMIN;
 
 // Capcode formats (put '%s' where you want the original name)
 $config['JCAPCODE_FMT'] = '%s';
@@ -68,27 +71,27 @@ $config['SCAPCODE_FMT'] = '<span class="capcode capcodeSystem">%s ## System</spa
 $config['staffCapcodes'] = [
     'System' => [
         'capcodeHtml' => $config['SCAPCODE_FMT'],
-        'requiredRole' => \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN,
+        'requiredRole' => Kokonotsuba\userRole::LEV_ADMIN,
     ],
 
     'Admin' => [
         'capcodeHtml' => $config['ACAPCODE_FMT'],
-        'requiredRole' => \Kokonotsuba\Root\Constants\userRole::LEV_ADMIN,
+        'requiredRole' => Kokonotsuba\userRole::LEV_ADMIN,
     ],
 
     'Mod' => [
         'capcodeHtml' => $config['MCAPCODE_FMT'],
-        'requiredRole' => \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR,
+        'requiredRole' => Kokonotsuba\userRole::LEV_MODERATOR,
     ],
 
     'Developer' => [
         'capcodeHtml' => $config['DCAPCODE_FMT'],
-        'requiredRole' => \Kokonotsuba\Root\Constants\userRole::LEV_MODERATOR,
+        'requiredRole' => Kokonotsuba\userRole::LEV_MODERATOR,
     ],
 
     'Janitor' => [
         'capcodeHtml' => $config['JCAPCODE_FMT'],
-        'requiredRole' => \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR,
+        'requiredRole' => Kokonotsuba\userRole::LEV_JANITOR,
     ],
 ];
 

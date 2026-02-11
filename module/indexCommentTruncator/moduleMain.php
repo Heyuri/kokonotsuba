@@ -2,9 +2,14 @@
 
 namespace Kokonotsuba\Modules\indexCommentTruncator;
 
-use board;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\board\board;
+use Kokonotsuba\module_classes\abstractModuleMain;
 use Throwable;
+
+use function Kokonotsuba\libraries\_T;
+use function Puchiko\html\countHtmlLineBreaks;
+use function Puchiko\html\truncateHtml;
+use function Puchiko\html\truncateHtmlByLineBreak;
 
 class moduleMain extends abstractModuleMain {
 	// post comments over these limits are truncated (if viewed from the index)

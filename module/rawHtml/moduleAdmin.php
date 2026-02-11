@@ -2,8 +2,8 @@
 
 namespace Kokonotsuba\Modules\rawHtml;
 
-use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
-use Kokonotsuba\Root\Constants\userRole;
+use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\userRole;
 
 class moduleAdmin extends abstractModuleAdmin {
 	public function getRequiredRole(): userRole {

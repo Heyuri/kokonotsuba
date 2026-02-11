@@ -1,8 +1,10 @@
 <?php
 namespace Kokonotsuba\Modules\dice;
 
-use BoardException;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\module_classes\abstractModuleMain;
+
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	private int $dieAmountLimit, $dieFaceLimit, $emailDiceRoll, $commentDiceRoll;

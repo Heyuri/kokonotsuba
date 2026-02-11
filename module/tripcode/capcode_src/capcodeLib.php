@@ -2,7 +2,7 @@
 
 namespace Kokonotsuba\Modules\tripcode;
 
-use BoardException;
+use Kokonotsuba\error\BoardException;
 
 function validateCapcodeId(int $id): void {
 	// ensure ID is a non-zero positive integer

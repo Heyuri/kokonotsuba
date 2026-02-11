@@ -6,8 +6,8 @@ namespace Kokonotsuba\Modules\sticky;
 
 require_once __DIR__ . '/stickyLibrary.php';
 
-use FlagHelper;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\post\FlagHelper;
+use Kokonotsuba\module_classes\abstractModuleMain;
 
 class moduleMain extends abstractModuleMain {
 	public function getName(): string {

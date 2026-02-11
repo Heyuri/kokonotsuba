@@ -2,8 +2,14 @@
 
 namespace Kokonotsuba\Modules\catalog;
 
-use BoardException;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\module_classes\abstractModuleMain;
+
+use function Kokonotsuba\html\drawPager;
+use function Kokonotsuba\html\quote_unkfunc;
+use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\attachmentFileExists;
+use function Kokonotsuba\libraries\getAttachmentUrl;
 
 class moduleMain extends abstractModuleMain {
 	private readonly string $staticUrl;

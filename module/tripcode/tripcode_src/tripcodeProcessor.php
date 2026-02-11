@@ -1,5 +1,9 @@
 <?php
 
+namespace Kokonotsuba\Modules\tripcode;
+
+use Kokonotsuba\userRole;
+
 class tripcodeProcessor {
 
 	// Constructor to initialize config instance
@@ -7,7 +11,7 @@ class tripcodeProcessor {
 		private readonly array $config) {}
 
 	// Main method to apply tripcode processing to a given name
-	public function apply(string &$name, string &$tripcode, string &$secure_tripcode, string &$capcode, \Kokonotsuba\Root\Constants\userRole $roleLevel): void {
+	public function apply(string &$name, string &$tripcode, string &$secure_tripcode, string &$capcode, userRole $roleLevel): void {
 		// Check for fraud symbols in the name and append " (fraudster)" if found
 		if ($this->containsFraudSymbol($name)) {
 			$name .= " (fraudster)";
@@ -34,7 +38,7 @@ class tripcodeProcessor {
 	}
 
 	// Set the capcode if it exists in the array key
-	private function setCapcodeIfExists(\Kokonotsuba\Root\Constants\userRole $roleLevel, string $secure_tripcode): string {
+	private function setCapcodeIfExists(userRole $roleLevel, string $secure_tripcode): string {
 		if(array_key_exists($secure_tripcode, $this->config['staffCapcodes']) && $roleLevel->isAtLeast($this->config['staffCapcodes'][$secure_tripcode]['requiredRole'])) {
 			return $secure_tripcode;
 		}

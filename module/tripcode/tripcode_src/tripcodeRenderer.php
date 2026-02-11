@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\Modules\tripcode;
 
+use function Puchiko\array\find_row_by_key_value;
+
 class tripcodeRenderer {
 	public function __construct(
 		private array $userCapcodes,

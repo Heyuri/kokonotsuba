@@ -2,8 +2,12 @@
 
 namespace Kokonotsuba\Modules\rebuild;
 
-use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
-use Kokonotsuba\Root\Constants\userRole;
+use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\userRole;
+
+use function Kokonotsuba\html\generateRebuildListCheckboxHTML;
+use function Kokonotsuba\libraries\rebuildBoardsByArray;
+use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
 	private readonly string $myPage;

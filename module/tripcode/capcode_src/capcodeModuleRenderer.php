@@ -2,11 +2,14 @@
 
 namespace Kokonotsuba\Modules\tripcode;
 
-use board;
-use BoardException;
-use capcodeService;
-use moduleEngine;
-use pageRenderer;
+use Kokonotsuba\board\board;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\capcode_backend\capcodeService;
+use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\template\pageRenderer;
+
+use function Kokonotsuba\html\generatePostNameHtml;
+use function Kokonotsuba\libraries\_T;
 
 class capcodeModuleRenderer {
 	public function __construct(

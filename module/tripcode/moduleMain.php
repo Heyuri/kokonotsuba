@@ -2,9 +2,8 @@
 
 namespace Kokonotsuba\Modules\tripcode;
 
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
-use Kokonotsuba\Root\Constants\userRole;
-use tripcodeProcessor;
+use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\userRole;
 
 require __DIR__ . '/tripcode_src/tripcodeProcessor.php';
 require __DIR__ . '/tripcode_src/tripcodeRenderer.php';

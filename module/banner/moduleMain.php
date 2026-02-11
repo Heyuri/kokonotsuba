@@ -2,7 +2,7 @@
 
 namespace Kokonotsuba\Modules\banner;
 
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\module_classes\abstractModuleMain;
 
 use RuntimeException;
 

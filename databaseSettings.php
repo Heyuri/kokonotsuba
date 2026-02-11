@@ -28,4 +28,5 @@ return [
 	'CAPCODE_TABLE' => 'capcodes', // for storing capcode-related data
 	'SPAM_STRING_TABLE' => 'spam_string_rules',
 	'SOUDANE_TABLE'	=> 'soudane_votes', // for storing soudane-related vote data
+	'THREAD_THEMES_TABLE' => 'thread_themes' // for storing thread themes
 ];

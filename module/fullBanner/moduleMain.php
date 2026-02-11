@@ -7,7 +7,7 @@
 
 namespace Kokonotsuba\Modules\fullBanner;
 
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\module_classes\abstractModuleMain;
 
 class moduleMain extends abstractModuleMain {
 	private readonly bool $showTopAd;

@@ -5,10 +5,12 @@ namespace Kokonotsuba\Modules\lockThread;
 
 require_once __DIR__ . '/lockThreadLibrary.php';
 
-use BoardException;
-use FlagHelper;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
-use Kokonotsuba\Root\Constants\userRole;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\post\FlagHelper;
+use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\userRole;
+
+use function Kokonotsuba\libraries\getRoleLevelFromSession;
 
 class moduleMain extends abstractModuleMain {
 	public function getName(): string {

@@ -6,12 +6,33 @@ YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE TH
 */
 
 /* Prevent the user from aborting script execution */
+
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\PMCLibrary;
+use Kokonotsuba\routers\modeHandler;
+
+use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\updateAccountSession;
+use function Puchiko\json\isJavascriptRequest;
+use function Puchiko\json\renderJsonErrorPage;
+
 ignore_user_abort(true);
 
+// run the auto-loader
+require __DIR__ . '/autoload.php';
+
+// require constants (core file)
+require_once __DIR__ . '/code/Kokonotsuba/constants.php';
+
+// run the function autoloader for libraries
+autoloadDirectory(__DIR__ . '/code/Kokonotsuba/libraries/');
+autoloadDirectory(__DIR__ . '/code/Kokonotsuba/html/');
+autoloadDirectory(__DIR__ . '/code/Puchiko/');
+
+// main retuires
 require __DIR__ . '/bootstrap/session.php';
 require __DIR__ . '/bootstrap/cookies.php';
 require __DIR__ . '/paths.php';
-require __DIR__ . '/includes.php';
 require __DIR__ . '/bootstrap/global.php';
 require __DIR__ . '/bootstrap/checks.php';
 require __DIR__ . '/bootstrap/database.php';
@@ -38,7 +59,7 @@ try {
 	// run the mode router
 	$modeHandler->handle();
 
-} catch(\BoardException $boardException) {
+} catch(BoardException $boardException) {
 	// get error message
 	$errorMessage = $boardException->getMessage();
 

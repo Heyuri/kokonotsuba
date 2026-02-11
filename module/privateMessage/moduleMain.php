@@ -3,8 +3,11 @@
 
 namespace Kokonotsuba\Modules\privateMessage;
 
-use BoardException;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\module_classes\abstractModuleMain;
+
+use function Kokonotsuba\libraries\_T;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	private $MESG_LOG = '';

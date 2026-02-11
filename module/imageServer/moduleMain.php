@@ -2,9 +2,12 @@
 
 namespace Kokonotsuba\Modules\imageServer;
 
-use attachment;
-use BoardException;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\post\attachment\attachment;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\module_classes\abstractModuleMain;
+
+use function Kokonotsuba\libraries\isActiveStaffSession;
+use function Kokonotsuba\libraries\serveMedia;
 
 class moduleMain extends abstractModuleMain {
 

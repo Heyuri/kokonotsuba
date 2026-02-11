@@ -2,9 +2,11 @@
 
 namespace Kokonotsuba\Modules\deletedPosts;
 
-use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
-use Kokonotsuba\Root\Constants\userRole;
-use staffAccountFromSession;
+use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\userRole;
+use Kokonotsuba\account\staffAccountFromSession;
+
+use function Puchiko\request\redirect;
 
 // require helper classes
 require __DIR__ . '/deletedPostUtility.php';

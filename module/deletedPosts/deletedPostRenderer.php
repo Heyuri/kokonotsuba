@@ -2,18 +2,23 @@
 
 namespace Kokonotsuba\Modules\deletedPosts;
 
-use board;
-use BoardException;
-use deletedPostsService;
-use Kokonotsuba\Root\Constants\userRole;
-use moduleEngine;
-use pageRenderer;
-use postRenderer;
-use quoteLinkService;
+use Kokonotsuba\board\board;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\post\deletion\deletedPostsService;
+use Kokonotsuba\userRole;
+use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\template\pageRenderer;
+use Kokonotsuba\renderers\postRenderer;
+use Kokonotsuba\quote_link\quoteLinkService;
 use RuntimeException;
-use templateEngine;
-use threadRenderer;
-use threadService;
+use Kokonotsuba\template\templateEngine;
+use Kokonotsuba\renderers\threadRenderer;
+use Kokonotsuba\thread\threadService;
+
+use function Kokonotsuba\html\drawPager;
+use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Puchiko\strings\truncateText;
 
 class deletedPostRenderer {
 	public function __construct(

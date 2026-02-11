@@ -2,11 +2,13 @@
 
 namespace Kokonotsuba\Modules\antiSpam;
 
-use DatabaseConnection;
+use Kokonotsuba\database\databaseConnection;
+
+use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
 class antiSpamRepository {
 	public function __construct(
-		private DatabaseConnection $databaseConnection,
+		private databaseConnection $databaseConnection,
 		private string $spamStringRulesTable,
 		private string $accountTable
 	) {}

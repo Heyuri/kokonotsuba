@@ -2,9 +2,11 @@
 
 namespace Kokonotsuba\Modules\deletedPosts;
 
-use board;
-use Kokonotsuba\Root\Constants\userRole;
-use moduleEngine;
+use Kokonotsuba\board\board;
+use Kokonotsuba\userRole;
+use Kokonotsuba\module_classes\moduleEngine;
+
+use function Puchiko\strings\sanitizeStr;
 
 class deletedPostUIHooks {
 	public function __construct(

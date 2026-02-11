@@ -2,8 +2,13 @@
 
 namespace Kokonotsuba\Modules\threadList;
 
-use BoardException;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\module_classes\abstractModuleMain;
+
+use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\html\drawPager;
+use function Kokonotsuba\html\generatePostNameHtml;
+use function Puchiko\strings\truncateText;
 
 class moduleMain extends abstractModuleMain {
 	// Configuration variables
@@ -199,7 +204,6 @@ function checkall(){
 			$secure_tripcode = $opPost['secure_tripcode'];
 			$capcode = $opPost['capcode'];
 			$now = $opPost['now'];
-			$thread_uid = $opPost['thread_uid'];
 
 			$nameHtml = generatePostNameHtml(
 				$this->moduleContext->moduleEngine, 

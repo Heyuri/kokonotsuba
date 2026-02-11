@@ -7,12 +7,14 @@ function fetchNewReplies() {
 				return reject("Thread is pruned or deleted"); // Reject if the thread is not found
 			} else {
 				data.text().then(text => {
-					var tmp = document.createElement("div");
-					tmp.innerHTML = text;
-					
-					var threadHTML = tmp.querySelector(".thread");
-					var frs = threadHTML.querySelectorAll(".reply-container");
+					const parser = new DOMParser();
+					const doc = parser.parseFromString(text, "text/html");
 
+					// strip audio immediately
+					doc.querySelectorAll("audio").forEach(a => a.remove());
+
+					const threadHTML = doc.querySelector(".thread");
+					const frs = threadHTML.querySelectorAll(".reply-container");
 
 					// Get the current last reply id in the current page
 					var rs = document.querySelectorAll(".reply-container");

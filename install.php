@@ -1,5 +1,11 @@
 <?php
 
+use function Puchiko\copyFileWithNewName;
+use function Puchiko\createDirectory;
+use function Puchiko\createFileAndWriteText;
+use function Puchiko\request\redirect;
+use function Puchiko\strings\generateUid;
+
 function getRootPath() {
     $kokoFile = __DIR__ . DIRECTORY_SEPARATOR . 'koko.php';
     if (!file_exists($kokoFile)) {
@@ -32,7 +38,7 @@ define('ROOTPATH', getRootPath());
 require ROOTPATH . '/code/libraries/lib_common.php';
 require ROOTPATH . '/constants.php';
 
-use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
+use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 $extensions = [
     'mbstring',
@@ -609,6 +615,26 @@ class tableCreator {
                 INDEX idx_soudane_date_added (date_added),
 
                 CONSTRAINT fk_soudane_post_uid FOREIGN KEY (post_uid) REFERENCES posts(post_uid) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
+            ",
+            "
+            CREATE TABLE IF NOT EXISTS thread_themes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                thread_uid VARCHAR(255) NULL,
+                background_hex_color CHAR(7) NULL,
+                reply_background_hex_color CHAR(7) NULL,
+                text_hex_color CHAR(7) NULL,
+                background_image_url TEXT NULL, 
+                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL, 
+                audio TEXT NULL, 
+                raw_styling TEXT NULL, 
+                added_by INT NULL,
+
+                UNIQUE KEY unique_thread_uid (thread_uid),
+                INDEX idx_theme_added_by (added_by),
+
+                CONSTRAINT fk_theme_thread_uid FOREIGN KEY (thread_uid) REFERENCES threads(thread_uid) ON DELETE CASCADE,
+                CONSTRAINT fk_theme_added_by FOREIGN KEY (added_by) REFERENCES accounts(id) ON DELETE SET NULL
             ) ENGINE=InnoDB;
             "
         ];

@@ -2,9 +2,9 @@
 
 namespace Kokonotsuba\Modules\deletedPosts;
 
-use BoardException;
-use deletedPostsService;
-use Kokonotsuba\Root\Constants\userRole;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\post\deletion\deletedPostsService;
+use Kokonotsuba\userRole;
 
 class deletedPostUtility {
 	public function __construct(

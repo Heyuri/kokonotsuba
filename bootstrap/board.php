@@ -1,7 +1,16 @@
 <?php
+
+use Kokonotsuba\board\boardPostNumbers;
+use Kokonotsuba\board\boardRepository;
+use Kokonotsuba\board\boardService;
+use Kokonotsuba\cache\path_cache\boardPathRepository;
+use Kokonotsuba\cache\path_cache\boardPathService;
+use Kokonotsuba\containers\boardDiContainer;
+
 // ───────────────────────────────────────
 // Board Bootstrap
 // ───────────────────────────────────────
+
 $boardPostNumbers = new boardPostNumbers($databaseConnection, $dbSettings['POST_NUMBER_TABLE']);
 
 $boardPathRepository = new boardPathRepository($databaseConnection, $dbSettings['BOARD_PATH_CACHE_TABLE']);

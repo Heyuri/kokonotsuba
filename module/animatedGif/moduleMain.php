@@ -4,11 +4,11 @@
 
 namespace Kokonotsuba\Modules\animatedGif;
 
-use board;
-use FlagHelper;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
-use PMCLibrary;
+use Kokonotsuba\module_classes\abstractModuleMain;
 use RuntimeException;
+
+use function Kokonotsuba\libraries\attachmentFileExists;
+use function Kokonotsuba\libraries\isActiveStaffSession;
 
 class moduleMain extends abstractModuleMain {
 	public function getName(): string {

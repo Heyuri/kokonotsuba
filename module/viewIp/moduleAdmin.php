@@ -2,8 +2,10 @@
 
 namespace Kokonotsuba\Modules\viewIp;
 
-use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
-use Kokonotsuba\Root\Constants\userRole;
+use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\userRole;
+
+use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
 	public function getRequiredRole(): userRole {

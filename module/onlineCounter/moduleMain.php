@@ -2,8 +2,10 @@
 
 namespace Kokonotsuba\Modules\onlineCounter;
 
-use IPAddress;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\module_classes\abstractModuleMain;
+
+use function Kokonotsuba\libraries\_T;
 
 class moduleMain extends abstractModuleMain {
 	private $modulePageUrl, $usercounter, $timeout, $staticUrl;

@@ -2,7 +2,7 @@
 
 namespace Kokonotsuba\Modules\emoji;
 
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\module_classes\abstractModuleMain;
 
 class moduleMain extends abstractModuleMain {
 	private array $emojiFilter;

@@ -2,13 +2,15 @@
 
 namespace Kokonotsuba\Modules\tripcode;
 
-use actionLoggerService;
-use BoardException;
-use capcodeService;
+use Kokonotsuba\action_log\actionLoggerService;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\capcode_backend\capcodeService;
 use Exception;
 use Throwable;
 
-use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
+use const Kokonotsuba\GLOBAL_BOARD_UID;
+
+use function Kokonotsuba\libraries\_T;
 
 require __DIR__ . '/capcodeLib.php';
 

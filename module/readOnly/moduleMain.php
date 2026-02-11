@@ -5,8 +5,8 @@ Mod_Readonly - Add this to the boards config to make it admin-only
 
 namespace Kokonotsuba\Modules\readOnly;
 
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
-use BoardException;
+use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\error\BoardException;
 
 class moduleMain extends abstractModuleMain {
 	private $ALLOWREPLY, $MINIMUM_ROLE; // Allow replies

@@ -2,7 +2,7 @@
 
 namespace Kokonotsuba\Modules\globalMessage;
 
-use BoardException;
+use Kokonotsuba\error\BoardException;
 
 function getGlobalMessage(string $globalMessageFile) {
 	// Check if the cached message is available

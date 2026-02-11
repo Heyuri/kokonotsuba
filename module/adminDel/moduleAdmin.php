@@ -2,12 +2,20 @@
 
 namespace Kokonotsuba\Modules\adminDel;
 
-use BoardException;
-use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
-use Kokonotsuba\Root\Constants\userRole;
-use staffAccountFromSession;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\account\staffAccountFromSession;
+use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\userRole;
 
-use const Kokonotsuba\Root\Constants\GLOBAL_BOARD_UID;
+use function Kokonotsuba\html\getCurrentUrlNoQuery;
+use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\attachmentFileExists;
+use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Kokonotsuba\libraries\getPageOfThread;
+use function Puchiko\json\isJavascriptRequest;
+use function Puchiko\request\redirect;
+
+use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 class moduleAdmin extends abstractModuleAdmin {
 	private readonly int $JANIMUTE_LENGTH;
@@ -420,7 +428,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// Fallback for non-JS users: redirect
-		redirect('back', 0);
+		redirect('back');
 	}
 
 	private function appendGlobalBan($ip, $starttime, $expires, $reason) {

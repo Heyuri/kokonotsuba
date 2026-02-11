@@ -2,7 +2,7 @@
 
 namespace Kokonotsuba\Modules\blotter;
 
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\module_classes\abstractModuleMain;
 
 include_once __DIR__ . '/blotterLibrary.php';
 

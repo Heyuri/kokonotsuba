@@ -6,11 +6,12 @@ require_once __DIR__ . '/antiSpamRepository.php';
 require_once __DIR__ . '/antiSpamService.php';
 require_once __DIR__ . '/antiSpamLib.php';
 
-use BoardException;
-use IPAddress;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\Modules\antiSpam\antiSpamService;
 
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\Modules\antiSpam\getAntiSpamService;
 
 class moduleMain extends abstractModuleMain {

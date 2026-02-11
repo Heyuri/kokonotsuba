@@ -1,11 +1,17 @@
 <?php
+
+
+
+use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\database\transactionManager;
+
 // ───────────────────────────────────────
 // Database Setup
 // ───────────────────────────────────────
 $dbSettings = getDatabaseSettings();
 
-DatabaseConnection::createInstance($dbSettings);
+databaseConnection::createInstance($dbSettings);
 
-$databaseConnection = DatabaseConnection::getInstance();
+$databaseConnection = databaseConnection::getInstance();
 
 $transactionManager = new transactionManager($databaseConnection);

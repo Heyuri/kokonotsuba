@@ -1,3 +1,7 @@
+.thread {
+	display: flow-root;
+}
+
 .postMenuContainer {
 	display: inline-block;
 }

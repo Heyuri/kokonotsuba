@@ -1,0 +1,109 @@
+<?php
+
+// boards route - display information on boards for admin
+
+namespace Kokonotsuba\routers\routes;
+
+use Exception;
+use Kokonotsuba\board\board;
+use Kokonotsuba\board\boardService;
+use Kokonotsuba\error\softErrorHandler;
+use Kokonotsuba\template\pageRenderer;
+use Kokonotsuba\account\staffAccountFromSession;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\template\templateEngine;
+use Kokonotsuba\userRole;
+
+use function Kokonotsuba\html\drawBoardTable;
+use function Kokonotsuba\libraries\_T;
+
+use const Kokonotsuba\GLOBAL_BOARD_UID;
+
+class boardsRoute {
+	public function __construct(
+		private readonly array $config,
+		private readonly staffAccountFromSession $staffSession,
+		private readonly softErrorHandler $softErrorHandler,
+		private templateEngine $adminTemplateEngine,
+		private readonly pageRenderer $adminPageRenderer,
+		private readonly boardService $boardService,
+		private board $board
+	) {}
+
+	public function drawBoardPage(): void {
+		$authRoleLevel = $this->staffSession->getRoleLevel();
+
+		$this->softErrorHandler->handleAuthError(userRole::LEV_ADMIN);
+
+		$boards = $this->boardService->getAllRegularBoards();
+
+		// draw board tablke
+		$boardTableList = drawBoardTable($this->config['LIVE_INDEX_FILE'], $boards);
+		
+		// set template values
+		$templateValues = [
+			'{$BOARD_LIST}' => $boardTableList,
+			'{$CREATE_BOARD}' =>  '',
+			'{$IMPORT_BOARD}' =>  ''];
+
+		// admin forms for importing/creating boards
+		if($authRoleLevel === userRole::LEV_ADMIN) {
+			$defaultPath = dirname(getcwd()) . '/';
+			// create board form
+			$templateValues['{$CREATE_BOARD}'] = $this->adminTemplateEngine->ParseBlock('CREATE_BOARD', [
+				'{$DEFAULT_CDN_DIR}' => $this->config['CDN_DIR'],
+				'{$DEFAULT_CDN_URL}' => $this->config['CDN_URL'],
+				'{$DEFAULT_ROOT_URL}' => $this->board->getBoardRootURL(),
+				'{$DEFAULT_PATH}' => $defaultPath
+			]);
+		}
+
+		if (isset($_GET['view'])) {
+			$id = $_GET['view'] ?? null;
+			if (!$id) {
+				throw new Exception("Board UID from GET was not set or invalid. " . __CLASS__ . ' ' . __LINE__);
+			}
+
+			$board = $this->boardService->getBoard($id);
+
+			// throw exception if board's not found
+			if(!$board) {
+				throw new BoardException(_T('board_not_found'));
+			}
+
+			$boardUID = $board->getBoardUID() ?? '';
+			$boardIdentifier = $board->getBoardIdentifier() ?? '';
+			$boardTitle = $board->getBoardTitle() ?? '';
+			$boardSubtitle = $board->getBoardSubTitle() ?? '';
+			$boardURL = $board->getBoardURL() ?? '';
+			$boardListed = $board->getBoardListed() ?? '';
+			$boardConfig = $board->getConfigFileName() ?? '';
+			$boardStorageDirectoryName = $board->getBoardStorageDirName() ?? '';
+			$boardDate = $board->getDateAdded() ?? '';
+
+			$templateValues['{$BOARD_UID}'] = $boardUID;
+			$templateValues['{$BOARD_IDENTIFIER}'] = $boardIdentifier;
+			$templateValues['{$BOARD_TITLE}'] = $boardTitle;
+			$templateValues['{$BOARD_SUB_TITLE}'] = $boardSubtitle;
+			$templateValues['{$BOARD_URL}'] = $boardURL;
+			$templateValues['{$BOARD_IS_LISTED}'] = $boardListed ? 'True' : 'False';
+			$templateValues['{$BOARD_DATE_ADDED}'] = $boardDate;
+			$templateValues['{$BOARD_CONFIG_FILE}'] = $boardConfig;
+			$templateValues['{$CHECKED}'] = $boardListed ? 'checked' : '';
+			$templateValues['{$BOARD_STORAGE_DIR}'] = $boardStorageDirectoryName;
+			$templateValues['{$EDIT_BOARD_HTML}'] = $this->adminTemplateEngine->ParseBlock('EDIT_BOARD', $templateValues);
+			
+			// prevent showing editing a reserved board
+			if(!$boardUID === GLOBAL_BOARD_UID) {
+				$templateValues['{$EDIT_BOARD_HTML}'] = "<p>This board cannot be edited.</p>"; 
+			}
+
+			$viewBoardHtml = $this->adminPageRenderer->ParseBlock('VIEW_BOARD', $templateValues);
+			echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $viewBoardHtml], true);
+			return;
+		}
+
+		$boardPageHtml = $this->adminTemplateEngine->ParseBlock('BOARD_PAGE', $templateValues);
+		echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $boardPageHtml], true);
+	}
+}

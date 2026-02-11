@@ -1,5 +1,7 @@
 <?php
 
+
+
 // Set a unique session name for the instance
 session_name('kokonotsuba_session_id_' . substr(md5(__DIR__), 0, 5)); 
 

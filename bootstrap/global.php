@@ -1,5 +1,9 @@
 <?php
 
+use Kokonotsuba\account\staffAccountFromSession;
+use Kokonotsuba\policy\postPolicy;
+use Kokonotsuba\policy\postRenderingPolicy;
+
 // Global configuration file
 $globalConfig = getGlobalConfig();
 

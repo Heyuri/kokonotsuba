@@ -4,10 +4,15 @@ namespace Kokonotsuba\Modules\autoSage;
 
 require_once __DIR__ . '/autoSageLibrary.php';
 
-use BoardException;
-use FlagHelper;
-use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
-use Kokonotsuba\Root\Constants\userRole;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\post\FlagHelper;
+use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\userRole;
+
+use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Puchiko\json\isJavascriptRequest;
+use function Puchiko\json\sendAjaxAndDetach;
+use function Puchiko\request\redirect;
 
 // auto sage module made for kokonotsuba by deadking
 class moduleAdmin extends abstractModuleAdmin {
@@ -168,6 +173,6 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$board->rebuildBoard();	
 		
-		redirect('back', 1);
+		redirect('back');
 	}
 }

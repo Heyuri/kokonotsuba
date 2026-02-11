@@ -1,4 +1,7 @@
 <?php
+
+
+
 // Get the board that's currently being accessed by the request
 $board = $boardService->getBoardFromBootstrapFile('./boardUID.ini');
 

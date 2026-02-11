@@ -2,10 +2,14 @@
 
 namespace Kokonotsuba\Modules\soudane;
 
-use BoardException;
-use DatabaseConnection;
-use IPAddress;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\module_classes\abstractModuleMain;
+use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\isActiveStaffSession;
+use function Puchiko\json\renderJsonErrorPage;
+use function Puchiko\json\renderJsonPage;
 
 require_once __DIR__ . '/soudaneRepository.php';
 require_once __DIR__ . '/soudaneService.php';
@@ -36,7 +40,7 @@ class moduleMain extends abstractModuleMain {
 		$this->moduleUrl = $this->getModulePageURL([], false);
 
 		// get database connection and database setting
-		$databaseConnection = DatabaseConnection::getInstance();
+		$databaseConnection = databaseConnection::getInstance();
 		$soudaneTable = getDatabaseSettings()['SOUDANE_TABLE'];
 
 		// init soudane repo
@@ -54,7 +58,7 @@ class moduleMain extends abstractModuleMain {
 		
 		$this->moduleContext->moduleEngine->addListener('ModuleHeader', function(string &$moduleHeader) {
 			$this->onGenerateModuleHeader($moduleHeader);
-		});	
+		});
 	}
 
 	private function renderVoteButton(
@@ -185,7 +189,7 @@ class moduleMain extends abstractModuleMain {
 
 		// exit if none are found
 		if (empty($postUidsParameter)) {
-			renderJsonPage(['error' => 'No post IDs provided']);
+			renderJsonErrorPage(['error' => 'No post IDs provided']);
 			return;
 		}
 

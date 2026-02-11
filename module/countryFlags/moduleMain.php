@@ -7,7 +7,7 @@ require_once(__DIR__ . "/geoip/geoip2.phar");
 use Exception;
 use GeoIp2\Database\Reader;
 
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\module_classes\abstractModuleMain;
 
 class moduleMain  extends abstractModuleMain {
 	private readonly string $staticUrl;

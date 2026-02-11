@@ -3,8 +3,8 @@
 
 namespace Kokonotsuba\Modules\fieldTraps;
 
-use BoardException;
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\module_classes\abstractModuleMain;
 
 class moduleMain extends abstractModuleMain {
 	private $fields = array('e-mail', 'username', 'subject', 'comment', 'firstname', 'lastname', 'city', 'state', 'zipcode');

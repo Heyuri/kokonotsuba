@@ -2,14 +2,19 @@
 
 namespace Kokonotsuba\Modules\animatedGif;
 
-use BoardException;
-use Kokonotsuba\ModuleClasses\abstractModuleAdmin;
-use Kokonotsuba\Root\Constants\userRole;
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\getAttachmentUrl;
+use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Puchiko\json\isJavascriptRequest;
+use function Puchiko\json\sendAjaxAndDetach;
+use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
 	public function getRequiredRole(): userRole {
-		return \Kokonotsuba\Root\Constants\userRole::LEV_JANITOR;
+		return userRole::LEV_JANITOR;
 	}
 
 	public function getName(): string {
@@ -168,7 +173,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// rebuild board
 		$board->rebuildBoard();
 
-		redirect('back', 0);
+		redirect('back');
 	}
 
 	private function getAnimatedAttachmentUrl(array $attachment, bool $isAnimated): string {

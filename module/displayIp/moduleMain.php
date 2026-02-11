@@ -2,7 +2,9 @@
 
 namespace Kokonotsuba\Modules\displayIp;
 
-use Kokonotsuba\ModuleClasses\abstractModuleMain;
+use Kokonotsuba\module_classes\abstractModuleMain;
+
+use function Kokonotsuba\libraries\_T;
 
 class moduleMain extends abstractModuleMain {
 	private readonly int $IPTOGGLE;

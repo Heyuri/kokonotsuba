@@ -1,10 +1,13 @@
 <?php
+
+use function Puchiko\copyFileWithNewName;
+
 function getBackendDir() {
 	return __DIR__.'/';
 }
 
 function getBackendCodeDir() {
-	return getBackendDir().'code/';
+	return getBackendDir().'code/Kokonotsuba/';
 }
 
 function getBackendGlobalDir() {

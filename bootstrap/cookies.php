@@ -1,5 +1,7 @@
 <?php
 
+
+
 /* 
 * 
 * This file is for initializing cookies 
