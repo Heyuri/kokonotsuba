@@ -19,29 +19,3 @@ spl_autoload_register(function (string $class): void {
 		require $file;
 	}
 });
-
-
-/**
- * Function to require all PHP files in a directory
- * 
- * This is essentially a function autoloader that saves you having to `require` each 
- * individual file in a namespaces that isn't classes. 
- * 
- * This can potentially be insecure if you don't know the contents of the directory.
- * So it's crucial that permissions are read-only for /code/.
- * 
- * @param string $path - the file path of the directory to autoload from
- * @return void
- */
-function autoloadDirectory(string $baseDir): void {
-
-	$iterator = new RecursiveIteratorIterator(
-		new RecursiveDirectoryIterator($baseDir, FilesystemIterator::SKIP_DOTS)
-	);
-
-	foreach ($iterator as $file) {
-		if ($file->getExtension() === 'php') {
-			require_once $file->getRealPath();
-		}
-	}
-}

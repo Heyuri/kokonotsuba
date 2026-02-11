@@ -24,15 +24,11 @@ require __DIR__ . '/autoload.php';
 // require constants (core file)
 require_once __DIR__ . '/code/Kokonotsuba/constants.php';
 
-// run the function autoloader for libraries
-autoloadDirectory(__DIR__ . '/code/Kokonotsuba/libraries/');
-autoloadDirectory(__DIR__ . '/code/Kokonotsuba/html/');
-autoloadDirectory(__DIR__ . '/code/Puchiko/');
-
-// main retuires
+// main requires
+require __DIR__ . '/paths.php';
+require __DIR__ . '/bootstrap/libraryIncludes.php';
 require __DIR__ . '/bootstrap/session.php';
 require __DIR__ . '/bootstrap/cookies.php';
-require __DIR__ . '/paths.php';
 require __DIR__ . '/bootstrap/global.php';
 require __DIR__ . '/bootstrap/checks.php';
 require __DIR__ . '/bootstrap/database.php';
