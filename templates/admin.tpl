@@ -1185,7 +1185,7 @@ window.onload = function () {
 						<td class="postblock"><label for="rawStyling">Raw styling</label></td>
 						<td>
 							<div class="formItemDescription">Raw CSS for the thread - you will have to create blocks yourself.</div>
-							<textarea class="inputtext" id="rawStyling" name="rawStyling" <!--&IF($RAW_STYLING,'value="{$RAW_STYLING}"','')--> placeholder="#t1_123 { display: hidden; }"></textarea>
+							<textarea class="inputtext" id="rawStyling" name="rawStyling"placeholder="#t1_123 { display: hidden; }"><!--&IF($RAW_STYLING,'{$RAW_STYLING}','')--></textarea>
 						</td>
 					</tr>
 					<!--&IF($DATE_ADDED,'

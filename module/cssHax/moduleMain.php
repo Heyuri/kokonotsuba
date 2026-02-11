@@ -33,13 +33,13 @@ class moduleMain extends abstractModuleMain {
 		$styleAttributes = [];
 
 		// thread background color
-		if (!empty($threadData['background_hex_color'])) {
+		if (!empty($threadData['background_hex_color']) && $threadData['background_hex_color'] !== "#000000") {
 			$styleAttributes[] =
 				'background-color: ' . sanitizeStr($threadData['background_hex_color']);
 		}
 
 		// thread text color
-		if (!empty($threadData['text_hex_color'])) {
+		if (!empty($threadData['text_hex_color']) && $threadData['text_hex_color'] !== "#000000") {
 			$styleAttributes[] =
 				'color: ' . sanitizeStr($threadData['text_hex_color']);
 		}
@@ -66,8 +66,15 @@ class moduleMain extends abstractModuleMain {
 		// extract board uid
 		$boardUID = $threadData['boardUID'] ?? '';
 
-		// wrap attributes in id style block and return
-		return "#t{$boardUID}_{$threadNumber} { $collapsedAttributes }";
+		// assemble the reply bg color attribute
+		$replyBackgroundAttribute = 
+			(!empty($threadData['reply_background_hex_color']) && $threadData['reply_background_hex_color'] !== "#000000") 
+			? 'background-color: ' . sanitizeStr($threadData['reply_background_hex_color'])
+			: '';
+
+		// wrap attributes in id style block as well as the reply style, then return
+		return "#t{$boardUID}_{$threadNumber} { $collapsedAttributes }"
+				. "#t{$boardUID}_{$threadNumber} .reply { $replyBackgroundAttribute }";
 	}
 
 	private function generateThreadStyle(array $threadData): string {

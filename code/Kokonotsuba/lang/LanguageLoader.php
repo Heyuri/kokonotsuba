@@ -53,7 +53,7 @@ class LanguageLoader {
 	 */
 	public function setFallback($localeFallback = 'en_US') {
 		if ($localeFallback != $this->getLocale()) {
-			require getBackendCodeDir()."/lang/{$localeFallback}.php";
+			require getBackendCodeDir()."lang/{$localeFallback}.php";
 			$this->hasFallback = true;
 			$this->languageFallback = $language;
 		} else {

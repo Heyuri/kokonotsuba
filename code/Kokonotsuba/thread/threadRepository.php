@@ -24,7 +24,8 @@ class threadRepository {
 		private string $threadTable, 
 		private string $threadThemeTable,
 		private string $deletedPostsTable,
-		private string $fileTable) {
+		private string $fileTable,
+		private string $accountTable) {
 		$this->allowedOrderFields = ['last_bump_time', 'last_reply_time', 'thread_created_time', 'post_op_number', 'number_of_posts'];
 	}
 
@@ -51,6 +52,8 @@ class threadRepository {
 				theme.background_image_url,
 				theme.raw_styling,
 				theme.audio,
+				theme.date_added AS theme_date_added,
+				a.username AS theme_added_by,
 
 				(
 					SELECT COUNT(*)
@@ -68,6 +71,7 @@ class threadRepository {
 			) dp ON t.post_op_post_uid = dp.post_uid
 			
 			LEFT JOIN $this->threadThemeTable theme ON theme.thread_uid = t.thread_uid
+			LEFT JOIN $this->accountTable a ON theme.added_by = a.id
 		";
 
 		return $query;

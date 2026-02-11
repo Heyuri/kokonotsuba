@@ -27,13 +27,14 @@ class themeRepository {
 		?string $replyBackgroundHexColor,
 		?string $textHexColor,
 		?string $backgroundImageUrl,
+		?string $audio,
 		?string $rawStyling,
 		int $addedBy
 	): void {
 		// query to insert a new row to the theme table
 		$query = "INSERT INTO {$this->threadThemeTable} 
-				(thread_uid, background_hex_color, reply_background_hex_color, text_hex_color, background_image_url, raw_styling, added_by)
-				VALUES(:thread_uid, :background_hex_color, :reply_background_hex_color, :text_hex_color, :background_image_url, :raw_styling, :added_by)";
+				(thread_uid, background_hex_color, reply_background_hex_color, text_hex_color, background_image_url, audio, raw_styling, added_by)
+				VALUES(:thread_uid, :background_hex_color, :reply_background_hex_color, :text_hex_color, :background_image_url, :audio, :raw_styling, :added_by)";
 
 		// build parameters containing the theme data to be inserted
 		$params = [
@@ -42,6 +43,7 @@ class themeRepository {
 			':reply_background_hex_color' => $replyBackgroundHexColor,
 			':text_hex_color' => $textHexColor,
 			':background_image_url' => $backgroundImageUrl,
+			':audio' => $audio,
 			':raw_styling' => $rawStyling,
 			':added_by' => $addedBy
 		];

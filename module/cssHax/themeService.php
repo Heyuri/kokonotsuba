@@ -16,6 +16,7 @@ class themeService {
 		?string $replyBackgroundHexColor,
 		?string $textHexColor,
 		?string $backgroundImageUrl,
+		?string $audio,
 		?string $rawStyling,
 		int $addedBy
 	): void {
@@ -31,6 +32,7 @@ class themeService {
 			$replyBackgroundHexColor,
 			$textHexColor,
 			$backgroundImageUrl,
+			$audio,
 			$rawStyling,
 			$addedBy
 		);

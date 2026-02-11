@@ -188,6 +188,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$replyBackgroundHexColor,
 			$textHexColor,
 			$backgroundImageUrl,
+			$audio,
 			$rawStyling,
 			$addedBy
 		);
@@ -278,8 +279,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$BACKGROUND_IMAGE_URL}'	=> sanitizeStr($thread['background_image_url'] ?? ''),
 			'{$RAW_STYLING}'			=> sanitizeStr($thread['raw_styling'] ?? ''),
 			'{$AUDIO}'					=> sanitizeStr($thread['audio'] ?? ''),
-			'{$DATE_ADDED}'				=> sanitizeStr($thread['date_added'] ?? ''),
-			'{$ADDED_BY}'				=> sanitizeStr($thread['theme_added_by_username'] ?? ''),
+			'{$DATE_ADDED}'				=> sanitizeStr($thread['theme_date_added'] ?? ''),
+			'{$ADDED_BY}'				=> sanitizeStr($thread['theme_added_by'] ?? ''),
 			'{$THREAD_NUMBER}'			=> sanitizeStr($thread['post_op_number'] ?? ''),
 			'{$THREAD_UID}'				=> sanitizeStr($thread['thread_uid'] ?? ''),
 			'{$MODULE_URL}'				=> sanitizeStr($this->moduleUrl),
