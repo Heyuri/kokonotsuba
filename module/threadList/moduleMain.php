@@ -6,8 +6,8 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
 
 use function Kokonotsuba\libraries\_T;
-use function Kokonotsuba\html\drawPager;
-use function Kokonotsuba\html\generatePostNameHtml;
+use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Puchiko\strings\truncateText;
 
 class moduleMain extends abstractModuleMain {

@@ -9,11 +9,11 @@ use Kokonotsuba\interfaces\IBoard;
 use InvalidArgumentException;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
-use Kokonotsuba\userRole;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\postRegistData;
+use Kokonotsuba\userRole;
 
-use function Kokonotsuba\html\generateBoardListRadioHTML;
+use function Kokonotsuba\libraries\html\generateBoardListRadioHTML;
 use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\rebuildBoardsByArray;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
@@ -298,7 +298,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 	}
 
-	private function handleThreadMove($thread, $hostBoard, $destinationBoard, $leaveShadowThread = true) {
+	private function handleThreadMove(array $thread, IBoard $hostBoard, IBoard $destinationBoard, bool $leaveShadowThread = true) {
 		// redirect for url
 		$threadRedirectUrl = '';
 

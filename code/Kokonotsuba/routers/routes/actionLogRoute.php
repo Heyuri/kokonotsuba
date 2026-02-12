@@ -8,8 +8,8 @@ use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\userRole;
 
-use function Kokonotsuba\html\drawActionLogFilterForm;
-use function Kokonotsuba\html\drawPager;
+use function Kokonotsuba\libraries\html\drawActionLogFilterForm;
+use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\createAssocArrayFromBoardArray;
 use function Kokonotsuba\libraries\getFiltersFromRequest;
 use function Puchiko\strings\buildSmartQuery;

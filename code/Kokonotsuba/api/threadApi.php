@@ -66,7 +66,7 @@ class threadApi {
 	*/
 	private function fetchThread(string $threadUid): array|false {
 		// get thread data from database
-		$thread = $this->threadService->getThreadLastReplies($threadUid, isActiveStaffSession(), 5, 500);
+		$thread = $this->threadService->getThreadLastReplies($threadUid, false, 5, 100);
 
 		// return false early if the thread wasn't found
 		if(!$thread) {

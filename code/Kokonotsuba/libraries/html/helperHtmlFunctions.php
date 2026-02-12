@@ -4,7 +4,7 @@
 * General-use helper functions to do with html output and string manipulation
 */
 
-namespace Kokonotsuba\html;
+namespace Kokonotsuba\libraries\html;
 
 /**
  * Adds hidden input fields for each GET parameter at the top of the provided form HTML.

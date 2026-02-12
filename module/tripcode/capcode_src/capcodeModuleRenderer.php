@@ -8,7 +8,7 @@ use Kokonotsuba\capcode_backend\capcodeService;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\template\pageRenderer;
 
-use function Kokonotsuba\html\generatePostNameHtml;
+use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Kokonotsuba\libraries\_T;
 
 class capcodeModuleRenderer {

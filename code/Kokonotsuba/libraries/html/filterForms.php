@@ -1,10 +1,10 @@
 <?php
 
-namespace Kokonotsuba\html;
+namespace Kokonotsuba\libraries\html;
 
 use Kokonotsuba\board\board;
 use Kokonotsuba\userRole;
-use function Kokonotsuba\html\generateBoardListCheckBoxHTML;
+use function Kokonotsuba\libraries\html\generateBoardListCheckBoxHTML;
 
 function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, array $filters) {
 	$filterIP = $filters['ip_address'];

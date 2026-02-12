@@ -5,7 +5,7 @@ namespace Kokonotsuba\Modules\rebuild;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
-use function Kokonotsuba\html\generateRebuildListCheckboxHTML;
+use function Kokonotsuba\libraries\html\generateRebuildListCheckboxHTML;
 use function Kokonotsuba\libraries\rebuildBoardsByArray;
 use function Puchiko\request\redirect;
 

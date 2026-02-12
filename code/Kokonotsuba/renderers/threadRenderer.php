@@ -11,7 +11,7 @@ use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\template\templateEngine;
 
-use function Kokonotsuba\html\buildThreadNavButtons;
+use function Kokonotsuba\libraries\html\buildThreadNavButtons;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\bindThreadValuesToTemplate;
 

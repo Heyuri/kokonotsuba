@@ -15,7 +15,7 @@ use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\renderers\threadRenderer;
 use Kokonotsuba\thread\threadService;
 
-use function Kokonotsuba\html\drawPager;
+use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\strings\truncateText;

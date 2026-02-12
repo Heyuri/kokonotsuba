@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\html;
+namespace Kokonotsuba\libraries\html;
 
 use Kokonotsuba\board\board;
 

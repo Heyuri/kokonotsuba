@@ -8,7 +8,7 @@ use Kokonotsuba\board\boardRepository;
 use Kokonotsuba\board\board;
 use Kokonotsuba\overboard;
 use function Kokonotsuba\libraries\createAssocArrayFromBoardArray;
-use function Kokonotsuba\html\drawOverboardFilterForm;
+use function Kokonotsuba\libraries\html\drawOverboardFilterForm;
 use function Puchiko\request\redirect;
 
 class overboardRoute {

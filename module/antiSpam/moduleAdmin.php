@@ -10,7 +10,7 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
-use function Kokonotsuba\html\drawPager;
+use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\getIdFromSession;
 use function Puchiko\request\isGetRequest;
 use function Puchiko\request\isPostRequest;

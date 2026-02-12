@@ -5,7 +5,7 @@ namespace Kokonotsuba\Modules\csrfPrevent;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
 
-use function Kokonotsuba\html\fullURL;
+use function Kokonotsuba\libraries\html\fullURL;
 
 class moduleMain extends abstractModuleMain {
 	public function getName(): string {

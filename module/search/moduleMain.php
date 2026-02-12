@@ -13,11 +13,11 @@ use function Kokonotsuba\libraries\_T;
 use function Puchiko\strings\buildSmartQuery;
 use function Kokonotsuba\libraries\getFiltersFromRequest;
 use function Kokonotsuba\libraries\createAssocArrayFromBoardArray;
-use function Kokonotsuba\html\generateBoardListCheckBoxHTML;
+use function Kokonotsuba\libraries\html\generateBoardListCheckBoxHTML;
 use function Kokonotsuba\libraries\stripExtension;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
-use function Kokonotsuba\html\getThreadTitle;
-use function Kokonotsuba\html\drawPager;
+use function Kokonotsuba\libraries\html\getThreadTitle;
+use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\getBoardsByUIDs;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 

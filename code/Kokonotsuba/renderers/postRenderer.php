@@ -16,9 +16,9 @@ use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\template\templateEngine;
 
 use function Kokonotsuba\libraries\_T;
-use function Kokonotsuba\html\generateQuoteLinkHtml;
-use function Kokonotsuba\html\quote_unkfunc;
-use function Kokonotsuba\html\generatePostNameHtml;
+use function Kokonotsuba\libraries\html\generateQuoteLinkHtml;
+use function Kokonotsuba\libraries\html\quote_unkfunc;
+use function Kokonotsuba\libraries\html\generatePostNameHtml;
 
 class postRenderer {
 	private postDataPreparer $postDataPreparer;

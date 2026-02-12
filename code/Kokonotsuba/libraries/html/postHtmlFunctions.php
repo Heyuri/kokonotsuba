@@ -4,7 +4,7 @@
 * To avoid having to define html in multiple places
 */
 
-namespace Kokonotsuba\html;
+namespace Kokonotsuba\libraries\html;
 
 use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\moduleEngine;

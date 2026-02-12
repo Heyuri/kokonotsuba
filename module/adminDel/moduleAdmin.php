@@ -7,7 +7,7 @@ use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
-use function Kokonotsuba\html\getCurrentUrlNoQuery;
+use function Kokonotsuba\libraries\html\getCurrentUrlNoQuery;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;

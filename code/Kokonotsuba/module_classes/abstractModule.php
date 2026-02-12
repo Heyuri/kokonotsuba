@@ -17,7 +17,7 @@ namespace Kokonotsuba\module_classes;
 use Kokonotsuba\module_classes\moduleContext;
 use Kokonotsuba\template\templateEngine;
 
-use function Kokonotsuba\html\getCurrentUrlNoQuery;
+use function Kokonotsuba\libraries\html\getCurrentUrlNoQuery;
 
 abstract class abstractModule {
 	public function __construct(

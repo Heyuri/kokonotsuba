@@ -24,8 +24,8 @@ use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
 
-use function Kokonotsuba\html\drawPager;
-use function Kokonotsuba\html\getThreadTitle;
+use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\html\getThreadTitle;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
 use function Kokonotsuba\libraries\isActiveStaffSession;

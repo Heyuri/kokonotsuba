@@ -27,9 +27,9 @@ use Kokonotsuba\cache\path_cache\boardPathService;
 use Kokonotsuba\interfaces\IBoard;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\template\templateEngine;
-use function Kokonotsuba\html\generateHeadHtml;
-use function Kokonotsuba\html\generatePostFormHTML;
-use function Kokonotsuba\html\generateFooterHtml;
+use function Kokonotsuba\libraries\html\generateHeadHtml;
+use function Kokonotsuba\libraries\html\generatePostFormHTML;
+use function Kokonotsuba\libraries\html\generateFooterHtml;
 use function Puchiko\getDirectorySize;
 
 class board implements IBoard {

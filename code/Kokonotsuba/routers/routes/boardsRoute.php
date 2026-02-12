@@ -14,7 +14,7 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\userRole;
 
-use function Kokonotsuba\html\drawBoardTable;
+use function Kokonotsuba\libraries\html\drawBoardTable;
 use function Kokonotsuba\libraries\_T;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;

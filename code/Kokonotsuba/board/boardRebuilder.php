@@ -13,9 +13,9 @@ use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
 
-use function Kokonotsuba\html\drawBoardPager;
-use function Kokonotsuba\html\drawLiveBoardPager;
-use function Kokonotsuba\html\drawPager;
+use function Kokonotsuba\libraries\html\drawBoardPager;
+use function Kokonotsuba\libraries\html\drawLiveBoardPager;
+use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
 use function Kokonotsuba\libraries\isActiveStaffSession;

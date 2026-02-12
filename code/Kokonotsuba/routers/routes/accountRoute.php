@@ -11,7 +11,7 @@ use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\userRole;
 
-use function Kokonotsuba\html\drawAccountTable;
+use function Kokonotsuba\libraries\html\drawAccountTable;
 
 class accountRoute {
 	public function __construct(

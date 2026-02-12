@@ -7,9 +7,9 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\interfaces\IBoard;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\userRole;
-use function Kokonotsuba\html\drawAdminTheading;
-use function Kokonotsuba\html\generateAdminLinkButtons;
-use function Kokonotsuba\html\generateAdminNavLink;
+use function Kokonotsuba\libraries\html\drawAdminTheading;
+use function Kokonotsuba\libraries\html\generateAdminLinkButtons;
+use function Kokonotsuba\libraries\html\generateAdminNavLink;
 
 class pageRenderer {
 	private templateEngine $templateEngine;

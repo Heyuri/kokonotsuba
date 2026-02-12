@@ -8,7 +8,7 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\log_in\adminLoginController;
 use Kokonotsuba\template\pageRenderer;
 
-use function Kokonotsuba\html\drawAdminLoginForm;
+use function Kokonotsuba\libraries\html\drawAdminLoginForm;
 use function Kokonotsuba\libraries\isLoggedIn;
 use function Puchiko\request\redirect;
 
