@@ -4,6 +4,9 @@
 	const menu = document.createElement('div');
 	menu.className = 'postMenuDropdown';
 	menu.hidden = true;
+	
+	// append menu element to body
+	document.body.appendChild(menu);
 
 	let activeArrow = null; // currently open arrow
 
@@ -128,7 +131,7 @@
 			}
 		});
 
-		// ✅ ADD: let external modules inject extra items (e.g., "View deleted post")
+		// let external modules inject extra items (e.g., "View deleted post")
 		menuAugmenters.forEach(function (aug) {
 			try {
 				const extra = aug({ post: post, arrow: arrow });
@@ -221,11 +224,11 @@
 				clearTimeout(hideTimeout);
 
 				const wrapperRect = wrapper.getBoundingClientRect();
-				const containerRect = postMenu.getBoundingClientRect();
 				const mainMenuRect = menu.getBoundingClientRect();
 
-				subDiv.style.top = ((wrapperRect.top - containerRect.top)) + 'px';
-				subDiv.style.left = ((mainMenuRect.right - containerRect.left) + 2) + 'px';
+				subDiv.style.position = 'absolute';
+				subDiv.style.top = (window.scrollY + wrapperRect.top) + 'px';
+				subDiv.style.left = (window.scrollX + mainMenuRect.right + 2) + 'px';
 
 				subDiv.hidden = false;
 			}
@@ -256,33 +259,28 @@
 			// put the wrapper in the main menu
 			menu.appendChild(wrapper);
 
-			// put the submenu next to the main menu, at the same .postMenu level
-			postMenu.appendChild(subDiv);
+			document.body.appendChild(subDiv);
+			subDiv.style.position = 'fixed';
 
 			// remember all submenus so we can hide/remove them later
 			if (!menu._subMenus) menu._subMenus = [];
 			menu._subMenus.push(subDiv);
 		});
 
-		// Append dropdown menu inside this post's .postMenu block
-		postMenu.appendChild(menu);
-
-		// Make sure .postMenu is a positioned container so the absolute menu
-		const computedPos = window.getComputedStyle(postMenu).position;
-		if (computedPos === 'static') {
-			postMenu.style.position = 'relative';
-		}
-
-		// Position menu directly under the clicked arrow
 		const arrowRect = arrow.getBoundingClientRect();
-		const containerRect = postMenu.getBoundingClientRect();
 
 		menu.style.position = 'absolute';
-		menu.style.top = ((arrowRect.bottom - containerRect.top) + 2) + 'px';
-		menu.style.left = (arrowRect.left - containerRect.left) + 'px';
+		menu.style.top = (window.scrollY + arrowRect.bottom + 2) + 'px';
 
-		// Show menu
-		menu.hidden = false;
+		menu.hidden = false; // must be visible to measure
+		const menuWidth = menu.offsetWidth;
+
+		let left = window.scrollX + arrowRect.left;
+		const maxLeft = window.scrollX + window.innerWidth - menuWidth - 8;
+
+		left = Math.min(left, maxLeft);
+
+		menu.style.left = left + 'px';
 
 		// Mark active arrow
 		arrow.classList.add('menuOpen');
