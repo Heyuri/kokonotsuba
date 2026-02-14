@@ -83,6 +83,7 @@ $config['ModuleList'] = array(
 	'moveThread' => true,
 	'rawHtml' => true,
 	'deletedPosts' => true,
+	'cssHax' => true,
 	/* thread modes */
 	'autoSage' => true,
 	'lockThread' => true,
