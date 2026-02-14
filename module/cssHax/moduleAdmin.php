@@ -56,14 +56,14 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->onRenderThreadWidget($widgetArray, $post);
 			}
 		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+		
+		/*$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModuleAdminHeader',
 			function(&$moduleHeader) {
 				$this->onGenerateModuleHeader($moduleHeader);
 			}
-		);
+		);*/
 	}
 
 	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
