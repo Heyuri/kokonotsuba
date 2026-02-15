@@ -35,8 +35,9 @@ function getRootPath() {
 
 define('ROOTPATH', getRootPath());
 
-require ROOTPATH . '/code/libraries/lib_common.php';
-require ROOTPATH . '/constants.php';
+require ROOTPATH . '/code/Puchiko/includes.php';
+require ROOTPATH . '/code/Kokonotsuba/constants.php';
+require ROOTPATH . '/code/Kokonotsuba/install.php';
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
@@ -194,7 +195,7 @@ class html {
     public function drawInstallNotice() {
         echo '<div class="notice-text">
             <h2>Notice!</h2>
-            <p>Kokonotsuba is a BBS software</p>
+            <p>Kokonotsuba is a BBS software in active development.</p>
             <p>Read the instructions, other documentation or open an Issue on the <a href="https://github.com/Heyuri/kokonotsuba">repo</a> if there are any problems</p>
             <p>For more info: <a href="https://kokonotsuba.github.io/">see here</a></p>
         </div><hr size=1>';
@@ -205,13 +206,15 @@ class html {
         $extentionResults = checkExtensions($extensions);
         $commandResults = checkCommands($commands);
 
-        echo '<h3>Required Extensions</h3>
+        echo '<h3>Required extensions</h3>
         <p>These are the extensions required for Kokonotsuba to work fully:</p>
         <ul>';
         foreach ($extentionResults as $extension => $isEnabled) {
             echo "<li>$extension: " . ($isEnabled ? 'enabled' : 'not enabled') . '</li>';
         }
-
+        echo '</ul>';
+        echo '<h3>Required commands</h3>
+        <p>These are the commands that are required for certain features in Kokonotsuba';
         foreach($commandResults as $command => $isInstalled) {
             echo '<li>' . $command . ': ' . ($isInstalled ? 'enabled' : 'not enabled') . '</li>';
         }
@@ -246,56 +249,6 @@ class html {
     public function drawInstallForm() {
         echo '<form id="installation-form" action="' . htmlspecialchars($_SERVER['PHP_SELF']) . '" method="POST">
             <input type="hidden" name="action" value="install">
-            <h3>Database Options</h3>
-            <p>If you make any changes to these - make sure to update databaseSettings.php afterwards to match what you set</p>
-
-    <table id="installation-form-database-settings-table">
-        <tr> 
-            <td class="postblock"> <label for "database-post-table-input">Post table</label></td>
-            <td> <input id="database-post-table-input" name="POST_TABLE" value="'.htmlspecialchars($this->dbSettings['POST_TABLE']).'" required> </td>
-        </tr>
-        <tr>
-            <td class="postblock"> <label for "database-qotelink-table-input">Quotelink table</label></td>
-            <td> <input id="database-quotelink-table-input" name="QUOTE_LINK_TABLE" value="'.htmlspecialchars($this->dbSettings['QUOTE_LINK_TABLE']).'"> </td>
-        </tr>
-        <tr>
-            <td class="postblock"> <label for "database-report-table-input">Report table</label></td>
-            <td> <input id="database-report-table-input" name="REPORT_TABLE" value="'.htmlspecialchars($this->dbSettings['REPORT_TABLE']).'" required> </td>
-        </tr>
-        <tr>
-            <td class="postblock"> <label for "database-ban-table-input">Ban table</label></td>
-            <td> <input id="database-ban-table-input" name="BAN_TABLE" value="'.htmlspecialchars($this->dbSettings['BAN_TABLE']).'" required> </td>
-        </tr>
-        <tr>
-            <td class="postblock"> <label for "database-board-table-input">Board table</label></td>
-            <td> <input id="database-board-table-input" name="BOARD_TABLE" value="'.htmlspecialchars($this->dbSettings['BOARD_TABLE']).'" required> </td>
-        </tr>
-        <tr>
-            <td class="postblock"> <label for "database-board-cache-table-input">Board path cache table</label></td>
-            <td> <input id="database-board-cache-table-input" name="BOARD_PATH_CACHE_TABLE" value="'.htmlspecialchars($this->dbSettings['BOARD_PATH_CACHE_TABLE']).'" required> </td>
-        </tr>
-        <tr>
-            <td class="postblock"> <label for "database-post-number-table-input">Post number table</label></td>
-            <td> <input id="database-post-number-table-input" name="POST_NUMBER_TABLE" value="'.htmlspecialchars($this->dbSettings['POST_NUMBER_TABLE']).'" required> </td>
-        </tr>
-        <tr>
-            <td class="postblock"> <label for "database-account-table-input">Account table</label></td>
-            <td> <input id="database-account-table-input" name="ACCOUNT_TABLE" value="'.htmlspecialchars($this->dbSettings['ACCOUNT_TABLE']).'" required> </td>
-        </tr>
-        <tr>
-            <td class="postblock"> <label for "database-actionlog-table-input">Action log table</label></td>
-            <td> <input id="database-actionlog-table-input" name="ACTIONLOG_TABLE" value="'.htmlspecialchars($this->dbSettings['ACTIONLOG_TABLE']).'" required> </td>
-        </tr>
-        <tr>
-            <td class="postblock"> <label for "database-thread-table-input">Thread table</label></td>
-            <td> <input id="database-thread-table-input" name="THREAD_TABLE" value="'.htmlspecialchars($this->dbSettings['THREAD_TABLE']).'" required> </td>
-        </tr>
-        <tr>
-            <td class="postblock"> <label for "database-thread-redirect-table-input">Thread redirect table</label></td>
-            <td> <input id="database-thread-redirect-table-input" name="THREAD_REDIRECT_TABLE" value="'.htmlspecialchars($this->dbSettings['THREAD_REDIRECT_TABLE']).'" required> </td>
-        </tr>
-    </table>
-
             <h3>Admin Account</h3>
         <p>The username and password of the admin account, it can be changed at any time</p>
             <table id="installation-form-admin-account-table">
@@ -484,10 +437,10 @@ class tableCreator {
                 CONSTRAINT path_cache_board_uid FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
             ) ENGINE=InnoDB;",
 
-            "CREATE TABLE files (
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['FILE_TABLE']} (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 post_uid INT NOT NULL,
-                file_name VARCHAR(255) NOT NULL,  -- Changed to VARCHAR(255)
+                file_name VARCHAR(255) NOT NULL,
                 stored_filename TEXT NOT NULL,
                 file_ext VARCHAR(16) NOT NULL,
                 file_md5 VARCHAR(32) NOT NULL,
@@ -500,28 +453,22 @@ class tableCreator {
                 is_hidden TINYINT(1) NOT NULL DEFAULT 0,
                 is_deleted TINYINT(1) NOT NULL DEFAULT 0,
                 is_animated TINYINT(1) NOT NULL DEFAULT 0,
-                timestamp_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,  -- Removed parentheses for CURRENT_TIMESTAMP
+                timestamp_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
-                CONSTRAINT fk_file_post_uid FOREIGN KEY (post_uid) REFERENCES posts(post_uid) ON DELETE CASCADE,
+                CONSTRAINT fk_file_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
 
-                -- Index for file_md5
                 INDEX idx_md5 (file_md5),
-
-                -- Additional indexes
-                INDEX idx_post_uid (post_uid),  -- For queries filtering by post_uid
-                INDEX idx_file_ext (file_ext),  -- For queries filtering by file extension
-                INDEX idx_file_size (file_size), -- For queries filtering by file size
-                INDEX idx_file_name_prefix (file_name(255)), -- Prefix index for file_name (adjust length as necessary)
-                INDEX idx_mime_type (mime_type), -- For queries filtering by mime_type
-
-                -- Composite index for queries filtering by both post_uid and file_md5
+                INDEX idx_post_uid (post_uid),
+                INDEX idx_file_ext (file_ext),
+                INDEX idx_file_size (file_size),
+                INDEX idx_file_name_prefix (file_name(255)),
+                INDEX idx_mime_type (mime_type),
                 INDEX idx_post_uid_file_md5 (post_uid, file_md5),
-
                 FULLTEXT INDEX ft_file_name (file_name)
             ) ENGINE=InnoDB;
             ",
 
-            "CREATE TABLE IF NOT EXISTS deleted_posts (
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['DELETED_POSTS_TABLE']} (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 post_uid INT NOT NULL,
                 deleted_by INT NULL,
@@ -530,35 +477,28 @@ class tableCreator {
                 by_proxy TINYINT(1) DEFAULT 0,
                 note TEXT NULL,
 
-                -- restore fields
                 restored_at TIMESTAMP NULL,
-                restored_by INT NULL, -- FK to users(id)
+                restored_by INT NULL,
                 
-                -- optional attachment-level deletion
                 file_id INT NULL,
 
-                -- generated flag: 1 when open (restored_at IS NULL), 0 otherwise
                 open_flag TINYINT(1) AS (IF(restored_at IS NULL, 1, 0)) STORED,
 
-                -- helper column for uniqueness: only filled when open and post-level deletion
                 open_key INT AS (CASE WHEN restored_at IS NULL AND file_id IS NULL THEN post_uid ELSE NULL END) STORED,
 
-                -- FKs
-                CONSTRAINT fk_dp_post FOREIGN KEY (post_uid) REFERENCES posts(post_uid) ON DELETE CASCADE,
-                CONSTRAINT fk_dp_file FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE,
+                CONSTRAINT fk_dp_post FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
+                CONSTRAINT fk_dp_file FOREIGN KEY (file_id) REFERENCES `{$sanitizedTableNames['FILE_TABLE']}`(id) ON DELETE CASCADE,
 
-                -- Indexes
                 INDEX idx_post_uid (post_uid),
                 INDEX idx_deleted_by_deleted_at (deleted_by, deleted_at),
                 INDEX idx_restored_at (restored_at),
                 INDEX idx_file_id (file_id),
 
-                -- Enforce: at most one open row per post-level deletion
                 UNIQUE KEY uq_open_post (open_key)
             ) ENGINE=InnoDB;
             ",
 
-            "CREATE TABLE capcodes (
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['CAPCODE_TABLE']} (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 tripcode VARCHAR(255),
                 is_secure TINYINT(1) DEFAULT 0,
@@ -568,11 +508,10 @@ class tableCreator {
                 cap_text TEXT,
 
                 UNIQUE KEY unique_tripcode_is_secure (tripcode, is_secure),
-                CONSTRAINT fk_capcodes_added_by FOREIGN KEY (added_by) REFERENCES accounts(id) ON DELETE SET NULL
+                CONSTRAINT fk_capcodes_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
             ) ENGINE=InnoDB;
             ",
-            "
-            CREATE TABLE spam_string_rules (
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['SPAM_STRING_TABLE']} (
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                 pattern TEXT NOT NULL,
                 max_distance TINYINT UNSIGNED DEFAULT NULL,
@@ -596,14 +535,13 @@ class tableCreator {
 
                 CONSTRAINT fk_spam_string_rules_created_by
                     FOREIGN KEY (created_by)
-                    REFERENCES {$sanitizedTableNames['ACCOUNT_TABLE']}(id)
+                    REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id)
                     ON DELETE SET NULL
                     ON UPDATE CASCADE
             ) ENGINE=InnoDB;
             ",
 
-            "
-            CREATE TABLE IF NOT EXISTS soudane_votes (
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['SOUDANE_TABLE']} (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 ip_address VARCHAR(255),
                 yeah TINYINT(1) DEFAULT 0,
@@ -614,11 +552,10 @@ class tableCreator {
                 INDEX idx_soudane_ip (ip_address),
                 INDEX idx_soudane_date_added (date_added),
 
-                CONSTRAINT fk_soudane_post_uid FOREIGN KEY (post_uid) REFERENCES posts(post_uid) ON DELETE CASCADE
+                CONSTRAINT fk_soudane_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE
             ) ENGINE=InnoDB;
             ",
-            "
-            CREATE TABLE IF NOT EXISTS thread_themes (
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['THREAD_THEMES_TABLE']} (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 thread_uid VARCHAR(255) NULL,
                 background_hex_color CHAR(7) NULL,
@@ -633,10 +570,18 @@ class tableCreator {
                 UNIQUE KEY unique_thread_uid (thread_uid),
                 INDEX idx_theme_added_by (added_by),
 
-                CONSTRAINT fk_theme_thread_uid FOREIGN KEY (thread_uid) REFERENCES threads(thread_uid) ON DELETE CASCADE,
-                CONSTRAINT fk_theme_added_by FOREIGN KEY (added_by) REFERENCES accounts(id) ON DELETE SET NULL
+                CONSTRAINT fk_theme_thread_uid FOREIGN KEY (thread_uid) REFERENCES `{$sanitizedTableNames['THREAD_TABLE']}`(thread_uid) ON DELETE CASCADE,
+                CONSTRAINT fk_theme_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
             ) ENGINE=InnoDB;
-            "
+            ",
+            "CREATE TABLE IF NOT EXISTS last_thread_submissions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                board_uid INT NOT NULL UNIQUE,
+                last_submission_timestamp TIMESTAMP(3) NOT NULL,
+                
+                CONSTRAINT fk_last_thread_submissions_board_uid FOREIGN KEY (board_uid) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(board_uid) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
+            ",
         ];
     
         // Use prepared statements for execution
@@ -798,17 +743,24 @@ switch ($action) {
 
             $tableCreator = new tableCreator($pdoConnection);
             $tables = [
-                'POST_TABLE' => $_POST['POST_TABLE'],
-                'QUOTE_LINK_TABLE' => $_POST['QUOTE_LINK_TABLE'],
-                'REPORT_TABLE' => $_POST['REPORT_TABLE'],
-                'BAN_TABLE' => $_POST['BAN_TABLE'],
-                'BOARD_TABLE' => $_POST['BOARD_TABLE'],
-                'POST_NUMBER_TABLE' => $_POST['POST_NUMBER_TABLE'],
-                'ACCOUNT_TABLE' => $_POST['ACCOUNT_TABLE'],
-                'ACTIONLOG_TABLE' => $_POST['ACTIONLOG_TABLE'],
-                'THREAD_TABLE' => $_POST['THREAD_TABLE'],
-                'THREAD_REDIRECT_TABLE' => $_POST['THREAD_REDIRECT_TABLE'],
-                'BOARD_PATH_CACHE_TABLE' => $_POST['BOARD_PATH_CACHE_TABLE'],
+                'POST_TABLE' => $dbSettings['POST_TABLE'],
+                'FILE_TABLE' => $dbSettings['FILE_TABLE'],
+                'QUOTE_LINK_TABLE' => $dbSettings['QUOTE_LINK_TABLE'],
+                'REPORT_TABLE' => $dbSettings['REPORT_TABLE'],
+                'BAN_TABLE' => $dbSettings['BAN_TABLE'],
+                'BOARD_TABLE' => $dbSettings['BOARD_TABLE'],
+                'BOARD_PATH_CACHE_TABLE' => $dbSettings['BOARD_PATH_CACHE_TABLE'],
+                'THREAD_TABLE' => $dbSettings['THREAD_TABLE'],
+                'POST_NUMBER_TABLE' => $dbSettings['POST_NUMBER_TABLE'],
+                'ACCOUNT_TABLE' => $dbSettings['ACCOUNT_TABLE'],
+                'ACTIONLOG_TABLE' => $dbSettings['ACTIONLOG_TABLE'],
+                'THREAD_REDIRECT_TABLE' => $dbSettings['THREAD_REDIRECT_TABLE'],
+                'DELETED_POSTS_TABLE' => $dbSettings['DELETED_POSTS_TABLE'],
+                'CAPCODE_TABLE' => $dbSettings['CAPCODE_TABLE'],
+                'SPAM_STRING_TABLE' => $dbSettings['SPAM_STRING_TABLE'],
+                'SOUDANE_TABLE' => $dbSettings['SOUDANE_TABLE'],
+                'THREAD_THEMES_TABLE' => $dbSettings['THREAD_THEMES_TABLE'],
+                'LAST_THREAD_SUBMISSIONS_TABLE' => $dbSettings['LAST_THREAD_SUBMISSIONS_TABLE'],
             ];
 
             $tableCreator->createTables($tables);

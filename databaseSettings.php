@@ -29,4 +29,5 @@ return [
 	'SPAM_STRING_TABLE' => 'spam_string_rules',
 	'SOUDANE_TABLE'	=> 'soudane_votes', // for storing soudane-related vote data
 	'THREAD_THEMES_TABLE' => 'thread_themes', // for storing thread themes
+	'LAST_THREAD_SUBMISSIONS_TABLE' => 'last_thread_submissions', // for tracking last thread submission timestamps per board
 ];
