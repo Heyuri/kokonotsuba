@@ -123,8 +123,8 @@ class moduleMain extends abstractModuleMain {
 		// get time difference from latest thread from board				
 		$timeDifference = $this->calculateTimeDifference();
 
-		// if the time diference is a valid integer and the difference is below the minimum time window then prevent the thread creation 
-		if (is_int($timeDifference) &&  $this->RENZOKU3 && $timeDifference < $this->RENZOKU3) {
+		// if the time difference is a valid number and the difference is below the minimum time window then prevent the thread creation 
+		if (is_numeric($timeDifference) &&  $this->RENZOKU3 && $timeDifference < $this->RENZOKU3) {
 			throw new BoardException('ERROR: Please wait a few seconds before creating a new thread.');
 		}
 		// otherwise, record the submission so the next thread can check against it
@@ -133,10 +133,10 @@ class moduleMain extends abstractModuleMain {
 		}
 	}
 
-	private function calculateTimeDifference(): ?int {
+	private function calculateTimeDifference(): ?float {
 		// Fetch the last submission timestamp for this board from the submission table.
-		// This uses an atomic SELECT query that prevents race conditions and concurrent write conflicts.
-		// The query uses ORDER BY...LIMIT 1 which is atomic at the DB level.
+		// Database stores millisecond precision (TIMESTAMP(3)), so we calculate
+		// the difference accounting for microseconds to get accurate millisecond-level granularity.
 		$lastSubmissionTimestamp = $this->submissionService->getLastSubmissionTimeForBoard($this->moduleContext->board->getBoardUID());
 
 		// Don't bother if there's no last submission - there's no anti-flooding to calculate
@@ -148,9 +148,18 @@ class moduleMain extends abstractModuleMain {
 		$currentTimestamp = new DateTime('now', $utcTimezone);
 		$timestampFromDatabase = new DateTime($lastSubmissionTimestamp, $utcTimezone);
 
-		$currentTimestampUnix      = $currentTimestamp->getTimestamp();
-		$timestampFromDatabaseUnix = $timestampFromDatabase->getTimestamp();
+		// Calculate difference including microsecond precision
+		// This gives accurate millisecond-level granularity for flood prevention
+		$currentSeconds = $currentTimestamp->getTimestamp();
+		$currentMicros = (int)$currentTimestamp->format('u');
+		
+		$databaseSeconds = $timestampFromDatabase->getTimestamp();
+		$databaseMicros = (int)$timestampFromDatabase->format('u');
 
-		return $currentTimestampUnix - $timestampFromDatabaseUnix;
+		// Difference in seconds with microsecond precision (fractional seconds)
+		$differenceInSeconds = ($currentSeconds - $databaseSeconds) + 
+							   (($currentMicros - $databaseMicros) / 1000000.0);
+
+		return (float)$differenceInSeconds;
 	}
 }
