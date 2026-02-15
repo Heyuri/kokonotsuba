@@ -3,19 +3,26 @@
 
 namespace Kokonotsuba\Modules\antiFlood;
 
+require_once __DIR__ . '/submissionRepository.php';
+require_once __DIR__ . '/submissionService.php';
+require_once __DIR__ . '/submissionLib.php';
+
 use Kokonotsuba\error\BoardException;
 use DateTime;
 use DateTimeZone;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\Modules\antiFlood\submissionService;
 
 use function Kokonotsuba\libraries\getBoardsByUIDs;
 use function Kokonotsuba\libraries\rebuildBoardsByArray;
 use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
+use function Kokonotsuba\Modules\antiFlood\getSubmissionService;
 
 class moduleMain extends abstractModuleMain {
 	private readonly int $RENZOKU3; // Seconds before a new thread can be made
+	private submissionService $submissionService;
 
 	public function getName(): string {
 		return 'Anti-flood module';
@@ -27,6 +34,9 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		$this->RENZOKU3 = $this->getConfig('ModuleSettings.RENZOKU3', 0);
+		
+		// Initialize submission service for thread flood tracking
+		$this->submissionService = getSubmissionService();
 
 		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
 			$this->onBeforeCommit($isReply, $com);
@@ -117,21 +127,26 @@ class moduleMain extends abstractModuleMain {
 		if (is_int($timeDifference) &&  $this->RENZOKU3 && $timeDifference < $this->RENZOKU3) {
 			throw new BoardException('ERROR: Please wait a few seconds before creating a new thread.');
 		}
+		// otherwise, record the submission so the next thread can check against it
+		 else {
+			$this->submissionService->recordSubmission($this->moduleContext->board->getBoardUID());
+		}
 	}
 
 	private function calculateTimeDifference(): ?int {
-		// fetch the last timezone (local DB/server timezone)
-		$lastThreadTimestamp = $this->moduleContext->threadRepository->getLastThreadTimeFromBoard($this->moduleContext->board);
+		// Fetch the last submission timestamp for this board from the submission table.
+		// This uses an atomic SELECT query that prevents race conditions and concurrent write conflicts.
+		// The query uses ORDER BY...LIMIT 1 which is atomic at the DB level.
+		$lastSubmissionTimestamp = $this->submissionService->getLastSubmissionTimeForBoard($this->moduleContext->board->getBoardUID());
 
-		// don't bother if theres no last timezone - theres no anti-flooding to calcuate
-		if(!$lastThreadTimestamp) return null;
+		// Don't bother if there's no last submission - there's no anti-flooding to calculate
+		if(!$lastSubmissionTimestamp) return null;
 		
-		// init UTC timezone
+		// Initialize UTC timezone
 		$utcTimezone = new DateTimeZone('UTC');
 
 		$currentTimestamp = new DateTime('now', $utcTimezone);
-		$timestampFromDatabase = new DateTime($lastThreadTimestamp, $utcTimezone);
-
+		$timestampFromDatabase = new DateTime($lastSubmissionTimestamp, $utcTimezone);
 
 		$currentTimestampUnix      = $currentTimestamp->getTimestamp();
 		$timestampFromDatabaseUnix = $timestampFromDatabase->getTimestamp();
