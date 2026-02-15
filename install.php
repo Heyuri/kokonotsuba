@@ -110,8 +110,6 @@ function getTemplateConfigArray() {
 }
 
 function createBoardAndFiles($boardTable) {
-    include ROOTPATH . '/code/libraries/lib_file.php';
-
     //create board
     $board_identifier = $_POST['board-identifier'] ?? '';
     $board_title = $_POST['board-title'] ?? '';
