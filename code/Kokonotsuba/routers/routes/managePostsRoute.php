@@ -329,7 +329,7 @@ class managePostsRoute {
 				<td class="colSub"><span class="title">' . $sub . '</span></td>
 				<td class="colName"><span class="name">' . $nameHtml . '</span></td>
 				<td class="colComment"><div class="managepostsCommentWrapper">' . $com . '</div></td>
-				<td class="colHost">' . $host . ' <a target="_blank" href="https://whatismyipaddress.com/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="'.$managePostsUrl.'&ip_address=' . $host . '&board=' . $boardList . '" title="See all posts">★</a></td>
+				<td class="colHost">' . ($canViewIp ? $host . ' <a target="_blank" href="https://whatismyipaddress.com/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="'.$managePostsUrl.'&ip_address=' . $host . '&board=' . $boardList . '" title="See all posts">★</a>' : $host) . '</td>
 				' . $attachmentsHtml . '
 			</tr>';
 	}
