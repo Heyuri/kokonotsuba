@@ -103,11 +103,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		// append ban template to header
 		$moduleHeader .= $banTemplate;
 
-		// generate js link tag
-		$banJs = $this->generateScriptHeader('ban.js', true);
-
-		// append js link to module header
-		$moduleHeader .= $banJs;
+		// include ban js
+		$this->includeScript('ban.js', $moduleHeader);
 	}
 
 	private function generateBanJsTemplate(string $moduleUrl): string {

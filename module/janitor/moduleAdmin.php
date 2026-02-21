@@ -98,11 +98,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		// append pub warn message to header
 		$moduleHeader .= $warnMessageTemplate;
 
-		// generate warn link tag
-		$warnJs = $this->generateScriptHeader('warn.js', true);
-
-		// append js link to module header
-		$moduleHeader .= $warnJs;
+		// add warn js
+		$this->includeScript('warn.js', $moduleHeader);
 	}
 
 	private function generatePublicWarnTemplate(): string {

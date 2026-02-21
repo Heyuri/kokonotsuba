@@ -45,105 +45,154 @@ class managePostsRoute {
 	) {}
 
 	public function drawManagePostsPage() {
+		// Validate user permissions
 		$this->softErrorHandler->handleAuthError($this->config['AuthLevels']['CAN_MANAGE_POSTS']);
 		
+		// Initialize page context and filters
+		$context = $this->initializePageContext();
+		
+		// Handle post deletion if form was submitted
+		$this->handlePostDeletion($context);
+
+		// Fetch filtered posts from database
+		$posts = $this->fetchFilteredPosts($context);
+		
+		// Build board mapping and related data
+		$boardMap = $this->buildBoardMap();
+		$boardList = $this->buildBoardList();
+		
+		// Render the manage posts page
+		$managePostsHtml = $this->renderManagePostsPage($posts, $boardMap, $boardList, $context);
+		
+		// Output final HTML
+		$this->outputPageContent($managePostsHtml, $context);
+	}
+
+	private function initializePageContext(): array {
 		$isSubmission = isset($_GET['filterSubmissionFlag']);
-		
 		$managePostsUrl = $this->board->getBoardURL(true) . '?mode=managePosts';
-
-		// account id of the current user (can be null)
 		$accountId = getIdFromSession();
-
-		//filter list for the database
-		$defaultFilters = $this->initializeManagePostsFilters();
 		
+		$defaultFilters = $this->initializeManagePostsFilters();
 		$filtersFromRequest = getFiltersFromRequest($managePostsUrl, $isSubmission, $defaultFilters);
 		$cleanUrl = buildSmartQuery($managePostsUrl, $defaultFilters, $filtersFromRequest, true);
-
+		
 		$roleLevel = $this->staffAccountFromSession->getRoleLevel();
-
-		// whether the user can view all deleted posts
+		$canViewIp = $roleLevel->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_JANITOR));
 		$canViewDeleted = $this->postRenderingPolicy->viewDeleted();
-
-		// required level for viewing IPs
-		$canViewIpAddresses = $this->board->getConfigValue('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_JANITOR);
-
-		// can view ip
-		$canViewIp = $roleLevel->isAtLeast($canViewIpAddresses);
-		 
-		$postsPerPage = $this->config['ADMIN_PAGE_DEF'];
-		$numberOfFilteredPosts = $this->postRepository->postCount($filtersFromRequest);
-		$page = $_REQUEST['page'] ?? 0;
-
-		if (!filter_var($page, FILTER_VALIDATE_INT) && $page != 0) {
-			$this->softErrorHandler->errorAndExit("Page number was not a valid int.");
-		}
-
-		$page = ($page >= 0) ? $page : 1;
-
-		$onlyimgdel = !empty($_POST['onlyimgdel']); // Only delete the image
-		$posts = array(); //posts to display in the manage posts table
 		
-		// Delete the article(thread) block
+		$page = (int) ($_REQUEST['page'] ?? 0);
+		if ($page < 0) $page = 1;
+		
+		return [
+			'managePostsUrl' => $managePostsUrl,
+			'accountId' => $accountId,
+			'filters' => $filtersFromRequest,
+			'cleanUrl' => $cleanUrl,
+			'roleLevel' => $roleLevel,
+			'canViewIp' => $canViewIp,
+			'canViewDeleted' => $canViewDeleted,
+			'page' => $page,
+			'postsPerPage' => $this->config['ADMIN_PAGE_DEF'],
+			'numberOfFilteredPosts' => $this->postRepository->postCount($filtersFromRequest)
+		];
+	}
+
+	private function handlePostDeletion(array $context): void {
+		// Check if delete form was submitted
 		$postUidsFromCheckbox = $_POST['clist'] ?? [];
-		if($postUidsFromCheckbox) {
-			$this->deletePostsFromCheckboxes($postUidsFromCheckbox, $onlyimgdel, $accountId);
+		if (!$postUidsFromCheckbox) {
+			return;
 		}
 		
-		$posts = $this->postRepository->getFilteredPosts($postsPerPage, $page * $postsPerPage, $filtersFromRequest, $canViewDeleted) ?? [];
-		
-		// get the associate array for the checkbox generator
-		$arrayForFilter = createAssocArrayFromBoardArray($this->allRegularBoards);
-		
-		// draw post filter form
-		drawManagePostsFilterForm($managePostsHtml, $this->board, $filtersFromRequest, $arrayForFilter);
-		
-		$managePostsHtml .= '<form id="managePostsForm" action="' . htmlspecialchars($cleanUrl) . '" method="POST">';
-		$managePostsHtml .= '<input type="hidden" name="mode" value="admin">
-						<div id="tableManagePostsContainer">
-							<table id="tableManagePosts" class="postlists">
-								<thead>
-									<tr>'._T('admin_list_header').'</tr>
-								</thead>
-								<tbody>';
-		
-		// Eager load all boards first
-		$allBoards = GLOBAL_BOARD_ARRAY;
+		$onlyDeleteImages = !empty($_POST['onlyimgdel']);
+		$this->deletePostsFromCheckboxes($postUidsFromCheckbox, $onlyDeleteImages, $context['accountId']);
+	}
 
-		$allBoardUids = array_map(fn($board) => $board->getBoardUID(), $this->allRegularBoards);;
-		$boardList = implode('+', $allBoardUids);
+	private function handlePostsFromUserFeature(array &$filters): void {
+		// if the 'postsFrom' parameter exists extract it
+		$postsFrom = $_GET['postsFrom'] ?? null;
 
-		$boardMap = array();
-		foreach($allBoards as $board){
+		// return early if its not valid
+		if(!$postsFrom || !is_numeric($postsFrom)) {
+			return;
+		}
+
+		// now use the value to overwrite the 'host' filter so that the page will show posts from that IP address
+		// - without revealing it in the request directly
+		$filters['ip_address'] = $this->postRepository->resolveHostFromPostUid((int)$postsFrom);
+	}
+
+	private function fetchFilteredPosts(array $context): array {
+		// handle 'postsFromIp' feature.
+		// it has to be done here (right before the fetch) so it doesn't affect filters used for the form inputs and the clean url generation
+		// as that'd leak the IP
+		$this->handlePostsFromUserFeature($context['filters']);
+
+		// fetch and return the filtered posts from the repository based on the filters in the context
+		return $this->postRepository->getFilteredPosts(
+			$context['postsPerPage'],
+			$context['page'] * $context['postsPerPage'],
+			$context['filters'],
+			$context['canViewDeleted']
+		) ?? [];
+	}
+
+	private function buildBoardMap(): array {
+		$boardMap = [];
+		foreach (GLOBAL_BOARD_ARRAY as $board) {
 			$boardMap[$board->getBoardUID()] = $board;
 		}
+		return $boardMap;
+	}
 
-		// if there's any posts - render them
-		if($posts && is_array($posts)) {
-			$managePostsHtml .= $this->renderPostEntries(
-				$posts, 
-				$boardMap, 
-				$canViewIp, 
-				$roleLevel, 
-				$managePostsUrl,
-				$boardList
-			);
-		} 
-		// otherwise display error since there's no (valid) posts found
-		else {
-			$managePostsHtml .= '
-				<tr>
-					<td colspan="9"><b class="error" id="no-posts-found"> - No posts found! - </b></td>
-				</tr>';
+	private function buildBoardList(): string {
+		$allBoardUids = array_map(fn($board) => $board->getBoardUID(), $this->allRegularBoards);
+		return implode('+', $allBoardUids);
+	}
+
+	private function renderManagePostsPage(array $posts, array $boardMap, string $boardList, array $context): string {
+		$html = '';
+		
+		// Render filter form
+		drawManagePostsFilterForm($html, $this->board, $context['filters'], createAssocArrayFromBoardArray($this->allRegularBoards));
+		
+		// Render posts table
+		$html .= $this->renderPostsTable($posts, $boardMap, $boardList, $context);
+		
+		// Render action buttons and pagination
+		$html .= $this->renderPostsTableFooter();
+		$html .= drawPager($context['postsPerPage'], $context['numberOfFilteredPosts'], $context['cleanUrl']);
+		
+		return $html;
+	}
+
+	private function renderPostsTable(array $posts, array $boardMap, string $boardList, array $context): string {
+		$html = '<form id="managePostsForm" action="' . htmlspecialchars($context['cleanUrl']) . '" method="POST">';
+		$html .= '<input type="hidden" name="mode" value="admin">
+					<div id="tableManagePostsContainer">
+						<table id="tableManagePosts" class="postlists">
+							<thead>
+								<tr>' . _T('admin_list_header') . '</tr>
+							</thead>
+							<tbody>';
+		
+		// Render posts or empty state message
+		if ($posts && is_array($posts)) {
+			$html .= $this->renderPostEntries($posts, $boardMap, $context['canViewIp'], $context['roleLevel'], $context['managePostsUrl'], $boardList);
+		} else {
+			$html .= '<tr><td colspan="9"><b class="error" id="no-posts-found"> - No posts found! - </b></td></tr>';
 		}
 		
-		$managePostsHtml.= '
-			</tbody>
-		</table>
-		</div>
+		$html .= '</tbody></table></div>';
+		return $html;
+	}
+
+	private function renderPostsTableFooter(): string {
+		return '
 		<div class="buttonSection">
 			<button type="button" id="selectAllButton" onclick="selectAll()">Select all</button>
-			<input type="submit" value="'._T('admin_submit_btn').'"> <input type="reset" value="'._T('admin_reset_btn').'"> [<label><input type="checkbox" name="onlyimgdel" id="onlyimgdel" 		value="on">'._T('del_img_only').'</label>]
+			<input type="submit" value="' . _T('admin_submit_btn') . '"> <input type="reset" value="' . _T('admin_reset_btn') . '"> [<label><input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">' . _T('del_img_only') . '</label>]
 		</div>
 	</form>
 	<script>
@@ -160,23 +209,20 @@ class managePostsRoute {
 
 			btn.textContent = allChecked ? "Select all" : "Unselect all";
 		}
-	</script>
-	';
+	</script>';
+	}
 
-		$managePostsPager = drawPager($postsPerPage, $numberOfFilteredPosts, $cleanUrl);
-
+	private function outputPageContent(string $managePostsHtml, array $context): void {
 		$templateValues = [
 			'{$PAGE_CONTENT}' => $managePostsHtml,
-			'{$PAGER}' => $managePostsPager
+			'{$PAGER}' => ''
 		];
 		
 		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', $templateValues, true);
-	
 		echo $htmlOutput;
 	}
 
 	private function initializeManagePostsFilters(): array {
-		// Default board selection: current board and global board
 		$defaultSelectedBoards = [$this->board->getBoardUID()];
 
 		return [
@@ -201,201 +247,158 @@ class managePostsRoute {
 		string $managePostsUrl, 
 		string $boardList
 	): string {
-		// init html stored var
 		$postsHtml = '';
 
-		// loop through posts
-		foreach($posts as $p) {		
-			// get the board uid
-			$boardUID = $p['boardUID'];
-			
-			// get tripcode
-			$tripcode = $p['tripcode'];
-			
-			// get the secure tripcode
-			$secure_tripcode = $p['secure_tripcode'];
-
-			// get the capcode
-			$capcode = $p['capcode'];
-
-			// get the email
-			$email = $p['email'];
-
-			// get is_op condition
-			$is_op = $p['is_op'];
-
-			// get host
-			// hash if the user can't view IPs
-			$host = $canViewIp
-				? $p['host']
-				: substr(md5($p['host']), 0, 8);
-
-			// get comment
-			$com = $p['com'];
-
-			// get post uid
-			$post_uid = $p['post_uid'];
-
-			// get now
-			$now = $p['now'];
-
-			// get no
-			$no = $p['no'];
-
-			// get sub
-			$sub = $p['sub'];
-
-			// get name
-			$name = $p['name'];
-
-			// post board (from preloaded boards)
-			if(isset($boardMap[$boardUID])){
-				$postBoard = $boardMap[$boardUID];
-			}else{
-				continue; // Skip if board not found
-			}
-			$postBoardConfig = $postBoard->loadBoardConfig();
-		
-			// Modify the field style
-			$name = substr($name, 0, 500);
-			$sub = substr($sub, 0, 500);
-			// $com = substr($com, 0, 500);
-
-			$nameHtml = generatePostNameHtml(
-				$this->moduleEngine,  
-				$name, 
-				$tripcode, 
-				$secure_tripcode, 
-				$capcode, 
-				$email,
-				$this->config['NOTICE_SAGE']
+		foreach($posts as $post) {
+			$postsHtml .= $this->renderPostEntry(
+				$post, 
+				$boardMap, 
+				$canViewIp, 
+				$roleLevel, 
+				$managePostsUrl, 
+				$boardList
 			);
-
-			// The first part of the discussion is the stop tick box and module function
-			$modFunc = ' ';
-
-			if($is_op) {
-				$this->moduleEngine->dispatch('ManagePostsThreadControls', [&$modFunc, &$p]);
-			} else {
-				$this->moduleEngine->dispatch('ManagePostsReplyControls', [&$modFunc, &$p]);
-			}
-
-			// dispatch post admin hook point
-			$this->moduleEngine->dispatch('ManagePostsControls', [&$modFunc, &$p]);
-
-			// dispatch post comment hook point
-			$this->moduleEngine->dispatch('PostComment', [
-				&$com,
-				&$p
-			]);
-
-			if($roleLevel->isAtMost(userRole::LEV_JANITOR)) {
-				$host = substr(hash('sha256', $host), 0, 10);
-			}
-
-			// generate attachments info html
-			$attachmentsHtml = $this->renderAttachments($p['attachments']);
-
-			// Print out the interface
-			$postsHtml .= '
-				<tr>
-					<td class="colFunc">' . $modFunc . '</td>
-					<td class="colDel"><input type="checkbox" name="clist[]" value="' . $post_uid . '"><a target="_blank" href="'.$postBoard->getBoardURL().$postBoardConfig['LIVE_INDEX_FILE'].'?res=' . $no . '">' . $no . '</a></td>
-					<td class="colBoard">/' . $postBoard->getBoardIdentifier() . '/ ('.$postBoard->getBoardUID().')</td>
-					<td class="colDate"><span class="time">' . $now . '</span></td>
-					<td class="colSub"><span class="title">' . $sub . '</span></td>
-					<td class="colName"><span class="name">' . $nameHtml . '</span></td>
-					<td class="colComment"><div class="managepostsCommentWrapper">' . $com . '</div></td>
-					<td class="colHost">' . $host . ' <a target="_blank" href="https://whatismyipaddress.com/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="'.$managePostsUrl.'&ip_address=' . $host . '&board=' . $boardList . '" title="See all posts">★</a></td>
-					' . $attachmentsHtml . '
-				</tr>';
 		}
 
-		// then return the html
 		return $postsHtml;
 	}
 
+	private function renderPostEntry(
+		array $post,
+		array $boardMap,
+		bool $canViewIp,
+		userRole $roleLevel,
+		string $managePostsUrl,
+		string $boardList
+	): string {
+		$boardUID = $post['boardUID'];
+
+		if(!isset($boardMap[$boardUID])){
+			return '';
+		}
+
+		$postBoard = $boardMap[$boardUID];
+		$postBoardConfig = $postBoard->loadBoardConfig();
+
+		// Prepare post data
+		$name = substr($post['name'], 0, 500);
+		$sub = substr($post['sub'], 0, 500);
+		$com = $post['com'];
+		$post_uid = $post['post_uid'];
+		$no = $post['no'];
+		$now = $post['now'];
+		$is_op = $post['is_op'];
+
+		// Handle host display
+		$host = $canViewIp
+			? $post['host']
+			: substr(md5($post['host']), 0, 8);
+
+		// Generate name HTML
+		$nameHtml = generatePostNameHtml(
+			$this->moduleEngine, 
+			$name, 
+			$post['tripcode'], 
+			$post['secure_tripcode'], 
+			$post['capcode'], 
+			$post['email'],
+			$this->config['NOTICE_SAGE']
+		);
+
+		// Build module functions
+		$modFunc = ' ';
+		if($is_op) {
+			$this->moduleEngine->dispatch('ManagePostsThreadControls', [&$modFunc, &$post]);
+		} else {
+			$this->moduleEngine->dispatch('ManagePostsReplyControls', [&$modFunc, &$post]);
+		}
+
+		$this->moduleEngine->dispatch('ManagePostsControls', [&$modFunc, &$post]);
+		$this->moduleEngine->dispatch('PostComment', [&$com, &$post]);
+
+		// Generate attachments HTML
+		$attachmentsHtml = $this->renderAttachments($post['attachments']);
+
+		// Build and return the table row
+		return '
+			<tr>
+				<td class="colFunc">' . $modFunc . '</td>
+				<td class="colDel"><input type="checkbox" name="clist[]" value="' . $post_uid . '"><a target="_blank" href="'.$postBoard->getBoardURL().$postBoardConfig['LIVE_INDEX_FILE'].'?res=' . $no . '">' . $no . '</a></td>
+				<td class="colBoard">/' . $postBoard->getBoardIdentifier() . '/ ('.$postBoard->getBoardUID().')</td>
+				<td class="colDate"><span class="time">' . $now . '</span></td>
+				<td class="colSub"><span class="title">' . $sub . '</span></td>
+				<td class="colName"><span class="name">' . $nameHtml . '</span></td>
+				<td class="colComment"><div class="managepostsCommentWrapper">' . $com . '</div></td>
+				<td class="colHost">' . $host . ' <a target="_blank" href="https://whatismyipaddress.com/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="'.$managePostsUrl.'&ip_address=' . $host . '&board=' . $boardList . '" title="See all posts">★</a></td>
+				' . $attachmentsHtml . '
+			</tr>';
+	}
+
 	private function renderAttachments(array $attachments): string {
-		// return default no-file attachment row
+		// if there are no attachments, return the placeholder html
 		if(empty($attachments)) {
 			return '<td class="colImage">---</td>';
 		}
 		
-		// init attachments html
+		// html string to hold the attachments html, will be concatenated with each attachment's html in the loop below
 		$attachmentsHtml = '';
 
-		// loop through attachments and 
+		// loop through attachments and render each one, concatenating the html for each into a single string
 		foreach($attachments as $att) {
-			// continue early if empty
-			// probably invalid / a bug if that happens but may as well prevent error page on mod tools in case of failing at critial times
 			if(empty($att)) {
 				continue;
 			}
 
-			// get md5 hash
-			$fileMd5 = $att['fileMd5'];
-
-			// get file extension
-			$fileExtension = $att['fileExtension'];
-
-			// get stored file name
-			$storedFileName = $att['storedFileName'];
-
-			// Extract additional archived image files and generate a link
-			$clip = '<a href="'. getAttachmentUrl($att).'" target="_blank">' . $storedFileName . '.' . $fileExtension . '</a>';
-			$size = $att['fileSize'];
-
-			// then put together the attachments list
-			$attachmentInfoEntry = '<div class="attachmentListEntry">' . $clip . ' (' . $size . ')<br>' . $fileMd5 . '</div>';
-
-			// wrap in strike-through if the attachment doesn't exist
-			if(!attachmentFileExists($att)) {
-				$attachmentInfoEntry = '<s title="Attachment file doesn\'t exist">' . $attachmentInfoEntry . '</s>';
-			}
-		
-			// append to attachments html
-			$attachmentsHtml .= $attachmentInfoEntry;
+			$attachmentsHtml .= $this->renderAttachmentEntry($att);
 		}
 
-		// wrap html in td
-		$attachmentsHtml = '<td class="colImage">' . $attachmentsHtml . '</td>';
+		// return the attachments html wrapped in the table cell
+		return '<td class="colImage">' . $attachmentsHtml . '</td>';
+	}
 
-		// return attachments html
-		return $attachmentsHtml;
+	private function renderAttachmentEntry(array $attachment): string {
+		$fileMd5 = $attachment['fileMd5'];
+		$fileExtension = $attachment['fileExtension'];
+		$storedFileName = $attachment['storedFileName'];
+		$size = $attachment['fileSize'];
+
+		$clip = '<a href="'. getAttachmentUrl($attachment).'" target="_blank">' . $storedFileName . '.' . $fileExtension . '</a>';
+		$attachmentInfoEntry = '<div class="attachmentListEntry">' . $clip . ' (' . $size . ')<br>' . $fileMd5 . '</div>';
+
+		if(!attachmentFileExists($attachment)) {
+			$attachmentInfoEntry = '<s title="Attachment file doesn\'t exist">' . $attachmentInfoEntry . '</s>';
+		}
+	
+		return $attachmentInfoEntry;
 	}
 	
 	private function deletePostsFromCheckboxes(array $postUids, bool $onlyDeleteImages, int $accountId): void {
-		// fetch data for selected posts
+		// Fetch post data for deletion
 		$postsData = $this->postService->getPostsByUids($postUids);
 		
-		// no post data found
+		// Validate posts exist
 		if(!$postsData) {
 			throw new BoardException("Posts not found while deleting!");
 		}
 
-		// get the attachments
+		// Extract attachments and post numbers for logging
 		$attachments = getAttachmentsFromPosts($postsData);
-
 		$postNumbers = array_column($postsData, 'no');
-
 		$checkboxDeletionActionLogStr = is_array($postNumbers) ? implode(', No. ',$postNumbers) : $postNumbers;
 
+		// Delete only files or entire posts based on user selection
 		if($onlyDeleteImages) {
 			$this->deletedPostsService->deleteFilesFromPosts($attachments, $accountId);
 		} else {
 			$this->postService->removePosts($postUids, $accountId);
 		}
 
-		// get board uids
+		// Rebuild affected boards after deletion
 		$boardUids = $this->postRepository->getBoardUidsFromPostUids($postUids);
-		
-		// get boards by uids
 		$boards = getBoardsByUIDs($boardUids);
-
-		// rebuild the boards
 		rebuildBoardsByArray($boards);
 
-		// log action
+		// Record deletion action in logs
 		$this->actionLoggerService->logAction("Delete posts: $checkboxDeletionActionLogStr".($onlyDeleteImages?' (file only)':''), $this->board->getBoardUID());
 	}
 }

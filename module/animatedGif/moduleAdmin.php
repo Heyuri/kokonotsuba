@@ -82,11 +82,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// generate the script header
-		$jsHtml = $this->generateScriptHeader('animatedGif.js', true);
-
-		// then append it to the header
-		$moduleHeader .= $jsHtml;
+		// include anigif mod script
+		$this->includeScript('animatedGif.js', $moduleHeader);
 	}
 
 	public function ModulePage() {

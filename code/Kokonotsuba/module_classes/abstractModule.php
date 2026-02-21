@@ -102,7 +102,7 @@ abstract class abstractModule {
 		return $scriptHtml;
 	}
 
-	public function generateScriptHeader(string $jsFileName, bool $defer = false): string {
+	private function generateScriptHeader(string $jsFileName, bool $defer = false): string {
 		// generate the url path of the module javascript
 		// this prevents the user from needing to refresh + wait through the rebuild
 		$jsFileUrl = $this->generateJavascriptUrl($jsFileName);
@@ -113,6 +113,14 @@ abstract class abstractModule {
 
 		// return the link html
 		return $jsHtml;
+	}
+
+	public function includeScript(string $jsFileName, string &$moduleHeader, bool $defer = true): void {
+		// generate the script header html
+		$jsHtml = $this->generateScriptHeader($jsFileName, $defer);
+
+		// append the script header to the module header
+		$moduleHeader .= $jsHtml;
 	}
 
 	public function buildWidgetEntry(

@@ -87,11 +87,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		// append theme template to header
 		$moduleHeader .= $themeTemplate;
 
-		// generate theme link tag
-		$themeJs = $this->generateScriptHeader('cssHax.js', true);
-
-		// append theme link to module header
-		$moduleHeader .= $themeJs;
+		// add css hax mod js
+		$this->includeScript('cssHax.js', $moduleHeader);
 	}
 
 	private function generateThemeJsTemplate(string $moduleUrl): string {

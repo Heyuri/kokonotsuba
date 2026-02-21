@@ -36,11 +36,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// generate banner js script tag
-		$jsHtml = $this->generateScriptHeader('banners.js', true);
-
-		// append to module header
-		$moduleHeader .= $jsHtml;
+		// include banner js script
+		$this->includeScript('banners.js', $moduleHeader);
 	}
 
 	private function getAllFilesFromDirectory($directory) {

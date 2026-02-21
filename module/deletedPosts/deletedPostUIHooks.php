@@ -255,10 +255,7 @@ class deletedPostUIHooks {
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		// generate the script header
-		$jsHtml = $this->moduleAdmin->generateScriptHeader('deletedPosts.js', true);
-
-		// then append it to the header
-		$moduleHeader .= $jsHtml;
+		$this->moduleAdmin->includeScript('deletedPosts.js', $moduleHeader);
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, array &$post): void {

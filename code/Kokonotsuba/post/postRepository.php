@@ -474,4 +474,12 @@ class postRepository {
 			return array_merge(...$boardUids);
 		}
 	}
+
+	public function resolveHostFromPostUid(int $postUid): ?string {
+		// query to get host from post uid
+		$query = "SELECT host FROM {$this->postTable} WHERE post_uid = :post_uid";
+	
+		// execute query and return host
+		return $this->databaseConnection->fetchValue($query, [':post_uid' => $postUid]);
+	}
 }

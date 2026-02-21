@@ -147,10 +147,7 @@ class moduleMain extends abstractModuleMain {
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		// generate the soudane js <script> include
-		$jsHtml = $this->generateScriptHeader('soudane.js', true);
-
-		// append to module header
-		$moduleHeader .= $jsHtml;
+		$this->includeScript('soudane.js', $moduleHeader);
 
 		// now build a meta tag to store the API endpoint for fetching votes
 		$moduleHeader .= '<meta name="soudaneUrl" content="' . $this->getModulePageURL(['modPage' => 'soudaneApi']) . '">';

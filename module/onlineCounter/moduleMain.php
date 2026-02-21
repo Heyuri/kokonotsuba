@@ -209,11 +209,8 @@ class moduleMain extends abstractModuleMain {
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// generate online counter js script tag
-		$jsHtml = $this->generateScriptHeader('onlineCounterUpdater.js', true);
-
-		// append to module header
-		$moduleHeader .= $jsHtml;
+		// include online counter js script
+		$this->includeScript('onlineCounterUpdater.js', $moduleHeader);
 	}
 
 	/**

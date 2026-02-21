@@ -39,11 +39,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// generate the script header
-		$jsHtml = $this->generateScriptHeader('filter.js', true);
-
-		// then append it to the header
-		$moduleHeader .= $jsHtml;
+		// include the filter js for the hide post widget
+		$this->includeScript('filter.js', $moduleHeader);
 	}
 	
 }

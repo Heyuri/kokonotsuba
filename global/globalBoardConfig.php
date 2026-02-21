@@ -100,6 +100,7 @@ $config['ModuleList'] = array(
 	'fieldTraps' => true,
 	'readOnly' => false,
 	'viewIp' => true,
+	'viewPosts' => true,
 	'displayId' => true,
 	'dice' => true,
 	'tripcode' => true,
