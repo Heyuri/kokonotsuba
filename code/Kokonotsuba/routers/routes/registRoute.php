@@ -236,7 +236,8 @@ class registRoute {
 	}
 
 	private function gatherPostInputData(): array {
-		$name = htmlspecialchars($_POST['name'] ?? '');
+		// Extract tripcode from raw name before HTML escaping
+		$rawName = $_POST['name'] ?? '';
 		$email = htmlspecialchars($_POST['email'] ?? '');
 		$sub = htmlspecialchars($_POST['sub'] ?? '');
 		$comment = htmlspecialchars($_POST['com'] ?? '');
@@ -262,15 +263,16 @@ class registRoute {
 		$up_incomplete = 0;
 		$is_admin = $roleLevel === userRole::LEV_ADMIN;
 
-		// full name for cookie, it wont be processed by the tripcode processor
-		$nameCookie = $name;
-
+		// Parse tripcode from raw name before HTML escaping
 		$tripcode = '';
 		$secure_tripcode = '';
-		[$name, $tripcode, $secure_tripcode] = array_map('trim', explode('#', $name . '##'));
+		[$nameOnly, $tripcode, $secure_tripcode] = array_map('trim', explode('#', $rawName . '##'));
+		
+		// Now apply HTML escaping to the name portion and store full name for cookie
+		$name = htmlspecialchars($nameOnly);
+		$nameCookie = $name;
 
-
-		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode_input' => $tripcode, 'secure_tripcode_input' => $secure_tripcode,
+		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode_input' => htmlspecialchars($tripcode), 'secure_tripcode_input' => htmlspecialchars($secure_tripcode),
 			 'tripcode' => '', 'secure_tripcode' => '', 'capcode' => '', 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
 			 'category' => $category, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip,
 			 'thread_uid' => $thread_uid, 'isReply' => $isReply, 'roleLevel' => $roleLevel, 'time' => $time,
