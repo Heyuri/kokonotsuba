@@ -270,7 +270,9 @@ class registRoute {
 		
 		// Now apply HTML escaping to the name portion and store full name for cookie
 		$name = htmlspecialchars($nameOnly);
-		$nameCookie = $name;
+		
+		// Store the raw name (with tripcode) in a separate variable for cookie storage
+		$nameCookie = $rawName;
 
 		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode_input' => htmlspecialchars($tripcode), 'secure_tripcode_input' => htmlspecialchars($secure_tripcode),
 			 'tripcode' => '', 'secure_tripcode' => '', 'capcode' => '', 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
