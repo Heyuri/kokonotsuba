@@ -179,7 +179,7 @@ class managePostsRoute {
 		
 		// Render posts or empty state message
 		if ($posts && is_array($posts)) {
-			$html .= $this->renderPostEntries($posts, $boardMap, $context['canViewIp'], $context['roleLevel'], $context['managePostsUrl'], $boardList);
+			$html .= $this->renderPostEntries($posts, $boardMap, $context['canViewIp'], $context['managePostsUrl'], $boardList);
 		} else {
 			$html .= '<tr><td colspan="9"><b class="error" id="no-posts-found"> - No posts found! - </b></td></tr>';
 		}
@@ -243,7 +243,6 @@ class managePostsRoute {
 		array $posts, 
 		array $boardMap, 
 		bool $canViewIp, 
-		userRole $roleLevel, 
 		string $managePostsUrl, 
 		string $boardList
 	): string {
@@ -254,7 +253,6 @@ class managePostsRoute {
 				$post, 
 				$boardMap, 
 				$canViewIp, 
-				$roleLevel, 
 				$managePostsUrl, 
 				$boardList
 			);
@@ -267,7 +265,6 @@ class managePostsRoute {
 		array $post,
 		array $boardMap,
 		bool $canViewIp,
-		userRole $roleLevel,
 		string $managePostsUrl,
 		string $boardList
 	): string {

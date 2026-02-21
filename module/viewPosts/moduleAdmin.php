@@ -25,14 +25,6 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-        // dont bother if the mod is above the max permission level for this module.
-        //
-        // its still authenticated by the module loader so you dont need to worry about it being accessed
-        // by under-privileged users.
-        if(!getRoleLevelFromSession()->isAtMost($this->getRequiredRole())) {
-            return;
-        }
-
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ManagePostsControls',
@@ -49,11 +41,29 @@ class moduleAdmin extends abstractModuleAdmin {
 			}
 		);
 
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'PostAdminControls',
+			function(string &$modControlSection, array &$post) {
+				$this->onRenderPostAdminControls($modControlSection, $post);
+			}
+		);
+
 	}
 
     private function generateViewPostsUrl(string $postUid): string {
         return $this->getModulePageURL(['post_uid' => $postUid], false, true);
     }
+
+	private function generateViewIpUrl(string $ipAddress): string {
+		return $this->getModulePageURL(['ip_address' => $ipAddress], false, true);
+	}
+
+	private function canViewRawIp(): bool {
+		$roleLevel = getRoleLevelFromSession();
+		$canViewIpLevel = $this->getConfig('AuthLevels.CAN_VIEW_IP_ADDRESS', userRole::LEV_MODERATOR);
+		return $roleLevel->isAtLeast($canViewIpLevel);
+	}
 
 	private function renderViewPostsButton(string &$modControlSection, array &$post): void {
 		$viewPostsUrl = $this->generateViewPostsUrl($post['post_uid']);
@@ -81,14 +91,22 @@ class moduleAdmin extends abstractModuleAdmin {
         // get current url
         $currentUrl = getCurrentUrlNoQuery();
 
-        // get the post uid from the query parameters
+        // determine which type of filter to apply based on user role
 		$postUid = $_GET['post_uid'] ?? '';
+		$ipAddress = $_GET['ip_address'] ?? '';
 
-        // no post selected
-        if(empty($postUid)) {
-            throw new BoardException(_T('post_not_found'), 404);
-        }
+		if(!empty($postUid)) {
+			// view posts by user flow
+			$this->handleViewPostsByUser($currentUrl, $postUid);
+		} elseif(!empty($ipAddress)) {
+			// view posts by IP flow
+			$this->handleViewPostsByIp($currentUrl, $ipAddress);
+		} else {
+			throw new BoardException(_T('post_not_found'), 404);
+		}
+	}
 
+	private function handleViewPostsByUser(string $currentUrl, string $postUid): void {
         // board uids for query build
 		$allBoardUids = [];
 
@@ -112,7 +130,62 @@ class moduleAdmin extends abstractModuleAdmin {
 		$url = $currentUrl . '?' . $query;
 
         // redirect to the manage posts page with the query parameters to show posts from the selected user
-        // (without)
 		redirect($url);
 	}
+
+	private function handleViewPostsByIp(string $currentUrl, string $ipAddress): void {
+		$allBoardUids = [];
+
+		foreach(GLOBAL_BOARD_ARRAY as $board) {
+			$allBoardUids[] = $board->getBoardUID();
+		}
+		
+		$boardList = implode(' ', $allBoardUids);
+		
+		$query = http_build_query(
+			[
+				'mode' => 'managePosts',
+				'ip_address' => $ipAddress,
+				'board' => $boardList
+			]);
+		
+		$url = $currentUrl . '?' . $query;
+
+		redirect($url);
+	}
+
+	private function isManagePostsRoute(): bool {
+		// Get the mode
+		$mode = $_GET['mode'] ?? '';
+		
+		// Check if its manage posts
+		if($mode === 'managePosts') {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private function onRenderPostAdminControls(string &$modControlSection, array &$post): void {
+		// Return early if the user is viewing the manage posts screen
+		// This is so the control doesn't show up in the func column
+		if($this->isManagePostsRoute()) {
+			return;
+		}
+		
+		// Check user role to determine which behavior to use
+		if($this->canViewRawIp()) {
+			// Show raw IP for higher-privilege users
+			$postLink = $this->generateViewIpUrl($post['host']);
+			$button = '[<a href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars($post['host']) . '</a>]';
+		} else {
+			// Show hashed IP and user-based filter for lower-privilege users
+			$postLink = $this->generateViewPostsUrl($post['post_uid']);
+			$button = '[<a href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars(substr(md5($post['host']), 0, 8)) . '</a>]';
+		}
+		
+		// append the button to the hook point
+		$modControlSection .= $button;
+	}
+
 }
