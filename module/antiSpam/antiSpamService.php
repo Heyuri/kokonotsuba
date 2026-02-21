@@ -40,7 +40,7 @@ class antiSpamService {
 	
 	public function getEntries(int $entriesPerPage, int $page): false|array {
 		// calculate pagination value
-		$offset = max(0, ($page - 1) * $entriesPerPage);
+		$offset = max(0, max(0, $page) * $entriesPerPage);
 
 		// return data
 		return $this->antiSpamRepository->getEntries($entriesPerPage, $offset);
