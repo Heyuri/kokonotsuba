@@ -65,7 +65,7 @@ class managePostsRoute {
 		$managePostsHtml = $this->renderManagePostsPage($posts, $boardMap, $boardList, $context);
 		
 		// Output final HTML
-		$this->outputPageContent($managePostsHtml, $context);
+		$this->outputPageContent($managePostsHtml);
 	}
 
 	private function initializePageContext(): array {
@@ -75,7 +75,23 @@ class managePostsRoute {
 		
 		$defaultFilters = $this->initializeManagePostsFilters();
 		$filtersFromRequest = getFiltersFromRequest($managePostsUrl, $isSubmission, $defaultFilters);
-		$cleanUrl = buildSmartQuery($managePostsUrl, $defaultFilters, $filtersFromRequest, true);
+		
+		// Keep form filters clean - don't expose the resolved IP
+		$formFilters = $filtersFromRequest;
+		
+		// Create query filters with resolved postsFrom for accurate results
+		$queryFilters = $filtersFromRequest;
+		$postsFrom = $_GET['postsFrom'] ?? null;
+		if($postsFrom && is_numeric($postsFrom)) {
+			$queryFilters['ip_address'] = $this->postRepository->resolveHostFromPostUid((int)$postsFrom);
+		}
+		
+		$cleanUrl = buildSmartQuery($managePostsUrl, $defaultFilters, $formFilters, true);
+		
+		// Append postsFrom to cleanUrl if it exists (keep URL clean - don't expose IP)
+		if($postsFrom) {
+			$cleanUrl .= '&postsFrom=' . urlencode($postsFrom);
+		}
 		
 		$roleLevel = $this->staffAccountFromSession->getRoleLevel();
 		$canViewIp = $roleLevel->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_JANITOR));
@@ -87,14 +103,15 @@ class managePostsRoute {
 		return [
 			'managePostsUrl' => $managePostsUrl,
 			'accountId' => $accountId,
-			'filters' => $filtersFromRequest,
+			'formFilters' => $formFilters,
+			'queryFilters' => $queryFilters,
 			'cleanUrl' => $cleanUrl,
 			'roleLevel' => $roleLevel,
 			'canViewIp' => $canViewIp,
 			'canViewDeleted' => $canViewDeleted,
 			'page' => $page,
 			'postsPerPage' => $this->config['ADMIN_PAGE_DEF'],
-			'numberOfFilteredPosts' => $this->postRepository->postCount($filtersFromRequest)
+			'numberOfFilteredPosts' => $this->postRepository->postCount($queryFilters)
 		];
 	}
 
@@ -109,33 +126,14 @@ class managePostsRoute {
 		$this->deletePostsFromCheckboxes($postUidsFromCheckbox, $onlyDeleteImages, $context['accountId']);
 	}
 
-	private function handlePostsFromUserFeature(array &$filters): void {
-		// if the 'postsFrom' parameter exists extract it
-		$postsFrom = $_GET['postsFrom'] ?? null;
-
-		// return early if its not valid
-		if(!$postsFrom || !is_numeric($postsFrom)) {
-			return;
-		}
-
-		// now use the value to overwrite the 'host' filter so that the page will show posts from that IP address
-		// - without revealing it in the request directly
-		$filters['ip_address'] = $this->postRepository->resolveHostFromPostUid((int)$postsFrom);
-	}
-
 	private function fetchFilteredPosts(array $context): array {
-		// handle 'postsFromIp' feature.
-		// it has to be done here (right before the fetch) so it doesn't affect filters used for the form inputs and the clean url generation
-		// as that'd leak the IP
-		$this->handlePostsFromUserFeature($context['filters']);
-
-		// fetch and return the filtered posts from the repository based on the filters in the context
+		// Fetch and return the filtered posts using query filters
 		return $this->postRepository->getFilteredPosts(
 			$context['postsPerPage'],
 			$context['page'] * $context['postsPerPage'],
-			$context['filters'],
+			$context['queryFilters'],
 			$context['canViewDeleted']
-		) ?? [];
+		) ?: [];
 	}
 
 	private function buildBoardMap(): array {
@@ -155,7 +153,7 @@ class managePostsRoute {
 		$html = '';
 		
 		// Render filter form
-		drawManagePostsFilterForm($html, $this->board, $context['filters'], createAssocArrayFromBoardArray($this->allRegularBoards));
+		drawManagePostsFilterForm($html, $this->board, $context['formFilters'], createAssocArrayFromBoardArray($this->allRegularBoards));
 		
 		// Render posts table
 		$html .= $this->renderPostsTable($posts, $boardMap, $boardList, $context);
@@ -212,7 +210,7 @@ class managePostsRoute {
 	</script>';
 	}
 
-	private function outputPageContent(string $managePostsHtml, array $context): void {
+	private function outputPageContent(string $managePostsHtml): void {
 		$templateValues = [
 			'{$PAGE_CONTENT}' => $managePostsHtml,
 			'{$PAGER}' => ''
@@ -235,7 +233,7 @@ class managePostsRoute {
 			'board' => $defaultSelectedBoards,
 			'date_before' => '',
 			'date_after' => '',
-			'host' => ''
+			'postsFrom' => ''
 		];
 	}
 
