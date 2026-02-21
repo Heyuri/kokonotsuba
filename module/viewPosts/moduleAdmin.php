@@ -72,6 +72,11 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+        // dont bother for IP viewers
+        if($this->canViewRawIp()) {
+            return;
+        }
+
 		// generate view posts url
 		$viewPostsUrl = $this->generateViewPostsUrl($post['post_uid']);
 
