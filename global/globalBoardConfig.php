@@ -99,7 +99,6 @@ $config['ModuleList'] = array(
 	'antiFlood' => true,
 	'fieldTraps' => true,
 	'readOnly' => false,
-	'viewIp' => true,
 	'viewPosts' => true,
 	'displayId' => true,
 	'dice' => true,
