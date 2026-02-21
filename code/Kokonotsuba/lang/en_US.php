@@ -238,5 +238,6 @@ $language['post_singular'] = 'post';
 $language['post_multiple'] = 'posts';
 $language['poster_hash_count'] = 'There\'s %1$s %2$s by this ID.';
 $language['score_pre_text'] = 'Score: %1$s';
+$language['view_posts_by_user'] = 'View posts by user';
 
 ?>

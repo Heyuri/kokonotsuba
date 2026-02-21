@@ -68,7 +68,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function renderViewPostsButton(string &$modControlSection, array &$post): void {
 		$viewPostsUrl = $this->generateViewPostsUrl($post['post_uid']);
 		
-		$modControlSection .= '<span class="adminFunctions adminViewFunction">[<a href="' . htmlspecialchars($viewPostsUrl) . '" title="View posts by this user.">VP</a>]</span>';
+		$modControlSection .= '<span class="adminFunctions adminViewFunction">[<a href="' . htmlspecialchars($viewPostsUrl) . '" title="' . _T('view_posts_by_user') . '">VP</a>]</span>';
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
@@ -79,7 +79,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$viewPostsWidget = $this->buildWidgetEntry(
 			$viewPostsUrl, 
 			'viewPosts', 
-			'View posts by user.', 
+			_T('view_posts_by_user'), 
 			''
 		);
 		
