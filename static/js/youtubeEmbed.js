@@ -2,7 +2,7 @@
 	'use strict';
 
 	const ytRegex =
-		/^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{11})/;
+		/^(https?:\/\/)?(www\.)?(youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/;
 
 	// Create the thumbnail with a real <a> link
 	function makeThumb(id) {
