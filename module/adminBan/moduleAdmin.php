@@ -401,12 +401,13 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function calculateBanDuration($duration) {
-		preg_match_all('/(\d+)([wdhm])/', $duration, $matches, PREG_SET_ORDER);
+		preg_match_all('/(\d+)([ywdhm])/', $duration, $matches, PREG_SET_ORDER);
 		$seconds = 0;
 
 		foreach ($matches as $match) {
 			$value = intval($match[1]);
 			switch ($match[2]) {
+				case 'y': $seconds += $value * 31536000; break;
 				case 'w': $seconds += $value * 604800; break;
 				case 'd': $seconds += $value * 86400; break;
 				case 'h': $seconds += $value * 3600; break;
