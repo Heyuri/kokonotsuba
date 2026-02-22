@@ -41,5 +41,6 @@ class moduleEngineContext {
         public templateEngine $templateEngine,
         public board $board,
         public postRenderingPolicy $postRenderingPolicy,
+        public ?int $currentUserId,
     ) {}
 }

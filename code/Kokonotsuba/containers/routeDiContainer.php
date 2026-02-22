@@ -83,5 +83,6 @@ class routeDiContainer {
 		public boardApi $boardApi,
 		public fileService $fileService,
 		public postRenderingPolicy $postRenderingPolicy,
+		public ?int $currentUserId
 	) {}
 }

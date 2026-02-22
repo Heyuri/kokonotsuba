@@ -36,6 +36,7 @@ $boardDiContainer = new boardDiContainer(
 	$fileService,
 	$transactionManager,
 	$postRenderingPolicy,
+	$currentUserId,
 );
 
 $boardService = new boardService($boardRepository, $boardDiContainer, $boardPathService);

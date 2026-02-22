@@ -272,7 +272,8 @@ class boardService {
 			$this->boardDiContainer->transactionManager,
 			$templateEngine, 
 			$board,
-			$this->boardDiContainer->postRenderingPolicy);
+			$this->boardDiContainer->postRenderingPolicy,
+			$this->boardDiContainer->currentUserId);
 			
 		$moduleEngine = new moduleEngine($moduleEngineContext);
 		

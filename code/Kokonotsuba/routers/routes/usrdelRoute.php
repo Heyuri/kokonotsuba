@@ -11,7 +11,6 @@ use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\post\postService;
 
 use function Kokonotsuba\libraries\getAttachmentsFromPosts;
-use function Kokonotsuba\libraries\getIdFromSession;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\_T;
 use function Puchiko\request\redirect;
@@ -24,7 +23,8 @@ class usrdelRoute {
 		private readonly postService $postService,
 		private readonly deletedPostsService $deletedPostsService,
 		private readonly softErrorHandler $softErrorHandler,
-		private postPolicy $postPolicy
+		private postPolicy $postPolicy,
+		private ?int $currentUserId
 	) {}
 
 	/* User post deletion */
@@ -46,7 +46,7 @@ class usrdelRoute {
 
 		// the account ID, for post deletion-related meta data for staff deletions
 		// users will just have a null ID
-		$accountId = getIdFromSession();
+		$accountId = $this->currentUserId;
 
 		// if the password supplied is empty - then use the password stored in the cookie
 		if (empty($password) && $passwordFromCookie !== '') {

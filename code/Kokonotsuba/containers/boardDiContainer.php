@@ -36,5 +36,6 @@ class boardDiContainer {
 		public readonly fileService $fileService,
 		public readonly transactionManager $transactionManager,
 		public postRenderingPolicy $postRenderingPolicy,
+		public ?int $currentUserId,
     ) {}
 }

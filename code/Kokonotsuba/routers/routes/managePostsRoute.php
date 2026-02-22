@@ -14,7 +14,6 @@ use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\policy\postRenderingPolicy;
 use Kokonotsuba\userRole;
 use Kokonotsuba\error\BoardException;
-use function Kokonotsuba\libraries\getIdFromSession;
 use function Kokonotsuba\libraries\getFiltersFromRequest;
 use function Puchiko\strings\buildSmartQuery;
 use function Kokonotsuba\libraries\createAssocArrayFromBoardArray;
@@ -41,7 +40,8 @@ class managePostsRoute {
 		private readonly pageRenderer $adminPageRenderer,
 		private readonly array $allRegularBoards,
 		private readonly deletedPostsService $deletedPostsService,
-		private postRenderingPolicy $postRenderingPolicy
+		private postRenderingPolicy $postRenderingPolicy,
+		private ?int $currentUserId
 	) {}
 
 	public function drawManagePostsPage() {
@@ -71,7 +71,7 @@ class managePostsRoute {
 	private function initializePageContext(): array {
 		$isSubmission = isset($_GET['filterSubmissionFlag']);
 		$managePostsUrl = $this->board->getBoardURL(true) . '?mode=managePosts';
-		$accountId = getIdFromSession();
+		$accountId = $this->currentUserId;
 		
 		$defaultFilters = $this->initializeManagePostsFilters();
 		$filtersFromRequest = getFiltersFromRequest($managePostsUrl, $isSubmission, $defaultFilters);

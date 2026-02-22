@@ -42,5 +42,6 @@ class moduleContext {
 		public array $userCapcodes, 
 		public transactionManager $transactionManager,
 		public postRenderingPolicy $postRenderingPolicy,
+		public ?int $currentUserId,
 	) {}
 }

@@ -11,6 +11,7 @@ $globalConfig = getGlobalConfig();
 // Session & Validation
 // ───────────────────────────────────────
 $staffAccountFromSession = new staffAccountFromSession;
+$currentUserId = $staffAccountFromSession->getUID();
 
 // ───────────────────────────────────────
 // Policies

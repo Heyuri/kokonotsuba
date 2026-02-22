@@ -11,7 +11,6 @@ use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\html\drawPager;
-use function Kokonotsuba\libraries\getIdFromSession;
 use function Puchiko\request\isGetRequest;
 use function Puchiko\request\isPostRequest;
 use function Puchiko\request\redirect;
@@ -135,7 +134,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// get the current staff's user id
-		$createdBy = getIdFromSession();
+		$createdBy = $this->moduleContext->currentUserId;
 
 		$this->moduleContext->transactionManager->run(function() use ($fields, $createdBy) {
 			// add the entry

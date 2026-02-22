@@ -169,7 +169,8 @@ class modeHandler {
 					$this->routeDiContainer->postService,
 					$this->routeDiContainer->deletedPostsService, 
 					$this->routeDiContainer->softErrorHandler,
-					$this->routeDiContainer->postPolicy
+					$this->routeDiContainer->postPolicy,
+					$this->routeDiContainer->currentUserId
 				);
 				$route->userPostDeletion();
 			},
@@ -207,7 +208,8 @@ class modeHandler {
 					$this->routeDiContainer->adminPageRenderer,
 					$this->routeDiContainer->regularBoards,
 					$this->routeDiContainer->deletedPostsService,
-					$this->routeDiContainer->postRenderingPolicy
+					$this->routeDiContainer->postRenderingPolicy,
+					$this->routeDiContainer->currentUserId
 				);
 				$route->drawManagePostsPage();
 			},

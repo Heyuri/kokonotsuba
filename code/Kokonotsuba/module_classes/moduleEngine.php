@@ -100,6 +100,7 @@ use function Kokonotsuba\libraries\getRoleLevelFromSession;
 			$this->moduleEngineContext->userCapcodes,
 			$this->moduleEngineContext->transactionManager,
 			$this->moduleEngineContext->postRenderingPolicy,
+			$this->moduleEngineContext->currentUserId,
 		);
 
 		foreach ($loadlist as $moduleName => $moduleStatus) {

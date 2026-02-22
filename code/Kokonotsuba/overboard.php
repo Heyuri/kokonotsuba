@@ -27,6 +27,7 @@ use Kokonotsuba\thread\threadService;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\getThreadTitle;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getIdFromSession;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 
@@ -276,7 +277,9 @@ class overboard {
 			$this->transactionManager,
 			$templateEngine, 
 			$board,
-			$this->postRenderingPolicy);
+			$this->postRenderingPolicy,
+			getIdFromSession()
+			);
 
 		$moduleEngine = new moduleEngine($moduleEngineContext);
 		

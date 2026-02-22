@@ -7,7 +7,6 @@ use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
-use function Kokonotsuba\libraries\getIdFromSession;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
 use function Puchiko\request\isPostRequest;
@@ -176,7 +175,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$rawStyling = $_POST['rawStyling'] ?? null;
 
 		// define who added it (current staff id)
-		$addedBy = getIdFromSession();
+		$addedBy = $this->moduleContext->currentUserId;
 
 		// now add a new entry
 		$this->themeService->addTheme(
