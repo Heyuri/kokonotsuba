@@ -420,7 +420,7 @@
 					<td class="postblock"><label for="duration">Ban duration</label></td>
 					<td>
 						<input type="text" class="inputtext" id="duration" name="duration" value="1d" placeholder="e.g., 1d, 2h" required>
-						<div class="formItemDescription">Examples: 1w = 1 week, 2d = 2 days, 3h = 3 hours</div>
+						<div class="formItemDescription">Examples: 2y = 2 years, 4m = 4 months, 1w = 1 week, 2d = 2 days, 3h = 3 hours</div>
 					</td>
 				</tr>
 				<tr>
