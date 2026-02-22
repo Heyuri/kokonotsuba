@@ -14,9 +14,9 @@ class moduleAdmin extends abstractModuleAdmin {
 	private readonly string $DEFAULT_BAN_MESSAGE;
 	private readonly string $myPage;
 
-    public function getRequiredRole(): userRole {
-        return $this->getConfig('AuthLevels.CAN_BAN');
-    }
+	public function getRequiredRole(): userRole {
+		return $this->getConfig('AuthLevels.CAN_BAN');
+	}
 
 	public function getName(): string {
 		return 'Admin ban tools';
@@ -401,17 +401,24 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function calculateBanDuration($duration) {
-		preg_match_all('/(\d+)([ywdhm])/', $duration, $matches, PREG_SET_ORDER);
+		// use regex to find all occurrences of number + unit (e.g. 1d, 2h, etc.)
+		preg_match_all('/(\d+(\.\d+)?)([ywdhm])/', $duration, $matches, PREG_SET_ORDER);
+		
+		// total ban duration in seconds
 		$seconds = 0;
 
+		// loop through matches and calculate the total duration in seconds
 		foreach ($matches as $match) {
-			$value = intval($match[1]);
-			switch ($match[2]) {
+			// cast to float for decimal support (e.g. 1.5d for 1 day and 12 hours)
+			$value = floatval($match[1]);
+			
+			// now match the unit and convert to seconds
+			switch ($match[3]) {
 				case 'y': $seconds += $value * 31536000; break;
+				case 'm': $seconds += $value * 2597120; break;
 				case 'w': $seconds += $value * 604800; break;
 				case 'd': $seconds += $value * 86400; break;
 				case 'h': $seconds += $value * 3600; break;
-				case 'm': $seconds += $value * 60; break;
 			}
 		}
 
