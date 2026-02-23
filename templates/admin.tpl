@@ -420,7 +420,15 @@
 					<td class="postblock"><label for="duration">Ban duration</label></td>
 					<td>
 						<input type="text" class="inputtext" id="duration" name="duration" value="1d" placeholder="e.g., 1d, 2h" required>
-						<div class="formItemDescription">Examples: 2y = 2 years, 4m = 4 months, 1w = 1 week, 2d = 2 days, 3h = 3 hours</div>
+						<div class="formItemDescription">Legend: 
+							<ul>
+								<li>'1y' = 1 year</li>
+								<li>'1m' = 1 month</li>
+								<li>'1w' = 1 week</li>
+								<li>'1d' = 1 day</li>
+							</ul>
+							<p>Decimal values can also be used - e.g: 1.5y = 18 months.</p>
+							<p>Units can also be combined - '1y2m' will last for 1 year and 2 months</p>
 					</td>
 				</tr>
 				<tr>
