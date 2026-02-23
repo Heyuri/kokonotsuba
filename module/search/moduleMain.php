@@ -279,7 +279,8 @@ class moduleMain extends abstractModuleMain {
 				$this->moduleContext->transactionManager,
 				$this->moduleContext->templateEngine,
 				$board,
-				$this->moduleContext->postRenderingPolicy
+				$this->moduleContext->postRenderingPolicy,
+				$this->moduleContext->currentUserId
 			);
 
 			// moduleEngine is unique per board
