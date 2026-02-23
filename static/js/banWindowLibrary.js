@@ -27,9 +27,24 @@
 
 			// Create window
 			const rect = {w: 420, h: 420};
-			const d = document.documentElement;
-			const x = d.clientWidth / 2 - rect.w / 2;
-			const y = d.clientHeight / 2 - rect.h / 2;
+			
+			const viewportWidth = window.innerWidth;
+			const viewportHeight = window.innerHeight;
+			const scrollX = window.scrollX || window.pageXOffset;
+			const scrollY = window.scrollY || window.pageYOffset;
+
+			const margin = 20; // distance from the right edge
+
+			// Right side alignment
+			let x = scrollX + viewportWidth - rect.w - margin;
+
+			// Vertical centering
+			let y = scrollY + (viewportHeight - rect.h) / 2;
+
+			// Ensure the window doesn't go off-screen
+			x = Math.min(x, scrollX + viewportWidth - rect.w);
+			y = Math.min(y, scrollY + viewportHeight - rect.h);
+
 			const win = new kkwmWindow(title, {x, y, w: rect.w, h: rect.h});
 			const body = win.div.querySelector('.windbody') || win.div;
 			body.appendChild(clone);
