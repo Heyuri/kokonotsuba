@@ -94,11 +94,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// get base module url
-		$moduleUrl = $this->myPage;
-
 		// get ban template
-		$banTemplate = $this->generateBanJsTemplate($moduleUrl);
+		$banTemplate = $this->generateBanJsTemplate();
 
 		// append ban template to header
 		$moduleHeader .= $banTemplate;
@@ -107,15 +104,14 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->includeScript('ban.js', $moduleHeader);
 	}
 
-	private function generateBanJsTemplate(string $moduleUrl): string {
+	private function generateBanJsTemplate(): string {
 		// template placeholders
 		// Leave most values blank/zero - the js will fill these values/fields
 		$templateValues = $this->getBanFormTemplateValues(
 			0,
 			0,
 			'',
-			$this->DEFAULT_BAN_MESSAGE,
-			$moduleUrl
+			$this->DEFAULT_BAN_MESSAGE
 		);
 
 		// generate an empty ban form (parse block)
@@ -183,15 +179,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		// IP address from GET
 		$ipAddress = $_GET['ip'] ?? '';
 
-		// get module url
-		$moduleUrl = $this->myPage;
-
 		$templateData = $this->getBanFormTemplateValues(
 			$postNumber,
 			$postUid,
 			$ipAddress,
-			$this->DEFAULT_BAN_MESSAGE,
-			$moduleUrl
+			$this->DEFAULT_BAN_MESSAGE
 		);
 
 		// add tables template value 
@@ -209,8 +201,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		int $postNumber, 
 		int $postUid, 
 		string $ipAddress, 
-		string $defaultBanMessage, 
-		string $moduleUrl
+		string $defaultBanMessage
 	): array {
 		// ban form template values
 		return [
