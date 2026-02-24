@@ -25,29 +25,30 @@
 				ipInput.value = ipLink ? ipLink.textContent.trim() : '';
 			}
 
-			// Create window
-			const rect = {w: 420, h: 420};
-			
-			const viewportWidth = window.innerWidth;
-			const viewportHeight = window.innerHeight;
-			const scrollX = window.scrollX || window.pageXOffset;
-			const scrollY = window.scrollY || window.pageYOffset;
-
-			const margin = 20; // distance from the right edge
-
-			// Right side alignment
-			let x = scrollX + viewportWidth - rect.w - margin;
-
-			// Vertical centering
-			let y = scrollY + (viewportHeight - rect.h) / 2;
-
-			// Ensure the window doesn't go off-screen
-			x = Math.min(x, scrollX + viewportWidth - rect.w);
-			y = Math.min(y, scrollY + viewportHeight - rect.h);
-
-			const win = new kkwmWindow(title, {x, y, w: rect.w, h: rect.h});
+			// Create at a neutral position
+			const win = new kkwmWindow(title, { x: 0, y: 0, w: 420, h: 420 });
 			const body = win.div.querySelector('.windbody') || win.div;
 			body.appendChild(clone);
+
+			// Position after layout is ready
+			requestAnimationFrame(() => {
+				const rect = win.div.getBoundingClientRect();
+
+				const viewportWidth = window.innerWidth;
+				const viewportHeight = window.innerHeight;
+				const margin = 20;
+
+				// Top-right
+				let x = viewportWidth - rect.width - margin;
+				let y = margin;
+
+				// Clamp just in case
+				x = Math.max(margin, x);
+				y = Math.max(margin, Math.min(y, viewportHeight - rect.height - margin));
+
+				win.div.style.left = x + 'px';
+				win.div.style.top = y + 'px';
+			});
 
 			const form = body.querySelector('form');
 			if (!form) return win;
