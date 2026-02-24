@@ -459,34 +459,6 @@
 		</div>
 	</form>
 
-	<script>
-var trolls = Array(
-	"Hatsune Miku is nothing more than an overated normie whore.",
-	"HAHA NIGGER MODS DELETING POSTS THEY CAN'T TAKE CRITICISM LITERALLY YANDERE DEV OF IMAGE BOARDS",
-	"You're imposing on muh freedoms of speech! See you in court, buddy.",
-	"Being gay is okay.",
-	"<span class=\"unkfunc\">&gt;Soooooooooooy</span>",
-	"I know where you live.<br>I watch everything you do.<br>I know everything about you and I am coming!",
-	"Ooooh muh god! qLiterally can't even!<br>I didn't even break any of the rules and I was banned?!",
-	"Unrestricted access to the internet is a human right.",
-	"get live Child Pizza at http:/jbbait.gov<br>get live Child Pizza at http:/jbbait.gov<br>get live Child Pizza at http:/jbbait.gov<br>get live Child Pizza at http:/jbbait.gov",
-	"<span class=\"unkfunc\">&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br>&gt;(USER WAS BANNED FOR THIS POST)<br></span>"
-);
-var troll = trolls[Math.floor(Math.random()*trolls.length)];
-
-function updatepview(event=null) {
-	var msg = document.getElementById("banmsg");
-	var pview = document.getElementById("msgpview");
-	pview.innerHTML = troll+msg.value;
-}
-
-window.onload = function () {
-	var msg = document.getElementById("banmsg");
-	msg.insertAdjacentHTML("afterend", '<div>Preview:</div><div class="thread"><div class="post reply"><div class="comment" id="msgpview"></div></div></div>');
-	msg.oninput = updatepview;
-	updatepview();
-}
-	</script>
 </div>
 <!--/&ADMIN_BAN_FORM-->
 
