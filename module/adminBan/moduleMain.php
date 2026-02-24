@@ -40,22 +40,51 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function checkBans(string $ipAddress): void {
+		// read ban logs
 		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
 		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
 
+		// check local board bans first, then global bans
 		$this->handleBan($log, $ipAddress, $this->BANFILE);
-		$this->handleBan($glog, $ipAddress, $this->GLOBAL_BANS, true);
+		$this->handleBan($glog, $ipAddress, $this->GLOBAL_BANS);
+	}
+	
+	private function ipMatchesBan(string $ip, string $pattern): bool {
+		// Validate IPv4 or IPv6
+		if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+			return false;
+		}
+
+		// For IPv6, expand to full form
+		if (strpos($ip, ':') !== false) {
+			$ip = inet_ntop(inet_pton($ip));
+		}
+
+		// Escape regex special chars, except *
+		$regex = preg_quote($pattern, '/');
+
+		if (strpos($pattern, ':') !== false) {
+			// IPv6: * matches 1+ hextets (4 hex digits) separated by colons
+			$regex = str_replace('\*', '(?:[0-9a-fA-F]{1,4}:?)+', $regex);
+		} else {
+			// IPv4: * matches 1+ digits or dots
+			$regex = str_replace('\*', '[0-9.]+', $regex);
+		}
+
+		// Anchor
+		$regex = '/^' . $regex . '$/i';
+
+		return preg_match($regex, $ip) === 1;
 	}
 
-	private function handleBan(&$log, $ip, $banFile, $isGlobalBan = false): void {
+	private function handleBan(&$log, $ip, $banFile): void {
 		// Loop through each ban entry in the log
 		foreach ($log as $i => $entry) {
 			// Each entry is expected to be in the format: ip,starttime,expires,reason
 			[$banip, $starttime, $expires, $reason] = explode(',', $entry, 4);
 
-			// For global bans, match by prefix (e.g. "127.0.0.")
-			// For regular bans, match the full IP exactly
-			$match = $isGlobalBan ? (strpos($ip, $banip) === 0) : ($ip === $banip);
+			// Check if the IP matches the ban pattern (supports wildcards)
+			$match = $this->ipMatchesBan($ip, $banip);
 			
 			if ($match) {
 				// If the ban has expired, remove it from the log and save
@@ -133,7 +162,6 @@ class moduleMain extends abstractModuleMain {
 			'{$BAN_DETAIL}' => $detailText
 		];
 	}
-
 
 	/**
 	 * Render the ban page using the template values.
