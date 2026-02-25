@@ -426,6 +426,7 @@
 								<li>'1m' = 1 month</li>
 								<li>'1w' = 1 week</li>
 								<li>'1d' = 1 day</li>
+								<li>'1h' = 1 hour</li>
 							</ul>
 							<p>Decimal values can also be used - e.g: 1.5y = 18 months.</p>
 							<p>Units can also be combined - '1y2m' will last for 1 year and 2 months</p>
@@ -1194,3 +1195,56 @@
 		</form>
 	</div>
 <!--/&THEME_FORM-->
+
+<!--&NOTE_CREATE_FORM-->
+	<div class="noteFormContainer">
+		<h3>Leave a note for post No.<span class="noteFormPostNumber">{$POST_NUMBER}</span></h3>
+		<div class="noteForm">
+			<form method="POST" action="{$MODULE_URL}">
+				<input name="action" value="saveNote" type="hidden">
+				<input name="post_uid" value="<!--&IF($POST_UID,'{$POST_UID}','')-->" type="hidden">
+				<table>
+					<tbody>
+						<tr>
+							<td class="postblock"><label for="note">Note</label></td>
+							<td>
+								<div class="formItemDescription">This note is only visible to moderators.</div>
+								<textarea id="note" name="note"></textarea>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+
+				<div class="buttonSection">
+					<input type="submit" value="Save note">
+				</div>
+			</form>
+	</div>
+<!--/&NOTE_CREATE_FORM-->
+
+<!--&NOTE_EDIT_FORM-->
+	<div class="noteFormContainer">
+		<h3>Edit note for post No.<span class="noteFormPostNumber">{$POST_NUMBER}</span></h3>
+		<div class="noteForm">
+			<form method="POST" action="{$MODULE_URL}">
+				<input name="action" value="editNote" type="hidden">
+				<input name="note_id" value="<!--&IF($NOTE_ID,'{$NOTE_ID}','')-->" type="hidden">
+				<table>
+					<tbody>
+						<tr>
+							<td class="postblock"><label for="note">Note</label></td>
+							<td>
+								<div class="formItemDescription">This note is only visible to moderators.</div>
+								<textarea id="note" name="note"><!--&IF($NOTE,'{$NOTE}','')--></textarea>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+
+				<div class="buttonSection">
+					<input type="submit" value="Save note">
+					<button name="action" value="deleteNote">Delete note</button>
+				</div>
+			</form>
+	</div>
+<!--/&NOTE_EDIT_FORM-->
