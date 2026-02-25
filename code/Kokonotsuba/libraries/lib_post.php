@@ -294,15 +294,3 @@ function generatePostHash(
 		return substr(crypt(md5($baseString), 'id'), -8);
 	}
 }
-
-function processPostDataForJson(array $posts): array {
-	
-	// loop through posts and remove sensitive columns
-	foreach($posts as &$p) {
-		// verify that its a valid post array by checking some core columns
-
-		// remove ip and password hash from entry
-	}
-
-	// return the array
-}
