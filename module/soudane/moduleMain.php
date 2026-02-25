@@ -8,6 +8,7 @@ use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\isActiveStaffSession;
+use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\json\renderJsonErrorPage;
 use function Puchiko\json\renderJsonPage;
 
@@ -266,13 +267,14 @@ class moduleMain extends abstractModuleMain {
 			throw new BoardException('Invalid parameters.');
 		}
 
-		// Check if the post exists in the repository
-		if (!$this->moduleContext->postRepository->getPostByUid(
-			$postUid, 
-			isActiveStaffSession()
-			)) {
-			throw new BoardException(_T('post_not_found'));
-		}
+		// Validate that the post exists; if not, this will throw an exception and halt execution
+		validatePostInput(
+			$this->moduleContext->postRepository->getPostByUid(
+				$postUid, 
+				isActiveStaffSession()
+			), 
+			false, 
+			404);
 
 		// If the type is 'score', calculate and output the score, then exit
 		if ($type === 'score') {

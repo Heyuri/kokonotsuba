@@ -13,6 +13,7 @@ use Kokonotsuba\post\postService;
 use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\request\redirect;
 
 class usrdelRoute {
@@ -72,9 +73,7 @@ class usrdelRoute {
 
 		// throw an exception if posts is falsey.
 		// in this case its likely already been deleted or doesn't exist
-		if(!$posts) {
-			throw new BoardException(_T('post_not_found'));
-		}
+		validatePostInput($posts, false);
 
 		// Call the method to authenticate the posts and log actions
 		$this->authenticateAndLogPostDeletions(

@@ -6,6 +6,7 @@ namespace Kokonotsuba\libraries;
 use RuntimeException;
 use Kokonotsuba\board\board;
 use Kokonotsuba\board\boardStoredFile;
+use Kokonotsuba\error\BoardException;
 use Kokonotsuba\file\file;
 use Kokonotsuba\file\fileFromUpload;
 use Kokonotsuba\file\thumbnail;
@@ -292,5 +293,26 @@ function generatePostHash(
 		$baseString = $ip . $idSeed . $threadNumber;
 
 		return substr(crypt(md5($baseString), 'id'), -8);
+	}
+}
+
+/*
+ * Validates post input for existence and correct format.
+ * Throws BoardException if validation fails.
+ * 
+ * @param null|false|int|array $postInput The input to validate (e.g., post UID).
+ * @param bool $isUid Indicates if the input is expected to be a UID (numeric).
+ *
+ * @return void
+ */
+function validatePostInput(null|false|int|array $postInput, bool $isUid = true, int $statusCode = 400): void {
+	// Validate post input
+	if (empty($postInput)) {
+		throw new BoardException(_T('post_not_found'), $statusCode);
+	}
+
+	// If it's supposed to be a UID, ensure it's numeric
+	if($isUid && !is_numeric($postInput)) {
+		throw new BoardException(_T('post_not_found'), $statusCode);
 	}
 }

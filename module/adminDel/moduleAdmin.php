@@ -12,6 +12,7 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\getPageOfThread;
+use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\request\redirect;
 
@@ -278,17 +279,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		$postUid = $_GET['post_uid'] ?? null;
 
 		// throw error if post uid is empty
-		if(empty($postUid)) {
-			throw new BoardException(_T('post_not_found'));
-		}
+		validatePostInput($postUid);
 
 		// fetch the post to be deleted
 		$post = $this->moduleContext->postRepository->getPostByUid($postUid, false);
 
 		// throw error if post not found
-		if(!$post) {
-			throw new BoardException(_T('post_not_found'));
-		}
+		validatePostInput($post, false);
 
 		// whether the post has been deleted
 		$isDeleted = !empty($post['open_flag']) && empty($post['file_only_deleted']);
