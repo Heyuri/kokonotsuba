@@ -277,7 +277,7 @@ class moduleMain extends abstractModuleMain {
 				$this->moduleContext->capcodeService,
 				$this->moduleContext->userCapcodes,
 				$this->moduleContext->transactionManager,
-				$this->moduleContext->templateEngine,
+				$this->moduleTemplateEngine,
 				$board,
 				$this->moduleContext->postRenderingPolicy,
 				$this->moduleContext->currentUserId
