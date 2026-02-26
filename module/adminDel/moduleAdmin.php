@@ -269,12 +269,6 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {
-		// get staff account from session
-		$staffAccountFromSession = new staffAccountFromSession;
-
-		// get account id
-		$accountId = $staffAccountFromSession->getUID();
-
 		// get post uid from request
 		$postUid = $_GET['post_uid'] ?? null;
 
@@ -282,7 +276,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		validatePostInput($postUid);
 
 		// fetch the post to be deleted
-		$post = $this->moduleContext->postRepository->getPostByUid($postUid, false);
+		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
 
 		// throw error if post not found
 		validatePostInput($post, false);
@@ -296,9 +290,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		// get board uid
 		$boardUID = $board->getBoardUID();
 
-		if (!$post) {
-			throw new BoardException('ERROR: That post does not exist.');
-		}
+		// validate the post input for deletion
+		validatePostInput($post, false, 404);
 
 		// throw an error if the post was already deleted
 		if ($isDeleted) {
@@ -310,11 +303,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		
 		switch ($action) {
 			case 'del':
-				$this->moduleContext->postService->removePosts([$post['post_uid']], $accountId);
+				$this->moduleContext->postService->removePosts([$post['post_uid']], $this->moduleContext->currentUserId);
 				$this->moduleContext->actionLoggerService->logAction('Deleted post No.'.$post['no'], $boardUID);
 				break;
 			case 'delmute':
-				$this->moduleContext->postService->removePosts([$post['post_uid']], $accountId);
+				$this->moduleContext->postService->removePosts([$post['post_uid']], $this->moduleContext->currentUserId);
 				$ip = $post['host'];
 				$starttime = $_SERVER['REQUEST_TIME'];
 				$expires = $starttime + intval($this->JANIMUTE_LENGTH) * 60;
@@ -346,7 +339,7 @@ class moduleAdmin extends abstractModuleAdmin {
 					throw new BoardException(_T('attachment_not_found'));
 				}
 
-				$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$attachment], $accountId);
+				$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$attachment], $this->moduleContext->currentUserId);
 
 				$this->moduleContext->actionLoggerService->logAction('Deleted file for post No.'.$post['no'], $boardUID);
 				break;
