@@ -65,7 +65,7 @@ class moduleMain extends abstractModuleMain {
 	private function renderVoteButton(
 		int $postUid,
 		string $type, // 'yeah' | 'nope'
-		int $voteCount,
+		?int $voteCount,
 		string $title,
 		string $wrapperClass
 	): string {
@@ -96,17 +96,22 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function onRenderPost(array &$arrLabels, array $post): void {
-		$postUid = $post['post_uid'];
+		// Initialize an empty string to hold the HTML for the vote buttons
+		$voteHtml = '';
 
-		$arrLabels['{$POSTINFO_EXTRA}'] .= ' <span class="soudaneContainer">';
+		// get post uid
+		$postUid = $post['post_uid'];
 
 		// enable nope
 		if ($this->enableNope) {
-			$logNope = $this->loadVotes($postUid, 'nope');
-			$arrLabels['{$POSTINFO_EXTRA}'] .= $this->renderVoteButton(
+			// get nope count for this post
+			$nopeCount = $post['votes']['nope_count'];
+
+			// render the nope button and append to post info extra
+			$voteHtml .= $this->renderVoteButton(
 				$postUid,
 				'nope',
-				count($logNope),
+				$nopeCount,
 				'Disagree with this post',
 				'soudaneNope'
 			);
@@ -114,23 +119,25 @@ class moduleMain extends abstractModuleMain {
 
 		// add a space so Nope & Yeah aren't touching each other
 		if ($this->enableNope && $this->enableYeah) {
-			$arrLabels['{$POSTINFO_EXTRA}'] .= ' ';
+			$voteHtml .= ' ';
 		}
 
 		// If SHOW_SCORE_ONLY is enabled, show score in between the "-" and "+"
 		if ($this->enableScore && $this->showScoreOnly) {
 			$score = $this->getScore($postUid);
-			$arrLabels['{$POSTINFO_EXTRA}'] .=
-				$this->renderScore($postUid, $score) . ' ';
+			$voteHtml .= $this->renderScore($postUid, $score) . ' ';
 		}
 
 		// yeah vote
 		if ($this->enableYeah) {
-			$logYeah = $this->loadVotes($postUid, 'yeah');
-			$arrLabels['{$POSTINFO_EXTRA}'] .= $this->renderVoteButton(
+			// get yeah count for this post
+			$yeahCount = $post['votes']['yeah_count'];
+
+			// render the yeah button and append to post info extra
+			$voteHtml .= $this->renderVoteButton(
 				$postUid,
 				'yeah',
-				count($logYeah),
+				$yeahCount,
 				'Agree with this post',
 				'soudane'
 			);
@@ -138,12 +145,11 @@ class moduleMain extends abstractModuleMain {
 
 		// If SHOW_SCORE_ONLY is not enabled, display the score separately
 		if ($this->enableScore && !$this->showScoreOnly) {
-			$score = _T('score_pre_text', $this->getScore($postUid));
-			$arrLabels['{$POSTINFO_EXTRA}'] .=
-				' ' . $this->renderScore($postUid, $score);
+			$score = _T('score_pre_text', $post['votes']['total_score']);
+			$voteHtml .= ' ' . $this->renderScore($postUid, $score);
 		}
 
-		$arrLabels['{$POSTINFO_EXTRA}'] .= '</span>';
+		$arrLabels['{$POSTINFO_EXTRA}'] .= ' <span class="soudaneContainer"> ' . $voteHtml . ' </span>';
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
@@ -162,9 +168,9 @@ class moduleMain extends abstractModuleMain {
 		return $votes;
 	}	
 
-	private function getVoteButtonText(string $type, int $count): string {
+	private function getVoteButtonText(string $type, ?int $count): string {
 		// If no votes exist, display "+" or "-" regardless of settings
-		if ($count === 0) {
+		if ($count === 0 || is_null($count)) {
 			return $type === 'yeah' ? '+' : '-';
 		}
 		// If SHOW_SCORE_ONLY is enabled, always show "+" or "-" without counts

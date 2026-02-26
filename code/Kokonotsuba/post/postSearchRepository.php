@@ -42,7 +42,7 @@ class postSearchRepository {
 		$params = $this->buildParamters($fields, $boardUids);
 
 		// get base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, false);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable,  false);
 
 		// build the search field WHERE clause
 		$searchClause = $this->buildSearchClause($fields, $boardUids, $openingPostsOnly);
@@ -70,7 +70,7 @@ class postSearchRepository {
 
 	public function countPostsByFullText(array $fields, array $boardUids, bool $openingPostsOnly): int {
 		// get base post query
-		$postQuery = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, false);
+		$postQuery = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable,  false);
 
 		// build the search field WHERE clause
 		$searchClause = $this->buildSearchClause($fields, $boardUids, $openingPostsOnly);

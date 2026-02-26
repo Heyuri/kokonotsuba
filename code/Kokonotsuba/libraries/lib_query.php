@@ -17,6 +17,7 @@ function getBasePostQuery(
     string $deletedPostsTable,
     string $fileTable,
     string $threadTable,
+	string $soudaneTable,
     bool $viewDeleted = false
 ): string {
 
@@ -74,12 +75,29 @@ function getBasePostQuery(
             dp.file_id,
             dp.deleted_by,
             dp.deleted_at,
-            dp.restored_at
+            dp.restored_at,
+
+			-- soudane
+			sv.votes_total_count,
+			sv.votes_yeah_count,
+			sv.votes_nope_count
 
         FROM ($postFilterSubquery) p
 
         -- Attachments
         LEFT JOIN $fileTable f ON f.post_uid = p.post_uid
+
+		-- vote data
+		LEFT JOIN (
+			SELECT
+				post_uid,
+				COUNT(*) AS vote_rows,
+				SUM(CASE WHEN yeah = 1 THEN 1 ELSE 0 END) AS votes_yeah_count,
+				SUM(CASE WHEN yeah = 0 THEN 1 ELSE 0 END) AS votes_nope_count,
+				SUM(CASE WHEN yeah = 1 THEN 1 ELSE -1 END) AS votes_total_count
+			FROM $soudaneTable
+			GROUP BY post_uid
+		) sv ON sv.post_uid = p.post_uid
 
         -- Thread info
         INNER JOIN $threadTable t ON p.thread_uid = t.thread_uid
@@ -184,6 +202,16 @@ function mergeMultiplePostRows(null|false|array $rows): false|array {
 		 * Delegate the repeated logic to one helper
 		 */
 		mergeRowIntoPost($posts[$uid], $row);
+
+		// soudane data
+		if ($row['votes_total_count'] !== null) {
+			$target['votes'] = [
+				'id' => $row['soudane_id'],
+				'total_score' => $row['votes_total_count'],
+				'yeah_count' => $row['votes_yeah_count'],
+				'nope_count' => $row['votes_nope_count']
+			];
+		}
 	}
 
 	// apply deletion meta data to attachments
@@ -205,7 +233,6 @@ function mergeMultiplePostRows(null|false|array $rows): false|array {
  * @param array $row    The SQL row
  */
 function mergeRowIntoPost(array &$target, array $row): void {
-
 	// normal attachments
 	if (!empty($row['attachment_id'])) {
 		$target['attachments'][$row['attachment_id']] = buildAttachment($row);
@@ -226,15 +253,25 @@ function mergeRowIntoPost(array &$target, array $row): void {
 
 	// remove raw attachment_* columns
 	stripAttachmentColumns($target);
+
+	// strip soudane columns
+	stripSoudaneColumns($target);
 }
 
 /**
- * Remove all attachment_* columns from a post row.
+ * Remove all columns in $cols from a post row.
  *
  * @param array &$row  Row to clean (modified in-place)
+ * @param array $cols   Columns to remove
  */
+function stripColumns(array &$row, array $cols): void {
+	foreach ($cols as $c) {
+		unset($row[$c]);
+	}
+}
+
 function stripAttachmentColumns(array &$row): void {
-	static $cols = [
+	stripColumns($row, [
 		'attachment_id',
 		'attachment_file_name',
 		'attachment_stored_filename',
@@ -250,11 +287,15 @@ function stripAttachmentColumns(array &$row): void {
 		'attachment_is_animated',
 		'attachment_is_deleted',
 		'attachment_timestamp_added',
-	];
+	]);
+}
 
-	foreach ($cols as $c) {
-		unset($row[$c]);
-	}
+function stripSoudaneColumns(array &$row): void {
+	stripColumns($row, [
+		'votes_total_count',
+		'votes_yeah_count',
+		'votes_nope_count'
+	]);
 }
 
 function applyDeletionMetadata(array &$posts): void {

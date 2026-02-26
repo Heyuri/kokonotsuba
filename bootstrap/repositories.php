@@ -39,9 +39,9 @@ $accountService = new accountService($accountRepository, $actionLoggerService);
 // ───────────────────────────────────────
 $fileRepository = new fileRepository($databaseConnection, $dbSettings['FILE_TABLE'], $dbSettings['POST_TABLE'], $dbSettings['DELETED_POSTS_TABLE']);
 $fileService = new fileService($fileRepository);
-$threadRepository = new threadRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['THREAD_THEMES_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['ACCOUNT_TABLE']);
-$postRepository = new postRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE']);
-$deletedPostsRepository = new deletedPostsRepository($databaseConnection, $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['POST_TABLE'], $dbSettings['ACCOUNT_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['THREAD_TABLE']);
+$threadRepository = new threadRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['THREAD_THEMES_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['ACCOUNT_TABLE'], $dbSettings['SOUDANE_TABLE']);
+$postRepository = new postRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['SOUDANE_TABLE']);
+$deletedPostsRepository = new deletedPostsRepository($databaseConnection, $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['POST_TABLE'], $dbSettings['ACCOUNT_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['SOUDANE_TABLE']);
 $deletedPostsService = new deletedPostsService($transactionManager, $deletedPostsRepository, $fileService, $actionLoggerService, $postRepository, $threadRepository);
 $postService = new postService($postRepository, $transactionManager, $threadRepository, $deletedPostsService);
 $threadService = new threadService($threadRepository, $postRepository, $postService, $transactionManager, $deletedPostsService, $fileService);

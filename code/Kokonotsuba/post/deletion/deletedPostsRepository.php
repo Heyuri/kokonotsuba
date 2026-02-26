@@ -19,7 +19,8 @@ class deletedPostsRepository {
 		private readonly string $postTable,
 		private readonly string $accountTable,
 		private readonly string $fileTable,
-		private readonly string $threadTable
+		private readonly string $threadTable,
+		private readonly string $soudaneTable
 	) {
 		$this->allowedOrderFields = [
 			'id',
@@ -131,7 +132,7 @@ class deletedPostsRepository {
 
 	public function getPostByDeletedPostId(int $deletedPostId): array|false {
 		// query to get the post data by deleted post id
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, true);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable,  true);
 		
 		// append WHERE clause
 		$query .= " WHERE p.post_uid = 
@@ -154,7 +155,7 @@ class deletedPostsRepository {
 
 	public function getPostsByIdList(array $postUids): array|false {
 		// base query to get the posts data by deleted post id
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, true);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable,  true);
 		
 		// generate IN clause for post uids
 		$inClause = pdoPlaceholdersForIn($postUids);
