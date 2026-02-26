@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\Modules\note;
+namespace Kokonotsuba\Modules\notes;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
@@ -19,7 +19,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function getName(): string {
-		return 'Note module';
+		return 'Notes management mod tool';
 	}
 
 	public function getVersion(): string {
@@ -49,8 +49,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->includeScript('note.js', $moduleHeader);
 
 		// append the note form template to the header
-		$noteFormTemplate = $this->generateNoteFormHtml(0, );
-		$moduleHeader .= $noteFormTemplate;
+		$noteCreateFormTemplate = $this->generateNoteFormHtml(0, 0);
+		$moduleHeader .= $this->generateTemplate('noteCreateFormTemplate', $noteCreateFormTemplate);
 	}
 
 	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
@@ -143,6 +143,14 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function generateNoteFormHtml(int $postUid, int $postNumber): string {
+		// build template values for the note form
+		$templateValues = [
+			'post_uid' => $postUid,
+			'post_number' => $postNumber,
+		];
+
+		// Parse block and return
+		return $this->moduleContext->adminPageRenderer->ParseBlock('NOTE_CREATE_FORM', $templateValues);
 	}
 
 	private function renderNoteForm(int $postUid): void {
@@ -150,7 +158,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($postUid);
 
 		// render the note form
-		$htmlOutput = $this->generateNoteFormHtml($postUid, $postNumber);
+		$noteForm = $this->generateNoteFormHtml($postUid, $postNumber);
+
+		// render the page
+		$htmlOutput = $this->moduleContext->adminPageRenderer->ParsePage(
+			'GLOBAL_ADMIN_PAGE_CONTENT', 
+			['{$PAGE_CONTENT}' => $noteForm], true);
 
 		// output the form
 		echo $htmlOutput;
