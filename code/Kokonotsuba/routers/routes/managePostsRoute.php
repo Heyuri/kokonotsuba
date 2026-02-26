@@ -26,6 +26,7 @@ use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\getBoardsByUIDs;
 use function Kokonotsuba\libraries\rebuildBoardsByArray;
+use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 
 class managePostsRoute {
 	public function __construct(
@@ -389,9 +390,7 @@ class managePostsRoute {
 		}
 
 		// Rebuild affected boards after deletion
-		$boardUids = $this->postRepository->getBoardUidsFromPostUids($postUids);
-		$boards = getBoardsByUIDs($boardUids);
-		rebuildBoardsByArray($boards);
+		rebuildBoardsFromPosts($postUids, $this->postService);
 
 		// Record deletion action in logs
 		$this->actionLoggerService->logAction("Delete posts: $checkboxDeletionActionLogStr".($onlyDeleteImages?' (file only)':''), $this->board->getBoardUID());

@@ -207,4 +207,8 @@ class postService {
 		// return the posts
 		return $repeatedPosts;
 	}
+
+	public function getBoardUidsFromPostUids(array $postUids): false|array {
+		return $this->postRepository->getBoardUidsFromPostUids($postUids);
+	}
 }

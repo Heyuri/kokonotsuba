@@ -5,6 +5,9 @@
 
 namespace Kokonotsuba\libraries;
 
+use Kokonotsuba\post\postRepository;
+use Kokonotsuba\post\postService;
+
 // rebuild all boards' html pages
 function rebuildAllBoards(): void {
     $allBoards = GLOBAL_BOARD_ARRAY;
@@ -23,4 +26,23 @@ function rebuildBoardsByArray(array $boardsToRebuild): void {
         $board->rebuildBoard(true);
     }
 
+}
+
+/**
+ * Rebuild boards that contain the given post UIDs
+ *
+ * @param array $postUids Array of post UIDs that were affected by an action
+ * @param postRepository $postRepository Repository to fetch post data and associated board UIDs
+ *
+ * @return void
+ */
+function rebuildBoardsFromPosts(array $postUids, postService $postService): void {
+    // get board UIDs from post UIDs
+    $boardUids = $postService->getBoardUidsFromPostUids($postUids);
+	
+    // get boards from board UIDs
+    $boards = getBoardsByUIDs($boardUids);
+	
+    // rebuild boards
+    rebuildBoardsByArray($boards);
 }

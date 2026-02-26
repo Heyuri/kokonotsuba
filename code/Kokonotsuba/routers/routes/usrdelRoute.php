@@ -13,6 +13,7 @@ use Kokonotsuba\post\postService;
 use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\request\redirect;
 
@@ -95,7 +96,7 @@ class usrdelRoute {
 		);
 
 		// Rebuild the static HTML pages for the board
-		$this->board->rebuildBoard();
+		rebuildBoardsFromPosts($authenticatedDeletedPostUids, $this->postService);
 
 		// handle page redirecting
 		$this->handleDeleteRedirect();
