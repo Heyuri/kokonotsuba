@@ -74,7 +74,7 @@ class threadApi {
 		}
 
 		// whether to include the posts of the thread
-		$includePosts = $_GET['includeThreadPosts'] ?? false; 
+		$includePosts = false; // needs moar work - $_GET['includeThreadPosts'] ?? false;
 
 		// build the thread array
 		// whitelists values we want in the json
