@@ -158,14 +158,10 @@
 			deleteAttachment: 'Attachment deleted!'
 		};
 
-		const failMessages = {
-			delete: 'Failed to delete post.',
-			mute: 'Failed to delete and mute.',
-			deleteAttachment: 'Failed to delete attachment.'
-		};
-
 		try {
 			if (type === 'post') markAsDeleted(postEl, 'post');
+
+			let data = {};
 
 			const res = await fetch(ctx.url, {
 				method: 'GET',
@@ -173,10 +169,12 @@
 				headers: { 'X-Requested-With': 'XMLHttpRequest' },
 				cache: 'no-store'
 			});
-			if (!res.ok) throw new Error();
-
-			let data = {};
+			
 			try { data = await res.json(); } catch (_) {}
+
+			if (!res.ok) {
+				throw new Error(data?.message || 'Request failed');
+			}
 
 			if (data?.success && data.deleted_link && type === 'post') {
 				postEl.dataset.deletedLink = data.deleted_link;
@@ -215,7 +213,7 @@
 			}
 		} catch (err) {
 			if (typeof showMessage === 'function') {
-				showMessage(failMessages[action] || 'Failed to process deletion.', false);
+				showMessage(err.message || 'Action failed.', false);
 			}
 		}
 	}

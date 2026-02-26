@@ -135,53 +135,58 @@
 		const postEl = options.postEl;
 		const revertUI = options.revertUI;
 		const successMessage = options.successMessage;
-		const failMessage = options.failMessage;
-		const hasMessages = typeof showMessage === 'function' && (successMessage || failMessage);
 
 		fetch(url, {
 			method: 'GET',
 			credentials: 'same-origin',
 			headers: { 'X-Requested-With': 'XMLHttpRequest' },
 			cache: 'no-store'
-		}).then(function (res) {
-			if (!res.ok) {
-				if (hasMessages && failMessage) showMessage(failMessage, false);
-				if (revertUI) revertUI();
-			} else {
-				res.json().then(function (data) {
-					if (data && data.success && data.deleted_link) {
-						
-						// Post-level only
-						postEl.dataset.deletedLink = data.deleted_link;
+		})
+		.then(async function (res) {
+			let data = null;
 
-						// Attachment deletion → add [VF] button
-						if (type === 'file' && options.attachment) {
-							const btn = options.attachment.querySelector('.adminDeleteFileFunction, #adminDeleteFileFunction');
-							if (btn) {
-								const vf = createViewFileButton(data.deleted_link);
-								btn.insertAdjacentElement('afterend', vf);
-								options.vfButton = vf;
-							}
-						}
-					}
-
-					if (hasMessages && successMessage) showMessage(successMessage, true);
-
-					// Widget cleanup: posts only (attachments never use widgets)
-					if (type !== 'file') {
-						removeWidgetActions(postEl, ['delete', 'mute']);
-					}
-
-				}).catch(function () {
-					if (hasMessages && successMessage) showMessage(successMessage, true);
-
-					if (type !== 'file') {
-						removeWidgetActions(postEl, ['delete', 'mute']);
-					}
-				});
+			// Always try to parse JSON (even on error responses)
+			try {
+				data = await res.json();
+			} catch (e) {
+				// ignore JSON parse errors
 			}
-		}).catch(function () {
-			if (hasMessages && failMessage) showMessage(failMessage, false);
+
+			if (!res.ok) {
+				const message = data?.message;
+				if (message) showMessage(message, false);
+				if (revertUI) revertUI();
+				return;
+			}
+
+			// Success response
+			if (data?.success && data?.deleted_link) {
+
+				// Post-level only
+				postEl.dataset.deletedLink = data.deleted_link;
+
+				// Attachment deletion and add [VF] button
+				if (type === 'file' && options.attachment) {
+					const btn = options.attachment.querySelector('.adminDeleteFileFunction, #adminDeleteFileFunction');
+					if (btn) {
+						const vf = createViewFileButton(data.deleted_link);
+						btn.insertAdjacentElement('afterend', vf);
+						options.vfButton = vf;
+					}
+				}
+			}
+
+			const message = data?.message || successMessage;
+			if (message) showMessage(message, true);
+
+			// Widget cleanup: posts only
+			if (type !== 'file') {
+				removeWidgetActions(postEl, ['delete', 'mute']);
+			}
+		})
+		.catch(function (err) {
+			const message = err?.message;
+			if (message) showMessage(message, false);
 			if (revertUI) revertUI();
 		});
 	}
@@ -214,14 +219,11 @@
 			e.preventDefault();
 			try {
 				let successMessage = null;
-				let failMessage = null;
 
 				if (type === 'file') {
 					successMessage = "Attachment deleted!";
-					failMessage = "Failed to delete attachment.";
 				} else {
 					successMessage = "Post deleted!";
-					failMessage = "Failed to delete post.";
 				}
 
 				let attachment = null;
@@ -234,7 +236,6 @@
 					postEl: postEl,
 					revertUI: uiState.revertUI,
 					successMessage: successMessage,
-					failMessage: failMessage,
 					attachment: attachment
 				});
 			} catch (_) {
@@ -251,17 +252,12 @@
 		// Attachments are never deleted via widgets
 		if (action === 'deleteAttachment') return;
 
-		const type = (action === 'delete' || action === 'mute') ? 'post' : 'post';
-
 		let successMessage = '';
-		let failMessage = '';
 
 		if (action === 'delete') {
 			successMessage = "Post deleted!";
-			failMessage = "Failed to delete post.";
 		} else if (action === 'mute') {
 			successMessage = "Post deleted and user muted!";
-			failMessage = "Failed to delete and mute.";
 		}
 
 		const uiState = createDeletionUIState('post', postEl, { arrow: ctx.arrow });
@@ -271,8 +267,7 @@
 				type: 'post',
 				postEl: postEl,
 				revertUI: uiState.revertUI,
-				successMessage: successMessage,
-				failMessage: failMessage
+				successMessage: successMessage
 			});
 		} catch (_) {
 			if (uiState && uiState.revertUI) uiState.revertUI();
