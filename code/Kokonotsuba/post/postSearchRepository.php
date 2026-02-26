@@ -14,6 +14,7 @@ class postSearchRepository {
 		private readonly string $threadTable,
 		private readonly string $deletedPostsTable,
 		private readonly string $fileTable,
+		private readonly string $soudaneTable
 	) {}
 	
 	private function buildParamters(array $fields, array $boardUids): array {
