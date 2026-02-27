@@ -42,9 +42,6 @@ class moduleMain extends abstractModuleMain {
 		if (!empty($threadData['background_hex_color']) && $threadData['background_hex_color'] !== "#000000") {
 			$styleAttributes[] =
 				'background-color: ' . sanitizeStr($threadData['background_hex_color']);
-			
-			// set the background color of the text to the default bg so the OP can be read more easily
-			$textBg = "#p{$boardUID}_{$threadNumber} .comment { background-color: var(--color-bg-main) }";
 		}
 
 		// thread text color
@@ -77,6 +74,14 @@ class moduleMain extends abstractModuleMain {
 			(!empty($threadData['reply_background_hex_color']) && $threadData['reply_background_hex_color'] !== "#000000") 
 			? 'background-color: ' . sanitizeStr($threadData['reply_background_hex_color'])
 			: '';
+
+
+		// handle text bg for visibility
+		if(!empty($threadData['background_hex_color']) && $threadData['background_hex_color'] !== "#000000"
+			|| !empty($threadData['background_image_url'])) {
+			// set the background color of the text to the default bg so the OP can be read more easily
+			$textBg = "#p{$boardUID}_{$threadNumber} .comment { background-color: var(--color-bg-main) }";
+		}
 
 		// wrap attributes in id style block as well as the reply style, then return
 		return "#t{$boardUID}_{$threadNumber} { $collapsedAttributes }"
