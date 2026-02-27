@@ -10,6 +10,7 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Puchiko\request\isGetRequest;
 use function Puchiko\request\isPostRequest;
@@ -38,7 +39,15 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->getRequiredRole(),
 			'ManagePostsControls',
 			function(string &$modControlSection, array &$post) {
-				$this->renderFilterPostButton($modControlSection, $post);
+				$this->renderFilterPostButton($modControlSection, $post, false);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'PostAdminControls',
+			function(string &$modControlSection, array &$post) {
+				$this->renderFilterPostButton($modControlSection, $post, true);
 			}
 		);
 
@@ -62,10 +71,18 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->antiSpamService = getAntiSpamService();
 	}
 	
-	public function renderFilterPostButton(string &$modfunc, array $post): void {
+	public function renderFilterPostButton(string &$modfunc, array $post, bool $noScript): void {
+		// generate filer post url
 		$filterPostUrl = $this->generateFilterPostUrl($post['post_uid']);
 
-		$modfunc .= '<span class="adminFunctions adminFilterPostFunction">[<a href="' . htmlspecialchars($filterPostUrl) . '" title="Filter post content">FP</a>]</span>';
+		// generate the filter post button html and append it to the modfunc string
+		$modfunc .= generateModerateButton(
+			$filterPostUrl, 
+			'FP', 
+			'Filter post content', 
+			'adminFilterPostFunction',
+			$noScript
+		);
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, array &$post): void {

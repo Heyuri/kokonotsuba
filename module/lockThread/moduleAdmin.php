@@ -9,6 +9,7 @@ use Kokonotsuba\post\FlagHelper;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
@@ -32,7 +33,15 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->getRequiredRole(),
 			'ManagePostsThreadControls',
 			function(string &$modControlSection, array &$post) {
-				$this->addLockButtonToAdminControls($modControlSection, $post);
+				$this->addLockButtonToAdminControls($modControlSection, $post, false);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ThreadAdminControls',
+			function(string &$modControlSection, array &$post) {
+				$this->addLockButtonToAdminControls($modControlSection, $post, true);
 			}
 		);
 
@@ -53,12 +62,18 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function addLockButtonToAdminControls(&$modfunc, $post) {
+	private function addLockButtonToAdminControls(string &$modfunc, array $post, bool $noScript) {
 		$status = new FlagHelper($post['status']);
 
 		$lockThreadLink = $this->generateLockUrl($post['post_uid']);
 
-		$modfunc.= '<span class="adminFunctions adminLockFunction">[<a href="' . htmlspecialchars($lockThreadLink) . '"' . ($status->value('stop') ? ' title="Unlock thread">l' : ' title="Lock thread">L').'</a>]</span>';
+		$modfunc .= generateModerateButton(
+			$lockThreadLink,
+			$status->value('stop') ? 'l' : 'L',
+			$status->value('stop') ? 'Unlock thread' : 'Lock thread',
+			'adminLockFunction',
+			$noScript
+		);
 	}
 
 	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {

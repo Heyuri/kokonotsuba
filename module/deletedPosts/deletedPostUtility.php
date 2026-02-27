@@ -6,6 +6,8 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\generateModerateButton;
+
 class deletedPostUtility {
 	public function __construct(
 		private moduleAdmin $moduleAdmin,
@@ -42,7 +44,7 @@ class deletedPostUtility {
 
 	}
 
-	public function adminPostViewModuleButton(array $post): string {
+	public function adminPostViewModuleButton(array $post, bool $noScript = false): string {
 		// whether to render it
 		if(!$this->canRenderButton($post)) {
 			return '';
@@ -54,11 +56,17 @@ class deletedPostUtility {
 		// get url
 		$modulePageUrl = $this->generateViewDeletedPostUrl($deletedPostId);
 
-		// render the html
-		$buttonUrl = '<span class="adminFunctions adminViewDeletedPostFunction">[<a href="' . htmlspecialchars($modulePageUrl) . '" title="View deleted post">VD</a>]</span>';
+		// generate the button html
+		$buttonHtml = generateModerateButton(
+			$modulePageUrl,
+			'VD',
+			'View deleted post',
+			'adminViewDeletedPostFunction',
+			$noScript
+		);
 
 		// return string
-		return $buttonUrl;
+		return $buttonHtml;
 	}
 
 	public function canRenderButton(array $post): bool {

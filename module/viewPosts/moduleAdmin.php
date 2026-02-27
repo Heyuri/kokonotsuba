@@ -7,6 +7,7 @@ use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Kokonotsuba\libraries\html\getCurrentUrlNoQuery;
 use function Puchiko\request\redirect;
@@ -29,7 +30,15 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->getRequiredRole(),
 			'ManagePostsControls',
 			function(string &$modControlSection, array &$post) {
-				$this->renderViewPostsButton($modControlSection, $post);
+				$this->renderViewPostsButton($modControlSection, $post, false);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ManagePostsControls',
+			function(string &$modControlSection, array &$post) {
+				$this->renderViewPostsButton($modControlSection, $post, true);
 			}
 		);
 
@@ -65,10 +74,16 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $roleLevel->isAtLeast($canViewIpLevel);
 	}
 
-	private function renderViewPostsButton(string &$modControlSection, array &$post): void {
+	private function renderViewPostsButton(string &$modControlSection, array &$post, bool $noScript = false): void {
 		$viewPostsUrl = $this->generateViewPostsUrl($post['post_uid']);
 		
-		$modControlSection .= '<span class="adminFunctions adminViewFunction">[<a href="' . htmlspecialchars($viewPostsUrl) . '" title="' . _T('view_posts_by_user') . '">VP</a>]</span>';
+		$modControlSection .= generateModerateButton(
+			$viewPostsUrl,
+			'VP',
+			_T('view_posts_by_user'),
+			'adminViewPostsFunction',
+			$noScript
+		);
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, array &$post): void {

@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\adminBan;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
 
@@ -36,7 +37,15 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->getRequiredRole(),
 			'ManagePostsControls',
 			function(string &$modControlSection, array &$post) {
-				$this->onRenderPostAdminControls($modControlSection, $post);
+				$this->onRenderPostAdminControls($modControlSection, $post, false);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'PostAdminControls',
+			function(string &$modControlSection, array &$post) {
+				$this->onRenderPostAdminControls($modControlSection, $post, true);
 			}
 		);
 
@@ -65,12 +74,18 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function onRenderPostAdminControls(string &$modfunc, array &$post) {
+	private function onRenderPostAdminControls(string &$modfunc, array &$post, bool $noScript): void {
 		$ip = htmlspecialchars($post['host']) ?? '';
 
 		$modulePageUrl = $this->generateBanUrl($ip, $post['post_uid']);
 
-		$modfunc .= '<span class="adminFunctions adminBanFunction">[<a href="' . htmlspecialchars($modulePageUrl) . '" title="Ban">B</a>]</span>';
+		$modfunc .= generateModerateButton(
+			$modulePageUrl, 
+			'B', 
+			'Ban this user', 
+			'adminBanFunction',
+			$noScript
+		);
 	}
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {

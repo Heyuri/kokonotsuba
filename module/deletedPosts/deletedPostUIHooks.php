@@ -28,7 +28,7 @@ class deletedPostUIHooks {
 			$requiredRole,
 			'PostAdminControls',
 			function(string &$modControlSection, array &$post) {
-				$this->onRenderPostAdminControls($modControlSection, $post);
+				$this->onRenderPostAdminControls($modControlSection, $post, true);
 			}
 		);
 
@@ -36,7 +36,7 @@ class deletedPostUIHooks {
 			$requiredRole,
 			'ManagePostsControls',
 			function(string &$modControlSection, array &$post) {
-				$this->onRenderManagePostsControls($modControlSection, $post);
+				$this->onRenderPostAdminControls($modControlSection, $post, false);
 			}
 		);
 
@@ -120,20 +120,13 @@ class deletedPostUIHooks {
 		$callback($post);
 	}
 
-	private function onRenderManagePostsControls(string &$modFunc, array &$post): void {
-		$this->handleDeletedPost($post, function(array &$post) use (&$modFunc) {
-			// render the <a> button to take the user to the entry in the module
-			$modFunc .= $this->deletedPostUtility->adminPostViewModuleButton($post);
-
-			// also render indicator if conditions apply
-			$modFunc .= $this->renderDeletedIndicator($post);
-		});
-	}
-
-	private function onRenderPostAdminControls(string &$modFunc, array &$post): void {
-		$this->handleDeletedPost($post, function(array &$post) use (&$modFunc) {
+	private function onRenderPostAdminControls(string &$modFunc, array &$post, bool $noScript): void {
+		$this->handleDeletedPost($post, function(array &$post) use (&$modFunc, $noScript) {
 			// render indicator
 			$modFunc .= $this->renderDeletedIndicator($post);
+
+			// render the <a> button to take the user to the entry in the module
+			$modFunc .= $this->deletedPostUtility->adminPostViewModuleButton($post, $noScript);
 		});
 	}
 

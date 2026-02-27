@@ -64,3 +64,21 @@ function updateAccountSession(accountRepository $accountRepository, Log_inLoginS
 	// now update the session
 	$loginSessionHandler->updateSessionData($account);
 }
+
+function generateModerateButton(
+	string $buttonUrl,  
+	string $label, 
+	string $title, 
+	string $class,
+	bool $isNoScript = false,
+): string {
+	// generate the html for a moderate button with the given url, label, title and class
+	$buttonSpan = '<span class="adminFunctions ' . htmlspecialchars($class) . '">[<a href="' . htmlspecialchars($buttonUrl) . '" title="' . htmlspecialchars($title) . '">' . htmlspecialchars($label) . '</a>]</span>';
+
+	// if the button is meant to be used in a no script context, wrap it in a noscript tag
+	if($isNoScript) {
+		$buttonSpan = '<noscript>' . $buttonSpan . '</noscript>';
+	}
+
+	return $buttonSpan;
+}

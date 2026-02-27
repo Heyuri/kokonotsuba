@@ -13,6 +13,7 @@ use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\postRegistData;
 use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\html\generateBoardListRadioHTML;
 use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\rebuildBoardsByArray;
@@ -42,7 +43,15 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->getRequiredRole(),
 			'ManagePostsThreadControls',
 			function(string &$modControlSection, array &$post) {
-				$this->renderMoveThreadButton($modControlSection, $post);
+				$this->renderMoveThreadButton($modControlSection, $post, false);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ThreadAdminControls',
+			function(string &$modControlSection, array &$post) {
+				$this->renderMoveThreadButton($modControlSection, $post, true);
 			}
 		);
 
@@ -55,17 +64,18 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	public function renderMoveThreadButton(string &$modfunc, array $post): void {
-		// if it's a thread, apply admin hook list html
-		$threadStatus = new FlagHelper($post['status']);
+	public function renderMoveThreadButton(string &$modfunc, array $post, bool $noScript): void {
+		// url to move thread page with thread uid as parameter
+		$moveThreadButtonUrl = $this->generateMoveThreadUrl($post['thread_uid']);
 
-		if($threadStatus->value('ghost')) {
-			$modfunc .= '<span class="adminFunctions adminMoveThreadFunction" title="Ghost threads cannot be moved.">[mt]</span>';
-		} else {
-			$moveThreadButtonUrl = $this->generateMoveThreadUrl($post['thread_uid']);
-
-			$modfunc .= '<span class="adminFunctions adminMoveThreadFunction">[<a href="' . $moveThreadButtonUrl . '" title="Move thread">MT</a>]</span>';
-		}
+		// append the move thread button to the modfunc string
+		$modfunc .= generateModerateButton(
+			$moveThreadButtonUrl,
+			'MT',
+			'Move thread',
+			'adminMoveThreadFunction',
+			$noScript
+		);
 	}
 
 	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {

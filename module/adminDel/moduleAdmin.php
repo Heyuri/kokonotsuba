@@ -3,13 +3,13 @@
 namespace Kokonotsuba\Modules\adminDel;
 
 use Kokonotsuba\error\BoardException;
-use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\html\getCurrentUrlNoQuery;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\attachmentFileExists;
+use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\getPageOfThread;
 use function Kokonotsuba\libraries\validatePostInput;
@@ -44,7 +44,15 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->getRequiredRole(),
 			'ManagePostsControls',
 			function(string &$modControlSection, array &$post) {
-				$this->onRenderPostAdminControls($modControlSection, $post);
+				$this->onRenderPostAdminControls($modControlSection, $post, false);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'PostAdminControls',
+			function(string &$modControlSection, array &$post) {
+				$this->onRenderPostAdminControls($modControlSection, $post, true);
 			}
 		);
 
@@ -78,7 +86,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function onRenderPostAdminControls(string &$modFunc, array &$post): void {
+	private function onRenderPostAdminControls(string &$modFunc, array &$post, bool $noScript): void {
 		// whether to render the admin controls or not
 		if(!$this->canRenderButton($post)) {
 			return;
@@ -88,20 +96,23 @@ class moduleAdmin extends abstractModuleAdmin {
 		$muteMinutes = $this->JANIMUTE_LENGTH;
 		$plural = $muteMinutes == 1 ? '' : 's';
 
-		$addControl = function(string $action, string $label, string $title, string $class) use (&$modFunc, $postUid) {
-			$buttonUrl = $this->generateDeletionUrl($action, $postUid);
-			$modFunc .= '<span class="adminFunctions ' . htmlspecialchars($class) . '">[<a href="' . htmlspecialchars($buttonUrl) . '" title="' . htmlspecialchars($title) . '">' . htmlspecialchars($label) . '</a>]</span>';
-		};
-
-		$addControl('del', 'D', 'Delete', 'adminDeleteFunction');
-
-		$addControl(
-			'delmute',
-			'DM',
-			'Delete and mute for ' . $muteMinutes . ' minute' . $plural,
-			'adminDeleteMuteFunction'
+		// render delete button
+		$modFunc .= generateModerateButton(
+			$this->generateDeletionUrl('del', $postUid),
+			'D',
+			'Delete',
+			'adminDeleteFunction',
+			$noScript
 		);
 
+		// render delete and mute button
+		$modFunc .= generateModerateButton(
+			$this->generateDeletionUrl('delmute', $postUid),
+			'DM',
+			'Delete and mute for ' . $muteMinutes . ' minute' . $plural,
+			'adminDeleteMuteFunction',
+			$noScript
+		);
 	}
 	
 	private function canRenderButton(array $post): bool {

@@ -9,6 +9,7 @@ use Kokonotsuba\post\FlagHelper;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
@@ -33,7 +34,15 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->getRequiredRole(),
 			'ManagePostsThreadControls',
 			function(string &$modControlSection, array &$post) {
-				$this->renderAutoSageButton($modControlSection, $post);
+				$this->renderAutoSageButton($modControlSection, $post, false);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'ThreadAdminControls',
+			function(string &$modControlSection, array &$post) {
+				$this->renderAutoSageButton($modControlSection, $post, true);
 			}
 		);
 
@@ -54,12 +63,21 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	} 
 
-	private function renderAutoSageButton(string &$modfunc, array $post) {
+	private function renderAutoSageButton(string &$modfunc, array $post, bool $noScript) {
+		// only render the button for OP posts
 		$status = new FlagHelper($post['status']);
 
+		// generate the autosage url
 		$autoSageLink = $this->generateAutoSageUrl($post['post_uid']);
 
-		$modfunc.= '<span class="adminFunctions adminAutosageFunction">[<a href="' . htmlspecialchars($autoSageLink) . '"' . ($status->value('as') ? ' title="Allow age">as' : ' title="Autosage">AS') . '</a>]</span>';
+		// generate the button html and append it to the modfunc string
+		$modfunc .= generateModerateButton(
+			$autoSageLink,
+			$status->value('as') ? 'as' : 'AS',
+			$status->value('as') ? 'Un-autosage' : 'Autosage',
+			'adminAutoSageFunction',
+			$noScript
+		);
 	}
 
 	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {

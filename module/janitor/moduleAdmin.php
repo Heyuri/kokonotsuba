@@ -7,6 +7,7 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
 
@@ -28,7 +29,15 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->getRequiredRole(),
 			'ManagePostsControls',
 			function(string &$modControlSection, array &$post) {
-				$this->renderWarnButton($modControlSection, $post);
+				$this->renderWarnButton($modControlSection, $post, false);
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'PostAdminControls',
+			function(string &$modControlSection, array &$post) {
+				$this->renderWarnButton($modControlSection, $post, true);
 			}
 		);
 
@@ -49,10 +58,16 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function renderWarnButton(string &$modfunc, array &$post): void {
+	private function renderWarnButton(string &$modfunc, array &$post, bool $noScript = false): void {
 		$janitorWarnUrl = $this->generateWarnUrl($post['post_uid']);
 		
-		$modfunc .= '<span class="adminFunctions adminWarnFunction">[<a href="' . htmlspecialchars($janitorWarnUrl) . '" title="Warn">W</a>]</span>';
+		$modfunc .= generateModerateButton(
+			$janitorWarnUrl,
+			'W',
+			'Warn the user who made this post',
+			'adminWarnFunction',
+			$noScript
+		);
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
