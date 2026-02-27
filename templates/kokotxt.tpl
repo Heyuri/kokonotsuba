@@ -105,6 +105,7 @@
 						<ul class="rules">
 							{$FORM_NOTICE}
 							<!--&IF($FORM_NOTICE_STORAGE_LIMIT,'{$FORM_NOTICE_STORAGE_LIMIT}','')-->
+							{$MODULE_POST_MENU_LIST_ITEM}
 						</ul>
 						{$HOOKPOSTINFO}
 					</div>

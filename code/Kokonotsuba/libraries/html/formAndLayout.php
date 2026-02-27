@@ -124,6 +124,8 @@ function generatePostFormHTML(int $resno,
 	}
 
 	$moduleEngine->dispatch('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // Hook: PostInfo
+	$moduleEngine->dispatch('PostMenuList', array(&$pte_vals['{$MODULE_POST_MENU_LIST_ITEM}'])); // Hook: post menu list item
+
 
 	$pte_vals['{$POST_FORM}'] .= $templateEngine->ParseBlock('POSTFORM',$pte_vals);
 
@@ -162,6 +164,7 @@ function preparePostFormTemplateValues(int $resno, ?string $liveIndexFile, ?stri
 				)
 		),
 		'{$HOOKPOSTINFO}' => '',
+		'{$MODULE_POST_MENU_LIST_ITEM}' => '',
 		'{$MODULE_INFO_HOOK}' => $moduleInfoHook,
 		'{$ALWAYS_NOKO}' => $config['ALWAYS_NOKO'] ? 'data-alwaysnoko="true"' : '',
 		'{$POST_FORM}' => '');

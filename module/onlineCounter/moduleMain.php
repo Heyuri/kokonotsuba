@@ -27,8 +27,8 @@ class moduleMain extends abstractModuleMain {
 		
 		$this->modulePageUrl = $this->getModulePageURL();
 
-		$this->moduleContext->moduleEngine->addListener('PostInfo', function(string &$hookPostInfoHtml) {
-			$this->onRenderPostInfo($hookPostInfoHtml);
+		$this->moduleContext->moduleEngine->addListener('PostMenuList', function(string &$postMenuListHtml) {
+			$this->onRenderPostMenuList($postMenuListHtml);
 		});
 
 		$this->moduleContext->moduleEngine->addListener('ModuleHeader', function(string &$moduleHeader) {
@@ -172,7 +172,7 @@ class moduleMain extends abstractModuleMain {
 		rename($tempFile, $this->usercounter);
 	}
 	
-	private function onRenderPostInfo(string &$hookPostInfoHtml): void {
+	private function onRenderPostMenuList(string &$hookPostInfoHtml): void {
 		$userCount = $this->getUserCount();
 
 		// Handle pluralization
