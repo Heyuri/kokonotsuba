@@ -314,8 +314,8 @@ class postRenderer {
 		}
 
 		// Render each attachment individually
-		foreach ($attachments as $index=>$att) {
-			// generateAttachmentHtml()
+		foreach (array_values($attachments) as $index => $att) {
+			// generate the attachment html and append it to the attachments html variable
 			$postAttachmentsHtml .= $this->attachmentRenderer->generateAttachmentHtml(
 				$att,
 				$isDeleted,
