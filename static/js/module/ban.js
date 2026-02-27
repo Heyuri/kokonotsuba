@@ -8,7 +8,7 @@ window.postWidget.registerActionHandler('ban', function(ctx) {
 	// Open the form window
 	PostActionUtils.openWindow({
 		templateId: '#banFormTemplate',
-		title: '',
+		title: 'Ban user',
 		postEl,
 		successMessage: "User was banned for this post!",
 		failMessage: "There was an error while banning user.",

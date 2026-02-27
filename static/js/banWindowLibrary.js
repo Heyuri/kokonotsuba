@@ -32,22 +32,17 @@
 
 			// Position after layout is ready
 			requestAnimationFrame(() => {
-				const rect = win.div.getBoundingClientRect();
+				// Calculate the width of the window after content is added
+				const rectWidth = win.div.offsetWidth;
 
-				const viewportWidth = window.innerWidth;
-				const viewportHeight = window.innerHeight;
+				// Position the window near the right edge with some margin
+				const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
 				const margin = 20;
 
-				// Top-right
-				let x = viewportWidth - rect.width - margin;
-				let y = margin;
+				// Ensure the window doesn't go off-screen
+				let x = viewportWidth - rectWidth - margin;  // Left position
 
-				// Clamp just in case
-				x = Math.max(margin, x);
-				y = Math.max(margin, Math.min(y, viewportHeight - rect.height - margin));
-
-				win.div.style.left = x + 'px';
-				win.div.style.top = y + 'px';
+				win.div.style.left = `${x}px`;
 			});
 
 			const form = body.querySelector('form');

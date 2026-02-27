@@ -4,7 +4,7 @@ window.postWidget.registerActionHandler('warn', function(ctx) {
 
 	PostActionUtils.openWindow({
 		templateId: '#warnFormTemplate',
-		title: '',
+		title: 'Warn user',
 		postEl,
 		successMessage: "User was warned for this post!",
 		failMessage: "There was an error while warning user.",
