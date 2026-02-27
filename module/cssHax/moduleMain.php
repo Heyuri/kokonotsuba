@@ -32,10 +32,19 @@ class moduleMain extends abstractModuleMain {
 	private function buildStyleAttributes(array $threadData, int $threadNumber): string {
 		$styleAttributes = [];
 
+		// extract board uid
+		$boardUID = $threadData['boardUID'] ?? '';
+
+		// init text bg
+		$textBg = '';
+
 		// thread background color
 		if (!empty($threadData['background_hex_color']) && $threadData['background_hex_color'] !== "#000000") {
 			$styleAttributes[] =
 				'background-color: ' . sanitizeStr($threadData['background_hex_color']);
+			
+			// set the background color of the text to the default bg so the OP can be read more easily
+			$textBg = "#p{$boardUID}_{$threadNumber} .comment { background-color: var(--color-bg-main) }";
 		}
 
 		// thread text color
@@ -63,9 +72,6 @@ class moduleMain extends abstractModuleMain {
 		// implode with semi-colons
 		$collapsedAttributes = implode('; ', $styleAttributes);
 
-		// extract board uid
-		$boardUID = $threadData['boardUID'] ?? '';
-
 		// assemble the reply bg color attribute
 		$replyBackgroundAttribute = 
 			(!empty($threadData['reply_background_hex_color']) && $threadData['reply_background_hex_color'] !== "#000000") 
@@ -74,7 +80,8 @@ class moduleMain extends abstractModuleMain {
 
 		// wrap attributes in id style block as well as the reply style, then return
 		return "#t{$boardUID}_{$threadNumber} { $collapsedAttributes }"
-				. "#t{$boardUID}_{$threadNumber} .reply { $replyBackgroundAttribute }";
+				. "#t{$boardUID}_{$threadNumber} .reply { $replyBackgroundAttribute }"
+				. $textBg;
 	}
 
 	private function generateThreadStyle(array $threadData): string {
