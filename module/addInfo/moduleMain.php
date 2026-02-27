@@ -28,7 +28,7 @@ class moduleMain extends abstractModuleMain {
 	private function onRenderPostInfo(string &$form): void {
 		// Build additional information HTML
 		$addinfoHTML = '';  
-		$addinfoHTML .= '</ul><hr><ul class="rules">';
+		$addinfoHTML .= '<hr><ul class="rules">';
 		
 		// Add custom rules/points
 		foreach ($this->dotPoints as $rule) {
