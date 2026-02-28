@@ -15,11 +15,17 @@ class tripcodeProcessor {
 		// Check for fraud symbols in the name and append " (fraudster)" if found
 		if ($this->containsFraudSymbol($name)) {
 			$name .= " (fraudster)";
+
+			// replace symbols for good measure
+			$name = $this->replaceFullWithHollow($name);
+
 			return;
 		}
 
+
 		// Apply role capcode if conditions are met
 		$capcode = $this->setCapcodeIfExists($roleLevel, $secure_tripcode);
+
 		// now return
 		if($capcode) {
 			$tripcode = '';
@@ -35,6 +41,22 @@ class tripcodeProcessor {
 	// Check if name contains fraud symbols
 	private function containsFraudSymbol(string $name): bool {
 		return preg_match('/[◆◇♢♦⟡★]/u', $name);
+	}
+
+	private function replaceFullWithHollow(string $text) {
+	    // Define the replacements in an associative array
+	    $replacements = [
+	        '★' => '☆',  // Full star to hollow star
+	        '♦' => '♢',  // Full diamond to hollow diamond
+	        '◆' => '◇'  // Full black diamond to hollow diamond
+	    ];
+
+	    // Replace full symbols with hollow ones
+	    foreach ($replacements as $full => $hollow) {
+	        $text = str_replace($full, $hollow, $text);
+	    }
+
+	    return $text;
 	}
 
 	// Set the capcode if it exists in the array key
