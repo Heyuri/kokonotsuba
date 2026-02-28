@@ -105,7 +105,7 @@ class moduleMain extends abstractModuleMain {
 		// enable nope
 		if ($this->enableNope) {
 			// get nope count for this post
-			$nopeCount = $post['votes']['nope_count'];
+			$nopeCount = $post['votes']['nope_count'] ?? null;
 
 			// render the nope button and append to post info extra
 			$voteHtml .= $this->renderVoteButton(
@@ -131,7 +131,7 @@ class moduleMain extends abstractModuleMain {
 		// yeah vote
 		if ($this->enableYeah) {
 			// get yeah count for this post
-			$yeahCount = $post['votes']['yeah_count'];
+			$yeahCount = $post['votes']['yeah_count'] ?? null;
 
 			// render the yeah button and append to post info extra
 			$voteHtml .= $this->renderVoteButton(
@@ -145,7 +145,9 @@ class moduleMain extends abstractModuleMain {
 
 		// If SHOW_SCORE_ONLY is not enabled, display the score separately
 		if ($this->enableScore && !$this->showScoreOnly) {
-			$score = _T('score_pre_text', $post['votes']['total_score']);
+			$scoreCount = $post['votes']['total_score'] ?? 0;
+
+			$score = _T('score_pre_text', $scoreCount);
 			$voteHtml .= ' ' . $this->renderScore($postUid, $score);
 		}
 
