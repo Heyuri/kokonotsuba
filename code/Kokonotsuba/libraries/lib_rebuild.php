@@ -36,7 +36,7 @@ function rebuildBoardsByArray(array $boardsToRebuild, bool $logRebuild = false):
  *
  * @return void
  */
-function rebuildBoardsFromPosts(array $postUids, postService $postService): void {
+function rebuildBoardsFromPosts(array $postUids, postService $postService, bool $logRebuild = false): void {
     // get board UIDs from post UIDs
     $boardUids = $postService->getBoardUidsFromPostUids($postUids);
 	
@@ -44,5 +44,5 @@ function rebuildBoardsFromPosts(array $postUids, postService $postService): void
     $boards = getBoardsByUIDs($boardUids);
 	
     // rebuild boards
-    rebuildBoardsByArray($boards);
+    rebuildBoardsByArray($boards, $logRebuild);
 }
