@@ -47,7 +47,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			
 			$boardsToRebuild = $this->moduleContext->boardService->getBoardsFromUIDs($boardUIDsToRebuild);
 			
-			rebuildBoardsByArray($boardsToRebuild);
+			rebuildBoardsByArray($boardsToRebuild, true);
 
 			$moduleUrlForRedirect = $this->getModulePageURL([], false);
 

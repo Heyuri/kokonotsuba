@@ -20,10 +20,10 @@ function rebuildAllBoards(): void {
 }
 
 // rebuild selected boards from board uid array
-function rebuildBoardsByArray(array $boardsToRebuild): void {
+function rebuildBoardsByArray(array $boardsToRebuild, bool $logRebuild = false): void {
     // rebuild boards
     foreach($boardsToRebuild as $board) {
-        $board->rebuildBoard(true);
+        $board->rebuildBoard($logRebuild);
     }
 
 }

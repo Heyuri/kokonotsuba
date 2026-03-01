@@ -24,8 +24,6 @@ use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Kokonotsuba\libraries\getAttachmentUrl;
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\getAttachmentsFromPosts;
-use function Kokonotsuba\libraries\getBoardsByUIDs;
-use function Kokonotsuba\libraries\rebuildBoardsByArray;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 
 class managePostsRoute {
