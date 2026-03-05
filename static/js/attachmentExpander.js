@@ -322,7 +322,7 @@
 	attachmentExpander.createExpandable = function(anchor, post, index, isImage, contentBuilder) {
 		// main container
 		var expandDiv = document.createElement("div");
-		expandDiv.className = "expand";
+		expandDiv.className = "expandimg";
 		expandDiv.setAttribute("data-attachment-index", index);
 
 		if(!isImage) {
