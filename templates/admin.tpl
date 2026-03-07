@@ -414,7 +414,10 @@
 				</tr>
 				<tr>
 					<td class="postblock"><label for="ip">IP address</label></td>
-					<td><input type="text" class="inputtext" id="ip" name="ip" placeholder="Enter IP address" value="<!--&IF($IP,'{$IP}','')-->" required></td>
+					<td>
+						<div class="formItemDescription">The IP to be banned. You can use '*' for range bans. E.g, '127.0.*' will ban any IP that begins with '127.0.'</div>
+						<input type="text" class="inputtext" id="ip" name="ip" placeholder="Enter IP address" value="<!--&IF($IP,'{$IP}','')-->" required>
+					</td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="duration">Ban duration</label></td>
@@ -606,11 +609,6 @@
 							<td class="postblock">Deleted at</td>
 							<td>{$DELETED_AT}</td>
 						</tr>
-						<!--&IF($IS_VIEW,'
-							<!--&DELETED_POST_NOTE_INPUT/-->
-						','
-							<!--&DELETED_POST_NOTE_PREVIEW/-->					
-						')-->
 						<!--&IF($IS_OPEN,'','
 							<!--&DELETED_POST_RESTORE_INFO/-->
 						')-->
@@ -641,16 +639,6 @@
 		</button>]
 	','')-->
 <!--/&PURGE_RESTORE_ENTRY_BUTTON-->
-
-<!--&DELETED_POST_NOTE_INPUT-->
-	<tr>
-		<td class="postblock">Staff note</td>
-		<td> 
-			<textarea class="inputtext" name="note" placeholder="Optionally, leave a note."><!--&IF($NOTE,'{$NOTE}','')--></textarea>
-			<br><button type="submit" name="action" value="saveNote">Save</button>
-		</td>
-	</tr>
-<!--/&DELETED_POST_NOTE_INPUT-->
 
 <!--&DELETED_POST_NOTE_PREVIEW-->
 	<!--&IF($NOTE_PREVIEW,'
@@ -1201,14 +1189,14 @@
 		<h3>Leave a note for post No.<span class="noteFormPostNumber">{$POST_NUMBER}</span></h3>
 		<div class="noteForm">
 			<form method="POST" action="{$MODULE_URL}">
-				<input name="action" value="saveNote" type="hidden">
-				<input name="post_uid" value="<!--&IF($POST_UID,'{$POST_UID}','')-->" type="hidden">
+				<input name="action" value="addNote" type="hidden">
+				<input name="postUid" value="<!--&IF($POST_UID,'{$POST_UID}','')-->" type="hidden">
 				<table>
 					<tbody>
 						<tr>
 							<td class="postblock"><label for="note">Note</label></td>
 							<td>
-								<div class="formItemDescription">This note is only visible to moderators.</div>
+								<div class="formItemDescription">{$NOTE_VISIBILITY_DESCRIPTION}</div>
 								<textarea id="note" name="note"></textarea>
 							</td>
 						</tr>
@@ -1234,7 +1222,7 @@
 						<tr>
 							<td class="postblock"><label for="note">Note</label></td>
 							<td>
-								<div class="formItemDescription">This note is only visible to moderators.</div>
+								<div class="formItemDescription">{$NOTE_VISIBILITY_DESCRIPTION}</div>
 								<textarea id="note" name="note"><!--&IF($NOTE,'{$NOTE}','')--></textarea>
 							</td>
 						</tr>
@@ -1248,3 +1236,13 @@
 			</form>
 	</div>
 <!--/&NOTE_EDIT_FORM-->
+
+<!--&NOTE_ENTRY_HTML-->
+	<div class="noteOnPost" title="{$NOTE_TITLE_TEXT}">{$NOTE_TEXT}
+		<i class="noteAddedBy"> - {$ACCOUNT_NAME}</i> <i>({$NOTE_TIMESTAMP})</i> 
+		<span class="noteFunctions"> 
+			<!--&IF($CAN_DELETE_NOTE,'<span class="noteDeleteFunction">[<a href="{$NOTE_DELETION_URL}">X</a>]</span>','')-->
+			<!--&IF($CAN_EDIT_NOTE,'<span class="noteEditFunction">[<a href="{$NOTE_EDIT_URL}">E</a>]</span>','')-->
+		</span>
+	</div>
+<!--/&NOTE_ENTRY_HTML-->
