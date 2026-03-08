@@ -609,6 +609,11 @@
 							<td class="postblock">Deleted at</td>
 							<td>{$DELETED_AT}</td>
 						</tr>
+						<!--&IF($IS_VIEW,'
+							<!--&DELETED_POST_NOTE_INPUT/-->
+						','
+							<!--&DELETED_POST_NOTE_PREVIEW/-->					
+						')-->
 						<!--&IF($IS_OPEN,'','
 							<!--&DELETED_POST_RESTORE_INFO/-->
 						')-->
@@ -639,6 +644,16 @@
 		</button>]
 	','')-->
 <!--/&PURGE_RESTORE_ENTRY_BUTTON-->
+
+<!--&DELETED_POST_NOTE_INPUT-->
+	<tr>
+		<td class="postblock">Staff note</td>
+		<td> 
+			<textarea class="inputtext" name="note" placeholder="Optionally, leave a note."><!--&IF($NOTE,'{$NOTE}','')--></textarea>
+			<br><button type="submit" name="action" value="saveNote">Save</button>
+		</td>
+	</tr>
+<!--/&DELETED_POST_NOTE_INPUT-->
 
 <!--&DELETED_POST_NOTE_PREVIEW-->
 	<!--&IF($NOTE_PREVIEW,'
