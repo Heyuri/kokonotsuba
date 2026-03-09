@@ -18,7 +18,9 @@ class postRepository {
 		private readonly string $threadTable,
 		private readonly string $deletedPostsTable,
 		private readonly string $fileTable,
-		private readonly string $soudaneTable
+		private readonly string $soudaneTable,
+		private readonly string $noteTable,
+		private readonly string $accountTable,
 	) {
 		$this->allowedOrderFields = ['root' , 'no', 'post_uid'];
 	}
@@ -52,7 +54,7 @@ class postRepository {
 	public function getFilteredPosts(int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'post_uid'): false|array {
 		if(!in_array($order, $this->allowedOrderFields)) return [];
 
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable,  $includeDeleted);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
 		$params = [];
 		
 		// add WHERE so the AND conditions can be appended without sissue
@@ -115,7 +117,7 @@ class postRepository {
 
 	public function getPostByUid(int $post_uid, bool $viewDeleted = false): array|false {
 		// get base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable,  $viewDeleted);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $viewDeleted);
 		
 		// append WHERE clause to get it by the post uid
 		$query .= " WHERE p.post_uid = :post_uid";
@@ -251,7 +253,7 @@ class postRepository {
 
 	public function getPostsByUids(array $postUIDsList): array|false {
 		// get base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable);
 
 		// generate in clause
 		$inClause = pdoPlaceholdersForIn($postUIDsList);
@@ -292,7 +294,7 @@ class postRepository {
 		$inClause = pdoPlaceholdersForIn($threadUids);
 
 		// base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable,  $includeDeleted);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
 
 		// append where clause
 		$query .= " WHERE p.thread_uid IN $inClause";
@@ -320,7 +322,7 @@ class postRepository {
 
 	public function getOpeningPostFromThread(string $threadUid): bool|array {
 		// get base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable);
 
 		// append WHERE clause
 		$query .= " WHERE p.post_uid = (SELECT post_op_post_uid FROM {$this->threadTable} WHERE thread_uid = :thread_uid)";

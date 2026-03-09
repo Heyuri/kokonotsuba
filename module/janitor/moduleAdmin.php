@@ -179,7 +179,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		$ip = $post['host'];
-		$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', nl2br($_POST['msg'] ?? '')));
+		$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', nl2br($_POST['msg'] ?? '', false)));
 		if (!$reason) $reason = 'No reason given.';
 
 		if (!empty($_POST['public'])) {

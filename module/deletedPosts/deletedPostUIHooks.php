@@ -42,14 +42,6 @@ class deletedPostUIHooks {
 
 		$moduleEngine->addRoleProtectedListener(
 			$requiredRole,
-			'Post',
-			function(array &$arrLabels, array &$post, array &$threadPosts, board &$board, bool &$adminMode) {
-				$this->onRenderPost($arrLabels, $post, $adminMode);
-			}
-		);
-
-		$moduleEngine->addRoleProtectedListener(
-			$requiredRole,
 			'AttachmentCssClass',
 			function(&$postCssClasses, &$post, $isLiveFrontend) {
 				$this->onRenderAttachmentCssClass($postCssClasses, $post, $isLiveFrontend);
@@ -146,45 +138,6 @@ class deletedPostUIHooks {
 	private function renderIndicator(string $message, string $spanTitle): string {
 		// return html
 		return '<span class="warning" title="' . htmlspecialchars($spanTitle) . '">[' . htmlspecialchars($message) . ']</span>';
-	}
-
-	private function onRenderPost(array &$templateValues, array $post, bool $adminMode): void {
-		// whether the post is deleted or not
-		$isPostDeleted = $this->deletedPostUtility->isPostDeleted($post);
-
-		// don't bother if the post isn't deleted
-		if(!$isPostDeleted) {
-			return;
-		}
-
-		// also don't bother if this isn't a staff session
-		if(!$adminMode) {
-			return;
-		}
-
-		// OK - this post is deleted and this is a staff session. Proceed
-		
-		// Append the staff note to the comment
-		if(isset($post['deleted_note'])) {
-			$templateValues['{$COM}'] .= $this->renderStaffNoteOnPost($post);
-		}
-	}
-
-	private function renderStaffNoteOnPost(array $post): string {
-		// get the note
-		$note = $post['deleted_note'] ?? '';
-
-		// sanitize the note
-		$sanitizedNote = sanitizeStr($note);
-
-		// convert new lines to break lines
-		$sanitizedNote = nl2br($sanitizedNote);
-
-		// generate the string
-		$noteHtml = '<br><br><small class="noteOnPost warning" title="This is a note left by staff"> ' . $sanitizedNote . ' </small>';
-
-		// return the generate message
-		return $noteHtml;
 	}
 
 	private function appendCssClassIf(string &$cssClasses, bool $condition, string $className): void {

@@ -823,20 +823,6 @@ caption h3 {
 	vertical-align: text-bottom;
 }
 
-.post .title,
-.post .nameContainer,
-.post .time,
-.post .userIP,
-.post .postnum,
-.post .adminFunctions,
-.post .host,
-.post .filterpostContainer,
-.post .soudaneContainer,
-.post .replyButton,
-.post .backlinks {
-	display: inline-block;
-}
-
 .post .title:empty,
 .post .postertrip:empty,
 .post .postInfoExtra:empty,

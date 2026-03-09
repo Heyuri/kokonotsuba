@@ -164,7 +164,6 @@ class modeHandler {
 			'usrdel' => function() {
 				$route = new usrdelRoute(
 					$this->routeDiContainer->config,
-					$this->routeDiContainer->board, 
 					$this->routeDiContainer->actionLoggerService, 
 					$this->routeDiContainer->postService,
 					$this->routeDiContainer->deletedPostsService, 

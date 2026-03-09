@@ -18,6 +18,8 @@ function getBasePostQuery(
     string $fileTable,
     string $threadTable,
 	string $soudaneTable,
+	string $noteTable,
+	string $accountTable,
     bool $viewDeleted = false
 ): string {
 
@@ -71,7 +73,6 @@ function getBasePostQuery(
             dp.file_only AS file_only_deleted,
             dp.id AS deleted_post_id,
             dp.by_proxy,
-            dp.note AS deleted_note,
             dp.file_id,
             dp.deleted_by,
             dp.deleted_at,
@@ -80,7 +81,14 @@ function getBasePostQuery(
 			-- soudane
 			sv.votes_total_count,
 			sv.votes_yeah_count,
-			sv.votes_nope_count
+			sv.votes_nope_count,
+
+			-- Staff notes
+			n.id AS note_id,
+			n.note_submitted,
+			n.added_by AS note_added_by,
+			a.username AS note_added_by_username,
+			n.note_text
 
         FROM ($postFilterSubquery) p
 
@@ -98,6 +106,12 @@ function getBasePostQuery(
 			FROM $soudaneTable
 			GROUP BY post_uid
 		) sv ON sv.post_uid = p.post_uid
+
+		-- Staff notes
+		LEFT JOIN $noteTable n ON n.post_uid = p.post_uid
+		
+		-- Staff note author
+		LEFT JOIN $accountTable a ON a.id = n.added_by
 
         -- Thread info
         INNER JOIN $threadTable t ON p.thread_uid = t.thread_uid
@@ -120,7 +134,6 @@ function getBasePostQuery(
 
     return $query;
 }
-
 
 function excludeDeletedThreadsCondition(string $deletedPostsTable): string {
 	return " AND NOT EXISTS (
@@ -196,6 +209,7 @@ function mergeMultiplePostRows(null|false|array $rows): false|array {
 			$posts[$uid] = $row;              // copy base post data
 			$posts[$uid]['attachments'] = []; // normal attachments
 			$posts[$uid]['deleted_attachments'] = []; // attachment deletion metadata
+			$posts[$uid]['staff_notes'] = [];
 		}
 
 		/**
@@ -246,8 +260,23 @@ function mergeRowIntoPost(array &$target, array $row): void {
 			'restored_at'       => $row['restored_at'] ?? null,
 			'file_only_deleted' => (bool)($row['file_only_deleted'] ?? false),
 			'by_proxy'          => (bool)($row['by_proxy'] ?? false),
-			'note'              => $row['deleted_note'] ?? ($row['note'] ?? null),
 		];
+	}
+
+	// staff notes
+	if (!empty($row['note_id'])) {
+
+	    $noteId = $row['note_id'];
+
+	    if (!isset($target['staff_notes'][$noteId])) {
+	        $target['staff_notes'][$noteId] = [
+	            'id'			=> $noteId,
+	            'note_submitted'=> $row['note_submitted'],
+	            'note_added_by'	=> $row['note_added_by'],
+	            'note_text'		=> $row['note_text'],
+				'note_added_by_username' => $row['note_added_by_username'],
+	        ];
+	    }
 	}
 
 	// remove raw attachment_* columns
@@ -255,6 +284,9 @@ function mergeRowIntoPost(array &$target, array $row): void {
 
 	// strip soudane columns
 	stripSoudaneColumns($target);
+
+	// strip the notes columns from the base array
+	stripNoteColumns($row);
 }
 
 /**
@@ -295,6 +327,15 @@ function stripSoudaneColumns(array &$row): void {
 		'votes_yeah_count',
 		'votes_nope_count'
 	]);
+}
+
+function stripNoteColumns(array &$row): void {
+    stripColumns($row, [
+        'note_id',
+        'note_submitted',
+        'note_added_by',
+        'note_text'
+    ]);
 }
 
 function applyDeletionMetadata(array &$posts): void {

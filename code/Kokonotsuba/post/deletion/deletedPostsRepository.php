@@ -20,7 +20,8 @@ class deletedPostsRepository {
 		private readonly string $accountTable,
 		private readonly string $fileTable,
 		private readonly string $threadTable,
-		private readonly string $soudaneTable
+		private readonly string $soudaneTable,
+		private readonly string $noteTable,
 	) {
 		$this->allowedOrderFields = [
 			'id',
@@ -132,7 +133,7 @@ class deletedPostsRepository {
 
 	public function getPostByDeletedPostId(int $deletedPostId): array|false {
 		// query to get the post data by deleted post id
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable,  true);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  true);
 		
 		// append WHERE clause
 		$query .= " WHERE p.post_uid = 
@@ -155,7 +156,7 @@ class deletedPostsRepository {
 
 	public function getPostsByIdList(array $postUids): array|false {
 		// base query to get the posts data by deleted post id
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable,  true);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  true);
 		
 		// generate IN clause for post uids
 		$inClause = pdoPlaceholdersForIn($postUids);
@@ -425,7 +426,6 @@ class deletedPostsRepository {
 				dp.by_proxy,
 				dp.file_only         AS file_only_deleted,
 				dp.file_id           AS file_id,
-				dp.note				 AS deleted_note,
 
 				-- Post data (may be null if the post itself is gone)
 				p.*,
@@ -835,7 +835,6 @@ class deletedPostsRepository {
 				dp.deleted_at,
 				dp.file_only,
 				dp.by_proxy,
-				dp.note,
 				dp.restored_at,
 				dp.restored_by,
 				NULL                 -- file_id remains NULL at post level
@@ -893,7 +892,6 @@ class deletedPostsRepository {
 				dp.deleted_at,
 				dp.file_only,
 				dp.by_proxy,
-				dp.note,
 				dp.restored_at,
 				dp.restored_by,
 				fm.new_fid          -- new file ID

@@ -2,18 +2,29 @@
 
 namespace Kokonotsuba\Modules\notes;
 
+require_once __DIR__ . '/noteRepository.php';
+require_once __DIR__ . '/noteService.php';
+require_once __DIR__ . '/notePolicy.php';
+
+use Kokonotsuba\board\board;
+use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\generatePostUrl;
 use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\isPostRequest;
 use function Puchiko\request\redirect;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
+	private noteService $noteService;
+	private notePolicy $notePolicy;
+
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('CAN_LEAVE_NOTE', userRole::LEV_JANITOR);
 	}
@@ -37,23 +48,39 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
-			'ModerateThreadWidget',
+			'ModeratePostWidget',
 			function(array &$widgetArray, array &$post) {
-				$this->onRenderThreadWidget($widgetArray, $post);
+				$this->onRenderPostWidget($widgetArray, $post);
 			}
 		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'Post',
+			function(array &$arrLabels, array &$post, array &$threadPosts, board &$board, bool &$adminMode) {
+				$this->renderStaffNotesOnPost($arrLabels, $post, $adminMode);
+			}
+		);
+
+		// fetch database settings
+		$databaseSettings = getDatabaseSettings();
+
+		// init dependencies and set note service
+		$noteRepository = new noteRepository(databaseConnection::getInstance(),$databaseSettings['NOTE_TABLE']);
+		$this->noteService = new noteService($noteRepository, $this->moduleContext->transactionManager);
+		$this->notePolicy = new notePolicy($this->noteService);
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		// include the note js for the mod tool
-		$this->includeScript('note.js', $moduleHeader);
+		$this->includeScript('notes.js', $moduleHeader);
 
 		// append the note form template to the header
 		$noteCreateFormTemplate = $this->generateNoteFormHtml(0, 0);
 		$moduleHeader .= $this->generateTemplate('noteCreateFormTemplate', $noteCreateFormTemplate);
 	}
 
-	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
+	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
 		// get post details for widget
 		$postUid = $post['post_uid'];
 
@@ -69,7 +96,75 @@ class moduleAdmin extends abstractModuleAdmin {
 		$widgetArray[] = $noteWidget;
 	}
 
+	private function renderNote(string $noteText, string $accountName, string $noteTimestamp): string {
+		// sanitize the note
+		$sanitizedNote = sanitizeStr($noteText);
+
+		// convert new lines to break lines
+		$sanitizedNote = nl2br($sanitizedNote, false);
+
+		// generate the string
+		$noteHtml = $this->moduleContext->adminPageRenderer->ParseBlock('NOTE_ENTRY_HTML', 
+			[
+				'{$NOTE_TEXT}' => $sanitizedNote,
+				'{$ACCOUNT_NAME}' => $accountName,
+				'{$NOTE_TIMESTAMP}' => $noteTimestamp,
+				'{$NOTE_TITLE_TEXT}' => _T('note_title_text'),
+				'{$CAN_DELETE_NOTE}' => $this->notePolicy->canDeleteNote($noteId),
+				'{$CAN_EDIT_NOTE}' => $this->notePolicy->canEditNote($noteId),
+				'{$NOTE_EDIT_URL}' => $this->getModulePageURL(['action' => 'deleteNote', 'noteId' => $noteId]),
+				'{$NOTE_DELETION_URL}' => $this->getModulePageURL(['action' => 'editNote', 'noteId' => $noteId]),
+			]);
+
+		// return the generate message
+		return $noteHtml;
+	}
+
+	private function renderStaffNotesOnPost(array &$templateValues, array &$post, bool $adminMode): void {
+		// only run the method on the live frontend
+		if(!$adminMode) {
+			return;
+		}
+
+		// select staff notes on the post	
+		$staffNotesList = $post['staff_notes'] ?? null;
+
+		// dont bother rendering if theres no notes on the post
+		if(empty($staffNotesList)) {
+			return;
+		}
+
+		// initialize the variable we'll be using to store generated note html
+		$staffNotesHtml = '';
+
+		// reindex the array
+		$staffNotesList = array_values($staffNotesList);
+
+		// get the last index of the list
+		$lastIndex = count($staffNotesList) - 1;
+
+		// loop through and generate the notes html and add it to main variable
+		foreach ($staffNotesList as $index => $note) {
+			$text = $note['note_text'] ?? '';
+			$addedBy = $note['note_added_by_username'] ?? '';
+			$timestamp = $note['note_submitted'] ?? '';
+
+			$staffNotesHtml .= $this->renderNote($text, $addedBy, $timestamp);
+
+			// Add separator only if not last item
+			if ($index !== $lastIndex) {
+				$staffNotesHtml .= '<div class="noteSeparator">---</div>';
+			}
+		}
+
+		// now append the notes wrapped in a <div> to the post comment (which is passed by reference)
+		if($templateValues['{$COM}']) {
+			$templateValues['{$COM}'] .= '<div class="staffNotesContainer">' . $staffNotesHtml . '</div>';
+		}
+	}
+
 	private function handleResponse(
+		string $redirectUrl,
 		int $postUid, 
 		?string $note = null, 
 		?int $addedBy = null, 
@@ -93,38 +188,42 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 		// ===== end AJAX handling =====
 
-		redirect('back');
+		redirect($redirectUrl);
 	}
 
 	private function handleAddNoteRequest(int $postUid): void {
 		// get note content from request
-		$noteContent = $_POST['note'] ?? '';
+		$noteText = $_POST['note'] ?? '';
 
 		// add the note to the post
-		$this->moduleContext->noteService->addNote(
+		$this->noteService->addNote(
 			$postUid, 
-			$noteContent, 
+			$noteText, 
 			$this->moduleContext->currentUserId
 		);
 
+		// generate redirect url (just redirect to the post)
+		$redirectUrl = generatePostUrl($postUid, $this->moduleContext->postRepository);		
+
 		// handle response
 		$this->handleResponse(
+			$redirectUrl,
 			$postUid, 
-			$noteContent, 
+			$noteText, 
 			$this->moduleContext->currentUserId, 
 			date('Y-m-d H:i:s'));
 	}
 
 	private function handleActionRoute(string $action, int $postUid, ?int $noteId = null): void {
-		if($action === 'add_note') {
+		if($action === 'addNote') {
 			// add a note to the post
 			$this->handleAddNoteRequest($postUid);
 		}
-		elseif ($action === 'delete_note') {
+		elseif ($action === 'deleteNote') {
 			// delete the note from the post
 			$this->handleDeleteNoteRequest($postUid, $noteId);
 		} 
-		elseif($action === 'edit_note') {
+		elseif($action === 'editNote') {
 			// edit the note from the post
 			$this->handleEditNoteRequest($postUid, $noteId);
 		}
@@ -145,8 +244,10 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function generateNoteFormHtml(int $postUid, int $postNumber): string {
 		// build template values for the note form
 		$templateValues = [
-			'post_uid' => $postUid,
-			'post_number' => $postNumber,
+			'{$POST_UID}' => $postUid,
+			'{$POST_NUMBER}' => $postNumber,
+			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
+			'{$NOTE_VISIBILITY_DESCRIPTION}' => _T('note_visibility_description')
 		];
 
 		// Parse block and return
@@ -171,7 +272,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage() {
 		// get post uid from request
-		$postUid = $_GET['postUid'] ?? null;
+		$postUid = $_REQUEST['postUid'] ?? null;
 		
 		// validate post uid
 		validatePostInput($postUid);

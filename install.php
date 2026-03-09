@@ -473,7 +473,6 @@ class tableCreator {
                 deleted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 file_only TINYINT(1) DEFAULT 0,
                 by_proxy TINYINT(1) DEFAULT 0,
-                note TEXT NULL,
 
                 restored_at TIMESTAMP NULL,
                 restored_by INT NULL,
@@ -491,7 +490,7 @@ class tableCreator {
                 INDEX idx_deleted_by_deleted_at (deleted_by, deleted_at),
                 INDEX idx_restored_at (restored_at),
                 INDEX idx_file_id (file_id),
-
+s
                 UNIQUE KEY uq_open_post (open_key)
             ) ENGINE=InnoDB;
             ",
@@ -572,12 +571,23 @@ class tableCreator {
                 CONSTRAINT fk_theme_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
             ) ENGINE=InnoDB;
             ",
-            "CREATE TABLE IF NOT EXISTS last_thread_submissions (
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['LAST_THREAD_SUBMISSIONS_TABLE']} (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 board_uid INT NOT NULL UNIQUE,
                 last_submission_timestamp TIMESTAMP(3) NOT NULL,
                 
                 CONSTRAINT fk_last_thread_submissions_board_uid FOREIGN KEY (board_uid) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(board_uid) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
+            ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['NOTES_TABLE']} (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                post_uid INT NOT NULL,
+                note_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                added_by INT NULL,
+                note_text TEXT NOT NULL,
+                
+                CONSTRAINT fk_notes_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
+                CONSTRAINT fk_notes_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
             ) ENGINE=InnoDB;
             ",
         ];

@@ -5,12 +5,12 @@ namespace Kokonotsuba\libraries;
 
 use RuntimeException;
 use Kokonotsuba\board\board;
-use Kokonotsuba\board\boardStoredFile;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\file\file;
 use Kokonotsuba\file\fileFromUpload;
 use Kokonotsuba\file\thumbnail;
 use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\post\postRepository;
 use Kokonotsuba\userRole;
 
 use function Puchiko\getVideoDimensions;
@@ -315,4 +315,36 @@ function validatePostInput(null|false|int|array $postInput, bool $isUid = true, 
 	if($isUid && !is_numeric($postInput)) {
 		throw new BoardException(_T('post_not_found'), $statusCode);
 	}
+}
+
+/**
+ * This is a reusable bit of code to form a post URL in a thread based off its post id
+ * 
+ * @param int $postUid The id of the post
+ * @param postRepository $postRepository the repo that handles post IO
+ * @param bool $viewDeleted 
+ */
+function generatePostUrl(int $postUid, postRepository $postRepository, bool $viewDeleted = true): string {
+	// fetch post data
+	$post = $postRepository->getPostByUid($postUid, $viewDeleted);
+
+	// return empty str if the post isnt found
+	if(empty($post)) {
+		return '';
+	}
+
+	// fetch the board
+	$board = searchBoardArrayForBoard($post['boardUID']);
+
+	// also return early if the post number isn't valid
+	if(!isset($post['no'])) {
+		return '';
+	}
+
+	// now generate the URL.
+	// Theres no need to include the thread number since it'll redirect on its own
+	$postUrl = $board->getBoardThreadURL($post['no']);
+
+	// now return the url
+	return $postUrl;
 }

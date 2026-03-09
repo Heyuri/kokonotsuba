@@ -239,5 +239,8 @@ $language['post_multiple'] = 'posts';
 $language['poster_hash_count'] = 'There\'s %1$s %2$s by this ID.';
 $language['score_pre_text'] = 'Score: %1$s';
 $language['view_posts_by_user'] = 'View posts by user';
+$language['leave_note'] = 'Leave a note';
+$language['note_visibility_description'] = 'This note is only visible to other staff';
+$language['note_title_text'] = 'This is a note';
 
 ?>

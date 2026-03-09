@@ -3,7 +3,6 @@
 namespace Kokonotsuba\routers\routes;
 
 use Kokonotsuba\action_log\actionLoggerService;
-use Kokonotsuba\board\board;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\policy\postPolicy;
@@ -20,7 +19,6 @@ use function Puchiko\request\redirect;
 class usrdelRoute {
 	public function __construct(
 		private readonly array $config,
-		private board $board,
 		private readonly actionLoggerService $actionLoggerService,
 		private readonly postService $postService,
 		private readonly deletedPostsService $deletedPostsService,

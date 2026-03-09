@@ -228,6 +228,30 @@
 	word-break: break-word;
 }
 
+.staffNotesContainer {
+	font-size: var(--font-size-small);
+	color: blue;
+	margin-top: 2em;
+}
+
+/* Protect against zalgo text spam by preventing overflow from the post */
+.post {
+	overflow: hidden;
+}
+
+.post .nameContainer,
+.post .time,
+.post .userIP,
+.post .postnum,
+.post .adminFunctions,
+.post .host,
+.post .filterpostContainer,
+.post .soudaneContainer,
+.post .replyButton,
+.post .backlinks {
+	display: inline-block;
+}
+
 /************************ Mobile **************************************/
 
 @media screen and (max-width: 650px) {

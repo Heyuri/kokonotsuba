@@ -399,7 +399,6 @@ class deletedPostRenderer {
 			'{$IS_ATTACHMENT_ONLY}' => $isAttachmentOnly,
 			'{$RESTORED_AT}' => htmlspecialchars($deletedEntry['restored_at']),
 			'{$RESTORED_BY}' => htmlspecialchars($restoredByUsername),
-			'{$NOTE}' => htmlspecialchars($note),
 			'{$NOTE_PREVIEW}' => $notePreview,
 			'{$SHOW_ALL}' => htmlspecialchars($showAll),
 			'{$URL}' => htmlspecialchars($this->modulePageUrl),
@@ -418,7 +417,7 @@ class deletedPostRenderer {
 		$notePreview = htmlspecialchars($notePreview);
 
 		// convert new lines to <br> for preview
-		$notePreview = nl2br($notePreview);
+		$notePreview = nl2br($notePreview, false);
 
 		// return note preview string
 		return $notePreview;
