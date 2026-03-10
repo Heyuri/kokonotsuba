@@ -55,26 +55,73 @@ class moduleMain extends abstractModuleMain {
 			return false;
 		}
 
-		// For IPv6, expand to full form
-		if (strpos($ip, ':') !== false) {
-			$ip = inet_ntop(inet_pton($ip));
+		// IPv6 handling
+		if (str_contains($ip, ':') && str_contains($pattern, ':')) {
+			return $this->ipv6MatchesPattern($ip, $pattern);
 		}
 
-		// Escape regex special chars, except *
-		$regex = preg_quote($pattern, '/');
-
-		if (strpos($pattern, ':') !== false) {
-			// IPv6: * matches 1+ hextets (4 hex digits) separated by colons
-			$regex = str_replace('\*', '(?:[0-9a-fA-F]{1,4}:?)+', $regex);
-		} else {
-			// IPv4: * matches 1+ digits or dots
-			$regex = str_replace('\*', '[0-9.]+', $regex);
+		// IPv4 handling (simple wildcard match)
+		if (str_contains($ip, '.') && str_contains($pattern, '.')) {
+			// Convert wildcard pattern to regex and match
+			$patternRegex = '/^' . str_replace('\*', '[0-9.]+', preg_quote($pattern, '/')) . '$/';
+			return preg_match($patternRegex, $ip) === 1;
 		}
 
-		// Anchor
-		$regex = '/^' . $regex . '$/i';
+		return false;
+	}
 
-		return preg_match($regex, $ip) === 1;
+	private function ipv6MatchesPattern(string $ip, string $pattern): bool {
+		// Expand both IP and pattern to full IPv6 form
+		$ipFull = inet_ntop(inet_pton($ip));
+		$patternParts = explode(':', $pattern);
+		$ipParts = explode(':', $ipFull);
+
+		// Normalize IPv6 to 8 hextets
+		if (count($ipParts) < 8) {
+			$missing = 8 - count($ipParts);
+			$expanded = [];
+			foreach ($ipParts as $part) {
+				if ($part === '') {
+					for ($i = 0; $i <= $missing; $i++) $expanded[] = '0';
+				} else {
+					$expanded[] = $part;
+				}
+			}
+			$ipParts = $expanded;
+		}
+
+		// Expand :: in pattern
+		if (count($patternParts) < 8 && in_array('', $patternParts, true)) {
+			$missing = 8 - count($patternParts) + 1;
+			$expanded = [];
+			$expandedOnce = false;
+			foreach ($patternParts as $part) {
+				if ($part === '' && !$expandedOnce) {
+					for ($i = 0; $i < $missing; $i++) $expanded[] = '0';
+					$expandedOnce = true;
+				} else {
+					$expanded[] = $part;
+				}
+			}
+			$patternParts = $expanded;
+		}
+
+		$count = min(count($patternParts), count($ipParts));
+		for ($i = 0; $i < $count; $i++) {
+			if ($patternParts[$i] === '*') {
+				// Trailing wildcard matches any remaining hextets
+				return true;
+			}
+			if (strcasecmp($patternParts[$i], $ipParts[$i]) !== 0) {
+				return false;
+			}
+		}
+		// If pattern is shorter and ends with *, match
+		if (end($patternParts) === '*') {
+			return true;
+		}
+		// If all compared parts matched and lengths are equal, match
+		return count($patternParts) === count($ipParts);
 	}
 
 	private function handleBan(&$log, $ip, $banFile): void {
@@ -201,3 +248,4 @@ class moduleMain extends abstractModuleMain {
 		$this->drawNotBannedPage();
 	}
 }
+
