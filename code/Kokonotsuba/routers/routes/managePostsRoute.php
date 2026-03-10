@@ -89,9 +89,7 @@ class managePostsRoute {
 		$queryFilters = $filtersFromRequest;
 		$postsFrom = $_GET['postsFrom'] ?? null;
 		if ($postsFrom && is_numeric($postsFrom)) {
-			if ($canViewIp) {
-				$queryFilters['ip_address'] = $this->postRepository->resolveHostFromPostUid((int)$postsFrom);
-			}
+			$queryFilters['ip_address'] = $this->postRepository->resolveHostFromPostUid((int)$postsFrom);
 		}
 		
 		$cleanUrl = buildSmartQuery($managePostsUrl, $defaultFilters, $formFilters, true);
@@ -103,6 +101,7 @@ class managePostsRoute {
 		
 		$roleLevel = $this->staffAccountFromSession->getRoleLevel();
 		$canViewIp = $roleLevel->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_JANITOR));
+		$canViewHashedIp = $roleLevel->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_ONLY_VIEW_POSTS_FROM_USER', userRole::LEV_JANITOR));
 		$canViewDeleted = $this->postRenderingPolicy->viewDeleted();
 		
 		$page = (int) ($_REQUEST['page'] ?? 0);
@@ -116,6 +115,7 @@ class managePostsRoute {
 			'cleanUrl' => $cleanUrl,
 			'roleLevel' => $roleLevel,
 			'canViewIp' => $canViewIp,
+			'canViewHashedIp' => $canViewHashedIp,
 			'canViewDeleted' => $canViewDeleted,
 			'page' => $page,
 			'postsPerPage' => $this->config['ADMIN_PAGE_DEF'],
@@ -185,7 +185,7 @@ class managePostsRoute {
 		
 		// Render posts or empty state message
 		if ($posts && is_array($posts)) {
-			$html .= $this->renderPostEntries($posts, $boardMap, $context['canViewIp'], $context['managePostsUrl'], $boardList);
+			$html .= $this->renderPostEntries($posts, $boardMap, $context['canViewIp'], $context['canViewHashedIp'], $context['managePostsUrl'], $boardList);
 		} else {
 			$html .= '<tr><td colspan="9"><b class="error" id="no-posts-found"> - No posts found! - </b></td></tr>';
 		}
@@ -249,6 +249,7 @@ class managePostsRoute {
 		array $posts, 
 		array $boardMap, 
 		bool $canViewIp, 
+		bool $canViewHashedIp,
 		string $managePostsUrl, 
 		string $boardList
 	): string {
@@ -259,6 +260,7 @@ class managePostsRoute {
 				$post, 
 				$boardMap, 
 				$canViewIp, 
+				$canViewHashedIp,
 				$managePostsUrl, 
 				$boardList
 			);
@@ -271,6 +273,7 @@ class managePostsRoute {
 		array $post,
 		array $boardMap,
 		bool $canViewIp,
+		bool $canViewHashedIp,
 		string $managePostsUrl,
 		string $boardList
 	): string {
@@ -293,9 +296,12 @@ class managePostsRoute {
 		$is_op = $post['is_op'];
 
 		// Handle host display
-		$host = $canViewIp
-			? $post['host']
-			: substr(md5($post['host']), 0, 8);
+		$showHost = $canViewIp || $canViewHashedIp;
+		if ($showHost) {
+			$host = $canViewIp ? $post['host'] : substr(md5($post['host']), 0, 8);
+		} else {
+			$host = '';
+		}
 
 		// Generate name HTML
 		$nameHtml = generatePostNameHtml(
@@ -322,19 +328,25 @@ class managePostsRoute {
 		// Generate attachments HTML
 		$attachmentsHtml = $this->renderAttachments($post['attachments']);
 
-		// Build and return the table row
-		return '
-			<tr>
-				<td class="colFunc">' . $modFunc . '</td>
-				<td class="colDel"><input type="checkbox" name="clist[]" value="' . $post_uid . '"><a target="_blank" href="'.$postBoard->getBoardURL().$postBoardConfig['LIVE_INDEX_FILE'].'?res=' . $no . '">' . $no . '</a></td>
-				<td class="colBoard">/' . $postBoard->getBoardIdentifier() . '/ ('.$postBoard->getBoardUID().')</td>
-				<td class="colDate"><span class="time">' . $now . '</span></td>
-				<td class="colSub"><span class="title">' . $sub . '</span></td>
-				<td class="colName"><span class="name">' . $nameHtml . '</span></td>
-				<td class="colComment"><div class="managepostsCommentWrapper">' . $com . '</div></td>
-				<td class="colHost">' . ($canViewIp ? $host . ' <a target="_blank" href="https://whatismyipaddress.com/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="'.$managePostsUrl.'&ip_address=' . $host . '&board=' . $boardList . '" title="See all posts">★</a>' : $host) . '</td>
-				' . $attachmentsHtml . '
-			</tr>';
+		   // Build and return the table row
+		   $hostColHtml = '';
+		   if ($showHost) {
+			   $hostColHtml = '<td class="colHost">' . ($canViewIp ? $host . ' <a target="_blank" href="https://whatismyipaddress.com/ip/' . $host . '" title="Resolve hostname"><img height="12" src="' . $this->config['STATIC_URL'] . 'image/glass.png"></a> <a href="'.$managePostsUrl.'&ip_address=' . $host . '&board=' . $boardList . '" title="See all posts">★</a>' : $host) . '</td>';
+		   } else {
+			   $hostColHtml = '<td class="colHost">---</td>';
+		   }
+		   return '
+			   <tr>
+				   <td class="colFunc">' . $modFunc . '</td>
+				   <td class="colDel"><input type="checkbox" name="clist[]" value="' . $post_uid . '"><a target="_blank" href="'.$postBoard->getBoardURL().$postBoardConfig['LIVE_INDEX_FILE'].'?res=' . $no . '">' . $no . '</a></td>
+				   <td class="colBoard">/' . $postBoard->getBoardIdentifier() . '/ ('.$postBoard->getBoardUID().')</td>
+				   <td class="colDate"><span class="time">' . $now . '</span></td>
+				   <td class="colSub"><span class="title">' . $sub . '</span></td>
+				   <td class="colName"><span class="name">' . $nameHtml . '</span></td>
+				   <td class="colComment"><div class="managepostsCommentWrapper">' . $com . '</div></td>
+				   ' . $hostColHtml . '
+				   ' . $attachmentsHtml . '
+			   </tr>';
 	}
 
 	private function renderAttachments(array $attachments): string {
