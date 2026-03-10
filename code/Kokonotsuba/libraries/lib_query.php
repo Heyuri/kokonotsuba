@@ -204,7 +204,7 @@ function mergeMultiplePostRows(null|false|array $rows): false|array {
 		mergeRowIntoPost($posts[$uid], $row);
 
 		// soudane data
-		if ($row['votes_total_count'] !== null) {
+		if (isset($row['votes_total_count']) && $row['votes_total_count'] !== null) {
 			$posts[$uid]['votes'] = [
 				'total_score' => $row['votes_total_count'],
 				'yeah_count' => $row['votes_yeah_count'],
