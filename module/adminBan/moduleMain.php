@@ -248,4 +248,3 @@ class moduleMain extends abstractModuleMain {
 		$this->drawNotBannedPage();
 	}
 }
-

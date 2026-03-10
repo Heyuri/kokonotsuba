@@ -609,11 +609,6 @@
 							<td class="postblock">Deleted at</td>
 							<td>{$DELETED_AT}</td>
 						</tr>
-						<!--&IF($IS_VIEW,'
-							<!--&DELETED_POST_NOTE_INPUT/-->
-						','
-							<!--&DELETED_POST_NOTE_PREVIEW/-->					
-						')-->
 						<!--&IF($IS_OPEN,'','
 							<!--&DELETED_POST_RESTORE_INFO/-->
 						')-->
@@ -644,27 +639,6 @@
 		</button>]
 	','')-->
 <!--/&PURGE_RESTORE_ENTRY_BUTTON-->
-
-<!--&DELETED_POST_NOTE_INPUT-->
-	<tr>
-		<td class="postblock">Staff note</td>
-		<td> 
-			<textarea class="inputtext" name="note" placeholder="Optionally, leave a note."><!--&IF($NOTE,'{$NOTE}','')--></textarea>
-			<br><button type="submit" name="action" value="saveNote">Save</button>
-		</td>
-	</tr>
-<!--/&DELETED_POST_NOTE_INPUT-->
-
-<!--&DELETED_POST_NOTE_PREVIEW-->
-	<!--&IF($NOTE_PREVIEW,'
-		<tr>
-			<td class="postblock">Note</td>
-			<td>
-				<p class="postNote">{$NOTE_PREVIEW}</p>
-			</td>
-		</tr>	
-	','')-->
-<!--/&DELETED_POST_NOTE_PREVIEW-->
 
 <!--&DELETE_POST_BUTTONS-->
 	<div class="deletedPostButtons">
@@ -1201,7 +1175,7 @@
 
 <!--&NOTE_CREATE_FORM-->
 	<div class="noteFormContainer">
-		<h3>Leave a note for post No.<span class="noteFormPostNumber">{$POST_NUMBER}</span></h3>
+		<h3>Leave a note for post No.<span class="noteFormPostNumber" id="post_number">{$POST_NUMBER}</span></h3>
 		<div class="noteForm">
 			<form method="POST" action="{$MODULE_URL}">
 				<input name="action" value="addNote" type="hidden">
@@ -1256,8 +1230,8 @@
 	<div class="noteOnPost" title="{$NOTE_TITLE_TEXT}">{$NOTE_TEXT}
 		<i class="noteAddedBy"> - {$ACCOUNT_NAME}</i> <i>({$NOTE_TIMESTAMP})</i> 
 		<span class="noteFunctions"> 
-			<!--&IF($CAN_DELETE_NOTE,'<span class="noteDeleteFunction">[<a href="{$NOTE_DELETION_URL}">X</a>]</span>','')-->
-			<!--&IF($CAN_EDIT_NOTE,'<span class="noteEditFunction">[<a href="{$NOTE_EDIT_URL}">E</a>]</span>','')-->
+			<!--&IF($CAN_MODIFY_NOTE,'<span class="noteDeleteFunction">[<a href="{$NOTE_DELETION_URL}" title="{$DELETE_NOTE_TITLE}">X</a>]</span>','')-->
+			<!--&IF($CAN_MODIFY_NOTE,'<span class="noteEditFunction">[<a href="{$NOTE_EDIT_URL}" title="{$EDIT_NOTE_TITLE}">E</a>]</span>','')-->
 		</span>
 	</div>
 <!--/&NOTE_ENTRY_HTML-->

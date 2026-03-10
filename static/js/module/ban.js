@@ -2,20 +2,21 @@
 //  BAN ACTION HANDLER
 // ======================================================
 window.postWidget.registerActionHandler('ban', function(ctx) {
-	const postEl = ctx?.post || ctx?.arrow?.closest('.post');
-	if (!postEl) return;
+    const postEl = ctx?.post || ctx?.arrow?.closest('.post');
+    if (!postEl) return;
 
-	// Open the form window
-	PostActionUtils.openWindow({
-		templateId: '#banFormTemplate',
-		title: 'Ban user',
-		postEl,
-		successMessage: "User was banned for this post!",
-		failMessage: "There was an error while banning user.",
-		isWarn: false
-	});
+    PostActionUtils.openWindow({
+        templateId: '#banFormTemplate',
+        title: 'Ban user',
+        postEl,
+        onSuccess: ({ res, form, postEl }) => {
+            showMessage("User was banned for this post No. " + res);
+        },
+        onFail: ({ err, form, postEl }) => {
+            showMessage("There was an error while banning user.");
+        }
+    });
 });
-
 // ======================================================
 //  EVENT DELEGATION: TOGGLE PUBLIC BAN MESSAGE FIELD
 // ======================================================

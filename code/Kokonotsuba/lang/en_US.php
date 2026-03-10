@@ -242,5 +242,7 @@ $language['view_posts_by_user'] = 'View posts by user';
 $language['leave_note'] = 'Leave a note';
 $language['note_visibility_description'] = 'This note is only visible to other staff';
 $language['note_title_text'] = 'This is a note';
+$language['edit_note'] = 'Edit note';
+$language['delete_note'] = 'Delete note';
 
 ?>

@@ -14,6 +14,7 @@ use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generatePostUrl;
+use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
@@ -68,7 +69,14 @@ class moduleAdmin extends abstractModuleAdmin {
 		// init dependencies and set note service
 		$noteRepository = new noteRepository(databaseConnection::getInstance(),$databaseSettings['NOTE_TABLE']);
 		$this->noteService = new noteService($noteRepository, $this->moduleContext->transactionManager);
-		$this->notePolicy = new notePolicy($this->noteService);
+		$this->notePolicy = new notePolicy(
+			$this->getConfig('AuthLevels', []), 
+			getRoleLevelFromSession(), 
+			$this->moduleContext->currentUserId
+		);
+
+		// set the note service
+		$this->notePolicy->setNoteService($this->noteService);
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
@@ -96,7 +104,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		$widgetArray[] = $noteWidget;
 	}
 
-	private function renderNote(string $noteText, string $accountName, string $noteTimestamp): string {
+	private function renderNote(
+		int $postUid, 
+		int $noteId, 
+		string $noteText, 
+		string $accountName, 
+		string $noteTimestamp
+	): string {
 		// sanitize the note
 		$sanitizedNote = sanitizeStr($noteText);
 
@@ -110,10 +124,11 @@ class moduleAdmin extends abstractModuleAdmin {
 				'{$ACCOUNT_NAME}' => $accountName,
 				'{$NOTE_TIMESTAMP}' => $noteTimestamp,
 				'{$NOTE_TITLE_TEXT}' => _T('note_title_text'),
-				'{$CAN_DELETE_NOTE}' => $this->notePolicy->canDeleteNote($noteId),
-				'{$CAN_EDIT_NOTE}' => $this->notePolicy->canEditNote($noteId),
-				'{$NOTE_EDIT_URL}' => $this->getModulePageURL(['action' => 'deleteNote', 'noteId' => $noteId]),
-				'{$NOTE_DELETION_URL}' => $this->getModulePageURL(['action' => 'editNote', 'noteId' => $noteId]),
+				'{$CAN_MODIFY_NOTE}' => $this->notePolicy->canModifyNote($noteId),
+				'{$NOTE_EDIT_URL}' => $this->getModulePageURL(['action' => 'deleteNote', 'noteId' => $noteId, 'postUid' => $postUid]),
+				'{$NOTE_DELETION_URL}' => $this->getModulePageURL(['action' => 'editNote', 'noteId' => $noteId, 'postUid' => $postUid]),
+				'{$EDIT_NOTE_TEXT}' => _T('edit_note'),
+				'{$DELETE_NOTE_TEXT}' => _T('delete_note')
 			]);
 
 		// return the generate message
@@ -148,8 +163,10 @@ class moduleAdmin extends abstractModuleAdmin {
 			$text = $note['note_text'] ?? '';
 			$addedBy = $note['note_added_by_username'] ?? '';
 			$timestamp = $note['note_submitted'] ?? '';
+			$noteId = $note['id'] ?? 0;
 
-			$staffNotesHtml .= $this->renderNote($text, $addedBy, $timestamp);
+			// render the note and append it to the main notes html variable	
+			$staffNotesHtml .= $this->renderNote($post['post_uid'], $noteId, $text, $addedBy, $timestamp);
 
 			// Add separator only if not last item
 			if ($index !== $lastIndex) {
@@ -212,6 +229,46 @@ class moduleAdmin extends abstractModuleAdmin {
 			$noteText, 
 			$this->moduleContext->currentUserId, 
 			date('Y-m-d H:i:s'));
+	}
+
+	private function handleDeleteNoteRequest(int $postUid, int $noteId): void {
+		// delete the note
+		$this->noteService->deleteNote($noteId);
+
+		// generate redirect url (just redirect to the post)
+		$redirectUrl = generatePostUrl($postUid, $this->moduleContext->postRepository);		
+		
+		// handle response
+		$this->handleResponse(
+			$redirectUrl,
+			0, 
+			null, 
+			null, 
+			null, 
+			true // is deletion
+		);
+	}
+
+	private function handleEditNoteRequest(int $postUid, int $noteId): void {
+		// get new note content from request
+		$newNoteText = $_POST['note'] ?? '';
+
+		// edit the note
+		$this->noteService->editNote($noteId, $newNoteText);
+
+		// generate redirect url (just redirect to the post)
+		$redirectUrl = generatePostUrl($postUid, $this->moduleContext->postRepository);		
+		
+		// handle response
+		$this->handleResponse(
+			$redirectUrl,
+			$postUid, 
+			$newNoteText, 
+			$this->moduleContext->currentUserId, 
+			date('Y-m-d H:i:s'),
+			false,
+			true // is edit
+		);
 	}
 
 	private function handleActionRoute(string $action, int $postUid, ?int $noteId = null): void {
