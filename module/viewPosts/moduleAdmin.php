@@ -70,7 +70,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function canViewRawIp(): bool {
 		$roleLevel = getRoleLevelFromSession();
-		$canViewIpLevel = $this->getConfig('AuthLevels.CAN_VIEW_IP_ADDRESS', userRole::LEV_MODERATOR);
+		$canViewIpLevel = $this->getConfig('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_MODERATOR);
 		return $roleLevel->isAtLeast($canViewIpLevel);
 	}
 
@@ -111,7 +111,7 @@ class moduleAdmin extends abstractModuleAdmin {
         // get current url
         $currentUrl = getCurrentUrlNoQuery();
 
-        // determine which type of filter to apply based on user role
+        // determine which type of failter to apply based on user role
 		$postUid = $_GET['post_uid'] ?? '';
 		$ipAddress = $_GET['ip_address'] ?? '';
 
