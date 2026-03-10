@@ -146,6 +146,11 @@ class fileService {
 	}
 
 	private function sanitizeAndMove(string $fullPath, string $destinationPath): void {
+		// dont rename if the file is already non-existant
+		if(!file_exists($fullPath)) {
+			return;
+		}
+
 		// sanitize to prevent path traversal
 		$fullPath = realpath($fullPath);
 
