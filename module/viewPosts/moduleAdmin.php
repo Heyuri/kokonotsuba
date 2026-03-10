@@ -81,6 +81,10 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function renderViewPostsButton(string &$modControlSection, array &$post, bool $noScript = false): void {
+		if($this->canViewRawIp()) {
+			return;
+		}
+		
 		$viewPostsUrl = $this->generateViewPostsUrl($post['post_uid']);
 		
 		$modControlSection .= generateModerateButton(
