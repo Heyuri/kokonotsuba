@@ -70,8 +70,14 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function canViewRawIp(): bool {
 		$roleLevel = getRoleLevelFromSession();
-		$canViewIpLevel = $this->getConfig('AuthLevels.CAN_VIEW_IP_ADDRESS', userRole::LEV_MODERATOR);
+		$canViewIpLevel = $this->getConfig('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_MODERATOR);
 		return $roleLevel->isAtLeast($canViewIpLevel);
+	}
+
+	private function canViewHashedIp(): bool {
+		$roleLevel = getRoleLevelFromSession();
+		$canViewHashedIpLevel = $this->getConfig('AuthLevels.CAN_ONLY_VIEW_POSTS_FROM_USER', userRole::LEV_JANITOR);
+		return $roleLevel->isAtLeast($canViewHashedIpLevel);
 	}
 
 	private function renderViewPostsButton(string &$modControlSection, array &$post, bool $noScript = false): void {
@@ -111,7 +117,7 @@ class moduleAdmin extends abstractModuleAdmin {
         // get current url
         $currentUrl = getCurrentUrlNoQuery();
 
-        // determine which type of filter to apply based on user role
+        // determine which type of failter to apply based on user role
 		$postUid = $_GET['post_uid'] ?? '';
 		$ipAddress = $_GET['ip_address'] ?? '';
 
@@ -198,7 +204,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			// Show raw IP for higher-privilege users
 			$postLink = $this->generateViewIpUrl($post['host']);
 			$button = '[<a href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars($post['host']) . '</a>]';
-		} else {
+		} else if($this->canViewHashedIp()) {
 			// Show hashed IP and user-based filter for lower-privilege users
 			$postLink = $this->generateViewPostsUrl($post['post_uid']);
 			$button = '[<a href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars(substr(md5($post['host']), 0, 8)) . '</a>]';

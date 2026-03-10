@@ -74,6 +74,13 @@ class managePostsRoute {
 		
 		$defaultFilters = $this->initializeManagePostsFilters();
 		$filtersFromRequest = getFiltersFromRequest($managePostsUrl, $isSubmission, $defaultFilters);
+
+		// Restrict ip_address filter to users with CAN_VIEW_IP_ADDRESSES
+		$roleLevel = $this->staffAccountFromSession->getRoleLevel();
+		$canViewIp = $roleLevel->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_JANITOR));
+		if (!$canViewIp && isset($filtersFromRequest['ip_address']) && $filtersFromRequest['ip_address'] !== '') {
+			$filtersFromRequest['ip_address'] = '';
+		}
 		
 		// Keep form filters clean - don't expose the resolved IP
 		$formFilters = $filtersFromRequest;
@@ -81,8 +88,10 @@ class managePostsRoute {
 		// Create query filters with resolved postsFrom for accurate results
 		$queryFilters = $filtersFromRequest;
 		$postsFrom = $_GET['postsFrom'] ?? null;
-		if($postsFrom && is_numeric($postsFrom)) {
-			$queryFilters['ip_address'] = $this->postRepository->resolveHostFromPostUid((int)$postsFrom);
+		if ($postsFrom && is_numeric($postsFrom)) {
+			if ($canViewIp) {
+				$queryFilters['ip_address'] = $this->postRepository->resolveHostFromPostUid((int)$postsFrom);
+			}
 		}
 		
 		$cleanUrl = buildSmartQuery($managePostsUrl, $defaultFilters, $formFilters, true);
@@ -152,7 +161,7 @@ class managePostsRoute {
 		$html = '';
 		
 		// Render filter form
-		drawManagePostsFilterForm($html, $this->board, $context['formFilters'], createAssocArrayFromBoardArray($this->allRegularBoards));
+		drawManagePostsFilterForm($html, $this->board, $context['formFilters'], $context['canViewIp'], createAssocArrayFromBoardArray($this->allRegularBoards));
 		
 		// Render posts table
 		$html .= $this->renderPostsTable($posts, $boardMap, $boardList, $context);

@@ -89,7 +89,7 @@ function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, a
 		';
 	}	
 	
-function drawManagePostsFilterForm(&$dat, board $board, array $filters, array $boards) {
+function drawManagePostsFilterForm(string &$dat, board $board, array $filters, bool $canViewIp, array $boards) {
 	$filterIP = $filters['ip_address'];
 	$filterName = $filters['post_name'];
 	$filterTripcode = $filters['tripcode'];
@@ -109,10 +109,10 @@ function drawManagePostsFilterForm(&$dat, board $board, array $filters, array $b
 
 				<table id="adminPostFilterTable" class="centerBlock">
 					<tbody>
-						<tr>
+						' . ($canViewIp ? '<tr>
 							<td class="postblock"><label for="ip_address">IP address</label></td>
 							<td><input class="inputtext" id="ip_address" name="ip_address" value="'.htmlspecialchars($filterIP).'"></td>
-						</tr>
+						</tr>' : '') . '
 						<tr>
 							<td class="postblock"><label for="post_name">Name</label></td>
 							<td><input class="inputtext" id="post_name" name="post_name" value="'.htmlspecialchars($filterName).'"></td>
