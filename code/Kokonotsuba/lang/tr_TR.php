@@ -239,6 +239,7 @@ $language['post_singular'] = 'post';
 $language['post_multiple'] = 'post';
 $language['poster_hash_count'] = 'Bu ID ile %1$s %2$s var.';
 $language['score_pre_text'] = 'Skor: %1$s';
+$language['view_posts_by_user'] = 'Kullanıcının postlarını görüntüle';
 
 ?>
 

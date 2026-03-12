@@ -721,7 +721,7 @@
 <!--&DELETED_POSTS_MOD_PAGE-->
 	<h3>{$MODULE_HEADER_TEXT}</h3>
 	<div class="deletedPostIndexLinks">[<a href="{$URL}">Deleted</a>] [<a href="{$URL}&pageName=restoredIndex">Restored</a>]</div>
-	<div class="toggleLink">[<a title="Toggle the visibility of deleted posts on the live frontend" href="{$URL}&toggleVisibility=1"><!--&IF($SHOW_DELETED_POSTS,'Hide','Show')--> deleted posts on live frontend</a>]</div> 
+	<!--&IF($CAN_VIEW_ALL_DELETED_POSTS,'<!--&DP_TOGGLE_BUTTON/-->','')--> 
 	<div class="deletedPostsListContainer">
 		<div class="deletedPostsList">
 			<!--&FOREACH($DELETED_POSTS,'DELETED_POST_ENTRY')-->
@@ -729,6 +729,10 @@
 		</div>
 	</div>
 <!--/&DELETED_POSTS_MOD_PAGE-->
+
+<!--&DP_TOGGLE_BUTTON-->
+	<div class="toggleLink">[<a title="Toggle the visibility of deleted posts on the live frontend" href="{$URL}&toggleVisibility=1"><!--&IF($SHOW_DELETED_POSTS,'Hide','Show')--> deleted posts on live frontend</a>]</div>
+<!--/&DP_TOGGLE_BUTTON-->
 
 <!--&CAPCODE_ENTRY-->
 	<h3>View capcode</h3>

@@ -308,6 +308,7 @@ class deletedPostRenderer {
 			[
 				'{$DELETED_POSTS}' => $deletedPostListValues,
 				'{$SHOW_DELETED_POSTS}' => $_COOKIE['viewDeletedPosts'] ?? true,
+				'{$CAN_VIEW_ALL_DELETED_POSTS}' => $roleLevel->isAtLeast($this->requiredRoleActionForModAll),
 				'{$ARE_NO_POSTS}' => $areNoPosts,
 				'{$MODULE_HEADER_TEXT}' => $moduleHeader,
 				'{$URL}' => htmlspecialchars($this->modulePageUrl)
