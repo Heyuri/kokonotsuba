@@ -76,7 +76,7 @@
 
 	function makeDropzone() {
 		var wrap = document.createElement('div');
-		wrap.id = 'userscript-dropzone-wrap';
+		wrap.id = 'dropzoneWrap';
 		wrap.style.userSelect = 'none';
 		wrap.style.marginTop = '4px';
 
@@ -146,16 +146,16 @@
 	// ----------------------------------------
 
 	function ensureList() {
-		var c = document.getElementById('userscript-file-list-container');
+		var c = document.getElementById('fileListContainer');
 		if (!c) {
 			c = document.createElement('div');
-			c.id='userscript-file-list-container';
+			c.id='fileListContainer';
 			c.style.display='flex';
 			c.style.flexWrap='wrap';
 			c.style.gap='8px';
 			c.style.marginTop='4px';
 
-			var dz = document.getElementById('userscript-dropzone-wrap');
+			var dz = document.getElementById('dropzoneWrap');
 			if (dz) dz.after(c);
 			else fileInput.after(c);
 		}
@@ -164,7 +164,7 @@
 
 	// Removes the file list container entirely when no files remain
 	function clearList() {
-		var c = document.getElementById('userscript-file-list-container');
+		var c = document.getElementById('fileListContainer');
 		if (c) c.remove();
 	}
 
@@ -177,7 +177,7 @@
 			for (var i=0;i<filesState.length;i++) c.appendChild(renderBlock(filesState[i], i));
 		}
 
-		var dz = document.getElementById('userscript-dropzone-wrap');
+		var dz = document.getElementById('dropzoneWrap');
 		if (dz) dz.style.display = canAdd() ? 'block' : 'none';
 	}
 
