@@ -37,10 +37,10 @@ document.addEventListener("DOMContentLoaded", () => {
 		if (comInput) comInput.value = "";
 
 		// File Cleanup
-		var list = document.getElementById("userscript-file-list-container");
+		var list = document.getElementById("fileListContainer");
 		if (list) list.remove();
 	
-		var dz = document.getElementById("userscript-dropzone-wrap");
+		var dz = document.getElementById("dropzoneWrap");
 		if (dz) dz.style.display = "block";
 
 		var realInput = document.querySelector("input[type='file'][name^='upfile']");
