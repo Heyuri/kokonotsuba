@@ -626,12 +626,11 @@ class deletedPostsRepository {
 		bool $byProxy,
 		?int $fileId = null,
 		?int $restoredBy = null, 
-		?string $note = null
 	): void {
 
 		$query = "INSERT INTO {$this->deletedPostsTable} 
-			(post_uid, deleted_by, file_only, by_proxy, restored_by, note, file_id) 
-			VALUES (:post_uid, :deleted_by, :file_only, :by_proxy, :restored_by, :note, :file_id)";
+			(post_uid, deleted_by, file_only, by_proxy, restored_by, file_id) 
+			VALUES (:post_uid, :deleted_by, :file_only, :by_proxy, :restored_by, :file_id)";
 
 		$parameters = [
 			':post_uid'   => $postUid,
@@ -639,24 +638,9 @@ class deletedPostsRepository {
 			':file_only'  => (int)$fileOnly,
 			':by_proxy'   => (int)$byProxy,
 			':restored_by'=> $restoredBy,
-			':note'		  => $note,
 			':file_id'    => $fileId,   // leave NULL as NULL
 		];
 
-		$this->databaseConnection->execute($query, $parameters);
-	}
-
-	public function updateDeletedPostNoteById(int $deletedPostId, string $note): void {
-		// query to UPDATE the note column for the specified post
-		$query = "UPDATE {$this->deletedPostsTable} SET note = :note WHERE id = :deleted_post_id";
-
-		// parameters
-		$parameters = [
-			':note' => $note,
-			':deleted_post_id' => $deletedPostId
-		];
-
-		// execute query and update entry
 		$this->databaseConnection->execute($query, $parameters);
 	}
 

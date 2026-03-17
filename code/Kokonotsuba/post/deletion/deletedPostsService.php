@@ -641,26 +641,6 @@ class deletedPostsService {
 		);
 	}
 
-	public function updateNote(int $deletedPostId, string $note): void {
-		// run transaction
-		$this->transactionManager->run(function() use($deletedPostId, $note) {
-			// update the note for that deleted post
-			$this->deletedPostsRepository->updateDeletedPostNoteById($deletedPostId, $note);
-
-			// get the post data from the associated deleted posts row
-			$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
-
-			// board uid of the post
-			$boardUid = $postData['boardUID'];
-
-			// post number
-			$no = $postData['no'];
-
-			// log adding the note
-			$this->actionLoggerService->logAction("Updated note on post No.$no", $boardUid);
-		});
-	}
-
 	public function deleteFilesFromPosts(array $attachments, ?int $deletedBy): void {
 		$this->transactionManager->run(function() use ($attachments, $deletedBy) {
 			// Construct file objects from the attachments array

@@ -60,21 +60,6 @@ class deletedPostActionHandler {
 			$this->deletedPostsService->restoreAttachment($deletedPostId, $accountId);
 		}
 
-		// if it's a saveNote action. handle saving a new note tied to that post
-		else if ($action === 'saveNote') {
-			// note from request
-			$note = $_POST['note'] ?? '';
-
-			// update the note
-			$this->deletedPostsService->updateNote($deletedPostId, $note);
-
-			// url of the deleted post
-			$url = $this->deletedPostUtility->generateDeletedPostViewUrl($deletedPostId);
-
-			// redirect early to the url - theres no need to rebuild
-			redirect($url);
-		}
-
 		// if it's a delete record action - then delete the record directly from the database
 		// this is only intended for restore records
 		else if ($action === 'deleteRecord') {

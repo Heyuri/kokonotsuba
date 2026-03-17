@@ -377,12 +377,6 @@ class deletedPostRenderer {
 		// handle post html rendering logic
 		$postHtml = $this->generatePostHtml($deletedEntry, $thread, $showAll, $postRenderer, $threadRenderer);
 
-		// note for the deleted post
-		$note = $deletedEntry['deleted_note'] ?? '';
-
-		// init a truncated one for the preview
-		$notePreview = $this->generateNotePreview($note);
-
 		// attachment only deletion
 		$isAttachmentOnly = !empty($deletedEntry['file_id']) && !empty($deletedEntry['file_only_deleted']);
 
@@ -400,7 +394,6 @@ class deletedPostRenderer {
 			'{$IS_ATTACHMENT_ONLY}' => $isAttachmentOnly,
 			'{$RESTORED_AT}' => htmlspecialchars($deletedEntry['restored_at']),
 			'{$RESTORED_BY}' => htmlspecialchars($restoredByUsername),
-			'{$NOTE_PREVIEW}' => $notePreview,
 			'{$SHOW_ALL}' => htmlspecialchars($showAll),
 			'{$URL}' => htmlspecialchars($this->modulePageUrl),
 			'{$CAN_PURGE_RESTORE_RECORD}' => $roleLevel->isAtLeast($this->requiredRoleForDeleteRestoredRecord)
@@ -408,20 +401,6 @@ class deletedPostRenderer {
 
 		// return results
 		return $templateValues;
-	}
-
-	private function generateNotePreview(string $note): string {
-		// limit it to 100 chars
-		$notePreview = truncateText($note, 100);
-
-		// sanitize the preview
-		$notePreview = htmlspecialchars($notePreview);
-
-		// convert new lines to <br> for preview
-		$notePreview = nl2br($notePreview, false);
-
-		// return note preview string
-		return $notePreview;
 	}
 
 	private function generatePostHtml(
@@ -498,7 +477,6 @@ class deletedPostRenderer {
 		// But overwrite fields to indicate that it's deleted
 		$attachment['is_deleted'] = true;
 		$attachment['deleted_at'] = $deletedAttachmentMeta['deleted_at'];
-		$attachment['deleted_note'] = $deletedAttachmentMeta['note'];
 		$attachment['deleted_post_id'] = $deletedAttachmentMeta['deleted_post_id'];
 
 		// Render the attachment using postRenderer’s normal function
