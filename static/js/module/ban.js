@@ -36,7 +36,7 @@
 				// Refetch and remove the temp ban message if error
 				const tempMsgEl = postEl.querySelector('.publicComment.tempBanMsg');
 				if (tempMsgEl?.parentNode) tempMsgEl.remove();
-				showMessage("There was an error while banning user.");
+				showMessage("There was an error while banning user.", false);
 			}
 		});
 	});

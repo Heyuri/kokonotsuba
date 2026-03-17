@@ -64,10 +64,10 @@
 				}
 
 				// Show message with post number from JSON
-				showMessage("Note added to post No. " + (data && data.post_number ? data.post_number : '?'));
+				showMessage("Note added to post No. " + (data && data.post_number ? data.post_number : '?'), true);
 			},
 			onFail: ({ err, form, postEl }) => {
-				showMessage("There was an error while adding a note.");
+				showMessage("There was an error while adding a note.", false);
 			}
 		});
 	})
