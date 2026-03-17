@@ -246,5 +246,6 @@ $language['edit_note'] = 'Edit note';
 $language['delete_note'] = 'Delete note';
 $language['note_no_permission'] = 'You do not have permission to modify this note.';
 $language['note_not_found'] = 'Note not found!';
+$language['edit_post'] = 'Edit post';
 
 ?>

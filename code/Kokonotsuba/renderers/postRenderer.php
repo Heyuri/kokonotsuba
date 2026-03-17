@@ -19,6 +19,7 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\generateQuoteLinkHtml;
 use function Kokonotsuba\libraries\html\quote_unkfunc;
 use function Kokonotsuba\libraries\html\generatePostNameHtml;
+use function Puchiko\strings\sanitizeStr;
 
 class postRenderer {
 	private postDataPreparer $postDataPreparer;
@@ -153,6 +154,9 @@ class postRenderer {
 		// bind post url 
 		$templateValues['{$POST_URL}'] = $postUrl;
 
+		// bind attributes
+		$templateValues['{$DATA_ATTRIBUTES}'] = 'data-post-email="' . sanitizeStr($data['email']) . '" data-post-user-name="' . sanitizeStr($data['name']) . '" data-post-number="' . $data['no'] . '" data-post-uid="' . sanitizeStr($data['post_uid']) . '"';
+
 		// get first attachment array key
 		$firstAttachmentArrKey = array_key_first($data['attachments']);
 
@@ -224,6 +228,16 @@ class postRenderer {
 		$this->moduleEngine->dispatch('PostComment', [
 				&$templateValues['{$COM}'],
 				&$data
+		]);
+
+
+		// run below comment hook point
+		$templateValues['{$BELOW_COMMENT}'] = '';
+		$this->moduleEngine->dispatch('BelowComment', [
+			&$templateValues['{$BELOW_COMMENT}'],
+			&$data,
+			&$threadPosts,
+			&$adminMode
 		]);
 
 		// CSS hook point placeholders

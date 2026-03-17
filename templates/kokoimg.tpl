@@ -193,7 +193,7 @@
 <!--/&THREAD-->
 
 <!--&OP-->
-		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}" data-post-uid="{$POST_UID}">
+		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}" {$DATA_ATTRIBUTES}>
 			<!--&IF($BOARD_THREAD_NAME,'{$BOARD_THREAD_NAME}','')-->
 			<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
 				<!--&IF($POST_ATTACHMENTS,'{$POST_ATTACHMENTS}','')-->
@@ -214,6 +214,7 @@
 				<span class="replyButton">{$REPLYBTN}</span> <span class="recentRepliesButton">{$RECENT_REPLIES}</span><span class="backlinks"></span>
 			</div>
 			<div class="comment">{$COM}</div>
+			<div class="belowComment comment">{$BELOW_COMMENT}</div>
 			<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
 			{$WARN_OLD}{$WARN_BEKILL}{$WARN_ENDREPLY}{$WARN_HIDEPOST}
 		</div>
@@ -224,7 +225,7 @@
 				<div class="doubledash">
 					&gt;&gt;
 				</div>
-				<div class="post reply <!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-post-uid="{$POST_UID}">
+				<div class="post reply <!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" {$DATA_ATTRIBUTES}>
 					<div class="postinfo">
 						<label>
 							<!--&IF($POST_POSITION_ENABLED,'<span class="replyPosition">{$POST_POSITION}</span>','')-->
@@ -244,27 +245,12 @@
 						<!--&IF($POST_ATTACHMENTS,'{$POST_ATTACHMENTS}','')-->
 					</div>
 					<div class="comment">{$COM}</div>
+					<div class="belowComment comment">{$BELOW_COMMENT}</div>
 					<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
 					{$WARN_BEKILL}
 				</div>
 			</div>
 <!--/&REPLY-->
-
-<!--&SEARCHRESULT-->
-		<div class="post op">
-			<div class="postinfo">
-				<span class="title">{$SUB}</span>
-				<span class="nameContainer">
-					<!--{$NAME_TEXT}--><span class="name">{$NAME}</span>
-				</span>
-				<span class="time">{$NOW}</span>
-				<span class="postnum">No.{$NO}</span>
-			</div>
-			<div class="comment">{$COM}</div>
-			<!--&IF($CATEGORY,'<div class="category">{$CATEGORY_TEXT}{$CATEGORY}</div>','')-->
-		</div>
-		<!--&REALSEPARATE/-->
-<!--/&SEARCHRESULT-->
 
 <!--&THREADSEPARATE-->
 		<hr class="threadSeparator">

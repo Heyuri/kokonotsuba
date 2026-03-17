@@ -128,7 +128,7 @@
 <!--/&THREAD-->
 
 <!--&OP-->
-	<div class="post op" id="p{$BOARD_UID}_{$NO}" data-post-uid="{$POST_UID}">
+	<div class="post op" id="p{$BOARD_UID}_{$NO}" {$DATA_ATTRIBUTES}>
 		<h1 class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h1>
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]</div>
 		<div class="postinfo">
@@ -143,6 +143,7 @@
 			<!--&IF($POST_ATTACHMENTS,'{$POST_ATTACHMENTS}','')-->
 		</div>
 		<div class="comment">{$COM}</div>
+		<div class="belowComment comment">{$BELOW_COMMENT}</div>
 		<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
 		{$WARN_OLD}{$WARN_BEKILL}{$WARN_ENDREPLY}{$WARN_HIDEPOST}
 	</div>
@@ -151,7 +152,7 @@
 <!--&REPLY-->
 <div id="pc{$BOARD_UID}_{$NO}" class="reply-container">
 	<!--&IF($IS_PREVIEW,'<table class="thread" align="CENTER" width="95%" border="1" cellspacing="7" cellpadding="3"><tbody><tr><td>','')-->
-	<div class="post reply" id="p{$BOARD_UID}_{$NO}" data-post-uid="{$POST_UID}">
+	<div class="post reply" id="p{$BOARD_UID}_{$NO}" {$DATA_ATTRIBUTES}>
 		<span class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}#p{$BOARD_UID}_{$NO}">{$SUB}</a></span>
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]</div>
 		<div class="postinfo">
@@ -167,23 +168,12 @@
 			<!--&IF($POST_ATTACHMENTS,'{$POST_ATTACHMENTS}','')-->
 		</div>
 		<div class="comment">{$COM}</div>
+		<div class="belowComment comment">{$BELOW_COMMENT}</div>
 		<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
 		{$WARN_BEKILL}
 	</div>
 </div>
 <!--/&REPLY-->
-
-<!--&SEARCHRESULT-->
-	<div class="thread outerbox">
-		<div class="post search innerbox">
-			<span class="title">{$SUB}</span>
-			<div class="postinfo"><span class="postnum">{$NO}</span> <span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span> <span class="time">{$NOW}</span></div>
-			<div class="comment">{$COM}</div>
-			<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
-		</div>
-	</div>
-	<!--&REALSEPARATE/-->
-<!--/&SEARCHRESULT-->
 
 <!--&THREADSEPARATE-->
 <!--/&THREADSEPARATE-->

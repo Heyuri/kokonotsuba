@@ -58,9 +58,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
-			'Post',
-			function(array &$arrLabels, array &$post, array &$threadPosts, board &$board, bool &$adminMode) {
-				$this->renderStaffNotesOnPost($arrLabels, $post, $adminMode);
+			'BelowComment',
+			function(string &$belowComment, array &$post, array &$threadPosts, bool &$adminMode) {
+				$this->renderStaffNotesOnPost($belowComment, $post, $adminMode);
 			}
 		);
 
@@ -179,7 +179,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $noteHtml;
 	}
 
-	private function renderStaffNotesOnPost(array &$templateValues, array &$post, bool $adminMode): void {
+	private function renderStaffNotesOnPost(string &$belowComment, array &$post, bool $adminMode): void {
 		// only run the method on the live frontend
 		if(!$adminMode) {
 			return;
@@ -206,9 +206,9 @@ class moduleAdmin extends abstractModuleAdmin {
 			$staffNotesHtml .= $this->renderNote($post['post_uid'], $noteId, $text, $addedBy, $addedById, $timestamp);
 		}
 
-		// now append the notes wrapped in a <div> to the post comment (which is passed by reference)
-		if($templateValues['{$COM}']) {
-			$templateValues['{$COM}'] .= '<div class="staffNotesContainer">' . $staffNotesHtml . '</div>';
+		// now append the notes wrapped in a <div> to below the post comment
+		if(isset($belowComment)) {
+			$belowComment .= '<div class="staffNotesContainer">' . $staffNotesHtml . '</div>';
 		}
 	}
 

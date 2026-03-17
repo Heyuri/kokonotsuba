@@ -192,6 +192,7 @@
 				<span class="postnum">No.{$NO}</span>
 			</div>
 			<div class="comment">{$COM}</div>
+			<div class="belowComment comment">{$BELOW_COMMENT}</div>
 			<!--&IF($CATEGORY,'<div class="category">{$CATEGORY_TEXT}{$CATEGORY}</div>','')-->
 		</div>
 		<!--&REALSEPARATE/-->

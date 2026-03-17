@@ -85,6 +85,7 @@ $config['ModuleList'] = array(
 	'deletedPosts' => true,
 	'cssHax' => true,
 	'notes' => true,
+	'edit' => true,
 	/* thread modes */
 	'autoSage' => true,
 	'lockThread' => true,
