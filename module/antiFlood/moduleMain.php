@@ -79,7 +79,7 @@ class moduleMain extends abstractModuleMain {
 		// if its a repeated comment and isn't the default comment - silently delete the previous threads and redirect
 		// Deleted posts are still visible to moderators so false-positives can be restored
 		// It doesn't serve an error because the bot or bot operator may have an automated way of detecting server errors and adjusting output
-		if($repeatedPosts) {
+		if(is_countable($repeatedPosts) && sizeof($repeatedPosts) > $this->getConfig('ModuleSettings.ALLOWED_COMMENT_REPETITIONS', 5)) {
 			// now delete the posts themselves
 			$this->moduleContext->postService->removePosts($repeatedPosts);
 			
