@@ -49,7 +49,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		// include the post edit js for the mod tool
-		$this->includeScript('postEdit.js', $moduleHeader);
+		//$this->includeScript('postEdit.js', $moduleHeader);
 
 		// Render empty create form
 		$postEditFormTemplate = $this->moduleContext->adminPageRenderer->ParseBlock('POST_EDIT_FORM', [
