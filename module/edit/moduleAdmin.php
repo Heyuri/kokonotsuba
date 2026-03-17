@@ -174,6 +174,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		// rebuild the board html of the post
 		rebuildBoardsFromPosts([$postUid], $this->moduleContext->postService);
 
+		// log the edit action
+		$this->moduleContext->actionLoggerService->logAction("Edit post No.{$postNumber}", $boardUid ?? GLOBAL_BOARD_UID);
+
 		// send json data back if it's a js request
 		if(isJavascriptRequest()) {
 			$this->sendJson($postUid);
@@ -183,9 +186,6 @@ class moduleAdmin extends abstractModuleAdmin {
 			// redirect back to the post after edit
 			$this->redirect($postNumber);
 		}
-		
-		// log the edit action
-		$this->moduleContext->actionLoggerService->logAction("Edit post No. {$postNumber}", $boardUid ?? GLOBAL_BOARD_UID);
 	}
 
 	private function handleEditPage(int $postUid): void {
