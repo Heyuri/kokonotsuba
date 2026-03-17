@@ -232,7 +232,8 @@ class modeHandler {
 				$this->routeDiContainer->board, 
 				$this->routeDiContainer->threadRepository,
 				$this->routeDiContainer->postRepository,
-				$this->routeDiContainer->postRedirectService
+				$this->routeDiContainer->postRedirectService,
+				$this->routeDiContainer->postRenderingPolicy
 			);
 			$defaultRoute->handleDefault();
 		}

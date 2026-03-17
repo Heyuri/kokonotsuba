@@ -143,8 +143,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function generateBanUrl(string $ipAddress, int $postUid): string {
 		// build parameters for the url
 		$params = [
-			'ip' => $ipAddress,
-			'post_uid' => $postUid
+			'ipAddress' => $ipAddress,
+			'postUid' => $postUid
 		];
 
 		// generate the url
@@ -188,11 +188,11 @@ class moduleAdmin extends abstractModuleAdmin {
 			]
 		];
 
-		$postUid = $_GET['post_uid'] ?? 0;
+		$postUid = $_GET['postUid'] ?? 0;
 		$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($postUid);
 		
 		// IP address from GET
-		$ipAddress = $_GET['ip'] ?? '';
+		$ipAddress = $_GET['ipAddress'] ?? '';
 
 		$templateData = $this->getBanFormTemplateValues(
 			$postNumber,
@@ -240,11 +240,11 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function handleBanAddition() {
 		// Extract data from the request
 		$reasonFromRequest = $_POST['privmsg'] ?? '';
-		$newIp = $_POST['ip'] ?? '';
+		$newIp = $_POST['ipAddress'] ?? '';
 		$duration = $_POST['duration'] ?? '0';
 		$makePublic = $_POST['public'] ?? '';
 		$publicBanMessageHTML = $_POST['banmsg'] ?? '';
-		$postUid = intval($_POST['post_uid']) ?? null;
+		$postUid = $_POST['postUid'] ?? 0;
 		$isGlobal = isset($_POST['global']);  // Check if global ban is selected
 
 		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
@@ -323,7 +323,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function processBanForm(
 		string $reasonFromRequest, 
-		string $newip,  
+		string $newIp,  
 		string $duration, 
 		string $makePublic, 
 		string $publicBanMessageHTML, 
@@ -344,9 +344,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		// replace comma so it doesnt break the explode
 		$reason = str_replace(',', '&#44;', $reason);
 
-		if (!empty($newip)) {
+		if (!empty($newIp)) {
 			// Create the ban entry
-			$banEntry = "{$newip},{$starttime},{$expires},{$reason}";
+			$banEntry = "{$newIp},{$starttime},{$expires},{$reason}";
 			if ($isGlobal) {  // Global ban
 				$glog[] = $banEntry;
 				file_put_contents($this->GLOBAL_BANS, implode(PHP_EOL, $glog));

@@ -2,14 +2,7 @@
 
 namespace Kokonotsuba\policy;
 
-use Kokonotsuba\userRole;
-
-class postRenderingPolicy {
-	public function __construct(
-		private array $authLevels,
-        private userRole $roleLevel
-	) {}
-
+class postRenderingPolicy extends policyBase {
 	private function canViewDeletedPosts(): bool {
 		// Minimum auth role
 		$canDeleteAll = $this->authLevels['CAN_DELETE_ALL'];

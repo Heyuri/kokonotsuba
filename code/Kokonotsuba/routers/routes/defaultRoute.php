@@ -6,6 +6,7 @@ namespace Kokonotsuba\routers\routes;
 
 use Kokonotsuba\board\board;
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\policy\postRenderingPolicy;
 use Kokonotsuba\thread\postRedirectService;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\thread\threadRepository;
@@ -22,7 +23,8 @@ class defaultRoute {
 		private board $board,
 		private readonly threadRepository $threadRepository,
 		private readonly postRepository $postRepository,
-		private readonly postRedirectService $postRedirectService
+		private readonly postRedirectService $postRedirectService,
+		private readonly postRenderingPolicy $postRenderingPolicy
 	) {}
 
 	/**
@@ -99,7 +101,7 @@ class defaultRoute {
 			$post_uid = $this->postRepository->resolvePostUidFromPostNumber($this->board, $resno);
 
 			// get the post
-			$post = $this->postRepository->getPostByUid($post_uid);
+			$post = $this->postRepository->getPostByUid($post_uid, $this->postRenderingPolicy->viewDeleted());
 
 			// throw error if the post still isn't found
 			if (!$post) {

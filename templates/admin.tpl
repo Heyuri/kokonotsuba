@@ -410,13 +410,13 @@
 				<tr>
 					<td class="postblock"><label for="post_number">Post number</label></td>
 					<td><span id="post_number"><!--&IF($POST_NUMBER,'{$POST_NUMBER}','')--></span></td>
-					<td><input type="hidden" name="post_uid" id="post_uid" value="<!--&IF($POST_UID,'{$POST_UID}','')-->"></td>
+					<td><input type="hidden" name="postUid" value="<!--&IF($POST_UID,'{$POST_UID}','')-->"></td>
 				</tr>
 				<tr>
-					<td class="postblock"><label for="ip">IP address</label></td>
+					<td class="postblock"><label for="ipAddress">IP address</label></td>
 					<td>
 						<div class="formItemDescription">The IP to be banned. You can use '*' for range bans. E.g, '127.0.*' will ban any IP that begins with '127.0.'</div>
-						<input type="text" class="inputtext" id="ip" name="ip" placeholder="Enter IP address" value="<!--&IF($IP,'{$IP}','')-->" required>
+						<input type="text" class="inputtext" id="ipAddress" name="ipAddress" placeholder="Enter IP address" value="<!--&IF($IP,'{$IP}','')-->" required>
 					</td>
 				</tr>
 				<tr>
@@ -535,7 +535,7 @@
 		<h3 class="centerText">Warn user</h3>
 
 		<label> Post No. <span id="post_number"><!--&IF($POST_NUMBER,'{$POST_NUMBER}','')--></span> </label><br>
-		<input type="hidden" name="post_uid" value="<!--&IF($POST_UID,'{$POST_UID}','')-->"><br>
+		<input type="hidden" name="postUid"  value="<!--&IF($POST_UID,'{$POST_UID}','')-->"><br>
 		<label>Reason:<br>
 			<textarea name="msg" cols="80" rows="6"><!--&IF($REASON_DEFAULT,'{$REASON_DEFAULT}','')--></textarea>
 		</label><br>
@@ -861,7 +861,7 @@
 		<p>User capcodes that can be used as long as the user knows the trip password.</p>
 		<table class="capcodeList postlists">
 			<thead>
-				<th>Tripcode</th> <th>Color hexadecimal</th> <th>Capcode text</th> <th>Preview</th> <th></th>
+				<tr> <th>Tripcode</th> <th>Color hexadecimal</th> <th>Capcode text</th> <th>Preview</th> <th></th> </tr>
 			</thead>
 			<tbody>
 				<!--&FOREACH($CAPCODES,'CAPCODE_ROW')-->
@@ -879,7 +879,7 @@
 
 		<table class="staffCapcodeList postlists">
 			<thead>
-				<th>Capcode</th> <th>Preview</th> <th>Required role to use</th>
+				<tr> <th>Capcode</th> <th>Preview</th> <th>Required role to use</th> </tr>
 			</thead>
 			<tbody>
 			<!--&FOREACH($STAFF_CAPCODES,'STAFF_CAPCODE_ROW')-->
@@ -1088,7 +1088,7 @@
 			<input type="hidden" name="action" value="delete">
 			<table class="spamList postlists">
 				<thead>
-					<th>Delete</th> <th>Pattern</th> <th>Active?</th> <th>Description</th> <th>Action</th> <th>Match type</th> <th>Fields</th> <th></th>
+					<tr> <th>Delete</th> <th>Pattern</th> <th>Active?</th> <th>Description</th> <th>Action</th> <th>Match type</th> <th>Fields</th> <th></th> </tr>
 				</thead>
 				<tbody>
 					<!--&FOREACH($ROWS,'SPAM_ROW')-->
@@ -1190,7 +1190,7 @@
 							<td class="postblock"><label for="note">Note</label></td>
 							<td>
 								<div class="formItemDescription">{$NOTE_VISIBILITY_DESCRIPTION}</div>
-								<textarea id="note" name="note"></textarea>
+								<textarea id="note" name="note" cols="80" rows="6"></textarea>
 							</td>
 						</tr>
 					</tbody>
@@ -1205,18 +1205,19 @@
 
 <!--&NOTE_EDIT_FORM-->
 	<div class="noteFormContainer">
-		<h3>Edit note for post No.<span class="noteFormPostNumber">{$POST_NUMBER}</span></h3>
+		<h3>Edit note for post No.<span class="noteFormPostNumber" id="post_number">{$POST_NUMBER}</span></h3>
 		<div class="noteForm">
 			<form method="POST" action="{$MODULE_URL}">
 				<input name="action" value="editNote" type="hidden">
-				<input name="note_id" value="<!--&IF($NOTE_ID,'{$NOTE_ID}','')-->" type="hidden">
+				<input name="noteId" value="<!--&IF($NOTE_ID,'{$NOTE_ID}','')-->" type="hidden">
+				<input name="postUid" value="<!--&IF($POST_UID,'{$POST_UID}','')-->" type="hidden">
 				<table>
 					<tbody>
 						<tr>
-							<td class="postblock"><label for="note">Note</label></td>
+							<td class="postblock"><label for="noteText">Note</label></td>
 							<td>
 								<div class="formItemDescription">{$NOTE_VISIBILITY_DESCRIPTION}</div>
-								<textarea id="note" name="note"><!--&IF($NOTE,'{$NOTE}','')--></textarea>
+								<textarea id="noteText" name="noteText" cols="50" rows="6"><!--&IF($NOTE_TEXT,'{$NOTE_TEXT}','')--></textarea>
 							</td>
 						</tr>
 					</tbody>
@@ -1224,18 +1225,19 @@
 
 				<div class="buttonSection">
 					<input type="submit" value="Save note">
-					<button name="action" value="deleteNote">Delete note</button>
 				</div>
 			</form>
 	</div>
 <!--/&NOTE_EDIT_FORM-->
 
 <!--&NOTE_ENTRY_HTML-->
-	<div class="noteOnPost" title="{$NOTE_TITLE_TEXT}">{$NOTE_TEXT}
-		<i class="noteAddedBy"> - {$ACCOUNT_NAME}</i> <i>({$NOTE_TIMESTAMP})</i> 
-		<span class="noteFunctions"> 
-			<!--&IF($CAN_MODIFY_NOTE,'<span class="noteDeleteFunction">[<a href="{$NOTE_DELETION_URL}" title="{$DELETE_NOTE_TITLE}">X</a>]</span>','')-->
-			<!--&IF($CAN_MODIFY_NOTE,'<span class="noteEditFunction">[<a href="{$NOTE_EDIT_URL}" title="{$EDIT_NOTE_TITLE}">E</a>]</span>','')-->
+	<div class="noteOnPost"  title="{$NOTE_TITLE_TEXT}" data-note-Id="{$NOTE_ID}">
+		<div class="noteSeparator">---</div>
+		<span class="noteText">{$NOTE_TEXT}</span>
+		<i class="noteAddedBy" style="color: {$MOD_COLOR};"> - {$ACCOUNT_NAME}</i> <i class="noteTimestamp">({$NOTE_TIMESTAMP})</i> 
+		<span class="noteFunctions">
+			<!--&IF($CAN_MODIFY_NOTE,'<span class="adminFunctions noteDeleteFunction">[<a class="noteDeletionAnchor" href="{$NOTE_DELETION_URL}" title="{$DELETE_NOTE_TITLE}">X</a>]</span>','')-->
+			<!--&IF($CAN_MODIFY_NOTE,'<span class="adminFunctions noteEditFunction">[<a class="noteEditAnchor" href="{$NOTE_EDIT_URL}" title="{$EDIT_NOTE_TITLE}">E</a>]</span>','')-->
 		</span>
 	</div>
 <!--/&NOTE_ENTRY_HTML-->

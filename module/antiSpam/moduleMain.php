@@ -16,7 +16,6 @@ use function Kokonotsuba\Modules\antiSpam\getAntiSpamService;
 
 class moduleMain extends abstractModuleMain {
 	private antiSpamService $antiSpamService;
-	private string $globalBans;
 
 	public function getName(): string {
 		return 'Anti-spam checking system';

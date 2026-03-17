@@ -2,15 +2,7 @@
 
 namespace Kokonotsuba\policy;
 
-use Kokonotsuba\userRole;
-
-class postPolicy {
-    public function __construct(
-        private array $authLevels,
-        private userRole $roleLevel
-    ) {}
-
-
+class postPolicy extends policyBase {
     public function authenticatePostDeletion(string $passwordHash, string $suppliedPassword): bool {
         // if the user's role is authorized to delete a post (regardless if they have the correct password)
         // then the user is authenticated for deleting the post - return true

@@ -207,11 +207,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		if($this->canViewRawIp()) {
 			// Show raw IP for higher-privilege users
 			$postLink = $this->generateViewIpUrl($post['host']);
-			$button = '[<a href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars($post['host']) . '</a>]';
+			$button = '[<a class="ipAddress" href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars($post['host']) . '</a>]';
 		} else if($this->canViewHashedIp()) {
 			// Show hashed IP and user-based filter for lower-privilege users
 			$postLink = $this->generateViewPostsUrl($post['post_uid']);
-			$button = '[<a href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars(substr(md5($post['host']), 0, 8)) . '</a>]';
+			$button = '[<a class="hashedIp" href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars(substr(md5($post['host']), 0, 8)) . '</a>]';
 		}
 		
 		// append the button to the hook point

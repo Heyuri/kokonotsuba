@@ -79,4 +79,23 @@ class noteRepository {
 		// execute the query to update the note
 		$this->databaseConnection->execute($query, $params);
 	}
+
+	public function getNoteById(int $noteId): false|array {
+		// build query to fetch the note with the given ID
+		$query = "SELECT id, post_uid, note_text, added_by, note_submitted 
+				  FROM $this->noteTable 
+				  WHERE id = :note_id";
+
+		// parameters for the query
+		$params = [
+			':note_id' => $noteId
+		];
+
+		// execute the query and return the note data as an associative array
+		return $this->databaseConnection->fetchOne($query, $params);
+	}
+
+	public function getLastInsertId(): false|int {
+		return $this->databaseConnection->lastInsertId();
+	}
 }

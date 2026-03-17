@@ -90,7 +90,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// get the warn url + post uid paramter
 		$warnUrl = $this->getModulePageURL(
 			[
-				'post_uid' => $postUid
+				'postUid' => $postUid
 			],
 			false,
 			true
@@ -152,8 +152,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {
-		$post_uid = $_REQUEST['post_uid'] ?? 0;
-		$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($post_uid);
+		$postUid = $_REQUEST['postUid'] ?? 0;
+		$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($postUid);
 
 		if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 			// get shared template values for this module
@@ -163,7 +163,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$templateValues = array_merge($templateValues, 
 				[
 					'{$POST_NUMBER}'	=> htmlspecialchars($postNumber),
-					'{$POST_UID}'		=> htmlspecialchars($post_uid),
+					'{$POST_UID}'		=> htmlspecialchars($postUid),
 				]
 			);
 
@@ -172,7 +172,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			return;
 		}
 
-		$post = $this->moduleContext->postRepository->getPostByUid($post_uid, true);
+		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
 		if (!$post) {
 			throw new BoardException('ERROR: That post does not exist.');
 			return;

@@ -16,5 +16,12 @@ $currentUserId = $staffAccountFromSession->getUID();
 // ───────────────────────────────────────
 // Policies
 // ───────────────────────────────────────
-$postPolicy = new postPolicy($globalConfig['AuthLevels'], $staffAccountFromSession->getRoleLevel());
-$postRenderingPolicy = new postRenderingPolicy($globalConfig['AuthLevels'], $staffAccountFromSession->getRoleLevel());
+$postPolicy = new postPolicy(
+    $globalConfig['AuthLevels'], 
+    $staffAccountFromSession->getRoleLevel(),
+    $currentUserId);
+    
+$postRenderingPolicy = new postRenderingPolicy(
+    $globalConfig['AuthLevels'], 
+    $staffAccountFromSession->getRoleLevel(), 
+    $currentUserId);
