@@ -230,8 +230,7 @@
 
 .staffNotesContainer {
 	font-size: var(--font-size-small);
-	color: blue;
-	margin-top: 2em;
+	color: var(--color-fg-warning);
 }
 
 /* Protect against zalgo text spam by preventing overflow from the post */
