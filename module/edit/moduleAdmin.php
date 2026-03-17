@@ -5,6 +5,8 @@ namespace Kokonotsuba\Modules\edit;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
+use const Kokonotsuba\GLOBAL_BOARD_UID;
+
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 use function Kokonotsuba\libraries\validatePostInput;
@@ -139,8 +141,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		// variable to hold post number for redirect after edit
 		$postNumber = null;
 
+		// board uid
+		$boardUid = null;
+
 		// wrap in transaction to ensure data integrity
-		$this->moduleContext->transactionManager->run(function() use ($postUid, &$postNumber) {
+		$this->moduleContext->transactionManager->run(function() use ($postUid, &$postNumber, &$boardUid) {
 			// get post details for widget
 			$post = $this->moduleContext->postRepository->getPostByUID(
 				$postUid, 
@@ -152,6 +157,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 			// store post number for redirect after edit
 			$postNumber = $post['no'] ?? null;
+
+			// get board uid
+			$boardUid = $post['boardUID'] ?? null;
 
 			// get the parameters
 			$name = $_POST['postUserName'] ?? null;
@@ -176,6 +184,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->redirect($postNumber);
 		}
 		
+		// log the edit action
+		$this->moduleContext->actionLoggerService->logAction("Edit post No. {$postNumber}", $boardUid ?? GLOBAL_BOARD_UID);
 	}
 
 	private function handleEditPage(int $postUid): void {
