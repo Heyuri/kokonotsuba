@@ -50,9 +50,26 @@
 				}
 			});
 
-			const win = new kkwmWindow(title, { x: 0, y: 0, w: 420, h: 420 });
-			const body = win.div.querySelector('.windbody') || win.div;
+			// Use a unique internal name for each window
+			let uniqueWinName;
+			do {
+				uniqueWinName = 'kkwm_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+			} while (window.$kkwm_name && window.$kkwm_name(uniqueWinName));
+			const win = new kkwmWindow(uniqueWinName, { x: 0, y: 0, w: 420, h: 420 });
 			
+			// Set the visible window title
+			if (win.div) {
+				const winNameEl = win.div.querySelector('.winname');
+				if (winNameEl) winNameEl.textContent = title;
+			}
+			
+			// Use only the new window's div
+			const body = win.div && win.div.querySelector ? (win.div.querySelector('.windbody') || win.div) : null;
+			
+			if (!body) {
+				console.error('Window body could not be created.');
+				return null;
+			}
 			body.appendChild(clone);
 
 			// Call onOpen if provided, after the form is in the DOM
