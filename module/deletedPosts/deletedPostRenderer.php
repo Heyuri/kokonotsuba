@@ -18,7 +18,6 @@ use Kokonotsuba\thread\threadService;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
-use function Puchiko\strings\truncateText;
 
 class deletedPostRenderer {
 	public function __construct(
@@ -315,10 +314,18 @@ class deletedPostRenderer {
 			]
 		);
 
+		// generate the url for the pager
+		$pagerUrl = $this->modulePageUrl;
+
+		// generate the url for the pager
+		if(isset($_GET['pageName']) && $_GET['pageName'] === 'restoredIndex') {
+			$pagerUrl .= '&pageName=restoredIndex';
+		}
+
 		// pager
 		$entriesPerPage = $this->board->getConfigValue('PAGE_DEF');
 		$totalEntries = $deletedPostsCount;
-		$pager = drawPager($entriesPerPage, $totalEntries, $this->modulePageUrl);
+		$pager = drawPager($entriesPerPage, $totalEntries, $pagerUrl);
 		
 		// output the admin page
 		$this->outputAdminPage($deletedPostsPageHtml, $pager);
