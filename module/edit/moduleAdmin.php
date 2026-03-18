@@ -94,18 +94,23 @@ class moduleAdmin extends abstractModuleAdmin {
 		?string $email
 	): void {
 		// parameters to update in the query
-		   $updatePostParameters = [
-			   'name' => $name,
-			   'com' => $comment,
-			   'sub' => $subject,
-			   'email' => $email
-		   ];
+		$updatePostParameters = [
+			'name' => $name,
+			'com' => $comment,
+			'sub' => $subject,
+			'email' => $email
+		];
 
-		   // Filter out null values
-		   $updatePostParameters = array_filter($updatePostParameters, function($v) { return $v !== null; });
+		// convert new lines
+		if($comment !== null) {
+			$updatePostParameters['com'] = nl2br($comment, false);
+		}
 
-		   // update the post in database
-		   $this->moduleContext->postRepository->updatePost($postUid, $updatePostParameters);
+		// Filter out null values
+		$updatePostParameters = array_filter($updatePostParameters, function($v) { return $v !== null; });
+
+		// update the post in database
+		$this->moduleContext->postRepository->updatePost($postUid, $updatePostParameters);
 	}
 
 	private function sendJson(int $postUid): void {
