@@ -54,7 +54,7 @@ class moduleMain extends abstractModuleMain {
 		$fontstyle = sprintf('color: rgb(%d, %d, %d);', $red6, $green6, $blue6);
 
 		// construct span
-		$span = '<span style="' . $bgstyle . ' ' . $fontstyle . '"> ' . htmlspecialchars($textContent) . '</span>';
+		$span = '<span style="' . $bgstyle . ' ' . $fontstyle . '">' . htmlspecialchars($textContent) . '</span>';
 
 		// return the span html
 		return $span;
