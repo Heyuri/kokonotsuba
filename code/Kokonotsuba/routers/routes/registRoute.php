@@ -221,18 +221,13 @@ class registRoute {
 		// Handle javascript/json request
 		// It will exit after a successful javascript request
 		$this->handleJsonOutput(
-			$computedPostInfo['no'], 
+			$computedPostInfo,
+			$postData,
+			$preInsertThreadList,
+			$computedPostInfo['no'],
 			$this->board->getBoardUID(),
-			$redirect
+			$redirect, 
 		);
-
-		// Rebuild board pages
-		$this->handlePageRebuilding($computedPostInfo, $postData, $preInsertThreadList);
-		
-		// Final redirect (only for non-js requests)
-		if(isJavascriptRequest() === false) {
-			redirect($redirect, 0);
-		}
 	}
 
 	private function gatherPostInputData(): array {
@@ -614,18 +609,71 @@ class registRoute {
 		}
 	}
 
-	private function handleJsonOutput(int $postNumber, int $boardUid, string $redirectUrl): void {
+	private function shouldRebuildAfterDetach(array $postData): bool {
+		// the poster's email
+		$email = $postData['email'] ?? '';
+		
+		// always noko
+		$alwaysNoko = $this->board->getConfigValue('ALWAYS_NOKO', false);
+		
+		// noko
+		$isNoko = (strstr($email, 'noko') && !strstr($email, 'nonoko')) || ($alwaysNoko && !strstr($email, 'nonoko'));
+		
+		// dump
+		$isDump = strstr($email, 'dump');
+		
+		// for noko or dump we'll return true to trigger page rebuild after sending JSON
+		return $isNoko || $isDump;
+	}
+
+	private function handleJsonDetach(
+		array $postData, 
+		array $computedPostInfo, 
+		array $preInsertThreadList,
+		array $registJsonData
+	): void {
+		// If the post is marked with "noko" or "dump", we want to trigger the page rebuild before sending the JSON response to ensure the client receives the updated page state.
+		if ($this->shouldRebuildAfterDetach($postData)) {
+			sendAjaxAndDetach($registJsonData);
+			$this->handlePageRebuilding($computedPostInfo, $postData, $preInsertThreadList);
+			exit;
+		} 
+		// Otherwise, we can send the JSON response first and then handle the page rebuilding.
+		else {
+			$this->handlePageRebuilding($computedPostInfo, $postData, $preInsertThreadList);
+			sendAjaxAndDetach($registJsonData);
+			exit;
+		}
+	}
+
+	private function handleJsonOutput(
+		array $computedPostInfo, 
+		array $postData, 
+		array $preInsertThreadList,
+		int $postNumber, 
+		int $boardUid, 
+		string $redirectUrl
+	): void {
+		// If it's a JavaScript request, return JSON response with post ID and redirect URL
 		if(isJavascriptRequest()) {
-			// build the array to be encoded as json
+			// Construct the JSON response data
 			$registJsonData = [
-				// we want to build the post id so we can redirect to it when noko'ing
 				'postId' => "p{$boardUid}_{$postNumber}",
-				// in case of no noko or dump we'll want the js to redirect the user
 				'redirectUrl' => $redirectUrl,
 			];
 
-			// then send ajax (and detach)
-			sendAjaxAndDetach($registJsonData);
+			// handle detach logic
+			$this->handleJsonDetach(
+				$postData, 
+				$computedPostInfo, 
+				$preInsertThreadList, 
+				$registJsonData
+			);
+		} 
+		// For non-JavaScript requests, handle page rebuilding and then redirect
+		else {
+			$this->handlePageRebuilding($computedPostInfo, $postData, $preInsertThreadList);
+			redirect($redirectUrl, 0);
 		}
 	}
 
