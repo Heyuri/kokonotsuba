@@ -240,6 +240,19 @@ $language['post_multiple'] = 'post';
 $language['poster_hash_count'] = 'Bu ID ile %1$s %2$s var.';
 $language['score_pre_text'] = 'Skor: %1$s';
 $language['view_posts_by_user'] = 'Kullanıcının postlarını görüntüle';
+$language['leave_note'] = 'Not bırak';
+$language['note_visibility_description'] = 'Bu not sadece diğer yetkililer tarafından görülebilir';
+$language['note_title_text'] = 'Bu bir not';
+$language['edit_note'] = 'Notu düzenleme';
+$language['delete_note'] = 'Notu sil';
+$language['note_no_permission'] = 'Bu notu düzenleme yetkiniz yok.';
+$language['edit_post'] = 'Postu düzenle';
+$language['self_serve_banner_suggest'] = 'Kendi bannerınızı burada göstermek ister misiniz? Başvurmak için tıklayın!';
+$language['private_message_top_bar'] = 'Özel Mesajlar';
+$language['pm_recipient_and_message_required'] = 'Alıcı ve mesaj gereklidir!';
+$language['pm_invalid_recipient'] = 'Geçersiz alıcı tripcode\'u!';
+$language['pm_inbox_page_title'] = 'Özel mesaj gelen kutusu';
+$language['pm_view_thread_page_title'] = 'Özel mesaj threadi';
 
 ?>
 
