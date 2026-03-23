@@ -233,11 +233,6 @@
 	color: var(--color-fg-warning);
 }
 
-/* Protect against zalgo text spam by preventing overflow from the post */
-.post {
-	overflow: hidden;
-}
-
 .post .nameContainer,
 .post .time,
 .post .userIP,
