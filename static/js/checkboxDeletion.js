@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Function to toggle the fixed position class based on checkbox status
     function updateUserDeletePosition() {
+
         let anyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
         
         if (anyChecked) {
@@ -15,11 +16,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Set up event listeners for all checkboxes
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', updateUserDeletePosition);
-    });
+    // Only set up event listeners if the userDeleteDiv exists
+    if(userDeleteDiv) {
+        // Set up event listeners for all checkboxes
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateUserDeletePosition);
+        });
 
-    // Initial check in case some checkboxes are already checked
-    updateUserDeletePosition();
+        // Initial check in case some checkboxes are already checked
+        updateUserDeletePosition();
+    }
 });

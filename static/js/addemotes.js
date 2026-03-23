@@ -732,7 +732,7 @@ emotes_list.forEach((emote,index) => {
 });
 
 // A.after(B), B.after(C), etc... = A --> B --> C --> ...
-COMMENT.after(emotes_container); // insert emotes after comment box
+COMMENT?.after(emotes_container); // insert emotes after comment box
 
 /* EMOJI */
 let emoji_container = document.createElement("details");

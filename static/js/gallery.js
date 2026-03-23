@@ -7,8 +7,8 @@ const kkgal = {
 		kkgal.postImages = $class("postimg");
 
 		var df = $id("delform");
-		if (!df) return;
-		if (document.querySelector("#galfuncs")) return;
+		if (!df) return true;
+		if (document.querySelector("#galfuncs")) return true;
 		//df.insertAdjacentHTML("beforebegin", '<div id="galfuncs"><label><input type="checkbox" onchange="localStorage.setItem(\'galmode\',this.checked);"'+( localStorage.getItem("galmode")=="true" ? ' checked="checked"' : '')+'>Gallery mode</label></div>'); // disable "Gallery mode" checkbox in thread
 		$doc.body.insertAdjacentHTML("beforeend", `
 <div id="galframe">

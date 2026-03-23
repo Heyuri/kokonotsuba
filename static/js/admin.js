@@ -125,10 +125,12 @@
 	const publicTextarea   = document.getElementById('banmsg');
 
 	function toggleReason() {
-		publicTextarea.disabled = !publicCheckbox.checked;
+		if (publicTextarea && publicCheckbox) {
+			publicTextarea.disabled = !publicCheckbox.checked;
+		}
 	}
 
-	publicCheckbox.addEventListener('change', toggleReason);
+	publicCheckbox?.addEventListener('change', toggleReason);
 	// Initialize on load
 	toggleReason();
 
