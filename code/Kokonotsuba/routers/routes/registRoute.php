@@ -315,15 +315,20 @@ class registRoute {
 			return ['files' => []];
 		}
 
+		// get attachment limit
+		$attachmentUploadLimit = $this->board->getConfigValue('ATTACHMENT_UPLOAD_LIMIT', 1);
+
 		// ----------------------------------------
 		// LOOP THROUGH ALL FILES IN THE INPUT
 		// ----------------------------------------
 		$fileCount = count($_FILES[$inputName]['tmp_name']);
 
-		// get attachment limit
-		$attachmentUploadLimit = $this->board->getConfigValue('ATTACHMENT_UPLOAD_LIMIT', 1);
+		// if the file count is above the limit, we will only process up to the limit to prevent errors
+		if ($fileCount > $attachmentUploadLimit) {
+			$fileCount = $attachmentUploadLimit;
+		}
 
-		for ($i = 0; $i < $fileCount; $i++) {
+		for ($i = 0; $i < $fileCount && $i < $attachmentUploadLimit; $i++) {
 			// break loop if iterator is above limit
 			if($i >= $attachmentUploadLimit) {
 				break;
@@ -388,6 +393,15 @@ class registRoute {
 				'fileSize' => $file->getFileSize(),
 				'mimeType' => $file->getMimeType(),
 			];
+		}
+
+		// if the user somehow selected multiple files but the board is set to only allow 1 attachment, we will only process the first file to prevent errors
+		if (
+			count($fileMetaList) > 1 
+			&& $attachmentUploadLimit < 2
+			&& isset($fileMetaList[0])
+		) {
+			$fileMetaList = [$fileMetaList[0]];
 		}
 
 		// return all files
