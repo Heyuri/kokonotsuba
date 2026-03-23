@@ -81,6 +81,8 @@ $language['regist_threadlocked']		= 'Thread is locked by administrator!';
 $language['regist_redirect']			= '%1$s Redirecting... <p>If your browser don\'t redirect for you, please click: <a href="%2$s">Return</a></p>';
 $language['del_notchecked']				= 'Nothing selected for deletion. Please go back and select again.';
 $language['del_wrongpwornotfound']		= 'No such post or wrong password.';
+$language['del_success']				= 'Post deleted successfully.';
+$language['del_timeexceeded']			= 'Post is too old to delete.';
 $language['admin_wrongpassword']		= 'Wrong password';
 $language['return']						= 'Return';
 $language['admin_remake']				= 'Rebuild';
@@ -247,5 +249,12 @@ $language['delete_note'] = 'Delete note';
 $language['note_no_permission'] = 'You do not have permission to modify this note.';
 $language['note_not_found'] = 'Note not found!';
 $language['edit_post'] = 'Edit post';
+$language['self_serve_banner_suggest'] = 'Want your banner here? Click here to submit yours!';
+$language['private_message_top_bar'] = 'Private Messages';
+$language['pm_recipient_and_message_required'] = 'Recipient and message are required!';
+$language['pm_invalid_recipient'] = 'Invalid recipient tripcode!';
+$language['pm_inbox_page_title'] = 'Private message inbox';
+$language['pm_view_thread_page_title'] = 'Private message thread';
+
 
 ?>
