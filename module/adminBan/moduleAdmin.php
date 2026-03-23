@@ -89,7 +89,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a href="' . $this->myPage . '">Manage bans</a></li>';
+		$linkHtml .= '<li class="adminNavLink"><a href="' . $this->myPage . '">Bans</a></li>';
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, array &$post): void {

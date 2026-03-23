@@ -64,7 +64,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink" title="Manage user capcodes and view staff capcodes"><a href="' . htmlspecialchars($this->modulePageUrl) . '">Manage capcodes</a></li>';
+		$linkHtml .= '<li class="adminNavLink" title="Manage user capcodes and view staff capcodes"><a href="' . htmlspecialchars($this->modulePageUrl) . '">Capcodes</a></li>';
 	}
 
 	public function ModulePage(): void {

@@ -88,7 +88,7 @@ class deletedPostUIHooks {
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {
 		// modify the "links above bar" html to have a [Deleted Posts] button
-		$linkHtml .= '<li class="adminNavLink"><a title="Manage posts that have been deleted" href="' . htmlspecialchars($this->modulePageUrl) . '">Manage deleted posts</a></li>';
+		$linkHtml .= '<li class="adminNavLink"><a title="Manage posts that have been deleted" href="' . htmlspecialchars($this->modulePageUrl) . '">Deleted posts</a></li>';
 	}
 
 	/**

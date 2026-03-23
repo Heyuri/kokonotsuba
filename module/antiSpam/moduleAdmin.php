@@ -102,7 +102,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a href="' . htmlspecialchars($this->moduleUrl) . '">Manage anti-spam system</a></li>';
+		$linkHtml .= '<li class="adminNavLink"><a href="' . htmlspecialchars($this->moduleUrl) . '">Anti-spam system</a></li>';
 	}
 
 	public function ModulePage(): void {

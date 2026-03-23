@@ -43,7 +43,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a title="Manage the global warning/message that will appear across all boards" href="' . $this->myPage . '">Manage global message</a></li>';
+		$linkHtml .= '<li class="adminNavLink"><a title="Manage the global warning/message that will appear across all boards" href="' . $this->myPage . '">Global message</a></li>';
 	}	
 
 	public function ModulePage() {
