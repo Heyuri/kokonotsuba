@@ -120,6 +120,22 @@ class usrdelRoute {
 		return $postUidsForDeletion;
 	}
 
+	private function validatePostDeletionTimeLimit(array $post): void {
+		// deletion time limit in hours
+		$deletionTimeLimit = intval($this->config['POST_DELETION_TIME_LIMIT'] ?? 168); // default to 168 hours (7 days) if not set
+
+		// extract unix timestamp
+		$postTime = isset($post['root']) ? strtotime($post['root']) : (int)$post['time'];
+
+		// convert to seconds - since the time limit is in hours
+		$deletionTimeLimit *= 3600;
+
+		// if the post is older than the cutoff limit, then it cannot be deleted by users (only staff can delete old posts)
+		if(time() - $postTime > $deletionTimeLimit && !$this->postPolicy->canStaffDelete()) {
+			throw new BoardException(_T('del_timeexceeded'));
+		}
+	}
+
 	private function authenticateAndLogPostDeletions(
 		array $posts, 
 		string $password, 
@@ -134,8 +150,14 @@ class usrdelRoute {
 			// Get the post password hash
 			$postPasswordHash = $post['pwd'] ?? '';
 
+			// check if the post is too old to delete
+			$this->validatePostDeletionTimeLimit($post);
+
 			// Determine whether the user can delete the post
-			$canUserDelete = $this->postPolicy->authenticatePostDeletion($postPasswordHash, $password);
+			$canUserDelete = $this->postPolicy->canDeletePost(
+				$postPasswordHash, 
+				$password,
+			);
 
 			// If the post can be deleted, proceed
 			if ($canUserDelete) {

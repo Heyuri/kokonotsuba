@@ -455,3 +455,6 @@ $config['STAFF_LOGIN_TIMEOUT'] = 86400;
 
 // name of system role/user
 $config['SYSTEMCHAN_NAME'] = "System-chan";
+
+// Time limit for deleting posts in seconds.
+$config['POST_DELETION_TIME_LIMIT'] = 168;
