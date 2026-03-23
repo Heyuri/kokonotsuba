@@ -115,6 +115,10 @@ document.addEventListener("DOMContentLoaded", () => {
 				const data = await safeJSON(resp);
 
 				if (!resp.ok) {
+            		if (resp.status === 525) {
+            		    showMessage("SSL Handshake error. Try again in a minute or so.", false);
+            		}
+
 					if (data?.message) showMessage(data.message, false);
 					else showMessage(`Error ${resp.status}: Post failed.`, false);
 					throw new Error(`HTTP ${resp.status}`);
