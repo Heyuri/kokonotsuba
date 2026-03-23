@@ -37,7 +37,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function onRenderLinksAboveBar(&$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a href="' . $this->myPage . '">Rebuild boards</a></li>';
+		$linkHtml .= '<li class="adminNavLink"><a href="' . $this->myPage . '">Rebuild multiple</a></li>';
 	}
 
 	public function ModulePage() {
