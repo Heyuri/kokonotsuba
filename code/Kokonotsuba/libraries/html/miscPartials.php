@@ -202,7 +202,7 @@ function drawAdminTheading(&$dat, $staffSession) {
 	$loggedInInfo = '';
 		
 	if($roleEnum !== userRole::LEV_NONE) {
-		$loggedInInfo = '<div class=\"username\">' . _T('admin_logged_in_as', sanitizeStr($username), sanitizeStr($roleName)) . '</div>';
+		$loggedInInfo = '<div class="username">' . _T('admin_logged_in_as', sanitizeStr($username), sanitizeStr($roleName)) . '</div>';
 	}
 	
 	$html = '<div class="theading3"><h2>' . _T('admin_top') . '</h2>' . $loggedInInfo . '</div>';
