@@ -89,6 +89,7 @@ $language['admin_remake']				= 'Rebuild';
 $language['admin_frontendmanage']		= 'Front-End Manage (Sign in needed)';
 $language['admin_delete']				= 'Delete';
 $language['admin_top']					= 'Administrator mode';
+$language['admin_logged_in_as']			= 'Logged in as %1$s (%2$s)';
 $language['admin_manageposts']			= 'Manage posts';
 $language['admin_optimize']				= 'Optimize';
 $language['admin_check']				= 'Check data source';
@@ -256,12 +257,15 @@ $language['pm_invalid_recipient'] = 'Invalid recipient tripcode!';
 $language['pm_main_title'] = 'Private messaging system';
 $language['pm_inbox_page_title'] = 'Private message inbox';
 $language['pm_view_thread_page_title'] = 'Private message thread';
+$language['pm_login_page_title'] = 'Private message login';
+$language['pm_contact_view_no_messages'] = 'No messages in this thread yet.';
 $language['contact_not_selected'] = 'No contact selected!';
 $language['pm_no_message'] = 'No messages!';
 $language['pm_login_required'] = 'You must be logged in to use the private messaging system!';
 $language['pm_contact_self'] = 'Yourself';
 $language['pm_login_description'] = 'Enter your tripcode to access your private messages.';
-
+$language['pm_tripcode_login_hash_note'] = 'Include the \'#\' followed by your tripcode password. Use two \'#\' (##) for secure tripcodes.';
+$language['pm_tripcode_login_label'] = 'Tripcode:';
 
 $language['admin_nav_capcodes_title'] = 'Manage user capcodes and view staff capcodes';
 $language['admin_nav_capcodes'] = 'Capcodes';

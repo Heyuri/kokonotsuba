@@ -7,6 +7,7 @@ use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
+use function Puchiko\strings\sanitizeStr;
 
 function generateAdminLinkButtons(string $liveIndexFile, string $staticIndexFile, moduleEngine $moduleEngine, string $adminLinkHtml): string {
 	$linksAboveBar =  '
@@ -201,10 +202,10 @@ function drawAdminTheading(&$dat, $staffSession) {
 	$loggedInInfo = '';
 		
 	if($roleEnum !== userRole::LEV_NONE) {
-		$loggedInInfo = "<div class=\"username\">Logged in as $username ($roleName)</div>";
+		$loggedInInfo = '<div class=\"username\">' . _T('admin_logged_in_as', sanitizeStr($username), sanitizeStr($roleName)) . '</div>';
 	}
 	
-	$html = "<div class=\"theading3\"><h2>Administrator mode</h2>$loggedInInfo</div>";
+	$html = '<div class="theading3"><h2>' . _T('admin_top') . '</h2>' . $loggedInInfo . '</div>';
 	
 	$dat .= $html;
 	return $html;
