@@ -96,7 +96,6 @@ $language['admin_optimize']				= 'Optimize';
 $language['admin_check']				= 'Check data source';
 $language['admin_repair']				= 'Repair data source';
 $language['admin_export']				= 'Export data';
-$language['admin_logout']				= 'Logout';
 $language['admin_verify_btn']			= 'Login';
 $language['admin_archive']				= '<th>Archive</th>';
 $language['admin_notices']				= '<ul><li>If you want to delete a post, check the "delete" checkbox before that post and click Submit button.</li><li>If you want to delete image only, please check "Delete image only" checkbox and follow normal deletion procedures.</li><li>If you want to lock/unlock a thread, please check "Stop" checkbox of that thread and click "Submit" button.</li><li>Please press "Update" after managing posts.</li></ul>';
