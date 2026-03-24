@@ -8,6 +8,7 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\log_in\adminLoginController;
 use Kokonotsuba\template\pageRenderer;
 
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawAdminLoginForm;
 use function Kokonotsuba\libraries\isLoggedIn;
 use function Puchiko\request\redirect;
@@ -40,7 +41,7 @@ class adminRoute {
 		$adminRouteHtml.= '<div id="adminOptionContainer" class="centerText">';
 
 		if(isLoggedIn()) {
-			$adminRouteHtml .= '[<a href="'.$adminRouteUrl.'&modAction=logout">Log out</a>]';
+			$adminRouteHtml .= '[<a href="'.$adminRouteUrl.'&modAction=logout">' . _T('admin_logout') . '</a>]';
 		} else {
 			$adminRouteHtml .= drawAdminLoginForm($adminRouteUrl);
 		}

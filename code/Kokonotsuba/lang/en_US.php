@@ -90,6 +90,7 @@ $language['admin_frontendmanage']		= 'Front-End Manage (Sign in needed)';
 $language['admin_delete']				= 'Delete';
 $language['admin_top']					= 'Administrator mode';
 $language['admin_logged_in_as']			= 'Logged in as %1$s (%2$s)';
+$language['admin_logout']			    = 'Log out';
 $language['admin_manageposts']			= 'Manage posts';
 $language['admin_optimize']				= 'Optimize';
 $language['admin_check']				= 'Check data source';
