@@ -160,7 +160,7 @@
 			.then(res => {
 				if (res.status === 200) {
 					noteOnPost.style.display = 'none';
-					showMessage('Note deleted!.', true);
+					showMessage('Note deleted!', true);
 				} else if (res.status === 500) {
 					noteOnPost.style.opacity = '';
 					showMessage('Failed to delete note.');
