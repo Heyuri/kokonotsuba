@@ -245,7 +245,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$duration = $_POST['duration'] ?? '0';
 		$makePublic = $_POST['public'] ?? '';
 		$publicBanMessageHTML = $_POST['banmsg'] ?? '';
-		$postUid = $_POST['postUid'] ?? 0;
+		$postUid = intval($_POST['postUid'] ?? 0);
 		$isGlobal = isset($_POST['global']);  // Check if global ban is selected
 
 		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
