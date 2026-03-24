@@ -384,26 +384,53 @@ class moduleAdmin extends abstractModuleAdmin {
 		$log = $this->sortBansByNewest($log);
 		$glog = $this->sortBansByNewest($glog);
 
-		$newLocalLog = [];
-		$newGlobalLog = [];
+		   $newLocalLog = [];
+		   $newGlobalLog = [];
+		   $revokedLocalIps = [];
+		   $revokedGlobalIps = [];
 
-		foreach ($log as $i => $entry) {
-			if (!isset($_POST["del$i"]) || $_POST["del$i"] !== 'on') {
-				$newLocalLog[] = $entry;
-			}
-		}
+		   foreach ($log as $i => $entry) {
+			   if (isset($_POST["del$i"]) && $_POST["del$i"] === 'on') {
+				   // Ban is being revoked
+				   $parts = explode(',', $entry);
+				   if (!empty($parts[0])) {
+					   $revokedLocalIps[] = $parts[0];
+				   }
+			   } else {
+				   $newLocalLog[] = $entry;
+			   }
+		   }
 
-		foreach ($glog as $i => $entry) {
-			if (!isset($_POST["delg$i"]) || $_POST["delg$i"] !== 'on') {
-				$newGlobalLog[] = $entry;
-			}
-		}
+		   foreach ($glog as $i => $entry) {
+			   if (isset($_POST["delg$i"]) && $_POST["delg$i"] === 'on') {
+				   // Global ban is being revoked
+				   $parts = explode(',', $entry);
+				   if (!empty($parts[0])) {
+					   $revokedGlobalIps[] = $parts[0];
+				   }
+			   } else {
+				   $newGlobalLog[] = $entry;
+			   }
+		   }
 
-		file_put_contents($this->BANFILE, implode(PHP_EOL, $newLocalLog));
-		file_put_contents($this->GLOBAL_BANS, implode(PHP_EOL, $newGlobalLog));
-		
-		redirect($_SERVER['HTTP_REFERER']);
-		exit;
+		   file_put_contents($this->BANFILE, implode(PHP_EOL, $newLocalLog));
+		   file_put_contents($this->GLOBAL_BANS, implode(PHP_EOL, $newGlobalLog));
+
+		   // Log revocations if any
+		   $allRevoked = array_merge($revokedLocalIps, $revokedGlobalIps);
+		   if (!empty($allRevoked)) {
+			   if (count($allRevoked) === 1) {
+				   $msg = "Revoked ban for {$allRevoked[0]}";
+			   } else {
+				   $msg = "Revoke bans for: " . implode(", ", $allRevoked);
+			   }
+			   // Use -1 for global if any global bans, else use board UID
+			   $boardUid = !empty($revokedGlobalIps) ? -1 : $this->moduleContext->board->getBoardUID();
+			   $this->moduleContext->actionLoggerService->logAction($msg, $boardUid);
+		   }
+
+		   redirect($_SERVER['HTTP_REFERER']);
+		   exit;
 	}
 
 	private function calculateBanDuration($duration) {
