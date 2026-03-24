@@ -248,12 +248,44 @@ $language['delete_note'] = 'Notu sil';
 $language['note_no_permission'] = 'Bu notu düzenleme yetkiniz yok.';
 $language['edit_post'] = 'Postu düzenle';
 $language['self_serve_banner_suggest'] = 'Kendi bannerınızı burada göstermek ister misiniz? Başvurmak için tıklayın!';
-$language['private_message_top_bar'] = 'Özel Mesajlar';
+$language['private_message_top_bar'] = 'Özel mesajlar';
 $language['pm_recipient_and_message_required'] = 'Alıcı ve mesaj gereklidir!';
 $language['pm_invalid_recipient'] = 'Geçersiz alıcı tripcode\'u!';
+$language['pm_main_title'] = 'Özel mesajlaşma sistemi';
 $language['pm_inbox_page_title'] = 'Özel mesaj gelen kutusu';
 $language['pm_view_thread_page_title'] = 'Özel mesaj threadi';
+$language['contact_not_selected'] = 'Hiçbir kişi seçilmedi!';
+$language['pm_no_message'] = 'Mesaj yok!';
+$language['pm_login_required'] = 'Özel mesajlaşma sistemini kullanmak için giriş yapmalısınız!';
+$language['pm_contact_self'] = 'Kendiniz';
+$language['pm_login_description'] = 'Özel mesajlarınıza erişmek için tripcode\'unuzu girin.';
 
+$language['admin_nav_capcodes_title'] = 'Kullanıcı capcode\'larını yönetin ve yetkili capcode\'larını görüntüleyin';
+$language['admin_nav_capcodes'] = 'Capcode\'lar';
+$language['admin_nav_blotter_title'] = 'Blotter\'ı yönetin';
+$language['admin_nav_blotter'] = 'Blotter';
+$language['admin_nav_global_message_title'] = 'Genel duyuruyu yönetin';
+$language['admin_nav_global_message'] = 'Genel duyuru';
+$language['admin_nav_deleted_posts_title'] = 'Silinen postları görüntüleyin';
+$language['admin_nav_deleted_posts'] = 'Silinen postlar';
+$language['admin_nav_rebuild_title'] = 'Yeniden oluşturma araçları';
+$language['admin_nav_rebuild'] = 'Tahtayı yeniden oluştur';
+$language['admin_nav_accounts_title'] = 'Kullanıcı hesaplarını ve yetki seviyelerini yönetin';
+$language['admin_nav_accounts'] = 'Hesaplar';
+$language['admin_nav_ban_title'] = 'Banları ve uyarıları yönetin';
+$language['admin_nav_ban'] = 'Banlar';
+$language['admin_nav_anti_spam_title'] = 'Anti-spam ayarlarını yönetin';
+$language['admin_nav_anti_spam'] = 'Anti-Spam';
+$language['admin_nav_posts_title'] = 'Postları yönetin';
+$language['admin_nav_posts'] = 'Postlar';
+$language['admin_nav_boards_title'] = 'Tahtaları yönetin';
+$language['admin_nav_boards'] = 'Tahtalar';
+$language['admin_nav_action_log_title'] = 'Yetkili işlem kayıtlarını görüntüleyin';
+$language['admin_nav_action_log'] = 'İşlem kaydı';
+$language['admin_nav_rebuild_multiple_title'] = 'Toplu yeniden oluşturma';
+$language['admin_nav_rebuild_multiple'] = 'Toplu yeniden oluştur';
+$language['admin_nav_live_frontend'] = 'Canlı arayüz';
+$language['admin_nav_return'] = 'Geri dön';
 ?>
 
 
