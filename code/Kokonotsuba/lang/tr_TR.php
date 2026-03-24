@@ -105,7 +105,7 @@ $language['admin_archive_btn']			= 'A';
 $language['admin_stop_btn']				= 'Stop';
 $language['admin_totalsize']			= '[Total size of images: <b>%1$s</b> KB ]';
 $language['search_disabled']			= 'Search is disabled!';
-$language['search_top']					= 'Arama';
+$language['search_top']					= 'Ara';
 $language['search_notice']				= '<li>Lütfen anahtar kelimeleri girip aramanın hedefini seçin, ve <q>Ara</q> butonuna basın.</li><li>Aralarında boşluk bırakarak birden fazla anahtar kelimeyi arayabilirsiniz.</li><li>Arama metodunu (<q>VE araması</q> ve <q>YA DA araması</q>) yaparak farklı şekillerde birden fazla anahtar kelime arayabilirsiniz.</li>';
 $language['search_keyword']				= 'Anahtar kelime';
 $language['search_target']				= 'Hedef';
@@ -186,7 +186,7 @@ $language['action_main_failed']			= 'başarısız oldu!';
 // lib_common.php
 $language['head_home']					= 'Ana Sayfa';
 $language['head_catalog']				= 'Katalog';
-$language['head_search']				= 'Ara';
+$language['head_search']				= 'Arama';
 $language['head_info']					= 'Bilgi';
 $language['head_admin']					= 'Admin';
 $language['head_refresh']				= 'Dön';
