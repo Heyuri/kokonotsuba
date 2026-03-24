@@ -14,6 +14,7 @@ use function Kokonotsuba\libraries\isArchiveFile;
 use function Kokonotsuba\libraries\getAttachmentUrl;
 use function Puchiko\strings\truncateText;
 use function Puchiko\strings\formatFileSize;
+use function Puchiko\strings\sanitizeStr;
 
 class attachmentRenderer {
 	public function __construct(
@@ -296,18 +297,18 @@ class attachmentRenderer {
 		$fname .= $fullStop . $ext;
 
 		// Escape single quotes for JavaScript
-		$fnameJS = str_replace('&#039;', '\\&#039;', $fname);
-		$truncatedJS = str_replace('&#039;', '\\&#039;', $truncated);
+		$fnameJS = str_replace('&#039;', '\\&#039;', sanitizeStr($fname));
+		$truncatedJS = str_replace('&#039;', '\\&#039;', sanitizeStr($truncated));
 
 		// Image info dimensions
 		$imgwh_bar = ($this->board->getConfigValue('SHOW_IMGWH') && ($imgw || $imgh)) ? ', ' . $imgw . 'x' . $imgh : '';
 
 		return _T('img_filename') . 
-			'<a href="' . htmlspecialchars($imageURL) . '" target="_blank" rel="nofollow" onmouseover="this.textContent=\'' . htmlspecialchars($fnameJS) . '\';" onmouseout="this.textContent=\'' . htmlspecialchars($truncatedJS) . '\'">' . 
-   			htmlspecialchars($truncated) . 
-			'</a> <a href="' . htmlspecialchars($imageURL) . '" title="' . htmlspecialchars($fname) . '" download="' . htmlspecialchars($fname) . '">
+			'<a href="' . sanitizeStr($imageURL) . '" target="_blank" rel="nofollow" onmouseover="this.textContent=\'' . $fnameJS . '\';" onmouseout="this.textContent=\'' . $truncatedJS . '\'">' . 
+   			sanitizeStr($truncated) . 
+			'</a> <a href="' . sanitizeStr($imageURL) . '" title="' . sanitizeStr($fname) . '" download="' . sanitizeStr($fname) . '">
 			<div class="download"></div></a> 
-			<span class="fileProperties">(' . htmlspecialchars($imgsize) . htmlspecialchars($imgwh_bar) . ')</span>';
+			<span class="fileProperties">(' . sanitizeStr($imgsize) . sanitizeStr($imgwh_bar) . ')</span>';
 	}
 
 	public function generateImageUrl(
