@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\adminBan;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
@@ -89,7 +90,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a href="' . $this->myPage . '">Bans</a></li>';
+		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_ban_title') . '" href="' . $this->myPage . '">' . _T('admin_nav_ban') . '</a></li>';
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, array &$post): void {

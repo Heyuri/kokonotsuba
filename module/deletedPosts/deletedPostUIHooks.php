@@ -6,6 +6,7 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\userRole;
 use Kokonotsuba\module_classes\moduleEngine;
 
+use function Kokonotsuba\libraries\_T;
 use function Puchiko\strings\sanitizeStr;
 
 class deletedPostUIHooks {
@@ -88,7 +89,7 @@ class deletedPostUIHooks {
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {
 		// modify the "links above bar" html to have a [Deleted Posts] button
-		$linkHtml .= '<li class="adminNavLink"><a title="Manage posts that have been deleted" href="' . htmlspecialchars($this->modulePageUrl) . '">Deleted posts</a></li>';
+		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_deleted_posts_title') . '" href="' . htmlspecialchars($this->modulePageUrl) . '">' . _T('admin_nav_deleted_posts') . '</a></li>';
 	}
 
 	/**

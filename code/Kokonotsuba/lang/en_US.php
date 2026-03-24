@@ -250,11 +250,44 @@ $language['note_no_permission'] = 'You do not have permission to modify this not
 $language['note_not_found'] = 'Note not found!';
 $language['edit_post'] = 'Edit post';
 $language['self_serve_banner_suggest'] = 'Want your banner here? Click here to submit yours!';
-$language['private_message_top_bar'] = 'Private Messages';
+$language['private_message_top_bar'] = 'Private messages';
 $language['pm_recipient_and_message_required'] = 'Recipient and message are required!';
 $language['pm_invalid_recipient'] = 'Invalid recipient tripcode!';
+$language['pm_main_title'] = 'Private messaging system';
 $language['pm_inbox_page_title'] = 'Private message inbox';
 $language['pm_view_thread_page_title'] = 'Private message thread';
+$language['contact_not_selected'] = 'No contact selected!';
+$language['pm_no_message'] = 'No messages!';
+$language['pm_login_required'] = 'You must be logged in to use the private messaging system!';
+$language['pm_contact_self'] = 'Yourself';
+$language['pm_login_description'] = 'Enter your tripcode to access your private messages.';
 
+
+$language['admin_nav_capcodes_title'] = 'Manage user capcodes and view staff capcodes';
+$language['admin_nav_capcodes'] = 'Capcodes';
+$language['admin_nav_blotter_title'] = 'Manage blotter';
+$language['admin_nav_blotter'] = 'Blotter';
+$language['admin_nav_global_message_title'] = 'Manage global message';
+$language['admin_nav_global_message'] = 'Global message';
+$language['admin_nav_deleted_posts_title'] = 'View deleted posts';
+$language['admin_nav_deleted_posts'] = 'Deleted posts';
+$language['admin_nav_rebuild_title'] = 'Rebuild tools';
+$language['admin_nav_rebuild'] = 'Rebuild board';
+$language['admin_nav_accounts_title'] = 'Manage user accounts and permissions';
+$language['admin_nav_accounts'] = 'Accounts';
+$language['admin_nav_ban_title'] = 'Manage bans and warnings';
+$language['admin_nav_ban'] = 'Bans';
+$language['admin_nav_anti_spam_title'] = 'Manage anti-spam settings';
+$language['admin_nav_anti_spam'] = 'Anti-Spam';
+$language['admin_nav_posts_title'] = 'Manage posts';
+$language['admin_nav_posts'] = 'Posts';
+$language['admin_nav_boards_title'] = 'Manage boards';
+$language['admin_nav_boards'] = 'Boards';
+$language['admin_nav_action_log_title'] = 'View staff action log';
+$language['admin_nav_action_log'] = 'Action log';
+$language['admin_nav_rebuild_multiple_title'] = 'Rebuild multiple boards';
+$language['admin_nav_rebuild_multiple'] = 'Rebuild multiple';
+$language['admin_nav_live_frontend'] = 'Live frontend';
+$language['admin_nav_return'] = 'Return';
 
 ?>

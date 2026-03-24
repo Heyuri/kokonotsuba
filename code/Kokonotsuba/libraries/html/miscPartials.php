@@ -4,13 +4,15 @@ namespace Kokonotsuba\libraries\html;
 
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\userRole;
+
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
 
 function generateAdminLinkButtons(string $liveIndexFile, string $staticIndexFile, moduleEngine $moduleEngine, string $adminLinkHtml): string {
 	$linksAboveBar =  '
 		<ul id="adminNavBar">
-			<li class="adminNavLink"><a href="'.$staticIndexFile.'?'.$_SERVER['REQUEST_TIME'].'">Return</a></li>
-			<li class="adminNavLink"><a href="'.$liveIndexFile.'?page=0">Live frontend</a></li>
+			<li class="adminNavLink"><a href="'.$staticIndexFile.'?'.$_SERVER['REQUEST_TIME'].'">' . _T('admin_nav_return') . '</a></li>
+			<li class="adminNavLink"><a href="'.$liveIndexFile.'?page=0">' . _T('admin_nav_live_frontend') . '</a></li>
 			' . $adminLinkHtml;
 
 	$moduleEngine->dispatch('LinksAboveBar', array(&$linksAboveBar));
@@ -19,7 +21,7 @@ function generateAdminLinkButtons(string $liveIndexFile, string $staticIndexFile
 	return $linksAboveBar;
 }
 
-function generateAdminNavLink(string $liveIndexFile, string $mode, string $navTitle, userRole $requiredRole): string {
+function generateAdminNavLink(string $liveIndexFile, string $mode, string $navTitle, userRole $requiredRole, string $titleAttr = ''): string {
 	// role level
 	$roleLevel = getRoleLevelFromSession();
 
@@ -46,7 +48,8 @@ function generateAdminNavLink(string $liveIndexFile, string $mode, string $navTi
 	$modeUrl = $baseUrl . '?' . $urlParameters;
 	
 	// generate the action log entry html
-	return '<li class="adminNavLink"><a href="' . htmlspecialchars($modeUrl) . '">' . htmlspecialchars($navTitle) . '</a></li>';
+	$titleHtml = $titleAttr !== '' ? ' title="' . htmlspecialchars($titleAttr) . '"' : '';
+	return '<li class="adminNavLink"><a' . $titleHtml . ' href="' . htmlspecialchars($modeUrl) . '">' . htmlspecialchars($navTitle) . '</a></li>';
 }
 
 

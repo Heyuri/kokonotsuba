@@ -7,6 +7,8 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\interfaces\IBoard;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\userRole;
+
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawAdminTheading;
 use function Kokonotsuba\libraries\html\generateAdminLinkButtons;
 use function Kokonotsuba\libraries\html\generateAdminNavLink;
@@ -40,11 +42,11 @@ class pageRenderer {
 			// add hard-coded modes
 			// there'll be a more modular way (that doesn't require modules) later 
 			$adminLinkHtml = '';
-			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'actionLog', 'Action log', $this->board->getConfigValue('AuthLevels.CAN_VIEW_ACTION_LOG', userRole::LEV_MODERATOR));
-			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'account', 'Accounts', userRole::LEV_USER);
-			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'managePosts', 'Posts', userRole::LEV_JANITOR);
-			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'rebuild', 'Rebuild board', userRole::LEV_JANITOR);
-			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'boards', 'Boards', userRole::LEV_ADMIN);
+			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'actionLog', _T('admin_nav_action_log'), $this->board->getConfigValue('AuthLevels.CAN_VIEW_ACTION_LOG', userRole::LEV_MODERATOR), _T('admin_nav_action_log_title'));
+			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'account', _T('admin_nav_accounts'), userRole::LEV_USER, _T('admin_nav_accounts_title'));
+			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'managePosts', _T('admin_nav_posts'), userRole::LEV_JANITOR, _T('admin_nav_posts_title'));
+			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'rebuild', _T('admin_nav_rebuild'), userRole::LEV_JANITOR, _T('admin_nav_rebuild_title'));
+			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'boards', _T('admin_nav_boards'), userRole::LEV_ADMIN, _T('admin_nav_boards_title'));
 
 			// add the admin links to html output
 			$htmlOutput .= generateAdminLinkButtons($liveIndexFile, $staticIndexFile, $this->moduleEngine, $adminLinkHtml);

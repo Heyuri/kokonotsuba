@@ -8,6 +8,7 @@ include_once __DIR__ . '/globalMessageLibrary.php';
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\rebuildAllBoards;
 
 class moduleAdmin extends abstractModuleAdmin {
@@ -43,7 +44,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a title="Manage the global warning/message that will appear across all boards" href="' . $this->myPage . '">Global message</a></li>';
+		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_global_message_title') . '" href="' . $this->myPage . '">' . _T('admin_nav_global_message') . '</a></li>';
 	}	
 
 	public function ModulePage() {

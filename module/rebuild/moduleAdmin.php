@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\rebuild;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\generateRebuildListCheckboxHTML;
 use function Kokonotsuba\libraries\rebuildBoardsByArray;
 use function Puchiko\request\redirect;
@@ -37,7 +38,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function onRenderLinksAboveBar(&$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a href="' . $this->myPage . '">Rebuild multiple</a></li>';
+		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_rebuild_multiple_title') . '" href="' . $this->myPage . '">' . _T('admin_nav_rebuild_multiple') . '</a></li>';
 	}
 
 	public function ModulePage() {

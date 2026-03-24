@@ -6,6 +6,7 @@ use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 use Kokonotsuba\account\staffAccountFromSession;
 
+use function Kokonotsuba\libraries\_T;
 use function Puchiko\request\redirect;
 
 require __DIR__ . '/capcode_src/capcodeModuleRenderer.php';
@@ -64,7 +65,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink" title="Manage user capcodes and view staff capcodes"><a href="' . htmlspecialchars($this->modulePageUrl) . '">Capcodes</a></li>';
+		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_capcodes_title') . '" href="' . htmlspecialchars($this->modulePageUrl) . '">' . _T('admin_nav_capcodes') . '</a></li>';
 	}
 
 	public function ModulePage(): void {

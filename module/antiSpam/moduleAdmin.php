@@ -10,6 +10,7 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Puchiko\request\isGetRequest;
@@ -102,7 +103,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a href="' . htmlspecialchars($this->moduleUrl) . '">Anti-spam system</a></li>';
+		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_anti_spam_title') . '" href="' . htmlspecialchars($this->moduleUrl) . '">' . _T('admin_nav_anti_spam') . '</a></li>';
 	}
 
 	public function ModulePage(): void {
