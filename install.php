@@ -490,7 +490,7 @@ class tableCreator {
                 INDEX idx_deleted_by_deleted_at (deleted_by, deleted_at),
                 INDEX idx_restored_at (restored_at),
                 INDEX idx_file_id (file_id),
-s
+
                 UNIQUE KEY uq_open_post (open_key)
             ) ENGINE=InnoDB;
             ",
