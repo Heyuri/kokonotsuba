@@ -37,7 +37,7 @@ define('ROOTPATH', getRootPath());
 
 require ROOTPATH . '/code/Puchiko/includes.php';
 require ROOTPATH . '/code/Kokonotsuba/constants.php';
-require ROOTPATH . '/code/Kokonotsuba/install.php';
+require ROOTPATH . '/code/Kokonotsuba/userRole.php';
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
