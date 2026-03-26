@@ -769,6 +769,7 @@ switch ($action) {
                 'SOUDANE_TABLE' => $dbSettings['SOUDANE_TABLE'],
                 'THREAD_THEMES_TABLE' => $dbSettings['THREAD_THEMES_TABLE'],
                 'LAST_THREAD_SUBMISSIONS_TABLE' => $dbSettings['LAST_THREAD_SUBMISSIONS_TABLE'],
+                'NOTES_TABLE' => $dbSettings['NOTES_TABLE'],
             ];
 
             $tableCreator->createTables($tables);
