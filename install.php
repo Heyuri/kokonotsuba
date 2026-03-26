@@ -579,7 +579,7 @@ class tableCreator {
                 CONSTRAINT fk_last_thread_submissions_board_uid FOREIGN KEY (board_uid) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(board_uid) ON DELETE CASCADE
             ) ENGINE=InnoDB;
             ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['NOTES_TABLE']} (
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['NOTE_TABLE']} (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 post_uid INT NOT NULL,
                 note_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -769,7 +769,7 @@ switch ($action) {
                 'SOUDANE_TABLE' => $dbSettings['SOUDANE_TABLE'],
                 'THREAD_THEMES_TABLE' => $dbSettings['THREAD_THEMES_TABLE'],
                 'LAST_THREAD_SUBMISSIONS_TABLE' => $dbSettings['LAST_THREAD_SUBMISSIONS_TABLE'],
-                'NOTES_TABLE' => $dbSettings['NOTES_TABLE'],
+                'NOTE_TABLE' => $dbSettings['NOTE_TABLE'],
             ];
 
             $tableCreator->createTables($tables);
