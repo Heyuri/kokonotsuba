@@ -16,6 +16,7 @@ use Kokonotsuba\log_in\authenticationHandler;
 use Kokonotsuba\log_in\loginSessionHandler;
 use Kokonotsuba\overboard;
 use Kokonotsuba\post\postValidator;
+use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\template\templateEngine;
 
@@ -49,6 +50,8 @@ $adminLoginController = new adminLoginController(
 
 $IPValidator = new IPValidator($config, new IPAddress);
 $postValidator = new postValidator($config, $IPValidator, $threadRepository, $threadService, $fileService);
+
+$postDateFormatter = new postDateFormatter($config['TIME_ZONE']);
 
 // ───────────────────────────────────────
 // Overboard

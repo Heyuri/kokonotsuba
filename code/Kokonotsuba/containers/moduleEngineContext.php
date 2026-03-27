@@ -18,6 +18,7 @@ use Kokonotsuba\quote_link\quoteLinkService;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
+use Kokonotsuba\post\helper\postDateFormatter;
 
 class moduleEngineContext {
     public function __construct(
@@ -41,6 +42,7 @@ class moduleEngineContext {
         public templateEngine $templateEngine,
         public board $board,
         public postRenderingPolicy $postRenderingPolicy,
+        public postDateFormatter $postDateFormatter,
         public ?int $currentUserId,
     ) {}
 }

@@ -5,6 +5,7 @@ namespace Kokonotsuba\routers\routes;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\board\board;
 use Kokonotsuba\error\softErrorHandler;
+use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\userRole;
 
@@ -23,7 +24,8 @@ class actionLogRoute {
 		private readonly actionLoggerService $actionLoggerService,
 		private readonly softErrorHandler $softErrorHandler,
 		private readonly pageRenderer $adminPageRenderer,
-		private readonly array $regularBoards
+		private readonly array $regularBoards,
+		private readonly postDateFormatter $postDateFormatter
 	) {}
 
 	public function drawActionLog() {
@@ -85,7 +87,7 @@ class actionLogRoute {
 					<td>" . htmlspecialchars($roleEnum->displayRoleName()) . "</td>
 					<td>" . htmlspecialchars($actionLogEntry->getIpAddress()) . "</td>
 					<td>" . htmlspecialchars($actionLogEntry->getLogAction()) . "</td>
-					<td>" . htmlspecialchars($actionLogEntry->getTimeAdded()) . "</td>
+					<td>" . $this->postDateFormatter->formatFromDateString($actionLogEntry->getTimeAdded()) . "</td>
    			 	</tr>";
 			}
 

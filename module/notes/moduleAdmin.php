@@ -139,7 +139,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				'{$NOTE_ID}' => $noteId,
 				'{$NOTE_TEXT}' => $noteText,
 				'{$ACCOUNT_NAME}' => $accountName,
-				'{$NOTE_TIMESTAMP}' => $noteTimestamp,
+				'{$NOTE_TIMESTAMP}' => $this->moduleContext->postDateFormatter->formatFromDateString($noteTimestamp),
 				'{$NOTE_TITLE_TEXT}' => _T('note_title_text'),
 				// assume its true for the template purposes
 				'{$CAN_MODIFY_NOTE}' => $noteId ? $this->notePolicy->canModifyNote($noteId) : true,
@@ -222,6 +222,16 @@ class moduleAdmin extends abstractModuleAdmin {
 		bool $isDeletion = false,
 		bool $isEdit = false
 	): void {
+		
+		// strip tags and format
+		if($addedAt) {
+			// format
+			$addedAt = $this->moduleContext->postDateFormatter->formatFromDateString($addedAt);
+
+			// now strip tags
+			$addedAt = strip_tags($addedAt);
+		}
+
 		// handle final redirect
 		// ===== AJAX handling updated to use helper =====
 		if(isJavascriptRequest()) {

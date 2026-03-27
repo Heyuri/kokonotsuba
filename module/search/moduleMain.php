@@ -7,6 +7,7 @@ use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\containers\moduleEngineContext;
 use Kokonotsuba\renderers\postRenderer;
+use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\postSearchService;
 use Kokonotsuba\board\board;
 use function Kokonotsuba\libraries\_T;
@@ -259,6 +260,8 @@ class moduleMain extends abstractModuleMain {
 			}
 
 			// Build the module engine context
+			$postDateFormatter = new postDateFormatter($board->loadBoardConfig()['TIME_ZONE']);
+
 			$moduleEngineContext = new moduleEngineContext(
 				$this->moduleContext->config,
 				$board->getConfigValue('LIVE_INDEX_FILE'),
@@ -280,6 +283,7 @@ class moduleMain extends abstractModuleMain {
 				$this->moduleTemplateEngine,
 				$board,
 				$this->moduleContext->postRenderingPolicy,
+				$postDateFormatter,
 				$this->moduleContext->currentUserId
 			);
 
