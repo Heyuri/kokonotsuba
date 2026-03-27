@@ -41,5 +41,6 @@ $routeDiContainer = new routeDiContainer(
 	$boardApi,
 	$fileService,
 	$postRenderingPolicy,
+	$postDateFormatter,
 	$currentUserId
 );

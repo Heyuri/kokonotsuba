@@ -8,6 +8,7 @@ use Kokonotsuba\containers\boardDiContainer;
 use Kokonotsuba\containers\moduleEngineContext;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\userRole;
 
@@ -254,7 +255,10 @@ class boardService {
 		
 		$liveIndexFile = $board->getConfigValue('LIVE_INDEX_FILE');
 
-		$moduleEngineContext = new moduleEngineContext($board->loadBoardConfig(), 
+		$boardConfig = $board->loadBoardConfig();
+		$postDateFormatter = new postDateFormatter($boardConfig['TIME_ZONE']);
+
+		$moduleEngineContext = new moduleEngineContext($boardConfig, 
 			$liveIndexFile, $board->getConfigValue('ModuleList'), 
 			$this->boardDiContainer->postRepository, 
 			$this->boardDiContainer->postService, 
@@ -273,6 +277,7 @@ class boardService {
 			$templateEngine, 
 			$board,
 			$this->boardDiContainer->postRenderingPolicy,
+			$postDateFormatter,
 			$this->boardDiContainer->currentUserId);
 			
 		$moduleEngine = new moduleEngine($moduleEngineContext);

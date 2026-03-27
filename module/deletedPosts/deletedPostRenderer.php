@@ -7,6 +7,7 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\userRole;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\renderers\postRenderer;
 use Kokonotsuba\quote_link\quoteLinkService;
@@ -33,7 +34,8 @@ class deletedPostRenderer {
 		private quoteLinkService $quoteLinkService,
 		private string $modulePageUrl,
 		private string $restoredIndexUrl,
-		private userRole $requiredRoleForDeleteRestoredRecord
+		private userRole $requiredRoleForDeleteRestoredRecord,
+		private postDateFormatter $postDateFormatter,
 	) {}
 
 	public function drawModPage(int $accountId, userRole $roleLevel): void {
@@ -390,7 +392,7 @@ class deletedPostRenderer {
 		// put together the placeholder => value
 		$templateValues = [
 			'{$DELETED_BY}' => htmlspecialchars($deletedByUsername),
-			'{$DELETED_AT}' => htmlspecialchars($deletedTimestamp),
+			'{$DELETED_AT}' => htmlspecialchars($this->postDateFormatter->formatFromDateString($deletedTimestamp)),
 			'{$ID}' => htmlspecialchars($id),
 			'{$BOARD_UID}' => htmlspecialchars($boardUID),
 			'{$CAN_PURGE}' => $roleLevel->isAtLeast($this->requiredRoleActionForModAll),
@@ -399,7 +401,7 @@ class deletedPostRenderer {
 			'{$POST_HTML}' => $postHtml,
 			'{$IS_OPEN}' => $deletedEntry['open_flag'] ? 1 : null,
 			'{$IS_ATTACHMENT_ONLY}' => $isAttachmentOnly,
-			'{$RESTORED_AT}' => htmlspecialchars($deletedEntry['restored_at']),
+			'{$RESTORED_AT}' => htmlspecialchars($this->postDateFormatter->formatFromDateString($deletedEntry['restored_at'])),
 			'{$RESTORED_BY}' => htmlspecialchars($restoredByUsername),
 			'{$SHOW_ALL}' => htmlspecialchars($showAll),
 			'{$URL}' => htmlspecialchars($this->modulePageUrl),

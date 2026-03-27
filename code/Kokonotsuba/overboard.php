@@ -16,6 +16,7 @@ use Kokonotsuba\policy\postRenderingPolicy;
 use Kokonotsuba\post\attachment\fileService;
 use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\thread\postRedirectService;
+use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\post\postSearchService;
 use Kokonotsuba\post\postService;
@@ -257,6 +258,8 @@ class overboard {
 	}
 	
 	private function createThreadRenderer(board $board, array $config, templateEngine $templateEngine, array $quoteLinksFromPage): threadRenderer {
+		$postDateFormatter = new postDateFormatter($config['TIME_ZONE']);
+
 		$moduleEngineContext = new moduleEngineContext(
 			$config, 
 			$board->getConfigValue('LIVE_INDEX_FILE'), 
@@ -278,6 +281,7 @@ class overboard {
 			$templateEngine, 
 			$board,
 			$this->postRenderingPolicy,
+			$postDateFormatter,
 			getIdFromSession()
 			);
 

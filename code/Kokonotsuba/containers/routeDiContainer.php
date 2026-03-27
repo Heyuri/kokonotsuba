@@ -45,6 +45,7 @@ use Kokonotsuba\thread\threadService;
 use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\cache\path_cache\boardPathService;
 use Kokonotsuba\template\pageRenderer;
+use Kokonotsuba\post\helper\postDateFormatter;
 
 class routeDiContainer {
 	public function __construct(
@@ -83,6 +84,7 @@ class routeDiContainer {
 		public boardApi $boardApi,
 		public fileService $fileService,
 		public postRenderingPolicy $postRenderingPolicy,
+		public postDateFormatter $postDateFormatter,
 		public ?int $currentUserId
 	) {}
 }
