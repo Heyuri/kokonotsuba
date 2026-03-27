@@ -8,8 +8,7 @@ const kkBannerSwitch = {
         const bannerElement = document.getElementById(this.elementId);
 
         if (!bannerElement) {
-            console.log("ERROR: Banner element not found.");
-            return;
+            return true;
         }
 
         // Store the original src attribute value
