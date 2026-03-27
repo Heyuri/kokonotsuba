@@ -808,7 +808,6 @@ class deletedPostsRepository {
 				deleted_at,
 				file_only,
 				by_proxy,
-				note,
 				restored_at,
 				restored_by,
 				file_id
@@ -865,7 +864,6 @@ class deletedPostsRepository {
 				deleted_at,
 				file_only,
 				by_proxy,
-				note,
 				restored_at,
 				restored_by,
 				file_id
