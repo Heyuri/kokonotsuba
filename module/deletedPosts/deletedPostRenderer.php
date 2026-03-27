@@ -392,7 +392,7 @@ class deletedPostRenderer {
 		// put together the placeholder => value
 		$templateValues = [
 			'{$DELETED_BY}' => htmlspecialchars($deletedByUsername),
-			'{$DELETED_AT}' => htmlspecialchars($this->postDateFormatter->formatFromDateString($deletedTimestamp)),
+			'{$DELETED_AT}' => isset($deletedTimestamp) ? $this->postDateFormatter->formatFromDateString($deletedTimestamp) : '',
 			'{$ID}' => htmlspecialchars($id),
 			'{$BOARD_UID}' => htmlspecialchars($boardUID),
 			'{$CAN_PURGE}' => $roleLevel->isAtLeast($this->requiredRoleActionForModAll),
@@ -401,7 +401,7 @@ class deletedPostRenderer {
 			'{$POST_HTML}' => $postHtml,
 			'{$IS_OPEN}' => $deletedEntry['open_flag'] ? 1 : null,
 			'{$IS_ATTACHMENT_ONLY}' => $isAttachmentOnly,
-			'{$RESTORED_AT}' => htmlspecialchars($this->postDateFormatter->formatFromDateString($deletedEntry['restored_at'])),
+			'{$RESTORED_AT}' => isset($deletedEntry['restored_at']) ? $this->postDateFormatter->formatFromDateString($deletedEntry['restored_at']) : '',
 			'{$RESTORED_BY}' => htmlspecialchars($restoredByUsername),
 			'{$SHOW_ALL}' => htmlspecialchars($showAll),
 			'{$URL}' => htmlspecialchars($this->modulePageUrl),
