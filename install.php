@@ -490,7 +490,7 @@ class tableCreator {
                 INDEX idx_deleted_by_deleted_at (deleted_by, deleted_at),
                 INDEX idx_restored_at (restored_at),
                 INDEX idx_file_id (file_id),
-s
+
                 UNIQUE KEY uq_open_post (open_key)
             ) ENGINE=InnoDB;
             ",
@@ -579,7 +579,7 @@ s
                 CONSTRAINT fk_last_thread_submissions_board_uid FOREIGN KEY (board_uid) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(board_uid) ON DELETE CASCADE
             ) ENGINE=InnoDB;
             ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['NOTES_TABLE']} (
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['NOTE_TABLE']} (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 post_uid INT NOT NULL,
                 note_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -588,6 +588,29 @@ s
                 
                 CONSTRAINT fk_notes_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
                 CONSTRAINT fk_notes_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB;
+            ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['PRIVATE_MESSAGE_TABLE']} (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                ip_address TEXT NOT NULL, 
+                date_sent TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                sender_tripcode VARCHAR(255) NOT NULL,
+                sender_name TEXT NOT NULL,
+                recipient_tripcode VARCHAR(255) NOT NULL,
+                message_subject TEXT NOT NULL,
+                message_body TEXT NOT NULL,
+                is_read TINYINT(1) NOT NULL DEFAULT 0
+            ) ENGINE=InnoDB;
+            ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BANNER_AD_TABLE']} (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                link TEXT DEFAULT NULL,
+                banner_file_name TEXT NOT NULL,
+                is_active TINYINT(1) NOT NULL DEFAULT 1,
+                is_approved TINYINT(1) NOT NULL DEFAULT 0,
+                date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                INDEX idx_active_approved (is_active, is_approved),
+                INDEX idx_date_submitted (date_submitted)
             ) ENGINE=InnoDB;
             ",
         ];
@@ -769,6 +792,10 @@ switch ($action) {
                 'SOUDANE_TABLE' => $dbSettings['SOUDANE_TABLE'],
                 'THREAD_THEMES_TABLE' => $dbSettings['THREAD_THEMES_TABLE'],
                 'LAST_THREAD_SUBMISSIONS_TABLE' => $dbSettings['LAST_THREAD_SUBMISSIONS_TABLE'],
+                'NOTE_TABLE' => $dbSettings['NOTE_TABLE'],
+                'PRIVATE_MESSAGE_TABLE' => $dbSettings['PRIVATE_MESSAGE_TABLE'],
+                'BANNER_AD_TABLE' => $dbSettings['BANNER_AD_TABLE'],
+                'BANNER_TABLE' => $dbSettings['BANNER_TABLE'],
             ];
 
             $tableCreator->createTables($tables);

@@ -1283,3 +1283,100 @@
 			</form>
 	</div>	
 <!--/&POST_EDIT_FORM-->
+
+<!--&PM_PAGE-->
+	<h2 class="theading2">{$PAGE_TITLE}</h2>
+	{$PAGE_CONTENT}
+<!--/&PM_PAGE-->
+
+<!--&PM_LOGIN_FORM-->
+	<h3>{$LOGIN_FORM_HEADING}</h3>
+	<p class="description">{$TRIPCODE_LOGIN_DESCRIPTION}</p>
+	<div class="loginFormContainer">
+		<form action="{$MODULE_PAGE_URL}" method="POST">
+			<input name="action" value="tripLogin" type="hidden">
+			<table class="loginFormTable">
+				<tr>
+					<td class="postblock"><label for="tripcodeLogin">{$TRIPCODE_LOGIN_LABEL}</td>
+					<td>
+						<p class="formItemDescription">{$TRIPCODE_LOGIN_HASH_NOTE}</p>
+						<input id="tripcodeLogin" name="tripcodeLogin" type="password" placeholder="#password">
+					</td>
+				</tr>
+			</table>
+			<input type="submit" value="{$LOGIN_SUBMIT}">
+		</form>
+	</div>
+<!--/&PM_LOGIN_FORM-->
+
+<!--/&PM_CONTACT_ENTRY-->
+	<div class="contactEntryContainer">
+		<div class="contactEntry" data-contact-tripcode="{$CONTACT_TRIPCODE}">
+			<div class="contactTrip">
+				<span class="unreadPmIndicator warning">
+					<!--&IF($CONTACT_IS_UNREAD,'!','')-->
+				</span>
+				<span class="contactTripcodeText">
+					{$CONTACT_TRIPCODE}
+				</span>
+			</div>
+			<div class="contactMessagePreview">
+				<span class="contactPreviewText">{$CONTACT_PREVIEW}</span>
+			</div>
+		</div>
+	</div>
+<!--/&PM_CONTACT_ENTRY-->
+
+<!--&PM_CONTACT_ENTRY-->
+	<div class="contactEntryContainer">
+		<div class="contactEntry" data-contact-tripcode="{$CONTACT_TRIPCODE}">
+			<a class="contactEntryAnchor" href="{$CONTACT_THREAD_URL}">
+				<div class="contactTrip">
+					<span class="unreadPmIndicator warning">
+						<!--&IF($CONTACT_IS_UNREAD,'!','')-->
+					</span>
+					<span class="contactTripcodeText">
+						{$CONTACT_TRIPCODE}
+					</span>
+				</div>
+				<div class="contactMessagePreview">
+					<span class="contactPreviewText">{$CONTACT_PREVIEW}</span>
+				</div>
+			</a>
+		</div>
+	</div>
+<!--/&PM_CONTACT_ENTRY-->
+
+<!--&PRIVATE_MESSAGE_ENTRY-->
+	<div class="privateMessageContainer">
+		{$MESSAGE_ENTRY_HTML}
+	</div>
+<!--/&PRIVATE_MESSAGE_ENTRY-->
+
+<!--&PRIVATE_MESSAGES-->
+	<!--&FOREACH($MESSAGES,'PRIVATE_MESSAGE_ENTRY')-->
+<!--/&PRIVATE_MESSAGES-->
+
+<!--&PM_PRIVATE_THREAD-->
+	<div class="privateThreadContainer">
+		<!--&IF($ID,'<!--/&PRIVATE_MESSAGES/-->','<span class="noPrivateMessages"><i>{$NO_MESSAGES_TEXT}</i></span>')-->
+	</div>
+<!--/&PM_PRIVATE_THREAD-->
+
+<!--&PM_INBOX_PAGE-->
+	<div class="inboxPageContainer">
+		<h3 class="inboxHeader">{$INBOX_TITLE}</h3>
+		<div class="inboxPageBox">
+			<div class="contactSection">
+				<div class="messageContactNavigator">
+					<div class="inboxThreadList">
+						<!--&FOREACH($CONTACTS,'PM_CONTACT_ENTRY')-->
+					</div>
+				</div>
+			</div>
+			<div class="selectedContactSection">
+				{$PRIVATE_THREAD}
+			</div>
+		</div>
+	</div>
+<!--/&PM_INBOX_PAGE-->

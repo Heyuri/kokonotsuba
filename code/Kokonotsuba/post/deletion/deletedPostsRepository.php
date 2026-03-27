@@ -414,95 +414,16 @@ class deletedPostsRepository {
 	}
 
 	private function getBaseDeletedPostsQuery(): string {
-		return "
-			SELECT
-				dp.open_flag,
-				dp.id                AS deleted_post_id,
-				dp.post_uid          AS post_uid,
-				dp.deleted_at        AS deleted_at,
-				dp.deleted_by        AS deleted_by,
-				dp.restored_at,
-				dp.restored_by,
-				dp.by_proxy,
-				dp.file_only         AS file_only_deleted,
-				dp.file_id           AS file_id,
-
-				-- Post data (may be null if the post itself is gone)
-				p.*,
-				-- thread op number
-				t.post_op_number,
-
-				-- Attachment belonging to THIS deletion event or, for post-level,
-				-- all attachments belonging to the post.
-				f.id                 AS attachment_id,
-				f.file_name          AS attachment_file_name,
-				f.stored_filename    AS attachment_stored_filename,
-				f.file_ext           AS attachment_file_ext,
-				f.file_md5           AS attachment_file_md5,
-				f.file_size          AS attachment_file_size,
-				f.file_width         AS attachment_file_width,
-				f.file_height        AS attachment_file_height,
-				f.thumb_file_width   AS attachment_thumb_width,
-				f.thumb_file_height  AS attachment_thumb_height,
-				f.mime_type          AS attachment_mime_type,
-				f.is_hidden          AS attachment_is_hidden,
-				f.is_animated        AS attachment_is_animated,
-				f.is_deleted         AS attachment_is_deleted,
-				f.timestamp_added    AS attachment_timestamp_added,
-
-				da.username AS deleted_by_username,
-				ra.username AS restored_by_username
-
-			FROM {$this->deletedPostsTable} dp
-
-			-- Post content
-			LEFT JOIN {$this->postTable} p
-				ON p.post_uid = dp.post_uid
-
-			-- Attachments:
-			--  - for attachment-only deletion: match specific file_id
-			--  - for post-level deletion (file_id IS NULL): match all files of the post
-			LEFT JOIN {$this->fileTable} f
-				ON (
-					(dp.file_id IS NOT NULL AND f.id = dp.file_id)
-					OR (dp.file_id IS NULL AND f.post_uid = dp.post_uid)
-				)
-
-			LEFT JOIN {$this->accountTable} da ON dp.deleted_by = da.id
-			LEFT JOIN {$this->accountTable} ra ON dp.restored_by = ra.id
-
-			LEFT JOIN {$this->threadTable} t on p.thread_uid = t.thread_uid
-		";
-	}
-
-	private function buildDeletedPostsQuery(
-		int $amount, 
-		int $offset, 
-		string $orderBy = 'id', 
-		string $direction = 'DESC',
-		string $whereClause = '',
-	): string {
-		// Validate orderBy
-		if (!in_array($orderBy, $this->allowedOrderFields, true)) {
-			$orderBy = 'id';
-		}
-
-		// Validate direction
-		$direction = strtoupper($direction);
-		if (!in_array($direction, ['ASC', 'DESC'], true)) {
-			$direction = 'DESC';
-		}
-
-		// Start with shared SELECT + JOIN block
-		$query = $this->getBaseDeletedPostsQuery();
-
-		// Append the WHERE Clause
-		$query .= $whereClause;
-
-		// Add ordering and pagination
-		$query .= " ORDER BY dp.{$orderBy} {$direction} LIMIT {$amount} OFFSET {$offset}";
-
-		return $query;
+		return getBasePostQuery(
+			$this->postTable,
+			$this->deletedPostsTable,
+			$this->fileTable,
+			$this->threadTable,
+			$this->soudaneTable,
+			$this->noteTable,
+			$this->accountTable,
+			deletionCentric: true
+		);
 	}
 
 	private function buildDeletedPostByIdQuery(): string {
@@ -808,7 +729,6 @@ class deletedPostsRepository {
 				deleted_at,
 				file_only,
 				by_proxy,
-				note,
 				restored_at,
 				restored_by,
 				file_id
@@ -865,7 +785,6 @@ class deletedPostsRepository {
 				deleted_at,
 				file_only,
 				by_proxy,
-				note,
 				restored_at,
 				restored_by,
 				file_id

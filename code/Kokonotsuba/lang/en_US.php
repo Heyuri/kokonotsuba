@@ -265,7 +265,7 @@ $language['pm_login_required'] = 'You must be logged in to use the private messa
 $language['pm_contact_self'] = 'Yourself';
 $language['pm_login_description'] = 'Enter your tripcode to access your private messages.';
 $language['pm_tripcode_login_hash_note'] = 'Include the \'#\' followed by your tripcode password. Use two \'#\' (##) for secure tripcodes.';
-$language['pm_tripcode_login_label'] = 'Tripcode:';
+$language['pm_tripcode_login_label'] = 'Tripcode';
 
 $language['admin_nav_capcodes_title'] = 'Manage user capcodes and view staff capcodes';
 $language['admin_nav_capcodes'] = 'Capcodes';

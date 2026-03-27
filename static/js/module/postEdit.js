@@ -49,11 +49,22 @@
 							a.appendChild(posterSpan);
 
 							if (email.toLowerCase() === 'sage') {
-								// Insert <span class="sageText">SAGE!</span> after posterSpan
-								const sageSpan = document.createElement('span');
-								sageSpan.className = 'sageText';
-								sageSpan.textContent = ' SAGE!';
-								posterSpan.parentNode.insertBefore(sageSpan, posterSpan.nextSibling);
+								// Only insert sageText if it doesn't already exist
+								let nextNode = a.nextSibling;
+								let hasSage = false;
+								while (nextNode) {
+									if (nextNode.nodeType === 1 && nextNode.classList && nextNode.classList.contains('sageText')) {
+										hasSage = true;
+										break;
+									}
+									nextNode = nextNode.nextSibling;
+								}
+								if (!hasSage) {
+									const sageSpan = document.createElement('span');
+									sageSpan.className = 'sageText';
+									sageSpan.textContent = ' SAGE!';
+									a.parentNode.insertBefore(sageSpan, a.nextSibling);
+								}
 							}
 						}
 					}

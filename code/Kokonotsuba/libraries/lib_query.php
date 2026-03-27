@@ -3,13 +3,24 @@
 namespace Kokonotsuba\libraries;
 
 /**
- * Generate the base query for posts, optionally hiding deleted posts.
+ * Generate the base query for posts or deleted posts.
+ *
+ * In post-centric mode (default), the posts table is the main FROM and
+ * deleted posts are LEFT JOINed. Soudane and staff notes are included.
+ *
+ * In deletion-centric mode, the deleted_posts table is the main FROM and
+ * posts are LEFT JOINed. Account usernames for deleted_by/restored_by are
+ * included instead of soudane/notes.
  *
  * @param string $postTable
  * @param string $deletedPostsTable
  * @param string $fileTable
  * @param string $threadTable
- * @param bool $viewDeleted  Whether to include deleted posts (default false)
+ * @param string $soudaneTable
+ * @param string $noteTable
+ * @param string $accountTable
+ * @param bool   $viewDeleted      Whether to include deleted posts (post-centric only)
+ * @param bool   $deletionCentric  If true, query from deleted_posts perspective
  * @return string
  */
 function getBasePostQuery(
@@ -20,8 +31,79 @@ function getBasePostQuery(
 	string $soudaneTable,
 	string $noteTable,
 	string $accountTable,
-    bool $viewDeleted = false
+    bool $viewDeleted = false,
+	bool $deletionCentric = false
 ): string {
+
+	// Shared column definitions
+	$attachmentColumns = "
+			f.id                 AS attachment_id,
+			f.file_name          AS attachment_file_name,
+			f.stored_filename    AS attachment_stored_filename,
+			f.file_ext           AS attachment_file_ext,
+			f.file_md5           AS attachment_file_md5,
+			f.file_size          AS attachment_file_size,
+			f.file_width         AS attachment_file_width,
+			f.file_height        AS attachment_file_height,
+			f.thumb_file_width   AS attachment_thumb_width,
+			f.thumb_file_height  AS attachment_thumb_height,
+			f.mime_type          AS attachment_mime_type,
+			f.is_hidden          AS attachment_is_hidden,
+			f.is_animated        AS attachment_is_animated,
+			f.is_deleted         AS attachment_is_deleted,
+			f.timestamp_added    AS attachment_timestamp_added";
+
+	$deletedPostColumns = "
+			dp.open_flag,
+			dp.id                AS deleted_post_id,
+			dp.deleted_at,
+			dp.deleted_by,
+			dp.restored_at,
+			dp.by_proxy,
+			dp.file_only         AS file_only_deleted,
+			dp.file_id";
+
+	// Deletion-centric mode: deleted_posts is the main table
+	if ($deletionCentric) {
+		return "
+			SELECT
+				{$deletedPostColumns},
+				dp.post_uid,
+				dp.restored_by,
+
+				-- Post data (may be null if the post itself is gone)
+				p.*,
+				t.post_op_number,
+
+				-- Attachments
+				{$attachmentColumns},
+
+				da.username AS deleted_by_username,
+				ra.username AS restored_by_username
+
+			FROM {$deletedPostsTable} dp
+
+			-- Post content
+			LEFT JOIN {$postTable} p
+				ON p.post_uid = dp.post_uid
+
+			-- Attachments:
+			--  - for attachment-only deletion: match specific file_id
+			--  - for post-level deletion (file_id IS NULL): match all files of the post
+			LEFT JOIN {$fileTable} f
+				ON (
+					(dp.file_id IS NOT NULL AND f.id = dp.file_id)
+					OR (dp.file_id IS NULL AND f.post_uid = dp.post_uid)
+				)
+
+			LEFT JOIN {$accountTable} da ON dp.deleted_by = da.id
+			LEFT JOIN {$accountTable} ra ON dp.restored_by = ra.id
+
+			LEFT JOIN {$threadTable} t ON p.thread_uid = t.thread_uid
+		";
+	}
+
+	// Post-centric mode: posts table is the main FROM
 
     // Base subquery: filtered posts (excludes deleted if $viewDeleted = false)
     $postFilterSubquery = $viewDeleted
@@ -47,36 +129,13 @@ function getBasePostQuery(
     $query = "
         SELECT 
             p.*,
-            
-            -- Thread info
             t.post_op_number,
-            
+
             -- Attachments
-            f.id AS attachment_id,
-            f.file_name AS attachment_file_name,
-            f.stored_filename AS attachment_stored_filename,
-            f.file_ext AS attachment_file_ext,
-            f.file_md5 AS attachment_file_md5,
-            f.file_size AS attachment_file_size,
-            f.file_width AS attachment_file_width,
-            f.file_height AS attachment_file_height,
-            f.thumb_file_width AS attachment_thumb_width,
-            f.thumb_file_height AS attachment_thumb_height,
-            f.mime_type AS attachment_mime_type,
-            f.is_hidden AS attachment_is_hidden,
-            f.is_animated AS attachment_is_animated,
-            f.is_deleted AS attachment_is_deleted,
-            f.timestamp_added AS attachment_timestamp_added,
+            {$attachmentColumns},
             
-            -- Deleted post info (all rows)
-            dp.open_flag,
-            dp.file_only AS file_only_deleted,
-            dp.id AS deleted_post_id,
-            dp.by_proxy,
-            dp.file_id,
-            dp.deleted_by,
-            dp.deleted_at,
-            dp.restored_at,
+            -- Deleted post info
+            {$deletedPostColumns},
 
 			-- soudane
 			sv.votes_total_count,
