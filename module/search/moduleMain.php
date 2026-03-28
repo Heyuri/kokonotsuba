@@ -363,8 +363,6 @@ class moduleMain extends abstractModuleMain {
 		$totalPostHits = $hitPosts['total_posts'] ?? 0;
 		$resultList = '';
 
-		$templateValues = [];
-
 		if ($totalPostHits > 0) {
 			// extract the plain posts
 			$hitPostResultData = $hitPosts['results_data'];
@@ -391,6 +389,9 @@ class moduleMain extends abstractModuleMain {
 			$renderAsOp = !$displayThreadedFormat;
 
 			foreach ($hitPostResultData as $hitPost) {
+				// declare template values per post
+				$templateValues = [];
+
 				// extract post data
 				$hitPostData = $hitPost['post'] ?? null;
 				
