@@ -77,6 +77,23 @@ class deletedPostsRepository {
 		$this->databaseConnection->execute($query, $params); 
 	}
 
+	public function restoreFileOnlyEntriesByPostUid(int $postUid, int $accountId): void {
+		// query to mark open file-only entries as restored
+		$query = $this->getBaseRestoreQuery();
+
+		// append where clause
+		$query .= " WHERE post_uid = :post_uid AND file_only = 1 AND open_flag = 1";
+
+		// parameters
+		$params = [
+			':account_id' => $accountId,
+			':post_uid' => $postUid
+		];
+
+		// execute the query
+		$this->databaseConnection->execute($query, $params);
+	}
+
 	public function restorePostsByThreadUid(string $threadUid, int $accountId): void {
 		// query to mark posts as restored by thread uid
 		$query = "
@@ -378,7 +395,17 @@ class deletedPostsRepository {
 		$params = array_merge($params, $named['params']);
 
 		// Base SELECT/JOIN for deleted-posts rows
-		$query = $this->getBaseDeletedPostsQuery();
+		$query = getBasePostQuery(
+			$this->postTable,
+			$this->deletedPostsTable,
+			$this->fileTable,
+			$this->threadTable,
+			$this->soudaneTable,
+			$this->noteTable,
+			$this->accountTable,
+			true,
+			true
+		);
 
 		// Apply filters + restrict to the selected post_uid list
 		if ($filterClause) {
@@ -403,111 +430,30 @@ class deletedPostsRepository {
 			':id' => $deletedPostId
 		];
 
-		// fetch the single row
+		// fetch rows (notes/attachments produce multiple rows per dp entry)
 		$deletedPost = $this->databaseConnection->fetchAllAsArray($query, $params);
 
-		// merge attachment rows
-		$deletedPost = mergeMultiplePostRows($deletedPost);
+		// merge by deleted_post_id to preserve the specific dp entry
+		$deletedPost = mergeDeletedPostRows($deletedPost);
 
 		// return data
 		return $deletedPost[0] ?? false;
 	}
 
-	private function getBaseDeletedPostsQuery(): string {
-		return "
-			SELECT
-				dp.open_flag,
-				dp.id                AS deleted_post_id,
-				dp.post_uid          AS post_uid,
-				dp.deleted_at        AS deleted_at,
-				dp.deleted_by        AS deleted_by,
-				dp.restored_at,
-				dp.restored_by,
-				dp.by_proxy,
-				dp.file_only         AS file_only_deleted,
-				dp.file_id           AS file_id,
-
-				-- Post data (may be null if the post itself is gone)
-				p.*,
-				-- thread op number
-				t.post_op_number,
-
-				-- Attachment belonging to THIS deletion event or, for post-level,
-				-- all attachments belonging to the post.
-				f.id                 AS attachment_id,
-				f.file_name          AS attachment_file_name,
-				f.stored_filename    AS attachment_stored_filename,
-				f.file_ext           AS attachment_file_ext,
-				f.file_md5           AS attachment_file_md5,
-				f.file_size          AS attachment_file_size,
-				f.file_width         AS attachment_file_width,
-				f.file_height        AS attachment_file_height,
-				f.thumb_file_width   AS attachment_thumb_width,
-				f.thumb_file_height  AS attachment_thumb_height,
-				f.mime_type          AS attachment_mime_type,
-				f.is_hidden          AS attachment_is_hidden,
-				f.is_animated        AS attachment_is_animated,
-				f.is_deleted         AS attachment_is_deleted,
-				f.timestamp_added    AS attachment_timestamp_added,
-
-				da.username AS deleted_by_username,
-				ra.username AS restored_by_username
-
-			FROM {$this->deletedPostsTable} dp
-
-			-- Post content
-			LEFT JOIN {$this->postTable} p
-				ON p.post_uid = dp.post_uid
-
-			-- Attachments:
-			--  - for attachment-only deletion: match specific file_id
-			--  - for post-level deletion (file_id IS NULL): match all files of the post
-			LEFT JOIN {$this->fileTable} f
-				ON (
-					(dp.file_id IS NOT NULL AND f.id = dp.file_id)
-					OR (dp.file_id IS NULL AND f.post_uid = dp.post_uid)
-				)
-
-			LEFT JOIN {$this->accountTable} da ON dp.deleted_by = da.id
-			LEFT JOIN {$this->accountTable} ra ON dp.restored_by = ra.id
-
-			LEFT JOIN {$this->threadTable} t on p.thread_uid = t.thread_uid
-		";
-	}
-
-	private function buildDeletedPostsQuery(
-		int $amount, 
-		int $offset, 
-		string $orderBy = 'id', 
-		string $direction = 'DESC',
-		string $whereClause = '',
-	): string {
-		// Validate orderBy
-		if (!in_array($orderBy, $this->allowedOrderFields, true)) {
-			$orderBy = 'id';
-		}
-
-		// Validate direction
-		$direction = strtoupper($direction);
-		if (!in_array($direction, ['ASC', 'DESC'], true)) {
-			$direction = 'DESC';
-		}
-
-		// Start with shared SELECT + JOIN block
-		$query = $this->getBaseDeletedPostsQuery();
-
-		// Append the WHERE Clause
-		$query .= $whereClause;
-
-		// Add ordering and pagination
-		$query .= " ORDER BY dp.{$orderBy} {$direction} LIMIT {$amount} OFFSET {$offset}";
-
-		return $query;
-	}
-
 	private function buildDeletedPostByIdQuery(): string {
-		$query = $this->getBaseDeletedPostsQuery();
-		$query .= " WHERE dp.id = :id LIMIT 1";
+		$query = getBasePostQuery(
+			$this->postTable,
+			$this->deletedPostsTable,
+			$this->fileTable,
+			$this->threadTable,
+			$this->soudaneTable,
+			$this->noteTable,
+			$this->accountTable,
+			true,
+			true
+		);
+
+		$query .= " WHERE dp.id = :id";
 		
 		return $query;
 	}
@@ -667,21 +613,31 @@ class deletedPostsRepository {
 
 	public function getDeletedPostRowByPostUid(int $postUid): false|array {
 		// query to fetch the deleted post by post uid
-		$query = $this->getBaseDeletedPostsQuery();
+		$query = getBasePostQuery(
+			$this->postTable,
+			$this->deletedPostsTable,
+			$this->fileTable,
+			$this->threadTable,
+			$this->soudaneTable,
+			$this->noteTable,
+			$this->accountTable,
+			true,
+			true
+		);
 
 		// select the post by post uid
-		$query .= " WHERE p.post_uid = :post_uid ORDER BY dp.id DESC LIMIT 1";
+		$query .= " WHERE p.post_uid = :post_uid ORDER BY dp.id DESC";
 
 		// query parameteres
 		$params = [
 			':post_uid' => $postUid
 		];
 
-		// fetch the row
+		// fetch rows (may span multiple dp entries + notes)
 		$deletedPost = $this->databaseConnection->fetchAllAsArray($query, $params);
 
-		// merge attachment rows
-		$deletedPost = mergeMultiplePostRows($deletedPost);
+		// merge by deleted_post_id to keep each dp entry separate
+		$deletedPost = mergeDeletedPostRows($deletedPost);
 
 		// return result
 		return $deletedPost[0] ?? false;
@@ -689,21 +645,31 @@ class deletedPostsRepository {
 
 	public function getDeletedPostRowByFileId(int $fileId): false|array {
 		// query to fetch the deleted post by post uid
-		$query = $this->getBaseDeletedPostsQuery();
+		$query = getBasePostQuery(
+			$this->postTable,
+			$this->deletedPostsTable,
+			$this->fileTable,
+			$this->threadTable,
+			$this->soudaneTable,
+			$this->noteTable,
+			$this->accountTable,
+			true,
+			true
+		);
 
 		// select the post by post uid
-		$query .= " WHERE dp.file_id = :file_id ORDER BY dp.id DESC LIMIT 1";
+		$query .= " WHERE dp.file_id = :file_id ORDER BY dp.id DESC";
 
 		// query parameteres
 		$params = [
 			':file_id' => $fileId
 		];
 
-		// fetch the row
+		// fetch rows (notes produce multiple rows per dp entry)
 		$deletedPost = $this->databaseConnection->fetchAllAsArray($query, $params);
 
-		// merge attachment rows
-		$deletedPost = mergeMultiplePostRows($deletedPost);
+		// merge by deleted_post_id to keep each dp entry separate
+		$deletedPost = mergeDeletedPostRows($deletedPost);
 
 		// return result
 		return $deletedPost[0] ?? false;
