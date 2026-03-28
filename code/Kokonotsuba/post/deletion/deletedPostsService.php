@@ -97,6 +97,9 @@ class deletedPostsService {
 		// restore the reply
 		$this->deletedPostsRepository->restorePostData($deletedPostId, $accountId);
 
+		// also restore any open file-only deletion entries for this post
+		$this->deletedPostsRepository->restoreFileOnlyEntriesByPostUid($postUid, $accountId);
+
 		// thread_uid of the post
 		$threadUid = $postData['thread_uid'];
 		
