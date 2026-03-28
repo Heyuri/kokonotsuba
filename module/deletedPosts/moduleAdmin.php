@@ -86,7 +86,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->moduleContext->quoteLinkService,
 			$this->modulePageUrl,
 			$restoredIndexUrl,
-			$this->requiredRoleForDeleteRestoredRecord
+			$this->requiredRoleForDeleteRestoredRecord,
+			$this->moduleContext->postDateFormatter
 		);
 
 		// init ui hooks class

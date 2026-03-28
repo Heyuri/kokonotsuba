@@ -19,6 +19,7 @@ use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
+use Kokonotsuba\post\helper\postDateFormatter;
 
 class moduleContext {
 	public function __construct(
@@ -42,6 +43,7 @@ class moduleContext {
 		public array $userCapcodes, 
 		public transactionManager $transactionManager,
 		public postRenderingPolicy $postRenderingPolicy,
+		public postDateFormatter $postDateFormatter,
 		public ?int $currentUserId,
 	) {}
 }

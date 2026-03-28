@@ -63,6 +63,33 @@ function getBasePostQuery(
 			dp.file_only         AS file_only_deleted,
 			dp.file_id";
 
+	$soudaneColumns = "
+			sv.votes_total_count,
+			sv.votes_yeah_count,
+			sv.votes_nope_count";
+
+	$noteColumns = "
+			n.id AS note_id,
+			n.note_submitted,
+			n.added_by AS note_added_by,
+			n.note_text";
+
+	// Shared JOIN fragments
+	$soudaneJoin = "
+		LEFT JOIN (
+			SELECT
+				post_uid,
+				COUNT(*) AS vote_rows,
+				SUM(CASE WHEN yeah = 1 THEN 1 ELSE 0 END) AS votes_yeah_count,
+				SUM(CASE WHEN yeah = 0 THEN 1 ELSE 0 END) AS votes_nope_count,
+				SUM(CASE WHEN yeah = 1 THEN 1 ELSE -1 END) AS votes_total_count
+			FROM {$soudaneTable}
+			GROUP BY post_uid
+		)";
+
+	$noteJoin = "
+		LEFT JOIN {$noteTable} n";
+
 	// Deletion-centric mode: deleted_posts is the main table
 	if ($deletionCentric) {
 		return "
@@ -71,25 +98,24 @@ function getBasePostQuery(
 				dp.post_uid,
 				dp.restored_by,
 
-				-- Post data (may be null if the post itself is gone)
 				p.*,
 				t.post_op_number,
 
-				-- Attachments
 				{$attachmentColumns},
 
 				da.username AS deleted_by_username,
-				ra.username AS restored_by_username
+				ra.username AS restored_by_username,
+
+				{$soudaneColumns},
+
+				{$noteColumns},
+				na.username AS note_added_by_username
 
 			FROM {$deletedPostsTable} dp
 
-			-- Post content
 			LEFT JOIN {$postTable} p
 				ON p.post_uid = dp.post_uid
 
-			-- Attachments:
-			--  - for attachment-only deletion: match specific file_id
-			--  - for post-level deletion (file_id IS NULL): match all files of the post
 			LEFT JOIN {$fileTable} f
 				ON (
 					(dp.file_id IS NOT NULL AND f.id = dp.file_id)
@@ -100,6 +126,11 @@ function getBasePostQuery(
 			LEFT JOIN {$accountTable} ra ON dp.restored_by = ra.id
 
 			LEFT JOIN {$threadTable} t ON p.thread_uid = t.thread_uid
+
+			{$soudaneJoin} sv ON sv.post_uid = dp.post_uid
+
+			{$noteJoin} ON n.post_uid = dp.post_uid
+			LEFT JOIN {$accountTable} na ON na.id = n.added_by
 		";
 	}
 
@@ -131,45 +162,22 @@ function getBasePostQuery(
             p.*,
             t.post_op_number,
 
-            -- Attachments
             {$attachmentColumns},
-            
-            -- Deleted post info
+
             {$deletedPostColumns},
 
-			-- soudane
-			sv.votes_total_count,
-			sv.votes_yeah_count,
-			sv.votes_nope_count,
+			{$soudaneColumns},
 
-			-- Staff notes
-			n.id AS note_id,
-			n.note_submitted,
-			n.added_by AS note_added_by,
-			a.username AS note_added_by_username,
-			n.note_text
+			{$noteColumns},
+			a.username AS note_added_by_username
 
         FROM ($postFilterSubquery) p
 
-        -- Attachments
         LEFT JOIN $fileTable f ON f.post_uid = p.post_uid
 
-		-- vote data
-		LEFT JOIN (
-			SELECT
-				post_uid,
-				COUNT(*) AS vote_rows,
-				SUM(CASE WHEN yeah = 1 THEN 1 ELSE 0 END) AS votes_yeah_count,
-				SUM(CASE WHEN yeah = 0 THEN 1 ELSE 0 END) AS votes_nope_count,
-				SUM(CASE WHEN yeah = 1 THEN 1 ELSE -1 END) AS votes_total_count
-			FROM $soudaneTable
-			GROUP BY post_uid
-		) sv ON sv.post_uid = p.post_uid
+		{$soudaneJoin} sv ON sv.post_uid = p.post_uid
 
-		-- Staff notes
-		LEFT JOIN $noteTable n ON n.post_uid = p.post_uid
-		
-		-- Staff note author
+		{$noteJoin} ON n.post_uid = p.post_uid
 		LEFT JOIN $accountTable a ON a.id = n.added_by
 
         -- Thread info
@@ -345,7 +353,7 @@ function mergeRowIntoPost(array &$target, array $row): void {
 	stripSoudaneColumns($target);
 
 	// strip the notes columns from the base array
-	stripNoteColumns($row);
+	stripNoteColumns($target);
 }
 
 /**
@@ -452,6 +460,7 @@ function mergeDeletedPostRows(null|false|array $rows): false|array {
 			$entries[$dpId] = $row;
 			$entries[$dpId]['attachments'] = [];
 			$entries[$dpId]['deleted_attachments'] = [];
+			$entries[$dpId]['staff_notes'] = [];
 		}
 
 		// Reuse your existing logic for wiring up attachments + deleted_attachments

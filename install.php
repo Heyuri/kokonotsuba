@@ -37,7 +37,7 @@ define('ROOTPATH', getRootPath());
 
 require ROOTPATH . '/code/Puchiko/includes.php';
 require ROOTPATH . '/code/Kokonotsuba/constants.php';
-require ROOTPATH . '/code/Kokonotsuba/install.php';
+require ROOTPATH . '/code/Kokonotsuba/userRole.php';
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
@@ -490,6 +490,7 @@ class tableCreator {
                 INDEX idx_deleted_by_deleted_at (deleted_by, deleted_at),
                 INDEX idx_restored_at (restored_at),
                 INDEX idx_file_id (file_id),
+
 
                 UNIQUE KEY uq_open_post (open_key)
             ) ENGINE=InnoDB;

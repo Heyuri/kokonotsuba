@@ -466,8 +466,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			$rows[] = [
 				'{$CHECKBOX_NAME}' => $prefix . $i,
 				'{$IP}' => htmlspecialchars($ip),
-				'{$START}' => date('Y/m/d H:i:s', intval($start)),
-				'{$EXPIRES}' => date('Y/m/d H:i:s', intval($expires)),
+				'{$START}' => $this->moduleContext->postDateFormatter->formatFromTimestamp(intval($start)),
+				'{$EXPIRES}' => $this->moduleContext->postDateFormatter->formatFromTimestamp(intval($expires)),
 				'{$REASON}' => $reason,
 			];
 		}

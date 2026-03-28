@@ -7,6 +7,7 @@ use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\containers\moduleEngineContext;
 use Kokonotsuba\renderers\postRenderer;
+use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\postSearchService;
 use Kokonotsuba\board\board;
 use function Kokonotsuba\libraries\_T;
@@ -259,6 +260,8 @@ class moduleMain extends abstractModuleMain {
 			}
 
 			// Build the module engine context
+			$postDateFormatter = new postDateFormatter($board->loadBoardConfig()['TIME_ZONE']);
+
 			$moduleEngineContext = new moduleEngineContext(
 				$this->moduleContext->config,
 				$board->getConfigValue('LIVE_INDEX_FILE'),
@@ -280,6 +283,7 @@ class moduleMain extends abstractModuleMain {
 				$this->moduleTemplateEngine,
 				$board,
 				$this->moduleContext->postRenderingPolicy,
+				$postDateFormatter,
 				$this->moduleContext->currentUserId
 			);
 
@@ -359,8 +363,6 @@ class moduleMain extends abstractModuleMain {
 		$totalPostHits = $hitPosts['total_posts'] ?? 0;
 		$resultList = '';
 
-		$templateValues = [];
-
 		if ($totalPostHits > 0) {
 			// extract the plain posts
 			$hitPostResultData = $hitPosts['results_data'];
@@ -387,6 +389,9 @@ class moduleMain extends abstractModuleMain {
 			$renderAsOp = !$displayThreadedFormat;
 
 			foreach ($hitPostResultData as $hitPost) {
+				// declare template values per post
+				$templateValues = [];
+
 				// extract post data
 				$hitPostData = $hitPost['post'] ?? null;
 				

@@ -190,7 +190,8 @@ class modeHandler {
 					$this->routeDiContainer->actionLoggerService,
 					$this->routeDiContainer->softErrorHandler,
 					$this->routeDiContainer->adminPageRenderer,
-					$this->routeDiContainer->regularBoards
+					$this->routeDiContainer->regularBoards,
+					$this->routeDiContainer->postDateFormatter,
 				);
 				$route->drawActionLog();
 			},

@@ -193,6 +193,7 @@
 <!--/&THREAD-->
 
 <!--&OP-->
+	<div id="pc{$BOARD_UID}_{$NO}" class="op-container">
 		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}" {$DATA_ATTRIBUTES}>
 			<!--&IF($BOARD_THREAD_NAME,'{$BOARD_THREAD_NAME}','')-->
 			<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
@@ -218,6 +219,7 @@
 			<!--&IF($CATEGORY,'<small class="category"><i>{$CATEGORY_TEXT}{$CATEGORY}</i></small>','')-->
 			{$WARN_OLD}{$WARN_BEKILL}{$WARN_ENDREPLY}{$WARN_HIDEPOST}
 		</div>
+	</div>
 <!--/&OP-->
 
 <!--&REPLY-->
