@@ -46,17 +46,21 @@ class messageRepository {
 		$this->databaseConnection->execute($query, $params);
 	}
 
-	public function getMessagesForTripCode(string $tripCode, int $offset, int $limit): array {
+	public function getMessagesForTripCode(string $tripCode, string $contactTrip, int $offset, int $limit): array {
 		// query to get messages for the given trip hash
 		$query = "SELECT * FROM {$this->privateMessageTable} 
-				WHERE sender_tripcode = :trip_hash OR recipient_tripcode = :trip_hash
+				WHERE (sender_tripcode = :trip_hash AND recipient_tripcode = :contact_trip) 
+				   OR (sender_tripcode = :contact_trip AND recipient_tripcode = :trip_hash)
 				ORDER BY timestamp DESC";
 
 		// add limit and offset to query
 		$query .= " LIMIT $limit OFFSET $offset";
 
 		// parameters
-		$params = [':trip_hash' => $tripCode];
+		$params = [
+			':trip_hash' => $tripCode,
+			':contact_trip' => $contactTrip
+		];
 
 		// execute the query and return the results
 		return $this->databaseConnection->fetchAllAsArray($query, $params);
