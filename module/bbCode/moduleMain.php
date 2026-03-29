@@ -152,7 +152,14 @@ class moduleMain extends abstractModuleMain {
 
 		// color
 		if($this->supportColor) {
-			$string = preg_replace('#\[color=(\S+?)\](.*?)\[/color\]#si', '<span style="color:\1;">\2</span>', $string);
+			$string = preg_replace_callback('#\[color=(\S+?)\](.*?)\[/color\]#si', function($m) {
+				$color = $m[1];
+				// Allow only hex colors and named CSS colors (no semicolons, parentheses, or other CSS injection vectors)
+				if (!preg_match('/^(#[0-9a-fA-F]{3,6}|[a-zA-Z]{1,20})$/', $color)) {
+					return $m[0]; // return the raw BBCode unchanged
+				}
+				return '<span style="color:' . $color . ';">' . $m[2] . '</span>';
+			}, $string);
 		}
 
 		// font size
@@ -202,9 +209,12 @@ class moduleMain extends abstractModuleMain {
 			$string = preg_replace('#\[email=(\S+?@\S+?\\.\S+?)\](.*?)\[/email\]#si', '<a href="mailto:\1">\2</a>', $string);
 		}
 
-		// image
+		// image (restrict to http/https/ftp only)
 		if($this->supportImg && (($this->ImgTagTagMode == 2) || ($this->ImgTagTagMode && !$files))){
-			$string = preg_replace('#\[img\](([a-z]+?)://([^ \n\r]+?))\[\/img\]#si', '<img class="bbcodeIMG" src="\1" style="border:1px solid \#021a40;" alt="\1">', $string);
+			$string = preg_replace_callback('#\[img\](((https?|ftp)://([^ \n\r]+?)))\[\/img\]#si', function($m) {
+				$url = htmlspecialchars($m[1], ENT_QUOTES, 'UTF-8');
+				return '<img class="bbcodeIMG" src="' . $url . '" style="border:1px solid #021a40;" alt="' . $url . '">';
+			}, $string);
 		}
 
 		// restore preserved code blocks
@@ -463,22 +473,28 @@ class moduleMain extends abstractModuleMain {
 
 	private function _URLConv1($m){
 		++$this->urlcount;
-		return '<a class="bbcodeA" href="'.$m[1].$m[2].'" rel="nofollow noreferrer" target="_blank">'.$m[1].$m[2].'</a>';
+		$url = htmlspecialchars($m[1].$m[2], ENT_QUOTES, 'UTF-8');
+		return '<a class="bbcodeA" href="'.$url.'" rel="nofollow noreferrer" target="_blank">'.$url.'</a>';
 	}
 
 	private function _URLConv2($m){
 		++$this->urlcount;
-		return '<a class="bbcodeA" href="http://'.$m[1].'" rel="nofollow noreferrer" target="_blank">'.$m[1].'</a>';
+		$url = htmlspecialchars($m[1], ENT_QUOTES, 'UTF-8');
+		return '<a class="bbcodeA" href="http://'.$url.'" rel="nofollow noreferrer" target="_blank">'.$url.'</a>';
 	}
 
 	private function _URLConv3($m){
 		++$this->urlcount;
-		return '<a class="bbcodeA" href="'.$m[1].$m[2].'" rel="nofollow noreferrer" target="_blank">'.$m[3].'</a>';
+		$href = htmlspecialchars($m[1].$m[2], ENT_QUOTES, 'UTF-8');
+		$text = htmlspecialchars($m[3], ENT_QUOTES, 'UTF-8');
+		return '<a class="bbcodeA" href="'.$href.'" rel="nofollow noreferrer" target="_blank">'.$text.'</a>';
 	}
 
 	private function _URLConv4($m){
 		++$this->urlcount;
-		return '<a class="bbcodeA" href="http://'.$m[1].'" rel="nofollow noreferrer" target="_blank">'.$m[2].'</a>';
+		$url = htmlspecialchars($m[1], ENT_QUOTES, 'UTF-8');
+		$text = htmlspecialchars($m[2], ENT_QUOTES, 'UTF-8');
+		return '<a class="bbcodeA" href="http://'.$url.'" rel="nofollow noreferrer" target="_blank">'.$text.'</a>';
 	}
 
 	private function _URLRevConv($m){

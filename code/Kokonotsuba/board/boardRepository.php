@@ -3,20 +3,33 @@
 namespace Kokonotsuba\board;
 
 use Exception;
+use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
-class boardRepository {
+/** Repository for board records, with a per-request static result cache. */
+class boardRepository extends baseRepository {
 	// Store results to avoid over-querying within a request
 	private static array $boardResultCache = [];
 
-	// Constructor
+	/**
+	 * @param databaseConnection $databaseConnection Database connection.
+	 * @param string             $boardTable          Table name for boards.
+	 */
 	public function __construct(
-		private databaseConnection $databaseConnection,
-		private readonly string $boardTable
-	) {}
+		databaseConnection $databaseConnection,
+		string $boardTable
+	) {
+		parent::__construct($databaseConnection, $boardTable);
+	}
 
-	// Internal cache handler
+	/**
+	 * Return a cached result or compute and cache it via $fn.
+	 *
+	 * @param string   $key Cache key string.
+	 * @param callable $fn  Callable that returns the value to cache.
+	 * @return mixed Cached or freshly computed result.
+	 */
 	private function cacheMethodResult(string $key, callable $fn) {
 		if (isset(self::$boardResultCache[$key])) {
 			return self::$boardResultCache[$key];
@@ -24,152 +37,192 @@ class boardRepository {
 		return self::$boardResultCache[$key] = $fn();
 	}
 
-	// Invalidate per-request board result cache
+	/**
+	 * Clear the per-request board result cache.
+	 *
+	 * @return void
+	 */
 	private function invalidateBoardCache(): void {
 		self::$boardResultCache = [];
 	}
 
-	// Get a board object by UID
+	/**
+	 * Fetch a single board by its UID (result cached per request).
+	 *
+	 * @param int|string $uid Board UID.
+	 * @return boardData|null Hydrated boardData object, or null if not found.
+	 */
 	public function getBoardByUID($uid) {
 		$cacheKey = __METHOD__ . ':' . intval($uid);
 
 		return $this->cacheMethodResult($cacheKey, function () use ($uid) {
-			$query = "SELECT * FROM {$this->boardTable} WHERE board_uid = ?";
-			return $this->databaseConnection->fetchAsClass($query, [$uid], '\Kokonotsuba\board\boardData');
+			return $this->findBy('board_uid', $uid, '\Kokonotsuba\board\boardData');
 		});
 	}
 
 
-	// Delete board by UID
+	/**
+	 * Delete a board row by its UID and invalidate the result cache.
+	 *
+	 * @param int|string $uid Board UID to delete.
+	 * @return void
+	 */
 	public function deleteBoardByUID($uid) {
-		$query = "DELETE FROM {$this->boardTable} WHERE board_uid = ?";
-		$this->databaseConnection->execute($query, [$uid]);
-		$this->invalidateBoardCache(); // clear cache
+		$this->deleteWhere('board_uid', $uid);
+		$this->invalidateBoardCache();
 	}
 
-	// Get all boards (cached)
+	/**
+	 * Fetch all boards ordered by UID (result cached per request).
+	 *
+	 * @return boardData[] Array of hydrated boardData objects.
+	 */
 	public function getAllBoards() {
 		return $this->cacheMethodResult(__METHOD__, function () {
-			$query = "SELECT * FROM {$this->boardTable}";
-			return $this->databaseConnection->fetchAllAsClass($query, [], '\Kokonotsuba\board\boardData');
+			return $this->findAll('', 'ASC', '\Kokonotsuba\board\boardData');
 		});
 	}
 
-	// Get all boards with UID > 0 (cached)
+	/**
+	 * Fetch all boards with UID > 0 (result cached per request).
+	 *
+	 * @return boardData[] Array of hydrated boardData objects.
+	 */
 	public function getAllRegularBoards() {
 		return $this->cacheMethodResult(__METHOD__, function () {
-			$query = "SELECT * FROM {$this->boardTable} WHERE board_uid > 0";
-			return $this->databaseConnection->fetchAllAsClass($query, [], '\Kokonotsuba\board\boardData');
+			$query = "SELECT * FROM {$this->table} WHERE board_uid > 0";
+			return $this->queryAllAsClass($query, [], '\Kokonotsuba\board\boardData');
 		});
 	}
 
-	// Get only UIDs of all regular boards (cached)
+	/**
+	 * Fetch board_uid of every regular board (UID > 0), result cached per request.
+	 *
+	 * @return boardData[] Partially-hydrated boardData objects (board_uid only).
+	 */
 	public function getAllRegularBoardUIDs() {
 		return $this->cacheMethodResult(__METHOD__, function () {
-			$query = "SELECT board_uid FROM {$this->boardTable} WHERE board_uid > 0";
-			return $this->databaseConnection->fetchAllAsClass($query, [], '\Kokonotsuba\board\boardData');
+			$query = "SELECT board_uid FROM {$this->table} WHERE board_uid > 0";
+			return $this->queryAllAsClass($query, [], '\Kokonotsuba\board\boardData');
 		});
 	}
 
-	// Get only UIDs of all boards (cached)
+	/**
+	 * Fetch a flat array of all board UIDs (result cached per request).
+	 *
+	 * @return int[] Array of board_uid integers.
+	 */
 	public function getAllBoardUIDs() {
 		return $this->cacheMethodResult(__METHOD__, function () {
-			$query = "SELECT board_uid FROM {$this->boardTable}";
-			$boards = $this->databaseConnection->fetchAllAsIndexArray($query, []);
+			$query = "SELECT board_uid FROM {$this->table}";
+			$boards = $this->queryAllAsIndexArray($query);
 			return array_merge(...$boards);
 		});
 	}
 
-	// Get all listed boards (cached)
+	/**
+	 * Fetch all boards where listed = true (result cached per request).
+	 *
+	 * @return boardData[] Array of hydrated boardData objects.
+	 */
 	public function getAllListedBoards() {
 		return $this->cacheMethodResult(__METHOD__, function () {
-			$query = "SELECT * FROM {$this->boardTable} WHERE listed = true";
-			return $this->databaseConnection->fetchAllAsClass($query, [], '\Kokonotsuba\board\boardData');
+			return $this->findAllBy('listed', true, '\Kokonotsuba\board\boardData');
 		});
 	}
 
-	// Get only UIDs of listed boards (cached)
+	/**
+	 * Fetch the UIDs of all listed boards as a flat array (result cached per request).
+	 *
+	 * @return int[] Array of board_uid integers.
+	 */
 	public function getAllListedBoardUIDs() {
 		return $this->cacheMethodResult(__METHOD__, function () {
-			$query = "SELECT board_uid FROM {$this->boardTable} WHERE listed = true";
-			$boards = $this->databaseConnection->fetchAllAsIndexArray($query, []);
+			$query = "SELECT board_uid FROM {$this->table} WHERE listed = true";
+			$boards = $this->queryAllAsIndexArray($query);
 			return array_merge(...$boards);
 		});
 	}
 
-	// Get board objects by UID array (cached per UID combination)
+	/**
+	 * Fetch board objects for the given array of UIDs (result cached per UID combination).
+	 *
+	 * @param int[] $uidList Array of board UIDs.
+	 * @return boardData[] Array of hydrated boardData objects.
+	 */
 	public function getBoardsFromUIDs(array $uidList): array {
 		// Create a cache key based on the method and UID list
 		$cacheKey = __METHOD__ . ':' . implode(',', $uidList);
 	
 		return $this->cacheMethodResult($cacheKey, function () use ($uidList) {
-			// Generate the in clause
 			$inClause = pdoPlaceholdersForIn($uidList);
-
-			// Prepare the query with the sanitized UIDs
-			$query = "SELECT * FROM {$this->boardTable} WHERE board_uid IN $inClause";
-	
-			// re-index the array to avoid parameter errors
+			$query = "SELECT * FROM {$this->table} WHERE board_uid IN $inClause";
 			$uidList = array_values($uidList);
-
-			// Fetch the results using the constructed query
-			return $this->databaseConnection->fetchAllAsClass($query, $uidList, '\Kokonotsuba\board\boardData');
+			return $this->queryAllAsClass($query, $uidList, '\Kokonotsuba\board\boardData');
 		});
 	}
 	
 	
 
-	// Add a new board to the database
+	/**
+	 * Insert a new board row and invalidate the result cache.
+	 *
+	 * @param string $board_identifier        Board short identifier (slug).
+	 * @param string $board_title             Board display title.
+	 * @param string $board_sub_title         Board subtitle.
+	 * @param int    $listed                  Whether the board appears in board listings (0 or 1).
+	 * @param string $config_name             Config file name for the board.
+	 * @param string $storage_directory_name  Directory name for board storage.
+	 * @return void
+	 */
 	public function addNewBoard($board_identifier, $board_title, $board_sub_title, $listed, $config_name, $storage_directory_name) {
-		$query = "INSERT INTO {$this->boardTable} (board_identifier, board_title, board_sub_title, listed, config_name, storage_directory_name)
-				  VALUES(:board_identifier, :board_title, :board_sub_title, :listed, :config_name, :storage_directory_name)";
-		$params = [
-			':board_identifier' => $board_identifier,
-			':board_title' => $board_title,
-			':board_sub_title' => $board_sub_title,
-			':listed' => $listed,
-			':config_name' => $config_name,
-			':storage_directory_name' => $storage_directory_name
-		];
-		$this->databaseConnection->execute($query, $params);
-		$this->invalidateBoardCache(); // clear cache
+		$this->insert([
+			'board_identifier' => $board_identifier,
+			'board_title' => $board_title,
+			'board_sub_title' => $board_sub_title,
+			'listed' => $listed,
+			'config_name' => $config_name,
+			'storage_directory_name' => $storage_directory_name,
+		]);
+		$this->invalidateBoardCache();
 	}
 
-	// Edit board values
+	/**
+	 * Update specified columns on a board row and invalidate the result cache.
+	 *
+	 * @param int   $boardUID Board UID to update.
+	 * @param array $fields   Associative array of column => value pairs.
+	 * @return void
+	 * @throws Exception If $fields is empty.
+	 */
 	public function updateBoardByUID(int $boardUID, array $fields): void {
 		if (empty($fields)) {
 			throw new Exception("No valid fields provided to update.");
 		}
-
-		$params = [];
-		$assignments = [];
-
-		foreach ($fields as $key => $value) {
-			$assignments[] = "{$key} = :{$key}";
-			$params[":{$key}"] = $value;
-		}
-
-		$params[':board_uid'] = $boardUID;
-
-		$query = "UPDATE {$this->boardTable} SET " . implode(", ", $assignments) . " WHERE board_uid = :board_uid";
-
-		$this->databaseConnection->execute($query, $params);
-		$this->invalidateBoardCache(); // clear cache
+		$this->updateWhere($fields, 'board_uid', $boardUID);
+		$this->invalidateBoardCache();
 	}
 
 
-	// Get the next auto-increment board UID (cached)
+	/**
+	 * Return the next AUTO_INCREMENT value for the boards table (result cached per request).
+	 *
+	 * @return int Next available board UID.
+	 */
 	public function getNextBoardUID() {
 		return $this->cacheMethodResult(__METHOD__, function () {
-			return $this->databaseConnection->getNextAutoIncrement($this->boardTable);
+			return $this->getNextAutoIncrement();
 		});
 	}
 
-	// Get the last board UID in the table (cached)
+	/**
+	 * Return the highest board UID currently in the table (result cached per request).
+	 *
+	 * @return int|null Maximum board UID, or null if the table is empty.
+	 */
 	public function getLastBoardUID() {
 		return $this->cacheMethodResult(__METHOD__, function () {
-			$query = "SELECT MAX(board_uid) FROM {$this->boardTable}";
-			return $this->databaseConnection->fetchColumn($query);
+			return $this->queryColumn("SELECT MAX(board_uid) FROM {$this->table}");
 		});
 	}  
 }

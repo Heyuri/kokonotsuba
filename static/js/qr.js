@@ -4,6 +4,9 @@
 document.write(`<style id="qrs"></style>`);
 window.kkqrLastSubmitButton = null;
 
+function _qrEsc(s) {
+	return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 /* Module */
 const kkqr = { name: "KK Quick Reply",
@@ -117,19 +120,19 @@ const kkqr = { name: "KK Quick Reply",
 			var qrcontents = $id("qrcontents");
 			var submitplace = 'qr';
 			if (typeof(name)!='undefined') {
-				qr.innerHTML+= '<div id="qrnamediv"><input type="text" name="name" id="qrname" value="'+name.value+'" maxlength="100" class="inputtext" placeholder="Name" oninput="kkqr.input(this);"></div>';
+				qr.innerHTML+= '<div id="qrnamediv"><input type="text" name="name" id="qrname" value="'+_qrEsc(name.value)+'" maxlength="100" class="inputtext" placeholder="Name" oninput="kkqr.input(this);"></div>';
 				submitplace = 'qrnamediv';
 			}
 			if (typeof(email)!='undefined') {
-				qr.innerHTML+= '<div id="qremaildiv"><input type="text" name="email" id="qremail" value="'+email.value+'" maxlength="100" class="inputtext" placeholder="Email" oninput="kkqr.input(this);"></div>';
+				qr.innerHTML+= '<div id="qremaildiv"><input type="text" name="email" id="qremail" value="'+_qrEsc(email.value)+'" maxlength="100" class="inputtext" placeholder="Email" oninput="kkqr.input(this);"></div>';
 				if (!submitplace) submitplace = 'qremaildiv';
 			}
 			if (typeof(sub)!='undefined') {
-				qr.innerHTML+= '<div id="qrsubdiv"><input type="text" name="sub" id="qrsub" value="'+sub.value+'" maxlength="100" class="inputtext" placeholder="Subject" oninput="kkqr.input(this);"></div>';
+				qr.innerHTML+= '<div id="qrsubdiv"><input type="text" name="sub" id="qrsub" value="'+_qrEsc(sub.value)+'" maxlength="100" class="inputtext" placeholder="Subject" oninput="kkqr.input(this);"></div>';
 				submitplace = 'qrsubdiv';
 			}
 			if (typeof(com) != 'undefined') {
-				qr.innerHTML += '<textarea name="com" id="qrcom" cols="48" rows="6" class="inputtext" placeholder="Comment" oninput="kkqr.input(this);">' + com.value + '</textarea>';
+				qr.innerHTML += '<textarea name="com" id="qrcom" cols="48" rows="6" class="inputtext" placeholder="Comment" oninput="kkqr.input(this);">' + _qrEsc(com.value) + '</textarea>';
 			}
 			// --- File input ---
 			if (typeof(upfile) != 'undefined') {
@@ -156,10 +159,10 @@ const kkqr = { name: "KK Quick Reply",
 				qrcontents.innerHTML += '';
 			}
 			if (typeof(pwd) != 'undefined') {
-				qrcontents.innerHTML += '<div><input type="password" name="pwd" id="qrpwd" size="8" value="' + pwd.value + '" class="inputtext" placeholder="Password" oninput="kkqr.input(this);"> <span id="delPasswordInfo">(for deletion)</span></div>';
+				qrcontents.innerHTML += '<div><input type="password" name="pwd" id="qrpwd" size="8" value="' + _qrEsc(pwd.value) + '" class="inputtext" placeholder="Password" oninput="kkqr.input(this);"> <span id="delPasswordInfo">(for deletion)</span></div>';
 			}
 			if (typeof(captchacode) != 'undefined') {
-				qrcontents.innerHTML += '<div id="qrcaptcha" class="postblock"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&amp;\';})();">Reload</a>]</small><br><input type="text" name="captchacode" id="qrcaptchacode" value="' + captchacode.value + '" autocomplete="off" class="inputtext" placeholder="Captcha" oninput="kkqr.input(this);"><nobr><small>(Please enter the words. Case-insensitive.)</small></nobr></div>';
+				qrcontents.innerHTML += '<div id="qrcaptcha" class="postblock"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&amp;\';})();">Reload</a>]</small><br><input type="text" name="captchacode" id="qrcaptchacode" value="' + _qrEsc(captchacode.value) + '" autocomplete="off" class="inputtext" placeholder="Captcha" oninput="kkqr.input(this);"><nobr><small>(Please enter the words. Case-insensitive.)</small></nobr></div>';
 				var qrc = $id("qrcaptcha"), chaimg = $id("chaimg");
 				chaimg.insertAdjacentHTML("beforebegin", '<span id="chaimgDUMMY"></span>');
 				qrc.insertAdjacentElement("afterbegin", chaimg);

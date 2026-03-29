@@ -13,6 +13,7 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\constructAttachment;
 use function Kokonotsuba\libraries\constructAttachmentsFromArray;
 
+/** Service for soft-deleting, restoring, and purging posts and attachments, with paged retrieval. */
 class deletedPostsService {
 	public function __construct(
 		private transactionManager $transactionManager,
@@ -23,6 +24,13 @@ class deletedPostsService {
 		private readonly threadRepository $threadRepository
 	) {}
 
+	/**
+	 * Restore a deleted post (or its entire thread if it is an OP) and its attachments.
+	 *
+	 * @param int $deletedPostId Deletion record ID.
+	 * @param int $accountId     Account performing the restore.
+	 * @return void
+	 */
 	public function restorePost(int $deletedPostId, int $accountId): void {
 		// run transaction
 		$this->transactionManager->run(function() use($deletedPostId, $accountId) {
@@ -113,6 +121,14 @@ class deletedPostsService {
 		$this->logAction($restoreActionString, $postData['boardUID']);
 	}
 
+	/**
+	 * Restore a file-only deletion entry and move the attachment back from purgatory.
+	 *
+	 * @param int $deletedPostId Deletion record ID (file-only entry).
+	 * @param int $accountId     Account performing the restore.
+	 * @return void
+	 * @throws BoardException If the file ID or attachment data is missing.
+	 */
 	public function restoreAttachment(int $deletedPostId, int $accountId): void {
 		// get post data
 		$deletedPostEntry = $this->deletedPostsRepository->getDeletedPostRowById($deletedPostId);
@@ -163,6 +179,13 @@ class deletedPostsService {
 		$this->logAction("Restored attachment $fileId on post No.{$deletedPostEntry['no']}", $deletedPostEntry['boardUID']);
 	}
 
+	/**
+	 * Permanently purge a deleted post (or entire thread if OP) and its files.
+	 *
+	 * @param int  $deletedPostId Deletion record ID.
+	 * @param bool $logAction     Whether to log the purge action.
+	 * @return void
+	 */
 	public function purgePost(int $deletedPostId, bool $logAction = true): void {
 		// run transaction
 		$this->transactionManager->run(function() use($deletedPostId, $logAction) {
@@ -315,6 +338,13 @@ class deletedPostsService {
 		return $actionString;
 	}
 
+	/**
+	 * Permanently purge only the attachment from a file-only deletion entry.
+	 *
+	 * @param int $deletedPostId Deletion record ID (file-only entry).
+	 * @return void
+	 * @throws BoardException If the attachment data is missing.
+	 */
 	public function purgeAttachmentOnly(int $deletedPostId): void {
 		// run transaction
 		$this->transactionManager->run(function() use($deletedPostId) {
@@ -397,6 +427,13 @@ class deletedPostsService {
 		return $result === false ? null : $result;
 	}
 
+	/**
+	 * Fetch a paged list of open (soft-deleted) posts.
+	 *
+	 * @param int $page           Zero-based page number.
+	 * @param int $entriesPerPage Number of entries per page.
+	 * @return array|null Array of deleted post entries, or null if none.
+	 */
 	public function getDeletedPosts(int $page, int $entriesPerPage): ?array {
 		// Fetch deleted posts for the given page range
 		$deletedPosts = $this->getPagedEntries($page, $entriesPerPage);
@@ -405,6 +442,13 @@ class deletedPostsService {
 		return $deletedPosts;
 	}
 
+	/**
+	 * Fetch a paged list of restored posts.
+	 *
+	 * @param int $page           Zero-based page number.
+	 * @param int $entriesPerPage Number of entries per page.
+	 * @return array|null Array of restored post entries, or null if none.
+	 */
 	public function getRestoredPosts(int $page, int $entriesPerPage): ?array {
 		// get paged restored posts
 		$restoredPosts = $this->getPagedEntries($page, $entriesPerPage, true);
@@ -413,6 +457,14 @@ class deletedPostsService {
 		return $restoredPosts;
 	}
 	
+	/**
+	 * Fetch a paged list of open (soft-deleted) posts for a specific account.
+	 *
+	 * @param int $accountId      Account ID whose deletions to list.
+	 * @param int $page           Zero-based page number.
+	 * @param int $entriesPerPage Number of entries per page.
+	 * @return array|null Array of deleted post entries, or null if none.
+	 */
 	public function getDeletedPostsByAccount(int $accountId, int $page, int $entriesPerPage): ?array {
 		// Fetch deleted posts for a specific account ID within the given page range
 		$deletedPosts = $this->getPagedEntries($page, $entriesPerPage, false, $accountId);
@@ -421,6 +473,14 @@ class deletedPostsService {
 		return $deletedPosts;
 	}
 
+	/**
+	 * Fetch a paged list of restored posts for a specific account.
+	 *
+	 * @param int $accountId      Account ID.
+	 * @param int $page           Zero-based page number.
+	 * @param int $entriesPerPage Number of entries per page.
+	 * @return array|null Array of restored post entries, or null if none.
+	 */
 	public function getRestoredPostsByAccount(int $accountId, int $page, int $entriesPerPage): ?array {
 		// fetch the restored posts for a specific account by page
 		$restoredPosts = $this->getPagedEntries($page, $entriesPerPage, true, $accountId);
@@ -440,6 +500,12 @@ class deletedPostsService {
 		return $this->returnOrNull($entries);
 	}
 
+	/**
+	 * Fetch a single deletion row by its deletion record ID.
+	 *
+	 * @param int $deletedPostId Deletion record ID.
+	 * @return array|null Merged deletion row, or null if not found.
+	 */
 	public function getDeletedPostRowById(int $deletedPostId): ?array {
 		// get the single row from the db
 		$deletedPostRow = $this->deletedPostsRepository->getDeletedPostRowById($deletedPostId);
@@ -447,6 +513,11 @@ class deletedPostsService {
 		return $this->returnOrNull($deletedPostRow);
 	}
 
+	/**
+	 * Return the total count of open soft-deleted posts.
+	 *
+	 * @return int Total count.
+	 */
 	public function getTotalAmountOfDeletedPosts(): int {
 		// get the total amount of deleted posts stored in the table
 		$totalDeletedPosts = $this->deletedPostsRepository->getTotalAmount();
@@ -455,6 +526,11 @@ class deletedPostsService {
 		return $totalDeletedPosts;
 	}
 
+	/**
+	 * Return the total count of restored posts.
+	 *
+	 * @return int Total count.
+	 */
 	public function getTotalAmountOfRestoredPosts(): int {
 		// get the total amount of restored posts stored in the table
 		$totalAmount = $this->deletedPostsRepository->getTotalAmount(null, true);
@@ -463,6 +539,12 @@ class deletedPostsService {
 		return $totalAmount;
 	}
 
+	/**
+	 * Return the total count of open deletions attributed to the given account.
+	 *
+	 * @param int $accountId Account ID.
+	 * @return int Total count.
+	 */
 	public function getTotalAmountOfDeletedPostsFromAccountId(int $accountId): int {
 		// get the total amount of deleleted posts 
 		$totalAmount = $this->deletedPostsRepository->getTotalAmount($accountId);
@@ -471,6 +553,12 @@ class deletedPostsService {
 		return $totalAmount;
 	}
 
+	/**
+	 * Return the total count of restored posts attributed to the given account.
+	 *
+	 * @param int $accountId Account ID.
+	 * @return int Total count.
+	 */
 	public function getTotalAmountOfRestoredPostsFromAccountId(int $accountId): int {
 		// get the total amount of restored posts by account id
 		$totalAmount = $this->deletedPostsRepository->getTotalAmount($accountId, true);
@@ -479,6 +567,13 @@ class deletedPostsService {
 		return $totalAmount;
 	}
 
+	/**
+	 * Check whether the given deletion record exists and belongs to the given account.
+	 *
+	 * @param int $deletedPostId Deletion record ID.
+	 * @param int $accountId     Account ID to authenticate against.
+	 * @return bool True if the record is owned by the account.
+	 */
 	public function authenticateDeletedPost(int $deletedPostId, int $accountId): bool {
 		// check the database if the row exists and was deleted by the user
 		$rowExists = $this->deletedPostsRepository->deletedPostExistsByAccountId($deletedPostId, $accountId);
@@ -487,6 +582,14 @@ class deletedPostsService {
 		return $rowExists;
 	}
 
+	/**
+	 * Soft-delete one or more posts and their attachments, creating deletion records.
+	 * Thread OPs automatically include all their replies as proxy-deleted entries.
+	 *
+	 * @param array    $posts     Array of post data arrays to delete.
+	 * @param int|null $deletedBy Account ID performing the deletion, or null for anonymous.
+	 * @return void
+	 */
 	public function flagPostsAsDeleted(array $posts, ?int $deletedBy): void {
 		// get all posts from the thread if any of the posts are thread OPs
 		$threadPosts = $this->getThreadsFromOPs($posts);
@@ -644,6 +747,13 @@ class deletedPostsService {
 		);
 	}
 
+	/**
+	 * Create file-only deletion entries and move the associated attachment files to purgatory.
+	 *
+	 * @param array    $attachments Array of attachment data arrays.
+	 * @param int|null $deletedBy   Account ID performing the deletion, or null for anonymous.
+	 * @return void
+	 */
 	public function deleteFilesFromPosts(array $attachments, ?int $deletedBy): void {
 		$this->transactionManager->run(function() use ($attachments, $deletedBy) {
 			// Construct file objects from the attachments array
@@ -676,6 +786,12 @@ class deletedPostsService {
 		}
 	}
 
+	/**
+	 * Return the board UID for the post referenced by the given deletion record ID.
+	 *
+	 * @param int $deletedPostId Deletion record ID.
+	 * @return int|null Board UID, or null if not found.
+	 */
 	public function getBoardUidByDeletedPostId(int $deletedPostId): ?int {
 		// fetch board uid from database based on the deleted id
 		$boardUid = $this->deletedPostsRepository->getBoardUidByDeletedPostId($deletedPostId);
@@ -684,6 +800,12 @@ class deletedPostsService {
 		return $this->returnOrNull($boardUid);
 	}
 
+	/**
+	 * Fetch the most-recent deletion row for the given post UID.
+	 *
+	 * @param int $postUid Post UID.
+	 * @return array|null Merged deletion row, or null if not found.
+	 */
 	public function getDeletedPostRowByPostUid(int $postUid): ?array {
 		// fetch the row by post uid
 		$deletedPost = $this->deletedPostsRepository->getDeletedPostRowByPostUid($postUid);
@@ -692,6 +814,12 @@ class deletedPostsService {
 		return $this->returnOrNull($deletedPost);
 	}
 
+	/**
+	 * Fetch the most-recent deletion row associated with the given file ID.
+	 *
+	 * @param int $fileId File row ID.
+	 * @return array|null Merged deletion row, or null if not found.
+	 */
 	public function getDeletedPostRowByFileId(int $fileId): ?array {
 		// fetch the row by file id
 		$deletedPost = $this->deletedPostsRepository->getDeletedPostRowByFileId($fileId);
@@ -700,6 +828,12 @@ class deletedPostsService {
 		return $this->returnOrNull($deletedPost);
 	}
 
+	/**
+	 * Prune all soft-deleted entries older than the given hour limit and permanently delete them.
+	 *
+	 * @param int $timeLimit Age cutoff in hours.
+	 * @return void
+	 */
 	public function pruneExpiredPosts(int $timeLimit): void {
 		// run transaction
 		$this->transactionManager->run(function() use($timeLimit) {
@@ -723,6 +857,12 @@ class deletedPostsService {
 
 	}
 
+	/**
+	 * Remove a deletion record without purging the underlying post or file.
+	 *
+	 * @param int $deletedPostId Deletion record ID to remove.
+	 * @return void
+	 */
 	public function removeEntry(int $deletedPostId): void {
 		// run transaction
 		$this->transactionManager->run(function() use($deletedPostId) {
@@ -731,6 +871,15 @@ class deletedPostsService {
 		});
 	}
 
+	/**
+	 * Copy deletion entries from original posts to their copies, remapping post and file UIDs.
+	 *
+	 * @param int[] $hostPostUids Array of original post UIDs.
+	 * @param int[] $newPostUids  Array of corresponding new post UIDs.
+	 * @param int[] $hostFileIDs  Array of original file IDs.
+	 * @param int[] $newFileIDs   Array of corresponding new file IDs.
+	 * @return void
+	 */
 	public function copyDeletionEntries(
 		array $hostPostUids, 
 		array $newPostUids, 

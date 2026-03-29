@@ -68,7 +68,26 @@ class databaseConnection {
 	// Public method to execute a query (for INSERT, UPDATE, DELETE)
 	public function execute(string $query, array $params = []) {
 		$stmt = $this->pdo->prepare($query);
-		return $stmt->execute($params);
+		$this->bindTypedParams($stmt, $params);
+		return $stmt->execute();
+	}
+
+	// Bind parameters with proper PDO types (int params as PARAM_INT so LIMIT/OFFSET work)
+	private function bindTypedParams(\PDOStatement $stmt, array $params): void {
+		foreach ($params as $key => $value) {
+			// Positional params (0-indexed array) need 1-indexed keys for bindValue
+			$bindKey = is_int($key) ? $key + 1 : $key;
+
+			if (is_int($value)) {
+				$stmt->bindValue($bindKey, $value, PDO::PARAM_INT);
+			} elseif (is_bool($value)) {
+				$stmt->bindValue($bindKey, $value, PDO::PARAM_BOOL);
+			} elseif (is_null($value)) {
+				$stmt->bindValue($bindKey, $value, PDO::PARAM_NULL);
+			} else {
+				$stmt->bindValue($bindKey, $value, PDO::PARAM_STR);
+			}
+		}
 	}
 
 	// Transaction methods
@@ -90,44 +109,51 @@ class databaseConnection {
 
 	public function fetchAllAsClass(string $query, array $params = [], string $className = '') {
 		$stmt = $this->pdo->prepare($query);
-		$stmt->execute($params);
+		$this->bindTypedParams($stmt, $params);
+		$stmt->execute();
 		return $stmt->fetchAll(PDO::FETCH_CLASS, $className);
 	}
 
 	public function fetchAllAsArray(string $query, array $params = []) {
 		$stmt = $this->pdo->prepare($query);
-		$stmt->execute($params);
+		$this->bindTypedParams($stmt, $params);
+		$stmt->execute();
 		return $stmt->fetchAll(PDO::FETCH_ASSOC);
 	}
 	
 	public function fetchAllAsIndexArray(string $query, array $params = []) {
 		$stmt = $this->pdo->prepare($query);
-		$stmt->execute($params);
+		$this->bindTypedParams($stmt, $params);
+		$stmt->execute();
 		return $stmt->fetchAll(PDO::FETCH_NUM);
 	}
 	
 	public function fetchAsClass(string $query, array $params = [], string $className = '') {
 		$stmt = $this->pdo->prepare($query);
-		$stmt->execute($params);
+		$this->bindTypedParams($stmt, $params);
+		$stmt->execute();
 		$stmt->setFetchMode(PDO::FETCH_CLASS, $className);
 		return $stmt->fetch();
 	}
 
 	public function fetchColumn(string $query, array $params = [], int $columnIndex = 0) {
 		$stmt = $this->pdo->prepare($query);
-		$stmt->execute($params);
+		$this->bindTypedParams($stmt, $params);
+		$stmt->execute();
 		return $stmt->fetchColumn($columnIndex);
 	}
 
 	public function fetchOne(string $query, array $params = [], int $fetchMode = PDO::FETCH_ASSOC) {
 		$stmt = $this->pdo->prepare($query);
-		$stmt->execute($params);
+		$this->bindTypedParams($stmt, $params);
+		$stmt->execute();
 		return $stmt->fetch($fetchMode);
 	}
 
 	public function fetchValue(string $query, array $params = [], int $columnIndex = 0) {
 		$stmt = $this->pdo->prepare($query);
-		$stmt->execute($params);
+		$this->bindTypedParams($stmt, $params);
+		$stmt->execute();
 		return $stmt->fetchColumn($columnIndex);
 	}
 

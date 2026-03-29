@@ -32,7 +32,8 @@ $params = [
 	'lifetime' => 0,
 	'path'     => '/',
 	'secure'   => $request->isHttps(),
-	'httponly' => true
+	'httponly' => true,
+	'samesite' => 'Lax'
 ];
 
 if (!$isIp && !$isLocalhost && !$isOnion && $host !== '') {

@@ -9,16 +9,30 @@ use Kokonotsuba\userRole;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
+/** Service for managing staff account lifecycle: creation, deletion, promotion, and password resets. */
 class accountService {
 	public function __construct(
         private readonly accountRepository $accountRepository, 
         private readonly actionLoggerService $actionLoggerService,
         private readonly request $request) {}
 	
+	/**
+	 * Delete an account by its primary key.
+	 *
+	 * @param int $id Account primary key.
+	 * @return void
+	 */
 	public function handleAccountDelete(int $id) {
 		$this->accountRepository->deleteAccountByID($id);	
 	}
 
+	/**
+	 * Demote an account by reducing its role level by 1.
+	 * No-ops if the account is already at the lowest role level.
+	 *
+	 * @param int $id Account primary key.
+	 * @return void
+	 */
 	public function handleAccountDemote(int $id) {
 		$account = $this->accountRepository->getAccountByID($id);
 		
@@ -27,6 +41,13 @@ class accountService {
 		$this->accountRepository->demoteAccountByID($id);
 	}
 
+	/**
+	 * Promote an account by increasing its role level by 1.
+	 * No-ops if the account is already at the highest role level.
+	 *
+	 * @param int $id Account primary key.
+	 * @return void
+	 */
 	public function handleAccountPromote(int $id) {
 		$account = $this->accountRepository->getAccountByID($id);
 	
@@ -35,6 +56,15 @@ class accountService {
 		$this->accountRepository->promoteAccountByID($id);
 	}
 
+	/**
+	 * Create a new staff account.
+	 *
+	 * @param bool   $isHashed Whether $password is already bcrypt-hashed.
+	 * @param string $password Plain-text password (or hash if $isHashed is true).
+	 * @param string $username New account username.
+	 * @param int    $role     Initial role level integer.
+	 * @return void
+	 */
 	public function handleAccountCreation(bool $isHashed, string $password, string $username, int $role) {
 		// don't hash the password if its being passed as hashed from the request
 		if(!$isHashed) {
@@ -47,6 +77,13 @@ class accountService {
 		$this->actionLoggerService->logAction("Registered a new account ($username)", GLOBAL_BOARD_UID);
 	}
 
+	/**
+	 * Reset a staff member's own password and refresh the live session.
+	 *
+	 * @param staffAccountFromSession $staffAccountFromSession Session wrapper of the account resetting their password.
+	 * @param string $newAccountPasswordForReset New plain-text password.
+	 * @return void
+	 */
 	public function handleAccountPasswordReset(staffAccountFromSession $staffAccountFromSession, string $newAccountPasswordForReset) {
 		$loginSessionHandler = new loginSessionHandler($this->request);
 		$accountID = $staffAccountFromSession->getUID();

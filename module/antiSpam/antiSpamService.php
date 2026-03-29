@@ -2,11 +2,29 @@
 
 namespace Kokonotsuba\Modules\antiSpam;
 
+/** Service for managing the post spam-filter rule set. */
 class antiSpamService {
 	public function __construct(
 		private antiSpamRepository $antiSpamRepository
 	) {}
 
+	/**
+	 * Add a new spam filter rule.
+	 *
+	 * @param string      $pattern       Pattern to match.
+	 * @param string      $matchType     Match strategy ('contains', 'exact', 'regex', etc.).
+	 * @param int         $applySubject  Apply to post subject (1/0).
+	 * @param int         $applyComment  Apply to post comment (1/0).
+	 * @param int         $applyName     Apply to poster name (1/0).
+	 * @param int         $applyEmail    Apply to poster email (1/0).
+	 * @param int         $caseSensitive Case-sensitive match (1/0).
+	 * @param string|null $userMessage   Message shown to the blocked user, or null.
+	 * @param string|null $description   Internal description, or null.
+	 * @param string      $action        Action on match ('reject', etc.).
+	 * @param int|null    $maxDistance   Max edit distance for fuzzy matching, or null.
+	 * @param int|null    $createdBy     Account ID of the creating staff member, or null.
+	 * @return void
+	 */
 	public function addEntry(
 		string $pattern,
 		string $matchType = 'contains',
@@ -38,6 +56,13 @@ class antiSpamService {
 		);
 	}
 	
+	/**
+	 * Fetch a paginated list of spam rule entries.
+	 *
+	 * @param int $entriesPerPage Number of entries per page.
+	 * @param int $page           Zero-based page index.
+	 * @return array|false Array of rule rows, or false if none.
+	 */
 	public function getEntries(int $entriesPerPage, int $page): false|array {
 		// calculate pagination value
 		$offset = max(0, max(0, $page) * $entriesPerPage);
@@ -46,15 +71,35 @@ class antiSpamService {
 		return $this->antiSpamRepository->getEntries($entriesPerPage, $offset);
 	}
 
+	/**
+	 * Count the total number of spam rule entries.
+	 *
+	 * @return int Entry count.
+	 */
 	public function getTotalEntries(): int {
 		return $this->antiSpamRepository->getTotalEntries();
 	}
 
+	/**
+	 * Delete a set of spam rule entries by their primary keys.
+	 *
+	 * @param array $entryIDs Array of integer primary keys.
+	 * @return void
+	 */
 	public function deleteEntries(array $entryIDs): void {
 		// delete the entries
 		$this->antiSpamRepository->deleteEntries($entryIDs);
 	}
 
+	/**
+	 * Fetch active spam rules applicable to the provided post fields.
+	 *
+	 * @param string|null $subject Post subject, or null.
+	 * @param string|null $comment Post comment, or null.
+	 * @param string|null $name    Poster name, or null.
+	 * @param string|null $email   Poster email, or null.
+	 * @return array|false Matching rule rows, or false if none.
+	 */
 	public function getActiveSpamStringRules(
 		?string $subject,
 		?string $comment,
@@ -64,10 +109,23 @@ class antiSpamService {
 		return $this->antiSpamRepository->getActiveSpamStringRules($subject, $comment, $name, $email);
 	}
 
+	/**
+	 * Fetch a single spam rule entry by its primary key.
+	 *
+	 * @param int $id Entry primary key.
+	 * @return array|false Associative row, or false if not found.
+	 */
 	public function getEntry(int $id): false|array {
 		return $this->antiSpamRepository->getEntryById($id);
 	}
 
+	/**
+	 * Update allowed fields on an existing spam rule entry.
+	 *
+	 * @param int   $entryId Entry primary key.
+	 * @param array $fields  Map of camelCase field names to new values.
+	 * @return void
+	 */
 	public function modifyEntry(int $entryId, array $fields): void {
 		$update = [];
 

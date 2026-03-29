@@ -2,27 +2,39 @@
 
 namespace Kokonotsuba\Modules\antiSpam;
 
+use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
-class antiSpamRepository {
+/** Repository for spam string filter rules. */
+class antiSpamRepository extends baseRepository {
 	public function __construct(
-		private databaseConnection $databaseConnection,
-		private string $spamStringRulesTable,
+		databaseConnection $databaseConnection,
+		string $spamStringRulesTable,
 		private string $accountTable
-	) {}
+	) {
+		parent::__construct($databaseConnection, $spamStringRulesTable);
+	}
 
+	/**
+	 * Fetch all active spam rules applicable to the provided post fields.
+	 *
+	 * @param string|null $subject Post subject to test, or null.
+	 * @param string|null $comment Post comment to test, or null.
+	 * @param string|null $name    Poster name to test, or null.
+	 * @param string|null $email   Poster email to test, or null.
+	 * @return array|false Array of matching rule rows, or false if none.
+	 */
 	public function getActiveSpamStringRules(
 		?string $subject,
 		?string $comment,
 		?string $name,
 		?string $email
 	): false|array {
-		// query to check for spam rules
 		$query = "
 			SELECT *
-				FROM {$this->spamStringRulesTable}
+				FROM {$this->table}
 			WHERE is_active = 1
 			  AND (
 				(apply_subject = 1 AND :subject IS NOT NULL) OR
@@ -32,7 +44,6 @@ class antiSpamRepository {
 			  )
 		";
 
-		// define the query parameters
 		$params = [
 			':subject' => $subject,
 			':comment' => $comment,
@@ -40,13 +51,26 @@ class antiSpamRepository {
 			':email' => $email,
 		];
 
-		// fetch the spam rules
-		$spamRows = $this->databaseConnection->fetchAllAsArray($query, $params);
-
-		// return results
-		return $spamRows;
+		return $this->queryAll($query, $params);
 	}
 
+	/**
+	 * Insert a new spam rule.
+	 *
+	 * @param string      $pattern        Pattern to match against.
+	 * @param string      $matchType      Match strategy: 'contains', 'exact', 'regex', etc.
+	 * @param int         $applySubject   Whether to test the subject field (1/0).
+	 * @param int         $applyComment   Whether to test the comment field (1/0).
+	 * @param int         $applyName      Whether to test the name field (1/0).
+	 * @param int         $applyEmail     Whether to test the email field (1/0).
+	 * @param int         $caseSensitive  Whether the match is case-sensitive (1/0).
+	 * @param string|null $userMessage    Custom message shown to the blocked user, or null.
+	 * @param string|null $description    Internal description for admins, or null.
+	 * @param string      $action         Action to take on match ('reject', etc.).
+	 * @param int|null    $maxDistance    Max edit distance for fuzzy matching, or null.
+	 * @param int|null    $createdBy      Account ID of the creating staff member, or null.
+	 * @return bool True on success.
+	 */
 	public function insertRow(
 		string $pattern,
 		string $matchType = 'contains',
@@ -61,152 +85,90 @@ class antiSpamRepository {
 		?int $maxDistance = null,
 		?int $createdBy = null
 	): bool {
-		// insert spam rule query
-		$query = "
-			INSERT INTO {$this->spamStringRulesTable} (
-				pattern,
-				match_type,
-				apply_subject,
-				apply_comment,
-				apply_name,
-				apply_email,
-				case_sensitive,
-				user_message,
-				description,
-				action,
-				max_distance,
-				created_by
-			) VALUES (
-				:pattern,
-				:match_type,
-				:apply_subject,
-				:apply_comment,
-				:apply_name,
-				:apply_email,
-				:case_sensitive,
-				:user_message,
-				:description,
-				:action,
-				:max_distance,
-				:created_by
-			)
-		";
-
-		// define the query parameters
-		$params = [
-			':pattern' => $pattern,
-			':match_type' => $matchType,
-			':apply_subject' => $applySubject,
-			':apply_comment' => $applyComment,
-			':apply_name' => $applyName,
-			':apply_email' => $applyEmail,
-			':case_sensitive' => $caseSensitive,
-			':user_message' => $userMessage,
-			':description' => $description,
-			':action' => $action,
-			':max_distance' => $maxDistance,
-			':created_by' => $createdBy,
-		];
-
-		// execute insert
-		return $this->databaseConnection->execute($query, $params);
+		$this->insert([
+			'pattern' => $pattern,
+			'match_type' => $matchType,
+			'apply_subject' => $applySubject,
+			'apply_comment' => $applyComment,
+			'apply_name' => $applyName,
+			'apply_email' => $applyEmail,
+			'case_sensitive' => $caseSensitive,
+			'user_message' => $userMessage,
+			'description' => $description,
+			'action' => $action,
+			'max_distance' => $maxDistance,
+			'created_by' => $createdBy,
+		]);
+		return true;
 	}
 
+	/**
+	 * Fetch a paginated list of spam rule entries, including the creating account's username.
+	 *
+	 * @param int $limit  Maximum entries to return.
+	 * @param int $offset Pagination offset.
+	 * @return array|false Array of rows, or false if none.
+	 */
 	public function getEntries(int $limit, int $offset): false|array {
-		// fetch spam string rule entries
 		$query = "
 			SELECT s.*, a.username AS created_by_username
-				FROM {$this->spamStringRulesTable} s
+				FROM {$this->table} s
 			LEFT JOIN {$this->accountTable} a ON a.id = s.created_by
 			ORDER BY s.id DESC
 			LIMIT {$limit} OFFSET {$offset}
 		";
 
-		// fetch entries
-		$rows = $this->databaseConnection->fetchAllAsArray($query);
-
-		// return results
-		return $rows;
+		return $this->queryAll($query);
 	}
 
+	/**
+	 * Count the total number of spam rule entries.
+	 *
+	 * @return int Entry count.
+	 */
 	public function getTotalEntries(): int {
-		// total entries count query
-		$query = "
-			SELECT COUNT(*)
-				FROM {$this->spamStringRulesTable}
-		";
-
-		// fetch total count
-		$row = $this->databaseConnection->fetchValue($query);
-
-		// return total
-		return (int) ($row ?? 0);
+		return $this->count();
 	}
 
+	/**
+	 * Delete a set of spam rule entries by their primary keys.
+	 *
+	 * @param array $entryIDs Array of integer primary keys to delete.
+	 * @return void
+	 */
 	public function deleteEntries(array $entryIDs): void {
-		// generate placeholders
 		$placeholders = pdoPlaceholdersForIn($entryIDs);
-
-		// delete query
-		$query = "
-			DELETE FROM {$this->spamStringRulesTable}
-			WHERE id IN $placeholders
-		";
-
-		// set parameters
-		$params = $entryIDs;
-
-		// execute delete
-		$this->databaseConnection->execute($query, $params);
+		$this->query("DELETE FROM {$this->table} WHERE id IN $placeholders", $entryIDs);
 	}
 
+	/**
+	 * Fetch a single spam rule entry by its primary key, including the creating account's username.
+	 *
+	 * @param int $id Entry primary key.
+	 * @return array|false Associative row, or false if not found.
+	 */
 	public function getEntryById(int $id): false|array {
-		// form query
 		$query = "SELECT s.*, a.username AS created_by_username
-					FROM {$this->spamStringRulesTable} s
+					FROM {$this->table} s
 					LEFT JOIN {$this->accountTable} a ON a.id = s.created_by
 					WHERE s.id = :id";
 
-		// define params
-		$params = [
-			':id' => $id
-		];
-
-		// fetch entry
-		$entry = $this->databaseConnection->fetchOne($query, $params);
-
-		// return result
-		return $entry;
+		return $this->queryOne($query, [':id' => $id]);
 	}
 
+	/**
+	 * Update whitelisted columns on an existing spam rule entry.
+	 *
+	 * @param int   $entryId Entry primary key.
+	 * @param array $fields  Map of column names to new values.
+	 * @return bool True on success, false if no fields provided.
+	 */
 	public function updateRow(int $entryId, array $fields): bool {
-		// nothing to update
 		if (empty($fields)) {
 			return false;
 		}
-
-		// build SET clauses and params
-		$set = [];
-		$params = [];
-
-		foreach ($fields as $column => $value) {
-			$placeholder = ':' . $column;
-			$set[] = "{$column} = {$placeholder}";
-			$params[$placeholder] = $value;
-		}
-
-		// add entry id parameter
-		$params[':id'] = $entryId;
-
-		// build update query
-		$query = "
-			UPDATE {$this->spamStringRulesTable}
-			SET " . implode(', ', $set) . "
-			WHERE id = :id
-		";
-
-		// execute update
-		return $this->databaseConnection->execute($query, $params);
+		$this->updateWhere($fields, 'id', $entryId);
+		return true;
 	}
 
 }

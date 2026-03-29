@@ -2,32 +2,42 @@
 
 namespace Kokonotsuba\Modules\blotter;
 
+use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 use function Kokonotsuba\libraries\pdoNamedPlaceholdersForIn;
 
-class blotterRepository {
+/** Repository for sitewide blotter (news) entries. */
+class blotterRepository extends baseRepository {
 	public function __construct(
-		private databaseConnection $databaseConnection,
-		private string $blotterTable,
+		databaseConnection $databaseConnection,
+		string $blotterTable,
 		private string $accountTable,
-	) {}
-
-	public function insertEntry(string $content, ?int $addedBy): void {
-		$query = "
-			INSERT INTO {$this->blotterTable} (blotter_content, added_by)
-			VALUES (:blotter_content, :added_by)
-		";
-
-		$params = [
-			':blotter_content' => $content,
-			':added_by' => $addedBy,
-		];
-
-		$this->databaseConnection->execute($query, $params);
+	) {
+		parent::__construct($databaseConnection, $blotterTable);
 	}
 
+	/**
+	 * Insert a new blotter entry.
+	 *
+	 * @param string   $content  Blotter text content.
+	 * @param int|null $addedBy  Account ID of the staff member adding the entry, or null.
+	 * @return void
+	 */
+	public function insertEntry(string $content, ?int $addedBy): void {
+		$this->insert([
+			'blotter_content' => $content,
+			'added_by' => $addedBy,
+		]);
+	}
+
+	/**
+	 * Delete a set of blotter entries by their primary keys.
+	 *
+	 * @param array $entryIds Array of integer primary keys to delete.
+	 * @return void
+	 */
 	public function deleteEntries(array $entryIds): void {
 		if (empty($entryIds)) {
 			return;
@@ -36,27 +46,18 @@ class blotterRepository {
 		$sanitizedIds = array_map('intval', $entryIds);
 		$placeholders = pdoPlaceholdersForIn($sanitizedIds);
 
-		$query = "
-			DELETE FROM {$this->blotterTable}
-			WHERE id IN $placeholders
-		";
-
-		$this->databaseConnection->execute($query, $sanitizedIds);
+		$this->query("DELETE FROM {$this->table} WHERE id IN $placeholders", $sanitizedIds);
 	}
 
+	/**
+	 * Update the text of a single blotter entry.
+	 *
+	 * @param int    $entryId Entry primary key.
+	 * @param string $content New content.
+	 * @return void
+	 */
 	public function updateEntry(int $entryId, string $content): void {
-		$query = "
-			UPDATE {$this->blotterTable}
-			SET blotter_content = :blotter_content
-			WHERE id = :id
-		";
-
-		$params = [
-			':blotter_content' => $content,
-			':id' => $entryId,
-		];
-
-		$this->databaseConnection->execute($query, $params);
+		$this->updateWhere(['blotter_content' => $content], 'id', $entryId);
 	}
 
 	/**
@@ -82,14 +83,14 @@ class blotterRepository {
 
 		$query = "
 			SELECT b.id
-			FROM {$this->blotterTable} b
+			FROM {$this->table} b
 			INNER JOIN (
 				" . implode("\n\t\t\t\tUNION ALL\n\t\t\t\t", $derivedRows) . "
 			) incoming ON incoming.id = b.id
 			WHERE b.blotter_content <> incoming.blotter_content
 		";
 
-		$rows = $this->databaseConnection->fetchAllAsArray($query, $params);
+		$rows = $this->queryAll($query, $params);
 
 		return array_values(array_map(
 			static fn(array $row): int => (int) ($row['id'] ?? 0),
@@ -97,10 +98,16 @@ class blotterRepository {
 		));
 	}
 
+	/**
+	 * Fetch all blotter entries (or a recent subset), ordered newest first.
+	 *
+	 * @param int|null $limit Maximum number of entries to return, or null for all.
+	 * @return blotterEntry[] Array of hydrated blotterEntry objects.
+	 */
 	public function getEntries(?int $limit = null): array {
 		$query = "
 			SELECT b.id, b.blotter_content, b.added_by, b.date_added, a.username AS added_by_username
-			FROM {$this->blotterTable} b
+			FROM {$this->table} b
 			LEFT JOIN {$this->accountTable} a ON a.id = b.added_by
 			ORDER BY date_added DESC, id DESC
 		";
@@ -109,7 +116,7 @@ class blotterRepository {
 			$query .= ' LIMIT ' . (int) $limit;
 		}
 
-		return $this->databaseConnection->fetchAllAsClass(
+		return $this->queryAllAsClass(
 			$query,
 			[],
 			'\\Kokonotsuba\\Modules\\blotter\\blotterEntry'

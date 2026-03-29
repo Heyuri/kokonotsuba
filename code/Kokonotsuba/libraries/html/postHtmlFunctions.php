@@ -43,7 +43,8 @@ function generatePostNameHtml(
 function generateEmailName(string $nameHtml, string $email): string {
 	// if the email isn't empty then wrap it in an <a>
 	if($email) {
-		return '<a href="mailto:' . $email . '">'. $nameHtml . '</a>';
+		$escapedEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
+		return '<a href="mailto:' . $escapedEmail . '">'. $nameHtml . '</a>';
 	} 
 	// no email
 	else {

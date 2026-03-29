@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\post\deletion;
 
+use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
 use function Kokonotsuba\libraries\getBasePostQuery;
@@ -10,12 +11,13 @@ use function Kokonotsuba\libraries\mergeMultiplePostRows;
 use function Kokonotsuba\libraries\pdoNamedPlaceholdersForIn;
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
-class deletedPostsRepository {
+/** Repository for tracking soft-deleted and purged post records, with paged retrieval and restoration support. */
+class deletedPostsRepository extends baseRepository {
 	private array $allowedOrderFields;
 
 	public function __construct(
-		private databaseConnection $databaseConnection,
-		private readonly string $deletedPostsTable,
+		databaseConnection $databaseConnection,
+		string $deletedPostsTable,
 		private readonly string $postTable,
 		private readonly string $accountTable,
 		private readonly string $fileTable,
@@ -23,6 +25,7 @@ class deletedPostsRepository {
 		private readonly string $soudaneTable,
 		private readonly string $noteTable,
 	) {
+		parent::__construct($databaseConnection, $deletedPostsTable);
 		$this->allowedOrderFields = [
 			'id',
 			'post_uid',
@@ -31,22 +34,25 @@ class deletedPostsRepository {
 		];
 	}
 
+	/**
+	 * Delete all deletion records associated with the given account ID.
+	 *
+	 * @param int $accountId Account ID.
+	 * @return void
+	 */
 	public function purgeDeletedPostsByAccountId(int $accountId): void {
-		// query to delete rows that have been deleted by a specified account id
-		$query = "DELETE FROM {$this->deletedPostsTable} WHERE deleted_by = :account_id";
-
-		// parameters
-		$params = [
-			':account_id' => $accountId
-		];
-
-		// execute the query
-		$this->databaseConnection->execute($query, $params);
+		$this->deleteWhere('deleted_by', $accountId);
 	}
 
+	/**
+	 * Return all post UIDs from records deleted by the given account ID.
+	 *
+	 * @param int $accountId Account ID.
+	 * @return array|false Flat array of post UIDs, or false if none found.
+	 */
 	public function getAllPostUidsFromAccountId(int $accountId): array|false {
 		// query to get all post uids from posts deleted by the specified account id
-		$query = "SELECT post_uid FROM {$this->deletedPostsTable} WHERE deleted_by = :account_id";
+		$query = "SELECT post_uid FROM {$this->table} WHERE deleted_by = :account_id";
 
 		// parameters
 		$params = [
@@ -54,12 +60,19 @@ class deletedPostsRepository {
 		];
 		
 		// fetch the data
-		$postUids = $this->databaseConnection->fetchAllAsIndexArray($query, $params);
+		$postUids = $this->queryAllAsIndexArray($query, $params);
 
 		// return the data
 		return $postUids;
 	}
 
+	/**
+	 * Mark a specific deletion record as restored by the given account.
+	 *
+	 * @param int $deletedPostId Deletion record ID to restore.
+	 * @param int $accountId     Account ID performing the restore.
+	 * @return void
+	 */
 	public function restorePostData(int $deletedPostId, int $accountId): void {
 		// query to mark posts as restored
 		$query = $this->getBaseRestoreQuery();
@@ -74,9 +87,16 @@ class deletedPostsRepository {
 		];
 
 		// execute the query
-		$this->databaseConnection->execute($query, $params); 
+		$this->query($query, $params); 
 	}
 
+	/**
+	 * Mark all open file-only deletion entries for the given post UID as restored.
+	 *
+	 * @param int $postUid    Post UID.
+	 * @param int $accountId  Account performing the restore.
+	 * @return void
+	 */
 	public function restoreFileOnlyEntriesByPostUid(int $postUid, int $accountId): void {
 		// query to mark open file-only entries as restored
 		$query = $this->getBaseRestoreQuery();
@@ -91,13 +111,20 @@ class deletedPostsRepository {
 		];
 
 		// execute the query
-		$this->databaseConnection->execute($query, $params);
+		$this->query($query, $params);
 	}
 
+	/**
+	 * Restore all deletion entries for posts in the given thread (proxy-deleted replies and OP).
+	 *
+	 * @param string $threadUid Thread UID.
+	 * @param int    $accountId Account performing the restore.
+	 * @return void
+	 */
 	public function restorePostsByThreadUid(string $threadUid, int $accountId): void {
 		// query to mark posts as restored by thread uid
 		$query = "
-			UPDATE {$this->deletedPostsTable} dp
+			UPDATE {$this->table} dp
 			INNER JOIN {$this->postTable} p ON p.post_uid = dp.post_uid
 			SET dp.restored_at = CURRENT_TIMESTAMP,
 				dp.restored_by = :account_id,
@@ -114,12 +141,12 @@ class deletedPostsRepository {
 		];
 
 		// execute restore query
-		$this->databaseConnection->execute($query, $params);
+		$this->query($query, $params);
 	}
 
 	private function getBaseRestoreQuery(): string {
 		// query to restore posts
-		$query = "UPDATE {$this->deletedPostsTable} 
+		$query = "UPDATE {$this->table} 
 				SET restored_at = CURRENT_TIMESTAMP,
 					restored_by = :account_id,
 					file_only = 0";
@@ -128,13 +155,20 @@ class deletedPostsRepository {
 		return $query;
 	}
 
+	/**
+	 * Permanently delete a post from the posts table via its deletion record ID.
+	 * Relies on ON DELETE CASCADE to clean up the deletedPosts row automatically.
+	 *
+	 * @param int $deletedPostId Deletion record ID.
+	 * @return void
+	 */
 	public function purgeDeletedPostById(int $deletedPostId): void {
 		// query to purge the post
 		// there's a foreign key with ON DELETE CASCADE on the deleted posts table so we only need to delete the post from the post table and it'll handle the associated row on its own
 		$query = "DELETE FROM {$this->postTable}
 			WHERE post_uid = (
 				SELECT post_uid
-				FROM {$this->deletedPostsTable}
+				FROM {$this->table}
 				WHERE id = :deleted_post_id
 			);
 		";
@@ -145,16 +179,22 @@ class deletedPostsRepository {
 		];
 
 		// execute the query
-		$this->databaseConnection->execute($query, $params); 
+		$this->query($query, $params); 
 	}
 
+	/**
+	 * Fetch a fully merged post data array by its deletion record ID.
+	 *
+	 * @param int $deletedPostId Deletion record ID.
+	 * @return array|false Merged post data array, or false if not found.
+	 */
 	public function getPostByDeletedPostId(int $deletedPostId): array|false {
 		// query to get the post data by deleted post id
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  true);
+		$query = getBasePostQuery($this->postTable, $this->table, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  true);
 		
 		// append WHERE clause
 		$query .= " WHERE p.post_uid = 
-					(SELECT post_uid FROM {$this->deletedPostsTable} WHERE id = :deleted_post_id)";
+					(SELECT post_uid FROM {$this->table} WHERE id = :deleted_post_id)";
 
 		// parameters
 		$params = [
@@ -162,7 +202,7 @@ class deletedPostsRepository {
 		];
 
 		// fetch the data as a single row
-		$postData = $this->databaseConnection->fetchAllAsArray($query, $params);
+		$postData = $this->queryAll($query, $params);
 	
 		// merge attachment row
 		$postData = mergeMultiplePostRows($postData);
@@ -171,23 +211,29 @@ class deletedPostsRepository {
 		return $postData[0] ?? false;
 	}
 
+	/**
+	 * Fetch fully merged post data arrays for an array of post UIDs.
+	 *
+	 * @param int[] $postUids Array of post UIDs.
+	 * @return array|false Array of merged post data arrays, or false if none found.
+	 */
 	public function getPostsByIdList(array $postUids): array|false {
 		// base query to get the posts data by deleted post id
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  true);
+		$query = getBasePostQuery($this->postTable, $this->table, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  true);
 		
 		// generate IN clause for post uids
 		$inClause = pdoPlaceholdersForIn($postUids);
 
 		// append WHERE clause
 		$query .= " WHERE p.post_uid IN (
-					SELECT post_uid FROM {$this->deletedPostsTable} WHERE id IN $inClause
+					SELECT post_uid FROM {$this->table} WHERE id IN $inClause
 				)";
 
 		// parameters
 		$params = $postUids;
 
 		// fetch the posts as an array
-		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
+		$posts = $this->queryAll($query, $params);
 
 		// merge attachment rows
 		$posts = mergeMultiplePostRows($posts);
@@ -349,7 +395,7 @@ class deletedPostsRepository {
 		// Query returns one post_uid per logical deleted entry.
 		$query = "
 			SELECT dp.post_uid
-			FROM {$this->deletedPostsTable} dp
+			FROM {$this->table} dp
 			{$filterClause}
 			GROUP BY dp.post_uid
 			ORDER BY {$sortExpr} {$direction}
@@ -357,7 +403,7 @@ class deletedPostsRepository {
 		";
 
 		// Returns structured array like [ ['post_uid' => 123], ['post_uid' => 456] ]
-		$rows = $this->databaseConnection->fetchAllAsIndexArray($query, $params);
+		$rows = $this->queryAllAsIndexArray($query, $params);
 
 		if (!$rows) {
 			return false;
@@ -397,7 +443,7 @@ class deletedPostsRepository {
 		// Base SELECT/JOIN for deleted-posts rows
 		$query = getBasePostQuery(
 			$this->postTable,
-			$this->deletedPostsTable,
+			$this->table,
 			$this->fileTable,
 			$this->threadTable,
 			$this->soudaneTable,
@@ -418,9 +464,15 @@ class deletedPostsRepository {
 		$query .= " ORDER BY dp.{$orderBy} {$direction}, dp.id {$direction}";
 
 		// Retrieve all rows for mergeMultiplePostRows()
-		return $this->databaseConnection->fetchAllAsArray($query, $params);
+		return $this->queryAll($query, $params);
 	}
 
+	/**
+	 * Fetch a single deleted-posts row by its primary deletion record ID.
+	 *
+	 * @param int $deletedPostId Deletion record ID.
+	 * @return array|false Merged deletion row, or false if not found.
+	 */
 	public function getDeletedPostRowById(int $deletedPostId): array|false {
 		// Get the query for deleted posts
 		$query = $this->buildDeletedPostByIdQuery();
@@ -431,7 +483,7 @@ class deletedPostsRepository {
 		];
 
 		// fetch rows (notes/attachments produce multiple rows per dp entry)
-		$deletedPost = $this->databaseConnection->fetchAllAsArray($query, $params);
+		$deletedPost = $this->queryAll($query, $params);
 
 		// merge by deleted_post_id to preserve the specific dp entry
 		$deletedPost = mergeDeletedPostRows($deletedPost);
@@ -443,7 +495,7 @@ class deletedPostsRepository {
 	private function buildDeletedPostByIdQuery(): string {
 		$query = getBasePostQuery(
 			$this->postTable,
-			$this->deletedPostsTable,
+			$this->table,
 			$this->fileTable,
 			$this->threadTable,
 			$this->soudaneTable,
@@ -458,20 +510,31 @@ class deletedPostsRepository {
 		return $query;
 	}
 
+	/**
+	 * Return the total count of open (non-restored) deletion records.
+	 *
+	 * @return int Total count.
+	 */
 	public function getTotalAmountOfDeletedPosts(): int {
 		// query to get the total amount of deleted posts
-		$query = "SELECT COUNT(*) FROM {$this->deletedPostsTable} WHERE open_flag = 1 AND by_proxy = 0";
+		$query = "SELECT COUNT(*) FROM {$this->table} WHERE open_flag = 1 AND by_proxy = 0";
 
 		// fetch the count value
-		$totalAmount = $this->databaseConnection->fetchColumn($query);
+		$totalAmount = $this->queryColumn($query);
 
 		// return it
 		return $totalAmount;
 	}
 
+	/**
+	 * Return the count of open deletion records for a specific account.
+	 *
+	 * @param int $accountId Account ID to filter by.
+	 * @return int Total count.
+	 */
 	public function getTotalAmountOfDeletedPostsByAccountId(int $accountId): int {
 		// query to get the total amount of deleted posts
-		$query = "SELECT COUNT(*) FROM {$this->deletedPostsTable} WHERE deleted_by = :account_id AND open_flag = 1 AND by_proxy = 0";
+		$query = "SELECT COUNT(*) FROM {$this->table} WHERE deleted_by = :account_id AND open_flag = 1 AND by_proxy = 0";
 
 		// parameters
 		$params = [
@@ -479,15 +542,22 @@ class deletedPostsRepository {
 		];
 
 		// fetch the count value
-		$totalAmount = $this->databaseConnection->fetchColumn($query, $params);
+		$totalAmount = $this->queryColumn($query, $params);
 
 		// return it
 		return $totalAmount;
 	}
 
+	/**
+	 * Return the total count of deletion records, optionally filtered by account or restoration status.
+	 *
+	 * @param int|null $accountId    Optional account ID to filter by.
+	 * @param bool     $restoredOnly If true, count only restored records; otherwise count only open ones.
+	 * @return int Total count.
+	 */
 	public function getTotalAmount(?int $accountId = null, bool $restoredOnly = false): int {
 		// query to get the total amount
-		$query = "SELECT COUNT(*) FROM {$this->deletedPostsTable}";
+		$query = "SELECT COUNT(*) FROM {$this->table}";
 
 		// init params
 		$params = [];
@@ -516,16 +586,23 @@ class deletedPostsRepository {
 		$query .= $whereClause;
 
 		// fetch the count value
-		$totalAmount = $this->databaseConnection->fetchColumn($query, $params);
+		$totalAmount = $this->queryColumn($query, $params);
 
 		// return it
 		return $totalAmount;
 	}
 
+	/**
+	 * Check whether an open deletion record exists for the given ID under the given account.
+	 *
+	 * @param int $deletedPostId Deletion record ID.
+	 * @param int $accountId     Account ID to match against deleted_by.
+	 * @return bool True if the record exists and belongs to the account.
+	 */
 	public function deletedPostExistsByAccountId(int $deletedPostId, int $accountId): bool {
 		// query to check if the deleted post row exists
 		$query = "
-			SELECT 1 FROM {$this->deletedPostsTable}
+			SELECT 1 FROM {$this->table}
 			WHERE id = :deleted_post_id AND deleted_by = :account_id
 			LIMIT 1
 		";
@@ -537,12 +614,18 @@ class deletedPostsRepository {
 		];
 
 		// fetch the result as a single value
-		$result = $this->databaseConnection->fetchOne($query, $params);
+		$result = $this->queryOne($query, $params);
 
 		// if its not false return true
 		return $result !== false;
 	}
 
+	/**
+	 * Permanently delete posts (and their deletion records) for the given list of deletion record IDs.
+	 *
+	 * @param int[] $deletedPostsList Array of deletion record IDs.
+	 * @return void
+	 */
 	public function purgeDeletedPostsFromList(array $deletedPostsList): void {
 		// '?' placeholders for the IN clause
 		$inClause = pdoPlaceholdersForIn($deletedPostsList);
@@ -552,7 +635,7 @@ class deletedPostsRepository {
 			DELETE FROM {$this->postTable}
 				WHERE post_uid IN (
 				SELECT post_uid
-				FROM {$this->deletedPostsTable}
+				FROM {$this->table}
 				WHERE id IN $inClause
 			);
 		";
@@ -562,9 +645,20 @@ class deletedPostsRepository {
 		$parameters = $deletedPostsList;
 
 		// execute the query to delete the posts
-		$this->databaseConnection->execute($query, $parameters);
+		$this->query($query, $parameters);
 	}
 
+	/**
+	 * Insert a new deletion record for a post.
+	 *
+	 * @param int      $postUid    Post UID being deleted.
+	 * @param int|null $deletedBy  Account ID performing the deletion, or null if anonymous.
+	 * @param bool     $fileOnly   True if only an attachment is deleted (post remains).
+	 * @param bool     $byProxy    True if this record was created because the thread OP was deleted.
+	 * @param int|null $fileId     File ID for file-only deletion entries.
+	 * @param int|null $restoredBy Account ID that restored the entry (for pre-restored records).
+	 * @return void
+	 */
 	public function insertDeletedPostEntry(
 		int $postUid, 
 		?int $deletedBy, 
@@ -573,28 +667,27 @@ class deletedPostsRepository {
 		?int $fileId = null,
 		?int $restoredBy = null, 
 	): void {
-
-		$query = "INSERT INTO {$this->deletedPostsTable} 
-			(post_uid, deleted_by, file_only, by_proxy, restored_by, file_id) 
-			VALUES (:post_uid, :deleted_by, :file_only, :by_proxy, :restored_by, :file_id)";
-
-		$parameters = [
-			':post_uid'   => $postUid,
-			':deleted_by' => $deletedBy,
-			':file_only'  => (int)$fileOnly,
-			':by_proxy'   => (int)$byProxy,
-			':restored_by'=> $restoredBy,
-			':file_id'    => $fileId,   // leave NULL as NULL
-		];
-
-		$this->databaseConnection->execute($query, $parameters);
+		$this->insert([
+			'post_uid'    => $postUid,
+			'deleted_by'  => $deletedBy,
+			'file_only'   => (int)$fileOnly,
+			'by_proxy'    => (int)$byProxy,
+			'restored_by' => $restoredBy,
+			'file_id'     => $fileId,
+		]);
 	}
 
+	/**
+	 * Return the board UID for the post referenced by the given deletion record ID.
+	 *
+	 * @param int $deletedPostId Deletion record ID.
+	 * @return int|false Board UID, or false if not found.
+	 */
 	public function getBoardUidByDeletedPostId(int $deletedPostId): false|int {
 		// query to get boardUID from post table via post_uid in deletedPosts table
 		$query = "
 			SELECT p.boardUID
-			FROM {$this->deletedPostsTable} dp
+			FROM {$this->table} dp
 			INNER JOIN {$this->postTable} p ON p.post_uid = dp.post_uid
 			WHERE dp.id = :deleted_post_id
 		";
@@ -605,17 +698,23 @@ class deletedPostsRepository {
 		];
 
 		// query database
-		$boardUid = $this->databaseConnection->fetchValue($query, $parameters);
+		$boardUid = $this->queryValue($query, $parameters);
 
 		// return result
 		return $boardUid;
 	}
 
+	/**
+	 * Fetch the most-recent deletion row for the given post UID.
+	 *
+	 * @param int $postUid Post UID.
+	 * @return array|false Merged deletion row, or false if not found.
+	 */
 	public function getDeletedPostRowByPostUid(int $postUid): false|array {
 		// query to fetch the deleted post by post uid
 		$query = getBasePostQuery(
 			$this->postTable,
-			$this->deletedPostsTable,
+			$this->table,
 			$this->fileTable,
 			$this->threadTable,
 			$this->soudaneTable,
@@ -634,7 +733,7 @@ class deletedPostsRepository {
 		];
 
 		// fetch rows (may span multiple dp entries + notes)
-		$deletedPost = $this->databaseConnection->fetchAllAsArray($query, $params);
+		$deletedPost = $this->queryAll($query, $params);
 
 		// merge by deleted_post_id to keep each dp entry separate
 		$deletedPost = mergeDeletedPostRows($deletedPost);
@@ -643,11 +742,17 @@ class deletedPostsRepository {
 		return $deletedPost[0] ?? false;
 	}
 
+	/**
+	 * Fetch the most-recent deletion row associated with the given file ID.
+	 *
+	 * @param int $fileId File row ID.
+	 * @return array|false Merged deletion row, or false if not found.
+	 */
 	public function getDeletedPostRowByFileId(int $fileId): false|array {
 		// query to fetch the deleted post by post uid
 		$query = getBasePostQuery(
 			$this->postTable,
-			$this->deletedPostsTable,
+			$this->table,
 			$this->fileTable,
 			$this->threadTable,
 			$this->soudaneTable,
@@ -666,7 +771,7 @@ class deletedPostsRepository {
 		];
 
 		// fetch rows (notes produce multiple rows per dp entry)
-		$deletedPost = $this->databaseConnection->fetchAllAsArray($query, $params);
+		$deletedPost = $this->queryAll($query, $params);
 
 		// merge by deleted_post_id to keep each dp entry separate
 		$deletedPost = mergeDeletedPostRows($deletedPost);
@@ -675,13 +780,21 @@ class deletedPostsRepository {
 		return $deletedPost[0] ?? false;
 	}
 
+	/**
+	 * Return deletion record IDs older than the given hour limit.
+	 *
+	 * @param int  $timeLimit       Cutoff age in hours.
+	 * @param bool $attachmentsOnly If true, return only file-only deletion entries; otherwise post-level entries.
+	 * @return array|false Flat array of deletion record IDs, or false if none.
+	 */
 	public function getExpiredEntryIDs(int $timeLimit, bool $attachmentsOnly = false): false|array {
 		// query to get entries older than the time limit (in hours) 
 		$query = "SELECT id
-			FROM {$this->deletedPostsTable}
-			WHERE deleted_at < NOW() - INTERVAL {$timeLimit} HOUR
+			FROM {$this->table}
+			WHERE deleted_at < DATE_SUB(NOW(), INTERVAL :timeLimit HOUR)
 			AND COALESCE(open_flag, 0) = 1";
 
+		$params = [':timeLimit' => $timeLimit];
 		// if we only want the attachments then append a condition to get attachment-level deletions 
 		if($attachmentsOnly) {
 			// append condition for file_only = 1
@@ -694,7 +807,7 @@ class deletedPostsRepository {
 		}
 
 		// fetch the results as array
-		$entries = $this->databaseConnection->fetchAllAsIndexArray($query);
+		$entries = $this->queryAllAsIndexArray($query, $params);
 
 		// unpack
 		$entries = array_merge(...$entries);
@@ -703,22 +816,26 @@ class deletedPostsRepository {
 		return $entries;
 	}
 
+	/**
+	 * Delete a deletion record by its primary key.
+	 *
+	 * @param int $id Deletion record ID to remove.
+	 * @return void
+	 */
 	public function removeRowById(int $id): void {
-		// query to remove a row by its ID
-		$query = "DELETE FROM {$this->deletedPostsTable} WHERE id = :id";
-		
-		// parameter
-		$params = [
-			':id' => $id
-		];
-
-		// execute query
-		$this->databaseConnection->execute($query, $params);
+		$this->deleteWhere('id', $id);
 	}
 
+	/**
+	 * Delete all open (non-restored, non-file-only) deletion records for the given post UID.
+	 * Called before inserting a new deletion entry to avoid conflicts.
+	 *
+	 * @param int $postUid Post UID.
+	 * @return void
+	 */
 	public function removeOpenRows(int $postUid): void {
 		// query to remove open post deletions under this post uid
-		$query = "DELETE FROM {$this->deletedPostsTable} WHERE post_uid = :post_uid AND open_flag = 1 AND file_only = 0";
+		$query = "DELETE FROM {$this->table} WHERE post_uid = :post_uid AND open_flag = 1 AND file_only = 0";
 
 		// parameter
 		$params = [
@@ -726,7 +843,7 @@ class deletedPostsRepository {
 		];
 
 		// execute query
-		$this->databaseConnection->execute($query, $params);	
+		$this->query($query, $params);	
 	}
 
 	private function buildMapSql(array $oldValues, array $newValues, string $oldKey, string $newKey, string $paramPrefix, array &$params): string {
@@ -768,7 +885,7 @@ class deletedPostsRepository {
 		// The SQL inserts into the deletion table by selecting from the old records
 		// and replacing each old post UID with the corresponding new UID.
 		$sql = "
-			INSERT INTO {$this->deletedPostsTable} (
+			INSERT INTO {$this->table} (
 				post_uid,
 				deleted_by,
 				deleted_at,
@@ -788,13 +905,13 @@ class deletedPostsRepository {
 				dp.restored_by,
 				NULL                 -- file_id remains NULL at post level
 			FROM ({$postMapSql}) AS pm
-			INNER JOIN {$this->deletedPostsTable} dp
+			INNER JOIN {$this->table} dp
 				ON dp.post_uid = pm.old_uid  -- match old post UID
 			WHERE dp.file_id IS NULL         -- only post-level deletions
 		";
 
 		// Execute the insert with the parameterized mapping
-		$this->databaseConnection->execute($sql, $postParams);
+		$this->query($sql, $postParams);
 	}
 
 	private function insertFileLevelDeletions(
@@ -824,7 +941,7 @@ class deletedPostsRepository {
 		//    f  (files table) so we know which post a file belonged to
 		//    pm (post mapping) so we can map the old post UID from f.post_uid to the new one
 		$sql = "
-			INSERT INTO {$this->deletedPostsTable} (
+			INSERT INTO {$this->table} (
 				post_uid,
 				deleted_by,
 				deleted_at,
@@ -844,7 +961,7 @@ class deletedPostsRepository {
 				dp.restored_by,
 				fm.new_fid          -- new file ID
 			FROM ({$fileMapSql}) AS fm
-			INNER JOIN {$this->deletedPostsTable} dp
+			INNER JOIN {$this->table} dp
 				ON dp.file_id = fm.old_fid      -- match old file-level deletion entry
 			INNER JOIN {$this->fileTable} f
 				ON f.id = dp.file_id            -- find old file's post UID
@@ -853,7 +970,7 @@ class deletedPostsRepository {
 		";
 
 		// Execute the insert with the merged parameters
-		$this->databaseConnection->execute($sql, $params);
+		$this->query($sql, $params);
 	}
 
 	public function copyDeletionEntries(

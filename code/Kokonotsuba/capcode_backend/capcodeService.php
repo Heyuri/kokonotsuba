@@ -7,22 +7,45 @@ use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\error\BoardException;
 use PDOException;
 
+/** Service for managing capcode (trip-based role badge) records. */
 class capcodeService {
 	public function __construct(
         private capcodeRepository $capcodeRepository,
 		private transactionManager $transactionManager
     ) {}
 
+	/**
+	 * Retrieve a capcode record by primary key.
+	 *
+	 * @param int $id Capcode primary key.
+	 * @return array|null Associative row, or null if not found.
+	 */
 	public function getCapcode(int $id): ?array {
 		// Retrieve a single capcode record by ID
 		return $this->capcodeRepository->getById($id);
 	}
 
+	/**
+	 * List all capcode records.
+	 *
+	 * @return array Array of associative capcode rows.
+	 */
 	public function listCapcodes(): array {
 		// Get all capcode records
 		return $this->capcodeRepository->getAll();
 	}
 
+	/**
+	 * Create a new capcode record.
+	 *
+	 * @param string $tripcode     Tripcode string this capcode applies to.
+	 * @param bool   $isSecure     Whether the tripcode is a secure tripcode.
+	 * @param int    $addedBy      Account ID of the creating staff member.
+	 * @param string $colorHex     Badge display colour in hex.
+	 * @param string $capcodeText  Badge label text.
+	 * @return int|null New primary key, or null on failure.
+	 * @throws BoardException If a duplicate tripcode is detected.
+	 */
 	public function addCapcode(
 		string $tripcode,
 		bool $isSecure,
@@ -66,6 +89,13 @@ class capcodeService {
 		return $idResult;
 	}
 
+	/**
+	 * Update an existing capcode record's whitelisted fields.
+	 *
+	 * @param int   $id   Capcode primary key.
+	 * @param array $data Map of column names to new values.
+	 * @return void
+	 */
 	public function editCapcode(int $id, array $data): void {
 		// run through transaction
 		$this->transactionManager->run(function () use ($id, $data) {
@@ -74,6 +104,12 @@ class capcodeService {
 		});
 	}
 
+	/**
+	 * Delete a capcode record by primary key.
+	 *
+	 * @param int $id Capcode primary key.
+	 * @return void
+	 */
 	public function removeCapcode(int $id): void {
 		// run transaction
 		$this->transactionManager->run(function () use ($id) {
@@ -82,6 +118,11 @@ class capcodeService {
 		});
 	}
 
+	/**
+	 * Retrieve the next AUTO_INCREMENT value for the capcode table.
+	 *
+	 * @return int|null Next auto-increment ID, or null if unavailable.
+	 */
 	public function getNextId(): ?int {
 		// init id to be set in transaction
 		$id = null;

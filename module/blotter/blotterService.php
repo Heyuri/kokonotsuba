@@ -4,12 +4,20 @@ namespace Kokonotsuba\Modules\blotter;
 
 use Kokonotsuba\database\transactionManager;
 
+/** Service for managing sitewide blotter entries. */
 class blotterService {
 	public function __construct(
 		private blotterRepository $blotterRepository,
 		private transactionManager $transactionManager,
 	) {}
 
+	/**
+	 * Add a new blotter entry. Trims content and no-ops on empty strings.
+	 *
+	 * @param string   $content  Entry text (trimmed before persisting).
+	 * @param int|null $addedBy  Account ID of the adding staff member, or null.
+	 * @return void
+	 */
 	public function addEntry(string $content, ?int $addedBy): void {
 		$trimmedContent = trim($content);
 
@@ -22,6 +30,12 @@ class blotterService {
 		});
 	}
 
+	/**
+	 * Delete a set of blotter entries by their primary keys.
+	 *
+	 * @param array $entryIds Array of integer primary keys to delete.
+	 * @return void
+	 */
 	public function deleteEntries(array $entryIds): void {
 		if (empty($entryIds)) {
 			return;
@@ -78,6 +92,12 @@ class blotterService {
 		return $changedIds;
 	}
 
+	/**
+	 * Fetch all blotter entries (or a capped subset).
+	 *
+	 * @param int|null $limit Maximum entries to return, or null for all.
+	 * @return blotterEntry[] Array of hydrated blotterEntry objects.
+	 */
 	public function getEntries(?int $limit = null): array {
 		if ($limit !== null && $limit < 0) {
 			$limit = null;

@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\antiFlood;
 
+/** Service for checking and recording post submission timestamps for flood prevention. */
 class submissionService {
 	public function __construct(
 		private submissionRepository $submissionRepository

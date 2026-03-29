@@ -13,6 +13,7 @@ use Kokonotsuba\post\postService;
 use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Puchiko\strings\generateUid;
 
+/** Service for fetching, moving, copying, and pruning threads with their associated posts and attachments. */
 class threadService {
 	private array $allowedOrderFields;
 
@@ -107,6 +108,18 @@ class threadService {
 	}
 
 
+	/**
+	 * Internal implementation used by getThreadLastReplies, getThreadPaged, and getThreadAllReplies.
+	 * Fetches thread metadata and its posts, then returns a structured preview result.
+	 *
+	 * @param string   $thread_uid              Thread UID to fetch.
+	 * @param bool     $adminMode               Whether to show deleted posts.
+	 * @param int      $previewCount            Max posts included in the preview result.
+	 * @param int|null $amountOfRepliesToRender  If set, fetch only the last N replies.
+	 * @param int|null $repliesPerPage           If set (with $page), fetch a paginated slice.
+	 * @param int|null $page                     Page index (0-based) for paginated fetch.
+	 * @return array|false Preview result array, or false if the thread does not exist.
+	 */
 	private function getThreadByUidInternal(
 		string $thread_uid, 
 		bool $adminMode = false, 
@@ -151,6 +164,18 @@ class threadService {
 		return $this->buildPreviewResults([$threadMeta], $groupedPosts, $previewCount)[0] ?? false;
 	}
 
+	/**
+	 * Fetch paginated thread previews for a board, each with N latest posts.
+	 *
+	 * @param board  $board         Board object.
+	 * @param int    $previewCount  Max posts (including OP) to include in each preview.
+	 * @param int    $amount        Number of threads to return (0 = all).
+	 * @param int    $offset        Pagination offset.
+	 * @param bool   $adminMode     Whether to include deleted posts.
+	 * @param string $orderBy       Field to sort threads by.
+	 * @param bool   $isDescending  Sort direction.
+	 * @return array Array of thread preview structures.
+	 */
 	public function getThreadPreviewsFromBoard(board $board, int $previewCount, int $amount = 0, int $offset = 0, bool $adminMode = false, string $orderBy = 'last_bump_time', bool $isDescending = true): array {
 		$boardUID = $board->getBoardUID();
 
@@ -180,6 +205,12 @@ class threadService {
 		return $this->buildPreviewResults($threads, $postsByThread, $previewCount);
 	}
 
+	/**
+	 * Group a flat array of post rows by their thread_uid key.
+	 *
+	 * @param array $postRows Flat array of post data rows.
+	 * @return array Map of thread_uid => array of post rows.
+	 */
 	private function groupPostsByThread(array $postRows): array {
 		$postsByThread = [];
 		foreach ($postRows as $post) {
@@ -188,6 +219,14 @@ class threadService {
 		return $postsByThread;
 	}
 
+	/**
+	 * Combine thread metadata rows with their grouped post rows into a structured preview array.
+	 *
+	 * @param array    $threads       Array of thread metadata rows.
+	 * @param array    $postsByThread Map of thread_uid => array of post rows.
+	 * @param int|null $previewCount  Preview post limit (null = no limit).
+	 * @return array Array of thread preview structures.
+	 */
 	private function buildPreviewResults(array $threads, array $postsByThread, ?int $previewCount): array {
 		$result = [];
 		foreach ($threads as $thread) {
@@ -218,6 +257,17 @@ class threadService {
 		return $result;
 	}
 
+	/**
+	 * Fetch a filtered, paginated list of thread previews, each with N latest posts.
+	 *
+	 * @param int    $previewCount   Max posts (including OP) to include in each preview.
+	 * @param int    $amount         Number of threads to return.
+	 * @param int    $offset         Pagination offset.
+	 * @param array  $filters        Optional filter criteria passed to the repository.
+	 * @param bool   $includeDeleted Whether to include deleted threads/posts.
+	 * @param string $order          Field to sort threads by.
+	 * @return array Array of thread preview structures.
+	 */
 	public function getFilteredThreads(int $previewCount, int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'last_bump_time'): array {
 		$threads = $this->threadRepository->fetchFilteredThreads($filters, $order, $amount, $offset, $includeDeleted);
 
@@ -236,6 +286,16 @@ class threadService {
 		return $result;
 	}
 
+	/**
+	 * Fetch a paginated list of thread UIDs for the given board.
+	 *
+	 * @param board  $board    Board object.
+	 * @param int    $start    Pagination offset (number of threads to skip).
+	 * @param int    $amount   Number of thread UIDs to return (0 = all).
+	 * @param bool   $isDESC   True for descending, false for ascending.
+	 * @param string $orderBy  Field to sort threads by.
+	 * @return array Flat array of thread UIDs.
+	 */
 	public function getThreadListFromBoard(
 		board $board,
 		int $start = 0,
@@ -265,6 +325,14 @@ class threadService {
 		);
 	}
 
+	/**
+	 * Move all posts in a thread to a different board, reassigning post numbers and updating quote links.
+	 * Runs inside a database transaction.
+	 *
+	 * @param mixed $thread_uid        UID of the thread to move.
+	 * @param mixed $destinationBoard  Destination board object.
+	 * @return void
+	 */
 	public function moveThreadAndUpdate($thread_uid, $destinationBoard) {
 		$this->transactionManager->run(function () use (
 			$thread_uid,
@@ -311,6 +379,14 @@ class threadService {
 		});
 	}
 
+	/**
+	 * Copy a thread and all its posts to another board as a new thread.
+	 * Runs inside a database transaction; returns mapping data used by callers for finalising the copy.
+	 *
+	 * @param mixed $originalThreadUid  UID of the source thread.
+	 * @param mixed $destinationBoard   Destination board object.
+	 * @return array Map containing 'threadUid', 'postUidMap', and 'fileIdMapping'.
+	 */
 	public function copyThreadAndPosts($originalThreadUid, $destinationBoard): array {
 		$moveData = [];
 		
@@ -388,6 +464,15 @@ class threadService {
 		return $moveData;
 	}
 
+	/**
+	 * Build the data array for a new post based on an original post being copied.
+	 *
+	 * @param array  $post           Original post data row.
+	 * @param mixed  $boardUID       Destination board UID.
+	 * @param int    $newPostNumber  New post number in the destination board.
+	 * @param string $newThreadUid   UID of the new thread.
+	 * @return array New post data array ready for insertion.
+	 */
 	private function mapPostData($post, $boardUID, $newPostNumber, $newThreadUid) {
 		return [
 			'no'			=> $newPostNumber,
@@ -412,6 +497,13 @@ class threadService {
 		];
 	}
 	
+	/**
+	 * Rewrite >>postNo quote references in a comment using a mapping of old to new post numbers.
+	 *
+	 * @param string $comment            Post comment HTML.
+	 * @param array  $postNumberMapping  Map of old post number => new post number.
+	 * @return string Updated comment.
+	 */
 	private function updateQuoteReferences($comment, $postNumberMapping) {
 		return preg_replace_callback('/&gt;&gt;(\d+)/', function ($matches) use ($postNumberMapping) {
 			$oldQuote = $matches[1];
@@ -419,6 +511,13 @@ class threadService {
 		}, $comment);
 	}
 
+	/**
+	 * Copy file attachment records from original posts to copied posts, returning an old=>new file ID mapping.
+	 *
+	 * @param array $attachments    Attachment data arrays from the original thread.
+	 * @param array $postUidMapping Map of old post UID => new post UID.
+	 * @return array Map of old file ID => new file ID.
+	 */
 	private function copyAttachmentsData(array $attachments, array $postUidMapping): array {
 		// init file id map
 		$fileIdMapping = [];
@@ -473,6 +572,13 @@ class threadService {
 		return $fileIdMapping;
 	}
 
+	/**
+	 * Copy deletion entries from original posts to their copied counterparts, preserving soft-delete state.
+	 *
+	 * @param array $postUidMapping Map of old post UID => new post UID.
+	 * @param array $fileIdMapping  Map of old file ID => new file ID.
+	 * @return void
+	 */
 	private function markDeletedPosts(array $postUidMapping, array $fileIdMapping): void {
 		// get the post uids of the old posts
 		$oldPostUids = array_keys($postUidMapping);
@@ -495,6 +601,13 @@ class threadService {
 		);
 	}
 
+	/**
+	 * Delete the oldest threads in the list that exceed the maximum thread limit.
+	 *
+	 * @param string[] $threadUidList     Ordered array of thread UIDs (newest-first).
+	 * @param int      $maxThreadAmount   Maximum number of threads to retain.
+	 * @return array|null Thread UIDs that were pruned, or empty array if none.
+	 */
 	public function pruneByAmount(array $threadUidList, int $maxThreadAmount): ?array {
 		// slice array to filter amount threads that are over the max thread amount limit.
 		// Threads are ordered on last bump time
@@ -517,6 +630,13 @@ class threadService {
 		return $threadsToPrune;
 	}
 
+	/**
+	 * Return the subset of thread UIDs that exceed the maximum, with the oldest first.
+	 *
+	 * @param string[] $threadUidList    Ordered array of thread UIDs.
+	 * @param int      $maxThreadAmount  Maximum number of threads to keep.
+	 * @return array|null Thread UIDs to prune.
+	 */
 	private function getThreadAmountToPrune(array $threadUidList, int $maxThreadAmount): ?array {
 		$amountOfThreads = count($threadUidList);
 
@@ -536,6 +656,13 @@ class threadService {
 		return $threadsToPrune;
 	}
 
+	/**
+	 * Return the 1-based page number that the given thread appears on.
+	 *
+	 * @param string $threadUid      Thread UID.
+	 * @param int    $threadsPerPage Number of threads per page.
+	 * @return int Page number (defaults to 0 if not found).
+	 */
 	public function getPageOfThread(string $threadUid, int $threadsPerPage): int {
 		// run repository method to get the page of the thread
 		$threadPage = $this->threadRepository->getPageOfThread($threadUid, $threadsPerPage);
@@ -544,6 +671,13 @@ class threadService {
 		return $threadPage ?? 0;
 	}
 	
+	/**
+	 * Fetch the raw thread data row by thread UID.
+	 *
+	 * @param string $threadUid      Thread UID.
+	 * @param bool   $includeDeleted Whether to return the thread if its OP is deleted.
+	 * @return array|false Thread data array, or false if not found.
+	 */
 	public function getThreadData(string $threadUid, bool $includeDeleted = false): array|false {
 		// get thread by uid
 		$threadData = $this->threadRepository->getThreadByUid($threadUid, $includeDeleted);

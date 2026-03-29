@@ -2,25 +2,41 @@
 
 namespace Kokonotsuba\Modules\cssHax;
 
-use Kokonotsuba\database\databaseConnection as DatabasedatabaseConnection;
+use Kokonotsuba\database\baseRepository;
+use Kokonotsuba\database\databaseConnection;
 
-class themeRepository {
+/** Repository for per-thread visual theme overrides. */
+class themeRepository extends baseRepository {
 	public function __construct(
-		private DatabasedatabaseConnection $databaseConnection,
-		private string $threadThemeTable,
-	) {}
-
-	public function themeExists(string $threadUid): bool {
-		// query to check if a row with the specified thread uid exists
-		$query = "SELECT 1 FROM {$this->threadThemeTable} WHERE thread_uid = :thread_uid";
-
-		// define param
-		$params = [':thread_uid' => $threadUid];
-
-		// fetch query value and return
-		return $this->databaseConnection->fetchValue($query, $params);
+		databaseConnection $databaseConnection,
+		string $threadThemeTable,
+	) {
+		parent::__construct($databaseConnection, $threadThemeTable);
 	}
 
+	/**
+	 * Check whether a theme entry already exists for the given thread.
+	 *
+	 * @param string $threadUid Thread UID to check.
+	 * @return bool True if a theme exists.
+	 */
+	public function themeExists(string $threadUid): bool {
+		return $this->exists('thread_uid', $threadUid);
+	}
+
+	/**
+	 * Insert a new theme entry for a thread.
+	 *
+	 * @param string      $threadUid               Thread UID.
+	 * @param string|null $backgroundHexColor      Background colour hex, or null.
+	 * @param string|null $replyBackgroundHexColor Reply background colour hex, or null.
+	 * @param string|null $textHexColor            Text colour hex, or null.
+	 * @param string|null $backgroundImageUrl      Background image URL, or null.
+	 * @param string|null $audio                   Audio URL, or null.
+	 * @param string|null $rawStyling              Raw CSS, or null.
+	 * @param int         $addedBy                 Account ID of the staff member adding the theme.
+	 * @return void
+	 */
 	public function addTheme(
 		string $threadUid,
 		?string $backgroundHexColor,
@@ -31,38 +47,40 @@ class themeRepository {
 		?string $rawStyling,
 		int $addedBy
 	): void {
-		// query to insert a new row to the theme table
-		$query = "INSERT INTO {$this->threadThemeTable} 
-				(thread_uid, background_hex_color, reply_background_hex_color, text_hex_color, background_image_url, audio, raw_styling, added_by)
-				VALUES(:thread_uid, :background_hex_color, :reply_background_hex_color, :text_hex_color, :background_image_url, :audio, :raw_styling, :added_by)";
-
-		// build parameters containing the theme data to be inserted
-		$params = [
-			':thread_uid' => $threadUid,
-			':background_hex_color' => $backgroundHexColor,
-			':reply_background_hex_color' => $replyBackgroundHexColor,
-			':text_hex_color' => $textHexColor,
-			':background_image_url' => $backgroundImageUrl,
-			':audio' => $audio,
-			':raw_styling' => $rawStyling,
-			':added_by' => $addedBy
-		];
-
-		// execute query and add it to the database
-		$this->databaseConnection->execute($query, $params);
+		$this->insert([
+			'thread_uid' => $threadUid,
+			'background_hex_color' => $backgroundHexColor,
+			'reply_background_hex_color' => $replyBackgroundHexColor,
+			'text_hex_color' => $textHexColor,
+			'background_image_url' => $backgroundImageUrl,
+			'audio' => $audio,
+			'raw_styling' => $rawStyling,
+			'added_by' => $addedBy,
+		]);
 	}
 
+	/**
+	 * Delete the theme entry for the given thread.
+	 *
+	 * @param string $threadUid Thread UID.
+	 * @return void
+	 */
 	public function deleteTheme(string $threadUid): void {
-		// query to delete the theme assoiated with the thread
-		$query = "DELETE FROM {$this->threadThemeTable} WHERE thread_uid = :thread_uid";
-
-		// define param
-		$params = [':thread_uid' => $threadUid];
-	
-		// execute query and delete row
-		$this->databaseConnection->execute($query, $params);
+		$this->deleteWhere('thread_uid', $threadUid);
 	}
 
+	/**
+	 * Update non-null fields on an existing theme entry.
+	 *
+	 * @param string      $threadUid               Thread UID.
+	 * @param string|null $backgroundHexColor      New background colour, or null to leave unchanged.
+	 * @param string|null $replyBackgroundHexColor New reply background colour, or null.
+	 * @param string|null $textHexColor            New text colour, or null.
+	 * @param string|null $backgroundImageUrl      New background image URL, or null.
+	 * @param string|null $audio                   New audio URL, or null.
+	 * @param string|null $rawStyling              New raw CSS, or null.
+	 * @return void
+	 */
 	public function editTheme(
 		string $threadUid,
 		?string $backgroundHexColor,
@@ -73,52 +91,29 @@ class themeRepository {
 		?string $rawStyling
 	): void {
 		$fields = [];
-		$params = [
-			':thread_uid' => $threadUid,
-		];
 
 		if ($backgroundHexColor !== null) {
-			$fields[] = 'background_hex_color = :background_hex_color';
-			$params[':background_hex_color'] = $backgroundHexColor;
+			$fields['background_hex_color'] = $backgroundHexColor;
 		}
-
 		if ($replyBackgroundHexColor !== null) {
-			$fields[] = 'reply_background_hex_color = :reply_background_hex_color';
-			$params[':reply_background_hex_color'] = $replyBackgroundHexColor;
+			$fields['reply_background_hex_color'] = $replyBackgroundHexColor;
 		}
-
 		if ($textHexColor !== null) {
-			$fields[] = 'text_hex_color = :text_hex_color';
-			$params[':text_hex_color'] = $textHexColor;
+			$fields['text_hex_color'] = $textHexColor;
 		}
-
 		if ($backgroundImageUrl !== null) {
-			$fields[] = 'background_image_url = :background_image_url';
-			$params[':background_image_url'] = $backgroundImageUrl;
+			$fields['background_image_url'] = $backgroundImageUrl;
 		}
-
 		if ($audio !== null) {
-			$fields[] = 'audio = :audio';
-			$params[':audio'] = $audio;
-		}		
-
+			$fields['audio'] = $audio;
+		}
 		if ($rawStyling !== null) {
-			$fields[] = 'raw_styling = :raw_styling';
-			$params[':raw_styling'] = $rawStyling;
+			$fields['raw_styling'] = $rawStyling;
 		}
 
-		// Nothing to update
-		if (empty($fields)) {
-			return;
+		if (!empty($fields)) {
+			$this->updateWhere($fields, 'thread_uid', $threadUid);
 		}
-
-		$query = sprintf(
-			"UPDATE %s SET %s WHERE thread_uid = :thread_uid",
-			$this->threadThemeTable,
-			implode(', ', $fields)
-		);
-
-		$this->databaseConnection->execute($query, $params);
 	}
 
 }
