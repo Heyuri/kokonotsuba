@@ -2,7 +2,19 @@
 
 namespace Kokonotsuba\policy;
 
+use Kokonotsuba\cookie\cookieService;
+use Kokonotsuba\userRole;
+
 class postRenderingPolicy extends policyBase {
+	public function __construct(
+		array $authLevels,
+		userRole $roleLevel,
+		?int $accountId,
+		private readonly cookieService $cookieService,
+	) {
+		parent::__construct($authLevels, $roleLevel, $accountId);
+	}
+
 	private function canViewDeletedPosts(): bool {
 		// Minimum auth role
 		$canDeleteAll = $this->authLevels['CAN_DELETE_ALL'];
@@ -25,7 +37,7 @@ class postRenderingPolicy extends policyBase {
 		$defaultCookieValue = '1';
 
 		// extract the value
-		$viewDeletedPosts = $_COOKIE['viewDeletedPosts'] ?? $defaultCookieValue;
+		$viewDeletedPosts = $this->cookieService->get('viewDeletedPosts', $defaultCookieValue);
 
 		// cast to boolean and return
 		return (bool) $viewDeletedPosts;

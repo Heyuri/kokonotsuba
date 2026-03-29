@@ -2,25 +2,19 @@
 
 namespace Kokonotsuba;
 
-use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\board\board;
 use Kokonotsuba\board\boardService;
-use Kokonotsuba\capcode_backend\capcodeService;
+use Kokonotsuba\containers\appContainer;
 use Kokonotsuba\containers\moduleEngineContext;
-use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\renderers\postRenderer;
 use Kokonotsuba\renderers\threadRenderer;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\policy\postRenderingPolicy;
-use Kokonotsuba\post\attachment\fileService;
-use Kokonotsuba\post\deletion\deletedPostsService;
-use Kokonotsuba\thread\postRedirectService;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\postRepository;
-use Kokonotsuba\post\postSearchService;
-use Kokonotsuba\post\postService;
 use Kokonotsuba\quote_link\quoteLinkService;
+use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
@@ -28,7 +22,6 @@ use Kokonotsuba\thread\threadService;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\getThreadTitle;
 use function Kokonotsuba\libraries\_T;
-use function Kokonotsuba\libraries\getIdFromSession;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 
@@ -42,20 +35,13 @@ class overboard {
 		private readonly threadRepository $threadRepository,
 		private readonly boardService $boardService,
 		private readonly postRepository $postRepository,
-		private readonly postService $postService,
 		private readonly quoteLinkService $quoteLinkService,
 		private readonly threadService $threadService,
-		private readonly postSearchService $postSearchService,
-		private readonly actionLoggerService $actionLoggerService,
-		private readonly postRedirectService $postRedirectService,
-		private readonly deletedPostsService $deletedPostsService,
-		private readonly fileService $fileService,
-		private capcodeService $capcodeService,
-		private array $userCapcodes,
-		private transactionManager $transactionManager,
 		private moduleEngine $moduleEngine, 
 		private templateEngine $templateEngine,
-		private postRenderingPolicy $postRenderingPolicy
+		private postRenderingPolicy $postRenderingPolicy,
+		private readonly appContainer $container,
+		private readonly request $request,
 	) {
 		// whether staff is logged in or not
 		$this->adminMode = isActiveStaffSession();
@@ -108,7 +94,7 @@ class overboard {
 	}
 
 	public function drawOverboardThreads(array $filters) {
-		$page = $_REQUEST['page'] ?? 0;
+		$page = $this->request->getParameter('page', null, 0);
 		if (!filter_var($page, FILTER_VALIDATE_INT) && $page != 0) $this->softErrorHandler->errorAndExit("Page number was not a valid int.");
 		$page = ($page >= 0) ? $page : 1;
 		
@@ -151,7 +137,7 @@ class overboard {
 			}
 		}
 		
-		$templateValues['{$BOTTOM_PAGENAV}'] = drawPager($limit, $numberThreadsFiltered, $this->board->getBoardURL(true) . '?mode=overboard');
+		$templateValues['{$BOTTOM_PAGENAV}'] = drawPager($limit, $numberThreadsFiltered, $this->board->getBoardURL(true) . '?mode=overboard', $this->request);
 		$threadsHTML .= $this->templateEngine->ParseBlock('MAIN', $templateValues);
 		return $threadsHTML;
 	}
@@ -264,26 +250,11 @@ class overboard {
 			$config, 
 			$board->getConfigValue('LIVE_INDEX_FILE'), 
 			$board->getConfigValue('ModuleList'), 
-			$this->postRepository, 
-			$this->postService, 
-			$this->threadRepository, 
-			$this->threadService, 
-			$this->postSearchService,
-			$this->quoteLinkService,
-			$this->boardService,
-			$this->actionLoggerService,
-			$this->postRedirectService,
-			$this->deletedPostsService,
-			$this->fileService,
-			$this->capcodeService,
-			$this->userCapcodes,
-			$this->transactionManager,
 			$templateEngine, 
 			$board,
-			$this->postRenderingPolicy,
 			$postDateFormatter,
-			getIdFromSession()
-			);
+			$this->container
+		);
 
 		$moduleEngine = new moduleEngine($moduleEngineContext);
 		
@@ -291,7 +262,8 @@ class overboard {
 		 $config, 
 		 $moduleEngine, 
 		 $templateEngine, 
-		 $quoteLinksFromPage
+		 $quoteLinksFromPage,
+		 $this->request
 		);
 
 		return new threadRenderer($config, $templateEngine, $postRenderer, $moduleEngine);

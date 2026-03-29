@@ -3,16 +3,19 @@
 namespace Kokonotsuba\ip;
 
 use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\request\request;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getRemoteAddrOpenShift;
 
 class IPValidator {
 	private $config;
 	private IPAddress $ip;
+	private request $request;
 
-	public function __construct(array $config, IPAddress $ip) {
+	public function __construct(array $config, IPAddress $ip, request $request) {
 		$this->config = $config;
 		$this->ip = $ip;
+		$this->request = $request;
 	}
 
 	public function getValidatedIPAddress(): string {
@@ -26,7 +29,7 @@ class IPValidator {
 			return $ipProxy;
 		}
 
-		$ipOpenShift = getRemoteAddrOpenShift();
+		$ipOpenShift = getRemoteAddrOpenShift($this->request);
 		if (!empty($ipOpenShift)) {
 			return $ipOpenShift;
 		}
@@ -97,8 +100,9 @@ class IPValidator {
 
 	private function getRemoteAddrThroughProxy(): string {
 		foreach ($this->config['PROXYHEADERlist'] as $key) {
-			if (isset($_SERVER[$key])) {
-				foreach (explode(',', $_SERVER[$key]) as $ip) {
+			$value = $this->request->getServer($key);
+			if ($value !== null) {
+				foreach (explode(',', $value) as $ip) {
 					$ip = trim($ip);
 					if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
 						return $ip;
@@ -123,13 +127,13 @@ class IPValidator {
 		if ($this->ip->isIPv4()) {
 			foreach ($cloudflare_v4 as $cidr) {
 				if ($this->matchCIDR($addr, $cidr)) {
-					return $_SERVER['HTTP_CF_CONNECTING_IP'] ?? '';
+					return $this->request->getServer('HTTP_CF_CONNECTING_IP', '');
 				}
 			}
 		} else {
 			foreach ($cloudflare_v6 as $cidr) {
 				if ($this->matchCIDRv6($addr, $cidr)) {
-					return $_SERVER['HTTP_CF_CONNECTING_IP'] ?? '';
+					return $this->request->getServer('HTTP_CF_CONNECTING_IP', '');
 				}
 			}
 		}

@@ -12,6 +12,7 @@ use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\policy\postRenderingPolicy;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 use Kokonotsuba\error\BoardException;
 use function Kokonotsuba\libraries\getFiltersFromRequest;
@@ -40,7 +41,8 @@ class managePostsRoute {
 		private readonly array $allRegularBoards,
 		private readonly deletedPostsService $deletedPostsService,
 		private postRenderingPolicy $postRenderingPolicy,
-		private ?int $currentUserId
+		private ?int $currentUserId,
+		private readonly request $request
 	) {}
 
 	public function drawManagePostsPage() {
@@ -68,12 +70,12 @@ class managePostsRoute {
 	}
 
 	private function initializePageContext(): array {
-		$isSubmission = isset($_GET['filterSubmissionFlag']);
+		$isSubmission = $this->request->hasParameter('filterSubmissionFlag', 'GET');
 		$managePostsUrl = $this->board->getBoardURL(true) . '?mode=managePosts';
 		$accountId = $this->currentUserId;
 		
 		$defaultFilters = $this->initializeManagePostsFilters();
-		$filtersFromRequest = getFiltersFromRequest($managePostsUrl, $isSubmission, $defaultFilters);
+		$filtersFromRequest = getFiltersFromRequest($managePostsUrl, $isSubmission, $defaultFilters, $this->request);
 
 		// Restrict ip_address filter to users with CAN_VIEW_IP_ADDRESSES
 		$roleLevel = $this->staffAccountFromSession->getRoleLevel();
@@ -87,7 +89,7 @@ class managePostsRoute {
 		
 		// Create query filters with resolved postsFrom for accurate results
 		$queryFilters = $filtersFromRequest;
-		$postsFrom = $_GET['postsFrom'] ?? null;
+		$postsFrom = $this->request->getParameter('postsFrom', 'GET');
 		if ($postsFrom && is_numeric($postsFrom)) {
 			$queryFilters['ip_address'] = $this->postRepository->resolveHostFromPostUid((int)$postsFrom);
 		}
@@ -104,7 +106,7 @@ class managePostsRoute {
 		$canViewHashedIp = $roleLevel->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_ONLY_VIEW_POSTS_FROM_USER', userRole::LEV_JANITOR));
 		$canViewDeleted = $this->postRenderingPolicy->viewDeleted();
 		
-		$page = (int) ($_REQUEST['page'] ?? 0);
+		$page = (int) $this->request->getParameter('page', default: 0);
 		if ($page < 0) $page = 1;
 		
 		return [
@@ -125,12 +127,12 @@ class managePostsRoute {
 
 	private function handlePostDeletion(array $context): void {
 		// Check if delete form was submitted
-		$postUidsFromCheckbox = $_POST['clist'] ?? [];
+		$postUidsFromCheckbox = $this->request->getParameter('clist', 'POST', []);
 		if (!$postUidsFromCheckbox) {
 			return;
 		}
 		
-		$onlyDeleteImages = !empty($_POST['onlyimgdel']);
+		$onlyDeleteImages = !empty($this->request->getParameter('onlyimgdel', 'POST'));
 		$this->deletePostsFromCheckboxes($postUidsFromCheckbox, $onlyDeleteImages, $context['accountId']);
 	}
 
@@ -168,7 +170,7 @@ class managePostsRoute {
 		
 		// Render action buttons and pagination
 		$html .= $this->renderPostsTableFooter();
-		$html .= drawPager($context['postsPerPage'], $context['numberOfFilteredPosts'], $context['cleanUrl']);
+		$html .= drawPager($context['postsPerPage'], $context['numberOfFilteredPosts'], $context['cleanUrl'], $this->request);
 		
 		return $html;
 	}

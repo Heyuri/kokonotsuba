@@ -45,7 +45,7 @@ abstract class abstractModule {
 		$query = http_build_query($params, '', $separator);
 
 		$boardUrl = $this->moduleContext->board->getBoardURL(true);
-		$requestUri = getCurrentUrlNoQuery(); 
+		$requestUri = getCurrentUrlNoQuery($this->moduleContext->request); 
 
 		$baseUrl = $useRequestUri ? $requestUri : $boardUrl;
 

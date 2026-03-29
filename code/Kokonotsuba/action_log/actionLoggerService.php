@@ -5,11 +5,13 @@ namespace Kokonotsuba\action_log;
 use Kokonotsuba\account\accountRepository;
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\request\request;
 
 class actionLoggerService {
 	public function __construct(
 		private readonly actionLoggerRepository $actionLoggerRepository,
-		private readonly accountRepository $accountRepository
+		private readonly accountRepository $accountRepository,
+		private readonly request $request
 	) {}
 
 	public function getSpecifiedLogEntries(int $amount = 0, int $offset = 0, array $filters = [], string $order = 'time_added'): array {
@@ -25,7 +27,7 @@ class actionLoggerService {
 
 	public function logAction(string $actionString, int $board_uid): void {
 		$staffSession = new staffAccountFromSession;
-		$IPAddress = new IPAddress;
+		$IPAddress = new IPAddress($this->request->getRemoteAddr());
 
 		$name = $staffSession->getUsername();
 		$roleEnum = $staffSession->getRoleLevel();

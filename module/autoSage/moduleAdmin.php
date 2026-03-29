@@ -151,7 +151,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {
-		$post = $this->moduleContext->postRepository->getPostByUid($_GET['post_uid'], true);
+		$post = $this->moduleContext->postRepository->getPostByUid($this->moduleContext->request->getParameter('post_uid', 'GET'), true);
 
 		if (!$post['is_op']) { 
 			throw new BoardException('ERROR: Cannot autosage reply.');
@@ -174,7 +174,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->actionLoggerService->logAction($logMessage, $board->getBoardUID());
 
 		// ===== AJAX handling updated to use helper =====
-		if(isJavascriptRequest()) {
+		if($this->moduleContext->request->isAjax()) {
 			// whether the post-action thread is AS'd or not
 			$isAutosaged = $status->value('as');
 
@@ -191,6 +191,6 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$board->rebuildBoard();	
 		
-		redirect('back');
+		redirect($this->moduleContext->request->getReferer());
 	}
 }

@@ -17,6 +17,7 @@ use Kokonotsuba\post\attachment\fileService;
 use Kokonotsuba\quote_link\quoteLinkRepository;
 use Kokonotsuba\userRole;
 use Kokonotsuba\board\boardCreator;
+use Kokonotsuba\request\request;
 use function Puchiko\request\redirect;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Puchiko\isValidMySQLDumpFile;
@@ -35,6 +36,7 @@ class handleBoardRequestsRoute {
 		private threadRepository $threadRepository,
 		private fileService $fileService,
 		private quoteLinkRepository $quoteLinkRepository,
+		private request $request
 	) {}
 
 
@@ -43,17 +45,17 @@ class handleBoardRequestsRoute {
 		$this->softErrorHandler->handleAuthError(userRole::LEV_ADMIN);
 
 		// edit a board
-		if(!empty($_POST['edit-board'])) {
+		if(!empty($this->request->getParameter('edit-board', 'POST'))) {
 			$this->editBoardFromRequest();
 		}
 
 		// create a new board
-		if(!empty($_POST['new-board'])) {
+		if(!empty($this->request->getParameter('new-board', 'POST'))) {
 			$this->createNewBoardFromRequest();
 		}
 
 		// import a board
-		if(!empty($_POST['import-board'])) {
+		if(!empty($this->request->getParameter('import-board', 'POST'))) {
 			$this->importBoardFromRequest();
 		}
 
@@ -64,7 +66,7 @@ class handleBoardRequestsRoute {
 	// handle board editing
 	private function editBoardFromRequest() {
 		try {
-			$modifiedBoardIdFromPOST = intval($_POST['edit-board-uid']) ?? '';
+			$modifiedBoardIdFromPOST = intval($this->request->getParameter('edit-board-uid', 'POST')) ?? '';
 			
 			if(!$modifiedBoardIdFromPOST) {
 				throw new \InvalidArgumentException("Board UID in board editing cannot be NULL!");
@@ -77,18 +79,18 @@ class handleBoardRequestsRoute {
 			$modifiedBoard = $this->boardService->getBoard($modifiedBoardIdFromPOST);
 
 
-			if (isset($_POST['board-action-submit']) && $_POST['board-action-submit'] === 'delete-board') {
+			if ($this->request->hasParameter('board-action-submit', 'POST') && $this->request->getParameter('board-action-submit', 'POST') === 'delete-board') {
 				$this->boardService->deleteBoard($modifiedBoard->getBoardUID());
 				redirect($this->config['LIVE_INDEX_FILE'] . '?mode=boards');
 			}
 
 			$fields = [
-				'board_identifier' => $_POST['edit-board-identifier'] ?? false,
-				'board_title' => $_POST['edit-board-title'] ?? false,
-				'board_sub_title' => $_POST['edit-board-sub-title'] ?? false,
-				'config_name' => $_POST['edit-board-config-path'] ?? false,
-				'storage_directory_name' => $_POST['edit-board-storage-dir'] ?? false,
-				'listed' => $_POST['edit-board-listed'] ?? false
+				'board_identifier' => $this->request->getParameter('edit-board-identifier', 'POST', false),
+				'board_title' => $this->request->getParameter('edit-board-title', 'POST', false),
+				'board_sub_title' => $this->request->getParameter('edit-board-sub-title', 'POST', false),
+				'config_name' => $this->request->getParameter('edit-board-config-path', 'POST', false),
+				'storage_directory_name' => $this->request->getParameter('edit-board-storage-dir', 'POST', false),
+				'listed' => $this->request->getParameter('edit-board-listed', 'POST', false)
 			];
 
 			if (!file_exists(getBoardConfigDir() . $fields['config_name'])) {
@@ -104,18 +106,18 @@ class handleBoardRequestsRoute {
 			echo "Error: " . $e->getMessage();
 		}
 
-		$boardRedirectUID = $_POST['edit-board-uid-for-redirect'] ?? '';
+		$boardRedirectUID = $this->request->getParameter('edit-board-uid-for-redirect', 'POST', '');
 		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=boards&view=' . $boardRedirectUID);
 	}
 
 	// handle board creation
 	private function createNewBoardFromRequest() {
 		// Get board information from the request
-		$boardTitle = $_POST['new-board-title'] ?? throw new BoardException("Board title wasn't set!");
-		$boardSubTitle = $_POST['new-board-sub-title'] ?? '';
-		$boardIdentifier = $_POST['new-board-identifier'] ?? '';
-		$boardListed = !empty($_POST['new-board-listed']) ? 1 : 0;
-		$boardPath = $_POST['new-board-path'] ?? throw new BoardException("Board path wasn't set!");
+		$boardTitle = $this->request->getParameter('new-board-title', 'POST') ?? throw new BoardException("Board title wasn't set!");
+		$boardSubTitle = $this->request->getParameter('new-board-sub-title', 'POST', '');
+		$boardIdentifier = $this->request->getParameter('new-board-identifier', 'POST', '');
+		$boardListed = !empty($this->request->getParameter('new-board-listed', 'POST')) ? 1 : 0;
+		$boardPath = $this->request->getParameter('new-board-path', 'POST') ?? throw new BoardException("Board path wasn't set!");
 	
 		// Create an instance of the BoardCreator helper class
 		$boardCreator = new boardCreator($this->boardService);
@@ -134,8 +136,8 @@ class handleBoardRequestsRoute {
 			 $this->boardPathService);
 	
 			// Initialize board variables
-			$boardPath = $_POST['import-board-path'] ?? throw new BoardException("Board path wasn't set!");
-			$dumpPath = $_POST['import-dump-path'] ?? throw new BoardException("Dump path wasn't set!");
+			$boardPath = $this->request->getParameter('import-board-path', 'POST') ?? throw new BoardException("Board path wasn't set!");
+			$dumpPath = $this->request->getParameter('import-dump-path', 'POST') ?? throw new BoardException("Dump path wasn't set!");
 	
 			// basic check to ensure it's a mysql dump
 			if(!isValidMySQLDumpFile($dumpPath)) {

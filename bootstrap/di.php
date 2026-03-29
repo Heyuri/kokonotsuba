@@ -1,46 +1,8 @@
 <?php
 
-use Kokonotsuba\containers\routeDiContainer;
-
 // ───────────────────────────────────────
-// DI containers
+// Final container registrations
 // ───────────────────────────────────────
-$routeDiContainer = new routeDiContainer(
-	$board,
-	$config,
-	$moduleEngine,
-	$templateEngine,
-	$adminTemplateEngine,
-	$overboard,
-	$adminPageRenderer,
-	$softErrorHandler,
-	$boardRepository,
-	$boardService,
-	$postRepository,
-	$postService,
-	$threadRepository,
-	$threadService,
-	$accountRepository,
-	$accountService,
-	$actionLoggerRepository,
-	$actionLoggerService,
-	$adminLoginController,
-	$staffAccountFromSession,
-	$postValidator,
-	$transactionManager,
-	$postRedirectService,
-	$databaseConnection,
-	$boardPathService,
-	$visibleBoards,
-	$boardList,
-	$quoteLinkRepository,
-	$quoteLinkService,
-	$deletedPostsService,
-	$postPolicy,
-	$threadApi,
-	$boardApi,
-	$fileService,
-	$postRenderingPolicy,
-	$postDateFormatter,
-	$currentUserId
-);
+// All services are now registered in $container via the bootstrap chain.
+// No additional registrations needed here — this file exists as the 
+// final bootstrap step for any last-minute wiring.

@@ -3,16 +3,17 @@
 namespace Kokonotsuba\libraries\html;
 
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Puchiko\strings\sanitizeStr;
 
-function generateAdminLinkButtons(string $liveIndexFile, string $staticIndexFile, moduleEngine $moduleEngine, string $adminLinkHtml): string {
+function generateAdminLinkButtons(string $liveIndexFile, string $staticIndexFile, moduleEngine $moduleEngine, string $adminLinkHtml, request $request): string {
 	$linksAboveBar =  '
 		<ul id="adminNavBar">
-			<li class="adminNavLink"><a href="'.$staticIndexFile.'?'.$_SERVER['REQUEST_TIME'].'">' . _T('admin_nav_return') . '</a></li>
+			<li class="adminNavLink"><a href="'.$staticIndexFile.'?'.$request->getRequestTime().'">' . _T('admin_nav_return') . '</a></li>
 			<li class="adminNavLink"><a href="'.$liveIndexFile.'?page=0">' . _T('admin_nav_live_frontend') . '</a></li>
 			' . $adminLinkHtml;
 
@@ -157,19 +158,19 @@ function buildThreadNavButtons(array $threadList, int $threadInnerIterator): str
 	return $postFormButton . $upArrow . $downArrow;
 }
 
-function fullURL(): string {
-	return '//'.$_SERVER['HTTP_HOST'];
+function fullURL(request $request): string {
+	return '//'.$request->getHttpHost();
 }
 
-function getCurrentUrlNoQuery(): string {
+function getCurrentUrlNoQuery(request $request): string {
 	// Scheme
-	$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+	$scheme = $request->isHttps() ? 'https' : 'http';
 	
 	// Host (includes port if non-standard)
-	$host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
+	$host = $request->getHttpHost();
 	
 	// Path to the current script
-	$path = $_SERVER['SCRIPT_NAME']; // e.g. /folder/file.php
+	$path = $request->getServer('SCRIPT_NAME', ''); // e.g. /folder/file.php
 	
 	return $scheme . '://' . $host . $path;
 }

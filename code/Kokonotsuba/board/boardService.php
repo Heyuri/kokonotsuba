@@ -4,7 +4,7 @@ namespace Kokonotsuba\board;
 
 use Exception;
 use Kokonotsuba\cache\path_cache\boardPathService;
-use Kokonotsuba\containers\boardDiContainer;
+use Kokonotsuba\containers\appContainer;
 use Kokonotsuba\containers\moduleEngineContext;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\moduleEngine;
@@ -21,7 +21,7 @@ use function Puchiko\safeRmdir;
 class boardService {
 	public function __construct(
 		private readonly boardRepository $boardRepository,
-		private readonly boardDiContainer $boardDiContainer,
+		private readonly appContainer $container,
 		private readonly boardPathService $boardPathService
 	) {}
 
@@ -248,7 +248,7 @@ class boardService {
 	}
 
 	private function assembleBoard(boardData $boardData): ?board {
-		$board = new board($this->boardDiContainer->boardPostNumbers, $boardData, $this->boardDiContainer->boardPathService);
+		$board = new board($this->container->get('boardPostNumbers'), $boardData, $this->container->get('boardPathService'));
 
 		// initialize dependencies for setter inject
 		$templateEngine = $this->initializeTemplateEngine($board);
@@ -258,27 +258,15 @@ class boardService {
 		$boardConfig = $board->loadBoardConfig();
 		$postDateFormatter = new postDateFormatter($boardConfig['TIME_ZONE']);
 
-		$moduleEngineContext = new moduleEngineContext($boardConfig, 
-			$liveIndexFile, $board->getConfigValue('ModuleList'), 
-			$this->boardDiContainer->postRepository, 
-			$this->boardDiContainer->postService, 
-			$this->boardDiContainer->threadRepository, 
-			$this->boardDiContainer->threadService, 
-			$this->boardDiContainer->postSearchService,
-			$this->boardDiContainer->quoteLinkService,
-			$this,
-			$this->boardDiContainer->actionLoggerService,
-			$this->boardDiContainer->postRedirectService,
-			$this->boardDiContainer->deletedPostsService,
-			$this->boardDiContainer->fileService,
-			$this->boardDiContainer->capcodeService,
-			$this->boardDiContainer->userCapcodes,
-			$this->boardDiContainer->transactionManager,
-			$templateEngine, 
+		$moduleEngineContext = new moduleEngineContext(
+			$boardConfig,
+			$liveIndexFile,
+			$board->getConfigValue('ModuleList'),
+			$templateEngine,
 			$board,
-			$this->boardDiContainer->postRenderingPolicy,
 			$postDateFormatter,
-			$this->boardDiContainer->currentUserId);
+			$this->container
+		);
 			
 		$moduleEngine = new moduleEngine($moduleEngineContext);
 		
@@ -289,11 +277,12 @@ class boardService {
 		$boardRebuilder = new boardRebuilder($board,
 			$moduleEngine,
 			$templateEngine,
-			$this->boardDiContainer->actionLoggerService,
-			$this->boardDiContainer->threadRepository,
-			$this->boardDiContainer->threadService,
-			$this->boardDiContainer->quoteLinkService,
-			$this->boardDiContainer->postRenderingPolicy);
+			$this->container->get('actionLoggerService'),
+			$this->container->get('threadRepository'),
+			$this->container->get('threadService'),
+			$this->container->get('quoteLinkService'),
+			$this->container->get('postRenderingPolicy'),
+			$this->container->get('request'));
 
 		$board->setBoardRebuilder($boardRebuilder);
 
@@ -305,7 +294,7 @@ class boardService {
 		$config = $board->loadBoardConfig();
 
 		$templateFile = null;
-		$isReply = !empty($_GET['res']);
+		$isReply = !empty($this->container->get('request')->getParameter('res', 'GET'));
 
 		$templateKey = $isReply ? 'REPLY_TEMPLATE_FILE' : 'TEMPLATE_FILE';
 		$templateFileName = $board->getConfigValue($templateKey, 'TEMPLATE_FILE');

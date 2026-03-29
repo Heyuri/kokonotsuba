@@ -2,14 +2,15 @@
 
 namespace Puchiko\request;
 
+use Kokonotsuba\request\request;
+
 /**
  * Check whether the current HTTP request is a POST request.
  *
  * @return bool True if the request method is POST, false otherwise
  */
-function isPostRequest(): bool {
-	// REQUEST_METHOD is set by the web server (e.g. GET, POST, PUT)
-	return ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
+function isPostRequest(request $request): bool {
+	return $request->isPost();
 }
 
 /**
@@ -17,17 +18,12 @@ function isPostRequest(): bool {
  *
  * @return bool True if the request method is GET, false otherwise
  */
-function isGetRequest(): bool {
-	// Use null coalescing to avoid notices in non-HTTP contexts (CLI, tests)
-	return ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET';
+function isGetRequest(request $request): bool {
+	return $request->isGet();
 }
 
 /* redirect */
 function redirect(string $to) {
-	if($to=='back') {
-		$to = $_SERVER['HTTP_REFERER']??'';
-	}
-	
 	header("Location: " . $to);
 	exit;
 }

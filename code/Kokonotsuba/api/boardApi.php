@@ -4,6 +4,7 @@ namespace Kokonotsuba\api;
 
 use Kokonotsuba\board\board;
 use Kokonotsuba\board\boardService;
+use Kokonotsuba\request\request;
 
 use function Kokonotsuba\libraries\_T;
 use function Puchiko\json\renderCachedJsonPage;
@@ -11,7 +12,8 @@ use function Puchiko\json\renderJsonErrorPage;
 
 class boardApi {
 	public function __construct(
-		private readonly boardService $boardService
+		private readonly boardService $boardService,
+		private readonly request $request
 	) {}
 
 	/**
@@ -36,7 +38,7 @@ class boardApi {
 
 				// GET /?page=board&endpoint=single&board_uid=##
 				case 'single':
-					$boardUid = isset($_GET['board_uid']) ? (int)$_GET['board_uid'] : 0;
+					$boardUid = $this->request->hasParameter('board_uid', 'GET') ? (int)$this->request->getParameter('board_uid', 'GET') : 0;
 
 					if ($boardUid <= 0) {
 						renderJsonErrorPage(_T('error_invalid_board_id'), 400);

@@ -25,6 +25,7 @@ use Kokonotsuba\board\boardRepository;
 use Kokonotsuba\board\boardService;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\database\transactionManager;
+use Kokonotsuba\cookie\cookieService;
 use Kokonotsuba\log_in\adminLoginController;
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\module_classes\moduleEngine;
@@ -73,6 +74,7 @@ class routeDiContainer {
 		public transactionManager $transactionManager,
 		public postRedirectService $postRedirectService,
 		public databaseConnection $databaseConnection,
+		public cookieService $cookieService,
 		public boardPathService $boardPathService,
 		public array $visibleBoards,
 		public array $regularBoards,

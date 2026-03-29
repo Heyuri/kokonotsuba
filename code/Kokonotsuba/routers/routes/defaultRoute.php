@@ -7,6 +7,7 @@ namespace Kokonotsuba\routers\routes;
 use Kokonotsuba\board\board;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\policy\postRenderingPolicy;
+use Kokonotsuba\request\request;
 use Kokonotsuba\thread\postRedirectService;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\thread\threadRepository;
@@ -24,7 +25,8 @@ class defaultRoute {
 		private readonly threadRepository $threadRepository,
 		private readonly postRepository $postRepository,
 		private readonly postRedirectService $postRedirectService,
-		private readonly postRenderingPolicy $postRenderingPolicy
+		private readonly postRenderingPolicy $postRenderingPolicy,
+		private readonly request $request
 	) {}
 
 	/**
@@ -35,10 +37,10 @@ class defaultRoute {
 		header('Content-Type: text/html; charset=utf-8');
 
 		// Check for ?res= (thread view)
-		$res = intval($_GET['res'] ?? 0);
+		$res = intval($this->request->getParameter('res', 'GET', 0));
 
 		// Check for ?page= (specific page number)
-		$pageParam = $_GET['page'] ?? null;
+		$pageParam = $this->request->getParameter('page', 'GET');
 
 		if ($res > 0) {
 			// Handle thread view (with potential redirection)
@@ -46,7 +48,7 @@ class defaultRoute {
 
 			// get recent replies mode from GET request.
 			// thread mode is typically blank just for regular thread rendering
-			$recentReplies = $_GET['recentReplies'] ?? null;
+			$recentReplies = $this->request->getParameter('recentReplies', 'GET');
 
 			// Render the last X amount of replies
 			if($recentReplies) {
@@ -78,7 +80,7 @@ class defaultRoute {
 
 			// Redirect to static index page with cache-busting timestamp
 			header('HTTP/1.1 302 Moved Temporarily');
-			header('Location: ' . $this->board->getBoardURL(false, true) . '?' . $_SERVER['REQUEST_TIME']);
+			header('Location: ' . $this->board->getBoardURL(false, true) . '?' . $this->request->getRequestTime());
 		}
 	}
 

@@ -106,15 +106,6 @@ function sendAjaxAndDetach(array $payload): void {
  *
  * @return bool True if request is an AJAX/JavaScript request, false otherwise.
  */
-function isJavascriptRequest(): bool {
-	// Verify the header exists and matches the standard AJAX identifier
-	if (
-		isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-		strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
-	) {
-		return true;
-	}
-
-	// Not an AJAX request
-	return false;
+function isJavascriptRequest(\Kokonotsuba\request\request $request): bool {
+	return $request->isAjax();
 }

@@ -6,7 +6,7 @@
 session_name('kokonotsuba_session_id_' . substr(md5(__DIR__), 0, 5)); 
 
 // Get host from request
-$host = $_SERVER['HTTP_HOST'] ?? '';
+$host = $request->getHttpHost();
 
 // Strip port if present
 $host = preg_replace('/:\d+$/', '', $host);
@@ -31,7 +31,7 @@ if (!$isIp && !$isLocalhost && !$isOnion) {
 $params = [
 	'lifetime' => 0,
 	'path'     => '/',
-	'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+	'secure'   => $request->isHttps(),
 	'httponly' => true
 ];
 

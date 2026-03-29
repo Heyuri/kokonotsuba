@@ -109,19 +109,19 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function ModulePage(): void {
 		// handle POST requests.
 		// these requests change something in the database, either deleting, creating, or modifying entries
-		if(isPostRequest()) {
+		if($this->moduleContext->request->isPost()) {
 			$this->handleRequests();
 		}
 		// handle GET requests
 		// these are typically pages for viewing entries, or forms
-		elseif (isGetRequest()) {
+		elseif ($this->moduleContext->request->isGet()) {
 			$this->handlePages();
 		}
 	}
 
 	private function handleRequests(): void {
 		// get the action parameter
-		$action = $_POST['action'] ?? '';
+		$action = $this->moduleContext->request->getParameter('action', 'POST', '');
 
 		// add an entry
 		if($action === 'addEntry') {
@@ -144,7 +144,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleNewEntry(): void {
 		// normalize and validate input
-		$fields = $this->normalizeSpamRuleInput($_POST);
+		$fields = $this->normalizeSpamRuleInput($this->moduleContext->request->allPost());
 
 		// require a non-empty pattern
 		if ($fields['pattern'] === '') {
@@ -178,7 +178,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleDeletions(): void {
 		// get all the IDs from the requests for entries that are to be deleted
-		$entryIDs = $_POST['entryIDs'] ?? null;
+		$entryIDs = $this->moduleContext->request->getParameter('entryIDs', 'POST');
 		
 		// database transaction to prevent potential race conditions
 		$this->moduleContext->transactionManager->run(function() use($entryIDs) {
@@ -197,7 +197,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleModification(): void {
 		// get the target ID
-		$entryId = $_POST['entryId'] ?? null;
+		$entryId = $this->moduleContext->request->getParameter('entryId', 'POST');
 
 		// just redirect if its null
 		if (empty($entryId)) {
@@ -208,7 +208,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$entryId = (int)$entryId;
 
 		// normalize and validate input for update
-		$fields = $this->normalizeSpamRuleInput($_POST, true);
+		$fields = $this->normalizeSpamRuleInput($this->moduleContext->request->allPost(), true);
 
 		$this->moduleContext->transactionManager->run(function() use ($entryId, $fields) {
 			// modify entry
@@ -298,7 +298,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handlePages(): void {
 		// get the page view
-		$viewPage = $_GET['viewPage'] ?? '';
+		$viewPage = $this->moduleContext->request->getParameter('viewPage', 'GET', '');
 		
 		// view the entry creation form
 		if($viewPage === 'newEntryForm') {
@@ -320,7 +320,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$patternValue = '';
 		
 		// get the target post uid from request we so can optionally auto-fill the pattern field
-		$postUid = $_GET['post_uid'] ?? null;
+		$postUid = $this->moduleContext->request->getParameter('post_uid', 'GET');
 
 		// if the post uid is set then try to get the comment and set the pattern value to it
 		if(!empty($postUid)) {
@@ -358,7 +358,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function drawView(): void {
 		// get the id
-		$id = $_GET['id'] ?? null;
+		$id = $this->moduleContext->request->getParameter('id', 'GET');
 
 		// fetch entry from database
 		$entry = $this->antiSpamService->getEntry($id);
@@ -420,7 +420,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$entriesPerPage = $this->getConfig('ACTIONLOG_MAX_PER_PAGE');
 
 		// get current page
-		$page = $_GET['page'] ?? 0;
+		$page = $this->moduleContext->request->getParameter('page', 'GET', 0);
 
 		// fetch anti-spam rule entries from database
 		$entries = $this->antiSpamService->getEntries($entriesPerPage, $page);
@@ -435,7 +435,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$totalEntries = $this->antiSpamService->getTotalEntries();
 
 		// generate pager
-		$pagerHtml = drawPager($entriesPerPage, $totalEntries, $this->moduleUrl);
+		$pagerHtml = drawPager($entriesPerPage, $totalEntries, $this->moduleUrl, $this->moduleContext->request);
 
 		// render the page
 		$this->renderPage($indexHtml, $pagerHtml);

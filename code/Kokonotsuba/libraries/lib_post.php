@@ -11,6 +11,7 @@ use Kokonotsuba\file\fileFromUpload;
 use Kokonotsuba\file\thumbnail;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\post\postRepository;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
 use function Puchiko\getVideoDimensions;
@@ -19,7 +20,7 @@ use function Puchiko\strings\getswfsize;
 
 /* Catch impersonators and modify name to display such */
 function catchFraudsters(&$name) {
-	if (preg_match('/[◆◇♢♦⟡★]/u', $name)) $name .= " (fraudster)";
+	if (preg_match('/[◆♦★]/u', $name)) $name .= " (fraudster)";
 }
 
 function searchBoardArrayForBoard(int $targetBoardUID): ?board {
@@ -80,7 +81,7 @@ function getBoardsByUIDs(array $targetBoardUIDs): array {
  *
  * @return fileFromUpload
  */
-function getUserFileFromRequest(string $tempFilename, string $fileName, int $fileStatus, int $index): fileFromUpload {
+function getUserFileFromRequest(string $tempFilename, string $fileName, int $fileStatus, int $index, request $request): fileFromUpload {
 	// generate md5 hash of uploaded file
 	$md5chksum = md5_file($tempFilename);
 
@@ -88,7 +89,7 @@ function getUserFileFromRequest(string $tempFilename, string $fileName, int $fil
 	$extension = normalizeExtension($fileName);
 
 	// get timestamp in ms
-	$timeInMillisecond = (int) ($_SERVER['REQUEST_TIME_FLOAT'] * 1000);
+	$timeInMillisecond = (int) ($request->getRequestTimeFloat() * 1000);
 
 	// remove EXIF if jpeg AND exiftool available
 	if (isJpegExtension($extension) && isExiftoolAvailable()) {

@@ -3,16 +3,18 @@
 namespace Kokonotsuba\routers\routes;
 
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\request\request;
 use Throwable;
 
 class jsonApiRoute {
 	public function __construct(
-		private array $allowedClasses
+		private array $allowedClasses,
+		private readonly request $request
 	) {}
 
 	public function routeApiRequests(): void {
 		// get the API switch, used to determine which api to run
-		$apiEndpoint = $_REQUEST['apiEndpoint'] ?? null;
+		$apiEndpoint = $this->request->getParameter('apiEndpoint');
 
 		// throw exception if null, not a string, or empty
 		// it should ONLY be a label for a api route like 'board' for the board API, or 'thread' for the thread api
@@ -28,7 +30,7 @@ class jsonApiRoute {
 		// apiEndpoint = 'board'
 		// endpointPage = 'boardList'
 		// which will get the board list from the board API
-		$endpointPage = $_REQUEST['endpointPage'] ?? null;
+		$endpointPage = $this->request->getParameter('endpointPage');
 
 		// validate specific endpoint page as well
 		$this->validateEndpoint($endpointPage, "Invalid endpoint page!");

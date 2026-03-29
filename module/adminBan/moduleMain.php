@@ -136,7 +136,7 @@ class moduleMain extends abstractModuleMain {
 			if ($match) {
 				// If the ban has expired, remove it from the log and save
 				// only clear it for non-js requests (i.e the user is viewing it)
-				if ($_SERVER['REQUEST_TIME'] > intval($expires) && !isJavascriptRequest()) {
+				if ($this->moduleContext->request->getRequestTime() > intval($expires) && !$this->moduleContext->request->isAjax()) {
 					unset($log[$i]);
 					file_put_contents($banFile, implode(PHP_EOL, $log));
 				}
@@ -150,7 +150,7 @@ class moduleMain extends abstractModuleMain {
 	private function handleRegistBanPage(int $starttime, int $expires, string $reason, string $banImage): void {
 		// render ban json page
 		// this is so the javascript can alert the user that they're banned when trying to submit a post
-		if(isJavascriptRequest()) {
+		if($this->moduleContext->request->isAjax()) {
 			// get the module page url
 			$moduleUrl = $this->getModulePageURL([], false, true); 
 
@@ -183,7 +183,7 @@ class moduleMain extends abstractModuleMain {
 	private function getBanTemplateValues($starttime, $expires, $reason, $banImage = '', bool $isBanned = true) {
 
 		// True = the ban time has passed
-		$isExpired = ($_SERVER['REQUEST_TIME'] > intval($expires));
+		$isExpired = ($this->moduleContext->request->getRequestTime() > intval($expires));
 
 		// Determine what type of moderation action it was:
 		// If start == expire, it's a warning, otherwise a ban.
@@ -237,7 +237,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function ModulePage(): void {
 		// get the user's IP
-		$ipAddress = new IPAddress();
+		$ipAddress = new IPAddress($this->moduleContext->request->getRemoteAddr());
 
 		// check if they're banned
 		// execution won't continue past here if a ban is caught since it terminates output with exit

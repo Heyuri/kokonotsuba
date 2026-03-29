@@ -281,7 +281,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage() {
 		// get post uid from request
-		$postUid = $_GET['post_uid'] ?? null;
+		$postUid = $this->moduleContext->request->getParameter('post_uid', 'GET');
 
 		// throw error if post uid is empty
 		validatePostInput($postUid);
@@ -310,7 +310,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// get action
-		$action = $_REQUEST['action'] ?? '';
+		$action = $this->moduleContext->request->getParameter('action', null, '');
 		
 		switch ($action) {
 			case 'del':
@@ -320,7 +320,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			case 'delmute':
 				$this->moduleContext->postService->removePosts([$post['post_uid']], $this->moduleContext->currentUserId);
 				$ip = $post['host'];
-				$starttime = $_SERVER['REQUEST_TIME'];
+				$starttime = $this->moduleContext->request->getRequestTime();
 				$expires = $starttime + intval($this->JANIMUTE_LENGTH) * 60;
 				$reason = $this->JANIMUTE_REASON;
 
@@ -333,7 +333,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				break;
 			case 'attachmentDel':
 				// get the file Id
-				$fileId = $_GET['fileId'] ?? null;
+				$fileId = $this->moduleContext->request->getParameter('fileId', 'GET');
 				
 				// cast to int
 				$fileId = (int)$fileId;
@@ -362,7 +362,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		//deleteThreadCache($post['thread_uid']);
 
 		// AJAX first: send JSON, flush to client, then rebuild in the background of this request.
-		if (isJavascriptRequest()) {
+		if ($this->moduleContext->request->isAjax()) {
 			// if it was an attachment deletion then use the appropriate method to generate the url
 			if($action === 'attachmentDel' && $fileId) {
 				$deletionUrl = $this->getDeletionUrlForAttachment($fileId);
@@ -429,7 +429,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// Fallback for non-JS users: redirect
-		redirect('back');
+		redirect($this->moduleContext->request->getReferer());
 	}
 
 	private function appendGlobalBan($ip, $starttime, $expires, $reason) {
@@ -469,7 +469,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$deletedPostId = $deletedPost['deleted_post_id'];
 
 		// base url
-		$baseUrl = getCurrentUrlNoQuery();
+		$baseUrl = getCurrentUrlNoQuery($this->moduleContext->request);
 
 		// parameters for the link
 		$urlParameters = [

@@ -16,6 +16,7 @@ use function Kokonotsuba\Modules\antiSpam\getAntiSpamService;
 
 class moduleMain extends abstractModuleMain {
 	private antiSpamService $antiSpamService;
+	private string $globalBans;
 
 	public function getName(): string {
 		return 'Anti-spam checking system';
@@ -112,7 +113,7 @@ class moduleMain extends abstractModuleMain {
 	private function banUser(string $reason, int $banTime): void {
 		// get IP from request
 		// this is the user who made the regist request
-		$ipAddress = new IPAddress();
+		$ipAddress = new IPAddress($this->moduleContext->request->getRemoteAddr());
 
 		// calculcate start time
 

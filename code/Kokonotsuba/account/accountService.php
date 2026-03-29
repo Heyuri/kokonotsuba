@@ -4,6 +4,7 @@ namespace Kokonotsuba\account;
 
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\log_in\loginSessionHandler;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
@@ -11,7 +12,8 @@ use const Kokonotsuba\GLOBAL_BOARD_UID;
 class accountService {
 	public function __construct(
         private readonly accountRepository $accountRepository, 
-        private readonly actionLoggerService $actionLoggerService) {}
+        private readonly actionLoggerService $actionLoggerService,
+        private readonly request $request) {}
 	
 	public function handleAccountDelete(int $id) {
 		$this->accountRepository->deleteAccountByID($id);	
@@ -46,7 +48,7 @@ class accountService {
 	}
 
 	public function handleAccountPasswordReset(staffAccountFromSession $staffAccountFromSession, string $newAccountPasswordForReset) {
-		$loginSessionHandler = new loginSessionHandler();
+		$loginSessionHandler = new loginSessionHandler($this->request);
 		$accountID = $staffAccountFromSession->getUID();
 		
 		// hash the password

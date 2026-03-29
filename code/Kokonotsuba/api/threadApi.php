@@ -3,6 +3,7 @@
 namespace Kokonotsuba\api;
 
 use Kokonotsuba\thread\threadService;
+use Kokonotsuba\request\request;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\isActiveStaffSession;
@@ -11,7 +12,8 @@ use function Puchiko\json\renderJsonErrorPage;
 
 class threadApi {
 	public function __construct(
-		private threadService $threadService
+		private threadService $threadService,
+		private request $request
 	) {}
 
 	public function invoke(string $endpointPage): void {
@@ -32,7 +34,7 @@ class threadApi {
 		// wrap in try-catch
 		try {
 			// id of the requested thread
-			$threadUid = $_GET['thread_uid'] ?? null;
+			$threadUid = $this->request->getParameter('thread_uid', 'GET');
 
 			// if null or empty then output a json error page
 			if(is_null($threadUid) || empty($threadUid)) {

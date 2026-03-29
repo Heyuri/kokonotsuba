@@ -60,7 +60,7 @@ class moduleMain extends abstractModuleMain {
 
 	private function handlePostAnimatedGif(array &$attachments): void {
 		// whether anigif was toggled
-		$anigifRequested = isset($_POST['anigif']);
+		$anigifRequested = $this->moduleContext->request->hasParameter('anigif', 'POST');
 		
 		// if toggled then loop through attachments and toggle each gif to be animated
 		// non-GIFs are skipped

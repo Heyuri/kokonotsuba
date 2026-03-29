@@ -7,21 +7,23 @@ namespace Kokonotsuba\routers\routes;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\request\request;
 use function Kokonotsuba\libraries\_T;
 
 class moduleRoute {
 	public function __construct(
 		private moduleEngine $moduleEngine,
-		private readonly softErrorHandler $softErrorHandler
+		private readonly softErrorHandler $softErrorHandler,
+		private readonly request $request
 	) {}
 
 	public function handleModule(): void {
-		$load = $_REQUEST['load'] ?? '';
+		$load = $this->request->getParameter('load', default: '');
 
 		if ($this->moduleEngine->onlyLoad($load)) {
 			$moduleInstance = $this->moduleEngine->moduleInstance[$load];
 			
-			$moduleMode = $_REQUEST['moduleMode'] ?? '';
+			$moduleMode = $this->request->getParameter('moduleMode', default: '');
 
 			if ($moduleMode === 'admin') {
 				if (isset($moduleInstance['moduleAdmin']) && method_exists($moduleInstance['moduleAdmin'], 'ModulePage')) {

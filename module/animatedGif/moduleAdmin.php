@@ -88,10 +88,10 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage() {
 		// get post uid from request
-		$postUid = $_GET['postUid'] ?? null;
+		$postUid = $this->moduleContext->request->getParameter('postUid', 'GET');
 		
 		// get file id from request
-		$fileId = $_GET['fileId'] ?? null;
+		$fileId = $this->moduleContext->request->getParameter('fileId', 'GET');
 
 		// throw exception if post uid is blank
 		if ($postUid === null || $postUid <= 0) {
@@ -150,7 +150,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$board = searchBoardArrayForBoard($post['boardUID']);
 
 		// ===== AJAX handling updated to use helper =====
-		if(isJavascriptRequest()) {
+		if($this->moduleContext->request->isAjax()) {
 			// get url
 			$attachmentUrl = $this->getAnimatedAttachmentUrl($attachment, $isAnimated);
 
@@ -170,7 +170,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// rebuild board
 		$board->rebuildBoard();
 
-		redirect('back');
+		redirect($this->moduleContext->request->getReferer());
 	}
 
 	private function getAnimatedAttachmentUrl(array $attachment, bool $isAnimated): string {

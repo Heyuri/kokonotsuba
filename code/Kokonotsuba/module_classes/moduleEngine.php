@@ -76,32 +76,17 @@ use function Kokonotsuba\libraries\getRoleLevelFromSession;
 		$adminTemplateEngine = new templateEngine($adminTemplatePath, $dependencies);
 
 		// Create the admin page renderer
-		$adminPageRenderer = new pageRenderer($adminTemplateEngine, $this, $this->moduleEngineContext->board);
+		$adminPageRenderer = new pageRenderer($adminTemplateEngine, $this, $this->moduleEngineContext->board, $this->moduleEngineContext->getContainer()->get('request'));
 
 		// Prepare the module context
 		$moduleContext = new moduleContext(
 			$this->moduleEngineContext->board, 
 			$this->moduleEngineContext->templateEngine, 
 			$this->moduleEngineContext->config, 
-			$this->moduleEngineContext->postRepository, 
-			$this->moduleEngineContext->postService,
-			$this->moduleEngineContext->threadRepository, 
-			$this->moduleEngineContext->threadService,
-			$adminPageRenderer, // Pass adminPageRenderer here
+			$adminPageRenderer,
 			$this,
-			$this->moduleEngineContext->boardService,
-			$this->moduleEngineContext->postSearchService,
-			$this->moduleEngineContext->quoteLinkService,
-			$this->moduleEngineContext->actionLoggerService,
-			$this->moduleEngineContext->postRedirectService,
-			$this->moduleEngineContext->deletedPostsService,
-			$this->moduleEngineContext->fileService,
-			$this->moduleEngineContext->capcodeService,
-			$this->moduleEngineContext->userCapcodes,
-			$this->moduleEngineContext->transactionManager,
-			$this->moduleEngineContext->postRenderingPolicy,
 			$this->moduleEngineContext->postDateFormatter,
-			$this->moduleEngineContext->currentUserId,
+			$this->moduleEngineContext->getContainer(),
 		);
 
 		foreach ($loadlist as $moduleName => $moduleStatus) {

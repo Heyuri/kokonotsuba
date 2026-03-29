@@ -2,47 +2,26 @@
 
 namespace Kokonotsuba\containers;
 
-use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\board\board;
-use Kokonotsuba\board\boardService;
-use Kokonotsuba\capcode_backend\capcodeService;
-use Kokonotsuba\database\transactionManager;
-use Kokonotsuba\policy\postRenderingPolicy;
-use Kokonotsuba\post\attachment\fileService;
-use Kokonotsuba\post\deletion\deletedPostsService;
-use Kokonotsuba\thread\postRedirectService;
-use Kokonotsuba\post\postRepository;
-use Kokonotsuba\post\postSearchService;
-use Kokonotsuba\post\postService;
-use Kokonotsuba\quote_link\quoteLinkService;
-use Kokonotsuba\template\templateEngine;
-use Kokonotsuba\thread\threadRepository;
-use Kokonotsuba\thread\threadService;
 use Kokonotsuba\post\helper\postDateFormatter;
+use Kokonotsuba\template\templateEngine;
 
 class moduleEngineContext {
     public function __construct(
         public readonly array $config,
         public readonly ?string $liveIndexFile,
         public readonly ?array $moduleList,
-        public readonly postRepository $postRepository,
-        public readonly postService $postService,
-        public readonly threadRepository $threadRepository,
-        public readonly threadService $threadService,
-        public readonly postSearchService $postSearchService,
-        public readonly quoteLinkService $quoteLinkService,
-        public readonly boardService $boardService,
-        public readonly actionLoggerService $actionLoggerService,
-        public readonly postRedirectService $postRedirectService,
-        public readonly deletedPostsService $deletedPostsService,
-        public readonly fileService $fileService,
-        public capcodeService $capcodeService,
-        public array $userCapcodes,
-        public transactionManager $transactionManager,
         public templateEngine $templateEngine,
         public board $board,
-        public postRenderingPolicy $postRenderingPolicy,
         public postDateFormatter $postDateFormatter,
-        public ?int $currentUserId,
+        private readonly appContainer $container,
     ) {}
+
+    public function getContainer(): appContainer {
+        return $this->container;
+    }
+
+    public function __get(string $name): mixed {
+        return $this->container->get($name);
+    }
 }

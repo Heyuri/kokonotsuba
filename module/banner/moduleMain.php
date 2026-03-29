@@ -104,7 +104,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function ModulePage() {
-		if(isset($_GET['bannerjson'])) {
+		if($this->moduleContext->request->hasParameter('bannerjson', 'GET')) {
 			$this->outputbannerJSON();
 			return;
 		} else $this->drawBannerRedirect();

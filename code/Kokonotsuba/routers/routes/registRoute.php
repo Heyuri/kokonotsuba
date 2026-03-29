@@ -7,6 +7,7 @@ namespace Kokonotsuba\routers\routes;
 use Kokonotsuba\board\board;
 use Kokonotsuba\post\postValidator;
 use Kokonotsuba\account\staffAccountFromSession;
+use Kokonotsuba\cookie\cookieService;
 use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\action_log\actionLoggerService;
@@ -26,6 +27,7 @@ use Kokonotsuba\post\helper\webhookDispatcher;
 use Kokonotsuba\post\postRegistData;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\file\postFileUploadController;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 use Kokonotsuba\error\BoardException;
 use function Puchiko\json\isJavascriptRequest;
@@ -47,12 +49,14 @@ class registRoute {
 		private transactionManager $transactionManager,
         private moduleEngine $moduleEngine,
         private readonly actionLoggerService $actionLoggerService,
+		private readonly cookieService $cookieService,
 		private readonly postRepository $postRepository,
         private readonly postService $postService,
 		private readonly fileService $fileService,
 		private readonly threadRepository $threadRepository,
 		private readonly threadService $threadService,
-		private readonly quoteLinkService $quoteLinkService
+		private readonly quoteLinkService $quoteLinkService,
+		private readonly request $request
 	) {}
 
     /* Write to post table */
@@ -204,8 +208,8 @@ class registRoute {
 		});
 
 		// Set cookies for password and email
-		setcookie('pwdc', $postData['pwd'], time()+7*24*3600);
-		setcookie('emailc', htmlspecialchars_decode($postData['email']), time()+7*24*3600);
+		$this->cookieService->set('pwdc', $postData['pwd'], time()+7*24*3600);
+		$this->cookieService->set('emailc', htmlspecialchars_decode($postData['email']), time()+7*24*3600);
 
 		// Save files
 		foreach($fileMeta['files'] as $entry) {
@@ -232,16 +236,16 @@ class registRoute {
 
 	private function gatherPostInputData(): array {
 		// Extract tripcode from raw name before HTML escaping
-		$rawName = $_POST['name'] ?? '';
-		$email = htmlspecialchars($_POST['email'] ?? '');
-		$sub = htmlspecialchars($_POST['sub'] ?? '');
-		$comment = htmlspecialchars($_POST['com'] ?? '');
-		$pwd = $_POST['pwd'] ?? '';
-		$category = htmlspecialchars($_POST['category'] ?? '');
-		$resno = intval($_POST['resto'] ?? 0);
-		$pwdc = $_COOKIE['pwdc'] ?? '';
+		$rawName = $this->request->getParameter('name', 'POST', '');
+		$email = htmlspecialchars($this->request->getParameter('email', 'POST', ''));
+		$sub = htmlspecialchars($this->request->getParameter('sub', 'POST', ''));
+		$comment = htmlspecialchars($this->request->getParameter('com', 'POST', ''));
+		$pwd = $this->request->getParameter('pwd', 'POST', '');
+		$category = htmlspecialchars($this->request->getParameter('category', 'POST', ''));
+		$resno = intval($this->request->getParameter('resto', 'POST', 0));
+		$pwdc = $this->cookieService->get('pwdc', '');
 	
-		$ip = new IPAddress;
+		$ip = new IPAddress($this->request->getRemoteAddr());
 		
 		$age = false;
 	
@@ -249,8 +253,8 @@ class registRoute {
 		$isReply = $thread_uid ? true : false;
 	
 		$roleLevel = $this->staffSession->getRoleLevel();
-		$time = $_SERVER['REQUEST_TIME'];
-		$timeInMilliseconds = intval($_SERVER['REQUEST_TIME_FLOAT'] * 1000);
+		$time = $this->request->getRequestTime();
+		$timeInMilliseconds = intval($this->request->getRequestTimeFloat() * 1000);
 	
 		$postOpRoot = 0;
 		$flgh = '';
@@ -284,16 +288,18 @@ class registRoute {
 		$postFileUploadControllerList = [];
 
 		// determine if multiple files are uploaded on the main input
+		$upfileData = $this->request->getFile('upfile');
 		$hasMultiUpfile =
-			isset($_FILES['upfile']['tmp_name']) &&
-			is_array($_FILES['upfile']['tmp_name']) &&
-			count(array_filter($_FILES['upfile']['tmp_name'])) > 0;
+			isset($upfileData['tmp_name']) &&
+			is_array($upfileData['tmp_name']) &&
+			count(array_filter($upfileData['tmp_name'])) > 0;
 
 		// determine if multiple files are uploaded on quick reply
+		$quickReplyData = $this->request->getFile('quickReplyUpFile');
 		$hasMultiQuickReply =
-			isset($_FILES['quickReplyUpFile']['tmp_name']) &&
-			is_array($_FILES['quickReplyUpFile']['tmp_name']) &&
-			count(array_filter($_FILES['quickReplyUpFile']['tmp_name'])) > 0;
+			isset($quickReplyData['tmp_name']) &&
+			is_array($quickReplyData['tmp_name']) &&
+			count(array_filter($quickReplyData['tmp_name'])) > 0;
 
 		// pick which input to use
 		$inputName = $hasMultiUpfile ? 'upfile' : ($hasMultiQuickReply ? 'quickReplyUpFile' : null);
@@ -321,7 +327,7 @@ class registRoute {
 		// ----------------------------------------
 		// LOOP THROUGH ALL FILES IN THE INPUT
 		// ----------------------------------------
-		$fileCount = count($_FILES[$inputName]['tmp_name']);
+		$fileCount = count($this->request->getFile($inputName)['tmp_name']);
 
 		// if the file count is above the limit, we will only process up to the limit to prevent errors
 		if ($fileCount > $attachmentUploadLimit) {
@@ -335,7 +341,7 @@ class registRoute {
 			}
 
 			// load indexed upload data
-			[$tmp, $name, $status] = loadUploadData($inputName, $i);
+			[$tmp, $name, $status] = loadUploadData($inputName, $i, $this->request);
 
 			// skip empty slots
 			if ($status === UPLOAD_ERR_NO_FILE || !$tmp) {
@@ -343,7 +349,7 @@ class registRoute {
 			}
 
 			// convert raw PHP file into fileFromUpload object
-			$fileFromUpload = getUserFileFromRequest($tmp, $name, $status, $i);
+			$fileFromUpload = getUserFileFromRequest($tmp, $name, $status, $i, $this->request);
 
 			// extract file object
 			$file = $fileFromUpload->getFile();
@@ -438,7 +444,7 @@ class registRoute {
 		if (strlenUnicode($postData['sub']) > $this->config['INPUT_MAX']) throw new BoardException(_T('regist_topictoolong'));
 		if (strlenUnicode($postData['pwd']) > $this->config['INPUT_MAX']) throw new BoardException(_T('regist_passtoolong'));
 
-		setrawcookie('namec', rawurlencode(htmlspecialchars_decode($postData['nameCookie'])), time() + 7 * 24 * 3600);
+		$this->cookieService->setRaw('namec', rawurlencode(htmlspecialchars_decode($postData['nameCookie'])), time() + 7 * 24 * 3600);
 	
 		$postData['email'] = str_replace("\r\n", '', $postData['email']);
 		$postData['sub'] = str_replace("\r\n", '', $postData['sub']);
@@ -669,7 +675,7 @@ class registRoute {
 		string $redirectUrl
 	): void {
 		// If it's a JavaScript request, return JSON response with post ID and redirect URL
-		if(isJavascriptRequest()) {
+		if($this->request->isAjax()) {
 			// Construct the JSON response data
 			$registJsonData = [
 				'postId' => "p{$boardUid}_{$postNumber}",

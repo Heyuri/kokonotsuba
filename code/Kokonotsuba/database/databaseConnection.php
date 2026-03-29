@@ -4,8 +4,10 @@ namespace Kokonotsuba\database;
 
 use Exception;
 use InvalidArgumentException;
+use Kokonotsuba\error\BoardException;
 use PDO;
 use PDOException;
+use RuntimeException;
 
 class databaseConnection {
 	private static $instance = null;
@@ -59,7 +61,7 @@ class databaseConnection {
 				PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
 			]);
 		} catch (PDOException $e) {
-			die("Connection failed: " . $e->getMessage());
+			throw new RuntimeException('There was a problem connecting to the database.', 0, $e);
 		}
 	}
 

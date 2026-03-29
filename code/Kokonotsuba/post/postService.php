@@ -5,6 +5,7 @@ namespace Kokonotsuba\post;
 use Kokonotsuba\board\board;
 use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\post\deletion\deletedPostsService;
+use Kokonotsuba\request\request;
 use Kokonotsuba\thread\threadRepository;
 
 use function Kokonotsuba\libraries\getBoardsByUIDs;
@@ -15,7 +16,8 @@ class postService {
 		private readonly postRepository $postRepository, 
 		private readonly transactionManager $transactionManager, 
 		private readonly threadRepository $threadRepository,
-		private readonly deletedPostsService $deletedPostsService) {}
+		private readonly deletedPostsService $deletedPostsService,
+		private readonly request $request) {}
 
 	public function getPostsByUids(array $postUids): false|array {
 		$postsFromList = $this->postRepository->getPostsByUids($postUids);
@@ -154,7 +156,7 @@ class postService {
 						
 						$maxAgeLimit = $board->getConfigValue('MAX_AGE_TIME');
 
-						$threadExpired = ($maxAgeLimit && ($_SERVER['REQUEST_TIME'] - $threadCreatedTime > ($maxAgeLimit * 60 * 60)));
+						$threadExpired = ($maxAgeLimit && ($this->request->getRequestTime() - $threadCreatedTime > ($maxAgeLimit * 60 * 60)));
 
 						if ($status->value('as') || $threadExpired) {
 							$suppressBump = true;

@@ -13,6 +13,7 @@ use Kokonotsuba\renderers\postTemplateBinder;
 use Kokonotsuba\renderers\postWidget;
 use Kokonotsuba\interfaces\IBoard;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
 
 use function Kokonotsuba\libraries\_T;
@@ -33,7 +34,8 @@ class postRenderer {
 		private readonly array $config, 
 		private readonly moduleEngine $moduleEngine, 
 		private readonly templateEngine $templateEngine,
-		private array $quoteLinksFromBoard) {
+		private array $quoteLinksFromBoard,
+		private readonly request $request) {
 			// initialize post data preperation class
 			$this->postDataPreparer = new postDataPreparer($board);
 
@@ -120,7 +122,7 @@ class postRenderer {
 		if ($isThreadOp) {
 			$maxAgeLimit = $this->config['MAX_AGE_TIME'];
 			$postUnixTimestamp = is_numeric($post['root']) ? $post['root'] : strtotime($post['root']);
-			if ($maxAgeLimit && $_SERVER['REQUEST_TIME'] - $postUnixTimestamp > ($maxAgeLimit * 60 * 60)) {
+			if ($maxAgeLimit && $this->request->getRequestTime() - $postUnixTimestamp > ($maxAgeLimit * 60 * 60)) {
 				$warnOld .= "<div class='warning'>"._T('warn_oldthread')."</div>";
 			}
 		}

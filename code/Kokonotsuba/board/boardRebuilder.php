@@ -9,6 +9,7 @@ use Kokonotsuba\renderers\threadRenderer;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\policy\postRenderingPolicy;
 use Kokonotsuba\quote_link\quoteLinkService;
+use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
@@ -34,7 +35,8 @@ class boardRebuilder {
 		private readonly threadRepository $threadRepository, 
 		private readonly threadService $threadService,
 		private readonly quoteLinkService $quoteLinkService,
-		private postRenderingPolicy $postRenderingPolicy) {
+		private postRenderingPolicy $postRenderingPolicy,
+		private readonly request $request) {
 
 		$this->config = $board->loadBoardConfig();
 		if (empty($this->config)) {
@@ -165,11 +167,11 @@ class boardRebuilder {
 
 			// if the top pager for threads is enabled, render it
 			if($enableTopPager) {
-				$pte_vals['{$TOP_PAGENAV}'] = drawPager($repliesPerPage, $totalPosts, $threadUrl);
+				$pte_vals['{$TOP_PAGENAV}'] = drawPager($repliesPerPage, $totalPosts, $threadUrl, $this->request);
 			}
 
 			// always draw bottom pager
-			$pte_vals['{$BOTTOM_PAGENAV}'] = drawPager($repliesPerPage, $totalPosts, $threadUrl);
+			$pte_vals['{$BOTTOM_PAGENAV}'] = drawPager($repliesPerPage, $totalPosts, $threadUrl, $this->request);
 		}
 
 		$opPost = $posts[0];
@@ -299,7 +301,7 @@ class boardRebuilder {
 		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $pte_vals, $this->adminMode);
 
 		// thread pager
-		$pte_vals['{$BOTTOM_PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'));
+		$pte_vals['{$BOTTOM_PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'), $this->request);
 
 		// generate the whole page's html
 		$pageData = $this->buildFullPage($pte_vals, $this->board->getBoardTitle(), 0, false, $this->adminMode);
@@ -499,7 +501,8 @@ class boardRebuilder {
 			$this->config,
 			$this->moduleEngine,
 			$this->templateEngine,
-			$quoteLinksFromBoard
+			$quoteLinksFromBoard,
+			$this->request
 		);
 		$threadRenderer = new threadRenderer(
 			$this->config,

@@ -12,6 +12,7 @@ use Kokonotsuba\PMCLibrary;
 use Kokonotsuba\routers\modeHandler;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\renderBasicBootstrapErrorPage;
 use function Kokonotsuba\libraries\updateAccountSession;
 use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\renderJsonErrorPage;
@@ -27,11 +28,23 @@ require_once __DIR__ . '/code/Kokonotsuba/constants.php';
 // main requires
 require __DIR__ . '/paths.php';
 require __DIR__ . '/bootstrap/libraryIncludes.php';
+
+// Create request object from superglobals (must be early, before other bootstrap files)
+$request = \Kokonotsuba\request\request::fromGlobals();
+
 require __DIR__ . '/bootstrap/session.php';
+
 require __DIR__ . '/bootstrap/cookies.php';
 require __DIR__ . '/bootstrap/global.php';
 require __DIR__ . '/bootstrap/checks.php';
-require __DIR__ . '/bootstrap/database.php';
+
+try {
+	require __DIR__ . '/bootstrap/database.php';
+} catch (RuntimeException $runtimeException) {
+	renderBasicBootstrapErrorPage($runtimeException->getMessage());
+}
+
+require __DIR__ . '/bootstrap/container.php';
 require __DIR__ . '/bootstrap/repositories.php';
 require __DIR__ . '/bootstrap/board.php';
 require __DIR__ . '/bootstrap/requestBoard.php';
@@ -47,7 +60,7 @@ try {
 	updateAccountSession($accountRepository, $loginSessionHandler);
 
 	// init mode handler
-	$modeHandler = new modeHandler($routeDiContainer);
+	$modeHandler = new modeHandler($container);
 	
 	// validate the currently selected board
 	$modeHandler->validateBoard($board);
@@ -60,7 +73,7 @@ try {
 	$errorMessage = $boardException->getMessage();
 
 	// if its a request made by js, then serve json error
-	if(isJavascriptRequest()) {
+	if($request->isAjax()) {
 		// strip html tags - message.js doesn't accept any raw html
 		$errorMessage = strip_tags($errorMessage);
 

@@ -9,6 +9,7 @@ use Kokonotsuba\account\accountService;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\account\staffAccountFromSession;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 use function Puchiko\request\redirect;
 
@@ -19,21 +20,22 @@ class handleAccountActionRoute {
 		private readonly accountService $accountService,
 		private readonly actionLoggerService $actionLoggerService,
 		private readonly softErrorHandler $softErrorHandler,
-		private readonly staffAccountFromSession $staffAccountFromSession
+		private readonly staffAccountFromSession $staffAccountFromSession,
+		private readonly request $request
 	) {}
 
 	public function handleAccountRequests(): void {
 		$this->softErrorHandler->handleAuthError(userRole::LEV_USER);
 
 		if ($this->staffAccountFromSession->getRoleLevel() === userRole::LEV_ADMIN) {
-			$accountIdToDelete = $_GET['del'] ?? null;
-			$accountIdToDemote = $_GET['dem'] ?? null;
-			$accountIdToPromote = $_GET['up'] ?? null;
+			$accountIdToDelete = $this->request->getParameter('del', 'GET');
+			$accountIdToDemote = $this->request->getParameter('dem', 'GET');
+			$accountIdToPromote = $this->request->getParameter('up', 'GET');
 
-			$newAccountUsername = $_POST['usrname'] ?? null;
-			$newAccountPassword = $_POST['passwd'] ?? null;
-			$newAccountIsAlreadyHashed = !empty($_POST['ishashed']);
-			$newAccountRole = $_POST['role'] ?? null;
+			$newAccountUsername = $this->request->getParameter('usrname', 'POST');
+			$newAccountPassword = $this->request->getParameter('passwd', 'POST');
+			$newAccountIsAlreadyHashed = !empty($this->request->getParameter('ishashed', 'POST'));
+			$newAccountRole = $this->request->getParameter('role', 'POST');
 
 			if (isset($accountIdToDelete)) {
 				$this->accountService->handleAccountDelete($accountIdToDelete);
@@ -50,7 +52,7 @@ class handleAccountActionRoute {
 		}
 
 		// used for password reset
-		$newAccountPasswordForReset = $_POST['new_account_password'] ?? null;
+		$newAccountPasswordForReset = $this->request->getParameter('new_account_password', 'POST');
 
 		if (!empty($newAccountPasswordForReset)) {
 			$this->accountService->handleAccountPasswordReset($this->staffAccountFromSession, $newAccountPasswordForReset);

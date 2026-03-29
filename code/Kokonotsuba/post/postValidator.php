@@ -5,6 +5,7 @@ namespace Kokonotsuba\post;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\ip\IPValidator;
 use Kokonotsuba\post\attachment\fileService;
+use Kokonotsuba\request\request;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
 use Kokonotsuba\userRole;
@@ -20,13 +21,14 @@ class postValidator {
 		private readonly threadRepository $threadRepository,
 		private readonly threadService $threadService,
 		private readonly fileService $fileService,
+		private readonly request $request,
 	) {}
 	
 	public function registValidate(): void {
 		// Ensure required server keys exist before accessing them
-		$httpReferer = $_SERVER['HTTP_REFERER'] ?? null;	// May be null if header is missing
-		$userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;	// May be null if header is missing
-		$requestMethod = $_SERVER['REQUEST_METHOD'] ?? null;	// May be null in unusual environments
+		$httpReferer = $this->request->getReferer();	// May be null if header is missing
+		$userAgent = $this->request->getUserAgent();	// May be null if header is missing
+		$requestMethod = $this->request->isPost() ? 'POST' : ($this->request->getServer('REQUEST_METHOD') ?? null);	// May be null in unusual environments
 
 		// Validate referer and user agent; block common CLI tools and missing headers
 		// If referer or user agent is missing OR user agent looks like curl/wget → treat as bot

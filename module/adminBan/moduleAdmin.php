@@ -156,8 +156,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {
-		if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-			$banAction = $_POST['adminban-action'] ?? '';
+		if ($this->moduleContext->request->isPost()) {
+			$banAction = $this->moduleContext->request->getParameter('adminban-action', 'POST', '');
 			switch($banAction) {
 				case 'add-ban':
 					$this->handleBanAddition();
@@ -189,11 +189,11 @@ class moduleAdmin extends abstractModuleAdmin {
 			]
 		];
 
-		$postUid = $_GET['postUid'] ?? 0;
+		$postUid = $this->moduleContext->request->getParameter('postUid', 'GET', 0);
 		$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($postUid);
 		
 		// IP address from GET
-		$ipAddress = $_GET['ipAddress'] ?? '';
+		$ipAddress = $this->moduleContext->request->getParameter('ipAddress', 'GET', '');
 
 		$templateData = $this->getBanFormTemplateValues(
 			$postNumber,
@@ -240,13 +240,13 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleBanAddition() {
 		// Extract data from the request
-		$reasonFromRequest = $_POST['privmsg'] ?? '';
-		$newIp = $_POST['ipAddress'] ?? '';
-		$duration = $_POST['duration'] ?? '0';
-		$makePublic = $_POST['public'] ?? '';
-		$publicBanMessageHTML = $_POST['banmsg'] ?? '';
-		$postUid = intval($_POST['postUid'] ?? 0);
-		$isGlobal = isset($_POST['global']);  // Check if global ban is selected
+		$reasonFromRequest = $this->moduleContext->request->getParameter('privmsg', 'POST', '');
+		$newIp = $this->moduleContext->request->getParameter('ipAddress', 'POST', '');
+		$duration = $this->moduleContext->request->getParameter('duration', 'POST', '0');
+		$makePublic = $this->moduleContext->request->getParameter('public', 'POST', '');
+		$publicBanMessageHTML = $this->moduleContext->request->getParameter('banmsg', 'POST', '');
+		$postUid = intval($this->moduleContext->request->getParameter('postUid', 'POST', 0));
+		$isGlobal = $this->moduleContext->request->hasParameter('global', 'POST');  // Check if global ban is selected
 
 		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
 
@@ -258,7 +258,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 
 		// Redirect after processing
-		redirect($_SERVER['HTTP_REFERER']);
+		redirect($this->moduleContext->request->getReferer());
 		exit;
 	}
 
@@ -336,7 +336,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// Set defaults if not provided
 		$reason = $reasonFromRequest ?: "No reason given.";
-		$starttime = $_SERVER['REQUEST_TIME']; // This remains from the server, no change
+		$starttime = $this->moduleContext->request->getRequestTime(); // This remains from the server, no change
 		$expires = $starttime + $this->calculateBanDuration($duration);
 
 		// Replace all newlines with literal <br /> tags, and remove the actual newlines
@@ -391,7 +391,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		   $revokedGlobalIps = [];
 
 		   foreach ($log as $i => $entry) {
-			   if (isset($_POST["del$i"]) && $_POST["del$i"] === 'on') {
+			   if ($this->moduleContext->request->hasParameter("del$i", 'POST') && $this->moduleContext->request->getParameter("del$i", 'POST') === 'on') {
 				   // Ban is being revoked
 				   $parts = explode(',', $entry);
 				   if (!empty($parts[0])) {
@@ -403,7 +403,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		   }
 
 		   foreach ($glog as $i => $entry) {
-			   if (isset($_POST["delg$i"]) && $_POST["delg$i"] === 'on') {
+			   if ($this->moduleContext->request->hasParameter("delg$i", 'POST') && $this->moduleContext->request->getParameter("delg$i", 'POST') === 'on') {
 				   // Global ban is being revoked
 				   $parts = explode(',', $entry);
 				   if (!empty($parts[0])) {
@@ -430,7 +430,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			   $this->moduleContext->actionLoggerService->logAction($msg, $boardUid);
 		   }
 
-		   redirect($_SERVER['HTTP_REFERER']);
+		   redirect($this->moduleContext->request->getReferer());
 		   exit;
 	}
 

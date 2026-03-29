@@ -87,7 +87,7 @@ class moduleMain extends abstractModuleMain {
 			$index = $this->getConfig('LIVE_INDEX_FILE', 'back');
 			
 			// send dummy json output for ajax users
-			if(isJavascriptRequest()) {
+			if($this->moduleContext->request->isAjax()) {
 				// send ajax
 				sendAjaxAndDetach(['redirectUrl' => $index]);
 
