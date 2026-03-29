@@ -46,7 +46,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function ModulePage() {
 		// file id of the file row
-		$fileId = $_GET['file'] ?? null;
+		$fileId = $this->moduleContext->request->getParameter('file', 'GET');
 
 		// cast to int
 		$fileId = (int)$fileId;
@@ -68,7 +68,7 @@ class moduleMain extends abstractModuleMain {
 		$this->authenticateUserForAttachment($attachment);
 
 		// whether we're accessing the thumbnail via GET
-		$isThumb = $_GET['isThumb'] ?? false;
+		$isThumb = $this->moduleContext->request->getParameter('isThumb', 'GET', false);
 
 		// cast to bool
 		$isThumb = (bool)$isThumb;

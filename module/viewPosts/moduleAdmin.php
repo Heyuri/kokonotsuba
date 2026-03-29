@@ -119,11 +119,11 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage(): void {
         // get current url
-        $currentUrl = getCurrentUrlNoQuery();
+        $currentUrl = getCurrentUrlNoQuery($this->moduleContext->request);
 
         // determine which type of failter to apply based on user role
-		$postUid = $_GET['post_uid'] ?? '';
-		$ipAddress = $_GET['ip_address'] ?? '';
+		$postUid = $this->moduleContext->request->getParameter('post_uid', 'GET', '');
+		$ipAddress = $this->moduleContext->request->getParameter('ip_address', 'GET', '');
 
 		if(!empty($postUid)) {
 			// view posts by user flow
@@ -186,7 +186,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function isManagePostsRoute(): bool {
 		// Get the mode
-		$mode = $_GET['mode'] ?? '';
+		$mode = $this->moduleContext->request->getParameter('mode', 'GET', '');
 		
 		// Check if its manage posts
 		if($mode === 'managePosts') {

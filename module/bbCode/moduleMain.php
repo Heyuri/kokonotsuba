@@ -594,7 +594,7 @@ class moduleMain extends abstractModuleMain {
 	private function _URLExcced(){
 		if($this->urlcount > $this->MaxURLCount) {
 		  	  $fh = fopen($this->URLTrapLog, 'a+b');
-		  	  fwrite($fh, time()."\t$_SERVER[REMOTE_ADDR]\t{$this->urlcount}\n");
+		  	  fwrite($fh, time()."\t" . $this->moduleContext->request->getRemoteAddr() . "\t{$this->urlcount}\n");
 		  	  fclose($fh);
 		  	  throw new BoardException("URL: Tags exceed max limit");
 		}

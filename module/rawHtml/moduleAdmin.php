@@ -38,7 +38,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function renderPostFormCheckbox(string &$adminPostFormCheckbox): void {
 		// cookie for whether the checkbox is selected
-		$rawHtmlCookie = $_COOKIE['rawHtml'] ?? null;
+		$rawHtmlCookie = $this->moduleContext->cookieService->get('rawHtml');
 
 		// string for 'checked'
 		$checked = $rawHtmlCookie ? 'checked=""' : '';
@@ -52,18 +52,18 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function onRegistBegin(string &$comment): void {
 		// Raw HTML checkbox from request
-		$formRawHtml = !empty($_POST['formRawHtml']) ?? null;
+		$formRawHtml = !empty($this->moduleContext->request->getParameter('formRawHtml', 'POST'));
 
 		// if a post has been submitted with it selected, then set the cookie so its persistent
 		if($formRawHtml) {
-			setcookie("rawHtml", "1", time() + 86400, "/");
+			$this->moduleContext->cookieService->set('rawHtml', '1', time() + 86400, '/');
 
             // html decode the comment html
             $comment = htmlspecialchars_decode($comment);
 		}
 		// clear the cookie if it wasn't selected
 		else {
-			setcookie("rawHtml", "", time() - 3600, "/");
+			$this->moduleContext->cookieService->delete('rawHtml', '/');
 		}
 	}
 }

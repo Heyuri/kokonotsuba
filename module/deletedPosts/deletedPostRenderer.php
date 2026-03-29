@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\deletedPosts;
 
 use Kokonotsuba\board\board;
+use Kokonotsuba\cookie\cookieService;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\userRole;
@@ -15,6 +16,7 @@ use RuntimeException;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\renderers\threadRenderer;
 use Kokonotsuba\thread\threadService;
+use Kokonotsuba\request\request;
 
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\_T;
@@ -32,18 +34,20 @@ class deletedPostRenderer {
 		private pageRenderer $adminPageRenderer,
 		private threadService $threadService,
 		private quoteLinkService $quoteLinkService,
+		private cookieService $cookieService,
 		private string $modulePageUrl,
 		private string $restoredIndexUrl,
 		private userRole $requiredRoleForDeleteRestoredRecord,
 		private postDateFormatter $postDateFormatter,
+		private readonly request $request,
 	) {}
 
 	public function drawModPage(int $accountId, userRole $roleLevel): void {
 		// get page number from GET
-		$page = $_GET['page'] ?? 0;
+		$page = $this->request->getParameter('page', 'GET', 0);
 
 		// certain actions involve drawing/GET
-		$pageName = $_GET['pageName'] ?? null;
+		$pageName = $this->request->getParameter('pageName', 'GET');
 
 		// init post renderer
 		$postRenderer = new postRenderer(
@@ -51,7 +55,8 @@ class deletedPostRenderer {
 			$this->config, 
 			$this->moduleEngine, 
 			$this->moduleTemplateEngine, 
-			[]
+			[],
+			$this->request
 		);
 		
 		// init thread renderer
@@ -85,7 +90,7 @@ class deletedPostRenderer {
 
 	private function handlePostView(userRole $roleLevel, int $accountId, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
 		// to view a deleted post in full detail we need the deleted post id
-		$deletedPostId = $_GET['deletedPostId'] ?? null;
+		$deletedPostId = $this->request->getParameter('deletedPostId', 'GET');
 
 		// cast to int
 		$deletedPostId = (int)$deletedPostId;
@@ -308,7 +313,7 @@ class deletedPostRenderer {
 			'DELETED_POSTS_MOD_PAGE',
 			[
 				'{$DELETED_POSTS}' => $deletedPostListValues,
-				'{$SHOW_DELETED_POSTS}' => $_COOKIE['viewDeletedPosts'] ?? true,
+				'{$SHOW_DELETED_POSTS}' => $this->cookieService->get('viewDeletedPosts', true),
 				'{$CAN_VIEW_ALL_DELETED_POSTS}' => $roleLevel->isAtLeast($this->requiredRoleActionForModAll),
 				'{$ARE_NO_POSTS}' => $areNoPosts,
 				'{$MODULE_HEADER_TEXT}' => $moduleHeader,
@@ -320,14 +325,14 @@ class deletedPostRenderer {
 		$pagerUrl = $this->modulePageUrl;
 
 		// generate the url for the pager
-		if(isset($_GET['pageName']) && $_GET['pageName'] === 'restoredIndex') {
+		if($this->request->getParameter('pageName', 'GET') === 'restoredIndex') {
 			$pagerUrl .= '&pageName=restoredIndex';
 		}
 
 		// pager
 		$entriesPerPage = $this->board->getConfigValue('PAGE_DEF');
 		$totalEntries = $deletedPostsCount;
-		$pager = drawPager($entriesPerPage, $totalEntries, $pagerUrl);
+		$pager = drawPager($entriesPerPage, $totalEntries, $pagerUrl, $this->request);
 		
 		// output the admin page
 		$this->outputAdminPage($deletedPostsPageHtml, $pager);

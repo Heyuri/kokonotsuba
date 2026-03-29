@@ -147,7 +147,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 	
 	public function ModulePage(): void {
-		$thread_uid = $_GET['thread_uid'] ?? null;
+		$thread_uid = $this->moduleContext->request->getParameter('thread_uid', 'GET');
 	
 		// no thread uid selected - throw exception
 		if($thread_uid === null) {
@@ -196,7 +196,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$board = searchBoardArrayForBoard($boardUid);
 	
 		// ===== AJAX handling updated to use helper =====
-		if(isJavascriptRequest()) {
+		if($this->moduleContext->request->isAjax()) {
 			// whether the post-action thread is stickied or not
 			$isStickied = $flags->value('sticky');
 
@@ -213,7 +213,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	
 		$board->rebuildBoard();
 	
-		redirect('back');
+		redirect($this->moduleContext->request->getReferer());
 	}
 
 }

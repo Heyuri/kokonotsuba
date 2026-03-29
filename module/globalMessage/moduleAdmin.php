@@ -48,10 +48,10 @@ class moduleAdmin extends abstractModuleAdmin {
 	}	
 
 	public function ModulePage() {
-		$action = $_GET['action'] ?? '';
+		$action = $this->moduleContext->request->getParameter('action', 'GET', '');
 
-		if ($action === 'setmessage' && isset($_POST['submit'])) {
-			$message = $_POST['content'] ?? '';
+		if ($action === 'setmessage' && $this->moduleContext->request->hasParameter('submit', 'POST')) {
+			$message = $this->moduleContext->request->getParameter('content', 'POST', '');
 			writeToGlobalMsg($this->globalMessageFile, $message);
 			rebuildAllBoards();
 		}

@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\deletedPosts;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\deletion\deletedPostsService;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\generateModerateButton;
@@ -12,7 +13,8 @@ class deletedPostUtility {
 	public function __construct(
 		private moduleAdmin $moduleAdmin,
 		private deletedPostsService $deletedPostsService,
-		private userRole $requiredRoleActionForModAll
+		private userRole $requiredRoleActionForModAll,
+		private readonly request $request
 	) {}
 
 	public function isPostDeleted(array $post): bool {
@@ -31,7 +33,7 @@ class deletedPostUtility {
 
 	public function isModulePage(): bool {
 		// get current module
-		$loadedModule = $_REQUEST['load'] ?? '';
+		$loadedModule = $this->request->getParameter('load', default: '');
 
 		// return true if its the module
 		if($loadedModule === 'deletedPosts') {

@@ -149,7 +149,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {		
-		$post = $this->moduleContext->postRepository->getPostByUid($_GET['post_uid'], true);
+		$post = $this->moduleContext->postRepository->getPostByUid($this->moduleContext->request->getParameter('post_uid', 'GET'), true);
 
 		$board = searchBoardArrayForBoard($post['boardUID']);
 
@@ -172,7 +172,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->actionLoggerService->logAction($logMessage, $board->getBoardUID());
 		
 		// ===== AJAX handling updated to use helper =====
-		if(isJavascriptRequest()) {
+		if($this->moduleContext->request->isAjax()) {
 			// whether the post-action thread is locked or not
 			$isLocked = $status->value('stop');
 
@@ -189,6 +189,6 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$board->rebuildBoard();
 
-		redirect('back');
+		redirect($this->moduleContext->request->getReferer());
 	}
 }

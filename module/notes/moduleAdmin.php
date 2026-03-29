@@ -234,7 +234,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// handle final redirect
 		// ===== AJAX handling updated to use helper =====
-		if(isJavascriptRequest()) {
+		if($this->moduleContext->request->isAjax()) {
 			// send json first
 			sendAjaxAndDetach([
 				'note' => $note,
@@ -259,7 +259,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleAddNoteRequest(int $postUid): void {
 		// get note content from request
-		$noteText = $_POST['note'] ?? '';
+		$noteText = $this->moduleContext->request->getParameter('note', 'POST', '');
 
 		// add the note to the post and get the note ID of the newly inserted note
 		$noteId = $this->noteService->addNote(
@@ -313,7 +313,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// get new note content from request
-		$newNoteText = $_POST['noteText'] ?? '';
+		$newNoteText = $this->moduleContext->request->getParameter('noteText', 'POST', '');
 
 		// edit the note
 		$this->noteService->editNote($noteId, $newNoteText);
@@ -355,7 +355,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleNoteRequest(int $postUid, ?int $noteId = null): void {
 		// get action
-		$action = $_REQUEST['action'] ?? null;
+		$action = $this->moduleContext->request->getParameter('action');
 
 		// handle the request routes
 		$this->handleActionRoute($action, $postUid, $noteId);
@@ -427,7 +427,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleModPages(int $postUid, ?int $noteId = null): void {
 		// get mod page
-		$modPage = $_REQUEST['modPage'] ?? null;
+		$modPage = $this->moduleContext->request->getParameter('modPage');
 
 		if($modPage === 'editNoteForm') {
 			// render the edit note form
@@ -441,16 +441,16 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage() {
 		// get post uid from request
-		$postUid = $_REQUEST['postUid'] ?? null;
+		$postUid = $this->moduleContext->request->getParameter('postUid');
 
 		// get the note id from the request (only applicable for edit and delete actions)
-		$noteId = $_REQUEST['noteId'] ?? null;
+		$noteId = $this->moduleContext->request->getParameter('noteId');
 		
 		// validate post uid
 		validatePostInput($postUid);
 
 		// handle the main note requests
-		if(isset($_REQUEST['action'])) {
+		if($this->moduleContext->request->hasParameter('action')) {
 			$this->handleNoteRequest($postUid, $noteId);
 		}
 		// otherwise just render the form

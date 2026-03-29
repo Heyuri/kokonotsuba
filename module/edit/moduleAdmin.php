@@ -167,10 +167,10 @@ class moduleAdmin extends abstractModuleAdmin {
 			$boardUid = $post['boardUID'] ?? null;
 
 			// get the parameters
-			$name = $_POST['postUserName'] ?? null;
-			$comment = $_POST['comment'] ?? null;
-			$subject = $_POST['subject'] ?? null;
-			$email = $_POST['postEmail'] ?? null;
+			$name = $this->moduleContext->request->getParameter('postUserName', 'POST');
+			$comment = $this->moduleContext->request->getParameter('comment', 'POST');
+			$subject = $this->moduleContext->request->getParameter('subject', 'POST');
+			$email = $this->moduleContext->request->getParameter('postEmail', 'POST');
 			
 			// handle the edit
 			$this->editPost($postUid, $name, $comment, $subject, $email);
@@ -183,7 +183,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->actionLoggerService->logAction("Edited post No.{$postNumber}", $boardUid ?? GLOBAL_BOARD_UID);
 
 		// send json data back if it's a js request
-		if(isJavascriptRequest()) {
+		if($this->moduleContext->request->isAjax()) {
 			$this->sendJson($postUid);
 		}
 		// otherwise redirect back to the post
@@ -224,13 +224,13 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage() {
 		// get post uid from request
-		$postUid = $_REQUEST['postUid'] ?? null;
+		$postUid = $this->moduleContext->request->getParameter('postUid');
 		
 		// validate post uid
 		validatePostInput($postUid);
 
 		// handle the main edit requests
-		if(isPostRequest()) {
+		if($this->moduleContext->request->isPost()) {
 			$this->handleEditRequest($postUid);
 		}
 		// otherwise just render the form

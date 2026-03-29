@@ -101,7 +101,7 @@ class moduleMain extends abstractModuleMain {
 		$dat = ''; // HTML Buffer
 		$listMax = $this->moduleContext->threadRepository->threadCountFromBoard($this->moduleContext->board); // Total number of threads
 		$pageMax = ceil($listMax / $this->THREADLIST_NUMBER) - 1; // Maximum page number
-		$page = isset($_GET['page']) ? intval($_GET['page']) : 0; // Current page number
+		$page = $this->moduleContext->request->hasParameter('page', 'GET') ? intval($this->moduleContext->request->getParameter('page', 'GET')) : 0; // Current page number
 
 		// Check if the page number is out of range
 		if ($page < 0 || $page > $pageMax) throw new BoardException('Page out of range.');
@@ -118,7 +118,7 @@ class moduleMain extends abstractModuleMain {
 		$sortingColumn = '';
 
 		// get sorting value from request
-		$sortingMethod = $_GET['sort'] ?? 'no';
+		$sortingMethod = $this->moduleContext->request->getParameter('sort', 'GET', 'no');
 
 		// decide which column to use based on the request
 		if($sortingMethod === 'no') {
@@ -234,7 +234,7 @@ function checkall(){
 <hr>
 ';
 
-		$dat .= drawPager($this->THREADLIST_NUMBER, $listMax, $thisPage . '&sort=' . $sortingMethod); 		
+		$dat .= drawPager($this->THREADLIST_NUMBER, $listMax, $thisPage . '&sort=' . $sortingMethod, $this->moduleContext->request); 		
 
 		// Add delete form if necessary
 		if ($this->SHOW_FORM) {

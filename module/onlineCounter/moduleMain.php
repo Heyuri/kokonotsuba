@@ -57,7 +57,7 @@ class moduleMain extends abstractModuleMain {
 		$currentTime = time();
 
 		// get IP object
-		$addr = new IPAddress;
+		$addr = new IPAddress($this->moduleContext->request->getRemoteAddr());
 		
 		// get addr string
 		$addrString = $addr->__toString();
@@ -242,7 +242,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function ModulePage() {
 		// If the "usercountjson" parameter is set, output the user count as JSON and stop execution
-		if (isset($_GET['usercountjson'])) {
+		if ($this->moduleContext->request->hasParameter('usercountjson', 'GET')) {
 			$this->outputUserCountJson();
 			return;
 		}

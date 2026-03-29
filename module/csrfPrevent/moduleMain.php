@@ -29,7 +29,7 @@ class moduleMain extends abstractModuleMain {
 		 *  1. No HTTP_REFERER
 		 *  2. HTTP_REFERER is not in this domain
 		 */
-		if(!strpos($_SERVER['HTTP_REFERER']??'', fullURL())) {
+		if(!strpos($this->moduleContext->request->getReferer(), fullURL($this->moduleContext->request))) {
 			$CSRFdetectd = true;
 		}
 

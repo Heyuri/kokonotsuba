@@ -36,7 +36,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function onRegistBegin(): void {
 		foreach ($this->fields as &$f) {
-			if (isset($_POST[$f]) && $_POST[$f] != "") {
+			if ($this->moduleContext->request->hasParameter($f, 'POST') && $this->moduleContext->request->getParameter($f, 'POST') != "") {
 				throw new BoardException("You appear to be a bot! [ -c°▥°]-c");
 			}
 		}

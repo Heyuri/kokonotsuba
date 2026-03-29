@@ -191,7 +191,7 @@ class moduleMain extends abstractModuleMain {
 
 	private function handleSoudaneApi(): void {
 		// extract the post uids from url
-		$postUidsParameter = $_GET['posts'] ?? [];
+		$postUidsParameter = $this->moduleContext->request->getParameter('posts', 'GET', []);
 
 		// exit if none are found
 		if (empty($postUidsParameter)) {
@@ -257,7 +257,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function ModulePage() {
 		// get mod page parameter
-		$modPage = $_GET['modPage'] ?? '';
+		$modPage = $this->moduleContext->request->getParameter('modPage', 'GET', '');
 
 		// if the mod page parameter is targetting the api endpoint then call a method to generate json
 		if($modPage === 'soudaneApi') {
@@ -265,10 +265,10 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		// Retrieve the postUid from GET parameters, default to empty string if not provided
-		$postUid = $_GET['postUid'] ?? '';
+		$postUid = $this->moduleContext->request->getParameter('postUid', 'GET', '');
 
 		// Retrieve the type from GET parameters, default to empty string if not provided
-		$type = $_GET['type'] ?? '';
+		$type = $this->moduleContext->request->getParameter('type', 'GET', '');
 		
 		// Validate that postUid is not empty and type is one of the allowed values
 		if (!$postUid || !in_array($type, ['yeah', 'nope', 'score'])) {
@@ -294,7 +294,7 @@ class moduleMain extends abstractModuleMain {
 		$log = $this->loadVotes($postUid, $type);
 
 		// Get the current user's IP address
-		$ip = new IPAddress;
+		$ip = new IPAddress($this->moduleContext->request->getRemoteAddr());
 
 		$yeahIPs = !empty($log) ? array_column($log, 'ip_address') : [];
 

@@ -107,7 +107,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		// only use audio if the user is currently viewing a thread
-		if(!isset($_GET['res'])) {
+		if(!$this->moduleContext->request->hasParameter('res', 'GET')) {
 			return '';
 		}
 

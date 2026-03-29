@@ -64,11 +64,11 @@ class moduleMain extends abstractModuleMain {
 		$dat = '';
 
 		$list_max = $this->moduleContext->threadRepository->threadCountFromBoard($this->moduleContext->board);
-		$page = filter_var($_GET['page'] ?? 0, FILTER_VALIDATE_INT);
+		$page = filter_var($this->moduleContext->request->getParameter('page', 'GET', 0), FILTER_VALIDATE_INT);
 		$page = ($page === false) ? 0 : $page;
 		$page_max = ceil($list_max / $this->PAGE_DEF) - 1;
 
-		$sort = $_POST['sort_by'] ?? $_GET['sort_by'] ?? $_COOKIE['cat_sort_by'] ?? '';
+		$sort = $this->moduleContext->request->getParameter('sort_by', 'POST') ?? $this->moduleContext->request->getParameter('sort_by', 'GET') ?? $this->moduleContext->cookieService->get('cat_sort_by', '');
 		if (!in_array($sort, array('bump', 'time'))) {
 			$sort = 'bump';
 		}
@@ -77,8 +77,8 @@ class moduleMain extends abstractModuleMain {
 			throw new BoardException("Page out of range!");
 		}
 
-		if (isset($_POST['sort_by'])) {
-			setcookie('cat_sort_by', $sort, time() + 365 * 86400);
+		if ($this->moduleContext->request->hasParameter('sort_by', 'POST')) {
+			$this->moduleContext->cookieService->set('cat_sort_by', $sort, time() + 365 * 86400);
 		}
 
 		$sortingColumn = 'last_bump_time';
@@ -94,8 +94,8 @@ class moduleMain extends abstractModuleMain {
 			break;
 		}
 
-		$cat_cols = $_COOKIE['cat_cols']??0;
-		$cat_fw = ($_COOKIE['cat_fw']??'false')=='true';
+		$cat_cols = $this->moduleContext->cookieService->get('cat_cols', 0);
+		$cat_fw = $this->moduleContext->cookieService->get('cat_fw', 'false') == 'true';
 		if (!$cat_cols=intval($cat_cols))
 			$cat_cols = 'auto';
 
@@ -148,7 +148,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		$dat .= '</tbody></table></div><hr>';
-		$dat .= drawPager($this->PAGE_DEF,$list_max, $this->myPage);
+		$dat .= drawPager($this->PAGE_DEF,$list_max, $this->myPage, $this->moduleContext->request);
 		$dat .= $this->moduleContext->board->getBoardFooter();
 		echo $dat;
 	}

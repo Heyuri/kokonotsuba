@@ -42,9 +42,9 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {
-		$formSubmit = $_POST['formSubmit'] ?? false;
+		$formSubmit = $this->moduleContext->request->getParameter('formSubmit', 'POST', false);
 		if($formSubmit) {
-			$boardUIDsToRebuild = $_POST['rebuildBoardUIDs'] ?? false;
+			$boardUIDsToRebuild = $this->moduleContext->request->getParameter('rebuildBoardUIDs', 'POST', false);
 			
 			$boardsToRebuild = $this->moduleContext->boardService->getBoardsFromUIDs($boardUIDsToRebuild);
 			

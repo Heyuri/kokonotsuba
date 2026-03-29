@@ -38,7 +38,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function renderPostFormCheckbox(string &$adminPostFormCheckbox): void {
 		// cookie for whether the checkbox is selected
-		$overidePostIdCookie = $_COOKIE['overidePostId'] ?? null;
+		$overidePostIdCookie = $this->moduleContext->cookieService->get('overidePostId');
 
 		// string for 'checked'
 		$checked = $overidePostIdCookie ? 'checked=""' : '';
@@ -52,15 +52,15 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function onRegistBegin(): void {
 		// Hide ID checkbox from request
-		$formModIdOveride = !empty($_POST['formModIdOveride']) ?? null;
+		$formModIdOveride = !empty($this->moduleContext->request->getParameter('formModIdOveride', 'POST'));
 
 		// if a post has been submitted with it selected, then set the cookie so its persistent
 		if($formModIdOveride) {
-			setcookie("overidePostId", "1", time() + 86400, "/");
+			$this->moduleContext->cookieService->set('overidePostId', '1', time() + 86400, '/');
 		}
 		// clear the cookie if it wasn't selected
 		else {
-			setcookie("overidePostId", "", time() - 3600, "/");
+			$this->moduleContext->cookieService->delete('overidePostId', '/');
 		}
 	}
 }

@@ -152,10 +152,10 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {
-		$postUid = $_REQUEST['postUid'] ?? 0;
+		$postUid = $this->moduleContext->request->getParameter('postUid', null, 0);
 		$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($postUid);
 
-		if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+		if (!$this->moduleContext->request->isPost()) {
 			// get shared template values for this module
 			$templateValues = $this->getWarnTemplateValues();
 
@@ -179,10 +179,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		$ip = $post['host'];
-		$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', nl2br($_POST['msg'] ?? '', false)));
+		$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', nl2br($this->moduleContext->request->getParameter('msg', 'POST', ''), false)));
 		if (!$reason) $reason = 'No reason given.';
 
-		if (!empty($_POST['public'])) {
+		if (!empty($this->moduleContext->request->getParameter('public', 'POST'))) {
 			$post['com'] .= $this->getPublicWarnMessageHtml($reason); 
 			
 			// parameters to update in the query
@@ -199,7 +199,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		touch($BANFILE);
 
 		$log = array_map('rtrim', file($BANFILE));
-		$rtime = $_SERVER['REQUEST_TIME'];
+		$rtime = $this->moduleContext->request->getRequestTime();
 		$log[] = "$ip,$rtime,$rtime,$reason";
 		file_put_contents($BANFILE, implode(PHP_EOL, $log) . PHP_EOL);
 

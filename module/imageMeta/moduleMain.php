@@ -133,7 +133,7 @@ class moduleMain extends abstractModuleMain {
 		echo '<ul class="exifInfoList">';
 
 		// get post uid from request
-		$postUid = $_GET['postUid'] ?? null;
+		$postUid = $this->moduleContext->request->getParameter('postUid', 'GET');
 
 		// validate post uid
 		if(!$postUid || $postUid <= 0) {
@@ -141,7 +141,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		// get file id from request
-		$fileId = $_GET['fileId'] ?? null;
+		$fileId = $this->moduleContext->request->getParameter('fileId', 'GET');
 
 		// validate file id
 		if(!$fileId || $fileId <= 0) {
@@ -212,8 +212,8 @@ class moduleMain extends abstractModuleMain {
 			echo '<li><strong class="error">File Not Found!</strong></li>';
 		}
 
-		if (isset($_SERVER['HTTP_REFERER'])) {
-			echo '[<a href="' . $_SERVER['HTTP_REFERER'] . '" onclick="event.preventDefault();history.go(-1);">Back</a>]';
+		if ($this->moduleContext->request->hasParameter('HTTP_REFERER', 'SERVER')) {
+			echo '[<a href="' . $this->moduleContext->request->getReferer() . '" onclick="event.preventDefault();history.go(-1);">Back</a>]';
 		}
 
 		echo $this->moduleContext->board->getBoardFooter();

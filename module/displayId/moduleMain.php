@@ -101,12 +101,12 @@ class moduleMain extends abstractModuleMain {
 
 		// generate the hash for a user's post
 		$poster_hash = generatePostHash(
-			new IPAddress,
+			new IPAddress($this->moduleContext->request->getRemoteAddr()),
 			$threadNumber, 
 			$email, 
 			$roleLevel,
 			$this->getConfig('IDSEED'),
-			!empty($_POST['formModIdOveride']),
+			!empty($this->moduleContext->request->getParameter('formModIdOveride', 'POST')),
 		);
 	}
 

@@ -60,7 +60,7 @@ class moduleMain extends abstractModuleMain {
 		$boards = $adminMode ? GLOBAL_BOARD_ARRAY : $this->moduleContext->boardService->getAllListedBoards();
 
 		// build board checkbox HTML
-		$isSubmission = isset($_GET['filterSubmissionFlag']);
+		$isSubmission = $this->moduleContext->request->hasParameter('filterSubmissionFlag', 'GET');
 
 		$defaultFilters = [
 			'searchGeneral' => '',
@@ -76,7 +76,7 @@ class moduleMain extends abstractModuleMain {
 		];
 
 		// get filters from request
-		$filtersFromRequest = getFiltersFromRequest($this->myPage, $isSubmission, $defaultFilters);
+		$filtersFromRequest = getFiltersFromRequest($this->myPage, $isSubmission, $defaultFilters, $this->moduleContext->request);
 
 		// build clean url
 		$cleanUrl = buildSmartQuery($this->myPage, $defaultFilters, $filtersFromRequest, true);
@@ -90,17 +90,17 @@ class moduleMain extends abstractModuleMain {
 		$dat .= $this->renderSearchForm($filtersFromRequest, $cleanUrl, $boards);
 
 		$searchFields = [
-			'general' => $_GET['searchGeneral'] ?? '',
-			'com' => $_GET['searchComment'] ?? '',
-			'name' => $_GET['searchName'] ?? '',
-			'email' => $_GET['searchEmail'] ?? '',
-			'sub' => $_GET['searchSubject'] ?? '',
-			'file_name' => $_GET['searchFileName'] ?? '',
-			'no' => $_GET['searchPostNumber'] ?? '',
+			'general' => $this->moduleContext->request->getParameter('searchGeneral', 'GET', ''),
+			'com' => $this->moduleContext->request->getParameter('searchComment', 'GET', ''),
+			'name' => $this->moduleContext->request->getParameter('searchName', 'GET', ''),
+			'email' => $this->moduleContext->request->getParameter('searchEmail', 'GET', ''),
+			'sub' => $this->moduleContext->request->getParameter('searchSubject', 'GET', ''),
+			'file_name' => $this->moduleContext->request->getParameter('searchFileName', 'GET', ''),
+			'no' => $this->moduleContext->request->getParameter('searchPostNumber', 'GET', ''),
 		];
 
 		// get selected boards from request
-		$boardUids = $_GET['board'] ?? $this->getUidsFromBoards($boards);
+		$boardUids = $this->moduleContext->request->getParameter('board', 'GET') ?? $this->getUidsFromBoards($boards);
 
 		// convert to array of integers
 		if (!is_array($boardUids) && !empty($boardUids)) {
@@ -266,25 +266,10 @@ class moduleMain extends abstractModuleMain {
 				$this->moduleContext->config,
 				$board->getConfigValue('LIVE_INDEX_FILE'),
 				$board->getConfigValue('ModuleList'),
-				$this->moduleContext->postRepository,
-				$this->moduleContext->postService,
-				$this->moduleContext->threadRepository,
-				$this->moduleContext->threadService,
-				$this->moduleContext->postSearchService,
-				$this->moduleContext->quoteLinkService,
-				$this->moduleContext->boardService,
-				$this->moduleContext->actionLoggerService,
-				$this->moduleContext->postRedirectService,
-				$this->moduleContext->deletedPostsService,
-				$this->moduleContext->fileService,
-				$this->moduleContext->capcodeService,
-				$this->moduleContext->userCapcodes,
-				$this->moduleContext->transactionManager,
 				$this->moduleTemplateEngine,
 				$board,
-				$this->moduleContext->postRenderingPolicy,
 				$postDateFormatter,
-				$this->moduleContext->currentUserId
+				$this->moduleContext->getContainer()
 			);
 
 			// moduleEngine is unique per board
@@ -296,7 +281,8 @@ class moduleMain extends abstractModuleMain {
 				$this->moduleContext->config,
 				$moduleEngine,
 				$this->moduleContext->templateEngine,
-				$quoteLinks
+				$quoteLinks,
+				$this->moduleContext->request
 			);
 
 			// Store it keyed by board UID
@@ -345,14 +331,14 @@ class moduleMain extends abstractModuleMain {
 		string $searchUrl,
 		bool $adminMode
 	): string {
-		$searchPage = intval($_GET['page'] ?? 0);
+		$searchPage = intval($this->moduleContext->request->getParameter('page', 'GET', 0));
 		$searchPostsPerPage = $this->getConfig('ModuleSettings.SEARCH_POSTS_PER_PAGE');
 
 		// determine search method
-		$matchWholeWords = isset($_GET['searchMatchWord']) && $_GET['searchMatchWord'] === 'on';
+		$matchWholeWords = $this->moduleContext->request->getParameter('searchMatchWord', 'GET') === 'on';
 
 		// only search opening posts
-		$openingPostsOnly = isset($_GET['searchOpeningPost']) && $_GET['searchOpeningPost'] === 'on';
+		$openingPostsOnly = $this->moduleContext->request->getParameter('searchOpeningPost', 'GET') === 'on';
 
 		// chop the extension off of the file_name field
 		$fields['file_name'] = stripExtension($fields['file_name']);
@@ -449,7 +435,7 @@ class moduleMain extends abstractModuleMain {
 
 			$out = '<div id="searchresult">' . $resultList . '</div>';
 	
-			$out .= drawPager($searchPostsPerPage, $totalPostHits, $searchUrl);
+			$out .= drawPager($searchPostsPerPage, $totalPostHits, $searchUrl, $this->moduleContext->request);
 			return $out;
 		} else {
 			return $this->renderNoResultsMessage();

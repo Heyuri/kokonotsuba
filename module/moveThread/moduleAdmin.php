@@ -107,7 +107,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$postDateFormatter = new postDateFormatter($originalBoardConfig['TIME_ZONE']);
 		
-		$time = $_SERVER['REQUEST_TIME'];
+		$time = $this->moduleContext->request->getRequestTime();
 		$now = $postDateFormatter->formatFromTimestamp($time);
 
 		// Generate new post number
@@ -369,10 +369,10 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage() {
 		// If form was submitted to move a thread
-		if (!empty($_POST['move-thread-submit'])) {
-			$thread_uid = $_POST['move-thread-uid'] ?? null;
-			$destinationBoardUID = $_POST['radio-board-selection'] ?? null;
-			$leaveShadowThread = !empty($_POST['leave-shadow-thread']);
+		if (!empty($this->moduleContext->request->getParameter('move-thread-submit', 'POST'))) {
+			$thread_uid = $this->moduleContext->request->getParameter('move-thread-uid', 'POST');
+			$destinationBoardUID = $this->moduleContext->request->getParameter('radio-board-selection', 'POST');
+			$leaveShadowThread = !empty($this->moduleContext->request->getParameter('leave-shadow-thread', 'POST'));
 	
 			// Validate inputs
 			if (empty($thread_uid)) {
@@ -439,7 +439,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	
 
 	private function prepareMoveFormTemplateValues(): array {
-		$thread_uid = $_GET['thread_uid'] ?? '';
+		$thread_uid = $this->moduleContext->request->getParameter('thread_uid', 'GET', '');
 
 		if (!$thread_uid) {
 			throw new InvalidArgumentException("No thread uid selected");

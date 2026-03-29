@@ -41,7 +41,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		// init request handler
 		$this->capcodeModuleRequestHandler = new capcodeModuleRequestHandler(
 			$this->moduleContext->capcodeService,
-			$this->moduleContext->actionLoggerService
+			$this->moduleContext->actionLoggerService,
+			$this->moduleContext->request
 		);
 
 		// init module page renderer
@@ -51,7 +52,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->moduleContext->moduleEngine, 
 			$this->moduleContext->capcodeService, 
 			$this->moduleContext->adminPageRenderer,
-			$this->modulePageUrl
+			$this->modulePageUrl,
+			$this->moduleContext->request
 		);
 
 		// add links listener 
@@ -76,7 +78,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$accountId = $staffAccountFromSession->getUID();
 		
 		// request vs draw
-		if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+		if ($this->moduleContext->request->isPost()) {
 			$this->capcodeModuleRequestHandler->handleModPageRequests($accountId);
 
 			redirect($this->modulePageUrl);

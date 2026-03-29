@@ -161,18 +161,18 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleThemeCreation(): void {
 		// get the thread uid from POST
-		$threadUid = $_POST['thread_uid'] ?? null;
+		$threadUid = $this->moduleContext->request->getParameter('thread_uid', 'POST');
 
 		// validate thread uid
 		$this->validateThread($threadUid);
 
 		// collect fields
-		$backgroundHexColor = $_POST['backgroundHexColor'] ?? null;
-		$replyBackgroundHexColor = $_POST['replyBackgroundHexColor'] ?? null;
-		$textHexColor = $_POST['textHexColor'] ?? null;
-		$backgroundImageUrl = $_POST['backgroundImageUrl'] ?? null;
-		$audio = $_POST['audio'] ?? null;
-		$rawStyling = $_POST['rawStyling'] ?? null;
+		$backgroundHexColor = $this->moduleContext->request->getParameter('backgroundHexColor', 'POST');
+		$replyBackgroundHexColor = $this->moduleContext->request->getParameter('replyBackgroundHexColor', 'POST');
+		$textHexColor = $this->moduleContext->request->getParameter('textHexColor', 'POST');
+		$backgroundImageUrl = $this->moduleContext->request->getParameter('backgroundImageUrl', 'POST');
+		$audio = $this->moduleContext->request->getParameter('audio', 'POST');
+		$rawStyling = $this->moduleContext->request->getParameter('rawStyling', 'POST');
 
 		// define who added it (current staff id)
 		$addedBy = $this->moduleContext->currentUserId;
@@ -195,7 +195,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleThemeEdit(): void {
 		// get the thread uid from POST
-		$threadUid = $_POST['thread_uid'] ?? null;
+		$threadUid = $this->moduleContext->request->getParameter('thread_uid', 'POST');
 
 		// validate
 		$this->validateThread($threadUid);
@@ -206,12 +206,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// collect fields
-		$backgroundHexColor = $_POST['backgroundHexColor'] ?? null;
-		$replyBackgroundHexColor = $_POST['replyBackgroundHexColor'] ?? null;
-		$textHexColor = $_POST['textHexColor'] ?? null;
-		$backgroundImageUrl = $_POST['backgroundImageUrl'] ?? null;
-		$audio = $_POST['audio'] ?? null;
-		$rawStyling = $_POST['rawStyling'] ?? null;
+		$backgroundHexColor = $this->moduleContext->request->getParameter('backgroundHexColor', 'POST');
+		$replyBackgroundHexColor = $this->moduleContext->request->getParameter('replyBackgroundHexColor', 'POST');
+		$textHexColor = $this->moduleContext->request->getParameter('textHexColor', 'POST');
+		$backgroundImageUrl = $this->moduleContext->request->getParameter('backgroundImageUrl', 'POST');
+		$audio = $this->moduleContext->request->getParameter('audio', 'POST');
+		$rawStyling = $this->moduleContext->request->getParameter('rawStyling', 'POST');
 
 		// Update the entry in the database
 		$this->themeService->editTheme(
@@ -230,7 +230,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleThemeDeletion(): void {
 		// get the thread uid from POST
-		$threadUid = $_POST['thread_uid'] ?? null;
+		$threadUid = $this->moduleContext->request->getParameter('thread_uid', 'POST');
 
 		// validate
 		$this->validateThread($threadUid);
@@ -244,7 +244,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleThemeRequest(): void {
 		// get the action parameter from request
-		$action = $_POST['action'] ?? '';
+		$action = $this->moduleContext->request->getParameter('action', 'POST', '');
 
 		// handle creation
 		if($action === 'create') {
@@ -299,7 +299,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleThemeView(): void {
 		// fetch the thread uid from request
-		$threadUid = $_GET['thread_uid'] ?? null;
+		$threadUid = $this->moduleContext->request->getParameter('thread_uid', 'GET');
 
 		// if no thread uid was supplied or has a falsey value then throw error
 		if(!$threadUid) {
@@ -320,12 +320,12 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage(): void {
 		// if its a post request (i.e: form submission)
-		if(isPostRequest()) {
+		if($this->moduleContext->request->isPost()) {
 			// handle delete/add/edit requests
 			$this->handleThemeRequest();
 		}
 		// GET requests: viewing
-		else if (isGetRequest()) {
+		else if ($this->moduleContext->request->isGet()) {
 			$this->handleThemeView();
 		}
 	}

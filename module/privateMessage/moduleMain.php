@@ -161,7 +161,7 @@ class moduleMain extends abstractModuleMain {
 
 		$this->_loadCache();
 
-		$logs = (++$this->lastno) . ",$to," . time() . ",$from,$topic,$mesg,{$_SERVER['REMOTE_ADDR']},\n" . @file_get_contents($this->MESG_LOG);
+		$logs = (++$this->lastno) . ",$to," . time() . ",$from,$topic,$mesg," . $this->moduleContext->request->getRemoteAddr() . ",\n" . @file_get_contents($this->MESG_LOG);
 		$this->_write($this->MESG_LOG, $logs);
 
 		$this->_rebuildCache();
@@ -274,8 +274,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function ModulePage() {
-		$trip = $_REQUEST['t'] ?? '';
-		$action = $_REQUEST['action'] ?? '';
+		$trip = $this->moduleContext->request->getParameter('t', null, '');
+		$action = $this->moduleContext->request->getParameter('action', null, '');
 		$dat = '';
 
 		$dat .= $this->moduleContext->board->getBoardHead('Private messages');
@@ -284,7 +284,7 @@ class moduleMain extends abstractModuleMain {
 				case 'write':
 
 						$dat.= '
-[<a href="' . $this->getConfig('STATIC_INDEX_FILE') . '?'.$_SERVER['REQUEST_TIME'] . '">Return</a>]
+[<a href="' . $this->getConfig('STATIC_INDEX_FILE') . '?'.$this->moduleContext->request->getRequestTime() . '">Return</a>]
 <div id="PMContainer">
 	<h2 class="theading2">Send PM</h2>
 	<div class="postformTable">
@@ -320,9 +320,9 @@ class moduleMain extends abstractModuleMain {
 
 				case 'post':
 					
-						$this->_postPM($_POST['from'], $_POST['t'], $_POST['topic'], $_POST['content']);
+						$this->_postPM($this->moduleContext->request->getParameter('from', 'POST'), $this->moduleContext->request->getParameter('t', 'POST'), $this->moduleContext->request->getParameter('topic', 'POST'), $this->moduleContext->request->getParameter('content', 'POST'));
 
-						$from = $_POST['from'] ?? '';
+						$from = $this->moduleContext->request->getParameter('from', 'POST', '');
 
 						if (preg_match('/(.*?)[#＃](.*)/u', $from, $regs)) {
 								$from = '<span class="postername">' . htmlspecialchars($regs[1]) . '</span>';
@@ -333,15 +333,15 @@ class moduleMain extends abstractModuleMain {
 						}
 
 						$dat .= '
-[<a href="' . $this->getConfig('STATIC_INDEX_FILE') . '?' . $_SERVER['REQUEST_TIME'] . '">Return</a>]
+[<a href="' . $this->getConfig('STATIC_INDEX_FILE') . '?' . $this->moduleContext->request->getRequestTime() . '">Return</a>]
 <div id="PMContainer">
 	<h2 class="theading2">Message sent</h2>
 	<div class="postformTable">
 		<table cellpadding="1" cellspacing="1" id="postform_tbl">
 			<tr><td class="postblock">From</td><td class="name">' . $from . '</td></tr>
-			<tr><td class="postblock">To</td><td>' . _T('trip_pre') . htmlspecialchars($_POST['t']) . '</td></tr>
-			<tr><td class="postblock">' . _T('form_topic') . '</td><td>' . htmlspecialchars($_POST['topic']) . '</td></tr>
-			<tr><td class="postblock">' . _T('form_comment') . '</td><td><div class="comment">' . htmlspecialchars($_POST['content']) . '</div></td></tr>
+			<tr><td class="postblock">To</td><td>' . _T('trip_pre') . htmlspecialchars($this->moduleContext->request->getParameter('t', 'POST')) . '</td></tr>
+			<tr><td class="postblock">' . _T('form_topic') . '</td><td>' . htmlspecialchars($this->moduleContext->request->getParameter('topic', 'POST')) . '</td></tr>
+			<tr><td class="postblock">' . _T('form_comment') . '</td><td><div class="comment">' . htmlspecialchars($this->moduleContext->request->getParameter('content', 'POST')) . '</div></td></tr>
 		</table>
 	</div>
 </div>
@@ -350,17 +350,17 @@ class moduleMain extends abstractModuleMain {
 						break;
 
 				case 'delete':
-						if (isset($_POST['trip'])) {
+						if ($this->moduleContext->request->hasParameter('trip', 'POST')) {
 								$delno = [];
 
-								foreach ($_POST as $key => $value) {
+								foreach ($this->moduleContext->request->allPost() as $key => $value) {
 										if ($value === 'delete') {
 												$delno[] = $key;
 										}
 								}
 
 								if (!empty($delno)) {
-										$this->_deletePM($delno, $_POST['trip']);
+										$this->_deletePM($delno, $this->moduleContext->request->getParameter('trip', 'POST'));
 								}
 						}
 						// Fallthrough to inbox
@@ -368,7 +368,7 @@ class moduleMain extends abstractModuleMain {
 				default:
 				
 						$dat .= '
-[<a href="' . $this->getConfig('STATIC_INDEX_FILE') . '?' . $_SERVER['REQUEST_TIME'] . '">Return</a>]
+[<a href="' . $this->getConfig('STATIC_INDEX_FILE') . '?' . $this->moduleContext->request->getRequestTime() . '">Return</a>]
 <div id="PMContainer">
 	<h2 class="theading2">Inbox</h2>';
 
@@ -386,8 +386,8 @@ class moduleMain extends abstractModuleMain {
 </script>';
 
 
-						if ($action === 'check' && isset($_POST['trip']) && str_starts_with($_POST['trip'], '#')) {
-								$dat .= $this->_getPM($_POST['trip']);
+						if ($action === 'check' && $this->moduleContext->request->hasParameter('trip', 'POST') && str_starts_with($this->moduleContext->request->getParameter('trip', 'POST'), '#')) {
+								$dat .= $this->_getPM($this->moduleContext->request->getParameter('trip', 'POST'));
 						} else {
 								$dat .= '<hr>';
 						}

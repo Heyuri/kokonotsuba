@@ -59,8 +59,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage(): void {
 		// Admin panel to manage blotter
-		if (isPostRequest()) {
-			if (!empty($_POST['new_blot_txt'])) {
+		if ($this->moduleContext->request->isPost()) {
+			if (!empty($this->moduleContext->request->getParameter('new_blot_txt', 'POST'))) {
 				$this->handleBlotterAddition();
 
 				$this->moduleContext->actionLoggerService->logAction("Added new blotter entry", GLOBAL_BOARD_UID);
@@ -69,8 +69,8 @@ class moduleAdmin extends abstractModuleAdmin {
 				
 				redirect($this->getModulePageURL([], false));
 			}
-			if (!empty($_POST['edit_submit']) && !empty($_POST['entryedit']) && is_array($_POST['entryedit'])) {
-				$editedIds = $this->editBlotterEntries($_POST['entryedit']);
+			if (!empty($this->moduleContext->request->getParameter('edit_submit', 'POST')) && !empty($this->moduleContext->request->getParameter('entryedit', 'POST')) && is_array($this->moduleContext->request->getParameter('entryedit', 'POST'))) {
+				$editedIds = $this->editBlotterEntries($this->moduleContext->request->getParameter('entryedit', 'POST'));
 
 				if (!empty($editedIds)) {
 					$this->moduleContext->actionLoggerService->logAction("Edited blotter entries with IDs: " . implode(", ", $editedIds), GLOBAL_BOARD_UID);
@@ -79,11 +79,11 @@ class moduleAdmin extends abstractModuleAdmin {
 
 				redirect($this->getModulePageURL([], false));
 			}
-			if (!empty($_POST['delete_submit']) && !empty($_POST['entrydelete'])) {
-				$this->deleteBlotterEntries($_POST['entrydelete']);
+			if (!empty($this->moduleContext->request->getParameter('delete_submit', 'POST')) && !empty($this->moduleContext->request->getParameter('entrydelete', 'POST'))) {
+				$this->deleteBlotterEntries($this->moduleContext->request->getParameter('entrydelete', 'POST'));
 
 				// log deletion
-				$this->moduleContext->actionLoggerService->logAction("Deleted blotter entries with IDs: " . implode(", ", $_POST['entrydelete']), GLOBAL_BOARD_UID);
+				$this->moduleContext->actionLoggerService->logAction("Deleted blotter entries with IDs: " . implode(", ", $this->moduleContext->request->getParameter('entrydelete', 'POST')), GLOBAL_BOARD_UID);
 
 				rebuildAllBoards(); //rebuild all pages so it takes effect immedietly
 
@@ -132,7 +132,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function handleBlotterAddition() {
-		$newText = (string) ($_POST['new_blot_txt'] ?? '');
+		$newText = (string) ($this->moduleContext->request->getParameter('new_blot_txt', 'POST', ''));
 		$this->blotterService->addEntry($newText, $this->moduleContext->currentUserId);
 	}
 
