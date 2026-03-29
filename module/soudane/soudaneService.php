@@ -6,15 +6,28 @@ use Kokonotsuba\error\BoardException;
 
 use function Kokonotsuba\libraries\_T;
 
+/** Service for managing soudane (yeah/nope) voting on posts. */
 class soudaneService {
 	public function __construct(
 		private soudaneRepository $soudaneRepository
 	) {}
 
+	/**
+	 * Get yeah vote counts indexed by post UID.
+	 *
+	 * @param array $postUids Array of post UIDs to look up.
+	 * @return array Map of post_uid => yeah count.
+	 */
 	public function getYeahCounts(array $postUids): array {
 		return $this->getVoteCounts($postUids, true);
 	}
 
+	/**
+	 * Get nope vote counts indexed by post UID.
+	 *
+	 * @param array $postUids Array of post UIDs to look up.
+	 * @return array Map of post_uid => nope count.
+	 */
 	public function getNopeCounts(array $postUids): array {
 		return $this->getVoteCounts($postUids, false);
 	}
@@ -59,6 +72,13 @@ class soudaneService {
 		return $type === 'yeah' ? true : false;
 	}
 
+	/**
+	 * Fetch all votes of the given type for a specific post.
+	 *
+	 * @param int    $postUid UID of the post.
+	 * @param string $type    Vote type: 'yeah' or 'nope'.
+	 * @return array|false Array of vote rows, or false if none.
+	 */
 	public function getVotes(int $postUid, string $type): false|array {
 		// validate the type
 		$this->validateType($type);
@@ -73,6 +93,14 @@ class soudaneService {
 		return $votes;
 	}
 
+	/**
+	 * Record a vote on a post.
+	 *
+	 * @param int    $postUid   UID of the post to vote on.
+	 * @param string $ipAddress IP address of the voter.
+	 * @param string $type      Vote type: 'yeah' or 'nope'.
+	 * @return void
+	 */
 	public function addVote(int $postUid, string $ipAddress, string $type): void {
 		// validate the type for repo
 		$this->validateType($type);
