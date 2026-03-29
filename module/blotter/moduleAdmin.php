@@ -2,18 +2,25 @@
 
 namespace Kokonotsuba\Modules\blotter;
 
-include_once __DIR__ . '/blotterLibrary.php';
+require_once __DIR__ . '/blotterEntry.php';
+require_once __DIR__ . '/blotterRepository.php';
+require_once __DIR__ . '/blotterService.php';
 
+use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
+use const Kokonotsuba\GLOBAL_BOARD_UID;
+
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\rebuildAllBoards;
+use function Puchiko\request\isPostRequest;
 use function Puchiko\request\redirect;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
-	private readonly string $myPage;
-	private readonly string $BLOTTER_PATH;
+	private blotterService $blotterService;
+	private readonly string $modulePage;
 
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('AuthLevels.CAN_EDIT_BLOTTER');
@@ -28,13 +35,14 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->BLOTTER_PATH = $this->getConfig('ModuleSettings.BLOTTER_FILE');
-		
-		if(!file_exists($this->BLOTTER_PATH)) {
-			touch($this->BLOTTER_PATH);
-		}
-
-		$this->myPage = $this->getModulePageURL();
+		$databaseSettings = getDatabaseSettings();
+		$blotterRepository = new blotterRepository(
+			databaseConnection::getInstance(),
+			$databaseSettings['BLOTTER_TABLE'],
+			$databaseSettings['ACCOUNT_TABLE']
+		);
+		$this->blotterService = new blotterService($blotterRepository, $this->moduleContext->transactionManager);
+		$this->modulePage = $this->getModulePageURL([], false);
 
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
@@ -46,22 +54,37 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_blotter_title') . '" href="' . $this->myPage . '">' . _T('admin_nav_blotter') . '</a></li>';
+		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_blotter_title') . '" href="' . sanitizeStr($this->modulePage) . '">' . _T('admin_nav_blotter') . '</a></li>';
 	}
 
 	public function ModulePage(): void {
 		// Admin panel to manage blotter
-		if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+		if (isPostRequest()) {
 			if (!empty($_POST['new_blot_txt'])) {
 				$this->handleBlotterAddition();
+
+				$this->moduleContext->actionLoggerService->logAction("Added new blotter entry", GLOBAL_BOARD_UID);
 
 				rebuildAllBoards(); //rebuild all pages so it takes effect immedietly
 				
 				redirect($this->getModulePageURL([], false));
 			}
+			if (!empty($_POST['edit_submit']) && !empty($_POST['entryedit']) && is_array($_POST['entryedit'])) {
+				$editedIds = $this->editBlotterEntries($_POST['entryedit']);
+
+				if (!empty($editedIds)) {
+					$this->moduleContext->actionLoggerService->logAction("Edited blotter entries with IDs: " . implode(", ", $editedIds), GLOBAL_BOARD_UID);
+					rebuildAllBoards(); //rebuild all pages so it takes effect immedietly
+				}
+
+				redirect($this->getModulePageURL([], false));
+			}
 			if (!empty($_POST['delete_submit']) && !empty($_POST['entrydelete'])) {
 				$this->deleteBlotterEntries($_POST['entrydelete']);
-				
+
+				// log deletion
+				$this->moduleContext->actionLoggerService->logAction("Deleted blotter entries with IDs: " . implode(", ", $_POST['entrydelete']), GLOBAL_BOARD_UID);
+
 				rebuildAllBoards(); //rebuild all pages so it takes effect immedietly
 
 				redirect($this->getModulePageURL([], false));
@@ -78,53 +101,39 @@ class moduleAdmin extends abstractModuleAdmin {
 
 
 	private function deleteBlotterEntries($uidsToDelete) {
-		$blotterData = getBlotterFileData($this->BLOTTER_PATH);
-		
 		if(!is_array($uidsToDelete)) {
 			$uidsToDelete = [$uidsToDelete];
 		}
 
-		$updatedData = array_filter($blotterData, function($entry) use ($uidsToDelete) {
-				return !in_array($entry['uid'], $uidsToDelete);
-		});
+		$this->blotterService->deleteEntries($uidsToDelete);
+	}
 
-		$blotterContent = '';
-
-		foreach ($updatedData as $entry) {
-				$blotterContent .= "{$entry['date']}<>{$entry['comment']}<>{$entry['uid']}\n"; // Ensure UID is stored as well
-		}
-
-		file_put_contents($this->BLOTTER_PATH, $blotterContent);
+	/**
+	 * @param array<int|string, string> $entryEdits
+	 * @return int[]
+	 */
+	private function editBlotterEntries(array $entryEdits): array {
+		return $this->blotterService->editEntries($entryEdits);
 	}
 
 	private function prepareAdminBlotterPlaceHolders() {
-		$blotterData = getBlotterFileData($this->BLOTTER_PATH);
+		$blotterEntries = $this->blotterService->getEntries();
 
-		$blotterPlaceholders = ['{$MODULE_URL}' => $this->myPage];
-		foreach($blotterData as $blotterEntry) {
-			$blotterPlaceholders['{$ROWS}'][] = [
-				'{$DATE}' => $blotterEntry['date'],
-				'{$COMMENT}' => $blotterEntry['comment'],
-				'{$UID}' => $blotterEntry['uid'],
-			];
+		$blotterPlaceholders = [
+			'{$MODULE_URL}' => sanitizeStr($this->modulePage),
+			'{$ROWS}' => [],
+		];
+
+		foreach($blotterEntries as $blotterEntry) {
+			$blotterPlaceholders['{$ROWS}'][] = $blotterEntry->toAdminTemplateRow();
 		}
 		
 		return $blotterPlaceholders;
 	}
 
-	private function writeToBlotterFile($comment, $date, $uid) {
-		$escapedComment = preg_replace('/<>/', '&lt;&gt;', $comment);
-		$line = "{$date}<>{$escapedComment}<>{$uid}\n";
-		
-		file_put_contents($this->BLOTTER_PATH, $line, FILE_APPEND);
-	}
-
 	private function handleBlotterAddition() {
-		$newText = strval($_POST['new_blot_txt']) ?? '';
-		$newDate = date($this->getConfig('ModuleSettings.BLOTTER_DATE_FORMAT')) ?? '';
-		$newUID = substr(bin2hex(random_bytes(10)), 0, 10);
-		
-		$this->writeToBlotterFile($newText, $newDate, $newUID);
+		$newText = (string) ($_POST['new_blot_txt'] ?? '');
+		$this->blotterService->addEntry($newText, $this->moduleContext->currentUserId);
 	}
 
 }

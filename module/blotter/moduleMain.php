@@ -2,14 +2,19 @@
 
 namespace Kokonotsuba\Modules\blotter;
 
+require_once __DIR__ . '/blotterEntry.php';
+require_once __DIR__ . '/blotterRepository.php';
+require_once __DIR__ . '/blotterService.php';
+
+use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
 
-include_once __DIR__ . '/blotterLibrary.php';
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
-	private $myPage;
-	private $BLOTTER_PATH; 
-	private $previewLimit = -1; // Path to blotter file
+	private string $modulePage;
+	private int $previewLimit = -1;
+	private blotterService $blotterService;
 
 	public function getName(): string {
 		return 'Blotter';
@@ -20,15 +25,16 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->BLOTTER_PATH = $this->getConfig('ModuleSettings.BLOTTER_FILE');
+		$databaseSettings = getDatabaseSettings();
+		$blotterRepository = new blotterRepository(
+			databaseConnection::getInstance(),
+			$databaseSettings['BLOTTER_TABLE'],
+			$databaseSettings['ACCOUNT_TABLE']
+		);
+		$this->blotterService = new blotterService($blotterRepository, $this->moduleContext->transactionManager);
+		$this->previewLimit = (int) $this->getConfig('ModuleSettings.BLOTTER_PREVIEW_AMOUNT');
 		
-		if(!file_exists($this->BLOTTER_PATH)) {
-			touch($this->BLOTTER_PATH);
-		}
-		
-		$this->previewLimit = $this->getConfig('ModuleSettings.BLOTTER_PREVIEW_AMOUNT');
-		
-		$this->myPage = $this->getModulePageURL();
+		$this->modulePage = $this->getModulePageURL([], false);
 
 		$this->moduleContext->moduleEngine->addListener('PlaceHolderIntercept', function(array &$placeholderArray) {
 			$this->onRenderBlotterPreview($placeholderArray);
@@ -43,19 +49,15 @@ class moduleMain extends abstractModuleMain {
 			$globalMessage .= $res;
 			return;
 		}
-		$blotterData = getBlotterFileData($this->BLOTTER_PATH);
+		$blotterEntries = $this->blotterService->getEntries($this->previewLimit);
 		$previewEntries = [];
 
-		foreach ($blotterData as $i => $entry) {
-				if ($i >= $this->previewLimit) break;
-				$previewEntries[] = [
-						'{$DATE}' => $entry['date'],
-						'{$COMMENT}' => $entry['comment'],
-				];
+		foreach ($blotterEntries as $entry) {
+			$previewEntries[] = $entry->toPublicTemplateRow();
 		}
 
 		$templateValues = [
-				'{$MODULE_URL}' => $this->myPage,
+				'{$MODULE_URL}' => sanitizeStr($this->modulePage),
 				'{$ENTRIES}' => $previewEntries,
 				'{$EMPTY}' => empty($previewEntries),
 		];
@@ -65,17 +67,15 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function drawBlotterTable() {
-		$blotterData = getBlotterFileData($this->BLOTTER_PATH);
+		$blotterEntries = $this->blotterService->getEntries();
 
 		$rows = [];
-		foreach ($blotterData as $entry) {
-				$rows[] = [
-						'{$DATE}' => $entry['date'],
-						'{$COMMENT}' => $entry['comment'],
-				];
+		foreach ($blotterEntries as $entry) {
+				$rows[] = $entry->toPublicTemplateRow();
 		}
 
 		$templateValues = [
+				'{$STATIC_INDEX_FILE}' => sanitizeStr($this->getConfig('STATIC_INDEX_FILE')),
 				'{$ROWS}' => $rows,
 				'{$EMPTY}' => empty($rows),
 		];
@@ -89,4 +89,3 @@ class moduleMain extends abstractModuleMain {
 		echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $blotterTableHtml]);
 	}
 }
-?>

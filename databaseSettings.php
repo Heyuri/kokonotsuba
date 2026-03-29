@@ -31,4 +31,5 @@ return [
 	'THREAD_THEMES_TABLE' => 'thread_themes', // for storing thread themes
 	'LAST_THREAD_SUBMISSIONS_TABLE' => 'last_thread_submissions', // for tracking last thread submission timestamps per board
 	'NOTE_TABLE' => 'notes', // for storing notes left by staff
+	'BLOTTER_TABLE' => 'blotter', // for storing blotter entries
 ];

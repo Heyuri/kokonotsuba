@@ -151,7 +151,7 @@ function generateUid($length = 8) {
 	return $uid;
 }
 
-function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = false): string {
+function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = false, bool $convertNewLines = false): string {
 	// Trim whitespace from both ends of the string
 	$str = trim($str);
 
@@ -170,6 +170,11 @@ function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = fals
 	if ($isAdmin && $injectHtml) {
 		// Convert &lt;tag&gt; back to <tag>
 		$str = preg_replace('/&lt;(.*?)&gt;/', '<$1>', $str);
+	}
+
+	// Convert newlines to <br> tags if $convertNewLines is true
+	if ($convertNewLines) {
+		$str = nl2br($str);
 	}
 
 	return $str;
