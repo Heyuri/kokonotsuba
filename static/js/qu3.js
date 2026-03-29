@@ -9,7 +9,10 @@ let previewStack   = []
 let lastMouseEvent = null
 let cleanupTimer   = null
 
-function createPreviewBox(notFound = false) {
+// Cache for remote post API fetches (keyed by "boardUid_postNo")
+const fetchCache = new Map()
+
+function createPreviewBox(notFound = false, loading = false) {
 	const box = document.createElement('div')
 	box.classList.add('previewBox')
 	box.style.position  = 'absolute'
@@ -22,9 +25,70 @@ function createPreviewBox(notFound = false) {
 				Quote source not found
 			</div>
 		`
+	} else if (loading) {
+		const fetchingText = document.querySelector('meta[name="postApiFetchingText"]')?.content || 'Fetching post...'
+		box.innerHTML = `
+			<div class="post reply">
+				${fetchingText}
+			</div>
+		`
 	}
 	document.body.appendChild(box)
 	return box
+}
+
+/** Get the post API base URL from the meta tag injected by the postApi module. */
+function getPostApiUrl() {
+	return document.querySelector('meta[name="postApiUrl"]')?.content || null
+}
+
+/** Fetch post data from the API by post_uid. Returns a promise; results are cached. */
+function fetchPostData(postUid) {
+	if (fetchCache.has(postUid)) return fetchCache.get(postUid)
+
+	const apiUrl = getPostApiUrl()
+	if (!apiUrl) {
+		const rejected = Promise.resolve(null)
+		fetchCache.set(postUid, rejected)
+		return rejected
+	}
+
+	const separator = apiUrl.includes('?') ? '&' : '?'
+	const url = `${apiUrl}${separator}post_uid=${encodeURIComponent(postUid)}`
+
+	const promise = fetch(url)
+		.then(res => res.ok ? res.json() : null)
+		.catch(() => null)
+
+	fetchCache.set(postUid, promise)
+	return promise
+}
+
+/** Build a post element from API data containing server-rendered HTML. */
+function buildPostFromApi(data) {
+	if (!data || !data.html) return null
+
+	const wrapper = document.createElement('div')
+	wrapper.innerHTML = data.html
+
+	const post = wrapper.querySelector('.post')
+	if (!post) return null
+
+	// Remove the deletion checkbox from the preview
+	const checkbox = post.querySelector('.deletionCheckbox')
+	if (checkbox) checkbox.remove()
+
+	return post
+}
+
+/** Prefetch post data for a quotelink whose target is not in the DOM. */
+function prefetchPost(event) {
+	const el = event.currentTarget
+	const postUid = el.dataset.postUid
+	const targetId = el.dataset.targetId
+	if (!postUid || !targetId || document.getElementById(targetId)) return
+
+	fetchPostData(postUid)
 }
 
 function positionPreviewBox(box, e) {
@@ -102,27 +166,68 @@ function startHover(event) {
 		const parentPrev = parentBox
 			? previewStack.find(o => o.box === parentBox)
 			: null
-		const box        = createPreviewBox(!post)
-		const obj        = {
-			box,
-			trigger,
-			parent: parentPrev,
-			contextPost: post
-		}
-		previewStack.push(obj)
 
+		// Post is in the DOM — show it directly
 		if (post) {
+			const box = createPreviewBox()
+			const obj = { box, trigger, parent: parentPrev, contextPost: post }
+			previewStack.push(obj)
+
 			box.innerHTML = ''
 			const clone = post.cloneNode(true)
 			clone.removeAttribute('id')
 			clone.style.margin = '0'
 			box.appendChild(clone)
+
+			attachPreviewHandlers(obj)
+			applyHoverListeners(box)
+			positionPreviewBox(box, lastMouseEvent)
+			box.style.display = 'block'
+			return
 		}
 
+		// Post not in DOM — try remote fetch via data-post-uid
+		const postUid = trigger.dataset.postUid
+		if (!postUid) {
+			const box = createPreviewBox(true)
+			const obj = { box, trigger, parent: parentPrev, contextPost: null }
+			previewStack.push(obj)
+			attachPreviewHandlers(obj)
+			positionPreviewBox(box, lastMouseEvent)
+			box.style.display = 'block'
+			return
+		}
+
+		// Show loading state
+		const box = createPreviewBox(false, true)
+		const obj = { box, trigger, parent: parentPrev, contextPost: null }
+		previewStack.push(obj)
 		attachPreviewHandlers(obj)
-		applyHoverListeners(box)
 		positionPreviewBox(box, lastMouseEvent)
 		box.style.display = 'block'
+
+		fetchPostData(postUid).then(data => {
+			// If the preview was already removed while fetching, bail out
+			if (!previewStack.includes(obj)) return
+
+			if (!data) {
+				box.innerHTML = `<div class="post reply">Quote source not found</div>`
+				return
+			}
+
+			const rendered = buildPostFromApi(data)
+			if (rendered) {
+				box.innerHTML = ''
+				rendered.style.margin = '0'
+				box.appendChild(rendered)
+				applyHoverListeners(box)
+			} else {
+				box.innerHTML = `<div class="post reply">Quote source not found</div>`
+			}
+
+			// Reposition after content change
+			if (lastMouseEvent) positionPreviewBox(box, lastMouseEvent)
+		})
 	}, PREVIEW_DELAY)
 }
 
@@ -336,8 +441,10 @@ function applyHoverListeners(root) {
 		) return
 		el.removeEventListener('mouseover', startHover)
 		el.removeEventListener('mouseout',  stopHover)
+		el.removeEventListener('mouseenter', prefetchPost)
 		el.addEventListener   ('mouseover', startHover)
 		el.addEventListener   ('mouseout',  stopHover)
+		el.addEventListener   ('mouseenter', prefetchPost)
 	})
 	root.querySelectorAll('.replies-label').forEach(el => {
 		el.removeEventListener('mouseover',  startHover)

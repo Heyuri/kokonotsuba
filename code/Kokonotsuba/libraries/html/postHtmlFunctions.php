@@ -124,6 +124,7 @@ function generateQuoteLinkHtml(
 	//   - quoted post number → post_position (Nth post inside thread)
 	$targetPostToThreadNumber = [];
 	$targetPostToPosition = [];
+	$targetPostToUid = [];
 
 	// Extract metadata for all quoted posts referenced from this post.
 	foreach ($quoteLinkEntries as $entry) {
@@ -136,6 +137,11 @@ function generateQuoteLinkHtml(
 			$postNo = (int)$entry['target_post']['no'];               // Quoted post number
 			$threadNo = (int)$entry['target_post']['post_op_number']; // OP number of target thread
 			$targetPostToThreadNumber[$postNo] = $threadNo;
+
+			// Store the target post UID for the data attribute
+			if (isset($entry['target_post']['post_uid'])) {
+				$targetPostToUid[$postNo] = (int)$entry['target_post']['post_uid'];
+			}
 
 			// If available, store the quoted post's position within its thread (0-based)
 			if (isset($entry['target_post']['post_position']) && is_numeric($entry['target_post']['post_position'])) {
@@ -187,8 +193,13 @@ function generateQuoteLinkHtml(
 			// Assign CSS classes — add crossThreadLink if needed.
 			$linkClass = 'quotelink' . ($isCrossThread ? ' crossThreadLink' : '');
 
+			// Include the target post UID as a data attribute for JS hover previews.
+			$uidAttr = isset($targetPostToUid[$postNumber])
+				? ' data-post-uid="' . $targetPostToUid[$postNumber] . '"'
+				: '';
+
 			// Final anchor tag replacement.
-			$replacements[$fullMatch] = '<a href="' . $url . '" class="' . $linkClass . '">' . $fullMatch . '</a>';
+			$replacements[$fullMatch] = '<a href="' . $url . '" class="' . $linkClass . '"' . $uidAttr . '>' . $fullMatch . '</a>';
 
 		} else {
 			// No metadata found → quoted post does not exist or cannot be resolved.
