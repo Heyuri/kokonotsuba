@@ -136,7 +136,8 @@ const kkfilter = {
 		p.classList.remove('filter');
 
 		if (p.classList.contains('op')) {
-			p.parentNode.classList.remove('filter');
+			var thread = p.closest('.thread');
+			if (thread) thread.classList.remove('filter');
 		}
 
 		var link = p.querySelector('.filterpost');
@@ -150,10 +151,10 @@ const kkfilter = {
 		p.classList.add("filter");
 	
 		if (p.classList.contains("op")) {
-			if (p.parentNode.classList.contains("thread")) {
-				p.parentNode.classList.add("filter");
-			} else {
-				p.classList.add("filter");  // Hide the node itself if parent doesn't have 'thread'
+			var thread = p.closest('.thread');
+			if (thread) {
+				thread.classList.add('filter');
+				if (thread.getBoundingClientRect().top < 0) thread.scrollIntoView();
 			}
 		}
 	
@@ -199,7 +200,8 @@ class kkFilter {
 				if (that.func(post, r)) {
 					if (post.classList.contains("op")) {
 						if ($class("thread").length!=1) {
-							post.parentNode.classList.add("filter");
+							var thread = post.closest('.thread');
+							if (thread) thread.classList.add('filter');
 							post.classList.add("filter");
 						}
 					} else post.classList.add("filter");
