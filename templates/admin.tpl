@@ -314,7 +314,10 @@
 <!--&BLOTTER_ADMIN_PAGE_TABLE_BLOCK-->
 	<tr>
 		<td>{$DATE}</td>
-		<td>{$COMMENT}</td>
+		<td>{$ADDED_BY}</td>
+		<td>
+			<textarea class="inputtext" name="entryedit[{$UID}]" cols="50" rows="2">{$COMMENT}</textarea>
+		</td>
 		<td><input type="checkbox" name="entrydelete[]" value="{$UID}"></td>
 	</tr>
 <!--/&BLOTTER_ADMIN_PAGE_TABLE_BLOCK-->
@@ -344,6 +347,7 @@
 			<thead>
 				<tr>
 					<th>Date</th>
+					<th>Added by</th>
 					<th>Entry</th>
 					<th>Del</th>
 				</tr>
@@ -354,6 +358,7 @@
 		</table>
 
 		<div class="buttonSection">
+			<input value="Save edits" name="edit_submit" type="submit">
 			<input value="Submit" name="delete_submit" type="submit">
 		</div>
 	</form>

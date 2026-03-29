@@ -590,6 +590,15 @@ class tableCreator {
                 CONSTRAINT fk_notes_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
             ) ENGINE=InnoDB;
             ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BLOTTER_TABLE']} (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                blotter_content TEXT NOT NULL,
+                added_by INT NULL,
+                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                
+                CONSTRAINT fk_blotter_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB;
+            ",
         ];
     
         // Use prepared statements for execution
@@ -770,6 +779,7 @@ switch ($action) {
                 'THREAD_THEMES_TABLE' => $dbSettings['THREAD_THEMES_TABLE'],
                 'LAST_THREAD_SUBMISSIONS_TABLE' => $dbSettings['LAST_THREAD_SUBMISSIONS_TABLE'],
                 'NOTE_TABLE' => $dbSettings['NOTE_TABLE'],
+                'BLOTTER_TABLE' => $dbSettings['BLOTTER_TABLE'],
             ];
 
             $tableCreator->createTables($tables);
