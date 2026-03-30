@@ -5,7 +5,6 @@ namespace Kokonotsuba\Modules\blotter;
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
-use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 use function Kokonotsuba\libraries\pdoNamedPlaceholdersForIn;
 
 /** Repository for sitewide blotter (news) entries. */
@@ -43,10 +42,7 @@ class blotterRepository extends baseRepository {
 			return;
 		}
 
-		$sanitizedIds = array_map('intval', $entryIds);
-		$placeholders = pdoPlaceholdersForIn($sanitizedIds);
-
-		$this->query("DELETE FROM {$this->table} WHERE id IN $placeholders", $sanitizedIds);
+		$this->deleteWhereIn('id', array_map('intval', $entryIds));
 	}
 
 	/**
@@ -112,13 +108,14 @@ class blotterRepository extends baseRepository {
 			ORDER BY date_added DESC, id DESC
 		";
 
+		$params = [];
 		if ($limit !== null) {
-			$query .= ' LIMIT ' . (int) $limit;
+			$this->paginate($query, $params, $limit);
 		}
 
 		return $this->queryAllAsClass(
 			$query,
-			[],
+			$params,
 			'\\Kokonotsuba\\Modules\\blotter\\blotterEntry'
 		) ?? [];
 	}

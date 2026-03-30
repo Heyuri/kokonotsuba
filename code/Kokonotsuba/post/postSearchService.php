@@ -184,7 +184,7 @@ class postSearchService {
 	private function formatResults(array $posts, int $totalPostCount): array {
 		$results = [];
 		foreach ($posts as $post) {
-			$post_uid = $post['post_uid'];
+			$post_uid = $post->getUid();
 
 			$results[$post_uid] = [
 				'post' => $post,

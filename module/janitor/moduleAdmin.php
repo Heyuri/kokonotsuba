@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\janitor;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\generateModerateButton;
@@ -28,7 +29,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ManagePostsControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->renderWarnButton($modControlSection, $post, false);
 			}
 		);
@@ -36,7 +37,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'PostAdminControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->renderWarnButton($modControlSection, $post, true);
 			}
 		);
@@ -44,7 +45,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModeratePostWidget',
-			function(array &$widgetArray, array &$post) {
+			function(array &$widgetArray, Post &$post) {
 				$this->onRenderPostWidget($widgetArray, $post);
 			}
 		);
@@ -58,8 +59,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function renderWarnButton(string &$modfunc, array &$post, bool $noScript = false): void {
-		$janitorWarnUrl = $this->generateWarnUrl($post['post_uid']);
+	private function renderWarnButton(string &$modfunc, Post &$post, bool $noScript = false): void {
+		$janitorWarnUrl = $this->generateWarnUrl($post->getUid());
 		
 		$modfunc .= generateModerateButton(
 			$janitorWarnUrl,
@@ -70,9 +71,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
 		// generate warn url
-		$warnUrl = $this->generateWarnUrl($post['post_uid']);
+		$warnUrl = $this->generateWarnUrl($post->getUid());
 
 		// build the widget entry for warn
 		$warnWidget = $this->buildWidgetEntry(
@@ -178,7 +179,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			return;
 		}
 
-		$ip = $post['host'];
+		$ip = $post->getIp();
 		$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', nl2br($this->moduleContext->request->getParameter('msg', 'POST', ''), false)));
 		if (!$reason) $reason = 'No reason given.';
 
@@ -187,13 +188,13 @@ class moduleAdmin extends abstractModuleAdmin {
 			
 			// parameters to update in the query
 			$updatePostParameters = [
-				'com' => $post['com']
+				'com' => $post->getComment()
 			];
 			
-			$this->moduleContext->postRepository->updatePost($post['post_uid'], $updatePostParameters);
+			$this->moduleContext->postRepository->updatePost($post->getUid(), $updatePostParameters);
 		}
 
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 
 		$BANFILE = $board->getBoardStoragePath() . 'bans.log.txt';
 		touch($BANFILE);

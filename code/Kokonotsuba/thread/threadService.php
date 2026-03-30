@@ -6,6 +6,7 @@ use Exception;
 use Kokonotsuba\board\board;
 use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\post\attachment\fileService;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\post\postService;
@@ -197,7 +198,7 @@ class threadService {
 
 		if (empty($threads)) return [];
 
-		$threadUIDs = array_column($threads, 'thread_uid');
+		$threadUIDs = array_map(fn($t) => $t->getUid(), $threads);
 		
 		$postRows = $this->threadRepository->getPostsForThreads($threadUIDs, $previewCount, $adminMode);
 		$postsByThread = $this->groupPostsByThread($postRows);
@@ -214,7 +215,7 @@ class threadService {
 	private function groupPostsByThread(array $postRows): array {
 		$postsByThread = [];
 		foreach ($postRows as $post) {
-			$postsByThread[$post['thread_uid']][] = $post;
+			$postsByThread[$post->getThreadUid()][] = $post;
 		}
 		return $postsByThread;
 	}
@@ -230,11 +231,11 @@ class threadService {
 	private function buildPreviewResults(array $threads, array $postsByThread, ?int $previewCount): array {
 		$result = [];
 		foreach ($threads as $thread) {
-			$threadUID = $thread['thread_uid'];
+			$threadUID = $thread->getUid();
 			$previewPosts = $postsByThread[$threadUID] ?? [];
 			
 			// get total posts
-			$totalPosts = $thread['number_of_posts'];
+			$totalPosts = $thread->getPostCount();
 
 			// if theres a preview limit then generate hidden amount
 			if($previewCount) {
@@ -247,7 +248,7 @@ class threadService {
 
 			$result[] = [
 				'thread' => $thread,
-				'post_uids' => array_column($previewPosts, 'post_uid'),
+				'post_uids' => array_map(fn($p) => $p->getUid(), $previewPosts),
 				'posts' => $previewPosts,
 				'hidden_reply_count' => $omittedCount,
 				'number_of_posts' => $totalPosts,
@@ -273,7 +274,7 @@ class threadService {
 
 		if (empty($threads)) return [];
 
-		$threadUIDs = array_column($threads, 'thread_uid');
+		$threadUIDs = array_map(fn($t) => $t->getUid(), $threads);
 
 		// get posts from thread
 		$allPosts = $this->threadRepository->getPostsForThreads($threadUIDs, $previewCount, $includeDeleted);
@@ -349,14 +350,14 @@ class threadService {
 			$boardUID = $destinationBoard->getBoardUID();
 
 			foreach ($posts as $key => $post) {
-				$oldPostNumber = $post['no'];
+				$oldPostNumber = $post->getNumber();
 				$newPostNumber = ++$lastPostNumber;
 				$postNumberMapping[$oldPostNumber] = $newPostNumber;
 
-				$updatedCom = $this->updateQuoteReferences($post['com'], $postNumberMapping);
+				$updatedCom = $this->updateQuoteReferences($post->getComment(), $postNumberMapping);
 
 				$this->threadRepository->updatePostForBoardMove(
-					$post['post_uid'],
+					$post->getUid(),
 					$newPostNumber,
 					$boardUID,
 					$updatedCom
@@ -414,12 +415,13 @@ class threadService {
 			$this->threadRepository->insertThread($newThreadUid, $newOpPostNumber, $boardUID);
 
 			foreach ($posts as $post) {
+				/** @var Post $post */
 				$newPostNumber = ++$lastPostNo;
-				$postNumberMapping[$post['no']] = $newPostNumber;
+				$postNumberMapping[$post->getNumber()] = $newPostNumber;
 				$destinationBoard->incrementBoardPostNumber();
 
 				$newPost = $this->mapPostData($post, $boardUID, $newPostNumber, $newThreadUid);
-				$newPost['_original_uid'] = $post['post_uid'];
+				$newPost['_original_uid'] = $post->getUid();
 				$newPostsData[] = $newPost;
 			}
 
@@ -467,33 +469,33 @@ class threadService {
 	/**
 	 * Build the data array for a new post based on an original post being copied.
 	 *
-	 * @param array  $post           Original post data row.
+	 * @param Post   $post           Original post object.
 	 * @param mixed  $boardUID       Destination board UID.
 	 * @param int    $newPostNumber  New post number in the destination board.
 	 * @param string $newThreadUid   UID of the new thread.
 	 * @return array New post data array ready for insertion.
 	 */
-	private function mapPostData($post, $boardUID, $newPostNumber, $newThreadUid) {
+	private function mapPostData(Post $post, $boardUID, $newPostNumber, $newThreadUid) {
 		return [
 			'no'			=> $newPostNumber,
-			'poster_hash'	=> $post['poster_hash'],
+			'poster_hash'	=> $post->getPosterHash(),
 			'boardUID'		=> $boardUID,
 			'thread_uid'	=> $newThreadUid,
-			'post_position' => $post['post_position'],
-			'is_op'			=> $post['is_op'],
-			'root'			=> $post['root'],
-			'category'		=> $post['category'],
-			'pwd'			=> $post['pwd'],
-			'now'			=> $post['now'],
-			'name'			=> $post['name'],
-			'tripcode'		=> $post['tripcode'],
-			'secure_tripcode' => $post['secure_tripcode'],
-			'capcode'		=> $post['capcode'],
-			'email'			=> $post['email'],
-			'sub'			=> $post['sub'],
-			'com'			=> $post['com'],
-			'host'			=> $post['host'],
-			'status'		=> $post['status']
+			'post_position' => $post->getPostPosition(),
+			'is_op'			=> $post->isOp(),
+			'root'			=> $post->getRoot(),
+			'category'		=> $post->getCategory(),
+			'pwd'			=> $post->getPassword(),
+			'now'			=> $post->getTimestamp(),
+			'name'			=> $post->getName(),
+			'tripcode'		=> $post->getTripcode(),
+			'secure_tripcode' => $post->getSecureTripcode(),
+			'capcode'		=> $post->getCapcode(),
+			'email'			=> $post->getEmail(),
+			'sub'			=> $post->getSubject(),
+			'com'			=> $post->getComment(),
+			'host'			=> $post->getIp(),
+			'status'		=> $post->getStatus()
 		];
 	}
 	
@@ -608,7 +610,7 @@ class threadService {
 	 * @param int      $maxThreadAmount   Maximum number of threads to retain.
 	 * @return array|null Thread UIDs that were pruned, or empty array if none.
 	 */
-	public function pruneByAmount(array $threadUidList, int $maxThreadAmount): ?array {
+	public function pruneByAmount(array $threadUidList, int $maxThreadAmount, int $chunkSize = 50): ?array {
 		// slice array to filter amount threads that are over the max thread amount limit.
 		// Threads are ordered on last bump time
 		$threadsToPrune = $this->getThreadAmountToPrune($threadUidList, $maxThreadAmount);
@@ -619,12 +621,13 @@ class threadService {
 			return [];
 		}
 
-		// get all the opening posts
-		$postUids = $this->threadRepository->getOpPostUidsFromThreads($threadsToPrune);
+		// process in chunks to avoid running out of memory on large boards
+		$chunks = array_chunk($threadsToPrune, $chunkSize);
 
-		// then delete them
-		// use -1 to represent the system
-		$this->postService->removePosts($postUids);
+		foreach ($chunks as $chunk) {
+			$postUids = $this->threadRepository->getOpPostUidsFromThreads($chunk);
+			$this->postService->removePosts($postUids);
+		}
 
 		// return the deleted thread uids
 		return $threadsToPrune;
@@ -676,9 +679,9 @@ class threadService {
 	 *
 	 * @param string $threadUid      Thread UID.
 	 * @param bool   $includeDeleted Whether to return the thread if its OP is deleted.
-	 * @return array|false Thread data array, or false if not found.
+	 * @return Thread|false Thread object, or false if not found.
 	 */
-	public function getThreadData(string $threadUid, bool $includeDeleted = false): array|false {
+	public function getThreadData(string $threadUid, bool $includeDeleted = false): Thread|false {
 		// get thread by uid
 		$threadData = $this->threadRepository->getThreadByUid($threadUid, $includeDeleted);
 

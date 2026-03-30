@@ -9,6 +9,7 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\policy\postRenderingPolicy;
 use Kokonotsuba\request\request;
 use Kokonotsuba\thread\postRedirectService;
+use Kokonotsuba\thread\Thread;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\thread\threadRepository;
 
@@ -111,10 +112,16 @@ class defaultRoute {
 			}
 
 			// Fetch the thread UID from the post's data
-			$newThread = $this->threadRepository->getThreadByUid($post['thread_uid']) ?? false;
+			$newThread = $this->threadRepository->getThreadByUid($post->getThreadUid());
 
+			// If thread not found, show error
+			if (!$newThread) {
+				throw new BoardException(_T('thread_not_found'));
+			}
+
+			/** @var Thread $newThread */
 			// new thread uid
-			$newThreadUid = $newThread['thread_uid'];
+			$newThreadUid = $newThread->getUid();
 
 			// If still not valid, show error
 			if (!$this->threadRepository->isThread($newThreadUid)) {
@@ -125,7 +132,7 @@ class defaultRoute {
 			$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
 
 			// get the page of the post
-			$page = floor($post['post_position'] / $repliesPerPage);
+			$page = floor($post->getPostPosition() / $repliesPerPage);
 
 			// Otherwise, redirect to the correct thread page and scroll to post
 			$resnoNew = $this->threadRepository->resolveThreadNumberFromUID($newThreadUid); 

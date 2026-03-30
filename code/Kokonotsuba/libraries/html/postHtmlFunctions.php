@@ -8,6 +8,7 @@ namespace Kokonotsuba\libraries\html;
 
 use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\post\Post;
 
 use function Puchiko\strings\containsHtmlTags;
 
@@ -86,7 +87,7 @@ function generateNoticeSage(bool $noticeSage, string $email): string {
  *     - target_post['post_position'] (Nth post within the thread, 0-based)
  *
  * @param array $quoteLinksFromBoard All quote metadata for the thread, indexed by post_uid.
- * @param array $post The current post's data, including 'post_uid' and 'com'.
+ * @param Post $post The current post's data, including 'post_uid' and 'com'.
  * @param int $threadNumber Thread number (OP's post number) of the current thread.
  * @param bool $useQuoteSystem Whether quote links should be transformed.
  * @param board $board Board object used to generate URLs.
@@ -97,7 +98,7 @@ function generateNoticeSage(bool $noticeSage, string $email): string {
  */
 function generateQuoteLinkHtml(
 	array $quoteLinksFromBoard, 
-	array $post, 
+	Post $post, 
 	int $threadNumber, 
 	bool $useQuoteSystem, 
 	board $board, 
@@ -106,14 +107,14 @@ function generateQuoteLinkHtml(
 	// If quoting system disabled, or comment missing, or post missing an ID → return original content.
 	if (
 		empty($useQuoteSystem) ||
-		empty($post['com']) ||
-		empty($post['post_uid'])
+		empty($post->getComment()) ||
+		empty($post->getUid())
 	) {
-		return $post['com'] ?? '';
+		return $post->getComment() ?? '';
 	}
 	
-	$comment = $post['com'];
-	$postUid = $post['post_uid'];
+	$comment = $post->getComment();
+	$postUid = $post->getUid();
 
 	// Get all quote references originating from this specific post.
 	// This contains all metadata about the quoted posts.

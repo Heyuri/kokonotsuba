@@ -63,12 +63,15 @@ class postRedirectService {
 	public function resolveRedirectUrlFromThreadUID(string $threadUid) {
 		// fetch redirected thread from database
 		$thread = $this->threadService->getThreadData($threadUid);
-		
+
+		if (!$thread) return null;
+
+		/** @var Thread $thread */
 		// get thread board
-        $threadBoard = searchBoardArrayForBoard($thread['boardUID']);
+        $threadBoard = searchBoardArrayForBoard($thread->getBoardUID());
 		
 		// get thread number
-		$threadNumber = $thread['post_op_number'];
+		$threadNumber = $thread->getOpNumber();
 
 		// build thread url
         $url = $threadBoard->getBoardThreadURL($threadNumber);
@@ -93,8 +96,11 @@ class postRedirectService {
 		$thread_uid = $redirect->getThreadUID();
 		$thread = $this->threadService->getThreadData($thread_uid);
 
+		if (!$thread) return null;
+
+		/** @var Thread $thread */
 		// get thread number
-		$threadNumber = $thread['post_op_number'];
+		$threadNumber = $thread->getOpNumber();
 
 		// generate url
 		$newURL = $newBoard->getBoardThreadURL($threadNumber);

@@ -9,8 +9,10 @@ use Kokonotsuba\interfaces\IBoard;
 use InvalidArgumentException;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\postRegistData;
+use Kokonotsuba\thread\Thread;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\generateModerateButton;
@@ -42,7 +44,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ManagePostsThreadControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->renderMoveThreadButton($modControlSection, $post, false);
 			}
 		);
@@ -50,7 +52,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ThreadAdminControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->renderMoveThreadButton($modControlSection, $post, true);
 			}
 		);
@@ -58,15 +60,15 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModerateThreadWidget',
-			function(array &$widgetArray, array &$post) {
+			function(array &$widgetArray, Post &$post) {
 				$this->onRenderThreadWidget($widgetArray, $post);
 			}
 		);
 	}
 
-	public function renderMoveThreadButton(string &$modfunc, array $post, bool $noScript): void {
+	public function renderMoveThreadButton(string &$modfunc, Post $post, bool $noScript): void {
 		// url to move thread page with thread uid as parameter
-		$moveThreadButtonUrl = $this->generateMoveThreadUrl($post['thread_uid']);
+		$moveThreadButtonUrl = $this->generateMoveThreadUrl($post->getThreadUid());
 
 		// append the move thread button to the modfunc string
 		$modfunc .= generateModerateButton(
@@ -78,9 +80,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
+	private function onRenderThreadWidget(array &$widgetArray, Post &$post): void {
 		// generate move thread url
-		$moveThreadUrl = $this->generateMoveThreadUrl($post['thread_uid']);
+		$moveThreadUrl = $this->generateMoveThreadUrl($post->getThreadUid());
 
 		// build the widget entry
 		$moveThreadWidget = $this->buildWidgetEntry($moveThreadUrl, 'moveThread', 'Move thread', '');
@@ -102,7 +104,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $url;
 	}
 
-	private function leavePostInShadowThread(array $originalThread, IBoard $originalBoard, array $newThread, IBoard $destinationBoard) {
+	private function leavePostInShadowThread(Thread $originalThread, IBoard $originalBoard, Thread $newThread, IBoard $destinationBoard) {
 		$originalBoardConfig = $originalBoard->loadBoardConfig();
 
 		$postDateFormatter = new postDateFormatter($originalBoardConfig['TIME_ZONE']);
@@ -118,7 +120,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$name = $originalBoardConfig['SYSTEMCHAN_NAME'];
 
 		// Generate link to the new thread
-		$newThreadUrl = $destinationBoard->getBoardThreadURL($newThread['post_op_number']);
+		$newThreadUrl = $destinationBoard->getBoardThreadURL($newThread->getOpNumber());
 		$moveComment = 'Thread moved to <a href="' . $newThreadUrl . '">'.$destinationBoard->getBoardTitle().'</a>';
 
 		// Prepare post metadata
@@ -128,7 +130,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$capcode = 'System';
 
 		// Get original thread UID
-		$originalThreadUid = $originalThread['thread_uid'];
+		$originalThreadUid = $originalThread->getUid();
 
 
 		$postRegistData = new postRegistData(
@@ -313,7 +315,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$threadRedirectUrl = '';
 
 		$threadData = $thread['thread'];
-		$threadUid = $threadData['thread_uid'];
+		$threadUid = $threadData->getUid();
 		$threadPosts = $thread['posts'];
 
 		// board uid of the destination board
@@ -328,6 +330,10 @@ class moduleAdmin extends abstractModuleAdmin {
 
 			$newThreadData = $this->moduleContext->threadRepository->getThreadByUid($newThreadUid, true);
 
+			if (!$newThreadData) {
+				throw new \RuntimeException('Failed to fetch newly created thread.');
+			}
+
 			// leave shadow post
 			$this->leavePostInShadowThread($threadData, $hostBoard, $newThreadData, $destinationBoard);
 			
@@ -340,7 +346,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			// make unmoveable
 			$openingPost['status'] = $this->toggleThreadStatus($openingPost, 'ghost');
 
-			$threadRedirectUrl = $destinationBoard->getBoardThreadURL($newThreadData['post_op_number']); 
+			$threadRedirectUrl = $destinationBoard->getBoardThreadURL($newThreadData->getOpNumber()); 
 		} else {
 			$this->moduleContext->postRedirectService->addNewRedirect($hostBoard->getBoardUID(), $destinationBoard->getBoardUID(), $threadUid);
 
@@ -388,15 +394,15 @@ class moduleAdmin extends abstractModuleAdmin {
 				throw new BoardException("Thread not found");
 			}
 
-			$threadOP = $thread['posts'][0];
-			$threadStatus = new FlagHelper($threadOP['status']);
+		$threadOP = $thread['posts'][0];
+			$threadStatus = new FlagHelper($threadOP->getStatus());
 	
 			if ($threadStatus->value('ghost')) {
 				throw new BoardException("Cannot move ghost threads");
 			}
 	
 			// Get board objects
-			$hostBoard = searchBoardArrayForBoard($thread['thread']['boardUID']);
+			$hostBoard = searchBoardArrayForBoard($thread['thread']->getBoardUID());
 			$destinationBoard = searchBoardArrayForBoard($destinationBoardUID);
 	
 			$redirectURL = '';
@@ -419,7 +425,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			// Log the action
 			$destinationBoardTitle = htmlspecialchars($destinationBoard->getBoardTitle());
 			$this->moduleContext->actionLoggerService->logAction(
-				"Moved thread {$thread['thread']['post_op_number']} to board $destinationBoardTitle",
+				"Moved thread {$thread['thread']->getOpNumber()} to board $destinationBoardTitle",
 				$hostBoard->getBoardUID()
 			);
 	
@@ -446,7 +452,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 		$thread = $this->moduleContext->threadService->getThreadData($thread_uid, true);
 		$threadNumber = $this->moduleContext->threadRepository->resolveThreadNumberFromUID($thread_uid);
-		$threadParentBoard = searchBoardArrayForBoard($thread['boardUID']);
+		$threadParentBoard = searchBoardArrayForBoard($thread->getBoardUID());
 
 		$boardRadioHTML = generateBoardListRadioHTML($threadParentBoard, GLOBAL_BOARD_ARRAY);
 
@@ -460,15 +466,15 @@ class moduleAdmin extends abstractModuleAdmin {
 		];
 	}
 
-	private function toggleThreadStatus(array $openingPost, string $flag): FlagHelper {
+	private function toggleThreadStatus(Post $openingPost, string $flag): FlagHelper {
 		// Create helper with current status
-		$flags = new FlagHelper($openingPost['status']);
+		$flags = new FlagHelper($openingPost->getStatus());
 
 		// Toggle the specified flag
 		$flags->toggle($flag);
 
 		// Save the updated status back to the post
-		$this->moduleContext->postRepository->setPostStatus($openingPost['post_uid'], $flags->toString());
+		$this->moduleContext->postRepository->setPostStatus($openingPost->getUid(), $flags->toString());
 
 		// Return updated flags
 		return $flags;

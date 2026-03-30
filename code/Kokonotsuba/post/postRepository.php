@@ -46,12 +46,9 @@ class postRepository extends baseRepository {
 	 */
 	public function postCountFromBoard($board, $threadUID = 0) {
 		if ($threadUID) {
-			$query = "SELECT COUNT(post_uid) FROM {$this->table} WHERE thread_uid = ?";
-			$count = $this->queryColumn($query, [$threadUID]);
-			return $count + 1;
+			return $this->countBy('thread_uid', $threadUID) + 1;
 		} else {
-			$query = "SELECT COUNT(post_uid) FROM {$this->table} WHERE boardUID = :board_uid";
-			return $this->queryColumn($query, [':board_uid' => $board->getBoardUID()]);
+			return $this->countBy('boardUID', $board->getBoardUID());
 		}
 	}
 
@@ -91,9 +88,8 @@ class postRepository extends baseRepository {
 
 		bindPostFilterParameters($params, $query, $filters, true); //apply filtration to query
 
-		$query .= " ORDER BY p.$order  DESC LIMIT :_limit OFFSET :_offset";
-		$params[':_limit'] = $amount;
-		$params[':_offset'] = $offset;
+		$query .= " ORDER BY p.$order DESC";
+		$this->paginate($query, $params, $amount, $offset);
 		$posts = $this->queryAll($query, $params);
 	
 		// merge attachment rows
@@ -105,11 +101,11 @@ class postRepository extends baseRepository {
 	/**
 	 * Fetch posts belonging to the specified boards and threads.
 	 *
-	 * @param array  $boardThreadMap Map of boardUID => array of thread/post UIDs.
+	 * @param array<int, array<int>>  $boardThreadMap Map of boardUID => array of thread/post UIDs.
 	 * @param string $fields         Comma-separated column list to SELECT.
 	 * @return array Array of raw post rows.
 	 */
-	public function fetchPostsFromBoardsAndThreads(array $boardThreadMap, string $fields = '*') {
+	public function fetchPostsFromBoardsAndThreads(array $boardThreadMap, string $fields = '*'): array {
 		if (empty($boardThreadMap)) {
 			return array();
 		}
@@ -157,9 +153,9 @@ class postRepository extends baseRepository {
 	 *
 	 * @param int  $post_uid     Post UID.
 	 * @param bool $viewDeleted  Include deletion metadata in the query.
-	 * @return array|false Merged post data array, or false if not found.
+	 * @return Post|false Merged post object, or false if not found.
 	 */
-	public function getPostByUid(int $post_uid, bool $viewDeleted = false): array|false {
+	public function getPostByUid(int $post_uid, bool $viewDeleted = false): Post|false {
 		// get base post query
 		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $viewDeleted);
 		
@@ -200,12 +196,7 @@ class postRepository extends baseRepository {
 	 * @return mixed Post number (no), or null if not found.
 	 */
 	public function resolvePostNumberFromUID($post_uid) {
-		$query = "SELECT no FROM {$this->table} WHERE post_uid = :post_uid";
-		$params = [
-			':post_uid' => strval($post_uid)
-		];
-		$postNo = $this->queryColumn($query, $params);
-		return $postNo;
+		return $this->pluck('no', 'post_uid', strval($post_uid));
 	}
 	
 	/**
@@ -388,12 +379,7 @@ class postRepository extends baseRepository {
 	 * @return void
 	 */
 	public function deletePostsByUIDs(array $postUIDsList): void {
-		$inClause = pdoPlaceholdersForIn($postUIDsList);
-
-		$this->query("
-			DELETE FROM {$this->table}
-			WHERE post_uid IN $inClause
-		", $postUIDsList);
+		$this->deleteWhereIn('post_uid', $postUIDsList);
 	}
 	
 	/**
@@ -428,15 +414,7 @@ class postRepository extends baseRepository {
 	 * @return bool|array Flat array of post UIDs, or false if none found.
 	 */
 	public function getPostUidsFromThread(string $threadUid): bool|array {
-		$query = "SELECT post_uid FROM {$this->table} WHERE thread_uid = :thread_uid";
-
-		$params = [
-			':thread_uid' => $threadUid
-		];
-
-		$postUids = array_merge(...$this->queryAllAsIndexArray($query, $params));
-
-		return $postUids;
+		return $this->pluckAll('post_uid', 'thread_uid', $threadUid);
 	}
 
 	/**
@@ -445,7 +423,7 @@ class postRepository extends baseRepository {
 	 * @param string $threadUid Thread UID.
 	 * @return bool|array Merged post data array, or false if not found.
 	 */
-	public function getOpeningPostFromThread(string $threadUid): bool|array {
+	public function getOpeningPostFromThread(string $threadUid): bool|Post {
 		// get base post query
 		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable);
 
@@ -597,22 +575,7 @@ class postRepository extends baseRepository {
 	 * @return array|false Flat array of board UIDs, or false if none found.
 	 */
 	public function getBoardUidsFromPostUids(array $postUids): false|array {
-		// declare base query
-		$query = "SELECT boardUID FROM {$this->table}";
-
-		// add where clause
-		$placeholders = pdoPlaceholdersForIn($postUids);
-		$query .= " WHERE post_uid IN $placeholders";
-
-		// fetch board uids
-		$boardUids = $this->queryAllAsIndexArray($query, $postUids);
-
-		if(!$boardUids) {
-			return false;
-		} else {
-			// return result
-			return array_merge(...$boardUids);
-		}
+		return $this->pluckWhereIn('boardUID', 'post_uid', $postUids) ?: false;
 	}
 
 	/**
@@ -622,7 +585,6 @@ class postRepository extends baseRepository {
 	 * @return string|null Host string, or null if not found.
 	 */
 	public function resolveHostFromPostUid(int $postUid): ?string {
-		$query = "SELECT host FROM {$this->table} WHERE post_uid = :post_uid";
-		return $this->queryValue($query, [':post_uid' => $postUid]);
+		return $this->pluck('host', 'post_uid', $postUid);
 	}
 }

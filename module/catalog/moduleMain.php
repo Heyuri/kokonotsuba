@@ -118,16 +118,16 @@ class moduleMain extends abstractModuleMain {
 
 			if(!$opPost) continue;
 
-			$firstKey = array_key_first($opPost['attachments']);
+			$firstKey = array_key_first($opPost->getAttachments());
 
-			$opAttachment = $opPost['attachments'][$firstKey] ?? null;
+			$opAttachment = $opPost->getAttachments()[$firstKey] ?? null;
 
-			$comment = quote_unkfunc($opPost['com']);
+			$comment = quote_unkfunc($opPost->getComment());
 
 			// get OP subject
-			$subject = $opPost['sub'] ?? '';
+			$subject = $opPost->getSubject() ?? '';
 
-			$threadNumber = $thread['thread']['post_op_number'];
+			$threadNumber = $thread['thread']->getOpNumber();
 			if ( ($cat_cols!='auto') && !($i%intval($cat_cols)) )
 				$dat.= '</tr><tr>';
 

@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\libraries;
 
+use Kokonotsuba\post\Post;
+
 /**
  * Generate the base query for posts or deleted posts.
  *
@@ -259,7 +261,7 @@ function buildAttachment(array $row): array {
  *  - deleted_attachments[]
  *
  * @param false|array $rows
- * @return false|array
+ * @return false|Post[]
  */
 function mergeMultiplePostRows(null|false|array $rows): false|array {
 	if (!$rows) {
@@ -271,26 +273,21 @@ function mergeMultiplePostRows(null|false|array $rows): false|array {
 	foreach ($rows as $row) {
 		$uid = $row['post_uid'];
 
-		// Initialize the post entry if we haven't seen it yet
+		// Initialize the Post object if we haven't seen this uid yet
 		if (!isset($posts[$uid])) {
-			$posts[$uid] = $row;              // copy base post data
-			$posts[$uid]['attachments'] = []; // normal attachments
-			$posts[$uid]['deleted_attachments'] = []; // attachment deletion metadata
-			$posts[$uid]['staff_notes'] = [];
+			$posts[$uid] = new Post($row);
 		}
 
-		/**
-		 * Delegate the repeated logic to one helper
-		 */
+		// Merge attachment, deletion, and note data from this row
 		mergeRowIntoPost($posts[$uid], $row);
 
 		// soudane data
 		if (isset($row['votes_total_count']) && $row['votes_total_count'] !== null) {
-			$posts[$uid]['votes'] = [
+			$posts[$uid]->setVotes([
 				'total_score' => $row['votes_total_count'],
 				'yeah_count' => $row['votes_yeah_count'],
 				'nope_count' => $row['votes_nope_count']
-			];
+			]);
 		}
 	}
 
@@ -309,51 +306,37 @@ function mergeMultiplePostRows(null|false|array $rows): false|array {
  *  - merges deleted-attachment metadata
  *  - strips attachment_* columns
  *
- * @param array $target The post entry being built
+ * @param Post $target The post entry being built
  * @param array $row    The SQL row
  */
-function mergeRowIntoPost(array &$target, array $row): void {
+function mergeRowIntoPost(Post &$target, array $row): void {
 	// normal attachments
 	if (!empty($row['attachment_id'])) {
-		$target['attachments'][$row['attachment_id']] = buildAttachment($row);
+		$target->addAttachment($row['attachment_id'], buildAttachment($row));
 	}
 
 	// deleted attachments
 	if (!empty($row['file_id'])) {
-		$target['deleted_attachments'][$row['file_id']] = [
+		$target->addDeletedAttachment($row['file_id'], [
 			'deleted_post_id'   => $row['deleted_post_id'] ?? null,
 			'deleted_by'        => $row['deleted_by'] ?? null,
 			'deleted_at'        => $row['deleted_at'] ?? null,
 			'restored_at'       => $row['restored_at'] ?? null,
 			'file_only_deleted' => (bool)($row['file_only_deleted'] ?? false),
 			'by_proxy'          => (bool)($row['by_proxy'] ?? false),
-		];
+		]);
 	}
 
 	// staff notes
 	if (!empty($row['note_id'])) {
-
-	    $noteId = $row['note_id'];
-
-	    if (!isset($target['staff_notes'][$noteId])) {
-	        $target['staff_notes'][$noteId] = [
-	            'id'			=> $noteId,
-	            'note_submitted'=> $row['note_submitted'],
-	            'note_added_by'	=> $row['note_added_by'],
-	            'note_text'		=> $row['note_text'],
-				'note_added_by_username' => $row['note_added_by_username'],
-	        ];
-	    }
+		$target->addStaffNote($row['note_id'], [
+			'id'                     => $row['note_id'],
+			'note_submitted'         => $row['note_submitted'],
+			'note_added_by'          => $row['note_added_by'],
+			'note_text'              => $row['note_text'],
+			'note_added_by_username' => $row['note_added_by_username'],
+		]);
 	}
-
-	// remove raw attachment_* columns
-	stripAttachmentColumns($target);
-
-	// strip soudane columns
-	stripSoudaneColumns($target);
-
-	// strip the notes columns from the base array
-	stripNoteColumns($target);
 }
 
 /**
@@ -406,16 +389,16 @@ function stripNoteColumns(array &$row): void {
 }
 
 function applyDeletionMetadata(array &$posts): void {
-	// loop through post rows by reference
-	foreach ($posts as &$post) {
-		// Apply metadata to every attachment
-		if (!empty($post['attachments'])) {
-			foreach ($post['attachments'] as $attachmentId => &$att) {
-				// attachment-level deletion
+	foreach ($posts as $post) {
+		$attachments = $post->getAttachments();
+		$deletedAttachments = $post->getDeletedAttachments();
+		if (!empty($attachments)) {
+			foreach ($attachments as $attachmentId => &$att) {
 				$att['deletedPostId'] =
-					$post['deleted_attachments'][$attachmentId]['deleted_post_id']
+					$deletedAttachments[$attachmentId]['deleted_post_id']
 					?? null;
 			}
+			$post->setAttachments($attachments);
 		}
 	}
 }
@@ -451,19 +434,15 @@ function mergeDeletedPostRows(null|false|array $rows): false|array {
 		}
 
 		if ($dpId === null) {
-			// Nothing sensible to group by; skip this row
 			continue;
 		}
 
-		// Initialize this dp entry if we haven't seen it yet
+		// Initialize Post object if we haven't seen this entry yet
 		if (!isset($entries[$dpId])) {
-			$entries[$dpId] = $row;
-			$entries[$dpId]['attachments'] = [];
-			$entries[$dpId]['deleted_attachments'] = [];
-			$entries[$dpId]['staff_notes'] = [];
+			$entries[$dpId] = new Post($row);
 		}
 
-		// Reuse your existing logic for wiring up attachments + deleted_attachments
+		// Reuse existing logic for wiring up attachments + deleted_attachments
 		mergeRowIntoPost($entries[$dpId], $row);
 	}
 

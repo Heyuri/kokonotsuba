@@ -6,6 +6,7 @@ use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\attachment\fileService;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\thread\threadRepository;
 
@@ -42,6 +43,8 @@ class deletedPostsService {
 				return;
 			}
 
+			/** @var Post $postData */
+
 			// check if the post was a reply to a deleted thread
 			$isByProxy = $this->checkIfPostIsProxyDeleted($postData);
 
@@ -51,7 +54,7 @@ class deletedPostsService {
 			}
 			
 			// whether its an op or not
-			$isOp = $postData['is_op'] ?? 0;
+			$isOp = $postData->isOp();
 
 			// if its a thread then restore all posts in it
 			if($isOp) {
@@ -64,9 +67,9 @@ class deletedPostsService {
 		});
 	}
 
-	private function restoreThread(array $opPostData, int $accountId): void {
+	private function restoreThread(Post $opPostData, int $accountId): void {
 		// thread uid of the thread
-		$threadUid = $opPostData['thread_uid'];
+		$threadUid = $opPostData->getThreadUid();
 
 		// get attachments from the thread in order to restore them
 		$threadAttachments = $this->fileService->getAttachmentsForThread($threadUid, true);
@@ -83,15 +86,15 @@ class deletedPostsService {
 		$this->deletedPostsRepository->restorePostsByThreadUid($threadUid, $accountId);
 
 		// generate the logging string
-		$restoreActionString = $this->generateActionLoggingString($opPostData['no'], false, true);
+		$restoreActionString = $this->generateActionLoggingString($opPostData->getNumber(), false, true);
 
 		// Log the restore action to the logging table
-		$this->logAction($restoreActionString, $opPostData['boardUID']);
+		$this->logAction($restoreActionString, $opPostData->getBoardUID());
 	}
 
-	private function restoreReply(array $postData, int $deletedPostId, int $accountId): void {
+	private function restoreReply(Post $postData, int $deletedPostId, int $accountId): void {
 		// post uid of the post
-		$postUid = $postData['post_uid'];
+		$postUid = $postData->getUid();
 		
 		// get the reply attachments
 		$postAttachments = $this->fileService->getAttachmentsForPost($postUid);
@@ -109,16 +112,16 @@ class deletedPostsService {
 		$this->deletedPostsRepository->restoreFileOnlyEntriesByPostUid($postUid, $accountId);
 
 		// thread_uid of the post
-		$threadUid = $postData['thread_uid'];
+		$threadUid = $postData->getThreadUid();
 		
 		// now update the thread's bump order
 		$this->threadRepository->bumpThread($threadUid);
 
 		// generate the logging string
-		$restoreActionString = $this->generateActionLoggingString($postData['no'], false, false);
+		$restoreActionString = $this->generateActionLoggingString($postData->getNumber(), false, false);
 
 		// Log the restore action to the logging table
-		$this->logAction($restoreActionString, $postData['boardUID']);
+		$this->logAction($restoreActionString, $postData->getBoardUID());
 	}
 
 	/**
@@ -197,6 +200,8 @@ class deletedPostsService {
 				return;
 			}
 
+			/** @var Post $postData */
+
 			// check if the post was a reply to a deleted thread
 			$isByProxy = $this->checkIfPostIsProxyDeleted($postData);
 
@@ -206,7 +211,7 @@ class deletedPostsService {
 			}
 
 			// whether its an op or not
-			$isOp = $postData['is_op'] ?? 0;
+			$isOp = $postData->isOp();
 
 			// if its a thread then purge the thread
 			if($isOp) {
@@ -238,9 +243,9 @@ class deletedPostsService {
 		}
 	}
 
-	private function checkIfPostIsProxyDeleted(array $post): bool {
+	private function checkIfPostIsProxyDeleted(Post $post): bool {
 		// if the post has bee deleted by proxy
-		$byProxy = $post['by_proxy'] ?? 0;
+		$byProxy = $post->isByProxy();
 
 		// don't do anything if its trying to restore a post thats deleted by-proxy
 		// otherwise, there will be unexpected behavior (potentially)
@@ -254,9 +259,9 @@ class deletedPostsService {
 		}
 	}
 
-	private function purgeThread(array $opPostData, bool $logAction = true): void {
+	private function purgeThread(Post $opPostData, bool $logAction = true): void {
 		// thread uid
-		$threadUid = $opPostData['thread_uid'];
+		$threadUid = $opPostData->getThreadUid();
 
 		// get all attachments from the thread
 		$threadAttachments = $this->fileService->getAttachmentsForThread($threadUid);
@@ -272,16 +277,16 @@ class deletedPostsService {
 
 		if($logAction) {
 			// generate the logging string
-			$purgeActionString = $this->generateActionLoggingString($opPostData['no'], true, true);
+			$purgeActionString = $this->generateActionLoggingString($opPostData->getNumber(), true, true);
 
 			// Log the purge action to the logging table
-			$this->logAction($purgeActionString, $opPostData['boardUID']);
+			$this->logAction($purgeActionString, $opPostData->getBoardUID());
 		}
 	}
 
-	private function purgeReply(array $replyPostData, int $deletedPostId, bool $logAction = true): void {
+	private function purgeReply(Post $replyPostData, int $deletedPostId, bool $logAction = true): void {
 		// post uid of the post
-		$postUid = $replyPostData['post_uid'];
+		$postUid = $replyPostData->getUid();
 
 		// get all attachments for the post
 		$postAttachments = $this->fileService->getAttachmentsForPost($postUid);
@@ -298,10 +303,10 @@ class deletedPostsService {
 
 		if($logAction) {
 			// generate the logging string
-			$purgeActionString = $this->generateActionLoggingString($replyPostData['no'], true, false);
+			$purgeActionString = $this->generateActionLoggingString($replyPostData->getNumber(), true, false);
 
 			// Log the purge action to the logging table
-			$this->logAction($purgeActionString, $replyPostData['boardUID']);
+			$this->logAction($purgeActionString, $replyPostData->getBoardUID());
 		}
 	}
 
@@ -351,8 +356,13 @@ class deletedPostsService {
 			// get deletion row
 			$row = $this->deletedPostsRepository->getDeletedPostRowById($deletedPostId);
 
+			if (!$row) {
+				throw new BoardException(_T('attachment_not_found'));
+			}
+
+			/** @var Post $row */
 			// get attachments data
-			$attachmentsData = $row['attachments'];
+			$attachmentsData = $row->getAttachments();
 
 			// get file id
 			// this is the file id that will be used to select the attachment to purge
@@ -394,10 +404,10 @@ class deletedPostsService {
 			$this->fileService->purgeAttachmentsFromPurgatory([$attachmentToPurge]);
 
 			// generate the logging string for the file purge
-			$purgeActionString = $this->generateFilePurgeLoggingString($row['no']);
+			$purgeActionString = $this->generateFilePurgeLoggingString($row->getNumber());
 
 			// Log the purge action to the logging table
-			$this->logAction($purgeActionString, $row['boardUID']);
+			$this->logAction($purgeActionString, $row->getBoardUID());
 		});
 
 	}
@@ -623,11 +633,11 @@ class deletedPostsService {
 	private function getThreadsFromOPs(array $posts): array {
 		// filter for OP posts
 		$openingPosts = array_filter($posts, function($item) {
-			return array_key_exists('is_op', $item) && $item['is_op'];
+			return $item->isOp();
 		});
 
 		// get their thread uids
-		$threadUids = array_column($openingPosts, 'thread_uid');
+		$threadUids = array_map(fn($p) => $p->getThreadUid(), $openingPosts);
 
 		// then fetch posts from those threads
 		$threadPosts = $this->postRepository->getPostsByThreadUIDs($threadUids);
@@ -647,10 +657,10 @@ class deletedPostsService {
 		$out = [];
 
 		foreach ($posts as $row) {
-			if (!is_array($row) || !array_key_exists('post_uid', $row)) {
-				continue; // skip rows without post_uid
+			if (!($row instanceof Post)) {
+				continue; // skip non-Post rows
 			}
-			$key = (string)$row['post_uid'];
+			$key = (string)$row->getUid();
 			if ($key === '' || $key === '0') {
 				continue; // skip empty/invalid ids (optional)
 			}
@@ -668,13 +678,13 @@ class deletedPostsService {
 
 		foreach ($posts as $post) {
 			// Determine whether this post is an OP post (thread starter)
-			$isOp = $post['is_op'] ?? null;
+			$isOp = $post->isOp();
 
 			// Check if the post is already deleted:
 			// open_flag must be non-empty AND by_proxy must be 0 or null
-			// (meaning it wasn’t deleted by a proxy process)
-			$isAlreadyDeleted = !empty($post['open_flag']) 
-								&& ($post['by_proxy'] === 0 || is_null($post['by_proxy']));
+			// (meaning it wasn't deleted by a proxy process)
+			$isAlreadyDeleted = !empty($post->getOpenFlag()) 
+								&& ($post->isByProxy() === 0 || is_null($post->isByProxy()));
 
 			// A reply is any post that is not an OP.
 			// OP can be represented as 1, "1", or true depending on source,
@@ -693,14 +703,15 @@ class deletedPostsService {
 
 	private function removeOverlap(array $a, array $b): array {
 		// collect all post_uid values from $b
-		$bUids = array_column($b, 'post_uid');
+		$bUids = array_map(fn($p) => $p->getUid(), $b);
 		$bUids = array_map('strval', $bUids); // normalize to string
 
 		$result = [];
 		foreach ($a as $row) {
-			$key = isset($row['post_uid']) ? (string)$row['post_uid'] : null;
+			if (!($row instanceof Post)) continue;
+			$key = (string)$row->getUid();
 
-			if ($key !== null && !in_array($key, $bUids, true)) {
+			if (!in_array($key, $bUids, true)) {
 				$result[] = $row;
 			}
 		}
@@ -710,7 +721,7 @@ class deletedPostsService {
 
 	private function deleteAttachments(array $posts): void {
 		// post uids
-		$postUids = array_column($posts, 'post_uid');
+		$postUids = array_map(fn($p) => $p->getUid(), $posts);
 
 		// now get the attachments from the post uids
 		$attachments = $this->fileService->getAttachmentsFromPostUids($postUids);
@@ -729,9 +740,9 @@ class deletedPostsService {
 		}
 	}
 
-	private function deletePost(array $post, ?int $deletedBy , bool $fileOnly = false, bool $byProxy = false): void {
+	private function deletePost(Post $post, ?int $deletedBy , bool $fileOnly = false, bool $byProxy = false): void {
 		// the post uid
-		$postUid = $post['post_uid'];
+		$postUid = $post->getUid();
 
 		// delete any pre-existing open entries in order to avoid conflicts
 		// "open" meaning they aren't restored and are

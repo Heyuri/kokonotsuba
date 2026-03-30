@@ -4,6 +4,7 @@ namespace Kokonotsuba\post\deletion;
 
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\getBasePostQuery;
 use function Kokonotsuba\libraries\mergeDeletedPostRows;
@@ -51,19 +52,7 @@ class deletedPostsRepository extends baseRepository {
 	 * @return array|false Flat array of post UIDs, or false if none found.
 	 */
 	public function getAllPostUidsFromAccountId(int $accountId): array|false {
-		// query to get all post uids from posts deleted by the specified account id
-		$query = "SELECT post_uid FROM {$this->table} WHERE deleted_by = :account_id";
-
-		// parameters
-		$params = [
-			':account_id' => $accountId
-		];
-		
-		// fetch the data
-		$postUids = $this->queryAllAsIndexArray($query, $params);
-
-		// return the data
-		return $postUids;
+		return $this->pluckAll('post_uid', 'deleted_by', $accountId) ?: false;
 	}
 
 	/**
@@ -186,9 +175,9 @@ class deletedPostsRepository extends baseRepository {
 	 * Fetch a fully merged post data array by its deletion record ID.
 	 *
 	 * @param int $deletedPostId Deletion record ID.
-	 * @return array|false Merged post data array, or false if not found.
+	 * @return Post|false Merged post object, or false if not found.
 	 */
-	public function getPostByDeletedPostId(int $deletedPostId): array|false {
+	public function getPostByDeletedPostId(int $deletedPostId): Post|false {
 		// query to get the post data by deleted post id
 		$query = getBasePostQuery($this->postTable, $this->table, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  true);
 		
@@ -399,8 +388,9 @@ class deletedPostsRepository extends baseRepository {
 			{$filterClause}
 			GROUP BY dp.post_uid
 			ORDER BY {$sortExpr} {$direction}
-			LIMIT {$amount} OFFSET {$offset}
 		";
+
+		$this->paginate($query, $params, $amount, $offset);
 
 		// Returns structured array like [ ['post_uid' => 123], ['post_uid' => 456] ]
 		$rows = $this->queryAllAsIndexArray($query, $params);
@@ -473,7 +463,7 @@ class deletedPostsRepository extends baseRepository {
 	 * @param int $deletedPostId Deletion record ID.
 	 * @return array|false Merged deletion row, or false if not found.
 	 */
-	public function getDeletedPostRowById(int $deletedPostId): array|false {
+	public function getDeletedPostRowById(int $deletedPostId): Post|false {
 		// Get the query for deleted posts
 		$query = $this->buildDeletedPostByIdQuery();
 
@@ -516,14 +506,7 @@ class deletedPostsRepository extends baseRepository {
 	 * @return int Total count.
 	 */
 	public function getTotalAmountOfDeletedPosts(): int {
-		// query to get the total amount of deleted posts
-		$query = "SELECT COUNT(*) FROM {$this->table} WHERE open_flag = 1 AND by_proxy = 0";
-
-		// fetch the count value
-		$totalAmount = $this->queryColumn($query);
-
-		// return it
-		return $totalAmount;
+		return $this->count('open_flag = 1 AND by_proxy = 0');
 	}
 
 	/**
@@ -533,19 +516,10 @@ class deletedPostsRepository extends baseRepository {
 	 * @return int Total count.
 	 */
 	public function getTotalAmountOfDeletedPostsByAccountId(int $accountId): int {
-		// query to get the total amount of deleted posts
-		$query = "SELECT COUNT(*) FROM {$this->table} WHERE deleted_by = :account_id AND open_flag = 1 AND by_proxy = 0";
-
-		// parameters
-		$params = [
-			':account_id' => $accountId
-		];
-
-		// fetch the count value
-		$totalAmount = $this->queryColumn($query, $params);
-
-		// return it
-		return $totalAmount;
+		return $this->count(
+			'deleted_by = :account_id AND open_flag = 1 AND by_proxy = 0',
+			[':account_id' => $accountId]
+		);
 	}
 
 	/**

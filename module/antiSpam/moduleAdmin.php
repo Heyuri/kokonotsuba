@@ -8,6 +8,7 @@ require_once __DIR__ . '/antiSpamLib.php';
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
@@ -39,7 +40,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ManagePostsControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->renderFilterPostButton($modControlSection, $post, false);
 			}
 		);
@@ -47,7 +48,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'PostAdminControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->renderFilterPostButton($modControlSection, $post, true);
 			}
 		);
@@ -55,7 +56,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModeratePostWidget',
-			function(array &$widgetArray, array &$post) {
+			function(array &$widgetArray, Post &$post) {
 				$this->onRenderPostWidget($widgetArray, $post);
 			}
 		);
@@ -72,9 +73,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->antiSpamService = getAntiSpamService();
 	}
 	
-	public function renderFilterPostButton(string &$modfunc, array $post, bool $noScript): void {
+	public function renderFilterPostButton(string &$modfunc, Post $post, bool $noScript): void {
 		// generate filer post url
-		$filterPostUrl = $this->generateFilterPostUrl($post['post_uid']);
+		$filterPostUrl = $this->generateFilterPostUrl($post->getUid());
 
 		// generate the filter post button html and append it to the modfunc string
 		$modfunc .= generateModerateButton(
@@ -86,9 +87,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
 		// generate filer post url
-		$filterPostUrl = $this->generateFilterPostUrl($post['post_uid']);
+		$filterPostUrl = $this->generateFilterPostUrl($post->getUid());
 
 		// build the widget entry
 		$filterPostWidget = $this->buildWidgetEntry($filterPostUrl, 'filterPost', 'Filter post', '');
@@ -328,7 +329,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
 
 			// set the pattern value to the comment so it shows up the comment in the form
-			$patternValue = $post['com'] ?? '';
+			$patternValue = $post->getComment() ?? '';
 
 			// replace breaklines with new lines so line breaks are preserved
 			$patternValue = str_replace(

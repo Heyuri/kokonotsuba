@@ -5,7 +5,6 @@ namespace Kokonotsuba\post\attachment;
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
-use function Kokonotsuba\libraries\pdoNamedPlaceholdersForIn;
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
 /** Repository for post attachment file records. */
@@ -106,8 +105,7 @@ class fileRepository extends baseRepository {
 	 * @return void
 	 */
 	public function deleteFileRows(array $fileIds): void {
-		$inClause = pdoPlaceholdersForIn($fileIds);
-		$this->query("DELETE FROM {$this->table} WHERE id IN $inClause", $fileIds);
+		$this->deleteWhereIn('id', $fileIds);
 	}
 
 	/**
@@ -118,13 +116,7 @@ class fileRepository extends baseRepository {
 	 * @return void
 	 */
 	public function setHiddenStatuses(array $fileIds, bool $flag): void {
-		$fileClause = pdoNamedPlaceholdersForIn($fileIds, 'file');
-		$filePlaceholders = $fileClause['placeholders'];
-		$fileParameters = $fileClause['params'];
-
-		$query = "UPDATE {$this->table} SET is_hidden = :flag WHERE id IN ($filePlaceholders)";
-		$params = array_merge([':flag' => (int) $flag], $fileParameters);
-		$this->query($query, $params);
+		$this->updateWhereIn(['is_hidden' => (int) $flag], 'id', $fileIds);
 	}
 
 	/**
@@ -196,13 +188,7 @@ class fileRepository extends baseRepository {
 	 * @return void
 	 */
 	public function toggleIsDeleted(array $fileIDs, bool $delete): void {
-		$clause = pdoNamedPlaceholdersForIn($fileIDs, 'file');
-		$filePlaceholders = $clause['placeholders'];
-		$fileParameters = $clause['params'];
-
-		$query = "UPDATE {$this->table} SET is_deleted = :delete WHERE id IN ($filePlaceholders)";
-		$fileParameters[':delete'] = (int)$delete;
-		$this->query($query, $fileParameters);
+		$this->updateWhereIn(['is_deleted' => (int) $delete], 'id', $fileIDs);
 	}
 
 	/**

@@ -157,10 +157,10 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		// get board
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 
 		// get attachments
-		$attachments = $post['attachments'] ?? null;
+		$attachments = $post->getAttachments() ?? null;
 
 		// throw runtime exception if no attachments
 		if(!$attachments) {
@@ -168,7 +168,7 @@ class moduleMain extends abstractModuleMain {
 		} 
 
 		// get attachment
-		$attachment = $post['attachments'][$fileId] ?? null;
+		$attachment = $post->getAttachments()[$fileId] ?? null;
 
 		// throw runtime if attachment not found
 		if(!$attachment) {

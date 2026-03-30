@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\adminDel;
 
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
@@ -13,7 +14,6 @@ use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\getPageOfThread;
 use function Kokonotsuba\libraries\validatePostInput;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\request\redirect;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
@@ -43,7 +43,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ManagePostsControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->onRenderPostAdminControls($modControlSection, $post, false);
 			}
 		);
@@ -51,7 +51,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'PostAdminControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->onRenderPostAdminControls($modControlSection, $post, true);
 			}
 		);
@@ -59,7 +59,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModeratePostWidget',
-			function(array &$widgetArray, array &$post) {
+			function(array &$widgetArray, Post &$post) {
 				$this->onRenderPostWidget($widgetArray, $post);
 			}
 		);
@@ -86,13 +86,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function onRenderPostAdminControls(string &$modFunc, array &$post, bool $noScript): void {
+	private function onRenderPostAdminControls(string &$modFunc, Post &$post, bool $noScript): void {
 		// whether to render the admin controls or not
 		if(!$this->canRenderButton($post)) {
 			return;
 		}
 		
-		$postUid = $post['post_uid'];
+		$postUid = $post->getUid();
 		$muteMinutes = $this->JANIMUTE_LENGTH;
 		$plural = $muteMinutes == 1 ? '' : 's';
 
@@ -115,12 +115,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 	
-	private function canRenderButton(array $post): bool {
+	private function canRenderButton(Post $post): bool {
 		// whether the post is deleted or not
-		$openFlag = $post['open_flag'] ?? 0;
+		$openFlag = $post->getOpenFlag();
 
 		// don't render anything if the post is already deleted
-		if($openFlag && empty($post['file_only_deleted'])) {
+		if($openFlag && !$post->isFileOnlyDeleted()) {
 			return false;
 		}
 
@@ -205,14 +205,14 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $deletionUrl;
 	}
 
-	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
 		// whether to render the button
 		if(!$this->canRenderButton($post)) {
 			return;
 		}
 
 		// generate deletion url
-		$deletionUrl = $this->generateDeletionUrl('del', $post['post_uid']);
+		$deletionUrl = $this->generateDeletionUrl('del', $post->getUid());
 
 		// build the widget entry for deletion
 		$deletionWidgets[] = $this->buildWidgetEntry(
@@ -223,7 +223,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 
 		// generate mute url
-		$muteUrl = $this->generateDeletionUrl('delmute', $post['post_uid']);
+		$muteUrl = $this->generateDeletionUrl('delmute', $post->getUid());
 
 		// build the widget entry for muting
 		$deletionWidgets[] = $this->buildWidgetEntry(
@@ -293,10 +293,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		validatePostInput($post, false);
 
 		// whether the post has been deleted
-		$isDeleted = !empty($post['open_flag']) && empty($post['file_only_deleted']);
+		$isDeleted = !empty($post->getOpenFlag()) && !$post->isFileOnlyDeleted();
 
 		// get board object
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 		
 		// get board uid
 		$boardUID = $board->getBoardUID();
@@ -314,12 +314,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		
 		switch ($action) {
 			case 'del':
-				$this->moduleContext->postService->removePosts([$post['post_uid']], $this->moduleContext->currentUserId);
-				$this->moduleContext->actionLoggerService->logAction('Deleted post No.'.$post['no'], $boardUID);
+				$this->moduleContext->postService->removePosts([$post->getUid()], $this->moduleContext->currentUserId);
+				$this->moduleContext->actionLoggerService->logAction('Deleted post No.'.$post->getNumber(), $boardUID);
 				break;
 			case 'delmute':
-				$this->moduleContext->postService->removePosts([$post['post_uid']], $this->moduleContext->currentUserId);
-				$ip = $post['host'];
+				$this->moduleContext->postService->removePosts([$post->getUid()], $this->moduleContext->currentUserId);
+				$ip = $post->getIp();
 				$starttime = $this->moduleContext->request->getRequestTime();
 				$expires = $starttime + intval($this->JANIMUTE_LENGTH) * 60;
 				$reason = $this->JANIMUTE_REASON;
@@ -328,7 +328,7 @@ class moduleAdmin extends abstractModuleAdmin {
 					$this->appendGlobalBan($ip, $starttime, $expires, $reason);
 				}
 
-				$this->moduleContext->actionLoggerService->logAction('Muted '.$ip.' and deleted post No.'.$post['no'] . ' ' . $board->getBoardTitle() . ' (' . $board->getBoardUID() . ')', GLOBAL_BOARD_UID);
+				$this->moduleContext->actionLoggerService->logAction('Muted '.$ip.' and deleted post No.'.$post->getNumber() . ' ' . $board->getBoardTitle() . ' (' . $board->getBoardUID() . ')', GLOBAL_BOARD_UID);
 
 				break;
 			case 'attachmentDel':
@@ -344,7 +344,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				}
 
 				// get the attachment to deleted
-				$attachment = $post['attachments'][$fileId] ?? false;
+				$attachment = $post->getAttachments()[$fileId] ?? false;
 
 				if(!$attachment) {
 					throw new BoardException(_T('attachment_not_found'));
@@ -352,7 +352,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 				$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$attachment], $this->moduleContext->currentUserId);
 
-				$this->moduleContext->actionLoggerService->logAction('Deleted file for post No.'.$post['no'], $boardUID);
+				$this->moduleContext->actionLoggerService->logAction('Deleted file for post No.'.$post->getNumber(), $boardUID);
 				break;
 			default:
 				throw new BoardException('ERROR: Invalid action.');
@@ -369,14 +369,14 @@ class moduleAdmin extends abstractModuleAdmin {
 			}
 			// otherwise just get the regular deletion url
 			else {
-				$deletionUrl = $this->getDeletionUrlForPost($post['post_uid']);
+				$deletionUrl = $this->getDeletionUrlForPost($post->getUid());
 			}
 
 			// Return JSON for AJAX requests
 			header('Content-Type: application/json');
 			echo json_encode([
 				'success' => true,
-				'is_op' => $post['is_op'],
+				'is_op' => $post->isOp(),
 				'deleted_link' => $deletionUrl
 			]);
 		
@@ -394,11 +394,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		
 			// ===== rebuild after the response has been sent =====
 			// if its a thread, rebuild all board pages
-			if ($post['is_op']) {
+			if ($post->isOp()) {
 				$board->rebuildBoard();
 			} else {
 				// otherwise just rebuild the page the reply is on
-				$thread_uid = $post['thread_uid'];
+				$thread_uid = $post->getThreadUid();
 			
 				$threads = $this->moduleContext->threadService->getThreadListFromBoard($board);
 			
@@ -413,10 +413,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// Non-AJAX fallback: do the rebuild first, then redirect (unchanged)
-		if ($post['is_op']) {
+		if ($post->isOp()) {
 			$board->rebuildBoard();
 		} else {
-			$thread_uid = $post['thread_uid'];
+			$thread_uid = $post->getThreadUid();
 		
 			$threads = $this->moduleContext->threadService->getThreadListFromBoard($board);
 		

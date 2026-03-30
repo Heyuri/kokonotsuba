@@ -6,6 +6,7 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\request\request;
+use Kokonotsuba\thread\Thread;
 use Kokonotsuba\thread\threadRepository;
 
 use function Kokonotsuba\libraries\getBoardsByUIDs;
@@ -123,7 +124,7 @@ class postService {
 			}
 
 			// Extract unique boardUIDs from the result
-			$boardUIDs = array_unique(array_column($postsData, 'boardUID'));
+			$boardUIDs = array_unique(array_map(fn($p) => $p->getBoardUID(), $postsData));
 
 			// Fetch boards using the unique UIDs
 			$boards = getBoardsByUIDs($boardUIDs);
@@ -138,14 +139,14 @@ class postService {
 			$deletionRows = [];
 			foreach ($postsData as $row) {
 				// don't bother including it if the post is already deleted
-				if($row['open_flag'] === 1) {
+				if($row->getOpenFlag() === 1) {
 					continue;
 				}
 
 				// add deletion row
 				$deletionRows[] = [
-					'thread_uid' => $row['thread_uid'],
-					'board' => $boardMap[$row['boardUID']],
+					'thread_uid' => $row->getThreadUid(),
+					'board' => $boardMap[$row->getBoardUID()],
 				];
 			}
 
@@ -160,7 +161,7 @@ class postService {
 				$board = $deletionRow['board'];
 
 				// get posts from the associated thread uid
-				$replies = $this->threadRepository->getAllPostsFromThread($threadUID, true);
+				$replies = $this->threadRepository->getAllPostsFromThread($threadUID, false);
 
 				// skip post early if there are no posts/replies
 				if(is_null($replies) || $replies === false) {
@@ -168,8 +169,7 @@ class postService {
 				}
 
 				// remove sage replies so the bump restoration only takes into account posts that caused a bump
-				// also remove deleted replies so it reflects what the user can see
-				$replies = $this->removeSagedAndDeletedReplies($replies);
+				$replies = $this->removeSagedReplies($replies);
 
 				$newReplyData = end($replies);
 
@@ -180,9 +180,10 @@ class postService {
 					$threadData = $this->threadRepository->getThreadByUid($threadUID);
 
 					$suppressBump = false;
-					if ($opPostCheck) {
+					if ($opPostCheck && $threadData) {
+						/** @var Thread $threadData */
 						$status = new FlagHelper($opPostCheck['status']);
-						$threadCreatedTime = strtotime($threadData['thread_created_time']);
+						$threadCreatedTime = strtotime($threadData->getCreatedTime());
 						
 						$maxAgeLimit = $board->getConfigValue('MAX_AGE_TIME');
 
@@ -194,9 +195,9 @@ class postService {
 					}
 
 					if ($suppressBump) {
-						$this->threadRepository->updateThreadReplyTime($threadUID, $newReplyData['root']);
+						$this->threadRepository->updateThreadReplyTime($threadUID, $newReplyData->getRoot());
 					} else {
-						$this->threadRepository->updateThreadBumpAndReplyTime($threadUID, $newReplyData['root']);
+						$this->threadRepository->updateThreadBumpAndReplyTime($threadUID, $newReplyData->getRoot());
 					}
 				}
 			}
@@ -204,7 +205,7 @@ class postService {
 		});
 	}
 
-	private function removeSagedAndDeletedReplies(array $threadReplies): array {
+	private function removeSagedReplies(array $threadReplies): array {
 		$replies = [];
 		foreach($threadReplies as $reply) {
 			// get post email
@@ -213,11 +214,8 @@ class postService {
 			// if the email contains sage, then its a sage post
 			$isSage = str_contains($email, 'sage');
 
-			// if the post is flagged as deleted, its deleted
-			$isDeleted = $reply['open_flag'] ?? 0;
-
-			// if its a sage or a deleted post, continue
-			if($isSage || $isDeleted) {
+			// if its a sage, continue
+			if($isSage) {
 				continue;
 			}
 

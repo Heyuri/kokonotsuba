@@ -64,9 +64,7 @@ class actionLoggerRepository extends baseRepository {
 		bindActionLogFiltersParameters($params, $query, $filters);
 
 		$query .= " ORDER BY {$order} DESC";
-		$query .= " LIMIT :_limit OFFSET :_offset";
-		$params[':_limit'] = $amount;
-		$params[':_offset'] = $offset;
+		$this->paginate($query, $params, $amount, $offset);
 
 		return $this->queryAllAsClass($query, $params, '\Kokonotsuba\action_log\loggedActionEntry') ?? [];
 	}

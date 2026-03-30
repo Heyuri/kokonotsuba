@@ -8,6 +8,7 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\policy\postPolicy;
 use Kokonotsuba\post\deletion\deletedPostsService;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\post\postService;
 use Kokonotsuba\request\request;
 
@@ -121,12 +122,12 @@ class usrdelRoute {
 		return $postUidsForDeletion;
 	}
 
-	private function validatePostDeletionTimeLimit(array $post): void {
+	private function validatePostDeletionTimeLimit(Post $post): void {
 		// deletion time limit in hours
 		$deletionTimeLimit = intval($this->config['POST_DELETION_TIME_LIMIT'] ?? 168); // default to 168 hours (7 days) if not set
 
 		// extract unix timestamp
-		$postTime = isset($post['root']) ? strtotime($post['root']) : (int)$post['time'];
+		$postTime = strtotime($post->getRoot());
 
 		// convert to seconds - since the time limit is in hours
 		$deletionTimeLimit *= 3600;
@@ -149,7 +150,7 @@ class usrdelRoute {
 		// Loop through each post and authenticate whether it can be deleted by the user
 		foreach ($posts as $post) {
 			// Get the post password hash
-			$postPasswordHash = $post['pwd'] ?? '';
+			$postPasswordHash = $post->getPassword() ?? '';
 
 			// check if the post is too old to delete
 			$this->validatePostDeletionTimeLimit($post);
@@ -169,14 +170,14 @@ class usrdelRoute {
 				$authenticatedPostData[] = $post;
 
 				// Add the post UID to the authenticated deletion UIDs array (to delete the post itself)
-				$authenticatedDeletedPostUids[] = (int)$post['post_uid'];
+				$authenticatedDeletedPostUids[] = (int)$post->getUid();
 
 				// Get the board of this post
-				$board = searchBoardArrayForBoard($post['boardUID']);
+				$board = searchBoardArrayForBoard($post->getBoardUID());
 
 				// Log the action (whether it's just the file or the entire post deletion)
 				$this->actionLoggerService->logAction(
-					"Deleted post No." . $post['no'] . ($onlyImgDel ? ' (file only)' : ''), 
+					"Deleted post No." . $post->getNumber() . ($onlyImgDel ? ' (file only)' : ''), 
 					$board->getBoardUID()
 				);
 			}

@@ -5,8 +5,6 @@ namespace Kokonotsuba\Modules\antiSpam;
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
-use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
-
 /** Repository for spam string filter rules. */
 class antiSpamRepository extends baseRepository {
 	public function __construct(
@@ -115,10 +113,12 @@ class antiSpamRepository extends baseRepository {
 				FROM {$this->table} s
 			LEFT JOIN {$this->accountTable} a ON a.id = s.created_by
 			ORDER BY s.id DESC
-			LIMIT {$limit} OFFSET {$offset}
 		";
 
-		return $this->queryAll($query);
+		$params = [];
+		$this->paginate($query, $params, $limit, $offset);
+
+		return $this->queryAll($query, $params);
 	}
 
 	/**
@@ -137,8 +137,7 @@ class antiSpamRepository extends baseRepository {
 	 * @return void
 	 */
 	public function deleteEntries(array $entryIDs): void {
-		$placeholders = pdoPlaceholdersForIn($entryIDs);
-		$this->query("DELETE FROM {$this->table} WHERE id IN $placeholders", $entryIDs);
+		$this->deleteWhereIn('id', $entryIDs);
 	}
 
 	/**

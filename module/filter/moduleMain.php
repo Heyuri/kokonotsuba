@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\filter;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\post\Post;
 
 class moduleMain extends abstractModuleMain {
 	public function getName(): string {
@@ -15,7 +16,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		// add post widget listener
-		$this->moduleContext->moduleEngine->addListener('PostWidget', function(array &$widgetArray, array &$post) {
+		$this->moduleContext->moduleEngine->addListener('PostWidget', function(array &$widgetArray, Post &$post) {
 				$this->onRenderPostWidget($widgetArray);
 		});
 

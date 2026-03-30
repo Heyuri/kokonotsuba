@@ -6,6 +6,7 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\post\Post;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Kokonotsuba\libraries\validatePostInput;
@@ -53,7 +54,7 @@ class moduleMain extends abstractModuleMain {
 		// set property
 		$this->soudaneService = $soudaneService;
 
-		$this->moduleContext->moduleEngine->addListener('Post', function (&$arrLabels, $post) {
+		$this->moduleContext->moduleEngine->addListener('Post', function (&$arrLabels, Post $post) {
 			$this->onRenderPost($arrLabels, $post);
 		});
 		
@@ -95,17 +96,17 @@ class moduleMain extends abstractModuleMain {
 			</span>';
 	}
 
-	private function onRenderPost(array &$arrLabels, array $post): void {
+	private function onRenderPost(array &$arrLabels, Post $post): void {
 		// Initialize an empty string to hold the HTML for the vote buttons
 		$voteHtml = '';
 
 		// get post uid
-		$postUid = $post['post_uid'];
+		$postUid = $post->getUid();
 
 		// enable nope
 		if ($this->enableNope) {
 			// get nope count for this post
-			$nopeCount = $post['votes']['nope_count'] ?? null;
+			$nopeCount = $post->getVotes()['nope_count'] ?? null;
 
 			// render the nope button and append to post info extra
 			$voteHtml .= $this->renderVoteButton(
@@ -131,7 +132,7 @@ class moduleMain extends abstractModuleMain {
 		// yeah vote
 		if ($this->enableYeah) {
 			// get yeah count for this post
-			$yeahCount = $post['votes']['yeah_count'] ?? null;
+			$yeahCount = $post->getVotes()['yeah_count'] ?? null;
 
 			// render the yeah button and append to post info extra
 			$voteHtml .= $this->renderVoteButton(
@@ -145,7 +146,7 @@ class moduleMain extends abstractModuleMain {
 
 		// If SHOW_SCORE_ONLY is not enabled, display the score separately
 		if ($this->enableScore && !$this->showScoreOnly) {
-			$scoreCount = $post['votes']['total_score'] ?? 0;
+			$scoreCount = $post->getVotes()['total_score'] ?? 0;
 
 			$score = _T('score_pre_text', $scoreCount);
 			$voteHtml .= ' ' . $this->renderScore($postUid, $score);

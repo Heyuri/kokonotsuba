@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\adminBan;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
@@ -37,7 +38,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ManagePostsControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->onRenderPostAdminControls($modControlSection, $post, false);
 			}
 		);
@@ -45,7 +46,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'PostAdminControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->onRenderPostAdminControls($modControlSection, $post, true);
 			}
 		);
@@ -61,7 +62,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModeratePostWidget',
-			function(array &$widgetArray, array &$post) {
+			function(array &$widgetArray, Post &$post) {
 				$this->onRenderPostWidget($widgetArray, $post);
 			}
 		);
@@ -75,10 +76,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function onRenderPostAdminControls(string &$modfunc, array &$post, bool $noScript): void {
-		$ip = htmlspecialchars($post['host']) ?? '';
+	private function onRenderPostAdminControls(string &$modfunc, Post &$post, bool $noScript): void {
+		$ip = htmlspecialchars($post->getIp()) ?? '';
 
-		$modulePageUrl = $this->generateBanUrl($ip, $post['post_uid']);
+		$modulePageUrl = $this->generateBanUrl($ip, $post->getUid());
 
 		$modfunc .= generateModerateButton(
 			$modulePageUrl, 
@@ -93,9 +94,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_ban_title') . '" href="' . $this->myPage . '">' . _T('admin_nav_ban') . '</a></li>';
 	}
 
-	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
 		// generate ban url
-		$banUrl = $this->generateBanUrl($post['host'], $post['post_uid']);
+		$banUrl = $this->generateBanUrl($post->getIp(), $post->getUid());
 
 		// build the widget entry for deletion
 		$banWidget = $this->buildWidgetEntry(
@@ -248,6 +249,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$postUid = intval($this->moduleContext->request->getParameter('postUid', 'POST', 0));
 		$isGlobal = $this->moduleContext->request->hasParameter('global', 'POST');  // Check if global ban is selected
 
+		/** @var Post|false $post */
 		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
 
 		// Process the ban form (add to log, update post if public, etc.)
@@ -262,7 +264,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		exit;
 	}
 
-	private function logBanAction(string $newIp, string $duration, bool $isGlobal, array|false $post) {
+	private function logBanAction(string $newIp, string $duration, bool $isGlobal, Post|false $post) {
 		// Build the action string based on whether it's a global ban or related to a post
 		$actionString = $this->buildActionString($newIp, $duration, $isGlobal, $post);
 
@@ -280,7 +282,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function buildActionString(string $newIp, 
 		string $duration, 
 		bool $isGlobal, 
-		array|false $post): string {
+		Post|false $post): string {
 		// Initial action string (basic information about the ban)
 		$actionString = "Banned $newIp for $duration";
 
@@ -298,13 +300,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		// If the ban is related to a specific post, add post info to the action string
 		if ($post) {
 			// post number
-			$postNumber = $post['no'];
+			$postNumber = $post->getNumber();
 
 			// board uid of the post
-			$boardUID = $post['boardUID'];
+			$boardUID = $post->getBoardUID();
 			
 			// fetch the board from memory
-			$board = searchBoardArrayForBoard($post['boardUID']);
+			$board = searchBoardArrayForBoard($post->getBoardUID());
 			
 			// board title
 			$boardTitle = $board->getBoardTitle();	
@@ -329,7 +331,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		string $makePublic, 
 		string $publicBanMessageHTML, 
 		bool $isGlobal,
-		array|false $post = []): void {
+		Post|false $post = false): void {
 		// Load ban logs
 		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
 		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
@@ -364,12 +366,12 @@ class moduleAdmin extends abstractModuleAdmin {
 				
 				// parameters to update in the query
 				$updatePostParameters = [
-					'com' => $post['com']
+					'com' => $post->getComment()
 				];
 
-				$this->moduleContext->postRepository->updatePost($post['post_uid'], $updatePostParameters);
+				$this->moduleContext->postRepository->updatePost($post->getUid(), $updatePostParameters);
 				
-				$board = searchBoardArrayForBoard($post['boardUID']);
+				$board = searchBoardArrayForBoard($post->getBoardUID());
 				
 				$board->rebuildBoard();
 			}

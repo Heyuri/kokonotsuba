@@ -112,12 +112,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// throw exception if the post has no attachments
-		if (empty($post['attachments'])) {
+		if (empty($post->getAttachments())) {
 			throw new BoardException('ERROR: No attachments on post.');
 		}
 
 		// now select the attachment on this post
-		$attachment = $post['attachments'][$fileId] ?? null;
+		$attachment = $post->getAttachments()[$fileId] ?? null;
 
 		// if attachment isn't found or blank then throw exception
 		if($attachment === null || $attachment <= 0) {
@@ -141,13 +141,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		$isAnimated = !$isAnimated;
 
 		$logMessage = $isAnimated
-			? 'Animated GIF activated on No. ' . htmlspecialchars($post['no'])
-			: 'Animated GIF deactivated on No. ' . htmlspecialchars($post['no']);
+			? 'Animated GIF activated on No. ' . htmlspecialchars($post->getNumber())
+			: 'Animated GIF deactivated on No. ' . htmlspecialchars($post->getNumber());
 
-		$this->moduleContext->actionLoggerService->logAction($logMessage, $post['boardUID']);
+		$this->moduleContext->actionLoggerService->logAction($logMessage, $post->getBoardUID());
 
 		// get the board of the post
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 
 		// ===== AJAX handling updated to use helper =====
 		if($this->moduleContext->request->isAjax()) {

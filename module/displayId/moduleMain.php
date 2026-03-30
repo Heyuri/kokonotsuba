@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\displayId;
 
 use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleMain;
 
 use function Kokonotsuba\libraries\_T;
@@ -41,14 +42,14 @@ class moduleMain extends abstractModuleMain {
 		});
 	}
 
-	private function onRenderPost(array &$templateValues, array $post, array $threadPosts): void {
+	private function onRenderPost(array &$templateValues, Post $post, array $threadPosts): void {
 		// handle poster base hash binding/rendering
 		$this->bindPosterBaseHash($templateValues, $post, $threadPosts);
 	}
 
-	private function bindPosterBaseHash(array &$templateValues, array $post, array $threadPosts): void {
+	private function bindPosterBaseHash(array &$templateValues, Post $post, array $threadPosts): void {
 		// return early if poster_hash is not set
-		if (empty($post['poster_hash'])) {
+		if (empty($post->getPosterHash())) {
 			return;
 		}
 
@@ -61,7 +62,7 @@ class moduleMain extends abstractModuleMain {
 		$openingPost = $threadPosts[0];
 
 		// check if the thread OP post's email contains 'displayid'
-		$threadDisplayId = !empty($openingPost['email']) && str_contains($openingPost['email'], 'displayid');
+		$threadDisplayId = !empty($openingPost->getEmail()) && str_contains($openingPost->getEmail(), 'displayid');
 
 		// return early if displaying IDs is disabled
 		// allow if the OP post's email contains 'displayid' to always show the ID
@@ -70,10 +71,10 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		// bind the poster_hash to the placeholder
-		$templateValues['{$POSTER_HASH}'] = htmlspecialchars($post['poster_hash']);
+		$templateValues['{$POSTER_HASH}'] = htmlspecialchars($post->getPosterHash());
 
 		// get count of posts by this poster hash
-		$posterHashCount = $this->getPosterHashCount($threadPosts, $post['poster_hash']);
+		$posterHashCount = $this->getPosterHashCount($threadPosts, $post->getPosterHash());
 
 		// then bind the total amount of posts by that ID
 		$templateValues['{$POSTER_HASH_COUNT}'] = htmlspecialchars(_T('poster_hash_count', $posterHashCount, _T($posterHashCount === 1 ? 'post_singular' : 'post_multiple')));
@@ -84,7 +85,7 @@ class moduleMain extends abstractModuleMain {
 
 		// loop through posts in the thread and count how many times this poster hash appears
 		foreach($threadPosts as $post) {
-			if($post['poster_hash'] === $posterHash) {
+			if($post->getPosterHash() === $posterHash) {
 				$count++;
 			}
 		}
@@ -123,7 +124,7 @@ class moduleMain extends abstractModuleMain {
 			$threadData = $thread['thread'];
 
 			// get the thread number for the hash
-			$threadNumber = $threadData['post_op_number'];
+			$threadNumber = $threadData->getOpNumber();
 		
 			// return threead number
 			return $threadNumber;

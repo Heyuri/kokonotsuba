@@ -6,6 +6,7 @@ require_once __DIR__ . '/autoSageLibrary.php';
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\FlagHelper;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
@@ -33,7 +34,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ManagePostsThreadControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->renderAutoSageButton($modControlSection, $post, false);
 			}
 		);
@@ -41,7 +42,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ThreadAdminControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->renderAutoSageButton($modControlSection, $post, true);
 			}
 		);
@@ -49,7 +50,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModerateThreadWidget',
-			function(array &$widgetArray, array &$post) {
+			function(array &$widgetArray, Post &$post) {
 				$this->onRenderThreadWidget($widgetArray, $post);
 			}
 		);
@@ -63,12 +64,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	} 
 
-	private function renderAutoSageButton(string &$modfunc, array $post, bool $noScript) {
+	private function renderAutoSageButton(string &$modfunc, Post $post, bool $noScript) {
 		// only render the button for OP posts
-		$status = new FlagHelper($post['status']);
+		$status = $post->getFlags();
 
 		// generate the autosage url
-		$autoSageLink = $this->generateAutoSageUrl($post['post_uid']);
+		$autoSageLink = $this->generateAutoSageUrl($post->getUid());
 
 		// generate the button html and append it to the modfunc string
 		$modfunc .= generateModerateButton(
@@ -80,15 +81,15 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
+	private function onRenderThreadWidget(array &$widgetArray, Post &$post): void {
 		// get post status
-		$postStatus = new FlagHelper($post['status']);
+		$postStatus = $post->getFlags();
 
 		// get autosage label
 		$autoSageLabel = $this->getAutoSageLabel($postStatus);
 		
 		// generate autosage url
-		$autoSageUrl = $this->generateAutoSageUrl($post['post_uid']);
+		$autoSageUrl = $this->generateAutoSageUrl($post->getUid());
 
 		// build the widget entry
 		$autoSageWidget = $this->buildWidgetEntry(
@@ -153,23 +154,23 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function ModulePage() {
 		$post = $this->moduleContext->postRepository->getPostByUid($this->moduleContext->request->getParameter('post_uid', 'GET'), true);
 
-		if (!$post['is_op']) { 
+		if (!$post->isOp()) { 
 			throw new BoardException('ERROR: Cannot autosage reply.');
 		}
 
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 
 		if (!$post) {
 			throw new BoardException('ERROR: Post does not exist.');
 		}
 		
-		$status = new FlagHelper($post['status']);
+		$status = $post->getFlags();
 		
 		$status->toggle('as');
 		
-		$this->moduleContext->postRepository->setPostStatus($post['post_uid'], $status->toString());
+		$this->moduleContext->postRepository->setPostStatus($post->getUid(), $status->toString());
 		
-		$logMessage = $status->value('as') ? "Autosaged No. {$post['no']}" : "Took off autosage on No. {$post['no']}";
+		$logMessage = $status->value('as') ? "Autosaged No. {$post->getNumber()}" : "Took off autosage on No. {$post->getNumber()}";
 		
 		$this->moduleContext->actionLoggerService->logAction($logMessage, $board->getBoardUID());
 

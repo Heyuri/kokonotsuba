@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\privateMessage;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\_T;
 use function Puchiko\strings\sanitizeStr;
@@ -35,7 +36,7 @@ class moduleMain extends abstractModuleMain {
 			$this->onRenderTopLink($topLinkHookHtml);
 		});
 
-		$this->moduleContext->moduleEngine->addListener('Post', function (&$arrLabels, $post) {
+		$this->moduleContext->moduleEngine->addListener('Post', function (&$arrLabels, Post $post) {
 			$this->onRenderPost($arrLabels, $post);
 		});
 	}
@@ -44,15 +45,15 @@ class moduleMain extends abstractModuleMain {
 		$topLinkHookHtml .= '[<a href="' . $this->myPage . '">Inbox</a>] [<a href="' . $this->myPage . '&amp;action=write">Write PM</a>]' . "\n";
 	}
 
-	public function onRenderPost(array &$arrLabels, array $post) {
+	public function onRenderPost(array &$arrLabels, Post $post) {
 		if (!$this->getConfig('ModuleSettings.APPEND_TRIP_PM_BUTTON_TO_POST')) return;
-		if (strpos($post['name'], '◆') === false) return;
+		if (strpos($post->getName(), '◆') === false) return;
 
-		[$trip] = explode('◆', $post['name']);
+		[$trip] = explode('◆', $post->getName());
 		$tripSanitized = strip_tags($trip);
 
 		if ($trip) {
-			$arrLabels['{$NAME}'] = $post['name'] . '<a href="' . $this->myPage . '&action=write&t=' . $tripSanitized . '" style="text-decoration: overline underline" title="PM">❖</a>';
+			$arrLabels['{$NAME}'] = $post->getName() . '<a href="' . $this->myPage . '&action=write&t=' . $tripSanitized . '" style="text-decoration: overline underline" title="PM">❖</a>';
 		}
 	}
 

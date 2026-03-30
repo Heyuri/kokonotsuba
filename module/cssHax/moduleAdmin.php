@@ -5,6 +5,8 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\post\Post;
+use Kokonotsuba\thread\Thread;
 use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
@@ -51,7 +53,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModerateThreadWidget',
-			function(array &$widgetArray, array &$post) {
+			function(array &$widgetArray, Post &$post) {
 				$this->onRenderThreadWidget($widgetArray, $post);
 			}
 		);
@@ -65,9 +67,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		);*/
 	}
 
-	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
+	private function onRenderThreadWidget(array &$widgetArray, Post &$post): void {
 		// generate css hax url
-		$cssHaxUrl = $this->getModulePageURL(['thread_uid' => $post['thread_uid']], false, true);
+		$cssHaxUrl = $this->getModulePageURL(['thread_uid' => $post->getThreadUid()], false, true);
 
 		// build the widget entry
 		$cssHaxWidget = $this->buildWidgetEntry($cssHaxUrl, 'cssHax', 'Css hax', '');
@@ -102,9 +104,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $themeTemplate;
 	}
 
-	private function redirectToThread(array $threadData, board $board): void {
+	private function redirectToThread(Thread $threadData, board $board): void {
 		// fetch thread number
-		$threadNumber = $threadData['post_op_number'];
+		$threadNumber = $threadData->getOpNumber();
 
 		// return if thread number isn't found
 		if(!$threadNumber) {
@@ -128,7 +130,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 		
 		// get board uid
-		$boardUid = $threadData['boardUID'] ?? null;
+		$boardUid = $threadData->getBoardUID() ?? null;
 
 		// return if board uid isn't found
 		if(!$boardUid) {
@@ -264,28 +266,28 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 	}
 
-	private function buildTemplateValues(array $thread, bool $isEdit): array {
+	private function buildTemplateValues(Thread $thread, bool $isEdit): array {
 		// bind and return template parameters
 		return [
 			'{$IS_EDIT}'				=> sanitizeStr($isEdit),
-			'{$THREAD_UID}'				=> sanitizeStr($thread['thread_uid']),
-			'{$BACKGROUND_HEX_COLOR}'	=> sanitizeStr($thread['background_hex_color'] ?? ''),
-			'{$REPLY_BACKGROUND_HEX_COLOR}'	=> sanitizeStr($thread['reply_background_hex_color'] ?? ''),
-			'{$TEXT_HEX_COLOR}'			=> sanitizeStr($thread['text_hex_color'] ?? ''),
-			'{$BACKGROUND_IMAGE_URL}'	=> sanitizeStr($thread['background_image_url'] ?? ''),
-			'{$RAW_STYLING}'			=> sanitizeStr($thread['raw_styling'] ?? ''),
-			'{$AUDIO}'					=> sanitizeStr($thread['audio'] ?? ''),
+			'{$THREAD_UID}'				=> sanitizeStr($thread->getUid()),
+			'{$BACKGROUND_HEX_COLOR}'	=> sanitizeStr($thread->getBackgroundColor() ?? ''),
+			'{$REPLY_BACKGROUND_HEX_COLOR}'	=> sanitizeStr($thread->getReplyBackgroundColor() ?? ''),
+			'{$TEXT_HEX_COLOR}'			=> sanitizeStr($thread->getTextColor() ?? ''),
+			'{$BACKGROUND_IMAGE_URL}'	=> sanitizeStr($thread->getBackgroundImageUrl() ?? ''),
+			'{$RAW_STYLING}'			=> sanitizeStr($thread->getRawStyling() ?? ''),
+			'{$AUDIO}'					=> sanitizeStr($thread->getAudio() ?? ''),
 			'{$DATE_ADDED}'				=> isset($thread['theme_date_added']) ? $this->moduleContext->postDateFormatter->formatFromDateString($thread['theme_date_added']) : '',
 			'{$ADDED_BY}'				=> sanitizeStr($thread['theme_added_by'] ?? ''),
-			'{$THREAD_NUMBER}'			=> sanitizeStr($thread['post_op_number'] ?? ''),
-			'{$THREAD_UID}'				=> sanitizeStr($thread['thread_uid'] ?? ''),
+			'{$THREAD_NUMBER}'			=> sanitizeStr($thread->getOpNumber() ?? ''),
+			'{$THREAD_UID}'				=> sanitizeStr($thread->getUid() ?? ''),
 			'{$MODULE_URL}'				=> sanitizeStr($this->moduleUrl),
 		];
 	}
 
-	private function renderForm(array $thread): void {
+	private function renderForm(Thread $thread): void {
 		// if the entry already exists then it means we're editing an existing entry
-		$isEdit = $this->themeService->themeExists($thread['thread_uid']);
+		$isEdit = $this->themeService->themeExists($thread->getUid());
 
 		// build template values
 		$templateValues = $this->buildTemplateValues($thread, $isEdit);

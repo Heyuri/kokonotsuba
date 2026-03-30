@@ -8,8 +8,10 @@
 namespace Kokonotsuba\renderers;
 
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\template\templateEngine;
+use Kokonotsuba\thread\Thread;
 
 use function Kokonotsuba\libraries\html\buildThreadNavButtons;
 use function Kokonotsuba\libraries\_T;
@@ -28,7 +30,7 @@ class threadRenderer {
 	 */
 	public function render(array $threadsInPage,
 			bool $isReplyMode,
-			array $thread,
+			Thread $thread,
 			array $posts, 
 			int $hiddenReply, 
 			bool $killSensor,  
@@ -39,7 +41,7 @@ class threadRenderer {
 			array $templateValues = []
 		): string {
 
-		$threadResno = $thread['post_op_number'];
+		$threadResno = $thread->getOpNumber();
 		
 		// whether this is reply mode
 		$replyMode = $isReplyMode;
@@ -50,7 +52,7 @@ class threadRenderer {
 
 		// number of replies
 		// number of posts excluding OP
-		$replyCount = $thread['number_of_posts'] - 1;
+		$replyCount = $thread->getPostCount() - 1;
 	
 		$threadHtml = '';
 
@@ -122,7 +124,7 @@ class threadRenderer {
 	*/
 	private function renderSinglePost(
 		array $threadPosts,
-		array $post,
+		Post $post,
 		int $i,
 		bool $threadMode,
 		bool $adminMode,
@@ -168,14 +170,14 @@ class threadRenderer {
 	}
 
 
-	private function getThreadPlaceholders(array $thread, array $templateValues): array {
-		$threadUid = $thread['thread_uid'];
-		$postOpNumber = $thread['post_op_number'];
-		$postOpPostUid = $thread['post_op_post_uid'];
-		$boardUid = $thread['boardUID'];
-		$lastReplyTime = $thread['last_reply_time'];
-		$lastBumpTime = $thread['last_bump_time'];
-		$threadCreatedTime = $thread['thread_created_time'];
+	private function getThreadPlaceholders(Thread $thread, array $templateValues): array {
+		$threadUid = $thread->getUid();
+		$postOpNumber = $thread->getOpNumber();
+		$postOpPostUid = $thread->getOpPostUid();
+		$boardUid = $thread->getBoardUID();
+		$lastReplyTime = $thread->getLastReplyTime();
+		$lastBumpTime = $thread->getLastBumpTime();
+		$threadCreatedTime = $thread->getCreatedTime();
 
 		// format thread created time
 		$postDateFormatter = new postDateFormatter($this->config['TIME_ZONE']);

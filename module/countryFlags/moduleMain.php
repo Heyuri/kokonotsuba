@@ -8,6 +8,7 @@ use Exception;
 use GeoIp2\Database\Reader;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\post\Post;
 
 class moduleMain  extends abstractModuleMain {
 	private readonly string $staticUrl;
@@ -23,7 +24,7 @@ class moduleMain  extends abstractModuleMain {
 	public function initialize(): void {
 		$this->staticUrl = $this->getConfig('STATIC_URL');
 
-		$this->moduleContext->moduleEngine->addListener('Post', function (&$arrLabels, $post) {
+		$this->moduleContext->moduleEngine->addListener('Post', function (&$arrLabels, Post $post) {
 			$this->onRenderPost($arrLabels, $post);
 		});
 	}
@@ -43,17 +44,17 @@ class moduleMain  extends abstractModuleMain {
 		return false;
 	}
 	
-	public function onRenderPost(array &$arrLabels, array $post){
-		if ($this->getConfig('ModuleSettings.FLAG_MODE') == 1 && strstr($post['email'], 'flag')) return;
-		if ($this->getConfig('ModuleSettings.FLAG_MODE') == 2 && !strstr($post['email'], 'flag')) return;
+	public function onRenderPost(array &$arrLabels, Post $post){
+		if ($this->getConfig('ModuleSettings.FLAG_MODE') == 1 && strstr($post->getEmail(), 'flag')) return;
+		if ($this->getConfig('ModuleSettings.FLAG_MODE') == 2 && !strstr($post->getEmail(), 'flag')) return;
 
 		$reader = new Reader(__DIR__ . '/geoip/GeoLite2-Country.mmdb');
 		
-		$iphost = strtolower($post['host']);
+		$iphost = strtolower($post->getIp());
 		
 		
 		try {
-			$record = $reader->country(gethostbyname($post['host']));
+			$record = $reader->country(gethostbyname($post->getIp()));
 		} catch (Exception $e) {
 			$record = "";  // default value
 		}

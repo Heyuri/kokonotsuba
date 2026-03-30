@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\edit;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
@@ -41,7 +42,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModeratePostWidget',
-			function(array &$widgetArray, array &$post) {
+			function(array &$widgetArray, Post &$post) {
 				$this->onRenderPostWidget($widgetArray, $post);
 			}
 		);
@@ -70,9 +71,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$moduleHeader .= $this->generateTemplate('postEditFormTemplate', $postEditFormTemplate);
 	}
 
-	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
 		// get post details for widget
-		$postUid = $post['post_uid'];
+		$postUid = $post->getUid();
 
 		// get post number for widget
 		$postWidget = $this->buildWidgetEntry(
@@ -122,12 +123,12 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// send the updated post data back as json
 		sendAjaxAndDetach([
-			'postUserName' => $post['name'] ?? '',
-			'comment' => $post['com'] ?? '',
-			'subject' => $post['sub'] ?? '',
-			'postEmail' => $post['email'] ?? '',
-			'postUid' => $post['post_uid'] ?? '',
-			'postNumber' => $post['no'] ?? ''
+			'postUserName' => $post->getName() ?? '',
+			'comment' => $post->getComment() ?? '',
+			'subject' => $post->getSubject() ?? '',
+			'postEmail' => $post->getEmail() ?? '',
+			'postUid' => $post->getUid() ?? '',
+			'postNumber' => $post->getNumber() ?? ''
 		]);
 		exit;
 	}
@@ -161,10 +162,10 @@ class moduleAdmin extends abstractModuleAdmin {
 			validatePostInput($post, false);
 
 			// store post number for redirect after edit
-			$postNumber = $post['no'] ?? null;
+			$postNumber = $post->getNumber() ?? null;
 
 			// get board uid
-			$boardUid = $post['boardUID'] ?? null;
+			$boardUid = $post->getBoardUID() ?? null;
 
 			// get the parameters
 			$name = $this->moduleContext->request->getParameter('postUserName', 'POST');
@@ -205,12 +206,12 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// page content
 		$pageContent = $this->moduleContext->adminPageRenderer->ParseBlock('POST_EDIT_FORM',[
-			'{$POST_UID}' => $post['post_uid'],
-			'{$POST_NUMBER}' => $post['no'],
-			'{$NAME}' => sanitizeStr($post['name'] ?? ''),
-			'{$COMMENT}' => sanitizeStr($post['com'] ?? ''),
-			'{$SUBJECT}' => sanitizeStr($post['sub'] ?? ''),
-			'{$EMAIL}' => sanitizeStr($post['email'] ?? ''),
+			'{$POST_UID}' => $post->getUid(),
+			'{$POST_NUMBER}' => $post->getNumber(),
+			'{$NAME}' => sanitizeStr($post->getName() ?? ''),
+			'{$COMMENT}' => sanitizeStr($post->getComment() ?? ''),
+			'{$SUBJECT}' => sanitizeStr($post->getSubject() ?? ''),
+			'{$EMAIL}' => sanitizeStr($post->getEmail() ?? ''),
 			'{$FORM_NAME}' => _T('form_name'),
 			'{$FORM_EMAIL}' => _T('form_email'),
 			'{$FORM_TOPIC}' => _T('form_topic'),

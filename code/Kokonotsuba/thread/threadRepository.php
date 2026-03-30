@@ -7,6 +7,8 @@ use RuntimeException;
 use Kokonotsuba\board\board;
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\post\Post;
+use Kokonotsuba\thread\Thread;
 use function Kokonotsuba\libraries\sqlLatestDeletionEntry;
 use function Kokonotsuba\libraries\excludeDeletedPostsCondition;
 use function Kokonotsuba\libraries\excludeDeletedThreadsCondition;
@@ -29,7 +31,8 @@ class threadRepository extends baseRepository {
 		private string $fileTable,
 		private string $accountTable,
 		private string $soudaneTable,
-		private string $noteTable,) {
+		private string $noteTable
+	) {
 		parent::__construct($databaseConnection, $threadTable);
 		$this->allowedOrderFields = ['last_bump_time', 'last_reply_time', 'thread_created_time', 'post_op_number', 'number_of_posts'];
 	}
@@ -138,9 +141,9 @@ class threadRepository extends baseRepository {
 	 *
 	 * @param string $thread_uid    Thread UID.
 	 * @param bool   $includeDeleted Whether to include the thread if its OP is deleted.
-	 * @return array|false Thread data array, or false if not found.
+	 * @return Thread|false Thread object, or false if not found.
 	 */
-	public function getThreadByUid(string $thread_uid, bool $includeDeleted = false): array|false {
+	public function getThreadByUid(string $thread_uid, bool $includeDeleted = false): Thread|false {
 		// get base thread query
 		$query = $this->getBaseThreadQuery($includeDeleted);
 
@@ -157,7 +160,7 @@ class threadRepository extends baseRepository {
 		
 		$threadData = $this->queryOne($query, $params);	
 	
-		return $threadData;
+		return $threadData ? new Thread($threadData) : false;
 	}
 
 	/**
@@ -166,16 +169,12 @@ class threadRepository extends baseRepository {
 	 * @param array $threadUidArray Array of thread UIDs.
 	 * @return array Array of rows with 'post_op_number' and 'boardUID'.
 	 */
-	public function mapThreadUidListToPostNumber($threadUidArray) {
+	public function mapThreadUidListToPostNumber(array $threadUidArray) {
 		if (empty($threadUidArray)) {
 			return array(); // early return if no thread UIDs
 		}
 	
-		if (!is_array($threadUidArray)) {
-			$threadUidArray = [$threadUidArray];
-		}
-		
-		$placeholders = implode(',', array_fill(0, count($threadUidArray), '?'));
+		$placeholders = pdoPlaceholdersForIn($threadUidArray);
 		$query = "SELECT post_op_number, boardUID FROM {$this->table} WHERE thread_uid IN ($placeholders) ORDER BY last_bump_time DESC";
 		
 		return $this->queryAll($query, $threadUidArray);
@@ -221,11 +220,11 @@ class threadRepository extends baseRepository {
 					{$visibleCond}
 				ORDER BY {$orderBy} {$direction}";
 
-		if ($amount > 0) {
-			$query .= " LIMIT {$start}, {$amount}";
-		}
-
 		$params = [':board_uid' => $boardUID];
+
+		if ($amount > 0) {
+			$this->paginate($query, $params, $amount, $start);
+		}
 
 		$threads = $this->queryAllAsIndexArray($query, $params);
 		return !empty($threads) ? array_merge(...$threads) : [];
@@ -242,14 +241,12 @@ class threadRepository extends baseRepository {
 	 */
 	// insert a new thread into the thread table
 	public function addThread($boardUID, $post_uid, $thread_uid, $post_op_number) {
-		$query = "INSERT INTO {$this->table} (boardUID, post_op_post_uid, post_op_number, thread_uid) VALUES (:board_uid, :post_op_post_uid, :post_op_number, :thread_uid)";
-		$params = [
-			':board_uid' => $boardUID,
-			':post_op_post_uid' => $post_uid,
-			':post_op_number' => $post_op_number,
-			':thread_uid' => $thread_uid,
-		];
-		$this->query($query, $params);
+		$this->insert([
+			'boardUID' => $boardUID,
+			'post_op_post_uid' => $post_uid,
+			'post_op_number' => $post_op_number,
+			'thread_uid' => $thread_uid,
+		]);
 	}
 
 	/**
@@ -273,7 +270,7 @@ class threadRepository extends baseRepository {
 		$values = [];
 		$params = [];
 
-		foreach ($threads as $i => $t) {
+		foreach (array_values($threads) as $i => $t) {
 			$values[] = "(:board_uid_$i, 0, :post_op_number_$i, :thread_uid_$i)";
 			$params[":board_uid_$i"] = $t['board_uid'];
 			$params[":post_op_number_$i"] = $t['post_op_number'];
@@ -372,11 +369,11 @@ class threadRepository extends baseRepository {
 			bindBoardUIDFilter($params, $query, $filters['board'], 't.boardUID');
 		}
 
-		$query .= " ORDER BY t.{$order} DESC LIMIT :_limit OFFSET :_offset";
-		$params[':_limit'] = $amount;
-		$params[':_offset'] = $offset;
+		$query .= " ORDER BY t.{$order} DESC";
+		$this->paginate($query, $params, $amount, $offset);
 
-		return $this->queryAll($query, $params);
+		$rows = $this->queryAll($query, $params);
+		return array_map(fn($row) => new Thread($row), $rows);
 	}
 
 	/**
@@ -413,12 +410,7 @@ class threadRepository extends baseRepository {
 	 * @return mixed OP post number, or null if not found.
 	 */
 	public function resolveThreadNumberFromUID($thread_uid) {
-		$query = "SELECT post_op_number FROM {$this->table} WHERE thread_uid = :thread_uid";
-		$params = [
-			':thread_uid' => strval($thread_uid)
-		];
-		$threadNo = $this->queryColumn($query, $params);
-		return $threadNo;
+		return $this->pluck('post_op_number', 'thread_uid', strval($thread_uid));
 	}
 
 	/**
@@ -429,11 +421,10 @@ class threadRepository extends baseRepository {
 	 * @return void
 	 */
 	public function updateThreadBumpAndReplyTime(string $threadUID, $time): void {
-		$this->query("
-			UPDATE {$this->table}
-			SET last_bump_time = ?, last_reply_time = ?
-			WHERE thread_uid = ?
-		", [$time, $time, $threadUID]);
+		$this->updateWhere(
+			['last_bump_time' => $time, 'last_reply_time' => $time],
+			'thread_uid', $threadUID
+		);
 	}
 
 	/**
@@ -455,11 +446,7 @@ class threadRepository extends baseRepository {
 	 * @return void
 	 */
 	public function updateThreadReplyTime(string $threadUID, $time): void {
-		$this->query("
-			UPDATE {$this->table}
-			SET last_reply_time = ?
-			WHERE thread_uid = ?
-		", [$time, $threadUID]);
+		$this->updateWhere(['last_reply_time' => $time], 'thread_uid', $threadUID);
 	}
 
 	/**
@@ -516,18 +503,7 @@ class threadRepository extends baseRepository {
 				return [];
 		}
 
-		$placeholders = pdoPlaceholdersForIn($threadUIDs);
-
-		// Subquery to get the first (oldest) post of each thread
-		$query = "
-			SELECT post_op_post_uid
-			FROM {$this->table}
-			WHERE thread_uid IN $placeholders
-		";
-
-		$results = $this->queryAllAsIndexArray($query, $threadUIDs);
-
-		return array_merge(...$results);
+		return $this->pluckWhereIn('post_op_post_uid', 'thread_uid', $threadUIDs);
 	}
 
 	/**
@@ -616,16 +592,17 @@ class threadRepository extends baseRepository {
 		// add ordering (sticky first)
 		$query .= " ORDER BY t.is_sticky DESC, t.{$orderBy} {$direction}";
 
-		// add limits
-		if ($limit) {
-			$query .= " LIMIT {$limit} OFFSET {$offset}";
-		}
-
 		// add param
 		$params = [':board_uid' => $boardUid];
 
+		// add limits
+		if ($limit) {
+			$this->paginate($query, $params, $limit, $offset);
+		}
+
 		// return db query fetching the thread data
-		return $this->queryAll($query, $params);
+		$rows = $this->queryAll($query, $params);
+		return $rows ? array_map(fn($row) => new Thread($row), $rows) : null;
 	}
 
 
@@ -703,7 +680,7 @@ class threadRepository extends baseRepository {
 	 *
 	 * @param string $threadUID      Thread UID.
 	 * @param bool   $includeDeleted Whether to include soft-deleted posts.
-	 * @return array|null Array of merged post data arrays, or null if none found.
+	 * @return Post[]|null Array of Post objects, or null if none found.
 	 */
 	public function getAllPostsFromThread(string $threadUID, bool $includeDeleted = false): ?array {
 		// Generate the base query
@@ -868,15 +845,11 @@ class threadRepository extends baseRepository {
 	 * @return void
 	 */
 	public function insertThread($threadUid, $postOpNumber, $boardUID) {
-		$query = "INSERT INTO {$this->table} (
-			thread_uid, post_op_number, post_op_post_uid, boardUID
-		) VALUES (
-			:thread_uid, :post_op_number, -1, :boardUID
-		)";
-		$this->query($query, [
-			':thread_uid'		=> $threadUid,
-			':post_op_number'	=> $postOpNumber,
-			':boardUID'			=> $boardUID
+		$this->insert([
+			'thread_uid' => $threadUid,
+			'post_op_number' => $postOpNumber,
+			'post_op_post_uid' => -1,
+			'boardUID' => $boardUID,
 		]);
 	}
 	
@@ -888,15 +861,7 @@ class threadRepository extends baseRepository {
 	 * @return void
 	 */
 	public function updateThreadOpPostUid(string $threadUid, string $postOpUid): void {
-		$this->query(
-			"UPDATE {$this->table}
-			 SET post_op_post_uid = :post_uid
-			 WHERE thread_uid = :thread_uid",
-			[
-				':post_uid'		=> $postOpUid,
-				':thread_uid'	=> $threadUid
-			]
-		);
+		$this->updateWhere(['post_op_post_uid' => $postOpUid], 'thread_uid', $threadUid);
 	}
 
 	/**
@@ -930,16 +895,10 @@ class threadRepository extends baseRepository {
 	 * @return void
 	 */
 	public function updateThreadForBoardMove($threadUid, $newBoardUID, $newPostOpNumber): void {
-		$query = "UPDATE {$this->table} 
-					SET boardUID = :new_boardUID, post_op_number = :new_post_op_number
-					WHERE thread_uid = :thread_uid";
-		$params = [
-			':new_boardUID' => intval($newBoardUID),
-			':new_post_op_number' => intval($newPostOpNumber),
-			':thread_uid' => $threadUid,
-		];
-		
-		$this->query($query, $params);
+		$this->updateWhere(
+			['boardUID' => intval($newBoardUID), 'post_op_number' => intval($newPostOpNumber)],
+			'thread_uid', $threadUid
+		);
 	}
 
 	/**

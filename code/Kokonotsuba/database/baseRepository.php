@@ -180,6 +180,161 @@ class baseRepository {
 		return $this->databaseConnection->getNextAutoIncrement($this->table);
 	}
 
+	// ─── Column-level helpers ──────────────────────────────────────
+
+	/**
+	 * Fetch a single column value from the first row matching a WHERE condition.
+	 *
+	 * @param string $selectColumn Column to return.
+	 * @param string $whereColumn  Column to filter on.
+	 * @param mixed  $value        Value to match.
+	 * @return mixed Scalar value, or false if not found.
+	 */
+	protected function pluck(string $selectColumn, string $whereColumn, mixed $value): mixed {
+		$this->validateColumnName($selectColumn);
+		$this->validateColumnName($whereColumn);
+		$query = "SELECT {$selectColumn} FROM {$this->table} WHERE {$whereColumn} = :value LIMIT 1";
+		return $this->databaseConnection->fetchColumn($query, [':value' => $value]);
+	}
+
+	/**
+	 * Fetch a flat array of a single column's values for all rows matching a WHERE condition.
+	 *
+	 * @param string $selectColumn Column to return.
+	 * @param string $whereColumn  Column to filter on.
+	 * @param mixed  $value        Value to match.
+	 * @return array Flat array of column values.
+	 */
+	protected function pluckAll(string $selectColumn, string $whereColumn, mixed $value): array {
+		$this->validateColumnName($selectColumn);
+		$this->validateColumnName($whereColumn);
+		$query = "SELECT {$selectColumn} FROM {$this->table} WHERE {$whereColumn} = :value";
+		$rows = $this->databaseConnection->fetchAllAsIndexArray($query, [':value' => $value]);
+		return $rows ? array_merge(...$rows) : [];
+	}
+
+	/**
+	 * Fetch a flat array of a column's values where another column is IN a list of values.
+	 *
+	 * @param string $selectColumn Column to return.
+	 * @param string $whereColumn  Column to filter on.
+	 * @param array  $values       Values for the IN clause.
+	 * @param bool   $distinct     Whether to return only unique values.
+	 * @return array Flat array of column values.
+	 */
+	protected function pluckWhereIn(string $selectColumn, string $whereColumn, array $values, bool $distinct = false): array {
+		if (empty($values)) return [];
+		$this->validateColumnName($selectColumn);
+		$this->validateColumnName($whereColumn);
+		$select = $distinct ? "SELECT DISTINCT {$selectColumn}" : "SELECT {$selectColumn}";
+		$in = $this->buildInClause($values);
+		$query = "{$select} FROM {$this->table} WHERE {$whereColumn} IN {$in}";
+		$rows = $this->databaseConnection->fetchAllAsIndexArray($query, array_values($values));
+		return $rows ? array_merge(...$rows) : [];
+	}
+
+	/**
+	 * Fetch all rows where the given column is IN a list of values.
+	 *
+	 * @param string $whereColumn Column to filter on.
+	 * @param array  $values      Values for the IN clause.
+	 * @param string $fetchClass  Optional class name to hydrate rows into.
+	 * @return array Array of rows.
+	 */
+	protected function findAllWhereIn(string $whereColumn, array $values, string $fetchClass = ''): array {
+		if (empty($values)) return [];
+		$this->validateColumnName($whereColumn);
+		$in = $this->buildInClause($values);
+		$query = "SELECT * FROM {$this->table} WHERE {$whereColumn} IN {$in}";
+		$params = array_values($values);
+		if ($fetchClass !== '') {
+			return $this->databaseConnection->fetchAllAsClass($query, $params, $fetchClass);
+		}
+		return $this->databaseConnection->fetchAllAsArray($query, $params);
+	}
+
+	// ─── Bulk mutation helpers ─────────────────────────────────────
+
+	/**
+	 * Delete all rows where the given column is IN a list of values.
+	 *
+	 * @param string $column Column to filter on.
+	 * @param array  $values Values for the IN clause.
+	 * @return void
+	 */
+	protected function deleteWhereIn(string $column, array $values): void {
+		if (empty($values)) return;
+		$this->validateColumnName($column);
+		$in = $this->buildInClause($values);
+		$query = "DELETE FROM {$this->table} WHERE {$column} IN {$in}";
+		$this->databaseConnection->execute($query, array_values($values));
+	}
+
+	/**
+	 * Update columns in rows where the given column is IN a list of values.
+	 *
+	 * @param array  $data   Associative array of column => new value pairs.
+	 * @param string $column Column name used in the WHERE IN clause.
+	 * @param array  $values Values for the IN clause.
+	 * @return void
+	 */
+	protected function updateWhereIn(array $data, string $column, array $values): void {
+		if (empty($data) || empty($values)) return;
+		$this->validateColumnName($column);
+		$setClauses = [];
+		$params = [];
+		foreach ($data as $key => $val) {
+			$this->validateColumnName($key);
+			$setClauses[] = "{$key} = :set_{$key}";
+			$params[":set_{$key}"] = $val;
+		}
+		$in = $this->buildInClause($values);
+		$query = "UPDATE {$this->table} SET " . implode(', ', $setClauses) . " WHERE {$column} IN {$in}";
+		// Merge named SET params with positional IN params — named first, positional after
+		$this->databaseConnection->execute($query, array_merge($params, array_values($values)));
+	}
+
+	/**
+	 * Count rows where the given column equals the given value.
+	 *
+	 * @param string $column Column to filter on.
+	 * @param mixed  $value  Value to match.
+	 * @return int Number of matching rows.
+	 */
+	protected function countBy(string $column, mixed $value): int {
+		$this->validateColumnName($column);
+		$query = "SELECT COUNT(*) FROM {$this->table} WHERE {$column} = :value";
+		return (int) ($this->databaseConnection->fetchColumn($query, [':value' => $value]) ?? 0);
+	}
+
+	/**
+	 * Build a positional placeholder IN clause for the given values.
+	 *
+	 * @param array $values Values to create placeholders for.
+	 * @return string Parenthesised placeholder string, e.g. "(?, ?, ?)".
+	 */
+	private function buildInClause(array $values): string {
+		if (empty($values)) return '(NULL)';
+		return '(' . implode(', ', array_fill(0, count($values), '?')) . ')';
+	}
+
+	// ─── Query-building helpers ────────────────────────────────────
+
+	/**
+	 * Append a LIMIT/OFFSET clause to a query using named parameters.
+	 *
+	 * @param string   $query  SQL query string (modified by reference).
+	 * @param array    $params Bound parameters array (modified by reference).
+	 * @param int      $limit  Maximum number of rows to return.
+	 * @param int      $offset Row offset (default 0).
+	 * @return void
+	 */
+	protected function paginate(string &$query, array &$params, int $limit, int $offset = 0): void {
+		$query .= " LIMIT :_limit OFFSET :_offset";
+		$params[':_limit'] = $limit;
+		$params[':_offset'] = $offset;
+	}
+
 	// ─── Manual query methods for advanced operations ──────────────
 
 	/**

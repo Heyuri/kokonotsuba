@@ -5,7 +5,6 @@ namespace Kokonotsuba\board;
 use Exception;
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
-use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
 /** Repository for board records, with a per-request static result cache. */
 class boardRepository extends baseRepository {
@@ -138,9 +137,7 @@ class boardRepository extends baseRepository {
 	 */
 	public function getAllListedBoardUIDs() {
 		return $this->cacheMethodResult(__METHOD__, function () {
-			$query = "SELECT board_uid FROM {$this->table} WHERE listed = true";
-			$boards = $this->queryAllAsIndexArray($query);
-			return array_merge(...$boards);
+			return $this->pluckAll('board_uid', 'listed', true);
 		});
 	}
 
@@ -155,10 +152,7 @@ class boardRepository extends baseRepository {
 		$cacheKey = __METHOD__ . ':' . implode(',', $uidList);
 	
 		return $this->cacheMethodResult($cacheKey, function () use ($uidList) {
-			$inClause = pdoPlaceholdersForIn($uidList);
-			$query = "SELECT * FROM {$this->table} WHERE board_uid IN $inClause";
-			$uidList = array_values($uidList);
-			return $this->queryAllAsClass($query, $uidList, '\Kokonotsuba\board\boardData');
+			return $this->findAllWhereIn('board_uid', array_values($uidList), '\Kokonotsuba\board\boardData');
 		});
 	}
 	

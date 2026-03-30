@@ -70,9 +70,9 @@ class moduleMain extends abstractModuleMain {
 						if (!isset($t['posts'][0])) continue;
 						$post = $t['posts'][0];
 
-						$cleanComment = strip_tags($post['com']);
+						$cleanComment = strip_tags($post->getComment());
 						$truncatedComment = truncateText($cleanComment, 100);
-						$truncatedSubject = truncateText($post['sub'], 100);
+						$truncatedSubject = truncateText($post->getSubject(), 100);
 
 						$title = $truncatedSubject ?: $truncatedComment;
 
@@ -82,8 +82,8 @@ class moduleMain extends abstractModuleMain {
 
 						$dat .= sprintf(
 								'<span><!--%d--> <a href="%s">%s (%d)</a></span>',
-								$post['no'],
-								$this->getConfig('LIVE_INDEX_FILE') . '?res=' . $post['no'],
+								$post->getNumber(),
+								$this->getConfig('LIVE_INDEX_FILE') . '?res=' . $post->getNumber(),
 								$title,
 								$replyCount
 						);

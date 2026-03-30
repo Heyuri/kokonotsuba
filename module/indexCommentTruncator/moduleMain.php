@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\indexCommentTruncator;
 
 use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\post\Post;
 use Throwable;
 
 use function Kokonotsuba\libraries\_T;
@@ -32,14 +33,14 @@ class moduleMain extends abstractModuleMain {
 		$this->breakLinePreviewLimit = $this->getConfig('ModuleSettings.LINE_PREVIEW_LIMIT', 10);
 
 		// add hook point listener for post
-		$this->moduleContext->moduleEngine->addListener('Post', function(array &$templateValues, array &$post, array &$threadPosts, board &$board, bool &$adminMode) {
+		$this->moduleContext->moduleEngine->addListener('Post', function(array &$templateValues, Post &$post, array &$threadPosts, board &$board, bool &$adminMode) {
 			$this->onRenderPost($templateValues['{$COM}'], $post);
 		});
 	}
 
-	private function onRenderPost(string &$comment, array &$post): void {
+	private function onRenderPost(string &$comment, Post &$post): void {
 		// truncate post comment for index view
-		$this->truncatePostComment($comment, $post['no']);
+		$this->truncatePostComment($comment, $post->getNumber());
 	}
 
 	private function truncatePostComment(string &$comment, int $postNumber): void {

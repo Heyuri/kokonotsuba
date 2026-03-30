@@ -70,12 +70,8 @@ class postSearchRepository extends baseRepository {
 		// order it
 		$query .= " ORDER BY p.root DESC";
 
-		// append order / limit / offset
-		$query .= "
-			LIMIT :_limit OFFSET :_offset
-		";
-		$params[':_limit'] = $limit;
-		$params[':_offset'] = $offset;
+		// append limit / offset
+		$this->paginate($query, $params, $limit, $offset);
 
 		// fetch posts from db
 		$postsResults = $this->queryAll($query, $params);

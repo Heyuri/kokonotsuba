@@ -3,6 +3,7 @@
 namespace Kokonotsuba\renderers;
 
 use Kokonotsuba\board\board;
+use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\bindOPValuesToTemplate;
 use function Kokonotsuba\libraries\bindReplyValuesToTemplate;
@@ -20,7 +21,7 @@ class postTemplateBinder {
 	 * Prepares the data structure for a non-OP post (a reply) using the reply template binding function.
 	 * Adds name, quote, image, and comment information to the template.
 	 */
-	public function renderReplyPost(array $data,
+	public function renderReplyPost(Post $data,
 		string $crossLink,
 		bool $postPositionEnabled,
 		array $templateValues,
@@ -38,19 +39,19 @@ class postTemplateBinder {
 				$this->board,
 				$this->config,
 				$crossLink,
-				$data['post_uid'],
-				$data['no'],
+				$data->getUid(),
+				$data->getNumber(),
 				$threadResno,
 				$postPositionEnabled,
-				$data['post_position'],
-				$data['sub'],
+				$data->getPostPosition(),
+				$data->getSubject(),
 				$nameHtml,
-				$data['now'],
+				$data->getTimestamp(),
 				$categoryHTML,
 				$quoteButton,
 				$attachmentHtml, 
 				$warnBeKill,
-				$data['com'],
+				$data->getComment(),
 				$postFormExtra
 			)
 		);
@@ -62,7 +63,7 @@ class postTemplateBinder {
 	 * This handles the layout and logic specific to OPs including reply count, warnings,
 	 * thread navigation, and extended image information.
 	 */
-	public function renderOpPost(array $data,
+	public function renderOpPost(Post $data,
 		?array $fileData,
 		string $crossLink,
 		array $templateValues,
@@ -86,11 +87,11 @@ class postTemplateBinder {
 				$this->board,
 				$this->config,
 				$crossLink,
-				$data['post_uid'],
-				$data['no'],
-				$data['sub'],
+				$data->getUid(),
+				$data->getNumber(),
+				$data->getSubject(),
 				$nameHtml,
-				$data['now'],
+				$data->getTimestamp(),
 				$categoryHTML,
 				$quoteButton,
 				$attachmentHtml,
@@ -107,7 +108,7 @@ class postTemplateBinder {
 				$warnBeKill,
 				$warnEndReply,
 				$warnHidePost,
-				$data['com'],
+				$data->getComment(),
 				$postFormExtra
 			)
 		);

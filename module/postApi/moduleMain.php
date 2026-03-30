@@ -4,10 +4,13 @@ namespace Kokonotsuba\Modules\postApi;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\PMCLibrary;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\renderers\postRenderer;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Puchiko\json\renderCachedJsonPage;
 use function Puchiko\json\renderJsonPage;
 use function Puchiko\json\renderJsonErrorPage;
 
@@ -69,18 +72,24 @@ class moduleMain extends abstractModuleMain {
 		$moduleHeader .= '<meta name="postApiFetchingText" content="' . $fetchingText . '">';
 	}
 
+    private function generateTripcode(?string $tripcode, ?string $secureTripcode): string {
+        if ($secureTripcode) {
+            return  _T('cap_char') . $secureTripcode;
+        } elseif ($tripcode) {
+            return _T('trip_pre') . $tripcode;
+        } else {
+            return '';
+        }
+
+
+    }
+
 	/** Module page — serves the JSON API with server-rendered post HTML. */
 	public function ModulePage(): void {
 		$postUid = (int) $this->moduleContext->request->getParameter('post_uid', 'GET', '');
 
 		if ($postUid <= 0) {
 			renderJsonErrorPage(_T('post_not_found'), 400);
-		}
-
-		// Return from filesystem cache if available
-		$cached = $this->readCache($postUid);
-		if ($cached !== null) {
-			renderJsonPage($cached);
 		}
 
 		$post = $this->moduleContext->postRepository->getPostByUid($postUid);
@@ -90,17 +99,23 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		$html = $this->renderPostHtml($post);
-		$data = ['html' => $html];
+		$data = [
+            'timestamp' => $post->getRoot(),
+            'post_uid' => $post->getUid(),
+            'name' => $post->getName(),
+            'tripcode' => $this->generateTripcode($post->getTripcode(), $post->getSecureTripcode()),
+            'mod_capcode' => $post->getCapcode(),
+            'email' => $post->getEmail(),
+            'html' => $html
+            ];
 
-		$this->writeCache($postUid, $data);
-
-		renderJsonPage($data);
+		renderCachedJsonPage($data);
 	}
 
 	/** Render a post to full HTML using the postRenderer pipeline. */
-	private function renderPostHtml(array $post): string {
+	private function renderPostHtml(Post $post): string {
 		// Resolve the board for this post
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 
 		if (!$board) {
 			$board = $this->moduleContext->board;
@@ -121,12 +136,12 @@ class moduleMain extends abstractModuleMain {
 
 		// Fetch and set quote links for this post
 		$quoteLinks = $this->moduleContext->quoteLinkService->getQuoteLinksByPostUids(
-			[$post['post_uid']]
+			[$post->getUid()]
 		);
 		$postRenderer->setQuoteLinks($quoteLinks);
 
 		// Determine thread number
-		$threadNumber = $post['post_op_number'] ?? 0;
+		$threadNumber = $post->getOpNumber();
 
 		// Render using the full post rendering pipeline
 		$templateValues = [];

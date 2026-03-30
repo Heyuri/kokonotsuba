@@ -197,10 +197,7 @@ class quoteLinkRepository extends baseRepository {
 			return;
 		}
 
-		$inClause = pdoPlaceholdersForIn($quoteLinkIds);
-		$query = "UPDATE {$this->table} SET board_uid = ? WHERE quotelink_id IN $inClause";
-		$parameters = array_merge([$boardUid], $quoteLinkIds);
-		$this->query($query, $parameters);
+		$this->updateWhereIn(['board_uid' => $boardUid], 'quotelink_id', $quoteLinkIds);
 	}
 
 	/**
@@ -210,8 +207,6 @@ class quoteLinkRepository extends baseRepository {
 	 * @return quoteLink[] Array of hydrated quoteLink objects.
 	 */
 	public function getQuoteLinksFromHostPostUids(array $postUids): array {
-		$inClause = pdoPlaceholdersForIn($postUids);
-		$query = "SELECT * FROM {$this->table} WHERE host_post_uid IN $inClause";
-		return $this->queryAllAsClass($query, $postUids, '\Kokonotsuba\quote_link\quoteLink');
+		return $this->findAllWhereIn('host_post_uid', $postUids, '\Kokonotsuba\quote_link\quoteLink');
 	}
 }

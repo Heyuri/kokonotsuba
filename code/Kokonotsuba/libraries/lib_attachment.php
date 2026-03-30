@@ -230,7 +230,7 @@ function getAttachmentsFromPosts(array $posts): array {
 
 	foreach ($posts as $post) {
 		// Ensure $post is array-like
-		if (!is_array($post)) {
+		if (!is_array($post) && !($post instanceof \ArrayAccess)) {
 			continue;
 		}
 

@@ -8,6 +8,7 @@ use Kokonotsuba\renderers\postRenderer;
 use Kokonotsuba\renderers\threadRenderer;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\policy\postRenderingPolicy;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\quote_link\quoteLinkService;
 use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
@@ -97,13 +98,13 @@ class boardRebuilder {
 		$thread = $threadData['thread'];
 
 		// get the total amount of posts in the thread
-		$totalPosts = $thread['number_of_posts'];
+		$totalPosts = $thread->getPostCount();
 
 		// whether the thread has been deleted
-		$threadDeleted = $thread['thread_deleted'] ?? null;
+		$threadDeleted = $thread->isThreadDeleted();
 
 		// whether it was a file-only deletion
-		$fileOnly = $thread['thread_attachment_deleted'] ?? null;
+		$fileOnly = $thread->isAttachmentDeleted();
 
 		// hard deleted (a la, thread itself was deleted and the file isn't what was deleted)
 		$hardDeleted = $threadDeleted && !$fileOnly;
@@ -216,15 +217,15 @@ class boardRebuilder {
 		return $threadData;
 	}
 
-	private function getThreadPageTitle(array $opPost, string $boardTitle): string {
-		$subject = strip_tags($opPost['sub']); // thread subject/topic
-		$comment = strip_tags($opPost['com']); // op post comment
+	private function getThreadPageTitle(Post $opPost, string $boardTitle): string {
+		$subject = strip_tags($opPost->getSubject()); // thread subject/topic
+		$comment = strip_tags($opPost->getComment()); // op post comment
 		
 		// first array key
-		$firstAttachmentArrKey = array_key_first($opPost['attachments']);
+		$firstAttachmentArrKey = array_key_first($opPost->getAttachments());
 
 		// get the first attachment
-		$firstAttachment = $opPost['attachments'][$firstAttachmentArrKey] ?? null; 
+		$firstAttachment = $opPost->getAttachments()[$firstAttachmentArrKey] ?? null; 
 
 		// set first filename if it exists
 		$firstAttachment ? $fileName = strip_tags($firstAttachment['fileName'] . '.' . $firstAttachment['fileExtension']) : $fileName = null;

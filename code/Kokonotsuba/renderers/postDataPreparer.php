@@ -3,6 +3,7 @@
 namespace Kokonotsuba\renderers;
 
 use Kokonotsuba\board\board;
+use Kokonotsuba\post\Post;
 
 class postDataPreparer {
     public function __construct(
@@ -12,13 +13,13 @@ class postDataPreparer {
 	 /**
 	 * Sanitize and format post data for rendering using associative arrays.
 	 */
-	public function preparePostData(array $post): array {
+	public function preparePostData(Post $post): Post {
 		// Mailto formatting
 		if ($this->board->getConfigValue('CLEAR_SAGE')) {
-			$email = preg_replace('/^sage( *)/i', '', $post['email']);
+			$email = preg_replace('/^sage( *)/i', '', $post->getEmail());
 		}
 		if ($this->board->getConfigValue('ALLOW_NONAME') == 2 && $email) {
-			$now = "<a href=\"mailto:{$post['email']}\">{$post['now']}</a>";
+			$now = "<a href=\"mailto:{$post->getEmail()}\">{$post->getTimestamp()}</a>";
 		}
 
 		// return post

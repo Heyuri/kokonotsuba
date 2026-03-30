@@ -269,7 +269,7 @@ function getPageOfThread(string $thread_uid, array $threads, int $threadsPerPage
 function getPostUidsFromThreadArrays(array $threads): array {
 	$postUids = array_unique(array_reduce($threads, function($carry, $thread) {
 		if (isset($thread['posts']) && is_array($thread['posts'])) {
-			return array_merge($carry, array_column($thread['posts'], 'post_uid'));
+			return array_merge($carry, array_map(fn($p) => $p['post_uid'], $thread['posts']));
 		}
 		return $carry;
 	}, []));
@@ -335,16 +335,16 @@ function generatePostUrl(int $postUid, postRepository $postRepository, bool $vie
 	}
 
 	// fetch the board
-	$board = searchBoardArrayForBoard($post['boardUID']);
+	$board = searchBoardArrayForBoard($post->getBoardUID());
 
 	// also return early if the post number isn't valid
-	if(!isset($post['no'])) {
+	if(!$board || !$post->getNumber()) {
 		return '';
 	}
 
 	// now generate the URL.
 	// Theres no need to include the thread number since it'll redirect on its own
-	$postUrl = $board->getBoardThreadURL($post['no']);
+	$postUrl = $board->getBoardThreadURL($post->getNumber());
 
 	// now return the url
 	return $postUrl;

@@ -10,6 +10,7 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
@@ -51,7 +52,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModeratePostWidget',
-			function(array &$widgetArray, array &$post) {
+			function(array &$widgetArray, Post &$post) {
 				$this->onRenderPostWidget($widgetArray, $post);
 			}
 		);
@@ -59,7 +60,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'BelowComment',
-			function(string &$belowComment, array &$post, array &$threadPosts, bool &$adminMode) {
+			function(string &$belowComment, Post &$post, array &$threadPosts, bool &$adminMode) {
 				$this->renderStaffNotesOnPost($belowComment, $post, $adminMode);
 			}
 		);
@@ -109,9 +110,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$moduleHeader .= $noteEntryTemplate;
 	}
 
-	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
 		// get post details for widget
-		$postUid = $post['post_uid'];
+		$postUid = $post->getUid();
 
 		// get post number for widget
 		$noteWidget = $this->buildWidgetEntry(
@@ -179,14 +180,14 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $noteHtml;
 	}
 
-	private function renderStaffNotesOnPost(string &$belowComment, array &$post, bool $adminMode): void {
+	private function renderStaffNotesOnPost(string &$belowComment, Post &$post, bool $adminMode): void {
 		// only run the method on the live frontend
 		if(!$adminMode) {
 			return;
 		}
 
 		// select staff notes on the post	
-		$staffNotesList = $post['staff_notes'] ?? [];
+		$staffNotesList = $post->getStaffNotes();
 
 		// initialize the variable we'll be using to store generated note html
 		$staffNotesHtml = '';
@@ -203,7 +204,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$noteId = $note['id'] ?? 0;
 
 			// render the note and append it to the main notes html variable	
-			$staffNotesHtml .= $this->renderNote($post['post_uid'], $noteId, $text, $addedBy, $addedById, $timestamp);
+			$staffNotesHtml .= $this->renderNote($post->getUid(), $noteId, $text, $addedBy, $addedById, $timestamp);
 		}
 
 		// now append the notes wrapped in a <div> to below the post comment

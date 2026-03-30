@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\cssHax;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\thread\Thread;
 
 use function Puchiko\strings\sanitizeStr;
 
@@ -16,12 +17,12 @@ class moduleMain extends abstractModuleMain {
 	}
 
  	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addListener('ModuleThreadHeader', function(string &$threadHeader, array $threadData) {
+		$this->moduleContext->moduleEngine->addListener('ModuleThreadHeader', function(string &$threadHeader, Thread $threadData) {
 			$this->onModuleThreadHeader($threadHeader, $threadData);
 		});
 	}
 
-	private function onModuleThreadHeader(string &$threadHeader, array $threadData): void {
+	private function onModuleThreadHeader(string &$threadHeader, Thread $threadData): void {
 		// generate and append the css styling for this thread
 		$threadHeader .= $this->generateThreadStyle($threadData);
 
@@ -29,32 +30,32 @@ class moduleMain extends abstractModuleMain {
 		$threadHeader .= $this->generateThreadAudio($threadData);
 	}
 
-	private function buildStyleAttributes(array $threadData, int $threadNumber): string {
+	private function buildStyleAttributes(Thread $threadData, int $threadNumber): string {
 		$styleAttributes = [];
 
 		// extract board uid
-		$boardUID = $threadData['boardUID'] ?? '';
+		$boardUID = $threadData->getBoardUID() ?? '';
 
 		// init text bg
 		$textBg = '';
 
 		// thread background color
-		if (!empty($threadData['background_hex_color']) && $threadData['background_hex_color'] !== "#000000") {
+		if (!empty($threadData->getBackgroundColor()) && $threadData->getBackgroundColor() !== "#000000") {
 			$styleAttributes[] =
-				'background-color: ' . sanitizeStr($threadData['background_hex_color']);
+				'background-color: ' . sanitizeStr($threadData->getBackgroundColor());
 		}
 
 		// thread text color
-		if (!empty($threadData['text_hex_color']) && $threadData['text_hex_color'] !== "#000000") {
+		if (!empty($threadData->getTextColor()) && $threadData->getTextColor() !== "#000000") {
 			$styleAttributes[] =
-				'color: ' . sanitizeStr($threadData['text_hex_color']);
+				'color: ' . sanitizeStr($threadData->getTextColor());
 		}
 
 		// thread background image
-		if (!empty($threadData['background_image_url'])) {
+		if (!empty($threadData->getBackgroundImageUrl())) {
 			$styleAttributes[] =
 				'background-image: url(\'' .
-				sanitizeStr($threadData['background_image_url']) .
+				sanitizeStr($threadData->getBackgroundImageUrl()) .
 				'\')';
 
 			// also add a background option to prevent it
@@ -71,14 +72,14 @@ class moduleMain extends abstractModuleMain {
 
 		// assemble the reply bg color attribute
 		$replyBackgroundAttribute = 
-			(!empty($threadData['reply_background_hex_color']) && $threadData['reply_background_hex_color'] !== "#000000") 
-			? 'background-color: ' . sanitizeStr($threadData['reply_background_hex_color'])
+			(!empty($threadData->getReplyBackgroundColor()) && $threadData->getReplyBackgroundColor() !== "#000000") 
+			? 'background-color: ' . sanitizeStr($threadData->getReplyBackgroundColor())
 			: '';
 
 
 		// handle text bg for visibility
-		if(!empty($threadData['background_hex_color']) && $threadData['background_hex_color'] !== "#000000"
-			|| !empty($threadData['background_image_url'])) {
+		if(!empty($threadData->getBackgroundColor()) && $threadData->getBackgroundColor() !== "#000000"
+			|| !empty($threadData->getBackgroundImageUrl())) {
 			// set the background color of the text to the default bg so the OP can be read more easily
 			$textBg = "#p{$boardUID}_{$threadNumber} .comment { background-color: var(--color-bg-main) }";
 		}
@@ -89,20 +90,20 @@ class moduleMain extends abstractModuleMain {
 				. $textBg;
 	}
 
-	private function generateThreadStyle(array $threadData): string {
+	private function generateThreadStyle(Thread $threadData): string {
 		// build attributes
-		$styleBlock = $this->buildStyleAttributes($threadData, $threadData['post_op_number']);
+		$styleBlock = $this->buildStyleAttributes($threadData, $threadData->getOpNumber());
 
 		// also pull the raw CSS if any exists
-		$rawStyling = htmlspecialchars($threadData['raw_styling']);
+		$rawStyling = htmlspecialchars($threadData->getRawStyling());
 
 		// return concatinated styling wrapped in raw style tags
 		return '<style>' . $styleBlock . $rawStyling . '</style>';
 	}
 
-	private function generateThreadAudio(array $threadData): string {
+	private function generateThreadAudio(Thread $threadData): string {
 		// return empty string if the thread doesn't have an audio URL
-		if(!$threadData['audio']) {
+		if(!$threadData->getAudio()) {
 			return '';
 		}
 
@@ -112,6 +113,6 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		// return generated audio tag with autoplay
-		return '<audio autoplay loop src="' . sanitizeStr($threadData['audio']) . '"></audio>';
+		return '<audio autoplay loop src="' . sanitizeStr($threadData->getAudio()) . '"></audio>';
 	}
 }

@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\deletedPosts;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\deletion\deletedPostsService;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
@@ -17,9 +18,9 @@ class deletedPostUtility {
 		private readonly request $request
 	) {}
 
-	public function isPostDeleted(array $post): bool {
+	public function isPostDeleted(Post $post): bool {
 		// has a value of 1 if the post is deleted
-		$openFlag = $post['open_flag'] ?? 0;
+		$openFlag = $post->getOpenFlag() ?? 0;
 
 		// return true if its value is 1
 		if((int)$openFlag === 1) {
@@ -46,7 +47,7 @@ class deletedPostUtility {
 
 	}
 
-	public function adminPostViewModuleButton(array $post, bool $noScript = false): string {
+	public function adminPostViewModuleButton(Post $post, bool $noScript = false): string {
 		// whether to render it
 		if(!$this->canRenderButton($post)) {
 			return '';
@@ -71,7 +72,7 @@ class deletedPostUtility {
 		return $buttonHtml;
 	}
 
-	public function canRenderButton(array $post): bool {
+	public function canRenderButton(Post $post): bool {
 		// whether the post is deleted or not
 		$isPostDeleted = $this->isPostDeleted($post);
 
@@ -90,7 +91,7 @@ class deletedPostUtility {
 		}
 
 		// is a reply of a deleted thread
-		$byProxy = $post['by_proxy'] ?? 0;
+		$byProxy = $post->isByProxy() ?? 0;
 
 		// also don't display it if the post is only deleted by proxy
 		// replies of deleted threads aren't meant to be view or changed individually

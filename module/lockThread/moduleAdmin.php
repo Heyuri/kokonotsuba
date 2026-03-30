@@ -6,6 +6,7 @@ require_once __DIR__ . '/lockThreadLibrary.php';
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\FlagHelper;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
@@ -32,7 +33,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ManagePostsThreadControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->addLockButtonToAdminControls($modControlSection, $post, false);
 			}
 		);
@@ -40,7 +41,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ThreadAdminControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->addLockButtonToAdminControls($modControlSection, $post, true);
 			}
 		);
@@ -48,7 +49,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModerateThreadWidget',
-			function(array &$widgetArray, array &$post) {
+			function(array &$widgetArray, Post &$post) {
 				$this->onRenderThreadWidget($widgetArray, $post);
 			}
 		);
@@ -62,10 +63,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function addLockButtonToAdminControls(string &$modfunc, array $post, bool $noScript) {
-		$status = new FlagHelper($post['status']);
+	private function addLockButtonToAdminControls(string &$modfunc, Post $post, bool $noScript) {
+		$status = $post->getFlags();
 
-		$lockThreadLink = $this->generateLockUrl($post['post_uid']);
+		$lockThreadLink = $this->generateLockUrl($post->getUid());
 
 		$modfunc .= generateModerateButton(
 			$lockThreadLink,
@@ -76,12 +77,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
+	private function onRenderThreadWidget(array &$widgetArray, Post &$post): void {
 		// generate lock url
-		$lockUrl = $this->generateLockUrl($post['post_uid']);
+		$lockUrl = $this->generateLockUrl($post->getUid());
 
 		// get the post status
-		$postStatus = new FlagHelper($post['status']);
+		$postStatus = $post->getFlags();
 
 		// get the lock label
 		$lockLabel = $this->generateLockLabel($postStatus);
@@ -151,9 +152,9 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function ModulePage() {		
 		$post = $this->moduleContext->postRepository->getPostByUid($this->moduleContext->request->getParameter('post_uid', 'GET'), true);
 
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 
-		if(!$post['is_op']) {
+		if(!$post->isOp()) {
 			throw new BoardException('ERROR: Cannot lock reply.');
 		}
 
@@ -161,13 +162,13 @@ class moduleAdmin extends abstractModuleAdmin {
 			throw new BoardException('ERROR: Post does not exist.');
 		}
 
-		$status = new FlagHelper($post['status']);
+		$status = $post->getFlags();
 		
 		$status->toggle('stop');
 
-		$this->moduleContext->postRepository->setPostStatus($post['post_uid'], $status->toString());
+		$this->moduleContext->postRepository->setPostStatus($post->getUid(), $status->toString());
 		
-		$logMessage = $status->value('stop') ? "Locked thread No. {$post['no']}" : "Unlock thread No. {$post['no']}";
+		$logMessage = $status->value('stop') ? "Locked thread No. {$post->getNumber()}" : "Unlock thread No. {$post->getNumber()}";
 		
 		$this->moduleContext->actionLoggerService->logAction($logMessage, $board->getBoardUID());
 		

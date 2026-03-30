@@ -157,32 +157,6 @@ class quoteLinkService {
 	}
 
 	/**
-	 * Fetch the first quote-link record associated with the given post array.
-	 *
-	 * @param array $post Post data array (must contain 'post_uid').
-	 * @return quoteLink The first matching quoteLink object.
-	 * @throws Exception If the post array is empty, missing post_uid, or no link is found.
-	 */
-	public function getQuoteLinkFromPost(array $post): quoteLink {
-		if (empty($post)) {
-			throw new Exception(__FUNCTION__ . ": Post array is empty.");
-		}
-
-		if (!isset($post['post_uid'])) {
-			throw new Exception(__FUNCTION__ . ": Missing 'post_uid' in post array.");
-		}
-
-		$postUid = $post['post_uid'];
-		$links = $this->quoteLinkRepository->getQuoteLinksFromHostPostUids([$postUid]);
-
-		if (empty($links)) {
-			throw new Exception(__FUNCTION__ . ": Quote link not found for post_uid: {$postUid}");
-		}
-
-		return $links[0]; // If multiple links exist, returns the first one.
-	}
-
-	/**
 	 * Convenience wrapper: fetch all quote-links for the given board UID.
 	 *
 	 * @param int $boardUid Board UID.

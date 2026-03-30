@@ -7,6 +7,7 @@ require_once __DIR__ . '/lockThreadLibrary.php';
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\FlagHelper;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\userRole;
 
@@ -48,7 +49,7 @@ class moduleMain extends abstractModuleMain {
 			return;
 		}
 
-		$status = new FlagHelper($openingPost['status']);
+		$status = new FlagHelper($openingPost->getStatus());
 
 		if($status->value('stop')) {
 			$formDat = '
@@ -68,7 +69,7 @@ class moduleMain extends abstractModuleMain {
 				return;
 			}
 
-			$status = new FlagHelper($openingPost['status']);
+			$status = new FlagHelper($openingPost->getStatus());
 
 			if($status->value('stop')) {
 				throw new BoardException('ERROR: This thread is locked.');
@@ -76,9 +77,9 @@ class moduleMain extends abstractModuleMain {
 		}
 	}
 
-	public function renderLockIcon(string &$postInfoExtra, $post): void {
+	public function renderLockIcon(string &$postInfoExtra, Post $post): void {
 		// post OP status
-		$status = new FlagHelper($post['status']);
+		$status = $post->getFlags();
 		
 		// get static url
 		$staticUrl = $this->getConfig('STATIC_URL');

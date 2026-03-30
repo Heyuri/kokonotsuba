@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\autoSage;
 require_once __DIR__ . '/autoSageLibrary.php';
 
 use Kokonotsuba\post\FlagHelper;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleMain;
 
 class moduleMain extends abstractModuleMain {
@@ -30,8 +31,8 @@ class moduleMain extends abstractModuleMain {
 		});
 	}
 
-	public function renderAutosageIcon(string &$postInfoExtra, array $post) {
-		$status = new FlagHelper($post['status']);
+	public function renderAutosageIcon(string &$postInfoExtra, Post $post) {
+		$status = $post->getFlags();
 		
 		if($status->value('as')) {
 			$postInfoExtra .= getAutoSageIndicator();
@@ -40,7 +41,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function onBeforeCommit(array &$thread, bool &$age) {
 		$post = $thread['posts'][0];
-		$status = new FlagHelper($post['status']);
+		$status = $post->getFlags();
 		
 		if($status->value('as')) { 
 			$age = false;

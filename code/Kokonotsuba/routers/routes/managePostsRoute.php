@@ -5,6 +5,7 @@ namespace Kokonotsuba\routers\routes;
 use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\account\staffAccountFromSession;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\post\postService;
 use Kokonotsuba\error\softErrorHandler;
@@ -186,7 +187,7 @@ class managePostsRoute {
 							<tbody>';
 		
 		// Render posts or empty state message
-		if ($posts && is_array($posts)) {
+		if ($posts && (is_array($posts) || $posts instanceof \Traversable)) {
 			$html .= $this->renderPostEntries($posts, $boardMap, $context['canViewIp'], $context['canViewHashedIp'], $context['managePostsUrl'], $boardList);
 		} else {
 			$html .= '<tr><td colspan="9"><b class="error" id="no-posts-found"> - No posts found! - </b></td></tr>';
@@ -272,14 +273,14 @@ class managePostsRoute {
 	}
 
 	private function renderPostEntry(
-		array $post,
+		Post $post,
 		array $boardMap,
 		bool $canViewIp,
 		bool $canViewHashedIp,
 		string $managePostsUrl,
 		string $boardList
 	): string {
-		$boardUID = $post['boardUID'];
+		$boardUID = $post->getBoardUID();
 
 		if(!isset($boardMap[$boardUID])){
 			return '';
@@ -289,18 +290,18 @@ class managePostsRoute {
 		$postBoardConfig = $postBoard->loadBoardConfig();
 
 		// Prepare post data
-		$name = substr($post['name'], 0, 500);
-		$sub = substr($post['sub'], 0, 500);
-		$com = $post['com'];
-		$post_uid = $post['post_uid'];
-		$no = $post['no'];
-		$now = $post['now'];
-		$is_op = $post['is_op'];
+		$name = substr($post->getName(), 0, 500);
+		$sub = substr($post->getSubject(), 0, 500);
+		$com = $post->getComment();
+		$post_uid = $post->getUid();
+		$no = $post->getNumber();
+		$now = $post->getTimestamp();
+		$is_op = $post->isOp();
 
 		// Handle host display
 		$showHost = $canViewIp || $canViewHashedIp;
 		if ($showHost) {
-			$host = $canViewIp ? $post['host'] : substr(md5($post['host']), 0, 8);
+			$host = $canViewIp ? $post->getIp() : substr(md5($post->getIp()), 0, 8);
 		} else {
 			$host = '';
 		}
@@ -309,10 +310,10 @@ class managePostsRoute {
 		$nameHtml = generatePostNameHtml(
 			$this->moduleEngine, 
 			$name, 
-			$post['tripcode'], 
-			$post['secure_tripcode'], 
-			$post['capcode'], 
-			$post['email'],
+			$post->getTripcode(), 
+			$post->getSecureTripcode(), 
+			$post->getCapcode(), 
+			$post->getEmail(),
 			$this->config['NOTICE_SAGE']
 		);
 
@@ -328,7 +329,7 @@ class managePostsRoute {
 		$this->moduleEngine->dispatch('PostComment', [&$com, &$post]);
 
 		// Generate attachments HTML
-		$attachmentsHtml = $this->renderAttachments($post['attachments']);
+		$attachmentsHtml = $this->renderAttachments($post->getAttachments());
 
 		   // Build and return the table row
 		   $hostColHtml = '';
@@ -400,7 +401,7 @@ class managePostsRoute {
 
 		// Extract attachments and post numbers for logging
 		$attachments = getAttachmentsFromPosts($postsData);
-		$postNumbers = array_column($postsData, 'no');
+		$postNumbers = array_map(fn($p) => $p['no'], $postsData);
 		$checkboxDeletionActionLogStr = is_array($postNumbers) ? implode(', No. ',$postNumbers) : $postNumbers;
 
 		// Delete only files or entire posts based on user selection

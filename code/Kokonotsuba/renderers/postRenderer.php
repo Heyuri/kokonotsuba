@@ -13,6 +13,7 @@ use Kokonotsuba\renderers\postTemplateBinder;
 use Kokonotsuba\renderers\postWidget;
 use Kokonotsuba\interfaces\IBoard;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
 
@@ -58,7 +59,7 @@ class postRenderer {
 	}
 
 	public function render(
-		array $post,
+		Post $post,
 		array &$templateValues,
 		int $threadResno,
 		bool $killSensor,
@@ -78,7 +79,7 @@ class postRenderer {
 		$data = $this->postDataPreparer->preparePostData($post);
 
 		// Define if it's the thread's OP or a reply
-		$isThreadOp = $data['is_op'] ? true : false;
+		$isThreadOp = $data->isOp();
 		$isThreadReply = !$isThreadOp;  // Inverse of $isThreadOp
 		
 		// get replies per page value
@@ -86,20 +87,20 @@ class postRenderer {
 
 		// Apply quote and quote link
 		$data['com'] = generateQuoteLinkHtml($this->quoteLinksFromBoard, $data, $threadResno, $this->board->getConfigValue('USE_QUOTESYSTEM'), $this->board, $repliesPerPage, $replyCount);
-		$data['com'] = quote_unkfunc($data['com']);
+		$data['com'] = quote_unkfunc($data->getComment());
 
 		// Post position config
 		$postPositionEnabled = $this->config['RENDER_REPLY_NUMBER'];
 	
 		// Process category links
-		$categoryHTML = $this->postElementGenerator->processCategoryLinks($data['category'], $crossLink);
+		$categoryHTML = $this->postElementGenerator->processCategoryLinks($data->getCategory(), $crossLink);
 
 		// this post is deleted
-		$isDeleted = $data['open_flag'] && !$data['file_only_deleted'] && $adminMode;
+		$isDeleted = $data->getOpenFlag() && !$data->isFileOnlyDeleted() && $adminMode;
 
 		// process attachment data
 		$attachmentsHtml = $this->processAttachments(
-			$data['attachments'],
+			$data->getAttachments(),
 			$isDeleted,
 			$adminMode
 		);
@@ -121,7 +122,7 @@ class postRenderer {
 		// handle thread max-age message
 		if ($isThreadOp) {
 			$maxAgeLimit = $this->config['MAX_AGE_TIME'];
-			$postUnixTimestamp = is_numeric($post['root']) ? $post['root'] : strtotime($post['root']);
+			$postUnixTimestamp = is_numeric($post->getRoot()) ? $post->getRoot() : strtotime($post->getRoot());
 			if ($maxAgeLimit && $this->request->getRequestTime() - $postUnixTimestamp > ($maxAgeLimit * 60 * 60)) {
 				$warnOld .= "<div class='warning'>"._T('warn_oldthread')."</div>";
 			}
@@ -130,11 +131,11 @@ class postRenderer {
 		// Handle name/trip/capcode HTML generation
 		$nameHtml = generatePostNameHtml(
 			$this->moduleEngine,
-			$data['name'],
-			$data['tripcode'],
-			$data['secure_tripcode'],
-			$data['capcode'],
-			$data['email'],
+			$data->getName(),
+			$data->getTripcode(),
+			$data->getSecureTripcode(),
+			$data->getCapcode(),
+			$data->getEmail(),
 			$this->config['NOTICE_SAGE']
 		);
 
@@ -143,28 +144,29 @@ class postRenderer {
 		$totalThreadPages = $replyCount / $repliesPerPage;
 
 		// Generate the quote and reply buttons
-		$quoteButton = $this->postElementGenerator->generateQuoteButton($threadResno, $data['no'], $totalThreadPages, $crossLink);
+		$quoteButton = $this->postElementGenerator->generateQuoteButton($threadResno, $data->getNumber(), $totalThreadPages, $crossLink);
 		$replyButton = $threadMode ? $this->postElementGenerator->generateReplyButton($crossLink, $threadResno, $totalThreadPages) : '';
 		$recentRepliesButton = $threadMode ? $this->postElementGenerator->generateRecentRepliesButton($crossLink, $threadResno, $replyCount) : '';
 
 		// get the page of the post
-		$page = floor($data['post_position'] / $repliesPerPage);
+		$page = floor($data->getPostPosition() / $repliesPerPage);
 
 		// Generate the post url
-		$postUrl = $this->board->getBoardThreadURL($threadResno, $data['no'], false, $page, $crossLink);
+		$postUrl = $this->board->getBoardThreadURL($threadResno, $data->getNumber(), false, $page, $crossLink);
 
 		// bind post url 
 		$templateValues['{$POST_URL}'] = $postUrl;
 
 		// bind attributes
-		$templateValues['{$DATA_ATTRIBUTES}'] = 'data-post-email="' . sanitizeStr($data['email']) . '" data-post-user-name="' . sanitizeStr($data['name']) . '" data-post-number="' . $data['no'] . '" data-post-uid="' . sanitizeStr($data['post_uid']) . '"';
+		$templateValues['{$DATA_ATTRIBUTES}'] = 'data-post-email="' . sanitizeStr($data->getEmail()) . '" data-post-user-name="' . sanitizeStr($data->getName()) . '" data-post-number="' . $data->getNumber() . '" data-post-uid="' . sanitizeStr($data->getUid()) . '"';
 
 		// get first attachment array key
-		$firstAttachmentArrKey = array_key_first($data['attachments']);
+		$attachments = $data->getAttachments();
+		$firstAttachmentArrKey = array_key_first($attachments);
 
 		// get the first attachment
 		// This is needed for the flash board template which uses various 
-		$firstAttachment = $data['attachments'][$firstAttachmentArrKey] ?? [];
+		$firstAttachment = $attachments[$firstAttachmentArrKey] ?? [];
 
 		// generate first attachment URL
 		$firstAttachmentUrl = $this->attachmentRenderer->generateImageUrl($firstAttachment, false, $isDeleted);
@@ -345,7 +347,7 @@ class postRenderer {
 		return $postAttachmentsHtml;
 	}
 
-	private function generateAdminControls(array $post, bool $adminMode, bool $isThreadOp): string {
+	private function generateAdminControls(Post $post, bool $adminMode, bool $isThreadOp): string {
 		// if the user is logged in as a mod, then run thread admin controls
 		if ($adminMode) {
 			$modFunc = '';
@@ -366,7 +368,7 @@ class postRenderer {
 		}
 	}
 
-	private function generateAdminWidgets(array $post, array $threadPosts, bool $adminMode, bool $isThreadOp): string {
+	private function generateAdminWidgets(Post $post, array $threadPosts, bool $adminMode, bool $isThreadOp): string {
 		// if the user is logged in as a mod, then run moderator widgets
 		if ($adminMode) {
 			$widgetDataHtml = '';

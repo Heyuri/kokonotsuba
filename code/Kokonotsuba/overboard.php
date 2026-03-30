@@ -163,7 +163,7 @@ class overboard {
 
 	private function loadBoardsForThreads(array $threads): array {
 		// Extract thread.boardUID safely
-		$boardUIDs = array_map(fn($t) => $t['thread']['boardUID'] ?? null, $threads);
+		$boardUIDs = array_map(fn($t) => $t['thread']->getBoardUID(), $threads);
 
 		// Remove nulls and duplicates
 		$boardUIDs = array_unique(array_filter($boardUIDs));
@@ -184,15 +184,15 @@ class overboard {
 		$tIDsByBoard = array();
 		
 		foreach ($threads as $thread) {
-			$tIDsByBoard[$thread['thread']['boardUID']][] = $thread['thread_uid'];
+			$tIDsByBoard[$thread['thread']->getBoardUID()][] = $thread['thread']->getUid();
 		}
 		
 		$allPosts = $this->postRepository->fetchPostsFromBoardsAndThreads($tIDsByBoard);
 		
 		$postsByBoardAndThread = array();
 		foreach ($allPosts as $post) {
-			$boardUID = $post['boardUID'];
-			$threadID = ($post['thread_uid'] == 0) ? $post['no'] : $post['thread_uid'];
+			$boardUID = $post->getBoardUid();
+			$threadID = ($post->getThreadUid() == 0) ? $post->getNo() : $post->getThreadUid();
 			$postsByBoardAndThread[$boardUID][$threadID][] = $post;
 		}
 		return $postsByBoardAndThread;
@@ -206,7 +206,7 @@ class overboard {
 		array $postsByBoardAndThread, 
 		array $threads
 	): string {
-		$boardUID = $thread['thread']['boardUID'];
+		$boardUID = $thread['thread']->getBoardUID();
 		$threadID = $thread['thread_uid'];
 	
 		if (!isset($boardMap[$boardUID]) || !isset($postsByBoardAndThread[$boardUID][$threadID])) {

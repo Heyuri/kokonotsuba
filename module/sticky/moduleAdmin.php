@@ -6,6 +6,7 @@ require_once __DIR__ . '/stickyLibrary.php';
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\FlagHelper;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
@@ -31,7 +32,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ManagePostsThreadControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->onRenderThreadAdminControls($modControlSection, $post);
 			}
 		);
@@ -39,7 +40,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModerateThreadWidget',
-			function(array &$widgetArray, array &$post) {
+			function(array &$widgetArray, Post &$post) {
 				$this->onRenderThreadWidget($widgetArray, $post);
 			}
 		);
@@ -53,23 +54,23 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function onRenderThreadAdminControls(string &$modfunc, array $post): void {
+	private function onRenderThreadAdminControls(string &$modfunc, Post $post): void {
 		[$stickyTitle, $toggleLabel] = $this->getStickyAttributes($post);
 
-		$stickyButtonUrl = $this->generateStickyUrl($post['thread_uid']);
+		$stickyButtonUrl = $this->generateStickyUrl($post->getThreadUid());
 
 		$modfunc .= '<span class="adminFunctions adminStickyFunction">[<a href="' . htmlspecialchars($stickyButtonUrl) . '" title="' . $stickyTitle . '">'.$toggleLabel.'</a>]</span>';
 	}
 
-	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
+	private function onRenderThreadWidget(array &$widgetArray, Post &$post): void {
 		// get status
-		$postStatus = new FlagHelper($post['status']);
+		$postStatus = $post->getFlags();
 
 		// get sticky label
 		$stickyLabel = $this->generateStickyLabel($postStatus);
 		
 		// generate sticky url
-		$stickyUrl = $this->generateStickyUrl($post['thread_uid']);
+		$stickyUrl = $this->generateStickyUrl($post->getThreadUid());
 
 		// build the widget entry
 		$stickyWidget = $this->buildWidgetEntry(
@@ -83,9 +84,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$widgetArray[] = $stickyWidget;
 	}
 
-	private function getStickyAttributes(array $post): array {
+	private function getStickyAttributes(Post $post): array {
 		// Create a helper to inspect the post's status flags
-		$stickyFlag = new FlagHelper($post['status']);
+		$stickyFlag = $post->getFlags();
 
 		// Determine the title to display based on current sticky state
 		$stickyTitle = $this->generateStickyLabel($stickyFlag);
@@ -166,7 +167,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$openingPost = $this->moduleContext->postRepository->getOpeningPostFromThread($thread_uid);
 	
 		// bool column for if the thread is stickied
-		$is_sticky = $threadData['is_sticky'];
+		$is_sticky = $threadData->isSticky();
 	
 		// if it's already sticky'd, then unsticky it
 		if($is_sticky) {
@@ -178,15 +179,15 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 	
 		// toggles OP post status too so we don't have to refactor too much code for rendering in the time being
-		$flags = new FlagHelper($openingPost['status']);
+		$flags = new FlagHelper($openingPost->getStatus());
 		$flags->toggle('sticky');
-		$this->moduleContext->postRepository->setPostStatus($openingPost['post_uid'], $flags->toString());
+		$this->moduleContext->postRepository->setPostStatus($openingPost->getUid(), $flags->toString());
 	
 		// post op number of the thread
-		$post_op_number = $threadData['post_op_number'];
+		$post_op_number = $threadData->getOpNumber();
 	
 		// board uid of the thread
-		$boardUid = $threadData['boardUID'];
+		$boardUid = $threadData->getBoardUID();
 	
 		$this->moduleContext->actionLoggerService->logAction(
 			'Changed sticky status on post No.' . $post_op_number . ' (' . ($is_sticky ? 'false' : 'true') . ')',

@@ -8,6 +8,7 @@ use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\containers\moduleEngineContext;
 use Kokonotsuba\renderers\postRenderer;
 use Kokonotsuba\post\helper\postDateFormatter;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\post\postSearchService;
 use Kokonotsuba\board\board;
 use function Kokonotsuba\libraries\_T;
@@ -302,15 +303,11 @@ class moduleMain extends abstractModuleMain {
 		$boardUids = [];
 
 		foreach ($hitPostResultData as $row) {
-			if (!isset($row['post']) || !is_array($row['post'])) {
+			if (!isset($row['post']) || !($row['post'] instanceof Post)) {
 				continue;
 			}
 
-			if (!isset($row['post']['boardUID'])) {
-				continue;
-			}
-
-			$boardUID = $row['post']['boardUID'];
+			$boardUID = $row['post']->getBoardUID();
 
 			if (!is_string($boardUID) && !is_int($boardUID)) {
 				continue;
@@ -387,7 +384,7 @@ class moduleMain extends abstractModuleMain {
 				}
 
 				// get the board uid
-				$boardUid = $hitPostData['boardUID'] ?? null;
+				$boardUid = $hitPostData->getBoardUID();
 
 				// no board uid = invalid search result
 				if(!$boardUid) {
@@ -403,10 +400,10 @@ class moduleMain extends abstractModuleMain {
 				$postRenderer = $postRenderersForResults[$boardUid];
 
 				// get the thread resno for linking
-				$hitThreadResno = $hitPostData['post_op_number'];
+				$hitThreadResno = $hitPostData->getOpNumber();
 
 				// get board object
-				$board = searchBoardArrayForBoard($hitPostData['boardUID']);
+				$board = searchBoardArrayForBoard($hitPostData->getBoardUID());
 
 				// set board/thread name for template
 				$templateValues['{$BOARD_THREAD_NAME}'] = getThreadTitle(
