@@ -245,8 +245,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		if (isJavascriptRequest()) {
 			sendAjaxAndDetach(['success' => true]);
 		}
-
-		redirect('back');
+        else {
+    		redirect('back');
+        }
 	}
 
 	private function getDeletedLinkForFile(int $fileId): string {
