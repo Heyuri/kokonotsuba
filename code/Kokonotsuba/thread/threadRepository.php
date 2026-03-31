@@ -728,47 +728,56 @@ class threadRepository extends baseRepository {
 	public function getPostsForThreads(array $threadUIDs, int $previewCount, bool $includeDeleted = false): array {
 		if (empty($threadUIDs)) return [];
 
-		// add to preview count by 1 so we include OP
+		// include OP
 		$previewCount++;
 
-		// Generate the base query
-		$base = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
-
-		// Add the condition specific to this method (fetching posts for multiple threads)
 		$inClause = pdoPlaceholdersForIn($threadUIDs);
-		$base .= " WHERE p.thread_uid IN $inClause";
 
-		// If we do not want to include deleted posts, add the condition to exclude them
-		if(!$includeDeleted) {
-			$base .= excludeDeletedThreadsCondition($this->deletedPostsTable);
-		}
-
-		// wrap with dense_rank partition to limit posts per thread (OP + preview replies)
-		$query = "
-			SELECT *
-			FROM (
-				SELECT
-					t.*,
-					DENSE_RANK() OVER (
-						PARTITION BY t.thread_uid
-						ORDER BY t.is_op DESC, t.post_uid DESC
-					) AS rn
-				FROM (
-					$base
-				) t
-			) x
-			WHERE x.rn <= ?
-			ORDER BY x.no ASC
+		$ranked = "
+			SELECT
+				p.post_uid,
+				p.thread_uid,
+				ROW_NUMBER() OVER (
+					PARTITION BY p.thread_uid
+					ORDER BY p.is_op DESC, p.post_uid DESC
+				) AS rn
+			FROM {$this->postTable} p
+			JOIN {$this->table} t ON t.thread_uid = p.thread_uid
+			WHERE p.thread_uid IN $inClause
 		";
 
-		// fetch posts
-		$params = array_merge($threadUIDs, [$previewCount]);
-		$posts = $this->queryAll($query, $params) ?? [];
+		if (!$includeDeleted) {
+			$ranked .= excludeDeletedThreadsCondition($this->deletedPostsTable);
+		}
 
-		// merge attachment rows
+		$base = getBasePostQuery(
+			$this->postTable,
+			$this->deletedPostsTable,
+			$this->fileTable,
+			$this->table,
+			$this->soudaneTable,
+			$this->noteTable,
+			$this->accountTable,
+			$includeDeleted
+		);
+
+		$query = "
+			SELECT full.*
+			FROM (
+				$ranked
+			) r
+			JOIN (
+				$base
+			) full ON full.post_uid = r.post_uid
+			WHERE r.rn <= ?
+			ORDER BY full.no ASC
+		";
+
+		$params = array_merge($threadUIDs, [$previewCount]);
+
+		$posts = $this->queryAll($query, $params) ?? [];
 		$posts = mergeMultiplePostRows($posts);
 
-		// return results
 		return $posts;
 	}
 

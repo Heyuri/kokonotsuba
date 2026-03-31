@@ -142,6 +142,7 @@ class threadService {
 		if($amountOfRepliesToRender) {
 			$posts = $this->threadRepository->getPostsForThreads([$thread_uid], $amountOfRepliesToRender, $adminMode);
 		}
+		
 		// otherwise if paged results are fetched then fetch paged results
 		else if (!is_null($page)) {
 			$posts = $this->threadRepository->getPostsFromThread($thread_uid, $adminMode, $repliesPerPage, $page * $repliesPerPage);
