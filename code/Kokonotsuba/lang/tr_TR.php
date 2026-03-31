@@ -105,7 +105,7 @@ $language['admin_archive_btn']			= 'A';
 $language['admin_stop_btn']				= 'Stop';
 $language['admin_totalsize']			= '[Total size of images: <b>%1$s</b> KB ]';
 $language['search_disabled']			= 'Search is disabled!';
-$language['search_top']					= 'Ara';
+$language['search_top']					= 'Arama';
 $language['search_notice']				= '<li>Lütfen anahtar kelimeleri girip aramanın hedefini seçin, ve <q>Ara</q> butonuna basın.</li><li>Aralarında boşluk bırakarak birden fazla anahtar kelimeyi arayabilirsiniz.</li><li>Arama metodunu (<q>VE araması</q> ve <q>YA DA araması</q>) yaparak farklı şekillerde birden fazla anahtar kelime arayabilirsiniz.</li>';
 $language['search_keyword']				= 'Anahtar kelime';
 $language['search_target']				= 'Hedef';
@@ -291,6 +291,23 @@ $language['admin_nav_rebuild_multiple_title'] = 'Toplu yeniden oluşturma';
 $language['admin_nav_rebuild_multiple'] = 'Toplu yeniden oluştur';
 $language['admin_nav_live_frontend'] = 'Canlı arayüz';
 $language['admin_nav_return'] = 'Geri dön';
+
+// fileBan module
+$language['file_ban_blocked'] = 'Yükleme başarısız.<br> Dosyaya izin verilmiyor.';
+$language['file_ban_btn_title'] = 'Bu dosya hash\'ini yasakla';
+$language['file_ban_bd_btn_title'] = 'Dosya hash\'ini yasakla ve sil';
+$language['file_ban_invalid_action'] = 'Dosya yasaklama işlemi geçersiz.';
+$language['file_ban_invalid_hash'] = 'Sağlanan MD5 hash\'i geçersiz.';
+$language['file_ban_add_title'] = 'Dosya yasağı ekle';
+$language['file_ban_hash_label'] = 'MD5 hash\'i';
+$language['file_ban_added_by_label'] = 'Ekleyen';
+$language['file_ban_date_label'] = 'Tarih';
+$language['file_ban_delete_label'] = 'Sil';
+$language['file_ban_index_title'] = 'Yasaklı dosyalar';
+$language['file_ban_no_entries'] = 'Yasaklı dosya yok.';
+$language['admin_nav_file_ban_title'] = 'Yasaklı dosyaları yönet';
+$language['admin_nav_file_ban'] = 'Dosya yasakları';
+
 ?>
 
 
