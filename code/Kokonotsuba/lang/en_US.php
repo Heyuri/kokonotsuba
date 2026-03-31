@@ -296,7 +296,8 @@ $language['admin_nav_return'] = 'Return';
 
 // fileBan module
 $language['file_ban_blocked'] = 'Upload failed.<br> File not allowed.';
-$language['file_ban_btn_title'] = 'Ban this file';
+$language['file_ban_btn_title'] = 'Ban this file hash';
+$language['file_ban_bd_btn_title'] = 'Ban file hash and delete';
 $language['file_ban_invalid_action'] = 'Invalid file ban action.';
 $language['file_ban_invalid_hash'] = 'Invalid MD5 hash provided.';
 $language['file_ban_add_title'] = 'Add file ban';

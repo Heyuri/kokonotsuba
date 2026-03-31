@@ -106,6 +106,7 @@ $config['ModuleList'] = array(
 	'dice' => true,
 	'tripcode' => true,
 	'displayIp' => true,
+	'animatedGif' => true,
 	/* misc */
 	'soudane' => true,
 	'privateMessage' => true,
