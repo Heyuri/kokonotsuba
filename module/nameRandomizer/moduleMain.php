@@ -25,7 +25,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		$this->claimsFile = getBackendGlobalDir() . 'name_randomizer_claims.dat';
-		$this->claimTtl = $this->getConfig('ModuleSettings.NAME_RANDOMIZER_TTL', 1800);
+		$this->claimTtl = $this->getConfig('ModuleSettings.NAME_RANDOMIZER_TTL', 43200);
 
 		// Priority -1: runs after the tripcode module (priority 0) so we can overwrite its values
 		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (array &$registInfo) {
