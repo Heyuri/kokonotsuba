@@ -294,4 +294,19 @@ $language['admin_nav_rebuild_multiple'] = 'Rebuild multiple';
 $language['admin_nav_live_frontend'] = 'Live frontend';
 $language['admin_nav_return'] = 'Return';
 
+// fileBan module
+$language['file_ban_blocked'] = 'Upload failed.<br> File not allowed.';
+$language['file_ban_btn_title'] = 'Ban this file';
+$language['file_ban_invalid_action'] = 'Invalid file ban action.';
+$language['file_ban_invalid_hash'] = 'Invalid MD5 hash provided.';
+$language['file_ban_add_title'] = 'Add file ban';
+$language['file_ban_hash_label'] = 'MD5 hash';
+$language['file_ban_added_by_label'] = 'Added by';
+$language['file_ban_date_label'] = 'Date';
+$language['file_ban_delete_label'] = 'Delete';
+$language['file_ban_index_title'] = 'Banned files';
+$language['file_ban_no_entries'] = 'No banned files.';
+$language['admin_nav_file_ban_title'] = 'Manage banned files';
+$language['admin_nav_file_ban'] = 'File bans';
+
 ?>

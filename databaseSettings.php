@@ -32,4 +32,5 @@ return [
 	'LAST_THREAD_SUBMISSIONS_TABLE' => 'last_thread_submissions', // for tracking last thread submission timestamps per board
 	'NOTE_TABLE' => 'notes', // for storing notes left by staff
 	'BLOTTER_TABLE' => 'blotter', // for storing blotter entries
+	'FILE_BAN_TABLE' => 'file_bans', // for storing banned file MD5 hashes
 ];
