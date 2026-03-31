@@ -33,7 +33,7 @@ class blotterEntry {
 	public function toPublicTemplateRow(): array {
 		return [
 			'{$DATE}' => sanitizeStr($this->getDisplayDate()),
-			'{$COMMENT}' => sanitizeStr($this->blotter_content, true, true, true),
+			'{$COMMENT}' => $this->blotter_content,
 		];
 	}
 }
