@@ -440,6 +440,8 @@ $config['ModuleSettings']['EMOTES'] = [
 $config['ModuleSettings']['CHARACTER_PREVIEW_LIMIT'] = 2500;
 $config['ModuleSettings']['LINE_PREVIEW_LIMIT'] = 10;
 
+$config['ModuleSettings']['NAME_RANDOMIZER_TTL'] = 43200; 
+
 $config['BAD_STRING'] = array(); // Deprecated by spamdb
 $config['BAD_FILEMD5'] = array(); // Deprecated by spamdb
 $config['BANPATTERN'] = array(); // Deprecated by adminban module
