@@ -62,81 +62,28 @@
 		event.preventDefault();
 
 		const postEl = dfAnchor.closest('.post');
-		if (!postEl) {
-			console.error("Error: Post element not found for DF link.");
-			return;
-		}
+		if (!postEl) return;
 
 		const attachmentEl =
 			dfAnchor.closest('.attachmentContainer') ||
 			dfAnchor.closest('.file');
 
-		if (!attachmentEl) {
-			console.error("Error: Attachment container not found for DF link.");
-			return;
-		}
+		if (!attachmentEl) return;
 
-		const dfContainer =
-			dfAnchor.closest('.adminDeleteFileFunction') ||
-			dfAnchor.closest('#adminDeleteFileFunction');
+		const state = prepareAttachmentDeletion(attachmentEl, postEl, [
+			'.adminDeleteFileFunction, #adminDeleteFileFunction',
+			'.imgopsLink'
+		]);
 
-		attachmentEl.classList.add('deletedFile');
-
-		try {
-			if (typeof appendWarning === 'function') {
-				const props =
-					attachmentEl.querySelector('.fileProperties') ||
-					attachmentEl.querySelector('.filesize');
-
-				const res = appendWarning(postEl, 'file');
-				if (props && res) {
-					if (res.spacer1) props.insertAdjacentElement('afterend', res.spacer1);
-					if (res.warn) props.insertAdjacentElement('afterend', res.warn);
+		sendModuleAction(dfAnchor.href, {
+			revertUI: state.revertUI,
+			successMessage: 'Attachment deleted successfully.',
+			errorMessage: 'Failed to delete the attachment.',
+			onSuccess: function (data) {
+				if (data && data.deleted_link) {
+					state.addViewFileButton(data.deleted_link);
 				}
 			}
-		} catch (err) {
-			console.error("Error while appending file warning:", err);
-		}
-
-		const imgops = attachmentEl.querySelector('.imgopsLink');
-		if (imgops) imgops.remove();
-
-		if (dfContainer) dfContainer.classList.add('hidden');
-
-		const url = dfAnchor.href;
-
-		fetch(url, {
-			method: 'GET',
-			credentials: 'same-origin',
-			headers: { 'X-Requested-With': 'XMLHttpRequest' },
-			cache: 'no-store'
-		})
-		.then(async (response) => {
-			if (!response.ok) {
-				if (typeof showMessage === 'function') showMessage("Failed to delete the attachment.", false);
-				return;
-			}
-
-			let data = null;
-			try { data = await response.json(); } catch (_) {}
-
-			if (data && data.success && data.deleted_link && typeof createViewFileButton === 'function') {
-				const btn =
-					attachmentEl.querySelector('.adminDeleteFileFunction, #adminDeleteFileFunction') ||
-					dfContainer;
-
-				if (btn) {
-					const vf = createViewFileButton(data.deleted_link);
-					btn.insertAdjacentElement('afterend', vf);
-				}
-			}
-
-			if (typeof showMessage === 'function') {
-				showMessage("Attachment deleted successfully.", true);
-			}
-		})
-		.catch(() => {
-			if (typeof showMessage === 'function') showMessage("Network error during deletion.", false);
 		});
 	}
 
