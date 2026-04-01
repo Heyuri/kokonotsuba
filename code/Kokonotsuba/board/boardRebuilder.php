@@ -82,7 +82,14 @@ class boardRebuilder {
 		$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
 		
 		// get the thread and decide how to fetch its data based on the provided parameters
-		$threadData = $this->getThreadForRendering($uid, $previewCount, $repliesPerPage, $page, $amountOfRepliesToRender);
+		$threadData = $this->getThreadForRendering(
+			$uid, 
+			$previewCount, 
+			$repliesPerPage, 
+			$page, 
+			$amountOfRepliesToRender, 
+			$this->postRenderingPolicy->viewDeleted()
+		);
 		
 		// throw 404 error if no thread data is found
 		// otherwise it'll just dump errors to error log - its data-related and not code-related
@@ -108,7 +115,7 @@ class boardRebuilder {
 
 		// Throw a 404 error if the thread isn't found
 		// Also throw a 404 if the thread was deleted
-		if (!$threadData || ($hardDeleted)) {
+		if (!$threadData || (($hardDeleted) && !$this->postRenderingPolicy->viewDeleted())) {
 			throw new BoardException(_T('thread_not_found'), 404);
 			return;
 		}
@@ -186,7 +193,8 @@ class boardRebuilder {
 		int $previewCount, 
 		int $repliesPerPage, 
 		?int $page, 
-		?int $amountOfRepliesToRender
+		?int $amountOfRepliesToRender,
+		bool $includeDeleted = false
 	): false|array {
 		// Fetch thread with a limited amount of replies	
 		if(!is_null($amountOfRepliesToRender)) {
@@ -195,19 +203,27 @@ class boardRebuilder {
 				$threadUid, 
 				$this->canViewDeleted, 
 				$previewCount, 
-				$amountOfRepliesToRender
+				$amountOfRepliesToRender,
+				$includeDeleted
 			);
 
 		}
 		// Fetch thread with pages
 		else if(!is_null($page)) {
 			// fetch a paged thread
-			$threadData = $this->threadService->getThreadPaged($threadUid, $this->canViewDeleted, $previewCount, $repliesPerPage, $page);
+			$threadData = $this->threadService->getThreadPaged(
+				$threadUid, 
+				$this->canViewDeleted, 
+				$previewCount, 
+				$repliesPerPage, 
+				$page, 
+				$includeDeleted
+			);
 		}
 		// Fetch unpaged thread (intensive)
 		else {
 			// get the while thing
-			$threadData = $this->threadService->getThreadAllReplies($threadUid, $this->canViewDeleted, $previewCount);
+			$threadData = $this->threadService->getThreadAllReplies($threadUid, $this->canViewDeleted, $previewCount, $includeDeleted);
 		}
 
 		// then return the thread data
