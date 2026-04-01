@@ -112,14 +112,8 @@ class defaultRoute {
 			}
 
 			// Fetch the thread UID from the post's data
-			$newThread = $this->threadRepository->getThreadByUid($post->getThreadUid());
+			$newThread = $this->threadRepository->getThreadByUid($post['thread_uid'], $this->postRenderingPolicy->viewDeleted()) ?? false;
 
-			// If thread not found, show error
-			if (!$newThread) {
-				throw new BoardException(_T('thread_not_found'));
-			}
-
-			/** @var Thread $newThread */
 			// new thread uid
 			$newThreadUid = $newThread->getUid();
 
