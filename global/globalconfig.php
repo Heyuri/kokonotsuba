@@ -60,6 +60,7 @@ $config['AuthLevels']['CAN_ONLY_VIEW_POSTS_FROM_USER'] = Kokonotsuba\userRole::L
 $config['AuthLevels']['CAN_LEAVE_NOTE'] = Kokonotsuba\userRole::LEV_JANITOR;
 $config['AuthLevels']['CAN_DELETE_NOTE'] = Kokonotsuba\userRole::LEV_ADMIN;
 $config['AuthLevels']['CAN_EDIT_POST'] = Kokonotsuba\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_BAN_FILES'] = Kokonotsuba\userRole::LEV_MODERATOR;
 
 // Capcode formats (put '%s' where you want the original name)
 $config['JCAPCODE_FMT'] = '%s';
