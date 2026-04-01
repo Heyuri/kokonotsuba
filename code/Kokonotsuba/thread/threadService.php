@@ -35,6 +35,7 @@ class threadService {
 		* @param bool $adminMode					Whether admin mode is enabled (affects visibility of deleted posts).
 		* @param int $previewCount				How many posts should be included in the preview result.
 		* @param int $amountOfRepliesToRender	Number of latest replies to include (OP not counted).
+		* @param bool $includeDeleted			Whether to include deleted posts regardless of admin mode.
 		*
 		* @return array|false						Thread data structure or false if not found.
 		*/
@@ -42,7 +43,8 @@ class threadService {
 		string $thread_uid,
 		bool $adminMode,
 		int $previewCount,
-		int $amountOfRepliesToRender
+		int $amountOfRepliesToRender,
+		bool $includeDeleted = false
 	): array|false {
 		return $this->getThreadByUidInternal(
 			$thread_uid,
@@ -50,7 +52,8 @@ class threadService {
 			$previewCount,
 			$amountOfRepliesToRender,
 			null,
-			null
+			null,
+			$includeDeleted
 		);
 	}
 
@@ -62,6 +65,7 @@ class threadService {
 		* @param int $previewCount		How many posts should be included in the preview result.
 		* @param int $repliesPerPage		How many replies should be shown per page.
 		* @param int $page				The page index to load (0-based external, automatically offset internally).
+		* @param bool $includeDeleted	Whether to include deleted posts regardless of admin mode.
 		*
 		* @return array|false				Thread data structure or false if not found.
 		*/
@@ -70,7 +74,8 @@ class threadService {
 		bool $adminMode,
 		int $previewCount,
 		int $repliesPerPage,
-		int $page
+		int $page,
+		bool $includeDeleted = false
 	): array|false {
 		return $this->getThreadByUidInternal(
 			$thread_uid,
@@ -78,7 +83,8 @@ class threadService {
 			$previewCount,
 			null,
 			$repliesPerPage,
-			$page
+			$page,
+			$includeDeleted
 		);
 	}
 
@@ -88,13 +94,15 @@ class threadService {
 		* @param string $thread_uid		The UID of the thread to fetch.
 		* @param bool $adminMode			Whether admin mode is enabled (affects visibility of deleted posts).
 		* @param int $previewCount		How many posts should be included in the preview result.
+		* @param bool $includeDeleted	Whether to include deleted posts regardless of admin mode.
 		*
 		* @return array|false				Thread data structure or false if not found.
 		*/
 	public function getThreadAllReplies(
 		string $thread_uid,
 		bool $adminMode,
-		int $previewCount
+		int $previewCount,
+		bool $includeDeleted = false
 	): array|false {
 		return $this->getThreadByUidInternal(
 			$thread_uid,
@@ -102,7 +110,8 @@ class threadService {
 			$previewCount,
 			null,
 			null,
-			null
+			null,
+			$includeDeleted
 		);
 	}
 
@@ -113,10 +122,13 @@ class threadService {
 		int $previewCount = 5, 
 		?int $amountOfRepliesToRender = 50, 
 		?int $repliesPerPage = 500,
-		?int $page = 0 
+		?int $page = 0,
+		bool $includeDeleted = false
 	): array|false {
+		$showDeleted = $adminMode || $includeDeleted;
+
 		// get thread meta data
-		$threadMeta = $this->threadRepository->getThreadByUID($thread_uid, $adminMode);
+		$threadMeta = $this->threadRepository->getThreadByUID($thread_uid, $showDeleted);
 
 		// return false if thread data is falsey
 		if (!$threadMeta) {
@@ -126,15 +138,15 @@ class threadService {
 
 		// if the reply amount parameter is set then fetch last X amount of posts
 		if($amountOfRepliesToRender) {
-			$posts = $this->threadRepository->getPostsForThreads([$thread_uid], $amountOfRepliesToRender, $adminMode);
+			$posts = $this->threadRepository->getPostsForThreads([$thread_uid], $amountOfRepliesToRender, $showDeleted);
 		}
 		// otherwise if paged results are fetched then fetch paged results
 		else if (!is_null($page)) {
-			$posts = $this->threadRepository->getPostsFromThread($thread_uid, $adminMode, $repliesPerPage, $page * $repliesPerPage);
+			$posts = $this->threadRepository->getPostsFromThread($thread_uid, $showDeleted, $repliesPerPage, $page * $repliesPerPage);
 		}
 		// no parameters set - fetch all replies
 		else {
-			$posts = $this->threadRepository->getAllPostsFromThread($thread_uid, $adminMode);
+			$posts = $this->threadRepository->getAllPostsFromThread($thread_uid, $showDeleted);
 		}
 
 		// initialize groupedPosts as an empty array to prevent groupPostsByThread from logging an error.

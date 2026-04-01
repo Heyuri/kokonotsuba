@@ -109,7 +109,7 @@ class defaultRoute {
 			}
 
 			// Fetch the thread UID from the post's data
-			$newThread = $this->threadRepository->getThreadByUid($post['thread_uid']) ?? false;
+			$newThread = $this->threadRepository->getThreadByUid($post['thread_uid'], $this->postRenderingPolicy->viewDeleted()) ?? false;
 
 			// new thread uid
 			$newThreadUid = $newThread['thread_uid'];
