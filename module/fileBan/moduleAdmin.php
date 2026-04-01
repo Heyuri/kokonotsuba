@@ -16,11 +16,7 @@ use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\getPageOfThread;
 use function Kokonotsuba\libraries\validatePostInput;
-use function Kokonotsuba\libraries\html\getCurrentUrlNoQuery;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
-use function Puchiko\request\isGetRequest;
-use function Puchiko\request\isPostRequest;
 use function Puchiko\request\redirect;
 use function Kokonotsuba\Modules\fileBan\getFileBanService;
 
@@ -139,9 +135,9 @@ class moduleAdmin extends abstractModuleAdmin {
 			return;
 		}
 
-		if (isPostRequest()) {
+		if ($this->moduleContext->request->isPost()) {
 			$this->handleRequests();
-		} elseif (isGetRequest()) {
+		} elseif ($this->moduleContext->request->isGet()) {
 			$this->drawIndex();
 		}
 	}
@@ -196,7 +192,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$boardUID
 		);
 
-		if (isJavascriptRequest()) {
+		if ($this->moduleContext->request->isJavascript()) {
 			$deletedLink = $this->getDeletedLinkForFile($fileId);
 			sendAjaxAndDetach(['success' => true, 'deleted_link' => $deletedLink]);
 			$this->rebuildBoardForPost($board, $post);
@@ -242,7 +238,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$boardUID
 		);
 
-		if (isJavascriptRequest()) {
+		if ($this->moduleContext->request->isJavascript()) {
 			sendAjaxAndDetach(['success' => true]);
 		}
         else {
@@ -253,7 +249,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function getDeletedLinkForFile(int $fileId): string {
 		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
 		$deletedPostId = $deletedPost['deleted_post_id'];
-		$baseUrl = getCurrentUrlNoQuery();
+		$baseUrl = $this->moduleContext->request->getCurrentUrlNoQuery();
 
 		$urlParameters = [
 			'pageName' => 'viewMore',
@@ -346,7 +342,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$FILE_BAN_NO_ENTRIES}' => _T('file_ban_no_entries'),
 		]);
 
-		$pagerHtml = drawPager($entriesPerPage, $totalEntries, $this->moduleUrl);
+		$pagerHtml = drawPager($entriesPerPage, $totalEntries, $this->moduleUrl, $this->moduleContext->request);
 
 		$this->renderPage($indexHtml, $pagerHtml);
 	}
