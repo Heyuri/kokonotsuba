@@ -14,7 +14,6 @@ use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\rebuildAllBoards;
-use function Puchiko\request\isPostRequest;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 

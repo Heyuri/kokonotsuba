@@ -17,8 +17,6 @@ namespace Kokonotsuba\module_classes;
 use Kokonotsuba\module_classes\moduleContext;
 use Kokonotsuba\template\templateEngine;
 
-use function Kokonotsuba\libraries\html\getCurrentUrlNoQuery;
-
 abstract class abstractModule {
 	public function __construct(
 		protected readonly moduleContext $moduleContext, 
@@ -45,7 +43,7 @@ abstract class abstractModule {
 		$query = http_build_query($params, '', $separator);
 
 		$boardUrl = $this->moduleContext->board->getBoardURL(true);
-		$requestUri = getCurrentUrlNoQuery($this->moduleContext->request); 
+		$requestUri = $this->moduleContext->request->getCurrentUrlNoQuery();
 
 		$baseUrl = $useRequestUri ? $requestUri : $boardUrl;
 

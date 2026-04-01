@@ -14,8 +14,6 @@ use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\html\drawPager;
-use function Puchiko\request\isGetRequest;
-use function Puchiko\request\isPostRequest;
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {

@@ -10,7 +10,7 @@ use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
-use function Kokonotsuba\libraries\html\getCurrentUrlNoQuery;
+
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
@@ -120,7 +120,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage(): void {
         // get current url
-        $currentUrl = getCurrentUrlNoQuery($this->moduleContext->request);
+        $currentUrl = $this->moduleContext->request->getCurrentUrlNoQuery();
 
         // determine which type of failter to apply based on user role
 		$postUid = $this->moduleContext->request->getParameter('post_uid', 'GET', '');

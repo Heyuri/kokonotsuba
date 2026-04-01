@@ -7,7 +7,6 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
-use function Kokonotsuba\libraries\html\getCurrentUrlNoQuery;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\generateModerateButton;
@@ -469,7 +468,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$deletedPostId = $deletedPost['deleted_post_id'];
 
 		// base url
-		$baseUrl = getCurrentUrlNoQuery($this->moduleContext->request);
+		$baseUrl = $this->moduleContext->request->getCurrentUrlNoQuery();
 
 		// parameters for the link
 		$urlParameters = [

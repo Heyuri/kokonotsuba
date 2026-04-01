@@ -2,90 +2,52 @@
 
 namespace Kokonotsuba\Modules\fileBan;
 
+use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
-use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
-
-class fileBanRepository {
+class fileBanRepository extends baseRepository {
 	public function __construct(
-		private databaseConnection $databaseConnection,
-		private string $fileBanTable,
+		databaseConnection $databaseConnection,
+		string $fileBanTable,
 		private string $accountTable
-	) {}
+	) {
+		parent::__construct($databaseConnection, $fileBanTable);
+	}
 
-	public function findBannedHashes(array $md5Hashes): false|array {
-		if (empty($md5Hashes)) {
-			return false;
-		}
-
-		$placeholders = pdoPlaceholdersForIn($md5Hashes);
-
-		$query = "
-			SELECT file_md5
-			FROM {$this->fileBanTable}
-			WHERE file_md5 IN {$placeholders}
-		";
-
-		return $this->databaseConnection->fetchAllAsArray($query, $md5Hashes);
+	public function findBannedHashes(array $md5Hashes): array {
+		return $this->pluckWhereIn('file_md5', 'file_md5', $md5Hashes);
 	}
 
 	public function insertBan(string $md5Hash, int $addedBy): void {
-		$query = "
-			INSERT INTO {$this->fileBanTable} (file_md5, added_by)
-			VALUES (:file_md5, :added_by)
-		";
-
-		$params = [
-			':file_md5' => $md5Hash,
-			':added_by' => $addedBy,
-		];
-
-		$this->databaseConnection->execute($query, $params);
+		$this->insert([
+			'file_md5' => $md5Hash,
+			'added_by' => $addedBy,
+		]);
 	}
 
-	public function getEntries(int $limit, int $offset): false|array {
+	public function getEntries(int $limit, int $offset): array {
 		$query = "
 			SELECT fb.*, a.username AS added_by_username
-			FROM {$this->fileBanTable} fb
+			FROM {$this->table} fb
 			LEFT JOIN {$this->accountTable} a ON a.id = fb.added_by
 			ORDER BY fb.id DESC
-			LIMIT {$limit} OFFSET {$offset}
 		";
 
-		return $this->databaseConnection->fetchAllAsArray($query);
+		$params = [];
+		$this->paginate($query, $params, $limit, $offset);
+
+		return $this->queryAll($query, $params);
 	}
 
 	public function getTotalEntries(): int {
-		$query = "SELECT COUNT(*) FROM {$this->fileBanTable}";
-		$row = $this->databaseConnection->fetchValue($query);
-		return (int) ($row ?? 0);
+		return $this->count();
 	}
 
 	public function deleteEntries(array $entryIDs): void {
-		if (empty($entryIDs)) {
-			return;
-		}
-
-		$placeholders = pdoPlaceholdersForIn($entryIDs);
-
-		$query = "
-			DELETE FROM {$this->fileBanTable}
-			WHERE id IN {$placeholders}
-		";
-
-		$this->databaseConnection->execute($query, $entryIDs);
+		$this->deleteWhereIn('id', $entryIDs);
 	}
 
-	public function getEntryByHash(string $md5Hash): false|array {
-		$query = "
-			SELECT fb.*, a.username AS added_by_username
-			FROM {$this->fileBanTable} fb
-			LEFT JOIN {$this->accountTable} a ON a.id = fb.added_by
-			WHERE fb.file_md5 = :file_md5
-		";
-
-		$params = [':file_md5' => $md5Hash];
-
-		return $this->databaseConnection->fetchOne($query, $params);
+	public function hashExists(string $md5Hash): bool {
+		return $this->exists('file_md5', $md5Hash);
 	}
 }

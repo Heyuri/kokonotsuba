@@ -158,23 +158,6 @@ function buildThreadNavButtons(array $threadList, int $threadInnerIterator): str
 	return $postFormButton . $upArrow . $downArrow;
 }
 
-function fullURL(request $request): string {
-	return '//'.$request->getHttpHost();
-}
-
-function getCurrentUrlNoQuery(request $request): string {
-	// Scheme
-	$scheme = $request->isHttps() ? 'https' : 'http';
-	
-	// Host (includes port if non-standard)
-	$host = $request->getHttpHost();
-	
-	// Path to the current script
-	$path = $request->getServer('SCRIPT_NAME', ''); // e.g. /folder/file.php
-	
-	return $scheme . '://' . $host . $path;
-}
-
 
 function drawAdminLoginForm(string $adminUrl) {
 	return "

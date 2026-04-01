@@ -11,8 +11,6 @@ use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
-use function Puchiko\request\isPostRequest;
-use function Puchiko\request\isGetRequest;
 use function Puchiko\strings\sanitizeStr;
 
 require __DIR__  . '/themeRepository.php';
