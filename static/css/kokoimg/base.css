@@ -736,10 +736,6 @@ caption h3 {
 	margin: 3px 20px 3px;
 }
 
-.expandimg {
-	max-width: 100%;
-}
-
 #hoverimg {
 	display: none;
 	position: fixed;
