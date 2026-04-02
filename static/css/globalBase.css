@@ -210,10 +210,6 @@
 	font-size: var(--font-size-small);
 }
 
-.imageSourceContainer {
-	display: inline-block;
-}
-
 .expandimg {
 	max-width: 100%;
 }
