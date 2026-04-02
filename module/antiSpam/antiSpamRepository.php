@@ -17,18 +17,22 @@ class antiSpamRepository {
 		?string $subject,
 		?string $comment,
 		?string $name,
-		?string $email
+		?string $email,
+		bool $hasFilenames = false,
+		bool $isOp = false
 	): false|array {
 		// query to check for spam rules
 		$query = "
 			SELECT *
 				FROM {$this->spamStringRulesTable}
 			WHERE is_active = 1
+			  AND (apply_op_only = 0 OR :is_op = 1)
 			  AND (
 				(apply_subject = 1 AND :subject IS NOT NULL) OR
 				(apply_comment = 1 AND :comment IS NOT NULL) OR
 				(apply_name = 1 AND :name IS NOT NULL) OR
-				(apply_email = 1 AND :email IS NOT NULL)
+				(apply_email = 1 AND :email IS NOT NULL) OR
+				(apply_filename = 1 AND :has_filenames = 1)
 			  )
 		";
 
@@ -38,6 +42,8 @@ class antiSpamRepository {
 			':comment' => $comment,
 			':name' => $name,
 			':email' => $email,
+			':has_filenames' => $hasFilenames ? 1 : 0,
+			':is_op' => $isOp ? 1 : 0,
 		];
 
 		// fetch the spam rules
@@ -54,6 +60,9 @@ class antiSpamRepository {
 		int $applyComment = 1,
 		int $applyName = 1,
 		int $applyEmail = 1,
+		int $applyFilename = 0,
+		int $applyOpOnly = 0,
+		int $silentReject = 0,
 		int $caseSensitive = 0,
 		?string $userMessage = null,
 		?string $description = null,
@@ -70,6 +79,9 @@ class antiSpamRepository {
 				apply_comment,
 				apply_name,
 				apply_email,
+				apply_filename,
+				apply_op_only,
+				silent_reject,
 				case_sensitive,
 				user_message,
 				description,
@@ -83,6 +95,9 @@ class antiSpamRepository {
 				:apply_comment,
 				:apply_name,
 				:apply_email,
+				:apply_filename,
+				:apply_op_only,
+				:silent_reject,
 				:case_sensitive,
 				:user_message,
 				:description,
@@ -100,6 +115,9 @@ class antiSpamRepository {
 			':apply_comment' => $applyComment,
 			':apply_name' => $applyName,
 			':apply_email' => $applyEmail,
+			':apply_filename' => $applyFilename,
+			':apply_op_only' => $applyOpOnly,
+			':silent_reject' => $silentReject,
 			':case_sensitive' => $caseSensitive,
 			':user_message' => $userMessage,
 			':description' => $description,

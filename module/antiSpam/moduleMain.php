@@ -13,9 +13,14 @@ use Kokonotsuba\Modules\antiSpam\antiSpamService;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\Modules\antiSpam\getAntiSpamService;
+use function Puchiko\json\isJavascriptRequest;
+use function Puchiko\json\renderJsonErrorPage;
+use function Puchiko\json\sendJsonResponse;
+use function Puchiko\request\redirect;
 
 class moduleMain extends abstractModuleMain {
 	private antiSpamService $antiSpamService;
+	private string $globalBansPath;
 
 	public function getName(): string {
 		return 'Anti-spam checking system';
@@ -29,19 +34,29 @@ class moduleMain extends abstractModuleMain {
 		// add to the regist before commit hook point
 		// this is ran before a post is inserted
 		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (&$registInfo) {
-			$this->onBeforeCommit($registInfo['name'], $registInfo['com'], $registInfo['email'], $registInfo['sub']); 
+			$this->onBeforeCommit(
+				$registInfo['name'],
+				$registInfo['com'],
+				$registInfo['email'],
+				$registInfo['sub'],
+				$registInfo['files'] ?? [],
+				!empty($registInfo['isThreadSubmit'])
+			); 
 		});
 
 		// set antispam service instance
 		$this->antiSpamService = getAntiSpamService();
 
 		// get global bans path
-		$this->globalBans = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
+		$this->globalBansPath = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
 	}
 	
-	private function onBeforeCommit(?string $name, ?string $comment, ?string $email, ?string $subject): void{
+	private function onBeforeCommit(?string $name, ?string $comment, ?string $email, ?string $subject, array $files = [], bool $isOp = false): void{
+		// Extract file names from attachments
+		$fileNames = $this->extractFileNames($files); 
+
 		// Fetch all active spam string rules
-		$spamRules = $this->antiSpamService->getActiveSpamStringRules($subject, $comment, $name, $email);
+		$spamRules = $this->antiSpamService->getActiveSpamStringRules($subject, $comment, $name, $email, !empty($fileNames), $isOp);
 
 		// Normalize all input fields into a single iterable array
 		$fields = [
@@ -77,49 +92,126 @@ class moduleMain extends abstractModuleMain {
 
 				// Check if the field value matches the spam rule
 				if($this->matchesRule($value, $rule)){
-					// Use custom user message if provided, otherwise fallback
-					$message = $rule['user_message'] ?: _T('anti_spam_message');
-					
-					// Execute rule action
-					switch($rule['action']){
-						case 'mute':
-							// get the mute time config value
-							// measured in minutes - defaults to 40 minutes
-							$muteTime = $this->getConfig('ModuleSettings.JANIMUTE_LENGTH', 20);
+					$this->executeRuleAction($rule);
+				}
+			}
 
-							// Silent failure: stop processing but allow submission
-							$this->banUser($message, $muteTime);
-							throw new BoardException($message);
-						case 'ban':
-							// get the ban time config value
-							// measured in hours - defaults to 24 hours
-							$banTime = $this->getConfig('ModuleSettings.FILTER_BAN_TIME', 24);
-
-							// Ban the current user and halt execution
-							$this->banUser($message, $banTime);
-							throw new BoardException($message);
-						case 'reject':
-						default:
-							// Reject submission and show error to user
-							throw new BoardException($message);
-						break;
+			// Check rule against file names if enabled
+			if(!empty($rule['apply_filename'])){
+				foreach($fileNames as $fileName){
+					if($this->matchesRule($fileName, $rule)){
+						$this->executeRuleAction($rule);
 					}
 				}
 			}
 		}
 	}
 
-	private function banUser(string $reason, int $banTime): void {
-		// get IP from request
-		// this is the user who made the regist request
-		$ipAddress = new IPAddress();
+	private function extractFileNames(array $files): array {
+		$fileNames = [];
+		foreach ($files as $file) {
+			if (isset($file['fileName']) && is_string($file['fileName'])) {
+				$fileNames[] = $file['fileName'];
+			}
+		}
+		return $fileNames;
+	}
 
-		// calculcate start time
+	private function executeRuleAction(array $rule): void {
+		// Use custom user message if provided, otherwise fallback
+		$message = $rule['user_message'] ?: _T('anti_spam_message');
+
+		// Execute rule action
+		switch($rule['action']){
+			case 'mute':
+				// get the mute time config value
+				// measured in minutes - defaults to 20 minutes
+				$muteTime = $this->getConfig('ModuleSettings.JANIMUTE_LENGTH', 20);
+
+				// Mute the user (short-term ban)
+				$this->banUser($message, $muteTime * 60);
+
+				// reject the submission
+				$this->rejectSubmission($message, !empty($rule['silent_reject']));
+			case 'ban':
+				// get the ban time config value
+				// measured in hours - defaults to 24 hours
+				$banTime = $this->getConfig('ModuleSettings.FILTER_BAN_TIME', 24);
+
+				// Ban the current user
+				$this->banUser($message, $banTime * 3600);
+
+				// reject the submission
+				$this->rejectSubmission($message, !empty($rule['silent_reject']));
+			case 'reject':
+			default:
+				// reject the submission
+				$this->rejectSubmission($message, !empty($rule['silent_reject']));
+			break;
+		}
+	}
+
+	private function rejectSubmission(string $message, bool $silent): void {
+		if($silent){
+			$this->silentReject();
+		}
+
+		$this->loudReject($message);
+	}
+
+	private function silentReject(): void {
+		$boardUrl = $this->moduleContext->board->getBoardURL();
+
+		// for JS requests, send a JSON response that mimics a successful post
+		// the client will redirect to the board index as if nothing happened
+		if(isJavascriptRequest()){
+			sendJsonResponse(['redirectUrl' => $boardUrl]);
+			exit;
+		}
+
+		// for normal requests, just redirect
+		redirect($boardUrl);
+	}
+
+	private function loudReject(string $message): void {
+		// for JS requests, send a JSON error response
+		if(isJavascriptRequest()){
+			renderJsonErrorPage(strip_tags($message));
+			exit;
+		}
+
+		// for normal requests, throw a board exception (caught by the global handler)
+		throw new BoardException($message);
+	}
+
+	private function banUser(string $reason, int $durationSeconds): void {
+		// get IP from request
+		$ipAddress = new IPAddress();
+		$ip = (string)$ipAddress;
+
+		// calculate start time
+		$startTime = $_SERVER['REQUEST_TIME'];
 
 		// calculate end time
+		$expires = $startTime + $durationSeconds;
 
-		// globally ban the user
+		// sanitize reason for flat-file storage (commas break the CSV format)
+		$reason = str_replace(',', '&#44;', $reason);
 
+		// build ban entry
+		$banEntry = "{$ip},{$startTime},{$expires},{$reason}";
+
+		// append to global bans file
+		$needsNewline = file_exists($this->globalBansPath) && filesize($this->globalBansPath) > 0;
+
+		$f = fopen($this->globalBansPath, 'a');
+		if ($f) {
+			if ($needsNewline) {
+				fwrite($f, "\n");
+			}
+			fwrite($f, $banEntry);
+			fclose($f);
+		}
 	}
 
 	private function matchesRule(string $value, array $rule): bool {
