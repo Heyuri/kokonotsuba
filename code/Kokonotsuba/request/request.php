@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\request;
 
+use Kokonotsuba\ip\IPAddress;
+
 class request {
 	private array $get;
 	private array $post;
@@ -171,6 +173,15 @@ class request {
 	 */
 	public function getRemoteAddr(string $default = '127.0.0.1'): string {
 		return $this->server['REMOTE_ADDR'] ?? $default;
+	}
+
+	/**
+	 * Get the user's IP address as an IPAddress object.
+	 *
+	 * @return IPAddress User's IP address.
+	 */
+	public function userIp(): IPAddress {
+		return new IPAddress($this->getRemoteAddr());
 	}
 
 	/**

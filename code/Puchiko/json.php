@@ -97,15 +97,3 @@ function sendAjaxAndDetach(array $payload): void {
 		flush();
 	}
 }
-
-/**
- * Checks whether the current request was made via JavaScript (AJAX).
- *
- * Many JS libraries (e.g., jQuery) send the "X-Requested-With: XMLHttpRequest"
- * header during AJAX calls. This function detects that.
- *
- * @return bool True if request is an AJAX/JavaScript request, false otherwise.
- */
-function isJavascriptRequest(\Kokonotsuba\request\request $request): bool {
-	return $request->isAjax();
-}

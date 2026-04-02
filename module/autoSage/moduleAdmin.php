@@ -12,7 +12,6 @@ use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 

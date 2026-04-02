@@ -931,6 +931,7 @@
 								<li><label><input type="checkbox" name="matchField[]" value="comment"<!--&IF($COMMENT_SELECTED,' checked','')-->>Comment</label></li>
 								<li><label><input type="checkbox" name="matchField[]" value="name"<!--&IF($NAME_SELECTED,' checked','')-->>Name</label></li>
 								<li><label><input type="checkbox" name="matchField[]" value="email"<!--&IF($EMAIL_SELECTED,' checked','')-->>Email</label></li>
+								<li><label><input type="checkbox" name="matchField[]" value="filename"<!--&IF($FILENAME_SELECTED,' checked','')-->>Filename</label></li>
 							</ul>
 						</td>
 					</tr>
@@ -941,12 +942,24 @@
 						</td>
 					</tr>
 					<tr>
+						<td class="postblock"><label for="applyOpOnly">OP only</label></td>
+						<td>
+							<label><input type="checkbox" id="applyOpOnly" name="applyOpOnly" value="1"<!--&IF($OP_ONLY_SELECTED,' checked','')-->>Only apply to opening posts</label>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="silentReject">Silent reject</label></td>
+						<td>
+							<label><input type="checkbox" id="silentReject" name="silentReject" value="1"<!--&IF($SILENT_REJECT_SELECTED,' checked','')-->>Silently redirect instead of showing an error</label>
+						</td>
+					</tr>
+					<tr>
 						<td class="postblock"><label for="spamAction">Action</label></td>
 						<td>
 							<select id="spamAction" name="spamAction">
 								<option value="reject"<!--&IF($REJECT_SELECTED,' selected','')-->>Reject</option>
-								<!--<option value="mute"<!--&IF($MUTE_SELECTED,' selected','')-->>Mute</option>-->
-								<!--<option value="ban"<!--&IF($BAN_SELECTED,' selected','')-->>Ban</option>-->
+								<option value="mute"<!--&IF($MUTE_SELECTED,' selected','')-->>Mute</option>
+								<option value="ban"<!--&IF($BAN_SELECTED,' selected','')-->>Ban</option>
 							</select>
 						</td>
 					</tr>
@@ -1024,6 +1037,7 @@
 								<li><label><input type="checkbox" name="matchField[]" value="comment" checked>Comment</label></li>
 								<li><label><input type="checkbox" name="matchField[]" value="name" checked>Name</label></li>
 								<li><label><input type="checkbox" name="matchField[]" value="email" checked>Email</label></li>
+								<li><label><input type="checkbox" name="matchField[]" value="filename" checked>Filename</label></li>
 							</ul>
 						</td>
 					</tr>
@@ -1035,13 +1049,27 @@
 						</td>
 					</tr>
 					<tr>
+						<td class="postblock"><label for="applyOpOnly">OP only</label></td>
+						<td>
+							<div class="formItemDescription">Only check this rule against new thread submissions (opening posts).</div>
+							<label><input type="checkbox" id="applyOpOnly" name="applyOpOnly" value="1">Only apply to opening posts</label>
+						</td>
+					</tr>
+					<tr>
+						<td class="postblock"><label for="silentReject">Silent reject</label></td>
+						<td>
+							<div class="formItemDescription">Silently redirect the user to the board index instead of showing an error message.</div>
+							<label><input type="checkbox" id="silentReject" name="silentReject" value="1">Silently redirect instead of showing an error</label>
+						</td>
+					</tr>
+					<tr>
 						<td class="postblock"><label for="spamAction">Action</label></td>
 						<td>
 							<div class="formItemDescription">What happens to the user or their post once its caught by the spam rule.</div>
 							<select id="spamAction" name="spamAction">
 								<option value="reject">Reject</option>
-								<!--<option value="mute">Mute</option>-->
-								<!--<option value="ban">Ban</option>-->
+								<option value="mute">Mute</option>
+								<option value="ban">Ban</option>
 							</select>
 						</td>
 					</tr>

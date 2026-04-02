@@ -32,7 +32,7 @@ class postIdGenerator {
 		} elseif (stristr($email, 'sage')) {
 			return ' Heaven';
 		} else {
-			$ip = new IPAddress($this->request->getRemoteAddr());
+			$ip = $this->request->userIp();
 			$idSeed = $this->config['IDSEED'];
 			$postNo = $threadNumber ? $threadNumber : ($this->board->getLastPostNoFromBoard() + 1);
 			$baseString = $ip . $idSeed . $postNo;

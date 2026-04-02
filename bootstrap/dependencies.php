@@ -48,7 +48,7 @@ $adminLoginController = new adminLoginController(
 	$softErrorHandler
 );
 
-$IPValidator = new IPValidator($config, new IPAddress($request->getRemoteAddr()), $request);
+$IPValidator = new IPValidator($config, $request->userIp(), $request);
 $postValidator = new postValidator($config, $IPValidator, $threadRepository, $threadService, $fileService, $request);
 
 $postDateFormatter = new postDateFormatter($config['TIME_ZONE']);

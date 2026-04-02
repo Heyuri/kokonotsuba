@@ -103,3 +103,9 @@ $config['staffCapcodes'] = [
 
 $config['KILL_INCOMPLETE_UPLOAD'] = 1; // Automatically delete uploaded incomplete additional images
 
+// Excimer Profiling
+// Requires the Excimer PHP extension (https://www.mediawiki.org/wiki/Excimer)
+// When enabled, speedscope-compatible JSON profiles are saved to global/excimer/{category}/
+// Categories: posting (registRoute), rebuild (mode=rebuild), deleting (adminDel)
+$config['EXCIMER_PROFILING'] = false;
+

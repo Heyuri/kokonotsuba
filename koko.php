@@ -14,7 +14,6 @@ use Kokonotsuba\routers\modeHandler;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\renderBasicBootstrapErrorPage;
 use function Kokonotsuba\libraries\updateAccountSession;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\renderJsonErrorPage;
 
 ignore_user_abort(true);

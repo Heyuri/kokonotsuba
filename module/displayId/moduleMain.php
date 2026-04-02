@@ -102,7 +102,7 @@ class moduleMain extends abstractModuleMain {
 
 		// generate the hash for a user's post
 		$poster_hash = generatePostHash(
-			new IPAddress($this->moduleContext->request->getRemoteAddr()),
+			$this->moduleContext->request->userIp(),
 			$threadNumber, 
 			$email, 
 			$roleLevel,

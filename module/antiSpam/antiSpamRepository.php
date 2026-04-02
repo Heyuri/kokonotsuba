@@ -28,17 +28,21 @@ class antiSpamRepository extends baseRepository {
 		?string $subject,
 		?string $comment,
 		?string $name,
-		?string $email
+		?string $email,
+		bool $hasFilenames = false,
+		bool $isOp = false
 	): false|array {
 		$query = "
 			SELECT *
 				FROM {$this->table}
 			WHERE is_active = 1
+			  AND (apply_op_only = 0 OR :is_op = 1)
 			  AND (
 				(apply_subject = 1 AND :subject IS NOT NULL) OR
 				(apply_comment = 1 AND :comment IS NOT NULL) OR
 				(apply_name = 1 AND :name IS NOT NULL) OR
-				(apply_email = 1 AND :email IS NOT NULL)
+				(apply_email = 1 AND :email IS NOT NULL) OR
+				(apply_filename = 1 AND :has_filenames = 1)
 			  )
 		";
 
@@ -47,6 +51,8 @@ class antiSpamRepository extends baseRepository {
 			':comment' => $comment,
 			':name' => $name,
 			':email' => $email,
+			':has_filenames' => $hasFilenames,
+			':is_op' => $isOp,
 		];
 
 		return $this->queryAll($query, $params);
@@ -76,6 +82,9 @@ class antiSpamRepository extends baseRepository {
 		int $applyComment = 1,
 		int $applyName = 1,
 		int $applyEmail = 1,
+		int $applyFilename = 0,
+		int $applyOpOnly = 0,
+		int $silentReject = 0,
 		int $caseSensitive = 0,
 		?string $userMessage = null,
 		?string $description = null,
@@ -90,6 +99,9 @@ class antiSpamRepository extends baseRepository {
 			'apply_comment' => $applyComment,
 			'apply_name' => $applyName,
 			'apply_email' => $applyEmail,
+			'apply_filename' => $applyFilename,
+			'apply_op_only' => $applyOpOnly,
+			'silent_reject' => $silentReject,
 			'case_sensitive' => $caseSensitive,
 			'user_message' => $userMessage,
 			'description' => $description,

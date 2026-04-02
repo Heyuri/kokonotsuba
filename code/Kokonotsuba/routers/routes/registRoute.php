@@ -30,7 +30,6 @@ use Kokonotsuba\file\postFileUploadController;
 use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 use Kokonotsuba\error\BoardException;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\request\redirect;
 use function Kokonotsuba\libraries\loadUploadData;
 use function Kokonotsuba\libraries\getUserFileFromRequest;
@@ -245,7 +244,7 @@ class registRoute {
 		$resno = intval($this->request->getParameter('resto', 'POST', 0));
 		$pwdc = $this->cookieService->get('pwdc', '');
 	
-		$ip = new IPAddress($this->request->getRemoteAddr());
+		$ip = $this->request->userIp();
 		
 		$age = false;
 	

@@ -5,7 +5,6 @@ namespace Kokonotsuba\Modules\adminBan;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
 
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\renderJsonErrorPage;
 
 class moduleMain extends abstractModuleMain {
@@ -237,7 +236,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function ModulePage(): void {
 		// get the user's IP
-		$ipAddress = new IPAddress($this->moduleContext->request->getRemoteAddr());
+		$ipAddress = $this->moduleContext->request->userIp();
 
 		// check if they're banned
 		// execution won't continue past here if a ban is caught since it terminates output with exit

@@ -295,7 +295,7 @@ class moduleMain extends abstractModuleMain {
 		$log = $this->loadVotes($postUid, $type);
 
 		// Get the current user's IP address
-		$ip = new IPAddress($this->moduleContext->request->getRemoteAddr());
+		$ip = $this->moduleContext->request->userIp();
 
 		$yeahIPs = !empty($log) ? array_column($log, 'ip_address') : [];
 

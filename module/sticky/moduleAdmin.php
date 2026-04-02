@@ -11,7 +11,6 @@ use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 

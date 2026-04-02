@@ -45,7 +45,7 @@ class actionLoggerService {
 	 */
 	public function logAction(string $actionString, int $board_uid): void {
 		$staffSession = new staffAccountFromSession;
-		$IPAddress = new IPAddress($this->request->getRemoteAddr());
+		$IPAddress = $this->request->userIp();
 
 		$name = $staffSession->getUsername();
 		$roleEnum = $staffSession->getRoleLevel();

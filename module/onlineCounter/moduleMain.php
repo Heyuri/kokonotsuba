@@ -57,7 +57,7 @@ class moduleMain extends abstractModuleMain {
 		$currentTime = time();
 
 		// get IP object
-		$addr = new IPAddress($this->moduleContext->request->getRemoteAddr());
+		$addr = $this->moduleContext->request->userIp();
 		
 		// get addr string
 		$addrString = $addr->__toString();

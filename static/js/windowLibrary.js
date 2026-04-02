@@ -80,10 +80,20 @@
 
 			requestAnimationFrame(() => {
 				const rectWidth = win.div.offsetWidth;
+				const rectHeight = win.div.scrollHeight;
 				const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+				const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
 				const margin = 20;
 				let x = viewportWidth - rectWidth - margin;
 				win.div.style.left = `${x}px`;
+
+				// Clamp vertical position so the window stays within viewport
+				let y = parseFloat(win.div.style.top) || 0;
+				if (y + rectHeight > viewportHeight - margin) {
+					y = Math.max(margin, viewportHeight - rectHeight - margin);
+				}
+				win.div.style.top = `${y}px`;
+				win.div.style.overflowY = 'auto';
 			});
 
 			if (!form) return win;

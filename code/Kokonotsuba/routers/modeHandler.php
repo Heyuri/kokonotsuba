@@ -21,6 +21,7 @@ use Kokonotsuba\routers\routes\actionLogRoute;
 use Kokonotsuba\routers\routes\managePostsRoute;
 use Kokonotsuba\routers\routes\jsonApiRoute;
 use Kokonotsuba\routers\routes\defaultRoute;
+use Kokonotsuba\profiler\excimerProfiler;
 
 use function Kokonotsuba\libraries\CheckSupportGZip;
 
@@ -28,6 +29,25 @@ class modeHandler {
 	public function __construct(
 		private appContainer $container	
 	) {}
+
+	/**
+	 * Determine the profiler category for the current request, or null if not profiled.
+	 */
+	private function getProfilerCategory(string $mode): ?string {
+		if ($mode === 'regist') {
+			return 'posting';
+		}
+		if ($mode === 'rebuild') {
+			return 'rebuild';
+		}
+		if ($mode === 'module') {
+			$load = $this->container->get('request')->getParameter('load', default: '');
+			if ($load === 'adminDel') {
+				return 'deleting';
+			}
+		}
+		return null;
+	}
 
 	public function validateBoard(board $board): void {
 		if (!file_exists($board->getFullConfigPath())) {
@@ -239,6 +259,18 @@ class modeHandler {
 				$route->routeApiRequests();
 			}
 		];
+
+		// Start Excimer profiler if enabled and this route is profiled
+		$profiler = null;
+		$globalConfig = $this->container->get('globalConfig');
+		if (!empty($globalConfig['EXCIMER_PROFILING'])) {
+			$category = $this->getProfilerCategory($mode);
+			if ($category !== null) {
+				$outputPath = getBackendGlobalDir() . 'excimer';
+				$profiler = new excimerProfiler($outputPath, $category);
+				$profiler->start();
+			}
+		}
 	
 		if (isset($routes[$mode])) {
 			$routes[$mode]();
@@ -253,6 +285,11 @@ class modeHandler {
 				$this->container->get('request')
 			);
 			$defaultRoute->handleDefault();
+		}
+
+		// Stop Excimer profiler and write output
+		if ($profiler !== null) {
+			$profiler->stop();
 		}
 	
 		if ($this->container->get('config')['GZIP_COMPRESS_LEVEL'] && $Encoding) {
