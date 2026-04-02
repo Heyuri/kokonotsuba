@@ -52,7 +52,7 @@ class postDateFormatter {
 	 * Core formatting logic shared by both methods
 	 */
 	private function formatFromDateTime(DateTime $datetime): string {
-		$offsetSeconds = $this->timeZone * 3600;
+		$offsetSeconds = (int) $this->timeZone * 3600;
 
 		// Clone and apply offset
 		$adjusted = clone $datetime;
