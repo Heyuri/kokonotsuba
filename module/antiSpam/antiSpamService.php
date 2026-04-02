@@ -14,6 +14,9 @@ class antiSpamService {
 		int $applyComment = 1,
 		int $applyName = 1,
 		int $applyEmail = 1,
+		int $applyFilename = 0,
+		int $applyOpOnly = 0,
+		int $silentReject = 0,
 		int $caseSensitive = 0,
 		?string $userMessage = null,
 		?string $description = null,
@@ -29,6 +32,9 @@ class antiSpamService {
 			$applyComment,
 			$applyName,
 			$applyEmail,
+			$applyFilename,
+			$applyOpOnly,
+			$silentReject,
 			$caseSensitive,
 			$userMessage,
 			$description,
@@ -59,9 +65,11 @@ class antiSpamService {
 		?string $subject,
 		?string $comment,
 		?string $name,
-		?string $email
+		?string $email,
+		bool $hasFilenames = false,
+		bool $isOp = false
 	): false|array {
-		return $this->antiSpamRepository->getActiveSpamStringRules($subject, $comment, $name, $email);
+		return $this->antiSpamRepository->getActiveSpamStringRules($subject, $comment, $name, $email, $hasFilenames, $isOp);
 	}
 
 	public function getEntry(int $id): false|array {
@@ -103,6 +111,18 @@ class antiSpamService {
 
 		if (array_key_exists('applyEmail', $fields)) {
 			$update['apply_email'] = (int)$fields['applyEmail'];
+		}
+
+		if (array_key_exists('applyFilename', $fields)) {
+			$update['apply_filename'] = (int)$fields['applyFilename'];
+		}
+
+		if (array_key_exists('applyOpOnly', $fields)) {
+			$update['apply_op_only'] = (int)$fields['applyOpOnly'];
+		}
+
+		if (array_key_exists('silentReject', $fields)) {
+			$update['silent_reject'] = (int)$fields['silentReject'];
 		}
 
 		// case sensitivity

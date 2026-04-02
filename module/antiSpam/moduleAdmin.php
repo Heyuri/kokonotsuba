@@ -163,6 +163,9 @@ class moduleAdmin extends abstractModuleAdmin {
 				$fields['applyComment'],
 				$fields['applyName'],
 				$fields['applyEmail'],
+				$fields['applyFilename'],
+				$fields['applyOpOnly'],
+				$fields['silentReject'],
 				$fields['caseSensitive'],
 				$fields['userMessage'],
 				$fields['description'],
@@ -263,7 +266,14 @@ class moduleAdmin extends abstractModuleAdmin {
 			$fields['applyComment'] = in_array('comment', $matchField, true) ? 1 : 0;
 			$fields['applyName']    = in_array('name', $matchField, true) ? 1 : 0;
 			$fields['applyEmail']   = in_array('email', $matchField, true) ? 1 : 0;
+			$fields['applyFilename'] = in_array('filename', $matchField, true) ? 1 : 0;
 		}
+
+		// opening post only
+		$fields['applyOpOnly'] = !empty($post['applyOpOnly']) ? 1 : 0;
+
+		// silent reject
+		$fields['silentReject'] = !empty($post['silentReject']) ? 1 : 0;
 
 		// case sensitivity
 		$fields['caseSensitive'] = !empty($post['matchCase']) ? 1 : 0;
@@ -403,6 +413,15 @@ class moduleAdmin extends abstractModuleAdmin {
 		// spam_string_rules.apply_email
 		$values['{$EMAIL_SELECTED}'] = !empty($entry['apply_email']);
 
+		// spam_string_rules.apply_filename
+		$values['{$FILENAME_SELECTED}'] = !empty($entry['apply_filename']);
+
+		// spam_string_rules.apply_op_only
+		$values['{$OP_ONLY_SELECTED}'] = !empty($entry['apply_op_only']);
+
+		// spam_string_rules.silent_reject
+		$values['{$SILENT_REJECT_SELECTED}'] = !empty($entry['silent_reject']);
+
 		// spam_string_rules.case_sensitive
 		$values['{$CASE_SENSITIVE}'] = !empty($entry['case_sensitive']);
 
@@ -499,7 +518,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'apply_subject' => 'subject',
 			'apply_comment' => 'comment',
 			'apply_name' => 'name',
-			'apply_email' => 'email'
+			'apply_email' => 'email',
+			'apply_filename' => 'filename'
 		];
 
 		// Collect enabled fields
