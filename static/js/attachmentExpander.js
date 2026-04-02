@@ -322,29 +322,27 @@
 	attachmentExpander.createExpandable = function(anchor, post, index, isImage, contentBuilder) {
 		// main container
 		var expandDiv = document.createElement("div");
-		expandDiv.className = "expandimg";
+		expandDiv.className = "expandedImageContainer";
 		expandDiv.setAttribute("data-attachment-index", index);
+
+		// custom content (img / video / etc.)
+		let content = contentBuilder();
 
 		if(!isImage) {
 			// header with close link
 			let header = document.createElement("div");
 
-			attachmentExpander.addCloseButton(expandDiv, expandDiv, anchor);
+			attachmentExpander.addCloseButton(header, expandDiv, anchor);
 
 			expandDiv.appendChild(header);
 		}
 		else {
-			expandDiv.addEventListener("click", function(event) {
+			content.addEventListener("click", function(event) {
 				event.preventDefault();
 				event.stopPropagation();
 				attachmentExpander.contractAttachment(expandDiv, post);
 			});
-
-			expandDiv.style.cursor = "pointer";
 		}
-
-		// custom content (img / video / etc.)
-		let content = contentBuilder();
 
 		// if media fails to load, remove expansion and show error instead
 		content.addEventListener("error", function() {

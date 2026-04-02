@@ -212,6 +212,7 @@
 
 .expandimg {
 	max-width: 100%;
+	cursor: pointer;
 }
 
 .threadUpdater {
