@@ -4,7 +4,6 @@ namespace Kokonotsuba\post\helper;
 
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\board\board;
-use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
