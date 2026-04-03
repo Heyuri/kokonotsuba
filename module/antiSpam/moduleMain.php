@@ -9,7 +9,7 @@ require_once __DIR__ . '/antiSpamLib.php';
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\RegistBeginListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 use Kokonotsuba\Modules\antiSpam\antiSpamService;
 
 use function Kokonotsuba\libraries\_T;
@@ -36,16 +36,7 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// add to the regist before commit hook point
 		// this is ran before a post is inserted
-		$this->listenRegistBegin(function (&$registInfo) {
-			$this->onBeforeCommit(
-				$registInfo['name'],
-				$registInfo['com'],
-				$registInfo['email'],
-				$registInfo['sub'],
-				$registInfo['files'] ?? [],
-				!empty($registInfo['isThreadSubmit'])
-			); 
-		});
+		$this->listenRegistBegin('onBeforeCommit');
 
 		// set antispam service instance
 		$this->antiSpamService = getAntiSpamService();
@@ -54,7 +45,13 @@ class moduleMain extends abstractModuleMain {
 		$this->globalBansPath = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
 	}
 	
-	private function onBeforeCommit(?string $name, ?string $comment, ?string $email, ?string $subject, array $files = [], bool $isOp = false): void{
+	private function onBeforeCommit(array &$registInfo): void{
+		$name = $registInfo['name'] ?? null;
+		$comment = $registInfo['com'] ?? null;
+		$email = $registInfo['email'] ?? null;
+		$subject = $registInfo['sub'] ?? null;
+		$files = $registInfo['files'] ?? [];
+		$isOp = $registInfo['isThreadSubmit'] ?? false;
 		// Extract file names from attachments
 		$fileNames = $this->extractFileNames($files); 
 

@@ -161,9 +161,9 @@ class threadRepository extends baseRepository {
 
 		$params = [':thread_uid' => (string) $thread_uid];
 		
-		$threadData = $this->queryOne($query, $params);	
+		$threadData = $this->databaseConnection->fetchAllAsClass($query, $params, 'Kokonotsuba\\thread\\Thread')[0] ?? null;	
 	
-		return $threadData ? new Thread($threadData) : false;
+		return $threadData ?: false;
 	}
 
 	/**

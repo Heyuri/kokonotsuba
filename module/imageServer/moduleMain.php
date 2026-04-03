@@ -5,7 +5,7 @@ namespace Kokonotsuba\Modules\imageServer;
 use Kokonotsuba\post\attachment\attachment;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\ImageUrlListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\ImageUrlListenerTrait;
 
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Kokonotsuba\libraries\serveMedia;

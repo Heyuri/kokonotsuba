@@ -42,7 +42,7 @@ class threadService {
 		* @param int $amountOfRepliesToRender	Number of latest replies to include (OP not counted).
 		* @param bool $includeDeleted			Whether to include deleted posts regardless of admin mode.
 		*
-		* @return array|false						Thread data structure or false if not found.
+		* @return ThreadData|false						Thread data structure or false if not found.
 		*/
 	public function getThreadLastReplies(
 		string $thread_uid,
@@ -50,7 +50,7 @@ class threadService {
 		int $previewCount,
 		int $amountOfRepliesToRender,
 		bool $includeDeleted = false
-	): array|false {
+	): ThreadData|false {
 		return $this->getThreadByUidInternal(
 			$thread_uid,
 			$adminMode,
@@ -72,7 +72,7 @@ class threadService {
 		* @param int $page				The page index to load (0-based external, automatically offset internally).
 		* @param bool $includeDeleted	Whether to include deleted posts regardless of admin mode.
 		*
-		* @return array|false				Thread data structure or false if not found.
+		* @return ThreadData|false				Thread data structure or false if not found.
 		*/
 	public function getThreadPaged(
 		string $thread_uid,
@@ -81,7 +81,7 @@ class threadService {
 		int $repliesPerPage,
 		int $page,
 		bool $includeDeleted = false
-	): array|false {
+	): ThreadData|false {
 		return $this->getThreadByUidInternal(
 			$thread_uid,
 			$adminMode,
@@ -101,14 +101,14 @@ class threadService {
 		* @param int $previewCount		How many posts should be included in the preview result.
 		* @param bool $includeDeleted	Whether to include deleted posts regardless of admin mode.
 		*
-		* @return array|false				Thread data structure or false if not found.
+		* @return ThreadData|false				Thread data structure or false if not found.
 		*/
 	public function getThreadAllReplies(
 		string $thread_uid,
 		bool $adminMode,
 		int $previewCount,
 		bool $includeDeleted = false
-	): array|false {
+	): ThreadData|false {
 		return $this->getThreadByUidInternal(
 			$thread_uid,
 			$adminMode,
@@ -131,7 +131,7 @@ class threadService {
 	 * @param int|null $amountOfRepliesToRender  If set, fetch only the last N replies.
 	 * @param int|null $repliesPerPage           If set (with $page), fetch a paginated slice.
 	 * @param int|null $page                     Page index (0-based) for paginated fetch.
-	 * @return array|false Preview result array, or false if the thread does not exist.
+	 * @return ThreadData|false Preview result, or false if the thread does not exist.
 	 */
 	private function getThreadByUidInternal(
 		string $thread_uid, 
@@ -141,7 +141,7 @@ class threadService {
 		?int $repliesPerPage = 500,
 		?int $page = 0,
 		bool $includeDeleted = false
-	): array|false {
+	): ThreadData|false {
 		$showDeleted = $adminMode || $includeDeleted;
 
 		// get thread meta data
@@ -191,7 +191,7 @@ class threadService {
 	 * @param bool   $adminMode     Whether to include deleted posts.
 	 * @param string $orderBy       Field to sort threads by.
 	 * @param bool   $isDescending  Sort direction.
-	 * @return array Array of thread preview structures.
+	 * @return ThreadData[] Array of ThreadData structures.
 	 */
 	public function getThreadPreviewsFromBoard(board $board, int $previewCount, int $amount = 0, int $offset = 0, bool $adminMode = false, string $orderBy = 'last_bump_time', bool $isDescending = true): array {
 		$boardUID = $board->getBoardUID();
@@ -235,12 +235,12 @@ class threadService {
 	}
 
 	/**
-	 * Combine thread metadata rows with their grouped post rows into a structured preview array.
+	 * Combine thread metadata rows with their grouped post rows into a structured ThreadData array.
 	 *
 	 * @param array    $threads       Array of thread metadata rows.
 	 * @param array    $postsByThread Map of thread_uid => array of post rows.
 	 * @param int|null $previewCount  Preview post limit (null = no limit).
-	 * @return array Array of thread preview structures.
+	 * @return ThreadData[] Array of ThreadData structures.
 	 */
 	private function buildPreviewResults(array $threads, array $postsByThread, ?int $previewCount): array {
 		$result = [];
@@ -260,14 +260,12 @@ class threadService {
 				$omittedCount = null;
 			}
 
-			$result[] = [
-				'thread' => $thread,
-				'post_uids' => array_map(fn($p) => $p->getUid(), $previewPosts),
-				'posts' => $previewPosts,
-				'hidden_reply_count' => $omittedCount,
-				'number_of_posts' => $totalPosts,
-				'thread_uid' => $threadUID
-			];
+			$result[] = new ThreadData(
+				$thread,
+				$previewPosts,
+				$omittedCount,
+				$totalPosts
+			);
 		}
 		return $result;
 	}
@@ -281,7 +279,7 @@ class threadService {
 	 * @param array  $filters        Optional filter criteria passed to the repository.
 	 * @param bool   $includeDeleted Whether to include deleted threads/posts.
 	 * @param string $order          Field to sort threads by.
-	 * @return array Array of thread preview structures.
+	 * @return ThreadData[] Array of ThreadData structures.
 	 */
 	public function getFilteredThreads(int $previewCount, int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'last_bump_time'): array {
 		$threads = $this->threadRepository->fetchFilteredThreads($filters, $order, $amount, $offset, $includeDeleted);
@@ -507,7 +505,7 @@ class threadService {
 			'sub'			=> $post->getSubject(),
 			'com'			=> $post->getComment(),
 			'host'			=> $post->getIp(),
-			'status'		=> $post->getStatus()
+			'status'		=> $post->getFlags()
 		];
 	}
 	

@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\module_classes\traits;
+namespace Kokonotsuba\module_classes\traits\listeners;
 
 use Kokonotsuba\post\Post;
 

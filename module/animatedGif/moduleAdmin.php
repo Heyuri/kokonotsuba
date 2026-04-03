@@ -4,8 +4,8 @@ namespace Kokonotsuba\Modules\animatedGif;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
-use Kokonotsuba\module_classes\AuditableTrait;
-use Kokonotsuba\module_classes\PostControlHooksTrait;
+use Kokonotsuba\module_classes\traits\AuditableTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\getAttachmentUrl;

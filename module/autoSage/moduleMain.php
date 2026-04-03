@@ -7,8 +7,8 @@ require_once __DIR__ . '/autoSageLibrary.php';
 use Kokonotsuba\post\FlagHelper;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\RegistBeforeCommitListenerTrait;
-use Kokonotsuba\module_classes\listeners\OpeningPostListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeforeCommitListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\OpeningPostListenerTrait;
 
 class moduleMain extends abstractModuleMain {
 	use RegistBeforeCommitListenerTrait;
@@ -23,32 +23,25 @@ class moduleMain extends abstractModuleMain {
 	}
 
  	public function initialize(): void {
-		$this->listenRegistBeforeCommit(function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
-			if(!$isReply) {
-				return;
-			}
+		$this->listenRegistBeforeCommit('onBeforeCommit');
 
-			$this->onBeforeCommit($thread, $age);  // Call the method to modify the form
-		});
-
-		$this->listenOpeningPost(function (&$arrLabels, $post) {
-			$this->renderAutosageIcon($arrLabels['{$POSTINFO_EXTRA}'], $post);
-		});
+		$this->listenOpeningPost('renderAutosageIcon');
 	}
 
-	public function renderAutosageIcon(string &$postInfoExtra, Post $post) {
+	public function renderAutosageIcon(array &$templateValues, Post $post) {
 		$status = $post->getFlags();
 		
 		if($status->value('as')) {
-			$postInfoExtra .= getAutoSageIndicator();
+			$templateValues['{$POSTINFO_EXTRA}'] .= getAutoSageIndicator();
 		}
 	}
 
-	public function onBeforeCommit(array &$thread, bool &$age) {
-		$post = $thread['posts'][0];
-		$status = $post->getFlags();
+	public function onBeforeCommit(&$name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $files, $isReply, $status, $thread) {
+		if(empty($thread)) return;
+		$post = $thread->getOpeningPost();
+		$flags = $post->getFlags();
 		
-		if($status->value('as')) { 
+		if($flags->value('as')) { 
 			$age = false;
 		}
 	}

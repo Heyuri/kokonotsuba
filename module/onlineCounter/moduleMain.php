@@ -4,14 +4,14 @@ namespace Kokonotsuba\Modules\onlineCounter;
 
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\PostMenuListListenerTrait;
-use Kokonotsuba\module_classes\listeners\ModuleHeaderListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostMenuListListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 
 use function Kokonotsuba\libraries\_T;
 
 class moduleMain extends abstractModuleMain {
 	use PostMenuListListenerTrait;
-	use ModuleHeaderListenerTrait;
+	use IncludeScriptTrait;
 
 	private $modulePageUrl, $usercounter, $timeout, $staticUrl;
 
@@ -34,7 +34,7 @@ class moduleMain extends abstractModuleMain {
 
 		$this->listenPostMenuList('onRenderPostMenuList');
 
-		$this->listenModuleHeader('onGenerateModuleHeader');
+		$this->registerScript('onlineCounterUpdater.js');
 	}
 
 	/**
@@ -207,11 +207,6 @@ class moduleMain extends abstractModuleMain {
 			</li>';
 
 		$hookPostInfoHtml .= $noScriptHtml . $userCounterHTML;
-	}
-	
-	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// include online counter js script
-		$this->includeScript('onlineCounterUpdater.js', $moduleHeader);
 	}
 
 	/**

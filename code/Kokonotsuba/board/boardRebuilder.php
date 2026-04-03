@@ -12,6 +12,7 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\quote_link\quoteLinkService;
 use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
+use Kokonotsuba\thread\ThreadData;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
 
@@ -102,7 +103,7 @@ class boardRebuilder {
 		}
 
 		// get the thread row
-		$thread = $threadData['thread'];
+		$thread = $threadData->getThread();
 
 		// get the total amount of posts in the thread
 		$totalPosts = $thread->getPostCount();
@@ -124,10 +125,10 @@ class boardRebuilder {
 		}
 
 		// get the posts from the thread
-		$posts = $threadData['posts'];
+		$posts = $threadData->getPosts();
 		
 		// get the post uids from the thread posts
-		$postUids = $threadData['post_uids'];
+		$postUids = $threadData->getPostUids();
 
 		// init hidden reply var
 		$hiddenReply = 0;
@@ -182,7 +183,7 @@ class boardRebuilder {
 			$pte_vals['{$BOTTOM_PAGENAV}'] = drawPager($repliesPerPage, $totalPosts, $threadUrl, $this->request);
 		}
 
-		$opPost = $posts[0];
+		$opPost = $threadData->getOpeningPost();
 		$boardTitle = $this->board->getBoardTitle();
 
 		$pageTitle = $this->getThreadPageTitle($opPost, $boardTitle);
@@ -198,7 +199,7 @@ class boardRebuilder {
 		?int $page, 
 		?int $amountOfRepliesToRender,
 		bool $includeDeleted = false
-	): false|array {
+	): false|ThreadData {
 		// Fetch thread with a limited amount of replies	
 		if(!is_null($amountOfRepliesToRender)) {
 			// fetch a 'last X replies' thread
@@ -225,7 +226,7 @@ class boardRebuilder {
 		}
 		// Fetch unpaged thread (intensive)
 		else {
-			// get the while thing
+			// get the whole thing
 			$threadData = $this->threadService->getThreadAllReplies($threadUid, $this->canViewDeleted, $previewCount, $includeDeleted);
 		}
 
@@ -573,9 +574,9 @@ class boardRebuilder {
 		foreach ($threadsInPage as $i => $data) {
 			$output .= $threadRenderer->render($threadsInPage,
 				false,
-				$data['thread'],
-				$data['posts'],
-				$data['hidden_reply_count'],
+				$data->getThread(),
+				$data->getPosts(),
+				$data->getHiddenReplyCount(),
 				false,
 				$adminMode,
 				$i,

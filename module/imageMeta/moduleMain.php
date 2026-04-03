@@ -9,7 +9,7 @@ namespace Kokonotsuba\Modules\imageMeta;
 require __DIR__ . '/exif.php';
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\AttachmentListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\AttachmentListenerTrait;
 use RuntimeException;
 
 use function Kokonotsuba\libraries\attachmentFileExists;

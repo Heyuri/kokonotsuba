@@ -9,11 +9,12 @@ use Kokonotsuba\interfaces\IBoard;
 use InvalidArgumentException;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
-use Kokonotsuba\module_classes\PostControlHooksTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\postRegistData;
 use Kokonotsuba\thread\Thread;
+use Kokonotsuba\thread\ThreadData;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\generateModerateButton;
@@ -292,13 +293,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 	}
 
-	private function handleThreadMove(array $thread, IBoard $hostBoard, IBoard $destinationBoard, bool $leaveShadowThread = true) {
+	private function handleThreadMove(ThreadData $thread, IBoard $hostBoard, IBoard $destinationBoard, bool $leaveShadowThread = true) {
 		// redirect for url
 		$threadRedirectUrl = '';
 
-		$threadData = $thread['thread'];
+		$threadData = $thread->getThread();
 		$threadUid = $threadData->getUid();
-		$threadPosts = $thread['posts'];
+		$threadPosts = $thread->getPosts();
 
 		// board uid of the destination board
 		$destinationBoardUID = $destinationBoard->getBoardUID();
@@ -320,7 +321,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->leavePostInShadowThread($threadData, $hostBoard, $newThreadData, $destinationBoard);
 			
 			// opening post
-			$openingPost = $thread['posts'][0];
+			$openingPost = $thread->getOpeningPost();
 
 			// lock thread
 			$openingPost['status'] = $this->toggleThreadStatus($openingPost, 'stop');
@@ -376,15 +377,15 @@ class moduleAdmin extends abstractModuleAdmin {
 				throw new BoardException("Thread not found");
 			}
 
-		$threadOP = $thread['posts'][0];
-			$threadStatus = new FlagHelper($threadOP->getStatus());
+		$threadOP = $thread->getOpeningPost();
+			$threadStatus = $threadOP->getFlags();
 	
 			if ($threadStatus->value('ghost')) {
 				throw new BoardException("Cannot move ghost threads");
 			}
 	
 			// Get board objects
-			$hostBoard = searchBoardArrayForBoard($thread['thread']->getBoardUID());
+			$hostBoard = searchBoardArrayForBoard($thread->getThread()->getBoardUID());
 			$destinationBoard = searchBoardArrayForBoard($destinationBoardUID);
 	
 			$redirectURL = '';
@@ -407,7 +408,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			// Log the action
 			$destinationBoardTitle = htmlspecialchars($destinationBoard->getBoardTitle());
 			$this->moduleContext->actionLoggerService->logAction(
-				"Moved thread {$thread['thread']->getOpNumber()} to board $destinationBoardTitle",
+				"Moved thread {$thread->getThread()->getOpNumber()} to board $destinationBoardTitle",
 				$hostBoard->getBoardUID()
 			);
 	
@@ -450,7 +451,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function toggleThreadStatus(Post $openingPost, string $flag): FlagHelper {
 		// Create helper with current status
-		$flags = new FlagHelper($openingPost->getStatus());
+		$flags = $openingPost->getFlags();
 
 		// Toggle the specified flag
 		$flags->toggle($flag);

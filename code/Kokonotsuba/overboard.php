@@ -18,6 +18,7 @@ use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
+use Kokonotsuba\thread\ThreadData;
 
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\getThreadTitle;
@@ -163,7 +164,7 @@ class overboard {
 
 	private function loadBoardsForThreads(array $threads): array {
 		// Extract thread.boardUID safely
-		$boardUIDs = array_map(fn($t) => $t['thread']->getBoardUID(), $threads);
+		$boardUIDs = array_map(fn($t) => $t->getThread()->getBoardUID(), $threads);
 
 		// Remove nulls and duplicates
 		$boardUIDs = array_unique(array_filter($boardUIDs));
@@ -184,7 +185,7 @@ class overboard {
 		$tIDsByBoard = array();
 		
 		foreach ($threads as $thread) {
-			$tIDsByBoard[$thread['thread']->getBoardUID()][] = $thread['thread']->getUid();
+			$tIDsByBoard[$thread->getThread()->getBoardUID()][] = $thread->getThread()->getUid();
 		}
 		
 		$allPosts = $this->postRepository->fetchPostsFromBoardsAndThreads($tIDsByBoard);
@@ -199,15 +200,15 @@ class overboard {
 	}
 
 	private function renderOverboardThread(
-		array $thread, 
+		ThreadData $thread, 
 		int $iterator, 
 		array $boardMap, 
 		array $quoteLinksFromPage,
 		array $postsByBoardAndThread, 
 		array $threads
 	): string {
-		$boardUID = $thread['thread']->getBoardUID();
-		$threadID = $thread['thread_uid'];
+		$boardUID = $thread->getThread()->getBoardUID();
+		$threadID = $thread->getThreadUid();
 	
 		if (!isset($boardMap[$boardUID]) || !isset($postsByBoardAndThread[$boardUID][$threadID])) {
 			return '';
@@ -215,8 +216,8 @@ class overboard {
 	
 		$board = $boardMap[$boardUID];
 		$config = $board->loadBoardConfig();
-		$posts = $thread['posts'];
-		$threadToRender = $thread['thread'];
+		$posts = $thread->getPosts();
+		$threadToRender = $thread->getThread();
 	
 		$threadRenderer = $this->createThreadRenderer($board, $config, $this->templateEngine, $quoteLinksFromPage);
 	
@@ -227,7 +228,7 @@ class overboard {
 	
 		$killSensor = false;
 	
-		$hiddenReply = $thread['hidden_reply_count'];
+		$hiddenReply = $thread->getHiddenReplyCount();
 	
 		return $threadRenderer->render($threads,
 			false,

@@ -8,7 +8,7 @@ use Exception;
 use GeoIp2\Database\Reader;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\PostListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
 use Kokonotsuba\post\Post;
 
 class moduleMain  extends abstractModuleMain {

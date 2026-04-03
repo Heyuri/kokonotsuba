@@ -3,6 +3,7 @@
 namespace Kokonotsuba\libraries;
 
 use Kokonotsuba\post\Post;
+use Kokonotsuba\post\deletion\DeletedPost;
 
 /**
  * Generate the base query for posts or deleted posts.
@@ -437,9 +438,9 @@ function mergeDeletedPostRows(null|false|array $rows): false|array {
 			continue;
 		}
 
-		// Initialize Post object if we haven't seen this entry yet
+		// Initialize DeletedPost object if we haven't seen this entry yet
 		if (!isset($entries[$dpId])) {
-			$entries[$dpId] = new Post($row);
+			$entries[$dpId] = new DeletedPost($row);
 		}
 
 		// Reuse existing logic for wiring up attachments + deleted_attachments

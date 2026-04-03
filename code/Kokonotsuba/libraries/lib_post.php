@@ -268,8 +268,9 @@ function getPageOfThread(string $thread_uid, array $threads, int $threadsPerPage
 
 function getPostUidsFromThreadArrays(array $threads): array {
 	$postUids = array_unique(array_reduce($threads, function($carry, $thread) {
-		if (isset($thread['posts']) && is_array($thread['posts'])) {
-			return array_merge($carry, array_map(fn($p) => $p['post_uid'], $thread['posts']));
+		$posts = $thread->getPosts();
+		if (is_array($posts)) {
+			return array_merge($carry, array_map(fn($p) => $p->getUid(), $posts));
 		}
 		return $carry;
 	}, []));

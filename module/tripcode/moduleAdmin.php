@@ -3,7 +3,7 @@
 namespace Kokonotsuba\Modules\tripcode;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
-use Kokonotsuba\module_classes\PostControlHooksTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 use Kokonotsuba\account\staffAccountFromSession;
 

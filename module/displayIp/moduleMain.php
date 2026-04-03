@@ -3,8 +3,8 @@
 namespace Kokonotsuba\Modules\displayIp;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\PostListenerTrait;
-use Kokonotsuba\module_classes\listeners\OpeningPostListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\OpeningPostListenerTrait;
 use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\_T;

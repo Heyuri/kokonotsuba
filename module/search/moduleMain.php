@@ -4,7 +4,7 @@ namespace Kokonotsuba\Modules\search;
 
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\TopLinksListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\containers\moduleEngineContext;
 use Kokonotsuba\renderers\postRenderer;

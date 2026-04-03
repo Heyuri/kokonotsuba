@@ -11,7 +11,7 @@ require_once __DIR__ . '/messageRequestHandler.php';
 
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\TopLinksListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;

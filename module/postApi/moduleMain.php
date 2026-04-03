@@ -3,8 +3,8 @@
 namespace Kokonotsuba\Modules\postApi;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\PostMenuListListenerTrait;
-use Kokonotsuba\module_classes\listeners\ModuleHeaderListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostMenuListListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\PMCLibrary;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\renderers\postRenderer;

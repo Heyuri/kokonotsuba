@@ -8,8 +8,8 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\FlagHelper;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
-use Kokonotsuba\module_classes\AuditableTrait;
-use Kokonotsuba\module_classes\ToggleActionTrait;
+use Kokonotsuba\module_classes\traits\AuditableTrait;
+use Kokonotsuba\module_classes\traits\ToggleActionTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
@@ -88,7 +88,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 	
 		// toggles OP post status too so we don't have to refactor too much code for rendering in the time being
-		$flags = new FlagHelper($openingPost->getStatus());
+		$flags = $openingPost->getFlags();
 		$flags->toggle('sticky');
 		$this->moduleContext->postRepository->setPostStatus($openingPost->getUid(), $flags->toString());
 	

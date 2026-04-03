@@ -4,7 +4,7 @@ namespace Kokonotsuba\Modules\bbCode;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\RegistBeginListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 
 class moduleMain extends abstractModuleMain { 
 	use RegistBeginListenerTrait;
@@ -47,9 +47,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		// Register the listener for the PostInfo hook
-		$this->listenRegistBegin(function (array &$registInfo) {
-			$this->onRegistBegin($registInfo['com'], $registInfo['files']);  // Call the method to modify the form
-		});
+		$this->listenRegistBegin('onRegistBegin');
 
 		// initialize bbcode feature flags
 		$this->supportBold = $this->getConfig('ModuleSettings.supportBold', false);
@@ -74,8 +72,8 @@ class moduleMain extends abstractModuleMain {
 		$this->supportKao = $this->getConfig('ModuleSettings.supportKao', false);
 	}
 
-	private function onRegistBegin(&$com, $files){
-		$com = $this->bb2html($com, $files);
+	private function onRegistBegin(array &$registInfo): void {
+		$registInfo['com'] = $this->bb2html($registInfo['com'], $registInfo['files']);
 	}
 
 	private function bb2html($string, $files): string {

@@ -6,7 +6,7 @@ namespace Kokonotsuba\Modules\globalMessage;
 include_once __DIR__ . '/globalMessageLibrary.php';
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\PlaceHolderInterceptListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PlaceHolderInterceptListenerTrait;
 
 class moduleMain extends abstractModuleMain {
 	use PlaceHolderInterceptListenerTrait;

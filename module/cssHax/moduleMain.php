@@ -3,7 +3,7 @@
 namespace Kokonotsuba\Modules\cssHax;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\ModuleThreadHeaderListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleThreadHeaderListenerTrait;
 use Kokonotsuba\thread\Thread;
 
 use function Puchiko\strings\sanitizeStr;

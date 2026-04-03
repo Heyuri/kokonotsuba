@@ -5,8 +5,8 @@ namespace Kokonotsuba\Modules\fieldTraps;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\RegistBeginListenerTrait;
-use Kokonotsuba\module_classes\listeners\PostFormListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostFormListenerTrait;
 
 class moduleMain extends abstractModuleMain {
 	use RegistBeginListenerTrait;

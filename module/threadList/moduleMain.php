@@ -4,9 +4,9 @@ namespace Kokonotsuba\Modules\threadList;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\RegistBeforeCommitListenerTrait;
-use Kokonotsuba\module_classes\listeners\AboveThreadAreaListenerTrait;
-use Kokonotsuba\module_classes\listeners\TopLinksListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeforeCommitListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\AboveThreadAreaListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawPager;
@@ -66,8 +66,8 @@ class moduleMain extends abstractModuleMain {
 				$dat .= '<div class="menu outerbox" id="topiclist"><div class="innerbox">';
 
 				foreach ($threads as $t) {
-						if (!isset($t['posts'][0])) continue;
-						$post = $t['posts'][0];
+						$post = $t->getOpeningPost();
+						if (!$post) continue;
 
 						$cleanComment = strip_tags($post->getComment());
 						$truncatedComment = truncateText($cleanComment, 100);
@@ -75,9 +75,7 @@ class moduleMain extends abstractModuleMain {
 
 						$title = $truncatedSubject ?: $truncatedComment;
 
-						$replyCount = isset($t['number_of_posts'])
-								? $t['number_of_posts'] - 1
-								: 0;
+						$replyCount = $t->getNumberOfPosts() - 1;
 
 						$dat .= sprintf(
 								'<span><!--%d--> <a href="%s">%s (%d)</a></span>',
@@ -188,7 +186,7 @@ function checkall(){
 		// Loop through and display each thread data
 		foreach($threads as $t) {
 			// get opening post from data
-			$opPost = $t['posts'][0] ?? false;
+			$opPost = $t->getOpeningPost();
 
 			// not found or data invalid (falsey value) - continue
 			if(!$opPost) {
@@ -214,7 +212,7 @@ function checkall(){
 				$this->getConfig('NOTICE_SAGE', false)
 			);
 
-			$rescount = $t['number_of_posts'] - 1;
+			$rescount = $t->getNumberOfPosts() - 1;
 			if ($this->HIGHLIGHT_COUNT > 0 && $rescount > $this->HIGHLIGHT_COUNT) {
 				$rescount = '<span class="warning">'.$rescount.'</span>';
 			}

@@ -3,8 +3,8 @@
 namespace Kokonotsuba\Modules\tripcode;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\RenderTripcodeListenerTrait;
-use Kokonotsuba\module_classes\listeners\RegistBeginListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RenderTripcodeListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 use Kokonotsuba\userRole;
 
 require __DIR__ . '/tripcode_src/tripcodeProcessor.php';

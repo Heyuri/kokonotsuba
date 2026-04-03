@@ -3,8 +3,8 @@
 namespace Kokonotsuba\Modules\edit;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
-use Kokonotsuba\module_classes\AuditableTrait;
-use Kokonotsuba\module_classes\PostControlHooksTrait;
+use Kokonotsuba\module_classes\traits\AuditableTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 

@@ -3,7 +3,7 @@
 namespace Kokonotsuba\Modules\nameRandomizer;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\RegistBeginListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 
 class moduleMain extends abstractModuleMain {
 	use RegistBeginListenerTrait;

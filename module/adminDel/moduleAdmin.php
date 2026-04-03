@@ -5,8 +5,8 @@ namespace Kokonotsuba\Modules\adminDel;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
-use Kokonotsuba\module_classes\AuditableTrait;
-use Kokonotsuba\module_classes\PostControlHooksTrait;
+use Kokonotsuba\module_classes\traits\AuditableTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;

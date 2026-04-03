@@ -3,9 +3,13 @@
 namespace Kokonotsuba\Modules\displayId;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\listeners\PostFormAdminListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 use Kokonotsuba\userRole;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostFormAdminListenerTrait, RegistBeginListenerTrait;
+
 	public function getRequiredRole(): userRole {
 		return userRole::LEV_MODERATOR;
 	}
@@ -19,21 +23,9 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'PostFormAdmin',
-			function(string &$postFormAdminSection) {
-				$this->renderPostFormCheckbox($postFormAdminSection);
-			}
-		);
+		$this->listenPostFormAdmin('renderPostFormCheckbox');
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'RegistBegin',
-			function() {
-				$this->onRegistBegin();
-			}
-		);
+		$this->listenRegistBegin('onRegistBegin');
 	}
 
 	private function renderPostFormCheckbox(string &$adminPostFormCheckbox): void {

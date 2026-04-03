@@ -4,7 +4,7 @@ namespace Kokonotsuba\Modules\catalog;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\TopLinksListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
 
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\quote_unkfunc;
@@ -113,11 +113,11 @@ class moduleMain extends abstractModuleMain {
 		$threads = $this->moduleContext->threadService->getThreadPreviewsFromBoard($this->moduleContext->board, 0, $this->PAGE_DEF, $page * $this->PAGE_DEF, false, $sortingColumn);
 		
 		foreach($threads as $i=>$thread){
-			$threadPosts = $thread['posts'];
-			
-			$opPost = $threadPosts[0] ?? null;
+			$opPost = $thread->getOpeningPost();
 
 			if(!$opPost) continue;
+
+			$threadPosts = $thread->getPosts();
 
 			$firstKey = array_key_first($opPost->getAttachments());
 
@@ -128,7 +128,7 @@ class moduleMain extends abstractModuleMain {
 			// get OP subject
 			$subject = $opPost->getSubject() ?? '';
 
-			$threadNumber = $thread['thread']->getOpNumber();
+			$threadNumber = $thread->getThread()->getOpNumber();
 			if ( ($cat_cols!='auto') && !($i%intval($cat_cols)) )
 				$dat.= '</tr><tr>';
 
@@ -136,7 +136,7 @@ class moduleMain extends abstractModuleMain {
 			$arrLabels = array('{$IMG_BAR}'=>'', '{$POSTINFO_EXTRA}'=>'', '{$IMG_SRC}' => '');
 			$this->moduleContext->moduleEngine->dispatch('ThreadPost', array(&$arrLabels, $opPost, $threadPosts, false)); // "ThreadPost" Hook Point
 
-			$res = $thread['number_of_posts'] - 1; // subtract by one so we dont count the OP
+			$res = $thread->getNumberOfPosts() - 1; // subtract by one so we dont count the OP
 			$dat.= '<td class="thread">
 	<!--<div class="filesize">'.$arrLabels['{$IMG_BAR}'].'</div>-->
 	<a href="'.$this->moduleContext->board->getBoardThreadURL($threadNumber).'">'.

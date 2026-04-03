@@ -3,7 +3,7 @@ namespace Kokonotsuba\Modules\dice;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\RegistBeforeCommitListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeforeCommitListenerTrait;
 
 use function Puchiko\strings\sanitizeStr;
 

@@ -8,12 +8,10 @@
 namespace Kokonotsuba\Modules\fullBanner;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\AboveThreadAreaListenerTrait;
-use Kokonotsuba\module_classes\listeners\BelowThreadAreaListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\AboveThreadAreaListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\BelowThreadAreaListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
-use function Puchiko\request\isGetRequest;
-use function Puchiko\request\isPostRequest;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
@@ -169,12 +167,12 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function ModulePage(): void {
-		if(isPostRequest()) {
+		if($this->moduleContext->request->isPost()) {
 			// handle requests (adds, edits, removals, approvals, etc.)
 			$this->handleRequests();
 		}
 		// handle GET requests to the module page (for the banner server)
-		else if(isGetRequest()) {
+		else if($this->moduleContext->request->isGet()) {
 			$this->handlePages();
 		}
 	}

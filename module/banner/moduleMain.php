@@ -3,13 +3,13 @@
 namespace Kokonotsuba\Modules\banner;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\ModuleHeaderListenerTrait;
-use Kokonotsuba\module_classes\listeners\PageTopListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
+use Kokonotsuba\module_classes\traits\listeners\PageTopListenerTrait;
 
 use RuntimeException;
 
 class moduleMain extends abstractModuleMain {
-	use ModuleHeaderListenerTrait;
+	use IncludeScriptTrait;
 	use PageTopListenerTrait;
 
 	private readonly string $myPage;
@@ -31,18 +31,9 @@ class moduleMain extends abstractModuleMain {
 
 		$this->staticUrl = $this->getConfig('STATIC_URL');
 
-		$this->listenModuleHeader(function(string &$moduleHeader) {
-			$this->onGenerateModuleHeader($moduleHeader);
-		});
+		$this->registerScript('banners.js');
 
-		$this->listenPageTop(function (string &$pageTopHtml) {
-			$this->onRenderPageTop($pageTopHtml);  // Call the method to modify the form
-		});
-	}
-
-	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// include banner js script
-		$this->includeScript('banners.js', $moduleHeader);
+		$this->listenPageTop('onRenderPageTop');
 	}
 
 	private function getAllFilesFromDirectory($directory) {

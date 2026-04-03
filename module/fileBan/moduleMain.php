@@ -8,7 +8,7 @@ require_once __DIR__ . '/fileBanLib.php';
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\RegistBeginListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\Modules\fileBan\getFileBanService;

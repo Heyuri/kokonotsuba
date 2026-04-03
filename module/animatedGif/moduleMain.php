@@ -5,9 +5,9 @@
 namespace Kokonotsuba\Modules\animatedGif;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\AttachmentsAfterInsertListenerTrait;
-use Kokonotsuba\module_classes\listeners\AttachmentListenerTrait;
-use Kokonotsuba\module_classes\listeners\PostFormFileListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\AttachmentsAfterInsertListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\AttachmentListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostFormFileListenerTrait;
 use RuntimeException;
 
 use function Kokonotsuba\libraries\attachmentFileExists;
@@ -27,25 +27,11 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->listenAttachmentsAfterInsert('onAttachmentsAfterInsert');
 
-		$this->listenAttachmentsAfterInsert( 
-			function (?array &$attachments) {
-				$this->onAttachmentsAfterInsert($attachments); 
-			}
-		);
+		$this->listenAttachment('onRenderAttachment');
 
-		$this->listenAttachment(function(
-			string &$attachmentProperties, 
-			string &$attachmentImage, 
-			string &$attachmentUrl, 
-			array &$attachment,
-		) {
-			$this->onRenderAttachment($attachmentProperties, $attachmentImage, $attachmentUrl, $attachment);
-		});
-
-		$this->listenPostFormFile(function(string &$formFileSection) {
-			$this->onRenderPostFormFile($formFileSection);
-		});
+		$this->listenPostFormFile('onRenderPostFormFile');
 	}
 
 	private function onRenderPostFormFile(string &$file): void {

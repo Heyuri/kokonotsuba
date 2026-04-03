@@ -6,7 +6,7 @@ Mod_Readonly - Add this to the boards config to make it admin-only
 namespace Kokonotsuba\Modules\readOnly;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\RegistBeginListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 use Kokonotsuba\error\BoardException;
 
 class moduleMain extends abstractModuleMain {

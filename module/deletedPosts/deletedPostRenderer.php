@@ -9,6 +9,7 @@ use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\userRole;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\post\helper\postDateFormatter;
+use Kokonotsuba\post\deletion\DeletedPost;
 use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\renderers\postRenderer;
 use Kokonotsuba\quote_link\quoteLinkService;
@@ -16,6 +17,7 @@ use RuntimeException;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\renderers\threadRenderer;
 use Kokonotsuba\thread\threadService;
+use Kokonotsuba\thread\ThreadData;
 use Kokonotsuba\request\request;
 
 use function Kokonotsuba\libraries\html\drawPager;
@@ -193,10 +195,10 @@ class deletedPostRenderer {
 		echo $pageHtml;
 	}
 
-	private function drawDeletedPostView(userRole $roleLevel, array $deletedPost, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
+	private function drawDeletedPostView(userRole $roleLevel, DeletedPost $deletedPost, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
 		// if its a thread then get the thread data
-		if($deletedPost['is_op']) {
-			$thread = $this->threadService->getThreadAllReplies($deletedPost['thread_uid'], true, 0);
+		if($deletedPost->isOp()) {
+			$thread = $this->threadService->getThreadAllReplies($deletedPost->getThreadUid(), true, 0);
 
 			// throw error if thread not found
 			if(!$thread) {
@@ -204,14 +206,14 @@ class deletedPostRenderer {
 			}
 
 			// get the post uids from the thread
-			$postUids = $thread['post_uids'];
+			$postUids = $thread->getPostUids();
 		} 
 		// just set it blank
 		else {
-			$thread = [];
+			$thread = null;
 
 			// but set the post uids to be the post uid of the deleted post
-			$postUids = [$deletedPost['post_uid']];
+			$postUids = [$deletedPost->getUid()];
 		}
 
 		// get the quotelinks
@@ -233,7 +235,7 @@ class deletedPostRenderer {
 		$deletedPostTemplateValues['{$IS_VIEW}'] = true;
 
 		// get the url of the view
-		$url = $this->deletedPostUtility->generateDeletedPostViewUrl($deletedPost['deleted_post_id']);
+		$url = $this->deletedPostUtility->generateDeletedPostViewUrl($deletedPost->getDeletedPostId());
 
 		// add url for the view
 		$deletedPostTemplateValues['{$VIEW_URL}'] = htmlspecialchars($url);
@@ -256,9 +258,9 @@ class deletedPostRenderer {
 		$this->outputAdminPage($deletedPostEntryPage);
 	}
 
-	private function generateBackUrl(array $deletedPost): string {
+	private function generateBackUrl(DeletedPost $deletedPost): string {
 		// flag for if its restored or not
-		$isRestoredPost = $deletedPost['open_flag'] === 0;
+		$isRestoredPost = $deletedPost->getOpenFlag() === 0;
 
 		// if its a restored post then make the [Back] url go to the restored index
 		if($isRestoredPost) {
@@ -358,23 +360,23 @@ class deletedPostRenderer {
 
 	private function prepareDeletedEntryPlaceholders(
 		userRole $roleLevel,
-		array $deletedEntry, 
+		DeletedPost $deletedEntry, 
 		postRenderer $postRenderer, 
 		threadRenderer $threadRenderer, 
 		bool $showAll = false, 
-		array $thread = []
+		?ThreadData $thread = null
 		): array {
 		// post board uid 
-		$boardUID = $deletedEntry['boardUID'];
+		$boardUID = $deletedEntry->getBoardUID();
 
 		// username of the staff/user who deleted the post
-		$deletedByUsername = $deletedEntry['deleted_by_username'] ?? null;
+		$deletedByUsername = $deletedEntry->getDeletedByUsername() ?? null;
 
 		// username of the staff who deleted the post
-		$restoredByUsername = $deletedEntry['restored_by_username'] ?? null;
+		$restoredByUsername = $deletedEntry->getRestoredByUsername() ?? null;
 
 		// timestamp the post was deleted at
-		$deletedTimestamp = $deletedEntry['deleted_at'];
+		$deletedTimestamp = $deletedEntry->getDeletedAt();
 
 		// board the post was made to
 		$board = searchBoardArrayForBoard($boardUID);
@@ -383,7 +385,7 @@ class deletedPostRenderer {
 		$boardTitle = $board->getBoardTitle();
 
 		// id of the deleted post row
-		$id = $deletedEntry['deleted_post_id'];
+		$id = $deletedEntry->getDeletedPostId();
 
 		// url to view more detailed information about the post
 		$viewMoreUrl = $this->generateViewMoreUrl($id, $this->modulePageUrl);
@@ -392,7 +394,7 @@ class deletedPostRenderer {
 		$postHtml = $this->generatePostHtml($deletedEntry, $thread, $showAll, $postRenderer, $threadRenderer);
 
 		// attachment only deletion
-		$isAttachmentOnly = !empty($deletedEntry['file_id']) && !empty($deletedEntry['file_only_deleted']);
+		$isAttachmentOnly = !empty($deletedEntry->getFileId()) && !empty($deletedEntry->getFileOnlyDeleted());
 
 		// put together the placeholder => value
 		$templateValues = [
@@ -404,9 +406,9 @@ class deletedPostRenderer {
 			'{$BOARD_TITLE}' => $boardTitle,
 			'{$VIEW_MORE_URL}' => htmlspecialchars($viewMoreUrl),
 			'{$POST_HTML}' => $postHtml,
-			'{$IS_OPEN}' => $deletedEntry['open_flag'] ? 1 : null,
+			'{$IS_OPEN}' => $deletedEntry->getOpenFlag() ? 1 : null,
 			'{$IS_ATTACHMENT_ONLY}' => $isAttachmentOnly,
-			'{$RESTORED_AT}' => isset($deletedEntry['restored_at']) ? $this->postDateFormatter->formatFromDateString($deletedEntry['restored_at']) : '',
+			'{$RESTORED_AT}' => ($deletedEntry->getRestoredAt() !== null) ? $this->postDateFormatter->formatFromDateString($deletedEntry->getRestoredAt()) : '',
 			'{$RESTORED_BY}' => htmlspecialchars($restoredByUsername),
 			'{$SHOW_ALL}' => htmlspecialchars($showAll),
 			'{$URL}' => htmlspecialchars($this->modulePageUrl),
@@ -418,14 +420,14 @@ class deletedPostRenderer {
 	}
 
 	private function generatePostHtml(
-		array $deletedEntry, 
-		array $thread, 
+		DeletedPost $deletedEntry, 
+		?ThreadData $thread, 
 		bool $showAll, 
 		postRenderer $postRenderer, 
 		threadRenderer $threadRenderer
 	): string {
 		// Attachment-only view
-		if ($deletedEntry['file_only_deleted']) {
+		if ($deletedEntry->getFileOnlyDeleted()) {
 			return $this->renderAttachmentDeletion($deletedEntry, $postRenderer);
 		}
 
@@ -433,26 +435,26 @@ class deletedPostRenderer {
 		$templateValues = [];
 
 		// get the board of the post
-		$board = searchBoardArrayForBoard($deletedEntry['boardUID']);
+		$board = searchBoardArrayForBoard($deletedEntry->getBoardUID());
 
 		// get the base url of the board
 		$boardUrl = $board->getBoardURL();
 
 		// if the post is a reply then render it as an OP
-		if(!$deletedEntry['is_op'] || !$showAll) {
+		if(!$deletedEntry->isOp() || !$showAll) {
 			// flag to make sure the reply gets rendered using the OP template block
 			$renderAsOp = true;
 
 			// fetch thread number and default to zero if it isn't there for some reason
-			$threadNumber = $deletedEntry['post_op_number'] ?? 0;
+			$threadNumber = $deletedEntry->getOpNumber();
 
 			// html of the post / thread
 			$postHtml = $postRenderer->render($deletedEntry, $templateValues, $threadNumber, false, [$deletedEntry], true, '', '', '', '', '', 0, false, $boardUrl, $renderAsOp);
 		}
 		// if its a thread (and we're showing all) then render it along with its replies
-		elseif ($deletedEntry['is_op'] && $showAll) {
+		elseif ($deletedEntry->isOp() && $showAll) {
 			// posts from the thread
-			$posts = $thread['posts'];
+			$posts = $thread->getPosts();
 			
 			// make every post marked as deleted
 			$posts = array_map(function($row) {
@@ -461,7 +463,7 @@ class deletedPostRenderer {
 			}, $posts);
 
 			// thread html
-			$postHtml = $threadRenderer->render([$thread], true, $thread['thread'], $posts, 0, false, true, 0, '', $boardUrl, $templateValues);
+			$postHtml = $threadRenderer->render([$thread], true, $thread->getThread(), $posts, 0, false, true, 0, '', $boardUrl, $templateValues);
 		}
 
 		// return post/thread html
@@ -472,21 +474,21 @@ class deletedPostRenderer {
 	 * Render ONLY the deleted attachment for an attachment-only deletion entry.
 	 * The post itself is NOT marked deleted — only the attachment.
 	 */
-	private function renderAttachmentDeletion(array $deletedEntry, postRenderer $postRenderer): string {
+	private function renderAttachmentDeletion(DeletedPost $deletedEntry, postRenderer $postRenderer): string {
 		// file id of the deleted attachment
-		$fileId = $deletedEntry['file_id'];
+		$fileId = $deletedEntry->getFileId();
 
-		// if deleted_attachments[field] doesn’t exist, return empty
-		if (empty($deletedEntry['deleted_attachments'][$fileId]) || empty($deletedEntry['attachments'][$fileId])) {
+		// if deleted_attachments[field] doesn't exist, return empty
+		if (empty($deletedEntry->getDeletedAttachments()[$fileId]) || empty($deletedEntry->getAttachments()[$fileId])) {
 			return '<div class="error centerText">' . _T('attachment_not_found') . '</div>';
 		}
 
 		// get the deleted attachment metadata
-		$deletedAttachmentMeta = $deletedEntry['deleted_attachments'][$fileId];
+		$deletedAttachmentMeta = $deletedEntry->getDeletedAttachments()[$fileId];
 
 		// get attachment
 		// null if its not found
-		$attachment = $deletedEntry['attachments'][$fileId];
+		$attachment = $deletedEntry->getAttachments()[$fileId];
 
 		// But overwrite fields to indicate that it's deleted
 		$attachment['is_deleted'] = true;

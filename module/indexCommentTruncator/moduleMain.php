@@ -3,7 +3,7 @@
 namespace Kokonotsuba\Modules\indexCommentTruncator;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\PostListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
 use Kokonotsuba\post\Post;
 use Throwable;
 

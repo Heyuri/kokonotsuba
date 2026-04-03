@@ -9,7 +9,7 @@ require_once __DIR__ . '/stickyLibrary.php';
 use Kokonotsuba\post\FlagHelper;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\OpeningPostListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\OpeningPostListenerTrait;
 
 class moduleMain extends abstractModuleMain {
 	use OpeningPostListenerTrait;

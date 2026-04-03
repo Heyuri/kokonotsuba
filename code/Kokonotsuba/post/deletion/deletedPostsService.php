@@ -517,9 +517,9 @@ class deletedPostsService {
 	 * Fetch a single deletion row by its deletion record ID.
 	 *
 	 * @param int $deletedPostId Deletion record ID.
-	 * @return array|null Merged deletion row, or null if not found.
+	 * @return Post|null Merged deletion row, or null if not found.
 	 */
-	public function getDeletedPostRowById(int $deletedPostId): ?array {
+	public function getDeletedPostRowById(int $deletedPostId): ?DeletedPost {
 		// get the single row from the db
 		$deletedPostRow = $this->deletedPostsRepository->getDeletedPostRowById($deletedPostId);
 		
@@ -820,7 +820,7 @@ class deletedPostsService {
 	 * @param int $postUid Post UID.
 	 * @return array|null Merged deletion row, or null if not found.
 	 */
-	public function getDeletedPostRowByPostUid(int $postUid): ?array {
+	public function getDeletedPostRowByPostUid(int $postUid): ?DeletedPost {
 		// fetch the row by post uid
 		$deletedPost = $this->deletedPostsRepository->getDeletedPostRowByPostUid($postUid);
 
@@ -834,7 +834,7 @@ class deletedPostsService {
 	 * @param int $fileId File row ID.
 	 * @return array|null Merged deletion row, or null if not found.
 	 */
-	public function getDeletedPostRowByFileId(int $fileId): ?array {
+	public function getDeletedPostRowByFileId(int $fileId): ?DeletedPost {
 		// fetch the row by file id
 		$deletedPost = $this->deletedPostsRepository->getDeletedPostRowByFileId($fileId);
 

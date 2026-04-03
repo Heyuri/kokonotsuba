@@ -4,7 +4,7 @@ namespace Kokonotsuba\Modules\adminBan;
 
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\RegistBeginListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 
 use function Puchiko\json\renderJsonErrorPage;
 

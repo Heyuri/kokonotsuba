@@ -3,13 +3,13 @@
 namespace Kokonotsuba\Modules\filter;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\PostWidgetListenerTrait;
-use Kokonotsuba\module_classes\listeners\ModuleHeaderListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostWidgetListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\post\Post;
 
 class moduleMain extends abstractModuleMain {
 	use PostWidgetListenerTrait;
-	use ModuleHeaderListenerTrait;
+	use IncludeScriptTrait;
 
 	public function getName(): string {
 		return 'Kokonotsuba Filter JS';
@@ -23,8 +23,8 @@ class moduleMain extends abstractModuleMain {
 		// add post widget listener
 		$this->listenPostWidget('onRenderPostWidget');
 
-		// add module header listener
-		$this->listenModuleHeader('onGenerateModuleHeader');
+		// include the filter js for the hide post widget
+		$this->registerScript('filter.js');
 	}
 
 	private function onRenderPostWidget(array &$widgetArray): void {
@@ -40,9 +40,4 @@ class moduleMain extends abstractModuleMain {
 		$widgetArray[] = $hideWidget;
 	}
 
-	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// include the filter js for the hide post widget
-		$this->includeScript('filter.js', $moduleHeader);
-	}
-	
 }

@@ -5,8 +5,9 @@ namespace Kokonotsuba\Modules\displayId;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\PostListenerTrait;
-use Kokonotsuba\module_classes\listeners\RegistBeforeCommitListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeforeCommitListenerTrait;
+use Kokonotsuba\thread\ThreadData;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generatePostHash;
@@ -107,7 +108,7 @@ class moduleMain extends abstractModuleMain {
 		);
 	}
 
-	private function getThreadNumber(array|false $thread): int {
+	private function getThreadNumber(ThreadData|false $thread): int {
 		// if the thread doesn't exist then this means the post is a new thread - so the thread number will be the next post number
 		if(!$thread) {
 			// return the next post number
@@ -117,7 +118,7 @@ class moduleMain extends abstractModuleMain {
 		// if we're replying to a thread then get the thread number from the thread data
 		else {
 			// get the thread data
-			$threadData = $thread['thread'];
+			$threadData = $thread->getThread();
 
 			// get the thread number for the hash
 			$threadNumber = $threadData->getOpNumber();

@@ -92,7 +92,7 @@ class postValidator {
 				// Check that the thread is set to suppress response (by the way, take out the post time of the original post)
 				$post = $this->threadRepository->getPostsFromThread($thread_uid, false, 0, 0)[0]; // [Special] Take a single article content, but the $post of the return also relies on [$i] to switch articles!
 
-				[$postOpStatus, $postOpRoot] = array($post->getStatus(), $post->getRoot());
+				[$postOpStatus, $postOpRoot] = array($post->getFlags(), $post->getRoot());
 				$flgh = new FlagHelper($postOpStatus);
 			} else {
 				throw new BoardException(_T('thread_not_found'), 404); // Does not exist

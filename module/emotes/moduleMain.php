@@ -4,7 +4,7 @@ namespace Kokonotsuba\Modules\emotes;
 
 use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\PostCommentListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
 use Kokonotsuba\post\Post;
 
 class moduleMain extends abstractModuleMain {

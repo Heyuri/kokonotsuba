@@ -464,7 +464,7 @@ class deletedPostsRepository extends baseRepository {
 	 * @param int $deletedPostId Deletion record ID.
 	 * @return array|false Merged deletion row, or false if not found.
 	 */
-	public function getDeletedPostRowById(int $deletedPostId): Post|false {
+	public function getDeletedPostRowById(int $deletedPostId): DeletedPost|false {
 		// Get the query for deleted posts
 		$query = $this->buildDeletedPostByIdQuery();
 
@@ -685,7 +685,7 @@ class deletedPostsRepository extends baseRepository {
 	 * @param int $postUid Post UID.
 	 * @return array|false Merged deletion row, or false if not found.
 	 */
-	public function getDeletedPostRowByPostUid(int $postUid): false|array {
+	public function getDeletedPostRowByPostUid(int $postUid): DeletedPost|false {
 		// query to fetch the deleted post by post uid
 		$query = getBasePostQuery(
 			$this->postTable,
@@ -723,7 +723,7 @@ class deletedPostsRepository extends baseRepository {
 	 * @param int $fileId File row ID.
 	 * @return array|false Merged deletion row, or false if not found.
 	 */
-	public function getDeletedPostRowByFileId(int $fileId): false|array {
+	public function getDeletedPostRowByFileId(int $fileId): DeletedPost|false {
 		// query to fetch the deleted post by post uid
 		$query = getBasePostQuery(
 			$this->postTable,

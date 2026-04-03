@@ -7,8 +7,8 @@ require_once __DIR__ . '/autoSageLibrary.php';
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
-use Kokonotsuba\module_classes\AuditableTrait;
-use Kokonotsuba\module_classes\ToggleActionTrait;
+use Kokonotsuba\module_classes\traits\AuditableTrait;
+use Kokonotsuba\module_classes\traits\ToggleActionTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;

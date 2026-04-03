@@ -8,7 +8,7 @@ require_once __DIR__ . '/blotterService.php';
 
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\listeners\PlaceHolderInterceptListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PlaceHolderInterceptListenerTrait;
 
 use function Puchiko\strings\sanitizeStr;
 
