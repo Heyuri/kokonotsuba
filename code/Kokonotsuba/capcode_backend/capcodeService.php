@@ -4,11 +4,14 @@ namespace Kokonotsuba\capcode_backend;
 
 use Kokonotsuba\capcode_backend\capcodeRepository;
 use Kokonotsuba\database\transactionManager;
+use Kokonotsuba\database\TransactionalTrait;
 use Kokonotsuba\error\BoardException;
 use PDOException;
 
 /** Service for managing capcode (trip-based role badge) records. */
 class capcodeService {
+	use TransactionalTrait;
+
 	public function __construct(
         private capcodeRepository $capcodeRepository,
 		private transactionManager $transactionManager
@@ -58,7 +61,7 @@ class capcodeService {
 
 		try {
 			// run query in a transaction
-			$this->transactionManager->run(function () use (
+			$this->inTransaction(function () use (
 					$tripcode,
 					$isSecure,
 					$addedBy,
@@ -98,7 +101,7 @@ class capcodeService {
 	 */
 	public function editCapcode(int $id, array $data): void {
 		// run through transaction
-		$this->transactionManager->run(function () use ($id, $data) {
+		$this->inTransaction(function () use ($id, $data) {
 			// Update the specified capcode record
 			$this->capcodeRepository->update($id, $data);
 		});
@@ -112,7 +115,7 @@ class capcodeService {
 	 */
 	public function removeCapcode(int $id): void {
 		// run transaction
-		$this->transactionManager->run(function () use ($id) {
+		$this->inTransaction(function () use ($id) {
 			// Delete a capcode record
 			$this->capcodeRepository->delete($id);
 		});
@@ -128,7 +131,7 @@ class capcodeService {
 		$id = null;
 
 		// run through transaction
-		$this->transactionManager->run(function () use (&$id) {
+		$this->inTransaction(function () use (&$id) {
 			// Retrieve the next AUTO_INCREMENT value
 			$id = $this->capcodeRepository->getNextAutoIncrement();
 		});

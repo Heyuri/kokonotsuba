@@ -9,6 +9,7 @@ namespace Kokonotsuba\Modules\imageMeta;
 require __DIR__ . '/exif.php';
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\AttachmentListenerTrait;
 use RuntimeException;
 
 use function Kokonotsuba\libraries\attachmentFileExists;
@@ -17,6 +18,8 @@ use function Kokonotsuba\libraries\getAttachmentUrl;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 
 class moduleMain extends abstractModuleMain {
+	use AttachmentListenerTrait;
+
 	private $enable_exif, $enable_imgops, $enable_iqdb, $enable_swfchan = false; // Initialize options, actually defined in config files
 	private $myPage;
 
@@ -27,14 +30,7 @@ class moduleMain extends abstractModuleMain {
 		$this->enable_swfchan = $this->getConfig('ModuleSettings.SWFCHAN');
 
 		// Listen to posts rendering
-		$this->moduleContext->moduleEngine->addListener('Attachment', function(
-			string &$attachmentProperties, 
-			string &$attachmentImage, 
-			string &$attachmentUrl, 
-			array &$attachment
-		) {
-			$this->onRenderAttachment($attachmentProperties, $attachment);
-		});
+		$this->listenAttachment('onRenderAttachment');
 	}
 
 	public function getName(): string {
@@ -48,7 +44,7 @@ class moduleMain extends abstractModuleMain {
 	/**
 	 * Render the attachment with EXIF and reverse search links.
 	 */
-	public function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
+	public function onRenderAttachment(string &$attachmentProperties, string &$attachmentImage, string &$attachmentUrl, array &$attachment): void {
 		// Prepare HTML to append to the attachment properies
 		$sauceHtml = '';
 

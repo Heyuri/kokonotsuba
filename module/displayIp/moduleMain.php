@@ -3,11 +3,16 @@
 namespace Kokonotsuba\Modules\displayIp;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\PostListenerTrait;
+use Kokonotsuba\module_classes\listeners\OpeningPostListenerTrait;
 use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\_T;
 
 class moduleMain extends abstractModuleMain {
+	use PostListenerTrait;
+	use OpeningPostListenerTrait;
+
 	private readonly int $IPTOGGLE;
 	
 	public function getName(): string {
@@ -21,13 +26,9 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		$this->IPTOGGLE = $this->getConfig('ModuleSettings.IPTOGGLE', -1);
 
-		$this->moduleContext->moduleEngine->addListener('Post', function(array &$templateValues, Post $post, array $threadPosts) {
-			$this->onRenderPost($templateValues, $post, $threadPosts);
-		});
+		$this->listenPost('onRenderPost');
 
-		$this->moduleContext->moduleEngine->addListener('OpeningPost', function(array &$templateValues, Post $post) {
-			$this->onRenderOpeningPost($templateValues, $post);
-		});
+		$this->listenOpeningPost('onRenderOpeningPost');
 	}
 
 	private function _isgTLD($last,$add='') {

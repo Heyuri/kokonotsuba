@@ -5,12 +5,17 @@ namespace Kokonotsuba\Modules\displayId;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\PostListenerTrait;
+use Kokonotsuba\module_classes\listeners\RegistBeforeCommitListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generatePostHash;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
 
 class moduleMain extends abstractModuleMain {
+	use PostListenerTrait;
+	use RegistBeforeCommitListenerTrait;
+
 	// Property for whether to display IDs or not
 	private bool $DISPLAY_ID;
 
@@ -26,20 +31,11 @@ class moduleMain extends abstractModuleMain {
 		$this->DISPLAY_ID = $this->getConfig('ModuleSettings.DISP_ID', false);
 
 		// add the listener for displaying IDs
-		$this->moduleContext->moduleEngine->addListener('Post', function (
-			&$templateValues,
-			&$data,
-			&$threadPosts,
-			&$board,
-			&$adminMode) {
-			$this->onRenderPost($templateValues, $data, $threadPosts);
-		});
+		$this->listenPost('onRenderPost');
 
 		// run the hook point to gen an ID.
 		// IDs are generated for every post when the module is enabled
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
-			$this->onBeforeCommit($poster_hash, $email, $thread);
-		});
+		$this->listenRegistBeforeCommit('onBeforeCommit');
 	}
 
 	private function onRenderPost(array &$templateValues, Post $post, array $threadPosts): void {
@@ -93,7 +89,7 @@ class moduleMain extends abstractModuleMain {
 		return $count;
 	}
 
-	private function onBeforeCommit(string &$poster_hash, string $email, array|false $thread): void {
+	private function onBeforeCommit(&$name, string &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $files, $isReply, &$status, $thread, string &$poster_hash): void {
 		// get the role level from the session
 		$roleLevel = getRoleLevelFromSession();
 

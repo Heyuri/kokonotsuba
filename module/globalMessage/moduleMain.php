@@ -6,8 +6,10 @@ namespace Kokonotsuba\Modules\globalMessage;
 include_once __DIR__ . '/globalMessageLibrary.php';
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\PlaceHolderInterceptListenerTrait;
 
 class moduleMain extends abstractModuleMain {
+	use PlaceHolderInterceptListenerTrait;
 	private readonly string $globalMessageFile;
 
 	public function getName(): string {
@@ -23,9 +25,7 @@ class moduleMain extends abstractModuleMain {
 
 		if(!file_exists($this->globalMessageFile)) touch($this->globalMessageFile);
 		
-		$this->moduleContext->moduleEngine->addListener('PlaceHolderIntercept', function(array &$placeholderArray) {
-			$this->onPlaceHolderIntercept($placeholderArray);
-		});
+		$this->listenPlaceHolderIntercept('onPlaceHolderIntercept');
 	}
 
 	private function onPlaceHolderIntercept(array &$placeholderArray): void {

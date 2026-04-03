@@ -3,6 +3,8 @@
 namespace Kokonotsuba\Modules\adminBan;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\AuditableTrait;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
@@ -12,6 +14,9 @@ use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+	use AuditableTrait;
+
 	private readonly string $BANFILE;
 	private readonly string $GLOBAL_BANS;
 	private readonly string $DEFAULT_BAN_MESSAGE;
@@ -35,45 +40,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->GLOBAL_BANS = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
 		$this->DEFAULT_BAN_MESSAGE = $this->getConfig('DEFAULT_BAN_MESSAGE');
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->onRenderPostAdminControls($modControlSection, $post, false);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'PostAdminControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->onRenderPostAdminControls($modControlSection, $post, true);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'LinksAboveBar',
-			function(string &$linkHtml) {
-				$this->onRenderLinksAboveBar($linkHtml);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, Post &$post) {
-				$this->onRenderPostWidget($widgetArray, $post);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
+		$this->registerPostControlPair('onRenderPostAdminControls');
+		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
+		$this->registerPostWidgetHook('onRenderPostWidget');
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
 	}
 
 	private function onRenderPostAdminControls(string &$modfunc, Post &$post, bool $noScript): void {
@@ -276,7 +246,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$boardUid = -1;
 		}
 
-		$this->moduleContext->actionLoggerService->logAction($actionString, $boardUid);
+		$this->logAction($actionString, $boardUid);
 	}
 
 	private function buildActionString(string $newIp, 
@@ -429,7 +399,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			   }
 			   // Use -1 for global if any global bans, else use board UID
 			   $boardUid = !empty($revokedGlobalIps) ? -1 : $this->moduleContext->board->getBoardUID();
-			   $this->moduleContext->actionLoggerService->logAction($msg, $boardUid);
+			   $this->logAction($msg, $boardUid);
 		   }
 
 		   redirect($this->moduleContext->request->getReferer());

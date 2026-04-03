@@ -3,6 +3,8 @@
 namespace Kokonotsuba\Modules\edit;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\AuditableTrait;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
@@ -16,6 +18,9 @@ use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use AuditableTrait;
+	use PostControlHooksTrait;
+
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('CAN_EDIT_POST', userRole::LEV_MODERATOR);
 	}
@@ -29,21 +34,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, Post &$post) {
-				$this->onRenderPostWidget($widgetArray, $post);
-			}
-		);
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
+		$this->registerPostWidgetHook('onRenderPostWidget');
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
@@ -179,7 +171,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		rebuildBoardsFromPosts([$postUid], $this->moduleContext->postService);
 
 		// log the edit action
-		$this->moduleContext->actionLoggerService->logAction("Edited post No.{$postNumber}", $boardUid ?? GLOBAL_BOARD_UID);
+		$this->logAction("Edited post No.{$postNumber}", $boardUid ?? GLOBAL_BOARD_UID);
 
 		// send json data back if it's a js request
 		if($this->moduleContext->request->isAjax()) {

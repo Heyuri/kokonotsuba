@@ -3,6 +3,8 @@
 namespace Kokonotsuba\Modules\postApi;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\PostMenuListListenerTrait;
+use Kokonotsuba\module_classes\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\PMCLibrary;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\renderers\postRenderer;
@@ -15,6 +17,9 @@ use function Puchiko\json\renderJsonPage;
 use function Puchiko\json\renderJsonErrorPage;
 
 class moduleMain extends abstractModuleMain {
+	use PostMenuListListenerTrait;
+	use ModuleHeaderListenerTrait;
+
 	private const CACHE_DIR_NAME = 'post_api_cache';
 
 	/** Resolved filesystem path to the cache directory. */
@@ -34,13 +39,8 @@ class moduleMain extends abstractModuleMain {
 
 		$this->registerTranslations();
 
-		$this->moduleContext->moduleEngine->addListener('PostMenuList', function (string &$postMenuListHtml) {
-			$this->onRenderPostMenuList($postMenuListHtml);
-		});
-
-		$this->moduleContext->moduleEngine->addListener('ModuleHeader', function (string &$moduleHeader) {
-			$this->onGenerateModuleHeader($moduleHeader);
-		});
+		$this->listenPostMenuList('onRenderPostMenuList');
+		$this->listenModuleHeader('onGenerateModuleHeader');
 	}
 
 	/** Create the cache directory if it does not exist. */

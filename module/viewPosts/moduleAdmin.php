@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\viewPosts;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
@@ -14,6 +15,7 @@ use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('AuthLevels.CAN_ONLY_VIEW_POSTS_FROM_USER', userRole::LEV_JANITOR);
 	}
@@ -27,38 +29,19 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->renderViewPostsButton($modControlSection, $post, false);
-			}
-		);
+		$this->listenProtected('ManagePostsControls', function(string &$modControlSection, Post &$post) {
+			$this->renderViewPostsButton($modControlSection, $post, false);
+		});
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->renderViewPostsButton($modControlSection, $post, true);
-			}
-		);
+		$this->listenProtected('ManagePostsControls', function(string &$modControlSection, Post &$post) {
+			$this->renderViewPostsButton($modControlSection, $post, true);
+		});
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, Post &$post) {
-				$this->onRenderPostWidget($widgetArray, $post);
-			}
-		);
+		$this->registerPostWidgetHook('onRenderPostWidget');
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'PostAdminControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->onRenderPostAdminControls($modControlSection, $post);
-			}
-		);
-
+		$this->listenProtected('PostAdminControls', function(string &$modControlSection, Post &$post) {
+			$this->onRenderPostAdminControls($modControlSection, $post);
+		});
 	}
 
     private function generateViewPostsUrl(string $postUid): string {

@@ -7,6 +7,7 @@ use RuntimeException;
 use Kokonotsuba\board\board;
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\database\OrderFieldWhitelistTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\thread\Thread;
 use function Kokonotsuba\libraries\sqlLatestDeletionEntry;
@@ -20,6 +21,8 @@ use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
 /** Repository for thread records and multi-post queries used to serve board and thread pages. */
 class threadRepository extends baseRepository {
+	use OrderFieldWhitelistTrait;
+
 	private array $allowedOrderFields;
 
 	public function __construct(
@@ -198,9 +201,7 @@ class threadRepository extends baseRepository {
 		string $direction = 'DESC'): array {
 			
 		// Validate orderBy against allowlist
-		if (!in_array($orderBy, $this->allowedOrderFields, true)) {
-			$orderBy = 'last_bump_time';
-		}
+		$orderBy = $this->validateOrderField($orderBy, 'last_bump_time');
 
 		// Validate direction
 		$direction = strtoupper($direction);
@@ -567,7 +568,7 @@ class threadRepository extends baseRepository {
 		}
 
 		// validate order by
-		if (!in_array($orderBy, $this->allowedOrderFields)) {
+		if (!$this->isValidOrderField($orderBy)) {
 			throw new RuntimeException("Invalid order by field.");
 		}
 

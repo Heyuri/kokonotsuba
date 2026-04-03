@@ -3,9 +3,14 @@
 namespace Kokonotsuba\Modules\filter;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\PostWidgetListenerTrait;
+use Kokonotsuba\module_classes\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\Post;
 
 class moduleMain extends abstractModuleMain {
+	use PostWidgetListenerTrait;
+	use ModuleHeaderListenerTrait;
+
 	public function getName(): string {
 		return 'Kokonotsuba Filter JS';
 	}
@@ -16,14 +21,10 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		// add post widget listener
-		$this->moduleContext->moduleEngine->addListener('PostWidget', function(array &$widgetArray, Post &$post) {
-				$this->onRenderPostWidget($widgetArray);
-		});
+		$this->listenPostWidget('onRenderPostWidget');
 
 		// add module header listener
-		$this->moduleContext->moduleEngine->addListener('ModuleHeader', function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-		});
+		$this->listenModuleHeader('onGenerateModuleHeader');
 	}
 
 	private function onRenderPostWidget(array &$widgetArray): void {

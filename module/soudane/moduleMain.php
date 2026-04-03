@@ -6,6 +6,8 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\PostListenerTrait;
+use Kokonotsuba\module_classes\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\Post;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\isActiveStaffSession;
@@ -17,6 +19,9 @@ require_once __DIR__ . '/soudaneRepository.php';
 require_once __DIR__ . '/soudaneService.php';
 
 class moduleMain extends abstractModuleMain {
+	use PostListenerTrait;
+	use ModuleHeaderListenerTrait;
+
 	private string $moduleUrl;
 	private bool $enableYeah;
 	private bool $enableNope;
@@ -54,13 +59,9 @@ class moduleMain extends abstractModuleMain {
 		// set property
 		$this->soudaneService = $soudaneService;
 
-		$this->moduleContext->moduleEngine->addListener('Post', function (&$arrLabels, Post $post) {
-			$this->onRenderPost($arrLabels, $post);
-		});
+		$this->listenPost('onRenderPost');
 		
-		$this->moduleContext->moduleEngine->addListener('ModuleHeader', function(string &$moduleHeader) {
-			$this->onGenerateModuleHeader($moduleHeader);
-		});
+		$this->listenModuleHeader('onGenerateModuleHeader');
 	}
 
 	private function renderVoteButton(

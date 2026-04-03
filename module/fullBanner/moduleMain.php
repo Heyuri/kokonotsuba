@@ -8,6 +8,8 @@
 namespace Kokonotsuba\Modules\fullBanner;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\AboveThreadAreaListenerTrait;
+use Kokonotsuba\module_classes\listeners\BelowThreadAreaListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 use function Puchiko\request\isGetRequest;
@@ -15,6 +17,9 @@ use function Puchiko\request\isPostRequest;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
+	use AboveThreadAreaListenerTrait;
+	use BelowThreadAreaListenerTrait;
+
 	private readonly bool $showTopAd;
 	private readonly bool $showBottomAd;
 	private readonly string $modulePageUrl, $bannerServerUrl;
@@ -34,13 +39,8 @@ class moduleMain extends abstractModuleMain {
 		$this->modulePageUrl = $this->getModulePageURL(['page' => 'bannerIndex'], false, false);
 		$this->bannerServerUrl = $this->getModulePageURL(['page' => 'bannerServer'], false, false);
 
-		$this->moduleContext->moduleEngine->addListener('AboveThreadArea', function (string &$aboveThreadsHtml) {
-			$this->onRenderAboveThreadArea($aboveThreadsHtml);  // Call the method to modify the form
-		});
-		
-		$this->moduleContext->moduleEngine->addListener('BelowThreadArea', function (string &$belowThreadsHtml) {
-			$this->onRenderBelowThreadArea($belowThreadsHtml);  // Call the method to modify the form
-		});
+		$this->listenAboveThreadArea('onRenderAboveThreadArea');
+		$this->listenBelowThreadArea('onRenderBelowThreadArea');
 	}
 
 	private function renderBannerFrame(): string {

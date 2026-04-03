@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\search;
 
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\TopLinksListenerTrait;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\containers\moduleEngineContext;
 use Kokonotsuba\renderers\postRenderer;
@@ -24,6 +25,8 @@ use function Kokonotsuba\libraries\getBoardsByUIDs;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 
 class moduleMain extends abstractModuleMain {
+	use TopLinksListenerTrait;
+
 	private readonly string $myPage;
 
 	// used for rendering posts
@@ -43,9 +46,7 @@ class moduleMain extends abstractModuleMain {
 		// init the module template engine
 		$this->moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.SEARCH_TEMPLATE', 'kokoimg.tpl');
 
-		$this->moduleContext->moduleEngine->addListener('TopLinks', function(string &$topLinkHookHtml, bool $isReply) {
-			$this->onRenderTopLinks($topLinkHookHtml);
-		});
+		$this->listenTopLinks('onRenderTopLinks');
 	}
 
 	public function onRenderTopLinks(&$topLinkHookHtml){

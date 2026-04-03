@@ -4,6 +4,9 @@ namespace Kokonotsuba\Modules\threadList;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\RegistBeforeCommitListenerTrait;
+use Kokonotsuba\module_classes\listeners\AboveThreadAreaListenerTrait;
+use Kokonotsuba\module_classes\listeners\TopLinksListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawPager;
@@ -11,6 +14,10 @@ use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Puchiko\strings\truncateText;
 
 class moduleMain extends abstractModuleMain {
+	use RegistBeforeCommitListenerTrait;
+	use AboveThreadAreaListenerTrait;
+	use TopLinksListenerTrait;
+
 	// Configuration variables
 	private $THREADLIST_NUMBER, $FORCE_SUBJECT, $SHOW_IN_MAIN, $THREADLIST_NUMBER_IN_MAIN, $SHOW_FORM, $HIGHLIGHT_COUNT = -1;
 
@@ -32,21 +39,13 @@ class moduleMain extends abstractModuleMain {
 		$this->HIGHLIGHT_COUNT = $this->getConfig('ModuleSettings.HIGHLIGHT_COUNT');
 		$this->SHOW_IN_MAIN = $this->getConfig('ModuleSettings.SHOW_IN_MAIN');
 
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
-			$this->onBeforeCommit($sub, $isReply);
-		});
-
-		$this->moduleContext->moduleEngine->addListener('AboveThreadArea', function(string &$aboveThreadsHtml, bool $isThreadView) {
-			$this->onRenderAboveThreadArea($aboveThreadsHtml, $isThreadView);
-		});
-
-		$this->moduleContext->moduleEngine->addListener('TopLinks', function(string &$topLinkHookHtml, bool $isReply) {
-			$this->onRenderTopLinks($topLinkHookHtml);
-		});
+		$this->listenRegistBeforeCommit('onBeforeCommit');
+		$this->listenAboveThreadArea('onRenderAboveThreadArea');
+		$this->listenTopLinks('onRenderTopLinks');
 	}
 
 	// Automatically checks subject for posts before commit
-	public function onBeforeCommit(string &$sub, bool $isReply): void {
+	public function onBeforeCommit($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $files, $isReply): void {
 		if ($this->FORCE_SUBJECT && !$isReply && $sub == $this->getConfig('DEFAULT_NOTITLE')) {
 			throw new BoardException("A subject/title is required for a new thread.");
 		}

@@ -3,10 +3,15 @@
 namespace Kokonotsuba\Modules\banner;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\ModuleHeaderListenerTrait;
+use Kokonotsuba\module_classes\listeners\PageTopListenerTrait;
 
 use RuntimeException;
 
 class moduleMain extends abstractModuleMain {
+	use ModuleHeaderListenerTrait;
+	use PageTopListenerTrait;
+
 	private readonly string $myPage;
 	private readonly string $bannerPath;
 	private readonly string $staticUrl;
@@ -26,11 +31,11 @@ class moduleMain extends abstractModuleMain {
 
 		$this->staticUrl = $this->getConfig('STATIC_URL');
 
-		$this->moduleContext->moduleEngine->addListener('ModuleHeader', function(string &$moduleHeader) {
+		$this->listenModuleHeader(function(string &$moduleHeader) {
 			$this->onGenerateModuleHeader($moduleHeader);
 		});
 
-		$this->moduleContext->moduleEngine->addListener('PageTop', function (string &$pageTopHtml) {
+		$this->listenPageTop(function (string &$pageTopHtml) {
 			$this->onRenderPageTop($pageTopHtml);  // Call the method to modify the form
 		});
 	}

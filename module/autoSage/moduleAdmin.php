@@ -5,18 +5,21 @@ namespace Kokonotsuba\Modules\autoSage;
 require_once __DIR__ . '/autoSageLibrary.php';
 
 use Kokonotsuba\error\BoardException;
-use Kokonotsuba\post\FlagHelper;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\AuditableTrait;
+use Kokonotsuba\module_classes\ToggleActionTrait;
 use Kokonotsuba\userRole;
 
-use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 
 // auto sage module made for kokonotsuba by deadking
 class moduleAdmin extends abstractModuleAdmin {
+	use ToggleActionTrait;
+	use AuditableTrait;
+
     public function getRequiredRole(): userRole {
         return $this->getConfig('AuthLevels.CAN_AUTO_SAGE');
     }
@@ -29,125 +32,26 @@ class moduleAdmin extends abstractModuleAdmin {
 		return 'Koko 2025';
 	}
 
+	protected function getToggleFlagKey(): string { return 'as'; }
+	protected function getToggleActiveLabel(): string { return 'as'; }
+	protected function getToggleInactiveLabel(): string { return 'AS'; }
+	protected function getToggleActiveTitle(): string { return 'Un-autosage'; }
+	protected function getToggleInactiveTitle(): string { return 'Autosage'; }
+	protected function getToggleCssClass(): string { return 'adminAutoSageFunction'; }
+	protected function getToggleActionName(): string { return 'autosage'; }
+	protected function getToggleJsFile(): string { return 'autosage.js'; }
+	protected function getToggleTemplateName(): string { return 'autoSageTemplate'; }
+
+	protected function getToggleIndicatorHtml(): string {
+		return getAutoSageIndicator();
+	}
+
+	protected function getToggleUrlParams(Post $post): array {
+		return ['post_uid' => $post->getUid()];
+	}
+
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsThreadControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->renderAutoSageButton($modControlSection, $post, false);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ThreadAdminControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->renderAutoSageButton($modControlSection, $post, true);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModerateThreadWidget',
-			function(array &$widgetArray, Post &$post) {
-				$this->onRenderThreadWidget($widgetArray, $post);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
-	} 
-
-	private function renderAutoSageButton(string &$modfunc, Post $post, bool $noScript) {
-		// only render the button for OP posts
-		$status = $post->getFlags();
-
-		// generate the autosage url
-		$autoSageLink = $this->generateAutoSageUrl($post->getUid());
-
-		// generate the button html and append it to the modfunc string
-		$modfunc .= generateModerateButton(
-			$autoSageLink,
-			$status->value('as') ? 'as' : 'AS',
-			$status->value('as') ? 'Un-autosage' : 'Autosage',
-			'adminAutoSageFunction',
-			$noScript
-		);
-	}
-
-	private function onRenderThreadWidget(array &$widgetArray, Post &$post): void {
-		// get post status
-		$postStatus = $post->getFlags();
-
-		// get autosage label
-		$autoSageLabel = $this->getAutoSageLabel($postStatus);
-		
-		// generate autosage url
-		$autoSageUrl = $this->generateAutoSageUrl($post->getUid());
-
-		// build the widget entry
-		$autoSageWidget = $this->buildWidgetEntry(
-			$autoSageUrl, 
-			'autosage', 
-			$autoSageLabel, 
-			''
-		);
-
-		// add the widget to the array
-		$widgetArray[] = $autoSageWidget;
-	}
-
-	private function getAutoSageLabel(FlagHelper $postStatus): string {
-		// autosage flag
-		$isAutosaged = $postStatus->value('as');
-
-		// if the thread is already autosaged then the action is to unautosage it
-		if($isAutosaged) {
-			return 'Un-autosage thread';
-		}
-		// if the thread isn't autosaged then the action is to autosage it
-		else {
-			return 'Autosage thread';
-		}
-
-	}
-
-	private function generateAutoSageUrl(int $postUid): string {
-		// get AS url
-		$autoSageUrl = $this->getModulePageURL(
-			[
-				'post_uid' => $postUid
-			],
-			false,
-			true
-		);
-
-		// return url
-		return $autoSageUrl;
-	}
-
-	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// generate the autosage <template> html
-		$templateHtml = $this->generateAutoSageTemplate();
-
-		// generate toggle widget + js
-		$this->generateToggleWidget($moduleHeader, 'autosage.js', $templateHtml);
-	}
-
-	private function generateAutoSageTemplate(): string {
-		// get the autosage indicator tag
-		$autoSageIndicator = getAutoSageIndicator();
-		
-		// generate the autosage template html
-		$autoSageTemplateHtml = $this->generateTemplate('autoSageTemplate', $autoSageIndicator);
-
-		// return AS template
-		return $autoSageTemplateHtml;
+		$this->registerToggleHooks();
 	}
 
 	public function ModulePage() {
@@ -171,7 +75,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		
 		$logMessage = $status->value('as') ? "Autosaged No. {$post->getNumber()}" : "Took off autosage on No. {$post->getNumber()}";
 		
-		$this->moduleContext->actionLoggerService->logAction($logMessage, $board->getBoardUID());
+		$this->logAction($logMessage, $board->getBoardUID());
 
 		// ===== AJAX handling updated to use helper =====
 		if($this->moduleContext->request->isAjax()) {

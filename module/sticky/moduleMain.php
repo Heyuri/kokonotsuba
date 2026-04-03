@@ -9,8 +9,10 @@ require_once __DIR__ . '/stickyLibrary.php';
 use Kokonotsuba\post\FlagHelper;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\OpeningPostListenerTrait;
 
 class moduleMain extends abstractModuleMain {
+	use OpeningPostListenerTrait;
 	public function getName(): string {
 		return 'Sticky';
 	}
@@ -20,12 +22,10 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addListener('OpeningPost', function(array &$templateValues, Post $post) {
-			$this->onRenderOpeningPost($templateValues['{$POSTINFO_EXTRA}'], $post);
-		});
+		$this->listenOpeningPost('onRenderOpeningPost');
 	}
 
-	public function onRenderOpeningPost(string &$postInfoExtra, Post $post): void {
+	public function onRenderOpeningPost(array &$templateValues, Post $post): void {
 		// indicates whether the thread is sticky'd or not 
 		$stickyFlag = $post->getFlags();
 
@@ -33,7 +33,7 @@ class moduleMain extends abstractModuleMain {
 		$stickyIndicator = getStickyIndicator($this->getConfig('STATIC_URL'));
 
 		if ($stickyFlag->value('sticky')) {
-			$postInfoExtra .= $stickyIndicator;
+			$templateValues['{$POSTINFO_EXTRA}'] .= $stickyIndicator;
 		}
 	}
 

@@ -8,6 +8,8 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\FlagHelper;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\AuditableTrait;
+use Kokonotsuba\module_classes\ToggleActionTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
@@ -15,6 +17,9 @@ use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use ToggleActionTrait;
+	use AuditableTrait;
+
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('AuthLevels.CAN_STICKY', userRole::LEV_MODERATOR);
 	}
@@ -27,125 +32,30 @@ class moduleAdmin extends abstractModuleAdmin {
 		return 'Koko 2025';
 	}
 
+	protected function getToggleFlagKey(): string { return 'sticky'; }
+	protected function getToggleActiveLabel(): string { return 's'; }
+	protected function getToggleInactiveLabel(): string { return 'S'; }
+	protected function getToggleActiveTitle(): string { return 'Unsticky thread'; }
+	protected function getToggleInactiveTitle(): string { return 'Sticky thread'; }
+	protected function getToggleCssClass(): string { return 'adminStickyFunction'; }
+	protected function getToggleActionName(): string { return 'sticky'; }
+	protected function getToggleJsFile(): string { return 'sticky.js'; }
+	protected function getToggleTemplateName(): string { return 'stickyIconTemplate'; }
+
+	protected function shouldRegisterThreadAdminControls(): bool { return false; }
+
+	protected function getToggleIndicatorHtml(): string {
+		return getStickyIndicator($this->getConfig('STATIC_URL'));
+	}
+
+	protected function getToggleUrlParams(Post $post): array {
+		return ['thread_uid' => $post->getThreadUid()];
+	}
+
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsThreadControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->onRenderThreadAdminControls($modControlSection, $post);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModerateThreadWidget',
-			function(array &$widgetArray, Post &$post) {
-				$this->onRenderThreadWidget($widgetArray, $post);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
+		$this->registerToggleHooks();
 	}
 
-	private function onRenderThreadAdminControls(string &$modfunc, Post $post): void {
-		[$stickyTitle, $toggleLabel] = $this->getStickyAttributes($post);
-
-		$stickyButtonUrl = $this->generateStickyUrl($post->getThreadUid());
-
-		$modfunc .= '<span class="adminFunctions adminStickyFunction">[<a href="' . htmlspecialchars($stickyButtonUrl) . '" title="' . $stickyTitle . '">'.$toggleLabel.'</a>]</span>';
-	}
-
-	private function onRenderThreadWidget(array &$widgetArray, Post &$post): void {
-		// get status
-		$postStatus = $post->getFlags();
-
-		// get sticky label
-		$stickyLabel = $this->generateStickyLabel($postStatus);
-		
-		// generate sticky url
-		$stickyUrl = $this->generateStickyUrl($post->getThreadUid());
-
-		// build the widget entry
-		$stickyWidget = $this->buildWidgetEntry(
-			$stickyUrl, 
-			'sticky', 
-			$stickyLabel, 
-			''
-		);
-
-		// add the widget to the array
-		$widgetArray[] = $stickyWidget;
-	}
-
-	private function getStickyAttributes(Post $post): array {
-		// Create a helper to inspect the post's status flags
-		$stickyFlag = $post->getFlags();
-
-		// Determine the title to display based on current sticky state
-		$stickyTitle = $this->generateStickyLabel($stickyFlag);
-
-		// Determine the toggle label used in the UI
-		$toggleLabel = $stickyFlag->value('sticky') ? 's' : 'S'; 
-
-		// Return both the title and toggle label
-		return [$stickyTitle, $toggleLabel];
-	}
-
-	private function generateStickyLabel(FlagHelper $postStatus): string {
-		// whether the thread is stickied or not
-		$isSticky = $postStatus->value('sticky');
-		
-		// if we're already sticky'd then we need to unsticky
-		if($isSticky) {
-			return 'Unsticky thread';
-		} 
-		// not sticky'd - so the action is to sticky
-		else {
-			return 'Sticky thread';
-		}
-	}
-
-	private function generateStickyUrl(string $thread_uid): string {
-		// generate the sticky thread url
-		$url = $this->getModulePageURL(
-					[
-						'thread_uid' => $thread_uid
-					],
-					false,
-					true
-				);
-		
-		// return url
-		return $url;
-	}
-
-	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// generate the sticky img <template> html
-		$templateHtml = $this->generateStickyTemplate();
-
-		$this->generateToggleWidget($moduleHeader, 'sticky.js', $templateHtml);
-	}
-	
-	private function generateStickyTemplate(): string {
-		// get static url
-		$staticUrl = $this->getConfig('STATIC_URL');
-
-		// get the sticky indicator tag
-		$stickyIndicator = getStickyIndicator($staticUrl);
-		
-		//get sticky indicator
-		$stickyIconTemplate = $this->generateTemplate('stickyIconTemplate', $stickyIndicator);
-
-		// return template
-		return $stickyIconTemplate;
-	}
-	
 	public function ModulePage(): void {
 		$thread_uid = $this->moduleContext->request->getParameter('thread_uid', 'GET');
 	
@@ -188,7 +98,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// board uid of the thread
 		$boardUid = $threadData->getBoardUID();
 	
-		$this->moduleContext->actionLoggerService->logAction(
+		$this->logAction(
 			'Changed sticky status on post No.' . $post_op_number . ' (' . ($is_sticky ? 'false' : 'true') . ')',
 			$boardUid
 		);

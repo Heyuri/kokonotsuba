@@ -4,6 +4,7 @@ namespace Kokonotsuba\post;
 
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\database\OrderFieldWhitelistTrait;
 
 use function Kokonotsuba\libraries\bindPostFilterParameters;
 use function Kokonotsuba\libraries\getBasePostQuery;
@@ -12,6 +13,8 @@ use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
 /** Repository for post records, supporting full-text retrieval, batch insertion, and deletion. */
 class postRepository extends baseRepository {
+	use OrderFieldWhitelistTrait;
+
 	private array $allowedOrderFields;
 
 	public function __construct(
@@ -78,7 +81,7 @@ class postRepository extends baseRepository {
 	 * @return array|false Array of merged post data arrays, or false/empty if none.
 	 */
 	public function getFilteredPosts(int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'post_uid'): false|array {
-		if(!in_array($order, $this->allowedOrderFields)) return [];
+		if(!$this->isValidOrderField($order)) return [];
 
 		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
 		$params = [];

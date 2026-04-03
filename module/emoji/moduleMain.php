@@ -3,8 +3,11 @@
 namespace Kokonotsuba\Modules\emoji;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\RegistBeforeCommitListenerTrait;
 
 class moduleMain extends abstractModuleMain {
+	use RegistBeforeCommitListenerTrait;
+
 	private array $emojiFilter;
 	private readonly string $staticUrl;
 		 
@@ -21,9 +24,7 @@ class moduleMain extends abstractModuleMain {
 		
 		$this->emojiFilter = $this->buildEmojiFilter();
 
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
-			$this->onBeforeCommit($com);
-		});
+		$this->listenRegistBeforeCommit('onBeforeCommit');
 	}
 
 	private function buildEmojiFilter(): array {
@@ -44,7 +45,7 @@ class moduleMain extends abstractModuleMain {
 		return $emojiFilter;
 	}
 
-	public function onBeforeCommit(string &$com): void {
+	public function onBeforeCommit(&$name, &$email, &$emailForInsertion, &$sub, string &$com): void {
 		// Loop through emoji regex and apply it on the comment 
 		foreach ($this->emojiFilter as $filterin => $filterout) {
 			// apply filter

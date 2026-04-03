@@ -4,15 +4,19 @@ namespace Kokonotsuba\Modules\animatedGif;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\AuditableTrait;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\getAttachmentUrl;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use AuditableTrait;
+	use PostControlHooksTrait;
+
 	public function getRequiredRole(): userRole {
 		return userRole::LEV_JANITOR;
 	}
@@ -26,26 +30,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModerateAttachment',
-			function(
-				string &$attachmentProperties, 
-				string &$attachmentImage, 
-				string &$attachmentUrl, 
-				array &$attachment,
-			) {
-				$this->onRenderAttachment($attachmentProperties, $attachment);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
+		$this->registerAttachmentHook('onRenderAttachment');
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
 	}
 	
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
@@ -144,7 +130,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			? 'Animated GIF activated on No. ' . htmlspecialchars($post->getNumber())
 			: 'Animated GIF deactivated on No. ' . htmlspecialchars($post->getNumber());
 
-		$this->moduleContext->actionLoggerService->logAction($logMessage, $post->getBoardUID());
+		$this->logAction($logMessage, $post->getBoardUID());
 
 		// get the board of the post
 		$board = searchBoardArrayForBoard($post->getBoardUID());

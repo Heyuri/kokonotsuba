@@ -9,6 +9,7 @@ use Kokonotsuba\interfaces\IBoard;
 use InvalidArgumentException;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\postRegistData;
@@ -24,6 +25,8 @@ use function Puchiko\request\redirect;
 
 //move thread module
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+
 	private readonly string $myPage;
 
     public function getRequiredRole(): userRole {
@@ -41,29 +44,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function initialize(): void {
 		$this->myPage = $this->getModulePageURL();
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsThreadControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->renderMoveThreadButton($modControlSection, $post, false);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ThreadAdminControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->renderMoveThreadButton($modControlSection, $post, true);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModerateThreadWidget',
-			function(array &$widgetArray, Post &$post) {
-				$this->onRenderThreadWidget($widgetArray, $post);
-			}
-		);
+		$this->registerThreadControlPair('renderMoveThreadButton');
+		$this->registerThreadWidgetHook('onRenderThreadWidget');
 	}
 
 	public function renderMoveThreadButton(string &$modfunc, Post $post, bool $noScript): void {

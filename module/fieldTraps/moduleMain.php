@@ -5,19 +5,20 @@ namespace Kokonotsuba\Modules\fieldTraps;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\RegistBeginListenerTrait;
+use Kokonotsuba\module_classes\listeners\PostFormListenerTrait;
 
 class moduleMain extends abstractModuleMain {
+	use RegistBeginListenerTrait;
+	use PostFormListenerTrait;
+
 	private $fields = array('e-mail', 'username', 'subject', 'comment', 'firstname', 'lastname', 'city', 'state', 'zipcode');
 
 	public function initialize(): void {
 		// Register the listener for the PostInfo hook
-		$this->moduleContext->moduleEngine->addListener('RegistBegin', function () {
-			$this->onRegistBegin();  // Call the method to modify the form
-		});
+		$this->listenRegistBegin('onRegistBegin');
 		
-		$this->moduleContext->moduleEngine->addListener('PostForm', function (&$postForm) {
-			$this->onRenderPostForm($postForm);  // Call the method to modify the form
-		});
+		$this->listenPostForm('onRenderPostForm');
 	}
 
 	public function getName(): string {

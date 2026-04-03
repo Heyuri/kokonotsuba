@@ -11,14 +11,15 @@ require_once __DIR__ . '/messageRequestHandler.php';
 
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\post\Post;
+use Kokonotsuba\module_classes\listeners\TopLinksListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
-use function Puchiko\request\isPostRequest;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
+	use TopLinksListenerTrait;
+
 	private string $modulePageUrl;
 	private messageService $messageService;
 	private messagePolicy $messagePolicy;
@@ -37,13 +38,9 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		$this->modulePageUrl = $this->getModulePageURL([], false);
 
-		$this->moduleContext->moduleEngine->addListener('TopLinks', function(string &$topLinkHookHtml, bool $isReply) {
-			$this->onRenderTopLink($topLinkHookHtml);
-		});
+		$this->listenTopLinks('onRenderTopLink');
 
-		$this->moduleContext->moduleEngine->addListener('Post', function (&$arrLabels, $post) {
-			//$this->onRenderPost($arrLabels, $post);
-		});
+		// $this->listenPost('onRenderPost');
 
 		// get database table and connection
 		$databaseConnection = databaseConnection::getInstance();
@@ -92,7 +89,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function ModulePage() {
 		// handle submitted forms and such
-		if(isPostRequest()) {
+		if($this->moduleContext->request->isPost()) {
 			$this->messageRequestHandler->handlePostRequest();
 		} 
 		// handle static pages

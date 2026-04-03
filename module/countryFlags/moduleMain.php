@@ -8,9 +8,12 @@ use Exception;
 use GeoIp2\Database\Reader;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\PostListenerTrait;
 use Kokonotsuba\post\Post;
 
 class moduleMain  extends abstractModuleMain {
+	use PostListenerTrait;
+
 	private readonly string $staticUrl;
 
 	public function getName(): string {
@@ -24,9 +27,7 @@ class moduleMain  extends abstractModuleMain {
 	public function initialize(): void {
 		$this->staticUrl = $this->getConfig('STATIC_URL');
 
-		$this->moduleContext->moduleEngine->addListener('Post', function (&$arrLabels, Post $post) {
-			$this->onRenderPost($arrLabels, $post);
-		});
+		$this->listenPost('onRenderPost');
 	}
 
 	private function _isgTLD($last,$add='') {

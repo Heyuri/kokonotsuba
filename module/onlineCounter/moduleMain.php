@@ -4,10 +4,15 @@ namespace Kokonotsuba\Modules\onlineCounter;
 
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\PostMenuListListenerTrait;
+use Kokonotsuba\module_classes\listeners\ModuleHeaderListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 
 class moduleMain extends abstractModuleMain {
+	use PostMenuListListenerTrait;
+	use ModuleHeaderListenerTrait;
+
 	private $modulePageUrl, $usercounter, $timeout, $staticUrl;
 
 	public function getName(): string {
@@ -27,13 +32,9 @@ class moduleMain extends abstractModuleMain {
 		
 		$this->modulePageUrl = $this->getModulePageURL();
 
-		$this->moduleContext->moduleEngine->addListener('PostMenuList', function(string &$postMenuListHtml) {
-			$this->onRenderPostMenuList($postMenuListHtml);
-		});
+		$this->listenPostMenuList('onRenderPostMenuList');
 
-		$this->moduleContext->moduleEngine->addListener('ModuleHeader', function(string &$moduleHeader) {
-			$this->onGenerateModuleHeader($moduleHeader);
-		});
+		$this->listenModuleHeader('onGenerateModuleHeader');
 	}
 
 	/**

@@ -3,11 +3,14 @@
 namespace Kokonotsuba\Modules\cssHax;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\ModuleThreadHeaderListenerTrait;
 use Kokonotsuba\thread\Thread;
 
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
+	use ModuleThreadHeaderListenerTrait;
+
 	public function getName(): string {
 		return 'Thread css hax handler';
 	}
@@ -17,9 +20,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
  	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addListener('ModuleThreadHeader', function(string &$threadHeader, Thread $threadData) {
-			$this->onModuleThreadHeader($threadHeader, $threadData);
-		});
+		$this->listenModuleThreadHeader('onModuleThreadHeader');
 	}
 
 	private function onModuleThreadHeader(string &$threadHeader, Thread $threadData): void {

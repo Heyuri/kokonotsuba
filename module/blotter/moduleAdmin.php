@@ -8,6 +8,8 @@ require_once __DIR__ . '/blotterService.php';
 
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\AuditableTrait;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
@@ -18,6 +20,9 @@ use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use AuditableTrait;
+	use PostControlHooksTrait;
+
 	private blotterService $blotterService;
 	private readonly string $modulePage;
 
@@ -43,13 +48,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->blotterService = new blotterService($blotterRepository, $this->moduleContext->transactionManager);
 		$this->modulePage = $this->getModulePageURL([], false);
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'LinksAboveBar',
-			function(string &$linkHtml) {
-				$this->onRenderLinksAboveBar($linkHtml);
-			}
-		);
+		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
 	}
 
 	public function onRenderLinksAboveBar(string &$linkHtml): void {
@@ -62,7 +61,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			if (!empty($this->moduleContext->request->getParameter('new_blot_txt', 'POST'))) {
 				$this->handleBlotterAddition();
 
-				$this->moduleContext->actionLoggerService->logAction("Added new blotter entry", GLOBAL_BOARD_UID);
+				$this->logAction("Added new blotter entry", GLOBAL_BOARD_UID);
 
 				rebuildAllBoards(); //rebuild all pages so it takes effect immedietly
 				
@@ -72,7 +71,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				$editedIds = $this->editBlotterEntries($this->moduleContext->request->getParameter('entryedit', 'POST'));
 
 				if (!empty($editedIds)) {
-					$this->moduleContext->actionLoggerService->logAction("Edited blotter entries with IDs: " . implode(", ", $editedIds), GLOBAL_BOARD_UID);
+					$this->logAction("Edited blotter entries with IDs: " . implode(", ", $editedIds), GLOBAL_BOARD_UID);
 					rebuildAllBoards(); //rebuild all pages so it takes effect immedietly
 				}
 
@@ -82,7 +81,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				$this->deleteBlotterEntries($this->moduleContext->request->getParameter('entrydelete', 'POST'));
 
 				// log deletion
-				$this->moduleContext->actionLoggerService->logAction("Deleted blotter entries with IDs: " . implode(", ", $this->moduleContext->request->getParameter('entrydelete', 'POST')), GLOBAL_BOARD_UID);
+				$this->logAction("Deleted blotter entries with IDs: " . implode(", ", $this->moduleContext->request->getParameter('entrydelete', 'POST')), GLOBAL_BOARD_UID);
 
 				rebuildAllBoards(); //rebuild all pages so it takes effect immedietly
 

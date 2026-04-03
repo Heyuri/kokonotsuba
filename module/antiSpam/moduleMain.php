@@ -9,6 +9,7 @@ require_once __DIR__ . '/antiSpamLib.php';
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\RegistBeginListenerTrait;
 use Kokonotsuba\Modules\antiSpam\antiSpamService;
 
 use function Kokonotsuba\libraries\_T;
@@ -18,6 +19,8 @@ use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
 
 class moduleMain extends abstractModuleMain {
+	use RegistBeginListenerTrait;
+
 	private antiSpamService $antiSpamService;
 	private string $globalBans;
 	private string $globalBansPath;
@@ -33,7 +36,7 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// add to the regist before commit hook point
 		// this is ran before a post is inserted
-		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (&$registInfo) {
+		$this->listenRegistBegin(function (&$registInfo) {
 			$this->onBeforeCommit(
 				$registInfo['name'],
 				$registInfo['com'],

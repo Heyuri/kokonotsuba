@@ -4,9 +4,12 @@ namespace Kokonotsuba\Modules\emotes;
 
 use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\PostCommentListenerTrait;
 use Kokonotsuba\post\Post;
 
 class moduleMain extends abstractModuleMain {
+	use PostCommentListenerTrait;
+
     // The assoc emotes list used for the search and replace in comment
     private array $emotes;
 
@@ -29,9 +32,7 @@ class moduleMain extends abstractModuleMain {
         $this->baseEmoteUrl = $this->getConfig('STATIC_URL') . 'image/emote/';
 
         // add hook point listener for post
-		$this->moduleContext->moduleEngine->addListener('PostComment', function(string &$postComment, Post &$post) {
-			$this->onRenderComment($postComment);
-		});
+		$this->listenPostComment('onRenderComment');
 	}
 
     private function onRenderComment(string &$comment): void {

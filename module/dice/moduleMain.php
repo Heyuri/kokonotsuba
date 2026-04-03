@@ -3,10 +3,13 @@ namespace Kokonotsuba\Modules\dice;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\RegistBeforeCommitListenerTrait;
 
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
+	use RegistBeforeCommitListenerTrait;
+
 	private int $dieAmountLimit, $dieFaceLimit, $emailDiceRoll, $commentDiceRoll;
 
 	public function getName(): string {
@@ -30,22 +33,20 @@ class moduleMain extends abstractModuleMain {
 		// get the comment dice roll config value and set it
 		$this->commentDiceRoll = $this->getConfig('ModuleSettings.COMMENT_DICE_ROLL', true);
 
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
-			$this->onBeforeCommit($email, $emailForInsertion, $com);
-		});
+		$this->listenRegistBeforeCommit('onBeforeCommit');
 
 	}
 
-	public function onBeforeCommit(string &$email, string &$emailForInsertion, string &$comment): void {
+	public function onBeforeCommit(&$name, string &$email, string &$emailForInsertion, &$sub, string &$com): void {
 		
 		// Handle email-field dice rolling
 		if($this->emailDiceRoll) {
-			$this->handleEmailDiceRoll($email, $emailForInsertion, $comment);
+			$this->handleEmailDiceRoll($email, $emailForInsertion, $com);
 		}
 		
 		// Handle futaba-style comment rolling
 		if($this->commentDiceRoll) {
-			$this->handleCommentDiceRoll($comment);
+			$this->handleCommentDiceRoll($com);
 		}
 
 	}

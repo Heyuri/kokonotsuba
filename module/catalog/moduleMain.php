@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\catalog;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\TopLinksListenerTrait;
 
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\quote_unkfunc;
@@ -12,6 +13,8 @@ use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\getAttachmentUrl;
 
 class moduleMain extends abstractModuleMain {
+	use TopLinksListenerTrait;
+
 	private readonly string $staticUrl;
 	private readonly string $staticIndexFile;
 	private $myPage;
@@ -32,9 +35,7 @@ class moduleMain extends abstractModuleMain {
 		$this->RESICON = $this->staticUrl . 'image/replies.png';
 		$this->myPage = $this->getModulePageURL();
 
-		$this->moduleContext->moduleEngine->addListener('TopLinks', function(string &$topLinkHookHtml, bool $isReply) {
-			$this->onRenderTopLink($topLinkHookHtml);
-		});
+		$this->listenTopLinks('onRenderTopLink');
 	}
 
 	private function onRenderTopLink(string &$linkbar): void {

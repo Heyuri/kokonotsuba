@@ -5,6 +5,7 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\thread\Thread;
 use Kokonotsuba\userRole;
@@ -17,6 +18,8 @@ require __DIR__  . '/themeRepository.php';
 require __DIR__  . '/themeService.php';
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+
 	private string $moduleUrl;
 	private themeService $themeService;
 
@@ -48,21 +51,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		// initialize service for managing themes
 		$this->themeService = new themeService($themeRepository);
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModerateThreadWidget',
-			function(array &$widgetArray, Post &$post) {
-				$this->onRenderThreadWidget($widgetArray, $post);
-			}
-		);
+		$this->registerThreadWidgetHook('onRenderThreadWidget');
 		
-		/*$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);*/
+		/*$this->registerAdminHeaderHook('onGenerateModuleHeader');*/
 	}
 
 	private function onRenderThreadWidget(array &$widgetArray, Post &$post): void {

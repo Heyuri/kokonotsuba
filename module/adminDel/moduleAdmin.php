@@ -5,6 +5,8 @@ namespace Kokonotsuba\Modules\adminDel;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\AuditableTrait;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
@@ -18,6 +20,9 @@ use function Puchiko\request\redirect;
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+	use AuditableTrait;
+
 	private readonly int $JANIMUTE_LENGTH;
 	private readonly string $JANIMUTE_REASON;
 	private readonly string $GLOBAL_BANS;
@@ -39,50 +44,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->JANIMUTE_REASON = $this->getConfig('ModuleSettings.JANIMUTE_REASON');
 		$this->GLOBAL_BANS = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->onRenderPostAdminControls($modControlSection, $post, false);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'PostAdminControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->onRenderPostAdminControls($modControlSection, $post, true);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, Post &$post) {
-				$this->onRenderPostWidget($widgetArray, $post);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModerateAttachment',
-			function(
-				string &$attachmentProperties, 
-				string &$attachmentImage, 
-				string &$attachmentUrl, 
-				array &$attachment
-			) {
-				$this->onRenderAttachment($attachmentProperties, $attachment);
-			}
-		);
+		$this->registerPostControlPair('onRenderPostAdminControls');
+		$this->registerPostWidgetHook('onRenderPostWidget');
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
+		$this->registerAttachmentHook('onRenderAttachment');
 	}
 
 	private function onRenderPostAdminControls(string &$modFunc, Post &$post, bool $noScript): void {
@@ -314,7 +279,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		switch ($action) {
 			case 'del':
 				$this->moduleContext->postService->removePosts([$post->getUid()], $this->moduleContext->currentUserId);
-				$this->moduleContext->actionLoggerService->logAction('Deleted post No.'.$post->getNumber(), $boardUID);
+				$this->logAction('Deleted post No.'.$post->getNumber(), $boardUID);
 				break;
 			case 'delmute':
 				$this->moduleContext->postService->removePosts([$post->getUid()], $this->moduleContext->currentUserId);
@@ -327,7 +292,7 @@ class moduleAdmin extends abstractModuleAdmin {
 					$this->appendGlobalBan($ip, $starttime, $expires, $reason);
 				}
 
-				$this->moduleContext->actionLoggerService->logAction('Muted '.$ip.' and deleted post No.'.$post->getNumber() . ' ' . $board->getBoardTitle() . ' (' . $board->getBoardUID() . ')', GLOBAL_BOARD_UID);
+				$this->logAction('Muted '.$ip.' and deleted post No.'.$post->getNumber() . ' ' . $board->getBoardTitle() . ' (' . $board->getBoardUID() . ')', GLOBAL_BOARD_UID);
 
 				break;
 			case 'attachmentDel':
@@ -351,7 +316,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 				$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$attachment], $this->moduleContext->currentUserId);
 
-				$this->moduleContext->actionLoggerService->logAction('Deleted file for post No.'.$post->getNumber(), $boardUID);
+				$this->logAction('Deleted file for post No.'.$post->getNumber(), $boardUID);
 				break;
 			default:
 				throw new BoardException('ERROR: Invalid action.');

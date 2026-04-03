@@ -4,6 +4,7 @@ namespace Kokonotsuba\post\deletion;
 
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\database\OrderFieldWhitelistTrait;
 use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\getBasePostQuery;
@@ -14,6 +15,8 @@ use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
 /** Repository for tracking soft-deleted and purged post records, with paged retrieval and restoration support. */
 class deletedPostsRepository extends baseRepository {
+	use OrderFieldWhitelistTrait;
+
 	private array $allowedOrderFields;
 
 	public function __construct(
@@ -256,9 +259,7 @@ class deletedPostsRepository extends baseRepository {
 	): array|false {
 
 		// Validate ordering field
-		if (!in_array($orderBy, $this->allowedOrderFields, true)) {
-			$orderBy = 'id';
-		}
+		$orderBy = $this->validateOrderField($orderBy, 'id');
 
 		// Validate direction
 		$direction = strtoupper($direction);

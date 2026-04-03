@@ -3,8 +3,11 @@
 namespace Kokonotsuba\Modules\addInfo;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\PostInfoListenerTrait;
 
 class moduleMain extends abstractModuleMain {
+	use PostInfoListenerTrait;
+
 	private array $dotPoints;
 
 	public function initialize(): void {
@@ -12,7 +15,7 @@ class moduleMain extends abstractModuleMain {
 		$this->dotPoints = $this->getConfig('ModuleSettings.ADD_INFO', []);
 		
 		// Register the listener for the PostInfo hook
-		$this->moduleContext->moduleEngine->addListener('PostInfo', function (string &$form) {
+		$this->listenPostInfo(function (string &$form) {
 			$this->onRenderPostInfo($form);  // Call the method to modify the form
 		});
 	}

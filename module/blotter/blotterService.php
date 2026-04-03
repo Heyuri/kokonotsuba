@@ -3,9 +3,12 @@
 namespace Kokonotsuba\Modules\blotter;
 
 use Kokonotsuba\database\transactionManager;
+use Kokonotsuba\database\TransactionalTrait;
 
 /** Service for managing sitewide blotter entries. */
 class blotterService {
+	use TransactionalTrait;
+
 	public function __construct(
 		private blotterRepository $blotterRepository,
 		private transactionManager $transactionManager,
@@ -25,7 +28,7 @@ class blotterService {
 			return;
 		}
 
-		$this->transactionManager->run(function() use ($trimmedContent, $addedBy) {
+		$this->inTransaction(function() use ($trimmedContent, $addedBy) {
 			$this->blotterRepository->insertEntry($trimmedContent, $addedBy);
 		});
 	}
@@ -41,7 +44,7 @@ class blotterService {
 			return;
 		}
 
-		$this->transactionManager->run(function() use ($entryIds) {
+		$this->inTransaction(function() use ($entryIds) {
 			$this->blotterRepository->deleteEntries($entryIds);
 		});
 	}
@@ -78,7 +81,7 @@ class blotterService {
 			return [];
 		}
 
-		$this->transactionManager->run(function() use ($changedIds, $normalizedUpdates) {
+		$this->inTransaction(function() use ($changedIds, $normalizedUpdates) {
 			foreach ($changedIds as $entryId) {
 				if (!array_key_exists($entryId, $normalizedUpdates)) {
 					continue;

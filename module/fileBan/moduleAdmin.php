@@ -8,6 +8,7 @@ require_once __DIR__ . '/fileBanLib.php';
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
@@ -21,6 +22,8 @@ use function Puchiko\request\redirect;
 use function Kokonotsuba\Modules\fileBan\getFileBanService;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+
 	private fileBanService $fileBanService;
 	private string $moduleUrl;
 
@@ -41,37 +44,12 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->fileBanService = getFileBanService($this->moduleContext->transactionManager);
 
-		// "Ban file" button on attachments - same hook point as "Delete file" (ModerateAttachment)
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModerateAttachment',
-			function(
-				string &$attachmentProperties,
-				string &$attachmentImage,
-				string &$attachmentUrl,
-				array &$attachment
-			) {
-				$this->onRenderAttachment($attachmentProperties, $attachment);
-			}
-		);
+		$this->registerAttachmentHook('onRenderAttachment');
+		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
 
-		// Nav link
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'LinksAboveBar',
-			function(string &$linkHtml) {
-				$this->onRenderLinksAboveBar($linkHtml);
-			}
-		);
-
-		// JS for seamless ban+delete
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(string &$moduleHeader) {
-				$this->includeScript('fileBan.js', $moduleHeader);
-			}
-		);
+		$this->listenProtected('ModuleAdminHeader', function(string &$moduleHeader) {
+			$this->includeScript('fileBan.js', $moduleHeader);
+		});
 	}
 
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
@@ -155,7 +133,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function handleBanAndDelete(): void {
-		$postUid = $_GET['post_uid'] ?? null;
+		$postUid = $this->moduleContext->request->param ?? null;
 
 		validatePostInput($postUid);
 

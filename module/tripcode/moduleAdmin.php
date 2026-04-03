@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\tripcode;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 use Kokonotsuba\account\staffAccountFromSession;
 
@@ -13,6 +14,8 @@ require __DIR__ . '/capcode_src/capcodeModuleRenderer.php';
 require __DIR__ . '/capcode_src/capcodeModuleRequestHandler.php';
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+
 	// the url of the module page
 	private string $modulePageUrl;
 
@@ -57,13 +60,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 
 		// add links listener 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'LinksAboveBar',
-			function(string &$linkHtml) {
-				$this->onRenderLinksAboveBar($linkHtml);
-			}
-		);
+		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
 	}
 
 	public function onRenderLinksAboveBar(string &$linkHtml): void {

@@ -6,12 +6,15 @@ namespace Kokonotsuba\Modules\globalMessage;
 include_once __DIR__ . '/globalMessageLibrary.php';
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\rebuildAllBoards;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+
 	private readonly string $myPage;
 	private readonly string $globalMessageFile;
 
@@ -34,13 +37,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		
 		$this->myPage = $this->getModulePageURL();
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'LinksAboveBar',
-			function(string &$linkHtml) {
-				$this->onRenderLinksAboveBar($linkHtml);
-			}
-		);
+		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
 	}
 
 	public function onRenderLinksAboveBar(string &$linkHtml): void {

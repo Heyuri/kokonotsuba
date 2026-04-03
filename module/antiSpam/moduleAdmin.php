@@ -8,6 +8,7 @@ require_once __DIR__ . '/antiSpamLib.php';
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
@@ -17,6 +18,8 @@ use function Kokonotsuba\libraries\html\drawPager;
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+
 	private antiSpamService $antiSpamService;
 	private string $moduleUrl;
 
@@ -35,37 +38,9 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function initialize(): void {
 		$this->moduleUrl = $this->getModulePageURL([], false);
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->renderFilterPostButton($modControlSection, $post, false);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'PostAdminControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->renderFilterPostButton($modControlSection, $post, true);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, Post &$post) {
-				$this->onRenderPostWidget($widgetArray, $post);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'LinksAboveBar',
-			function(string &$linkHtml) {
-				$this->onRenderLinksAboveBar($linkHtml);
-			}
-		);
+		$this->registerPostControlPair('renderFilterPostButton');
+		$this->registerPostWidgetHook('onRenderPostWidget');
+		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
 
 		// set antispam service instance
 		$this->antiSpamService = getAntiSpamService();

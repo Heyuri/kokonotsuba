@@ -4,8 +4,13 @@ namespace Kokonotsuba\Modules\csrfPrevent;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\RegistBeginListenerTrait;
+use Kokonotsuba\module_classes\listeners\PostFormListenerTrait;
 
 class moduleMain extends abstractModuleMain {
+	use RegistBeginListenerTrait;
+	use PostFormListenerTrait;
+
 	private const TOKEN_FIELD = 'csrf_token';
 
 	public function getName(): string {
@@ -17,13 +22,9 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addListener('RegistBegin', function () {
-			$this->onRegistBegin();
-		});
+		$this->listenRegistBegin('onRegistBegin');
 
-		$this->moduleContext->moduleEngine->addListener('PostForm', function (&$postForm) {
-			$this->onRenderPostForm($postForm);
-		});
+		$this->listenPostForm('onRenderPostForm');
 	}
 
 	private function getSessionToken(): string {

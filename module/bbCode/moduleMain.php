@@ -4,8 +4,10 @@ namespace Kokonotsuba\Modules\bbCode;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\RegistBeginListenerTrait;
 
 class moduleMain extends abstractModuleMain { 
+	use RegistBeginListenerTrait;
 	private $urlcount;
 	private	$ImgTagTagMode = 0; // [img] tag behavior (0: no conversion 1: conversion when no textures 2: always conversion)
 	private	$URLTagMode = 0; // [url] tag behavior (0: no conversion 1: normal)
@@ -45,7 +47,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		// Register the listener for the PostInfo hook
-		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (array &$registInfo) {
+		$this->listenRegistBegin(function (array &$registInfo) {
 			$this->onRegistBegin($registInfo['com'], $registInfo['files']);  // Call the method to modify the form
 		});
 

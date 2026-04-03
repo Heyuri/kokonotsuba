@@ -10,6 +10,7 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
@@ -19,12 +20,13 @@ use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Kokonotsuba\libraries\getUsernameFromSession;
 use function Kokonotsuba\libraries\modIdToColorHex;
 use function Kokonotsuba\libraries\validatePostInput;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+
 	private noteService $noteService;
 	private notePolicy $notePolicy;
 
@@ -41,29 +43,12 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
+		$this->registerPostWidgetHook('onRenderPostWidget');
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, Post &$post) {
-				$this->onRenderPostWidget($widgetArray, $post);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'BelowComment',
-			function(string &$belowComment, Post &$post, array &$threadPosts, bool &$adminMode) {
-				$this->renderStaffNotesOnPost($belowComment, $post, $adminMode);
-			}
-		);
+		$this->listenProtected('BelowComment', function(string &$belowComment, Post &$post, array &$threadPosts, bool &$adminMode) {
+			$this->renderStaffNotesOnPost($belowComment, $post, $adminMode);
+		});
 
 		// fetch database settings
 		$databaseSettings = getDatabaseSettings();

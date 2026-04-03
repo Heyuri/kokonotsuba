@@ -4,6 +4,7 @@ namespace Kokonotsuba\post\deletion;
 
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\database\transactionManager;
+use Kokonotsuba\database\TransactionalTrait;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\attachment\fileService;
 use Kokonotsuba\post\Post;
@@ -16,6 +17,8 @@ use function Kokonotsuba\libraries\constructAttachmentsFromArray;
 
 /** Service for soft-deleting, restoring, and purging posts and attachments, with paged retrieval. */
 class deletedPostsService {
+	use TransactionalTrait;
+
 	public function __construct(
 		private transactionManager $transactionManager,
 		private readonly deletedPostsRepository $deletedPostsRepository,
@@ -34,7 +37,7 @@ class deletedPostsService {
 	 */
 	public function restorePost(int $deletedPostId, int $accountId): void {
 		// run transaction
-		$this->transactionManager->run(function() use($deletedPostId, $accountId) {
+		$this->inTransaction(function() use($deletedPostId, $accountId) {
 			// get the post data from the associated deleted posts row
 			$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
 			
@@ -191,7 +194,7 @@ class deletedPostsService {
 	 */
 	public function purgePost(int $deletedPostId, bool $logAction = true): void {
 		// run transaction
-		$this->transactionManager->run(function() use($deletedPostId, $logAction) {
+		$this->inTransaction(function() use($deletedPostId, $logAction) {
 			// get the post data from the associated deleted posts row
 			$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
 			
@@ -352,7 +355,7 @@ class deletedPostsService {
 	 */
 	public function purgeAttachmentOnly(int $deletedPostId): void {
 		// run transaction
-		$this->transactionManager->run(function() use($deletedPostId) {
+		$this->inTransaction(function() use($deletedPostId) {
 			// get deletion row
 			$row = $this->deletedPostsRepository->getDeletedPostRowById($deletedPostId);
 
@@ -766,7 +769,7 @@ class deletedPostsService {
 	 * @return void
 	 */
 	public function deleteFilesFromPosts(array $attachments, ?int $deletedBy): void {
-		$this->transactionManager->run(function() use ($attachments, $deletedBy) {
+		$this->inTransaction(function() use ($attachments, $deletedBy) {
 			// Construct file objects from the attachments array
 			$attachmentsToMove = constructAttachmentsFromArray($attachments);
 
@@ -847,7 +850,7 @@ class deletedPostsService {
 	 */
 	public function pruneExpiredPosts(int $timeLimit): void {
 		// run transaction
-		$this->transactionManager->run(function() use($timeLimit) {
+		$this->inTransaction(function() use($timeLimit) {
 			// get IDs from entires that are older than the time limit
 			$prunedEntryIDs = $this->deletedPostsRepository->getExpiredEntryIDs($timeLimit);
 
@@ -876,7 +879,7 @@ class deletedPostsService {
 	 */
 	public function removeEntry(int $deletedPostId): void {
 		// run transaction
-		$this->transactionManager->run(function() use($deletedPostId) {
+		$this->inTransaction(function() use($deletedPostId) {
 			// run the method to delete the entry from the database
 			$this->deletedPostsRepository->removeRowById($deletedPostId);
 		});

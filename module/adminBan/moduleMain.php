@@ -4,10 +4,13 @@ namespace Kokonotsuba\Modules\adminBan;
 
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\RegistBeginListenerTrait;
 
 use function Puchiko\json\renderJsonErrorPage;
 
 class moduleMain extends abstractModuleMain {
+	use RegistBeginListenerTrait;
+
 	private string $BANFILE = '';
 	private string $GLOBAL_BANS = '';
 	private string $BANIMG = '';
@@ -28,14 +31,12 @@ class moduleMain extends abstractModuleMain {
 		touch($this->BANFILE);
 		touch($this->GLOBAL_BANS);
 
-		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (array &$registInfo) {
-			$this->onRegistBegin($registInfo['ip']);  // Call the method to modify the form
-		});
+		$this->listenRegistBegin('onRegistBegin');
 	}
 
-	public function onRegistBegin(string $ipAddress): void {
+	public function onRegistBegin(array &$registInfo): void {
 		// check if the regist ip is banned
-		$this->checkBans($ipAddress);
+		$this->checkBans($registInfo['ip']);
 	}
 
 	private function checkBans(string $ipAddress): void {

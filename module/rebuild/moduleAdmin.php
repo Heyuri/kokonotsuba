@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\rebuild;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
@@ -11,6 +12,8 @@ use function Kokonotsuba\libraries\rebuildBoardsByArray;
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+
 	private readonly string $myPage;
 
     public function getRequiredRole(): userRole {
@@ -28,13 +31,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function initialize(): void {
 		$this->myPage = $this->getModulePageURL();
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'LinksAboveBar',
-			function(string &$linkHtml) {
-				$this->onRenderLinksAboveBar($linkHtml);
-			}
-		);
+		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
 	}
 
 	public function onRenderLinksAboveBar(&$linkHtml): void {

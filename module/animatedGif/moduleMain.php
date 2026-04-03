@@ -5,12 +5,19 @@
 namespace Kokonotsuba\Modules\animatedGif;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\listeners\AttachmentsAfterInsertListenerTrait;
+use Kokonotsuba\module_classes\listeners\AttachmentListenerTrait;
+use Kokonotsuba\module_classes\listeners\PostFormFileListenerTrait;
 use RuntimeException;
 
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 
 class moduleMain extends abstractModuleMain {
+	use AttachmentsAfterInsertListenerTrait;
+	use AttachmentListenerTrait;
+	use PostFormFileListenerTrait;
+
 	public function getName(): string {
 		return 'Kokonotsuba Animated GIF';
 	}
@@ -21,13 +28,13 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 
-		$this->moduleContext->moduleEngine->addListener('AttachmentsAfterInsert', 
+		$this->listenAttachmentsAfterInsert( 
 			function (?array &$attachments) {
 				$this->onAttachmentsAfterInsert($attachments); 
 			}
 		);
 
-		$this->moduleContext->moduleEngine->addListener('Attachment', function(
+		$this->listenAttachment(function(
 			string &$attachmentProperties, 
 			string &$attachmentImage, 
 			string &$attachmentUrl, 
@@ -36,7 +43,7 @@ class moduleMain extends abstractModuleMain {
 			$this->onRenderAttachment($attachmentProperties, $attachmentImage, $attachmentUrl, $attachment);
 		});
 
-		$this->moduleContext->moduleEngine->addListener('PostFormFile', function(string &$formFileSection) {
+		$this->listenPostFormFile(function(string &$formFileSection) {
 			$this->onRenderPostFormFile($formFileSection);
 		});
 	}

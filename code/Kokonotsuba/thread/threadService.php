@@ -4,6 +4,7 @@ namespace Kokonotsuba\thread;
 
 use Exception;
 use Kokonotsuba\board\board;
+use Kokonotsuba\database\OrderFieldWhitelistTrait;
 use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\post\attachment\fileService;
 use Kokonotsuba\post\Post;
@@ -16,6 +17,8 @@ use function Puchiko\strings\generateUid;
 
 /** Service for fetching, moving, copying, and pruning threads with their associated posts and attachments. */
 class threadService {
+	use OrderFieldWhitelistTrait;
+
 	private array $allowedOrderFields;
 
 	public function __construct(
@@ -196,9 +199,7 @@ class threadService {
 		$amount = max(0, $amount);
 		$offset = max(0, $offset);
 
-		if (!in_array($orderBy, $this->allowedOrderFields, true)) {
-			$orderBy = 'last_bump_time';
-		}
+		$orderBy = $this->validateOrderField($orderBy, 'last_bump_time');
 
 		$threads = $this->threadRepository->getThreadsFromBoard(
 			$boardUID, 
@@ -318,9 +319,7 @@ class threadService {
 		string $orderBy = 'last_bump_time'): array {
 
 		// Validate orderBy to prevent SQL injection
-		if (!in_array($orderBy, $this->allowedOrderFields, true)) {
-			$orderBy = 'last_bump_time';
-		}
+		$orderBy = $this->validateOrderField($orderBy, 'last_bump_time');
 
 		// Validate direction
 		$direction = $isDESC ? 'DESC' : 'ASC';

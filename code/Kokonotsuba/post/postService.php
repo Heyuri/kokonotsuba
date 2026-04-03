@@ -4,6 +4,7 @@ namespace Kokonotsuba\post;
 
 use Kokonotsuba\board\board;
 use Kokonotsuba\database\transactionManager;
+use Kokonotsuba\database\TransactionalTrait;
 use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\request\request;
 use Kokonotsuba\thread\Thread;
@@ -14,6 +15,8 @@ use function Puchiko\strings\generateUid;
 
 /** Service for creating, retrieving, and soft-deleting posts within threads. */
 class postService {
+	use TransactionalTrait;
+
 	public function __construct(
 		private readonly postRepository $postRepository, 
 		private readonly transactionManager $transactionManager, 
@@ -115,7 +118,7 @@ class postService {
 			return filter_var($value, FILTER_VALIDATE_INT) !== false;
 		});
 
-		$this->transactionManager->run(function () use ($posts, $accountId) {
+		$this->inTransaction(function () use ($posts, $accountId) {
 			$postsData = $this->postRepository->getPostsByUids($posts);
 
 			// return early if posts data is null for whatever reason

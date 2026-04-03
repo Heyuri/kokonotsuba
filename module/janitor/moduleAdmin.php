@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\janitor;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
@@ -13,6 +14,7 @@ use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
 	public function getRequiredRole(): userRole {
 		return userRole::LEV_JANITOR;
 	}
@@ -26,37 +28,9 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 	
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->renderWarnButton($modControlSection, $post, false);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'PostAdminControls',
-			function(string &$modControlSection, Post &$post) {
-				$this->renderWarnButton($modControlSection, $post, true);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, Post &$post) {
-				$this->onRenderPostWidget($widgetArray, $post);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
+		$this->registerPostControlPair('renderWarnButton');
+		$this->registerPostWidgetHook('onRenderPostWidget');
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
 	}
 
 	private function renderWarnButton(string &$modfunc, Post &$post, bool $noScript = false): void {
