@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\module_classes\listeners;
+namespace Kokonotsuba\module_classes\traits\listeners;
 
 trait ViewedThreadListenerTrait {
 	protected function listenViewedThread(string $methodName, int $priority = 0): void {

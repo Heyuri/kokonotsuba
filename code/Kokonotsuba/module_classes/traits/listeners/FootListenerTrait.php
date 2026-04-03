@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\module_classes\listeners;
+namespace Kokonotsuba\module_classes\traits\listeners;
 
 trait FootListenerTrait {
 	protected function listenFoot(string $methodName, int $priority = 0): void {

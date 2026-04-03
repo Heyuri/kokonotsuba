@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\module_classes\listeners;
+namespace Kokonotsuba\module_classes\traits\listeners;
 
 trait RegistBeforeCommitListenerTrait {
 	protected function listenRegistBeforeCommit(string $methodName, int $priority = 0): void {

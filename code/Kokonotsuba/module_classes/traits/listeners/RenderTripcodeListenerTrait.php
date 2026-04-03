@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\module_classes\listeners;
+namespace Kokonotsuba\module_classes\traits\listeners;
 
 trait RenderTripcodeListenerTrait {
 	protected function listenRenderTripcode(string $methodName, int $priority = 0): void {

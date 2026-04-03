@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\module_classes;
+namespace Kokonotsuba\module_classes\traits;
 
 /**
  * Trait providing a shorthand for action logging in modules.

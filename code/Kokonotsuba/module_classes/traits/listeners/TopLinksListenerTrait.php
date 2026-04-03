@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\module_classes\listeners;
+namespace Kokonotsuba\module_classes\traits\listeners;
 
 trait TopLinksListenerTrait {
 	protected function listenTopLinks(string $methodName, int $priority = 0): void {

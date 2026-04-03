@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\module_classes\listeners;
+namespace Kokonotsuba\module_classes\traits\listeners;
 
 trait PostFormListenerTrait {
 	protected function listenPostForm(string $methodName, int $priority = 0): void {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\module_classes;
+namespace Kokonotsuba\module_classes\traits;
 
 /**
  * Shorthand for registering non-role-protected hook listeners.
