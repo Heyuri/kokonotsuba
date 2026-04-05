@@ -56,7 +56,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$restoredIndexUrl = $this->getModulePageURL(['pageName' => 'restoredIndex'], false);
 
 		// init the module template engine
-		$moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.DELETED_POSTS_TEMPLATE', 'kokoimg.tpl');
+		$moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.DELETED_POSTS_TEMPLATE', 'kokoimg');
 
 		// init utility class
 		$deletedPostUtility = new deletedPostUtility(

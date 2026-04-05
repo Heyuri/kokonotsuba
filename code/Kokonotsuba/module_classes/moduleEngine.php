@@ -67,13 +67,24 @@ use function Kokonotsuba\libraries\getRoleLevelFromSession;
 			return;
 		}
 		
-		$adminTemplatePath = getBackendDir() . 'templates/admin.tpl';
+		$adminTemplatePath = getBackendDir() . 'templates/admin';
 
 		$dependencies = [
 			'config' => $this->moduleEngineContext->config
 		];
 
 		$adminTemplateEngine = new templateEngine($adminTemplatePath, $dependencies);
+
+		// Register module template search paths with both template engines
+		$boardTemplateEngine = $this->moduleEngineContext->templateEngine;
+		foreach ($loadlist as $modName => $modStatus) {
+			if (!$modStatus) continue;
+			$moduleTemplatePath = $this->ENV['MODULE.PATH'] . $modName . '/templates';
+			if (is_dir($moduleTemplatePath)) {
+				$adminTemplateEngine->addSearchPath($moduleTemplatePath);
+				$boardTemplateEngine->addSearchPath($moduleTemplatePath);
+			}
+		}
 
 		// Create the admin page renderer
 		$adminPageRenderer = new pageRenderer($adminTemplateEngine, $this, $this->moduleEngineContext->board, $this->moduleEngineContext->getContainer()->get('request'));

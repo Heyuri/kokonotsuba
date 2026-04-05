@@ -203,7 +203,6 @@ $config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_PATH'].'image/banner/
 
 //mod_addinfo
 $config['ModuleSettings']['ADD_INFO'] = array(
-	'<div id="formfuncs"><a class="postformOption" href="javascript:kkjs.form_switch();">Switch form position</a> | <a class="postformOption" href="'.$config['STATIC_URL'].'html/bbcode.html" target="_blank">BBCode reference</a></div>',
 	'Read the <a href="//example.net/rules.html">rules</a> before you post.',
 	'Read <a href="//example.net/faq.html">our FAQ</a> for any questions.',
 	'Modify this by editing $config[\'ModuleSettings\'][\'ADD_INFO\'] in globalconfig.php',
@@ -223,7 +222,7 @@ $config['ModuleSettings']['SHOW_SCORE_ONLY'] = false;
 
 //mod_search
 $config['ModuleSettings']['SEARCH_POSTS_PER_PAGE'] = 50;
-$config['ModuleSettings']['SEARCH_TEMPLATE'] = 'kokoimg.tpl';
+$config['ModuleSettings']['SEARCH_TEMPLATE'] = 'kokoimg';
 $config['ModuleSettings']['DISPLAY_THREADED_FORMAT'] = false;
 
 //mod_readonly
@@ -237,7 +236,7 @@ $config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'] = 250;
 $config['ModuleSettings']['DISP_ID'] = false; // if posterID is enabled: false = OPs can open by putting displayid to mail, true = IDs always ON
 
 // deletedPosts
-$config['ModuleSettings']['DELETED_POSTS_TEMPLATE'] = 'kokoimg.tpl';
+$config['ModuleSettings']['DELETED_POSTS_TEMPLATE'] = 'kokoimg';
 $config['ModuleSettings']['PRUNE_TIME'] = 336;
 
 // dice
@@ -509,8 +508,8 @@ $config['TRUST_HTTP_X_FORWARDED_FOR'] = 0; //Whether to use HTTP_X_FORWARDED_FOR
 $config['MAX_THREAD_AMOUNT'] = 150; // Auto deletes the last thread from a board that exceed this limit, defaults to 10 pages
 
 // Appearance
-$config['TEMPLATE_FILE'] = 'kokoimg.tpl'; // Template File. Set this and the next line to 'kokotxt.tpl' and 'kokotxtreply.tpl' respectively to use Kokonotsuba as a textboard.
-$config['REPLY_TEMPLATE_FILE'] = 'kokoimg.tpl'; // Reply page template file
+$config['TEMPLATE_FILE'] = 'kokoimg'; // Template directory. Set this and the next to 'kokotxt' and 'kokotxtreply' respectively for textboard.
+$config['REPLY_TEMPLATE_FILE'] = 'kokoimg'; // Reply page template directory
 $config['MAX_AGE_TIME'] = 0; // How long will thread accept age replies? (hours)
 
 $config['USE_CATEGORY'] = 0; // Enable Categories

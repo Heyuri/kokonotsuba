@@ -40,11 +40,6 @@ class moduleAdmin extends abstractModuleAdmin {
 	protected function getToggleCssClass(): string { return 'adminAutoSageFunction'; }
 	protected function getToggleActionName(): string { return 'autosage'; }
 	protected function getToggleJsFile(): string { return 'autosage.js'; }
-	protected function getToggleTemplateName(): string { return 'autoSageTemplate'; }
-
-	protected function getToggleIndicatorHtml(): string {
-		return getAutoSageIndicator();
-	}
 
 	protected function getToggleUrlParams(Post $post): array {
 		return ['post_uid' => $post->getUid()];

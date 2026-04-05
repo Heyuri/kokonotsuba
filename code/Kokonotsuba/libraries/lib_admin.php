@@ -5,7 +5,7 @@ namespace Kokonotsuba\libraries;
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\account\staffAccount;
 use Kokonotsuba\account\accountRepository;
-use Kokonotsuba\log_in\loginSessionHandler as Log_inLoginSessionHandler;
+use Kokonotsuba\log_in\loginSessionHandler;
 use Kokonotsuba\userRole;
 
 //This file contains functions for koko management mode and related features
@@ -51,7 +51,7 @@ function getIdFromSession(): ?int {
 	return $accountUid;
 }
 
-function updateAccountSession(accountRepository $accountRepository, Log_inLoginSessionHandler $loginSessionHandler): void {
+function updateAccountSession(accountRepository $accountRepository, loginSessionHandler $loginSessionHandler): void {
 	// don't bother if the user isn't logged in
 	if(!isLoggedIn()) {
 		return;

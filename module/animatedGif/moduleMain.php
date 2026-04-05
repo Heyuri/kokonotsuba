@@ -102,12 +102,6 @@ class moduleMain extends abstractModuleMain {
 		string &$attachmentUrl, 
 		array &$attachment
 	): void {
-
-		// Only process attachments that are marked as animated
-		if (!$attachment['isAnimated']) {
-			return;
-		}
-
 		// stop module early if its not a gif		
 		if ($attachment['fileExtension'] !== 'gif') {
 			return;
@@ -135,10 +129,16 @@ class moduleMain extends abstractModuleMain {
 		if ($fileSize >= $maxGifFileSize * 1024) {
 			return;
 		}
-		// replace image src url in order to directly display the gif
-		$attachmentImage = preg_replace('/<img src=".*"/U', '<img src="' . $attachmentUrl . '"', $attachmentImage);
+
+		$isAnimated = (bool) $attachment['isAnimated'];
+
+		// replace image src url in order to directly display the gif (only when animated)
+		if ($isAnimated) {
+			$attachmentImage = preg_replace('/<img src=".*"/U', '<img src="' . $attachmentUrl . '"', $attachmentImage);
+		}
 		
-		// append animated gif label to properties
-		$attachmentProperties .= '<span class="animatedGIFLabel imageOptions">[Animated GIF]</span>';
+		// always render animated gif label wrapper, hidden when not active
+		$hiddenClass = $isAnimated ? '' : ' indicatorHidden';
+		$attachmentProperties .= '<span class="indicator indicator-animatedGifLabel animatedGIFLabel imageOptions' . $hiddenClass . '">[Animated GIF]</span>';
 	}
 }

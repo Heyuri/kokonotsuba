@@ -146,15 +146,20 @@ class threadApi {
 	*/
 	private function buildPostsArray(array $posts): array {
 		// loop through posts and remove 'host', which contains the IP address. as well as 'pwd', which contains the post password hash
-		foreach($posts as &$p) {
+		$result = [];
+		foreach($posts as $p) {
+			$arr = $p->toArray();
+
 			// remove host
-			unset($p['host']);
+			unset($arr['host']);
 
 			// remove pwd
-			unset($p['pwd']);
+			unset($arr['pwd']);
+
+			$result[] = $arr;
 		}
 
 		// then return posts
-		return $posts;
+		return $result;
 	}
 }

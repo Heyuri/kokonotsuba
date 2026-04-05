@@ -6,7 +6,6 @@ namespace Kokonotsuba\Modules\sticky;
 
 require_once __DIR__ . '/stickyLibrary.php';
 
-use Kokonotsuba\post\FlagHelper;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\OpeningPostListenerTrait;
@@ -22,19 +21,16 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->listenOpeningPost('onRenderOpeningPost');
+		$this->listenOpeningPost('onRenderOpeningPost', 30);
 	}
 
 	public function onRenderOpeningPost(array &$templateValues, Post $post): void {
-		// indicates whether the thread is sticky'd or not 
 		$stickyFlag = $post->getFlags();
-
-		// get the sticky indicator
 		$stickyIndicator = getStickyIndicator($this->getConfig('STATIC_URL'));
+		$isActive = $stickyFlag->value('sticky');
+		$hiddenClass = $isActive ? '' : ' indicatorHidden';
 
-		if ($stickyFlag->value('sticky')) {
-			$templateValues['{$POSTINFO_EXTRA}'] .= $stickyIndicator;
-		}
+		$templateValues['{$POSTINFO_EXTRA}'] .= '<span class="indicator indicator-sticky' . $hiddenClass . '">' . $stickyIndicator . '</span>';
 	}
 
 }

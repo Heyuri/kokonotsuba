@@ -385,7 +385,7 @@ class boardService {
 		$templateFileName = $board->getConfigValue($templateKey, 'TEMPLATE_FILE');
 
 		if ($templateFileName !== null) {
-			$templateFile = getBackendDir() . 'templates/' . $templateFileName;
+			$templateFile = getBackendDir() . 'templates/' . str_replace('.tpl', '', $templateFileName);
 		}
 
 		if ($templateFile === null) {

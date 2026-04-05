@@ -45,9 +45,6 @@ class moduleMain extends abstractModuleMain {
 	 * Render the attachment with EXIF and reverse search links.
 	 */
 	public function onRenderAttachment(string &$attachmentProperties, string &$attachmentImage, string &$attachmentUrl, array &$attachment): void {
-		// Prepare HTML to append to the attachment properies
-		$sauceHtml = '';
-
 		$fileExtension = strtolower($attachment['fileExtension']);
 		$isSwf = $fileExtension === 'swf';
 		static $nonReverseSearchableExtensions = ['swf', 'mp4', 'webm'];
@@ -60,7 +57,6 @@ class moduleMain extends abstractModuleMain {
 
 		// EXIF link
 		if ($this->enable_exif) {
-			// exif parameters
 			$queryParameters = http_build_query(
 				[
 					'postUid' => $attachment['postUid'],
@@ -68,54 +64,51 @@ class moduleMain extends abstractModuleMain {
 				]
 			);
 
-			// append to html
-			$sauceHtml .= '<span class="exifLink imageOptions">[<a href="' . $this->myPage . $queryParameters . '">EXIF</a>]</span> ';
+			$attachmentProperties .= '<span class="indicator indicator-exif exifLink imageOptions">[<a href="' . $this->myPage . $queryParameters . '">EXIF</a>]</span> ';
 		}
 
 		// ImgOps reverse search
-		if ($this->enable_imgops && !$isNotAReverseSearchableImage) {
-			$sauceHtml .= '<span class="imgopsLink imageOptions">[<a href="http://imgops.com/' . getAttachmentUrl($attachment) . '" target="_blank">ImgOps</a>]</span> ';
+		if ($this->enable_imgops) {
+			$hiddenClass = $isNotAReverseSearchableImage ? ' indicatorHidden' : '';
+			$attachmentProperties .= '<span class="indicator indicator-imgops imgopsLink imageOptions' . $hiddenClass . '">[<a href="http://imgops.com/' . getAttachmentUrl($attachment) . '" target="_blank">ImgOps</a>]</span> ';
 		}
 
 		// IQDB search
-		if ($this->enable_iqdb && !$isNotAReverseSearchableImage) {
-			$sauceHtml .= '<span class="iqdbLink imageOptions">[<a href="http://iqdb.org/?url=' . getAttachmentUrl($attachment) . '" target="_blank">iqdb</a>]</span> ';
+		if ($this->enable_iqdb) {
+			$hiddenClass = $isNotAReverseSearchableImage ? ' indicatorHidden' : '';
+			$attachmentProperties .= '<span class="indicator indicator-iqdb iqdbLink imageOptions' . $hiddenClass . '">[<a href="http://iqdb.org/?url=' . getAttachmentUrl($attachment) . '" target="_blank">iqdb</a>]</span> ';
 		}
 
 		// SWFChan archive
-		if ($this->enable_swfchan && $isSwf) {
-			// construct attachment object
-			$constructedAttachment = constructAttachment(
-				$attachment['fileId'],
-				$attachment['postUid'],
-				$attachment['boardUID'],
-				$attachment['fileName'],
-				$attachment['storedFileName'],
-				$attachment['fileExtension'],
-				$attachment['fileMd5'],
-				$attachment['fileWidth'],
-				$attachment['fileHeight'],
-				$attachment['thumbWidth'],
-				$attachment['thumbHeight'],
-				$attachment['fileSize'],
-				$attachment['mimeType'],
-				(bool)$attachment['isHidden'],
-				$attachment['isDeleted'],
-				$attachment['timestampAdded']
-			);
+		if ($this->enable_swfchan) {
+			if ($isSwf) {
+				$constructedAttachment = constructAttachment(
+					$attachment['fileId'],
+					$attachment['postUid'],
+					$attachment['boardUID'],
+					$attachment['fileName'],
+					$attachment['storedFileName'],
+					$attachment['fileExtension'],
+					$attachment['fileMd5'],
+					$attachment['fileWidth'],
+					$attachment['fileHeight'],
+					$attachment['thumbWidth'],
+					$attachment['thumbHeight'],
+					$attachment['fileSize'],
+					$attachment['mimeType'],
+					(bool)$attachment['isHidden'],
+					$attachment['isDeleted'],
+					$attachment['timestampAdded']
+				);
 
-			// get the attachment path
-			$attachmentPath = $constructedAttachment->getPath();
+				$attachmentPath = $constructedAttachment->getPath();
+				$rawByteFileSize = filesize($attachmentPath);
 
-			// read disk for file size
-			$rawByteFileSize = filesize($attachmentPath);
-
-			// append html
-			$sauceHtml .= '<span class="swfchanLink imageOptions">[<a href="http://eye.swfchan.com/search/?q=>' . $rawByteFileSize . '" target="_blank">swfchan</a>]</span> ';
+				$attachmentProperties .= '<span class="indicator indicator-swfchan swfchanLink imageOptions">[<a href="http://eye.swfchan.com/search/?q=>' . $rawByteFileSize . '" target="_blank">swfchan</a>]</span> ';
+			} else {
+				$attachmentProperties .= '<span class="indicator indicator-swfchan swfchanLink imageOptions indicatorHidden">[<a href="#">swfchan</a>]</span> ';
+			}
 		}
-
-		// Append link to the attachment properties
-		$attachmentProperties .= $sauceHtml;
 	}
 
 	/**

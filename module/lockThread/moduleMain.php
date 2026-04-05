@@ -30,7 +30,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		$this->listenViewedThread('overRidePostForm');
-		$this->listenOpeningPost('renderLockIcon');
+		$this->listenOpeningPost('renderLockIcon', 20);
 		$this->listenRegistBegin('onRegistBegin');
 	}
 
@@ -80,18 +80,12 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function renderLockIcon(array &$templateValues, Post $post): void {
-		// post OP status
 		$status = $post->getFlags();
-		
-		// get static url
-		$staticUrl = $this->getConfig('STATIC_URL');
+		$lockIconHtml = getLockIndicator($this->getConfig('STATIC_URL'));
+		$isActive = $status->value('stop');
+		$hiddenClass = $isActive ? '' : ' indicatorHidden';
 
-		// get lock icon html
-		$lockIconHtml = getLockIndicator($staticUrl);
-
-		if ($status->value('stop')) {
-			$templateValues['{$POSTINFO_EXTRA}'] .= $lockIconHtml;
-		}
+		$templateValues['{$POSTINFO_EXTRA}'] .= '<span class="indicator indicator-lock' . $hiddenClass . '">' . $lockIconHtml . '</span>';
 	}
 
 }

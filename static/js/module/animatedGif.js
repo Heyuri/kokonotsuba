@@ -52,20 +52,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 const newAnchor = oldGifButtonContainer.querySelector('a');
                 newAnchor.addEventListener('click', handleGifToggle);
 
-                // Add or remove the "[Animated GIF]" label
-                if (data.active) {
-                    // Add the label if it's not already there
-                    if (!filesizeDiv.querySelector('.animatedGIFLabel')) {
-                        const label = document.createElement('span');
-                        label.className = 'animatedGIFLabel imageOptions';
-                        label.textContent = '[Animated GIF]';
-                        filesizeDiv.appendChild(label);
-                    }
-                } else {
-                    // Remove the label if it exists
-                    const label = filesizeDiv.querySelector('.animatedGIFLabel');
-                    if (label) {
-                        filesizeDiv.removeChild(label);
+                // Toggle the "[Animated GIF]" label visibility
+                const labelIndicator = filesizeDiv.querySelector('.indicator-animatedGifLabel');
+                if (labelIndicator) {
+                    if (data.active) {
+                        labelIndicator.classList.remove('indicatorHidden');
+                    } else {
+                        labelIndicator.classList.add('indicatorHidden');
                     }
                 }
             })

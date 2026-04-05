@@ -25,15 +25,15 @@ class moduleMain extends abstractModuleMain {
  	public function initialize(): void {
 		$this->listenRegistBeforeCommit('onBeforeCommit');
 
-		$this->listenOpeningPost('renderAutosageIcon');
+		$this->listenOpeningPost('renderAutosageIcon', 10);
 	}
 
 	public function renderAutosageIcon(array &$templateValues, Post $post) {
 		$status = $post->getFlags();
-		
-		if($status->value('as')) {
-			$templateValues['{$POSTINFO_EXTRA}'] .= getAutoSageIndicator();
-		}
+		$isActive = $status->value('as');
+		$hiddenClass = $isActive ? '' : ' indicatorHidden';
+
+		$templateValues['{$POSTINFO_EXTRA}'] .= '<span class="indicator indicator-autosage' . $hiddenClass . '">' . getAutoSageIndicator() . '</span>';
 	}
 
 	public function onBeforeCommit(&$name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $files, $isReply, $status, $thread) {

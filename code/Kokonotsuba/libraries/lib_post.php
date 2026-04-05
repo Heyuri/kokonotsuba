@@ -10,6 +10,7 @@ use Kokonotsuba\file\file;
 use Kokonotsuba\file\fileFromUpload;
 use Kokonotsuba\file\thumbnail;
 use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
@@ -302,14 +303,18 @@ function generatePostHash(
  * Validates post input for existence and correct format.
  * Throws BoardException if validation fails.
  * 
- * @param null|false|int|array $postInput The input to validate (e.g., post UID).
+ * @param null|false|int|Post $postInput The input to validate (e.g., post UID).
  * @param bool $isUid Indicates if the input is expected to be a UID (numeric).
  *
  * @return void
  */
-function validatePostInput(null|false|int|array $postInput, bool $isUid = true, int $statusCode = 400): void {
+function validatePostInput(null|false|int|Post $postInput, bool $isUid = true, int $statusCode = 400): void {
 	// Validate post input
-	if (empty($postInput)) {
+	if (
+		$postInput === null 
+		|| ($postInput instanceof Post === false && $isUid === false) 
+		|| $postInput === false
+	) {
 		throw new BoardException(_T('post_not_found'), $statusCode);
 	}
 

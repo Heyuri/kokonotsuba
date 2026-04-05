@@ -401,7 +401,7 @@ class managePostsRoute {
 
 		// Extract attachments and post numbers for logging
 		$attachments = getAttachmentsFromPosts($postsData);
-		$postNumbers = array_map(fn($p) => $p['no'], $postsData);
+		$postNumbers = array_map(fn($p) => $p->getNumber(), $postsData);
 		$checkboxDeletionActionLogStr = is_array($postNumbers) ? implode(', No. ',$postNumbers) : $postNumbers;
 
 		// Delete only files or entire posts based on user selection

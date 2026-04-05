@@ -39,11 +39,6 @@ class moduleAdmin extends abstractModuleAdmin {
 	protected function getToggleCssClass(): string { return 'adminLockFunction'; }
 	protected function getToggleActionName(): string { return 'lock'; }
 	protected function getToggleJsFile(): string { return 'lock.js'; }
-	protected function getToggleTemplateName(): string { return 'lockIconTemplate'; }
-
-	protected function getToggleIndicatorHtml(): string {
-		return getLockIndicator($this->getConfig('STATIC_URL'));
-	}
 
 	protected function getToggleUrlParams(Post $post): array {
 		return ['post_uid' => $post->getUid()];

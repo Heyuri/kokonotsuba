@@ -2,16 +2,13 @@
 
 namespace Kokonotsuba\thread;
 
-use ArrayAccess;
 use Kokonotsuba\post\Post;
 
 /**
  * Represents a thread with its associated posts and preview metadata.
  * Combines thread metadata (Thread) with post data for rendering.
- * 
- * Implements ArrayAccess for backward compatibility with legacy array access patterns.
  */
-class ThreadData implements ArrayAccess {
+class ThreadData {
 	private array $postUids;
 
 	public function __construct(
@@ -61,31 +58,5 @@ class ThreadData implements ArrayAccess {
 	/** Get the thread UID. */
 	public function getThreadUid(): string {
 		return $this->thread->getUid();
-	}
-
-	// --- ArrayAccess (backward compatibility) ---
-
-	public function offsetExists(mixed $offset): bool {
-		return in_array($offset, ['thread', 'posts', 'post_uids', 'hidden_reply_count', 'number_of_posts', 'thread_uid'], true);
-	}
-
-	public function offsetGet(mixed $offset): mixed {
-		return match ($offset) {
-			'thread' => $this->thread,
-			'posts' => $this->posts,
-			'post_uids' => $this->postUids,
-			'hidden_reply_count' => $this->hiddenReplyCount,
-			'number_of_posts' => $this->numberOfPosts,
-			'thread_uid' => $this->thread->getUid(),
-			default => null,
-		};
-	}
-
-	public function offsetSet(mixed $offset, mixed $value): void {
-		// immutable
-	}
-
-	public function offsetUnset(mixed $offset): void {
-		// immutable
 	}
 }

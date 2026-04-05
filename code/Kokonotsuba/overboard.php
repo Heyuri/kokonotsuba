@@ -12,6 +12,7 @@ use Kokonotsuba\renderers\threadRenderer;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\policy\postRenderingPolicy;
 use Kokonotsuba\post\helper\postDateFormatter;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\quote_link\quoteLinkService;
 use Kokonotsuba\request\request;
@@ -192,8 +193,13 @@ class overboard {
 		
 		$postsByBoardAndThread = array();
 		foreach ($allPosts as $post) {
+			// sanity check - skip if not a Post instance
+			if($post instanceof Post === false) {
+				continue;
+			}
+
 			$boardUID = $post->getBoardUid();
-			$threadID = ($post->getThreadUid() == 0) ? $post->getNo() : $post->getThreadUid();
+			$threadID = ($post->getThreadUid() == 0) ? $post->getNumber() : $post->getThreadUid();
 			$postsByBoardAndThread[$boardUID][$threadID][] = $post;
 		}
 		return $postsByBoardAndThread;

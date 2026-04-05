@@ -332,7 +332,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		if ($makePublic) {
 			if ($post) {
 				
-				$post['com'] .= $publicBanMessageHTML;
+				$post->setComment($post->getComment() . $publicBanMessageHTML);
 				
 				// parameters to update in the query
 				$updatePostParameters = [

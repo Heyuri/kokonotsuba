@@ -229,13 +229,15 @@ function getAttachmentsFromPosts(array $posts): array {
 	$all = [];
 
 	foreach ($posts as $post) {
-		// Ensure $post is array-like
-		if (!is_array($post) && !($post instanceof \ArrayAccess)) {
+		// Get attachments from Post object or raw array
+		if ($post instanceof \Kokonotsuba\post\Post) {
+			$attachments = $post->getAttachments();
+		} elseif (is_array($post)) {
+			$attachments = $post['attachments'] ?? null;
+		} else {
 			continue;
 		}
 
-		// Ensure attachments key exists and is an array
-		$attachments = $post['attachments'] ?? null;
 		if (!is_array($attachments)) {
 			continue;
 		}

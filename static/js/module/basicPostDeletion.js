@@ -71,8 +71,8 @@
 		if (!attachmentEl) return;
 
 		const state = prepareAttachmentDeletion(attachmentEl, postEl, [
-			'.adminDeleteFileFunction, #adminDeleteFileFunction',
-			'.imgopsLink'
+			'.indicator-deleteFile',
+			'.indicator-imgops'
 		]);
 
 		sendModuleAction(dfAnchor.href, {

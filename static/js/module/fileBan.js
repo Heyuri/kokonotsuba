@@ -15,10 +15,10 @@
 			if (!attachmentEl) return;
 
 			var state = prepareAttachmentDeletion(attachmentEl, postEl, [
-				'.adminBanFileFunction, #adminBanFileFunction',
-				'.adminBanDeleteFileFunction, #adminBanDeleteFileFunction',
-				'.adminDeleteFileFunction, #adminDeleteFileFunction',
-				'.imgopsLink'
+				'.indicator-banFile',
+				'.indicator-banDeleteFile',
+				'.indicator-deleteFile',
+				'.indicator-imgops'
 			]);
 
 			sendModuleAction(anchor.href, {
@@ -46,11 +46,12 @@
 				successMessage: 'File hash banned.',
 				errorMessage: 'Failed to ban file.',
 				onSuccess: function () {
-					bfControl.classList.add('hidden');
+					var banFileIndicator = bfControl.closest('.indicator-banFile');
+					if (banFileIndicator) banFileIndicator.classList.add('indicatorHidden');
 					var attachmentEl = bfControl.closest('.attachmentContainer') || bfControl.closest('.file');
 					if (attachmentEl) {
-						var bd = attachmentEl.querySelector('.adminBanDeleteFileFunction, #adminBanDeleteFileFunction');
-						if (bd) bd.classList.add('hidden');
+						var bdIndicator = attachmentEl.querySelector('.indicator-banDeleteFile');
+						if (bdIndicator) bdIndicator.classList.add('indicatorHidden');
 					}
 				}
 			});

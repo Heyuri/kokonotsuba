@@ -3,21 +3,19 @@
 namespace Kokonotsuba\Modules\postApi;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\traits\listeners\PostMenuListListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\FormFuncsListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\PMCLibrary;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\renderers\postRenderer;
 
 use function Kokonotsuba\libraries\_T;
-use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\renderCachedJsonPage;
-use function Puchiko\json\renderJsonPage;
 use function Puchiko\json\renderJsonErrorPage;
 
 class moduleMain extends abstractModuleMain {
-	use PostMenuListListenerTrait;
+	use FormFuncsListenerTrait;
 	use ModuleHeaderListenerTrait;
 
 	private const CACHE_DIR_NAME = 'post_api_cache';
@@ -39,7 +37,7 @@ class moduleMain extends abstractModuleMain {
 
 		$this->registerTranslations();
 
-		$this->listenPostMenuList('onRenderPostMenuList');
+		$this->listenFormFuncs('onRenderFormFuncs');
 		$this->listenModuleHeader('onGenerateModuleHeader');
 	}
 
@@ -57,10 +55,10 @@ class moduleMain extends abstractModuleMain {
 		]);
 	}
 
-	/** Inject the "Post API" link into the rules list below the post form. */
-	private function onRenderPostMenuList(string &$postMenuListHtml): void {
-		$url = $this->getModulePageURL();
-		$postMenuListHtml .= '<li><a class="postformOption" href="' . $url . '">' . _T('post_api_link') . '</a></li>';
+	/** Inject the "Post API" link into the formfuncs div. */
+	private function onRenderFormFuncs(string &$formFuncsHtml): void {
+		$url = $this->getModulePageURL(['pageName' => 'info']);
+		$formFuncsHtml .= ' | <a class="postformOption" href="' . $url . '">' . _T('post_api_link') . '</a>';
 	}
 
 	/** Inject the API base URL meta tag into the page header. */
@@ -72,20 +70,82 @@ class moduleMain extends abstractModuleMain {
 		$moduleHeader .= '<meta name="postApiFetchingText" content="' . $fetchingText . '">';
 	}
 
-    private function generateTripcode(?string $tripcode, ?string $secureTripcode): string {
-        if ($secureTripcode) {
-            return  _T('cap_char') . $secureTripcode;
-        } elseif ($tripcode) {
-            return _T('trip_pre') . $tripcode;
-        } else {
-            return '';
-        }
+	private function generateTripcode(?string $tripcode, ?string $secureTripcode): string {
+		if ($secureTripcode) {
+			return _T('cap_char') . $secureTripcode;
+		} elseif ($tripcode) {
+			return _T('trip_pre') . $tripcode;
+		} else {
+			return '';
+		}
+	}
 
-
-    }
-
-	/** Module page — serves the JSON API with server-rendered post HTML. */
+	/** Module page — routes between info page and JSON API endpoints. */
 	public function ModulePage(): void {
+		$pageName = $this->moduleContext->request->getParameter('pageName', 'GET', '');
+
+		if ($pageName === 'info') {
+			$this->renderInfoPage();
+			return;
+		}
+
+		if ($pageName === 'thread') {
+			$this->handleThreadPostsRequest();
+			return;
+		}
+
+		// Default: single post API
+		$this->handleSinglePostRequest();
+	}
+
+	/** Render the API documentation info page. */
+	private function renderInfoPage(): void {
+		$board = $this->moduleContext->board;
+		$baseApiUrl = htmlspecialchars($this->getModulePageURL([], false));
+
+		$this->moduleContext->adminPageRenderer->setTemplate('admin');
+		$infoHtml = $this->moduleContext->adminPageRenderer->ParseBlock('POST_API_INFO', [
+			'{$API_BASE_URL}' => $baseApiUrl,
+		]);
+
+		$html = $board->getBoardHead('Post API');
+		$html .= $infoHtml;
+		$html .= $board->getBoardFooter(false);
+
+		echo $html;
+	}
+
+	/** Handle request for all posts from a thread. */
+	private function handleThreadPostsRequest(): void {
+		$threadUid = $this->moduleContext->request->getParameter('thread_uid', 'GET', '');
+
+		if (empty($threadUid)) {
+			renderJsonErrorPage('Missing thread_uid parameter', 400);
+		}
+
+		$posts = $this->moduleContext->threadRepository->getAllPostsFromThread($threadUid, false);
+
+		if (!$posts) {
+			renderJsonErrorPage('Thread not found', 404);
+		}
+
+		$postsData = [];
+		foreach ($posts as $post) {
+			$html = $this->renderPostHtml($post);
+			$postsData[] = $this->buildPostData($post, $html);
+		}
+
+		$data = [
+			'thread_uid' => $threadUid,
+			'post_count' => count($postsData),
+			'posts' => $postsData,
+		];
+
+		renderCachedJsonPage($data);
+	}
+
+	/** Handle request for a single post. */
+	private function handleSinglePostRequest(): void {
 		$postUid = (int) $this->moduleContext->request->getParameter('post_uid', 'GET', '');
 
 		if ($postUid <= 0) {
@@ -99,17 +159,25 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		$html = $this->renderPostHtml($post);
-		$data = [
-            'timestamp' => $post->getRoot(),
-            'post_uid' => $post->getUid(),
-            'name' => $post->getName(),
-            'tripcode' => $this->generateTripcode($post->getTripcode(), $post->getSecureTripcode()),
-            'mod_capcode' => $post->getCapcode(),
-            'email' => $post->getEmail(),
-            'html' => $html
-            ];
+		$data = $this->buildPostData($post, $html);
 
 		renderCachedJsonPage($data);
+	}
+
+	/** Build the JSON-safe data array for a post. */
+	private function buildPostData(Post $post, string $html): array {
+		return [
+			'timestamp' => $post->getRoot(),
+			'post_uid' => $post->getUid(),
+			'name' => $post->getName(),
+			'tripcode' => $post->getTripcode(),
+			'secure_tripcode' => $post->getSecureTripcode(),
+			'capcode' => $post->getCapcode(),
+			'email' => $post->getEmail(),
+			'subject' => $post->getSubject(),
+			'comment' => $post->getComment(),
+			'html' => $html,
+		];
 	}
 
 	/** Render a post to full HTML using the postRenderer pipeline. */
@@ -153,10 +221,7 @@ class moduleMain extends abstractModuleMain {
 			[$post],         // threadPosts
 			false,           // adminMode
 			'',              // postFormExtra
-			'',              // warnBeKill
-			'',              // warnOld
 			'',              // warnHidePost
-			'',              // warnEndReply
 			0,               // replyCount
 			false,           // threadMode
 			$boardUrl,       // crossLink

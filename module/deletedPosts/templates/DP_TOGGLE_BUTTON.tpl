@@ -1,0 +1,1 @@
+	<div class="toggleLink">[<a title="Toggle the visibility of deleted posts on the live frontend" href="{$URL}&toggleVisibility=1"><!--&IF($SHOW_DELETED_POSTS,'Hide','Show')--> deleted posts on live frontend</a>]</div>

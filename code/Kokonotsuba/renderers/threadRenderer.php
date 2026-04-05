@@ -138,7 +138,7 @@ class threadRenderer {
 	): string {
 		$isReply = $i > 0;
 
-		$postFormExtra = $warnBeKill = $warnOld = $warnEndReply = $warnHidePost = '';
+		$postFormExtra = $warnHidePost = '';
 
 		// Hidden reply notice
 		if (!$isReply && $hiddenReply) {
@@ -157,10 +157,7 @@ class threadRenderer {
 			$threadPosts,
 			$adminMode,
 			$postFormExtra,
-			$warnBeKill,
-			$warnOld,
 			$warnHidePost,
-			$warnEndReply,
 			$replyCount,
 			$threadMode,
 			$crossLink

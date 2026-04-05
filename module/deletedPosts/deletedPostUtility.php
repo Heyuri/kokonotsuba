@@ -54,7 +54,7 @@ class deletedPostUtility {
 		}
 
 		// get the deleted post id
-		$deletedPostId = $post['deleted_post_id'];
+		$deletedPostId = $post->getDeletedPostId();
 
 		// get url
 		$modulePageUrl = $this->generateViewDeletedPostUrl($deletedPostId);

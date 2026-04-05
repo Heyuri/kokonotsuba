@@ -44,7 +44,7 @@ class moduleMain extends abstractModuleMain {
 		$this->myPage = $this->getModulePageURL([], false);
 
 		// init the module template engine
-		$this->moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.SEARCH_TEMPLATE', 'kokoimg.tpl');
+		$this->moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.SEARCH_TEMPLATE', 'kokoimg');
 
 		$this->listenTopLinks('onRenderTopLinks');
 	}
@@ -419,9 +419,6 @@ class moduleMain extends abstractModuleMain {
 					false,
 					[$hitPostData],
 					$adminMode,
-					'',
-					'',
-					'',
 					'',
 					'',
 					0,

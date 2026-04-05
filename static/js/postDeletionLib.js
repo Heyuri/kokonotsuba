@@ -91,7 +91,7 @@ function prepareAttachmentDeletion(attachmentEl, postEl, buttonSelectors) {
 	for (var i = 0; i < buttonSelectors.length; i++) {
 		var btn = attachmentEl.querySelector(buttonSelectors[i]);
 		if (btn) {
-			btn.classList.add('hidden');
+			btn.classList.add('indicatorHidden');
 			hiddenControls.push(btn);
 		}
 	}
@@ -102,7 +102,7 @@ function prepareAttachmentDeletion(attachmentEl, postEl, buttonSelectors) {
 		revertUI: function () {
 			attachmentEl.classList.remove('deletedFile');
 			for (var j = 0; j < hiddenControls.length; j++) {
-				hiddenControls[j].classList.remove('hidden');
+				hiddenControls[j].classList.remove('indicatorHidden');
 			}
 			if (warningResult && warningResult.warn && warningResult.warn.parentNode) {
 				warningResult.warn.parentNode.removeChild(warningResult.warn);

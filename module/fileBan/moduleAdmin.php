@@ -17,6 +17,7 @@ use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\getPageOfThread;
 use function Kokonotsuba\libraries\validatePostInput;
+use Kokonotsuba\post\Post;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 use function Kokonotsuba\Modules\fileBan\getFileBanService;
@@ -54,37 +55,43 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
 		$md5 = $attachment['fileMd5'] ?? '';
-		if (empty($md5)) {
-			return;
+		$isBanned = false;
+
+		if (!empty($md5)) {
+			$banned = $this->fileBanService->findBannedHashes([$md5]);
+			$isBanned = !empty($banned);
 		}
 
-		// Don't show ban buttons if the hash is already banned
-		$banned = $this->fileBanService->findBannedHashes([$md5]);
-		if (!empty($banned)) {
-			return;
-		}
+		$hasAttachment = !empty($attachment) && !empty($md5);
+		$canDelete = $this->canRenderDeleteButton($attachment);
 
-		// BF (ban only) — show on both live and already-deleted files
-		if (!empty($attachment)) {
+		// BF (ban only)
+		$bfHidden = (!$hasAttachment || $isBanned) ? ' indicatorHidden' : '';
+		$bfContent = '';
+		if ($hasAttachment && !$isBanned) {
 			$banUrl = $this->getModulePageURL([
 				'action' => 'banOnly',
 				'post_uid' => $attachment['postUid'],
 				'fileId' => $attachment['fileId'],
 			], false, true);
 
-			$attachmentProperties .= ' <span class="adminFunctions adminBanFileFunction attachmentButton">[<a href="' . htmlspecialchars($banUrl) . '" title="' . _T('file_ban_btn_title') . '">BF</a>]</span>';
+			$bfContent = ' <span class="adminFunctions adminBanFileFunction attachmentButton">[<a href="' . htmlspecialchars($banUrl) . '" title="' . _T('file_ban_btn_title') . '">BF</a>]</span>';
 		}
+		$attachmentProperties .= '<span class="indicator indicator-banFile' . $bfHidden . '">' . $bfContent . '</span>';
 
-		// B&D (ban + delete) — only on live, non-deleted files
-		if ($this->canRenderDeleteButton($attachment)) {
+		// B&D (ban + delete)
+		$bdHidden = (!$canDelete || $isBanned) ? ' indicatorHidden' : '';
+		$bdContent = '';
+		if ($canDelete && !$isBanned) {
 			$bdUrl = $this->getModulePageURL([
 				'action' => 'banAndDelete',
 				'post_uid' => $attachment['postUid'],
 				'fileId' => $attachment['fileId'],
 			], false, true);
 
-			$attachmentProperties .= ' <span class="adminFunctions adminBanDeleteFileFunction attachmentButton">[<a href="' . htmlspecialchars($bdUrl) . '" title="' . _T('file_ban_bd_btn_title') . '">B&amp;D</a>]</span>';
+			$bdContent = ' <span class="adminFunctions adminBanDeleteFileFunction attachmentButton">[<a href="' . htmlspecialchars($bdUrl) . '" title="' . _T('file_ban_bd_btn_title') . '">B&amp;D</a>]</span>';
 		}
+		$attachmentProperties .= '<span class="indicator indicator-banDeleteFile' . $bdHidden . '">' . $bdContent . '</span>';
 	}
 
 	private function canRenderDeleteButton(array $attachment): bool {
@@ -146,7 +153,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			throw new BoardException(_T('file_ban_invalid_hash'));
 		}
 
-		$attachment = $post['attachments'][$fileId] ?? false;
+		$attachment = $post->getAttachments()[$fileId] ?? false;
 		if (!$attachment) {
 			throw new BoardException(_T('attachment_not_found'));
 		}
@@ -156,7 +163,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			throw new BoardException(_T('file_ban_invalid_hash'));
 		}
 
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUid());
 		$boardUID = $board->getBoardUID();
 
 		// Ban the hash
@@ -166,7 +173,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$attachment], $this->moduleContext->currentUserId);
 
 		$this->moduleContext->actionLoggerService->logAction(
-			'Banned and deleted file hash: ' . $md5 . ' from post No.' . $post['no'],
+			'Banned and deleted file hash: ' . $md5 . ' from post No.' . $post->getNumber(),
 			$boardUID
 		);
 
@@ -195,7 +202,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			throw new BoardException(_T('file_ban_invalid_hash'));
 		}
 
-		$attachment = $post['attachments'][$fileId] ?? false;
+		$attachment = $post->getAttachments()[$fileId] ?? false;
 		if (!$attachment) {
 			throw new BoardException(_T('attachment_not_found'));
 		}
@@ -205,14 +212,14 @@ class moduleAdmin extends abstractModuleAdmin {
 			throw new BoardException(_T('file_ban_invalid_hash'));
 		}
 
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 		$boardUID = $board->getBoardUID();
 
 		// Ban the hash only — no file deletion
 		$this->fileBanService->addBan($md5, $this->moduleContext->currentUserId);
 
 		$this->moduleContext->actionLoggerService->logAction(
-			'Banned file hash: ' . $md5 . ' from post No.' . $post['no'],
+			'Banned file hash: ' . $md5 . ' from post No.' . $post->getNumber(),
 			$boardUID
 		);
 
@@ -240,11 +247,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $baseUrl . '?' . http_build_query($urlParameters);
 	}
 
-	private function rebuildBoardForPost($board, array $post): void {
-		if ($post['is_op']) {
+	private function rebuildBoardForPost($board, Post $post): void {
+		if ($post->isOp()) {
 			$board->rebuildBoard();
 		} else {
-			$thread_uid = $post['thread_uid'];
+			$thread_uid = $post->getThreadUid();
 			$threads = $this->moduleContext->threadService->getThreadListFromBoard($board);
 			$pageToRebuild = getPageOfThread($thread_uid, $threads, $board->getConfigValue('PAGE_DEF', 15));
 			$pageToRebuild = min($pageToRebuild, $this->getConfig('STATIC_HTML_UNTIL'));

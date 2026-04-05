@@ -193,14 +193,14 @@ function checkall(){
 				continue;
 			}
 
-			$no = $opPost['no'];
-			$sub = $opPost['sub'];
-			$name = $opPost['name'];
-			$email = $opPost['email'];
-			$tripcode = $opPost['tripcode'];
-			$secure_tripcode = $opPost['secure_tripcode'];
-			$capcode = $opPost['capcode'];
-			$now = $opPost['now'];
+			$no = $opPost->getNumber();
+			$sub = $opPost->getSubject();
+			$name = $opPost->getName();
+			$email = $opPost->getEmail();
+			$tripcode = $opPost->getTripcode();
+			$secure_tripcode = $opPost->getSecureTripcode();
+			$capcode = $opPost->getCapcode();
+			$now = $opPost->getNow();
 
 			$nameHtml = generatePostNameHtml(
 				$this->moduleContext->moduleEngine, 

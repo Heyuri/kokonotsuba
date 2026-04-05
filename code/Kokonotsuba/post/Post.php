@@ -2,10 +2,9 @@
 
 namespace Kokonotsuba\post;
 
-use ArrayAccess;
 use JsonSerializable;
 
-class Post implements ArrayAccess, JsonSerializable {
+class Post implements JsonSerializable {
 	private array $data;
 	private array $attachments = [];
 	private array $deletedAttachments = [];
@@ -91,45 +90,14 @@ class Post implements ArrayAccess, JsonSerializable {
 	public function setAttachments(array $attachments): void { $this->attachments = $attachments; }
 	public function setDeletedAttachments(array $deleted): void { $this->deletedAttachments = $deleted; }
 
-	// ArrayAccess (backward compatibility)
-	public function offsetExists(mixed $offset): bool {
-		return match($offset) {
-			'attachments' => true,
-			'deleted_attachments' => true,
-			'staff_notes' => true,
-			'votes' => $this->votes !== null,
-			default => array_key_exists($offset, $this->data),
-		};
+	public function setComment(string $comment): void {
+		$this->data['com'] = $comment;
 	}
 
-	public function offsetGet(mixed $offset): mixed {
-		return match($offset) {
-			'attachments' => $this->attachments,
-			'deleted_attachments' => $this->deletedAttachments,
-			'staff_notes' => $this->staffNotes,
-			'votes' => $this->votes,
-			default => $this->data[$offset] ?? null,
-		};
-	}
-
-	public function offsetSet(mixed $offset, mixed $value): void {
-		match($offset) {
-			'attachments' => $this->attachments = $value,
-			'deleted_attachments' => $this->deletedAttachments = $value,
-			'staff_notes' => $this->staffNotes = $value,
-			'votes' => $this->votes = $value,
-			default => $this->data[$offset] = $value,
-		};
-	}
-
-	public function offsetUnset(mixed $offset): void {
-		match($offset) {
-			'attachments' => $this->attachments = [],
-			'deleted_attachments' => $this->deletedAttachments = [],
-			'staff_notes' => $this->staffNotes = [],
-			'votes' => $this->votes = null,
-			default => (function() use ($offset) { unset($this->data[$offset]); })(),
-		};
+	// Dynamic data field access (for JOINed columns like deleted_post_id)
+	public function getDeletedPostId(): ?int {
+		$val = $this->data['deleted_post_id'] ?? null;
+		return $val !== null ? (int)$val : null;
 	}
 
 	public function toArray(): array {

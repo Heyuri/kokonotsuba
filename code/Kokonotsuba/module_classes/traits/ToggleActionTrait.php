@@ -23,8 +23,6 @@ trait ToggleActionTrait {
 	abstract protected function getToggleCssClass(): string;
 	abstract protected function getToggleActionName(): string;
 	abstract protected function getToggleJsFile(): string;
-	abstract protected function getToggleTemplateName(): string;
-	abstract protected function getToggleIndicatorHtml(): string;
 	abstract protected function getToggleUrlParams(Post $post): array;
 
 	protected function shouldRegisterThreadAdminControls(): bool {
@@ -102,8 +100,6 @@ trait ToggleActionTrait {
 	}
 
 	protected function onToggleModuleHeader(string &$moduleHeader): void {
-		$indicatorHtml = $this->getToggleIndicatorHtml();
-		$templateHtml = $this->generateTemplate($this->getToggleTemplateName(), $indicatorHtml);
-		$this->generateToggleWidget($moduleHeader, $this->getToggleJsFile(), $templateHtml);
+		$this->includeScript($this->getToggleJsFile(), $moduleHeader);
 	}
 }

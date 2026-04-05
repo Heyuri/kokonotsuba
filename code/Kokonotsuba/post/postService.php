@@ -212,7 +212,7 @@ class postService {
 		$replies = [];
 		foreach($threadReplies as $reply) {
 			// get post email
-			$email = $reply['email'];
+			$email = $reply->getEmail();
 
 			// if the email contains sage, then its a sage post
 			$isSage = str_contains($email, 'sage');

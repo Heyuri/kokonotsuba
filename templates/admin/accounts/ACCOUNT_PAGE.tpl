@@ -1,0 +1,3 @@
+	{$VIEW_OWN_ACCOUNT}
+	{$CREATE_ACCOUNT}
+	<!--&IF($ACCOUNT_LIST,'<h3>Staff list</h3>{$ACCOUNT_LIST}','')-->

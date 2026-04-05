@@ -1,20 +1,13 @@
 	// === Generic function to handle toggle actions (sticky, lock, etc.) ===
 	async function handleThreadToggle(ctx, options) {
 		const {
-			templateId,           // e.g. "stickyIconTemplate"
 			actionName,           // e.g. "sticky"
-			iconClass,				// e.g. "stickyIcon"
+			indicatorClass,       // e.g. "indicator-sticky"
 			messageOn,             // e.g. "Thread stickied!"
 			messageOff,            // e.g. "Thread un-stickied!"
 			labelOn,               // e.g. "Unsticky thread"
 			labelOff               // e.g. "Sticky thread"
 		} = options;
-
-		const template = document.getElementById(templateId);
-		if (!template) {
-			console.error(`Template not found: ${templateId}`);
-			return;
-		}
 
 		const post = ctx.post || ctx.menuItem.closest('.post');
 		if (!post) return;
@@ -22,18 +15,14 @@
 		const extra = post.querySelector('.postInfoExtra');
 		if (!extra) return;
 
-		let icon = extra.querySelector(`.${iconClass}`);
-		let iconWasExisting = !!icon;
+		const indicator = extra.querySelector(`.${indicatorClass}`);
+		if (!indicator) return;
 
-		// === Gray out current icon or create temporary one ===
-		if (icon) {
-			icon.style.opacity = "0.5";
-		} else {
-			icon = template.content.firstElementChild.cloneNode(true);
-			icon.style.opacity = "0.5";
-			extra.appendChild(icon);
-			iconWasExisting = false;
-		}
+		const wasHidden = indicator.classList.contains('indicatorHidden');
+
+		// === Show indicator with reduced opacity as loading state ===
+		indicator.classList.remove('indicatorHidden');
+		indicator.style.opacity = "0.5";
 
 		try {
 			const response = await fetch(ctx.url, {
@@ -53,15 +42,13 @@
 				throw new Error("Bad JSON");
 			}
 
-			// === Success: update icon & labels ===
+			// === Success: toggle indicator visibility ===
 			if (json.active) {
-				extra.querySelectorAll(`.${iconClass}`).forEach(el => el.remove());
-				const newIcon = template.content.firstElementChild.cloneNode(true);
-				newIcon.style.opacity = "1";
-				extra.appendChild(newIcon);
+				indicator.classList.remove('indicatorHidden');
 			} else {
-				extra.querySelectorAll(`.${iconClass}`).forEach(el => el.remove());
+				indicator.classList.add('indicatorHidden');
 			}
+			indicator.style.opacity = "";
 
 			const newLabel = json.active ? labelOn : labelOff;
 
@@ -77,11 +64,10 @@
 			console.error(err);
 
 			// === Revert on failure ===
-			if (icon && iconWasExisting) {
-				icon.style.opacity = "1";
-			} else if (icon && !iconWasExisting) {
-				icon.remove();
+			if (wasHidden) {
+				indicator.classList.add('indicatorHidden');
 			}
+			indicator.style.opacity = "";
 
 			showMessage(`${actionName.charAt(0).toUpperCase() + actionName.slice(1)} operation failed.`, false);
 		}

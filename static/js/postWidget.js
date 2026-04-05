@@ -1,76 +1,62 @@
+/**
+ * postWidget.js — Dropdown menu for post actions
+ *
+ * Builds a per-post dropdown from hidden widget refs injected by PHP modules.
+ * Supports action handlers, label providers, menu augmenters, and submenus.
+ *
+ * Depends on: dropdownMenu.js (loaded first)
+ */
 (function () {
+	'use strict';
 
-	// Create a single global dropdown menu
-	const menu = document.createElement('div');
-	menu.className = 'postMenuDropdown';
-	menu.hidden = true;
-	
-	// append menu element to body
-	document.body.appendChild(menu);
-
-	let activeArrow = null; // currently open arrow
+	var dropdown = DropdownMenu.create('postMenuDropdown');
 
 	// registry for javascript-only actions
-	const actionHandlers = new Map();
-	const labelProviders = new Map();
+	var actionHandlers = new Map();
+	var labelProviders = new Map();
+	var menuAugmenters = [];
 
-	// ADD: simple list of augmenters
-	const menuAugmenters = [];
-
-	// expose minimal api for other modules to hook custom actions and labels
+	// expose api for other modules
 	window.postWidget = {
-		registerActionHandler(action, cb) {
-			if (typeof cb === 'function') {
-				actionHandlers.set(action, cb);
-			}
+		registerActionHandler: function (action, cb) {
+			if (typeof cb === 'function') actionHandlers.set(action, cb);
 		},
-		registerLabelProvider(action, cb) {
-			if (typeof cb === 'function') {
-				labelProviders.set(action, cb);
-			}
+		registerLabelProvider: function (action, cb) {
+			if (typeof cb === 'function') labelProviders.set(action, cb);
 		},
-		// ADD: let modules add menu items dynamically (e.g., "View deleted post")
-		registerMenuAugmenter(cb) {
-			if (typeof cb === 'function') {
-				menuAugmenters.push(cb);
-			}
+		registerMenuAugmenter: function (cb) {
+			if (typeof cb === 'function') menuAugmenters.push(cb);
 		}
 	};
 
-	document.addEventListener('click', e => {
-		const arrow = e.target.closest('.menuToggle');
-		const menuItem = e.target.closest('.postMenuDropdown a');
+	// ---- click delegation ----
 
-		// Clicked an arrow
+	document.addEventListener('click', function (e) {
+		// --- toggle arrow ---
+		var arrow = e.target.closest('.postMenu .menuToggle');
 		if (arrow) {
 			e.preventDefault();
 
-			// If clicking the same arrow again, close it
-			if (activeArrow === arrow && !menu.hidden) {
-				closeMenu();
-				return;
-			}
-
-			// Open new menu for this post
-			openMenu(arrow);
+			dropdown.open(arrow, function (menu, subMenus) {
+				buildMenuContent(menu, subMenus, arrow);
+			});
 			return;
 		}
 
-		// Clicked a menu item
+		// --- menu item ---
+		var menuItem = e.target.closest('.postMenuDropdown a');
 		if (menuItem) {
 			e.preventDefault();
 
-			// if this is just a submenu header ("▶ Moderate", etc.), do nothing
-			if (menuItem.dataset && menuItem.dataset.submenuToggle === '1') {
-				return;
-			}
+			// submenu header — do nothing
+			if (menuItem.dataset && menuItem.dataset.submenuToggle === '1') return;
 
-			// if no handler is registered for this action, treat it as a normal link (navigate)
-			const action = menuItem.dataset.action || '';
-			const hasHandler = actionHandlers.has(action);
+			var action = menuItem.dataset.action || '';
+			var hasHandler = actionHandlers.has(action);
 
 			if (!hasHandler) {
-				const url = menuItem.href;
+				// treat as normal link
+				var url = menuItem.href;
 				if (url && url !== '#') {
 					if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) {
 						window.open(url, '_blank');
@@ -78,68 +64,50 @@
 						window.location.assign(url);
 					}
 				}
-				closeMenu();
+				dropdown.close();
 				return;
 			}
 
-			// run the action while activeArrow is still set
 			handleWidgetAction(action, menuItem.href, menuItem);
-
-			// then close the menu (which also clears activeArrow)
-			closeMenu();
+			dropdown.close();
 			return;
-		}
-
-		// Clicked anywhere else -> close menu
-		if (!menu.hidden && !menu.contains(e.target)) {
-			closeMenu();
 		}
 	});
 
-	function openMenu(arrow) {
-		const post = arrow.closest('.post');
-		const postMenu = arrow.closest('.postMenu');
-		const refs = post.querySelectorAll('.widgetRefs a');
+	// ---- menu content builder ----
 
-		// Reset arrow states
-		resetArrows();
+	function buildMenuContent(menu, subMenus, arrow) {
+		var post = arrow.closest('.post');
+		var refs = post.querySelectorAll('.widgetRefs a');
 
-		// Build dropdown
-		menu.innerHTML = '';
+		var rootItems = [];
+		var groups = {};
 
-		// group refs:
-		// - rootItems = items with no data-subMenu (or empty)
-		// - groups = { "Moderate": [items...], ... }
-		const rootItems = [];
-		const groups = {};
-
-		refs.forEach(ref => {
-			const subName = (ref.dataset.submenu || '').trim();
-			const itemData = {
+		refs.forEach(function (ref) {
+			var subName = (ref.dataset.submenu || '').trim();
+			var itemData = {
 				href: ref.href,
 				action: ref.dataset.action,
 				label: ref.dataset.label
 			};
 
 			if (subName) {
-				if (!groups[subName]) {
-					groups[subName] = [];
-				}
+				if (!groups[subName]) groups[subName] = [];
 				groups[subName].push(itemData);
 			} else {
 				rootItems.push(itemData);
 			}
 		});
 
-		// let external modules inject extra items (e.g., "View deleted post")
+		// let external modules inject extra items
 		menuAugmenters.forEach(function (aug) {
 			try {
-				const extra = aug({ post: post, arrow: arrow });
+				var extra = aug({ post: post, arrow: arrow });
 				if (Array.isArray(extra)) {
 					extra.forEach(function (item) {
 						if (!item || (!item.label && !item.action)) return;
-						const subName = (item.subMenu || '').trim();
-						const data = {
+						var subName = (item.subMenu || '').trim();
+						var data = {
 							href: item.href || '#',
 							action: item.action || '',
 							label: item.label || ''
@@ -152,35 +120,30 @@
 						}
 					});
 				}
-			} catch (e) {
-				console.error('menu augmenter error', e);
+			} catch (err) {
+				console.error('menu augmenter error', err);
 			}
 		});
 
-		// helper to build a clickable <a> for an item
+		// helper
 		function buildMenuItem(item) {
-			const a = document.createElement('a');
+			var a = document.createElement('a');
 			a.href = item.href;
 			a.dataset.action = item.action;
 
-			// default label from server / php
-			let label = item.label;
-
-			// allow modules to provide dynamic labels per action/post
-			const lp = labelProviders.get(a.dataset.action);
+			var label = item.label;
+			var lp = labelProviders.get(a.dataset.action);
 			if (lp) {
 				try {
-					const custom = lp({
+					var custom = lp({
 						action: a.dataset.action,
 						url: a.href,
 						arrow: arrow,
 						post: post
 					});
-					if (typeof custom === 'string' && custom.length) {
-						label = custom;
-					}
-				} catch (e) {
-					console.error('label provider error', e);
+					if (typeof custom === 'string' && custom.length) label = custom;
+				} catch (err) {
+					console.error('label provider error', err);
 				}
 			}
 
@@ -188,144 +151,77 @@
 			return a;
 		}
 
-		// add all root-level items first
-		rootItems.forEach(function(item) {
+		// root items
+		rootItems.forEach(function (item) {
 			menu.appendChild(buildMenuItem(item));
 		});
 
-		// now build submenus for each group
+		// submenus
 		Object.keys(groups).forEach(function (groupName) {
-			// wrapper that shows up in the main menu
-			const wrapper = document.createElement('div');
+			var wrapper = document.createElement('div');
 			wrapper.className = 'submenuWrapper';
 
-			// header anchor that the user hovers
-			const headerA = document.createElement('a');
+			var headerA = document.createElement('a');
 			headerA.href = 'javascript:void(0);';
-			// add arrow ▶ after submenu label
-			headerA.textContent = groupName + ' ▶';
+			headerA.textContent = groupName + ' \u25B6';
 			headerA.dataset.submenuToggle = '1';
 			wrapper.appendChild(headerA);
 
-			// actual submenu dropdown
-			const subDiv = document.createElement('div');
-			subDiv.className = 'postMenuDropdown submenu';
+			var subDiv = document.createElement('div');
+			subDiv.className = 'dropdownMenu submenu';
 			subDiv.hidden = true;
 
-			// fill submenu with that group's items
 			groups[groupName].forEach(function (item) {
 				subDiv.appendChild(buildMenuItem(item));
 			});
 
-			// hover logic: keep submenu visible if mouse is over either the wrapper OR the submenu
-			let hideTimeout;
+			// hover logic
+			var hideTimeout;
 
 			function showSubmenu() {
 				clearTimeout(hideTimeout);
-
-				const wrapperRect = wrapper.getBoundingClientRect();
-				const mainMenuRect = menu.getBoundingClientRect();
-
+				var wrapperRect = wrapper.getBoundingClientRect();
+				var mainMenuRect = menu.getBoundingClientRect();
 				subDiv.style.position = 'absolute';
 				subDiv.style.top = (window.scrollY + wrapperRect.top) + 'px';
 				subDiv.style.left = (window.scrollX + mainMenuRect.right + 2) + 'px';
-
 				subDiv.hidden = false;
 			}
 
-			function scheduleHideSubmenu() {
+			function scheduleHide() {
 				clearTimeout(hideTimeout);
-				hideTimeout = setTimeout(function () {
-					subDiv.hidden = true;
-				}, 150);
+				hideTimeout = setTimeout(function () { subDiv.hidden = true; }, 150);
 			}
 
-			wrapper.addEventListener('mouseenter', function () {
-				showSubmenu();
-			});
+			wrapper.addEventListener('mouseenter', showSubmenu);
+			wrapper.addEventListener('mouseleave', scheduleHide);
+			subDiv.addEventListener('mouseenter', showSubmenu);
+			subDiv.addEventListener('mouseleave', scheduleHide);
 
-			wrapper.addEventListener('mouseleave', function () {
-				scheduleHideSubmenu();
-			});
-
-			subDiv.addEventListener('mouseenter', function () {
-				showSubmenu();
-			});
-
-			subDiv.addEventListener('mouseleave', function () {
-				scheduleHideSubmenu();
-			});
-
-			// put the wrapper in the main menu
 			menu.appendChild(wrapper);
-
 			document.body.appendChild(subDiv);
 			subDiv.style.position = 'fixed';
 
-			// remember all submenus so we can hide/remove them later
-			if (!menu._subMenus) menu._subMenus = [];
-			menu._subMenus.push(subDiv);
+			subMenus.push(subDiv);
 		});
-
-		const arrowRect = arrow.getBoundingClientRect();
-
-		menu.style.position = 'absolute';
-		menu.style.top = (window.scrollY + arrowRect.bottom + 2) + 'px';
-
-		menu.hidden = false; // must be visible to measure
-		const menuWidth = menu.offsetWidth;
-
-		let left = window.scrollX + arrowRect.left;
-		const maxLeft = window.scrollX + window.innerWidth - menuWidth - 8;
-
-		left = Math.min(left, maxLeft);
-
-		menu.style.left = left + 'px';
-
-		// Mark active arrow
-		arrow.classList.add('menuOpen');
-		activeArrow = arrow;
 	}
 
-	function closeMenu() {
-		menu.hidden = true;
+	// ---- action handling ----
 
-		// hide any open submenus too
-		if (menu._subMenus && menu._subMenus.length) {
-			menu._subMenus.forEach(function (sm) {
-				if (sm) {
-					sm.hidden = true;
-				}
-			});
-		}
-
-		resetArrows();
-		activeArrow = null;
-	}
-
-	function resetArrows() {
-		document.querySelectorAll('.menuToggle.menuOpen').forEach(btn =>
-			btn.classList.remove('menuOpen')
-		);
-	}
-
-	// Example action handler — adapt for real actions
 	function handleWidgetAction(action, url, menuItem) {
-		// check for a registered javascript-only handler first
-		const handler = actionHandlers.get(action);
+		var handler = actionHandlers.get(action);
 		if (handler) {
-			// pass some useful context to the handler
+			var activeToggle = dropdown.getActiveToggle();
 			handler({
 				action: action,
 				url: url,
 				menuItem: menuItem,
-				arrow: activeArrow,
-				post: activeArrow ? activeArrow.closest('.post') : null
+				arrow: activeToggle,
+				post: activeToggle ? activeToggle.closest('.post') : null
 			});
 			return;
 		}
 
-		// default behavior: navigate to the link (redirect)
 		if (url && url !== '#') {
 			window.location.assign(url);
 		}

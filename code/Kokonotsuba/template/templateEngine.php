@@ -3,61 +3,109 @@
 /*
 Kokonotsuba! Template engine for interacting with templates.
 Derived from pixmicat's PTELibrary
+
+Templates are directory-based: each block is a separate .tpl file.
+Block resolution order: primary dir → additional paths → global fallback.
+Within a directory, root files take precedence over subdirectory files.
 */
 
 namespace Kokonotsuba\template;
 
 class templateEngine {
-	private $tpl_block = [];
-	private $tpl;
-	private $config;
-	private $boardData;
+	private array $tpl_block = [];
+	private string $templateDir;
+	private string $globalDir;
+	private array $additionalPaths = [];
+	private ?array $dirBlockMap = null;
+	private array $config;
+	private array $boardData;
 
-	public function __construct(string $tplname, array $dependencies) {
+	private static array $fileCache = [];
+
+	public function __construct(string $templateDir, array $dependencies) {
 		$this->config = $dependencies['config'] ?? [];
 		$this->boardData = $dependencies['boardData'] ?? [];
-
-		// load the template
-		$this->loadTemplate($tplname);
+		$this->templateDir = $templateDir;
+		$this->globalDir = getBackendDir() . 'templates/global';
 	}
 
-	private function loadTemplate(string $tplname): void {
-		// cache to store template file contents
-		static $tplCache = [];
-
-		// if its cached then load the ecache
-		if (isset($tplCache[$tplname])) {
-			$this->tpl = $tplCache[$tplname];
-		} else {
-			// die if the template file doesn't exist
-			if(!file_exists($tplname)) {
-				die("Template file ($tplname) doesn't exist for {$this->boardData['title']}");
-			}
-
-			$this->tpl = file_get_contents($tplname);
-			$tplCache[$tplname] = $this->tpl;
+	public function addSearchPath(string $path): void {
+		if (!in_array($path, $this->additionalPaths, true)) {
+			$this->additionalPaths[] = $path;
+			$this->dirBlockMap = null;
 		}
+	}
+
+	private function buildBlockMap(): array {
+		$map = [];
+
+		// Index global directory (lowest priority)
+		$this->indexDirectory($this->globalDir, $map);
+
+		// Index additional paths (middle priority, first added = lowest)
+		foreach ($this->additionalPaths as $path) {
+			$this->indexDirectory($path, $map);
+		}
+
+		// Index primary directory (highest priority)
+		$this->indexDirectory($this->templateDir, $map);
+
+		return $map;
+	}
+
+	private function indexDirectory(string $dir, array &$map): void {
+		if (!is_dir($dir)) return;
+
+		// Collect from subdirectories first (lower priority within this dir)
+		foreach (glob($dir . '/*', GLOB_ONLYDIR) as $subdir) {
+			foreach (glob($subdir . '/*.tpl') as $file) {
+				$blockName = basename($file, '.tpl');
+				$map[$blockName] = $file;
+			}
+		}
+
+		// Root files override subdirectory files (higher priority within this dir)
+		foreach (glob($dir . '/*.tpl') as $file) {
+			$blockName = basename($file, '.tpl');
+			$map[$blockName] = $file;
+		}
+	}
+
+	private function getBlockMap(): array {
+		if ($this->dirBlockMap === null) {
+			$this->dirBlockMap = $this->buildBlockMap();
+		}
+		return $this->dirBlockMap;
+	}
+
+	private function readBlockFile(string $path): string {
+		if (!isset(self::$fileCache[$path])) {
+			self::$fileCache[$path] = file_get_contents($path);
+		}
+		return self::$fileCache[$path];
 	}
 
 	private function _readBlock(string $blockName) {
 		if (!isset($this->tpl_block[$blockName])) {
-			if (preg_match('/<!--&'.$blockName.'-->(.*)<!--\/&'.$blockName.'-->/smU', $this->tpl, $matches))
-				$this->tpl_block[$blockName] = $matches[1];
-			else
+			$map = $this->getBlockMap();
+			if (isset($map[$blockName])) {
+				$this->tpl_block[$blockName] = $this->readBlockFile($map[$blockName]);
+			} else {
 				$this->tpl_block[$blockName] = false;
+			}
 		}
 		return $this->tpl_block[$blockName];
 	}
 
 	public function setTemplateFile(string $templateName): void {
-		// generate template path
-		$templatePath = getBackendDir() . 'templates/' . $templateName;
-
 		// clear the block cache
 		$this->tpl_block = [];
-		
-		// load the specified template
-		$this->loadTemplate($templatePath);
+
+		// reset the directory block map
+		$this->dirBlockMap = null;
+
+		// set the new template directory
+		$this->templateDir = getBackendDir() . 'templates/' . $templateName;
 	}
 
 	public function BlockValue($blockName) {

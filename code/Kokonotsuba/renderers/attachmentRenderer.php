@@ -69,6 +69,9 @@ class attachmentRenderer {
 		// Attachment bar (if any)
 		$imageBar = $this->handleFileBar($fileData, $imageURL);
 
+		// save the file info bar before module hooks append buttons to it
+		$fileInfoBar = $imageBar;
+
 		// check if the image exists
 		$imageExists = $this->checkIfAttachmentExists($fileData, $fileAttachment, $isDeleted, $isAttachmentDeleted);
 
@@ -94,10 +97,14 @@ class attachmentRenderer {
 			$this->moduleEngine->dispatch('ModerateAttachment', [&$imageBar, &$imageHtml, &$imageURL, &$fileData]);
 		}
 
+		// extract the buttons that modules appended to the bar
+		$attachmentButtons = substr($imageBar, strlen($fileInfoBar));
+
 		// wrap in attachment container
 		$attachmentHtml = $this->wrapAttachmentContent(
 			$imageHtml, 
-			$imageBar, 
+			$fileInfoBar,
+			$attachmentButtons,
 			$multipleAttachments
 		);
 
@@ -107,7 +114,8 @@ class attachmentRenderer {
 
 	private function wrapAttachmentContent(
 		string $imageHtml, 
-		string $imageBar, 
+		string $imageBar,
+		string $attachmentButtons,
 		bool $multipleAttachments
 	): string {
 		// init attachment html
@@ -124,8 +132,20 @@ class attachmentRenderer {
 		// begin container wrap
 		$attachmentHtml .= '<div class="' . $attachmentClasses . '">';
 
-		// append attachment info html
-		$attachmentHtml .= '<div class="filesize">' . $imageBar . '</div>';
+		// begin file info bar
+		$attachmentHtml .= '<div class="filesize">' . $imageBar;
+
+		// output module buttons (EXIF, ImgOps, DF, BF, etc.)
+		if(!empty($attachmentButtons)) {
+			// noscript: show original buttons when javascript is disabled
+			$attachmentHtml .= '<noscript>' . $attachmentButtons . '</noscript>';
+
+			// hidden data container for the JS attachment widget to read from
+			$attachmentHtml .= '<span class="attachmentWidgetData" hidden>' . $attachmentButtons . '</span>';
+		}
+
+		// close file info bar
+		$attachmentHtml .= '</div>';
 
 		// append main attachment html (image/thumbnail itself)
 		$attachmentHtml .= $imageHtml;

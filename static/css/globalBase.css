@@ -2,6 +2,7 @@
 	display: inline-block;
 }
 
+/* Shared toggle arrow (▶) for all dropdown menus */
 .menuToggle {
 	cursor: pointer;
 	display: inline-block;
@@ -12,11 +13,11 @@
 }
 
 .menuToggle.menuOpen {
-	transform: rotate(90deg); /* ▸ rotates to ▾ */
+	transform: rotate(90deg); /* ▶ rotates to ▼ */
 }
 
-/* The dropdown container */
-.postMenuDropdown {
+/* Shared dropdown menu base */
+.dropdownMenu {
 	position: absolute;
 	background: var(--color-bg-reply);
 	border: 1px solid var(--color-hi-contrast-border);
@@ -26,18 +27,33 @@
 	padding: 2px 0;
 }
 
-/* Individual menu items */
-.postMenuDropdown a {
-	display: block;            /* stack vertically */
+.dropdownMenu a {
+	display: block;
 	padding: 2px 4px;
 	text-decoration: none;
 	color: inherit;
-	white-space: nowrap;       /* prevent text wrapping */
+	white-space: nowrap;
 	cursor: pointer;
 }
 
-.postMenuDropdown a:hover {
+.dropdownMenu a:hover {
 	background: rgba(0, 0, 0, 0.05);
+}
+
+/* Attachment menu toggle — extra spacing in file bar */
+.attachmentMenuToggle {
+	margin-left: 4px;
+	font-size: var(--font-size-x-small);
+}
+
+/* Attachment dropdown — slightly smaller than post menu */
+.attachmentMenuDropdown {
+	min-width: 100px;
+	font-size: var(--font-size-small);
+}
+
+.attachmentMenuDropdown a {
+	padding: 1px 4px;
 }
 
 .managepostsCommentWrapper {
@@ -45,6 +61,10 @@
 }
 
 /************************ Hachi stuff *************************/
+
+.indicatorHidden {
+	display: none;
+}
 
 .detailsbox {
 	background-color: var(--color-bg-main);
@@ -253,5 +273,5 @@
 /************************ Mobile **************************************/
 
 @media screen and (max-width: 650px) {
-	.postMenuDropdown a { line-height: 2 }
+	.dropdownMenu a { line-height: 2 }
 }

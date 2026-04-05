@@ -94,22 +94,15 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
-		// if we can't render the attachment button then don't bother
-		if($this->canRenderAttachmentButton($attachment) === false) {
-			return;
+		$canRender = $this->canRenderAttachmentButton($attachment);
+		$hiddenClass = $canRender ? '' : ' indicatorHidden';
+
+		$buttonHtml = '';
+		if ($canRender) {
+			$buttonHtml = $this->generateDeleteAttachButton($attachment['fileId'], $attachment['postUid']);
 		}
 
-		// get file id
-		$fileId = $attachment['fileId'];		
-
-		// get post uid
-		$postUid = $attachment['postUid'];
-
-		// render Delete Attachment button
-		$deleteAttachButton = $this->generateDeleteAttachButton($fileId, $postUid);
-
-		// append button to below attachment properties
-		$attachmentProperties .= $deleteAttachButton;
+		$attachmentProperties .= '<span class="indicator indicator-deleteFile' . $hiddenClass . '">' . $buttonHtml . '</span>';
 	}
 
 	private function generateDeleteAttachButton(int $fileId, int $postUid): string {
@@ -219,7 +212,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 */
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// can view deleted poss
+		// can view deleted posts
 		$canViewDeleted = $this->moduleContext->postRenderingPolicy->viewDeleted();
 
 		// add requiredForAll js for the live frontend
@@ -252,7 +245,6 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// fetch the post to be deleted
 		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
-
 		// throw error if post not found
 		validatePostInput($post, false);
 

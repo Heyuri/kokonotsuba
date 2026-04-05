@@ -35,10 +35,11 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 	
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
-		if ($this->canAnimateAttachment($attachment)) {
-			// append animate gif button
-			$attachmentProperties .= $this->generateAnimateGifButton($attachment);
-		}
+		$isGif = $this->canAnimateAttachment($attachment);
+		$hiddenClass = $isGif ? '' : ' indicatorHidden';
+
+		$buttonHtml = $isGif ? $this->generateAnimateGifButton($attachment) : '';
+		$attachmentProperties .= '<span class="indicator indicator-animateGif' . $hiddenClass . '">' . $buttonHtml . '</span>';
 	}
 
 	private function canAnimateAttachment(array $attachment): bool {

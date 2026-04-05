@@ -40,13 +40,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	protected function getToggleCssClass(): string { return 'adminStickyFunction'; }
 	protected function getToggleActionName(): string { return 'sticky'; }
 	protected function getToggleJsFile(): string { return 'sticky.js'; }
-	protected function getToggleTemplateName(): string { return 'stickyIconTemplate'; }
 
 	protected function shouldRegisterThreadAdminControls(): bool { return false; }
-
-	protected function getToggleIndicatorHtml(): string {
-		return getStickyIndicator($this->getConfig('STATIC_URL'));
-	}
 
 	protected function getToggleUrlParams(Post $post): array {
 		return ['thread_uid' => $post->getThreadUid()];
@@ -97,7 +92,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	
 		// board uid of the thread
 		$boardUid = $threadData->getBoardUID();
-	
+
 		$this->logAction(
 			'Changed sticky status on post No.' . $post_op_number . ' (' . ($is_sticky ? 'false' : 'true') . ')',
 			$boardUid

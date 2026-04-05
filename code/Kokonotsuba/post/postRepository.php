@@ -102,13 +102,12 @@ class postRepository extends baseRepository {
 	}
 
 	/**
-	 * Fetch posts belonging to the specified boards and threads.
+	 * Fetch posts belonging to the specified boards and threads, with merged attachment rows.
 	 *
 	 * @param array<int, array<int>>  $boardThreadMap Map of boardUID => array of thread/post UIDs.
-	 * @param string $fields         Comma-separated column list to SELECT.
-	 * @return array Array of raw post rows.
+	 * @return array Array of merged post data arrays.
 	 */
-	public function fetchPostsFromBoardsAndThreads(array $boardThreadMap, string $fields = '*'): array {
+	public function fetchPostsFromBoardsAndThreads(array $boardThreadMap): array {
 		if (empty($boardThreadMap)) {
 			return array();
 		}
@@ -128,7 +127,7 @@ class postRepository extends baseRepository {
 			}
 
 			$inClause = pdoPlaceholdersForIn($threadIDs);
-			$conditions[] = "(boardUID = ? AND (post_uid IN $inClause OR thread_uid IN $inClause))";
+			$conditions[] = "(p.boardUID = ? AND (p.post_uid IN $inClause OR p.thread_uid IN $inClause))";
 
 			// First placeholder is boardUID
 			$params[] = $boardUID;
@@ -146,9 +145,14 @@ class postRepository extends baseRepository {
 		}
 
 		$whereClause = implode(' OR ', $conditions);
-		$query = "SELECT {$fields} FROM {$this->table} WHERE {$whereClause}";
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable);
+		$query .= " WHERE {$whereClause}";
 
-		return $this->queryAll($query, $params);
+		$posts = $this->queryAll($query, $params);
+
+		$posts = mergeMultiplePostRows($posts);
+
+		return $posts ?? [];
 	}
 
 	/**

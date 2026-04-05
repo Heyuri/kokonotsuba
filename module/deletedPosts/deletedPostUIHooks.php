@@ -213,7 +213,7 @@ class deletedPostUIHooks {
 		}
 
 		// generate view deleted url
-		$deletedEntryUrl = $this->deletedPostUtility->generateViewDeletedPostUrl($post['deleted_post_id']);
+		$deletedEntryUrl = $this->deletedPostUtility->generateViewDeletedPostUrl($post->getDeletedPostId());
 
 		// build the widget entry
 		$viewDeletedPostWidget = $this->moduleAdmin->buildWidgetEntry(

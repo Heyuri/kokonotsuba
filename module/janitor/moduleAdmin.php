@@ -158,7 +158,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		if (!$reason) $reason = 'No reason given.';
 
 		if (!empty($this->moduleContext->request->getParameter('public', 'POST'))) {
-			$post['com'] .= $this->getPublicWarnMessageHtml($reason); 
+			$post->setComment($post->getComment() . $this->getPublicWarnMessageHtml($reason));
 			
 			// parameters to update in the query
 			$updatePostParameters = [

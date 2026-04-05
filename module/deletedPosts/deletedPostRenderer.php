@@ -449,7 +449,7 @@ class deletedPostRenderer {
 			$threadNumber = $deletedEntry->getOpNumber();
 
 			// html of the post / thread
-			$postHtml = $postRenderer->render($deletedEntry, $templateValues, $threadNumber, false, [$deletedEntry], true, '', '', '', '', '', 0, false, $boardUrl, $renderAsOp);
+			$postHtml = $postRenderer->render($deletedEntry, $templateValues, $threadNumber, false, [$deletedEntry], true, '', '', 0, false, $boardUrl, $renderAsOp);
 		}
 		// if its a thread (and we're showing all) then render it along with its replies
 		elseif ($deletedEntry->isOp() && $showAll) {

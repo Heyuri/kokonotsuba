@@ -23,7 +23,7 @@ use Kokonotsuba\template\templateEngine;
 $templateEngine = $board->getBoardTemplateEngine();
 $moduleEngine = $board->getModuleEngine();
 
-$adminTemplateEngine = new templateEngine(getBackendDir() . 'templates/admin.tpl', [
+$adminTemplateEngine = new templateEngine(getBackendDir() . 'templates/admin', [
 	'config'	=> $config,
 	'boardData'	=> [
 		'title'		=> $board->getBoardTitle(),
