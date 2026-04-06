@@ -33,4 +33,5 @@ return [
 	'NOTE_TABLE' => 'notes', // for storing notes left by staff
 	'BLOTTER_TABLE' => 'blotter', // for storing blotter entries
 	'FILE_BAN_TABLE' => 'file_bans', // for storing banned file MD5 hashes
+	'PERCEPTUAL_BAN_TABLE' => 'perceptual_bans', // for storing perceptually banned file hashes
 ];

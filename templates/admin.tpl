@@ -1370,3 +1370,58 @@
 		','{$FILE_BAN_NO_ENTRIES}')-->
 	</form>
 <!--/&FILE_BAN_INDEX-->
+
+<!--&PERCEPTUAL_BAN_ADD_FORM-->
+	<h3>{$PERCEPTUAL_BAN_ADD_TITLE}</h3>
+	<form action="{$MODULE_URL}" method="POST">
+		<input type="hidden" name="action" value="addBan">
+		<table>
+			<tbody>
+				<tr>
+					<td class="postblock"><label for="perceptualBanHash">{$PERCEPTUAL_BAN_HASH_LABEL}</label></td>
+					<td><input type="text" class="inputtext" name="phash" id="perceptualBanHash" value="{$PHASH_VALUE}" size="18" maxlength="16" required></td>
+				</tr>
+			</tbody>
+		</table>
+		<p>{$PERCEPTUAL_BAN_THRESHOLD_LABEL}: {$THRESHOLD}</p>
+		<div class="buttonSection">
+			<input type="submit" value="{$FORM_SUBMIT_BTN}">
+		</div>
+	</form>
+<!--/&PERCEPTUAL_BAN_ADD_FORM-->
+
+<!--&PERCEPTUAL_BAN_ROW-->
+	<tr>
+		<td><div class="centerText"><input name="entryIDs[]" type="checkbox" value="{$ID}"></div></td>
+		<td>{$PHASH_HEX}</td>
+		<td><!--&IF($ADDED_BY,'{$ADDED_BY}','')--></td>
+		<td>{$CREATED_AT}</td>
+	</tr>
+<!--/&PERCEPTUAL_BAN_ROW-->
+
+<!--&PERCEPTUAL_BAN_INDEX-->
+	<h3>{$PERCEPTUAL_BAN_INDEX_TITLE}</h3>
+	<!--&PERCEPTUAL_BAN_ADD_FORM/-->
+	<hr>
+	<form action="{$MODULE_URL}" method="POST">
+		<input type="hidden" name="action" value="delete">
+		<!--&IF($ROWS,'
+		<table class="postlists">
+			<thead>
+				<tr>
+					<th>{$PERCEPTUAL_BAN_DELETE_LABEL}</th>
+					<th>{$PERCEPTUAL_BAN_HASH_LABEL}</th>
+					<th>{$PERCEPTUAL_BAN_ADDED_BY_LABEL}</th>
+					<th>{$PERCEPTUAL_BAN_DATE_LABEL}</th>
+				</tr>
+			</thead>
+			<tbody>
+				<!--&FOREACH($ROWS,'PERCEPTUAL_BAN_ROW')-->
+			</tbody>
+		</table>
+		<div class="buttonSection">
+			<input type="submit" value="{$FORM_SUBMIT_BTN}">
+		</div>
+		','{$PERCEPTUAL_BAN_NO_ENTRIES}')-->
+	</form>
+<!--/&PERCEPTUAL_BAN_INDEX-->
