@@ -79,7 +79,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		$mimeType = $attachment['mimeType'] ?? '';
-		if (!$this->perceptualHasher->isHashableImage($mimeType)) {
+		if (!$this->perceptualHasher->isHashableMedia($mimeType)) {
 			return;
 		}
 
@@ -245,8 +245,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$mimeType = $attachment['mimeType'] ?? '';
 
-		// for animated formats (GIF), extract a random frame for hashing
-		if ($this->perceptualHasher->isAnimatedFormat($mimeType)) {
+		if ($this->perceptualHasher->needsFrameExtraction($mimeType)) {
 			$filePath = $attachmentObj->getPath();
 			if (!file_exists($filePath)) {
 				throw new BoardException(_T('perceptual_ban_file_missing'));
