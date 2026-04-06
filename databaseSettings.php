@@ -36,4 +36,5 @@ return [
 	'BANNER_AD_TABLE' => 'banner_ads', // for storing banner ad data
 	'BLOTTER_TABLE' => 'blotter', // for storing blotter entries
 	'FILE_BAN_TABLE' => 'file_bans', // for storing banned file MD5 hashes
+	'PERCEPTUAL_BAN_TABLE' => 'perceptual_bans', // for storing perceptually banned file hashes
 ];

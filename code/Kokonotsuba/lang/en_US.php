@@ -310,4 +310,24 @@ $language['file_ban_no_entries'] = 'No banned files.';
 $language['admin_nav_file_ban_title'] = 'Manage banned files';
 $language['admin_nav_file_ban'] = 'File bans';
 
+// perceptualBan module
+$language['perceptual_ban_blocked'] = 'Upload failed.<br> File not allowed (perceptual match).';
+$language['perceptual_ban_btn_title'] = 'Perceptually ban this file';
+$language['perceptual_ban_bd_btn_title'] = 'Perceptually ban file and delete';
+$language['perceptual_ban_invalid_action'] = 'Invalid perceptual ban action.';
+$language['perceptual_ban_invalid_hash'] = 'Invalid perceptual hash provided. Must be 16 hex characters.';
+$language['perceptual_ban_no_file'] = 'No file specified.';
+$language['perceptual_ban_file_missing'] = 'File not found on disk.';
+$language['perceptual_ban_hash_failed'] = 'Failed to compute perceptual hash for this file.';
+$language['perceptual_ban_add_title'] = 'Add perceptual file ban';
+$language['perceptual_ban_hash_label'] = 'pHash (hex)';
+$language['perceptual_ban_added_by_label'] = 'Added by';
+$language['perceptual_ban_date_label'] = 'Date';
+$language['perceptual_ban_delete_label'] = 'Delete';
+$language['perceptual_ban_threshold_label'] = 'Hamming distance threshold';
+$language['perceptual_ban_index_title'] = 'Perceptually banned files';
+$language['perceptual_ban_no_entries'] = 'No perceptually banned files.';
+$language['admin_nav_perceptual_ban_title'] = 'Manage perceptual file bans';
+$language['admin_nav_perceptual_ban'] = 'Perceptual bans';
+
 ?>

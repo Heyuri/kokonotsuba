@@ -642,6 +642,19 @@ class tableCreator {
                 CONSTRAINT fk_file_ban_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
             ) ENGINE=InnoDB;
             ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['PERCEPTUAL_BAN_TABLE']} (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                phash BIGINT NOT NULL,
+                phash_hex CHAR(16) NOT NULL,
+                added_by INT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+                UNIQUE KEY uq_phash (phash),
+                INDEX idx_perceptual_ban_added_by (added_by),
+
+                CONSTRAINT fk_perceptual_ban_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB;
+            ",
         ];
     
         // Use prepared statements for execution
@@ -827,6 +840,7 @@ switch ($action) {
                 'BANNER_TABLE' => $dbSettings['BANNER_TABLE'],
                 'BLOTTER_TABLE' => $dbSettings['BLOTTER_TABLE'],
                 'FILE_BAN_TABLE' => $dbSettings['FILE_BAN_TABLE'],
+                'PERCEPTUAL_BAN_TABLE' => $dbSettings['PERCEPTUAL_BAN_TABLE'],
             ];
 
             $tableCreator->createTables($tables);
