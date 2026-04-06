@@ -16,17 +16,25 @@ class perceptualHasher {
 	];
 
 	/**
-	 * Check if a MIME type is a hashable image type.
+	 * Check if a MIME type is a hashable media type (image or video).
 	 */
-	public function isHashableImage(string $mimeType): bool {
-		return in_array($mimeType, self::IMAGE_MIME_TYPES, true);
+	public function isHashableMedia(string $mimeType): bool {
+		return in_array($mimeType, self::IMAGE_MIME_TYPES, true)
+			|| $this->isVideoFormat($mimeType);
 	}
 
 	/**
-	 * Check if a MIME type is an animated format that should use a thumbnail.
+	 * Check if a MIME type is video.
 	 */
-	public function isAnimatedFormat(string $mimeType): bool {
-		return $mimeType === 'image/gif';
+	public function isVideoFormat(string $mimeType): bool {
+		return str_starts_with($mimeType, 'video/');
+	}
+
+	/**
+	 * Check if a MIME type needs ffmpeg frame extraction (GIF or video).
+	 */
+	public function needsFrameExtraction(string $mimeType): bool {
+		return $mimeType === 'image/gif' || $this->isVideoFormat($mimeType);
 	}
 
 	/**

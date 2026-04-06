@@ -53,7 +53,7 @@ class moduleMain extends abstractModuleMain {
 			}
 
 			$mimeType = $fileMeta['mimeType'] ?? '';
-			if (!$this->perceptualHasher->isHashableImage($mimeType)) {
+			if (!$this->perceptualHasher->isHashableMedia($mimeType)) {
 				continue;
 			}
 
@@ -62,7 +62,7 @@ class moduleMain extends abstractModuleMain {
 				continue;
 			}
 
-			if ($this->perceptualHasher->isAnimatedFormat($mimeType)) {
+			if ($this->perceptualHasher->needsFrameExtraction($mimeType)) {
 				$isBanned = $this->perceptualBanService->isPerceptuallyBannedAnimated($tmpPath, $threshold);
 			} else {
 				$isBanned = $this->perceptualBanService->isPerceptuallyBanned($tmpPath, $threshold);

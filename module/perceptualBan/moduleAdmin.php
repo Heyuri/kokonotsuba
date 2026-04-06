@@ -55,8 +55,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
 		$mimeType = $attachment['mimeType'] ?? '';
-		$hasAttachment = !empty($attachment) && $this->perceptualHasher->isHashableImage($mimeType);
-		$canDelete = $this->canRenderDeleteButton($attachment);
+		if (!$this->perceptualHasher->isHashableMedia($mimeType)) {
+			return;
+		}
 
 		// PBF (perceptual ban only)
 		$pbfHidden = !$hasAttachment ? ' indicatorHidden' : '';
@@ -221,13 +222,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		$mimeType = $attachment['mimeType'] ?? '';
-		$filePath = $attachmentObj->getPath();
 
-		if (!file_exists($filePath)) {
-			throw new BoardException(_T('perceptual_ban_file_missing'));
-		}
-
+		// for animated formats (GIF), extract a random frame for hashing
 		if ($this->perceptualHasher->isAnimatedFormat($mimeType)) {
+			$filePath = $attachmentObj->getPath();
+			if (!file_exists($filePath)) {
+				throw new BoardException(_T('perceptual_ban_file_missing'));
+			}
 			$hashHex = $this->perceptualHasher->computeHashFromAnimated($filePath);
 		} else {
 			$hashHex = $this->perceptualHasher->computeHash($filePath);
