@@ -177,7 +177,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$boardUID
 		);
 
-		if ($this->moduleContext->request->isJavascript()) {
+		if ($this->moduleContext->request->isAjax()) {
 			$deletedLink = $this->getDeletedLinkForFile($fileId);
 			sendAjaxAndDetach(['success' => true, 'deleted_link' => $deletedLink]);
 			$this->rebuildBoardForPost($board, $post);
@@ -223,7 +223,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$boardUID
 		);
 
-		if ($this->moduleContext->request->isJavascript()) {
+		if ($this->moduleContext->request->isAjax()) {
 			sendAjaxAndDetach(['success' => true]);
 		}
         else {
