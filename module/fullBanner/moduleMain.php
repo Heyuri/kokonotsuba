@@ -7,11 +7,19 @@
 
 namespace Kokonotsuba\Modules\fullBanner;
 
+require_once __DIR__ . '/fullBannerEntry.php';
+require_once __DIR__ . '/fullBannerRepository.php';
+require_once __DIR__ . '/fullBannerService.php';
+require_once __DIR__ . '/fullBannerLib.php';
+
+use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\AboveThreadAreaListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\BelowThreadAreaListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\serveMedia;
+use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
@@ -20,8 +28,16 @@ class moduleMain extends abstractModuleMain {
 
 	private readonly bool $showTopAd;
 	private readonly bool $showBottomAd;
-	private readonly string $modulePageUrl, $bannerServerUrl;
-	
+	private readonly int $submissionCooldown;
+	private readonly int $requiredWidth;
+	private readonly int $requiredHeight;
+	private readonly int $maxFileSize;
+	private readonly string $modulePageUrl;
+	private readonly string $bannerServerUrl;
+	private readonly string $serveImageUrl;
+	private fullBannerService $fullBannerService;
+	private bool $hasActiveBanners = false;
+
 	// Names
 	public function getName(): string {
 		return 'Kokonotsuba Full Banners';
@@ -34,8 +50,17 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		$this->showTopAd = $this->getConfig('ModuleSettings.SHOW_TOP_AD');
 		$this->showBottomAd = $this->getConfig('ModuleSettings.SHOW_BOTTOM_AD');
+		$this->submissionCooldown = $this->getConfig('ModuleSettings.FULLBANNER_SUBMISSION_COOLDOWN', 300);
+		$this->requiredWidth = $this->getConfig('ModuleSettings.FULLBANNER_REQUIRED_WIDTH', 468);
+		$this->requiredHeight = $this->getConfig('ModuleSettings.FULLBANNER_REQUIRED_HEIGHT', 60);
+		$this->maxFileSize = $this->getConfig('ModuleSettings.FULLBANNER_MAX_FILE_SIZE', 204800);
 		$this->modulePageUrl = $this->getModulePageURL(['page' => 'bannerIndex'], false, false);
 		$this->bannerServerUrl = $this->getModulePageURL(['page' => 'bannerServer'], false, false);
+		$this->serveImageUrl = $this->getModulePageURL(['page' => 'bannerServeImage'], false, false);
+
+		$this->fullBannerService = getFullBannerService($this->moduleContext->transactionManager);
+
+		$this->hasActiveBanners = $this->fullBannerService->getRandomActiveBanner() !== null;
 
 		$this->listenAboveThreadArea('onRenderAboveThreadArea');
 		$this->listenBelowThreadArea('onRenderBelowThreadArea');
@@ -52,49 +77,64 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	// Top Ad
-	private function onRenderAboveThreadArea(string &$aboveThreadsHtml): void {		
-		if ($this->showTopAd) { // Check if top ad is enabled
+	private function onRenderAboveThreadArea(string &$aboveThreadsHtml): void {
+		if ($this->showTopAd && $this->hasActiveBanners) {
 			$aboveThreadsHtml .= $this->renderBannerFrame();
 		}
 	}
 
 	// Bottom Ad
 	private function onRenderBelowThreadArea(string &$belowThreadsHtml): void {
-		if ($this->showBottomAd) { // Check if bottom ad is enabled
+		if ($this->showBottomAd && $this->hasActiveBanners) {
 			$belowThreadsHtml .= $this->renderBannerFrame();
 		}
 	}
 
+	private function handleBannerSubmission(): void {
+		$file = $this->moduleContext->request->getFile('banner_file');
+		if (!$file) {
+			throw new BoardException('No file uploaded.');
+		}
+
+		$link = trim($this->moduleContext->request->getParameter('banner_link', 'POST', '') ?? '');
+		if ($link !== '' && !filter_var($link, FILTER_VALIDATE_URL)) {
+			throw new BoardException('Invalid destination link URL.');
+		}
+		if ($link === '') {
+			$link = null;
+		}
+
+		$ipAddress = $this->moduleContext->request->getRemoteAddr();
+
+		$this->fullBannerService->submitBanner($file, $link, $ipAddress, $this->submissionCooldown, $this->requiredWidth, $this->requiredHeight, $this->maxFileSize);
+	}
+
 	private function handleRequests(): void {
-		// get the action
-		$action = $_POST['action'] ?? '';
+		$action = $this->moduleContext->request->getParameter('action', 'POST', '');
 
-		// handle banner submission
-		if($action === 'submitBanner') {
+		if ($action === 'submitBanner') {
+			try {
+				$this->handleBannerSubmission();
+			} catch (BoardException $e) {
+				$this->handleBannerIndexPage('<p style="color:red;font-weight:bold;">' . htmlspecialchars($e->getMessage()) . '</p>');
+				exit;
+			}
 
+			redirect($this->modulePageUrl . '&submittedBanner=1');
+			exit;
 		}
 	}
 
 	private function serveBanners(): void {
-		// get the banner ad array from config
-		$bannerAds = $this->getConfig('ModuleSettings.BANNER_ADS');
+		$banner = $this->fullBannerService->getRandomActiveBanner();
 
-		// return early if there are no banner ads in config
-		if(!$bannerAds) {
+		if (!$banner) {
+			echo '<!DOCTYPE html><html><body></body></html>';
 			return;
 		}
-		
-		// get a random file name from the banner ad array
-		$randomBannerAdName = array_rand($bannerAds);
 
-		// get static url
-		$staticUrl = $this->getConfig('STATIC_URL', 'static/');
-
-		// assemble the banner ad url
-		$bannerAdImageUrl = $staticUrl . 'image/fullbanners/' . $randomBannerAdName;
-
-		// get the link the banner ad leads to
-		$bannerAdLink = $bannerAds[$randomBannerAdName];
+		$bannerImageUrl = $this->serveImageUrl . '&file=' . urlencode($banner->banner_file_name);
+		$bannerLink = $banner->link ? sanitizeStr($banner->link) : '#';
 
 		echo '<!DOCTYPE html>
 		<html lang="en" style="overflow:hidden;">
@@ -104,75 +144,81 @@ class moduleMain extends abstractModuleMain {
 				<title>Full banner</title>
 			</head>
 			<body style="margin: 0;">
-				<a href="' . $bannerAdLink . '" target="_blank"><img style="max-width: 100%;" src="'.$bannerAdImageUrl.'"></a>
+				<a href="' . $bannerLink . '" target="_blank"><img style="max-width: 100%;" src="' . sanitizeStr($bannerImageUrl) . '"></a>
 			</body>
 		</html>';
 	}
 
-	private function getBanners(): array {
-		return $this->getConfig('ModuleSettings.BANNER_ADS') ?? [];
-	}
-
-	private function renderBannerList(): string {
-		// get the banner ad array from config
-		$bannerAds = $this->getBanners();
-
-		// return early if there are no banner ads in config
-		if(!$bannerAds) {
-			return '<p>' . _T('no_banners_configured') . '</p>';
+	private function serveBannerImage(): void {
+		$fileName = $this->moduleContext->request->getParameter('file', 'GET', '');
+		if ($fileName === '') {
+			header("HTTP/1.0 400 Bad Request");
+			exit;
 		}
 
-		// render the banner ad list
-		$bannerListHtml = '';
+		$filePath = $this->fullBannerService->getBannerFilePath($fileName);
+		if ($filePath === null) {
+			header("HTTP/1.0 404 Not Found");
+			exit;
+		}
 
-		// build template values for each banner
-		$bannerRowTemplateValues = $this->buildRowTemplateValues($bannerAds);
+		// Cache for 1 hour
+		header('Cache-Control: public, max-age=3600');
+		header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 3600) . ' GMT');
 
-		// now render the list
-		$bannerListHtml = $this->moduleContext->adminPageRenderer->ParseBlock('BANNER_LIST', $bannerRowTemplateValues);
-
-		return $bannerListHtml;
+		serveMedia($filePath);
 	}
 
-	private function handleBannerIndexPage(): void {
-		// generate banner creation form
-		$formHtml = $this->moduleContext->adminPageRenderer->ParseBlock('BANNER_INDEX_FORM', [
-			'{$MODULE_PAGE_URL}' => $this->modulePageUrl
-		]);
+	private function handleBannerIndexPage(string $statusMessage = ''): void {
+		$staticIndexFile = $this->getConfig('STATIC_INDEX_FILE', 'index.html');
+		$banners = $this->fullBannerService->getApprovedActiveBanners();
 
-		// generate the banner list
-		$bannerList = $this->renderBannerList();
+		$rows = array_map(fn($b) => $b->toPublicTemplateRow($this->serveImageUrl, $this->requiredWidth, $this->requiredHeight), $banners);
 
-		// assemble page content
-		$pageContent = $formHtml . $bannerList;
+		$templateValues = [
+			'{$STATIC_INDEX_FILE}' => sanitizeStr($staticIndexFile),
+			'{$MODULE_PAGE_URL}' => sanitizeStr($this->modulePageUrl),
+			'{$UPLOAD_HEADING}' => _T('fullbanner_submit_heading'),
+			'{$UPLOAD_BUTTON}' => _T('fullbanner_submit_button'),
+			'{$REQ_DIMENSIONS}' => _T('fullbanner_req_dimensions', $this->requiredWidth, $this->requiredHeight),
+			'{$REQ_FILETYPES}' => _T('fullbanner_req_filetypes'),
+			'{$REQ_FILESIZE}' => _T('fullbanner_req_filesize', round($this->maxFileSize / 1024)),
+			'{$BANNER_WIDTH}' => (string) $this->requiredWidth,
+			'{$BANNER_HEIGHT}' => (string) $this->requiredHeight,
+			'{$STATUS_MESSAGE}' => $statusMessage,
+			'{$ROWS}' => $rows,
+			'{$EMPTY}' => empty($rows) ? '1' : '',
+		];
 
-		// render the page
-		echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $pageContent], false);
+		$pageContent = $this->moduleContext->adminPageRenderer->ParseBlock('FULLBANNER_INDEX', $templateValues);
+		echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', [
+			'{$PAGE_CONTENT}' => $pageContent
+		], false);
 	}
 
 	private function handlePages(): void {
-		// get the page
-		$page = $_GET['page'] ?? '';
+		$page = $this->moduleContext->request->getParameter('page', 'GET', '');
 
-		// serve the banner server page
-		if($page === 'bannerServer') {
+		if ($page === 'bannerServer') {
 			$this->serveBanners();
 			exit;
-		}
-		// serve the banner index page
-		else if($page === 'bannerIndex') {
-			$this->handleBannerIndexPage();
+		} else if ($page === 'bannerServeImage') {
+			$this->serveBannerImage();
+			exit;
+		} else if ($page === 'bannerIndex') {
+			$statusMessage = '';
+			if ($this->moduleContext->request->getParameter('submittedBanner', 'GET', '') === '1') {
+				$statusMessage = '<p>' . sanitizeStr(_T('fullbanner_submit_success')) . '</p>';
+			}
+			$this->handleBannerIndexPage($statusMessage);
 			exit;
 		}
 	}
 
 	public function ModulePage(): void {
-		if($this->moduleContext->request->isPost()) {
-			// handle requests (adds, edits, removals, approvals, etc.)
+		if ($this->moduleContext->request->isPost()) {
 			$this->handleRequests();
-		}
-		// handle GET requests to the module page (for the banner server)
-		else if($this->moduleContext->request->isGet()) {
+		} else if ($this->moduleContext->request->isGet()) {
 			$this->handlePages();
 		}
 	}

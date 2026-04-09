@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\adminBan;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
+use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
@@ -12,15 +13,15 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
 	use AuditableTrait;
+	use BanFileOperationsTrait;
 
-	private readonly string $BANFILE;
-	private readonly string $GLOBAL_BANS;
 	private readonly string $DEFAULT_BAN_MESSAGE;
-	private readonly string $myPage;
+	private readonly string $modulePageUrl;
 
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('AuthLevels.CAN_BAN');
@@ -35,14 +36,16 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->myPage = $this->getModulePageURL([], true, true);
-		$this->BANFILE = $this->moduleContext->board->getBoardStoragePath() . 'bans.log.txt';
-		$this->GLOBAL_BANS = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
+		$this->modulePageUrl = $this->getModulePageURL([], false, true);
 		$this->DEFAULT_BAN_MESSAGE = $this->getConfig('DEFAULT_BAN_MESSAGE');
 
 		$this->registerPostControlPair('onRenderPostAdminControls');
-		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
-		$this->registerPostWidgetHook('onRenderPostWidget');
+		$this->registerLinksAboveBarHook(_T('admin_nav_ban_title'), $this->modulePageUrl, _T('admin_nav_ban'));
+		$this->registerSimplePostWidget(
+			fn(Post $post) => $this->generateBanUrl($post->getIp(), $post->getUid()),
+			'ban',
+			'Ban'
+		);
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
 	}
 
@@ -58,26 +61,6 @@ class moduleAdmin extends abstractModuleAdmin {
 			'adminBanFunction',
 			$noScript
 		);
-	}
-
-	private function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_ban_title') . '" href="' . $this->myPage . '">' . _T('admin_nav_ban') . '</a></li>';
-	}
-
-	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
-		// generate ban url
-		$banUrl = $this->generateBanUrl($post->getIp(), $post->getUid());
-
-		// build the widget entry for deletion
-		$banWidget = $this->buildWidgetEntry(
-			$banUrl, 
-			'ban', 
-			'Ban', 
-			''
-		);
-		
-		// add the widget to the array
-		$widgetArray[] = $banWidget;
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
@@ -139,23 +122,20 @@ class moduleAdmin extends abstractModuleAdmin {
 			}
 		}
 
-		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
-		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
-
-		$log = $this->sortBansByNewest($log);
-		$glog = $this->sortBansByNewest($glog);
+		$log = $this->sortBansByNewest($this->readBanLog($this->getBanFilePath()));
+		$glog = $this->sortBansByNewest($this->readBanLog($this->getGlobalBanFilePath()));
 
 		$tables = [
 			[
 				'{$TITLE}' => 'Local bans',
 				'{$TABLE_ID}' => 'localBanTable',
-				'{$MODULE_URL}' => $this->myPage,
+				'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
 				'{$ROWS}' => $this->convertBanLogToRows($log, 'del')
 			],
 			[
 				'{$TITLE}' => 'Global bans',
 				'{$TABLE_ID}' => 'globalBanTable',
-				'{$MODULE_URL}' => $this->myPage,
+				'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
 				'{$ROWS}' => $this->convertBanLogToRows($glog, 'delg')
 			]
 		];
@@ -196,7 +176,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$POST_UID}' => htmlspecialchars($postUid),
 			'{$IP}' => htmlspecialchars($ipAddress),
 			'{$DEFAULT_BAN_MESSAGE}' => $defaultBanMessage,
-			'{$MODULE_URL}' => $this->myPage,
+			'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
 		];
 	}
 
@@ -302,31 +282,14 @@ class moduleAdmin extends abstractModuleAdmin {
 		string $publicBanMessageHTML, 
 		bool $isGlobal,
 		Post|false $post = false): void {
-		// Load ban logs
-		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
-		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
-
 		// Set defaults if not provided
 		$reason = $reasonFromRequest ?: "No reason given.";
-		$starttime = $this->moduleContext->request->getRequestTime(); // This remains from the server, no change
+		$starttime = $this->moduleContext->request->getRequestTime();
 		$expires = $starttime + $this->calculateBanDuration($duration);
 
-		// Replace all newlines with literal <br /> tags, and remove the actual newlines
-		$reason = str_replace(["\r\n", "\n", "\r"], '<br />', $reason);
-
-		// replace comma so it doesnt break the explode
-		$reason = str_replace(',', '&#44;', $reason);
-
 		if (!empty($newIp)) {
-			// Create the ban entry
-			$banEntry = "{$newIp},{$starttime},{$expires},{$reason}";
-			if ($isGlobal) {  // Global ban
-				$glog[] = $banEntry;
-				file_put_contents($this->GLOBAL_BANS, implode(PHP_EOL, $glog));
-			} else {  // Local ban
-				$log[] = $banEntry;
-				file_put_contents($this->BANFILE, implode(PHP_EOL, $log));
-			}
+			$banFile = $isGlobal ? $this->getGlobalBanFilePath() : $this->getBanFilePath();
+			$this->addBanEntry($banFile, $newIp, $starttime, $expires, $reason);
 		}
 
 		if ($makePublic) {
@@ -350,85 +313,65 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function processBanDeletions() {
-		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
-		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
+		$localBanFile = $this->getBanFilePath();
+		$globalBanFile = $this->getGlobalBanFilePath();
 
-		//lazy hack
-		$log = $this->sortBansByNewest($log);
-		$glog = $this->sortBansByNewest($glog);
+		$log = $this->sortBansByNewest($this->readBanLog($localBanFile));
+		$glog = $this->sortBansByNewest($this->readBanLog($globalBanFile));
 
-		   $newLocalLog = [];
-		   $newGlobalLog = [];
-		   $revokedLocalIps = [];
-		   $revokedGlobalIps = [];
+		$localIndicesToRemove = [];
+		$globalIndicesToRemove = [];
 
-		   foreach ($log as $i => $entry) {
-			   if ($this->moduleContext->request->hasParameter("del$i", 'POST') && $this->moduleContext->request->getParameter("del$i", 'POST') === 'on') {
-				   // Ban is being revoked
-				   $parts = explode(',', $entry);
-				   if (!empty($parts[0])) {
-					   $revokedLocalIps[] = $parts[0];
-				   }
-			   } else {
-				   $newLocalLog[] = $entry;
-			   }
-		   }
-
-		   foreach ($glog as $i => $entry) {
-			   if ($this->moduleContext->request->hasParameter("delg$i", 'POST') && $this->moduleContext->request->getParameter("delg$i", 'POST') === 'on') {
-				   // Global ban is being revoked
-				   $parts = explode(',', $entry);
-				   if (!empty($parts[0])) {
-					   $revokedGlobalIps[] = $parts[0];
-				   }
-			   } else {
-				   $newGlobalLog[] = $entry;
-			   }
-		   }
-
-		   file_put_contents($this->BANFILE, implode(PHP_EOL, $newLocalLog));
-		   file_put_contents($this->GLOBAL_BANS, implode(PHP_EOL, $newGlobalLog));
-
-		   // Log revocations if any
-		   $allRevoked = array_merge($revokedLocalIps, $revokedGlobalIps);
-		   if (!empty($allRevoked)) {
-			   if (count($allRevoked) === 1) {
-				   $msg = "Revoked ban for {$allRevoked[0]}";
-			   } else {
-				   $msg = "Revoke bans for: " . implode(", ", $allRevoked);
-			   }
-			   // Use -1 for global if any global bans, else use board UID
-			   $boardUid = !empty($revokedGlobalIps) ? -1 : $this->moduleContext->board->getBoardUID();
-			   $this->logAction($msg, $boardUid);
-		   }
-
-		   redirect($this->moduleContext->request->getReferer());
-		   exit;
-	}
-
-	private function calculateBanDuration($duration) {
-		// use regex to find all occurrences of number + unit (e.g. 1d, 2h, etc.)
-		preg_match_all('/(\d+(\.\d+)?)([ywdhm])/', $duration, $matches, PREG_SET_ORDER);
-		
-		// total ban duration in seconds
-		$seconds = 0;
-
-		// loop through matches and calculate the total duration in seconds
-		foreach ($matches as $match) {
-			// cast to float for decimal support (e.g. 1.5d for 1 day and 12 hours)
-			$value = floatval($match[1]);
-			
-			// now match the unit and convert to seconds
-			switch ($match[3]) {
-				case 'y': $seconds += $value * 31536000; break;
-				case 'm': $seconds += $value * 2597120; break;
-				case 'w': $seconds += $value * 604800; break;
-				case 'd': $seconds += $value * 86400; break;
-				case 'h': $seconds += $value * 3600; break;
+		foreach ($log as $i => $entry) {
+			if ($this->moduleContext->request->hasParameter("del$i", 'POST') && $this->moduleContext->request->getParameter("del$i", 'POST') === 'on') {
+				$localIndicesToRemove[] = $i;
 			}
 		}
 
-		return $seconds;
+		foreach ($glog as $i => $entry) {
+			if ($this->moduleContext->request->hasParameter("delg$i", 'POST') && $this->moduleContext->request->getParameter("delg$i", 'POST') === 'on') {
+				$globalIndicesToRemove[] = $i;
+			}
+		}
+
+		// Note: removeBanEntries works on unsorted logs, but we sorted first.
+		// We must write the sorted logs back with indices removed.
+		$revokedLocalIps = $this->removeBanEntriesFromSorted($log, $localIndicesToRemove, $localBanFile);
+		$revokedGlobalIps = $this->removeBanEntriesFromSorted($glog, $globalIndicesToRemove, $globalBanFile);
+
+		// Log revocations if any
+		$allRevoked = array_merge($revokedLocalIps, $revokedGlobalIps);
+		if (!empty($allRevoked)) {
+			if (count($allRevoked) === 1) {
+				$msg = "Revoked ban for {$allRevoked[0]}";
+			} else {
+				$msg = "Revoke bans for: " . implode(", ", $allRevoked);
+			}
+			$boardUid = !empty($revokedGlobalIps) ? -1 : $this->moduleContext->board->getBoardUID();
+			$this->logAction($msg, $boardUid);
+		}
+
+		redirect($this->moduleContext->request->getReferer());
+		exit;
+	}
+
+	private function removeBanEntriesFromSorted(array $sortedLog, array $indicesToRemove, string $banFile): array {
+		$newLog = [];
+		$removedIps = [];
+
+		foreach ($sortedLog as $i => $entry) {
+			if (in_array($i, $indicesToRemove, true)) {
+				$parts = explode(',', $entry, 4);
+				if (!empty($parts[0])) {
+					$removedIps[] = $parts[0];
+				}
+			} else {
+				$newLog[] = $entry;
+			}
+		}
+
+		$this->writeBanLog($banFile, $newLog);
+		return $removedIps;
 	}
 
 	private function convertBanLogToRows(array $bans, string $prefix): array {

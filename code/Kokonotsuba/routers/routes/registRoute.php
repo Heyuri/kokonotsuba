@@ -30,6 +30,8 @@ use Kokonotsuba\file\postFileUploadController;
 use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\thread\ThreadData;
+
 use function Puchiko\request\redirect;
 use function Kokonotsuba\libraries\loadUploadData;
 use function Kokonotsuba\libraries\getUserFileFromRequest;
@@ -114,8 +116,11 @@ class registRoute {
 			// get preview count
 			$previewCount = $this->board->getConfigValue('RE_DEF', 5);
 
+			// get the amount of recent replies to fetch
+			$amountOfRepliesToRender = $this->board->getConfigValue('LAST_AMOUNT_OF_REPLIES', 50);
+
 			// Get the thread data (if it exists)
-			$thread = $this->threadService->getThreadAllReplies($postData['thread_uid'], false, $previewCount);
+			$thread = $this->threadService->getThreadLastReplies($postData['thread_uid'], false, $previewCount, $amountOfRepliesToRender);
 
 			// Step 3: Verify that thread exists
 			$this->postValidator->threadSanityCheck($postData['postOpRoot'], $postData['flgh'], $postData['thread_uid'], $postData['resno'], $postData['threadDeleted'], $thread);
@@ -191,7 +196,7 @@ class registRoute {
 			$afterInsertPost = $this->postRepository->getPostByUid($nextPostUid);
 			
 			// get post-insert attachments
-			$attachments = $afterInsertPost['attachments'] ?? [];
+			$attachments = $afterInsertPost->getAttachments() ?? [];
 			
 			// run attachments after insert hook point
 			$this->moduleEngine->dispatch('AttachmentsAfterInsert', [&$attachments]);
@@ -272,7 +277,7 @@ class registRoute {
 		// Store the raw name (with tripcode) in a separate variable for cookie storage
 		$nameCookie = $rawName;
 
-		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode_input' => htmlspecialchars($tripcode), 'secure_tripcode_input' => htmlspecialchars($secure_tripcode),
+		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode_input' => $tripcode, 'secure_tripcode_input' => $secure_tripcode,
 			 'tripcode' => '', 'secure_tripcode' => '', 'capcode' => '', 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
 			 'category' => $category, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip,
 			 'thread_uid' => $thread_uid, 'isReply' => $isReply, 'roleLevel' => $roleLevel, 'time' => $time,
@@ -413,7 +418,7 @@ class registRoute {
 		return ['files' => $fileMetaList];
 	}
 
-	private function validateAndCleanPostContent(array &$postData, array $files, bool $isAdmin, bool|array $thread): void {
+	private function validateAndCleanPostContent(array &$postData, array $files, bool $isAdmin, bool|ThreadData $thread): void {
 		$this->postValidator->spamValidate($postData['name'], $postData['email'], $postData['sub'], $postData['comment']);
 	
 		$registInfo = [
@@ -425,8 +430,6 @@ class registRoute {
 			'secure_tripcode' => &$postData['secure_tripcode'],
 			'tripcode_input' => &$postData['tripcode_input'],
 			'secure_tripcode_input' => &$postData['secure_tripcode_input'],
-			'tripcode' => &$postData['tripcode'],
-			'secure_tripcode' => &$postData['secure_tripcode'],
 			'capcode' => &$postData['capcode'],
 			'age' => &$postData['age'],
 			'files' => $files,

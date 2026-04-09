@@ -15,10 +15,7 @@ use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawPager;
-use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
-use function Kokonotsuba\libraries\getPageOfThread;
-use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 use function Kokonotsuba\Modules\perceptualBan\getPerceptualBanService;
@@ -50,16 +47,15 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->perceptualHasher = getPerceptualHasher();
 
 		$this->registerAttachmentHook('onRenderAttachment');
-		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
+		$this->registerLinksAboveBarHook(_T('admin_nav_perceptual_ban_title'), $this->moduleUrl, _T('admin_nav_perceptual_ban'));
 	}
 
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
 		$mimeType = $attachment['mimeType'] ?? '';
 		$hasAttachment = !empty($attachment) && $this->perceptualHasher->isHashableMedia($mimeType);
-		$canDelete = $this->canRenderDeleteButton($attachment);
+		$canDelete = $this->canDeleteAttachment($attachment);
 
 		// PBF (perceptual ban only)
-		$pbfHidden = !$hasAttachment ? ' indicatorHidden' : '';
 		$pbfContent = '';
 		if ($hasAttachment) {
 			$banUrl = $this->getModulePageURL([
@@ -68,12 +64,11 @@ class moduleAdmin extends abstractModuleAdmin {
 				'fileId' => $attachment['fileId'],
 			], false, true);
 
-			$pbfContent = ' <span class="adminFunctions adminPerceptualBanFunction attachmentButton">[<a href="' . htmlspecialchars($banUrl) . '" title="' . _T('perceptual_ban_btn_title') . '">PBF</a>]</span>';
+			$pbfContent = $this->renderAttachmentButton($banUrl, 'PerceptualBan', _T('perceptual_ban_btn_title'), 'PBF');
 		}
-		$attachmentProperties .= '<span class="indicator indicator-perceptualBanFile' . $pbfHidden . '">' . $pbfContent . '</span>';
+		$attachmentProperties .= $this->renderAttachmentIndicator('perceptualBanFile', $pbfContent, !$hasAttachment);
 
 		// PB&D (perceptual ban + delete)
-		$pbdHidden = !$canDelete ? ' indicatorHidden' : '';
 		$pbdContent = '';
 		if ($canDelete) {
 			$bdUrl = $this->getModulePageURL([
@@ -82,22 +77,9 @@ class moduleAdmin extends abstractModuleAdmin {
 				'fileId' => $attachment['fileId'],
 			], false, true);
 
-			$pbdContent = ' <span class="adminFunctions adminPerceptualBanDeleteFunction attachmentButton">[<a href="' . htmlspecialchars($bdUrl) . '" title="' . _T('perceptual_ban_bd_btn_title') . '">PB&amp;D</a>]</span>';
+			$pbdContent = $this->renderAttachmentButton($bdUrl, 'PerceptualBanDelete', _T('perceptual_ban_bd_btn_title'), 'PB&amp;D');
 		}
-		$attachmentProperties .= '<span class="indicator indicator-perceptualBanDeleteFile' . $pbdHidden . '">' . $pbdContent . '</span>';
-	}
-
-	private function canRenderDeleteButton(array $attachment): bool {
-		if (!empty($attachment)) {
-			if (attachmentFileExists($attachment) && !$attachment['isDeleted']) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_perceptual_ban_title') . '" href="' . htmlspecialchars($this->moduleUrl) . '">' . _T('admin_nav_perceptual_ban') . '</a></li>';
+		$attachmentProperties .= $this->renderAttachmentIndicator('perceptualBanDeleteFile', $pbdContent, !$canDelete);
 	}
 
 	public function ModulePage(): void {
@@ -134,19 +116,14 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleBanAndDelete(): void {
 		$postUid = $_GET['post_uid'] ?? null;
-
-		validatePostInput($postUid);
-
-		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
-
-		validatePostInput($post, false);
+		$post = $this->fetchValidatedPost($postUid);
 
 		$fileId = (int) ($_GET['fileId'] ?? 0);
 		if (empty($fileId)) {
 			throw new BoardException(_T('perceptual_ban_no_file'));
 		}
 
-		$attachment = $post->getAttachments()[$fileId] ?? false;
+		$attachment = $post->getAttachmentById($fileId);
 		if (!$attachment) {
 			throw new BoardException(_T('attachment_not_found'));
 		}
@@ -178,19 +155,14 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleBanOnly(): void {
 		$postUid = $_GET['post_uid'] ?? null;
-
-		validatePostInput($postUid);
-
-		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
-
-		validatePostInput($post, false);
+		$post = $this->fetchValidatedPost($postUid);
 
 		$fileId = (int) ($_GET['fileId'] ?? 0);
 		if (empty($fileId)) {
 			throw new BoardException(_T('perceptual_ban_no_file'));
 		}
 
-		$attachment = $post->getAttachments()[$fileId] ?? false;
+		$attachment = $post->getAttachmentById($fileId);
 		if (!$attachment) {
 			throw new BoardException(_T('attachment_not_found'));
 		}
@@ -238,34 +210,6 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		return $hashHex;
-	}
-
-	private function getDeletedLinkForFile(int $fileId): string {
-		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
-		$deletedPostId = $deletedPost['deleted_post_id'];
-		$baseUrl = $this->moduleContext->request->getCurrentUrlNoQuery();
-
-		$urlParameters = [
-			'pageName' => 'viewMore',
-			'deletedPostId' => $deletedPostId,
-			'moduleMode' => 'admin',
-			'mode' => 'module',
-			'load' => 'deletedPosts'
-		];
-
-		return $baseUrl . '?' . http_build_query($urlParameters);
-	}
-
-	private function rebuildBoardForPost($board, Post $post): void {
-		if ($post->isOp()) {
-			$board->rebuildBoard();
-		} else {
-			$thread_uid = $post->getThreadUid();
-			$threads = $this->moduleContext->threadService->getThreadListFromBoard($board);
-			$pageToRebuild = getPageOfThread($thread_uid, $threads, $board->getConfigValue('PAGE_DEF', 15));
-			$pageToRebuild = min($pageToRebuild, $this->getConfig('STATIC_HTML_UNTIL'));
-			$board->rebuildBoardPage($pageToRebuild);
-		}
 	}
 
 	private function handleAddBan(): void {

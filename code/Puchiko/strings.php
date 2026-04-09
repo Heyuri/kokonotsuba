@@ -217,7 +217,7 @@ function extractGetParams($url) {
  *
  * This function generates a URL with the given filters (e.g., keyword, field, method) and no pagination.
  *
- * @param string $baseUrl The base URL for the page (e.g., $this->mypage).
+ * @param string $baseUrl The base URL for the page (e.g., $this->modulePageUrl).
  * @param array $filters An associative array of filter names and their values (e.g., ['keyword' => 'test', 'field' => 'com']).
  * @return string The full URL with filters (pagination is not handled by this function).
  */

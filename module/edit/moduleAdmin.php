@@ -35,7 +35,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function initialize(): void {
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
-		$this->registerPostWidgetHook('onRenderPostWidget');
+		$this->registerSimplePostWidget('postUid', 'editPost', _T('edit_post'));
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
@@ -59,22 +59,6 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// append the form template to the module header so it's available on the page (but hidden until triggered)
 		$moduleHeader .= $this->generateTemplate('postEditFormTemplate', $postEditFormTemplate);
-	}
-
-	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
-		// get post details for widget
-		$postUid = $post->getUid();
-
-		// get post number for widget
-		$postWidget = $this->buildWidgetEntry(
-			$this->getModulePageURL(['postUid' => $postUid], false, true),
-			'editPost',
-			_T('edit_post'),
-			''
-		);
-
-		// append post widget to the post widget
-		$widgetArray[] = $postWidget;
 	}
 
 	private function editPost(

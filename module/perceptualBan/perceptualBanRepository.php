@@ -12,6 +12,7 @@ class perceptualBanRepository extends baseRepository {
 		private string $accountTable
 	) {
 		parent::__construct($databaseConnection, $perceptualBanTable);
+		self::validateTableNames($accountTable);
 	}
 
 	/**

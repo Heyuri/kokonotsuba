@@ -4,10 +4,10 @@ namespace Kokonotsuba\Modules\bbCode;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
 
 class moduleMain extends abstractModuleMain { 
-	use RegistBeginListenerTrait;
+	use PostCommentListenerTrait;
 	private $urlcount;
 	private	$ImgTagTagMode = 0; // [img] tag behavior (0: no conversion 1: conversion when no textures 2: always conversion)
 	private	$URLTagMode = 0; // [url] tag behavior (0: no conversion 1: normal)
@@ -46,8 +46,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		// Register the listener for the PostInfo hook
-		$this->listenRegistBegin('onRegistBegin');
+		// Register the listener for the PostComment hook (render-time)
+		$this->listenPostComment('onRenderComment');
 
 		// initialize bbcode feature flags
 		$this->supportBold = $this->getConfig('ModuleSettings.supportBold', false);
@@ -72,11 +72,11 @@ class moduleMain extends abstractModuleMain {
 		$this->supportKao = $this->getConfig('ModuleSettings.supportKao', false);
 	}
 
-	private function onRegistBegin(array &$registInfo): void {
-		$registInfo['com'] = $this->bb2html($registInfo['com'], $registInfo['files']);
+	private function onRenderComment(string &$comment): void {
+		$comment = $this->bb2html($comment);
 	}
 
-	private function bb2html($string, $files): string {
+	private function bb2html(string $string, array $files = []): string {
 		$this->urlcount=0; // Reset counter
 
 		// Extract [code] and [code=lang] blocks before processing other BBCode

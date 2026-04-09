@@ -17,7 +17,7 @@ class moduleMain extends abstractModuleMain {
 
 	private readonly string $staticUrl;
 	private readonly string $staticIndexFile;
-	private $myPage;
+	private $modulePageUrl;
 	private $PAGE_DEF = 200;
 	private $RESICON = -1;
 
@@ -33,14 +33,9 @@ class moduleMain extends abstractModuleMain {
 		$this->staticUrl = $this->getConfig('STATIC_URL');
 		$this->staticIndexFile = $this->getConfig('LIVE_INDEX_FILE');
 		$this->RESICON = $this->staticUrl . 'image/replies.png';
-		$this->myPage = $this->getModulePageURL();
+		$this->modulePageUrl = $this->getModulePageURL();
 
-		$this->listenTopLinks('onRenderTopLink');
-	}
-
-	private function onRenderTopLink(string &$linkbar): void {
-
-		$linkbar .= ' [<a href="'.$this->myPage.'">' . _T('head_catalog') . '</a>] ';
+		$this->addTopLink($this->modulePageUrl, _T('head_catalog'));
 	}
 
 	private function drawSortOptions($sort = 'bump') {
@@ -51,7 +46,7 @@ class moduleMain extends abstractModuleMain {
 			$timeSelected = ' selected';
 		}
 		return '
-			<form id="catalogSortForm" action="'. $this->myPage .'" method="post">
+			<form id="catalogSortForm" action="'. $this->modulePageUrl .'" method="post">
 				<span>Sort by:</span>
 				<select name="sort_by">
 					<option value="bump"'.$bumpSelected.'>Bump order</option>
@@ -119,9 +114,7 @@ class moduleMain extends abstractModuleMain {
 
 			$threadPosts = $thread->getPosts();
 
-			$firstKey = array_key_first($opPost->getAttachments());
-
-			$opAttachment = $opPost->getAttachments()[$firstKey] ?? null;
+			$opAttachment = $opPost->getFirstAttachment();
 
 			$comment = quote_unkfunc($opPost->getComment());
 
@@ -149,7 +142,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		$dat .= '</tbody></table></div><hr>';
-		$dat .= drawPager($this->PAGE_DEF,$list_max, $this->myPage, $this->moduleContext->request);
+		$dat .= drawPager($this->PAGE_DEF,$list_max, $this->modulePageUrl, $this->moduleContext->request);
 		$dat .= $this->moduleContext->board->getBoardFooter();
 		echo $dat;
 	}

@@ -29,6 +29,31 @@
 		}
 	};
 
+	// ---- helpers ----
+
+	// Collect data-param-* attributes from an element into a plain object
+	function collectParams(el) {
+		var params = {};
+		if (!el || !el.attributes) return params;
+		for (var i = 0; i < el.attributes.length; i++) {
+			var attr = el.attributes[i];
+			if (attr.name.indexOf('data-param-') === 0) {
+				params[attr.name.slice(11)] = attr.value;
+			}
+		}
+		return params;
+	}
+
+	// Copy a params object onto an element as data-param-* attributes
+	function applyParams(el, params) {
+		if (!params) return;
+		for (var key in params) {
+			if (params.hasOwnProperty(key)) {
+				el.setAttribute('data-param-' + key, params[key]);
+			}
+		}
+	}
+
 	// ---- click delegation ----
 
 	document.addEventListener('click', function (e) {
@@ -88,7 +113,8 @@
 			var itemData = {
 				href: ref.href,
 				action: ref.dataset.action,
-				label: ref.dataset.label
+				label: ref.dataset.label,
+				params: collectParams(ref)
 			};
 
 			if (subName) {
@@ -110,7 +136,8 @@
 						var data = {
 							href: item.href || '#',
 							action: item.action || '',
-							label: item.label || ''
+							label: item.label || '',
+							params: item.params || {}
 						};
 						if (subName) {
 							if (!groups[subName]) groups[subName] = [];
@@ -130,6 +157,7 @@
 			var a = document.createElement('a');
 			a.href = item.href;
 			a.dataset.action = item.action;
+			applyParams(a, item.params);
 
 			var label = item.label;
 			var lp = labelProviders.get(a.dataset.action);
@@ -217,7 +245,8 @@
 				url: url,
 				menuItem: menuItem,
 				arrow: activeToggle,
-				post: activeToggle ? activeToggle.closest('.post') : null
+				post: activeToggle ? activeToggle.closest('.post') : null,
+				params: collectParams(menuItem)
 			});
 			return;
 		}

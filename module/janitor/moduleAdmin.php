@@ -29,7 +29,11 @@ class moduleAdmin extends abstractModuleAdmin {
 	
 	public function initialize(): void {
 		$this->registerPostControlPair('renderWarnButton');
-		$this->registerPostWidgetHook('onRenderPostWidget');
+		$this->registerSimplePostWidget(
+			fn(Post $post) => $this->generateWarnUrl($post->getUid()),
+			'warn',
+			'Warn'
+		);
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
 	}
 
@@ -43,22 +47,6 @@ class moduleAdmin extends abstractModuleAdmin {
 			'adminWarnFunction',
 			$noScript
 		);
-	}
-
-	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
-		// generate warn url
-		$warnUrl = $this->generateWarnUrl($post->getUid());
-
-		// build the widget entry for warn
-		$warnWidget = $this->buildWidgetEntry(
-			$warnUrl, 
-			'warn', 
-			'Warn', 
-			''
-		);
-		
-		// add the widget to the array
-		$widgetArray[] = $warnWidget;
 	}
 
 	private function generateWarnUrl(int $postUid): string {

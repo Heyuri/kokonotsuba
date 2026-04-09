@@ -5,6 +5,7 @@
 namespace Kokonotsuba\Modules\animatedGif;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\IndicatorTrait;
 use Kokonotsuba\module_classes\traits\listeners\AttachmentsAfterInsertListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\AttachmentListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostFormFileListenerTrait;
@@ -16,6 +17,7 @@ use function Kokonotsuba\libraries\isActiveStaffSession;
 class moduleMain extends abstractModuleMain {
 	use AttachmentsAfterInsertListenerTrait;
 	use AttachmentListenerTrait;
+	use IndicatorTrait;
 	use PostFormFileListenerTrait;
 
 	public function getName(): string {
@@ -138,7 +140,6 @@ class moduleMain extends abstractModuleMain {
 		}
 		
 		// always render animated gif label wrapper, hidden when not active
-		$hiddenClass = $isAnimated ? '' : ' indicatorHidden';
-		$attachmentProperties .= '<span class="indicator indicator-animatedGifLabel animatedGIFLabel imageOptions' . $hiddenClass . '">[Animated GIF]</span>';
+		$attachmentProperties .= $this->renderIndicator('animatedGifLabel', '[Animated GIF]', 'animatedGIFLabel imageOptions', !$isAnimated);
 	}
 }

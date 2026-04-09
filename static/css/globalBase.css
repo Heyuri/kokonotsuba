@@ -275,3 +275,102 @@
 @media screen and (max-width: 650px) {
 	.dropdownMenu a { line-height: 2 }
 }
+
+/************************ Private Messages *****************************/
+
+.pmSendForm {
+	margin: 0.5em 0;
+}
+
+.pmRow.pmRead {
+	opacity: 0.85;
+}
+
+.pmRow.pmUnread {
+	font-weight: var(--font-weight-bold);
+}
+
+.pmUnreadIndicator {
+	color: var(--color-fg-warning);
+	font-weight: var(--font-weight-bold);
+}
+
+.pmStatusCell {
+	width: 1.5em;
+	text-align: center;
+}
+
+.pmDateCell {
+	white-space: nowrap;
+}
+
+.pmViewCell {
+	white-space: nowrap;
+}
+
+
+
+/* View message page */
+
+.pmViewContainer {
+	text-align: left;
+}
+
+.pmViewNav {
+	margin-bottom: 0.5em;
+}
+
+.pmViewMeta td {
+	padding: 2px 8px 2px 0;
+}
+
+.pmViewBody {
+	padding: 0.5em 0;
+	word-break: break-word;
+}
+
+/************************ Filters *************************************/
+
+.filter .comment,
+.filter .post,
+.filter .omittedposts,
+.filter .filesize,
+.filter .postimg,
+.filter > .reply-container {
+  display: none;
+}
+
+.filter .post.op {
+  display: block;
+}
+
+.filter .postinfo,
+.filter .category {
+  opacity: 0.5;
+}
+
+/* .filterpost {
+  text-decoration: none;
+  font-weight: var(--font-weight-bold);
+	font-size: 9pt;
+} */
+
+/* .filterpostContainer::before {
+	content: "["
+}
+
+.filterpostContainer::after {
+	content: "]"
+} */
+
+.filterpost:hover {
+  opacity: 1;
+}
+
+.filterImage .postimg {
+  opacity: 0;
+}
+
+.filterImage .attachmentAnchor {
+  position: relative;
+}

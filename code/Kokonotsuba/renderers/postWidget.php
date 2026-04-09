@@ -113,8 +113,14 @@ class postWidget {
 			$action = $w['action'] ?? '';
 			$label  = $w['label'] ?? '';
             $subMenu = $w['subMenu'] ?? '';
+			$params = $w['params'] ?? [];
 
-			$html .= '<a href="' . htmlspecialchars($href) . '" data-action="' . htmlspecialchars($action) . '" data-label="' . htmlspecialchars($label) . '" data-subMenu="' . htmlspecialchars($subMenu) . '"></a>';
+			$paramAttrs = '';
+			foreach ($params as $key => $value) {
+				$paramAttrs .= ' data-param-' . htmlspecialchars($key) . '="' . htmlspecialchars((string)$value) . '"';
+			}
+
+			$html .= '<a href="' . htmlspecialchars($href) . '" data-action="' . htmlspecialchars($action) . '" data-label="' . htmlspecialchars($label) . '" data-subMenu="' . htmlspecialchars($subMenu) . '"' . $paramAttrs . '></a>';
 		}
 
 		return $html;

@@ -48,11 +48,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->blotterService = new blotterService($blotterRepository, $this->moduleContext->transactionManager);
 		$this->modulePage = $this->getModulePageURL([], false);
 
-		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
-	}
-
-	public function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_blotter_title') . '" href="' . sanitizeStr($this->modulePage) . '">' . _T('admin_nav_blotter') . '</a></li>';
+		$this->registerLinksAboveBarHook(_T('admin_nav_blotter_title'), $this->modulePage, _T('admin_nav_blotter'));
 	}
 
 	public function ModulePage(): void {

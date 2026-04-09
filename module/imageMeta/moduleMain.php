@@ -9,6 +9,7 @@ namespace Kokonotsuba\Modules\imageMeta;
 require __DIR__ . '/exif.php';
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\IndicatorTrait;
 use Kokonotsuba\module_classes\traits\listeners\AttachmentListenerTrait;
 use RuntimeException;
 
@@ -19,9 +20,10 @@ use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 
 class moduleMain extends abstractModuleMain {
 	use AttachmentListenerTrait;
+	use IndicatorTrait;
 
 	private $enable_exif, $enable_imgops, $enable_iqdb, $enable_swfchan = false; // Initialize options, actually defined in config files
-	private $myPage;
+	private $modulePageUrl;
 
 	public function initialize(): void {
 		$this->enable_exif = $this->getConfig('ModuleSettings.EXIF_DATA_VIEWER');
@@ -64,19 +66,17 @@ class moduleMain extends abstractModuleMain {
 				]
 			);
 
-			$attachmentProperties .= '<span class="indicator indicator-exif exifLink imageOptions">[<a href="' . $this->myPage . $queryParameters . '">EXIF</a>]</span> ';
+			$attachmentProperties .= $this->renderIndicator('exif', '[<a href="' . $this->modulePageUrl . $queryParameters . '">EXIF</a>]', 'exifLink imageOptions') . ' ';
 		}
 
 		// ImgOps reverse search
 		if ($this->enable_imgops) {
-			$hiddenClass = $isNotAReverseSearchableImage ? ' indicatorHidden' : '';
-			$attachmentProperties .= '<span class="indicator indicator-imgops imgopsLink imageOptions' . $hiddenClass . '">[<a href="http://imgops.com/' . getAttachmentUrl($attachment) . '" target="_blank">ImgOps</a>]</span> ';
+			$attachmentProperties .= $this->renderIndicator('imgops', '[<a href="http://imgops.com/' . getAttachmentUrl($attachment) . '" target="_blank">ImgOps</a>]', 'imgopsLink imageOptions', $isNotAReverseSearchableImage) . ' ';
 		}
 
 		// IQDB search
 		if ($this->enable_iqdb) {
-			$hiddenClass = $isNotAReverseSearchableImage ? ' indicatorHidden' : '';
-			$attachmentProperties .= '<span class="indicator indicator-iqdb iqdbLink imageOptions' . $hiddenClass . '">[<a href="http://iqdb.org/?url=' . getAttachmentUrl($attachment) . '" target="_blank">iqdb</a>]</span> ';
+			$attachmentProperties .= $this->renderIndicator('iqdb', '[<a href="http://iqdb.org/?url=' . getAttachmentUrl($attachment) . '" target="_blank">iqdb</a>]', 'iqdbLink imageOptions', $isNotAReverseSearchableImage) . ' ';
 		}
 
 		// SWFChan archive
@@ -104,9 +104,9 @@ class moduleMain extends abstractModuleMain {
 				$attachmentPath = $constructedAttachment->getPath();
 				$rawByteFileSize = filesize($attachmentPath);
 
-				$attachmentProperties .= '<span class="indicator indicator-swfchan swfchanLink imageOptions">[<a href="http://eye.swfchan.com/search/?q=>' . $rawByteFileSize . '" target="_blank">swfchan</a>]</span> ';
+				$attachmentProperties .= $this->renderIndicator('swfchan', '[<a href="http://eye.swfchan.com/search/?q=>' . $rawByteFileSize . '" target="_blank">swfchan</a>]', 'swfchanLink imageOptions') . ' ';
 			} else {
-				$attachmentProperties .= '<span class="indicator indicator-swfchan swfchanLink imageOptions indicatorHidden">[<a href="#">swfchan</a>]</span> ';
+				$attachmentProperties .= $this->renderIndicator('swfchan', '[<a href="#">swfchan</a>]', 'swfchanLink imageOptions', true) . ' ';
 			}
 		}
 	}
@@ -157,7 +157,7 @@ class moduleMain extends abstractModuleMain {
 		} 
 
 		// get attachment
-		$attachment = $post->getAttachments()[$fileId] ?? null;
+		$attachment = $post->getAttachmentById($fileId);
 
 		// throw runtime if attachment not found
 		if(!$attachment) {

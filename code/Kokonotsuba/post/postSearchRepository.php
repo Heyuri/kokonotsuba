@@ -21,6 +21,7 @@ class postSearchRepository extends baseRepository {
 		private readonly string $accountTable,
 	) {
 		parent::__construct($databaseConnection, $postTable);
+		self::validateTableNames($threadTable, $deletedPostsTable, $fileTable, $soudaneTable, $noteTable, $accountTable);
 	}
 	
 	private function buildParamters(array $fields, array $boardUids): array {

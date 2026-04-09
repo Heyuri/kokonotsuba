@@ -13,6 +13,7 @@ class antiSpamRepository extends baseRepository {
 		private string $accountTable
 	) {
 		parent::__construct($databaseConnection, $spamStringRulesTable);
+		self::validateTableNames($accountTable);
 	}
 
 	/**

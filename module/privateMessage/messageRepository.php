@@ -2,106 +2,179 @@
 
 namespace Kokonotsuba\Modules\privateMessage;
 
+use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
-class messageRepository {
+class messageRepository extends baseRepository {
 	public function __construct(
-		private databaseConnection $databaseConnection,
-		private string $privateMessageTable,
-	) {}
+		databaseConnection $databaseConnection,
+		string $privateMessageTable,
+	) {
+		parent::__construct($databaseConnection, $privateMessageTable);
+	}
 
 	public function sendMessage(
 		string $senderTripCode, 
 		string $recipientTripCode, 
 		string $senderName,
 		string $messageSubject, 
-		string $messageBody
+		string $messageBody,
+		string $ipAddress
 	): void {
-		// query to insert the message into the database
-		$query = "INSERT INTO {$this->privateMessageTable} 
-				(sender_tripcode, sender_name, recipient_tripcode, message_subject, message_body) 
-				VALUES (:sender_tripcode, :sender_name, :recipient_tripcode, :message_subject, :message_body)";
-
-		// parameters
-		$params = [
-			':sender_tripcode' => $senderTripCode,
-			':sender_name' => $senderName,
-			':recipient_tripcode' => $recipientTripCode,
-			':message_subject' => $messageSubject,
-			':message_body' => $messageBody,
-		];
-
-		// insert the message into the database
-		$this->databaseConnection->execute($query, $params);
+		$this->insert([
+			'sender_tripcode' => $senderTripCode,
+			'sender_name' => $senderName,
+			'recipient_tripcode' => $recipientTripCode,
+			'message_subject' => $messageSubject,
+			'message_body' => $messageBody,
+			'ip_address' => $ipAddress,
+			'date_sent' => date('Y-m-d H:i:s'),
+			'is_read' => 0,
+		]);
 	}
 
 	public function deleteMessage(int $messageId): void {
-		// query to delete the message from the database
-		$query = "DELETE FROM {$this->privateMessageTable} WHERE id = :message_id";
-		
-		// parameters
-		$params = [':message_id' => $messageId];
-		
-		// delete the message from the database
-		$this->databaseConnection->execute($query, $params);
+		$this->deleteWhere('id', $messageId);
 	}
 
 	public function getMessagesForTripCode(string $tripCode, string $contactTrip, int $offset, int $limit): array {
-		// query to get messages for the given trip hash
-		$query = "SELECT * FROM {$this->privateMessageTable} 
-				WHERE (sender_tripcode = :trip_hash AND recipient_tripcode = :contact_trip) 
-				   OR (sender_tripcode = :contact_trip AND recipient_tripcode = :trip_hash)
-				ORDER BY timestamp DESC";
+		$query = "SELECT * FROM {$this->table} 
+				WHERE (sender_tripcode = :trip_sender AND recipient_tripcode = :contact_recipient) 
+				   OR (sender_tripcode = :contact_sender AND recipient_tripcode = :trip_recipient)
+				ORDER BY date_sent ASC";
 
-		// add limit and offset to query
-		$query .= " LIMIT $limit OFFSET $offset";
-
-		// parameters
 		$params = [
-			':trip_hash' => $tripCode,
-			':contact_trip' => $contactTrip
+			':trip_sender' => $tripCode,
+			':contact_recipient' => $contactTrip,
+			':contact_sender' => $contactTrip,
+			':trip_recipient' => $tripCode,
 		];
 
-		// execute the query and return the results
-		return $this->databaseConnection->fetchAllAsArray($query, $params);
+		$this->paginate($query, $params, $limit, $offset);
+		return $this->queryAll($query, $params);
 	}
 
-	public function getLatestUniqueMessages(string $recipientTripCode): array {
-		// query to get the latest unique message from each sender
+	public function getConversationCount(string $tripCode, string $contactTrip): int {
+		return $this->count(
+			"(sender_tripcode = :trip_sender AND recipient_tripcode = :contact_recipient) 
+			 OR (sender_tripcode = :contact_sender AND recipient_tripcode = :trip_recipient)",
+			[
+				':trip_sender' => $tripCode,
+				':contact_recipient' => $contactTrip,
+				':contact_sender' => $contactTrip,
+				':trip_recipient' => $tripCode,
+			]
+		);
+	}
+
+	public function getLatestUniqueMessages(string $userTripCode): array {
 		$query = "
 			SELECT 
 				id, 
 				sender_tripcode, 
+				sender_name,
 				recipient_tripcode, 
 				message_body, 
 				message_subject, 
 				date_sent, 
-				is_read, 
-				date_sent
+				is_read,
+				contact_tripcode
 			FROM (
 				SELECT 
 					id, 
 					sender_tripcode, 
+					sender_name,
 					recipient_tripcode, 
 					message_body, 
 					message_subject, 
 					date_sent, 
-					is_read, 
-					date_sent,
+					is_read,
+					CASE 
+						WHEN sender_tripcode = :user_trip_case THEN recipient_tripcode 
+						ELSE sender_tripcode 
+					END as contact_tripcode,
 					ROW_NUMBER() OVER (
-						PARTITION BY sender_tripcode 
+						PARTITION BY CASE 
+							WHEN sender_tripcode = :user_trip_partition THEN recipient_tripcode 
+							ELSE sender_tripcode 
+						END
 						ORDER BY date_sent DESC, id DESC
 					) as rn
-				FROM {$this->privateMessageTable}
-				WHERE recipient_tripcode = :recipient_tripcode
+				FROM {$this->table}
+				WHERE sender_tripcode = :user_trip_sender 
+				   OR recipient_tripcode = :user_trip_recipient
 			) sub
 			WHERE rn = 1
 			ORDER BY date_sent DESC
 		";
-		// parameters
-		$params = [':recipient_tripcode' => $recipientTripCode];
 
-		// execute the query and return the results
-		return $this->databaseConnection->fetchAllAsArray($query, $params);
+		$params = [
+			':user_trip_case' => $userTripCode,
+			':user_trip_partition' => $userTripCode,
+			':user_trip_sender' => $userTripCode,
+			':user_trip_recipient' => $userTripCode,
+		];
+
+		return $this->queryAll($query, $params);
+	}
+
+	public function markMessagesAsRead(string $recipientTripCode, string $senderTripCode): void {
+		$this->query(
+			"UPDATE {$this->table} SET is_read = 1 
+			 WHERE recipient_tripcode = :recipient AND sender_tripcode = :sender AND is_read = 0",
+			[':recipient' => $recipientTripCode, ':sender' => $senderTripCode]
+		);
+	}
+
+	public function getAllMessagesForUser(string $userTripCode, int $offset, int $limit): array {
+		$query = "SELECT * FROM {$this->table} 
+				WHERE sender_tripcode = :trip_sender 
+				   OR recipient_tripcode = :trip_recipient
+				ORDER BY date_sent DESC";
+
+		$params = [
+			':trip_sender' => $userTripCode,
+			':trip_recipient' => $userTripCode,
+		];
+
+		$this->paginate($query, $params, $limit, $offset);
+		return $this->queryAll($query, $params);
+	}
+
+	public function getAllMessagesCountForUser(string $userTripCode): int {
+		return $this->count(
+			"sender_tripcode = :trip_sender OR recipient_tripcode = :trip_recipient",
+			[':trip_sender' => $userTripCode, ':trip_recipient' => $userTripCode]
+		);
+	}
+
+	public function getMessageById(int $messageId): ?array {
+		return $this->findBy('id', $messageId);
+	}
+
+	public function markMessageAsRead(int $messageId): void {
+		$this->updateWhere(['is_read' => 1], 'id', $messageId);
+	}
+
+	public function getAllMessages(int $offset, int $limit): array {
+		$query = "SELECT * FROM {$this->table} ORDER BY date_sent DESC";
+		$params = [];
+		$this->paginate($query, $params, $limit, $offset);
+		return $this->queryAll($query, $params);
+	}
+
+	public function getAllMessagesCount(): int {
+		return $this->count();
+	}
+
+	public function getUnreadMessageCount(string $recipientTripCode): int {
+		return $this->count(
+			"recipient_tripcode = :recipient AND is_read = 0",
+			[':recipient' => $recipientTripCode]
+		);
+	}
+
+	public function deleteMessages(array $ids): void {
+		$this->deleteWhereIn('id', $ids);
 	}
 }

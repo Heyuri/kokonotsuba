@@ -125,7 +125,8 @@ abstract class abstractModule {
 		string $url,
 		string $action,
 		string $label,
-		string $subMenu
+		string $subMenu,
+		array $params = []
 	): array {
 		// assemble the widget
 		$widget = [
@@ -139,7 +140,10 @@ abstract class abstractModule {
 			'label' => $label,
 
 			// sub-menu
-			'subMenu' => $subMenu
+			'subMenu' => $subMenu,
+
+			// POST parameters for JS to send
+			'params' => $params
 		];
 
 		// return assembled widget

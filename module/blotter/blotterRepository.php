@@ -15,6 +15,7 @@ class blotterRepository extends baseRepository {
 		private string $accountTable,
 	) {
 		parent::__construct($databaseConnection, $blotterTable);
+		self::validateTableNames($accountTable);
 	}
 
 	/**

@@ -36,21 +36,19 @@ class moduleAdmin extends abstractModuleAdmin {
 	
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
 		$isGif = $this->canAnimateAttachment($attachment);
-		$hiddenClass = $isGif ? '' : ' indicatorHidden';
 
-		$buttonHtml = $isGif ? $this->generateAnimateGifButton($attachment) : '';
-		$attachmentProperties .= '<span class="indicator indicator-animateGif' . $hiddenClass . '">' . $buttonHtml . '</span>';
+		$buttonHtml = '';
+		if ($isGif) {
+			$animatedGifButtonUrl = $this->generateAnimatedGifUrl($attachment['postUid'], $attachment['fileId']);
+			$flag = ($attachment['isAnimated']) ? 'g' : 'G';
+			$title = ($attachment['isAnimated']) ? 'Use still image of GIF' : 'Use animated GIF';
+			$buttonHtml = $this->renderAttachmentButton($animatedGifButtonUrl, 'GIF', $title, $flag);
+		}
+		$attachmentProperties .= $this->renderAttachmentIndicator('animateGif', $buttonHtml, !$isGif);
 	}
 
 	private function canAnimateAttachment(array $attachment): bool {
 		return $attachment['fileExtension'] === 'gif';
-	}
-
-	private function generateAnimateGifButton(array $attachment): string {
-		$animatedGifButtonUrl = $this->generateAnimatedGifUrl($attachment['postUid'], $attachment['fileId']);
-		$flag = ($attachment['isAnimated']) ? 'title="Use still image of GIF">g' : 'title="Use animated GIF">G';
-		
-		return '<span class="adminFunctions adminGIFFunction attachmentButton">[<a href="' . htmlspecialchars($animatedGifButtonUrl) . '" ' . $flag . '</a>]</span>';
 	}
 
 	private function generateAnimatedGifUrl(int $postUid, int $fileId): string {
@@ -104,7 +102,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// now select the attachment on this post
-		$attachment = $post->getAttachments()[$fileId] ?? null;
+		$attachment = $post->getAttachmentById($fileId);
 
 		// if attachment isn't found or blank then throw exception
 		if($attachment === null || $attachment <= 0) {
@@ -142,10 +140,13 @@ class moduleAdmin extends abstractModuleAdmin {
 			$attachmentUrl = $this->getAnimatedAttachmentUrl($attachment, $isAnimated);
 
 			// send json first
+			$flag = $isAnimated ? 'g' : 'G';
+			$title = $isAnimated ? 'Use still image of GIF' : 'Use animated GIF';
+			$animatedGifButtonUrl = $this->generateAnimatedGifUrl($attachment['postUid'], $attachment['fileId']);
 			sendAjaxAndDetach([
 				'active' => $isAnimated,
 				'attachmentUrl' => $attachmentUrl,
-				'newGifButton' => $this->generateAnimateGifButton($attachment)
+				'newGifButton' => $this->renderAttachmentButton($animatedGifButtonUrl, 'GIF', $title, $flag)
 			]);
 
 			// rebuild after client already received JSON

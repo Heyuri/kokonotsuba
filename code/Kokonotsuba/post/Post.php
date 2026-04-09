@@ -70,6 +70,11 @@ class Post implements JsonSerializable {
 	public function getStaffNotes(): array { return $this->staffNotes; }
 	public function getVotes(): ?array { return $this->votes; }
 	public function hasAttachments(): bool { return !empty($this->attachments); }
+	public function getAttachmentById(int $id): ?array { return $this->attachments[$id] ?? null; }
+	public function getFirstAttachment(): ?array {
+		$key = array_key_first($this->attachments);
+		return $key !== null ? $this->attachments[$key] : null;
+	}
 
 	// Mutators for hydration
 	public function addAttachment(int $id, array $attachment): void {
@@ -92,6 +97,11 @@ class Post implements JsonSerializable {
 
 	public function setComment(string $comment): void {
 		$this->data['com'] = $comment;
+	}
+
+	/** Protected accessor for subclasses to read from the private data array. */
+	protected function get(string $key, mixed $default = null): mixed {
+		return $this->data[$key] ?? $default;
 	}
 
 	// Dynamic data field access (for JOINed columns like deleted_post_id)

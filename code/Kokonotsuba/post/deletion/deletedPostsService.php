@@ -443,13 +443,14 @@ class deletedPostsService {
 	/**
 	 * Fetch a paged list of open (soft-deleted) posts.
 	 *
-	 * @param int $page           Zero-based page number.
-	 * @param int $entriesPerPage Number of entries per page.
+	 * @param int   $page           Zero-based page number.
+	 * @param int   $entriesPerPage Number of entries per page.
+	 * @param array $filters        Additional filters (deleted_by_type, post_type, ip_address).
 	 * @return array|null Array of deleted post entries, or null if none.
 	 */
-	public function getDeletedPosts(int $page, int $entriesPerPage): ?array {
+	public function getDeletedPosts(int $page, int $entriesPerPage, array $filters = []): ?array {
 		// Fetch deleted posts for the given page range
-		$deletedPosts = $this->getPagedEntries($page, $entriesPerPage);
+		$deletedPosts = $this->getPagedEntries($page, $entriesPerPage, false, null, $filters);
 
 		// Return the result array or null if empty
 		return $deletedPosts;
@@ -458,13 +459,14 @@ class deletedPostsService {
 	/**
 	 * Fetch a paged list of restored posts.
 	 *
-	 * @param int $page           Zero-based page number.
-	 * @param int $entriesPerPage Number of entries per page.
+	 * @param int   $page           Zero-based page number.
+	 * @param int   $entriesPerPage Number of entries per page.
+	 * @param array $filters        Additional filters (deleted_by_type, post_type, ip_address).
 	 * @return array|null Array of restored post entries, or null if none.
 	 */
-	public function getRestoredPosts(int $page, int $entriesPerPage): ?array {
+	public function getRestoredPosts(int $page, int $entriesPerPage, array $filters = []): ?array {
 		// get paged restored posts
-		$restoredPosts = $this->getPagedEntries($page, $entriesPerPage, true);
+		$restoredPosts = $this->getPagedEntries($page, $entriesPerPage, true, null, $filters);
 
 		// return the results
 		return $restoredPosts;
@@ -473,14 +475,15 @@ class deletedPostsService {
 	/**
 	 * Fetch a paged list of open (soft-deleted) posts for a specific account.
 	 *
-	 * @param int $accountId      Account ID whose deletions to list.
-	 * @param int $page           Zero-based page number.
-	 * @param int $entriesPerPage Number of entries per page.
+	 * @param int   $accountId      Account ID whose deletions to list.
+	 * @param int   $page           Zero-based page number.
+	 * @param int   $entriesPerPage Number of entries per page.
+	 * @param array $filters        Additional filters (deleted_by_type, post_type, ip_address).
 	 * @return array|null Array of deleted post entries, or null if none.
 	 */
-	public function getDeletedPostsByAccount(int $accountId, int $page, int $entriesPerPage): ?array {
+	public function getDeletedPostsByAccount(int $accountId, int $page, int $entriesPerPage, array $filters = []): ?array {
 		// Fetch deleted posts for a specific account ID within the given page range
-		$deletedPosts = $this->getPagedEntries($page, $entriesPerPage, false, $accountId);
+		$deletedPosts = $this->getPagedEntries($page, $entriesPerPage, false, $accountId, $filters);
 		
 		// return the deleted posts
 		return $deletedPosts;
@@ -489,25 +492,26 @@ class deletedPostsService {
 	/**
 	 * Fetch a paged list of restored posts for a specific account.
 	 *
-	 * @param int $accountId      Account ID.
-	 * @param int $page           Zero-based page number.
-	 * @param int $entriesPerPage Number of entries per page.
+	 * @param int   $accountId      Account ID.
+	 * @param int   $page           Zero-based page number.
+	 * @param int   $entriesPerPage Number of entries per page.
+	 * @param array $filters        Additional filters (deleted_by_type, post_type, ip_address).
 	 * @return array|null Array of restored post entries, or null if none.
 	 */
-	public function getRestoredPostsByAccount(int $accountId, int $page, int $entriesPerPage): ?array {
+	public function getRestoredPostsByAccount(int $accountId, int $page, int $entriesPerPage, array $filters = []): ?array {
 		// fetch the restored posts for a specific account by page
-		$restoredPosts = $this->getPagedEntries($page, $entriesPerPage, true, $accountId);
+		$restoredPosts = $this->getPagedEntries($page, $entriesPerPage, true, $accountId, $filters);
 
 		// return restored posts
 		return $restoredPosts;
 	}
 
-	private function getPagedEntries(int $page, int $entriesPerPage, bool $restoredPostsOnly = false, ?int $accountId = null): ?array {
+	private function getPagedEntries(int $page, int $entriesPerPage, bool $restoredPostsOnly = false, ?int $accountId = null, array $filters = []): ?array {
 		// Calculate pagination values (LIMIT and OFFSET)
 		[$pageAmount, $pageOffset] = $this->getPaginationParams($page, $entriesPerPage);
 
 		// Fetch entries for the given page range
-		$entries = $this->deletedPostsRepository->getPagedEntries($pageAmount, $pageOffset, 'id', 'DESC', $restoredPostsOnly, $accountId);
+		$entries = $this->deletedPostsRepository->getPagedEntries($pageAmount, $pageOffset, 'id', 'DESC', $restoredPostsOnly, $accountId, $filters);
 	
 		// Return the result array or null if empty
 		return $this->returnOrNull($entries);
@@ -529,11 +533,12 @@ class deletedPostsService {
 	/**
 	 * Return the total count of open soft-deleted posts.
 	 *
+	 * @param array $filters Additional filters (deleted_by_type, post_type, ip_address).
 	 * @return int Total count.
 	 */
-	public function getTotalAmountOfDeletedPosts(): int {
+	public function getTotalAmountOfDeletedPosts(array $filters = []): int {
 		// get the total amount of deleted posts stored in the table
-		$totalDeletedPosts = $this->deletedPostsRepository->getTotalAmount();
+		$totalDeletedPosts = $this->deletedPostsRepository->getTotalAmountFiltered(false, null, $filters);
 
 		// return the amount
 		return $totalDeletedPosts;
@@ -542,11 +547,12 @@ class deletedPostsService {
 	/**
 	 * Return the total count of restored posts.
 	 *
+	 * @param array $filters Additional filters (deleted_by_type, post_type, ip_address).
 	 * @return int Total count.
 	 */
-	public function getTotalAmountOfRestoredPosts(): int {
+	public function getTotalAmountOfRestoredPosts(array $filters = []): int {
 		// get the total amount of restored posts stored in the table
-		$totalAmount = $this->deletedPostsRepository->getTotalAmount(null, true);
+		$totalAmount = $this->deletedPostsRepository->getTotalAmountFiltered(true, null, $filters);
 
 		// return the amount
 		return $totalAmount;
@@ -555,12 +561,13 @@ class deletedPostsService {
 	/**
 	 * Return the total count of open deletions attributed to the given account.
 	 *
-	 * @param int $accountId Account ID.
+	 * @param int   $accountId Account ID.
+	 * @param array $filters   Additional filters (deleted_by_type, post_type, ip_address).
 	 * @return int Total count.
 	 */
-	public function getTotalAmountOfDeletedPostsFromAccountId(int $accountId): int {
+	public function getTotalAmountOfDeletedPostsFromAccountId(int $accountId, array $filters = []): int {
 		// get the total amount of deleleted posts 
-		$totalAmount = $this->deletedPostsRepository->getTotalAmount($accountId);
+		$totalAmount = $this->deletedPostsRepository->getTotalAmountFiltered(false, $accountId, $filters);
 	
 		// return result
 		return $totalAmount;
@@ -569,12 +576,13 @@ class deletedPostsService {
 	/**
 	 * Return the total count of restored posts attributed to the given account.
 	 *
-	 * @param int $accountId Account ID.
+	 * @param int   $accountId Account ID.
+	 * @param array $filters   Additional filters (deleted_by_type, post_type, ip_address).
 	 * @return int Total count.
 	 */
-	public function getTotalAmountOfRestoredPostsFromAccountId(int $accountId): int {
+	public function getTotalAmountOfRestoredPostsFromAccountId(int $accountId, array $filters = []): int {
 		// get the total amount of restored posts by account id
-		$totalAmount = $this->deletedPostsRepository->getTotalAmount($accountId, true);
+		$totalAmount = $this->deletedPostsRepository->getTotalAmountFiltered(true, $accountId, $filters);
 	
 		// return result
 		return $totalAmount;

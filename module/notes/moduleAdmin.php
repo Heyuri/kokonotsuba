@@ -6,7 +6,6 @@ require_once __DIR__ . '/noteRepository.php';
 require_once __DIR__ . '/noteService.php';
 require_once __DIR__ . '/notePolicy.php';
 
-use Kokonotsuba\board\board;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
@@ -44,7 +43,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function initialize(): void {
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
-		$this->registerPostWidgetHook('onRenderPostWidget');
+		$this->registerSimplePostWidget('postUid', 'leaveNote', _T('leave_note'));
 
 		$this->listenProtected('BelowComment', function(string &$belowComment, Post &$post, array &$threadPosts, bool &$adminMode) {
 			$this->renderStaffNotesOnPost($belowComment, $post, $adminMode);
@@ -93,22 +92,6 @@ class moduleAdmin extends abstractModuleAdmin {
 		// Render empty note entry template
 		$noteEntryTemplate = $this->generateTemplate('noteEntryTemplate', $this->generateNoteEntryHtml());
 		$moduleHeader .= $noteEntryTemplate;
-	}
-
-	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
-		// get post details for widget
-		$postUid = $post->getUid();
-
-		// get post number for widget
-		$noteWidget = $this->buildWidgetEntry(
-			$this->getModulePageURL(['postUid' => $postUid], false, true),
-			'leaveNote',
-			_T('leave_note'),
-			''
-		);
-
-		// append note widget to the thread widget array so it shows up in the thread controls
-		$widgetArray[] = $noteWidget;
 	}
 	
 	private function generateNoteEntryHtml(

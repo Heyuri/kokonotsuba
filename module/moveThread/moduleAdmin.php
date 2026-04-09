@@ -28,7 +28,7 @@ use function Puchiko\request\redirect;
 class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
 
-	private readonly string $myPage;
+	private readonly string $modulePageUrl;
 
     public function getRequiredRole(): userRole {
         return $this->getConfig('AuthLevels.CAN_MOVE_THREAD', userRole::LEV_MODERATOR);
@@ -43,7 +43,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->myPage = $this->getModulePageURL();
+		$this->modulePageUrl = $this->getModulePageURL();
 
 		$this->registerThreadControlPair('renderMoveThreadButton');
 		$this->registerThreadWidgetHook('onRenderThreadWidget');
@@ -440,7 +440,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$boardRadioHTML = generateBoardListRadioHTML($threadParentBoard, GLOBAL_BOARD_ARRAY);
 
 		return [
-			'{$FORM_ACTION}' => $this->myPage,
+			'{$FORM_ACTION}' => $this->modulePageUrl,
 			'{$THREAD_UID}' => htmlspecialchars($thread_uid),
 			'{$THREAD_NUMBER}' => $threadNumber,
 			'{$CURRENT_BOARD_UID}' => $threadParentBoard->getBoardUID(),

@@ -37,6 +37,7 @@ class threadRepository extends baseRepository {
 		private string $noteTable
 	) {
 		parent::__construct($databaseConnection, $threadTable);
+		self::validateTableNames($postTable, $threadThemeTable, $deletedPostsTable, $fileTable, $accountTable, $soudaneTable, $noteTable);
 		$this->allowedOrderFields = ['last_bump_time', 'last_reply_time', 'thread_created_time', 'post_op_number', 'number_of_posts'];
 	}
 

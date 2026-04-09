@@ -12,6 +12,7 @@ use function Kokonotsuba\libraries\mergeDeletedPostRows;
 use function Kokonotsuba\libraries\mergeMultiplePostRows;
 use function Kokonotsuba\libraries\pdoNamedPlaceholdersForIn;
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
+use function Kokonotsuba\libraries\applyRegexIPFilter;
 
 /** Repository for tracking soft-deleted and purged post records, with paged retrieval and restoration support. */
 class deletedPostsRepository extends baseRepository {
@@ -30,6 +31,7 @@ class deletedPostsRepository extends baseRepository {
 		private readonly string $noteTable,
 	) {
 		parent::__construct($databaseConnection, $deletedPostsTable);
+		self::validateTableNames($postTable, $accountTable, $fileTable, $threadTable, $soudaneTable, $noteTable);
 		$this->allowedOrderFields = [
 			'id',
 			'post_uid',
@@ -255,7 +257,8 @@ class deletedPostsRepository extends baseRepository {
 		string $orderBy = 'id',
 		string $direction = 'DESC',
 		bool $restoredOnly = false,
-		?int $accountId = null
+		?int $accountId = null,
+		array $filters = []
 	): array|false {
 
 		// Validate ordering field
@@ -270,8 +273,10 @@ class deletedPostsRepository extends baseRepository {
 		// Parameters get accumulated here
 		$params = [];
 
-		// Step 1: build WHERE clause for deleted_posts
-		$filterClause = $this->buildDeletedPostsFilter($restoredOnly, $accountId, $params);
+		// Step 1: build WHERE and JOIN clauses for deleted_posts
+		$filterResult = $this->buildDeletedPostsFilter($restoredOnly, $accountId, $params, $filters);
+		$filterClause = $filterResult['where'];
+		$joinClause = $filterResult['join'];
 
 		// Step 2: get a page of post_uid values representing logical deleted posts
 		$postUids = $this->getPagedPostUids(
@@ -280,7 +285,8 @@ class deletedPostsRepository extends baseRepository {
 			$orderBy,
 			$direction,
 			$filterClause,
-			$params
+			$params,
+			$joinClause
 		);
 
 		if (!$postUids) {
@@ -315,8 +321,9 @@ class deletedPostsRepository extends baseRepository {
 	 *
 	 * @return string   A complete WHERE clause beginning with "WHERE".
 	 */
-	private function buildDeletedPostsFilter(bool $restoredOnly, ?int $accountId, array &$params): string {
+	private function buildDeletedPostsFilter(bool $restoredOnly, ?int $accountId, array &$params, array $filters = []): array {
 		$parts = [];
+		$needsPostJoin = false;
 
 		// Choose open vs restored deleted entries.
 		if (!$restoredOnly) {
@@ -334,12 +341,56 @@ class deletedPostsRepository extends baseRepository {
 			$params[':account_id'] = $accountId;
 		}
 
-		// Build final WHERE string.
-		if (!$parts) {
-			return '';
+		// Filter by deletion source (staff vs user self-deletion).
+		if (!empty($filters['deleted_by_type'])) {
+			if ($filters['deleted_by_type'] === 'staff') {
+				$parts[] = 'dp.deleted_by IS NOT NULL';
+			} elseif ($filters['deleted_by_type'] === 'user') {
+				$parts[] = 'dp.deleted_by IS NULL';
+			}
 		}
 
-		return ' WHERE ' . implode(' AND ', $parts);
+		// Filter by post type (OP vs reply).
+		if (!empty($filters['post_type'])) {
+			$needsPostJoin = true;
+			if ($filters['post_type'] === 'op') {
+				$parts[] = 'p.is_op = 1';
+			} elseif ($filters['post_type'] === 'reply') {
+				$parts[] = 'p.is_op = 0';
+			}
+		}
+
+		// Filter by IP address.
+		if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
+			$needsPostJoin = true;
+			$regex = applyRegexIPFilter($filters['ip_address']);
+			if ($regex !== null) {
+				$parts[] = 'p.host REGEXP :ip_regex';
+				$params[':ip_regex'] = $regex;
+			}
+		}
+
+		// Filter by staff username who performed the deletion.
+		$needsAccountJoin = false;
+		if (!empty($filters['staff_username']) && is_string($filters['staff_username'])) {
+			$needsAccountJoin = true;
+			$parts[] = 'da.username LIKE :staff_username';
+			$params[':staff_username'] = '%' . $filters['staff_username'] . '%';
+		}
+
+		// Build final WHERE string.
+		$whereClause = $parts ? ' WHERE ' . implode(' AND ', $parts) : '';
+
+		// Build JOIN clauses for tables needed by the filters.
+		$joinClause = '';
+		if ($needsPostJoin) {
+			$joinClause .= " INNER JOIN {$this->postTable} p ON p.post_uid = dp.post_uid";
+		}
+		if ($needsAccountJoin) {
+			$joinClause .= " INNER JOIN {$this->accountTable} da ON dp.deleted_by = da.id";
+		}
+
+		return ['where' => $whereClause, 'join' => $joinClause];
 	}
 
 	/**
@@ -362,7 +413,8 @@ class deletedPostsRepository extends baseRepository {
 		string $orderBy,
 		string $direction,
 		string $filterClause,
-		array $params
+		array $params,
+		string $joinClause = ''
 	): array|false {
 
 		// Map orderBy field into the appropriate grouped expression.
@@ -386,6 +438,7 @@ class deletedPostsRepository extends baseRepository {
 		$query = "
 			SELECT dp.post_uid
 			FROM {$this->table} dp
+			{$joinClause}
 			{$filterClause}
 			GROUP BY dp.post_uid
 			ORDER BY {$sortExpr} {$direction}
@@ -559,6 +612,31 @@ class deletedPostsRepository extends baseRepository {
 
 		// append where clause to query
 		$query .= $whereClause;
+
+		// fetch the count value
+		$totalAmount = $this->queryColumn($query, $params);
+
+		// return it
+		return $totalAmount;
+	}
+
+	/**
+	 * Return the total count of deletion records with support for advanced filters.
+	 *
+	 * @param bool     $restoredOnly If true, count only restored records; otherwise count only open ones.
+	 * @param int|null $accountId    Optional account ID to filter by.
+	 * @param array    $filters      Additional filters (deleted_by_type, post_type, ip_address).
+	 * @return int Total count.
+	 */
+	public function getTotalAmountFiltered(bool $restoredOnly = false, ?int $accountId = null, array $filters = []): int {
+		// build the filter clauses
+		$params = [];
+		$filterResult = $this->buildDeletedPostsFilter($restoredOnly, $accountId, $params, $filters);
+		$whereClause = $filterResult['where'];
+		$joinClause = $filterResult['join'];
+
+		// count distinct post_uids to match pagination grouping
+		$query = "SELECT COUNT(DISTINCT dp.post_uid) FROM {$this->table} dp {$joinClause} {$whereClause}";
 
 		// fetch the count value
 		$totalAmount = $this->queryColumn($query, $params);

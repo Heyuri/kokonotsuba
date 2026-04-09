@@ -28,6 +28,7 @@ class postRepository extends baseRepository {
 		private readonly string $accountTable,
 	) {
 		parent::__construct($databaseConnection, $postTable);
+		self::validateTableNames($threadTable, $deletedPostsTable, $fileTable, $soudaneTable, $noteTable, $accountTable);
 		$this->allowedOrderFields = ['root' , 'no', 'post_uid'];
 	}
 
@@ -428,7 +429,7 @@ class postRepository extends baseRepository {
 	 * Fetch the OP (opening post) for the given thread, with merged attachment rows.
 	 *
 	 * @param string $threadUid Thread UID.
-	 * @return bool|array Merged post data array, or false if not found.
+	 * @return bool|Post Merged post data array, or false if not found.
 	 */
 	public function getOpeningPostFromThread(string $threadUid): bool|Post {
 		// get base post query

@@ -7,6 +7,7 @@ use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\RegistBeforeCommitListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\AboveThreadAreaListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
+use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawPager;
@@ -41,7 +42,7 @@ class moduleMain extends abstractModuleMain {
 
 		$this->listenRegistBeforeCommit('onBeforeCommit');
 		$this->listenAboveThreadArea('onRenderAboveThreadArea');
-		$this->listenTopLinks('onRenderTopLinks');
+		$this->addTopLink($this->getModulePageURL(), 'Thread list');
 	}
 
 	// Automatically checks subject for posts before commit
@@ -49,11 +50,6 @@ class moduleMain extends abstractModuleMain {
 		if ($this->FORCE_SUBJECT && !$isReply && $sub == $this->getConfig('DEFAULT_NOTITLE')) {
 			throw new BoardException("A subject/title is required for a new thread.");
 		}
-	}
-
-	// Adds a link to the top navigation bar
-	public function onRenderTopLinks(&$topLinkHookHtml) {
-		$topLinkHookHtml .= '[<a href="' . $this->getModulePageURL() . '">Thread list</a>]'."\n";
 	}
 
 	public function onRenderAboveThreadArea(string &$txt, bool $isThreadView) {
@@ -189,7 +185,7 @@ function checkall(){
 			$opPost = $t->getOpeningPost();
 
 			// not found or data invalid (falsey value) - continue
-			if(!$opPost) {
+			if(!$opPost || !($opPost instanceof Post)) {
 				continue;
 			}
 
@@ -200,7 +196,7 @@ function checkall(){
 			$tripcode = $opPost->getTripcode();
 			$secure_tripcode = $opPost->getSecureTripcode();
 			$capcode = $opPost->getCapcode();
-			$now = $opPost->getNow();
+			$now = $opPost->getTimestamp();
 
 			$nameHtml = generatePostNameHtml(
 				$this->moduleContext->moduleEngine, 

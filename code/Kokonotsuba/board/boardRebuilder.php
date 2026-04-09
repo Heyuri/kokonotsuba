@@ -155,6 +155,12 @@ class boardRebuilder {
 		// This hook is one that only gets dispatched for threads that are being viewed through drawThread
 		$this->moduleEngine->dispatch('ViewedThread', [&$pte_vals, &$threadData]);
 
+		// calculate current page and total pages for thread pagination display
+		$totalThreadPages = (int) ceil($totalPosts / $repliesPerPage);
+		$currentPage = !is_null($amountOfRepliesToRender)
+			? max(0, $totalThreadPages - 1)
+			: ($page ?? 0);
+
 		// Render threads
 		$pte_vals['{$THREADS}'] .= $threadRenderer->render([],
 			true,
@@ -166,7 +172,10 @@ class boardRebuilder {
 			0,
 			'',
 			'',
-			$pte_vals
+			$pte_vals,
+			$currentPage,
+			$totalThreadPages,
+			$amountOfRepliesToRender
 		);
 		
 		// if a non-null page value is set - then draw the pager
@@ -238,11 +247,8 @@ class boardRebuilder {
 		$subject = strip_tags($opPost->getSubject()); // thread subject/topic
 		$comment = strip_tags($opPost->getComment()); // op post comment
 		
-		// first array key
-		$firstAttachmentArrKey = array_key_first($opPost->getAttachments());
-
 		// get the first attachment
-		$firstAttachment = $opPost->getAttachments()[$firstAttachmentArrKey] ?? null; 
+		$firstAttachment = $opPost->getFirstAttachment();
 
 		// set first filename if it exists
 		$firstAttachment ? $fileName = strip_tags($firstAttachment['fileName'] . '.' . $firstAttachment['fileExtension']) : $fileName = null;

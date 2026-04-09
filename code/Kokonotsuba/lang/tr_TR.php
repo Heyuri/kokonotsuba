@@ -264,6 +264,8 @@ $language['pm_contact_self'] = 'Kendiniz';
 $language['pm_login_description'] = 'Özel mesajlarınıza erişmek için tripcode\'unuzu girin.';
 $language['pm_tripcode_login_hash_note'] = '\'#\' işaretini ve ardından tripcode şifrenizi ekleyin. Güvenli tripcode için iki adet \'#\' (##) kullanın.';
 $language['pm_tripcode_login_label'] = 'Tripcode:';
+$language['pm_notification_title'] = 'Yeni Özel Mesajlar';
+$language['pm_notification_body'] = '%d okunmamış mesajınız var.';
 
 $language['admin_nav_capcodes_title'] = 'Kullanıcı capcode\'larını yönetin ve yetkili capcode\'larını görüntüleyin';
 $language['admin_nav_capcodes'] = 'Capcode\'lar';

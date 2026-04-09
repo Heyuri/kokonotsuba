@@ -27,7 +27,7 @@ use function Kokonotsuba\libraries\isActiveStaffSession;
 class moduleMain extends abstractModuleMain {
 	use TopLinksListenerTrait;
 
-	private readonly string $myPage;
+	private readonly string $modulePageUrl;
 
 	// used for rendering posts
 	private \Kokonotsuba\template\templateEngine $moduleTemplateEngine;
@@ -41,16 +41,12 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->myPage = $this->getModulePageURL([], false);
+		$this->modulePageUrl = $this->getModulePageURL([], false);
 
 		// init the module template engine
 		$this->moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.SEARCH_TEMPLATE', 'kokoimg');
 
-		$this->listenTopLinks('onRenderTopLinks');
-	}
-
-	public function onRenderTopLinks(&$topLinkHookHtml){
-		$topLinkHookHtml .= ' [<a href="' . htmlspecialchars($this->myPage) . '">' . _T('head_search') . '</a>] ';
+		$this->addTopLink($this->modulePageUrl, _T('head_search'));
 	}
 
 	public function ModulePage() {
@@ -78,10 +74,10 @@ class moduleMain extends abstractModuleMain {
 		];
 
 		// get filters from request
-		$filtersFromRequest = getFiltersFromRequest($this->myPage, $isSubmission, $defaultFilters, $this->moduleContext->request);
+		$filtersFromRequest = getFiltersFromRequest($this->modulePageUrl, $isSubmission, $defaultFilters, $this->moduleContext->request);
 
 		// build clean url
-		$cleanUrl = buildSmartQuery($this->myPage, $defaultFilters, $filtersFromRequest, true);
+		$cleanUrl = buildSmartQuery($this->modulePageUrl, $defaultFilters, $filtersFromRequest, true);
 
 		$dat = '';
 

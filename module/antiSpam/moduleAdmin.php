@@ -39,8 +39,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleUrl = $this->getModulePageURL([], false);
 
 		$this->registerPostControlPair('renderFilterPostButton');
-		$this->registerPostWidgetHook('onRenderPostWidget');
-		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
+		$this->registerSimplePostWidget(
+			fn(Post $post) => $this->generateFilterPostUrl($post->getUid()),
+			'filterPost',
+			'Filter post'
+		);
+		$this->registerLinksAboveBarHook(_T('admin_nav_anti_spam_title'), $this->moduleUrl, _T('admin_nav_anti_spam'));
 
 		// set antispam service instance
 		$this->antiSpamService = getAntiSpamService();
@@ -60,24 +64,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
-		// generate filer post url
-		$filterPostUrl = $this->generateFilterPostUrl($post->getUid());
-
-		// build the widget entry
-		$filterPostWidget = $this->buildWidgetEntry($filterPostUrl, 'filterPost', 'Filter post', '');
-
-		// add the widget to the array
-		$widgetArray[] = $filterPostWidget;
-	}
-
 	private function generateFilterPostUrl(int $postUid): string {
 		// generate and return url for 'newEntryForm' page
 		return $this->getModulePageURL(['viewPage' => 'newEntryForm', 'post_uid' => $postUid], false, true);
-	}
-
-	private function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_anti_spam_title') . '" href="' . htmlspecialchars($this->moduleUrl) . '">' . _T('admin_nav_anti_spam') . '</a></li>';
 	}
 
 	public function ModulePage(): void {

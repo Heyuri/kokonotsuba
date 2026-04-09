@@ -15,6 +15,7 @@ class actionLoggerRepository extends baseRepository {
 		private readonly string $boardTable
 	) {
 		parent::__construct($databaseConnection, $actionLogTable);
+		self::validateTableNames($boardTable);
 	}
 
 	/**

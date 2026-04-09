@@ -2,17 +2,19 @@
 
 namespace Kokonotsuba\Modules\deletedPosts;
 
-use Kokonotsuba\board\board;
+use Closure;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\module_classes\traits\IndicatorTrait;
 
 use function Kokonotsuba\libraries\_T;
-use function Puchiko\strings\sanitizeStr;
 
 class deletedPostUIHooks {
+	use IndicatorTrait;
 	public function __construct(
-		private moduleAdmin $moduleAdmin,
+		private Closure $includeScript,
+		private Closure $buildWidgetEntry,
 		private deletedPostUtility $deletedPostUtility,
 		private string $modulePageUrl
 	) {}
@@ -22,7 +24,7 @@ class deletedPostUIHooks {
 			$requiredRole,
 			'LinksAboveBar',
 			function(string &$linkHtml) {
-				$this->onRenderLinksAboveBar($linkHtml);
+				$linkHtml .= '<li class="adminNavLink"><a title="' . htmlspecialchars(_T('admin_nav_deleted_posts_title')) . '" href="' . htmlspecialchars($this->modulePageUrl) . '">' . htmlspecialchars(_T('admin_nav_deleted_posts')) . '</a></li>';
 			}
 		);
 
@@ -86,11 +88,14 @@ class deletedPostUIHooks {
 				$this->onRenderAttachment($attachmentProperties, $attachment);
 			}
 		);
-	}
 
-	private function onRenderLinksAboveBar(string &$linkHtml): void {
-		// modify the "links above bar" html to have a [Deleted Posts] button
-		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_deleted_posts_title') . '" href="' . htmlspecialchars($this->modulePageUrl) . '">' . _T('admin_nav_deleted_posts') . '</a></li>';
+		$moduleEngine->addRoleProtectedListener(
+			$requiredRole,
+			'ModerateAttachmentIndicator',
+			function(string &$fileInfoBar, array &$attachment) {
+				$this->onRenderAttachmentIndicator($fileInfoBar, $attachment);
+			}
+		);
 	}
 
 	/**
@@ -115,31 +120,22 @@ class deletedPostUIHooks {
 	}
 
 	private function onRenderPostAdminControls(string &$modFunc, Post &$post, bool $noScript): void {
-		$this->handleDeletedPost($post, function(Post &$post) use (&$modFunc, $noScript) {
-			// render indicator
-			$modFunc .= $this->renderDeletedIndicator($post);
-
-			// render the <a> button to take the user to the entry in the module
-			$modFunc .= $this->deletedPostUtility->adminPostViewModuleButton($post, $noScript);
-		});
-	}
-
-	private function renderDeletedIndicator(?Post $post): string {
-		// whether only the file was deleted
-		$onlyFileDeleted = $post->isFileOnlyDeleted() ?? 0;
-
-		// render the [DELETED] indicator if the file wasn't deleted
-		if (!$onlyFileDeleted) {
-			return $this->renderIndicator('DELETED', "This post was deleted!");
+		// Skip if viewing from the module page
+		if ($this->deletedPostUtility->isModulePage()) {
+			return;
 		}
 
-		// otherwise dont render any indicaztor
-		return '';
-	}
+		$isDeleted = $this->deletedPostUtility->isPostDeleted($post);
+		$onlyFileDeleted = $post->isFileOnlyDeleted() ?? 0;
 
-	private function renderIndicator(string $message, string $spanTitle): string {
-		// return html
-		return '<span class="warning" title="' . htmlspecialchars($spanTitle) . '">[' . htmlspecialchars($message) . ']</span>';
+		// Always render the [DELETED] indicator container (hidden by default, like toggle indicators)
+		$showIndicator = $isDeleted && !$onlyFileDeleted;
+		$modFunc .= $this->renderIndicator('deleted', '[DELETED]', 'warning', !$showIndicator, 'This post was deleted!');
+
+		// Render the View button only for actually deleted posts
+		if ($isDeleted) {
+			$modFunc .= $this->deletedPostUtility->adminPostViewModuleButton($post, $noScript);
+		}
 	}
 
 	private function appendCssClassIf(string &$cssClasses, bool $condition, string $className): void {
@@ -193,17 +189,17 @@ class deletedPostUIHooks {
 		}
 
 		// whether only the file was deleted
-		$onlyFileDeleted = $post->isFileOnlyDeleted() ?? 0;
+		$onlyFileDeleted = $post->isFileOnlyDeleted();
 
 		// whether the post is deleted or not
-		$isPostDeleted = $this->deletedPostUtility->isPostDeleted($post) && $onlyFileDeleted === 0;
+		$isPostDeleted = $this->deletedPostUtility->isPostDeleted($post) && !$onlyFileDeleted;
 
 		$this->appendCssClassIf($postCssClasses, $isPostDeleted, 'deletedPost');
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		// generate the script header
-		$this->moduleAdmin->includeScript('deletedPosts.js', $moduleHeader);
+		($this->includeScript)('deletedPosts.js', $moduleHeader);
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
@@ -216,7 +212,7 @@ class deletedPostUIHooks {
 		$deletedEntryUrl = $this->deletedPostUtility->generateViewDeletedPostUrl($post->getDeletedPostId());
 
 		// build the widget entry
-		$viewDeletedPostWidget = $this->moduleAdmin->buildWidgetEntry(
+		$viewDeletedPostWidget = ($this->buildWidgetEntry)(
 			$deletedEntryUrl, 
 			'viewDeletedPost', 
 			'View deleted post', 
@@ -229,18 +225,23 @@ class deletedPostUIHooks {
 
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
 		// return early if the attachment isn't deleted
-		if((!$attachment['isDeleted'] && !$attachment['onlyFileDeleted']) || empty($attachment['deletedPostId'])) {
+		if(!$attachment['isDeleted'] && !$attachment['onlyFileDeleted']) {
 			return;
 		}
-
-		// append indicator to attachment
-		$attachmentProperties .= $this->renderIndicator('FILE DELETED', 'This post\'s file was deleted!');
 
 		// get deleted post id of the attachment
 		$deletedPostId = $attachment['deletedPostId'] ?? null;
 
 		// append view deleted attachment button
 		$attachmentProperties .= $this->generateViewDelAttachmentButton($deletedPostId);
+	}
+
+	private function onRenderAttachmentIndicator(string &$fileInfoBar, array &$attachment): void {
+		// whether the attachment is deleted
+		$isDeleted = $attachment['isDeleted'] || $attachment['onlyFileDeleted'];
+
+		// always render [FILE DELETED] indicator (hidden when not deleted, JS toggles visibility)
+		$fileInfoBar .= $this->renderIndicator('fileDeleted', '[FILE DELETED]', 'warning', !$isDeleted, 'This post\'s file was deleted!');
 	}
 
 	private function generateViewDelAttachmentButton(?int $deletedPostId): string {
@@ -258,4 +259,6 @@ class deletedPostUIHooks {
 		// return button
 		return $button;
 	}
+
+
 }

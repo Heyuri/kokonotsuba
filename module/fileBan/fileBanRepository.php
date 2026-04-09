@@ -12,6 +12,7 @@ class fileBanRepository extends baseRepository {
 		private string $accountTable
 	) {
 		parent::__construct($databaseConnection, $fileBanTable);
+		self::validateTableNames($accountTable);
 	}
 
 	public function findBannedHashes(array $md5Hashes): array {

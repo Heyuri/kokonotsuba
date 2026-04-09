@@ -4,6 +4,7 @@ namespace Kokonotsuba\account;
 
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\database\SqlExpression;
 
 /** Repository for staff account records. */
 class accountRepository extends baseRepository {
@@ -62,24 +63,22 @@ class accountRepository extends baseRepository {
 	 * @return bool True on success.
 	 */
 	public function addNewAccount($username, $role, $passwordHash) {
-		$query = "INSERT INTO {$this->table} (username, role, password_hash, date_added) 
-				  VALUES (:username, :role, :password_hash, CURRENT_TIMESTAMP)";
-		$params = [
-			':username' => $username,
-			':role' => $role,
-			':password_hash' => $passwordHash
-		];
-		return $this->query($query, $params);
+		$this->insert([
+			'username' => $username,
+			'role' => $role,
+			'password_hash' => $passwordHash,
+			'date_added' => SqlExpression::now(),
+		]);
 	}
 
 	/**
 	 * Update the last_login timestamp for the given account to now.
 	 *
 	 * @param int|string $id Account primary key.
-	 * @return bool True on success.
+	 * @return void
 	 */
 	public function updateLastLoginByID($id) {
-		return $this->query("UPDATE {$this->table} SET last_login = CURRENT_TIMESTAMP WHERE id = :id", [':id' => $id]);
+		$this->updateWhere(['last_login' => SqlExpression::now()], 'id', $id);
 	}
 	
 	/**
@@ -97,29 +96,29 @@ class accountRepository extends baseRepository {
 	 * Increase the role level of an account by 1.
 	 *
 	 * @param int|string $id Account primary key.
-	 * @return bool True on success.
+	 * @return void
 	 */
 	public function promoteAccountByID($id) {
-		return $this->query("UPDATE {$this->table} SET role = role + 1 WHERE id = :id", [':id' => $id]);
+		$this->updateWhere(['role' => SqlExpression::increment('role')], 'id', $id);
 	}
 	
 	/**
 	 * Decrease the role level of an account by 1.
 	 *
 	 * @param int|string $id Account primary key.
-	 * @return bool True on success.
+	 * @return void
 	 */
 	public function demoteAccountByID($id) {
-		return $this->query("UPDATE {$this->table} SET role = role - 1 WHERE id = :id", [':id' => $id]);
+		$this->updateWhere(['role' => SqlExpression::decrement('role')], 'id', $id);
 	}
 	
 	/**
 	 * Increment the number_of_actions counter for the given account by 1.
 	 *
 	 * @param int|string $id Account primary key.
-	 * @return bool True on success.
+	 * @return void
 	 */
 	public function incrementAccountActionRecordByID($id) {
-		return $this->query("UPDATE {$this->table} SET number_of_actions = number_of_actions + 1 WHERE id = :id", [':id' => $id]);
+		$this->updateWhere(['number_of_actions' => SqlExpression::increment('number_of_actions')], 'id', $id);
 	}
 }

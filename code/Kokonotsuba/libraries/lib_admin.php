@@ -91,6 +91,96 @@ function generateModerateButton(
 }
 
 /**
+ * Get or create a CSRF token stored in the session.
+ */
+function getOrCreateCsrfToken(): string {
+	if (empty($_SESSION['csrf_token'])) {
+		$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+	}
+	return $_SESSION['csrf_token'];
+}
+
+/**
+ * Validate a submitted CSRF token against the session token.
+ */
+function validateCsrfToken(string $submittedToken): bool {
+	$sessionToken = getOrCreateCsrfToken();
+	return hash_equals($sessionToken, $submittedToken);
+}
+
+/**
+ * Require that the request is POST and has a valid CSRF token.
+ * Throws BoardException on failure.
+ */
+function requirePostWithCsrf(\Kokonotsuba\request\request $request): void {
+	if (!$request->isPost()) {
+		throw new \Kokonotsuba\error\BoardException('ERROR: Invalid request method.');
+	}
+	$submittedToken = $request->getParameter('csrf_token', 'POST', '');
+	if (!validateCsrfToken($submittedToken)) {
+		throw new \Kokonotsuba\error\BoardException('ERROR: CSRF validation failed.');
+	}
+}
+
+/**
+ * Generate a <meta> tag for the CSRF token (for JS to read).
+ * Only outputs once per request.
+ */
+function getCsrfMetaTag(): string {
+	static $added = false;
+	if ($added) return '';
+	$added = true;
+	$token = htmlspecialchars(getOrCreateCsrfToken(), ENT_QUOTES, 'UTF-8');
+	return '<meta name="csrf-token" content="' . $token . '">';
+}
+
+/**
+ * Generate a POST form that looks like a moderate button [label].
+ * Uses the buttonLink CSS class to make the submit button resemble a link.
+ */
+function generateModerateForm(
+	string $buttonUrl,
+	string $label,
+	string $title,
+	string $class,
+	bool $isNoScript = false,
+): string {
+	$csrfToken = htmlspecialchars(getOrCreateCsrfToken(), ENT_QUOTES, 'UTF-8');
+
+	$form = '<span class="adminFunctions ' . htmlspecialchars($class) . '">'
+		. '<form method="POST" action="' . htmlspecialchars($buttonUrl) . '" style="display:inline">'
+		. '<input type="hidden" name="csrf_token" value="' . $csrfToken . '">'
+		. '[<button type="submit" class="buttonLink" title="' . htmlspecialchars($title) . '">' . htmlspecialchars($label) . '</button>]'
+		. '</form>'
+		. '</span>';
+
+	if ($isNoScript) {
+		$form = '<noscript>' . $form . '</noscript>';
+	}
+
+	return $form;
+}
+
+/**
+ * Generate a POST form for an attachment action button.
+ */
+function generateAttachmentForm(
+	string $url,
+	string $functionClass,
+	string $title,
+	string $label,
+): string {
+	$csrfToken = htmlspecialchars(getOrCreateCsrfToken(), ENT_QUOTES, 'UTF-8');
+
+	return ' <span class="adminFunctions admin' . $functionClass . 'Function attachmentButton">'
+		. '<form method="POST" action="' . htmlspecialchars($url) . '" style="display:inline">'
+		. '<input type="hidden" name="csrf_token" value="' . $csrfToken . '">'
+		. '[<button type="submit" class="buttonLink" title="' . htmlspecialchars($title) . '">' . $label . '</button>]'
+		. '</form>'
+		. '</span>';
+}
+
+/**
  * Generate a hex color code based on a moderator ID using the golden angle method for good distribution of colors
  * 
  * This function takes an integer ID and converts it to a unique color by calculating a hue value using the golden angle, then converting that hue to an RGB color with fixed saturation and lightness for good visibility

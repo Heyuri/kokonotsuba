@@ -10,8 +10,12 @@ require_once __DIR__ . '/messageRenderer.php';
 require_once __DIR__ . '/messageRequestHandler.php';
 
 use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
 use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
+use Kokonotsuba\post\helper\postDateFormatter;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
@@ -19,6 +23,8 @@ use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use TopLinksListenerTrait;
+	use IncludeScriptTrait;
+	use BanFileOperationsTrait;
 
 	private string $modulePageUrl;
 	private messageService $messageService;
@@ -38,7 +44,8 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		$this->modulePageUrl = $this->getModulePageURL([], false);
 
-		$this->listenTopLinks('onRenderTopLink');
+		$this->addTopLink($this->modulePageUrl, _T('private_message_top_bar'));
+		$this->registerScript('privateMessage.js');
 
 		// $this->listenPost('onRenderPost');
 
@@ -71,7 +78,10 @@ class moduleMain extends abstractModuleMain {
 		// init message renderer
 		$this->messageRenderer = new messageRenderer(
 			$this->moduleContext->adminPageRenderer,
-			$this->messageUtility
+			$this->messageUtility,
+			new postDateFormatter($this->getConfig('TIME_ZONE', 0)),
+			$this->moduleContext->moduleEngine,
+			$this->moduleContext->request
 		);
 
 		// init request handler
@@ -79,15 +89,37 @@ class moduleMain extends abstractModuleMain {
 			$this->messageService,
 			$this->messagePolicy,
 			$this->messageRenderer,
-			$this->messageUtility
+			$this->messageUtility,
+			$this->moduleContext->request,
+			$this->getConfig('INPUT_MAX', 100),
+			$this->getConfig('PM_MESSAGES_PER_PAGE', 20)
+		);
+
+		// browser notifications for unread PMs
+		$this->registerUnreadNotificationHook();
+	}
+
+	private function registerUnreadNotificationHook(): void {
+		if (!$this->messageUtility->isLoggedIn()) {
+			return;
+		}
+
+		$apiUrl = $this->getModulePageURL(['notifications' => '1'], false);
+
+		$this->moduleContext->moduleEngine->addListener('ModuleHeader',
+			function (string &$moduleHeader) use ($apiUrl) {
+				$moduleHeader .= '<meta name="pmNotifyApi" content="' . sanitizeStr($apiUrl) . '">';
+			}
 		);
 	}
 
-	private function onRenderTopLink(string &$topLinkHookHtml): void {
-		$topLinkHookHtml .= '[<a href="' . sanitizeStr($this->modulePageUrl) . '">' . sanitizeStr(_T('private_message_top_bar')) . '</a>]';
-	}
-
 	public function ModulePage() {
+		// check if the user's IP is banned
+		$userIp = (string) $this->moduleContext->request->userIp();
+		if ($this->isIpBanned($userIp)) {
+			throw new BoardException(_T('pm_user_banned'));
+		}
+
 		// handle submitted forms and such
 		if($this->moduleContext->request->isPost()) {
 			$this->messageRequestHandler->handlePostRequest();

@@ -13,6 +13,7 @@ class postRedirectRepository extends baseRepository {
         private readonly string $threadTable,
     ) {
 		parent::__construct($databaseConnection, $redirectsTable);
+		self::validateTableNames($threadTable);
 	}
 
 	/**

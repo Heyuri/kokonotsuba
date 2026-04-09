@@ -9,15 +9,14 @@ require_once __DIR__ . '/fileBanLib.php';
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawPager;
-use function Kokonotsuba\libraries\attachmentFileExists;
+use function Kokonotsuba\libraries\getCsrfMetaTag;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
-use function Kokonotsuba\libraries\getPageOfThread;
-use function Kokonotsuba\libraries\validatePostInput;
-use Kokonotsuba\post\Post;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 use function Kokonotsuba\Modules\fileBan\getFileBanService;
@@ -46,9 +45,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->fileBanService = getFileBanService($this->moduleContext->transactionManager);
 
 		$this->registerAttachmentHook('onRenderAttachment');
-		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
+		$this->registerLinksAboveBarHook(_T('admin_nav_file_ban_title'), $this->moduleUrl, _T('admin_nav_file_ban'));
 
 		$this->listenProtected('ModuleAdminHeader', function(string &$moduleHeader) {
+			$moduleHeader .= getCsrfMetaTag();
 			$this->includeScript('fileBan.js', $moduleHeader);
 		});
 	}
@@ -63,10 +63,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		$hasAttachment = !empty($attachment) && !empty($md5);
-		$canDelete = $this->canRenderDeleteButton($attachment);
+		$canDelete = $this->canDeleteAttachment($attachment);
 
 		// BF (ban only)
-		$bfHidden = (!$hasAttachment || $isBanned) ? ' indicatorHidden' : '';
 		$bfContent = '';
 		if ($hasAttachment && !$isBanned) {
 			$banUrl = $this->getModulePageURL([
@@ -75,12 +74,11 @@ class moduleAdmin extends abstractModuleAdmin {
 				'fileId' => $attachment['fileId'],
 			], false, true);
 
-			$bfContent = ' <span class="adminFunctions adminBanFileFunction attachmentButton">[<a href="' . htmlspecialchars($banUrl) . '" title="' . _T('file_ban_btn_title') . '">BF</a>]</span>';
+			$bfContent = $this->renderAttachmentForm($banUrl, 'BanFile', _T('file_ban_btn_title'), 'BF');
 		}
-		$attachmentProperties .= '<span class="indicator indicator-banFile' . $bfHidden . '">' . $bfContent . '</span>';
+		$attachmentProperties .= $this->renderAttachmentIndicator('banFile', $bfContent, !$hasAttachment || $isBanned);
 
 		// B&D (ban + delete)
-		$bdHidden = (!$canDelete || $isBanned) ? ' indicatorHidden' : '';
 		$bdContent = '';
 		if ($canDelete && !$isBanned) {
 			$bdUrl = $this->getModulePageURL([
@@ -89,33 +87,22 @@ class moduleAdmin extends abstractModuleAdmin {
 				'fileId' => $attachment['fileId'],
 			], false, true);
 
-			$bdContent = ' <span class="adminFunctions adminBanDeleteFileFunction attachmentButton">[<a href="' . htmlspecialchars($bdUrl) . '" title="' . _T('file_ban_bd_btn_title') . '">B&amp;D</a>]</span>';
+			$bdContent = $this->renderAttachmentForm($bdUrl, 'BanDeleteFile', _T('file_ban_bd_btn_title'), 'B&amp;D');
 		}
-		$attachmentProperties .= '<span class="indicator indicator-banDeleteFile' . $bdHidden . '">' . $bdContent . '</span>';
-	}
-
-	private function canRenderDeleteButton(array $attachment): bool {
-		if (!empty($attachment)) {
-			if (attachmentFileExists($attachment) && !$attachment['isDeleted']) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_file_ban_title') . '" href="' . htmlspecialchars($this->moduleUrl) . '">' . _T('admin_nav_file_ban') . '</a></li>';
+		$attachmentProperties .= $this->renderAttachmentIndicator('banDeleteFile', $bdContent, !$canDelete || $isBanned);
 	}
 
 	public function ModulePage(): void {
 		$action = $_REQUEST['action'] ?? '';
 
 		if ($action === 'banAndDelete') {
+			requirePostWithCsrf($this->moduleContext->request);
 			$this->handleBanAndDelete();
 			return;
 		}
 
 		if ($action === 'banOnly') {
+			requirePostWithCsrf($this->moduleContext->request);
 			$this->handleBanOnly();
 			return;
 		}
@@ -141,19 +128,14 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleBanAndDelete(): void {
 		$postUid = $this->moduleContext->request->param ?? null;
-
-		validatePostInput($postUid);
-
-		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
-
-		validatePostInput($post, false);
+		$post = $this->fetchValidatedPost($postUid);
 
 		$fileId = (int) ($_GET['fileId'] ?? 0);
 		if (empty($fileId)) {
 			throw new BoardException(_T('file_ban_invalid_hash'));
 		}
 
-		$attachment = $post->getAttachments()[$fileId] ?? false;
+		$attachment = $post->getAttachmentById($fileId);
 		if (!$attachment) {
 			throw new BoardException(_T('attachment_not_found'));
 		}
@@ -190,19 +172,14 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleBanOnly(): void {
 		$postUid = $_GET['post_uid'] ?? null;
-
-		validatePostInput($postUid);
-
-		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
-
-		validatePostInput($post, false);
+		$post = $this->fetchValidatedPost($postUid);
 
 		$fileId = (int) ($_GET['fileId'] ?? 0);
 		if (empty($fileId)) {
 			throw new BoardException(_T('file_ban_invalid_hash'));
 		}
 
-		$attachment = $post->getAttachments()[$fileId] ?? false;
+		$attachment = $post->getAttachmentById($fileId);
 		if (!$attachment) {
 			throw new BoardException(_T('attachment_not_found'));
 		}
@@ -229,34 +206,6 @@ class moduleAdmin extends abstractModuleAdmin {
         else {
     		redirect('back');
         }
-	}
-
-	private function getDeletedLinkForFile(int $fileId): string {
-		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
-		$deletedPostId = $deletedPost['deleted_post_id'];
-		$baseUrl = $this->moduleContext->request->getCurrentUrlNoQuery();
-
-		$urlParameters = [
-			'pageName' => 'viewMore',
-			'deletedPostId' => $deletedPostId,
-			'moduleMode' => 'admin',
-			'mode' => 'module',
-			'load' => 'deletedPosts'
-		];
-
-		return $baseUrl . '?' . http_build_query($urlParameters);
-	}
-
-	private function rebuildBoardForPost($board, Post $post): void {
-		if ($post->isOp()) {
-			$board->rebuildBoard();
-		} else {
-			$thread_uid = $post->getThreadUid();
-			$threads = $this->moduleContext->threadService->getThreadListFromBoard($board);
-			$pageToRebuild = getPageOfThread($thread_uid, $threads, $board->getConfigValue('PAGE_DEF', 15));
-			$pageToRebuild = min($pageToRebuild, $this->getConfig('STATIC_HTML_UNTIL'));
-			$board->rebuildBoardPage($pageToRebuild);
-		}
 	}
 
 	private function handleAddBan(): void {

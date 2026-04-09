@@ -16,6 +16,7 @@ class fileRepository extends baseRepository {
 		private readonly string $deletedPostsTable,
 	) {
 		parent::__construct($databaseConnection, $fileTable);
+		self::validateTableNames($postTable, $deletedPostsTable);
 	}
 
 	/**

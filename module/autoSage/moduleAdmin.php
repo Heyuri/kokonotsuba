@@ -49,8 +49,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->registerToggleHooks();
 	}
 
-	public function ModulePage() {
-		$post = $this->moduleContext->postRepository->getPostByUid($this->moduleContext->request->getParameter('post_uid', 'GET'), true);
+	protected function handleModuleRequest(): void {
+		$post = $this->moduleContext->postRepository->getPostByUid($this->moduleContext->request->getParameter('post_uid'), true);
 
 		if (!$post->isOp()) { 
 			throw new BoardException('ERROR: Cannot autosage reply.');

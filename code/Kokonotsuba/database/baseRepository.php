@@ -4,6 +4,8 @@ namespace Kokonotsuba\database;
 
 /** Base repository providing shared CRUD and query helpers for all concrete repositories. */
 class baseRepository {
+	use ValidatesIdentifiersTrait;
+
 	/**
 	 * @param databaseConnection $databaseConnection Active database connection.
 	 * @param string $table Primary table name for this repository.
@@ -11,7 +13,9 @@ class baseRepository {
 	public function __construct(
 		protected databaseConnection $databaseConnection,
 		protected readonly string $table
-	) {}
+	) {
+		self::validateTableName($table);
+	}
 
 	private function validateColumnName(string $name): void {
 		if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $name)) {
@@ -80,8 +84,9 @@ class baseRepository {
 
 	/**
 	 * Insert a single row into the primary table.
+	 * Values may be scalars (bound as parameters) or SqlExpression instances (embedded as raw SQL).
 	 *
-	 * @param array $data Associative array of column => value pairs to insert.
+	 * @param array $data Associative array of column => value|SqlExpression pairs to insert.
 	 * @return void
 	 */
 	protected function insert(array $data): void {
@@ -89,19 +94,25 @@ class baseRepository {
 			$this->validateColumnName($key);
 		}
 		$columns = implode(', ', array_keys($data));
-		$placeholders = implode(', ', array_map(fn($k) => ":{$k}", array_keys($data)));
+		$valueParts = [];
 		$params = [];
 		foreach ($data as $key => $value) {
-			$params[":{$key}"] = $value;
+			if ($value instanceof SqlExpression) {
+				$valueParts[] = $value->expression;
+			} else {
+				$valueParts[] = ":{$key}";
+				$params[":{$key}"] = $value;
+			}
 		}
-		$query = "INSERT INTO {$this->table} ({$columns}) VALUES ({$placeholders})";
+		$query = "INSERT INTO {$this->table} ({$columns}) VALUES (" . implode(', ', $valueParts) . ")";
 		$this->databaseConnection->execute($query, $params);
 	}
 
 	/**
 	 * Update columns in rows where the given column equals the given value.
+	 * Values may be scalars (bound as parameters) or SqlExpression instances (embedded as raw SQL).
 	 *
-	 * @param array  $data   Associative array of column => new value pairs.
+	 * @param array  $data   Associative array of column => value|SqlExpression pairs.
 	 * @param string $column Column name used in the WHERE clause.
 	 * @param mixed  $value  Value to match in the WHERE clause.
 	 * @return void
@@ -113,8 +124,12 @@ class baseRepository {
 		$params = [];
 		foreach ($data as $key => $val) {
 			$this->validateColumnName($key);
-			$setClauses[] = "{$key} = :set_{$key}";
-			$params[":set_{$key}"] = $val;
+			if ($val instanceof SqlExpression) {
+				$setClauses[] = "{$key} = {$val->expression}";
+			} else {
+				$setClauses[] = "{$key} = :set_{$key}";
+				$params[":set_{$key}"] = $val;
+			}
 		}
 		$params[':where_value'] = $value;
 		$query = "UPDATE {$this->table} SET " . implode(', ', $setClauses) . " WHERE {$column} = :where_value";
@@ -272,8 +287,9 @@ class baseRepository {
 
 	/**
 	 * Update columns in rows where the given column is IN a list of values.
+	 * Values may be scalars (bound as parameters) or SqlExpression instances (embedded as raw SQL).
 	 *
-	 * @param array  $data   Associative array of column => new value pairs.
+	 * @param array  $data   Associative array of column => value|SqlExpression pairs.
 	 * @param string $column Column name used in the WHERE IN clause.
 	 * @param array  $values Values for the IN clause.
 	 * @return void
@@ -285,13 +301,22 @@ class baseRepository {
 		$params = [];
 		foreach ($data as $key => $val) {
 			$this->validateColumnName($key);
-			$setClauses[] = "{$key} = :set_{$key}";
-			$params[":set_{$key}"] = $val;
+			if ($val instanceof SqlExpression) {
+				$setClauses[] = "{$key} = {$val->expression}";
+			} else {
+				$setClauses[] = "{$key} = :set_{$key}";
+				$params[":set_{$key}"] = $val;
+			}
 		}
-		$in = $this->buildInClause($values);
+		$inPlaceholders = [];
+		foreach (array_values($values) as $i => $v) {
+			$key = ":in_{$i}";
+			$inPlaceholders[] = $key;
+			$params[$key] = $v;
+		}
+		$in = '(' . implode(', ', $inPlaceholders) . ')';
 		$query = "UPDATE {$this->table} SET " . implode(', ', $setClauses) . " WHERE {$column} IN {$in}";
-		// Merge named SET params with positional IN params — named first, positional after
-		$this->databaseConnection->execute($query, array_merge($params, array_values($values)));
+		$this->databaseConnection->execute($query, $params);
 	}
 
 	/**

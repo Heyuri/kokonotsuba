@@ -1,41 +1,42 @@
+[<a href="{$STATIC_INDEX_FILE}">Return</a>]
 	<div class="postApiInfo">
-		<h2>Post API</h2>
-		<p>Kokonotsuba provides a read-only API for fetching post data. You can fetch data from individual posts or whole threads.</p>
+		<h2>{$POST_API_TITLE}</h2>
+		<p>{$POST_API_DESCRIPTION}</p>
 
-		<h3>Get a single post</h3>
+		<h3>{$GET_SINGLE_POST}</h3>
 		<pre><code>GET {$API_BASE_URL}&amp;post_uid={post_uid}</code></pre>
-		<p>Returns JSON with the post data and rendered HTML.</p>
-		<h4>Parameters</h4>
+		<p>{$RETURNS_JSON_POST}</p>
+		<h4>{$PARAMETERS}</h4>
 		<table class="postlists">
-			<tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
-			<tr><td><code>post_uid</code></td><td>integer</td><td>The unique ID of the post</td></tr>
+			<tr><th>{$TH_PARAMETER}</th><th>{$TH_TYPE}</th><th>{$TH_DESCRIPTION}</th></tr>
+			<tr><td><code>post_uid</code></td><td>integer</td><td>{$POST_UID_DESC}</td></tr>
 		</table>
 
-		<h4>Response fields</h4>
+		<h4>{$RESPONSE_FIELDS}</h4>
 		<table class="postlists">
-			<tr><th>Field</th><th>Type</th><th>Description</th></tr>
-			<tr><td><code>post_uid</code></td><td>integer</td><td>Post unique ID</td></tr>
-			<tr><td><code>timestamp</code></td><td>string</td><td>Post timestamp</td></tr>
-			<tr><td><code>name</code></td><td>string</td><td>Poster name</td></tr>
-			<tr><td><code>tripcode</code></td><td>string</td><td>Tripcode (formatted)</td></tr>
-			<tr><td><code>secure_tripcode</code></td><td>string</td><td>Secure tripcode</td></tr>
-			<tr><td><code>capcode</code></td><td>string</td><td>Staff capcode</td></tr>
-			<tr><td><code>email</code></td><td>string</td><td>Email field</td></tr>
-			<tr><td><code>subject</code></td><td>string</td><td>Post subject</td></tr>
-			<tr><td><code>comment</code></td><td>string</td><td>Raw comment text</td></tr>
-			<tr><td><code>html</code></td><td>string</td><td>Fully rendered post HTML</td></tr>
+			<tr><th>{$TH_FIELD}</th><th>{$TH_TYPE}</th><th>{$TH_DESCRIPTION}</th></tr>
+			<tr><td><code>post_uid</code></td><td>integer</td><td>{$FIELD_POST_UID}</td></tr>
+			<tr><td><code>timestamp</code></td><td>string</td><td>{$FIELD_TIMESTAMP}</td></tr>
+			<tr><td><code>name</code></td><td>string</td><td>{$FIELD_NAME}</td></tr>
+			<tr><td><code>tripcode</code></td><td>string</td><td>{$FIELD_TRIPCODE}</td></tr>
+			<tr><td><code>secure_tripcode</code></td><td>string</td><td>{$FIELD_SECURE_TRIPCODE}</td></tr>
+			<tr><td><code>capcode</code></td><td>string</td><td>{$FIELD_CAPCODE}</td></tr>
+			<tr><td><code>email</code></td><td>string</td><td>{$FIELD_EMAIL}</td></tr>
+			<tr><td><code>subject</code></td><td>string</td><td>{$FIELD_SUBJECT}</td></tr>
+			<tr><td><code>comment</code></td><td>string</td><td>{$FIELD_COMMENT}</td></tr>
+			<tr><td><code>html</code></td><td>string</td><td>{$FIELD_HTML}</td></tr>
 		</table>
 
-		<h3>Get all posts from a thread</h3>
+		<h3>{$GET_THREAD_POSTS}</h3>
 		<pre><code>GET {$API_BASE_URL}&amp;pageName=thread&amp;thread_uid={thread_uid}</code></pre>
-		<p>Returns JSON with all posts in the specified thread.</p>
-		<h4>Parameters</h4>
+		<p>{$RETURNS_JSON_THREAD}</p>
+		<h4>{$PARAMETERS}</h4>
 		<table class="postlists">
-			<tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
-			<tr><td><code>thread_uid</code></td><td>string</td><td>The unique ID of the thread</td></tr>
+			<tr><th>{$TH_PARAMETER}</th><th>{$TH_TYPE}</th><th>{$TH_DESCRIPTION}</th></tr>
+			<tr><td><code>thread_uid</code></td><td>string</td><td>{$THREAD_UID_DESC}</td></tr>
 		</table>
 
-		<h4>Response</h4>
-		<p>Returns an object with <code>thread_uid</code>, <code>post_count</code>, and <code>posts</code> (array of post objects with the same fields as the single post endpoint).</p>
+		<h4>{$RESPONSE}</h4>
+		<p>{$THREAD_RESPONSE_DESC}</p>
 	</div>
 <hr>

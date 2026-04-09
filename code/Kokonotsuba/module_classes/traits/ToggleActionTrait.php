@@ -4,7 +4,8 @@ namespace Kokonotsuba\module_classes\traits;
 
 use Kokonotsuba\post\Post;
 
-use function Kokonotsuba\libraries\generateModerateButton;
+use function Kokonotsuba\libraries\generateModerateForm;
+use function Kokonotsuba\libraries\getCsrfMetaTag;
 
 /**
  * Trait for thread-level toggle modules (lock, sticky, autosage).
@@ -69,7 +70,7 @@ trait ToggleActionTrait {
 		$isActive = $post->getFlags()->value($this->getToggleFlagKey());
 		$url = $this->generateToggleActionUrl($post);
 
-		$modfunc .= generateModerateButton(
+		$modfunc .= generateModerateForm(
 			$url,
 			$isActive ? $this->getToggleActiveLabel() : $this->getToggleInactiveLabel(),
 			$isActive ? $this->getToggleActiveTitle() : $this->getToggleInactiveTitle(),
@@ -80,14 +81,15 @@ trait ToggleActionTrait {
 
 	protected function onRenderToggleWidget(array &$widgetArray, Post &$post): void {
 		$isActive = $post->getFlags()->value($this->getToggleFlagKey());
-		$url = $this->generateToggleActionUrl($post);
+		$url = $this->getModulePageURL([], false, true);
 		$label = $isActive ? $this->getToggleActiveTitle() : $this->getToggleInactiveTitle();
 
 		$widgetArray[] = $this->buildWidgetEntry(
 			$url,
 			$this->getToggleActionName(),
 			$label,
-			''
+			'',
+			['post_uid' => $post->getUid()]
 		);
 	}
 
@@ -100,6 +102,7 @@ trait ToggleActionTrait {
 	}
 
 	protected function onToggleModuleHeader(string &$moduleHeader): void {
+		$moduleHeader .= getCsrfMetaTag();
 		$this->includeScript($this->getToggleJsFile(), $moduleHeader);
 	}
 }

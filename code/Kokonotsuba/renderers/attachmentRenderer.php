@@ -100,6 +100,11 @@ class attachmentRenderer {
 		// extract the buttons that modules appended to the bar
 		$attachmentButtons = substr($imageBar, strlen($fileInfoBar));
 
+		// run attachment indicator hooks (rendered directly in the visible bar)
+		if($adminMode) {
+			$this->moduleEngine->dispatch('ModerateAttachmentIndicator', [&$fileInfoBar, &$fileData]);
+		}
+
 		// wrap in attachment container
 		$attachmentHtml = $this->wrapAttachmentContent(
 			$imageHtml, 
@@ -142,6 +147,9 @@ class attachmentRenderer {
 
 			// hidden data container for the JS attachment widget to read from
 			$attachmentHtml .= '<span class="attachmentWidgetData" hidden>' . $attachmentButtons . '</span>';
+
+			// toggle arrow for the JS attachment dropdown menu
+			$attachmentHtml .= '<a class="menuToggle attachmentMenuToggle" role="button" aria-label="Attachment menu">&#x25B6;</a>';
 		}
 
 		// close file info bar

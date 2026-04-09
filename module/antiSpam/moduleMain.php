@@ -7,8 +7,8 @@ require_once __DIR__ . '/antiSpamService.php';
 require_once __DIR__ . '/antiSpamLib.php';
 
 use Kokonotsuba\error\BoardException;
-use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
 use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 use Kokonotsuba\Modules\antiSpam\antiSpamService;
 
@@ -20,10 +20,9 @@ use function Puchiko\request\redirect;
 
 class moduleMain extends abstractModuleMain {
 	use RegistBeginListenerTrait;
+	use BanFileOperationsTrait;
 
 	private antiSpamService $antiSpamService;
-	private string $globalBans;
-	private string $globalBansPath;
 
 	public function getName(): string {
 		return 'Anti-spam checking system';
@@ -40,9 +39,6 @@ class moduleMain extends abstractModuleMain {
 
 		// set antispam service instance
 		$this->antiSpamService = getAntiSpamService();
-
-		// get global bans path
-		$this->globalBansPath = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
 	}
 	
 	private function onBeforeCommit(array &$registInfo): void{
@@ -187,9 +183,7 @@ class moduleMain extends abstractModuleMain {
 	private function banUser(string $reason, int $durationSeconds): void {
 		// get IP from request
 		// this is the user who made the regist request
-		$ipAddress = $this->moduleContext->request->userIp();
-
-		$ip = (string)$ipAddress;
+		$ip = (string)$this->moduleContext->request->userIp();
 
 		// calculate start time
 		$startTime = $_SERVER['REQUEST_TIME'];
@@ -197,23 +191,8 @@ class moduleMain extends abstractModuleMain {
 		// calculate end time
 		$expires = $startTime + $durationSeconds;
 
-		// sanitize reason for flat-file storage (commas break the CSV format)
-		$reason = str_replace(',', '&#44;', $reason);
-
-		// build ban entry
-		$banEntry = "{$ip},{$startTime},{$expires},{$reason}";
-
-		// append to global bans file
-		$needsNewline = file_exists($this->globalBansPath) && filesize($this->globalBansPath) > 0;
-
-		$f = fopen($this->globalBansPath, 'a');
-		if ($f) {
-			if ($needsNewline) {
-				fwrite($f, "\n");
-			}
-			fwrite($f, $banEntry);
-			fclose($f);
-		}
+		// append to global bans file via trait
+		$this->addBanEntry($this->getGlobalBanFilePath(), $ip, $startTime, $expires, $reason);
 	}
 
 	private function matchesRule(string $value, array $rule): bool {

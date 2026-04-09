@@ -4,7 +4,6 @@ namespace Kokonotsuba\Modules\autoSage;
 
 require_once __DIR__ . '/autoSageLibrary.php';
 
-use Kokonotsuba\post\FlagHelper;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\RegistBeforeCommitListenerTrait;
@@ -25,15 +24,7 @@ class moduleMain extends abstractModuleMain {
  	public function initialize(): void {
 		$this->listenRegistBeforeCommit('onBeforeCommit');
 
-		$this->listenOpeningPost('renderAutosageIcon', 10);
-	}
-
-	public function renderAutosageIcon(array &$templateValues, Post $post) {
-		$status = $post->getFlags();
-		$isActive = $status->value('as');
-		$hiddenClass = $isActive ? '' : ' indicatorHidden';
-
-		$templateValues['{$POSTINFO_EXTRA}'] .= '<span class="indicator indicator-autosage' . $hiddenClass . '">' . getAutoSageIndicator() . '</span>';
+		$this->registerOpeningPostIndicator('autosage', getAutoSageIndicator(), fn(Post $p) => $p->getFlags()->value('as'), 10);
 	}
 
 	public function onBeforeCommit(&$name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $files, $isReply, $status, $thread) {

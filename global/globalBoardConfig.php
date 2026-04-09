@@ -159,14 +159,13 @@ $config['ModuleSettings']['APPEND_TRIP_PM_BUTTON_TO_POST'] = false;
 //fullBanner
 $config['ModuleSettings']['SHOW_TOP_AD'] = true; // Whether to show the top full banner ad
 $config['ModuleSettings']['SHOW_BOTTOM_AD'] = true; // Whether to show the bottom full banner ad
+$config['ModuleSettings']['FULLBANNER_SUBMISSION_COOLDOWN'] = 300; // Seconds between banner submissions per IP
+$config['ModuleSettings']['FULLBANNER_REQUIRED_WIDTH'] = 468; // Required banner image width in pixels
+$config['ModuleSettings']['FULLBANNER_REQUIRED_HEIGHT'] = 60; // Required banner image height in pixels
+$config['ModuleSettings']['FULLBANNER_MAX_FILE_SIZE'] = 204800; // Maximum banner file size in bytes (200KB)
 
-// These banners *must* be in the web-accessible static/fullbanners/ directory
-// image name => URL the banner will lead to when clicked
-$config['ModuleSettings']['BANNER_ADS'] = array(
-	'rules2.png' => 'https://www.heyuri.net/index.php?p=rules',
-	'nominate1.png' => 'https://cgi.heyuri.net/nominate/',
-	'sw2.png' => 'https://dis.heyuri.net/sw/',
-);
+// Full banners are now managed via the database through the admin panel.
+// Legacy BANNER_ADS config is no longer used.
 
 //mod_wf
 $config['ModuleSettings']['FILTERS'] = array( 

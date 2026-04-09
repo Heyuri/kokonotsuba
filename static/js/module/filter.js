@@ -51,6 +51,28 @@ const kkfilter = {
 			}
 		}
 
+		// Hook into the attachment widget dropdown (if it's loaded)
+		if (window.attachmentWidget) {
+			// Dynamic label: "Hide image" or "Show image"
+			window.attachmentWidget.registerLabelProvider('hideImage', function (ctx) {
+				if (!ctx.container || !ctx.post) return null;
+				var key = kkfilter.getAttachmentKey(ctx.post, ctx.container);
+				if (!key) return null;
+				return kkfilter.isImageHidden(key) ? 'Show image' : 'Hide image';
+			});
+
+			// Action handler: toggle image visibility
+			window.attachmentWidget.registerActionHandler('hideImage', function (ctx) {
+				if (!ctx.container || !ctx.post) return;
+				var key = kkfilter.getAttachmentKey(ctx.post, ctx.container);
+				if (!key) return;
+				kkfilter.toggleImage(key, ctx.container);
+			});
+
+			// Apply stored hidden states on load
+			kkfilter.applyHiddenImages();
+		}
+
 		return true;
 	},
 
@@ -162,6 +184,65 @@ const kkfilter = {
 		if (link) {
 			link.innerText = 'Show';
 			link.title = 'Show this post';
+		}
+	},
+
+	// ---- Image hiding ----
+
+	getAttachmentKey: function (postEl, containerEl) {
+		if (!postEl || !postEl.id) return null;
+		var postNo = postEl.id.slice(1); // strip "p"
+		var anchor = containerEl.querySelector('.attachmentAnchor');
+		var index = anchor ? anchor.dataset.attachmentIndex : '0';
+		return postNo + '-' + index;
+	},
+
+	getHiddenImages: function () {
+		try {
+			return JSON.parse(localStorage.getItem('filter_hidden_images')) || [];
+		} catch (e) {
+			return [];
+		}
+	},
+
+	saveHiddenImages: function (list) {
+		localStorage.setItem('filter_hidden_images', JSON.stringify(list));
+	},
+
+	isImageHidden: function (key) {
+		return this.getHiddenImages().indexOf(key) !== -1;
+	},
+
+	toggleImage: function (key, containerEl) {
+		var list = this.getHiddenImages();
+		var idx = list.indexOf(key);
+		if (idx === -1) {
+			list.push(key);
+			containerEl.classList.add('filterImage');
+		} else {
+			list.splice(idx, 1);
+			containerEl.classList.remove('filterImage');
+		}
+		this.saveHiddenImages(list);
+	},
+
+	applyHiddenImages: function () {
+		var list = this.getHiddenImages();
+		if (!list.length) return;
+		for (var i = 0; i < list.length; i++) {
+			var parts = list[i].split('-');
+			if (parts.length < 2) continue;
+			var postNo = parts[0];
+			var attachIndex = parts[1];
+			var post = document.getElementById('p' + postNo);
+			if (!post) continue;
+			var containers = post.querySelectorAll('.attachmentContainer');
+			containers.forEach(function (c) {
+				var anchor = c.querySelector('.attachmentAnchor');
+				if (anchor && anchor.dataset.attachmentIndex === attachIndex) {
+					c.classList.add('filterImage');
+				}
+			});
 		}
 	}
 

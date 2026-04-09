@@ -56,10 +56,8 @@
 								<!--&IF($FORM_NOTICE_STORAGE_LIMIT,'{$FORM_NOTICE_STORAGE_LIMIT}','')-->
 								{$MODULE_POST_MENU_LIST_ITEM}
 							</ul>
-								<hr>
-							<ul class="rules">
-                                <li><div id="formfuncs"><a class="postformOption" href="javascript:kkjs.form_switch();">Switch form position</a> | <a class="postformOption" href="{$STATIC_URL}html/bbcode.html" target="_blank">BBCode reference</a>{$FORM_FUNCS_EXTRA}</div></li>
-							</ul>
+							<hr>
+                            <div id="formfuncs" class="rules"><a class="postformOption" href="javascript:kkjs.form_switch();">Switch form position</a> | <a class="postformOption" href="{$STATIC_URL}html/bbcode.html" target="_blank">BBCode reference</a>{$FORM_FUNCS_EXTRA}</div>
 							{$HOOKPOSTINFO}
 						</td>
 					</tr>

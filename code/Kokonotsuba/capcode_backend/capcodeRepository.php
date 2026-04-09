@@ -16,6 +16,7 @@ class capcodeRepository extends baseRepository {
 		private string $accountTable
     ) {
 		parent::__construct($databaseConnection, $capcodeTable);
+		self::validateTableNames($accountTable);
 	}
 
 	private function getBaseSelectQuery(): string {

@@ -3,9 +3,12 @@
 namespace Kokonotsuba\Modules\privateMessage;
 
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\request\request;
 
 use function Kokonotsuba\libraries\_T;
+use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
+use function Puchiko\strings\strlenUnicode;
 
 class messageRequestHandler {
     public function __construct(
@@ -13,129 +16,147 @@ class messageRequestHandler {
         private messagePolicy $messagePolicy,
         private messageRenderer $messageRenderer,
         private messageUtility $messageUtility,
+        private request $request,
+        private int $inputMax = 100,
+        private int $messagesPerPage = 20,
     ) {}
 
-	private function handlePrivateThread(string $usertripCode, string $contactTripcode, int $page = 0): string {
-		// validate that the user's PM hash is among the contact's allowed hashes
-		$isAuthorized = $this->messagePolicy->canViewContact($contactTripcode, $usertripCode);
+	public function handleInboxPage(): void {
+		$tripCode = $this->messageUtility->getUsertripCode();
+		$modulePageUrl = $this->messageUtility->getModulePageURL();
 
-		// if not authorized then throw 403
-		if(!$isAuthorized) {
-			throw new BoardException(_T('pm_login_required'), 403);
-		}
+		$page = ($this->request->hasParameter('page') && is_numeric($this->request->getParameter('page')))
+			? max(0, (int) $this->request->getParameter('page'))
+			: 0;
 
-		// get PMs from the contact
-		$messages = $this->messageService->getMessagesForTripCode($usertripCode, $page);
+		$messages = $this->messageService->getAllMessagesForUser($tripCode, $page, $this->messagesPerPage);
+		$totalEntries = $this->messageService->getAllMessagesCountForUser($tripCode);
 
-		// render the thread view and return it
-		return $this->messageRenderer->renderContactView($messages, $page) ?? '';
+		$this->messageRenderer->renderInboxPage(
+			$messages,
+			$modulePageUrl,
+			$tripCode,
+			$totalEntries,
+			$this->messagesPerPage
+		);
 	}
 
-	public function handleInboxPage(): void {
-		// get selected contact's tripcode from query params
-		$contactTripcode = $_GET['tripcode'] ?? null;
-		
-		// if not selected, return empty string (no thread view)
-		if(!$contactTripcode) {
-			throw new BoardException(_T('contact_not_selected'), 400);
-		}
-
-		// get page number for the thread view
-		$page = intval($_GET['page'] ?? 0);
-
-		// get user trip hash
+	private function handleViewMessage(): void {
+		$messageId = (int) $this->request->getParameter('view');
 		$tripCode = $this->messageUtility->getUsertripCode();
 
-		// handle PM thread html generation if one is selected
-		$messageThreadHtml = $this->handlePrivateThread($tripCode, $contactTripcode, $page);
+		$message = $this->messageService->getMessageById($messageId);
 
-		// get contact data
-		$contacts = $this->messageService->getContactsForUser($tripCode);
+		if (!$message) {
+			throw new BoardException(_T('pm_message_not_found'), 404);
+		}
 
-		// render the inbox page
-		$this->messageRenderer->renderInboxPage(
-            $contacts, 
-            $messageThreadHtml, 
-            $this->messageUtility->getModulePageURL()
-        );
+		// only sender or recipient can view
+		if ($message['sender_tripcode'] !== $tripCode && $message['recipient_tripcode'] !== $tripCode) {
+			throw new BoardException(_T('pm_no_conversation'), 403);
+		}
+
+		// mark as read if this user is the recipient
+		if ($message['recipient_tripcode'] === $tripCode && !$message['is_read']) {
+			$this->messageService->markMessageAsRead($messageId);
+			$message['is_read'] = 1;
+		}
+
+		$modulePageUrl = $this->messageUtility->getModulePageURL();
+		$this->messageRenderer->renderViewMessage($message, $modulePageUrl, $tripCode);
 	}
 
 	public function handleWriteMessage(): void {
-		// get form inputs
-		$recipient = $_POST['recipient'] ?? '';
-		$name = $_POST['name'] ?? '';
-		$subject = $_POST['subject'] ?? '';
-		$body = $_POST['body'] ?? '';
+		$recipient = trim($this->request->getParameter('recipient', 'POST') ?? '');
+		$rawName = trim($this->request->getParameter('name', 'POST') ?? '');
+		$subject = trim($this->request->getParameter('subject', 'POST') ?? '');
+		$body = trim($this->request->getParameter('body', 'POST') ?? '');
 
-		// validate empty inputs
 		if (empty($recipient) || empty($body)) {
 			throw new BoardException(_T('pm_recipient_and_message_required'), 400);
 		}
 
-		// now validate that they're valid trip codes
-		if($this->messageUtility->isValidTripCode($recipient) === false) {
+		if (strlenUnicode($recipient) > $this->inputMax) {
+			throw new BoardException(_T('pm_input_too_long'), 400);
+		}
+
+		if (strlenUnicode($rawName) > $this->inputMax) {
+			throw new BoardException(_T('pm_input_too_long'), 400);
+		}
+
+		if (strlenUnicode($subject) > $this->inputMax) {
+			throw new BoardException(_T('pm_input_too_long'), 400);
+		}
+
+		if (strlenUnicode($body) > $this->inputMax) {
+			throw new BoardException(_T('pm_input_too_long'), 400);
+		}
+
+		if (!$this->messageUtility->isValidTripCode($recipient)) {
 			throw new BoardException(_T('pm_invalid_recipient'), 400);
 		}
 
-		// get sender trip hash
 		$senderTripCode = $this->messageUtility->getUsertripCode();
 
-		// send the message
-		$this->messageService->sendMessage($senderTripCode, $recipient, $name, $subject, $body);
+		if (!$this->messagePolicy->canSendMessage($senderTripCode)) {
+			throw new BoardException(_T('pm_login_required'), 403);
+		}
 
-		// redirect back to inbox
+		$parsed = $this->messageUtility->parseName($rawName);
+		$displayName = $parsed['name'];
+
+		$ipAddress = (string) $this->request->userIp();
+		$this->messageService->sendMessage($senderTripCode, $recipient, $displayName, $subject, $body, $ipAddress);
+
 		redirect($this->messageUtility->getModulePageURL());
 		exit();
 	}
 
 	private function handleLogin(): void {
-		// get tripcode from form input
-		$tripCodeInput = $_POST['tripcode'] ?? '';
+		$tripCodeInput = $this->request->getParameter('tripcodeLogin', 'POST') ?? '';
 
-		// validate that it's not empty and is a valid tripcode
 		if (empty($tripCodeInput) || !$this->messageUtility->isValidTripCodeInput($tripCodeInput)) {
 			throw new BoardException(_T('pm_invalid_tripcode'), 400);
 		}
 
-		// log the user in by setting a cookie with their tripcode
-		$this->messageUtility->logInUser($tripCodeInput);
+		if (strlenUnicode($tripCodeInput) > $this->inputMax) {
+			throw new BoardException(_T('pm_input_too_long'), 400);
+		}
 
-		// redirect to inbox
+		$this->messageUtility->loginUser($tripCodeInput);
+
 		redirect($this->messageUtility->getModulePageURL());
-		exit();
+		exit;
+	}
+
+	private function handleLogout(): void {
+		$this->messageUtility->logoutUser();
+		redirect($this->messageUtility->getModulePageURL());
+		exit;
 	}
 
 	public function handlePostRequest(): void {
-		// determine which action
-		$action = $_POST['action'] ?? '';
-
-		// check if user is logged in
+		$action = $this->request->getParameter('action', 'POST') ?? '';
 		$tripAuthorized = $this->messageUtility->isLoggedIn();
 
-		// if they aren't and the action isn't login - then throw a 403
-		if (!$tripAuthorized && $action !== 'tripLogin') {
-			throw new BoardException(_T('pm_login_required'), 403);
-		}
-
-		// handle login action
-		else if($action === 'tripLogin') {
+		if ($action === 'tripLogin') {
 			$this->handleLogin();
 			return;
 		}
 
-		// handle logout action
-		else if($action === 'tripLogout') {
-			$this->handleLogout();
-			return;
+		if (!$tripAuthorized) {
+			throw new BoardException(_T('pm_login_required'), 403);
 		}
 
-		// handle write message action
-		else if($action === 'submitPm') {
-			$this->handleWriteMessage();
-			return;
-		}
-		else {
-			throw new BoardException(_T('page_not_found'), 404);
+		switch ($action) {
+			case 'tripLogout':
+				$this->handleLogout();
+				return;
+			case 'submitPm':
+				$this->handleWriteMessage();
+				return;
+			default:
+				throw new BoardException(_T('page_not_found'), 404);
 		}
 	}
 
@@ -143,32 +164,41 @@ class messageRequestHandler {
 		$this->messageRenderer->renderLoginPage($this->messageUtility->getModulePageURL());
 	}
 
-	private function handleLogout(): void {
-		$this->messageUtility->logoutUser();
-		redirect($this->messageUtility->getModulePageURL());
-		exit();
-	}
-
 	public function handleGetRequest(): void {
-		// determine which page to show
-		$pageName = $_GET['pageName'] ?? '';
+		if ($this->request->hasParameter('notifications')) {
+			$this->handleNotificationsApi();
+			return;
+		}
 
-		// check if user is logged in
 		$tripAuthorized = $this->messageUtility->isLoggedIn();
 
-		// if they aren't - then handle the login page
 		if (!$tripAuthorized) {
 			$this->handleLoginPage();
 			return;
 		}
-		// check if user is authorized to view PMs
-		if($pageName === '') {
-			$this->handleInboxPage();
+
+		if ($this->request->hasParameter('view')) {
+			$this->handleViewMessage();
 			return;
 		}
-		// if the page doesn't match any of the above, throw a 404
-		 else {
-			throw new BoardException(_T('page_not_found'), 404);
+
+		$this->handleInboxPage();
+	}
+
+	private function handleNotificationsApi(): void {
+		if (!$this->messageUtility->isLoggedIn()) {
+			sendJsonResponse(['unreadCount' => 0]);
+			return;
 		}
+
+		$tripCode = $this->messageUtility->getUsertripCode();
+		$unreadCount = $this->messageService->getUnreadMessageCount($tripCode);
+
+		sendJsonResponse([
+			'unreadCount' => $unreadCount,
+			'title' => _T('pm_notification_title'),
+			'body' => _T('pm_notification_body', $unreadCount),
+			'url' => $this->messageUtility->getModulePageURL([], true),
+		]);
 	}
 }

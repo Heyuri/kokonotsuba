@@ -38,7 +38,10 @@ class threadRenderer {
 			int $threadIterator = 0, 
 			string $overboardBoardTitleHTML = '', 
 			string $crossLink = '',
-			array $templateValues = []
+			array $templateValues = [],
+			int $currentPage = 0,
+			int $totalPages = 1,
+			?int $recentRepliesCount = null
 		): string {
 
 		$threadResno = $thread->getOpNumber();
@@ -93,7 +96,10 @@ class threadRenderer {
 						$replyMode,
 						$replyCount,
 						$crossLink,
-						$templateValues
+						$templateValues,
+						$currentPage,
+						$totalPages,
+						$recentRepliesCount
 			);
 			if($i === 0) {
 				$templateValues['{$THREAD_OP}'] = $postHtml;
@@ -135,6 +141,9 @@ class threadRenderer {
 		int $replyCount,
 		string $crossLink,
 		array &$templateValues,
+		int $currentPage = 0,
+		int $totalPages = 1,
+		?int $recentRepliesCount = null
 	): string {
 		$isReply = $i > 0;
 
@@ -143,6 +152,14 @@ class threadRenderer {
 		// Hidden reply notice
 		if (!$isReply && $hiddenReply) {
 			$warnHidePost = '<div class="omittedposts">'._T('notice_omitted', $hiddenReply).'</div>';
+		}
+
+		// Page viewing notice
+		if (!$isReply && $recentRepliesCount !== null) {
+			$shownReplies = count($threadPosts) - 1;
+			$warnHidePost .= '<div class="omittedposts">'._T('notice_viewing_last_posts', $shownReplies, $shownReplies === 1 ? _T('post_singular') : _T('post_multiple')).'</div>';
+		} elseif (!$isReply && $totalPages > 1) {
+			$warnHidePost .= '<div class="omittedposts">'._T('notice_viewing_page', $currentPage + 1, $totalPages).'</div>';
 		}
 
 		// bind post op number to resto

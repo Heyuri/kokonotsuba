@@ -4,15 +4,17 @@ namespace Kokonotsuba\Modules\adminBan;
 
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
+use Kokonotsuba\module_classes\traits\listeners\FormFuncsListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 
 use function Puchiko\json\renderJsonErrorPage;
 
 class moduleMain extends abstractModuleMain {
 	use RegistBeginListenerTrait;
+	use BanFileOperationsTrait;
+	use FormFuncsListenerTrait;
 
-	private string $BANFILE = '';
-	private string $GLOBAL_BANS = '';
 	private string $BANIMG = '';
 
 	public function getName(): string {
@@ -24,14 +26,13 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->BANFILE = $this->moduleContext->board->getBoardStoragePath() . 'bans.log.txt';
 		$this->BANIMG = $this->getConfig('STATIC_URL') . "image/banned.jpg";
-		$this->GLOBAL_BANS = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
 
-		touch($this->BANFILE);
-		touch($this->GLOBAL_BANS);
+		touch($this->getBanFilePath());
+		touch($this->getGlobalBanFilePath());
 
 		$this->listenRegistBegin('onRegistBegin');
+		$this->addFormFuncLink($this->getModulePageURL([], false), 'Banned?');
 	}
 
 	public function onRegistBegin(array &$registInfo): void {
@@ -41,12 +42,12 @@ class moduleMain extends abstractModuleMain {
 
 	private function checkBans(string $ipAddress): void {
 		// read ban logs
-		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
-		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
+		$glog = $this->readBanLog($this->getGlobalBanFilePath());
+		$log = $this->readBanLog($this->getBanFilePath());
 
 		// check local board bans first, then global bans
-		$this->handleBan($log, $ipAddress, $this->BANFILE);
-		$this->handleBan($glog, $ipAddress, $this->GLOBAL_BANS);
+		$this->handleBan($log, $ipAddress, $this->getBanFilePath());
+		$this->handleBan($glog, $ipAddress, $this->getGlobalBanFilePath());
 	}
 	
 	private function ipMatchesBan(string $ip, string $pattern): bool {
@@ -138,7 +139,7 @@ class moduleMain extends abstractModuleMain {
 				// only clear it for non-js requests (i.e the user is viewing it)
 				if ($this->moduleContext->request->getRequestTime() > intval($expires) && !$this->moduleContext->request->isAjax()) {
 					unset($log[$i]);
-					file_put_contents($banFile, implode(PHP_EOL, $log));
+					$this->writeBanLog($banFile, array_values($log));
 				}
 			
 				// then handle the rendering of the regist ban page

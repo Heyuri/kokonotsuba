@@ -20,7 +20,7 @@
 					<div class="postformItem"><label for="pwd">Password:</label><input type="password" name="pwd" id="pwd" value="" class="inputtext" maxlength="{$INPUT_MAX}"><span id="delPasswordInfo">(for deletion)</span></div>
 					<div class="postformItem">{$FORM_EXTRA_COLUMN}</div>
 					<div id="rules">
-						<div id="formfuncs"><a class="postformOption" href="javascript:kkjs.form_switch();">Switch form position</a> | <a class="postformOption" href="{$STATIC_URL}html/bbcode.html" target="_blank">BBCode reference</a>{$FORM_FUNCS_EXTRA}</div>
+						<div id="formfuncs" class="rules"><a class="postformOption" href="javascript:kkjs.form_switch();">Switch form position</a> | <a class="postformOption" href="{$STATIC_URL}html/bbcode.html" target="_blank">BBCode reference</a>{$FORM_FUNCS_EXTRA}</div>
 						<ul class="rules">
 							{$FORM_NOTICE}
 							<!--&IF($FORM_NOTICE_STORAGE_LIMIT,'{$FORM_NOTICE_STORAGE_LIMIT}','')-->

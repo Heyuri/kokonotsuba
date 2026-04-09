@@ -15,7 +15,7 @@ use function Kokonotsuba\libraries\rebuildAllBoards;
 class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
 
-	private readonly string $myPage;
+	private readonly string $modulePageUrl;
 	private readonly string $globalMessageFile;
 
     public function getRequiredRole(): userRole {
@@ -35,14 +35,10 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		if(!file_exists($this->globalMessageFile)) touch($this->globalMessageFile);
 		
-		$this->myPage = $this->getModulePageURL();
+		$this->modulePageUrl = $this->getModulePageURL([], false);
 
-		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
+		$this->registerLinksAboveBarHook(_T('admin_nav_global_message_title'), $this->modulePageUrl, _T('admin_nav_global_message'));
 	}
-
-	public function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_global_message_title') . '" href="' . $this->myPage . '">' . _T('admin_nav_global_message') . '</a></li>';
-	}	
 
 	public function ModulePage() {
 		$action = $this->moduleContext->request->getParameter('action', 'GET', '');
@@ -55,7 +51,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$templateValues = [
 			'{$CURRENT_GLOBAL_MESSAGE}' => getCurrentGlobalMsg($this->globalMessageFile),
-			'{$MODULE_URL}' => $this->myPage
+			'{$MODULE_URL}' => $this->modulePageUrl
 		];
 
 		$globalMessagePageHtml = $this->moduleContext->adminPageRenderer->ParseBlock('GLOBALMSG_PAGE', $templateValues);

@@ -60,11 +60,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 
 		// add links listener 
-		$this->registerLinksAboveBarHook('onRenderLinksAboveBar');
-	}
-
-	public function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_capcodes_title') . '" href="' . htmlspecialchars($this->modulePageUrl) . '">' . _T('admin_nav_capcodes') . '</a></li>';
+		$this->registerLinksAboveBarHook(_T('admin_nav_capcodes_title'), $this->modulePageUrl, _T('admin_nav_capcodes'));
 	}
 
 	public function ModulePage(): void {

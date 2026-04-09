@@ -24,13 +24,27 @@
 		indicator.classList.remove('indicatorHidden');
 		indicator.style.opacity = "0.5";
 
+		const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
 		try {
+			const body = new URLSearchParams();
+			body.append('csrf_token', csrfToken);
+
+			// Append params from widget data attributes (e.g. post_uid)
+			if (ctx.params) {
+				for (const key in ctx.params) {
+					body.append(key, ctx.params[key]);
+				}
+			}
+
 			const response = await fetch(ctx.url, {
+				method: 'POST',
 				credentials: 'include',
 				headers: {
 					'X-Requested-With': 'XMLHttpRequest',
 					'Accept': 'application/json'
-				}
+				},
+				body: body
 			});
 
 			if (!response.ok) throw new Error(`HTTP error ${response.status}`);

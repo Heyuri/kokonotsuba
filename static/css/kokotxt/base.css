@@ -1810,44 +1810,6 @@ a.linkjs {
 	padding-left: 1em;
 }
 
-/************************ Filters *************************************/
-
-.filter .comment,
-.filter .post,
-.filter .omittedposts,
-.filter .filesize,
-.filter .postimg,
-.filter > .reply-container {
-  display: none;
-}
-
-.filter .post.op {
-  display: block;
-}
-
-.filter .postinfo,
-.filter .category {
-  opacity: 0.5;
-}
-
-/* .filterpost {
-  text-decoration: none;
-  font-weight: var(--font-weight-bold);
-	font-size: 9pt;
-} */
-
-/* .filterpostContainer::before {
-	content: "["
-}
-
-.filterpostContainer::after {
-	content: "]"
-} */
-
-.filterpost:hover {
-  opacity: 1;
-}
-
 #filterdie {
   display: block;
   font-size: var(--font-size-small);

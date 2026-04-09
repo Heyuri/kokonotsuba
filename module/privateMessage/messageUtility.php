@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\privateMessage;
 
 use Closure;
+use function Kokonotsuba\libraries\generateTripcode;
 
 class messageUtility {
 	public function __construct(
@@ -40,23 +41,42 @@ class messageUtility {
 	}
 
 	public function loginUser(string $input): void {
+		$tripcode = '';
+		$secure_tripcode = '';
 		if (str_starts_with($input, '##')) {
-			// Secure tripcode
-			$password = substr($input, 2);
-			$sha = str_rot13(base64_encode(pack('H*', sha1($password . $this->tripSalt))));
-			$tripCode = '★' . substr($sha, 0, 10);
+			$secure_tripcode = substr($input, 2);
 		} else {
-			// Regular tripcode
-			$password = substr($input, 1);
-			$password = mb_convert_encoding($password, 'Shift_JIS', 'UTF-8');
-			$salt = strtr(preg_replace('/[^\.-z]/', '.', substr($password . 'H.', 1, 2)), ':;<=>?@[\\]^_`', 'ABCDEFGabcdef');
-			$tripCode = '◆' . substr(crypt($password, $salt), -10);
+			$tripcode = substr($input, 1);
 		}
 
-		$this->setUsertripCode($tripCode);
+		generateTripcode($tripcode, $secure_tripcode, $this->tripSalt);
+
+		if ($secure_tripcode) {
+			$this->setUsertripCode('★' . $secure_tripcode);
+		} else {
+			$this->setUsertripCode('◆' . $tripcode);
+		}
 	}
 
-	public function getModulePageURL(array $additionalParams = [], bool $includeBaseUrl = true): string {
+	public function getModulePageURL(array $additionalParams = [], bool $includeBaseUrl = false): string {
         return ($this->getModulePageURLCallable)($additionalParams, false, $includeBaseUrl);
+	}
+
+	public function parseName(string $rawName): array {
+		[$nameOnly, $tripcode, $secureTripcode] = array_map('trim', explode('#', $rawName . '##'));
+
+		generateTripcode($tripcode, $secureTripcode, $this->tripSalt);
+
+		$tripcodeHash = '';
+		if ($secureTripcode) {
+			$tripcodeHash = '★' . $secureTripcode;
+		} elseif ($tripcode) {
+			$tripcodeHash = '◆' . $tripcode;
+		}
+
+		return [
+			'name' => htmlspecialchars($nameOnly),
+			'tripcode' => $tripcodeHash,
+		];
 	}
 }

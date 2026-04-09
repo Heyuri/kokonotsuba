@@ -113,7 +113,7 @@ class postRenderer {
 		// Dispatch module events and finalize post menu
 		$this->dispatchPostModuleEvents($templateValues, $data, $post, $threadPosts, $adminMode, $isThreadOp, $isThreadReply);
 		$this->finalizePostWidgets($templateValues, $post, $threadPosts, $isThreadOp, $isThreadReply, $widgetDataHtml);
-
+		
 		// Return rendered HTML
 		if ($shouldRenderReply) {
 			return $this->templateEngine->ParseBlock('REPLY', $templateValues);

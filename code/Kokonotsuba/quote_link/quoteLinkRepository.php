@@ -17,6 +17,7 @@ class quoteLinkRepository extends baseRepository {
 		private readonly string $deletedPostsTable
 	) {
 		parent::__construct($databaseConnection, $quoteLinkTable);
+		self::validateTableNames($postTable, $threadTable, $deletedPostsTable);
 	}
 
 	private function indexQuoteLinksByHostPostUid(array $quoteLinks): array {

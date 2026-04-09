@@ -184,8 +184,7 @@ class postService {
 
 					$suppressBump = false;
 					if ($opPostCheck && $threadData) {
-						/** @var Thread $threadData */
-						$status = new FlagHelper($opPostCheck['status']);
+						$status = $opPostCheck->getFlags();
 						$threadCreatedTime = strtotime($threadData->getCreatedTime());
 						
 						$maxAgeLimit = $board->getConfigValue('MAX_AGE_TIME');

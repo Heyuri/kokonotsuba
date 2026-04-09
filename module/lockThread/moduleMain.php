@@ -6,13 +6,11 @@ namespace Kokonotsuba\Modules\lockThread;
 require_once __DIR__ . '/lockThreadLibrary.php';
 
 use Kokonotsuba\error\BoardException;
-use Kokonotsuba\post\FlagHelper;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\ViewedThreadListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\OpeningPostListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
-use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
 
@@ -30,7 +28,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		$this->listenViewedThread('overRidePostForm');
-		$this->listenOpeningPost('renderLockIcon', 20);
+		$this->registerOpeningPostIndicator('lock', getLockIndicator($this->getConfig('STATIC_URL')), fn(Post $p) => $p->getFlags()->value('stop'), 20);
 		$this->listenRegistBegin('onRegistBegin');
 	}
 
@@ -77,15 +75,6 @@ class moduleMain extends abstractModuleMain {
 				throw new BoardException('ERROR: This thread is locked.');
 			}
 		}
-	}
-
-	public function renderLockIcon(array &$templateValues, Post $post): void {
-		$status = $post->getFlags();
-		$lockIconHtml = getLockIndicator($this->getConfig('STATIC_URL'));
-		$isActive = $status->value('stop');
-		$hiddenClass = $isActive ? '' : ' indicatorHidden';
-
-		$templateValues['{$POSTINFO_EXTRA}'] .= '<span class="indicator indicator-lock' . $hiddenClass . '">' . $lockIconHtml . '</span>';
 	}
 
 }

@@ -11,4 +11,13 @@ trait TopLinksListenerTrait {
 			$priority
 		);
 	}
+
+	protected function addTopLink(string $url, string $text, int $priority = 0): void {
+		$this->moduleContext->moduleEngine->addListener('TopLinks',
+			function(string &$topLinkHtml) use ($url, $text) {
+				$topLinkHtml .= ' [<a href="' . htmlspecialchars($url) . '">' . htmlspecialchars($text) . '</a>]';
+			},
+			$priority
+		);
+	}
 }

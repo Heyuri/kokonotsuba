@@ -13,12 +13,11 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\renderCachedJsonPage;
 use function Puchiko\json\renderJsonErrorPage;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use FormFuncsListenerTrait;
 	use ModuleHeaderListenerTrait;
-
-	private const CACHE_DIR_NAME = 'post_api_cache';
 
 	/** Resolved filesystem path to the cache directory. */
 	private string $cacheDir;
@@ -32,52 +31,17 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->cacheDir = getBackendGlobalDir() . self::CACHE_DIR_NAME . '/';
-		$this->ensureCacheDir();
-
-		$this->registerTranslations();
-
-		$this->listenFormFuncs('onRenderFormFuncs');
+		$this->addFormFuncLink($this->getModulePageURL(['pageName' => 'info'], false), _T('post_api_link'));
 		$this->listenModuleHeader('onGenerateModuleHeader');
-	}
-
-	/** Create the cache directory if it does not exist. */
-	private function ensureCacheDir(): void {
-		if (!is_dir($this->cacheDir)) {
-			mkdir($this->cacheDir, 0755, true);
-		}
-	}
-
-	private function registerTranslations(): void {
-		PMCLibrary::getLanguageInstance()->attachLanguage([
-			'post_api_link'     => 'Post API',
-			'post_api_fetching' => 'Fetching post...',
-		]);
-	}
-
-	/** Inject the "Post API" link into the formfuncs div. */
-	private function onRenderFormFuncs(string &$formFuncsHtml): void {
-		$url = $this->getModulePageURL(['pageName' => 'info']);
-		$formFuncsHtml .= ' | <a class="postformOption" href="' . $url . '">' . _T('post_api_link') . '</a>';
 	}
 
 	/** Inject the API base URL meta tag into the page header. */
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		$apiUrl = $this->getModulePageURL();
-		$fetchingText = htmlspecialchars(_T('post_api_fetching'), ENT_QUOTES, 'UTF-8');
+		$fetchingText = sanitizeStr(_T('post_api_fetching'));
 
 		$moduleHeader .= '<meta name="postApiUrl" content="' . $apiUrl . '">';
 		$moduleHeader .= '<meta name="postApiFetchingText" content="' . $fetchingText . '">';
-	}
-
-	private function generateTripcode(?string $tripcode, ?string $secureTripcode): string {
-		if ($secureTripcode) {
-			return _T('cap_char') . $secureTripcode;
-		} elseif ($tripcode) {
-			return _T('trip_pre') . $tripcode;
-		} else {
-			return '';
-		}
 	}
 
 	/** Module page — routes between info page and JSON API endpoints. */
@@ -105,10 +69,36 @@ class moduleMain extends abstractModuleMain {
 
 		$this->moduleContext->adminPageRenderer->setTemplate('admin');
 		$infoHtml = $this->moduleContext->adminPageRenderer->ParseBlock('POST_API_INFO', [
-			'{$API_BASE_URL}' => $baseApiUrl,
+			'{$API_BASE_URL}'              => $baseApiUrl,
+			'{$POST_API_TITLE}'            => _T('post_api_title'),
+			'{$POST_API_DESCRIPTION}'      => _T('post_api_description'),
+			'{$GET_SINGLE_POST}'           => _T('post_api_get_single_post'),
+			'{$RETURNS_JSON_POST}'         => _T('post_api_returns_json_post'),
+			'{$PARAMETERS}'                => _T('post_api_parameters'),
+			'{$TH_PARAMETER}'              => _T('post_api_th_parameter'),
+			'{$TH_TYPE}'                   => _T('post_api_th_type'),
+			'{$TH_DESCRIPTION}'            => _T('post_api_th_description'),
+			'{$TH_FIELD}'                  => _T('post_api_th_field'),
+			'{$POST_UID_DESC}'             => _T('post_api_post_uid_desc'),
+			'{$RESPONSE_FIELDS}'           => _T('post_api_response_fields'),
+			'{$FIELD_POST_UID}'            => _T('post_api_field_post_uid'),
+			'{$FIELD_TIMESTAMP}'           => _T('post_api_field_timestamp'),
+			'{$FIELD_NAME}'                => _T('post_api_field_name'),
+			'{$FIELD_TRIPCODE}'            => _T('post_api_field_tripcode'),
+			'{$FIELD_SECURE_TRIPCODE}'     => _T('post_api_field_secure_tripcode'),
+			'{$FIELD_CAPCODE}'             => _T('post_api_field_capcode'),
+			'{$FIELD_EMAIL}'               => _T('post_api_field_email'),
+			'{$FIELD_SUBJECT}'             => _T('post_api_field_subject'),
+			'{$FIELD_COMMENT}'             => _T('post_api_field_comment'),
+			'{$FIELD_HTML}'                => _T('post_api_field_html'),
+			'{$GET_THREAD_POSTS}'          => _T('post_api_get_thread_posts'),
+			'{$RETURNS_JSON_THREAD}'       => _T('post_api_returns_json_thread'),
+			'{$THREAD_UID_DESC}'           => _T('post_api_thread_uid_desc'),
+			'{$RESPONSE}'                  => _T('post_api_response'),
+			'{$THREAD_RESPONSE_DESC}'      => _T('post_api_thread_response_desc'),
 		]);
 
-		$html = $board->getBoardHead('Post API');
+		$html = $board->getBoardHead(_T('post_api_title'));
 		$html .= $infoHtml;
 		$html .= $board->getBoardFooter(false);
 
@@ -176,6 +166,8 @@ class moduleMain extends abstractModuleMain {
 			'email' => $post->getEmail(),
 			'subject' => $post->getSubject(),
 			'comment' => $post->getComment(),
+			'parent_thread_uid' => $post->getThreadUid(),
+			'parent_post_number' => $post->getOpNumber(),
 			'html' => $html,
 		];
 	}

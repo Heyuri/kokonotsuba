@@ -614,14 +614,16 @@ class tableCreator {
                 id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                 link TEXT DEFAULT NULL,
                 banner_file_name TEXT NOT NULL,
+                ip_address VARCHAR(45) DEFAULT NULL,
                 is_active TINYINT(1) NOT NULL DEFAULT 1,
                 is_approved TINYINT(1) NOT NULL DEFAULT 0,
                 date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
                 INDEX idx_active_approved (is_active, is_approved),
-                INDEX idx_date_submitted (date_submitted)
+                INDEX idx_date_submitted (date_submitted),
+                INDEX idx_ip_date (ip_address, date_submitted)
             ) ENGINE=InnoDB;
             ",
-                        "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BLOTTER_TABLE']} (
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BLOTTER_TABLE']} (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 blotter_content TEXT NOT NULL,
                 added_by INT NULL,

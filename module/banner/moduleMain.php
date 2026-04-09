@@ -12,7 +12,7 @@ class moduleMain extends abstractModuleMain {
 	use IncludeScriptTrait;
 	use PageTopListenerTrait;
 
-	private readonly string $myPage;
+	private readonly string $modulePageUrl;
 	private readonly string $bannerPath;
 	private readonly string $staticUrl;
 
@@ -25,7 +25,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->myPage = $this->getModulePageURL();
+		$this->modulePageUrl = $this->getModulePageURL();
 
 		$this->bannerPath = $this->getConfig('ModuleSettings.BANNER_PATH');
 
@@ -73,7 +73,7 @@ class moduleMain extends abstractModuleMain {
 	public function onRenderPageTop(&$html) {
 		$html .= '
       <div id="bannerContainer">
-        <img width="300" height="100" src="' .$this->myPage.'" id="banner" title="Click to change">
+        <img width="300" height="100" src="' .$this->modulePageUrl.'" id="banner" title="Click to change">
       </div>';
 	}
 
