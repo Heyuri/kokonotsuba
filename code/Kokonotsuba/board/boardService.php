@@ -381,7 +381,7 @@ class boardService {
 		$templateFile = null;
 
 		// If not viewing a thread, it's a reply page, otherwise it's an index page
-		$isReply = $this->container->get('request')->isViewingThread() === false;
+		$isReply = $this->container->get('request')->isViewingThread() === true;
 
 		$templateKey = $isReply ? 'REPLY_TEMPLATE_FILE' : 'TEMPLATE_FILE';
 		$templateFileName = $board->getConfigValue($templateKey, 'TEMPLATE_FILE');
