@@ -171,7 +171,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$paginationData = $this->fullBannerService->getAllBannersPage($requestedPage, $entriesPerPage);
 		$banners = $paginationData['items'];
 
-		$rows = array_map(fn($b) => $b->toAdminTemplateRow($this->serveImageUrl, $this->requiredWidth, $this->requiredHeight), $banners);
+		$rows = array_map(fn($b) => $b->toAdminTemplateRow($this->serveImageUrl, $this->requiredWidth, $this->requiredHeight, $this->moduleContext->postDateFormatter), $banners);
 		$paginationHtml = drawPager($paginationData['entriesPerPage'], $paginationData['totalEntries'], $this->modulePage, $request);
 
 		$templateValues = [

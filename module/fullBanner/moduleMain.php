@@ -179,7 +179,7 @@ class moduleMain extends abstractModuleMain {
 		$paginationData = $this->fullBannerService->getApprovedActiveBannersPage($requestedPage, $perPage);
 		$banners = $paginationData['items'];
 
-		$rows = array_map(fn($b) => $b->toPublicTemplateRow($this->serveImageUrl, $this->requiredWidth, $this->requiredHeight), $banners);
+		$rows = array_map(fn($b) => $b->toPublicTemplateRow($this->serveImageUrl, $this->requiredWidth, $this->requiredHeight, $this->moduleContext->postDateFormatter), $banners);
 
 		// Use drawPager for pagination
 		$paginationHtml = drawPager($paginationData['entriesPerPage'], $paginationData['totalEntries'], $this->modulePageUrl, $request);

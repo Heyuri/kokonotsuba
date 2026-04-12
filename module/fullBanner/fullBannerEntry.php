@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\fullBanner;
 
+use Kokonotsuba\post\helper\postDateFormatter;
 use function Puchiko\strings\sanitizeStr;
 
 class fullBannerEntry {
@@ -13,20 +14,16 @@ class fullBannerEntry {
 	public int $is_approved;
 	public string $date_submitted;
 
-	private function getDisplayDate(): string {
-		$timestamp = strtotime($this->date_submitted);
-		if ($timestamp === false) {
-			return $this->date_submitted;
-		}
-		return date('Y-m-d H:i', $timestamp);
+	private function getDisplayDate(postDateFormatter $formatter): string {
+		return $formatter->formatFromDateString($this->date_submitted);
 	}
 
-	public function toPublicTemplateRow(string $serveImageUrl, int $bannerWidth, int $bannerHeight): array {
+	public function toPublicTemplateRow(string $serveImageUrl, int $bannerWidth, int $bannerHeight, postDateFormatter $formatter): array {
 		$link = $this->link ? sanitizeStr($this->link) : '#';
 		$imageUrl = $serveImageUrl . '&file=' . urlencode($this->banner_file_name);
 
 		return [
-			'{$DATE}' => sanitizeStr($this->getDisplayDate()),
+			'{$DATE}' => $this->getDisplayDate($formatter),
 			'{$LINK}' => $link,
 			'{$IMAGE_URL}' => sanitizeStr($imageUrl),
 			'{$BANNER_WIDTH}' => (string) $bannerWidth,
@@ -34,13 +31,13 @@ class fullBannerEntry {
 		];
 	}
 
-	public function toAdminTemplateRow(string $serveImageUrl, int $bannerWidth, int $bannerHeight): array {
+	public function toAdminTemplateRow(string $serveImageUrl, int $bannerWidth, int $bannerHeight, postDateFormatter $formatter): array {
 		$link = $this->link ? sanitizeStr($this->link) : '#';
 		$imageUrl = $serveImageUrl . '&file=' . urlencode($this->banner_file_name);
 
 		return [
 			'{$ID}' => (string) $this->id,
-			'{$DATE}' => sanitizeStr($this->getDisplayDate()),
+			'{$DATE}' => $this->getDisplayDate($formatter),
 			'{$FILE_NAME}' => sanitizeStr($this->banner_file_name),
 			'{$LINK}' => $link,
 			'{$IMAGE_URL}' => sanitizeStr($imageUrl),
