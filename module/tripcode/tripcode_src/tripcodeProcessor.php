@@ -29,8 +29,9 @@ class tripcodeProcessor {
 
 		// now return
 		if($capcode) {
-			$tripcode = '';
+			// Staff capcode found — clear secure_tripcode but still generate the regular tripcode
 			$secure_tripcode = '';
+			$this->generateTripcodeFromInput($tripcode, $secure_tripcode);
 			return;
 		}
 

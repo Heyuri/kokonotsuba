@@ -14,17 +14,18 @@ require_once __DIR__ . '/fullBannerLib.php';
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\traits\listeners\AboveThreadAreaListenerTrait;
-use Kokonotsuba\module_classes\traits\listeners\BelowThreadAreaListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\AboveThreadsGlobalListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\BelowThreadsGlobalListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\serveMedia;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
+use function Kokonotsuba\libraries\html\drawPager;
 
 class moduleMain extends abstractModuleMain {
-	use AboveThreadAreaListenerTrait;
-	use BelowThreadAreaListenerTrait;
+	use AboveThreadsGlobalListenerTrait;
+	use BelowThreadsGlobalListenerTrait;
 
 	private readonly bool $showTopAd;
 	private readonly bool $showBottomAd;
@@ -54,20 +55,20 @@ class moduleMain extends abstractModuleMain {
 		$this->requiredWidth = $this->getConfig('ModuleSettings.FULLBANNER_REQUIRED_WIDTH', 468);
 		$this->requiredHeight = $this->getConfig('ModuleSettings.FULLBANNER_REQUIRED_HEIGHT', 60);
 		$this->maxFileSize = $this->getConfig('ModuleSettings.FULLBANNER_MAX_FILE_SIZE', 204800);
-		$this->modulePageUrl = $this->getModulePageURL(['page' => 'bannerIndex'], false, false);
-		$this->bannerServerUrl = $this->getModulePageURL(['page' => 'bannerServer'], false, false);
-		$this->serveImageUrl = $this->getModulePageURL(['page' => 'bannerServeImage'], false, false);
+		$this->modulePageUrl = $this->getModulePageURL([], false, false);
+		$this->bannerServerUrl = $this->getModulePageURL(['pageName' => 'bannerServer'], false, false);
+		$this->serveImageUrl = $this->getModulePageURL(['pageName' => 'bannerServeImage'], false, false);
 
 		$this->fullBannerService = getFullBannerService($this->moduleContext->transactionManager);
 
 		$this->hasActiveBanners = $this->fullBannerService->getRandomActiveBanner() !== null;
 
-		$this->listenAboveThreadArea('onRenderAboveThreadArea');
-		$this->listenBelowThreadArea('onRenderBelowThreadArea');
+		$this->listenAboveThreadsGlobal('onRenderAboveThreadArea');
+		$this->listenBelowThreadsGlobal('onRenderBelowThreadArea');
 	}
 
 	private function renderBannerFrame(): string {
-		return '<iframe class="fullbannerIframe" title="Banner" src="' . htmlspecialchars($this->bannerServerUrl) . '"></iframe>
+		return '<iframe class="fullbannerIframe" title="Banner" src="' . sanitizeStr($this->bannerServerUrl) . '"></iframe>
 				<div class="fullbannerSuggestionContainer centerText">
 					<small class="fullbannerSuggestion">
 						<a class="fullbannerSuggestionAnchor" href="' . sanitizeStr($this->modulePageUrl) . '">' . sanitizeStr(_T('self_serve_banner_suggest')) . '</a>
@@ -171,9 +172,17 @@ class moduleMain extends abstractModuleMain {
 
 	private function handleBannerIndexPage(string $statusMessage = ''): void {
 		$staticIndexFile = $this->getConfig('STATIC_INDEX_FILE', 'index.html');
-		$banners = $this->fullBannerService->getApprovedActiveBanners();
+		$perPage = (int)$this->getConfig('ADMIN_PAGE_DEF', 100);
+		$request = $this->moduleContext->request;
+		$pageParam = $request->getParameter('page', 'GET', 0);
+		$requestedPage = is_numeric($pageParam) ? (int)$pageParam : 0;
+		$paginationData = $this->fullBannerService->getApprovedActiveBannersPage($requestedPage, $perPage);
+		$banners = $paginationData['items'];
 
 		$rows = array_map(fn($b) => $b->toPublicTemplateRow($this->serveImageUrl, $this->requiredWidth, $this->requiredHeight), $banners);
+
+		// Use drawPager for pagination
+		$paginationHtml = drawPager($paginationData['entriesPerPage'], $paginationData['totalEntries'], $this->modulePageUrl, $request);
 
 		$templateValues = [
 			'{$STATIC_INDEX_FILE}' => sanitizeStr($staticIndexFile),
@@ -188,24 +197,26 @@ class moduleMain extends abstractModuleMain {
 			'{$STATUS_MESSAGE}' => $statusMessage,
 			'{$ROWS}' => $rows,
 			'{$EMPTY}' => empty($rows) ? '1' : '',
+			'{$PAGINATION}' => $paginationHtml,
 		];
 
 		$pageContent = $this->moduleContext->adminPageRenderer->ParseBlock('FULLBANNER_INDEX', $templateValues);
 		echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', [
-			'{$PAGE_CONTENT}' => $pageContent
+			'{$PAGE_CONTENT}' => $pageContent,
+			'{$PAGER}' => $paginationHtml,
 		], false);
 	}
 
 	private function handlePages(): void {
-		$page = $this->moduleContext->request->getParameter('page', 'GET', '');
+		$pageName = $this->moduleContext->request->getParameter('pageName', 'GET', '');
 
-		if ($page === 'bannerServer') {
+		if ($pageName === 'bannerServer') {
 			$this->serveBanners();
 			exit;
-		} else if ($page === 'bannerServeImage') {
+		} else if ($pageName === 'bannerServeImage') {
 			$this->serveBannerImage();
 			exit;
-		} else if ($page === 'bannerIndex') {
+		} else {
 			$statusMessage = '';
 			if ($this->moduleContext->request->getParameter('submittedBanner', 'GET', '') === '1') {
 				$statusMessage = '<p>' . sanitizeStr(_T('fullbanner_submit_success')) . '</p>';

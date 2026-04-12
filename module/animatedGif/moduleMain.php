@@ -8,6 +8,7 @@ use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\IndicatorTrait;
 use Kokonotsuba\module_classes\traits\listeners\AttachmentsAfterInsertListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\AttachmentListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\IncludeHtmlTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostFormFileListenerTrait;
 use RuntimeException;
 
@@ -17,6 +18,7 @@ use function Kokonotsuba\libraries\isActiveStaffSession;
 class moduleMain extends abstractModuleMain {
 	use AttachmentsAfterInsertListenerTrait;
 	use AttachmentListenerTrait;
+	use IncludeHtmlTrait;
 	use IndicatorTrait;
 	use PostFormFileListenerTrait;
 
@@ -34,14 +36,15 @@ class moduleMain extends abstractModuleMain {
 		$this->listenAttachment('onRenderAttachment');
 
 		$this->listenPostFormFile('onRenderPostFormFile');
+
+		// size limit data in <head> for JS to read
+		$animatedGifSizeLimit = $this->getConfig('MAX_SIZE_FOR_ANIMATED_GIF', 2000);
+		$this->registerHeaderHtml('<template id="anigifData" data-size-limit="' . htmlspecialchars($animatedGifSizeLimit) . '"></template>');
 	}
 
 	private function onRenderPostFormFile(string &$file): void {
-		// get size limit for animated gifs (in kb)
-		$animatedGifSizeLimit = $this->getConfig('MAX_SIZE_FOR_ANIMATED_GIF', 2000);
-
-		// append checkbox to post form
-		$file .= '<div id="anigifContainer"><label id="anigifLabel" title="Makes GIF thumbnails animated"><input type="checkbox" name="anigif" id="anigif" data-size-limit="' . htmlspecialchars($animatedGifSizeLimit) . '" value="on">Animated GIF</label></div>';
+		// noscript fallback checkbox for no-JS users
+		$file .= '<noscript><div id="anigifContainer"><label id="anigifLabel" title="Makes GIF thumbnails animated"><input type="checkbox" name="anigif" id="anigif" value="on">Animated GIF</label></div></noscript>';
 	}
 
 	private function onAttachmentsAfterInsert(?array &$attachments): void {

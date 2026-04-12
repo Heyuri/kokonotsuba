@@ -2,6 +2,7 @@
 		<h3>Edit note for post No.<span class="noteFormPostNumber" id="post_number">{$POST_NUMBER}</span></h3>
 		<div class="editForm">
 			<form method="POST" action="{$MODULE_URL}">
+				{$CSRF_TOKEN}
 				<input name="postUid" value="<!--&IF($POST_UID,'{$POST_UID}','')-->" type="hidden">
 				<table>
 					<tbody>
@@ -36,4 +37,5 @@
 					<input type="submit" value="Save">
 				</div>
 			</form>
+		</div>
 	</div>	

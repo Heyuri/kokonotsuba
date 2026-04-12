@@ -77,7 +77,9 @@ class usrdelRoute {
 
 		// throw an exception if posts is falsey.
 		// in this case its likely already been deleted or doesn't exist
-		validatePostInput($posts, false);
+		if(!$posts) {
+			throw new BoardException(_T('del_wrongpwornotfound'));
+		}
 
 		// Call the method to authenticate the posts and log actions
 		$this->authenticateAndLogPostDeletions(

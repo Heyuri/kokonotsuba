@@ -34,26 +34,14 @@ function fetchNewReplies() {
 
 					// Append new replies to the page
 					const threadElement = document.querySelector(".thread"); // Assuming you want to insert them here
-					newReplies.forEach((reply) => {						
-						// get post num quote elements
-						const postQuote = reply.querySelectorAll(".qu");
-
-						// add kkqu clink events
-						postQuote.forEach(q => {
-							q.addEventListener("click", kkqu._evquote);
-						});
-
+					newReplies.forEach((reply) => {
 						threadElement.appendChild(reply); // Append each new reply
 					});
 
-					// re add scroll listeners
-					if(kkqr) kkqr.addScrollListener();
-
-					// start up image expanding js
-					if (attachmentExpander) attachmentExpander.startUpimageExpanding();
-
-					// restart inline js
-					if (kkinline) kkinline.startup();
+					// Initialize JS features on all new replies
+					if (newReplies.length) {
+						initNewPosts(newReplies);
+					}
 
 					// Return the new replies for further use if necessary
 					resolve(newReplies);

@@ -1,6 +1,7 @@
 	{$FORMDAT}
 	{$THREADFRONT}
 	<form name="delform" id="delform" action="{$LIVE_INDEX_FILE}" method="post">
+		{$DELFORM_CSRF}
 		<div class="centerText">
 			<table class="flashboardList" id="filelist">
 				<thead>

@@ -719,6 +719,37 @@ class threadRepository extends baseRepository {
 	}
 
 	/**
+	 * Fetch replies from a thread with post number greater than a given value.
+	 * Excludes the OP. Used for incremental reply loading.
+	 *
+	 * @param string $threadUID      Thread UID.
+	 * @param int    $afterPostNo    Only return replies with no > this value.
+	 * @param bool   $includeDeleted Whether to include soft-deleted posts.
+	 * @return Post[]|null Array of Post objects, or null if none found.
+	 */
+	public function getRepliesAfterPostNumber(string $threadUID, int $afterPostNo, bool $includeDeleted = false): ?array {
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted);
+
+		$query .= " WHERE p.thread_uid = :thread_uid AND p.is_op = 0 AND p.no > :after_no";
+
+		if (!$includeDeleted) {
+			$query .= excludeDeletedThreadsCondition($this->deletedPostsTable);
+		}
+
+		$query .= " ORDER BY p.post_uid ASC";
+
+		$params = [
+			':thread_uid' => $threadUID,
+			':after_no' => $afterPostNo,
+		];
+
+		$posts = $this->queryAll($query, $params) ?? [];
+		$posts = mergeMultiplePostRows($posts);
+
+		return $posts ?: null;
+	}
+
+	/**
 	 * Fetch the latest N posts from each of the given threads in one query.
 	 * Results always include the OP and up to ($previewCount - 1) most-recent replies.
 	 *

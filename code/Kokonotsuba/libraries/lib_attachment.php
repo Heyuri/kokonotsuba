@@ -49,6 +49,60 @@ function resolveThumbName(?array $attachment): false|string {
 	return $thumbnailName;
 }
 
+/**
+ * Resolve which thumbnail URL to display for an attachment.
+ *
+ * Determines the correct thumbnail URL based on file type, whether a real
+ * thumbnail exists, whether the source file exists on disk, and whether
+ * the attachment has been deleted. Returns placeholder URLs (nofile.gif,
+ * filedeleted.gif, nothumb.gif) for the appropriate fallback cases, and
+ * type-specific placeholders for SWF, audio, and archive files.
+ *
+ * @param array  $attachment   Attachment data array (needs storedFileName, fileExtension, 
+ *                             fileWidth, fileHeight, isHidden, fileId, boardUID).
+ * @param board  $board        Board for config/path resolution.
+ * @param bool   $fileDeleted  Whether the attachment has been soft-deleted.
+ * @return string Thumbnail URL to display.
+ */
+function resolveThumbnailDisplayUrl(array $attachment, board $board, bool $fileDeleted = false): string {
+	$staticUrl = $board->getConfigValue('STATIC_URL');
+
+	// Deleted file placeholder
+	if ($fileDeleted) {
+		return $staticUrl . 'image/filedeleted.gif';
+	}
+
+	// Check if the source file exists on disk
+	if (!attachmentFileExists($attachment)) {
+		return $staticUrl . 'image/nofile.gif';
+	}
+
+	$ext = $attachment['fileExtension'] ?? '';
+	$mimeType = $attachment['mimeType'] ?? null;
+
+	// Try the real thumbnail first
+	$thumbName = resolveThumbName($attachment);
+	if (!empty($thumbName)) {
+		$baseUploadUrl = $board->getBoardUploadedFilesURL();
+		$thumbDir = $board->getConfigValue('THUMB_DIR');
+		return $baseUploadUrl . $thumbDir . $thumbName;
+	}
+
+	// Type-specific fallback thumbnails
+	if ($ext === 'swf') {
+		return $board->getConfigValue('SWF_THUMB');
+	}
+	if ($mimeType !== null && str_contains($mimeType, 'audio')) {
+		return $board->getConfigValue('AUDIO_THUMB');
+	}
+	if ($mimeType !== null && isArchiveFile($ext, $mimeType)) {
+		return $board->getConfigValue('ARCHIVE_THUMB');
+	}
+
+	// Generic no-thumbnail fallback
+	return $staticUrl . 'image/nothumb.gif';
+}
+
 function getAttachmentUrl(?array $attachment, bool $isThumb = false): false|string {
     // If no attachment is provided, return an empty string
     if (!$attachment) {

@@ -48,7 +48,7 @@ class moduleMain extends abstractModuleMain {
 		// ("res" = 'response')
 		// its only set when viewing/targetting a thread.
 		// We don't want truncated comments while viewing the thread
-		if($this->moduleContext->request->hasParameter('res', 'GET')) {
+		if($this->moduleContext->request->isViewingThread()) {
 			return;
 		}
 		

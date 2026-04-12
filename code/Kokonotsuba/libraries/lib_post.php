@@ -38,6 +38,18 @@ function searchBoardArrayForBoard(int $targetBoardUID): ?board {
 	return null;
 }
 
+function searchBoardArrayForBoardByIdentifier(string $identifier): ?board {
+	$boards = GLOBAL_BOARD_ARRAY;
+
+	foreach ($boards as $board) {
+		if ($board->getBoardIdentifier() === $identifier) {
+			return $board;
+		}
+	}
+
+	return null;
+}
+
 function createAssocArrayFromBoardArray(array $boards): array {
 	$assocBoardArray = [];
 

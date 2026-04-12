@@ -12,10 +12,10 @@ trait FormFuncsListenerTrait {
 		);
 	}
 
-	protected function addFormFuncLink(string $url, string $text, int $priority = 0): void {
+	protected function addFormFuncLink(string $url, string $text, bool $jsOnly = false, int $priority = 0): void {
 		$this->moduleContext->moduleEngine->addListener('FormFuncs',
-			function(string &$formFuncsHtml) use ($url, $text) {
-				$formFuncsHtml .= ' | <a class="postformOption" href="' . htmlspecialchars($url) . '">' . htmlspecialchars($text) . '</a>';
+			function(string &$formFuncsHtml) use ($url, $text, $jsOnly) {
+				$formFuncsHtml .= ' | <a class="postformOption' . ($jsOnly ? ' js-only' : '') . '" href="' . htmlspecialchars($url) . '">' . htmlspecialchars($text) . '</a>';
 			},
 			$priority
 		);

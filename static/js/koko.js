@@ -392,9 +392,10 @@ const kkjs = {
 		}
 
 		com.value+= str;
-		if (com != qrcom) // Don't scroll to the QR form
+		var qrEnabled = typeof kkqr !== 'undefined' && kkqr && localStorage.getItem("useqr") == "true";
+		if (com != qrcom && !qrEnabled) // Don't scroll to the main form when QR is enabled
 			com.scrollIntoView({behavior:"smooth",block:"center"});
-		com.focus();
+		com.focus({ preventScroll: qrEnabled });
 
 		var event = $doc.createEvent("HTMLEvents");
 		event.initEvent("input", true, true);
@@ -415,14 +416,9 @@ const kkjs = {
 	ee: function () {
 		var email = $id("email");
 		if (!email) return;
-		// Insert checkboxes after the email field
-		email.insertAdjacentHTML("afterend", '<div id="emailjs">'+
-			'<label class="nokosagedump" title="Thread will not bump on reply"><input type="checkbox" class="nokosagedump" onclick="kkjs.ee2(this.id, this.checked);" id="sage">sage</label>'+
-			'<label class="nokosagedump" title="Stay in thread after replying, jump to your reply"><input type="checkbox" class="nokosagedump" onclick="kkjs.ee2(this.id,this.checked);" id="noko">noko</label>'+
-			'<label class="nokosagedump" title="Stay in thread after replying, remain at top of page"><input type="checkbox" class="nokosagedump" onclick="kkjs.ee2(this.id,this.checked);" id="dump">dump</label>'+
-		'</div>');
-	
-		// Check if 'sage' or 'noko' are already in the email value, and check the corresponding checkboxes
+
+		// Checkboxes are now rendered server-side in NOKO_SAGE_DUMP.tpl
+		// Sync checked state from current email value
 		if (email.value.includes("sage") && $id('sage')) {
 			$id('sage').checked = true;
 		}
@@ -534,9 +530,7 @@ const kkjs = {
 	wztt_evmout: function (event) { UnTip(); },
 	// Settings
 	sett_init: function () {
-		var ab = $class("adminbar");
-		if (ab.length) 
-			ab[0].insertAdjacentHTML("afterbegin", '[<a href="javascript:void(0);" onclick="kkjs.sett_open(this);">Settings</a>] ');
+		// Settings link is now rendered server-side in TOPLINKS.tpl
 	},
 	sett_open: function (el) {
 		var win;

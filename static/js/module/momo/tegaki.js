@@ -5503,15 +5503,9 @@ function createMomocan (opts) {
 	}
 
 	function installIntoKoko() {
-		const comlbl = $qs('label[for=com]');
-		const div = comlbl.parentNode.insertBefore(document.createElement('div'), comlbl.nextSibling);
-		const anchor = div.appendChild(document.createElement('a'));
-		anchor.id = START_LINK_ID;
-		anchor.href = '#start-momocan';
-		anchor.textContent = 'Tegaki';
-		anchor.style.fontSize = '1em';
-		anchor.style.fontWeight = 'normal';
-		anchor.style.color = 'inherit';
+		const anchor = $(START_LINK_ID);
+		if (!anchor) return;
+
 		anchor.addEventListener('click', e => {
 			e.preventDefault();
 			let momocan = createMomocan({
@@ -5611,16 +5605,10 @@ function createMomocan (opts) {
 		const container = $('momocan-container');
 		if (container && container.classList.contains('run')) return;
 
-		const anchor = $(START_LINK_ID);
-		if (anchor) {
-			anchor.click();
-		}
-		else {
-			loadStyle().then(() => {
-				initController();
-				installIntoKoko();
-			});
-		}
+		loadStyle().then(() => {
+			initController();
+			installIntoKoko();
+		});
 	}
 	else if (/^https?:\/\/[^.]+\.2chan\.net\//.test(window.location.href)) {
 		// inside content script of the akahukuplus extension

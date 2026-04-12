@@ -10,6 +10,7 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\generateModerateButton;
+use function Puchiko\strings\newLinesToBreakLines;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
 
@@ -142,7 +143,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		$ip = $post->getIp();
-		$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', nl2br($this->moduleContext->request->getParameter('msg', 'POST', ''), false)));
+		$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', newLinesToBreakLines($this->moduleContext->request->getParameter('msg', 'POST', ''))));
 		if (!$reason) $reason = 'No reason given.';
 
 		if (!empty($this->moduleContext->request->getParameter('public', 'POST'))) {

@@ -7,9 +7,8 @@ require_once __DIR__ . '/antiSpamService.php';
 require_once __DIR__ . '/antiSpamLib.php';
 
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
-use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 use Kokonotsuba\Modules\antiSpam\antiSpamService;
 
 use function Kokonotsuba\libraries\_T;
@@ -19,10 +18,8 @@ use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
 
 class moduleMain extends abstractModuleMain {
-	use RegistBeginListenerTrait;
-	use BanFileOperationsTrait;
-
 	private antiSpamService $antiSpamService;
+	private string $globalBansPath;
 
 	public function getName(): string {
 		return 'Anti-spam checking system';
@@ -35,19 +32,25 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// add to the regist before commit hook point
 		// this is ran before a post is inserted
-		$this->listenRegistBegin('onBeforeCommit');
+		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (&$registInfo) {
+			$this->onBeforeCommit(
+				$registInfo['name'],
+				$registInfo['com'],
+				$registInfo['email'],
+				$registInfo['sub'],
+				$registInfo['files'] ?? [],
+				!empty($registInfo['isThreadSubmit'])
+			); 
+		});
 
 		// set antispam service instance
 		$this->antiSpamService = getAntiSpamService();
+
+		// get global bans path
+		$this->globalBansPath = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
 	}
 	
-	private function onBeforeCommit(array &$registInfo): void{
-		$name = $registInfo['name'] ?? null;
-		$comment = $registInfo['com'] ?? null;
-		$email = $registInfo['email'] ?? null;
-		$subject = $registInfo['sub'] ?? null;
-		$files = $registInfo['files'] ?? [];
-		$isOp = $registInfo['isThreadSubmit'] ?? false;
+	private function onBeforeCommit(?string $name, ?string $comment, ?string $email, ?string $subject, array $files = [], bool $isOp = false): void{
 		// Extract file names from attachments
 		$fileNames = $this->extractFileNames($files); 
 
@@ -182,8 +185,7 @@ class moduleMain extends abstractModuleMain {
 
 	private function banUser(string $reason, int $durationSeconds): void {
 		// get IP from request
-		// this is the user who made the regist request
-		$ip = (string)$this->moduleContext->request->userIp();
+		$ip = $this->moduleContext->request->getIpAddress();
 
 		// calculate start time
 		$startTime = $_SERVER['REQUEST_TIME'];
@@ -191,8 +193,23 @@ class moduleMain extends abstractModuleMain {
 		// calculate end time
 		$expires = $startTime + $durationSeconds;
 
-		// append to global bans file via trait
-		$this->addBanEntry($this->getGlobalBanFilePath(), $ip, $startTime, $expires, $reason);
+		// sanitize reason for flat-file storage (commas break the CSV format)
+		$reason = str_replace(',', '&#44;', $reason);
+
+		// build ban entry
+		$banEntry = "{$ip},{$startTime},{$expires},{$reason}";
+
+		// append to global bans file
+		$needsNewline = file_exists($this->globalBansPath) && filesize($this->globalBansPath) > 0;
+
+		$f = fopen($this->globalBansPath, 'a');
+		if ($f) {
+			if ($needsNewline) {
+				fwrite($f, "\n");
+			}
+			fwrite($f, $banEntry);
+			fclose($f);
+		}
 	}
 
 	private function matchesRule(string $value, array $rule): bool {

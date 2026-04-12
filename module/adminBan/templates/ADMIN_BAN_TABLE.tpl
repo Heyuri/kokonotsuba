@@ -1,4 +1,6 @@
+<div class="banSectionContainer centerItem">
 	<form method="POST" action="{$MODULE_URL}">
+		{$CSRF_TOKEN}
 		<h3>{$TITLE}</h3>
 
 		<input type="hidden" name="adminban-action" value="delete-ban">
@@ -24,3 +26,6 @@
 			<button type="submit" id="revokeButton">Remove selected</button>
 		</div>
 	</form>
+
+	{$PAGER}
+</div>

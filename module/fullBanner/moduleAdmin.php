@@ -18,6 +18,7 @@ use const Kokonotsuba\GLOBAL_BOARD_UID;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\html\drawPager;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use AuditableTrait;
@@ -162,9 +163,16 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function drawAdminPage(): void {
-		$banners = $this->fullBannerService->getAllBanners();
+		$entriesPerPage = (int)$this->getConfig('ADMIN_PAGE_DEF', 100);
+		$request = $this->moduleContext->request;
+		$pageParam = $request->getParameter('page', 'GET', 0);
+		$requestedPage = is_numeric($pageParam) ? (int)$pageParam : 0;
+
+		$paginationData = $this->fullBannerService->getAllBannersPage($requestedPage, $entriesPerPage);
+		$banners = $paginationData['items'];
 
 		$rows = array_map(fn($b) => $b->toAdminTemplateRow($this->serveImageUrl, $this->requiredWidth, $this->requiredHeight), $banners);
+		$paginationHtml = drawPager($paginationData['entriesPerPage'], $paginationData['totalEntries'], $this->modulePage, $request);
 
 		$templateValues = [
 			'{$MODULE_PAGE_URL}' => sanitizeStr($this->modulePage),
@@ -180,7 +188,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$adminPageHtml = $this->moduleContext->adminPageRenderer->ParseBlock('FULLBANNER_ADMIN_PAGE', $templateValues);
 		echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', [
-			'{$PAGE_CONTENT}' => $adminPageHtml
+			'{$PAGE_CONTENT}' => $adminPageHtml,
+			'{$PAGER}' => $paginationHtml,
 		], true);
 	}
 }

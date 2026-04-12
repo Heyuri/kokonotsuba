@@ -105,6 +105,9 @@ class overboard {
 		$offset = $page * $limit;
 		
 		$templateValues = $this->buildOverboardTemplateValues();
+
+		$this->moduleEngine->dispatch('AboveThreadsGlobal', array(&$templateValues['{$THREADFRONT}']));
+		$this->moduleEngine->dispatch('BelowThreadsGlobal', array(&$templateValues['{$THREADREAR}']));
 		
 		// If no boards are selected, return prematurely
 		if (!$filters['board']) {

@@ -306,4 +306,14 @@ class request {
 	public function allServer(): array {
 		return $this->server;
 	}
+
+	/**
+	 * Check if the request is viewing a thread
+	 * 
+	 * @return bool True if viewing a thread, false otherwise
+	 */
+	public function isViewingThread(): bool {
+		// Check if the 'res' parameter is present in GET or POST data
+		return $this->hasParameter('res', 'GET');
+	}
 }

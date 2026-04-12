@@ -18,7 +18,7 @@ const kkupdate = { name: "KK Thread Updating",
 		controls.id = "controls";
 		controls.classList.add("threadUpdater");
 		document.querySelector(".threadRear").appendChild(controls);
-		controls.innerHTML += "[<a onclick=\"kkupdate.update();return false;\" href=\"\">Update</a>] [<label><input onchange=\"kkupdate.toggleAuto();\" checked type=\"checkbox\">Auto</label>] <span id=\"update-status\"></span><hr>";
+		controls.innerHTML += "[<a onclick=\"kkupdate.update();return false;\" href=\"\">Update</a>] [<label><input onchange=\"kkupdate.toggleAuto();\" checked type=\"checkbox\">Auto</label>] <span id=\"update-status\"></span>";
 		document.addEventListener("scroll", function () {
 			if ((window.innerHeight + document.documentElement.scrollTop) >= (document.documentElement.scrollHeight - 2)) {
 				kkupdate.total = 0;
@@ -71,19 +71,16 @@ const kkupdate = { name: "KK Thread Updating",
 					kkupdate.total += npc;
 					kkupdate.inci = 0;
 
+					var inserted = [];
 					for (i = i; i <= frs.length-1; i++) {
 						document.querySelector(".thread").insertAdjacentElement("beforeEnd", frs[i]);
-						
-						let quoteButton = document.getElementById(frs[i].id).querySelector(`.qu`);
-						quoteButton.addEventListener("click", kkqu._evquote);
+						inserted.push(frs[i]);
 					}
-					// re add scroll liseners
-					kkqr.addScrollListener();
+
+					initNewPosts(inserted);
 
 					document.querySelector("#update-status").innerText = npc+" new post"+(npc>1 ? "s" : "");
 					if (kkupdate.total > 0) document.title = "("+kkupdate.total+") "+kkupdate.otitle;
-					if (attachmentExpander) attachmentExpander.startUpimageExpanding();
-					if (kkinline) kkinline.startup();
 					return true;
 				});
 			}

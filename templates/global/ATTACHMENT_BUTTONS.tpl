@@ -1,0 +1,1 @@
+<noscript>{$BUTTONS}</noscript><span class="attachmentWidgetData" hidden>{$BUTTONS}</span><a class="menuToggle attachmentMenuToggle js-only" role="button" aria-label="Attachment menu">&#x25B6;</a>

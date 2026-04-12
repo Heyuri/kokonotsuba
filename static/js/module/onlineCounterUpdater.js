@@ -13,17 +13,6 @@ const kkUserUpdate = {  name: "KK online user updating",
 			return true;
 		}
 
-		// Remove 'hidden' class from <li id="counterListItemJS"> and add 'hidden' class to <li id="counterListItemNoJS">
-		const jsListItem = document.getElementById('counterListItemJS');
-		const noJsListItem = document.getElementById('counterListItemNoJS');
-
-		if (jsListItem) {
-			jsListItem.classList.remove('hidden');
-		}
-		if (noJsListItem) {
-			noJsListItem.classList.add('hidden');
-		}
-
 		this.reloadElement();
 		this.startInterval();
 		return true;

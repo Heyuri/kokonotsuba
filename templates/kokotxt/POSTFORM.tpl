@@ -6,7 +6,7 @@
 					<div class="postformItem"><label for="sub">Topic:</label>{$FORM_TOPIC_FIELD}{$FORM_SUBMIT}</div>
 					<div class="postformCombinedItems">
 						<div class="postformItem"><label for="name">Name:</label>{$FORM_NAME_FIELD}</div>
-						<div class="postformItem"><label for="email">Email:</label>{$FORM_EMAIL_FIELD}</div>
+						<div class="postformItem"><label for="email">Email:</label>{$FORM_EMAIL_FIELD}<!--&NOKO_SAGE_DUMP/--></div>
 					</div>
 					<!--&IF($FORM_ATTECHMENT_FIELD,'<div class="postformItem"><label for="upfile">File:</label>{$FORM_ATTECHMENT_FIELD}','')-->
 					<!--&IF($FORM_NOATTECHMENT_FIELD,'<span class="nowrap">[<label>{$FORM_NOATTECHMENT_FIELD}No File</label>]</span>','')-->
@@ -14,8 +14,8 @@
 					{$FORM_FILE_EXTRA_FIELD}
 					<!--&IF($FORM_ATTECHMENT_FIELD,'</div>','')-->
 					<!--&IF($FORM_CATEGORY_FIELD,'<div class="postformItem"><label for="category">Category:</label>{$FORM_CATEGORY_FIELD}<small>(Use , to separate)</small></div>','')-->
-					<div class="postformItem"><label for="com">Comment:</label>
-						<div class="commentArea">{$FORM_COMMENT_FIELD}</div>
+					<div class="postformItem"><label for="com">Comment:</label>{$FORM_COMMENT_BLOCK_EXTRA}
+						<div class="commentArea">{$FORM_COMMENT_FIELD}{$FORM_COMMENT_EXTRAS}</div>
 					</div>
 					<div class="postformItem"><label for="pwd">Password:</label><input type="password" name="pwd" id="pwd" value="" class="inputtext" maxlength="{$INPUT_MAX}"><span id="delPasswordInfo">(for deletion)</span></div>
 					<div class="postformItem">{$FORM_EXTRA_COLUMN}</div>

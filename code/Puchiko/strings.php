@@ -285,3 +285,13 @@ function truncateText(
     // Append ellipsis if desired
     return $addEllipsis ? $truncated . '(' . html_entity_decode('&hellip;', ENT_QUOTES, $encoding) . ')' : $truncated;
 }
+
+/**
+ * Convert newlines to <br> tags for HTML display
+ *  
+ * @param string $str The input string.
+ * @return string The string with newlines converted to <br> tags.
+ */
+function newLinesToBreakLines(string $str): string {
+	return nl2br($str, false);
+}

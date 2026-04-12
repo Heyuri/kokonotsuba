@@ -13,14 +13,39 @@ class fullBannerRepository extends baseRepository {
 		parent::__construct($databaseConnection, $bannerAdTable);
 	}
 
-	public function getApprovedActiveBanners(): array {
-		$query = "SELECT * FROM {$this->table} WHERE is_active = 1 AND is_approved = 1 ORDER BY date_submitted DESC";
-		return $this->databaseConnection->fetchAllAsClass($query, [], fullBannerEntry::class);
+	/**
+	 * Get approved and active banners with pagination.
+	 * @param int $limit
+	 * @param int $offset
+	 * @return array
+	 */
+	public function getApprovedActiveBannersPaginated(int $limit, int $offset = 0): array {
+		$query = "SELECT * FROM {$this->table} WHERE is_active = 1 AND is_approved = 1 ORDER BY date_submitted DESC LIMIT :limit OFFSET :offset";
+		return $this->databaseConnection->fetchAllAsClass($query, [':limit' => $limit, ':offset' => $offset], fullBannerEntry::class);
+	}
+
+	/**
+	 * Get total count of approved and active banners.
+	 * @return int
+	 */
+	public function countApprovedActiveBanners(): int {
+		$query = "SELECT COUNT(*) FROM {$this->table} WHERE is_active = 1 AND is_approved = 1";
+		return (int)($this->databaseConnection->fetchColumn($query) ?? 0);
 	}
 
 	public function getAllBanners(): array {
 		$query = "SELECT * FROM {$this->table} ORDER BY date_submitted DESC";
 		return $this->databaseConnection->fetchAllAsClass($query, [], fullBannerEntry::class);
+	}
+
+	public function getAllBannersPaginated(int $limit, int $offset = 0): array {
+		$query = "SELECT * FROM {$this->table} ORDER BY date_submitted DESC LIMIT :limit OFFSET :offset";
+		return $this->databaseConnection->fetchAllAsClass($query, [':limit' => $limit, ':offset' => $offset], fullBannerEntry::class);
+	}
+
+	public function countAllBanners(): int {
+		$query = "SELECT COUNT(*) FROM {$this->table}";
+		return (int)($this->databaseConnection->fetchColumn($query) ?? 0);
 	}
 
 	public function getRandomActiveBanner(): ?fullBannerEntry {

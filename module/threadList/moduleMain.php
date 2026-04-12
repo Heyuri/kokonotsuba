@@ -42,7 +42,7 @@ class moduleMain extends abstractModuleMain {
 
 		$this->listenRegistBeforeCommit('onBeforeCommit');
 		$this->listenAboveThreadArea('onRenderAboveThreadArea');
-		$this->addTopLink($this->getModulePageURL(), 'Thread list');
+		$this->addTopLink($this->getModulePageURL([], false), 'Thread list');
 	}
 
 	// Automatically checks subject for posts before commit

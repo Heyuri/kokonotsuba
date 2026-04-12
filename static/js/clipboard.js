@@ -11,20 +11,19 @@
 		: 1;
 
 	// References for handling optional animated GIF checkbox behavior
-	var anigifWrapper = document.getElementById('anigifContainer');
-	var anigifInput = document.getElementById('anigif');
+	var anigifData = document.getElementById('anigifData');
 	var anigifLimit = 0;
-	if (anigifInput && anigifInput.getAttribute('data-size-limit')) {
-		anigifLimit = parseInt(anigifInput.getAttribute('data-size-limit'), 10) || 0;
+	if (anigifData && anigifData.getAttribute('data-size-limit')) {
+		anigifLimit = parseInt(anigifData.getAttribute('data-size-limit'), 10) || 0;
 	}
 
 	// Holds all selected or pasted files in memory before syncing with file input
 	var filesState = [];
 	var allowedPreviewTypes = ['image/jpeg','image/png','image/gif','image/bmp','image/webp','image/svg+xml'];
 	var ignoreChange = false;
+	var renderTarget = null;
 
-	// Hides the server's built-in GIF checkbox since this script replaces that UI
-	if (anigifWrapper) anigifWrapper.style.display = 'none';
+
 
 	// Determines a suitable extension for a given MIME type
 	function getFileExt(m) {
@@ -74,56 +73,30 @@
 	// Dropzone UI for multi-file selection
 	// ----------------------------------------
 
-	function makeDropzone() {
-		var wrap = document.createElement('div');
-		wrap.id = 'dropzoneWrap';
-		wrap.style.userSelect = 'none';
-		wrap.style.marginTop = '4px';
-
-		var dz = document.createElement('div');
-		dz.tabIndex = 0;
-		dz.style.border = '2px dashed #888';
-		dz.style.padding = '12px';
-		dz.style.borderRadius = '6px';
-		dz.style.cursor = 'pointer';
-		dz.style.textAlign = 'center';
-		dz.style.color = '#666';
-
-		var hint = document.createElement('div');
-		hint.textContent = 'Select / drop / paste images here';
-
-		dz.appendChild(hint);
-		wrap.appendChild(dz);
-		fileInput.after(wrap);
-
-		// Hidden picker allows traditional browsing while keeping the UI consistent
-		var hiddenPicker = document.createElement('input');
-		hiddenPicker.type = 'file';
-		hiddenPicker.multiple = true;
-		hiddenPicker.style.display='none';
-		if (fileInput.accept) hiddenPicker.setAttribute('accept', fileInput.getAttribute('accept'));
-		wrap.after(hiddenPicker);
+	// Wires up dropzone behavior on a given container element
+	function wireDropzone(wrap) {
+		var dz = wrap.querySelector('.dropzone');
+		var picker = wrap.querySelector('.dropzoneFilePicker') || wrap.querySelector('input[type="file"]');
+		if (!dz || !picker) return;
 
 		dz.addEventListener('click', function(){
 			if (!canAdd()) return;
-			hiddenPicker.click();
+			picker.click();
 		});
 
-		// Provides visual feedback while dragging files over the dropzone
 		dz.addEventListener('dragover', function(e){
 			e.preventDefault(); e.stopPropagation();
-			dz.style.borderColor='#33a'; dz.style.color='#33a';
+			dz.classList.add('dragover');
 		});
 
 		dz.addEventListener('dragleave', function(e){
 			e.preventDefault(); e.stopPropagation();
-			dz.style.borderColor='#888'; dz.style.color='#666';
+			dz.classList.remove('dragover');
 		});
 
-		// Accepts dropped files and forwards them to the file handler
 		dz.addEventListener('drop', function(e){
 			e.preventDefault(); e.stopPropagation();
-			dz.style.borderColor='#888'; dz.style.color='#666';
+			dz.classList.remove('dragover');
 
 			var fl = e.dataTransfer.files;
 			if (!fl || !fl.length) return;
@@ -132,20 +105,28 @@
 			for (var i=0;i<fl.length && slots>0;i++,slots--) addFile(fl[i], fl[i].name);
 		});
 
-		hiddenPicker.addEventListener('change', function(){
-			if (!hiddenPicker.files.length) return;
+		picker.addEventListener('change', function(){
+			if (ignoreChange) return;
+			if (!picker.files.length) return;
 			var slots = remaining();
-			for (var i=0;i<hiddenPicker.files.length && slots>0;i++,slots--)
-				addFile(hiddenPicker.files[i], hiddenPicker.files[i].name);
-			hiddenPicker.value='';
+			var picked = Array.prototype.slice.call(picker.files);
+			picker.value='';
+			for (var i=0;i<picked.length && slots>0;i++,slots--)
+				addFile(picked[i], picked[i].name);
 		});
+	}
+
+	function makeDropzone() {
+		var wrap = document.getElementById('dropzoneWrap');
+		if (!wrap) return;
+		wireDropzone(wrap);
 	}
 
 	// ----------------------------------------
 	// Rendering and layout of file entries
 	// ----------------------------------------
 
-	function ensureList() {
+	function ensureMainList() {
 		var c = document.getElementById('fileListContainer');
 		if (!c) {
 			c = document.createElement('div');
@@ -154,31 +135,62 @@
 			c.style.flexWrap='wrap';
 			c.style.gap='8px';
 			c.style.marginTop='4px';
-
-			var dz = document.getElementById('dropzoneWrap');
-			if (dz) dz.after(c);
-			else fileInput.after(c);
+		}
+		var dz = document.getElementById('dropzoneWrap');
+		var parent = dz ? dz.parentNode : fileInput.parentNode;
+		if (c.parentNode !== parent) {
+			parent.appendChild(c);
 		}
 		return c;
 	}
 
-	// Removes the file list container entirely when no files remain
-	function clearList() {
-		var c = document.getElementById('fileListContainer');
-		if (c) c.remove();
+	function ensureQrList() {
+		if (!renderTarget) return null;
+		var c = document.getElementById('qrFileList');
+		if (!c) {
+			c = document.createElement('div');
+			c.id='qrFileList';
+			c.style.display='flex';
+			c.style.flexWrap='wrap';
+			c.style.gap='4px';
+			c.style.marginTop='4px';
+		}
+		if (c.parentNode !== renderTarget) {
+			renderTarget.appendChild(c);
+		}
+		return c;
 	}
 
-	// Updates the displayed list of files, including previews and controls
+	// Removes file list containers when no files remain
+	function clearLists() {
+		var c = document.getElementById('fileListContainer');
+		if (c) c.remove();
+		var q = document.getElementById('qrFileList');
+		if (q) q.remove();
+	}
+
+	// Updates the displayed list of files in both main form and QR
 	function render() {
-		if (!filesState.length) clearList();
-		else {
-			var c = ensureList();
+		if (!filesState.length) {
+			clearLists();
+		} else {
+			var c = ensureMainList();
 			c.innerHTML='';
 			for (var i=0;i<filesState.length;i++) c.appendChild(renderBlock(filesState[i], i));
+
+			var qc = ensureQrList();
+			if (qc) {
+				qc.innerHTML='';
+				for (var i=0;i<filesState.length;i++) qc.appendChild(renderCompactBlock(filesState[i], i));
+			}
 		}
 
-		var dz = document.getElementById('dropzoneWrap');
-		if (dz) dz.style.display = canAdd() ? 'block' : 'none';
+		// Update visibility of all dropzone wraps (main form + QR)
+		var allDz = document.querySelectorAll('.dropzoneWrap');
+		var show = canAdd();
+		for (var i = 0; i < allDz.length; i++) {
+			allDz[i].style.display = show ? 'block' : 'none';
+		}
 	}
 
 	// Creates a single file entry including filename input, preview, size display, and actions
@@ -246,7 +258,7 @@
 		}
 
 		// Adds a toggle for animated GIFs if the server allows it and the file is within limits
-		if (st.type === 'image/gif' && anigifInput && anigifLimit > 0) {
+		if (st.type === 'image/gif' && anigifLimit > 0) {
 			var sizeKB = st.blob.size / 1024;
 			if (sizeKB <= anigifLimit) {
 				var wrap = document.createElement('div');
@@ -278,6 +290,51 @@
 				b.appendChild(wrap);
 			}
 		}
+
+		return b;
+	}
+
+	// Creates a compact file entry for the QR window (small thumbnail + name + [X])
+	function renderCompactBlock(st, index) {
+		var b = document.createElement('div');
+		b.style.display = 'inline-flex';
+		b.style.alignItems = 'center';
+		b.style.gap = '4px';
+		b.style.padding = '2px 4px';
+		b.style.fontSize = '11px';
+		b.style.maxWidth = '160px';
+
+		// Small preview thumbnail
+		if (allowedPreviewTypes.indexOf(st.type) !== -1) {
+			var img = document.createElement('img');
+			img.style.maxWidth = '40px';
+			img.style.maxHeight = '40px';
+			img.style.display = 'block';
+			img.style.flexShrink = '0';
+			var fr = new FileReader();
+			fr.onload = function(e) { img.src = e.target.result; };
+			fr.readAsDataURL(st.blob);
+			b.appendChild(img);
+		}
+
+		// Filename
+		var name = document.createElement('span');
+		name.textContent = st.nameBase + st.extension;
+		name.style.overflow = 'hidden';
+		name.style.textOverflow = 'ellipsis';
+		name.style.whiteSpace = 'nowrap';
+		name.style.minWidth = '0';
+		b.appendChild(name);
+
+		// [X] remove
+		var x = document.createElement('span');
+		x.innerHTML = '[<a href="javascript:void(0);">X</a>]';
+		x.style.flexShrink = '0';
+		x.querySelector('a').addEventListener('click', function(e) {
+			e.preventDefault();
+			removeFile(index);
+		});
+		b.appendChild(x);
 
 		return b;
 	}
@@ -350,12 +407,8 @@
 	// Global event handling
 	// ----------------------------------------
 
-	// Multi-file mode hides the original file input UI
 	if (attachmentLimit > 1) {
-		fileInput.style.display = 'none';
 		makeDropzone();
-	} else {
-		fileInput.style.display = '';
 	}
 
 	// Processes files selected through the input element
@@ -363,18 +416,13 @@
 		if (ignoreChange) return;
 
 		if (!fileInput.files || !fileInput.files.length) {
-			if (attachmentLimit <= 1 && anigifWrapper) {
-				anigifWrapper.style.display = 'none';
-				if (anigifInput) anigifInput.checked = false;
-			}
 			return;
 		}
 
 		if (attachmentLimit <= 1) {
 			addFile(fileInput.files[0], fileInput.files[0].name);
-		} else {
-			fileInput.value='';
 		}
+		// Multi-attach: handled by dropzone picker handler
 	});
 
 	// Allows pasted images to be processed just like dropped or selected files
@@ -402,6 +450,37 @@
 			}
 		}
 	});
+
+	// Allows external code (e.g. posting.js clearForm) to reset file state
+	window.resetClipboardFiles = function() {
+		filesState = [];
+		render();
+		syncInputFiles();
+	};
+
+	// Expose addFile so QR and other scripts can feed files into clipboard state
+	window.clipboardAddFile = function(file, name) {
+		addFile(file, name);
+	};
+
+	window.clipboardCanAdd = function() {
+		return canAdd();
+	};
+
+	window.clipboardRemaining = function() {
+		return remaining();
+	};
+
+	// Redirect preview rendering into a custom container (e.g. QR window)
+	window.clipboardSetRenderTarget = function(el) {
+		renderTarget = el || null;
+		render();
+	};
+
+	// Wire dropzone events on an external dropzone element
+	window.clipboardWireDropzone = function(wrapEl) {
+		wireDropzone(wrapEl);
+	};
 
 	// Automatically displays an already-selected single file on page load
 	if (attachmentLimit <= 1 && fileInput.files && fileInput.files.length === 1) {

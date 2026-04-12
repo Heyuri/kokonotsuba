@@ -193,18 +193,17 @@ class moduleMain extends abstractModuleMain {
 		);
 
 		$userCounterHTML = '
-			<li id="counterListItemJS" class="hidden">
+			<li id="counterListItemJS" class="js-only">
 				<div data-timeout="'.$this->timeout.'" data-modurl="'.$this->modulePageUrl.'&usercountjson" id="usercounter">
 					' . $userCounterText . '
 				</div>
 			</li>';
 
 		$noScriptHtml = '
-			<li id="counterListItemNoJS" class="">
-				<noscript>
+				<li id="counterListItemNoJS" class="no-js-only">
 					<iframe id="counterIframe" title="User counter" src="'.$this->modulePageUrl.'"></iframe>
-				</noscript>
-			</li>';
+				</li>
+			';
 
 		$hookPostInfoHtml .= $noScriptHtml . $userCounterHTML;
 	}

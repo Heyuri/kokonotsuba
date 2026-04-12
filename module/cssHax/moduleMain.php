@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\cssHax;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleThreadHeaderListenerTrait;
 use Kokonotsuba\thread\Thread;
 
@@ -10,6 +11,9 @@ use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use ModuleThreadHeaderListenerTrait;
+	use ModuleHeaderListenerTrait;
+
+	private array $collectedStyles = [];
 
 	public function getName(): string {
 		return 'Thread css hax handler';
@@ -21,14 +25,23 @@ class moduleMain extends abstractModuleMain {
 
  	public function initialize(): void {
 		$this->listenModuleThreadHeader('onModuleThreadHeader');
+		$this->listenModuleHeader('onModuleHeader');
 	}
 
 	private function onModuleThreadHeader(string &$threadHeader, Thread $threadData): void {
-		// generate and append the css styling for this thread
-		$threadHeader .= $this->generateThreadStyle($threadData);
+		// collect css styling for this thread to be rendered in <head>
+		$this->collectThreadStyle($threadData);
 
-		// generate thread audio tags
+		// generate thread audio tags (these stay in the body)
 		$threadHeader .= $this->generateThreadAudio($threadData);
+	}
+
+	private function onModuleHeader(string &$moduleHeader): void {
+		// inject all collected thread styles into the <head>
+		if (!empty($this->collectedStyles)) {
+			$moduleHeader .= '<style>' . implode('', $this->collectedStyles) . '</style>';
+			$this->collectedStyles = [];
+		}
 	}
 
 	private function buildStyleAttributes(Thread $threadData, int $threadNumber): string {
@@ -91,15 +104,18 @@ class moduleMain extends abstractModuleMain {
 				. $textBg;
 	}
 
-	private function generateThreadStyle(Thread $threadData): string {
+	private function collectThreadStyle(Thread $threadData): void {
 		// build attributes
 		$styleBlock = $this->buildStyleAttributes($threadData, $threadData->getOpNumber());
 
 		// also pull the raw CSS if any exists
 		$rawStyling = htmlspecialchars($threadData->getRawStyling());
 
-		// return concatinated styling wrapped in raw style tags
-		return '<style>' . $styleBlock . $rawStyling . '</style>';
+		// collect styling to be rendered in <head> later
+		$combined = $styleBlock . $rawStyling;
+		if (!empty($combined)) {
+			$this->collectedStyles[] = $combined;
+		}
 	}
 
 	private function generateThreadAudio(Thread $threadData): string {
@@ -109,7 +125,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		// only use audio if the user is currently viewing a thread
-		if(!$this->moduleContext->request->hasParameter('res', 'GET')) {
+		if($this->moduleContext->request->isViewingThread() === false) {
 			return '';
 		}
 

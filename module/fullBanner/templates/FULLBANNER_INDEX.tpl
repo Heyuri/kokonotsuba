@@ -3,12 +3,12 @@
 
 <!--&FULLBANNER_SUBMIT_FORM/-->
 
-<h3>Approved Banners</h3>
+<h3>Approved banners</h3>
 <table class="postlists" id="fullbannerlist">
 	<thead>
 		<tr>
-			<th>Date Submitted</th>
-			<th>Destination Link</th>
+			<th>Date submitted</th>
+			<th>Destination link</th>
 			<th>Preview</th>
 		</tr>
 	</thead>

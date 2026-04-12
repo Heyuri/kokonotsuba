@@ -1,0 +1,1 @@
+<template id="dropzoneTemplate" data-attachment-limit="{$ATTACHMENT_LIMIT}"><div class="dropzoneWrap"><div class="dropzone" tabindex="0"><div>Select / drop / paste images here</div></div><input type="file" class="dropzoneFilePicker" data-attachment-limit="{$ATTACHMENT_LIMIT}" multiple></div></template>

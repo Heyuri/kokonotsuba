@@ -1,5 +1,6 @@
 <div class="banFormContainer">
 	<form method="POST" action="{$MODULE_URL}">
+		{$CSRF_TOKEN}
 		<h3 class="centerText">Add a ban</h3>
 		<input type="hidden" name="adminban-action" value="add-ban">
 

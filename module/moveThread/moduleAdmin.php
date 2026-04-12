@@ -18,9 +18,11 @@ use Kokonotsuba\thread\ThreadData;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\generateModerateButton;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\html\generateBoardListRadioHTML;
 use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\rebuildBoardsByArray;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
 
@@ -359,6 +361,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function ModulePage() {
 		// If form was submitted to move a thread
 		if (!empty($this->moduleContext->request->getParameter('move-thread-submit', 'POST'))) {
+			requirePostWithCsrf($this->moduleContext->request);
+
 			$thread_uid = $this->moduleContext->request->getParameter('move-thread-uid', 'POST');
 			$destinationBoardUID = $this->moduleContext->request->getParameter('radio-board-selection', 'POST');
 			$leaveShadowThread = !empty($this->moduleContext->request->getParameter('leave-shadow-thread', 'POST'));
@@ -446,6 +450,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$CURRENT_BOARD_UID}' => $threadParentBoard->getBoardUID(),
 			'{$CURRENT_BOARD_NAME}' => htmlspecialchars($threadParentBoard->getBoardTitle()) . ' (' . $threadParentBoard->getBoardUID() . ')',
 			'{$BOARD_RADIO_HTML}' => $boardRadioHTML,
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 		];
 	}
 

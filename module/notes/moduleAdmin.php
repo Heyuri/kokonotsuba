@@ -14,10 +14,15 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\generatePostUrl;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
+use function Kokonotsuba\libraries\getCsrfMetaTag;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Kokonotsuba\libraries\getUsernameFromSession;
 use function Kokonotsuba\libraries\modIdToColorHex;
+use function Puchiko\strings\newLinesToBreakLines;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
@@ -45,6 +50,16 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
 		$this->registerSimplePostWidget('postUid', 'leaveNote', _T('leave_note'));
 
+		// noscript fallback: link to note form page
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'PostAdminControls',
+			function(string &$modControlSection, Post &$post) {
+				$url = $this->getModulePageURL(['postUid' => $post->getUid()], false, true);
+				$modControlSection .= generateModerateButton($url, 'N', _T('leave_note'), 'adminNoteFunction', true);
+			}
+		);
+
 		$this->listenProtected('BelowComment', function(string &$belowComment, Post &$post, array &$threadPosts, bool &$adminMode) {
 			$this->renderStaffNotesOnPost($belowComment, $post, $adminMode);
 		});
@@ -66,6 +81,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		$moduleHeader .= getCsrfMetaTag();
+
 		// include the note js for the mod tool
 		$this->includeScript('notes.js', $moduleHeader);
 
@@ -74,7 +91,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$POST_UID}' => 0,
 			'{$POST_NUMBER}' => 0,
 			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
-			'{$NOTE_VISIBILITY_DESCRIPTION}' => _T('note_visibility_description')
+			'{$NOTE_VISIBILITY_DESCRIPTION}' => _T('note_visibility_description'),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput()
 		]);
 		$moduleHeader .= $this->generateTemplate('noteCreateFormTemplate', $noteCreateFormTemplate);
 
@@ -85,7 +103,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$POST_NUMBER}' => 0,
 			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
 			'{$NOTE_TEXT}' => '',
-			'{$NOTE_VISIBILITY_DESCRIPTION}' => _T('note_visibility_description')
+			'{$NOTE_VISIBILITY_DESCRIPTION}' => _T('note_visibility_description'),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput()
 		]);
 		$moduleHeader .= $this->generateTemplate('noteEditFormTemplate', $noteEditFormTemplate);
 
@@ -132,7 +151,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$sanitizedNote = sanitizeStr($noteText);
 
 		// convert new lines to break lines
-		$sanitizedNote = nl2br($sanitizedNote, false);
+		$sanitizedNote = newLinesToBreakLines($sanitizedNote);
 
 		// generate the string
 		$noteHtml = $this->generateNoteEntryHtml(
@@ -336,6 +355,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$POST_UID}' => $extra['postUid'] ?? 0,
 			'{$POST_NUMBER}' => $extra['postNumber'] ?? 0,
 			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 		];
 		return array_merge($defaults, $extra['template'] ?? []);
 	}
@@ -420,6 +440,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// handle the main note requests
 		if($this->moduleContext->request->hasParameter('action')) {
+			requirePostWithCsrf($this->moduleContext->request);
 			$this->handleNoteRequest($postUid, $noteId);
 		}
 		// otherwise just render the form

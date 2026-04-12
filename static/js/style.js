@@ -23,63 +23,35 @@ document.write('<style id="usercss">' + _usercss + '</style>');
 const kkstyle = {
 	name: "KK Styles Switcher",
 	startup: function() {
-		var udel = document.getElementById("userdelete");
-		var footer = document.getElementById("footer");
-		var styleswitch;
+		kkstyle.stylessel = document.getElementById("styleSwitcherSelect");
+		if (!kkstyle.stylessel) return false;
 
-		// Create style switcher
-		try {
-			if (udel) {
-				// If "userdelete" exists, create the style switcher inside it
-				styleswitch = document.createElement("div");
-				styleswitch.id = "styleSwitcherContainer";
-				udel.appendChild(styleswitch);
-			} else if (footer) {
-				// If "footer" exists but "userdelete" does not, place it above footer
-				styleswitch = document.createElement("div");
-				styleswitch.id = "styleSwitcherContainer";
-				footer.parentNode.insertBefore(styleswitch, footer);
-			} else {
-				// If neither exist, create style switcher in the body
-				styleswitch = document.createElement("div");
-				styleswitch.id = "styleSwitcherContainer";
-				document.body.appendChild(styleswitch);
-			}
-		} catch (error) {
-			console.error("ERROR: Could not initialize style switcher container.", error);
-			return false;  // Return false if any error occurs to prevent module from loading
-		}
+		// Options are pre-populated by inline script in FOOTER.tpl
+		// Just populate if empty (fallback)
+		if (!kkstyle.stylessel.options.length) {
+			var link = document.getElementsByClassName("linkstyle");
 
-		styleswitch.id = "styleswitch";
-		var lbl = document.createElement("label");
-		kkstyle.stylessel = document.createElement("select");
-		var link = document.getElementsByClassName("linkstyle");
-
-		lbl.innerText = "Style: ";
-		var opt = document.createElement("option");
-		opt.value = opt.innerText = "Random";
-		kkstyle.stylessel.appendChild(opt);
-
-		// Add options for each available style
-		for (var i = 0; i < link.length; i++) {
-			opt = document.createElement("option");
-			opt.value = opt.innerText = link[i].title;
+			var opt = document.createElement("option");
+			opt.value = opt.innerText = "Random";
 			kkstyle.stylessel.appendChild(opt);
+
+			for (var i = 0; i < link.length; i++) {
+				opt = document.createElement("option");
+				opt.value = opt.innerText = link[i].title;
+				kkstyle.stylessel.appendChild(opt);
+			}
 		}
-		lbl.appendChild(kkstyle.stylessel);
 
 		kkstyle.stylessel.onchange = function(event) {
 			kkstyle.set_stylesheet(this.value);
 		};
-		styleswitch.appendChild(lbl);
 
 		// Set the initial stylesheet
 		kkstyle.set_stylesheet(localStorage.getItem("stylestyle"), false);
 		return true;
 	},
 	reset: function() {
-		var styleswitch = document.getElementById("styleswitch");
-		if (styleswitch) styleswitch.remove();
+		if (kkstyle.stylessel) kkstyle.stylessel.innerHTML = '';
 	},
 	sett_tab: function(id) {
 		var tabElement = document.getElementById(id);

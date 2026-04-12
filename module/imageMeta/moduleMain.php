@@ -9,8 +9,7 @@ namespace Kokonotsuba\Modules\imageMeta;
 require __DIR__ . '/exif.php';
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\traits\IndicatorTrait;
-use Kokonotsuba\module_classes\traits\listeners\AttachmentListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\AttachmentWidgetListenerTrait;
 use RuntimeException;
 
 use function Kokonotsuba\libraries\attachmentFileExists;
@@ -19,8 +18,7 @@ use function Kokonotsuba\libraries\getAttachmentUrl;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 
 class moduleMain extends abstractModuleMain {
-	use AttachmentListenerTrait;
-	use IndicatorTrait;
+	use AttachmentWidgetListenerTrait;
 
 	private $enable_exif, $enable_imgops, $enable_iqdb, $enable_swfchan = false; // Initialize options, actually defined in config files
 	private $modulePageUrl;
@@ -32,7 +30,7 @@ class moduleMain extends abstractModuleMain {
 		$this->enable_swfchan = $this->getConfig('ModuleSettings.SWFCHAN');
 
 		// Listen to posts rendering
-		$this->listenAttachment('onRenderAttachment');
+		$this->listenAttachmentWidget('onRenderAttachmentWidget');
 	}
 
 	public function getName(): string {
@@ -46,7 +44,7 @@ class moduleMain extends abstractModuleMain {
 	/**
 	 * Render the attachment with EXIF and reverse search links.
 	 */
-	public function onRenderAttachment(string &$attachmentProperties, string &$attachmentImage, string &$attachmentUrl, array &$attachment): void {
+	public function onRenderAttachmentWidget(array &$widgetArray, array &$attachment): void {
 		$fileExtension = strtolower($attachment['fileExtension']);
 		$isSwf = $fileExtension === 'swf';
 		static $nonReverseSearchableExtensions = ['swf', 'mp4', 'webm'];
@@ -66,48 +64,44 @@ class moduleMain extends abstractModuleMain {
 				]
 			);
 
-			$attachmentProperties .= $this->renderIndicator('exif', '[<a href="' . $this->modulePageUrl . $queryParameters . '">EXIF</a>]', 'exifLink imageOptions') . ' ';
+			$widgetArray[] = $this->buildWidgetEntry($this->modulePageUrl . $queryParameters, 'exif', 'EXIF', '');
 		}
 
 		// ImgOps reverse search
-		if ($this->enable_imgops) {
-			$attachmentProperties .= $this->renderIndicator('imgops', '[<a href="http://imgops.com/' . getAttachmentUrl($attachment) . '" target="_blank">ImgOps</a>]', 'imgopsLink imageOptions', $isNotAReverseSearchableImage) . ' ';
+		if ($this->enable_imgops && !$isNotAReverseSearchableImage) {
+			$widgetArray[] = $this->buildWidgetEntry('http://imgops.com/' . getAttachmentUrl($attachment), 'imgops', 'ImgOps', '', ['target' => '_blank']);
 		}
 
 		// IQDB search
-		if ($this->enable_iqdb) {
-			$attachmentProperties .= $this->renderIndicator('iqdb', '[<a href="http://iqdb.org/?url=' . getAttachmentUrl($attachment) . '" target="_blank">iqdb</a>]', 'iqdbLink imageOptions', $isNotAReverseSearchableImage) . ' ';
+		if ($this->enable_iqdb && !$isNotAReverseSearchableImage) {
+			$widgetArray[] = $this->buildWidgetEntry('http://iqdb.org/?url=' . getAttachmentUrl($attachment), 'iqdb', 'iqdb', '', ['target' => '_blank']);
 		}
 
 		// SWFChan archive
-		if ($this->enable_swfchan) {
-			if ($isSwf) {
-				$constructedAttachment = constructAttachment(
-					$attachment['fileId'],
-					$attachment['postUid'],
-					$attachment['boardUID'],
-					$attachment['fileName'],
-					$attachment['storedFileName'],
-					$attachment['fileExtension'],
-					$attachment['fileMd5'],
-					$attachment['fileWidth'],
-					$attachment['fileHeight'],
-					$attachment['thumbWidth'],
-					$attachment['thumbHeight'],
-					$attachment['fileSize'],
-					$attachment['mimeType'],
-					(bool)$attachment['isHidden'],
-					$attachment['isDeleted'],
-					$attachment['timestampAdded']
-				);
+		if ($this->enable_swfchan && $isSwf) {
+			$constructedAttachment = constructAttachment(
+				$attachment['fileId'],
+				$attachment['postUid'],
+				$attachment['boardUID'],
+				$attachment['fileName'],
+				$attachment['storedFileName'],
+				$attachment['fileExtension'],
+				$attachment['fileMd5'],
+				$attachment['fileWidth'],
+				$attachment['fileHeight'],
+				$attachment['thumbWidth'],
+				$attachment['thumbHeight'],
+				$attachment['fileSize'],
+				$attachment['mimeType'],
+				(bool)$attachment['isHidden'],
+				$attachment['isDeleted'],
+				$attachment['timestampAdded']
+			);
 
-				$attachmentPath = $constructedAttachment->getPath();
-				$rawByteFileSize = filesize($attachmentPath);
+			$attachmentPath = $constructedAttachment->getPath();
+			$rawByteFileSize = filesize($attachmentPath);
 
-				$attachmentProperties .= $this->renderIndicator('swfchan', '[<a href="http://eye.swfchan.com/search/?q=>' . $rawByteFileSize . '" target="_blank">swfchan</a>]', 'swfchanLink imageOptions') . ' ';
-			} else {
-				$attachmentProperties .= $this->renderIndicator('swfchan', '[<a href="#">swfchan</a>]', 'swfchanLink imageOptions', true) . ' ';
-			}
+			$widgetArray[] = $this->buildWidgetEntry('http://eye.swfchan.com/search/?q=>' . $rawByteFileSize, 'swfchan', 'swfchan', '', ['target' => '_blank']);
 		}
 	}
 

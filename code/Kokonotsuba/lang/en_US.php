@@ -395,12 +395,24 @@ $language['post_api_field_capcode']           = 'Staff capcode';
 $language['post_api_field_email']             = 'Email field';
 $language['post_api_field_subject']           = 'Post subject';
 $language['post_api_field_comment']           = 'Raw comment text';
+$language['post_api_field_parent_thread_uid'] = 'UID of the parent thread';
+$language['post_api_field_parent_post_number'] = 'Post number of the thread OP';
 $language['post_api_field_html']              = 'Fully rendered post HTML';
-$language['post_api_get_thread_posts']        = 'Get all posts from a thread';
-$language['post_api_returns_json_thread']     = 'Returns JSON with all posts in the specified thread';
+$language['post_api_get_thread_posts']        = 'Get posts from a thread (paginated)';
+$language['post_api_returns_json_thread']     = 'Returns JSON with a page of posts from the specified thread. The OP is always included on every page.';
 $language['post_api_thread_uid_desc']         = 'The unique ID of the thread';
+$language['post_api_page_param_desc']         = 'Page number (0-based, optional, defaults to 0)';
 $language['post_api_response']                = 'Response';
-$language['post_api_thread_response_desc']    = 'Returns an object with <code>thread_uid</code>, <code>post_count</code>, and <code>posts</code> (array of post objects with the same fields as the single post endpoint).';
+$language['post_api_thread_response_desc']    = 'Returns an object with <code>thread_uid</code>, <code>page</code>, <code>post_count</code>, and <code>posts</code> (array of post objects with the same fields as the single post endpoint).';
+$language['post_api_get_thread_list']         = 'Get thread list (paginated)';
+$language['post_api_board_uid_desc']          = 'The numeric board UID (optional, defaults to the current board)';
+$language['post_api_returns_json_thread_list'] = 'Returns a paginated list of thread UIDs for the board, sorted by creation time (newest first).';
+$language['post_api_thread_list_response_desc'] = 'Returns an object with <code>page</code>, <code>threads_per_page</code>, <code>thread_count</code>, and <code>threads</code> (array of thread objects).';
+$language['post_api_thread_list_field_thread_uid'] = 'Unique ID of the thread';
+$language['post_api_thread_list_field_subject']    = 'Subject of the opening post';
+$language['post_api_thread_list_field_last_bump_time'] = 'Timestamp of the last bump';
+$language['post_api_thread_list_field_created_time'] = 'Timestamp of when the thread was created';
+$language['post_api_thread_list_field_post_count'] = 'Total number of posts in the thread';
 
 // fullBanner module
 $language['fullbanner_no_file'] = 'No file uploaded.';
@@ -424,4 +436,5 @@ $language['fullbanner_submit_button'] = 'Submit banner';
 $language['fullbanner_upload_heading'] = 'Upload banner (Auto-Approved)';
 $language['fullbanner_upload_button'] = 'Upload banner';
 
+$language['quick_reply_link'] = 'Quick reply';
 ?>

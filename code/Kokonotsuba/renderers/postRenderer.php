@@ -41,7 +41,7 @@ class postRenderer {
 			$this->postDataPreparer = new postDataPreparer($board);
 
 			// initialize attachment rendering class
-			$this->attachmentRenderer = new attachmentRenderer($board, $moduleEngine);
+			$this->attachmentRenderer = new attachmentRenderer($board, $moduleEngine, $templateEngine);
 
 			// intialize post template binding class
 			$this->postTemplateBinder = new postTemplateBinder($board, $config);

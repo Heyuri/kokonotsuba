@@ -25,7 +25,7 @@ use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\helper\agingHandler;
 use Kokonotsuba\post\helper\webhookDispatcher;
 use Kokonotsuba\post\postRegistData;
-use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\renderers\postRenderer;
 use Kokonotsuba\file\postFileUploadController;
 use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
@@ -40,6 +40,7 @@ use function Kokonotsuba\libraries\scaleThumbnail;
 use function Puchiko\strings\strlenUnicode;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getPageOfThread;
+use function Kokonotsuba\libraries\searchBoardArrayForBoardByIdentifier;
 use function Puchiko\json\sendAjaxAndDetach;
 
 class registRoute {
@@ -88,6 +89,8 @@ class registRoute {
 		$computedPostInfo = [];
 		$emailForInsertion = '';
 		$redirect = '';
+		$newPostsHtml = [];
+		$thread = false;
 
 		// Begin transaction
 		$this->transactionManager->run(function () use (
@@ -96,6 +99,7 @@ class registRoute {
 			&$computedPostInfo,
 			&$emailForInsertion,
 			&$redirect,
+			&$thread,
 			$imgDir,
 			$thumbnailCreator,
 			$defaultTextFiller,
@@ -121,7 +125,6 @@ class registRoute {
 
 			// Get the thread data (if it exists)
 			$thread = $this->threadService->getThreadLastReplies($postData['thread_uid'], false, $previewCount, $amountOfRepliesToRender);
-
 			// Step 3: Verify that thread exists
 			$this->postValidator->threadSanityCheck($postData['postOpRoot'], $postData['flgh'], $postData['thread_uid'], $postData['resno'], $postData['threadDeleted'], $thread);
 
@@ -223,6 +226,19 @@ class registRoute {
 			// save attachment + thumbnail 
 			$this->saveUploadedPostFiles($entry['postFileUploadController'], $file->getExtention());
 		}
+
+		// Render new replies to HTML for instant client-side insertion (noko/dump)
+		// Done after file saving so images/thumbnails exist on disk when HTML is served
+		if ($this->request->isAjax() && $postData['isReply']) {
+			$lastPostNo = intval($this->request->getParameter('lastPostNo', 'POST', 0));
+			$newPostsHtml = $this->renderNewRepliesHtml(
+				$postData['thread_uid'],
+				$postData['resno'],
+				$lastPostNo,
+				$thread
+			);
+		}
+
 		// Dispatch webhook
 		$webhookDispatcher->dispatch($postData['resno'], $computedPostInfo['no']);
 
@@ -234,7 +250,8 @@ class registRoute {
 			$preInsertThreadList,
 			$computedPostInfo['no'],
 			$this->board->getBoardUID(),
-			$redirect, 
+			$redirect,
+			$newPostsHtml,
 		);
 	}
 
@@ -269,7 +286,23 @@ class registRoute {
 		// Parse tripcode from raw name before HTML escaping
 		$tripcode = '';
 		$secure_tripcode = '';
+		$staffCapcodeInput = '';
+
+		// Extract staff capcode first ( ## Capcode at the end, with leading space)
+		// This must be done before tripcode parsing so "name#trip ## Mod" works
+		if (preg_match('/\s##\s+(.+)$/', $rawName, $capcodeMatch)) {
+			$staffCapcodeInput = trim($capcodeMatch[1]);
+			$rawName = substr($rawName, 0, -strlen($capcodeMatch[0]));
+		}
+
+		// Parse tripcode from remaining name
 		[$nameOnly, $tripcode, $secure_tripcode] = array_map('trim', explode('#', $rawName . '##'));
+
+		// If a staff capcode was extracted, pass it via secure_tripcode_input
+		// (only when secure_tripcode isn't already set from a ##securetrip)
+		if ($staffCapcodeInput !== '' && $secure_tripcode === '') {
+			$secure_tripcode = $staffCapcodeInput;
+		}
 		
 		// Now apply HTML escaping to the name portion and store full name for cookie
 		$name = htmlspecialchars($nameOnly);
@@ -600,16 +633,13 @@ class registRoute {
 		return $passwordHash;
 	}
 
-	// Processes quote links (e.g., >>123 or >>No.123) in a post's comment
+	// Processes quote links (e.g., >>123 or >>No.123 or >>>/board/123) in a post's comment
 	private function handlePostQuoteLink(int $postNumber, string $postComment) {
-		// Match all quote patterns like ">>123" or ">>No.123" in the comment
+		$allQuoteLinkedPostUids = [];
+
+		// Match same-board quote patterns like ">>123" or ">>No.123"
 		if(preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $postComment, $matches, PREG_SET_ORDER)) {
-			// Resolve the UID of the current post from its number
-			$postUid = $this->postRepository->resolvePostUidFromPostNumber($this->board, $postNumber);
-	
 			$uniqueMatches = [];
-	
-			// Filter out duplicate matches
 			foreach ($matches as $match) {
 				if (!in_array($match, $uniqueMatches)) {
 					$uniqueMatches[] = $match;
@@ -617,17 +647,37 @@ class registRoute {
 			}
 	
 			$quoteLinkedPostNumbers = [];
-	
-			// Extract just the numeric post number from each quote match
 			foreach ($uniqueMatches as $match) {
-				$quoteLinkedPostNumbers[] = $match[2]; // This is the quoted post number
+				$quoteLinkedPostNumbers[] = $match[2];
 			}
 	
-			// Resolve the UIDs of all quoted post numbers
 			$quoteLinkedPostUids = $this->postRepository->resolvePostUidsFromArray($this->board, $quoteLinkedPostNumbers);
-	
-			// Store quote link relationships in the database
-			$this->quoteLinkService->createQuoteLinksFromArray($this->board->getBoardUID(), $postUid, $quoteLinkedPostUids);
+			$allQuoteLinkedPostUids = array_merge($allQuoteLinkedPostUids, array_values($quoteLinkedPostUids));
+		}
+
+		// Match cross-board quote patterns like ">>>/c/123"
+		if(preg_match_all('/((?:&gt;|＞){3})\/([a-zA-Z0-9]+)\/(\d+)/i', $postComment, $crossMatches, PREG_SET_ORDER)) {
+			$crossBoardPosts = [];
+			foreach ($crossMatches as $match) {
+				$boardIdentifier = $match[2];
+				$postNo = $match[3];
+				$crossBoardPosts[$boardIdentifier][] = $postNo;
+			}
+
+			foreach ($crossBoardPosts as $identifier => $postNumbers) {
+				$targetBoard = searchBoardArrayForBoardByIdentifier($identifier);
+				if (!$targetBoard) continue;
+
+				$postNumbers = array_unique($postNumbers);
+				$resolvedUids = $this->postRepository->resolvePostUidsFromArray($targetBoard, $postNumbers);
+				$allQuoteLinkedPostUids = array_merge($allQuoteLinkedPostUids, array_values($resolvedUids));
+			}
+		}
+
+		if (!empty($allQuoteLinkedPostUids)) {
+			$postUid = $this->postRepository->resolvePostUidFromPostNumber($this->board, $postNumber);
+			$allQuoteLinkedPostUids = array_unique($allQuoteLinkedPostUids);
+			$this->quoteLinkService->createQuoteLinksFromArray($this->board->getBoardUID(), $postUid, $allQuoteLinkedPostUids);
 		}
 	}
 
@@ -674,7 +724,8 @@ class registRoute {
 		array $preInsertThreadList,
 		int $postNumber, 
 		int $boardUid, 
-		string $redirectUrl
+		string $redirectUrl,
+		array $newPostsHtml = []
 	): void {
 		// If it's a JavaScript request, return JSON response with post ID and redirect URL
 		if($this->request->isAjax()) {
@@ -683,6 +734,11 @@ class registRoute {
 				'postId' => "p{$boardUid}_{$postNumber}",
 				'redirectUrl' => $redirectUrl,
 			];
+
+			// Include rendered new reply HTML for instant client-side insertion
+			if (!empty($newPostsHtml)) {
+				$registJsonData['newPostsHtml'] = $newPostsHtml;
+			}
 
 			// handle detach logic
 			$this->handleJsonDetach(
@@ -732,6 +788,53 @@ class registRoute {
 			$postFileUploadController->savePostThumbnailToBoard();
 			$postFileUploadController->savePostFileToBoard();
 		}
+	}
+
+	// Render all new replies in a thread after a given post number
+	private function renderNewRepliesHtml(string $threadUid, int $threadResno, int $lastPostNo, ThreadData|false $thread): array {
+		// Fetch all replies after the client's last known post
+		$newPosts = $this->threadRepository->getRepliesAfterPostNumber($threadUid, $lastPostNo);
+
+		if (!$newPosts) {
+			return [];
+		}
+
+		$templateEngine = $this->board->getBoardTemplateEngine();
+
+		$newPostUids = array_map(fn($p) => $p->getUid(), $newPosts);
+		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByPostUids($newPostUids);
+
+		$renderer = new postRenderer(
+			$this->board,
+			$this->config,
+			$this->moduleEngine,
+			$templateEngine,
+			$quoteLinksFromBoard,
+			$this->request
+		);
+
+		$threadPosts = $thread ? $thread->getPosts() : $newPosts;
+		$replyCount = $thread ? $thread->getThread()->getPostCount() - 1 : 0;
+
+		$htmlArray = [];
+		foreach ($newPosts as $post) {
+			$templateValues = [];
+			$htmlArray[] = $renderer->render(
+				$post,
+				$templateValues,
+				$threadResno,
+				false,
+				$threadPosts,
+				false,
+				'',
+				'',
+				$replyCount,
+				true,
+				''
+			);
+		}
+
+		return $htmlArray;
 	}
 
 }

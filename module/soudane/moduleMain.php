@@ -153,7 +153,7 @@ class moduleMain extends abstractModuleMain {
 			$voteHtml .= ' ' . $this->renderScore($postUid, $score);
 		}
 
-		$arrLabels['{$POSTINFO_EXTRA}'] .= ' <span class="soudaneContainer"> ' . $voteHtml . ' </span>';
+		$arrLabels['{$POSTINFO_EXTRA}'] .= ' <span class="soudaneContainer js-only"> ' . $voteHtml . ' </span>';
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {

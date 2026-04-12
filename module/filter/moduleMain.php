@@ -3,17 +3,14 @@
 namespace Kokonotsuba\Modules\filter;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\traits\IndicatorTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostWidgetListenerTrait;
-use Kokonotsuba\module_classes\traits\listeners\AttachmentListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\AttachmentWidgetListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
-use Kokonotsuba\post\Post;
 
 class moduleMain extends abstractModuleMain {
 	use PostWidgetListenerTrait;
-	use AttachmentListenerTrait;
+	use AttachmentWidgetListenerTrait;
 	use IncludeScriptTrait;
-	use IndicatorTrait;
 
 	public function getName(): string {
 		return 'Kokonotsuba Filter JS';
@@ -28,7 +25,7 @@ class moduleMain extends abstractModuleMain {
 		$this->listenPostWidget('onRenderPostWidget');
 
 		// add attachment widget listener for hide image
-		$this->listenAttachment('onRenderAttachment');
+		$this->listenAttachmentWidget('onRenderAttachmentWidget');
 
 		// include the filter js for the hide post widget
 		$this->registerScript('filter.js');
@@ -47,8 +44,8 @@ class moduleMain extends abstractModuleMain {
 		$widgetArray[] = $hideWidget;
 	}
 
-	private function onRenderAttachment(string &$imageBar, string &$imageHtml, string &$imageUrl, array &$fileData): void {
-		$imageBar .= $this->renderIndicator('hideImage', '<a href="#" data-action="hideImage">Hide image</a>');
+	private function onRenderAttachmentWidget(array &$widgetArray, array &$fileData): void {
+		$widgetArray[] = $this->buildWidgetEntry('#', 'hideImage', 'Hide image', '');
 	}
 
 }

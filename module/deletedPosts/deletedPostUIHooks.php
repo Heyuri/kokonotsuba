@@ -237,8 +237,8 @@ class deletedPostUIHooks {
 	}
 
 	private function onRenderAttachmentIndicator(string &$fileInfoBar, array &$attachment): void {
-		// whether the attachment is deleted
-		$isDeleted = $attachment['isDeleted'] || $attachment['onlyFileDeleted'];
+		// whether this specific attachment is deleted (per-attachment flag AND post-level file-only flag)
+		$isDeleted = $attachment['isDeleted'] && $attachment['onlyFileDeleted'];
 
 		// always render [FILE DELETED] indicator (hidden when not deleted, JS toggles visibility)
 		$fileInfoBar .= $this->renderIndicator('fileDeleted', '[FILE DELETED]', 'warning', !$isDeleted, 'This post\'s file was deleted!');

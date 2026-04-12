@@ -21,6 +21,7 @@ use function Kokonotsuba\libraries\html\drawLiveBoardPager;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
+use function Kokonotsuba\libraries\getOrCreateCsrfToken;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\strings\html_minify;
 use function Puchiko\strings\truncateText;
@@ -144,6 +145,11 @@ class boardRebuilder {
 
 		// init template placeholders
 		$pte_vals = $this->buildPteVals(true);
+
+		// add CSRF token to delform for logged-in staff on live pages
+		if($this->adminMode) {
+			$pte_vals['{$DELFORM_CSRF}'] = '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(getOrCreateCsrfToken(), ENT_QUOTES, 'UTF-8') . '">';
+		}
 		
 		// if we want to render the post form then build form html and bind to template parameter
 		if($showPostForm) {
@@ -318,6 +324,11 @@ class boardRebuilder {
 		// init placeholder template values
 		$pte_vals = $this->buildPteVals(false);
 
+		// add CSRF token to delform for logged-in staff on live pages
+		if($this->adminMode) {
+			$pte_vals['{$DELFORM_CSRF}'] = '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(getOrCreateCsrfToken(), ENT_QUOTES, 'UTF-8') . '">';
+		}
+
 		// build form html
 		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml(0, $pte_vals, $this->adminMode);
 
@@ -440,6 +451,9 @@ class boardRebuilder {
     	// Render thread data to PTE values
     	$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $pte_vals);
 
+    	// Regenerate head HTML after thread rendering so modules can inject per-thread styles into <head>
+    	$headerHtml = $this->board->getBoardHead($this->board->getBoardTitle());
+
     	// Render page navigation
     	$pte_vals['{$BOTTOM_PAGENAV}'] = drawBoardPager(
     	    $threadsPerPage,
@@ -495,6 +509,7 @@ class boardRebuilder {
 			'{$THREADS}' => '',
 			'{$THREADFRONT}' => '',
 			'{$THREADREAR}' => '',
+			'{$DELFORM_CSRF}' => '',
 			'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel">' . _T('del_head'),
 			'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 			'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
@@ -547,7 +562,9 @@ class boardRebuilder {
 
 	private function runThreadModuleHooks(array &$pte_vals, int $resno): void {
 		$this->moduleEngine->dispatch('AboveThreadArea', array(&$pte_vals['{$THREADFRONT}'], empty($resno)));
+		$this->moduleEngine->dispatch('AboveThreadsGlobal', array(&$pte_vals['{$THREADFRONT}']));
 		$this->moduleEngine->dispatch('BelowThreadArea', array(&$pte_vals['{$THREADREAR}'], empty($resno)));
+		$this->moduleEngine->dispatch('BelowThreadsGlobal', array(&$pte_vals['{$THREADREAR}']));
 		$this->moduleEngine->dispatch('PlaceHolderIntercept', [&$pte_vals]);
 	}
 

@@ -147,7 +147,7 @@ class postWidget {
 		$html = '<div class="postMenu">';
 
 		// arrow trigger (no href)
-		$html .= '<a class="menuToggle" role="button" aria-label="Post menu">▶</a>';
+		$html .= '<a class="menuToggle js-only" role="button" aria-label="Post menu">▶</a>';
 
 		// hidden widget refs
 		$html .= '<div class="widgetRefs" hidden>';

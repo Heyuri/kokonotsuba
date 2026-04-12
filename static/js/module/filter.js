@@ -218,6 +218,12 @@ const kkfilter = {
 		var idx = list.indexOf(key);
 		if (idx === -1) {
 			list.push(key);
+			var expanded = containerEl.querySelector('.expandedImageContainer, .expand');
+			if (expanded) {
+				var anchor = containerEl.querySelector('.attachmentAnchor');
+				if (anchor) anchor.style.display = '';
+				expanded.remove();
+			}
 			containerEl.classList.add('filterImage');
 		} else {
 			list.splice(idx, 1);

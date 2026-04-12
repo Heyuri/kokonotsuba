@@ -12,6 +12,7 @@ use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\anti_sakura;
+use function Puchiko\strings\newLinesToBreakLines;
 use function Puchiko\strings\strlenUnicode;
 
 class postValidator {
@@ -142,7 +143,7 @@ class postValidator {
 		$com = preg_replace("/\n((　| )*\n){3,}/", "\n", $com);
 
 		if(!$this->config['BR_CHECK'] || substr_count($com,"\n") < $this->config['BR_CHECK']){
-			$com = nl2br($com); // Newline characters are replaced by <br>
+			$com = newLinesToBreakLines($com); // Newline characters are replaced by <br>
 		}
 		$com = str_replace("\n", '', $com); // If there are still \n newline characters, cancel the newline
 

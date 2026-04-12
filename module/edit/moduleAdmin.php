@@ -11,7 +11,12 @@ use Kokonotsuba\userRole;
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\generateModerateButton;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
+use function Kokonotsuba\libraries\getCsrfMetaTag;
+use function Puchiko\strings\newLinesToBreakLines;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
@@ -36,9 +41,21 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function initialize(): void {
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
 		$this->registerSimplePostWidget('postUid', 'editPost', _T('edit_post'));
+
+		// noscript fallback: link to edit form page
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'PostAdminControls',
+			function(string &$modControlSection, Post &$post) {
+				$url = $this->getModulePageURL(['postUid' => $post->getUid()], false, true);
+				$modControlSection .= generateModerateButton($url, 'E', _T('edit_post'), 'adminEditFunction', true);
+			}
+		);
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		$moduleHeader .= getCsrfMetaTag();
+
 		// include the post edit js for the mod tool
 		//$this->includeScript('postEdit.js', $moduleHeader);
 
@@ -54,7 +71,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$FORM_EMAIL}' => _T('form_email'),
 			'{$FORM_TOPIC}' => _T('form_topic'),
 			'{$FORM_COMMENT}' => _T('form_comment'),
-			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false))
+			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput()
 		]);
 
 		// append the form template to the module header so it's available on the page (but hidden until triggered)
@@ -78,7 +96,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// convert new lines
 		if($comment !== null) {
-			$updatePostParameters['com'] = nl2br($comment, false);
+			$updatePostParameters['com'] = newLinesToBreakLines($comment);
 		}
 
 		// Filter out null values
@@ -190,7 +208,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$FORM_EMAIL}' => _T('form_email'),
 			'{$FORM_TOPIC}' => _T('form_topic'),
 			'{$FORM_COMMENT}' => _T('form_comment'),
-			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)) 
+			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput()
 		]);
 
 		// render the edit form with post details
@@ -206,6 +225,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// handle the main edit requests
 		if($this->moduleContext->request->isPost()) {
+			requirePostWithCsrf($this->moduleContext->request);
 			$this->handleEditRequest($postUid);
 		}
 		// otherwise just render the form

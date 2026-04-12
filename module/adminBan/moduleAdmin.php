@@ -11,7 +11,11 @@ use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
+use function Kokonotsuba\libraries\getCsrfMetaTag;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Kokonotsuba\libraries\html\drawPager;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
@@ -22,6 +26,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private readonly string $DEFAULT_BAN_MESSAGE;
 	private readonly string $modulePageUrl;
+	private readonly int $bansPerPage;
 
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('AuthLevels.CAN_BAN');
@@ -38,6 +43,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function initialize(): void {
 		$this->modulePageUrl = $this->getModulePageURL([], false, true);
 		$this->DEFAULT_BAN_MESSAGE = $this->getConfig('DEFAULT_BAN_MESSAGE');
+		$this->bansPerPage = (int)$this->getConfig('ADMIN_PAGE_DEF', 100);
 
 		$this->registerPostControlPair('onRenderPostAdminControls');
 		$this->registerLinksAboveBarHook(_T('admin_nav_ban_title'), $this->modulePageUrl, _T('admin_nav_ban'));
@@ -64,6 +70,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		$moduleHeader .= getCsrfMetaTag();
+
 		// get ban template
 		$banTemplate = $this->generateBanJsTemplate();
 
@@ -111,6 +119,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage() {
 		if ($this->moduleContext->request->isPost()) {
+			requirePostWithCsrf($this->moduleContext->request);
+
 			$banAction = $this->moduleContext->request->getParameter('adminban-action', 'POST', '');
 			switch($banAction) {
 				case 'add-ban':
@@ -125,18 +135,39 @@ class moduleAdmin extends abstractModuleAdmin {
 		$log = $this->sortBansByNewest($this->readBanLog($this->getBanFilePath()));
 		$glog = $this->sortBansByNewest($this->readBanLog($this->getGlobalBanFilePath()));
 
+		// Pagination
+		$request = $this->moduleContext->request;
+
+		$localPage = ($request->hasParameter('lpage') && is_numeric($request->getParameter('lpage')))
+			? max(0, (int)$request->getParameter('lpage')) : 0;
+		$globalPage = ($request->hasParameter('gpage') && is_numeric($request->getParameter('gpage')))
+			? max(0, (int)$request->getParameter('gpage')) : 0;
+
+		$localOffset = $localPage * $this->bansPerPage;
+		$globalOffset = $globalPage * $this->bansPerPage;
+
+		$localPageEntries = array_slice($log, $localOffset, $this->bansPerPage);
+		$globalPageEntries = array_slice($glog, $globalOffset, $this->bansPerPage);
+
+		$localPager = drawPager($this->bansPerPage, count($log), $this->modulePageUrl, $request, 'lpage');
+		$globalPager = drawPager($this->bansPerPage, count($glog), $this->modulePageUrl, $request, 'gpage');
+
 		$tables = [
 			[
 				'{$TITLE}' => 'Local bans',
 				'{$TABLE_ID}' => 'localBanTable',
 				'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
-				'{$ROWS}' => $this->convertBanLogToRows($log, 'del')
+				'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
+				'{$ROWS}' => $this->convertBanLogToRows($localPageEntries, 'del', $localOffset),
+				'{$PAGER}' => $localPager
 			],
 			[
 				'{$TITLE}' => 'Global bans',
 				'{$TABLE_ID}' => 'globalBanTable',
 				'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
-				'{$ROWS}' => $this->convertBanLogToRows($glog, 'delg')
+				'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
+				'{$ROWS}' => $this->convertBanLogToRows($globalPageEntries, 'delg', $globalOffset),
+				'{$PAGER}' => $globalPager
 			]
 		];
 
@@ -177,6 +208,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$IP}' => htmlspecialchars($ipAddress),
 			'{$DEFAULT_BAN_MESSAGE}' => $defaultBanMessage,
 			'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 		];
 	}
 
@@ -374,12 +406,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $removedIps;
 	}
 
-	private function convertBanLogToRows(array $bans, string $prefix): array {
+	private function convertBanLogToRows(array $bans, string $prefix, int $offset = 0): array {
 		$rows = [];
 		foreach ($bans as $i => $ban) {
 			list($ip, $start, $expires, $reason) = explode(',', $ban, 4);
 			$rows[] = [
-				'{$CHECKBOX_NAME}' => $prefix . $i,
+				'{$CHECKBOX_NAME}' => $prefix . ($offset + $i),
 				'{$IP}' => htmlspecialchars($ip),
 				'{$START}' => $this->moduleContext->postDateFormatter->formatFromTimestamp(intval($start)),
 				'{$EXPIRES}' => $this->moduleContext->postDateFormatter->formatFromTimestamp(intval($expires)),

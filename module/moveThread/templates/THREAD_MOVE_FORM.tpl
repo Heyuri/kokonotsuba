@@ -1,5 +1,6 @@
 <div class="moveThreadContainer">
 	<form id="thread-move-form" method="POST" action="<!--&IF($FORM_ACTION,'{$FORM_ACTION}','')-->">
+		{$CSRF_TOKEN}
 		<h3 class="centerText">Move thread</h3>
 
 		<input type="hidden" name="move-thread-uid" value="<!--&IF($THREAD_UID,'{$THREAD_UID}','')-->">

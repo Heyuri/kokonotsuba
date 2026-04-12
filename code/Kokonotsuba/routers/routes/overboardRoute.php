@@ -53,6 +53,9 @@ class overboardRoute {
 		// draw filter form
 		drawOverboardFilterForm($html, $this->board, $arrayForFilter, $allowedBoards);
 
+		// add another hr
+		$html .= '<hr>';
+
 		// draw threads
 		$html .= $this->overboard->drawOverboardThreads($filters);
 

@@ -5,9 +5,15 @@ namespace Kokonotsuba\Modules\bbCode;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\CommentExtrasListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
+use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
 
 class moduleMain extends abstractModuleMain { 
 	use PostCommentListenerTrait;
+	use CommentExtrasListenerTrait;
+	use IncludeScriptTrait;
+	use FormattingDetailsTrait;
 	private $urlcount;
 	private	$ImgTagTagMode = 0; // [img] tag behavior (0: no conversion 1: conversion when no textures 2: always conversion)
 	private	$URLTagMode = 0; // [url] tag behavior (0: no conversion 1: normal)
@@ -49,6 +55,11 @@ class moduleMain extends abstractModuleMain {
 		// Register the listener for the PostComment hook (render-time)
 		$this->listenPostComment('onRenderComment');
 
+		// Render BBCode picker buttons in the post form
+		$this->listenCommentExtras('onRenderCommentExtras');
+
+		$this->registerScript('addbbcode.js');
+
 		// initialize bbcode feature flags
 		$this->supportBold = $this->getConfig('ModuleSettings.supportBold', false);
 		$this->supportStrikeThrough = $this->getConfig('ModuleSettings.supportStrikeThrough', false);
@@ -70,6 +81,63 @@ class moduleMain extends abstractModuleMain {
 		$this->supportScroll = $this->getConfig('ModuleSettings.supportScroll', false);
 		$this->supportCodeBlocks = $this->getConfig('ModuleSettings.supportCodeBlocks', false);
 		$this->supportKao = $this->getConfig('ModuleSettings.supportKao', false);
+	}
+
+	private function onRenderCommentExtras(string &$html): void {
+		$html .= $this->renderBBCodeButtons();
+	}
+
+	private function renderBBCodeButtons(): string {
+		$buttons = '';
+
+		// Simple wrap buttons - rendered as server HTML, JS adds click handlers
+		$simpleButtons = [];
+		if ($this->supportBold) {
+			$simpleButtons[] = ['label' => '<b>B</b>', 'title' => 'Bold', 'code' => 'b'];
+		}
+		if ($this->supportItalic) {
+			$simpleButtons[] = ['label' => '<i>I</i>', 'title' => 'Italics', 'code' => 'i'];
+		}
+		if ($this->supportUnderline) {
+			$simpleButtons[] = ['label' => '<u>U</u>', 'title' => 'Underline', 'code' => 'u'];
+		}
+		if ($this->supportStrikeThrough) {
+			$simpleButtons[] = ['label' => '<s>S</s>', 'title' => 'Strikethrough', 'code' => 's'];
+		}
+		if ($this->supportSpoiler) {
+			$simpleButtons[] = ['label' => '<span style="background-color:black;color:white">Spoiler</span>', 'title' => 'Spoiler', 'code' => 'spoiler'];
+		}
+		if ($this->supportQuote) {
+			$simpleButtons[] = ['label' => '<q>Quote</q>', 'title' => 'Blockquote', 'code' => 'quote'];
+		}
+		if ($this->supportScroll) {
+			$simpleButtons[] = ['label' => 'Scroll', 'title' => 'Scrollbar for long passages of text', 'code' => 'scroll'];
+		}
+
+		foreach ($simpleButtons as $btn) {
+			$buttons .= '<button type="button" class="bbcodeButton" data-code="' . htmlspecialchars($btn['code'], ENT_QUOTES, 'UTF-8') . '" title="' . htmlspecialchars($btn['title'], ENT_QUOTES, 'UTF-8') . '">' . $btn['label'] . '</button>';
+		}
+
+		// Selector buttons - rendered as HTML with data-type, JS builds the dropdowns
+		if ($this->supportCodeBlocks) {
+			$buttons .= '<button type="button" class="bbcodeButton bbcodeSelectorButton" data-type="code" title="Code"><code class="code">Code</code></button>';
+		}
+		if ($this->supportColor) {
+			$buttons .= '<button type="button" class="bbcodeButton bbcodeSelectorButton" data-type="color" title="Font color"><span style="font-weight:bold"><span class="bokuRed">C</span><span class="bokuGreen">o</span><span class="bokuRed">l</span><span class="bokuGreen">o</span><span class="bokuRed">r</span></span></button>';
+		}
+		if ($this->supportFontSize) {
+			$buttons .= '<button type="button" class="bbcodeButton bbcodeSelectorButton" data-type="size" title="Font size">Size</button>';
+		}
+		if ($this->supportPre || $this->supportSw) {
+			$buttons .= '<button type="button" class="bbcodeButton bbcodeSelectorButton" data-type="pre" title="ASCII art">ASCII</button>';
+		}
+
+		if ($buttons === '') {
+			return '';
+		}
+
+		return $this->renderFormattingDetails('bbcodeContainer', 'BBCode',
+			'<div id="bbcodeButtonContainer">' . $buttons . '</div>');
 	}
 
 	private function onRenderComment(string &$comment): void {

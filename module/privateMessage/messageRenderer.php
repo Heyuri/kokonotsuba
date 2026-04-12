@@ -11,6 +11,7 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Kokonotsuba\libraries\html\quote_unkfunc;
+use function Puchiko\strings\newLinesToBreakLines;
 use function Puchiko\strings\autoLink;
 use function Puchiko\strings\sanitizeStr;
 use function Puchiko\strings\truncateText;
@@ -167,7 +168,7 @@ class messageRenderer {
 		$isSent = ($message['sender_tripcode'] === $userTripCode);
 
 		// apply PostComment hook for emotes/bbcode rendering
-		$bodyHtml = nl2br(sanitizeStr($message['message_body']));
+		$bodyHtml = newLinesToBreakLines(sanitizeStr($message['message_body']));
 		$bodyHtml = $this->applyCommentHooks($bodyHtml);
 
 		// build reply prefills
@@ -202,7 +203,7 @@ class messageRenderer {
 	public function renderAdminViewMessage(array $message, string $backUrl): string {
 		$nameHtml = $this->buildSenderNameHtml($message);
 
-		$bodyHtml = nl2br(sanitizeStr($message['message_body']));
+		$bodyHtml = newLinesToBreakLines(sanitizeStr($message['message_body']));
 		$bodyHtml = $this->applyCommentHooks($bodyHtml);
 
 		return $this->adminPageRenderer->ParseBlock('PM_VIEW_MESSAGE', [

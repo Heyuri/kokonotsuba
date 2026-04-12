@@ -45,8 +45,6 @@ class moduleAdmin extends abstractModuleAdmin {
 	protected function getToggleActionName(): string { return 'sticky'; }
 	protected function getToggleJsFile(): string { return 'sticky.js'; }
 
-	protected function shouldRegisterThreadAdminControls(): bool { return false; }
-
 	protected function getToggleUrlParams(Post $post): array {
 		return ['thread_uid' => $post->getThreadUid()];
 	}

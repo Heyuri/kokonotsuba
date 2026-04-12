@@ -116,19 +116,19 @@ function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url,
 	return renderPager($currentPage, $totalPages, $getLink, $getForm);
 }
 
-function drawPager(int $entriesPerPage, int $totalEntries, string $url, request $request): string {
-	$currentPage = ($request->hasParameter('page') && is_numeric($request->getParameter('page')))
-		? (int)$request->getParameter('page')
+function drawPager(int $entriesPerPage, int $totalEntries, string $url, request $request, string $pageParam = 'page'): string {
+	$currentPage = ($request->hasParameter($pageParam) && is_numeric($request->getParameter($pageParam)))
+		? (int)$request->getParameter($pageParam)
 		: 0;
 
 	[$totalPages, $currentPage] = validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
 
-	$getLink = fn($page) => $url . '&page=' . $page;
+	$getLink = fn($page) => $url . '&' . $pageParam . '=' . $page;
 
-	$getForm = function($page, $label) use ($url, $request) {
+	$getForm = function($page, $label) use ($url, $request, $pageParam) {
 		$params = $request->allGet();
-		unset($params['page']);
-		$params['page'] = $page;
+		unset($params[$pageParam]);
+		$params[$pageParam] = $page;
 
 		$inputs = '';
 		foreach ($params as $key => $val) {

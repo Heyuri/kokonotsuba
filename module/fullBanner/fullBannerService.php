@@ -23,8 +23,29 @@ class fullBannerService {
 		private string $storageDir,
 	) {}
 
-	public function getApprovedActiveBanners(): array {
-		return $this->fullBannerRepository->getApprovedActiveBanners();
+
+	public function getApprovedActiveBannersPage(int $requestedPage, int $entriesPerPage): array {
+		$totalEntries = $this->fullBannerRepository->countApprovedActiveBanners();
+		[$entriesPerPage, $currentPage, $offset] = $this->calculatePagination($requestedPage, $entriesPerPage, $totalEntries);
+
+		return [
+			'items' => $this->fullBannerRepository->getApprovedActiveBannersPaginated($entriesPerPage, $offset),
+			'totalEntries' => $totalEntries,
+			'entriesPerPage' => $entriesPerPage,
+			'currentPage' => $currentPage,
+		];
+	}
+
+	public function getAllBannersPage(int $requestedPage, int $entriesPerPage): array {
+		$totalEntries = $this->fullBannerRepository->countAllBanners();
+		[$entriesPerPage, $currentPage, $offset] = $this->calculatePagination($requestedPage, $entriesPerPage, $totalEntries);
+
+		return [
+			'items' => $this->fullBannerRepository->getAllBannersPaginated($entriesPerPage, $offset),
+			'totalEntries' => $totalEntries,
+			'entriesPerPage' => $entriesPerPage,
+			'currentPage' => $currentPage,
+		];
 	}
 
 	public function getAllBanners(): array {
@@ -112,6 +133,21 @@ class fullBannerService {
 
 	public function getStorageDir(): string {
 		return $this->storageDir;
+	}
+
+	private function calculatePagination(int $requestedPage, int $entriesPerPage, int $totalEntries): array {
+		$entriesPerPage = max(1, $entriesPerPage);
+		$currentPage = max(0, $requestedPage);
+
+		if ($totalEntries <= 0) {
+			return [$entriesPerPage, 0, 0];
+		}
+
+		$lastPage = (int)ceil($totalEntries / $entriesPerPage) - 1;
+		$currentPage = min($currentPage, $lastPage);
+		$offset = $currentPage * $entriesPerPage;
+
+		return [$entriesPerPage, $currentPage, $offset];
 	}
 
 	private function checkFlood(string $ipAddress, int $cooldownSeconds): void {

@@ -9,7 +9,7 @@
 					</tr>
 					<tr>
 						<td class="postblock"><label for="email">Email</label></td>
-						<td class="postformInputCell">{$FORM_EMAIL_FIELD}</td>
+						<td class="postformInputCell">{$FORM_EMAIL_FIELD}<!--&NOKO_SAGE_DUMP/--></td>
 					</tr>
 					<tr>
 						<td class="postblock">
@@ -18,8 +18,8 @@
 					</tr>
 					<tr>
 						<td class="postblock">
-							<label for="com">Comment</label></td>
-						<td class="postformInputCell">{$FORM_COMMENT_FIELD}</td>
+							<label for="com">Comment</label>{$FORM_COMMENT_BLOCK_EXTRA}</td>
+						<td class="postformInputCell">{$FORM_COMMENT_FIELD}{$FORM_COMMENT_EXTRAS}</td>
 					</tr>
 					<!--&IF($FORM_ATTECHMENT_FIELD,'<tr>
 						<td class="postblock"><label for="upfile">File</label></td>

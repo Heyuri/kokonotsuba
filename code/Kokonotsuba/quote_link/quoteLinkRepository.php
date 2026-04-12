@@ -46,6 +46,7 @@ class quoteLinkRepository extends baseRepository {
 					'no' => (int)$row['target_no'],
 					'post_op_number' => (int)$row['target_post_op_number'],
 					'post_position' => (int)$row['target_post_position'],
+					'board_uid' => (int)$row['target_board_uid'],
 				],
 				'host_post' => [
 					'post_uid' => (int)$row['host_post_uid'],
@@ -76,6 +77,7 @@ class quoteLinkRepository extends baseRepository {
 				hp.no AS host_no,
 				ht.post_op_number AS host_post_op_number,
 
+				tp.boardUID AS target_board_uid,
 				tp.post_position AS target_post_position,
 				hp.post_position AS host_post_position,
 

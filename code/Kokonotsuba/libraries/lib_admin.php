@@ -8,6 +8,8 @@ use Kokonotsuba\account\accountRepository;
 use Kokonotsuba\log_in\loginSessionHandler;
 use Kokonotsuba\userRole;
 
+use function Puchiko\strings\sanitizeStr;
+
 //This file contains functions for koko management mode and related features
 /**
 * Check if the account session role is at least a janitor
@@ -123,6 +125,14 @@ function requirePostWithCsrf(\Kokonotsuba\request\request $request): void {
 }
 
 /**
+ * Generate a hidden <input> element containing the CSRF token.
+ * Used inside <form> elements for POST submission.
+ */
+function getCsrfHiddenInput(): string {
+	return '<input type="hidden" name="csrf_token" value="' . sanitizeStr(getOrCreateCsrfToken()) . '">';
+}
+
+/**
  * Generate a <meta> tag for the CSRF token (for JS to read).
  * Only outputs once per request.
  */
@@ -130,13 +140,18 @@ function getCsrfMetaTag(): string {
 	static $added = false;
 	if ($added) return '';
 	$added = true;
-	$token = htmlspecialchars(getOrCreateCsrfToken(), ENT_QUOTES, 'UTF-8');
+	$token = sanitizeStr(getOrCreateCsrfToken());
 	return '<meta name="csrf-token" content="' . $token . '">';
 }
 
 /**
  * Generate a POST form that looks like a moderate button [label].
  * Uses the buttonLink CSS class to make the submit button resemble a link.
+ *
+ * When $isNoScript is true the output lives inside delform, so a nested
+ * <form> would be invalid HTML.  Instead we emit a <button> with
+ * formaction/formmethod attributes that override the parent form.
+ * The parent delform must contain a csrf_token hidden input.
  */
 function generateModerateForm(
 	string $buttonUrl,
@@ -145,24 +160,37 @@ function generateModerateForm(
 	string $class,
 	bool $isNoScript = false,
 ): string {
+	if ($isNoScript) {
+		// Inside delform — use formaction to avoid nested <form> tags.
+		// The CSRF token is already present as a hidden input in delform.
+		$html = '<span class="adminFunctions ' . htmlspecialchars($class) . '">'
+			. '[<button type="submit" class="buttonLink"'
+			. ' formaction="' . htmlspecialchars($buttonUrl) . '"'
+			. ' formmethod="POST"'
+			. ' title="' . htmlspecialchars($title) . '">'
+			. htmlspecialchars($label)
+			. '</button>]'
+			. '</span>';
+
+		return '<noscript>' . $html . '</noscript>';
+	}
+
+	// Standalone context (admin management pages) — wrap in its own <form>.
 	$csrfToken = htmlspecialchars(getOrCreateCsrfToken(), ENT_QUOTES, 'UTF-8');
 
-	$form = '<span class="adminFunctions ' . htmlspecialchars($class) . '">'
+	return '<span class="adminFunctions ' . htmlspecialchars($class) . '">'
 		. '<form method="POST" action="' . htmlspecialchars($buttonUrl) . '" style="display:inline">'
 		. '<input type="hidden" name="csrf_token" value="' . $csrfToken . '">'
 		. '[<button type="submit" class="buttonLink" title="' . htmlspecialchars($title) . '">' . htmlspecialchars($label) . '</button>]'
 		. '</form>'
 		. '</span>';
-
-	if ($isNoScript) {
-		$form = '<noscript>' . $form . '</noscript>';
-	}
-
-	return $form;
 }
 
 /**
- * Generate a POST form for an attachment action button.
+ * Generate a POST button for an attachment action.
+ * Always rendered inside delform, so uses formaction/formmethod
+ * to avoid nested <form> tags.  The parent delform must contain
+ * a csrf_token hidden input.
  */
 function generateAttachmentForm(
 	string $url,
@@ -170,13 +198,13 @@ function generateAttachmentForm(
 	string $title,
 	string $label,
 ): string {
-	$csrfToken = htmlspecialchars(getOrCreateCsrfToken(), ENT_QUOTES, 'UTF-8');
-
 	return ' <span class="adminFunctions admin' . $functionClass . 'Function attachmentButton">'
-		. '<form method="POST" action="' . htmlspecialchars($url) . '" style="display:inline">'
-		. '<input type="hidden" name="csrf_token" value="' . $csrfToken . '">'
-		. '[<button type="submit" class="buttonLink" title="' . htmlspecialchars($title) . '">' . $label . '</button>]'
-		. '</form>'
+		. '[<button type="submit" class="buttonLink"'
+		. ' formaction="' . htmlspecialchars($url) . '"'
+		. ' formmethod="POST"'
+		. ' title="' . htmlspecialchars($title) . '">'
+		. $label
+		. '</button>]'
 		. '</span>';
 }
 

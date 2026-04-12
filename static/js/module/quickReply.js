@@ -1,7 +1,11 @@
 /* LOL HEYURI
  */
 
-document.write(`<style id="qrs"></style>`);
+(function() {
+	var s = document.createElement('style');
+	s.id = 'qrs';
+	document.head.appendChild(s);
+})();
 window.kkqrLastSubmitButton = null;
 
 function _qrEsc(s) {
@@ -20,7 +24,6 @@ const kkqr = { name: "KK Quick Reply",
 		if (!localStorage.getItem("useqr"))
 			localStorage.setItem("useqr", true);
 		if (!$id("postform")) return true;
-		if ($id("formfuncs")) $id("formfuncs").insertAdjacentHTML("beforeend", '<span id="qrfunc"> | <a href="javascript:kkqr.openqr();">Quick reply</a></span>');
 		if (localStorage.getItem("useqr")=="true") {
 			if (localStorage.getItem("alwaysqr")=="true" && !kkqr.closedOnce) {
 				kkqr.openqr();
@@ -71,10 +74,20 @@ const kkqr = { name: "KK Quick Reply",
 			quotedPost.scrollIntoView({ behavior: "smooth", block: "center" });
 		}
 	},
+	removeFixedButton: function() {
+		if (kkqr._fixedBtnObserver) {
+			kkqr._fixedBtnObserver.disconnect();
+			kkqr._fixedBtnObserver = null;
+		}
+		if (kkqr._fixedBtn) {
+			kkqr._fixedBtn.remove();
+			kkqr._fixedBtn = null;
+		}
+	},
 	reset: function () {
 		if (!$id("postform")) return true;
 		kkqr.closeqr();
-		$del($id("qrfunc"));
+		kkqr.removeFixedButton();
 		if (localStorage.getItem("useqr")=="true") {
 			var qu = $class("qu");
 			for (var i=0; i<qu.length; i++) {
@@ -114,61 +127,92 @@ const kkqr = { name: "KK Quick Reply",
 		kkqr.win.onclose = kkqr.closeqr;
 		kkqr.qrs.disabled = false;
 		var pf = $id("postform");
-		with (pf) {
-			kkqr.win.div.innerHTML += '<div id="qrcontents"><div id="qrinputs"></div></div>';
-			var qr = $id("qrinputs");
-			var qrcontents = $id("qrcontents");
-			var submitplace = 'qr';
-			if (typeof(name)!='undefined') {
-				qr.innerHTML+= '<div id="qrnamediv"><input type="text" name="name" id="qrname" value="'+_qrEsc(name.value)+'" maxlength="100" class="inputtext" placeholder="Name" oninput="kkqr.input(this);"></div>';
-				submitplace = 'qrnamediv';
-			}
-			if (typeof(email)!='undefined') {
-				qr.innerHTML+= '<div id="qremaildiv"><input type="text" name="email" id="qremail" value="'+_qrEsc(email.value)+'" maxlength="100" class="inputtext" placeholder="Email" oninput="kkqr.input(this);"></div>';
-				if (!submitplace) submitplace = 'qremaildiv';
-			}
-			if (typeof(sub)!='undefined') {
-				qr.innerHTML+= '<div id="qrsubdiv"><input type="text" name="sub" id="qrsub" value="'+_qrEsc(sub.value)+'" maxlength="100" class="inputtext" placeholder="Subject" oninput="kkqr.input(this);"></div>';
-				submitplace = 'qrsubdiv';
-			}
-			if (typeof(com) != 'undefined') {
-				qr.innerHTML += '<textarea name="com" id="qrcom" cols="48" rows="6" class="inputtext" placeholder="Comment" oninput="kkqr.input(this);">' + _qrEsc(com.value) + '</textarea>';
-			}
-			// --- File input ---
-			if (typeof(upfile) != 'undefined') {
-				// Create a fresh file input for the QR
-				const qrUpfile = document.createElement("input");
-				qrUpfile.type = "file";
-				qrUpfile.multiple = true
-				qrUpfile.name = "quickReplyUpFile[]";
-				qrUpfile.id = "quickReplyUpFile";
-				qrUpfile.className = "inputtext";
-
-				qrcontents.appendChild(qrUpfile);
-
-				// optional: add clear link
-				qrcontents.innerHTML += '[<a href="javascript:void(0);" onclick="$id(\'quickReplyUpFile\').value=\'\';">X</a>]<br>';
-			}
-			if (typeof(noimg) != 'undefined') {
-				qrcontents.innerHTML += '<nobr><label>[<input type="checkbox" name="noimg" id="qrnoimg" onclick="$id(\'noimg\').checked=this.checked;"' + (noimg.checked ? ' checked="checked"' : '') + '>No File]</label></nobr> ';
-			}
-			if (typeof(anigif) != 'undefined') {
-				qrcontents.innerHTML += '<nobr><label>[<input type="checkbox" name="anigif" id="qranigif" onclick="$id(\'anigif\').checked=this.checked;"' + (anigif.checked ? ' checked="checked"' : '') + '>Animated GIF]</label></nobr> ';
-			}
-			if (typeof(category) != 'undefined') {
-				qrcontents.innerHTML += '';
-			}
-			if (typeof(pwd) != 'undefined') {
-				qrcontents.innerHTML += '<div><input type="password" name="pwd" id="qrpwd" size="8" value="' + _qrEsc(pwd.value) + '" class="inputtext" placeholder="Password" oninput="kkqr.input(this);"> <span id="delPasswordInfo">(for deletion)</span></div>';
-			}
-			if (typeof(captchacode) != 'undefined') {
-				qrcontents.innerHTML += '<div id="qrcaptcha" class="postblock"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&amp;\';})();">Reload</a>]</small><br><input type="text" name="captchacode" id="qrcaptchacode" value="' + _qrEsc(captchacode.value) + '" autocomplete="off" class="inputtext" placeholder="Captcha" oninput="kkqr.input(this);"><nobr><small>(Please enter the words. Case-insensitive.)</small></nobr></div>';
-				var qrc = $id("qrcaptcha"), chaimg = $id("chaimg");
-				chaimg.insertAdjacentHTML("beforebegin", '<span id="chaimgDUMMY"></span>');
-				qrc.insertAdjacentElement("afterbegin", chaimg);
-			}
-			kkqr.win.div.style.height = "";
+		var pel = pf.elements;
+		kkqr.win.div.innerHTML += '<div id="qrcontents"><div id="qrinputs"></div></div>';
+		var qr = $id("qrinputs");
+		var qrcontents = $id("qrcontents");
+		var submitplace = 'qr';
+		if (pel['name']) {
+			qr.innerHTML+= '<div id="qrnamediv"><input type="text" name="name" id="qrname" value="'+_qrEsc(pel['name'].value)+'" maxlength="100" class="inputtext" placeholder="Name" oninput="kkqr.input(this);"></div>';
+			submitplace = 'qrnamediv';
 		}
+		if (pel['email']) {
+			qr.innerHTML+= '<div id="qremaildiv"><input type="text" name="email" id="qremail" value="'+_qrEsc(pel['email'].value)+'" maxlength="100" class="inputtext" placeholder="Email" oninput="kkqr.input(this);"></div>';
+			if (!submitplace) submitplace = 'qremaildiv';
+		}
+		if (pel['sub']) {
+			qr.innerHTML+= '<div id="qrsubdiv"><input type="text" name="sub" id="qrsub" value="'+_qrEsc(pel['sub'].value)+'" maxlength="100" class="inputtext" placeholder="Subject" oninput="kkqr.input(this);"></div>';
+			submitplace = 'qrsubdiv';
+		}
+		if (pel['com']) {
+			qr.innerHTML += '<textarea name="com" id="qrcom" cols="48" rows="6" class="inputtext" placeholder="Comment" oninput="kkqr.input(this);">' + _qrEsc(pel['com'].value) + '</textarea>';
+		}
+		// --- File input ---
+		if (pel['upfile[]']) {
+			var qrFileWrap = document.createElement('div');
+			qrFileWrap.id = 'qrFileWrap';
+
+			// Clone the dropzone template if multi-attach is enabled, otherwise fall back to plain input
+			var dzTemplate = document.getElementById('dropzoneTemplate');
+			var attachLimit = dzTemplate ? parseInt(dzTemplate.dataset.attachmentLimit, 10) : 0;
+			if (dzTemplate && attachLimit > 1 && window.clipboardWireDropzone) {
+				var dzClone = dzTemplate.content.cloneNode(true);
+				var dzWrap = dzClone.querySelector('.dropzoneWrap');
+				qrFileWrap.appendChild(dzClone);
+				qrcontents.appendChild(qrFileWrap);
+				// Must wire AFTER it's in the DOM
+				window.clipboardWireDropzone(dzWrap);
+			} else {
+				var qrUpfile = document.createElement('input');
+				qrUpfile.type = 'file';
+				qrUpfile.multiple = true;
+				qrUpfile.id = 'quickReplyUpFile';
+				qrUpfile.className = 'inputtext';
+				qrFileWrap.appendChild(qrUpfile);
+				qrcontents.appendChild(qrFileWrap);
+
+				qrUpfile.addEventListener('change', function() {
+					if (!qrUpfile.files || !qrUpfile.files.length) return;
+					var picked = Array.prototype.slice.call(qrUpfile.files);
+					qrUpfile.value = '';
+					if (window.clipboardAddFile) {
+						for (var i = 0; i < picked.length; i++) {
+							if (window.clipboardCanAdd && !window.clipboardCanAdd()) break;
+							window.clipboardAddFile(picked[i], picked[i].name);
+						}
+					}
+				});
+			}
+
+			// Container for clipboard.js previews inside QR
+			var qrPreviewTarget = document.createElement('div');
+			qrPreviewTarget.id = 'qrPreviewTarget';
+			qrFileWrap.appendChild(qrPreviewTarget);
+
+			// Redirect clipboard.js preview rendering into QR
+			if (window.clipboardSetRenderTarget) {
+				window.clipboardSetRenderTarget(qrPreviewTarget);
+			}
+		}
+		if (pel['noimg']) {
+			qrcontents.insertAdjacentHTML('beforeend', '<nobr><label>[<input type="checkbox" name="noimg" id="qrnoimg" onclick="$id(\'noimg\').checked=this.checked;"' + (pel['noimg'].checked ? ' checked="checked"' : '') + '>No File]</label></nobr> ');
+		}
+		if (pel['anigif']) {
+			qrcontents.insertAdjacentHTML('beforeend', '<nobr><label>[<input type="checkbox" name="anigif" id="qranigif" onclick="$id(\'anigif\').checked=this.checked;"' + (pel['anigif'].checked ? ' checked="checked"' : '') + '>Animated GIF]</label></nobr> ');
+		}
+		if (pel['category']) {
+			// reserved
+		}
+		if (pel['pwd']) {
+			qrcontents.insertAdjacentHTML('beforeend', '<div><input type="password" name="pwd" id="qrpwd" size="8" value="' + _qrEsc(pel['pwd'].value) + '" class="inputtext" placeholder="Password" oninput="kkqr.input(this);"> <span id="delPasswordInfo">(for deletion)</span></div>');
+		}
+		if (pel['captchacode']) {
+			qrcontents.insertAdjacentHTML('beforeend', '<div id="qrcaptcha" class="postblock"><small> [<a href="#" onclick="(function(){var i=document.getElementById(\'chaimg\'),s=i.src;i.src=s+\'&amp;\';})();">Reload</a>]</small><br><input type="text" name="captchacode" id="qrcaptchacode" value="' + _qrEsc(pel['captchacode'].value) + '" autocomplete="off" class="inputtext" placeholder="Captcha" oninput="kkqr.input(this);"><nobr><small>(Please enter the words. Case-insensitive.)</small></nobr></div>');
+			var qrc = $id("qrcaptcha"), chaimg = $id("chaimg");
+			chaimg.insertAdjacentHTML("beforebegin", '<span id="chaimgDUMMY"></span>');
+			qrc.insertAdjacentElement("afterbegin", chaimg);
+		}
+		kkqr.win.div.style.height = "";
 		var inputs = $q("#postform .inputtext");
 		for (var i=0; i<inputs.length; i++) {
 			inputs[i].addEventListener('input', kkqr._evinput2);
@@ -190,27 +234,8 @@ const kkqr = { name: "KK Quick Reply",
 				qrBtn.disabled = true;
 				window.kkqrLastSubmitButton = qrBtn;
 
-				const qrFile = document.getElementById("quickReplyUpFile");
-				let placeholder;
-
-				if (qrFile) {
-					// temporarily move QR file into main form
-					placeholder = document.createElement("div");
-					placeholder.id = "quickReplyUpFile_placeholder";
-					qrFile.parentNode.insertBefore(placeholder, qrFile);
-					$id("postform").appendChild(qrFile);
-				}
-
 				// trigger the real form submit button
 				btn.click();
-
-				// move the QR file back to the QR window
-				if (qrFile && placeholder) {
-					placeholder.parentNode.insertBefore(qrFile, placeholder);
-					placeholder.remove();
-				}
-
-				// DO NOT close QR window
 			};
 			submitqr.appendChild(qrBtn);
 		}
@@ -221,6 +246,11 @@ const kkqr = { name: "KK Quick Reply",
 		kkqr.qrs.disabled = true;
 		kkqr.closedOnce = true;
 		if (!kkqr.win) return;
+
+		// Return clipboard.js preview rendering to default location
+		if (window.clipboardSetRenderTarget) {
+			window.clipboardSetRenderTarget(null);
+		}
 
 		// Restore the original file input to its place
 		const up = $id("upfile");
@@ -285,7 +315,8 @@ const kkqr = { name: "KK Quick Reply",
 		const qrsub = document.getElementById("qrsub");
 		if (qrsub) qrsub.value = "";
 
-		const qrFile = document.getElementById("quickReplyUpFile");
+		if (window.resetClipboardFiles) window.resetClipboardFiles();
+		var qrFile = document.getElementById("quickReplyUpFile");
 		if (qrFile) qrFile.value = "";
 	},
 

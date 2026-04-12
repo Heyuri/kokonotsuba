@@ -2,6 +2,7 @@
 		<h3>Leave a note for post No.<span class="noteFormPostNumber" id="post_number">{$POST_NUMBER}</span></h3>
 		<div class="noteForm">
 			<form method="POST" action="{$MODULE_URL}">
+				{$CSRF_TOKEN}
 				<input name="action" value="addNote" type="hidden">
 				<input name="postUid" value="<!--&IF($POST_UID,'{$POST_UID}','')-->" type="hidden">
 				<table>
@@ -20,4 +21,5 @@
 					<input type="submit" value="Save note">
 				</div>
 			</form>
+		</div>
 	</div>
