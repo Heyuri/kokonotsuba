@@ -179,9 +179,9 @@ function drawAdminLoginForm(string $adminUrl) {
 }
 	
 function drawAdminTheading(&$dat, $staffSession) {
-	$username = htmlspecialchars($staffSession->getUsername(), ENT_QUOTES, 'UTF-8');
+	$username = sanitizeStr($staffSession->getUsername());
 	$roleEnum = $staffSession->getRoleLevel();
-	$roleName = htmlspecialchars($roleEnum->displayRoleName(), ENT_QUOTES, 'UTF-8');
+	$roleName = sanitizeStr($roleEnum->displayRoleName());
 	
 	$loggedInInfo = '';
 		

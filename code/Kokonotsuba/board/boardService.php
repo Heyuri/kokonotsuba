@@ -17,6 +17,7 @@ use function Puchiko\createDirectory;
 use function Puchiko\createFileAndWriteText;
 use function Puchiko\rollbackCreatedPaths;
 use function Puchiko\safeRmdir;
+use function Puchiko\strings\sanitizeStr;
 
 /** Service for assembling, creating, editing, and deleting board objects. */
 class boardService {
@@ -219,7 +220,7 @@ class boardService {
 	 * @return string HTML-entity-escaped text.
 	 */
     private function sanitizeTextField($input) {
-        return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');  // Convert special chars to HTML entities
+        return sanitizeStr(trim($input));  // Convert special chars to HTML entities
     }
 
 	/**

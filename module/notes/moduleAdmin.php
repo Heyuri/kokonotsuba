@@ -393,7 +393,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'postNumber' => $postNumber,
 			'template' => [
 				'{$NOTE_ID}' => $noteId,
-				'{$NOTE_TEXT}' => htmlspecialchars($note['note_text'] ?? '', ENT_QUOTES),
+				'{$NOTE_TEXT}' => sanitizeStr($note['note_text'] ?? ''),
 				'{$NOTE_VISIBILITY_DESCRIPTION}' => _T('note_visibility_description')
 			]
 		]);

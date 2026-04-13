@@ -7,6 +7,8 @@ use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostFormListenerTrait;
 
+use function Puchiko\strings\sanitizeStr;
+
 class moduleMain extends abstractModuleMain {
 	use RegistBeginListenerTrait;
 	use PostFormListenerTrait;
@@ -35,7 +37,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function onRenderPostForm(string &$postForm): void {
-		$token = htmlspecialchars($this->getSessionToken(), ENT_QUOTES, 'UTF-8');
+		$token = sanitizeStr($this->getSessionToken());
 		$postForm .= '<input type="hidden" name="' . self::TOKEN_FIELD . '" value="' . $token . '">';
 	}
 

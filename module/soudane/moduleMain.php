@@ -14,6 +14,7 @@ use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\json\renderJsonErrorPage;
 use function Puchiko\json\renderJsonPage;
+use function Puchiko\strings\sanitizeStr;
 
 require_once __DIR__ . '/soudaneRepository.php';
 require_once __DIR__ . '/soudaneService.php';
@@ -74,15 +75,15 @@ class moduleMain extends abstractModuleMain {
 		$class = $voteCount > 0 ? 'hasVotes' : 'noVotes';
 		$buttonText = $this->getVoteButtonText($type, $voteCount);
 
-		$postUidEsc = htmlspecialchars((string) $postUid, ENT_QUOTES, 'UTF-8');
-		$moduleUrlEsc = htmlspecialchars($this->moduleUrl, ENT_QUOTES, 'UTF-8');
+		$postUidEsc = sanitizeStr((string) $postUid);
+		$moduleUrlEsc = sanitizeStr($this->moduleUrl);
 
 		return
-			'<span class="' . htmlspecialchars($wrapperClass) . '" title="' . htmlspecialchars($title) . '">' .
+			'<span class="' . sanitizeStr($wrapperClass) . '" title="' . sanitizeStr($title) . '">' .
 				'<a id="vote_' . $type . '_' . $postUidEsc . '" ' .
-				'class="sod ' . htmlspecialchars($class) . '" ' .
+				'class="sod ' . sanitizeStr($class) . '" ' .
 				'href="javascript:soudane.vote(\'' . $postUidEsc . '\', \'' . $type . '\', \'' . $moduleUrlEsc . '\');">' .
-					htmlspecialchars($buttonText) .
+					sanitizeStr($buttonText) .
 				'</a>' .
 			'</span>';
 	}
@@ -90,9 +91,9 @@ class moduleMain extends abstractModuleMain {
 	private function renderScore(int $postUid, string $scoreText): string {
     	return
     	    '<span class="soundaneScoreContainer">
-				<span id="vote_score_' . htmlspecialchars((string) $postUid, ENT_QUOTES, 'UTF-8') . '" ' .
+				<span id="vote_score_' . sanitizeStr((string) $postUid) . '" ' .
     	          'class="voteScore">' .
-    	        htmlspecialchars($scoreText) . '
+    	        sanitizeStr($scoreText) . '
 				</span>
 			</span>';
 	}

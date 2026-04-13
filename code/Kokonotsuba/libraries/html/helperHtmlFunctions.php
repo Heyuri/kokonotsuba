@@ -6,6 +6,8 @@
 
 namespace Kokonotsuba\libraries\html;
 
+use function Puchiko\strings\sanitizeStr;
+
 /**
  * Adds hidden input fields for each GET parameter at the top of the provided form HTML.
  *
@@ -17,8 +19,8 @@ function addHiddenGetParamsToForm(string $formHtml, array $getValues): string {
 	$hiddenInputs = '';
 
 	foreach ($getValues as $name => $value) {
-		$nameEscaped = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
-		$valueEscaped = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+		$nameEscaped = sanitizeStr($name);
+		$valueEscaped = sanitizeStr($value);
 		$hiddenInputs .= "<input type=\"hidden\" name=\"{$nameEscaped}\" value=\"{$valueEscaped}\">\n";
 	}
 
