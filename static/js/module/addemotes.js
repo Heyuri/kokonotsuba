@@ -272,24 +272,4 @@ const selectorConfigs = {
 			btn.addEventListener("click", (e) => insertAtCursor(COMMENT, e.target.title));
 		});
 	}
-
-	/* BBCode: server-rendered buttons, add click handlers and build selectors */
-	const bbcodeContainer = document.getElementById("bbcodeContainer");
-	if (bbcodeContainer) {
-		/* Simple wrap buttons: just add click handlers */
-		bbcodeContainer.querySelectorAll(".bbcodeButton:not(.bbcodeSelectorButton)").forEach((btn) => {
-			btn.addEventListener("click", () => {
-				wrapSelectionWithTags(COMMENT, btn.dataset.code);
-			});
-		});
-
-		/* Selector buttons: attach dropdown/input based on data-type */
-		bbcodeContainer.querySelectorAll(".bbcodeSelectorButton").forEach((btn) => {
-			const type = btn.dataset.type;
-			const config = selectorConfigs[type];
-			if (!config) return;
-			const [, selectorInput] = createSelectorButton(COMMENT, config, type, btn);
-			btn.parentNode.insertBefore(selectorInput, btn.nextSibling);
-		});
-	}
 })();
