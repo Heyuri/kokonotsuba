@@ -8,6 +8,8 @@ use Kokonotsuba\module_classes\traits\listeners\CommentExtrasListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
 
+use function Puchiko\strings\sanitizeStr;
+
 class moduleMain extends abstractModuleMain {
 	use PostCommentListenerTrait;
 	use CommentExtrasListenerTrait;
@@ -57,8 +59,8 @@ class moduleMain extends abstractModuleMain {
 		}
 		$buttons = '';
 		foreach ($this->emotes as $emo => $name) {
-			$url = htmlspecialchars($this->baseEmoteUrl . $name);
-			$value = htmlspecialchars(':' . $emo . ':');
+			$url = sanitizeStr($this->baseEmoteUrl . $name);
+			$value = sanitizeStr(':' . $emo . ':');
 			$buttons .= '<button type="button" class="buttonEmote emoteButton" title="' . $value . '">'
 				. '<img class="emoteImage" src="' . $url . '" loading="lazy" title="' . $value . '" alt="' . $value . '">'
 				. '</button>';
@@ -73,8 +75,8 @@ class moduleMain extends abstractModuleMain {
 		}
 		$buttons = '';
 		foreach ($this->kaomoji as $display => $value) {
-			$escapedValue = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
-			$escapedDisplay = htmlspecialchars($display, ENT_QUOTES, 'UTF-8');
+			$escapedValue = sanitizeStr($value);
+			$escapedDisplay = sanitizeStr($display);
 			$buttons .= '<button type="button" class="buttonSJIS kaomojiButton" title="' . $escapedValue . '" data-value="' . $escapedValue . '">'
 				. '<span class="ascii" title="' . $escapedValue . '">' . $escapedDisplay . '</span>'
 				. '</button>';

@@ -24,6 +24,7 @@ use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
 use function Kokonotsuba\libraries\getOrCreateCsrfToken;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\strings\html_minify;
+use function Puchiko\strings\sanitizeStr;
 use function Puchiko\strings\truncateText;
 
 class boardRebuilder {
@@ -148,7 +149,7 @@ class boardRebuilder {
 
 		// add CSRF token to delform for logged-in staff on live pages
 		if($this->adminMode) {
-			$pte_vals['{$DELFORM_CSRF}'] = '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(getOrCreateCsrfToken(), ENT_QUOTES, 'UTF-8') . '">';
+			$pte_vals['{$DELFORM_CSRF}'] = '<input type="hidden" name="csrf_token" value="' . sanitizeStr(getOrCreateCsrfToken()) . '">';
 		}
 		
 		// if we want to render the post form then build form html and bind to template parameter
@@ -326,7 +327,7 @@ class boardRebuilder {
 
 		// add CSRF token to delform for logged-in staff on live pages
 		if($this->adminMode) {
-			$pte_vals['{$DELFORM_CSRF}'] = '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(getOrCreateCsrfToken(), ENT_QUOTES, 'UTF-8') . '">';
+			$pte_vals['{$DELFORM_CSRF}'] = '<input type="hidden" name="csrf_token" value="' . sanitizeStr(getOrCreateCsrfToken()) . '">';
 		}
 
 		// build form html

@@ -2,12 +2,14 @@
 
 namespace Kokonotsuba\libraries;
 
+use function Puchiko\strings\sanitizeStr;
+
 function renderBasicBootstrapErrorPage(string $message): never {
 	http_response_code(500);
 	echo '<!DOCTYPE html>';
 	echo '<html><head><meta charset="UTF-8"><title>Error</title></head><body>';
 	echo '<h1>Error</h1>';
-	echo '<p>' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</p>';
+	echo '<p>' . sanitizeStr($message) . '</p>';
 	echo '</body></html>';
 	exit;
 }

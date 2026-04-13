@@ -12,6 +12,7 @@ use Kokonotsuba\post\Post;
 
 use function Puchiko\strings\containsHtmlTags;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Puchiko\strings\sanitizeStr;
 
 /* Generate html for the post name dynamically */
 function generatePostNameHtml(
@@ -45,7 +46,7 @@ function generatePostNameHtml(
 function generateEmailName(string $nameHtml, string $email): string {
 	// if the email isn't empty then wrap it in an <a>
 	if($email) {
-		$escapedEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
+		$escapedEmail = sanitizeStr($email);
 		return '<a href="mailto:' . $escapedEmail . '">'. $nameHtml . '</a>';
 	} 
 	// no email

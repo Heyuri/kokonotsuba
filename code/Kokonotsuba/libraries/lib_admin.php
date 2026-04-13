@@ -176,7 +176,7 @@ function generateModerateForm(
 	}
 
 	// Standalone context (admin management pages) — wrap in its own <form>.
-	$csrfToken = htmlspecialchars(getOrCreateCsrfToken(), ENT_QUOTES, 'UTF-8');
+	$csrfToken = sanitizeStr(getOrCreateCsrfToken());
 
 	return '<span class="adminFunctions ' . htmlspecialchars($class) . '">'
 		. '<form method="POST" action="' . htmlspecialchars($buttonUrl) . '" style="display:inline">'

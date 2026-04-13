@@ -9,6 +9,9 @@ use Kokonotsuba\module_classes\traits\listeners\CommentExtrasListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
 
+use function Puchiko\request\sanitizeHeaderInjection;
+use function Puchiko\strings\sanitizeStr;
+
 class moduleMain extends abstractModuleMain { 
 	use PostCommentListenerTrait;
 	use CommentExtrasListenerTrait;
@@ -115,7 +118,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		foreach ($simpleButtons as $btn) {
-			$buttons .= '<button type="button" class="bbcodeButton" data-code="' . htmlspecialchars($btn['code'], ENT_QUOTES, 'UTF-8') . '" title="' . htmlspecialchars($btn['title'], ENT_QUOTES, 'UTF-8') . '">' . $btn['label'] . '</button>';
+			$buttons .= '<button type="button" class="bbcodeButton" data-code="' . sanitizeStr($btn['code']) . '" title="' . sanitizeStr($btn['title']) . '">' . $btn['label'] . '</button>';
 		}
 
 		// Selector buttons - rendered as HTML with data-type, JS builds the dropdowns
@@ -280,7 +283,7 @@ class moduleMain extends abstractModuleMain {
 		// image (restrict to http/https/ftp only)
 		if($this->supportImg && (($this->ImgTagTagMode == 2) || ($this->ImgTagTagMode && !$files))){
 			$string = preg_replace_callback('#\[img\](((https?|ftp)://([^ \n\r]+?)))\[\/img\]#si', function($m) {
-				$url = htmlspecialchars($m[1], ENT_QUOTES, 'UTF-8');
+				$url = sanitizeStr($m[1]);
 				return '<img class="bbcodeIMG" src="' . $url . '" style="border:1px solid #021a40;" alt="' . $url . '">';
 			}, $string);
 		}
@@ -541,27 +544,27 @@ class moduleMain extends abstractModuleMain {
 
 	private function _URLConv1($m){
 		++$this->urlcount;
-		$url = htmlspecialchars($m[1].$m[2], ENT_QUOTES, 'UTF-8');
+		$url = sanitizeStr($m[1].$m[2]);
 		return '<a class="bbcodeA" href="'.$url.'" rel="nofollow noreferrer" target="_blank">'.$url.'</a>';
 	}
 
 	private function _URLConv2($m){
 		++$this->urlcount;
-		$url = htmlspecialchars($m[1], ENT_QUOTES, 'UTF-8');
+		$url = sanitizeStr($m[1]);
 		return '<a class="bbcodeA" href="http://'.$url.'" rel="nofollow noreferrer" target="_blank">'.$url.'</a>';
 	}
 
 	private function _URLConv3($m){
 		++$this->urlcount;
-		$href = htmlspecialchars($m[1].$m[2], ENT_QUOTES, 'UTF-8');
-		$text = htmlspecialchars($m[3], ENT_QUOTES, 'UTF-8');
+		$href = sanitizeStr($m[1].$m[2]);
+		$text = sanitizeStr($m[3]);
 		return '<a class="bbcodeA" href="'.$href.'" rel="nofollow noreferrer" target="_blank">'.$text.'</a>';
 	}
 
 	private function _URLConv4($m){
 		++$this->urlcount;
-		$url = htmlspecialchars($m[1], ENT_QUOTES, 'UTF-8');
-		$text = htmlspecialchars($m[2], ENT_QUOTES, 'UTF-8');
+		$url = sanitizeStr($m[1]);
+		$text = sanitizeStr($m[2]);
 		return '<a class="bbcodeA" href="http://'.$url.'" rel="nofollow noreferrer" target="_blank">'.$text.'</a>';
 	}
 
