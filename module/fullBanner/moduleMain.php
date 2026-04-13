@@ -117,7 +117,7 @@ class moduleMain extends abstractModuleMain {
 			try {
 				$this->handleBannerSubmission();
 			} catch (BoardException $e) {
-				$this->handleBannerIndexPage('<p style="color:red;font-weight:bold;">' . htmlspecialchars($e->getMessage()) . '</p>');
+				$this->handleBannerIndexPage('<p class="warning">' . htmlspecialchars($e->getMessage()) . '</p>');
 				exit;
 			}
 
