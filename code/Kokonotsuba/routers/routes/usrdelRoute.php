@@ -3,11 +3,14 @@
 namespace Kokonotsuba\routers\routes;
 
 use Kokonotsuba\action_log\actionLoggerService;
+use Kokonotsuba\cookie\cookieService;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\policy\postPolicy;
 use Kokonotsuba\post\deletion\deletedPostsService;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\post\postService;
+use Kokonotsuba\request\request;
 
 use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
@@ -23,20 +26,22 @@ class usrdelRoute {
 		private readonly postService $postService,
 		private readonly deletedPostsService $deletedPostsService,
 		private readonly softErrorHandler $softErrorHandler,
+		private readonly cookieService $cookieService,
 		private postPolicy $postPolicy,
-		private ?int $currentUserId
+		private ?int $currentUserId,
+		private readonly request $request
 	) {}
 
 	/* User post deletion */
 	public function userPostDeletion(): void {
 		// the password entered by the user for deleting the posts
-		$password = $_POST['pwd'] ?? '';
+		$password = $this->request->getParameter('pwd', 'POST', '');
 
 		// the post password from the cookie value
-		$passwordFromCookie = $_COOKIE['pwdc'] ?? '';
+		$passwordFromCookie = $this->cookieService->get('pwdc', '');
 
 		// whether to only delete the attachment of posts
-		$onlyImgDel = $_POST['onlyimgdel'] ?? '';
+		$onlyImgDel = $this->request->getParameter('onlyimgdel', 'POST', '');
 
 		// IDs of posts to be deleted
 		$postUidsForDeletion = $this->collectPostUidsForDeletion();
@@ -72,7 +77,9 @@ class usrdelRoute {
 
 		// throw an exception if posts is falsey.
 		// in this case its likely already been deleted or doesn't exist
-		validatePostInput($posts, false);
+		if(!$posts) {
+			throw new BoardException(_T('del_wrongpwornotfound'));
+		}
 
 		// Call the method to authenticate the posts and log actions
 		$this->authenticateAndLogPostDeletions(
@@ -104,11 +111,8 @@ class usrdelRoute {
 		// Initialize an array to store the UIDs marked for deletion
 		$postUidsForDeletion = [];
 
-		// Reset the internal pointer of the $_POST array to ensure the loop works from the beginning
-		reset($_POST);
-
-		// Loop through each element in the $_POST array
-		foreach ($_POST as $key => $val) {
+		// Loop through each element in the POST data
+		foreach ($this->request->allPost() as $key => $val) {
 			// Check if the current value is equal to 'delete'
 			if ($val === 'delete') {
 				// If the value is 'delete', add the key (UID) to the $postUidsForDeletion array
@@ -120,12 +124,12 @@ class usrdelRoute {
 		return $postUidsForDeletion;
 	}
 
-	private function validatePostDeletionTimeLimit(array $post): void {
+	private function validatePostDeletionTimeLimit(Post $post): void {
 		// deletion time limit in hours
 		$deletionTimeLimit = intval($this->config['POST_DELETION_TIME_LIMIT'] ?? 168); // default to 168 hours (7 days) if not set
 
 		// extract unix timestamp
-		$postTime = isset($post['root']) ? strtotime($post['root']) : (int)$post['time'];
+		$postTime = strtotime($post->getRoot());
 
 		// convert to seconds - since the time limit is in hours
 		$deletionTimeLimit *= 3600;
@@ -148,7 +152,7 @@ class usrdelRoute {
 		// Loop through each post and authenticate whether it can be deleted by the user
 		foreach ($posts as $post) {
 			// Get the post password hash
-			$postPasswordHash = $post['pwd'] ?? '';
+			$postPasswordHash = $post->getPassword() ?? '';
 
 			// check if the post is too old to delete
 			$this->validatePostDeletionTimeLimit($post);
@@ -168,14 +172,14 @@ class usrdelRoute {
 				$authenticatedPostData[] = $post;
 
 				// Add the post UID to the authenticated deletion UIDs array (to delete the post itself)
-				$authenticatedDeletedPostUids[] = (int)$post['post_uid'];
+				$authenticatedDeletedPostUids[] = (int)$post->getUid();
 
 				// Get the board of this post
-				$board = searchBoardArrayForBoard($post['boardUID']);
+				$board = searchBoardArrayForBoard($post->getBoardUID());
 
 				// Log the action (whether it's just the file or the entire post deletion)
 				$this->actionLoggerService->logAction(
-					"Deleted post No." . $post['no'] . ($onlyImgDel ? ' (file only)' : ''), 
+					"Deleted post No." . $post->getNumber() . ($onlyImgDel ? ' (file only)' : ''), 
 					$board->getBoardUID()
 				);
 			}
@@ -216,14 +220,15 @@ class usrdelRoute {
 
 	private function handleDeleteRedirect(): void {
 		// Check if the 'func' key exists in the POST data and if its value is 'delete'
-		if (isset($_POST['func']) && $_POST['func'] === 'delete') {
+		if ($this->request->getParameter('func', 'POST') === 'delete') {
 			// Check if the 'HTTP_REFERER' header is present, which indicates the page the request came from
-			if (isset($_SERVER['HTTP_REFERER'])) {
+			$referer = $this->request->getReferer();
+			if ($referer !== '') {
 				// Send a 302 HTTP response, indicating a temporary redirect
 				header('HTTP/1.1 302 Moved Temporarily');
 			
-				// Redirect the user to the page they came from (using the 'HTTP_REFERER' value)
-				header('Location: ' . $_SERVER['HTTP_REFERER']);
+				// Redirect the user to the page they came from (using the referer)
+				header('Location: ' . $referer);
 				exit; // It's a good idea to call exit after header redirects
 			}
 		} else {

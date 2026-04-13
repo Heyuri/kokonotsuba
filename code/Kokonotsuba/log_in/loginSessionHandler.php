@@ -5,11 +5,12 @@
 namespace Kokonotsuba\log_in;
 
 use Kokonotsuba\account\staffAccount;
+use Kokonotsuba\request\request;
 
 class loginSessionHandler {
 	private readonly int $loginTimeout; // in seconds
 
-	public function __construct(int $loginTimeout = 1800) {
+	public function __construct(private readonly request $request, int $loginTimeout = 1800) {
 		$this->loginTimeout = $loginTimeout;
 	}
 
@@ -25,7 +26,7 @@ class loginSessionHandler {
 		$_SESSION['accountUID'] = $account->getId();
 		$_SESSION['username'] = $account->getUsername();
 		$_SESSION['role_level'] = $account->getRoleLevel()->value;
-		$_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+		$_SESSION['user_agent'] = $this->request->getUserAgent('unknown');
 		$_SESSION['last_activity'] = time();
 
 		return true;
@@ -44,7 +45,7 @@ class loginSessionHandler {
 			return false;
 		}
 
-		$currentUserAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+		$currentUserAgent = $this->request->getUserAgent('unknown');
 		if (($_SESSION['user_agent'] ?? '') !== $currentUserAgent) {
 			$this->logout();
 			return false;

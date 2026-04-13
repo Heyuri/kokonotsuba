@@ -6,6 +6,7 @@ namespace Kokonotsuba\routers\routes;
 
 use Kokonotsuba\board\board;
 use Kokonotsuba\log_in\adminLoginController;
+use Kokonotsuba\request\request;
 use Kokonotsuba\template\pageRenderer;
 
 use function Kokonotsuba\libraries\_T;
@@ -17,11 +18,12 @@ class adminRoute {
 	public function __construct(
 		private board $board,
 		private readonly adminLoginController $adminLoginController,
-		private readonly pageRenderer $adminPageRenderer) {}
+		private readonly pageRenderer $adminPageRenderer,
+		private readonly request $request) {}
 
 	public function drawAdminPage(): void {
-		$username = $_POST['username'] ?? '';
-		$password = $_POST['password'] ?? '';
+		$username = $this->request->getParameter('username', 'POST', '');
+		$password = $this->request->getParameter('password', 'POST', '');
 
 		$adminRouteUrl = $this->board->getBoardURL(true) . '?mode=admin';
 
@@ -30,7 +32,7 @@ class adminRoute {
 			redirect($adminRouteUrl);
 		}
 
-		$modAction = $_GET['modAction'] ?? '';
+		$modAction = $this->request->getParameter('modAction', 'GET', '');
 		if($modAction === 'logout') {
 			$this->adminLoginController->adminLogout();
 			redirect($adminRouteUrl);

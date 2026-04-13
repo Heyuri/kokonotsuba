@@ -4,15 +4,18 @@ namespace Kokonotsuba\Modules\viewPosts;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
-use function Kokonotsuba\libraries\html\getCurrentUrlNoQuery;
+
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('AuthLevels.CAN_ONLY_VIEW_POSTS_FROM_USER', userRole::LEV_JANITOR);
 	}
@@ -26,38 +29,19 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsControls',
-			function(string &$modControlSection, array &$post) {
-				$this->renderViewPostsButton($modControlSection, $post, false);
-			}
-		);
+		$this->listenProtected('ManagePostsControls', function(string &$modControlSection, Post &$post) {
+			$this->renderViewPostsButton($modControlSection, $post, false);
+		});
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsControls',
-			function(string &$modControlSection, array &$post) {
-				$this->renderViewPostsButton($modControlSection, $post, true);
-			}
-		);
+		$this->listenProtected('ManagePostsControls', function(string &$modControlSection, Post &$post) {
+			$this->renderViewPostsButton($modControlSection, $post, true);
+		});
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, array &$post) {
-				$this->onRenderPostWidget($widgetArray, $post);
-			}
-		);
+		$this->registerPostWidgetHook('onRenderPostWidget');
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'PostAdminControls',
-			function(string &$modControlSection, array &$post) {
-				$this->onRenderPostAdminControls($modControlSection, $post);
-			}
-		);
-
+		$this->listenProtected('PostAdminControls', function(string &$modControlSection, Post &$post) {
+			$this->onRenderPostAdminControls($modControlSection, $post);
+		});
 	}
 
     private function generateViewPostsUrl(string $postUid): string {
@@ -80,12 +64,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $roleLevel->isAtLeast($canViewHashedIpLevel);
 	}
 
-	private function renderViewPostsButton(string &$modControlSection, array &$post, bool $noScript = false): void {
+	private function renderViewPostsButton(string &$modControlSection, Post &$post, bool $noScript = false): void {
 		if($this->canViewRawIp()) {
 			return;
 		}
 		
-		$viewPostsUrl = $this->generateViewPostsUrl($post['post_uid']);
+		$viewPostsUrl = $this->generateViewPostsUrl($post->getUid());
 		
 		$modControlSection .= generateModerateButton(
 			$viewPostsUrl,
@@ -96,14 +80,14 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
         // dont bother for IP viewers
         if($this->canViewRawIp()) {
             return;
         }
 
 		// generate view posts url
-		$viewPostsUrl = $this->generateViewPostsUrl($post['post_uid']);
+		$viewPostsUrl = $this->generateViewPostsUrl($post->getUid());
 
 		// build the widget entry for view posts
 		$viewPostsWidget = $this->buildWidgetEntry(
@@ -119,11 +103,11 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage(): void {
         // get current url
-        $currentUrl = getCurrentUrlNoQuery();
+        $currentUrl = $this->moduleContext->request->getCurrentUrlNoQuery();
 
         // determine which type of failter to apply based on user role
-		$postUid = $_GET['post_uid'] ?? '';
-		$ipAddress = $_GET['ip_address'] ?? '';
+		$postUid = $this->moduleContext->request->getParameter('post_uid', 'GET', '');
+		$ipAddress = $this->moduleContext->request->getParameter('ip_address', 'GET', '');
 
 		if(!empty($postUid)) {
 			// view posts by user flow
@@ -186,7 +170,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function isManagePostsRoute(): bool {
 		// Get the mode
-		$mode = $_GET['mode'] ?? '';
+		$mode = $this->moduleContext->request->getParameter('mode', 'GET', '');
 		
 		// Check if its manage posts
 		if($mode === 'managePosts') {
@@ -196,7 +180,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 	}
 
-	private function onRenderPostAdminControls(string &$modControlSection, array &$post): void {
+	private function onRenderPostAdminControls(string &$modControlSection, Post &$post): void {
 		// Return early if the user is viewing the manage posts screen
 		// This is so the control doesn't show up in the func column
 		if($this->isManagePostsRoute()) {
@@ -206,12 +190,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		// Check user role to determine which behavior to use
 		if($this->canViewRawIp()) {
 			// Show raw IP for higher-privilege users
-			$postLink = $this->generateViewIpUrl($post['host']);
-			$button = '[<a class="ipAddress" href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars($post['host']) . '</a>]';
+			$postLink = $this->generateViewIpUrl($post->getIp());
+			$button = '[<a class="ipAddress" href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars($post->getIp()) . '</a>]';
 		} else if($this->canViewHashedIp()) {
 			// Show hashed IP and user-based filter for lower-privilege users
-			$postLink = $this->generateViewPostsUrl($post['post_uid']);
-			$button = '[<a class="hashedIp" href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars(substr(md5($post['host']), 0, 8)) . '</a>]';
+			$postLink = $this->generateViewPostsUrl($post->getUid());
+			$button = '[<a class="hashedIp" href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars(substr(md5($post->getIp()), 0, 8)) . '</a>]';
 		}
 		
 		// append the button to the hook point

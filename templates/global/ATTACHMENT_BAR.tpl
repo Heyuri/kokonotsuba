@@ -1,0 +1,1 @@
+{$IMG_FILENAME_LABEL}<a href="{$IMAGE_URL}" target="_blank" rel="nofollow" class="fileNameAnchor" onmouseover="this.textContent='{$FNAME_JS}';" onmouseout="this.textContent='{$TRUNCATED_JS}'">{$TRUNCATED}</a> <a href="{$IMAGE_URL}" title="{$FNAME}" download="{$FNAME}"><div class="download"></div></a> 

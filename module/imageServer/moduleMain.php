@@ -5,11 +5,13 @@ namespace Kokonotsuba\Modules\imageServer;
 use Kokonotsuba\post\attachment\attachment;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\ImageUrlListenerTrait;
 
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Kokonotsuba\libraries\serveMedia;
 
 class moduleMain extends abstractModuleMain {
+	use ImageUrlListenerTrait;
 
 	public function getName(): string {
 		return 'Kokonotsuba File Server';
@@ -20,9 +22,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addListener('ImageUrl', function (string &$imageURL, int $fileId, bool $isThumb) {
-			$this->onRenderImageUrl($imageURL, $fileId, $isThumb);
-		});
+		$this->listenImageUrl('onRenderImageUrl');
 	}
 
 	private function onRenderImageUrl(string &$imageURL, int $fileId, bool $isThumb): void {
@@ -46,7 +46,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function ModulePage() {
 		// file id of the file row
-		$fileId = $_GET['file'] ?? null;
+		$fileId = $this->moduleContext->request->getParameter('file', 'GET');
 
 		// cast to int
 		$fileId = (int)$fileId;
@@ -68,7 +68,7 @@ class moduleMain extends abstractModuleMain {
 		$this->authenticateUserForAttachment($attachment);
 
 		// whether we're accessing the thumbnail via GET
-		$isThumb = $_GET['isThumb'] ?? false;
+		$isThumb = $this->moduleContext->request->getParameter('isThumb', 'GET', false);
 
 		// cast to bool
 		$isThumb = (bool)$isThumb;

@@ -6,6 +6,7 @@ use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\board\board;
 use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\post\helper\postDateFormatter;
+use Kokonotsuba\request\request;
 use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\userRole;
 
@@ -25,7 +26,8 @@ class actionLogRoute {
 		private readonly softErrorHandler $softErrorHandler,
 		private readonly pageRenderer $adminPageRenderer,
 		private readonly array $regularBoards,
-		private readonly postDateFormatter $postDateFormatter
+		private readonly postDateFormatter $postDateFormatter,
+		private readonly request $request
 	) {}
 
 	public function drawActionLog() {
@@ -35,18 +37,18 @@ class actionLogRoute {
 
 		$tableEntries = '';
 		$limit = $this->config['ACTIONLOG_MAX_PER_PAGE'];
-		$page = isset($_REQUEST['page']) ? (int)$_REQUEST['page'] : 0;
+		$page = (int) $this->request->getParameter('page', default: 0);
 		$page = ($page >= 0) ? $page : 1;
 		$offset = $page * $limit;
 
 		// So we can see if the form is being submitted in the current request
-		$isSubmission = isset($_GET['filterSubmissionFlag']);
+		$isSubmission = $this->request->hasParameter('filterSubmissionFlag', 'GET');
 		
 		$actionLogUrl = $this->board->getBoardURL(true) . '?mode=actionLog';
 
 		$defaultActionLogFilters = $this->initializeActionLogFilters();
 
-		$filtersFromRequest = getFiltersFromRequest($actionLogUrl, $isSubmission, $defaultActionLogFilters);
+		$filtersFromRequest = getFiltersFromRequest($actionLogUrl, $isSubmission, $defaultActionLogFilters, $this->request);
 
 		$cleanUrl = buildSmartQuery($actionLogUrl, $defaultActionLogFilters, $filtersFromRequest, true);
 
@@ -114,7 +116,7 @@ class actionLogRoute {
 			</div>
 		";
 
-		$actionLogPager = drawPager($limit, $numberOfActionLogs, $cleanUrl);
+		$actionLogPager = drawPager($limit, $numberOfActionLogs, $cleanUrl, $this->request);
 		
 		$templateValues = [
 			'{$PAGE_CONTENT}' => $actionLogHtml,

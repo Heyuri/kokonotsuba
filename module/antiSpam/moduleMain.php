@@ -13,7 +13,6 @@ use Kokonotsuba\Modules\antiSpam\antiSpamService;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\Modules\antiSpam\getAntiSpamService;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\renderJsonErrorPage;
 use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
@@ -164,7 +163,7 @@ class moduleMain extends abstractModuleMain {
 
 		// for JS requests, send a JSON response that mimics a successful post
 		// the client will redirect to the board index as if nothing happened
-		if(isJavascriptRequest()){
+		if($this->moduleContext->request->isAjax()){
 			sendJsonResponse(['redirectUrl' => $boardUrl]);
 			exit;
 		}
@@ -175,7 +174,7 @@ class moduleMain extends abstractModuleMain {
 
 	private function loudReject(string $message): void {
 		// for JS requests, send a JSON error response
-		if(isJavascriptRequest()){
+		if($this->moduleContext->request->isAjax()){
 			renderJsonErrorPage(strip_tags($message));
 			exit;
 		}
@@ -186,8 +185,7 @@ class moduleMain extends abstractModuleMain {
 
 	private function banUser(string $reason, int $durationSeconds): void {
 		// get IP from request
-		$ipAddress = new IPAddress();
-		$ip = (string)$ipAddress;
+		$ip = $this->moduleContext->request->getIpAddress();
 
 		// calculate start time
 		$startTime = $_SERVER['REQUEST_TIME'];

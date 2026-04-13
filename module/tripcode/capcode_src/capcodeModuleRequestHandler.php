@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\tripcode;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\capcode_backend\capcodeService;
+use Kokonotsuba\request\request;
 use Exception;
 use Throwable;
 
@@ -17,7 +18,8 @@ require __DIR__ . '/capcodeLib.php';
 class capcodeModuleRequestHandler {
 	public function __construct(
 		private capcodeService $capcodeService,
-		private actionLoggerService $actionLoggerService
+		private actionLoggerService $actionLoggerService,
+		private request $request
 	) {}
 
 	public function handleModPageRequests(
@@ -25,7 +27,7 @@ class capcodeModuleRequestHandler {
 	): void {
 		// get the action from post
 		// this determins how the request will be handled
-		$action = $_POST['action'] ?? null;
+		$action = $this->request->getParameter('action', 'POST');
 
 		// delete a capcode by id
 		if($action === 'deleteCapcode') {
@@ -49,7 +51,7 @@ class capcodeModuleRequestHandler {
 	private function handleCapcodeDeletion(): void {
 		$this->handleCapcodeOperation('deleting', function() {
 			// get the capcode id from POST
-			$capcodeId = $_POST['capcodeId'] ?? null;
+			$capcodeId = $this->request->getParameter('capcodeId', 'POST');
 
 			// validate the capcode id
 			validateCapcodeId($capcodeId);
@@ -88,7 +90,7 @@ class capcodeModuleRequestHandler {
 
 	private function getCapcodeInputFromRequest(): array {
 		// the tripcode/secure tripcode itself. Included with the diamond or star
-		$rawTripcode = $_POST['rawTripcode'] ?? '';
+		$rawTripcode = $this->request->getParameter('rawTripcode', 'POST', '');
 
 		// validate the tripcode input
 		$this->validateTripcode($rawTripcode);
@@ -100,13 +102,13 @@ class capcodeModuleRequestHandler {
 		$tripcode = mb_substr($rawTripcode, 1);
 
 		// the hexadecimal color
-		$colorHex = $_POST['capcodeColorHex'] ?? '';
+		$colorHex = $this->request->getParameter('capcodeColorHex', 'POST', '');
 
 		// validate color
 		$this->validateColorHexadecimal($colorHex);
 
 		// the text that comes after the tripcode. e.g "## Pezident"
-		$capcodeText = $_POST['capcodeText'] ?? '';
+		$capcodeText = $this->request->getParameter('capcodeText', 'POST', '');
 
 		return [$tripcode, $isSecure, $colorHex, $capcodeText];
 	}
@@ -186,7 +188,7 @@ class capcodeModuleRequestHandler {
 	private function handleCapcodeModify(): void {
         $this->handleCapcodeOperation('modifying', function() {
 			// get the capcode id from POST
-			$capcodeId = $_POST['capcodeId'] ?? null;
+			$capcodeId = $this->request->getParameter('capcodeId', 'POST');
 
 			// validate the id
 			validateCapcodeId($capcodeId);

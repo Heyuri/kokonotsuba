@@ -9,7 +9,6 @@
 use Kokonotsuba\api\boardApi;
 use Kokonotsuba\api\threadApi;
 use Kokonotsuba\error\softErrorHandler;
-use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\ip\IPValidator;
 use Kokonotsuba\log_in\adminLoginController;
 use Kokonotsuba\log_in\authenticationHandler;
@@ -23,7 +22,7 @@ use Kokonotsuba\template\templateEngine;
 $templateEngine = $board->getBoardTemplateEngine();
 $moduleEngine = $board->getModuleEngine();
 
-$adminTemplateEngine = new templateEngine(getBackendDir() . 'templates/admin.tpl', [
+$adminTemplateEngine = new templateEngine(getBackendDir() . 'templates/admin', [
 	'config'	=> $config,
 	'boardData'	=> [
 		'title'		=> $board->getBoardTitle(),
@@ -31,13 +30,13 @@ $adminTemplateEngine = new templateEngine(getBackendDir() . 'templates/admin.tpl
 	]
 ]);
 
-$adminPageRenderer = new pageRenderer($adminTemplateEngine, $moduleEngine, $board);
+$adminPageRenderer = new pageRenderer($adminTemplateEngine, $moduleEngine, $board, $request);
 
 // ───────────────────────────────────────
 // Error Handling & Authentication
 // ───────────────────────────────────────
-$softErrorHandler = new softErrorHandler($board->getBoardHead('Error!'), $board->getBoardFooter(), $board->getConfigValue('STATIC_INDEX_FILE'), $templateEngine);
-$loginSessionHandler = new loginSessionHandler($config['STAFF_LOGIN_TIMEOUT']);
+$softErrorHandler = new softErrorHandler($board->getBoardHead('Error!'), $board->getBoardFooter(), $board->getConfigValue('STATIC_INDEX_FILE'), $templateEngine, $staffAccountFromSession, $request);
+$loginSessionHandler = new loginSessionHandler($request, $config['STAFF_LOGIN_TIMEOUT']);
 $authenticationHandler = new authenticationHandler();
 
 $adminLoginController = new adminLoginController(
@@ -48,8 +47,8 @@ $adminLoginController = new adminLoginController(
 	$softErrorHandler
 );
 
-$IPValidator = new IPValidator($config, new IPAddress);
-$postValidator = new postValidator($config, $IPValidator, $threadRepository, $threadService, $fileService);
+$IPValidator = new IPValidator($config, $request->userIp(), $request);
+$postValidator = new postValidator($config, $IPValidator, $threadRepository, $threadService, $fileService, $request);
 
 $postDateFormatter = new postDateFormatter($config['TIME_ZONE']);
 
@@ -63,24 +62,36 @@ $overboard = new overboard(
 	$threadRepository, 
 	$boardService, 
 	$postRepository, 
-	$postService, 
 	$quoteLinkService, 
     $threadService,
-	$postSearchService,
-	$actionLoggerService,
-	$postRedirectService,
-	$deletedPostsService,
-	$fileService,
-	$capcodeService,
-	$userCapcodes,
-	$transactionManager,
-	$moduleEngine, 
+	$moduleEngine,
 	$templateEngine,
 	$postRenderingPolicy,
+	$container,
+	$request,
 );
 
 // ───────────────────────────────────────
 // API
 // ───────────────────────────────────────
-$boardApi = new boardApi($boardService);
-$threadApi = new threadApi($threadService);
+$boardApi = new boardApi($boardService, $request);
+$threadApi = new threadApi($threadService, $request);
+
+// ───────────────────────────────────────
+// Register in container
+// ───────────────────────────────────────
+$container->set('board', $board);
+$container->set('config', $config);
+$container->set('templateEngine', $templateEngine);
+$container->set('moduleEngine', $moduleEngine);
+$container->set('adminTemplateEngine', $adminTemplateEngine);
+$container->set('adminPageRenderer', $adminPageRenderer);
+$container->set('softErrorHandler', $softErrorHandler);
+$container->set('loginSessionHandler', $loginSessionHandler);
+$container->set('adminLoginController', $adminLoginController);
+$container->set('postValidator', $postValidator);
+$container->set('postDateFormatter', $postDateFormatter);
+$container->set('overboard', $overboard);
+$container->set('boardApi', $boardApi);
+$container->set('threadApi', $threadApi);
+$container->set('boardPathService', $boardPathService);

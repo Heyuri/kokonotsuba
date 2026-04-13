@@ -5,12 +5,23 @@
 namespace Kokonotsuba\Modules\animatedGif;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\IndicatorTrait;
+use Kokonotsuba\module_classes\traits\listeners\AttachmentsAfterInsertListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\AttachmentListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\IncludeHtmlTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostFormFileListenerTrait;
 use RuntimeException;
 
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 
 class moduleMain extends abstractModuleMain {
+	use AttachmentsAfterInsertListenerTrait;
+	use AttachmentListenerTrait;
+	use IncludeHtmlTrait;
+	use IndicatorTrait;
+	use PostFormFileListenerTrait;
+
 	public function getName(): string {
 		return 'Kokonotsuba Animated GIF';
 	}
@@ -20,33 +31,20 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		$this->listenAttachmentsAfterInsert('onAttachmentsAfterInsert');
 
-		$this->moduleContext->moduleEngine->addListener('AttachmentsAfterInsert', 
-			function (?array &$attachments) {
-				$this->onAttachmentsAfterInsert($attachments); 
-			}
-		);
+		$this->listenAttachment('onRenderAttachment');
 
-		$this->moduleContext->moduleEngine->addListener('Attachment', function(
-			string &$attachmentProperties, 
-			string &$attachmentImage, 
-			string &$attachmentUrl, 
-			array &$attachment,
-		) {
-			$this->onRenderAttachment($attachmentProperties, $attachmentImage, $attachmentUrl, $attachment);
-		});
+		$this->listenPostFormFile('onRenderPostFormFile');
 
-		$this->moduleContext->moduleEngine->addListener('PostFormFile', function(string &$formFileSection) {
-			$this->onRenderPostFormFile($formFileSection);
-		});
+		// size limit data in <head> for JS to read
+		$animatedGifSizeLimit = $this->getConfig('MAX_SIZE_FOR_ANIMATED_GIF', 2000);
+		$this->registerHeaderHtml('<template id="anigifData" data-size-limit="' . htmlspecialchars($animatedGifSizeLimit) . '"></template>');
 	}
 
 	private function onRenderPostFormFile(string &$file): void {
-		// get size limit for animated gifs (in kb)
-		$animatedGifSizeLimit = $this->getConfig('MAX_SIZE_FOR_ANIMATED_GIF', 2000);
-
-		// append checkbox to post form
-		$file .= '<div id="anigifContainer"><label id="anigifLabel" title="Makes GIF thumbnails animated"><input type="checkbox" name="anigif" id="anigif" data-size-limit="' . htmlspecialchars($animatedGifSizeLimit) . '" value="on">Animated GIF</label></div>';
+		// noscript fallback checkbox for no-JS users
+		$file .= '<noscript><div id="anigifContainer"><label id="anigifLabel" title="Makes GIF thumbnails animated"><input type="checkbox" name="anigif" id="anigif" value="on">Animated GIF</label></div></noscript>';
 	}
 
 	private function onAttachmentsAfterInsert(?array &$attachments): void {
@@ -60,7 +58,7 @@ class moduleMain extends abstractModuleMain {
 
 	private function handlePostAnimatedGif(array &$attachments): void {
 		// whether anigif was toggled
-		$anigifRequested = isset($_POST['anigif']);
+		$anigifRequested = $this->moduleContext->request->hasParameter('anigif', 'POST');
 		
 		// if toggled then loop through attachments and toggle each gif to be animated
 		// non-GIFs are skipped
@@ -109,12 +107,6 @@ class moduleMain extends abstractModuleMain {
 		string &$attachmentUrl, 
 		array &$attachment
 	): void {
-
-		// Only process attachments that are marked as animated
-		if (!$attachment['isAnimated']) {
-			return;
-		}
-
 		// stop module early if its not a gif		
 		if ($attachment['fileExtension'] !== 'gif') {
 			return;
@@ -142,10 +134,15 @@ class moduleMain extends abstractModuleMain {
 		if ($fileSize >= $maxGifFileSize * 1024) {
 			return;
 		}
-		// replace image src url in order to directly display the gif
-		$attachmentImage = preg_replace('/<img src=".*"/U', '<img src="' . $attachmentUrl . '"', $attachmentImage);
+
+		$isAnimated = (bool) $attachment['isAnimated'];
+
+		// replace image src url in order to directly display the gif (only when animated)
+		if ($isAnimated) {
+			$attachmentImage = preg_replace('/<img src=".*"/U', '<img src="' . $attachmentUrl . '"', $attachmentImage);
+		}
 		
-		// append animated gif label to properties
-		$attachmentProperties .= '<span class="animatedGIFLabel imageOptions">[Animated GIF]</span>';
+		// always render animated gif label wrapper, hidden when not active
+		$attachmentProperties .= $this->renderIndicator('animatedGifLabel', '[Animated GIF]', 'animatedGIFLabel imageOptions', !$isAnimated);
 	}
 }

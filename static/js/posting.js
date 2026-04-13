@@ -37,14 +37,18 @@ document.addEventListener("DOMContentLoaded", () => {
 		if (comInput) comInput.value = "";
 
 		// File Cleanup
-		var list = document.getElementById("fileListContainer");
-		if (list) list.remove();
-	
-		var dz = document.getElementById("dropzoneWrap");
-		if (dz) dz.style.display = "block";
+		if (window.resetClipboardFiles) {
+			window.resetClipboardFiles();
+		} else {
+			var list = document.getElementById("fileListContainer");
+			if (list) list.remove();
 
-		var realInput = document.querySelector("input[type='file'][name^='upfile']");
-		if (realInput) realInput.value = "";
+			var dz = document.getElementById("dropzoneWrap");
+			if (dz) dz.style.display = "block";
+
+			var realInput = document.querySelector("input[type='file'][name^='upfile']");
+			if (realInput) realInput.value = "";
+		}
 		
 		// also clear the quick reply form for good measure
 		if(kkqr) {
@@ -54,10 +58,59 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 
 	/**
-	 * Update thread with new replies and scroll to post
+	 * Get the post number of the last reply currently in the DOM.
+	 * Used to tell the server which posts are new.
 	 */
-	function updateThreadAndScroll(postId) {
-		fetchNewReplies().then(() => {
+	function getLastReplyPostNo() {
+		const replies = document.querySelectorAll(".reply-container");
+		if (!replies.length) return 0;
+		const lastId = replies[replies.length - 1].id; // e.g. "pc1_123"
+		const match = lastId.match(/(\d+)$/);
+		return match ? parseInt(match[1], 10) : 0;
+	}
+
+	/**
+	 * Insert an array of reply HTML strings into the thread in order.
+	 * Skips any that already exist in the DOM. Returns the last inserted element.
+	 */
+	function insertNewPostsHtml(htmlArray) {
+		const threadElement = document.querySelector(".thread");
+		if (!threadElement || !htmlArray || !htmlArray.length) return null;
+
+		let lastEl = null;
+		const inserted = [];
+		htmlArray.forEach(html => {
+			const temp = document.createElement("div");
+			temp.innerHTML = html;
+			const replyEl = temp.firstElementChild;
+			if (!replyEl) return;
+
+			// Skip if this post already exists in the DOM
+			if (document.getElementById(replyEl.id)) return;
+
+			threadElement.appendChild(replyEl);
+			lastEl = replyEl;
+			inserted.push(replyEl);
+		});
+
+		// Initialize JS features on all newly inserted posts
+		if (inserted.length) {
+			initNewPosts(inserted);
+		}
+
+		return lastEl;
+	}
+
+	/**
+	 * Update thread with new replies and scroll to the user's post.
+	 * Inserts all new replies returned by the server in correct order.
+	 */
+	function updateThreadAndScroll(postId, newPostsHtml) {
+		if (newPostsHtml && newPostsHtml.length) {
+			// Insert all new replies in order
+			insertNewPostsHtml(newPostsHtml);
+
+			// Scroll to the user's own post
 			const postEl =
 				document.getElementById(postId) ||
 				document.querySelector(`#p${postId}`) ||
@@ -67,7 +120,20 @@ document.addEventListener("DOMContentLoaded", () => {
 				postEl.scrollIntoView({ behavior: "smooth" });
 				window.location.hash = postId;
 			}
-		});
+		} else {
+			// Fallback: fetch everything then scroll
+			fetchNewReplies().then(() => {
+				const postEl =
+					document.getElementById(postId) ||
+					document.querySelector(`#p${postId}`) ||
+					document.querySelector(`[id$="${postId}"]`);
+
+				if (postEl) {
+					postEl.scrollIntoView({ behavior: "smooth" });
+					window.location.hash = postId;
+				}
+			});
+		}
 	}
 
 	/**
@@ -94,6 +160,11 @@ document.addEventListener("DOMContentLoaded", () => {
 		const formData = new FormData(postForm);
 		if (submitButton && submitButton.name) {
 			formData.append(submitButton.name, submitButton.value);
+		}
+
+		// Send the last known post number so the server can return all newer replies
+		if (isReply) {
+			formData.append("lastPostNo", getLastReplyPostNo());
 		}
 
 		if (submitButton) submitButton.disabled = true;
@@ -152,14 +223,19 @@ document.addEventListener("DOMContentLoaded", () => {
 					return;
 				}
 
-				fetchNewReplies();
+				// Insert new replies inline if server returned them
+				if (data.newPostsHtml && data.newPostsHtml.length) {
+					insertNewPostsHtml(data.newPostsHtml);
+				} else {
+					fetchNewReplies();
+				}
 				clearForm();
 				return;
 			}
 
 			// --- NOKO reply ---
 			if (isNoko && isReply) {
-				updateThreadAndScroll(data.postId);
+				updateThreadAndScroll(data.postId, data.newPostsHtml);
 				clearForm();
 				return;
 			}

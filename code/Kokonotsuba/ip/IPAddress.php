@@ -5,8 +5,8 @@ namespace Kokonotsuba\ip;
 class IPAddress {
 	private string $ipAddress;
 
-	public function __construct(string $ipAddress = '') {
-		$this->ipAddress = $ipAddress ?: ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+	public function __construct(string $ipAddress) {
+		$this->ipAddress = $ipAddress;
 	}
 
 	public function __toString(): string {

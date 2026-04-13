@@ -2,8 +2,9 @@
 
 namespace Kokonotsuba\Modules\indexCommentTruncator;
 
-use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
+use Kokonotsuba\post\Post;
 use Throwable;
 
 use function Kokonotsuba\libraries\_T;
@@ -12,6 +13,8 @@ use function Puchiko\html\truncateHtml;
 use function Puchiko\html\truncateHtmlByLineBreak;
 
 class moduleMain extends abstractModuleMain {
+	use PostListenerTrait;
+
 	// post comments over these limits are truncated (if viewed from the index)
 	private int $characterPreviewLimit;
 	private int $breakLinePreviewLimit;
@@ -32,14 +35,12 @@ class moduleMain extends abstractModuleMain {
 		$this->breakLinePreviewLimit = $this->getConfig('ModuleSettings.LINE_PREVIEW_LIMIT', 10);
 
 		// add hook point listener for post
-		$this->moduleContext->moduleEngine->addListener('Post', function(array &$templateValues, array &$post, array &$threadPosts, board &$board, bool &$adminMode) {
-			$this->onRenderPost($templateValues['{$COM}'], $post);
-		});
+		$this->listenPost('onRenderPost');
 	}
 
-	private function onRenderPost(string &$comment, array &$post): void {
+	private function onRenderPost(array &$templateValues, Post &$post): void {
 		// truncate post comment for index view
-		$this->truncatePostComment($comment, $post['no']);
+		$this->truncatePostComment($templateValues['{$COM}'], $post->getNumber());
 	}
 
 	private function truncatePostComment(string &$comment, int $postNumber): void {
@@ -47,7 +48,7 @@ class moduleMain extends abstractModuleMain {
 		// ("res" = 'response')
 		// its only set when viewing/targetting a thread.
 		// We don't want truncated comments while viewing the thread
-		if(isset($_GET['res'])) {
+		if($this->moduleContext->request->isViewingThread()) {
 			return;
 		}
 		

@@ -1,3 +1,18 @@
+/** Build an inline-quote container and insert it after the given link element. Returns the container. */
+function insertInlineQuote(link, html) {
+	const t = document.createElement("div");
+	t.classList.add("inline-quote");
+	link.insertAdjacentElement("afterend", t);
+	t.style.display = "table";
+	t.style.border = "1px dashed";
+	t.style.borderColor = window.getComputedStyle(document.querySelector(".reply"), null).getPropertyValue("border-color");
+	t.innerHTML = html;
+	// strip out any backlinks in the cloned content
+	const back = t.querySelector(".backlinks");
+	if (back) back.remove();
+	return t;
+}
+
 const kkinline = {
 	name: "KK Quote Inlining",
 	startup: function() {
@@ -19,23 +34,41 @@ const kkinline = {
 					next.remove();
 					return false;
 				}
+
+				const self = this;
+
 				// grab the target post ID
 				const targetId = this.hash.replace(/^#/, "");
-				const orig = document.getElementById(targetId);
-				if (!orig) {
+				const orig = targetId ? document.getElementById(targetId) : null;
+
+				if (orig) {
+					// Post is in the DOM — inline it directly
+					insertInlineQuote(self, orig.outerHTML);
+					return false;
+				}
+
+				// Post not in DOM — try remote fetch via data-post-uid
+				const postUid = this.dataset.postUid;
+				if (!postUid || typeof fetchPostData !== "function") {
 					return true;  // fall back to normal behavior
 				}
-				// build our inline container
-				const t = document.createElement("div");
-				t.classList.add("inline-quote");
-				this.insertAdjacentElement("afterend", t);
-				t.style.display = "table";
-				t.style.border = "1px dashed";
-				t.style.borderColor = window.getComputedStyle(document.querySelector(".reply"), null).getPropertyValue("border-color");
-				t.innerHTML = orig.outerHTML;
-				// strip out any backlinks in the cloned content
-				const back = t.querySelector(".backlinks");
-				if (back) back.remove();
+
+				// Show loading state
+				const fetchingText = document.querySelector('meta[name="postApiFetchingText"]')?.content || 'Fetching post...';
+				const loading = insertInlineQuote(self, '<div class="post reply">' + fetchingText + '</div>');
+
+				fetchPostData(postUid).then(function(data) {
+					if (!loading.parentNode) return;
+
+					const rendered = typeof buildPostFromApi === "function" ? buildPostFromApi(data) : null;
+					if (rendered) {
+						loading.innerHTML = '';
+						loading.appendChild(rendered);
+					} else {
+						loading.innerHTML = '<div class="post reply">Quote source not found</div>';
+					}
+				});
+
 				return false;
 			};
 		});

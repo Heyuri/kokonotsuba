@@ -49,25 +49,23 @@ class tripcodeRenderer {
 	}
 
 	private function generateCapcodeHtml(string $tripcode = '', string $secure_tripcode = '', string $capcode = ''): string {
-		// Check if either tripcode or secure tripcode has a defined capcode
+		// Staff capcode takes priority
+		if($capcode) {
+			// generate the staff capcode
+			return $this->generateStaffCapcodeWrapper($capcode);
+		}
+
+		// Check if either tripcode or secure tripcode has a defined user capcode
 		if (!empty($tripcode) || !empty($secure_tripcode)) {
 			// generate user capcode html
 			$capcodeHtml = $this->generateUserCapcodeHtml($tripcode, $secure_tripcode);
-		}
-	
-		// If a capcode is provided, format the name accordingly
-		elseif($capcode) {
-			// generate the staff capcode
-			$capcodeHtml = $this->generateStaffCapcodeWrapper($capcode);
+			if (!empty($capcodeHtml)) {
+				return $capcodeHtml;
+			}
 		}
 
 		// otherwise set it blank
-		else {
-			$capcodeHtml = '';
-		}
-
-		// return the html wrapper
-		return $capcodeHtml;
+		return '';
 	}
 
 	private function generateUserCapcodeHtml(string $tripcode, string $secure_tripcode): string {

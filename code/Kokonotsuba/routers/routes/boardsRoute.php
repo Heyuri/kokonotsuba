@@ -11,6 +11,7 @@ use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\userRole;
 
@@ -27,7 +28,8 @@ class boardsRoute {
 		private templateEngine $adminTemplateEngine,
 		private readonly pageRenderer $adminPageRenderer,
 		private readonly boardService $boardService,
-		private board $board
+		private board $board,
+		private readonly request $request
 	) {}
 
 	public function drawBoardPage(): void {
@@ -58,8 +60,8 @@ class boardsRoute {
 			]);
 		}
 
-		if (isset($_GET['view'])) {
-			$id = $_GET['view'] ?? null;
+		if ($this->request->hasParameter('view', 'GET')) {
+			$id = $this->request->getParameter('view', 'GET');
 			if (!$id) {
 				throw new Exception("Board UID from GET was not set or invalid. " . __CLASS__ . ' ' . __LINE__);
 			}

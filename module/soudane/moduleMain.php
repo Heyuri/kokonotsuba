@@ -6,6 +6,9 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
+use Kokonotsuba\post\Post;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Kokonotsuba\libraries\validatePostInput;
@@ -16,6 +19,9 @@ require_once __DIR__ . '/soudaneRepository.php';
 require_once __DIR__ . '/soudaneService.php';
 
 class moduleMain extends abstractModuleMain {
+	use PostListenerTrait;
+	use ModuleHeaderListenerTrait;
+
 	private string $moduleUrl;
 	private bool $enableYeah;
 	private bool $enableNope;
@@ -53,13 +59,9 @@ class moduleMain extends abstractModuleMain {
 		// set property
 		$this->soudaneService = $soudaneService;
 
-		$this->moduleContext->moduleEngine->addListener('Post', function (&$arrLabels, $post) {
-			$this->onRenderPost($arrLabels, $post);
-		});
+		$this->listenPost('onRenderPost');
 		
-		$this->moduleContext->moduleEngine->addListener('ModuleHeader', function(string &$moduleHeader) {
-			$this->onGenerateModuleHeader($moduleHeader);
-		});
+		$this->listenModuleHeader('onGenerateModuleHeader');
 	}
 
 	private function renderVoteButton(
@@ -95,17 +97,17 @@ class moduleMain extends abstractModuleMain {
 			</span>';
 	}
 
-	private function onRenderPost(array &$arrLabels, array $post): void {
+	private function onRenderPost(array &$arrLabels, Post $post): void {
 		// Initialize an empty string to hold the HTML for the vote buttons
 		$voteHtml = '';
 
 		// get post uid
-		$postUid = $post['post_uid'];
+		$postUid = $post->getUid();
 
 		// enable nope
 		if ($this->enableNope) {
 			// get nope count for this post
-			$nopeCount = $post['votes']['nope_count'] ?? null;
+			$nopeCount = $post->getVotes()['nope_count'] ?? null;
 
 			// render the nope button and append to post info extra
 			$voteHtml .= $this->renderVoteButton(
@@ -131,7 +133,7 @@ class moduleMain extends abstractModuleMain {
 		// yeah vote
 		if ($this->enableYeah) {
 			// get yeah count for this post
-			$yeahCount = $post['votes']['yeah_count'] ?? null;
+			$yeahCount = $post->getVotes()['yeah_count'] ?? null;
 
 			// render the yeah button and append to post info extra
 			$voteHtml .= $this->renderVoteButton(
@@ -145,13 +147,13 @@ class moduleMain extends abstractModuleMain {
 
 		// If SHOW_SCORE_ONLY is not enabled, display the score separately
 		if ($this->enableScore && !$this->showScoreOnly) {
-			$scoreCount = $post['votes']['total_score'] ?? 0;
+			$scoreCount = $post->getVotes()['total_score'] ?? 0;
 
 			$score = _T('score_pre_text', $scoreCount);
 			$voteHtml .= ' ' . $this->renderScore($postUid, $score);
 		}
 
-		$arrLabels['{$POSTINFO_EXTRA}'] .= ' <span class="soudaneContainer"> ' . $voteHtml . ' </span>';
+		$arrLabels['{$POSTINFO_EXTRA}'] .= ' <span class="soudaneContainer js-only"> ' . $voteHtml . ' </span>';
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
@@ -191,7 +193,7 @@ class moduleMain extends abstractModuleMain {
 
 	private function handleSoudaneApi(): void {
 		// extract the post uids from url
-		$postUidsParameter = $_GET['posts'] ?? [];
+		$postUidsParameter = $this->moduleContext->request->getParameter('posts', 'GET', []);
 
 		// exit if none are found
 		if (empty($postUidsParameter)) {
@@ -257,7 +259,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function ModulePage() {
 		// get mod page parameter
-		$modPage = $_GET['modPage'] ?? '';
+		$modPage = $this->moduleContext->request->getParameter('modPage', 'GET', '');
 
 		// if the mod page parameter is targetting the api endpoint then call a method to generate json
 		if($modPage === 'soudaneApi') {
@@ -265,10 +267,10 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		// Retrieve the postUid from GET parameters, default to empty string if not provided
-		$postUid = $_GET['postUid'] ?? '';
+		$postUid = $this->moduleContext->request->getParameter('postUid', 'GET', '');
 
 		// Retrieve the type from GET parameters, default to empty string if not provided
-		$type = $_GET['type'] ?? '';
+		$type = $this->moduleContext->request->getParameter('type', 'GET', '');
 		
 		// Validate that postUid is not empty and type is one of the allowed values
 		if (!$postUid || !in_array($type, ['yeah', 'nope', 'score'])) {
@@ -294,7 +296,7 @@ class moduleMain extends abstractModuleMain {
 		$log = $this->loadVotes($postUid, $type);
 
 		// Get the current user's IP address
-		$ip = new IPAddress;
+		$ip = $this->moduleContext->request->userIp();
 
 		$yeahIPs = !empty($log) ? array_column($log, 'ip_address') : [];
 

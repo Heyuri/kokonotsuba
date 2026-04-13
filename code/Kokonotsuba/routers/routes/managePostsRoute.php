@@ -5,6 +5,7 @@ namespace Kokonotsuba\routers\routes;
 use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\account\staffAccountFromSession;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\post\postService;
 use Kokonotsuba\error\softErrorHandler;
@@ -12,6 +13,7 @@ use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\policy\postRenderingPolicy;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 use Kokonotsuba\error\BoardException;
 use function Kokonotsuba\libraries\getFiltersFromRequest;
@@ -40,7 +42,8 @@ class managePostsRoute {
 		private readonly array $allRegularBoards,
 		private readonly deletedPostsService $deletedPostsService,
 		private postRenderingPolicy $postRenderingPolicy,
-		private ?int $currentUserId
+		private ?int $currentUserId,
+		private readonly request $request
 	) {}
 
 	public function drawManagePostsPage() {
@@ -68,12 +71,12 @@ class managePostsRoute {
 	}
 
 	private function initializePageContext(): array {
-		$isSubmission = isset($_GET['filterSubmissionFlag']);
+		$isSubmission = $this->request->hasParameter('filterSubmissionFlag', 'GET');
 		$managePostsUrl = $this->board->getBoardURL(true) . '?mode=managePosts';
 		$accountId = $this->currentUserId;
 		
 		$defaultFilters = $this->initializeManagePostsFilters();
-		$filtersFromRequest = getFiltersFromRequest($managePostsUrl, $isSubmission, $defaultFilters);
+		$filtersFromRequest = getFiltersFromRequest($managePostsUrl, $isSubmission, $defaultFilters, $this->request);
 
 		// Restrict ip_address filter to users with CAN_VIEW_IP_ADDRESSES
 		$roleLevel = $this->staffAccountFromSession->getRoleLevel();
@@ -87,7 +90,7 @@ class managePostsRoute {
 		
 		// Create query filters with resolved postsFrom for accurate results
 		$queryFilters = $filtersFromRequest;
-		$postsFrom = $_GET['postsFrom'] ?? null;
+		$postsFrom = $this->request->getParameter('postsFrom', 'GET');
 		if ($postsFrom && is_numeric($postsFrom)) {
 			$queryFilters['ip_address'] = $this->postRepository->resolveHostFromPostUid((int)$postsFrom);
 		}
@@ -104,7 +107,7 @@ class managePostsRoute {
 		$canViewHashedIp = $roleLevel->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_ONLY_VIEW_POSTS_FROM_USER', userRole::LEV_JANITOR));
 		$canViewDeleted = $this->postRenderingPolicy->viewDeleted();
 		
-		$page = (int) ($_REQUEST['page'] ?? 0);
+		$page = (int) $this->request->getParameter('page', default: 0);
 		if ($page < 0) $page = 1;
 		
 		return [
@@ -125,12 +128,12 @@ class managePostsRoute {
 
 	private function handlePostDeletion(array $context): void {
 		// Check if delete form was submitted
-		$postUidsFromCheckbox = $_POST['clist'] ?? [];
+		$postUidsFromCheckbox = $this->request->getParameter('clist', 'POST', []);
 		if (!$postUidsFromCheckbox) {
 			return;
 		}
 		
-		$onlyDeleteImages = !empty($_POST['onlyimgdel']);
+		$onlyDeleteImages = !empty($this->request->getParameter('onlyimgdel', 'POST'));
 		$this->deletePostsFromCheckboxes($postUidsFromCheckbox, $onlyDeleteImages, $context['accountId']);
 	}
 
@@ -168,7 +171,7 @@ class managePostsRoute {
 		
 		// Render action buttons and pagination
 		$html .= $this->renderPostsTableFooter();
-		$html .= drawPager($context['postsPerPage'], $context['numberOfFilteredPosts'], $context['cleanUrl']);
+		$html .= drawPager($context['postsPerPage'], $context['numberOfFilteredPosts'], $context['cleanUrl'], $this->request);
 		
 		return $html;
 	}
@@ -184,7 +187,7 @@ class managePostsRoute {
 							<tbody>';
 		
 		// Render posts or empty state message
-		if ($posts && is_array($posts)) {
+		if ($posts && (is_array($posts) || $posts instanceof \Traversable)) {
 			$html .= $this->renderPostEntries($posts, $boardMap, $context['canViewIp'], $context['canViewHashedIp'], $context['managePostsUrl'], $boardList);
 		} else {
 			$html .= '<tr><td colspan="9"><b class="error" id="no-posts-found"> - No posts found! - </b></td></tr>';
@@ -270,14 +273,14 @@ class managePostsRoute {
 	}
 
 	private function renderPostEntry(
-		array $post,
+		Post $post,
 		array $boardMap,
 		bool $canViewIp,
 		bool $canViewHashedIp,
 		string $managePostsUrl,
 		string $boardList
 	): string {
-		$boardUID = $post['boardUID'];
+		$boardUID = $post->getBoardUID();
 
 		if(!isset($boardMap[$boardUID])){
 			return '';
@@ -287,18 +290,18 @@ class managePostsRoute {
 		$postBoardConfig = $postBoard->loadBoardConfig();
 
 		// Prepare post data
-		$name = substr($post['name'], 0, 500);
-		$sub = substr($post['sub'], 0, 500);
-		$com = $post['com'];
-		$post_uid = $post['post_uid'];
-		$no = $post['no'];
-		$now = $post['now'];
-		$is_op = $post['is_op'];
+		$name = substr($post->getName(), 0, 500);
+		$sub = substr($post->getSubject(), 0, 500);
+		$com = $post->getComment();
+		$post_uid = $post->getUid();
+		$no = $post->getNumber();
+		$now = $post->getTimestamp();
+		$is_op = $post->isOp();
 
 		// Handle host display
 		$showHost = $canViewIp || $canViewHashedIp;
 		if ($showHost) {
-			$host = $canViewIp ? $post['host'] : substr(md5($post['host']), 0, 8);
+			$host = $canViewIp ? $post->getIp() : substr(md5($post->getIp()), 0, 8);
 		} else {
 			$host = '';
 		}
@@ -307,10 +310,10 @@ class managePostsRoute {
 		$nameHtml = generatePostNameHtml(
 			$this->moduleEngine, 
 			$name, 
-			$post['tripcode'], 
-			$post['secure_tripcode'], 
-			$post['capcode'], 
-			$post['email'],
+			$post->getTripcode(), 
+			$post->getSecureTripcode(), 
+			$post->getCapcode(), 
+			$post->getEmail(),
 			$this->config['NOTICE_SAGE']
 		);
 
@@ -326,7 +329,7 @@ class managePostsRoute {
 		$this->moduleEngine->dispatch('PostComment', [&$com, &$post]);
 
 		// Generate attachments HTML
-		$attachmentsHtml = $this->renderAttachments($post['attachments']);
+		$attachmentsHtml = $this->renderAttachments($post->getAttachments());
 
 		   // Build and return the table row
 		   $hostColHtml = '';
@@ -398,7 +401,7 @@ class managePostsRoute {
 
 		// Extract attachments and post numbers for logging
 		$attachments = getAttachmentsFromPosts($postsData);
-		$postNumbers = array_column($postsData, 'no');
+		$postNumbers = array_map(fn($p) => $p->getNumber(), $postsData);
 		$checkboxDeletionActionLogStr = is_array($postNumbers) ? implode(', No. ',$postNumbers) : $postNumbers;
 
 		// Delete only files or entire posts based on user selection

@@ -5,6 +5,7 @@ namespace Kokonotsuba\renderers;
 use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\post\attachment\attachment;
+use Kokonotsuba\template\templateEngine;
 
 use function Kokonotsuba\libraries\resolveThumbName;
 use function Kokonotsuba\libraries\_T;
@@ -19,7 +20,8 @@ use function Puchiko\strings\sanitizeStr;
 class attachmentRenderer {
 	public function __construct(
 		private board $board,
-		private moduleEngine $moduleEngine
+		private moduleEngine $moduleEngine,
+		private templateEngine $templateEngine
 	) {}
 
 	public function generateAttachmentHtml(
@@ -67,7 +69,11 @@ class attachmentRenderer {
 			false);
 
 		// Attachment bar (if any)
-		$imageBar = $this->handleFileBar($fileData, $imageURL);
+		$fileBarData = $this->handleFileBar($fileData, $imageURL);
+		$imageBar = $fileBarData['bar'];
+
+		// save the file info bar before module hooks append buttons to it
+		$fileInfoBar = $imageBar;
 
 		// check if the image exists
 		$imageExists = $this->checkIfAttachmentExists($fileData, $fileAttachment, $isDeleted, $isAttachmentDeleted);
@@ -94,10 +100,31 @@ class attachmentRenderer {
 			$this->moduleEngine->dispatch('ModerateAttachment', [&$imageBar, &$imageHtml, &$imageURL, &$fileData]);
 		}
 
+		// extract the buttons that modules appended to the bar
+		$attachmentButtons = substr($imageBar, strlen($fileInfoBar));
+
+		// run attachment widget hook point (structured widget entries)
+		$attachmentWidgets = [];
+		$this->moduleEngine->dispatch('AttachmentWidget', [&$attachmentWidgets, &$fileData]);
+
+		if($adminMode) {
+			$this->moduleEngine->dispatch('ModerateAttachmentWidget', [&$attachmentWidgets, &$fileData]);
+		}
+
+		$attachmentButtons .= $this->buildAttachmentWidgetHtml($attachmentWidgets);
+
+		// run attachment indicator hooks (rendered directly in the visible bar)
+		if($adminMode) {
+			$this->moduleEngine->dispatch('ModerateAttachmentIndicator', [&$fileInfoBar, &$fileData]);
+		}
+
 		// wrap in attachment container
 		$attachmentHtml = $this->wrapAttachmentContent(
 			$imageHtml, 
-			$imageBar, 
+			$fileInfoBar,
+			$fileBarData['fileSize'],
+			$fileBarData['fileDimensions'],
+			$attachmentButtons,
 			$multipleAttachments
 		);
 
@@ -107,12 +134,12 @@ class attachmentRenderer {
 
 	private function wrapAttachmentContent(
 		string $imageHtml, 
-		string $imageBar, 
+		string $fileInfoBar,
+		string $fileSize,
+		string $fileDimensions,
+		string $attachmentButtons,
 		bool $multipleAttachments
 	): string {
-		// init attachment html
-		$attachmentHtml = '';
-
 		// css classes for the attachment container
 		$attachmentClasses = 'attachmentContainer';
 
@@ -121,20 +148,23 @@ class attachmentRenderer {
 			$attachmentClasses .= ' multiAttachment';
 		}
 
-		// begin container wrap
-		$attachmentHtml .= '<div class="' . $attachmentClasses . '">';
+		// render attachment buttons through template if there are any
+		$buttonsHtml = '';
+		if(!empty($attachmentButtons)) {
+			$buttonsHtml = $this->templateEngine->ParseBlock('ATTACHMENT_BUTTONS', [
+				'{$BUTTONS}' => $attachmentButtons,
+			]);
+		}
 
-		// append attachment info html
-		$attachmentHtml .= '<div class="filesize">' . $imageBar . '</div>';
-
-		// append main attachment html (image/thumbnail itself)
-		$attachmentHtml .= $imageHtml;
-
-		// end container wrap
-		$attachmentHtml .= '</div>';
-
-		// now, return the attachment container/html
-		return $attachmentHtml;
+		// render attachment container
+		return $this->templateEngine->ParseBlock('ATTACHMENT_CONTAINER', [
+			'{$ATTACHMENT_CLASSES}' => $attachmentClasses,
+			'{$FILE_INFO_BAR}' => $fileInfoBar,
+			'{$FILE_SIZE}' => $fileSize,
+			'{$FILE_DIMENSIONS}' => $fileDimensions,
+			'{$ATTACHMENT_BUTTONS}' => $buttonsHtml,
+			'{$IMAGE_HTML}' => $imageHtml,
+		]);
 	}
 
 	private function checkIfAttachmentExists(
@@ -160,27 +190,33 @@ class attachmentRenderer {
 		return $imageExists;
 	}
 
-	private function handleFileBar(?array $fileData, string $imageURL): string {
+	private function handleFileBar(?array $fileData, string $imageURL): array {
 		// return blank if the file data is null
 		if($fileData === null) {
-			return '';
+			return ['bar' => '', 'fileSize' => '', 'fileDimensions' => ''];
 		}
 
 		// format file size
 		$formattedFileSize = formatFileSize($fileData['fileSize']);
+
+		// image dimensions
+		$fileDimensions = ($this->board->getConfigValue('SHOW_IMGWH') && ($fileData['fileWidth'] || $fileData['fileHeight'])) 
+			? ', ' . $fileData['fileWidth'] . 'x' . $fileData['fileHeight'] 
+			: '';
 
 		// generate file bar html 
 		$imageBar = $this->buildAttachmentBar(
 			$fileData['storedFileName'], 
 			$fileData['fileExtension'], 
 			$fileData['fileName'], 
-			$formattedFileSize, 
-			$fileData['fileWidth'], 
-			$fileData['fileHeight'], 
 			$imageURL);
 
-		// return generated file bar
-		return $imageBar;
+		// return generated file bar with size info
+		return [
+			'bar' => $imageBar,
+			'fileSize' => sanitizeStr($formattedFileSize),
+			'fileDimensions' => sanitizeStr($fileDimensions),
+		];
 	}
 
 	/**
@@ -253,34 +289,25 @@ class attachmentRenderer {
 		?int $width = null, 
 		?int $height = null, 
 		?string $title = null
-	): string {		
-		// Start building the <img> tag
-		$imgTag = '<img src="' . $thumbURL . '" class="postimg" alt="' . $altText . '"';
+	): string {
+		// build width/height attribute string
+		$imgDimensions = ($width && $height) ? 'width="' . $width . '" height="' . $height . '"' : '';
 
-		// Add optional width and height
-		if ($width && $height) {
-			$imgTag .= ' width="' . $width . '" height="' . $height . '"';
-		}
-
-		// Add optional title (used as tooltip)
-		if ($title) {
-			$imgTag .= ' title="' . $title . '"';
-		}
-
-		$imgTag .= '>';
-
-		// Wrap the image in a clickable link to the full image
-		// data-attachment-index is so js knows whether its the first, second, and so on, attachment of the post
-		// data-extension is for the attachment expander js to know what type of file it is
-		return '<a href="' . $imageURL . '" target="_blank" rel="nofollow" class="attachmentAnchor" 
-			data-attachment-index="' . htmlspecialchars($index) . '" 
-			data-extension="' . htmlspecialchars($extension) .'">' . $imgTag . '</a>';
+		return $this->templateEngine->ParseBlock('ATTACHMENT_IMAGE', [
+			'{$IMAGE_URL}' => $imageURL,
+			'{$THUMB_URL}' => $thumbURL,
+			'{$ALT_TEXT}' => $altText,
+			'{$ATTACHMENT_INDEX}' => htmlspecialchars($index),
+			'{$EXTENSION}' => htmlspecialchars($extension),
+			'{$IMG_DIMENSIONS}' => $imgDimensions,
+			'{$IMG_TITLE}' => $title ?? '',
+		]);
 	}
 
 	/**
 	 * Builds the attachment/file download bar with filename and size info.
 	*/
-	private function buildAttachmentBar(string $tim, string $ext, string $fname, string $imgsize, int $imgw, int $imgh, string $imageURL): string {
+	private function buildAttachmentBar(string $tim, string $ext, string $fname, string $imageURL): string {
 		// add a dot (full stop) if the extension
 		// (compatability)
 		$fullStop = str_contains($ext, '.') ? '' : '.';
@@ -300,15 +327,14 @@ class attachmentRenderer {
 		$fnameJS = str_replace('&#039;', '\\&#039;', sanitizeStr($fname));
 		$truncatedJS = str_replace('&#039;', '\\&#039;', sanitizeStr($truncated));
 
-		// Image info dimensions
-		$imgwh_bar = ($this->board->getConfigValue('SHOW_IMGWH') && ($imgw || $imgh)) ? ', ' . $imgw . 'x' . $imgh : '';
-
-		return _T('img_filename') . 
-			'<a href="' . sanitizeStr($imageURL) . '" target="_blank" rel="nofollow" onmouseover="this.textContent=\'' . $fnameJS . '\';" onmouseout="this.textContent=\'' . $truncatedJS . '\'">' . 
-   			sanitizeStr($truncated) . 
-			'</a> <a href="' . sanitizeStr($imageURL) . '" title="' . sanitizeStr($fname) . '" download="' . sanitizeStr($fname) . '">
-			<div class="download"></div></a> 
-			<span class="fileProperties">(' . sanitizeStr($imgsize) . sanitizeStr($imgwh_bar) . ')</span>';
+		return $this->templateEngine->ParseBlock('ATTACHMENT_BAR', [
+			'{$IMG_FILENAME_LABEL}' => _T('img_filename'),
+			'{$IMAGE_URL}' => sanitizeStr($imageURL),
+			'{$FNAME_JS}' => $fnameJS,
+			'{$TRUNCATED_JS}' => $truncatedJS,
+			'{$TRUNCATED}' => sanitizeStr($truncated),
+			'{$FNAME}' => sanitizeStr($fname),
+		]);
 	}
 
 	public function generateImageUrl(
@@ -337,5 +363,36 @@ class attachmentRenderer {
 
 		// return generated image url
 		return $imageURL;
+	}
+
+	private function buildAttachmentWidgetHtml(array $widgets): string {
+		$html = '';
+
+		foreach ($widgets as $w) {
+			$href   = $w['href'] ?? '';
+			$action = $w['action'] ?? '';
+			$label  = $w['label'] ?? '';
+			$params = $w['params'] ?? [];
+
+			$targetAttr = '';
+			if (isset($params['target'])) {
+				$targetAttr = ' target="' . htmlspecialchars($params['target']) . '"';
+				unset($params['target']);
+			}
+
+			$paramAttrs = '';
+			foreach ($params as $key => $value) {
+				$paramAttrs .= ' data-param-' . htmlspecialchars($key) . '="' . htmlspecialchars((string)$value) . '"';
+			}
+
+			$html .= '<span class="indicator indicator-' . htmlspecialchars($action) . '">'
+				. '<a href="' . htmlspecialchars($href) . '"'
+				. ' data-action="' . htmlspecialchars($action) . '"'
+				. $targetAttr
+				. $paramAttrs
+				. '>' . htmlspecialchars($label) . '</a></span>';
+		}
+
+		return $html;
 	}
 }

@@ -1,38 +1,35 @@
-// Utility: append a warning span
+// Utility: show a deletion indicator
+// For 'post': toggles the always-present .indicator-deleted container
+// For 'file': toggles the always-present .indicator-fileDeleted container
 // scopeEl: optional element to scope the .filesize query for multi-attachment posts
-function appendWarning(postEl, type, scopeEl) {
+function showDeletionIndicator(postEl, type, scopeEl) {
 	if (!postEl) return null;
 
 	if (type === 'post') {
 		const infoExtra = postEl.querySelector('.postInfoExtra');
 		if (!infoExtra) return null;
 
-		const existsDeleted = infoExtra.querySelector('.warning[title="This post was deleted"]');
-		if (existsDeleted) return null;
+		const indicator = infoExtra.querySelector('.indicator-deleted');
+		if (!indicator) return null;
 
-		const warn = document.createElement('span');
-		warn.className = 'warning';
-		warn.title = 'This post was deleted';
-		warn.textContent = '[DELETED]';
+		// Already visible
+		if (!indicator.classList.contains('indicatorHidden')) return null;
 
-		const spacer1 = document.createTextNode(' ');
-		infoExtra.appendChild(spacer1);
-		infoExtra.appendChild(warn);
-		return { warn, spacer1, vd: null, spacer2: null };
+		indicator.classList.remove('indicatorHidden');
+		return { indicator: indicator };
 
 	} else if (type === 'file') {
 		const filesizeEl = (scopeEl || postEl).querySelector('.filesize');
 		if (!filesizeEl) return null;
 
-		const existsFileDel = filesizeEl.querySelector('.warning[title="This post\'s file was deleted"]');
-		if (existsFileDel) return null;
+		const indicator = filesizeEl.querySelector('.indicator-fileDeleted');
+		if (!indicator) return null;
 
-		const warn = document.createElement('span');
-		warn.className = 'warning';
-		warn.title = "This post's file was deleted";
-		warn.textContent = '[FILE DELETED]';
-		filesizeEl.appendChild(warn);
-		return { warn, spacer1: null, vd: null, spacer2: null };
+		// Already visible
+		if (!indicator.classList.contains('indicatorHidden')) return null;
+
+		indicator.classList.remove('indicatorHidden');
+		return { indicator: indicator };
 	}
 	return null;
 }
@@ -48,30 +45,6 @@ function removeWidgetActions(postEl, actions) {
 			a.remove();
 		});
 	});
-}
-
-function createViewFileButton(url) {
-	const span = document.createElement('span');
-	span.className = 'adminFunctions attachmentButton viewDeletedFileButton';
-
-	// leading bracket
-	const left = document.createTextNode('[');
-
-	// the actual link
-	const a = document.createElement('a');
-	a.href = url;
-	a.target = '_blank';
-	a.textContent = 'VF';
-	a.title = 'View deleted attachment';
-
-	// trailing bracket
-	const right = document.createTextNode(']');
-
-	span.appendChild(left);
-	span.appendChild(a);
-	span.appendChild(right);
-
-	return span;
 }
 
 /**
@@ -91,39 +64,28 @@ function prepareAttachmentDeletion(attachmentEl, postEl, buttonSelectors) {
 	for (var i = 0; i < buttonSelectors.length; i++) {
 		var btn = attachmentEl.querySelector(buttonSelectors[i]);
 		if (btn) {
-			btn.classList.add('hidden');
+			btn.classList.add('indicatorHidden');
 			hiddenControls.push(btn);
 		}
 	}
 
-	warningResult = appendWarning(postEl, 'file', attachmentEl);
+	warningResult = showDeletionIndicator(postEl, 'file', attachmentEl);
 
 	return {
 		revertUI: function () {
 			attachmentEl.classList.remove('deletedFile');
 			for (var j = 0; j < hiddenControls.length; j++) {
-				hiddenControls[j].classList.remove('hidden');
+				hiddenControls[j].classList.remove('indicatorHidden');
 			}
-			if (warningResult && warningResult.warn && warningResult.warn.parentNode) {
-				warningResult.warn.parentNode.removeChild(warningResult.warn);
-			}
-			if (warningResult && warningResult.spacer1 && warningResult.spacer1.parentNode) {
-				warningResult.spacer1.parentNode.removeChild(warningResult.spacer1);
+			if (warningResult && warningResult.indicator) {
+				warningResult.indicator.classList.add('indicatorHidden');
 			}
 		},
-		addViewFileButton: function (deletedLink) {
-			if (!deletedLink) return;
-			var vf = createViewFileButton(deletedLink);
-			if (warningResult && warningResult.warn && warningResult.warn.parentNode) {
-				warningResult.warn.parentNode.insertBefore(document.createTextNode(' '), warningResult.warn.nextSibling);
-				warningResult.warn.nextSibling.after(vf);
-			}
-		}
 	};
 }
 
 /**
- * Send a module action via AJAX GET and handle success/failure with revert and messages.
+ * Send a module action via AJAX POST with CSRF token.
  *
  * @param {string} url  The action URL
  * @param {Object} options
@@ -131,13 +93,26 @@ function prepareAttachmentDeletion(attachmentEl, postEl, buttonSelectors) {
  * @param {string}   [options.successMessage]  Shown on success
  * @param {string}   [options.errorMessage]    Fallback error message
  * @param {Function} [options.onSuccess]       Called with parsed JSON data on success
+ * @param {Object} [extraParams]   Additional key-value pairs to include in the POST body
  */
-function sendModuleAction(url, options) {
+function sendModuleAction(url, options, extraParams) {
+	var csrfToken = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+	var body = new URLSearchParams();
+	body.append('csrf_token', csrfToken);
+
+	if (extraParams) {
+		for (var key in extraParams) {
+			if (extraParams.hasOwnProperty(key)) {
+				body.append(key, extraParams[key]);
+			}
+		}
+	}
+
 	fetch(url, {
-		method: 'GET',
+		method: 'POST',
 		credentials: 'same-origin',
 		headers: { 'X-Requested-With': 'XMLHttpRequest' },
-		cache: 'no-store'
+		body: body
 	})
 	.then(async function (response) {
 		var data = null;

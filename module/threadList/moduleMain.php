@@ -4,6 +4,10 @@ namespace Kokonotsuba\Modules\threadList;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeforeCommitListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\AboveThreadAreaListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
+use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawPager;
@@ -11,6 +15,10 @@ use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Puchiko\strings\truncateText;
 
 class moduleMain extends abstractModuleMain {
+	use RegistBeforeCommitListenerTrait;
+	use AboveThreadAreaListenerTrait;
+	use TopLinksListenerTrait;
+
 	// Configuration variables
 	private $THREADLIST_NUMBER, $FORCE_SUBJECT, $SHOW_IN_MAIN, $THREADLIST_NUMBER_IN_MAIN, $SHOW_FORM, $HIGHLIGHT_COUNT = -1;
 
@@ -32,29 +40,16 @@ class moduleMain extends abstractModuleMain {
 		$this->HIGHLIGHT_COUNT = $this->getConfig('ModuleSettings.HIGHLIGHT_COUNT');
 		$this->SHOW_IN_MAIN = $this->getConfig('ModuleSettings.SHOW_IN_MAIN');
 
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
-			$this->onBeforeCommit($sub, $isReply);
-		});
-
-		$this->moduleContext->moduleEngine->addListener('AboveThreadArea', function(string &$aboveThreadsHtml, bool $isThreadView) {
-			$this->onRenderAboveThreadArea($aboveThreadsHtml, $isThreadView);
-		});
-
-		$this->moduleContext->moduleEngine->addListener('TopLinks', function(string &$topLinkHookHtml, bool $isReply) {
-			$this->onRenderTopLinks($topLinkHookHtml);
-		});
+		$this->listenRegistBeforeCommit('onBeforeCommit');
+		$this->listenAboveThreadArea('onRenderAboveThreadArea');
+		$this->addTopLink($this->getModulePageURL([], false), 'Thread list');
 	}
 
 	// Automatically checks subject for posts before commit
-	public function onBeforeCommit(string &$sub, bool $isReply): void {
+	public function onBeforeCommit($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $files, $isReply): void {
 		if ($this->FORCE_SUBJECT && !$isReply && $sub == $this->getConfig('DEFAULT_NOTITLE')) {
 			throw new BoardException("A subject/title is required for a new thread.");
 		}
-	}
-
-	// Adds a link to the top navigation bar
-	public function onRenderTopLinks(&$topLinkHookHtml) {
-		$topLinkHookHtml .= '[<a href="' . $this->getModulePageURL() . '">Thread list</a>]'."\n";
 	}
 
 	public function onRenderAboveThreadArea(string &$txt, bool $isThreadView) {
@@ -67,23 +62,21 @@ class moduleMain extends abstractModuleMain {
 				$dat .= '<div class="menu outerbox" id="topiclist"><div class="innerbox">';
 
 				foreach ($threads as $t) {
-						if (!isset($t['posts'][0])) continue;
-						$post = $t['posts'][0];
+						$post = $t->getOpeningPost();
+						if (!$post) continue;
 
-						$cleanComment = strip_tags($post['com']);
+						$cleanComment = strip_tags($post->getComment());
 						$truncatedComment = truncateText($cleanComment, 100);
-						$truncatedSubject = truncateText($post['sub'], 100);
+						$truncatedSubject = truncateText($post->getSubject(), 100);
 
 						$title = $truncatedSubject ?: $truncatedComment;
 
-						$replyCount = isset($t['number_of_posts'])
-								? $t['number_of_posts'] - 1
-								: 0;
+						$replyCount = $t->getNumberOfPosts() - 1;
 
 						$dat .= sprintf(
 								'<span><!--%d--> <a href="%s">%s (%d)</a></span>',
-								$post['no'],
-								$this->getConfig('LIVE_INDEX_FILE') . '?res=' . $post['no'],
+								$post->getNumber(),
+								$this->getConfig('LIVE_INDEX_FILE') . '?res=' . $post->getNumber(),
 								$title,
 								$replyCount
 						);
@@ -101,7 +94,7 @@ class moduleMain extends abstractModuleMain {
 		$dat = ''; // HTML Buffer
 		$listMax = $this->moduleContext->threadRepository->threadCountFromBoard($this->moduleContext->board); // Total number of threads
 		$pageMax = ceil($listMax / $this->THREADLIST_NUMBER) - 1; // Maximum page number
-		$page = isset($_GET['page']) ? intval($_GET['page']) : 0; // Current page number
+		$page = $this->moduleContext->request->hasParameter('page', 'GET') ? intval($this->moduleContext->request->getParameter('page', 'GET')) : 0; // Current page number
 
 		// Check if the page number is out of range
 		if ($page < 0 || $page > $pageMax) throw new BoardException('Page out of range.');
@@ -118,7 +111,7 @@ class moduleMain extends abstractModuleMain {
 		$sortingColumn = '';
 
 		// get sorting value from request
-		$sortingMethod = $_GET['sort'] ?? 'no';
+		$sortingMethod = $this->moduleContext->request->getParameter('sort', 'GET', 'no');
 
 		// decide which column to use based on the request
 		if($sortingMethod === 'no') {
@@ -189,21 +182,21 @@ function checkall(){
 		// Loop through and display each thread data
 		foreach($threads as $t) {
 			// get opening post from data
-			$opPost = $t['posts'][0] ?? false;
+			$opPost = $t->getOpeningPost();
 
 			// not found or data invalid (falsey value) - continue
-			if(!$opPost) {
+			if(!$opPost || !($opPost instanceof Post)) {
 				continue;
 			}
 
-			$no = $opPost['no'];
-			$sub = $opPost['sub'];
-			$name = $opPost['name'];
-			$email = $opPost['email'];
-			$tripcode = $opPost['tripcode'];
-			$secure_tripcode = $opPost['secure_tripcode'];
-			$capcode = $opPost['capcode'];
-			$now = $opPost['now'];
+			$no = $opPost->getNumber();
+			$sub = $opPost->getSubject();
+			$name = $opPost->getName();
+			$email = $opPost->getEmail();
+			$tripcode = $opPost->getTripcode();
+			$secure_tripcode = $opPost->getSecureTripcode();
+			$capcode = $opPost->getCapcode();
+			$now = $opPost->getTimestamp();
 
 			$nameHtml = generatePostNameHtml(
 				$this->moduleContext->moduleEngine, 
@@ -215,7 +208,7 @@ function checkall(){
 				$this->getConfig('NOTICE_SAGE', false)
 			);
 
-			$rescount = $t['number_of_posts'] - 1;
+			$rescount = $t->getNumberOfPosts() - 1;
 			if ($this->HIGHLIGHT_COUNT > 0 && $rescount > $this->HIGHLIGHT_COUNT) {
 				$rescount = '<span class="warning">'.$rescount.'</span>';
 			}
@@ -234,7 +227,7 @@ function checkall(){
 <hr>
 ';
 
-		$dat .= drawPager($this->THREADLIST_NUMBER, $listMax, $thisPage . '&sort=' . $sortingMethod); 		
+		$dat .= drawPager($this->THREADLIST_NUMBER, $listMax, $thisPage . '&sort=' . $sortingMethod, $this->moduleContext->request); 		
 
 		// Add delete form if necessary
 		if ($this->SHOW_FORM) {

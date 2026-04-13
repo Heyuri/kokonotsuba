@@ -301,14 +301,13 @@ caption h3 {
 }
 
 #bannerContainer {
-	max-height: 102px;
+	height: 118px;
 	width: 100%;
 }
 
 #banner {
 	display: block;
 	width: 302px;
-	height: auto;
 	max-width: 100%;
 	margin: 8px auto;
 }
@@ -1466,125 +1465,6 @@ caption h3 {
 	text-align: left;
 }
 
-/************************ Catalog *************************************/
-
-#catsett {
-	float: right;
-	text-align: right;
-}
-
-#catalogSortForm {
-	float: left;
-}
-
-#catalogTable {
-	clear: both;
-}
-
-#catalogTable.full-width {
-	width: 100%;
-}
-
-#catalogTable.auto-cols {
-	text-align: center;
-}
-
-#catalogTable.auto-cols tr, 
-#catalogTable.auto-cols tbody {
-	display: inline;
-	display: flex;
-	flex-wrap: wrap;
-	align-items: stretch;
-	justify-content: center;
-}
-
-#catalogTable.auto-cols .thread {
-	display: inline-block;
-	margin: 0.5em;
-}
-
-#catalogTable.fixed-cols .thread {
-	margin: 0.5em;
-}
-
-#catalogTable.fixed-cols .catComment {
-	max-height: 100px;
-	overflow: hidden;
-}
-
-#catalogTable.fixed-cols .catComment:hover {
-	overflow: auto;
-}
-
-#catalogTable {
-	margin: 0 auto;
-	text-align: center;
-	clear: both;
-}
-
-#catalogTable .thread {
-	padding: 0 0 0.5em;
-	width: 180px;
-	max-height: 250px;
-	max-width: 170px;
-	text-align: center;
-	vertical-align: top;
-	overflow-y: hidden;
-	overflow-wrap: break-word;
-	overflow-wrap: anywhere;
-}
-
-#catalogTable .thread:hover {
-	overflow-y: auto;
-}
-
-#catalogTable .thumb {
-	display: block;
-	margin: 0 auto 0.75em;
-	width: auto;
-	min-width: 50px;
-	min-height: 50px;
-	max-height: 150px;
-	max-width: 150px;
-	box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.2);
-}
-
-#catalogTable .catPostInfo {
-	font-size: var(--font-size-small);
-}
-
-#catalogTable .catPostInfo .title {
-	display: inline-block;
-	font-size: inherit;
-  max-width: 100%;
-	vertical-align: text-bottom;
-	overflow: hidden;
-	text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-#catalogTable .catPostInfo .Replies {
-	display: inline-block;
-}
-
-.catComment {
-	display: table;
-  margin: 0 auto;
-	text-align: left;
-	font-size: var(--font-size-small);
-}
-
-@media screen and (max-width: 600px) {
-	#catalogTable .thread {
-		width: 140px;
-		max-width: 140px;
-	}
-	
-	#catalogTable .thumb {
-		max-width: 135px;
-	}
-}
-
 /************************ Search **************************************/
 
 #searchresult {
@@ -2041,44 +1921,6 @@ a.linkjs {
 	padding-left: 1em;
 }
 
-/************************ Filters *************************************/
-
-.filter .comment,
-.filter .post,
-.filter .omittedposts,
-.filter .filesize,
-.filter .postimg,
-.filter > .reply-container {
-  display: none;
-}
-
-.filter .post.op {
-  display: block;
-}
-
-.filter .postinfo,
-.filter .category {
-  opacity: 0.5;
-}
-
-/* .filterpost {
-  text-decoration: none;
-  font-weight: var(--font-weight-bold);
-	font-size: 9pt;
-} */
-
-/* .filterpostContainer::before {
-	content: "["
-}
-
-.filterpostContainer::after {
-	content: "]"
-} */
-
-.filterpost:hover {
-  opacity: 1;
-}
-
 #filterdie {
   display: block;
   font-size: var(--font-size-small);
@@ -2221,7 +2063,7 @@ width: 300px;
 		margin: 1em 1.5em;
 	}
 
-	#catsett,
+	#catalogSettings,
 	#catalogSortForm {
 		float: none;
 		text-align: center;

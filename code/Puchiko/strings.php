@@ -217,7 +217,7 @@ function extractGetParams($url) {
  *
  * This function generates a URL with the given filters (e.g., keyword, field, method) and no pagination.
  *
- * @param string $baseUrl The base URL for the page (e.g., $this->mypage).
+ * @param string $baseUrl The base URL for the page (e.g., $this->modulePageUrl).
  * @param array $filters An associative array of filter names and their values (e.g., ['keyword' => 'test', 'field' => 'com']).
  * @return string The full URL with filters (pagination is not handled by this function).
  */
@@ -284,4 +284,14 @@ function truncateText(
 
     // Append ellipsis if desired
     return $addEllipsis ? $truncated . '(' . html_entity_decode('&hellip;', ENT_QUOTES, $encoding) . ')' : $truncated;
+}
+
+/**
+ * Convert newlines to <br> tags for HTML display
+ *  
+ * @param string $str The input string.
+ * @return string The string with newlines converted to <br> tags.
+ */
+function newLinesToBreakLines(string $str): string {
+	return nl2br($str, false);
 }

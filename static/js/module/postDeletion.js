@@ -33,7 +33,7 @@
 	// Set up UI changes for post deletion and provide revert function
 	function createDeletionUIState(postEl, source) {
 		const addedClasses = [];
-		const appendedNodes = [];
+		const shownIndicators = [];
 		const hiddenControls = [];
 
 		function addClassAndTrack(el, cls) {
@@ -49,17 +49,14 @@
 
 				const postsInThread = thread.querySelectorAll('.post');
 				for (let i = 0; i < postsInThread.length; i++) {
-					const p = postsInThread[i];
-					const res = appendWarning(p, 'post');
-					if (res && res.spacer1) appendedNodes.push(res.spacer1);
-					if (res && res.warn) appendedNodes.push(res.warn);
+					const res = showDeletionIndicator(postsInThread[i], 'post');
+					if (res && res.indicator) shownIndicators.push(res.indicator);
 				}
 			}
 		} else {
 			addClassAndTrack(postEl, 'deletedPost');
-			const res = appendWarning(postEl, 'post');
-			if (res && res.spacer1) appendedNodes.push(res.spacer1);
-			if (res && res.warn) appendedNodes.push(res.warn);
+			const res = showDeletionIndicator(postEl, 'post');
+			if (res && res.indicator) shownIndicators.push(res.indicator);
 		}
 
 		const hidden = hideDeleteControls(postEl, 'post');
@@ -70,9 +67,8 @@
 				const entry = addedClasses[i];
 				if (entry && entry.el) entry.el.classList.remove(entry.cls);
 			}
-			for (let i = appendedNodes.length - 1; i >= 0; i--) {
-				const node = appendedNodes[i];
-				if (node && node.parentNode) node.parentNode.removeChild(node);
+			for (let i = shownIndicators.length - 1; i >= 0; i--) {
+				shownIndicators[i].classList.add('indicatorHidden');
 			}
 			for (let i = hiddenControls.length - 1; i >= 0; i--) {
 				const el = hiddenControls[i];
@@ -84,7 +80,7 @@
 	}
 
 	// Shared: fetch + widget removal + messages
-	function performPostDeletionRequest(url, postEl, revertUI, successMessage) {
+	function performPostDeletionRequest(url, postEl, revertUI, successMessage, extraParams) {
 		sendModuleAction(url, {
 			revertUI: revertUI,
 			successMessage: successMessage,
@@ -95,7 +91,7 @@
 				}
 				removeWidgetActions(postEl, ['delete', 'mute']);
 			}
-		});
+		}, extraParams);
 	}
 
 	// Main delegated click handler (legacy admin controls)
@@ -112,12 +108,16 @@
 
 		const isFileControl = control.matches('.adminDeleteFileFunction, #adminDeleteFileFunction');
 
-		const href = (control.tagName === 'A' && control.href) ? control.href :
-			(control.getAttribute && control.getAttribute('href')) ||
-			(function () {
-				const a = control.querySelector && control.querySelector('a[href]');
-				return a ? a.href : null;
-			})();
+		const href = (function () {
+			// Try form action first (POST forms)
+			const form = control.querySelector && control.querySelector('form[action]');
+			if (form) return form.action;
+			// Fall back to anchor href
+			if (control.tagName === 'A' && control.href) return control.href;
+			if (control.getAttribute && control.getAttribute('href')) return control.getAttribute('href');
+			const a = control.querySelector && control.querySelector('a[href]');
+			return a ? a.href : null;
+		})();
 
 		if (!href) return;
 		e.preventDefault();
@@ -127,8 +127,8 @@
 			if (!attachmentEl) return;
 
 			const state = prepareAttachmentDeletion(attachmentEl, postEl, [
-				'.adminDeleteFileFunction, #adminDeleteFileFunction',
-				'.imgopsLink'
+				'.indicator-deleteFile',
+				'.indicator-imgops'
 			]);
 
 			sendModuleAction(href, {
@@ -166,7 +166,8 @@
 
 		const uiState = createDeletionUIState(postEl, { arrow: ctx.arrow });
 
-		performPostDeletionRequest(ctx.url, postEl, uiState.revertUI, successMessage);
+		// Forward params from widget data attributes
+		performPostDeletionRequest(ctx.url, postEl, uiState.revertUI, successMessage, ctx.params || {});
 	}
 
 	// Register widget handlers + optional augmenter (unchanged for post deletion)
@@ -205,5 +206,33 @@
 				}];
 			});
 		}
+	}
+
+	// Register attachment widget handler for file deletion
+	if (window.attachmentWidget) {
+		window.attachmentWidget.registerActionHandler('deleteFile', function (ctx) {
+			var menuItem = ctx && ctx.menuItem;
+			if (!menuItem || !menuItem.href) return;
+
+			var postEl = ctx.post;
+			var attachmentEl = ctx.container || (ctx.bar && ctx.bar.closest('.attachmentContainer'));
+			if (!attachmentEl || !postEl) return;
+
+			var state = prepareAttachmentDeletion(attachmentEl, postEl, [
+				'.indicator-deleteFile',
+				'.indicator-imgops'
+			]);
+
+			sendModuleAction(menuItem.href, {
+				revertUI: state.revertUI,
+				successMessage: 'Attachment deleted!',
+				errorMessage: 'Failed to delete the attachment.',
+				onSuccess: function (data) {
+					if (data && data.deleted_link) {
+						state.addViewFileButton(data.deleted_link);
+					}
+				}
+			});
+		});
 	}
 })();

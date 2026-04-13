@@ -1,0 +1,1 @@
+<details id="{$CONTAINER_ID}" class="formattingDetails js-only"><summary>{$CONTAINER_LABEL}</summary>{$CONTAINER_CONTENT}</details>

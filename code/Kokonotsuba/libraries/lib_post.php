@@ -10,7 +10,9 @@ use Kokonotsuba\file\file;
 use Kokonotsuba\file\fileFromUpload;
 use Kokonotsuba\file\thumbnail;
 use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\post\postRepository;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
 use function Puchiko\getVideoDimensions;
@@ -19,7 +21,7 @@ use function Puchiko\strings\getswfsize;
 
 /* Catch impersonators and modify name to display such */
 function catchFraudsters(&$name) {
-	if (preg_match('/[◆◇♢♦⟡★]/u', $name)) $name .= " (fraudster)";
+	if (preg_match('/[◆♦★]/u', $name)) $name .= " (fraudster)";
 }
 
 function searchBoardArrayForBoard(int $targetBoardUID): ?board {
@@ -33,6 +35,18 @@ function searchBoardArrayForBoard(int $targetBoardUID): ?board {
 	}
 
 	// not found
+	return null;
+}
+
+function searchBoardArrayForBoardByIdentifier(string $identifier): ?board {
+	$boards = GLOBAL_BOARD_ARRAY;
+
+	foreach ($boards as $board) {
+		if ($board->getBoardIdentifier() === $identifier) {
+			return $board;
+		}
+	}
+
 	return null;
 }
 
@@ -80,7 +94,7 @@ function getBoardsByUIDs(array $targetBoardUIDs): array {
  *
  * @return fileFromUpload
  */
-function getUserFileFromRequest(string $tempFilename, string $fileName, int $fileStatus, int $index): fileFromUpload {
+function getUserFileFromRequest(string $tempFilename, string $fileName, int $fileStatus, int $index, request $request): fileFromUpload {
 	// generate md5 hash of uploaded file
 	$md5chksum = md5_file($tempFilename);
 
@@ -88,7 +102,7 @@ function getUserFileFromRequest(string $tempFilename, string $fileName, int $fil
 	$extension = normalizeExtension($fileName);
 
 	// get timestamp in ms
-	$timeInMillisecond = (int) ($_SERVER['REQUEST_TIME_FLOAT'] * 1000);
+	$timeInMillisecond = (int) ($request->getRequestTimeFloat() * 1000);
 
 	// remove EXIF if jpeg AND exiftool available
 	if (isJpegExtension($extension) && isExiftoolAvailable()) {
@@ -267,8 +281,9 @@ function getPageOfThread(string $thread_uid, array $threads, int $threadsPerPage
 
 function getPostUidsFromThreadArrays(array $threads): array {
 	$postUids = array_unique(array_reduce($threads, function($carry, $thread) {
-		if (isset($thread['posts']) && is_array($thread['posts'])) {
-			return array_merge($carry, array_column($thread['posts'], 'post_uid'));
+		$posts = $thread->getPosts();
+		if (is_array($posts)) {
+			return array_merge($carry, array_map(fn($p) => $p->getUid(), $posts));
 		}
 		return $carry;
 	}, []));
@@ -300,14 +315,18 @@ function generatePostHash(
  * Validates post input for existence and correct format.
  * Throws BoardException if validation fails.
  * 
- * @param null|false|int|array $postInput The input to validate (e.g., post UID).
+ * @param null|false|int|Post $postInput The input to validate (e.g., post UID).
  * @param bool $isUid Indicates if the input is expected to be a UID (numeric).
  *
  * @return void
  */
-function validatePostInput(null|false|int|array $postInput, bool $isUid = true, int $statusCode = 400): void {
+function validatePostInput(null|false|int|Post $postInput, bool $isUid = true, int $statusCode = 400): void {
 	// Validate post input
-	if (empty($postInput)) {
+	if (
+		$postInput === null 
+		|| ($postInput instanceof Post === false && $isUid === false) 
+		|| $postInput === false
+	) {
 		throw new BoardException(_T('post_not_found'), $statusCode);
 	}
 
@@ -334,16 +353,16 @@ function generatePostUrl(int $postUid, postRepository $postRepository, bool $vie
 	}
 
 	// fetch the board
-	$board = searchBoardArrayForBoard($post['boardUID']);
+	$board = searchBoardArrayForBoard($post->getBoardUID());
 
 	// also return early if the post number isn't valid
-	if(!isset($post['no'])) {
+	if(!$board || !$post->getNumber()) {
 		return '';
 	}
 
 	// now generate the URL.
 	// Theres no need to include the thread number since it'll redirect on its own
-	$postUrl = $board->getBoardThreadURL($post['no']);
+	$postUrl = $board->getBoardThreadURL($post->getNumber());
 
 	// now return the url
 	return $postUrl;

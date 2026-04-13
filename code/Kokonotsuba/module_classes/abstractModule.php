@@ -17,8 +17,6 @@ namespace Kokonotsuba\module_classes;
 use Kokonotsuba\module_classes\moduleContext;
 use Kokonotsuba\template\templateEngine;
 
-use function Kokonotsuba\libraries\html\getCurrentUrlNoQuery;
-
 abstract class abstractModule {
 	public function __construct(
 		protected readonly moduleContext $moduleContext, 
@@ -45,7 +43,7 @@ abstract class abstractModule {
 		$query = http_build_query($params, '', $separator);
 
 		$boardUrl = $this->moduleContext->board->getBoardURL(true);
-		$requestUri = getCurrentUrlNoQuery(); 
+		$requestUri = $this->moduleContext->request->getCurrentUrlNoQuery();
 
 		$baseUrl = $useRequestUri ? $requestUri : $boardUrl;
 
@@ -127,7 +125,8 @@ abstract class abstractModule {
 		string $url,
 		string $action,
 		string $label,
-		string $subMenu
+		string $subMenu,
+		array $params = []
 	): array {
 		// assemble the widget
 		$widget = [
@@ -141,7 +140,10 @@ abstract class abstractModule {
 			'label' => $label,
 
 			// sub-menu
-			'subMenu' => $subMenu
+			'subMenu' => $subMenu,
+
+			// POST parameters for JS to send
+			'params' => $params
 		];
 
 		// return assembled widget

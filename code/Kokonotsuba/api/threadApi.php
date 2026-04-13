@@ -3,6 +3,8 @@
 namespace Kokonotsuba\api;
 
 use Kokonotsuba\thread\threadService;
+use Kokonotsuba\thread\ThreadData;
+use Kokonotsuba\request\request;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\isActiveStaffSession;
@@ -11,7 +13,8 @@ use function Puchiko\json\renderJsonErrorPage;
 
 class threadApi {
 	public function __construct(
-		private threadService $threadService
+		private threadService $threadService,
+		private request $request
 	) {}
 
 	public function invoke(string $endpointPage): void {
@@ -32,7 +35,7 @@ class threadApi {
 		// wrap in try-catch
 		try {
 			// id of the requested thread
-			$threadUid = $_GET['thread_uid'] ?? null;
+			$threadUid = $this->request->getParameter('thread_uid', 'GET');
 
 			// if null or empty then output a json error page
 			if(is_null($threadUid) || empty($threadUid)) {
@@ -89,41 +92,41 @@ class threadApi {
 	 * 
 	 * Note: threads can have a lot of replies made to them, which can potientially eat up a lot of memory
 	 * 
-	 * @param array $thread the whole thread data
+	 * @param ThreadData $thread the whole thread data
 	 * @param bool $includeReplies whether to include the thread's replies
 	 * 
 	 * @return array to be json encoded
 	*/
-	private function buildThreadArray(array $thread, bool $includePosts = false): array {
+	private function buildThreadArray(ThreadData $thread, bool $includePosts = false): array {
 		// thread meta data
 		// contains thread_uid, board uid, post op number, etc.
-		$threadMetaData = $thread['thread'];
+		$threadMetaData = $thread->getThread();
 
 		// manually specify keys and values to avoid potentially sensitive values from being included
 		$threadData = [
 			// ID of the thread
-			'thread_uid' => $threadMetaData['thread_uid'],
+			'thread_uid' => $threadMetaData->getUid(),
 
 			// board id that the thread is currently in
-			'board_uid' => $threadMetaData['boardUID'],
+			'board_uid' => $threadMetaData->getBoardUID(),
 			
 			// flag for if the thread is stickied
-			'is_sticky' => $threadMetaData['is_sticky'],
+			'is_sticky' => $threadMetaData->isSticky(),
 
 			// post number of the OP post
-			'post_op_number' => $threadMetaData['post_op_number'],
+			'post_op_number' => $threadMetaData->getOpNumber(),
 
 			// post uid of the OP post
-			'post_op_post_uid' => $threadMetaData['post_op_post_uid'],
+			'post_op_post_uid' => $threadMetaData->getOpPostUid(),
 
 			// amount of replies in the thread (not counting OP)
 			// subtract count by 1 to exclude OP from count
-			'amount_of_replies' => $threadMetaData['number_of_posts'] - 1
+			'amount_of_replies' => $thread->getNumberOfPosts() - 1
 		];
 
 		// append to array posts (includes OP) if specified
 		if($includePosts) {
-			$threadData['posts'] = $this->buildPostsArray($thread['posts']);
+			$threadData['posts'] = $this->buildPostsArray($thread->getPosts());
 		}
 
 		// return constructed thread data
@@ -143,15 +146,20 @@ class threadApi {
 	*/
 	private function buildPostsArray(array $posts): array {
 		// loop through posts and remove 'host', which contains the IP address. as well as 'pwd', which contains the post password hash
-		foreach($posts as &$p) {
+		$result = [];
+		foreach($posts as $p) {
+			$arr = $p->toArray();
+
 			// remove host
-			unset($p['host']);
+			unset($arr['host']);
 
 			// remove pwd
-			unset($p['pwd']);
+			unset($arr['pwd']);
+
+			$result[] = $arr;
 		}
 
 		// then return posts
-		return $posts;
+		return $result;
 	}
 }

@@ -5,17 +5,20 @@ namespace Kokonotsuba\Modules\lockThread;
 require_once __DIR__ . '/lockThreadLibrary.php';
 
 use Kokonotsuba\error\BoardException;
-use Kokonotsuba\post\FlagHelper;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\AuditableTrait;
+use Kokonotsuba\module_classes\traits\ToggleActionTrait;
 use Kokonotsuba\userRole;
 
-use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use ToggleActionTrait;
+	use AuditableTrait;
+
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('AuthLevels.CAN_LOCK');
 	}
@@ -28,132 +31,29 @@ class moduleAdmin extends abstractModuleAdmin {
 		return 'Koko 2025';
 	}
 
+	protected function getToggleFlagKey(): string { return 'stop'; }
+	protected function getToggleActiveLabel(): string { return 'l'; }
+	protected function getToggleInactiveLabel(): string { return 'L'; }
+	protected function getToggleActiveTitle(): string { return 'Unlock thread'; }
+	protected function getToggleInactiveTitle(): string { return 'Lock thread'; }
+	protected function getToggleCssClass(): string { return 'adminLockFunction'; }
+	protected function getToggleActionName(): string { return 'lock'; }
+	protected function getToggleJsFile(): string { return 'lock.js'; }
+
+	protected function getToggleUrlParams(Post $post): array {
+		return ['post_uid' => $post->getUid()];
+	}
+
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsThreadControls',
-			function(string &$modControlSection, array &$post) {
-				$this->addLockButtonToAdminControls($modControlSection, $post, false);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ThreadAdminControls',
-			function(string &$modControlSection, array &$post) {
-				$this->addLockButtonToAdminControls($modControlSection, $post, true);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModerateThreadWidget',
-			function(array &$widgetArray, array &$post) {
-				$this->onRenderThreadWidget($widgetArray, $post);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
+		$this->registerToggleHooks();
 	}
 
-	private function addLockButtonToAdminControls(string &$modfunc, array $post, bool $noScript) {
-		$status = new FlagHelper($post['status']);
+	protected function handleModuleRequest(): void {		
+		$post = $this->moduleContext->postRepository->getPostByUid($this->moduleContext->request->getParameter('post_uid'), true);
 
-		$lockThreadLink = $this->generateLockUrl($post['post_uid']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 
-		$modfunc .= generateModerateButton(
-			$lockThreadLink,
-			$status->value('stop') ? 'l' : 'L',
-			$status->value('stop') ? 'Unlock thread' : 'Lock thread',
-			'adminLockFunction',
-			$noScript
-		);
-	}
-
-	private function onRenderThreadWidget(array &$widgetArray, array &$post): void {
-		// generate lock url
-		$lockUrl = $this->generateLockUrl($post['post_uid']);
-
-		// get the post status
-		$postStatus = new FlagHelper($post['status']);
-
-		// get the lock label
-		$lockLabel = $this->generateLockLabel($postStatus);
-
-		// build the widget entry
-		$lockWidget = $this->buildWidgetEntry(
-			$lockUrl, 
-			'lock', 
-			$lockLabel, 
-			''
-		);
-
-		// add the widget to the array
-		$widgetArray[] = $lockWidget;
-	}
-
-	private function generateLockLabel(FlagHelper $postStatus): string {
-		// if the locked or not
-		$isLocked = $postStatus->value('stop');
-
-		// if the thread is already locked then the action is to unlock it
-		if($isLocked) {
-			return 'Unlock thread';
-		}
-		// if the thread isn't locked then the action is to lock it
-		else {
-			return 'Lock thread';
-		}
-	}
-
-	private function generateLockUrl(int $postUid): string {
-		// generate lock thread url
-		$lockThreadLink = $this->getModulePageURL(
-			[
-				'post_uid' => $postUid
-			],
-			false,
-			true
-		);
-
-		// return url
-		return $lockThreadLink;
-	}
-	
-	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// generate the lock img <template> html
-		$templateHtml = $this->generateLockTemplate();
-
-		// generate toggle widget + js
-		$this->generateToggleWidget($moduleHeader, 'lock.js', $templateHtml);
-	}
-	
-	private function generateLockTemplate(): string {
-		// get static url
-		$staticUrl = $this->getConfig('STATIC_URL');
-
-		// get the locked indicator tag
-		$lockIndicator = getLockIndicator($staticUrl);
-		
-		// get lock icon template
-		$lockIconTemplate = $this->generateTemplate('lockIconTemplate', $lockIndicator);
-
-		// return template
-		return $lockIconTemplate;
-	}
-
-	public function ModulePage() {		
-		$post = $this->moduleContext->postRepository->getPostByUid($_GET['post_uid'], true);
-
-		$board = searchBoardArrayForBoard($post['boardUID']);
-
-		if(!$post['is_op']) {
+		if(!$post->isOp()) {
 			throw new BoardException('ERROR: Cannot lock reply.');
 		}
 
@@ -161,18 +61,18 @@ class moduleAdmin extends abstractModuleAdmin {
 			throw new BoardException('ERROR: Post does not exist.');
 		}
 
-		$status = new FlagHelper($post['status']);
+		$status = $post->getFlags();
 		
 		$status->toggle('stop');
 
-		$this->moduleContext->postRepository->setPostStatus($post['post_uid'], $status->toString());
+		$this->moduleContext->postRepository->setPostStatus($post->getUid(), $status->toString());
 		
-		$logMessage = $status->value('stop') ? "Locked thread No. {$post['no']}" : "Unlock thread No. {$post['no']}";
+		$logMessage = $status->value('stop') ? "Locked thread No. {$post->getNumber()}" : "Unlock thread No. {$post->getNumber()}";
 		
-		$this->moduleContext->actionLoggerService->logAction($logMessage, $board->getBoardUID());
+		$this->logAction($logMessage, $board->getBoardUID());
 		
 		// ===== AJAX handling updated to use helper =====
-		if(isJavascriptRequest()) {
+		if($this->moduleContext->request->isAjax()) {
 			// whether the post-action thread is locked or not
 			$isLocked = $status->value('stop');
 
@@ -189,6 +89,6 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$board->rebuildBoard();
 
-		redirect('back');
+		redirect($this->moduleContext->request->getReferer());
 	}
 }

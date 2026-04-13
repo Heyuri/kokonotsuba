@@ -3,31 +3,34 @@
 namespace Puchiko\request;
 
 /**
- * Check whether the current HTTP request is a POST request.
- *
- * @return bool True if the request method is POST, false otherwise
+ * Sanitize a URL by stripping CR, LF, and null bytes to prevent header injection.
+ * 
+ * @param string $url The URL to sanitize
+ * @return string The sanitized URL
  */
-function isPostRequest(): bool {
-	// REQUEST_METHOD is set by the web server (e.g. GET, POST, PUT)
-	return ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
+function sanitizeHeaderInjection(string $url): string {
+	return str_replace(["\r", "\n", "\0"], '', $url);
 }
 
 /**
- * Check whether the current HTTP request is a GET request.
+ * Redirect the client to the given URL or back to the referring page.
  *
- * @return bool True if the request method is GET, false otherwise
+ * @param string $to Target URL, or 'back' to return to the HTTP referer.
  */
-function isGetRequest(): bool {
-	// Use null coalescing to avoid notices in non-HTTP contexts (CLI, tests)
-	return ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET';
-}
-
-/* redirect */
 function redirect(string $to) {
-	if($to=='back') {
-		$to = $_SERVER['HTTP_REFERER']??'';
+	if ($to === 'back') {
+		$referer = $_SERVER['HTTP_REFERER'] ?? '';
+
+		if ($referer !== '') {
+			header("Location: " . sanitizeHeaderInjection($referer));
+			exit;
+		}
+
+		// No referer — fall back to JS history.back()
+		echo '<!DOCTYPE html><html><head><script>history.back()</script></head><body></body></html>';
+		exit;
 	}
-	
-	header("Location: " . $to);
+
+	header("Location: " . sanitizeHeaderInjection($to));
 	exit;
 }

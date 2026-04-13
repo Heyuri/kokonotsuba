@@ -3,16 +3,17 @@
 namespace Kokonotsuba\libraries\html;
 
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Puchiko\strings\sanitizeStr;
 
-function generateAdminLinkButtons(string $liveIndexFile, string $staticIndexFile, moduleEngine $moduleEngine, string $adminLinkHtml): string {
+function generateAdminLinkButtons(string $liveIndexFile, string $staticIndexFile, moduleEngine $moduleEngine, string $adminLinkHtml, request $request): string {
 	$linksAboveBar =  '
 		<ul id="adminNavBar">
-			<li class="adminNavLink"><a href="'.$staticIndexFile.'?'.$_SERVER['REQUEST_TIME'].'">' . _T('admin_nav_return') . '</a></li>
+			<li class="adminNavLink"><a href="'.$staticIndexFile.'?'.$request->getRequestTime().'">' . _T('admin_nav_return') . '</a></li>
 			<li class="adminNavLink"><a href="'.$liveIndexFile.'?page=0">' . _T('admin_nav_live_frontend') . '</a></li>
 			' . $adminLinkHtml;
 
@@ -136,42 +137,25 @@ function drawBoardTable(string $liveIndexFile, array $boards): string {
 }
 
 function buildThreadNavButtons(array $threadList, int $threadInnerIterator): string {
-	if (!$threadList || !isset($threadList[$threadInnerIterator]['thread'])) return '';
+	if (!$threadList || !isset($threadList[$threadInnerIterator])) return '';
 	
 	$upArrow = '';
 	$downArrow = '';
 	$postFormButton = '<a title="Go to post form" href="#postform">&#9632;</a>';
 	
 	// Up arrow (previous thread on this page)
-	if ($threadInnerIterator > 0 && isset($threadList[$threadInnerIterator - 1]['thread'])) {
-		$aboveThread = $threadList[$threadInnerIterator - 1]['thread'];
-		$upArrow = '<a title="Go to above thread" href="#t' . htmlspecialchars($aboveThread['boardUID']) . '_' . htmlspecialchars($aboveThread['post_op_number']) . '">&#9650;</a>';
+	if ($threadInnerIterator > 0 && isset($threadList[$threadInnerIterator - 1])) {
+		$aboveThread = $threadList[$threadInnerIterator - 1]->getThread();
+		$upArrow = '<a title="Go to above thread" href="#t' . htmlspecialchars($aboveThread->getBoardUID()) . '_' . htmlspecialchars($aboveThread->getOpNumber()) . '">&#9650;</a>';
 	}
 	
 	// Down arrow (next thread on this page)
-	if ($threadInnerIterator < count($threadList) - 1 && isset($threadList[$threadInnerIterator + 1]['thread'])) {
-		$belowThread = $threadList[$threadInnerIterator + 1]['thread'];
-		$downArrow = '<a title="Go to below thread" href="#t' . htmlspecialchars($belowThread['boardUID']) . '_' . htmlspecialchars($belowThread['post_op_number']) . '">&#9660;</a>';
+	if ($threadInnerIterator < count($threadList) - 1 && isset($threadList[$threadInnerIterator + 1])) {
+		$belowThread = $threadList[$threadInnerIterator + 1]->getThread();
+		$downArrow = '<a title="Go to below thread" href="#t' . htmlspecialchars($belowThread->getBoardUID()) . '_' . htmlspecialchars($belowThread->getOpNumber()) . '">&#9660;</a>';
 	}
 	
 	return $postFormButton . $upArrow . $downArrow;
-}
-
-function fullURL(): string {
-	return '//'.$_SERVER['HTTP_HOST'];
-}
-
-function getCurrentUrlNoQuery(): string {
-	// Scheme
-	$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-	
-	// Host (includes port if non-standard)
-	$host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
-	
-	// Path to the current script
-	$path = $_SERVER['SCRIPT_NAME']; // e.g. /folder/file.php
-	
-	return $scheme . '://' . $host . $path;
 }
 
 

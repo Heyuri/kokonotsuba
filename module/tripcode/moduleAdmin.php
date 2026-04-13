@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\tripcode;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 use Kokonotsuba\account\staffAccountFromSession;
 
@@ -13,6 +14,8 @@ require __DIR__ . '/capcode_src/capcodeModuleRenderer.php';
 require __DIR__ . '/capcode_src/capcodeModuleRequestHandler.php';
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+
 	// the url of the module page
 	private string $modulePageUrl;
 
@@ -41,7 +44,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		// init request handler
 		$this->capcodeModuleRequestHandler = new capcodeModuleRequestHandler(
 			$this->moduleContext->capcodeService,
-			$this->moduleContext->actionLoggerService
+			$this->moduleContext->actionLoggerService,
+			$this->moduleContext->request
 		);
 
 		// init module page renderer
@@ -51,21 +55,12 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->moduleContext->moduleEngine, 
 			$this->moduleContext->capcodeService, 
 			$this->moduleContext->adminPageRenderer,
-			$this->modulePageUrl
+			$this->modulePageUrl,
+			$this->moduleContext->request
 		);
 
 		// add links listener 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'LinksAboveBar',
-			function(string &$linkHtml) {
-				$this->onRenderLinksAboveBar($linkHtml);
-			}
-		);
-	}
-
-	public function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_capcodes_title') . '" href="' . htmlspecialchars($this->modulePageUrl) . '">' . _T('admin_nav_capcodes') . '</a></li>';
+		$this->registerLinksAboveBarHook(_T('admin_nav_capcodes_title'), $this->modulePageUrl, _T('admin_nav_capcodes'));
 	}
 
 	public function ModulePage(): void {
@@ -76,7 +71,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$accountId = $staffAccountFromSession->getUID();
 		
 		// request vs draw
-		if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+		if ($this->moduleContext->request->isPost()) {
 			$this->capcodeModuleRequestHandler->handleModPageRequests($accountId);
 
 			redirect($this->modulePageUrl);

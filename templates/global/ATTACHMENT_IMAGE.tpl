@@ -1,0 +1,1 @@
+<a href="{$IMAGE_URL}" target="_blank" rel="nofollow" class="attachmentAnchor" data-attachment-index="{$ATTACHMENT_INDEX}" data-extension="{$EXTENSION}"><img src="{$THUMB_URL}" class="postimg" alt="{$ALT_TEXT}"<!--&IF($IMG_DIMENSIONS,' {$IMG_DIMENSIONS}','')--> <!--&IF($IMG_TITLE,'title="{$IMG_TITLE}"','')-->></a>

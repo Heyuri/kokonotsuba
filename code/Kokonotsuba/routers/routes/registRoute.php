@@ -7,6 +7,7 @@ namespace Kokonotsuba\routers\routes;
 use Kokonotsuba\board\board;
 use Kokonotsuba\post\postValidator;
 use Kokonotsuba\account\staffAccountFromSession;
+use Kokonotsuba\cookie\cookieService;
 use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\action_log\actionLoggerService;
@@ -24,11 +25,13 @@ use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\helper\agingHandler;
 use Kokonotsuba\post\helper\webhookDispatcher;
 use Kokonotsuba\post\postRegistData;
-use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\renderers\postRenderer;
 use Kokonotsuba\file\postFileUploadController;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 use Kokonotsuba\error\BoardException;
-use function Puchiko\json\isJavascriptRequest;
+use Kokonotsuba\thread\ThreadData;
+
 use function Puchiko\request\redirect;
 use function Kokonotsuba\libraries\loadUploadData;
 use function Kokonotsuba\libraries\getUserFileFromRequest;
@@ -37,6 +40,7 @@ use function Kokonotsuba\libraries\scaleThumbnail;
 use function Puchiko\strings\strlenUnicode;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getPageOfThread;
+use function Kokonotsuba\libraries\searchBoardArrayForBoardByIdentifier;
 use function Puchiko\json\sendAjaxAndDetach;
 
 class registRoute {
@@ -47,12 +51,14 @@ class registRoute {
 		private transactionManager $transactionManager,
         private moduleEngine $moduleEngine,
         private readonly actionLoggerService $actionLoggerService,
+		private readonly cookieService $cookieService,
 		private readonly postRepository $postRepository,
         private readonly postService $postService,
 		private readonly fileService $fileService,
 		private readonly threadRepository $threadRepository,
 		private readonly threadService $threadService,
-		private readonly quoteLinkService $quoteLinkService
+		private readonly quoteLinkService $quoteLinkService,
+		private readonly request $request
 	) {}
 
     /* Write to post table */
@@ -83,6 +89,8 @@ class registRoute {
 		$computedPostInfo = [];
 		$emailForInsertion = '';
 		$redirect = '';
+		$newPostsHtml = [];
+		$thread = false;
 
 		// Begin transaction
 		$this->transactionManager->run(function () use (
@@ -91,6 +99,7 @@ class registRoute {
 			&$computedPostInfo,
 			&$emailForInsertion,
 			&$redirect,
+			&$thread,
 			$imgDir,
 			$thumbnailCreator,
 			$defaultTextFiller,
@@ -111,9 +120,11 @@ class registRoute {
 			// get preview count
 			$previewCount = $this->board->getConfigValue('RE_DEF', 5);
 
-			// Get the thread data (if it exists)
-			$thread = $this->threadService->getThreadAllReplies($postData['thread_uid'], false, $previewCount);
+			// get the amount of recent replies to fetch
+			$amountOfRepliesToRender = $this->board->getConfigValue('LAST_AMOUNT_OF_REPLIES', 50);
 
+			// Get the thread data (if it exists)
+			$thread = $this->threadService->getThreadLastReplies($postData['thread_uid'], false, $previewCount, $amountOfRepliesToRender);
 			// Step 3: Verify that thread exists
 			$this->postValidator->threadSanityCheck($postData['postOpRoot'], $postData['flgh'], $postData['thread_uid'], $postData['resno'], $postData['threadDeleted'], $thread);
 
@@ -188,7 +199,7 @@ class registRoute {
 			$afterInsertPost = $this->postRepository->getPostByUid($nextPostUid);
 			
 			// get post-insert attachments
-			$attachments = $afterInsertPost['attachments'] ?? [];
+			$attachments = $afterInsertPost->getAttachments() ?? [];
 			
 			// run attachments after insert hook point
 			$this->moduleEngine->dispatch('AttachmentsAfterInsert', [&$attachments]);
@@ -204,8 +215,8 @@ class registRoute {
 		});
 
 		// Set cookies for password and email
-		setcookie('pwdc', $postData['pwd'], time()+7*24*3600);
-		setcookie('emailc', htmlspecialchars_decode($postData['email']), time()+7*24*3600);
+		$this->cookieService->set('pwdc', $postData['pwd'], time()+7*24*3600);
+		$this->cookieService->set('emailc', htmlspecialchars_decode($postData['email']), time()+7*24*3600);
 
 		// Save files
 		foreach($fileMeta['files'] as $entry) {
@@ -215,6 +226,19 @@ class registRoute {
 			// save attachment + thumbnail 
 			$this->saveUploadedPostFiles($entry['postFileUploadController'], $file->getExtention());
 		}
+
+		// Render new replies to HTML for instant client-side insertion (noko/dump)
+		// Done after file saving so images/thumbnails exist on disk when HTML is served
+		if ($this->request->isAjax() && $postData['isReply']) {
+			$lastPostNo = intval($this->request->getParameter('lastPostNo', 'POST', 0));
+			$newPostsHtml = $this->renderNewRepliesHtml(
+				$postData['thread_uid'],
+				$postData['resno'],
+				$lastPostNo,
+				$thread
+			);
+		}
+
 		// Dispatch webhook
 		$webhookDispatcher->dispatch($postData['resno'], $computedPostInfo['no']);
 
@@ -226,22 +250,23 @@ class registRoute {
 			$preInsertThreadList,
 			$computedPostInfo['no'],
 			$this->board->getBoardUID(),
-			$redirect, 
+			$redirect,
+			$newPostsHtml,
 		);
 	}
 
 	private function gatherPostInputData(): array {
 		// Extract tripcode from raw name before HTML escaping
-		$rawName = $_POST['name'] ?? '';
-		$email = htmlspecialchars($_POST['email'] ?? '');
-		$sub = htmlspecialchars($_POST['sub'] ?? '');
-		$comment = htmlspecialchars($_POST['com'] ?? '');
-		$pwd = $_POST['pwd'] ?? '';
-		$category = htmlspecialchars($_POST['category'] ?? '');
-		$resno = intval($_POST['resto'] ?? 0);
-		$pwdc = $_COOKIE['pwdc'] ?? '';
+		$rawName = $this->request->getParameter('name', 'POST', '');
+		$email = htmlspecialchars($this->request->getParameter('email', 'POST', ''));
+		$sub = htmlspecialchars($this->request->getParameter('sub', 'POST', ''));
+		$comment = htmlspecialchars($this->request->getParameter('com', 'POST', ''));
+		$pwd = $this->request->getParameter('pwd', 'POST', '');
+		$category = htmlspecialchars($this->request->getParameter('category', 'POST', ''));
+		$resno = intval($this->request->getParameter('resto', 'POST', 0));
+		$pwdc = $this->cookieService->get('pwdc', '');
 	
-		$ip = new IPAddress;
+		$ip = $this->request->userIp();
 		
 		$age = false;
 	
@@ -249,8 +274,8 @@ class registRoute {
 		$isReply = $thread_uid ? true : false;
 	
 		$roleLevel = $this->staffSession->getRoleLevel();
-		$time = $_SERVER['REQUEST_TIME'];
-		$timeInMilliseconds = intval($_SERVER['REQUEST_TIME_FLOAT'] * 1000);
+		$time = $this->request->getRequestTime();
+		$timeInMilliseconds = intval($this->request->getRequestTimeFloat() * 1000);
 	
 		$postOpRoot = 0;
 		$flgh = '';
@@ -261,7 +286,23 @@ class registRoute {
 		// Parse tripcode from raw name before HTML escaping
 		$tripcode = '';
 		$secure_tripcode = '';
+		$staffCapcodeInput = '';
+
+		// Extract staff capcode first ( ## Capcode at the end, with leading space)
+		// This must be done before tripcode parsing so "name#trip ## Mod" works
+		if (preg_match('/\s##\s+(.+)$/', $rawName, $capcodeMatch)) {
+			$staffCapcodeInput = trim($capcodeMatch[1]);
+			$rawName = substr($rawName, 0, -strlen($capcodeMatch[0]));
+		}
+
+		// Parse tripcode from remaining name
 		[$nameOnly, $tripcode, $secure_tripcode] = array_map('trim', explode('#', $rawName . '##'));
+
+		// If a staff capcode was extracted, pass it via secure_tripcode_input
+		// (only when secure_tripcode isn't already set from a ##securetrip)
+		if ($staffCapcodeInput !== '' && $secure_tripcode === '') {
+			$secure_tripcode = $staffCapcodeInput;
+		}
 		
 		// Now apply HTML escaping to the name portion and store full name for cookie
 		$name = htmlspecialchars($nameOnly);
@@ -269,7 +310,7 @@ class registRoute {
 		// Store the raw name (with tripcode) in a separate variable for cookie storage
 		$nameCookie = $rawName;
 
-		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode_input' => htmlspecialchars($tripcode), 'secure_tripcode_input' => htmlspecialchars($secure_tripcode),
+		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode_input' => $tripcode, 'secure_tripcode_input' => $secure_tripcode,
 			 'tripcode' => '', 'secure_tripcode' => '', 'capcode' => '', 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
 			 'category' => $category, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip,
 			 'thread_uid' => $thread_uid, 'isReply' => $isReply, 'roleLevel' => $roleLevel, 'time' => $time,
@@ -284,16 +325,18 @@ class registRoute {
 		$postFileUploadControllerList = [];
 
 		// determine if multiple files are uploaded on the main input
+		$upfileData = $this->request->getFile('upfile');
 		$hasMultiUpfile =
-			isset($_FILES['upfile']['tmp_name']) &&
-			is_array($_FILES['upfile']['tmp_name']) &&
-			count(array_filter($_FILES['upfile']['tmp_name'])) > 0;
+			isset($upfileData['tmp_name']) &&
+			is_array($upfileData['tmp_name']) &&
+			count(array_filter($upfileData['tmp_name'])) > 0;
 
 		// determine if multiple files are uploaded on quick reply
+		$quickReplyData = $this->request->getFile('quickReplyUpFile');
 		$hasMultiQuickReply =
-			isset($_FILES['quickReplyUpFile']['tmp_name']) &&
-			is_array($_FILES['quickReplyUpFile']['tmp_name']) &&
-			count(array_filter($_FILES['quickReplyUpFile']['tmp_name'])) > 0;
+			isset($quickReplyData['tmp_name']) &&
+			is_array($quickReplyData['tmp_name']) &&
+			count(array_filter($quickReplyData['tmp_name'])) > 0;
 
 		// pick which input to use
 		$inputName = $hasMultiUpfile ? 'upfile' : ($hasMultiQuickReply ? 'quickReplyUpFile' : null);
@@ -321,7 +364,7 @@ class registRoute {
 		// ----------------------------------------
 		// LOOP THROUGH ALL FILES IN THE INPUT
 		// ----------------------------------------
-		$fileCount = count($_FILES[$inputName]['tmp_name']);
+		$fileCount = count($this->request->getFile($inputName)['tmp_name']);
 
 		// if the file count is above the limit, we will only process up to the limit to prevent errors
 		if ($fileCount > $attachmentUploadLimit) {
@@ -335,7 +378,7 @@ class registRoute {
 			}
 
 			// load indexed upload data
-			[$tmp, $name, $status] = loadUploadData($inputName, $i);
+			[$tmp, $name, $status] = loadUploadData($inputName, $i, $this->request);
 
 			// skip empty slots
 			if ($status === UPLOAD_ERR_NO_FILE || !$tmp) {
@@ -343,7 +386,7 @@ class registRoute {
 			}
 
 			// convert raw PHP file into fileFromUpload object
-			$fileFromUpload = getUserFileFromRequest($tmp, $name, $status, $i);
+			$fileFromUpload = getUserFileFromRequest($tmp, $name, $status, $i, $this->request);
 
 			// extract file object
 			$file = $fileFromUpload->getFile();
@@ -408,7 +451,7 @@ class registRoute {
 		return ['files' => $fileMetaList];
 	}
 
-	private function validateAndCleanPostContent(array &$postData, array $files, bool $isAdmin, bool|array $thread): void {
+	private function validateAndCleanPostContent(array &$postData, array $files, bool $isAdmin, bool|ThreadData $thread): void {
 		$this->postValidator->spamValidate($postData['name'], $postData['email'], $postData['sub'], $postData['comment']);
 	
 		$registInfo = [
@@ -420,8 +463,6 @@ class registRoute {
 			'secure_tripcode' => &$postData['secure_tripcode'],
 			'tripcode_input' => &$postData['tripcode_input'],
 			'secure_tripcode_input' => &$postData['secure_tripcode_input'],
-			'tripcode' => &$postData['tripcode'],
-			'secure_tripcode' => &$postData['secure_tripcode'],
 			'capcode' => &$postData['capcode'],
 			'age' => &$postData['age'],
 			'files' => $files,
@@ -438,7 +479,7 @@ class registRoute {
 		if (strlenUnicode($postData['sub']) > $this->config['INPUT_MAX']) throw new BoardException(_T('regist_topictoolong'));
 		if (strlenUnicode($postData['pwd']) > $this->config['INPUT_MAX']) throw new BoardException(_T('regist_passtoolong'));
 
-		setrawcookie('namec', rawurlencode(htmlspecialchars_decode($postData['nameCookie'])), time() + 7 * 24 * 3600);
+		$this->cookieService->setRaw('namec', rawurlencode(htmlspecialchars_decode($postData['nameCookie'])), time() + 7 * 24 * 3600);
 	
 		$postData['email'] = str_replace("\r\n", '', $postData['email']);
 		$postData['sub'] = str_replace("\r\n", '', $postData['sub']);
@@ -592,16 +633,13 @@ class registRoute {
 		return $passwordHash;
 	}
 
-	// Processes quote links (e.g., >>123 or >>No.123) in a post's comment
+	// Processes quote links (e.g., >>123 or >>No.123 or >>>/board/123) in a post's comment
 	private function handlePostQuoteLink(int $postNumber, string $postComment) {
-		// Match all quote patterns like ">>123" or ">>No.123" in the comment
+		$allQuoteLinkedPostUids = [];
+
+		// Match same-board quote patterns like ">>123" or ">>No.123"
 		if(preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $postComment, $matches, PREG_SET_ORDER)) {
-			// Resolve the UID of the current post from its number
-			$postUid = $this->postRepository->resolvePostUidFromPostNumber($this->board, $postNumber);
-	
 			$uniqueMatches = [];
-	
-			// Filter out duplicate matches
 			foreach ($matches as $match) {
 				if (!in_array($match, $uniqueMatches)) {
 					$uniqueMatches[] = $match;
@@ -609,17 +647,37 @@ class registRoute {
 			}
 	
 			$quoteLinkedPostNumbers = [];
-	
-			// Extract just the numeric post number from each quote match
 			foreach ($uniqueMatches as $match) {
-				$quoteLinkedPostNumbers[] = $match[2]; // This is the quoted post number
+				$quoteLinkedPostNumbers[] = $match[2];
 			}
 	
-			// Resolve the UIDs of all quoted post numbers
 			$quoteLinkedPostUids = $this->postRepository->resolvePostUidsFromArray($this->board, $quoteLinkedPostNumbers);
-	
-			// Store quote link relationships in the database
-			$this->quoteLinkService->createQuoteLinksFromArray($this->board->getBoardUID(), $postUid, $quoteLinkedPostUids);
+			$allQuoteLinkedPostUids = array_merge($allQuoteLinkedPostUids, array_values($quoteLinkedPostUids));
+		}
+
+		// Match cross-board quote patterns like ">>>/c/123"
+		if(preg_match_all('/((?:&gt;|＞){3})\/([a-zA-Z0-9]+)\/(\d+)/i', $postComment, $crossMatches, PREG_SET_ORDER)) {
+			$crossBoardPosts = [];
+			foreach ($crossMatches as $match) {
+				$boardIdentifier = $match[2];
+				$postNo = $match[3];
+				$crossBoardPosts[$boardIdentifier][] = $postNo;
+			}
+
+			foreach ($crossBoardPosts as $identifier => $postNumbers) {
+				$targetBoard = searchBoardArrayForBoardByIdentifier($identifier);
+				if (!$targetBoard) continue;
+
+				$postNumbers = array_unique($postNumbers);
+				$resolvedUids = $this->postRepository->resolvePostUidsFromArray($targetBoard, $postNumbers);
+				$allQuoteLinkedPostUids = array_merge($allQuoteLinkedPostUids, array_values($resolvedUids));
+			}
+		}
+
+		if (!empty($allQuoteLinkedPostUids)) {
+			$postUid = $this->postRepository->resolvePostUidFromPostNumber($this->board, $postNumber);
+			$allQuoteLinkedPostUids = array_unique($allQuoteLinkedPostUids);
+			$this->quoteLinkService->createQuoteLinksFromArray($this->board->getBoardUID(), $postUid, $allQuoteLinkedPostUids);
 		}
 	}
 
@@ -666,15 +724,21 @@ class registRoute {
 		array $preInsertThreadList,
 		int $postNumber, 
 		int $boardUid, 
-		string $redirectUrl
+		string $redirectUrl,
+		array $newPostsHtml = []
 	): void {
 		// If it's a JavaScript request, return JSON response with post ID and redirect URL
-		if(isJavascriptRequest()) {
+		if($this->request->isAjax()) {
 			// Construct the JSON response data
 			$registJsonData = [
 				'postId' => "p{$boardUid}_{$postNumber}",
 				'redirectUrl' => $redirectUrl,
 			];
+
+			// Include rendered new reply HTML for instant client-side insertion
+			if (!empty($newPostsHtml)) {
+				$registJsonData['newPostsHtml'] = $newPostsHtml;
+			}
 
 			// handle detach logic
 			$this->handleJsonDetach(
@@ -724,6 +788,53 @@ class registRoute {
 			$postFileUploadController->savePostThumbnailToBoard();
 			$postFileUploadController->savePostFileToBoard();
 		}
+	}
+
+	// Render all new replies in a thread after a given post number
+	private function renderNewRepliesHtml(string $threadUid, int $threadResno, int $lastPostNo, ThreadData|false $thread): array {
+		// Fetch all replies after the client's last known post
+		$newPosts = $this->threadRepository->getRepliesAfterPostNumber($threadUid, $lastPostNo);
+
+		if (!$newPosts) {
+			return [];
+		}
+
+		$templateEngine = $this->board->getBoardTemplateEngine();
+
+		$newPostUids = array_map(fn($p) => $p->getUid(), $newPosts);
+		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByPostUids($newPostUids);
+
+		$renderer = new postRenderer(
+			$this->board,
+			$this->config,
+			$this->moduleEngine,
+			$templateEngine,
+			$quoteLinksFromBoard,
+			$this->request
+		);
+
+		$threadPosts = $thread ? $thread->getPosts() : $newPosts;
+		$replyCount = $thread ? $thread->getThread()->getPostCount() - 1 : 0;
+
+		$htmlArray = [];
+		foreach ($newPosts as $post) {
+			$templateValues = [];
+			$htmlArray[] = $renderer->render(
+				$post,
+				$templateValues,
+				$threadResno,
+				false,
+				$threadPosts,
+				false,
+				'',
+				'',
+				$replyCount,
+				true,
+				''
+			);
+		}
+
+		return $htmlArray;
 	}
 
 }

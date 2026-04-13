@@ -3,25 +3,31 @@
 namespace Kokonotsuba\Modules\adminDel;
 
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\AuditableTrait;
+use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\post\deletion\DeletedPost;
 use Kokonotsuba\userRole;
 
-use function Kokonotsuba\libraries\html\getCurrentUrlNoQuery;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\attachmentFileExists;
-use function Kokonotsuba\libraries\generateModerateButton;
+use function Kokonotsuba\libraries\generateModerateForm;
+use function Kokonotsuba\libraries\getCsrfMetaTag;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
-use function Kokonotsuba\libraries\getPageOfThread;
 use function Kokonotsuba\libraries\validatePostInput;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\request\redirect;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+	use AuditableTrait;
+	use BanFileOperationsTrait;
+
 	private readonly int $JANIMUTE_LENGTH;
 	private readonly string $JANIMUTE_REASON;
-	private readonly string $GLOBAL_BANS;
 
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('AuthLevels.CAN_DELETE', userRole::LEV_JANITOR);
@@ -38,66 +44,25 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function initialize(): void {
 		$this->JANIMUTE_LENGTH = $this->getConfig('ModuleSettings.JANIMUTE_LENGTH');
 		$this->JANIMUTE_REASON = $this->getConfig('ModuleSettings.JANIMUTE_REASON');
-		$this->GLOBAL_BANS = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsControls',
-			function(string &$modControlSection, array &$post) {
-				$this->onRenderPostAdminControls($modControlSection, $post, false);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'PostAdminControls',
-			function(string &$modControlSection, array &$post) {
-				$this->onRenderPostAdminControls($modControlSection, $post, true);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, array &$post) {
-				$this->onRenderPostWidget($widgetArray, $post);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModerateAttachment',
-			function(
-				string &$attachmentProperties, 
-				string &$attachmentImage, 
-				string &$attachmentUrl, 
-				array &$attachment
-			) {
-				$this->onRenderAttachment($attachmentProperties, $attachment);
-			}
-		);
+		$this->registerPostControlPair('onRenderPostAdminControls');
+		$this->registerPostWidgetHook('onRenderPostWidget');
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
+		$this->registerAttachmentHook('onRenderAttachment');
 	}
 
-	private function onRenderPostAdminControls(string &$modFunc, array &$post, bool $noScript): void {
+	private function onRenderPostAdminControls(string &$modFunc, Post &$post, bool $noScript): void {
 		// whether to render the admin controls or not
 		if(!$this->canRenderButton($post)) {
 			return;
 		}
 		
-		$postUid = $post['post_uid'];
+		$postUid = $post->getUid();
 		$muteMinutes = $this->JANIMUTE_LENGTH;
 		$plural = $muteMinutes == 1 ? '' : 's';
 
 		// render delete button
-		$modFunc .= generateModerateButton(
+		$modFunc .= generateModerateForm(
 			$this->generateDeletionUrl('del', $postUid),
 			'D',
 			'Delete',
@@ -106,7 +71,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 
 		// render delete and mute button
-		$modFunc .= generateModerateButton(
+		$modFunc .= generateModerateForm(
 			$this->generateDeletionUrl('delmute', $postUid),
 			'DM',
 			'Delete and mute for ' . $muteMinutes . ' minute' . $plural,
@@ -115,12 +80,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 	
-	private function canRenderButton(array $post): bool {
+	private function canRenderButton(Post $post): bool {
 		// whether the post is deleted or not
-		$openFlag = $post['open_flag'] ?? 0;
+		$openFlag = $post->getOpenFlag();
 
 		// don't render anything if the post is already deleted
-		if($openFlag && empty($post['file_only_deleted'])) {
+		if($openFlag && !$post->isFileOnlyDeleted()) {
 			return false;
 		}
 
@@ -130,33 +95,15 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
-		// if we can't render the attachment button then don't bother
-		if($this->canRenderAttachmentButton($attachment) === false) {
-			return;
+		$canRender = $this->canRenderAttachmentButton($attachment);
+
+		$buttonHtml = '';
+		if ($canRender) {
+			$url = $this->generateDeleteAttachUrl($attachment['fileId'], $attachment['postUid']);
+			$buttonHtml = ' <span class="adminFunctions adminDeleteFileFunction attachmentButton">[<a href="' . htmlspecialchars($url) . '" title="Delete file" data-action="deleteFile">DF</a>]</span>';
 		}
 
-		// get file id
-		$fileId = $attachment['fileId'];		
-
-		// get post uid
-		$postUid = $attachment['postUid'];
-
-		// render Delete Attachment button
-		$deleteAttachButton = $this->generateDeleteAttachButton($fileId, $postUid);
-
-		// append button to below attachment properties
-		$attachmentProperties .= $deleteAttachButton;
-	}
-
-	private function generateDeleteAttachButton(int $fileId, int $postUid): string {
-		// generate delete attachment url
-		$url = $this->generateDeleteAttachUrl($fileId, $postUid);
-
-		// button html
-		$button = ' <span class="adminFunctions adminDeleteFileFunction attachmentButton">[<a href="' . htmlspecialchars($url) . '" title="Delete attachment">DF</a>]</span>';
-	
-		// return button
-		return $button;
+		$attachmentProperties .= $this->renderAttachmentIndicator('deleteFile', $buttonHtml, !$canRender);
 	}
 
 	private function generateDeleteAttachUrl(int $fileId, int $postUid): string {
@@ -205,58 +152,43 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $deletionUrl;
 	}
 
-	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
 		// whether to render the button
 		if(!$this->canRenderButton($post)) {
 			return;
 		}
 
-		// generate deletion url
-		$deletionUrl = $this->generateDeletionUrl('del', $post['post_uid']);
+		// base module URL — params are carried as data-param-* attributes
+		$baseUrl = $this->getModulePageURL([], false, true);
+		$postUid = $post->getUid();
 
 		// build the widget entry for deletion
 		$deletionWidgets[] = $this->buildWidgetEntry(
-			$deletionUrl, 
+			$baseUrl, 
 			'delete', 
 			'Delete', 
-			''
+			'',
+			['post_uid' => $postUid, 'action' => 'del']
 		);
-
-		// generate mute url
-		$muteUrl = $this->generateDeletionUrl('delmute', $post['post_uid']);
 
 		// build the widget entry for muting
 		$deletionWidgets[] = $this->buildWidgetEntry(
-			$muteUrl, 
+			$baseUrl, 
 			'mute', 
 			'Delete & Mute', 
-			''
+			'',
+			['post_uid' => $postUid, 'action' => 'delmute']
 		);
 
 		// add the widget to the array
 		$widgetArray = array_merge($deletionWidgets, $widgetArray);
 	}
-/*
- * Can perhaps re-implement as a 'delete all attachments from post' option 
-	private function generateAttachmentWidget(int $postUid): array {
-		// generate attachment deletion url
-		$attachmentDeletionUrl = $this->generateDeletionUrl('imgdel', $postUid);
-
-		// build the widget entry for file deletion
-		$attachmentDeletionWidget = $this->buildWidgetEntry(
-			$attachmentDeletionUrl, 
-			'deleteAttachment', 
-			'Delete attachment', 
-			''
-		);
-
-		// return widget
-		return $attachmentDeletionWidget;
-	}
-*/
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// can view deleted poss
+		// can view deleted posts
 		$canViewDeleted = $this->moduleContext->postRenderingPolicy->viewDeleted();
+
+		// inject CSRF meta tag for JS
+		$moduleHeader .= getCsrfMetaTag();
 
 		// add requiredForAll js for the live frontend
 		// this js will add the deletedPost/deletedFile classes and deletion indicator to posts on the livefrontend
@@ -279,24 +211,18 @@ class moduleAdmin extends abstractModuleAdmin {
 		$moduleHeader .= $jsHtml;
 	}
 
-	public function ModulePage() {
-		// get post uid from request
-		$postUid = $_GET['post_uid'] ?? null;
+	protected function handleModuleRequest(): void {
+		// get post uid from request (POST body from JS, or query string from admin control forms)
+		$postUid = $this->moduleContext->request->getParameter('post_uid');
 
-		// throw error if post uid is empty
-		validatePostInput($postUid);
-
-		// fetch the post to be deleted
-		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
-
-		// throw error if post not found
-		validatePostInput($post, false);
+		// validate + fetch post
+		$post = $this->fetchValidatedPost($postUid);
 
 		// whether the post has been deleted
-		$isDeleted = !empty($post['open_flag']) && empty($post['file_only_deleted']);
+		$isDeleted = !empty($post->getOpenFlag()) && !$post->isFileOnlyDeleted();
 
 		// get board object
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 		
 		// get board uid
 		$boardUID = $board->getBoardUID();
@@ -310,30 +236,32 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// get action
-		$action = $_REQUEST['action'] ?? '';
+		$action = $this->moduleContext->request->getParameter('action', null, '');
 		
 		switch ($action) {
 			case 'del':
-				$this->moduleContext->postService->removePosts([$post['post_uid']], $this->moduleContext->currentUserId);
-				$this->moduleContext->actionLoggerService->logAction('Deleted post No.'.$post['no'], $boardUID);
+			case 'delete':
+				$this->moduleContext->postService->removePosts([$post->getUid()], $this->moduleContext->currentUserId);
+				$this->logAction('Deleted post No.'.$post->getNumber(), $boardUID);
 				break;
 			case 'delmute':
-				$this->moduleContext->postService->removePosts([$post['post_uid']], $this->moduleContext->currentUserId);
-				$ip = $post['host'];
-				$starttime = $_SERVER['REQUEST_TIME'];
+			case 'mute':
+				$this->moduleContext->postService->removePosts([$post->getUid()], $this->moduleContext->currentUserId);
+				$ip = $post->getIp();
+				$starttime = $this->moduleContext->request->getRequestTime();
 				$expires = $starttime + intval($this->JANIMUTE_LENGTH) * 60;
 				$reason = $this->JANIMUTE_REASON;
 
 				if ($ip) {
-					$this->appendGlobalBan($ip, $starttime, $expires, $reason);
+					$this->addBanEntry($this->getGlobalBanFilePath(), $ip, $starttime, $expires, $reason);
 				}
 
-				$this->moduleContext->actionLoggerService->logAction('Muted '.$ip.' and deleted post No.'.$post['no'] . ' ' . $board->getBoardTitle() . ' (' . $board->getBoardUID() . ')', GLOBAL_BOARD_UID);
+				$this->logAction('Muted '.$ip.' and deleted post No.'.$post->getNumber() . ' ' . $board->getBoardTitle() . ' (' . $board->getBoardUID() . ')', GLOBAL_BOARD_UID);
 
 				break;
 			case 'attachmentDel':
 				// get the file Id
-				$fileId = $_GET['fileId'] ?? null;
+				$fileId = $this->moduleContext->request->getParameter('fileId');
 				
 				// cast to int
 				$fileId = (int)$fileId;
@@ -344,7 +272,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				}
 
 				// get the attachment to deleted
-				$attachment = $post['attachments'][$fileId] ?? false;
+				$attachment = $post->getAttachmentById($fileId);
 
 				if(!$attachment) {
 					throw new BoardException(_T('attachment_not_found'));
@@ -352,7 +280,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 				$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$attachment], $this->moduleContext->currentUserId);
 
-				$this->moduleContext->actionLoggerService->logAction('Deleted file for post No.'.$post['no'], $boardUID);
+				$this->logAction('Deleted file for post No.'.$post->getNumber(), $boardUID);
 				break;
 			default:
 				throw new BoardException('ERROR: Invalid action.');
@@ -362,21 +290,21 @@ class moduleAdmin extends abstractModuleAdmin {
 		//deleteThreadCache($post['thread_uid']);
 
 		// AJAX first: send JSON, flush to client, then rebuild in the background of this request.
-		if (isJavascriptRequest()) {
+		if ($this->moduleContext->request->isAjax()) {
 			// if it was an attachment deletion then use the appropriate method to generate the url
 			if($action === 'attachmentDel' && $fileId) {
 				$deletionUrl = $this->getDeletionUrlForAttachment($fileId);
 			}
 			// otherwise just get the regular deletion url
 			else {
-				$deletionUrl = $this->getDeletionUrlForPost($post['post_uid']);
+				$deletionUrl = $this->getDeletionUrlForPost($post->getUid());
 			}
 
 			// Return JSON for AJAX requests
 			header('Content-Type: application/json');
 			echo json_encode([
 				'success' => true,
-				'is_op' => $post['is_op'],
+				'is_op' => $post->isOp(),
 				'deleted_link' => $deletionUrl
 			]);
 		
@@ -393,59 +321,15 @@ class moduleAdmin extends abstractModuleAdmin {
 			}
 		
 			// ===== rebuild after the response has been sent =====
-			// if its a thread, rebuild all board pages
-			if ($post['is_op']) {
-				$board->rebuildBoard();
-			} else {
-				// otherwise just rebuild the page the reply is on
-				$thread_uid = $post['thread_uid'];
-			
-				$threads = $this->moduleContext->threadService->getThreadListFromBoard($board);
-			
-				$pageToRebuild = getPageOfThread($thread_uid, $threads, $board->getConfigValue('PAGE_DEF', 15));
-
-				// make sure it isn't above the static page limit - this prevents a potential DOS vulnerability where a request can trigger a resource intensive operation
-				$pageToRebuild = min($pageToRebuild, $this->getConfig('STATIC_HTML_UNTIL'));
-			
-				$board->rebuildBoardPage($pageToRebuild);
-			}
+			$this->rebuildBoardForPost($board, $post);
 			exit;
 		}
 
 		// Non-AJAX fallback: do the rebuild first, then redirect (unchanged)
-		if ($post['is_op']) {
-			$board->rebuildBoard();
-		} else {
-			$thread_uid = $post['thread_uid'];
-		
-			$threads = $this->moduleContext->threadService->getThreadListFromBoard($board);
-		
-			$pageToRebuild = getPageOfThread($thread_uid, $threads, $board->getConfigValue('PAGE_DEF', 15));
-
-			// make sure it isn't above the static page limit - this prevents a potential DOS vulnerability where a request can trigger a resource intensive operation
-			$pageToRebuild = min($pageToRebuild, $this->getConfig('STATIC_HTML_UNTIL'));
-		
-			$board->rebuildBoardPage($pageToRebuild);
-		}
+		$this->rebuildBoardForPost($board, $post);
 
 		// Fallback for non-JS users: redirect
-		redirect('back');
-	}
-
-	private function appendGlobalBan($ip, $starttime, $expires, $reason) {
-		$needsNewline = file_exists($this->GLOBAL_BANS) && filesize($this->GLOBAL_BANS) > 0;
-
-		$f = fopen($this->GLOBAL_BANS, 'a');
-		if (!$f) {
-			return;
-		}
-
-		if ($needsNewline) {
-			fwrite($f, "\n");
-		}
-
-		fwrite($f, "$ip,$starttime,$expires,$reason");
-		fclose($f);
+		redirect($this->moduleContext->request->getReferer());
 	}
 
 	private function getDeletionUrlForPost(int $postUid): string {
@@ -464,12 +348,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $this->getDeletionViewUrl($deletedPost);
 	}
 
-	private function getDeletionViewUrl(array $deletedPost): string {
+	private function getDeletionViewUrl(DeletedPost $deletedPost): string {
 		// get the deleted post id for the url
-		$deletedPostId = $deletedPost['deleted_post_id'];
+		$deletedPostId = $deletedPost->getDeletedPostId();
 
 		// base url
-		$baseUrl = getCurrentUrlNoQuery();
+		$baseUrl = $this->moduleContext->request->getCurrentUrlNoQuery();
 
 		// parameters for the link
 		$urlParameters = [

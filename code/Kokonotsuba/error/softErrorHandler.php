@@ -3,6 +3,7 @@
 namespace Kokonotsuba\error;
 
 use Kokonotsuba\account\staffAccountFromSession as AccountStaffAccountFromSession;
+use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\userRole;
 
@@ -13,15 +14,16 @@ class softErrorHandler {
 		private readonly string $boardHtmlHeader, 
 		private readonly string $boardHtmlFooter, 
 		private readonly string $boardIndexFile, 
-		private templateEngine $templateEngine) {}
+		private templateEngine $templateEngine,
+		private readonly AccountStaffAccountFromSession $staffSession,
+		private readonly request $request) {}
 
 	public function handleAuthError(userRole $minimumRole) {
-		$staffSession = new AccountStaffAccountFromSession;
-		$authRoleLevel = $staffSession->getRoleLevel() ?? userRole::LEV_NONE;
+		$authRoleLevel = $this->staffSession->getRoleLevel();
 
 		//handle cases
 		if($authRoleLevel === userRole::LEV_NONE) {
-			$this->errorAndExit("You aren't logged in!"); //this user isn't logged in!
+			$this->errorAndExit("You aren't logged in!", 401); //this user isn't logged in!
 		}
 		
 		if(!$authRoleLevel->isAtLeast($minimumRole)) {
@@ -41,7 +43,7 @@ class softErrorHandler {
 			'{$MESG}' => $errorMessage,
 			'{$RETURN_TEXT}' => _T('return'),
 			'{$BACK_TEXT}' => _T('error_back'),
-			'{$BACK_URL}' => htmlspecialchars($_SERVER['HTTP_REFERER'] ?? '')
+			'{$BACK_URL}' => htmlspecialchars($this->request->getReferer())
 		);
 
 		$htmlOutput = '';

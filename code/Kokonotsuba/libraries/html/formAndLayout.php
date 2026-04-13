@@ -21,6 +21,7 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 	$moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
 
 	$pte_vals['{$PAGE_TITLE}'] = $pageTitle;
+	$pte_vals['{$ATTACHMENT_LIMIT}'] = htmlspecialchars($config['ATTACHMENT_UPLOAD_LIMIT'] ?? 1);
 
 	$html .= $templateEngine->ParseBlock('HEADER', $pte_vals);
 	$moduleEngine->dispatch('Head', array(&$html, $resno)); // Hook: Head
@@ -94,11 +95,16 @@ function generatePostFormHTML(int $resno,
 	if (!$config['TEXTBOARD_ONLY'] && ($config['RESIMG'] || !$resno)) {
 		// get attachment limit
 		$attachmentUploadLimit = $board->getConfigValue('ATTACHMENT_UPLOAD_LIMIT', 1);
-
-		// whether to use 'multiple'
-		$multipleAttribute = ($attachmentUploadLimit > 1) ? 'multiple' : ''; 
 		
-		$pte_vals['{$FORM_ATTECHMENT_FIELD}'] = '<input type="file" name="upfile[]" id="upfile" data-attachment-limit="' . htmlspecialchars($attachmentUploadLimit) . '" ' . htmlspecialchars($multipleAttribute) . '>';
+		if ($attachmentUploadLimit > 1) {
+			$pte_vals['{$FORM_ATTECHMENT_FIELD}'] = $templateEngine->ParseBlock('DROPZONE', [
+				'{$ATTACHMENT_LIMIT}' => htmlspecialchars($attachmentUploadLimit),
+				'{$DROPZONE_ACCEPT}' => '',
+			]);
+			$pte_vals['{$FORM_ATTECHMENT_FIELD}'] .= '<noscript><input type="file" name="upfile[]" data-attachment-limit="' . htmlspecialchars($attachmentUploadLimit) . '" multiple></noscript>';
+		} else {
+			$pte_vals['{$FORM_ATTECHMENT_FIELD}'] = '<input type="file" name="upfile[]" id="upfile" data-attachment-limit="' . htmlspecialchars($attachmentUploadLimit) . '">';
+		}
 
 		if (!$resno) {
 			$pte_vals['{$FORM_NOATTECHMENT_FIELD}'] = '<input type="checkbox" name="noimg" id="noimg" value="on">';
@@ -108,6 +114,10 @@ function generatePostFormHTML(int $resno,
 	}
 
 	$moduleEngine->dispatch('PostForm', array(&$pte_vals['{$FORM_EXTRA_COLUMN}'])); // Hook: PostForm
+
+	$moduleEngine->dispatch('CommentBlock', array(&$pte_vals['{$FORM_COMMENT_BLOCK_EXTRA}'])); // Hook: CommentBlock (inside the Comment label cell)
+
+	$moduleEngine->dispatch('CommentExtras', array(&$pte_vals['{$FORM_COMMENT_EXTRAS}'])); // Hook: CommentExtras (below comment textarea)
 
 	$moduleEngine->dispatch('PostFormAdmin', array(&$pte_vals['{$FORM_STAFF_CHECKBOXES}'])); // Hook: PostFormAdmin
 
@@ -123,6 +133,7 @@ function generatePostFormHTML(int $resno,
 		);
 	}
 
+	$moduleEngine->dispatch('FormFuncs', array(&$pte_vals['{$FORM_FUNCS_EXTRA}'])); // Hook: FormFuncs (pipe-separated links in formfuncs div)
 	$moduleEngine->dispatch('PostInfo', array(&$pte_vals['{$HOOKPOSTINFO}'])); // Hook: PostInfo
 	$moduleEngine->dispatch('PostMenuList', array(&$pte_vals['{$MODULE_POST_MENU_LIST_ITEM}'])); // Hook: post menu list item
 
@@ -151,6 +162,8 @@ function preparePostFormTemplateValues(int $resno, ?string $liveIndexFile, ?stri
 		'{$FORM_SUBMIT}' => '<button id="buttonPostFormSubmit" type="submit" name="mode" value="regist">' . ($resno ? 'Post' : 'New thread') . '</button>',
 		'{$FORM_COMMENT_FIELD}' => '<textarea maxlength="' . $config['COMM_MAX'] . '" name="com" id="com" class="inputtext">' . $comment . '</textarea>',
 		'{$FORM_EXTRA_COLUMN}' => '',
+		'{$FORM_COMMENT_BLOCK_EXTRA}' => '',
+		'{$FORM_COMMENT_EXTRAS}' => '',
 		'{$FORM_FILE_EXTRA_FIELD}' => '',
 		'{$FORM_NOTICE}' => (
 			$config['TEXTBOARD_ONLY']
@@ -166,6 +179,7 @@ function preparePostFormTemplateValues(int $resno, ?string $liveIndexFile, ?stri
 		'{$HOOKPOSTINFO}' => '',
 		'{$MODULE_POST_MENU_LIST_ITEM}' => '',
 		'{$MODULE_INFO_HOOK}' => $moduleInfoHook,
+		'{$FORM_FUNCS_EXTRA}' => '',
 		'{$ALWAYS_NOKO}' => $config['ALWAYS_NOKO'] ? 'data-alwaysnoko="true"' : '',
 		'{$POST_FORM}' => '');
 }

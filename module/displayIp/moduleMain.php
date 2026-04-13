@@ -3,10 +3,16 @@
 namespace Kokonotsuba\Modules\displayIp;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\OpeningPostListenerTrait;
+use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\_T;
 
 class moduleMain extends abstractModuleMain {
+	use PostListenerTrait;
+	use OpeningPostListenerTrait;
+
 	private readonly int $IPTOGGLE;
 	
 	public function getName(): string {
@@ -20,13 +26,9 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		$this->IPTOGGLE = $this->getConfig('ModuleSettings.IPTOGGLE', -1);
 
-		$this->moduleContext->moduleEngine->addListener('Post', function(array &$templateValues, array $post, array $threadPosts) {
-			$this->onRenderPost($templateValues, $post, $threadPosts);
-		});
+		$this->listenPost('onRenderPost');
 
-		$this->moduleContext->moduleEngine->addListener('OpeningPost', function(array &$templateValues, array $post) {
-			$this->onRenderOpeningPost($templateValues, $post);
-		});
+		$this->listenOpeningPost('onRenderOpeningPost');
 	}
 
 	private function _isgTLD($last,$add='') {
@@ -44,8 +46,8 @@ class moduleMain extends abstractModuleMain {
 		return false;
 	}
 
-	public function onRenderOpeningPost(array &$templateValues, array $post): void {
-		if ($this->IPTOGGLE == 1 && str_contains($post['email'], 'displayip')) {
+	public function onRenderOpeningPost(array &$templateValues, Post $post): void {
+		if ($this->IPTOGGLE == 1 && str_contains($post->getEmail(), 'displayip')) {
 			$templateValues['{$COM}'] .= '<p class="ipWarning">'._T('posts_itt_display_ip').'</p>';
 		}
 	}
@@ -53,9 +55,9 @@ class moduleMain extends abstractModuleMain {
 	public function onRenderPost(&$templateValues, $post, $threadPosts): void {
 		$opPost = $threadPosts[0];
 
-		$iphost = strtolower($post['host']);
+		$iphost = strtolower($post->getIp());
 
-		if (!($this->IPTOGGLE == 2) && !($this->IPTOGGLE == 1 && stristr($opPost['email'], 'displayip'))) {
+		if (!($this->IPTOGGLE == 2) && !($this->IPTOGGLE == 1 && stristr($opPost->getEmail(), 'displayip'))) {
 			return;
 		}
 

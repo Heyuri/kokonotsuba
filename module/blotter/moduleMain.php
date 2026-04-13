@@ -8,10 +8,13 @@ require_once __DIR__ . '/blotterService.php';
 
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\PlaceHolderInterceptListenerTrait;
 
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
+	use PlaceHolderInterceptListenerTrait;
+
 	private string $modulePage;
 	private int $previewLimit = -1;
 	private blotterService $blotterService;
@@ -36,9 +39,7 @@ class moduleMain extends abstractModuleMain {
 		
 		$this->modulePage = $this->getModulePageURL([], false);
 
-		$this->moduleContext->moduleEngine->addListener('PlaceHolderIntercept', function(array &$placeholderArray) {
-			$this->onRenderBlotterPreview($placeholderArray);
-		});
+		$this->listenPlaceHolderIntercept('onRenderBlotterPreview');
 	}
 
 	public function onRenderBlotterPreview(array &$placeHolderArray) {

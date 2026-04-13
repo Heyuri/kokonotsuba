@@ -4,10 +4,15 @@ namespace Kokonotsuba\Modules\onlineCounter;
 
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\PostMenuListListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 
 use function Kokonotsuba\libraries\_T;
 
 class moduleMain extends abstractModuleMain {
+	use PostMenuListListenerTrait;
+	use IncludeScriptTrait;
+
 	private $modulePageUrl, $usercounter, $timeout, $staticUrl;
 
 	public function getName(): string {
@@ -27,13 +32,9 @@ class moduleMain extends abstractModuleMain {
 		
 		$this->modulePageUrl = $this->getModulePageURL();
 
-		$this->moduleContext->moduleEngine->addListener('PostMenuList', function(string &$postMenuListHtml) {
-			$this->onRenderPostMenuList($postMenuListHtml);
-		});
+		$this->listenPostMenuList('onRenderPostMenuList');
 
-		$this->moduleContext->moduleEngine->addListener('ModuleHeader', function(string &$moduleHeader) {
-			$this->onGenerateModuleHeader($moduleHeader);
-		});
+		$this->registerScript('onlineCounterUpdater.js');
 	}
 
 	/**
@@ -57,7 +58,7 @@ class moduleMain extends abstractModuleMain {
 		$currentTime = time();
 
 		// get IP object
-		$addr = new IPAddress;
+		$addr = $this->moduleContext->request->userIp();
 		
 		// get addr string
 		$addrString = $addr->__toString();
@@ -192,25 +193,19 @@ class moduleMain extends abstractModuleMain {
 		);
 
 		$userCounterHTML = '
-			<li id="counterListItemJS" class="hidden">
+			<li id="counterListItemJS" class="js-only">
 				<div data-timeout="'.$this->timeout.'" data-modurl="'.$this->modulePageUrl.'&usercountjson" id="usercounter">
 					' . $userCounterText . '
 				</div>
 			</li>';
 
 		$noScriptHtml = '
-			<li id="counterListItemNoJS" class="">
-				<noscript>
+				<li id="counterListItemNoJS" class="no-js-only">
 					<iframe id="counterIframe" title="User counter" src="'.$this->modulePageUrl.'"></iframe>
-				</noscript>
-			</li>';
+				</li>
+			';
 
 		$hookPostInfoHtml .= $noScriptHtml . $userCounterHTML;
-	}
-	
-	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// include online counter js script
-		$this->includeScript('onlineCounterUpdater.js', $moduleHeader);
 	}
 
 	/**
@@ -242,7 +237,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function ModulePage() {
 		// If the "usercountjson" parameter is set, output the user count as JSON and stop execution
-		if (isset($_GET['usercountjson'])) {
+		if ($this->moduleContext->request->hasParameter('usercountjson', 'GET')) {
 			$this->outputUserCountJson();
 			return;
 		}

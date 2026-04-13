@@ -3,6 +3,7 @@
 namespace Kokonotsuba\libraries\html;
 
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\request\request;
 
 function validateAndClampPagination(int $entriesPerPage, int $totalEntries, int $currentPage): array {
 	if ((filter_var($totalEntries, FILTER_VALIDATE_INT) === false || $totalEntries < 0) ||
@@ -95,9 +96,9 @@ function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int
 	return renderPager($currentPage, $totalPages, $getLink, $getForm);
 }
 
-function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url, int $staticPagesToRebuild, string $liveIndexFile): string {
-	$currentPage = (isset($_REQUEST['page']) && is_numeric($_REQUEST['page']))
-		? (int)$_REQUEST['page']
+function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url, int $staticPagesToRebuild, string $liveIndexFile, request $request): string {
+	$currentPage = ($request->hasParameter('page') && is_numeric($request->getParameter('page')))
+		? (int)$request->getParameter('page')
 		: 0;
 
 	[$totalPages, $currentPage] = validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
@@ -115,19 +116,19 @@ function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url,
 	return renderPager($currentPage, $totalPages, $getLink, $getForm);
 }
 
-function drawPager(int $entriesPerPage, int $totalEntries, string $url): string {
-	$currentPage = (isset($_REQUEST['page']) && is_numeric($_REQUEST['page']))
-		? (int)$_REQUEST['page']
+function drawPager(int $entriesPerPage, int $totalEntries, string $url, request $request, string $pageParam = 'page'): string {
+	$currentPage = ($request->hasParameter($pageParam) && is_numeric($request->getParameter($pageParam)))
+		? (int)$request->getParameter($pageParam)
 		: 0;
 
 	[$totalPages, $currentPage] = validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
 
-	$getLink = fn($page) => $url . '&page=' . $page;
+	$getLink = fn($page) => $url . '&' . $pageParam . '=' . $page;
 
-	$getForm = function($page, $label) use ($url) {
-		$params = $_GET;
-		unset($params['page']);
-		$params['page'] = $page;
+	$getForm = function($page, $label) use ($url, $request, $pageParam) {
+		$params = $request->allGet();
+		unset($params[$pageParam]);
+		$params[$pageParam] = $page;
 
 		$inputs = '';
 		foreach ($params as $key => $val) {

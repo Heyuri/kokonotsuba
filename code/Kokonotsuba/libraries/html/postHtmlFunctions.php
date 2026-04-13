@@ -8,8 +8,10 @@ namespace Kokonotsuba\libraries\html;
 
 use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\post\Post;
 
 use function Puchiko\strings\containsHtmlTags;
+use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 
 /* Generate html for the post name dynamically */
 function generatePostNameHtml(
@@ -43,7 +45,8 @@ function generatePostNameHtml(
 function generateEmailName(string $nameHtml, string $email): string {
 	// if the email isn't empty then wrap it in an <a>
 	if($email) {
-		return '<a href="mailto:' . $email . '">'. $nameHtml . '</a>';
+		$escapedEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
+		return '<a href="mailto:' . $escapedEmail . '">'. $nameHtml . '</a>';
 	} 
 	// no email
 	else {
@@ -85,7 +88,7 @@ function generateNoticeSage(bool $noticeSage, string $email): string {
  *     - target_post['post_position'] (Nth post within the thread, 0-based)
  *
  * @param array $quoteLinksFromBoard All quote metadata for the thread, indexed by post_uid.
- * @param array $post The current post's data, including 'post_uid' and 'com'.
+ * @param Post $post The current post's data, including 'post_uid' and 'com'.
  * @param int $threadNumber Thread number (OP's post number) of the current thread.
  * @param bool $useQuoteSystem Whether quote links should be transformed.
  * @param board $board Board object used to generate URLs.
@@ -96,7 +99,7 @@ function generateNoticeSage(bool $noticeSage, string $email): string {
  */
 function generateQuoteLinkHtml(
 	array $quoteLinksFromBoard, 
-	array $post, 
+	Post $post, 
 	int $threadNumber, 
 	bool $useQuoteSystem, 
 	board $board, 
@@ -105,24 +108,30 @@ function generateQuoteLinkHtml(
 	// If quoting system disabled, or comment missing, or post missing an ID → return original content.
 	if (
 		empty($useQuoteSystem) ||
-		empty($post['com']) ||
-		empty($post['post_uid'])
+		empty($post->getComment()) ||
+		empty($post->getUid())
 	) {
-		return $post['com'] ?? '';
+		return $post->getComment() ?? '';
 	}
 	
-	$comment = $post['com'];
-	$postUid = $post['post_uid'];
+	$comment = $post->getComment();
+	$postUid = $post->getUid();
 
 	// Get all quote references originating from this specific post.
 	// This contains all metadata about the quoted posts.
 	$quoteLinkEntries = $quoteLinksFromBoard[$postUid] ?? [];
 
-	// Maps:
+	// Maps for same-board quote links:
 	//   - quoted post number → thread OP number
 	//   - quoted post number → post_position (Nth post inside thread)
 	$targetPostToThreadNumber = [];
 	$targetPostToPosition = [];
+	$targetPostToUid = [];
+
+	// Map for cross-board quote links: boardIdentifier → postNo → target data
+	$crossBoardTargets = [];
+
+	$currentBoardUid = $board->getBoardUID();
 
 	// Extract metadata for all quoted posts referenced from this post.
 	foreach ($quoteLinkEntries as $entry) {
@@ -132,24 +141,97 @@ function generateQuoteLinkHtml(
 			is_numeric($entry['target_post']['no']) &&
 			is_numeric($entry['target_post']['post_op_number'])
 		) {
-			$postNo = (int)$entry['target_post']['no'];               // Quoted post number
-			$threadNo = (int)$entry['target_post']['post_op_number']; // OP number of target thread
-			$targetPostToThreadNumber[$postNo] = $threadNo;
+			$postNo = (int)$entry['target_post']['no'];
+			$threadNo = (int)$entry['target_post']['post_op_number'];
+			$targetBoardUid = (int)($entry['target_post']['board_uid'] ?? $currentBoardUid);
 
-			// If available, store the quoted post's position within its thread (0-based)
-			if (isset($entry['target_post']['post_position']) && is_numeric($entry['target_post']['post_position'])) {
-                $targetPostToPosition[$postNo] = (int)$entry['target_post']['post_position'];
-            }
+			if ($targetBoardUid === $currentBoardUid) {
+				// Same-board entry
+				$targetPostToThreadNumber[$postNo] = $threadNo;
+
+				if (isset($entry['target_post']['post_uid'])) {
+					$targetPostToUid[$postNo] = (int)$entry['target_post']['post_uid'];
+				}
+
+				if (isset($entry['target_post']['post_position']) && is_numeric($entry['target_post']['post_position'])) {
+					$targetPostToPosition[$postNo] = (int)$entry['target_post']['post_position'];
+				}
+			} else {
+				// Cross-board entry
+				$targetBoard = searchBoardArrayForBoard($targetBoardUid);
+				if ($targetBoard) {
+					$identifier = $targetBoard->getBoardIdentifier();
+					$crossBoardTargets[$identifier][$postNo] = [
+						'threadNo' => $threadNo,
+						'position' => (int)($entry['target_post']['post_position'] ?? 0),
+						'uid' => isset($entry['target_post']['post_uid']) ? (int)$entry['target_post']['post_uid'] : null,
+						'board' => $targetBoard,
+					];
+				}
+			}
 		}
 	}
 
-	// Find all ">>123" or "＞＞123" style quote markers inside the comment.
-	if (!preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $comment, $matches, PREG_SET_ORDER)) {
-		return $comment; // No quote patterns found
-	}
-	
-	// We'll build a map of original-string → replacement-string to replace them in one pass.
 	$replacements = [];
+
+	// Match cross-board patterns first: >>>/board/123
+	if (preg_match_all('/((?:&gt;|＞){3})\/([a-zA-Z0-9]+)\/(\d+)/i', $comment, $crossMatches, PREG_SET_ORDER)) {
+		foreach ($crossMatches as $match) {
+			$fullMatch = $match[0];
+			$boardIdentifier = $match[2];
+			$postNumber = (int)$match[3];
+
+			if (isset($replacements[$fullMatch])) {
+				continue;
+			}
+
+			if (isset($crossBoardTargets[$boardIdentifier][$postNumber])) {
+				$target = $crossBoardTargets[$boardIdentifier][$postNumber];
+				$postPosition = (int)($target['position'] ?? 0);
+				$targetRepliesPerPage = $target['board']->getConfigValue('REPLIES_PER_PAGE', 200);
+				$page = ($postPosition < 0) ? 0 : (int)floor($postPosition / $targetRepliesPerPage);
+
+				$url = htmlspecialchars(
+					$target['board']->getBoardThreadURL($target['threadNo'], $postNumber, false, $page)
+				);
+
+				$linkClass = 'quotelink crossBoardLink';
+				$uidAttr = isset($target['uid'])
+					? ' data-post-uid="' . $target['uid'] . '"'
+					: '';
+
+				$replacements[$fullMatch] = '<a href="' . $url . '" class="' . $linkClass . '"' . $uidAttr . '>' . $fullMatch . '</a>';
+			} elseif ($boardIdentifier === $board->getBoardIdentifier() && isset($targetPostToThreadNumber[$postNumber])) {
+				// Cross-board syntax pointing to the current board — use same-board data
+				$targetThreadNumber = $targetPostToThreadNumber[$postNumber];
+				$isCrossThread = $targetThreadNumber !== $threadNumber;
+				$postPosition = $targetPostToPosition[$postNumber] ?? 0;
+				$page = ($postPosition < 0) ? 0 : (int)floor($postPosition / $repliesPerPage);
+
+				$url = htmlspecialchars(
+					$board->getBoardThreadURL($targetThreadNumber, $postNumber, false, $page)
+				);
+
+				$linkClass = 'quotelink crossBoardLink' . ($isCrossThread ? ' crossThreadLink' : '');
+				$uidAttr = isset($targetPostToUid[$postNumber])
+					? ' data-post-uid="' . $targetPostToUid[$postNumber] . '"'
+					: '';
+
+				$replacements[$fullMatch] = '<a href="' . $url . '" class="' . $linkClass . '"' . $uidAttr . '>' . $fullMatch . '</a>';
+			} else {
+				// Not resolved — strike through
+				$replacements[$fullMatch] = '<a href="javascript:void(0);" class="quotelink crossBoardLink"><del>' . $fullMatch . '</del></a>';
+			}
+		}
+	}
+
+	// Match same-board patterns: >>123 or >>No.123
+	if (!preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $comment, $matches, PREG_SET_ORDER)) {
+		if (empty($replacements)) {
+			return $comment;
+		}
+		return strtr($comment, $replacements);
+	}
 
 	foreach ($matches as $match) {
 		$fullMatch = $match[0];         // e.g. ">>123"
@@ -186,8 +268,13 @@ function generateQuoteLinkHtml(
 			// Assign CSS classes — add crossThreadLink if needed.
 			$linkClass = 'quotelink' . ($isCrossThread ? ' crossThreadLink' : '');
 
+			// Include the target post UID as a data attribute for JS hover previews.
+			$uidAttr = isset($targetPostToUid[$postNumber])
+				? ' data-post-uid="' . $targetPostToUid[$postNumber] . '"'
+				: '';
+
 			// Final anchor tag replacement.
-			$replacements[$fullMatch] = '<a href="' . $url . '" class="' . $linkClass . '">' . $fullMatch . '</a>';
+			$replacements[$fullMatch] = '<a href="' . $url . '" class="' . $linkClass . '"' . $uidAttr . '>' . $fullMatch . '</a>';
 
 		} else {
 			// No metadata found → quoted post does not exist or cannot be resolved.

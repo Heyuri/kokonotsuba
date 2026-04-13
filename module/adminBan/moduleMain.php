@@ -4,13 +4,17 @@ namespace Kokonotsuba\Modules\adminBan;
 
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
+use Kokonotsuba\module_classes\traits\listeners\FormFuncsListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\renderJsonErrorPage;
 
 class moduleMain extends abstractModuleMain {
-	private string $BANFILE = '';
-	private string $GLOBAL_BANS = '';
+	use RegistBeginListenerTrait;
+	use BanFileOperationsTrait;
+	use FormFuncsListenerTrait;
+
 	private string $BANIMG = '';
 
 	public function getName(): string {
@@ -22,31 +26,28 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->BANFILE = $this->moduleContext->board->getBoardStoragePath() . 'bans.log.txt';
 		$this->BANIMG = $this->getConfig('STATIC_URL') . "image/banned.jpg";
-		$this->GLOBAL_BANS = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
 
-		touch($this->BANFILE);
-		touch($this->GLOBAL_BANS);
+		touch($this->getBanFilePath());
+		touch($this->getGlobalBanFilePath());
 
-		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (array &$registInfo) {
-			$this->onRegistBegin($registInfo['ip']);  // Call the method to modify the form
-		});
+		$this->listenRegistBegin('onRegistBegin');
+		$this->addFormFuncLink($this->getModulePageURL([], false), 'Banned?');
 	}
 
-	public function onRegistBegin(string $ipAddress): void {
+	public function onRegistBegin(array &$registInfo): void {
 		// check if the regist ip is banned
-		$this->checkBans($ipAddress);
+		$this->checkBans($registInfo['ip']);
 	}
 
 	private function checkBans(string $ipAddress): void {
 		// read ban logs
-		$glog = is_file($this->GLOBAL_BANS) ? array_map('rtrim', file($this->GLOBAL_BANS)) : [];
-		$log = is_file($this->BANFILE) ? array_map('rtrim', file($this->BANFILE)) : [];
+		$glog = $this->readBanLog($this->getGlobalBanFilePath());
+		$log = $this->readBanLog($this->getBanFilePath());
 
 		// check local board bans first, then global bans
-		$this->handleBan($log, $ipAddress, $this->BANFILE);
-		$this->handleBan($glog, $ipAddress, $this->GLOBAL_BANS);
+		$this->handleBan($log, $ipAddress, $this->getBanFilePath());
+		$this->handleBan($glog, $ipAddress, $this->getGlobalBanFilePath());
 	}
 	
 	private function ipMatchesBan(string $ip, string $pattern): bool {
@@ -136,9 +137,9 @@ class moduleMain extends abstractModuleMain {
 			if ($match) {
 				// If the ban has expired, remove it from the log and save
 				// only clear it for non-js requests (i.e the user is viewing it)
-				if ($_SERVER['REQUEST_TIME'] > intval($expires) && !isJavascriptRequest()) {
+				if ($this->moduleContext->request->getRequestTime() > intval($expires) && !$this->moduleContext->request->isAjax()) {
 					unset($log[$i]);
-					file_put_contents($banFile, implode(PHP_EOL, $log));
+					$this->writeBanLog($banFile, array_values($log));
 				}
 			
 				// then handle the rendering of the regist ban page
@@ -150,7 +151,7 @@ class moduleMain extends abstractModuleMain {
 	private function handleRegistBanPage(int $starttime, int $expires, string $reason, string $banImage): void {
 		// render ban json page
 		// this is so the javascript can alert the user that they're banned when trying to submit a post
-		if(isJavascriptRequest()) {
+		if($this->moduleContext->request->isAjax()) {
 			// get the module page url
 			$moduleUrl = $this->getModulePageURL([], false, true); 
 
@@ -183,7 +184,7 @@ class moduleMain extends abstractModuleMain {
 	private function getBanTemplateValues($starttime, $expires, $reason, $banImage = '', bool $isBanned = true) {
 
 		// True = the ban time has passed
-		$isExpired = ($_SERVER['REQUEST_TIME'] > intval($expires));
+		$isExpired = ($this->moduleContext->request->getRequestTime() > intval($expires));
 
 		// Determine what type of moderation action it was:
 		// If start == expire, it's a warning, otherwise a ban.
@@ -237,7 +238,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function ModulePage(): void {
 		// get the user's IP
-		$ipAddress = new IPAddress();
+		$ipAddress = $this->moduleContext->request->userIp();
 
 		// check if they're banned
 		// execution won't continue past here if a ban is caught since it terminates output with exit

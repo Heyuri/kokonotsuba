@@ -41,7 +41,7 @@ class postRegistData {
     public function getCom(): string { return $this->com; }
     public function getHost(): string { return $this->host; }
     public function getAgeru(): bool { return $this->age; }
-    public function getStatus(): string { return $this->status; }
+    public function getFlags(): string { return $this->status; }
     public function getPostPosition(): int { return $this->post_position; }
 
     // Setters

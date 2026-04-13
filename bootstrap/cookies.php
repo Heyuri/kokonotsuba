@@ -1,6 +1,6 @@
 <?php
 
-
+use Kokonotsuba\cookie\cookieService;
 
 /* 
 * 
@@ -8,7 +8,9 @@
 * 
 */
 
+$cookieService = new cookieService($_COOKIE);
+
 // initialize the cookie value if it doesn't exist
-if(!isset($_COOKIE['viewDeletedPosts'])) {
-    setcookie('viewDeletedPosts', '1', time() + (86400 * 30), "/");
+if(!$cookieService->has('viewDeletedPosts')) {
+	$cookieService->set('viewDeletedPosts', '1', time() + (86400 * 30), '/');
 }

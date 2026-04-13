@@ -13,6 +13,8 @@ use Kokonotsuba\renderers\postTemplateBinder;
 use Kokonotsuba\renderers\postWidget;
 use Kokonotsuba\interfaces\IBoard;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\post\Post;
+use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
 
 use function Kokonotsuba\libraries\_T;
@@ -33,12 +35,13 @@ class postRenderer {
 		private readonly array $config, 
 		private readonly moduleEngine $moduleEngine, 
 		private readonly templateEngine $templateEngine,
-		private array $quoteLinksFromBoard) {
+		private array $quoteLinksFromBoard,
+		private readonly request $request) {
 			// initialize post data preperation class
 			$this->postDataPreparer = new postDataPreparer($board);
 
 			// initialize attachment rendering class
-			$this->attachmentRenderer = new attachmentRenderer($board, $moduleEngine);
+			$this->attachmentRenderer = new attachmentRenderer($board, $moduleEngine, $templateEngine);
 
 			// intialize post template binding class
 			$this->postTemplateBinder = new postTemplateBinder($board, $config);
@@ -56,17 +59,14 @@ class postRenderer {
 	}
 
 	public function render(
-		array $post,
+		Post $post,
 		array &$templateValues,
 		int $threadResno,
 		bool $killSensor,
 		array $threadPosts,
 		bool $adminMode,
 		string $postFormExtra,
-		string $warnBeKill,
-		string $warnOld,
 		string $warnHidePost,
-		string $warnEndReply,
 		int $replyCount,
 		bool $threadMode = true,
 		string $crossLink = '',
@@ -76,223 +76,241 @@ class postRenderer {
 		$data = $this->postDataPreparer->preparePostData($post);
 
 		// Define if it's the thread's OP or a reply
-		$isThreadOp = $data['is_op'] ? true : false;
-		$isThreadReply = !$isThreadOp;  // Inverse of $isThreadOp
-		
+		$isThreadOp = $data->isOp();
+		$isThreadReply = !$isThreadOp;
+		$shouldRenderReply = $isThreadReply && !$renderAsOp;
+
 		// get replies per page value
 		$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
 
-		// Apply quote and quote link
-		$data['com'] = generateQuoteLinkHtml($this->quoteLinksFromBoard, $data, $threadResno, $this->board->getConfigValue('USE_QUOTESYSTEM'), $this->board, $repliesPerPage, $replyCount);
-		$data['com'] = quote_unkfunc($data['com']);
+		// Prepare post content (quote links, category, attachments)
+		$contentData = $this->preparePostContent($data, $threadResno, $repliesPerPage, $replyCount, $crossLink, $adminMode);
 
-		// Post position config
-		$postPositionEnabled = $this->config['RENDER_REPLY_NUMBER'];
-	
+		// Generate warning messages
+		$warnings = $this->prepareWarnings($killSensor, $isThreadOp, $post);
+
+		$templateValues['{$POSTINFO_EXTRA}'] = '';
+
+		// Admin controls and widgets
+		$postFormExtra .= $this->generateAdminControls($post, $adminMode, $isThreadOp);
+		$widgetDataHtml = $this->generateAdminWidgets($post, $threadPosts, $adminMode, $isThreadOp);
+
+		// Generate post metadata (name HTML, buttons, URLs, attributes, first attachment)
+		$metadata = $this->generatePostMetadata($data, $threadResno, $replyCount, $repliesPerPage, $threadMode, $crossLink, $contentData['isDeleted']);
+
+		// Bind core template values
+		$templateValues['{$POST_URL}'] = $metadata['postUrl'];
+		$templateValues['{$DATA_ATTRIBUTES}'] = $metadata['dataAttributes'];
+
+		// Bind OP or reply template values
+		$this->bindPostTemplateValues(
+			$templateValues, $data, $metadata, $contentData,
+			$warnings, $shouldRenderReply, $isThreadOp, $renderAsOp,
+			$crossLink, $threadResno, $postFormExtra, $replyCount,
+			$warnHidePost
+		);
+
+		// Dispatch module events and finalize post menu
+		$this->dispatchPostModuleEvents($templateValues, $data, $post, $threadPosts, $adminMode, $isThreadOp, $isThreadReply);
+		$this->finalizePostWidgets($templateValues, $post, $threadPosts, $isThreadOp, $isThreadReply, $widgetDataHtml);
+		
+		// Return rendered HTML
+		if ($shouldRenderReply) {
+			return $this->templateEngine->ParseBlock('REPLY', $templateValues);
+		} else {
+			return $this->templateEngine->ParseBlock('OP', $templateValues);
+		}
+	}
+
+	private function preparePostContent($data, int $threadResno, int $repliesPerPage, int $replyCount, string $crossLink, bool $adminMode): array {
+		// Apply quote and quote link processing
+		$this->applyCommentQuoteLinks($data, $threadResno, $repliesPerPage, $replyCount);
+
 		// Process category links
-		$categoryHTML = $this->postElementGenerator->processCategoryLinks($data['category'], $crossLink);
+		$categoryHTML = $this->postElementGenerator->processCategoryLinks($data->getCategory(), $crossLink);
 
 		// this post is deleted
-		$isDeleted = $data['open_flag'] && !$data['file_only_deleted'] && $adminMode;
+		$isDeleted = $data->getOpenFlag() && !$data->isFileOnlyDeleted() && $adminMode;
 
 		// process attachment data
 		$attachmentsHtml = $this->processAttachments(
-			$data['attachments'],
+			$data->getAttachments(),
 			$isDeleted,
 			$adminMode
 		);
 
-		// File size warning (if necessary)
+		return [
+			'postPositionEnabled' => $this->config['RENDER_REPLY_NUMBER'],
+			'categoryHTML' => $categoryHTML,
+			'isDeleted' => $isDeleted,
+			'attachmentsHtml' => $attachmentsHtml,
+		];
+	}
+
+	private function bindPostTemplateValues(
+		array &$templateValues,
+		$data,
+		array $metadata,
+		array $contentData,
+		array $warnings,
+		bool $shouldRenderReply,
+		bool $isThreadOp,
+		bool $renderAsOp,
+		string $crossLink,
+		int $threadResno,
+		string $postFormExtra,
+		int $replyCount,
+		string $warnHidePost
+	): void {
+		$shouldRenderOp = $isThreadOp || $renderAsOp;
+
+		if ($shouldRenderReply) {
+			$templateValues = $this->postTemplateBinder->renderReplyPost(
+				$data, 
+				$crossLink, 
+				$contentData['postPositionEnabled'], 
+				$templateValues, 
+				$threadResno,
+				$metadata['nameHtml'], 
+				$contentData['categoryHTML'],
+				$metadata['quoteButton'], 
+				$contentData['attachmentsHtml'], 
+				$warnings['warnBeKill'], 
+				$postFormExtra, 
+			);
+		} elseif ($shouldRenderOp) {
+			$templateValues = $this->postTemplateBinder->renderOpPost(
+				$data, 
+				$metadata['firstAttachment'],
+				$crossLink,
+				$templateValues, 
+				$metadata['nameHtml'], 
+				$contentData['categoryHTML'], 
+				$metadata['quoteButton'], 
+				$contentData['attachmentsHtml'],
+				$metadata['firstAttachmentUrl'],
+				$metadata['replyButton'], 
+				$metadata['recentRepliesButton'],
+				$postFormExtra, 
+				$replyCount, 
+				$warnings['warnOld'], 
+				$warnings['warnBeKill'], 
+				'', 
+				$warnHidePost,
+			);
+		}
+	}
+
+	private function applyCommentQuoteLinks($data, int $threadResno, int $repliesPerPage, int $replyCount): void {
+		$data->setComment(generateQuoteLinkHtml(
+			$this->quoteLinksFromBoard, $data, $threadResno,
+			$this->board->getConfigValue('USE_QUOTESYSTEM'),
+			$this->board, $repliesPerPage, $replyCount
+		));
+		$data->setComment(quote_unkfunc($data->getComment()));
+	}
+
+	private function prepareWarnings(bool $killSensor, bool $isThreadOp, Post $post): array {
 		$warnBeKill = '';
 		if ($this->config['STORAGE_LIMIT'] && $killSensor) {
 			$warnBeKill = '<div class="warning">'._T('warn_sizelimit').'</div>';
 		}
 
-		$templateValues['{$POSTINFO_EXTRA}'] = '';
-
-		// Admin controls hook (if admin mode is on)
-		$postFormExtra .= $this->generateAdminControls($post, $adminMode, $isThreadOp);
-
-		// staff widgets
-		$widgetDataHtml = $this->generateAdminWidgets($post, $threadPosts, $adminMode, $isThreadOp);
-
-		// handle thread max-age message
+		$warnOld = '';
 		if ($isThreadOp) {
 			$maxAgeLimit = $this->config['MAX_AGE_TIME'];
-			$postUnixTimestamp = is_numeric($post['root']) ? $post['root'] : strtotime($post['root']);
-			if ($maxAgeLimit && $_SERVER['REQUEST_TIME'] - $postUnixTimestamp > ($maxAgeLimit * 60 * 60)) {
-				$warnOld .= "<div class='warning'>"._T('warn_oldthread')."</div>";
+			$postUnixTimestamp = is_numeric($post->getRoot()) ? $post->getRoot() : strtotime($post->getRoot());
+			if ($maxAgeLimit && $this->request->getRequestTime() - $postUnixTimestamp > ($maxAgeLimit * 60 * 60)) {
+				$warnOld = "<div class='warning'>"._T('warn_oldthread')."</div>";
 			}
 		}
 
-		// Handle name/trip/capcode HTML generation
+		return ['warnBeKill' => $warnBeKill, 'warnOld' => $warnOld];
+	}
+
+	private function generatePostMetadata($data, int $threadResno, int $replyCount, int $repliesPerPage, bool $threadMode, string $crossLink, bool $isDeleted): array {
 		$nameHtml = generatePostNameHtml(
 			$this->moduleEngine,
-			$data['name'],
-			$data['tripcode'],
-			$data['secure_tripcode'],
-			$data['capcode'],
-			$data['email'],
+			$data->getName(),
+			$data->getTripcode(),
+			$data->getSecureTripcode(),
+			$data->getCapcode(),
+			$data->getEmail(),
 			$this->config['NOTICE_SAGE']
 		);
 
-		// get the total thread pages
-		// used to place the user on the last page for certain actions
 		$totalThreadPages = $replyCount / $repliesPerPage;
 
-		// Generate the quote and reply buttons
-		$quoteButton = $this->postElementGenerator->generateQuoteButton($threadResno, $data['no'], $totalThreadPages, $crossLink);
+		$quoteButton = $this->postElementGenerator->generateQuoteButton($threadResno, $data->getNumber(), $totalThreadPages, $crossLink);
 		$replyButton = $threadMode ? $this->postElementGenerator->generateReplyButton($crossLink, $threadResno, $totalThreadPages) : '';
 		$recentRepliesButton = $threadMode ? $this->postElementGenerator->generateRecentRepliesButton($crossLink, $threadResno, $replyCount) : '';
 
-		// get the page of the post
-		$page = floor($data['post_position'] / $repliesPerPage);
+		$page = floor($data->getPostPosition() / $repliesPerPage);
+		$postUrl = $this->board->getBoardThreadURL($threadResno, $data->getNumber(), false, $page, $crossLink);
 
-		// Generate the post url
-		$postUrl = $this->board->getBoardThreadURL($threadResno, $data['no'], false, $page, $crossLink);
+		$dataAttributes = 'data-post-email="' . sanitizeStr($data->getEmail()) . '" data-post-user-name="' . sanitizeStr($data->getName()) . '" data-post-number="' . $data->getNumber() . '" data-post-uid="' . sanitizeStr($data->getUid()) . '"';
 
-		// bind post url 
-		$templateValues['{$POST_URL}'] = $postUrl;
-
-		// bind attributes
-		$templateValues['{$DATA_ATTRIBUTES}'] = 'data-post-email="' . sanitizeStr($data['email']) . '" data-post-user-name="' . sanitizeStr($data['name']) . '" data-post-number="' . $data['no'] . '" data-post-uid="' . sanitizeStr($data['post_uid']) . '"';
-
-		// get first attachment array key
-		$firstAttachmentArrKey = array_key_first($data['attachments']);
-
-		// get the first attachment
-		// This is needed for the flash board template which uses various 
-		$firstAttachment = $data['attachments'][$firstAttachmentArrKey] ?? [];
-
-		// generate first attachment URL
+		$attachments = $data->getAttachments();
+		$firstAttachmentArrKey = array_key_first($attachments);
+		$firstAttachment = $attachments[$firstAttachmentArrKey] ?? [];
 		$firstAttachmentUrl = $this->attachmentRenderer->generateImageUrl($firstAttachment, false, $isDeleted);
 
-		// Variables to used for the condition for whether to use OP/Reply template block
-		$shouldRenderReply = $isThreadReply && !$renderAsOp;
-		$shouldRenderOp = $isThreadOp || $renderAsOp;
+		return [
+			'nameHtml' => $nameHtml,
+			'quoteButton' => $quoteButton,
+			'replyButton' => $replyButton,
+			'recentRepliesButton' => $recentRepliesButton,
+			'postUrl' => $postUrl,
+			'dataAttributes' => $dataAttributes,
+			'firstAttachment' => $firstAttachment,
+			'firstAttachmentUrl' => $firstAttachmentUrl,
+		];
+	}
 
-		// Bind the template values based on whether it's a reply or OP
-		if ($shouldRenderReply) {
-			$templateValues = $this->postTemplateBinder->renderReplyPost(
-				$data, 
-				$crossLink, 
-				$postPositionEnabled, 
-				$templateValues, 
-				$threadResno,
-				$nameHtml, 
-				$categoryHTML,
-				$quoteButton, 
-				$attachmentsHtml, 
-				$warnBeKill, 
-				$postFormExtra, 
-			);
-		} 
-		// render the thread using the OP template block if its a thread OP.
-		//
-		// also optionally pass the $renderAsOp flag to force it to use the OP template block -
-		// - in order to various HTML problems that can occur across various themes. Which is useful 
-		// - when we're not rendering in a thread format.
-		elseif ($shouldRenderOp) {
-			$templateValues = $this->postTemplateBinder->renderOpPost(
-				$data, 
-				$firstAttachment,
-				$crossLink,
-				$templateValues, 
-				$nameHtml, 
-				$categoryHTML, 
-				$quoteButton, 
-				$attachmentsHtml,
-				$firstAttachmentUrl,
-				$replyButton, 
-				$recentRepliesButton,
-				$postFormExtra, 
-				$replyCount, 
-				$warnOld, 
-				$warnBeKill, 
-				$warnEndReply, 
-				$warnHidePost,
-			);
-		}
-
-		// Dispatch Post event, which is a hook point that will affect every post
+	private function dispatchPostModuleEvents(array &$templateValues, $data, Post $post, array $threadPosts, bool $adminMode, bool $isThreadOp, bool $isThreadReply): void {
 		$board = $this->board;
 		$this->moduleEngine->dispatch('Post', [
-			&$templateValues,
-			&$data,
-			&$threadPosts,
-			&$board,
-			&$adminMode,
+			&$templateValues, &$data, &$threadPosts, &$board, &$adminMode,
 		]);
 
-		// Dispatch comment event, which affects comments specifically
 		$this->moduleEngine->dispatch('PostComment', [
-				&$templateValues['{$COM}'],
-				&$data
+			&$templateValues['{$COM}'], &$data
 		]);
 
-
-		// run below comment hook point
 		$templateValues['{$BELOW_COMMENT}'] = '';
 		$this->moduleEngine->dispatch('BelowComment', [
-			&$templateValues['{$BELOW_COMMENT}'],
-			&$data,
-			&$threadPosts,
-			&$adminMode
+			&$templateValues['{$BELOW_COMMENT}'], &$data, &$threadPosts, &$adminMode
 		]);
 
-		// CSS hook point placeholders
 		$templateValues['{$MODULE_ATTACHMENT_CSS_CLASSES}'] = '';
 		$templateValues['{$MODULE_POST_CSS_CLASSES}'] = '';
 
-		// attachment CSS reference
 		$attachmentCss = &$templateValues['{$MODULE_ATTACHMENT_CSS_CLASSES}'];
-
-		// Dispatch attachment css event
 		$this->moduleEngine->dispatch('AttachmentCssClass', [
-			&$attachmentCss,
-			&$post,
-			&$adminMode
+			&$attachmentCss, &$post, &$adminMode
 		]);
 
-		// post CSS reference
 		$postCss = &$templateValues['{$MODULE_POST_CSS_CLASSES}'];
-
-		// Dispatch post css event
 		$this->moduleEngine->dispatch('PostCssClass', [
-			&$postCss,
-			&$post
+			&$postCss, &$post
 		]);
 
-		// Dispatch reply hook + widget
 		if ($isThreadReply) {
-			// thread reply hook dispatch
 			$this->moduleEngine->dispatch('ThreadReply', [&$templateValues, &$post, &$threadPosts]);
-		
-			// run reply widget
-			$this->postWidget->addThreadReplyWidget($widgetDataHtml, $post);
-		} 
-		// dispatch opening post hook point and widget
-		elseif ($isThreadOp) {
+		} elseif ($isThreadOp) {
 			$this->moduleEngine->dispatch('OpeningPost', [&$templateValues, &$post, &$threadPosts]);
+		}
+	}
 
-			// run opening post widget
+	private function finalizePostWidgets(array &$templateValues, Post $post, array $threadPosts, bool $isThreadOp, bool $isThreadReply, string $widgetDataHtml): void {
+		if ($isThreadReply) {
+			$this->postWidget->addThreadReplyWidget($widgetDataHtml, $post);
+		} elseif ($isThreadOp) {
 			$this->postWidget->addOpeningPostWidget($widgetDataHtml, $post, $threadPosts);
 		}
 
-		// run post widget
 		$this->postWidget->addPostWidget($widgetDataHtml, $post);
-
-		// then, generate the full widget html
 		$templateValues['{$POST_MENU}'] = $this->postWidget->generatePostMenuHtml($widgetDataHtml);
-
-		// Return HTML based on render intent (allow forcing OP layout via $renderAsOp)
-		if ($isThreadReply && !$renderAsOp) {
-			return $this->templateEngine->ParseBlock('REPLY', $templateValues);
-		} 
-		// Render as OP
-		else {
-			return $this->templateEngine->ParseBlock('OP', $templateValues);
-		}
 	}
 
 	/**
@@ -343,7 +361,7 @@ class postRenderer {
 		return $postAttachmentsHtml;
 	}
 
-	private function generateAdminControls(array $post, bool $adminMode, bool $isThreadOp): string {
+	private function generateAdminControls(Post $post, bool $adminMode, bool $isThreadOp): string {
 		// if the user is logged in as a mod, then run thread admin controls
 		if ($adminMode) {
 			$modFunc = '';
@@ -364,7 +382,7 @@ class postRenderer {
 		}
 	}
 
-	private function generateAdminWidgets(array $post, array $threadPosts, bool $adminMode, bool $isThreadOp): string {
+	private function generateAdminWidgets(Post $post, array $threadPosts, bool $adminMode, bool $isThreadOp): string {
 		// if the user is logged in as a mod, then run moderator widgets
 		if ($adminMode) {
 			$widgetDataHtml = '';

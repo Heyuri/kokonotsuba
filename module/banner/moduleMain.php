@@ -3,11 +3,16 @@
 namespace Kokonotsuba\Modules\banner;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
+use Kokonotsuba\module_classes\traits\listeners\PageTopListenerTrait;
 
 use RuntimeException;
 
 class moduleMain extends abstractModuleMain {
-	private readonly string $myPage;
+	use IncludeScriptTrait;
+	use PageTopListenerTrait;
+
+	private readonly string $modulePageUrl;
 	private readonly string $bannerPath;
 	private readonly string $staticUrl;
 
@@ -20,24 +25,15 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->myPage = $this->getModulePageURL();
+		$this->modulePageUrl = $this->getModulePageURL();
 
 		$this->bannerPath = $this->getConfig('ModuleSettings.BANNER_PATH');
 
 		$this->staticUrl = $this->getConfig('STATIC_URL');
 
-		$this->moduleContext->moduleEngine->addListener('ModuleHeader', function(string &$moduleHeader) {
-			$this->onGenerateModuleHeader($moduleHeader);
-		});
+		$this->registerScript('banners.js');
 
-		$this->moduleContext->moduleEngine->addListener('PageTop', function (string &$pageTopHtml) {
-			$this->onRenderPageTop($pageTopHtml);  // Call the method to modify the form
-		});
-	}
-
-	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// include banner js script
-		$this->includeScript('banners.js', $moduleHeader);
+		$this->listenPageTop('onRenderPageTop');
 	}
 
 	private function getAllFilesFromDirectory($directory) {
@@ -77,7 +73,7 @@ class moduleMain extends abstractModuleMain {
 	public function onRenderPageTop(&$html) {
 		$html .= '
       <div id="bannerContainer">
-        <img width="300" height="100" src="' .$this->myPage.'" id="banner" title="Click to change">
+        <img width="300" height="100" src="' .$this->modulePageUrl.'" id="banner" title="Click to change">
       </div>';
 	}
 
@@ -104,7 +100,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function ModulePage() {
-		if(isset($_GET['bannerjson'])) {
+		if($this->moduleContext->request->hasParameter('bannerjson', 'GET')) {
 			$this->outputbannerJSON();
 			return;
 		} else $this->drawBannerRedirect();

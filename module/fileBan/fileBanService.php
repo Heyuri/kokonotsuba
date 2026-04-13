@@ -11,19 +11,12 @@ class fileBanService {
 	) {}
 
 	public function findBannedHashes(array $md5Hashes): array {
-		$result = $this->fileBanRepository->findBannedHashes($md5Hashes);
-		if (!$result) {
-			return [];
-		}
-
-		return array_column($result, 'file_md5');
+		return $this->fileBanRepository->findBannedHashes($md5Hashes);
 	}
 
 	public function addBan(string $md5Hash, int $addedBy): void {
 		$this->transactionManager->run(function () use ($md5Hash, $addedBy) {
-			// check if hash already exists
-			$existing = $this->fileBanRepository->getEntryByHash($md5Hash);
-			if ($existing) {
+			if ($this->fileBanRepository->hashExists($md5Hash)) {
 				return;
 			}
 
@@ -33,8 +26,7 @@ class fileBanService {
 
 	public function getEntries(int $limit, int $page): array {
 		$offset = $limit * $page;
-		$result = $this->fileBanRepository->getEntries($limit, $offset);
-		return $result ?: [];
+		return $this->fileBanRepository->getEntries($limit, $offset);
 	}
 
 	public function getTotalEntries(): int {

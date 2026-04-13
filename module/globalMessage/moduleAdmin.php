@@ -6,13 +6,16 @@ namespace Kokonotsuba\Modules\globalMessage;
 include_once __DIR__ . '/globalMessageLibrary.php';
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\rebuildAllBoards;
 
 class moduleAdmin extends abstractModuleAdmin {
-	private readonly string $myPage;
+	use PostControlHooksTrait;
+
+	private readonly string $modulePageUrl;
 	private readonly string $globalMessageFile;
 
     public function getRequiredRole(): userRole {
@@ -32,33 +35,23 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		if(!file_exists($this->globalMessageFile)) touch($this->globalMessageFile);
 		
-		$this->myPage = $this->getModulePageURL();
+		$this->modulePageUrl = $this->getModulePageURL([], false);
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'LinksAboveBar',
-			function(string &$linkHtml) {
-				$this->onRenderLinksAboveBar($linkHtml);
-			}
-		);
+		$this->registerLinksAboveBarHook(_T('admin_nav_global_message_title'), $this->modulePageUrl, _T('admin_nav_global_message'));
 	}
 
-	public function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_global_message_title') . '" href="' . $this->myPage . '">' . _T('admin_nav_global_message') . '</a></li>';
-	}	
-
 	public function ModulePage() {
-		$action = $_GET['action'] ?? '';
+		$action = $this->moduleContext->request->getParameter('action', 'GET', '');
 
-		if ($action === 'setmessage' && isset($_POST['submit'])) {
-			$message = $_POST['content'] ?? '';
+		if ($action === 'setmessage' && $this->moduleContext->request->hasParameter('submit', 'POST')) {
+			$message = $this->moduleContext->request->getParameter('content', 'POST', '');
 			writeToGlobalMsg($this->globalMessageFile, $message);
 			rebuildAllBoards();
 		}
 
 		$templateValues = [
 			'{$CURRENT_GLOBAL_MESSAGE}' => getCurrentGlobalMsg($this->globalMessageFile),
-			'{$MODULE_URL}' => $this->myPage
+			'{$MODULE_URL}' => $this->modulePageUrl
 		];
 
 		$globalMessagePageHtml = $this->moduleContext->adminPageRenderer->ParseBlock('GLOBALMSG_PAGE', $templateValues);

@@ -6,6 +6,7 @@ use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\board\board;
 use Kokonotsuba\interfaces\IBoard;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
@@ -19,7 +20,7 @@ class pageRenderer {
 	private board $board;
 
 	// depend on templateEngine
-	public function __construct(templateEngine $templateEngine, moduleEngine $moduleEngine, IBoard $board) {
+	public function __construct(templateEngine $templateEngine, moduleEngine $moduleEngine, IBoard $board, private readonly request $request) {
 		$this->templateEngine = $templateEngine;
 		$this->moduleEngine = $moduleEngine;
 		$this->board = $board;
@@ -49,7 +50,7 @@ class pageRenderer {
 			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'boards', _T('admin_nav_boards'), userRole::LEV_ADMIN, _T('admin_nav_boards_title'));
 
 			// add the admin links to html output
-			$htmlOutput .= generateAdminLinkButtons($liveIndexFile, $staticIndexFile, $this->moduleEngine, $adminLinkHtml);
+			$htmlOutput .= generateAdminLinkButtons($liveIndexFile, $staticIndexFile, $this->moduleEngine, $adminLinkHtml, $this->request);
 
 			// add admin threading
 			$htmlOutput .= drawAdminTheading($thead, new staffAccountFromSession);

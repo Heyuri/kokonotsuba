@@ -3,11 +3,13 @@
 namespace Kokonotsuba\Modules\deletedPosts;
 
 use Kokonotsuba\board\board;
+use Kokonotsuba\cookie\cookieService;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\userRole;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\post\helper\postDateFormatter;
+use Kokonotsuba\post\deletion\DeletedPost;
 use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\renderers\postRenderer;
 use Kokonotsuba\quote_link\quoteLinkService;
@@ -15,10 +17,15 @@ use RuntimeException;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\renderers\threadRenderer;
 use Kokonotsuba\thread\threadService;
+use Kokonotsuba\thread\ThreadData;
+use Kokonotsuba\request\request;
 
 use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\html\drawDeletedPostsFilterForm;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Kokonotsuba\libraries\getFiltersFromRequest;
+use function Puchiko\strings\buildSmartQuery;
 
 class deletedPostRenderer {
 	public function __construct(
@@ -32,29 +39,32 @@ class deletedPostRenderer {
 		private pageRenderer $adminPageRenderer,
 		private threadService $threadService,
 		private quoteLinkService $quoteLinkService,
+		private cookieService $cookieService,
 		private string $modulePageUrl,
 		private string $restoredIndexUrl,
 		private userRole $requiredRoleForDeleteRestoredRecord,
 		private postDateFormatter $postDateFormatter,
+		private readonly request $request,
 	) {}
 
 	public function drawModPage(int $accountId, userRole $roleLevel): void {
 		// get page number from GET
-		$page = $_GET['page'] ?? 0;
+		$page = $this->request->getParameter('page', 'GET', 0);
 
 		// certain actions involve drawing/GET
-		$pageName = $_GET['pageName'] ?? null;
+		$pageName = $this->request->getParameter('pageName', 'GET');
 
-		// init post renderer
+		// init post renderer using the board's template engine (has OP/REPLY blocks)
 		$postRenderer = new postRenderer(
 			$this->board, 
 			$this->config, 
 			$this->moduleEngine, 
 			$this->moduleTemplateEngine, 
-			[]
+			[],
+			$this->request
 		);
 		
-		// init thread renderer
+		// init thread renderer using the board's template engine
 		$threadRenderer = new threadRenderer(
 			$this->board->loadBoardConfig(), 
 			$this->moduleTemplateEngine, 
@@ -85,7 +95,7 @@ class deletedPostRenderer {
 
 	private function handlePostView(userRole $roleLevel, int $accountId, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
 		// to view a deleted post in full detail we need the deleted post id
-		$deletedPostId = $_GET['deletedPostId'] ?? null;
+		$deletedPostId = $this->request->getParameter('deletedPostId', 'GET');
 
 		// cast to int
 		$deletedPostId = (int)$deletedPostId;
@@ -115,11 +125,13 @@ class deletedPostRenderer {
 	}
 
 	private function handleRestoredPostIndex(userRole $roleLevel, int $page, int $accountId, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
-		$this->handlePostIndex($roleLevel, $page, $accountId, $postRenderer, $threadRenderer, 'restored', 'Restored posts');
+		$filters = $this->resolveFilters('restoredIndex');
+		$this->handlePostIndex($roleLevel, $page, $accountId, $postRenderer, $threadRenderer, 'restored', 'Restored posts', $filters);
 	}
 
 	private function handleDeletedPostIndex(userRole $roleLevel, int $page, int $accountId, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
-		$this->handlePostIndex($roleLevel, $page, $accountId, $postRenderer, $threadRenderer, 'deleted', 'Deleted posts');
+		$filters = $this->resolveFilters();
+		$this->handlePostIndex($roleLevel, $page, $accountId, $postRenderer, $threadRenderer, 'deleted', 'Deleted posts', $filters);
 	}
 
 	private function handlePostIndex(
@@ -129,7 +141,8 @@ class deletedPostRenderer {
 		postRenderer $postRenderer,
 		threadRenderer $threadRenderer,
 		string $type,
-		string $title
+		string $title,
+		array $filters = []
 	): void {
 		// get paginated results
 		$isRestored = $type === 'restored';
@@ -140,16 +153,16 @@ class deletedPostRenderer {
 		if($roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {
 			if($isRestored) {
 				// get the restored posts from the database
-				$posts = $deletedPostsService->getRestoredPosts($page, $pageDef);
+				$posts = $deletedPostsService->getRestoredPosts($page, $pageDef, $filters);
 
 				// get the total amount of restored posts
-				$postsCount = $deletedPostsService->getTotalAmountOfRestoredPosts();
+				$postsCount = $deletedPostsService->getTotalAmountOfRestoredPosts($filters);
 			} else {
 				// get the deleted posts from the database
-				$posts = $deletedPostsService->getDeletedPosts($page, $pageDef);
+				$posts = $deletedPostsService->getDeletedPosts($page, $pageDef, $filters);
 
 				// get the total amount of deleted posts
-				$postsCount = $deletedPostsService->getTotalAmountOfDeletedPosts();
+				$postsCount = $deletedPostsService->getTotalAmountOfDeletedPosts($filters);
 			}
 		} 
 		
@@ -157,21 +170,21 @@ class deletedPostRenderer {
 		else {
 			if($isRestored) {
 				// only get posts restored by the staff
-				$posts = $deletedPostsService->getRestoredPostsByAccount($accountId, $page, $pageDef);
+				$posts = $deletedPostsService->getRestoredPostsByAccount($accountId, $page, $pageDef, $filters);
 
 				// get the total amount
-				$postsCount = $deletedPostsService->getTotalAmountOfRestoredPostsFromAccountId($accountId);
+				$postsCount = $deletedPostsService->getTotalAmountOfRestoredPostsFromAccountId($accountId, $filters);
 			} else {
 				// only get posts deleted by the staff
-				$posts = $deletedPostsService->getDeletedPostsByAccount($accountId, $page, $pageDef);
+				$posts = $deletedPostsService->getDeletedPostsByAccount($accountId, $page, $pageDef, $filters);
 
 				// get the total amount
-				$postsCount = $deletedPostsService->getTotalAmountOfDeletedPostsFromAccountId($accountId);
+				$postsCount = $deletedPostsService->getTotalAmountOfDeletedPostsFromAccountId($accountId, $filters);
 			}
 		}
 		
 		// finalize html output
-		$this->handleHtmlOutput($roleLevel, $posts, $postsCount, $postRenderer, $threadRenderer, $title);
+		$this->handleHtmlOutput($roleLevel, $posts, $postsCount, $postRenderer, $threadRenderer, $title, $filters);
 	}
 
 	private function outputAdminPage(string $pageContentHtml, string $pagerHtml = ''): void {
@@ -188,10 +201,10 @@ class deletedPostRenderer {
 		echo $pageHtml;
 	}
 
-	private function drawDeletedPostView(userRole $roleLevel, array $deletedPost, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
+	private function drawDeletedPostView(userRole $roleLevel, DeletedPost $deletedPost, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
 		// if its a thread then get the thread data
-		if($deletedPost['is_op']) {
-			$thread = $this->threadService->getThreadAllReplies($deletedPost['thread_uid'], true, 0);
+		if($deletedPost->isOp()) {
+			$thread = $this->threadService->getThreadAllReplies($deletedPost->getThreadUid(), true, 0);
 
 			// throw error if thread not found
 			if(!$thread) {
@@ -199,14 +212,14 @@ class deletedPostRenderer {
 			}
 
 			// get the post uids from the thread
-			$postUids = $thread['post_uids'];
+			$postUids = $thread->getPostUids();
 		} 
 		// just set it blank
 		else {
-			$thread = [];
+			$thread = null;
 
 			// but set the post uids to be the post uid of the deleted post
-			$postUids = [$deletedPost['post_uid']];
+			$postUids = [$deletedPost->getUid()];
 		}
 
 		// get the quotelinks
@@ -228,7 +241,7 @@ class deletedPostRenderer {
 		$deletedPostTemplateValues['{$IS_VIEW}'] = true;
 
 		// get the url of the view
-		$url = $this->deletedPostUtility->generateDeletedPostViewUrl($deletedPost['deleted_post_id']);
+		$url = $this->deletedPostUtility->generateDeletedPostViewUrl($deletedPost->getDeletedPostId());
 
 		// add url for the view
 		$deletedPostTemplateValues['{$VIEW_URL}'] = htmlspecialchars($url);
@@ -251,9 +264,9 @@ class deletedPostRenderer {
 		$this->outputAdminPage($deletedPostEntryPage);
 	}
 
-	private function generateBackUrl(array $deletedPost): string {
+	private function generateBackUrl(DeletedPost $deletedPost): string {
 		// flag for if its restored or not
-		$isRestoredPost = $deletedPost['open_flag'] === 0;
+		$isRestoredPost = $deletedPost->getOpenFlag() === 0;
 
 		// if its a restored post then make the [Back] url go to the restored index
 		if($isRestoredPost) {
@@ -272,13 +285,14 @@ class deletedPostRenderer {
 		int $deletedPostsCount, 
 		postRenderer $postRenderer, 
 		threadRenderer $threadRenderer,
-		string $moduleHeader = 'Deleted posts'
+		string $moduleHeader = 'Deleted posts',
+		array $filters = []
 	): void {
 		// Normalize null to empty array
 		$deletedPosts = $deletedPosts ?? [];
 
 		// get post uids
-		$postUids = array_column($deletedPosts, 'post_uid');
+		$postUids = array_map(fn(DeletedPost $p) => $p->getUid(), $deletedPosts);
 
 		// then get the quote links for the posts
 		$quoteLinks = $this->quoteLinkService->getQuoteLinksByPostUids($postUids, true);
@@ -302,17 +316,27 @@ class deletedPostRenderer {
 				$threadRenderer
 			);
 		}
+
+		// determine if the user can view IP addresses
+		$canViewIp = $roleLevel->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_VIEW_IP_ADDRESSES', \Kokonotsuba\userRole::LEV_MODERATOR));
+
+		// render the filter form
+		$filterFormHtml = '';
+		$formAction = $this->board->getBoardURL(true);
+		$hiddenPageName = ($this->request->getParameter('pageName', 'GET') === 'restoredIndex') ? 'restoredIndex' : '';
+		drawDeletedPostsFilterForm($filterFormHtml, $formAction, $filters, $canViewIp, $hiddenPageName);
 		
 		// bind deleted posts list html to placeholder
 		$deletedPostsPageHtml = $this->adminPageRenderer->ParseBlock(
 			'DELETED_POSTS_MOD_PAGE',
 			[
 				'{$DELETED_POSTS}' => $deletedPostListValues,
-				'{$SHOW_DELETED_POSTS}' => $_COOKIE['viewDeletedPosts'] ?? true,
+				'{$SHOW_DELETED_POSTS}' => $this->cookieService->get('viewDeletedPosts', true),
 				'{$CAN_VIEW_ALL_DELETED_POSTS}' => $roleLevel->isAtLeast($this->requiredRoleActionForModAll),
 				'{$ARE_NO_POSTS}' => $areNoPosts,
 				'{$MODULE_HEADER_TEXT}' => $moduleHeader,
-				'{$URL}' => htmlspecialchars($this->modulePageUrl)
+				'{$URL}' => htmlspecialchars($this->modulePageUrl),
+				'{$FILTER_FORM}' => $filterFormHtml
 			]
 		);
 
@@ -320,14 +344,18 @@ class deletedPostRenderer {
 		$pagerUrl = $this->modulePageUrl;
 
 		// generate the url for the pager
-		if(isset($_GET['pageName']) && $_GET['pageName'] === 'restoredIndex') {
+		if($this->request->getParameter('pageName', 'GET') === 'restoredIndex') {
 			$pagerUrl .= '&pageName=restoredIndex';
 		}
+
+		// append active filter params to the pager url
+		$defaultFilters = $this->getDefaultFilters();
+		$pagerUrl = buildSmartQuery($pagerUrl, $defaultFilters, $filters);
 
 		// pager
 		$entriesPerPage = $this->board->getConfigValue('PAGE_DEF');
 		$totalEntries = $deletedPostsCount;
-		$pager = drawPager($entriesPerPage, $totalEntries, $pagerUrl);
+		$pager = drawPager($entriesPerPage, $totalEntries, $pagerUrl, $this->request);
 		
 		// output the admin page
 		$this->outputAdminPage($deletedPostsPageHtml, $pager);
@@ -353,23 +381,23 @@ class deletedPostRenderer {
 
 	private function prepareDeletedEntryPlaceholders(
 		userRole $roleLevel,
-		array $deletedEntry, 
+		DeletedPost $deletedEntry, 
 		postRenderer $postRenderer, 
 		threadRenderer $threadRenderer, 
 		bool $showAll = false, 
-		array $thread = []
+		?ThreadData $thread = null
 		): array {
 		// post board uid 
-		$boardUID = $deletedEntry['boardUID'];
+		$boardUID = $deletedEntry->getBoardUID();
 
 		// username of the staff/user who deleted the post
-		$deletedByUsername = $deletedEntry['deleted_by_username'] ?? null;
+		$deletedByUsername = $deletedEntry->getDeletedByUsername() ?? null;
 
 		// username of the staff who deleted the post
-		$restoredByUsername = $deletedEntry['restored_by_username'] ?? null;
+		$restoredByUsername = $deletedEntry->getRestoredByUsername() ?? null;
 
 		// timestamp the post was deleted at
-		$deletedTimestamp = $deletedEntry['deleted_at'];
+		$deletedTimestamp = $deletedEntry->getDeletedAt();
 
 		// board the post was made to
 		$board = searchBoardArrayForBoard($boardUID);
@@ -378,7 +406,7 @@ class deletedPostRenderer {
 		$boardTitle = $board->getBoardTitle();
 
 		// id of the deleted post row
-		$id = $deletedEntry['deleted_post_id'];
+		$id = $deletedEntry->getDeletedPostId();
 
 		// url to view more detailed information about the post
 		$viewMoreUrl = $this->generateViewMoreUrl($id, $this->modulePageUrl);
@@ -387,7 +415,7 @@ class deletedPostRenderer {
 		$postHtml = $this->generatePostHtml($deletedEntry, $thread, $showAll, $postRenderer, $threadRenderer);
 
 		// attachment only deletion
-		$isAttachmentOnly = !empty($deletedEntry['file_id']) && !empty($deletedEntry['file_only_deleted']);
+		$isAttachmentOnly = !empty($deletedEntry->getFileId()) && !empty($deletedEntry->getFileOnlyDeleted());
 
 		// put together the placeholder => value
 		$templateValues = [
@@ -399,9 +427,9 @@ class deletedPostRenderer {
 			'{$BOARD_TITLE}' => $boardTitle,
 			'{$VIEW_MORE_URL}' => htmlspecialchars($viewMoreUrl),
 			'{$POST_HTML}' => $postHtml,
-			'{$IS_OPEN}' => $deletedEntry['open_flag'] ? 1 : null,
+			'{$IS_OPEN}' => $deletedEntry->getOpenFlag() ? 1 : null,
 			'{$IS_ATTACHMENT_ONLY}' => $isAttachmentOnly,
-			'{$RESTORED_AT}' => isset($deletedEntry['restored_at']) ? $this->postDateFormatter->formatFromDateString($deletedEntry['restored_at']) : '',
+			'{$RESTORED_AT}' => ($deletedEntry->getRestoredAt() !== null) ? $this->postDateFormatter->formatFromDateString($deletedEntry->getRestoredAt()) : '',
 			'{$RESTORED_BY}' => htmlspecialchars($restoredByUsername),
 			'{$SHOW_ALL}' => htmlspecialchars($showAll),
 			'{$URL}' => htmlspecialchars($this->modulePageUrl),
@@ -413,14 +441,14 @@ class deletedPostRenderer {
 	}
 
 	private function generatePostHtml(
-		array $deletedEntry, 
-		array $thread, 
+		DeletedPost $deletedEntry, 
+		?ThreadData $thread, 
 		bool $showAll, 
 		postRenderer $postRenderer, 
 		threadRenderer $threadRenderer
 	): string {
 		// Attachment-only view
-		if ($deletedEntry['file_only_deleted']) {
+		if ($deletedEntry->getFileOnlyDeleted()) {
 			return $this->renderAttachmentDeletion($deletedEntry, $postRenderer);
 		}
 
@@ -428,35 +456,35 @@ class deletedPostRenderer {
 		$templateValues = [];
 
 		// get the board of the post
-		$board = searchBoardArrayForBoard($deletedEntry['boardUID']);
+		$board = searchBoardArrayForBoard($deletedEntry->getBoardUID());
 
 		// get the base url of the board
 		$boardUrl = $board->getBoardURL();
 
 		// if the post is a reply then render it as an OP
-		if(!$deletedEntry['is_op'] || !$showAll) {
+		if(!$deletedEntry->isOp() || !$showAll) {
 			// flag to make sure the reply gets rendered using the OP template block
 			$renderAsOp = true;
 
 			// fetch thread number and default to zero if it isn't there for some reason
-			$threadNumber = $deletedEntry['post_op_number'] ?? 0;
+			$threadNumber = $deletedEntry->getOpNumber();
 
 			// html of the post / thread
-			$postHtml = $postRenderer->render($deletedEntry, $templateValues, $threadNumber, false, [$deletedEntry], true, '', '', '', '', '', 0, false, $boardUrl, $renderAsOp);
+			$postHtml = $postRenderer->render($deletedEntry, $templateValues, $threadNumber, false, [$deletedEntry], true, '', '', 0, false, $boardUrl, $renderAsOp);
 		}
 		// if its a thread (and we're showing all) then render it along with its replies
-		elseif ($deletedEntry['is_op'] && $showAll) {
+		elseif ($deletedEntry->isOp() && $showAll) {
 			// posts from the thread
-			$posts = $thread['posts'];
+			$posts = $thread->getPosts();
 			
 			// make every post marked as deleted
-			$posts = array_map(function($row) {
+			$posts = array_map(function(DeletedPost $row) {
 				//$row['open_flag'] = 1;  // mark row as deleted
    				return $row;
 			}, $posts);
 
 			// thread html
-			$postHtml = $threadRenderer->render([$thread], true, $thread['thread'], $posts, 0, false, true, 0, '', $boardUrl, $templateValues);
+			$postHtml = $threadRenderer->render([$thread], true, $thread->getThread(), $posts, 0, false, true, 0, '', $boardUrl, $templateValues);
 		}
 
 		// return post/thread html
@@ -467,21 +495,21 @@ class deletedPostRenderer {
 	 * Render ONLY the deleted attachment for an attachment-only deletion entry.
 	 * The post itself is NOT marked deleted — only the attachment.
 	 */
-	private function renderAttachmentDeletion(array $deletedEntry, postRenderer $postRenderer): string {
+	private function renderAttachmentDeletion(DeletedPost $deletedEntry, postRenderer $postRenderer): string {
 		// file id of the deleted attachment
-		$fileId = $deletedEntry['file_id'];
+		$fileId = $deletedEntry->getFileId();
 
-		// if deleted_attachments[field] doesn’t exist, return empty
-		if (empty($deletedEntry['deleted_attachments'][$fileId]) || empty($deletedEntry['attachments'][$fileId])) {
+		// if deleted_attachments[field] doesn't exist, return empty
+		if (empty($deletedEntry->getDeletedAttachments()[$fileId]) || !$deletedEntry->getAttachmentById($fileId)) {
 			return '<div class="error centerText">' . _T('attachment_not_found') . '</div>';
 		}
 
 		// get the deleted attachment metadata
-		$deletedAttachmentMeta = $deletedEntry['deleted_attachments'][$fileId];
+		$deletedAttachmentMeta = $deletedEntry->getDeletedAttachments()[$fileId];
 
 		// get attachment
 		// null if its not found
-		$attachment = $deletedEntry['attachments'][$fileId];
+		$attachment = $deletedEntry->getAttachmentById($fileId);
 
 		// But overwrite fields to indicate that it's deleted
 		$attachment['is_deleted'] = true;
@@ -520,6 +548,43 @@ class deletedPostRenderer {
 
 		// return generated url
 		return $actionUrl;	
+	}
+
+	private function getDefaultFilters(): array {
+		return [
+			'deleted_by_type' => '',
+			'post_type' => '',
+			'staff_username' => '',
+			'ip_address' => ''
+		];
+	}
+
+	private function resolveFilters(string $pageName = ''): array {
+		// determine if the filter form was submitted
+		$isSubmission = $this->request->hasParameter('filterSubmissionFlag', 'GET');
+
+		// build the base URL for redirect
+		$baseUrl = $this->modulePageUrl;
+		if ($pageName !== '') {
+			$baseUrl .= '&pageName=' . urlencode($pageName);
+		}
+
+		// get default filters
+		$defaultFilters = $this->getDefaultFilters();
+
+		// read filters from request (handles redirect on form submission)
+		$filters = getFiltersFromRequest($baseUrl, $isSubmission, $defaultFilters, $this->request);
+
+		// strip ip_address if user lacks permission
+		$canViewIp = false;
+		$staffAccount = new \Kokonotsuba\account\staffAccountFromSession;
+		$roleLevel = $staffAccount->getRoleLevel();
+		$canViewIp = $roleLevel->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_VIEW_IP_ADDRESSES', \Kokonotsuba\userRole::LEV_MODERATOR));
+		if (!$canViewIp && !empty($filters['ip_address'])) {
+			$filters['ip_address'] = '';
+		}
+
+		return $filters;
 	}
 
 }

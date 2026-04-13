@@ -264,6 +264,8 @@ $language['pm_contact_self'] = 'Kendiniz';
 $language['pm_login_description'] = 'Özel mesajlarınıza erişmek için tripcode\'unuzu girin.';
 $language['pm_tripcode_login_hash_note'] = '\'#\' işaretini ve ardından tripcode şifrenizi ekleyin. Güvenli tripcode için iki adet \'#\' (##) kullanın.';
 $language['pm_tripcode_login_label'] = 'Tripcode:';
+$language['pm_notification_title'] = 'Yeni Özel Mesajlar';
+$language['pm_notification_body'] = '%d okunmamış mesajınız var.';
 
 $language['admin_nav_capcodes_title'] = 'Kullanıcı capcode\'larını yönetin ve yetkili capcode\'larını görüntüleyin';
 $language['admin_nav_capcodes'] = 'Capcode\'lar';
@@ -307,6 +309,26 @@ $language['file_ban_index_title'] = 'Yasaklı dosyalar';
 $language['file_ban_no_entries'] = 'Yasaklı dosya yok.';
 $language['admin_nav_file_ban_title'] = 'Yasaklı dosyaları yönet';
 $language['admin_nav_file_ban'] = 'Dosya yasakları';
+
+// perceptualBan module
+$language['perceptual_ban_blocked'] = 'Yükleme başarısız.<br> Dosyaya izin verilmiyor (algısal eşleşme).';
+$language['perceptual_ban_btn_title'] = 'Bu dosyayı algısal olarak yasakla';
+$language['perceptual_ban_bd_btn_title'] = 'Dosyayı algısal olarak yasakla ve sil';
+$language['perceptual_ban_invalid_action'] = 'Geçersiz algısal yasaklama işlemi.';
+$language['perceptual_ban_invalid_hash'] = 'Geçersiz algısal hash. 16 hex karakter olmalıdır.';
+$language['perceptual_ban_no_file'] = 'Dosya belirtilmedi.';
+$language['perceptual_ban_file_missing'] = 'Dosya diskte bulunamadı.';
+$language['perceptual_ban_hash_failed'] = 'Bu dosya için algısal hash hesaplanamadı.';
+$language['perceptual_ban_add_title'] = 'Algısal dosya yasağı ekle';
+$language['perceptual_ban_hash_label'] = 'pHash (hex)';
+$language['perceptual_ban_added_by_label'] = 'Ekleyen';
+$language['perceptual_ban_date_label'] = 'Tarih';
+$language['perceptual_ban_delete_label'] = 'Sil';
+$language['perceptual_ban_threshold_label'] = 'Hamming mesafesi eşiği';
+$language['perceptual_ban_index_title'] = 'Algısal yasaklı dosyalar';
+$language['perceptual_ban_no_entries'] = 'Algısal yasaklı dosya yok.';
+$language['admin_nav_perceptual_ban_title'] = 'Algısal dosya yasaklarını yönet';
+$language['admin_nav_perceptual_ban'] = 'Algısal yasaklar';
 
 ?>
 

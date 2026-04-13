@@ -154,6 +154,64 @@ function drawManagePostsFilterForm(string &$dat, board $board, array $filters, b
 		</details>
 	</form>';
 }
+
+function drawDeletedPostsFilterForm(string &$dat, string $formAction, array $filters, bool $canViewIp, string $hiddenPageName = '') {
+	$filterDeletedByType = $filters['deleted_by_type'] ?? '';
+	$filterPostType = $filters['post_type'] ?? '';
+	$filterIP = $filters['ip_address'] ?? '';
+	$filterStaffUsername = $filters['staff_username'] ?? '';
+
+	$dat .= '
+	<form class="detailsboxForm" action="' . htmlspecialchars($formAction) . '" method="get">
+		<details id="filtercontainer" class="detailsbox">
+			<summary>Filter deleted posts</summary>
+			<div class="detailsboxContent">
+				<input type="hidden" name="mode" value="module">
+				<input type="hidden" name="load" value="deletedPosts">
+				<input type="hidden" name="moduleMode" value="admin">
+				<input type="hidden" name="filterSubmissionFlag" value="true">
+				' . ($hiddenPageName ? '<input type="hidden" name="pageName" value="' . htmlspecialchars($hiddenPageName) . '">' : '') . '
+
+				<table class="centerBlock">
+					<tbody>
+						<tr>
+							<td class="postblock"><label for="deleted_by_type">Deleted by</label></td>
+							<td>
+								<select class="inputtext" id="deleted_by_type" name="deleted_by_type">
+									<option value=""' . ($filterDeletedByType === '' ? ' selected' : '') . '>All</option>
+									<option value="staff"' . ($filterDeletedByType === 'staff' ? ' selected' : '') . '>Staff</option>
+									<option value="user"' . ($filterDeletedByType === 'user' ? ' selected' : '') . '>User (self-deletion)</option>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td class="postblock"><label for="post_type">Post type</label></td>
+							<td>
+								<select class="inputtext" id="post_type" name="post_type">
+									<option value=""' . ($filterPostType === '' ? ' selected' : '') . '>All</option>
+									<option value="op"' . ($filterPostType === 'op' ? ' selected' : '') . '>Thread (OP)</option>
+									<option value="reply"' . ($filterPostType === 'reply' ? ' selected' : '') . '>Reply</option>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td class="postblock"><label for="staff_username">Staff username</label></td>
+							<td><input class="inputtext" id="staff_username" name="staff_username" value="' . htmlspecialchars($filterStaffUsername) . '"></td>
+						</tr>
+						' . ($canViewIp ? '<tr>
+							<td class="postblock"><label for="ip_address">IP address</label></td>
+							<td><input class="inputtext" id="ip_address" name="ip_address" value="' . htmlspecialchars($filterIP) . '"></td>
+						</tr>' : '') . '
+					</tbody>
+				</table>
+				<div class="buttonSection">
+					<button type="submit" name="filterformsubmit" value="filter">Filter</button>
+					<input type="reset" value="Reset">
+				</div>
+			</div>
+		</details>
+	</form>';
+}
 	
 function drawOverboardFilterForm(&$dat, board $board, array $boards, array $allowedBoards) {
 	$boardCheckboxHTML = generateBoardListCheckBoxHTML($allowedBoards, $boards);

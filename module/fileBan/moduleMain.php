@@ -8,11 +8,14 @@ require_once __DIR__ . '/fileBanLib.php';
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\Modules\fileBan\getFileBanService;
 
 class moduleMain extends abstractModuleMain {
+	use RegistBeginListenerTrait;
+
 	private fileBanService $fileBanService;
 
 	public function getName(): string {
@@ -24,14 +27,14 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (&$registInfo) {
-			$this->onRegistBegin($registInfo['files']);
-		});
+		$this->listenRegistBegin('onRegistBegin');
 
 		$this->fileBanService = getFileBanService($this->moduleContext->transactionManager);
 	}
 
-	private function onRegistBegin(array $files): void {
+	private function onRegistBegin(array &$registInfo): void {
+		$files = $registInfo['files'];
+
 		if (empty($files)) {
 			return;
 		}

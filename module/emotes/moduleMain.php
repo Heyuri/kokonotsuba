@@ -2,12 +2,21 @@
 
 namespace Kokonotsuba\Modules\emotes;
 
-use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\CommentExtrasListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
+use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
 
 class moduleMain extends abstractModuleMain {
+	use PostCommentListenerTrait;
+	use CommentExtrasListenerTrait;
+	use IncludeScriptTrait;
+	use FormattingDetailsTrait;
+
     // The assoc emotes list used for the search and replace in comment
     private array $emotes;
+    private array $kaomoji;
 
     // The url of where emotes are stored in the static emote web directory
     private string $baseEmoteUrl;
@@ -23,14 +32,55 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// get emote list from config
 		$this->emotes = $this->getConfig('ModuleSettings.EMOTES', []);
+		$this->kaomoji = $this->getConfig('ModuleSettings.KAOMOJI', []);
 
         // get base emote url
         $this->baseEmoteUrl = $this->getConfig('STATIC_URL') . 'image/emote/';
 
         // add hook point listener for post
-		$this->moduleContext->moduleEngine->addListener('PostComment', function(string &$postComment, array &$post) {
-			$this->onRenderComment($postComment);
-		});
+		$this->listenPostComment('onRenderComment');
+
+		// render emote picker in post form
+		$this->listenCommentExtras('onRenderCommentExtras');
+
+		$this->registerScript('addemotes.js');
+	}
+
+	private function onRenderCommentExtras(string &$html): void {
+		$html .= $this->renderEmoteButtons();
+		$html .= $this->renderKaomojiButtons();
+	}
+
+	private function renderEmoteButtons(): string {
+		if (empty($this->emotes)) {
+			return '';
+		}
+		$buttons = '';
+		foreach ($this->emotes as $emo => $name) {
+			$url = htmlspecialchars($this->baseEmoteUrl . $name);
+			$value = htmlspecialchars(':' . $emo . ':');
+			$buttons .= '<button type="button" class="buttonEmote emoteButton" title="' . $value . '">'
+				. '<img class="emoteImage" src="' . $url . '" loading="lazy" title="' . $value . '" alt="' . $value . '">'
+				. '</button>';
+		}
+
+		return $this->renderFormattingDetails('emotesContainer', 'Emotes', $buttons);
+	}
+
+	private function renderKaomojiButtons(): string {
+		if (empty($this->kaomoji)) {
+			return '';
+		}
+		$buttons = '';
+		foreach ($this->kaomoji as $display => $value) {
+			$escapedValue = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+			$escapedDisplay = htmlspecialchars($display, ENT_QUOTES, 'UTF-8');
+			$buttons .= '<button type="button" class="buttonSJIS kaomojiButton" title="' . $escapedValue . '" data-value="' . $escapedValue . '">'
+				. '<span class="ascii" title="' . $escapedValue . '">' . $escapedDisplay . '</span>'
+				. '</button>';
+		}
+
+		return $this->renderFormattingDetails('kaomojiContainer', 'Kaomoji', $buttons);
 	}
 
     private function onRenderComment(string &$comment): void {

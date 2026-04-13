@@ -4,15 +4,19 @@ namespace Kokonotsuba\Modules\animatedGif;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\AuditableTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\getAttachmentUrl;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use AuditableTrait;
+	use PostControlHooksTrait;
+
 	public function getRequiredRole(): userRole {
 		return userRole::LEV_JANITOR;
 	}
@@ -26,44 +30,25 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModerateAttachment',
-			function(
-				string &$attachmentProperties, 
-				string &$attachmentImage, 
-				string &$attachmentUrl, 
-				array &$attachment,
-			) {
-				$this->onRenderAttachment($attachmentProperties, $attachment);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
+		$this->registerAttachmentHook('onRenderAttachment');
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
 	}
 	
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
-		if ($this->canAnimateAttachment($attachment)) {
-			// append animate gif button
-			$attachmentProperties .= $this->generateAnimateGifButton($attachment);
+		$isGif = $this->canAnimateAttachment($attachment);
+
+		$buttonHtml = '';
+		if ($isGif) {
+			$animatedGifButtonUrl = $this->generateAnimatedGifUrl($attachment['postUid'], $attachment['fileId']);
+			$flag = ($attachment['isAnimated']) ? 'g' : 'G';
+			$title = ($attachment['isAnimated']) ? 'Use still image of GIF' : 'Use animated GIF';
+			$buttonHtml = $this->renderAttachmentButton($animatedGifButtonUrl, 'GIF', $title, $flag);
 		}
+		$attachmentProperties .= $this->renderAttachmentIndicator('animateGif', $buttonHtml, !$isGif);
 	}
 
 	private function canAnimateAttachment(array $attachment): bool {
 		return $attachment['fileExtension'] === 'gif';
-	}
-
-	private function generateAnimateGifButton(array $attachment): string {
-		$animatedGifButtonUrl = $this->generateAnimatedGifUrl($attachment['postUid'], $attachment['fileId']);
-		$flag = ($attachment['isAnimated']) ? 'title="Use still image of GIF">g' : 'title="Use animated GIF">G';
-		
-		return '<span class="adminFunctions adminGIFFunction attachmentButton">[<a href="' . htmlspecialchars($animatedGifButtonUrl) . '" ' . $flag . '</a>]</span>';
 	}
 
 	private function generateAnimatedGifUrl(int $postUid, int $fileId): string {
@@ -88,10 +73,10 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage() {
 		// get post uid from request
-		$postUid = $_GET['postUid'] ?? null;
+		$postUid = $this->moduleContext->request->getParameter('postUid', 'GET');
 		
 		// get file id from request
-		$fileId = $_GET['fileId'] ?? null;
+		$fileId = $this->moduleContext->request->getParameter('fileId', 'GET');
 
 		// throw exception if post uid is blank
 		if ($postUid === null || $postUid <= 0) {
@@ -112,12 +97,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// throw exception if the post has no attachments
-		if (empty($post['attachments'])) {
+		if (empty($post->getAttachments())) {
 			throw new BoardException('ERROR: No attachments on post.');
 		}
 
 		// now select the attachment on this post
-		$attachment = $post['attachments'][$fileId] ?? null;
+		$attachment = $post->getAttachmentById($fileId);
 
 		// if attachment isn't found or blank then throw exception
 		if($attachment === null || $attachment <= 0) {
@@ -141,24 +126,27 @@ class moduleAdmin extends abstractModuleAdmin {
 		$isAnimated = !$isAnimated;
 
 		$logMessage = $isAnimated
-			? 'Animated GIF activated on No. ' . htmlspecialchars($post['no'])
-			: 'Animated GIF deactivated on No. ' . htmlspecialchars($post['no']);
+			? 'Animated GIF activated on No. ' . htmlspecialchars($post->getNumber())
+			: 'Animated GIF deactivated on No. ' . htmlspecialchars($post->getNumber());
 
-		$this->moduleContext->actionLoggerService->logAction($logMessage, $post['boardUID']);
+		$this->logAction($logMessage, $post->getBoardUID());
 
 		// get the board of the post
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 
 		// ===== AJAX handling updated to use helper =====
-		if(isJavascriptRequest()) {
+		if($this->moduleContext->request->isAjax()) {
 			// get url
 			$attachmentUrl = $this->getAnimatedAttachmentUrl($attachment, $isAnimated);
 
 			// send json first
+			$flag = $isAnimated ? 'g' : 'G';
+			$title = $isAnimated ? 'Use still image of GIF' : 'Use animated GIF';
+			$animatedGifButtonUrl = $this->generateAnimatedGifUrl($attachment['postUid'], $attachment['fileId']);
 			sendAjaxAndDetach([
 				'active' => $isAnimated,
 				'attachmentUrl' => $attachmentUrl,
-				'newGifButton' => $this->generateAnimateGifButton($attachment)
+				'newGifButton' => $this->renderAttachmentButton($animatedGifButtonUrl, 'GIF', $title, $flag)
 			]);
 
 			// rebuild after client already received JSON
@@ -170,7 +158,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// rebuild board
 		$board->rebuildBoard();
 
-		redirect('back');
+		redirect($this->moduleContext->request->getReferer());
 	}
 
 	private function getAnimatedAttachmentUrl(array $attachment, bool $isAnimated): string {

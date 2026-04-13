@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\post;
 
+/** Service for full-text post searching: field sanitization, boolean query building, and result pagination. */
 class postSearchService {
 	public function __construct(
 		private readonly postSearchRepository $postSearchRepository
@@ -91,6 +92,18 @@ class postSearchService {
 	}
 
 
+	/**
+	 * Sanitize search field values, compile them into boolean full-text tokens, and return paginated results.
+	 *
+	 * @param array  $stopWords       Map of stop words to exclude from the search.
+	 * @param array  $fields          Map of field name => raw search value.
+	 * @param array  $boardUids       Board UIDs to restrict the search to (empty = all boards).
+	 * @param bool   $matchWholeWords If true, match whole words rather than using prefix wildcards.
+	 * @param bool   $openingPostOnly If true, return only OP posts.
+	 * @param int    $page            Zero-based page number.
+	 * @param int    $postsPerPage    Number of posts per page.
+	 * @return array|null Associative array with 'results_data' and 'total_posts', or null if no results.
+	 */
 	public function searchPosts(
 		array $stopWords, 
 		array $fields, 
@@ -171,7 +184,7 @@ class postSearchService {
 	private function formatResults(array $posts, int $totalPostCount): array {
 		$results = [];
 		foreach ($posts as $post) {
-			$post_uid = $post['post_uid'];
+			$post_uid = $post->getUid();
 
 			$results[$post_uid] = [
 				'post' => $post,

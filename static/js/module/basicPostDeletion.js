@@ -13,9 +13,13 @@
 				const thread = postEl.closest('.thread');
 				if (thread) {
 					thread.classList.add('deletedPost');
+					thread.querySelectorAll('.post').forEach(function (p) {
+						showDeletionIndicator(p, 'post');
+					});
 				}
 			} else {
 				postEl.classList.add('deletedPost');
+				showDeletionIndicator(postEl, 'post');
 			}
 		}
 	}
@@ -58,24 +62,29 @@
 	/**
 	 * Handle the deletion of a file attachment (admin delete action)
 	 */
-	function handleFileDeletion(event, dfAnchor) {
+	function handleFileDeletion(event, dfElement) {
 		event.preventDefault();
 
-		const postEl = dfAnchor.closest('.post');
+		const postEl = dfElement.closest('.post');
 		if (!postEl) return;
 
 		const attachmentEl =
-			dfAnchor.closest('.attachmentContainer') ||
-			dfAnchor.closest('.file');
+			dfElement.closest('.attachmentContainer') ||
+			dfElement.closest('.file');
 
 		if (!attachmentEl) return;
 
+		// Get URL from form action or anchor href
+		const form = dfElement.closest('form[action]');
+		const url = form ? form.action : dfElement.href;
+		if (!url) return;
+
 		const state = prepareAttachmentDeletion(attachmentEl, postEl, [
-			'.adminDeleteFileFunction, #adminDeleteFileFunction',
-			'.imgopsLink'
+			'.indicator-deleteFile',
+			'.indicator-imgops'
 		]);
 
-		sendModuleAction(dfAnchor.href, {
+		sendModuleAction(url, {
 			revertUI: state.revertUI,
 			successMessage: 'Attachment deleted successfully.',
 			errorMessage: 'Failed to delete the attachment.',
@@ -110,11 +119,22 @@
 
 			let data = {};
 
+			const csrfToken = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+			const body = new URLSearchParams();
+			body.append('csrf_token', csrfToken);
+
+			// Append params from widget data attributes (e.g. post_uid, action)
+			if (ctx.params) {
+				for (const key in ctx.params) {
+					body.append(key, ctx.params[key]);
+				}
+			}
+
 			const res = await fetch(ctx.url, {
-				method: 'GET',
+				method: 'POST',
 				credentials: 'same-origin',
 				headers: { 'X-Requested-With': 'XMLHttpRequest' },
-				cache: 'no-store'
+				body: body
 			});
 			
 			try { data = await res.json(); } catch (_) {}
@@ -199,9 +219,11 @@
 
 	// Admin delete attachment handler
 	document.addEventListener('click', function (e) {
-		const dfAnchor = e.target.closest('.adminDeleteFileFunction a[title="Delete attachment"]');
-		if (!dfAnchor) return;
-		handleFileDeletion(e, dfAnchor);
+		// Support both anchor-based and form-based buttons
+		const dfElement = e.target.closest('.adminDeleteFileFunction a[title="Delete attachment"]')
+			|| e.target.closest('.adminDeleteFileFunction button[title="Delete attachment"]');
+		if (!dfElement) return;
+		handleFileDeletion(e, dfElement);
 	});
 
 })();

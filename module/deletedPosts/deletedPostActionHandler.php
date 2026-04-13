@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\deletedPosts;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\deletion\deletedPostsService;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
@@ -14,12 +15,13 @@ class deletedPostActionHandler {
 		private userRole $requiredRoleActionForModAll,
 		private deletedPostsService $deletedPostsService,
 		private deletedPostUtility $deletedPostUtility,
-		private string $restoredIndexUrl
+		private string $restoredIndexUrl,
+		private readonly request $request
 	) {}
 
 	public function handleModPageRequests(int $accountId, userRole $roleLevel): void {
-		$deletedPostId = $_POST['deletedPostId'] ?? null;
-		$action = $_POST['action'] ?? null;
+		$deletedPostId = $this->request->getParameter('deletedPostId', 'POST');
+		$action = $this->request->getParameter('action', 'POST');
 
 		// handle an action for single deleted post
 		if(isset($deletedPostId)) {

@@ -4,7 +4,7 @@ namespace Kokonotsuba\board;
 
 use Exception;
 use Kokonotsuba\cache\path_cache\boardPathService;
-use Kokonotsuba\containers\boardDiContainer;
+use Kokonotsuba\containers\appContainer;
 use Kokonotsuba\containers\moduleEngineContext;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\moduleEngine;
@@ -18,13 +18,22 @@ use function Puchiko\createFileAndWriteText;
 use function Puchiko\rollbackCreatedPaths;
 use function Puchiko\safeRmdir;
 
+/** Service for assembling, creating, editing, and deleting board objects. */
 class boardService {
 	public function __construct(
 		private readonly boardRepository $boardRepository,
-		private readonly boardDiContainer $boardDiContainer,
+		private readonly appContainer $container,
 		private readonly boardPathService $boardPathService
 	) {}
 
+	/**
+	 * Update editable fields on an existing board.
+	 *
+	 * @param board $board       The board object to edit.
+	 * @param array $inputFields Associative array of field names to new values.
+	 * @return void
+	 * @throws Exception If no valid fields are provided.
+	 */
 	public function editBoard(board $board, array $inputFields): void {
 		if (empty($inputFields)) {
 			throw new Exception("Fields left empty.");
@@ -58,6 +67,12 @@ class boardService {
 		$this->boardRepository->updateBoardByUID($board->getBoardUID(), $fields);
 	}
 
+	/**
+	 * Delete a board from the database and remove its files and directories.
+	 *
+	 * @param int $boardUid Board UID to delete.
+	 * @return void
+	 */
 	public function deleteBoard(int $boardUid): void {
 		// get the full board data
 		$board = $this->getBoard($boardUid);
@@ -78,6 +93,18 @@ class boardService {
 		unlink($boardConfigPath);
 	}
 
+	/**
+	 * Create a new board: validate input, provision directories, generate config, insert the record.
+	 * Rolls back created paths on failure.
+	 *
+	 * @param array    $inputFields          User-submitted board creation fields.
+	 * @param array    $templateBoardConfig  Config template array with path and file constants.
+	 * @param string   $backendDirectory     Absolute path to the backend directory.
+	 * @param userRole $requiredRoleLevel    Minimum role level required to create a board.
+	 * @param userRole $userRoleLevel        Actual role level of the requesting user.
+	 * @return board|null The newly created board object.
+	 * @throws Exception If required fields are missing, the user is unauthorized, or creation fails.
+	 */
     public function createBoard(array $inputFields, array $templateBoardConfig, string $backendDirectory, userRole $requiredRoleLevel, userRole $userRoleLevel): ?board {
         // Check for missing required fields
         if (empty($inputFields['boardIdentifier']) || empty($inputFields['boardTitle'])) {
@@ -154,7 +181,13 @@ class boardService {
     }
 
 
-	    // Sanitize board identifier (alphanumeric, dashes, underscores)
+	/**
+	 * Validate and sanitize a board identifier (alphanumeric, dashes, underscores only).
+	 *
+	 * @param string $input Raw identifier input.
+	 * @return string Sanitized board identifier.
+	 * @throws Exception If the identifier contains invalid characters.
+	 */
     private function sanitizeBoardIdentifier($input) {
         $input = trim($input);
         // Only allow alphanumeric, underscores, and dashes
@@ -164,7 +197,13 @@ class boardService {
         return $input;
     }
 
-    // Sanitize board path (ensure it's a valid directory path)
+	/**
+	 * Validate that a board path is an existing directory and strip trailing slashes.
+	 *
+	 * @param string $input Raw path input.
+	 * @return string Normalized directory path.
+	 * @throws Exception If the path is not a valid existing directory.
+	 */
     private function sanitizeBoardPath($input) {
         $input = rtrim(trim($input), '/');  // Remove any trailing slashes
         if (!is_dir($input)) {
@@ -173,11 +212,22 @@ class boardService {
         return $input;
     }
 
-    // Sanitize text fields (remove unwanted HTML tags)
+	/**
+	 * Strip dangerous characters from a free-text board field.
+	 *
+	 * @param string $input Raw text input.
+	 * @return string HTML-entity-escaped text.
+	 */
     private function sanitizeTextField($input) {
         return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');  // Convert special chars to HTML entities
     }
 
+	/**
+	 * Assemble and return board objects for an array of board UIDs.
+	 *
+	 * @param int[] $boardUIDs Array of board UIDs to fetch.
+	 * @return board[]|null Array of board objects, or null if none found.
+	 */
 	public function getBoardsFromUIDs(array $boardUIDs): ?array {
 		// Ensure $uidList is an array
 		if (!is_array($boardUIDs)) {
@@ -195,6 +245,11 @@ class boardService {
 	}
 
 	
+	/**
+	 * Assemble and return all regular boards (UID > 0).
+	 *
+	 * @return board[]|null Array of board objects, or null if none found.
+	 */
 	public function getAllRegularBoards(): ?array {
 		$allBoardsData = $this->boardRepository->getAllRegularBoards();
 
@@ -203,6 +258,11 @@ class boardService {
 		return $boards;
 	}
 
+	/**
+	 * Assemble and return all listed boards.
+	 *
+	 * @return board[]|null Array of board objects, or null if none found.
+	 */
 	public function getAllListedBoards(): ?array {
 		$allBoardsData = $this->boardRepository->getAllListedBoards();
 
@@ -211,6 +271,11 @@ class boardService {
 		return $boards;
 	}
 
+	/**
+	 * Assemble and return all boards.
+	 *
+	 * @return board[]|null Array of board objects, or null if none found.
+	 */
 	public function getAllBoards(): ?array {
 		$allBoardsData = $this->boardRepository->getAllBoards();
 
@@ -229,6 +294,13 @@ class boardService {
 		return $boards;
 	}
 
+	/**
+	 * Fetch a single board object by its UID.
+	 *
+	 * @param int $boardUid Board UID.
+	 * @return board|null The assembled board, or null if not found.
+	 * @throws Exception If the board data exists but cannot be assembled into a board instance.
+	 */
 	public function getBoard(int $boardUid): ?board {
 		$boardData = $this->boardRepository->getBoardByUID($boardUid);
 
@@ -247,8 +319,14 @@ class boardService {
 		return $board;
 	}
 
+	/**
+	 * Build a board object from a boardData DTO, wiring all required dependencies.
+	 *
+	 * @param boardData $boardData Hydrated board data DTO.
+	 * @return board|null Fully assembled board object, or null on failure.
+	 */
 	private function assembleBoard(boardData $boardData): ?board {
-		$board = new board($this->boardDiContainer->boardPostNumbers, $boardData, $this->boardDiContainer->boardPathService);
+		$board = new board($this->container->get('boardPostNumbers'), $boardData, $this->container->get('boardPathService'));
 
 		// initialize dependencies for setter inject
 		$templateEngine = $this->initializeTemplateEngine($board);
@@ -258,27 +336,15 @@ class boardService {
 		$boardConfig = $board->loadBoardConfig();
 		$postDateFormatter = new postDateFormatter($boardConfig['TIME_ZONE']);
 
-		$moduleEngineContext = new moduleEngineContext($boardConfig, 
-			$liveIndexFile, $board->getConfigValue('ModuleList'), 
-			$this->boardDiContainer->postRepository, 
-			$this->boardDiContainer->postService, 
-			$this->boardDiContainer->threadRepository, 
-			$this->boardDiContainer->threadService, 
-			$this->boardDiContainer->postSearchService,
-			$this->boardDiContainer->quoteLinkService,
-			$this,
-			$this->boardDiContainer->actionLoggerService,
-			$this->boardDiContainer->postRedirectService,
-			$this->boardDiContainer->deletedPostsService,
-			$this->boardDiContainer->fileService,
-			$this->boardDiContainer->capcodeService,
-			$this->boardDiContainer->userCapcodes,
-			$this->boardDiContainer->transactionManager,
-			$templateEngine, 
+		$moduleEngineContext = new moduleEngineContext(
+			$boardConfig,
+			$liveIndexFile,
+			$board->getConfigValue('ModuleList'),
+			$templateEngine,
 			$board,
-			$this->boardDiContainer->postRenderingPolicy,
 			$postDateFormatter,
-			$this->boardDiContainer->currentUserId);
+			$this->container
+		);
 			
 		$moduleEngine = new moduleEngine($moduleEngineContext);
 		
@@ -289,11 +355,12 @@ class boardService {
 		$boardRebuilder = new boardRebuilder($board,
 			$moduleEngine,
 			$templateEngine,
-			$this->boardDiContainer->actionLoggerService,
-			$this->boardDiContainer->threadRepository,
-			$this->boardDiContainer->threadService,
-			$this->boardDiContainer->quoteLinkService,
-			$this->boardDiContainer->postRenderingPolicy);
+			$this->container->get('actionLoggerService'),
+			$this->container->get('threadRepository'),
+			$this->container->get('threadService'),
+			$this->container->get('quoteLinkService'),
+			$this->container->get('postRenderingPolicy'),
+			$this->container->get('request'));
 
 		$board->setBoardRebuilder($boardRebuilder);
 
@@ -301,17 +368,26 @@ class boardService {
 		return $board;
 	}
 
+	/**
+	 * Instantiate and configure the template engine for the given board.
+	 *
+	 * @param board $board Board object to resolve the template file for.
+	 * @return templateEngine Configured template engine instance.
+	 * @throws BoardException If the resolved template file path is null.
+	 */
 	private function initializeTemplateEngine(board $board): templateEngine {
 		$config = $board->loadBoardConfig();
 
 		$templateFile = null;
-		$isReply = !empty($_GET['res']);
+
+		// If not viewing a thread, it's a reply page, otherwise it's an index page
+		$isReply = $this->container->get('request')->isViewingThread() === true;
 
 		$templateKey = $isReply ? 'REPLY_TEMPLATE_FILE' : 'TEMPLATE_FILE';
 		$templateFileName = $board->getConfigValue($templateKey, 'TEMPLATE_FILE');
 
 		if ($templateFileName !== null) {
-			$templateFile = getBackendDir() . 'templates/' . $templateFileName;
+			$templateFile = getBackendDir() . 'templates/' . str_replace('.tpl', '', $templateFileName);
 		}
 
 		if ($templateFile === null) {
@@ -329,6 +405,12 @@ class boardService {
 		return new templateEngine($templateFile, $dependencies);
 	}
 
+	/**
+	 * Load a board by reading its board_uid from a boardUID.ini bootstrap file.
+	 *
+	 * @param string $bootstrapFile Absolute path to the boardUID.ini file.
+	 * @return board The assembled board object.
+	 */
 	public function getBoardFromBootstrapFile(string $bootstrapFile): board {
 		$boardUIDIni = parse_ini_file($bootstrapFile, true);
 

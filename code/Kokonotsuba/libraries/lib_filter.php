@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\libraries;
 
+use Kokonotsuba\request\request;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\buildSmartQuery;
 
@@ -291,11 +292,11 @@ function bindBoardUIDFilter(array &$params, string &$query, array $boardUIDs, st
  * @param array $defaultFilters Default values for filters.
  * @return array An array containing the filters taken from the request or default values.
  */
-function buildFiltersFromRequest(array $defaultFilters): array {
+function buildFiltersFromRequest(array $defaultFilters, request $request): array {
 	$filtersArray = [];
 
 	foreach($defaultFilters as $key=>$filter) {
-		$filtersArray[$key] = $_GET[$key] ?? $filter;
+		$filtersArray[$key] = $request->getParameter($key, 'GET', $filter);
 	}
 	
 	return $filtersArray;
@@ -348,9 +349,9 @@ function handleRedirection(array $filtersFromRequest, bool $isSubmission, array 
  * @param string $url The base url of the page
  * @return array The filters array, processed and ready for use.
  */
-function getFiltersFromRequest(string $url, bool $isSubmission, array $defaultFilters): array {
+function getFiltersFromRequest(string $url, bool $isSubmission, array $defaultFilters, request $request): array {
 	// Build filters based on the GET request
-	$filtersFromRequest = buildFiltersFromRequest($defaultFilters);
+	$filtersFromRequest = buildFiltersFromRequest($defaultFilters, $request);
 
 	// Process the 'role' and 'board' filters to ensure they are arrays
 	$filtersFromRequest = processRoleAndBoardFilters($filtersFromRequest);

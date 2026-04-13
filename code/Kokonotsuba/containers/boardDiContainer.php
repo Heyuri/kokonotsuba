@@ -6,6 +6,7 @@ use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\board\boardPostNumbers;
 use Kokonotsuba\cache\path_cache\boardPathService;
 use Kokonotsuba\capcode_backend\capcodeService;
+use Kokonotsuba\cookie\cookieService;
 use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\policy\postRenderingPolicy;
 use Kokonotsuba\post\attachment\fileService;
@@ -31,6 +32,7 @@ class boardDiContainer {
 		public readonly postSearchService $postSearchService,
 		public readonly postRedirectService $postRedirectService,
 		public readonly deletedPostsService $deletedPostsService,
+		public readonly cookieService $cookieService,
 		public capcodeService $capcodeService,
 		public array $userCapcodes,
 		public readonly fileService $fileService,

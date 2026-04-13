@@ -16,6 +16,7 @@ require getBackendCodeDir() . 'libraries/lib_post.php';
 require getBackendCodeDir() . 'libraries/lib_query.php';
 require getBackendCodeDir() . 'libraries/lib_rebuild.php';
 require getBackendCodeDir() . 'libraries/lib_template.php';
+require getBackendCodeDir() . 'libraries/lib_tripcode.php';
 require getBackendCodeDir() . 'libraries/html/boardList.php';
 require getBackendCodeDir() . 'libraries/html/filterForms.php';
 require getBackendCodeDir() . 'libraries/html/formAndLayout.php';

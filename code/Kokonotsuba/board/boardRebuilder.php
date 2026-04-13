@@ -8,8 +8,11 @@ use Kokonotsuba\renderers\postRenderer;
 use Kokonotsuba\renderers\threadRenderer;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\policy\postRenderingPolicy;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\quote_link\quoteLinkService;
+use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
+use Kokonotsuba\thread\ThreadData;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
 
@@ -18,6 +21,7 @@ use function Kokonotsuba\libraries\html\drawLiveBoardPager;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
+use function Kokonotsuba\libraries\getOrCreateCsrfToken;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\strings\html_minify;
 use function Puchiko\strings\truncateText;
@@ -34,7 +38,8 @@ class boardRebuilder {
 		private readonly threadRepository $threadRepository, 
 		private readonly threadService $threadService,
 		private readonly quoteLinkService $quoteLinkService,
-		private postRenderingPolicy $postRenderingPolicy) {
+		private postRenderingPolicy $postRenderingPolicy,
+		private readonly request $request) {
 
 		$this->config = $board->loadBoardConfig();
 		if (empty($this->config)) {
@@ -99,16 +104,16 @@ class boardRebuilder {
 		}
 
 		// get the thread row
-		$thread = $threadData['thread'];
+		$thread = $threadData->getThread();
 
 		// get the total amount of posts in the thread
-		$totalPosts = $thread['number_of_posts'];
+		$totalPosts = $thread->getPostCount();
 
 		// whether the thread has been deleted
-		$threadDeleted = $thread['thread_deleted'] ?? null;
+		$threadDeleted = $thread->isThreadDeleted();
 
 		// whether it was a file-only deletion
-		$fileOnly = $thread['thread_attachment_deleted'] ?? null;
+		$fileOnly = $thread->isAttachmentDeleted();
 
 		// hard deleted (a la, thread itself was deleted and the file isn't what was deleted)
 		$hardDeleted = $threadDeleted && !$fileOnly;
@@ -121,10 +126,10 @@ class boardRebuilder {
 		}
 
 		// get the posts from the thread
-		$posts = $threadData['posts'];
+		$posts = $threadData->getPosts();
 		
 		// get the post uids from the thread posts
-		$postUids = $threadData['post_uids'];
+		$postUids = $threadData->getPostUids();
 
 		// init hidden reply var
 		$hiddenReply = 0;
@@ -140,6 +145,11 @@ class boardRebuilder {
 
 		// init template placeholders
 		$pte_vals = $this->buildPteVals(true);
+
+		// add CSRF token to delform for logged-in staff on live pages
+		if($this->adminMode) {
+			$pte_vals['{$DELFORM_CSRF}'] = '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(getOrCreateCsrfToken(), ENT_QUOTES, 'UTF-8') . '">';
+		}
 		
 		// if we want to render the post form then build form html and bind to template parameter
 		if($showPostForm) {
@@ -150,6 +160,12 @@ class boardRebuilder {
 		// Dispatch viewed thread hook
 		// This hook is one that only gets dispatched for threads that are being viewed through drawThread
 		$this->moduleEngine->dispatch('ViewedThread', [&$pte_vals, &$threadData]);
+
+		// calculate current page and total pages for thread pagination display
+		$totalThreadPages = (int) ceil($totalPosts / $repliesPerPage);
+		$currentPage = !is_null($amountOfRepliesToRender)
+			? max(0, $totalThreadPages - 1)
+			: ($page ?? 0);
 
 		// Render threads
 		$pte_vals['{$THREADS}'] .= $threadRenderer->render([],
@@ -162,7 +178,10 @@ class boardRebuilder {
 			0,
 			'',
 			'',
-			$pte_vals
+			$pte_vals,
+			$currentPage,
+			$totalThreadPages,
+			$amountOfRepliesToRender
 		);
 		
 		// if a non-null page value is set - then draw the pager
@@ -172,14 +191,14 @@ class boardRebuilder {
 
 			// if the top pager for threads is enabled, render it
 			if($enableTopPager) {
-				$pte_vals['{$TOP_PAGENAV}'] = drawPager($repliesPerPage, $totalPosts, $threadUrl);
+				$pte_vals['{$TOP_PAGENAV}'] = drawPager($repliesPerPage, $totalPosts, $threadUrl, $this->request);
 			}
 
 			// always draw bottom pager
-			$pte_vals['{$BOTTOM_PAGENAV}'] = drawPager($repliesPerPage, $totalPosts, $threadUrl);
+			$pte_vals['{$BOTTOM_PAGENAV}'] = drawPager($repliesPerPage, $totalPosts, $threadUrl, $this->request);
 		}
 
-		$opPost = $posts[0];
+		$opPost = $threadData->getOpeningPost();
 		$boardTitle = $this->board->getBoardTitle();
 
 		$pageTitle = $this->getThreadPageTitle($opPost, $boardTitle);
@@ -195,7 +214,7 @@ class boardRebuilder {
 		?int $page, 
 		?int $amountOfRepliesToRender,
 		bool $includeDeleted = false
-	): false|array {
+	): false|ThreadData {
 		// Fetch thread with a limited amount of replies	
 		if(!is_null($amountOfRepliesToRender)) {
 			// fetch a 'last X replies' thread
@@ -222,7 +241,7 @@ class boardRebuilder {
 		}
 		// Fetch unpaged thread (intensive)
 		else {
-			// get the while thing
+			// get the whole thing
 			$threadData = $this->threadService->getThreadAllReplies($threadUid, $this->canViewDeleted, $previewCount, $includeDeleted);
 		}
 
@@ -230,15 +249,12 @@ class boardRebuilder {
 		return $threadData;
 	}
 
-	private function getThreadPageTitle(array $opPost, string $boardTitle): string {
-		$subject = strip_tags($opPost['sub']); // thread subject/topic
-		$comment = strip_tags($opPost['com']); // op post comment
+	private function getThreadPageTitle(Post $opPost, string $boardTitle): string {
+		$subject = strip_tags($opPost->getSubject()); // thread subject/topic
+		$comment = strip_tags($opPost->getComment()); // op post comment
 		
-		// first array key
-		$firstAttachmentArrKey = array_key_first($opPost['attachments']);
-
 		// get the first attachment
-		$firstAttachment = $opPost['attachments'][$firstAttachmentArrKey] ?? null; 
+		$firstAttachment = $opPost->getFirstAttachment();
 
 		// set first filename if it exists
 		$firstAttachment ? $fileName = strip_tags($firstAttachment['fileName'] . '.' . $firstAttachment['fileExtension']) : $fileName = null;
@@ -308,6 +324,11 @@ class boardRebuilder {
 		// init placeholder template values
 		$pte_vals = $this->buildPteVals(false);
 
+		// add CSRF token to delform for logged-in staff on live pages
+		if($this->adminMode) {
+			$pte_vals['{$DELFORM_CSRF}'] = '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(getOrCreateCsrfToken(), ENT_QUOTES, 'UTF-8') . '">';
+		}
+
 		// build form html
 		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml(0, $pte_vals, $this->adminMode);
 
@@ -315,7 +336,7 @@ class boardRebuilder {
 		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $pte_vals, $this->adminMode);
 
 		// thread pager
-		$pte_vals['{$BOTTOM_PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'));
+		$pte_vals['{$BOTTOM_PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'), $this->request);
 
 		// generate the whole page's html
 		$pageData = $this->buildFullPage($pte_vals, $this->board->getBoardTitle(), 0, false, $this->adminMode);
@@ -430,6 +451,9 @@ class boardRebuilder {
     	// Render thread data to PTE values
     	$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $pte_vals);
 
+    	// Regenerate head HTML after thread rendering so modules can inject per-thread styles into <head>
+    	$headerHtml = $this->board->getBoardHead($this->board->getBoardTitle());
+
     	// Render page navigation
     	$pte_vals['{$BOTTOM_PAGENAV}'] = drawBoardPager(
     	    $threadsPerPage,
@@ -485,6 +509,7 @@ class boardRebuilder {
 			'{$THREADS}' => '',
 			'{$THREADFRONT}' => '',
 			'{$THREADREAR}' => '',
+			'{$DELFORM_CSRF}' => '',
 			'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel">' . _T('del_head'),
 			'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
 			'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
@@ -515,7 +540,8 @@ class boardRebuilder {
 			$this->config,
 			$this->moduleEngine,
 			$this->templateEngine,
-			$quoteLinksFromBoard
+			$quoteLinksFromBoard,
+			$this->request
 		);
 		$threadRenderer = new threadRenderer(
 			$this->config,
@@ -536,7 +562,9 @@ class boardRebuilder {
 
 	private function runThreadModuleHooks(array &$pte_vals, int $resno): void {
 		$this->moduleEngine->dispatch('AboveThreadArea', array(&$pte_vals['{$THREADFRONT}'], empty($resno)));
+		$this->moduleEngine->dispatch('AboveThreadsGlobal', array(&$pte_vals['{$THREADFRONT}']));
 		$this->moduleEngine->dispatch('BelowThreadArea', array(&$pte_vals['{$THREADREAR}'], empty($resno)));
+		$this->moduleEngine->dispatch('BelowThreadsGlobal', array(&$pte_vals['{$THREADREAR}']));
 		$this->moduleEngine->dispatch('PlaceHolderIntercept', [&$pte_vals]);
 	}
 
@@ -569,9 +597,9 @@ class boardRebuilder {
 		foreach ($threadsInPage as $i => $data) {
 			$output .= $threadRenderer->render($threadsInPage,
 				false,
-				$data['thread'],
-				$data['posts'],
-				$data['hidden_reply_count'],
+				$data->getThread(),
+				$data->getPosts(),
+				$data->getHiddenReplyCount(),
 				false,
 				$adminMode,
 				$i,

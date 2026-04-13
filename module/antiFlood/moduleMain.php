@@ -11,16 +11,18 @@ use Kokonotsuba\error\BoardException;
 use DateTime;
 use DateTimeZone;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeforeCommitListenerTrait;
 use Kokonotsuba\Modules\antiFlood\submissionService;
 
 use function Kokonotsuba\libraries\getBoardsByUIDs;
 use function Kokonotsuba\libraries\rebuildBoardsByArray;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 use function Kokonotsuba\Modules\antiFlood\getSubmissionService;
 
 class moduleMain extends abstractModuleMain {
+	use RegistBeforeCommitListenerTrait;
+
 	private readonly int $RENZOKU3; // Seconds before a new thread can be made
 	private submissionService $submissionService;
 
@@ -38,14 +40,12 @@ class moduleMain extends abstractModuleMain {
 		// Initialize submission service for thread flood tracking
 		$this->submissionService = getSubmissionService();
 
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
-			$this->onBeforeCommit($isReply, $com);
-		});
+		$this->listenRegistBeforeCommit('onBeforeCommit');
 	}
 	
-	private function onBeforeCommit(bool $isReply, string $comment): void{
+	private function onBeforeCommit(&$name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $files, $isReply): void{
 		// flood/spam-prevention logic for posts (replies and threads) as a whole
-		$this->preventFloodPost($comment);
+		$this->preventFloodPost($com);
 		
 		// reply-specific logic
 		// Commented out for now
@@ -87,7 +87,7 @@ class moduleMain extends abstractModuleMain {
 			$index = $this->getConfig('LIVE_INDEX_FILE', 'back');
 			
 			// send dummy json output for ajax users
-			if(isJavascriptRequest()) {
+			if($this->moduleContext->request->isAjax()) {
 				// send ajax
 				sendAjaxAndDetach(['redirectUrl' => $index]);
 

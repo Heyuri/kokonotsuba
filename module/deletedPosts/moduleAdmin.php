@@ -56,20 +56,22 @@ class moduleAdmin extends abstractModuleAdmin {
 		$restoredIndexUrl = $this->getModulePageURL(['pageName' => 'restoredIndex'], false);
 
 		// init the module template engine
-		$moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.DELETED_POSTS_TEMPLATE', 'kokoimg.tpl');
+		$moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.DELETED_POSTS_TEMPLATE', 'kokoimg');
 
 		// init utility class
 		$deletedPostUtility = new deletedPostUtility(
 			$this, 
 			$this->moduleContext->deletedPostsService,
-			$this->requiredRoleActionForModAll);
+			$this->requiredRoleActionForModAll,
+			$this->moduleContext->request);
 
 		// init action handler
 		$this->deletedPostActionHandler = new deletedPostActionHandler(
 			$this->requiredRoleActionForModAll, 
 			$this->moduleContext->deletedPostsService, 
 			$deletedPostUtility,
-			$restoredIndexUrl
+			$restoredIndexUrl,
+			$this->moduleContext->request
 		);
 
 		// init rendering class
@@ -84,15 +86,18 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->moduleContext->adminPageRenderer,
 			$this->moduleContext->threadService,
 			$this->moduleContext->quoteLinkService,
+			$this->moduleContext->cookieService,
 			$this->modulePageUrl,
 			$restoredIndexUrl,
 			$this->requiredRoleForDeleteRestoredRecord,
-			$this->moduleContext->postDateFormatter
+			$this->moduleContext->postDateFormatter,
+			$this->moduleContext->request
 		);
 
 		// init ui hooks class
 		$deletedPostUIHooks = new deletedPostUIHooks(
-			$this, 
+			$this->includeScript(...),
+			$this->buildWidgetEntry(...),
 			$deletedPostUtility, 
 			$this->modulePageUrl
 		);
@@ -114,19 +119,15 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function handleDpToggle(): void {
-		$current = isset($_COOKIE['viewDeletedPosts']) && $_COOKIE['viewDeletedPosts'] === '1';
+		$current = $this->moduleContext->cookieService->get('viewDeletedPosts', '1') === '1';
 		$newValue = $current ? '0' : '1';
 
-		// Adjust parameters as needed (path, domain, secure, httponly)
-		setcookie(
+		$this->moduleContext->cookieService->set(
 			'viewDeletedPosts',
 			$newValue,
-			time() + (86400 * 30), // 30 days
+			time() + (86400 * 30),
 			'/'
 		);
-
-		// Update the superglobal so the new value is available immediately
-		$_COOKIE['viewDeletedPosts'] = $newValue;
 	}
 
 	public function ModulePage(): void {
@@ -141,13 +142,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		$roleLevel = $staffAccountFromSession->getRoleLevel();
 
 		// handle POST requests
-		if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+		if ($this->moduleContext->request->isPost()) {
 			$this->deletedPostActionHandler->handleModPageRequests($accountId, $roleLevel);
 
 			redirect($this->modulePageUrl);
 		} 
 		// handle DP visibilty toggle
-		else if(isset($_GET['toggleVisibility'])) {
+		else if($this->moduleContext->request->hasParameter('toggleVisibility', 'GET')) {
 			$this->handleDpToggle();
 
 			// redirect back to module index

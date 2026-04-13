@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\libraries;
 
+use Kokonotsuba\request\request;
 use function Puchiko\strings\sanitizeStr;
 
 /**
@@ -76,8 +77,8 @@ function str_cut($str, $maxlen=20){
 }
 
 /* 檢查瀏覽器和伺服器是否支援gzip壓縮方式 */
-function CheckSupportGZip(){
-	$HTTP_ACCEPT_ENCODING = isset($_SERVER['HTTP_ACCEPT_ENCODING']) ? $_SERVER['HTTP_ACCEPT_ENCODING'] : '';
+function CheckSupportGZip(request $request){
+	$HTTP_ACCEPT_ENCODING = $request->getServer('HTTP_ACCEPT_ENCODING', '');
 	if(headers_sent() || connection_aborted()) return 0; // 已送出資料，取消
 	if(!(function_exists('gzencode') && function_exists('ob_start') && function_exists('ob_get_clean'))) return 0; // 伺服器相關的套件或函式無法使用，取消
 	if(strpos($HTTP_ACCEPT_ENCODING, 'gzip')!==false) return 'gzip';
@@ -110,9 +111,9 @@ function inet_to_bits($inet)
  * @return string IP Address
  * @since 8th.Release
  */
-function getRemoteAddrOpenShift() {
+function getRemoteAddrOpenShift(request $request) {
 	if (isset($_ENV['OPENSHIFT_REPO_DIR'])) {
-		return $_SERVER['HTTP_X_FORWARDED_FOR'];
+		return $request->getServer('HTTP_X_FORWARDED_FOR', '');
 	}
 	return '';
 }
@@ -126,16 +127,18 @@ function getRemoteAddrOpenShift() {
  *
  * @return array [$upfile, $upfile_name, $upfile_status]
  */
-function loadUploadData(string $inputName, int $index): array {
+function loadUploadData(string $inputName, int $index, request $request): array {
 	// Ensure input exists and is a proper file upload entry
+	$file = $request->getFile($inputName);
 	if (
-		isset($_FILES[$inputName]['tmp_name']) &&
-		is_array($_FILES[$inputName]['tmp_name']) &&
-		!empty($_FILES[$inputName]['tmp_name'][$index])
+		$file !== null &&
+		isset($file['tmp_name']) &&
+		is_array($file['tmp_name']) &&
+		!empty($file['tmp_name'][$index])
 	) {
-		$upfile = sanitizeStr($_FILES[$inputName]['tmp_name'][$index]);
-		$upfile_name = $_FILES[$inputName]['name'][$index];
-		$upfile_status = $_FILES[$inputName]['error'][$index];
+		$upfile = sanitizeStr($file['tmp_name'][$index]);
+		$upfile_name = $file['name'][$index];
+		$upfile_status = $file['error'][$index];
 
 		return [$upfile, $upfile_name, $upfile_status];
 	}

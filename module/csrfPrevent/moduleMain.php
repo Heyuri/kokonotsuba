@@ -4,36 +4,46 @@ namespace Kokonotsuba\Modules\csrfPrevent;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
-
-use function Kokonotsuba\libraries\html\fullURL;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostFormListenerTrait;
 
 class moduleMain extends abstractModuleMain {
+	use RegistBeginListenerTrait;
+	use PostFormListenerTrait;
+
+	private const TOKEN_FIELD = 'csrf_token';
+
 	public function getName(): string {
 		return 'mod_csrf_prevent : 防止偽造跨站請求 (CSRF)';
 	}
 
 	public function getVersion(): string {
-		return 'Koko BBS Release 1';
+		return 'Koko BBS Release 2';
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addListener('RegistBegin', function () {
-			$this->onRegistBegin();  // Call the method to modify the form
-		});
+		$this->listenRegistBegin('onRegistBegin');
+
+		$this->listenPostForm('onRenderPostForm');
+	}
+
+	private function getSessionToken(): string {
+		if (empty($_SESSION['csrf_token'])) {
+			$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+		}
+		return $_SESSION['csrf_token'];
+	}
+
+	public function onRenderPostForm(string &$postForm): void {
+		$token = htmlspecialchars($this->getSessionToken(), ENT_QUOTES, 'UTF-8');
+		$postForm .= '<input type="hidden" name="' . self::TOKEN_FIELD . '" value="' . $token . '">';
 	}
 
 	public function onRegistBegin(): void {
-		$CSRFdetectd = false;
-		
-		/* Check HTTP_REFERER (to prevent cross-site form)
-		 *  1. No HTTP_REFERER
-		 *  2. HTTP_REFERER is not in this domain
-		 */
-		if(!strpos($_SERVER['HTTP_REFERER']??'', fullURL())) {
-			$CSRFdetectd = true;
-		}
+		$submittedToken = $this->moduleContext->request->getParameter(self::TOKEN_FIELD, 'POST', '');
+		$sessionToken = $this->getSessionToken();
 
-		if($CSRFdetectd) {
+		if (!hash_equals($sessionToken, $submittedToken)) {
 			throw new BoardException('ERROR: CSRF detected!');
 		}
 	}

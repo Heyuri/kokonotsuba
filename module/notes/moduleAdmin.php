@@ -6,24 +6,31 @@ require_once __DIR__ . '/noteRepository.php';
 require_once __DIR__ . '/noteService.php';
 require_once __DIR__ . '/notePolicy.php';
 
-use Kokonotsuba\board\board;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\generatePostUrl;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
+use function Kokonotsuba\libraries\getCsrfMetaTag;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Kokonotsuba\libraries\getUsernameFromSession;
 use function Kokonotsuba\libraries\modIdToColorHex;
+use function Puchiko\strings\newLinesToBreakLines;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\validatePostInput;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+
 	private noteService $noteService;
 	private notePolicy $notePolicy;
 
@@ -40,29 +47,22 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
+		$this->registerSimplePostWidget('postUid', 'leaveNote', _T('leave_note'));
+
+		// noscript fallback: link to note form page
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
+			'PostAdminControls',
+			function(string &$modControlSection, Post &$post) {
+				$url = $this->getModulePageURL(['postUid' => $post->getUid()], false, true);
+				$modControlSection .= generateModerateButton($url, 'N', _T('leave_note'), 'adminNoteFunction', true);
 			}
 		);
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, array &$post) {
-				$this->onRenderPostWidget($widgetArray, $post);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'BelowComment',
-			function(string &$belowComment, array &$post, array &$threadPosts, bool &$adminMode) {
-				$this->renderStaffNotesOnPost($belowComment, $post, $adminMode);
-			}
-		);
+		$this->listenProtected('BelowComment', function(string &$belowComment, Post &$post, array &$threadPosts, bool &$adminMode) {
+			$this->renderStaffNotesOnPost($belowComment, $post, $adminMode);
+		});
 
 		// fetch database settings
 		$databaseSettings = getDatabaseSettings();
@@ -81,6 +81,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		$moduleHeader .= getCsrfMetaTag();
+
 		// include the note js for the mod tool
 		$this->includeScript('notes.js', $moduleHeader);
 
@@ -89,7 +91,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$POST_UID}' => 0,
 			'{$POST_NUMBER}' => 0,
 			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
-			'{$NOTE_VISIBILITY_DESCRIPTION}' => _T('note_visibility_description')
+			'{$NOTE_VISIBILITY_DESCRIPTION}' => _T('note_visibility_description'),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput()
 		]);
 		$moduleHeader .= $this->generateTemplate('noteCreateFormTemplate', $noteCreateFormTemplate);
 
@@ -100,29 +103,14 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$POST_NUMBER}' => 0,
 			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
 			'{$NOTE_TEXT}' => '',
-			'{$NOTE_VISIBILITY_DESCRIPTION}' => _T('note_visibility_description')
+			'{$NOTE_VISIBILITY_DESCRIPTION}' => _T('note_visibility_description'),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput()
 		]);
 		$moduleHeader .= $this->generateTemplate('noteEditFormTemplate', $noteEditFormTemplate);
 
 		// Render empty note entry template
 		$noteEntryTemplate = $this->generateTemplate('noteEntryTemplate', $this->generateNoteEntryHtml());
 		$moduleHeader .= $noteEntryTemplate;
-	}
-
-	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
-		// get post details for widget
-		$postUid = $post['post_uid'];
-
-		// get post number for widget
-		$noteWidget = $this->buildWidgetEntry(
-			$this->getModulePageURL(['postUid' => $postUid], false, true),
-			'leaveNote',
-			_T('leave_note'),
-			''
-		);
-
-		// append note widget to the thread widget array so it shows up in the thread controls
-		$widgetArray[] = $noteWidget;
 	}
 	
 	private function generateNoteEntryHtml(
@@ -163,7 +151,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$sanitizedNote = sanitizeStr($noteText);
 
 		// convert new lines to break lines
-		$sanitizedNote = nl2br($sanitizedNote, false);
+		$sanitizedNote = newLinesToBreakLines($sanitizedNote);
 
 		// generate the string
 		$noteHtml = $this->generateNoteEntryHtml(
@@ -179,14 +167,14 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $noteHtml;
 	}
 
-	private function renderStaffNotesOnPost(string &$belowComment, array &$post, bool $adminMode): void {
+	private function renderStaffNotesOnPost(string &$belowComment, Post &$post, bool $adminMode): void {
 		// only run the method on the live frontend
 		if(!$adminMode) {
 			return;
 		}
 
 		// select staff notes on the post	
-		$staffNotesList = $post['staff_notes'] ?? [];
+		$staffNotesList = $post->getStaffNotes();
 
 		// initialize the variable we'll be using to store generated note html
 		$staffNotesHtml = '';
@@ -203,7 +191,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$noteId = $note['id'] ?? 0;
 
 			// render the note and append it to the main notes html variable	
-			$staffNotesHtml .= $this->renderNote($post['post_uid'], $noteId, $text, $addedBy, $addedById, $timestamp);
+			$staffNotesHtml .= $this->renderNote($post->getUid(), $noteId, $text, $addedBy, $addedById, $timestamp);
 		}
 
 		// now append the notes wrapped in a <div> to below the post comment
@@ -234,7 +222,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// handle final redirect
 		// ===== AJAX handling updated to use helper =====
-		if(isJavascriptRequest()) {
+		if($this->moduleContext->request->isAjax()) {
 			// send json first
 			sendAjaxAndDetach([
 				'note' => $note,
@@ -259,7 +247,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleAddNoteRequest(int $postUid): void {
 		// get note content from request
-		$noteText = $_POST['note'] ?? '';
+		$noteText = $this->moduleContext->request->getParameter('note', 'POST', '');
 
 		// add the note to the post and get the note ID of the newly inserted note
 		$noteId = $this->noteService->addNote(
@@ -313,7 +301,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		// get new note content from request
-		$newNoteText = $_POST['noteText'] ?? '';
+		$newNoteText = $this->moduleContext->request->getParameter('noteText', 'POST', '');
 
 		// edit the note
 		$this->noteService->editNote($noteId, $newNoteText);
@@ -355,7 +343,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleNoteRequest(int $postUid, ?int $noteId = null): void {
 		// get action
-		$action = $_REQUEST['action'] ?? null;
+		$action = $this->moduleContext->request->getParameter('action');
 
 		// handle the request routes
 		$this->handleActionRoute($action, $postUid, $noteId);
@@ -367,6 +355,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$POST_UID}' => $extra['postUid'] ?? 0,
 			'{$POST_NUMBER}' => $extra['postNumber'] ?? 0,
 			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 		];
 		return array_merge($defaults, $extra['template'] ?? []);
 	}
@@ -427,7 +416,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleModPages(int $postUid, ?int $noteId = null): void {
 		// get mod page
-		$modPage = $_REQUEST['modPage'] ?? null;
+		$modPage = $this->moduleContext->request->getParameter('modPage');
 
 		if($modPage === 'editNoteForm') {
 			// render the edit note form
@@ -441,16 +430,17 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage() {
 		// get post uid from request
-		$postUid = $_REQUEST['postUid'] ?? null;
+		$postUid = $this->moduleContext->request->getParameter('postUid');
 
 		// get the note id from the request (only applicable for edit and delete actions)
-		$noteId = $_REQUEST['noteId'] ?? null;
+		$noteId = $this->moduleContext->request->getParameter('noteId');
 		
 		// validate post uid
 		validatePostInput($postUid);
 
 		// handle the main note requests
-		if(isset($_REQUEST['action'])) {
+		if($this->moduleContext->request->hasParameter('action')) {
+			requirePostWithCsrf($this->moduleContext->request);
 			$this->handleNoteRequest($postUid, $noteId);
 		}
 		// otherwise just render the form

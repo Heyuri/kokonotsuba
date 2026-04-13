@@ -1,10 +1,30 @@
 <?php
+
+namespace Kokonotsuba\board\import;
+
 /*
 * Vichan board importing object for Kokonotsuba!
-* This currently has no implementation nor working code, but is planned
 */
-set_time_limit(0);
+
+use Kokonotsuba\board\board;
+use Kokonotsuba\board\boardCreator;
+use Kokonotsuba\board\boardService;
+use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\database\transactionManager;
+use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\post\attachment\fileService;
+use Kokonotsuba\post\helper\postDateFormatter;
+use Kokonotsuba\post\postRegistData;
+use Kokonotsuba\post\postRepository;
+use Kokonotsuba\quote_link\quoteLinkRepository;
+use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\userRole;
+
+use function Kokonotsuba\libraries\generatePostHash;
+use function Puchiko\strings\autoLink;
+use function Puchiko\strings\generateUid;
+
+set_time_limit(0);
 
 class vichanBoardImporter {
 	public function __construct(
@@ -47,7 +67,7 @@ class vichanBoardImporter {
 
 				// update thread created times
 				$this->updateThreadCreatedTimes();
-			} catch (Throwable $e) {
+			} catch (\Throwable $e) {
 				// loop over board uids
 				foreach($boardUriMap as $boardUid) {
 					// then delete the associated board
@@ -61,7 +81,7 @@ class vichanBoardImporter {
 
 	private function loadTablesInChunks(string $sqlDumpPath): array {
 		if (!file_exists($sqlDumpPath)) {
-			throw new RuntimeException("SQL dump not found: {$sqlDumpPath}");
+			throw new \RuntimeException("SQL dump not found: {$sqlDumpPath}");
 		}
 
 		// 1. Create a temporary database
@@ -72,7 +92,7 @@ class vichanBoardImporter {
 		// 2. Stream the SQL dump into the temporary database
 		$handle = fopen($sqlDumpPath, 'r');
 		if (!$handle) {
-			throw new RuntimeException("Failed to open SQL dump: $sqlDumpPath");
+			throw new \RuntimeException("Failed to open SQL dump: $sqlDumpPath");
 		}
 
 		$buffer = "";
@@ -83,7 +103,7 @@ class vichanBoardImporter {
 					$this->databaseConnection->execute($buffer);
 				} catch (\Throwable $e) {
 					fclose($handle);
-					throw new RuntimeException(
+					throw new \RuntimeException(
 						"Failed executing SQL:\n" . htmlspecialchars($buffer) .
 						"\n\nError: " . $e->getMessage(), 0, $e
 					);
@@ -108,6 +128,10 @@ class vichanBoardImporter {
 
 		// force it to still load the main database
 		$this->databaseConnection->execute("USE " . getDatabaseSettings()['DATABASE_NAME']);
+
+		// Re-set UTC timezone — the SQL dump may have restored the server's
+		// original timezone via its own SET time_zone statements.
+		$this->databaseConnection->execute("SET time_zone = '+00:00'");
 
 		return $tableNames;
 	}
@@ -201,7 +225,7 @@ class vichanBoardImporter {
     	foreach ($this->getChunkedVichanThreads($postTableName) as $threads) {
     	    foreach ($this->processThreadChunk($threads, $boardUid, $postUidMap) as $opId => $threadUid) {
     	        if (isset($threadMap[$opId])) {
-    	            throw new RuntimeException(
+    	            throw new \RuntimeException(
     	                "Duplicate OP id {$opId} detected in board {$boardUid}. Thread map corruption likely."
     	            );
     	        }
@@ -290,7 +314,7 @@ class vichanBoardImporter {
 
 			if (isset($threadMap[$id])) {
    				 // This is fatal — two OPs share the same post number.
-   				 throw new RuntimeException("WARNING: Duplicate OP id $id detected. Thread map corruption likely.");
+   			 throw new \RuntimeException("WARNING: Duplicate OP id $id detected. Thread map corruption likely.");
     			continue;
 			}
 
@@ -529,8 +553,9 @@ class vichanBoardImporter {
 			0
 		);
 
-		// get root timestamp
-		$root = gmdate('Y-m-d H:i:s', $time);
+		// get root timestamp using DateTime to ensure correct UTC formatting
+		$rootDate = new \DateTime('@' . $time);
+		$root = $rootDate->format('Y-m-d H:i:s');
 
 		// generate params
 		$postParams = $postRegistData->toParams($boardUid, $root);

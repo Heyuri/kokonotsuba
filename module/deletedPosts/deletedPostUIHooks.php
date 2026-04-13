@@ -2,16 +2,19 @@
 
 namespace Kokonotsuba\Modules\deletedPosts;
 
-use Kokonotsuba\board\board;
+use Closure;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\module_classes\traits\IndicatorTrait;
 
 use function Kokonotsuba\libraries\_T;
-use function Puchiko\strings\sanitizeStr;
 
 class deletedPostUIHooks {
+	use IndicatorTrait;
 	public function __construct(
-		private moduleAdmin $moduleAdmin,
+		private Closure $includeScript,
+		private Closure $buildWidgetEntry,
 		private deletedPostUtility $deletedPostUtility,
 		private string $modulePageUrl
 	) {}
@@ -21,14 +24,14 @@ class deletedPostUIHooks {
 			$requiredRole,
 			'LinksAboveBar',
 			function(string &$linkHtml) {
-				$this->onRenderLinksAboveBar($linkHtml);
+				$linkHtml .= '<li class="adminNavLink"><a title="' . htmlspecialchars(_T('admin_nav_deleted_posts_title')) . '" href="' . htmlspecialchars($this->modulePageUrl) . '">' . htmlspecialchars(_T('admin_nav_deleted_posts')) . '</a></li>';
 			}
 		);
 
 		$moduleEngine->addRoleProtectedListener(
 			$requiredRole,
 			'PostAdminControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->onRenderPostAdminControls($modControlSection, $post, true);
 			}
 		);
@@ -36,7 +39,7 @@ class deletedPostUIHooks {
 		$moduleEngine->addRoleProtectedListener(
 			$requiredRole,
 			'ManagePostsControls',
-			function(string &$modControlSection, array &$post) {
+			function(string &$modControlSection, Post &$post) {
 				$this->onRenderPostAdminControls($modControlSection, $post, false);
 			}
 		);
@@ -52,7 +55,7 @@ class deletedPostUIHooks {
 		$moduleEngine->addRoleProtectedListener(
 			$requiredRole,
 			'PostCssClass',
-			function(&$postCssClasses, $post) {
+			function(&$postCssClasses, Post $post) {
 				$this->onRenderPostCssClass($postCssClasses, $post);
 			}
 		);
@@ -68,7 +71,7 @@ class deletedPostUIHooks {
 		$moduleEngine->addRoleProtectedListener(
 			$requiredRole,
 			'ModeratePostWidget',
-			function(array &$widgetArray, array &$post) {
+			function(array &$widgetArray, Post &$post) {
 				$this->onRenderPostWidget($widgetArray, $post);
 			}
 		);
@@ -85,20 +88,23 @@ class deletedPostUIHooks {
 				$this->onRenderAttachment($attachmentProperties, $attachment);
 			}
 		);
-	}
 
-	private function onRenderLinksAboveBar(string &$linkHtml): void {
-		// modify the "links above bar" html to have a [Deleted Posts] button
-		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_deleted_posts_title') . '" href="' . htmlspecialchars($this->modulePageUrl) . '">' . _T('admin_nav_deleted_posts') . '</a></li>';
+		$moduleEngine->addRoleProtectedListener(
+			$requiredRole,
+			'ModerateAttachmentIndicator',
+			function(string &$fileInfoBar, array &$attachment) {
+				$this->onRenderAttachmentIndicator($fileInfoBar, $attachment);
+			}
+		);
 	}
 
 	/**
 	 * Run common deleted-post checks and execute a callback if needed.
 	 *
-	 * @param array $post
-	 * @param callable $callback Receives the post array by reference
+	 * @param Post $post
+	 * @param callable $callback Receives the post by reference
 	 */
-	private function handleDeletedPost(array &$post, callable $callback): void {
+	private function handleDeletedPost(Post &$post, callable $callback): void {
 		// Skip if the post isn't deleted
 		if (!$this->deletedPostUtility->isPostDeleted($post)) {
 			return;
@@ -113,32 +119,23 @@ class deletedPostUIHooks {
 		$callback($post);
 	}
 
-	private function onRenderPostAdminControls(string &$modFunc, array &$post, bool $noScript): void {
-		$this->handleDeletedPost($post, function(array &$post) use (&$modFunc, $noScript) {
-			// render indicator
-			$modFunc .= $this->renderDeletedIndicator($post);
-
-			// render the <a> button to take the user to the entry in the module
-			$modFunc .= $this->deletedPostUtility->adminPostViewModuleButton($post, $noScript);
-		});
-	}
-
-	private function renderDeletedIndicator(?array $post): string {
-		// whether only the file was deleted
-		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
-
-		// render the [DELETED] indicator if the file wasn't deleted
-		if (!$onlyFileDeleted) {
-			return $this->renderIndicator('DELETED', "This post was deleted!");
+	private function onRenderPostAdminControls(string &$modFunc, Post &$post, bool $noScript): void {
+		// Skip if viewing from the module page
+		if ($this->deletedPostUtility->isModulePage()) {
+			return;
 		}
 
-		// otherwise dont render any indicaztor
-		return '';
-	}
+		$isDeleted = $this->deletedPostUtility->isPostDeleted($post);
+		$onlyFileDeleted = $post->isFileOnlyDeleted() ?? 0;
 
-	private function renderIndicator(string $message, string $spanTitle): string {
-		// return html
-		return '<span class="warning" title="' . htmlspecialchars($spanTitle) . '">[' . htmlspecialchars($message) . ']</span>';
+		// Always render the [DELETED] indicator container (hidden by default, like toggle indicators)
+		$showIndicator = $isDeleted && !$onlyFileDeleted;
+		$modFunc .= $this->renderIndicator('deleted', '[DELETED]', 'warning', !$showIndicator, 'This post was deleted!');
+
+		// Render the View button only for actually deleted posts
+		if ($isDeleted) {
+			$modFunc .= $this->deletedPostUtility->adminPostViewModuleButton($post, $noScript);
+		}
 	}
 
 	private function appendCssClassIf(string &$cssClasses, bool $condition, string $className): void {
@@ -152,7 +149,7 @@ class deletedPostUIHooks {
 		$cssClasses .= " $className ";
 	}
 
-	private function onRenderAttachmentCssClass(string &$attachmentCssClasses, array &$post, bool $isLiveFrontend): void {
+	private function onRenderAttachmentCssClass(string &$attachmentCssClasses, Post &$post, bool $isLiveFrontend): void {
 		// return early if this isn't done from the live frontend
 		if(!$isLiveFrontend) {
 			return;
@@ -167,12 +164,12 @@ class deletedPostUIHooks {
 		}
 
 		// Check if the post contains any deleted attachments
-		if (empty($post['deleted_attachments'])) {
+		if (empty($post->getDeletedAttachments())) {
 			return;
 		}
 
 		// Loop through the deleted_attachments to check 'open_flag' value
-		foreach ($post['attachments'] as $attachment) {
+		foreach ($post->getAttachments() as $attachment) {
 			if ((!isset($attachment['deletedPostId']) && !$attachment['deletedPostId']) || !$attachment['isDeleted']) {
 				// Handle the case where 'open_flag' is not 1
 				return;
@@ -182,7 +179,7 @@ class deletedPostUIHooks {
 		$this->appendCssClassIf($attachmentCssClasses, true, 'deletedFile');
 	}
 
-	private function onRenderPostCssClass(string &$postCssClasses, array $post): void {
+	private function onRenderPostCssClass(string &$postCssClasses, Post $post): void {
 		// is this being viewed from the module page?
 		$isModulePage = $this->deletedPostUtility->isModulePage();
 
@@ -192,30 +189,30 @@ class deletedPostUIHooks {
 		}
 
 		// whether only the file was deleted
-		$onlyFileDeleted = $post['file_only_deleted'] ?? 0;
+		$onlyFileDeleted = $post->isFileOnlyDeleted();
 
 		// whether the post is deleted or not
-		$isPostDeleted = $this->deletedPostUtility->isPostDeleted($post) && $onlyFileDeleted === 0;
+		$isPostDeleted = $this->deletedPostUtility->isPostDeleted($post) && !$onlyFileDeleted;
 
 		$this->appendCssClassIf($postCssClasses, $isPostDeleted, 'deletedPost');
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		// generate the script header
-		$this->moduleAdmin->includeScript('deletedPosts.js', $moduleHeader);
+		($this->includeScript)('deletedPosts.js', $moduleHeader);
 	}
 
-	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
+	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
 		// whether to render it
 		if(!$this->deletedPostUtility->canRenderButton($post)) {
 			return;
 		}
 
 		// generate view deleted url
-		$deletedEntryUrl = $this->deletedPostUtility->generateViewDeletedPostUrl($post['deleted_post_id']);
+		$deletedEntryUrl = $this->deletedPostUtility->generateViewDeletedPostUrl($post->getDeletedPostId());
 
 		// build the widget entry
-		$viewDeletedPostWidget = $this->moduleAdmin->buildWidgetEntry(
+		$viewDeletedPostWidget = ($this->buildWidgetEntry)(
 			$deletedEntryUrl, 
 			'viewDeletedPost', 
 			'View deleted post', 
@@ -228,18 +225,23 @@ class deletedPostUIHooks {
 
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
 		// return early if the attachment isn't deleted
-		if((!$attachment['isDeleted'] && !$attachment['onlyFileDeleted']) || empty($attachment['deletedPostId'])) {
+		if(!$attachment['isDeleted'] && !$attachment['onlyFileDeleted']) {
 			return;
 		}
-
-		// append indicator to attachment
-		$attachmentProperties .= $this->renderIndicator('FILE DELETED', 'This post\'s file was deleted!');
 
 		// get deleted post id of the attachment
 		$deletedPostId = $attachment['deletedPostId'] ?? null;
 
 		// append view deleted attachment button
 		$attachmentProperties .= $this->generateViewDelAttachmentButton($deletedPostId);
+	}
+
+	private function onRenderAttachmentIndicator(string &$fileInfoBar, array &$attachment): void {
+		// whether this specific attachment is deleted (per-attachment flag AND post-level file-only flag)
+		$isDeleted = $attachment['isDeleted'] && $attachment['onlyFileDeleted'];
+
+		// always render [FILE DELETED] indicator (hidden when not deleted, JS toggles visibility)
+		$fileInfoBar .= $this->renderIndicator('fileDeleted', '[FILE DELETED]', 'warning', !$isDeleted, 'This post\'s file was deleted!');
 	}
 
 	private function generateViewDelAttachmentButton(?int $deletedPostId): string {
@@ -257,4 +259,6 @@ class deletedPostUIHooks {
 		// return button
 		return $button;
 	}
+
+
 }

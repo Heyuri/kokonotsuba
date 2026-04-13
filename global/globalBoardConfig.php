@@ -107,6 +107,8 @@ $config['ModuleList'] = array(
 	'tripcode' => true,
 	'displayIp' => true,
 	'animatedGif' => true,
+	'tegaki' => true,
+	'quickReply' => true,
 	/* misc */
 	'soudane' => true,
 	'privateMessage' => true,
@@ -159,14 +161,13 @@ $config['ModuleSettings']['APPEND_TRIP_PM_BUTTON_TO_POST'] = false;
 //fullBanner
 $config['ModuleSettings']['SHOW_TOP_AD'] = true; // Whether to show the top full banner ad
 $config['ModuleSettings']['SHOW_BOTTOM_AD'] = true; // Whether to show the bottom full banner ad
+$config['ModuleSettings']['FULLBANNER_SUBMISSION_COOLDOWN'] = 300; // Seconds between banner submissions per IP
+$config['ModuleSettings']['FULLBANNER_REQUIRED_WIDTH'] = 468; // Required banner image width in pixels
+$config['ModuleSettings']['FULLBANNER_REQUIRED_HEIGHT'] = 60; // Required banner image height in pixels
+$config['ModuleSettings']['FULLBANNER_MAX_FILE_SIZE'] = 204800; // Maximum banner file size in bytes (200KB)
 
-// These banners *must* be in the web-accessible static/fullbanners/ directory
-// image name => URL the banner will lead to when clicked
-$config['ModuleSettings']['BANNER_ADS'] = array(
-	'rules2.png' => 'https://www.heyuri.net/index.php?p=rules',
-	'nominate1.png' => 'https://cgi.heyuri.net/nominate/',
-	'sw2.png' => 'https://dis.heyuri.net/sw/',
-);
+// Full banners are now managed via the database through the admin panel.
+// Legacy BANNER_ADS config is no longer used.
 
 //mod_wf
 $config['ModuleSettings']['FILTERS'] = array( 
@@ -203,7 +204,6 @@ $config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_PATH'].'image/banner/
 
 //mod_addinfo
 $config['ModuleSettings']['ADD_INFO'] = array(
-	'<div id="formfuncs"><a class="postformOption" href="javascript:kkjs.form_switch();">Switch form position</a> | <a class="postformOption" href="'.$config['STATIC_URL'].'html/bbcode.html" target="_blank">BBCode reference</a></div>',
 	'Read the <a href="//example.net/rules.html">rules</a> before you post.',
 	'Read <a href="//example.net/faq.html">our FAQ</a> for any questions.',
 	'Modify this by editing $config[\'ModuleSettings\'][\'ADD_INFO\'] in globalconfig.php',
@@ -223,7 +223,7 @@ $config['ModuleSettings']['SHOW_SCORE_ONLY'] = false;
 
 //mod_search
 $config['ModuleSettings']['SEARCH_POSTS_PER_PAGE'] = 50;
-$config['ModuleSettings']['SEARCH_TEMPLATE'] = 'kokoimg.tpl';
+$config['ModuleSettings']['SEARCH_TEMPLATE'] = 'kokoimg';
 $config['ModuleSettings']['DISPLAY_THREADED_FORMAT'] = false;
 
 //mod_readonly
@@ -237,7 +237,7 @@ $config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'] = 250;
 $config['ModuleSettings']['DISP_ID'] = false; // if posterID is enabled: false = OPs can open by putting displayid to mail, true = IDs always ON
 
 // deletedPosts
-$config['ModuleSettings']['DELETED_POSTS_TEMPLATE'] = 'kokoimg.tpl';
+$config['ModuleSettings']['DELETED_POSTS_TEMPLATE'] = 'kokoimg';
 $config['ModuleSettings']['PRUNE_TIME'] = 336;
 
 // dice
@@ -364,10 +364,6 @@ $config['ModuleSettings']['NAME_RANDOMIZER_NAMES'] = [
 // e.g :nigra: gets turned into '<img src="nigra.gif">'
 // NOTE: Emotes *must* be in `static/image/emotes/`
 $config['ModuleSettings']['EMOTES'] = [
-	'nigra' => 'nigra.gif',
-	'sage'	=> 'sage.gif',
-	'longcat'	=>'longcat.gif',
-	'tacgnol'	=>'tacgnol.gif',
 	'angry'		=>'emo-yotsuba-angry.gif',
 	'astonish'	=>'emo-yotsuba-astonish.gif',
 	'biggrin'	=>'emo-yotsuba-biggrin.gif',
@@ -378,20 +374,16 @@ $config['ModuleSettings']['EMOTES'] = [
 	'dark'		=>'emo-yotsuba-dark.gif',
 	'dizzy'		=>'emo-yotsuba-dizzy.gif',
 	'drool'		=>'emo-yotsuba-drool.gif',
-	'love'		=>'emo-yotsuba-heart.gif',
-	'blush'		=>'emo-yotsuba-blush3.gif',
-	'mask'		=>'emo-yotsuba-mask.gif',
-	'lolico'	=>'emo-yotsuba-lolico.gif',
 	'glare'		=>'emo-yotsuba-glare.gif',
 	'glare1'	=>'emo-yotsuba-glare-01.gif',
 	'glare2'	=>'emo-yotsuba-glare-02.gif',
 	'happy'		=>'emo-yotsuba-happy.gif',
 	'huh'		=>'emo-yotsuba-huh.gif',
 	'nosebleed'	=>'emo-yotsuba-nosebleed.gif',
-	'nyaoo-closedeyes'	=>'emo-yotsuba-nyaoo-closedeyes.gif',
-	'nyaoo-closed-eyes'	=>'emo-yotsuba-nyaoo-closedeyes.gif',
 	'nyaoo'		=>'emo-yotsuba-nyaoo.gif',
 	'nyaoo2'	=>'emo-yotsuba-nyaoo2.gif',
+	'nyaoo-closedeyes'	=>'emo-yotsuba-nyaoo-closedeyes.gif',
+	'nyaoo-closed-eyes'	=>'emo-yotsuba-nyaoo-closedeyes.gif',
 	'ph34r'		=>'emo-yotsuba-ph34r.gif',
 	'ninja'		=>'emo-yotsuba-ph34r.gif',
 	'rolleyes'	=>'emo-yotsuba-rolleyes.gif',
@@ -407,13 +399,30 @@ $config['ModuleSettings']['EMOTES'] = [
 	'x3'		=>'emo-yotsuba-x3.gif',
 	'xd'		=>'emo-yotsuba-xd.gif',
 	'xp'		=>'emo-yotsuba-xp.gif',
-	'party'		=>'emo-yotsuba-partyhat.png',
+	'love'		=>'emo-yotsuba-heart.gif',
+	'blush'		=>'emo-yotsuba-blush3.gif',
+	'mask'		=>'emo-yotsuba-mask.gif',
+	'emo'		=>'emo.gif',
+	'lolico'	=>'emo-yotsuba-lolico.gif',
+	'kuz'		=>'emo-yotsuba-tomo.gif',
+	'dance'		=>'heyuri-dance.gif',
+	'dance2'	=>'heyuri-dance-pantsu.gif',
+	'nigra'		=>'nigra.gif',
+	'sage'		=>'sage.gif',
+	'longcat'	=>'longcat.gif',
+	'tacgnol'	=>'tacgnol.gif',
 	'mona2'		=>'mona2.gif',
 	'nida'		=>'nida.gif',
-	'saitama'	=>'anime_saitama05.gif',
+	'iyahoo'	=>'iyahoo.gif',
 	'banana'	=>'banana.gif',
 	'onigiri'	=>'onigiri.gif',
 	'shii'		=>'anime_shii01.gif',
+	'saitama'	=>'anime_saitama05.gif',
+	'foruda'	=>'foruda.gif',
+	'nagato'	=>'nagato.gif',
+	'kuma6'		=>'kuma6.gif',
+	'waha'		=>'waha.gif',
+	'hokke'		=>'hokke.gif',
 	'af2'		=>'af2.gif',
 	'pata'		=>'u_pata.gif',
 	'depression'=>'u_sasu.gif',
@@ -421,19 +430,35 @@ $config['ModuleSettings']['EMOTES'] = [
 	'monapc'	=>'anime_miruna_pc.gif',
 	'purin'		=>'purin.gif',
 	'ranta'		=>'anime_imanouchi04.gif',
-	'nagato'	=>'nagato.gif',
-	'foruda'	=>'foruda.gif',
-	'sofa'		=>'sofa.gif',
-	'hardgay'	=>'hg.gif',
-	'iyahoo'	=>'iyahoo.gif',
-	'tehegg'	=>'egg.gif',
-	'kuz'		=>'emo-yotsuba-tomo.gif',
-	'emo'		=>'emo.gif',
-	'dance'		=>'heyuri-dance.gif',
-	'dance2'	=>'heyuri-dance-pantsu.gif',
-	'kuma6'		=>'kuma6.gif',
-	'waha'		=>'waha.gif',
-	'hokke'		=>'hokke.gif'
+];
+
+// Kaomoji (Shift-JIS faces) shown in the post form
+// 'display text' => 'value inserted into comment'
+$config['ModuleSettings']['KAOMOJI'] = [
+	'ヽ(´ー｀)ノ' => '[kao]ヽ(´ー｀)ノ[/kao]',
+	'(;´Д`)' => '[kao](;´Д`)[/kao]',
+	'ヽ(´∇`)ノ' => '[kao]ヽ(´∇`)ノ[/kao]',
+	'(´人｀)' => '[kao](´人｀)[/kao]',
+	'(＾Д^)' => '[kao](＾Д^)[/kao]',
+	'(´ー`)' => '[kao](´ー`)[/kao]',
+	'（ ´,_ゝ`）' => '[kao]（ ´,_ゝ`）[/kao]',
+	'(´～`)' => '[kao](´～`)[/kao]',
+	'(;ﾟДﾟ)' => '[kao](;ﾟДﾟ)[/kao]',
+	'(;ﾟ∀ﾟ)' => '[kao](;ﾟ∀ﾟ)[/kao]',
+	'┐(ﾟ～ﾟ)┌' => '[kao]┐(ﾟ～ﾟ)┌[/kao]',
+	'ヽ(`Д´)ノ' => '[kao]ヽ(`Д´)ノ[/kao]',
+	'( ´ω`)' => '[kao]( ´ω`)[/kao]',
+	'(ﾟー｀)' => '[kao](ﾟー｀)[/kao]',
+	'(・∀・)' => '[kao](・∀・)[/kao]',
+	'（⌒∇⌒ゞ）' => '[kao]（⌒∇⌒ゞ）[/kao]',
+	'(ﾟ血ﾟ#)' => '[kao](ﾟ血ﾟ#)[/kao]',
+	'(ﾟｰﾟ)' => '[kao](ﾟｰﾟ)[/kao]',
+	'(´￢`)' => '[kao](´￢`)[/kao]',
+	'(´π｀)' => '[kao](´π｀)[/kao]',
+	'ヽ(ﾟρﾟ)ノ' => '[kao]ヽ(ﾟρﾟ)ノ[/kao]',
+	'Σ(;ﾟДﾟ)' => '[kao]Σ(;ﾟДﾟ)[/kao]',
+	'Σ(ﾟдﾟ|||)' => '[kao]Σ(ﾟдﾟ|||)[/kao]',
+	'ｷﾀ━━━(・∀・)━━━!!' => '[kao]ｷﾀ━━━(・∀・)━━━!![/kao]',
 ];
 
 /* indexCommentTruncator */
@@ -509,8 +534,8 @@ $config['TRUST_HTTP_X_FORWARDED_FOR'] = 0; //Whether to use HTTP_X_FORWARDED_FOR
 $config['MAX_THREAD_AMOUNT'] = 150; // Auto deletes the last thread from a board that exceed this limit, defaults to 10 pages
 
 // Appearance
-$config['TEMPLATE_FILE'] = 'kokoimg.tpl'; // Template File. Set this and the next line to 'kokotxt.tpl' and 'kokotxtreply.tpl' respectively to use Kokonotsuba as a textboard.
-$config['REPLY_TEMPLATE_FILE'] = 'kokoimg.tpl'; // Reply page template file
+$config['TEMPLATE_FILE'] = 'kokoimg'; // Template directory. Set this and the next to 'kokotxt' and 'kokotxtreply' respectively for textboard.
+$config['REPLY_TEMPLATE_FILE'] = 'kokoimg'; // Reply page template directory
 $config['MAX_AGE_TIME'] = 0; // How long will thread accept age replies? (hours)
 
 $config['USE_CATEGORY'] = 0; // Enable Categories

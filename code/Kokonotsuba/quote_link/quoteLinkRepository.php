@@ -2,18 +2,23 @@
 
 namespace Kokonotsuba\quote_link;
 
+use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
-class quoteLinkRepository {
+/** Repository for quote-link records that track post-to-post reply references. */
+class quoteLinkRepository extends baseRepository {
 	public function __construct(
-		private databaseConnection $databaseConnection,
-		private readonly string $quoteLinkTable,
+		databaseConnection $databaseConnection,
+		string $quoteLinkTable,
 		private readonly string $postTable,
 		private readonly string $threadTable,
 		private readonly string $deletedPostsTable
-	) {}
+	) {
+		parent::__construct($databaseConnection, $quoteLinkTable);
+		self::validateTableNames($postTable, $threadTable, $deletedPostsTable);
+	}
 
 	private function indexQuoteLinksByHostPostUid(array $quoteLinks): array {
 		$indexed = [];
@@ -41,6 +46,7 @@ class quoteLinkRepository {
 					'no' => (int)$row['target_no'],
 					'post_op_number' => (int)$row['target_post_op_number'],
 					'post_position' => (int)$row['target_post_position'],
+					'board_uid' => (int)$row['target_board_uid'],
 				],
 				'host_post' => [
 					'post_uid' => (int)$row['host_post_uid'],
@@ -71,6 +77,7 @@ class quoteLinkRepository {
 				hp.no AS host_no,
 				ht.post_op_number AS host_post_op_number,
 
+				tp.boardUID AS target_board_uid,
 				tp.post_position AS target_post_position,
 				hp.post_position AS host_post_position,
 
@@ -79,7 +86,7 @@ class quoteLinkRepository {
 				hdp.file_only AS host_file_only,
 				tdp.file_only AS target_file_only
 
-			FROM {$this->quoteLinkTable} q
+			FROM {$this->table} q
 			JOIN {$this->postTable} tp ON q.target_post_uid = tp.post_uid
 			JOIN {$this->threadTable} tt ON tp.thread_uid = tt.thread_uid
 
@@ -93,6 +100,13 @@ class quoteLinkRepository {
 		return $query;
 	}
 
+	/**
+	 * Fetch quote-links for the given post UIDs (as host or target), with full post-number metadata.
+	 *
+	 * @param array $postUids                     Array of post UIDs to look up.
+	 * @param bool  $includeDeletedPostQuotelinks Whether to include links where a post is deleted.
+	 * @return array Quote-link results indexed by host_post_uid.
+	 */
 	public function getQuoteLinksByPostUids(array $postUids, bool $includeDeletedPostQuotelinks = false): array {
 		if (empty($postUids)) {
 			return [];
@@ -118,36 +132,30 @@ class quoteLinkRepository {
 			)";
 		}
 
-		// fetch the data from the database
-		$rows = $this->databaseConnection->fetchAllAsArray($query, $allParams);
-
-		// get the results
-		$results = $this->prepareResults($rows);
-
-		return $results;
+		$rows = $this->queryAll($query, $allParams);
+		return $this->prepareResults($rows);
 	}
 
+	/**
+	 * Fetch all quote-links belonging to the given board UID.
+	 *
+	 * @param int $boardUid Board UID to filter by.
+	 * @return array Quote-link results indexed by host_post_uid.
+	 */
 	public function getQuoteLinksByBoardUid(int $boardUid): array {
-		// get the query
 		$query = $this->getQuoteLinkQuery();
-
-		// add the IN clause for getting the posts by uids
 		$query .= "WHERE q.board_uid = :board_uid";
-
-		// board param
-		$params = [
-			':board_uid' => $boardUid
-		];
-
-		// fetch the data from the database
-		$rows = $this->databaseConnection->fetchAllAsArray($query, $params);
-
-		// get the results
-		$results = $this->prepareResults($rows);
-
-		return $results;
+		$rows = $this->queryAll($query, [':board_uid' => $boardUid]);
+		return $this->prepareResults($rows);
 	}
 
+	/**
+	 * Batch-insert quote-link records and return the number of rows affected.
+	 * Each item must have 'board_uid', 'host_post_uid', and 'target_post_uid' keys.
+	 *
+	 * @param array $quoteLinks Array of link data arrays.
+	 * @return int Number of rows inserted.
+	 */
 	public function insertQuoteLinks(array $quoteLinks): int {
 		if (empty($quoteLinks)) {
 			return 0;
@@ -176,27 +184,32 @@ class quoteLinkRepository {
 			return 0;
 		}
 
-		$query = "INSERT INTO {$this->quoteLinkTable} (board_uid, host_post_uid, target_post_uid) VALUES " . implode(', ', $placeholders);
-		return $this->databaseConnection->execute($query, $params);
+		$query = "INSERT INTO {$this->table} (board_uid, host_post_uid, target_post_uid) VALUES " . implode(', ', $placeholders);
+		return $this->query($query, $params);
 	}
 
+	/**
+	 * Move a set of quote-links to a different board.
+	 *
+	 * @param array $quoteLinkIds Array of quotelink_id values to update.
+	 * @param int   $boardUid     Destination board UID.
+	 * @return void
+	 */
 	public function updateQuoteLinkBoardUids(array $quoteLinkIds, int $boardUid): void {
 		if (empty($quoteLinkIds)) {
 			return;
 		}
 
-		$inClause = pdoPlaceholdersForIn($quoteLinkIds);
-		$query = "UPDATE {$this->quoteLinkTable} SET board_uid = ? WHERE quotelink_id IN $inClause";
-
-		// merge board uid into parameters
-		$parameters = array_merge([$boardUid], $quoteLinkIds);
-
-		$this->databaseConnection->execute($query, $parameters);
+		$this->updateWhereIn(['board_uid' => $boardUid], 'quotelink_id', $quoteLinkIds);
 	}
 
+	/**
+	 * Fetch all quote-links where the host post is one of the given post UIDs, as hydrated quoteLink objects.
+	 *
+	 * @param array $postUids Array of host post UIDs.
+	 * @return quoteLink[] Array of hydrated quoteLink objects.
+	 */
 	public function getQuoteLinksFromHostPostUids(array $postUids): array {
-		$inClause = pdoPlaceholdersForIn($postUids);
-		$query = "SELECT * FROM {$this->quoteLinkTable} WHERE host_post_uid IN $inClause";
-		return $this->databaseConnection->fetchAllAsClass($query, $postUids, '\Kokonotsuba\quote_link\quoteLink');
+		return $this->findAllWhereIn('host_post_uid', $postUids, '\Kokonotsuba\quote_link\quoteLink');
 	}
 }

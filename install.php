@@ -357,6 +357,9 @@ class tableCreator {
                 CONSTRAINT fk_boardUID FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
                 CONSTRAINT fk_thread_uid FOREIGN KEY (`thread_uid`) REFERENCES `{$sanitizedTableNames['THREAD_TABLE']}`(`thread_uid`) ON DELETE CASCADE,
                 INDEX (`thread_uid`),
+                INDEX (`no`),
+                INDEX idx_posts_thread_rank (thread_uid, is_op DESC, post_uid DESC),
+                INDEX idx_posts_thread_rank_cover (thread_uid, is_op DESC, post_uid DESC, post_uid),
                 INDEX idx_post_root (`root`),
                 UNIQUE KEY uniq_board_no (boardUID, no),
                 FULLTEXT INDEX ft_com (com),
@@ -492,6 +495,7 @@ class tableCreator {
                 INDEX idx_restored_at (restored_at),
                 INDEX idx_file_id (file_id),
 
+
                 UNIQUE KEY uq_open_post (open_key)
             ) ENGINE=InnoDB;
             ",
@@ -594,6 +598,31 @@ class tableCreator {
                 CONSTRAINT fk_notes_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
             ) ENGINE=InnoDB;
             ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['PRIVATE_MESSAGE_TABLE']} (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                ip_address TEXT NOT NULL, 
+                date_sent TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                sender_tripcode VARCHAR(255) NOT NULL,
+                sender_name TEXT NOT NULL,
+                recipient_tripcode VARCHAR(255) NOT NULL,
+                message_subject TEXT NOT NULL,
+                message_body TEXT NOT NULL,
+                is_read TINYINT(1) NOT NULL DEFAULT 0
+            ) ENGINE=InnoDB;
+            ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BANNER_AD_TABLE']} (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                link TEXT DEFAULT NULL,
+                banner_file_name TEXT NOT NULL,
+                ip_address VARCHAR(45) DEFAULT NULL,
+                is_active TINYINT(1) NOT NULL DEFAULT 1,
+                is_approved TINYINT(1) NOT NULL DEFAULT 0,
+                date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                INDEX idx_active_approved (is_active, is_approved),
+                INDEX idx_date_submitted (date_submitted),
+                INDEX idx_ip_date (ip_address, date_submitted)
+            ) ENGINE=InnoDB;
+            ",
             "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BLOTTER_TABLE']} (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 blotter_content TEXT NOT NULL,
@@ -613,6 +642,19 @@ class tableCreator {
                 INDEX idx_file_ban_added_by (added_by),
 
                 CONSTRAINT fk_file_ban_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB;
+            ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['PERCEPTUAL_BAN_TABLE']} (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                phash BIGINT NOT NULL,
+                phash_hex CHAR(16) NOT NULL,
+                added_by INT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+                UNIQUE KEY uq_phash (phash),
+                INDEX idx_perceptual_ban_added_by (added_by),
+
+                CONSTRAINT fk_perceptual_ban_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
             ) ENGINE=InnoDB;
             ",
         ];
@@ -795,8 +837,12 @@ switch ($action) {
                 'THREAD_THEMES_TABLE' => $dbSettings['THREAD_THEMES_TABLE'],
                 'LAST_THREAD_SUBMISSIONS_TABLE' => $dbSettings['LAST_THREAD_SUBMISSIONS_TABLE'],
                 'NOTE_TABLE' => $dbSettings['NOTE_TABLE'],
+                'PRIVATE_MESSAGE_TABLE' => $dbSettings['PRIVATE_MESSAGE_TABLE'],
+                'BANNER_AD_TABLE' => $dbSettings['BANNER_AD_TABLE'],
+                'BANNER_TABLE' => $dbSettings['BANNER_TABLE'],
                 'BLOTTER_TABLE' => $dbSettings['BLOTTER_TABLE'],
                 'FILE_BAN_TABLE' => $dbSettings['FILE_BAN_TABLE'],
+                'PERCEPTUAL_BAN_TABLE' => $dbSettings['PERCEPTUAL_BAN_TABLE'],
             ];
 
             $tableCreator->createTables($tables);

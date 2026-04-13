@@ -1,0 +1,2 @@
+	<style id="js-only-hide">.js-only { display: none !important; }</style>
+	<script>document.getElementById('js-only-hide').remove();document.head.appendChild(Object.assign(document.createElement('style'),{textContent:'.no-js-only{display:none!important}'}));</script>

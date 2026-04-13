@@ -4,8 +4,16 @@ namespace Kokonotsuba\Modules\bbCode;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\CommentExtrasListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
+use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
 
 class moduleMain extends abstractModuleMain { 
+	use PostCommentListenerTrait;
+	use CommentExtrasListenerTrait;
+	use IncludeScriptTrait;
+	use FormattingDetailsTrait;
 	private $urlcount;
 	private	$ImgTagTagMode = 0; // [img] tag behavior (0: no conversion 1: conversion when no textures 2: always conversion)
 	private	$URLTagMode = 0; // [url] tag behavior (0: no conversion 1: normal)
@@ -44,10 +52,13 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		// Register the listener for the PostInfo hook
-		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (array &$registInfo) {
-			$this->onRegistBegin($registInfo['com'], $registInfo['files']);  // Call the method to modify the form
-		});
+		// Register the listener for the PostComment hook (render-time)
+		$this->listenPostComment('onRenderComment');
+
+		// Render BBCode picker buttons in the post form
+		$this->listenCommentExtras('onRenderCommentExtras');
+
+		$this->registerScript('addbbcode.js');
 
 		// initialize bbcode feature flags
 		$this->supportBold = $this->getConfig('ModuleSettings.supportBold', false);
@@ -72,11 +83,68 @@ class moduleMain extends abstractModuleMain {
 		$this->supportKao = $this->getConfig('ModuleSettings.supportKao', false);
 	}
 
-	private function onRegistBegin(&$com, $files){
-		$com = $this->bb2html($com, $files);
+	private function onRenderCommentExtras(string &$html): void {
+		$html .= $this->renderBBCodeButtons();
 	}
 
-	private function bb2html($string, $files): string {
+	private function renderBBCodeButtons(): string {
+		$buttons = '';
+
+		// Simple wrap buttons - rendered as server HTML, JS adds click handlers
+		$simpleButtons = [];
+		if ($this->supportBold) {
+			$simpleButtons[] = ['label' => '<b>B</b>', 'title' => 'Bold', 'code' => 'b'];
+		}
+		if ($this->supportItalic) {
+			$simpleButtons[] = ['label' => '<i>I</i>', 'title' => 'Italics', 'code' => 'i'];
+		}
+		if ($this->supportUnderline) {
+			$simpleButtons[] = ['label' => '<u>U</u>', 'title' => 'Underline', 'code' => 'u'];
+		}
+		if ($this->supportStrikeThrough) {
+			$simpleButtons[] = ['label' => '<s>S</s>', 'title' => 'Strikethrough', 'code' => 's'];
+		}
+		if ($this->supportSpoiler) {
+			$simpleButtons[] = ['label' => '<span style="background-color:black;color:white">Spoiler</span>', 'title' => 'Spoiler', 'code' => 'spoiler'];
+		}
+		if ($this->supportQuote) {
+			$simpleButtons[] = ['label' => '<q>Quote</q>', 'title' => 'Blockquote', 'code' => 'quote'];
+		}
+		if ($this->supportScroll) {
+			$simpleButtons[] = ['label' => 'Scroll', 'title' => 'Scrollbar for long passages of text', 'code' => 'scroll'];
+		}
+
+		foreach ($simpleButtons as $btn) {
+			$buttons .= '<button type="button" class="bbcodeButton" data-code="' . htmlspecialchars($btn['code'], ENT_QUOTES, 'UTF-8') . '" title="' . htmlspecialchars($btn['title'], ENT_QUOTES, 'UTF-8') . '">' . $btn['label'] . '</button>';
+		}
+
+		// Selector buttons - rendered as HTML with data-type, JS builds the dropdowns
+		if ($this->supportCodeBlocks) {
+			$buttons .= '<button type="button" class="bbcodeButton bbcodeSelectorButton" data-type="code" title="Code"><code class="code">Code</code></button>';
+		}
+		if ($this->supportColor) {
+			$buttons .= '<button type="button" class="bbcodeButton bbcodeSelectorButton" data-type="color" title="Font color"><span style="font-weight:bold"><span class="bokuRed">C</span><span class="bokuGreen">o</span><span class="bokuRed">l</span><span class="bokuGreen">o</span><span class="bokuRed">r</span></span></button>';
+		}
+		if ($this->supportFontSize) {
+			$buttons .= '<button type="button" class="bbcodeButton bbcodeSelectorButton" data-type="size" title="Font size">Size</button>';
+		}
+		if ($this->supportPre || $this->supportSw) {
+			$buttons .= '<button type="button" class="bbcodeButton bbcodeSelectorButton" data-type="pre" title="ASCII art">ASCII</button>';
+		}
+
+		if ($buttons === '') {
+			return '';
+		}
+
+		return $this->renderFormattingDetails('bbcodeContainer', 'BBCode',
+			'<div id="bbcodeButtonContainer">' . $buttons . '</div>');
+	}
+
+	private function onRenderComment(string &$comment): void {
+		$comment = $this->bb2html($comment);
+	}
+
+	private function bb2html(string $string, array $files = []): string {
 		$this->urlcount=0; // Reset counter
 
 		// Extract [code] and [code=lang] blocks before processing other BBCode
@@ -152,7 +220,14 @@ class moduleMain extends abstractModuleMain {
 
 		// color
 		if($this->supportColor) {
-			$string = preg_replace('#\[color=(\S+?)\](.*?)\[/color\]#si', '<span style="color:\1;">\2</span>', $string);
+			$string = preg_replace_callback('#\[color=(\S+?)\](.*?)\[/color\]#si', function($m) {
+				$color = $m[1];
+				// Allow only hex colors and named CSS colors (no semicolons, parentheses, or other CSS injection vectors)
+				if (!preg_match('/^(#[0-9a-fA-F]{3,6}|[a-zA-Z]{1,20})$/', $color)) {
+					return $m[0]; // return the raw BBCode unchanged
+				}
+				return '<span style="color:' . $color . ';">' . $m[2] . '</span>';
+			}, $string);
 		}
 
 		// font size
@@ -202,9 +277,12 @@ class moduleMain extends abstractModuleMain {
 			$string = preg_replace('#\[email=(\S+?@\S+?\\.\S+?)\](.*?)\[/email\]#si', '<a href="mailto:\1">\2</a>', $string);
 		}
 
-		// image
+		// image (restrict to http/https/ftp only)
 		if($this->supportImg && (($this->ImgTagTagMode == 2) || ($this->ImgTagTagMode && !$files))){
-			$string = preg_replace('#\[img\](([a-z]+?)://([^ \n\r]+?))\[\/img\]#si', '<img class="bbcodeIMG" src="\1" style="border:1px solid \#021a40;" alt="\1">', $string);
+			$string = preg_replace_callback('#\[img\](((https?|ftp)://([^ \n\r]+?)))\[\/img\]#si', function($m) {
+				$url = htmlspecialchars($m[1], ENT_QUOTES, 'UTF-8');
+				return '<img class="bbcodeIMG" src="' . $url . '" style="border:1px solid #021a40;" alt="' . $url . '">';
+			}, $string);
 		}
 
 		// restore preserved code blocks
@@ -463,22 +541,28 @@ class moduleMain extends abstractModuleMain {
 
 	private function _URLConv1($m){
 		++$this->urlcount;
-		return '<a class="bbcodeA" href="'.$m[1].$m[2].'" rel="nofollow noreferrer" target="_blank">'.$m[1].$m[2].'</a>';
+		$url = htmlspecialchars($m[1].$m[2], ENT_QUOTES, 'UTF-8');
+		return '<a class="bbcodeA" href="'.$url.'" rel="nofollow noreferrer" target="_blank">'.$url.'</a>';
 	}
 
 	private function _URLConv2($m){
 		++$this->urlcount;
-		return '<a class="bbcodeA" href="http://'.$m[1].'" rel="nofollow noreferrer" target="_blank">'.$m[1].'</a>';
+		$url = htmlspecialchars($m[1], ENT_QUOTES, 'UTF-8');
+		return '<a class="bbcodeA" href="http://'.$url.'" rel="nofollow noreferrer" target="_blank">'.$url.'</a>';
 	}
 
 	private function _URLConv3($m){
 		++$this->urlcount;
-		return '<a class="bbcodeA" href="'.$m[1].$m[2].'" rel="nofollow noreferrer" target="_blank">'.$m[3].'</a>';
+		$href = htmlspecialchars($m[1].$m[2], ENT_QUOTES, 'UTF-8');
+		$text = htmlspecialchars($m[3], ENT_QUOTES, 'UTF-8');
+		return '<a class="bbcodeA" href="'.$href.'" rel="nofollow noreferrer" target="_blank">'.$text.'</a>';
 	}
 
 	private function _URLConv4($m){
 		++$this->urlcount;
-		return '<a class="bbcodeA" href="http://'.$m[1].'" rel="nofollow noreferrer" target="_blank">'.$m[2].'</a>';
+		$url = htmlspecialchars($m[1], ENT_QUOTES, 'UTF-8');
+		$text = htmlspecialchars($m[2], ENT_QUOTES, 'UTF-8');
+		return '<a class="bbcodeA" href="http://'.$url.'" rel="nofollow noreferrer" target="_blank">'.$text.'</a>';
 	}
 
 	private function _URLRevConv($m){
@@ -594,7 +678,7 @@ class moduleMain extends abstractModuleMain {
 	private function _URLExcced(){
 		if($this->urlcount > $this->MaxURLCount) {
 		  	  $fh = fopen($this->URLTrapLog, 'a+b');
-		  	  fwrite($fh, time()."\t$_SERVER[REMOTE_ADDR]\t{$this->urlcount}\n");
+		  	  fwrite($fh, time()."\t" . $this->moduleContext->request->getRemoteAddr() . "\t{$this->urlcount}\n");
 		  	  fclose($fh);
 		  	  throw new BoardException("URL: Tags exceed max limit");
 		}

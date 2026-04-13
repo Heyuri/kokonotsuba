@@ -2,6 +2,7 @@
 	display: inline-block;
 }
 
+/* Shared toggle arrow (▶) for all dropdown menus */
 .menuToggle {
 	cursor: pointer;
 	display: inline-block;
@@ -12,11 +13,11 @@
 }
 
 .menuToggle.menuOpen {
-	transform: rotate(90deg); /* ▸ rotates to ▾ */
+	transform: rotate(90deg); /* ▶ rotates to ▼ */
 }
 
-/* The dropdown container */
-.postMenuDropdown {
+/* Shared dropdown menu base */
+.dropdownMenu {
 	position: absolute;
 	background: var(--color-bg-reply);
 	border: 1px solid var(--color-hi-contrast-border);
@@ -26,18 +27,33 @@
 	padding: 2px 0;
 }
 
-/* Individual menu items */
-.postMenuDropdown a {
-	display: block;            /* stack vertically */
+.dropdownMenu a {
+	display: block;
 	padding: 2px 4px;
 	text-decoration: none;
 	color: inherit;
-	white-space: nowrap;       /* prevent text wrapping */
+	white-space: nowrap;
 	cursor: pointer;
 }
 
-.postMenuDropdown a:hover {
+.dropdownMenu a:hover {
 	background: rgba(0, 0, 0, 0.05);
+}
+
+/* Attachment menu toggle — extra spacing in file bar */
+.attachmentMenuToggle {
+	margin-left: 4px;
+	font-size: var(--font-size-x-small);
+}
+
+/* Attachment dropdown — slightly smaller than post menu */
+.attachmentMenuDropdown {
+	min-width: 100px;
+	font-size: var(--font-size-small);
+}
+
+.attachmentMenuDropdown a {
+	padding: 1px 4px;
 }
 
 .managepostsCommentWrapper {
@@ -45,6 +61,10 @@
 }
 
 /************************ Hachi stuff *************************/
+
+.indicatorHidden {
+	display: none;
+}
 
 .detailsbox {
 	background-color: var(--color-bg-main);
@@ -253,5 +273,279 @@
 /************************ Mobile **************************************/
 
 @media screen and (max-width: 650px) {
-	.postMenuDropdown a { line-height: 2 }
+	.dropdownMenu a { line-height: 2 }
+}
+
+/************************ Private Messages *****************************/
+
+.pmSendForm {
+	margin: 0.5em 0;
+}
+
+.pmRow.pmRead {
+	opacity: 0.85;
+}
+
+.pmRow.pmUnread {
+	font-weight: var(--font-weight-bold);
+}
+
+.pmUnreadIndicator {
+	color: var(--color-fg-warning);
+	font-weight: var(--font-weight-bold);
+}
+
+.pmStatusCell {
+	width: 1.5em;
+	text-align: center;
+}
+
+.pmDateCell {
+	white-space: nowrap;
+}
+
+.pmViewCell {
+	white-space: nowrap;
+}
+
+
+
+/* View message page */
+
+.pmViewContainer {
+	text-align: left;
+}
+
+.pmViewNav {
+	margin-bottom: 0.5em;
+}
+
+.pmViewMeta td {
+	padding: 2px 8px 2px 0;
+}
+
+.pmViewBody {
+	padding: 0.5em 0;
+	word-break: break-word;
+}
+
+/************************ Filters *************************************/
+
+.filter .comment,
+.filter .post,
+.filter .omittedposts,
+.filter .filesize,
+.filter .postimg,
+.filter > .reply-container {
+  display: none;
+}
+
+.filter .post.op {
+  display: block;
+}
+
+.filter .postinfo,
+.filter .category {
+  opacity: 0.5;
+}
+
+/* .filterpost {
+  text-decoration: none;
+  font-weight: var(--font-weight-bold);
+	font-size: 9pt;
+} */
+
+/* .filterpostContainer::before {
+	content: "["
+}
+
+.filterpostContainer::after {
+	content: "]"
+} */
+
+.filterpost:hover {
+  opacity: 1;
+}
+
+.filterImage .postimg {
+  opacity: 0;
+}
+
+.filterImage .attachmentAnchor {
+  position: relative;
+}
+
+.formattingDetails summary {
+  width: fit-content;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.formattingDetails summary:hover {
+  font-weight: bold;
+}
+
+.dropzoneWrap {
+  user-select: none;
+  margin-top: 4px;
+}
+
+.dropzone {
+  border: 2px dashed #888;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  color: #666;
+}
+
+.dropzone.dragover {
+  border-color: #33a;
+  color: #33a;
+}
+
+.dropzoneFilePicker {
+  display: none;
+}
+
+/************************ Catalog *************************************/
+
+#catalogSettings {
+	float: right;
+}
+
+#catalogSortForm {
+	float: left;
+}
+
+/* ---- Catalog ---- */
+
+#catalogTable {
+	margin: 0 auto;
+	text-align: center;
+	clear: both;
+}
+
+/* Auto columns: flex wrapping, centered */
+#catalogTable.auto-cols {
+	text-align: center;
+}
+
+#catalogTable.auto-cols tr,
+#catalogTable.auto-cols tbody {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: stretch;
+	justify-content: center;
+}
+
+#catalogTable.auto-cols .thread {
+	display: inline-block;
+	margin: 0.5em;
+}
+
+/* Fixed columns: CSS grid */
+#catalogTable.fixed-cols tr,
+#catalogTable.fixed-cols tbody {
+	display: grid;
+	grid-template-columns: repeat(var(--cat-cols, 5), auto);
+	justify-content: center;
+}
+
+#catalogTable.fixed-cols .thread {
+	margin: 0.5em;
+}
+
+#catalogTable.fixed-cols .catComment {
+	max-height: 100px;
+	overflow: hidden;
+}
+
+#catalogTable.fixed-cols .catComment:hover {
+	overflow: auto;
+}
+
+/* Full width: stretch table and distribute threads across the page */
+#catalogTable.full-width {
+	display: block;
+	width: 100%;
+}
+
+#catalogTable.full-width tbody {
+	display: flex;
+	flex-wrap: wrap;
+	width: 100%;
+}
+
+#catalogTable.full-width tr {
+	display: flex;
+	flex-wrap: wrap;
+	width: 100%;
+	justify-content: space-evenly;
+}
+
+#catalogTable.full-width.fixed-cols tr {
+	display: grid;
+	grid-template-columns: repeat(var(--cat-cols, 5), 1fr);
+	justify-items: center;
+}
+
+#catalogTable .thread {
+	padding: 0 0 0.5em;
+	width: 180px;
+	max-height: 250px;
+	max-width: 170px;
+	text-align: center;
+	vertical-align: top;
+	overflow-y: hidden;
+	overflow-wrap: break-word;
+	overflow-wrap: anywhere;
+}
+
+#catalogTable .thread:hover {
+	overflow-y: auto;
+}
+
+#catalogTable .thumb {
+	display: block;
+	margin: 0 auto 0.75em;
+	width: 150px;
+	height: 150px;
+	object-fit: scale-down;
+}
+
+#catalogTable .catPostInfo {
+	font-size: var(--font-size-small);
+}
+
+#catalogTable .catPostInfo .title {
+	display: inline-block;
+	font-size: inherit;
+  max-width: 100%;
+	vertical-align: text-bottom;
+	overflow: hidden;
+	text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#catalogTable .catPostInfo .Replies {
+	display: inline-block;
+}
+
+.catComment {
+	display: table;
+  margin: 0 auto;
+	text-align: left;
+	font-size: var(--font-size-small);
+}
+
+@media screen and (max-width: 600px) {
+	#catalogTable .thread {
+		width: 140px;
+		max-width: 140px;
+	}
+	
+	#catalogTable .thumb {
+		max-width: 135px;
+	}
 }

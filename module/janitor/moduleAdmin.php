@@ -5,13 +5,17 @@ namespace Kokonotsuba\Modules\janitor;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\generateModerateButton;
+use function Puchiko\strings\newLinesToBreakLines;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
 	public function getRequiredRole(): userRole {
 		return userRole::LEV_JANITOR;
 	}
@@ -25,41 +29,17 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 	
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ManagePostsControls',
-			function(string &$modControlSection, array &$post) {
-				$this->renderWarnButton($modControlSection, $post, false);
-			}
+		$this->registerPostControlPair('renderWarnButton');
+		$this->registerSimplePostWidget(
+			fn(Post $post) => $this->generateWarnUrl($post->getUid()),
+			'warn',
+			'Warn'
 		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'PostAdminControls',
-			function(string &$modControlSection, array &$post) {
-				$this->renderWarnButton($modControlSection, $post, true);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, array &$post) {
-				$this->onRenderPostWidget($widgetArray, $post);
-			}
-		);
-
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
 	}
 
-	private function renderWarnButton(string &$modfunc, array &$post, bool $noScript = false): void {
-		$janitorWarnUrl = $this->generateWarnUrl($post['post_uid']);
+	private function renderWarnButton(string &$modfunc, Post &$post, bool $noScript = false): void {
+		$janitorWarnUrl = $this->generateWarnUrl($post->getUid());
 		
 		$modfunc .= generateModerateButton(
 			$janitorWarnUrl,
@@ -68,22 +48,6 @@ class moduleAdmin extends abstractModuleAdmin {
 			'adminWarnFunction',
 			$noScript
 		);
-	}
-
-	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
-		// generate warn url
-		$warnUrl = $this->generateWarnUrl($post['post_uid']);
-
-		// build the widget entry for warn
-		$warnWidget = $this->buildWidgetEntry(
-			$warnUrl, 
-			'warn', 
-			'Warn', 
-			''
-		);
-		
-		// add the widget to the array
-		$widgetArray[] = $warnWidget;
 	}
 
 	private function generateWarnUrl(int $postUid): string {
@@ -152,10 +116,10 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function ModulePage() {
-		$postUid = $_REQUEST['postUid'] ?? 0;
+		$postUid = $this->moduleContext->request->getParameter('postUid', null, 0);
 		$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($postUid);
 
-		if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+		if (!$this->moduleContext->request->isPost()) {
 			// get shared template values for this module
 			$templateValues = $this->getWarnTemplateValues();
 
@@ -178,28 +142,28 @@ class moduleAdmin extends abstractModuleAdmin {
 			return;
 		}
 
-		$ip = $post['host'];
-		$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', nl2br($_POST['msg'] ?? '', false)));
+		$ip = $post->getIp();
+		$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', newLinesToBreakLines($this->moduleContext->request->getParameter('msg', 'POST', ''))));
 		if (!$reason) $reason = 'No reason given.';
 
-		if (!empty($_POST['public'])) {
-			$post['com'] .= $this->getPublicWarnMessageHtml($reason); 
+		if (!empty($this->moduleContext->request->getParameter('public', 'POST'))) {
+			$post->setComment($post->getComment() . $this->getPublicWarnMessageHtml($reason));
 			
 			// parameters to update in the query
 			$updatePostParameters = [
-				'com' => $post['com']
+				'com' => $post->getComment()
 			];
 			
-			$this->moduleContext->postRepository->updatePost($post['post_uid'], $updatePostParameters);
+			$this->moduleContext->postRepository->updatePost($post->getUid(), $updatePostParameters);
 		}
 
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 
 		$BANFILE = $board->getBoardStoragePath() . 'bans.log.txt';
 		touch($BANFILE);
 
 		$log = array_map('rtrim', file($BANFILE));
-		$rtime = $_SERVER['REQUEST_TIME'];
+		$rtime = $this->moduleContext->request->getRequestTime();
 		$log[] = "$ip,$rtime,$rtime,$reason";
 		file_put_contents($BANFILE, implode(PHP_EOL, $log) . PHP_EOL);
 

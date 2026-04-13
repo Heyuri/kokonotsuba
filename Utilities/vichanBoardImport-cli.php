@@ -1,43 +1,91 @@
 
 <?php
 /***************
- * !NOTICE!
+ * Vichan Board Import CLI
  * 
- * This script outlived its use and isn't maintained. If you want to use it, move it back into the root directory of koko and run it 
+ * Usage: php vichanBoardImport-cli.php /path/to/vichan.sql /boards/path
  *
-****************/
+ * Imports boards and posts from a vichan SQL dump into kokonotsuba.
+ ****************/
 
-// init regular dependencies
-// aside from session.php since thats exclusively a request
-require __DIR__ . '/paths.php';
-require __DIR__ . '/includes.php';
-require __DIR__ . '/bootstrap/database.php';
-require __DIR__ . '/bootstrap/repositories.php';
-require __DIR__ . '/bootstrap/board.php';
+use Kokonotsuba\board\boardCreator;
+use Kokonotsuba\board\import\vichanBoardImporter;
+use Kokonotsuba\cookie\cookieService;
+use Kokonotsuba\request\request;
+use Kokonotsuba\account\staffAccountFromSession;
+use Kokonotsuba\policy\postPolicy;
+use Kokonotsuba\policy\postRenderingPolicy;
+use Kokonotsuba\containers\appContainer;
 
-// get sql dump path from the first db argument
+// ─── Resolve root directory ───
+$rootDir = __DIR__ . '/../';
+
+// ─── Autoloader & core includes ───
+require $rootDir . 'autoload.php';
+require_once $rootDir . 'code/Kokonotsuba/constants.php';
+require $rootDir . 'paths.php';
+require $rootDir . 'bootstrap/libraryIncludes.php';
+
+// ─── CLI-compatible request (no HTTP superglobals) ───
+$request = new request();
+
+// ─── Global config & policies ───
+$globalConfig = getGlobalConfig();
+$cookieService = new cookieService([]);
+$staffAccountFromSession = new staffAccountFromSession();
+$currentUserId = $staffAccountFromSession->getUID();
+$postPolicy = new postPolicy(
+	$globalConfig['AuthLevels'],
+	$staffAccountFromSession->getRoleLevel(),
+	$currentUserId
+);
+$postRenderingPolicy = new postRenderingPolicy(
+	$globalConfig['AuthLevels'],
+	$staffAccountFromSession->getRoleLevel(),
+	$currentUserId,
+	$cookieService
+);
+
+// ─── Database ───
+require $rootDir . 'bootstrap/database.php';
+
+// ─── Container ───
+$container = new appContainer();
+$container->set('request', $request);
+$container->set('cookieService', $cookieService);
+$container->set('staffAccountFromSession', $staffAccountFromSession);
+$container->set('currentUserId', $currentUserId);
+$container->set('postPolicy', $postPolicy);
+$container->set('postRenderingPolicy', $postRenderingPolicy);
+$container->set('globalConfig', $globalConfig);
+$container->set('databaseConnection', $databaseConnection);
+$container->set('transactionManager', $transactionManager);
+
+// ─── Repositories & Board ───
+require $rootDir . 'bootstrap/repositories.php';
+require $rootDir . 'bootstrap/board.php';
+
+// ─── Parse CLI arguments ───
 $sqlDump = $argv[1] ?? null;
-
-// the base boards path
 $boardPath = $argv[2] ?? null;
 
 if (!$sqlDump || !$boardPath) {
-	echo "Usage: php " . __FILE__ . " /path/to/vichan.sql /boards/path\n";
+	echo "Usage: php " . basename(__FILE__) . " /path/to/vichan.sql /boards/path\n";
 	exit(1);
 }
 
+// ─── Run import ───
 $boardCreator = new boardCreator($boardService);
 
-// init vichanBoardImporter class
 $vichanBoardImporter = new vichanBoardImporter(
-    $databaseConnection, 
-    $boardCreator,
-    $boardService,
-    $postRepository,
-    $threadRepository,
-    $fileService,
-    $transactionManager,
-    $quoteLinkRepository);
-
+	$databaseConnection,
+	$boardCreator,
+	$boardService,
+	$postRepository,
+	$threadRepository,
+	$fileService,
+	$transactionManager,
+	$quoteLinkRepository
+);
 
 $vichanBoardImporter->importVichanInstance($sqlDump, $boardPath);

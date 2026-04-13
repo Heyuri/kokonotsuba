@@ -3,9 +3,13 @@
 namespace Kokonotsuba\Modules\displayId;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\listeners\PostFormAdminListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 use Kokonotsuba\userRole;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostFormAdminListenerTrait, RegistBeginListenerTrait;
+
 	public function getRequiredRole(): userRole {
 		return userRole::LEV_MODERATOR;
 	}
@@ -19,26 +23,14 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'PostFormAdmin',
-			function(string &$postFormAdminSection) {
-				$this->renderPostFormCheckbox($postFormAdminSection);
-			}
-		);
+		$this->listenPostFormAdmin('renderPostFormCheckbox');
 
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'RegistBegin',
-			function() {
-				$this->onRegistBegin();
-			}
-		);
+		$this->listenRegistBegin('onRegistBegin');
 	}
 
 	private function renderPostFormCheckbox(string &$adminPostFormCheckbox): void {
 		// cookie for whether the checkbox is selected
-		$overidePostIdCookie = $_COOKIE['overidePostId'] ?? null;
+		$overidePostIdCookie = $this->moduleContext->cookieService->get('overidePostId');
 
 		// string for 'checked'
 		$checked = $overidePostIdCookie ? 'checked=""' : '';
@@ -52,15 +44,15 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function onRegistBegin(): void {
 		// Hide ID checkbox from request
-		$formModIdOveride = !empty($_POST['formModIdOveride']) ?? null;
+		$formModIdOveride = !empty($this->moduleContext->request->getParameter('formModIdOveride', 'POST'));
 
 		// if a post has been submitted with it selected, then set the cookie so its persistent
 		if($formModIdOveride) {
-			setcookie("overidePostId", "1", time() + 86400, "/");
+			$this->moduleContext->cookieService->set('overidePostId', '1', time() + 86400, '/');
 		}
 		// clear the cookie if it wasn't selected
 		else {
-			setcookie("overidePostId", "", time() - 3600, "/");
+			$this->moduleContext->cookieService->delete('overidePostId', '/');
 		}
 	}
 }

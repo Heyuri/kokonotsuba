@@ -3,12 +3,16 @@
 namespace Kokonotsuba\Modules\tripcode;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\userRole;
+use Kokonotsuba\module_classes\traits\listeners\RenderTripcodeListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 
 require __DIR__ . '/tripcode_src/tripcodeProcessor.php';
 require __DIR__ . '/tripcode_src/tripcodeRenderer.php';
 
 class moduleMain extends abstractModuleMain {
+	use RenderTripcodeListenerTrait;
+	use RegistBeginListenerTrait;
+
 	// handles rendering of tripcode/capcodes
 	private tripcodeRenderer $tripcodeRenderer;
 	
@@ -35,22 +39,10 @@ class moduleMain extends abstractModuleMain {
 		$this->tripcodeProcessor = new tripcodeProcessor($this->moduleContext->config);
 
 		// add hookpoint for tripcode rendering
-		$this->moduleContext->moduleEngine->addListener('RenderTripcode', function (string &$nameHtml, string &$tripcode, string &$secure_tripcode, string &$capcode) {
-			$this->onRenderTripcode($nameHtml, $tripcode, $secure_tripcode, $capcode);
-		});
+		$this->listenRenderTripcode('onRenderTripcode');
 
 		// add hookpoint for tripcode generatoring 
-		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (array &$registInfo) {
-			$this->onGenerateTripcode(
-				$registInfo['name'], 
-				$registInfo['tripcode_input'], 
-				$registInfo['secure_tripcode_input'], 
-				$registInfo['tripcode'], 
-				$registInfo['secure_tripcode'], 
-				$registInfo['capcode'], 
-				$registInfo['roleLevel']
-			);
-		});
+		$this->listenRegistBegin('onGenerateTripcode');
 	}
 
 	private function onRenderTripcode(
@@ -68,22 +60,20 @@ class moduleMain extends abstractModuleMain {
 		);
 	}
 
-	private function onGenerateTripcode(
-		string &$name, 
-		string &$tripcode_input, 
-		string &$secure_tripcode_input, 
-		string &$tripcode, 
-		string &$secure_tripcode, 
-		string &$capcode,
-		userRole $roleLevel
-	): void {
+	private function onGenerateTripcode(array &$registInfo): void {
 		// generate the tripcode/capcode
-		$this->tripcodeProcessor->apply($name, $tripcode_input, $secure_tripcode_input, $capcode, $roleLevel);
+		$this->tripcodeProcessor->apply(
+			$registInfo['name'], 
+			$registInfo['tripcode_input'], 
+			$registInfo['secure_tripcode_input'], 
+			$registInfo['capcode'], 
+			$registInfo['roleLevel']
+		);
 
 		// then assign the *_input tripcode values to the tripcode variables that'll be used in the insert.
 		// this is done so if the module is disabled - the plain trip password wont end up stored as plain text in `tripcode`/`secure_tripcode`
 		// tripcode logic is a little too integral to base posting
-		$tripcode = $tripcode_input;
-		$secure_tripcode = $secure_tripcode_input;
+		$registInfo['tripcode'] = $registInfo['tripcode_input'];
+		$registInfo['secure_tripcode'] = $registInfo['secure_tripcode_input'];
 	}
 }

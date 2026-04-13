@@ -3,20 +3,29 @@
 namespace Kokonotsuba\Modules\edit;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\AuditableTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\generateModerateButton;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
+use function Kokonotsuba\libraries\getCsrfMetaTag;
+use function Puchiko\strings\newLinesToBreakLines;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\validatePostInput;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
-use function Puchiko\request\isPostRequest;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use AuditableTrait;
+	use PostControlHooksTrait;
+
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('CAN_EDIT_POST', userRole::LEV_MODERATOR);
 	}
@@ -30,24 +39,23 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(&$moduleHeader) {
-				$this->onGenerateModuleHeader($moduleHeader);
-			}
-		);
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
+		$this->registerSimplePostWidget('postUid', 'editPost', _T('edit_post'));
 
+		// noscript fallback: link to edit form page
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
-			'ModeratePostWidget',
-			function(array &$widgetArray, array &$post) {
-				$this->onRenderPostWidget($widgetArray, $post);
+			'PostAdminControls',
+			function(string &$modControlSection, Post &$post) {
+				$url = $this->getModulePageURL(['postUid' => $post->getUid()], false, true);
+				$modControlSection .= generateModerateButton($url, 'E', _T('edit_post'), 'adminEditFunction', true);
 			}
 		);
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		$moduleHeader .= getCsrfMetaTag();
+
 		// include the post edit js for the mod tool
 		//$this->includeScript('postEdit.js', $moduleHeader);
 
@@ -63,27 +71,12 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$FORM_EMAIL}' => _T('form_email'),
 			'{$FORM_TOPIC}' => _T('form_topic'),
 			'{$FORM_COMMENT}' => _T('form_comment'),
-			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false))
+			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput()
 		]);
 
 		// append the form template to the module header so it's available on the page (but hidden until triggered)
 		$moduleHeader .= $this->generateTemplate('postEditFormTemplate', $postEditFormTemplate);
-	}
-
-	private function onRenderPostWidget(array &$widgetArray, array &$post): void {
-		// get post details for widget
-		$postUid = $post['post_uid'];
-
-		// get post number for widget
-		$postWidget = $this->buildWidgetEntry(
-			$this->getModulePageURL(['postUid' => $postUid], false, true),
-			'editPost',
-			_T('edit_post'),
-			''
-		);
-
-		// append post widget to the post widget
-		$widgetArray[] = $postWidget;
 	}
 
 	private function editPost(
@@ -103,7 +96,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// convert new lines
 		if($comment !== null) {
-			$updatePostParameters['com'] = nl2br($comment, false);
+			$updatePostParameters['com'] = newLinesToBreakLines($comment);
 		}
 
 		// Filter out null values
@@ -122,12 +115,12 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// send the updated post data back as json
 		sendAjaxAndDetach([
-			'postUserName' => $post['name'] ?? '',
-			'comment' => $post['com'] ?? '',
-			'subject' => $post['sub'] ?? '',
-			'postEmail' => $post['email'] ?? '',
-			'postUid' => $post['post_uid'] ?? '',
-			'postNumber' => $post['no'] ?? ''
+			'postUserName' => $post->getName() ?? '',
+			'comment' => $post->getComment() ?? '',
+			'subject' => $post->getSubject() ?? '',
+			'postEmail' => $post->getEmail() ?? '',
+			'postUid' => $post->getUid() ?? '',
+			'postNumber' => $post->getNumber() ?? ''
 		]);
 		exit;
 	}
@@ -161,16 +154,16 @@ class moduleAdmin extends abstractModuleAdmin {
 			validatePostInput($post, false);
 
 			// store post number for redirect after edit
-			$postNumber = $post['no'] ?? null;
+			$postNumber = $post->getNumber() ?? null;
 
 			// get board uid
-			$boardUid = $post['boardUID'] ?? null;
+			$boardUid = $post->getBoardUID() ?? null;
 
 			// get the parameters
-			$name = $_POST['postUserName'] ?? null;
-			$comment = $_POST['comment'] ?? null;
-			$subject = $_POST['subject'] ?? null;
-			$email = $_POST['postEmail'] ?? null;
+			$name = $this->moduleContext->request->getParameter('postUserName', 'POST');
+			$comment = $this->moduleContext->request->getParameter('comment', 'POST');
+			$subject = $this->moduleContext->request->getParameter('subject', 'POST');
+			$email = $this->moduleContext->request->getParameter('postEmail', 'POST');
 			
 			// handle the edit
 			$this->editPost($postUid, $name, $comment, $subject, $email);
@@ -180,10 +173,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		rebuildBoardsFromPosts([$postUid], $this->moduleContext->postService);
 
 		// log the edit action
-		$this->moduleContext->actionLoggerService->logAction("Edited post No.{$postNumber}", $boardUid ?? GLOBAL_BOARD_UID);
+		$this->logAction("Edited post No.{$postNumber}", $boardUid ?? GLOBAL_BOARD_UID);
 
 		// send json data back if it's a js request
-		if(isJavascriptRequest()) {
+		if($this->moduleContext->request->isAjax()) {
 			$this->sendJson($postUid);
 		}
 		// otherwise redirect back to the post
@@ -205,17 +198,18 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// page content
 		$pageContent = $this->moduleContext->adminPageRenderer->ParseBlock('POST_EDIT_FORM',[
-			'{$POST_UID}' => $post['post_uid'],
-			'{$POST_NUMBER}' => $post['no'],
-			'{$NAME}' => sanitizeStr($post['name'] ?? ''),
-			'{$COMMENT}' => sanitizeStr($post['com'] ?? ''),
-			'{$SUBJECT}' => sanitizeStr($post['sub'] ?? ''),
-			'{$EMAIL}' => sanitizeStr($post['email'] ?? ''),
+			'{$POST_UID}' => $post->getUid(),
+			'{$POST_NUMBER}' => $post->getNumber(),
+			'{$NAME}' => sanitizeStr($post->getName() ?? ''),
+			'{$COMMENT}' => sanitizeStr($post->getComment() ?? ''),
+			'{$SUBJECT}' => sanitizeStr($post->getSubject() ?? ''),
+			'{$EMAIL}' => sanitizeStr($post->getEmail() ?? ''),
 			'{$FORM_NAME}' => _T('form_name'),
 			'{$FORM_EMAIL}' => _T('form_email'),
 			'{$FORM_TOPIC}' => _T('form_topic'),
 			'{$FORM_COMMENT}' => _T('form_comment'),
-			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)) 
+			'{$MODULE_URL}' => sanitizeStr($this->getModulePageURL([], false)),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput()
 		]);
 
 		// render the edit form with post details
@@ -224,13 +218,14 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage() {
 		// get post uid from request
-		$postUid = $_REQUEST['postUid'] ?? null;
+		$postUid = $this->moduleContext->request->getParameter('postUid');
 		
 		// validate post uid
 		validatePostInput($postUid);
 
 		// handle the main edit requests
-		if(isPostRequest()) {
+		if($this->moduleContext->request->isPost()) {
+			requirePostWithCsrf($this->moduleContext->request);
 			$this->handleEditRequest($postUid);
 		}
 		// otherwise just render the form

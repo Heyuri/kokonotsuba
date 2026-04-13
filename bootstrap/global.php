@@ -24,4 +24,5 @@ $postPolicy = new postPolicy(
 $postRenderingPolicy = new postRenderingPolicy(
     $globalConfig['AuthLevels'], 
     $staffAccountFromSession->getRoleLevel(), 
-    $currentUserId);
+    $currentUserId,
+	$cookieService);

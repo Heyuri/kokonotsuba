@@ -3,13 +3,14 @@
 namespace Kokonotsuba\renderers;
 
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\post\Post;
 
 class postWidget {
     public function __construct(
         private moduleEngine $moduleEngine
     ) {}
 
-    public function addThreadReplyWidget(string &$widgetDataHtml, array &$post): void {
+    public function addThreadReplyWidget(string &$widgetDataHtml, Post &$post): void {
 		// generate widget menu for reply
 		$replyWidgets = $this->generateReplyWidgets($post);
 
@@ -17,7 +18,7 @@ class postWidget {
 		$widgetDataHtml .= $replyWidgets;
 	}
 
-	public function addOpeningPostWidget(string &$widgetDataHtml, array $post, array $threadPosts): void {
+	public function addOpeningPostWidget(string &$widgetDataHtml, Post $post, array $threadPosts): void {
 		// generate widget menu for thread
 		$threadWidgets = $this->generateThreadWidgets($post, $threadPosts);
 
@@ -25,7 +26,7 @@ class postWidget {
 		$widgetDataHtml .= $threadWidgets;
 	}
 
-    public function addPostWidget(string &$widgetDataHtml, array &$post): void {
+    public function addPostWidget(string &$widgetDataHtml, Post &$post): void {
 		// generate widget menu for post
 		$postWidgets = $this->generatePostWidgets($post);
 
@@ -33,7 +34,7 @@ class postWidget {
 		$widgetDataHtml .= $postWidgets;
 	}
 
-    public function addReplyModerateWidget(string &$modWidgetHtml, array &$post): void {
+    public function addReplyModerateWidget(string &$modWidgetHtml, Post &$post): void {
 		// generate widget menu for reply
 		$replyWidgets = $this->generateReplyWidgets($post, true);
 
@@ -41,7 +42,7 @@ class postWidget {
 		$modWidgetHtml .= $replyWidgets;
 	}
 
-	public function addThreadModerateWidget(string &$modWidgetHtml, array &$post, array &$threadPosts): void {
+	public function addThreadModerateWidget(string &$modWidgetHtml, Post &$post, array &$threadPosts): void {
 		// generate moderate widget menu for thread
 		$threadWidgets = $this->generateThreadWidgets($post, $threadPosts, true);
 
@@ -49,7 +50,7 @@ class postWidget {
 		$modWidgetHtml .= $threadWidgets;
 	}
     
-    public function addPostModerateWidget(string &$modWidgetHtml, array &$post): void {
+    public function addPostModerateWidget(string &$modWidgetHtml, Post &$post): void {
 		// generate widget menu for post
 		$postWidgets = $this->generatePostWidgets($post, true);
 
@@ -57,7 +58,7 @@ class postWidget {
 		$modWidgetHtml .= $postWidgets;
 	}
 
-	private function generateThreadWidgets(array $openingPost, array $threadPosts, bool $isModerate = false): string {
+	private function generateThreadWidgets(Post $openingPost, array $threadPosts, bool $isModerate = false): string {
 		// whether to use the moderate or user-end hook point
         // moderate hook points dont get called for statis html generation
         $threadWidgetHookPoint = $isModerate ? 'ModerateThreadWidget' : 'ThreadWidget';
@@ -72,7 +73,7 @@ class postWidget {
 		return $widgetDataDiv;
 	}
 
-	private function generateReplyWidgets(array $replyPost, bool $isModerate = false): string {
+	private function generateReplyWidgets(Post $replyPost, bool $isModerate = false): string {
         // whether to use the moderate or user-end hook point
         // moderate hook points dont get called for statis html generation
         $replyWidgetHookPoint = $isModerate ? 'ModerateReplyWidget' : 'ReplyWidget';
@@ -87,7 +88,7 @@ class postWidget {
 		return $widgetDataDiv;
 	}
 
-    private function generatePostWidgets(array $post, bool $isModerate = false): string {
+    private function generatePostWidgets(Post $post, bool $isModerate = false): string {
         // whether to use the moderate or user-end hook point
         // moderate hook points dont get called for statis html generation
         $postWidgetHookPoint = $isModerate ? 'ModeratePostWidget' : 'PostWidget';
@@ -112,8 +113,14 @@ class postWidget {
 			$action = $w['action'] ?? '';
 			$label  = $w['label'] ?? '';
             $subMenu = $w['subMenu'] ?? '';
+			$params = $w['params'] ?? [];
 
-			$html .= '<a href="' . htmlspecialchars($href) . '" data-action="' . htmlspecialchars($action) . '" data-label="' . htmlspecialchars($label) . '" data-subMenu="' . htmlspecialchars($subMenu) . '"></a>';
+			$paramAttrs = '';
+			foreach ($params as $key => $value) {
+				$paramAttrs .= ' data-param-' . htmlspecialchars($key) . '="' . htmlspecialchars((string)$value) . '"';
+			}
+
+			$html .= '<a href="' . htmlspecialchars($href) . '" data-action="' . htmlspecialchars($action) . '" data-label="' . htmlspecialchars($label) . '" data-subMenu="' . htmlspecialchars($subMenu) . '"' . $paramAttrs . '></a>';
 		}
 
 		return $html;
@@ -140,7 +147,7 @@ class postWidget {
 		$html = '<div class="postMenu">';
 
 		// arrow trigger (no href)
-		$html .= '<a class="menuToggle" role="button" aria-label="Post menu">▶</a>';
+		$html .= '<a class="menuToggle js-only" role="button" aria-label="Post menu">▶</a>';
 
 		// hidden widget refs
 		$html .= '<div class="widgetRefs" hidden>';

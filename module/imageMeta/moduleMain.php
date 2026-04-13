@@ -9,6 +9,7 @@ namespace Kokonotsuba\Modules\imageMeta;
 require __DIR__ . '/exif.php';
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\AttachmentWidgetListenerTrait;
 use RuntimeException;
 
 use function Kokonotsuba\libraries\attachmentFileExists;
@@ -17,8 +18,10 @@ use function Kokonotsuba\libraries\getAttachmentUrl;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 
 class moduleMain extends abstractModuleMain {
+	use AttachmentWidgetListenerTrait;
+
 	private $enable_exif, $enable_imgops, $enable_iqdb, $enable_swfchan = false; // Initialize options, actually defined in config files
-	private $myPage;
+	private $modulePageUrl;
 
 	public function initialize(): void {
 		$this->enable_exif = $this->getConfig('ModuleSettings.EXIF_DATA_VIEWER');
@@ -27,14 +30,7 @@ class moduleMain extends abstractModuleMain {
 		$this->enable_swfchan = $this->getConfig('ModuleSettings.SWFCHAN');
 
 		// Listen to posts rendering
-		$this->moduleContext->moduleEngine->addListener('Attachment', function(
-			string &$attachmentProperties, 
-			string &$attachmentImage, 
-			string &$attachmentUrl, 
-			array &$attachment
-		) {
-			$this->onRenderAttachment($attachmentProperties, $attachment);
-		});
+		$this->listenAttachmentWidget('onRenderAttachmentWidget');
 	}
 
 	public function getName(): string {
@@ -48,10 +44,7 @@ class moduleMain extends abstractModuleMain {
 	/**
 	 * Render the attachment with EXIF and reverse search links.
 	 */
-	public function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
-		// Prepare HTML to append to the attachment properies
-		$sauceHtml = '';
-
+	public function onRenderAttachmentWidget(array &$widgetArray, array &$attachment): void {
 		$fileExtension = strtolower($attachment['fileExtension']);
 		$isSwf = $fileExtension === 'swf';
 		static $nonReverseSearchableExtensions = ['swf', 'mp4', 'webm'];
@@ -64,7 +57,6 @@ class moduleMain extends abstractModuleMain {
 
 		// EXIF link
 		if ($this->enable_exif) {
-			// exif parameters
 			$queryParameters = http_build_query(
 				[
 					'postUid' => $attachment['postUid'],
@@ -72,23 +64,21 @@ class moduleMain extends abstractModuleMain {
 				]
 			);
 
-			// append to html
-			$sauceHtml .= '<span class="exifLink imageOptions">[<a href="' . $this->myPage . $queryParameters . '">EXIF</a>]</span> ';
+			$widgetArray[] = $this->buildWidgetEntry($this->modulePageUrl . $queryParameters, 'exif', 'EXIF', '');
 		}
 
 		// ImgOps reverse search
 		if ($this->enable_imgops && !$isNotAReverseSearchableImage) {
-			$sauceHtml .= '<span class="imgopsLink imageOptions">[<a href="http://imgops.com/' . getAttachmentUrl($attachment) . '" target="_blank">ImgOps</a>]</span> ';
+			$widgetArray[] = $this->buildWidgetEntry('http://imgops.com/' . getAttachmentUrl($attachment), 'imgops', 'ImgOps', '', ['target' => '_blank']);
 		}
 
 		// IQDB search
 		if ($this->enable_iqdb && !$isNotAReverseSearchableImage) {
-			$sauceHtml .= '<span class="iqdbLink imageOptions">[<a href="http://iqdb.org/?url=' . getAttachmentUrl($attachment) . '" target="_blank">iqdb</a>]</span> ';
+			$widgetArray[] = $this->buildWidgetEntry('http://iqdb.org/?url=' . getAttachmentUrl($attachment), 'iqdb', 'iqdb', '', ['target' => '_blank']);
 		}
 
 		// SWFChan archive
 		if ($this->enable_swfchan && $isSwf) {
-			// construct attachment object
 			$constructedAttachment = constructAttachment(
 				$attachment['fileId'],
 				$attachment['postUid'],
@@ -108,18 +98,11 @@ class moduleMain extends abstractModuleMain {
 				$attachment['timestampAdded']
 			);
 
-			// get the attachment path
 			$attachmentPath = $constructedAttachment->getPath();
-
-			// read disk for file size
 			$rawByteFileSize = filesize($attachmentPath);
 
-			// append html
-			$sauceHtml .= '<span class="swfchanLink imageOptions">[<a href="http://eye.swfchan.com/search/?q=>' . $rawByteFileSize . '" target="_blank">swfchan</a>]</span> ';
+			$widgetArray[] = $this->buildWidgetEntry('http://eye.swfchan.com/search/?q=>' . $rawByteFileSize, 'swfchan', 'swfchan', '', ['target' => '_blank']);
 		}
-
-		// Append link to the attachment properties
-		$attachmentProperties .= $sauceHtml;
 	}
 
 	/**
@@ -133,7 +116,7 @@ class moduleMain extends abstractModuleMain {
 		echo '<ul class="exifInfoList">';
 
 		// get post uid from request
-		$postUid = $_GET['postUid'] ?? null;
+		$postUid = $this->moduleContext->request->getParameter('postUid', 'GET');
 
 		// validate post uid
 		if(!$postUid || $postUid <= 0) {
@@ -141,7 +124,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		// get file id from request
-		$fileId = $_GET['fileId'] ?? null;
+		$fileId = $this->moduleContext->request->getParameter('fileId', 'GET');
 
 		// validate file id
 		if(!$fileId || $fileId <= 0) {
@@ -157,10 +140,10 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		// get board
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 
 		// get attachments
-		$attachments = $post['attachments'] ?? null;
+		$attachments = $post->getAttachments() ?? null;
 
 		// throw runtime exception if no attachments
 		if(!$attachments) {
@@ -168,7 +151,7 @@ class moduleMain extends abstractModuleMain {
 		} 
 
 		// get attachment
-		$attachment = $post['attachments'][$fileId] ?? null;
+		$attachment = $post->getAttachmentById($fileId);
 
 		// throw runtime if attachment not found
 		if(!$attachment) {
@@ -212,8 +195,8 @@ class moduleMain extends abstractModuleMain {
 			echo '<li><strong class="error">File Not Found!</strong></li>';
 		}
 
-		if (isset($_SERVER['HTTP_REFERER'])) {
-			echo '[<a href="' . $_SERVER['HTTP_REFERER'] . '" onclick="event.preventDefault();history.go(-1);">Back</a>]';
+		if ($this->moduleContext->request->hasParameter('HTTP_REFERER', 'SERVER')) {
+			echo '[<a href="' . $this->moduleContext->request->getReferer() . '" onclick="event.preventDefault();history.go(-1);">Back</a>]';
 		}
 
 		echo $this->moduleContext->board->getBoardFooter();

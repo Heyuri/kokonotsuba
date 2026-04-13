@@ -4,7 +4,7 @@ namespace Kokonotsuba\post\helper;
 
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\board\board;
-use Kokonotsuba\ip\IPAddress;
+use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
 // generate post id for a user/moderator
@@ -12,11 +12,13 @@ class postIdGenerator {
 	private readonly array $config;
 	private board $board;
     private readonly staffAccountFromSession $staffSession;
+    private readonly request $request;
 
-	public function __construct(array $config, board $board, staffAccountFromSession $staffSession) {
+	public function __construct(array $config, board $board, staffAccountFromSession $staffSession, request $request) {
 		$this->config = $config;
 		$this->board = $board;
         $this->staffSession = $staffSession;
+        $this->request = $request;
     }
 
 	public function generate(?string $email, int $time, int $threadNumber): string {
@@ -29,7 +31,7 @@ class postIdGenerator {
 		} elseif (stristr($email, 'sage')) {
 			return ' Heaven';
 		} else {
-			$ip = new IPAddress;
+			$ip = $this->request->userIp();
 			$idSeed = $this->config['IDSEED'];
 			$postNo = $threadNumber ? $threadNumber : ($this->board->getLastPostNoFromBoard() + 1);
 			$baseString = $ip . $idSeed . $postNo;

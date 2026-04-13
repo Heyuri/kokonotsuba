@@ -6,6 +6,7 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\capcode_backend\capcodeService;
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\request\request;
 use Kokonotsuba\template\pageRenderer;
 
 use function Kokonotsuba\libraries\html\generatePostNameHtml;
@@ -18,12 +19,13 @@ class capcodeModuleRenderer {
 		private moduleEngine $moduleEngine,
 		private capcodeService $capcodeService,
 		private pageRenderer $adminPageRenderer,
-		private string $modulePageUrl
+		private string $modulePageUrl,
+		private request $request
 	) {}
 
 	public function drawModPage(): void {
 		// get pageName
-		$pageName = $_GET['pageName'] ?? '';
+		$pageName = $this->request->getParameter('pageName', 'GET', '');
 
 		// handle capcode index
 		// it can either be blank (default page) or be specified
@@ -34,7 +36,7 @@ class capcodeModuleRenderer {
 		// handle capcode entry page 
 		elseif($pageName === 'viewCapcode') {
 			// get the capcode entry ID
-			$capcodeId = $_GET['capcodeId'] ?? null;
+			$capcodeId = $this->request->getParameter('capcodeId', 'GET');
 
 			// cast as int
 			$capcodeId = (int) $capcodeId;

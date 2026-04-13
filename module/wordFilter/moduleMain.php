@@ -3,16 +3,16 @@
 namespace Kokonotsuba\Modules\wordFilter;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\RegistBeforeCommitListenerTrait;
 
 class moduleMain extends abstractModuleMain {
+	use RegistBeforeCommitListenerTrait;
 	private array $FILTERS;
 
 	public function initialize(): void {
 		$this->FILTERS = $this->getConfig('ModuleSettings.FILTERS');
 		
-		$this->moduleContext->moduleEngine->addListener('RegistBeforeCommit', function ($name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $file, $isReply, &$status, $thread, &$poster_hash) {
-			$this->onBeforeCommit($com);
-		});
+		$this->listenRegistBeforeCommit('onBeforeCommit');
 	}
 		 
 	public function getName(): string {
@@ -23,7 +23,7 @@ class moduleMain extends abstractModuleMain {
 		return 'Koko BBS Release 1';
 	}
 
-	public function onBeforeCommit(&$com): void {
+	public function onBeforeCommit($name, &$email, &$emailForInsertion, &$sub, &$com): void {
 		//VAGINA filter
 		$this->FILTERS['~<a\b[^>]*>.*?</a>(*SKIP)(*F)|vagina~i'] = $this->generateColorSpan('VAGINA');
 		 

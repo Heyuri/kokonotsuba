@@ -2,22 +2,27 @@
 
 namespace Kokonotsuba\post;
 
+use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
 use function Kokonotsuba\libraries\getBasePostQuery;
 use function Kokonotsuba\libraries\mergeMultiplePostRows;
 
-class postSearchRepository {
+/** Repository for full-text post search queries. */
+class postSearchRepository extends baseRepository {
 	public function __construct(
-		private databaseConnection $databaseConnection,
-		private readonly string $postTable, 
+		databaseConnection $databaseConnection,
+		string $postTable, 
 		private readonly string $threadTable,
 		private readonly string $deletedPostsTable,
 		private readonly string $fileTable,
 		private readonly string $soudaneTable,
 		private readonly string $noteTable,
 		private readonly string $accountTable,
-	) {}
+	) {
+		parent::__construct($databaseConnection, $postTable);
+		self::validateTableNames($threadTable, $deletedPostsTable, $fileTable, $soudaneTable, $noteTable, $accountTable);
+	}
 	
 	private function buildParamters(array $fields, array $boardUids): array {
 		// initialize parameters array
@@ -40,12 +45,22 @@ class postSearchRepository {
 		return $params;
 	}
 
+	/**
+	 * Fetch a paginated list of posts matching the given full-text search fields.
+	 *
+	 * @param array  $fields           Map of field name => boolean full-text search string.
+	 * @param array  $boardUids        Board UIDs to restrict the search to (empty = all boards).
+	 * @param bool   $openingPostsOnly If true, return only OP posts.
+	 * @param int    $limit            Maximum number of results to return.
+	 * @param int    $offset           Pagination offset.
+	 * @return array|false Array of merged post data arrays, or false if none found.
+	 */
 	public function fetchPostsByFullText(array $fields, array $boardUids, bool $openingPostsOnly, int $limit, int $offset): false|array {
 		// build the search field and parameters
 		$params = $this->buildParamters($fields, $boardUids);
 
 		// get base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  false);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  false);
 
 		// build the search field WHERE clause
 		$searchClause = $this->buildSearchClause($fields, $boardUids, $openingPostsOnly);
@@ -56,13 +71,11 @@ class postSearchRepository {
 		// order it
 		$query .= " ORDER BY p.root DESC";
 
-		// append order / limit / offset
-		$query .= "
-			LIMIT $limit OFFSET $offset
-		";
+		// append limit / offset
+		$this->paginate($query, $params, $limit, $offset);
 
 		// fetch posts from db
-		$postsResults = $this->databaseConnection->fetchAllAsArray($query, $params);
+		$postsResults = $this->queryAll($query, $params);
 
 		// merge attachment rows
 		$mergedPosts = mergeMultiplePostRows($postsResults);
@@ -71,9 +84,17 @@ class postSearchRepository {
 		return $mergedPosts;
 	}
 
+	/**
+	 * Return the total count of posts matching the given full-text search fields.
+	 *
+	 * @param array $fields          Map of field name => boolean full-text search string.
+	 * @param array $boardUids       Board UIDs to restrict the search to.
+	 * @param bool  $openingPostsOnly If true, count only OP posts.
+	 * @return int Total matching post count.
+	 */
 	public function countPostsByFullText(array $fields, array $boardUids, bool $openingPostsOnly): int {
 		// get base post query
-		$postQuery = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  false);
+		$postQuery = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  false);
 
 		// build the search field WHERE clause
 		$searchClause = $this->buildSearchClause($fields, $boardUids, $openingPostsOnly);
@@ -90,7 +111,7 @@ class postSearchRepository {
 		// build parameters
 		$params = $this->buildParamters($fields, $boardUids);
 
-		return $this->databaseConnection->fetchOne($countQuery, $params)['total_posts'] ?? 0;
+		return $this->queryOne($countQuery, $params)['total_posts'] ?? 0;
 	}
 
 	private function buildSearchClause(array $fields, array $boardUids, bool $openingPostsOnly): string {

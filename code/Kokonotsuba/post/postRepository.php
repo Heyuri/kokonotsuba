@@ -2,19 +2,24 @@
 
 namespace Kokonotsuba\post;
 
+use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\database\OrderFieldWhitelistTrait;
 
 use function Kokonotsuba\libraries\bindPostFilterParameters;
 use function Kokonotsuba\libraries\getBasePostQuery;
 use function Kokonotsuba\libraries\mergeMultiplePostRows;
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
-class postRepository {
+/** Repository for post records, supporting full-text retrieval, batch insertion, and deletion. */
+class postRepository extends baseRepository {
+	use OrderFieldWhitelistTrait;
+
 	private array $allowedOrderFields;
 
 	public function __construct(
-		private databaseConnection $databaseConnection, 
-		private readonly string $postTable, 
+		databaseConnection $databaseConnection, 
+		string $postTable, 
 		private readonly string $threadTable,
 		private readonly string $deletedPostsTable,
 		private readonly string $fileTable,
@@ -22,39 +27,64 @@ class postRepository {
 		private readonly string $noteTable,
 		private readonly string $accountTable,
 	) {
+		parent::__construct($databaseConnection, $postTable);
+		self::validateTableNames($threadTable, $deletedPostsTable, $fileTable, $soudaneTable, $noteTable, $accountTable);
 		$this->allowedOrderFields = ['root' , 'no', 'post_uid'];
 	}
 
+	/**
+	 * Return the post_uid of the most recently inserted post.
+	 *
+	 * @return mixed Last inserted post_uid value.
+	 */
 	public function getLastInsertPostUid(): mixed {
-		return $this->databaseConnection->lastInsertId();
+		return $this->lastInsertId();
 	}
 
-		/* Get number of posts */
+	/**
+	 * Return the post count for a board, or for a specific thread within a board.
+	 *
+	 * @param mixed  $board     Board object with a getBoardUID() method.
+	 * @param int    $threadUID Thread UID to count replies for, or 0 for board-wide count.
+	 * @return int Post count (thread count includes +1 for the OP).
+	 */
 	public function postCountFromBoard($board, $threadUID = 0) {
 		if ($threadUID) {
-			$query = "SELECT COUNT(post_uid) FROM {$this->postTable} WHERE thread_uid = ?";
-			$count = $this->databaseConnection->fetchColumn($query, [$threadUID]);
-			return $count + 1;
+			return $this->countBy('thread_uid', $threadUID) + 1;
 		} else {
-			$query = "SELECT COUNT(post_uid) FROM {$this->postTable} WHERE boardUID = :board_uid";
-			return $this->databaseConnection->fetchColumn($query, [':board_uid' => $board->getBoardUID()]);
+			return $this->countBy('boardUID', $board->getBoardUID());
 		}
 	}
 
-	/* Get number of posts */
+	/**
+	 * Return the total post count, optionally filtered by the given criteria.
+	 *
+	 * @param array $filters Optional key/value filter criteria.
+	 * @return int Post count.
+	 */
 	public function postCount($filters = []) {
-		$query = "SELECT COUNT(post_uid) FROM posts WHERE 1";
+		$query = "SELECT COUNT(post_uid) FROM {$this->table} WHERE 1";
 
 		$params = [];
 		bindPostFilterParameters($params, $query, $filters);
 		
-		return $this->databaseConnection->fetchColumn($query, $params);
+		return $this->queryColumn($query, $params);
 	}
 
+	/**
+	 * Fetch a filtered, paginated list of posts with merged attachment rows.
+	 *
+	 * @param int    $amount         Number of posts to return.
+	 * @param int    $offset         Pagination offset.
+	 * @param array  $filters        Optional filter criteria array.
+	 * @param bool   $includeDeleted Whether to include soft-deleted posts.
+	 * @param string $order          Column to order by (validated against allowed list).
+	 * @return array|false Array of merged post data arrays, or false/empty if none.
+	 */
 	public function getFilteredPosts(int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'post_uid'): false|array {
-		if(!in_array($order, $this->allowedOrderFields)) return [];
+		if(!$this->isValidOrderField($order)) return [];
 
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
 		$params = [];
 		
 		// add WHERE so the AND conditions can be appended without sissue
@@ -62,8 +92,9 @@ class postRepository {
 
 		bindPostFilterParameters($params, $query, $filters, true); //apply filtration to query
 
-		$query .= " ORDER BY p.$order  DESC LIMIT $amount OFFSET $offset";
-		$posts = $this->databaseConnection->fetchAllAsArray($query, $params);
+		$query .= " ORDER BY p.$order DESC";
+		$this->paginate($query, $params, $amount, $offset);
+		$posts = $this->queryAll($query, $params);
 	
 		// merge attachment rows
 		$posts = mergeMultiplePostRows($posts);
@@ -71,8 +102,13 @@ class postRepository {
 		return $posts ?? [];
 	}
 
-    /* Output posts for multiple boards and threads */
-	public function fetchPostsFromBoardsAndThreads(array $boardThreadMap, string $fields = '*') {
+	/**
+	 * Fetch posts belonging to the specified boards and threads, with merged attachment rows.
+	 *
+	 * @param array<int, array<int>>  $boardThreadMap Map of boardUID => array of thread/post UIDs.
+	 * @return array Array of merged post data arrays.
+	 */
+	public function fetchPostsFromBoardsAndThreads(array $boardThreadMap): array {
 		if (empty($boardThreadMap)) {
 			return array();
 		}
@@ -92,7 +128,7 @@ class postRepository {
 			}
 
 			$inClause = pdoPlaceholdersForIn($threadIDs);
-			$conditions[] = "(boardUID = ? AND (post_uid IN $inClause OR thread_uid IN $inClause))";
+			$conditions[] = "(p.boardUID = ? AND (p.post_uid IN $inClause OR p.thread_uid IN $inClause))";
 
 			// First placeholder is boardUID
 			$params[] = $boardUID;
@@ -110,14 +146,26 @@ class postRepository {
 		}
 
 		$whereClause = implode(' OR ', $conditions);
-		$query = "SELECT {$fields} FROM {$this->postTable} WHERE {$whereClause}";
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable);
+		$query .= " WHERE {$whereClause}";
 
-		return $this->databaseConnection->fetchAllAsArray($query, $params);
+		$posts = $this->queryAll($query, $params);
+
+		$posts = mergeMultiplePostRows($posts);
+
+		return $posts ?? [];
 	}
 
-	public function getPostByUid(int $post_uid, bool $viewDeleted = false): array|false {
+	/**
+	 * Fetch a single post by its UID, with merged attachment rows.
+	 *
+	 * @param int  $post_uid     Post UID.
+	 * @param bool $viewDeleted  Include deletion metadata in the query.
+	 * @return Post|false Merged post object, or false if not found.
+	 */
+	public function getPostByUid(int $post_uid, bool $viewDeleted = false): Post|false {
 		// get base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $viewDeleted);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $viewDeleted);
 		
 		// append WHERE clause to get it by the post uid
 		$query .= " WHERE p.post_uid = :post_uid";
@@ -130,7 +178,7 @@ class postRepository {
 		// fetch row(s)
 		// it has to have fetch all instead of fetchOne because multiple attachments = multiple rows returned
 		// its up to mergeMultiplePostRows to take care of those extra attachment rows
-		$post = $this->databaseConnection->fetchAllAsArray($query, $params);
+		$post = $this->queryAll($query, $params);
 
 		// merge attachment row
 		$post = mergeMultiplePostRows($post);
@@ -140,19 +188,32 @@ class postRepository {
 		return $post[0] ?? false;
 	}
 
+	/**
+	 * Return the next AUTO_INCREMENT value for the posts table.
+	 *
+	 * @return int Next available post_uid.
+	 */
 	public function getNextPostUid(): int {
-		return $this->databaseConnection->getNextAutoIncrement($this->postTable);
+		return $this->getNextAutoIncrement();
 	}
 
+	/**
+	 * Resolve a post number (no) from a post UID.
+	 *
+	 * @param mixed $post_uid Post UID.
+	 * @return mixed Post number (no), or null if not found.
+	 */
 	public function resolvePostNumberFromUID($post_uid) {
-		$query = "SELECT no FROM {$this->postTable} WHERE post_uid = :post_uid";
-		$params = [
-			':post_uid' => strval($post_uid)
-		];
-		$postNo = $this->databaseConnection->fetchColumn($query, $params);
-		return $postNo;
+		return $this->pluck('no', 'post_uid', strval($post_uid));
 	}
 	
+	/**
+	 * Resolve multiple post UIDs from their post numbers (no) within a specific board.
+	 *
+	 * @param mixed $board       Board object with getBoardUid().
+	 * @param array $postNumbers Array of post numbers to resolve.
+	 * @return array Map of post_number => post_uid.
+	 */
 	public function resolvePostUidsFromArray($board, array $postNumbers): array {
 		if (empty($postNumbers)) {
 			return [];
@@ -173,14 +234,14 @@ class postRepository {
 
 		$query = "
     		SELECT no, post_uid
-		    FROM {$this->postTable}
+		    FROM {$this->table}
 		    WHERE no IN $inClause
 		    AND boardUID = :board_uid";
 
 		// Merge board UID with IN clause parameters
 		$params = array_merge([':board_uid' => $board_uid], $inParams);
 
-		$rows = $this->databaseConnection->fetchAllAsArray($query, $params);
+		$rows = $this->queryAll($query, $params);
 
 		// Map post_number (no) => post_uid
 		$resolved = [];
@@ -191,57 +252,83 @@ class postRepository {
 		return $resolved;
 	}
 
+	/**
+	 * Resolve a single post UID from a post number within a specific board.
+	 *
+	 * @param mixed $board      Board object with getBoardUID().
+	 * @param mixed $postNumber Post number (no) to look up.
+	 * @return mixed Post UID, or null if not found.
+	 */
 	public function resolvePostUidFromPostNumber($board, $postNumber) {
-		$query = "SELECT post_uid FROM {$this->postTable} WHERE no = :post_number AND boardUID = :board_uid";
+		$query = "SELECT post_uid FROM {$this->table} WHERE no = :post_number AND boardUID = :board_uid";
 		$params = [
 			':post_number' => strval($postNumber),
 			':board_uid' => $board->getBoardUID()
 		];
-		$postUID = $this->databaseConnection->fetchColumn($query, $params);
+		$postUID = $this->queryColumn($query, $params);
 		return $postUID;
 	}
 
-	/* Set the status of a post */
+	/**
+	 * Update the status column for the given post.
+	 *
+	 * @param mixed $post_uid  Post UID.
+	 * @param mixed $newStatus New status value.
+	 * @return true Always returns true.
+	 */
 	public function setPostStatus($post_uid, $newStatus) {
-		$query = "UPDATE {$this->postTable} SET status = ? WHERE post_uid = ?";
-		$params = [$newStatus, strval($post_uid)];
-		$this->databaseConnection->execute($query, $params);
-			
+		$this->updateWhere(['status' => $newStatus], 'post_uid', strval($post_uid));
 		return true;
 	}
 
-	/* Update post */
+	/**
+	 * Update arbitrary columns for the given post UID.
+	 *
+	 * @param mixed $post_uid   Post UID.
+	 * @param array $newValues  Associative array of column => new value pairs.
+	 * @return void
+	 */
 	public function updatePost($post_uid, $newValues) {
-		$setClause = [];
-		$params = [];
-		foreach ($newValues as $field => $value) {
-			$setClause[] = "$field = ?";
-			$params[] = $value;
-		}
-		$params[] = strval($post_uid);
-		$query = "UPDATE {$this->postTable} SET " . implode(', ', $setClause) . " WHERE post_uid = ?";
-		$this->databaseConnection->execute($query, $params);
+		$this->updateWhere($newValues, 'post_uid', strval($post_uid));
 	}
 
+	/**
+	 * Insert a new post row using the given parameter array.
+	 *
+	 * @param array $params Named parameter array matching the posts table columns.
+	 * @return void
+	 */
 	public function insertPost(array $params): void {
-		$query = "INSERT INTO {$this->postTable} 
+		$query = "INSERT INTO {$this->table} 
 			(no, poster_hash, boardUID, thread_uid, post_position, is_op, root, category, pwd, now, 
 			name, tripcode, secure_tripcode, capcode, email, sub, com, host, status) 
 			VALUES (:no, :poster_hash, :boardUID, :thread_uid, :post_position, :is_op, :root,
 			:category, :pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :status)";
 		
-		$this->databaseConnection->execute($query, $params);
+		$this->query($query, $params);
 	}
 
+	/**
+	 * Return the highest post_position value in the given thread.
+	 *
+	 * @param string $threadUID Thread UID.
+	 * @return int|null Maximum position, or null if the thread has no posts.
+	 */
 	public function getMaxPostPosition(string $threadUID): ?int {
-		$query = "SELECT MAX(post_position) FROM {$this->postTable} WHERE thread_uid = :thread_uid";
-		return $this->databaseConnection->fetchValue($query, [':thread_uid' => $threadUID]);
+		$query = "SELECT MAX(post_position) FROM {$this->table} WHERE thread_uid = :thread_uid";
+		return $this->queryValue($query, [':thread_uid' => $threadUID]);
 	}
 
+	/**
+	 * Return the email and status columns of the OP post for the given thread.
+	 *
+	 * @param string $threadUID Thread UID.
+	 * @return array|false Associative row with 'email' and 'status', or false if not found.
+	 */
 	public function getOpPostEmailAndStatus(string $threadUID): array|false {
-		return $this->databaseConnection->fetchOne("
+		return $this->queryOne("
 			SELECT email, status
-			FROM {$this->postTable}
+			FROM {$this->table}
 			WHERE post_uid = (
 				SELECT post_op_post_uid
 				FROM {$this->threadTable}
@@ -251,9 +338,15 @@ class postRepository {
 		", [$threadUID]);
 	}
 
+	/**
+	 * Fetch multiple posts by their UIDs, with merged attachment rows.
+	 *
+	 * @param int[] $postUIDsList Array of post UIDs.
+	 * @return array|false Array of merged post data arrays, or false if not found.
+	 */
 	public function getPostsByUids(array $postUIDsList): array|false {
 		// get base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable);
 
 		// generate in clause
 		$inClause = pdoPlaceholdersForIn($postUIDsList);
@@ -262,7 +355,7 @@ class postRepository {
 		$query .= " WHERE p.post_uid IN $inClause";
 
 		// fetch posts
-		$posts = $this->databaseConnection->fetchAllAsArray($query, $postUIDsList);
+		$posts = $this->queryAll($query, $postUIDsList);
 
 		// merge multiple rows
 		$posts = mergeMultiplePostRows($posts);
@@ -271,36 +364,50 @@ class postRepository {
 		return $posts;
 	}
 
+	/**
+	 * Return the distinct thread_uid for the given post UIDs (returns only the first match via queryColumn).
+	 *
+	 * @param int[] $postUIDsList Array of post UIDs.
+	 * @return string|null Thread UID, or null if none found.
+	 */
 	public function getThreadUIDsByPostUIDs(array $postUIDsList): ?string {
 		$inClause = pdoPlaceholdersForIn($postUIDsList);
 
-		return $this->databaseConnection->fetchColumn("
+		return $this->queryColumn("
 			SELECT DISTINCT thread_uid
-			FROM {$this->postTable}
+			FROM {$this->table}
 			WHERE post_uid IN $inClause
 		", $postUIDsList);
 	}
 
+	/**
+	 * Permanently delete posts for the given post UIDs.
+	 *
+	 * @param int[] $postUIDsList Array of post UIDs to delete.
+	 * @return void
+	 */
 	public function deletePostsByUIDs(array $postUIDsList): void {
-		$inClause = pdoPlaceholdersForIn($postUIDsList);
-
-		$this->databaseConnection->execute("
-			DELETE FROM {$this->postTable}
-			WHERE post_uid IN $inClause
-		", $postUIDsList);
+		$this->deleteWhereIn('post_uid', $postUIDsList);
 	}
 	
+	/**
+	 * Fetch all posts belonging to the given thread UIDs, with merged attachment rows.
+	 *
+	 * @param string[] $threadUids     Array of thread UIDs.
+	 * @param bool     $includeDeleted Whether to include soft-deleted posts.
+	 * @return array|false Array of merged post data arrays, or false if none found.
+	 */
 	public function getPostsByThreadUIDs(array $threadUids, bool $includeDeleted = false): array|false {	
 		$inClause = pdoPlaceholdersForIn($threadUids);
 
 		// base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
 
 		// append where clause
 		$query .= " WHERE p.thread_uid IN $inClause";
 
 		// fetch post rows
-		$posts = $this->databaseConnection->fetchAllAsArray($query, $threadUids);
+		$posts = $this->queryAll($query, $threadUids);
 
 		// merge attachment rows
 		$posts = mergeMultiplePostRows($posts);
@@ -308,21 +415,25 @@ class postRepository {
 		return $posts;
 	}
 
+	/**
+	 * Return a flat array of all post UIDs belonging to the given thread.
+	 *
+	 * @param string $threadUid Thread UID.
+	 * @return bool|array Flat array of post UIDs, or false if none found.
+	 */
 	public function getPostUidsFromThread(string $threadUid): bool|array {
-		$query = "SELECT post_uid FROM {$this->postTable} WHERE thread_uid = :thread_uid";
-
-		$params = [
-			':thread_uid' => $threadUid
-		];
-
-		$postUids = array_merge(...$this->databaseConnection->fetchAllAsIndexArray($query, $params));
-
-		return $postUids;
+		return $this->pluckAll('post_uid', 'thread_uid', $threadUid);
 	}
 
-	public function getOpeningPostFromThread(string $threadUid): bool|array {
+	/**
+	 * Fetch the OP (opening post) for the given thread, with merged attachment rows.
+	 *
+	 * @param string $threadUid Thread UID.
+	 * @return bool|Post Merged post data array, or false if not found.
+	 */
+	public function getOpeningPostFromThread(string $threadUid): bool|Post {
 		// get base post query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable);
 
 		// append WHERE clause
 		$query .= " WHERE p.post_uid = (SELECT post_op_post_uid FROM {$this->threadTable} WHERE thread_uid = :thread_uid)";
@@ -331,7 +442,7 @@ class postRepository {
 			':thread_uid' => $threadUid
 		];
 
-		$post = $this->databaseConnection->fetchAllAsArray($query, $params);
+		$post = $this->queryAll($query, $params);
 	
 		// merge data
 		$post = mergeMultiplePostRows($post)[0];
@@ -339,16 +450,22 @@ class postRepository {
 		return $post;
 	}
 
+	/**
+	 * Return distinct (thread_uid, boardUID) pairs for the given post UIDs.
+	 *
+	 * @param int[] $postUIDsList Array of post UIDs.
+	 * @return array|false Array of rows with 'thread_uid' and 'boardUID', or false if none found.
+	 */
 	public function getUniquePairFromPostUids(array $postUIDsList): array|false {
 		$inClause = pdoPlaceholdersForIn($postUIDsList);
 
 		$query = "
 			SELECT DISTINCT thread_uid, boardUID
-			FROM {$this->postTable}
+			FROM {$this->table}
 			WHERE post_uid IN $inClause
 		";
 
-		$pair = $this->databaseConnection->fetchAllAsArray($query, $postUIDsList);
+		$pair = $this->queryAll($query, $postUIDsList);
 		
 		return $pair;
 	}
@@ -387,7 +504,7 @@ class postRepository {
 		}
 
 		// Construct the full SQL query
-		$query = "INSERT INTO {$this->postTable} ($fieldList) VALUES " . implode(',', $rows);
+		$query = "INSERT INTO {$this->table} ($fieldList) VALUES " . implode(',', $rows);
 
 		// flatten into 1d array so we can pass it as regular query params
 		$paramsForQuery = array_merge(...$posts);
@@ -395,10 +512,10 @@ class postRepository {
 		//echo '<br><br><br>'; echo '<pre>'; echo $query . '<br>'; print_r($paramsForQuery); echo '</pre>';
 
 		// Execute the query with the parameters
-		$this->databaseConnection->execute($query, $paramsForQuery);
+		$this->query($query, $paramsForQuery);
 
 		// Get the first inserted ID and generate the range of post_uids
-		$firstId = $this->databaseConnection->lastInsertId();
+		$firstId = $this->lastInsertId();
 		return range($firstId, $firstId + count($posts) - 1);
 	}
 
@@ -434,7 +551,7 @@ class postRepository {
 		// Base query: find posts with the same comment within the given time window
 		$query = "
 			SELECT post_uid
-			FROM {$this->postTable}
+			FROM {$this->table}
 			WHERE com = :comment
 			AND root >= (UTC_TIMESTAMP() - INTERVAL :timeWindow SECOND)
 		";
@@ -453,36 +570,29 @@ class postRepository {
 		}
 
 		// Execute the query and fetch results as a numeric index array
-		$result = $this->databaseConnection->fetchAllAsIndexArray($query, $params);
+		$result = $this->queryAllAsIndexArray($query, $params);
 
 		// Normalize empty result sets to null for easier upstream handling
 		return array_merge(...$result) ?: null;
 	}
 
+	/**
+	 * Return the distinct board UIDs for the given post UIDs.
+	 *
+	 * @param int[] $postUids Array of post UIDs.
+	 * @return array|false Flat array of board UIDs, or false if none found.
+	 */
 	public function getBoardUidsFromPostUids(array $postUids): false|array {
-		// declare base query
-		$query = "SELECT boardUID FROM {$this->postTable}";
-
-		// add where clause
-		$placeholders = pdoPlaceholdersForIn($postUids);
-		$query .= " WHERE post_uid IN $placeholders";
-
-		// fetch board uids
-		$boardUids = $this->databaseConnection->fetchAllAsIndexArray($query, $postUids);
-
-		if(!$boardUids) {
-			return false;
-		} else {
-			// return result
-			return array_merge(...$boardUids);
-		}
+		return $this->pluckWhereIn('boardUID', 'post_uid', $postUids) ?: false;
 	}
 
+	/**
+	 * Return the host (IP/hostname) for the given post UID.
+	 *
+	 * @param int $postUid Post UID.
+	 * @return string|null Host string, or null if not found.
+	 */
 	public function resolveHostFromPostUid(int $postUid): ?string {
-		// query to get host from post uid
-		$query = "SELECT host FROM {$this->postTable} WHERE post_uid = :post_uid";
-	
-		// execute query and return host
-		return $this->databaseConnection->fetchValue($query, [':post_uid' => $postUid]);
+		return $this->pluck('host', 'post_uid', $postUid);
 	}
 }

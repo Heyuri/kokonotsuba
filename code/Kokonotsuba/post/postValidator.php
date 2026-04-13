@@ -5,12 +5,14 @@ namespace Kokonotsuba\post;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\ip\IPValidator;
 use Kokonotsuba\post\attachment\fileService;
+use Kokonotsuba\request\request;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\anti_sakura;
+use function Puchiko\strings\newLinesToBreakLines;
 use function Puchiko\strings\strlenUnicode;
 
 class postValidator {
@@ -20,13 +22,14 @@ class postValidator {
 		private readonly threadRepository $threadRepository,
 		private readonly threadService $threadService,
 		private readonly fileService $fileService,
+		private readonly request $request,
 	) {}
 	
 	public function registValidate(): void {
 		// Ensure required server keys exist before accessing them
-		$httpReferer = $_SERVER['HTTP_REFERER'] ?? null;	// May be null if header is missing
-		$userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;	// May be null if header is missing
-		$requestMethod = $_SERVER['REQUEST_METHOD'] ?? null;	// May be null in unusual environments
+		$httpReferer = $this->request->getReferer();	// May be null if header is missing
+		$userAgent = $this->request->getUserAgent();	// May be null if header is missing
+		$requestMethod = $this->request->isPost() ? 'POST' : ($this->request->getServer('REQUEST_METHOD') ?? null);	// May be null in unusual environments
 
 		// Validate referer and user agent; block common CLI tools and missing headers
 		// If referer or user agent is missing OR user agent looks like curl/wget → treat as bot
@@ -90,7 +93,7 @@ class postValidator {
 				// Check that the thread is set to suppress response (by the way, take out the post time of the original post)
 				$post = $this->threadRepository->getPostsFromThread($thread_uid, false, 0, 0)[0]; // [Special] Take a single article content, but the $post of the return also relies on [$i] to switch articles!
 
-				[$postOpStatus, $postOpRoot] = array($post['status'], $post['root']);
+				[$postOpStatus, $postOpRoot] = array($post->getFlags(), $post->getRoot());
 				$flgh = new FlagHelper($postOpStatus);
 			} else {
 				throw new BoardException(_T('thread_not_found'), 404); // Does not exist
@@ -140,7 +143,7 @@ class postValidator {
 		$com = preg_replace("/\n((　| )*\n){3,}/", "\n", $com);
 
 		if(!$this->config['BR_CHECK'] || substr_count($com,"\n") < $this->config['BR_CHECK']){
-			$com = nl2br($com); // Newline characters are replaced by <br>
+			$com = newLinesToBreakLines($com); // Newline characters are replaced by <br>
 		}
 		$com = str_replace("\n", '', $com); // If there are still \n newline characters, cancel the newline
 

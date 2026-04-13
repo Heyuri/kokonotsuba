@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\tripcode;
 
 use Kokonotsuba\userRole;
+use function Kokonotsuba\libraries\generateTripcode;
 
 class tripcodeProcessor {
 
@@ -28,13 +29,14 @@ class tripcodeProcessor {
 
 		// now return
 		if($capcode) {
-			$tripcode = '';
+			// Staff capcode found — clear secure_tripcode but still generate the regular tripcode
 			$secure_tripcode = '';
+			$this->generateTripcodeFromInput($tripcode, $secure_tripcode);
 			return;
 		}
 
 		// Generate tripcode based on extracted trip parts
-		$this->generateTripcode($tripcode, $secure_tripcode);
+		$this->generateTripcodeFromInput($tripcode, $secure_tripcode);
 
 	}
 
@@ -68,21 +70,8 @@ class tripcodeProcessor {
 	}
 
 	// Generate regular and/or secure tripcodes
-	private function generateTripcode(string &$tripcode, string &$secure_tripcode): void {
-		if ($tripcode) {
-			// Convert trip to Shift_JIS and generate a salt for crypt
-			$tripcode = mb_convert_encoding($tripcode, 'Shift_JIS', 'UTF-8');
-			$salt = strtr(preg_replace('/[^\.-z]/', '.', substr($tripcode . 'H.', 1, 2)), ':;<=>?@[\\]^_`', 'ABCDEFGabcdef');
-			// Generate tripcode using crypt
-			$tripcode = substr(crypt($tripcode, $salt), -10);
-		}
-
-		if ($secure_tripcode) {
-			// Generate secure tripcode by hashing and encoding
-			$sha = str_rot13(base64_encode(pack("H*", sha1($secure_tripcode . $this->config['TRIPSALT']))));
-			$secure_tripcode = substr($sha, 0, 10);
-		}
-
+	private function generateTripcodeFromInput(string &$tripcode, string &$secure_tripcode): void {
+		generateTripcode($tripcode, $secure_tripcode, $this->config['TRIPSALT']);
 	}
 
 }

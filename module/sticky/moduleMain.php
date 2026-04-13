@@ -5,11 +5,18 @@
 namespace Kokonotsuba\Modules\sticky;
 
 require_once __DIR__ . '/stickyLibrary.php';
+require_once __DIR__ . '/stickyRepository.php';
 
-use Kokonotsuba\post\FlagHelper;
+use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\listeners\OpeningPostListenerTrait;
 
 class moduleMain extends abstractModuleMain {
+	use OpeningPostListenerTrait;
+
+	private stickyRepository $stickyRepository;
+
 	public function getName(): string {
 		return 'Sticky';
 	}
@@ -19,21 +26,18 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->moduleContext->moduleEngine->addListener('OpeningPost', function(array &$templateValues, array $post) {
-			$this->onRenderOpeningPost($templateValues['{$POSTINFO_EXTRA}'], $post);
-		});
-	}
+		$databaseSettings = \getDatabaseSettings();
+		$this->stickyRepository = new stickyRepository(
+			databaseConnection::getInstance(),
+			$databaseSettings['THREAD_TABLE']
+		);
 
-	public function onRenderOpeningPost(string &$postInfoExtra, array $post): void {
-		// indicates whether the thread is sticky'd or not 
-		$stickyFlag = new FlagHelper($post['status']);
-
-		// get the sticky indicator
-		$stickyIndicator = getStickyIndicator($this->getConfig('STATIC_URL'));
-
-		if ($stickyFlag->value('sticky')) {
-			$postInfoExtra .= $stickyIndicator;
-		}
+		$this->registerOpeningPostIndicator(
+			'sticky',
+			getStickyIndicator($this->getConfig('STATIC_URL')),
+			fn(Post $p) => $this->stickyRepository->isSticky($p->getThreadUid()),
+			30
+		);
 	}
 
 }

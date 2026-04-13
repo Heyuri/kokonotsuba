@@ -8,23 +8,22 @@ require_once __DIR__ . '/fileBanLib.php';
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawPager;
-use function Kokonotsuba\libraries\attachmentFileExists;
+use function Kokonotsuba\libraries\getCsrfMetaTag;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
-use function Kokonotsuba\libraries\getPageOfThread;
-use function Kokonotsuba\libraries\validatePostInput;
-use function Kokonotsuba\libraries\html\getCurrentUrlNoQuery;
-use function Puchiko\json\isJavascriptRequest;
 use function Puchiko\json\sendAjaxAndDetach;
-use function Puchiko\request\isGetRequest;
-use function Puchiko\request\isPostRequest;
 use function Puchiko\request\redirect;
 use function Kokonotsuba\Modules\fileBan\getFileBanService;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use PostControlHooksTrait;
+
 	private fileBanService $fileBanService;
 	private string $moduleUrl;
 
@@ -45,103 +44,72 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->fileBanService = getFileBanService($this->moduleContext->transactionManager);
 
-		// "Ban file" button on attachments - same hook point as "Delete file" (ModerateAttachment)
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModerateAttachment',
-			function(
-				string &$attachmentProperties,
-				string &$attachmentImage,
-				string &$attachmentUrl,
-				array &$attachment
-			) {
-				$this->onRenderAttachment($attachmentProperties, $attachment);
-			}
-		);
+		$this->registerAttachmentHook('onRenderAttachment');
+		$this->registerLinksAboveBarHook(_T('admin_nav_file_ban_title'), $this->moduleUrl, _T('admin_nav_file_ban'));
 
-		// Nav link
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'LinksAboveBar',
-			function(string &$linkHtml) {
-				$this->onRenderLinksAboveBar($linkHtml);
-			}
-		);
-
-		// JS for seamless ban+delete
-		$this->moduleContext->moduleEngine->addRoleProtectedListener(
-			$this->getRequiredRole(),
-			'ModuleAdminHeader',
-			function(string &$moduleHeader) {
-				$this->includeScript('fileBan.js', $moduleHeader);
-			}
-		);
+		$this->listenProtected('ModuleAdminHeader', function(string &$moduleHeader) {
+			$moduleHeader .= getCsrfMetaTag();
+			$this->includeScript('fileBan.js', $moduleHeader);
+		});
 	}
 
 	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
 		$md5 = $attachment['fileMd5'] ?? '';
-		if (empty($md5)) {
-			return;
+		$isBanned = false;
+
+		if (!empty($md5)) {
+			$banned = $this->fileBanService->findBannedHashes([$md5]);
+			$isBanned = !empty($banned);
 		}
 
-		// Don't show ban buttons if the hash is already banned
-		$banned = $this->fileBanService->findBannedHashes([$md5]);
-		if (!empty($banned)) {
-			return;
-		}
+		$hasAttachment = !empty($attachment) && !empty($md5);
+		$canDelete = $this->canDeleteAttachment($attachment);
 
-		// BF (ban only) — show on both live and already-deleted files
-		if (!empty($attachment)) {
+		// BF (ban only)
+		$bfContent = '';
+		if ($hasAttachment && !$isBanned) {
 			$banUrl = $this->getModulePageURL([
 				'action' => 'banOnly',
 				'post_uid' => $attachment['postUid'],
 				'fileId' => $attachment['fileId'],
 			], false, true);
 
-			$attachmentProperties .= ' <span class="adminFunctions adminBanFileFunction attachmentButton">[<a href="' . htmlspecialchars($banUrl) . '" title="' . _T('file_ban_btn_title') . '">BF</a>]</span>';
+			$bfContent = $this->renderAttachmentForm($banUrl, 'BanFile', _T('file_ban_btn_title'), 'BF');
 		}
+		$attachmentProperties .= $this->renderAttachmentIndicator('banFile', $bfContent, !$hasAttachment || $isBanned);
 
-		// B&D (ban + delete) — only on live, non-deleted files
-		if ($this->canRenderDeleteButton($attachment)) {
+		// B&D (ban + delete)
+		$bdContent = '';
+		if ($canDelete && !$isBanned) {
 			$bdUrl = $this->getModulePageURL([
 				'action' => 'banAndDelete',
 				'post_uid' => $attachment['postUid'],
 				'fileId' => $attachment['fileId'],
 			], false, true);
 
-			$attachmentProperties .= ' <span class="adminFunctions adminBanDeleteFileFunction attachmentButton">[<a href="' . htmlspecialchars($bdUrl) . '" title="' . _T('file_ban_bd_btn_title') . '">B&amp;D</a>]</span>';
+			$bdContent = $this->renderAttachmentForm($bdUrl, 'BanDeleteFile', _T('file_ban_bd_btn_title'), 'B&amp;D');
 		}
-	}
-
-	private function canRenderDeleteButton(array $attachment): bool {
-		if (!empty($attachment)) {
-			if (attachmentFileExists($attachment) && !$attachment['isDeleted']) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private function onRenderLinksAboveBar(string &$linkHtml): void {
-		$linkHtml .= '<li class="adminNavLink"><a title="' . _T('admin_nav_file_ban_title') . '" href="' . htmlspecialchars($this->moduleUrl) . '">' . _T('admin_nav_file_ban') . '</a></li>';
+		$attachmentProperties .= $this->renderAttachmentIndicator('banDeleteFile', $bdContent, !$canDelete || $isBanned);
 	}
 
 	public function ModulePage(): void {
 		$action = $_REQUEST['action'] ?? '';
 
 		if ($action === 'banAndDelete') {
+			requirePostWithCsrf($this->moduleContext->request);
 			$this->handleBanAndDelete();
 			return;
 		}
 
 		if ($action === 'banOnly') {
+			requirePostWithCsrf($this->moduleContext->request);
 			$this->handleBanOnly();
 			return;
 		}
 
-		if (isPostRequest()) {
+		if ($this->moduleContext->request->isPost()) {
 			$this->handleRequests();
-		} elseif (isGetRequest()) {
+		} elseif ($this->moduleContext->request->isGet()) {
 			$this->drawIndex();
 		}
 	}
@@ -159,20 +127,15 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function handleBanAndDelete(): void {
-		$postUid = $_GET['post_uid'] ?? null;
-
-		validatePostInput($postUid);
-
-		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
-
-		validatePostInput($post, false);
+		$postUid = $this->moduleContext->request->param ?? null;
+		$post = $this->fetchValidatedPost($postUid);
 
 		$fileId = (int) ($_GET['fileId'] ?? 0);
 		if (empty($fileId)) {
 			throw new BoardException(_T('file_ban_invalid_hash'));
 		}
 
-		$attachment = $post['attachments'][$fileId] ?? false;
+		$attachment = $post->getAttachmentById($fileId);
 		if (!$attachment) {
 			throw new BoardException(_T('attachment_not_found'));
 		}
@@ -182,7 +145,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			throw new BoardException(_T('file_ban_invalid_hash'));
 		}
 
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUid());
 		$boardUID = $board->getBoardUID();
 
 		// Ban the hash
@@ -192,11 +155,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$attachment], $this->moduleContext->currentUserId);
 
 		$this->moduleContext->actionLoggerService->logAction(
-			'Banned and deleted file hash: ' . $md5 . ' from post No.' . $post['no'],
+			'Banned and deleted file hash: ' . $md5 . ' from post No.' . $post->getNumber(),
 			$boardUID
 		);
 
-		if (isJavascriptRequest()) {
+		if ($this->moduleContext->request->isAjax()) {
 			$deletedLink = $this->getDeletedLinkForFile($fileId);
 			sendAjaxAndDetach(['success' => true, 'deleted_link' => $deletedLink]);
 			$this->rebuildBoardForPost($board, $post);
@@ -209,19 +172,14 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function handleBanOnly(): void {
 		$postUid = $_GET['post_uid'] ?? null;
-
-		validatePostInput($postUid);
-
-		$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
-
-		validatePostInput($post, false);
+		$post = $this->fetchValidatedPost($postUid);
 
 		$fileId = (int) ($_GET['fileId'] ?? 0);
 		if (empty($fileId)) {
 			throw new BoardException(_T('file_ban_invalid_hash'));
 		}
 
-		$attachment = $post['attachments'][$fileId] ?? false;
+		$attachment = $post->getAttachmentById($fileId);
 		if (!$attachment) {
 			throw new BoardException(_T('attachment_not_found'));
 		}
@@ -231,51 +189,23 @@ class moduleAdmin extends abstractModuleAdmin {
 			throw new BoardException(_T('file_ban_invalid_hash'));
 		}
 
-		$board = searchBoardArrayForBoard($post['boardUID']);
+		$board = searchBoardArrayForBoard($post->getBoardUID());
 		$boardUID = $board->getBoardUID();
 
 		// Ban the hash only — no file deletion
 		$this->fileBanService->addBan($md5, $this->moduleContext->currentUserId);
 
 		$this->moduleContext->actionLoggerService->logAction(
-			'Banned file hash: ' . $md5 . ' from post No.' . $post['no'],
+			'Banned file hash: ' . $md5 . ' from post No.' . $post->getNumber(),
 			$boardUID
 		);
 
-		if (isJavascriptRequest()) {
+		if ($this->moduleContext->request->isAjax()) {
 			sendAjaxAndDetach(['success' => true]);
 		}
         else {
     		redirect('back');
         }
-	}
-
-	private function getDeletedLinkForFile(int $fileId): string {
-		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
-		$deletedPostId = $deletedPost['deleted_post_id'];
-		$baseUrl = getCurrentUrlNoQuery();
-
-		$urlParameters = [
-			'pageName' => 'viewMore',
-			'deletedPostId' => $deletedPostId,
-			'moduleMode' => 'admin',
-			'mode' => 'module',
-			'load' => 'deletedPosts'
-		];
-
-		return $baseUrl . '?' . http_build_query($urlParameters);
-	}
-
-	private function rebuildBoardForPost($board, array $post): void {
-		if ($post['is_op']) {
-			$board->rebuildBoard();
-		} else {
-			$thread_uid = $post['thread_uid'];
-			$threads = $this->moduleContext->threadService->getThreadListFromBoard($board);
-			$pageToRebuild = getPageOfThread($thread_uid, $threads, $board->getConfigValue('PAGE_DEF', 15));
-			$pageToRebuild = min($pageToRebuild, $this->getConfig('STATIC_HTML_UNTIL'));
-			$board->rebuildBoardPage($pageToRebuild);
-		}
 	}
 
 	private function handleAddBan(): void {
@@ -346,7 +276,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$FILE_BAN_NO_ENTRIES}' => _T('file_ban_no_entries'),
 		]);
 
-		$pagerHtml = drawPager($entriesPerPage, $totalEntries, $this->moduleUrl);
+		$pagerHtml = drawPager($entriesPerPage, $totalEntries, $this->moduleUrl, $this->moduleContext->request);
 
 		$this->renderPage($indexHtml, $pagerHtml);
 	}
