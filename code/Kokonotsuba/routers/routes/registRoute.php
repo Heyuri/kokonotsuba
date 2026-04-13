@@ -40,6 +40,7 @@ use function Kokonotsuba\libraries\scaleThumbnail;
 use function Puchiko\strings\strlenUnicode;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getPageOfThread;
+use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Kokonotsuba\libraries\searchBoardArrayForBoardByIdentifier;
 use function Puchiko\json\sendAjaxAndDetach;
 
@@ -799,7 +800,11 @@ class registRoute {
 			return [];
 		}
 
-		$templateEngine = $this->board->getBoardTemplateEngine();
+		// Switch to the reply template for rendering
+		// clone it so it doesn't affect page rebuild
+		$templateEngine = clone $this->board->getBoardTemplateEngine();
+		$replyTemplateName = $this->board->getConfigValue('REPLY_TEMPLATE_FILE');
+		$templateEngine->setTemplateFile($replyTemplateName);
 
 		$newPostUids = array_map(fn($p) => $p->getUid(), $newPosts);
 		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByPostUids($newPostUids);
@@ -825,7 +830,7 @@ class registRoute {
 				$threadResno,
 				false,
 				$threadPosts,
-				false,
+				isActiveStaffSession(),
 				'',
 				'',
 				$replyCount,
