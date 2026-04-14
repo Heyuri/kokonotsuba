@@ -349,9 +349,9 @@ class threadRepository extends baseRepository {
 	 */
 	public function fetchFilteredThreads(array $filters, string $order, int $amount, int $offset, bool $includeDeleted = false): array {
 		// Whitelist allowed ORDER BY fields
-		$allowedOrderFields = ['thread_uid', 'post_op_number', 'boardUID', 'last_post_time', 'thread_time'];
+		$allowedOrderFields = ['thread_uid', 'post_op_number', 'boardUID', 'last_post_time', 'thread_time', 'last_bump_time', 'last_reply_time', 'thread_created_time'];
 		if (!in_array($order, $allowedOrderFields, true)) {
-			$order = 'thread_uid';
+			$order = 'last_bump_time';
 		}
 
 		// get thread query
