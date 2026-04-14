@@ -30,7 +30,7 @@ function addHiddenGetParamsToForm(string $formHtml, array $getValues): string {
 
 /* Add quote class to quoted text */
 function quote_unkfunc(string $comment): string {
-	$comment = preg_replace('/(^|<br\s*\/?>)((?:&gt;|＞).*?)(?=<br\s*\/?>|$)/ui', '$1<span class="unkfunc">$2</span>', $comment);
-	$comment = preg_replace('/(^|<br\s*\/?>)((?:&lt;).*?)(?=<br\s*\/?>|$)/ui', '$1<span class="unkfunc2">$2</span>', $comment);
+	$comment = preg_replace('/(^|<br\s*\/?>)\s*((?:&gt;|＞).*?)(?=<br\s*\/?>|$)/ui', '$1<span class="unkfunc">$2</span>', $comment);
+	$comment = preg_replace('/(^|<br\s*\/?>)\s*((?:&lt;).*?)(?=<br\s*\/?>|$)/ui', '$1<span class="unkfunc2">$2</span>', $comment);
 	return $comment;
 }
