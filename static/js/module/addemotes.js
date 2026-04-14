@@ -1,25 +1,4 @@
-﻿/* addemotes.js - Hydrates server-rendered emote and kaomoji containers */
-(function() {
-	const COMMENT = document.getElementById("com");
-	if (!COMMENT) return;
-
-	/* Emotes: server-rendered buttons, just add click handlers */
-	const emotesContainer = document.getElementById("emotesContainer");
-	if (emotesContainer) {
-		emotesContainer.querySelectorAll(".emoteButton").forEach((btn) => {
-			btn.addEventListener("click", (e) => insertAtCursor(COMMENT, e.target.title));
-		});
-	}
-
-	/* Kaomoji: server-rendered buttons, just add click handlers */
-	const kaomojiContainer = document.getElementById("kaomojiContainer");
-	if (kaomojiContainer) {
-		kaomojiContainer.querySelectorAll(".kaomojiButton").forEach((btn) => {
-			btn.addEventListener("click", (e) => insertAtCursor(COMMENT, e.target.title));
-		});
-	}
-})();
-/* addemotes.js - Hydrates server-rendered emote/emoji/kaomoji/bbcode containers */
+﻿/* addemotes.js - Hydrates server-rendered emote/emoji/kaomoji/bbcode containers */
 
 /* UTILITY FUNCTIONS */
 function insertAtCursor(myField, myValue) {
@@ -213,14 +192,6 @@ function createSelectorButton(COMMENT, config, type, existingButton = null) {
 
 	return [button, input];
 }
-
-/* BBCODE SELECTOR CONFIGS (used by hydration to build dropdowns for selector buttons) */
-const selectorConfigs = {
-	code: { code: "code", selector: "" },
-	color: { code: "color", selector: "#800043" },
-	size: { code: "s", selector: "3" },
-	pre: { selector: "ASCII (monospace)" },
-};
 
 /* HYDRATION - runs after DOM is ready (script is loaded at end of page) */
 (function() {
