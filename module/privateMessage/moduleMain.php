@@ -91,7 +91,7 @@ class moduleMain extends abstractModuleMain {
 			$this->messageRenderer,
 			$this->messageUtility,
 			$this->moduleContext->request,
-			$this->getConfig('INPUT_MAX', 100),
+			$this->getConfig('COMM_MAX', 4000),
 			$this->getConfig('PM_MESSAGES_PER_PAGE', 20)
 		);
 
