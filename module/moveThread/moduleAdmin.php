@@ -326,10 +326,10 @@ class moduleAdmin extends abstractModuleAdmin {
 			$openingPost = $thread->getOpeningPost();
 
 			// lock thread
-			$openingPost['status'] = $this->toggleThreadStatus($openingPost, 'stop');
+			$this->toggleThreadStatus($openingPost, 'stop');
 
 			// make unmoveable
-			$openingPost['status'] = $this->toggleThreadStatus($openingPost, 'ghost');
+			$this->toggleThreadStatus($openingPost, 'ghost');
 
 			$threadRedirectUrl = $destinationBoard->getBoardThreadURL($newThreadData->getOpNumber()); 
 		} else {
