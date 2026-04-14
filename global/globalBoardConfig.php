@@ -100,7 +100,6 @@ $config['ModuleList'] = array(
 	'sticky' => true,
 	/* posting */
 	'antiSpam' => true,
-	'csrfPrevent' => true,
 	'bbCode' => true,
 	'emoji' => true,
 	'wordFilter' => true,
