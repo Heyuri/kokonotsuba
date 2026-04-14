@@ -158,6 +158,7 @@ class moduleMain extends abstractModuleMain {
 
 		$entries = $this->catalogService->getCatalogEntriesAsJson(
 			$this->moduleContext->board,
+			$this->perPage,
 			$sort
 		);
 
