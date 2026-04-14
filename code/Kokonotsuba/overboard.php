@@ -24,8 +24,11 @@ use Kokonotsuba\thread\ThreadData;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\getThreadTitle;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getOrCreateCsrfToken;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
+use function Kokonotsuba\libraries\html\getBoardStylesheetsFromConfig;
 use function Kokonotsuba\libraries\isActiveStaffSession;
+use function Puchiko\strings\sanitizeStr;
 
 class overboard {
 	private bool $adminMode, $canViewDeleted;
@@ -68,6 +71,9 @@ class overboard {
 		// dispatch module header hook point for static html
 		$this->moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
 
+		// Generate stylesheet <link> tags from config styles.
+		$pte_vals['{$BOARD_STYLESHEETS}'] = getBoardStylesheetsFromConfig($this->config);
+
 		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
 		$this->moduleEngine->dispatch('Head', array(&$html, $resno)); // "Head" Hook Point
 
@@ -105,6 +111,11 @@ class overboard {
 		$offset = $page * $limit;
 		
 		$templateValues = $this->buildOverboardTemplateValues();
+
+		// add CSRF token to delform for logged-in staff on live pages
+		if($this->adminMode) {
+			$templateValues['{$DELFORM_CSRF}'] = '<input type="hidden" name="csrf_token" value="' . sanitizeStr(getOrCreateCsrfToken()) . '">';
+		}
 
 		$this->moduleEngine->dispatch('AboveThreadsGlobal', array(&$templateValues['{$THREADFRONT}']));
 		$this->moduleEngine->dispatch('BelowThreadsGlobal', array(&$templateValues['{$THREADREAR}']));
@@ -151,6 +162,7 @@ class overboard {
 		return array(
 			'{$THREADFRONT}' => '',
 			'{$THREADREAR}' => '',
+			'{$DELFORM_CSRF}' => '',
 			'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel">'._T('del_head'),
 			'{$DEL_PASS_TEXT}' => _T('del_pass'),
 			'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
