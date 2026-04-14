@@ -67,11 +67,11 @@ class catalogEntry {
 		return [
 			'{$THREAD_URL}' => $this->threadUrl,
 			'{$THUMB_HTML}' => $thumbHtml,
-			'{$SUBJECT}' => sanitizeStr($this->subject),
+			'{$SUBJECT}' => $this->subject,
 			'{$POST_INFO_EXTRA}' => $this->postInfoExtra,
 			'{$REPLY_COUNT}' => $this->replyCount,
 			'{$REPLIES_ICON}' => sanitizeStr($repliesIconUrl),
-			'{$COMMENT}' => sanitizeStr($this->comment),
+			'{$COMMENT}' => $this->comment,
 			'{$IS_STICKY}' => $this->isSticky,
 		];
 	}
