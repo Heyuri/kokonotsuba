@@ -23,7 +23,16 @@
 			button.classList.add("buttonEmoji", "emojiButton");
 			button.title = emoji.title;
 			button.value = emoji.value;
-			button.innerHTML = '<img class="emojiImage" src="' + data.baseUrl + emoji.src + '" loading="lazy" title="' + emoji.title + '" alt="' + emoji.title + '" height="24">';
+
+			let img = document.createElement("img");
+			img.className = "emojiImage";
+			img.src = data.baseUrl + emoji.src;
+			img.loading = "lazy";
+			img.title = emoji.title;
+			img.alt = emoji.title;
+			img.height = 24;
+			button.appendChild(img);
+
 			button.addEventListener("click", (e) => insertAtCursor(COMMENT, e.currentTarget.value));
 			target.appendChild(button);
 			if ((index + 1) % 70 === 0) {
