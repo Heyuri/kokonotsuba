@@ -21,6 +21,7 @@ use function Puchiko\strings\buildSmartQuery;
 use function Kokonotsuba\libraries\createAssocArrayFromBoardArray;
 use function Kokonotsuba\libraries\html\drawManagePostsFilterForm;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Kokonotsuba\libraries\getAttachmentUrl;
@@ -180,6 +181,7 @@ class managePostsRoute {
 	private function renderPostsTable(array $posts, array $boardMap, string $boardList, array $context): string {
 		$html = '<form id="managePostsForm" action="' . htmlspecialchars($context['cleanUrl']) . '" method="POST">';
 		$html .= '<input type="hidden" name="mode" value="admin">
+					' . getCsrfHiddenInput() . '
 					<div id="tableManagePostsContainer">
 						<table id="tableManagePosts" class="postlists">
 							<thead>

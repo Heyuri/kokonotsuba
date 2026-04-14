@@ -158,9 +158,10 @@ function generateModerateForm(
 	string $label,
 	string $title,
 	string $class,
-	bool $isNoScript = false,
+	bool $noScript = false,
+	bool $useFormAction = true
 ): string {
-	if ($isNoScript) {
+	if ($useFormAction) {
 		// Inside delform — use formaction to avoid nested <form> tags.
 		// The CSRF token is already present as a hidden input in delform.
 		$html = '<span class="adminFunctions ' . htmlspecialchars($class) . '">'
@@ -172,7 +173,12 @@ function generateModerateForm(
 			. '</button>]'
 			. '</span>';
 
-		return '<noscript>' . $html . '</noscript>';
+		if($noScript) {
+			return '<noscript>' . $html . '</noscript>';
+		}
+		else {
+			return $html;
+		}
 	}
 
 	// Standalone context (admin management pages) — wrap in its own <form>.

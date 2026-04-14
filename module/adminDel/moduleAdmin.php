@@ -67,7 +67,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'D',
 			'Delete',
 			'adminDeleteFunction',
-			$noScript
+			$noScript,
+			true
 		);
 
 		// render delete and mute button
@@ -76,7 +77,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'DM',
 			'Delete and mute for ' . $muteMinutes . ' minute' . $plural,
 			'adminDeleteMuteFunction',
-			$noScript
+			$noScript,
+			true,
 		);
 	}
 	
