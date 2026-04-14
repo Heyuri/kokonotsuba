@@ -478,7 +478,7 @@ class deletedPostRenderer {
 			$posts = $thread->getPosts();
 			
 			// make every post marked as deleted
-			$posts = array_map(function(DeletedPost $row) {
+			$posts = array_map(function($row) {
 				//$row['open_flag'] = 1;  // mark row as deleted
    				return $row;
 			}, $posts);

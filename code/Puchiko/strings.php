@@ -236,7 +236,7 @@ function generateFilteredUrl(string $baseUrl, array $filters = []) {
 }
 
 function autoLink(string $text, string $refUrl = ''): string {
-	$pattern = '~https?://[^\s<]+~i';
+	$pattern = '~https?://[^\s<\[]+~i';
 
 	return preg_replace_callback($pattern, function ($m) use ($refUrl) {
 		// 1) Normalize any pre-escaped entities in the matched URL

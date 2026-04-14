@@ -398,6 +398,7 @@ class postRepository extends baseRepository {
 	 * @return array|false Array of merged post data arrays, or false if none found.
 	 */
 	public function getPostsByThreadUIDs(array $threadUids, bool $includeDeleted = false): array|false {	
+		$threadUids = array_values($threadUids);
 		$inClause = pdoPlaceholdersForIn($threadUids);
 
 		// base post query

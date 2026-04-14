@@ -781,6 +781,18 @@ class threadRepository extends baseRepository {
 
 		if (!$includeDeleted) {
 			$ranked .= excludeDeletedThreadsCondition($this->deletedPostsTable);
+			$ranked .= " AND NOT EXISTS (
+				SELECT 1
+				FROM {$this->deletedPostsTable} d1
+				INNER JOIN (
+					SELECT post_uid, MAX(id) AS max_id
+					FROM {$this->deletedPostsTable}
+					GROUP BY post_uid
+				) d2 ON d1.post_uid = d2.post_uid AND d1.id = d2.max_id
+				WHERE d1.post_uid = p.post_uid
+				  AND d1.open_flag = 1
+				  AND d1.file_id IS NULL
+			)";
 		}
 
 		$base = getBasePostQuery(

@@ -64,10 +64,10 @@ class managePostsRoute {
 		$boardList = $this->buildBoardList();
 		
 		// Render the manage posts page
-		$managePostsHtml = $this->renderManagePostsPage($posts, $boardMap, $boardList, $context);
+		[$managePostsHtml, $pagerHtml] = $this->renderManagePostsPage($posts, $boardMap, $boardList, $context);
 		
 		// Output final HTML
-		$this->outputPageContent($managePostsHtml);
+		$this->outputPageContent($managePostsHtml, $pagerHtml);
 	}
 
 	private function initializePageContext(): array {
@@ -160,7 +160,7 @@ class managePostsRoute {
 		return implode('+', $allBoardUids);
 	}
 
-	private function renderManagePostsPage(array $posts, array $boardMap, string $boardList, array $context): string {
+	private function renderManagePostsPage(array $posts, array $boardMap, string $boardList, array $context): array {
 		$html = '';
 		
 		// Render filter form
@@ -169,11 +169,12 @@ class managePostsRoute {
 		// Render posts table
 		$html .= $this->renderPostsTable($posts, $boardMap, $boardList, $context);
 		
-		// Render action buttons and pagination
+		// Render action buttons
 		$html .= $this->renderPostsTableFooter();
-		$html .= drawPager($context['postsPerPage'], $context['numberOfFilteredPosts'], $context['cleanUrl'], $this->request);
+
+		$pagerHtml = drawPager($context['postsPerPage'], $context['numberOfFilteredPosts'], $context['cleanUrl'], $this->request);
 		
-		return $html;
+		return [$html, $pagerHtml];
 	}
 
 	private function renderPostsTable(array $posts, array $boardMap, string $boardList, array $context): string {
@@ -221,10 +222,10 @@ class managePostsRoute {
 	</script>';
 	}
 
-	private function outputPageContent(string $managePostsHtml): void {
+	private function outputPageContent(string $managePostsHtml, string $pagerHtml = ''): void {
 		$templateValues = [
 			'{$PAGE_CONTENT}' => $managePostsHtml,
-			'{$PAGER}' => ''
+			'{$PAGER}' => $pagerHtml
 		];
 		
 		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', $templateValues, true);

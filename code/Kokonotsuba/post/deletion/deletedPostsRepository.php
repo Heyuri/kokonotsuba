@@ -5,7 +5,6 @@ namespace Kokonotsuba\post\deletion;
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\database\OrderFieldWhitelistTrait;
-use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\getBasePostQuery;
 use function Kokonotsuba\libraries\mergeDeletedPostRows;
@@ -174,35 +173,6 @@ class deletedPostsRepository extends baseRepository {
 
 		// execute the query
 		$this->query($query, $params); 
-	}
-
-	/**
-	 * Fetch a fully merged post data array by its deletion record ID.
-	 *
-	 * @param int $deletedPostId Deletion record ID.
-	 * @return Post|false Merged post object, or false if not found.
-	 */
-	public function getPostByDeletedPostId(int $deletedPostId): Post|false {
-		// query to get the post data by deleted post id
-		$query = getBasePostQuery($this->postTable, $this->table, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  true);
-		
-		// append WHERE clause
-		$query .= " WHERE p.post_uid = 
-					(SELECT post_uid FROM {$this->table} WHERE id = :deleted_post_id)";
-
-		// parameters
-		$params = [
-			':deleted_post_id' => $deletedPostId
-		];
-
-		// fetch the data as a single row
-		$postData = $this->queryAll($query, $params);
-	
-		// merge attachment row
-		$postData = mergeMultiplePostRows($postData);
-
-		// return it
-		return $postData[0] ?? false;
 	}
 
 	/**
@@ -515,7 +485,7 @@ class deletedPostsRepository extends baseRepository {
 	 * Fetch a single deleted-posts row by its primary deletion record ID.
 	 *
 	 * @param int $deletedPostId Deletion record ID.
-	 * @return array|false Merged deletion row, or false if not found.
+	 * @return DeletedPost|false Merged deletion row, or false if not found.
 	 */
 	public function getDeletedPostRowById(int $deletedPostId): DeletedPost|false {
 		// Get the query for deleted posts
@@ -761,7 +731,7 @@ class deletedPostsRepository extends baseRepository {
 	 * Fetch the most-recent deletion row for the given post UID.
 	 *
 	 * @param int $postUid Post UID.
-	 * @return array|false Merged deletion row, or false if not found.
+	 * @return DeletedPost|false Merged deletion row, or false if not found.
 	 */
 	public function getDeletedPostRowByPostUid(int $postUid): DeletedPost|false {
 		// query to fetch the deleted post by post uid
@@ -799,7 +769,7 @@ class deletedPostsRepository extends baseRepository {
 	 * Fetch the most-recent deletion row associated with the given file ID.
 	 *
 	 * @param int $fileId File row ID.
-	 * @return array|false Merged deletion row, or false if not found.
+	 * @return DeletedPost|false Merged deletion row, or false if not found.
 	 */
 	public function getDeletedPostRowByFileId(int $fileId): DeletedPost|false {
 		// query to fetch the deleted post by post uid

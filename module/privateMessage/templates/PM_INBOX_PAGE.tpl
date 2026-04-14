@@ -27,5 +27,4 @@
 				</tbody>
 			</table>','<p class="noMessages">{$NO_MESSAGES_TEXT}</p>')-->
 		</div>
-		{$PAGER_HTML}
 	</div>
