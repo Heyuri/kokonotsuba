@@ -91,7 +91,7 @@ function prefetchPost(event) {
 	fetchPostData(postUid)
 }
 
-function positionPreviewBox(box, e) {
+function positionPreviewBox(box, e, trigger) {
 	const vw = window.innerWidth, vh = window.innerHeight
 	box.style.maxWidth = `${vw - RIGHT_MARGIN}px`
 	box.style.display  = 'block'
@@ -101,7 +101,8 @@ function positionPreviewBox(box, e) {
 	if (left + w > vw - RIGHT_MARGIN) left = vw - w - RIGHT_MARGIN
 	box.style.left = `${Math.max(0, left)}px`
 
-	const rect  = e.target.getBoundingClientRect()
+	const anchor = trigger || e.target
+	const rect  = anchor.getBoundingClientRect()
 	const h     = box.offsetHeight
 	const below = rect.bottom + window.scrollY
 	const above = rect.top    + window.scrollY - h
@@ -117,7 +118,6 @@ function attachPreviewHandlers(obj) {
 	box.addEventListener('mouseleave', () => setTimeout(checkPreviews, REMOVAL_DELAY))
 	trigger.addEventListener('mouseenter', () => {})
 	trigger.addEventListener('mouseleave', () => setTimeout(checkPreviews, REMOVAL_DELAY))
-	trigger.addEventListener('mousemove', e => positionPreviewBox(box, e))
 }
 
 function checkPreviews() {
@@ -181,7 +181,7 @@ function startHover(event) {
 
 			attachPreviewHandlers(obj)
 			applyHoverListeners(box)
-			positionPreviewBox(box, lastMouseEvent)
+			positionPreviewBox(box, lastMouseEvent, trigger)
 			box.style.display = 'block'
 			return
 		}
@@ -193,7 +193,7 @@ function startHover(event) {
 			const obj = { box, trigger, parent: parentPrev, contextPost: null }
 			previewStack.push(obj)
 			attachPreviewHandlers(obj)
-			positionPreviewBox(box, lastMouseEvent)
+			positionPreviewBox(box, lastMouseEvent, trigger)
 			box.style.display = 'block'
 			return
 		}
@@ -203,7 +203,7 @@ function startHover(event) {
 		const obj = { box, trigger, parent: parentPrev, contextPost: null }
 		previewStack.push(obj)
 		attachPreviewHandlers(obj)
-		positionPreviewBox(box, lastMouseEvent)
+		positionPreviewBox(box, lastMouseEvent, trigger)
 		box.style.display = 'block'
 
 		fetchPostData(postUid).then(data => {
@@ -226,7 +226,7 @@ function startHover(event) {
 			}
 
 			// Reposition after content change
-			if (lastMouseEvent) positionPreviewBox(box, lastMouseEvent)
+			if (lastMouseEvent) positionPreviewBox(box, lastMouseEvent, trigger)
 		})
 	}, PREVIEW_DELAY)
 }
@@ -243,7 +243,7 @@ function stopHover(event) {
 
 function trackHoverMove(event) {
 	const obj = previewStack.find(o => o.trigger === event.currentTarget)
-	if (obj) positionPreviewBox(obj.box, event)
+	if (obj) positionPreviewBox(obj.box, event, obj.trigger)
 }
 
 function showAggregated(trigger, e) {
@@ -285,7 +285,7 @@ function showAggregated(trigger, e) {
 
 	attachPreviewHandlers(obj)
 	applyHoverListeners(box)
-	positionPreviewBox(box, e)
+	positionPreviewBox(box, e, trigger)
 	box.style.display = 'block'
 }
 
@@ -441,9 +441,11 @@ function applyHoverListeners(root) {
 		) return
 		el.removeEventListener('mouseover', startHover)
 		el.removeEventListener('mouseout',  stopHover)
+		el.removeEventListener('mousemove', trackHoverMove)
 		el.removeEventListener('mouseenter', prefetchPost)
 		el.addEventListener   ('mouseover', startHover)
 		el.addEventListener   ('mouseout',  stopHover)
+		el.addEventListener   ('mousemove', trackHoverMove)
 		el.addEventListener   ('mouseenter', prefetchPost)
 	})
 	root.querySelectorAll('.replies-label').forEach(el => {

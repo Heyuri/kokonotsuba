@@ -91,7 +91,8 @@ const kkqu = {
 	},
 	/* Function */
 	quote: function (no) {
-		kkjs.com_insert(">>"+no+"\n");
+		var qrEnabled = typeof kkqr !== 'undefined' && kkqr && localStorage.getItem("useqr") == "true";
+		kkjs.com_insert(">>"+ no+"\n", qrEnabled ? {noScroll: true} : undefined);
 		return no;
 	},
 	resetquotes: function () {
