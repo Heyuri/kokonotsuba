@@ -16,7 +16,7 @@ function createPreviewBox(notFound = false, loading = false) {
 	const box = document.createElement('div')
 	box.classList.add('previewBox')
 	box.style.position  = 'absolute'
-	box.style.zIndex    = '9999'
+	box.style.zIndex    = '9998'
 	box.style.minWidth  = `${MIN_WIDTH}px`
 	box.style.display   = 'none'
 	if (notFound) {
@@ -241,10 +241,6 @@ function stopHover(event) {
 	cleanupTimer = setTimeout(checkPreviews, REMOVAL_DELAY)
 }
 
-function trackHoverMove(event) {
-	const obj = previewStack.find(o => o.trigger === event.currentTarget)
-	if (obj) positionPreviewBox(obj.box, event, obj.trigger)
-}
 
 function showAggregated(trigger, e) {
 	const container = trigger.parentElement
@@ -441,20 +437,16 @@ function applyHoverListeners(root) {
 		) return
 		el.removeEventListener('mouseover', startHover)
 		el.removeEventListener('mouseout',  stopHover)
-		el.removeEventListener('mousemove', trackHoverMove)
 		el.removeEventListener('mouseenter', prefetchPost)
 		el.addEventListener   ('mouseover', startHover)
 		el.addEventListener   ('mouseout',  stopHover)
-		el.addEventListener   ('mousemove', trackHoverMove)
 		el.addEventListener   ('mouseenter', prefetchPost)
 	})
 	root.querySelectorAll('.replies-label').forEach(el => {
 		el.removeEventListener('mouseover',  startHover)
 		el.removeEventListener('mouseout',   stopHover)
-		el.removeEventListener('mousemove',  trackHoverMove)
 		el.addEventListener   ('mouseover',  startHover)
 		el.addEventListener   ('mouseout',   stopHover)
-		el.addEventListener   ('mousemove',  trackHoverMove)
 	})
 }
 
