@@ -381,10 +381,12 @@ const kkjs = {
 			if (typeof(form.email)!='undefined') { form.email.value=E; }
 		}
 	},
-	com_insert: function (str) {
+	com_insert: function (str, opts) {
 		var com = $id("com"), qrcom =  $id("qrcom");
+		var qrOpen = typeof kkqr !== 'undefined' && kkqr && kkqr.win;
+		var noScroll = opts && opts.noScroll;
 		if (!com) return false;
-		if (qrcom) com = qrcom;
+		if (qrOpen && qrcom) com = qrcom;
 
 		// Check if kkgal exists and has the necessary properties
 		if (typeof kkgal !== 'undefined' && kkgal.gframe) {
@@ -392,10 +394,9 @@ const kkjs = {
 		}
 
 		com.value+= str;
-		var qrEnabled = typeof kkqr !== 'undefined' && kkqr && localStorage.getItem("useqr") == "true";
-		if (com != qrcom && !qrEnabled) // Don't scroll to the main form when QR is enabled
+		if (!qrOpen && !noScroll) // Don't scroll to the main form when QR is open
 			com.scrollIntoView({behavior:"smooth",block:"center"});
-		com.focus({ preventScroll: qrEnabled });
+		com.focus({ preventScroll: qrOpen || noScroll });
 
 		var event = $doc.createEvent("HTMLEvents");
 		event.initEvent("input", true, true);
