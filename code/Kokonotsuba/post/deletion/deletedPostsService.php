@@ -38,18 +38,16 @@ class deletedPostsService {
 	public function restorePost(int $deletedPostId, int $accountId): void {
 		// run transaction
 		$this->inTransaction(function() use($deletedPostId, $accountId) {
-			// get the post data from the associated deleted posts row
-			$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
+			// get the deleted post entry from the associated deleted posts row
+			$deletedPost = $this->deletedPostsRepository->getDeletedPostRowById($deletedPostId);
 			
-			// return early if postData is null for whatever reason
-			if(!$postData) {
+			// return early if deletedPost is null for whatever reason
+			if(!$deletedPost) {
 				return;
 			}
 
-			/** @var Post $postData */
-
 			// check if the post was a reply to a deleted thread
-			$isByProxy = $this->checkIfPostIsProxyDeleted($postData);
+			$isByProxy = $this->checkIfPostIsProxyDeleted($deletedPost);
 
 			// return early if by proxy
 			if($isByProxy) {
@@ -57,20 +55,20 @@ class deletedPostsService {
 			}
 			
 			// whether its an op or not
-			$isOp = $postData->isOp();
+			$isOp = $deletedPost->isOp();
 
 			// if its a thread then restore all posts in it
 			if($isOp) {
-				$this->restoreThread($postData, $accountId);
+				$this->restoreThread($deletedPost, $accountId);
 			} 
 			// restore singular reply
 			else {
-				$this->restoreReply($postData, $deletedPostId, $accountId);
+				$this->restoreReply($deletedPost, $deletedPostId, $accountId);
 			}
 		});
 	}
 
-	private function restoreThread(Post $opPostData, int $accountId): void {
+	private function restoreThread(DeletedPost $opPostData, int $accountId): void {
 		// thread uid of the thread
 		$threadUid = $opPostData->getThreadUid();
 
@@ -95,7 +93,7 @@ class deletedPostsService {
 		$this->logAction($restoreActionString, $opPostData->getBoardUID());
 	}
 
-	private function restoreReply(Post $postData, int $deletedPostId, int $accountId): void {
+	private function restoreReply(DeletedPost $postData, int $deletedPostId, int $accountId): void {
 		// post uid of the post
 		$postUid = $postData->getUid();
 		
@@ -139,15 +137,20 @@ class deletedPostsService {
 		// get post data
 		$deletedPostEntry = $this->deletedPostsRepository->getDeletedPostRowById($deletedPostId);
 
+		// return early if postData is null for whatever reason
+		if(!$deletedPostEntry) {
+			return;
+		}
+
 		// get file ID
-		$fileId = $deletedPostEntry['file_id'] ?? null;
+		$fileId = $deletedPostEntry->getFileId() ?? null;
 
 		if(!$fileId) {
 			throw new BoardException(_T('no_attachment_ever'));
 		}
 
 		// get attachment array by file ID
-		$fileData = $deletedPostEntry['attachments'][$fileId] ?? false;
+		$fileData = $deletedPostEntry->getAttachments()[$fileId] ?? false;
 
 		// return early if the attachment isn't found
 		if(!$fileData) {
@@ -182,7 +185,7 @@ class deletedPostsService {
 		$this->deletedPostsRepository->restorePostData($deletedPostId, $accountId);
 
 		// Log the restore
-		$this->logAction("Restored attachment $fileId on post No.{$deletedPostEntry['no']}", $deletedPostEntry['boardUID']);
+		$this->logAction("Restored attachment $fileId on post No.{$deletedPostEntry->getNumber()}", $deletedPostEntry->getBoardUID());
 	}
 
 	/**
@@ -195,18 +198,16 @@ class deletedPostsService {
 	public function purgePost(int $deletedPostId, bool $logAction = true): void {
 		// run transaction
 		$this->inTransaction(function() use($deletedPostId, $logAction) {
-			// get the post data from the associated deleted posts row
-			$postData = $this->deletedPostsRepository->getPostByDeletedPostId($deletedPostId);
+			// get the deleted post entry from the associated deleted posts row
+			$deletedPost = $this->deletedPostsRepository->getDeletedPostRowById($deletedPostId);
 			
-			// return early if postData is null for whatever reason
-			if(!$postData) {
+			// return early if deletedPost is null for whatever reason
+			if(!$deletedPost) {
 				return;
 			}
 
-			/** @var Post $postData */
-
 			// check if the post was a reply to a deleted thread
-			$isByProxy = $this->checkIfPostIsProxyDeleted($postData);
+			$isByProxy = $this->checkIfPostIsProxyDeleted($deletedPost);
 
 			// return early if by proxy
 			if($isByProxy) {
@@ -214,15 +215,15 @@ class deletedPostsService {
 			}
 
 			// whether its an op or not
-			$isOp = $postData->isOp();
+			$isOp = $deletedPost->isOp();
 
 			// if its a thread then purge the thread
 			if($isOp) {
-				$this->purgeThread($postData, $logAction);
+				$this->purgeThread($deletedPost, $logAction);
 			} 
 			// purge singular reply
 			else {
-				$this->purgeReply($postData, $deletedPostId, $logAction);
+				$this->purgeReply($deletedPost, $deletedPostId, $logAction);
 			}
 		});
 	}
@@ -246,7 +247,7 @@ class deletedPostsService {
 		}
 	}
 
-	private function checkIfPostIsProxyDeleted(Post $post): bool {
+	private function checkIfPostIsProxyDeleted(DeletedPost $post): bool {
 		// if the post has bee deleted by proxy
 		$byProxy = $post->isByProxy();
 
@@ -262,7 +263,7 @@ class deletedPostsService {
 		}
 	}
 
-	private function purgeThread(Post $opPostData, bool $logAction = true): void {
+	private function purgeThread(DeletedPost $opPostData, bool $logAction = true): void {
 		// thread uid
 		$threadUid = $opPostData->getThreadUid();
 
@@ -287,7 +288,7 @@ class deletedPostsService {
 		}
 	}
 
-	private function purgeReply(Post $replyPostData, int $deletedPostId, bool $logAction = true): void {
+	private function purgeReply(DeletedPost $replyPostData, int $deletedPostId, bool $logAction = true): void {
 		// post uid of the post
 		$postUid = $replyPostData->getUid();
 
@@ -363,13 +364,12 @@ class deletedPostsService {
 				throw new BoardException(_T('attachment_not_found'));
 			}
 
-			/** @var Post $row */
 			// get attachments data
 			$attachmentsData = $row->getAttachments();
 
 			// get file id
 			// this is the file id that will be used to select the attachment to purge
-			$fileId = $row['file_id'];
+			$fileId = $row->getFileId();
 
 			// the select attachment
 			$fileData = $attachmentsData[$fileId] ?? false;
@@ -521,7 +521,7 @@ class deletedPostsService {
 	 * Fetch a single deletion row by its deletion record ID.
 	 *
 	 * @param int $deletedPostId Deletion record ID.
-	 * @return Post|null Merged deletion row, or null if not found.
+	 * @return DeletedPost|null Merged deletion row, or null if not found.
 	 */
 	public function getDeletedPostRowById(int $deletedPostId): ?DeletedPost {
 		// get the single row from the db
@@ -826,7 +826,7 @@ class deletedPostsService {
 	 * Fetch the most-recent deletion row for the given post UID.
 	 *
 	 * @param int $postUid Post UID.
-	 * @return array|null Merged deletion row, or null if not found.
+	 * @return DeletedPost|null Merged deletion row, or null if not found.
 	 */
 	public function getDeletedPostRowByPostUid(int $postUid): ?DeletedPost {
 		// fetch the row by post uid
@@ -840,7 +840,7 @@ class deletedPostsService {
 	 * Fetch the most-recent deletion row associated with the given file ID.
 	 *
 	 * @param int $fileId File row ID.
-	 * @return array|null Merged deletion row, or null if not found.
+	 * @return DeletedPost|null Merged deletion row, or null if not found.
 	 */
 	public function getDeletedPostRowByFileId(int $fileId): ?DeletedPost {
 		// fetch the row by file id

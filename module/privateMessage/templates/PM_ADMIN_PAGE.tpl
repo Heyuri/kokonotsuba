@@ -26,5 +26,3 @@
 		<button type="submit" name="action" value="ban">{$BAN_BTN}</button>
 	</div>
 </form>
-
-{$PAGER_HTML}

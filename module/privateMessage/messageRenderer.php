@@ -25,13 +25,16 @@ class messageRenderer {
 		private request $request,
 	) {}
 
-	private function renderPmPage(string $contentHtml): void {
+	private function renderPmPage(string $contentHtml, string $pagerHtml = ''): void {
 		$wrappedHtml = $this->adminPageRenderer->ParseBlock('PM_PAGE', [
 			'{$PAGE_TITLE}' => _T('pm_main_title'),
 			'{$PAGE_CONTENT}' => $contentHtml
 		]);
 
-		echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $wrappedHtml], false);
+		echo $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', [
+			'{$PAGE_CONTENT}' => $wrappedHtml,
+			'{$PAGER}' => $pagerHtml,
+		], false);
 	}
 
 	public function renderLoginPage(string $modulePageUrl): void {
@@ -157,10 +160,9 @@ class messageRenderer {
 			'{$MESSAGES}' => $rows,
 			'{$HAS_MESSAGES}' => !empty($messages) ? '1' : '',
 			'{$NO_MESSAGES_TEXT}' => _T('pm_no_messages'),
-			'{$PAGER_HTML}' => $pagerHtml,
 		]));
 
-		$this->renderPmPage($inboxHtml);
+		$this->renderPmPage($inboxHtml, $pagerHtml);
 	}
 
 	public function renderViewMessage(array $message, string $modulePageUrl, string $userTripCode): void {

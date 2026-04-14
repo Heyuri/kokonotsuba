@@ -174,10 +174,12 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$MESSAGES}' => $rows,
 			'{$HAS_MESSAGES}' => !empty($messages) ? '1' : '',
 			'{$NO_MESSAGES_TEXT}' => _T('pm_admin_no_messages'),
-			'{$PAGER_HTML}' => $pagerHtml,
 		]);
 
-		echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $contentHtml], true);
+		echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', [
+			'{$PAGE_CONTENT}' => $contentHtml,
+			'{$PAGER}' => $pagerHtml,
+		], true);
 	}
 
 	private function renderViewMessage(): void {
