@@ -282,6 +282,11 @@
 	margin: 0.5em 0;
 }
 
+.pmBodyInput {
+	width: 30em;
+	height: 5em;
+}
+
 .pmRow.pmRead {
 	opacity: 0.85;
 }
