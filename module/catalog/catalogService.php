@@ -44,23 +44,23 @@ class catalogService {
 	}
 
 	/**
-	 * Fetch ALL catalog entries for JSON output (used by JS sort).
+	 * Fetch a page of catalog entries for JSON output (used by JS sort).
 	 *
 	 * Returns a lightweight array suitable for JSON encoding so the
 	 * client can re-sort without a full page reload.
 	 *
-	 * @param board  $board   Board to fetch entries from.
-	 * @param string $sortBy  Sort column: 'bump' or 'time'.
+	 * @param board  $board    Board to fetch entries from.
+	 * @param int    $perPage  Maximum entries to return.
+	 * @param string $sortBy   Sort column: 'bump' or 'time'.
 	 * @return array Array of JSON-ready catalog entry arrays.
 	 */
-	public function getCatalogEntriesAsJson(board $board, string $sortBy = 'bump'): array {
+	public function getCatalogEntriesAsJson(board $board, int $perPage, string $sortBy = 'bump'): array {
 		$boardUID = $board->getBoardUID();
 		$orderColumn = $this->resolveSortColumn($sortBy);
 
-		// Fetch all entries (no pagination for JSON sort)
 		$rows = $this->catalogRepository->getCatalogEntries(
 			$boardUID,
-			0, // 0 = no limit
+			$perPage,
 			0,
 			$orderColumn
 		);
