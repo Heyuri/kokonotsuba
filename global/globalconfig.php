@@ -3,8 +3,6 @@
 * This is for global settings that should not be overwritten by any board's config, and thus can be accessed without needing to access the board.
 */
 
-use Kokonotsuba\Kokonotsuba\userRole;
-
 $config['PIXMICAT_LANGUAGE'] = 'en_US'; // Language (available languages in /lib/lang/)
 $config['ERROR_HANDLER_FILE'] = __DIR__.'/error.log';
 
@@ -51,7 +49,7 @@ $config['AuthLevels']['CAN_STICKY'] = Kokonotsuba\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_AUTO_SAGE'] = Kokonotsuba\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_MANAGE_REBUILD'] = Kokonotsuba\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_EDIT_GLOBAL_MESSAGE'] = Kokonotsuba\userRole::LEV_ADMIN;
-$config['AuthLevels']['CAN_EDIT_BLOTTER'] = Kokonotsuba\userRole::LEV_ADMIN;
+$config['AuthLevel']['CAN_EDIT_BLOTTER'] = Kokonotsuba\userRole::LEV_ADMIN;
 $config['AuthLevels']['CAN_MANAGE_POSTS'] = Kokonotsuba\userRole::LEV_JANITOR;
 $config['AuthLevels']['CAN_VIEW_ACTION_LOG'] = Kokonotsuba\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_RAW_HTML'] = Kokonotsuba\userRole::LEV_ADMIN;
@@ -101,6 +99,35 @@ $config['staffCapcodes'] = [
     ],
 ];
 
+// kokoimg styles
+$config['styles']['kokoimg'] = [
+    'Sakomoto' => 'sakomoto.css',
+    'Heyuri Classic' => 'heyuriclassic.css',
+    'Futaba' => 'futaba.css',
+    'Burichan' => 'burichan.css',
+    'Fuuka' => 'fuuka.css',
+    'Gurochan' => 'gurochan.css',
+    'Photon' => 'photon.css',
+    'Tomorrow' => 'tomorrow.css',
+    'Ayashii' => 'ayashii.css',
+    'Mercury' => 'mercury.css',
+];
+
+// kokotxt styles
+$config['styles']['kokotxt'] = [
+    'Pseud0ch' => 'pseud0ch.css',
+    'Pseud0ch (serif)' => 'pseud0ch2.css',
+    'Pseud0ch (sans-serif)' => 'pseud0ch3.css',
+    'Gochannel' => 'gochannel.css',
+    'Tomorrow' => 'tomorrow.css',
+    'Ayashii' => 'ayashii.css',
+    'Blue Moon' => 'bluemoon.css',
+    'Futaba' => 'futaba.css',
+    'Headline' => 'headline.css',
+    'Mercury' => 'mercury.css',
+    'Toothpaste' => 'toothpaste.css',
+    'VIPPER' => 'vipper.css',
+];
 
 $config['KILL_INCOMPLETE_UPLOAD'] = 1; // Automatically delete uploaded incomplete additional images
 

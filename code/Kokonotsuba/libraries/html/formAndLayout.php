@@ -23,6 +23,9 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 	$pte_vals['{$PAGE_TITLE}'] = $pageTitle;
 	$pte_vals['{$ATTACHMENT_LIMIT}'] = htmlspecialchars($config['ATTACHMENT_UPLOAD_LIMIT'] ?? 1);
 
+	// Generate stylesheet <link> tags from config styles.
+	$pte_vals['{$BOARD_STYLESHEETS}'] = getBoardStylesheetsFromConfig($config);
+
 	$html .= $templateEngine->ParseBlock('HEADER', $pte_vals);
 	$moduleEngine->dispatch('Head', array(&$html, $resno)); // Hook: Head
 
@@ -38,6 +41,57 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 	$moduleEngine->dispatch('PageTop', array(&$pte_vals['{$BANNER}'])); // Hook: AboveTitle
 
 	$html .= $templateEngine->ParseBlock('BODYHEAD', $pte_vals);
+
+	return $html;
+}
+
+/**
+ * Resolve and generate stylesheet <link> tags from the board config.
+ * Checks TEMPLATE_FILE and REPLY_TEMPLATE_FILE to determine the style set:
+ * if either is 'kokotxt' or 'kokotxtreply', uses kokotxt styles (static/css/kokotxt/),
+ * otherwise uses kokoimg styles (static/css/kokoimg/).
+ *
+ * @param array $config The board configuration array.
+ * @return string Generated <link> HTML tags.
+ */
+function getBoardStylesheetsFromConfig(array $config): string {
+	$textTemplates = ['kokotxt', 'kokotxtreply'];
+	$templateFile = $config['TEMPLATE_FILE'] ?? '';
+	$replyTemplateFile = $config['REPLY_TEMPLATE_FILE'] ?? '';
+
+	// Use kokotxt styles if either template is a text-board template
+	$isTextStyle = in_array($templateFile, $textTemplates, true)
+		|| in_array($replyTemplateFile, $textTemplates, true);
+	$styleKey = $isTextStyle ? 'kokotxt' : 'kokoimg';
+
+	return generateBoardStylesheets(
+		$config['styles'][$styleKey] ?? [],
+		$config['STATIC_URL'] ?? '',
+		'css/' . $styleKey . '/'
+	);
+}
+
+/**
+ * Generate <link> tags for board stylesheets.
+ * The first style is the default; all others are marked as alternates.
+ *
+ * @param array  $styles    Associative array of style name => CSS filename.
+ * @param string $staticUrl Base URL for static assets (e.g. 'https://static.example.net/').
+ * @param string $cssDir    CSS subdirectory path (e.g. 'css/kokoimg/').
+ * @return string Generated <link> HTML tags.
+ */
+function generateBoardStylesheets(array $styles, string $staticUrl, string $cssDir): string {
+	$html = '';
+	$first = true;
+
+	foreach ($styles as $title => $filename) {
+		// The first stylesheet is the default; subsequent ones are alternate
+		$rel = $first ? 'stylesheet' : 'stylesheet alternate';
+		$html .= "\t" . '<link class="linkstyle" rel="' . $rel . '" href="'
+			. htmlspecialchars($staticUrl . $cssDir . $filename)
+			. '" title="' . htmlspecialchars($title) . '">' . "\n";
+		$first = false;
+	}
 
 	return $html;
 }
@@ -181,5 +235,8 @@ function preparePostFormTemplateValues(int $resno, ?string $liveIndexFile, ?stri
 		'{$MODULE_INFO_HOOK}' => $moduleInfoHook,
 		'{$FORM_FUNCS_EXTRA}' => '',
 		'{$ALWAYS_NOKO}' => $config['ALWAYS_NOKO'] ? 'data-alwaysnoko="true"' : '',
+		'{$USE_SAGE_CHECKBOX}' => !empty($config['USE_SAGE_CHECKBOX']),
+		'{$USE_NOKO_CHECKBOX}' => !empty($config['USE_NOKO_CHECKBOX']),
+		'{$USE_DUMP_CHECKBOX}' => !empty($config['USE_DUMP_CHECKBOX']),
 		'{$POST_FORM}' => '');
 }

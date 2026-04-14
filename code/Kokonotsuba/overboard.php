@@ -25,6 +25,7 @@ use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\getThreadTitle;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
+use function Kokonotsuba\libraries\html\getBoardStylesheetsFromConfig;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 
 class overboard {
@@ -67,6 +68,9 @@ class overboard {
 		}
 		// dispatch module header hook point for static html
 		$this->moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
+
+		// Generate stylesheet <link> tags from config styles.
+		$pte_vals['{$BOARD_STYLESHEETS}'] = getBoardStylesheetsFromConfig($this->config);
 
 		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
 		$this->moduleEngine->dispatch('Head', array(&$html, $resno)); // "Head" Hook Point

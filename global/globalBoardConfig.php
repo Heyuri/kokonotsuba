@@ -12,6 +12,13 @@ $config['ATTACHMENT_UPLOAD_LIMIT'] = 1;
 // whether to redirect to the reply by default
 $config['ALWAYS_NOKO'] = false;
 
+// Show sage checkbox in post form
+$config['USE_SAGE_CHECKBOX'] = true;
+// Show noko checkbox in post form
+$config['USE_NOKO_CHECKBOX'] = true;
+// Show dump checkbox in post form
+$config['USE_DUMP_CHECKBOX'] = true;
+
 // Require new threads to have a file attached
 $config['THREAD_ATTACHMENT_REQUIRED'] = true;
 
