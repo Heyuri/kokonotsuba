@@ -8,6 +8,8 @@ use Kokonotsuba\module_classes\traits\listeners\CommentExtrasListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
 
+use function Puchiko\strings\sanitizeStr;
+
 class moduleMain extends abstractModuleMain {
 	use RegistBeforeCommitListenerTrait;
 	use CommentExtrasListenerTrait;
@@ -70,7 +72,7 @@ class moduleMain extends abstractModuleMain {
 
 		foreach ($this->emojis as $char => $name) {
 			$emojiFilter["/$char/u"] =
-				"<img class=\"emoji\" src=\"" . $this->staticUrl . "image/emoji/$name.gif\" title=\"$name\" alt=\"$char\">";
+				'<img class="emoji" src="' . sanitizeStr($this->staticUrl) . 'image/emoji/' . sanitizeStr($name) . '.gif" title="' . sanitizeStr($name) . '" alt="' . sanitizeStr($char) . '">';
 		}
 
 		return $emojiFilter;
