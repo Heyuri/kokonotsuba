@@ -891,7 +891,6 @@ caption h3 {
 	position: absolute;
 	z-index: 1000;
 	max-width: 90%;
-	overflow: auto;
 }
 
 .previewBox .post {
