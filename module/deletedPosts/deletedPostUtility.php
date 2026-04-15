@@ -91,7 +91,7 @@ class deletedPostUtility {
 		}
 
 		// is a reply of a deleted thread
-		$byProxy = $post->isByProxy() ?? 0;
+		$byProxy = $post->isByProxy();
 
 		// also don't display it if the post is only deleted by proxy
 		// replies of deleted threads aren't meant to be view or changed individually

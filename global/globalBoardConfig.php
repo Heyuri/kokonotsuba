@@ -129,6 +129,7 @@ $config['ModuleList'] = array(
 	'indexCommentTruncator' => true,
 	'emotes' => true,
 	'nameRandomizer' => false,
+	'youtubeEmbed' => true
 );
 
 /* Module-specific options */

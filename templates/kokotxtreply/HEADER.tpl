@@ -18,7 +18,6 @@
 	<script src="{$STATIC_URL}js/checkboxDeletion.js" defer></script>
 	<script src="{$STATIC_URL}js/postInit.js" defer></script>
 	<script src="{$STATIC_URL}js/posting.js" defer></script>
-	<script src="{$STATIC_URL}js/youtubeEmbed.js" defer></script>
 	<script src="{$STATIC_URL}js/inline.js" defer></script>
 	<script src="{$STATIC_URL}js/attachmentExpander.js" defer></script>
 	<script src="{$STATIC_URL}js/postDeletionLib.js" defer></script>
