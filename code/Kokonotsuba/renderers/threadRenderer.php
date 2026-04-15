@@ -159,7 +159,7 @@ class threadRenderer {
 			$shownReplies = count($threadPosts) - 1;
 			$warnHidePost .= '<div class="omittedposts">'._T('notice_viewing_last_posts', $shownReplies, $shownReplies === 1 ? _T('post_singular') : _T('post_multiple')).'</div>';
 		} elseif (!$isReply && $totalPages > 1) {
-			$warnHidePost .= '<div class="omittedposts">'._T('notice_viewing_page', $currentPage + 1, $totalPages).'</div>';
+			$warnHidePost .= '<div class="omittedposts">'._T('notice_viewing_page', $currentPage, max(1, $totalPages - 1)).'</div>';
 		}
 
 		// bind post op number to resto

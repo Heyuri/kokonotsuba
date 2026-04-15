@@ -239,13 +239,14 @@ class postRenderer {
 			$this->config['NOTICE_SAGE']
 		);
 
-		$totalThreadPages = $replyCount / $repliesPerPage;
+		$totalThreadPages = max(1, \Kokonotsuba\board\board::getPageForPostPosition($replyCount, $repliesPerPage) + 1);
+		$lastPage = $totalThreadPages - 1;
 
-		$quoteButton = $this->postElementGenerator->generateQuoteButton($threadResno, $data->getNumber(), $totalThreadPages, $crossLink);
-		$replyButton = $threadMode ? $this->postElementGenerator->generateReplyButton($crossLink, $threadResno, $totalThreadPages) : '';
+		$quoteButton = $this->postElementGenerator->generateQuoteButton($threadResno, $data->getNumber(), $lastPage, $crossLink);
+		$replyButton = $threadMode ? $this->postElementGenerator->generateReplyButton($crossLink, $threadResno, $lastPage) : '';
 		$recentRepliesButton = $threadMode ? $this->postElementGenerator->generateRecentRepliesButton($crossLink, $threadResno, $replyCount) : '';
 
-		$page = floor($data->getPostPosition() / $repliesPerPage);
+		$page = \Kokonotsuba\board\board::getPageForPostPosition($data->getPostPosition(), $repliesPerPage);
 		$postUrl = $this->board->getBoardThreadURL($threadResno, $data->getNumber(), false, $page, $crossLink);
 
 		$dataAttributes = 'data-post-email="' . sanitizeStr($data->getEmail()) . '" data-post-user-name="' . sanitizeStr($data->getName()) . '" data-post-number="' . $data->getNumber() . '" data-post-uid="' . sanitizeStr($data->getUid()) . '"';

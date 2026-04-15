@@ -125,8 +125,9 @@ class defaultRoute {
 			// then get replies per page config value
 			$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
 
-			// get the page of the post
-			$page = floor($newThread->getPostCount() / $repliesPerPage);
+			// get the page of the post based on its position within the thread
+			$postPosition = $post->getPostPosition();
+			$page = board::getPageForPostPosition($postPosition, $repliesPerPage);
 
 			// Otherwise, redirect to the correct thread page and scroll to post
 			$resnoNew = $this->threadRepository->resolveThreadNumberFromUID($newThreadUid); 
