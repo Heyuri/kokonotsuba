@@ -251,15 +251,6 @@ class board implements IBoard {
 		$this->boardRebuilder->rebuildBoardPages($amountOfPagesToRebuild);
 	}
 
-	/**
-	 * Calculate which page a post belongs to based on its position in the thread.
-	 * OP is position 0 and always on page 0. Replies (position >= 1) are paginated
-	 * separately, so position is offset by 1 before dividing.
-	 */
-	public static function getPageForPostPosition(int $postPosition, int $repliesPerPage): int {
-		return ($postPosition <= 0) ? 0 : (int)floor(($postPosition - 1) / $repliesPerPage);
-	}
-
 	public function getBoardThreadURL(
 		int $threadNumber, 
 		int $replyNumber = 0, 

@@ -19,6 +19,7 @@ use Kokonotsuba\thread\threadService;
 use function Kokonotsuba\libraries\html\drawBoardPager;
 use function Kokonotsuba\libraries\html\drawLiveBoardPager;
 use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\html\getPageForPostPosition;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
 use function Kokonotsuba\libraries\getOrCreateCsrfToken;
@@ -164,7 +165,7 @@ class boardRebuilder {
 
 		// calculate current page and total pages for thread pagination display
 		// totalPosts includes OP; last reply position = totalPosts - 1
-		$totalThreadPages = max(1, board::getPageForPostPosition($totalPosts - 1, $repliesPerPage) + 1);
+		$totalThreadPages = max(1, getPageForPostPosition($totalPosts - 1, $repliesPerPage) + 1);
 		$currentPage = !is_null($amountOfRepliesToRender)
 			? max(0, $totalThreadPages - 1)
 			: ($page ?? 0);

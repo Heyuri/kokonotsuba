@@ -14,6 +14,7 @@ use Kokonotsuba\post\postRepository;
 use Kokonotsuba\thread\threadRepository;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\html\getPageForPostPosition;
 use function Puchiko\request\redirect;
 
 class defaultRoute {
@@ -127,7 +128,7 @@ class defaultRoute {
 
 			// get the page of the post based on its position within the thread
 			$postPosition = $post->getPostPosition();
-			$page = board::getPageForPostPosition($postPosition, $repliesPerPage);
+			$page = getPageForPostPosition($postPosition, $repliesPerPage);
 
 			// Otherwise, redirect to the correct thread page and scroll to post
 			$resnoNew = $this->threadRepository->resolveThreadNumberFromUID($newThreadUid); 
