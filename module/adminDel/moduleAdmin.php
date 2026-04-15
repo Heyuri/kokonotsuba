@@ -8,7 +8,6 @@ use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
-use Kokonotsuba\post\deletion\DeletedPost;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
@@ -335,24 +334,25 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function getDeletionUrlForPost(int $postUid): string {
-		// fetch the deleted post by post uid
-		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByPostUid($postUid);
+		// fetch only the deleted post ID by post uid
+		$deletedPostId = $this->moduleContext->deletedPostsService->getDeletedPostIdByPostUid($postUid);
 
 		// now get the deleted post url and return
-		return $this->getDeletionViewUrl($deletedPost);
+		return $this->getDeletionViewUrl($deletedPostId);
 	}
 
 	private function getDeletionUrlForAttachment(int $fileId): string {
-		// fetch the deleted post by file id
-		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
+		// fetch only the deleted post ID by file id
+		$deletedPostId = $this->moduleContext->deletedPostsService->getDeletedPostIdByFileId($fileId);
 
 		// now get the deleted post url and return
-		return $this->getDeletionViewUrl($deletedPost);
+		return $this->getDeletionViewUrl($deletedPostId);
 	}
 
-	private function getDeletionViewUrl(DeletedPost $deletedPost): string {
-		// get the deleted post id for the url
-		$deletedPostId = $deletedPost->getDeletedPostId();
+	private function getDeletionViewUrl(?int $deletedPostId): string {
+		if ($deletedPostId === null) {
+			return '';
+		}
 
 		// base url
 		$baseUrl = $this->moduleContext->request->getCurrentUrlNoQuery();

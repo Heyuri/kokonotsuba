@@ -821,6 +821,30 @@ class deletedPostsService {
 	}
 
 	/**
+	 * Fetch the most-recent deleted_post ID for the given post UID.
+	 *
+	 * @param int $postUid Post UID.
+	 * @return int|null Deleted post ID, or null if not found.
+	 */
+	public function getDeletedPostIdByPostUid(int $postUid): ?int {
+		$id = $this->deletedPostsRepository->getDeletedPostIdByPostUid($postUid);
+
+		return $id !== false ? $id : null;
+	}
+
+	/**
+	 * Fetch the most-recent deleted_post ID for the given file ID.
+	 *
+	 * @param int $fileId File row ID.
+	 * @return int|null Deleted post ID, or null if not found.
+	 */
+	public function getDeletedPostIdByFileId(int $fileId): ?int {
+		$id = $this->deletedPostsRepository->getDeletedPostIdByFileId($fileId);
+
+		return $id !== false ? $id : null;
+	}
+
+	/**
 	 * Fetch the most-recent deletion row for the given post UID.
 	 *
 	 * @param int $postUid Post UID.
