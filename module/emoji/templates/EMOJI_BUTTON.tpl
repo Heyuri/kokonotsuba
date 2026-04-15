@@ -1,0 +1,1 @@
+<button type="button" class="buttonEmoji emojiButton{$ROW_END}" title="{$TITLE}" value="{$CHAR}" style="width:24px;height:24px"><img class="emojiImage" src="{$BASE_URL}{$NAME}.gif" loading="lazy" title="{$TITLE}" alt="{$TITLE}" width="24" height="24"></button>
