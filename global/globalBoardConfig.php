@@ -94,6 +94,7 @@ $config['ModuleList'] = array(
 	'cssHax' => true,
 	'notes' => true,
 	'edit' => true,
+	'excimerViewer' => true,
 	/* thread modes */
 	'autoSage' => true,
 	'lockThread' => true,

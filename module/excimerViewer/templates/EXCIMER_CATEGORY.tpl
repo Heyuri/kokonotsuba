@@ -1,4 +1,4 @@
-<details open>
+<details open class="detailsbox">
 	<summary><strong>{$CATEGORY_NAME}</strong> ({$PROFILE_COUNT} profiles)</summary>
 	<table class="postlists">
 		<thead>
