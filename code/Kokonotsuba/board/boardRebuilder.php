@@ -19,6 +19,7 @@ use Kokonotsuba\thread\threadService;
 use function Kokonotsuba\libraries\html\drawBoardPager;
 use function Kokonotsuba\libraries\html\drawLiveBoardPager;
 use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\html\getPageForPostPosition;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
 use function Kokonotsuba\libraries\getOrCreateCsrfToken;
@@ -163,7 +164,8 @@ class boardRebuilder {
 		$this->moduleEngine->dispatch('ViewedThread', [&$pte_vals, &$threadData]);
 
 		// calculate current page and total pages for thread pagination display
-		$totalThreadPages = (int) ceil($totalPosts / $repliesPerPage);
+		// totalPosts includes OP; last reply position = totalPosts - 1
+		$totalThreadPages = max(1, getPageForPostPosition($totalPosts - 1, $repliesPerPage) + 1);
 		$currentPage = !is_null($amountOfRepliesToRender)
 			? max(0, $totalThreadPages - 1)
 			: ($page ?? 0);
@@ -190,13 +192,16 @@ class boardRebuilder {
 			// get 'top pager for threads' config value
 			$enableTopPager = $this->board->getConfigValue('TOP_THREAD_PAGER', false);
 
+			// reply count excludes OP (which is always shown separately)
+			$replyCount = max(0, $totalPosts - 1);
+
 			// if the top pager for threads is enabled, render it
 			if($enableTopPager) {
-				$pte_vals['{$TOP_PAGENAV}'] = drawPager($repliesPerPage, $totalPosts, $threadUrl, $this->request);
+				$pte_vals['{$TOP_PAGENAV}'] = drawPager($repliesPerPage, $replyCount, $threadUrl, $this->request);
 			}
 
 			// always draw bottom pager
-			$pte_vals['{$BOTTOM_PAGENAV}'] = drawPager($repliesPerPage, $totalPosts, $threadUrl, $this->request);
+			$pte_vals['{$BOTTOM_PAGENAV}'] = drawPager($repliesPerPage, $replyCount, $threadUrl, $this->request);
 		}
 
 		$opPost = $threadData->getOpeningPost();

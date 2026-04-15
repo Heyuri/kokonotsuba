@@ -14,6 +14,15 @@ use function Puchiko\strings\containsHtmlTags;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\strings\sanitizeStr;
 
+/**
+ * Calculate which page a post belongs to based on its position in the thread.
+ * OP is position 0 and always on page 0. Replies (position >= 1) are paginated
+ * separately, so position is offset by 1 before dividing.
+ */
+function getPageForPostPosition(int $postPosition, int $repliesPerPage): int {
+	return ($postPosition <= 0) ? 0 : (int)floor(($postPosition - 1) / $repliesPerPage);
+}
+
 /* Generate html for the post name dynamically */
 function generatePostNameHtml(
 	moduleEngine $moduleEngine, 
@@ -190,7 +199,7 @@ function generateQuoteLinkHtml(
 				$target = $crossBoardTargets[$boardIdentifier][$postNumber];
 				$postPosition = (int)($target['position'] ?? 0);
 				$targetRepliesPerPage = $target['board']->getConfigValue('REPLIES_PER_PAGE', 200);
-				$page = ($postPosition < 0) ? 0 : (int)floor($postPosition / $targetRepliesPerPage);
+				$page = getPageForPostPosition($postPosition, $targetRepliesPerPage);
 
 				$url = htmlspecialchars(
 					$target['board']->getBoardThreadURL($target['threadNo'], $postNumber, false, $page)
@@ -207,7 +216,7 @@ function generateQuoteLinkHtml(
 				$targetThreadNumber = $targetPostToThreadNumber[$postNumber];
 				$isCrossThread = $targetThreadNumber !== $threadNumber;
 				$postPosition = $targetPostToPosition[$postNumber] ?? 0;
-				$page = ($postPosition < 0) ? 0 : (int)floor($postPosition / $repliesPerPage);
+				$page = getPageForPostPosition($postPosition, $repliesPerPage);
 
 				$url = htmlspecialchars(
 					$board->getBoardThreadURL($targetThreadNumber, $postNumber, false, $page)
@@ -254,12 +263,7 @@ function generateQuoteLinkHtml(
 			// If not provided, default to 0 (OP).
 			$postPosition = $targetPostToPosition[$postNumber] ?? 0;
 
-			// Calculate page number:
-			// - pages are 0-based
-			// - page = floor(post_position / repliesPerPage)
-			$page = ($postPosition < 0)
-				? 0
-				: (int)floor($postPosition / $repliesPerPage);
+			$page = getPageForPostPosition($postPosition, $repliesPerPage);
 
 			// Build the final quoted post URL including the "&page=X" parameter.
 			$url = htmlspecialchars(
