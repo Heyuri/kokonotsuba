@@ -695,12 +695,10 @@ class deletedPostsService {
 			// open_flag must be non-empty AND by_proxy must be 0 or null
 			// (meaning it wasn't deleted by a proxy process)
 			$isAlreadyDeleted = !empty($post->getOpenFlag()) 
-								&& ($post->isByProxy() === 0 || is_null($post->isByProxy()));
+								&& ($post->isByProxy() === false || is_null($post->isByProxy()));
 
 			// A reply is any post that is not an OP.
-			// OP can be represented as 1, "1", or true depending on source,
-			// so treat anything that is 0, "0", or null as a non-OP.
-			$isNotOp = $isOp === 0 || $isOp === '0' || $isOp === null; 
+			$isNotOp = !$isOp;
 
 			// Only include replies that are not already deleted
 			if ($isNotOp && !$isAlreadyDeleted) {

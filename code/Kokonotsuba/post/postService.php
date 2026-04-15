@@ -6,11 +6,10 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\database\TransactionalTrait;
 use Kokonotsuba\post\deletion\deletedPostsService;
+use Kokonotsuba\post\deletion\postDeletionService;
 use Kokonotsuba\request\request;
-use Kokonotsuba\thread\Thread;
 use Kokonotsuba\thread\threadRepository;
 
-use function Kokonotsuba\libraries\getBoardsByUIDs;
 use function Puchiko\strings\generateUid;
 
 /** Service for creating, retrieving, and soft-deleting posts within threads. */
@@ -22,7 +21,8 @@ class postService {
 		private readonly transactionManager $transactionManager, 
 		private readonly threadRepository $threadRepository,
 		private readonly deletedPostsService $deletedPostsService,
-		private readonly request $request) {}
+		private readonly request $request,
+		private readonly postDeletionService $postDeletionService) {}
 
 	/**
 	 * Fetch multiple posts by their UIDs, with merged attachment rows.
@@ -108,123 +108,8 @@ class postService {
 	 * @param int|null  $accountId Account ID performing the deletion, or 0 for anonymous.
 	 * @return void
 	 */
-	public function removePosts($posts, ?int $accountId = 0): void {
-		if (count($posts) == 0) return;
-		if (!is_array($posts)) {
-			$posts = [$posts];
-		}
-
-		$posts = array_filter($posts, function($value) {
-			return filter_var($value, FILTER_VALIDATE_INT) !== false;
-		});
-
-		$this->inTransaction(function () use ($posts, $accountId) {
-			$postsData = $this->postRepository->getPostsByUids($posts);
-
-			// return early if posts data is null for whatever reason
-			if(!$postsData) {
-				return;
-			}
-
-			// Extract unique boardUIDs from the result
-			$boardUIDs = array_unique(array_map(fn($p) => $p->getBoardUID(), $postsData));
-
-			// Fetch boards using the unique UIDs
-			$boards = getBoardsByUIDs($boardUIDs);
-
-			// Create a board map: boardUID => board
-			$boardMap = [];
-			foreach ($boards as $board) {
-				$boardMap[$board->getBoardUID()] = $board;
-			}
-
-			// Build deletionRows array with board mapping
-			$deletionRows = [];
-			foreach ($postsData as $row) {
-				// don't bother including it if the post is already deleted
-				if($row->getOpenFlag() === 1) {
-					continue;
-				}
-
-				// add deletion row
-				$deletionRows[] = [
-					'thread_uid' => $row->getThreadUid(),
-					'board' => $boardMap[$row->getBoardUID()],
-				];
-			}
-
-			$threadUIDs = $this->postRepository->getThreadUIDsByPostUIDs($posts);
-
-			$this->deletedPostsService->flagPostsAsDeleted($postsData, $accountId);
-
-			if (!is_array($threadUIDs)) $threadUIDs = [$threadUIDs];
-
-			foreach ($deletionRows as $deletionRow) {
-				$threadUID = $deletionRow['thread_uid'];
-				$board = $deletionRow['board'];
-
-				// get posts from the associated thread uid
-				$replies = $this->threadRepository->getAllPostsFromThread($threadUID, false);
-
-				// skip post early if there are no posts/replies
-				if(is_null($replies) || $replies === false) {
-					continue;
-				}
-
-				// remove sage replies so the bump restoration only takes into account posts that caused a bump
-				$replies = $this->removeSagedReplies($replies);
-
-				$newReplyData = end($replies);
-
-				if (!$newReplyData) {
-					continue;
-				} else {
-					$opPostCheck = $this->postRepository->getOpeningPostFromThread($threadUID);
-					$threadData = $this->threadRepository->getThreadByUid($threadUID);
-
-					$suppressBump = false;
-					if ($opPostCheck && $threadData) {
-						$status = $opPostCheck->getFlags();
-						$threadCreatedTime = strtotime($threadData->getCreatedTime());
-						
-						$maxAgeLimit = $board->getConfigValue('MAX_AGE_TIME');
-
-						$threadExpired = ($maxAgeLimit && ($this->request->getRequestTime() - $threadCreatedTime > ($maxAgeLimit * 60 * 60)));
-
-						if ($status->value('as') || $threadExpired) {
-							$suppressBump = true;
-						}
-					}
-
-					if ($suppressBump) {
-						$this->threadRepository->updateThreadReplyTime($threadUID, $newReplyData->getRoot());
-					} else {
-						$this->threadRepository->updateThreadBumpAndReplyTime($threadUID, $newReplyData->getRoot());
-					}
-				}
-			}
-
-		});
-	}
-
-	private function removeSagedReplies(array $threadReplies): array {
-		$replies = [];
-		foreach($threadReplies as $reply) {
-			// get post email
-			$email = $reply->getEmail();
-
-			// if the email contains sage, then its a sage post
-			$isSage = str_contains($email, 'sage');
-
-			// if its a sage, continue
-			if($isSage) {
-				continue;
-			}
-
-			$replies[] = $reply;
-		}
-
-		return $replies;
+	public function removePosts(array|int $posts, ?int $accountId = 0): void {
+		$this->postDeletionService->removePosts($posts, $accountId);
 	}
 
 	/**

@@ -430,11 +430,12 @@ class postRepository extends baseRepository {
 	 * Fetch the OP (opening post) for the given thread, with merged attachment rows.
 	 *
 	 * @param string $threadUid Thread UID.
+	 * @param bool   $includeDeleted Whether to include soft-deleted posts.
 	 * @return bool|Post Merged post data array, or false if not found.
 	 */
-	public function getOpeningPostFromThread(string $threadUid): bool|Post {
+	public function getOpeningPostFromThread(string $threadUid, bool $includeDeleted = false): bool|Post {
 		// get base post query
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted);
 
 		// append WHERE clause
 		$query .= " WHERE p.post_uid = (SELECT post_op_post_uid FROM {$this->threadTable} WHERE thread_uid = :thread_uid)";
@@ -446,7 +447,7 @@ class postRepository extends baseRepository {
 		$post = $this->queryAll($query, $params);
 	
 		// merge data
-		$post = mergeMultiplePostRows($post)[0];
+		$post = mergeMultiplePostRows($post)[0] ?? false;
 
 		return $post;
 	}

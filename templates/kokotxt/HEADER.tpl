@@ -17,7 +17,6 @@
 	<script src="{$STATIC_URL}js/checkboxDeletion.js" defer></script>
 	<script src="{$STATIC_URL}js/postInit.js" defer></script>
 	<script src="{$STATIC_URL}js/posting.js" defer></script>
-	<script src="{$STATIC_URL}js/youtubeEmbed.js" defer></script>
 	<script src="{$STATIC_URL}js/postDeletionLib.js" defer></script>
 	<script src="{$STATIC_URL}js/formExtras.js" defer></script>
 	<!--&DROPZONE_TEMPLATE/-->

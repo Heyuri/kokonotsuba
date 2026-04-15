@@ -33,6 +33,9 @@ class excimerProfiler {
 		$this->profiler->setPeriod(0.001); // 1ms sampling interval
 		$this->profiler->setEventType(EXCIMER_REAL);
 		$this->profiler->start();
+
+		// Register shutdown function so the profile is saved even if exit/die is called
+		register_shutdown_function([$this, 'stop']);
 	}
 
 	public function stop(): void {

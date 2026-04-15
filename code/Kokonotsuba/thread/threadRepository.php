@@ -719,6 +719,30 @@ class threadRepository extends baseRepository {
 	}
 
 	/**
+	 * Fetch all non-deleted posts from a thread, even if the thread's OP is deleted.
+	 * This allows retrieving visible replies from a deleted thread.
+	 *
+	 * @param string $threadUID Thread UID.
+	 * @return Post[]|null Array of Post objects, or null if none found.
+	 */
+	public function getVisiblePostsFromDeletedThread(string $threadUID): ?array {
+		// viewDeleted=false filters out deleted posts in the subquery
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, false);
+
+		// Filter by thread — intentionally no excludeDeletedThreadsCondition
+		// so the query works even when the OP is deleted
+		$query .= " WHERE p.thread_uid = :thread_uid";
+		$query .= " ORDER BY p.post_uid ASC";
+
+		$params = [':thread_uid' => $threadUID];
+
+		$posts = $this->queryAll($query, $params) ?? [];
+		$posts = mergeMultiplePostRows($posts);
+
+		return $posts ?: null;
+	}
+
+	/**
 	 * Fetch replies from a thread with post number greater than a given value.
 	 * Excludes the OP. Used for incremental reply loading.
 	 *
