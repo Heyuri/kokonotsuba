@@ -326,10 +326,10 @@ class moduleAdmin extends abstractModuleAdmin {
 			$openingPost = $thread->getOpeningPost();
 
 			// lock thread
-			$this->toggleThreadStatus($openingPost, 'stop');
+			$flags = $this->toggleThreadStatus($openingPost, 'stop');
 
 			// make unmoveable
-			$this->toggleThreadStatus($openingPost, 'ghost');
+			$this->toggleThreadStatus($openingPost, 'ghost', $flags);
 
 			$threadRedirectUrl = $destinationBoard->getBoardThreadURL($newThreadData->getOpNumber()); 
 		} else {
@@ -454,9 +454,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		];
 	}
 
-	private function toggleThreadStatus(Post $openingPost, string $flag): FlagHelper {
-		// Create helper with current status
-		$flags = $openingPost->getFlags();
+	private function toggleThreadStatus(Post $openingPost, string $flag, ?FlagHelper $flags = null): FlagHelper {
+		// Use provided flags or create helper with current status
+		if ($flags === null) {
+			$flags = $openingPost->getFlags();
+		}
 
 		// Toggle the specified flag
 		$flags->toggle($flag);
