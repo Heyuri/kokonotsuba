@@ -217,11 +217,37 @@
 		addViewDeletedMenu();
 	}
 
-	// Admin delete attachment handler
+	// Register attachment widget handler for file deletion
+	if (window.attachmentWidget) {
+		window.attachmentWidget.registerActionHandler('deleteFile', function (ctx) {
+			var menuItem = ctx && ctx.menuItem;
+			if (!menuItem || !menuItem.href) return;
+
+			var postEl = ctx.post;
+			var attachmentEl = ctx.container || (ctx.bar && ctx.bar.closest('.attachmentContainer'));
+			if (!attachmentEl || !postEl) return;
+
+			var state = prepareAttachmentDeletion(attachmentEl, postEl, [
+				'.indicator-deleteFile',
+				'.indicator-imgops'
+			]);
+
+			sendModuleAction(menuItem.href, {
+				revertUI: state.revertUI,
+				successMessage: 'Attachment deleted!',
+				errorMessage: 'Failed to delete the attachment.',
+				onSuccess: function (data) {
+					if (data && data.deleted_link) {
+						state.addViewFileButton(data.deleted_link);
+					}
+				}
+			});
+		});
+	}
+
+	// Legacy admin delete attachment handler (fallback when attachmentWidget is not present)
 	document.addEventListener('click', function (e) {
-		// Support both anchor-based and form-based buttons
-		const dfElement = e.target.closest('.adminDeleteFileFunction a[title="Delete attachment"]')
-			|| e.target.closest('.adminDeleteFileFunction button[title="Delete attachment"]');
+		var dfElement = e.target.closest('.adminDeleteFileFunction [data-action="deleteFile"]');
 		if (!dfElement) return;
 		handleFileDeletion(e, dfElement);
 	});
