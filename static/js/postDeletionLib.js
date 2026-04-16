@@ -81,6 +81,11 @@ function prepareAttachmentDeletion(attachmentEl, postEl, buttonSelectors) {
 				warningResult.indicator.classList.add('indicatorHidden');
 			}
 		},
+		addViewFileButton: function (deletedLink) {
+			if (deletedLink) {
+				attachmentEl.dataset.deletedLink = deletedLink;
+			}
+		},
 	};
 }
 
