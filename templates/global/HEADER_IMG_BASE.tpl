@@ -13,3 +13,4 @@
 	<link rel="stylesheet" href="{$STATIC_URL}css/kokoimg/base.css?v=139">
 	{$BOARD_STYLESHEETS}
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">
+	{$JS_DEFAULT_SETTINGS}

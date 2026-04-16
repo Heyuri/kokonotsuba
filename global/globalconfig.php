@@ -99,6 +99,26 @@ $config['staffCapcodes'] = [
     ],
 ];
 
+// Default values for JS user settings checkboxes.
+// These are sent to the frontend as JSON and used when the user has not yet set a preference in localStorage.
+$config['JS_DEFAULT_SETTINGS'] = [
+    'neomenu' => false,
+    'persistnav' => false,
+    'persistpager' => false,
+    'centerthreads' => false,
+    'tripkeys' => false,
+    'markopqu' => true,
+    'imgexpand' => true,
+    'imghover' => false,
+    'update' => true,
+    'useqr' => true,
+    'alwaysqr' => false,
+    'quoteinline' => false,
+    'quotetooltip' => true,
+    'galmode' => false,
+    'addbacklinks' => false,
+];
+
 // kokoimg styles
 $config['styles']['kokoimg'] = [
     'Sakomoto' => 'sakomoto.css',

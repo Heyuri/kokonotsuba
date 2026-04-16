@@ -21,11 +21,9 @@ const kkqr = { name: "KK Quick Reply",
 		}
 
 		kkqr.qrs.disabled = true;
-		if (!localStorage.getItem("useqr"))
-			localStorage.setItem("useqr", true);
 		if (!$id("postform")) return true;
-		if (localStorage.getItem("useqr")=="true") {
-			if (localStorage.getItem("alwaysqr")=="true" && !kkqr.closedOnce) {
+		if (_kkSetting("useqr")) {
+			if (_kkSetting("alwaysqr") && !kkqr.closedOnce) {
 				kkqr.openqr();
 			}
 			var qu = $class("qu");
@@ -42,7 +40,7 @@ const kkqr = { name: "KK Quick Reply",
 
 		// Open Quick Reply only when arriving with a q-link (e.g. #q12345)
 		if (
-			localStorage.getItem("useqr") == "true"
+			_kkSetting("useqr")
 			&& /^#q\d+$/.test(location.hash)
 		)
 			kkqr.openqr();
@@ -88,7 +86,7 @@ const kkqr = { name: "KK Quick Reply",
 		if (!$id("postform")) return true;
 		kkqr.closeqr();
 		kkqr.removeFixedButton();
-		if (localStorage.getItem("useqr")=="true") {
+		if (_kkSetting("useqr")) {
 			var qu = $class("qu");
 			for (var i=0; i<qu.length; i++) {
 				qu[i].removeEventListener("click", kkqr._evqr);
@@ -101,8 +99,8 @@ const kkqr = { name: "KK Quick Reply",
 	closedOnce: false,
 	/* Settings */
 	sett: function (tab, div) { if (tab!="general") return;
-		div.innerHTML+= '<label><input id="useqr_cb" type="checkbox" onchange="localStorage.setItem(\'useqr\',this.checked);if(!this.checked)setTimeout(()=>kkqr.closeqr(), 0);"'+(localStorage.getItem("useqr")=="true"?'checked="checked"':'')+'>Use quick reply</label>';
-		div.innerHTML+= '<label><input type="checkbox" onchange="localStorage.setItem(\'alwaysqr\',this.checked);if(this.checked){localStorage.setItem(\'useqr\',true);document.getElementById(\'useqr_cb\').checked=true;if(!kkqr.win)kkqr.openqr();}"'+(localStorage.getItem("alwaysqr")=="true"?'checked="checked"':'')+'>Persistent quick reply</label>';
+		div.innerHTML+= '<label><input id="useqr_cb" type="checkbox" onchange="localStorage.setItem(\'useqr\',this.checked);if(!this.checked)setTimeout(()=>kkqr.closeqr(), 0);"'+(_kkSetting("useqr")?'checked="checked"':'')+'>Use quick reply</label>';
+		div.innerHTML+= '<label><input type="checkbox" onchange="localStorage.setItem(\'alwaysqr\',this.checked);if(this.checked){localStorage.setItem(\'useqr\',true);document.getElementById(\'useqr_cb\').checked=true;if(!kkqr.win)kkqr.openqr();}"'+(_kkSetting("alwaysqr")?'checked="checked"':'')+'>Persistent quick reply</label>';
 	},
 	/* Function */
 	_evqr: function (event) {

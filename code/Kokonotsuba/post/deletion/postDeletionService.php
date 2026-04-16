@@ -105,7 +105,7 @@ class postDeletionService {
 
 			$board = $deletionRow['board'];
 
-			$replies = $this->threadRepository->getAllPostsFromThread($threadUID, true);
+			$replies = $this->threadRepository->getAllPostsFromThread($threadUID);
 			if (is_null($replies) || $replies === false) continue;
 
 			$replies = $this->removeSagedReplies($replies);

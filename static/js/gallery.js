@@ -58,7 +58,7 @@ const kkgal = {
 	},
 	sett: function(tab, div) {
 		if (tab!="general") return;
-		div.innerHTML+= `<label><input type="checkbox" onchange="localStorage.setItem('galmode',this.checked);kkgal.reset();kkgal.startup();"`+(localStorage.getItem("galmode")=="true"?' checked="checked"':'')+`>Gallery mode</label>`;
+		div.innerHTML+= `<label><input type="checkbox" onchange="localStorage.setItem('galmode',this.checked);kkgal.reset();kkgal.startup();"`+(_kkSetting("galmode")?' checked="checked"':'')+`>Gallery mode</label>`;
 	},
 	/* - */
 	gframe:	null,

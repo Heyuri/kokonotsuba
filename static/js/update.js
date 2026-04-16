@@ -6,10 +6,7 @@ const kkupdate = { name: "KK Thread Updating",
 	total: 0,
 	otitle: document.title,
 	startup: function () {
-		if (!localStorage.getItem("update")) {
-			localStorage.setItem("update", "true");
-		}
-		if (localStorage.getItem("update") != "true") {
+		if (!_kkSetting("update")) {
 			return true;
 		}
 		if (!document.postform) {return true;}
@@ -112,7 +109,7 @@ const kkupdate = { name: "KK Thread Updating",
 	},
 	sett: function (tab, div) { if (tab!="general") return;
 		div.innerHTML+= `
-			<label><input type="checkbox" onchange="localStorage.setItem('update',this.checked);kkupdate.reset();kkupdate.startup();"`+(localStorage.getItem("update")=="true"?'checked="checked"':'')+`>Thread updater</label>
+			<label><input type="checkbox" onchange="localStorage.setItem('update',this.checked);kkupdate.reset();kkupdate.startup();"`+(_kkSetting("update")?'checked="checked"':'')+`>Thread updater</label>
 			`;
 	}
 };

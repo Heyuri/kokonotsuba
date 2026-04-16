@@ -19,15 +19,11 @@
 	window.settingsHooks.push(function(tab, div) { 
 		if (tab!="general") return;
 		div.innerHTML+= `
-			<label><input type="checkbox" onchange="localStorage.setItem('imgexpand',this.checked);attachmentExpander.resetAttachmentExpansion();attachmentExpander.startUpimageExpanding();"`+(localStorage.getItem("imgexpand")=="true"?' checked="checked"':'')+`>Inline image expansion</label>
-			<label><input type="checkbox" onchange="localStorage.setItem('imghover',this.checked);document.getElementById('hoverimg').src='';"`+(localStorage.getItem("imghover")=="true"?' checked="checked"':'')+`>Image hover</label>`;
+			<label><input type="checkbox" onchange="localStorage.setItem('imgexpand',this.checked);attachmentExpander.resetAttachmentExpansion();attachmentExpander.startUpimageExpanding();"`+(_kkSetting("imgexpand")?' checked="checked"':'')+`>Inline image expansion</label>
+			<label><input type="checkbox" onchange="localStorage.setItem('imghover',this.checked);document.getElementById('hoverimg').src='';"`+(_kkSetting("imghover")?' checked="checked"':'')+`>Image hover</label>`;
 	});
 
 	attachmentExpander.startUpimageExpanding = function () {
-		// declare its localstorage value if its non-existant
-		if (!localStorage.getItem("imgexpand")) {
-			localStorage.setItem("imgexpand", "true");
-		}
 
 		// fetch all post images
 		let postAttachmentAnchors = document.getElementsByClassName("attachmentAnchor");
@@ -106,7 +102,7 @@
 
 	attachmentExpander.hoverMouseOn = function (anchor) {
 		// exit if hover previews are disabled in user settings
-		if (localStorage.getItem("imghover") != "true") return;
+		if (!_kkSetting("imghover")) return;
 
 		// fetch the hover image
 		let hoverImage = document.getElementById("hoverimg");
@@ -160,9 +156,9 @@
 
 		if (!post) return;
 		let no = post.id.substr(1);
-		if (localStorage.getItem("imgexpand")!="true") return;
+		if (!_kkSetting("imgexpand")) return;
 
-		if (localStorage.getItem("galmode")=="true") {
+		if (_kkSetting("galmode")) {
 			kkgal.expand(no);
 			event.preventDefault();
 			return;

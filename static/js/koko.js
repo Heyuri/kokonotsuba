@@ -263,6 +263,13 @@ class kkwmWindow {
 };
 
 /* Koko JS */
+const _kkDefaults = window.KOKO_DEFAULT_SETTINGS || {};
+const _kkSetting = function (key) {
+	var stored = localStorage.getItem(key);
+	if (stored !== null) return stored === "true";
+	return !!_kkDefaults[key];
+};
+
 const kkjs = {
 	modules: Array(),
 	posts: null,
@@ -276,33 +283,33 @@ const kkjs = {
 
 		// Initialization logic for centerthreads, persistpager, persistnav
 		const body = document.body;
-		if (localStorage.getItem("centerthreads") === "true") {
+		if (_kkSetting("centerthreads")) {
 			body.classList.add("centerthreads");
 		} else {
 			body.classList.remove("centerthreads");
 		}
 
-		if (localStorage.getItem("persistpager") === "true") {
+		if (_kkSetting("persistpager")) {
 			body.classList.add("persistpager");
 		} else {
 			body.classList.remove("persistpager");
 		}
 
-		if (localStorage.getItem("persistnav") === "true") {
+		if (_kkSetting("persistnav")) {
 			body.classList.add("persistnav");
 			// body.insertAdjacentHTML("afterbegin", '<br>');
 		} else {
 			body.classList.remove("persistnav");
 		}
 
-		if (localStorage.getItem("neomenu") === "true") {
+		if (_kkSetting("neomenu")) {
 			body.classList.add("neomenuEnabled");
 			// body.insertAdjacentHTML("afterbegin", '<br>');
 		} else {
 			body.classList.remove("neomenuEnabled");
 		}
 
-		if (localStorage.getItem("tripkeys")=="true") {
+		if (_kkSetting("tripkeys")) {
 			kkjs.applyTripKeys();
 		}
 
@@ -576,11 +583,11 @@ const kkjs = {
 		
 		if (tab == "general") {
 			div.innerHTML += `
-				<label><input type="checkbox" onchange="localStorage.setItem('neomenu',this.checked);document.body.classList.toggle('neomenuEnabled', this.checked);kkjs.toggleNeomenu(this.checked);" ${(localStorage.getItem("neomenu") === "true" ? 'checked="checked"' : '')}>Use neomenu</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('persistnav',this.checked);document.body.classList.toggle('persistnav', this.checked);" ${(localStorage.getItem("persistnav") === "true" ? 'checked="checked"' : '')}>Persistent navigation</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('persistpager',this.checked);document.body.classList.toggle('persistpager', this.checked);" ${(localStorage.getItem("persistpager") === "true" ? 'checked="checked"' : '')}>Persistent pager</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('centerthreads',this.checked);document.body.classList.toggle('centerthreads', this.checked);" ${(localStorage.getItem("centerthreads") === "true" ? 'checked="checked"' : '')}>Center threads</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('tripkeys', this.checked);" ${(localStorage.getItem("tripkeys") === "true" ? 'checked="checked"' : '')}>Futallaby style tripkeys</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('neomenu',this.checked);document.body.classList.toggle('neomenuEnabled', this.checked);kkjs.toggleNeomenu(this.checked);" ${(_kkSetting("neomenu") ? 'checked="checked"' : '')}>Use neomenu</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('persistnav',this.checked);document.body.classList.toggle('persistnav', this.checked);" ${(_kkSetting("persistnav") ? 'checked="checked"' : '')}>Persistent navigation</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('persistpager',this.checked);document.body.classList.toggle('persistpager', this.checked);" ${(_kkSetting("persistpager") ? 'checked="checked"' : '')}>Persistent pager</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('centerthreads',this.checked);document.body.classList.toggle('centerthreads', this.checked);" ${(_kkSetting("centerthreads") ? 'checked="checked"' : '')}>Center threads</label>
+				<label><input type="checkbox" onchange="localStorage.setItem('tripkeys', this.checked);" ${(_kkSetting("tripkeys") ? 'checked="checked"' : '')}>Futallaby style tripkeys</label>
 			`;
 		}
 		// loop through modules and add their settings
@@ -681,14 +688,14 @@ kkjs.modules.push(kkjs_copycode);
 
 window.addEventListener("DOMContentLoaded", kkjs.startup);
 
-// Function to set initial menu state based on localStorage
+// Function to set initial menu state based on localStorage or server defaults
 kkjs.setInitialMenuState = function() {
-  // Check if 'neomenu' exists in localStorage
-  let isNeoMenuEnabled = localStorage.getItem("neomenu");
+  // Check if 'neomenu' exists in localStorage or server defaults
+  let hasExplicitSetting = localStorage.getItem("neomenu") !== null || _kkDefaults.hasOwnProperty("neomenu");
 
   // Only proceed if 'neomenu' is explicitly set
-  if (isNeoMenuEnabled !== null) {
-    let neoMenuEnabled = isNeoMenuEnabled === "true";
+  if (hasExplicitSetting) {
+    let neoMenuEnabled = _kkSetting("neomenu");
     
     // Ensure the classic and neo menus exist before toggling
     const classicMenu = document.querySelector('.classicmenu');

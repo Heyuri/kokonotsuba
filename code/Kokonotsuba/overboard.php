@@ -22,11 +22,11 @@ use Kokonotsuba\thread\threadService;
 use Kokonotsuba\thread\ThreadData;
 
 use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\html\generateHeadHtml;
 use function Kokonotsuba\libraries\html\getThreadTitle;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getOrCreateCsrfToken;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
-use function Kokonotsuba\libraries\html\getBoardStylesheetsFromConfig;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\strings\sanitizeStr;
 
@@ -56,46 +56,24 @@ class overboard {
 	}
 	
 	public function drawOverboardHead(&$dat, $resno = 0) {
-		$html = '';
-		
-		$pte_vals = array('{$RESTO}'=>$resno?$resno:'', '{$IS_THREAD}'=>boolval($resno), '{$IS_STAFF}' => $this->adminMode);
-
-		$pte_vals['{$PAGE_TITLE}'] = strip_tags($this->config['OVERBOARD_TITLE']);
-
-		$pte_vals['{$MODULE_HEADER_HTML}'] = '';
-
-		// dispatch module header hook point for (staff) live frontend
-		if($this->adminMode) {
-			$this->moduleEngine->dispatch('ModuleAdminHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
-		}
-		// dispatch module header hook point for static html
-		$this->moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
-
-		// Generate stylesheet <link> tags from config styles.
-		$pte_vals['{$BOARD_STYLESHEETS}'] = getBoardStylesheetsFromConfig($this->config);
-
-		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
-		$this->moduleEngine->dispatch('Head', array(&$html, $resno)); // "Head" Hook Point
-
-		$pte_vals += array('{$HOME}' => '[<a href="'.$this->config['HOME'].'" target="_top">'._T('head_home').'</a>]',
-			'{$STATUS}' => '[<a href="'.$this->config['LIVE_INDEX_FILE'].'?mode=status">'._T('head_info').'</a>]',
-			'{$ADMIN}' => '[<a href="'.$this->config['LIVE_INDEX_FILE'].'?mode=admin">'._T('head_admin').'</a>]',
-			'{$REFRESH}' => '[<a href="'.$this->config['STATIC_INDEX_FILE'].'?">'._T('head_refresh').'</a>]',
-			'{$HOOKLINKS}' => '', '{$TITLE}' => $this->config['OVERBOARD_TITLE'], '{$TITLESUB}' => $this->config['OVERBOARD_SUBTITLE'],
-			 '{$LIVE_INDEX_FILE}' => $this->config['LIVE_INDEX_FILE'], '{$BANNER}' => '',
-			);
-		
-		$this->moduleEngine->dispatch('PlaceHolderIntercept', [&$pte_vals]);
-		$this->moduleEngine->dispatch('TopLinks', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
-		$this->moduleEngine->dispatch('PageTop', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
-		
-		$html .= $this->templateEngine->ParseBlock('BODYHEAD',$pte_vals);
-		
-		$pte_vals['{$MODULE_INFO_HOOK}'] = $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
-		
-		$html .= $this->templateEngine->ParseBlock('POST_AREA', $pte_vals);
-
-		$html .= $this->config['OVERBOARD_SUB_HEADER_HTML'];
+		$html = generateHeadHtml(
+			$this->config,
+			$this->templateEngine,
+			$this->moduleEngine,
+			strip_tags($this->config['OVERBOARD_TITLE']),
+			$resno,
+			$this->adminMode,
+			[
+				'extraPteVals' => [
+					'{$TITLE}' => $this->config['OVERBOARD_TITLE'],
+					'{$TITLESUB}' => $this->config['OVERBOARD_SUBTITLE'],
+					'{$LIVE_INDEX_FILE}' => $this->config['LIVE_INDEX_FILE'],
+				],
+				'dispatchPlaceHolderIntercept' => true,
+				'renderPostArea' => true,
+				'suffixHtml' => $this->config['OVERBOARD_SUB_HEADER_HTML'],
+			]
+		);
 
 		$dat .= $html;
 		return $html;

@@ -16,10 +16,7 @@ function insertInlineQuote(link, html) {
 const kkinline = {
 	name: "KK Quote Inlining",
 	startup: function() {
-		if (!localStorage.getItem("quoteinline")) {
-			localStorage.setItem("quoteinline", "false");
-		}
-		if (localStorage.getItem("quoteinline") !== "true") {
+		if (!_kkSetting("quoteinline")) {
 			return true;
 		}
 		document.querySelectorAll("a.quotelink").forEach(function(link) {
@@ -85,7 +82,7 @@ const kkinline = {
 	sett: function(tab, div) {
 		if (tab !== "general") return;
 		div.innerHTML += `
-			<label><input type="checkbox" onchange="localStorage.setItem('quoteinline',this.checked);kkinline.reset();kkinline.startup();" ${(localStorage.getItem("quoteinline")==="true"?'checked':'')} /> Quote inlining</label>
+			<label><input type="checkbox" onchange="localStorage.setItem('quoteinline',this.checked);kkinline.reset();kkinline.startup();" ${(_kkSetting("quoteinline")?'checked':'')} /> Quote inlining</label>
 		`;
 	}
 };
