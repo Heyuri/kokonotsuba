@@ -12,6 +12,8 @@ use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\post\postSearchService;
 use Kokonotsuba\board\board;
+use Kokonotsuba\template\templateEngine;
+
 use function Kokonotsuba\libraries\_T;
 use function Puchiko\strings\buildSmartQuery;
 use function Kokonotsuba\libraries\getFiltersFromRequest;
@@ -30,7 +32,7 @@ class moduleMain extends abstractModuleMain {
 	private readonly string $modulePageUrl;
 
 	// used for rendering posts
-	private \Kokonotsuba\template\templateEngine $moduleTemplateEngine;
+	private templateEngine $moduleTemplateEngine;
 
 	public function getName(): string {
 		return 'Kokonotsuba Search';
@@ -278,7 +280,7 @@ class moduleMain extends abstractModuleMain {
 				$board,
 				$this->moduleContext->config,
 				$moduleEngine,
-				$this->moduleContext->templateEngine,
+				$this->moduleTemplateEngine,
 				$quoteLinks,
 				$this->moduleContext->request
 			);
