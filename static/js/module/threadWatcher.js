@@ -1,10 +1,10 @@
-/* Thread Watcher module
+/* Thread watcher module
  * Watches threads for new replies using the postApi module.
  * Stores watched threads in localStorage.
  * Uses browser notifications for unread replies.
  */
 
-const kktwch = { name: "KK Thread Watcher",
+const kktwch = { name: "KK Thread watcher",
 	STORAGE_KEY: 'threadWatcher',
 	POLL_INTERVAL: 60000,
 	_pollTimer: null,
@@ -14,7 +14,7 @@ const kktwch = { name: "KK Thread Watcher",
 		// Hook the form func link
 		var links = $q('.postformOption');
 		for (var i = 0; i < links.length; i++) {
-			if (links[i].textContent.trim() === (document.querySelector('meta[name="threadWatcherLinkText"]')?.content || 'Thread Watcher')) {
+			if (links[i].textContent.trim() === (document.querySelector('meta[name="threadWatcherLinkText"]')?.content || 'Thread watcher')) {
 				links[i].addEventListener('click', function (e) {
 					e.preventDefault();
 					kktwch.toggleWindow();
@@ -23,28 +23,26 @@ const kktwch = { name: "KK Thread Watcher",
 			}
 		}
 
-		// Add "Watch thread" to post widget dropdown for OP posts
-		if (window.postWidget && typeof window.postWidget.registerMenuAugmenter === 'function') {
-			window.postWidget.registerMenuAugmenter(function (ctx) {
+		// Register action handler for PHP-injected "Watch thread" widget on OP posts
+		if (window.postWidget) {
+			// Dynamic label: show "Watch" or "Unwatch" based on current state
+			window.postWidget.registerLabelProvider('watchThread', function (ctx) {
 				var post = ctx.post;
-				if (!post || !post.classList.contains('op')) return [];
+				if (!post) return null;
+				var threadUid = post.getAttribute('data-thread-uid') ||
+				                (post.querySelector('[data-param-thread_uid]')?.getAttribute('data-param-thread_uid'));
+				if (!threadUid) return null;
 
-				var threadUid = post.getAttribute('data-thread-uid');
-				if (!threadUid) return [];
+				var watchLabel = document.querySelector('meta[name="threadWatcherWatchLabel"]')?.content || 'Watch thread';
+				var unwatchLabel = document.querySelector('meta[name="threadWatcherUnwatchLabel"]')?.content || 'Unwatch thread';
 
 				var watched = kktwch.getWatchedThreads();
-				var isWatched = watched.hasOwnProperty(threadUid);
-
-				return [{
-					href: 'javascript:void(0)',
-					action: 'watchThread',
-					label: isWatched ? 'Unwatch thread' : 'Watch thread',
-					params: { threadUid: threadUid }
-				}];
+				return watched.hasOwnProperty(threadUid) ? unwatchLabel : watchLabel;
 			});
 
+			// Handle the watch/unwatch action
 			window.postWidget.registerActionHandler('watchThread', function (ctx) {
-				var threadUid = ctx.params?.threadUid || ctx.el?.getAttribute('data-param-threadUid') || '';
+				var threadUid = ctx.params?.thread_uid || '';
 				if (!threadUid) return;
 
 				var watched = kktwch.getWatchedThreads();
@@ -60,6 +58,9 @@ const kktwch = { name: "KK Thread Watcher",
 		// Auto-watch on reply submission
 		kktwch.hookFormSubmit();
 
+		// Track posts scrolling into view on watched thread pages
+		kktwch.initViewportTracking();
+
 		// Request notification permission proactively
 		if ('Notification' in window && Notification.permission === 'default') {
 			// Will be requested on first watch action instead
@@ -73,6 +74,10 @@ const kktwch = { name: "KK Thread Watcher",
 
 	reset: function () {
 		kktwch.stopPolling();
+		if (kktwch._viewportObserver) {
+			kktwch._viewportObserver.disconnect();
+			kktwch._viewportObserver = null;
+		}
 		if (kktwch._win) {
 			kktwch._win.remove();
 			kktwch._win = null;
@@ -195,17 +200,38 @@ const kktwch = { name: "KK Thread Watcher",
 		return info;
 	},
 
-	/* --- Form Submit Hook (auto-watch on reply) --- */
+	/* --- Form Submit Hook (auto-watch on reply and new thread) --- */
 
 	hookFormSubmit: function () {
 		var form = $id('postform');
 		if (!form) return;
 
+		// On page load, check if we just created a new thread and should auto-watch it
+		if (sessionStorage.getItem('twAutoWatch')) {
+			sessionStorage.removeItem('twAutoWatch');
+			var opPost = document.querySelector('.post.op');
+			if (opPost) {
+				var threadUid = opPost.getAttribute('data-thread-uid');
+				if (threadUid) {
+					var watched = kktwch.getWatchedThreads();
+					if (!watched[threadUid]) {
+						kktwch.watchCurrentThread(threadUid);
+						kktwch.renderWatchList();
+					}
+				}
+			}
+		}
+
 		form.addEventListener('submit', function () {
 			var restoInput = form.querySelector('input[name="resto"]');
-			if (!restoInput || !restoInput.value) return; // not a reply
 
-			// Find the thread UID from the page
+			if (!restoInput || !restoInput.value) {
+				// New thread: set flag so we auto-watch after redirect
+				sessionStorage.setItem('twAutoWatch', '1');
+				return;
+			}
+
+			// Reply: watch immediately
 			var opPost = document.querySelector('.post.op');
 			if (!opPost) return;
 
@@ -217,6 +243,64 @@ const kktwch = { name: "KK Thread Watcher",
 				kktwch.watchCurrentThread(threadUid);
 			}
 		});
+	},
+
+	/* --- Viewport Read Tracking --- */
+
+	_viewportObserver: null,
+
+	initViewportTracking: function () {
+		// Only run on thread pages (where a resto input exists)
+		var restoInput = document.querySelector('input[name="resto"]');
+		if (!restoInput || !restoInput.value) return;
+
+		var opPost = document.querySelector('.post.op');
+		if (!opPost) return;
+
+		var threadUid = opPost.getAttribute('data-thread-uid');
+		if (!threadUid) return;
+
+		var watched = kktwch.getWatchedThreads();
+		if (!watched[threadUid]) return;
+
+		// Track which posts have been seen using an IntersectionObserver
+		var seenPosts = new Set();
+
+		kktwch._viewportObserver = new IntersectionObserver(function (entries) {
+			var changed = false;
+			entries.forEach(function (entry) {
+				if (!entry.isIntersecting) return;
+				var postEl = entry.target;
+				if (seenPosts.has(postEl)) return;
+				seenPosts.add(postEl);
+				changed = true;
+				// Stop observing this post
+				kktwch._viewportObserver.unobserve(postEl);
+			});
+
+			if (changed) {
+				// Update lastSeenCount to the number of posts seen so far
+				var w = kktwch.getWatchedThreads();
+				var e = w[threadUid];
+				if (!e) return;
+
+				var totalSeen = seenPosts.size;
+				if (totalSeen > e.lastSeenCount) {
+					e.lastSeenCount = totalSeen;
+					kktwch.saveWatchedThreads(w);
+					kktwch.renderWatchList();
+				}
+			}
+		}, { threshold: 0.5 });
+
+		// Observe all posts in the thread
+		var threadEl = opPost.closest('.thread') || opPost.parentElement;
+		if (threadEl) {
+			var posts = threadEl.querySelectorAll('.post');
+			posts.forEach(function (post) {
+				kktwch._viewportObserver.observe(post);
+			});
+		}
 	},
 
 	/* --- Polling --- */
@@ -323,7 +407,8 @@ const kktwch = { name: "KK Thread Watcher",
 	},
 
 	sendNotification: function (entry, unreadCount) {
-		if (!('Notification' in window) || Notification.permission !== 'granted') return;
+		// Check if notifications are enabled in settings
+		if (!_kkSetting('threadWatcherNotifs')) return;
 
 		// Don't notify if tab is focused and the watcher window is open
 		if (document.hasFocus() && kktwch._win) return;
@@ -331,23 +416,36 @@ const kktwch = { name: "KK Thread Watcher",
 		var title = entry.subject || 'Thread No.' + (entry.threadNo || entry.threadUid);
 		var body = unreadCount + ' new ' + (unreadCount === 1 ? 'reply' : 'replies');
 
-		try {
-			var notif = new Notification(title, {
-				body: body,
-				tag: 'tw_' + entry.threadUid, // Replace previous notif for same thread
-				icon: STATIC_URL + 'image/favicon.ico'
-			});
+		// Try browser notification first
+		if ('Notification' in window && Notification.permission === 'granted') {
+			try {
+				var notif = new Notification(title, {
+					body: body,
+					tag: 'tw_' + entry.threadUid,
+					icon: STATIC_URL + 'image/favicon.ico'
+				});
 
-			notif.onclick = function () {
-				window.focus();
-				if (entry.url) {
-					window.location.href = entry.url;
-				}
-				notif.close();
-			};
-		} catch (e) {
-			// Notification api may not be available
+				notif.onclick = function () {
+					window.focus();
+					if (entry.url) {
+						window.location.href = entry.url;
+					}
+					notif.close();
+				};
+				return;
+			} catch (e) {}
 		}
+
+		// Fallback: play ding sound
+		kktwch.playDing();
+	},
+
+	playDing: function () {
+		if (!kktwch._dingAudio) {
+			kktwch._dingAudio = new Audio(STATIC_URL + 'audio/ding.mp3');
+		}
+		kktwch._dingAudio.currentTime = 0;
+		kktwch._dingAudio.play().catch(function () {});
 	},
 
 	/* --- Window UI --- */
@@ -362,7 +460,7 @@ const kktwch = { name: "KK Thread Watcher",
 	},
 
 	openWindow: function () {
-		var title = 'Thread Watcher';
+		var title = 'Thread watcher';
 		var exist = $kkwm_name(title);
 		if (exist) {
 			exist.flash();
@@ -377,13 +475,12 @@ const kktwch = { name: "KK Thread Watcher",
 			kktwch._win = null;
 		};
 
-		// Build the content container
-		var content = document.createElement('div');
-		content.id = 'threadWatcherContent';
-		content.style.padding = '6px';
-		content.style.overflowY = 'auto';
-		content.style.maxHeight = '400px';
-		kktwch._win.div.appendChild(content);
+		// Clone the content wrapper template
+		var contentTpl = document.getElementById('threadWatcherContentTpl');
+		if (contentTpl) {
+			var clone = contentTpl.content.cloneNode(true);
+			kktwch._win.div.appendChild(clone);
+		}
 
 		kktwch.renderWatchList();
 	},
@@ -395,13 +492,31 @@ const kktwch = { name: "KK Thread Watcher",
 		var watched = kktwch.getWatchedThreads();
 		var keys = Object.keys(watched);
 
+		var list = content.querySelector('.threadWatcherList');
+
 		if (!keys.length) {
-			content.innerHTML = '<div style="padding:4px;color:#888;">No watched threads.</div>';
+			// Show empty state from template
+			list.hidden = true;
+			var existing = content.querySelector('.threadWatcherEmpty');
+			if (!existing) {
+				var emptyTpl = document.getElementById('threadWatcherEmptyTpl');
+				if (emptyTpl) {
+					content.appendChild(emptyTpl.content.cloneNode(true));
+				}
+			}
 			return;
 		}
 
-		var html = '<table style="width:100%;border-collapse:collapse;">';
-		html += '<tbody>';
+		// Remove empty state if present
+		var emptyEl = content.querySelector('.threadWatcherEmpty');
+		if (emptyEl) emptyEl.remove();
+		list.hidden = false;
+
+		// Clear existing rows
+		list.innerHTML = '';
+
+		var rowTpl = document.getElementById('threadWatcherRowTpl');
+		if (!rowTpl) return;
 
 		keys.forEach(function (threadUid) {
 			var entry = watched[threadUid];
@@ -409,34 +524,39 @@ const kktwch = { name: "KK Thread Watcher",
 			var hasUnread = unread > 0;
 
 			var displayName = entry.subject || 'No.' + (entry.threadNo || threadUid);
-			// Truncate long subjects
 			if (displayName.length > 40) {
 				displayName = displayName.substring(0, 37) + '...';
 			}
 
-			var linkClass = hasUnread ? 'warning' : '';
+			var row = rowTpl.content.cloneNode(true);
 
-			html += '<tr>';
-			html += '<td style="padding:2px 4px;">';
-			html += '<a href="' + (entry.url || '#') + '" class="' + linkClass + '" onclick="kktwch.markAsRead(\'' + threadUid + '\')">';
-			html += kktwch._escHtml(displayName);
-			html += '</a>';
+			// Fill in the link
+			var link = row.querySelector('.threadWatcherLink');
+			link.href = entry.url || '#';
+			link.textContent = displayName;
+			link.setAttribute('data-thread-uid', threadUid);
+			if (hasUnread) link.classList.add('warning');
+			link.addEventListener('click', function () {
+				kktwch.markAsRead(threadUid);
+			});
+
+			// Fill in unread count
+			var unreadSpan = row.querySelector('.threadWatcherUnread');
 			if (hasUnread) {
-				html += ' <span class="warning">(' + unread + ')</span>';
+				unreadSpan.textContent = '(' + unread + ')';
+				unreadSpan.hidden = false;
 			}
-			html += '</td>';
-			html += '<td style="padding:2px 4px;text-align:right;white-space:nowrap;">';
-			html += '<a href="javascript:void(0)" onclick="kktwch.unwatchThread(\'' + threadUid + '\');kktwch.renderWatchList();" title="Unwatch">\u2716</a>';
-			html += '</td>';
-			html += '</tr>';
+
+			// Wire up remove button
+			var removeBtn = row.querySelector('.threadWatcherRemove');
+			removeBtn.addEventListener('click', function (e) {
+				e.preventDefault();
+				kktwch.unwatchThread(threadUid);
+				kktwch.renderWatchList();
+			});
+
+			list.appendChild(row);
 		});
-
-		html += '</tbody></table>';
-		content.innerHTML = html;
-	},
-
-	_escHtml: function (s) {
-		return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 	},
 
 	/* Settings */
@@ -444,7 +564,7 @@ const kktwch = { name: "KK Thread Watcher",
 		if (tab !== 'general') return;
 		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'threadWatcherNotifs\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
 			(_kkSetting('threadWatcherNotifs') ? ' checked="checked"' : '') +
-			'>Thread Watcher notifications</label>';
+			'>Thread watcher notifications</label>';
 	}
 };
 

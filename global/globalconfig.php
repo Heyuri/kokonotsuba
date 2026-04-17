@@ -117,6 +117,7 @@ $config['JS_DEFAULT_SETTINGS'] = [
     'quotetooltip' => true,
     'galmode' => false,
     'addbacklinks' => false,
+    'threadWatcherNotifs' => true,
 ];
 
 // kokoimg styles

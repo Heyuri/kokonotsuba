@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\privateMessage;
 
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\module_classes\traits\CommentHooksTrait;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\request\request;
 use Kokonotsuba\template\pageRenderer;
@@ -10,13 +11,13 @@ use Kokonotsuba\template\pageRenderer;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\generatePostNameHtml;
-use function Kokonotsuba\libraries\html\quote_unkfunc;
 use function Puchiko\strings\newLinesToBreakLines;
-use function Puchiko\strings\autoLink;
 use function Puchiko\strings\sanitizeStr;
 use function Puchiko\strings\truncateText;
 
 class messageRenderer {
+	use CommentHooksTrait;
+
 	public function __construct(
 		private pageRenderer $adminPageRenderer,
 		private messageUtility $messageUtility,
@@ -24,6 +25,10 @@ class messageRenderer {
 		private moduleEngine $moduleEngine,
 		private request $request,
 	) {}
+
+	protected function getModuleEngine(): moduleEngine {
+		return $this->moduleEngine;
+	}
 
 	private function renderPmPage(string $contentHtml, string $pagerHtml = ''): void {
 		$wrappedHtml = $this->adminPageRenderer->ParseBlock('PM_PAGE', [
@@ -70,17 +75,6 @@ class messageRenderer {
 
 	public function formatPreviewComment(string $body, int $maxLength = 80): string {
 		return $this->applyCommentHooks(sanitizeStr(truncateText($body, $maxLength)));
-	}
-
-	/**
-	 * Dispatch the PostComment hook on a comment string.
-	 * This allows modules like emotes to process PM body text.
-	 */
-	private function applyCommentHooks(string $comment): string {
-		$this->moduleEngine->dispatch('PostComment', [&$comment]);
-		$comment = quote_unkfunc($comment);
-		$comment = autoLink($comment);
-		return $comment;
 	}
 
 	private function getComposeFormVariables(string $modulePageUrl, string $prefillRecipient = '', string $prefillSubject = '', string $prefillBody = ''): array {

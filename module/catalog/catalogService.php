@@ -3,8 +3,9 @@
 namespace Kokonotsuba\Modules\catalog;
 
 use Kokonotsuba\board\board;
+use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\module_classes\traits\CommentHooksTrait;
 
-use function Kokonotsuba\libraries\html\quote_unkfunc;
 use function Kokonotsuba\libraries\resolveThumbnailDisplayUrl;
 
 /**
@@ -13,9 +14,16 @@ use function Kokonotsuba\libraries\resolveThumbnailDisplayUrl;
  * Handles thumbnail resolution, comment processing, and pagination math.
  */
 class catalogService {
+	use CommentHooksTrait;
+
 	public function __construct(
 		private readonly catalogRepository $catalogRepository,
+		private readonly moduleEngine $moduleEngine,
 	) {}
+
+	protected function getModuleEngine(): moduleEngine {
+		return $this->moduleEngine;
+	}
 
 	/**
 	 * Fetch a page of catalog entries for the given board.
@@ -112,7 +120,7 @@ class catalogService {
 			$thumbWidth = $thumbnailUrl ? (int) ($row['file_thumb_width'] ?? 0) : 0;
 
 			// Process the comment text for display
-			$comment = quote_unkfunc((string) ($row['op_comment'] ?? ''));
+			$comment = $this->applyCommentHooks((string) ($row['op_comment'] ?? ''));
 			$subject = (string) ($row['op_subject'] ?? '');
 
 			$replyCount = max(0, (int) ($row['reply_count'] ?? 0));

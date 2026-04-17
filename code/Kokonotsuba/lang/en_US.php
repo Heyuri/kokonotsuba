@@ -437,4 +437,11 @@ $language['fullbanner_upload_heading'] = 'Upload banner (Auto-Approved)';
 $language['fullbanner_upload_button'] = 'Upload banner';
 
 $language['quick_reply_link'] = 'Quick reply';
+
+// threadWatcher module
+$language['thread_watch_link'] = 'Thread watcher';
+$language['thread_watch_label'] = 'Watch thread';
+$language['thread_unwatch_label'] = 'Unwatch thread';
+$language['thread_watch_empty'] = 'No watched threads.';
+$language['thread_watch_unwatch_title'] = 'Unwatch';
 ?>
