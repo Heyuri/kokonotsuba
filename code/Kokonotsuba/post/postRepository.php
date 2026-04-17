@@ -108,7 +108,7 @@ class postRepository extends baseRepository {
 	 * @param array<int, array<int>>  $boardThreadMap Map of boardUID => array of thread/post UIDs.
 	 * @return array Array of merged post data arrays.
 	 */
-	public function fetchPostsFromBoardsAndThreads(array $boardThreadMap): array {
+	public function fetchPostsFromBoardsAndThreads(array $boardThreadMap, bool $viewDeleted = false): array {
 		if (empty($boardThreadMap)) {
 			return array();
 		}
@@ -146,7 +146,7 @@ class postRepository extends baseRepository {
 		}
 
 		$whereClause = implode(' OR ', $conditions);
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $viewDeleted);
 		$query .= " WHERE {$whereClause}";
 
 		$posts = $this->queryAll($query, $params);

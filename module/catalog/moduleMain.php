@@ -94,7 +94,7 @@ class moduleMain extends abstractModuleMain {
 			$dbSettings['DELETED_POSTS_TABLE'],
 		);
 
-		$this->catalogService = new catalogService($catalogRepository);
+		$this->catalogService = new catalogService($catalogRepository, $this->moduleContext->moduleEngine);
 	}
 
 	/**
