@@ -7,19 +7,18 @@ require_once __DIR__ . '/perceptualBanService.php';
 require_once __DIR__ . '/perceptualBanLib.php';
 require_once __DIR__ . '/perceptualHasher.php';
 
+use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 
 use function Kokonotsuba\Modules\perceptualBan\getPerceptualBanService;
-use function Puchiko\json\sendJsonResponse;
-use function Puchiko\request\redirect;
+use function Kokonotsuba\libraries\_T;
 
 class moduleMain extends abstractModuleMain {
 	use RegistBeginListenerTrait;
 
 	private perceptualBanService $perceptualBanService;
 	private perceptualHasher $perceptualHasher;
-	private string $globalBansPath;
 
 	public function getName(): string {
 		return 'Perceptual file ban system';
@@ -34,7 +33,6 @@ class moduleMain extends abstractModuleMain {
 
 		$this->perceptualBanService = getPerceptualBanService($this->moduleContext->transactionManager);
 		$this->perceptualHasher = getPerceptualHasher();
-		$this->globalBansPath = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
 	}
 
 	private function onRegistBegin(array &$registInfo): void {
@@ -69,44 +67,8 @@ class moduleMain extends abstractModuleMain {
 			}
 
 			if ($isBanned) {
-				$this->banIp();
-				$this->silentReject();
+				throw new BoardException(_T('perceptual_ban_blocked'));
 			}
 		}
-	}
-
-	private function banIp(): void {
-		$ip = (string) $this->moduleContext->request->userIp();
-		$startTime = $_SERVER['REQUEST_TIME'];
-		$banDuration = $this->getConfig('ModuleSettings.perceptualBan.BAN_DURATION', 86400);
-		// jitter ±10% so the duration doesn't look automated
-		$jitter = (int) ($banDuration * 0.1);
-		$banDuration += mt_rand(-$jitter, $jitter);
-		$expires = $startTime + $banDuration;
-		$reason = str_replace(',', '&#44;', 'ban evasion');
-
-		$banEntry = "{$ip},{$startTime},{$expires},{$reason}";
-
-		$needsNewline = file_exists($this->globalBansPath) && filesize($this->globalBansPath) > 0;
-
-		$f = fopen($this->globalBansPath, 'a');
-		if ($f) {
-			if ($needsNewline) {
-				fwrite($f, "\n");
-			}
-			fwrite($f, $banEntry);
-			fclose($f);
-		}
-	}
-
-	private function silentReject(): void {
-		$boardUrl = $this->moduleContext->board->getBoardURL();
-
-		if ($this->moduleContext->request->isAjax()) {
-			sendJsonResponse(['redirectUrl' => $boardUrl]);
-			exit;
-		}
-
-		redirect($boardUrl);
 	}
 }
