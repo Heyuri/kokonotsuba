@@ -34,7 +34,9 @@ $language['warn_sizelimit']				= 'Resim, depolama sınırı yüzünden yakında 
 $language['warn_oldthread']				= 'Thread eski olduğu için yakında silinecek.';
 $language['warn_locked']				= 'Thread admin tarafından kilitlendi.';
 $language['notice_omitted']				= '%1$s post dahil edilmedi. Görmek için yanıt butonuna basınız.';
-$language['post_name']					= 'İsim: ';
+$language['notice_viewing_page']  = 'Sayfa %1$s / %2$s görüntüleniyor';
+$language['notice_viewing_last_posts']	= 'Son %1$s %2$s görüntüleniyor';
+$language['post_name']				  	= 'İsim: ';
 $language['post_category']				= 'Kategori: ';
 $language['regist_notpost']				= 'Post atabilmek için lütfen board üzerindeki formu kullanın.';
 $language['regist_nospam']				= 'Spambot karşıt sistemi aktive edildi.';
@@ -249,22 +251,60 @@ $language['delete_note'] = 'Notu sil';
 $language['note_no_permission'] = 'Bu notu düzenleme yetkiniz yok.';
 $language['edit_post'] = 'Postu düzenle';
 $language['self_serve_banner_suggest'] = 'Kendi bannerınızı burada göstermek ister misiniz? Başvurmak için tıklayın!';
+
+// DEPRECATED: pm_contacts_section_title, pm_view_thread_page_title, pm_contact_view_no_messages,
+// contact_not_selected, pm_no_message, pm_contact_self, pm_compose_title, pm_new_message, pm_no_contacts
+
 $language['private_message_top_bar'] = 'Özel mesajlar';
 $language['pm_recipient_and_message_required'] = 'Alıcı ve mesaj gereklidir!';
 $language['pm_invalid_recipient'] = 'Geçersiz alıcı tripcode\'u!';
 $language['pm_main_title'] = 'Özel mesajlaşma sistemi';
 $language['pm_inbox_page_title'] = 'Özel mesaj gelen kutusu';
-$language['pm_view_thread_page_title'] = 'Özel mesaj threadi';
 $language['pm_login_page_title'] = 'Özel mesaj girişi';
-$language['pm_contact_view_no_messages'] = 'Bu threadde henüz mesaj yok.';
-$language['contact_not_selected'] = 'Hiçbir kişi seçilmedi!';
-$language['pm_no_message'] = 'Mesaj yok!';
 $language['pm_login_required'] = 'Özel mesajlaşma sistemini kullanmak için giriş yapmalısınız!';
-$language['pm_contact_self'] = 'Kendiniz';
 $language['pm_login_description'] = 'Özel mesajlarınıza erişmek için tripcode\'unuzu girin.';
 $language['pm_tripcode_login_hash_note'] = '\'#\' işaretini ve ardından tripcode şifrenizi ekleyin. Güvenli tripcode için iki adet \'#\' (##) kullanın.';
 $language['pm_tripcode_login_label'] = 'Tripcode:';
-$language['pm_notification_title'] = 'Yeni Özel Mesajlar';
+$language['pm_invalid_tripcode'] = 'Geçersiz tripcode girdisi!';
+$language['pm_no_conversation'] = 'Bu kullanıcıyla hiçbir konuşma bulunamadı.';
+$language['pm_no_messages'] = 'Henüz mesaj yok.';
+$language['pm_message_not_found'] = 'Mesaj bulunamadı.';
+$language['pm_name_label'] = 'İsim';
+$language['pm_subject_label'] = 'Konu';
+$language['pm_body_label'] = 'Mesaj';
+$language['pm_send_btn'] = 'Gönder';
+$language['pm_recipient_label'] = 'Alıcı';
+$language['pm_recipient_placeholder'] = '◆tripcode veya ★tripcode';
+$language['pm_logged_in_as'] = 'Giriş yapıldı';
+$language['pm_logout_btn'] = 'Çıkış yap';
+$language['pm_direction_sent'] = 'Kime';
+$language['pm_direction_received'] = 'Kimden';
+$language['pm_view_label'] = 'Görüntüle';
+$language['pm_table_from'] = 'Kimden/Kime';
+$language['pm_table_subject'] = 'Konu';
+$language['pm_table_preview'] = 'Önizleme';
+$language['pm_table_date'] = 'Tarih';
+$language['pm_back_to_inbox'] = 'Gelen kutusuna dön';
+$language['pm_from_label'] = 'Kimden';
+$language['pm_to_label'] = 'Kime';
+$language['pm_date_label'] = 'Tarih';
+$language['pm_reply_label'] = 'Yanıtla';
+$language['pm_user_banned'] = 'Özel mesaj sistemini kullanmanız yasaklandı.';
+$language['pm_admin_title'] = 'Özel Mesaj Yönetimi';
+$language['admin_nav_pm_title'] = 'Özel mesajları yönet';
+$language['admin_nav_pm'] = 'Özel mesajlar';
+$language['pm_admin_th_select'] = 'Seç';
+$language['pm_admin_th_sender'] = 'Gönderen';
+$language['pm_admin_th_recipient'] = 'Alıcı';
+$language['pm_admin_th_subject'] = 'Konu';
+$language['pm_admin_th_body'] = 'İçerik';
+$language['pm_admin_th_ip'] = 'IP Adresi';
+$language['pm_admin_th_date'] = 'Tarih';
+$language['pm_admin_delete_btn'] = 'Seçilenleri sil';
+$language['pm_admin_ban_btn'] = 'Seçili IP\'leri yasakla';
+$language['pm_admin_no_messages'] = 'Hiç özel mesaj bulunamadı.';
+$language['pm_admin_back'] = 'Mesajlara dön';
+$language['pm_notification_title'] = 'Yeni özel mesajlar';
 $language['pm_notification_body'] = '%d okunmamış mesajınız var.';
 
 $language['admin_nav_capcodes_title'] = 'Kullanıcı capcode\'larını yönetin ve yetkili capcode\'larını görüntüleyin';
@@ -311,7 +351,6 @@ $language['admin_nav_file_ban_title'] = 'Yasaklı dosyaları yönet';
 $language['admin_nav_file_ban'] = 'Dosya yasakları';
 
 // perceptualBan module
-$language['perceptual_ban_blocked'] = 'Yükleme başarısız.<br> Dosyaya izin verilmiyor (algısal eşleşme).';
 $language['perceptual_ban_btn_title'] = 'Bu dosyayı algısal olarak yasakla';
 $language['perceptual_ban_bd_btn_title'] = 'Dosyayı algısal olarak yasakla ve sil';
 $language['perceptual_ban_invalid_action'] = 'Geçersiz algısal yasaklama işlemi.';
@@ -329,6 +368,58 @@ $language['perceptual_ban_index_title'] = 'Algısal yasaklı dosyalar';
 $language['perceptual_ban_no_entries'] = 'Algısal yasaklı dosya yok.';
 $language['admin_nav_perceptual_ban_title'] = 'Algısal dosya yasaklarını yönet';
 $language['admin_nav_perceptual_ban'] = 'Algısal yasaklar';
+
+// postApi module
+$language['post_api_link']                    = 'Post API';
+$language['post_api_title']                   = 'Post API rehberi';
+$language['post_api_fetching']                = 'Getiriliyor...';
+$language['post_api_description']             = 'Kokonotsuba, post verilerini almak için salt okunur bir API sağlar. Tekil postlardan veya tüm thread\'lerden veri çekebilirsiniz.';
+$language['post_api_get_single_post']         = 'Tek bir post getir';
+$language['post_api_returns_json_post']       = 'Post verileri ve render edilmiş HTML içeren JSON döndürür';
+$language['post_api_parameters']              = 'Parametreler';
+$language['post_api_th_parameter']            = 'Parametre';
+$language['post_api_th_type']                 = 'Tür';
+$language['post_api_th_description']          = 'Açıklama';
+$language['post_api_th_field']                = 'Alan';
+$language['post_api_post_uid_desc']           = 'Postun benzersiz kimliği';
+$language['post_api_response_fields']         = 'Yanıt alanları';
+$language['post_api_field_post_uid']          = 'Post benzersiz kimliği';
+$language['post_api_field_timestamp']         = 'Post zaman damgası';
+$language['post_api_field_name']              = 'Gönderen adı';
+$language['post_api_field_tripcode']          = 'Tripcode (biçimlendirilmiş)';
+$language['post_api_field_secure_tripcode']   = 'Güvenli tripcode';
+$language['post_api_field_capcode']           = 'Yetkili capcode';
+$language['post_api_field_email']             = 'E-posta alanı';
+$language['post_api_field_subject']           = 'Post konusu';
+$language['post_api_field_comment']           = 'Ham yorum metni';
+$language['post_api_field_html']              = 'Tam render edilmiş post HTML';
+$language['post_api_get_thread_posts']        = 'Bir thread içindeki tüm postları getir';
+$language['post_api_returns_json_thread']     = 'Belirtilen thread içindeki tüm postları içeren JSON döndürür';
+$language['post_api_thread_uid_desc']         = 'Thread\'in benzersiz kimliği';
+$language['post_api_response']                = 'Yanıt';
+$language['post_api_thread_response_desc']    = '<code>thread_uid</code>, <code>post_count</code> ve <code>posts</code> (tek post endpoint\'i ile aynı alanlara sahip post nesneleri dizisi) içeren bir nesne döndürür.';
+
+// fullBanner module
+$language['fullbanner_no_file'] = 'Dosya yüklenmedi.';
+$language['fullbanner_invalid_link'] = 'Geçersiz hedef bağlantı URL\'si.';
+$language['fullbanner_flood'] = 'Lütfen başka bir banner göndermeden önce %1$s saniye bekleyin.';
+$language['fullbanner_upload_failed'] = 'Dosya yükleme başarısız.';
+$language['fullbanner_invalid_upload'] = 'Geçersiz dosya yükleme.';
+$language['fullbanner_invalid_extension'] = 'Yalnızca PNG, JPG, JPEG ve GIF dosyalarına izin verilir.';
+$language['fullbanner_invalid_image'] = 'Dosya geçerli bir görsel gibi görünmüyor.';
+$language['fullbanner_ext_mime_mismatch'] = 'Dosya uzantısı içerik türüyle eşleşmiyor.';
+$language['fullbanner_save_failed'] = 'Yüklenen dosya kaydedilemedi.';
+$language['fullbanner_mkdir_failed'] = 'Banner depolama dizini oluşturulamadı.';
+$language['fullbanner_invalid_dimensions'] = 'Banner görselleri tam olarak %1$sx%2$s piksel olmalıdır.';
+$language['fullbanner_submit_success'] = 'Bu banner gönderildi ve yetkililerin onayını bekliyor!';
+$language['fullbanner_req_dimensions'] = 'Görseller tam olarak %1$sx%2$s piksel olmalıdır.';
+$language['fullbanner_req_filetypes'] = 'Kabul edilen dosya türleri: PNG, JPG, GIF.';
+$language['fullbanner_req_filesize'] = 'Maksimum dosya boyutu: %1$sKB.';
+$language['fullbanner_file_too_large'] = 'Dosya boyutu izin verilen maksimum %1$sKB sınırını aşıyor.';
+$language['fullbanner_submit_heading'] = 'Banner gönder';
+$language['fullbanner_submit_button'] = 'Banner gönder';
+$language['fullbanner_upload_heading'] = 'Banner yükle (Otomatik Onaylı)';
+$language['fullbanner_upload_button'] = 'Banner yükle';
 
 ?>
 
