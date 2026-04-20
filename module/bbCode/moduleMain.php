@@ -143,7 +143,7 @@ class moduleMain extends abstractModuleMain {
 			'<div id="bbcodeButtonContainer">' . $buttons . '</div>');
 	}
 
-	private function onRenderComment(string &$comment, Post $post): void {
+	private function onRenderComment(string &$comment, ?Post $post): void {
 		$comment = $this->bb2html($comment);
 	}
 
