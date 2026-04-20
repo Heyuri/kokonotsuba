@@ -365,7 +365,8 @@ class tableCreator {
                 FULLTEXT INDEX ft_com (com),
                 FULLTEXT INDEX ft_sub (sub),
                 FULLTEXT INDEX ft_name (name),
-                FULLTEXT INDEX ft_email (email)
+                FULLTEXT INDEX ft_email (email),
+                FULLTEXT INDEX ft_general (name, email, sub, com)
             ) ENGINE=InnoDB;",
 
             "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_NUMBER_TABLE']} (
