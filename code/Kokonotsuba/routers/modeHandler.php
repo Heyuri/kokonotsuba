@@ -134,9 +134,22 @@ class modeHandler {
 					$this->container->get('softErrorHandler'),
 					$this->container->get('accountRepository'),
 					$this->container->get('adminTemplateEngine'),
-					$this->container->get('adminPageRenderer')
+					$this->container->get('adminPageRenderer'),
+					$this->container->get('request')
 				);
 				$route->drawAccountPage();
+			},
+			'viewStaffAccount' => function() {
+				$route = new accountRoute(
+					$this->container->get('config'),
+					$this->container->get('staffAccountFromSession'),
+					$this->container->get('softErrorHandler'),
+					$this->container->get('accountRepository'),
+					$this->container->get('adminTemplateEngine'),
+					$this->container->get('adminPageRenderer'),
+					$this->container->get('request')
+				);
+				$route->drawStaffAccountPage();
 			},
 			'boards' => function() {
 				$route = new boardsRoute(
