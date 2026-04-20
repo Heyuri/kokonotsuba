@@ -4,14 +4,11 @@ namespace Kokonotsuba\Modules\soudane;
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\database\databaseConnection;
-use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\Post;
 use function Kokonotsuba\libraries\_T;
-use function Kokonotsuba\libraries\isActiveStaffSession;
-use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\json\renderJsonErrorPage;
 use function Puchiko\json\renderJsonPage;
 use function Puchiko\strings\sanitizeStr;
@@ -198,7 +195,7 @@ class moduleMain extends abstractModuleMain {
 
 		// exit if none are found
 		if (empty($postUidsParameter)) {
-			renderJsonErrorPage(['error' => 'No post IDs provided']);
+			renderJsonErrorPage(['error' => _T('soudane_no_post_ids_provided')]);
 			return;
 		}
 
@@ -278,26 +275,26 @@ class moduleMain extends abstractModuleMain {
 			throw new BoardException('Invalid parameters.');
 		}
 
-		// Validate that the post exists; if not, this will throw an exception and halt execution
-		validatePostInput(
-			$this->moduleContext->postRepository->getPostByUid(
-				$postUid, 
-				isActiveStaffSession()
-			), 
-			false, 
-			404);
+		// Validate that the post exists and get the poster's IP
+		$posterHost = $this->moduleContext->postRepository->resolveHostFromPostUid((int) $postUid);
+		if ($posterHost === null) {
+			throw new BoardException(_T('error_post_not_found'));
+		}
+
+		// Prevent users from voting on their own posts
+		$ip = $this->moduleContext->request->userIp();
+		if ($posterHost === (string) $ip) {
+			renderJsonErrorPage(_T('soudane_vote_own_post'));
+		}
 
 		// If the type is 'score', calculate and output the score, then exit
 		if ($type === 'score') {
-			echo _T('score_pre_text', $this->getScore($postUid));
+			renderJsonPage(['score' => _T('score_pre_text', $this->getScore($postUid))]);
 			exit;
 		}
 
 		// Load existing votes for the post and type
 		$log = $this->loadVotes($postUid, $type);
-
-		// Get the current user's IP address
-		$ip = $this->moduleContext->request->userIp();
 
 		$yeahIPs = !empty($log) ? array_column($log, 'ip_address') : [];
 
@@ -317,6 +314,13 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		// Output the updated button text with the new vote count
-		echo $this->getVoteButtonText($type, count($yeahIPs));
+		$buttonText = $this->getVoteButtonText($type, count($yeahIPs));
+
+		if ($this->moduleContext->request->isAjax()) {
+			renderJsonPage(['text' => $buttonText]);
+			return;
+		}
+
+		echo $buttonText;
 	}
 }
