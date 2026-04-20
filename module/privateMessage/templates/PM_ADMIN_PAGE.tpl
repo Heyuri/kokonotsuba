@@ -1,7 +1,7 @@
 <h3 class="centerText">{$PAGE_TITLE}</h3>
 
 <form method="POST" action="{$MODULE_URL}">
-	<div id="pmAdminTableContainer">
+	<div id="pmAdminTableContainer" class="tableViewportWrapper">
 		<table class="postlists" id="pmAdminTable">
 			<thead>
 				<tr>
