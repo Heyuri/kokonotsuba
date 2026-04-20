@@ -381,9 +381,9 @@ $language['post_api_th_parameter']            = 'Parametre';
 $language['post_api_th_type']                 = 'Tür';
 $language['post_api_th_description']          = 'Açıklama';
 $language['post_api_th_field']                = 'Alan';
-$language['post_api_post_uid_desc']           = 'Postun benzersiz kimliği';
+$language['post_api_post_uid_desc']           = 'Postun benzersiz ID\'si';
 $language['post_api_response_fields']         = 'Yanıt alanları';
-$language['post_api_field_post_uid']          = 'Post benzersiz kimliği';
+$language['post_api_field_post_uid']          = 'Post benzersiz ID\'si';
 $language['post_api_field_timestamp']         = 'Post zaman damgası';
 $language['post_api_field_name']              = 'Gönderen adı';
 $language['post_api_field_tripcode']          = 'Tripcode (biçimlendirilmiş)';
@@ -392,12 +392,24 @@ $language['post_api_field_capcode']           = 'Yetkili capcode';
 $language['post_api_field_email']             = 'E-posta alanı';
 $language['post_api_field_subject']           = 'Post konusu';
 $language['post_api_field_comment']           = 'Ham yorum metni';
+$language['post_api_field_parent_thread_uid'] = 'Ana thread\'in UID\'si';
+$language['post_api_field_parent_post_number'] = 'Thread OP\'sinin post numarası';
 $language['post_api_field_html']              = 'Tam render edilmiş post HTML';
-$language['post_api_get_thread_posts']        = 'Bir thread içindeki tüm postları getir';
-$language['post_api_returns_json_thread']     = 'Belirtilen thread içindeki tüm postları içeren JSON döndürür';
-$language['post_api_thread_uid_desc']         = 'Thread\'in benzersiz kimliği';
+$language['post_api_get_thread_posts']        = 'Bir thread\'den postları getir (sayfalandırılmış)';
+$language['post_api_returns_json_thread']     = 'Belirtilen thread\'den bir sayfalık postları içeren JSON döndürür. OP her sayfada daima dahil edilir.';
+$language['post_api_thread_uid_desc']         = 'Thread\'in benzersiz ID\'si';
+$language['post_api_page_param_desc']         = 'Sayfa numarası (0 tabanlı, isteğe bağlı, varsayılan 0)';
 $language['post_api_response']                = 'Yanıt';
-$language['post_api_thread_response_desc']    = '<code>thread_uid</code>, <code>post_count</code> ve <code>posts</code> (tek post endpoint\'i ile aynı alanlara sahip post nesneleri dizisi) içeren bir nesne döndürür.';
+$language['post_api_thread_response_desc']    = '<code>thread_uid</code>, <code>page</code>, <code>post_count</code> ve <code>posts</code> (tek post endpoint\'i ile aynı alanlara sahip post nesneleri dizisi) içeren bir nesne döndürür.';
+$language['post_api_get_thread_list']         = 'Thread listesi getir (sayfalandırılmış)';
+$language['post_api_board_uid_desc']          = 'Sayısal board UID\'si (isteğe bağlı, varsayılan mevcut board)';
+$language['post_api_returns_json_thread_list'] = 'Board için oluşturulma zamanına göre sıralanmış (en yeni en üstte) sayfalandırılmış thread UID listesi döndürür.';
+$language['post_api_thread_list_response_desc'] = '<code>page</code>, <code>threads_per_page</code>, <code>thread_count</code> ve <code>threads</code> (thread nesneleri dizisi) içeren bir nesne döndürür.';
+$language['post_api_thread_list_field_thread_uid'] = 'Thread\'in benzersiz ID\'si';
+$language['post_api_thread_list_field_subject']    = 'Açılış postunun konusu';
+$language['post_api_thread_list_field_last_bump_time'] = 'Son bump zaman damgası';
+$language['post_api_thread_list_field_created_time'] = 'Thread\'in oluşturulma zaman damgası';
+$language['post_api_thread_list_field_post_count'] = 'Thread içindeki toplam post sayısı';
 
 // fullBanner module
 $language['fullbanner_no_file'] = 'Dosya yüklenmedi.';
@@ -421,6 +433,7 @@ $language['fullbanner_submit_button'] = 'Banner gönder';
 $language['fullbanner_upload_heading'] = 'Banner yükle (Otomatik Onaylı)';
 $language['fullbanner_upload_button'] = 'Banner yükle';
 
+$language['quick_reply_link'] = 'Hızlı yanıt';
 ?>
 
 
