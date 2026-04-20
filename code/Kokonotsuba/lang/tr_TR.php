@@ -434,18 +434,6 @@ $language['fullbanner_upload_heading'] = 'Banner yükle (Otomatik Onaylı)';
 $language['fullbanner_upload_button'] = 'Banner yükle';
 
 $language['quick_reply_link'] = 'Hızlı yanıt';
-?>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+$language['soudane_vote_own_post'] = 'Kendi postuna oy veremezsin';
+$language['soudane_no_post_ids_provided'] = 'Herhangi bir post ID\'si sağlanmadı.';
