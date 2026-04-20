@@ -111,4 +111,51 @@ class soudaneService {
 		// call the repo to add a new vote to the table
 		$this->soudaneRepository->insertVote($postUid, $ipAddress, $isYeah);
 	}
+
+	/**
+	 * Remove a vote from a post.
+	 *
+	 * @param int    $postUid   UID of the post to remove the vote from.
+	 * @param string $ipAddress IP address of the voter.
+	 * @param string $type      Vote type: 'yeah' or 'nope'.
+	 * @return void
+	 */
+	public function removeVote(int $postUid, string $ipAddress, string $type): void {
+		$this->validateType($type);
+		$isYeah = $this->isYeahType($type);
+		$this->soudaneRepository->deleteVote($postUid, $ipAddress, $isYeah);
+	}
+
+	/**
+	 * Get paginated votes for a post.
+	 *
+	 * @param int $postUid UID of the post.
+	 * @param int $limit   Entries per page.
+	 * @param int $page    Page number (0-based).
+	 * @return array Array of vote rows.
+	 */
+	public function getVotesPaginated(int $postUid, int $limit, int $page): array {
+		$offset = $page * $limit;
+		return $this->soudaneRepository->fetchVotesPaginated($postUid, $limit, $offset);
+	}
+
+	/**
+	 * Get total vote count for a post.
+	 *
+	 * @param int $postUid UID of the post.
+	 * @return int Total votes.
+	 */
+	public function getTotalVotesForPost(int $postUid): int {
+		return $this->soudaneRepository->countVotesForPost($postUid);
+	}
+
+	/**
+	 * Delete votes by their IDs.
+	 *
+	 * @param array $ids Array of vote IDs.
+	 * @return void
+	 */
+	public function deleteVotesByIds(array $ids): void {
+		$this->soudaneRepository->deleteByIds(array_map('intval', $ids));
+	}
 }
