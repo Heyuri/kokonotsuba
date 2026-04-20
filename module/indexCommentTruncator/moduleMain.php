@@ -3,17 +3,18 @@
 namespace Kokonotsuba\Modules\indexCommentTruncator;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
 use Kokonotsuba\post\Post;
 use Throwable;
 
 use function Kokonotsuba\libraries\_T;
+use function Puchiko\html\closeUnclosedTags;
 use function Puchiko\html\countHtmlLineBreaks;
 use function Puchiko\html\truncateHtml;
 use function Puchiko\html\truncateHtmlByLineBreak;
 
 class moduleMain extends abstractModuleMain {
-	use PostListenerTrait;
+	use PostCommentListenerTrait;
 
 	// post comments over these limits are truncated (if viewed from the index)
 	private int $characterPreviewLimit;
@@ -35,12 +36,12 @@ class moduleMain extends abstractModuleMain {
 		$this->breakLinePreviewLimit = $this->getConfig('ModuleSettings.LINE_PREVIEW_LIMIT', 10);
 
 		// add hook point listener for post
-		$this->listenPost('onRenderPost');
+		$this->listenPostComment('onRenderComment', -10000);
 	}
 
-	private function onRenderPost(array &$templateValues, Post &$post): void {
+	private function onRenderComment(string &$comment, Post $post): void {
 		// truncate post comment for index view
-		$this->truncatePostComment($templateValues['{$COM}'], $post->getNumber());
+		$this->truncatePostComment($comment, $post->getNumber());
 	}
 
 	private function truncatePostComment(string &$comment, int $postNumber): void {
@@ -105,6 +106,8 @@ class moduleMain extends abstractModuleMain {
 
 		// if either condition was triggered then append the 'comment too long' message
 		if($commentTooLong) {
+			// close any tags left open by truncation before appending the message
+			$comment = closeUnclosedTags($comment);
 			// append the message
 			$this->appendLimitMessage($comment, $postNumber);
 		}

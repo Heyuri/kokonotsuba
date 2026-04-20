@@ -7,6 +7,7 @@ use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\CommentExtrasListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
+use Kokonotsuba\post\Post;
 
 use function Puchiko\strings\sanitizeStr;
 
@@ -85,7 +86,7 @@ class moduleMain extends abstractModuleMain {
 		return $this->renderFormattingDetails('kaomojiContainer', 'Kaomoji', $buttons);
 	}
 
-    private function onRenderComment(string &$comment): void {
+    private function onRenderComment(string &$comment, Post $post): void {
         // modify rendered comment to include emotes
         $this->searchAndReplaceEmotes($comment);
     }
