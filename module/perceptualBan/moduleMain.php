@@ -67,7 +67,7 @@ class moduleMain extends abstractModuleMain {
 			}
 
 			if ($isBanned) {
-				throw new BoardException(_T('perceptual_ban_blocked'));
+				throw new BoardException(_T('file_ban_blocked'));
 			}
 		}
 	}

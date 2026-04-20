@@ -353,7 +353,6 @@ $language['admin_nav_file_ban_title'] = 'Manage banned files';
 $language['admin_nav_file_ban'] = 'File bans';
 
 // perceptualBan module
-$language['perceptual_ban_blocked'] = 'Upload failed.<br> File not allowed (perceptual match).';
 $language['perceptual_ban_btn_title'] = 'Perceptually ban this file';
 $language['perceptual_ban_bd_btn_title'] = 'Perceptually ban file and delete';
 $language['perceptual_ban_invalid_action'] = 'Invalid perceptual ban action.';
