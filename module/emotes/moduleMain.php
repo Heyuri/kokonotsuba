@@ -86,7 +86,7 @@ class moduleMain extends abstractModuleMain {
 		return $this->renderFormattingDetails('kaomojiContainer', 'Kaomoji', $buttons);
 	}
 
-    private function onRenderComment(string &$comment, Post $post): void {
+    private function onRenderComment(string &$comment, ?Post $post): void {
         // modify rendered comment to include emotes
         $this->searchAndReplaceEmotes($comment);
     }
