@@ -8,8 +8,8 @@ use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\CommentExtrasListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
+use Kokonotsuba\post\Post;
 
-use function Puchiko\request\sanitizeHeaderInjection;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain { 
@@ -143,7 +143,7 @@ class moduleMain extends abstractModuleMain {
 			'<div id="bbcodeButtonContainer">' . $buttons . '</div>');
 	}
 
-	private function onRenderComment(string &$comment): void {
+	private function onRenderComment(string &$comment, Post $post): void {
 		$comment = $this->bb2html($comment);
 	}
 

@@ -2,6 +2,7 @@
 
 <form id="fullbanneradminform" action="{$MODULE_PAGE_URL}" method="POST">
 	<h3>All Banners</h3>
+	<div class="tableViewportWrapper">
 	<table class="postlists" id="fullbanneradminlist">
 		<thead>
 			<tr>
@@ -19,6 +20,7 @@
 			<!--&IF($EMPTY,'<tr><td colspan="7">No banners submitted yet.</td></tr>','')-->
 		</tbody>
 	</table>
+	</div>
 	<div class="buttonSection">
 		<input type="submit" name="action_approve" value="Approve Selected">
 		<input type="submit" name="action_enable" value="Enable Selected">

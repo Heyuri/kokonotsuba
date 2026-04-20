@@ -45,6 +45,52 @@ class soudaneRepository extends baseRepository {
 	}
 	
 	/**
+	 * Delete a vote record for the given post, IP address, and type.
+	 *
+	 * @param int    $postUid   UID of the post.
+	 * @param string $ipAddress IP address of the voter.
+	 * @param bool   $isYeah    True for a yeah vote, false for a nope vote.
+	 * @return void
+	 */
+	public function deleteVote(int $postUid, string $ipAddress, bool $isYeah): void {
+		$query = "DELETE FROM {$this->table} WHERE post_uid = :post_uid AND ip_address = :ip_address AND yeah = :yeah LIMIT 1";
+		$this->query($query, [':post_uid' => $postUid, ':ip_address' => $ipAddress, ':yeah' => (int)$isYeah]);
+	}
+
+	/**
+	 * Fetch paginated votes for a specific post.
+	 *
+	 * @param int $postUid UID of the post.
+	 * @param int $limit   Number of rows per page.
+	 * @param int $offset  Row offset.
+	 * @return array Array of vote rows.
+	 */
+	public function fetchVotesPaginated(int $postUid, int $limit, int $offset): array {
+		$query = "SELECT id, post_uid, ip_address, yeah, date_added FROM {$this->table} WHERE post_uid = :post_uid ORDER BY date_added DESC LIMIT :limit OFFSET :offset";
+		return $this->queryAll($query, [':post_uid' => $postUid, ':limit' => $limit, ':offset' => $offset]);
+	}
+
+	/**
+	 * Count total votes for a specific post.
+	 *
+	 * @param int $postUid UID of the post.
+	 * @return int Total number of votes.
+	 */
+	public function countVotesForPost(int $postUid): int {
+		return $this->count('post_uid = :post_uid', [':post_uid' => $postUid]);
+	}
+
+	/**
+	 * Delete votes by their IDs.
+	 *
+	 * @param array $ids Array of vote IDs to delete.
+	 * @return void
+	 */
+	public function deleteByIds(array $ids): void {
+		$this->deleteWhereIn('id', $ids);
+	}
+
+	/**
 	 * Get the vote count for each of the given post UIDs.
 	 *
 	 * @param array $postUids Array of post UIDs to aggregate.

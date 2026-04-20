@@ -169,7 +169,7 @@ function checkall(){
 		$dat .= '<div id="contents">
 			[<a href="'.$this->getConfig('STATIC_INDEX_FILE').'?'.time().'">'._T('return').'</a>]
 			<h2 class="theading2">Thread list</h2>'.
-			($this->SHOW_FORM ? '<form action="'.$this->getConfig('LIVE_INDEX_FILE').'" method="post">' : '').'<div id="tableThreadlistContainer"><table id="tableThreadlist" class="postlists"><thead><tr>
+			($this->SHOW_FORM ? '<form action="'.$this->getConfig('LIVE_INDEX_FILE').'" method="post">' : '').'<div id="tableThreadlistContainer" class="tableViewportWrapper"><table id="tableThreadlist" class="postlists"><thead><tr>
 			'.($this->SHOW_FORM ? '<th class="colDel"><a href="javascript:checkall()">↓</a></th>' : '').'
 			<th class="colNum"><a href="'.$thisPage.'&sort=no">No.'.($sortingMethod == 'no' ? ' ▼' : '').'</a></th>
 			<th class="colSub">'._T('form_topic').'</th>

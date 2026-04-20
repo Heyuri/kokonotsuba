@@ -19,7 +19,10 @@ class deletedPostActionHandler {
 		private readonly request $request
 	) {}
 
-	public function handleModPageRequests(int $accountId, userRole $roleLevel): void {
+	/**
+	 * @return array{action: string, message: string} Result of the action performed.
+	 */
+	public function handleModPageRequests(int $accountId, userRole $roleLevel): array {
 		$deletedPostId = $this->request->getParameter('deletedPostId', 'POST');
 		$action = $this->request->getParameter('action', 'POST');
 
@@ -29,9 +32,7 @@ class deletedPostActionHandler {
 			// if not, throw excepton
 			$this->deletedPostUtility->authenticateDeletedPost($deletedPostId, $roleLevel, $accountId);
 
-			$this->handleAction($deletedPostId, $accountId, $roleLevel, $action);
-
-			return;
+			return $this->handleAction($deletedPostId, $accountId, $roleLevel, $action);
 		}
 
 		// invalid action from request - it didn't fit any of the above criteria
@@ -40,26 +41,43 @@ class deletedPostActionHandler {
 		}
 	}
 
-    private function handleAction(int $deletedPostId, int $accountId, userRole $roleLevel, string $action): void {
+    /**
+	 * @return array{action: string, message: string}
+	 */
+	private function handleAction(int $deletedPostId, int $accountId, userRole $roleLevel, string $action): array {
 		// If its a restore action, handle the restoring of the post
 		if($action === 'restore') {
 			$this->deletedPostsService->restorePost($deletedPostId, $accountId);
+
+			// rebuild board
+			$this->rebuildBoardByDeletedPostId($deletedPostId);
+
+			return ['action' => 'restore', 'message' => 'Post restored'];
 		}
 
 		// if it's a purge action, handle the purging and associated actions 
 		else if ($action === 'purge' && $roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {
 			$this->deletedPostsService->purgePost($deletedPostId);
+
+			return ['action' => 'purge', 'message' => 'Post purged'];
 		}
 
 		// if it's an attachment purge then delete the file only
 		// then mark it as 'restored' by the mod since theres no more action to do on it
 		else if ($action === 'purgeAttachment' && $roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {
 			$this->deletedPostsService->purgeAttachmentOnly($deletedPostId);
+
+			return ['action' => 'purgeAttachment', 'message' => 'Attachment purged'];
 		}
 
 		// if its a restore attachment action then restore the specifc attachment
 		else if ($action === 'restoreAttachment') {
 			$this->deletedPostsService->restoreAttachment($deletedPostId, $accountId);
+
+			// rebuild board
+			$this->rebuildBoardByDeletedPostId($deletedPostId);
+
+			return ['action' => 'restoreAttachment', 'message' => 'Attachment restored'];
 		}
 
 		// if it's a delete record action - then delete the record directly from the database
@@ -68,12 +86,10 @@ class deletedPostActionHandler {
 			// delete the row, the post remains intact
 			$this->deletedPostsService->removeEntry($deletedPostId);
 
-			// then redirect to the restored index
-			redirect($this->restoredIndexUrl);
+			return ['action' => 'deleteRecord', 'message' => 'Record deleted', 'redirect' => $this->restoredIndexUrl];
 		}
 
-		// rebuild board
-		$this->rebuildBoardByDeletedPostId($deletedPostId);
+		throw new BoardException("Invalid action");
 	}
 
 	private function rebuildBoardByDeletedPostId(int $deletedPostId): void {

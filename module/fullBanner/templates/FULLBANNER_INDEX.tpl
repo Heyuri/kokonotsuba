@@ -4,6 +4,7 @@
 <!--&FULLBANNER_SUBMIT_FORM/-->
 
 <h3>Approved banners</h3>
+<div class="tableViewportWrapper">
 <table class="postlists" id="fullbannerlist">
 	<thead>
 		<tr>
@@ -17,3 +18,4 @@
 		<!--&IF($EMPTY,'<tr><td colspan="3">No approved banners yet.</td></tr>','')-->
 	</tbody>
 </table>
+</div>

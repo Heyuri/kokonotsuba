@@ -1,69 +1,52 @@
 (function () {
-	// Helper: extract action URL from either a form or anchor within a control element
-	function getActionUrl(control) {
-		var form = control.querySelector('form[action]');
-		if (form) return form.action;
-		var anchor = control.querySelector('a');
-		if (anchor) return anchor.href;
-		return null;
-	}
+	if (!window.attachmentWidget) return;
 
-	document.addEventListener('click', function (e) {
-		// B&D button — ban + delete (same as old BF behavior)
-		var bdControl = e.target.closest('.adminBanDeleteFileFunction, #adminBanDeleteFileFunction');
-		if (bdControl) {
-			var url = getActionUrl(bdControl);
-			if (!url) return;
+	// Ban file only
+	window.attachmentWidget.registerActionHandler('BanFile', function (ctx) {
+		var menuItem = ctx && ctx.menuItem;
+		if (!menuItem || !menuItem.href) return;
 
-			e.preventDefault();
+		var attachmentEl = ctx.container || (ctx.bar && ctx.bar.closest('.attachmentContainer'));
 
-			var postEl = bdControl.closest('.post');
-			if (!postEl) return;
-
-			var attachmentEl = bdControl.closest('.attachmentContainer') || bdControl.closest('.file');
-			if (!attachmentEl) return;
-
-			var state = prepareAttachmentDeletion(attachmentEl, postEl, [
-				'.indicator-banFile',
-				'.indicator-banDeleteFile',
-				'.indicator-deleteFile',
-				'.indicator-imgops'
-			]);
-
-			sendModuleAction(url, {
-				revertUI: state.revertUI,
-				successMessage: 'File banned and deleted.',
-				errorMessage: 'Failed to ban and delete file.',
-				onSuccess: function (data) {
-					if (data && data.deleted_link) {
-						state.addViewFileButton(data.deleted_link);
-					}
-				}
-			});
-			return;
-		}
-
-		// BF button — ban only (no file deletion)
-		var bfControl = e.target.closest('.adminBanFileFunction, #adminBanFileFunction');
-		if (bfControl) {
-			var url = getActionUrl(bfControl);
-			if (!url) return;
-
-			e.preventDefault();
-
-			sendModuleAction(url, {
-				successMessage: 'File hash banned.',
-				errorMessage: 'Failed to ban file.',
-				onSuccess: function () {
-					var banFileIndicator = bfControl.closest('.indicator-banFile');
+		sendModuleAction(menuItem.href, {
+			successMessage: 'File hash banned.',
+			errorMessage: 'Failed to ban file.',
+			onSuccess: function () {
+				if (attachmentEl) {
+					var banFileIndicator = attachmentEl.querySelector('.indicator-BanFile');
 					if (banFileIndicator) banFileIndicator.classList.add('indicatorHidden');
-					var attachmentEl = bfControl.closest('.attachmentContainer') || bfControl.closest('.file');
-					if (attachmentEl) {
-						var bdIndicator = attachmentEl.querySelector('.indicator-banDeleteFile');
-						if (bdIndicator) bdIndicator.classList.add('indicatorHidden');
-					}
+					var bdIndicator = attachmentEl.querySelector('.indicator-BanDeleteFile');
+					if (bdIndicator) bdIndicator.classList.add('indicatorHidden');
 				}
-			});
-		}
+			}
+		});
+	});
+
+	// Ban and delete file
+	window.attachmentWidget.registerActionHandler('BanDeleteFile', function (ctx) {
+		var menuItem = ctx && ctx.menuItem;
+		if (!menuItem || !menuItem.href) return;
+
+		var postEl = ctx.post;
+		var attachmentEl = ctx.container || (ctx.bar && ctx.bar.closest('.attachmentContainer'));
+		if (!attachmentEl || !postEl) return;
+
+		var state = prepareAttachmentDeletion(attachmentEl, postEl, [
+			'.indicator-BanFile',
+			'.indicator-BanDeleteFile',
+			'.indicator-deleteFile',
+			'.indicator-imgops'
+		]);
+
+		sendModuleAction(menuItem.href, {
+			revertUI: state.revertUI,
+			successMessage: 'File banned and deleted.',
+			errorMessage: 'Failed to ban and delete file.',
+			onSuccess: function (data) {
+				if (data && data.deleted_link) {
+					state.addViewFileButton(data.deleted_link);
+				}
+			}
+		});
 	});
 })();

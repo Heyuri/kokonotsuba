@@ -94,6 +94,7 @@ $config['ModuleList'] = array(
 	'cssHax' => true,
 	'notes' => true,
 	'edit' => true,
+	'perceptualBan' => true,
 	/* thread modes */
 	'autoSage' => true,
 	'lockThread' => true,
@@ -118,6 +119,7 @@ $config['ModuleList'] = array(
 	'quickReply' => true,
 	/* misc */
 	'soudane' => true,
+	'postApi' => true,
 	'privateMessage' => true,
 	'fullBanner' => true,
 	'imageMeta' => true,
@@ -468,13 +470,6 @@ $config['ModuleSettings']['CHARACTER_PREVIEW_LIMIT'] = 2500;
 $config['ModuleSettings']['LINE_PREVIEW_LIMIT'] = 10;
 
 $config['ModuleSettings']['NAME_RANDOMIZER_TTL'] = 43200; 
-
-$config['BAD_STRING'] = array(); // Deprecated by spamdb
-$config['BAD_FILEMD5'] = array(); // Deprecated by spamdb
-$config['BANPATTERN'] = array(); // Deprecated by adminban module
-$config['DNSBLservers'] = array();  // Deprecated by adminban module
-$config['DNSBLWHlist'] = array(); // Deprecated by adminban module
-
 
 $config['SWF_THUMB'] = $config['STATIC_URL']."image/swf_thumb.png";
 $config['AUDIO_THUMB'] = $config['STATIC_URL']."image/audio.png";

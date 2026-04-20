@@ -38,8 +38,8 @@ class deletedPostsService {
 	public function restorePost(int $deletedPostId, int $accountId): void {
 		// run transaction
 		$this->inTransaction(function() use($deletedPostId, $accountId) {
-			// get the deleted post entry from the associated deleted posts row
-			$deletedPost = $this->deletedPostsRepository->getDeletedPostRowById($deletedPostId);
+			// get only the core columns needed for restore logic
+			$deletedPost = $this->deletedPostsRepository->getDeletedPostCoreById($deletedPostId);
 			
 			// return early if deletedPost is null for whatever reason
 			if(!$deletedPost) {
@@ -198,8 +198,8 @@ class deletedPostsService {
 	public function purgePost(int $deletedPostId, bool $logAction = true): void {
 		// run transaction
 		$this->inTransaction(function() use($deletedPostId, $logAction) {
-			// get the deleted post entry from the associated deleted posts row
-			$deletedPost = $this->deletedPostsRepository->getDeletedPostRowById($deletedPostId);
+			// get only the core columns needed for purge logic
+			$deletedPost = $this->deletedPostsRepository->getDeletedPostCoreById($deletedPostId);
 			
 			// return early if deletedPost is null for whatever reason
 			if(!$deletedPost) {

@@ -14,6 +14,7 @@ use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Puchiko\strings\newLinesToBreakLines;
 use function Puchiko\strings\sanitizeStr;
 use function Puchiko\strings\truncateText;
+use function Puchiko\strings\autoLink;
 
 class messageRenderer {
 	use CommentHooksTrait;
@@ -74,7 +75,8 @@ class messageRenderer {
 	}
 
 	public function formatPreviewComment(string $body, int $maxLength = 80): string {
-		return $this->applyCommentHooks(sanitizeStr(truncateText($body, $maxLength)));
+		$comment = $this->applyCommentHooks(sanitizeStr(truncateText($body, $maxLength)));
+		return autoLink($comment);
 	}
 
 	private function getComposeFormVariables(string $modulePageUrl, string $prefillRecipient = '', string $prefillSubject = '', string $prefillBody = ''): array {
@@ -166,6 +168,7 @@ class messageRenderer {
 		// apply PostComment hook for emotes/bbcode rendering
 		$bodyHtml = newLinesToBreakLines(sanitizeStr($message['message_body']));
 		$bodyHtml = $this->applyCommentHooks($bodyHtml);
+		$bodyHtml = autoLink($bodyHtml);
 
 		// build reply prefills
 		$replyRecipient = $message['sender_tripcode'];
@@ -201,6 +204,7 @@ class messageRenderer {
 
 		$bodyHtml = newLinesToBreakLines(sanitizeStr($message['message_body']));
 		$bodyHtml = $this->applyCommentHooks($bodyHtml);
+		$bodyHtml = autoLink($bodyHtml);
 
 		return $this->adminPageRenderer->ParseBlock('PM_VIEW_MESSAGE', [
 			'{$MODULE_PAGE_URL}' => htmlspecialchars($backUrl),

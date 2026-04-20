@@ -2,6 +2,7 @@
 
 	<h2 class="theading2">Blotter</h2>
 
+	<div class="tableViewportWrapper">
 	<table class="postlists" id="blotterlist">
 		<thead>
 			<tr>
@@ -14,3 +15,4 @@
 			<!--&IF($EMPTY,'<tr><td colspan="2">No entries</td></tr>','')-->
 		</tbody>
 	</table>
+	</div>

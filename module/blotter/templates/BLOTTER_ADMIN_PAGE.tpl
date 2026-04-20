@@ -18,6 +18,7 @@
 	<form id="blotterdeletionform" action="{$MODULE_URL}" method="POST">
 		<h3>Blotter entries</h3>
 
+		<div class="tableViewportWrapper">
 		<table class="postlists" id="blotterlist">
 			<thead>
 				<tr>
@@ -31,6 +32,7 @@
 				<!--&FOREACH($ROWS,'BLOTTER_ADMIN_PAGE_TABLE_BLOCK')-->
 			</tbody>
 		</table>
+		</div>
 
 		<div class="buttonSection">
 			<input value="Save edits" name="edit_submit" type="submit">

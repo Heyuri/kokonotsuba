@@ -301,8 +301,14 @@ class moduleMain extends abstractModuleMain {
 
 		$yeahIPs = !empty($log) ? array_column($log, 'ip_address') : [];
 
-		// Check if the current IP has already voted; if not, add it to the log
-		if (!in_array($ip, $yeahIPs)) {
+		// Check if the current IP has already voted; if so, remove the vote (toggle off)
+		if (in_array($ip, $yeahIPs)) {
+			// remove from yeahIPs so the updated count is correct
+			$yeahIPs = array_values(array_diff($yeahIPs, [$ip]));
+
+			// Remove the vote using the service
+			$this->soudaneService->removeVote($postUid, $ip, $type);
+		} else {
 			// add to yeah IPs so we can render changes upon a new vote right away
 			$yeahIPs[] = $ip;
 

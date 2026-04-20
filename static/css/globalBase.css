@@ -1,3 +1,5 @@
+/************************ Dropdown Menus ******************************/
+
 .postMenuContainer {
 	display: inline-block;
 }
@@ -56,11 +58,56 @@
 	padding: 1px 4px;
 }
 
-.managepostsCommentWrapper {
-	word-break: break-word;
+/************************ Posts & Threads ******************************/
+
+.post .nameContainer,
+.post .time,
+.post .userIP,
+.post .postnum,
+.post .adminFunctions,
+.post .host,
+.post .filterpostContainer,
+.post .soudaneContainer,
+.post .replyButton,
+.post .backlinks {
+	display: inline-block;
 }
 
-/************************ Hachi stuff *************************/
+.heading {
+	color: #af0a0f;
+	font-size: 1.125em;
+	font-weight: bold;
+}
+
+.threadUpdater {
+	display: inline;
+}
+
+/************************ Attachments & Images ************************/
+
+.multiAttachment {
+	display: inline-block;
+	vertical-align: top;
+}
+
+.multiAttachment .postimg {
+	float: none;
+}
+
+.multiAttachment .fileProperties {
+	display: block;
+}
+
+.attachmentButton {
+	font-size: var(--font-size-small);
+}
+
+.expandimg {
+	max-width: 100%;
+	cursor: pointer;
+}
+
+/************************ Collapsible Details Boxes ********************/
 
 .indicatorHidden {
 	display: none;
@@ -88,44 +135,7 @@
 	padding: 0.25em;
 }
 
-.selectlinktextjs {
-	font-size: var(--font-size-x-small);
-	user-select: none;
-}
-
-.filterSelectBoardItem {
-	display: block;
-}
-
-#reloadTable {
-	margin: 0.5em auto;
-}
-
-.littlelist {
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
-
-.overboardThreadBoardTitle {
-	font-weight: var(--font-weight-bold);
-}
-
-.url-input {
-	min-width: 35ch;
-}
-
-.mod-extra-info {
-	text-align: center;
-}
-
-.deletedPostEntry {
-	text-align: left;
-}
-
-.deletedPost, .deletedFile { 
-	opacity: 0.75;
-}
+/************************ JS Alert/Messages *******************************/
 
 /* Container that holds all messages */
 .messageStackContainer {
@@ -192,64 +202,21 @@
 	font-weight: bold;
 }
 
-.buttonLink {
-	background: none;       /* No background */
-	border: none;           /* No border */
-	color: var(--color-fg-link);         /* Link-like blue color */
-	font: inherit;          /* Inherit font styles */
-	cursor: pointer;       /* Pointer cursor to show it's clickable */
-	padding: 0;             /* Remove padding */
-}
+/************************ Deleted Posts (Mod) **************************/
 
-.alignLeft {
+.deletedPostEntry {
 	text-align: left;
 }
 
-/* Define the fixed position class with padding and bottom-right placement */
-.fixedPosition {
-	position: sticky;
-	bottom: 5px; /* Adjust the distance from the bottom */
-	right: 5px;  /* Adjust the distance from the right */
-}
-
-.multiAttachment {
-	display: inline-block;
-	vertical-align: top;
-}
-
-.multiAttachment .postimg {
-	float: none;
-}
-
-
-.multiAttachment .fileProperties {
-	display: block;
-}
-
-.attachmentButton {
-	font-size: var(--font-size-small);
-}
-
-.expandimg {
-	max-width: 100%;
-	cursor: pointer;
-}
-
-.threadUpdater {
-	display: inline;
-}
-
-.heading {
-	color: #af0a0f;
-	font-size: 1.125em;
-	font-weight: bold;
+.deletedPost, .deletedFile { 
+	opacity: 0.75;
 }
 
 .managepostsCommentWrapper {
+	word-break: break-word;
 	max-height: 200px;
 	overflow: auto;
 	word-wrap: break-word;
-	word-break: break-word;
 }
 
 .staffNotesContainer {
@@ -257,81 +224,59 @@
 	color: var(--color-fg-warning);
 }
 
-.post .nameContainer,
-.post .time,
-.post .userIP,
-.post .postnum,
-.post .adminFunctions,
-.post .host,
-.post .filterpostContainer,
-.post .soudaneContainer,
-.post .replyButton,
-.post .backlinks {
-	display: inline-block;
-}
+/************************ Overboard ***********************************/
 
-/************************ Mobile **************************************/
-
-@media screen and (max-width: 650px) {
-	.dropdownMenu a { line-height: 2 }
-}
-
-/************************ Private Messages *****************************/
-
-.pmSendForm {
-	margin: 0.5em 0;
-}
-
-.pmBodyInput {
-	width: 30em;
-	height: 5em;
-}
-
-.pmRow.pmRead {
-	opacity: 0.85;
-}
-
-.pmRow.pmUnread {
+.overboardThreadBoardTitle {
 	font-weight: var(--font-weight-bold);
 }
 
-.pmUnreadIndicator {
-	color: var(--color-fg-warning);
-	font-weight: var(--font-weight-bold);
+.filterSelectBoardItem {
+	display: block;
 }
 
-.pmStatusCell {
-	width: 1.5em;
-	text-align: center;
+#reloadTable {
+	margin: 0.5em auto;
 }
 
-.pmDateCell {
-	white-space: nowrap;
+.littlelist {
+	margin: 0;
+	padding: 0;
+	list-style: none;
 }
 
-.pmViewCell {
-	white-space: nowrap;
+/************************ Post Form & Dropzone ************************/
+
+.formattingDetails summary {
+  width: fit-content;
+  font-weight: normal;
+  cursor: pointer;
 }
 
-
-
-/* View message page */
-
-.pmViewContainer {
-	text-align: left;
+.formattingDetails summary:hover {
+  font-weight: bold;
 }
 
-.pmViewNav {
-	margin-bottom: 0.5em;
+.dropzoneWrap {
+  user-select: none;
+  margin-top: 4px;
 }
 
-.pmViewMeta td {
-	padding: 2px 8px 2px 0;
+.dropzone {
+  border: 2px dashed #888;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  color: #666;
 }
 
-.pmViewBody {
-	padding: 0.5em 0;
-	word-break: break-word;
+.dropzone.dragover {
+  border-color: #33a;
+  color: #33a;
+}
+
+.dropzoneFilePicker {
+  display: none;
 }
 
 /************************ Filters *************************************/
@@ -380,37 +325,60 @@
   position: relative;
 }
 
-.formattingDetails summary {
-  width: fit-content;
-  font-weight: normal;
-  cursor: pointer;
+/************************ Private Messages *****************************/
+
+.pmSendForm {
+	margin: 0.5em 0;
 }
 
-.formattingDetails summary:hover {
-  font-weight: bold;
+.pmBodyInput {
+	width: 30em;
+	height: 5em;
 }
 
-.dropzoneWrap {
-  user-select: none;
-  margin-top: 4px;
+.pmRow.pmRead {
+	opacity: 0.85;
 }
 
-.dropzone {
-  border: 2px dashed #888;
-  padding: 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  text-align: center;
-  color: #666;
+.pmRow.pmUnread {
+	font-weight: var(--font-weight-bold);
 }
 
-.dropzone.dragover {
-  border-color: #33a;
-  color: #33a;
+.pmUnreadIndicator {
+	color: var(--color-fg-warning);
+	font-weight: var(--font-weight-bold);
 }
 
-.dropzoneFilePicker {
-  display: none;
+.pmStatusCell {
+	width: 1.5em;
+	text-align: center;
+}
+
+.pmDateCell {
+	white-space: nowrap;
+}
+
+.pmViewCell {
+	white-space: nowrap;
+}
+
+/* View message page */
+
+.pmViewContainer {
+	text-align: left;
+}
+
+.pmViewNav {
+	margin-bottom: 0.5em;
+}
+
+.pmViewMeta td {
+	padding: 2px 8px 2px 0;
+}
+
+.pmViewBody {
+	padding: 0.5em 0;
+	word-break: break-word;
 }
 
 /************************ Catalog *************************************/
@@ -422,8 +390,6 @@
 #catalogSortForm {
 	float: left;
 }
-
-/* ---- Catalog ---- */
 
 #catalogTable {
 	margin: 0 auto;
@@ -542,6 +508,53 @@
   margin: 0 auto;
 	text-align: left;
 	font-size: var(--font-size-small);
+}
+
+/************************ Utility Classes ******************************/
+
+.buttonLink {
+	background: none;       /* No background */
+	border: none;           /* No border */
+	color: var(--color-fg-link);         /* Link-like blue color */
+	font: inherit;          /* Inherit font styles */
+	cursor: pointer;       /* Pointer cursor to show it's clickable */
+	padding: 0;             /* Remove padding */
+}
+
+.alignLeft {
+	text-align: left;
+}
+
+/* Define the fixed position class with padding and bottom-right placement */
+.fixedPosition {
+	position: sticky;
+	bottom: 5px; /* Adjust the distance from the bottom */
+	right: 5px;  /* Adjust the distance from the right */
+}
+
+.selectlinktextjs {
+	font-size: var(--font-size-x-small);
+	user-select: none;
+}
+
+.url-input {
+	min-width: 35ch;
+}
+
+.mod-extra-info {
+	text-align: center;
+}
+
+/************************ Tables *******************************/
+.tableViewportWrapper {
+	max-width: 100%;
+	overflow: auto;
+}
+
+/************************ Mobile **************************************/
+
+@media screen and (max-width: 650px) {
+	.dropdownMenu a { line-height: 2 }
 }
 
 @media screen and (max-width: 600px) {
