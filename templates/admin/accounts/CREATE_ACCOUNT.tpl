@@ -1,6 +1,7 @@
 	<form action="{$LIVE_INDEX_FILE}?mode=handleAccountAction" method="POST">
 		<h3>Create a new staff account</h3>
 
+		{$CSRF_HIDDEN_INPUT}
 		<table id="account-create-table">
 			<tbody>
 				<tr>

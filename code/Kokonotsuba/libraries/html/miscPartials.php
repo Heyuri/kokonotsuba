@@ -55,35 +55,37 @@ function generateAdminNavLink(string $liveIndexFile, string $mode, string $navTi
 }
 
 
-function drawAccountTable(string $liveIndexFile, array $accounts) {
+function drawAccountTable(string $liveIndexFile, array $accounts, string $csrfHiddenInput) {
 	$dat = '';
 	$accountsHTML = '';
 	
 	foreach ($accounts as $account) {
 			$accountID = $account->getId();
-			$accountUsername = $account->getUsername();
+			$accountUsername = htmlspecialchars($account->getUsername());
 			$accountRoleLevel = $account->getRoleLevel();
 			$accountNumberOfActions = $account->getNumberOfActions();
 			$accountLastLogin = $account->getLastLogin() ?? '<i>Never</i>';
 	
-			$actionHTML = '[<a title="Delete account" href="' . $liveIndexFile . '?mode=handleAccountAction&del=' . $accountID . '">D</a>] ';
-			if ($accountRoleLevel->value + 1 <= userRole::LEV_ADMIN->value) $actionHTML .= '[<a title="Promote account" href="' . $liveIndexFile . '?mode=handleAccountAction&up=' . $accountID. '">▲</a>]';
-			if ($accountRoleLevel->value - 1 > userRole::LEV_NONE->value) $actionHTML .= '[<a title="Demote account" href="' . $liveIndexFile . '?mode=handleAccountAction&dem=' . $accountID . '">▼</a>]';			
+			$viewHTML = '[<a title="View account" href="' . htmlspecialchars($liveIndexFile) . '?mode=viewStaffAccount&amp;id=' . (int)$accountID . '">View</a>]';
 
 			$accountsHTML .= '<tr> 
-					<td class="colAccountID">' . $accountID . '</td>
-					<td class="colUsername">' . $accountUsername . ' </td>
-					<td class="colRoleLevel">' . $accountRoleLevel->displayRoleName() . '</td>
-					<td class="colNumberofActions">' . $accountNumberOfActions . '</td>
+					<td class="colSelect"><input type="checkbox" name="del_ids[]" value="' . (int)$accountID . '"></td>
+					<td class="colAccountID">' . (int)$accountID . '</td>
+					<td class="colUsername">' . sanitizeStr($accountUsername) . ' </td>
+					<td class="colRoleLevel">' . sanitizeStr($accountRoleLevel->displayRoleName()) . '</td>
+					<td class="colNumberofActions">' . (int)$accountNumberOfActions . '</td>
 					<td class="colLastLogin">' . $accountLastLogin . '</td>
-					<td class="colActions">' . $actionHTML . '</td>
+					<td class="colActions">' . $viewHTML . '</td>
 				</tr>';
 	}
 	$dat .= '
+			<form method="POST" action="' . sanitizeStr($liveIndexFile) . '?mode=handleAccountAction">
+			' . $csrfHiddenInput . '
 			<div class="tableViewportWrapper">
 			<table id="tableStaffList" class="postlists">
 				<thead>
 					<tr>
+						<th class="colSelect"></th>
 						<th class="colAccountID">ID</th>
 						<th class="colUsername">Username</th>
 						<th class="colRoleLevel">Role</th>
@@ -96,7 +98,11 @@ function drawAccountTable(string $liveIndexFile, array $accounts) {
 					' . $accountsHTML . '
 				</tbody>
 			</table>
-			</div>';
+			</div>
+			<div class="buttonSection">
+				<input type="submit" name="bulk_delete" value="Delete selected">
+			</div>
+			</form>';
 	return $dat;
 }
 	
@@ -110,13 +116,13 @@ function drawBoardTable(string $liveIndexFile, array $boards): string {
 			$boardTitle = $board->getBoardTitle();
 			$boardDateAdded = $board->getDateAdded();
 		
-			$actionHTML = '[<a title="View board" href="' . $liveIndexFile . '?mode=boards&view='.$boardUID.'">View</a>] ';
+			$actionHTML = '[<a title="View board" href="' . sanitizeStr($liveIndexFile) . '?mode=boards&view=' . sanitizeStr($boardUID) . '">View</a>] ';
 			$boardsHTML .= '
 				<tr> 
-					<td>' . $boardUID . '</td>
-					<td>' . $boardIdentifier . '</td>
-					<td>' . $boardTitle . '</td>
-					<td>' . $boardDateAdded . '</td>
+					<td>' . sanitizeStr($boardUID) . '</td>
+					<td>' . sanitizeStr($boardIdentifier) . '</td>
+					<td>' . sanitizeStr($boardTitle) . '</td>
+					<td>' . sanitizeStr($boardDateAdded) . '</td>
 					<td>' . $actionHTML . '</td>
 				</tr>';
 	}

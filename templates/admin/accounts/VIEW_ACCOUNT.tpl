@@ -1,6 +1,7 @@
 <form id="account-modify-form" action="{$LIVE_INDEX_FILE}?mode=handleAccountAction" method="POST">
 		<h3>Your account</h3>
 
+		{$CSRF_HIDDEN_INPUT}
 		<input type="hidden" name="password_reset_form" value="1">
 		<input  type="hidden" name="id" value="{$ACCOUNT_ID}">
 
