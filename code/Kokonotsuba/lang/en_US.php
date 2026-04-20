@@ -436,4 +436,6 @@ $language['fullbanner_upload_heading'] = 'Upload banner (Auto-Approved)';
 $language['fullbanner_upload_button'] = 'Upload banner';
 
 $language['quick_reply_link'] = 'Quick reply';
-?>
+
+$language['soudane_vote_own_post'] = 'You cannot vote on your own post';
+$language['soudane_no_post_ids_provided'] = 'No post IDs provided.';
