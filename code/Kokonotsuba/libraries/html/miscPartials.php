@@ -80,6 +80,7 @@ function drawAccountTable(string $liveIndexFile, array $accounts) {
 				</tr>';
 	}
 	$dat .= '
+			<div class="tableViewportWrapper">
 			<table id="tableStaffList" class="postlists">
 				<thead>
 					<tr>
@@ -94,7 +95,8 @@ function drawAccountTable(string $liveIndexFile, array $accounts) {
 				<tbody>
 					' . $accountsHTML . '
 				</tbody>
-			</table>';
+			</table>
+			</div>';
 	return $dat;
 }
 	
@@ -119,6 +121,7 @@ function drawBoardTable(string $liveIndexFile, array $boards): string {
 				</tr>';
 	}
 	$dat .= '
+			<div class="tableViewportWrapper">
 			<table class="postlists">
 				<thead>
 					<tr>
@@ -132,7 +135,8 @@ function drawBoardTable(string $liveIndexFile, array $boards): string {
 				<tbody>
 					' . $boardsHTML . '
 				</tbody>
-			</table>';
+			</table>
+			</div>';
 	return $dat;
 }
 
