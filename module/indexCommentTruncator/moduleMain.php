@@ -40,6 +40,10 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function onRenderComment(string &$comment, ?Post $post): void {
+		if(!$post) {
+			return;
+		}
+
 		// truncate post comment for index view
 		$this->truncatePostComment($comment, $post->getNumber());
 	}
