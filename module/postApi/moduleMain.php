@@ -213,7 +213,7 @@ class moduleMain extends abstractModuleMain {
 			renderCachedJsonPage(_T('post_not_found'), 3600, 400);
 		}
 
-		$post = $this->moduleContext->postRepository->getPostByUid($postUid);
+		$post = $this->moduleContext->postRepository->getCorePostByUid($postUid);
 
 		if (!$post) {
 			renderCachedJsonPage(_T('post_not_found'), 60, 404);
@@ -239,8 +239,31 @@ class moduleMain extends abstractModuleMain {
 			'comment' => $post->getComment(),
 			'parent_thread_uid' => $post->getThreadUid(),
 			'parent_post_number' => $post->getOpNumber(),
+			'attachments' => $this->buildAttachmentsData($post),
 			'html' => $html,
 		];
+	}
+
+	/** Build the attachments array for the API response. */
+	private function buildAttachmentsData(Post $post): array {
+		$attachments = [];
+
+		foreach ($post->getAttachments() as $id => $att) {
+			$attachments[] = [
+				'file_id' => $id,
+				'file_name' => $att['fileName'] ?? '',
+				'file_extension' => $att['fileExtension'] ?? '',
+				'file_size' => (int)($att['fileSize'] ?? 0),
+				'file_width' => (int)($att['fileWidth'] ?? 0),
+				'file_height' => (int)($att['fileHeight'] ?? 0),
+				'thumb_width' => (int)($att['thumbWidth'] ?? 0),
+				'thumb_height' => (int)($att['thumbHeight'] ?? 0),
+				'mime_type' => $att['mimeType'] ?? '',
+				'md5' => $att['fileMd5'] ?? '',
+			];
+		}
+
+		return $attachments;
 	}
 
 	/** Render a post to full HTML using the postRenderer pipeline. */
