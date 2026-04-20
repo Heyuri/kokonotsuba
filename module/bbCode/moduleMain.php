@@ -150,6 +150,12 @@ class moduleMain extends abstractModuleMain {
 	private function bb2html(string $string, array $files = []): string {
 		$this->urlcount=0; // Reset counter
 
+		// Preprocess the BBCode to fix nesting issues
+		$string = $this->fixBBCodeNesting($string);
+
+		// Prevent inline tags from wrapping block-level tags
+		$string = $this->unwrapBlockFromInline($string);
+
 		// Extract [code] and [code=lang] blocks before processing other BBCode
 		if($this->supportCodeBlocks) {
 			$codeBlocks = [];
@@ -167,9 +173,6 @@ class moduleMain extends abstractModuleMain {
 		} else {
 			$codeBlocks = [];
 		}
-
-		// Preprocess the BBCode to fix nesting issues
-		$string = $this->fixBBCodeNesting($string);
 
 		// bold
 		if($this->supportBold) {
@@ -445,6 +448,75 @@ class moduleMain extends abstractModuleMain {
 			}
 		}
 		return $result;
+	}
+
+	/**
+	 * Prevent inline BBCode tags from wrapping block-level BBCode tags.
+	 * When a block tag (code, pre, aa, sw, quote, scroll) is opened while
+	 * inline tags (b, i, u, s, spoiler, color, etc.) are active, the inline
+	 * tags are closed before the block and reopened after it.
+	 */
+	private function unwrapBlockFromInline(string $text): string {
+		$inlineTags = ['b', 'i', 'u', 's', 'spoiler', 'h', 'color', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'ruby', 'rt', 'rp', 'kao'];
+		$blockTags = ['code', 'pre', 'aa', 'sw', 'quote', 'scroll'];
+
+		$pattern = '/(\[\/?[a-zA-Z0-9]+\b(?:=[^\]]+)?\])/i';
+		$parts = preg_split($pattern, $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+		$output = '';
+		$inlineStack = [];
+		$blockDepth = 0;
+
+		foreach ($parts as $part) {
+			if (preg_match('/^\[\/([a-zA-Z0-9]+)\]$/i', $part, $m)) {
+				$tag = strtolower($m[1]);
+
+				if (in_array($tag, $blockTags)) {
+					$blockDepth = max(0, $blockDepth - 1);
+					$output .= $part;
+					// Reopen inline tags when exiting all block levels
+					if ($blockDepth === 0 && !empty($inlineStack)) {
+						foreach ($inlineStack as $openTag) {
+							$output .= $openTag['full'];
+						}
+					}
+				} elseif (in_array($tag, $inlineTags) && $blockDepth === 0) {
+					// Remove from top-level inline stack
+					for ($i = count($inlineStack) - 1; $i >= 0; $i--) {
+						if ($inlineStack[$i]['tag'] === $tag) {
+							array_splice($inlineStack, $i, 1);
+							break;
+						}
+					}
+					$output .= $part;
+				} else {
+					$output .= $part;
+				}
+			} elseif (preg_match('/^\[([a-zA-Z0-9]+)(=[^\]]+)?\]$/i', $part, $m)) {
+				$tag = strtolower($m[1]);
+
+				if (in_array($tag, $blockTags)) {
+					// Close all inline tags before entering block
+					if ($blockDepth === 0 && !empty($inlineStack)) {
+						for ($i = count($inlineStack) - 1; $i >= 0; $i--) {
+							$output .= '[/' . $inlineStack[$i]['tag'] . ']';
+						}
+					}
+					$blockDepth++;
+					$output .= $part;
+				} elseif (in_array($tag, $inlineTags) && $blockDepth === 0) {
+					// Track inline tags opened outside blocks
+					$inlineStack[] = ['tag' => $tag, 'full' => $part];
+					$output .= $part;
+				} else {
+					$output .= $part;
+				}
+			} else {
+				$output .= $part;
+			}
+		}
+
+		return $output;
 	}
 
 	private function highlightCodeSyntax($code, $lang) {
