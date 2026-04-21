@@ -246,7 +246,7 @@ function buildAttachment(array $row): array {
 		'isHidden'       => $row['attachment_is_hidden'],
 		'isAnimated'     => $row['attachment_is_animated'],
 		'isDeleted'      => $row['attachment_is_deleted'],
-		'onlyFileDeleted' => $row['file_only_deleted'],
+		'onlyFileDeleted' => $row['file_only_deleted'] ?? false,
 		'timestampAdded' => $row['attachment_timestamp_added'],
 		'postUid'        => $row['post_uid'],
 		'boardUID'       => $row['boardUID'],
