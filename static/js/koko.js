@@ -263,7 +263,7 @@ class kkwmWindow {
 };
 
 /* Koko JS */
-const _kkDefaults = window.KOKO_DEFAULT_SETTINGS || {};
+const _kkDefaults = (!Array.isArray(window.KOKO_DEFAULT_SETTINGS) && window.KOKO_DEFAULT_SETTINGS) || {};
 const _kkSetting = function (key) {
 	var stored = localStorage.getItem(key);
 	if (stored !== null) return stored === "true";
