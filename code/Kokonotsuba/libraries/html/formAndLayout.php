@@ -28,7 +28,8 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 
 	// Inject default JS user settings as JSON for koko.js
 	$jsDefaults = $config['JS_DEFAULT_SETTINGS'] ?? [];
-	$pte_vals['{$JS_DEFAULT_SETTINGS}'] = '<script>window.KOKO_DEFAULT_SETTINGS=' . json_encode($jsDefaults, JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
+	// Cast to object to ensure json_encode always produces {} not [] when the array is empty
+	$pte_vals['{$JS_DEFAULT_SETTINGS}'] = '<script>window.KOKO_DEFAULT_SETTINGS=' . json_encode((object)$jsDefaults, JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
 
 	$html .= $templateEngine->ParseBlock('HEADER', $pte_vals);
 	$moduleEngine->dispatch('Head', array(&$html, $resno)); // Hook: Head

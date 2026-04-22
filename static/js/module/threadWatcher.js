@@ -6,7 +6,7 @@
 
 const kktwch = { name: "KK Thread watcher",
 	STORAGE_KEY: 'threadWatcher',
-	POLL_INTERVAL: 60000,
+	POLL_INTERVAL: 15000,
 	_pollTimer: null,
 	_win: null,
 
@@ -241,6 +241,12 @@ const kktwch = { name: "KK Thread watcher",
 			var watched = kktwch.getWatchedThreads();
 			if (!watched[threadUid]) {
 				kktwch.watchCurrentThread(threadUid);
+			} else {
+				// Bump lastSeenCount to include our own pending post so
+				// the poll doesn't treat it as an unread reply and play the ding.
+				var entry = watched[threadUid];
+				entry.lastSeenCount = Math.max(entry.lastSeenCount || 0, (entry.postCount || 0) + 1);
+				kktwch.saveWatchedThreads(watched);
 			}
 		});
 	},
@@ -410,14 +416,11 @@ const kktwch = { name: "KK Thread watcher",
 		// Check if notifications are enabled in settings
 		if (!_kkSetting('threadWatcherNotifs')) return;
 
-		// Don't notify if tab is focused and the watcher window is open
-		if (document.hasFocus() && kktwch._win) return;
-
 		var title = entry.subject || 'Thread No.' + (entry.threadNo || entry.threadUid);
 		var body = unreadCount + ' new ' + (unreadCount === 1 ? 'reply' : 'replies');
 
-		// Try browser notification first
-		if ('Notification' in window && Notification.permission === 'granted') {
+		// Try browser notification when tab is not focused
+		if (!document.hasFocus() && 'Notification' in window && Notification.permission === 'granted') {
 			try {
 				var notif = new Notification(title, {
 					body: body,
@@ -436,13 +439,19 @@ const kktwch = { name: "KK Thread watcher",
 			} catch (e) {}
 		}
 
-		// Fallback: play ding sound
+		// Tab is focused or notification failed: play ding
 		kktwch.playDing();
 	},
 
 	playDing: function () {
+		// Cross-tab dedup: if another tab played the ding within the last 3 seconds, skip.
+		var now = Date.now();
+		var lastDing = parseInt(localStorage.getItem('kktwch_lastDing') || '0', 10);
+		if (now - lastDing < 3000) return;
+		localStorage.setItem('kktwch_lastDing', now);
+
 		if (!kktwch._dingAudio) {
-			kktwch._dingAudio = new Audio(STATIC_URL + 'audio/ding.mp3');
+			kktwch._dingAudio = new Audio(STATIC_URL + 'audio/postNotif.mp3');
 		}
 		kktwch._dingAudio.currentTime = 0;
 		kktwch._dingAudio.play().catch(function () {});

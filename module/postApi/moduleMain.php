@@ -151,7 +151,7 @@ class moduleMain extends abstractModuleMain {
 			'posts' => $postsData,
 		];
 
-		renderCachedJsonPage($data);
+		renderCachedJsonPage($data, 0);
 	}
 
 	/** Handle request for a paginated list of thread UIDs sorted by creation time. */
