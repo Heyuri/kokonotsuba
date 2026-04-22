@@ -289,6 +289,10 @@ class registRoute {
 		$secure_tripcode = '';
 		$staffCapcodeInput = '';
 
+		// Store the original raw name (with tripcode and capcode) for cookie storage
+		// This must happen before capcode extraction modifies $rawName
+		$nameCookie = $rawName;
+
 		// Extract staff capcode first ( ## Capcode at the end, with leading space)
 		// This must be done before tripcode parsing so "name#trip ## Mod" works
 		if (preg_match('/\s##\s+(.+)$/', $rawName, $capcodeMatch)) {
@@ -305,11 +309,8 @@ class registRoute {
 			$secure_tripcode = $staffCapcodeInput;
 		}
 		
-		// Now apply HTML escaping to the name portion and store full name for cookie
+		// Now apply HTML escaping to the name portion
 		$name = htmlspecialchars($nameOnly);
-		
-		// Store the raw name (with tripcode) in a separate variable for cookie storage
-		$nameCookie = $rawName;
 
 		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode_input' => $tripcode, 'secure_tripcode_input' => $secure_tripcode,
 			 'tripcode' => '', 'secure_tripcode' => '', 'capcode' => '', 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,

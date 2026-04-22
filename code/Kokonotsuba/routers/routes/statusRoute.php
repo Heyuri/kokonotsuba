@@ -56,6 +56,7 @@ class statusRoute {
 
         $this->moduleEngine->dispatch('LinksAboveBar', array(&$links));
 		$dat .= $links . '<h2 class="theading2">' . _T('info_top') . '</h2>
+<div class="tableViewportWrapper">
 <table id="status" class="postlists">
 	<thead>
 		<tr>
@@ -169,6 +170,7 @@ class statusRoute {
 		</tr>
 	</tbody>
 </table>
+</div>
 <hr>';
 
 		$dat .= $this->board->getBoardFooter();

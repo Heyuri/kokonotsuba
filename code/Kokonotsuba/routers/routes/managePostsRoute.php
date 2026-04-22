@@ -182,7 +182,7 @@ class managePostsRoute {
 		$html = '<form id="managePostsForm" action="' . htmlspecialchars($context['cleanUrl']) . '" method="POST">';
 		$html .= '<input type="hidden" name="mode" value="admin">
 					' . getCsrfHiddenInput() . '
-					<div id="tableManagePostsContainer">
+					<div id="tableManagePostsContainer" class="tableViewportWrapper">
 						<table id="tableManagePosts" class="postlists">
 							<thead>
 								<tr>' . _T('admin_list_header') . '</tr>

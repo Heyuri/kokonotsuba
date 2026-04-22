@@ -182,7 +182,7 @@ class overboard {
 			$tIDsByBoard[$thread->getThread()->getBoardUID()][] = $thread->getThread()->getUid();
 		}
 		
-		$allPosts = $this->postRepository->fetchPostsFromBoardsAndThreads($tIDsByBoard);
+		$allPosts = $this->postRepository->fetchPostsFromBoardsAndThreads($tIDsByBoard, $this->canViewDeleted);
 		
 		$postsByBoardAndThread = array();
 		foreach ($allPosts as $post) {

@@ -44,7 +44,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->fileBanService = getFileBanService($this->moduleContext->transactionManager);
 
-		$this->registerAttachmentHook('onRenderAttachment');
+		$this->listenProtected('ModerateAttachmentWidget', function(array &$widgets, array &$fileData) {
+			$this->onAttachmentWidget($widgets, $fileData);
+		});
 		$this->registerLinksAboveBarHook(_T('admin_nav_file_ban_title'), $this->moduleUrl, _T('admin_nav_file_ban'));
 
 		$this->listenProtected('ModuleAdminHeader', function(string &$moduleHeader) {
@@ -53,43 +55,34 @@ class moduleAdmin extends abstractModuleAdmin {
 		});
 	}
 
-	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
-		$md5 = $attachment['fileMd5'] ?? '';
-		$isBanned = false;
-
-		if (!empty($md5)) {
-			$banned = $this->fileBanService->findBannedHashes([$md5]);
-			$isBanned = !empty($banned);
+	private function onAttachmentWidget(array &$widgets, array &$fileData): void {
+		$md5 = $fileData['fileMd5'] ?? '';
+		if (empty($md5)) {
+			return;
 		}
 
-		$hasAttachment = !empty($attachment) && !empty($md5);
-		$canDelete = $this->canDeleteAttachment($attachment);
-
-		// BF (ban only)
-		$bfContent = '';
-		if ($hasAttachment && !$isBanned) {
-			$banUrl = $this->getModulePageURL([
-				'action' => 'banOnly',
-				'post_uid' => $attachment['postUid'],
-				'fileId' => $attachment['fileId'],
-			], false, true);
-
-			$bfContent = $this->renderAttachmentForm($banUrl, 'BanFile', _T('file_ban_btn_title'), 'BF');
+		$banned = $this->fileBanService->findBannedHashes([$md5]);
+		if (!empty($banned)) {
+			return;
 		}
-		$attachmentProperties .= $this->renderAttachmentIndicator('banFile', $bfContent, !$hasAttachment || $isBanned);
 
-		// B&D (ban + delete)
-		$bdContent = '';
-		if ($canDelete && !$isBanned) {
+		// Ban file only
+		$banUrl = $this->getModulePageURL([
+			'action' => 'banOnly',
+			'post_uid' => $fileData['postUid'],
+			'fileId' => $fileData['fileId'],
+		], false, true);
+		$widgets[] = $this->buildWidgetEntry($banUrl, 'BanFile', _T('file_ban_btn_title'), '');
+
+		// Ban & delete (only if file can be deleted)
+		if ($this->canDeleteAttachment($fileData)) {
 			$bdUrl = $this->getModulePageURL([
 				'action' => 'banAndDelete',
-				'post_uid' => $attachment['postUid'],
-				'fileId' => $attachment['fileId'],
+				'post_uid' => $fileData['postUid'],
+				'fileId' => $fileData['fileId'],
 			], false, true);
-
-			$bdContent = $this->renderAttachmentForm($bdUrl, 'BanDeleteFile', _T('file_ban_bd_btn_title'), 'B&amp;D');
+			$widgets[] = $this->buildWidgetEntry($bdUrl, 'BanDeleteFile', _T('file_ban_bd_btn_title'), '');
 		}
-		$attachmentProperties .= $this->renderAttachmentIndicator('banDeleteFile', $bdContent, !$canDelete || $isBanned);
 	}
 
 	public function ModulePage(): void {

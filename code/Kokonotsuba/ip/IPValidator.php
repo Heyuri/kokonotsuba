@@ -37,67 +37,6 @@ class IPValidator {
 		return (string) $this->ip;
 	}
 
-	public function isBanned(&$baninfo): bool {
-		if (!$this->config['BAN_CHECK']) return false; // Disabled
-
-		$IP = (string) $this->ip;
-		$IsBanned = false;
-
-		foreach ($this->config['BANPATTERN'] as $pattern) {
-			$slash = substr_count($pattern, '/');
-
-			if ($slash == 2) { // RegExp
-				$pattern .= 'i';
-			} elseif ($slash == 1) { // CIDR Notation
-				if ($this->matchCIDR($IP, $pattern)) {
-					$IsBanned = true;
-					break;
-				}
-				continue;
-			} elseif (strpos($pattern, '*') !== false || strpos($pattern, '?') !== false) { // Wildcard
-				$pattern = '/^' . str_replace(['.', '*', '?'], ['\.', '.*', '.?'], $pattern) . '$/i';
-			} else { // Full-text
-				if ($IP == $pattern) {
-					$IsBanned = true;
-					break;
-				}
-				continue;
-			}
-
-			if (preg_match($pattern, $IP)) {
-				$IsBanned = true;
-				break;
-			}
-		}
-
-		if ($IsBanned) {
-			$baninfo = _T('ip_banned');
-			return true;
-		}
-
-		return $this->checkDNSBL($IP, $baninfo);
-	}
-
-	private function checkDNSBL(string $IP, &$baninfo): bool {
-		if (!isset($this->config['DNSBLservers'][0]) || !$this->config['DNSBLservers'][0]) return false;
-		if (array_search($IP, $this->config['DNSBLWHlist']) !== false) return false;
-
-		$rev = implode('.', array_reverse(explode('.', $IP)));
-		$lastPoint = count($this->config['DNSBLservers']) - 1;
-		if ($this->config['DNSBLservers'][0] < $lastPoint) $lastPoint = $this->config['DNSBLservers'][0];
-
-		for ($i = 1; $i <= $lastPoint; $i++) {
-			$query = $rev . '.' . $this->config['DNSBLservers'][$i] . '.';
-			$result = gethostbyname($query);
-			if ($result && ($result != $query)) {
-				$baninfo = _T('ip_dnsbl_banned', $this->config['DNSBLservers'][$i]);
-				return true;
-			}
-		}
-
-		return false;
-	}
-
 	private function getRemoteAddrThroughProxy(): string {
 		foreach ($this->config['PROXYHEADERlist'] as $key) {
 			$value = $this->request->getServer($key);

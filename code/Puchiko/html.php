@@ -251,3 +251,45 @@ function countHtmlLineBreaks(string $html): int {
 
 	return $brNodes->length;
 }
+
+/**
+ * Close any unclosed HTML tags in a fragment.
+ *
+ * Scans for opening and closing tags, tracks which are still open,
+ * and appends closing tags in reverse order. This acts as a safety
+ * net after truncation to prevent formatting from leaking.
+ *
+ * @param string $html The HTML fragment that may have unclosed tags
+ * @return string      The HTML with all tags properly closed
+ */
+function closeUnclosedTags(string $html): string {
+	$voidElements = ['br', 'hr', 'img', 'input', 'meta', 'link', 'area', 'base', 'col', 'embed', 'source', 'track', 'wbr'];
+
+	preg_match_all('#<(/?)([a-z][a-z0-9]*)\b[^>]*/?>#i', $html, $matches, PREG_SET_ORDER);
+
+	$openTags = [];
+
+	foreach ($matches as $match) {
+		$isClosing = $match[1] === '/';
+		$tagName = strtolower($match[2]);
+
+		if (in_array($tagName, $voidElements, true)) {
+			continue;
+		}
+
+		if ($isClosing) {
+			$key = array_search($tagName, array_reverse($openTags, true));
+			if ($key !== false) {
+				unset($openTags[$key]);
+			}
+		} else {
+			$openTags[] = $tagName;
+		}
+	}
+
+	foreach (array_reverse($openTags) as $tag) {
+		$html .= "</$tag>";
+	}
+
+	return $html;
+}

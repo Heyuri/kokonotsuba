@@ -94,6 +94,7 @@ $config['ModuleList'] = array(
 	'cssHax' => true,
 	'notes' => true,
 	'edit' => true,
+	'perceptualBan' => true,
 	'excimerViewer' => true,
 	/* thread modes */
 	'autoSage' => true,
@@ -119,6 +120,7 @@ $config['ModuleList'] = array(
 	'quickReply' => true,
 	/* misc */
 	'soudane' => true,
+	'postApi' => true,
 	'privateMessage' => true,
 	'fullBanner' => true,
 	'imageMeta' => true,
@@ -175,12 +177,9 @@ $config['ModuleSettings']['FULLBANNER_REQUIRED_WIDTH'] = 468; // Required banner
 $config['ModuleSettings']['FULLBANNER_REQUIRED_HEIGHT'] = 60; // Required banner image height in pixels
 $config['ModuleSettings']['FULLBANNER_MAX_FILE_SIZE'] = 204800; // Maximum banner file size in bytes (200KB)
 
-// Full banners are now managed via the database through the admin panel.
-// Legacy BANNER_ADS config is no longer used.
-
 //mod_wf
 $config['ModuleSettings']['FILTERS'] = array( 
-  '/\b(rabi-en-rose|rabi~en~rose)\b/i' => '<span class="rabienrose">Rabi~en~Rose</span>',
+	'/\b(rabi-en-rose|rabi~en~rose)\b/i' => '<span class="rabienrose">Rabi~en~Rose</span>',
 	'/\b(newfag)\b/i' => 'n00b like me',
 	'/\b(newfags)\b/i' => 'n00bs like me',
 	'/\b(heyuri★cgi)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Heyuri%E2%98%85CGI">Heyuri★CGI</a>',
@@ -193,7 +192,7 @@ $config['ModuleSettings']['FILTERS'] = array(
 	'/@party ii/i' => '<a href="https://cgi.heyuri.net/party2/">@Party II</a>',
 	'/\b(ayashii world)\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Ayashii_World">Ayashii World</a>',
 	'/\b(partybus)\b/i' => '<span class="partybus"><span class="partybusColor1">p</span><span class="partybusColor2">a</span><span class="partybusColor3">r</span><span class="partybusColor4">t</span><span class="partybusColor5">y</span><span class="partybusColor6">b</span><span class="partybusColor7">u</span><span class="partybusColor8">s</span></span>',
-	'/\b(boku)\b/i' => '<span class="boku" title="AGE OF DESU IS OVAR, WE BOKU NOW"><span class="bokuGreen">B</span><span class="bokuRed">O</span><span class="bokuGreen">K</span><span class="bokuRed">U</span></span>'
+	'/\b(boku)\b/i' => '<span class="boku" title="AGE OF DESU IS OVAR, WE BOKU NOW"><span class="bokuGreen">B</span><span class="bokuRed">O</span><span class="bokuGreen">K</span><span class="bokuRed">U</span></span>',
 );
 
 //mod_threadlist
@@ -238,9 +237,6 @@ $config['ModuleSettings']['DISPLAY_THREADED_FORMAT'] = false;
 //mod_readonly
 $config['ModuleSettings']['ALLOW_REPLY'] = false; // allow replies to threads but disallow creating threads when board is read-only
 $config['ModuleSettings']['MINIMUM_ROLE'] = Kokonotsuba\userRole::LEV_MODERATOR;
-
-//mod_pushpost
-$config['ModuleSettings']['PUSHPOST_CHARACTER_LIMIT'] = 250;
 
 // posterID
 $config['ModuleSettings']['DISP_ID'] = false; // if posterID is enabled: false = OPs can open by putting displayid to mail, true = IDs always ON
@@ -475,13 +471,6 @@ $config['ModuleSettings']['CHARACTER_PREVIEW_LIMIT'] = 2500;
 $config['ModuleSettings']['LINE_PREVIEW_LIMIT'] = 10;
 
 $config['ModuleSettings']['NAME_RANDOMIZER_TTL'] = 43200; 
-
-$config['BAD_STRING'] = array(); // Deprecated by spamdb
-$config['BAD_FILEMD5'] = array(); // Deprecated by spamdb
-$config['BANPATTERN'] = array(); // Deprecated by adminban module
-$config['DNSBLservers'] = array();  // Deprecated by adminban module
-$config['DNSBLWHlist'] = array(); // Deprecated by adminban module
-
 
 $config['SWF_THUMB'] = $config['STATIC_URL']."image/swf_thumb.png";
 $config['AUDIO_THUMB'] = $config['STATIC_URL']."image/audio.png";

@@ -5,13 +5,22 @@
 	var soudane = window.soudane;
     
 	soudane.vote = function(postUid, type, url) {
-		var xmlhttp = new XMLHttpRequest();
-		xmlhttp.open("GET", url + "&postUid=" + encodeURIComponent(postUid) + "&type=" + type);
 		var elem = document.getElementById("vote_" + type + "_" + postUid);
+		var originalText = elem.innerHTML;
 		elem.innerHTML = "&hellip;";
-		xmlhttp.onreadystatechange = function() {
-			if (xmlhttp.readyState == 4) {
-				elem.innerHTML = xmlhttp.responseText;
+
+		fetch(url + "&postUid=" + encodeURIComponent(postUid) + "&type=" + type, {
+			headers: { 'X-Requested-With': 'XMLHttpRequest' }
+		})
+			.then(function(response) { return response.json(); })
+			.then(function(json) {
+				if (json.error) {
+					elem.innerHTML = originalText;
+					showMessage(json.message, false);
+					return;
+				}
+
+				elem.innerHTML = json.text;
 				soudane.updateScore(postUid, url);
 
 				// Check and update class from noVotes to hasVotes if needed
@@ -19,21 +28,28 @@
 					elem.classList.remove("noVotes");
 					elem.classList.add("hasVotes");
 				}
-			}
-		};
-		xmlhttp.send(null);
+			})
+			.catch(function(err) {
+				elem.innerHTML = originalText;
+				console.error("Vote failed:", err);
+			});
 	};
 
 	soudane.updateScore = function(postUid, url) {
 		var scoreElem = document.getElementById("vote_score_" + postUid);
-		var xmlhttp = new XMLHttpRequest();
-		xmlhttp.open("GET", url + "&postUid=" + encodeURIComponent(postUid) + "&type=score");
-		xmlhttp.onreadystatechange = function() {
-			if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-				scoreElem.innerHTML = xmlhttp.responseText;
-			}
-		};
-		xmlhttp.send(null);
+
+		fetch(url + "&postUid=" + encodeURIComponent(postUid) + "&type=score", {
+			headers: { 'X-Requested-With': 'XMLHttpRequest' }
+		})
+			.then(function(response) {
+				if (response.ok) return response.json();
+			})
+			.then(function(json) {
+				if (json && json.score) scoreElem.innerHTML = json.score;
+			})
+			.catch(function(err) {
+				console.error("Score update failed:", err);
+			});
 	};
 
 	soudane.updatePosts = function () {

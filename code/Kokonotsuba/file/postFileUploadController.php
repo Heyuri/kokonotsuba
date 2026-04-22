@@ -104,7 +104,6 @@ class postFileUploadController {
 		$mimeType = $this->file->getMimeType();
 		$upfileStatus = $this->file->getFileStatus();
 
-		$this->validateFileHash($md5Hash);
 		$this->validateFileSize($fileSize);
 		$this->validateFileExtentionAndMimeType($fileExtention, $mimeType);
 		$this->validateFileUploadStatus($upfileStatus);
@@ -163,12 +162,6 @@ class postFileUploadController {
 	private function validateFileSize(int $fileSize): void {
 		if ($fileSize > $this->config['MAX_KB'] * 1024) {
 			throw new BoardException(_T('regist_upload_exceedcustom'));
-		}
-	}
-
-	private function validateFileHash(string $md5Hash) {
-		if (in_array($md5Hash, $this->config['BAD_FILEMD5'])) {
-			throw new BoardException(_T('regist_upload_blocked'));
 		}
 	}
 

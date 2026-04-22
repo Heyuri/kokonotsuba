@@ -4,6 +4,7 @@
 	<form action="{$MODULE_URL}" method="POST">
 		<input type="hidden" name="action" value="delete">
 		<!--&IF($ROWS,'
+		<div class="tableViewportWrapper">
 		<table class="postlists">
 			<thead>
 				<tr>
@@ -17,6 +18,7 @@
 				<!--&FOREACH($ROWS,'PERCEPTUAL_BAN_ROW')-->
 			</tbody>
 		</table>
+		</div>
 		<div class="buttonSection">
 			<input type="submit" value="{$FORM_SUBMIT_BTN}">
 		</div>

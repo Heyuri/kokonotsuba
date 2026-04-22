@@ -96,7 +96,7 @@ class actionLogRoute {
 		}
 		
 		$actionLogHtml .= "
-			<div id=\"actionlogtableContainer\">
+			<div id=\"actionlogtableContainer\" class=\"tableViewportWrapper\">
 				<table class=\"postlists\" id=\"actionlogtable\">
 					<thead>
 						<tr>

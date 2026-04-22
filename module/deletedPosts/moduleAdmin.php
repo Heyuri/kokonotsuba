@@ -7,6 +7,7 @@ use Kokonotsuba\userRole;
 use Kokonotsuba\account\staffAccountFromSession;
 
 use function Puchiko\request\redirect;
+use function Puchiko\json\renderJsonPage;
 
 // require helper classes
 require __DIR__ . '/deletedPostUtility.php';
@@ -143,9 +144,16 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// handle POST requests
 		if ($this->moduleContext->request->isPost()) {
-			$this->deletedPostActionHandler->handleModPageRequests($accountId, $roleLevel);
+			$result = $this->deletedPostActionHandler->handleModPageRequests($accountId, $roleLevel);
 
-			redirect($this->modulePageUrl);
+			// return JSON for AJAX requests
+			if ($this->moduleContext->request->isAjax()) {
+				renderJsonPage(['success' => true, ...$result]);
+			}
+
+			// redirect for non-JS requests
+			$redirectUrl = $result['redirect'] ?? $this->modulePageUrl;
+			redirect($redirectUrl);
 		} 
 		// handle DP visibilty toggle
 		else if($this->moduleContext->request->hasParameter('toggleVisibility', 'GET')) {

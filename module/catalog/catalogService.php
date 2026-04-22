@@ -169,6 +169,6 @@ class catalogService {
 			'boardUID' => (int) $row['boardUID'],
 		];
 
-		return resolveThumbnailDisplayUrl($attachment, $board);
+		return resolveThumbnailDisplayUrl($attachment, $board) ?? '';
 	}
 }

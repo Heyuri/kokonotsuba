@@ -108,7 +108,7 @@ class postRepository extends baseRepository {
 	 * @param array<int, array<int>>  $boardThreadMap Map of boardUID => array of thread/post UIDs.
 	 * @return array Array of merged post data arrays.
 	 */
-	public function fetchPostsFromBoardsAndThreads(array $boardThreadMap): array {
+	public function fetchPostsFromBoardsAndThreads(array $boardThreadMap, bool $viewDeleted = false): array {
 		if (empty($boardThreadMap)) {
 			return array();
 		}
@@ -146,7 +146,7 @@ class postRepository extends baseRepository {
 		}
 
 		$whereClause = implode(' OR ', $conditions);
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $viewDeleted);
 		$query .= " WHERE {$whereClause}";
 
 		$posts = $this->queryAll($query, $params);
@@ -185,6 +185,47 @@ class postRepository extends baseRepository {
 
 		// return row
 		// make sure to return the first
+		return $post[0] ?? false;
+	}
+
+	/**
+	 * Fetch a single post by UID with attachments, skipping soudane/notes/deleted_posts JOINs.
+	 *
+	 * @param int $post_uid Post UID.
+	 * @return Post|false Merged post object, or false if not found.
+	 */
+	public function getCorePostByUid(int $post_uid): Post|false {
+		$query = "
+			SELECT
+				p.*,
+				t.post_op_number,
+				f.id                 AS attachment_id,
+				f.file_name          AS attachment_file_name,
+				f.stored_filename    AS attachment_stored_filename,
+				f.file_ext           AS attachment_file_ext,
+				f.file_md5           AS attachment_file_md5,
+				f.file_size          AS attachment_file_size,
+				f.file_width         AS attachment_file_width,
+				f.file_height        AS attachment_file_height,
+				f.thumb_file_width   AS attachment_thumb_width,
+				f.thumb_file_height  AS attachment_thumb_height,
+				f.mime_type          AS attachment_mime_type,
+				f.is_hidden          AS attachment_is_hidden,
+				f.is_animated        AS attachment_is_animated,
+				f.is_deleted         AS attachment_is_deleted,
+				f.timestamp_added    AS attachment_timestamp_added
+			FROM {$this->table} p
+			INNER JOIN {$this->threadTable} t ON p.thread_uid = t.thread_uid
+			LEFT JOIN {$this->fileTable} f ON f.post_uid = p.post_uid
+			WHERE p.post_uid = :post_uid
+		";
+
+		$params = [':post_uid' => $post_uid];
+
+		$rows = $this->queryAll($query, $params);
+
+		$post = mergeMultiplePostRows($rows);
+
 		return $post[0] ?? false;
 	}
 

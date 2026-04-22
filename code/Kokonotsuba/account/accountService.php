@@ -100,5 +100,18 @@ class accountService {
 
 		$this->actionLoggerService->logAction("Reset password", GLOBAL_BOARD_UID);
 	}
+
+	/**
+	 * Admin: reset another account's password by ID.
+	 *
+	 * @param int    $accountId  Target account primary key.
+	 * @param string $newPassword New plain-text password.
+	 * @return void
+	 */
+	public function handleAdminPasswordReset(int $accountId, string $newPassword): void {
+		$passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+		$this->accountRepository->updateAccountPasswordHashById($accountId, $passwordHash);
+		$this->actionLoggerService->logAction("Admin reset password for account #$accountId", GLOBAL_BOARD_UID);
+	}
 	
 }

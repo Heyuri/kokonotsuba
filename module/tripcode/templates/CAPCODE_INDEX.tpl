@@ -1,6 +1,6 @@
 	<h3>Capcodes</h3> 
 	<!--&CAPCODE_CREATE_FORM/-->
-	<div class="capcodeListContainer">
+	<div class="capcodeListContainer tableViewportWrapper">
 		<h4>Capcode list</h4>
 		<p>User capcodes that can be used as long as the user knows the trip password.</p>
 		<table class="capcodeList postlists">
@@ -17,7 +17,7 @@
 		</table>
 	</div>
 	
-	<div class="staffCapcodeListContainer">
+	<div class="staffCapcodeListContainer tableViewportWrapper">
 		<h4>Staff capcode list</h4>
 		<p>Only usable by staff. Can be edited in <code>globalconfig.php</code></p>
 

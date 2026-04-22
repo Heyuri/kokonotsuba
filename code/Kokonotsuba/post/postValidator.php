@@ -45,18 +45,6 @@ class postValidator {
 	}
 
 	public function spamValidate(&$name, &$email, &$sub, &$com) {
-		// Blocking: IP/Hostname/DNSBL Check Function
-		$baninfo = '';
-		if($this->IPValidator->isBanned($baninfo)){
-			throw new BoardException(_T('regist_ipfiltered', $baninfo));
-		}
-		// Block: Restrict the text that appears (text filter?)
-		foreach($this->config['BAD_STRING'] as $value){
-			if(preg_match($value, $com) || preg_match($value, $sub) || preg_match($value, $name) || preg_match($value, $email)){
-				throw new BoardException(_T('regist_wordfiltered'));
-			}
-		}
-	 
 		// Check if you enter Sakura Japanese kana (kana = Japanese syllabary)
 		foreach(array($name, $email, $sub, $com) as $anti){
 			if(anti_sakura($anti)){

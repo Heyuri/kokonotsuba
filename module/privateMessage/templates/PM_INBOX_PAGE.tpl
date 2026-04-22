@@ -10,7 +10,7 @@
 			<summary class="pmSendFormToggle">{$SEND_LABEL}</summary>
 			<!--&PM_COMPOSE_FORM/-->
 		</details>
-		<div class="pmTableContainer">
+		<div class="pmTableContainer tableViewportWrapper">
 			<!--&IF($HAS_MESSAGES,'<table class="postlists">
 				<thead>
 					<tr class="pmTableHeader">

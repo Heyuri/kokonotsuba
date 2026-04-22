@@ -1277,13 +1277,6 @@ caption h3 {
 	display: block !important;
 }
 
-#actionlogtableContainer,
-#tableManagePostsContainer,
-#tableThreadlistContainer {
-	max-width: 100%;
-	overflow: auto;
-}
-
 #tableManagePosts {
 	font-size: var(--font-size-small);
 }

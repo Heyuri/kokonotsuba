@@ -353,7 +353,6 @@ $language['admin_nav_file_ban_title'] = 'Manage banned files';
 $language['admin_nav_file_ban'] = 'File bans';
 
 // perceptualBan module
-$language['perceptual_ban_blocked'] = 'Upload failed.<br> File not allowed (perceptual match).';
 $language['perceptual_ban_btn_title'] = 'Perceptually ban this file';
 $language['perceptual_ban_bd_btn_title'] = 'Perceptually ban file and delete';
 $language['perceptual_ban_invalid_action'] = 'Invalid perceptual ban action.';
@@ -444,4 +443,6 @@ $language['thread_watch_label'] = 'Watch thread';
 $language['thread_unwatch_label'] = 'Unwatch thread';
 $language['thread_watch_empty'] = 'No watched threads.';
 $language['thread_watch_unwatch_title'] = 'Unwatch';
-?>
+
+$language['soudane_vote_own_post'] = 'You cannot vote on your own post';
+$language['soudane_no_post_ids_provided'] = 'No post IDs provided.';

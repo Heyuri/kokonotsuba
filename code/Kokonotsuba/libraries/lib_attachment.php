@@ -64,7 +64,7 @@ function resolveThumbName(?array $attachment): false|string {
  * @param bool   $fileDeleted  Whether the attachment has been soft-deleted.
  * @return string Thumbnail URL to display.
  */
-function resolveThumbnailDisplayUrl(array $attachment, board $board, bool $fileDeleted = false): string {
+function resolveThumbnailDisplayUrl(array $attachment, board $board, bool $fileDeleted = false): ?string {
 	$staticUrl = $board->getConfigValue('STATIC_URL');
 
 	// Deleted file placeholder
@@ -103,7 +103,7 @@ function resolveThumbnailDisplayUrl(array $attachment, board $board, bool $fileD
 	return $staticUrl . 'image/nothumb.gif';
 }
 
-function getAttachmentUrl(?array $attachment, bool $isThumb = false): false|string {
+function getAttachmentUrl(?array $attachment, bool $isThumb = false): ?string {
     // If no attachment is provided, return an empty string
     if (!$attachment) {
         return '';

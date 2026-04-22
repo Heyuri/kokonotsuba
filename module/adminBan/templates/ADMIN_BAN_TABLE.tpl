@@ -5,7 +5,7 @@
 
 		<input type="hidden" name="adminban-action" value="delete-ban">
 
-		<div id="banTableContainer">
+		<div id="banTableContainer" class="tableViewportWrapper">
 			<table class="postlists banTable" id="{$TABLE_ID}">
 				<thead>
 					<tr>

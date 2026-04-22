@@ -525,6 +525,36 @@ class deletedPostsRepository extends baseRepository {
 	}
 
 	/**
+	 * Fetch only the core columns needed for purge/restore operations.
+	 * Avoids the heavy JOINs to files, soudane, notes, and accounts.
+	 *
+	 * @param int $deletedPostId Deletion record ID.
+	 * @return DeletedPost|false Lightweight DeletedPost, or false if not found.
+	 */
+	public function getDeletedPostCoreById(int $deletedPostId): DeletedPost|false {
+		$query = "
+			SELECT
+				dp.id           AS deleted_post_id,
+				dp.post_uid,
+				dp.by_proxy,
+				dp.open_flag,
+				dp.file_id,
+				dp.file_only    AS file_only_deleted,
+				p.is_op,
+				p.thread_uid,
+				p.no,
+				p.boardUID
+			FROM {$this->table} dp
+			LEFT JOIN {$this->postTable} p ON p.post_uid = dp.post_uid
+			WHERE dp.id = :id
+		";
+
+		$row = $this->queryOne($query, [':id' => $deletedPostId]);
+
+		return $row ? new DeletedPost($row) : false;
+	}
+
+	/**
 	 * Return the total count of open (non-restored) deletion records.
 	 *
 	 * @return int Total count.

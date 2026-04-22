@@ -167,13 +167,13 @@ class moduleMain extends abstractModuleMain {
 
 				if (is_array($exif_data) && count($exif_data)) {
 					echo '<li>Image contains EXIF data:</li>';
-					echo '</ul><table class="exif postlists"><tbody>';
+					echo '</ul><div class="tableViewportWrapper"><table class="exif postlists"><tbody>';
 					foreach ($exif_data as $key => $section) {
 						foreach ($section as $name => $value) {
 							echo "<tr><th>$key.$name</th><td>$value</td></tr>";
 						}
 					}
-					echo '</tbody></table><p>';
+					echo '</tbody></table></div><p>';
 				} else {
 					echo '<li>No EXIF data found.</li>';
 				}
@@ -182,11 +182,11 @@ class moduleMain extends abstractModuleMain {
 				$exif = new exif($pfile);
 				if (count($exif->exif_data)) {
 					echo '<li>Image contains EXIF data:</li>';
-					echo '</ul><table border="1"><tbody>';
+					echo '</ul><div class="tableViewportWrapper"><table border="1"><tbody>';
 					foreach ($exif->exif_data as $key => $value) {
 						echo "<tr><th>$key</th><td>$value</td></tr>";
 					}
-					echo '</tbody></table><p>';
+					echo '</tbody></table></div><p>';
 				} else {
 					echo '<li>No EXIF data found.</li>';
 				}
