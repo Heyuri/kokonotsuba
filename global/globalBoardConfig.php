@@ -387,7 +387,6 @@ $config['ModuleSettings']['EMOTES'] = [
 	'nyaoo'		=>'emo-yotsuba-nyaoo.gif',
 	'nyaoo2'	=>'emo-yotsuba-nyaoo2.gif',
 	'nyaoo-closedeyes'	=>'emo-yotsuba-nyaoo-closedeyes.gif',
-	'nyaoo-closed-eyes'	=>'emo-yotsuba-nyaoo-closedeyes.gif',
 	'ph34r'		=>'emo-yotsuba-ph34r.gif',
 	'ninja'		=>'emo-yotsuba-ph34r.gif',
 	'rolleyes'	=>'emo-yotsuba-rolleyes.gif',
