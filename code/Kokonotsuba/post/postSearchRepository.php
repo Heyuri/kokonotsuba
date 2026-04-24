@@ -71,7 +71,7 @@ class postSearchRepository extends baseRepository {
 
 		// Phase 1: find matching post UIDs with a lightweight query (no soudane/notes/account JOINs)
 		$uidQuery = $this->buildLightweightSearchQuery('SELECT DISTINCT p.post_uid', $fields, $boardUids, $openingPostsOnly);
-		$uidQuery .= " ORDER BY p.root DESC";
+		$uidQuery .= " ORDER BY p.root DESC, p.post_uid DESC";
 		$this->paginate($uidQuery, $params, $limit, $offset);
 
 		$uidRows = $this->queryAllAsIndexArray($uidQuery, $params);
@@ -112,7 +112,7 @@ class postSearchRepository extends baseRepository {
 		$unionQuery = $result['query'];
 		$params = $result['params'];
 
-		$query = "SELECT post_uid FROM ({$unionQuery}) AS search_hits ORDER BY root DESC";
+		$query = "SELECT post_uid FROM ({$unionQuery}) AS search_hits ORDER BY root DESC, post_uid DESC";
 		$this->paginate($query, $params, $limit, $offset);
 
 		$uidRows = $this->queryAllAsIndexArray($query, $params);
@@ -258,7 +258,7 @@ class postSearchRepository extends baseRepository {
 		$fullQuery = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, false);
 		$inClause = pdoPlaceholdersForIn($postUids);
 		$fullQuery .= " WHERE p.post_uid IN {$inClause}";
-		$fullQuery .= " ORDER BY p.root DESC";
+		$fullQuery .= " ORDER BY p.root DESC, p.post_uid DESC";
 
 		$postsResults = $this->queryAll($fullQuery, $postUids);
 
