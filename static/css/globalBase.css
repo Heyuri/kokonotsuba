@@ -381,6 +381,88 @@
 	word-break: break-word;
 }
 
+/************************ Media ***************************************/
+
+.pmStickyWrap {
+	position: fixed;
+	left: 50%;
+	bottom: 0;
+	transform: translateX(-50%);
+	width: var(--pm-slot-width, 728px);
+	height: var(--pm-slot-height, 90px);
+	max-width: 100%;
+	z-index: 900;
+	background: transparent;
+}
+
+.pmStickyClose {
+	position: absolute;
+	top: -1.4em;
+	right: 0;
+	background: rgba(0, 0, 0, 0.5);
+	color: #fff;
+	border: none;
+	padding: 0 0.4em;
+	cursor: pointer;
+	font-size: 1em;
+	line-height: 1.4em;
+	z-index: 901;
+}
+
+.pmSlot {
+	text-align: center;
+	overflow: hidden;
+}
+
+.pmSlotMobile {
+	display: none;
+}
+
+.mediaIframe {
+	display: table;
+	width: 470px;
+	width: var(--pm-slot-width, 728px);
+	height: var(--pm-slot-height, 90px);
+	border: 0;
+	margin: 0 auto;
+	max-width: 100%;
+	aspect-ratio: 39 / 5;
+}
+
+.pmPostAd .postinfo {
+	margin-bottom: 0.25em;
+}
+
+.pmInlineRow {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 4px;
+	margin: 0.5em auto;
+	overflow-x: auto;
+}
+
+.pmPostAdBadge {
+	font-size: var(--font-size-small);
+	font-weight: var(--font-weight-bold);
+	background: var(--color-bg-theading, #800000);
+	color: var(--color-fg-theading, #fff);
+	padding: 0 4px;
+}
+
+.pmPostAdSlot {
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.pmPostAdFrame {
+	width: 100%;
+	height: 100%;
+	border: 0;
+	display: block;
+	background: transparent;
+}
+
 /************************ Catalog *************************************/
 
 #catalogSettings {
@@ -553,8 +635,32 @@
 
 /************************ Mobile **************************************/
 
+.pmMobileOnly {
+	display: none;
+}
+
 @media screen and (max-width: 650px) {
+	.pmMobileOnly {
+		display: block;
+	}
+
 	.dropdownMenu a { line-height: 2 }
+
+	.pmSlotTop {
+		display: none;
+	}
+
+	.pmSlotMobile {
+		display: block;
+	}
+
+	.pmDesktopOnly {
+		display: none;
+	}
+
+	.pmStickyWrap {
+		display: none;
+	}
 }
 
 @media screen and (max-width: 600px) {

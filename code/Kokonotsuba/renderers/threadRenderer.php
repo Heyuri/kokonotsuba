@@ -105,6 +105,9 @@ class threadRenderer {
 				$templateValues['{$THREAD_OP}'] = $postHtml;
 			} else {
 				$templateValues['{$REPLIES}'] .= $postHtml;
+				$postSeparateHtml = '';
+				$this->moduleEngine->dispatch('PostSeparate', [&$postSeparateHtml, $i - 1]);
+				$templateValues['{$REPLIES}'] .= $postSeparateHtml;
 			}
 		}
 		
@@ -121,7 +124,9 @@ class threadRenderer {
 		}
 
 		$threadHtml .= $this->templateEngine->ParseBlock('THREAD', $templateValues);
-		$threadHtml .= $this->templateEngine->ParseBlock('THREADSEPARATE', []);
+		$separateHtml = $this->templateEngine->ParseBlock('THREADSEPARATE', []);
+		$this->moduleEngine->dispatch('ThreadSeparate', [&$separateHtml, $threadIterator]);
+		$threadHtml .= $separateHtml;
 		return $threadHtml;
 	}
 	

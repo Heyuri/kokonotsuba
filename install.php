@@ -624,6 +624,19 @@ class tableCreator {
                 INDEX idx_ip_date (ip_address, date_submitted)
             ) ENGINE=InnoDB;
             ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['ADS_TABLE']} (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                slot VARCHAR(20) NOT NULL,
+                type VARCHAR(10) NOT NULL,
+                src TEXT NULL,
+                href TEXT NULL,
+                alt TEXT NULL,
+                html TEXT NULL,
+                enabled TINYINT(1) NOT NULL DEFAULT 1,
+                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                INDEX idx_ads_slot_enabled (slot, enabled)
+            ) ENGINE=InnoDB;
+            ",
             "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BLOTTER_TABLE']} (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 blotter_content TEXT NOT NULL,

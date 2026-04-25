@@ -206,66 +206,25 @@ $config['ModuleSettings']['USER_COUNT_DAT_FILE'] = 'users.dat'; //Name of the fi
 $config['ModuleSettings']['USER_COUNT_TIMEOUT'] = 10; //Timeout for counting the amount of users. Counts in minutes
 
 //mod_banner
-$config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_PATH'].'image/banner/'; // Set this to the directory of your banner images
+$config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_PATH'].'image/default/'; // Set this to the directory of your banner images
 
 //mod_ads
 $config['ModuleSettings']['ADS_ENABLE_POPUNDER'] = true;
 $config['ModuleSettings']['ADS_STICKY_ROTATE_SECONDS'] = 45;
-$config['ModuleSettings']['ADS_POPUNDER_COOLDOWN_SECONDS'] = 600;
+$config['ModuleSettings']['ADS_INLINE_EVERY_N_THREADS'] = 4; // Insert inline ad after every N threads. Requires at least N threads on the page.
+$config['ModuleSettings']['ADS_INLINE_COUNT'] = 2; // Number of ads to show side-by-side in each inline row (1–5).
+$config['ModuleSettings']['ADS_POST_AD_EVERY_N_POSTS'] = 15; // Insert a post-style ad after every N reply posts within a thread.
 
 // Slot dimensions are fixed in layout, but containers still cap at max-width: 100%.
 $config['ModuleSettings']['ADS_SLOT_DIMENSIONS'] = [
-	'regular' => ['width' => 728, 'height' => 90],
-	'mobile' => ['width' => 320, 'height' => 100],
-	'sticky' => ['width' => 728, 'height' => 90],
-	'popunder' => ['width' => 1024, 'height' => 768],
+	'top' => ['width' => 728, 'height' => 90],
+	'mobile' => ['width' => 300, 'height' => 250],
+	'above' => ['width' => 728, 'height' => 90],
+	'below' => ['width' => 728, 'height' => 90],
+	'inline' => ['width' => 728, 'height' => 90],
+	'post_ad' => ['width' => 300, 'height' => 250],
 ];
 
-// Ad formats supported:
-// - script: ['type' => 'script', 'html' => '<script ...></script>']
-// - image/link: ['type' => 'image', 'src' => 'https://...', 'href' => 'https://...']
-$config['ModuleSettings']['ADS_ITEMS'] = [
-	'regular' => [
-		[
-			'type' => 'image',
-			'src' => $config['STATIC_URL'] . 'image/banner/defaultbanner.png',
-			'href' => 'https://example.net/',
-			'alt' => 'Regular banner ad',
-		],
-	],
-	'mobile' => [
-		[
-			'type' => 'image',
-			'src' => $config['STATIC_URL'] . 'image/banner/defaultbanner.png',
-			'href' => 'https://example.net/',
-			'alt' => 'Mobile banner ad',
-		],
-	],
-	'sticky' => [
-		[
-			'type' => 'script',
-			'html' => '<script async src="https://example.net/sticky-ad.js"></script>',
-		],
-		[
-			'type' => 'image',
-			'src' => $config['STATIC_URL'] . 'image/banner/defaultbanner.png',
-			'href' => 'https://example.net/',
-			'alt' => 'Sticky ad',
-		],
-	],
-	'popunder' => [
-		[
-			'type' => 'script',
-			'html' => '<script async src="https://example.net/popunder-ad.js"></script>',
-		],
-		[
-			'type' => 'image',
-			'src' => $config['STATIC_URL'] . 'image/banner/defaultbanner.png',
-			'href' => 'https://example.net/',
-			'alt' => 'Popunder ad',
-		],
-	],
-];
 
 //mod_addinfo
 $config['ModuleSettings']['ADD_INFO'] = array(
