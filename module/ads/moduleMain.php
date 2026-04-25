@@ -325,9 +325,9 @@ class moduleMain extends abstractModuleMain {
 
 		if ($slot !== null) {
 			$dims = $this->getSlotDimensions($slot);
-			$imgStyle = 'max-width:' . (int)$dims['width'] . 'px;max-height:' . (int)$dims['height'] . 'px;height:auto;display:inline;';
+			$imgStyle = 'max-width:' . (int)$dims['width'] . 'px;max-height:' . (int)$dims['height'] . 'px;';
 		} else {
-			$imgStyle = 'max-width:100%;height:auto;display:inline;';
+			$imgStyle = '';
 		}
 
 		return $this->moduleContext->adminPageRenderer->ParseBlock('ADS_AD_IMAGE', [

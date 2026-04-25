@@ -450,6 +450,12 @@
 	padding: 0 4px;
 }
 
+.pmAdImage {
+	max-width: 100%;
+	height: auto;
+	display: inline;
+}
+
 .pmPostAdSlot {
 	max-width: 100%;
 	overflow: hidden;

@@ -1,1 +1,1 @@
-<!--&IF($HAS_HREF,'<a href="{$HREF}" target="_blank" rel="noopener"><img src="{$SRC}" alt="{$ALT}" style="{$IMG_STYLE}"></a>','<img src="{$SRC}" alt="{$ALT}" style="{$IMG_STYLE}">')-->
+<!--&IF($HAS_HREF,'<a href="{$HREF}" target="_blank" rel="noopener"><img class="pmAdImage" src="{$SRC}" alt="{$ALT}" style="{$IMG_STYLE}"></a>','<img class="pmAdImage" src="{$SRC}" alt="{$ALT}" style="{$IMG_STYLE}">')-->
