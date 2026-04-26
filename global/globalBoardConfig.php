@@ -224,7 +224,6 @@ $config['ModuleSettings']['ADS_SLOT_DIMENSIONS'] = [
 	'post_ad' => ['width' => 300, 'height' => 250],
 ];
 
-
 //mod_addinfo
 $config['ModuleSettings']['ADD_INFO'] = array(
 	'Read the <a href="//example.net/rules.html">rules</a> before you post.',
