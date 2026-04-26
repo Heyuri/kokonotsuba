@@ -1207,7 +1207,6 @@ caption h3 {
 
 #adminPageContent > form,
 .modulePageContent > form {
-	display: table;
 	margin: 0.5em auto;
 }
 

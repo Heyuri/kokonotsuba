@@ -135,6 +135,10 @@
 	padding: 0.25em;
 }
 
+.detailsboxForm {
+	display: table;
+} 
+
 /************************ JS Alert/Messages *******************************/
 
 /* Container that holds all messages */
