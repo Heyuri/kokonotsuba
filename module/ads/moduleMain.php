@@ -67,34 +67,28 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function onRenderAboveThreads(string &$html): void {
-		$ads = $this->getAdsForSlot('above');
-		if (!empty($ads)) {
-			$dims = $this->getSlotDimensions('above');
+		$ad = $this->getNextAdForSlot('above');
+		if ($ad !== null) {
 			$html .= $this->moduleContext->adminPageRenderer->ParseBlock('ADS_INLINE_SLOT', [
-				'{$STYLE}' => '--pm-slot-width:' . (int)$dims['width'] . 'px;--pm-slot-height:' . (int)$dims['height'] . 'px;',
-				'{$SRC}'   => sanitizeStr($this->buildFrameUrl('above')),
+				'{$AD_HTML}' => $this->buildAdHtml($ad, 'above'),
 			]);
 		}
 
-		$mobileAds = $this->getAdsForSlot('mobile');
-		if (!empty($mobileAds)) {
-			$mobileDims = $this->getSlotDimensions('mobile');
+		$mobileAd = $this->getNextAdForSlot('mobile');
+		if ($mobileAd !== null) {
 			$html .= $this->moduleContext->adminPageRenderer->ParseBlock('ADS_MOBILE_INLINE_SLOT', [
-				'{$STYLE}' => '--pm-slot-width:' . (int)$mobileDims['width'] . 'px;--pm-slot-height:' . (int)$mobileDims['height'] . 'px;',
-				'{$SRC}'   => sanitizeStr($this->buildFrameUrl('mobile')),
+				'{$AD_HTML}' => $this->buildAdHtml($mobileAd, 'mobile'),
 			]);
 		}
 	}
 
 	private function onRenderBelowThreads(string &$html): void {
-		$ads = $this->getAdsForSlot('below');
-		if (empty($ads)) {
+		$ad = $this->getNextAdForSlot('below');
+		if ($ad === null) {
 			return;
 		}
-		$dims = $this->getSlotDimensions('below');
 		$html .= $this->moduleContext->adminPageRenderer->ParseBlock('ADS_INLINE_SLOT', [
-			'{$STYLE}' => '--pm-slot-width:' . (int)$dims['width'] . 'px;--pm-slot-height:' . (int)$dims['height'] . 'px;',
-			'{$SRC}'   => sanitizeStr($this->buildFrameUrl('below')),
+			'{$AD_HTML}' => $this->buildAdHtml($ad, 'below'),
 		]);
 	}
 
@@ -103,31 +97,26 @@ class moduleMain extends abstractModuleMain {
 		if (($threadIterator + 1) % $inlineEvery !== 0) {
 			return;
 		}
-		$ads = $this->getAdsForSlot('inline');
-		if (empty($ads)) {
+		$ad = $this->getNextAdForSlot('inline');
+		if ($ad === null) {
 			return;
 		}
 		$count = min(5, max(1, (int)$this->getConfig('ModuleSettings.ADS_INLINE_COUNT', 3)));
-		$dims = $this->getSlotDimensions('inline');
-		$style = '--pm-slot-width:' . (int)$dims['width'] . 'px;--pm-slot-height:' . (int)$dims['height'] . 'px;';
-		$frameUrl = sanitizeStr($this->buildFrameUrl('inline'));
+		$adHtml = $this->buildAdHtml($ad, 'inline');
 		$slots = '';
 		for ($i = 0; $i < $count; $i++) {
 			$slots .= $this->moduleContext->adminPageRenderer->ParseBlock('ADS_INLINE_SLOT_ITEM', [
-				'{$STYLE}' => $style,
-				'{$SRC}'   => $frameUrl,
+				'{$AD_HTML}' => $adHtml,
 			]);
 		}
 		$html .= $this->moduleContext->adminPageRenderer->ParseBlock('ADS_INLINE_ROW', [
 			'{$SLOTS}' => $slots,
 		]);
 
-		$mobileAds = $this->getAdsForSlot('mobile');
-		if (!empty($mobileAds)) {
-			$mobileDims = $this->getSlotDimensions('mobile');
+		$mobileAd = $this->getNextAdForSlot('mobile');
+		if ($mobileAd !== null) {
 			$html .= $this->moduleContext->adminPageRenderer->ParseBlock('ADS_MOBILE_INLINE_SLOT', [
-				'{$STYLE}' => '--pm-slot-width:' . (int)$mobileDims['width'] . 'px;--pm-slot-height:' . (int)$mobileDims['height'] . 'px;',
-				'{$SRC}'   => sanitizeStr($this->buildFrameUrl('mobile')),
+				'{$AD_HTML}' => $this->buildAdHtml($mobileAd, 'mobile'),
 			]);
 		}
 	}
@@ -203,12 +192,10 @@ class moduleMain extends abstractModuleMain {
 			'{$STICKY_ROTATE_SECONDS}' => max(0, (int)$this->getConfig('ModuleSettings.ADS_STICKY_ROTATE_SECONDS', 45)),
 		]);
 
-		$mobileAds = $this->getAdsForSlot('mobile');
-		if (!empty($mobileAds)) {
-			$mobileDims = $this->getSlotDimensions('mobile');
+		$mobileAd = $this->getNextAdForSlot('mobile');
+		if ($mobileAd !== null) {
 			$footer .= $this->moduleContext->adminPageRenderer->ParseBlock('ADS_MOBILE_INLINE_SLOT', [
-				'{$STYLE}' => '--pm-slot-width:' . (int)$mobileDims['width'] . 'px;--pm-slot-height:' . (int)$mobileDims['height'] . 'px;',
-				'{$SRC}'   => sanitizeStr($this->buildFrameUrl('mobile')),
+				'{$AD_HTML}' => $this->buildAdHtml($mobileAd, 'mobile'),
 			]);
 		}
 	}
@@ -227,7 +214,7 @@ class moduleMain extends abstractModuleMain {
 			return;
 		}
 
-		$this->renderFrameForSlot($slot);
+		renderJsonPage(['success' => false, 'error' => 'Invalid page'], 400);
 	}
 
 	private function renderJsonForSlot(string $slot): void {
@@ -250,24 +237,6 @@ class moduleMain extends abstractModuleMain {
 		];
 
 		renderJsonPage($payload);
-	}
-
-	private function renderFrameForSlot(string $slot): void {
-		$ad = $this->getNextAdForSlot($slot);
-		$dims = $this->getSlotDimensions($slot);
-
-		header('Content-Type: text/html; charset=utf-8');
-
-		if ($ad === null) {
-			echo $this->moduleContext->adminPageRenderer->ParseBlock('ADS_FRAME_EMPTY', []);
-			return;
-		}
-
-		echo $this->moduleContext->adminPageRenderer->ParseBlock('ADS_FRAME_PAGE', [
-			'{$FRAME_WIDTH}'  => (int)$dims['width'],
-			'{$FRAME_HEIGHT}' => (int)$dims['height'],
-			'{$AD_HTML}'      => $this->buildAdHtml($ad),
-		]);
 	}
 
 	private function getSlotDimensions(string $slot): array {
@@ -339,11 +308,4 @@ class moduleMain extends abstractModuleMain {
 		]);
 	}
 
-	private function buildFrameUrl(string $slot): string {
-		return $this->modulePageUrl . '&pageName=frame&type=' . rawurlencode($slot);
-	}
-
-	private function buildJsonUrl(string $slot): string {
-		return $this->modulePageUrl . '&pageName=json&type=' . rawurlencode($slot);
-	}
 }

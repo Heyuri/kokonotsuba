@@ -1,4 +1,4 @@
 <div class="pmMobileOnly">
-	<div class="pmInlineSlot" style="{$STYLE}"><iframe class="pmFrame mediaIframe" title="Sponsor" loading="lazy" src="{$SRC}"></iframe></div>
+	<div class="pmInlineSlot centerText">{$AD_HTML}</div>
 	<hr class="threadSeprate">
 </div>

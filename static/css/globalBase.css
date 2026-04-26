@@ -413,22 +413,8 @@
 	z-index: 901;
 }
 
-.pmSlot {
-	text-align: center;
-	overflow: hidden;
-}
-
 .pmSlotMobile {
 	display: none;
-}
-
-.mediaIframe {
-	display: block;
-	width: var(--pm-slot-width, 728px);
-	height: var(--pm-slot-height, 90px);
-	border: 0;
-	margin: 0 auto;
-	max-width: 100%;
 }
 
 .pmPostAd .postinfo {
