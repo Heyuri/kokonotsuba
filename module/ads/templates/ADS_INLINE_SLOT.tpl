@@ -1,0 +1,4 @@
+<div class="pmDesktopOnly">
+	<div class="pmInlineSlot" style="{$STYLE}"><iframe class="pmFrame mediaIframe" title="Sponsor" loading="lazy" src="{$SRC}"></iframe></div>
+	<hr class="threadSeprate">
+</div>

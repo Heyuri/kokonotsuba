@@ -124,6 +124,7 @@ $config['ModuleList'] = array(
 	'fullBanner' => true,
 	'imageMeta' => true,
 	'onlineCounter' => true,
+	'ads' => true,
 	'banner' => true,
 	'addInfo' => true,
 	'imageServer' => true,
@@ -160,8 +161,6 @@ $config['ModuleSettings']['ALLOWED_COMMENT_REPETITIONS'] = 5; // How many times 
 $config['ModuleSettings']['IPTOGGLE'] = 1; // 1 to have OPs toggle IP display, 2 enables for all posts
 
 //mod_blotter
-$config['ModuleSettings']['BLOTTER_FILE'] = __DIR__.DIRECTORY_SEPARATOR.'blotter.txt'; //blotter flat file
-$config['ModuleSettings']['BLOTTER_DATE_FORMAT'] = "Y/m/d"; //time date format for blotter entries
 $config['ModuleSettings']['BLOTTER_PREVIEW_AMOUNT'] = 5; //Number of previewed blotter entries on the index and thread view
 
 //mod_pm
@@ -207,7 +206,25 @@ $config['ModuleSettings']['USER_COUNT_DAT_FILE'] = 'users.dat'; //Name of the fi
 $config['ModuleSettings']['USER_COUNT_TIMEOUT'] = 10; //Timeout for counting the amount of users. Counts in minutes
 
 //mod_banner
-$config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_PATH'].'image/banner/'; // Set this to the directory of your banner images
+$config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_PATH'].'image/default/'; // Set this to the directory of your banner images
+
+//mod_ads
+$config['ModuleSettings']['ADS_ENABLE_POPUNDER'] = true;
+$config['ModuleSettings']['ADS_STICKY_ROTATE_SECONDS'] = 45;
+$config['ModuleSettings']['ADS_INLINE_EVERY_N_THREADS'] = 4; // Insert inline ad after every N threads. Requires at least N threads on the page.
+$config['ModuleSettings']['ADS_INLINE_COUNT'] = 2; // Number of ads to show side-by-side in each inline row (1–5).
+$config['ModuleSettings']['ADS_POST_AD_EVERY_N_POSTS'] = 15; // Insert a post-style ad after every N reply posts within a thread.
+
+// Slot dimensions are fixed in layout, but containers still cap at max-width: 100%.
+$config['ModuleSettings']['ADS_SLOT_DIMENSIONS'] = [
+	'top' => ['width' => 728, 'height' => 90],
+	'mobile' => ['width' => 300, 'height' => 250],
+	'above' => ['width' => 728, 'height' => 90],
+	'below' => ['width' => 728, 'height' => 90],
+	'inline' => ['width' => 728, 'height' => 90],
+	'post_ad' => ['width' => 300, 'height' => 250],
+];
+
 
 //mod_addinfo
 $config['ModuleSettings']['ADD_INFO'] = array(
