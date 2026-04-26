@@ -413,17 +413,8 @@
 	z-index: 901;
 }
 
-.pmSlot {
-	text-align: center;
-	overflow: hidden;
-}
-
 .pmSlotMobile {
 	display: none;
-}
-.pmInlineSlot {
-	text-align: center;
-	overflow: hidden;
 }
 
 .pmPostAd .postinfo {
