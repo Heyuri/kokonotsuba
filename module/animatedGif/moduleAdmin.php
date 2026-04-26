@@ -30,21 +30,19 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->registerAttachmentHook('onRenderAttachment');
+		$this->listenProtected('ModerateAttachmentWidget', function(array &$widgetArray, array &$fileData) {
+			$this->onRenderAttachmentWidget($widgetArray, $fileData);
+		});
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
 	}
-	
-	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
-		$isGif = $this->canAnimateAttachment($attachment);
 
-		$buttonHtml = '';
-		if ($isGif) {
-			$animatedGifButtonUrl = $this->generateAnimatedGifUrl($attachment['postUid'], $attachment['fileId']);
-			$flag = ($attachment['isAnimated']) ? 'g' : 'G';
-			$title = ($attachment['isAnimated']) ? 'Use still image of GIF' : 'Use animated GIF';
-			$buttonHtml = $this->renderAttachmentButton($animatedGifButtonUrl, 'GIF', $title, $flag);
+	private function onRenderAttachmentWidget(array &$widgetArray, array &$fileData): void {
+		if (!$this->canAnimateAttachment($fileData)) {
+			return;
 		}
-		$attachmentProperties .= $this->renderAttachmentIndicator('animateGif', $buttonHtml, !$isGif);
+		$url = $this->generateAnimatedGifUrl($fileData['postUid'], $fileData['fileId']);
+		$label = $fileData['isAnimated'] ? 'Use still image of GIF' : 'Use animated GIF';
+		$widgetArray[] = $this->buildWidgetEntry($url, 'animateGif', $label, '');
 	}
 
 	private function canAnimateAttachment(array $attachment): bool {
