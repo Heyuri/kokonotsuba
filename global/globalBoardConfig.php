@@ -218,9 +218,9 @@ $config['ModuleSettings']['ADS_POST_AD_EVERY_N_POSTS'] = 15; // Insert a post-st
 $config['ModuleSettings']['ADS_SLOT_DIMENSIONS'] = [
 	'top' => ['width' => 728, 'height' => 90],
 	'mobile' => ['width' => 300, 'height' => 250],
-	'above' => ['width' => 728, 'height' => 90],
-	'below' => ['width' => 728, 'height' => 90],
-	'inline' => ['width' => 728, 'height' => 90],
+	'above' => ['width' => 728, 'height' => 150],
+	'below' => ['width' => 728, 'height' => 150],
+	'inline' => ['width' => 728, 'height' => 150],
 	'post_ad' => ['width' => 300, 'height' => 250],
 ];
 
