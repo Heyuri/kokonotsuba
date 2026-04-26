@@ -209,7 +209,6 @@ $config['ModuleSettings']['USER_COUNT_TIMEOUT'] = 10; //Timeout for counting the
 $config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_PATH'].'image/default/'; // Set this to the directory of your banner images
 
 //mod_ads
-$config['ModuleSettings']['ADS_ENABLE_POPUNDER'] = true;
 $config['ModuleSettings']['ADS_STICKY_ROTATE_SECONDS'] = 45;
 $config['ModuleSettings']['ADS_INLINE_EVERY_N_THREADS'] = 4; // Insert inline ad after every N threads. Requires at least N threads on the page.
 $config['ModuleSettings']['ADS_INLINE_COUNT'] = 2; // Number of ads to show side-by-side in each inline row (1–5).
