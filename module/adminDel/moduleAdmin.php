@@ -14,7 +14,6 @@ use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\generateModerateForm;
-use function Kokonotsuba\libraries\getCsrfMetaTag;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\request\redirect;
@@ -186,9 +185,6 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		// can view deleted posts
 		$canViewDeleted = $this->moduleContext->postRenderingPolicy->viewDeleted();
-
-		// inject CSRF meta tag for JS
-		$moduleHeader .= getCsrfMetaTag();
 
 		// add requiredForAll js for the live frontend
 		// this js will add the deletedPost/deletedFile classes and deletion indicator to posts on the livefrontend

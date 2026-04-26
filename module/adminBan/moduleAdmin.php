@@ -12,7 +12,6 @@ use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
-use function Kokonotsuba\libraries\getCsrfMetaTag;
 use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\html\drawPager;
@@ -70,8 +69,6 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		$moduleHeader .= getCsrfMetaTag();
-
 		// get ban template
 		$banTemplate = $this->generateBanJsTemplate();
 

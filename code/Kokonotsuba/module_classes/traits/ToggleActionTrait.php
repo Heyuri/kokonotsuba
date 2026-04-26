@@ -5,7 +5,6 @@ namespace Kokonotsuba\module_classes\traits;
 use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\generateModerateForm;
-use function Kokonotsuba\libraries\getCsrfMetaTag;
 
 /**
  * Trait for thread-level toggle modules (lock, sticky, autosage).
@@ -102,7 +101,6 @@ trait ToggleActionTrait {
 	}
 
 	protected function onToggleModuleHeader(string &$moduleHeader): void {
-		$moduleHeader .= getCsrfMetaTag();
 		$this->includeScript($this->getToggleJsFile(), $moduleHeader);
 	}
 }
