@@ -1776,7 +1776,7 @@ a.linkjs {
 
 .window {
 	position: fixed;
-	z-index: 100;
+	z-index: 10000;
 	background-color: inherit;
 	border-width: 1px;
 	border-style: solid;
