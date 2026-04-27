@@ -147,7 +147,7 @@ class registRoute {
 			);
 
 			// Age/sage logic
-			$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['postOpRoot'], $postData['email'], $postData['age']);
+			$agingHandler->apply($postData['thread_uid'], $postData['time'], $thread ? $thread->getThread() : null, $postData['email'], $postData['age']);
 
 			// Generate redirect URL and sanitize
 			$redirect = $this->generateRedirectURL($computedPostInfo['no'], $postData['email'], $postData['resno'], $computedPostInfo['timeInMilliseconds']);
