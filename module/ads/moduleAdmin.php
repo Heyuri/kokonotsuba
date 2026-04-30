@@ -14,6 +14,8 @@ use Kokonotsuba\userRole;
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\html\getPageFromRequest;
+use function Kokonotsuba\libraries\html\pageToOffset;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
@@ -191,16 +193,13 @@ class moduleAdmin extends abstractModuleAdmin {
 			$slotFilter = '';
 		}
 
-		$currentPage = ($request->hasParameter('page') && is_numeric($request->getParameter('page')))
-			? (int)$request->getParameter('page')
-			: 0;
-		$currentPage = max(0, $currentPage);
+		$currentPage = getPageFromRequest($request);
 
 		$entriesPerPage = max(1, (int)$this->getConfig('ADMIN_PAGE_DEF', 100));
 
 		$filterArg = $slotFilter !== '' ? $slotFilter : null;
 		$total  = $this->adRepository->countAll($filterArg);
-		$offset = $currentPage * $entriesPerPage;
+		$offset = pageToOffset($currentPage, $entriesPerPage);
 		$ads    = $this->adRepository->getPagedAds($entriesPerPage, $offset, $filterArg);
 
 		$filterUrl = $this->modulePage . ($slotFilter !== '' ? '&slot=' . rawurlencode($slotFilter) : '');

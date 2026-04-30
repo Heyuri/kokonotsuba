@@ -15,6 +15,8 @@ use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\html\getPageFromRequest;
+use function Kokonotsuba\libraries\html\pageToOffset;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
@@ -135,13 +137,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		// Pagination
 		$request = $this->moduleContext->request;
 
-		$localPage = ($request->hasParameter('lpage') && is_numeric($request->getParameter('lpage')))
-			? max(0, (int)$request->getParameter('lpage')) : 0;
-		$globalPage = ($request->hasParameter('gpage') && is_numeric($request->getParameter('gpage')))
-			? max(0, (int)$request->getParameter('gpage')) : 0;
+		$localPage = getPageFromRequest($request, 'lpage');
+		$globalPage = getPageFromRequest($request, 'gpage');
 
-		$localOffset = $localPage * $this->bansPerPage;
-		$globalOffset = $globalPage * $this->bansPerPage;
+		$localOffset = pageToOffset($localPage, $this->bansPerPage);
+		$globalOffset = pageToOffset($globalPage, $this->bansPerPage);
 
 		$localPageEntries = array_slice($log, $localOffset, $this->bansPerPage);
 		$globalPageEntries = array_slice($glog, $globalOffset, $this->bansPerPage);

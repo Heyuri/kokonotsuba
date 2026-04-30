@@ -327,7 +327,7 @@ class moduleMain extends abstractModuleMain {
 		string $searchUrl,
 		bool $adminMode
 	): string {
-		$searchPage = intval($this->moduleContext->request->getParameter('page', 'GET', 0));
+		$searchPage = max(1, intval($this->moduleContext->request->getParameter('page', 'GET', 1)));
 		$searchPostsPerPage = $this->getConfig('ModuleSettings.SEARCH_POSTS_PER_PAGE');
 
 		// determine search method

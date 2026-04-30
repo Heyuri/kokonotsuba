@@ -5,6 +5,22 @@ namespace Kokonotsuba\libraries\html;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\request\request;
 
+/**
+ * Read a 1-based page number from the request, defaulting to 1.
+ */
+function getPageFromRequest(request $request, string $pageParam = 'page'): int {
+	return ($request->hasParameter($pageParam) && is_numeric($request->getParameter($pageParam)))
+		? max(1, (int)$request->getParameter($pageParam))
+		: 1;
+}
+
+/**
+ * Convert a 1-based page number to a 0-based database offset.
+ */
+function pageToOffset(int $page, int $entriesPerPage): int {
+	return max(0, $page - 1) * $entriesPerPage;
+}
+
 function validateAndClampPagination(int $entriesPerPage, int $totalEntries, int $currentPage): array {
 	if ((filter_var($totalEntries, FILTER_VALIDATE_INT) === false || $totalEntries < 0) ||
 		(filter_var($entriesPerPage, FILTER_VALIDATE_INT) === false || $entriesPerPage < 0)) {
@@ -17,7 +33,7 @@ function validateAndClampPagination(int $entriesPerPage, int $totalEntries, int 
 		throw new BoardException("Invalid page number");
 	}
 
-	$currentPage = max(0, min($totalPages - 1, $currentPage));
+	$currentPage = max(1, min($totalPages, $currentPage));
 
 	return [$totalPages, $currentPage];
 }
@@ -27,8 +43,8 @@ function getBoardPageLink(int $page, bool $isStaticAll, string $liveFrontEnd, bo
 		return $liveFrontEnd . '?page=' . $page;
 	}
 
-	if ($isStaticAll || $page <= $staticPagesToRebuild - 1) {
-		return ($page === 0) ? 'index.html' : $page . '.html';
+	if ($isStaticAll || $page <= $staticPagesToRebuild) {
+		return ($page === 1) ? 'index.html' : $page . '.html';
 	}
 
 	return $liveFrontEnd . '?page=' . $page;
@@ -37,14 +53,14 @@ function getBoardPageLink(int $page, bool $isStaticAll, string $liveFrontEnd, bo
 function renderPager(int $currentPage, int $totalPages, callable $getLink, ?callable $getForm = null): string {
 	$pageHTML = '<table id="pager"><tbody><tr>';
 
-	if ($currentPage <= 0) {
+	if ($currentPage <= 1) {
 		$pageHTML .= '<td id="pagerPreviousCell">First</td>';
 	} else {
 		$pageHTML .= '<td id="pagerPreviousCell">' . ($getForm ? $getForm($currentPage - 1, 'Previous') : '<form action="' . $getLink($currentPage - 1) . '" method="get"><button type="submit">Previous</button></form>') . '</td>';
 	}
 
 	$pageHTML .= '<td id="pagerPagesCell"><div id="pagerPagesContainer">';
-	for ($i = 0; $i < $totalPages; $i++) {
+	for ($i = 1; $i <= $totalPages; $i++) {
 		if ($i == $currentPage) {
 			$pageHTML .= "<span class=\"pagerPageLink\" id=\"pagerSelectedPage\">[$i]</span> ";
 		} else {
@@ -53,7 +69,7 @@ function renderPager(int $currentPage, int $totalPages, callable $getLink, ?call
 	}
 	$pageHTML .= '</div></td>';
 
-	if ($currentPage >= $totalPages - 1) {
+	if ($currentPage >= $totalPages) {
 		$pageHTML .= '<td id="pagerNextCell">Last</td>';
 	} else {
 		$pageHTML .= '<td id="pagerPreviousCell">' . ($getForm ? $getForm($currentPage + 1, 'Next') : '<form action="' . $getLink($currentPage + 1) . '" method="get"><button type="submit">Next</button></form>') . '</td>';
@@ -70,20 +86,20 @@ function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int
 	$isStaticAll = ($staticUntil === -1);
 
 	$getLink = function($page) use ($url, $staticUntil, $isStaticAll, $liveIndexFile, $staticIndexFile) {
-		if ($page === 0) {
+		if ($page === 1) {
 			return $url . $staticIndexFile;
 		}
-		if (!$isStaticAll && $page >= $staticUntil) {
+		if (!$isStaticAll && $page > $staticUntil) {
 			return $url . $liveIndexFile . '?page=' . $page;
 		}
 		return $page . '.html';
 	};
 
 	$getForm = function($page, $label) use ($url, $staticUntil, $isStaticAll, $liveIndexFile, $staticIndexFile) {
-		if ($page === 0) {
+		if ($page === 1) {
 			return '<form action="' . htmlspecialchars($url . $staticIndexFile) . '" method="get"><button type="submit">' . htmlspecialchars($label) . '</button></form>';
 		}
-		if (!$isStaticAll && $page >= $staticUntil) {
+		if (!$isStaticAll && $page > $staticUntil) {
 			return '<form action="' . htmlspecialchars($url . $liveIndexFile) . '" method="get">
 				<input type="hidden" name="page" value="' . intval($page) . '">
 				<button type="submit">' . htmlspecialchars($label) . '</button>
@@ -97,9 +113,7 @@ function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int
 }
 
 function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url, int $staticPagesToRebuild, string $liveIndexFile, request $request): string {
-	$currentPage = ($request->hasParameter('page') && is_numeric($request->getParameter('page')))
-		? (int)$request->getParameter('page')
-		: 0;
+	$currentPage = getPageFromRequest($request);
 
 	[$totalPages, $currentPage] = validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
 
@@ -117,9 +131,7 @@ function drawLiveBoardPager(int $entriesPerPage, int $totalEntries, string $url,
 }
 
 function drawPager(int $entriesPerPage, int $totalEntries, string $url, request $request, string $pageParam = 'page'): string {
-	$currentPage = ($request->hasParameter($pageParam) && is_numeric($request->getParameter($pageParam)))
-		? (int)$request->getParameter($pageParam)
-		: 0;
+	$currentPage = getPageFromRequest($request, $pageParam);
 
 	[$totalPages, $currentPage] = validateAndClampPagination($entriesPerPage, $totalEntries, $currentPage);
 

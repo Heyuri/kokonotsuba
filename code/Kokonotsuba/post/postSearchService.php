@@ -110,7 +110,7 @@ class postSearchService {
 		array $boardUids, 
 		bool $matchWholeWords, 
 		bool $openingPostOnly = false,
-		int $page = 0, 
+		int $page = 1, 
 		int $postsPerPage = 20
 	): ?array {
 		// sanitize fields
@@ -127,7 +127,7 @@ class postSearchService {
 		}
 
 		// calculate pagination parameters
-		$offset = $page * $postsPerPage;
+		$offset = ($page - 1) * $postsPerPage;
 
 		return $this->searchByFullText($fields, $boardUids, $openingPostOnly, $postsPerPage, $offset);
 	}

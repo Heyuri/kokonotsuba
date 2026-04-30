@@ -131,11 +131,11 @@ class soudaneService {
 	 *
 	 * @param int $postUid UID of the post.
 	 * @param int $limit   Entries per page.
-	 * @param int $page    Page number (0-based).
+	 * @param int $page    Page number (1-based).
 	 * @return array Array of vote rows.
 	 */
 	public function getVotesPaginated(int $postUid, int $limit, int $page): array {
-		$offset = $page * $limit;
+		$offset = ($page - 1) * $limit;
 		return $this->soudaneRepository->fetchVotesPaginated($postUid, $limit, $offset);
 	}
 

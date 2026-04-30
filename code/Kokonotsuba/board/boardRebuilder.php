@@ -165,10 +165,10 @@ class boardRebuilder {
 
 		// calculate current page and total pages for thread pagination display
 		// totalPosts includes OP; last reply position = totalPosts - 1
-		$totalThreadPages = max(1, getPageForPostPosition($totalPosts - 1, $repliesPerPage) + 1);
+		$totalThreadPages = getPageForPostPosition($totalPosts - 1, $repliesPerPage);
 		$currentPage = !is_null($amountOfRepliesToRender)
-			? max(0, $totalThreadPages - 1)
-			: ($page ?? 0);
+			? $totalThreadPages
+			: ($page ?? 1);
 
 		// Render threads
 		$pte_vals['{$THREADS}'] .= $threadRenderer->render([],
@@ -299,7 +299,7 @@ class boardRebuilder {
 
 	}
 
-	public function drawPage(int $page = 0): void {
+	public function drawPage(int $page = 1): void {
 		// url of the board
 		$boardUrl = $this->board->getBoardURL();
 
@@ -307,7 +307,7 @@ class boardRebuilder {
 		$threadsPerPage = $this->config['PAGE_DEF'];
 
 		// thread offset for pagination query
-		$threadPageOffset = $page * $threadsPerPage;
+		$threadPageOffset = ($page - 1) * $threadsPerPage;
 		
 		// max amounts of reply previews to show for each thread
 		$previewCount = $this->config['RE_DEF'];
@@ -377,7 +377,7 @@ class boardRebuilder {
 
 		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
 
-		for ($page = 0; $page < $totalPagesToRebuild; $page++) {
+		for ($page = 1; $page <= $totalPagesToRebuild; $page++) {
 			$this->renderStaticPage($page, $threads, $totalThreadCount, $headerHtml, $formHtml, $footHtml, $pte_vals, false, $quoteLinksFromBoard);
 		}
 
@@ -390,11 +390,11 @@ class boardRebuilder {
 	}
 
 	public function rebuildBoardPages(int $lastPageToRebuild): void {
-		if ($lastPageToRebuild < 0) return;
+		if ($lastPageToRebuild < 1) return;
 
 		$totalThreadCountForBoard = $this->threadRepository->threadCountFromBoard($this->board);
 		$threadsPerPage = $this->config['PAGE_DEF'];
-		$amountOfThreads = $threadsPerPage * ($lastPageToRebuild + 1);
+		$amountOfThreads = $threadsPerPage * $lastPageToRebuild;
 
 		$threads = $this->threadService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $amountOfThreads, 0);
 
@@ -406,23 +406,23 @@ class boardRebuilder {
 
 		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
 
-		for ($page = 0; $page <= $lastPageToRebuild; $page++) {
+		for ($page = 1; $page <= $lastPageToRebuild; $page++) {
 			$this->renderStaticPage($page, $threads, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals, false, $quoteLinksFromPage);
 		}
 	}
 
 	public function rebuildBoardPageHtml(int $targetPage, bool $logRebuild): void {
-		if ($targetPage < 0) return;
+		if ($targetPage < 1) return;
 
 		$totalThreadCountForBoard = $this->threadRepository->threadCountFromBoard($this->board);
 
-		$offset = $targetPage * $this->config['PAGE_DEF'];
+		$offset = ($targetPage - 1) * $this->config['PAGE_DEF'];
 		$limit = $this->config['PAGE_DEF'];
 
 		$threads = $this->threadService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $limit, $offset);
 		$totalPages = ceil($totalThreadCountForBoard / $this->config['PAGE_DEF']);
 
-		if ($targetPage >= $totalPages) return;
+		if ($targetPage > $totalPages) return;
 
 		// post uids of posts that are rendered
 		$postUidsInPage = getPostUidsFromThreadArrays($threads);
@@ -452,7 +452,7 @@ class boardRebuilder {
     	// Slice threads or use all of them depending on the flag
     	$threadsInPage = $threadsAreSliced
     	    ? $threads
-    	    : array_slice($threads, $page * $threadsPerPage, $threadsPerPage);
+    	    : array_slice($threads, ($page - 1) * $threadsPerPage, $threadsPerPage);
 
     	// Render thread data to PTE values
     	$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $pte_vals);
@@ -475,7 +475,7 @@ class boardRebuilder {
     	$pageData = $this->buildStaticPageHtml($pte_vals, $headerHtml, $formHtml, $footHtml);
 
     	// Determine file name
-    	$logfilename = ($page === 0) ? 'index.html' : $page . '.html';
+    	$logfilename = ($page === 1) ? 'index.html' : $page . '.html';
     	$logFilePath = $this->board->getBoardCachedPath() . $logfilename;
 
     	// Open file for writing

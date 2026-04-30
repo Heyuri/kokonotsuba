@@ -102,13 +102,13 @@ class overboard {
 	}
 
 	public function drawOverboardThreads(array $filters) {
-		$page = $this->request->getParameter('page', null, 0);
-		if (!filter_var($page, FILTER_VALIDATE_INT) && $page != 0) $this->softErrorHandler->errorAndExit("Page number was not a valid int.");
-		$page = ($page >= 0) ? $page : 1;
+		$page = $this->request->getParameter('page', null, 1);
+		if (!filter_var($page, FILTER_VALIDATE_INT) && $page != 1) $this->softErrorHandler->errorAndExit("Page number was not a valid int.");
+		$page = ($page >= 1) ? $page : 1;
 		
 		$threadsHTML = '';
 		$limit = $this->config['OVERBOARD_THREADS_PER_PAGE'];
-		$offset = $page * $limit;
+		$offset = ($page - 1) * $limit;
 		
 		$templateValues = $this->buildOverboardTemplateValues();
 

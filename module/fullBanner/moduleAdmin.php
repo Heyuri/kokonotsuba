@@ -19,6 +19,7 @@ use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\html\getPageFromRequest;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use AuditableTrait;
@@ -165,8 +166,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function drawAdminPage(): void {
 		$entriesPerPage = (int)$this->getConfig('ADMIN_PAGE_DEF', 100);
 		$request = $this->moduleContext->request;
-		$pageParam = $request->getParameter('page', 'GET', 0);
-		$requestedPage = is_numeric($pageParam) ? (int)$pageParam : 0;
+		$requestedPage = getPageFromRequest($request);
 
 		$paginationData = $this->fullBannerService->getAllBannersPage($requestedPage, $entriesPerPage);
 		$banners = $paginationData['items'];

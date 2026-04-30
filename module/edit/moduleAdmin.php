@@ -13,7 +13,6 @@ use const Kokonotsuba\GLOBAL_BOARD_UID;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
-use function Kokonotsuba\libraries\getCsrfMetaTag;
 use function Puchiko\strings\newLinesToBreakLines;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 use function Kokonotsuba\libraries\requirePostWithCsrf;
@@ -54,8 +53,6 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		$moduleHeader .= getCsrfMetaTag();
-
 		// include the post edit js for the mod tool
 		//$this->includeScript('postEdit.js', $moduleHeader);
 

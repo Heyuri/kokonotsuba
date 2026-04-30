@@ -130,7 +130,7 @@ class threadService {
 	 * @param int      $previewCount            Max posts included in the preview result.
 	 * @param int|null $amountOfRepliesToRender  If set, fetch only the last N replies.
 	 * @param int|null $repliesPerPage           If set (with $page), fetch a paginated slice.
-	 * @param int|null $page                     Page index (0-based) for paginated fetch.
+	 * @param int|null $page                     Page index (1-based) for paginated fetch.
 	 * @return ThreadData|false Preview result, or false if the thread does not exist.
 	 */
 	private function getThreadByUidInternal(
@@ -139,7 +139,7 @@ class threadService {
 		int $previewCount = 5, 
 		?int $amountOfRepliesToRender = 50, 
 		?int $repliesPerPage = 500,
-		?int $page = 0,
+		?int $page = 1,
 		bool $includeDeleted = false
 	): ThreadData|false {
 		$showDeleted = $adminMode || $includeDeleted;
@@ -160,7 +160,7 @@ class threadService {
 		
 		// otherwise if paged results are fetched then fetch paged results
 		else if (!is_null($page)) {
-			$posts = $this->threadRepository->getPostsFromThread($thread_uid, $showDeleted, $repliesPerPage, $page * $repliesPerPage);
+			$posts = $this->threadRepository->getPostsFromThread($thread_uid, $showDeleted, $repliesPerPage, ($page - 1) * $repliesPerPage);
 		}
 		// no parameters set - fetch all replies
 		else {

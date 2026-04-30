@@ -26,8 +26,8 @@ class messageRequestHandler {
 		$modulePageUrl = $this->messageUtility->getModulePageURL();
 
 		$page = ($this->request->hasParameter('page') && is_numeric($this->request->getParameter('page')))
-			? max(0, (int) $this->request->getParameter('page'))
-			: 0;
+			? max(1, (int) $this->request->getParameter('page'))
+			: 1;
 
 		$messages = $this->messageService->getAllMessagesForUser($tripCode, $page, $this->messagesPerPage);
 		$totalEntries = $this->messageService->getAllMessagesCountForUser($tripCode);
