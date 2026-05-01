@@ -18,10 +18,10 @@ const kkcat = {
 		// Apply display settings immediately so classes match cookie state
 		kkcat.applyDisplaySettings();
 
-		// Restore search query from URL hash
+		// Restore search query from localStorage
 		var searchInput = $id("sett_ss");
 		if (searchInput) {
-			searchInput.value = location.hash.substring(1);
+			searchInput.value = localStorage.getItem("cat_search") || "";
 			searchInput.addEventListener("input", function () {
 				kkcat.search(this.value);
 			});
@@ -148,7 +148,7 @@ const kkcat = {
 			threads[i].style.display = text.includes(str) ? "" : "none";
 		}
 
-		location.hash = str;
+		localStorage.setItem("cat_search", str);
 	},
 
 	/**
