@@ -212,6 +212,7 @@ class postRepository extends baseRepository {
 				f.mime_type          AS attachment_mime_type,
 				f.is_hidden          AS attachment_is_hidden,
 				f.is_animated        AS attachment_is_animated,
+				f.is_spoilered       AS attachment_is_spoilered,
 				f.is_deleted         AS attachment_is_deleted,
 				f.timestamp_added    AS attachment_timestamp_added
 			FROM {$this->table} p
