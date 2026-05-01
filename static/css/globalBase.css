@@ -329,6 +329,13 @@
   position: relative;
 }
 
+/************************ Search **************************************/
+
+#searchresult {
+	margin-top: 1em;
+	text-align: left;
+}
+
 /************************ Private Messages *****************************/
 
 .pmSendForm {
