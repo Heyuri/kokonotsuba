@@ -31,7 +31,7 @@ abstract class abstractModule {
 
 	abstract public function initialize(): void; 
 
-	protected function getConfig(string $key, $default = null) {
+	protected function getConfig(string $key, mixed $default = null) {
 		return $this->moduleContext->board->getConfigValue($key, $default);
 	}
 
