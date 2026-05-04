@@ -218,12 +218,12 @@ class moduleMain extends abstractModuleMain {
 	private function resolveCurrentPage(int $totalThreads): int {
 		$request = $this->moduleContext->request;
 
-		$page = filter_var($request->getParameter('page', 'GET', 0), FILTER_VALIDATE_INT);
-		$page = ($page === false) ? 0 : $page;
+		$page = filter_var($request->getParameter('page', 'GET', 1), FILTER_VALIDATE_INT);
+		$page = ($page === false) ? 1 : $page;
 
-		$pageMax = max(0, (int) ceil($totalThreads / $this->perPage) - 1);
+		$pageMax = max(1, (int) ceil($totalThreads / $this->perPage));
 
-		if ($page < 0 || $page > $pageMax) {
+		if ($page < 1 || $page > $pageMax) {
 			throw new BoardException("Page out of range!");
 		}
 

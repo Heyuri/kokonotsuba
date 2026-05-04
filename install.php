@@ -456,6 +456,7 @@ class tableCreator {
                 is_hidden TINYINT(1) NOT NULL DEFAULT 0,
                 is_deleted TINYINT(1) NOT NULL DEFAULT 0,
                 is_animated TINYINT(1) NOT NULL DEFAULT 0,
+                is_spoilered TINYINT(1) NOT NULL DEFAULT 0,
                 timestamp_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
                 CONSTRAINT fk_file_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,

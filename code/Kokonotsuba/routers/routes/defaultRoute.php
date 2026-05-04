@@ -68,9 +68,9 @@ class defaultRoute {
 			}
 			else {
 				// draw the regular thread page	
-				$this->board->drawThread($res, intval($pageParam));
+				$this->board->drawThread($res, $pageParam !== null ? max(1, intval($pageParam)) : 1);
 			}
-		} elseif ($pageParam !== null && intval($pageParam) > -1) {
+		} elseif ($pageParam !== null && intval($pageParam) >= 1) {
 			// Handle specific board page
 			$this->board->drawPage(intval($pageParam));
 		} else {

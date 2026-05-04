@@ -6,6 +6,7 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\template\templateEngine;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfMetaTag;
 
 function generateHeadHtml(array $config, templateEngine $templateEngine, moduleEngine $moduleEngine, string $pageTitle = '', int $resno = 0, bool $isStaff = false) {
 	$html = '';
@@ -14,6 +15,9 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 
 	// dispatch module header hook point for (staff) live frontend
 	if($isStaff) {
+		// Emit CSRF meta tag centrally so all JS actions can read it reliably,
+		// regardless of which modules are enabled on the board.
+		$pte_vals['{$MODULE_HEADER_HTML}'] .= getCsrfMetaTag();
 		$moduleEngine->dispatch('ModuleAdminHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
 	}
 	

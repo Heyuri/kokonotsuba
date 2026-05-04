@@ -753,7 +753,7 @@ class registRoute {
 		// For non-JavaScript requests, handle page rebuilding and then redirect
 		else {
 			$this->handlePageRebuilding($computedPostInfo, $postData, $preInsertThreadList);
-			redirect($redirectUrl, 0);
+			redirect($redirectUrl);
 		}
 	}
 

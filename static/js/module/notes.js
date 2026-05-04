@@ -145,18 +145,21 @@
 		const noteOnPost = deleteBtn.closest('.noteOnPost');
 		if (!noteOnPost) return;
 
-		// Find the deletion URL (from anchor or data attribute)
-		let deletionUrl = deleteBtn.href || deleteBtn.dataset.deletionUrl;
-		if (!deletionUrl) {
-			const anchor = noteOnPost.querySelector('.noteDeletionAnchor');
-			if (anchor) deletionUrl = anchor.href;
-		}
+		// Find the deletion URL — .noteDeletionAnchor is a <button>, so read formaction attribute
+		const deletionAnchor = noteOnPost.querySelector('.noteDeletionAnchor');
+		const deletionUrl = deletionAnchor
+			? (deletionAnchor.getAttribute('formaction') || deletionAnchor.href || '')
+			: '';
 		if (!deletionUrl) return;
 
 		// Reduce opacity to indicate pending deletion
 		noteOnPost.style.opacity = '0.5';
 
-		fetch(deletionUrl, { method: 'POST', credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+		const csrfToken = (document.querySelector('meta[name="csrf-token"]') || {}).content || '';
+		const body = new URLSearchParams();
+		body.append('csrf_token', csrfToken);
+
+		fetch(deletionUrl, { method: 'POST', credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body })
 			.then(res => {
 				if (res.status === 200) {
 					noteOnPost.style.display = 'none';

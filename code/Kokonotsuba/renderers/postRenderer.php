@@ -244,8 +244,8 @@ class postRenderer {
 			$this->config['NOTICE_SAGE']
 		);
 
-		$totalThreadPages = max(1, getPageForPostPosition($replyCount, $repliesPerPage) + 1);
-		$lastPage = $totalThreadPages - 1;
+		$totalThreadPages = getPageForPostPosition($replyCount, $repliesPerPage);
+		$lastPage = $totalThreadPages;
 
 		$quoteButton = $this->postElementGenerator->generateQuoteButton($threadResno, $data->getNumber(), $lastPage, $crossLink);
 		$replyButton = $threadMode ? $this->postElementGenerator->generateReplyButton($crossLink, $threadResno, $lastPage) : '';

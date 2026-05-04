@@ -100,7 +100,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$postNumber = $this->moduleContext->postRepository->resolvePostNumberFromUID($postUid);
 
 		$entriesPerPage = 50;
-		$page = (int) ($_GET['page'] ?? 0);
+		$page = max(1, (int) $this->moduleContext->request->getParameter('page', 'GET', 1));
 
 		$entries = $this->soudaneService->getVotesPaginated($postUid, $entriesPerPage, $page);
 		$totalEntries = $this->soudaneService->getTotalVotesForPost($postUid);

@@ -14,7 +14,7 @@ function generateAdminLinkButtons(string $liveIndexFile, string $staticIndexFile
 	$linksAboveBar =  '
 		<ul id="adminNavBar">
 			<li class="adminNavLink"><a href="'.$staticIndexFile.'?'.$request->getRequestTime().'">' . _T('admin_nav_return') . '</a></li>
-			<li class="adminNavLink"><a href="'.$liveIndexFile.'?page=0">' . _T('admin_nav_live_frontend') . '</a></li>
+			<li class="adminNavLink"><a href="'.$liveIndexFile.'?page=1">' . _T('admin_nav_live_frontend') . '</a></li>
 			' . $adminLinkHtml;
 
 	$moduleEngine->dispatch('LinksAboveBar', array(&$linksAboveBar));

@@ -108,8 +108,7 @@ class managePostsRoute {
 		$canViewHashedIp = $roleLevel->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_ONLY_VIEW_POSTS_FROM_USER', userRole::LEV_JANITOR));
 		$canViewDeleted = $this->postRenderingPolicy->viewDeleted();
 		
-		$page = (int) $this->request->getParameter('page', default: 0);
-		if ($page < 0) $page = 1;
+		$page = max(1, (int) $this->request->getParameter('page', default: 1));
 		
 		return [
 			'managePostsUrl' => $managePostsUrl,
@@ -142,7 +141,7 @@ class managePostsRoute {
 		// Fetch and return the filtered posts using query filters
 		return $this->postRepository->getFilteredPosts(
 			$context['postsPerPage'],
-			$context['page'] * $context['postsPerPage'],
+			($context['page'] - 1) * $context['postsPerPage'],
 			$context['queryFilters'],
 			$context['canViewDeleted']
 		) ?: [];

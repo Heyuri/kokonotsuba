@@ -22,6 +22,7 @@ use function Kokonotsuba\libraries\serveMedia;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\html\getPageFromRequest;
 
 class moduleMain extends abstractModuleMain {
 	use AboveThreadsGlobalListenerTrait;
@@ -174,8 +175,7 @@ class moduleMain extends abstractModuleMain {
 		$staticIndexFile = $this->getConfig('STATIC_INDEX_FILE', 'index.html');
 		$perPage = (int)$this->getConfig('ADMIN_PAGE_DEF', 100);
 		$request = $this->moduleContext->request;
-		$pageParam = $request->getParameter('page', 'GET', 0);
-		$requestedPage = is_numeric($pageParam) ? (int)$pageParam : 0;
+		$requestedPage = getPageFromRequest($request);
 		$paginationData = $this->fullBannerService->getApprovedActiveBannersPage($requestedPage, $perPage);
 		$banners = $paginationData['items'];
 

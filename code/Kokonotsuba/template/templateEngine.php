@@ -108,7 +108,7 @@ class templateEngine {
 		$this->templateDir = getBackendDir() . 'templates/' . $templateName . '/';
 	}
 
-	public function BlockValue($blockName) {
+	public function BlockValue(string $blockName) {
 		return trim($this->_readBlock($blockName));
 	}
 

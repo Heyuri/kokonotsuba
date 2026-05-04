@@ -135,11 +135,11 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function renderAdminPage(): void {
 		$page = $this->moduleContext->request->hasParameter('page')
-			? max(0, (int) $this->moduleContext->request->getParameter('page'))
-			: 0;
+			? max(1, (int) $this->moduleContext->request->getParameter('page'))
+			: 1;
 
 		$totalEntries = $this->messageRepository->getAllMessagesCount();
-		$offset = $page * $this->messagesPerPage;
+		$offset = ($page - 1) * $this->messagesPerPage;
 		$messages = $this->messageRepository->getAllMessages($offset, $this->messagesPerPage);
 
 		$rows = [];

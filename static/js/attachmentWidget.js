@@ -45,45 +45,27 @@
 		}
 	};
 
-	// selectors for actionable nodes inside .attachmentWidgetData
-	var BUTTON_SELECTOR = '.indicator, .attachmentButton, .warning';
-
 	/**
 	 * Collect menu items from the hidden .attachmentWidgetData container.
+	 * PHP pre-renders each widget as a plain <a> tag with data-action and data-label.
 	 */
 	function collectFromBar(bar) {
 		var dataContainer = bar.querySelector('.attachmentWidgetData');
 		if (!dataContainer) return [];
 
 		var items = [];
-		var nodes = dataContainer.querySelectorAll(BUTTON_SELECTOR);
 
-		nodes.forEach(function (node) {
-			// skip if hidden by the PHP layer
-			if (node.classList.contains('indicatorHidden')) return;
-			if (node.closest('.indicatorHidden')) return;
+		dataContainer.querySelectorAll('a').forEach(function (a) {
+			var href = a.getAttribute('href') || '';
+			var action = a.dataset.action || '';
 
-			// skip nested duplicates (e.g. .attachmentButton inside .indicator)
-			if (node.parentElement && node.parentElement.closest(BUTTON_SELECTOR)
-				&& node.parentElement.closest('.attachmentWidgetData') === dataContainer) {
-				return;
-			}
+			if (!href && !action) return;
 
-			// find anchors
-			var links = node.querySelectorAll('a[href]');
-			links.forEach(function (a) {
-				var href = a.getAttribute('href') || '';
-				var action = a.dataset.action || '';
-
-				// skip empty hrefs unless they have a data-action
-				if ((!href || href === '#') && !action) return;
-
-				items.push({
-					href: a.href,
-					label: a.title || a.textContent.replace(/[\[\]]/g, '').trim(),
-					target: a.target || '',
-					action: action
-				});
+			items.push({
+				href: a.href,
+				label: a.dataset.label || a.textContent.trim(),
+				target: a.target || '',
+				action: action
 			});
 		});
 

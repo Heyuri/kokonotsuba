@@ -16,7 +16,7 @@ class Post implements JsonSerializable {
 		'attachment_file_ext', 'attachment_file_md5', 'attachment_file_size',
 		'attachment_file_width', 'attachment_file_height', 'attachment_thumb_width',
 		'attachment_thumb_height', 'attachment_mime_type', 'attachment_is_hidden',
-		'attachment_is_animated', 'attachment_is_deleted', 'attachment_timestamp_added',
+			'attachment_is_animated', 'attachment_is_spoilered', 'attachment_is_deleted', 'attachment_timestamp_added',
 		'votes_total_count', 'votes_yeah_count', 'votes_nope_count',
 		'note_id', 'note_submitted', 'note_added_by', 'note_text', 'note_added_by_username',
 	];

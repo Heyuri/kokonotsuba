@@ -46,40 +46,34 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->perceptualBanService = getPerceptualBanService($this->moduleContext->transactionManager);
 		$this->perceptualHasher = getPerceptualHasher();
 
-		$this->registerAttachmentHook('onRenderAttachment');
+		$this->listenProtected('ModerateAttachmentWidget', function(array &$widgetArray, array &$fileData) {
+			$this->onRenderAttachmentWidget($widgetArray, $fileData);
+		});
 		$this->registerLinksAboveBarHook(_T('admin_nav_perceptual_ban_title'), $this->moduleUrl, _T('admin_nav_perceptual_ban'));
 	}
 
-	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
-		$mimeType = $attachment['mimeType'] ?? '';
-		$hasAttachment = !empty($attachment) && $this->perceptualHasher->isHashableMedia($mimeType);
-		$canDelete = $this->canDeleteAttachment($attachment);
+	private function onRenderAttachmentWidget(array &$widgetArray, array &$fileData): void {
+		$mimeType = $fileData['mimeType'] ?? '';
+		$hasAttachment = !empty($fileData) && $this->perceptualHasher->isHashableMedia($mimeType);
+		$canDelete = $this->canDeleteAttachment($fileData);
 
-		// PBF (perceptual ban only)
-		$pbfContent = '';
 		if ($hasAttachment) {
 			$banUrl = $this->getModulePageURL([
 				'action' => 'banOnly',
-				'post_uid' => $attachment['postUid'],
-				'fileId' => $attachment['fileId'],
+				'post_uid' => $fileData['postUid'],
+				'fileId' => $fileData['fileId'],
 			], false, true);
-
-			$pbfContent = $this->renderAttachmentButton($banUrl, 'PerceptualBan', _T('perceptual_ban_btn_title'), 'PBF');
+			$widgetArray[] = $this->buildWidgetEntry($banUrl, 'BanFile', _T('perceptual_ban_btn_title'), '');
 		}
-		$attachmentProperties .= $this->renderAttachmentIndicator('perceptualBanFile', $pbfContent, !$hasAttachment);
 
-		// PB&D (perceptual ban + delete)
-		$pbdContent = '';
 		if ($canDelete) {
 			$bdUrl = $this->getModulePageURL([
 				'action' => 'banAndDelete',
-				'post_uid' => $attachment['postUid'],
-				'fileId' => $attachment['fileId'],
+				'post_uid' => $fileData['postUid'],
+				'fileId' => $fileData['fileId'],
 			], false, true);
-
-			$pbdContent = $this->renderAttachmentButton($bdUrl, 'PerceptualBanDelete', _T('perceptual_ban_bd_btn_title'), 'PB&amp;D');
+			$widgetArray[] = $this->buildWidgetEntry($bdUrl, 'BanDeleteFile', _T('perceptual_ban_bd_btn_title'), '');
 		}
-		$attachmentProperties .= $this->renderAttachmentIndicator('perceptualBanDeleteFile', $pbdContent, !$canDelete);
 	}
 
 	public function ModulePage(): void {

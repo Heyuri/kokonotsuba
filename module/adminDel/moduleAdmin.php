@@ -14,7 +14,6 @@ use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\generateModerateForm;
-use function Kokonotsuba\libraries\getCsrfMetaTag;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\request\redirect;
@@ -48,7 +47,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->registerPostControlPair('onRenderPostAdminControls');
 		$this->registerPostWidgetHook('onRenderPostWidget');
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
-		$this->registerAttachmentHook('onRenderAttachment');
+		$this->listenProtected('ModerateAttachmentWidget', function(array &$widgetArray, array &$fileData) {
+			$this->onRenderAttachmentWidget($widgetArray, $fileData);
+		});
 	}
 
 	private function onRenderPostAdminControls(string &$modFunc, Post &$post, bool $noScript): void {
@@ -96,16 +97,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		return true;
 	}
 
-	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
-		$canRender = $this->canRenderAttachmentButton($attachment);
-
-		$buttonHtml = '';
-		if ($canRender) {
-			$url = $this->generateDeleteAttachUrl($attachment['fileId'], $attachment['postUid']);
-			$buttonHtml = ' <span class="adminFunctions adminDeleteFileFunction attachmentButton">[<a href="' . htmlspecialchars($url) . '" title="Delete file" data-action="deleteFile">DF</a>]</span>';
+	private function onRenderAttachmentWidget(array &$widgetArray, array &$fileData): void {
+		if (!$this->canRenderAttachmentButton($fileData)) {
+			return;
 		}
-
-		$attachmentProperties .= $this->renderAttachmentIndicator('deleteFile', $buttonHtml, !$canRender);
+		$url = $this->generateDeleteAttachUrl($fileData['fileId'], $fileData['postUid']);
+		$widgetArray[] = $this->buildWidgetEntry($url, 'deleteFile', 'Delete file', '');
 	}
 
 	private function generateDeleteAttachUrl(int $fileId, int $postUid): string {
@@ -188,9 +185,6 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		// can view deleted posts
 		$canViewDeleted = $this->moduleContext->postRenderingPolicy->viewDeleted();
-
-		// inject CSRF meta tag for JS
-		$moduleHeader .= getCsrfMetaTag();
 
 		// add requiredForAll js for the live frontend
 		// this js will add the deletedPost/deletedFile classes and deletion indicator to posts on the livefrontend

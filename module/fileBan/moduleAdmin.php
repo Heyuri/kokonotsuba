@@ -9,12 +9,10 @@ require_once __DIR__ . '/fileBanLib.php';
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
-use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawPager;
-use function Kokonotsuba\libraries\getCsrfMetaTag;
 use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\sendAjaxAndDetach;
@@ -50,7 +48,6 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->registerLinksAboveBarHook(_T('admin_nav_file_ban_title'), $this->moduleUrl, _T('admin_nav_file_ban'));
 
 		$this->listenProtected('ModuleAdminHeader', function(string &$moduleHeader) {
-			$moduleHeader .= getCsrfMetaTag();
 			$this->includeScript('fileBan.js', $moduleHeader);
 		});
 	}

@@ -18,6 +18,7 @@ class fileEntry {
 	public ?string $mime_type;
 	public int $is_hidden;
 	public int $is_deleted;
+	public int $is_spoilered;
 	public string $timestamp_added;
 
 	public function __construct() {
@@ -118,6 +119,10 @@ class fileEntry {
 
 	public function isDeleted(): bool {
 		return (bool)$this->is_deleted;
+	}
+
+	public function isSpoilered(): bool {
+		return (bool)$this->is_spoilered;
 	}
 
 	public function getTimestampAdded(): int {
