@@ -117,6 +117,7 @@ $config['ModuleList'] = array(
 	'animatedGif' => true,
 	'tegaki' => true,
 	'quickReply' => true,
+	'spoiler' => true,
 	/* misc */
 	'soudane' => true,
 	'postApi' => true,

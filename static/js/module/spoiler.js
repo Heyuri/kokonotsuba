@@ -42,6 +42,8 @@
                 if (imageElement) {
                     imageElement.style.opacity = 1;
                     imageElement.src = data.thumbUrl;
+                    if (data.thumbWidth) imageElement.width = data.thumbWidth;
+                    if (data.thumbHeight) imageElement.height = data.thumbHeight;
                 }
 
                 // Update the hidden widget data so the next menu open shows the correct label

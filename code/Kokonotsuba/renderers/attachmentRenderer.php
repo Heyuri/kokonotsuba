@@ -65,8 +65,7 @@ class attachmentRenderer {
 			$fileData['mimeType'], 
 			$fileData['isHidden'], 
 			$fileData['isDeleted'],
-			$fileData['timestampAdded'],
-			false);
+			$fileData['timestampAdded']);
 
 		// Attachment bar (if any)
 		$fileBarData = $this->handleFileBar($fileData, $imageURL);
@@ -108,6 +107,13 @@ class attachmentRenderer {
 
 		$attachmentButtons = $this->buildAttachmentWidgetHtml($attachmentWidgets);
 
+		// build container css classes and let modules append to them
+		$attachmentClasses = 'attachmentContainer';
+		if ($multipleAttachments) {
+			$attachmentClasses .= ' multiAttachment';
+		}
+		$this->moduleEngine->dispatch('AttachmentContainerClass', [&$attachmentClasses, &$fileData]);
+
 		// wrap in attachment container
 		$attachmentHtml = $this->wrapAttachmentContent(
 			$imageHtml, 
@@ -115,7 +121,7 @@ class attachmentRenderer {
 			$fileBarData['fileSize'],
 			$fileBarData['fileDimensions'],
 			$attachmentButtons,
-			$multipleAttachments
+			$attachmentClasses
 		);
 
 		// return html
@@ -128,16 +134,8 @@ class attachmentRenderer {
 		string $fileSize,
 		string $fileDimensions,
 		string $attachmentButtons,
-		bool $multipleAttachments
+		string $attachmentClasses
 	): string {
-		// css classes for the attachment container
-		$attachmentClasses = 'attachmentContainer';
-
-		// append the multi-attachment css class if the post has more than 1 attachment
-		if($multipleAttachments) {
-			$attachmentClasses .= ' multiAttachment';
-		}
-
 		// render attachment buttons through template if there are any
 		$buttonsHtml = '';
 		if(!empty($attachmentButtons)) {

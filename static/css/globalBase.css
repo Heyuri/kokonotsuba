@@ -110,7 +110,7 @@
 /************************ Collapsible Details Boxes ********************/
 
 .indicatorHidden {
-	display: none;
+	display: none !important;
 }
 
 .detailsbox {

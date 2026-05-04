@@ -106,9 +106,10 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		if ($this->moduleContext->request->isAjax()) {
 			$spoilerImageUrl = $this->getConfig('STATIC_URL') . 'image/spoiler_image.png';
+			$isAnimated = !empty($attachment['isAnimated']);
 			$thumbUrl = $isSpoilered
 				? $spoilerImageUrl
-				: getAttachmentUrl($attachment, true);
+				: ($isAnimated ? getAttachmentUrl($attachment, false) : getAttachmentUrl($attachment, true));
 
 			$label       = $isSpoilered ? 'Remove spoiler' : 'Mark as spoiler';
 			$newButtonUrl = $this->generateSpoilerUrl($attachment['postUid'], $attachment['fileId']);
@@ -116,6 +117,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			sendAjaxAndDetach([
 				'active'          => $isSpoilered,
 				'thumbUrl'        => $thumbUrl,
+				'thumbWidth'      => $isSpoilered ? 255 : (int) $attachment['thumbWidth'],
+				'thumbHeight'     => $isSpoilered ? 255 : (int) $attachment['thumbHeight'],
 				'newSpoilerButton' => $this->renderAttachmentButton($newButtonUrl, 'toggleSpoiler', $label, $isSpoilered ? 'sp' : 'SP'),
 			]);
 

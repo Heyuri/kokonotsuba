@@ -37,6 +37,12 @@ class moduleMain extends abstractModuleMain {
 
 		$this->listenPostFormFile('onRenderPostFormFile');
 
+		$this->moduleContext->moduleEngine->addListener('AttachmentContainerClass', function(string &$classes, array &$fileData) {
+			if (!empty($fileData['isSpoilered'])) {
+				$classes .= ' spoileredAttachment';
+			}
+		});
+
 		// signal presence to clipboard.js so it adds per-file spoiler checkboxes
 		$this->registerHeaderHtml('<template id="spoilerData"></template>');
 	}
@@ -96,8 +102,10 @@ class moduleMain extends abstractModuleMain {
 		string &$attachmentUrl,
 		array &$attachment
 	): void {
-		// skip if not spoilered
 		$isSpoilered = (bool) ($attachment['isSpoilered'] ?? false);
+
+		// always render the indicator so JS can toggle it; hidden when not spoilered
+		$attachmentProperties .= $this->renderIndicator('spoilerLabel', '[Spoiler]', 'spoilerLabel imageOptions', !$isSpoilered);
 
 		if (!$isSpoilered) {
 			return;
@@ -120,8 +128,5 @@ class moduleMain extends abstractModuleMain {
 		// replace thumbnail dimensions with 255x255
 		$attachmentImage = preg_replace('/width="\d+"/', 'width="255"', $attachmentImage);
 		$attachmentImage = preg_replace('/height="\d+"/', 'height="255"', $attachmentImage);
-
-		// render spoiler label indicator
-		$attachmentProperties .= $this->renderIndicator('spoilerLabel', '[Spoiler]', 'spoilerLabel imageOptions');
 	}
 }
