@@ -272,6 +272,12 @@
   cursor: pointer;
   text-align: center;
   color: #666;
+  transition: color 0.1s ease-in-out, border-color 0.1s ease-in-out;
+}
+
+.dropzone:hover {
+  color: var(--color-hi-contrast-border);
+  border-color: var(--color-hi-contrast-border);
 }
 
 .dropzone.dragover {
