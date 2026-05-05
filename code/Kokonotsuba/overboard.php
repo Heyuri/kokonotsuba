@@ -29,6 +29,7 @@ use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
 use function Kokonotsuba\libraries\html\getBoardStylesheetsFromConfig;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\strings\sanitizeStr;
+use function Kokonotsuba\libraries\getCsrfMetaTag;
 
 class overboard {
 	private bool $adminMode, $canViewDeleted;
@@ -66,6 +67,8 @@ class overboard {
 
 		// dispatch module header hook point for (staff) live frontend
 		if($this->adminMode) {
+			$pte_vals['{$MODULE_HEADER_HTML}'] .= getCsrfMetaTag();
+
 			$this->moduleEngine->dispatch('ModuleAdminHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
 		}
 		// dispatch module header hook point for static html
