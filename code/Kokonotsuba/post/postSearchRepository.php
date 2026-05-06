@@ -220,6 +220,7 @@ class postSearchRepository extends baseRepository {
 			'no'        => 'p.no',
 			'file_name' => 'f.file_name',
 			'root'      => 'p.root',
+			'tag'       => 'p.tag',
 		];
 
 		foreach ($fields as $field => $value) {
@@ -227,7 +228,7 @@ class postSearchRepository extends baseRepository {
 			$columns = (array) $fieldColumns[$field];
 			$subClauses = [];
 			foreach ($columns as $column) {
-				if ($field === 'no') {
+				if ($field === 'no' || $field === 'tag') {
 					$subClauses[] = "{$column} = :{$field}{$suffix}";
 				} else {
 					$subClauses[] = "MATCH({$column}) AGAINST (:{$field}{$suffix} IN BOOLEAN MODE)";
@@ -311,6 +312,7 @@ class postSearchRepository extends baseRepository {
 			'no'        => 'p.no',
 			'file_name' => 'f.file_name',
 			'root'      => 'p.root',
+			'tag'       => 'p.tag',
 		];
 
 		// get the keys
@@ -329,8 +331,8 @@ class postSearchRepository extends baseRepository {
 
 			// build MATCH AGAINST for each column
 			foreach ($columns as $column) {
-				// if its a post number search, use equality
-				if ($field === 'no') {
+				// if its a post number or tag search, use equality
+				if ($field === 'no' || $field === 'tag') {
 					$subClauses[] = "$column = :{$field}";
 					continue;
 				}

@@ -8,7 +8,7 @@ $config['ERROR_HANDLER_FILE'] = __DIR__.'/error.log';
 
 $config['STATIC_URL'] = 'https://static.example.net/'; // Where static files are located on the web, can be a full URL (eg. 'https://static.example.com/'). Include trailing '/'
 $config['STATIC_PATH'] = '/var/www/static/'; // Where static files are stored in the server, can be an absolute path (eg. '/home/example/web/static/'). Include trailing '/'
-$config['WEBSITE_URL'] = "https://".$request->getHttpHost()."/"; //The URL of where the boards are. (e.g "https://boards.example.net/")
+$config['WEBSITE_URL'] = "https://". $_SERVER['HTTP_HOST'] . "/"; //The URL of where the boards are. (e.g "https://boards.example.net/")
 
 $config['USE_CDN'] = false; //Whether to use the "cdn" (AKA storing all board uploaded-file-storages in one central directory on the server)
 
@@ -132,6 +132,17 @@ $config['styles']['kokotxt'] = [
 ];
 
 $config['KILL_INCOMPLETE_UPLOAD'] = 1; // Automatically delete uploaded incomplete additional images
+
+// Post tags: keys are abbreviations stored in the database, values are the full display names shown in forms.
+// Example: $config['TAGS'] = ['G' => 'Games', 'A' => 'Anime', 'T' => 'Technology'];
+$config['TAGS'] = [
+    'G' => 'Games', 
+    'OC' => 'Original content', 
+    'A' => 'Anime',
+    'L' => 'Loop',
+    'E' => 'Ero',
+    'H' => 'Heyuri',
+    'O' => 'Other'];
 
 // Excimer Profiling
 // Requires the Excimer PHP extension (https://www.mediawiki.org/wiki/Excimer)

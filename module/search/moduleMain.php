@@ -70,6 +70,7 @@ class moduleMain extends abstractModuleMain {
 			'searchSubject' => '',
 			'searchFileName' => '',
 			'searchPostNumber' => '',
+			'searchTag' => '',
 			'searchMatchWord' => $isSubmission ? '' : 'on',
 			'searchOpeningPost' => $isSubmission ? '' : 'off',
 			'board' => $this->getUidsFromBoards($boards),
@@ -97,6 +98,7 @@ class moduleMain extends abstractModuleMain {
 			'sub' => $this->moduleContext->request->getParameter('searchSubject', 'GET', ''),
 			'file_name' => $this->moduleContext->request->getParameter('searchFileName', 'GET', ''),
 			'no' => $this->moduleContext->request->getParameter('searchPostNumber', 'GET', ''),
+			'tag' => $this->moduleContext->request->getParameter('searchTag', 'GET', ''),
 		];
 
 		// get selected boards from request
@@ -146,6 +148,7 @@ class moduleMain extends abstractModuleMain {
 		$searchSubject = $filtersFromRequest['searchSubject'] ?? '';
 		$searchFileName = $filtersFromRequest['searchFileName'] ?? '';
 		$searchPostNumber = $filtersFromRequest['searchPostNumber'] ?? '';
+		$searchTag = $filtersFromRequest['searchTag'] ?? '';
 		$searchMatchWord = $filtersFromRequest['searchMatchWord'] ?? '';
 		$searchOpeningPost = $filtersFromRequest['searchOpeningPost'] ?? '';
 
@@ -154,6 +157,20 @@ class moduleMain extends abstractModuleMain {
 
 		// generate board list checkboxes
 		$boardCheckboxHTML = generateBoardListCheckBoxHTML($filtersFromRequest['board'], $allBoards, false);
+
+		// build tag select if tags are configured
+		$tags = $this->getConfig('TAGS', []);
+		$tagSelectHTML = '';
+		if (!empty($tags)) {
+			$tagSelectHTML = '<select name="searchTag" id="searchTag" class="inputtext"><option value="">' . _T('search_tag_all') . '</option>';
+			foreach ($tags as $abbr => $label) {
+				$safeAbbr = htmlspecialchars($abbr);
+				$safeLabel = htmlspecialchars($label);
+				$selected = ($searchTag === $abbr) ? ' selected' : '';
+				$tagSelectHTML .= '<option value="' . $safeAbbr . '"' . $selected . '>' . $safeLabel . '</option>';
+			}
+			$tagSelectHTML .= '</select>';
+		}
 
 		// render the form
 		return '
@@ -221,6 +238,11 @@ class moduleMain extends abstractModuleMain {
 									<input type="checkbox" id="searchOpeningPost" name="searchOpeningPost" value="on"' . ($searchOpeningPost === 'on' ? 'checked' : '') . '>
 								</td>
 							</tr>
+							' . ($tagSelectHTML !== '' ? '
+							<tr>
+								<td class="postblock"><label for="searchTag">' . _T('search_target_tag') . '</label></td>
+								<td>' . $tagSelectHTML . '</td>
+							</tr>' : '') . '
 							<tr id="boardrow">
 								<td class="postblock"><label for="filterboard">Boards</label><div class="selectlinktextjs" id="boardselectall">[<a>Select all</a>]</div></td>
 								<td>

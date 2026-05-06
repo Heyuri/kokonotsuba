@@ -342,10 +342,10 @@ class postRepository extends baseRepository {
 	 */
 	public function insertPost(array $params): void {
 		$query = "INSERT INTO {$this->table} 
-			(no, poster_hash, boardUID, thread_uid, post_position, is_op, root, category, pwd, now, 
+			(no, poster_hash, boardUID, thread_uid, post_position, is_op, root, category, tag, pwd, now, 
 			name, tripcode, secure_tripcode, capcode, email, sub, com, host, status) 
 			VALUES (:no, :poster_hash, :boardUID, :thread_uid, :post_position, :is_op, :root,
-			:category, :pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :status)";
+			:category, :tag, :pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :status)";
 		
 		$this->query($query, $params);
 	}
@@ -527,7 +527,7 @@ class postRepository extends baseRepository {
 		// Manually define the columns
 		$columns = [
 			'no', 'poster_hash', 'boardUID', 'thread_uid', 'post_position', 'is_op',
-			'root', 'category', 'pwd', 'now', 'name', 'tripcode', 'secure_tripcode',
+			'root', 'category', 'tag', 'pwd', 'now', 'name', 'tripcode', 'secure_tripcode',
 			'capcode', 'email', 'sub', 'com', 'host', 'status'
 		];
 

@@ -9,6 +9,7 @@ class postRegistData {
         private string $threadUIDFromUrl,
         private int $is_op,
         private string $category,
+        private string $tag,
         private string $pwd,
         private string $now,
         private string $name,
@@ -30,6 +31,7 @@ class postRegistData {
     public function getThreadUIDFromUrl(): string { return $this->threadUIDFromUrl; }
     public function getIsOp(): int { return $this->is_op; }
     public function getCategory(): string { return $this->category; }
+    public function getTag(): string { return $this->tag; }
     public function getPwd(): string { return $this->pwd; }
     public function getNow(): string { return $this->now; }
     public function getName(): string { return $this->name; }
@@ -65,6 +67,7 @@ class postRegistData {
             ':is_op' => (int)$this->is_op,
             ':root' => $root,
             ':category' => $this->category,
+            ':tag' => $this->tag,
             ':pwd' => $this->pwd,
             ':now' => $this->now,
             ':name' => $this->name,
