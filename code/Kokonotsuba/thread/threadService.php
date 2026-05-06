@@ -495,6 +495,7 @@ class threadService {
 			'is_op'			=> $post->isOp(),
 			'root'			=> $post->getRoot(),
 			'category'		=> $post->getCategory(),
+			'tag'			=> $post->getTag(),
 			'pwd'			=> $post->getPassword(),
 			'now'			=> $post->getTimestamp(),
 			'name'			=> $post->getName(),
