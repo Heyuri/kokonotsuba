@@ -36,6 +36,7 @@ $config['PROXYHEADERlist'] = array(
 	'HTTP_X_CLUSTER_CLIENT_IP',
 	'HTTP_FORWARDED_FOR',
 	'HTTP_FORWARDED');
+
 $config['FORTUNES'] = array( // Used for fortune function, selected at random.
 	'Your true waifu will reveal herself',
 	'Only time will tell',
@@ -56,6 +57,17 @@ $config['FORTUNES'] = array( // Used for fortune function, selected at random.
 	'ｷﾀ━━━━━━(ﾟ∀ﾟ)━━━━━━ !!!!',
 	'（　´_ゝ`）ﾌｰﾝ'
 );
+
+// Post tags: keys are abbreviations stored in the database, values are the full display names shown in forms.
+// Example: $config['TAGS'] = ['G' => 'Games', 'A' => 'Anime', 'T' => 'Technology'];
+$config['TAGS'] = [
+    'G' => 'Games', 
+    'OC' => 'Original content', 
+    'A' => 'Anime',
+    'L' => 'Loop',
+    'E' => 'Ero',
+    'H' => 'Heyuri',
+    'O' => 'Other'];
 
 // Allowed filetypes and mimetypes
 // The key is the extention and the value is the associated mime-type
