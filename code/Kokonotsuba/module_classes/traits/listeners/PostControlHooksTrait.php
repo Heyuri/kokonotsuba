@@ -2,8 +2,8 @@
 
 namespace Kokonotsuba\module_classes\traits\listeners;
 
-use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\board\board;
 
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\getPageOfThread;
@@ -178,7 +178,7 @@ trait PostControlHooksTrait {
 	 * Rebuild the board intelligently: full rebuild for OP posts,
 	 * single-page rebuild for replies.
 	 */
-	protected function rebuildBoardForPost($board, Post $post): void {
+	protected function rebuildBoardForPost(board $board, Post $post): void {
 		if ($post->isOp()) {
 			$board->rebuildBoard();
 		} else {

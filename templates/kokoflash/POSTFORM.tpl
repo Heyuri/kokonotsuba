@@ -35,6 +35,10 @@
 						<td class="postblock"><label for="category">Category</label></td>
 						<td class="postformInputCell">{$FORM_CATEGORY_FIELD}<small></small></td>
 					</tr>','')-->
+					<!--&IF($FORM_TAG_FIELD,'<tr>
+						<td class="postblock"><label for="tag">Tag</label></td>
+						<td class="postformInputCell">{$FORM_TAG_FIELD}</td>
+					</tr>','')-->
 					<tr>
 						<td class="postblock"><label for="pwd">Password</label></td>
 						<td class="postformInputCell"><input type="password" name="pwd" id="pwd" value="" class="inputtext" maxlength="{$INPUT_MAX}"><span id="delPasswordInfo">(for deletion)</span>{$FORM_EXTRA_COLUMN}</td>

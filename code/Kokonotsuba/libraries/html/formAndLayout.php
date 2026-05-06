@@ -7,6 +7,7 @@ use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\template\templateEngine;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfMetaTag;
+use function Puchiko\strings\sanitizeStr;
 
 function generateHeadHtml(array $config, templateEngine $templateEngine, moduleEngine $moduleEngine, string $pageTitle = '', int $resno = 0, bool $isStaff = false) {
 	$html = '';
@@ -183,6 +184,17 @@ function generatePostFormHTML(int $resno,
 		$pte_vals['{$FORM_CATEGORY_FIELD}'] = '<input type="text" name="category" id="category" value="' . $category . '" class="inputtext">';
 	}
 
+	$tags = $config['TAGS'] ?? [];
+	if (!empty($tags)) {
+		$tagOptions = '<option value="">--</option>';
+		foreach ($tags as $abbr => $tagName) {
+			$safeAbbr = sanitizeStr($abbr);
+			$safeName = sanitizeStr($tagName);
+			$tagOptions .= '<option value="' . $safeAbbr . '">' . $safeName . '</option>';
+		}
+		$pte_vals['{$FORM_TAG_FIELD}'] = '<select name="tag" id="tag" class="inputtext">' . $tagOptions . '</select>';
+	}
+
 	if ($config['STORAGE_LIMIT']) {
 		$pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T(
 			'form_notice_storage_limit',
@@ -242,5 +254,6 @@ function preparePostFormTemplateValues(int $resno, ?string $liveIndexFile, ?stri
 		'{$USE_SAGE_CHECKBOX}' => !empty($config['USE_SAGE_CHECKBOX']),
 		'{$USE_NOKO_CHECKBOX}' => !empty($config['USE_NOKO_CHECKBOX']),
 		'{$USE_DUMP_CHECKBOX}' => !empty($config['USE_DUMP_CHECKBOX']),
+		'{$FORM_TAG_FIELD}' => '',
 		'{$POST_FORM}' => '');
 }

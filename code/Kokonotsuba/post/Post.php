@@ -45,6 +45,7 @@ class Post implements JsonSerializable {
 	public function getSubject(): string { return (string)($this->data['sub'] ?? ''); }
 	public function getComment(): string { return (string)($this->data['com'] ?? ''); }
 	public function getCategory(): string { return (string)($this->data['category'] ?? ''); }
+	public function getTag(): string { return (string)($this->data['tag'] ?? ''); }
 	public function getIp(): string { return (string)($this->data['host'] ?? ''); }
 	public function getTimestamp(): string { return (string)($this->data['now'] ?? ''); }
 	public function getRoot(): string { return (string)($this->data['root'] ?? ''); }

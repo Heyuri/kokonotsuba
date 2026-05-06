@@ -130,6 +130,9 @@ class postRenderer {
 		// Process category links
 		$categoryHTML = $this->postElementGenerator->processCategoryLinks($data->getCategory(), $crossLink);
 
+		// Get tag
+		$tag = $data->getTag();
+
 		// this post is deleted
 		$isDeleted = $data->getOpenFlag() && !$data->isFileOnlyDeleted() && $adminMode;
 
@@ -143,6 +146,7 @@ class postRenderer {
 		return [
 			'postPositionEnabled' => $this->config['RENDER_REPLY_NUMBER'],
 			'categoryHTML' => $categoryHTML,
+			'tag' => $tag,
 			'isDeleted' => $isDeleted,
 			'attachmentsHtml' => $attachmentsHtml,
 		];
@@ -174,6 +178,7 @@ class postRenderer {
 				$threadResno,
 				$metadata['nameHtml'], 
 				$contentData['categoryHTML'],
+				$contentData['tag'],
 				$metadata['quoteButton'], 
 				$contentData['attachmentsHtml'], 
 				$warnings['warnBeKill'], 
@@ -186,7 +191,8 @@ class postRenderer {
 				$crossLink,
 				$templateValues, 
 				$metadata['nameHtml'], 
-				$contentData['categoryHTML'], 
+				$contentData['categoryHTML'],
+				$contentData['tag'],
 				$metadata['quoteButton'], 
 				$contentData['attachmentsHtml'],
 				$metadata['firstAttachmentUrl'],

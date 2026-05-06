@@ -288,7 +288,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		// AJAX first: send JSON, flush to client, then rebuild in the background of this request.
 		if ($this->moduleContext->request->isAjax()) {
 			// if it was an attachment deletion then use the appropriate method to generate the url
-			if($action === 'attachmentDel' && $fileId) {
+			if($action === 'attachmentDel' && isset($fileId)) {
 				$deletionUrl = $this->getDeletionUrlForAttachment($fileId);
 			}
 			// otherwise just get the regular deletion url

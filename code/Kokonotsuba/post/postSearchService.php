@@ -118,8 +118,8 @@ class postSearchService {
 
 		// tokenize and compile each field for boolean full-text search
 		foreach ($fields as $field => $value) {
-			// dont parse post number
-			if($field === 'no') {
+			// dont parse post number or tag (exact match fields)
+			if($field === 'no' || $field === 'tag') {
 				continue;
 			}
 
@@ -157,7 +157,10 @@ class postSearchService {
 			'file_name', 
 			
 			// timestamp of the post
-			'root'
+			'root',
+
+			// tag (exact match abbreviation)
+			'tag',
 		];
 
 		// Remove any fields that are not allowed

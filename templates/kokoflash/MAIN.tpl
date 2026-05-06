@@ -6,8 +6,7 @@
 			<table class="flashboardList" id="filelist">
 				<thead>
 					<tr>
-						<th class="postblock">No.</th>
-						<th class="postblock">Name</th>
+						<th class="postblock">No.</th>					<th class="postblock">Tag</th>						<th class="postblock">Name</th>
 						<th class="postblock">File</th>
 						<th class="postblock"></th>
 						<th class="postblock">Subject</th>
