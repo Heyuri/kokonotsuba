@@ -133,17 +133,6 @@ $config['styles']['kokotxt'] = [
 
 $config['KILL_INCOMPLETE_UPLOAD'] = 1; // Automatically delete uploaded incomplete additional images
 
-// Post tags: keys are abbreviations stored in the database, values are the full display names shown in forms.
-// Example: $config['TAGS'] = ['G' => 'Games', 'A' => 'Anime', 'T' => 'Technology'];
-$config['TAGS'] = [
-    'G' => 'Games', 
-    'OC' => 'Original content', 
-    'A' => 'Anime',
-    'L' => 'Loop',
-    'E' => 'Ero',
-    'H' => 'Heyuri',
-    'O' => 'Other'];
-
 // Excimer Profiling
 // Requires the Excimer PHP extension (https://www.mediawiki.org/wiki/Excimer)
 // When enabled, speedscope-compatible JSON profiles are saved to global/excimer/{category}/
