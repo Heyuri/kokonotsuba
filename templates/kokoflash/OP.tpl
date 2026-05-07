@@ -1,4 +1,4 @@
-	<td class="tag"><!--&IF($TAG,'[{$TAG}]','')--></td>
+	<td class="tag"><!--&IF($TAG,'<span class="tag" title="{$TAG_TITLE}">[{$TAG}]</span>','')--></td>
 	<td class="name">{$NAME}</td>
 	<td class="filecol">[<a href="{$FILE_LINK}" download="{$FILE_NAME}">{$FILE_NAME}</a>]</td>
 		<td>[<a class="flashboardEmbedText" onclick="openFlashEmbedWindow('{$FILE_LINK}', '{$ESCAPED_FILE_NAME}', '{$EXTENSION}', {$FILE_WIDTH}, {$FILE_HEIGHT})">Embed</a>]</td>

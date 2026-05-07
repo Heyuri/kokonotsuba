@@ -4,6 +4,8 @@ namespace Kokonotsuba\libraries;
 
 use Kokonotsuba\interfaces\IBoard;
 
+use function Puchiko\strings\sanitizeStr;
+
 //template convenience library
 function bindReplyValuesToTemplate(IBoard $board, 
 	array $config, 
@@ -36,7 +38,8 @@ function bindReplyValuesToTemplate(IBoard $board,
 		'{$NAME}' => $name, 
 		'{$NOW}' => $now, 
 		'{$CATEGORY}' => $category,
-		'{$TAG}' => $tag,
+		'{$TAG}' => sanitizeStr($tag),
+		'{$TAG_TITLE}' => sanitizeStr($config['TAGS'][$tag] ?? $tag),
 		'{$QUOTEBTN}' => $quoteButton, 
 		'{$POST_ATTACHMENTS}' => $attachmentHtml,
 		'{$WARN_BEKILL}' => $warnBeKill, 
@@ -87,7 +90,8 @@ function bindOPValuesToTemplate(IBoard $board,
 		'{$NAME}' => $name, 
 		'{$NOW}' => $now, 
 		'{$CATEGORY}' => $category,
-		'{$TAG}' => $tag,
+		'{$TAG}' => sanitizeStr($tag),
+		'{$TAG_TITLE}' => sanitizeStr($config['TAGS'][$tag] ?? $tag),
 		'{$QUOTEBTN}' => $quoteButton, 
 		'{$POST_ATTACHMENTS}' => $attachmentHtml,
 		'{$REPLYBTN}' => $replyButton,

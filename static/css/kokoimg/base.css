@@ -1205,11 +1205,6 @@ caption h3 {
 	text-align: center;
 }
 
-#adminPageContent > form,
-.modulePageContent > form {
-	margin: 0.5em auto;
-}
-
 #adminPageContent ul,
 .modulePageContent ul {
 	margin: 1em auto;
@@ -1234,10 +1229,6 @@ caption h3 {
 
 .buttonSection {
 	margin-top: 0.5em;
-}
-
-.formtable {
-	margin: 1em auto;
 }
 
 #adminOptionContainer label {

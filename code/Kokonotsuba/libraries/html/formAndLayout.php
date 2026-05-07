@@ -9,6 +9,15 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfMetaTag;
 use function Puchiko\strings\sanitizeStr;
 
+function buildTagSelectOptions(array $tags, string $currentTag = '', string $emptyLabel = ''): string {
+	$html = '<option value=""' . ($currentTag === '' ? ' selected' : '') . '>' . sanitizeStr($emptyLabel) . '</option>';
+	foreach ($tags as $abbr => $name) {
+		$selected = ($currentTag === $abbr) ? ' selected' : '';
+		$html .= '<option value="' . sanitizeStr($abbr) . '"' . $selected . '>' . sanitizeStr($name) . '</option>';
+	}
+	return $html;
+}
+
 function generateHeadHtml(array $config, templateEngine $templateEngine, moduleEngine $moduleEngine, string $pageTitle = '', int $resno = 0, bool $isStaff = false) {
 	$html = '';
 
@@ -186,13 +195,7 @@ function generatePostFormHTML(int $resno,
 
 	$tags = $config['TAGS'] ?? [];
 	if (!empty($tags)) {
-		$tagOptions = '<option value="">--</option>';
-		foreach ($tags as $abbr => $tagName) {
-			$safeAbbr = sanitizeStr($abbr);
-			$safeName = sanitizeStr($tagName);
-			$tagOptions .= '<option value="' . $safeAbbr . '">' . $safeName . '</option>';
-		}
-		$pte_vals['{$FORM_TAG_FIELD}'] = '<select name="tag" id="tag" class="inputtext">' . $tagOptions . '</select>';
+		$pte_vals['{$FORM_TAG_FIELD}'] = '<select name="tag" id="tag" class="inputtext">' . buildTagSelectOptions($tags, '', '--') . '</select>';
 	}
 
 	if ($config['STORAGE_LIMIT']) {

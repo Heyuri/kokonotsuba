@@ -640,6 +640,11 @@
 	overflow: auto;
 }
 
+.formtable {
+	display: table;
+	margin: 1em auto;
+}
+
 /************************ Mobile **************************************/
 
 .pmMobileOnly {
