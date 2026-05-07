@@ -185,8 +185,14 @@ trait PostControlHooksTrait {
 			$thread_uid = $post->getThreadUid();
 			$threads = $this->moduleContext->threadService->getThreadListFromBoard($board);
 			$pageToRebuild = getPageOfThread($thread_uid, $threads, $board->getConfigValue('PAGE_DEF', 15));
+
+			// if its above the static limit then dont bother rebuilding since it wont be static anyway
+			if($pageToRebuild > $this->getConfig('STATIC_HTML_UNTIL')) {
+				return;
+			}
+
 			$pageToRebuild = min($pageToRebuild, $this->getConfig('STATIC_HTML_UNTIL'));
-			$board->rebuildBoardPage($pageToRebuild);
+			$board->rebuildBoardPages($pageToRebuild);
 		}
 	}
 
