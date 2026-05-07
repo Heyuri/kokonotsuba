@@ -83,8 +83,11 @@ function renderCachedJsonPage($data, $cacheSeconds = 3600, $statusCode = 200) {
 }
 
 function sendAjaxAndDetach(array $payload): void {
+	$body = json_encode($payload);
 	header('Content-Type: application/json');
-	echo json_encode($payload);
+	header('Content-Length: ' . strlen($body));
+	header('Connection: close');
+	echo $body;
 
 	if (session_status() === PHP_SESSION_ACTIVE) {
 		session_write_close();
@@ -93,7 +96,7 @@ function sendAjaxAndDetach(array $payload): void {
 	if (function_exists('fastcgi_finish_request')) {
 		fastcgi_finish_request();
 	} else {
-		ob_flush();
+		ob_end_flush();
 		flush();
 	}
 }

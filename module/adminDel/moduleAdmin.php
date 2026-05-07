@@ -16,6 +16,7 @@ use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\generateModerateForm;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\validatePostInput;
+use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
@@ -296,26 +297,13 @@ class moduleAdmin extends abstractModuleAdmin {
 				$deletionUrl = $this->getDeletionUrlForPost($post->getUid());
 			}
 
-			// Return JSON for AJAX requests
-			header('Content-Type: application/json');
-			echo json_encode([
+			// Return JSON for AJAX requests, detach client, then rebuild server-side.
+			sendAjaxAndDetach([
 				'success' => true,
 				'is_op' => $post->isOp(),
 				'deleted_link' => $deletionUrl
 			]);
-		
-			// Let the client go on; we keep working server-side.
-			if (session_status() === PHP_SESSION_ACTIVE) {
-				session_write_close();
-			}
-			if (function_exists('fastcgi_finish_request')) {
-				fastcgi_finish_request();
-			} else {
-				// Best-effort flush for non-FPM SAPIs
-				ob_flush();
-				flush();
-			}
-		
+
 			// ===== rebuild after the response has been sent =====
 			$this->rebuildBoardForPost($board, $post);
 			exit;
