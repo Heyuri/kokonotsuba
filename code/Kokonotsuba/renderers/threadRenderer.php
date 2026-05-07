@@ -97,6 +97,7 @@ class threadRenderer {
 						$replyCount,
 						$crossLink,
 						$templateValues,
+						$thread,
 						$currentPage,
 						$totalPages,
 						$recentRepliesCount
@@ -146,6 +147,7 @@ class threadRenderer {
 		int $replyCount,
 		string $crossLink,
 		array &$templateValues,
+		Thread $thread,
 		int $currentPage = 0,
 		int $totalPages = 1,
 		?int $recentRepliesCount = null
@@ -182,7 +184,9 @@ class threadRenderer {
 			$warnHidePost,
 			$replyCount,
 			$threadMode,
-			$crossLink
+			$crossLink,
+			false,
+			$thread
 		);
 
 		return $postHtml;

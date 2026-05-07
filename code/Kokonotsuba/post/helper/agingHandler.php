@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\post\helper;
 
+use Kokonotsuba\thread\Thread;
 use Kokonotsuba\thread\threadRepository;
 
 class agingHandler {
@@ -13,18 +14,18 @@ class agingHandler {
 		$this->threadRepository = $threadRepository;
 	}
 
-	public function apply(string $thread_uid, int $unixTime, ?string $postOpRoot, string &$email, bool &$age): void {
+	public function apply(string $thread_uid, int $unixTime, ?Thread $thread, string &$email, bool &$age): void {
 		if (!$thread_uid) return;
-		if (!$postOpRoot) return;
+		if (!$thread) return;
 
 		if (
 			$this->threadRepository->getPostCountFromThread($thread_uid) <= $this->config['MAX_RES']
 			|| $this->config['MAX_RES'] == 0
 		) {
-			$postOpUnixTimestamp = strtotime($postOpRoot);
+			$threadUnixTimestamp = strtotime($thread->getCreatedTime());
 			if (
 				!$this->config['MAX_AGE_TIME']
-				|| (($unixTime - $postOpUnixTimestamp) < ($this->config['MAX_AGE_TIME'] * 60 * 60))
+				|| (($unixTime - $threadUnixTimestamp) < ($this->config['MAX_AGE_TIME'] * 60 * 60))
 			) {
 				$age = true;
 			}

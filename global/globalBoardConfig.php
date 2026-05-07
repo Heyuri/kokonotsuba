@@ -36,6 +36,7 @@ $config['PROXYHEADERlist'] = array(
 	'HTTP_X_CLUSTER_CLIENT_IP',
 	'HTTP_FORWARDED_FOR',
 	'HTTP_FORWARDED');
+
 $config['FORTUNES'] = array( // Used for fortune function, selected at random.
 	'Your true waifu will reveal herself',
 	'Only time will tell',
@@ -56,6 +57,17 @@ $config['FORTUNES'] = array( // Used for fortune function, selected at random.
 	'ｷﾀ━━━━━━(ﾟ∀ﾟ)━━━━━━ !!!!',
 	'（　´_ゝ`）ﾌｰﾝ'
 );
+
+// Post tags: keys are abbreviations stored in the database, values are the full display names shown in forms.
+// Example: $config['TAGS'] = ['G' => 'Games', 'A' => 'Anime', 'T' => 'Technology'];
+$config['TAGS'] = [
+    'G' => 'Games', 
+    'OC' => 'Original content', 
+    'A' => 'Anime',
+    'L' => 'Loop',
+    'E' => 'Ero',
+    'H' => 'Heyuri',
+    'O' => 'Other'];
 
 // Allowed filetypes and mimetypes
 // The key is the extention and the value is the associated mime-type
@@ -219,12 +231,11 @@ $config['ModuleSettings']['ADS_POST_AD_EVERY_N_POSTS'] = 15; // Insert a post-st
 $config['ModuleSettings']['ADS_SLOT_DIMENSIONS'] = [
 	'top' => ['width' => 728, 'height' => 90],
 	'mobile' => ['width' => 300, 'height' => 250],
-	'above' => ['width' => 728, 'height' => 90],
-	'below' => ['width' => 728, 'height' => 90],
-	'inline' => ['width' => 728, 'height' => 90],
+	'above' => ['width' => 728, 'height' => 150],
+	'below' => ['width' => 728, 'height' => 150],
+	'inline' => ['width' => 728, 'height' => 150],
 	'post_ad' => ['width' => 300, 'height' => 250],
 ];
-
 
 //mod_addinfo
 $config['ModuleSettings']['ADD_INFO'] = array(

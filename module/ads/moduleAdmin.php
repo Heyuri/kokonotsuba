@@ -27,7 +27,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	private readonly string $modulePage;
 
 	private const VALID_SLOTS = [
-		'top', 'mobile', 'sticky', 'popunder',
+		'top', 'mobile', 'sticky',
 		'above', 'below', 'inline', 'post_ad',
 	];
 

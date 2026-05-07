@@ -16,6 +16,7 @@ use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
+use Kokonotsuba\thread\Thread;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\generateQuoteLinkHtml;
@@ -71,7 +72,8 @@ class postRenderer {
 		int $replyCount,
 		bool $threadMode = true,
 		string $crossLink = '',
-		bool $renderAsOp = false
+		bool $renderAsOp = false,
+		?Thread $thread = null
 	) {
 		// Prepare post data
 		$data = $this->postDataPreparer->preparePostData($post);
@@ -88,7 +90,7 @@ class postRenderer {
 		$contentData = $this->preparePostContent($data, $threadResno, $repliesPerPage, $replyCount, $crossLink, $adminMode);
 
 		// Generate warning messages
-		$warnings = $this->prepareWarnings($killSensor, $isThreadOp, $post);
+		$warnings = $this->prepareWarnings($killSensor, $isThreadOp, $post, $thread);
 
 		$templateValues['{$POSTINFO_EXTRA}'] = '';
 
@@ -217,17 +219,19 @@ class postRenderer {
 		$data->setComment(quote_unkfunc($data->getComment()));
 	}
 
-	private function prepareWarnings(bool $killSensor, bool $isThreadOp, Post $post): array {
+	private function prepareWarnings(bool $killSensor, bool $isThreadOp, Post $post, ?Thread $thread = null): array {
 		$warnBeKill = '';
 		if ($this->config['STORAGE_LIMIT'] && $killSensor) {
 			$warnBeKill = '<div class="warning">'._T('warn_sizelimit').'</div>';
 		}
 
 		$warnOld = '';
-		if ($isThreadOp) {
+		if ($isThreadOp && $thread !== null) {
 			$maxAgeLimit = $this->config['MAX_AGE_TIME'];
-			$postUnixTimestamp = is_numeric($post->getRoot()) ? $post->getRoot() : strtotime($post->getRoot());
-			if ($maxAgeLimit && $this->request->getRequestTime() - $postUnixTimestamp > ($maxAgeLimit * 60 * 60)) {
+			
+			$threadUnixTimestamp = strtotime($thread->getCreatedTime());
+			
+			if ($maxAgeLimit && $this->request->getRequestTime() - $threadUnixTimestamp > ($maxAgeLimit * 60 * 60)) {
 				$warnOld = "<div class='warning'>"._T('warn_oldthread')."</div>";
 			}
 		}
