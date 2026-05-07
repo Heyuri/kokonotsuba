@@ -7,7 +7,7 @@
 			<div class="postinfo">
 				<label>
 					<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete">
-					<span class="title">{$SUB}</span>
+					<span class="title">{$SUB}</span><!--&IF($TAG,'<span class="tag" title="{$TAG_TITLE}">[{$TAG}]</span>','')-->
 					<span class="nameContainer">
 						<!--{$NAME_TEXT}--><span class="name">{$NAME}</span>
 					</span>

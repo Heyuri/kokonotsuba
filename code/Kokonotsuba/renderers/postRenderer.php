@@ -130,8 +130,8 @@ class postRenderer {
 		// Process category links
 		$categoryHTML = $this->postElementGenerator->processCategoryLinks($data->getCategory(), $crossLink);
 
-		// Get tag
-		$tag = $data->getTag();
+		// Get tag (only pass it through if ENABLE_TAGS is on)
+		$tag = !empty($this->config['ENABLE_TAGS']) ? $data->getTag() : '';
 
 		// this post is deleted
 		$isDeleted = $data->getOpenFlag() && !$data->isFileOnlyDeleted() && $adminMode;

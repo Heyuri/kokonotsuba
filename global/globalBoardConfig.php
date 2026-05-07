@@ -267,6 +267,10 @@ $config['ModuleSettings']['DICE_FACE_LIMIT'] = 9999;
 $config['ModuleSettings']['EMAIL_DICE_ROLL'] = false;
 $config['ModuleSettings']['COMMENT_DICE_ROLL'] = true;
 
+//mod_spoiler
+$config['ModuleSettings']['SPOILER_THUMB_W'] = 255; // Width in pixels of the spoiler thumbnail
+$config['ModuleSettings']['SPOILER_THUMB_H'] = 255; // Height in pixels of the spoiler thumbnail
+
 /* bbCode */
 $config['ModuleSettings']['supportBold'] = true; // [b]...[/b] into <b>...</b>
 $config['ModuleSettings']['supportSpoiler'] = true; // [spoiler]...[/spoiler] into <span class="spoiler">...</span>
@@ -552,6 +556,7 @@ $config['REPLY_TEMPLATE_FILE'] = 'kokoimg'; // Reply page template directory
 $config['MAX_AGE_TIME'] = 0; // How long will thread accept age replies? (hours)
 
 $config['USE_CATEGORY'] = 0; // Enable Categories
+$config['ENABLE_TAGS'] = false; // Show post tags (requires TAGS defined in globalconfig.php)
 
 $config['PREVENT_DUPLICATE_FILE_UPLOADS'] = false; // Disallow the same file was being posted twice 
 $config['DUPLICATE_FILE_TIME'] = 7200; // The time a duplicate attachment cant be uploaded
