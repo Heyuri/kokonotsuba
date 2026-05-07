@@ -567,7 +567,7 @@ $config['REPLY_TEMPLATE_FILE'] = 'kokoimg'; // Reply page template directory
 $config['MAX_AGE_TIME'] = 0; // How long will thread accept age replies? (hours)
 
 $config['USE_CATEGORY'] = 0; // Enable Categories
-$config['ENABLE_TAGS'] = false; // Show post tags (requires TAGS defined in globalconfig.php)
+$config['ENABLE_TAGS'] = false; // Show post tags (requires TAGS defined)
 
 $config['PREVENT_DUPLICATE_FILE_UPLOADS'] = false; // Disallow the same file was being posted twice 
 $config['DUPLICATE_FILE_TIME'] = 7200; // The time a duplicate attachment cant be uploaded
