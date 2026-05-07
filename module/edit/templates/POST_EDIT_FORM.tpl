@@ -30,6 +30,14 @@
 								<textarea name="comment" id="editComment" rows="4" cols="40">{$COMMENT}</textarea>
 							</td>
 						</tr>
+						<tr>
+							<td class="postblock"><label for="editTag">{$FORM_TAG}</label></td>
+							<td>
+								<select name="tag" id="editTag">
+									{$TAG_SELECT}
+								</select>
+							</td>
+						</tr>
 					</tbody>
 				</table>
 
