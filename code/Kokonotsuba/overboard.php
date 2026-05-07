@@ -30,6 +30,7 @@ use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\strings\sanitizeStr;
 use function Kokonotsuba\libraries\getCsrfMetaTag;
+use function Kokonotsuba\libraries\html\getBoardStylesheetsFromConfig;
 
 class overboard {
 	private bool $adminMode, $canViewDeleted;
