@@ -429,9 +429,9 @@ class deletedPostsService {
 	}
 
 	private function getPaginationParams(int $page, int $entriesPerPage): array {
-		$page = max($page, 0);
+		$page = max($page, 1);
 		$entriesPerPage = max($entriesPerPage, 0);
-		$offset = $page * $entriesPerPage;
+		$offset = ($page - 1) * $entriesPerPage;
 
 		return [$entriesPerPage, $offset];
 	}

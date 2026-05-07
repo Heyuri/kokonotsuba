@@ -1,5 +1,5 @@
 	<div class="post op" id="p{$BOARD_UID}_{$NO}" {$DATA_ATTRIBUTES}>
-		<h1 class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h1>
+		<h1 class="title"><a href="{$LIVE_INDEX_FILE}?res={$RESTO}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h1><!--&IF($TAG,'<span class="tag" title="{$TAG_TITLE}">[{$TAG}]</span>','')-->
 		<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]</div>
 		<div class="postinfo">
 			<span class="postnum">{$QUOTEBTN}</span>

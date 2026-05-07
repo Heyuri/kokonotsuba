@@ -97,6 +97,7 @@ class threadRenderer {
 						$replyCount,
 						$crossLink,
 						$templateValues,
+						$thread,
 						$currentPage,
 						$totalPages,
 						$recentRepliesCount
@@ -105,6 +106,9 @@ class threadRenderer {
 				$templateValues['{$THREAD_OP}'] = $postHtml;
 			} else {
 				$templateValues['{$REPLIES}'] .= $postHtml;
+				$postSeparateHtml = '';
+				$this->moduleEngine->dispatch('PostSeparate', [&$postSeparateHtml, $i - 1]);
+				$templateValues['{$REPLIES}'] .= $postSeparateHtml;
 			}
 		}
 		
@@ -121,7 +125,9 @@ class threadRenderer {
 		}
 
 		$threadHtml .= $this->templateEngine->ParseBlock('THREAD', $templateValues);
-		$threadHtml .= $this->templateEngine->ParseBlock('THREADSEPARATE', []);
+		$separateHtml = $this->templateEngine->ParseBlock('THREADSEPARATE', []);
+		$this->moduleEngine->dispatch('ThreadSeparate', [&$separateHtml, $threadIterator]);
+		$threadHtml .= $separateHtml;
 		return $threadHtml;
 	}
 	
@@ -141,6 +147,7 @@ class threadRenderer {
 		int $replyCount,
 		string $crossLink,
 		array &$templateValues,
+		Thread $thread,
 		int $currentPage = 0,
 		int $totalPages = 1,
 		?int $recentRepliesCount = null
@@ -159,7 +166,7 @@ class threadRenderer {
 			$shownReplies = count($threadPosts) - 1;
 			$warnHidePost .= '<div class="omittedposts">'._T('notice_viewing_last_posts', $shownReplies, $shownReplies === 1 ? _T('post_singular') : _T('post_multiple')).'</div>';
 		} elseif (!$isReply && $totalPages > 1) {
-			$warnHidePost .= '<div class="omittedposts">'._T('notice_viewing_page', $currentPage, max(1, $totalPages - 1)).'</div>';
+			$warnHidePost .= '<div class="omittedposts">'._T('notice_viewing_page', $currentPage, max(1, $totalPages)).'</div>';
 		}
 
 		// bind post op number to resto
@@ -177,7 +184,9 @@ class threadRenderer {
 			$warnHidePost,
 			$replyCount,
 			$threadMode,
-			$crossLink
+			$crossLink,
+			false,
+			$thread
 		);
 
 		return $postHtml;

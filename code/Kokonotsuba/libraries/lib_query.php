@@ -53,6 +53,7 @@ function getBasePostQuery(
 			f.mime_type          AS attachment_mime_type,
 			f.is_hidden          AS attachment_is_hidden,
 			f.is_animated        AS attachment_is_animated,
+			f.is_spoilered       AS attachment_is_spoilered,
 			f.is_deleted         AS attachment_is_deleted,
 			f.timestamp_added    AS attachment_timestamp_added";
 
@@ -245,6 +246,7 @@ function buildAttachment(array $row): array {
 		'mimeType'       => $row['attachment_mime_type'],
 		'isHidden'       => $row['attachment_is_hidden'],
 		'isAnimated'     => $row['attachment_is_animated'],
+		'isSpoilered'    => $row['attachment_is_spoilered'],
 		'isDeleted'      => $row['attachment_is_deleted'],
 		'onlyFileDeleted' => $row['file_only_deleted'] ?? false,
 		'timestampAdded' => $row['attachment_timestamp_added'],
@@ -367,6 +369,7 @@ function stripAttachmentColumns(array &$row): void {
 		'attachment_mime_type',
 		'attachment_is_hidden',
 		'attachment_is_animated',
+		'attachment_is_spoilered',
 		'attachment_is_deleted',
 		'attachment_timestamp_added',
 	]);

@@ -137,15 +137,15 @@ class fullBannerService {
 
 	private function calculatePagination(int $requestedPage, int $entriesPerPage, int $totalEntries): array {
 		$entriesPerPage = max(1, $entriesPerPage);
-		$currentPage = max(0, $requestedPage);
+		$currentPage = max(1, $requestedPage);
 
 		if ($totalEntries <= 0) {
-			return [$entriesPerPage, 0, 0];
+			return [$entriesPerPage, 1, 0];
 		}
 
-		$lastPage = (int)ceil($totalEntries / $entriesPerPage) - 1;
+		$lastPage = (int)ceil($totalEntries / $entriesPerPage);
 		$currentPage = min($currentPage, $lastPage);
-		$offset = $currentPage * $entriesPerPage;
+		$offset = ($currentPage - 1) * $entriesPerPage;
 
 		return [$entriesPerPage, $currentPage, $offset];
 	}

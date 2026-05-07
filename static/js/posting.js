@@ -235,6 +235,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 			// --- NOKO reply ---
 			if (isNoko && isReply) {
+				// #pagerNextCell only appears when the current page is the last page.
+				// If there's a pager but no #pagerNextCell, we're on an earlier page.
+				const hasPager = !!document.getElementById('pager');
+				const onLastPage = !hasPager || !!document.getElementById('pagerNextCell');
+				if (!onLastPage && data.redirectUrl) {
+					window.location.href = data.redirectUrl;
+					return;
+				}
 				updateThreadAndScroll(data.postId, data.newPostsHtml);
 				clearForm();
 				return;

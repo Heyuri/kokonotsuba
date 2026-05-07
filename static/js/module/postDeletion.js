@@ -126,10 +126,7 @@
 			const attachmentEl = control.closest('.attachmentContainer') || control.closest('.file');
 			if (!attachmentEl) return;
 
-			const state = prepareAttachmentDeletion(attachmentEl, postEl, [
-				'.indicator-deleteFile',
-				'.indicator-imgops'
-			]);
+			const state = prepareAttachmentDeletion(attachmentEl, postEl, []);
 
 			sendModuleAction(href, {
 				revertUI: state.revertUI,
@@ -218,10 +215,7 @@
 			var attachmentEl = ctx.container || (ctx.bar && ctx.bar.closest('.attachmentContainer'));
 			if (!attachmentEl || !postEl) return;
 
-			var state = prepareAttachmentDeletion(attachmentEl, postEl, [
-				'.indicator-deleteFile',
-				'.indicator-imgops'
-			]);
+			var state = prepareAttachmentDeletion(attachmentEl, postEl, []);
 
 			sendModuleAction(menuItem.href, {
 				revertUI: state.revertUI,

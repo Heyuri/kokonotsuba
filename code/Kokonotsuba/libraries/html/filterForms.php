@@ -25,7 +25,7 @@ function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, a
 	
 	$boardCheckboxHTML = generateBoardListCheckBoxHTML($filterBoard, $allBoards, false);
 	$dat .= '
-		<form class="detailsboxForm" id="actionLogFilterForm" action="' . $board->getBoardURL(true) . '" method="get">
+		<form class="detailsboxForm formtable" id="actionLogFilterForm" action="' . $board->getBoardURL(true) . '" method="get">
 			<details id="filtercontainer" class="detailsbox">
 				<summary>Filter action log</summary>
 				<div class="detailsboxContent">
@@ -100,7 +100,7 @@ function drawManagePostsFilterForm(string &$dat, board $board, array $filters, b
 	
 	$boardCheckboxHTML = generateBoardListCheckBoxHTML($filterBoard, $boards);
 	$dat .= '
-	<form class="detailsboxForm" action="' . $board->getBoardURL(true) . '" method="get">
+	<form class="detailsboxForm formtable" action="' . $board->getBoardURL(true) . '" method="get">
 		<details id="filtercontainer" class="detailsbox">
 			<summary>Filter posts</summary>
 			<div class="detailsboxContent">

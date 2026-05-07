@@ -231,7 +231,7 @@ class board implements IBoard {
 		$this->boardRebuilder->drawRecentReplies($res, $amountOfRepliesToRender);
 	}
 
-	public function drawThread(int $res, int $page = 0): void {
+	public function drawThread(int $res, int $page = 1): void {
 		$this->boardRebuilder->drawThread($res, $page);
 	}
 

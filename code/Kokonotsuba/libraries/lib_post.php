@@ -273,7 +273,7 @@ function getPageOfThread(string $thread_uid, array $threads, int $threadsPerPage
 	$index = array_search($thread_uid, $thread_list);
 		
 	if ($index !== false) {
-		return (int) floor($index / $threadsPerPage);
+		return (int) floor($index / $threadsPerPage) + 1;
 	}
 	
 	return -1; // Thread not found

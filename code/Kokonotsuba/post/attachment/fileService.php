@@ -366,6 +366,26 @@ class fileService {
 	}
 
 	/**
+	 * Mark the given file as spoilered.
+	 *
+	 * @param int $fileId File row ID.
+	 * @return void
+	 */
+	public function spoilerFile(int $fileId): void {
+		$this->fileRepository->toggleSpoiledFileById($fileId, true);
+	}
+
+	/**
+	 * Remove the spoiler flag from the given file.
+	 *
+	 * @param int $fileId File row ID.
+	 * @return void
+	 */
+	public function unspoilerFile(int $fileId): void {
+		$this->fileRepository->toggleSpoiledFileById($fileId, false);
+	}
+
+	/**
 	 * Mark the given file IDs as deleted (is_deleted = true).
 	 *
 	 * @param int[] $fileIDs Array of file row IDs.

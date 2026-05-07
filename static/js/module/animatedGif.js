@@ -1,74 +1,63 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // Add event listener for all the admin GIF toggle links
-    document.querySelectorAll('.adminGIFFunction a').forEach(function (anchor) {
-        anchor.addEventListener('click', handleGifToggle);
-    });
+(function () {
+    'use strict';
 
-    // Function to handle the GIF toggle request
-    function handleGifToggle(e) {
-        e.preventDefault(); // Prevent the default anchor redirect behavior
+    if (!window.attachmentWidget) {
+        return;
+    }
 
-        const anchor = e.target; // The clicked anchor
-        const anchorUrl = anchor.href; // Get the URL from the href attribute
-        const attachmentContainer = anchor.closest('.attachmentContainer'); // Find the parent container for the attachment
-        const imageElement = attachmentContainer.querySelector('img'); // Find the associated image
-        const filesizeDiv = attachmentContainer.querySelector('.filesize'); // Find the filesize div
+    window.attachmentWidget.registerActionHandler('animateGif', function (ctx) {
+        var imageElement = ctx.container ? ctx.container.querySelector('img') : null;
+        if (imageElement) {
+            imageElement.style.opacity = 0.5;
+        }
 
-        // Set opacity to 0.5 while the request is being processed
-        imageElement.style.opacity = 0.5;
-
-        // Perform the fetch request
-        fetch(anchorUrl, {
+        fetch(ctx.menuItem.href, {
             method: 'GET',
             headers: {
-                'X-Requested-With': 'XMLHttpRequest' // Indicate that this is an AJAX request
+                'X-Requested-With': 'XMLHttpRequest'
             }
         })
-            .then(response => {
+            .then(function (response) {
                 if (!response.ok) {
-                    throw new Error(`HTTP error ${response.status}`);
+                    throw new Error('HTTP error ' + response.status);
                 }
                 return response.json();
             })
-            .then(data => {
-                // Reset the opacity of the image
-                imageElement.style.opacity = 1;
+            .then(function (data) {
+                if (imageElement) {
+                    imageElement.style.opacity = 1;
+                    imageElement.src = data.attachmentUrl;
+                }
 
-                // Show a success message based on whether the GIF is animated
-                const message = data.active
-                    ? 'GIF animated!'
-                    : 'GIF animation disabled';
+                // Update the hidden widget data so the next menu open shows the correct label
+                if (ctx.bar) {
+                    var widgetAnchor = ctx.bar.querySelector('.attachmentWidgetData a[data-action="animateGif"]');
+                    if (widgetAnchor) {
+                        var newLabel = data.active ? 'Use still image of GIF' : 'Use animated GIF';
+                        widgetAnchor.dataset.label = newLabel;
+                        widgetAnchor.textContent = newLabel;
+                    }
 
-                showMessage(message, true);
-
-                // Update the image source to the new attachmentUrl from the response
-                imageElement.src = data.attachmentUrl;
-
-                // Replace the old GIF toggle button with the new one
-                const oldGifButtonContainer = anchor.closest('.adminGIFFunction');
-                oldGifButtonContainer.innerHTML = data.newGifButton;
-
-                // Reattach the event listener to the new anchor (in case it has been replaced)
-                const newAnchor = oldGifButtonContainer.querySelector('a');
-                newAnchor.addEventListener('click', handleGifToggle);
-
-                // Toggle the "[Animated GIF]" label visibility
-                const labelIndicator = filesizeDiv.querySelector('.indicator-animatedGifLabel');
-                if (labelIndicator) {
-                    if (data.active) {
-                        labelIndicator.classList.remove('indicatorHidden');
-                    } else {
-                        labelIndicator.classList.add('indicatorHidden');
+                    // Toggle the "[Animated GIF]" indicator label
+                    var labelIndicator = ctx.bar.querySelector('.indicator-animatedGifLabel');
+                    if (labelIndicator) {
+                        if (data.active) {
+                            labelIndicator.classList.remove('indicatorHidden');
+                        } else {
+                            labelIndicator.classList.add('indicatorHidden');
+                        }
                     }
                 }
-            })
-            .catch(error => {
-                // Reset the opacity if there's an error
-                imageElement.style.opacity = 1;
 
-                // Show an error message
+                showMessage(data.active ? 'GIF animated!' : 'GIF animation disabled', true);
+            })
+            .catch(function (error) {
+                if (imageElement) {
+                    imageElement.style.opacity = 1;
+                }
                 showMessage('Error while toggling GIF animate status', false);
                 console.error(error);
             });
-    }
-});
+    });
+
+})();

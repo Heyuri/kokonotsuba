@@ -78,14 +78,9 @@ class deletedPostUIHooks {
 
 		$moduleEngine->addRoleProtectedListener(
 			$requiredRole,
-			'ModerateAttachment',
-			function(
-				string &$attachmentProperties, 
-				string &$attachmentImage, 
-				string &$attachmentUrl, 
-				array &$attachment
-			) {
-				$this->onRenderAttachment($attachmentProperties, $attachment);
+			'ModerateAttachmentWidget',
+			function(array &$widgetArray, array &$attachment) {
+				$this->onRenderAttachmentWidget($widgetArray, $attachment);
 			}
 		);
 
@@ -223,17 +218,18 @@ class deletedPostUIHooks {
 		$widgetArray[] = $viewDeletedPostWidget;
 	}
 
-	private function onRenderAttachment(string &$attachmentProperties, array &$attachment): void {
-		// return early if the attachment isn't deleted
-		if(!$attachment['isDeleted'] && !$attachment['onlyFileDeleted']) {
+	private function onRenderAttachmentWidget(array &$widgetArray, array &$attachment): void {
+		if (!$attachment['isDeleted'] && !$attachment['onlyFileDeleted']) {
 			return;
 		}
 
-		// get deleted post id of the attachment
 		$deletedPostId = $attachment['deletedPostId'] ?? null;
+		if (!$deletedPostId) {
+			return;
+		}
 
-		// append view deleted attachment button
-		$attachmentProperties .= $this->generateViewDelAttachmentButton($deletedPostId);
+		$deletedEntryUrl = $this->deletedPostUtility->generateViewDeletedPostUrl($deletedPostId);
+		$widgetArray[] = ($this->buildWidgetEntry)($deletedEntryUrl, 'viewDeletedAttachment', 'View deleted file', '');
 	}
 
 	private function onRenderAttachmentIndicator(string &$fileInfoBar, array &$attachment): void {
@@ -244,21 +240,6 @@ class deletedPostUIHooks {
 		$fileInfoBar .= $this->renderIndicator('fileDeleted', '[FILE DELETED]', 'warning', !$isDeleted, 'This post\'s file was deleted!');
 	}
 
-	private function generateViewDelAttachmentButton(?int $deletedPostId): string {
-		// return empty string if null
-		if(!$deletedPostId) {
-			return '';
-		}
-		
-		// generate delete attachment url
-		$deletedEntryUrl = $this->deletedPostUtility->generateViewDeletedPostUrl($deletedPostId);
-
-		// button html
-		$button = ' <span class="adminFunctions adminViewDeletedAttachment attachmentButton">[<a href="' . htmlspecialchars($deletedEntryUrl) . '" title="View deleted attachment">VF</a>]</span>';
-	
-		// return button
-		return $button;
-	}
 
 
 }

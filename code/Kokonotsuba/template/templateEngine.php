@@ -105,10 +105,10 @@ class templateEngine {
 		$this->dirBlockMap = null;
 
 		// set the new template directory
-		$this->templateDir = getBackendDir() . 'templates/' . $templateName;
+		$this->templateDir = getBackendDir() . 'templates/' . $templateName . '/';
 	}
 
-	public function BlockValue($blockName) {
+	public function BlockValue(string $blockName) {
 		return trim($this->_readBlock($blockName));
 	}
 

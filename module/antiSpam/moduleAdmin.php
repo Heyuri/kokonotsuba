@@ -402,7 +402,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$entriesPerPage = $this->getConfig('ACTIONLOG_MAX_PER_PAGE');
 
 		// get current page
-		$page = $this->moduleContext->request->getParameter('page', 'GET', 0);
+		$page = (int)$this->moduleContext->request->getParameter('page', 'GET', 1);
 
 		// fetch anti-spam rule entries from database
 		$entries = $this->antiSpamService->getEntries($entriesPerPage, $page);

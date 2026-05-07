@@ -17,6 +17,9 @@
 		anigifLimit = parseInt(anigifData.getAttribute('data-size-limit'), 10) || 0;
 	}
 
+	// Whether the spoiler module is active (injected <template id="spoilerData"> in page head)
+	var spoilerEnabled = !!document.getElementById('spoilerData');
+
 	// Holds all selected or pasted files in memory before syncing with file input
 	var filesState = [];
 	var allowedPreviewTypes = ['image/jpeg','image/png','image/gif','image/bmp','image/webp','image/svg+xml'];
@@ -291,6 +294,43 @@
 			}
 		}
 
+		// Adds a spoiler checkbox per file when the spoiler module is active
+		if (spoilerEnabled) {
+			var spWrap = document.createElement('div');
+			spWrap.style.marginTop = '6px';
+
+			var spBefore = document.createElement('span');
+			spBefore.textContent = '[';
+
+			var spLabel = document.createElement('label');
+			spLabel.style.cursor = 'pointer';
+			spLabel.style.margin = '0 4px';
+
+			(function(st, idx) {
+				var spChk = document.createElement('input');
+				spChk.type = 'checkbox';
+				spChk.name = 'spoiler[' + idx + ']';
+				spChk.value = 'on';
+				spChk.checked = st.spoilered;
+				spChk.style.marginRight = '4px';
+				spChk.addEventListener('change', function() {
+					st.spoilered = spChk.checked;
+				});
+
+				spLabel.appendChild(spChk);
+				spLabel.appendChild(document.createTextNode('Spoiler'));
+			})(st, index);
+
+			var spAfter = document.createElement('span');
+			spAfter.textContent = ']';
+
+			spWrap.appendChild(spBefore);
+			spWrap.appendChild(spLabel);
+			spWrap.appendChild(spAfter);
+
+			b.appendChild(spWrap);
+		}
+
 		return b;
 	}
 
@@ -388,7 +428,8 @@
 			blob:f,
 			nameBase:p.nameBase||'image',
 			extension:ext,
-			type:f.type||'application/octet-stream'
+			type:f.type||'application/octet-stream',
+			spoilered: false
 		};
 
 		// Single-file mode replaces any existing file

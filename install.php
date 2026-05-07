@@ -353,6 +353,7 @@ class tableCreator {
                 `com` MEDIUMTEXT NOT NULL,
                 `host` TEXT NOT NULL,
                 `status` TEXT,
+                `tag` VARCHAR(16) DEFAULT NULL,
                 PRIMARY KEY (`post_uid`),
                 CONSTRAINT fk_boardUID FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
                 CONSTRAINT fk_thread_uid FOREIGN KEY (`thread_uid`) REFERENCES `{$sanitizedTableNames['THREAD_TABLE']}`(`thread_uid`) ON DELETE CASCADE,
@@ -361,6 +362,7 @@ class tableCreator {
                 INDEX idx_posts_thread_rank (thread_uid, is_op DESC, post_uid DESC),
                 INDEX idx_posts_thread_rank_cover (thread_uid, is_op DESC, post_uid DESC, post_uid),
                 INDEX idx_post_root (`root`),
+                INDEX idx_tag (`tag`),
                 UNIQUE KEY uniq_board_no (boardUID, no),
                 FULLTEXT INDEX ft_com (com),
                 FULLTEXT INDEX ft_sub (sub),
@@ -456,6 +458,7 @@ class tableCreator {
                 is_hidden TINYINT(1) NOT NULL DEFAULT 0,
                 is_deleted TINYINT(1) NOT NULL DEFAULT 0,
                 is_animated TINYINT(1) NOT NULL DEFAULT 0,
+                is_spoilered TINYINT(1) NOT NULL DEFAULT 0,
                 timestamp_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 
                 CONSTRAINT fk_file_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
@@ -622,6 +625,19 @@ class tableCreator {
                 INDEX idx_active_approved (is_active, is_approved),
                 INDEX idx_date_submitted (date_submitted),
                 INDEX idx_ip_date (ip_address, date_submitted)
+            ) ENGINE=InnoDB;
+            ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['ADS_TABLE']} (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                slot VARCHAR(20) NOT NULL,
+                type VARCHAR(10) NOT NULL,
+                src TEXT NULL,
+                href TEXT NULL,
+                alt TEXT NULL,
+                html TEXT NULL,
+                enabled TINYINT(1) NOT NULL DEFAULT 1,
+                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                INDEX idx_ads_slot_enabled (slot, enabled)
             ) ENGINE=InnoDB;
             ",
             "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BLOTTER_TABLE']} (

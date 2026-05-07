@@ -9,6 +9,7 @@
 			<span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span>
 			<span class="time">{$NOW}</span>
 			<!--&IF($POSTER_HASH,'<span class="idContainer">ID:{$POSTER_HASH}</span>','')-->
+			<!--&IF($TAG,'<span class="tag" title="{$TAG_TITLE}">[{$TAG}]</span>','')-->
 			<span class="postInfoExtra">{$POSTINFO_EXTRA}</span>
 			<div class="postMenuContainer"><!--&IF($POST_MENU,'{$POST_MENU}','')--></div>
 		</div>

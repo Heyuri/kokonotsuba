@@ -66,12 +66,12 @@ class antiSpamService {
 	 * Fetch a paginated list of spam rule entries.
 	 *
 	 * @param int $entriesPerPage Number of entries per page.
-	 * @param int $page           Zero-based page index.
+	 * @param int $page           One-based page index.
 	 * @return array|false Array of rule rows, or false if none.
 	 */
 	public function getEntries(int $entriesPerPage, int $page): false|array {
 		// calculate pagination value
-		$offset = max(0, max(0, $page) * $entriesPerPage);
+		$offset = max(0, (max(1, $page) - 1) * $entriesPerPage);
 
 		// return data
 		return $this->antiSpamRepository->getEntries($entriesPerPage, $offset);

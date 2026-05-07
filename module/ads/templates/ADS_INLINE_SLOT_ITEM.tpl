@@ -1,0 +1,1 @@
+<div class="pmInlineSlot centerText">{$AD_HTML}</div>

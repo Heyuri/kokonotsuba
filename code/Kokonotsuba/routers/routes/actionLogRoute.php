@@ -37,9 +37,9 @@ class actionLogRoute {
 
 		$tableEntries = '';
 		$limit = $this->config['ACTIONLOG_MAX_PER_PAGE'];
-		$page = (int) $this->request->getParameter('page', default: 0);
-		$page = ($page >= 0) ? $page : 1;
-		$offset = $page * $limit;
+		$page = (int) $this->request->getParameter('page', default: 1);
+		$page = max(1, $page);
+		$offset = ($page - 1) * $limit;
 
 		// So we can see if the form is being submitted in the current request
 		$isSubmission = $this->request->hasParameter('filterSubmissionFlag', 'GET');

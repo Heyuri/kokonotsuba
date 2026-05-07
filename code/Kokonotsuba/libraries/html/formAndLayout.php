@@ -6,6 +6,17 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\template\templateEngine;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfMetaTag;
+use function Puchiko\strings\sanitizeStr;
+
+function buildTagSelectOptions(array $tags, string $currentTag = '', string $emptyLabel = ''): string {
+	$html = '<option value=""' . ($currentTag === '' ? ' selected' : '') . '>' . sanitizeStr($emptyLabel) . '</option>';
+	foreach ($tags as $abbr => $name) {
+		$selected = ($currentTag === $abbr) ? ' selected' : '';
+		$html .= '<option value="' . sanitizeStr($abbr) . '"' . $selected . '>' . sanitizeStr($name) . '</option>';
+	}
+	return $html;
+}
 
 function generateHeadHtml(array $config, templateEngine $templateEngine, moduleEngine $moduleEngine, string $pageTitle = '', int $resno = 0, bool $isStaff = false, array $options = []) {
 	$html = '';
@@ -14,6 +25,9 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 
 	// dispatch module header hook point for (staff) live frontend
 	if($isStaff) {
+		// Emit CSRF meta tag centrally so all JS actions can read it reliably,
+		// regardless of which modules are enabled on the board.
+		$pte_vals['{$MODULE_HEADER_HTML}'] .= getCsrfMetaTag();
 		$moduleEngine->dispatch('ModuleAdminHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
 	}
 	
@@ -205,6 +219,11 @@ function generatePostFormHTML(int $resno,
 		$pte_vals['{$FORM_CATEGORY_FIELD}'] = '<input type="text" name="category" id="category" value="' . $category . '" class="inputtext">';
 	}
 
+	$tags = $config['TAGS'] ?? [];
+	if (!empty($tags)) {
+		$pte_vals['{$FORM_TAG_FIELD}'] = '<select name="tag" id="tag" class="inputtext">' . buildTagSelectOptions($tags, '', '--') . '</select>';
+	}
+
 	if ($config['STORAGE_LIMIT']) {
 		$pte_vals['{$FORM_NOTICE_STORAGE_LIMIT}'] = _T(
 			'form_notice_storage_limit',
@@ -264,5 +283,6 @@ function preparePostFormTemplateValues(int $resno, ?string $liveIndexFile, ?stri
 		'{$USE_SAGE_CHECKBOX}' => !empty($config['USE_SAGE_CHECKBOX']),
 		'{$USE_NOKO_CHECKBOX}' => !empty($config['USE_NOKO_CHECKBOX']),
 		'{$USE_DUMP_CHECKBOX}' => !empty($config['USE_DUMP_CHECKBOX']),
+		'{$FORM_TAG_FIELD}' => '',
 		'{$POST_FORM}' => '');
 }

@@ -212,6 +212,7 @@ class postRepository extends baseRepository {
 				f.mime_type          AS attachment_mime_type,
 				f.is_hidden          AS attachment_is_hidden,
 				f.is_animated        AS attachment_is_animated,
+				f.is_spoilered       AS attachment_is_spoilered,
 				f.is_deleted         AS attachment_is_deleted,
 				f.timestamp_added    AS attachment_timestamp_added
 			FROM {$this->table} p
@@ -341,10 +342,10 @@ class postRepository extends baseRepository {
 	 */
 	public function insertPost(array $params): void {
 		$query = "INSERT INTO {$this->table} 
-			(no, poster_hash, boardUID, thread_uid, post_position, is_op, root, category, pwd, now, 
+			(no, poster_hash, boardUID, thread_uid, post_position, is_op, root, category, tag, pwd, now, 
 			name, tripcode, secure_tripcode, capcode, email, sub, com, host, status) 
 			VALUES (:no, :poster_hash, :boardUID, :thread_uid, :post_position, :is_op, :root,
-			:category, :pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :status)";
+			:category, :tag, :pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :status)";
 		
 		$this->query($query, $params);
 	}
@@ -526,7 +527,7 @@ class postRepository extends baseRepository {
 		// Manually define the columns
 		$columns = [
 			'no', 'poster_hash', 'boardUID', 'thread_uid', 'post_position', 'is_op',
-			'root', 'category', 'pwd', 'now', 'name', 'tripcode', 'secure_tripcode',
+			'root', 'category', 'tag', 'pwd', 'now', 'name', 'tripcode', 'secure_tripcode',
 			'capcode', 'email', 'sub', 'com', 'host', 'status'
 		];
 

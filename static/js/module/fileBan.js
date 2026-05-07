@@ -31,12 +31,7 @@
 		var attachmentEl = ctx.container || (ctx.bar && ctx.bar.closest('.attachmentContainer'));
 		if (!attachmentEl || !postEl) return;
 
-		var state = prepareAttachmentDeletion(attachmentEl, postEl, [
-			'.indicator-BanFile',
-			'.indicator-BanDeleteFile',
-			'.indicator-deleteFile',
-			'.indicator-imgops'
-		]);
+		var state = prepareAttachmentDeletion(attachmentEl, postEl, []);
 
 		sendModuleAction(menuItem.href, {
 			revertUI: state.revertUI,

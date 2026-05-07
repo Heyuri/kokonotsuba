@@ -1,4 +1,4 @@
-	<form action="{$MODULE_URL}" method="POST">
+	<form action="{$MODULE_URL}" method="POST" class="formtable">
 		<h3>Rebuild boards</h3>
 		
 		{$REBUILD_CHECK_LIST}

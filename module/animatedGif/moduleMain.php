@@ -14,6 +14,7 @@ use RuntimeException;
 
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\isActiveStaffSession;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
 	use AttachmentsAfterInsertListenerTrait;
@@ -39,7 +40,7 @@ class moduleMain extends abstractModuleMain {
 
 		// size limit data in <head> for JS to read
 		$animatedGifSizeLimit = $this->getConfig('MAX_SIZE_FOR_ANIMATED_GIF', 2000);
-		$this->registerHeaderHtml('<template id="anigifData" data-size-limit="' . htmlspecialchars($animatedGifSizeLimit) . '"></template>');
+		$this->registerHeaderHtml('<template id="anigifData" data-size-limit="' . sanitizeStr($animatedGifSizeLimit) . '"></template>');
 	}
 
 	private function onRenderPostFormFile(string &$file): void {

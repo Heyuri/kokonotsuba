@@ -17,7 +17,6 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\generatePostUrl;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
-use function Kokonotsuba\libraries\getCsrfMetaTag;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
 use function Kokonotsuba\libraries\getUsernameFromSession;
 use function Kokonotsuba\libraries\modIdToColorHex;
@@ -81,8 +80,6 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 	
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		$moduleHeader .= getCsrfMetaTag();
-
 		// include the note js for the mod tool
 		$this->includeScript('notes.js', $moduleHeader);
 

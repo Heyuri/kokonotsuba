@@ -32,10 +32,10 @@ class messageService {
 	public function getMessagesForThread(
 		string $userTripCode, 
 		string $contactTripCode, 
-		int $page = 0, 
+		int $page = 1, 
 		int $messagesPerPage = 20
 	): array {
-		$offset = $page * $messagesPerPage;
+		$offset = ($page - 1) * $messagesPerPage;
 		return $this->messageRepository->getMessagesForTripCode(
 			$userTripCode, 
 			$contactTripCode, 
@@ -61,8 +61,8 @@ class messageService {
 		return $this->messageRepository->getConversationCount($userTripCode, $contactTripCode) > 0;
 	}
 
-	public function getAllMessagesForUser(string $userTripCode, int $page = 0, int $messagesPerPage = 20): array {
-		$offset = $page * $messagesPerPage;
+	public function getAllMessagesForUser(string $userTripCode, int $page = 1, int $messagesPerPage = 20): array {
+		$offset = ($page - 1) * $messagesPerPage;
 		return $this->messageRepository->getAllMessagesForUser($userTripCode, $offset, $messagesPerPage);
 	}
 

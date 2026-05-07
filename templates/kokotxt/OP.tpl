@@ -1,5 +1,5 @@
 	<div id="pc{$BOARD_UID}_{$NO}" class="op-container">
-		<h2 class="title"><a href="{$POST_URL}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h2>
+		<h2 class="title"><a href="{$POST_URL}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h2><!--&IF($TAG,'<span class="tag" title="{$TAG_TITLE}">[{$TAG}]</span>','')-->
 		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}" {$DATA_ATTRIBUTES}>
 			<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]</div>
 			<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span>

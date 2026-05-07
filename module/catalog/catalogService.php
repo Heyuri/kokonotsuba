@@ -29,14 +29,14 @@ class catalogService {
 	 * Fetch a page of catalog entries for the given board.
 	 *
 	 * @param board  $board     Board to fetch entries from.
-	 * @param int    $page      Zero-based page index.
+	 * @param int    $page      One-based page index.
 	 * @param int    $perPage   Entries per page.
 	 * @param string $sortBy    Sort column: 'bump' or 'time'.
 	 * @return catalogEntry[] Array of catalog entry DTOs.
 	 */
 	public function getCatalogEntries(board $board, int $page, int $perPage, string $sortBy = 'bump'): array {
 		$boardUID = $board->getBoardUID();
-		$offset = $page * $perPage;
+		$offset = ($page - 1) * $perPage;
 
 		// Map user-facing sort names to DB columns
 		$orderColumn = $this->resolveSortColumn($sortBy);

@@ -147,7 +147,7 @@ class registRoute {
 			);
 
 			// Age/sage logic
-			$agingHandler->apply($postData['thread_uid'], $postData['time'], $postData['postOpRoot'], $postData['email'], $postData['age']);
+			$agingHandler->apply($postData['thread_uid'], $postData['time'], $thread ? $thread->getThread() : null, $postData['email'], $postData['age']);
 
 			// Generate redirect URL and sanitize
 			$redirect = $this->generateRedirectURL($computedPostInfo['no'], $postData['email'], $postData['resno'], $computedPostInfo['timeInMilliseconds']);
@@ -169,6 +169,7 @@ class registRoute {
 				$postData['thread_uid'],
 				$computedPostInfo['is_op'],
 				$postData['category'],
+				$postData['tag'],
 				$computedPostInfo['password_hash'],
 				$computedPostInfo['now'],
 				$postData['name'],
@@ -264,6 +265,7 @@ class registRoute {
 		$comment = htmlspecialchars($this->request->getParameter('com', 'POST', ''));
 		$pwd = $this->request->getParameter('pwd', 'POST', '');
 		$category = htmlspecialchars($this->request->getParameter('category', 'POST', ''));
+		$tag = $this->request->getParameter('tag', 'POST', '');
 		$resno = intval($this->request->getParameter('resto', 'POST', 0));
 		$pwdc = $this->cookieService->get('pwdc', '');
 	
@@ -314,7 +316,7 @@ class registRoute {
 
 		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode_input' => $tripcode, 'secure_tripcode_input' => $secure_tripcode,
 			 'tripcode' => '', 'secure_tripcode' => '', 'capcode' => '', 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
-			 'category' => $category, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip,
+			 'category' => $category, 'tag' => $tag, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip,
 			 'thread_uid' => $thread_uid, 'isReply' => $isReply, 'roleLevel' => $roleLevel, 'time' => $time,
 			 'timeInMilliseconds' => $timeInMilliseconds, 'postOpRoot' => $postOpRoot, 'flgh' => $flgh, 'age' => $age, 'status' => '',
 			 'threadDeleted' => $threadDeleted, 'up_incomplete' => $up_incomplete, 'is_admin' => $is_admin
@@ -517,6 +519,14 @@ class registRoute {
 			$postData['category'] = ',' . implode(',', array_map('trim', $categories)) . ',';
 		} else {
 			$postData['category'] = '';
+		}
+
+		// Validate tag against allowed tags in config
+		$allowedTags = $this->config['TAGS'] ?? [];
+		if (!empty($postData['tag']) && !empty($allowedTags) && array_key_exists($postData['tag'], $allowedTags)) {
+			// tag is valid, keep it
+		} else {
+			$postData['tag'] = '';
 		}
 	
 		if ($postData['up_incomplete']) {
@@ -753,7 +763,7 @@ class registRoute {
 		// For non-JavaScript requests, handle page rebuilding and then redirect
 		else {
 			$this->handlePageRebuilding($computedPostInfo, $postData, $preInsertThreadList);
-			redirect($redirectUrl, 0);
+			redirect($redirectUrl);
 		}
 	}
 

@@ -65,15 +65,11 @@ class attachmentRenderer {
 			$fileData['mimeType'], 
 			$fileData['isHidden'], 
 			$fileData['isDeleted'],
-			$fileData['timestampAdded'],
-			false);
+			$fileData['timestampAdded']);
 
 		// Attachment bar (if any)
 		$fileBarData = $this->handleFileBar($fileData, $imageURL);
-		$imageBar = $fileBarData['bar'];
-
-		// save the file info bar before module hooks append buttons to it
-		$fileInfoBar = $imageBar;
+		$fileInfoBar = $fileBarData['bar'];
 
 		// check if the image exists
 		$imageExists = $this->checkIfAttachmentExists($fileData, $fileAttachment, $isDeleted, $isAttachmentDeleted);
@@ -92,18 +88,16 @@ class attachmentRenderer {
 			$imageExists,
 			(!$adminMode && $isAttachmentDeleted));
 			
-		// run attachment hook point
-		$this->moduleEngine->dispatch('Attachment', [&$imageBar, &$imageHtml, &$imageURL, &$fileData]);
+		// run attachment hook points — output appends directly to the visible file info bar
+		$this->moduleEngine->dispatch('Attachment', [&$fileInfoBar, &$imageHtml, &$imageURL, &$fileData]);
 
-		// run moderation attachment hook point
 		if($adminMode) {
-			$this->moduleEngine->dispatch('ModerateAttachment', [&$imageBar, &$imageHtml, &$imageURL, &$fileData]);
+			$this->moduleEngine->dispatch('ModerateAttachment', [&$fileInfoBar, &$imageHtml, &$imageURL, &$fileData]);
+			// run attachment indicator hooks (also rendered directly in the visible bar)
+			$this->moduleEngine->dispatch('ModerateAttachmentIndicator', [&$fileInfoBar, &$fileData]);
 		}
 
-		// extract the buttons that modules appended to the bar
-		$attachmentButtons = substr($imageBar, strlen($fileInfoBar));
-
-		// run attachment widget hook point (structured widget entries)
+		// run attachment widget hook points — structured entries pre-rendered as <a> tags for the dropdown
 		$attachmentWidgets = [];
 		$this->moduleEngine->dispatch('AttachmentWidget', [&$attachmentWidgets, &$fileData]);
 
@@ -111,12 +105,14 @@ class attachmentRenderer {
 			$this->moduleEngine->dispatch('ModerateAttachmentWidget', [&$attachmentWidgets, &$fileData]);
 		}
 
-		$attachmentButtons .= $this->buildAttachmentWidgetHtml($attachmentWidgets);
+		$attachmentButtons = $this->buildAttachmentWidgetHtml($attachmentWidgets);
 
-		// run attachment indicator hooks (rendered directly in the visible bar)
-		if($adminMode) {
-			$this->moduleEngine->dispatch('ModerateAttachmentIndicator', [&$fileInfoBar, &$fileData]);
+		// build container css classes and let modules append to them
+		$attachmentClasses = 'attachmentContainer';
+		if ($multipleAttachments) {
+			$attachmentClasses .= ' multiAttachment';
 		}
+		$this->moduleEngine->dispatch('AttachmentContainerClass', [&$attachmentClasses, &$fileData]);
 
 		// wrap in attachment container
 		$attachmentHtml = $this->wrapAttachmentContent(
@@ -125,7 +121,7 @@ class attachmentRenderer {
 			$fileBarData['fileSize'],
 			$fileBarData['fileDimensions'],
 			$attachmentButtons,
-			$multipleAttachments
+			$attachmentClasses
 		);
 
 		// return html
@@ -138,16 +134,8 @@ class attachmentRenderer {
 		string $fileSize,
 		string $fileDimensions,
 		string $attachmentButtons,
-		bool $multipleAttachments
+		string $attachmentClasses
 	): string {
-		// css classes for the attachment container
-		$attachmentClasses = 'attachmentContainer';
-
-		// append the multi-attachment css class if the post has more than 1 attachment
-		if($multipleAttachments) {
-			$attachmentClasses .= ' multiAttachment';
-		}
-
 		// render attachment buttons through template if there are any
 		$buttonsHtml = '';
 		if(!empty($attachmentButtons)) {
@@ -385,12 +373,12 @@ class attachmentRenderer {
 				$paramAttrs .= ' data-param-' . htmlspecialchars($key) . '="' . htmlspecialchars((string)$value) . '"';
 			}
 
-			$html .= '<span class="indicator indicator-' . htmlspecialchars($action) . '">'
-				. '<a href="' . htmlspecialchars($href) . '"'
+			$html .= '<a href="' . htmlspecialchars($href) . '"'
 				. ' data-action="' . htmlspecialchars($action) . '"'
+				. ' data-label="' . htmlspecialchars($label) . '"'
 				. $targetAttr
 				. $paramAttrs
-				. '>' . htmlspecialchars($label) . '</a></span>';
+				. '>' . htmlspecialchars($label) . '</a>';
 		}
 
 		return $html;

@@ -182,6 +182,17 @@ class fileRepository extends baseRepository {
 	}
 
 	/**
+	 * Toggle the is_spoilered flag on the given file row.
+	 *
+	 * @param int  $fileId  File row ID.
+	 * @param bool $spoil   True to mark as spoilered, false to unmark.
+	 * @return void
+	 */
+	public function toggleSpoiledFileById(int $fileId, bool $spoil): void {
+		$this->updateWhere(['is_spoilered' => (int)$spoil], 'id', $fileId);
+	}
+
+	/**
 	 * Toggle the is_deleted flag on the given file IDs.
 	 *
 	 * @param int[]  $fileIDs Array of file row IDs to update.

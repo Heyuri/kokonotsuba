@@ -137,9 +137,6 @@ function getCsrfHiddenInput(): string {
  * Only outputs once per request.
  */
 function getCsrfMetaTag(): string {
-	static $added = false;
-	if ($added) return '';
-	$added = true;
 	$token = sanitizeStr(getOrCreateCsrfToken());
 	return '<meta name="csrf-token" content="' . $token . '">';
 }

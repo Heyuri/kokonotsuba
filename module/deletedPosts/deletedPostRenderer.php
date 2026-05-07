@@ -49,7 +49,7 @@ class deletedPostRenderer {
 
 	public function drawModPage(int $accountId, userRole $roleLevel): void {
 		// get page number from GET
-		$page = $this->request->getParameter('page', 'GET', 0);
+		$page = (int)$this->request->getParameter('page', 'GET', 1);
 
 		// certain actions involve drawing/GET
 		$pageName = $this->request->getParameter('pageName', 'GET');
