@@ -135,6 +135,10 @@
 	padding: 0.25em;
 }
 
+.detailsboxForm {
+	display: table;
+} 
+
 /************************ JS Alert/Messages *******************************/
 
 /* Container that holds all messages */
@@ -268,6 +272,12 @@
   cursor: pointer;
   text-align: center;
   color: #666;
+  transition: color 0.1s ease-in-out, border-color 0.1s ease-in-out;
+}
+
+.dropzone:hover {
+  color: var(--color-hi-contrast-border);
+  border-color: var(--color-hi-contrast-border);
 }
 
 .dropzone.dragover {
@@ -323,6 +333,13 @@
 
 .filterImage .attachmentAnchor {
   position: relative;
+}
+
+/************************ Search **************************************/
+
+#searchresult {
+	margin-top: 1em;
+	text-align: left;
 }
 
 /************************ Private Messages *****************************/
@@ -409,24 +426,8 @@
 	z-index: 901;
 }
 
-.pmSlot {
-	text-align: center;
-	overflow: hidden;
-}
-
 .pmSlotMobile {
 	display: none;
-}
-
-.mediaIframe {
-	display: table;
-	width: 470px;
-	width: var(--pm-slot-width, 728px);
-	height: var(--pm-slot-height, 90px);
-	border: 0;
-	margin: 0 auto;
-	max-width: 100%;
-	aspect-ratio: 39 / 5;
 }
 
 .pmPostAd .postinfo {

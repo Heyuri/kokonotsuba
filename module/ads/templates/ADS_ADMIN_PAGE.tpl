@@ -10,7 +10,6 @@
 				<tr><td><strong>top</strong></td><td>Above all threads on the index, desktop only</td><td>Leaderboard (728&times;90). Hidden on mobile.</td></tr>
 				<tr><td><strong>mobile</strong></td><td>Above all threads on the index, mobile only</td><td>Mobile banner (320&times;100). Hidden on desktop.</td></tr>
 				<tr><td><strong>sticky</strong></td><td>Fixed bar at the bottom of every page</td><td>Rotates if multiple ads are enabled. Dismissible for 1&nbsp;hour.</td></tr>
-				<tr><td><strong>popunder</strong></td><td>Opens behind the current window on first click or keypress per tab</td><td>Redirects visitor to the ad&rsquo;s Click&nbsp;URL. One fire per tab; cooldown applies cross-tab.</td></tr>
 				<tr><td><strong>above</strong></td><td>Between the page header and the first thread</td><td>Standard leaderboard (728&times;90).</td></tr>
 				<tr><td><strong>below</strong></td><td>After the last thread, before the post form</td><td>Standard leaderboard (728&times;90).</td></tr>
 				<tr><td><strong>inline</strong></td><td>Between threads, every N threads (configurable)</td><td>Three ads shown side-by-side in a row (728&times;90 each).</td></tr>
