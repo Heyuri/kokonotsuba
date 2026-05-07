@@ -200,6 +200,7 @@ $language['form_hidepostform']			= 'Hide form';
 $language['form_name']					= 'isim';
 $language['form_email']					= 'E-mail';
 $language['form_topic']					= 'Konu';
+$language['form_tag']				    = 'Etiket';
 $language['form_submit_btn']			= 'Gönder';
 $language['form_comment']				= 'Yorum';
 $language['form_attechment']			= 'Dosya';
