@@ -331,57 +331,63 @@ const kktwch = { name: "KK Thread watcher",
 		var threadUids = Object.keys(watched);
 		if (!threadUids.length) return;
 
-		var apiUrl = getPostApiUrl();
+		var apiUrl = document.querySelector('meta[name="threadWatcherApiUrl"]')?.content || null;
 		if (!apiUrl) return;
 
-		threadUids.forEach(function (threadUid) {
-			kktwch.checkThread(threadUid, apiUrl);
-		});
-	},
-
-	checkThread: function (threadUid, apiUrl) {
 		var separator = apiUrl.includes('?') ? '&' : '?';
-		var url = apiUrl + separator + 'pageName=thread&thread_uid=' + encodeURIComponent(threadUid);
+		var url = apiUrl + separator + 'thread_uids=' + threadUids.map(encodeURIComponent).join(',');
 
 		fetch(url)
 			.then(function (res) {
-				if (!res.ok) {
-					if (res.status === 404) {
-						// Thread was deleted, remove from watch list
-						kktwch.unwatchThread(threadUid);
-						kktwch.renderWatchList();
-					}
-					return null;
-				}
+				if (!res.ok) return null;
 				return res.json();
 			})
 			.then(function (data) {
-				if (!data || !data.posts) return;
+				if (!data) return;
 
 				var watched = kktwch.getWatchedThreads();
-				var entry = watched[threadUid];
-				if (!entry) return;
+				var changed = false;
 
-				var newPostCount = data.post_count;
-				var prevPostCount = entry.postCount || 0;
-
-				entry.postCount = newPostCount;
-				entry.lastChecked = Date.now();
-
-				// Update subject if we have it from the first post
-				if (data.posts.length > 0 && data.posts[0].subject) {
-					entry.subject = data.posts[0].subject;
+				// Handle deleted threads
+				if (Array.isArray(data.deleted)) {
+					data.deleted.forEach(function (threadUid) {
+						if (watched[threadUid]) {
+							delete watched[threadUid];
+							changed = true;
+						}
+					});
 				}
 
-				kktwch.saveWatchedThreads(watched);
+				// Update post counts and subjects
+				if (data.threads && typeof data.threads === 'object') {
+					Object.keys(data.threads).forEach(function (threadUid) {
+						var entry = watched[threadUid];
+						if (!entry) return;
 
-				// Send notification if there are new unseen posts
-				var unseenCount = newPostCount - (entry.lastSeenCount || 0);
-				if (newPostCount > prevPostCount && unseenCount > 0) {
-					kktwch.sendNotification(entry, unseenCount);
+						var info = data.threads[threadUid];
+						var newPostCount = info.post_count;
+						var prevPostCount = entry.postCount || 0;
+
+						entry.postCount = newPostCount;
+						entry.lastChecked = Date.now();
+
+						if (info.subject) {
+							entry.subject = info.subject;
+						}
+
+						changed = true;
+
+						var unseenCount = newPostCount - (entry.lastSeenCount || 0);
+						if (newPostCount > prevPostCount && unseenCount > 0) {
+							kktwch.sendNotification(entry, unseenCount);
+						}
+					});
 				}
 
-				kktwch.renderWatchList();
+				if (changed) {
+					kktwch.saveWatchedThreads(watched);
+					kktwch.renderWatchList();
+				}
 			})
 			.catch(function () {
 				// Silently fail on network errors

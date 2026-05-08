@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\threadWatcher;
 
+use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\FormFuncsListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
@@ -10,7 +11,11 @@ use Kokonotsuba\module_classes\traits\listeners\ThreadWidgetListenerTrait;
 use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\_T;
+use function Puchiko\json\renderJsonPage;
+use function Puchiko\json\renderJsonErrorPage;
 use function Puchiko\strings\sanitizeStr;
+
+require_once __DIR__ . '/threadWatcherRepository.php';
 
 class moduleMain extends abstractModuleMain {
 	use FormFuncsListenerTrait;
@@ -33,10 +38,67 @@ class moduleMain extends abstractModuleMain {
 		$this->listenThreadWidget('onRenderThreadWidget');
 	}
 
+	/** Batch counts endpoint: ?mode=module&load=threadWatcher&pageName=counts&thread_uids=uid1,uid2,... */
+	public function ModulePage(): void {
+		$pageName = $this->moduleContext->request->getParameter('pageName', 'GET', '');
+
+		if ($pageName !== 'counts') {
+			renderJsonErrorPage('Not found', 404);
+		}
+
+		$raw = $this->moduleContext->request->getParameter('thread_uids', 'GET', '');
+
+		if ($raw === '') {
+			renderJsonPage(['threads' => [], 'deleted' => []]);
+		}
+
+		// Parse, sanitize and cap the list of thread UIDs
+		$parts = array_slice(explode(',', $raw), 0, 100);
+		$threadUids = [];
+		foreach ($parts as $part) {
+			$uid = trim($part);
+			// thread_uid is VARCHAR(255); allow alphanumeric, dash, underscore only
+			if ($uid !== '' && preg_match('/^[a-zA-Z0-9_\-]{1,255}$/', $uid)) {
+				$threadUids[] = $uid;
+			}
+		}
+
+		if (empty($threadUids)) {
+			renderJsonPage(['threads' => [], 'deleted' => []]);
+		}
+
+		$dbSettings = getDatabaseSettings();
+		$repo = new threadWatcherRepository(
+			databaseConnection::getInstance(),
+			$dbSettings['THREAD_TABLE'],
+			$dbSettings['POST_TABLE'],
+			$dbSettings['DELETED_POSTS_TABLE']
+		);
+
+		$rows = $repo->batchGetThreadCounts($threadUids);
+
+		// Index results by thread_uid
+		$found = [];
+		foreach ($rows as $row) {
+			$found[$row['thread_uid']] = [
+				'post_count' => (int) $row['post_count'],
+				'subject'    => (string) $row['subject'],
+			];
+		}
+
+		// Any requested UID not in $found is deleted or non-existent
+		$deleted = array_values(array_diff($threadUids, array_keys($found)));
+
+		renderJsonPage(['threads' => $found, 'deleted' => $deleted]);
+	}
+
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		$linkText = sanitizeStr(_T('thread_watch_link'));
 		$watchLabel = sanitizeStr(_T('thread_watch_label'));
 		$unwatchLabel = sanitizeStr(_T('thread_unwatch_label'));
+
+		$apiUrl = sanitizeStr($this->getModulePageURL(['pageName' => 'counts'], false));
+		$moduleHeader .= '<meta name="threadWatcherApiUrl" content="' . $apiUrl . '">';
 
 		$moduleHeader .= '<meta name="threadWatcherLinkText" content="' . $linkText . '">';
 		$moduleHeader .= '<meta name="threadWatcherWatchLabel" content="' . $watchLabel . '">';
