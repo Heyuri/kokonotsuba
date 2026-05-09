@@ -83,7 +83,7 @@ function createSelectorButton(COMMENT, config, type, existingButton = null) {
 	let input;
 	let saved = { start: 0, end: 0 };
 
-	if (type === "color") {
+	if (type === "color" || type === "colorbg" || type === "textshadow") {
 		input = document.createElement("input");
 		input.type = "color";
 		input.value = config.selector;

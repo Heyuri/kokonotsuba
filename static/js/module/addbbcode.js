@@ -9,6 +9,8 @@
 	const selectorConfigs = {
 		code: { code: "code", selector: "" },
 		color: { code: "color", selector: "#800043" },
+		colorbg: { code: "colorbg", selector: "#2ece0e" },
+		textshadow: { code: "textshadow", selector: "#800043" },
 		size: { code: "s", selector: "3" },
 		pre: { selector: "ASCII (monospace)" },
 	};
