@@ -294,6 +294,11 @@ $config['ModuleSettings']['supportUnderline'] = true; // [u]...[/u] into <u>...<
 $config['ModuleSettings']['supportParagraph'] = true; // [p]...[/p] into <p>...</p>
 $config['ModuleSettings']['supportSw'] = true; // [sw]...[/sw] into <pre class="sw">...</pre> (Strange World-style AA)
 $config['ModuleSettings']['supportColor'] = true; // [color=X]...[/color] into <span style="color:X;">...</span>
+$config['ModuleSettings']['supportColorBg'] = true; // [colorbg=X]...[/colorbg] into <span style="background-color:X;">...</span>
+$config['ModuleSettings']['supportNeon'] = true; // [neon]...[/neon] into <span class="neon">...</span>
+$config['ModuleSettings']['supportTextShadow'] = true; // [textshadow=X]...[/textshadow] into <span style="text-shadow:2px 2px 4px X;">...</span>
+$config['ModuleSettings']['supportPartybus'] = true; // [partybus]...[/partybus] cycles partybusColor1-8 across each character
+$config['ModuleSettings']['supportEcho'] = true; // [echo]...[/echo] into <span class="echoText">...</span>
 $config['ModuleSettings']['supportFontSize'] = true; // [sN]...[/sN] into <span class="fontSizeN">...</span>
 $config['ModuleSettings']['supportPre'] = true; // [pre]...[/pre] into <pre>...</pre>
 $config['ModuleSettings']['supportQuote'] = true; // [quote]...[/quote] into <blockquote>...</blockquote>
