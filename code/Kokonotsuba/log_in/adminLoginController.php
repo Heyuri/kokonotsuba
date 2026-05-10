@@ -48,14 +48,7 @@ class adminLoginController {
 		if($account && $this->authenticationHandler->verifyPasswordHash($password, $account)) {
 			// Successful login: reset attempt counter
 			unset($_SESSION['login_attempts'], $_SESSION['login_lockout_until']);
-			
-			// Set session
 			$this->loginSessionHandler->login($account);
-
-			// log it
-			$this->actionLoggerService->logAction("Logged in", GLOBAL_BOARD_UID);
-
-			// update last login time
 			$this->accountRepository->updateLastLoginByID($account->getId());
 		} else {
 			$attempts++;

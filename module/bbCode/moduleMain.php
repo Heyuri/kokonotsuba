@@ -17,12 +17,12 @@ class moduleMain extends abstractModuleMain {
 	use CommentExtrasListenerTrait;
 	use IncludeScriptTrait;
 	use FormattingDetailsTrait;
-	private $urlcount;
-	private	$ImgTagTagMode = 0; // [img] tag behavior (0: no conversion 1: conversion when no textures 2: always conversion)
-	private	$URLTagMode = 0; // [url] tag behavior (0: no conversion 1: normal)
-	private	$MaxURLCount = 2; // [url] tag upper limit (when the upper limit is exceeded, the tag is a trap tag [written to $URLTrapLog])
-	private	$URLTrapLog = './URLTrap.log'; // [url]trap label log file
-	private $AATagMode = 1; // Koko [0:Enabled 1:Disabled]
+	private int $urlcount = 0;
+	private int $ImgTagTagMode = 0; // [img] tag behavior (0: no conversion 1: conversion when no textures 2: always conversion)
+	private int $URLTagMode = 0; // [url] tag behavior (0: no conversion 1: normal)
+	private int $MaxURLCount = 2; // [url] tag upper limit (when the upper limit is exceeded, the tag is a trap tag [written to $URLTrapLog])
+	private string $URLTrapLog = './URLTrap.log'; // [url]trap label log file
+	private int $AATagMode = 1; // Koko [0:Enabled 1:Disabled]
 
 	// feature flags
 	private bool $supportBold = false;
@@ -35,6 +35,11 @@ class moduleMain extends abstractModuleMain {
 	private bool $supportParagraph = false;
 	private bool $supportSw = false;
 	private bool $supportColor = false;
+	private bool $supportColorBg = false;
+	private bool $supportNeon = false;
+	private bool $supportTextShadow = false;
+	private bool $supportPartybus = false;
+	private bool $supportEcho = false;
 	private bool $supportFontSize = false;
 	private bool $supportPre = false;
 	private bool $supportQuote = false;
@@ -74,6 +79,11 @@ class moduleMain extends abstractModuleMain {
 		$this->supportParagraph = $this->getConfig('ModuleSettings.supportParagraph', false);
 		$this->supportSw = $this->getConfig('ModuleSettings.supportSw', false);
 		$this->supportColor = $this->getConfig('ModuleSettings.supportColor', false);
+		$this->supportColorBg = $this->getConfig('ModuleSettings.supportColorBg', false);
+		$this->supportNeon = $this->getConfig('ModuleSettings.supportNeon', false);
+		$this->supportTextShadow = $this->getConfig('ModuleSettings.supportTextShadow', false);
+		$this->supportPartybus = $this->getConfig('ModuleSettings.supportPartybus', false);
+		$this->supportEcho = $this->getConfig('ModuleSettings.supportEcho', false);
 		$this->supportFontSize = $this->getConfig('ModuleSettings.supportFontSize', false);
 		$this->supportPre = $this->getConfig('ModuleSettings.supportPre', false);
 		$this->supportQuote = $this->getConfig('ModuleSettings.supportQuote', false);
@@ -116,6 +126,15 @@ class moduleMain extends abstractModuleMain {
 		if ($this->supportScroll) {
 			$simpleButtons[] = ['label' => 'Scroll', 'title' => 'Scrollbar for long passages of text', 'code' => 'scroll'];
 		}
+		if ($this->supportNeon) {
+			$simpleButtons[] = ['label' => '<span style="color:#39ff14;text-shadow:0 0 6px #39ff14">Neon</span>', 'title' => 'Neon glow text', 'code' => 'neon'];
+		}
+		if ($this->supportPartybus) {
+			$simpleButtons[] = ['label' => '<span class="partybus"><span class="partybusColor1">P</span><span class="partybusColor2">a</span><span class="partybusColor3">r</span><span class="partybusColor4">t</span><span class="partybusColor5">y</span></span>', 'title' => 'Party rainbow text', 'code' => 'party'];
+		}
+		if ($this->supportEcho) {
+			$simpleButtons[] = ['label' => '<span class="echoText">Echo</span>', 'title' => 'Echo shadow text', 'code' => 'echo'];
+		}
 
 		foreach ($simpleButtons as $btn) {
 			$buttons .= '<button type="button" class="bbcodeButton" data-code="' . sanitizeStr($btn['code']) . '" title="' . sanitizeStr($btn['title']) . '">' . $btn['label'] . '</button>';
@@ -127,6 +146,12 @@ class moduleMain extends abstractModuleMain {
 		}
 		if ($this->supportColor) {
 			$buttons .= '<button type="button" class="bbcodeButton bbcodeSelectorButton" data-type="color" title="Font color"><span style="font-weight:bold"><span class="bokuRed">C</span><span class="bokuGreen">o</span><span class="bokuRed">l</span><span class="bokuGreen">o</span><span class="bokuRed">r</span></span></button>';
+		}
+		if ($this->supportColorBg) {
+			$buttons .= '<button type="button" class="bbcodeButton bbcodeSelectorButton" data-type="colorbg" title="Background color"><span style="font-weight:bold;background:#ffff00">BG</span></button>';
+		}
+		if ($this->supportTextShadow) {
+			$buttons .= '<button type="button" class="bbcodeButton bbcodeSelectorButton" data-type="textshadow" title="Text shadow"><span style="text-shadow:2px 2px 4px #800043">Shadow</span></button>';
 		}
 		if ($this->supportFontSize) {
 			$buttons .= '<button type="button" class="bbcodeButton bbcodeSelectorButton" data-type="size" title="Font size">Size</button>';
@@ -236,6 +261,51 @@ class moduleMain extends abstractModuleMain {
 			}, $string);
 		}
 
+		// background color
+		if($this->supportColorBg) {
+			$string = preg_replace_callback('#\[colorbg=(\S+?)\](.*?)\[/colorbg\]#si', function($m) {
+				$color = $m[1];
+				if (!preg_match('/^(#[0-9a-fA-F]{3,6}|[a-zA-Z]{1,20})$/', $color)) {
+					return $m[0];
+				}
+				return '<span style="background-color:' . $color . ';">' . $m[2] . '</span>';
+			}, $string);
+		}
+
+		// neon
+		if($this->supportNeon) {
+			$string = preg_replace('#\[neon\](.*?)\[/neon\]#si', '<span class="neon">\1</span>', $string);
+		}
+
+		// text shadow
+		if($this->supportTextShadow) {
+			$string = preg_replace_callback('#\[textshadow=(\S+?)\](.*?)\[/textshadow\]#si', function($m) {
+				$color = $m[1];
+				if (!preg_match('/^(#[0-9a-fA-F]{3,6}|[a-zA-Z]{1,20})$/', $color)) {
+					return $m[0];
+				}
+				return '<span style="text-shadow:2px 2px 4px ' . $color . ';">' . $m[2] . '</span>';
+			}, $string);
+		}
+
+		// partybus
+		if($this->supportPartybus) {
+			$string = preg_replace_callback('#\[party\](.*?)\[/party\]#si', function($m) {
+				$chars = preg_split('//u', $m[1], -1, PREG_SPLIT_NO_EMPTY);
+				$result = '<span class="partybus">';
+				foreach ($chars as $i => $char) {
+					$result .= '<span class="partybusColor' . (($i % 8) + 1) . '">' . $char . '</span>';
+				}
+				$result .= '</span>';
+				return $result;
+			}, $string);
+		}
+
+		// echo
+		if($this->supportEcho) {
+			$string = preg_replace('#\[echo\](.*?)\[/echo\]#si', '<span class="echoText">\1</span>', $string);
+		}
+
 		// font size
 		if($this->supportFontSize) {
 			$string = preg_replace('#\[s([1-7])\](.*?)\[/s([1-7])\]#si', '<span class="fontSize\1">\2</span>', $string);
@@ -302,7 +372,7 @@ class moduleMain extends abstractModuleMain {
 	// New function to fix improperly nested BBCode tags
 	private function fixBBCodeNesting($text){
 		// List of supported tags. Only these tags will be processed for nesting correction.
-		$supportedTags = array('b', 'i', 'spoiler', 'h', 'color', 's', 'u', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'code', 'pre', 'aa', 'kao', 'sw', 'quote', 'ruby', 'rt', 'rp');
+		$supportedTags = array('b', 'i', 'spoiler', 'h', 'color', 'colorbg', 'neon', 'textshadow', 'party', 'echo', 's', 'u', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'code', 'pre', 'aa', 'kao', 'sw', 'quote', 'ruby', 'rt', 'rp');
 		
 		$pattern = '/(\[\/?[a-zA-Z0-9]+\b(?:=[^\]]+)?\])/i';
 		$tokens = array();
@@ -457,7 +527,7 @@ class moduleMain extends abstractModuleMain {
 	 * tags are closed before the block and reopened after it.
 	 */
 	private function unwrapBlockFromInline(string $text): string {
-		$inlineTags = ['b', 'i', 'u', 's', 'spoiler', 'h', 'color', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'ruby', 'rt', 'rp', 'kao'];
+		$inlineTags = ['b', 'i', 'u', 's', 'spoiler', 'h', 'color', 'colorbg', 'neon', 'textshadow', 'party', 'echo', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'ruby', 'rt', 'rp', 'kao'];
 		$blockTags = ['code', 'pre', 'aa', 'sw', 'quote', 'scroll'];
 
 		$pattern = '/(\[\/?[a-zA-Z0-9]+\b(?:=[^\]]+)?\])/i';
@@ -698,6 +768,34 @@ class moduleMain extends abstractModuleMain {
 		// color
 		if($this->supportColor) {
 			$string = preg_replace('#<span style="color:(\S+?);">(.*?)</span>#si', '[color=\1]\2[/color]', $string);
+		}
+
+		// background color
+		if($this->supportColorBg) {
+			$string = preg_replace('#<span style="background-color:(\S+?);">(.*?)</span>#si', '[colorbg=\1]\2[/colorbg]', $string);
+		}
+
+		// neon
+		if($this->supportNeon) {
+			$string = preg_replace('#<span class="neon">(.*?)</span>#si', '[neon]\1[/neon]', $string);
+		}
+
+		// text shadow
+		if($this->supportTextShadow) {
+			$string = preg_replace('#<span style="text-shadow:2px 2px 4px (\S+?);">(.*?)</span>#si', '[textshadow=\1]\2[/textshadow]', $string);
+		}
+
+		// partybus
+		if($this->supportPartybus) {
+			$string = preg_replace_callback('#<span class="partybus">(.*?)</span>#si', function($m) {
+				$text = preg_replace('#<span class="partybusColor\d+">(.*?)</span>#si', '\1', $m[1]);
+				return '[party]' . $text . '[/party]';
+			}, $string);
+		}
+
+		// echo
+		if($this->supportEcho) {
+			$string = preg_replace('#<span class="echoText">(.*?)</span>#si', '[echo]\1[/echo]', $string);
 		}
 
 		// font size
