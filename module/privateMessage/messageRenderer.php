@@ -147,7 +147,7 @@ class messageRenderer {
 			$this->getComposeFormVariables($modulePageUrl),
 			[
 			'{$INBOX_TITLE}' => _T('pm_inbox_page_title'),
-			'{$LOGGED_IN_AS}' => _T('pm_logged_in_as') . ' ' . $userTrip,
+			'{$LOGGED_IN_AS}' => _T('pm_logged_in_as', $userTrip),
 			'{$LOGOUT_LABEL}' => _T('pm_logout_btn'),
 			'{$PM_TABLE_FROM}' => _T('pm_table_from'),
 			'{$PM_TABLE_SUBJECT}' => _T('pm_table_subject'),
