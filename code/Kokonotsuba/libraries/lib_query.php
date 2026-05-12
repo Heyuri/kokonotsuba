@@ -35,7 +35,8 @@ function getBasePostQuery(
 	string $noteTable,
 	string $accountTable,
     bool $viewDeleted = false,
-	bool $deletionCentric = false
+	bool $deletionCentric = false,
+	string $countryFlagTable = ''
 ): string {
 
 	// Shared column definitions
@@ -161,10 +162,14 @@ function getBasePostQuery(
         ";
 
     // Main query: join threads, attachments, and all deletion rows (for mergeRowIntoPost)
+	$countryFlagColumn = $countryFlagTable ? "\n\t\t\tcf.country AS country_flag_country," : '';
+	$countryFlagJoin   = $countryFlagTable ? "\n\t\tLEFT JOIN $countryFlagTable cf ON cf.post_uid = p.post_uid" : '';
+
     $query = "
         SELECT 
             p.*,
             t.post_op_number,
+			{$countryFlagColumn}
 
             {$attachmentColumns},
 
@@ -201,6 +206,7 @@ function getBasePostQuery(
 					AND dp2.open_flag = 1
 			)
 		)
+		{$countryFlagJoin}
     ";
 
     return $query;

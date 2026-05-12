@@ -34,7 +34,8 @@ class threadRepository extends baseRepository {
 		private string $fileTable,
 		private string $accountTable,
 		private string $soudaneTable,
-		private string $noteTable
+		private string $noteTable,
+		private string $countryFlagTable = ''
 	) {
 		parent::__construct($databaseConnection, $threadTable);
 		self::validateTableNames($postTable, $threadThemeTable, $deletedPostsTable, $fileTable, $accountTable, $soudaneTable, $noteTable);
@@ -623,7 +624,7 @@ class threadRepository extends baseRepository {
 		$offset = max(0, (int)$offset);
 
 		// Generate the base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted, false, $this->countryFlagTable);
 
 		// Add the condition specific to this method (fetching posts for a single thread)
 		$query .= " WHERE p.thread_uid = :thread_uid";
@@ -645,7 +646,7 @@ class threadRepository extends baseRepository {
 			)
 			UNION ALL
 			(
-				" . getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted) . "
+				" . getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted, false, $this->countryFlagTable) . "
 				WHERE p.thread_uid = :thread_uid_2
 				" . (!$includeDeleted ? excludeDeletedThreadsCondition($this->deletedPostsTable) : "") . "
 				AND p.is_op = 0
@@ -686,7 +687,7 @@ class threadRepository extends baseRepository {
 	 */
 	public function getAllPostsFromThread(string $threadUID, bool $includeDeleted = false): ?array {
 		// Generate the base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted, false, $this->countryFlagTable);
 
 		// Add thread condition
 		$query .= " WHERE p.thread_uid = :thread_uid";
@@ -727,7 +728,7 @@ class threadRepository extends baseRepository {
 	 */
 	public function getVisiblePostsFromDeletedThread(string $threadUID): ?array {
 		// viewDeleted=false filters out deleted posts in the subquery
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, false);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, false, false, $this->countryFlagTable);
 
 		// Filter by thread — intentionally no excludeDeletedThreadsCondition
 		// so the query works even when the OP is deleted
@@ -752,7 +753,7 @@ class threadRepository extends baseRepository {
 	 * @return Post[]|null Array of Post objects, or null if none found.
 	 */
 	public function getRepliesAfterPostNumber(string $threadUID, int $afterPostNo, bool $includeDeleted = false): ?array {
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted, false, $this->countryFlagTable);
 
 		$query .= " WHERE p.thread_uid = :thread_uid AND p.is_op = 0 AND p.no > :after_no";
 
@@ -827,7 +828,9 @@ class threadRepository extends baseRepository {
 			$this->soudaneTable,
 			$this->noteTable,
 			$this->accountTable,
-			$includeDeleted
+			$includeDeleted,
+			false,
+			$this->countryFlagTable
 		);
 
 		$query = "

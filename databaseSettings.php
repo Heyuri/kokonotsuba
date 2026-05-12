@@ -38,4 +38,5 @@ return [
 	'ADS_TABLE' => 'ads', // for storing ad inventory
 	'FILE_BAN_TABLE' => 'file_bans', // for storing banned file MD5 hashes
 	'PERCEPTUAL_BAN_TABLE' => 'perceptual_bans', // for storing perceptually banned file hashes
+	'COUNTRY_FLAG_TABLE' => 'country_flags', // for storing pre-computed country flags for posts
 ];

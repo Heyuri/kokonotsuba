@@ -40,8 +40,8 @@ $accountService = new accountService($accountRepository, $actionLoggerService, $
 // ───────────────────────────────────────
 $fileRepository = new fileRepository($databaseConnection, $dbSettings['FILE_TABLE'], $dbSettings['POST_TABLE'], $dbSettings['DELETED_POSTS_TABLE']);
 $fileService = new fileService($fileRepository);
-$threadRepository = new threadRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['THREAD_THEMES_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['ACCOUNT_TABLE'], $dbSettings['SOUDANE_TABLE'], $dbSettings['NOTE_TABLE']);
-$postRepository = new postRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['SOUDANE_TABLE'], $dbSettings['NOTE_TABLE'], $dbSettings['ACCOUNT_TABLE']);
+$threadRepository = new threadRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['THREAD_THEMES_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['ACCOUNT_TABLE'], $dbSettings['SOUDANE_TABLE'], $dbSettings['NOTE_TABLE'], $dbSettings['COUNTRY_FLAG_TABLE']);
+$postRepository = new postRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['SOUDANE_TABLE'], $dbSettings['NOTE_TABLE'], $dbSettings['ACCOUNT_TABLE'], $dbSettings['COUNTRY_FLAG_TABLE']);
 $deletedPostsRepository = new deletedPostsRepository($databaseConnection, $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['POST_TABLE'], $dbSettings['ACCOUNT_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['SOUDANE_TABLE'], $dbSettings['NOTE_TABLE']);
 $deletedPostsService = new deletedPostsService($transactionManager, $deletedPostsRepository, $fileService, $actionLoggerService, $postRepository, $threadRepository);
 $postDeletionService = new postDeletionService($postRepository, $transactionManager, $threadRepository, $deletedPostsService, $request);

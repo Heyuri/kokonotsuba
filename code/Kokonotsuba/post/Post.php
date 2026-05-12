@@ -51,6 +51,7 @@ class Post implements JsonSerializable {
 	public function getRoot(): string { return (string)($this->data['root'] ?? ''); }
 	public function getPassword(): string { return (string)($this->data['pwd'] ?? ''); }
 	public function getPosterHash(): string { return (string)($this->data['poster_hash'] ?? ''); }
+	public function getCountryCode(): string { return (string)($this->data['country_flag_country'] ?? ''); }
 
 	// Status/Flags
 	public function getStatus(): string { return (string)($this->data['status'] ?? ''); }
