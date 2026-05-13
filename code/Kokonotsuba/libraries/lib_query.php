@@ -36,7 +36,8 @@ function getBasePostQuery(
 	string $accountTable,
     bool $viewDeleted = false,
 	bool $deletionCentric = false,
-	string $countryFlagTable = ''
+	string $countryFlagTable = '',
+	string $displayIpTable = ''
 ): string {
 
 	// Shared column definitions
@@ -164,12 +165,15 @@ function getBasePostQuery(
     // Main query: join threads, attachments, and all deletion rows (for mergeRowIntoPost)
 	$countryFlagColumn = $countryFlagTable ? "\n\t\t\tcf.country AS country_flag_country," : '';
 	$countryFlagJoin   = $countryFlagTable ? "\n\t\tLEFT JOIN $countryFlagTable cf ON cf.post_uid = p.post_uid" : '';
+	$displayIpColumn   = $displayIpTable ? "\n\t\t\tdip.ip_part AS display_ip_ip_part," : '';
+	$displayIpJoin     = $displayIpTable ? "\n\t\tLEFT JOIN $displayIpTable dip ON dip.post_uid = p.post_uid" : '';
 
     $query = "
         SELECT 
             p.*,
             t.post_op_number,
 			{$countryFlagColumn}
+			{$displayIpColumn}
 
             {$attachmentColumns},
 
@@ -207,6 +211,7 @@ function getBasePostQuery(
 			)
 		)
 		{$countryFlagJoin}
+		{$displayIpJoin}
     ";
 
     return $query;

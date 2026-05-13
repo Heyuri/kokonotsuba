@@ -31,7 +31,7 @@ class moduleRoute {
 					$admin = $moduleInstance['moduleAdmin'];
 					$admin->authenticateRequest();
 
-					if ($this->hasModuleRequest($admin)) {
+					if ($this->hasModuleRequest($admin) && $this->request->isPost()) {
 						$admin->dispatchModuleRequest();
 					} elseif (method_exists($admin, 'ModulePage')) {
 						$admin->ModulePage();

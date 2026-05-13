@@ -49,6 +49,10 @@ $postRenderingPolicy = new postRenderingPolicy(
 // ─── Database ───
 require $rootDir . 'bootstrap/database.php';
 
+/** @var \Kokonotsuba\database\databaseConnection $databaseConnection */
+/** @var \Kokonotsuba\database\transactionManager $transactionManager */
+/** @var array $dbSettings */
+
 // ─── Container ───
 $container = new appContainer();
 $container->set('request', $request);

@@ -444,3 +444,16 @@ $language['quick_reply_link'] = 'Quick reply';
 
 $language['soudane_vote_own_post'] = 'You cannot vote on your own post';
 $language['soudane_no_post_ids_provided'] = 'No post IDs provided.';
+
+// anonIp module
+$language['admin_nav_anon_ip_title']  = 'Anonymize IP addresses of old posts';
+$language['admin_nav_anon_ip']        = 'Anonymize IPs';
+$language['anon_ip_title']            = 'Anonymize IP Addresses';
+$language['anon_ip_warning']          = 'This will anonymize the IP addresses of posts older than the selected time frame - it cannot be undone.';
+$language['anon_ip_select_label']     = 'Anonymize posts older than:';
+$language['anon_ip_1_year']           = '1 year';
+$language['anon_ip_1_month']          = '1 month';
+$language['anon_ip_1_week']           = '1 week';
+$language['anon_ip_24_hours']         = '24 hours';
+$language['anon_ip_submit']           = 'Anonymize';
+$language['anon_ip_success']          = '%d IP address(es) have been anonymized.';
