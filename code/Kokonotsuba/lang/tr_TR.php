@@ -440,3 +440,16 @@ $language['quick_reply_link'] = 'Hızlı yanıt';
 
 $language['soudane_vote_own_post'] = 'Kendi postuna oy veremezsin';
 $language['soudane_no_post_ids_provided'] = 'Herhangi bir post ID\'si sağlanmadı.';
+
+// anonIp module
+$language['admin_nav_anon_ip_title']  = 'Eski postların IP adreslerini anonimleştir';
+$language['admin_nav_anon_ip']        = 'IP\'leri anonimleştir';
+$language['anon_ip_title']            = 'IP Adreslerini Anonimleştir';
+$language['anon_ip_warning']          = 'Bu işlem, seçilen zaman diliminden daha eski postların IP adreslerini anonimleştirecek – geri alınamaz.';
+$language['anon_ip_select_label']     = 'Şu tarihten daha eski gönderileri anonimleştir:';
+$language['anon_ip_1_year']           = '1 yıl';
+$language['anon_ip_1_month']          = '1 ay';
+$language['anon_ip_1_week']           = '1 hafta';
+$language['anon_ip_24_hours']         = '24 saat';
+$language['anon_ip_submit']           = 'Anonimleştir';
+$language['anon_ip_success']          = '%d IP adresi anonimleştirildi.';
