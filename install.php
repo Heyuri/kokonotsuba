@@ -674,6 +674,24 @@ class tableCreator {
                 CONSTRAINT fk_perceptual_ban_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
             ) ENGINE=InnoDB;
             ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['COUNTRY_FLAG_TABLE']} (
+                `id` INT NOT NULL AUTO_INCREMENT,
+                `post_uid` INT NOT NULL,
+                `country` VARCHAR(8) NOT NULL,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY uq_country_flag_post_uid (`post_uid`),
+                CONSTRAINT fk_country_flag_post_uid FOREIGN KEY (`post_uid`) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
+            ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['DISPLAY_IP_TABLE']} (
+                `id` INT NOT NULL AUTO_INCREMENT,
+                `post_uid` INT NOT NULL,
+                `ip_part` VARCHAR(512) NOT NULL DEFAULT '',
+                PRIMARY KEY (`id`),
+                UNIQUE KEY uq_display_ip_post_uid (`post_uid`),
+                CONSTRAINT fk_display_ip_post_uid FOREIGN KEY (`post_uid`) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
+            ",
         ];
     
         // Use prepared statements for execution
@@ -860,6 +878,8 @@ switch ($action) {
                 'BLOTTER_TABLE' => $dbSettings['BLOTTER_TABLE'],
                 'FILE_BAN_TABLE' => $dbSettings['FILE_BAN_TABLE'],
                 'PERCEPTUAL_BAN_TABLE' => $dbSettings['PERCEPTUAL_BAN_TABLE'],
+                'COUNTRY_FLAG_TABLE' => $dbSettings['COUNTRY_FLAG_TABLE'],
+                'DISPLAY_IP_TABLE' => $dbSettings['DISPLAY_IP_TABLE'],
             ];
 
             $tableCreator->createTables($tables);

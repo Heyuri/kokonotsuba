@@ -34,7 +34,9 @@ class threadRepository extends baseRepository {
 		private string $fileTable,
 		private string $accountTable,
 		private string $soudaneTable,
-		private string $noteTable
+		private string $noteTable,
+		private string $countryFlagTable = '',
+		private string $displayIpTable = ''
 	) {
 		parent::__construct($databaseConnection, $threadTable);
 		self::validateTableNames($postTable, $threadThemeTable, $deletedPostsTable, $fileTable, $accountTable, $soudaneTable, $noteTable);
@@ -488,7 +490,7 @@ class threadRepository extends baseRepository {
 		// Index results by thread_uid for fast lookup
 		$indexed = [];
 		foreach ($results as $row) {
-				$indexed[$row['thread_uid']] = $row;
+				$indexed[$row->getThreadUid()] = $row;
 		}
 
 		return $indexed;
@@ -618,63 +620,78 @@ class threadRepository extends baseRepository {
 	 * @return array|null Array of merged post data arrays, or null if none found.
 	 */
 	public function getPostsFromThread(string $threadUID, bool $includeDeleted = false, int $amount = 500, int $offset = 0): ?array {
-		// sanitize numeric inputs
 		$amount = max(0, (int)$amount);
 		$offset = max(0, (int)$offset);
 
-		// Generate the base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
+		// Step 1: lightweight query — fetch only the post UIDs we need
+		$postUIDs = $this->fetchPostUIDsForThread($threadUID, $includeDeleted, $amount, $offset);
 
-		// Add the condition specific to this method (fetching posts for a single thread)
-		$query .= " WHERE p.thread_uid = :thread_uid";
-
-		// If we do not want to include deleted posts, add the condition to exclude them
-		if(!$includeDeleted) {
-			$query .= excludeDeletedThreadsCondition($this->deletedPostsTable);
+		if (empty($postUIDs)) {
+			return null;
 		}
 
-		/*
-			We UNION the OP (p.is_op = 1) with the replies (p.is_op = 0).
-			The OP is always returned first and is not affected by reply LIMIT/OFFSET.
-		*/
+		// Step 2: single full query for those UIDs
+		$placeholders = pdoPlaceholdersForIn($postUIDs);
+		$query = getBasePostQuery(
+			$this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table,
+			$this->soudaneTable, $this->noteTable, $this->accountTable,
+			$includeDeleted, false, $this->countryFlagTable, $this->displayIpTable
+		);
+		$query .= " WHERE p.post_uid IN {$placeholders} ORDER BY p.post_uid ASC";
+
+		$posts = $this->queryAll($query, $postUIDs) ?? [];
+		$posts = mergeMultiplePostRows($posts);
+
+		return $posts ?: null;
+	}
+
+	/**
+	 * Fetch the post UIDs needed for getPostsFromThread: always the OP, plus paginated replies.
+	 */
+	private function fetchPostUIDsForThread(string $threadUID, bool $includeDeleted, int $amount, int $offset): array {
+		$deletionFilter      = '';
+		$threadDeletionFilter = '';
+
+		if (!$includeDeleted) {
+			$deletionFilter = "
+				AND NOT EXISTS (
+					SELECT 1
+					FROM {$this->deletedPostsTable} d1
+					INNER JOIN (
+						SELECT post_uid, MAX(id) AS max_id
+						FROM {$this->deletedPostsTable}
+						GROUP BY post_uid
+					) d2 ON d1.post_uid = d2.post_uid AND d1.id = d2.max_id
+					WHERE d1.post_uid = p.post_uid
+					  AND d1.file_id IS NULL AND d1.open_flag = 1
+				)";
+			$threadDeletionFilter = excludeDeletedThreadsCondition($this->deletedPostsTable);
+		}
+
+		$baseFragment = "
+			FROM {$this->postTable} p
+			INNER JOIN {$this->table} t ON t.thread_uid = p.thread_uid
+			WHERE 1=1
+			{$deletionFilter}
+			{$threadDeletionFilter}";
+
 		$query = "
-			(
-				{$query}
-				AND p.is_op = 1
-				ORDER BY p.post_uid ASC
-			)
+			(SELECT p.post_uid {$baseFragment} AND p.thread_uid = :thread_uid   AND p.is_op = 1)
 			UNION ALL
-			(
-				" . getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted) . "
-				WHERE p.thread_uid = :thread_uid_2
-				" . (!$includeDeleted ? excludeDeletedThreadsCondition($this->deletedPostsTable) : "") . "
-				AND p.is_op = 0
-				ORDER BY p.post_uid ASC
-				LIMIT :_limit OFFSET :_offset
-			)
+			(SELECT p.post_uid {$baseFragment} AND p.thread_uid = :thread_uid_2 AND p.is_op = 0
+			 ORDER BY p.post_uid ASC
+			 LIMIT :_limit OFFSET :_offset)
 		";
 
 		$params = [
-			':thread_uid' => $threadUID,
+			':thread_uid'   => $threadUID,
 			':thread_uid_2' => $threadUID,
-			':_limit' => $amount,
-			':_offset' => $offset,
+			':_limit'       => $amount,
+			':_offset'      => $offset,
 		];
 
-		// fetch post rows
-		$posts = $this->queryAll($query, $params) ?? [];
-
-		// merge attachment rows
-		$posts = mergeMultiplePostRows($posts);
-
-		// return null if posts is false/null
-		if(!$posts) {
-			return null;
-		}
-		else {
-			// return results
-			return $posts;
-		}
+		$rows = $this->queryAll($query, $params);
+		return $rows ? array_column($rows, 'post_uid') : [];
 	}
 
 	/**
@@ -686,7 +703,7 @@ class threadRepository extends baseRepository {
 	 */
 	public function getAllPostsFromThread(string $threadUID, bool $includeDeleted = false): ?array {
 		// Generate the base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable);
 
 		// Add thread condition
 		$query .= " WHERE p.thread_uid = :thread_uid";
@@ -727,7 +744,7 @@ class threadRepository extends baseRepository {
 	 */
 	public function getVisiblePostsFromDeletedThread(string $threadUID): ?array {
 		// viewDeleted=false filters out deleted posts in the subquery
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, false);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, false, false, $this->countryFlagTable, $this->displayIpTable);
 
 		// Filter by thread — intentionally no excludeDeletedThreadsCondition
 		// so the query works even when the OP is deleted
@@ -752,7 +769,7 @@ class threadRepository extends baseRepository {
 	 * @return Post[]|null Array of Post objects, or null if none found.
 	 */
 	public function getRepliesAfterPostNumber(string $threadUID, int $afterPostNo, bool $includeDeleted = false): ?array {
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable);
 
 		$query .= " WHERE p.thread_uid = :thread_uid AND p.is_op = 0 AND p.no > :after_no";
 
@@ -827,7 +844,10 @@ class threadRepository extends baseRepository {
 			$this->soudaneTable,
 			$this->noteTable,
 			$this->accountTable,
-			$includeDeleted
+			$includeDeleted,
+			false,
+			$this->countryFlagTable,
+			$this->displayIpTable
 		);
 
 		$query = "

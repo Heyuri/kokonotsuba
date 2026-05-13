@@ -190,6 +190,9 @@ class registRoute {
 			// Add post to database
 			$this->postService->addPostToThread($this->board, $postRegistData, $nextPostUid);
 
+			// Dispatch post-inserted event (used by modules that store data per post, e.g. country flags)
+			$this->moduleEngine->dispatch('RegistPostInserted', [$nextPostUid, $postData['ip']]);
+
 			// Handle adding attachments
 			$this->handleAttachments($fileMeta['files'], $nextPostUid); 
 

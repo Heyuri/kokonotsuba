@@ -19,3 +19,4 @@ $container->set('globalConfig', $globalConfig);
 // Register database services
 $container->set('databaseConnection', $databaseConnection);
 $container->set('transactionManager', $transactionManager);
+$container->set('dbSettings', $dbSettings);

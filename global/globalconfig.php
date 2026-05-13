@@ -62,6 +62,7 @@ $config['AuthLevels']['CAN_BAN_FILES'] = Kokonotsuba\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_MANAGE_PMS'] = Kokonotsuba\userRole::LEV_ADMIN;
 $config['AuthLevels']['CAN_MANAGE_ADS'] = Kokonotsuba\userRole::LEV_ADMIN;
 $concifg['AuthLevels']['CAN_MANAGE_ANTI_SPAM_SYSTEM'] = Kokonotsuba\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_ANONYMIZE_IPS'] = Kokonotsuba\userRole::LEV_ADMIN;
 
 // Capcode formats (put '%s' where you want the original name)
 $config['JCAPCODE_FMT'] = '%s';
