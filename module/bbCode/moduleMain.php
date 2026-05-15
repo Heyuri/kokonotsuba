@@ -38,7 +38,6 @@ class moduleMain extends abstractModuleMain {
 	private bool $supportColorBg = false;
 	private bool $supportNeon = false;
 	private bool $supportTextShadow = false;
-	private bool $supportPartybus = false;
 	private bool $supportEcho = false;
 	private bool $supportFontSize = false;
 	private bool $supportPre = false;
@@ -82,7 +81,6 @@ class moduleMain extends abstractModuleMain {
 		$this->supportColorBg = $this->getConfig('ModuleSettings.supportColorBg', false);
 		$this->supportNeon = $this->getConfig('ModuleSettings.supportNeon', false);
 		$this->supportTextShadow = $this->getConfig('ModuleSettings.supportTextShadow', false);
-		$this->supportPartybus = $this->getConfig('ModuleSettings.supportPartybus', false);
 		$this->supportEcho = $this->getConfig('ModuleSettings.supportEcho', false);
 		$this->supportFontSize = $this->getConfig('ModuleSettings.supportFontSize', false);
 		$this->supportPre = $this->getConfig('ModuleSettings.supportPre', false);
@@ -128,9 +126,6 @@ class moduleMain extends abstractModuleMain {
 		}
 		if ($this->supportNeon) {
 			$simpleButtons[] = ['label' => '<span style="color:#39ff14;text-shadow:0 0 6px #39ff14">Neon</span>', 'title' => 'Neon glow text', 'code' => 'neon'];
-		}
-		if ($this->supportPartybus) {
-			$simpleButtons[] = ['label' => '<span class="partybus"><span class="partybusColor1">P</span><span class="partybusColor2">a</span><span class="partybusColor3">r</span><span class="partybusColor4">t</span><span class="partybusColor5">y</span></span>', 'title' => 'Party rainbow text', 'code' => 'party'];
 		}
 		if ($this->supportEcho) {
 			$simpleButtons[] = ['label' => '<span class="echoText">Echo</span>', 'title' => 'Echo shadow text', 'code' => 'echo'];
@@ -285,19 +280,6 @@ class moduleMain extends abstractModuleMain {
 					return $m[0];
 				}
 				return '<span style="text-shadow:2px 2px 4px ' . $color . ';">' . $m[2] . '</span>';
-			}, $string);
-		}
-
-		// partybus
-		if($this->supportPartybus) {
-			$string = preg_replace_callback('#\[party\](.*?)\[/party\]#si', function($m) {
-				$chars = preg_split('//u', $m[1], -1, PREG_SPLIT_NO_EMPTY);
-				$result = '<span class="partybus">';
-				foreach ($chars as $i => $char) {
-					$result .= '<span class="partybusColor' . (($i % 8) + 1) . '">' . $char . '</span>';
-				}
-				$result .= '</span>';
-				return $result;
 			}, $string);
 		}
 
@@ -783,14 +765,6 @@ class moduleMain extends abstractModuleMain {
 		// text shadow
 		if($this->supportTextShadow) {
 			$string = preg_replace('#<span style="text-shadow:2px 2px 4px (\S+?);">(.*?)</span>#si', '[textshadow=\1]\2[/textshadow]', $string);
-		}
-
-		// partybus
-		if($this->supportPartybus) {
-			$string = preg_replace_callback('#<span class="partybus">(.*?)</span>#si', function($m) {
-				$text = preg_replace('#<span class="partybusColor\d+">(.*?)</span>#si', '\1', $m[1]);
-				return '[party]' . $text . '[/party]';
-			}, $string);
 		}
 
 		// echo
