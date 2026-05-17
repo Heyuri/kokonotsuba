@@ -7,7 +7,7 @@
 			<strong>{$WARNING_MESSAGE}</strong>
 		</p>
 
-		<form method="POST" action="{$MODULE_URL}">
+		<form method="POST" action="{$MODULE_URL}" id="anonIpForm">
 			{$CSRF_TOKEN}
 			<input type="hidden" name="anonIpAction" value="anonymize">
 
@@ -21,6 +21,7 @@
 								<option value="1month">{$OPT_1_MONTH}</option>
 								<option value="1week">{$OPT_1_WEEK}</option>
 								<option value="24hours">{$OPT_24_HOURS}</option>
+								<option value="now">{$OPT_NOW}</option>
 							</select>
 						</td>
 					</tr>
@@ -28,7 +29,7 @@
 			</table>
 
 			<div class="buttonSection">
-				<input type="submit" value="{$SUBMIT_BTN}">
+				<input type="submit" id="anonIpSubmit" value="{$SUBMIT_BTN}">
 			</div>
 		</form>
 	</div>

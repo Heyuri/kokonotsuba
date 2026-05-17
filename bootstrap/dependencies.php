@@ -1,6 +1,23 @@
 <?php
 
-
+/**
+ * Variables injected from the calling bootstrap context (e.g. koko.php).
+ *
+ * @var \Kokonotsuba\board\board                         $board
+ * @var array                                            $config
+ * @var \Kokonotsuba\containers\appContainer             $container
+ * @var \Kokonotsuba\request\request                     $request
+ * @var \Kokonotsuba\account\staffAccountFromSession     $staffAccountFromSession
+ * @var \Kokonotsuba\policy\postRenderingPolicy          $postRenderingPolicy
+ * @var \Kokonotsuba\action_log\actionLoggerService      $actionLoggerService
+ * @var \Kokonotsuba\account\accountRepository           $accountRepository
+ * @var \Kokonotsuba\thread\threadRepository             $threadRepository
+ * @var \Kokonotsuba\thread\threadService                $threadService
+ * @var \Kokonotsuba\post\attachment\fileService         $fileService
+ * @var \Kokonotsuba\board\boardService                  $boardService
+ * @var \Kokonotsuba\post\postRepository                 $postRepository
+ * @var \Kokonotsuba\quote_link\quoteLinkService         $quoteLinkService
+ */
 
 // ───────────────────────────────────────
 // Dependencies

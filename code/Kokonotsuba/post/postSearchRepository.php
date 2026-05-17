@@ -20,6 +20,8 @@ class postSearchRepository extends baseRepository {
 		private readonly string $soudaneTable,
 		private readonly string $noteTable,
 		private readonly string $accountTable,
+		private readonly string $countryFlagTable = '',
+		private readonly string $displayIpTable = '',
 	) {
 		parent::__construct($databaseConnection, $postTable);
 		self::validateTableNames($threadTable, $deletedPostsTable, $fileTable, $soudaneTable, $noteTable, $accountTable);
@@ -256,7 +258,7 @@ class postSearchRepository extends baseRepository {
 	 * Load full post data (with attachments, votes, notes) for the given UIDs.
 	 */
 	private function loadFullPostData(array $postUids): false|array {
-		$fullQuery = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, false);
+		$fullQuery = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, false, false, $this->countryFlagTable, $this->displayIpTable);
 		$inClause = pdoPlaceholdersForIn($postUids);
 		$fullQuery .= " WHERE p.post_uid IN {$inClause}";
 		$fullQuery .= " ORDER BY p.root DESC, p.post_uid DESC";

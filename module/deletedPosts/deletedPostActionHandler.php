@@ -23,7 +23,10 @@ class deletedPostActionHandler {
 	 * @return array{action: string, message: string} Result of the action performed.
 	 */
 	public function handleModPageRequests(int $accountId, userRole $roleLevel): array {
-		$deletedPostId = $this->request->getParameter('deletedPostId', 'POST');
+		// Support both the browser-lowercased form (data-param-deletedPostId → deletedpostid in DOM)
+		// and the original camelCase name used by server-rendered forms.
+		$deletedPostId = $this->request->getParameter('deletedpostid', 'POST')
+			?? $this->request->getParameter('deletedPostId', 'POST');
 		$action = $this->request->getParameter('action', 'POST');
 
 		// handle an action for single deleted post

@@ -32,7 +32,16 @@ function parseMessageWithLinks(text) {
     return container;
 }
 
-function showMessage(text, isSuccess) {
+function dismissMessage(el) {
+	if (!el || !el.parentNode) return;
+	el.classList.remove('show');
+	el.classList.add('hide');
+	setTimeout(function () { el.remove(); }, 400);
+}
+
+function showMessage(text, isSuccess, duration, spinning) {
+	if (duration === undefined) duration = 5000;
+
 	let stackContainer = document.getElementById('messageStackContainer');
 	if (!stackContainer) {
 		stackContainer = document.createElement('div');
@@ -42,14 +51,26 @@ function showMessage(text, isSuccess) {
 	}
 
 	const messageContainer = document.createElement('div');
-	messageContainer.classList.add(
-		'messageContainer',
-		isSuccess ? 'messageSuccess' : 'messageFailure'
-	);
+	let styleClass;
+	if (isSuccess === null) {
+		styleClass = 'messagePending';
+	} else if (isSuccess) {
+		styleClass = 'messageSuccess';
+	} else {
+		styleClass = 'messageFailure';
+	}
+	messageContainer.classList.add('messageContainer', styleClass);
 
 	const messageText = document.createElement('span');
 	messageText.classList.add('messageText');
 	messageText.appendChild(parseMessageWithLinks(text));
+
+	if (spinning) {
+		const spinStar = document.createElement('span');
+		spinStar.className = 'messageSpin';
+		spinStar.textContent = ' ★';
+		messageText.appendChild(spinStar);
+	}
 
 	const closeBtn = document.createElement('span');
 	closeBtn.classList.add('messageClose');
@@ -67,12 +88,14 @@ function showMessage(text, isSuccess) {
 	// trigger fade-in
 	requestAnimationFrame(() => messageContainer.classList.add('show'));
 
-	// auto fade-out after 5s
-	setTimeout(() => {
-		if (messageContainer.parentNode) {
-			messageContainer.classList.remove('show');
-			messageContainer.classList.add('hide');
-			setTimeout(() => messageContainer.remove(), 400);
-		}
-	}, 5000);
+	// auto fade-out after duration ms (0 = persistent)
+	if (duration > 0) {
+		setTimeout(function () {
+			if (messageContainer.parentNode) {
+				dismissMessage(messageContainer);
+			}
+		}, duration);
+	}
+
+	return messageContainer;
 }

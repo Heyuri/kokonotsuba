@@ -8,6 +8,7 @@ use Kokonotsuba\account\staffAccountFromSession;
 
 use function Puchiko\request\redirect;
 use function Puchiko\json\renderJsonPage;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 
 // require helper classes
 require __DIR__ . '/deletedPostUtility.php';
@@ -144,6 +145,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// handle POST requests
 		if ($this->moduleContext->request->isPost()) {
+			requirePostWithCsrf($this->moduleContext->request);
 			$result = $this->deletedPostActionHandler->handleModPageRequests($accountId, $roleLevel);
 
 			// return JSON for AJAX requests

@@ -86,4 +86,59 @@ class anonIpRepository extends baseRepository {
 
 		$this->query($sql, [':cutoff' => $cutoff]);
 	}
+
+	/**
+	 * Count all posts whose `host` has not yet been anonymized, regardless of age.
+	 *
+	 * @return int
+	 */
+	public function countAllToAnonymize(): int {
+		$sql = "SELECT COUNT(*)
+		        FROM {$this->table}
+		        WHERE host NOT REGEXP '^[0-9a-f]{16}$'";
+
+		return (int) $this->queryColumn($sql);
+	}
+
+	/**
+	 * Replace `host` with the first 16 hex characters of SHA-512(host) for
+	 * every post that has not already been anonymized.
+	 *
+	 * @return void
+	 */
+	public function anonymizeAll(): void {
+		$sql = "UPDATE {$this->table}
+		        SET host = LEFT(SHA2(host, 512), 16)
+		        WHERE host NOT REGEXP '^[0-9a-f]{16}$'";
+
+		$this->query($sql);
+	}
+
+	/**
+	 * Count all action log entries whose `ip_address` has not yet been anonymized,
+	 * regardless of age.
+	 *
+	 * @return int
+	 */
+	public function countAllActionLogToAnonymize(): int {
+		$sql = "SELECT COUNT(*)
+		        FROM {$this->actionLogTable}
+		        WHERE ip_address NOT REGEXP '^[0-9a-f]{16}$'";
+
+		return (int) $this->queryColumn($sql);
+	}
+
+	/**
+	 * Replace `ip_address` with the first 16 hex characters of SHA-512(ip_address)
+	 * for every action log entry that has not already been anonymized.
+	 *
+	 * @return void
+	 */
+	public function anonymizeAllActionLog(): void {
+		$sql = "UPDATE {$this->actionLogTable}
+		        SET ip_address = LEFT(SHA2(ip_address, 512), 16)
+		        WHERE ip_address NOT REGEXP '^[0-9a-f]{16}$'";
+
+		$this->query($sql);
+	}
 }

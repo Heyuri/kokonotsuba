@@ -11,7 +11,7 @@ use function Kokonotsuba\libraries\mergeDeletedPostRows;
 use function Kokonotsuba\libraries\mergeMultiplePostRows;
 use function Kokonotsuba\libraries\pdoNamedPlaceholdersForIn;
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
-use function Kokonotsuba\libraries\applyRegexIPFilter;
+use function Kokonotsuba\libraries\applyLikeIPFilter;
 
 /** Repository for tracking soft-deleted and purged post records, with paged retrieval and restoration support. */
 class deletedPostsRepository extends baseRepository {
@@ -289,7 +289,7 @@ class deletedPostsRepository extends baseRepository {
 	 * @param int|null  $accountId     Optional filter for dp.deleted_by.
 	 * @param array     $params        Parameter array passed by reference.
 	 *
-	 * @return string   A complete WHERE clause beginning with "WHERE".
+	 * @return array{where: string, join: string}
 	 */
 	private function buildDeletedPostsFilter(bool $restoredOnly, ?int $accountId, array &$params, array $filters = []): array {
 		$parts = [];
@@ -333,10 +333,10 @@ class deletedPostsRepository extends baseRepository {
 		// Filter by IP address.
 		if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
 			$needsPostJoin = true;
-			$regex = applyRegexIPFilter($filters['ip_address']);
-			if ($regex !== null) {
-				$parts[] = 'p.host REGEXP :ip_regex';
-				$params[':ip_regex'] = $regex;
+			$likePattern = applyLikeIPFilter($filters['ip_address']);
+			if ($likePattern !== null) {
+				$parts[] = 'p.host LIKE :ip_like';
+				$params[':ip_like'] = $likePattern;
 			}
 		}
 
