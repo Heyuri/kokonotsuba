@@ -11,13 +11,13 @@ namespace Kokonotsuba\libraries;
 use Kokonotsuba\PMCLibrary;
 
 /**
- * 取出翻譯資源檔對應字串。
+ * Look up the matching string from the translation resource file.
  *
- * @param args 翻譯資源檔索引、其餘變數
+ * @param args Translation resource index, followed by any additional variables
  * @see LanguageLoader->getTranslation
  */
 function _T(string $translationLable) {
-	// 因為 5.3 以前 func_get_args 無法直接指派，故需要由變數 $args 承接再帶入
+	// Prior to PHP 5.3, func_get_args() could not be assigned directly, so its result must be stored in $args first.
 	$args = func_get_args();
 	return call_user_func_array(
 		array(PMCLibrary::getLanguageInstance(), 'getTranslation'),
@@ -25,10 +25,11 @@ function _T(string $translationLable) {
 }
 
 /**
- * 動態附加翻譯資源。此函式已經由 {@link #LanguageLoader->attachLanguage} 取代。
+ * Dynamically attach additional translation resources. This function has been
+ * superseded by {@link #LanguageLoader->attachLanguage}.
  *
  * @deprecated 7th.Release. Use LanguageLoader->attachLanguage instead.
- * @param callable $fcall 附加翻譯資源字串的函式
+ * @param callable $fcall Function that appends translation resource strings
  */
 function AttachLanguage($fcall){
 	$GLOBALS['language'] = array();

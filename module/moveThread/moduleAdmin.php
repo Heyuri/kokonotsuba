@@ -9,6 +9,7 @@ use Kokonotsuba\interfaces\IBoard;
 use InvalidArgumentException;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\post\helper\postDateFormatter;
@@ -22,13 +23,14 @@ use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\html\generateBoardListRadioHTML;
 use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\rebuildBoardsByArray;
-use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
 
 //move thread module
 class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
+	use IncludeScriptTrait;
 
 	private readonly string $modulePageUrl;
 
@@ -49,6 +51,40 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->registerThreadControlPair('renderMoveThreadButton');
 		$this->registerThreadWidgetHook('onRenderThreadWidget');
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
+		$this->registerScript('moveThread.js');
+	}
+
+	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		$moduleHeader .= $this->generateMoveThreadJsTemplate();
+	}
+
+	private function generateMoveThreadJsTemplate(): string {
+		$boardRadioHTML = $this->generateAllBoardsRadioHTML(GLOBAL_BOARD_ARRAY);
+
+		$templateValues = [
+			'{$FORM_ACTION}' => $this->modulePageUrl,
+			'{$THREAD_UID}' => '',
+			'{$THREAD_NUMBER}' => '',
+			'{$CURRENT_BOARD_UID}' => '',
+			'{$CURRENT_BOARD_NAME}' => '',
+			'{$BOARD_RADIO_HTML}' => $boardRadioHTML,
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
+		];
+
+		$formHtml = $this->moduleContext->adminPageRenderer->ParseBlock('THREAD_MOVE_FORM', $templateValues);
+
+		return $this->generateTemplate('moveThreadFormTemplate', $formHtml);
+	}
+
+	private function generateAllBoardsRadioHTML(array $boards): string {
+		$html = '';
+		foreach ($boards as $board) {
+			$uid = htmlspecialchars($board->getBoardUID());
+			$title = htmlspecialchars($board->getBoardTitle());
+			$html .= '<label> <input name="radio-board-selection" type="radio" value="' . $uid . '">' . $title . '</label>  ';
+		}
+		return $html;
 	}
 
 	public function renderMoveThreadButton(string &$modfunc, Post $post, bool $noScript): void {
@@ -69,8 +105,17 @@ class moduleAdmin extends abstractModuleAdmin {
 		// generate move thread url
 		$moveThreadUrl = $this->generateMoveThreadUrl($post->getThreadUid());
 
+		$board = searchBoardArrayForBoard($post->getBoardUID());
+		$boardName = $board
+			? htmlspecialchars($board->getBoardTitle()) . ' (' . $post->getBoardUID() . ')'
+			: $post->getBoardUID();
+
 		// build the widget entry
-		$moveThreadWidget = $this->buildWidgetEntry($moveThreadUrl, 'moveThread', 'Move thread', '');
+		$moveThreadWidget = $this->buildWidgetEntry($moveThreadUrl, 'moveThread', 'Move thread', '', [
+			'thread_number' => $post->getNumber(),
+			'board_uid'     => $post->getBoardUID(),
+			'board_name'    => $boardName,
+		]);
 
 		// add the widget to the array
 		$widgetArray[] = $moveThreadWidget;
@@ -360,67 +405,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 
 	public function ModulePage() {
-		// If form was submitted to move a thread
-		if (!empty($this->moduleContext->request->getParameter('move-thread-submit', 'POST'))) {
-			requirePostWithCsrf($this->moduleContext->request);
-
-			$thread_uid = $this->moduleContext->request->getParameter('move-thread-uid', 'POST');
-			$destinationBoardUID = $this->moduleContext->request->getParameter('radio-board-selection', 'POST');
-			$leaveShadowThread = !empty($this->moduleContext->request->getParameter('leave-shadow-thread', 'POST'));
-	
-			// Validate inputs
-			if (empty($thread_uid)) {
-				throw new BoardException("Invalid thread_uid from request");
-			}
-			if (empty($destinationBoardUID)) {
-				throw new BoardException("Invalid board uid from request");
-			}
-	
-			// Retrieve thread and validate
-			$thread = $this->moduleContext->threadService->getThreadAllReplies($thread_uid, true, $this->moduleContext->board->getConfigValue('RE_DEF'));
-			if (!$thread) {
-				throw new BoardException("Thread not found");
-			}
-
-		$threadOP = $thread->getOpeningPost();
-			$threadStatus = $threadOP->getFlags();
-	
-			if ($threadStatus->value('ghost')) {
-				throw new BoardException("Cannot move ghost threads");
-			}
-	
-			// Get board objects
-			$hostBoard = searchBoardArrayForBoard($thread->getThread()->getBoardUID());
-			$destinationBoard = searchBoardArrayForBoard($destinationBoardUID);
-	
-			$redirectURL = '';
-			$this->moduleContext->transactionManager->run(function () use (
-				&$redirectURL,
-				$thread,
-				$hostBoard,
-				$destinationBoard,
-				$leaveShadowThread
-				) {
-				// Perform the move
-				$redirectURL = $this->handleThreadMove(
-					$thread,
-					$hostBoard,
-					$destinationBoard,
-					$leaveShadowThread
-				);
-			});
-	
-			// Log the action
-			$destinationBoardTitle = htmlspecialchars($destinationBoard->getBoardTitle());
-			$this->moduleContext->actionLoggerService->logAction(
-				"Moved thread {$thread->getThread()->getOpNumber()} to board $destinationBoardTitle",
-				$hostBoard->getBoardUID()
-			);
-	
-			redirect($redirectURL);
-		}
-	
-		// Show move form if no submission
+		// Show move form
 		$templateData = $this->prepareMoveFormTemplateValues();
 		$threadMoveFormHtml = $this->moduleContext->adminPageRenderer->ParseBlock('THREAD_MOVE_FORM', $templateData);
 	
@@ -429,6 +414,66 @@ class moduleAdmin extends abstractModuleAdmin {
 			['{$PAGE_CONTENT}' => $threadMoveFormHtml],
 			true
 		);
+	}
+
+	protected function handleModuleRequest(): void {
+		$thread_uid = $this->moduleContext->request->getParameter('move-thread-uid', 'POST');
+		$destinationBoardUID = $this->moduleContext->request->getParameter('radio-board-selection', 'POST');
+		$leaveShadowThread = !empty($this->moduleContext->request->getParameter('leave-shadow-thread', 'POST'));
+
+		// Validate inputs
+		if (empty($thread_uid)) {
+			throw new BoardException("Invalid thread_uid from request");
+		}
+		if (empty($destinationBoardUID)) {
+			throw new BoardException("Invalid board uid from request");
+		}
+
+		// Retrieve thread and validate
+		$thread = $this->moduleContext->threadService->getThreadAllReplies($thread_uid, true, $this->moduleContext->board->getConfigValue('RE_DEF'));
+		if (!$thread) {
+			throw new BoardException("Thread not found");
+		}
+
+		$threadOP = $thread->getOpeningPost();
+		$threadStatus = $threadOP->getFlags();
+
+		if ($threadStatus->value('ghost')) {
+			throw new BoardException("Cannot move ghost threads");
+		}
+
+		// Get board objects
+		$hostBoard = searchBoardArrayForBoard($thread->getThread()->getBoardUID());
+		$destinationBoard = searchBoardArrayForBoard($destinationBoardUID);
+
+		$redirectURL = '';
+		$this->moduleContext->transactionManager->run(function () use (
+			&$redirectURL,
+			$thread,
+			$hostBoard,
+			$destinationBoard,
+			$leaveShadowThread
+		) {
+			$redirectURL = $this->handleThreadMove(
+				$thread,
+				$hostBoard,
+				$destinationBoard,
+				$leaveShadowThread
+			);
+		});
+
+		// Log the action
+		$destinationBoardTitle = htmlspecialchars($destinationBoard->getBoardTitle());
+		$this->moduleContext->actionLoggerService->logAction(
+			"Moved thread {$thread->getThread()->getOpNumber()} to board $destinationBoardTitle",
+			$hostBoard->getBoardUID()
+		);
+
+		if ($this->moduleContext->request->isAjax()) {
+			sendJsonResponse(['redirectUrl' => $redirectURL]);
+		}
+
+		redirect($redirectURL);
 	}
 	
 

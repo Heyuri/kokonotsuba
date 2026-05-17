@@ -2,7 +2,7 @@
 /**
  * Thumbnail Generate API: GD Wrapper
  *
- * 提供程式便於以 GD Library 生成預覽圖的物件
+ * Helper object that generates thumbnails using the GD Library.
  *
  * @package PMCLibrary
  * @version $Id$
@@ -38,9 +38,9 @@ class ThumbWrapper{
 		return -1;
 	}
 
-	/* ImageCreateFromBMP : 讓GD可處理BMP圖檔
-	此為修改後最適化版本。原出處：http://www.php.net/imagecreate#53879
-	原作宣告：
+	/* ImageCreateFromBMP: enables GD to handle BMP image files.
+	This is a modified and optimized version. Original source: http://www.php.net/imagecreate#53879
+	Original author's declaration:
 	*****************************
 	Function: ImageCreateFromBMP
 	Author:	DHKold
@@ -49,15 +49,15 @@ class ThumbWrapper{
 	Version: 2.0B
 	*****************************/
 	function _ImageCreateFromBMP($filename){
-		// 序章：以二進位模式開啟檔案流
+		// Prologue: open the file stream in binary mode
 		if(!$f1 = fopen($filename, 'rb')) return FALSE;
 
-		// 第一步：讀取BMP檔頭
+		// Step 1: read the BMP file header
 		$FILE = unpack('vfile_type/Vfile_size/Vreserved/Vbitmap_offset', fread($f1, 14));
 		if($FILE['file_type']!=19778) return FALSE; // BM
 
-		// 第二步：讀取BMP資訊
-		// 僅支援BITMAPINFOHEADER，不支援BITMAPV4HEADER及BITMAPV5HEADER
+		// Step 2: read the BMP info header
+		// Only BITMAPINFOHEADER is supported; BITMAPV4HEADER and BITMAPV5HEADER are not supported
 		$BMP = unpack('Vheader_size/Vwidth/Vheight/vplanes/vbits_per_pixel/Vcompression/Vsize_bitmap/Vhoriz_resolution/Vvert_resolution/Vcolors_used/Vcolors_important', fread($f1, 40));
 		$BMP['colors'] = pow(2, $BMP['bits_per_pixel']);
 		if($BMP['size_bitmap']==0) $BMP['size_bitmap'] = $FILE['file_size'] - $FILE['bitmap_offset'];
@@ -67,7 +67,7 @@ class ThumbWrapper{
 		$BMP['decal'] = 4 - (4 * $BMP['decal']);
 		if($BMP['decal']==4) $BMP['decal'] = 0;
 
-		// 第三步：讀取色盤資訊
+		// Step 3: read the color palette information
 		$PALETTE = array();
 		if ($BMP['colors'] <=256 || $BMP['compression'] == 3) {
 			if($BMP['compression'] == 3) // BI_BITFIELDS
@@ -83,7 +83,7 @@ class ThumbWrapper{
 			if($BMP['colors'] == 65536) $mask = array(array(0x7C00,0x3E0,0x1F),array(10,5,0),array(3,3,3));
 		}
 
-		// 第四步：關閉檔案，變換每一個畫素
+		// Step 4: close the file and transform each pixel
 		$IMG = fread($f1, $BMP['size_bitmap']);
 		fclose($f1);
 		$VIDE = chr(0);
@@ -159,7 +159,7 @@ class ThumbWrapper{
 					switch($BMP['bits_per_pixel']){
 						case 32: 
 							$COLOR = unpack('V', substr($IMG, $P, 4));
-							$COLOR[1] &= 0xFFFFFF; // 不處理Alpha
+							$COLOR[1] &= 0xFFFFFF; // Ignore the alpha channel
 							break;
 						case 24: $COLOR = unpack('V', substr($IMG, $P, 3).$VIDE); break;
 						case 16:
@@ -200,7 +200,7 @@ class ThumbWrapper{
 			}
 		}
 
-		// 終章：回傳新圖像
+		// Epilogue: return the new image
 		return $res;
 	}
 

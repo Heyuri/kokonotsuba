@@ -99,16 +99,17 @@ class BackgroundTaskRegistry {
  *   );
  */
 class BackgroundTaskDispatcher {
-	private static string $runnerPath = '';
-	private static string $taskDir    = '';
+	private static ?string $contextFile = null;
 
 	/**
-	 * @param string $runnerPath  Absolute path to background-runner.php.
-	 * @param string $taskDir     Writable directory for ephemeral payload files.
+	 * Provide an application bootstrap file that the runner loads before executing
+	 * any task. Use this to set up the autoloader, database connection, and other
+	 * application dependencies that background tasks rely on.
+	 *
+	 * @param string|null $file Absolute path to the context file, or null to clear.
 	 */
-	public static function configure(string $runnerPath, string $taskDir): void {
-		self::$runnerPath = $runnerPath;
-		self::$taskDir    = rtrim($taskDir, '/\\');
+	public static function setContext(?string $file): void {
+		self::$contextFile = $file;
 	}
 
 	/**
@@ -121,20 +122,15 @@ class BackgroundTaskDispatcher {
 	 * @param array<string, mixed> $args      JSON-serializable arguments for the task.
 	 * @return string                         Opaque job ID (32 hex chars).
 	 *
-	 * @throws \RuntimeException         If not configured or the payload file cannot be written.
+	 * @throws \RuntimeException         If the payload file cannot be written.
 	 * @throws \InvalidArgumentException If the task name is not registered.
 	 * @throws \JsonException            If $args cannot be JSON-encoded.
 	 */
 	public static function dispatch(string $taskName, array $args = []): string {
-		if (self::$runnerPath === '' || self::$taskDir === '') {
-			throw new \RuntimeException(
-				'BackgroundTaskDispatcher::configure() must be called before dispatch().'
-			);
-		}
-
+		$taskDir    = sys_get_temp_dir();
 		$jobId      = bin2hex(random_bytes(16));
 		$class      = BackgroundTaskRegistry::resolve($taskName);
-		$statusFile = self::$taskDir . '/bgtask_status_' . $jobId . '.json';
+		$statusFile = $taskDir . '/bgtask_status_' . $jobId . '.json';
 
 		$payload = json_encode([
 			'class'      => $class['class'],
@@ -142,12 +138,13 @@ class BackgroundTaskDispatcher {
 			'args'       => $args,
 			'jobId'      => $jobId,
 			'statusFile' => $statusFile,
+			'context'    => self::$contextFile,
 		], JSON_THROW_ON_ERROR);
 
 		// Write status first so it exists before the process starts
 		self::writeStatus($statusFile, ['status' => 'pending']);
 
-		$payloadFile = self::$taskDir . '/bgtask_' . $jobId . '.json';
+		$payloadFile = $taskDir . '/bgtask_' . $jobId . '.json';
 
 		if (file_put_contents($payloadFile, $payload, LOCK_EX) === false) {
 			@unlink($statusFile);
@@ -165,14 +162,24 @@ class BackgroundTaskDispatcher {
 		}
 
 		$phpBin  = escapeshellarg(self::resolvePhpBinary());
-		$runner  = escapeshellarg(self::$runnerPath);
+		$runner  = escapeshellarg(__DIR__ . '/background-runner.php');
 		$pfile   = escapeshellarg($payloadFile);
-		$logFile = self::$taskDir . '/bgtask_' . $jobId . '.log';
+		$logFile = $taskDir . '/bgtask_' . $jobId . '.log';
 		$log     = escapeshellarg($logFile);
 
 		$output = [];
-		exec("$phpBin $runner $pfile > /dev/null 2>$log & echo $!", $output);
+		$rc = 1;
+		exec("$phpBin $runner $pfile > /dev/null 2>$log & echo $!", $output, $rc);
 		$pid = isset($output[0]) ? (int) $output[0] : 0;
+
+		if ($rc !== 0 || $pid <= 0) {
+			self::writeStatus($statusFile, [
+				'status' => 'failed',
+				'error'  => 'Failed to start background process. Check PHP CLI binary and exec permissions.',
+			]);
+			@unlink($payloadFile);
+			throw new \RuntimeException('Failed to start background process.');
+		}
 
 		// Persist PID so the job can be cancelled later
 		self::writeStatus($statusFile, ['status' => 'pending', 'pid' => $pid]);
@@ -188,21 +195,14 @@ class BackgroundTaskDispatcher {
 	 *
 	 * @param string $jobId  Value returned by dispatch().
 	 * @return array{status: string, error?: string}
-	 *
-	 * @throws \RuntimeException If configure() has not been called.
 	 */
 	public static function pollStatus(string $jobId): array {
-		if (self::$taskDir === '') {
-			throw new \RuntimeException(
-				'BackgroundTaskDispatcher::configure() must be called before pollStatus().'
-			);
-		}
-
 		if (!ctype_xdigit($jobId) || strlen($jobId) !== 32) {
 			return ['status' => 'not_found'];
 		}
 
-		$statusFile = self::$taskDir . '/bgtask_status_' . $jobId . '.json';
+		$taskDir    = sys_get_temp_dir();
+		$statusFile = $taskDir . '/bgtask_status_' . $jobId . '.json';
 
 		if (!is_file($statusFile)) {
 			return ['status' => 'not_found'];
@@ -219,10 +219,23 @@ class BackgroundTaskDispatcher {
 			return ['status' => 'not_found'];
 		}
 
+		$currentStatus = $status['status'] ?? '';
+		if (in_array($currentStatus, ['pending', 'running'], true)) {
+			$pid = isset($status['pid']) ? (int) $status['pid'] : 0;
+			if ($pid > 0 && !self::isProcessAlive($pid)) {
+				$status = [
+					'status' => 'failed',
+					'error'  => 'Background worker exited before reporting completion.',
+					'pid'    => $pid,
+				];
+				self::writeStatus($statusFile, $status);
+			}
+		}
+
 		// Clean up terminal states so the tmp dir doesn't fill up
 		if (in_array($status['status'] ?? '', ['completed', 'failed'], true)) {
 			@unlink($statusFile);
-			@unlink(self::$taskDir . '/bgtask_' . $jobId . '.log');
+			@unlink($taskDir . '/bgtask_' . $jobId . '.log');
 		}
 
 		return $status;
@@ -236,7 +249,7 @@ class BackgroundTaskDispatcher {
 		if (!ctype_xdigit($jobId) || strlen($jobId) !== 32) {
 			return null;
 		}
-		$logFile = self::$taskDir . '/bgtask_' . $jobId . '.log';
+		$logFile = sys_get_temp_dir() . '/bgtask_' . $jobId . '.log';
 		if (!is_file($logFile)) {
 			return null;
 		}
@@ -253,11 +266,12 @@ class BackgroundTaskDispatcher {
 	 * @param string $jobId Value returned by dispatch().
 	 */
 	public static function killJob(string $jobId): bool {
-		if (self::$taskDir === '' || !ctype_xdigit($jobId) || strlen($jobId) !== 32) {
+		if (!ctype_xdigit($jobId) || strlen($jobId) !== 32) {
 			return false;
 		}
 
-		$statusFile = self::$taskDir . '/bgtask_status_' . $jobId . '.json';
+		$taskDir    = sys_get_temp_dir();
+		$statusFile = $taskDir . '/bgtask_status_' . $jobId . '.json';
 
 		if (!is_file($statusFile)) {
 			return false;
@@ -292,7 +306,7 @@ class BackgroundTaskDispatcher {
 
 		if ($sent) {
 			self::writeStatus($statusFile, ['status' => 'failed', 'error' => 'Killed by request.', 'pid' => $pid]);
-			@unlink(self::$taskDir . '/bgtask_' . $jobId . '.log');
+			@unlink($taskDir . '/bgtask_' . $jobId . '.log');
 		}
 
 		return $sent;
@@ -308,30 +322,86 @@ class BackgroundTaskDispatcher {
 	 * @throws \RuntimeException If no executable PHP binary can be found.
 	 */
 	private static function resolvePhpBinary(): string {
-		// PHP_BINARY is the most reliable when set
-		if (PHP_BINARY !== '' && is_executable(PHP_BINARY)) {
-			return PHP_BINARY;
+		$candidates = [];
+
+		$configuredCli = getenv('PHP_CLI_BINARY');
+		if (is_string($configuredCli) && $configuredCli !== '') {
+			$candidates[] = $configuredCli;
 		}
 
-		// Try <bindir>/php (common in CLI-only installs and some FPM setups)
-		$binDirPhp = PHP_BINDIR . '/php';
-		if (is_executable($binDirPhp)) {
-			return $binDirPhp;
+		if (PHP_BINARY !== '') {
+			$candidates[] = PHP_BINARY;
 		}
 
-		// Last resort: ask the shell
+		$candidates[] = PHP_BINDIR . '/php';
+
+		// Ask the shell for common CLI binary names.
 		if (function_exists('exec')) {
 			$found = [];
-			exec('which php 2>/dev/null', $found);
-			if (!empty($found[0]) && is_executable($found[0])) {
-				return $found[0];
+			exec('command -v php 2>/dev/null', $found);
+			if (!empty($found[0])) {
+				$candidates[] = $found[0];
+			}
+
+			$found = [];
+			exec('command -v php-cli 2>/dev/null', $found);
+			if (!empty($found[0])) {
+				$candidates[] = $found[0];
+			}
+		}
+
+		$candidates = array_values(array_unique($candidates));
+
+		foreach ($candidates as $candidate) {
+			if (self::isCliPhpBinary($candidate)) {
+				return $candidate;
 			}
 		}
 
 		throw new \RuntimeException(
-			'Could not locate an executable PHP binary. ' .
-			'Set PHP_BINARY or ensure php is on the PATH.'
+			'Could not locate an executable CLI PHP binary. ' .
+			'Set PHP_CLI_BINARY or ensure php CLI is on the PATH.'
 		);
+	}
+
+	/**
+	 * Determine whether a candidate points to a usable CLI PHP binary.
+	 */
+	private static function isCliPhpBinary(string $binary): bool {
+		if ($binary === '' || !is_executable($binary)) {
+			return false;
+		}
+
+		$base = strtolower(basename($binary));
+		if (strpos($base, 'php-fpm') !== false || strpos($base, 'php-cgi') !== false) {
+			return false;
+		}
+
+		if (!function_exists('exec')) {
+			return true;
+		}
+
+		$probe = [];
+		$rc    = 1;
+		exec(escapeshellarg($binary) . " -r 'echo PHP_SAPI;' 2>/dev/null", $probe, $rc);
+
+		return $rc === 0 && isset($probe[0]) && trim($probe[0]) === 'cli';
+	}
+
+	/**
+	 * Determine whether a PID currently exists.
+	 */
+	private static function isProcessAlive(int $pid): bool {
+		if ($pid <= 0) {
+			return false;
+		}
+
+		if (function_exists('posix_kill')) {
+			return @posix_kill($pid, 0);
+		}
+
+		exec('kill -0 ' . $pid . ' 2>/dev/null', result_code: $rc);
+		return $rc === 0;
 	}
 
 	/** @param array<string, mixed> $data */
@@ -339,8 +409,3 @@ class BackgroundTaskDispatcher {
 		file_put_contents($statusFile, json_encode($data), LOCK_EX);
 	}
 }
-
-BackgroundTaskDispatcher::configure(
-	__DIR__ . '/background-runner.php',
-		sys_get_temp_dir()
-	);

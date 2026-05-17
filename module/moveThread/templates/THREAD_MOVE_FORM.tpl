@@ -3,6 +3,7 @@
 		{$CSRF_TOKEN}
 		<h3 class="centerText">Move thread</h3>
 
+		<input type="hidden" name="move-thread-action" value="move">
 		<input type="hidden" name="move-thread-uid" value="<!--&IF($THREAD_UID,'{$THREAD_UID}','')-->">
 		<input type="hidden" name="move-thread-board-uid" value="<!--&IF($CURRENT_BOARD_UID,'{$CURRENT_BOARD_UID}','')-->">
 

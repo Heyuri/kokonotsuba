@@ -2,7 +2,7 @@
 /**
  * Thumbnail Generate API: MagickWand Wrapper
  *
- * 提供程式便於以 MagickWand for PHP 生成預覽圖的物件
+ * Helper object that generates thumbnails using MagickWand for PHP.
  *
  * @package PMCLibrary
  * @version $Id$

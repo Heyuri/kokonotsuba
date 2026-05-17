@@ -5,7 +5,7 @@ PIO - Pixmicat! data source I/O
 
 namespace Kokonotsuba\post;
 
-// 協助設定 status 旗標的類別
+// Helper class for setting status flags
 class FlagHelper{
 	var $_status;
 
@@ -50,8 +50,8 @@ class FlagHelper{
 			if(is_array($value)) $value = $this->join($value); // Array Flatten
 			$ifexist = $this->get($flag);
 			if($ifexist !== $flag.':'.$value){
-				if($ifexist) $this->_write($this->replace($ifexist, "$flag:$value")); // 已立flag，不同值
-				else $this->_write($this->toString()."_$flag:{$value}_"); // 無flag
+				if($ifexist) $this->_write($this->replace($ifexist, "$flag:$value")); // Flag already set with a different value
+				else $this->_write($this->toString()."_$flag:{$value}_"); // No existing flag
 			}
 		}
 		return $this;

@@ -2,7 +2,7 @@
 /**
  * Thumbnail Generate API: ImageMagick Wrapper
  *
- * 提供程式便於以 ImageMagick 命令列生成預覽圖的物件
+ * Helper object that generates thumbnails using the ImageMagick command line.
  *
  * @package PMCLibrary
  * @version $Id$

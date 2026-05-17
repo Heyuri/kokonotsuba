@@ -16,7 +16,7 @@ class moduleMain extends abstractModuleMain {
 	private const TOKEN_FIELD = 'csrf_token';
 
 	public function getName(): string {
-		return 'mod_csrf_prevent : 防止偽造跨站請求 (CSRF)';
+		return 'mod_csrf_prevent : Prevents Cross-Site Request Forgery (CSRF)';
 	}
 
 	public function getVersion(): string {

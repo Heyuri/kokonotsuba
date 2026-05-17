@@ -43,8 +43,8 @@ class LoggerInterceptor implements MethodInterceptor {
 }
 
 /**
- * 事件記錄器注入
- * 使用 MethodInterceptor 代理包裹物件方法，藉此注入 Logger。
+ * Logger injector.
+ * Uses MethodInterceptor to proxy-wrap an object's methods so that a Logger can be injected.
  */
 class LoggerInjector {
 	private $principalClass;
@@ -67,11 +67,11 @@ class LoggerInjector {
 	}
 
 	/**
-	 * 以 MethodInterceptor 注入記錄器
+	 * Inject the logger via the MethodInterceptor.
 	 *
-	 * @param  string $name 呼叫方法名稱
-	 * @param  array $args 呼叫方法參數
-	 * @return mixed       呼叫方法回傳值
+	 * @param  string $name Name of the method being called
+	 * @param  array $args Arguments passed to the method
+	 * @return mixed       Return value of the called method
 	 */
 	public function __call($name, $args) {
 		if (!method_exists($this->principalClass, $name)) {
