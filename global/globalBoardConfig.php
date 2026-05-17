@@ -28,6 +28,9 @@ $config['TOP_THREAD_PAGER'] = false;
 // Replies shown (not including OP) per thread page
 $config['REPLIES_PER_PAGE'] = 200;
 
+// Maximum thread age (in hours) allowed for replies.
+$config['THREAD_REPLY_TIME_LIMIT'] = 0;
+
 $config['PROXYHEADERlist'] = array(
 	'HTTP_CLIENT_IP',
 	'HTTP_X_REAL_IP',
@@ -111,6 +114,7 @@ $config['ModuleList'] = array(
 	/* thread modes */
 	'autoSage' => true,
 	'lockThread' => true,
+	'oldThread' => true,
 	'sticky' => true,
 	/* posting */
 	'antiSpam' => true,

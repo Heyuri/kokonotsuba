@@ -80,6 +80,7 @@ $language['regist_successivepost']		= 'Please wait for a while for continuous po
 $language['regist_duplicatefile']		= 'Upload failed.<br>Same file uploaded lately.';
 $language['regist_threaddeleted']		= 'This thread has been deleted!';
 $language['regist_threadlocked']		= 'Thread is locked by administrator!';
+$language['regist_thread_too_old']		= 'This thread is too old to recieve replies!';
 $language['regist_redirect']			= '%1$s Redirecting... <p>If your browser don\'t redirect for you, please click: <a href="%2$s">Return</a></p>';
 $language['del_notchecked']				= 'Nothing selected for deletion. Please go back and select again.';
 $language['del_wrongpwornotfound']		= 'No such post or wrong password.';
