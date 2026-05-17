@@ -32,22 +32,6 @@ if (!is_file($payloadFile)) {
 	exit(1);
 }
 
-// ─── Resolve root directory ───
-$rootDir = __DIR__ . '/../../';
-
-// ─── Autoloader & core includes ───
-require $rootDir . 'autoload.php';
-require_once $rootDir . 'code/Kokonotsuba/constants.php';
-require $rootDir . 'paths.php';
-require $rootDir . 'bootstrap/libraryIncludes.php';
-
-// ─── Database ───
-require $rootDir . 'bootstrap/database.php';
-
-/** @var \Kokonotsuba\database\databaseConnection $databaseConnection */
-/** @var \Kokonotsuba\database\transactionManager $transactionManager */
-/** @var array $dbSettings */
-
 // ─── Read and immediately delete the payload file ───
 $raw = file_get_contents($payloadFile);
 unlink($payloadFile);
@@ -69,10 +53,20 @@ $class      = $payload['class']      ?? '';
 $file       = $payload['file']       ?? null;
 $args       = $payload['args']       ?? [];
 $statusFile = $payload['statusFile'] ?? null;
+$context    = $payload['context']    ?? null;
 
 if (!is_string($class) || $class === '') {
 	fwrite(STDERR, "Payload missing 'class'.\n");
 	exit(1);
+}
+
+// ─── Load application context ───
+if ($context !== null) {
+	if (!is_file($context)) {
+		fwrite(STDERR, "Context file not found: $context\n");
+		exit(1);
+	}
+	require $context;
 }
 
 // ─── Validate and normalise the status file path ───

@@ -9,6 +9,7 @@ use Kokonotsuba\interfaces\IBoard;
 use InvalidArgumentException;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\post\helper\postDateFormatter;
@@ -24,11 +25,13 @@ use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\rebuildBoardsByArray;
 use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
 
 //move thread module
 class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
+	use IncludeScriptTrait;
 
 	private readonly string $modulePageUrl;
 
@@ -49,6 +52,31 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->registerThreadControlPair('renderMoveThreadButton');
 		$this->registerThreadWidgetHook('onRenderThreadWidget');
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
+		$this->registerScript('moveThread.js');
+	}
+
+	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		$moduleHeader .= $this->generateMoveThreadJsTemplate();
+	}
+
+	private function generateMoveThreadJsTemplate(): string {
+		$currentBoard = $this->moduleContext->board;
+		$boardRadioHTML = generateBoardListRadioHTML($currentBoard, GLOBAL_BOARD_ARRAY);
+
+		$templateValues = [
+			'{$FORM_ACTION}' => $this->modulePageUrl,
+			'{$THREAD_UID}' => '',
+			'{$THREAD_NUMBER}' => '',
+			'{$CURRENT_BOARD_UID}' => '',
+			'{$CURRENT_BOARD_NAME}' => '',
+			'{$BOARD_RADIO_HTML}' => $boardRadioHTML,
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
+		];
+
+		$formHtml = $this->moduleContext->adminPageRenderer->ParseBlock('THREAD_MOVE_FORM', $templateValues);
+
+		return $this->generateTemplate('moveThreadFormTemplate', $formHtml);
 	}
 
 	public function renderMoveThreadButton(string &$modfunc, Post $post, bool $noScript): void {
@@ -416,7 +444,11 @@ class moduleAdmin extends abstractModuleAdmin {
 				"Moved thread {$thread->getThread()->getOpNumber()} to board $destinationBoardTitle",
 				$hostBoard->getBoardUID()
 			);
-	
+
+			if ($this->moduleContext->request->isAjax()) {
+				sendJsonResponse(['redirectUrl' => $redirectURL]);
+			}
+
 			redirect($redirectURL);
 		}
 	

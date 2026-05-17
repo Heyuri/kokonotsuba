@@ -21,7 +21,7 @@ class moduleMain extends abstractModuleMain {
 	private readonly displayIpRepository $displayIpRepository;
 
 	public function getName(): string {
-		return '顯示部份IP/hostname';
+		return 'Display partial IP/hostname';
 	}
 
 	public function getVersion(): string {

@@ -11,6 +11,8 @@ use Kokonotsuba\policy\postPolicy;
 use Kokonotsuba\policy\postRenderingPolicy;
 use Puchiko\background\BackgroundTaskDispatcher;
 
+BackgroundTaskDispatcher::setContext(__DIR__ . '/background.php');
+
 // Global configuration file
 $globalConfig = getGlobalConfig();
 
