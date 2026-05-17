@@ -2,18 +2,26 @@
 
 namespace Kokonotsuba\Modules\rebuild;
 
+require_once __DIR__ . '/rebuildTask.php';
+
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\BackgroundTaskTrait;
+use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
+use Puchiko\background\BackgroundTaskRegistry;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\html\generateRebuildListCheckboxHTML;
-use function Kokonotsuba\libraries\rebuildBoardsByArray;
+use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
+	use IncludeScriptTrait;
+	use BackgroundTaskTrait;
 
 	private readonly string $modulePageUrl;
 
@@ -32,28 +40,58 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function initialize(): void {
 		$this->modulePageUrl = $this->getModulePageURL([], false);
 
+		BackgroundTaskRegistry::register('rebuild_boards', rebuildTask::class, __DIR__ . '/rebuildTask.php');
+
 		$this->registerLinksAboveBarHook(_T('admin_nav_rebuild_multiple_title'), $this->modulePageUrl, _T('admin_nav_rebuild_multiple'));
+		$this->registerScript('rebuild.js');
+	}
+
+	/**
+	 * Handle the rebuild POST action.
+	 * CSRF token + POST method are enforced automatically by
+	 * abstractModuleAdmin::dispatchModuleRequest() before this fires.
+	 */
+	protected function handleModuleRequest(): void {
+		$boardUIDsToRebuild = $this->moduleContext->request->getParameter('rebuildBoardUIDs', 'POST', []);
+		$isAjax             = $this->moduleContext->request->isAjax();
+
+		if (empty($boardUIDsToRebuild) || !is_array($boardUIDsToRebuild)) {
+			if ($isAjax) {
+				sendJsonResponse(['dispatched' => false, 'message' => 'No boards selected.'], 400);
+			}
+			redirect($this->modulePageUrl);
+			return;
+		}
+
+		$this->dispatchBackgroundJob(
+			'rebuild_boards',
+			['boardUIDs' => array_map('intval', $boardUIDsToRebuild)],
+			'Rebuild started.',
+			'Failed to start rebuild.',
+			$this->getModulePageURL(['dispatched' => '1'], false),
+			$this->modulePageUrl,
+			'[rebuild]'
+		);
 	}
 
 	public function ModulePage() {
-		$formSubmit = $this->moduleContext->request->getParameter('formSubmit', 'POST', false);
-		if($formSubmit) {
-			$boardUIDsToRebuild = $this->moduleContext->request->getParameter('rebuildBoardUIDs', 'POST', false);
-			
-			$boardsToRebuild = $this->moduleContext->boardService->getBoardsFromUIDs($boardUIDsToRebuild);
-			
-			rebuildBoardsByArray($boardsToRebuild, true);
+		$this->handleBackgroundPoll(fn(string $status, array $data) => match ($status) {
+			'completed' => 'Boards rebuilt successfully.',
+			'failed'    => $data['error'] ?? 'Rebuild failed.',
+			default     => '',
+		});
 
-			redirect($this->modulePageUrl);
-			/* Add more things here. TODO: Add thread cache rebuilding when those are added */
-		} else {
-			$templateValues = [
-				'{$REBUILD_CHECK_LIST}' => generateRebuildListCheckboxHTML(GLOBAL_BOARD_ARRAY),
-				'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl)
-			];
+		$dispatched     = $this->moduleContext->request->getParameter('dispatched', 'GET', null);
+		$successMessage = $dispatched === '1' ? 'Rebuild job started.' : '';
 
-			$adminRebuildPage = $this->moduleContext->adminPageRenderer->ParseBlock('ADMIN_REBUILD_PAGE', $templateValues);
-			echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $adminRebuildPage], true);
-		}
+		$templateValues = [
+			'{$REBUILD_CHECK_LIST}' => generateRebuildListCheckboxHTML(GLOBAL_BOARD_ARRAY),
+			'{$MODULE_URL}'         => sanitizeStr($this->modulePageUrl),
+			'{$CSRF_TOKEN}'         => getCsrfHiddenInput(),
+			'{$SUCCESS_MESSAGE}'    => sanitizeStr($successMessage),
+		];
+
+		$adminRebuildPage = $this->moduleContext->adminPageRenderer->ParseBlock('ADMIN_REBUILD_PAGE', $templateValues);
+		echo $this->moduleContext->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', ['{$PAGE_CONTENT}' => $adminRebuildPage], true);
 	}
 }

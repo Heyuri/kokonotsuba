@@ -89,6 +89,9 @@
 				if (data && data.success && data.deleted_link) {
 					postEl.dataset.deletedLink = data.deleted_link;
 				}
+				if (data && data.deleted_post_id) {
+					postEl.dataset.deletedPostId = data.deleted_post_id;
+				}
 				removeWidgetActions(postEl, ['delete', 'mute']);
 			}
 		}, extraParams);
@@ -184,23 +187,6 @@
 				if (ctx && ctx.url && ctx.url !== '#') {
 					window.location.assign(ctx.url);
 				}
-			});
-		}
-		
-		if (typeof window.postWidget.registerMenuAugmenter === 'function') {
-			window.postWidget.registerMenuAugmenter(function (ctx) {
-				const post = ctx && (ctx.post || (ctx.arrow && ctx.arrow.closest('.post')));
-				if (!post) return [];
-				const existing = post.querySelector('.widgetRefs a[data-action="viewdeleted"]');
-				if (existing) return [];
-				const link = post.dataset.deletedLink;
-				if (!link) return [];
-				return [{
-					href: link,
-					action: 'viewdeleted',
-					label: 'View deleted post',
-					subMenu: ''
-				}];
 			});
 		}
 	}

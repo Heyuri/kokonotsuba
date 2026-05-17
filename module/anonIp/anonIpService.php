@@ -52,6 +52,27 @@ class anonIpService {
 	}
 
 	/**
+	 * Hash every IP address that has not yet been anonymized, regardless of post age.
+	 *
+	 * @return int  Total number of rows anonymized across both tables.
+	 */
+	public function anonymizeAll(): int {
+		$postCount      = $this->anonIpRepository->countAllToAnonymize();
+		$actionLogCount = $this->anonIpRepository->countAllActionLogToAnonymize();
+
+		$this->inTransaction(function () use ($postCount, $actionLogCount) {
+			if ($postCount > 0) {
+				$this->anonIpRepository->anonymizeAll();
+			}
+			if ($actionLogCount > 0) {
+				$this->anonIpRepository->anonymizeAllActionLog();
+			}
+		});
+
+		return $postCount + $actionLogCount;
+	}
+
+	/**
 	 * Resolve a human-readable time-frame string to a DateTimeImmutable cutoff.
 	 *
 	 * @param string $timeframe

@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Variables injected from the calling bootstrap context (e.g. koko.php).
+ *
+ * @var \Kokonotsuba\database\databaseConnection $databaseConnection
+ * @var array                                    $dbSettings
+ * @var \Kokonotsuba\containers\appContainer     $container
+ */
+
 use Kokonotsuba\board\boardPostNumbers;
 use Kokonotsuba\board\boardRepository;
 use Kokonotsuba\board\boardService;

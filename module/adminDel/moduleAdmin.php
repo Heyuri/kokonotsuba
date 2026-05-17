@@ -206,6 +206,26 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// then append it to the header
 		$moduleHeader .= $jsHtml;
+
+		// When deletedPosts module is active, emit a <template> containing the delete/mute widget
+		// entries so that JS can re-inject them after a post is restored (without hardcoding labels
+		// or URLs).  '__POSTUID__' is a placeholder that JS replaces with the real post_uid.
+		if ($canViewDeleted) {
+			$baseUrl = $this->getModulePageURL([], false, true);
+			$tmplEntries = [
+				$this->buildWidgetEntry($baseUrl, 'delete', 'Delete',       '', ['post_uid' => '__POSTUID__', 'action' => 'del']),
+				$this->buildWidgetEntry($baseUrl, 'mute',   'Delete & Mute', '', ['post_uid' => '__POSTUID__', 'action' => 'delmute']),
+			];
+			$tmplHtml = '';
+			foreach ($tmplEntries as $w) {
+				$paramAttrs = '';
+				foreach ($w['params'] as $k => $v) {
+					$paramAttrs .= ' data-param-' . htmlspecialchars($k) . '="' . htmlspecialchars((string)$v) . '"';
+				}
+				$tmplHtml .= '<a href="' . htmlspecialchars($w['href']) . '" data-action="' . htmlspecialchars($w['action']) . '" data-label="' . htmlspecialchars($w['label']) . '" data-subMenu="' . htmlspecialchars($w['subMenu']) . '"' . $paramAttrs . '></a>';
+			}
+			$moduleHeader .= '<template id="del-restore-tmpl">' . $tmplHtml . '</template>';
+		}
 	}
 
 	protected function handleModuleRequest(): void {
@@ -290,18 +310,20 @@ class moduleAdmin extends abstractModuleAdmin {
 		if ($this->moduleContext->request->isAjax()) {
 			// if it was an attachment deletion then use the appropriate method to generate the url
 			if($action === 'attachmentDel' && isset($fileId)) {
-				$deletionUrl = $this->getDeletionUrlForAttachment($fileId);
+				$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
 			}
 			// otherwise just get the regular deletion url
 			else {
-				$deletionUrl = $this->getDeletionUrlForPost($post->getUid());
+				$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByPostUid($post->getUid());
 			}
+			$deletionUrl = $this->getDeletionViewUrl($deletedPost);
 
 			// Return JSON for AJAX requests, detach client, then rebuild server-side.
 			sendAjaxAndDetach([
 				'success' => true,
 				'is_op' => $post->isOp(),
-				'deleted_link' => $deletionUrl
+				'deleted_link' => $deletionUrl,
+				'deleted_post_id' => $deletedPost->getDeletedPostId()
 			]);
 
 			// ===== rebuild after the response has been sent =====

@@ -2,6 +2,47 @@
 // For 'post': toggles the always-present .indicator-deleted container
 // For 'file': toggles the always-present .indicator-fileDeleted container
 // scopeEl: optional element to scope the .filesize query for multi-attachment posts
+
+/**
+ * Fade out and remove a post or thread from the DOM.
+ * For OP posts, removes the entire .thread container.
+ * For replies, removes the nearest .reply-container or the post itself.
+ *
+ * @param {Element} postEl  The .post element
+ */
+function fadeAndRemovePost(postEl) {
+	if (!postEl) return;
+
+	if (postEl.classList.contains('op')) {
+		var thread = postEl.closest('.thread');
+		if (thread) {
+			// Collect the trailing separator elements (threadSeparatorPusher + threadSeparator)
+			// that immediately follow the thread in the DOM so they are removed together.
+			var trailingEls = [];
+			var sibling = thread.nextElementSibling;
+			while (sibling && sibling.matches('hr.threadSeparatorPusher, hr.threadSeparator')) {
+				trailingEls.push(sibling);
+				sibling = sibling.nextElementSibling;
+			}
+
+			thread.style.transition = 'opacity 0.3s ease';
+			thread.style.opacity = '0';
+			setTimeout(function () {
+				thread.remove();
+				trailingEls.forEach(function (el) { el.remove(); });
+			}, 300);
+		}
+	} else {
+		postEl.style.transition = 'opacity 0.3s ease';
+		postEl.style.opacity = '0';
+		setTimeout(function () {
+			var parent = postEl.closest('.reply-container');
+			if (parent) parent.remove();
+			else postEl.remove();
+		}, 300);
+	}
+}
+
 function showDeletionIndicator(postEl, type, scopeEl) {
 	if (!postEl) return null;
 

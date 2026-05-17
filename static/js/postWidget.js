@@ -16,6 +16,10 @@
 	var labelProviders = new Map();
 	var menuAugmenters = [];
 
+	// track the active arrow independently — dropdownMenu.js clears activeToggle
+	// before our click handler fires when submenu items are clicked
+	var currentArrow = null;
+
 	// expose api for other modules
 	window.postWidget = {
 		registerActionHandler: function (action, cb) {
@@ -31,7 +35,8 @@
 
 	// ---- helpers ----
 
-	// Collect data-param-* attributes from an element into a plain object
+	// Collect data-param-* attributes from an element into a plain object.
+	// Keys are as the browser stores them (always lowercased for HTML attributes).
 	function collectParams(el) {
 		var params = {};
 		if (!el || !el.attributes) return params;
@@ -62,6 +67,7 @@
 		if (arrow) {
 			e.preventDefault();
 
+			currentArrow = arrow;
 			dropdown.open(arrow, function (menu, subMenus) {
 				buildMenuContent(menu, subMenus, arrow);
 			});
@@ -69,7 +75,7 @@
 		}
 
 		// --- menu item ---
-		var menuItem = e.target.closest('.postMenuDropdown a');
+		var menuItem = e.target.closest('.postMenuDropdown a, .postMenuSubmenu a');
 		if (menuItem) {
 			e.preventDefault();
 
@@ -94,6 +100,7 @@
 			}
 
 			handleWidgetAction(action, menuItem.href, menuItem);
+			currentArrow = null;
 			dropdown.close();
 			return;
 		}
@@ -196,7 +203,7 @@
 			wrapper.appendChild(headerA);
 
 			var subDiv = document.createElement('div');
-			subDiv.className = 'dropdownMenu submenu';
+			subDiv.className = 'dropdownMenu submenu postMenuSubmenu';
 			subDiv.hidden = true;
 
 			groups[groupName].forEach(function (item) {
@@ -239,7 +246,9 @@
 	function handleWidgetAction(action, url, menuItem) {
 		var handler = actionHandlers.get(action);
 		if (handler) {
-			var activeToggle = dropdown.getActiveToggle();
+			// prefer our own tracked arrow — getActiveToggle() may already be null
+			// if dropdownMenu.js's click-outside handler fired first (submenu clicks)
+			var activeToggle = currentArrow || dropdown.getActiveToggle();
 			handler({
 				action: action,
 				url: url,

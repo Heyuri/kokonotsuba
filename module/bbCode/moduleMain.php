@@ -352,7 +352,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	// New function to fix improperly nested BBCode tags
-	private function fixBBCodeNesting($text){
+	private function fixBBCodeNesting(string $text): string {
 		// List of supported tags. Only these tags will be processed for nesting correction.
 		$supportedTags = array('b', 'i', 'spoiler', 'h', 'color', 'colorbg', 'neon', 'textshadow', 'party', 'echo', 's', 'u', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 'code', 'pre', 'aa', 'kao', 'sw', 'quote', 'ruby', 'rt', 'rp');
 		
@@ -571,7 +571,7 @@ class moduleMain extends abstractModuleMain {
 		return $output;
 	}
 
-	private function highlightCodeSyntax($code, $lang) {
+	private function highlightCodeSyntax(string $code, string $lang): string {
 		$lang = strtolower($lang);
 	
 		$keywords = [];
@@ -666,33 +666,33 @@ class moduleMain extends abstractModuleMain {
 	}
 	
 
-	private function _URLConv1($m){
+	private function _URLConv1(array $m): string {
 		++$this->urlcount;
 		$url = sanitizeStr($m[1].$m[2]);
 		return '<a class="bbcodeA" href="'.$url.'" rel="nofollow noreferrer" target="_blank">'.$url.'</a>';
 	}
 
-	private function _URLConv2($m){
+	private function _URLConv2(array $m): string {
 		++$this->urlcount;
 		$url = sanitizeStr($m[1]);
 		return '<a class="bbcodeA" href="http://'.$url.'" rel="nofollow noreferrer" target="_blank">'.$url.'</a>';
 	}
 
-	private function _URLConv3($m){
+	private function _URLConv3(array $m): string {
 		++$this->urlcount;
 		$href = sanitizeStr($m[1].$m[2]);
 		$text = sanitizeStr($m[3]);
 		return '<a class="bbcodeA" href="'.$href.'" rel="nofollow noreferrer" target="_blank">'.$text.'</a>';
 	}
 
-	private function _URLConv4($m){
+	private function _URLConv4(array $m): string {
 		++$this->urlcount;
 		$url = sanitizeStr($m[1]);
 		$text = sanitizeStr($m[2]);
 		return '<a class="bbcodeA" href="http://'.$url.'" rel="nofollow noreferrer" target="_blank">'.$text.'</a>';
 	}
 
-	private function _URLRevConv($m){
+	private function _URLRevConv(array $m): string {
 		if($m[1]=='http' && $m[2]=='://'.$m[3]) {
 			return '[url]'.$m[3].'[/url]';
 		} elseif(($m[1].$m[2])==$m[3]) {
@@ -705,12 +705,12 @@ class moduleMain extends abstractModuleMain {
 		}
 	}
 
-	private function _EMailRevConv($m){
+	private function _EMailRevConv(array $m): string {
 		if($m[1]==$m[2]) return '[email]'.$m[1].'[/email]';
 		else return '[email='.$m[1].']'.$m[2].'[/email]';
 	}
 
-	public function html2bb(&$string){
+	public function html2bb(string &$string): void {
 		// bold
 		if($this->supportBold) {
 			$string = preg_replace('#<b>(.*?)</b>#si', '[b]\1[/b]', $string);

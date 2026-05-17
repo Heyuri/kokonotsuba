@@ -1,6 +1,10 @@
 <?php
 
-
+/**
+ * Variables injected from the calling bootstrap context (e.g. koko.php).
+ *
+ * @var \Kokonotsuba\board\boardService $boardService
+ */
 
 // Get the board that's currently being accessed by the request
 $board = $boardService->getBoardFromBootstrapFile('./boardUID.ini');

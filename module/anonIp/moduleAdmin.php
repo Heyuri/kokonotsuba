@@ -2,23 +2,26 @@
 
 namespace Kokonotsuba\Modules\anonIp;
 
-require_once __DIR__ . '/anonIpRepository.php';
-require_once __DIR__ . '/anonIpService.php';
+require_once __DIR__ . '/anonIpTask.php';
 
-use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\BackgroundTaskTrait;
+use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
+use Puchiko\background\BackgroundTaskRegistry;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
+use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
+	use IncludeScriptTrait;
+	use BackgroundTaskTrait;
 
-	private anonIpService $anonIpService;
 	private readonly string $modulePageUrl;
 
 	public function getRequiredRole(): userRole {
@@ -34,21 +37,16 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$dbSettings       = getDatabaseSettings();
-		$anonIpRepository = new anonIpRepository(
-			databaseConnection::getInstance(),
-			$dbSettings['POST_TABLE'],
-			$dbSettings['ACTIONLOG_TABLE']
-		);
-		$this->anonIpService = new anonIpService($anonIpRepository, $this->moduleContext->transactionManager);
-
 		$this->modulePageUrl = $this->getModulePageURL([], false, true);
+
+		BackgroundTaskRegistry::register('anonymize_ips', anonIpTask::class, __DIR__ . '/anonIpTask.php');
 
 		$this->registerLinksAboveBarHook(
 			_T('admin_nav_anon_ip_title'),
 			$this->modulePageUrl,
 			_T('admin_nav_anon_ip')
 		);
+		$this->registerScript('anonIp.js');
 	}
 
 	/**
@@ -59,25 +57,43 @@ class moduleAdmin extends abstractModuleAdmin {
 	protected function handleModuleRequest(): void {
 		$action    = $this->moduleContext->request->getParameter('anonIpAction', 'POST', '');
 		$timeframe = $this->moduleContext->request->getParameter('timeframe', 'POST', '');
+		$isAjax    = $this->moduleContext->request->isAjax();
 
-		if ($action === 'anonymize') {
-			$count = $this->anonIpService->anonymizeByTimeframe($timeframe);
+		$validTimeframes = ['1year', '1month', '1week', '24hours', 'now'];
 
-			if ($count >= 0) {
-				redirect($this->getModulePageURL(['anonymized' => $count], false, true));
-				return;
+		if ($action !== 'anonymize' || !in_array($timeframe, $validTimeframes, true)) {
+			if ($isAjax) {
+				sendJsonResponse(['dispatched' => false, 'message' => sanitizeStr(_T('anon_ip_invalid_request'))], 400);
 			}
+			redirect($this->modulePageUrl);
+			return;
 		}
 
-		redirect($this->modulePageUrl);
+		$this->dispatchBackgroundJob(
+			'anonymize_ips',
+			['timeframe' => $timeframe],
+			sanitizeStr(_T('anon_ip_dispatched')),
+			sanitizeStr(_T('anon_ip_dispatch_failed')),
+			$this->getModulePageURL(['dispatched' => '1'], false, true),
+			$this->modulePageUrl,
+			'[anonIp]'
+		);
 	}
 
 	public function ModulePage(): void {
-		$anonymized     = $this->moduleContext->request->getParameter('anonymized', 'GET', null);
+		$this->handleBackgroundPoll(function (string $status) {
+			return match ($status) {
+				'completed' => sanitizeStr(_T('anon_ip_completed')),
+				'failed'    => sanitizeStr(_T('anon_ip_dispatch_failed')),
+				default     => '',
+			};
+		});
+
+		$dispatched     = $this->moduleContext->request->getParameter('dispatched', 'GET', null);
 		$successMessage = '';
 
-		if ($anonymized !== null && ctype_digit((string)$anonymized)) {
-			$successMessage = sanitizeStr(_T('anon_ip_success', (int)$anonymized));
+		if ($dispatched === '1') {
+			$successMessage = sanitizeStr(_T('anon_ip_dispatched'));
 		}
 
 		$templateValues = [
@@ -88,6 +104,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$OPT_1_MONTH}'     => _T('anon_ip_1_month'),
 			'{$OPT_1_WEEK}'      => _T('anon_ip_1_week'),
 			'{$OPT_24_HOURS}'    => _T('anon_ip_24_hours'),
+			'{$OPT_NOW}'         => _T('anon_ip_now'),
 			'{$SUBMIT_BTN}'      => _T('anon_ip_submit'),
 			'{$MODULE_URL}'      => sanitizeStr($this->modulePageUrl),
 			'{$CSRF_TOKEN}'      => getCsrfHiddenInput(),

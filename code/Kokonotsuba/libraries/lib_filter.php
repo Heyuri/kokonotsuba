@@ -47,6 +47,23 @@ function applyRegexIPFilter(string $ip): ?string {
 }
 
 /**
+ * Convert a potentially wildcarded IP address to a SQL LIKE pattern.
+ * The '*' wildcard is translated to '%'; the host index can then be used.
+ *
+ * @param string $ip The IP address to process (may contain '*' wildcards).
+ * @return string|null A LIKE pattern string if valid, null if the IP is invalid.
+ */
+function applyLikeIPFilter(string $ip): ?string {
+	// Validate: allow digits, dots, colons, hex letters, and asterisks only
+	if (!preg_match('/^[\d\.\*\:a-fA-F]+$/', $ip)) {
+		return null;
+	}
+
+	// Replace wildcard '*' with the SQL LIKE wildcard '%'
+	return str_replace('*', '%', $ip);
+}
+
+/**
  * Bind the filter parameters to a SQL query for execution.
  * This function modifies the query by adding conditions based on the filters provided.
  *
@@ -87,12 +104,12 @@ function bindPostFilterParameters(array &$params, string &$query, array $filters
 		}
 	}
 
-	// Apply the 'ip_address' filter using a regex pattern
+	// Apply the 'ip_address' filter using a LIKE pattern against the indexed host column
 	if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
-		$regex = applyRegexIPFilter($filters['ip_address']);
-		if ($regex !== null) {
-			$query .= " AND " . $columnPrefix . "host REGEXP :ip_regex";
-			$params[':ip_regex'] = $regex;  // Bind the regex for IP address
+		$likePattern = applyLikeIPFilter($filters['ip_address']);
+		if ($likePattern !== null) {
+			$query .= " AND " . $columnPrefix . "host LIKE :ip_like";
+			$params[':ip_like'] = $likePattern;
 		}
 	}
 }

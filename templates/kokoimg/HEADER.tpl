@@ -14,7 +14,7 @@
 	<script src="{$STATIC_URL}js/clipboard.js?v=15" defer></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
-	<script src="{$STATIC_URL}js/message.js" defer></script>
+	<script src="{$STATIC_URL}js/message.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/dropdownMenu.js" defer></script>
 	<script src="{$STATIC_URL}js/postWidget.js" defer></script>
 	<script src="{$STATIC_URL}js/attachmentWidget.js" defer></script>
