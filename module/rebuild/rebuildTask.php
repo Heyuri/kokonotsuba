@@ -70,6 +70,6 @@ class rebuildTask implements BackgroundTaskInterface {
 
 		// ── Rebuild ───────────────────────────────────────────────────────
 		$boards = $boardService->getBoardsFromUIDs($boardUIDs);
-		rebuildBoardsByArray($boards, true);
+		rebuildBoardsByArray($boards, false);
 	}
 }

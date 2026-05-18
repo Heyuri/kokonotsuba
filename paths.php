@@ -54,7 +54,8 @@ function generateNewBoardConfigFile(string $boardUid): ?string {
 
 /* get the database settings from dbSettings PHP file */
 function getDatabaseSettings() {
-	$dbSettings = require __DIR__.'/databaseSettings.php';
+	$dir = rtrim((string)(getenv('KOKONOTSUBA_APPROOT') ?: __DIR__), '/');
+	$dbSettings = require $dir.'/databaseSettings.php';
 	if(empty($dbSettings)) die("Could not read database settings.");	
 	else return $dbSettings;
 }

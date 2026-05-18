@@ -11,7 +11,8 @@ use Kokonotsuba\policy\postPolicy;
 use Kokonotsuba\policy\postRenderingPolicy;
 use Puchiko\background\BackgroundTaskDispatcher;
 
-BackgroundTaskDispatcher::setContext(__DIR__ . '/background.php');
+BackgroundTaskDispatcher::setContext(($kokoInstanceRoot ?? __DIR__ . '/../') . 'bootstrap/background.php');
+BackgroundTaskDispatcher::setAppRoot($kokoInstanceRoot ?? __DIR__ . '/../');
 
 // Global configuration file
 $globalConfig = getGlobalConfig();

@@ -54,6 +54,7 @@ $file       = $payload['file']       ?? null;
 $args       = $payload['args']       ?? [];
 $statusFile = $payload['statusFile'] ?? null;
 $context    = $payload['context']    ?? null;
+$appRoot    = $payload['appRoot']    ?? null;
 
 if (!is_string($class) || $class === '') {
 	fwrite(STDERR, "Payload missing 'class'.\n");
@@ -83,16 +84,37 @@ try {
 		if (!is_file($context)) {
 			throw new \RuntimeException("Context file not found: $context");
 		}
+		// Use the explicitly set appRoot from the payload (set via setAppRoot() in
+		// the web entry point using __DIR__, which is never symlinked there).
+		// Fall back to deriving from the context path if not set.
+		$backgroundAppRoot = $appRoot ?? rtrim(dirname($context, 2), '/') . '/';
 		require $context;
+	} else {
+		fwrite(STDERR, "WARNING: no context file set — application classes will not be autoloaded\n");
 	}
 
 	// ─── Optionally require the task file (for non-autoloaded classes) ───
 	if ($file !== null) {
-		// Security: only allow files within the application root
-		$appRoot  = realpath(__DIR__ . '/../../');
-		$realFile = realpath($file);
+		// Security: only allow files within the application root or the shared
+		// symlink-target root (module/ etc. are symlinks whose realpath resolves
+		// to a different directory than the per-instance $appRoot).
+		$instanceRoot = realpath($backgroundAppRoot ?? dirname($context ?? '', 2));
+		$realFile     = realpath($file);
 
-		if ($realFile === false || $appRoot === false || strncmp($realFile, $appRoot, strlen($appRoot)) !== 0) {
+		// Derive the shared root by resolving the symlink on module/ inside the
+		// instance root — gives us e.g. /srv/a/kokonotsuba from
+		// /srv/a/kokobackend1/module -> /srv/a/kokonotsuba/module.
+		$sharedRoot = ($instanceRoot !== false && is_dir($instanceRoot . '/module'))
+			? realpath($instanceRoot . '/module')
+			: false;
+		$sharedRoot = ($sharedRoot !== false) ? dirname($sharedRoot) : false;
+
+		$inInstance = $instanceRoot !== false && $realFile !== false
+			&& strncmp($realFile, $instanceRoot, strlen($instanceRoot)) === 0;
+		$inShared   = $sharedRoot   !== false && $realFile !== false
+			&& strncmp($realFile, $sharedRoot,   strlen($sharedRoot))   === 0;
+
+		if ($realFile === false || (!$inInstance && !$inShared)) {
 			throw new \RuntimeException("Task file '$file' is outside the application directory or does not exist.");
 		}
 
@@ -101,7 +123,9 @@ try {
 
 	// ─── Validate task class ───
 	if (!class_exists($class)) {
-		throw new \RuntimeException("Task class not found: $class");
+		$writeStatus(['status' => 'failed', 'error' => "Task class not found: $class"]);
+		fwrite(STDERR, "Task class not found: $class\n");
+		exit(1);
 	}
 
 	if (!is_a($class, \Puchiko\background\BackgroundTaskInterface::class, true)) {
@@ -115,15 +139,16 @@ try {
 	$writeStatus(['status' => 'completed']);
 } catch (\Throwable $e) {
 	$errMsg = sprintf(
-		"Task %s failed: [%s] %s in %s:%d\n",
+		"Task %s failed: [%s] %s in %s:%d\nStack trace:\n%s\n",
 		$class,
 		get_class($e),
 		$e->getMessage(),
 		$e->getFile(),
-		$e->getLine()
+		$e->getLine(),
+		$e->getTraceAsString()
 	);
 	fwrite(STDERR, $errMsg);
-	$writeStatus(['status' => 'failed', 'error' => $e->getMessage()]);
+	$writeStatus(['status' => 'failed', 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
 	exit(1);
 }
 
