@@ -45,7 +45,7 @@ trait BackgroundTaskTrait {
 		}
 
 		if (in_array($status, ['pending', 'running', 'failed'], true)) {
-			$log = BackgroundTaskDispatcher::getJobLog($jobId);
+			$log = $data['log'] ?? BackgroundTaskDispatcher::getJobLog($jobId);
 			if ($log !== null) {
 				$response['log'] = sanitizeStr($log);
 			}
