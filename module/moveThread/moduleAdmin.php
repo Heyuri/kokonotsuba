@@ -26,6 +26,7 @@ use function Kokonotsuba\libraries\rebuildBoardsByArray;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
+use function Puchiko\strings\sanitizeStr;
 
 //move thread module
 class moduleAdmin extends abstractModuleAdmin {
@@ -149,9 +150,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		$capcode = "";
 		$name = $originalBoardConfig['SYSTEMCHAN_NAME'];
 
-		// Generate link to the new thread
-		$newThreadUrl = $destinationBoard->getBoardThreadURL($newThread->getOpNumber());
-		$moveComment = 'Thread moved to <a href="' . $newThreadUrl . '">'.$destinationBoard->getBoardTitle().'</a>';
+		// Generate cross-board quote link to the new thread
+		$boardIdentifier = sanitizeStr($destinationBoard->getBoardIdentifier());
+		$opNumber = $newThread->getOpNumber();
+		$moveComment = 'Thread moved to &gt;&gt;&gt;/' . $boardIdentifier . '/' . $opNumber;
 
 		// Prepare post metadata
 		$ip = new IPAddress('127.0.0.1');
@@ -191,6 +193,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		// Add shadow post
 		$this->moduleContext->postService->addPostToThread(
 			$originalBoard, $postRegistData, $postUid);
+
+		// Register quote link so the cross-board reference resolves in the renderer
+		$this->moduleContext->quoteLinkService->createQuoteLinksFromArray(
+			$originalBoard->getBoardUID(),
+			$postUid,
+			[$newThread->getOpPostUid()]
+		);
 	}
 
 
