@@ -22,6 +22,7 @@ use Kokonotsuba\request\request;
 
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\drawDeletedPostsFilterForm;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\getFiltersFromRequest;
@@ -422,6 +423,7 @@ class deletedPostRenderer {
 			'{$DELETED_BY}' => htmlspecialchars($deletedByUsername),
 			'{$DELETED_AT}' => isset($deletedTimestamp) ? $this->postDateFormatter->formatFromDateString($deletedTimestamp) : '',
 			'{$ID}' => htmlspecialchars($id),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 			'{$BOARD_UID}' => htmlspecialchars($boardUID),
 			'{$CAN_PURGE}' => $roleLevel->isAtLeast($this->requiredRoleActionForModAll),
 			'{$BOARD_TITLE}' => $boardTitle,
@@ -460,6 +462,7 @@ class deletedPostRenderer {
 
 		// get the base url of the board
 		$boardUrl = $board->getBoardURL();
+		$postHtml = '';
 
 		// if the post is a reply then render it as an OP
 		if(!$deletedEntry->isOp() || !$showAll) {

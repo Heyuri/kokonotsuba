@@ -3,6 +3,7 @@
 		<div class="deletedPostEntry">
 			<form method="POST" action="<!--&IF($IS_VIEW,'{$VIEW_URL}','{$URL}')-->">
 				<input type="hidden" name="deletedPostId" value="{$ID}">
+				{$CSRF_TOKEN}
 				<table class="deletedPostTable">
 					<tbody>
 						<tr>
