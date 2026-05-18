@@ -1,0 +1,1 @@
+<li><label><input name="radio-board-selection" type="radio" value="{$BOARD_UID}">{$BOARD_TITLE}</label></li>

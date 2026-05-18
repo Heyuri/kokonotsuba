@@ -100,6 +100,7 @@ class BackgroundTaskRegistry {
  */
 class BackgroundTaskDispatcher {
 	private static ?string $contextFile = null;
+	private static ?string $appRoot = null;
 
 	/**
 	 * Provide an application bootstrap file that the runner loads before executing
@@ -110,6 +111,18 @@ class BackgroundTaskDispatcher {
 	 */
 	public static function setContext(?string $file): void {
 		self::$contextFile = $file;
+	}
+
+	/**
+	 * Set the application instance root directory. This is used by the runner to
+	 * resolve paths correctly when code directories are symlinked. Should be set
+	 * to the real, non-symlinked instance root (e.g. dirname(__FILE__) in the
+	 * web entry point).
+	 *
+	 * @param string|null $dir Absolute path to the instance root (with trailing slash), or null to clear.
+	 */
+	public static function setAppRoot(?string $dir): void {
+		self::$appRoot = $dir !== null ? rtrim($dir, '/') . '/' : null;
 	}
 
 	/**
@@ -139,6 +152,7 @@ class BackgroundTaskDispatcher {
 			'jobId'      => $jobId,
 			'statusFile' => $statusFile,
 			'context'    => self::$contextFile,
+			'appRoot'    => self::$appRoot,
 		], JSON_THROW_ON_ERROR);
 
 		// Write status first so it exists before the process starts
@@ -167,9 +181,13 @@ class BackgroundTaskDispatcher {
 		$logFile = $taskDir . '/bgtask_' . $jobId . '.log';
 		$log     = escapeshellarg($logFile);
 
+		$envPrefix = self::$appRoot !== null
+			? 'KOKONOTSUBA_APPROOT=' . escapeshellarg(self::$appRoot) . ' '
+			: '';
+
 		$output = [];
 		$rc = 1;
-		exec("$phpBin $runner $pfile > /dev/null 2>$log & echo $!", $output, $rc);
+		exec("{$envPrefix}$phpBin $runner $pfile > /dev/null 2>$log & echo $!", $output, $rc);
 		$pid = isset($output[0]) ? (int) $output[0] : 0;
 
 		if ($rc !== 0 || $pid <= 0) {

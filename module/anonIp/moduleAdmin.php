@@ -17,6 +17,8 @@ use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
+use const Kokonotsuba\GLOBAL_BOARD_UID;
+
 class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
 	use IncludeScriptTrait;
@@ -76,7 +78,13 @@ class moduleAdmin extends abstractModuleAdmin {
 			sanitizeStr(_T('anon_ip_dispatch_failed')),
 			$this->getModulePageURL(['dispatched' => '1'], false, true),
 			$this->modulePageUrl,
-			'[anonIp]'
+			'[anonIp]',
+			function () use ($timeframe): void {
+				$this->moduleContext->actionLoggerService->logAction(
+					"Queued IP anonymization (timeframe: $timeframe)",
+					GLOBAL_BOARD_UID
+				);
+			}
 		);
 	}
 

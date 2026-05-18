@@ -44,6 +44,10 @@ trait BackgroundTaskTrait {
 			$response['error'] = sanitizeStr($data['error']);
 		}
 
+		if ($status === 'failed' && isset($data['trace'])) {
+			$response['trace'] = sanitizeStr($data['trace']);
+		}
+
 		if (in_array($status, ['pending', 'running', 'failed'], true)) {
 			$log = $data['log'] ?? BackgroundTaskDispatcher::getJobLog($jobId);
 			if ($log !== null) {
@@ -63,27 +67,34 @@ trait BackgroundTaskTrait {
 	 *
 	 * This method always terminates the current request (via sendJsonResponse or redirect).
 	 *
-	 * @param string $taskName       Registered task name.
-	 * @param array  $args           Arguments forwarded to the task's handle().
-	 * @param string $successMessage Message included in the AJAX success response.
-	 * @param string $failMessage    Message included in the AJAX failure response.
-	 * @param string $successUrl     Redirect target on non-AJAX success.
-	 * @param string $failUrl        Redirect target on non-AJAX failure.
-	 * @param string $logPrefix      Prefix used in the error log entry, e.g. '[rebuild]'.
+	 * @param string        $taskName       Registered task name.
+	 * @param array         $args           Arguments forwarded to the task's handle().
+	 * @param string        $successMessage Message included in the AJAX success response.
+	 * @param string        $failMessage    Message included in the AJAX failure response.
+	 * @param string        $successUrl     Redirect target on non-AJAX success.
+	 * @param string        $failUrl        Redirect target on non-AJAX failure.
+	 * @param string        $logPrefix      Prefix used in the error log entry, e.g. '[rebuild]'.
+	 * @param callable|null $onSuccess      Optional callback invoked after a successful dispatch,
+	 *                                      before the response is sent. Receives the job ID as argument.
 	 */
 	protected function dispatchBackgroundJob(
-		string $taskName,
-		array  $args,
-		string $successMessage,
-		string $failMessage,
-		string $successUrl,
-		string $failUrl,
-		string $logPrefix = '[background]'
+		string   $taskName,
+		array    $args,
+		string   $successMessage,
+		string   $failMessage,
+		string   $successUrl,
+		string   $failUrl,
+		string   $logPrefix = '[background]',
+		?callable $onSuccess = null
 	): void {
 		$isAjax = $this->moduleContext->request->isAjax();
 
 		try {
 			$jobId = BackgroundTaskDispatcher::dispatch($taskName, $args);
+
+			if ($onSuccess !== null) {
+				$onSuccess($jobId);
+			}
 
 			if ($isAjax) {
 				sendJsonResponse(['dispatched' => true, 'jobId' => $jobId, 'message' => $successMessage]);

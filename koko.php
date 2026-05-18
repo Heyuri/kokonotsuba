@@ -31,6 +31,9 @@ require __DIR__ . '/bootstrap/libraryIncludes.php';
 // Create request object from superglobals (must be early, before other bootstrap files)
 $request = \Kokonotsuba\request\request::fromGlobals();
 
+// Set the app root for this request
+$kokoInstanceRoot = __DIR__ . '/';
+
 require __DIR__ . '/bootstrap/session.php';
 
 require __DIR__ . '/bootstrap/cookies.php';

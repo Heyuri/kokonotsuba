@@ -18,6 +18,8 @@ use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
+use const Kokonotsuba\GLOBAL_BOARD_UID;
+
 class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
 	use IncludeScriptTrait;
@@ -63,14 +65,23 @@ class moduleAdmin extends abstractModuleAdmin {
 			return;
 		}
 
+		$boardUIDs = array_map('intval', $boardUIDsToRebuild);
+
 		$this->dispatchBackgroundJob(
 			'rebuild_boards',
-			['boardUIDs' => array_map('intval', $boardUIDsToRebuild)],
+			['boardUIDs' => $boardUIDs],
 			'Rebuild started.',
 			'Failed to start rebuild.',
 			$this->getModulePageURL(['dispatched' => '1'], false),
 			$this->modulePageUrl,
-			'[rebuild]'
+			'[rebuild]',
+			function () use ($boardUIDs): void {
+				$count = count($boardUIDs);
+				$this->moduleContext->actionLoggerService->logAction(
+					"Queued rebuild for $count board(s) (UIDs: " . implode(', ', $boardUIDs) . ')',
+					GLOBAL_BOARD_UID
+				);
+			}
 		);
 	}
 

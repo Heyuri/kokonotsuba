@@ -58,7 +58,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function isThreadTooOld(Thread $thread): bool {
-		$limitHours = intval($this->getConfig('THREAD_REPLY_TIME_LIMIT', self::DEFAULT_REPLY_LIMIT_HOURS));
+		$limitHours = intval($this->getConfig('ModuleSettings.THREAD_REPLY_TIME_LIMIT', self::DEFAULT_REPLY_LIMIT_HOURS));
 		if ($limitHours <= 0) {
 			return false;
 		}
