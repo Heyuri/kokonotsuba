@@ -232,10 +232,20 @@ class BackgroundTaskDispatcher {
 			}
 		}
 
+		$logFile = $taskDir . '/bgtask_' . $jobId . '.log';
+		if (($status['status'] ?? '') === 'failed' && is_file($logFile)) {
+			$log = file_get_contents($logFile);
+			if ($log !== false && $log !== '') {
+				$status['log'] = $log;
+			}
+		}
+
 		// Clean up terminal states so the tmp dir doesn't fill up
 		if (in_array($status['status'] ?? '', ['completed', 'failed'], true)) {
 			@unlink($statusFile);
-			@unlink($taskDir . '/bgtask_' . $jobId . '.log');
+			if (($status['status'] ?? '') === 'completed') {
+				@unlink($logFile);
+			}
 		}
 
 		return $status;

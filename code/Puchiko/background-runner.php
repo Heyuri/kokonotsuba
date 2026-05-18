@@ -60,15 +60,6 @@ if (!is_string($class) || $class === '') {
 	exit(1);
 }
 
-// ─── Load application context ───
-if ($context !== null) {
-	if (!is_file($context)) {
-		fwrite(STDERR, "Context file not found: $context\n");
-		exit(1);
-	}
-	require $context;
-}
-
 // ─── Validate and normalise the status file path ───
 if ($statusFile !== null) {
 	if (!preg_match('#/bgtask_status_[0-9a-f]{32}\.json$#', $statusFile)) {
@@ -86,38 +77,40 @@ $writeStatus = static function (array $data) use ($statusFile): void {
 
 $writeStatus(['status' => 'running']);
 
-// ─── Optionally require the task file (for non-autoloaded classes) ───
-if ($file !== null) {
-	// Security: only allow files within the application root
-	$appRoot  = realpath(__DIR__ . '/../../');
-	$realFile = realpath($file);
-
-	if ($realFile === false || $appRoot === false || strncmp($realFile, $appRoot, strlen($appRoot)) !== 0) {
-		fwrite(STDERR, "Task file '$file' is outside the application directory or does not exist.\n");
-		exit(1);
+try {
+	// ─── Load application context ───
+	if ($context !== null) {
+		if (!is_file($context)) {
+			throw new \RuntimeException("Context file not found: $context");
+		}
+		require $context;
 	}
 
-	require_once $realFile;
-}
+	// ─── Optionally require the task file (for non-autoloaded classes) ───
+	if ($file !== null) {
+		// Security: only allow files within the application root
+		$appRoot  = realpath(__DIR__ . '/../../');
+		$realFile = realpath($file);
 
-// ─── Validate task class ───
-use Puchiko\background\BackgroundTaskInterface;
+		if ($realFile === false || $appRoot === false || strncmp($realFile, $appRoot, strlen($appRoot)) !== 0) {
+			throw new \RuntimeException("Task file '$file' is outside the application directory or does not exist.");
+		}
 
-if (!class_exists($class)) {
-	fwrite(STDERR, "Task class not found: $class\n");
-	exit(1);
-}
+		require_once $realFile;
+	}
 
-if (!is_a($class, BackgroundTaskInterface::class, true)) {
-	fwrite(STDERR, "Class $class does not implement BackgroundTaskInterface.\n");
-	exit(1);
-}
+	// ─── Validate task class ───
+	if (!class_exists($class)) {
+		throw new \RuntimeException("Task class not found: $class");
+	}
 
-// ─── Execute task ───
-/** @var BackgroundTaskInterface $task */
-$task = new $class();
+	if (!is_a($class, \Puchiko\background\BackgroundTaskInterface::class, true)) {
+		throw new \RuntimeException("Class $class does not implement BackgroundTaskInterface.");
+	}
 
-try {
+	// ─── Execute task ───
+	/** @var \Puchiko\background\BackgroundTaskInterface $task */
+	$task = new $class();
 	$task->handle((array) $args);
 	$writeStatus(['status' => 'completed']);
 } catch (\Throwable $e) {
