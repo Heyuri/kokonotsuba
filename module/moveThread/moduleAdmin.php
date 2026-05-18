@@ -81,9 +81,10 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function generateAllBoardsRadioHTML(array $boards): string {
 		$html = '';
 		foreach ($boards as $board) {
-			$uid = htmlspecialchars($board->getBoardUID());
-			$title = htmlspecialchars($board->getBoardTitle());
-			$html .= '<label> <input name="radio-board-selection" type="radio" value="' . $uid . '">' . $title . '</label>  ';
+			$html .= $this->moduleContext->adminPageRenderer->ParseBlock('BOARD_RADIO_ITEM', [
+				'{$BOARD_UID}'   => sanitizeStr($board->getBoardUID()),
+				'{$BOARD_TITLE}' => sanitizeStr($board->getBoardTitle()),
+			]);
 		}
 		return $html;
 	}
@@ -108,8 +109,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$board = searchBoardArrayForBoard($post->getBoardUID());
 		$boardName = $board
-			? htmlspecialchars($board->getBoardTitle()) . ' (' . $post->getBoardUID() . ')'
-			: $post->getBoardUID();
+			? sanitizeStr($board->getBoardTitle()) . ' (' . sanitizeStr($post->getBoardUID()) . ')'
+			: sanitizeStr($post->getBoardUID());
 
 		// build the widget entry
 		$moveThreadWidget = $this->buildWidgetEntry($moveThreadUrl, 'moveThread', 'Move thread', '', [

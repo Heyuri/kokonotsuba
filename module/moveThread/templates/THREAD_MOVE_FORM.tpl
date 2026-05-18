@@ -19,7 +19,7 @@
 				</tr>
 				<tr id="boardrow">
 					<td class="postblock"><label>Boards</label></td>
-					<td>{$BOARD_RADIO_HTML}</td>
+					<td><ul class="littlelist">{$BOARD_RADIO_HTML}</ul></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label>Options</label></td>
