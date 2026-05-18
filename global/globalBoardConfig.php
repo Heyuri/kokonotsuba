@@ -28,9 +28,6 @@ $config['TOP_THREAD_PAGER'] = false;
 // Replies shown (not including OP) per thread page
 $config['REPLIES_PER_PAGE'] = 200;
 
-// Maximum thread age (in hours) allowed for replies.
-$config['THREAD_REPLY_TIME_LIMIT'] = 0;
-
 $config['PROXYHEADERlist'] = array(
 	'HTTP_CLIENT_IP',
 	'HTTP_X_REAL_IP',
@@ -511,6 +508,9 @@ $config['ModuleSettings']['CHARACTER_PREVIEW_LIMIT'] = 2500;
 $config['ModuleSettings']['LINE_PREVIEW_LIMIT'] = 10;
 
 $config['ModuleSettings']['NAME_RANDOMIZER_TTL'] = 43200; 
+
+// Maximum thread age (in hours) allowed for replies.
+$config['ModuleSettings']['THREAD_REPLY_TIME_LIMIT'] = 0;
 
 $config['SWF_THUMB'] = $config['STATIC_URL']."image/swf_thumb.png";
 $config['AUDIO_THUMB'] = $config['STATIC_URL']."image/audio.png";
