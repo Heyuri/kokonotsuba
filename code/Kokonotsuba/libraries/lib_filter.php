@@ -120,8 +120,6 @@ function bindPostFilterParameters(array &$params, string &$query, array $filters
  * @param array  &$params  The array to store bound parameters for the PDO statement.
  * @param string &$query   The SQL query string to which filter conditions will be appended.
  * @param array  $filters  The filters to apply (e.g., 'board', 'thread_uid', 'created_before').
- * @param string $orderBy  The column by which to order the results (default: 'last_bump_time').
- * @param bool   $isCount  Whether the query is a count query (avoids ORDER BY if true).
  */
 function bindThreadFilterParameters(array &$params, string &$query, array $filters): void {
 	// Apply the 'board' filter and bind parameters
@@ -362,8 +360,10 @@ function handleRedirection(array $filtersFromRequest, bool $isSubmission, array 
 /**
  * Main function to get filters from the request, process them, and handle redirection if needed.
  *
- * @param board $board The board object that contains board-related data.
  * @param string $url The base url of the page
+ * @param bool $isSubmission Whether the form is being submitted
+ * @param array $defaultFilters The default filters to fall back on if not provided in the request
+ * @param request $request The request object to extract parameters from
  * @return array The filters array, processed and ready for use.
  */
 function getFiltersFromRequest(string $url, bool $isSubmission, array $defaultFilters, request $request): array {
