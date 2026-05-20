@@ -13,3 +13,4 @@
 	{$BOARD_STYLESHEETS}
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">
 	<script src="{$STATIC_URL}js/backgroundTaskPoller.js" defer></script>
+	<script src="{$STATIC_URL}js/attachmentDownload.js" defer></script>
