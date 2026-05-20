@@ -82,12 +82,12 @@ function bindPostFilterParameters(array &$params, string &$query, array $filters
 	// Apply the 'board' filter and bind parameters
 	$boards = applyArrayFilter($filters, 'board');
 	if (!empty($boards)) {
-		$query .= " AND (";
+		$inParams = [];
 		foreach ($boards as $index => $board) {
-			$query .= ($index > 0 ? " OR " : "") . $columnPrefix . "boardUID = :board_$index";
-			$params[":board_$index"] = (int)$board;  // Bind the board UID as an integer
+			$inParams[":board_$index"] = (int)$board;
 		}
-		$query .= ")";
+		$query .= " AND " . $columnPrefix . "boardUID IN (" . implode(', ', array_keys($inParams)) . ")";
+		$params = array_merge($params, $inParams);
 	}
 
 	// Apply the 'tripcode' filter to both 'tripcode' and 'secure_tripcode' columns
