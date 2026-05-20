@@ -15,6 +15,7 @@ use Kokonotsuba\userRole;
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Kokonotsuba\libraries\rebuildAllBoards;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
@@ -127,6 +128,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$blotterPlaceholders = [
 			'{$MODULE_URL}' => sanitizeStr($this->modulePage),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 			'{$ROWS}' => [],
 		];
 
