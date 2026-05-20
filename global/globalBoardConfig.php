@@ -147,7 +147,8 @@ $config['ModuleList'] = array(
 	'indexCommentTruncator' => true,
 	'emotes' => true,
 	'nameRandomizer' => false,
-	'youtubeEmbed' => true
+	'youtubeEmbed' => true,
+	'segregator' => false,
 );
 
 /* Module-specific options */
@@ -508,6 +509,11 @@ $config['ModuleSettings']['CHARACTER_PREVIEW_LIMIT'] = 2500;
 $config['ModuleSettings']['LINE_PREVIEW_LIMIT'] = 10;
 
 $config['ModuleSettings']['NAME_RANDOMIZER_TTL'] = 43200; 
+
+//mod_segregator
+$config['ModuleSettings']['SEGREGATOR_SUB_DOMAIN'] = ''; // Subdomain prefix to prepend to the file host (e.g. 'media' turns 'example.com' into 'media.example.com'). Leave empty to disable URL rewriting.
+$config['ModuleSettings']['SEGREGATOR_COOKIE_NAME'] = 'viewAllContent'; // Name of the access cookie checked by nginx
+$config['ModuleSettings']['SEGREGATOR_COOKIE_DOMAIN'] = ''; // Cookie domain scope (e.g. '.example.com' for cross-subdomain). Leave empty to scope to the current host only.
 
 // Maximum thread age (in hours) allowed for replies.
 $config['ModuleSettings']['THREAD_REPLY_TIME_LIMIT'] = 0;
