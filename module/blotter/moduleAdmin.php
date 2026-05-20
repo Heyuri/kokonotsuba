@@ -107,9 +107,9 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 
-	private function deleteBlotterEntries($uidsToDelete) {
-		if(!is_array($uidsToDelete)) {
-			$uidsToDelete = [$uidsToDelete];
+	private function deleteBlotterEntries(?array $uidsToDelete) {
+		if(!$uidsToDelete) {
+			return;
 		}
 
 		$this->blotterService->deleteEntries($uidsToDelete);
