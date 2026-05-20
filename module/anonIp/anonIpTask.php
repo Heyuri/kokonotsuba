@@ -25,7 +25,8 @@ class anonIpTask implements BackgroundTaskInterface {
 		$repo = new anonIpRepository(
 			$conn,
 			$dbSettings['POST_TABLE'],
-			$dbSettings['ACTIONLOG_TABLE']
+			$dbSettings['ACTIONLOG_TABLE'],
+			$dbSettings['SOUDANE_TABLE']
 		);
 
 		$service = new anonIpService($repo, new transactionManager($conn));

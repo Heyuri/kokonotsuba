@@ -298,13 +298,20 @@ class moduleMain extends abstractModuleMain {
 
 		$yeahIPs = !empty($log) ? array_column($log, 'ip_address') : [];
 
+		// An IP that was stored before anonymization appears as raw; after
+		// anonymization it appears as LEFT(SHA512, 16).  Check both forms so
+		// the toggle works correctly regardless of whether the vote has been
+		// anonymized in the meantime.
+		$ipStr  = (string) $ip;
+		$ipHash = substr(hash('sha512', $ipStr), 0, 16);
+
 		// Check if the current IP has already voted; if so, remove the vote (toggle off)
-		if (in_array($ip, $yeahIPs)) {
-			// remove from yeahIPs so the updated count is correct
-			$yeahIPs = array_values(array_diff($yeahIPs, [$ip]));
+		if (in_array($ipStr, $yeahIPs, true) || in_array($ipHash, $yeahIPs, true)) {
+			// remove whichever form is stored so the updated count is correct
+			$yeahIPs = array_values(array_filter($yeahIPs, fn($v) => $v !== $ipStr && $v !== $ipHash));
 
 			// Remove the vote using the service
-			$this->soudaneService->removeVote($postUid, $ip, $type);
+			$this->soudaneService->removeVote($postUid, $ipStr, $type);
 		} else {
 			// add to yeah IPs so we can render changes upon a new vote right away
 			$yeahIPs[] = $ip;

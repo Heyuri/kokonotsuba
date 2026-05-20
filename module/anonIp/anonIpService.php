@@ -38,17 +38,21 @@ class anonIpService {
 
 		$postCount      = $this->anonIpRepository->countToAnonymize($cutoffSql);
 		$actionLogCount = $this->anonIpRepository->countActionLogToAnonymize($cutoffSql);
+		$soudaneCount   = $this->anonIpRepository->countSoudaneToAnonymize($cutoffSql);
 
-		$this->inTransaction(function () use ($cutoffSql, $postCount, $actionLogCount) {
+		$this->inTransaction(function () use ($cutoffSql, $postCount, $actionLogCount, $soudaneCount) {
 			if ($postCount > 0) {
 				$this->anonIpRepository->anonymizeBefore($cutoffSql);
 			}
 			if ($actionLogCount > 0) {
 				$this->anonIpRepository->anonymizeActionLogBefore($cutoffSql);
 			}
+			if ($soudaneCount > 0) {
+				$this->anonIpRepository->anonymizeSoudaneBefore($cutoffSql);
+			}
 		});
 
-		return $postCount + $actionLogCount;
+		return $postCount + $actionLogCount + $soudaneCount;
 	}
 
 	/**
@@ -59,17 +63,21 @@ class anonIpService {
 	public function anonymizeAll(): int {
 		$postCount      = $this->anonIpRepository->countAllToAnonymize();
 		$actionLogCount = $this->anonIpRepository->countAllActionLogToAnonymize();
+		$soudaneCount   = $this->anonIpRepository->countAllSoudaneToAnonymize();
 
-		$this->inTransaction(function () use ($postCount, $actionLogCount) {
+		$this->inTransaction(function () use ($postCount, $actionLogCount, $soudaneCount) {
 			if ($postCount > 0) {
 				$this->anonIpRepository->anonymizeAll();
 			}
 			if ($actionLogCount > 0) {
 				$this->anonIpRepository->anonymizeAllActionLog();
 			}
+			if ($soudaneCount > 0) {
+				$this->anonIpRepository->anonymizeAllSoudane();
+			}
 		});
 
-		return $postCount + $actionLogCount;
+		return $postCount + $actionLogCount + $soudaneCount;
 	}
 
 	/**
