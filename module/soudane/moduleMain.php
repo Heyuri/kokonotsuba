@@ -122,12 +122,6 @@ class moduleMain extends abstractModuleMain {
 			$voteHtml .= ' ';
 		}
 
-		// If SHOW_SCORE_ONLY is enabled, show score in between the "-" and "+"
-		if ($this->enableScore && $this->showScoreOnly) {
-			$score = $this->getScore($postUid);
-			$voteHtml .= $this->renderScore($postUid, $score) . ' ';
-		}
-
 		// yeah vote
 		if ($this->enableYeah) {
 			// get yeah count for this post
@@ -141,6 +135,12 @@ class moduleMain extends abstractModuleMain {
 				'Agree with this post',
 				'soudane'
 			);
+		}
+
+		// If SHOW_SCORE_ONLY is enabled
+		if ($this->enableScore && $this->showScoreOnly) {
+			$score = $this->getScore($postUid);
+			$voteHtml .= $this->renderScore($postUid, $score) . ' ';
 		}
 
 		// If SHOW_SCORE_ONLY is not enabled, display the score separately
