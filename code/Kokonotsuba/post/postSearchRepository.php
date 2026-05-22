@@ -188,7 +188,11 @@ class postSearchRepository extends baseRepository {
 		if ($extraClause1 !== '') {
 			$postWhere[] = $extraClause1;
 		}
-		$postQuery = "SELECT p.post_uid, p.root FROM {$this->table} p WHERE " . implode(' AND ', $postWhere);
+		$postQuery = "SELECT p.post_uid, p.root FROM {$this->table} p";
+		if (isset($nonGeneralFields['file_name'])) {
+			$postQuery .= " INNER JOIN {$this->fileTable} f ON f.post_uid = p.post_uid";
+		}
+		$postQuery .= " WHERE " . implode(' AND ', $postWhere);
 
 		// Query 2: file_name FULLTEXT
 		$fileWhere = [$deletedExclusion, "MATCH(f.file_name) AGAINST (:general_file IN BOOLEAN MODE)"];
