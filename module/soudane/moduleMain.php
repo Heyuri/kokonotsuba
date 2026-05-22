@@ -205,50 +205,34 @@ class moduleMain extends abstractModuleMain {
 		// sanitize for integers using array mapping
 		$postUids = array_map('intval', $postUids);
 
-		// now fetch associated vote counts
-		$yeahCounts = $this->soudaneService->getYeahCounts($postUids); // array of yeah counts per post
-		$nopeCounts = $this->soudaneService->getNopeCounts($postUids); // array of nope counts per post
+		// fetch vote counts only for the buttons/score that are enabled
+		$yeahCounts = $this->enableYeah ? $this->soudaneService->getYeahCounts($postUids) : [];
+		$nopeCounts = $this->enableNope ? $this->soudaneService->getNopeCounts($postUids) : [];
 
-		// init nope and yeah html arrays
-		$yeahHtml = [];
-		$nopeHtml = [];
-
-		// calculate score per post by subtracting nope from yeah
-		$scores = [];
+		$data = [];
 		foreach ($postUids as $uid) {
 			$yeahCount = $yeahCounts[$uid] ?? 0;
 			$nopeCount = $nopeCounts[$uid] ?? 0;
 
-			$yeahHtml[$uid] = $this->renderVoteButton(
-				$uid,
-				'yeah',
-				$yeahCount,
-				'Agree with this post',
-				'soudane'
-			);
+			$entry = [];
 
-			$nopeHtml[$uid] = $this->renderVoteButton(
-				$uid,
-				'nope',
-				$nopeCount,
-				'Disagree with this post',
-				'soudaneNope'
-			);
+			if ($this->enableYeah) {
+				$entry['yeah'] = $this->renderVoteButton($uid, 'yeah', $yeahCount, 'Agree with this post', 'soudane');
+			}
 
-			$scores[$uid] = $this->renderScore(
-				$uid,
-				_T('score_pre_text', $yeahCount - $nopeCount)
-			);
-		}
+			if ($this->enableNope) {
+				$entry['nope'] = $this->renderVoteButton($uid, 'nope', $nopeCount, 'Disagree with this post', 'soudaneNope');
+			}
 
-		// form the json data
-		$data = [];
-		foreach ($postUids as $uid) {
-			$data[$uid] = [
-				'yeah' => $yeahHtml[$uid] ?? 0,
-				'nope' => $nopeHtml[$uid] ?? 0,
-				'score' => $scores[$uid]
-			];
+			if ($this->enableScore) {
+				// showScoreOnly: raw number; otherwise use the translated prefix
+				$scoreText = $this->showScoreOnly
+					? (string) ($yeahCount - $nopeCount)
+					: _T('score_pre_text', $yeahCount - $nopeCount);
+				$entry['score'] = $this->renderScore($uid, $scoreText);
+			}
+
+			$data[$uid] = $entry;
 		}
 
 		// now render the json page
@@ -289,7 +273,9 @@ class moduleMain extends abstractModuleMain {
 
 		// If the type is 'score', calculate and output the score, then exit
 		if ($type === 'score') {
-			renderJsonPage(['score' => _T('score_pre_text', $this->getScore($postUid))]);
+			$scoreValue = $this->getScore($postUid);
+			$scoreText = $this->showScoreOnly ? (string) $scoreValue : _T('score_pre_text', $scoreValue);
+			renderJsonPage(['score' => $scoreText]);
 			exit;
 		}
 
