@@ -137,14 +137,8 @@ class moduleMain extends abstractModuleMain {
 			);
 		}
 
-		// If SHOW_SCORE_ONLY is enabled
-		if ($this->enableScore && $this->showScoreOnly) {
-			$score = $this->getScore($postUid);
-			$voteHtml .= $this->renderScore($postUid, $score) . ' ';
-		}
-
-		// If SHOW_SCORE_ONLY is not enabled, display the score separately
-		if ($this->enableScore && !$this->showScoreOnly) {
+		// score display
+		if ($this->enableScore) {
 			$scoreCount = $post->getVotes()['total_score'] ?? 0;
 
 			$score = _T('score_pre_text', $scoreCount);
@@ -226,9 +220,7 @@ class moduleMain extends abstractModuleMain {
 
 			if ($this->enableScore) {
 				// showScoreOnly: raw number; otherwise use the translated prefix
-				$scoreText = $this->showScoreOnly
-					? (string) ($yeahCount - $nopeCount)
-					: _T('score_pre_text', $yeahCount - $nopeCount);
+				$scoreText = _T('score_pre_text', $yeahCount - $nopeCount);
 				$entry['score'] = $this->renderScore($uid, $scoreText);
 			}
 
@@ -274,7 +266,7 @@ class moduleMain extends abstractModuleMain {
 		// If the type is 'score', calculate and output the score, then exit
 		if ($type === 'score') {
 			$scoreValue = $this->getScore($postUid);
-			$scoreText = $this->showScoreOnly ? (string) $scoreValue : _T('score_pre_text', $scoreValue);
+			$scoreText = _T('score_pre_text', $scoreValue);
 			renderJsonPage(['score' => $scoreText]);
 			exit;
 		}
