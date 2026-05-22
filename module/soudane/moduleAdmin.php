@@ -24,7 +24,6 @@ class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
 
 	private soudaneService $soudaneService;
-	private string $moduleUrl;
 
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('AuthLevels.CAN_VIEW_VOTES', userRole::LEV_MODERATOR);
@@ -38,9 +37,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		return 'Koko BBS Release';
 	}
 
+	/**
+	 * Bootstraps the repository/service and registers the post widget hook.
+	 *
+	 * @return void
+	 */
 	public function initialize(): void {
-		$this->moduleUrl = $this->getModulePageURL([], false);
-
 		$databaseConnection = databaseConnection::getInstance();
 		$soudaneTable = getDatabaseSettings()['SOUDANE_TABLE'];
 		$soudaneRepository = new soudaneRepository($databaseConnection, $soudaneTable);
@@ -49,6 +51,13 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->registerPostWidgetHook('onRenderPostWidget');
 	}
 
+	/**
+	 * Adds a "View votes" widget link to each post in the admin controls.
+	 *
+	 * @param array $widgetArray Widget entries to append to.
+	 * @param Post  $post        The post being rendered.
+	 * @return void
+	 */
 	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
 		$viewVotesUrl = $this->getModulePageURL(['postUid' => $post->getUid()], false, true);
 
@@ -60,6 +69,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
+	/**
+	 * Dispatches POST (vote deletion) or GET (index) requests.
+	 *
+	 * @return void
+	 */
 	public function ModulePage(): void {
 		if ($this->moduleContext->request->isPost()) {
 			requirePostWithCsrf($this->moduleContext->request);
@@ -70,6 +84,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->drawIndex();
 	}
 
+	/**
+	 * Deletes the selected vote entries and redirects back to the vote list.
+	 * Redirects without deleting if no entries or post UID were supplied.
+	 *
+	 * @return void
+	 */
 	private function handleDeletions(): void {
 		$entryIDs = $_POST['entryIDs'] ?? null;
 		$postUid = (int) ($_POST['postUid'] ?? 0);
@@ -84,6 +104,11 @@ class moduleAdmin extends abstractModuleAdmin {
 		redirect($this->getModulePageURL(['postUid' => $postUid], false));
 	}
 
+	/**
+	 * Renders the paginated vote list for the requested post.
+	 *
+	 * @return void
+	 */
 	private function drawIndex(): void {
 		$postUid = (int) $this->moduleContext->request->getParameter('postUid', 'GET', 0);
 
@@ -105,12 +130,21 @@ class moduleAdmin extends abstractModuleAdmin {
 		$entries = $this->soudaneService->getVotesPaginated($postUid, $entriesPerPage, $page);
 		$totalEntries = $this->soudaneService->getTotalVotesForPost($postUid);
 
+		// Show full IP only to staff with the required role; otherwise show an 8-char MD5 hash
+		$canViewIp = $this->moduleContext->staffAccountFromSession->getRoleLevel()->isAtLeast(
+			$this->getConfig('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_MODERATOR)
+		);
+
 		$templateRows = [];
 		foreach ($entries as $entry) {
+			$ipAddress = $canViewIp
+				? $entry['ip_address']
+				: substr(md5($entry['ip_address']), 0, 8);
+
 			$templateRows[] = [
 				'{$ID}' => sanitizeStr($entry['id']),
 				'{$POST_UID}' => sanitizeStr($entry['post_uid']),
-				'{$IP_ADDRESS}' => sanitizeStr($entry['ip_address']),
+				'{$IP_ADDRESS}' => sanitizeStr($ipAddress),
 				'{$VOTE_TYPE}' => $entry['yeah'] ? 'Yeah' : 'Nope',
 				'{$DATE_ADDED}' => $this->moduleContext->postDateFormatter->formatFromDateString($entry['date_added']),
 			];
