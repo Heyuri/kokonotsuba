@@ -25,8 +25,9 @@ function bindReplyValuesToTemplate(IBoard $board,
 	string $warnBeKill, 
 	string $comment, 
 	string $postFormExtra): array {
+		$tagsEnabled = $config['ENABLE_TAGS'] ?? false;
 		$effectiveTag = $tag !== '' ? $tag : ($config['DEFAULT_TAG'] ?? '');
-		$tagInConfig = isset($config['TAGS'][$effectiveTag]);
+		$tagInConfig = $tagsEnabled && isset($config['TAGS'][$effectiveTag]);
 		
 		return [
 		'{$BOARD_URL}' => $boardUrl,
@@ -41,8 +42,8 @@ function bindReplyValuesToTemplate(IBoard $board,
 		'{$NAME}' => $name, 
 		'{$NOW}' => $now, 
 		'{$CATEGORY}' => $category,
-		'{$TAG}' => sanitizeStr($tagInConfig ? $effectiveTag : '[?]'),
-		'{$TAG_TITLE}' => sanitizeStr($tagInConfig ? $config['TAGS'][$effectiveTag] : '???'),
+		'{$TAG}' => $tagsEnabled ? sanitizeStr($tagInConfig ? $effectiveTag : '[?]') : '',
+		'{$TAG_TITLE}' => $tagsEnabled ? sanitizeStr($tagInConfig ? $config['TAGS'][$effectiveTag] : '???') : '',
 		'{$QUOTEBTN}' => $quoteButton, 
 		'{$POST_ATTACHMENTS}' => $attachmentHtml,
 		'{$WARN_BEKILL}' => $warnBeKill, 
@@ -82,8 +83,9 @@ function bindOPValuesToTemplate(IBoard $board,
 	string $warnHidePost, 
 	string $comment, 
 	string $postFormExtra): array {
+		$tagsEnabled = $config['ENABLE_TAGS'] ?? false;
 		$effectiveTag = $tag !== '' ? $tag : ($config['DEFAULT_TAG'] ?? '');
-		$tagInConfig = isset($config['TAGS'][$effectiveTag]);	
+		$tagInConfig = $tagsEnabled && isset($config['TAGS'][$effectiveTag]);	
 		
 		return [
 		'{$BOARD_URL}' => $boardUrl,
@@ -96,8 +98,8 @@ function bindOPValuesToTemplate(IBoard $board,
 		'{$NAME}' => $name, 
 		'{$NOW}' => $now, 
 		'{$CATEGORY}' => $category,
-		'{$TAG}' => sanitizeStr($tagInConfig ? $effectiveTag : '[?]'),
-		'{$TAG_TITLE}' => sanitizeStr($tagInConfig ? $config['TAGS'][$effectiveTag] : '???'),
+		'{$TAG}' => $tagsEnabled ? sanitizeStr($tagInConfig ? $effectiveTag : '[?]') : '',
+		'{$TAG_TITLE}' => $tagsEnabled ? sanitizeStr($tagInConfig ? $config['TAGS'][$effectiveTag] : '???') : '',
 		'{$QUOTEBTN}' => $quoteButton, 
 		'{$POST_ATTACHMENTS}' => $attachmentHtml,
 		'{$REPLYBTN}' => $replyButton,
