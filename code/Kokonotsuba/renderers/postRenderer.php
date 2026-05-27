@@ -87,7 +87,7 @@ class postRenderer {
 		$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
 
 		// Prepare post content (quote links, category, attachments)
-		$contentData = $this->preparePostContent($data, $threadResno, $repliesPerPage, $replyCount, $crossLink, $adminMode);
+		$contentData = $this->preparePostContent($data, $threadResno, $repliesPerPage, $replyCount, $crossLink, $adminMode, $isThreadOp);
 
 		// Generate warning messages
 		$warnings = $this->prepareWarnings($killSensor, $isThreadOp, $post, $thread);
@@ -125,15 +125,25 @@ class postRenderer {
 		}
 	}
 
-	private function preparePostContent($data, int $threadResno, int $repliesPerPage, int $replyCount, string $crossLink, bool $adminMode): array {
+	private function preparePostContent($data, int $threadResno, int $repliesPerPage, int $replyCount, string $crossLink, bool $adminMode, bool $isThreadOp = false): array {
 		// Apply quote and quote link processing
 		$this->applyCommentQuoteLinks($data, $threadResno, $repliesPerPage, $replyCount);
 
 		// Process category links
 		$categoryHTML = $this->postElementGenerator->processCategoryLinks($data->getCategory(), $crossLink);
 
-		// Get tag (only pass it through if ENABLE_TAGS is on)
-		$tag = !empty($this->config['ENABLE_TAGS']) ? $data->getTag() : '';
+		// Resolve tag display value and title
+		if (!empty($this->config['ENABLE_TAGS'])) {
+			$rawTag = $data->getTag();
+			// Apply default tag fallback for OP posts only
+			$effectiveTag = $rawTag !== '' ? $rawTag : ($isThreadOp ? ($this->config['DEFAULT_TAG'] ?? '') : '');
+			$tagInConfig = $effectiveTag !== '' && isset($this->config['TAGS'][$effectiveTag]);
+			$tag = sanitizeStr($tagInConfig ? $effectiveTag : ($effectiveTag !== '' ? '[?]' : ''));
+			$tagTitle = sanitizeStr($tagInConfig ? $this->config['TAGS'][$effectiveTag] : ($effectiveTag !== '' ? '???' : ''));
+		} else {
+			$tag = '';
+			$tagTitle = '';
+		}
 
 		// this post is deleted
 		$isDeleted = $data->getOpenFlag() && !$data->isFileOnlyDeleted() && $adminMode;
@@ -149,6 +159,7 @@ class postRenderer {
 			'postPositionEnabled' => $this->config['RENDER_REPLY_NUMBER'],
 			'categoryHTML' => $categoryHTML,
 			'tag' => $tag,
+			'tagTitle' => $tagTitle,
 			'isDeleted' => $isDeleted,
 			'attachmentsHtml' => $attachmentsHtml,
 		];
@@ -181,6 +192,7 @@ class postRenderer {
 				$metadata['nameHtml'], 
 				$contentData['categoryHTML'],
 				$contentData['tag'],
+				$contentData['tagTitle'],
 				$metadata['quoteButton'], 
 				$contentData['attachmentsHtml'], 
 				$warnings['warnBeKill'], 
@@ -195,6 +207,7 @@ class postRenderer {
 				$metadata['nameHtml'], 
 				$contentData['categoryHTML'],
 				$contentData['tag'],
+				$contentData['tagTitle'],
 				$metadata['quoteButton'], 
 				$contentData['attachmentsHtml'],
 				$metadata['firstAttachmentUrl'],
