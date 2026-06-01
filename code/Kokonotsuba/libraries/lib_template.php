@@ -20,14 +20,13 @@ function bindReplyValuesToTemplate(IBoard $board,
 	string $now, 
 	string $category, 
 	string $tag,
+	string $tagTitle,
 	string $quoteButton, 
 	?string $attachmentHtml, 
 	string $warnBeKill, 
 	string $comment, 
 	string $postFormExtra): array {
-		$effectiveTag = $tag !== '' ? $tag : ($config['DEFAULT_TAG'] ?? '');
-		$tagInConfig = isset($config['TAGS'][$effectiveTag]);
-		
+
 		return [
 		'{$BOARD_URL}' => $boardUrl,
 		'{$BOARD_UID}' => $board->getBoardUID(),
@@ -41,8 +40,8 @@ function bindReplyValuesToTemplate(IBoard $board,
 		'{$NAME}' => $name, 
 		'{$NOW}' => $now, 
 		'{$CATEGORY}' => $category,
-		'{$TAG}' => sanitizeStr($tagInConfig ? $effectiveTag : '[?]'),
-		'{$TAG_TITLE}' => sanitizeStr($tagInConfig ? $config['TAGS'][$effectiveTag] : '???'),
+		'{$TAG}' => $tag,
+		'{$TAG_TITLE}' => $tagTitle,
 		'{$QUOTEBTN}' => $quoteButton, 
 		'{$POST_ATTACHMENTS}' => $attachmentHtml,
 		'{$WARN_BEKILL}' => $warnBeKill, 
@@ -65,6 +64,7 @@ function bindOPValuesToTemplate(IBoard $board,
 	string $now, 
 	string $category, 
 	string $tag,
+	string $tagTitle,
 	string $quoteButton, 
 	?string $attachmentHtml,
 	?string $attachmentUrl,
@@ -82,9 +82,6 @@ function bindOPValuesToTemplate(IBoard $board,
 	string $warnHidePost, 
 	string $comment, 
 	string $postFormExtra): array {
-		$effectiveTag = $tag !== '' ? $tag : ($config['DEFAULT_TAG'] ?? '');
-		$tagInConfig = isset($config['TAGS'][$effectiveTag]);	
-		
 		return [
 		'{$BOARD_URL}' => $boardUrl,
 		'{$BOARD_UID}' => $board->getBoardUID(),
@@ -96,8 +93,8 @@ function bindOPValuesToTemplate(IBoard $board,
 		'{$NAME}' => $name, 
 		'{$NOW}' => $now, 
 		'{$CATEGORY}' => $category,
-		'{$TAG}' => sanitizeStr($tagInConfig ? $effectiveTag : '[?]'),
-		'{$TAG_TITLE}' => sanitizeStr($tagInConfig ? $config['TAGS'][$effectiveTag] : '???'),
+		'{$TAG}' => $tag,
+		'{$TAG_TITLE}' => $tagTitle,
 		'{$QUOTEBTN}' => $quoteButton, 
 		'{$POST_ATTACHMENTS}' => $attachmentHtml,
 		'{$REPLYBTN}' => $replyButton,
