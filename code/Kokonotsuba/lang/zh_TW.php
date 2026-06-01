@@ -46,6 +46,7 @@ $language['regist_uploaded']			= '附加圖檔 %1$s 上傳完畢<br>';
 $language['regist_sakuradetected']		= '偵測到您有輸入櫻花日文假名';
 $language['regist_withoutname']			= '您沒有填寫名稱';
 $language['regist_withoutcomment']		= '在沒有附加圖檔的情況下，請寫入內文';
+$language['regist_withouttag']			= '請為您的串選擇一個標籤。';
 $language['regist_nametoolong']			= '名稱過長';
 $language['regist_emailtoolong']		= 'E-mail過長';
 $language['regist_topictoolong']		= '標題過長';

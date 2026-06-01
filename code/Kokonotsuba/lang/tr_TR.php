@@ -56,6 +56,7 @@ $language['regist_uploaded']			= '%1$s Resmi Yüklendi.<br>';
 $language['regist_sakuradetected']		= 'Big5 sakura Japonca karakterleri tespit edildi.';
 $language['regist_withoutname']			= 'Lütfen isminizi girin.';
 $language['regist_withoutcomment']		= 'Eğer bir resim yüklemiyorsanız lütfen yanıt alanını doldurun.';
+$language['regist_withouttag']			= 'Lütfen konunuz için bir etiket seçin.';
 $language['regist_withoutimage']		= 'Lütfen bir resim seçin.';
 $language['regist_nametoolong']			= 'İsim çok uzun.';
 $language['regist_emailtoolong']		= 'E-mail çok uzun.';

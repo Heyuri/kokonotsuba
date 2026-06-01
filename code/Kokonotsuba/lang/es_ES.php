@@ -46,6 +46,7 @@ $language['regist_uploaded']			= 'Imagen %1$s cargada.<br>';
 $language['regist_sakuradetected']		= 'Big5 sakura caracteres japoneses detectados.';
 $language['regist_withoutname']			= 'Por favor escribe un nombre.';
 $language['regist_withoutcomment']		= 'Por favor escribe una respuesta si no vas a enviar una imagen.';
+$language['regist_withouttag']			= 'Por favor selecciona una etiqueta para tu hilo.';
 $language['regist_nametoolong']			= 'Nombre muy largo.';
 $language['regist_emailtoolong']		= 'Correo electrónico muy largo.';
 $language['regist_topictoolong']		= 'Título muy largo.';
