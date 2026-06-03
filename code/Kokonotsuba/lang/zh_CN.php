@@ -46,6 +46,7 @@ $language['regist_uploaded']			= '图片 %1$s 已上传完毕。<br>';
 $language['regist_sakuradetected']		= '系统侦测到您输入了樱花日文假名';
 $language['regist_withoutname']			= '您没有填写昵称';
 $language['regist_withoutcomment']		= '倘若没有上传图片，请您输入文章内容。';
+$language['regist_withouttag']			= '请为您的串选择一个标签。';
 $language['regist_nametoolong']			= '您的昵称过长';
 $language['regist_emailtoolong']		= '您的E-mail地址过长';
 $language['regist_topictoolong']		= '您的文章标题过长';

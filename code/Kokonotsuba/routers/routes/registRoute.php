@@ -531,6 +531,11 @@ class registRoute {
 		} else {
 			$postData['tag'] = '';
 		}
+
+		// Reject new threads without a tag when FORCE_TAGS is enabled
+		if (!$postData['isReply'] && ($this->config['FORCE_TAGS'] ?? false) && ($this->config['ENABLE_TAGS'] ?? false) && $postData['tag'] === '') {
+			throw new BoardException(_T('regist_withouttag'));
+		}
 	
 		if ($postData['up_incomplete']) {
 			$postData['comment'] .= '<p class="incompleteFile"><span class="warning">' . _T('notice_incompletefile') . '</span></p>';

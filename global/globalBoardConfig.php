@@ -61,6 +61,9 @@ $config['FORTUNES'] = array( // Used for fortune function, selected at random.
 // Show post tags (requires TAGS defined)
 $config['ENABLE_TAGS'] = false; 
 
+// whether to force tags for new threads
+$config['FORCE_TAGS'] = false;
+
 // Post tags: keys are abbreviations stored in the database, values are the full display names shown in forms.
 // Example: $config['TAGS'] = ['G' => 'Games', 'A' => 'Anime', 'T' => 'Technology'];
 $config['TAGS'] = [
@@ -70,10 +73,10 @@ $config['TAGS'] = [
     'L' => 'Loop',
     'E' => 'Ero',
     'H' => 'Heyuri',
-    'O' => 'Other'];
+    '?' => 'Other'];
 
 // Default tag for new threads, should be one of the keys in $config['TAGS'] or empty string for no default tag
-$config['DEFAULT_TAG'] = 'O';
+$config['DEFAULT_TAG'] = '?';
 
 // Allowed filetypes and mimetypes
 // The key is the extention and the value is the associated mime-type
