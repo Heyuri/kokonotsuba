@@ -1,5 +1,5 @@
 	<div class="editFormContainer">
-		<h3>Edit note for post No.<span class="noteFormPostNumber" id="post_number">{$POST_NUMBER}</span></h3>
+		<h3>Edit post No.<span class="noteFormPostNumber" id="post_number">{$POST_NUMBER}</span></h3>
 		<div class="editForm">
 			<form method="POST" action="{$MODULE_URL}">
 				{$CSRF_TOKEN}
