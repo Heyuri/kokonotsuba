@@ -870,6 +870,24 @@ class deletedPostsRepository extends baseRepository {
 	}
 
 	/**
+	 * Return whether a post has ever been restored by staff.
+	 *
+	 * @param int $postUid Post UID.
+	 * @return bool True if the post has been restored at least once.
+	 */
+	public function hasBeenRestored(int $postUid): bool {
+		$query = "SELECT 1 FROM {$this->table}
+			WHERE post_uid = :post_uid
+			AND open_flag = 0
+			AND by_proxy = 0
+			LIMIT 1";
+
+		$params = [':post_uid' => $postUid];
+
+		return (bool)$this->queryColumn($query, $params);
+	}
+
+	/**
 	 * Delete a deletion record by its primary key.
 	 *
 	 * @param int $id Deletion record ID to remove.

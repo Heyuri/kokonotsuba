@@ -73,6 +73,7 @@ $language['regist_threadlocked']		= 'Ce fil a été clos par l\'administrateur!'
 $language['regist_redirect']			= '%1$s Redirection en cours... <p>Si votre navigateur ne vous redirige pas, cliquez: <a href="%2$s">Retourner</a></p>';
 $language['del_notchecked']				= 'Rien n\'a été sélectionné pour être effacé. Retournez et sélectionnez quelque chose s\'il vous plaît.';
 $language['del_wrongpwornotfound']		= 'Commentaire inexistant ou mot de passe incorrect.';
+$language['del_restored_locked']		= 'Ce commentaire ne peut plus être supprimé.';
 $language['admin_wrongpassword']		= 'Mot de passe incorrect';
 $language['return']						= 'Retourner';
 $language['admin_remake']				= 'Refaire';
