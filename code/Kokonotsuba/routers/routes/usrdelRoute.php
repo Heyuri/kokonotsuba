@@ -16,7 +16,6 @@ use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
-use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\request\redirect;
 
 class usrdelRoute {
@@ -124,6 +123,18 @@ class usrdelRoute {
 		return $postUidsForDeletion;
 	}
 
+	private function validatePostRestoreLimit(Post $post): void {
+		// staff are not subject to this restriction
+		if ($this->postPolicy->canStaffDelete()) {
+			return;
+		}
+
+		// if the post has been restored by staff at least once, non-staff cannot delete it again
+		if ($this->deletedPostsService->hasBeenRestored((int)$post->getUid())) {
+			throw new BoardException(_T('del_restored_locked'));
+		}
+	}
+
 	private function validatePostDeletionTimeLimit(Post $post): void {
 		// deletion time limit in hours
 		$deletionTimeLimit = intval($this->config['POST_DELETION_TIME_LIMIT'] ?? 168); // default to 168 hours (7 days) if not set
@@ -156,6 +167,9 @@ class usrdelRoute {
 
 			// check if the post is too old to delete
 			$this->validatePostDeletionTimeLimit($post);
+
+			// check if the post has been restored too many times to be user-deleted
+			$this->validatePostRestoreLimit($post);
 
 			// Determine whether the user can delete the post
 			$canUserDelete = $this->postPolicy->canDeletePost(

@@ -86,6 +86,7 @@ $language['regist_thread_too_old']		= 'Bu thread yeni yanıtlar alamayacak kadar
 $language['regist_redirect']			= '%1$s Yönlendiriliyor... <p>Eğer tarayıcınız otomatik olarak yönlendirmiyorsa tıklayın: <a href="%2$s">Geri dön</a></p>';
 $language['del_notchecked']				= 'Silinmek üzere bir şey seçilmedi. Lütfen geri dönüp seçin.';
 $language['del_wrongpwornotfound']		= 'Öyle bir post yok veya şifre hatalı.';
+$language['del_restored_locked']		= 'Bu post artık silinemez.';
 $language['admin_wrongpassword']		= 'Şifre hatalı';
 $language['return']						= 'Geri dön';
 $language['admin_remake']				= 'Yeniden kur';

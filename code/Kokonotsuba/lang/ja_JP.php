@@ -73,6 +73,7 @@ $language['regist_threadlocked']		= 'もう書けませんです';
 $language['regist_redirect']			= '%1$s 画面を切り替えます。<p>しばらく待っても変わらない場合は、<a href="%2$s">こちら</a>をクリックしてください。</p>';
 $language['del_notchecked']				= '何でもない削除のために選択されなかった。';
 $language['del_wrongpwornotfound']		= '該当記事が見つからないかパスワードが間違っています';
+$language['del_restored_locked']		= 'この投稿はこれ以上削除できません。';
 $language['admin_wrongpassword']		= '"パスワードが違います';
 $language['return']						= '掲示板に戻る';
 $language['admin_remake']				= 'ログを更新する';

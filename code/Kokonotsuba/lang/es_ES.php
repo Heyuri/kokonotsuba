@@ -73,6 +73,7 @@ $language['regist_threadlocked']		= '¡Este hilo ha sido cerrado por el administ
 $language['regist_redirect']			= '%1$s Redireccionando... <p>Si tu navegador no logra redireccionarte, por favor cliquea: <a href="%2$s">Regresar</a></p>';
 $language['del_notchecked']				= 'No se ha seleccionado nada para borrar. Por favor regresa y selecciona algo.';
 $language['del_wrongpwornotfound']		= 'Comentario inexistente o contraseña incorrecta.';
+$language['del_restored_locked']		= 'Este comentario ya no puede ser eliminado.';
 $language['admin_wrongpassword']		= 'Contraseña incorrecta';
 $language['return']						= 'Regresar';
 $language['admin_remake']				= 'Rehacer';

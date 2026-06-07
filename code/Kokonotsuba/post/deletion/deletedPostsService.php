@@ -189,6 +189,16 @@ class deletedPostsService {
 	}
 
 	/**
+	 * Return whether the given post has ever been restored by staff.
+	 *
+	 * @param int $postUid Post UID.
+	 * @return bool True if the post has been restored at least once.
+	 */
+	public function hasBeenRestored(int $postUid): bool {
+		return $this->deletedPostsRepository->hasBeenRestored($postUid);
+	}
+
+	/**
 	 * Permanently purge a deleted post (or entire thread if OP) and its files.
 	 *
 	 * @param int  $deletedPostId Deletion record ID.
