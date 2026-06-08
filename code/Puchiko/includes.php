@@ -2,6 +2,7 @@
 
 // require all of puchiko's files
 require __DIR__ . '/array.php';
+require __DIR__ . '/background.php';
 require __DIR__ . '/file.php';
 require __DIR__ . '/html.php';
 require __DIR__ . '/json.php';

@@ -126,11 +126,6 @@ class deletedPostUIHooks {
 		// Always render the [DELETED] indicator container (hidden by default, like toggle indicators)
 		$showIndicator = $isDeleted && !$onlyFileDeleted;
 		$modFunc .= $this->renderIndicator('deleted', '[DELETED]', 'warning', !$showIndicator, 'This post was deleted!');
-
-		// Render the View button only for actually deleted posts
-		if ($isDeleted) {
-			$modFunc .= $this->deletedPostUtility->adminPostViewModuleButton($post, $noScript);
-		}
 	}
 
 	private function appendCssClassIf(string &$cssClasses, bool $condition, string $className): void {
@@ -192,9 +187,38 @@ class deletedPostUIHooks {
 		$this->appendCssClassIf($postCssClasses, $isPostDeleted, 'deletedPost');
 	}
 
+	/**
+	 * Serialise an array of widget entry arrays (as returned by buildWidgetEntry) to
+	 * anchor HTML, matching the format used by postWidget.php's buildWidgetMenuHtml.
+	 */
+	private function widgetEntriesToHtml(array $entries): string {
+		$html = '';
+		foreach ($entries as $w) {
+			$href    = htmlspecialchars($w['href'] ?? '');
+			$action  = htmlspecialchars($w['action'] ?? '');
+			$label   = htmlspecialchars($w['label'] ?? '');
+			$subMenu = htmlspecialchars($w['subMenu'] ?? '');
+			$params  = $w['params'] ?? [];
+			$paramAttrs = '';
+			foreach ($params as $k => $v) {
+				$paramAttrs .= ' data-param-' . htmlspecialchars($k) . '="' . htmlspecialchars((string)$v) . '"';
+			}
+			$html .= '<a href="' . $href . '" data-action="' . $action . '" data-label="' . $label . '" data-subMenu="' . $subMenu . '"' . $paramAttrs . '></a>';
+		}
+		return $html;
+	}
+
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
-		// generate the script header
 		($this->includeScript)('deletedPosts.js', $moduleHeader);
+
+		// Template for dynamic Deletion submenu injection after a post is deleted live.
+		// JS replaces the '__DPID__' placeholder with the actual deleted-post ID.
+		$templateEntries = [
+			($this->buildWidgetEntry)('#', 'viewDeletedPost', 'View entry', 'Deletion'),
+			($this->buildWidgetEntry)($this->modulePageUrl, 'restoreDeletedPost', 'Restore post', 'Deletion', ['deletedPostId' => '__DPID__', 'action' => 'restore']),
+			($this->buildWidgetEntry)($this->modulePageUrl, 'purgeDeletedPost',   'Purge post',   'Deletion', ['deletedPostId' => '__DPID__', 'action' => 'purge']),
+		];
+		$moduleHeader .= '<template id="dp-widget-tmpl">' . $this->widgetEntriesToHtml($templateEntries) . '</template>';
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
@@ -203,19 +227,34 @@ class deletedPostUIHooks {
 			return;
 		}
 
-		// generate view deleted url
-		$deletedEntryUrl = $this->deletedPostUtility->generateViewDeletedPostUrl($post->getDeletedPostId());
+		$deletedPostId = $post->getDeletedPostId();
 
-		// build the widget entry
-		$viewDeletedPostWidget = ($this->buildWidgetEntry)(
-			$deletedEntryUrl, 
-			'viewDeletedPost', 
-			'View deleted post', 
-			''
+		// View entry (GET navigation) under the "Deletion" submenu
+		$deletedEntryUrl = $this->deletedPostUtility->generateViewDeletedPostUrl($deletedPostId);
+		$widgetArray[] = ($this->buildWidgetEntry)(
+			$deletedEntryUrl,
+			'viewDeletedPost',
+			'View entry',
+			'Deletion'
 		);
 
-		// add the widget to the array
-		$widgetArray[] = $viewDeletedPostWidget;
+		// Restore action (POST with CSRF) under the "Deletion" submenu
+		$widgetArray[] = ($this->buildWidgetEntry)(
+			$this->modulePageUrl,
+			'restoreDeletedPost',
+			'Restore post',
+			'Deletion',
+			['deletedPostId' => $deletedPostId, 'action' => 'restore']
+		);
+
+		// Purge action (POST with CSRF) under the "Deletion" submenu
+		$widgetArray[] = ($this->buildWidgetEntry)(
+			$this->modulePageUrl,
+			'purgeDeletedPost',
+			'Purge post',
+			'Deletion',
+			['deletedPostId' => $deletedPostId, 'action' => 'purge']
+		);
 	}
 
 	private function onRenderAttachmentWidget(array &$widgetArray, array &$attachment): void {

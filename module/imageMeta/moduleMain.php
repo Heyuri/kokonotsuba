@@ -170,7 +170,10 @@ class moduleMain extends abstractModuleMain {
 					echo '</ul><div class="tableViewportWrapper"><table class="exif postlists"><tbody>';
 					foreach ($exif_data as $key => $section) {
 						foreach ($section as $name => $value) {
-							echo "<tr><th>$key.$name</th><td>$value</td></tr>";
+							$safeKey   = htmlspecialchars((string)$key,   ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+							$safeName  = htmlspecialchars((string)$name,  ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+							$safeValue = htmlspecialchars(is_scalar($value) ? (string)$value : print_r($value, true), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+							echo "<tr><th>{$safeKey}.{$safeName}</th><td>{$safeValue}</td></tr>";
 						}
 					}
 					echo '</tbody></table></div><p>';
@@ -184,7 +187,9 @@ class moduleMain extends abstractModuleMain {
 					echo '<li>Image contains EXIF data:</li>';
 					echo '</ul><div class="tableViewportWrapper"><table border="1"><tbody>';
 					foreach ($exif->exif_data as $key => $value) {
-						echo "<tr><th>$key</th><td>$value</td></tr>";
+						$safeKey   = htmlspecialchars((string)$key, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+						$safeValue = htmlspecialchars(is_scalar($value) ? (string)$value : print_r($value, true), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+						echo "<tr><th>{$safeKey}</th><td>{$safeValue}</td></tr>";
 					}
 					echo '</tbody></table></div><p>';
 				} else {

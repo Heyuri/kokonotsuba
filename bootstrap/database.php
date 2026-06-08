@@ -8,7 +8,7 @@ use Kokonotsuba\database\transactionManager;
 // ───────────────────────────────────────
 // Database Setup
 // ───────────────────────────────────────
-$dbSettings = getDatabaseSettings();
+$dbSettings ??= getDatabaseSettings();
 
 databaseConnection::createInstance($dbSettings);
 

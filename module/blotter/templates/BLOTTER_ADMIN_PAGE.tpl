@@ -1,4 +1,5 @@
 	<form action="{$MODULE_URL}" method='post'>
+		{$CSRF_TOKEN}
 		<h3>Add new blotter entry</h3>
 
 		<table class="formtable">
@@ -16,6 +17,7 @@
 	</form>
 
 	<form id="blotterdeletionform" action="{$MODULE_URL}" method="POST">
+		{$CSRF_TOKEN}
 		<h3>Blotter entries</h3>
 
 		<div class="tableViewportWrapper">

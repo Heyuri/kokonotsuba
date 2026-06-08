@@ -20,6 +20,8 @@ class postSearchRepository extends baseRepository {
 		private readonly string $soudaneTable,
 		private readonly string $noteTable,
 		private readonly string $accountTable,
+		private readonly string $countryFlagTable = '',
+		private readonly string $displayIpTable = '',
 	) {
 		parent::__construct($databaseConnection, $postTable);
 		self::validateTableNames($threadTable, $deletedPostsTable, $fileTable, $soudaneTable, $noteTable, $accountTable);
@@ -186,7 +188,11 @@ class postSearchRepository extends baseRepository {
 		if ($extraClause1 !== '') {
 			$postWhere[] = $extraClause1;
 		}
-		$postQuery = "SELECT p.post_uid, p.root FROM {$this->table} p WHERE " . implode(' AND ', $postWhere);
+		$postQuery = "SELECT p.post_uid, p.root FROM {$this->table} p";
+		if (isset($nonGeneralFields['file_name'])) {
+			$postQuery .= " INNER JOIN {$this->fileTable} f ON f.post_uid = p.post_uid";
+		}
+		$postQuery .= " WHERE " . implode(' AND ', $postWhere);
 
 		// Query 2: file_name FULLTEXT
 		$fileWhere = [$deletedExclusion, "MATCH(f.file_name) AGAINST (:general_file IN BOOLEAN MODE)"];
@@ -256,7 +262,7 @@ class postSearchRepository extends baseRepository {
 	 * Load full post data (with attachments, votes, notes) for the given UIDs.
 	 */
 	private function loadFullPostData(array $postUids): false|array {
-		$fullQuery = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, false);
+		$fullQuery = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, false, false, $this->countryFlagTable, $this->displayIpTable);
 		$inClause = pdoPlaceholdersForIn($postUids);
 		$fullQuery .= " WHERE p.post_uid IN {$inClause}";
 		$fullQuery .= " ORDER BY p.root DESC, p.post_uid DESC";

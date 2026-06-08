@@ -2,7 +2,7 @@
 /**
  * Thumbnail Generate API: Imagick Wrapper
  *
- * 提供程式便於以 repng2jpeg 生成預覽圖的物件
+ * Helper object that generates thumbnails using repng2jpeg.
  *
  * @package PMCLibrary
  * @version $Id$
@@ -77,7 +77,7 @@ class ThumbWrapper{
 			case IMAGETYPE_JPEG:
 			case IMAGETYPE_GIF:
 			case IMAGETYPE_PNG:
-				break; // 僅支援此三種格式
+				break; // Only these three formats are supported
 			case IMAGETYPE_BMP:
 				if($this->_support_bmp) break;
 				else return false;

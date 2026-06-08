@@ -3,6 +3,7 @@
 		{$CSRF_TOKEN}
 		<h3 class="centerText">Move thread</h3>
 
+		<input type="hidden" name="move-thread-action" value="move">
 		<input type="hidden" name="move-thread-uid" value="<!--&IF($THREAD_UID,'{$THREAD_UID}','')-->">
 		<input type="hidden" name="move-thread-board-uid" value="<!--&IF($CURRENT_BOARD_UID,'{$CURRENT_BOARD_UID}','')-->">
 
@@ -18,7 +19,7 @@
 				</tr>
 				<tr id="boardrow">
 					<td class="postblock"><label>Boards</label></td>
-					<td>{$BOARD_RADIO_HTML}</td>
+					<td><ul class="littlelist">{$BOARD_RADIO_HTML}</ul></td>
 				</tr>
 				<tr>
 					<td class="postblock"><label>Options</label></td>

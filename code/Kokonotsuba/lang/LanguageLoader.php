@@ -22,10 +22,10 @@ class LanguageLoader {
 	}
 
 	/**
-	 * 取得語言物件之單例。
+	 * Get the singleton instance of the language object.
 	 *
-	 * @return LanguageLoader 語言物件
-	 * @throws InvalidArgumentException 如果找不到設定語言
+	 * @return LanguageLoader Language object
+	 * @throws InvalidArgumentException If the configured language cannot be found
 	 */
 	public static function getInstance() {
 		static $inst = null;
@@ -47,9 +47,9 @@ class LanguageLoader {
 	}
 
 	/**
-	 * 設定備用語系。
+	 * Set the fallback locale.
 	 *
-	 * @param string $localeFallback 備用語系
+	 * @param string $localeFallback Fallback locale
 	 */
 	public function setFallback($localeFallback = 'en_US') {
 		if ($localeFallback != $this->getLocale()) {
@@ -57,35 +57,35 @@ class LanguageLoader {
 			$this->hasFallback = true;
 			$this->languageFallback = $language;
 		} else {
-			// 備用無效
+			// Fallback is invalid (same as current locale)
 			$this->hasFallback = false;
 		}
 	}
 
 	/**
-	 * 取得語系設定。
+	 * Get the current locale setting.
 	 *
 	 * @see PIXMICAT_LANGUAGE
-	 * @return string 語系代表字串
+	 * @return string Locale identifier string
 	 */
 	public function getLocale() {
 		return $this->locale;
 	}
 
 	/**
-	 * 取得翻譯資源字串陣列。
+	 * Get the array of translated resource strings.
 	 *
-	 * @return array 翻譯字串陣列
+	 * @return array Array of translation strings
 	 */
 	public function getLanguage() {
 		return $this->language;
 	}
 
 	/**
-	 * 自翻譯資源字串陣列取出對應文字。
+	 * Look up the matching text from the array of translation resource strings.
 	 *
-	 * @param  string $index 翻譯資源索引
-	 * @return string        對應文字
+	 * @param  string $index Translation resource index
+	 * @return string        Corresponding translated text
 	 */
 	private function getTranslationBody($index) {
 		$str = $index;
@@ -98,11 +98,11 @@ class LanguageLoader {
 	}
 
 	/**
-	 * 取得指定項目之翻譯，並進行變數字串的替代。
+	 * Get the translation for the specified item and perform variable substitution.
 	 *
-	 * @param string arg1 翻譯資源索引字
-	 * @param mixed  arg2 變數
-	 * @return string 翻譯後之字串
+	 * @param string arg1 Translation resource index string
+	 * @param mixed  arg2 Variables to substitute
+	 * @return string The translated string
 	 */
 	public function getTranslation(/*args[]*/) {
 		if (!func_num_args()) {
@@ -114,9 +114,9 @@ class LanguageLoader {
 	}
 
 	/**
-	 * 附加翻譯資源字串。
+	 * Append additional translation resource strings.
 	 *
-	 * @param  array  $language 翻譯資源字串陣列
+	 * @param  array  $language Array of translation resource strings
 	 */
 	public function attachLanguage(array $language) {
 		$this->language = $this->language + $language;

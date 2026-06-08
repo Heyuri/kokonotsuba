@@ -47,23 +47,24 @@ class moduleMain extends abstractModuleMain {
 		if (empty($this->emojis)) {
 			return '';
 		}
-		$baseUrl = sanitizeStr($this->staticUrl) . 'image/emoji/';
-		$templateEngine = $this->moduleContext->templateEngine;
+		$baseUrl = $this->staticUrl . 'image/emoji/';
 
-		$buttons = '';
-		$i = 0;
+		// Build picker data from the same emojis.php used for text replacement
+		$items = [];
 		foreach ($this->emojis as $char => $name) {
-			$i++;
-			$buttons .= $templateEngine->ParseBlock('EMOJI_BUTTON', [
-				'{$BASE_URL}' => $baseUrl,
-				'{$NAME}' => sanitizeStr($name),
-				'{$CHAR}' => sanitizeStr($char),
-				'{$TITLE}' => sanitizeStr(str_replace('-', ' ', $name)),
-				'{$ROW_END}' => ($i % 70 === 0) ? ' row-end' : '',
-			]);
+			$items[] = [
+				'src' => $name . '.gif',
+				'value' => $char,
+				'title' => str_replace('-', ' ', $name),
+			];
 		}
 
-		return $this->renderFormattingDetails('emojiContainer', 'Emoji', $buttons);
+		$content = '<div id="emojiButtons"></div>'
+			. '<script type="application/json" id="emojiData">'
+			. json_encode(['baseUrl' => $baseUrl, 'items' => $items], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+			. '</script>';
+
+		return $this->renderFormattingDetails('emojiContainer', 'Emoji', $content);
 	}
 
 	private function buildEmojiFilter(): array {

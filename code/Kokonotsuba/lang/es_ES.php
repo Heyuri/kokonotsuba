@@ -46,6 +46,7 @@ $language['regist_uploaded']			= 'Imagen %1$s cargada.<br>';
 $language['regist_sakuradetected']		= 'Big5 sakura caracteres japoneses detectados.';
 $language['regist_withoutname']			= 'Por favor escribe un nombre.';
 $language['regist_withoutcomment']		= 'Por favor escribe una respuesta si no vas a enviar una imagen.';
+$language['regist_withouttag']			= 'Por favor selecciona una etiqueta para tu hilo.';
 $language['regist_nametoolong']			= 'Nombre muy largo.';
 $language['regist_emailtoolong']		= 'Correo electrónico muy largo.';
 $language['regist_topictoolong']		= 'Título muy largo.';
@@ -72,6 +73,7 @@ $language['regist_threadlocked']		= '¡Este hilo ha sido cerrado por el administ
 $language['regist_redirect']			= '%1$s Redireccionando... <p>Si tu navegador no logra redireccionarte, por favor cliquea: <a href="%2$s">Regresar</a></p>';
 $language['del_notchecked']				= 'No se ha seleccionado nada para borrar. Por favor regresa y selecciona algo.';
 $language['del_wrongpwornotfound']		= 'Comentario inexistente o contraseña incorrecta.';
+$language['del_restored_locked']		= 'Este comentario ya no puede ser eliminado.';
 $language['admin_wrongpassword']		= 'Contraseña incorrecta';
 $language['return']						= 'Regresar';
 $language['admin_remake']				= 'Rehacer';

@@ -1,5 +1,20 @@
 <?php
 
+/**
+ * Variables injected from the calling bootstrap context (e.g. koko.php).
+ *
+ * @var \Kokonotsuba\request\request                    $request
+ * @var \Kokonotsuba\cookie\cookieService               $cookieService
+ * @var \Kokonotsuba\account\staffAccountFromSession    $staffAccountFromSession
+ * @var int|null                                        $currentUserId
+ * @var \Kokonotsuba\policy\postPolicy                  $postPolicy
+ * @var \Kokonotsuba\policy\postRenderingPolicy         $postRenderingPolicy
+ * @var array                                           $globalConfig
+ * @var \Kokonotsuba\database\databaseConnection        $databaseConnection
+ * @var \Kokonotsuba\database\transactionManager        $transactionManager
+ * @var array                                           $dbSettings
+ */
+
 use Kokonotsuba\containers\appContainer;
 
 // ───────────────────────────────────────
@@ -19,3 +34,4 @@ $container->set('globalConfig', $globalConfig);
 // Register database services
 $container->set('databaseConnection', $databaseConnection);
 $container->set('transactionManager', $transactionManager);
+$container->set('dbSettings', $dbSettings);

@@ -349,6 +349,9 @@ class attachmentRenderer {
 			$imageURL = getAttachmentUrl($attachment, $isThumb);
 		}
 
+		// allow modules to override the final URL regardless of serving method
+		$this->moduleEngine->dispatch('FileUrl', [&$imageURL, $attachment, $isThumb]);
+
 		// return generated image url
 		return $imageURL;
 	}

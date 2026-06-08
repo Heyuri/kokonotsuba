@@ -122,12 +122,6 @@ class moduleMain extends abstractModuleMain {
 			$voteHtml .= ' ';
 		}
 
-		// If SHOW_SCORE_ONLY is enabled, show score in between the "-" and "+"
-		if ($this->enableScore && $this->showScoreOnly) {
-			$score = $this->getScore($postUid);
-			$voteHtml .= $this->renderScore($postUid, $score) . ' ';
-		}
-
 		// yeah vote
 		if ($this->enableYeah) {
 			// get yeah count for this post
@@ -143,8 +137,8 @@ class moduleMain extends abstractModuleMain {
 			);
 		}
 
-		// If SHOW_SCORE_ONLY is not enabled, display the score separately
-		if ($this->enableScore && !$this->showScoreOnly) {
+		// score display
+		if ($this->enableScore) {
 			$scoreCount = $post->getVotes()['total_score'] ?? 0;
 
 			$score = _T('score_pre_text', $scoreCount);
@@ -205,50 +199,32 @@ class moduleMain extends abstractModuleMain {
 		// sanitize for integers using array mapping
 		$postUids = array_map('intval', $postUids);
 
-		// now fetch associated vote counts
-		$yeahCounts = $this->soudaneService->getYeahCounts($postUids); // array of yeah counts per post
-		$nopeCounts = $this->soudaneService->getNopeCounts($postUids); // array of nope counts per post
+		// fetch vote counts only for the buttons/score that are enabled
+		$yeahCounts = $this->enableYeah ? $this->soudaneService->getYeahCounts($postUids) : [];
+		$nopeCounts = $this->enableNope ? $this->soudaneService->getNopeCounts($postUids) : [];
 
-		// init nope and yeah html arrays
-		$yeahHtml = [];
-		$nopeHtml = [];
-
-		// calculate score per post by subtracting nope from yeah
-		$scores = [];
+		$data = [];
 		foreach ($postUids as $uid) {
 			$yeahCount = $yeahCounts[$uid] ?? 0;
 			$nopeCount = $nopeCounts[$uid] ?? 0;
 
-			$yeahHtml[$uid] = $this->renderVoteButton(
-				$uid,
-				'yeah',
-				$yeahCount,
-				'Agree with this post',
-				'soudane'
-			);
+			$entry = [];
 
-			$nopeHtml[$uid] = $this->renderVoteButton(
-				$uid,
-				'nope',
-				$nopeCount,
-				'Disagree with this post',
-				'soudaneNope'
-			);
+			if ($this->enableYeah) {
+				$entry['yeah'] = $this->renderVoteButton($uid, 'yeah', $yeahCount, 'Agree with this post', 'soudane');
+			}
 
-			$scores[$uid] = $this->renderScore(
-				$uid,
-				_T('score_pre_text', $yeahCount - $nopeCount)
-			);
-		}
+			if ($this->enableNope) {
+				$entry['nope'] = $this->renderVoteButton($uid, 'nope', $nopeCount, 'Disagree with this post', 'soudaneNope');
+			}
 
-		// form the json data
-		$data = [];
-		foreach ($postUids as $uid) {
-			$data[$uid] = [
-				'yeah' => $yeahHtml[$uid] ?? 0,
-				'nope' => $nopeHtml[$uid] ?? 0,
-				'score' => $scores[$uid]
-			];
+			if ($this->enableScore) {
+				// showScoreOnly: raw number; otherwise use the translated prefix
+				$scoreText = _T('score_pre_text', $yeahCount - $nopeCount);
+				$entry['score'] = $this->renderScore($uid, $scoreText);
+			}
+
+			$data[$uid] = $entry;
 		}
 
 		// now render the json page
@@ -289,7 +265,9 @@ class moduleMain extends abstractModuleMain {
 
 		// If the type is 'score', calculate and output the score, then exit
 		if ($type === 'score') {
-			renderJsonPage(['score' => _T('score_pre_text', $this->getScore($postUid))]);
+			$scoreValue = $this->getScore($postUid);
+			$scoreText = _T('score_pre_text', $scoreValue);
+			renderJsonPage(['score' => $scoreText]);
 			exit;
 		}
 
@@ -298,13 +276,20 @@ class moduleMain extends abstractModuleMain {
 
 		$yeahIPs = !empty($log) ? array_column($log, 'ip_address') : [];
 
+		// An IP that was stored before anonymization appears as raw; after
+		// anonymization it appears as LEFT(SHA512, 16).  Check both forms so
+		// the toggle works correctly regardless of whether the vote has been
+		// anonymized in the meantime.
+		$ipStr  = (string) $ip;
+		$ipHash = substr(hash('sha512', $ipStr), 0, 16);
+
 		// Check if the current IP has already voted; if so, remove the vote (toggle off)
-		if (in_array($ip, $yeahIPs)) {
-			// remove from yeahIPs so the updated count is correct
-			$yeahIPs = array_values(array_diff($yeahIPs, [$ip]));
+		if (in_array($ipStr, $yeahIPs, true) || in_array($ipHash, $yeahIPs, true)) {
+			// remove whichever form is stored so the updated count is correct
+			$yeahIPs = array_values(array_filter($yeahIPs, fn($v) => $v !== $ipStr && $v !== $ipHash));
 
 			// Remove the vote using the service
-			$this->soudaneService->removeVote($postUid, $ip, $type);
+			$this->soudaneService->removeVote($postUid, $ipStr, $type);
 		} else {
 			// add to yeah IPs so we can render changes upon a new vote right away
 			$yeahIPs[] = $ip;

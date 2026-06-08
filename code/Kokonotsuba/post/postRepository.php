@@ -26,6 +26,8 @@ class postRepository extends baseRepository {
 		private readonly string $soudaneTable,
 		private readonly string $noteTable,
 		private readonly string $accountTable,
+		private readonly string $countryFlagTable = '',
+		private readonly string $displayIpTable = '',
 	) {
 		parent::__construct($databaseConnection, $postTable);
 		self::validateTableNames($threadTable, $deletedPostsTable, $fileTable, $soudaneTable, $noteTable, $accountTable);
@@ -84,22 +86,68 @@ class postRepository extends baseRepository {
 	public function getFilteredPosts(int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'post_uid'): false|array {
 		if(!$this->isValidOrderField($order)) return [];
 
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
-		$params = [];
-		
-		// add WHERE so the AND conditions can be appended without sissue
-		$query .= " WHERE 1";
+		// Retrieve just the post_uids for this page with a lightweight query.
+		// This avoids materialising the full soudane aggregate and all other JOINs across
+		// the entire posts table before LIMIT is applied.
+		$postUids = $this->getFilteredPostUids($amount, $offset, $filters, $includeDeleted, $order);
 
-		bindPostFilterParameters($params, $query, $filters, true); //apply filtration to query
+		if (empty($postUids)) {
+			return [];
+		}
 
-		$query .= " ORDER BY p.$order DESC";
-		$this->paginate($query, $params, $amount, $offset);
-		$posts = $this->queryAll($query, $params);
-	
-		// merge attachment rows
+		// Fetch the full join data for only those post_uids.
+		// pdoPlaceholdersForIn uses positional '?' placeholders; pass $postUids as the params array.
+		$inClause = pdoPlaceholdersForIn($postUids);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable);
+		$query .= " WHERE p.post_uid IN $inClause ORDER BY p.$order DESC";
+
+		$posts = $this->queryAll($query, $postUids);
 		$posts = mergeMultiplePostRows($posts);
 
 		return $posts ?? [];
+	}
+
+	/**
+	 * Return the post_uid values for a paginated, filtered list of posts.
+	 *
+	 * Uses a simple single-table query so the database can apply the boardUID index
+	 * and ORDER BY post_uid LIMIT efficiently, without materialising any of the
+	 * expensive JOINs (soudane aggregate, notes, files, etc.) from getBasePostQuery.
+	 *
+	 * @param int    $amount         Number of post_uids to return.
+	 * @param int    $offset         Pagination offset.
+	 * @param array  $filters        Filter criteria (same format as getFilteredPosts).
+	 * @param bool   $includeDeleted When false, soft-deleted posts are excluded.
+	 * @param string $order          Column to order by (already validated by caller).
+	 * @return array Flat array of post_uid integers.
+	 */
+	private function getFilteredPostUids(int $amount, int $offset, array $filters, bool $includeDeleted, string $order): array {
+		if ($includeDeleted) {
+			$query = "SELECT p.post_uid FROM {$this->table} p WHERE 1";
+		} else {
+			// Exclude posts whose latest deletion entry is a full-post deletion that is still open.
+			// This is equivalent to the LEFT JOIN + WHERE IS NULL logic in getBasePostQuery but
+			// expressed as NOT EXISTS so it works as a correlated lookup against an index.
+			$query = "
+				SELECT p.post_uid FROM {$this->table} p
+				WHERE NOT EXISTS (
+					SELECT 1 FROM {$this->deletedPostsTable} dpx
+					WHERE dpx.post_uid = p.post_uid
+					AND dpx.file_id IS NULL
+					AND dpx.open_flag = 1
+					AND dpx.id = (SELECT MAX(id) FROM {$this->deletedPostsTable} WHERE post_uid = p.post_uid)
+				)
+				AND 1
+			";
+		}
+
+		$params = [];
+		bindPostFilterParameters($params, $query, $filters);
+		$query .= " ORDER BY p.$order DESC";
+		$this->paginate($query, $params, $amount, $offset);
+
+		$rows = $this->queryAll($query, $params);
+		return array_column($rows, 'post_uid');
 	}
 
 	/**
@@ -146,7 +194,7 @@ class postRepository extends baseRepository {
 		}
 
 		$whereClause = implode(' OR ', $conditions);
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $viewDeleted);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $viewDeleted, false, $this->countryFlagTable, $this->displayIpTable);
 		$query .= " WHERE {$whereClause}";
 
 		$posts = $this->queryAll($query, $params);
@@ -165,7 +213,7 @@ class postRepository extends baseRepository {
 	 */
 	public function getPostByUid(int $post_uid, bool $viewDeleted = false): Post|false {
 		// get base post query
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $viewDeleted);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $viewDeleted, false, $this->countryFlagTable, $this->displayIpTable);
 		
 		// append WHERE clause to get it by the post uid
 		$query .= " WHERE p.post_uid = :post_uid";
@@ -388,7 +436,7 @@ class postRepository extends baseRepository {
 	 */
 	public function getPostsByUids(array $postUIDsList): array|false {
 		// get base query
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, false, false, $this->countryFlagTable, $this->displayIpTable);
 
 		// generate in clause
 		$inClause = pdoPlaceholdersForIn($postUIDsList);
@@ -444,7 +492,7 @@ class postRepository extends baseRepository {
 		$inClause = pdoPlaceholdersForIn($threadUids);
 
 		// base post query
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable);
 
 		// append where clause
 		$query .= " WHERE p.thread_uid IN $inClause";
@@ -477,7 +525,7 @@ class postRepository extends baseRepository {
 	 */
 	public function getOpeningPostFromThread(string $threadUid, bool $includeDeleted = false): bool|Post {
 		// get base post query
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable);
 
 		// append WHERE clause
 		$query .= " WHERE p.post_uid = (SELECT post_op_post_uid FROM {$this->threadTable} WHERE thread_uid = :thread_uid)";

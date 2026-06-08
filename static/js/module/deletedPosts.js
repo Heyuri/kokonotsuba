@@ -118,4 +118,133 @@
 		});
 	}
 
+	if (window.postWidget) {
+		if (typeof window.postWidget.registerActionHandler === 'function') {
+			window.postWidget.registerActionHandler('viewDeletedPost', function (ctx) {
+				if (ctx && ctx.url && ctx.url !== '#') window.location.assign(ctx.url);
+			});
+
+			window.postWidget.registerActionHandler('restoreDeletedPost', function (ctx) {
+				var post = ctx.post;
+				if (!post || !ctx.url) return;
+
+				// Optimistic UI: strip deleted styling immediately
+				var addedClasses = [];
+				var hiddenIndicators = [];
+
+				function applyRestore(el) {
+					if (!el) return;
+					el.classList.remove('deletedPost');
+					addedClasses.push(el);
+					el.querySelectorAll('.indicator-deleted, .indicator-fileDeleted').forEach(function (ind) {
+						ind.classList.add('indicatorHidden');
+						hiddenIndicators.push(ind);
+					});
+				}
+
+				if (post.classList.contains('op')) {
+					var thread = post.closest('.thread');
+					if (thread) {
+						applyRestore(thread);
+						thread.querySelectorAll('.post').forEach(applyRestore);
+					}
+				} else {
+					applyRestore(post);
+				}
+
+				sendModuleAction(ctx.url, {
+					revertUI: function () {
+						addedClasses.forEach(function (el) { el.classList.add('deletedPost'); });
+						hiddenIndicators.forEach(function (ind) { ind.classList.remove('indicatorHidden'); });
+					},
+					successMessage: 'Post restored.',
+					errorMessage: 'Failed to restore post.',
+					onSuccess: function () {
+						removeWidgetActions(post, ['viewDeletedPost', 'restoreDeletedPost', 'purgeDeletedPost']);
+
+						// Clear the deleted-post-id stored after live deletion
+						delete post.dataset.deletedPostId;
+
+						// Re-inject delete/mute entries from the adminDel template
+						var delTmpl = document.getElementById('del-restore-tmpl');
+						if (delTmpl) {
+							var refs = post.querySelector('.widgetRefs');
+							if (refs) {
+								var clone = delTmpl.content.cloneNode(true);
+								var postUid = post.dataset.postUid;
+								clone.querySelectorAll('a').forEach(function (a) {
+									if (a.getAttribute('data-param-post_uid') === '__POSTUID__') {
+										a.setAttribute('data-param-post_uid', postUid);
+									}
+								});
+								// Prepend so delete/mute appear first, matching server-side order
+								refs.insertBefore(clone, refs.firstChild);
+							}
+						}
+					}
+				}, ctx.params);
+			});
+
+			window.postWidget.registerActionHandler('purgeDeletedPost', function (ctx) {
+				var post = ctx.post;
+				if (!post || !ctx.url) return;
+
+				sendModuleAction(ctx.url, {
+					successMessage: 'Post purged.',
+					errorMessage: 'Failed to purge post.',
+					onSuccess: function () {
+						fadeAndRemovePost(post);
+					}
+				}, ctx.params);
+			});
+		}
+	}
+
+	// Augment the post widget menu: when a post has been deleted live (postDeletion.js sets
+	// dataset.deletedPostId), clone the server-rendered <template id="dp-widget-tmpl"> and
+	// return its entries — labels, URLs, and subMenu name all come from the server.
+	if (window.postWidget && typeof window.postWidget.registerMenuAugmenter === 'function') {
+		window.postWidget.registerMenuAugmenter(function (ctx) {
+			var post = ctx.post;
+			if (!post) return [];
+
+			// data-deleted-post-id is set by postDeletion.js after a live deletion
+			var deletedPostId = post.dataset.deletedPostId;
+			if (!deletedPostId) return [];
+
+			// Don't add if already present (rendered server-side or previously injected)
+			if (post.querySelector('.widgetRefs a[data-action="restoreDeletedPost"]')) return [];
+
+			var tmpl = document.getElementById('dp-widget-tmpl');
+			if (!tmpl) return [];
+
+			var items = [];
+			tmpl.content.querySelectorAll('a[data-action]').forEach(function (a) {
+				var action  = a.getAttribute('data-action')  || '';
+				var label   = a.getAttribute('data-label')   || '';
+				var subMenu = a.getAttribute('data-submenu') || '';
+				var href    = a.getAttribute('href')         || '#';
+
+				if (action === 'viewDeletedPost') {
+					var viewLink = post.dataset.deletedLink;
+					if (!viewLink) return; // no link yet — skip
+					href = viewLink;
+				}
+
+				// Collect params and replace the placeholder with the real deleted-post ID
+				var params = {};
+				for (var i = 0; i < a.attributes.length; i++) {
+					var attr = a.attributes[i];
+					if (attr.name.indexOf('data-param-') === 0) {
+						var key = attr.name.slice(11);
+						params[key] = attr.value === '__DPID__' ? deletedPostId : attr.value;
+					}
+				}
+
+				items.push({ href: href, action: action, label: label, subMenu: subMenu, params: params });
+			});
+			return items;
+		});
+	}
+
 })();

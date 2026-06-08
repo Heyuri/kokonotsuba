@@ -22,15 +22,14 @@ use Kokonotsuba\thread\threadService;
 use Kokonotsuba\thread\ThreadData;
 
 use function Kokonotsuba\libraries\html\drawPager;
-use function Kokonotsuba\libraries\html\generateHeadHtml;
 use function Kokonotsuba\libraries\html\getThreadTitle;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getOrCreateCsrfToken;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
+use function Kokonotsuba\libraries\html\getBoardStylesheetsFromConfig;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\strings\sanitizeStr;
 use function Kokonotsuba\libraries\getCsrfMetaTag;
-use function Kokonotsuba\libraries\html\getBoardStylesheetsFromConfig;
 
 class overboard {
 	private bool $adminMode, $canViewDeleted;

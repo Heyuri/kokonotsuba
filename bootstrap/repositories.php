@@ -1,6 +1,14 @@
 <?php
 
-
+/**
+ * Variables injected from the calling bootstrap context (e.g. koko.php).
+ *
+ * @var \Kokonotsuba\database\databaseConnection $databaseConnection
+ * @var array                                    $dbSettings
+ * @var \Kokonotsuba\database\transactionManager $transactionManager
+ * @var \Kokonotsuba\request\request             $request
+ * @var \Kokonotsuba\containers\appContainer     $container
+ */
 
 // ───────────────────────────────────────
 // Account and action log Bootstrap
@@ -40,8 +48,8 @@ $accountService = new accountService($accountRepository, $actionLoggerService, $
 // ───────────────────────────────────────
 $fileRepository = new fileRepository($databaseConnection, $dbSettings['FILE_TABLE'], $dbSettings['POST_TABLE'], $dbSettings['DELETED_POSTS_TABLE']);
 $fileService = new fileService($fileRepository);
-$threadRepository = new threadRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['THREAD_THEMES_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['ACCOUNT_TABLE'], $dbSettings['SOUDANE_TABLE'], $dbSettings['NOTE_TABLE']);
-$postRepository = new postRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['SOUDANE_TABLE'], $dbSettings['NOTE_TABLE'], $dbSettings['ACCOUNT_TABLE']);
+$threadRepository = new threadRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['THREAD_THEMES_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['ACCOUNT_TABLE'], $dbSettings['SOUDANE_TABLE'], $dbSettings['NOTE_TABLE'], $dbSettings['COUNTRY_FLAG_TABLE'], $dbSettings['DISPLAY_IP_TABLE']);
+$postRepository = new postRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['SOUDANE_TABLE'], $dbSettings['NOTE_TABLE'], $dbSettings['ACCOUNT_TABLE'], $dbSettings['COUNTRY_FLAG_TABLE'], $dbSettings['DISPLAY_IP_TABLE']);
 $deletedPostsRepository = new deletedPostsRepository($databaseConnection, $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['POST_TABLE'], $dbSettings['ACCOUNT_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['SOUDANE_TABLE'], $dbSettings['NOTE_TABLE']);
 $deletedPostsService = new deletedPostsService($transactionManager, $deletedPostsRepository, $fileService, $actionLoggerService, $postRepository, $threadRepository);
 $postDeletionService = new postDeletionService($postRepository, $transactionManager, $threadRepository, $deletedPostsService, $request);
@@ -49,7 +57,7 @@ $postService = new postService($postRepository, $transactionManager, $threadRepo
 $threadService = new threadService($threadRepository, $postRepository, $postService, $transactionManager, $deletedPostsService, $fileService);
 $quoteLinkRepository = new quoteLinkRepository($databaseConnection, $dbSettings['QUOTE_LINK_TABLE'], $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE']);
 $quoteLinkService = new quoteLinkService($quoteLinkRepository, $postRepository);
-$postSearchRepository = new postSearchRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['SOUDANE_TABLE'], $dbSettings['NOTE_TABLE'], $dbSettings['ACCOUNT_TABLE']);
+$postSearchRepository = new postSearchRepository($databaseConnection, $dbSettings['POST_TABLE'], $dbSettings['THREAD_TABLE'], $dbSettings['DELETED_POSTS_TABLE'], $dbSettings['FILE_TABLE'], $dbSettings['SOUDANE_TABLE'], $dbSettings['NOTE_TABLE'], $dbSettings['ACCOUNT_TABLE'], $dbSettings['COUNTRY_FLAG_TABLE'], $dbSettings['DISPLAY_IP_TABLE']);
 $postSearchService = new postSearchService($postSearchRepository);
 $postRedirectRepository = new postRedirectRepository($databaseConnection, $dbSettings['THREAD_REDIRECT_TABLE'], $dbSettings['THREAD_TABLE']);
 $postRedirectService = new postRedirectService($postRedirectRepository, $threadService);

@@ -8,7 +8,7 @@ use function Puchiko\strings\sanitizeStr;
 /**
  * Pixmicat! Common Library
  *
- * 存放常用函式供主程式引入
+ * Holds common utility functions for the main program to include.
  *
  * @package PMCLibrary
  * @version $Id$
@@ -45,14 +45,14 @@ if (!function_exists('inet_pton')) {
 	}
 }
 
-/* 反櫻花字 */
+/* Anti-Sakura (Private Use Area) character detection */
 function anti_sakura($str){
 	return preg_match('/[\x{E000}-\x{F848}]/u', $str);
 }
 
 
-/* 適用UTF-8環境的擬substr，取出特定數目字元
-原出處：Sea Otter @ 2005.05.10
+/* substr-like helper for UTF-8 environments that extracts a given number of characters.
+Original source: Sea Otter @ 2005.05.10
 http://www.meyu.net/star/viewthread.php?tid=267&fpage=10 */
 function str_cut($str, $maxlen=20){
 	$i = $l = 0; $len = strlen($str); $f = true; $return_str = $str;
@@ -76,11 +76,11 @@ function str_cut($str, $maxlen=20){
 	return $return_str;
 }
 
-/* 檢查瀏覽器和伺服器是否支援gzip壓縮方式 */
+/* Check whether the browser and server both support gzip compression */
 function CheckSupportGZip(request $request){
 	$HTTP_ACCEPT_ENCODING = $request->getServer('HTTP_ACCEPT_ENCODING', '');
-	if(headers_sent() || connection_aborted()) return 0; // 已送出資料，取消
-	if(!(function_exists('gzencode') && function_exists('ob_start') && function_exists('ob_get_clean'))) return 0; // 伺服器相關的套件或函式無法使用，取消
+	if(headers_sent() || connection_aborted()) return 0; // Data already sent; cancel
+	if(!(function_exists('gzencode') && function_exists('ob_start') && function_exists('ob_get_clean'))) return 0; // Required server-side packages or functions are unavailable; cancel
 	if(strpos($HTTP_ACCEPT_ENCODING, 'gzip')!==false) return 'gzip';
 	return 0;
 }
@@ -106,7 +106,7 @@ function inet_to_bits($inet)
 }
 
 /**
- * (OpenShift) 取得 Client IP Address
+ * (OpenShift) Get the Client IP Address
  *
  * @return string IP Address
  * @since 8th.Release

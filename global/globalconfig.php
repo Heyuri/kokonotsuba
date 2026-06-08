@@ -8,7 +8,7 @@ $config['ERROR_HANDLER_FILE'] = __DIR__.'/error.log';
 
 $config['STATIC_URL'] = 'https://static.example.net/'; // Where static files are located on the web, can be a full URL (eg. 'https://static.example.com/'). Include trailing '/'
 $config['STATIC_PATH'] = '/var/www/static/'; // Where static files are stored in the server, can be an absolute path (eg. '/home/example/web/static/'). Include trailing '/'
-$config['WEBSITE_URL'] = "https://". $_SERVER['HTTP_HOST'] . "/"; //The URL of where the boards are. (e.g "https://boards.example.net/")
+$config['WEBSITE_URL'] = "/"; //The URL of where the boards are. (e.g "https://boards.example.net/")
 
 $config['USE_CDN'] = false; //Whether to use the "cdn" (AKA storing all board uploaded-file-storages in one central directory on the server)
 
@@ -61,7 +61,9 @@ $config['AuthLevels']['CAN_EDIT_POST'] = Kokonotsuba\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_BAN_FILES'] = Kokonotsuba\userRole::LEV_MODERATOR;
 $config['AuthLevels']['CAN_MANAGE_PMS'] = Kokonotsuba\userRole::LEV_ADMIN;
 $config['AuthLevels']['CAN_MANAGE_ADS'] = Kokonotsuba\userRole::LEV_ADMIN;
-$concifg['AuthLevels']['CAN_MANAGE_ANTI_SPAM_SYSTEM'] = Kokonotsuba\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_MANAGE_ANTI_SPAM_SYSTEM'] = Kokonotsuba\userRole::LEV_MODERATOR;
+$config['AuthLevels']['CAN_ANONYMIZE_IPS'] = Kokonotsuba\userRole::LEV_ADMIN;
+$config['AuthLevels']['CAN_VIEW_VOTES'] = Kokonotsuba\userRole::LEV_MODERATOR;
 
 // Capcode formats (put '%s' where you want the original name)
 $config['JCAPCODE_FMT'] = '%s';

@@ -53,8 +53,13 @@ class soudaneRepository extends baseRepository {
 	 * @return void
 	 */
 	public function deleteVote(int $postUid, string $ipAddress, bool $isYeah): void {
-		$query = "DELETE FROM {$this->table} WHERE post_uid = :post_uid AND ip_address = :ip_address AND yeah = :yeah LIMIT 1";
-		$this->query($query, [':post_uid' => $postUid, ':ip_address' => $ipAddress, ':yeah' => (int)$isYeah]);
+		$query = "DELETE FROM {$this->table} WHERE post_uid = :post_uid AND (ip_address = :ip_address OR ip_address = :ip_hash) AND yeah = :yeah LIMIT 1";
+		$this->query($query, [
+			':post_uid'   => $postUid,
+			':ip_address' => $ipAddress,
+			':ip_hash'    => substr(hash('sha512', $ipAddress), 0, 16),
+			':yeah'       => (int)$isYeah,
+		]);
 	}
 
 	/**

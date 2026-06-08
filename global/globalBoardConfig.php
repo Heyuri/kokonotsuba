@@ -58,6 +58,12 @@ $config['FORTUNES'] = array( // Used for fortune function, selected at random.
 	'（　´_ゝ`）ﾌｰﾝ'
 );
 
+// Show post tags (requires TAGS defined)
+$config['ENABLE_TAGS'] = false; 
+
+// whether to force tags for new threads
+$config['FORCE_TAGS'] = false;
+
 // Post tags: keys are abbreviations stored in the database, values are the full display names shown in forms.
 // Example: $config['TAGS'] = ['G' => 'Games', 'A' => 'Anime', 'T' => 'Technology'];
 $config['TAGS'] = [
@@ -67,7 +73,10 @@ $config['TAGS'] = [
     'L' => 'Loop',
     'E' => 'Ero',
     'H' => 'Heyuri',
-    'O' => 'Other'];
+    '?' => 'Other'];
+
+// Default tag for new threads, should be one of the keys in $config['TAGS'] or empty string for no default tag
+$config['DEFAULT_TAG'] = '?';
 
 // Allowed filetypes and mimetypes
 // The key is the extention and the value is the associated mime-type
@@ -108,9 +117,11 @@ $config['ModuleList'] = array(
 	'edit' => true,
 	'perceptualBan' => true,
 	'excimerViewer' => true,
+	'anonIp' => true,
 	/* thread modes */
 	'autoSage' => true,
 	'lockThread' => true,
+	'oldThread' => true,
 	'sticky' => true,
 	/* posting */
 	'antiSpam' => true,
@@ -146,7 +157,8 @@ $config['ModuleList'] = array(
 	'indexCommentTruncator' => true,
 	'emotes' => true,
 	'nameRandomizer' => false,
-	'youtubeEmbed' => true
+	'youtubeEmbed' => true,
+	'segregator' => false,
 );
 
 /* Module-specific options */
@@ -295,6 +307,11 @@ $config['ModuleSettings']['supportUnderline'] = true; // [u]...[/u] into <u>...<
 $config['ModuleSettings']['supportParagraph'] = true; // [p]...[/p] into <p>...</p>
 $config['ModuleSettings']['supportSw'] = true; // [sw]...[/sw] into <pre class="sw">...</pre> (Strange World-style AA)
 $config['ModuleSettings']['supportColor'] = true; // [color=X]...[/color] into <span style="color:X;">...</span>
+$config['ModuleSettings']['supportColorBg'] = true; // [colorbg=X]...[/colorbg] into <span style="background-color:X;">...</span>
+$config['ModuleSettings']['supportNeon'] = true; // [neon]...[/neon] into <span class="neon">...</span>
+$config['ModuleSettings']['supportTextShadow'] = true; // [textshadow=X]...[/textshadow] into <span style="text-shadow:2px 2px 4px X;">...</span>
+$config['ModuleSettings']['supportPartybus'] = true; // [partybus]...[/partybus] cycles partybusColor1-8 across each character
+$config['ModuleSettings']['supportEcho'] = true; // [echo]...[/echo] into <span class="echoText">...</span>
 $config['ModuleSettings']['supportFontSize'] = true; // [sN]...[/sN] into <span class="fontSizeN">...</span>
 $config['ModuleSettings']['supportPre'] = true; // [pre]...[/pre] into <pre>...</pre>
 $config['ModuleSettings']['supportQuote'] = true; // [quote]...[/quote] into <blockquote>...</blockquote>
@@ -503,6 +520,14 @@ $config['ModuleSettings']['LINE_PREVIEW_LIMIT'] = 10;
 
 $config['ModuleSettings']['NAME_RANDOMIZER_TTL'] = 43200; 
 
+//mod_segregator
+$config['ModuleSettings']['SEGREGATOR_SUB_DOMAIN'] = ''; // Subdomain prefix to prepend to the file host (e.g. 'media' turns 'example.com' into 'media.example.com'). Leave empty to disable URL rewriting.
+$config['ModuleSettings']['SEGREGATOR_COOKIE_NAME'] = 'viewAllContent'; // Name of the access cookie checked by nginx
+$config['ModuleSettings']['SEGREGATOR_COOKIE_DOMAIN'] = ''; // Cookie domain scope (e.g. '.example.com' for cross-subdomain). Leave empty to scope to the current host only.
+
+// Maximum thread age (in hours) allowed for replies.
+$config['ModuleSettings']['THREAD_REPLY_TIME_LIMIT'] = 0;
+
 $config['SWF_THUMB'] = $config['STATIC_URL']."image/swf_thumb.png";
 $config['AUDIO_THUMB'] = $config['STATIC_URL']."image/audio.png";
 $config['ARCHIVE_THUMB'] = $config['STATIC_URL']."image/archive.png";
@@ -568,7 +593,6 @@ $config['REPLY_TEMPLATE_FILE'] = 'kokoimg'; // Reply page template directory
 $config['MAX_AGE_TIME'] = 0; // How long will thread accept age replies? (hours)
 
 $config['USE_CATEGORY'] = 0; // Enable Categories
-$config['ENABLE_TAGS'] = false; // Show post tags (requires TAGS defined in globalconfig.php)
 
 $config['PREVENT_DUPLICATE_FILE_UPLOADS'] = false; // Disallow the same file was being posted twice 
 $config['DUPLICATE_FILE_TIME'] = 7200; // The time a duplicate attachment cant be uploaded

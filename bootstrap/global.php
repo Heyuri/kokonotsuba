@@ -1,8 +1,18 @@
 <?php
 
+/**
+ * Variables injected from the calling bootstrap context (e.g. koko.php).
+ *
+ * @var \Kokonotsuba\cookie\cookieService $cookieService
+ */
+
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\policy\postPolicy;
 use Kokonotsuba\policy\postRenderingPolicy;
+use Puchiko\background\BackgroundTaskDispatcher;
+
+BackgroundTaskDispatcher::setContext(($kokoInstanceRoot ?? __DIR__ . '/../') . 'bootstrap/background.php');
+BackgroundTaskDispatcher::setAppRoot($kokoInstanceRoot ?? __DIR__ . '/../');
 
 // Global configuration file
 $globalConfig = getGlobalConfig();

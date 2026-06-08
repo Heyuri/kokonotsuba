@@ -173,14 +173,30 @@
 	background-color: var(--color-bg-theading3);
 	color: var(--color-fg-theading);
 	border: 1px solid var(--color-fg-theading);
-	border-radius: 4px;
 }
 
 .messageFailure {
 	background-color: var(--color-bg-theading);
 	color: var(--color-fg-theading);
 	border: 1px solid var(--color-fg-theading);
+}
+
+.messagePending {
+	background-color: var(--color-bg-theading2, #0040e0);
+	color: var(--color-fg-theading);
+	border: 1px solid var(--color-fg-theading);
 	border-radius: 4px;
+}
+
+@keyframes messageSpin {
+	from { transform: rotate(0deg); }
+	to   { transform: rotate(360deg); }
+}
+
+.messageSpin {
+	font-size: var(--font-size-large);
+	display: inline-block;
+	animation: messageSpin 1.5s linear infinite;
 }
 
 /* Show & hide animation states */
@@ -643,6 +659,22 @@
 .formtable {
 	display: table;
 	margin: 1em auto;
+}
+
+/************************ BBcode **************************************/
+
+.neon {
+    color: #ff1414;
+    text-shadow: 0 0 5px #ff1414, 0 0 10px #ff1414, 0 0 20px #ff1414;
+}
+
+.echoText {
+    text-shadow:
+        2px 2px 0 rgba(0,0,0,0.45),
+        4px 4px 0 rgba(0,0,0,0.35),
+        6px 6px 0 rgba(0,0,0,0.25),
+        8px 8px 0 rgba(0,0,0,0.15),
+        10px 10px 0 rgba(0,0,0,0.08);
 }
 
 /************************ Mobile **************************************/

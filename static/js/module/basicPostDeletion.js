@@ -142,6 +142,9 @@
 
 			if (data?.success && data.deleted_link && type === 'post') {
 				postEl.dataset.deletedLink = data.deleted_link;
+				if (data.deleted_post_id) {
+					postEl.dataset.deletedPostId = data.deleted_post_id;
+				}
 			}
 
 			if (typeof showMessage === 'function') {
@@ -153,27 +156,7 @@
 				await reloadAttachment(postEl);
 			} else {
 				removeWidgetActions(postEl, ['delete', 'mute', 'deleteAttachment']);
-
-				// -------------------------------
-				// FIX: If OP → hide entire thread
-				// -------------------------------
-				if (postEl.classList.contains('op')) {
-					const thread = postEl.closest('.thread');
-					if (thread) {
-						thread.style.transition = 'opacity 0.3s ease';
-						thread.style.opacity = '0';
-						setTimeout(() => thread.remove(), 300);
-					}
-				} else {
-					// Non-OP delete (same as before)
-					postEl.style.transition = 'opacity 0.3s ease';
-					postEl.style.opacity = '0';
-					setTimeout(() => {
-						const parent = postEl.closest('.reply-container');
-						if (parent) parent.remove();
-						else postEl.remove();
-					}, 300);
-				}
+				fadeAndRemovePost(postEl);
 			}
 		} catch (err) {
 			if (typeof showMessage === 'function') {

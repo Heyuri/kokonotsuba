@@ -46,6 +46,7 @@ $language['regist_uploaded']			= 'Image %1$s téléversé.<br>';
 $language['regist_sakuradetected']		= 'Big5 sakura des caractères japonais détectés.';
 $language['regist_withoutname']			= 'Remplissez avec un nom, s\'il vous plaît.';
 $language['regist_withoutcomment']		= 'Écrivez un commentaire si vous ne voulez pas envoyer une image.';
+$language['regist_withouttag']			= 'Veuillez sélectionner un tag pour votre fil.';
 $language['regist_nametoolong']			= 'Ce nom est trop long.';
 $language['regist_emailtoolong']		= 'Ce mél est trop long.';
 $language['regist_topictoolong']		= 'Ce titre est trop long.';
@@ -72,6 +73,7 @@ $language['regist_threadlocked']		= 'Ce fil a été clos par l\'administrateur!'
 $language['regist_redirect']			= '%1$s Redirection en cours... <p>Si votre navigateur ne vous redirige pas, cliquez: <a href="%2$s">Retourner</a></p>';
 $language['del_notchecked']				= 'Rien n\'a été sélectionné pour être effacé. Retournez et sélectionnez quelque chose s\'il vous plaît.';
 $language['del_wrongpwornotfound']		= 'Commentaire inexistant ou mot de passe incorrect.';
+$language['del_restored_locked']		= 'Ce commentaire ne peut plus être supprimé.';
 $language['admin_wrongpassword']		= 'Mot de passe incorrect';
 $language['return']						= 'Retourner';
 $language['admin_remake']				= 'Refaire';

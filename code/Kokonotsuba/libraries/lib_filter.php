@@ -47,6 +47,23 @@ function applyRegexIPFilter(string $ip): ?string {
 }
 
 /**
+ * Convert a potentially wildcarded IP address to a SQL LIKE pattern.
+ * The '*' wildcard is translated to '%'; the host index can then be used.
+ *
+ * @param string $ip The IP address to process (may contain '*' wildcards).
+ * @return string|null A LIKE pattern string if valid, null if the IP is invalid.
+ */
+function applyLikeIPFilter(string $ip): ?string {
+	// Validate: allow digits, dots, colons, hex letters, and asterisks only
+	if (!preg_match('/^[\d\.\*\:a-fA-F]+$/', $ip)) {
+		return null;
+	}
+
+	// Replace wildcard '*' with the SQL LIKE wildcard '%'
+	return str_replace('*', '%', $ip);
+}
+
+/**
  * Bind the filter parameters to a SQL query for execution.
  * This function modifies the query by adding conditions based on the filters provided.
  *
@@ -65,12 +82,12 @@ function bindPostFilterParameters(array &$params, string &$query, array $filters
 	// Apply the 'board' filter and bind parameters
 	$boards = applyArrayFilter($filters, 'board');
 	if (!empty($boards)) {
-		$query .= " AND (";
+		$inParams = [];
 		foreach ($boards as $index => $board) {
-			$query .= ($index > 0 ? " OR " : "") . $columnPrefix . "boardUID = :board_$index";
-			$params[":board_$index"] = (int)$board;  // Bind the board UID as an integer
+			$inParams[":board_$index"] = (int)$board;
 		}
-		$query .= ")";
+		$query .= " AND " . $columnPrefix . "boardUID IN (" . implode(', ', array_keys($inParams)) . ")";
+		$params = array_merge($params, $inParams);
 	}
 
 	// Apply the 'tripcode' filter to both 'tripcode' and 'secure_tripcode' columns
@@ -87,12 +104,12 @@ function bindPostFilterParameters(array &$params, string &$query, array $filters
 		}
 	}
 
-	// Apply the 'ip_address' filter using a regex pattern
+	// Apply the 'ip_address' filter using a LIKE pattern against the indexed host column
 	if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
-		$regex = applyRegexIPFilter($filters['ip_address']);
-		if ($regex !== null) {
-			$query .= " AND " . $columnPrefix . "host REGEXP :ip_regex";
-			$params[':ip_regex'] = $regex;  // Bind the regex for IP address
+		$likePattern = applyLikeIPFilter($filters['ip_address']);
+		if ($likePattern !== null) {
+			$query .= " AND " . $columnPrefix . "host LIKE :ip_like";
+			$params[':ip_like'] = $likePattern;
 		}
 	}
 }
@@ -103,8 +120,6 @@ function bindPostFilterParameters(array &$params, string &$query, array $filters
  * @param array  &$params  The array to store bound parameters for the PDO statement.
  * @param string &$query   The SQL query string to which filter conditions will be appended.
  * @param array  $filters  The filters to apply (e.g., 'board', 'thread_uid', 'created_before').
- * @param string $orderBy  The column by which to order the results (default: 'last_bump_time').
- * @param bool   $isCount  Whether the query is a count query (avoids ORDER BY if true).
  */
 function bindThreadFilterParameters(array &$params, string &$query, array $filters): void {
 	// Apply the 'board' filter and bind parameters
@@ -345,8 +360,10 @@ function handleRedirection(array $filtersFromRequest, bool $isSubmission, array 
 /**
  * Main function to get filters from the request, process them, and handle redirection if needed.
  *
- * @param board $board The board object that contains board-related data.
  * @param string $url The base url of the page
+ * @param bool $isSubmission Whether the form is being submitted
+ * @param array $defaultFilters The default filters to fall back on if not provided in the request
+ * @param request $request The request object to extract parameters from
  * @return array The filters array, processed and ready for use.
  */
 function getFiltersFromRequest(string $url, bool $isSubmission, array $defaultFilters, request $request): array {

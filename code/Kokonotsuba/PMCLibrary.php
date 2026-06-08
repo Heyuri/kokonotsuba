@@ -2,7 +2,7 @@
 /**
  * Pixmicat! Library Singleton Factory
  *
- * 集中函式庫以方便呼叫，並可回傳單例物件。
+ * Centralized library access for convenient calls; returns singleton instances.
  *
  * @package PMCLibrary
  * @version $Id$
@@ -16,10 +16,10 @@ use Kokonotsuba\lang\LanguageLoader;
 
 class PMCLibrary {
 	/**
-	 * 取得 Logger 函式庫物件
+	 * Get a Logger library instance.
 	 *
-	 * @param string $name 識別名稱
-	 * @return ILogger Logger 函式庫物件
+	 * @param string $name Identifier name
+	 * @return ILogger Logger library instance
 	 */
 	public static function getLoggerInstance($logfile, $name = 'Global') {
 		static $instLogger = array();
@@ -30,9 +30,9 @@ class PMCLibrary {
 	}
 
 	/**
-	 * 取得語言函式庫物件
+	 * Get the Language library instance.
 	 *
-	 * @return LanguageLoader Language 函式庫物件
+	 * @return LanguageLoader Language library instance
 	 */
 	public static function getLanguageInstance() {
 		static $instLanguage = null;

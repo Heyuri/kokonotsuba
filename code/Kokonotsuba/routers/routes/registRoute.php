@@ -190,6 +190,9 @@ class registRoute {
 			// Add post to database
 			$this->postService->addPostToThread($this->board, $postRegistData, $nextPostUid);
 
+			// Dispatch post-inserted event (used by modules that store data per post, e.g. country flags)
+			$this->moduleEngine->dispatch('RegistPostInserted', [$nextPostUid, $postData['ip']]);
+
 			// Handle adding attachments
 			$this->handleAttachments($fileMeta['files'], $nextPostUid); 
 
@@ -527,6 +530,11 @@ class registRoute {
 			// tag is valid, keep it
 		} else {
 			$postData['tag'] = '';
+		}
+
+		// Reject new threads without a tag when FORCE_TAGS is enabled
+		if (!$postData['isReply'] && ($this->config['FORCE_TAGS'] ?? false) && ($this->config['ENABLE_TAGS'] ?? false) && $postData['tag'] === '') {
+			throw new BoardException(_T('regist_withouttag'));
 		}
 	
 		if ($postData['up_incomplete']) {
