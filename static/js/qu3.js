@@ -346,7 +346,7 @@ function processPost(post) {
 	const numEl   = post.querySelector('.postnum .qu')
 	if (!numEl) return
 	const replyNum = numEl.textContent.trim()
-	const wantBack = localStorage.getItem('addbacklinks') === 'true'
+	const wantBack = _kkSetting('addbacklinks')
 
 	post.querySelectorAll('.comment .unkfunc, .comment a.quotelink').forEach(el => {
 		let targetId = el.dataset.targetId
@@ -466,9 +466,6 @@ function init() {
 const kkhoverbacklink = {
 	name: "Heyuri Hover Previews + Backlinks",
 	startup: function() {
-		if (!localStorage.getItem("addbacklinks")) {
-			localStorage.setItem("addbacklinks", "false")
-		}
 		init()
 		return true
 	},
@@ -482,7 +479,7 @@ const kkhoverbacklink = {
 		if (tab !== "general") return
 		div.innerHTML +=
 			'<label><input type="checkbox" onchange="localStorage.setItem(\'addbacklinks\',this.checked);kkhoverbacklink.reset();kkhoverbacklink.startup();" ' +
-			(localStorage.getItem("addbacklinks") === "true" ? 'checked' : '') +
+			(_kkSetting("addbacklinks") ? 'checked' : '') +
 			'>Add reply backlinks</label>'
 	}
 }

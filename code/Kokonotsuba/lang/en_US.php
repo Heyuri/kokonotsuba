@@ -445,6 +445,14 @@ $language['fullbanner_upload_button'] = 'Upload banner';
 
 $language['quick_reply_link'] = 'Quick reply';
 
+// threadWatcher module
+$language['thread_watch_link'] = 'Thread watcher';
+$language['thread_watch_label'] = 'Watch thread';
+$language['thread_unwatch_label'] = 'Unwatch thread';
+$language['thread_watch_empty'] = 'No watched threads.';
+$language['thread_watch_unwatch_title'] = 'Unwatch';
+$language['thread_watch_mark_read_title'] = 'Mark as read';
+
 $language['soudane_vote_own_post'] = 'You cannot vote on your own post';
 $language['soudane_no_post_ids_provided'] = 'No post IDs provided.';
 

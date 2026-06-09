@@ -116,6 +116,7 @@ $config['ModuleList'] = array(
 	'notes' => true,
 	'edit' => true,
 	'perceptualBan' => true,
+	'excimerViewer' => true,
 	'anonIp' => true,
 	/* thread modes */
 	'autoSage' => true,

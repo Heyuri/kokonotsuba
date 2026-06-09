@@ -4,10 +4,7 @@
 /* Module */
 const kkinline = { name: "KK Quote Inlining",
 	startup: function () {
-		if (!localStorage.getItem("quoteinline")) {
-			localStorage.setItem("quoteinline", "false");
-		}
-		if (localStorage.getItem("quoteinline") != "true") {
+		if (!_kkSetting("quoteinline")) {
 			return true;
 		}
 		document.querySelectorAll(".quotelink").forEach(function (i) {
@@ -53,7 +50,7 @@ const kkinline = { name: "KK Quote Inlining",
 	},
 	sett: function (tab, div) { if (tab!="general") return;
 		div.innerHTML+= `
-			<label><input type="checkbox" onchange="localStorage.setItem('quoteinline',this.checked);kkinline.reset();kkinline.startup();"`+(localStorage.getItem("quoteinline")=="true"?'checked="checked"':'')+`>Quote inlining</label>
+			<label><input type="checkbox" onchange="localStorage.setItem('quoteinline',this.checked);kkinline.reset();kkinline.startup();"`+(_kkSetting("quoteinline")?'checked="checked"':'')+`>Quote inlining</label>
 			`;
 	}
 };

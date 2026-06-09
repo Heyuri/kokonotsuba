@@ -87,11 +87,11 @@ const kkqu = {
 	/* Settings */
 	sett: function (tab, div) {
 		if (tab != "general") return;
-		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'quotetooltip\',this.checked);document.body.classList.toggle(\'quotetooltip-enabled\', this.checked);" ' + (localStorage.getItem("quotetooltip") == "true" ? 'checked="checked"' : '') + '>Quote tooltip</label>';
+		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'quotetooltip\',this.checked);document.body.classList.toggle(\'quotetooltip-enabled\', this.checked);" ' + (_kkSetting("quotetooltip") ? 'checked="checked"' : '') + '>Quote tooltip</label>';
 	},
 	/* Function */
 	quote: function (no) {
-		var qrEnabled = typeof kkqr !== 'undefined' && kkqr && localStorage.getItem("useqr") == "true";
+		var qrEnabled = typeof kkqr !== 'undefined' && kkqr && _kkSetting("useqr");
 		kkjs.com_insert(">>"+ no+"\n", qrEnabled ? {noScroll: true} : undefined);
 		return no;
 	},
@@ -123,7 +123,7 @@ const kkqu = {
 		}, 50);
 	},
 	selopen: function (x, y) {
-		if (localStorage.getItem("quotetooltip") == "false") return true;
+		if (!_kkSetting("quotetooltip")) return true;
 		var txt = getSelectTxt();
 		if (!txt) return;
 		var selpop = $doc.createElement("div");
@@ -144,7 +144,7 @@ const kkqu = {
 		if (!selpop) return;
 		var txt = $id("slptmp").innerText.replace(/[\r\n]+/g, "\n").trim().replace(/\n/g, "\n>").replace(/\t/g, "");
 		$del(selpop);
-		var qrEnabled = typeof kkqr !== 'undefined' && kkqr && localStorage.getItem("useqr") == "true";
+		var qrEnabled = typeof kkqr !== 'undefined' && kkqr && _kkSetting("useqr");
 		if (qrEnabled && !kkqr.win) {
 			kkqr.openqr();
 		}

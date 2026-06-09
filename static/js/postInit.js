@@ -7,7 +7,7 @@
 function initNewPosts(newElements) {
 	if (newElements && newElements.length) {
 		var useQr = typeof kkqr !== "undefined" && kkqr
-			&& localStorage.getItem("useqr") == "true";
+			&& _kkSetting("useqr");
 
 		for (var i = 0; i < newElements.length; i++) {
 			var quButtons = newElements[i].querySelectorAll(".qu");

@@ -758,6 +758,36 @@ class deletedPostsRepository extends baseRepository {
 	}
 
 	/**
+	 * Fetch the most-recent deleted_post ID for the given post UID.
+	 *
+	 * @param int $postUid Post UID.
+	 * @return int|false Deleted post ID, or false if not found.
+	 */
+	public function getDeletedPostIdByPostUid(int $postUid): int|false {
+		$id = $this->queryValue(
+			"SELECT id FROM {$this->table} WHERE post_uid = :post_uid AND file_id IS NULL ORDER BY id DESC LIMIT 1",
+			[':post_uid' => $postUid]
+		);
+
+		return $id !== false ? (int)$id : false;
+	}
+
+	/**
+	 * Fetch the most-recent deleted_post ID for the given file ID.
+	 *
+	 * @param int $fileId File row ID.
+	 * @return int|false Deleted post ID, or false if not found.
+	 */
+	public function getDeletedPostIdByFileId(int $fileId): int|false {
+		$id = $this->queryValue(
+			"SELECT id FROM {$this->table} WHERE file_id = :file_id ORDER BY id DESC LIMIT 1",
+			[':file_id' => $fileId]
+		);
+
+		return $id !== false ? (int)$id : false;
+	}
+
+	/**
 	 * Fetch the most-recent deletion row for the given post UID.
 	 *
 	 * @param int $postUid Post UID.

@@ -77,6 +77,10 @@ class overboard {
 		// Generate stylesheet <link> tags from config styles.
 		$pte_vals['{$BOARD_STYLESHEETS}'] = getBoardStylesheetsFromConfig($this->config);
 
+		// Inject default JS user settings as JSON for koko.js
+		$jsDefaults = $this->config['JS_DEFAULT_SETTINGS'] ?? [];
+		$pte_vals['{$JS_DEFAULT_SETTINGS}'] = '<script>window.KOKO_DEFAULT_SETTINGS=' . json_encode((object)$jsDefaults, JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
+
 		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
 		$this->moduleEngine->dispatch('Head', array(&$html, $resno)); // "Head" Hook Point
 

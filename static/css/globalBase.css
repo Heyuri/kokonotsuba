@@ -707,6 +707,11 @@
 	}
 }
 
+/* Thread watcher module */
+.threadWatcherContent {
+	padding: 0.75em;
+}
+
 @media screen and (max-width: 600px) {
 	#catalogTable .thread {
 		width: 140px;

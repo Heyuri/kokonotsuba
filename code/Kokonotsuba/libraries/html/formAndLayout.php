@@ -18,7 +18,7 @@ function buildTagSelectOptions(array $tags, string $currentTag = '', string $emp
 	return $html;
 }
 
-function generateHeadHtml(array $config, templateEngine $templateEngine, moduleEngine $moduleEngine, string $pageTitle = '', int $resno = 0, bool $isStaff = false) {
+function generateHeadHtml(array $config, templateEngine $templateEngine, moduleEngine $moduleEngine, string $pageTitle = '', int $resno = 0, bool $isStaff = false, array $options = []) {
 	$html = '';
 
 	$pte_vals = prepareBaseTemplateValues($resno, $isStaff);
@@ -40,6 +40,11 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 	// Generate stylesheet <link> tags from config styles.
 	$pte_vals['{$BOARD_STYLESHEETS}'] = getBoardStylesheetsFromConfig($config);
 
+	// Inject default JS user settings as JSON for koko.js
+	$jsDefaults = $config['JS_DEFAULT_SETTINGS'] ?? [];
+	// Cast to object to ensure json_encode always produces {} not [] when the array is empty
+	$pte_vals['{$JS_DEFAULT_SETTINGS}'] = '<script>window.KOKO_DEFAULT_SETTINGS=' . json_encode((object)$jsDefaults, JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
+
 	$html .= $templateEngine->ParseBlock('HEADER', $pte_vals);
 	$moduleEngine->dispatch('Head', array(&$html, $resno)); // Hook: Head
 
@@ -51,10 +56,31 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 		'{$HOOKLINKS}' => '', '{$BANNER}' => ''
 	);
 
+	// Merge any extra template values for BODYHEAD (e.g. TITLE, TITLESUB, LIVE_INDEX_FILE)
+	if (!empty($options['extraPteVals'])) {
+		$pte_vals += $options['extraPteVals'];
+	}
+
+	// Optionally dispatch PlaceHolderIntercept before TopLinks/PageTop
+	if (!empty($options['dispatchPlaceHolderIntercept'])) {
+		$moduleEngine->dispatch('PlaceHolderIntercept', [&$pte_vals]);
+	}
+
 	$moduleEngine->dispatch('TopLinks', array(&$pte_vals['{$HOOKLINKS}'], !empty($resto)));
 	$moduleEngine->dispatch('PageTop', array(&$pte_vals['{$BANNER}'])); // Hook: AboveTitle
 
 	$html .= $templateEngine->ParseBlock('BODYHEAD', $pte_vals);
+
+	// Optionally render POST_AREA after BODYHEAD
+	if (!empty($options['renderPostArea'])) {
+		$pte_vals['{$MODULE_INFO_HOOK}'] = $templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);
+		$html .= $templateEngine->ParseBlock('POST_AREA', $pte_vals);
+	}
+
+	// Optionally append suffix HTML (e.g. sub-header HTML)
+	if (!empty($options['suffixHtml'])) {
+		$html .= $options['suffixHtml'];
+	}
 
 	return $html;
 }
