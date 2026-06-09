@@ -1,14 +1,14 @@
 <!--&HEADER_IMG_BASE/-->
-	<script src="{$STATIC_URL}js/koko.js?v=15"></script>
-	<script src="{$STATIC_URL}js/style.js?v=3"></script>
+	<script src="{$STATIC_URL}js/koko.js?v=16"></script>
+	<script src="{$STATIC_URL}js/style.js?v=4"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
-	<script src="{$STATIC_URL}js/inline.js?v=9" defer></script>
-	<script src="{$STATIC_URL}js/admin.js?v=5" defer></script>
+	<script src="{$STATIC_URL}js/inline.js?v=4" defer></script>
+	<script src="{$STATIC_URL}js/admin.js?v=6" defer></script>
 	<script src="{$STATIC_URL}js/clipboard.js" defer></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
-	<script src="{$STATIC_URL}js/flashembed.js?v=2"></script>
-	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
-	<script src="{$STATIC_URL}js/message.js?v=2" defer></script>
+	<script src="{$STATIC_URL}js/flashembed.js?v=3"></script>
+	<script src="{$STATIC_URL}js/select-all-feature.js?v=5" defer></script>
+	<script src="{$STATIC_URL}js/message.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/dropdownMenu.js" defer></script>
 	<script src="{$STATIC_URL}js/postWidget.js" defer></script>
 	<script src="{$STATIC_URL}js/attachmentWidget.js" defer></script>
