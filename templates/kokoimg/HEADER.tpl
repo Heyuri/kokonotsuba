@@ -5,8 +5,8 @@
 	<script src="{$STATIC_URL}js/qu3.js?v=23" defer></script>
 	<script src="{$STATIC_URL}js/style.js?v=3"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
-	<script src="{$STATIC_URL}js/gallery.js?v=4"></script>
-	<script src="{$STATIC_URL}js/attachmentExpander.js?v=4"></script>
+	<script src="{$STATIC_URL}js/gallery.js?v=4" defer></script>
+	<script src="{$STATIC_URL}js/attachmentExpander.js?v=4" defer></script>
 	<script src="{$STATIC_URL}js/inline.js?v=9" defer></script>
 	<script src="{$STATIC_URL}js/updateThread.js" defer></script>
 	<script src="{$STATIC_URL}js/update.js?v=2" defer></script>

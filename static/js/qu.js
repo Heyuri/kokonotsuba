@@ -144,7 +144,7 @@ const kkqu = {
 		if (!selpop) return;
 		var txt = $id("slptmp").innerText.replace(/[\r\n]+/g, "\n").trim().replace(/\n/g, "\n>").replace(/\t/g, "");
 		$del(selpop);
-		var qrEnabled = typeof kkqr !== 'undefined' && kkqr && localStorage.getItem("useqr") == "true";
+		var qrEnabled = typeof kkqr !== 'undefined' && kkqr && _kkSetting("useqr");
 		if (qrEnabled && !kkqr.win) {
 			kkqr.openqr();
 		}

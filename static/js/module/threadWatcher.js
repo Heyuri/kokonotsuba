@@ -9,6 +9,7 @@ const kktwch = { name: "KK Thread watcher",
 	POLL_INTERVAL: 15000,
 	_pollTimer: null,
 	_win: null,
+	_originalTitle: null,
 
 	startup: function () {
 		// Hook the form func link
@@ -65,6 +66,13 @@ const kktwch = { name: "KK Thread watcher",
 		if ('Notification' in window && Notification.permission === 'default') {
 			// Will be requested on first watch action instead
 		}
+
+		// If any watched threads are visible on this index/overboard page,
+		// treat them as seen before reflecting unread counts in the title.
+		kktwch.markVisibleThreadsAsRead();
+
+		// Reflect any existing unread counts in the title before the first poll lands
+		kktwch.updatePageTitle();
 
 		// Start polling
 		kktwch.startPolling();
@@ -241,10 +249,14 @@ const kktwch = { name: "KK Thread watcher",
 			var watched = kktwch.getWatchedThreads();
 			if (!watched[threadUid]) {
 				kktwch.watchCurrentThread(threadUid);
-			} else {
-				// Bump lastSeenCount to include our own pending post so
-				// the poll doesn't treat it as an unread reply and play the ding.
-				var entry = watched[threadUid];
+				// Re-read after creation so we can bump for our pending reply.
+				watched = kktwch.getWatchedThreads();
+			}
+
+			// Bump lastSeenCount to include our own pending post so the next
+			// poll doesn't treat our own reply as an unread reply and ding.
+			var entry = watched[threadUid];
+			if (entry) {
 				entry.lastSeenCount = Math.max(entry.lastSeenCount || 0, (entry.postCount || 0) + 1);
 				kktwch.saveWatchedThreads(watched);
 			}
@@ -358,6 +370,10 @@ const kktwch = { name: "KK Thread watcher",
 					});
 				}
 
+				// Track which threads grew this poll so we can decide
+				// notifications AFTER markVisibleThreadsAsRead runs.
+				var pollGrowth = {};
+
 				// Update post counts and subjects
 				if (data.threads && typeof data.threads === 'object') {
 					Object.keys(data.threads).forEach(function (threadUid) {
@@ -375,18 +391,39 @@ const kktwch = { name: "KK Thread watcher",
 							entry.subject = info.subject;
 						}
 
-						changed = true;
-
-						var unseenCount = newPostCount - (entry.lastSeenCount || 0);
-						if (newPostCount > prevPostCount && unseenCount > 0) {
-							kktwch.sendNotification(entry, unseenCount);
+						if (newPostCount > prevPostCount) {
+							pollGrowth[threadUid] = true;
 						}
+
+						changed = true;
 					});
 				}
 
 				if (changed) {
 					kktwch.saveWatchedThreads(watched);
+					// On index/overboard, any watched thread that's rendered on
+					// the page is considered seen — bump lastSeenCount when the
+					// visible DOM actually contains the unread range. Run this
+					// BEFORE the notification check so an unread reply that's
+					// already visible on the index doesn't trigger a ding.
+					kktwch.markVisibleThreadsAsRead();
+
+					// Send notifications for threads that grew this poll AND
+					// still have unread replies after the visibility check.
+					var watchedAfter = kktwch.getWatchedThreads();
+					Object.keys(pollGrowth).forEach(function (threadUid) {
+						var entry = watchedAfter[threadUid];
+						if (!entry) return;
+						var unseenCount = (entry.postCount || 0) - (entry.lastSeenCount || 0);
+						if (unseenCount > 0) {
+							kktwch.sendNotification(entry, unseenCount);
+						}
+					});
+
 					kktwch.renderWatchList();
+					// renderWatchList early-returns when the watcher window is closed,
+					// so also refresh the title directly to keep it in sync on the index/overboard.
+					kktwch.updatePageTitle();
 				}
 			})
 			.catch(function () {
@@ -404,6 +441,66 @@ const kktwch = { name: "KK Thread watcher",
 		entry.lastSeenCount = entry.postCount;
 		kktwch.saveWatchedThreads(watched);
 		kktwch.renderWatchList();
+	},
+
+	/**
+	 * On index/overboard pages, a watched thread that's rendered on the page
+	 * is treated as "seen" only when the index's snapshot actually contains
+	 * all the user's unread replies. If the index is outdated (the API says
+	 * there are more posts than the DOM is showing for the unread range),
+	 * leave lastSeenCount alone — those unseen posts aren't actually visible.
+	 *
+	 * No-op on thread pages (those use the viewport IntersectionObserver).
+	 * Returns true if anything changed.
+	 */
+	markVisibleThreadsAsRead: function () {
+		// Only run on index/overboard pages
+		var restoInput = document.querySelector('input[name="resto"]');
+		if (restoInput && restoInput.value) return false;
+
+		var watched = kktwch.getWatchedThreads();
+		var keys = Object.keys(watched);
+		if (!keys.length) return false;
+
+		var changed = false;
+		keys.forEach(function (threadUid) {
+			var entry = watched[threadUid];
+			if (!entry) return;
+
+			var postCount = entry.postCount || 0;
+			var lastSeen = entry.lastSeenCount || 0;
+			// Nothing new to mark
+			if (lastSeen >= postCount) return;
+
+			// Find the thread container on the page. data-thread-uid is on
+			// both the .thread wrapper and the OP .post element; prefer the
+			// wrapper so we can count posts (OP + visible replies) inside it.
+			var threadEl = document.querySelector('.thread[data-thread-uid="' + threadUid + '"]');
+			if (!threadEl) {
+				var opPost = document.querySelector('.post.op[data-thread-uid="' + threadUid + '"]');
+				if (opPost) threadEl = opPost.closest('.thread') || opPost.parentElement;
+			}
+			if (!threadEl) return;
+
+			// Posts currently in this thread block on the index (OP + last N replies).
+			var domCount = threadEl.querySelectorAll('.post').length;
+			if (!domCount) return;
+
+			// The visible block shows the OP plus the last (domCount - 1) replies.
+			// All unread replies are visible only if the unread range fits inside
+			// what's shown — i.e. lastSeen >= postCount - (domCount - 1).
+			// If the index snapshot is outdated and missing some new posts,
+			// this fails and we don't mark.
+			if (lastSeen < postCount - (domCount - 1)) return;
+
+			entry.lastSeenCount = postCount;
+			changed = true;
+		});
+
+		if (changed) {
+			kktwch.saveWatchedThreads(watched);
+		}
+		return changed;
 	},
 
 	getUnreadCount: function (entry) {
@@ -519,6 +616,7 @@ const kktwch = { name: "KK Thread watcher",
 					content.appendChild(emptyTpl.content.cloneNode(true));
 				}
 			}
+			kktwch.updatePageTitle();
 			return;
 		}
 
@@ -570,8 +668,40 @@ const kktwch = { name: "KK Thread watcher",
 				kktwch.renderWatchList();
 			});
 
+			// Wire up mark-as-read button
+			var markReadBtn = row.querySelector('.threadWatcherMarkRead');
+			if (hasUnread) {
+				markReadBtn.hidden = false;
+				markReadBtn.addEventListener('click', function (e) {
+					e.preventDefault();
+					kktwch.markAsRead(threadUid);
+				});
+			}
+
 			list.appendChild(row);
 		});
+
+		kktwch.updatePageTitle();
+	},
+
+	/* --- Page Title --- */
+
+	updatePageTitle: function () {
+		var watched = kktwch.getWatchedThreads();
+		var total = 0;
+		Object.keys(watched).forEach(function (uid) {
+			total += kktwch.getUnreadCount(watched[uid]);
+		});
+
+		if (kktwch._originalTitle === null) {
+			kktwch._originalTitle = document.title;
+		}
+
+		if (total > 0) {
+			document.title = '(' + total + ') ' + kktwch._originalTitle;
+		} else {
+			document.title = kktwch._originalTitle;
+		}
 	},
 
 	/* Settings */

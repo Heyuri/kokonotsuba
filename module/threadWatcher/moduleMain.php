@@ -114,6 +114,8 @@ class moduleMain extends abstractModuleMain {
 		$rowHtml = $this->moduleContext->templateEngine->ParseBlock('THREAD_WATCHER_ROW', [
 			'{$UNWATCH_TITLE}' => sanitizeStr(_T('thread_watch_unwatch_title')),
 			'{$REMOVE_ICON}' => "\u{2716}",
+			'{$MARK_READ_TITLE}' => sanitizeStr(_T('thread_watch_mark_read_title')),
+			'{$MARK_READ_ICON}' => "\u{2713}",
 		]);
 		$moduleHeader .= $this->generateTemplate('threadWatcherRowTpl', $rowHtml);
 

@@ -32,7 +32,7 @@ const $p_class = function (el, c) {
 	return false;
 }
 
-window.settingsHooks = [];
+window.settingsHooks = window.settingsHooks || [];
 
 /* Window Manager */
 const kkwm = {
