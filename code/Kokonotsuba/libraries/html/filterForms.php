@@ -162,7 +162,7 @@ function drawDeletedPostsFilterForm(string &$dat, string $formAction, array $fil
 	$filterStaffUsername = $filters['staff_username'] ?? '';
 
 	$dat .= '
-	<form class="detailsboxForm" action="' . htmlspecialchars($formAction) . '" method="get">
+	<form class="detailsboxForm formtable" action="' . htmlspecialchars($formAction) . '" method="get">
 		<details id="filtercontainer" class="detailsbox">
 			<summary>Filter deleted posts</summary>
 			<div class="detailsboxContent">
@@ -217,7 +217,7 @@ function drawOverboardFilterForm(&$dat, board $board, array $boards, array $allo
 	$boardCheckboxHTML = generateBoardListCheckBoxHTML($allowedBoards, $boards);
 
 	$dat .= '
-		<form class="detailsboxForm" id="overboardFilterForm" action="' . $board->getBoardURL(true) . '?mode=overboard" method="POST">
+		<form class="detailsboxForm formtable" id="overboardFilterForm" action="' . $board->getBoardURL(true) . '?mode=overboard" method="POST">
 			<details id="filtercontainer" class="detailsbox">
 				<summary>Filter boards</summary>
 				<div class="detailsboxContent">

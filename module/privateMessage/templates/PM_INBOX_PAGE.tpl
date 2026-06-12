@@ -6,10 +6,7 @@
 			<input type="submit" value="{$LOGOUT_LABEL}" class="logoutBtn">
 		</form>
 		<hr>
-		<details class="pmSendForm detailsbox">
-			<summary class="pmSendFormToggle">{$SEND_LABEL}</summary>
-			<!--&PM_COMPOSE_FORM/-->
-		</details>
+		<!--&PM_COMPOSE_FORM/-->
 		<div class="pmTableContainer tableViewportWrapper">
 			<!--&IF($HAS_MESSAGES,'<table class="postlists">
 				<thead>
