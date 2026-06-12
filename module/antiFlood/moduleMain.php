@@ -43,7 +43,7 @@ class moduleMain extends abstractModuleMain {
 		$this->listenRegistBeforeCommit('onBeforeCommit');
 	}
 	
-	private function onBeforeCommit(&$name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $files, $isReply): void{
+	private function onBeforeCommit(&$name, &$email, &$emailForInsertion, &$sub, &$com, &$category, &$age, $files, $isReply, $status, $thread): void{
 		// flood/spam-prevention logic for posts (replies and threads) as a whole
 		$this->preventFloodPost($com);
 		
@@ -54,52 +54,68 @@ class moduleMain extends abstractModuleMain {
 		}
 		// prevent flooding for thread submissions
 		else {
+			$this->preventFloodThreadComment($com);
 			$this->preventFloodThread();
 		}
 		return;
 	}
 
 	private function preventFloodPost(string $comment): void {
-		// get the time window for comments it'll grab.
-		// measured in seconds
 		$timeWindow = $this->getConfig('ModuleSettings.SAME_COMMENT_TIME_WINDOW', 10);
 
-		// return early if its 0 or negative
 		if(!$timeWindow || $timeWindow <= 0) {
 			return;
 		}
 
-		// get the default comment
 		$defaultComment = $this->getConfig('DEFAULT_NOCOMMENT');
+		$host = (string) $this->moduleContext->request->userIp();
 
-		// check if the comment is repeated in a certain time period
-		// it needs to be instance wide - mainly to prevent stuff like lazy bot spammers
-		$repeatedPosts = $this->moduleContext->postService->getRepeatedPosts($comment, $defaultComment, $timeWindow);
+		// check if the comment is repeated in a certain time period instance-wide, scoped to the poster's IP
+		$repeatedPosts = $this->moduleContext->postService->getRepeatedPosts($comment, $defaultComment, $timeWindow, $host);
 
-		// if its a repeated comment and isn't the default comment - silently delete the previous threads and redirect
-		// Deleted posts are still visible to moderators so false-positives can be restored
-		// It doesn't serve an error because the bot or bot operator may have an automated way of detecting server errors and adjusting output
-		if(is_countable($repeatedPosts) && sizeof($repeatedPosts) > $this->getConfig('ModuleSettings.ALLOWED_COMMENT_REPETITIONS', 5)) {
-			// now delete the posts themselves
-			$this->moduleContext->postService->removePosts($repeatedPosts);
-			
-			// get the index file name (default to returning them to the last page if not)
-			$index = $this->getConfig('LIVE_INDEX_FILE', 'back');
-			
-			// send dummy json output for ajax users
-			if($this->moduleContext->request->isAjax()) {
-				// send ajax
-				sendAjaxAndDetach(['redirectUrl' => $index]);
+		$this->deleteRepeatedPostsAndRedirect($repeatedPosts, $this->getConfig('ModuleSettings.ALLOWED_COMMENT_REPETITIONS', 5));
+	}
 
-				$this->handlePageRebuilding($repeatedPosts);
+	private function preventFloodThreadComment(string $comment): void {
+		$timeWindow = $this->getConfig('ModuleSettings.SAME_THREAD_COMMENT_TIME_WINDOW', 0);
 
-				exit;
-			} else {
-				$this->handlePageRebuilding($repeatedPosts);
-				
-				// redirect to index
-				redirect($index);
-			}
+		if(!$timeWindow || $timeWindow <= 0) {
+			return;
+		}
+
+		$defaultComment = $this->getConfig('DEFAULT_NOCOMMENT');
+		$host = (string) $this->moduleContext->request->userIp();
+
+		// check if the comment is repeated among recent OP posts, scoped to the poster's IP
+		$repeatedOps = $this->moduleContext->postService->getRepeatedOpPosts($comment, $defaultComment, $timeWindow, $host);
+
+		$this->deleteRepeatedPostsAndRedirect($repeatedOps, 0);
+	}
+
+	/**
+	 * Delete repeated posts and silently redirect if the count exceeds the given threshold.
+	 * Deleted posts remain visible to moderators so false-positives can be restored.
+	 * No error is surfaced to avoid giving bots a detectable signal.
+	 *
+	 * @param array|null $posts     Post UIDs to evaluate and delete.
+	 * @param int        $threshold Delete and redirect only when count exceeds this value.
+	 */
+	private function deleteRepeatedPostsAndRedirect(?array $posts, int $threshold): void {
+		if(!is_countable($posts) || sizeof($posts) <= $threshold) {
+			return;
+		}
+
+		$this->moduleContext->postService->removePosts($posts);
+
+		$index = $this->getConfig('LIVE_INDEX_FILE', 'back');
+
+		if($this->moduleContext->request->isAjax()) {
+			sendAjaxAndDetach(['redirectUrl' => $index]);
+			$this->handlePageRebuilding($posts);
+			exit;
+		} else {
+			$this->handlePageRebuilding($posts);
+			redirect($index);
 		}
 	}
 

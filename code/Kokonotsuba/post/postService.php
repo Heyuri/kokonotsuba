@@ -121,17 +121,34 @@ class postService {
 	 * @param int         $timeWindow     Look-back window in seconds.
 	 * @return array|null Array of matching post UIDs, or null if none (or input equals default).
 	 */
-	public function getRepeatedPosts(string $comment, ?string $defaultComment, int $timeWindow): ?array {
+	public function getRepeatedPosts(string $comment, ?string $defaultComment, int $timeWindow, ?string $host = null): ?array {
 		// if the comment equals the default comment then return null since it can't be spam
 		if(strip_tags($comment) === $defaultComment) {
 			return null;
 		}
 		
 		// fetch post uids of posts with the same comment
-		$repeatedPosts = $this->postRepository->getRepeatedPosts($comment, $defaultComment, $timeWindow);
+		$repeatedPosts = $this->postRepository->getRepeatedPosts($comment, $defaultComment, $timeWindow, $host);
 	
 		// return the posts
 		return $repeatedPosts;
+	}
+
+	/**
+	 * Return OP posts within the given time window that have the same content as the given comment.
+	 * Returns null if the comment matches the board default.
+	 *
+	 * @param string      $comment        Comment content to check.
+	 * @param string|null $defaultComment Board's default comment to exclude from the check.
+	 * @param int         $timeWindow     Look-back window in seconds.
+	 * @return array|null Array of matching post UIDs, or null if none (or input equals default).
+	 */
+	public function getRepeatedOpPosts(string $comment, ?string $defaultComment, int $timeWindow, ?string $host = null): ?array {
+		if(strip_tags($comment) === $defaultComment) {
+			return null;
+		}
+
+		return $this->postRepository->getRepeatedOpPosts($comment, $defaultComment, $timeWindow, $host);
 	}
 
 	/**

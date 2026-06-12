@@ -90,7 +90,7 @@ class messageRenderer {
 			'{$SEND_LABEL}' => _T('pm_send_btn'),
 			'{$PREFILL_RECIPIENT}' => sanitizeStr($prefillRecipient),
 			'{$PREFILL_SUBJECT}' => sanitizeStr($prefillSubject),
-			'{$PREFILL_BODY}' => sanitizeStr($prefillBody) . "\n\n",
+			'{$PREFILL_BODY}' => !empty($prefillBody) ? sanitizeStr($prefillBody) . "\n\n" : '',
 		];
 	}
 
@@ -179,7 +179,6 @@ class messageRenderer {
 			$this->getComposeFormVariables($modulePageUrl, $replyRecipient, $replySubject, $replyBody),
 			[
 			'{$BACK_LABEL}' => _T('pm_back_to_inbox'),
-			'{$REPLY_LABEL}' => _T('pm_reply_label'),
 			'{$SHOW_REPLY}' => '1',
 			'{$PM_SENDER_NAME}' => $nameHtml,
 			'{$PM_SENDER_TRIP}' => sanitizeStr($message['sender_tripcode']),

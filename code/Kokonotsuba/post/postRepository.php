@@ -639,7 +639,7 @@ class postRepository extends baseRepository {
 	 *
 	 * @return array|null Returns an array of matching post UIDs, or null if none are found
 	 */
-	public function getRepeatedPosts(string $comment, ?string $defaultComment, int $timeWindow): ?array {
+	public function getRepeatedPosts(string $comment, ?string $defaultComment, int $timeWindow, ?string $host = null): ?array {
 		// Base query: find posts with the same comment within the given time window
 		$query = "
 			SELECT post_uid
@@ -661,10 +661,53 @@ class postRepository extends baseRepository {
 			$params[':defaultComment'] = $defaultComment;
 		}
 
+		if ($host !== null) {
+			$query .= " AND host = :host";
+			$params[':host'] = $host;
+		}
+
 		// Execute the query and fetch results as a numeric index array
 		$result = $this->queryAllAsIndexArray($query, $params);
 
 		// Normalize empty result sets to null for easier upstream handling
+		return array_merge(...$result) ?: null;
+	}
+
+	/**
+	 * Return OP posts within the given time window that have the same comment.
+	 *
+	 * @param string      $comment        The comment content to match against existing OP posts
+	 * @param string|null $defaultComment A default/boilerplate comment to exclude, or null to disable exclusion
+	 * @param int         $timeWindow     Time window in seconds to look back from now
+	 *
+	 * @return array|null Returns an array of matching post UIDs, or null if none are found
+	 */
+	public function getRepeatedOpPosts(string $comment, ?string $defaultComment, int $timeWindow, ?string $host = null): ?array {
+		$query = "
+			SELECT post_uid
+			FROM {$this->table}
+			WHERE com = :comment
+			AND is_op = 1
+			AND root >= (UTC_TIMESTAMP() - INTERVAL :timeWindow SECOND)
+		";
+
+		$params = [
+			':comment' => $comment,
+			':timeWindow' => $timeWindow
+		];
+
+		if ($defaultComment !== null) {
+			$query .= " AND com != :defaultComment";
+			$params[':defaultComment'] = $defaultComment;
+		}
+
+		if ($host !== null) {
+			$query .= " AND host = :host";
+			$params[':host'] = $host;
+		}
+
+		$result = $this->queryAllAsIndexArray($query, $params);
+
 		return array_merge(...$result) ?: null;
 	}
 

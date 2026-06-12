@@ -24,5 +24,5 @@
 		<div class="pmViewBody">
 			{$PM_BODY}
 		</div>
-		<!--&IF($SHOW_REPLY,'<hr><details class="pmReplyForm detailsbox" open><summary>{$REPLY_LABEL}</summary><!--&PM_COMPOSE_FORM/--></details>','')-->
+		<!--&IF($SHOW_REPLY,'<hr><!--&PM_COMPOSE_FORM/-->','')-->
 	</div>
