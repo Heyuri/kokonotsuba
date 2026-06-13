@@ -106,7 +106,7 @@ function serveMedia(string $mediaPath) {
 		$fileExtension = strtolower(pathinfo($mediaPath, PATHINFO_EXTENSION));
 
 		// Decide if it's an image or video
-		if (in_array($fileExtension, ['png', 'jpg', 'jpeg', 'gif'])) {
+		if (in_array($fileExtension, ['png', 'jpg', 'jpeg', 'gif', 'webp'])) {
 			// Serve image
 			serveImage($mediaPath);
 		} elseif (in_array($fileExtension, ['mp4', 'webm', 'ogg'])) {

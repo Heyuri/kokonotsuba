@@ -239,6 +239,9 @@ class ThumbWrapper{
 			case IMAGETYPE_BMP:
 				$imagetype = 'bmp';
 				$im_in = $this->_ImageCreateFromBMP($this->sourceFile); break;
+			case IMAGETYPE_WEBP:
+				$imagetype = 'webp';
+				$im_in = function_exists('imagecreatefromwebp') ? @ImageCreateFromWEBP($this->sourceFile) : false; break;
 			default:
 				return false;
 		}
@@ -271,7 +274,7 @@ class ThumbWrapper{
 			imagefill($im_out, 0, 0, $backgroundColor);
 	
 			// Enable blending for images with transparency
-			if($size[2] === IMAGETYPE_PNG) {
+			if($size[2] === IMAGETYPE_PNG || $size[2] === IMAGETYPE_WEBP) {
 				imagealphablending($im_out, true);
 				imagesavealpha($im_out, true);
 			}

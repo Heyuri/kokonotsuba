@@ -86,6 +86,7 @@ $config['ALLOW_UPLOAD_EXT'] = [
 	'jpeg' => 'image/jpeg',
 	'png'  => 'image/png',
 	'bmp'  => 'image/bmp',
+	'webp' => 'image/webp',
 	'swf'  => 'application/x-shockwave-flash',
 	'webm' => 'video/webm',
 	'mp4'  => 'video/mp4',
