@@ -94,10 +94,10 @@ class moduleMain extends abstractModuleMain {
 		$dat = ''; // HTML Buffer
 		$listMax = $this->moduleContext->threadRepository->threadCountFromBoard($this->moduleContext->board); // Total number of threads
 		$pageMax = ceil($listMax / $this->THREADLIST_NUMBER) - 1; // Maximum page number
-		$page = $this->moduleContext->request->hasParameter('page', 'GET') ? intval($this->moduleContext->request->getParameter('page', 'GET')) : 0; // Current page number
+		$page = $this->moduleContext->request->hasParameter('page', 'GET') ? intval($this->moduleContext->request->getParameter('page', 'GET')) : 1; // Current page number
 
 		// Check if the page number is out of range
-		if ($page < 0 || $page > $pageMax) throw new BoardException('Page out of range.');
+		if ($page < 1 || $page > $pageMax) throw new BoardException('Page out of range.');
 
 		// init sorting descending variable
 		// this is so we can change the direction (ASC vs DESC) if we want to for certain sorting options
@@ -134,7 +134,7 @@ class moduleMain extends abstractModuleMain {
 			$sortDescending = false;
 		}
 		else if($sortingMethod === 'creationDate') {
-			// set to thread_creation_date so it
+			// set to thread_creation_date so it sorts by the date the thread was created
 			$sortingColumn = 'thread_created_time';
 		}
 
