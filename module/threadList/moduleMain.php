@@ -11,6 +11,7 @@ use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawPager;
+use function Kokonotsuba\libraries\html\pageToOffset;
 use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Puchiko\strings\truncateText;
 
@@ -20,7 +21,8 @@ class moduleMain extends abstractModuleMain {
 	use TopLinksListenerTrait;
 
 	// Configuration variables
-	private $THREADLIST_NUMBER, $FORCE_SUBJECT, $SHOW_IN_MAIN, $THREADLIST_NUMBER_IN_MAIN, $SHOW_FORM, $HIGHLIGHT_COUNT = -1;
+	private int $THREADLIST_NUMBER, $THREADLIST_NUMBER_IN_MAIN, $HIGHLIGHT_COUNT = -1;
+	private bool $FORCE_SUBJECT, $SHOW_IN_MAIN, $SHOW_FORM;
 
 	// Get the module name
 	public function getName(): string {
@@ -93,11 +95,12 @@ class moduleMain extends abstractModuleMain {
 		$thisPage = $this->getModulePageURL(); // Base position
 		$dat = ''; // HTML Buffer
 		$listMax = $this->moduleContext->threadRepository->threadCountFromBoard($this->moduleContext->board); // Total number of threads
-		$pageMax = ceil($listMax / $this->THREADLIST_NUMBER) - 1; // Maximum page number
+		$pageMax = ceil($listMax / $this->THREADLIST_NUMBER); // Maximum page number
 		$page = $this->moduleContext->request->hasParameter('page', 'GET') ? intval($this->moduleContext->request->getParameter('page', 'GET')) : 1; // Current page number
 
-		// Check if the page number is out of range
-		if ($page < 1 || $page > $pageMax) throw new BoardException('Page out of range.');
+		// Check if the page number is out of range.
+		// (allow page 1 even when there are no threads, so an empty board renders instead of erroring)
+		if ($page < 1 || $page > max(1, $pageMax)) throw new BoardException('Page out of range.');
 
 		// init sorting descending variable
 		// this is so we can change the direction (ASC vs DESC) if we want to for certain sorting options
@@ -142,10 +145,10 @@ class moduleMain extends abstractModuleMain {
 		// set preview count to 0 so it just gets OPs.
 		// pass column/direction parameters (sanitized by threadService)
 		$threads = $this->moduleContext->threadService->getThreadPreviewsFromBoard(
-			$this->moduleContext->board, 
-			0, 
-			$this->THREADLIST_NUMBER, 
-			$this->THREADLIST_NUMBER * $page,
+			$this->moduleContext->board,
+			0,
+			$this->THREADLIST_NUMBER,
+			pageToOffset($page, $this->THREADLIST_NUMBER),
 			false,
 			$sortingColumn,
 			$sortDescending
