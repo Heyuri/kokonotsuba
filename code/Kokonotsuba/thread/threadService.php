@@ -217,7 +217,11 @@ class threadService {
 		$postRows = $this->threadRepository->getPostsForThreads($threadUIDs, $previewCount, $adminMode);
 		$postsByThread = $this->groupPostsByThread($postRows);
 
-		return $this->buildPreviewResults($threads, $postsByThread, $previewCount);
+		// reply previews to show for sticky threads (null in config => default of 1)
+		$stickyPreviewCount = $board->getConfigValue('ModuleSettings.MAX_PREVIEW_REPLIES_FOR_STICKY', 1);
+		$stickyPreviewCount = is_null($stickyPreviewCount) ? 1 : (int)$stickyPreviewCount;
+
+		return $this->buildPreviewResults($threads, $postsByThread, $previewCount, $stickyPreviewCount);
 	}
 
 	/**
@@ -237,23 +241,37 @@ class threadService {
 	/**
 	 * Combine thread metadata rows with their grouped post rows into a structured ThreadData array.
 	 *
-	 * @param array    $threads       Array of thread metadata rows.
-	 * @param array    $postsByThread Map of thread_uid => array of post rows.
-	 * @param int|null $previewCount  Preview post limit (null = no limit).
+	 * @param array    $threads            Array of thread metadata rows.
+	 * @param array    $postsByThread      Map of thread_uid => array of post rows.
+	 * @param int|null $previewCount       Preview post limit (null = no limit).
+	 * @param int|null $stickyPreviewCount Reply previews to show for sticky threads (null = treat stickies like any other thread).
 	 * @return ThreadData[] Array of ThreadData structures.
 	 */
-	private function buildPreviewResults(array $threads, array $postsByThread, ?int $previewCount): array {
+	private function buildPreviewResults(array $threads, array $postsByThread, ?int $previewCount, ?int $stickyPreviewCount = null): array {
 		$result = [];
 		foreach ($threads as $thread) {
 			$threadUID = $thread->getUid();
 			$previewPosts = $postsByThread[$threadUID] ?? [];
-			
+
 			// get total posts
 			$totalPosts = $thread->getPostCount();
 
+			// sticky threads can preview a different number of replies than regular threads.
+			// the count is bounded by what was actually fetched ($previewCount).
+			$applyStickyPreview = $thread->isSticky() && $stickyPreviewCount !== null && $previewCount;
+			$effectivePreviewCount = $applyStickyPreview ? min($stickyPreviewCount, $previewCount) : $previewCount;
+
+			// trim sticky previews down to OP + the last N replies (posts are ordered oldest -> newest)
+			if ($applyStickyPreview && count($previewPosts) > $effectivePreviewCount + 1) {
+				$op = $previewPosts[0];
+				$previewPosts = $effectivePreviewCount > 0
+					? array_merge([$op], array_slice($previewPosts, -$effectivePreviewCount))
+					: [$op];
+			}
+
 			// if theres a preview limit then generate hidden amount
 			if($previewCount) {
-				$omittedCount = max(0, $totalPosts - $previewCount - 1);
+				$omittedCount = max(0, $totalPosts - $effectivePreviewCount - 1);
 			}
 			// otherwise leave null
 			else {

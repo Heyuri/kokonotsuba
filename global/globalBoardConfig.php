@@ -164,6 +164,9 @@ $config['ModuleList'] = array(
 );
 
 /* Module-specific options */
+//core index preview
+$config['ModuleSettings']['MAX_PREVIEW_REPLIES_FOR_STICKY'] = 1; // How many reply previews to show under a stickied thread's OP on the index (null = default of 1)
+
 //mod_anigif
 $config['ModuleSettings']['MAX_SIZE_FOR_ANIMATED_GIF'] = 2000; // Max file size for animated gifs (in kilobytes)
 
