@@ -143,6 +143,7 @@ $config['ModuleList'] = array(
 	'tegaki' => true,
 	'quickReply' => true,
 	'spoiler' => true,
+	'threadWatcher' => true,
 	/* misc */
 	'soudane' => true,
 	'postApi' => true,
