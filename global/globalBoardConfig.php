@@ -182,7 +182,7 @@ $config['ModuleSettings']['JANIMUTE_REASON'] = 'You have been muted temporarily!
 //mod_antiflood
 $config['ModuleSettings']['RENZOKU3'] = 30; // How many seconds between new threads?
 $config['ModuleSettings']['SAME_COMMENT_TIME_WINDOW'] = 10; // How many seconds between posts that can have the same comment?
-$config['ModuleSettings']['SAME_THREAD_COMMENT_TIME_WINDOW'] = 10; // How many seconds between posts with the same comment within the same thread (0 to disable)
+$config['ModuleSettings']['SAME_THREAD_COMMENT_TIME_WINDOW'] = 10; // How many seconds between OP posts can have the same comment? (0 to disable)
 $config['ModuleSettings']['ALLOWED_COMMENT_REPETITIONS'] = 5; // How many times can the same comment be posted within the SAME_COMMENT_TIME_WINDOW before it starts deleting previous posts with that comment?
 
 //mod_showip
