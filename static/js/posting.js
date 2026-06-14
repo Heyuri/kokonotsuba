@@ -58,6 +58,28 @@ document.addEventListener("DOMContentLoaded", () => {
 	}
 
 	/**
+	 * Record a post the user just made, keyed as "{board}_{no}", in localStorage.
+	 * Consumed by the thread watcher to flag replies that quote the user.
+	 * postId arrives from the server as "p{board}_{no}".
+	 */
+	function recordOwnPost(postId) {
+		if (!postId || typeof postId !== "string") return;
+		const key = postId.replace(/^p/, "");
+		if (!/^\d+_\d+$/.test(key)) return;
+		try {
+			const store = JSON.parse(localStorage.getItem("kkOwnPosts") || "{}");
+			store[key] = Date.now();
+			// Keep only the 500 most recently created own posts.
+			const keys = Object.keys(store);
+			if (keys.length > 500) {
+				keys.sort((a, b) => store[a] - store[b]);
+				keys.slice(0, keys.length - 500).forEach(k => delete store[k]);
+			}
+			localStorage.setItem("kkOwnPosts", JSON.stringify(store));
+		} catch (e) { /* ignore quota/parse errors */ }
+	}
+
+	/**
 	 * Get the post number of the last reply currently in the DOM.
 	 * Used to tell the server which posts are new.
 	 */
@@ -215,6 +237,9 @@ document.addEventListener("DOMContentLoaded", () => {
 		// Handle post response
 		function handleSuccessfulPost(data) {
 			if (!data) return;
+
+			// Remember this post as the user's own (for thread-watcher quote detection).
+			recordOwnPost(data.postId);
 
 			// --- DUMP: silent, clear form ---
 			if (isDump) {

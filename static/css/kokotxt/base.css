@@ -1524,8 +1524,9 @@ a.linkjs {
 	min-height: 1em;
 }
 
-.window.minimized #settcontents,
-.window.minimized #qrcontents {
+/* When minimized, hide everything in the window except its title bar.
+   Generic so any window content (forms, tables, the thread watcher, etc.) collapses. */
+.window.minimized > *:not(.winbar) {
 	display: none;
 }
 

@@ -188,7 +188,7 @@ class kkwmWindow {
 	}
 	minimize() {
 		this.minimized = !this.minimized;
-		if (typeof(this.onminimize)=='function') this.onclose(this.minimized);
+		if (typeof(this.onminimize)=='function') this.onminimize(this.minimized);
 		var winmin = this.div.getElementsByClassName("winmin")[0];
 		if (this.minimized) {
 			this.div.classList.add("minimized");
