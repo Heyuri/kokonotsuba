@@ -8,7 +8,7 @@
 	window.attachmentExpander = window.attachmentExpander || {};
 	var attachmentExpander = window.attachmentExpander;
 
-	attachmentExpander.imageExtensions = Array("png","jpg","jpeg","gif","giff","bmp","jfif");
+	attachmentExpander.imageExtensions = Array("png","jpg","jpeg","gif","giff","bmp","jfif", 'webp');
 	attachmentExpander.videoExtensions = Array("webm","mp4");
 	attachmentExpander.audioExtensions = Array("mp3","ogg","wav", "flac", "m4a");
 	attachmentExpander.flashExtensions = Array("swf");
