@@ -16,7 +16,7 @@ function createPreviewBox(notFound = false, loading = false) {
 	const box = document.createElement('div')
 	box.classList.add('previewBox')
 	box.style.position  = 'absolute'
-	box.style.zIndex    = '9999'
+	box.style.zIndex    = '9998'
 	box.style.minWidth  = `${MIN_WIDTH}px`
 	box.style.display   = 'none'
 	if (notFound) {
