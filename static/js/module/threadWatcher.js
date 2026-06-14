@@ -12,16 +12,13 @@ const kktwch = { name: "KK Thread watcher",
 	_originalTitle: null,
 
 	startup: function () {
-		// Hook the form func link
-		var links = $q('.postformOption');
-		for (var i = 0; i < links.length; i++) {
-			if (links[i].textContent.trim() === (document.querySelector('meta[name="threadWatcherLinkText"]')?.content || 'Thread watcher')) {
-				links[i].addEventListener('click', function (e) {
-					e.preventDefault();
-					kktwch.toggleWindow();
-				});
-				break;
-			}
+		// Hook the admin-bar top-link that opens the watcher window
+		var toplink = $id('threadWatcherToplink');
+		if (toplink) {
+			toplink.addEventListener('click', function (e) {
+				e.preventDefault();
+				kktwch.toggleWindow();
+			});
 		}
 
 		// Register action handler for PHP-injected "Watch thread" widget on OP posts
@@ -74,6 +71,14 @@ const kktwch = { name: "KK Thread watcher",
 		// Reflect any existing unread counts in the title before the first poll lands
 		kktwch.updatePageTitle();
 
+		// Keep tabs that didn't poll in sync: when another tab updates the watched
+		// threads, refresh this tab's list/title/top-link without re-notifying.
+		window.addEventListener('storage', function (e) {
+			if (e.key !== kktwch.STORAGE_KEY) return;
+			kktwch.renderWatchList();
+			kktwch.updatePageTitle();
+		});
+
 		// Start polling
 		kktwch.startPolling();
 
@@ -107,6 +112,19 @@ const kktwch = { name: "KK Thread watcher",
 		localStorage.setItem(kktwch.STORAGE_KEY, JSON.stringify(threads));
 	},
 
+	// The user's own posts, recorded at post time as a set of "board_no" keys (see posting.js).
+	// Returned as "board:no" tokens for the counts endpoint's `you` parameter.
+	getOwnPostTokens: function () {
+		try {
+			var data = JSON.parse(localStorage.getItem('kkOwnPosts') || '{}');
+			return Object.keys(data).map(function (key) {
+				return key.replace('_', ':');
+			});
+		} catch (e) {
+			return [];
+		}
+	},
+
 	/* --- Watch/Unwatch --- */
 
 	watchCurrentThread: function (threadUid) {
@@ -124,11 +142,16 @@ const kktwch = { name: "KK Thread watcher",
 		watched[threadUid] = {
 			threadUid: threadUid,
 			subject: info.subject || 'No.' + (info.threadNo || threadUid),
+			boardTitle: '',
+			label: '',
 			threadNo: info.threadNo || '',
 			boardUrl: info.boardUrl || '',
 			boardId: info.boardId || '',
 			postCount: currentPostCount,
 			lastSeenCount: currentPostCount,
+			quoteCount: 0,
+			// null until the first poll, so pre-existing quotes aren't flagged as new.
+			seenQuoteCount: null,
 			lastChecked: Date.now(),
 			url: info.url || ''
 		};
@@ -341,13 +364,40 @@ const kktwch = { name: "KK Thread watcher",
 	checkAllThreads: function () {
 		var watched = kktwch.getWatchedThreads();
 		var threadUids = Object.keys(watched);
-		if (!threadUids.length) return;
+		var wantNewThreads = _kkSetting('threadWatcherNewThreads');
+
+		// Nothing to do if not watching anything and new-thread alerts are off.
+		if (!threadUids.length && !wantNewThreads) return;
+
+		// Cross-tab coordination: only one tab actually polls per interval. Whichever
+		// tab fires first claims the shared lock; the others skip the fetch (and so the
+		// notifications) and instead refresh their UI from the `storage` event. This
+		// stops every open tab from notifying for the same new post.
+		var now = Date.now();
+		var lastPoll = parseInt(localStorage.getItem('kktwch_lastPoll') || '0', 10);
+		if (now - lastPoll < kktwch.POLL_INTERVAL - 1000) return;
+		localStorage.setItem('kktwch_lastPoll', now);
 
 		var apiUrl = document.querySelector('meta[name="threadWatcherApiUrl"]')?.content || null;
 		if (!apiUrl) return;
 
+		var params = [];
+		if (threadUids.length) {
+			params.push('thread_uids=' + threadUids.map(encodeURIComponent).join(','));
+			// Send the user's own posts so the server can flag threads that quote them.
+			var ownTokens = kktwch.getOwnPostTokens();
+			if (ownTokens.length) {
+				params.push('you=' + ownTokens.map(encodeURIComponent).join(','));
+			}
+		}
+		if (wantNewThreads) {
+			params.push('newthreads=1');
+			var sinceMark = localStorage.getItem('kktwch_lastThreadSeen') || '';
+			if (sinceMark) params.push('since=' + encodeURIComponent(sinceMark));
+		}
+
 		var separator = apiUrl.includes('?') ? '&' : '?';
-		var url = apiUrl + separator + 'thread_uids=' + threadUids.map(encodeURIComponent).join(',');
+		var url = apiUrl + separator + params.join('&');
 
 		fetch(url)
 			.then(function (res) {
@@ -372,7 +422,9 @@ const kktwch = { name: "KK Thread watcher",
 
 				// Track which threads grew this poll so we can decide
 				// notifications AFTER markVisibleThreadsAsRead runs.
+				// quoteGrowth marks threads whose new posts quote the user.
 				var pollGrowth = {};
+				var quoteGrowth = {};
 
 				// Update post counts and subjects
 				if (data.threads && typeof data.threads === 'object') {
@@ -387,16 +439,38 @@ const kktwch = { name: "KK Thread watcher",
 						entry.postCount = newPostCount;
 						entry.lastChecked = Date.now();
 
-						if (info.subject) {
-							entry.subject = info.subject;
+						if (typeof info.board_title === 'string') {
+							entry.boardTitle = info.board_title;
 						}
+						if (typeof info.label === 'string' && info.label !== '') {
+							entry.label = info.label;
+						}
+
+						// Track quote-replies to the user's own posts. Seed the seen
+						// count on the first poll so pre-existing quotes aren't flagged.
+						var newQuoteCount = info.quote_count || 0;
+						var prevQuoteCount = entry.quoteCount || 0;
+						var quoteWasSeeded = entry.seenQuoteCount !== null && entry.seenQuoteCount !== undefined;
+						if (!quoteWasSeeded) {
+							entry.seenQuoteCount = newQuoteCount;
+						}
+						entry.quoteCount = newQuoteCount;
 
 						if (newPostCount > prevPostCount) {
 							pollGrowth[threadUid] = true;
 						}
+						// A genuinely new quote this poll (not the seeding poll).
+						if (quoteWasSeeded && newQuoteCount > prevQuoteCount) {
+							quoteGrowth[threadUid] = true;
+						}
 
 						changed = true;
 					});
+				}
+
+				// New-thread alerts (independent of watched threads).
+				if (data.newThreads && typeof data.newThreads === 'object') {
+					kktwch.handleNewThreads(data.newThreads);
 				}
 
 				if (changed) {
@@ -416,15 +490,16 @@ const kktwch = { name: "KK Thread watcher",
 						if (!entry) return;
 						var unseenCount = (entry.postCount || 0) - (entry.lastSeenCount || 0);
 						if (unseenCount > 0) {
-							kktwch.sendNotification(entry, unseenCount);
+							kktwch.sendNotification(entry, unseenCount, !!quoteGrowth[threadUid]);
 						}
 					});
 
 					kktwch.renderWatchList();
-					// renderWatchList early-returns when the watcher window is closed,
-					// so also refresh the title directly to keep it in sync on the index/overboard.
-					kktwch.updatePageTitle();
 				}
+
+				// Refresh the title and top-link class on every poll cycle, even when
+				// nothing changed, so the button's color always reflects current state.
+				kktwch.updatePageTitle();
 			})
 			.catch(function () {
 				// Silently fail on network errors
@@ -439,6 +514,7 @@ const kktwch = { name: "KK Thread watcher",
 		if (!entry) return;
 
 		entry.lastSeenCount = entry.postCount;
+		entry.seenQuoteCount = entry.quoteCount || 0;
 		kktwch.saveWatchedThreads(watched);
 		kktwch.renderWatchList();
 	},
@@ -507,6 +583,20 @@ const kktwch = { name: "KK Thread watcher",
 		return Math.max(0, (entry.postCount || 0) - (entry.lastSeenCount || 0));
 	},
 
+	// "Board Title - Subject/preview/filename" (label computed server-side).
+	getDisplayName: function (entry) {
+		var label = entry.label || entry.subject || 'No.' + (entry.threadNo || entry.threadUid);
+		return entry.boardTitle ? (entry.boardTitle + ' - ' + label) : label;
+	},
+
+	// True when an unread post quotes one of the user's own posts.
+	hasUnreadQuote: function (entry) {
+		var seen = (entry.seenQuoteCount === null || entry.seenQuoteCount === undefined)
+			? (entry.quoteCount || 0)
+			: entry.seenQuoteCount;
+		return (entry.quoteCount || 0) > seen;
+	},
+
 	/* --- Notifications --- */
 
 	requestNotificationPermission: function () {
@@ -515,44 +605,108 @@ const kktwch = { name: "KK Thread watcher",
 		}
 	},
 
-	sendNotification: function (entry, unreadCount) {
+	/* --- New thread alerts --- */
+
+	// Process the server's new-threads payload. Seeds silently on first run, then pushes
+	// a notification for each new thread on a non-blacklisted board. The high-water marker
+	// lives in shared localStorage, so only the polling tab advances it and notifies.
+	handleNewThreads: function (nt) {
+		if (!_kkSetting('threadWatcherNewThreads')) return;
+
+		var prev = localStorage.getItem('kktwch_lastThreadSeen');
+
+		// First run: record the marker without notifying for everything that already exists.
+		if (prev === null || prev === '') {
+			if (nt.latest) localStorage.setItem('kktwch_lastThreadSeen', nt.latest);
+			return;
+		}
+
+		var items = Array.isArray(nt.items) ? nt.items : [];
+		// Cap per cycle so a burst of new threads can't spam a wall of notifications.
+		items.slice(0, 5).forEach(function (item) {
+			kktwch.notifyNewThread(item);
+		});
+
+		if (nt.latest) localStorage.setItem('kktwch_lastThreadSeen', nt.latest);
+	},
+
+	// New-thread alerts are push-only: they're enabled by default and cover every
+	// non-blacklisted board, so we don't fall back to an audible ping that could fire
+	// constantly on a busy instance.
+	notifyNewThread: function (item) {
+		if (document.hasFocus() || !('Notification' in window) || Notification.permission !== 'granted') {
+			return;
+		}
+
+		var title = 'New thread' + (item.board_title ? ' — ' + item.board_title : '');
+		try {
+			var notif = new Notification(title, {
+				body: item.label || '',
+				tag: 'twnt_' + item.thread_uid,
+				icon: STATIC_URL + 'image/favicon.ico'
+			});
+			notif.onclick = function () {
+				window.focus();
+				if (item.url) window.location.href = item.url;
+				notif.close();
+			};
+		} catch (e) {}
+	},
+
+	sendNotification: function (entry, unreadCount, isQuote) {
 		// Check if notifications are enabled in settings
 		if (!_kkSetting('threadWatcherNotifs')) return;
 
-		var title = entry.subject || 'Thread No.' + (entry.threadNo || entry.threadUid);
-		var body = unreadCount + ' new ' + (unreadCount === 1 ? 'reply' : 'replies');
+		var replyWord = unreadCount === 1 ? 'reply' : 'replies';
 
-		// Try browser notification when tab is not focused
-		if (!document.hasFocus() && 'Notification' in window && Notification.permission === 'granted') {
-			try {
-				var notif = new Notification(title, {
-					body: body,
-					tag: 'tw_' + entry.threadUid,
-					icon: STATIC_URL + 'image/favicon.ico'
-				});
+		// Quote-replies: prefer a push notification when the user allows them and the
+		// tab is in the background; otherwise fall back to a distinct double ping.
+		// When quote-push is disabled, fall through and treat them as a regular ping.
+		if (isQuote && _kkSetting('threadWatcherQuotePush')) {
+			if (!document.hasFocus() && 'Notification' in window && Notification.permission === 'granted') {
+				try {
+					var notif = new Notification(kktwch.getDisplayName(entry), {
+						body: 'Quoted you (' + unreadCount + ' new ' + replyWord + ')',
+						tag: 'tw_' + entry.threadUid,
+						icon: STATIC_URL + 'image/favicon.ico'
+					});
 
-				notif.onclick = function () {
-					window.focus();
-					if (entry.url) {
-						window.location.href = entry.url;
-					}
-					notif.close();
-				};
-				return;
-			} catch (e) {}
+					notif.onclick = function () {
+						window.focus();
+						if (entry.url) {
+							window.location.href = entry.url;
+						}
+						notif.close();
+					};
+					return;
+				} catch (e) {}
+			}
+
+			kktwch.playDing(2);
+			return;
 		}
 
-		// Tab is focused or notification failed: play ding
-		kktwch.playDing();
+		// Regular replies (no quote to you): a single audio ping.
+		kktwch.playDing(1);
 	},
 
-	playDing: function () {
+	// Play the notification sound `count` times in quick succession.
+	playDing: function (count) {
+		count = count || 1;
+
 		// Cross-tab dedup: if another tab played the ding within the last 3 seconds, skip.
 		var now = Date.now();
 		var lastDing = parseInt(localStorage.getItem('kktwch_lastDing') || '0', 10);
 		if (now - lastDing < 3000) return;
 		localStorage.setItem('kktwch_lastDing', now);
 
+		kktwch._playDingOnce();
+		for (var i = 1; i < count; i++) {
+			setTimeout(kktwch._playDingOnce, i * 300);
+		}
+	},
+
+	_playDingOnce: function () {
 		if (!kktwch._dingAudio) {
 			kktwch._dingAudio = new Audio(STATIC_URL + 'audio/postNotif.mp3');
 		}
@@ -635,11 +789,9 @@ const kktwch = { name: "KK Thread watcher",
 			var entry = watched[threadUid];
 			var unread = kktwch.getUnreadCount(entry);
 			var hasUnread = unread > 0;
+			var hasQuote = kktwch.hasUnreadQuote(entry);
 
-			var displayName = entry.subject || 'No.' + (entry.threadNo || threadUid);
-			if (displayName.length > 40) {
-				displayName = displayName.substring(0, 37) + '...';
-			}
+			var displayName = kktwch.getDisplayName(entry);
 
 			var row = rowTpl.content.cloneNode(true);
 
@@ -647,8 +799,11 @@ const kktwch = { name: "KK Thread watcher",
 			var link = row.querySelector('.threadWatcherLink');
 			link.href = entry.url || '#';
 			link.textContent = displayName;
+			link.title = displayName;
 			link.setAttribute('data-thread-uid', threadUid);
-			if (hasUnread) link.classList.add('warning');
+			// Red when an unread reply quotes you, otherwise green when there are unread posts.
+			if (hasQuote) link.classList.add('twQuoted');
+			else if (hasUnread) link.classList.add('twUnread');
 			link.addEventListener('click', function () {
 				kktwch.markAsRead(threadUid);
 			});
@@ -689,8 +844,10 @@ const kktwch = { name: "KK Thread watcher",
 	updatePageTitle: function () {
 		var watched = kktwch.getWatchedThreads();
 		var total = 0;
+		var anyQuote = false;
 		Object.keys(watched).forEach(function (uid) {
 			total += kktwch.getUnreadCount(watched[uid]);
+			if (kktwch.hasUnreadQuote(watched[uid])) anyQuote = true;
 		});
 
 		if (kktwch._originalTitle === null) {
@@ -702,6 +859,17 @@ const kktwch = { name: "KK Thread watcher",
 		} else {
 			document.title = kktwch._originalTitle;
 		}
+
+		kktwch.updateToplink(total > 0, anyQuote);
+	},
+
+	// Color the admin-bar top-link: red when any watched thread has an unread quote-reply,
+	// green when there are unread posts, default otherwise.
+	updateToplink: function (hasUnread, hasQuote) {
+		var toplink = $id('threadWatcherToplink');
+		if (!toplink) return;
+		toplink.classList.toggle('twQuoted', !!hasQuote);
+		toplink.classList.toggle('twUnread', !hasQuote && !!hasUnread);
 	},
 
 	/* Settings */
@@ -710,6 +878,12 @@ const kktwch = { name: "KK Thread watcher",
 		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'threadWatcherNotifs\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
 			(_kkSetting('threadWatcherNotifs') ? ' checked="checked"' : '') +
 			'>Thread watcher notifications</label>';
+		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'threadWatcherQuotePush\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
+			(_kkSetting('threadWatcherQuotePush') ? ' checked="checked"' : '') +
+			'>Push notification when quoted</label>';
+		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'threadWatcherNewThreads\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
+			(_kkSetting('threadWatcherNewThreads') ? ' checked="checked"' : '') +
+			'>New thread notifications</label>';
 	}
 };
 

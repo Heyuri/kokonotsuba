@@ -712,6 +712,20 @@
 	padding: 0.75em;
 }
 
+/* Watcher status colors: green = unread replies, red = an unread reply quotes you.
+   Applies to both the admin-bar top-link and the watched-thread list entries. */
+.threadWatcherToplink.twUnread,
+.threadWatcherList .threadWatcherLink.twUnread {
+	color: #2e7d32;
+	font-weight: var(--font-weight-bold);
+}
+
+.threadWatcherToplink.twQuoted,
+.threadWatcherList .threadWatcherLink.twQuoted {
+	color: var(--color-fg-warning);
+	font-weight: var(--font-weight-bold);
+}
+
 @media screen and (max-width: 600px) {
 	#catalogTable .thread {
 		width: 140px;

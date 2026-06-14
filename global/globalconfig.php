@@ -122,6 +122,8 @@ $config['JS_DEFAULT_SETTINGS'] = [
     'galmode' => false,
     'addbacklinks' => false,
     'threadWatcherNotifs' => true,
+    'threadWatcherQuotePush' => true,
+    'threadWatcherNewThreads' => true,
 ];
 
 // kokoimg styles
