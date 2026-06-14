@@ -9,14 +9,14 @@ let previewStack   = []
 let lastMouseEvent = null
 let cleanupTimer   = null
 
-// Cache for remote post API fetches (keyed by "boardUid_postNo")
+// Cache for remote post API fetches (keyed by post_uid)
 const fetchCache = new Map()
 
 function createPreviewBox(notFound = false, loading = false) {
 	const box = document.createElement('div')
 	box.classList.add('previewBox')
 	box.style.position  = 'absolute'
-	box.style.zIndex    = '9998'
+	box.style.zIndex    = '9999'
 	box.style.minWidth  = `${MIN_WIDTH}px`
 	box.style.display   = 'none'
 	if (notFound) {
@@ -91,18 +91,20 @@ function prefetchPost(event) {
 	fetchPostData(postUid)
 }
 
-function positionPreviewBox(box, e, trigger) {
+function positionPreviewBox(box, e) {
 	const vw = window.innerWidth, vh = window.innerHeight
-	box.style.maxWidth = `${vw - RIGHT_MARGIN}px`
 	box.style.display  = 'block'
 
-	const w = Math.max(box.offsetWidth, MIN_WIDTH)
-	let left = e.clientX - OFFSET_X
-	if (left + w > vw - RIGHT_MARGIN) left = vw - w - RIGHT_MARGIN
-	box.style.left = `${Math.max(0, left)}px`
+	// Anchor the box's left edge at the cursor's x position, then shrink it to
+	// fit the space remaining to the right (rather than relocating it) so the
+	// preview stays at the cursor's x location even when the post is wider than
+	// the screen. setProperty(...,'important') so it beats the stylesheet.
+	const left  = Math.max(0, e.clientX - OFFSET_X)
+	const avail = vw - RIGHT_MARGIN - left
+	box.style.setProperty('max-width', `${Math.max(MIN_WIDTH, avail)}px`, 'important')
+	box.style.left = `${left}px`
 
-	const anchor = trigger || e.target
-	const rect  = anchor.getBoundingClientRect()
+	const rect  = e.target.getBoundingClientRect()
 	const h     = box.offsetHeight
 	const below = rect.bottom + window.scrollY
 	const above = rect.top    + window.scrollY - h
@@ -118,6 +120,7 @@ function attachPreviewHandlers(obj) {
 	box.addEventListener('mouseleave', () => setTimeout(checkPreviews, REMOVAL_DELAY))
 	trigger.addEventListener('mouseenter', () => {})
 	trigger.addEventListener('mouseleave', () => setTimeout(checkPreviews, REMOVAL_DELAY))
+	trigger.addEventListener('mousemove', e => positionPreviewBox(box, e))
 }
 
 function checkPreviews() {
@@ -181,7 +184,7 @@ function startHover(event) {
 
 			attachPreviewHandlers(obj)
 			applyHoverListeners(box)
-			positionPreviewBox(box, lastMouseEvent, trigger)
+			positionPreviewBox(box, lastMouseEvent)
 			box.style.display = 'block'
 			return
 		}
@@ -193,17 +196,17 @@ function startHover(event) {
 			const obj = { box, trigger, parent: parentPrev, contextPost: null }
 			previewStack.push(obj)
 			attachPreviewHandlers(obj)
-			positionPreviewBox(box, lastMouseEvent, trigger)
+			positionPreviewBox(box, lastMouseEvent)
 			box.style.display = 'block'
 			return
 		}
 
-		// Show loading state
+		// Show loading state, then fetch
 		const box = createPreviewBox(false, true)
 		const obj = { box, trigger, parent: parentPrev, contextPost: null }
 		previewStack.push(obj)
 		attachPreviewHandlers(obj)
-		positionPreviewBox(box, lastMouseEvent, trigger)
+		positionPreviewBox(box, lastMouseEvent)
 		box.style.display = 'block'
 
 		fetchPostData(postUid).then(data => {
@@ -226,7 +229,7 @@ function startHover(event) {
 			}
 
 			// Reposition after content change
-			if (lastMouseEvent) positionPreviewBox(box, lastMouseEvent, trigger)
+			if (lastMouseEvent) positionPreviewBox(box, lastMouseEvent)
 		})
 	}, PREVIEW_DELAY)
 }
@@ -241,6 +244,10 @@ function stopHover(event) {
 	cleanupTimer = setTimeout(checkPreviews, REMOVAL_DELAY)
 }
 
+function trackHoverMove(event) {
+	const obj = previewStack.find(o => o.trigger === event.currentTarget)
+	if (obj) positionPreviewBox(obj.box, event)
+}
 
 function showAggregated(trigger, e) {
 	const container = trigger.parentElement
@@ -281,7 +288,7 @@ function showAggregated(trigger, e) {
 
 	attachPreviewHandlers(obj)
 	applyHoverListeners(box)
-	positionPreviewBox(box, e, trigger)
+	positionPreviewBox(box, e)
 	box.style.display = 'block'
 }
 
@@ -445,8 +452,10 @@ function applyHoverListeners(root) {
 	root.querySelectorAll('.replies-label').forEach(el => {
 		el.removeEventListener('mouseover',  startHover)
 		el.removeEventListener('mouseout',   stopHover)
+		el.removeEventListener('mousemove',  trackHoverMove)
 		el.addEventListener   ('mouseover',  startHover)
 		el.addEventListener   ('mouseout',   stopHover)
+		el.addEventListener   ('mousemove',  trackHoverMove)
 	})
 }
 
