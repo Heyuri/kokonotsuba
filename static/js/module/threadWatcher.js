@@ -136,7 +136,9 @@ const kktwch = { name: "KK Thread watcher",
 		// Gather thread info from the page
 		var info = kktwch.getThreadInfoFromPage(threadUid);
 
-		// Count current posts on page to set as "seen"
+		// Count current posts on page (only a preview is shown on the index, so this
+		// undercounts). lastSeenCount stays null and is seeded from the API's real count
+		// on the first poll, so the whole thread isn't treated as unread when watched.
 		var currentPostCount = info.postCount || 0;
 
 		watched[threadUid] = {
@@ -148,7 +150,9 @@ const kktwch = { name: "KK Thread watcher",
 			boardUrl: info.boardUrl || '',
 			boardId: info.boardId || '',
 			postCount: currentPostCount,
-			lastSeenCount: currentPostCount,
+			// null until the first poll, when it's seeded to the real post count
+			// (everything that exists at watch time counts as already read).
+			lastSeenCount: null,
 			quoteCount: 0,
 			// null until the first poll, so pre-existing quotes aren't flagged as new.
 			seenQuoteCount: null,
@@ -272,15 +276,17 @@ const kktwch = { name: "KK Thread watcher",
 			var watched = kktwch.getWatchedThreads();
 			if (!watched[threadUid]) {
 				kktwch.watchCurrentThread(threadUid);
-				// Re-read after creation so we can bump for our pending reply.
 				watched = kktwch.getWatchedThreads();
 			}
 
-			// Bump lastSeenCount to include our own pending post so the next
-			// poll doesn't treat our own reply as an unread reply and ding.
+			// Replying means you've engaged with the thread, so treat it as fully read.
+			// Reset to the unseeded state so the next poll seeds lastSeenCount to the real
+			// post count — this works regardless of the current view (full thread, a later
+			// page, or "view last X replies", which only render a subset of posts) and also
+			// stops our own pending reply from being counted as unread.
 			var entry = watched[threadUid];
 			if (entry) {
-				entry.lastSeenCount = Math.max(entry.lastSeenCount || 0, (entry.postCount || 0) + 1);
+				entry.lastSeenCount = null;
 				kktwch.saveWatchedThreads(watched);
 			}
 		});
@@ -324,6 +330,10 @@ const kktwch = { name: "KK Thread watcher",
 				var w = kktwch.getWatchedThreads();
 				var e = w[threadUid];
 				if (!e) return;
+
+				// Not yet seeded: let the poll set the real count instead of seeding from
+				// the visible-post count (which undercounts on paged / last-X-replies views).
+				if (e.lastSeenCount === null || e.lastSeenCount === undefined) return;
 
 				var totalSeen = seenPosts.size;
 				if (totalSeen > e.lastSeenCount) {
@@ -439,6 +449,14 @@ const kktwch = { name: "KK Thread watcher",
 						entry.postCount = newPostCount;
 						entry.lastChecked = Date.now();
 
+						// Seed lastSeenCount on the first poll: everything present when the
+						// thread was watched counts as already read (the page only showed a
+						// preview, so we couldn't know the real count at watch time).
+						var postWasSeeded = entry.lastSeenCount !== null && entry.lastSeenCount !== undefined;
+						if (!postWasSeeded) {
+							entry.lastSeenCount = newPostCount;
+						}
+
 						if (typeof info.board_title === 'string') {
 							entry.boardTitle = info.board_title;
 						}
@@ -456,7 +474,9 @@ const kktwch = { name: "KK Thread watcher",
 						}
 						entry.quoteCount = newQuoteCount;
 
-						if (newPostCount > prevPostCount) {
+						// Only count growth once seeded, so first watching a thread never
+						// notifies for posts that already existed.
+						if (postWasSeeded && newPostCount > prevPostCount) {
 							pollGrowth[threadUid] = true;
 						}
 						// A genuinely new quote this poll (not the seeding poll).
@@ -543,6 +563,10 @@ const kktwch = { name: "KK Thread watcher",
 			var entry = watched[threadUid];
 			if (!entry) return;
 
+			// Not yet seeded by a poll: leave it for the poll to seed to the real count,
+			// so we don't lock in the page's preview count as "seen".
+			if (entry.lastSeenCount === null || entry.lastSeenCount === undefined) return;
+
 			var postCount = entry.postCount || 0;
 			var lastSeen = entry.lastSeenCount || 0;
 			// Nothing new to mark
@@ -580,7 +604,9 @@ const kktwch = { name: "KK Thread watcher",
 	},
 
 	getUnreadCount: function (entry) {
-		return Math.max(0, (entry.postCount || 0) - (entry.lastSeenCount || 0));
+		// Not yet seeded (just watched): nothing is unread until the first poll.
+		if (entry.lastSeenCount === null || entry.lastSeenCount === undefined) return 0;
+		return Math.max(0, (entry.postCount || 0) - entry.lastSeenCount);
 	},
 
 	// "Board Title - Subject/preview/filename" (label computed server-side).
