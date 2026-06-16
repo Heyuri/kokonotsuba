@@ -4,6 +4,154 @@
 const KOKOJS = true;
 const STATIC_URL = document.currentScript.src.split('?')[0].replace(/js\/[^/]+\.js$/, ''); // Get the script URL, and remove 'js/{filename}.js'
 
+/* Cross-subdomain shared storage.
+ *
+ * localStorage is hard-scoped to its origin, so a value written on one board's
+ * subdomain is invisible to another. kkStore mirrors a fixed allowlist of keys
+ * through a hidden iframe hosted on STATIC_URL (static/html/storageHub.html):
+ * because that iframe always runs on the single STATIC_URL origin, its storage
+ * is shared by every board no matter which subdomain serves it.
+ *
+ * The local localStorage is kept as a synchronous mirror of the shared keys, so
+ * existing `localStorage.getItem(...)` reads keep working unchanged — callers
+ * only need to write through kkStore.set()/remove() instead of localStorage so
+ * the change is forwarded to the hub (and from there to other tabs/subdomains).
+ *
+ * If the hub can't be reached (different parent domain, file not deployed,
+ * blocked iframe), kkStore degrades to plain local-only localStorage, so the
+ * common same-subdomain case keeps working with no regression.
+ */
+const kkStore = (function () {
+	// Keys shared across subdomains. All thread-watcher state lives here.
+	var SHARED_KEYS = [
+		'threadWatcher',          // the watch list
+		'kkOwnPosts',             // the user's own posts (for quote detection)
+		'kktwch_lastPoll',        // cross-tab poll lock
+		'kktwch_lastThreadSeen',  // new-thread high-water mark
+		'kktwch_lastDing',        // cross-tab audio-ding dedup
+		'threadWatcherNotifs',    // settings
+		'threadWatcherQuotePush',
+		'threadWatcherNewThreads'
+	];
+	var keySet = {};
+	SHARED_KEYS.forEach(function (k) { keySet[k] = true; });
+
+	var HUB_URL = STATIC_URL + 'html/storageHub.html';
+	var hubOrigin;
+	try { hubOrigin = new URL(HUB_URL, location.href).origin; } catch (e) { hubOrigin = null; }
+
+	var hubWindow = null;
+	var ready = false;       // hub answered (or we gave up) — mirror is usable
+	var settled = false;     // ready callbacks have fired
+	var readyCbs = [];
+	var changeCbs = [];
+
+	function isShared(key) { return !!keySet[key]; }
+
+	function lsGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+	function lsSet(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
+	function lsRemove(key) { try { localStorage.removeItem(key); } catch (e) {} }
+
+	function settle() {
+		if (settled) return;
+		settled = true;
+		ready = true;
+		var cbs = readyCbs; readyCbs = [];
+		cbs.forEach(function (cb) { try { cb(); } catch (e) {} });
+	}
+
+	function fireChange(key) {
+		changeCbs.forEach(function (cb) { try { cb(key); } catch (e) {} });
+	}
+
+	function post(msg) {
+		if (hubWindow && hubOrigin) {
+			try { hubWindow.postMessage(msg, hubOrigin); } catch (e) {}
+		}
+	}
+
+	// Same-origin cross-tab changes still arrive via the native storage event.
+	window.addEventListener('storage', function (e) {
+		if (e.key === null) return;
+		if (isShared(e.key)) fireChange(e.key);
+	});
+
+	// Messages from the hub iframe.
+	window.addEventListener('message', function (e) {
+		if (!hubOrigin || e.origin !== hubOrigin) return;
+		var d = e.data;
+		if (!d || d.__kkstore !== 1) return;
+
+		if (d.type === 'snapshot') {
+			var data = d.data || {};
+			SHARED_KEYS.forEach(function (k) {
+				if (Object.prototype.hasOwnProperty.call(data, k) && data[k] !== null) {
+					// Adopt the hub's value into the local mirror.
+					lsSet(k, data[k]);
+				} else {
+					// Hub doesn't have it yet: migrate any pre-existing local value up
+					// so data created before the hub existed isn't lost on first run.
+					var local = lsGet(k);
+					if (local !== null) post({ __kkstore: 1, type: 'set', key: k, value: local });
+				}
+			});
+			settle();
+			SHARED_KEYS.forEach(fireChange);
+		} else if (d.type === 'change' && isShared(d.key)) {
+			if (d.value === null || d.value === undefined) lsRemove(d.key);
+			else lsSet(d.key, d.value);
+			fireChange(d.key);
+		}
+	});
+
+	function init() {
+		if (!hubOrigin) { settle(); return; }
+		try {
+			var iframe = document.createElement('iframe');
+			iframe.setAttribute('aria-hidden', 'true');
+			iframe.setAttribute('tabindex', '-1');
+			iframe.title = 'storage';
+			iframe.style.cssText = 'position:absolute;width:0;height:0;border:0;visibility:hidden;';
+			iframe.addEventListener('load', function () {
+				hubWindow = iframe.contentWindow;
+				post({ __kkstore: 1, type: 'init', keys: SHARED_KEYS });
+			});
+			iframe.addEventListener('error', settle);
+			iframe.src = HUB_URL;
+			(document.body || document.documentElement).appendChild(iframe);
+			// Fall back to local-only if the hub never answers.
+			setTimeout(function () { if (!settled) settle(); }, 4000);
+		} catch (e) {
+			settle();
+		}
+	}
+
+	if (document.readyState === 'loading') {
+		window.addEventListener('DOMContentLoaded', init);
+	} else {
+		init();
+	}
+
+	return {
+		SHARED_KEYS: SHARED_KEYS,
+		isReady: function () { return ready; },
+		// Run cb once the hub snapshot has been applied (or we've given up).
+		onReady: function (cb) { if (settled) cb(); else readyCbs.push(cb); },
+		// Subscribe to shared-key changes from other tabs/subdomains.
+		onChange: function (cb) { changeCbs.push(cb); },
+		get: function (key) { return lsGet(key); },
+		set: function (key, value) {
+			value = String(value);
+			lsSet(key, value);
+			if (isShared(key)) post({ __kkstore: 1, type: 'set', key: key, value: value });
+		},
+		remove: function (key) {
+			lsRemove(key);
+			if (isShared(key)) post({ __kkstore: 1, type: 'remove', key: key });
+		}
+	};
+})();
+
 /* - */
 if (typeof(FONTSIZE) === "undefined") { var FONTSIZE = 12; }
 

@@ -1,5 +1,5 @@
 <!--&HEADER_TXT_BASE/-->
-	<script src="{$STATIC_URL}js/koko.js?v=16"></script>
+	<script src="{$STATIC_URL}js/koko.js?v=17"></script>
 	<script src="{$STATIC_URL}js/qu.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qu2.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qu3.js?v=23" defer></script>
@@ -17,7 +17,7 @@
 	<script src="{$STATIC_URL}js/windowLibrary.js" defer></script>
 	<script src="{$STATIC_URL}js/checkboxDeletion.js" defer></script>
 	<script src="{$STATIC_URL}js/postInit.js" defer></script>
-	<script src="{$STATIC_URL}js/posting.js" defer></script>
+	<script src="{$STATIC_URL}js/posting.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/inline.js" defer></script>
 	<script src="{$STATIC_URL}js/attachmentExpander.js" defer></script>
 	<script src="{$STATIC_URL}js/postDeletionLib.js" defer></script>

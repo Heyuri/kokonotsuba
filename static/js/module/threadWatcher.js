@@ -71,12 +71,23 @@ const kktwch = { name: "KK Thread watcher",
 		// Reflect any existing unread counts in the title before the first poll lands
 		kktwch.updatePageTitle();
 
-		// Keep tabs that didn't poll in sync: when another tab updates the watched
-		// threads, refresh this tab's list/title/top-link without re-notifying.
-		window.addEventListener('storage', function (e) {
-			if (e.key !== kktwch.STORAGE_KEY) return;
+		// Keep tabs/subdomains that didn't poll in sync: when another tab updates the
+		// watched threads (locally or via the shared hub), refresh this tab's
+		// list/title/top-link without re-notifying.
+		kkStore.onChange(function (key) {
+			if (key !== kktwch.STORAGE_KEY) return;
 			kktwch.renderWatchList();
 			kktwch.updatePageTitle();
+		});
+
+		// The shared store loads asynchronously: once its snapshot has been merged
+		// in (it may carry threads watched on another subdomain), refresh the UI.
+		kkStore.onReady(function () {
+			kktwch.renderWatchList();
+			kktwch.updatePageTitle();
+			// Pick up counts for any threads adopted from another subdomain
+			// (respects the cross-tab poll lock inside checkAllThreads).
+			kktwch.checkAllThreads();
 		});
 
 		// Start polling
@@ -109,7 +120,7 @@ const kktwch = { name: "KK Thread watcher",
 	},
 
 	saveWatchedThreads: function (threads) {
-		localStorage.setItem(kktwch.STORAGE_KEY, JSON.stringify(threads));
+		kkStore.set(kktwch.STORAGE_KEY, JSON.stringify(threads));
 	},
 
 	// The user's own posts, recorded at post time as a set of "board_no" keys (see posting.js).
@@ -386,7 +397,7 @@ const kktwch = { name: "KK Thread watcher",
 		var now = Date.now();
 		var lastPoll = parseInt(localStorage.getItem('kktwch_lastPoll') || '0', 10);
 		if (now - lastPoll < kktwch.POLL_INTERVAL - 1000) return;
-		localStorage.setItem('kktwch_lastPoll', now);
+		kkStore.set('kktwch_lastPoll', now);
 
 		var apiUrl = document.querySelector('meta[name="threadWatcherApiUrl"]')?.content || null;
 		if (!apiUrl) return;
@@ -643,7 +654,7 @@ const kktwch = { name: "KK Thread watcher",
 
 		// First run: record the marker without notifying for everything that already exists.
 		if (prev === null || prev === '') {
-			if (nt.latest) localStorage.setItem('kktwch_lastThreadSeen', nt.latest);
+			if (nt.latest) kkStore.set('kktwch_lastThreadSeen', nt.latest);
 			return;
 		}
 
@@ -653,7 +664,7 @@ const kktwch = { name: "KK Thread watcher",
 			kktwch.notifyNewThread(item);
 		});
 
-		if (nt.latest) localStorage.setItem('kktwch_lastThreadSeen', nt.latest);
+		if (nt.latest) kkStore.set('kktwch_lastThreadSeen', nt.latest);
 	},
 
 	// New-thread alerts are push-only: they're enabled by default and cover every
@@ -724,7 +735,7 @@ const kktwch = { name: "KK Thread watcher",
 		var now = Date.now();
 		var lastDing = parseInt(localStorage.getItem('kktwch_lastDing') || '0', 10);
 		if (now - lastDing < 3000) return;
-		localStorage.setItem('kktwch_lastDing', now);
+		kkStore.set('kktwch_lastDing', now);
 
 		kktwch._playDingOnce();
 		for (var i = 1; i < count; i++) {
@@ -901,13 +912,13 @@ const kktwch = { name: "KK Thread watcher",
 	/* Settings */
 	sett: function (tab, div) {
 		if (tab !== 'general') return;
-		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'threadWatcherNotifs\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
+		div.innerHTML += '<label><input type="checkbox" onchange="kkStore.set(\'threadWatcherNotifs\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
 			(_kkSetting('threadWatcherNotifs') ? ' checked="checked"' : '') +
 			'>Thread watcher notifications</label>';
-		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'threadWatcherQuotePush\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
+		div.innerHTML += '<label><input type="checkbox" onchange="kkStore.set(\'threadWatcherQuotePush\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
 			(_kkSetting('threadWatcherQuotePush') ? ' checked="checked"' : '') +
 			'>Push notification when quoted</label>';
-		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'threadWatcherNewThreads\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
+		div.innerHTML += '<label><input type="checkbox" onchange="kkStore.set(\'threadWatcherNewThreads\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
 			(_kkSetting('threadWatcherNewThreads') ? ' checked="checked"' : '') +
 			'>New thread notifications</label>';
 	}

@@ -75,7 +75,11 @@ document.addEventListener("DOMContentLoaded", () => {
 				keys.sort((a, b) => store[a] - store[b]);
 				keys.slice(0, keys.length - 500).forEach(k => delete store[k]);
 			}
-			localStorage.setItem("kkOwnPosts", JSON.stringify(store));
+			const serialized = JSON.stringify(store);
+			// Write through the shared store so own-posts are visible to the thread
+			// watcher on other subdomains (falls back to local-only if unavailable).
+			if (typeof kkStore !== "undefined") kkStore.set("kkOwnPosts", serialized);
+			else localStorage.setItem("kkOwnPosts", serialized);
 		} catch (e) { /* ignore quota/parse errors */ }
 	}
 
