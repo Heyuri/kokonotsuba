@@ -107,12 +107,13 @@ const kkupdate = { name: "KK Thread Updating",
 		document.querySelector("#update-status").innerText = kkupdate.timer;
 		kkupdate.timer -= 1;
 	},
-	sett: function (tab, div) { if (tab!="general") return;
-		div.innerHTML+= `
-			<label><input type="checkbox" onchange="localStorage.setItem('update',this.checked);kkupdate.reset();kkupdate.startup();"`+(_kkSetting("update")?'checked="checked"':'')+`>Thread updater</label>
-			`;
-	}
 };
 
 /* Register */
-if(typeof(KOKOJS)!="undefined"){kkjs.modules.push(kkupdate);}else{console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");}
+if(typeof(KOKOJS)!="undefined"){
+	kkjs.modules.push(kkupdate);
+	kkSetting.add({ key: "update", label: "Thread updater", onChange: function () {
+		kkupdate.reset();
+		kkupdate.startup();
+	} }, "Browsing");
+}else{console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");}

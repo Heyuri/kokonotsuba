@@ -23,12 +23,13 @@ const kkqu2 = { name: "KK Quotelink Marking",
 			qu[i].classList.remove("oplink");
 		}
 	},
-	sett: function (tab, div) { if (tab!="general") return;
-		div.innerHTML+= `
-			<label><input type="checkbox" onchange="localStorage.setItem('markopqu',this.checked);kkqu2.reset();kkqu2.startup();"`+(_kkSetting("markopqu")?'checked="checked"':'')+`>Mark OP quotes</label>
-			`;
-	}
 };
 
 /* Register */
-if(typeof(KOKOJS)!="undefined"){kkjs.modules.push(kkqu2);}else{console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");}
+if(typeof(KOKOJS)!="undefined"){
+	kkjs.modules.push(kkqu2);
+	kkSetting.add({ key: "markopqu", label: "Mark OP quotes", onChange: function () {
+		kkqu2.reset();
+		kkqu2.startup();
+	} }, "Quotes & Replies");
+}else{console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");}

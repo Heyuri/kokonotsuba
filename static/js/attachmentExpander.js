@@ -15,13 +15,15 @@
 	attachmentExpander.archiveExtensions = Array("zip","rar","7z","tar","gz","bz2","xz");
 
 	// some koko js settings
-	// Register settings function
-	window.settingsHooks.push(function(tab, div) { 
-		if (tab!="general") return;
-		div.innerHTML+= `
-			<label><input type="checkbox" onchange="localStorage.setItem('imgexpand',this.checked);attachmentExpander.resetAttachmentExpansion();attachmentExpander.startUpimageExpanding();"`+(_kkSetting("imgexpand")?' checked="checked"':'')+`>Inline image expansion</label>
-			<label><input type="checkbox" onchange="localStorage.setItem('imghover',this.checked);document.getElementById('hoverimg').src='';"`+(_kkSetting("imghover")?' checked="checked"':'')+`>Image hover</label>`;
-	});
+	// Register settings under the Media section
+	kkSetting.add({ key: "imgexpand", label: "Inline image expansion", onChange: function () {
+		attachmentExpander.resetAttachmentExpansion();
+		attachmentExpander.startUpimageExpanding();
+	} }, "Media");
+	kkSetting.add({ key: "imghover", label: "Image hover", onChange: function () {
+		var h = document.getElementById("hoverimg");
+		if (h) h.src = "";
+	} }, "Media");
 
 	attachmentExpander.startUpimageExpanding = function () {
 

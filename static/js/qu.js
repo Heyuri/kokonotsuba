@@ -84,11 +84,6 @@ const kkqu = {
 		kkqu.hlquotes();
 	},
 
-	/* Settings */
-	sett: function (tab, div) {
-		if (tab != "general") return;
-		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'quotetooltip\',this.checked);document.body.classList.toggle(\'quotetooltip-enabled\', this.checked);" ' + (_kkSetting("quotetooltip") ? 'checked="checked"' : '') + '>Quote tooltip</label>';
-	},
 	/* Function */
 	quote: function (no) {
 		var qrEnabled = typeof kkqr !== 'undefined' && kkqr && _kkSetting("useqr");
@@ -153,4 +148,7 @@ const kkqu = {
 };
 
 /* Register */
-if(typeof(KOKOJS)!="undefined"){kkjs.modules.push(kkqu);}else{console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");}
+if(typeof(KOKOJS)!="undefined"){
+	kkjs.modules.push(kkqu);
+	kkSetting.add({ key: "quotetooltip", label: "Quote tooltip", bodyClass: "quotetooltip-enabled" }, "Quotes & Replies");
+}else{console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");}

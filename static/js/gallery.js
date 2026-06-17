@@ -56,10 +56,6 @@ const kkgal = {
 		if (kkgal.gframe) $del(kkgal.gframe);
 		window.removeEventListener("resize", kkgal._evresize);
 	},
-	sett: function(tab, div) {
-		if (tab!="general") return;
-		div.innerHTML+= `<label><input type="checkbox" onchange="localStorage.setItem('galmode',this.checked);kkgal.reset();kkgal.startup();"`+(_kkSetting("galmode")?' checked="checked"':'')+`>Gallery mode</label>`;
-	},
 	/* - */
 	gframe:	null,
 	gimg:	null,
@@ -171,6 +167,10 @@ const kkgal = {
 
 if (typeof(KOKOJS)!="undefined") {
 	kkjs.modules.push(kkgal);
+	kkSetting.add({ key: "galmode", label: "Gallery mode", onChange: function () {
+		kkgal.reset();
+		kkgal.startup();
+	} }, "Media");
 } else {
 	console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");
 }

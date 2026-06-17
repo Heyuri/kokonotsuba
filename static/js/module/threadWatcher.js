@@ -71,12 +71,23 @@ const kktwch = { name: "KK Thread watcher",
 		// Reflect any existing unread counts in the title before the first poll lands
 		kktwch.updatePageTitle();
 
-		// Keep tabs that didn't poll in sync: when another tab updates the watched
-		// threads, refresh this tab's list/title/top-link without re-notifying.
-		window.addEventListener('storage', function (e) {
-			if (e.key !== kktwch.STORAGE_KEY) return;
+		// Keep tabs/subdomains that didn't poll in sync: when another tab updates the
+		// watched threads (locally or via the shared hub), refresh this tab's
+		// list/title/top-link without re-notifying.
+		kkStore.onChange(function (key) {
+			if (key !== kktwch.STORAGE_KEY) return;
 			kktwch.renderWatchList();
 			kktwch.updatePageTitle();
+		});
+
+		// The shared store loads asynchronously: once its snapshot has been merged
+		// in (it may carry threads watched on another subdomain), refresh the UI.
+		kkStore.onReady(function () {
+			kktwch.renderWatchList();
+			kktwch.updatePageTitle();
+			// Pick up counts for any threads adopted from another subdomain
+			// (respects the cross-tab poll lock inside checkAllThreads).
+			kktwch.checkAllThreads();
 		});
 
 		// Start polling
@@ -109,7 +120,7 @@ const kktwch = { name: "KK Thread watcher",
 	},
 
 	saveWatchedThreads: function (threads) {
-		localStorage.setItem(kktwch.STORAGE_KEY, JSON.stringify(threads));
+		kkStore.set(kktwch.STORAGE_KEY, JSON.stringify(threads));
 	},
 
 	// The user's own posts, recorded at post time as a set of "board_no" keys (see posting.js).
@@ -157,6 +168,9 @@ const kktwch = { name: "KK Thread watcher",
 			// null until the first poll, so pre-existing quotes aren't flagged as new.
 			seenQuoteCount: null,
 			lastChecked: Date.now(),
+			// When the thread was first watched; used to order the watch list
+			// most-recent-first (Object.keys order is unreliable for numeric uids).
+			watchedAt: Date.now(),
 			url: info.url || ''
 		};
 
@@ -386,7 +400,7 @@ const kktwch = { name: "KK Thread watcher",
 		var now = Date.now();
 		var lastPoll = parseInt(localStorage.getItem('kktwch_lastPoll') || '0', 10);
 		if (now - lastPoll < kktwch.POLL_INTERVAL - 1000) return;
-		localStorage.setItem('kktwch_lastPoll', now);
+		kkStore.set('kktwch_lastPoll', now);
 
 		var apiUrl = document.querySelector('meta[name="threadWatcherApiUrl"]')?.content || null;
 		if (!apiUrl) return;
@@ -643,7 +657,7 @@ const kktwch = { name: "KK Thread watcher",
 
 		// First run: record the marker without notifying for everything that already exists.
 		if (prev === null || prev === '') {
-			if (nt.latest) localStorage.setItem('kktwch_lastThreadSeen', nt.latest);
+			if (nt.latest) kkStore.set('kktwch_lastThreadSeen', nt.latest);
 			return;
 		}
 
@@ -653,7 +667,7 @@ const kktwch = { name: "KK Thread watcher",
 			kktwch.notifyNewThread(item);
 		});
 
-		if (nt.latest) localStorage.setItem('kktwch_lastThreadSeen', nt.latest);
+		if (nt.latest) kkStore.set('kktwch_lastThreadSeen', nt.latest);
 	},
 
 	// New-thread alerts are push-only: they're enabled by default and cover every
@@ -724,7 +738,7 @@ const kktwch = { name: "KK Thread watcher",
 		var now = Date.now();
 		var lastDing = parseInt(localStorage.getItem('kktwch_lastDing') || '0', 10);
 		if (now - lastDing < 3000) return;
-		localStorage.setItem('kktwch_lastDing', now);
+		kkStore.set('kktwch_lastDing', now);
 
 		kktwch._playDingOnce();
 		for (var i = 1; i < count; i++) {
@@ -782,7 +796,11 @@ const kktwch = { name: "KK Thread watcher",
 		if (!content) return;
 
 		var watched = kktwch.getWatchedThreads();
-		var keys = Object.keys(watched);
+		// Most recently watched first. Entries from before watchedAt existed
+		// sort last (treated as oldest) but keep a stable relative order.
+		var keys = Object.keys(watched).sort(function (a, b) {
+			return (watched[b].watchedAt || 0) - (watched[a].watchedAt || 0);
+		});
 
 		var list = content.querySelector('.threadWatcherList');
 
@@ -898,19 +916,29 @@ const kktwch = { name: "KK Thread watcher",
 		toplink.classList.toggle('twUnread', !hasQuote && !!hasUnread);
 	},
 
-	/* Settings */
-	sett: function (tab, div) {
-		if (tab !== 'general') return;
-		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'threadWatcherNotifs\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
-			(_kkSetting('threadWatcherNotifs') ? ' checked="checked"' : '') +
-			'>Thread watcher notifications</label>';
-		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'threadWatcherQuotePush\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
-			(_kkSetting('threadWatcherQuotePush') ? ' checked="checked"' : '') +
-			'>Push notification when quoted</label>';
-		div.innerHTML += '<label><input type="checkbox" onchange="localStorage.setItem(\'threadWatcherNewThreads\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
-			(_kkSetting('threadWatcherNewThreads') ? ' checked="checked"' : '') +
-			'>New thread notifications</label>';
-	}
 };
 
-if (typeof(KOKOJS) != "undefined") { kkjs.modules.push(kktwch); } else { console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script."); }
+if (typeof(KOKOJS) != "undefined") {
+	kkjs.modules.push(kktwch);
+
+	// Declare which localStorage keys the watcher wants mirrored across subdomains.
+	// koko.js's kkStore is key-agnostic; each feature opts its own keys in here.
+	kkStore.registerShared([
+		'threadWatcher',          // the watch list
+		'kkOwnPosts',             // the user's own posts (for quote detection)
+		'kktwch_lastPoll',        // cross-tab poll lock
+		'kktwch_lastThreadSeen',  // new-thread high-water mark
+		'kktwch_lastDing',        // cross-tab audio-ding dedup
+		'threadWatcherNotifs',    // settings
+		'threadWatcherQuotePush',
+		'threadWatcherNewThreads'
+	]);
+
+	// Thread-watcher settings live in kkStore (shared across subdomains), not plain
+	// localStorage, so each writes through kkStore.set instead of the default.
+	var twStore = function (key, value) { kkStore.set(key, value); };
+	var twPermission = function (v) { if (v) kktwch.requestNotificationPermission(); };
+	kkSetting.add({ key: "threadWatcherNotifs", label: "Thread watcher notifications", store: twStore, onChange: twPermission }, "Thread Watcher");
+	kkSetting.add({ key: "threadWatcherQuotePush", label: "Push notification when quoted", store: twStore, onChange: twPermission }, "Thread Watcher");
+	kkSetting.add({ key: "threadWatcherNewThreads", label: "New thread notifications", store: twStore, onChange: twPermission }, "Thread Watcher");
+} else { console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script."); }

@@ -75,8 +75,11 @@ class messageRenderer {
 	}
 
 	public function formatPreviewComment(string $body, int $maxLength = 80): string {
-		$comment = $this->applyCommentHooks(sanitizeStr(truncateText($body, $maxLength)));
-		return autoLink($comment);
+		// autoLink must run before applyCommentHooks
+		$comment = autoLink(sanitizeStr(truncateText($body, $maxLength)));
+
+		// return comment after the comment hooks are run
+		return $this->applyCommentHooks($comment);
 	}
 
 	private function getComposeFormVariables(string $modulePageUrl, string $prefillRecipient = '', string $prefillSubject = '', string $prefillBody = ''): array {
@@ -165,10 +168,10 @@ class messageRenderer {
 		$nameHtml = $this->buildSenderNameHtml($message);
 		$isSent = ($message['sender_tripcode'] === $userTripCode);
 
-		// apply PostComment hook for emotes/bbcode rendering
+		// autoLink before applyCommentHooks so emote <img> src urls aren't mangled
 		$bodyHtml = newLinesToBreakLines(sanitizeStr($message['message_body']));
-		$bodyHtml = $this->applyCommentHooks($bodyHtml);
 		$bodyHtml = autoLink($bodyHtml);
+		$bodyHtml = $this->applyCommentHooks($bodyHtml);
 
 		// build reply prefills
 		$replyRecipient = $message['sender_tripcode'];
@@ -201,9 +204,10 @@ class messageRenderer {
 	public function renderAdminViewMessage(array $message, string $backUrl): string {
 		$nameHtml = $this->buildSenderNameHtml($message);
 
+		// autoLink before applyCommentHooks so emote <img> src urls aren't mangled
 		$bodyHtml = newLinesToBreakLines(sanitizeStr($message['message_body']));
-		$bodyHtml = $this->applyCommentHooks($bodyHtml);
 		$bodyHtml = autoLink($bodyHtml);
+		$bodyHtml = $this->applyCommentHooks($bodyHtml);
 
 		return $this->adminPageRenderer->ParseBlock('PM_VIEW_MESSAGE', [
 			'{$MODULE_PAGE_URL}' => htmlspecialchars($backUrl),

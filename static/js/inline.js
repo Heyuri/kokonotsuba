@@ -79,16 +79,14 @@ const kkinline = {
 			link.onclick = null;
 		});
 	},
-	sett: function(tab, div) {
-		if (tab !== "general") return;
-		div.innerHTML += `
-			<label><input type="checkbox" onchange="localStorage.setItem('quoteinline',this.checked);kkinline.reset();kkinline.startup();" ${(_kkSetting("quoteinline")?'checked':'')} /> Quote inlining</label>
-		`;
-	}
 };
 
 if (typeof KOKOJS !== "undefined") {
 	kkjs.modules.push(kkinline);
+	kkSetting.add({ key: "quoteinline", label: "Quote inlining", onChange: function () {
+		kkinline.reset();
+		kkinline.startup();
+	} }, "Quotes & Replies");
 } else {
 	console.error("ERROR: KOKOJS not loaded! Please load 'koko.js' before this script.");
 }
