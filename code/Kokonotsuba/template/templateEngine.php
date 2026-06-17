@@ -11,6 +11,8 @@ Within a directory, root files take precedence over subdirectory files.
 
 namespace Kokonotsuba\template;
 
+use function Puchiko\strings\sanitizeStr;
+
 class templateEngine {
 	private array $tpl_block = [];
 	private string $templateDir;
@@ -116,6 +118,7 @@ class templateEngine {
 		static $defaultPlaceholders = [
 			'{$LANGUAGE}'        => '',
 			'{$OVERBOARD}'       => '',
+			'{$CONTACT}'         => '',
 			'{$STATIC_URL}'      => '',
 			'{$REF_URL}'         => '',
 			'{$LIVE_INDEX_FILE}'        => '',
@@ -135,6 +138,7 @@ class templateEngine {
 		$ary_val = array_merge($defaultPlaceholders, [
 			'{$LANGUAGE}'        => $this->config['PIXMICAT_LANGUAGE'] ?? '',
 			'{$OVERBOARD}'       => !empty($this->config['ADMINBAR_OVERBOARD_BUTTON']) ? '[<a href="'.$this->config['LIVE_INDEX_FILE'].'?mode=overboard">Overboard</a>]' : ' ',
+			'{$CONTACT}'         => !empty($this->config['CONTACT_URL']) ? '[<a href="' . sanitizeStr($this->config['CONTACT_URL']) . '">Contact</a>]' : '',
 			'{$STATIC_URL}'      => $this->config['STATIC_URL'] ?? '',
 			'{$REF_URL}'         => $this->config['REF_URL'] ?? '',
 			'{$LIVE_INDEX_FILE}'        => $this->config['LIVE_INDEX_FILE'] ?? '',
