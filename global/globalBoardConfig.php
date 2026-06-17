@@ -623,6 +623,9 @@ $config['OVERBOARD_THREADS_PER_PAGE'] = 20;
 // A link to the overboard on the admin bar (next to [Admin] on the top right). Displayed as [Overboard]
 $config['ADMINBAR_OVERBOARD_BUTTON'] = true;
 
+// A link shown on the admin bar as [Contact]. Leave empty to hide the button.
+$config['CONTACT_URL'] = '';
+
 $config['ACTIONLOG_MAX_PER_PAGE'] = 50; // the amount of actionlog entries per page
 
 // The duration (in seconds) of inactivity allowed before automatically logging out a staff user
