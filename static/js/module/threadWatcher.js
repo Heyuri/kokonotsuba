@@ -168,6 +168,9 @@ const kktwch = { name: "KK Thread watcher",
 			// null until the first poll, so pre-existing quotes aren't flagged as new.
 			seenQuoteCount: null,
 			lastChecked: Date.now(),
+			// When the thread was first watched; used to order the watch list
+			// most-recent-first (Object.keys order is unreliable for numeric uids).
+			watchedAt: Date.now(),
 			url: info.url || ''
 		};
 
@@ -793,7 +796,11 @@ const kktwch = { name: "KK Thread watcher",
 		if (!content) return;
 
 		var watched = kktwch.getWatchedThreads();
-		var keys = Object.keys(watched);
+		// Most recently watched first. Entries from before watchedAt existed
+		// sort last (treated as oldest) but keep a stable relative order.
+		var keys = Object.keys(watched).sort(function (a, b) {
+			return (watched[b].watchedAt || 0) - (watched[a].watchedAt || 0);
+		});
 
 		var list = content.querySelector('.threadWatcherList');
 
