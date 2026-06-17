@@ -475,17 +475,14 @@ const kkhoverbacklink = {
 		document.querySelectorAll('[data-backlinks-processed]').forEach(el => el.removeAttribute('data-backlinks-processed'))
 		previewStack = []
 	},
-	sett: function(tab, div) {
-		if (tab !== "general") return
-		div.innerHTML +=
-			'<label><input type="checkbox" onchange="localStorage.setItem(\'addbacklinks\',this.checked);kkhoverbacklink.reset();kkhoverbacklink.startup();" ' +
-			(_kkSetting("addbacklinks") ? 'checked' : '') +
-			'>Add reply backlinks</label>'
-	}
 }
 
 if (typeof KOKOJS !== "undefined") {
 	kkjs.modules.push(kkhoverbacklink)
+	kkSetting.add({ key: "addbacklinks", label: "Add reply backlinks", onChange: function () {
+		kkhoverbacklink.reset()
+		kkhoverbacklink.startup()
+	} }, "Quotes & Replies")
 } else {
 	console.error("ERROR: KOKOJS not loaded! Please load 'koko.js' before this script.")
 }

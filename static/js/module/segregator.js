@@ -30,10 +30,12 @@
 		if (checked) setCookie(); else clearCookie();
 	};
 
-	window.settingsHooks.push(function(tab, div) {
-		if (tab !== 'general') return;
-		div.innerHTML += '<label><input type="checkbox" onchange="window._segregatorContentToggle(this.checked)"'
-			+ (hasCookie() ? ' checked="checked"' : '')
-			+ '>Enable all content</label>';
-	});
+	// Cookie-backed, so override how the value is read and persisted.
+	kkSetting.add({
+		key: 'segregatorContent',
+		label: 'Enable all content',
+		checked: hasCookie,
+		store: function () {},
+		onChange: function (v) { window._segregatorContentToggle(v); }
+	}, 'Browsing');
 })();

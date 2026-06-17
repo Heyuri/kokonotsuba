@@ -909,19 +909,29 @@ const kktwch = { name: "KK Thread watcher",
 		toplink.classList.toggle('twUnread', !hasQuote && !!hasUnread);
 	},
 
-	/* Settings */
-	sett: function (tab, div) {
-		if (tab !== 'general') return;
-		div.innerHTML += '<label><input type="checkbox" onchange="kkStore.set(\'threadWatcherNotifs\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
-			(_kkSetting('threadWatcherNotifs') ? ' checked="checked"' : '') +
-			'>Thread watcher notifications</label>';
-		div.innerHTML += '<label><input type="checkbox" onchange="kkStore.set(\'threadWatcherQuotePush\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
-			(_kkSetting('threadWatcherQuotePush') ? ' checked="checked"' : '') +
-			'>Push notification when quoted</label>';
-		div.innerHTML += '<label><input type="checkbox" onchange="kkStore.set(\'threadWatcherNewThreads\',this.checked);if(this.checked)kktwch.requestNotificationPermission();"' +
-			(_kkSetting('threadWatcherNewThreads') ? ' checked="checked"' : '') +
-			'>New thread notifications</label>';
-	}
 };
 
-if (typeof(KOKOJS) != "undefined") { kkjs.modules.push(kktwch); } else { console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script."); }
+if (typeof(KOKOJS) != "undefined") {
+	kkjs.modules.push(kktwch);
+
+	// Declare which localStorage keys the watcher wants mirrored across subdomains.
+	// koko.js's kkStore is key-agnostic; each feature opts its own keys in here.
+	kkStore.registerShared([
+		'threadWatcher',          // the watch list
+		'kkOwnPosts',             // the user's own posts (for quote detection)
+		'kktwch_lastPoll',        // cross-tab poll lock
+		'kktwch_lastThreadSeen',  // new-thread high-water mark
+		'kktwch_lastDing',        // cross-tab audio-ding dedup
+		'threadWatcherNotifs',    // settings
+		'threadWatcherQuotePush',
+		'threadWatcherNewThreads'
+	]);
+
+	// Thread-watcher settings live in kkStore (shared across subdomains), not plain
+	// localStorage, so each writes through kkStore.set instead of the default.
+	var twStore = function (key, value) { kkStore.set(key, value); };
+	var twPermission = function (v) { if (v) kktwch.requestNotificationPermission(); };
+	kkSetting.add({ key: "threadWatcherNotifs", label: "Thread watcher notifications", store: twStore, onChange: twPermission }, "Thread Watcher");
+	kkSetting.add({ key: "threadWatcherQuotePush", label: "Push notification when quoted", store: twStore, onChange: twPermission }, "Thread Watcher");
+	kkSetting.add({ key: "threadWatcherNewThreads", label: "New thread notifications", store: twStore, onChange: twPermission }, "Thread Watcher");
+} else { console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script."); }

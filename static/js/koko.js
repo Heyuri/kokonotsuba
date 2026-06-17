@@ -22,19 +22,12 @@ const STATIC_URL = document.currentScript.src.split('?')[0].replace(/js\/[^/]+\.
  * common same-subdomain case keeps working with no regression.
  */
 const kkStore = (function () {
-	// Keys shared across subdomains. All thread-watcher state lives here.
-	var SHARED_KEYS = [
-		'threadWatcher',          // the watch list
-		'kkOwnPosts',             // the user's own posts (for quote detection)
-		'kktwch_lastPoll',        // cross-tab poll lock
-		'kktwch_lastThreadSeen',  // new-thread high-water mark
-		'kktwch_lastDing',        // cross-tab audio-ding dedup
-		'threadWatcherNotifs',    // settings
-		'threadWatcherQuotePush',
-		'threadWatcherNewThreads'
-	];
-	var keySet = {};
-	SHARED_KEYS.forEach(function (k) { keySet[k] = true; });
+	// Keys shared across subdomains are declared at runtime by whichever feature
+	// owns them, via kkStore.registerShared([...]). koko.js stays agnostic about
+	// which keys those are — modules opt their own keys in. Any key NOT registered
+	// is written to the local subdomain's localStorage only (e.g. style/theme prefs).
+	var registered = Object.create(null);
+	function registeredKeys() { return Object.keys(registered); }
 
 	var HUB_URL = STATIC_URL + 'html/storageHub.html';
 	var hubOrigin;
@@ -46,7 +39,24 @@ const kkStore = (function () {
 	var readyCbs = [];
 	var changeCbs = [];
 
-	function isShared(key) { return !!keySet[key]; }
+	function isShared(key) { return !!registered[key]; }
+
+	// Registration hook: a feature declares the localStorage keys it wants mirrored
+	// across subdomains. Safe to call before or after the hub connects — keys
+	// registered late are sent to the hub immediately and pull a fresh snapshot.
+	function registerShared(keys) {
+		if (typeof keys === 'string') keys = [keys];
+		if (!Array.isArray(keys)) return [];
+		var added = [];
+		keys.forEach(function (k) {
+			if (typeof k === 'string' && !registered[k]) { registered[k] = true; added.push(k); }
+		});
+		if (added.length && hubWindow) {
+			// Hub already connected: register the new keys and get their values back.
+			post({ __kkstore: 1, type: 'init', keys: added });
+		}
+		return added;
+	}
 
 	function lsGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
 	function lsSet(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
@@ -84,7 +94,8 @@ const kkStore = (function () {
 
 		if (d.type === 'snapshot') {
 			var data = d.data || {};
-			SHARED_KEYS.forEach(function (k) {
+			var keys = registeredKeys();
+			keys.forEach(function (k) {
 				if (Object.prototype.hasOwnProperty.call(data, k) && data[k] !== null) {
 					// Adopt the hub's value into the local mirror.
 					lsSet(k, data[k]);
@@ -96,7 +107,7 @@ const kkStore = (function () {
 				}
 			});
 			settle();
-			SHARED_KEYS.forEach(fireChange);
+			keys.forEach(fireChange);
 		} else if (d.type === 'change' && isShared(d.key)) {
 			if (d.value === null || d.value === undefined) lsRemove(d.key);
 			else lsSet(d.key, d.value);
@@ -114,7 +125,7 @@ const kkStore = (function () {
 			iframe.style.cssText = 'position:absolute;width:0;height:0;border:0;visibility:hidden;';
 			iframe.addEventListener('load', function () {
 				hubWindow = iframe.contentWindow;
-				post({ __kkstore: 1, type: 'init', keys: SHARED_KEYS });
+				post({ __kkstore: 1, type: 'init', keys: registeredKeys() });
 			});
 			iframe.addEventListener('error', settle);
 			iframe.src = HUB_URL;
@@ -133,7 +144,8 @@ const kkStore = (function () {
 	}
 
 	return {
-		SHARED_KEYS: SHARED_KEYS,
+		// Declare keys to mirror across subdomains (the registration hook).
+		registerShared: registerShared,
 		isReady: function () { return ready; },
 		// Run cb once the hub snapshot has been applied (or we've given up).
 		onReady: function (cb) { if (settled) cb(); else readyCbs.push(cb); },
@@ -417,6 +429,108 @@ const _kkSetting = function (key) {
 	if (stored !== null) return stored === "true";
 	return !!_kkDefaults[key];
 };
+
+/*
+ * kkSetting — registry for the General tab of the Settings window.
+ *
+ * Register a setting under a named section header; the section grows a small
+ * header the first time a setting references it, and settings render grouped
+ * under their section in registration order.
+ *
+ *   kkSetting.add({ key: "centerthreads", label: "Center threads",
+ *                   bodyClass: "centerthreads" }, "Layout");
+ *
+ * def fields:
+ *   key       storage key (required)
+ *   label     visible label text (required)
+ *   type      "checkbox" (default) | "number"
+ *   bodyClass body class toggled to match the value (checkbox only)
+ *   onChange  callback(value) run after the value is stored
+ *   id        optional id set on the input element
+ *   checked   optional fn() -> bool overriding the read of the current value
+ *             (use when state lives somewhere other than localStorage, e.g. a cookie)
+ *   store     optional fn(key, value) overriding how the value is persisted
+ *             (default: localStorage.setItem; thread watcher uses kkStore.set)
+ *   min/max/step  bounds for "number" inputs
+ */
+const kkSetting = {
+	get: _kkSetting,
+	_sections: [],
+	_sectionMap: {},
+	add: function (def, header) {
+		header = header || "General";
+		var section = this._sectionMap[header];
+		if (!section) {
+			section = { header: header, items: [] };
+			this._sectionMap[header] = section;
+			this._sections.push(section);
+		}
+		section.items.push(def);
+		return this;
+	},
+	_apply: function (def, value) {
+		if (def.bodyClass) document.body.classList.toggle(def.bodyClass, value);
+		if (typeof def.onChange == "function") def.onChange(value);
+	},
+	_store: function (def, value) {
+		if (typeof def.store == "function") def.store(def.key, value);
+		else localStorage.setItem(def.key, value);
+	},
+	_buildItem: function (def) {
+		var self = this;
+		var label = document.createElement("label");
+		var input = document.createElement("input");
+		if (def.id) input.id = def.id;
+		if (def.type == "number") {
+			input.type = "number";
+			var stored = localStorage.getItem(def.key);
+			if (stored !== null) input.value = stored;
+			else if (typeof _kkDefaults[def.key] != "undefined") input.value = _kkDefaults[def.key];
+			if (typeof def.min != "undefined") input.min = def.min;
+			if (typeof def.max != "undefined") input.max = def.max;
+			if (typeof def.step != "undefined") input.step = def.step;
+			input.addEventListener("change", function () {
+				self._store(def, this.value);
+				if (typeof def.onChange == "function") def.onChange(this.value);
+			});
+			label.appendChild(document.createTextNode(def.label + " "));
+			label.appendChild(input);
+		} else {
+			input.type = "checkbox";
+			input.checked = (typeof def.checked == "function") ? def.checked() : _kkSetting(def.key);
+			input.addEventListener("change", function () {
+				self._store(def, this.checked);
+				self._apply(def, this.checked);
+			});
+			label.appendChild(input);
+			label.appendChild(document.createTextNode(def.label));
+		}
+		return label;
+	},
+	render: function (container) {
+		for (var i=0; i<this._sections.length; i++) {
+			var section = this._sections[i];
+			var secEl = document.createElement("div");
+			secEl.className = "settsection";
+			var head = document.createElement("h4");
+			head.className = "settsectionheader";
+			head.textContent = section.header;
+			secEl.appendChild(head);
+			for (var j=0; j<section.items.length; j++) {
+				secEl.appendChild(this._buildItem(section.items[j]));
+			}
+			container.appendChild(secEl);
+		}
+	}
+};
+
+// General-tab settings, grouped into sections.
+kkSetting.add({ key: "neomenu", label: "Use neomenu", bodyClass: "neomenuEnabled",
+	onChange: function (v) { kkjs.toggleNeomenu(v); } }, "Interface");
+kkSetting.add({ key: "persistnav", label: "Persistent navigation", bodyClass: "persistnav" }, "Layout");
+kkSetting.add({ key: "persistpager", label: "Persistent pager", bodyClass: "persistpager" }, "Layout");
+kkSetting.add({ key: "centerthreads", label: "Center threads", bodyClass: "centerthreads" }, "Layout");
+kkSetting.add({ key: "tripkeys", label: "Futallaby style tripkeys" }, "Posting");
 
 const kkjs = {
 	modules: Array(),
@@ -728,15 +842,10 @@ const kkjs = {
 
 		var div = $id("settarea");
 		div.innerHTML = '';
-		
+		div.classList.toggle("settarea_general", tab == "general");
+
 		if (tab == "general") {
-			div.innerHTML += `
-				<label><input type="checkbox" onchange="localStorage.setItem('neomenu',this.checked);document.body.classList.toggle('neomenuEnabled', this.checked);kkjs.toggleNeomenu(this.checked);" ${(_kkSetting("neomenu") ? 'checked="checked"' : '')}>Use neomenu</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('persistnav',this.checked);document.body.classList.toggle('persistnav', this.checked);" ${(_kkSetting("persistnav") ? 'checked="checked"' : '')}>Persistent navigation</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('persistpager',this.checked);document.body.classList.toggle('persistpager', this.checked);" ${(_kkSetting("persistpager") ? 'checked="checked"' : '')}>Persistent pager</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('centerthreads',this.checked);document.body.classList.toggle('centerthreads', this.checked);" ${(_kkSetting("centerthreads") ? 'checked="checked"' : '')}>Center threads</label>
-				<label><input type="checkbox" onchange="localStorage.setItem('tripkeys', this.checked);" ${(_kkSetting("tripkeys") ? 'checked="checked"' : '')}>Futallaby style tripkeys</label>
-			`;
+			kkSetting.render(div);
 		}
 		// loop through modules and add their settings
 		for (var i=0; i<kkjs.modules.length; i++) {

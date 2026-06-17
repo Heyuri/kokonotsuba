@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>kk storage hub</title>
+</head>
+<body>
+<script>
+/* Cross-subdomain storage hub for Kokonotsuba.
+ *
+ * This page is hosted on STATIC_URL and embedded as a hidden iframe by every
+ * board (see kkStore in koko.js). Because the iframe always runs on the single
+ * STATIC_URL origin, its localStorage is shared by all boards regardless of
+ * which subdomain they're served from. Boards talk to it over postMessage:
+ *
+ *   parent -> hub : {__kkstore, type:'init', keys:[...]}   register shared keys, get a snapshot
+ *                   {__kkstore, type:'set', key, value}    persist a value
+ *                   {__kkstore, type:'remove', key}        delete a value
+ *   hub -> parent : {__kkstore, type:'snapshot', data:{}}  reply to init
+ *                   {__kkstore, type:'change', key, value} a shared key changed (value null = removed)
+ *
+ * Cross-tab/cross-subdomain sync rides on the native `storage` event: a write in
+ * one tab's hub fires `storage` in every other tab's hub (all same origin), and
+ * each relays the change up to its own parent board page.
+ */
+(function () {
+	'use strict';
+
+	// Keys this hub is allowed to read/relay, populated by the parent's `init`.
+	var sharedKeys = Object.create(null);
+
+	// The (verified) origin of the board page that embedded us, learned from its
+	// `init` message. We only ever relay changes back to this exact origin, so a
+	// foreign site that frames the hub never receives another site's data.
+	var parentOrigin = null;
+
+	// Decide whether an origin is allowed to talk to us. We trust our own origin
+	// and any sibling subdomain under the same registrable domain. The parent
+	// domain is derived from OUR OWN hostname (which an attacker can't change),
+	// never from anything the caller sends — so a foreign site framing this hub
+	// can't trick it into serving another site's data.
+	function allowedOrigin(origin) {
+		if (!origin || origin === 'null') return false;
+		var u;
+		try { u = new URL(origin); } catch (e) { return false; }
+		if (u.protocol !== location.protocol) return false;
+
+		var host = u.hostname;
+		var self = location.hostname;
+		if (host === self) return true;
+
+		var parts = self.split('.');
+		var parent = (parts.length > 2 ? parts.slice(1).join('.') : self);
+		return host === parent || host.endsWith('.' + parent);
+	}
+
+	function snapshot() {
+		var data = {};
+		Object.keys(sharedKeys).forEach(function (k) {
+			try {
+				var v = localStorage.getItem(k);
+				if (v !== null) data[k] = v;
+			} catch (e) {}
+		});
+		return data;
+	}
+
+	window.addEventListener('message', function (e) {
+		if (!allowedOrigin(e.origin)) return;
+		var d = e.data;
+		if (!d || d.__kkstore !== 1 || !e.source) return;
+
+		switch (d.type) {
+			case 'init':
+				parentOrigin = e.origin;
+				if (Array.isArray(d.keys)) {
+					d.keys.forEach(function (k) {
+						if (typeof k === 'string') sharedKeys[k] = true;
+					});
+				}
+				e.source.postMessage({ __kkstore: 1, type: 'snapshot', data: snapshot() }, e.origin);
+				break;
+
+			case 'set':
+				if (typeof d.key === 'string' && sharedKeys[d.key]) {
+					try { localStorage.setItem(d.key, String(d.value)); } catch (err) {}
+				}
+				break;
+
+			case 'remove':
+				if (typeof d.key === 'string' && sharedKeys[d.key]) {
+					try { localStorage.removeItem(d.key); } catch (err) {}
+				}
+				break;
+		}
+	});
+
+	// Relay changes made by other tabs (same origin) up to our parent board page.
+	// Only ever sent to the verified parent origin learned during `init`.
+	window.addEventListener('storage', function (e) {
+		if (e.key === null) return; // localStorage.clear()
+		if (!sharedKeys[e.key]) return;
+		if (!parentOrigin) return;
+		if (window.parent && window.parent !== window) {
+			try {
+				window.parent.postMessage(
+					{ __kkstore: 1, type: 'change', key: e.key, value: e.newValue },
+					parentOrigin
+				);
+			} catch (err) {}
+		}
+	});
+})();
+</script>
+</body>
+</html>

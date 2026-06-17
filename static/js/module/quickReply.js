@@ -97,11 +97,6 @@ const kkqr = { name: "KK Quick Reply",
 	qrs: $id("qrs"),
 	win: null,
 	closedOnce: false,
-	/* Settings */
-	sett: function (tab, div) { if (tab!="general") return;
-		div.innerHTML+= '<label><input id="useqr_cb" type="checkbox" onchange="localStorage.setItem(\'useqr\',this.checked);if(!this.checked)setTimeout(()=>kkqr.closeqr(), 0);"'+(_kkSetting("useqr")?'checked="checked"':'')+'>Use quick reply</label>';
-		div.innerHTML+= '<label><input type="checkbox" onchange="localStorage.setItem(\'alwaysqr\',this.checked);if(this.checked){localStorage.setItem(\'useqr\',true);document.getElementById(\'useqr_cb\').checked=true;if(!kkqr.win)kkqr.openqr();}"'+(_kkSetting("alwaysqr")?'checked="checked"':'')+'>Persistent quick reply</label>';
-	},
 	/* Function */
 	_evqr: function (event) {
 		if (!kkqr.win) {
@@ -321,4 +316,17 @@ const kkqr = { name: "KK Quick Reply",
 };
 
 /* Register */
-if(typeof(KOKOJS)!="undefined"){kkjs.modules.push(kkqr);}else{console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");}
+if(typeof(KOKOJS)!="undefined"){
+	kkjs.modules.push(kkqr);
+	kkSetting.add({ key: "useqr", label: "Use quick reply", id: "useqr_cb", onChange: function (v) {
+		if (!v) setTimeout(function () { kkqr.closeqr(); }, 0);
+	} }, "Posting");
+	kkSetting.add({ key: "alwaysqr", label: "Persistent quick reply", onChange: function (v) {
+		if (v) {
+			localStorage.setItem("useqr", true);
+			var cb = document.getElementById("useqr_cb");
+			if (cb) cb.checked = true;
+			if (!kkqr.win) kkqr.openqr();
+		}
+	} }, "Posting");
+}else{console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");}
