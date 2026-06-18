@@ -256,16 +256,19 @@ const kktwch = { name: "KK Thread watcher",
 		if (!form) return;
 
 		// On page load, check if we just created a new thread and should auto-watch it
+		// (auto-watch is optional, enabled by default). Always clear the flag.
 		if (sessionStorage.getItem('twAutoWatch')) {
 			sessionStorage.removeItem('twAutoWatch');
-			var opPost = document.querySelector('.post.op');
-			if (opPost) {
-				var threadUid = opPost.getAttribute('data-thread-uid');
-				if (threadUid) {
-					var watched = kktwch.getWatchedThreads();
-					if (!watched[threadUid]) {
-						kktwch.watchCurrentThread(threadUid);
-						kktwch.renderWatchList();
+			if (_kkSetting('threadWatcherAutoWatch')) {
+				var opPost = document.querySelector('.post.op');
+				if (opPost) {
+					var threadUid = opPost.getAttribute('data-thread-uid');
+					if (threadUid) {
+						var watched = kktwch.getWatchedThreads();
+						if (!watched[threadUid]) {
+							kktwch.watchCurrentThread(threadUid);
+							kktwch.renderWatchList();
+						}
 					}
 				}
 			}
@@ -275,8 +278,8 @@ const kktwch = { name: "KK Thread watcher",
 			var restoInput = form.querySelector('input[name="resto"]');
 
 			if (!restoInput || !restoInput.value) {
-				// New thread: set flag so we auto-watch after redirect
-				sessionStorage.setItem('twAutoWatch', '1');
+				// New thread: set flag so we auto-watch after redirect (if enabled).
+				if (_kkSetting('threadWatcherAutoWatch')) sessionStorage.setItem('twAutoWatch', '1');
 				return;
 			}
 
@@ -288,7 +291,10 @@ const kktwch = { name: "KK Thread watcher",
 			if (!threadUid) return;
 
 			var watched = kktwch.getWatchedThreads();
-			if (!watched[threadUid]) {
+			// Auto-watch on reply is optional (enabled by default). When off, an
+			// unwatched thread stays unwatched; an already-watched one still gets
+			// marked read below.
+			if (!watched[threadUid] && _kkSetting('threadWatcherAutoWatch')) {
 				kktwch.watchCurrentThread(threadUid);
 				watched = kktwch.getWatchedThreads();
 			}
@@ -732,6 +738,8 @@ const kktwch = { name: "KK Thread watcher",
 
 	// Play the notification sound `count` times in quick succession.
 	playDing: function (count) {
+		// Audio pings are optional (enabled by default).
+		if (!_kkSetting('threadWatcherSound')) return;
 		count = count || 1;
 
 		// Cross-tab dedup: if another tab played the ding within the last 3 seconds, skip.
@@ -931,7 +939,9 @@ if (typeof(KOKOJS) != "undefined") {
 		'kktwch_lastDing',        // cross-tab audio-ding dedup
 		'threadWatcherNotifs',    // settings
 		'threadWatcherQuotePush',
-		'threadWatcherNewThreads'
+		'threadWatcherNewThreads',
+		'threadWatcherSound',
+		'threadWatcherAutoWatch'
 	]);
 
 	// Thread-watcher settings live in kkStore (shared across subdomains), not plain
@@ -941,4 +951,6 @@ if (typeof(KOKOJS) != "undefined") {
 	kkSetting.add({ key: "threadWatcherNotifs", label: "Thread watcher notifications", store: twStore, onChange: twPermission }, "Thread Watcher");
 	kkSetting.add({ key: "threadWatcherQuotePush", label: "Push notification when quoted", store: twStore, onChange: twPermission }, "Thread Watcher");
 	kkSetting.add({ key: "threadWatcherNewThreads", label: "New thread notifications", store: twStore, onChange: twPermission }, "Thread Watcher");
+	kkSetting.add({ key: "threadWatcherSound", label: "Play notification sound", store: twStore }, "Thread Watcher");
+	kkSetting.add({ key: "threadWatcherAutoWatch", label: "Auto-watch threads you post in", store: twStore }, "Thread Watcher");
 } else { console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script."); }

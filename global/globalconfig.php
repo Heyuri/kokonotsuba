@@ -124,6 +124,8 @@ $config['JS_DEFAULT_SETTINGS'] = [
     'threadWatcherNotifs' => true,
     'threadWatcherQuotePush' => true,
     'threadWatcherNewThreads' => true,
+    'threadWatcherSound' => true,
+    'threadWatcherAutoWatch' => true,
 ];
 
 // kokoimg styles
