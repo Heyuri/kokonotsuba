@@ -52,7 +52,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->requiredRoleForDeleteRestoredRecord = $this->getConfig('AuthLevels.CAN_DELETE_RESTORE_RECORDS', userRole::LEV_ADMIN);
 
 		// initialize url
-		$this->modulePageUrl = $this->getModulePageURL([], false);
+		$this->modulePageUrl = $this->getModulePageURL([], false, true);
 
 		// generate the restored index url
 		$restoredIndexUrl = $this->getModulePageURL(['pageName' => 'restoredIndex'], false);
