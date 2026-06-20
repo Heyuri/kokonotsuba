@@ -710,6 +710,8 @@
 /* Thread watcher module */
 .threadWatcherContent {
 	padding: 0.75em;
+	max-height: 60vh;
+	overflow-y: auto;
 }
 
 /* Watcher status colors: green = unread replies, red = an unread reply quotes you.
