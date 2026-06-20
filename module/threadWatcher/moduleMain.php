@@ -38,7 +38,7 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// The watcher window is opened from a top-link in the admin bar.
 		$this->listenTopLinks('onRenderTopLinks');
-		$this->registerScript('threadWatcher.js?v=4');
+		$this->registerScript('threadWatcher.js?v=5');
 		$this->listenModuleHeader('onGenerateModuleHeader');
 		$this->listenThreadWidget('onRenderThreadWidget');
 	}
@@ -138,9 +138,11 @@ class moduleMain extends abstractModuleMain {
 		$items = [];
 		foreach ($rows as $row) {
 			$items[] = [
-				'board_uid'   => (int) $row['boardUID'],
-				'board_title' => (string) $row['board_title'],
-				'thread_uid'  => (string) $row['thread_uid'],
+				'board_uid'      => (int) $row['boardUID'],
+				'board_title'    => (string) $row['board_title'],
+				'thread_uid'     => (string) $row['thread_uid'],
+				// OP post number, so the client can skip notifying for its own new threads.
+				'post_op_number' => (int) $row['post_op_number'],
 				'label'       => $this->buildThreadLabel(
 					(string) $row['subject'],
 					(string) $row['comment'],

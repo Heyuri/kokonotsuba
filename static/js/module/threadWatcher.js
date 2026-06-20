@@ -136,6 +136,18 @@ const kktwch = { name: "KK Thread watcher",
 		}
 	},
 
+	// True if the given board UID + post number is one of the user's own posts.
+	// Used to suppress new-thread notifications for threads the user just created.
+	isOwnPost: function (boardUid, postNo) {
+		if (!boardUid || !postNo) return false;
+		try {
+			var data = JSON.parse(localStorage.getItem('kkOwnPosts') || '{}');
+			return data.hasOwnProperty(boardUid + '_' + postNo);
+		} catch (e) {
+			return false;
+		}
+	},
+
 	/* --- Watch/Unwatch --- */
 
 	watchCurrentThread: function (threadUid) {
@@ -668,6 +680,10 @@ const kktwch = { name: "KK Thread watcher",
 		}
 
 		var items = Array.isArray(nt.items) ? nt.items : [];
+		// Don't notify for threads the user created themselves.
+		items = items.filter(function (item) {
+			return !kktwch.isOwnPost(item.board_uid, item.post_op_number);
+		});
 		// Cap per cycle so a burst of new threads can't spam a wall of notifications.
 		items.slice(0, 5).forEach(function (item) {
 			kktwch.notifyNewThread(item);
