@@ -12,10 +12,12 @@ class messageUtility {
 	) {}
 
 	public function isValidTripCode(string $tripCode): bool {
-		// accepts secure and regular tripcodes
+		// accepts secure and regular tripcodes; '!'/'!!' are legacy
+		// equivalents of the '◆'/'★' trip key prefixes
 		return (
 			preg_match('/^◆.{10,}$/u', $tripCode) === 1 ||
-			preg_match('/^★.{10,}$/u', $tripCode) === 1
+			preg_match('/^★.{10,}$/u', $tripCode) === 1 ||
+			preg_match('/^!{1,2}.{10,}$/u', $tripCode) === 1
 		);
 	}
 
