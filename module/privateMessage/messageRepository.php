@@ -13,18 +13,31 @@ class messageRepository extends baseRepository {
 		parent::__construct($databaseConnection, $privateMessageTable);
 	}
 
+	// '◆'/'★' are the canonical regular/secure trip key prefixes; '!'/'!!'
+	// are legacy equivalents accepted on input. Normalize to canonical so
+	// the stored keys stay single-form and lookups match by exact equality.
+	private function normalizeTripCode(string $tripCode): string {
+		if (str_starts_with($tripCode, '!!')) {
+			return '★' . substr($tripCode, 2);
+		}
+		if (str_starts_with($tripCode, '!')) {
+			return '◆' . substr($tripCode, 1);
+		}
+		return $tripCode;
+	}
+
 	public function sendMessage(
-		string $senderTripCode, 
-		string $recipientTripCode, 
+		string $senderTripCode,
+		string $recipientTripCode,
 		string $senderName,
-		string $messageSubject, 
+		string $messageSubject,
 		string $messageBody,
 		string $ipAddress
 	): void {
 		$this->insert([
-			'sender_tripcode' => $senderTripCode,
+			'sender_tripcode' => $this->normalizeTripCode($senderTripCode),
 			'sender_name' => $senderName,
-			'recipient_tripcode' => $recipientTripCode,
+			'recipient_tripcode' => $this->normalizeTripCode($recipientTripCode),
 			'message_subject' => $messageSubject,
 			'message_body' => $messageBody,
 			'ip_address' => $ipAddress,
