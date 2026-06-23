@@ -81,4 +81,8 @@ class messageService {
 	public function getUnreadMessageCount(string $recipientTripCode): int {
 		return $this->messageRepository->getUnreadMessageCount($recipientTripCode);
 	}
+
+	public function deleteMessagesForUser(array $ids, string $userTripCode): void {
+		$this->messageRepository->deleteMessagesForUser($ids, $userTripCode);
+	}
 }

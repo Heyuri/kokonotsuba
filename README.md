@@ -91,7 +91,7 @@ You can configure most things after installing but these will be required for yo
 
 1. From your browser, access install.php at `test/install.php`
 
-2. On install.php all you really need to do is set the admin username and password then click submit. If there's no errors, delete install.php and access `test/koko.php`
+2. On install.php, set the admin username and password, and fill in the board title and sub-title (these are required). The board identifier and path are pre-filled for you. Then click submit. If there's no errors, delete install.php and access `test/koko.php`
 
 3. You should be good to go. If you have any problems, open an Issue on the repository and describe the problem along with any error logs you can provide
 

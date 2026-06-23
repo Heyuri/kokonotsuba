@@ -20,6 +20,7 @@ use Kokonotsuba\board\boardCreator;
 use Kokonotsuba\request\request;
 use function Puchiko\request\redirect;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Puchiko\isValidMySQLDumpFile;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
@@ -43,6 +44,9 @@ class handleBoardRequestsRoute {
 	// handle actions
 	public function handleBoardRequests(): void {
 		$this->softErrorHandler->handleAuthError(userRole::LEV_ADMIN);
+
+		// All board actions are state-changing POST submissions - require a valid CSRF token.
+		requirePostWithCsrf($this->request);
 
 		// edit a board
 		if(!empty($this->request->getParameter('edit-board', 'POST'))) {

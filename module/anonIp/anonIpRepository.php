@@ -18,9 +18,19 @@ class anonIpRepository extends baseRepository {
 		string $postTable,
 		private readonly string $actionLogTable,
 		private readonly string $soudaneTable,
+		private readonly string $anonSalt,
 	) {
 		parent::__construct($databaseConnection, $postTable);
 		self::validateTableNames($actionLogTable, $soudaneTable);
+
+		// A reversible hash is not anonymization. Refuse to run with an empty salt:
+		// without a secret salt, the truncated SHA-512 of an IP can be brute-forced.
+		if ($this->anonSalt === '') {
+			throw new \RuntimeException(
+				"anonIp: ANON_IP_SALT is empty in databaseSettings.php. "
+				. "Set a long random secret before anonymizing IPs."
+			);
+		}
 	}
 
 	/**
@@ -48,11 +58,11 @@ class anonIpRepository extends baseRepository {
 	 */
 	public function anonymizeBefore(string $cutoff): void {
 		$sql = "UPDATE {$this->table}
-		        SET host = LEFT(SHA2(host, 512), 16)
+		        SET host = LEFT(SHA2(CONCAT(:anon_salt, host), 512), 16)
 		        WHERE root < :cutoff
 		        AND host NOT REGEXP '^[0-9a-f]{16}$'";
 
-		$this->query($sql, [':cutoff' => $cutoff]);
+		$this->query($sql, [':cutoff' => $cutoff, ':anon_salt' => $this->anonSalt]);
 	}
 
 	/**
@@ -81,11 +91,11 @@ class anonIpRepository extends baseRepository {
 	 */
 	public function anonymizeActionLogBefore(string $cutoff): void {
 		$sql = "UPDATE {$this->actionLogTable}
-		        SET ip_address = LEFT(SHA2(ip_address, 512), 16)
+		        SET ip_address = LEFT(SHA2(CONCAT(:anon_salt, ip_address), 512), 16)
 		        WHERE time_added < :cutoff
 		        AND ip_address NOT REGEXP '^[0-9a-f]{16}$'";
 
-		$this->query($sql, [':cutoff' => $cutoff]);
+		$this->query($sql, [':cutoff' => $cutoff, ':anon_salt' => $this->anonSalt]);
 	}
 
 	/**
@@ -109,10 +119,10 @@ class anonIpRepository extends baseRepository {
 	 */
 	public function anonymizeAll(): void {
 		$sql = "UPDATE {$this->table}
-		        SET host = LEFT(SHA2(host, 512), 16)
+		        SET host = LEFT(SHA2(CONCAT(:anon_salt, host), 512), 16)
 		        WHERE host NOT REGEXP '^[0-9a-f]{16}$'";
 
-		$this->query($sql);
+		$this->query($sql, [':anon_salt' => $this->anonSalt]);
 	}
 
 	/**
@@ -137,10 +147,10 @@ class anonIpRepository extends baseRepository {
 	 */
 	public function anonymizeAllActionLog(): void {
 		$sql = "UPDATE {$this->actionLogTable}
-		        SET ip_address = LEFT(SHA2(ip_address, 512), 16)
+		        SET ip_address = LEFT(SHA2(CONCAT(:anon_salt, ip_address), 512), 16)
 		        WHERE ip_address NOT REGEXP '^[0-9a-f]{16}$'";
 
-		$this->query($sql);
+		$this->query($sql, [':anon_salt' => $this->anonSalt]);
 	}
 
 	// -------------------------------------------------------------------------
@@ -173,11 +183,11 @@ class anonIpRepository extends baseRepository {
 	 */
 	public function anonymizeSoudaneBefore(string $cutoff): void {
 		$sql = "UPDATE {$this->soudaneTable}
-		        SET ip_address = LEFT(SHA2(ip_address, 512), 16)
+		        SET ip_address = LEFT(SHA2(CONCAT(:anon_salt, ip_address), 512), 16)
 		        WHERE date_added < :cutoff
 		        AND ip_address NOT REGEXP '^[0-9a-f]{16}$'";
 
-		$this->query($sql, [':cutoff' => $cutoff]);
+		$this->query($sql, [':cutoff' => $cutoff, ':anon_salt' => $this->anonSalt]);
 	}
 
 	/**
@@ -202,9 +212,9 @@ class anonIpRepository extends baseRepository {
 	 */
 	public function anonymizeAllSoudane(): void {
 		$sql = "UPDATE {$this->soudaneTable}
-		        SET ip_address = LEFT(SHA2(ip_address, 512), 16)
+		        SET ip_address = LEFT(SHA2(CONCAT(:anon_salt, ip_address), 512), 16)
 		        WHERE ip_address NOT REGEXP '^[0-9a-f]{16}$'";
 
-		$this->query($sql);
+		$this->query($sql, [':anon_salt' => $this->anonSalt]);
 	}
 }

@@ -17,6 +17,7 @@ use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\html\drawBoardTable;
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\getCsrfHiddenInput;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
@@ -56,7 +57,8 @@ class boardsRoute {
 				'{$DEFAULT_CDN_DIR}' => $this->config['CDN_DIR'],
 				'{$DEFAULT_CDN_URL}' => $this->config['CDN_URL'],
 				'{$DEFAULT_ROOT_URL}' => $this->board->getBoardRootURL(),
-				'{$DEFAULT_PATH}' => $defaultPath
+				'{$DEFAULT_PATH}' => $defaultPath,
+				'{$CSRF_INPUT}' => getCsrfHiddenInput()
 			]);
 		}
 
@@ -93,6 +95,7 @@ class boardsRoute {
 			$templateValues['{$BOARD_CONFIG_FILE}'] = $boardConfig;
 			$templateValues['{$CHECKED}'] = $boardListed ? 'checked' : '';
 			$templateValues['{$BOARD_STORAGE_DIR}'] = $boardStorageDirectoryName;
+			$templateValues['{$CSRF_INPUT}'] = getCsrfHiddenInput();
 			$templateValues['{$EDIT_BOARD_HTML}'] = $this->adminTemplateEngine->ParseBlock('EDIT_BOARD', $templateValues);
 			
 			// prevent showing editing a reserved board

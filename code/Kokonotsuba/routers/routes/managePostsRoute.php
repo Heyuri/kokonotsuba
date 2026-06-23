@@ -22,6 +22,7 @@ use function Kokonotsuba\libraries\createAssocArrayFromBoardArray;
 use function Kokonotsuba\libraries\html\drawManagePostsFilterForm;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
+use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\generatePostNameHtml;
 use function Kokonotsuba\libraries\getAttachmentUrl;
@@ -132,7 +133,10 @@ class managePostsRoute {
 		if (!$postUidsFromCheckbox) {
 			return;
 		}
-		
+
+		// Deletion is state-changing - require a valid CSRF token (form already emits one).
+		requirePostWithCsrf($this->request);
+
 		$onlyDeleteImages = !empty($this->request->getParameter('onlyimgdel', 'POST'));
 		$this->deletePostsFromCheckboxes($postUidsFromCheckbox, $onlyDeleteImages, $context['accountId']);
 	}
