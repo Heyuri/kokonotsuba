@@ -112,6 +112,25 @@ class messageRequestHandler {
 		exit();
 	}
 
+	private function handleDeleteMessages(): void {
+		$ids = $this->getSelectedIds();
+		if (!empty($ids)) {
+			$tripCode = $this->messageUtility->getUsertripCode();
+			$this->messageService->deleteMessagesForUser($ids, $tripCode);
+		}
+
+		redirect($this->messageUtility->getModulePageURL());
+		exit;
+	}
+
+	private function getSelectedIds(): array {
+		$selected = $this->request->getParameter('selected', 'POST', []);
+		if (is_array($selected)) {
+			return array_map('intval', $selected);
+		}
+		return [];
+	}
+
 	private function handleLogin(): void {
 		$tripCodeInput = $this->request->getParameter('tripcodeLogin', 'POST') ?? '';
 
@@ -154,6 +173,9 @@ class messageRequestHandler {
 				return;
 			case 'submitPm':
 				$this->handleWriteMessage();
+				return;
+			case 'deletePm':
+				$this->handleDeleteMessages();
 				return;
 			default:
 				throw new BoardException(_T('page_not_found'), 404);

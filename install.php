@@ -721,6 +721,19 @@ class accountTable {
         $stmt->bindParam(':role', $role);
         return $stmt->execute();
     }
+
+    // Returns true if the accounts table already holds at least one account.
+    // Used to refuse re-running the installer (which would create a new admin) on an
+    // already-provisioned instance, even if the .installed marker is missing.
+    public function anyAccountExists() {
+        try {
+            $stmt = $this->db->query("SELECT 1 FROM {$this->accountTableName} LIMIT 1");
+            return $stmt !== false && $stmt->fetchColumn() !== false;
+        } catch (PDOException $e) {
+            // Table doesn't exist yet (fresh DB) - no accounts.
+            return false;
+        }
+    }
 }
 
 
@@ -830,7 +843,12 @@ class boardTable {
 $dbSettings = require ROOTPATH . '/databaseSettings.php';
 $html = new html($dbSettings);
 
-if (file_exists('.installed')) {
+// Anchor the install marker to the application root, NOT the (SAPI-dependent) CWD.
+// A relative './.installed' could be written/checked in the wrong directory, silently
+// re-enabling the unauthenticated installer.
+define('INSTALLED_MARKER', ROOTPATH . '/.installed');
+
+if (file_exists(INSTALLED_MARKER)) {
     $html->drawHeader();
     $html->drawStyle();
     $html->drawInstallNotice();
@@ -876,6 +894,7 @@ switch ($action) {
                 'PRIVATE_MESSAGE_TABLE' => $dbSettings['PRIVATE_MESSAGE_TABLE'],
                 'BANNER_AD_TABLE' => $dbSettings['BANNER_AD_TABLE'],
                 'BANNER_TABLE' => $dbSettings['BANNER_TABLE'],
+                'ADS_TABLE' => $dbSettings['ADS_TABLE'],
                 'BLOTTER_TABLE' => $dbSettings['BLOTTER_TABLE'],
                 'FILE_BAN_TABLE' => $dbSettings['FILE_BAN_TABLE'],
                 'PERCEPTUAL_BAN_TABLE' => $dbSettings['PERCEPTUAL_BAN_TABLE'],
@@ -888,6 +907,14 @@ switch ($action) {
             $boardTable = new boardTable($pdoConnection, $sanitizedTableNames['BOARD_TABLE'], $dbSettings['DATABASE_NAME']);
             $accountTable = new accountTable($pdoConnection, $sanitizedTableNames['ACCOUNT_TABLE']);
 
+            // Refuse to provision a new admin on an already-installed instance, even if the
+            // .installed marker is absent (e.g. CLI/SQL install, backup restore, wrong CWD).
+            if ($accountTable->anyAccountExists()) {
+                touch(INSTALLED_MARKER);
+                http_response_code(403);
+                exit('Installation aborted: accounts already exist. Delete install.php.');
+            }
+
             $boardTable->createGlobalBoard(); // create global dummy board
 
             createBoardAndFiles($boardTable);
@@ -897,8 +924,8 @@ switch ($action) {
             $accountTable->addAdminAccount($username, $password, 4);
 
             
-            touch('.installed');
-            
+            touch(INSTALLED_MARKER);
+
             if(file_exists(dirname(__FILE__) . '/' .$globalConfig['STATIC_INDEX_FILE'])) {
 
                 unlink('./'.$globalConfig['STATIC_INDEX_FILE']);
@@ -919,7 +946,10 @@ switch ($action) {
             
             redirect($globalConfig['LIVE_INDEX_FILE']);
         } catch (Exception $e) {
-            throw $e;
+            // Log the detail server-side; never expose stack traces / SQL / paths to the client.
+            error_log('Installer error: ' . $e->getMessage());
+            http_response_code(500);
+            exit('Installation failed. Check the server error log for details.');
         }
         break;
 

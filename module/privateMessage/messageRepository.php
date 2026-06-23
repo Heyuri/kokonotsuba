@@ -190,4 +190,28 @@ class messageRepository extends baseRepository {
 	public function deleteMessages(array $ids): void {
 		$this->deleteWhereIn('id', $ids);
 	}
+
+	// Delete only the messages the user is actually party to, so a user can't
+	// remove conversations they aren't part of by forging ids in the POST.
+	public function deleteMessagesForUser(array $ids, string $userTripCode): void {
+		if (empty($ids)) {
+			return;
+		}
+
+		$placeholders = [];
+		$params = [':trip_sender' => $userTripCode, ':trip_recipient' => $userTripCode];
+		foreach (array_values($ids) as $i => $id) {
+			$key = ":id_{$i}";
+			$placeholders[] = $key;
+			$params[$key] = $id;
+		}
+		$in = '(' . implode(', ', $placeholders) . ')';
+
+		$this->query(
+			"DELETE FROM {$this->table}
+			 WHERE id IN {$in}
+			   AND (sender_tripcode = :trip_sender OR recipient_tripcode = :trip_recipient)",
+			$params
+		);
+	}
 }

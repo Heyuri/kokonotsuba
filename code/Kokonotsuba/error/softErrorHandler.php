@@ -40,7 +40,7 @@ class softErrorHandler {
 
 		$pte_vals = array(
 			'{$SELF2}' => $this->boardIndexFile.'?'.time(),
-			'{$MESG}' => $errorMessage,
+			'{$MESG}' => htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8'),
 			'{$RETURN_TEXT}' => _T('return'),
 			'{$BACK_TEXT}' => _T('error_back'),
 			'{$BACK_URL}' => htmlspecialchars($this->request->getReferer())

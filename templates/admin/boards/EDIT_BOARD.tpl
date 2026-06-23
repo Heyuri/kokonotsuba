@@ -4,7 +4,8 @@
 		<input type="hidden" name="edit-board-uid" value="{$BOARD_UID}">
 		<input type="hidden" name="edit-board-uid-for-redirect" value="{$BOARD_UID}">
 		<input type="hidden" name="edit-board" value="{$BOARD_UID}">
-		
+		{$CSRF_INPUT}
+
 		<table id="board-action-table">
 			<tbody>
 				<tr>

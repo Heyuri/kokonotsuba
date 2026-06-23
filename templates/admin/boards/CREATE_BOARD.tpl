@@ -2,6 +2,7 @@
 		<h3>Create a new board</h3>
 
 		<input type="hidden" name="new-board" value="1">
+		{$CSRF_INPUT}
 
 		<table id="board-create-table">
 			<tbody>

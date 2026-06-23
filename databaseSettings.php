@@ -5,10 +5,20 @@ return [
 	'DATABASE_PASSWORD' =>'password', //database user password
 
 	'DATABASE_DRIVER' => 'mysql',
-	'DATABASE_HOST' => '127.0.0.1',
+	// Must match the host of the DB user you created (e.g. a 'user'@'localhost' grant
+	// only authorizes socket connections; use '127.0.0.1' if the grant is on that host).
+	'DATABASE_HOST' => 'localhost',
 	'DATABASE_PORT' => 3306,
 	'DATABASE_CHARSET' => 'utf8mb4',
 	'DATABASE_NAME' => 'kokonotsuba', //the database the instance will be using
+
+	/*
+	 * Secret salt for IP anonymization (anonIp module). MUST be changed to a long,
+	 * random, secret value before relying on anonymization, otherwise the truncated
+	 * hashes are trivially brute-forceable. Keep this secret
+	 * and out of the database. Generate one with: bin2hex(random_bytes(32))
+	 */
+	'ANON_IP_SALT' => '',
 
 	/* Tables used by various parts of kokonotsuba, do not change them after installing */
 	'POST_TABLE' => 'posts', // post table, contains all posts on an instance
