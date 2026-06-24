@@ -38,7 +38,7 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// The watcher window is opened from a top-link in the admin bar.
 		$this->listenTopLinks('onRenderTopLinks');
-		$this->registerScript('threadWatcher.js?v=5');
+		$this->registerScript('threadWatcher.js?v=6');
 		$this->listenModuleHeader('onGenerateModuleHeader');
 		$this->listenThreadWidget('onRenderThreadWidget');
 	}
@@ -60,6 +60,7 @@ class moduleMain extends abstractModuleMain {
 		$request = $this->moduleContext->request;
 		$threadUids = $this->parseThreadUids($request->getParameter('thread_uids', 'GET', ''));
 		$ownPosts = $this->parseOwnPosts($request->getParameter('you', 'GET', ''));
+		$seenMap = $this->parseSeen($request->getParameter('seen', 'GET', ''));
 		$wantNewThreads = $request->getParameter('newthreads', 'GET', '') !== '';
 
 		$dbSettings = getDatabaseSettings();
@@ -81,6 +82,14 @@ class moduleMain extends abstractModuleMain {
 			$rows = $repo->batchGetThreadMeta($threadUids);
 			$quoteCounts = $repo->batchGetQuoteCounts($threadUids, $ownPosts);
 
+			// Resolve each thread's first-unread post number from the client's seen counts,
+			// scoped to the threads actually requested.
+			$firstUnread = [];
+			$seenScoped = array_intersect_key($seenMap, array_flip($threadUids));
+			if (!empty($seenScoped)) {
+				$firstUnread = $repo->batchGetFirstUnreadNo($seenScoped);
+			}
+
 			$found = [];
 			foreach ($rows as $row) {
 				$threadUid = (string) $row['thread_uid'];
@@ -94,6 +103,9 @@ class moduleMain extends abstractModuleMain {
 						$defaultComment
 					),
 					'quote_count' => $quoteCounts[$threadUid] ?? 0,
+					// Post number of the first unread reply (null when nothing is unread),
+					// so the client can link straight to it.
+					'first_unread_no' => $firstUnread[$threadUid] ?? null,
 				];
 			}
 
@@ -191,6 +203,38 @@ class moduleMain extends abstractModuleMain {
 			}
 		}
 		return $threadUids;
+	}
+
+	/**
+	 * Parse the client's per-thread seen counts from a "uid:count,uid:count,..." list into a
+	 * thread_uid => count map. Counts how many posts (OP + replies) the client has already read.
+	 * Capped to keep the first-unread query bounded; malformed entries are skipped.
+	 *
+	 * @return array<string,int>
+	 */
+	private function parseSeen(string $raw): array {
+		if ($raw === '') {
+			return [];
+		}
+
+		$seen = [];
+		foreach (array_slice(explode(',', $raw), 0, 100) as $part) {
+			$bits = explode(':', trim($part), 2);
+			if (count($bits) !== 2) {
+				continue;
+			}
+			$uid = trim($bits[0]);
+			$count = trim($bits[1]);
+			// thread_uid is VARCHAR(255); count is a small non-negative integer.
+			if ($uid === '' || !preg_match('/^[a-zA-Z0-9_\-]{1,255}$/', $uid)) {
+				continue;
+			}
+			if (!preg_match('/^\d{1,9}$/', $count)) {
+				continue;
+			}
+			$seen[$uid] = (int) $count;
+		}
+		return $seen;
 	}
 
 	/**
