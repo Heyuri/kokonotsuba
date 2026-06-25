@@ -16,12 +16,21 @@ const kkupdate = { name: "KK Thread Updating",
 		controls.classList.add("threadUpdater");
 		document.querySelector(".threadRear").appendChild(controls);
 		controls.innerHTML += "[<a onclick=\"kkupdate.update();return false;\" href=\"\">Update</a>] [<label><input onchange=\"kkupdate.toggleAuto();\" checked type=\"checkbox\">Auto</label>] <span id=\"update-status\"></span>";
+		// Throttle the scroll handler to one layout read per animation frame
+		// to avoid forcing a reflow on every scroll event.
+		var scrollTicking = false;
 		document.addEventListener("scroll", function () {
-			if ((window.innerHeight + document.documentElement.scrollTop) >= (document.documentElement.scrollHeight - 2)) {
-				kkupdate.total = 0;
-				document.title = kkupdate.otitle;
-			}
-		});
+			if (scrollTicking) return;
+			scrollTicking = true;
+			requestAnimationFrame(function () {
+				scrollTicking = false;
+				var de = document.documentElement;
+				if ((window.innerHeight + de.scrollTop) >= (de.scrollHeight - 2)) {
+					kkupdate.total = 0;
+					document.title = kkupdate.otitle;
+				}
+			});
+		}, { passive: true });
 		kkupdate.toggleAuto();
 		return true;
 	},
@@ -69,10 +78,12 @@ const kkupdate = { name: "KK Thread Updating",
 					kkupdate.inci = 0;
 
 					var inserted = [];
+					var frag = document.createDocumentFragment();
 					for (i = i; i <= frs.length-1; i++) {
-						document.querySelector(".thread").insertAdjacentElement("beforeEnd", frs[i]);
+						frag.appendChild(frs[i]);
 						inserted.push(frs[i]);
 					}
+					document.querySelector(".thread").appendChild(frag);
 
 					initNewPosts(inserted);
 

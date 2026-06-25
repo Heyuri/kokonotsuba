@@ -3,7 +3,7 @@
 	<script src="{$STATIC_URL}js/style.js?v=4"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
 	<script src="{$STATIC_URL}js/inline.js?v=4" defer></script>
-	<script src="{$STATIC_URL}js/admin.js?v=6" defer></script>
+	<script src="{$STATIC_URL}js/admin.js?v=7" defer></script>
 	<script src="{$STATIC_URL}js/clipboard.js" defer></script>
 	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
 	<script src="{$STATIC_URL}js/flashembed.js?v=3"></script>

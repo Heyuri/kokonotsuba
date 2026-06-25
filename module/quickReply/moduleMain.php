@@ -25,6 +25,6 @@ class moduleMain extends abstractModuleMain {
 		$this->addFormFuncLink('javascript:kkqr.openqr();', _T('quick_reply_link'), true);
 		
 		// register the quick reply script
-		$this->registerScript('quickReply.js');
+		$this->registerScript('quickReply.js?v=1');
 	}
 }

@@ -69,5 +69,7 @@
 	}
 
 	checkAndNotify();
+	// Keep polling even when the tab is hidden/unfocused: PM notifications are
+	// specifically meant to fire while the user is away from the page.
 	setInterval(checkAndNotify, 60000);
 })();

@@ -125,21 +125,25 @@ const kkqr = { name: "KK Quick Reply",
 		var qr = $id("qrinputs");
 		var qrcontents = $id("qrcontents");
 		var submitplace = 'qr';
+		// Build the field markup in one string and assign innerHTML once,
+		// instead of forcing a reparse of #qrinputs per field.
+		var qrHtml = '';
 		if (pel['name']) {
-			qr.innerHTML+= '<div id="qrnamediv"><input type="text" name="name" id="qrname" value="'+_qrEsc(pel['name'].value)+'" maxlength="100" class="inputtext" placeholder="Name" oninput="kkqr.input(this);"></div>';
+			qrHtml += '<div id="qrnamediv"><input type="text" name="name" id="qrname" value="'+_qrEsc(pel['name'].value)+'" maxlength="100" class="inputtext" placeholder="Name" oninput="kkqr.input(this);"></div>';
 			submitplace = 'qrnamediv';
 		}
 		if (pel['email']) {
-			qr.innerHTML+= '<div id="qremaildiv"><input type="text" name="email" id="qremail" value="'+_qrEsc(pel['email'].value)+'" maxlength="100" class="inputtext" placeholder="Email" oninput="kkqr.input(this);"></div>';
+			qrHtml += '<div id="qremaildiv"><input type="text" name="email" id="qremail" value="'+_qrEsc(pel['email'].value)+'" maxlength="100" class="inputtext" placeholder="Email" oninput="kkqr.input(this);"></div>';
 			if (!submitplace) submitplace = 'qremaildiv';
 		}
 		if (pel['sub']) {
-			qr.innerHTML+= '<div id="qrsubdiv"><input type="text" name="sub" id="qrsub" value="'+_qrEsc(pel['sub'].value)+'" maxlength="100" class="inputtext" placeholder="Subject" oninput="kkqr.input(this);"></div>';
+			qrHtml += '<div id="qrsubdiv"><input type="text" name="sub" id="qrsub" value="'+_qrEsc(pel['sub'].value)+'" maxlength="100" class="inputtext" placeholder="Subject" oninput="kkqr.input(this);"></div>';
 			submitplace = 'qrsubdiv';
 		}
 		if (pel['com']) {
-			qr.innerHTML += '<textarea name="com" id="qrcom" cols="48" rows="6" class="inputtext" placeholder="Comment" oninput="kkqr.input(this);">' + _qrEsc(pel['com'].value) + '</textarea>';
+			qrHtml += '<textarea name="com" id="qrcom" cols="48" rows="6" class="inputtext" placeholder="Comment" oninput="kkqr.input(this);">' + _qrEsc(pel['com'].value) + '</textarea>';
 		}
+		qr.innerHTML = qrHtml;
 		// --- File input ---
 		if (pel['upfile[]']) {
 			var qrFileWrap = document.createElement('div');

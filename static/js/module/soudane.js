@@ -147,8 +147,8 @@
 		// initial load
 		soudane.updatePosts();
 
-		// repeat every minute
-		setInterval(soudane.updatePosts, 60000);
+		// repeat every minute (skip ticks while the tab is hidden)
+		setInterval(function () { if (!document.hidden) soudane.updatePosts(); }, 60000);
 	});
 
 })();

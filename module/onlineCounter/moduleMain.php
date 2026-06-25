@@ -34,7 +34,7 @@ class moduleMain extends abstractModuleMain {
 
 		$this->listenPostMenuList('onRenderPostMenuList');
 
-		$this->registerScript('onlineCounterUpdater.js');
+		$this->registerScript('onlineCounterUpdater.js?v=1');
 	}
 
 	/**
