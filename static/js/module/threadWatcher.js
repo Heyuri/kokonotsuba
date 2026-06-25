@@ -769,10 +769,15 @@ const kktwch = { name: "KK Thread watcher",
 		items = items.filter(function (item) {
 			return !kktwch.isOwnPost(item.board_uid, item.post_op_number);
 		});
-		// Cap per cycle so a burst of new threads can't spam a wall of notifications.
-		items.slice(0, 5).forEach(function (item) {
-			kktwch.notifyNewThread(item);
-		});
+
+		if (items.length === 1) {
+			// A single new thread: notify with its board/label.
+			kktwch.notifyNewThread(items[0]);
+		} else if (items.length > 1) {
+			// A burst of new threads (e.g. a backlog that piled up while every tab was
+			// closed) is coalesced into one notification instead of a wall of dings.
+			kktwch.notifyNewThreadsBatch(items);
+		}
 
 		if (nt.latest) kkStore.set('kktwch_lastThreadSeen', nt.latest);
 	},
@@ -795,6 +800,34 @@ const kktwch = { name: "KK Thread watcher",
 			notif.onclick = function () {
 				window.focus();
 				if (item.url) window.location.href = item.url;
+				notif.close();
+			};
+		} catch (e) {}
+	},
+
+	// Coalesced alert for several new threads arriving in one poll (e.g. a backlog that
+	// accumulated while every tab was closed). Fires a single notification — "<N> new
+	// threads posted" — that links to the most recent thread. The server returns items
+	// newest-first, so items[0] is the most recent.
+	notifyNewThreadsBatch: function (items) {
+		if (document.hasFocus() || !('Notification' in window) || Notification.permission !== 'granted') {
+			return;
+		}
+
+		var latest = items[0];
+		var latestLabel = latest.label || ('No.' + latest.post_op_number);
+		var subtitle = latest.board_title ? (latest.board_title + ' — ' + latestLabel) : latestLabel;
+
+		try {
+			var notif = new Notification(items.length + ' new threads posted', {
+				body: 'Latest: ' + subtitle,
+				// Constant tag so a later batch replaces an earlier one rather than stacking.
+				tag: 'twnt_multi',
+				icon: STATIC_URL + 'image/favicon.ico'
+			});
+			notif.onclick = function () {
+				window.focus();
+				if (latest.url) window.location.href = latest.url;
 				notif.close();
 			};
 		} catch (e) {}
