@@ -4,7 +4,6 @@
 /* Module */
 const kkupdate = { name: "KK Thread Updating",
 	total: 0,
-	otitle: document.title,
 	startup: function () {
 		if (!_kkSetting("update")) {
 			return true;
@@ -27,7 +26,7 @@ const kkupdate = { name: "KK Thread Updating",
 				var de = document.documentElement;
 				if ((window.innerHeight + de.scrollTop) >= (de.scrollHeight - 2)) {
 					kkupdate.total = 0;
-					document.title = kkupdate.otitle;
+					kkTitle.set('updater', 0);
 				}
 			});
 		}, { passive: true });
@@ -88,7 +87,7 @@ const kkupdate = { name: "KK Thread Updating",
 					initNewPosts(inserted);
 
 					document.querySelector("#update-status").innerText = npc+" new post"+(npc>1 ? "s" : "");
-					if (kkupdate.total > 0) document.title = "("+kkupdate.total+") "+kkupdate.otitle;
+					kkTitle.set('updater', kkupdate.total);
 					return true;
 				});
 			}

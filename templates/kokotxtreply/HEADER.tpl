@@ -1,11 +1,11 @@
 <!--&HEADER_TXT_BASE/-->
-	<script src="{$STATIC_URL}js/koko.js?v=18"></script>
+	<script src="{$STATIC_URL}js/koko.js?v=19"></script>
 	<script src="{$STATIC_URL}js/qu.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qu2.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qu3.js?v=25" defer></script>
 	<script src="{$STATIC_URL}js/style.js?v=3"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
-	<script src="{$STATIC_URL}js/update.js?v=4" defer></script>
+	<script src="{$STATIC_URL}js/update.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/admin.js?v=7" defer></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
 	<script src="{$STATIC_URL}js/message.js?v=2" defer></script>

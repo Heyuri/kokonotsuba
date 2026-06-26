@@ -11,7 +11,6 @@ const kktwch = { name: "KK Thread watcher",
 	MANUAL_REFRESH_COOLDOWN: 5000,
 	_pollTimer: null,
 	_win: null,
-	_originalTitle: null,
 	// True while a poll's fetch is in flight in this tab (locks the refresh button).
 	_pollInProgress: false,
 	// Timestamp until which the manual refresh stays locked (cooldown).
@@ -193,7 +192,7 @@ const kktwch = { name: "KK Thread watcher",
 		watched[threadUid] = {
 			threadUid: threadUid,
 			subject: info.subject || 'No.' + (info.threadNo || threadUid),
-			boardTitle: '',
+			boardTitle: info.boardTitle || '',
 			label: '',
 			threadNo: info.threadNo || '',
 			boardUrl: info.boardUrl || '',
@@ -225,7 +224,7 @@ const kktwch = { name: "KK Thread watcher",
 	/* --- Thread Info Extraction --- */
 
 	getThreadInfoFromPage: function (threadUid) {
-		var info = { postCount: 0, subject: '', threadNo: '', boardUrl: '', boardId: '', url: '' };
+		var info = { postCount: 0, subject: '', threadNo: '', boardUrl: '', boardId: '', url: '', boardTitle: '' };
 
 		// Find the thread container
 		var threadEl = document.querySelector('.thread[data-thread-uid="' + threadUid + '"]') ||
@@ -243,6 +242,13 @@ const kktwch = { name: "KK Thread watcher",
 			// Get post count (OP + replies visible)
 			var posts = threadEl.querySelectorAll('.post');
 			info.postCount = posts.length;
+
+			// On the overboard each thread is labelled with its board title; grab it so
+			// the watch list shows "Board - Subject" immediately (the poll refines it later).
+			var boardTitleEl = threadEl.querySelector('.overboardThreadBoardTitle');
+			if (boardTitleEl && boardTitleEl.textContent.trim()) {
+				info.boardTitle = boardTitleEl.textContent.trim();
+			}
 		}
 
 		// Get subject from OP
@@ -1173,15 +1179,9 @@ const kktwch = { name: "KK Thread watcher",
 			if (kktwch.hasUnreadQuote(watched[uid])) anyQuote = true;
 		});
 
-		if (kktwch._originalTitle === null) {
-			kktwch._originalTitle = document.title;
-		}
-
-		if (total > 0) {
-			document.title = '(' + total + ') ' + kktwch._originalTitle;
-		} else {
-			document.title = kktwch._originalTitle;
-		}
+		// Contribute our unread total to the shared title controller instead of writing
+		// document.title directly, so we don't fight the thread updater over the prefix.
+		kkTitle.set('threadWatcher', total);
 
 		kktwch.updateToplink(total > 0, anyQuote);
 	},

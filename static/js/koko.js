@@ -164,6 +164,32 @@ const kkStore = (function () {
 	};
 })();
 
+/* Shared document.title controller.
+ *
+ * Several features want to prefix the page title with a "(N) " counter (the
+ * thread watcher's unread count, the thread updater's new-post count, ...). If
+ * each writes document.title directly they overwrite each other's prefix and it
+ * flickers on/off. Instead every source registers its count here under a unique
+ * id; this composes a single title from the clean base captured at load. */
+const kkTitle = {
+	// Clean base title, with any pre-existing "(N) " prefix stripped defensively
+	// (e.g. a bfcache restore that kept a counted title).
+	base: (document.title || '').replace(/^\(\d+\)\s+/, ''),
+	_counts: {},
+	// Register/replace a source's count and re-render. count <= 0 clears it.
+	set: function (id, count) {
+		count = parseInt(count, 10) || 0;
+		if (count > 0) this._counts[id] = count;
+		else delete this._counts[id];
+		this.render();
+	},
+	render: function () {
+		var total = 0;
+		for (var k in this._counts) total += this._counts[k];
+		document.title = total > 0 ? '(' + total + ') ' + this.base : this.base;
+	}
+};
+
 /* - */
 if (typeof(FONTSIZE) === "undefined") { var FONTSIZE = 12; }
 
