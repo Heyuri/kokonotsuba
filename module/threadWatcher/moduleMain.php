@@ -38,7 +38,7 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// The watcher window is opened from a top-link in the admin bar.
 		$this->listenTopLinks('onRenderTopLinks');
-		$this->registerScript('threadWatcher.js?v=10');
+		$this->registerScript('threadWatcher.js?v=11');
 		$this->listenModuleHeader('onGenerateModuleHeader');
 		$this->listenThreadWidget('onRenderThreadWidget');
 	}
@@ -309,6 +309,12 @@ class moduleMain extends abstractModuleMain {
 
 		$moduleHeader .= '<meta name="threadWatcherWatchLabel" content="' . $watchLabel . '">';
 		$moduleHeader .= '<meta name="threadWatcherUnwatchLabel" content="' . $unwatchLabel . '">';
+
+		// Current board's title, so watching from a single-board page (thread/index) can
+		// label the entry "Board - Subject" immediately (the overboard uses its per-thread
+		// labels instead). The poll refines this from the server afterwards.
+		$boardTitle = sanitizeStr($this->moduleContext->board->getBoardTitle());
+		$moduleHeader .= '<meta name="boardTitle" content="' . $boardTitle . '">';
 
 		// Empty state template
 		$emptyHtml = $this->moduleContext->templateEngine->ParseBlock('THREAD_WATCHER_EMPTY', [

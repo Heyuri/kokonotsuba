@@ -251,6 +251,16 @@ const kktwch = { name: "KK Thread watcher",
 			}
 		}
 
+		// On a single-board page (thread page or board index) there's no per-thread board
+		// label; the watcher emits the current board's title as a meta tag instead. Used as
+		// a fallback so watching from a thread page also shows "Board - Subject" right away.
+		if (!info.boardTitle) {
+			var boardTitleMeta = document.querySelector('meta[name="boardTitle"]');
+			if (boardTitleMeta && boardTitleMeta.content.trim()) {
+				info.boardTitle = boardTitleMeta.content.trim();
+			}
+		}
+
 		// Get subject from OP
 		var opPost = document.querySelector('.post.op[data-thread-uid="' + threadUid + '"]');
 		if (opPost) {
