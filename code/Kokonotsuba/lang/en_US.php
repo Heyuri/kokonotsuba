@@ -454,6 +454,8 @@ $language['thread_unwatch_label'] = 'Unwatch thread';
 $language['thread_watch_empty'] = 'No watched threads.';
 $language['thread_watch_unwatch_title'] = 'Unwatch';
 $language['thread_watch_mark_read_title'] = 'Mark as read';
+$language['thread_watch_refresh_title'] = 'Refresh';
+$language['thread_watch_updated_label'] = 'Updated:';
 
 $language['soudane_vote_own_post'] = 'You cannot vote on your own post';
 $language['soudane_no_post_ids_provided'] = 'No post IDs provided.';

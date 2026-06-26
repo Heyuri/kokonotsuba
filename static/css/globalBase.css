@@ -714,6 +714,49 @@
 	overflow-y: auto;
 }
 
+/* Fixed (non-scrolling) header bar above the scrollable watch list. */
+.threadWatcherHeader {
+	padding: 0.25em 0.5em;
+	border-bottom: 1px solid var(--color-border, rgba(128, 128, 128, 0.4));
+}
+
+.threadWatcherRefresh {
+	display: inline-block;
+	cursor: pointer;
+	text-decoration: none;
+	color: inherit;
+	line-height: 1;
+	padding: 0.1em 0.25em;
+}
+
+.threadWatcherRefresh.twSpinning {
+	animation: twSpin 0.6s linear infinite;
+}
+
+/* Locked: during a poll or the post-refresh cooldown — not clickable, dimmed. */
+.threadWatcherRefresh.twLocked {
+	pointer-events: none;
+	opacity: 0.5;
+}
+
+@keyframes twSpin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+/* "Updated: <time>" text after the refresh button. */
+.threadWatcherUpdatedLabel {
+	margin-left: 0.5em;
+	font-size: var(--font-size-small);
+	opacity: 0.7;
+}
+
+.threadWatcherUpdated {
+	margin-left: 0.25em;
+	font-size: var(--font-size-small);
+	opacity: 0.7;
+}
+
 /* Watcher status colors: green = unread replies, red = an unread reply quotes you.
    Applies to both the admin-bar top-link and the watched-thread list entries. */
 .threadWatcherToplink.twUnread,

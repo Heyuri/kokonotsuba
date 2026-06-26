@@ -38,7 +38,7 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// The watcher window is opened from a top-link in the admin bar.
 		$this->listenTopLinks('onRenderTopLinks');
-		$this->registerScript('threadWatcher.js?v=7');
+		$this->registerScript('threadWatcher.js?v=9');
 		$this->listenModuleHeader('onGenerateModuleHeader');
 		$this->listenThreadWidget('onRenderThreadWidget');
 	}
@@ -326,7 +326,11 @@ class moduleMain extends abstractModuleMain {
 		$moduleHeader .= $this->generateTemplate('threadWatcherRowTpl', $rowHtml);
 
 		// Content wrapper template
-		$contentHtml = $this->moduleContext->templateEngine->ParseBlock('THREAD_WATCHER_CONTENT', []);
+		$contentHtml = $this->moduleContext->templateEngine->ParseBlock('THREAD_WATCHER_CONTENT', [
+			'{$REFRESH_TITLE}' => sanitizeStr(_T('thread_watch_refresh_title')),
+			'{$REFRESH_ICON}' => "\u{27F3}",
+			'{$UPDATED_LABEL}' => sanitizeStr(_T('thread_watch_updated_label')),
+		]);
 		$moduleHeader .= $this->generateTemplate('threadWatcherContentTpl', $contentHtml);
 	}
 
