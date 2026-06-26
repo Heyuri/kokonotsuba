@@ -45,7 +45,7 @@ class moduleMain extends abstractModuleMain {
 		$this->modulePageUrl = $this->getModulePageURL([], false);
 
 		$this->addTopLink($this->modulePageUrl, _T('private_message_top_bar'));
-		$this->registerScript('privateMessage.js');
+		$this->registerScript('privateMessage.js?v=1');
 
 		// $this->listenPost('onRenderPost');
 

@@ -129,6 +129,66 @@ class threadWatcherRepository extends baseRepository {
 		return $counts;
 	}
 
+	/**
+	 * For each watched thread, return the post `no` of the first post the client hasn't
+	 * seen yet, given how many posts from the top it has already read.
+	 *
+	 * "Seen" is a count of live posts counted from the OP down (OP = 1), matching the
+	 * client's lastSeenCount. The first unread post is therefore the one at chronological
+	 * position seen+1. Posts are ranked with the SAME deleted-post filter used by
+	 * batchGetThreadMeta()'s post_count, so the ranking lines up with that count.
+	 * Threads where seen+1 is past the live post count (nothing unread, or a stale count
+	 * after deletions) simply return no row and are omitted.
+	 *
+	 * @param array<string,int> $seenMap thread_uid => number of posts already seen
+	 * @return array<string,int> thread_uid => first-unread post number (only threads with one)
+	 */
+	public function batchGetFirstUnreadNo(array $seenMap): array {
+		if (empty($seenMap)) {
+			return [];
+		}
+
+		$threadUids = array_keys($seenMap);
+		$threadPlaceholders = '(' . implode(', ', array_fill(0, count($threadUids), '?')) . ')';
+		$pairPlaceholders = '(' . implode(', ', array_fill(0, count($seenMap), '(?, ?)')) . ')';
+
+		$pairParams = [];
+		foreach ($seenMap as $uid => $seen) {
+			$pairParams[] = (string) $uid;
+			// Chronological position (1-based) of the first post past what's been seen.
+			$pairParams[] = max(0, (int) $seen) + 1;
+		}
+
+		$query = "
+			SELECT ranked.thread_uid AS thread_uid, ranked.no AS no
+			FROM (
+				SELECT
+					p.thread_uid AS thread_uid,
+					p.no AS no,
+					ROW_NUMBER() OVER (PARTITION BY p.thread_uid ORDER BY p.no ASC) AS rn
+				FROM {$this->postTable} p
+				WHERE p.thread_uid IN {$threadPlaceholders}
+				  AND NOT EXISTS (
+				      SELECT 1
+				      FROM {$this->deletedPostsTable} dp
+				      WHERE dp.post_uid = p.post_uid
+				        AND dp.open_flag = 1
+				        AND dp.file_id IS NULL
+				  )
+			) ranked
+			WHERE (ranked.thread_uid, ranked.rn) IN {$pairPlaceholders}
+		";
+
+		$params = array_merge(array_map('strval', $threadUids), $pairParams);
+		$rows = $this->queryAll($query, $params);
+
+		$out = [];
+		foreach ($rows as $row) {
+			$out[(string) $row['thread_uid']] = (int) $row['no'];
+		}
+		return $out;
+	}
+
 	/** SQL fragment + params for excluding blacklisted board UIDs. Returns ['', []] when empty. */
 	private function buildBlacklistClause(array $blacklist): array {
 		$blacklist = array_values(array_filter(array_map('intval', $blacklist)));

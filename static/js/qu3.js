@@ -462,9 +462,12 @@ function applyHoverListeners(root) {
 function init() {
 	document.addEventListener('mousemove', e => {
 		lastMouseEvent = e
+		// Only churn the cleanup timer while previews are actually open;
+		// otherwise this fires clearTimeout/setTimeout on every mouse frame for nothing.
+		if (!previewStack.length) return
 		if (cleanupTimer) clearTimeout(cleanupTimer)
 		cleanupTimer = setTimeout(checkPreviews, REMOVAL_DELAY)
-	})
+	}, { passive: true })
 
 	document.querySelectorAll('.post.op, .post.reply').forEach(processPost)
 	applyHoverListeners(document)

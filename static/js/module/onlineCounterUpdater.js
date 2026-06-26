@@ -22,7 +22,8 @@ const kkUserUpdate = {  name: "KK online user updating",
 		this.minutes = document.getElementById(this.elementId).dataset.timeout;
 		const milliseconds = this.minutes * 60 * 1000;
 		this.intervalId = setInterval(() => {
-			this.reloadElement();
+			// don't poll while the tab is hidden
+			if (!document.hidden) this.reloadElement();
 		}, milliseconds);
 	},
 

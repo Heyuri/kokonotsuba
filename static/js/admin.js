@@ -8,6 +8,15 @@
 	let hoverTimeout;
 	let currentLink = null;
 
+	// Shared state for the throttled thumbnail-follow handler
+	let moveX = 0, moveY = 0, moveScheduled = false;
+	function positionThumbnail() {
+		moveScheduled = false;
+		if (thumbnailDiv.style.display !== 'block') return;
+		thumbnailDiv.style.left = `${moveX - thumbnailDiv.offsetWidth}px`;
+		thumbnailDiv.style.top  = `${moveY - thumbnailDiv.offsetHeight}px`;
+	}
+
 	// Create a div to hold the thumbnail
 	const thumbnailDiv = document.createElement('div');
 	thumbnailDiv.style.position = 'absolute';
@@ -89,10 +98,12 @@
 		});
 
 		link.addEventListener('mousemove', function(e) {
-			if (thumbnailDiv.style.display === 'block') {
-				thumbnailDiv.style.left = `${e.pageX - thumbnailDiv.offsetWidth}px`;
-				thumbnailDiv.style.top = `${e.pageY - thumbnailDiv.offsetHeight}px`;
-			}
+			if (thumbnailDiv.style.display !== 'block') return;
+			moveX = e.pageX;
+			moveY = e.pageY;
+			if (moveScheduled) return;
+			moveScheduled = true;
+			requestAnimationFrame(positionThumbnail);
 		});
 
 		link.addEventListener('mouseleave', hideThumbnail);
@@ -101,6 +112,8 @@
 	// Additional listeners for scroll events and document-wide mousemove
 	window.addEventListener('scroll', hideThumbnail);
 	document.addEventListener('mousemove', function(e) {
+		// Nothing to hide unless a thumbnail is currently visible
+		if (thumbnailDiv.style.display !== 'block') return;
 		if (!thumbnailDiv.matches(':hover') && !currentLink?.matches(':hover')) {
 			hideThumbnail();
 		}
