@@ -40,8 +40,10 @@ const kkupdate = { name: "KK Thread Updating",
 	inc: [5,10,30,60,120,180],
 	inci: 0,
 	timer: 0,
+	hold: 0,
 	update: function () {
 		document.querySelector("#update-status").innerText = "Updating...";
+		kkupdate.hold = -1;
 		fetch(window.location.href).then(data => {
 			if (data.status != 200) {
 				document.querySelector("#update-status").innerText = "This thread has been pruned or deleted";
@@ -71,6 +73,7 @@ const kkupdate = { name: "KK Thread Updating",
 						if (kkupdate.inci >= kkupdate.inc.length)
 							kkupdate.inci--;
 						document.querySelector("#update-status").innerText = "No new posts";
+						kkupdate.hold = 1;
 						return true;
 					}
 					kkupdate.total += npc;
@@ -87,6 +90,7 @@ const kkupdate = { name: "KK Thread Updating",
 					initNewPosts(inserted);
 
 					document.querySelector("#update-status").innerText = npc+" new post"+(npc>1 ? "s" : "");
+					kkupdate.hold = 1;
 					kkTitle.set('updater', kkupdate.total);
 					return true;
 				});
@@ -98,11 +102,13 @@ const kkupdate = { name: "KK Thread Updating",
 			clearInterval(kkupdate.auto);
 			kkupdate.inci = 0;
 			kkupdate.timer = 0;
+			kkupdate.hold = 0;
 			document.querySelector("#update-status").innerText = "";
 			kkupdate.auto = null;
 		} else {
 			kkupdate.inci = 0;
 			kkupdate.timer = kkupdate.inc[kkupdate.inci];
+			kkupdate.hold = 0;
 			kkupdate._timer();
 			kkupdate.auto = setInterval(kkupdate._timer, 1000);
 		}
@@ -114,7 +120,11 @@ const kkupdate = { name: "KK Thread Updating",
 			kkupdate.timer = kkupdate.inc[kkupdate.inci];
 			kkupdate.auto = setInterval(kkupdate._timer, 1000);
 		}
-		document.querySelector("#update-status").innerText = kkupdate.timer;
+		if (kkupdate.hold > 0) {
+			kkupdate.hold -= 1;
+		} else if (kkupdate.hold === 0) {
+			document.querySelector("#update-status").innerText = kkupdate.timer;
+		}
 		kkupdate.timer -= 1;
 	},
 };
