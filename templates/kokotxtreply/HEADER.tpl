@@ -1,11 +1,11 @@
 <!--&HEADER_TXT_BASE/-->
-	<script src="{$STATIC_URL}js/koko.js?v=19"></script>
+	<script src="{$STATIC_URL}js/koko.js?v=20"></script>
 	<script src="{$STATIC_URL}js/qu.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qu2.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/qu3.js?v=25" defer></script>
 	<script src="{$STATIC_URL}js/style.js?v=3"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
-	<script src="{$STATIC_URL}js/update.js?v=5" defer></script>
+	<script src="{$STATIC_URL}js/update.js?v=6" defer></script>
 	<script src="{$STATIC_URL}js/admin.js?v=7" defer></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=4" defer></script>
 	<script src="{$STATIC_URL}js/message.js?v=2" defer></script>
@@ -18,10 +18,10 @@
 	<script src="{$STATIC_URL}js/postInit.js" defer></script>
 	<script src="{$STATIC_URL}js/posting.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/inline.js" defer></script>
-	<script src="{$STATIC_URL}js/attachmentExpander.js" defer></script>
+	<script src="{$STATIC_URL}js/attachmentExpander.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/postDeletionLib.js" defer></script>
 	<script src="{$STATIC_URL}js/formExtras.js" defer></script>
-	<script src="{$STATIC_URL}js/updateThread.js" defer></script>
+	<script src="{$STATIC_URL}js/updateThread.js?v=2" defer></script>
 	<!--&DROPZONE_TEMPLATE/-->
 	<!--&IF($MODULE_HEADER_HTML,'{$MODULE_HEADER_HTML}','')-->
 </head>
