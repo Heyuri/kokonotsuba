@@ -161,6 +161,7 @@ class messageRenderer {
 			'{$MESSAGES}' => $rows,
 			'{$HAS_MESSAGES}' => !empty($messages) ? '1' : '',
 			'{$NO_MESSAGES_TEXT}' => _T('pm_no_messages'),
+			'{$PM_DISCLAIMER_TEXT}' => _T('pm_disclaimer_text'),
 		]));
 
 		$this->renderPmPage($inboxHtml, $pagerHtml);
@@ -227,6 +228,7 @@ class messageRenderer {
 			'{$FROM_LABEL}' => _T('pm_from_label'),
 			'{$TO_LABEL}' => _T('pm_to_label'),
 			'{$DATE_LABEL}' => _T('pm_date_label'),
+			'{$PM_DISCLAIMER_TEXT}' => _T('pm_disclaimer_text'),
 		]);
 	}
 }

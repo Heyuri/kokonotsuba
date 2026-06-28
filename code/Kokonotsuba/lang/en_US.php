@@ -300,6 +300,7 @@ $language['pm_back_to_inbox'] = 'Back to inbox';
 $language['pm_from_label'] = 'From';
 $language['pm_to_label'] = 'To';
 $language['pm_date_label'] = 'Date';
+$language['pm_disclaimer_text'] = "Messages are <b>not</b> encrypted and are stored in plain text. It's recommended to avoid sharing sensitive information like passwords.";
 $language['pm_reply_label'] = 'Reply';
 $language['pm_user_banned'] = 'You are banned from using the private messaging system.';
 $language['pm_admin_title'] = 'Private Message Administration';
