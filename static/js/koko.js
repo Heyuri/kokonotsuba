@@ -62,6 +62,40 @@ const kkStore = (function () {
 	function lsSet(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
 	function lsRemove(key) { try { localStorage.removeItem(key); } catch (e) {} }
 
+	/* Echo suppression.
+	 *
+	 * When STATIC_URL shares the board's origin, our own hub iframe sees a native
+	 * `storage` event for every write WE make (same-origin sibling document) and relays
+	 * it straight back to us as a `change`. Blindly re-applying that echo via lsSet
+	 * re-fires the storage event; and when two different values are written to the same
+	 * key in quick succession (e.g. a poll's saveWatchedThreads followed by a
+	 * mark-as-read save), the two stale echoes arrive out of order and each "corrects"
+	 * the value back to the other — ping-ponging A<->B forever. That pegs the main thread
+	 * and flickers everything that re-renders on change (the watcher's unread title, etc).
+	 *
+	 * We remember each value we write and drop the matching echo when it returns. Entries
+	 * self-expire so a cross-origin hub (which never echoes) can't leak them. */
+	var selfWrites = [];        // { key, value (null = removal), expires }
+	var SELF_WRITE_TTL = 4000;  // ample for a hub round-trip; short enough to self-heal
+
+	function noteSelfWrite(key, value) {
+		var now = Date.now();
+		selfWrites = selfWrites.filter(function (w) { return w.expires > now; });
+		selfWrites.push({ key: key, value: value, expires: now + SELF_WRITE_TTL });
+	}
+
+	function isOwnEcho(key, value) {
+		var now = Date.now();
+		for (var i = 0; i < selfWrites.length; i++) {
+			var w = selfWrites[i];
+			if (w.expires > now && w.key === key && w.value === value) {
+				selfWrites.splice(i, 1); // consume; a later genuine change still applies
+				return true;
+			}
+		}
+		return false;
+	}
+
 	function settle() {
 		if (settled) return;
 		settled = true;
@@ -109,8 +143,12 @@ const kkStore = (function () {
 			settle();
 			keys.forEach(fireChange);
 		} else if (d.type === 'change' && isShared(d.key)) {
-			if (d.value === null || d.value === undefined) lsRemove(d.key);
-			else lsSet(d.key, d.value);
+			var incoming = (d.value === null || d.value === undefined) ? null : d.value;
+			// Ignore the echo of our own write — our local mirror is already current, and
+			// re-applying it would re-trigger the hub and start a feedback loop.
+			if (isOwnEcho(d.key, incoming)) return;
+			if (incoming === null) lsRemove(d.key);
+			else lsSet(d.key, incoming);
 			fireChange(d.key);
 		}
 	});
@@ -155,11 +193,17 @@ const kkStore = (function () {
 		set: function (key, value) {
 			value = String(value);
 			lsSet(key, value);
-			if (isShared(key)) post({ __kkstore: 1, type: 'set', key: key, value: value });
+			if (isShared(key)) {
+				noteSelfWrite(key, value);
+				post({ __kkstore: 1, type: 'set', key: key, value: value });
+			}
 		},
 		remove: function (key) {
 			lsRemove(key);
-			if (isShared(key)) post({ __kkstore: 1, type: 'remove', key: key });
+			if (isShared(key)) {
+				noteSelfWrite(key, null);
+				post({ __kkstore: 1, type: 'remove', key: key });
+			}
 		}
 	};
 })();
@@ -186,7 +230,12 @@ const kkTitle = {
 	render: function () {
 		var total = 0;
 		for (var k in this._counts) total += this._counts[k];
-		document.title = total > 0 ? '(' + total + ') ' + this.base : this.base;
+		var next = total > 0 ? '(' + total + ') ' + this.base : this.base;
+		// Skip redundant writes. Re-assigning the same document.title is a <title>
+		// mutation that other tabs/observers can react to; guarding it means a stable
+		// count never produces a visible flicker even when render() is called in a burst.
+		if (next === document.title) return;
+		document.title = next;
 	}
 };
 

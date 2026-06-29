@@ -121,12 +121,21 @@ class moduleMain extends abstractModuleMain {
 		echo $html;
 	}
 
-	/** Handle request for posts from a thread (paginated). */
+	/** Handle request for posts from a thread (paginated, or incremental via after_uid). */
 	private function handleThreadPostsRequest(): void {
 		$threadUid = $this->moduleContext->request->getParameter('thread_uid', 'GET', '');
 
 		if (empty($threadUid)) {
 			renderJsonErrorPage('Missing thread_uid parameter', 400);
+		}
+
+		// Incremental mode: the client passes the UID of the newest post it already has,
+		// and we return only newer replies. This keeps the live thread updater from
+		// re-fetching the entire (ever-growing) thread on every poll.
+		$afterUid = (int) $this->moduleContext->request->getParameter('after_uid', 'GET', '0');
+		if ($afterUid > 0) {
+			$this->handleIncrementalThreadPostsRequest($threadUid, $afterUid);
+			return;
 		}
 
 		$page = max(0, (int) $this->moduleContext->request->getParameter('page', 'GET', '0'));
@@ -152,6 +161,40 @@ class moduleMain extends abstractModuleMain {
 		];
 
 		renderCachedJsonPage($data);
+	}
+
+	/**
+	 * Incremental thread fetch: return only replies newer than $afterUid.
+	 *
+	 * Returns 404 when the thread no longer exists so the client can stop polling and
+	 * flag it as pruned/deleted; otherwise 200 with a (possibly empty) posts array.
+	 */
+	private function handleIncrementalThreadPostsRequest(string $threadUid, int $afterUid): void {
+		// Distinguish "no new replies" from "thread gone" — the updater shows a
+		// distinct message and disables itself only in the latter case.
+		if ($this->moduleContext->threadRepository->getThreadByUid($threadUid) === false) {
+			renderJsonErrorPage(_T('post_not_found'), 404);
+		}
+
+		$posts = $this->moduleContext->threadRepository->getRepliesFromThreadAfterUid($threadUid, $afterUid);
+
+		$postsData = [];
+		foreach ($posts as $post) {
+			$html = $this->renderPostHtml($post);
+			$postsData[] = $this->buildPostData($post, $html);
+		}
+
+		$data = [
+			'thread_uid' => $threadUid,
+			'after_uid' => $afterUid,
+			'post_count' => count($postsData),
+			'posts' => $postsData,
+		];
+
+		// New replies must surface promptly, so keep the client cache window short. The
+		// URL carries after_uid, so each poll is a distinct (uncacheable-in-practice) key;
+		// the short max-age just coalesces simultaneous identical requests.
+		renderCachedJsonPage($data, 3);
 	}
 
 	/** Handle request for a paginated list of thread UIDs sorted by creation time. */

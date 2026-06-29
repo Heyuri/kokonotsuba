@@ -1,5 +1,5 @@
 <!--&HEADER_IMG_BASE/-->
-	<script src="{$STATIC_URL}js/koko.js?v=19"></script>
+	<script src="{$STATIC_URL}js/koko.js?v=20"></script>
 	<script src="{$STATIC_URL}js/style.js?v=4"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
 	<script src="{$STATIC_URL}js/inline.js?v=4" defer></script>

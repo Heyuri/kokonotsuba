@@ -42,6 +42,20 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->listenProtected('PostAdminControls', function(string &$modControlSection, Post &$post) {
 			$this->onRenderPostAdminControls($modControlSection, $post);
 		});
+
+		// Expose the staff-only "Show user IPs" toggle on live staff views.
+		$this->registerAdminHeaderHook('onRenderModuleHeader');
+	}
+
+	private function onRenderModuleHeader(string &$moduleHeader): void {
+		// Only raw-IP viewers see the IP control, so only they get the toggle.
+		if(!$this->canViewRawIp()) {
+			return;
+		}
+
+		// Not deferred: the script runs in <head> and hides the IP controls
+		// before the posts paint, so toggling is seamless.
+		$this->includeScript('viewPosts.js', $moduleHeader, false);
 	}
 
     private function generateViewPostsUrl(string $postUid): string {
@@ -189,9 +203,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		
 		// Check user role to determine which behavior to use
 		if($this->canViewRawIp()) {
-			// Show raw IP for higher-privilege users
+			// Show raw IP for higher-privilege users. Wrapped so the "Show user
+			// IPs" toggle (viewPosts.js) can hide the IP and its brackets cleanly.
 			$postLink = $this->generateViewIpUrl($post->getIp());
-			$button = '[<a class="ipAddress" href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars($post->getIp()) . '</a>]';
+			$button = '<span class="ipAddressControl">[<a class="ipAddress" href="' . htmlspecialchars($postLink) . '">' . htmlspecialchars($post->getIp()) . '</a>]</span>';
 		} else if($this->canViewHashedIp()) {
 			// Show hashed IP and user-based filter for lower-privilege users
 			$postLink = $this->generateViewPostsUrl($post->getUid());

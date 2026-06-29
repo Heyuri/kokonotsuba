@@ -80,6 +80,11 @@
 
 	// Detect first-YouTube-link posts
 	function processComment(comment) {
+		// Process each comment at most once. Without this guard the observer below
+		// re-examined every comment on the page on every DOM mutation.
+		if (comment.dataset.ytProcessed) return;
+		comment.dataset.ytProcessed = '1';
+
 		const first = comment.firstChild;
 		if (!first || first.nodeType !== Node.ELEMENT_NODE || first.tagName !== 'A') return;
 
@@ -100,6 +105,17 @@
 		document.querySelectorAll('.comment').forEach(processComment);
 	}
 
-	new MutationObserver(apply).observe(document.body, { childList: true, subtree: true });
+	// Only inspect the nodes actually inserted, rather than re-scanning every comment
+	// on the page on every mutation. Combined with the per-comment processed flag this
+	// keeps the cost proportional to new content, not to total thread length.
+	new MutationObserver(function (muts) {
+		muts.forEach(function (m) {
+			m.addedNodes.forEach(function (n) {
+				if (n.nodeType !== 1) return;
+				if (n.matches('.comment')) processComment(n);
+				else n.querySelectorAll('.comment').forEach(processComment);
+			});
+		});
+	}).observe(document.body, { childList: true, subtree: true });
 	apply();
 })();

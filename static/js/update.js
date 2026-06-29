@@ -42,59 +42,46 @@ const kkupdate = { name: "KK Thread Updating",
 	timer: 0,
 	hold: 0,
 	update: function () {
-		document.querySelector("#update-status").innerText = "Updating...";
+		var statusEl = document.querySelector("#update-status");
+		if (statusEl) statusEl.innerText = "Updating...";
+		// Suppress the countdown display while the fetch is in flight.
 		kkupdate.hold = -1;
-		fetch(window.location.href).then(data => {
-			if (data.status != 200) {
-				document.querySelector("#update-status").innerText = "This thread has been pruned or deleted";
-				document.querySelector("#controls input").disabled = true;
-				document.querySelector("#controls a").onclick = function () {return false;};
-				return true;
-			} else {
-				data.text().then(text => {
-					const parser = new DOMParser();
-					const d = parser.parseFromString(text, "text/html");
 
-					// kill audio immediately to prevent repeats
-					d.querySelectorAll("audio").forEach(a => a.remove());
-
-					var rs = document.querySelectorAll(".reply-container");
-					var lid = 0;
- 					if (rs.length) lid = rs[rs.length-1].id.slice(1);
-					var frs = d.querySelectorAll(".reply-container");
-					var i;
- 					for (i = frs.length-1; i >= 0; i--)
-						if (frs[i].id.slice(1) <= lid)
-							break;
-					i++;
-					var npc = (frs.length) - i;
-					if (npc == 0) {
-						kkupdate.inci++;
-						if (kkupdate.inci >= kkupdate.inc.length)
-							kkupdate.inci--;
-						document.querySelector("#update-status").innerText = "No new posts";
-						kkupdate.hold = 1;
-						return true;
-					}
-					kkupdate.total += npc;
-					kkupdate.inci = 0;
-
-					var inserted = [];
-					var frag = document.createDocumentFragment();
-					for (i = i; i <= frs.length-1; i++) {
-						frag.appendChild(frs[i]);
-						inserted.push(frs[i]);
-					}
-					document.querySelector(".thread").appendChild(frag);
-
-					initNewPosts(inserted);
-
-					document.querySelector("#update-status").innerText = npc+" new post"+(npc>1 ? "s" : "");
-					kkupdate.hold = 1;
-					kkTitle.set('updater', kkupdate.total);
-					return true;
-				});
+		// fetchNewReplies (updateThread.js) pulls only the posts newer than what's on the
+		// page via the post API and appends them; we just reflect the result in the UI.
+		fetchNewReplies().then(function (inserted) {
+			var npc = inserted.length;
+			if (npc === 0) {
+				// Nothing new — lengthen the auto-update interval (back off).
+				kkupdate.inci++;
+				if (kkupdate.inci >= kkupdate.inc.length) kkupdate.inci--;
+				if (statusEl) statusEl.innerText = "No new posts";
+				// Keep the status visible for one tick before the countdown resumes.
+				kkupdate.hold = 1;
+				return;
 			}
+			kkupdate.total += npc;
+			kkupdate.inci = 0;
+			if (statusEl) statusEl.innerText = npc + " new post" + (npc > 1 ? "s" : "");
+			kkupdate.hold = 1;
+			kkTitle.set('updater', kkupdate.total);
+		}).catch(function (err) {
+			if (err === 'pruned') {
+				// Thread is gone — stop auto-updating entirely.
+				if (statusEl) statusEl.innerText = "This thread has been pruned or deleted";
+				var input = document.querySelector("#controls input");
+				if (input) input.disabled = true;
+				var a = document.querySelector("#controls a");
+				if (a) a.onclick = function () { return false; };
+				if (kkupdate.auto) {
+					clearInterval(kkupdate.auto);
+					kkupdate.auto = null;
+				}
+				return;
+			}
+			// Transient network/parse error: keep the updater running, just clear the status.
+			if (statusEl) statusEl.innerText = "";
+			kkupdate.hold = 0;
 		});
 	},
 	toggleAuto: function () {
@@ -121,6 +108,7 @@ const kkupdate = { name: "KK Thread Updating",
 			kkupdate.auto = setInterval(kkupdate._timer, 1000);
 		}
 		if (kkupdate.hold > 0) {
+			// Hold the last status message for a tick instead of overwriting it.
 			kkupdate.hold -= 1;
 		} else if (kkupdate.hold === 0) {
 			document.querySelector("#update-status").innerText = kkupdate.timer;

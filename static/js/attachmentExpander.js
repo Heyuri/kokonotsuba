@@ -61,12 +61,17 @@
 			anchor.addEventListener("mouseout", anchor._hoverOffHandler);
 		});
 
-		// append image hover element 
-		document.body.insertAdjacentHTML("beforeend",
-			'<img id="hoverimg" src="" alt="Full Image" '
-			+ 'onerror="this.style.display=\'\';" '
-			+ 'onload="this.style.display=\'inline-block\';" border="1">'
-		);
+		// append image hover element — but only once. startUpimageExpanding() is re-run on
+		// every auto-update that brings new posts (via initNewPosts) and on every settings
+		// toggle; appending unconditionally leaked one detached-but-attached <img> per call,
+		// growing the DOM without bound on a long-lived thread tab.
+		if (!document.getElementById("hoverimg")) {
+			document.body.insertAdjacentHTML("beforeend",
+				'<img id="hoverimg" src="" alt="Full Image" '
+				+ 'onerror="this.style.display=\'\';" '
+				+ 'onload="this.style.display=\'inline-block\';" border="1">'
+			);
+		}
 	};
 
 	attachmentExpander.expandAttachmentError = function(anchor) {

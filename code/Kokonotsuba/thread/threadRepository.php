@@ -695,6 +695,90 @@ class threadRepository extends baseRepository {
 	}
 
 	/**
+	 * Fetch thread replies newer than a given post UID, oldest-first.
+	 *
+	 * Used by the incremental thread updater: the client sends the UID of the newest
+	 * post it already has, and only genuinely new replies are returned. The OP is never
+	 * included (it's always already on the page). Returns an empty array — not null —
+	 * when the thread exists but has no newer replies, so callers can distinguish
+	 * "nothing new" from "thread gone" with a separate existence check.
+	 *
+	 * @param string $threadUID      Thread UID.
+	 * @param int    $afterPostUid   Only return replies with post_uid greater than this.
+	 * @param bool   $includeDeleted Whether to include soft-deleted posts.
+	 * @param int    $amount         Safety cap on how many replies to return at once.
+	 * @return Post[] Array of Post objects (possibly empty).
+	 */
+	public function getRepliesFromThreadAfterUid(string $threadUID, int $afterPostUid, bool $includeDeleted = false, int $amount = 500): array {
+		$amount       = max(0, (int)$amount);
+		$afterPostUid = max(0, (int)$afterPostUid);
+
+		$postUIDs = $this->fetchReplyUIDsAfter($threadUID, $afterPostUid, $includeDeleted, $amount);
+
+		if (empty($postUIDs)) {
+			return [];
+		}
+
+		$placeholders = pdoPlaceholdersForIn($postUIDs);
+		$query = getBasePostQuery(
+			$this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table,
+			$this->soudaneTable, $this->noteTable, $this->accountTable,
+			$includeDeleted, false, $this->countryFlagTable, $this->displayIpTable
+		);
+		$query .= " WHERE p.post_uid IN {$placeholders} ORDER BY p.post_uid ASC";
+
+		$posts = $this->queryAll($query, $postUIDs) ?? [];
+		$posts = mergeMultiplePostRows($posts);
+
+		return $posts ?: [];
+	}
+
+	/**
+	 * Fetch the UIDs of replies newer than a given post UID (for incremental updates).
+	 */
+	private function fetchReplyUIDsAfter(string $threadUID, int $afterPostUid, bool $includeDeleted, int $amount): array {
+		$deletionFilter       = '';
+		$threadDeletionFilter = '';
+
+		if (!$includeDeleted) {
+			$deletionFilter = "
+				AND NOT EXISTS (
+					SELECT 1
+					FROM {$this->deletedPostsTable} d1
+					INNER JOIN (
+						SELECT post_uid, MAX(id) AS max_id
+						FROM {$this->deletedPostsTable}
+						GROUP BY post_uid
+					) d2 ON d1.post_uid = d2.post_uid AND d1.id = d2.max_id
+					WHERE d1.post_uid = p.post_uid
+					  AND d1.file_id IS NULL AND d1.open_flag = 1
+				)";
+			$threadDeletionFilter = excludeDeletedThreadsCondition($this->deletedPostsTable);
+		}
+
+		$query = "
+			SELECT p.post_uid
+			FROM {$this->postTable} p
+			INNER JOIN {$this->table} t ON t.thread_uid = p.thread_uid
+			WHERE p.thread_uid = :thread_uid
+			  AND p.is_op = 0
+			  AND p.post_uid > :after_uid
+			  {$deletionFilter}
+			  {$threadDeletionFilter}
+			ORDER BY p.post_uid ASC
+			LIMIT :_limit";
+
+		$params = [
+			':thread_uid' => $threadUID,
+			':after_uid'  => $afterPostUid,
+			':_limit'     => $amount,
+		];
+
+		$rows = $this->queryAll($query, $params);
+		return $rows ? array_column($rows, 'post_uid') : [];
+	}
+
+	/**
 	 * Fetch all posts from a thread without pagination.
 	 *
 	 * @param string $threadUID      Thread UID.
