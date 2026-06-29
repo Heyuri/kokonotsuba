@@ -126,6 +126,7 @@ $config['JS_DEFAULT_SETTINGS'] = [
     'threadWatcherNewThreads' => true,
     'threadWatcherSound' => true,
     'threadWatcherAutoWatch' => true,
+    'enablesoudane' => true,
 ];
 
 // kokoimg styles

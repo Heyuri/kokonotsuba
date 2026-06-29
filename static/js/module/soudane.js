@@ -3,7 +3,41 @@
 
 	window.soudane = window.soudane || {};
 	var soudane = window.soudane;
-    
+
+	/*
+	 * "Enable soudane" user setting (default enabled, see JS_DEFAULT_SETTINGS).
+	 * When unticked we add the `soudaneDisabled` class to <html> and the rule
+	 * below hides the vote HTML. Applied here, while the script runs in <head>
+	 * before posts paint, so toggling is seamless with no flash of vote buttons.
+	 */
+	var SOUDANE_KEY = "enablesoudane";
+
+	function soudaneEnabled() {
+		if (typeof kkSetting !== "undefined") return kkSetting.get(SOUDANE_KEY);
+		var stored;
+		try { stored = localStorage.getItem(SOUDANE_KEY); } catch (e) { stored = null; }
+		return stored === null ? true : stored === "true";
+	}
+
+	function applySoudaneVisibility(enabled) {
+		document.documentElement.classList.toggle("soudaneDisabled", !enabled);
+	}
+
+	var soudaneStyle = document.createElement("style");
+	soudaneStyle.textContent = "html.soudaneDisabled .post .soudaneContainer{display:none}";
+	document.head.appendChild(soudaneStyle);
+
+	applySoudaneVisibility(soudaneEnabled());
+
+	if (typeof kkSetting !== "undefined") {
+		kkSetting.add({
+			key: SOUDANE_KEY,
+			label: "Enable soudane",
+			checked: soudaneEnabled,
+			onChange: applySoudaneVisibility
+		}, "Interface");
+	}
+
 	soudane.vote = function(postUid, type, url) {
 		var elem = document.getElementById("vote_" + type + "_" + postUid);
 		var originalText = elem.innerHTML;
