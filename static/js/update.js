@@ -40,9 +40,12 @@ const kkupdate = { name: "KK Thread Updating",
 	inc: [5,10,30,60,120,180],
 	inci: 0,
 	timer: 0,
+	hold: 0,
 	update: function () {
 		var statusEl = document.querySelector("#update-status");
 		if (statusEl) statusEl.innerText = "Updating...";
+		// Suppress the countdown display while the fetch is in flight.
+		kkupdate.hold = -1;
 
 		// fetchNewReplies (updateThread.js) pulls only the posts newer than what's on the
 		// page via the post API and appends them; we just reflect the result in the UI.
@@ -53,11 +56,14 @@ const kkupdate = { name: "KK Thread Updating",
 				kkupdate.inci++;
 				if (kkupdate.inci >= kkupdate.inc.length) kkupdate.inci--;
 				if (statusEl) statusEl.innerText = "No new posts";
+				// Keep the status visible for one tick before the countdown resumes.
+				kkupdate.hold = 1;
 				return;
 			}
 			kkupdate.total += npc;
 			kkupdate.inci = 0;
 			if (statusEl) statusEl.innerText = npc + " new post" + (npc > 1 ? "s" : "");
+			kkupdate.hold = 1;
 			kkTitle.set('updater', kkupdate.total);
 		}).catch(function (err) {
 			if (err === 'pruned') {
@@ -75,6 +81,7 @@ const kkupdate = { name: "KK Thread Updating",
 			}
 			// Transient network/parse error: keep the updater running, just clear the status.
 			if (statusEl) statusEl.innerText = "";
+			kkupdate.hold = 0;
 		});
 	},
 	toggleAuto: function () {
@@ -82,11 +89,13 @@ const kkupdate = { name: "KK Thread Updating",
 			clearInterval(kkupdate.auto);
 			kkupdate.inci = 0;
 			kkupdate.timer = 0;
+			kkupdate.hold = 0;
 			document.querySelector("#update-status").innerText = "";
 			kkupdate.auto = null;
 		} else {
 			kkupdate.inci = 0;
 			kkupdate.timer = kkupdate.inc[kkupdate.inci];
+			kkupdate.hold = 0;
 			kkupdate._timer();
 			kkupdate.auto = setInterval(kkupdate._timer, 1000);
 		}
@@ -98,7 +107,12 @@ const kkupdate = { name: "KK Thread Updating",
 			kkupdate.timer = kkupdate.inc[kkupdate.inci];
 			kkupdate.auto = setInterval(kkupdate._timer, 1000);
 		}
-		document.querySelector("#update-status").innerText = kkupdate.timer;
+		if (kkupdate.hold > 0) {
+			// Hold the last status message for a tick instead of overwriting it.
+			kkupdate.hold -= 1;
+		} else if (kkupdate.hold === 0) {
+			document.querySelector("#update-status").innerText = kkupdate.timer;
+		}
 		kkupdate.timer -= 1;
 	},
 };
