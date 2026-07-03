@@ -1035,9 +1035,26 @@ const kktwch = { name: "KK Thread watcher",
 		return base;
 	},
 
-	// "Board Title - Subject/preview/filename" (label computed server-side).
+	// Max characters for a client-side label fallback; read from the server-emitted meta
+	// tag so it mirrors the server's LABEL_MAX_LENGTH, keeping a freshly-watched thread
+	// (before the first poll supplies the server-truncated label) from showing an
+	// over-long, un-truncated subject. Falls back to 25 if the meta tag is absent.
+	getLabelMaxLength: function () {
+		var meta = document.querySelector('meta[name="threadWatcherLabelMaxLength"]');
+		var n = meta ? parseInt(meta.content, 10) : NaN;
+		return (n > 0) ? n : 25;
+	},
+
+	truncateLabel: function (text) {
+		var max = kktwch.getLabelMaxLength();
+		if (text.length <= max) return text;
+		return text.slice(0, max - 1) + '…';
+	},
+
+	// "Board Title - Subject/preview/filename" (label computed server-side; the client
+	// truncates its own subject fallback to match until the first poll lands).
 	getDisplayName: function (entry) {
-		var label = entry.label || entry.subject || 'No.' + (entry.threadNo || entry.threadUid);
+		var label = entry.label || kktwch.truncateLabel(entry.subject || 'No.' + (entry.threadNo || entry.threadUid));
 		return entry.boardTitle ? (entry.boardTitle + ' - ' + label) : label;
 	},
 

@@ -25,7 +25,7 @@ class moduleMain extends abstractModuleMain {
 	use TopLinksListenerTrait;
 
 	/** Max characters for a generated thread label (subject / comment preview / filename). */
-	private const LABEL_MAX_LENGTH = 50;
+	private const LABEL_MAX_LENGTH = 25;
 
 	/**
 	 * Inline SVG for the watch toggle: a regular 5-pointed star in a 24x24 viewBox.
@@ -326,6 +326,10 @@ class moduleMain extends abstractModuleMain {
 
 		$moduleHeader .= '<meta name="threadWatcherWatchLabel" content="' . $watchLabel . '">';
 		$moduleHeader .= '<meta name="threadWatcherUnwatchLabel" content="' . $unwatchLabel . '">';
+
+		// Max label length, so the client can truncate its own subject fallback to match the
+		// server-side truncation until the first poll supplies the server-computed label.
+		$moduleHeader .= '<meta name="threadWatcherLabelMaxLength" content="' . self::LABEL_MAX_LENGTH . '">';
 
 		// Current board's title, so watching from a single-board page (thread/index) can
 		// label the entry "Board - Subject" immediately (the overboard uses its per-thread
