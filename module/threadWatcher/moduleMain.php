@@ -6,7 +6,7 @@ use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
-use Kokonotsuba\module_classes\traits\listeners\ThreadWidgetListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\OpeningPostListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\request\request;
@@ -21,11 +21,25 @@ require_once __DIR__ . '/threadWatcherRepository.php';
 class moduleMain extends abstractModuleMain {
 	use IncludeScriptTrait;
 	use ModuleHeaderListenerTrait;
-	use ThreadWidgetListenerTrait;
+	use OpeningPostListenerTrait;
 	use TopLinksListenerTrait;
 
 	/** Max characters for a generated thread label (subject / comment preview / filename). */
 	private const LABEL_MAX_LENGTH = 50;
+
+	/**
+	 * Inline SVG for the watch toggle: a regular 5-pointed star in a 24x24 viewBox.
+	 * Rendered hollow (CSS stroke, no fill) by default; the ".twStarWatched" class the
+	 * client adds fills it in. A single geometry serves both states so they line up.
+	 */
+	private const WATCH_STAR_SVG =
+		// The viewBox is padded above the star (min-y = -2, so the coordinate window is
+		// y = -2..22 while the star spans y = 2..20). Since it stays square it renders at
+		// the same size but lower in its box, adding empty space on top so the star lines
+		// up with the checkbox next to it instead of sitting a touch high.
+		'<svg class="threadWatchStarIcon" viewBox="0 -2 24 24" width="20" height="20" aria-hidden="true" focusable="false">'
+		. '<path d="M12 2L14.35 8.76L21.51 8.91L15.8 13.24L17.88 20.09L12 16L6.12 20.09L8.2 13.24L2.49 8.91L9.65 8.76Z"/>'
+		. '</svg>';
 
 	public function getName(): string {
 		return 'Thread watcher';
@@ -38,9 +52,9 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// The watcher window is opened from a top-link in the admin bar.
 		$this->listenTopLinks('onRenderTopLinks');
-		$this->registerScript('threadWatcher.js?v=11');
+		$this->registerScript('threadWatcher.js?v=19');
 		$this->listenModuleHeader('onGenerateModuleHeader');
-		$this->listenThreadWidget('onRenderThreadWidget');
+		$this->listenOpeningPost('onRenderOpeningPost');
 	}
 
 	/**
@@ -265,7 +279,10 @@ class moduleMain extends abstractModuleMain {
 	private function buildThreadLabel(string $subject, string $comment, string $fileName, string $defaultComment): string {
 		$subject = trim($subject);
 		if ($subject !== '') {
-			return $this->truncateLabel($subject);
+			// Subjects are stored HTML-escaped (they're emitted raw into post markup).
+			// The client renders this label as plain text (textContent), so decode the
+			// entities here or apostrophes/ampersands show up as "&#039;"/"&amp;".
+			return $this->truncateLabel(html_entity_decode($subject, ENT_QUOTES, 'UTF-8'));
 		}
 
 		// Normalize the stored (HTML) comment down to a single line of plain text.
@@ -335,21 +352,33 @@ class moduleMain extends abstractModuleMain {
 		$contentHtml = $this->moduleContext->templateEngine->ParseBlock('THREAD_WATCHER_CONTENT', [
 			'{$REFRESH_TITLE}' => sanitizeStr(_T('thread_watch_refresh_title')),
 			'{$REFRESH_ICON}' => "\u{27F3}",
+			'{$MARK_ALL_READ_TITLE}' => sanitizeStr(_T('thread_watch_mark_all_read_title')),
+			'{$MARK_ALL_READ_ICON}' => "\u{2611}",
+			'{$CLEAR_ALL_TITLE}' => sanitizeStr(_T('thread_watch_clear_all_title')),
+			'{$CLEAR_ALL_ICON}' => "\u{1F5D1}\u{FE0E}",
 			'{$UPDATED_LABEL}' => sanitizeStr(_T('thread_watch_updated_label')),
 		]);
 		$moduleHeader .= $this->generateTemplate('threadWatcherContentTpl', $contentHtml);
 	}
 
-	private function onRenderThreadWidget(array &$widgetArray, Post &$openingPost, array &$threadPosts): void {
-		$watchWidget = $this->buildWidgetEntry(
-			'javascript:void(0)',
-			'watchThread',
-			_T('thread_watch_label'),
-			'',
-			['thread_uid' => $openingPost->getThreadUid()]
-		);
+	/**
+	 * Pre-render the watch toggle (a star) into each opening post, next to the deletion
+	 * checkbox via the {$WATCH_STAR} template slot. The star ships hollow because whether a
+	 * thread is watched lives in the visitor's localStorage, which the server can't see; the
+	 * client fills in stars for watched threads on load and handles clicks.
+	 */
+	private function onRenderOpeningPost(array &$templateValues, Post &$openingPost, array &$threadPosts): void {
+		$threadUid = sanitizeStr($openingPost->getThreadUid());
+		$watchLabel = sanitizeStr(_T('thread_watch_label'));
 
-		$widgetArray[] = $watchWidget;
+		$star = '<a class="threadWatchStar js-only" href="javascript:void(0)"'
+			. ' data-thread-uid="' . $threadUid . '"'
+			. ' role="button" aria-pressed="false"'
+			. ' title="' . $watchLabel . '" aria-label="' . $watchLabel . '">'
+			. self::WATCH_STAR_SVG
+			. '</a>';
+
+		$templateValues['{$WATCH_STAR}'] = $star;
 	}
 
 }

@@ -35,6 +35,7 @@
 	--color-bg-reply-hl: #f0c0b0;
 	--color-fg-title: #cc1105;
 	--color-fg-name: #117743;
+	--color-thread-watch-star: #117743; /* deep green to match this palette */
 	--color-fg-warning: #ff0000;
 	--color-fg-warning-ip: #0000cc;
 	--color-fg-omitted: #707070;

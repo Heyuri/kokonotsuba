@@ -35,60 +35,93 @@ class postSearchService {
 	}
 
 	/**
-	 * Converts sanitized user input into a MySQL FULLTEXT boolean search string.
+	 * Converts user input into a MySQL FULLTEXT boolean search string.
 	 *
 	 * The input is tokenized, stopwords and short words are removed, and each
-	 * remaining token is required in the search. When $matchWholeWord is false,
-	 * prefix wildcards are applied to allow partial matches.
+	 * remaining token is compiled according to the chosen combine mode:
+	 *   - 'and' (default): every term is required (+term).
+	 *   - 'or': terms are optional, so a post matching any of them is returned.
+	 * A term the user prefixes with '-' is excluded (-term) in both modes.
+	 * When $matchWholeWord is false, prefix wildcards allow partial matches.
 	 *
 	 * Additionally, for tokens that may contain apostrophes, an HTML-encoded
-	 * variant is included as an optional token, so searches match both
-	 * plain text and stored HTML entity forms (e.g., don't vs don&#39;t).
+	 * variant is included, so searches match both plain text and stored HTML
+	 * entity forms (e.g., don't vs don&#39;t).
 	 *
 	 * @param string $input Raw user search input
 	 * @param bool $matchWholeWord Whether to match exact words without wildcards
 	 * @param array $stopWords List or lookup table of FULLTEXT stopwords
 	 * @param int $minWordLength Minimum token length to include
+	 * @param string $searchMode How to combine terms: 'and' (all required) or 'or' (any)
 	 * @return string FULLTEXT-compatible boolean search string
 	 */
 	private function parseToBooleanFulltext(
 		string $input,
 		bool $matchWholeWord,
 		array $stopWords,
-		int $minWordLength = 3
+		int $minWordLength = 3,
+		string $searchMode = 'and'
 	): string {
-		$processedInput = $this->sanitizeFulltextInput($input);
-		$words = explode(' ', $processedInput);
+		// Split the raw input on whitespace first so a leading '-' (exclusion) can be
+		// detected before the sanitizer strips operator characters from the word body.
+		$rawWords = preg_split('/\s+/u', trim($input)) ?: [];
 
 		// Ensure stopwords are a lookup table for fast O(1) checking
 		$stopWordLookup = array_keys($stopWords) !== range(0, count($stopWords) - 1)
 			? $stopWords
 			: array_flip(array_map('mb_strtolower', $stopWords));
 
-		// Filter out short words and stopwords
-		$words = array_filter(
-			$words,
-			fn($word) =>
-				mb_strlen($word) >= $minWordLength &&
-				!isset($stopWordLookup[mb_strtolower($word)])
-		);
-
 		$tokens = [];
 
-		foreach ($words as $word) {
-			// Normal token
-			$token = $matchWholeWord ? '+' . $word : '+' . $word . '*';
-			$tokens[] = $token;
+		foreach ($rawWords as $rawWord) {
+			if ($rawWord === '') {
+				continue;
+			}
 
-			// HTML entity variant for apostrophes
-			if (str_contains($word, "'")) {
-				$encodedWord = str_replace("'", '&#39;', $word);
-				$encodedToken = $matchWholeWord ? '+' . $encodedWord : '+' . $encodedWord . '*';
-				$tokens[] = $encodedToken;
+			// A leading '-' marks the word for exclusion (works in AND and OR modes).
+			$exclude = str_starts_with($rawWord, '-');
+
+			// Sanitizing may split one raw token into several words (internal
+			// punctuation becomes whitespace); apply the exclusion flag to each.
+			$sanitized = $this->sanitizeFulltextInput($rawWord);
+			if ($sanitized === '') {
+				continue;
+			}
+
+			foreach (explode(' ', $sanitized) as $word) {
+				// Skip short words and stopwords
+				if (mb_strlen($word) < $minWordLength || isset($stopWordLookup[mb_strtolower($word)])) {
+					continue;
+				}
+
+				$tokens[] = $this->buildFulltextToken($word, $matchWholeWord, $exclude, $searchMode);
+
+				// HTML entity variant for apostrophes
+				if (str_contains($word, "'")) {
+					$encodedWord = str_replace("'", '&#39;', $word);
+					$tokens[] = $this->buildFulltextToken($encodedWord, $matchWholeWord, $exclude, $searchMode);
+				}
 			}
 		}
 
 		return implode(' ', $tokens);
+	}
+
+	/**
+	 * Compile a single sanitized word into a FULLTEXT boolean token.
+	 *
+	 * @param string $word Sanitized word body
+	 * @param bool $matchWholeWord Whether to append a prefix wildcard
+	 * @param bool $exclude Whether the word should be excluded from results
+	 * @param string $searchMode 'and' (required) or 'or' (optional) for non-excluded words
+	 * @return string A single boolean-mode token, e.g. "+cat*", "cat*" or "-dog*"
+	 */
+	private function buildFulltextToken(string $word, bool $matchWholeWord, bool $exclude, string $searchMode): string {
+		// '-' excludes; '+' requires (AND); OR mode uses no operator so any term may match.
+		$prefix = $exclude ? '-' : ($searchMode === 'or' ? '' : '+');
+		$suffix = $matchWholeWord ? '' : '*';
+
+		return $prefix . $word . $suffix;
 	}
 
 
@@ -102,19 +135,29 @@ class postSearchService {
 	 * @param bool   $openingPostOnly If true, return only OP posts.
 	 * @param int    $page            Zero-based page number.
 	 * @param int    $postsPerPage    Number of posts per page.
+	 * @param string $searchMode      How to combine keywords: 'and' (all required) or 'or' (any). '-word' always excludes.
 	 * @return array|null Associative array with 'results_data' and 'total_posts', or null if no results.
 	 */
 	public function searchPosts(
-		array $stopWords, 
-		array $fields, 
-		array $boardUids, 
-		bool $matchWholeWords, 
+		array $stopWords,
+		array $fields,
+		array $boardUids,
+		bool $matchWholeWords,
 		bool $openingPostOnly = false,
-		int $page = 1, 
-		int $postsPerPage = 20
+		int $page = 1,
+		int $postsPerPage = 20,
+		string $searchMode = 'and'
 	): ?array {
+		// Normalize the combine mode; anything other than 'or' falls back to 'and'.
+		$searchMode = strtolower($searchMode) === 'or' ? 'or' : 'and';
+
 		// sanitize fields
 		$fields = $this->sanitizeFields($fields);
+
+		// Capture the raw name value before full-text tokenization mangles it.
+		// A user may paste a tripcode (e.g. "!Ep8pui8Vw2") into the Name field, and we
+		// want that to also match posts by their stored tripcode / secure tripcode.
+		$tripcodeCandidate = isset($fields['name']) ? $this->extractTripcodeCandidate($fields['name']) : '';
 
 		// tokenize and compile each field for boolean full-text search
 		foreach ($fields as $field => $value) {
@@ -123,13 +166,58 @@ class postSearchService {
 				continue;
 			}
 
-			$fields[$field] = $this->parseToBooleanFulltext($value, $matchWholeWords, $stopWords);
+			$fields[$field] = $this->parseToBooleanFulltext($value, $matchWholeWords, $stopWords, 3, $searchMode);
+		}
+
+		// A genuine pasted tripcode is a trip search, not a name search: the name
+		// FULLTEXT token would just be the trip hash and match nothing useful. Drop
+		// it and hand the repository only the trip candidate, which it matches against
+		// the indexed tripcode / secure_tripcode columns. Kept separate from the
+		// full-text token because tripcodes contain characters the sanitizer strips.
+		if ($tripcodeCandidate !== '' && isset($fields['name'])) {
+			unset($fields['name']);
+			$fields['name_tripcode'] = $tripcodeCandidate;
 		}
 
 		// calculate pagination parameters
 		$offset = ($page - 1) * $postsPerPage;
 
 		return $this->searchByFullText($fields, $boardUids, $openingPostOnly, $postsPerPage, $offset);
+	}
+
+	/**
+	 * Extract a tripcode candidate from a raw Name-field value.
+	 *
+	 * Display renders a trip as the poster's name followed by a marker and the
+	 * stored hash (e.g. "test◆ViBjFlRv5." for a regular trip, "★…" for a secure
+	 * one). When a user pastes that whole string into the Name search field we
+	 * take everything after the marker as the trip hash to match against the
+	 * tripcode / secure_tripcode columns:
+	 *
+	 *   "test◆ViBjFlRv5."  -> "ViBjFlRv5."
+	 *   "◆ViBjFlRv5."      -> "ViBjFlRv5."
+	 *   "Anonymous"         -> ""   (no marker: ordinary name search)
+	 *
+	 * Only '◆' (regular) and '★' (secure) are treated as markers — they cannot
+	 * legitimately appear in a name (they are flagged as fraud symbols on post),
+	 * so finding one unambiguously signals a pasted trip. The legacy '!' posting
+	 * marker is intentionally excluded: it can occur in real names, and what
+	 * follows it when posting is the secret, not the stored hash.
+	 *
+	 * A plain name (no marker) returns ''. This also keeps such searches on the
+	 * fast ft_name FULLTEXT path: a candidate makes the repository add an exact
+	 * tripcode comparison, which only the trip indexes (not ft_name) can serve.
+	 *
+	 * @param string $name Raw name search value.
+	 * @return string Hash to compare against tripcode / secure_tripcode columns, or '' if the input has no trip marker.
+	 */
+	private function extractTripcodeCandidate(string $name): string {
+		// Take everything after the first trip marker (which may sit after a name).
+		if (preg_match('/[◆♦★]+(.*)$/u', trim($name), $matches) !== 1) {
+			return '';
+		}
+
+		return trim($matches[1]);
 	}
 
 	private function sanitizeFields(array $fields): array {

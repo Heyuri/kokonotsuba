@@ -364,6 +364,8 @@ class tableCreator {
                 INDEX idx_posts_thread_rank_cover (thread_uid, is_op DESC, post_uid DESC, post_uid),
                 INDEX idx_post_root (`root`),
                 INDEX idx_tag (`tag`),
+                INDEX idx_tripcode (`tripcode`(10)),
+                INDEX idx_secure_tripcode (`secure_tripcode`(10)),
                 UNIQUE KEY uniq_board_no (boardUID, no),
                 FULLTEXT INDEX ft_com (com),
                 FULLTEXT INDEX ft_sub (sub),

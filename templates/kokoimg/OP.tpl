@@ -5,7 +5,7 @@
 				<!--&IF($POST_ATTACHMENTS,'{$POST_ATTACHMENTS}','')-->
 			</div>
 			<div class="postinfo">
-				<label>
+				{$WATCH_STAR}<label>
 					<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete">
 					<span class="title">{$SUB}</span><!--&IF($TAG,'<span class="tag" title="{$TAG_TITLE}">[{$TAG}]</span>','')-->
 					<span class="nameContainer">

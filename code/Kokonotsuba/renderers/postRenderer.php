@@ -93,6 +93,9 @@ class postRenderer {
 		$warnings = $this->prepareWarnings($killSensor, $isThreadOp, $post, $thread);
 
 		$templateValues['{$POSTINFO_EXTRA}'] = '';
+		// Default so the OP-template placeholder never renders literally when the
+		// thread-watcher module is disabled; the module fills it via the OpeningPost hook.
+		$templateValues['{$WATCH_STAR}'] = '';
 
 		// Admin controls and widgets
 		$postFormExtra .= $this->generateAdminControls($post, $adminMode, $isThreadOp);

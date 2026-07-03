@@ -73,6 +73,7 @@ class moduleMain extends abstractModuleMain {
 			'searchTag' => '',
 			'searchMatchWord' => $isSubmission ? '' : 'on',
 			'searchOpeningPost' => $isSubmission ? '' : 'off',
+			'searchMatchMode' => 'and',
 			'board' => $this->getUidsFromBoards($boards),
 		];
 
@@ -151,6 +152,7 @@ class moduleMain extends abstractModuleMain {
 		$searchTag = $filtersFromRequest['searchTag'] ?? '';
 		$searchMatchWord = $filtersFromRequest['searchMatchWord'] ?? '';
 		$searchOpeningPost = $filtersFromRequest['searchOpeningPost'] ?? '';
+		$searchMatchMode = ($filtersFromRequest['searchMatchMode'] ?? 'and') === 'or' ? 'or' : 'and';
 
 		// get all boards as associative arrays
 		$allBoards = createAssocArrayFromBoardArray($boards);
@@ -236,6 +238,15 @@ class moduleMain extends abstractModuleMain {
 								<td>
 									<input type="hidden" name="searchOpeningPost" value="off">
 									<input type="checkbox" id="searchOpeningPost" name="searchOpeningPost" value="on"' . ($searchOpeningPost === 'on' ? 'checked' : '') . '>
+								</td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="searchMatchMode">' . _T('search_target_matchmode') . '</label></td>
+								<td>
+									<select id="searchMatchMode" name="searchMatchMode" class="inputtext">
+										<option value="and"' . ($searchMatchMode === 'or' ? '' : ' selected') . '>' . _T('search_matchmode_and') . '</option>
+										<option value="or"' . ($searchMatchMode === 'or' ? ' selected' : '') . '>' . _T('search_matchmode_or') . '</option>
+									</select>
 								</td>
 							</tr>
 							' . ($tagSelectHTML !== '' ? '
@@ -358,11 +369,14 @@ class moduleMain extends abstractModuleMain {
 		// only search opening posts
 		$openingPostsOnly = $this->moduleContext->request->getParameter('searchOpeningPost', 'GET') === 'on';
 
+		// how to combine keywords: 'and' (all required, default) or 'or' (any)
+		$searchMode = $this->moduleContext->request->getParameter('searchMatchMode', 'GET') === 'or' ? 'or' : 'and';
+
 		// chop the extension off of the file_name field
 		$fields['file_name'] = stripExtension($fields['file_name']);
 
 		// search database
-		$hitPosts = $postSearchService->searchPosts($stopWords, $fields, $boardUids, $matchWholeWords, $openingPostsOnly, $searchPage, $searchPostsPerPage) ?? [];
+		$hitPosts = $postSearchService->searchPosts($stopWords, $fields, $boardUids, $matchWholeWords, $openingPostsOnly, $searchPage, $searchPostsPerPage, $searchMode) ?? [];
 		
 		$totalPostHits = $hitPosts['total_posts'] ?? 0;
 		$resultList = '';
