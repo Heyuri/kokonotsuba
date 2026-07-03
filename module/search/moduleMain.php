@@ -71,7 +71,7 @@ class moduleMain extends abstractModuleMain {
 			'searchFileName' => '',
 			'searchPostNumber' => '',
 			'searchTag' => '',
-			'searchMatchWord' => '',
+			'searchMatchWord' => $isSubmission ? '' : 'on',
 			'searchOpeningPost' => $isSubmission ? '' : 'off',
 			'searchMatchMode' => 'and',
 			'board' => $this->getUidsFromBoards($boards),
@@ -234,19 +234,19 @@ class moduleMain extends abstractModuleMain {
 								</td>
 							</tr>
 							<tr>
+								<td class="postblock"><label for="searchOpeningPost">' . _T('search_target_opening_post') . '</label></td>
+								<td>
+									<input type="hidden" name="searchOpeningPost" value="off">
+									<input type="checkbox" id="searchOpeningPost" name="searchOpeningPost" value="on"' . ($searchOpeningPost === 'on' ? 'checked' : '') . '>
+								</td>
+							</tr>
+							<tr>
 								<td class="postblock"><label for="searchMatchMode">' . _T('search_target_matchmode') . '</label></td>
 								<td>
 									<select id="searchMatchMode" name="searchMatchMode" class="inputtext">
 										<option value="and"' . ($searchMatchMode === 'or' ? '' : ' selected') . '>' . _T('search_matchmode_and') . '</option>
 										<option value="or"' . ($searchMatchMode === 'or' ? ' selected' : '') . '>' . _T('search_matchmode_or') . '</option>
 									</select>
-								</td>
-							</tr>
-							<tr>
-								<td class="postblock"><label for="searchOpeningPost">' . _T('search_target_opening_post') . '</label></td>
-								<td>
-									<input type="hidden" name="searchOpeningPost" value="off">
-									<input type="checkbox" id="searchOpeningPost" name="searchOpeningPost" value="on"' . ($searchOpeningPost === 'on' ? 'checked' : '') . '>
 								</td>
 							</tr>
 							' . ($tagSelectHTML !== '' ? '
