@@ -793,10 +793,16 @@
 	height: 16px;
 	vertical-align: middle;
 	line-height: 0;
-	/* !important so the generic anchor link color (blue) can't override the star;
-	   the SVG's stroke/fill both derive from currentColor. */
-	color: var(--color-thread-watch-star) !important;
 	cursor: pointer;
+}
+
+.threadWatchStar,
+.threadWatchStar:link,
+.threadWatchStar:visited,
+.threadWatchStar:hover,
+.threadWatchStar:focus,
+.threadWatchStar:active {
+	color: var(--color-thread-watch-star) !important;
 }
 
 .threadWatchStar .threadWatchStarIcon {
