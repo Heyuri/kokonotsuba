@@ -155,6 +155,27 @@ const kktwch = { name: "KK Thread watcher",
 		}
 	},
 
+	getMyNewestOwnPostOp: function () {
+		var ownPosts;
+		try {
+			ownPosts = JSON.parse(localStorage.getItem('kkOwnPosts') || '{}');
+		} catch (e) {
+			return null;
+		}
+		var newestKey = null, newestTime = -1;
+		Object.keys(ownPosts).forEach(function (key) {
+			var t = ownPosts[key];
+			if (typeof t === 'number' && t > newestTime) {
+				newestTime = t;
+				newestKey = key;
+			}
+		});
+		if (!newestKey) return null;
+		// kkOwnPosts keys are "board_no"; the OP element id is "p{board}_{no}".
+		var op = document.getElementById('p' + newestKey);
+		return (op && op.classList.contains('op')) ? op : null;
+	},
+
 	/* --- Watch/Unwatch --- */
 
 	watchCurrentThread: function (threadUid) {
@@ -356,7 +377,14 @@ const kktwch = { name: "KK Thread watcher",
 		if (sessionStorage.getItem('twAutoWatch')) {
 			sessionStorage.removeItem('twAutoWatch');
 			if (_kkSetting('threadWatcherAutoWatchOwnThreads')) {
-				var opPost = document.querySelector('.post.op');
+				// Pin to the thread we actually made (see getMyNewestOwnPostOp). Only
+				// fall back to the sole OP when we're on a single-thread page, where
+				// ".post.op" is unambiguous - never on the index, where it would watch
+				// whatever thread happens to be on top instead of ours.
+				var opPost = kktwch.getMyNewestOwnPostOp();
+				if (!opPost && document.querySelector('#postform input[name="resto"]')) {
+					opPost = document.querySelector('.post.op');
+				}
 				if (opPost) {
 					var threadUid = opPost.getAttribute('data-thread-uid');
 					if (threadUid) {
