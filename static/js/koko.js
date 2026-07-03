@@ -78,6 +78,14 @@ const kkStore = (function () {
 	var selfWrites = [];        // { key, value (null = removal), expires }
 	var SELF_WRITE_TTL = 4000;  // ample for a hub round-trip; short enough to self-heal
 
+	/* Shared keys written locally this page-load before the hub snapshot merged in.
+	 * Their local value is newer than the hub's copy, so the snapshot must NOT clobber
+	 * them - we keep ours and push it up instead. Without this, a value written during
+	 * startup - before the hub iframe has even connected, so its `set` postMessage is a
+	 * no-op - is silently overwritten by the hub's stale snapshot moments later (e.g.
+	 * auto-watching the thread you just made vanishes right after it's added). */
+	var pendingLocalWrites = Object.create(null);
+
 	function noteSelfWrite(key, value) {
 		var now = Date.now();
 		selfWrites = selfWrites.filter(function (w) { return w.expires > now; });
@@ -130,6 +138,15 @@ const kkStore = (function () {
 			var data = d.data || {};
 			var keys = registeredKeys();
 			keys.forEach(function (k) {
+				// A value we wrote locally before this snapshot arrived is newer than the
+				// hub's copy: keep ours and push it up, rather than letting the stale
+				// snapshot overwrite it.
+				if (pendingLocalWrites[k]) {
+					var mine = lsGet(k);
+					if (mine !== null) post({ __kkstore: 1, type: 'set', key: k, value: mine });
+					else post({ __kkstore: 1, type: 'remove', key: k });
+					return;
+				}
 				if (Object.prototype.hasOwnProperty.call(data, k) && data[k] !== null) {
 					// Adopt the hub's value into the local mirror.
 					lsSet(k, data[k]);
@@ -195,6 +212,10 @@ const kkStore = (function () {
 			lsSet(key, value);
 			if (isShared(key)) {
 				noteSelfWrite(key, value);
+				// Written before the hub snapshot merged: mark it so the snapshot keeps
+				// our newer value (the post below is a no-op until the hub connects, so
+				// the snapshot handler is what actually carries this write up).
+				if (!settled) pendingLocalWrites[key] = true;
 				post({ __kkstore: 1, type: 'set', key: key, value: value });
 			}
 		},
@@ -202,6 +223,7 @@ const kkStore = (function () {
 			lsRemove(key);
 			if (isShared(key)) {
 				noteSelfWrite(key, null);
+				if (!settled) pendingLocalWrites[key] = true;
 				post({ __kkstore: 1, type: 'remove', key: key });
 			}
 		}
