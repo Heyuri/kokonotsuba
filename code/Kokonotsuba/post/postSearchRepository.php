@@ -240,7 +240,16 @@ class postSearchRepository extends baseRepository {
 					$subClauses[] = "MATCH({$column}) AGAINST (:{$field}{$suffix} IN BOOLEAN MODE)";
 				}
 			}
+
 			$clauses[] = '(' . implode(' OR ', $subClauses) . ')';
+		}
+
+		// A pasted tripcode in the Name field matches the stored tripcode /
+		// secure tripcode columns by exact equality. Kept as its own clause (never
+		// OR-ed alongside a MATCH()) so the optimizer can index_merge the two
+		// tripcode indexes instead of falling back to a full table scan.
+		if (isset($fields['name_tripcode'])) {
+			$clauses[] = "(p.tripcode = :name_tripcode{$suffix} OR p.secure_tripcode = :name_tripcode{$suffix})";
 		}
 
 		if (!empty($boardUids)) {
@@ -342,15 +351,23 @@ class postSearchRepository extends baseRepository {
 					$subClauses[] = "$column = :{$field}";
 					continue;
 				}
-				
+
 				// use boolean mode for fulltext search
 				$subClauses[] = "MATCH($column) AGAINST (:{$field} IN BOOLEAN MODE)";
 			}
 
 			$combineMethod = ' OR ';
-			
+
 			// add to main clauses
 			$clauses[] = '(' . implode($combineMethod, $subClauses) . ')';
+		}
+
+		// A pasted tripcode in the Name field matches the stored tripcode /
+		// secure tripcode columns by exact equality. Kept as its own clause (never
+		// OR-ed alongside a MATCH()) so the optimizer can index_merge the two
+		// tripcode indexes instead of falling back to a full table scan.
+		if (isset($fields['name_tripcode'])) {
+			$clauses[] = '(p.tripcode = :name_tripcode OR p.secure_tripcode = :name_tripcode)';
 		}
 
 		// build boardUID clause (if any)

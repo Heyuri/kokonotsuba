@@ -116,6 +116,11 @@ class postSearchService {
 		// sanitize fields
 		$fields = $this->sanitizeFields($fields);
 
+		// Capture the raw name value before full-text tokenization mangles it.
+		// A user may paste a tripcode (e.g. "!Ep8pui8Vw2") into the Name field, and we
+		// want that to also match posts by their stored tripcode / secure tripcode.
+		$tripcodeCandidate = isset($fields['name']) ? $this->extractTripcodeCandidate($fields['name']) : '';
+
 		// tokenize and compile each field for boolean full-text search
 		foreach ($fields as $field => $value) {
 			// dont parse post number or tag (exact match fields)
@@ -126,10 +131,55 @@ class postSearchService {
 			$fields[$field] = $this->parseToBooleanFulltext($value, $matchWholeWords, $stopWords);
 		}
 
+		// A genuine pasted tripcode is a trip search, not a name search: the name
+		// FULLTEXT token would just be the trip hash and match nothing useful. Drop
+		// it and hand the repository only the trip candidate, which it matches against
+		// the indexed tripcode / secure_tripcode columns. Kept separate from the
+		// full-text token because tripcodes contain characters the sanitizer strips.
+		if ($tripcodeCandidate !== '' && isset($fields['name'])) {
+			unset($fields['name']);
+			$fields['name_tripcode'] = $tripcodeCandidate;
+		}
+
 		// calculate pagination parameters
 		$offset = ($page - 1) * $postsPerPage;
 
 		return $this->searchByFullText($fields, $boardUids, $openingPostOnly, $postsPerPage, $offset);
+	}
+
+	/**
+	 * Extract a tripcode candidate from a raw Name-field value.
+	 *
+	 * Display renders a trip as the poster's name followed by a marker and the
+	 * stored hash (e.g. "test◆ViBjFlRv5." for a regular trip, "★…" for a secure
+	 * one). When a user pastes that whole string into the Name search field we
+	 * take everything after the marker as the trip hash to match against the
+	 * tripcode / secure_tripcode columns:
+	 *
+	 *   "test◆ViBjFlRv5."  -> "ViBjFlRv5."
+	 *   "◆ViBjFlRv5."      -> "ViBjFlRv5."
+	 *   "Anonymous"         -> ""   (no marker: ordinary name search)
+	 *
+	 * Only '◆' (regular) and '★' (secure) are treated as markers — they cannot
+	 * legitimately appear in a name (they are flagged as fraud symbols on post),
+	 * so finding one unambiguously signals a pasted trip. The legacy '!' posting
+	 * marker is intentionally excluded: it can occur in real names, and what
+	 * follows it when posting is the secret, not the stored hash.
+	 *
+	 * A plain name (no marker) returns ''. This also keeps such searches on the
+	 * fast ft_name FULLTEXT path: a candidate makes the repository add an exact
+	 * tripcode comparison, which only the trip indexes (not ft_name) can serve.
+	 *
+	 * @param string $name Raw name search value.
+	 * @return string Hash to compare against tripcode / secure_tripcode columns, or '' if the input has no trip marker.
+	 */
+	private function extractTripcodeCandidate(string $name): string {
+		// Take everything after the first trip marker (which may sit after a name).
+		if (preg_match('/[◆♦★]+(.*)$/u', trim($name), $matches) !== 1) {
+			return '';
+		}
+
+		return trim($matches[1]);
 	}
 
 	private function sanitizeFields(array $fields): array {
