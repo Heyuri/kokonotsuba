@@ -126,6 +126,7 @@ $config['JS_DEFAULT_SETTINGS'] = [
     'threadWatcherNewThreads' => true,
     'threadWatcherSound' => true,
     'threadWatcherAutoWatch' => true,
+    'threadWatcherAutoWatchOwnThreads' => true,
     'enablesoudane' => true,
 ];
 

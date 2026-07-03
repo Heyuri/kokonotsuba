@@ -7,15 +7,15 @@
 const kktwch = { name: "KK Thread watcher",
 	STORAGE_KEY: 'threadWatcher',
 	POLL_INTERVAL: 15000,
-	// Minimum gap between manual refreshes, so the button can't be spammed.
-	MANUAL_REFRESH_COOLDOWN: 5000,
+	// How long to wait before retrying a manual refresh that failed to reach the server.
+	REFRESH_RETRY_DELAY: 3000,
 	_pollTimer: null,
 	_win: null,
 	// True while a poll's fetch is in flight in this tab (locks the refresh button).
 	_pollInProgress: false,
-	// Timestamp until which the manual refresh stays locked (cooldown).
-	_refreshLockedUntil: 0,
-	_refreshCooldownTimer: null,
+	// track refresh pending state and retry timer
+	_refreshPending: false,
+	_refreshRetryTimer: null,
 	// Ticks the "last updated" label while the window is open.
 	_updatedTimer: null,
 
@@ -29,37 +29,10 @@ const kktwch = { name: "KK Thread watcher",
 			});
 		}
 
-		// Register action handler for PHP-injected "Watch thread" widget on OP posts
-		if (window.postWidget) {
-			// Dynamic label: show "Watch" or "Unwatch" based on current state
-			window.postWidget.registerLabelProvider('watchThread', function (ctx) {
-				var post = ctx.post;
-				if (!post) return null;
-				var threadUid = post.getAttribute('data-thread-uid') ||
-				                (post.querySelector('[data-param-thread_uid]')?.getAttribute('data-param-thread_uid'));
-				if (!threadUid) return null;
-
-				var watchLabel = document.querySelector('meta[name="threadWatcherWatchLabel"]')?.content || 'Watch thread';
-				var unwatchLabel = document.querySelector('meta[name="threadWatcherUnwatchLabel"]')?.content || 'Unwatch thread';
-
-				var watched = kktwch.getWatchedThreads();
-				return watched.hasOwnProperty(threadUid) ? unwatchLabel : watchLabel;
-			});
-
-			// Handle the watch/unwatch action
-			window.postWidget.registerActionHandler('watchThread', function (ctx) {
-				var threadUid = ctx.params?.thread_uid || '';
-				if (!threadUid) return;
-
-				var watched = kktwch.getWatchedThreads();
-				if (watched.hasOwnProperty(threadUid)) {
-					kktwch.unwatchThread(threadUid);
-				} else {
-					kktwch.watchCurrentThread(threadUid);
-				}
-				kktwch.renderWatchList();
-			});
-		}
+		// Wire up the pre-rendered watch stars on opening posts (delegated so it also
+		// covers threads inserted later, e.g. by the overboard/live updates), and reflect
+		// each thread's current watched state onto its star.
+		kktwch.initStars();
 
 		// Auto-watch on reply submission
 		kktwch.hookFormSubmit();
@@ -67,13 +40,12 @@ const kktwch = { name: "KK Thread watcher",
 		// Track posts scrolling into view on watched thread pages
 		kktwch.initViewportTracking();
 
-		// Request notification permission proactively
-		if ('Notification' in window && Notification.permission === 'default') {
-			// Will be requested on first watch action instead
-		}
+		// Track which watched threads scroll into view on index/overboard pages, seeding
+		// the initially-visible ones so the first poll's notifications are correct.
+		kktwch.initIndexViewportTracking();
 
-		// If any watched threads are visible on this index/overboard page,
-		// treat them as seen before reflecting unread counts in the title.
+		// Threads already scrolled into view on this index/overboard page count as seen —
+		// mark them read before reflecting unread counts in the title.
 		kktwch.markVisibleThreadsAsRead();
 
 		// Reflect any existing unread counts in the title before the first poll lands
@@ -91,6 +63,8 @@ const kktwch = { name: "KK Thread watcher",
 			if (key !== kktwch.STORAGE_KEY) return;
 			kktwch.renderWatchList();
 			kktwch.updatePageTitle();
+			// The watch list changed elsewhere (another tab/subdomain): re-sync stars.
+			kktwch.syncStars();
 		});
 
 		// The shared store loads asynchronously: once its snapshot has been merged
@@ -98,6 +72,7 @@ const kktwch = { name: "KK Thread watcher",
 		kkStore.onReady(function () {
 			kktwch.renderWatchList();
 			kktwch.updatePageTitle();
+			kktwch.syncStars();
 			// Pick up counts for any threads adopted from another subdomain
 			// (respects the cross-tab poll lock inside checkAllThreads).
 			kktwch.checkAllThreads();
@@ -112,10 +87,7 @@ const kktwch = { name: "KK Thread watcher",
 	reset: function () {
 		kktwch.stopPolling();
 		kktwch.stopUpdatedTicker();
-		if (kktwch._refreshCooldownTimer) {
-			clearTimeout(kktwch._refreshCooldownTimer);
-			kktwch._refreshCooldownTimer = null;
-		}
+		kktwch.clearRefreshPending();
 		if (kktwch._viewportObserver) {
 			kktwch._viewportObserver.disconnect();
 			kktwch._viewportObserver = null;
@@ -124,6 +96,16 @@ const kktwch = { name: "KK Thread watcher",
 			kktwch._viewportMutObserver.disconnect();
 			kktwch._viewportMutObserver = null;
 		}
+		if (kktwch._bottomScrollHandler) {
+			window.removeEventListener('scroll', kktwch._bottomScrollHandler);
+			kktwch._bottomScrollHandler = null;
+		}
+		if (kktwch._indexViewportObserver) {
+			kktwch._indexViewportObserver.disconnect();
+			kktwch._indexViewportObserver = null;
+		}
+		kktwch._indexObservedEls = null;
+		kktwch._indexSeenThreads = {};
 		kktwch._viewportThreadUid = null;
 		kktwch._viewportThreadEl = null;
 		kktwch._maxSeenIndex = -1;
@@ -221,6 +203,66 @@ const kktwch = { name: "KK Thread watcher",
 		kktwch.saveWatchedThreads(watched);
 	},
 
+	/* --- Watch stars (pre-rendered toggles on opening posts) --- */
+
+	// Toggle watch state when a star is clicked. Delegated on the document so stars in
+	// threads inserted after load (overboard, live updates) work without re-binding.
+	initStars: function () {
+		document.addEventListener('click', function (e) {
+			var star = e.target.closest ? e.target.closest('.threadWatchStar') : null;
+			if (!star) return;
+			e.preventDefault();
+
+			var threadUid = star.getAttribute('data-thread-uid');
+			if (!threadUid) return;
+
+			var watched = kktwch.getWatchedThreads();
+			if (watched.hasOwnProperty(threadUid)) {
+				kktwch.unwatchThread(threadUid);
+				kktwch.showWatchMessage(false);
+			} else {
+				kktwch.watchCurrentThread(threadUid);
+				kktwch.showWatchMessage(true);
+			}
+			kktwch.syncStars();
+			kktwch.renderWatchList();
+		});
+
+		// Reflect current state onto whatever stars are already on the page.
+		kktwch.syncStars();
+	},
+
+	// Toast feedback for an explicit watch/unwatch action (guarded in case message.js
+	// isn't loaded on this page).
+	showWatchMessage: function (isWatched) {
+		if (typeof showMessage === 'function') {
+			showMessage(isWatched ? 'Thread watched' : 'Thread unwatched', true);
+		}
+	},
+
+	// Fill in / hollow out every star on the page to match the watch list, and keep its
+	// label in sync ("Watch thread" vs "Unwatch thread").
+	syncStars: function () {
+		var stars = document.querySelectorAll('.threadWatchStar');
+		if (!stars.length) return;
+
+		var watched = kktwch.getWatchedThreads();
+		var watchLabel = document.querySelector('meta[name="threadWatcherWatchLabel"]')?.content || 'Watch thread';
+		var unwatchLabel = document.querySelector('meta[name="threadWatcherUnwatchLabel"]')?.content || 'Unwatch thread';
+
+		stars.forEach(function (star) {
+			var uid = star.getAttribute('data-thread-uid');
+			if (!uid) return;
+			var isWatched = watched.hasOwnProperty(uid);
+			var label = isWatched ? unwatchLabel : watchLabel;
+
+			star.classList.toggle('twStarWatched', isWatched);
+			star.setAttribute('aria-pressed', isWatched ? 'true' : 'false');
+			star.setAttribute('title', label);
+			star.setAttribute('aria-label', label);
+		});
+	},
+
 	/* --- Thread Info Extraction --- */
 
 	getThreadInfoFromPage: function (threadUid) {
@@ -310,10 +352,10 @@ const kktwch = { name: "KK Thread watcher",
 		if (!form) return;
 
 		// On page load, check if we just created a new thread and should auto-watch it
-		// (auto-watch is optional, enabled by default). Always clear the flag.
+		// (governed by its own setting, enabled by default). Always clear the flag.
 		if (sessionStorage.getItem('twAutoWatch')) {
 			sessionStorage.removeItem('twAutoWatch');
-			if (_kkSetting('threadWatcherAutoWatch')) {
+			if (_kkSetting('threadWatcherAutoWatchOwnThreads')) {
 				var opPost = document.querySelector('.post.op');
 				if (opPost) {
 					var threadUid = opPost.getAttribute('data-thread-uid');
@@ -322,6 +364,8 @@ const kktwch = { name: "KK Thread watcher",
 						if (!watched[threadUid]) {
 							kktwch.watchCurrentThread(threadUid);
 							kktwch.renderWatchList();
+							// Fill the new thread's star now that it's watched.
+							kktwch.syncStars();
 						}
 					}
 				}
@@ -332,8 +376,8 @@ const kktwch = { name: "KK Thread watcher",
 			var restoInput = form.querySelector('input[name="resto"]');
 
 			if (!restoInput || !restoInput.value) {
-				// New thread: set flag so we auto-watch after redirect (if enabled).
-				if (_kkSetting('threadWatcherAutoWatch')) sessionStorage.setItem('twAutoWatch', '1');
+				// New thread: set flag so we auto-watch after redirect (own-threads setting).
+				if (_kkSetting('threadWatcherAutoWatchOwnThreads')) sessionStorage.setItem('twAutoWatch', '1');
 				return;
 			}
 
@@ -373,6 +417,17 @@ const kktwch = { name: "KK Thread watcher",
 	_viewportThreadUid: null,
 	_viewportThreadEl: null,
 	_maxSeenIndex: -1,
+	// Scroll listener (+ its rAF throttle flag) used to detect reaching the page bottom.
+	_bottomScrollHandler: null,
+	_bottomScrollScheduled: false,
+
+	// Index/overboard read tracking. A watched thread rendered on the index only counts as
+	// "seen" once it has actually scrolled into the viewport — so threads sitting below the
+	// fold still notify for new replies instead of being silently marked read.
+	_indexViewportObserver: null,
+	_indexObservedEls: null,
+	// Set (as a plain object) of thread UIDs that have entered the viewport this page load.
+	_indexSeenThreads: {},
 
 	initViewportTracking: function () {
 		// Only run on thread pages (where a resto input exists)
@@ -429,6 +484,121 @@ const kktwch = { name: "KK Thread watcher",
 			kktwch.observeThreadPosts();
 		});
 		kktwch._viewportMutObserver.observe(threadEl, { childList: true });
+
+		// The IntersectionObserver's bottom margin means the very last reply may never
+		// scroll above the "seen" line (there's nothing below it to push it up), so it
+		// would never be marked read. Detect reaching the bottom of the page and snap the
+		// read marker to the last post. Throttled to once per frame.
+		kktwch._bottomScrollHandler = function () {
+			if (kktwch._bottomScrollScheduled) return;
+			kktwch._bottomScrollScheduled = true;
+			requestAnimationFrame(function () {
+				kktwch._bottomScrollScheduled = false;
+				kktwch.checkScrolledToBottom();
+			});
+		};
+		window.addEventListener('scroll', kktwch._bottomScrollHandler, { passive: true });
+
+		// A short thread may already be fully visible with nothing to scroll — treat it as
+		// read. Wait for full load first so image heights are settled; otherwise an
+		// image-heavy thread can measure short mid-load and be marked read prematurely.
+		if (document.readyState === 'complete') {
+			kktwch.checkScrolledToBottom();
+		} else {
+			window.addEventListener('load', function () {
+				kktwch.checkScrolledToBottom();
+			}, { once: true });
+		}
+	},
+
+	// When the page is scrolled to (near) the bottom, every rendered post has been passed,
+	// so mark the last one seen. This reliably clears the tail of the thread, which the
+	// IntersectionObserver's bottom margin can otherwise leave perpetually unread.
+	checkScrolledToBottom: function () {
+		if (!kktwch._viewportThreadEl) return;
+
+		var docHeight = document.documentElement.scrollHeight;
+		var viewportBottom = window.innerHeight + window.scrollY;
+		if (viewportBottom < docHeight - 100) return;
+
+		var lastIdx = kktwch._viewportThreadEl.querySelectorAll('.post').length - 1;
+		if (lastIdx > kktwch._maxSeenIndex) kktwch._maxSeenIndex = lastIdx;
+		kktwch.commitViewportProgress();
+	},
+
+	/* --- Index/overboard viewport read tracking --- */
+
+	// On index/overboard pages, watch which rendered threads actually scroll into view.
+	// Only those count as "seen" (see markVisibleThreadsAsRead), so a watched thread below
+	// the fold keeps notifying for new replies until the user scrolls to it.
+	initIndexViewportTracking: function () {
+		// Thread pages track individual posts instead (see initViewportTracking).
+		var restoInput = document.querySelector('input[name="resto"]');
+		if (restoInput && restoInput.value) return;
+
+		kktwch._indexSeenThreads = {};
+		kktwch._indexObservedEls = ('WeakSet' in window) ? new WeakSet() : null;
+
+		if (!('IntersectionObserver' in window)) {
+			// No observer support: fall back to the old behavior (rendered == seen) so
+			// threads still get marked read rather than notifying forever.
+			var w = kktwch.getWatchedThreads();
+			Object.keys(w).forEach(function (uid) { kktwch._indexSeenThreads[uid] = true; });
+			return;
+		}
+
+		kktwch._indexViewportObserver = new IntersectionObserver(function (entries) {
+			var changed = false;
+			entries.forEach(function (entry) {
+				if (!entry.isIntersecting) return;
+				var uid = kktwch.threadUidOfElement(entry.target);
+				if (uid && !kktwch._indexSeenThreads[uid]) {
+					kktwch._indexSeenThreads[uid] = true;
+					changed = true;
+				}
+				kktwch._indexViewportObserver.unobserve(entry.target);
+			});
+			if (!changed) return;
+			// A thread just became visible — mark it (and any others now qualifying) read.
+			if (kktwch.markVisibleThreadsAsRead()) kktwch.renderWatchList();
+			kktwch.updatePageTitle();
+		}, {
+			// Match the thread-page reader: a thread only counts once it's up past the
+			// bottom fifth of the viewport, not the instant it peeks in from the bottom.
+			threshold: 0,
+			rootMargin: '0px 0px -20% 0px'
+		});
+
+		kktwch.observeIndexThreads();
+	},
+
+	// Observe each watched thread element on the page that isn't observed yet. The
+	// IntersectionObserver decides what's actually visible (accounting for layout as images
+	// load), rather than a getBoundingClientRect snapshot that can misjudge an unlaid-out
+	// page at startup and wrongly mark a below-the-fold thread as seen.
+	observeIndexThreads: function () {
+		if (!kktwch._indexViewportObserver) return;
+		var watched = kktwch.getWatchedThreads();
+		Object.keys(watched).forEach(function (uid) {
+			var el = kktwch.indexThreadElement(uid);
+			if (!el) return;
+			if (kktwch._indexObservedEls && kktwch._indexObservedEls.has(el)) return;
+			if (kktwch._indexObservedEls) kktwch._indexObservedEls.add(el);
+			kktwch._indexViewportObserver.observe(el);
+		});
+	},
+
+	// The .thread wrapper (preferred) or OP element for a watched thread on this page.
+	indexThreadElement: function (uid) {
+		var el = document.querySelector('.thread[data-thread-uid="' + uid + '"]');
+		if (el) return el;
+		var op = document.querySelector('.post.op[data-thread-uid="' + uid + '"]');
+		return op ? (op.closest('.thread') || op) : null;
+	},
+
+	threadUidOfElement: function (el) {
+		return el.getAttribute('data-thread-uid') ||
+			(el.querySelector('.post.op[data-thread-uid]')?.getAttribute('data-thread-uid')) || null;
 	},
 
 	// Observe every not-yet-observed post in the tracked thread. Idempotent: posts are
@@ -464,12 +634,50 @@ const kktwch = { name: "KK Thread watcher",
 		// lock in a position before the true post count is known.
 		if (e.lastSeenCount === null || e.lastSeenCount === undefined) return;
 
-		var seenCount = kktwch._maxSeenIndex + 1;
+		var seenCount = kktwch.seenCountFromMaxIndex(e);
 		if (seenCount > e.lastSeenCount) {
 			e.lastSeenCount = seenCount;
+			// Reading through to the end of the thread means every quoting reply has been
+			// seen too, so clear the unread-quote flag the same way the unread count clears.
+			// Otherwise the red "quoted you" state would linger until the mark-read button.
+			if (e.lastSeenCount >= (e.postCount || 0)) {
+				e.seenQuoteCount = e.quoteCount || 0;
+			}
 			kktwch.saveWatchedThreads(w);
 			kktwch.renderWatchList();
 		}
+	},
+
+	// Translate the furthest-seen DOM position (_maxSeenIndex) into "posts read from the
+	// top of the thread". The page renders the OP followed by the *newest* replies: the
+	// whole thread when nothing is omitted, or just the last N in an abbreviated
+	// ("last X replies") view. So a reply at DOM index i sits at thread position
+	// (postCount - domCount + 1 + i), and the OP is always position 1. On a full thread
+	// page domCount === postCount and this reduces to i + 1. Returns 0 when it can't
+	// safely advance.
+	seenCountFromMaxIndex: function (entry) {
+		var idx = kktwch._maxSeenIndex;
+		if (idx < 0 || !kktwch._viewportThreadEl) return 0;
+
+		var postCount = entry.postCount || 0;
+		if (!postCount) return 0;
+
+		var domCount = kktwch._viewportThreadEl.querySelectorAll('.post').length;
+		if (!domCount) return 0;
+
+		// The OP (index 0) is always thread position 1.
+		if (idx === 0) return 1;
+
+		// The rendered replies cover thread positions [postCount - domCount + 2 .. postCount].
+		// If what's already read stops before that block begins, there are unread posts
+		// above the visible replies (an abbreviated view with a large backlog). Advancing
+		// would silently skip them, so leave those to a fuller view / the mark-read button.
+		if (entry.lastSeenCount < postCount - (domCount - 1)) return 0;
+
+		var pos = postCount - domCount + 1 + idx;
+		if (pos < 1) pos = 1;
+		if (pos > postCount) pos = postCount;
+		return pos;
 	},
 
 	/* --- Polling --- */
@@ -550,6 +758,10 @@ const kktwch = { name: "KK Thread watcher",
 
 		var separator = apiUrl.includes('?') ? '&' : '?';
 		var url = apiUrl + separator + params.join('&');
+
+		// Tracks whether this poll actually reached the server and parsed a response, so a
+		// manual refresh knows whether to stop spinning or keep retrying.
+		var succeeded = false;
 
 		return fetch(url)
 			.then(function (res) {
@@ -643,11 +855,13 @@ const kktwch = { name: "KK Thread watcher",
 
 				if (changed) {
 					kktwch.saveWatchedThreads(watched);
-					// On index/overboard, any watched thread that's rendered on
-					// the page is considered seen — bump lastSeenCount when the
-					// visible DOM actually contains the unread range. Run this
-					// BEFORE the notification check so an unread reply that's
-					// already visible on the index doesn't trigger a ding.
+					// Pick up any watched threads newly rendered on the page (e.g. an
+					// overboard reload) so their visibility is tracked too.
+					kktwch.observeIndexThreads();
+					// On index/overboard, a watched thread the user has scrolled into
+					// view is considered seen — bump lastSeenCount when the visible DOM
+					// actually contains the unread range. Run this BEFORE the
+					// notification check so a reply already read on the index doesn't ding.
 					kktwch.markVisibleThreadsAsRead();
 
 					// Send notifications for threads that grew this poll AND
@@ -663,6 +877,8 @@ const kktwch = { name: "KK Thread watcher",
 					});
 
 					kktwch.renderWatchList();
+					// A poll may have unwatched deleted threads — refresh their stars.
+					kktwch.syncStars();
 				}
 
 				// Refresh the title and top-link class on every poll cycle, even when
@@ -672,14 +888,18 @@ const kktwch = { name: "KK Thread watcher",
 				// Record when the watch data was last refreshed (shared across tabs).
 				kkStore.set('kktwch_lastUpdated', Date.now());
 				kktwch.updateUpdatedLabel();
+
+				succeeded = true;
 			})
 			.catch(function () {
 				// Silently fail on network errors
 			})
 			.finally(function () {
-				// Poll finished (success or failure): release the in-tab lock and let
-				// the cooldown govern when the button becomes clickable again.
+				// Poll finished: release the in-tab lock. A pending manual refresh keeps the
+				// button spinning until a poll succeeds — clear it on success, retry on failure.
 				kktwch._pollInProgress = false;
+				if (succeeded) kktwch.clearRefreshPending();
+				else kktwch.scheduleRefreshRetry();
 				kktwch.updateRefreshUi();
 			});
 	},
@@ -697,14 +917,47 @@ const kktwch = { name: "KK Thread watcher",
 		kktwch.renderWatchList();
 	},
 
+	// Mark every watched thread as fully read: clears both unread replies and unread
+	// quotes across the whole list. Only touches threads that actually have something
+	// unread, so unseeded (just-watched, not-yet-polled) entries are left alone.
+	markAllAsRead: function () {
+		var watched = kktwch.getWatchedThreads();
+		var changed = false;
+		Object.keys(watched).forEach(function (threadUid) {
+			var entry = watched[threadUid];
+			if (!entry) return;
+			if (kktwch.getUnreadCount(entry) === 0 && !kktwch.hasUnreadQuote(entry)) return;
+			entry.lastSeenCount = entry.postCount;
+			entry.seenQuoteCount = entry.quoteCount || 0;
+			changed = true;
+		});
+		if (changed) kktwch.saveWatchedThreads(watched);
+		kktwch.renderWatchList();
+	},
+
+	// Remove every watched thread from the list. Confirms first, since unwatching the
+	// whole list can't be undone.
+	clearAllWatched: function () {
+		var watched = kktwch.getWatchedThreads();
+		if (!Object.keys(watched).length) return;
+		if (!window.confirm('Remove all watched threads?')) return;
+
+		kktwch.saveWatchedThreads({});
+		kktwch.renderWatchList();
+		kktwch.updatePageTitle();
+		// Hollow out every star on the page now that nothing is watched.
+		kktwch.syncStars();
+	},
+
 	/**
-	 * On index/overboard pages, a watched thread that's rendered on the page
-	 * is treated as "seen" only when the index's snapshot actually contains
-	 * all the user's unread replies. If the index is outdated (the API says
-	 * there are more posts than the DOM is showing for the unread range),
-	 * leave lastSeenCount alone — those unseen posts aren't actually visible.
+	 * On index/overboard pages, mark a watched thread read only when BOTH hold:
+	 *  - the user has actually scrolled it into view this page load (_indexSeenThreads), and
+	 *  - its unread posts are genuinely rendered in the current index snapshot (checked via
+	 *    the first-unread post element existing in the DOM).
+	 * This means a thread below the fold, or one whose new replies haven't been loaded yet
+	 * (stale index the user hasn't refreshed), stays unread and keeps notifying.
 	 *
-	 * No-op on thread pages (those use the viewport IntersectionObserver).
+	 * No-op on thread pages (those use the per-post viewport IntersectionObserver).
 	 * Returns true if anything changed.
 	 */
 	markVisibleThreadsAsRead: function () {
@@ -721,6 +974,11 @@ const kktwch = { name: "KK Thread watcher",
 			var entry = watched[threadUid];
 			if (!entry) return;
 
+			// Only mark threads the user has actually scrolled into view on this page.
+			// Threads still below the fold aren't "seen", so their new replies keep
+			// notifying rather than being silently cleared just for being on the page.
+			if (!kktwch._indexSeenThreads[threadUid]) return;
+
 			// Not yet seeded by a poll: leave it for the poll to seed to the real count,
 			// so we don't lock in the page's preview count as "seen".
 			if (entry.lastSeenCount === null || entry.lastSeenCount === undefined) return;
@@ -730,28 +988,23 @@ const kktwch = { name: "KK Thread watcher",
 			// Nothing new to mark
 			if (lastSeen >= postCount) return;
 
-			// Find the thread container on the page. data-thread-uid is on
-			// both the .thread wrapper and the OP .post element; prefer the
-			// wrapper so we can count posts (OP + visible replies) inside it.
-			var threadEl = document.querySelector('.thread[data-thread-uid="' + threadUid + '"]');
-			if (!threadEl) {
-				var opPost = document.querySelector('.post.op[data-thread-uid="' + threadUid + '"]');
-				if (opPost) threadEl = opPost.closest('.thread') || opPost.parentElement;
-			}
-			if (!threadEl) return;
-
-			// Posts currently in this thread block on the index (OP + last N replies).
-			var domCount = threadEl.querySelectorAll('.post').length;
-			if (!domCount) return;
-
-			// The visible block shows the OP plus the last (domCount - 1) replies.
-			// All unread replies are visible only if the unread range fits inside
-			// what's shown — i.e. lastSeen >= postCount - (domCount - 1).
-			// If the index snapshot is outdated and missing some new posts,
-			// this fails and we don't mark.
-			if (lastSeen < postCount - (domCount - 1)) return;
+			// Only mark read if the unread posts are actually rendered on the index right
+			// now. The index HTML is a snapshot: when new replies arrive but the user hasn't
+			// reloaded the page, those posts aren't in the DOM — the API just reports a
+			// higher count — so they haven't really been seen. The server gives us the first
+			// unread post's number; if its element is on the page then the unread range (a
+			// contiguous block of the newest replies) is visible, so it's safe to mark read.
+			// Otherwise (stale index, or an abbreviated block that omits older unread posts)
+			// leave it unread.
+			var firstUnreadNo = entry.firstUnreadNo;
+			if (!firstUnreadNo || !entry.boardId) return;
+			if (!document.getElementById('p' + entry.boardId + '_' + firstUnreadNo)) return;
 
 			entry.lastSeenCount = postCount;
+			// The whole unread range is rendered and the thread has been scrolled into view,
+			// so any quoting replies in it have been seen — clear the unread-quote flag too,
+			// matching how the unread count clears (see commitViewportProgress).
+			entry.seenQuoteCount = entry.quoteCount || 0;
 			changed = true;
 		});
 
@@ -799,9 +1052,15 @@ const kktwch = { name: "KK Thread watcher",
 	/* --- Notifications --- */
 
 	requestNotificationPermission: function () {
-		if ('Notification' in window && Notification.permission === 'default') {
-			Notification.requestPermission();
-		}
+		if (!('Notification' in window) || Notification.permission !== 'default') return;
+
+		// only ever prompt once
+		try {
+			if (localStorage.getItem('kktwch_notifAsked')) return;
+			localStorage.setItem('kktwch_notifAsked', '1');
+		} catch (e) {}
+
+		Notification.requestPermission();
 	},
 
 	/* --- New thread alerts --- */
@@ -895,11 +1154,11 @@ const kktwch = { name: "KK Thread watcher",
 
 		var replyWord = unreadCount === 1 ? 'reply' : 'replies';
 
-		// Quote-replies: prefer a push notification when the user allows them and the
-		// tab is in the background; otherwise fall back to a distinct double ping.
+		// Quote-replies: prefer a push notification when the user allows them. 
+		// otherwise fall back to a distinct double ping.
 		// When quote-push is disabled, fall through and treat them as a regular ping.
 		if (isQuote && _kkSetting('threadWatcherQuotePush')) {
-			if (!document.hasFocus() && 'Notification' in window && Notification.permission === 'granted') {
+			if ('Notification' in window && Notification.permission === 'granted') {
 				try {
 					var notif = new Notification(kktwch.getDisplayName(entry), {
 						body: 'Quoted you (' + unreadCount + ' new ' + replyWord + ')',
@@ -959,6 +1218,8 @@ const kktwch = { name: "KK Thread watcher",
 			kktwch._win.remove();
 			kktwch._win = null;
 			kktwch.stopUpdatedTicker();
+			// No button to spin anymore; stop any in-progress manual-refresh retries.
+			kktwch.clearRefreshPending();
 			return;
 		}
 		kktwch.openWindow();
@@ -979,6 +1240,8 @@ const kktwch = { name: "KK Thread watcher",
 		kktwch._win.onclose = function () {
 			kktwch._win = null;
 			kktwch.stopUpdatedTicker();
+			// No button to spin anymore; stop any in-progress manual-refresh retries.
+			kktwch.clearRefreshPending();
 		};
 
 		// Clone the content wrapper template
@@ -994,6 +1257,24 @@ const kktwch = { name: "KK Thread watcher",
 			refreshBtn.addEventListener('click', function (e) {
 				e.preventDefault();
 				kktwch.manualRefresh();
+			});
+		}
+
+		// Wire the "mark all as read" button next to it.
+		var markAllBtn = kktwch._win.div.querySelector('.threadWatcherMarkAllRead');
+		if (markAllBtn) {
+			markAllBtn.addEventListener('click', function (e) {
+				e.preventDefault();
+				kktwch.markAllAsRead();
+			});
+		}
+
+		// Wire the "clear all" button.
+		var clearAllBtn = kktwch._win.div.querySelector('.threadWatcherClearAll');
+		if (clearAllBtn) {
+			clearAllBtn.addEventListener('click', function (e) {
+				e.preventDefault();
+				kktwch.clearAllWatched();
 			});
 		}
 
@@ -1024,39 +1305,59 @@ const kktwch = { name: "KK Thread watcher",
 	// Ignored while a poll is already running or during the post-refresh cooldown, so
 	// the button can't be spammed.
 	manualRefresh: function () {
+		// Ignore clicks while a poll is already running (or a manual refresh is still
+		// retrying): that's what stops the button being spammed.
 		if (kktwch.isRefreshLocked()) return;
 
-		// Open a cooldown window now, so even an instant poll can't be re-fired
-		// immediately afterwards.
-		kktwch._refreshLockedUntil = Date.now() + kktwch.MANUAL_REFRESH_COOLDOWN;
-		kktwch.scheduleRefreshUnlock();
+		// Keep the button spinning and locked until a poll actually succeeds.
+		kktwch._refreshPending = true;
 		kktwch.updateRefreshUi();
 
-		kktwch.checkAllThreads(true);
-	},
-
-	// True while the refresh button must stay locked: a poll is in flight, or we're
-	// still inside the manual cooldown.
-	isRefreshLocked: function () {
-		return kktwch._pollInProgress || Date.now() < kktwch._refreshLockedUntil;
-	},
-
-	// Re-evaluate the button UI when the cooldown expires.
-	scheduleRefreshUnlock: function () {
-		if (kktwch._refreshCooldownTimer) clearTimeout(kktwch._refreshCooldownTimer);
-		var delay = Math.max(0, kktwch._refreshLockedUntil - Date.now()) + 50;
-		kktwch._refreshCooldownTimer = setTimeout(function () {
-			kktwch._refreshCooldownTimer = null;
+		var started = kktwch.checkAllThreads(true);
+		// No fetch was started (nothing watched and new-thread alerts off): don't spin forever.
+		if (!started) {
+			kktwch.clearRefreshPending();
 			kktwch.updateRefreshUi();
-		}, delay);
+		}
 	},
 
-	// Reflect poll/cooldown state on the refresh button: spin while polling, locked
-	// (dimmed, non-clickable) while polling or cooling down.
+	// Retry a failed manual refresh after a short delay, for as long as one is pending.
+	scheduleRefreshRetry: function () {
+		if (!kktwch._refreshPending || kktwch._refreshRetryTimer) return;
+		kktwch._refreshRetryTimer = setTimeout(function () {
+			kktwch._refreshRetryTimer = null;
+			if (!kktwch._refreshPending) return;
+			var started = kktwch.checkAllThreads(true);
+			// Genuinely nothing left to fetch (not merely a poll already running): stop.
+			if (!started && !kktwch._pollInProgress) {
+				kktwch.clearRefreshPending();
+				kktwch.updateRefreshUi();
+			}
+		}, kktwch.REFRESH_RETRY_DELAY);
+	},
+
+	// Stop the manual-refresh spinner: a poll succeeded, or there's nothing left to do.
+	clearRefreshPending: function () {
+		kktwch._refreshPending = false;
+		if (kktwch._refreshRetryTimer) {
+			clearTimeout(kktwch._refreshRetryTimer);
+			kktwch._refreshRetryTimer = null;
+		}
+	},
+
+	// True while the refresh button must stay locked: a poll is in flight, or a manual
+	// refresh is still retrying. Unlocks as soon as the ongoing poll finishes.
+	isRefreshLocked: function () {
+		return kktwch._pollInProgress || kktwch._refreshPending;
+	},
+
+	// Reflect poll state on the refresh button: spin while polling, locked (dimmed,
+	// non-clickable) while a poll/refresh is ongoing so it can't be spammed.
 	updateRefreshUi: function () {
 		var btn = document.querySelector('.threadWatcherRefresh');
 		if (!btn) return;
-		btn.classList.toggle('twSpinning', kktwch._pollInProgress);
+		// Spin while a fetch is in flight or a manual refresh is still retrying.
+		btn.classList.toggle('twSpinning', kktwch._pollInProgress || kktwch._refreshPending);
 		btn.classList.toggle('twLocked', kktwch.isRefreshLocked());
 	},
 
@@ -1156,6 +1457,8 @@ const kktwch = { name: "KK Thread watcher",
 				e.preventDefault();
 				kktwch.unwatchThread(threadUid);
 				kktwch.renderWatchList();
+				// Hollow out this thread's on-page star, if it's visible.
+				kktwch.syncStars();
 			});
 
 			// Wire up mark-as-read button. Show it whenever there's anything to clear —
@@ -1223,7 +1526,8 @@ if (typeof(KOKOJS) != "undefined") {
 		'threadWatcherQuotePush',
 		'threadWatcherNewThreads',
 		'threadWatcherSound',
-		'threadWatcherAutoWatch'
+		'threadWatcherAutoWatch',
+		'threadWatcherAutoWatchOwnThreads'
 	]);
 
 	// Thread-watcher settings live in kkStore (shared across subdomains), not plain
@@ -1234,5 +1538,6 @@ if (typeof(KOKOJS) != "undefined") {
 	kkSetting.add({ key: "threadWatcherQuotePush", label: "Push notification when quoted", store: twStore, onChange: twPermission }, "Thread Watcher");
 	kkSetting.add({ key: "threadWatcherNewThreads", label: "New thread notifications", store: twStore, onChange: twPermission }, "Thread Watcher");
 	kkSetting.add({ key: "threadWatcherSound", label: "Play notification sound", store: twStore }, "Thread Watcher");
-	kkSetting.add({ key: "threadWatcherAutoWatch", label: "Auto-watch threads you post in", store: twStore }, "Thread Watcher");
+	kkSetting.add({ key: "threadWatcherAutoWatch", label: "Auto-watch threads you reply to", store: twStore }, "Thread Watcher");
+	kkSetting.add({ key: "threadWatcherAutoWatchOwnThreads", label: "Auto-watch threads you make", store: twStore }, "Thread Watcher");
 } else { console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script."); }

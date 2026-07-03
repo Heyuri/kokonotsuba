@@ -455,6 +455,8 @@ $language['thread_unwatch_label'] = 'Unwatch thread';
 $language['thread_watch_empty'] = 'No watched threads.';
 $language['thread_watch_unwatch_title'] = 'Unwatch';
 $language['thread_watch_mark_read_title'] = 'Mark as read';
+$language['thread_watch_mark_all_read_title'] = 'Mark all as read';
+$language['thread_watch_clear_all_title'] = 'Clear all watched threads';
 $language['thread_watch_refresh_title'] = 'Refresh';
 $language['thread_watch_updated_label'] = 'Updated:';
 
