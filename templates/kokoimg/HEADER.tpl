@@ -1,5 +1,5 @@
 <!--&HEADER_IMG_BASE/-->
-	<script src="{$STATIC_URL}js/koko.js?v=20"></script>
+	<script src="{$STATIC_URL}js/koko.js?v=21"></script>
 	<script src="{$STATIC_URL}js/qu.js?v=3" defer></script>
 	<script src="{$STATIC_URL}js/qu2.js?v=3" defer></script>
 	<script src="{$STATIC_URL}js/qu3.js?v=25" defer></script>
