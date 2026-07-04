@@ -63,6 +63,13 @@ class threadRenderer {
 
 		$templateValues['{$THREAD_OP}'] = '';
 
+		// Expose pagination position so the client-side incremental updater can tell
+		// whether this page shows the tail (newest posts) of the thread. On an earlier
+		// page the newest on-page post isn't the newest in the thread, so the updater
+		// must not fetch "posts newer than it" (that would pull in later pages' replies).
+		$templateValues['{$THREAD_CURRENT_PAGE}'] = max(1, $currentPage);
+		$templateValues['{$THREAD_TOTAL_PAGES}'] = max(1, $totalPages);
+
 		$templateValues = $this->getThreadPlaceholders($thread, $templateValues);
 		
 		// thread CSS reference

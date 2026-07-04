@@ -17,6 +17,22 @@ function _twLastKnownPostUid() {
 	return max;
 }
 
+// Whether the page currently shows the tail (newest posts) of the thread.
+//
+// Incremental updating only makes sense on the last page. On an earlier page of a
+// paginated thread the newest on-page post isn't the newest in the thread, so
+// fetching "posts newer than it" would wrongly pull every later page's replies
+// onto this page. When the pagination attributes are absent (older render, other
+// skins) we can't tell, so default to true rather than silently disabling updates.
+function _twOnLastThreadPage() {
+	var op = document.querySelector('.post.op[data-thread-uid]');
+	if (!op) return true;
+	var current = parseInt(op.getAttribute('data-current-page'), 10);
+	var total = parseInt(op.getAttribute('data-total-pages'), 10);
+	if (isNaN(current) || isNaN(total)) return true;
+	return current >= total;
+}
+
 // Build a reply-container element from an API post's rendered HTML, or null if empty.
 function _twBuildReply(html) {
 	var tmp = document.createElement('div');
@@ -44,6 +60,12 @@ function fetchNewReplies() {
 
 		// Without the API or a thread context there's nothing to do.
 		if (!apiUrl || !threadUid) {
+			resolve([]);
+			return;
+		}
+
+		// Never append on an earlier page of a paginated thread — see _twOnLastThreadPage.
+		if (!_twOnLastThreadPage()) {
 			resolve([]);
 			return;
 		}

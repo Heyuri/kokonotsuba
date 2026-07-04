@@ -1,6 +1,6 @@
 	<div id="pc{$BOARD_UID}_{$NO}" class="op-container">
 		<h2 class="title"><a href="{$POST_URL}"><!--&IF($SUB,'{$SUB}','No subject')--></a></h2><!--&IF($TAG,'<span class="tag" title="{$TAG_TITLE}">[{$TAG}]</span>','')-->
-		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}" {$DATA_ATTRIBUTES}>
+		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}" data-current-page="{$THREAD_CURRENT_PAGE}" data-total-pages="{$THREAD_TOTAL_PAGES}" {$DATA_ATTRIBUTES}>
 			<div class="del">[<label>Del:<input type="checkbox" name="{$POST_UID}" class="deletionCheckbox" value="delete"></label>]{$WATCH_STAR}</div>
 			<div class="postinfo"><span class="postnum">{$QUOTEBTN}</span>
 				<span class="nameContainer">{$NAME_TEXT}<span class="name">{$NAME}</span></span>
