@@ -97,12 +97,13 @@ class moduleMain extends abstractModuleMain {
             // build url
             $url = $this->baseEmoteUrl . $name;
 
-            // perform replacement outside img tags
+            // perform replacement outside HTML tags, so emote codes that land
+            // inside a tag's markup (e.g. a bbcode link's href) aren't mangled
             $comment = preg_replace_callback(
-                '/<img\b[^>]*>|:(?:' . preg_quote($emo, '/') . '):/i',
+                '/<[^>]+>|:(?:' . preg_quote($emo, '/') . '):/i',
                 function ($m) use ($emo, $url) {
-                    // if it's an img tag, return unchanged
-                    if (str_starts_with($m[0], '<img')) {
+                    // if it's an HTML tag, return unchanged
+                    if ($m[0][0] === '<') {
                         return $m[0];
                     }
                     // otherwise replace the emote
