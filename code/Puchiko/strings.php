@@ -239,19 +239,24 @@ function autoLink(string $text, string $refUrl = ''): string {
 	$pattern = '~https?://[^\s<\[]+~i';
 
 	return preg_replace_callback($pattern, function ($m) use ($refUrl) {
-		// 1) Normalize any pre-escaped entities in the matched URL
-		$url = html_entity_decode($m[0], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+		$matched = $m[0];
 
-		// 2) (Optional) Allow only http/https
-		if (!preg_match('~^https?://~i', $url)) {
-			return $m[0];
+		// don't swallow a trailing emote-style token (e.g. ":astonish:") into the URL
+		$trailing = '';
+		if (preg_match('~(?:\:[A-Za-z0-9_-]+\:)+$~', $matched, $tm)) {
+			$trailing = $tm[0];
+			$matched = substr($matched, 0, -strlen($trailing));
 		}
 
-		// 3) Escape once for HTML attribute; also escape label to be safe in HTML text
+		// normalize any pre-escaped entities in the matched URL
+		$url = html_entity_decode($matched, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+
+		// escape once for HTML attribute; also escape label to be safe in HTML text
 		$href = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 		$label = htmlspecialchars($url, ENT_NOQUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
-		return '<a href="'. $refUrl . $href . '" rel="nofollow noreferrer" target="_blank">' . $label . '</a>';
+		return '<a href="'. $refUrl . $href . '" rel="nofollow noreferrer" target="_blank">' . $label . '</a>' . $trailing;
 	}, $text);
 }
 
