@@ -50,9 +50,8 @@ class modeHandler {
 	}
 
 	public function validateBoard(board $board): void {
-		if (!file_exists($board->getFullConfigPath())) {
-			die("Board's config file <i>" . $board->getFullConfigPath() . "</i> was not found.");
-		}
+		// Board config now lives in the board_configs table (schema-backed), not a per-board
+		// PHP file, so there is no config file to check for here.
 
 		if (!file_exists($board->getBoardStoragePath())) {
 			die("Board's storage directory <i>" . $board->getBoardStoragePath() . "</i> does not exist.");
@@ -153,14 +152,15 @@ class modeHandler {
 			},
 			'boards' => function() {
 				$route = new boardsRoute(
-					$this->container->get('config'), 
-					$this->container->get('staffAccountFromSession'), 
-					$this->container->get('softErrorHandler'), 
-					$this->container->get('adminTemplateEngine'), 
-					$this->container->get('adminPageRenderer'), 
+					$this->container->get('config'),
+					$this->container->get('staffAccountFromSession'),
+					$this->container->get('softErrorHandler'),
+					$this->container->get('adminTemplateEngine'),
+					$this->container->get('adminPageRenderer'),
 					$this->container->get('boardService'),
 					$this->container->get('board'),
-					$this->container->get('request')
+					$this->container->get('request'),
+					$this->container->get('configService')
 				);
 				$route->drawBoardPage();
 			},
@@ -200,7 +200,8 @@ class modeHandler {
 					$this->container->get('threadRepository'),
 					$this->container->get('fileService'),
 					$this->container->get('quoteLinkRepository'),
-					$this->container->get('request')
+					$this->container->get('request'),
+					$this->container->get('configService')
 				);
 				$route->handleBoardRequests();
 			},

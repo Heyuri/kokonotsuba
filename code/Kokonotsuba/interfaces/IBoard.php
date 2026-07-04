@@ -59,20 +59,6 @@ interface IBoard {
 	public function getBoardStorageDirName(): string;
 
 	/**
-	 * Get the board's config filename.
-	 *
-	 * @return string Config filename
-	 */
-	public function getConfigFileName(): string;
-
-	/**
-	 * Get the full path to the config file.
-	 *
-	 * @return string Full config path
-	 */
-	public function getFullConfigPath(): string;
-
-	/**
 	 * Get the date the board was added.
 	 *
 	 * @return string ISO-formatted date

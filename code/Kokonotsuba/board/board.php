@@ -41,15 +41,22 @@ class board implements IBoard {
 	private ?moduleEngine $moduleEngine;
 	private templateEngine $templateEngine;
 
-	public function __construct(boardPostNumbers $boardPostNumbers, boardData $boardData, boardPathService $boardPathService) {
+	/**
+	 * @param boardPostNumbers $boardPostNumbers Board post-number helper.
+	 * @param boardData        $boardData        Hydrated board metadata.
+	 * @param boardPathService $boardPathService Board path cache service.
+	 * @param array            $config           Fully-resolved effective config for this board
+	 *                                           (globals + schema defaults + DB overrides), as
+	 *                                           produced by configService::getEffectiveConfig().
+	 */
+	public function __construct(boardPostNumbers $boardPostNumbers, boardData $boardData, boardPathService $boardPathService, array $config = []) {
 		$this->boardData = $boardData;
-		
-		$config = $this->loadBoardConfig();
+
 		$this->config = is_array($config) ? $config : [];
 
 		$this->boardPostNumbers = $boardPostNumbers;
 		$this->boardPathService = $boardPathService;
-		
+
 		$this->boardRebuilder = null;
 		$this->moduleEngine = null;
 	}
@@ -84,14 +91,6 @@ class board implements IBoard {
 
 	public function getBoardSubTitle(): string {
 		return $this->boardData->getBoardSubTitle();
-	}
-
-	public function getFullConfigPath(): string {
-		return getBoardConfigDir() . ($this->boardData->getConfigFileName() ?? '');
-	}
-
-	public function getConfigFileName(): string {
-		return $this->boardData->getConfigFileName();
 	}
 
 	public function getBoardStorageDirName(): string {
@@ -209,21 +208,16 @@ class board implements IBoard {
 		return $this->config['WEBSITE_URL'] ?? '';
 	}
 
+	/**
+	 * Return this board's effective config.
+	 *
+	 * The config is resolved once (globals + schema defaults + DB overrides) by
+	 * configService::getEffectiveConfig() and injected at construction — this is now
+	 * just an accessor, kept for backward compatibility with existing callers.
+	 *
+	 * @return array The effective config array.
+	 */
 	public function loadBoardConfig(): array {
-		$fullConfigPath = $this->getFullConfigPath();
-
-		if (!file_exists($fullConfigPath) || is_dir($fullConfigPath)) {
-			return [];
-		}		
-
-		if (!empty($this->config)) {
-			return $this->config;
-		}
-
-		// Load config if not already loaded
-		require $fullConfigPath;
-		$this->config = $config ?? [];
-
 		return $this->config;
 	}
 

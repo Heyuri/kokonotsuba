@@ -12,7 +12,6 @@ use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\userRole;
 
-use function Kokonotsuba\libraries\deleteCreatedBoardConfig;
 use function Puchiko\createDirectory;
 use function Puchiko\createFileAndWriteText;
 use function Puchiko\rollbackCreatedPaths;
@@ -51,9 +50,6 @@ class boardService {
 		if (!empty($inputFields['board_sub_title'])) {
 			$fields['board_sub_title'] = $inputFields['board_sub_title'];
 		}
-		if (!empty($inputFields['config_name'])) {
-			$fields['config_name'] = $inputFields['config_name'];
-		}
 		if (!empty($inputFields['storage_directory_name'])) {
 			$fields['storage_directory_name'] = $inputFields['storage_directory_name'];
 		}
@@ -81,17 +77,16 @@ class boardService {
 		// get board file properties
 		$boardPath = $board->getBoardCachedPath();
 		$boardStoragePath = $board->getBoardStoragePath();
-		$boardConfigPath = $board->getFullConfigPath();
 		$boardCdnDir = $board->getBoardCdnDir();
-		
-		// Delete board from the database
+
+		// Delete board from the database. The board_configs row is removed automatically
+		// via the ON DELETE CASCADE foreign key on board_uid.
 		$this->boardRepository->deleteBoardByUID($boardUid);
 
 		// delete files and directories
 		safeRmdir($boardPath);
 		safeRmDir($boardStoragePath);
 		safeRmDir($boardCdnDir);
-		unlink($boardConfigPath);
 	}
 
 	/**
@@ -155,11 +150,11 @@ class boardService {
             $dataDir = getBoardStoragesDir() . $boardStorageDirectoryName;
             $createdPaths[] = createDirectory($dataDir);
 
-            // Generate config file for the board
-            $boardConfigName = generateNewBoardConfigFile($nextBoardUid);
+            // Board config is stored in the board_configs table (created on first edit via the
+            // admin board configuration editor); no per-board PHP config file is generated.
 
             // Add board to the database
-            $this->boardRepository->addNewBoard($boardIdentifier, $boardTitle, $boardSubTitle, $boardListed, $boardConfigName, $boardStorageDirectoryName);
+            $this->boardRepository->addNewBoard($boardIdentifier, $boardTitle, $boardSubTitle, $boardListed, $boardStorageDirectoryName);
 
             // Initialize boardUID.ini
             $newBoardUID = $this->boardRepository->getLastBoardUID();
@@ -176,7 +171,6 @@ class boardService {
         } catch (Exception $e) {
             // Handle rollback and cleanup
             rollbackCreatedPaths($createdPaths);
-            deleteCreatedBoardConfig($boardConfigName);
             throw $e;
         }
     }
@@ -327,7 +321,10 @@ class boardService {
 	 * @return board|null Fully assembled board object, or null on failure.
 	 */
 	private function assembleBoard(boardData $boardData): ?board {
-		$board = new board($this->container->get('boardPostNumbers'), $boardData, $this->container->get('boardPathService'));
+		// Resolve the fully-merged effective config (globals + schema defaults + DB overrides).
+		$effectiveConfig = $this->container->get('configService')->getEffectiveConfig($boardData->getBoardUID());
+
+		$board = new board($this->container->get('boardPostNumbers'), $boardData, $this->container->get('boardPathService'), $effectiveConfig);
 
 		// initialize dependencies for setter inject
 		$templateEngine = $this->initializeTemplateEngine($board);

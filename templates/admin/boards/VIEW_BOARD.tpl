@@ -25,10 +25,6 @@
 				<td><div id="board-date-added">{$BOARD_DATE_ADDED}</div></td>
 			</tr>
 			<tr>
-				<td class="postblock"><label for="board-config-path">Config file</label></td>
-				<td><div id="board-config-path">{$BOARD_CONFIG_FILE}</div></td>
-			</tr>
-			<tr>
 				<td class="postblock"><label for="board-storage-dir">Board storage directory</label></td>
 				<td><div id="board-storage-dir">{$BOARD_STORAGE_DIR}</div></td>
 			</tr>
@@ -44,3 +40,5 @@
 	</table>
 	
 	{$EDIT_BOARD_HTML}
+
+	{$BOARD_CONFIG_FORM}

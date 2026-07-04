@@ -6,14 +6,6 @@
 
 namespace Kokonotsuba\libraries;
 
-function deleteCreatedBoardConfig(string $boardConfigName): void {
-	$boardConfigPath = getBoardConfigDir() . $boardConfigName;
-
-	if(file_exists($boardConfigPath)) {
-		unlink($boardConfigPath);
-	}
-}
-
 // Helper to send a file response with common headers
 function sendInlineFile(string $path, string $mimeType, string $fileName): void {
 	// Clear all output buffers to prevent corruption of binary data

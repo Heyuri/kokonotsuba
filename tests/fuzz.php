@@ -34,10 +34,25 @@ requireModuleFile('perceptualBan/perceptualHasher.php');
 
 use Koko\Tests\Framework\Fuzzer;
 use Kokonotsuba\userRole;
+use Kokonotsuba\post\postSearchService;
 use Kokonotsuba\Modules\tripcode\tripcodeProcessor;
 use Kokonotsuba\Modules\tripcode\tripcodeRenderer;
 use Kokonotsuba\Modules\privateMessage\messageUtility;
 use Kokonotsuba\Modules\perceptualBan\perceptualHasher;
+
+// postSearchService's FULLTEXT input processing is private and dependency-free;
+// bind reflected invokers once so the fuzz targets below can call them without a
+// repository or database.
+$searchService = (new ReflectionClass(postSearchService::class))->newInstanceWithoutConstructor();
+$invokeSearch = function (string $method, ...$args) use ($searchService) {
+	static $handles = [];
+	if (!isset($handles[$method])) {
+		$m = new ReflectionMethod(postSearchService::class, $method);
+		$m->setAccessible(true);
+		$handles[$method] = $m;
+	}
+	return $handles[$method]->invoke($searchService, ...$args);
+};
 
 // ---- Parse CLI options ------------------------------------------------------
 
@@ -302,5 +317,96 @@ $fuzzer->target(
 		['valid UTF-8 out', fn($r) => mb_check_encoding($r, 'UTF-8')],
 	]
 );
+
+// ---- Search input-processing targets ----------------------------------------
+
+// sanitizeFulltextInput must strip every MySQL boolean operator and any
+// non-letter/number/space character, leaving normalized whitespace — so its
+// output can never introduce a BOOLEAN MODE syntax error.
+$fuzzer->target(
+	'search:sanitizeFulltextInput',
+	fn(string $s) => $invokeSearch('sanitizeFulltextInput', $s),
+	fn() => [Fuzzer::nastyString(60)],
+	[
+		['returns a string', fn($r) => is_string($r)],
+		['valid UTF-8 out', fn($r) => mb_check_encoding($r, 'UTF-8')],
+		['no boolean operators survive', fn($r) => !preg_match('/[+\-><()~*"@]/u', $r)],
+		['only letters, numbers, single spaces', fn($r) => $r === '' || preg_match('/^[\p{L}\p{N}]+( [\p{L}\p{N}]+)*$/u', $r) === 1],
+		['trimmed', fn($r) => $r === trim($r)],
+		['idempotent', fn($r) => $invokeSearch('sanitizeFulltextInput', $r) === $r],
+	]
+);
+
+// parseToBooleanFulltext compiles arbitrary input into a boolean FULLTEXT query.
+// Whatever the input, the output must be a (possibly empty) space-separated list
+// of required (+) tokens, each a run of letters/numbers with an optional trailing
+// wildcard — nothing MySQL would reject in BOOLEAN MODE.
+$booleanSafe = '/^(\+[\p{L}\p{N}]+\*?(\s\+[\p{L}\p{N}]+\*?)*)?$/u';
+$fuzzer->target(
+	'search:parseToBooleanFulltext',
+	fn(string $s, bool $whole) => $invokeSearch('parseToBooleanFulltext', $s, $whole, ['the', 'and', 'a'], 3),
+	fn() => [Fuzzer::nastyString(50), Fuzzer::bool()],
+	[
+		['returns a string', fn($r) => is_string($r)],
+		['valid UTF-8 out', fn($r) => mb_check_encoding($r, 'UTF-8')],
+		['boolean-mode safe shape', fn($r) => preg_match($booleanSafe, $r) === 1],
+		['every token is required', fn($r) => $r === '' || !array_filter(explode(' ', $r), fn($t) => $t[0] !== '+')],
+		['whole-word mode has no wildcards', fn($r, $a) => !$a[1] || !str_contains($r, '*')],
+	]
+);
+
+// extractTripcodeCandidate returns the hash after a trip marker, or '' when the
+// name carries no marker. It must never throw and never itself contain a marker.
+$fuzzer->target(
+	'search:extractTripcodeCandidate',
+	fn(string $s) => $invokeSearch('extractTripcodeCandidate', $s),
+	fn() => [
+		// Bias toward marker-bearing names so both branches get exercised.
+		Fuzzer::bool()
+			? Fuzzer::nastyString(12) . Fuzzer::pick(['◆', '★', '♦']) . Fuzzer::nastyString(12)
+			: Fuzzer::nastyString(24),
+	],
+	[
+		['returns a string', fn($r) => is_string($r)],
+		['valid UTF-8 out', fn($r) => mb_check_encoding($r, 'UTF-8')],
+		['result carries no trip marker', fn($r) => !preg_match('/[◆♦★]/u', $r)],
+		// A marker followed by only whitespace still yields '', so we only assert
+		// the safe direction: no marker present ⇒ empty result.
+		['no marker ⇒ empty', fn($r, $a) => preg_match('/[◆♦★]/u', $a[0]) === 1 || $r === ''],
+		['result is the trimmed tail after a marker', fn($r, $a) => $r === '' || str_ends_with(trim($a[0]), $r)],
+	]
+);
+
+// sanitizeFields only ever returns a subset of the input restricted to the
+// allowed keys, and never surfaces an empty value.
+$allowedSearchFields = ['general', 'com', 'name', 'email', 'sub', 'no', 'file_name', 'root', 'tag'];
+$fuzzer->target(
+	'search:sanitizeFields',
+	fn(array $f) => $invokeSearch('sanitizeFields', $f),
+	function () {
+		$candidateKeys = ['general', 'com', 'name', 'email', 'sub', 'no', 'file_name', 'root', 'tag', 'evil', 'boardUID', ''];
+		$out = [];
+		$n = Fuzzer::int(0, 6);
+		for ($i = 0; $i < $n; $i++) {
+			$out[Fuzzer::pick($candidateKeys)] = Fuzzer::bool() ? Fuzzer::nastyString(10) : Fuzzer::pick(['', '0', 0, null]);
+		}
+		return [$out];
+	},
+	[
+		['returns an array', fn($r) => is_array($r)],
+		['only allowed keys survive', fn($r) => !array_diff(array_keys($r), $allowedSearchFields)],
+		['no empty values survive', fn($r) => !array_filter($r, fn($v) => empty($v))],
+		['is a subset of the input', fn($r, $a) => !array_diff_key($r, $a[0])],
+	]
+);
+
+// ---- Domain fuzz-target files -------------------------------------------------
+//
+// Further targets live one-domain-per-file under tests/fuzz/. Each file is
+// included with $fuzzer in scope and registers its own targets (declaring its
+// own `use` imports and requireModuleFile() calls as needed).
+foreach (glob(__DIR__ . '/fuzz/*.php') as $targetFile) {
+	require $targetFile;
+}
 
 exit($fuzzer->run());

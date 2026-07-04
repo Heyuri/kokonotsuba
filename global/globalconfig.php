@@ -168,3 +168,47 @@ $config['KILL_INCOMPLETE_UPLOAD'] = 1; // Automatically delete uploaded incomple
 // Categories: posting (registRoute), rebuild (mode=rebuild), deleting (adminDel)
 $config['EXCIMER_PROFILING'] = false;
 
+/*---------------------------------------------------------------------------
+ * Board base defaults (structural / computed).
+ *
+ * These board defaults are NOT surfaced in the per-board configuration editor: they are
+ * either structural (storage layout), derived
+ * from other global values (STATIC_URL / STATIC_PATH / paths), or non-scalar enum values.
+ * They form the immutable base layer beneath the editable global/configs/ schema and the
+ * per-board DB overrides. Board-editable settings live in global/configs/*.php instead.
+ *--------------------------------------------------------------------------*/
+
+// Storage layout (relative paths under each board's upload directory)
+$config['IMG_DIR'] = 'src/';
+$config['THUMB_DIR'] = 'src/';
+
+// Proxy headers inspected when resolving the real client IP
+$config['PROXYHEADERlist'] = array(
+	'HTTP_CLIENT_IP',
+	'HTTP_X_REAL_IP',
+	'HTTP_X_FORWARDED_FOR',
+	'HTTP_X_FORWARDED',
+	'HTTP_X_CLUSTER_CLIENT_IP',
+	'HTTP_FORWARDED_FOR',
+	'HTTP_FORWARDED');
+
+// Global bans file name (stored in global/)
+$config['GLOBAL_BANS'] = 'globalbans.log';
+
+// Placeholder thumbnails (derived from STATIC_URL)
+$config['SWF_THUMB'] = $config['STATIC_URL']."image/swf_thumb.png";
+$config['AUDIO_THUMB'] = $config['STATIC_URL']."image/audio.png";
+$config['ARCHIVE_THUMB'] = $config['STATIC_URL']."image/archive.png";
+
+// Default ban message (derived from STATIC_URL)
+$config['DEFAULT_BAN_MESSAGE'] = '<p class="warning">(USER WAS BANNED FOR THIS POST) <img class="banIcon icon" alt="banhammer" src="'.$config['STATIC_URL'].'image'.DIRECTORY_SEPARATOR.'hammer.gif"></p>';
+
+// Navigation links at top left (read from global/toplinks.txt)
+$config['TOP_LINKS'] = @file_get_contents(__DIR__.'/toplinks.txt');
+
+// Module base defaults that are path-derived or non-scalar
+$config['ModuleSettings']['PM_DIR'] = __DIR__.DIRECTORY_SEPARATOR;
+$config['ModuleSettings']['GLOBAL_TXT'] = __DIR__.'/globalmsg.txt';
+$config['ModuleSettings']['BANNER_PATH'] = $config['STATIC_PATH'].'image/default/';
+$config['ModuleSettings']['MINIMUM_ROLE'] = Kokonotsuba\userRole::LEV_MODERATOR; // readonly module minimum role
+

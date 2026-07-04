@@ -7,7 +7,6 @@ class boardData {
 	public ?string $board_identifier;
 	public ?string $board_title;
 	public ?string $board_sub_title;
-	public ?string $config_name;
 	public ?string $storage_directory_name;
 	public ?string $date_added;
 	public ?string $board_file_url;
@@ -24,10 +23,6 @@ class boardData {
 
 	public function getBoardSubTitle(): string {
 		return $this->board_sub_title ?? '';
-	}
-
-	public function getConfigFileName(): string {
-		return $this->config_name ?? '';
 	}
 
 	public function getBoardStorageDirName(): string {

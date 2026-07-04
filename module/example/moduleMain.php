@@ -1,7 +1,8 @@
 <?php
 
-/* to use this module - add it to ModuleList in globalBoardConfig.php like so:
- * 'example' => true,
+/* to use this module - add it to the ModuleList in global/configs/modules.php like so:
+ * 'ModuleList.example' => $m('Example', true),
+ * (or enable it per-board through the admin board configuration editor)
 */
 // the section after 'Modules' (in this case 'example') must be the same as the directory name.
 namespace Kokonotsuba\Modules\example;

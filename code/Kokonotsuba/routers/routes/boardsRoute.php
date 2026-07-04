@@ -15,7 +15,10 @@ use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\userRole;
 
+use Kokonotsuba\config\configService;
+
 use function Kokonotsuba\libraries\html\drawBoardTable;
+use function Kokonotsuba\libraries\html\drawBoardConfigForm;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
 
@@ -30,7 +33,8 @@ class boardsRoute {
 		private readonly pageRenderer $adminPageRenderer,
 		private readonly boardService $boardService,
 		private board $board,
-		private readonly request $request
+		private readonly request $request,
+		private readonly configService $configService
 	) {}
 
 	public function drawBoardPage(): void {
@@ -81,7 +85,6 @@ class boardsRoute {
 			$boardSubtitle = $board->getBoardSubTitle() ?? '';
 			$boardURL = $board->getBoardURL() ?? '';
 			$boardListed = $board->getBoardListed() ?? '';
-			$boardConfig = $board->getConfigFileName() ?? '';
 			$boardStorageDirectoryName = $board->getBoardStorageDirName() ?? '';
 			$boardDate = $board->getDateAdded() ?? '';
 
@@ -92,15 +95,22 @@ class boardsRoute {
 			$templateValues['{$BOARD_URL}'] = $boardURL;
 			$templateValues['{$BOARD_IS_LISTED}'] = $boardListed ? 'True' : 'False';
 			$templateValues['{$BOARD_DATE_ADDED}'] = $boardDate;
-			$templateValues['{$BOARD_CONFIG_FILE}'] = $boardConfig;
 			$templateValues['{$CHECKED}'] = $boardListed ? 'checked' : '';
 			$templateValues['{$BOARD_STORAGE_DIR}'] = $boardStorageDirectoryName;
 			$templateValues['{$CSRF_INPUT}'] = getCsrfHiddenInput();
 			$templateValues['{$EDIT_BOARD_HTML}'] = $this->adminTemplateEngine->ParseBlock('EDIT_BOARD', $templateValues);
-			
+
+			// Per-board configuration editor (schema-backed overrides).
+			$templateValues['{$BOARD_CONFIG_FORM}'] = drawBoardConfigForm(
+				$board,
+				$this->config['LIVE_INDEX_FILE'],
+				getCsrfHiddenInput()
+			);
+
 			// prevent showing editing a reserved board
-			if(!$boardUID === GLOBAL_BOARD_UID) {
-				$templateValues['{$EDIT_BOARD_HTML}'] = "<p>This board cannot be edited.</p>"; 
+			if($boardUID === GLOBAL_BOARD_UID) {
+				$templateValues['{$EDIT_BOARD_HTML}'] = "<p>This board cannot be edited.</p>";
+				$templateValues['{$BOARD_CONFIG_FORM}'] = "";
 			}
 
 			$viewBoardHtml = $this->adminPageRenderer->ParseBlock('VIEW_BOARD', $templateValues);

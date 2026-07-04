@@ -21,10 +21,6 @@
 					<td> <input id="edit-board-sub-title" name="edit-board-sub-title" value="{$BOARD_SUB_TITLE}"></td>
 				</tr>
 				<tr>
-					<td class="postblock"><label for="edit-board-config-path">Config file</label></td>
-					<td> <input id="edit-board-config-path" class="url-input" name="edit-board-config-path" value="{$BOARD_CONFIG_FILE}" required></td>
-				</tr>
-				<tr>
 					<td class="postblock"><label for="edit-board-storage-dir">Board storage directory</label></td>
 					<td> <input id="edit-board-storage-dir" name="edit-board-storage-dir" value="{$BOARD_STORAGE_DIR}" required> </td>
 				</tr>

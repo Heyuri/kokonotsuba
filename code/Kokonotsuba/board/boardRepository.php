@@ -165,17 +165,15 @@ class boardRepository extends baseRepository {
 	 * @param string $board_title             Board display title.
 	 * @param string $board_sub_title         Board subtitle.
 	 * @param int    $listed                  Whether the board appears in board listings (0 or 1).
-	 * @param string $config_name             Config file name for the board.
 	 * @param string $storage_directory_name  Directory name for board storage.
 	 * @return void
 	 */
-	public function addNewBoard($board_identifier, $board_title, $board_sub_title, $listed, $config_name, $storage_directory_name) {
+	public function addNewBoard($board_identifier, $board_title, $board_sub_title, $listed, $storage_directory_name) {
 		$this->insert([
 			'board_identifier' => $board_identifier,
 			'board_title' => $board_title,
 			'board_sub_title' => $board_sub_title,
 			'listed' => $listed,
-			'config_name' => $config_name,
 			'storage_directory_name' => $storage_directory_name,
 		]);
 		$this->invalidateBoardCache();

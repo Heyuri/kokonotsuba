@@ -12,7 +12,7 @@ $board = $boardService->getBoardFromBootstrapFile('./boardUID.ini');
 // ───────────────────────────────────────
 // Validate Early
 // ───────────────────────────────────────
-if (!file_exists($board->getFullConfigPath()) || !file_exists($board->getBoardStoragePath())) {
+if (!file_exists($board->getBoardStoragePath())) {
 	die("Invalid board setup");
 }
 
