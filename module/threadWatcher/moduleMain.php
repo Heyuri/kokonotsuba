@@ -52,7 +52,7 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// The watcher window is opened from a top-link in the admin bar.
 		$this->listenTopLinks('onRenderTopLinks');
-		$this->registerScript('threadWatcher.js?v=20');
+		$this->registerScript('threadWatcher.js?v=23');
 		$this->listenModuleHeader('onGenerateModuleHeader');
 		$this->listenOpeningPost('onRenderOpeningPost');
 	}
