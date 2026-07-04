@@ -1,5 +1,5 @@
 	<div id="pc{$BOARD_UID}_{$NO}" class="op-container">
-		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}" {$DATA_ATTRIBUTES}>
+		<div class="post op<!--&IF($MODULE_POST_CSS_CLASSES,'{$MODULE_POST_CSS_CLASSES}','')-->" id="p{$BOARD_UID}_{$NO}" data-thread-uid="{$THREAD_UID}" data-current-page="{$THREAD_CURRENT_PAGE}" data-total-pages="{$THREAD_TOTAL_PAGES}" {$DATA_ATTRIBUTES}>
 			<!--&IF($BOARD_THREAD_NAME,'{$BOARD_THREAD_NAME}','')-->
 			<div class="imageSourceContainer<!--&IF($MODULE_ATTACHMENT_CSS_CLASSES,'{$MODULE_ATTACHMENT_CSS_CLASSES}','')-->">
 				<!--&IF($POST_ATTACHMENTS,'{$POST_ATTACHMENTS}','')-->

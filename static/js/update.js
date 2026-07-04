@@ -10,6 +10,10 @@ const kkupdate = { name: "KK Thread Updating",
 		}
 		if (!document.postform) {return true;}
 		if (!document.postform.resto) {return true;}
+		// Earlier pages of a paginated thread are a fixed slice of old replies — there's
+		// nothing newer to show there, and updating would wrongly pull later pages' posts
+		// onto this one. Only the last page auto-updates. (_twOnLastThreadPage, updateThread.js)
+		if (typeof _twOnLastThreadPage === "function" && !_twOnLastThreadPage()) {return true;}
 		var controls = document.createElement("div");
 		controls.id = "controls";
 		controls.classList.add("threadUpdater");
