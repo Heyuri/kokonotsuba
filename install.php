@@ -75,8 +75,7 @@ function isCommandAvailable(string $command): bool {
 }
 
 function getGlobalConfig(): array {
-    require ROOTPATH . '/global/globalconfig.php';
-    return $config;
+    return require ROOTPATH . '/global/globalconfig.php';
 }
 
 function getBoardStorageDir() {
@@ -109,19 +108,38 @@ function setNestedInstallConfig(array &$config, string $dotpath, $value): void {
 }
 
 // Build the board-agnostic default config: globalconfig.php base + the editable global/configs/
-// schema defaults.
+// core schema defaults + each module's own module/{name}/config.php defaults.
 function getTemplateConfigArray() {
     $config = getGlobalConfig();
 
+    // Core config files: keys are full config dot-paths.
     foreach (glob(ROOTPATH . '/global/configs/*.php') ?: [] as $schemaFile) {
+        // Files beginning with "_" are shared helpers (e.g. _fieldTypes.php), not groups.
+        if (str_starts_with(basename($schemaFile), '_')) {
+            continue;
+        }
         $definition = require $schemaFile;
         if (!is_array($definition)) {
             continue;
         }
-        unset($definition['_group']);
+        unset($definition['_group'], $definition['_module']);
         foreach ($definition as $dotpath => $meta) {
             $default = (is_array($meta) && array_key_exists('default', $meta)) ? $meta['default'] : $meta;
             setNestedInstallConfig($config, (string) $dotpath, $default);
+        }
+    }
+
+    // Per-module config files: bare keys prefixed with "modules.{name}.".
+    foreach (glob(ROOTPATH . '/module/*/config.php') ?: [] as $moduleFile) {
+        $moduleName = basename(dirname($moduleFile));
+        $definition = require $moduleFile;
+        if (!is_array($definition)) {
+            continue;
+        }
+        unset($definition['_group'], $definition['_module']);
+        foreach ($definition as $key => $meta) {
+            $default = (is_array($meta) && array_key_exists('default', $meta)) ? $meta['default'] : $meta;
+            setNestedInstallConfig($config, "modules.{$moduleName}.{$key}", $default);
         }
     }
 

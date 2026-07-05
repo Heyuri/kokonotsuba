@@ -10,28 +10,32 @@ namespace Kokonotsuba\config;
  *
  *   return [
  *       // optional human-readable group label; falls back to a humanized filename
- *       '_group' => 'Flooding & rate limits',
+ *       '_group' => 'Appearance & pagination',
  *
  *       // one entry per editable setting, keyed by its config dot-path
- *       // (the same path understood by board::getConfigValue(), e.g. 'ModuleSettings.RENZOKU3')
- *       'ModuleSettings.RENZOKU3' => [
- *           'default' => 30,
+ *       // (the same path understood by board::getConfigValue(), e.g. 'REPLIES_PER_PAGE')
+ *       'REPLIES_PER_PAGE' => [
+ *           'default' => 200,
  *           'type'    => 'int',                       // bool|int|string|text|array (optional; inferred from default)
- *           'label'   => 'Seconds between new threads',
- *           'desc'    => 'Minimum wait before a new thread can be started.',
+ *           'label'   => 'Replies per thread page',
+ *           'desc'    => 'Replies shown (excluding OP) per thread page.',
  *       ],
  *   ];
+ *
+ * Modules declare their own settings in module/{name}/config.php (bare keys prefixed with
+ * "modules.{name}." and folded into the "_group" thematic group under a "_module" sub-header).
  *
  * Only settings declared here are editable through the board config editor and stored as
  * per-board overrides. Truly-global, board-immutable values stay in global/globalconfig.php
  * and never appear in the schema.
  */
 class configSchema {
-	public const TYPE_BOOL   = 'bool';
-	public const TYPE_INT    = 'int';
-	public const TYPE_STRING = 'string';
-	public const TYPE_TEXT   = 'text';
-	public const TYPE_ARRAY  = 'array';
+	public const TYPE_BOOL     = 'bool';
+	public const TYPE_INT      = 'int';
+	public const TYPE_STRING   = 'string';
+	public const TYPE_TEXT     = 'text';
+	public const TYPE_ARRAY    = 'array';
+	public const TYPE_TEMPLATE = 'template';
 
 	/** @var array<string, array<string, array>>|null Cached groups: groupName => [dotpath => normalizedMeta]. */
 	private static ?array $groups = null;
@@ -56,46 +60,90 @@ class configSchema {
 		self::$groupLabels = [];
 		self::$fields = [];
 
-		$dir = getConfigSchemaDir();
+		// 1) Core config files (global/configs/*.php). Their keys are full config dot-paths and
+		//    have no owning module. Loaded first so core fields lead each group.
+		$coreDir = getConfigSchemaDir();
+		if (is_dir($coreDir)) {
+			$coreFiles = glob($coreDir . '*.php') ?: [];
+			sort($coreFiles, SORT_STRING);
 
-		if (!is_dir($dir)) {
-			return;
+			foreach ($coreFiles as $file) {
+				$base = basename($file, '.php');
+
+				// Files beginning with "_" are shared helpers (e.g. _fieldTypes.php), not groups.
+				if (str_starts_with($base, '_')) {
+					continue;
+				}
+
+				$definition = require $file;
+				if (!is_array($definition)) {
+					continue;
+				}
+
+				$groupName = $definition['_group'] ?? self::humanizeGroupName($base);
+				unset($definition['_group'], $definition['_module']);
+
+				self::ingestGroup($groupName, $definition, '', '');
+			}
 		}
 
-		$files = glob($dir . '*.php') ?: [];
-		sort($files, SORT_STRING);
+		// 2) Per-module config files (module/{name}/config.php). Their keys are bare and get
+		//    prefixed with "modules.{name}."; their fields fold into the thematic group named by
+		//    "_group", each preceded by a "_module" sub-header label.
+		$moduleDir = getBackendDir() . 'module/';
+		if (is_dir($moduleDir)) {
+			$moduleFiles = glob($moduleDir . '*/config.php') ?: [];
+			sort($moduleFiles, SORT_STRING);
 
-		foreach ($files as $file) {
-			$groupName = basename($file, '.php');
+			foreach ($moduleFiles as $file) {
+				$moduleName = basename(dirname($file));
 
-			$definition = require $file;
-			if (!is_array($definition)) {
-				continue;
+				$definition = require $file;
+				if (!is_array($definition)) {
+					continue;
+				}
+
+				$groupName = $definition['_group'] ?? 'Modules';
+				$moduleLabel = $definition['_module'] ?? $moduleName;
+				unset($definition['_group'], $definition['_module']);
+
+				self::ingestGroup($groupName, $definition, $moduleLabel, "modules.{$moduleName}.");
 			}
+		}
+	}
 
-			$label = $definition['_group'] ?? self::humanizeGroupName($groupName);
-			unset($definition['_group']);
+	/**
+	 * Merge a set of fields into a named group, normalizing and prefixing keys.
+	 *
+	 * @param string $groupName   Human-readable group name (also its label).
+	 * @param array  $fields      Raw dotpath/key => meta pairs.
+	 * @param string $moduleLabel Sub-header label for these fields ('' for core fields).
+	 * @param string $prefix      Dot-path prefix to prepend to each key ('' for core).
+	 * @return void
+	 */
+	private static function ingestGroup(string $groupName, array $fields, string $moduleLabel, string $prefix): void {
+		if (!isset(self::$groups[$groupName])) {
+			self::$groups[$groupName] = [];
+			self::$groupLabels[$groupName] = $groupName;
+		}
 
-			$normalizedFields = [];
-			foreach ($definition as $dotpath => $meta) {
-				$normalized = self::normalizeField((string)$dotpath, $meta);
-				$normalizedFields[$dotpath] = $normalized;
-				self::$fields[$dotpath] = $normalized;
-			}
-
-			self::$groups[$groupName] = $normalizedFields;
-			self::$groupLabels[$groupName] = $label;
+		foreach ($fields as $key => $meta) {
+			$dotpath = $prefix . $key;
+			$normalized = self::normalizeField($dotpath, $meta, $moduleLabel);
+			self::$groups[$groupName][$dotpath] = $normalized;
+			self::$fields[$dotpath] = $normalized;
 		}
 	}
 
 	/**
 	 * Normalize a raw field definition into a consistent shape.
 	 *
-	 * @param string $dotpath Config dot-path key.
-	 * @param mixed  $meta    Raw metadata array from a schema file.
-	 * @return array{default: mixed, type: string, label: string, desc: string}
+	 * @param string $dotpath     Config dot-path key.
+	 * @param mixed  $meta        Raw metadata array from a schema file.
+	 * @param string $moduleLabel Owning module's sub-header label ('' for core fields).
+	 * @return array{default: mixed, type: string, label: string, desc: string, module: string}
 	 */
-	private static function normalizeField(string $dotpath, mixed $meta): array {
+	private static function normalizeField(string $dotpath, mixed $meta, string $moduleLabel = ''): array {
 		$meta = is_array($meta) ? $meta : ['default' => $meta];
 
 		$default = $meta['default'] ?? null;
@@ -106,6 +154,7 @@ class configSchema {
 			'type'    => $type,
 			'label'   => $meta['label'] ?? $dotpath,
 			'desc'    => $meta['desc'] ?? '',
+			'module'  => $moduleLabel,
 		];
 	}
 
@@ -205,9 +254,9 @@ class configSchema {
 	/**
 	 * Derive the camelCase HTML form input key for a field from its config dot-path.
 	 *
-	 * Config dot-paths use mixed conventions (e.g. 'ModuleSettings.RENZOKU3',
+	 * Config dot-paths use mixed conventions (e.g. 'modules.antiFlood.RENZOKU3',
 	 * 'REPLIES_PER_PAGE'); this produces a clean, dot-free camelCase identifier used as the
-	 * form input name/id (e.g. 'moduleSettingsRenzoku3', 'repliesPerPage'). It is deterministic
+	 * form input name/id (e.g. 'modulesAntifloodRenzoku3', 'repliesPerPage'). It is deterministic
 	 * so the form renderer and the save handler compute the same key without a stored mapping.
 	 *
 	 * @param string $dotpath Config dot-path key.

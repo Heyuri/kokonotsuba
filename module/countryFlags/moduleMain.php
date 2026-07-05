@@ -67,8 +67,8 @@ class moduleMain extends abstractModuleMain {
 	 * Called at render time. Reads the pre-computed country code from the post and appends the flag img.
 	 */
 	public function onRenderPost(array &$arrLabels, Post $post): void {
-		if ($this->getConfig('ModuleSettings.FLAG_MODE') == 1 && strstr($post->getEmail(), 'flag')) return;
-		if ($this->getConfig('ModuleSettings.FLAG_MODE') == 2 && !strstr($post->getEmail(), 'flag')) return;
+		if ($this->getModuleConfig('FLAG_MODE') == 1 && strstr($post->getEmail(), 'flag')) return;
+		if ($this->getModuleConfig('FLAG_MODE') == 2 && !strstr($post->getEmail(), 'flag')) return;
 
 		$countryCode = $post->getCountryCode();
 

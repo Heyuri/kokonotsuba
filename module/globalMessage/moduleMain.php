@@ -21,7 +21,7 @@ class moduleMain extends abstractModuleMain {
 	}
 	
 	public function initialize(): void {
-		$this->globalMessageFile = $this->getConfig('ModuleSettings.GLOBAL_TXT');
+		$this->globalMessageFile = $this->getModuleConfig('GLOBAL_TXT', getBackendGlobalDir().'globalmsg.txt');
 
 		if(!file_exists($this->globalMessageFile)) touch($this->globalMessageFile);
 		

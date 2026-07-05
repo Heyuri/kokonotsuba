@@ -273,7 +273,7 @@ class postRenderer {
 		$replyButton = $threadMode ? $this->postElementGenerator->generateReplyButton($crossLink, $threadResno, $lastPage) : '';
 		$recentRepliesButton = $threadMode ? $this->postElementGenerator->generateRecentRepliesButton($crossLink, $threadResno, $replyCount) : '';
 
-		$page = getPageForPostPosition($data->getPostPosition(), $repliesPerPage);
+		$page = getPageForPostPosition($data->getObjectivePosition(), $repliesPerPage);
 		$postUrl = $this->board->getBoardThreadURL($threadResno, $data->getNumber(), false, $page, $crossLink);
 
 		$dataAttributes = 'data-post-email="' . sanitizeStr($data->getEmail()) . '" data-post-user-name="' . sanitizeStr($data->getName()) . '" data-post-number="' . $data->getNumber() . '" data-post-uid="' . sanitizeStr($data->getUid()) . '"';

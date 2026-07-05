@@ -12,7 +12,7 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		// Load configuration values
-		$this->dotPoints = $this->getConfig('ModuleSettings.ADD_INFO', []);
+		$this->dotPoints = $this->getModuleConfig('ADD_INFO', []);
 		
 		// Register the listener for the PostInfo hook
 		$this->listenPostInfo('onRenderPostInfo');

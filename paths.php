@@ -38,9 +38,7 @@ function getDatabaseSettings() {
 }
 
 function getGlobalConfig() {
-	require __DIR__.'/global/globalconfig.php';
-	
-	return $config;
+	return require __DIR__.'/global/globalconfig.php';
 }
 
 function getGlobalAttachmentDirectory(): string {

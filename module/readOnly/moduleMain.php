@@ -8,6 +8,7 @@ namespace Kokonotsuba\Modules\readOnly;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\RegistBeginListenerTrait;
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\userRole;
 
 class moduleMain extends abstractModuleMain {
 	use RegistBeginListenerTrait;
@@ -15,8 +16,8 @@ class moduleMain extends abstractModuleMain {
 	private $ALLOWREPLY, $MINIMUM_ROLE; // Allow replies
 
 	public function initialize(): void {
-		$this->ALLOWREPLY = $this->getConfig('ModuleSettings.ALLOW_REPLY');
-		$this->MINIMUM_ROLE = $this->getConfig('ModuleSettings.MINIMUM_ROLE');
+		$this->ALLOWREPLY = $this->getModuleConfig('ALLOW_REPLY');
+		$this->MINIMUM_ROLE = $this->getModuleConfig('MINIMUM_ROLE', userRole::LEV_MODERATOR);
 
 		$this->listenRegistBegin('onRegistBegin');
 	}

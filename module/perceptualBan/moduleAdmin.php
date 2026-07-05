@@ -246,7 +246,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function drawIndex(): void {
 		$entriesPerPage = $this->getConfig('ACTIONLOG_MAX_PER_PAGE', 50);
 		$page = (int) ($_GET['page'] ?? 0);
-		$threshold = $this->getConfig('ModuleSettings.perceptualBan.HAMMING_THRESHOLD', 10);
+		$threshold = $this->getModuleConfig('HAMMING_THRESHOLD', 10);
 
 		$entries = $this->perceptualBanService->getEntries($entriesPerPage, $page);
 		$totalEntries = $this->perceptualBanService->getTotalEntries();

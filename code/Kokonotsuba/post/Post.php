@@ -35,6 +35,15 @@ class Post implements JsonSerializable {
 	public function getThreadUid(): string { return (string)($this->data['thread_uid'] ?? ''); }
 	public function isOp(): bool { return (bool)($this->data['is_op'] ?? false); }
 	public function getPostPosition(): int { return (int)($this->data['post_position'] ?? 0); }
+	/**
+	 * The post's true ordinal within its thread (OP = 0), computed from the currently
+	 * visible replies. Use this for pagination page math — post_position is a stored
+	 * insert counter that drifts after deletions. Falls back to post_position when the
+	 * position column wasn't selected (queries that don't include it).
+	 */
+	public function getObjectivePosition(): int {
+		return (int)($this->data['objective_position'] ?? $this->data['post_position'] ?? 0);
+	}
 
 	// Content
 	public function getName(): string { return (string)($this->data['name'] ?? ''); }

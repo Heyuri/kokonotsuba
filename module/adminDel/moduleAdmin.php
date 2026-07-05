@@ -42,8 +42,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$this->JANIMUTE_LENGTH = $this->getConfig('ModuleSettings.JANIMUTE_LENGTH');
-		$this->JANIMUTE_REASON = $this->getConfig('ModuleSettings.JANIMUTE_REASON');
+		$this->JANIMUTE_LENGTH = $this->getModuleConfig('JANIMUTE_LENGTH');
+		$this->JANIMUTE_REASON = $this->getModuleConfig('JANIMUTE_REASON');
 
 		$this->registerPostControlPair('onRenderPostAdminControls');
 		$this->registerPostWidgetHook('onRenderPostWidget');

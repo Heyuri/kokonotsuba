@@ -35,12 +35,12 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->THREADLIST_NUMBER = $this->getConfig('ModuleSettings.THREADLIST_NUMBER');
-		$this->FORCE_SUBJECT = $this->getConfig('ModuleSettings.FORCE_SUBJECT');
-		$this->THREADLIST_NUMBER_IN_MAIN = $this->getConfig('ModuleSettings.THREADLIST_NUMBER_IN_MAIN');
-		$this->SHOW_FORM = $this->getConfig('ModuleSettings.SHOW_FORM');
-		$this->HIGHLIGHT_COUNT = $this->getConfig('ModuleSettings.HIGHLIGHT_COUNT');
-		$this->SHOW_IN_MAIN = $this->getConfig('ModuleSettings.SHOW_IN_MAIN');
+		$this->THREADLIST_NUMBER = $this->getModuleConfig('THREADLIST_NUMBER');
+		$this->FORCE_SUBJECT = $this->getModuleConfig('FORCE_SUBJECT');
+		$this->THREADLIST_NUMBER_IN_MAIN = $this->getModuleConfig('THREADLIST_NUMBER_IN_MAIN');
+		$this->SHOW_FORM = $this->getModuleConfig('SHOW_FORM');
+		$this->HIGHLIGHT_COUNT = $this->getModuleConfig('HIGHLIGHT_COUNT');
+		$this->SHOW_IN_MAIN = $this->getModuleConfig('SHOW_IN_MAIN');
 
 		$this->listenRegistBeforeCommit('onBeforeCommit');
 		$this->listenAboveThreadArea('onRenderAboveThreadArea');

@@ -93,7 +93,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function onRenderThreadSeparate(string &$html, int $threadIterator): void {
-		$inlineEvery = max(1, (int)$this->getConfig('ModuleSettings.ADS_INLINE_EVERY_N_THREADS', 4));
+		$inlineEvery = max(1, (int)$this->getModuleConfig('ADS_INLINE_EVERY_N_THREADS', 4));
 		if (($threadIterator + 1) % $inlineEvery !== 0) {
 			return;
 		}
@@ -101,7 +101,7 @@ class moduleMain extends abstractModuleMain {
 		if ($ad === null) {
 			return;
 		}
-		$count = min(5, max(1, (int)$this->getConfig('ModuleSettings.ADS_INLINE_COUNT', 3)));
+		$count = min(5, max(1, (int)$this->getModuleConfig('ADS_INLINE_COUNT', 3)));
 		$adHtml = $this->buildAdHtml($ad, 'inline');
 		$slots = '';
 		for ($i = 0; $i < $count; $i++) {
@@ -122,7 +122,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function onRenderPostSeparate(string &$html, int $replyIterator): void {
-		$everyN = max(1, (int)$this->getConfig('ModuleSettings.ADS_POST_AD_EVERY_N_POSTS', 5));
+		$everyN = max(1, (int)$this->getModuleConfig('ADS_POST_AD_EVERY_N_POSTS', 5));
 		if (($replyIterator + 1) % $everyN !== 0) {
 			return;
 		}
@@ -131,7 +131,7 @@ class moduleMain extends abstractModuleMain {
 			return;
 		}
 
-		$names = $this->getConfig('ModuleSettings.NAME_RANDOMIZER_NAMES', []);
+		$names = $this->getConfig('modules.nameRandomizer.NAME_RANDOMIZER_NAMES', []);
 		$name  = (!empty($names) && is_array($names))
 			? sanitizeStr($names[array_rand($names)])
 			: 'Anonymous';
@@ -189,7 +189,7 @@ class moduleMain extends abstractModuleMain {
 
 	private function onRenderFoot(string &$footer): void {
 		$footer .= $this->moduleContext->adminPageRenderer->ParseBlock('ADS_FOOTER_INJECT', [
-			'{$STICKY_ROTATE_SECONDS}' => max(0, (int)$this->getConfig('ModuleSettings.ADS_STICKY_ROTATE_SECONDS', 45)),
+			'{$STICKY_ROTATE_SECONDS}' => max(0, (int)$this->getModuleConfig('ADS_STICKY_ROTATE_SECONDS', 45)),
 		]);
 
 		$mobileAd = $this->getNextAdForSlot('mobile');
@@ -240,7 +240,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function getSlotDimensions(string $slot): array {
-		$dimensions = $this->getConfig('ModuleSettings.ADS_SLOT_DIMENSIONS', []);
+		$dimensions = $this->getModuleConfig('ADS_SLOT_DIMENSIONS', []);
 
 		$defaults = [
 			'top'    => ['width' => 728, 'height' => 90],

@@ -24,11 +24,11 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->timeout = $this->getConfig('ModuleSettings.USER_COUNT_TIMEOUT');
+		$this->timeout = $this->getModuleConfig('USER_COUNT_TIMEOUT');
 		
 		$this->staticUrl = $this->getConfig('STATIC_URL');
 		
-		$this->usercounter = $this->moduleContext->board->getBoardStoragePath().$this->getConfig('ModuleSettings.USER_COUNT_DAT_FILE');
+		$this->usercounter = $this->moduleContext->board->getBoardStoragePath().$this->getModuleConfig('USER_COUNT_DAT_FILE');
 		
 		$this->modulePageUrl = $this->getModulePageURL();
 

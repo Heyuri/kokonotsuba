@@ -168,9 +168,14 @@ function getBasePostQuery(
 	$displayIpColumn   = $displayIpTable ? "\n\t\t\tdip.ip_part AS display_ip_ip_part," : '';
 	$displayIpJoin     = $displayIpTable ? "\n\t\tLEFT JOIN $displayIpTable dip ON dip.post_uid = p.post_uid" : '';
 
+	// True ordinal within the thread (OP = 0), used for pagination page math instead of
+	// the drift-prone stored post_position column.
+	$objectivePositionColumn = objectivePositionSubquery($postTable, $deletedPostsTable, 'p', $viewDeleted);
+
     $query = "
-        SELECT 
+        SELECT
             p.*,
+            {$objectivePositionColumn} AS objective_position,
             t.post_op_number,
 			{$countryFlagColumn}
 			{$displayIpColumn}
@@ -215,6 +220,53 @@ function getBasePostQuery(
     ";
 
     return $query;
+}
+
+/**
+ * Build a correlated subquery that yields a post's *objective position* within its
+ * thread: the OP is 0, and each reply is numbered by its ordinal among the currently
+ * visible replies ordered by post_uid ASC (1 = first reply, 2 = second, ...).
+ *
+ * This is the position pagination actually slices on. The stored `post_position`
+ * column is a monotonic insert counter (MAX+1) that is never decremented when a post
+ * is soft-deleted, so it drifts out of sync with the rendered order after deletions —
+ * use this instead of `post_position` for any page-number math.
+ *
+ * @param string $postTable        Posts table name.
+ * @param string $deletedPostsTable Deleted-posts table name.
+ * @param string $postAlias        Alias of the post row to position (e.g. 'p', 'tp').
+ * @param bool   $viewDeleted      When true, deleted replies are counted too (matches
+ *                                 admin/deleted-visible pagination); when false they are
+ *                                 excluded, matching the default rendered thread.
+ * @return string A parenthesized scalar subquery (no trailing alias).
+ */
+function objectivePositionSubquery(
+	string $postTable,
+	string $deletedPostsTable,
+	string $postAlias,
+	bool $viewDeleted = false
+): string {
+	$deletionFilter = $viewDeleted ? '' : "
+			AND NOT EXISTS (
+				SELECT 1
+				FROM $deletedPostsTable od1
+				INNER JOIN (
+					SELECT post_uid, MAX(id) AS max_id
+					FROM $deletedPostsTable
+					GROUP BY post_uid
+				) od2 ON od1.post_uid = od2.post_uid AND od1.id = od2.max_id
+				WHERE od1.post_uid = objpos.post_uid
+				  AND od1.file_id IS NULL AND od1.open_flag = 1
+			)";
+
+	return "(
+			SELECT COUNT(*)
+			FROM $postTable objpos
+			WHERE objpos.thread_uid = {$postAlias}.thread_uid
+			  AND objpos.is_op = 0
+			  AND objpos.post_uid <= {$postAlias}.post_uid
+			  {$deletionFilter}
+		)";
 }
 
 function excludeDeletedThreadsCondition(string $deletedPostsTable): string {

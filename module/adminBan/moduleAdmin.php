@@ -43,7 +43,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function initialize(): void {
 		$this->modulePageUrl = $this->getModulePageURL([], false, true);
-		$this->DEFAULT_BAN_MESSAGE = $this->getConfig('DEFAULT_BAN_MESSAGE');
+		$this->DEFAULT_BAN_MESSAGE = $this->getModuleConfig('DEFAULT_BAN_MESSAGE', '<p class="warning">(USER WAS BANNED FOR THIS POST) <img class="banIcon icon" alt="banhammer" src="'.$this->getConfig('STATIC_URL').'image'.DIRECTORY_SEPARATOR.'hammer.gif"></p>');
 		$this->bansPerPage = (int)$this->getConfig('ADMIN_PAGE_DEF', 100);
 
 		$this->registerPostControlPair('onRenderPostAdminControls');

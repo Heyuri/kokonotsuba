@@ -27,7 +27,7 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		$this->modulePageUrl = $this->getModulePageURL();
 
-		$this->bannerPath = $this->getConfig('ModuleSettings.BANNER_PATH');
+		$this->bannerPath = $this->getModuleConfig('BANNER_PATH', $this->getConfig('STATIC_PATH').'image/default/');
 
 		$this->staticUrl = $this->getConfig('STATIC_URL');
 

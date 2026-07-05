@@ -34,8 +34,8 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		// get emote list from config
-		$this->emotes = $this->getConfig('ModuleSettings.EMOTES', []);
-		$this->kaomoji = $this->getConfig('ModuleSettings.KAOMOJI', []);
+		$this->emotes = $this->getModuleConfig('EMOTES', []);
+		$this->kaomoji = $this->getModuleConfig('KAOMOJI', []);
 
         // get base emote url
         $this->baseEmoteUrl = $this->getConfig('STATIC_URL') . 'image/emote/';

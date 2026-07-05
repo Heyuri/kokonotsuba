@@ -35,6 +35,21 @@ abstract class abstractModule {
 		return $this->moduleContext->board->getConfigValue($key, $default);
 	}
 
+	/**
+	 * Read one of THIS module's own settings.
+	 *
+	 * Resolves to the config dot-path "modules.{thisModuleName}.{key}" (the per-module config
+	 * namespace declared in module/{name}/config.php). To read another module's setting, use
+	 * getConfig('modules.{otherModule}.{key}') directly.
+	 *
+	 * @param string $key     Bare setting key (e.g. 'RENZOKU3').
+	 * @param mixed  $default Fallback if the setting is not defined.
+	 * @return mixed The setting value.
+	 */
+	protected function getModuleConfig(string $key, mixed $default = null) {
+		return $this->getConfig("modules.{$this->moduleName}.{$key}", $default);
+	}
+
 	public function getModulePageURL(array $params = [], bool $forHtml = true, bool $useRequestUri = false): string {
 		$params['mode'] = 'module';
 		$params['load'] = $this->moduleName;

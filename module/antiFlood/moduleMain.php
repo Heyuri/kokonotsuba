@@ -35,7 +35,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->RENZOKU3 = $this->getConfig('ModuleSettings.RENZOKU3', 0);
+		$this->RENZOKU3 = $this->getModuleConfig('RENZOKU3', 0);
 		
 		// Initialize submission service for thread flood tracking
 		$this->submissionService = getSubmissionService();
@@ -61,7 +61,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function preventFloodPost(string $comment): void {
-		$timeWindow = $this->getConfig('ModuleSettings.SAME_COMMENT_TIME_WINDOW', 10);
+		$timeWindow = $this->getModuleConfig('SAME_COMMENT_TIME_WINDOW', 10);
 
 		if(!$timeWindow || $timeWindow <= 0) {
 			return;
@@ -73,11 +73,11 @@ class moduleMain extends abstractModuleMain {
 		// check if the comment is repeated in a certain time period instance-wide, scoped to the poster's IP
 		$repeatedPosts = $this->moduleContext->postService->getRepeatedPosts($comment, $defaultComment, $timeWindow, $host);
 
-		$this->deleteRepeatedPostsAndRedirect($repeatedPosts, $this->getConfig('ModuleSettings.ALLOWED_COMMENT_REPETITIONS', 5));
+		$this->deleteRepeatedPostsAndRedirect($repeatedPosts, $this->getModuleConfig('ALLOWED_COMMENT_REPETITIONS', 5));
 	}
 
 	private function preventFloodThreadComment(string $comment): void {
-		$timeWindow = $this->getConfig('ModuleSettings.SAME_THREAD_COMMENT_TIME_WINDOW', 0);
+		$timeWindow = $this->getModuleConfig('SAME_THREAD_COMMENT_TIME_WINDOW', 0);
 
 		if(!$timeWindow || $timeWindow <= 0) {
 			return;

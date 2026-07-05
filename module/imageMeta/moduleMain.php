@@ -24,10 +24,10 @@ class moduleMain extends abstractModuleMain {
 	private $modulePageUrl;
 
 	public function initialize(): void {
-		$this->enable_exif = $this->getConfig('ModuleSettings.EXIF_DATA_VIEWER');
-		$this->enable_imgops = $this->getConfig('ModuleSettings.IMG_OPS');
-		$this->enable_iqdb = $this->getConfig('ModuleSettings.IQDB');
-		$this->enable_swfchan = $this->getConfig('ModuleSettings.SWFCHAN');
+		$this->enable_exif = $this->getModuleConfig('EXIF_DATA_VIEWER');
+		$this->enable_imgops = $this->getModuleConfig('IMG_OPS');
+		$this->enable_iqdb = $this->getModuleConfig('IQDB');
+		$this->enable_swfchan = $this->getModuleConfig('SWFCHAN');
 
 		// Listen to posts rendering
 		$this->listenAttachmentWidget('onRenderAttachmentWidget');

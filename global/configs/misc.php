@@ -1,48 +1,44 @@
 <?php
 /**
- * Miscellaneous board settings: time zone, webhooks, logging, sessions, fortunes.
- * Defaults preserve the historical board defaults.
+ * Miscellaneous board settings: time zone, webhooks, logging, sessions, fortunes (core).
+ * Module-specific settings are declared by their own module and fold into their groups.
  */
+
+require_once __DIR__ . '/_fieldTypes.php';
+
+use function Kokonotsuba\config\fields\{boolField, intField, stringField, arrayField};
 
 return [
 	'_group' => 'Miscellaneous',
 
-	'TIME_ZONE'                 => ['default' => '0', 'type' => 'string', 'label' => 'Time zone', 'desc' => 'Offset from UTC, e.g. "-4" for New York or "9" for Japan.'],
-	'TRUST_HTTP_X_FORWARDED_FOR'=> ['default' => 0, 'type' => 'int', 'label' => 'Trust X-Forwarded-For', 'desc' => 'Use HTTP_X_FORWARDED_FOR to find the real IP behind a proxy (headers can be forged).'],
+	'TIME_ZONE'                 => stringField('Time zone', '0', 'Offset from UTC, e.g. "-4" for New York or "9" for Japan.'),
+	'TRUST_HTTP_X_FORWARDED_FOR'=> boolField('Trust X-Forwarded-For', false, 'Use HTTP_X_FORWARDED_FOR to find the real IP behind a proxy (headers can be forged).'),
 
-	'DISCORD_WH' => ['default' => '', 'type' => 'string', 'label' => 'Discord webhook', 'desc' => 'Webhook URL for post notifications.'],
-	'IRC_WH'     => ['default' => '', 'type' => 'string', 'label' => 'IRC webhook', 'desc' => 'Webhook URL for post notifications.'],
+	'DISCORD_WH' => stringField('Discord webhook', '', 'Webhook URL for post notifications.'),
+	'IRC_WH'     => stringField('IRC webhook', '', 'Webhook URL for post notifications.'),
 
-	'ACTIONLOG_MAX_PER_PAGE' => ['default' => 50, 'type' => 'int', 'label' => 'Action log per page', 'desc' => 'Number of action-log entries shown per page.'],
-	'STAFF_LOGIN_TIMEOUT'    => ['default' => 86400, 'type' => 'int', 'label' => 'Staff login timeout (s)', 'desc' => 'Inactivity allowed before a staff user is logged out. Must not exceed session.gc_maxlifetime.'],
-	'SYSTEMCHAN_NAME'        => ['default' => 'System-chan', 'type' => 'string', 'label' => 'System user name', 'desc' => 'Name of the system role/user.'],
+	'ACTIONLOG_MAX_PER_PAGE' => intField('Action log per page', 50, 'Number of action-log entries shown per page.'),
+	'STAFF_LOGIN_TIMEOUT'    => intField('Staff login timeout (s)', 86400, 'Inactivity allowed before a staff user is logged out. Must not exceed session.gc_maxlifetime.'),
+	'SYSTEMCHAN_NAME'        => stringField('System user name', 'System-chan', 'Name of the system role/user.'),
 
-	// private messages
-	'ModuleSettings.APPEND_TRIP_PM_BUTTON_TO_POST' => ['default' => false, 'type' => 'bool', 'label' => 'Append PM button to posts', 'desc' => 'Show a private-message button next to tripcoded posts.'],
-
-	'FORTUNES' => [
-		'default' => [
-			'Your true waifu will reveal herself',
-			'Only time will tell',
-			'Dark times are to come',
-			'Your harem is only just begining',
-			'You have cancer',
-			'You have aids',
-			'Tomo will strangle you in your sleep',
-			'You just lost the game',
-			'We don\'t know what happens next',
-			'mah pen0z is bigger than uurz',
-			'LOLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOL',
-			'Bad luck',
-			'Average luck',
-			'Good luck',
-			'Godly luck',
-			'Very bad luck',
-			'ｷﾀ━━━━━━(ﾟ∀ﾟ)━━━━━━ !!!!',
-			'（　´_ゝ`）ﾌｰﾝ',
-		],
-		'type'  => 'array',
-		'label' => 'Fortunes',
-		'desc'  => 'JSON array of fortunes selected at random by the fortune function.',
-	],
+	'FORTUNES' => arrayField('Fortunes', [
+		'Your true waifu will reveal herself',
+		'Only time will tell',
+		'Dark times are to come',
+		'Your harem is only just begining',
+		'You have cancer',
+		'You have aids',
+		'Tomo will strangle you in your sleep',
+		'You just lost the game',
+		'We don\'t know what happens next',
+		'mah pen0z is bigger than uurz',
+		'LOLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOLLOL',
+		'Bad luck',
+		'Average luck',
+		'Good luck',
+		'Godly luck',
+		'Very bad luck',
+		'ｷﾀ━━━━━━(ﾟ∀ﾟ)━━━━━━ !!!!',
+		'（　´_ゝ`）ﾌｰﾝ',
+	], 'JSON array of fortunes selected at random by the fortune function.'),
 ];

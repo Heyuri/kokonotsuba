@@ -21,14 +21,14 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->names = $this->getConfig('ModuleSettings.NAME_RANDOMIZER_NAMES', []);
+		$this->names = $this->getModuleConfig('NAME_RANDOMIZER_NAMES', []);
 
 		if (empty($this->names)) {
 			return;
 		}
 
 		$this->claimsFile = getBackendGlobalDir() . 'name_randomizer_claims.dat';
-		$this->claimTtl = $this->getConfig('ModuleSettings.NAME_RANDOMIZER_TTL', 43200);
+		$this->claimTtl = $this->getModuleConfig('NAME_RANDOMIZER_TTL', 43200);
 
 		// Priority -1: runs after the tripcode module (priority 0) so we can overwrite its values
 		$this->listenRegistBegin('onRegistBegin', -1);

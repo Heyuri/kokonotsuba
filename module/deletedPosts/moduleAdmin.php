@@ -58,7 +58,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$restoredIndexUrl = $this->getModulePageURL(['pageName' => 'restoredIndex'], false);
 
 		// init the module template engine
-		$moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.DELETED_POSTS_TEMPLATE', 'kokoimg');
+		$moduleTemplateEngine = $this->initModuleTemplateEngine('modules.deletedPosts.DELETED_POSTS_TEMPLATE', 'kokoimg');
 
 		// init utility class
 		$deletedPostUtility = new deletedPostUtility(
@@ -114,7 +114,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function pruneDeletedPosts(): void {
 		// get time limit config variable (hours)
 		// default to 1 week
-		$timeLimit = $this->getConfig('ModuleSettings.PRUNE_TIME', 336);
+		$timeLimit = $this->getModuleConfig('PRUNE_TIME', 336);
 
 		// prune the expired deleted posts in the system
 		$this->moduleContext->deletedPostsService->pruneExpiredPosts($timeLimit);

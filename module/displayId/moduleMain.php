@@ -29,7 +29,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->DISPLAY_ID = $this->getConfig('ModuleSettings.DISP_ID', false);
+		$this->DISPLAY_ID = $this->getModuleConfig('DISP_ID', false);
 
 		// add the listener for displaying IDs
 		$this->listenPost('onRenderPost');

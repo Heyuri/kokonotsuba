@@ -50,12 +50,12 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->showTopAd = $this->getConfig('ModuleSettings.SHOW_TOP_AD');
-		$this->showBottomAd = $this->getConfig('ModuleSettings.SHOW_BOTTOM_AD');
-		$this->submissionCooldown = $this->getConfig('ModuleSettings.FULLBANNER_SUBMISSION_COOLDOWN', 300);
-		$this->requiredWidth = $this->getConfig('ModuleSettings.FULLBANNER_REQUIRED_WIDTH', 468);
-		$this->requiredHeight = $this->getConfig('ModuleSettings.FULLBANNER_REQUIRED_HEIGHT', 60);
-		$this->maxFileSize = $this->getConfig('ModuleSettings.FULLBANNER_MAX_FILE_SIZE', 204800);
+		$this->showTopAd = $this->getModuleConfig('SHOW_TOP_AD');
+		$this->showBottomAd = $this->getModuleConfig('SHOW_BOTTOM_AD');
+		$this->submissionCooldown = $this->getModuleConfig('FULLBANNER_SUBMISSION_COOLDOWN', 300);
+		$this->requiredWidth = $this->getModuleConfig('FULLBANNER_REQUIRED_WIDTH', 468);
+		$this->requiredHeight = $this->getModuleConfig('FULLBANNER_REQUIRED_HEIGHT', 60);
+		$this->maxFileSize = $this->getModuleConfig('FULLBANNER_MAX_FILE_SIZE', 204800);
 		$this->modulePageUrl = $this->getModulePageURL([], false, false);
 		$this->bannerServerUrl = $this->getModulePageURL(['pageName' => 'bannerServer'], false, false);
 		$this->serveImageUrl = $this->getModulePageURL(['pageName' => 'bannerServeImage'], false, false);

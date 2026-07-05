@@ -68,30 +68,30 @@ class moduleMain extends abstractModuleMain {
 		$this->registerScript('addbbcode.js');
 
 		// initialize bbcode feature flags
-		$this->supportBold = $this->getConfig('ModuleSettings.supportBold', false);
-		$this->supportStrikeThrough = $this->getConfig('ModuleSettings.supportStrikeThrough', false);
-		$this->supportHeading = $this->getConfig('ModuleSettings.supportHeading', false);
-		$this->supportSpoiler = $this->getConfig('ModuleSettings.supportSpoiler', false);
-		$this->supportCode = $this->getConfig('ModuleSettings.supportCode', false);
-		$this->supportItalic = $this->getConfig('ModuleSettings.supportItalic', false);
-		$this->supportUnderline = $this->getConfig('ModuleSettings.supportUnderline', false);
-		$this->supportParagraph = $this->getConfig('ModuleSettings.supportParagraph', false);
-		$this->supportSw = $this->getConfig('ModuleSettings.supportSw', false);
-		$this->supportColor = $this->getConfig('ModuleSettings.supportColor', false);
-		$this->supportColorBg = $this->getConfig('ModuleSettings.supportColorBg', false);
-		$this->supportNeon = $this->getConfig('ModuleSettings.supportNeon', false);
-		$this->supportTextShadow = $this->getConfig('ModuleSettings.supportTextShadow', false);
-		$this->supportEcho = $this->getConfig('ModuleSettings.supportEcho', false);
-		$this->supportFontSize = $this->getConfig('ModuleSettings.supportFontSize', false);
-		$this->supportPre = $this->getConfig('ModuleSettings.supportPre', false);
-		$this->supportQuote = $this->getConfig('ModuleSettings.supportQuote', false);
-		$this->supportRuby = $this->getConfig('ModuleSettings.supportRuby', false);
-		$this->supportURL = $this->getConfig('ModuleSettings.supportURL', false);
-		$this->supportEmail = $this->getConfig('ModuleSettings.supportEmail', false);
-		$this->supportImg = $this->getConfig('ModuleSettings.supportImg', false);
-		$this->supportScroll = $this->getConfig('ModuleSettings.supportScroll', false);
-		$this->supportCodeBlocks = $this->getConfig('ModuleSettings.supportCodeBlocks', false);
-		$this->supportKao = $this->getConfig('ModuleSettings.supportKao', false);
+		$this->supportBold = $this->getModuleConfig('supportBold', false);
+		$this->supportStrikeThrough = $this->getModuleConfig('supportStrikeThrough', false);
+		$this->supportHeading = $this->getModuleConfig('supportHeading', false);
+		$this->supportSpoiler = $this->getModuleConfig('supportSpoiler', false);
+		$this->supportCode = $this->getModuleConfig('supportCode', false);
+		$this->supportItalic = $this->getModuleConfig('supportItalic', false);
+		$this->supportUnderline = $this->getModuleConfig('supportUnderline', false);
+		$this->supportParagraph = $this->getModuleConfig('supportParagraph', false);
+		$this->supportSw = $this->getModuleConfig('supportSw', false);
+		$this->supportColor = $this->getModuleConfig('supportColor', false);
+		$this->supportColorBg = $this->getModuleConfig('supportColorBg', false);
+		$this->supportNeon = $this->getModuleConfig('supportNeon', false);
+		$this->supportTextShadow = $this->getModuleConfig('supportTextShadow', false);
+		$this->supportEcho = $this->getModuleConfig('supportEcho', false);
+		$this->supportFontSize = $this->getModuleConfig('supportFontSize', false);
+		$this->supportPre = $this->getModuleConfig('supportPre', false);
+		$this->supportQuote = $this->getModuleConfig('supportQuote', false);
+		$this->supportRuby = $this->getModuleConfig('supportRuby', false);
+		$this->supportURL = $this->getModuleConfig('supportURL', false);
+		$this->supportEmail = $this->getModuleConfig('supportEmail', false);
+		$this->supportImg = $this->getModuleConfig('supportImg', false);
+		$this->supportScroll = $this->getModuleConfig('supportScroll', false);
+		$this->supportCodeBlocks = $this->getModuleConfig('supportCodeBlocks', false);
+		$this->supportKao = $this->getModuleConfig('supportKao', false);
 	}
 
 	private function onRenderCommentExtras(string &$html): void {
