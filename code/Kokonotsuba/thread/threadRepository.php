@@ -642,7 +642,99 @@ class threadRepository extends baseRepository {
 		$posts = $this->queryAll($query, $postUIDs) ?? [];
 		$posts = mergeMultiplePostRows($posts);
 
+		if ($posts) {
+			$this->attachObjectivePositions($posts, $includeDeleted);
+		}
+
 		return $posts ?: null;
+	}
+
+	/**
+	 * Eager-load each post's objective position and set it on the Post objects.
+	 *
+	 * The objective position is a post's true ordinal within its thread (OP = 0, replies
+	 * numbered by their order among the currently-visible replies) - the position that
+	 * pagination actually slices on, as opposed to the drift-prone stored post_position
+	 * column. A single window-function query covers every thread present in the batch, so
+	 * there is no per-post lookup even when rendering many threads (e.g. the board index).
+	 *
+	 * @param Post[] $posts          Posts to annotate (mutated in place).
+	 * @param bool   $includeDeleted Whether deleted replies count toward the ordinal; must
+	 *                               match the visibility the posts were fetched with.
+	 */
+	private function attachObjectivePositions(array $posts, bool $includeDeleted): void {
+		if (empty($posts)) {
+			return;
+		}
+
+		$threadUIDs = array_values(array_unique(array_map(
+			static fn(Post $post): string => $post->getThreadUid(),
+			$posts
+		)));
+
+		$positions = $this->getObjectivePositions($threadUIDs, $includeDeleted);
+
+		foreach ($posts as $post) {
+			$post->setObjectivePosition($positions[$post->getUid()] ?? 0);
+		}
+	}
+
+	/**
+	 * Map each post_uid in the given threads to its objective position (OP = 0, replies
+	 * numbered 1..N in post_uid order among the currently-visible posts). One
+	 * window-function query for the whole set of threads.
+	 *
+	 * @param string[] $threadUIDs     Thread UIDs to compute positions for.
+	 * @param bool     $includeDeleted Whether deleted replies count toward the ordinal.
+	 * @return array<int,int> post_uid => objective position
+	 */
+	public function getObjectivePositions(array $threadUIDs, bool $includeDeleted = false): array {
+		if (empty($threadUIDs)) {
+			return [];
+		}
+
+		$placeholders = pdoPlaceholdersForIn($threadUIDs);
+
+		// Same latest-post-level-deletion filter pagination uses, so the ordinal matches
+		// the set of replies actually rendered.
+		$deletionFilter = '';
+		if (!$includeDeleted) {
+			$deletionFilter = "
+				AND NOT EXISTS (
+					SELECT 1
+					FROM {$this->deletedPostsTable} d1
+					INNER JOIN (
+						SELECT post_uid, MAX(id) AS max_id
+						FROM {$this->deletedPostsTable}
+						GROUP BY post_uid
+					) d2 ON d1.post_uid = d2.post_uid AND d1.id = d2.max_id
+					WHERE d1.post_uid = p.post_uid
+					  AND d1.file_id IS NULL AND d1.open_flag = 1
+				)";
+		}
+
+		// OP first (is_op DESC) then replies by post_uid ASC — the exact order pagination
+		// slices on. Subtracting 1 places the OP at position 0.
+		$query = "
+			SELECT
+				p.post_uid,
+				ROW_NUMBER() OVER (
+					PARTITION BY p.thread_uid
+					ORDER BY p.is_op DESC, p.post_uid ASC
+				) - 1 AS objective_position
+			FROM {$this->postTable} p
+			WHERE p.thread_uid IN {$placeholders}
+			{$deletionFilter}
+		";
+
+		$rows = $this->queryAll($query, $threadUIDs);
+
+		$map = [];
+		foreach ($rows ?? [] as $row) {
+			$map[(int)$row['post_uid']] = (int)$row['objective_position'];
+		}
+
+		return $map;
 	}
 
 	/**
@@ -730,6 +822,10 @@ class threadRepository extends baseRepository {
 		$posts = $this->queryAll($query, $postUIDs) ?? [];
 		$posts = mergeMultiplePostRows($posts);
 
+		if ($posts) {
+			$this->attachObjectivePositions($posts, $includeDeleted);
+		}
+
 		return $posts ?: [];
 	}
 
@@ -815,6 +911,8 @@ class threadRepository extends baseRepository {
 			return null;
 		}
 
+		$this->attachObjectivePositions($posts, $includeDeleted);
+
 		// Return all posts
 		return $posts;
 	}
@@ -839,6 +937,11 @@ class threadRepository extends baseRepository {
 
 		$posts = $this->queryAll($query, $params) ?? [];
 		$posts = mergeMultiplePostRows($posts);
+
+		if ($posts) {
+			// deleted-thread view still hides post-level-deleted replies (viewDeleted=false)
+			$this->attachObjectivePositions($posts, false);
+		}
 
 		return $posts ?: null;
 	}
@@ -870,6 +973,10 @@ class threadRepository extends baseRepository {
 
 		$posts = $this->queryAll($query, $params) ?? [];
 		$posts = mergeMultiplePostRows($posts);
+
+		if ($posts) {
+			$this->attachObjectivePositions($posts, $includeDeleted);
+		}
 
 		return $posts ?: null;
 	}
@@ -951,7 +1058,11 @@ class threadRepository extends baseRepository {
 		$posts = $this->queryAll($query, $params) ?? [];
 		$posts = mergeMultiplePostRows($posts);
 
-		return $posts;
+		if ($posts) {
+			$this->attachObjectivePositions($posts, $includeDeleted);
+		}
+
+		return $posts ?: [];
 	}
 
 	/**

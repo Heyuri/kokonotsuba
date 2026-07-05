@@ -6,6 +6,7 @@ use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
+use function Kokonotsuba\libraries\objectivePositionSubquery;
 
 /** Repository for quote-link records that track post-to-post reply references. */
 class quoteLinkRepository extends baseRepository {
@@ -64,8 +65,13 @@ class quoteLinkRepository extends baseRepository {
 	}
 
 	private function getQuoteLinkQuery(): string {
+		// Objective position of the quoted (target) post within its thread — this is what
+		// the quote-link URL's page number is derived from. Using the stored post_position
+		// column here would point links at the wrong page once replies have been deleted.
+		$targetObjectivePosition = objectivePositionSubquery($this->postTable, $this->deletedPostsTable, 'tp', false);
+
 		$query = "
-			SELECT 
+			SELECT
 				q.quotelink_id,
 				q.board_uid,
 				q.target_post_uid,
@@ -78,7 +84,7 @@ class quoteLinkRepository extends baseRepository {
 				ht.post_op_number AS host_post_op_number,
 
 				tp.boardUID AS target_board_uid,
-				tp.post_position AS target_post_position,
+				{$targetObjectivePosition} AS target_post_position,
 				hp.post_position AS host_post_position,
 
 				hdp.open_flag AS host_open_flag,
