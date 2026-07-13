@@ -4,7 +4,7 @@
  * Read via $this->getModuleConfig('KEY'). Folds into the "Moderation" editor group.
  */
 
-require_once __DIR__ . '/../../global/configs/_fieldTypes.php';
+require_once __DIR__ . '/../../configs/_fieldTypes.php';
 
 use function Kokonotsuba\config\fields\{intField, templateField};
 
@@ -12,6 +12,6 @@ return [
 	'_group'  => 'Moderation',
 	'_module' => 'Deleted posts',
 
-	'DELETED_POSTS_TEMPLATE' => templateField('Deleted posts template', 'kokoimg', 'Template used to render deleted posts.'),
-	'PRUNE_TIME' => intField('Deleted posts prune time (h)', 336, 'How long deleted-post records are retained, in hours.'),
+	'DELETED_POSTS_TEMPLATE' => templateField('Deleted posts template', 'kokoimg', 'config_desc_modules.deletedPosts.DELETED_POSTS_TEMPLATE'),
+	'PRUNE_TIME' => intField('Deleted posts prune time (h)', 336, 'config_desc_modules.deletedPosts.PRUNE_TIME'),
 ];

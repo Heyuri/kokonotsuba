@@ -1,6 +1,6 @@
 <?php
 
-/* to use this module - add it to the ModuleList in global/configs/modules.php like so:
+/* to use this module - add it to the ModuleList in configs/modules.php like so:
  * 'ModuleList.example' => $m('Example', true),
  * (or enable it per-board through the admin board configuration editor)
 */

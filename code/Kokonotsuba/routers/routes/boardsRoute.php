@@ -101,10 +101,17 @@ class boardsRoute {
 			$templateValues['{$EDIT_BOARD_HTML}'] = $this->adminTemplateEngine->ParseBlock('EDIT_BOARD', $templateValues);
 
 			// Per-board configuration editor (schema-backed overrides).
+			$configNotice = $this->request->getParameter('rebuild', 'GET', '') === 'queued'
+				? 'Saved. This board is being rebuilt in the background.'
+				: '';
+
 			$templateValues['{$BOARD_CONFIG_FORM}'] = drawBoardConfigForm(
-				$board,
+				$this->adminTemplateEngine,
+				$this->configService,
+				(int)$boardUID,
 				$this->config['LIVE_INDEX_FILE'],
-				getCsrfHiddenInput()
+				getCsrfHiddenInput(),
+				$configNotice
 			);
 
 			// prevent showing editing a reserved board

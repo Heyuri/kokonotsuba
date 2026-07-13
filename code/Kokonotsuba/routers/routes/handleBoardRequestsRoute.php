@@ -19,8 +19,12 @@ use Kokonotsuba\userRole;
 use Kokonotsuba\board\boardCreator;
 use Kokonotsuba\config\configService;
 use Kokonotsuba\request\request;
+use Puchiko\background\BackgroundTaskDispatcher;
 use function Puchiko\request\redirect;
+use function Puchiko\json\sendJsonResponse;
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
+use function Kokonotsuba\libraries\logError;
 use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Puchiko\isValidMySQLDumpFile;
 
@@ -53,6 +57,12 @@ class handleBoardRequestsRoute {
 		// edit a board
 		if(!empty($this->request->getParameter('edit-board', 'POST'))) {
 			$this->editBoardFromRequest();
+		}
+
+		// reset a board's configuration back to the defaults. Checked before the save below: the
+		// config form posts its saveBoardConfig field whichever of its two buttons was clicked.
+		if(!empty($this->request->getParameter('resetBoardConfig', 'POST'))) {
+			$this->resetBoardConfigFromRequest();
 		}
 
 		// save a board's configuration overrides
@@ -114,7 +124,7 @@ class handleBoardRequestsRoute {
 
 	// handle saving a board's configuration overrides
 	private function saveBoardConfigFromRequest(): void {
-		$boardUid = intval($this->request->getParameter('save-board-config', 'POST'));
+		$boardUid = intval($this->request->getParameter('saveBoardConfig', 'POST'));
 
 		if (!$boardUid) {
 			throw new \InvalidArgumentException("Board UID for config save cannot be empty.");
@@ -135,22 +145,80 @@ class handleBoardRequestsRoute {
 			$submitted = [];
 		}
 
+		$isAjax = $this->request->isAjax();
+
 		try {
 			// Persist only values that differ from the schema defaults.
 			$this->configService->saveOverrides($boardUid, $submitted);
-
-			// Regenerate the board's static pages using the freshly-resolved config.
-			$updatedBoard = $this->boardService->getBoard($boardUid);
-			if ($updatedBoard) {
-				$updatedBoard->rebuildBoard();
-			}
 		} catch (Exception $e) {
+			if ($isAjax) {
+				sendJsonResponse(['success' => false, 'message' => $e->getMessage()], 400);
+			}
+
 			http_response_code(400);
 			echo "Error saving configuration: " . $e->getMessage();
 			return;
 		}
 
-		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=boards&view=' . $boardUid);
+		// Regenerate the board's static pages using the freshly-resolved config.
+		$this->queueBoardRebuild($boardUid);
+
+		// The editor saves over AJAX so the admin keeps their scroll position; without JS the same
+		// POST falls through to the redirect below.
+		if ($isAjax) {
+			sendJsonResponse([
+				'success'    => true,
+				'message'    => _T('config_saved'),
+				'overridden' => array_keys($this->configService->getOverrides($boardUid)),
+			]);
+		}
+
+		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=boards&view=' . $boardUid . '&rebuild=queued');
+	}
+
+	// handle resetting a board's configuration - deletes its stored overrides so every setting
+	// falls back to the schema default
+	private function resetBoardConfigFromRequest(): void {
+		$boardUid = intval($this->request->getParameter('resetBoardConfig', 'POST'));
+
+		if (!$boardUid) {
+			throw new \InvalidArgumentException("Board UID for config reset cannot be empty.");
+		}
+
+		if ($boardUid === GLOBAL_BOARD_UID) {
+			throw new \InvalidArgumentException("Cannot edit the reserved board's configuration.");
+		}
+
+		$board = $this->boardService->getBoard($boardUid);
+		if (!$board) {
+			throw new BoardException("Board not found.");
+		}
+
+		try {
+			$this->configService->resetOverrides($boardUid);
+		} catch (Exception $e) {
+			http_response_code(400);
+			echo "Error resetting configuration: " . $e->getMessage();
+			return;
+		}
+
+		// Regenerate the board's static pages using the freshly-resolved config.
+		$this->queueBoardRebuild($boardUid);
+
+		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=boards&view=' . $boardUid . '&rebuild=queued');
+	}
+
+	/**
+	 * Hand the board's rebuild to the detached 'rebuild_boards' task rather than doing it inside
+	 * this request. The config is already committed by this point, so a rebuild that fails to
+	 * dispatch is logged and left for the Rebuild page; it never fails the save.
+	 */
+	private function queueBoardRebuild(int $boardUid): void {
+		try {
+			BackgroundTaskDispatcher::dispatch('rebuild_boards', ['boardUIDs' => [$boardUid]]);
+		} catch (\Throwable $e) {
+			logError('[boardConfig] rebuild dispatch failed: ' . $e->getMessage());
+		}
 	}
 
 	// handle board creation

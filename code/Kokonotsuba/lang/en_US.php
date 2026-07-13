@@ -343,6 +343,15 @@ $language['admin_nav_posts_title'] = 'Manage posts';
 $language['admin_nav_posts'] = 'Posts';
 $language['admin_nav_boards_title'] = 'Manage boards';
 $language['admin_nav_boards'] = 'Boards';
+$language['admin_nav_global_config_title'] = 'Edit the configuration applied to every board';
+$language['admin_nav_global_config'] = 'Global config';
+$language['config_saved'] = 'Configuration edited.';
+$language['config_no_changes'] = 'No changes to save.';
+$language['config_save_failed'] = 'Could not save the configuration.';
+$language['config_confirm_save'] = 'Save these changes?';
+// {count} is substituted by the editor's JS, so it must not be a sprintf placeholder: _T() runs
+// every string through sprintf, and a bare %s here would throw when translated with no arguments.
+$language['config_confirm_more'] = '...and {count} more.';
 $language['admin_nav_action_log_title'] = 'View staff action log';
 $language['admin_nav_action_log'] = 'Action log';
 $language['admin_nav_rebuild_multiple_title'] = 'Rebuild multiple boards';
@@ -483,3 +492,213 @@ $language['anon_ip_dispatched']       = 'Anonymization job queued. You will be n
 $language['anon_ip_completed']        = 'IP anonymization completed successfully.';
 $language['anon_ip_dispatch_failed']  = 'Failed to start anonymization job. Please try again.';
 $language['anon_ip_invalid_request']  = 'Invalid anonymization request.';
+
+// ── Board / global config editor field descriptions ──────────────────────────────
+// One entry per schema field (see configs/*.php and module/{name}/config.php).
+
+// configs/appearance.php
+$language['config_desc_HOME'] = 'What the [Home] button links to.';
+$language['config_desc_FOOTTEXT'] = 'HTML shown at the bottom of the page.';
+$language['config_desc_REF_URL'] = 'URL prefix for outbound links (e.g. https://jump.example.net).';
+$language['config_desc_TEMPLATE_FILE'] = 'Template directory for the index page.';
+$language['config_desc_REPLY_TEMPLATE_FILE'] = 'Template directory for the thread/reply page.';
+$language['config_desc_TOP_THREAD_PAGER'] = 'Render a thread pager at the top of the thread.';
+$language['config_desc_RENDER_REPLY_NUMBER'] = 'Show the sequential reply number for each post within a thread.';
+$language['config_desc_REPLIES_PER_PAGE'] = 'Replies shown (excluding OP) per thread page.';
+$language['config_desc_PAGE_DEF'] = 'How many threads per index page.';
+$language['config_desc_ADMIN_PAGE_DEF'] = 'How many replies per page in the admin panel.';
+$language['config_desc_RE_DEF'] = 'Replies shown per thread on the index.';
+$language['config_desc_RE_PAGE_DEF'] = 'Replies shown on the thread page.';
+$language['config_desc_MAX_RES'] = 'How many replies before a thread is auto-saged.';
+$language['config_desc_MAX_THREAD_AMOUNT'] = 'Threads beyond this are pruned oldest-first.';
+$language['config_desc_MAX_AGE_TIME'] = 'How long a thread accepts age replies, in hours (0 = always).';
+$language['config_desc_STATIC_HTML_UNTIL'] = 'How many index pages are statically generated (-1 = all, 0 = portal only).';
+$language['config_desc_GZIP_COMPRESS_LEVEL'] = 'Gzip compression level (1-9, 0 = off).';
+$language['config_desc_MINIFY_HTML'] = 'Remove unnecessary whitespace from generated HTML.';
+$language['config_desc_AUTO_LINK'] = 'Turn URLs in comments into links.';
+
+// configs/flooding.php
+$language['config_desc_RENZOKU'] = 'Minimum seconds between posts (0 = off).';
+$language['config_desc_RENZOKU2'] = 'Minimum seconds between image posts (0 = off).';
+
+// configs/misc.php
+$language['config_desc_TIME_ZONE'] = 'Offset from UTC, e.g. "-4" for New York or "9" for Japan.';
+$language['config_desc_TRUST_HTTP_X_FORWARDED_FOR'] = 'Use HTTP_X_FORWARDED_FOR to find the real IP behind a proxy (headers can be forged).';
+$language['config_desc_DISCORD_WH'] = 'Webhook URL for post notifications.';
+$language['config_desc_IRC_WH'] = 'Webhook URL for post notifications.';
+$language['config_desc_ACTIONLOG_MAX_PER_PAGE'] = 'Number of action-log entries shown per page.';
+$language['config_desc_STAFF_LOGIN_TIMEOUT'] = 'Inactivity allowed before a staff user is logged out. Must not exceed session.gc_maxlifetime.';
+$language['config_desc_SYSTEMCHAN_NAME'] = 'Name of the system role/user.';
+$language['config_desc_FORTUNES'] = 'JSON array of fortunes selected at random by the fortune function.';
+
+// configs/moderation.php
+$language['config_desc_BAN_CHECK'] = 'Comprehensive ban-check function.';
+$language['config_desc_POST_DELETION_TIME_LIMIT'] = 'Time limit for users deleting their posts, in hours.';
+
+// configs/overboard.php
+$language['config_desc_OVERBOARD_TITLE'] = 'Title of the overboard.';
+$language['config_desc_OVERBOARD_SUBTITLE'] = 'Subtitle of the overboard.';
+$language['config_desc_OVERBOARD_SUB_HEADER_HTML'] = 'HTML shown above the overboard filter box.';
+$language['config_desc_OVERBOARD_THREADS_PER_PAGE'] = 'How many threads per overboard page.';
+$language['config_desc_ADMINBAR_OVERBOARD_BUTTON'] = 'Show an [Overboard] link on the admin bar.';
+$language['config_desc_CONTACT_URL'] = 'Link shown as [Contact] on the admin bar (empty = hidden).';
+
+// configs/posting.php
+$language['config_desc_ALWAYS_NOKO'] = 'Redirect to the reply by default.';
+$language['config_desc_USE_SAGE_CHECKBOX'] = 'Show the sage checkbox in the post form.';
+$language['config_desc_USE_NOKO_CHECKBOX'] = 'Show the noko checkbox in the post form.';
+$language['config_desc_USE_DUMP_CHECKBOX'] = 'Show the dump checkbox in the post form.';
+$language['config_desc_THREAD_ATTACHMENT_REQUIRED'] = 'New threads must have a file attached.';
+$language['config_desc_ALLOW_NONAME'] = 'Allow posters to submit without a name (1 = yes, 0 = no).';
+$language['config_desc_CLEAR_SAGE'] = 'Disable sage entirely.';
+$language['config_desc_NOTICE_SAGE'] = 'Show a visible "SAGE!" notice.';
+$language['config_desc_USE_QUOTESYSTEM'] = 'Enable >>1234 quote links.';
+$language['config_desc_USE_CATEGORY'] = 'Enable post categories.';
+$language['config_desc_COMM_MAX'] = 'Maximum number of characters in a comment.';
+$language['config_desc_INPUT_MAX'] = 'Maximum length of non-message fields (name, subject, etc.).';
+$language['config_desc_BR_CHECK'] = 'How many lines to show (0 = no limit).';
+$language['config_desc_DEFAULT_NOTITLE'] = 'Title used when none is entered.';
+$language['config_desc_DEFAULT_NONAME'] = 'Name used when none is entered.';
+$language['config_desc_DEFAULT_NOCOMMENT'] = 'Comment used when none is entered.';
+$language['config_desc_ENABLE_TAGS'] = 'Show post tags (requires TAGS defined).';
+$language['config_desc_FORCE_TAGS'] = 'Require a tag for new threads.';
+$language['config_desc_DEFAULT_TAG'] = 'Default tag key for new threads (a key of TAGS, or empty).';
+$language['config_desc_TAGS'] = 'Post tags: JSON object of abbreviation (stored) => display name.';
+
+// configs/uploads.php
+$language['config_desc_ATTACHMENT_UPLOAD_LIMIT'] = 'How many files a user can attach to a single post.';
+$language['config_desc_MAX_KB'] = 'Maximum upload size in kilobytes.';
+$language['config_desc_STORAGE_LIMIT'] = 'Per-board storage limit (0 = unlimited).';
+$language['config_desc_STORAGE_MAX'] = 'Total storage limit.';
+$language['config_desc_TEXTBOARD_ONLY'] = 'Completely disable all file features.';
+$language['config_desc_RESIMG'] = 'Allow files to be attached to replies.';
+$language['config_desc_SHOW_IMGWH'] = 'Display the original width/height of the attachment.';
+$language['config_desc_PREVENT_DUPLICATE_FILE_UPLOADS'] = 'Disallow the same file being posted twice.';
+$language['config_desc_DUPLICATE_FILE_TIME'] = 'Time a duplicate attachment cannot be re-uploaded.';
+$language['config_desc_VIDEO_EXT'] = 'Filetypes loaded as video.';
+$language['config_desc_HTTP_UPLOAD_DIFF'] = 'Upload timing tolerance.';
+$language['config_desc_ALLOW_UPLOAD_EXT'] = 'JSON object of extension => mime-type.';
+
+// module/addInfo/config.php
+$language['config_desc_modules.addInfo.ADD_INFO'] = 'JSON array of HTML lines shown by the additional-info module.';
+
+// module/adminDel/config.php
+$language['config_desc_modules.adminDel.JANIMUTE_LENGTH'] = 'Janitor mute duration in minutes.';
+$language['config_desc_modules.adminDel.JANIMUTE_REASON'] = 'Reason shown for a janitor mute.';
+
+// module/ads/config.php
+$language['config_desc_modules.ads.ADS_STICKY_ROTATE_SECONDS'] = 'Seconds between sticky ad rotations.';
+$language['config_desc_modules.ads.ADS_INLINE_EVERY_N_THREADS'] = 'Insert an inline ad after every N threads.';
+$language['config_desc_modules.ads.ADS_INLINE_COUNT'] = 'Number of ads shown side-by-side in each inline row (1-5).';
+$language['config_desc_modules.ads.ADS_POST_AD_EVERY_N_POSTS'] = 'Insert a post-style ad after every N reply posts within a thread.';
+$language['config_desc_modules.ads.ADS_SLOT_DIMENSIONS'] = 'One entry per ad slot: slot name => WIDTHxHEIGHT (e.g. 728x90).';
+
+// module/animatedGif/config.php
+$language['config_desc_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'] = 'Maximum file size for animated GIFs.';
+
+// module/antiFlood/config.php
+$language['config_desc_modules.antiFlood.RENZOKU3'] = 'Minimum wait before a poster can start another thread.';
+$language['config_desc_modules.antiFlood.SAME_COMMENT_TIME_WINDOW'] = 'Seconds between posts that can share the same comment.';
+$language['config_desc_modules.antiFlood.SAME_THREAD_COMMENT_TIME_WINDOW'] = 'Seconds between OP posts that can share the same comment (0 = off).';
+$language['config_desc_modules.antiFlood.ALLOWED_COMMENT_REPETITIONS'] = 'How many identical comments are allowed in the window before older ones are pruned.';
+
+// module/antiSpam/config.php
+$language['config_desc_modules.antiSpam.FILTER_BAN_TIME'] = 'Ban duration when a spam filter triggers, in hours.';
+
+// module/blotter/config.php
+$language['config_desc_modules.blotter.BLOTTER_PREVIEW_AMOUNT'] = 'Number of blotter entries previewed on the index and thread view.';
+
+// module/countryFlags/config.php
+$language['config_desc_modules.countryFlags.FLAG_MODE'] = '1 = hide flags on posts with "flag" in the email field, 2 = show them.';
+
+// module/deletedPosts/config.php
+$language['config_desc_modules.deletedPosts.DELETED_POSTS_TEMPLATE'] = 'Template used to render deleted posts.';
+$language['config_desc_modules.deletedPosts.PRUNE_TIME'] = 'How long deleted-post records are retained, in hours.';
+
+// module/dice/config.php
+$language['config_desc_modules.dice.DICE_AMOUNT_LIMIT'] = 'Maximum number of dice per roll.';
+$language['config_desc_modules.dice.DICE_FACE_LIMIT'] = 'Maximum number of faces per die.';
+$language['config_desc_modules.dice.EMAIL_DICE_ROLL'] = 'Allow rolling dice from the email field.';
+$language['config_desc_modules.dice.COMMENT_DICE_ROLL'] = 'Allow rolling dice from the comment.';
+
+// module/displayId/config.php
+$language['config_desc_modules.displayId.DISP_ID'] = 'When poster IDs are enabled: false = OPs opt in via mail, true = always on.';
+
+// module/displayIp/config.php
+$language['config_desc_modules.displayIp.IPTOGGLE'] = '1 = OPs toggle IP display, 2 = enabled for all posts.';
+
+// module/emotes/config.php
+$language['config_desc_modules.emotes.KAOMOJI'] = 'JSON object of display text => value inserted into the comment.';
+$language['config_desc_modules.emotes.EMOTES'] = 'JSON object of emote name => image filename (from static/image/emotes/).';
+
+// module/fullBanner/config.php
+$language['config_desc_modules.fullBanner.SHOW_TOP_AD'] = 'Show the top full-banner ad.';
+$language['config_desc_modules.fullBanner.SHOW_BOTTOM_AD'] = 'Show the bottom full-banner ad.';
+$language['config_desc_modules.fullBanner.FULLBANNER_SUBMISSION_COOLDOWN'] = 'Seconds between banner submissions per IP.';
+$language['config_desc_modules.fullBanner.FULLBANNER_REQUIRED_WIDTH'] = 'Required banner image width in pixels.';
+$language['config_desc_modules.fullBanner.FULLBANNER_REQUIRED_HEIGHT'] = 'Required banner image height in pixels.';
+$language['config_desc_modules.fullBanner.FULLBANNER_MAX_FILE_SIZE'] = 'Maximum banner file size in bytes.';
+
+// module/imageMeta/config.php
+$language['config_desc_modules.imageMeta.EXIF_DATA_VIEWER'] = 'Show an EXIF data viewer for images.';
+$language['config_desc_modules.imageMeta.IMG_OPS'] = 'ImgOps reverse-image-search portal.';
+$language['config_desc_modules.imageMeta.IQDB'] = 'IQDB reverse-image-search portal.';
+$language['config_desc_modules.imageMeta.SWFCHAN'] = 'SWFchan archive link.';
+
+// module/indexCommentTruncator/config.php
+$language['config_desc_modules.indexCommentTruncator.CHARACTER_PREVIEW_LIMIT'] = 'Max characters shown in an index comment preview.';
+$language['config_desc_modules.indexCommentTruncator.LINE_PREVIEW_LIMIT'] = 'Max lines shown in an index comment preview.';
+
+// module/nameRandomizer/config.php
+$language['config_desc_modules.nameRandomizer.NAME_RANDOMIZER_TTL'] = 'How long a randomized name persists, in seconds.';
+$language['config_desc_modules.nameRandomizer.NAME_RANDOMIZER_NAMES'] = 'JSON array of names picked at random when the name randomizer is enabled.';
+
+// module/oldThread/config.php
+$language['config_desc_modules.oldThread.THREAD_REPLY_TIME_LIMIT'] = 'Maximum thread age (hours) allowed for replies (0 = off).';
+
+// module/onlineCounter/config.php
+$language['config_desc_modules.onlineCounter.USER_COUNT_DAT_FILE'] = 'Filename used to track viewing IPs (stored in the board storage dir).';
+$language['config_desc_modules.onlineCounter.USER_COUNT_TIMEOUT'] = 'How long an IP counts as online, in minutes.';
+
+// module/perceptualBan/config.php
+$language['config_desc_modules.perceptualBan.HAMMING_THRESHOLD'] = 'Max Hamming distance for a perceptual hash match.';
+
+// module/privateMessage/config.php
+$language['config_desc_modules.privateMessage.APPEND_TRIP_PM_BUTTON_TO_POST'] = 'Show a private-message button next to tripcoded posts.';
+
+// module/readOnly/config.php
+$language['config_desc_modules.readOnly.ALLOW_REPLY'] = 'Allow replies but disallow new threads when the board is read-only.';
+
+// module/search/config.php
+$language['config_desc_modules.search.SEARCH_POSTS_PER_PAGE'] = 'Number of search results shown per page.';
+$language['config_desc_modules.search.SEARCH_TEMPLATE'] = 'Template used to render search results.';
+$language['config_desc_modules.search.DISPLAY_THREADED_FORMAT'] = 'Display search results in a threaded format.';
+
+// module/segregator/config.php
+$language['config_desc_modules.segregator.SEGREGATOR_SUB_DOMAIN'] = 'Subdomain prefix prepended to the file host (empty = disabled).';
+$language['config_desc_modules.segregator.SEGREGATOR_COOKIE_NAME'] = 'Name of the access cookie checked by nginx.';
+$language['config_desc_modules.segregator.SEGREGATOR_COOKIE_DOMAIN'] = 'Cookie domain scope (empty = current host only).';
+
+// module/soudane/config.php
+$language['config_desc_modules.soudane.ENABLE_YEAH'] = 'Enable positive soudane votes.';
+$language['config_desc_modules.soudane.ENABLE_NOPE'] = 'Enable negative soudane votes.';
+$language['config_desc_modules.soudane.ENABLE_SCORE'] = 'Enable a numeric vote score.';
+$language['config_desc_modules.soudane.SHOW_SCORE_ONLY'] = 'Show only the score rather than individual vote buttons.';
+
+// module/spoiler/config.php
+$language['config_desc_modules.spoiler.SPOILER_THUMB_W'] = 'Width in pixels of the spoiler thumbnail.';
+$language['config_desc_modules.spoiler.SPOILER_THUMB_H'] = 'Height in pixels of the spoiler thumbnail.';
+
+// module/tegaki/config.php
+$language['config_desc_modules.tegaki.TEGAKI_TEMPLATE'] = 'Template used for the tegaki (oekaki) page.';
+
+// module/threadList/config.php
+$language['config_desc_modules.threadList.THREADLIST_NUMBER'] = 'Number of entries shown per thread-list page.';
+$language['config_desc_modules.threadList.FORCE_SUBJECT'] = 'Require a subject for new threads.';
+$language['config_desc_modules.threadList.SHOW_IN_MAIN'] = 'Display the thread list on the main page.';
+$language['config_desc_modules.threadList.THREADLIST_NUMBER_IN_MAIN'] = 'Number of entries shown on the main page.';
+$language['config_desc_modules.threadList.SHOW_FORM'] = 'Display the delete form on the thread list.';
+$language['config_desc_modules.threadList.HIGHLIGHT_COUNT'] = 'Reply count above which the count turns red (0 = off).';
+
+// module/wordFilter/config.php
+$language['config_desc_modules.wordFilter.FILTERS'] = 'JSON object of regex pattern => replacement HTML.';

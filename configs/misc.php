@@ -11,15 +11,15 @@ use function Kokonotsuba\config\fields\{boolField, intField, stringField, arrayF
 return [
 	'_group' => 'Miscellaneous',
 
-	'TIME_ZONE'                 => stringField('Time zone', '0', 'Offset from UTC, e.g. "-4" for New York or "9" for Japan.'),
-	'TRUST_HTTP_X_FORWARDED_FOR'=> boolField('Trust X-Forwarded-For', false, 'Use HTTP_X_FORWARDED_FOR to find the real IP behind a proxy (headers can be forged).'),
+	'TIME_ZONE'                 => stringField('Time zone', '0', 'config_desc_TIME_ZONE'),
+	'TRUST_HTTP_X_FORWARDED_FOR'=> boolField('Trust X-Forwarded-For', false, 'config_desc_TRUST_HTTP_X_FORWARDED_FOR'),
 
-	'DISCORD_WH' => stringField('Discord webhook', '', 'Webhook URL for post notifications.'),
-	'IRC_WH'     => stringField('IRC webhook', '', 'Webhook URL for post notifications.'),
+	'DISCORD_WH' => stringField('Discord webhook', '', 'config_desc_DISCORD_WH'),
+	'IRC_WH'     => stringField('IRC webhook', '', 'config_desc_IRC_WH'),
 
-	'ACTIONLOG_MAX_PER_PAGE' => intField('Action log per page', 50, 'Number of action-log entries shown per page.'),
-	'STAFF_LOGIN_TIMEOUT'    => intField('Staff login timeout (s)', 86400, 'Inactivity allowed before a staff user is logged out. Must not exceed session.gc_maxlifetime.'),
-	'SYSTEMCHAN_NAME'        => stringField('System user name', 'System-chan', 'Name of the system role/user.'),
+	'ACTIONLOG_MAX_PER_PAGE' => intField('Action log per page', 50, 'config_desc_ACTIONLOG_MAX_PER_PAGE'),
+	'STAFF_LOGIN_TIMEOUT'    => intField('Staff login timeout (s)', 86400, 'config_desc_STAFF_LOGIN_TIMEOUT'),
+	'SYSTEMCHAN_NAME'        => stringField('System user name', 'System-chan', 'config_desc_SYSTEMCHAN_NAME'),
 
 	'FORTUNES' => arrayField('Fortunes', [
 		'Your true waifu will reveal herself',
@@ -40,5 +40,5 @@ return [
 		'Very bad luck',
 		'ｷﾀ━━━━━━(ﾟ∀ﾟ)━━━━━━ !!!!',
 		'（　´_ゝ`）ﾌｰﾝ',
-	], 'JSON array of fortunes selected at random by the fortune function.'),
+	], 'config_desc_FORTUNES'),
 ];

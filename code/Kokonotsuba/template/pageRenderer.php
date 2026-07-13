@@ -48,6 +48,7 @@ class pageRenderer {
 			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'managePosts', _T('admin_nav_posts'), userRole::LEV_JANITOR, _T('admin_nav_posts_title'));
 			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'rebuild', _T('admin_nav_rebuild'), userRole::LEV_JANITOR, _T('admin_nav_rebuild_title'));
 			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'boards', _T('admin_nav_boards'), userRole::LEV_ADMIN, _T('admin_nav_boards_title'));
+			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'globalConfig', _T('admin_nav_global_config'), userRole::LEV_ADMIN, _T('admin_nav_global_config_title'));
 
 			// add the admin links to html output
 			$htmlOutput .= generateAdminLinkButtons($liveIndexFile, $staticIndexFile, $this->moduleEngine, $adminLinkHtml, $this->request);

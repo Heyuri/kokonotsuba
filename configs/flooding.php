@@ -11,6 +11,6 @@ use function Kokonotsuba\config\fields\intField;
 return [
 	'_group' => 'Flooding & rate limits',
 
-	'RENZOKU'  => intField('Post interval (s)', 0, 'Minimum seconds between posts (0 = off).'),
-	'RENZOKU2' => intField('Image post interval (s)', 0, 'Minimum seconds between image posts (0 = off).'),
+	'RENZOKU'  => intField('Post interval (s)', 0, 'config_desc_RENZOKU'),
+	'RENZOKU2' => intField('Image post interval (s)', 0, 'config_desc_RENZOKU2'),
 ];

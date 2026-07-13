@@ -1,0 +1,12 @@
+[2026-07-13 17:50:40] Fatal Error #64: Cannot redeclare function Kokonotsuba\libraries\html\drawBoardConfigForm() (previously declared in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/html/configForm.php:28) in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/html/configForm.php on line 28
+[2026-07-13 17:50:49] Fatal Error #1: Uncaught ArgumentCountError: 2 arguments are required, 1 given in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/lang/LanguageLoader.php:113
+Stack trace:
+#0 [internal function]: sprintf()
+#1 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/lang/LanguageLoader.php(113): call_user_func_array()
+#2 [internal function]: Kokonotsuba\lang\LanguageLoader->getTranslation()
+#3 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_compatible.php(22): call_user_func_array()
+#4 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/html/configForm.php(59): Kokonotsuba\libraries\_T()
+#5 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/html/configForm.php(101): Kokonotsuba\libraries\html\configFormMessages()
+#6 /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/formRender.php(30): Kokonotsuba\libraries\html\drawGlobalConfigForm()
+#7 {main}
+  thrown in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/lang/LanguageLoader.php on line 113

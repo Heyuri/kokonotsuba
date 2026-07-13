@@ -4,7 +4,7 @@
  * Read via $this->getModuleConfig('KEY'). Folds into the "Content & formatting" editor group.
  */
 
-require_once __DIR__ . '/../../global/configs/_fieldTypes.php';
+require_once __DIR__ . '/../../configs/_fieldTypes.php';
 
 use function Kokonotsuba\config\fields\{arrayField};
 
@@ -27,5 +27,5 @@ return [
   '/\\b(ayashii world)\\b/i' => '<a href="https://wiki.heyuri.net/index.php?title=Ayashii_World">Ayashii World</a>',
   '/\\b(partybus)\\b/i' => '<span class="partybus"><span class="partybusColor1">p</span><span class="partybusColor2">a</span><span class="partybusColor3">r</span><span class="partybusColor4">t</span><span class="partybusColor5">y</span><span class="partybusColor6">b</span><span class="partybusColor7">u</span><span class="partybusColor8">s</span></span>',
   '/\\b(boku)\\b/i' => '<span class="boku" title="AGE OF DESU IS OVAR, WE BOKU NOW"><span class="bokuGreen">B</span><span class="bokuRed">O</span><span class="bokuGreen">K</span><span class="bokuRed">U</span></span>',
-], 'JSON object of regex pattern => replacement HTML.'),
+], 'config_desc_modules.wordFilter.FILTERS'),
 ];

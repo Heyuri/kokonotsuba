@@ -8,22 +8,34 @@
  *   use function Kokonotsuba\config\fields\{boolField, intField, stringField, textField, arrayField};
  *   return [
  *       '_group'      => 'Posting',
- *       'ALWAYS_NOKO' => boolField('Always noko', false, 'Redirect to the reply by default.'),
+ *       'ALWAYS_NOKO' => boolField('Always noko', false, 'config_desc_ALWAYS_NOKO'),
  *   ];
+ *
+ * $desc is a LANGUAGE KEY, not prose: the description text itself lives in
+ * code/Kokonotsuba/lang/en_US.php and is translated by the config editor when it renders the
+ * field. The key is 'config_desc_' followed by the setting's config dot-path - so a core field
+ * keyed 'ALWAYS_NOKO' uses 'config_desc_ALWAYS_NOKO', and a module field uses its prefixed path,
+ * e.g. 'config_desc_modules.ads.ADS_INLINE_COUNT'. A field with no description passes ''.
  *
  * Files beginning with "_" are skipped by the schema loader, so this is never treated as a group.
  */
 
 namespace Kokonotsuba\config\fields;
 
-/** Build a boolean (checkbox) field definition. */
+/** Build a boolean (checkbox) field definition. $desc is a language key - see the file header. */
 function boolField(string $label, bool $default, string $desc = ''): array {
 	return ['default' => $default, 'type' => 'bool', 'label' => $label, 'desc' => $desc];
 }
 
-/** Build an integer (number input) field definition. */
-function intField(string $label, int $default, string $desc = ''): array {
-	return ['default' => $default, 'type' => 'int', 'label' => $label, 'desc' => $desc];
+/**
+ * Build an integer (number input) field definition.
+ *
+ * Integers cannot go below zero unless a field opts out by passing an explicit $min (use
+ * null for no lower bound at all, e.g. intField('Static HTML pages', 10, '...', min: -1)).
+ * The bound is both rendered as the input's min attribute and enforced when the value is saved.
+ */
+function intField(string $label, int $default, string $desc = '', ?int $min = 0): array {
+	return ['default' => $default, 'type' => 'int', 'label' => $label, 'desc' => $desc, 'min' => $min];
 }
 
 /** Build a single-line string (text input) field definition. */

@@ -4,7 +4,7 @@
  * Read via $this->getModuleConfig('KEY'). Folds into the "Content & formatting" editor group.
  */
 
-require_once __DIR__ . '/../../global/configs/_fieldTypes.php';
+require_once __DIR__ . '/../../configs/_fieldTypes.php';
 
 use function Kokonotsuba\config\fields\{arrayField};
 
@@ -37,7 +37,7 @@ return [
   'Σ(;ﾟДﾟ)' => '[kao]Σ(;ﾟДﾟ)[/kao]',
   'Σ(ﾟдﾟ|||)' => '[kao]Σ(ﾟдﾟ|||)[/kao]',
   'ｷﾀ━━━(・∀・)━━━!!' => '[kao]ｷﾀ━━━(・∀・)━━━!![/kao]',
-], 'JSON object of display text => value inserted into the comment.'),
+], 'config_desc_modules.emotes.KAOMOJI'),
 	'EMOTES' => arrayField('Emotes', [
   'angry' => 'emo-yotsuba-angry.gif',
   'astonish' => 'emo-yotsuba-astonish.gif',
@@ -104,5 +104,5 @@ return [
   'monapc' => 'anime_miruna_pc.gif',
   'purin' => 'purin.gif',
   'ranta' => 'anime_imanouchi04.gif',
-], 'JSON object of emote name => image filename (from static/image/emotes/).'),
+], 'config_desc_modules.emotes.EMOTES'),
 ];

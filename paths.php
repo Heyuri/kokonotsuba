@@ -14,7 +14,7 @@ function getBackendGlobalDir() {
 
 /** Directory holding the board configuration schema files (grouped defaults + metadata). */
 function getConfigSchemaDir() {
-	return getBackendGlobalDir().'configs/';
+	return getBackendDir().'configs/';
 }
 
 function getBoardStoragesDir() {

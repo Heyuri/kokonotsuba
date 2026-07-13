@@ -11,6 +11,6 @@ use function Kokonotsuba\config\fields\{boolField, intField};
 return [
 	'_group' => 'Moderation',
 
-	'BAN_CHECK'               => boolField('Ban check', true, 'Comprehensive ban-check function.'),
-	'POST_DELETION_TIME_LIMIT'=> intField('Post deletion time limit (h)', 168, 'Time limit for users deleting their posts, in hours.'),
+	'BAN_CHECK'               => boolField('Ban check', true, 'config_desc_BAN_CHECK'),
+	'POST_DELETION_TIME_LIMIT'=> intField('Post deletion time limit (h)', 168, 'config_desc_POST_DELETION_TIME_LIMIT'),
 ];

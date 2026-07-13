@@ -4,7 +4,7 @@
  * Read via $this->getModuleConfig('KEY'). Folds into the "Posting" editor group.
  */
 
-require_once __DIR__ . '/../../global/configs/_fieldTypes.php';
+require_once __DIR__ . '/../../configs/_fieldTypes.php';
 
 use function Kokonotsuba\config\fields\templateField;
 
@@ -12,5 +12,5 @@ return [
 	'_group'  => 'Posting',
 	'_module' => 'Tegaki',
 
-	'TEGAKI_TEMPLATE' => templateField('Tegaki template', 'tegaki', 'Template used for the tegaki (oekaki) page.'),
+	'TEGAKI_TEMPLATE' => templateField('Tegaki template', 'tegaki', 'config_desc_modules.tegaki.TEGAKI_TEMPLATE'),
 ];

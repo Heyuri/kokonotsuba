@@ -4,7 +4,7 @@
  * Read via $this->getModuleConfig('KEY'). Folds into the "Content & formatting" editor group.
  */
 
-require_once __DIR__ . '/../../global/configs/_fieldTypes.php';
+require_once __DIR__ . '/../../configs/_fieldTypes.php';
 
 use function Kokonotsuba\config\fields\{arrayField, intField};
 
@@ -12,7 +12,7 @@ return [
 	'_group'  => 'Content & formatting',
 	'_module' => 'Name randomizer',
 
-	'NAME_RANDOMIZER_TTL' => intField('Name randomizer TTL (s)', 43200, 'How long a randomized name persists, in seconds.'),
+	'NAME_RANDOMIZER_TTL' => intField('Name randomizer TTL (s)', 43200, 'config_desc_modules.nameRandomizer.NAME_RANDOMIZER_TTL'),
 	'NAME_RANDOMIZER_NAMES' => arrayField('Name randomizer pool', [
   0 => 'Shota Liberation Army',
   1 => 'Nyuu',
@@ -102,5 +102,5 @@ return [
   85 => 'Habanero-tan',
   86 => 'hiroyuki',
   87 => 'Grimm',
-], 'JSON array of names picked at random when the name randomizer is enabled.'),
+], 'config_desc_modules.nameRandomizer.NAME_RANDOMIZER_NAMES'),
 ];

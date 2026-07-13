@@ -177,8 +177,8 @@ return [
 	 *
 	 * NOT surfaced in the per-board configuration editor: they are either structural (storage
 	 * layout), derived from other global values (STATIC_URL / STATIC_PATH / paths), or non-scalar
-	 * enum values. They form the immutable base beneath the editable global/configs/ schema and
-	 * per-board DB overrides. Board-editable settings live in global/configs/*.php instead.
+	 * enum values. They form the immutable base beneath the editable configs/ schema and
+	 * per-board DB overrides. Board-editable settings live in configs/*.php instead.
 	 *--------------------------------------------------------------------------*/
 
 	// Storage layout (relative paths under each board's upload directory)

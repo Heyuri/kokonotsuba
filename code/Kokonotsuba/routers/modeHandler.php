@@ -12,6 +12,7 @@ use Kokonotsuba\routers\routes\moduleRoute;
 use Kokonotsuba\routers\routes\moduleloadedRoute;
 use Kokonotsuba\routers\routes\accountRoute;
 use Kokonotsuba\routers\routes\boardsRoute;
+use Kokonotsuba\routers\routes\globalConfigRoute;
 use Kokonotsuba\routers\routes\overboardRoute;
 use Kokonotsuba\routers\routes\handleAccountActionRoute;
 use Kokonotsuba\routers\routes\handleBoardRequestsRoute;
@@ -45,14 +46,14 @@ class modeHandler {
 			if ($load === 'adminDel') {
 				return 'deleting';
 			}
+			if ($load === 'deletedPosts') {
+				return 'deletedPosts';
+			}
 		}
 		return null;
 	}
 
 	public function validateBoard(board $board): void {
-		// Board config now lives in the board_configs table (schema-backed), not a per-board
-		// PHP file, so there is no config file to check for here.
-
 		if (!file_exists($board->getBoardStoragePath())) {
 			die("Board's storage directory <i>" . $board->getBoardStoragePath() . "</i> does not exist.");
 		}
@@ -122,7 +123,6 @@ class modeHandler {
 					$this->container->get('board'),
 					$this->container->get('moduleEngine'),
 					$this->container->get('staffAccountFromSession'), 
-					$this->container->get('moduleEngine')
 				);
 				$route->listModules();
 			},
@@ -163,6 +163,18 @@ class modeHandler {
 					$this->container->get('configService')
 				);
 				$route->drawBoardPage();
+			},
+			'globalConfig' => function() {
+				$route = new globalConfigRoute(
+					$this->container->get('config'),
+					$this->container->get('softErrorHandler'),
+					$this->container->get('adminTemplateEngine'),
+					$this->container->get('adminPageRenderer'),
+					$this->container->get('boardService'),
+					$this->container->get('request'),
+					$this->container->get('configService')
+				);
+				$route->handleGlobalConfig();
 			},
 			'overboard' => function() {
 				$route = new overboardRoute(

@@ -4,7 +4,7 @@
  * Read via $this->getModuleConfig('KEY'). Folds into the "Appearance & pagination" editor group.
  */
 
-require_once __DIR__ . '/../../global/configs/_fieldTypes.php';
+require_once __DIR__ . '/../../configs/_fieldTypes.php';
 
 use function Kokonotsuba\config\fields\{arrayField};
 
@@ -16,5 +16,5 @@ return [
   0 => 'Read the <a href="//example.net/rules.html">rules</a> before you post.',
   1 => 'Read <a href="//example.net/faq.html">our FAQ</a> for any questions.',
   2 => 'Modify this by editing the additional-info setting.',
-], 'JSON array of HTML lines shown by the additional-info module.'),
+], 'config_desc_modules.addInfo.ADD_INFO'),
 ];

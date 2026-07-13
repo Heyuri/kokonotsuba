@@ -4,16 +4,24 @@ namespace Kokonotsuba\config;
 
 use InvalidArgumentException;
 
+use const Kokonotsuba\GLOBAL_BOARD_UID;
+
 /**
- * Resolves and persists per-board configuration.
+ * Resolves and persists configuration overrides.
  *
- * The effective config for a board is built in three layers, later layers winning:
+ * The effective config for a board is built in four layers, later layers winning:
  *   1. global/globalconfig.php  — board-immutable globals and computed defaults (never editable).
- *   2. global/configs/*.php     — the editable schema's default values (see configSchema).
- *   3. board_configs.conf_values — this board's stored overrides (only values differing from #2).
+ *   2. configs/*.php            — the editable schema's default values (see configSchema).
+ *   3. board_configs row GLOBAL_BOARD_UID — overrides applied to every board (the "global config"
+ *      admin page). Stored exactly like a board's, under the reserved GLOBAL board's UID, so
+ *      there's one table, one JSON shape and one code path for both scopes.
+ *   4. board_configs row {board_uid} — this board's own overrides.
  *
- * Saving compares each submitted value against the schema default and stores only the
- * differences, so a field set back to its default is automatically "reset" (dropped).
+ * Each scope stores only what differs from the layer beneath it: a board row holds only values
+ * that differ from the global config, and the global row holds only values that differ from the
+ * schema defaults. So a field set back to the value it inherits is dropped rather than stored,
+ * and a later change to the global config still flows through to every board that didn't
+ * deliberately diverge from it.
  */
 class configService {
 	public function __construct(
@@ -64,25 +72,74 @@ class configService {
 	/**
 	 * Build the fully-merged effective config array for a board.
 	 *
-	 * @param int $boardUid Board UID (0/GLOBAL_BOARD resolves to schema defaults only).
+	 * @param int $boardUid Board UID. GLOBAL_BOARD_UID resolves to the global config itself
+	 *                      (defaults + global overrides, with no board layer on top).
 	 * @return array The complete $config array, backward-compatible with the legacy cascade.
 	 */
 	public function getEffectiveConfig(int $boardUid): array {
 		// Layers 1 & 2: globals + schema defaults.
 		$config = self::resolveDefaults();
 
-		// Layer 3: this board's overrides.
-		foreach ($this->getOverrides($boardUid) as $dotpath => $value) {
+		// Layer 3: the global config, applied to every board.
+		foreach ($this->getOverrides(GLOBAL_BOARD_UID) as $dotpath => $value) {
 			self::setNested($config, (string)$dotpath, $value);
+		}
+
+		// Layer 4: this board's own overrides.
+		if ($boardUid !== GLOBAL_BOARD_UID) {
+			foreach ($this->getOverrides($boardUid) as $dotpath => $value) {
+				self::setNested($config, (string)$dotpath, $value);
+			}
 		}
 
 		return $config;
 	}
 
 	/**
-	 * Coerce, diff against defaults, and persist a submitted set of config values.
+	 * The effective value of every schema field for a scope, as a flat dot-path map.
+	 * These are the values the config editor prefills.
 	 *
-	 * @param int   $boardUid   Board UID.
+	 * @param int $boardUid Board UID, or GLOBAL_BOARD_UID for the global config.
+	 * @return array<string, mixed> dot-path => effective value.
+	 */
+	public function getEffectiveValues(int $boardUid): array {
+		// What the scope inherits, with its own overrides on top. For a board that's the global
+		// config then the board's row; for the global config it's the schema defaults then the
+		// global row.
+		$values = $this->getInheritedValues($boardUid);
+
+		foreach ($this->getOverrides($boardUid) as $dotpath => $value) {
+			$values[$dotpath] = $value;
+		}
+
+		return $values;
+	}
+
+	/**
+	 * The values a scope inherits when it overrides nothing — what a saved value is diffed
+	 * against, and what "Reset to defaults" returns the scope to.
+	 *
+	 * A board inherits the global config; the global config inherits the schema defaults.
+	 *
+	 * @param int $boardUid Board UID, or GLOBAL_BOARD_UID for the global config.
+	 * @return array<string, mixed> dot-path => inherited value.
+	 */
+	public function getInheritedValues(int $boardUid): array {
+		$values = configSchema::getDefaults();
+
+		if ($boardUid !== GLOBAL_BOARD_UID) {
+			foreach ($this->getOverrides(GLOBAL_BOARD_UID) as $dotpath => $value) {
+				$values[$dotpath] = $value;
+			}
+		}
+
+		return $values;
+	}
+
+	/**
+	 * Coerce, diff against the inherited values, and persist a submitted set of config values.
+	 *
+	 * @param int   $boardUid   Board UID, or GLOBAL_BOARD_UID to save the global config.
 	 * @param array $rawSubmitted Raw submitted map keyed by camelCase input key (see
 	 *                            configSchema::inputKey()). Missing bool fields are treated as
 	 *                            unchecked (false); other missing fields are left untouched.
@@ -92,9 +149,15 @@ class configService {
 	public function saveOverrides(int $boardUid, array $rawSubmitted): void {
 		$overrides = [];
 
+		// What this scope inherits: the global config for a board, the schema defaults for the
+		// global config itself. Diffing against this (rather than always against the schema
+		// default) is what keeps a board from silently freezing in the global value it was merely
+		// shown, which would cut it off from later global changes.
+		$inherited = $this->getInheritedValues($boardUid);
+
 		foreach (configSchema::getAllFields() as $dotpath => $meta) {
 			$type = $meta['type'];
-			$default = $meta['default'];
+			$inheritedValue = $inherited[$dotpath] ?? $meta['default'];
 			$inputKey = configSchema::inputKey((string)$dotpath);
 
 			// Checkboxes only submit when checked; absence means false.
@@ -106,11 +169,11 @@ class configService {
 				if (!array_key_exists($inputKey, $rawSubmitted)) {
 					continue;
 				}
-				$value = self::coerce($rawSubmitted[$inputKey], $type, (string)$dotpath);
+				$value = self::coerce($rawSubmitted[$inputKey], $type, (string)$dotpath, $meta);
 			}
 
-			// Store only values that differ from the schema default.
-			if (!self::valuesEqual($value, $default)) {
+			// Store only values that differ from what this scope already inherits.
+			if (!self::valuesEqual($value, $inheritedValue)) {
 				$overrides[$dotpath] = $value;
 			}
 		}
@@ -123,15 +186,27 @@ class configService {
 	}
 
 	/**
+	 * Drop every stored override for a scope, reverting it to the values it inherits (the global
+	 * config for a board; the schema defaults for the global config itself).
+	 *
+	 * @param int $boardUid Board UID, or GLOBAL_BOARD_UID for the global config.
+	 * @return void
+	 */
+	public function resetOverrides(int $boardUid): void {
+		$this->configRepository->deleteOverridesForBoardUid($boardUid);
+	}
+
+	/**
 	 * Coerce a raw submitted form value into the PHP type implied by the field's schema type.
 	 *
 	 * @param mixed  $raw     Raw value from the request.
 	 * @param string $type    One of the configSchema::TYPE_* constants.
 	 * @param string $dotpath Field dot-path (used in error messages).
+	 * @param array  $meta    Normalized schema metadata (supplies an int field's 'min' bound).
 	 * @return mixed Coerced value.
 	 * @throws InvalidArgumentException If an array field's JSON is invalid.
 	 */
-	private static function coerce(mixed $raw, string $type, string $dotpath): mixed {
+	private static function coerce(mixed $raw, string $type, string $dotpath, array $meta = []): mixed {
 		switch ($type) {
 			case configSchema::TYPE_BOOL:
 				if (is_bool($raw)) {
@@ -140,7 +215,10 @@ class configService {
 				return in_array(strtolower(trim((string)$raw)), ['1', 'on', 'true', 'yes'], true);
 
 			case configSchema::TYPE_INT:
-				return (int)trim((string)$raw);
+				$int = (int)trim((string)$raw);
+				// The input's min attribute is only a client-side hint, so clamp here too.
+				$min = $meta['min'] ?? configSchema::DEFAULT_INT_MIN;
+				return $min === null ? $int : max((int)$min, $int);
 
 			case configSchema::TYPE_ARRAY:
 				$text = trim((string)$raw);

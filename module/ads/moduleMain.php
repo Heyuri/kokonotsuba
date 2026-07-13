@@ -243,24 +243,38 @@ class moduleMain extends abstractModuleMain {
 		$dimensions = $this->getModuleConfig('ADS_SLOT_DIMENSIONS', []);
 
 		$defaults = [
-			'top'    => ['width' => 728, 'height' => 90],
-			'mobile' => ['width' => 300, 'height' => 250],
-			'sticky' => ['width' => 728, 'height' => 90],
-			'above' => ['width' => 728, 'height' => 90],
-			'below' => ['width' => 728, 'height' => 90],
-			'inline' => ['width' => 728, 'height' => 90],
-			'post_ad' => ['width' => 300, 'height' => 250],
+			'top'     => '728x90',
+			'mobile'  => '300x250',
+			'sticky'  => '728x90',
+			'above'   => '728x90',
+			'below'   => '728x90',
+			'inline'  => '728x90',
+			'post_ad' => '300x250',
 		];
 
-		$slotDefault = $defaults[$slot] ?? ['width' => 728, 'height' => 90];
-		$slotConfig = (is_array($dimensions) && isset($dimensions[$slot]) && is_array($dimensions[$slot]))
-			? $dimensions[$slot]
-			: [];
+		$configured = is_array($dimensions) ? ($dimensions[$slot] ?? null) : null;
 
-		$width = max(1, (int)($slotConfig['width'] ?? $slotDefault['width']));
-		$height = max(1, (int)($slotConfig['height'] ?? $slotDefault['height']));
+		return $this->parseSlotDimensions($configured)
+			?? $this->parseSlotDimensions($defaults[$slot] ?? null)
+			?? ['width' => 728, 'height' => 90];
+	}
 
-		return ['width' => $width, 'height' => $height];
+	/**
+	 * Read a slot size, which is configured as a "WIDTHxHEIGHT" string. A board configured before
+	 * the setting became a flat list may still hold the old ['width' => .., 'height' => ..] shape.
+	 *
+	 * @return array{width: int, height: int}|null Null if the value isn't a usable size.
+	 */
+	private function parseSlotDimensions(mixed $value): ?array {
+		if (is_array($value) && isset($value['width'], $value['height'])) {
+			return ['width' => max(1, (int)$value['width']), 'height' => max(1, (int)$value['height'])];
+		}
+
+		if (is_string($value) && preg_match('/^\s*(\d+)\s*x\s*(\d+)\s*$/i', $value, $matches)) {
+			return ['width' => max(1, (int)$matches[1]), 'height' => max(1, (int)$matches[2])];
+		}
+
+		return null;
 	}
 
 	private function getAdsRepo(): adRepository {

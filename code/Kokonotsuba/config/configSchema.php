@@ -5,7 +5,7 @@ namespace Kokonotsuba\config;
 /**
  * Loads and caches the board configuration schema.
  *
- * The schema is defined by the PHP files under global/configs/ (see getConfigSchemaDir()).
+ * The schema is defined by the PHP files under configs/ (see getConfigSchemaDir()).
  * Each file `return`s an associative array describing a group of settings:
  *
  *   return [
@@ -19,6 +19,7 @@ namespace Kokonotsuba\config;
  *           'type'    => 'int',                       // bool|int|string|text|array (optional; inferred from default)
  *           'label'   => 'Replies per thread page',
  *           'desc'    => 'Replies shown (excluding OP) per thread page.',
+ *           'min'     => 0,                           // int only; omit for 0, null for no lower bound
  *       ],
  *   ];
  *
@@ -36,6 +37,9 @@ class configSchema {
 	public const TYPE_TEXT     = 'text';
 	public const TYPE_ARRAY    = 'array';
 	public const TYPE_TEMPLATE = 'template';
+
+	/** Lower bound applied to int fields that don't declare their own 'min'. */
+	public const DEFAULT_INT_MIN = 0;
 
 	/** @var array<string, array<string, array>>|null Cached groups: groupName => [dotpath => normalizedMeta]. */
 	private static ?array $groups = null;
@@ -60,7 +64,7 @@ class configSchema {
 		self::$groupLabels = [];
 		self::$fields = [];
 
-		// 1) Core config files (global/configs/*.php). Their keys are full config dot-paths and
+		// 1) Core config files (configs/*.php). Their keys are full config dot-paths and
 		//    have no owning module. Loaded first so core fields lead each group.
 		$coreDir = getConfigSchemaDir();
 		if (is_dir($coreDir)) {
@@ -138,10 +142,13 @@ class configSchema {
 	/**
 	 * Normalize a raw field definition into a consistent shape.
 	 *
+	 * Int fields get a lower bound of zero unless the definition names its own 'min' (which may
+	 * be null for no lower bound); 'min' is meaningless for every other type and is left null.
+	 *
 	 * @param string $dotpath     Config dot-path key.
 	 * @param mixed  $meta        Raw metadata array from a schema file.
 	 * @param string $moduleLabel Owning module's sub-header label ('' for core fields).
-	 * @return array{default: mixed, type: string, label: string, desc: string, module: string}
+	 * @return array{default: mixed, type: string, label: string, desc: string, module: string, min: int|null}
 	 */
 	private static function normalizeField(string $dotpath, mixed $meta, string $moduleLabel = ''): array {
 		$meta = is_array($meta) ? $meta : ['default' => $meta];
@@ -149,12 +156,19 @@ class configSchema {
 		$default = $meta['default'] ?? null;
 		$type = $meta['type'] ?? self::inferType($default);
 
+		$min = null;
+		if ($type === self::TYPE_INT) {
+			$rawMin = array_key_exists('min', $meta) ? $meta['min'] : self::DEFAULT_INT_MIN;
+			$min = $rawMin === null ? null : (int)$rawMin;
+		}
+
 		return [
 			'default' => $default,
 			'type'    => $type,
 			'label'   => $meta['label'] ?? $dotpath,
 			'desc'    => $meta['desc'] ?? '',
 			'module'  => $moduleLabel,
+			'min'     => $min,
 		];
 	}
 
