@@ -1,7 +1,6 @@
 <?php
 /**
- * Overboard (core). Module settings for ads, full banners and the online counter are declared
- * by their own module and fold into this group.
+ * Overboard config defaults
  */
 
 require_once __DIR__ . '/_fieldTypes.php';
