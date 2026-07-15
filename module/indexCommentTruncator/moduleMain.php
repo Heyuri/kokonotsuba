@@ -39,8 +39,16 @@ class moduleMain extends abstractModuleMain {
 		$this->listenPostComment('onRenderComment', -10000);
 	}
 
-	private function onRenderComment(string &$comment, ?Post $post): void {
+	private function onRenderComment(string &$comment, ?Post $post, bool $isThreadView = false): void {
 		if(!$post) {
+			return;
+		}
+
+		// Don't truncate when the post is being rendered inside a single thread's
+		// full view. This covers the thread page and the AJAX reply insertion done
+		// by registRoute on a noko/dump reply. Truncation is only for index/overboard
+		// listing previews.
+		if($isThreadView) {
 			return;
 		}
 
@@ -49,14 +57,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function truncatePostComment(string &$comment, int $postNumber): void {
-		// return early if "res" is set in GET request
-		// ("res" = 'response')
-		// its only set when viewing/targetting a thread.
-		// We don't want truncated comments while viewing the thread
-		if($this->moduleContext->request->isViewingThread()) {
-			return;
-		}
-		
+
 		// return early if the comment is empty because theres no comment/html to truncate
 		if(empty($comment)) {
 			return;
