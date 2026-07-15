@@ -12,6 +12,6 @@ return [
 	'_group'  => 'Uploads',
 	'_module' => 'Spoiler',
 
-	'SPOILER_THUMB_W' => intField('Spoiler thumb width', 255, 'config_desc_modules.spoiler.SPOILER_THUMB_W'),
-	'SPOILER_THUMB_H' => intField('Spoiler thumb height', 255, 'config_desc_modules.spoiler.SPOILER_THUMB_H'),
+	'SPOILER_THUMB_W' => intField('config_label_modules.spoiler.SPOILER_THUMB_W', 255, 'config_desc_modules.spoiler.SPOILER_THUMB_W'),
+	'SPOILER_THUMB_H' => intField('config_label_modules.spoiler.SPOILER_THUMB_H', 255, 'config_desc_modules.spoiler.SPOILER_THUMB_H'),
 ];

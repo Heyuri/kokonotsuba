@@ -343,6 +343,7 @@ class tableCreator {
                 `board_title` TEXT NOT NULL,
                 `board_sub_title` TEXT,
                 `storage_directory_name` TEXT NOT NULL,
+                `subdomain` VARCHAR(253) NOT NULL DEFAULT '',
                 `listed` BOOL DEFAULT TRUE,
                 `date_added` DATE DEFAULT CURRENT_DATE,
                 PRIMARY KEY(`board_uid`),

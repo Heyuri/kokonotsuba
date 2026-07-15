@@ -12,5 +12,5 @@ return [
 	'_group'  => 'Miscellaneous',
 	'_module' => 'Private messages',
 
-	'APPEND_TRIP_PM_BUTTON_TO_POST' => boolField('Append PM button to posts', false, 'config_desc_modules.privateMessage.APPEND_TRIP_PM_BUTTON_TO_POST'),
+	'APPEND_TRIP_PM_BUTTON_TO_POST' => boolField('config_label_modules.privateMessage.APPEND_TRIP_PM_BUTTON_TO_POST', false, 'config_desc_modules.privateMessage.APPEND_TRIP_PM_BUTTON_TO_POST'),
 ];

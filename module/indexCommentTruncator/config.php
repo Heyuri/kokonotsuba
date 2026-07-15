@@ -12,6 +12,6 @@ return [
 	'_group'  => 'Appearance & pagination',
 	'_module' => 'Index comment truncator',
 
-	'CHARACTER_PREVIEW_LIMIT' => intField('Preview character limit', 2500, 'config_desc_modules.indexCommentTruncator.CHARACTER_PREVIEW_LIMIT'),
-	'LINE_PREVIEW_LIMIT' => intField('Preview line limit', 10, 'config_desc_modules.indexCommentTruncator.LINE_PREVIEW_LIMIT'),
+	'CHARACTER_PREVIEW_LIMIT' => intField('config_label_modules.indexCommentTruncator.CHARACTER_PREVIEW_LIMIT', 2500, 'config_desc_modules.indexCommentTruncator.CHARACTER_PREVIEW_LIMIT'),
+	'LINE_PREVIEW_LIMIT' => intField('config_label_modules.indexCommentTruncator.LINE_PREVIEW_LIMIT', 10, 'config_desc_modules.indexCommentTruncator.LINE_PREVIEW_LIMIT'),
 ];

@@ -12,5 +12,5 @@ return [
 	'_group'  => 'Posting',
 	'_module' => 'Tegaki',
 
-	'TEGAKI_TEMPLATE' => templateField('Tegaki template', 'tegaki', 'config_desc_modules.tegaki.TEGAKI_TEMPLATE'),
+	'TEGAKI_TEMPLATE' => templateField('config_label_modules.tegaki.TEGAKI_TEMPLATE', 'tegaki', 'config_desc_modules.tegaki.TEGAKI_TEMPLATE'),
 ];

@@ -12,7 +12,7 @@ return [
 	'_group'  => 'Content & formatting',
 	'_module' => 'Word filter',
 
-	'FILTERS' => arrayField('Word filters', [
+	'FILTERS' => arrayField('config_label_modules.wordFilter.FILTERS', [
   '/\\b(rabi-en-rose|rabi~en~rose)\\b/i' => '<span class="rabienrose">Rabi~en~Rose</span>',
   '/\\b(newfag)\\b/i' => 'n00b like me',
   '/\\b(newfags)\\b/i' => 'n00bs like me',

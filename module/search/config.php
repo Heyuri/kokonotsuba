@@ -12,7 +12,7 @@ return [
 	'_group'  => 'Appearance & pagination',
 	'_module' => 'Search',
 
-	'SEARCH_POSTS_PER_PAGE' => intField('Search results per page', 50, 'config_desc_modules.search.SEARCH_POSTS_PER_PAGE'),
-	'SEARCH_TEMPLATE' => templateField('Search template', 'kokoimg', 'config_desc_modules.search.SEARCH_TEMPLATE'),
-	'DISPLAY_THREADED_FORMAT' => boolField('Threaded search format', false, 'config_desc_modules.search.DISPLAY_THREADED_FORMAT'),
+	'SEARCH_POSTS_PER_PAGE' => intField('config_label_modules.search.SEARCH_POSTS_PER_PAGE', 50, 'config_desc_modules.search.SEARCH_POSTS_PER_PAGE'),
+	'SEARCH_TEMPLATE' => templateField('config_label_modules.search.SEARCH_TEMPLATE', 'kokoimg', 'config_desc_modules.search.SEARCH_TEMPLATE'),
+	'DISPLAY_THREADED_FORMAT' => boolField('config_label_modules.search.DISPLAY_THREADED_FORMAT', false, 'config_desc_modules.search.DISPLAY_THREADED_FORMAT'),
 ];

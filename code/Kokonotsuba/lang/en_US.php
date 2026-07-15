@@ -349,6 +349,14 @@ $language['config_saved'] = 'Configuration edited.';
 $language['config_no_changes'] = 'No changes to save.';
 $language['config_save_failed'] = 'Could not save the configuration.';
 $language['config_confirm_save'] = 'Save these changes?';
+$language['config_confirm_apply'] = 'Confirm';
+$language['config_confirm_cancel'] = 'Cancel';
+$language['config_confirm_col_setting'] = 'Setting';
+$language['config_confirm_col_from'] = 'Current';
+$language['config_confirm_col_to'] = 'New';
+$language['config_confirm_empty_value'] = '(empty)';
+// {count} is substituted by the editor's JS - not a sprintf placeholder (see config_confirm_more).
+$language['config_confirm_entries'] = '{count} entries';
 // {count} is substituted by the editor's JS, so it must not be a sprintf placeholder: _T() runs
 // every string through sprintf, and a bare %s here would throw when translated with no arguments.
 $language['config_confirm_more'] = '...and {count} more.';
@@ -702,3 +710,301 @@ $language['config_desc_modules.threadList.HIGHLIGHT_COUNT'] = 'Reply count above
 
 // module/wordFilter/config.php
 $language['config_desc_modules.wordFilter.FILTERS'] = 'JSON object of regex pattern => replacement HTML.';
+
+
+// ── Board / global config editor field labels ────────────────────────────────────
+// One entry per schema field (see configs/*.php and module/{name}/config.php).
+
+// configs/appearance.php
+$language['config_label_HOME'] = 'Home link target';
+$language['config_label_FOOTTEXT'] = 'Footer text';
+$language['config_label_REF_URL'] = 'Referrer URL prefix';
+$language['config_label_TEMPLATE_FILE'] = 'Index template';
+$language['config_label_REPLY_TEMPLATE_FILE'] = 'Reply template';
+$language['config_label_TOP_THREAD_PAGER'] = 'Top thread pager';
+$language['config_label_RENDER_REPLY_NUMBER'] = 'Show reply numbers';
+$language['config_label_REPLIES_PER_PAGE'] = 'Replies per thread page';
+$language['config_label_PAGE_DEF'] = 'Threads per page';
+$language['config_label_ADMIN_PAGE_DEF'] = 'Admin replies per page';
+$language['config_label_RE_DEF'] = 'Replies shown on index';
+$language['config_label_RE_PAGE_DEF'] = 'Replies shown on thread';
+$language['config_label_MAX_RES'] = 'Replies before auto-sage';
+$language['config_label_MAX_THREAD_AMOUNT'] = 'Max threads per board';
+$language['config_label_MAX_AGE_TIME'] = 'Age reply window (h)';
+$language['config_label_STATIC_HTML_UNTIL'] = 'Static HTML pages';
+$language['config_label_GZIP_COMPRESS_LEVEL'] = 'Gzip level';
+$language['config_label_MINIFY_HTML'] = 'Minify HTML';
+$language['config_label_AUTO_LINK'] = 'Auto-link URLs';
+
+// configs/flooding.php
+$language['config_label_RENZOKU'] = 'Post interval (s)';
+$language['config_label_RENZOKU2'] = 'Image post interval (s)';
+
+// configs/misc.php
+$language['config_label_TIME_ZONE'] = 'Time zone';
+$language['config_label_TRUST_HTTP_X_FORWARDED_FOR'] = 'Trust X-Forwarded-For';
+$language['config_label_DISCORD_WH'] = 'Discord webhook';
+$language['config_label_IRC_WH'] = 'IRC webhook';
+$language['config_label_ACTIONLOG_MAX_PER_PAGE'] = 'Action log per page';
+$language['config_label_STAFF_LOGIN_TIMEOUT'] = 'Staff login timeout (s)';
+$language['config_label_SYSTEMCHAN_NAME'] = 'System user name';
+$language['config_label_FORTUNES'] = 'Fortunes';
+
+// configs/moderation.php
+$language['config_label_BAN_CHECK'] = 'Ban check';
+$language['config_label_POST_DELETION_TIME_LIMIT'] = 'Post deletion time limit (h)';
+
+// configs/modules.php
+$language['config_label_ModuleList.catalog'] = 'Catalog';
+$language['config_label_ModuleList.search'] = 'Search';
+$language['config_label_ModuleList.threadList'] = 'Thread list';
+$language['config_label_ModuleList.rebuild'] = 'Rebuild';
+$language['config_label_ModuleList.adminDel'] = 'Admin delete';
+$language['config_label_ModuleList.adminBan'] = 'Admin ban';
+$language['config_label_ModuleList.fileBan'] = 'File ban';
+$language['config_label_ModuleList.globalMessage'] = 'Global message';
+$language['config_label_ModuleList.blotter'] = 'Blotter';
+$language['config_label_ModuleList.janitor'] = 'Janitor';
+$language['config_label_ModuleList.moveThread'] = 'Move thread';
+$language['config_label_ModuleList.rawHtml'] = 'Raw HTML';
+$language['config_label_ModuleList.deletedPosts'] = 'Deleted posts';
+$language['config_label_ModuleList.cssHax'] = 'CSS hax';
+$language['config_label_ModuleList.notes'] = 'Notes';
+$language['config_label_ModuleList.edit'] = 'Edit posts';
+$language['config_label_ModuleList.perceptualBan'] = 'Perceptual ban';
+$language['config_label_ModuleList.excimerViewer'] = 'Excimer profile viewer';
+$language['config_label_ModuleList.anonIp'] = 'Anonymize IPs';
+$language['config_label_ModuleList.autoSage'] = 'Auto-sage';
+$language['config_label_ModuleList.lockThread'] = 'Lock thread';
+$language['config_label_ModuleList.oldThread'] = 'Old thread';
+$language['config_label_ModuleList.sticky'] = 'Sticky';
+$language['config_label_ModuleList.antiSpam'] = 'Anti-spam';
+$language['config_label_ModuleList.csrfPrevent'] = 'CSRF prevention';
+$language['config_label_ModuleList.bbCode'] = 'BBCode';
+$language['config_label_ModuleList.emoji'] = 'Emoji';
+$language['config_label_ModuleList.wordFilter'] = 'Word filter';
+$language['config_label_ModuleList.countryFlags'] = 'Country flags';
+$language['config_label_ModuleList.antiFlood'] = 'Anti-flood';
+$language['config_label_ModuleList.fieldTraps'] = 'Field traps';
+$language['config_label_ModuleList.readOnly'] = 'Read-only';
+$language['config_label_ModuleList.viewPosts'] = 'View posts';
+$language['config_label_ModuleList.displayId'] = 'Display ID';
+$language['config_label_ModuleList.dice'] = 'Dice';
+$language['config_label_ModuleList.tripcode'] = 'Tripcode';
+$language['config_label_ModuleList.displayIp'] = 'Display IP';
+$language['config_label_ModuleList.animatedGif'] = 'Animated GIF';
+$language['config_label_ModuleList.tegaki'] = 'Tegaki (oekaki)';
+$language['config_label_ModuleList.quickReply'] = 'Quick reply';
+$language['config_label_ModuleList.spoiler'] = 'Spoiler';
+$language['config_label_ModuleList.threadWatcher'] = 'Thread watcher';
+$language['config_label_ModuleList.soudane'] = 'Soudane (voting)';
+$language['config_label_ModuleList.postApi'] = 'Post API';
+$language['config_label_ModuleList.privateMessage'] = 'Private messages';
+$language['config_label_ModuleList.fullBanner'] = 'Full banner';
+$language['config_label_ModuleList.imageMeta'] = 'Image metadata';
+$language['config_label_ModuleList.onlineCounter'] = 'Online counter';
+$language['config_label_ModuleList.ads'] = 'Ads';
+$language['config_label_ModuleList.banner'] = 'Banner';
+$language['config_label_ModuleList.addInfo'] = 'Additional info';
+$language['config_label_ModuleList.imageServer'] = 'Image server';
+$language['config_label_ModuleList.filter'] = 'Filter';
+$language['config_label_ModuleList.indexCommentTruncator'] = 'Index comment truncator';
+$language['config_label_ModuleList.emotes'] = 'Emotes';
+$language['config_label_ModuleList.nameRandomizer'] = 'Name randomizer';
+$language['config_label_ModuleList.youtubeEmbed'] = 'YouTube embed';
+$language['config_label_ModuleList.segregator'] = 'Segregator';
+
+// configs/overboard.php
+$language['config_label_OVERBOARD_TITLE'] = 'Overboard title';
+$language['config_label_OVERBOARD_SUBTITLE'] = 'Overboard subtitle';
+$language['config_label_OVERBOARD_SUB_HEADER_HTML'] = 'Overboard sub-header HTML';
+$language['config_label_OVERBOARD_THREADS_PER_PAGE'] = 'Overboard threads per page';
+$language['config_label_ADMINBAR_OVERBOARD_BUTTON'] = 'Overboard admin-bar button';
+$language['config_label_CONTACT_URL'] = 'Contact URL';
+
+// configs/posting.php
+$language['config_label_ALWAYS_NOKO'] = 'Always noko';
+$language['config_label_USE_SAGE_CHECKBOX'] = 'Show sage checkbox';
+$language['config_label_USE_NOKO_CHECKBOX'] = 'Show noko checkbox';
+$language['config_label_USE_DUMP_CHECKBOX'] = 'Show dump checkbox';
+$language['config_label_THREAD_ATTACHMENT_REQUIRED'] = 'Require file for new threads';
+$language['config_label_ALLOW_NONAME'] = 'Allow no name';
+$language['config_label_CLEAR_SAGE'] = 'Disable sage';
+$language['config_label_NOTICE_SAGE'] = 'Visible sage';
+$language['config_label_USE_QUOTESYSTEM'] = 'Enable quote links';
+$language['config_label_USE_CATEGORY'] = 'Enable categories';
+$language['config_label_COMM_MAX'] = 'Max comment length';
+$language['config_label_INPUT_MAX'] = 'Max field length';
+$language['config_label_BR_CHECK'] = 'Line limit';
+$language['config_label_DEFAULT_NOTITLE'] = 'Default title';
+$language['config_label_DEFAULT_NONAME'] = 'Default name';
+$language['config_label_DEFAULT_NOCOMMENT'] = 'Default comment';
+$language['config_label_ENABLE_TAGS'] = 'Enable tags';
+$language['config_label_FORCE_TAGS'] = 'Force tags';
+$language['config_label_DEFAULT_TAG'] = 'Default tag';
+$language['config_label_TAGS'] = 'Tags';
+
+// configs/uploads.php
+$language['config_label_ATTACHMENT_UPLOAD_LIMIT'] = 'Attachments per post';
+$language['config_label_MAX_KB'] = 'Max upload size (KB)';
+$language['config_label_STORAGE_LIMIT'] = 'Storage limit';
+$language['config_label_STORAGE_MAX'] = 'Total storage max';
+$language['config_label_TEXTBOARD_ONLY'] = 'Textboard only';
+$language['config_label_RESIMG'] = 'Allow files in replies';
+$language['config_label_SHOW_IMGWH'] = 'Show image dimensions';
+$language['config_label_PREVENT_DUPLICATE_FILE_UPLOADS'] = 'Prevent duplicate uploads';
+$language['config_label_DUPLICATE_FILE_TIME'] = 'Duplicate file window (s)';
+$language['config_label_VIDEO_EXT'] = 'Video extensions';
+$language['config_label_HTTP_UPLOAD_DIFF'] = 'HTTP upload diff';
+$language['config_label_ALLOW_UPLOAD_EXT'] = 'Allowed upload types';
+
+// module/addInfo/config.php
+$language['config_label_modules.addInfo.ADD_INFO'] = 'Additional info lines';
+
+// module/adminDel/config.php
+$language['config_label_modules.adminDel.JANIMUTE_LENGTH'] = 'Janitor mute length (min)';
+$language['config_label_modules.adminDel.JANIMUTE_REASON'] = 'Janitor mute reason';
+
+// module/ads/config.php
+$language['config_label_modules.ads.ADS_STICKY_ROTATE_SECONDS'] = 'Sticky ad rotate (s)';
+$language['config_label_modules.ads.ADS_INLINE_EVERY_N_THREADS'] = 'Inline ad every N threads';
+$language['config_label_modules.ads.ADS_INLINE_COUNT'] = 'Inline ads per row';
+$language['config_label_modules.ads.ADS_POST_AD_EVERY_N_POSTS'] = 'Post ad every N posts';
+$language['config_label_modules.ads.ADS_SLOT_DIMENSIONS'] = 'Ad slot dimensions';
+
+// module/animatedGif/config.php
+$language['config_label_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'] = 'Max animated GIF size (KB)';
+
+// module/antiFlood/config.php
+$language['config_label_modules.antiFlood.RENZOKU3'] = 'Seconds between new threads';
+$language['config_label_modules.antiFlood.SAME_COMMENT_TIME_WINDOW'] = 'Same-comment window (s)';
+$language['config_label_modules.antiFlood.SAME_THREAD_COMMENT_TIME_WINDOW'] = 'Same OP-comment window (s)';
+$language['config_label_modules.antiFlood.ALLOWED_COMMENT_REPETITIONS'] = 'Allowed comment repetitions';
+
+// module/antiSpam/config.php
+$language['config_label_modules.antiSpam.FILTER_BAN_TIME'] = 'Filter ban time (h)';
+
+// module/bbCode/config.php
+$language['config_label_modules.bbCode.supportBold'] = 'Bold';
+$language['config_label_modules.bbCode.supportSpoiler'] = 'Spoiler';
+$language['config_label_modules.bbCode.supportStrikeThrough'] = 'Strikethrough';
+$language['config_label_modules.bbCode.supportHeading'] = 'Heading';
+$language['config_label_modules.bbCode.supportCode'] = 'Code';
+$language['config_label_modules.bbCode.supportCodeBlocks'] = 'Code blocks';
+$language['config_label_modules.bbCode.supportItalic'] = 'Italic';
+$language['config_label_modules.bbCode.supportUnderline'] = 'Underline';
+$language['config_label_modules.bbCode.supportParagraph'] = 'Paragraph';
+$language['config_label_modules.bbCode.supportSw'] = 'Strange-world AA';
+$language['config_label_modules.bbCode.supportColor'] = 'Color';
+$language['config_label_modules.bbCode.supportColorBg'] = 'Background color';
+$language['config_label_modules.bbCode.supportNeon'] = 'Neon';
+$language['config_label_modules.bbCode.supportTextShadow'] = 'Text shadow';
+$language['config_label_modules.bbCode.supportPartybus'] = 'Partybus';
+$language['config_label_modules.bbCode.supportEcho'] = 'Echo';
+$language['config_label_modules.bbCode.supportFontSize'] = 'Font size';
+$language['config_label_modules.bbCode.supportPre'] = 'Pre';
+$language['config_label_modules.bbCode.supportQuote'] = 'Quote';
+$language['config_label_modules.bbCode.supportRuby'] = 'Ruby';
+$language['config_label_modules.bbCode.supportURL'] = 'URL';
+$language['config_label_modules.bbCode.supportEmail'] = 'Email';
+$language['config_label_modules.bbCode.supportImg'] = 'Img';
+$language['config_label_modules.bbCode.supportScroll'] = 'Scroll';
+$language['config_label_modules.bbCode.supportKao'] = 'Kao';
+
+// module/blotter/config.php
+$language['config_label_modules.blotter.BLOTTER_PREVIEW_AMOUNT'] = 'Blotter preview amount';
+
+// module/countryFlags/config.php
+$language['config_label_modules.countryFlags.FLAG_MODE'] = 'Country flag mode';
+
+// module/deletedPosts/config.php
+$language['config_label_modules.deletedPosts.DELETED_POSTS_TEMPLATE'] = 'Deleted posts template';
+$language['config_label_modules.deletedPosts.PRUNE_TIME'] = 'Deleted posts prune time (h)';
+
+// module/dice/config.php
+$language['config_label_modules.dice.DICE_AMOUNT_LIMIT'] = 'Dice amount limit';
+$language['config_label_modules.dice.DICE_FACE_LIMIT'] = 'Dice face limit';
+$language['config_label_modules.dice.EMAIL_DICE_ROLL'] = 'Dice via email field';
+$language['config_label_modules.dice.COMMENT_DICE_ROLL'] = 'Dice via comment';
+
+// module/displayId/config.php
+$language['config_label_modules.displayId.DISP_ID'] = 'Always show poster ID';
+
+// module/displayIp/config.php
+$language['config_label_modules.displayIp.IPTOGGLE'] = 'IP display toggle';
+
+// module/emotes/config.php
+$language['config_label_modules.emotes.KAOMOJI'] = 'Kaomoji';
+$language['config_label_modules.emotes.EMOTES'] = 'Emotes';
+
+// module/fullBanner/config.php
+$language['config_label_modules.fullBanner.SHOW_TOP_AD'] = 'Show top full banner';
+$language['config_label_modules.fullBanner.SHOW_BOTTOM_AD'] = 'Show bottom full banner';
+$language['config_label_modules.fullBanner.FULLBANNER_SUBMISSION_COOLDOWN'] = 'Banner submission cooldown (s)';
+$language['config_label_modules.fullBanner.FULLBANNER_REQUIRED_WIDTH'] = 'Banner required width';
+$language['config_label_modules.fullBanner.FULLBANNER_REQUIRED_HEIGHT'] = 'Banner required height';
+$language['config_label_modules.fullBanner.FULLBANNER_MAX_FILE_SIZE'] = 'Banner max file size (bytes)';
+
+// module/imageMeta/config.php
+$language['config_label_modules.imageMeta.EXIF_DATA_VIEWER'] = 'EXIF data viewer';
+$language['config_label_modules.imageMeta.IMG_OPS'] = 'ImgOps portal';
+$language['config_label_modules.imageMeta.IQDB'] = 'IQDB portal';
+$language['config_label_modules.imageMeta.SWFCHAN'] = 'SWFchan archive';
+
+// module/indexCommentTruncator/config.php
+$language['config_label_modules.indexCommentTruncator.CHARACTER_PREVIEW_LIMIT'] = 'Preview character limit';
+$language['config_label_modules.indexCommentTruncator.LINE_PREVIEW_LIMIT'] = 'Preview line limit';
+
+// module/nameRandomizer/config.php
+$language['config_label_modules.nameRandomizer.NAME_RANDOMIZER_TTL'] = 'Name randomizer TTL (s)';
+$language['config_label_modules.nameRandomizer.NAME_RANDOMIZER_NAMES'] = 'Name randomizer pool';
+
+// module/oldThread/config.php
+$language['config_label_modules.oldThread.THREAD_REPLY_TIME_LIMIT'] = 'Thread reply time limit (h)';
+
+// module/onlineCounter/config.php
+$language['config_label_modules.onlineCounter.USER_COUNT_DAT_FILE'] = 'Online counter data file';
+$language['config_label_modules.onlineCounter.USER_COUNT_TIMEOUT'] = 'Online counter timeout (min)';
+
+// module/perceptualBan/config.php
+$language['config_label_modules.perceptualBan.HAMMING_THRESHOLD'] = 'Hamming threshold';
+
+// module/privateMessage/config.php
+$language['config_label_modules.privateMessage.APPEND_TRIP_PM_BUTTON_TO_POST'] = 'Append PM button to posts';
+
+// module/readOnly/config.php
+$language['config_label_modules.readOnly.ALLOW_REPLY'] = 'Allow replies when read-only';
+
+// module/search/config.php
+$language['config_label_modules.search.SEARCH_POSTS_PER_PAGE'] = 'Search results per page';
+$language['config_label_modules.search.SEARCH_TEMPLATE'] = 'Search template';
+$language['config_label_modules.search.DISPLAY_THREADED_FORMAT'] = 'Threaded search format';
+
+// module/segregator/config.php
+$language['config_label_modules.segregator.SEGREGATOR_SUB_DOMAIN'] = 'Segregator subdomain';
+$language['config_label_modules.segregator.SEGREGATOR_COOKIE_NAME'] = 'Segregator cookie name';
+$language['config_label_modules.segregator.SEGREGATOR_COOKIE_DOMAIN'] = 'Segregator cookie domain';
+
+// module/soudane/config.php
+$language['config_label_modules.soudane.ENABLE_YEAH'] = 'Enable "yeah" votes';
+$language['config_label_modules.soudane.ENABLE_NOPE'] = 'Enable "nope" votes';
+$language['config_label_modules.soudane.ENABLE_SCORE'] = 'Enable score';
+$language['config_label_modules.soudane.SHOW_SCORE_ONLY'] = 'Show score only';
+
+// module/spoiler/config.php
+$language['config_label_modules.spoiler.SPOILER_THUMB_W'] = 'Spoiler thumb width';
+$language['config_label_modules.spoiler.SPOILER_THUMB_H'] = 'Spoiler thumb height';
+
+// module/tegaki/config.php
+$language['config_label_modules.tegaki.TEGAKI_TEMPLATE'] = 'Tegaki template';
+
+// module/threadList/config.php
+$language['config_label_modules.threadList.THREADLIST_NUMBER'] = 'Thread list per page';
+$language['config_label_modules.threadList.FORCE_SUBJECT'] = 'Force subject';
+$language['config_label_modules.threadList.SHOW_IN_MAIN'] = 'Show thread list on main';
+$language['config_label_modules.threadList.THREADLIST_NUMBER_IN_MAIN'] = 'Thread list on main count';
+$language['config_label_modules.threadList.SHOW_FORM'] = 'Show thread-list delete form';
+$language['config_label_modules.threadList.HIGHLIGHT_COUNT'] = 'Popular reply highlight';
+
+// module/wordFilter/config.php
+$language['config_label_modules.wordFilter.FILTERS'] = 'Word filters';

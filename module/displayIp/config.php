@@ -12,5 +12,5 @@ return [
 	'_group'  => 'Moderation',
 	'_module' => 'Display IP',
 
-	'IPTOGGLE' => intField('IP display toggle', 1, 'config_desc_modules.displayIp.IPTOGGLE'),
+	'IPTOGGLE' => intField('config_label_modules.displayIp.IPTOGGLE', 1, 'config_desc_modules.displayIp.IPTOGGLE'),
 ];

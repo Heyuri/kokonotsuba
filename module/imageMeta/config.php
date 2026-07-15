@@ -12,8 +12,8 @@ return [
 	'_group'  => 'Content & formatting',
 	'_module' => 'Image metadata',
 
-	'EXIF_DATA_VIEWER' => boolField('EXIF data viewer', false, 'config_desc_modules.imageMeta.EXIF_DATA_VIEWER'),
-	'IMG_OPS' => boolField('ImgOps portal', true, 'config_desc_modules.imageMeta.IMG_OPS'),
-	'IQDB' => boolField('IQDB portal', false, 'config_desc_modules.imageMeta.IQDB'),
-	'SWFCHAN' => boolField('SWFchan archive', true, 'config_desc_modules.imageMeta.SWFCHAN'),
+	'EXIF_DATA_VIEWER' => boolField('config_label_modules.imageMeta.EXIF_DATA_VIEWER', false, 'config_desc_modules.imageMeta.EXIF_DATA_VIEWER'),
+	'IMG_OPS' => boolField('config_label_modules.imageMeta.IMG_OPS', true, 'config_desc_modules.imageMeta.IMG_OPS'),
+	'IQDB' => boolField('config_label_modules.imageMeta.IQDB', false, 'config_desc_modules.imageMeta.IQDB'),
+	'SWFCHAN' => boolField('config_label_modules.imageMeta.SWFCHAN', true, 'config_desc_modules.imageMeta.SWFCHAN'),
 ];

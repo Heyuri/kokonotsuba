@@ -12,10 +12,10 @@ return [
 	'_group'  => 'Appearance & pagination',
 	'_module' => 'Thread list',
 
-	'THREADLIST_NUMBER' => intField('Thread list per page', 50, 'config_desc_modules.threadList.THREADLIST_NUMBER'),
-	'FORCE_SUBJECT' => boolField('Force subject', true, 'config_desc_modules.threadList.FORCE_SUBJECT'),
-	'SHOW_IN_MAIN' => boolField('Show thread list on main', true, 'config_desc_modules.threadList.SHOW_IN_MAIN'),
-	'THREADLIST_NUMBER_IN_MAIN' => intField('Thread list on main count', 40, 'config_desc_modules.threadList.THREADLIST_NUMBER_IN_MAIN'),
-	'SHOW_FORM' => boolField('Show thread-list delete form', false, 'config_desc_modules.threadList.SHOW_FORM'),
-	'HIGHLIGHT_COUNT' => intField('Popular reply highlight', 15, 'config_desc_modules.threadList.HIGHLIGHT_COUNT'),
+	'THREADLIST_NUMBER' => intField('config_label_modules.threadList.THREADLIST_NUMBER', 50, 'config_desc_modules.threadList.THREADLIST_NUMBER'),
+	'FORCE_SUBJECT' => boolField('config_label_modules.threadList.FORCE_SUBJECT', true, 'config_desc_modules.threadList.FORCE_SUBJECT'),
+	'SHOW_IN_MAIN' => boolField('config_label_modules.threadList.SHOW_IN_MAIN', true, 'config_desc_modules.threadList.SHOW_IN_MAIN'),
+	'THREADLIST_NUMBER_IN_MAIN' => intField('config_label_modules.threadList.THREADLIST_NUMBER_IN_MAIN', 40, 'config_desc_modules.threadList.THREADLIST_NUMBER_IN_MAIN'),
+	'SHOW_FORM' => boolField('config_label_modules.threadList.SHOW_FORM', false, 'config_desc_modules.threadList.SHOW_FORM'),
+	'HIGHLIGHT_COUNT' => intField('config_label_modules.threadList.HIGHLIGHT_COUNT', 15, 'config_desc_modules.threadList.HIGHLIGHT_COUNT'),
 ];

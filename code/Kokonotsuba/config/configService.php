@@ -155,6 +155,10 @@ class configService {
 		// shown, which would cut it off from later global changes.
 		$inherited = $this->getInheritedValues($boardUid);
 
+		// The row is rewritten wholesale, so a field missing from the submission would be dropped
+		// from it - i.e. silently reset. Keep whatever is already stored for such a field instead.
+		$existing = $this->getOverrides($boardUid);
+
 		foreach (configSchema::getAllFields() as $dotpath => $meta) {
 			$type = $meta['type'];
 			$inheritedValue = $inherited[$dotpath] ?? $meta['default'];
@@ -165,8 +169,12 @@ class configService {
 				$value = array_key_exists($inputKey, $rawSubmitted)
 					&& self::coerce($rawSubmitted[$inputKey], configSchema::TYPE_BOOL, (string)$dotpath);
 			} else {
-				// Leave unsubmitted non-bool fields alone (don't force them to default).
+				// Leave unsubmitted non-bool fields alone (don't force them back to the inherited
+				// value): a partial submission must not wipe settings it never mentioned.
 				if (!array_key_exists($inputKey, $rawSubmitted)) {
+					if (array_key_exists($dotpath, $existing)) {
+						$overrides[$dotpath] = $existing[$dotpath];
+					}
 					continue;
 				}
 				$value = self::coerce($rawSubmitted[$inputKey], $type, (string)$dotpath, $meta);
@@ -178,11 +186,7 @@ class configService {
 			}
 		}
 
-		if (empty($overrides)) {
-			$this->configRepository->deleteOverridesForBoardUid($boardUid);
-		} else {
-			$this->configRepository->saveOverridesForBoardUid($boardUid, $overrides);
-		}
+		$this->persistOverrides($boardUid, $overrides);
 	}
 
 	/**
@@ -194,6 +198,78 @@ class configService {
 	 */
 	public function resetOverrides(int $boardUid): void {
 		$this->configRepository->deleteOverridesForBoardUid($boardUid);
+	}
+
+	/**
+	 * Set a single setting for a scope, leaving every other stored override untouched.
+	 *
+	 * The raw value is coerced to the field's type (and an int clamped to its minimum), then
+	 * diffed against what the scope inherits: a value equal to the inherited one is not stored as
+	 * an override but clears any existing one, exactly as saving the whole form would. This is the
+	 * single-field counterpart of saveOverrides(), for callers that edit one setting at a time
+	 * (e.g. the CLI editor) rather than posting a form.
+	 *
+	 * @param int    $boardUid Board UID, or GLOBAL_BOARD_UID for the global config.
+	 * @param string $dotpath  Schema dot-path of the setting.
+	 * @param mixed  $rawValue Raw value (a string as it would arrive from a form, a bool, etc.).
+	 * @return void
+	 * @throws InvalidArgumentException If the field is not in the schema, or an array field's JSON
+	 *                                  is invalid.
+	 */
+	public function setOverride(int $boardUid, string $dotpath, mixed $rawValue): void {
+		$meta = configSchema::getFieldMeta($dotpath);
+		if ($meta === null) {
+			throw new InvalidArgumentException("Unknown setting: '{$dotpath}'.");
+		}
+
+		$value = self::coerce($rawValue, $meta['type'], $dotpath, $meta);
+		$inherited = $this->getInheritedValues($boardUid)[$dotpath] ?? $meta['default'];
+
+		$overrides = $this->getOverrides($boardUid);
+
+		if (self::valuesEqual($value, $inherited)) {
+			// Equal to what it already inherits: not an override. Clear any stored one.
+			unset($overrides[$dotpath]);
+		} else {
+			$overrides[$dotpath] = $value;
+		}
+
+		$this->persistOverrides($boardUid, $overrides);
+	}
+
+	/**
+	 * Clear a single setting's override for a scope, reverting just that setting to the value it
+	 * inherits. Other stored overrides are left untouched. A no-op if it wasn't overridden.
+	 *
+	 * @param int    $boardUid Board UID, or GLOBAL_BOARD_UID for the global config.
+	 * @param string $dotpath  Schema dot-path of the setting.
+	 * @return void
+	 */
+	public function unsetOverride(int $boardUid, string $dotpath): void {
+		$overrides = $this->getOverrides($boardUid);
+
+		if (!array_key_exists($dotpath, $overrides)) {
+			return;
+		}
+
+		unset($overrides[$dotpath]);
+		$this->persistOverrides($boardUid, $overrides);
+	}
+
+	/**
+	 * Write a scope's full override set, deleting the row when it is empty (so an emptied scope
+	 * leaves no row rather than an empty JSON object).
+	 *
+	 * @param int   $boardUid  Board UID.
+	 * @param array $overrides dot-path => value.
+	 * @return void
+	 */
+	private function persistOverrides(int $boardUid, array $overrides): void {
+		if (empty($overrides)) {
+			$this->configRepository->deleteOverridesForBoardUid($boardUid);
+		} else {
+			$this->configRepository->saveOverridesForBoardUid($boardUid, $overrides);
+		}
 	}
 
 	/**

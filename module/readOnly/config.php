@@ -12,5 +12,5 @@ return [
 	'_group'  => 'Moderation',
 	'_module' => 'Read-only',
 
-	'ALLOW_REPLY' => boolField('Allow replies when read-only', false, 'config_desc_modules.readOnly.ALLOW_REPLY'),
+	'ALLOW_REPLY' => boolField('config_label_modules.readOnly.ALLOW_REPLY', false, 'config_desc_modules.readOnly.ALLOW_REPLY'),
 ];

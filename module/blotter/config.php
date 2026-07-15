@@ -12,5 +12,5 @@ return [
 	'_group'  => 'Moderation',
 	'_module' => 'Blotter',
 
-	'BLOTTER_PREVIEW_AMOUNT' => intField('Blotter preview amount', 5, 'config_desc_modules.blotter.BLOTTER_PREVIEW_AMOUNT'),
+	'BLOTTER_PREVIEW_AMOUNT' => intField('config_label_modules.blotter.BLOTTER_PREVIEW_AMOUNT', 5, 'config_desc_modules.blotter.BLOTTER_PREVIEW_AMOUNT'),
 ];

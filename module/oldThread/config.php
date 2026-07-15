@@ -12,5 +12,5 @@ return [
 	'_group'  => 'Flooding & rate limits',
 	'_module' => 'Old thread',
 
-	'THREAD_REPLY_TIME_LIMIT' => intField('Thread reply time limit (h)', 0, 'config_desc_modules.oldThread.THREAD_REPLY_TIME_LIMIT'),
+	'THREAD_REPLY_TIME_LIMIT' => intField('config_label_modules.oldThread.THREAD_REPLY_TIME_LIMIT', 0, 'config_desc_modules.oldThread.THREAD_REPLY_TIME_LIMIT'),
 ];

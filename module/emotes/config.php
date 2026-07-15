@@ -12,7 +12,7 @@ return [
 	'_group'  => 'Content & formatting',
 	'_module' => 'Emotes',
 
-	'KAOMOJI' => arrayField('Kaomoji', [
+	'KAOMOJI' => arrayField('config_label_modules.emotes.KAOMOJI', [
   'ヽ(´ー｀)ノ' => '[kao]ヽ(´ー｀)ノ[/kao]',
   '(;´Д`)' => '[kao](;´Д`)[/kao]',
   'ヽ(´∇`)ノ' => '[kao]ヽ(´∇`)ノ[/kao]',
@@ -38,7 +38,7 @@ return [
   'Σ(ﾟдﾟ|||)' => '[kao]Σ(ﾟдﾟ|||)[/kao]',
   'ｷﾀ━━━(・∀・)━━━!!' => '[kao]ｷﾀ━━━(・∀・)━━━!![/kao]',
 ], 'config_desc_modules.emotes.KAOMOJI'),
-	'EMOTES' => arrayField('Emotes', [
+	'EMOTES' => arrayField('config_label_modules.emotes.EMOTES', [
   'angry' => 'emo-yotsuba-angry.gif',
   'astonish' => 'emo-yotsuba-astonish.gif',
   'biggrin' => 'emo-yotsuba-biggrin.gif',

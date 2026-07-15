@@ -12,5 +12,5 @@ return [
 	'_group'  => 'Uploads',
 	'_module' => 'Animated GIF',
 
-	'MAX_SIZE_FOR_ANIMATED_GIF' => intField('Max animated GIF size (KB)', 2000, 'config_desc_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'),
+	'MAX_SIZE_FOR_ANIMATED_GIF' => intField('config_label_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF', 2000, 'config_desc_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'),
 ];

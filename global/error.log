@@ -10,3 +10,32 @@ Stack trace:
 #6 /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/formRender.php(30): Kokonotsuba\libraries\html\drawGlobalConfigForm()
 #7 {main}
   thrown in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/lang/LanguageLoader.php on line 113
+[2026-07-14 14:22:53] PHP Error #2: Trying to access array offset on null in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/websiteUrl.php on line 22
+[2026-07-14 14:22:53] Fatal Error #1: Uncaught TypeError: Kokonotsuba\libraries\_T(): Argument #1 ($translationLable) must be of type string, null given, called in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/websiteUrl.php on line 22 and defined in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_compatible.php:19
+Stack trace:
+#0 /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/websiteUrl.php(22): Kokonotsuba\libraries\_T()
+#1 {main}
+  thrown in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_compatible.php on line 19
+[2026-07-14 18:38:07] PHP Error #2: Undefined array key "HTTP_HOST" in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/legacy/global/globalconfig.php on line 13
+[2026-07-14 18:38:07] PHP Error #2: Undefined array key "HTTP_HOST" in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/legacy/global/globalconfig.php on line 13
+[2026-07-14 18:38:07] PHP Error #2: Undefined array key "HTTP_HOST" in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/legacy/global/globalconfig.php on line 13
+[2026-07-15 00:16:47] PHP Error #2: Undefined array key "HTTP_HOST" in /tmp/tmp.QIMUwHF5I0/global/globalconfig.php on line 13
+[2026-07-15 00:16:47] PHP Error #2: Undefined array key "HTTP_HOST" in /tmp/tmp.QIMUwHF5I0/global/globalconfig.php on line 13
+[2026-07-15 00:16:47] PHP Error #2: Undefined array key "HTTP_HOST" in /tmp/tmp.QIMUwHF5I0/global/globalconfig.php on line 13
+[2026-07-15 14:49:39] Fatal Error #1: Uncaught PDOException: could not find driver in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php:59
+Stack trace:
+#0 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php(59): PDO->__construct()
+#1 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php(19): Kokonotsuba\database\databaseConnection->createPDOConnection()
+#2 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php(25): Kokonotsuba\database\databaseConnection->__construct()
+#3 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/bootstrap/database.php(13): Kokonotsuba\database\databaseConnection::createInstance()
+#4 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/Utilities/configEditor-cli.php(94): require('...')
+#5 {main}
+
+Next RuntimeException: There was a problem connecting to the database. in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php:64
+Stack trace:
+#0 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php(19): Kokonotsuba\database\databaseConnection->createPDOConnection()
+#1 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php(25): Kokonotsuba\database\databaseConnection->__construct()
+#2 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/bootstrap/database.php(13): Kokonotsuba\database\databaseConnection::createInstance()
+#3 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/Utilities/configEditor-cli.php(94): require('...')
+#4 {main}
+  thrown in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php on line 64

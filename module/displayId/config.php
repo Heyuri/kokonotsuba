@@ -12,5 +12,5 @@ return [
 	'_group'  => 'Moderation',
 	'_module' => 'Display ID',
 
-	'DISP_ID' => boolField('Always show poster ID', false, 'config_desc_modules.displayId.DISP_ID'),
+	'DISP_ID' => boolField('config_label_modules.displayId.DISP_ID', false, 'config_desc_modules.displayId.DISP_ID'),
 ];

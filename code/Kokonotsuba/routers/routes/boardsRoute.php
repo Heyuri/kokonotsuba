@@ -87,6 +87,7 @@ class boardsRoute {
 			$boardListed = $board->getBoardListed() ?? '';
 			$boardStorageDirectoryName = $board->getBoardStorageDirName() ?? '';
 			$boardDate = $board->getDateAdded() ?? '';
+			$boardSubdomain = $board->getBoardSubdomain();
 
 			$templateValues['{$BOARD_UID}'] = $boardUID;
 			$templateValues['{$BOARD_IDENTIFIER}'] = $boardIdentifier;
@@ -97,6 +98,7 @@ class boardsRoute {
 			$templateValues['{$BOARD_DATE_ADDED}'] = $boardDate;
 			$templateValues['{$CHECKED}'] = $boardListed ? 'checked' : '';
 			$templateValues['{$BOARD_STORAGE_DIR}'] = $boardStorageDirectoryName;
+			$templateValues['{$BOARD_SUBDOMAIN}'] = $boardSubdomain;
 			$templateValues['{$CSRF_INPUT}'] = getCsrfHiddenInput();
 			$templateValues['{$EDIT_BOARD_HTML}'] = $this->adminTemplateEngine->ParseBlock('EDIT_BOARD', $templateValues);
 

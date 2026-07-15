@@ -12,8 +12,8 @@ return [
 	'_group'  => 'Content & formatting',
 	'_module' => 'Name randomizer',
 
-	'NAME_RANDOMIZER_TTL' => intField('Name randomizer TTL (s)', 43200, 'config_desc_modules.nameRandomizer.NAME_RANDOMIZER_TTL'),
-	'NAME_RANDOMIZER_NAMES' => arrayField('Name randomizer pool', [
+	'NAME_RANDOMIZER_TTL' => intField('config_label_modules.nameRandomizer.NAME_RANDOMIZER_TTL', 43200, 'config_desc_modules.nameRandomizer.NAME_RANDOMIZER_TTL'),
+	'NAME_RANDOMIZER_NAMES' => arrayField('config_label_modules.nameRandomizer.NAME_RANDOMIZER_NAMES', [
   0 => 'Shota Liberation Army',
   1 => 'Nyuu',
   2 => 'Nyo',

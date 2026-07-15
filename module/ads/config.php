@@ -12,11 +12,11 @@ return [
 	'_group'  => 'Overboard, ads & banners',
 	'_module' => 'Ads',
 
-	'ADS_STICKY_ROTATE_SECONDS' => intField('Sticky ad rotate (s)', 45, 'config_desc_modules.ads.ADS_STICKY_ROTATE_SECONDS'),
-	'ADS_INLINE_EVERY_N_THREADS' => intField('Inline ad every N threads', 4, 'config_desc_modules.ads.ADS_INLINE_EVERY_N_THREADS'),
-	'ADS_INLINE_COUNT' => intField('Inline ads per row', 2, 'config_desc_modules.ads.ADS_INLINE_COUNT'),
-	'ADS_POST_AD_EVERY_N_POSTS' => intField('Post ad every N posts', 15, 'config_desc_modules.ads.ADS_POST_AD_EVERY_N_POSTS'),
-	'ADS_SLOT_DIMENSIONS' => arrayField('Ad slot dimensions', [
+	'ADS_STICKY_ROTATE_SECONDS' => intField('config_label_modules.ads.ADS_STICKY_ROTATE_SECONDS', 45, 'config_desc_modules.ads.ADS_STICKY_ROTATE_SECONDS'),
+	'ADS_INLINE_EVERY_N_THREADS' => intField('config_label_modules.ads.ADS_INLINE_EVERY_N_THREADS', 4, 'config_desc_modules.ads.ADS_INLINE_EVERY_N_THREADS'),
+	'ADS_INLINE_COUNT' => intField('config_label_modules.ads.ADS_INLINE_COUNT', 2, 'config_desc_modules.ads.ADS_INLINE_COUNT'),
+	'ADS_POST_AD_EVERY_N_POSTS' => intField('config_label_modules.ads.ADS_POST_AD_EVERY_N_POSTS', 15, 'config_desc_modules.ads.ADS_POST_AD_EVERY_N_POSTS'),
+	'ADS_SLOT_DIMENSIONS' => arrayField('config_label_modules.ads.ADS_SLOT_DIMENSIONS', [
 		'top'     => '728x90',
 		'mobile'  => '300x250',
 		'sticky'  => '728x90',

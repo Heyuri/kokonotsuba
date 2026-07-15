@@ -12,5 +12,5 @@ return [
 	'_group'  => 'Moderation',
 	'_module' => 'Anti-spam',
 
-	'FILTER_BAN_TIME' => intField('Filter ban time (h)', 24, 'config_desc_modules.antiSpam.FILTER_BAN_TIME'),
+	'FILTER_BAN_TIME' => intField('config_label_modules.antiSpam.FILTER_BAN_TIME', 24, 'config_desc_modules.antiSpam.FILTER_BAN_TIME'),
 ];

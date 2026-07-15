@@ -8,14 +8,15 @@
  *   use function Kokonotsuba\config\fields\{boolField, intField, stringField, textField, arrayField};
  *   return [
  *       '_group'      => 'Posting',
- *       'ALWAYS_NOKO' => boolField('Always noko', false, 'config_desc_ALWAYS_NOKO'),
+ *       'ALWAYS_NOKO' => boolField('config_label_ALWAYS_NOKO', false, 'config_desc_ALWAYS_NOKO'),
  *   ];
  *
- * $desc is a LANGUAGE KEY, not prose: the description text itself lives in
+ * $label and $desc are LANGUAGE KEYS, not prose: the text itself lives in
  * code/Kokonotsuba/lang/en_US.php and is translated by the config editor when it renders the
- * field. The key is 'config_desc_' followed by the setting's config dot-path - so a core field
- * keyed 'ALWAYS_NOKO' uses 'config_desc_ALWAYS_NOKO', and a module field uses its prefixed path,
- * e.g. 'config_desc_modules.ads.ADS_INLINE_COUNT'. A field with no description passes ''.
+ * field. A key is 'config_label_' / 'config_desc_' followed by the setting's config dot-path - so
+ * a core field keyed 'ALWAYS_NOKO' uses 'config_label_ALWAYS_NOKO', and a module field uses its
+ * prefixed path, e.g. 'config_label_modules.ads.ADS_INLINE_COUNT'. A field with no description
+ * passes '' for $desc.
  *
  * Files beginning with "_" are skipped by the schema loader, so this is never treated as a group.
  */

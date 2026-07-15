@@ -13,7 +13,7 @@ class boardCreator {
 		private readonly boardService $boardService
 	) {}
 
-	public function createNewBoard(string $boardTitle, ?string $boardSubTitle, string $boardIdentifier, bool $boardListed, string $boardPath, userRole $currentRoleLevel): board|null {
+	public function createNewBoard(string $boardTitle, ?string $boardSubTitle, string $boardIdentifier, bool $boardListed, string $boardPath, userRole $currentRoleLevel, string $boardSubdomain = ''): board|null {
 		$templateConfig = getTemplateConfigArray();
 		$backendDirectory = getBackendDir();
 
@@ -22,7 +22,8 @@ class boardCreator {
 			'boardSubTitle' => $boardSubTitle,
 			'boardIdentifier' => $boardIdentifier,
 			'boardListed' => $boardListed,
-			'boardPath' => $boardPath
+			'boardPath' => $boardPath,
+			'boardSubdomain' => $boardSubdomain
 		];
 		
 		

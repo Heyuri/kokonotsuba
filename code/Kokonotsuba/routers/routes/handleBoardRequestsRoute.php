@@ -105,7 +105,9 @@ class handleBoardRequestsRoute {
 				'board_title' => $this->request->getParameter('edit-board-title', 'POST', false),
 				'board_sub_title' => $this->request->getParameter('edit-board-sub-title', 'POST', false),
 				'storage_directory_name' => $this->request->getParameter('edit-board-storage-dir', 'POST', false),
-				'listed' => $this->request->getParameter('edit-board-listed', 'POST', false)
+				'listed' => $this->request->getParameter('edit-board-listed', 'POST', false),
+				// Always sent by the form, and an empty value legitimately clears the subdomain.
+				'subdomain' => $this->request->getParameter('edit-board-subdomain', 'POST', '')
 			];
 
 			if (!file_exists(getBoardStoragesDir() . $fields['storage_directory_name'])) {
@@ -229,12 +231,13 @@ class handleBoardRequestsRoute {
 		$boardIdentifier = $this->request->getParameter('new-board-identifier', 'POST', '');
 		$boardListed = !empty($this->request->getParameter('new-board-listed', 'POST')) ? 1 : 0;
 		$boardPath = $this->request->getParameter('new-board-path', 'POST') ?? throw new BoardException("Board path wasn't set!");
-	
+		$boardSubdomain = $this->request->getParameter('new-board-subdomain', 'POST', '');
+
 		// Create an instance of the BoardCreator helper class
 		$boardCreator = new boardCreator($this->boardService);
-	
+
 		// Call the createNewBoard method in the BoardCreator class
-		$boardCreator->createNewBoard($boardTitle, $boardSubTitle, $boardIdentifier, $boardListed, $boardPath, getRoleLevelFromSession());
+		$boardCreator->createNewBoard($boardTitle, $boardSubTitle, $boardIdentifier, $boardListed, $boardPath, getRoleLevelFromSession(), $boardSubdomain);
 	}
 
 }

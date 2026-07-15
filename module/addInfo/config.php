@@ -12,7 +12,7 @@ return [
 	'_group'  => 'Appearance & pagination',
 	'_module' => 'Additional info',
 
-	'ADD_INFO' => arrayField('Additional info lines', [
+	'ADD_INFO' => arrayField('config_label_modules.addInfo.ADD_INFO', [
   0 => 'Read the <a href="//example.net/rules.html">rules</a> before you post.',
   1 => 'Read <a href="//example.net/faq.html">our FAQ</a> for any questions.',
   2 => 'Modify this by editing the additional-info setting.',

@@ -12,8 +12,8 @@ return [
 	'_group'  => 'Moderation',
 	'_module' => 'Soudane',
 
-	'ENABLE_YEAH' => boolField('Enable "yeah" votes', true, 'config_desc_modules.soudane.ENABLE_YEAH'),
-	'ENABLE_NOPE' => boolField('Enable "nope" votes', false, 'config_desc_modules.soudane.ENABLE_NOPE'),
-	'ENABLE_SCORE' => boolField('Enable score', false, 'config_desc_modules.soudane.ENABLE_SCORE'),
-	'SHOW_SCORE_ONLY' => boolField('Show score only', false, 'config_desc_modules.soudane.SHOW_SCORE_ONLY'),
+	'ENABLE_YEAH' => boolField('config_label_modules.soudane.ENABLE_YEAH', true, 'config_desc_modules.soudane.ENABLE_YEAH'),
+	'ENABLE_NOPE' => boolField('config_label_modules.soudane.ENABLE_NOPE', false, 'config_desc_modules.soudane.ENABLE_NOPE'),
+	'ENABLE_SCORE' => boolField('config_label_modules.soudane.ENABLE_SCORE', false, 'config_desc_modules.soudane.ENABLE_SCORE'),
+	'SHOW_SCORE_ONLY' => boolField('config_label_modules.soudane.SHOW_SCORE_ONLY', false, 'config_desc_modules.soudane.SHOW_SCORE_ONLY'),
 ];

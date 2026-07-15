@@ -52,6 +52,13 @@ interface IBoard {
 	public function getBoardIdentifier(): string;
 
 	/**
+	 * Get the subdomain the board is served from (e.g. "cgi"), or '' if it uses the site-wide host.
+	 *
+	 * @return string Board subdomain
+	 */
+	public function getBoardSubdomain(): string;
+
+	/**
 	 * Get the storage directory name of the board.
 	 *
 	 * @return string Directory name

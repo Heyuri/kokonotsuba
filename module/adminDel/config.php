@@ -12,6 +12,6 @@ return [
 	'_group'  => 'Moderation',
 	'_module' => 'Janitor / delete',
 
-	'JANIMUTE_LENGTH' => intField('Janitor mute length (min)', 20, 'config_desc_modules.adminDel.JANIMUTE_LENGTH'),
-	'JANIMUTE_REASON' => stringField('Janitor mute reason', 'You have been muted temporarily!', 'config_desc_modules.adminDel.JANIMUTE_REASON'),
+	'JANIMUTE_LENGTH' => intField('config_label_modules.adminDel.JANIMUTE_LENGTH', 20, 'config_desc_modules.adminDel.JANIMUTE_LENGTH'),
+	'JANIMUTE_REASON' => stringField('config_label_modules.adminDel.JANIMUTE_REASON', 'You have been muted temporarily!', 'config_desc_modules.adminDel.JANIMUTE_REASON'),
 ];

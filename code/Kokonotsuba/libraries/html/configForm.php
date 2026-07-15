@@ -53,10 +53,17 @@ function drawBoardConfigForm(templateEngine $tpl, configService $configService, 
  */
 function configFormMessages(): array {
 	return [
-		'{$MSG_NO_CHANGES}'   => sanitizeStr(_T('config_no_changes')),
-		'{$MSG_SAVE_FAILED}'  => sanitizeStr(_T('config_save_failed')),
-		'{$MSG_CONFIRM_SAVE}' => sanitizeStr(_T('config_confirm_save')),
-		'{$MSG_CONFIRM_MORE}' => sanitizeStr(_T('config_confirm_more')),
+		'{$MSG_NO_CHANGES}'     => sanitizeStr(_T('config_no_changes')),
+		'{$MSG_SAVE_FAILED}'    => sanitizeStr(_T('config_save_failed')),
+		'{$MSG_CONFIRM_SAVE}'   => sanitizeStr(_T('config_confirm_save')),
+		'{$MSG_CONFIRM_MORE}'   => sanitizeStr(_T('config_confirm_more')),
+		'{$MSG_CONFIRM_APPLY}'  => sanitizeStr(_T('config_confirm_apply')),
+		'{$MSG_CONFIRM_CANCEL}' => sanitizeStr(_T('config_confirm_cancel')),
+		'{$MSG_COL_SETTING}'    => sanitizeStr(_T('config_confirm_col_setting')),
+		'{$MSG_COL_FROM}'       => sanitizeStr(_T('config_confirm_col_from')),
+		'{$MSG_COL_TO}'         => sanitizeStr(_T('config_confirm_col_to')),
+		'{$MSG_EMPTY_VALUE}'    => sanitizeStr(_T('config_confirm_empty_value')),
+		'{$MSG_ENTRIES}'        => sanitizeStr(_T('config_confirm_entries')),
 	];
 }
 
@@ -163,9 +170,9 @@ function renderConfigGroups(templateEngine $tpl, array $values, array $inherited
 /**
  * Render a single field row (label cell + input cell) for the config form.
  *
- * A field's 'desc' is a language key (config_desc_{dot-path}); it is translated here, at render
- * time, rather than when the schema loads - the schema is loaded during bootstrap, before the
- * language loader is ready.
+ * A field's 'label' and 'desc' are language keys (config_label_{dot-path} / config_desc_{dot-path});
+ * they are translated here, at render time, rather than when the schema loads - the schema is
+ * loaded during bootstrap, before the language loader is ready.
  *
  * @param templateEngine $tpl       Admin template engine.
  * @param string         $dotpath   Config dot-path key.
@@ -187,7 +194,7 @@ function renderConfigFieldRow(templateEngine $tpl, string $dotpath, array $meta,
 	return $tpl->ParseBlock('CONFIG_ROW', [
 		'{$ROW_CLASS}'        => $isOverridden ? 'configRowOverridden' : '',
 		'{$FIELD_ID}'         => sanitizeStr($inputKey),
-		'{$FIELD_LABEL}'      => sanitizeStr($meta['label']),
+		'{$FIELD_LABEL}'      => sanitizeStr(_T($meta['label'])),
 		'{$FIELD_KEY}'        => sanitizeStr($dotpath),
 		'{$OVERRIDE_MARKER}'  => $isOverridden ? $tpl->ParseBlock('CONFIG_OVERRIDE_MARKER', []) : '',
 		'{$FIELD_INPUT}'      => renderConfigInput($tpl, $meta, $inputKey, $current),

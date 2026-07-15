@@ -12,6 +12,6 @@ return [
 	'_group'  => 'Overboard, ads & banners',
 	'_module' => 'Online counter',
 
-	'USER_COUNT_DAT_FILE' => stringField('Online counter data file', 'users.dat', 'config_desc_modules.onlineCounter.USER_COUNT_DAT_FILE'),
-	'USER_COUNT_TIMEOUT' => intField('Online counter timeout (min)', 10, 'config_desc_modules.onlineCounter.USER_COUNT_TIMEOUT'),
+	'USER_COUNT_DAT_FILE' => stringField('config_label_modules.onlineCounter.USER_COUNT_DAT_FILE', 'users.dat', 'config_desc_modules.onlineCounter.USER_COUNT_DAT_FILE'),
+	'USER_COUNT_TIMEOUT' => intField('config_label_modules.onlineCounter.USER_COUNT_TIMEOUT', 10, 'config_desc_modules.onlineCounter.USER_COUNT_TIMEOUT'),
 ];

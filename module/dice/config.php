@@ -12,8 +12,8 @@ return [
 	'_group'  => 'Posting',
 	'_module' => 'Dice',
 
-	'DICE_AMOUNT_LIMIT' => intField('Dice amount limit', 30, 'config_desc_modules.dice.DICE_AMOUNT_LIMIT'),
-	'DICE_FACE_LIMIT' => intField('Dice face limit', 9999, 'config_desc_modules.dice.DICE_FACE_LIMIT'),
-	'EMAIL_DICE_ROLL' => boolField('Dice via email field', false, 'config_desc_modules.dice.EMAIL_DICE_ROLL'),
-	'COMMENT_DICE_ROLL' => boolField('Dice via comment', true, 'config_desc_modules.dice.COMMENT_DICE_ROLL'),
+	'DICE_AMOUNT_LIMIT' => intField('config_label_modules.dice.DICE_AMOUNT_LIMIT', 30, 'config_desc_modules.dice.DICE_AMOUNT_LIMIT'),
+	'DICE_FACE_LIMIT' => intField('config_label_modules.dice.DICE_FACE_LIMIT', 9999, 'config_desc_modules.dice.DICE_FACE_LIMIT'),
+	'EMAIL_DICE_ROLL' => boolField('config_label_modules.dice.EMAIL_DICE_ROLL', false, 'config_desc_modules.dice.EMAIL_DICE_ROLL'),
+	'COMMENT_DICE_ROLL' => boolField('config_label_modules.dice.COMMENT_DICE_ROLL', true, 'config_desc_modules.dice.COMMENT_DICE_ROLL'),
 ];

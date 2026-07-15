@@ -12,5 +12,5 @@ return [
 	'_group'  => 'Moderation',
 	'_module' => 'Perceptual ban',
 
-	'HAMMING_THRESHOLD' => intField('Hamming threshold', 10, 'config_desc_modules.perceptualBan.HAMMING_THRESHOLD'),
+	'HAMMING_THRESHOLD' => intField('config_label_modules.perceptualBan.HAMMING_THRESHOLD', 10, 'config_desc_modules.perceptualBan.HAMMING_THRESHOLD'),
 ];

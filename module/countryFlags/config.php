@@ -12,5 +12,5 @@ return [
 	'_group'  => 'Content & formatting',
 	'_module' => 'Country flags',
 
-	'FLAG_MODE' => intField('Country flag mode', 1, 'config_desc_modules.countryFlags.FLAG_MODE'),
+	'FLAG_MODE' => intField('config_label_modules.countryFlags.FLAG_MODE', 1, 'config_desc_modules.countryFlags.FLAG_MODE'),
 ];

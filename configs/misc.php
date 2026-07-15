@@ -11,17 +11,17 @@ use function Kokonotsuba\config\fields\{boolField, intField, stringField, arrayF
 return [
 	'_group' => 'Miscellaneous',
 
-	'TIME_ZONE'                 => stringField('Time zone', '0', 'config_desc_TIME_ZONE'),
-	'TRUST_HTTP_X_FORWARDED_FOR'=> boolField('Trust X-Forwarded-For', false, 'config_desc_TRUST_HTTP_X_FORWARDED_FOR'),
+	'TIME_ZONE'                 => stringField('config_label_TIME_ZONE', '0', 'config_desc_TIME_ZONE'),
+	'TRUST_HTTP_X_FORWARDED_FOR'=> boolField('config_label_TRUST_HTTP_X_FORWARDED_FOR', false, 'config_desc_TRUST_HTTP_X_FORWARDED_FOR'),
 
-	'DISCORD_WH' => stringField('Discord webhook', '', 'config_desc_DISCORD_WH'),
-	'IRC_WH'     => stringField('IRC webhook', '', 'config_desc_IRC_WH'),
+	'DISCORD_WH' => stringField('config_label_DISCORD_WH', '', 'config_desc_DISCORD_WH'),
+	'IRC_WH'     => stringField('config_label_IRC_WH', '', 'config_desc_IRC_WH'),
 
-	'ACTIONLOG_MAX_PER_PAGE' => intField('Action log per page', 50, 'config_desc_ACTIONLOG_MAX_PER_PAGE'),
-	'STAFF_LOGIN_TIMEOUT'    => intField('Staff login timeout (s)', 86400, 'config_desc_STAFF_LOGIN_TIMEOUT'),
-	'SYSTEMCHAN_NAME'        => stringField('System user name', 'System-chan', 'config_desc_SYSTEMCHAN_NAME'),
+	'ACTIONLOG_MAX_PER_PAGE' => intField('config_label_ACTIONLOG_MAX_PER_PAGE', 50, 'config_desc_ACTIONLOG_MAX_PER_PAGE'),
+	'STAFF_LOGIN_TIMEOUT'    => intField('config_label_STAFF_LOGIN_TIMEOUT', 86400, 'config_desc_STAFF_LOGIN_TIMEOUT'),
+	'SYSTEMCHAN_NAME'        => stringField('config_label_SYSTEMCHAN_NAME', 'System-chan', 'config_desc_SYSTEMCHAN_NAME'),
 
-	'FORTUNES' => arrayField('Fortunes', [
+	'FORTUNES' => arrayField('config_label_FORTUNES', [
 		'Your true waifu will reveal herself',
 		'Only time will tell',
 		'Dark times are to come',

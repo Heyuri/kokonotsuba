@@ -29,6 +29,10 @@
 				<td><div id="board-storage-dir">{$BOARD_STORAGE_DIR}</div></td>
 			</tr>
 			<tr>
+				<td class="postblock"><label for="board-subdomain">Subdomain</label></td>
+				<td><div id="board-subdomain">{$BOARD_SUBDOMAIN}</div></td>
+			</tr>
+			<tr>
 				<td class="postblock"><label for="board-url">URL</label></td>
 				<td><div id="board-url"><a href="{$BOARD_URL}">{$BOARD_URL}</a></div></td>
 			</tr>
