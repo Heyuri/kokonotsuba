@@ -64,6 +64,10 @@ function configFormMessages(): array {
 		'{$MSG_COL_TO}'         => sanitizeStr(_T('config_confirm_col_to')),
 		'{$MSG_EMPTY_VALUE}'    => sanitizeStr(_T('config_confirm_empty_value')),
 		'{$MSG_ENTRIES}'        => sanitizeStr(_T('config_confirm_entries')),
+		'{$MSG_ENTRIES_UNCHANGED}' => sanitizeStr(_T('config_confirm_entries_unchanged')),
+		'{$MSG_DISCARD}'         => sanitizeStr(_T('config_discard')),
+		'{$MSG_DISCARD_CONFIRM}' => sanitizeStr(_T('config_discard_confirm')),
+		'{$MSG_DISCARDED}'       => sanitizeStr(_T('config_discarded')),
 	];
 }
 

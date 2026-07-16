@@ -1147,11 +1147,33 @@ a.linkjs {
 .configChangesTable .configChangeKey { width: 34%; font-family: monospace; }
 
 /* A list setting is shown one entry per line instead of as raw JSON. Only the edited elements
-   are spelled out; each run of unedited ones collapses to a muted "...N more..." line. */
-.configChangeEntries { list-style: none; margin: 0; padding: 0; }
-.configChangeEntries li { padding: 0; }
-.configChangeEntries li.configChangeEdited { font-weight: bold; white-space: pre-wrap; }
-.configChangeEntries li.configChangeMore { opacity: 0.6; font-size: 0.9em; font-style: italic; }
+   are spelled out; each run of unedited ones collapses to a muted "...N more..." line.
+
+   Entries keep a real list marker and hanging indent: an entry can wrap over several lines, and
+   without the marker the entries run together into a block of text instead of reading as a list. */
+.configChangeEntries { list-style: disc; margin: 0; padding-left: 1.25em; }
+.configChangeEntries li { padding: 0; margin: 0; }
+.configChangeEntries li.configChangeEdited { white-space: pre-wrap; }
+
+/* The run of text that actually differs, inside an edited entry. An entry is cut around this, so
+   it is always on screen; the surrounding unchanged context is plain, and a leading/trailing … marks
+   where text was cut away. Removed text is struck through, added text is not. */
+.configChangeDelta { font-weight: bold; border-radius: 2px; padding: 0 1px; }
+.configChangeFrom .configChangeDelta {
+	background-color: rgba(220, 70, 70, 0.35);
+	text-decoration: line-through;
+}
+.configChangeTo .configChangeDelta {
+	background-color: rgba(70, 180, 90, 0.35);
+}
+/* The collapsed-run summaries are notes about the list, not entries in it, so they get no marker. */
+.configChangeEntries li.configChangeMore {
+	list-style: none;
+	margin-left: -1.25em;
+	opacity: 0.6;
+	font-size: 0.9em;
+	font-style: italic;
+}
 .configChangeCount { opacity: 0.7; font-size: 0.9em; }
 .configChangeEmpty { opacity: 0.7; font-style: italic; }
 .configChangeText { white-space: pre-wrap; }

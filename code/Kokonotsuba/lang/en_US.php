@@ -357,6 +357,11 @@ $language['config_confirm_col_to'] = 'New';
 $language['config_confirm_empty_value'] = '(empty)';
 // {count} is substituted by the editor's JS - not a sprintf placeholder (see config_confirm_more).
 $language['config_confirm_entries'] = '{count} entries';
+$language['config_confirm_entries_unchanged'] = '{count} entries, none changed';
+$language['config_discard'] = 'Discard changes';
+// {count} is substituted by the editor's JS - not a sprintf placeholder (see config_confirm_more).
+$language['config_discard_confirm'] = 'Discard your unsaved changes to {count} setting(s)? The saved configuration is not touched.';
+$language['config_discarded'] = 'Unsaved changes discarded.';
 // {count} is substituted by the editor's JS, so it must not be a sprintf placeholder: _T() runs
 // every string through sprintf, and a bare %s here would throw when translated with no arguments.
 $language['config_confirm_more'] = '...and {count} more.';

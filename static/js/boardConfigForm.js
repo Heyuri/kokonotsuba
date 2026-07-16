@@ -37,30 +37,74 @@
 		editor.querySelector('.configArrayJson').value = JSON.stringify(out);
 	}
 
-	function addRow(editor){
-		var map = editor.dataset.mode === 'map';
+	// One editable entry row, matching what CONFIG_ARRAY_ROW.tpl renders server-side.
+	function createArrayRow(isMap, key, value){
 		var li = document.createElement('li');
 		li.className = 'configArrayRow';
-		if (map){
-			var nk = editor.querySelector('.configArrayNewKey');
+
+		if (isMap){
 			var ki = document.createElement('input');
-			ki.type = 'text'; ki.className = 'configArrayKey';
-			ki.value = nk ? nk.value : '';
+			ki.type = 'text'; ki.className = 'configArrayKey'; ki.value = key;
 			li.appendChild(ki);
-			if (nk) nk.value = '';
 		}
-		var nv = editor.querySelector('.configArrayNewValue');
+
 		var vi = document.createElement('input');
-		vi.type = 'text'; vi.className = 'configArrayValue';
-		vi.value = nv ? nv.value : '';
+		vi.type = 'text'; vi.className = 'configArrayValue'; vi.value = value;
 		li.appendChild(vi);
-		if (nv) nv.value = '';
+
 		var rm = document.createElement('button');
 		rm.type = 'button'; rm.className = 'configArrayRemove'; rm.textContent = 'x'; rm.title = 'Delete entry';
 		li.appendChild(rm);
-		editor.querySelector('.configArrayList').appendChild(li);
+
+		return li;
+	}
+
+	function addRow(editor){
+		var map = editor.dataset.mode === 'map';
+		var nk = editor.querySelector('.configArrayNewKey');
+		var nv = editor.querySelector('.configArrayNewValue');
+
+		editor.querySelector('.configArrayList').appendChild(
+			createArrayRow(map, nk ? nk.value : '', nv ? nv.value : '')
+		);
+
+		if (nk) nk.value = '';
+		if (nv) nv.value = '';
+
 		serialize(editor);
 		markDirty();
+	}
+
+	// Rebuild an editor's rows from a JSON value. A native form reset restores the hidden JSON input
+	// but knows nothing about the rows JS built from it, so they have to be re-rendered by hand.
+	function rebuildArrayEditor(editor, json){
+		var map = editor.dataset.mode === 'map';
+		var list = editor.querySelector('.configArrayList');
+		var parsed;
+
+		try {
+			parsed = JSON.parse(json);
+		} catch (err){
+			parsed = map ? {} : [];
+		}
+
+		list.textContent = '';
+
+		if (map && parsed && typeof parsed === 'object' && !Array.isArray(parsed)){
+			Object.keys(parsed).forEach(function(k){
+				list.appendChild(createArrayRow(true, k, String(parsed[k])));
+			});
+		} else if (Array.isArray(parsed)){
+			parsed.forEach(function(v){
+				list.appendChild(createArrayRow(false, '', String(v)));
+			});
+		}
+
+		// A half-typed entry in the add row is an unsaved edit too, so it goes as well.
+		var nk = editor.querySelector('.configArrayNewKey');
+		var nv = editor.querySelector('.configArrayNewValue');
+		if (nk) nk.value = '';
+		if (nv) nv.value = '';
 	}
 
 	form.addEventListener('click', function(e){
@@ -134,12 +178,25 @@
 		return key ? key.textContent.trim() : field.name;
 	}
 
-	// How long a single plain-text value may run before it is cut. List *entries* are never cut:
-	// the point of the list view is to show exactly which elements changed.
-	var TEXT_LIMIT = 300;
+	// Values are never cut - not a plain value, not a list entry. What the window shows is exactly
+	// what will be written, so any cut risks hiding part of the edit; the window scrolls instead.
+	// (Runs of *unedited* list entries are still collapsed to a "...N more..." line - that omits
+	// whole untouched entries, it does not shorten a value.)
 
-	function truncate(text, limit){
-		return text.length > limit ? text.slice(0, limit - 3) + '...' : text;
+	// Where two strings start and stop agreeing, so the run that actually changed can be marked
+	// inside an entry.
+	function commonPrefixLength(a, b){
+		var max = Math.min(a.length, b.length);
+		var i = 0;
+		while (i < max && a.charAt(i) === b.charAt(i)) i++;
+		return i;
+	}
+
+	function commonSuffixLength(a, b, prefixLength){
+		var max = Math.min(a.length, b.length) - prefixLength;
+		var i = 0;
+		while (i < max && a.charAt(a.length - 1 - i) === b.charAt(b.length - 1 - i)) i++;
+		return i;
 	}
 
 	function moreText(count){
@@ -192,15 +249,57 @@
 		return edited;
 	}
 
-	// Render one side of a list change: every edited element in full, and each run of unedited
-	// elements between them collapsed to a single "...N more..." line, so a last-and-3rd-last edit
-	// shows both of those with the element between them (and everything before) left truncated.
-	function listSideNode(value, editedIds){
+	// Fill an edited entry's <li> with its full text, the run that differs from the counterpart entry
+	// wrapped in a marker so it stands out. The entry is never cut: it is the thing being confirmed,
+	// and any cut risks hiding part of the edit.
+	function fillEntry(li, text, counterpart){
+		// No counterpart: the element was added or removed outright, so all of it is the change.
+		if (typeof counterpart !== 'string'){
+			li.appendChild(el('span', 'configChangeDelta', text));
+			return;
+		}
+
+		var prefix = commonPrefixLength(text, counterpart);
+		var suffix = commonSuffixLength(text, counterpart, prefix);
+
+		var before = text.slice(0, prefix);
+		var changed = text.slice(prefix, text.length - suffix);
+		var after = text.slice(text.length - suffix);
+
+		if (before !== ''){
+			li.appendChild(document.createTextNode(before));
+		}
+
+		// Empty only if this side is a pure insertion/deletion at one end; the marker would then be
+		// invisible, so the counterpart's marked run carries the meaning.
+		if (changed !== ''){
+			li.appendChild(el('span', 'configChangeDelta', changed));
+		}
+
+		if (after !== ''){
+			li.appendChild(document.createTextNode(after));
+		}
+	}
+
+	// Render one side of a list change: every edited element (cut around its change), and each run of
+	// unedited elements between them collapsed to a single "...N more..." line - so a last-and-3rd-last
+	// edit shows both of those with the element between them (and everything before) left truncated.
+	function listSideNode(value, editedIds, counterpartById){
 		var wrap = el('div', 'configChangeValue');
 		var entries = listEntries(value);
 
 		if (entries.length === 0){
 			wrap.appendChild(el('span', 'configChangeEmpty', form.dataset.msgEmpty || '(empty)'));
+			return wrap;
+		}
+
+		// Nothing on this side is edited - the other side gained or lost an element, so every entry
+		// here is unchanged. Collapsing them would print "...and 18 more." above "18 entries": the
+		// same fact twice, with nothing shown. Say it once instead.
+		var hasEdits = entries.some(function(entry){ return editedIds.has(entry.id); });
+		if (!hasEdits){
+			var unchanged = form.dataset.msgEntriesUnchanged || '{count} entries, none changed';
+			wrap.appendChild(el('div', 'configChangeCount', unchanged.replace('{count}', entries.length)));
 			return wrap;
 		}
 
@@ -217,7 +316,9 @@
 		entries.forEach(function(entry){
 			if (editedIds.has(entry.id)){
 				flushHidden();
-				ul.appendChild(el('li', 'configChangeEdited', entry.text));
+				var li = el('li', 'configChangeEdited');
+				fillEntry(li, entry.text, counterpartById.get(entry.id));
+				ul.appendChild(li);
 			} else {
 				hiddenRun++;
 			}
@@ -232,12 +333,19 @@
 		return wrap;
 	}
 
+	/** id => entry text, so each side can diff an entry against its counterpart. */
+	function entryTextById(value){
+		var map = new Map();
+		listEntries(value).forEach(function(entry){ map.set(entry.id, entry.text); });
+		return map;
+	}
+
 	// A plain (non-list) value, cut if very long.
 	function scalarNode(raw){
 		if (raw === ''){
 			return el('span', 'configChangeEmpty', form.dataset.msgEmpty || '(empty)');
 		}
-		return el('span', 'configChangeText', truncate(raw, TEXT_LIMIT));
+		return el('span', 'configChangeText', raw);
 	}
 
 	// The before/after cell contents for one change. When both sides are lists of the same kind
@@ -250,12 +358,19 @@
 
 		if (sameKind){
 			var editedIds = editedListIds(fromList, toList);
-			return { fromNode: listSideNode(fromList, editedIds), toNode: listSideNode(toList, editedIds) };
+			return {
+				fromNode: listSideNode(fromList, editedIds, entryTextById(toList)),
+				toNode:   listSideNode(toList, editedIds, entryTextById(fromList))
+			};
 		}
 
+		// A list against a non-list (or a value that stopped parsing): there is nothing to align on,
+		// so each side just renders itself, with every element counted as changed.
+		var allIds = function(list){ return new Set(listEntries(list).map(function(e){ return e.id; })); };
+
 		return {
-			fromNode: fromList ? listSideNode(fromList, editedListIds(fromList, fromList)) : scalarNode(from),
-			toNode:   toList   ? listSideNode(toList, editedListIds(toList, toList))       : scalarNode(to)
+			fromNode: fromList ? listSideNode(fromList, allIds(fromList), new Map()) : scalarNode(from),
+			toNode:   toList   ? listSideNode(toList, allIds(toList), new Map())     : scalarNode(to)
 		};
 	}
 
@@ -512,6 +627,67 @@
 				submitter.disabled = false;
 			});
 	}
+
+	/* ── Discarding unsaved edits ─────────────────────────────────────────────────────────────
+	 * Put every field back to the last saved state, touching nothing on the server. Distinct from
+	 * the "Reset to defaults" button beside it, which deletes the scope's stored overrides.
+	 *
+	 * The button is a native <button type="reset">, so with no JS the browser still restores the
+	 * form to the values it was served with - which without JS is always the saved state, since a
+	 * save there is a POST and a fresh page. With JS the saved state can have moved on (an AJAX
+	 * save re-snapshots without touching the DOM's default values), so the baseline map is the
+	 * authority and the native reset is finished off by hand below.
+	 */
+	function restoreBaseline(){
+		configFields().forEach(function(field){
+			var was = baseline.get(field.name);
+			if (was === undefined) return;
+
+			if (field.type === 'checkbox'){
+				field.checked = (was === 'on');
+			} else {
+				field.value = was;
+			}
+		});
+
+		// The hidden JSON inputs are back to their baseline now, so the rows can be rebuilt from them.
+		form.querySelectorAll('.configArrayEditor').forEach(function(editor){
+			var json = editor.querySelector('.configArrayJson');
+			if (json) rebuildArrayEditor(editor, json.value);
+		});
+
+		form.classList.remove('configFormDirty');   // nothing outstanding, so unstick save
+		if (changesWindow) changesWindow.win.remove();
+	}
+
+	var discardButton = document.getElementById('boardConfigDiscardButton');
+	if (discardButton){
+		discardButton.addEventListener('click', function(e){
+			form.querySelectorAll('.configArrayEditor').forEach(serialize);
+
+			var changes = collectChanges();
+			if (changes.length === 0){
+				e.preventDefault();
+				notify(form.dataset.msgNoChanges || 'No changes to save.', false);
+				return;
+			}
+
+			var question = form.dataset.msgDiscardConfirm || 'Discard your unsaved changes to {count} setting(s)?';
+			if (!window.confirm(question.replace('{count}', changes.length))){
+				e.preventDefault();
+			}
+			// Confirmed: let the native reset run, then the reset handler finishes the job.
+		});
+	}
+
+	// Fires for the Discard button (and any native reset). The controls are only restored after this
+	// event, so the fix-up is deferred to the next tick.
+	form.addEventListener('reset', function(){
+		setTimeout(function(){
+			restoreBaseline();
+			notify(form.dataset.msgDiscarded || 'Unsaved changes discarded.', true);
+		}, 0);
+	});
 
 	snapshot();
 
