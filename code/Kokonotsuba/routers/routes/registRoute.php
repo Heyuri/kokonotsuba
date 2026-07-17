@@ -854,7 +854,7 @@ class registRoute {
 				'',
 				'',
 				$replyCount,
-				true,
+				false,
 				''
 			);
 		}

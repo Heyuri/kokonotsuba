@@ -117,7 +117,7 @@ class postRenderer {
 		);
 
 		// Dispatch module events and finalize post menu
-		$this->dispatchPostModuleEvents($templateValues, $data, $post, $threadPosts, $adminMode, $isThreadOp, $isThreadReply);
+		$this->dispatchPostModuleEvents($templateValues, $data, $post, $threadPosts, $adminMode, $isThreadOp, $isThreadReply, $threadMode);
 		$this->finalizePostWidgets($templateValues, $post, $threadPosts, $isThreadOp, $isThreadReply, $widgetDataHtml);
 		
 		// Return rendered HTML
@@ -295,14 +295,20 @@ class postRenderer {
 		];
 	}
 
-	private function dispatchPostModuleEvents(array &$templateValues, $data, Post $post, array $threadPosts, bool $adminMode, bool $isThreadOp, bool $isThreadReply): void {
+	private function dispatchPostModuleEvents(array &$templateValues, $data, Post $post, array $threadPosts, bool $adminMode, bool $isThreadOp, bool $isThreadReply, bool $threadMode = true): void {
 		$board = $this->board;
 		$this->moduleEngine->dispatch('Post', [
 			&$templateValues, &$data, &$threadPosts, &$board, &$adminMode,
 		]);
 
+		// The third arg tells listeners whether this render is inside a single
+		// thread's full view (thread page, or an AJAX reply insertion) rather than
+		// an index/overboard listing. $threadMode is true only for index listings,
+		// so its negation is the "thread view" flag. The comment truncator uses it
+		// to skip truncation inside threads.
+		$isThreadView = !$threadMode;
 		$this->moduleEngine->dispatch('PostComment', [
-			&$templateValues['{$COM}'], &$data
+			&$templateValues['{$COM}'], &$data, $isThreadView
 		]);
 
 		$templateValues['{$BELOW_COMMENT}'] = '';

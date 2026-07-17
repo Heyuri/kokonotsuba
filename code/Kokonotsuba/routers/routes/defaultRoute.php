@@ -127,8 +127,11 @@ class defaultRoute {
 			$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
 
 			// get the page of the post based on its true position within the thread
-			// (objective_position, not the drift-prone stored post_position column)
-			$postPosition = $post->getObjectivePosition();
+			// (objective position among visible replies, not the drift-prone stored
+			// post_position column which is inaccurate after deletions)
+			$viewDeleted = $this->postRenderingPolicy->viewDeleted();
+			$positions = $this->threadRepository->getObjectivePositions([$post->getThreadUid()], $viewDeleted);
+			$postPosition = $positions[$post->getUid()] ?? 0;
 			$page = getPageForPostPosition($postPosition, $repliesPerPage);
 
 			// Otherwise, redirect to the correct thread page and scroll to post

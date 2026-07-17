@@ -386,7 +386,7 @@ const kktwch = { name: "KK Thread watcher",
 					opPost = document.querySelector('.post.op');
 				}
 				if (opPost) {
-					var threadUid = opPost.getAttribute('data-thread-uid');
+					var threadUid = kktwch.threadUidOfElement(opPost);
 					if (threadUid) {
 						var watched = kktwch.getWatchedThreads();
 						if (!watched[threadUid]) {
@@ -410,10 +410,7 @@ const kktwch = { name: "KK Thread watcher",
 			}
 
 			// Reply: watch immediately
-			var opPost = document.querySelector('.post.op');
-			if (!opPost) return;
-
-			var threadUid = opPost.getAttribute('data-thread-uid');
+			var threadUid = kktwch.currentThreadUid();
 			if (!threadUid) return;
 
 			var watched = kktwch.getWatchedThreads();
@@ -458,15 +455,12 @@ const kktwch = { name: "KK Thread watcher",
 	_indexSeenThreads: {},
 
 	initViewportTracking: function () {
-		// Only run on thread pages (where a resto input exists)
-		var restoInput = document.querySelector('input[name="resto"]');
-		if (!restoInput || !restoInput.value) return;
+		// Only run on thread pages
+		var threadUid = kktwch.currentThreadUid();
+		if (!threadUid) return;
 
 		var opPost = document.querySelector('.post.op');
 		if (!opPost) return;
-
-		var threadUid = opPost.getAttribute('data-thread-uid');
-		if (!threadUid) return;
 
 		var watched = kktwch.getWatchedThreads();
 		if (!watched[threadUid]) return;
@@ -561,8 +555,7 @@ const kktwch = { name: "KK Thread watcher",
 	// the fold keeps notifying for new replies until the user scrolls to it.
 	initIndexViewportTracking: function () {
 		// Thread pages track individual posts instead (see initViewportTracking).
-		var restoInput = document.querySelector('input[name="resto"]');
-		if (restoInput && restoInput.value) return;
+		if (kktwch.onThreadPage()) return;
 
 		kktwch._indexSeenThreads = {};
 		kktwch._indexObservedEls = ('WeakSet' in window) ? new WeakSet() : null;
@@ -625,8 +618,10 @@ const kktwch = { name: "KK Thread watcher",
 	},
 
 	threadUidOfElement: function (el) {
+		if (!el) return null;
 		return el.getAttribute('data-thread-uid') ||
-			(el.querySelector('.post.op[data-thread-uid]')?.getAttribute('data-thread-uid')) || null;
+			(el.querySelector('.post.op[data-thread-uid]')?.getAttribute('data-thread-uid')) ||
+			(el.closest('.thread')?.getAttribute('data-thread-uid')) || null;
 	},
 
 	// Observe every not-yet-observed post in the tracked thread. Idempotent: posts are
@@ -994,8 +989,7 @@ const kktwch = { name: "KK Thread watcher",
 	 */
 	markVisibleThreadsAsRead: function () {
 		// Only run on index/overboard pages
-		var restoInput = document.querySelector('input[name="resto"]');
-		if (restoInput && restoInput.value) return false;
+		if (kktwch.onThreadPage()) return false;
 
 		var watched = kktwch.getWatchedThreads();
 		var keys = Object.keys(watched);
@@ -1050,6 +1044,25 @@ const kktwch = { name: "KK Thread watcher",
 		// Not yet seeded (just watched): nothing is unread until the first poll.
 		if (entry.lastSeenCount === null || entry.lastSeenCount === undefined) return 0;
 		return Math.max(0, (entry.postCount || 0) - entry.lastSeenCount);
+	},
+
+	// True while viewing a single thread's page (the reply form carries a filled-in resto input).
+	onThreadPage: function () {
+		var restoInput = document.querySelector('input[name="resto"]');
+		return !!(restoInput && restoInput.value);
+	},
+
+	// UID of the thread whose page we're currently viewing, or null on the index/overboard.
+	currentThreadUid: function () {
+		if (!kktwch.onThreadPage()) return null;
+		return kktwch.threadUidOfElement(document.querySelector('.post.op'));
+	},
+
+	// Unread count as shown in the UI. Unread badges only appear on the index/overboard, so
+	// while viewing a thread there's nothing to show.
+	getDisplayUnreadCount: function (entry) {
+		if (kktwch.onThreadPage()) return 0;
+		return kktwch.getUnreadCount(entry);
 	},
 
 	// Build the watch-list link target. When the thread has unread replies and the
@@ -1471,7 +1484,7 @@ const kktwch = { name: "KK Thread watcher",
 
 		keys.forEach(function (threadUid) {
 			var entry = watched[threadUid];
-			var unread = kktwch.getUnreadCount(entry);
+			var unread = kktwch.getDisplayUnreadCount(entry);
 			var hasUnread = unread > 0;
 			var hasQuote = kktwch.hasUnreadQuote(entry);
 
@@ -1537,7 +1550,7 @@ const kktwch = { name: "KK Thread watcher",
 		var total = 0;
 		var anyQuote = false;
 		Object.keys(watched).forEach(function (uid) {
-			total += kktwch.getUnreadCount(watched[uid]);
+			total += kktwch.getDisplayUnreadCount(watched[uid]);
 			if (kktwch.hasUnreadQuote(watched[uid])) anyQuote = true;
 		});
 
