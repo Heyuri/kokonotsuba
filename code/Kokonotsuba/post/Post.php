@@ -45,6 +45,8 @@ class Post implements JsonSerializable {
 		return (int)($this->data['objective_position'] ?? $this->data['post_position'] ?? 0);
 	}
 
+	public function setObjectivePosition(int $position): void { $this->data['objective_position'] = $position; }
+
 	// Content
 	public function getName(): string { return (string)($this->data['name'] ?? ''); }
 	public function getTripcode(): string { return (string)($this->data['tripcode'] ?? ''); }
