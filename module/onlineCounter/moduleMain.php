@@ -24,7 +24,10 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->timeout = $this->getModuleConfig('USER_COUNT_TIMEOUT');
+		// Clamp to at least 1 minute: this value is emitted as data-timeout and drives the
+		// client's poll interval, where 0/empty would become a zero-delay fetch loop. An old
+		// stored override can still be 0, so the schema min alone isn't enough.
+		$this->timeout = max(1, (int)$this->getModuleConfig('USER_COUNT_TIMEOUT', 10));
 		
 		$this->staticUrl = $this->getConfig('STATIC_URL');
 		
@@ -34,7 +37,7 @@ class moduleMain extends abstractModuleMain {
 
 		$this->listenPostMenuList('onRenderPostMenuList');
 
-		$this->registerScript('onlineCounterUpdater.js?v=1');
+		$this->registerScript('onlineCounterUpdater.js?v=2');
 	}
 
 	/**

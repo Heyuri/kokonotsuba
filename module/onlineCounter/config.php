@@ -13,5 +13,7 @@ return [
 	'_module' => 'Online counter',
 
 	'USER_COUNT_DAT_FILE' => stringField('config_label_modules.onlineCounter.USER_COUNT_DAT_FILE', 'users.dat', 'config_desc_modules.onlineCounter.USER_COUNT_DAT_FILE'),
-	'USER_COUNT_TIMEOUT' => intField('config_label_modules.onlineCounter.USER_COUNT_TIMEOUT', 10, 'config_desc_modules.onlineCounter.USER_COUNT_TIMEOUT'),
+	// min 1: a 0 timeout renders data-timeout="0", which the updater JS would turn into a
+	// zero-delay poll loop (see onlineCounterUpdater.js).
+	'USER_COUNT_TIMEOUT' => intField('config_label_modules.onlineCounter.USER_COUNT_TIMEOUT', 10, 'config_desc_modules.onlineCounter.USER_COUNT_TIMEOUT', min: 1),
 ];
