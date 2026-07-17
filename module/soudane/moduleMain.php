@@ -152,7 +152,7 @@ class moduleMain extends abstractModuleMain {
 		// generate the soudane js <script> include
 		// Not deferred: the "Enable soudane" toggle runs in <head> and hides the
 		// vote HTML before posts paint, so toggling is seamless.
-		$this->includeScript('soudane.js?v=2', $moduleHeader, false);
+		$this->includeScript('soudane.js?v=3', $moduleHeader, false);
 
 		// now build a meta tag to store the API endpoint for fetching votes
 		$moduleHeader .= '<meta name="soudaneUrl" content="' . $this->getModulePageURL(['modPage' => 'soudaneApi']) . '">';

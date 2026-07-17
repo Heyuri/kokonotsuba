@@ -70,6 +70,9 @@
 
 	checkAndNotify();
 	// Keep polling even when the tab is hidden/unfocused: PM notifications are
-	// specifically meant to fire while the user is away from the page.
-	setInterval(checkAndNotify, 60000);
+	// specifically meant to fire while the user is away from the page. Skip ticks
+	// while the network is down — the fetch could only fail.
+	setInterval(function () {
+		if (navigator.onLine !== false) checkAndNotify();
+	}, 60000);
 })();

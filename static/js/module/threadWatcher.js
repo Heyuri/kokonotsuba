@@ -736,6 +736,10 @@ const kktwch = { name: "KK Thread watcher",
 		// Nothing to do if not watching anything and new-thread alerts are off.
 		if (!threadUids.length && !wantNewThreads) return;
 
+		// Offline (e.g. the connection dropped overnight): the fetch can only fail, so
+		// don't fire it. Polling resumes as soon as the browser reports the network back.
+		if (navigator.onLine === false) return;
+
 		// Never run two polls at once in this tab; the in-flight one will finish first.
 		if (kktwch._pollInProgress) return;
 

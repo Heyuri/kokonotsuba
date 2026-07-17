@@ -27,8 +27,8 @@ const kkUserUpdate = {  name: "KK online user updating",
 		if (!Number.isFinite(this.minutes) || this.minutes < 1) this.minutes = 10;
 		const milliseconds = this.minutes * 60 * 1000;
 		this.intervalId = setInterval(() => {
-			// don't poll while the tab is hidden
-			if (!document.hidden) this.reloadElement();
+			// don't poll while the tab is hidden or the network is down
+			if (!document.hidden && navigator.onLine !== false) this.reloadElement();
 		}, milliseconds);
 	},
 

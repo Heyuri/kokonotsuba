@@ -65,6 +65,30 @@
 		return data;
 	}
 
+	/* Rapid-fire circuit breaker (mirror of the one in kkStore, koko.js).
+	 *
+	 * No key legitimately changes more than a few times a second. If writes or relays for
+	 * a key arrive at a sustained rapid rate — a feedback loop between tabs, a stuck
+	 * writer — drop them for a cooldown instead of amplifying the flood to every other
+	 * tab. Store state may go briefly stale; the next genuine change re-syncs it. */
+	var FLOOD_WINDOW_MS = 2000;
+	var FLOOD_LIMIT = 25;
+	var FLOOD_COOLDOWN_MS = 10000;
+	var floodCounts = Object.create(null);
+
+	function floodGuard(dirKey) {
+		var now = Date.now();
+		var f = floodCounts[dirKey];
+		if (!f) { f = floodCounts[dirKey] = { count: 0, windowStart: now, blockedUntil: 0 }; }
+		if (now < f.blockedUntil) return true;
+		if (now - f.windowStart > FLOOD_WINDOW_MS) { f.windowStart = now; f.count = 0; }
+		if (++f.count > FLOOD_LIMIT) {
+			f.blockedUntil = now + FLOOD_COOLDOWN_MS;
+			return true;
+		}
+		return false;
+	}
+
 	window.addEventListener('message', function (e) {
 		if (!allowedOrigin(e.origin)) return;
 		var d = e.data;
@@ -83,32 +107,59 @@
 
 			case 'set':
 				if (typeof d.key === 'string' && sharedKeys[d.key]) {
-					try { localStorage.setItem(d.key, String(d.value)); } catch (err) {}
+					try {
+						var next = String(d.value);
+						// A no-op write can't inform anyone of anything; skipping it also
+						// guarantees no storage event fires for it anywhere.
+						if (localStorage.getItem(d.key) === next) break;
+						if (floodGuard('set:' + d.key)) break;
+						localStorage.setItem(d.key, next);
+						// Confirm the write back to its own writer. Storage events don't
+						// fire in the writing context, so without this the writer is the
+						// one tab that never hears where its write landed in the hub's
+						// order — racing writes from several tabs then leave its mirror
+						// pinned on a stale value (and a stale poll-lock mirror makes
+						// every tab poll and collide again on every cycle, forever). With
+						// it, every tab receives the same ordered change stream and
+						// converges; the writer's kkStore recognizes the echo.
+						relayToParent(d.key, next);
+					} catch (err) {}
 				}
 				break;
 
 			case 'remove':
 				if (typeof d.key === 'string' && sharedKeys[d.key]) {
-					try { localStorage.removeItem(d.key); } catch (err) {}
+					try {
+						if (localStorage.getItem(d.key) === null) break;
+						if (floodGuard('set:' + d.key)) break;
+						localStorage.removeItem(d.key);
+						relayToParent(d.key, null);
+					} catch (err) {}
 				}
 				break;
 		}
 	});
 
+	// Send one change up to the parent board page. Only ever sent to the verified parent
+	// origin learned during `init`.
+	function relayToParent(key, value) {
+		if (!parentOrigin) return;
+		if (!window.parent || window.parent === window) return;
+		try {
+			window.parent.postMessage(
+				{ __kkstore: 1, type: 'change', key: key, value: value },
+				parentOrigin
+			);
+		} catch (err) {}
+	}
+
 	// Relay changes made by other tabs (same origin) up to our parent board page.
-	// Only ever sent to the verified parent origin learned during `init`.
 	window.addEventListener('storage', function (e) {
 		if (e.key === null) return; // localStorage.clear()
 		if (!sharedKeys[e.key]) return;
-		if (!parentOrigin) return;
-		if (window.parent && window.parent !== window) {
-			try {
-				window.parent.postMessage(
-					{ __kkstore: 1, type: 'change', key: e.key, value: e.newValue },
-					parentOrigin
-				);
-			} catch (err) {}
-		}
+		// A key relaying at an absurd sustained rate is a loop somewhere — stop feeding it.
+		if (floodGuard('relay:' + e.key)) return;
+		relayToParent(e.key, e.newValue);
 	});
 })();
 </script>

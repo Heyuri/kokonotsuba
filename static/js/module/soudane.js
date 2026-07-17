@@ -181,8 +181,10 @@
 		// initial load
 		soudane.updatePosts();
 
-		// repeat every minute (skip ticks while the tab is hidden)
-		setInterval(function () { if (!document.hidden) soudane.updatePosts(); }, 60000);
+		// repeat every minute (skip ticks while the tab is hidden or the network is down)
+		setInterval(function () {
+			if (!document.hidden && navigator.onLine !== false) soudane.updatePosts();
+		}, 60000);
 	});
 
 })();
