@@ -148,7 +148,7 @@
 	var resetButton = document.getElementById('boardConfigResetButton');
 	if (resetButton){
 		resetButton.addEventListener('click', function(e){
-			var ok = window.confirm('Reset this board\'s configuration?\n\nEvery setting goes back to its default and this board\'s saved overrides are deleted. This cannot be undone.');
+			var ok = window.confirm('Reset this board\'s configuration?\n\nEvery config will be reset to defaults. This cannot be undone.');
 			if (!ok) e.preventDefault();
 		});
 	}
