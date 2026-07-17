@@ -22,7 +22,7 @@ return [
 
 	'STATIC_URL' => $staticUrl,
 	'STATIC_PATH' => $staticPath,
-	'WEBSITE_URL' => '/', // The URL of where the boards are. (e.g "https://boards.example.net/")
+	'WEBSITE_URL' => '/',
 
 	'USE_CDN' => false, // Whether to use the "cdn" (storing all board upload storages in one central directory)
 

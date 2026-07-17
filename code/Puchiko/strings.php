@@ -335,19 +335,48 @@ function isValidSubdomain(string $subdomain): bool {
 }
 
 /**
- * Prefix a URL's host with a subdomain, leaving scheme, port, path, query and fragment intact.
+ * Strip a leading subdomain label off a host, leaving the part a sibling subdomain hangs from:
+ * 'sakaki.yuisuki.net' -> 'yuisuki.net', while 'example.net' and 'localhost' are returned as-is.
  *
- *   applySubdomainToUrl('https://example.net/', 'cgi')       -> 'https://cgi.example.net/'
- *   applySubdomainToUrl('https://example.net:8080/b/', 'dis') -> 'https://dis.example.net:8080/b/'
+ * A host of two labels or fewer is assumed to have no subdomain to strip. See applySubdomainToUrl()
+ * for the limits of that assumption on three-label registrable domains like 'example.co.uk'.
+ *
+ * @param string $host Lowercased hostname.
+ * @return string The host with any leading subdomain label removed.
+ */
+function registrableHost(string $host): string {
+	$labels = explode('.', $host);
+
+	return count($labels) > 2 ? implode('.', array_slice($labels, 1)) : $host;
+}
+
+/**
+ * Put a URL's host on the given subdomain, leaving scheme, port, path, query and fragment intact.
+ *
+ *   applySubdomainToUrl('https://example.net/', 'cgi')             -> 'https://cgi.example.net/'
+ *   applySubdomainToUrl('https://example.net:8080/b/', 'dis')      -> 'https://dis.example.net:8080/b/'
+ *   applySubdomainToUrl('https://sakaki.yuisuki.net/b/', 'waha')   -> 'https://waha.yuisuki.net/b/'
+ *
+ * The subdomain REPLACES the host's existing leading label rather than stacking on top of it, so a
+ * site already served from a subdomain moves the board across to a sibling host ('waha.yuisuki.net')
+ * instead of burrowing under the current one ('waha.sakaki.yuisuki.net'). A host of two labels or
+ * fewer is treated as having no subdomain to replace, so the value is prepended ('example.net' ->
+ * 'cgi.example.net'). This is the same rule the segregator module applies to file URLs.
+ *
+ * That "more than two labels means the first one is a subdomain" test is a heuristic, and it is
+ * wrong for a registrable domain that genuinely has three labels: on 'example.co.uk' it would
+ * replace 'example' and produce 'cgi.co.uk'. Determining this properly needs the public suffix
+ * list, which is more machinery than this is worth; installs on such a domain should leave board
+ * subdomains unset.
  *
  * The URL is returned unchanged whenever the rewrite cannot be performed safely, so a bad value
  * degrades to the original URL instead of producing a malformed one. That covers: an empty
  * subdomain, a subdomain that isn't a valid DNS name, a relative URL (no host to attach to), a
  * scheme other than http/https, an IP-literal host, and a result that would exceed the 253-char
- * hostname limit. Applying an already-applied subdomain is a no-op, so the function is idempotent.
+ * hostname limit. A host already on the subdomain is left alone, so the function is idempotent.
  *
  * @param string $url       Absolute URL to rewrite.
- * @param string $subdomain Subdomain to prepend (e.g. 'cgi'). May contain multiple labels ('a.b').
+ * @param string $subdomain Subdomain to apply (e.g. 'cgi'). May contain multiple labels ('a.b').
  * @return string The rewritten URL, or the original URL if it cannot be rewritten safely.
  */
 function applySubdomainToUrl(string $url, string $subdomain): string {
@@ -376,7 +405,10 @@ function applySubdomainToUrl(string $url, string $subdomain): string {
 		return $url;
 	}
 
-	$newHost = str_starts_with($host, $subdomain . '.') ? $host : $subdomain . '.' . $host;
+	$newHost = $host === $subdomain || str_starts_with($host, $subdomain . '.')
+		// Already on this subdomain, so there is nothing to replace.
+		? $host
+		: $subdomain . '.' . registrableHost($host);
 
 	if (strlen($newHost) > 253) {
 		return $url;

@@ -41,7 +41,7 @@ use function Puchiko\strings\strlenUnicode;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getPageOfThread;
 use function Kokonotsuba\libraries\isActiveStaffSession;
-use function Kokonotsuba\libraries\searchBoardArrayForBoardByIdentifier;
+use function Kokonotsuba\libraries\searchBoardArrayForBoardByReference;
 use function Puchiko\json\sendAjaxAndDetach;
 
 class registRoute {
@@ -675,17 +675,18 @@ class registRoute {
 			$allQuoteLinkedPostUids = array_merge($allQuoteLinkedPostUids, array_values($quoteLinkedPostUids));
 		}
 
-		// Match cross-board quote patterns like ">>>/c/123"
-		if(preg_match_all('/((?:&gt;|＞){3})\/([a-zA-Z0-9]+)\/(\d+)/i', $postComment, $crossMatches, PREG_SET_ORDER)) {
+		// Match cross-board quote patterns like ">>>/c/123", including subdomain-qualified
+		// references like ">>>/img.b/123" for boards that share an identifier across subdomains.
+		if(preg_match_all('/((?:&gt;|＞){3})\/((?:[a-zA-Z0-9_-]+\.)*[a-zA-Z0-9_-]+)\/(\d+)/i', $postComment, $crossMatches, PREG_SET_ORDER)) {
 			$crossBoardPosts = [];
 			foreach ($crossMatches as $match) {
-				$boardIdentifier = $match[2];
+				$boardReference = $match[2];
 				$postNo = $match[3];
-				$crossBoardPosts[$boardIdentifier][] = $postNo;
+				$crossBoardPosts[$boardReference][] = $postNo;
 			}
 
-			foreach ($crossBoardPosts as $identifier => $postNumbers) {
-				$targetBoard = searchBoardArrayForBoardByIdentifier($identifier);
+			foreach ($crossBoardPosts as $reference => $postNumbers) {
+				$targetBoard = searchBoardArrayForBoardByReference((string)$reference);
 				if (!$targetBoard) continue;
 
 				$postNumbers = array_unique($postNumbers);

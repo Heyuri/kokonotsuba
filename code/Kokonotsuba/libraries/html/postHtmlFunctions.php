@@ -12,6 +12,7 @@ use Kokonotsuba\post\Post;
 
 use function Puchiko\strings\containsHtmlTags;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
+use function Kokonotsuba\libraries\searchBoardArrayForBoardByReference;
 use function Puchiko\strings\sanitizeStr;
 
 /**
@@ -138,7 +139,8 @@ function generateQuoteLinkHtml(
 	$targetPostToPosition = [];
 	$targetPostToUid = [];
 
-	// Map for cross-board quote links: boardIdentifier → postNo → target data
+	// Map for cross-board quote links: board UID → postNo → target data. Keyed by UID rather
+	// than identifier because boards on different subdomains may share an identifier.
 	$crossBoardTargets = [];
 
 	$currentBoardUid = $board->getBoardUID();
@@ -170,8 +172,7 @@ function generateQuoteLinkHtml(
 				// Cross-board entry
 				$targetBoard = searchBoardArrayForBoard($targetBoardUid);
 				if ($targetBoard) {
-					$identifier = $targetBoard->getBoardIdentifier();
-					$crossBoardTargets[$identifier][$postNo] = [
+					$crossBoardTargets[$targetBoardUid][$postNo] = [
 						'threadNo' => $threadNo,
 						'position' => (int)($entry['target_post']['post_position'] ?? 0),
 						'uid' => isset($entry['target_post']['post_uid']) ? (int)$entry['target_post']['post_uid'] : null,
@@ -184,19 +185,25 @@ function generateQuoteLinkHtml(
 
 	$replacements = [];
 
-	// Match cross-board patterns first: >>>/board/123
-	if (preg_match_all('/((?:&gt;|＞){3})\/([a-zA-Z0-9]+)\/(\d+)/i', $comment, $crossMatches, PREG_SET_ORDER)) {
+	// Match cross-board patterns first: >>>/board/123, or subdomain-qualified >>>/img.b/123
+	// for boards that share an identifier across subdomains.
+	if (preg_match_all('/((?:&gt;|＞){3})\/((?:[a-zA-Z0-9_-]+\.)*[a-zA-Z0-9_-]+)\/(\d+)/i', $comment, $crossMatches, PREG_SET_ORDER)) {
 		foreach ($crossMatches as $match) {
 			$fullMatch = $match[0];
-			$boardIdentifier = $match[2];
+			$boardReference = $match[2];
 			$postNumber = (int)$match[3];
 
 			if (isset($replacements[$fullMatch])) {
 				continue;
 			}
 
-			if (isset($crossBoardTargets[$boardIdentifier][$postNumber])) {
-				$target = $crossBoardTargets[$boardIdentifier][$postNumber];
+			// Resolve the reference to a board so lookups go by UID; identifiers alone are
+			// ambiguous when boards on different subdomains share one.
+			$referencedBoard = searchBoardArrayForBoardByReference($boardReference);
+			$referencedBoardUid = $referencedBoard?->getBoardUID();
+
+			if ($referencedBoardUid !== null && isset($crossBoardTargets[$referencedBoardUid][$postNumber])) {
+				$target = $crossBoardTargets[$referencedBoardUid][$postNumber];
 				$postPosition = (int)($target['position'] ?? 0);
 				$targetRepliesPerPage = $target['board']->getConfigValue('REPLIES_PER_PAGE', 200);
 				$page = getPageForPostPosition($postPosition, $targetRepliesPerPage);
@@ -211,7 +218,7 @@ function generateQuoteLinkHtml(
 					: '';
 
 				$replacements[$fullMatch] = '<a href="' . $url . '" class="' . $linkClass . '"' . $uidAttr . '>' . $fullMatch . '</a>';
-			} elseif ($boardIdentifier === $board->getBoardIdentifier() && isset($targetPostToThreadNumber[$postNumber])) {
+			} elseif ($referencedBoardUid === $currentBoardUid && isset($targetPostToThreadNumber[$postNumber])) {
 				// Cross-board syntax pointing to the current board — use same-board data
 				$targetThreadNumber = $targetPostToThreadNumber[$postNumber];
 				$isCrossThread = $targetThreadNumber !== $threadNumber;
