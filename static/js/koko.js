@@ -137,6 +137,39 @@ const kkStore = (function () {
 		return false;
 	}
 
+	// Whether we wrote this key recently (an unexpired note exists), without consuming it.
+	function hasPendingSelfWrite(key) {
+		var now = Date.now();
+		for (var i = 0; i < selfWrites.length; i++) {
+			if (selfWrites[i].key === key && selfWrites[i].expires > now) return true;
+		}
+		return false;
+	}
+
+	/* Writer self-verification.
+	 *
+	 * When several tabs write the same key near-simultaneously (e.g. every tab's poll
+	 * firing at once after the network comes back), message ordering between the direct
+	 * hub echo and the storage-event relays is not guaranteed: the writer can end up with
+	 * its mirror pinned on another tab's older value while every other tab converged on
+	 * the hub's final one. A permanently diverged kktwch_lastPoll mirror then defeats the
+	 * cross-tab poll lock — every tab polls and collides again on every cycle, forever.
+	 *
+	 * So after each write, ask the hub (debounced) what it actually holds and adopt that.
+	 * The same verify is re-armed when a conflicting change lands while our own write is
+	 * still pending, so late stale relays get repaired too. Bounded: one message per key
+	 * per SYNC_DELAY window, and only ever in the wake of our own writes. */
+	var SYNC_DELAY_MS = 400;
+	var syncTimers = Object.create(null);
+
+	function scheduleSync(key) {
+		if (syncTimers[key]) clearTimeout(syncTimers[key]);
+		syncTimers[key] = setTimeout(function () {
+			delete syncTimers[key];
+			post({ __kkstore: 1, type: 'sync', key: key });
+		}, SYNC_DELAY_MS);
+	}
+
 	function settle() {
 		if (settled) return;
 		settled = true;
@@ -206,13 +239,17 @@ const kkStore = (function () {
 			if (incoming === lsGet(d.key)) return;
 			// From here the value differs from the mirror. If it's our own echo, racing
 			// writes from other tabs were applied over our value between the write and its
-			// confirmation — the hub's order says ours came later, so put it back. For
-			// everything else, the circuit breaker is the last line of defense: a key
-			// changing at an absurd sustained rate is a loop, whatever its cause.
+			// confirmation — adopt it back. For everything else, the circuit breaker is the
+			// last line of defense: a key changing at an absurd sustained rate is a loop,
+			// whatever its cause.
 			if (!ownEcho && floodGuard('in:' + d.key)) return;
 			if (incoming === null) lsRemove(d.key);
 			else lsSet(d.key, incoming);
 			fireChange(d.key);
+			// A conflicting change landed while our own write is still pending: message
+			// ordering between the echo and relays is not guaranteed, so re-verify against
+			// the hub once things settle rather than trusting whichever arrived last.
+			if (!ownEcho && hasPendingSelfWrite(d.key)) scheduleSync(d.key);
 		}
 	});
 
@@ -266,6 +303,7 @@ const kkStore = (function () {
 				// misbehaving tab can't flood every other tab with change events.
 				if (floodGuard('out:' + key)) return;
 				post({ __kkstore: 1, type: 'set', key: key, value: value });
+				scheduleSync(key);
 			}
 		},
 		remove: function (key) {
@@ -275,6 +313,7 @@ const kkStore = (function () {
 				if (!settled) pendingLocalWrites[key] = true;
 				if (floodGuard('out:' + key)) return;
 				post({ __kkstore: 1, type: 'remove', key: key });
+				scheduleSync(key);
 			}
 		}
 	};

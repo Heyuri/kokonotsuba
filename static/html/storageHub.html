@@ -137,6 +137,16 @@
 					} catch (err) {}
 				}
 				break;
+
+			case 'sync':
+				// Writer self-verification (see kkStore in koko.js): answer with the
+				// authoritative current value so a tab whose mirror lost a write race can
+				// repair itself. Answered as a normal 'change', which the page applies
+				// (or no-ops when the mirror already matches).
+				if (typeof d.key === 'string' && sharedKeys[d.key]) {
+					try { relayToParent(d.key, localStorage.getItem(d.key)); } catch (err) {}
+				}
+				break;
 		}
 	});
 
