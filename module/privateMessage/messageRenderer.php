@@ -91,6 +91,7 @@ class messageRenderer {
 			'{$SUBJECT_LABEL}' => _T('pm_subject_label'),
 			'{$BODY_LABEL}' => _T('pm_body_label'),
 			'{$SEND_LABEL}' => _T('pm_send_btn'),
+			'{$PM_DISCLAIMER_TEXT}' => _T('pm_disclaimer_text'),
 			'{$PREFILL_RECIPIENT}' => sanitizeStr($prefillRecipient),
 			'{$PREFILL_SUBJECT}' => sanitizeStr($prefillSubject),
 			'{$PREFILL_BODY}' => !empty($prefillBody) ? sanitizeStr($prefillBody) . "\n\n" : '',
@@ -160,8 +161,7 @@ class messageRenderer {
 			'{$PM_DELETE_BTN}' => _T('pm_delete_btn'),
 			'{$MESSAGES}' => $rows,
 			'{$HAS_MESSAGES}' => !empty($messages) ? '1' : '',
-			'{$NO_MESSAGES_TEXT}' => _T('pm_no_messages'),
-			'{$PM_DISCLAIMER_TEXT}' => _T('pm_disclaimer_text'),
+			'{$NO_MESSAGES_TEXT}' => _T('pm_no_messages')
 		]));
 
 		$this->renderPmPage($inboxHtml, $pagerHtml);
