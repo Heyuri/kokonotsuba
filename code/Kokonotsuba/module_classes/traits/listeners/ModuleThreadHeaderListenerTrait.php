@@ -7,8 +7,8 @@ use Kokonotsuba\thread\Thread;
 trait ModuleThreadHeaderListenerTrait {
 	protected function listenModuleThreadHeader(string $methodName, int $priority = 0): void {
 		$this->moduleContext->moduleEngine->addListener('ModuleThreadHeader',
-			function(string &$threadHeader, Thread &$thread) use ($methodName) {
-				$this->$methodName($threadHeader, $thread);
+			function(string &$threadHeader, Thread &$thread, bool $isThreadView = false) use ($methodName) {
+				$this->$methodName($threadHeader, $thread, $isThreadView);
 			},
 			$priority
 		);

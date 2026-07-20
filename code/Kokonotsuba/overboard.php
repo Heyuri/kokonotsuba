@@ -33,7 +33,10 @@ use function Kokonotsuba\libraries\getCsrfMetaTag;
 
 class overboard {
 	private bool $adminMode, $canViewDeleted;
-	
+
+	// thread renderers are reused across every thread belonging to the same board
+	private array $threadRenderersByBoardUID = [];
+
 	public function __construct(
 		private board $board,
 		private readonly array $config, 
@@ -243,12 +246,11 @@ class overboard {
 		}
 	
 		$board = $boardMap[$boardUID];
-		$config = $board->loadBoardConfig();
 		$posts = $thread->getPosts();
 		$threadToRender = $thread->getThread();
-	
-		$threadRenderer = $this->createThreadRenderer($board, $config, $this->templateEngine, $quoteLinksFromPage);
-	
+
+		$threadRenderer = $this->getThreadRenderer($board, $quoteLinksFromPage);
+
 		[$overboardThreadTitle, $crossLink] = $this->buildThreadTitleAndLink($board);
 	
 		$adminMode = isActiveStaffSession();
@@ -272,6 +274,30 @@ class overboard {
 		);
 	}
 	
+	/*
+	* Get the renderer for a board, building it on first use.
+	*
+	* Every thread from a board shares one module engine, the same way a board renders
+	* its own index. Building one per thread re-instantiated every module - along with
+	* an admin template engine and page renderer - for each thread on the page.
+	*/
+	private function getThreadRenderer(board $board, array $quoteLinksFromPage): threadRenderer {
+		$boardUID = $board->getBoardUID();
+
+		if (!isset($this->threadRenderersByBoardUID[$boardUID])) {
+			$config = $board->loadBoardConfig();
+
+			$this->threadRenderersByBoardUID[$boardUID] = $this->createThreadRenderer(
+				$board,
+				$config,
+				$this->templateEngine,
+				$quoteLinksFromPage
+			);
+		}
+
+		return $this->threadRenderersByBoardUID[$boardUID];
+	}
+
 	private function createThreadRenderer(board $board, array $config, templateEngine $templateEngine, array $quoteLinksFromPage): threadRenderer {
 		$postDateFormatter = new postDateFormatter($config['TIME_ZONE']);
 
