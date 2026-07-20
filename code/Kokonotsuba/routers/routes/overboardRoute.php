@@ -45,6 +45,11 @@ class overboardRoute {
 
 		$html = '';
 
+		// draw threads before the header - modules that gather markup while rendering
+		// threads (such as thread styling) write it into the head, so the head has to
+		// be built once the threads are done
+		$threadsHtml = $this->overboard->drawOverboardThreads($filters);
+
 		// draw the overboard header
 		$this->overboard->drawOverboardHead($html);
 
@@ -57,7 +62,7 @@ class overboardRoute {
 		$html .= '<hr>';
 
 		// draw threads
-		$html .= $this->overboard->drawOverboardThreads($filters);
+		$html .= $threadsHtml;
 
 		// draw footer
 		$html .= $this->board->getBoardFooter();

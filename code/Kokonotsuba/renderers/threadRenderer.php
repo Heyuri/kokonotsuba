@@ -86,8 +86,9 @@ class threadRenderer {
 
 		// dispatch thread header
 		$this->moduleEngine->dispatch('ModuleThreadHeader', [
-			&$threadHeader, 
-			&$thread
+			&$threadHeader,
+			&$thread,
+			$replyMode
 		]);
 
 		// render posts for a thread
