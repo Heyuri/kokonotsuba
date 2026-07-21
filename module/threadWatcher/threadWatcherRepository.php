@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\Modules\threadWatcher;
 
+use function Kokonotsuba\libraries\openDeletionExistsCondition;
+
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
@@ -53,25 +55,13 @@ class threadWatcherRepository extends baseRepository {
 					SELECT COUNT(*)
 					FROM {$this->postTable} p_cnt
 					WHERE p_cnt.thread_uid = t.thread_uid
-					  AND NOT EXISTS (
-					      SELECT 1
-					      FROM {$this->deletedPostsTable} dpx2
-					      WHERE dpx2.post_uid = p_cnt.post_uid
-					        AND dpx2.open_flag = 1
-					        AND dpx2.file_id IS NULL
-					  )
+					  AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 'p_cnt.post_uid') . "
 				) AS post_count
 			FROM {$this->table} t
 			LEFT JOIN {$this->postTable} p_op ON p_op.post_uid = t.post_op_post_uid
 			LEFT JOIN {$this->boardTable} b ON b.board_uid = t.boardUID
 			WHERE t.thread_uid IN {$placeholders}
-			  AND NOT EXISTS (
-			      SELECT 1
-			      FROM {$this->deletedPostsTable} dpx
-			      WHERE dpx.post_uid = t.post_op_post_uid
-			        AND dpx.open_flag = 1
-			        AND dpx.file_id IS NULL
-			  )
+			  AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 't.post_op_post_uid') . "
 		";
 
 		return $this->queryAll($query, array_values($threadUids));
@@ -109,13 +99,7 @@ class threadWatcherRepository extends baseRepository {
 			WHERE host.thread_uid IN {$threadPlaceholders}
 			  AND (target.boardUID, target.no) IN {$pairPlaceholders}
 			  AND (host.boardUID, host.no) NOT IN {$pairPlaceholders}
-			  AND NOT EXISTS (
-			      SELECT 1
-			      FROM {$this->deletedPostsTable} dp
-			      WHERE dp.post_uid = host.post_uid
-			        AND dp.open_flag = 1
-			        AND dp.file_id IS NULL
-			  )
+			  AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 'host.post_uid') . "
 			GROUP BY host.thread_uid
 		";
 
@@ -168,13 +152,7 @@ class threadWatcherRepository extends baseRepository {
 					ROW_NUMBER() OVER (PARTITION BY p.thread_uid ORDER BY p.no ASC) AS rn
 				FROM {$this->postTable} p
 				WHERE p.thread_uid IN {$threadPlaceholders}
-				  AND NOT EXISTS (
-				      SELECT 1
-				      FROM {$this->deletedPostsTable} dp
-				      WHERE dp.post_uid = p.post_uid
-				        AND dp.open_flag = 1
-				        AND dp.file_id IS NULL
-				  )
+				  AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid') . "
 			) ranked
 			WHERE (ranked.thread_uid, ranked.rn) IN {$pairPlaceholders}
 		";
@@ -210,10 +188,7 @@ class threadWatcherRepository extends baseRepository {
 			SELECT t.thread_created_time
 			FROM {$this->table} t
 			JOIN {$this->boardTable} b ON b.board_uid = t.boardUID AND b.listed = 1
-			WHERE NOT EXISTS (
-			    SELECT 1 FROM {$this->deletedPostsTable} dp
-			    WHERE dp.post_uid = t.post_op_post_uid AND dp.open_flag = 1 AND dp.file_id IS NULL
-			)
+			WHERE NOT " . openDeletionExistsCondition($this->deletedPostsTable, 't.post_op_post_uid') . "
 			ORDER BY t.thread_created_time DESC
 			LIMIT 1
 		";
@@ -258,10 +233,7 @@ class threadWatcherRepository extends baseRepository {
 			JOIN {$this->boardTable} b ON b.board_uid = t.boardUID AND b.listed = 1
 			JOIN {$this->postTable} p ON p.post_uid = t.post_op_post_uid
 			WHERE t.thread_created_time > ?
-			  AND NOT EXISTS (
-			      SELECT 1 FROM {$this->deletedPostsTable} dp
-			      WHERE dp.post_uid = t.post_op_post_uid AND dp.open_flag = 1 AND dp.file_id IS NULL
-			  )
+			  AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 't.post_op_post_uid') . "
 			  {$blacklistSql}
 			ORDER BY t.thread_created_time DESC
 			LIMIT {$limit}

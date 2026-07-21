@@ -6,6 +6,44 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\post\deletion\DeletedPost;
 
 /**
+ * Attachment column list selected from two file-table aliases at once, taking whichever of the two
+ * matched. Used by the deletion-centric query, where an attachment is reached either by file id
+ * (file-only deletions) or by post uid (post-level deletions) — see getBasePostQuery().
+ *
+ * @param string $fileIdAlias  Alias joined on the file's primary key.
+ * @param string $postUidAlias Alias joined on the file's post uid.
+ * @return string Comma-separated select list, aliased identically to the single-table version.
+ */
+function coalescedAttachmentColumns(string $fileIdAlias, string $postUidAlias): string {
+	$columns = [
+		'id'                => 'attachment_id',
+		'file_name'         => 'attachment_file_name',
+		'stored_filename'   => 'attachment_stored_filename',
+		'file_ext'          => 'attachment_file_ext',
+		'file_md5'          => 'attachment_file_md5',
+		'file_size'         => 'attachment_file_size',
+		'file_width'        => 'attachment_file_width',
+		'file_height'       => 'attachment_file_height',
+		'thumb_file_width'  => 'attachment_thumb_width',
+		'thumb_file_height' => 'attachment_thumb_height',
+		'mime_type'         => 'attachment_mime_type',
+		'is_hidden'         => 'attachment_is_hidden',
+		'is_animated'       => 'attachment_is_animated',
+		'is_spoilered'      => 'attachment_is_spoilered',
+		'is_deleted'        => 'attachment_is_deleted',
+		'timestamp_added'   => 'attachment_timestamp_added',
+	];
+
+	$select = [];
+
+	foreach ($columns as $column => $alias) {
+		$select[] = "\t\t\tCOALESCE({$fileIdAlias}.{$column}, {$postUidAlias}.{$column}) AS {$alias}";
+	}
+
+	return ltrim(implode(",\n", $select));
+}
+
+/**
  * Generate the base query for posts or deleted posts.
  *
  * In post-centric mode (default), the posts table is the main FROM and
@@ -98,6 +136,27 @@ function getBasePostQuery(
 
 	// Deletion-centric mode: deleted_posts is the main table
 	if ($deletionCentric) {
+		// A file-only deletion names one specific attachment (dp.file_id); a post-level deletion
+		// takes every attachment on the post. Expressing that as a single join with an OR of two
+		// different keys forces a full scan of the file table per deleted_posts row, so split it
+		// into two ref-joined aliases — fk (by file id, primary key) and pk (by post uid,
+		// idx_post_uid) — and coalesce the columns back together. Exactly one alias can match a
+		// given row, because their conditions are mutually exclusive on dp.file_id.
+		$attachmentColumnsCoalesced = coalescedAttachmentColumns('fk', 'pk');
+
+		// The shared soudane join is a derived table aggregating the entire votes table with no
+		// filter, which MariaDB cannot merge into the outer query and so materializes in full on
+		// every call. These pages only ever show a page's worth of posts, so use correlated
+		// subqueries instead — they ride idx_soudane_vote (post_uid, yeah) and run per result row.
+		// SUM over no rows yields NULL, matching the miss behaviour of the LEFT JOIN they replace.
+		$soudaneSubqueryColumns = "
+			(SELECT SUM(CASE WHEN sv.yeah = 1 THEN 1 ELSE -1 END)
+				FROM {$soudaneTable} sv WHERE sv.post_uid = dp.post_uid) AS votes_total_count,
+			(SELECT COUNT(*)
+				FROM {$soudaneTable} sv WHERE sv.post_uid = dp.post_uid AND sv.yeah = 1) AS votes_yeah_count,
+			(SELECT COUNT(*)
+				FROM {$soudaneTable} sv WHERE sv.post_uid = dp.post_uid AND sv.yeah = 0) AS votes_nope_count";
+
 		return "
 			SELECT
 				{$deletedPostColumns},
@@ -107,12 +166,12 @@ function getBasePostQuery(
 				p.*,
 				t.post_op_number,
 
-				{$attachmentColumns},
+				{$attachmentColumnsCoalesced},
 
 				da.username AS deleted_by_username,
 				ra.username AS restored_by_username,
 
-				{$soudaneColumns},
+				{$soudaneSubqueryColumns},
 
 				{$noteColumns},
 				na.username AS note_added_by_username
@@ -122,18 +181,16 @@ function getBasePostQuery(
 			LEFT JOIN {$postTable} p
 				ON p.post_uid = dp.post_uid
 
-			LEFT JOIN {$fileTable} f
-				ON (
-					(dp.file_id IS NOT NULL AND f.id = dp.file_id)
-					OR (dp.file_id IS NULL AND f.post_uid = dp.post_uid)
-				)
+			LEFT JOIN {$fileTable} fk
+				ON fk.id = dp.file_id
+
+			LEFT JOIN {$fileTable} pk
+				ON pk.post_uid = dp.post_uid AND dp.file_id IS NULL
 
 			LEFT JOIN {$accountTable} da ON dp.deleted_by = da.id
 			LEFT JOIN {$accountTable} ra ON dp.restored_by = ra.id
 
 			LEFT JOIN {$threadTable} t ON p.thread_uid = t.thread_uid
-
-			{$soudaneJoin} sv ON sv.post_uid = dp.post_uid
 
 			{$noteJoin} ON n.post_uid = dp.post_uid
 			LEFT JOIN {$accountTable} na ON na.id = n.added_by
@@ -148,19 +205,7 @@ function getBasePostQuery(
         : "
         SELECT p1.*
         FROM $postTable p1
-        LEFT JOIN (
-            -- latest post-level deletions only
-            SELECT d1.post_uid
-            FROM $deletedPostsTable d1
-            INNER JOIN (
-                SELECT post_uid, MAX(id) AS max_id
-                FROM $deletedPostsTable
-                GROUP BY post_uid
-            ) d2 ON d1.post_uid = d2.post_uid AND d1.id = d2.max_id
-            WHERE d1.file_id IS NULL AND d1.open_flag = 1
-        ) deleted_latest ON deleted_latest.post_uid = p1.post_uid
-        WHERE deleted_latest.post_uid IS NULL
-        ";
+        WHERE NOT " . openDeletionExistsCondition($deletedPostsTable, 'p1.post_uid');
 
     // Main query: join threads, attachments, and all deletion rows (for mergeRowIntoPost)
 	$countryFlagColumn = $countryFlagTable ? "\n\t\t\tcf.country AS country_flag_country," : '';
@@ -201,19 +246,14 @@ function getBasePostQuery(
         -- Thread info
         INNER JOIN $threadTable t ON p.thread_uid = t.thread_uid
 
-        -- All deletion entries
+        -- Open deletion entries: the post-level one if the post is deleted, otherwise every
+        -- attachment-level one, so mergeRowIntoPost() can mark individually deleted files.
 		LEFT JOIN $deletedPostsTable dp
 		ON dp.post_uid = p.post_uid
 		AND dp.open_flag = 1
 		AND (
-			dp.file_id IS NULL
-			OR NOT EXISTS (
-				SELECT 1
-				FROM $deletedPostsTable dp2
-				WHERE dp2.post_uid = p.post_uid
-					AND dp2.file_id IS NULL
-					AND dp2.open_flag = 1
-			)
+			dp.open_key = p.post_uid
+			OR NOT " . openDeletionExistsCondition($deletedPostsTable, 'p.post_uid') . "
 		)
 		{$countryFlagJoin}
 		{$displayIpJoin}
@@ -246,18 +286,9 @@ function objectivePositionSubquery(
 	string $postAlias,
 	bool $viewDeleted = false
 ): string {
-	$deletionFilter = $viewDeleted ? '' : "
-			AND NOT EXISTS (
-				SELECT 1
-				FROM $deletedPostsTable od1
-				INNER JOIN (
-					SELECT post_uid, MAX(id) AS max_id
-					FROM $deletedPostsTable
-					GROUP BY post_uid
-				) od2 ON od1.post_uid = od2.post_uid AND od1.id = od2.max_id
-				WHERE od1.post_uid = objpos.post_uid
-				  AND od1.file_id IS NULL AND od1.open_flag = 1
-			)";
+	$deletionFilter = $viewDeleted
+		? ''
+		: "\n\t\t\t  AND NOT " . openDeletionExistsCondition($deletedPostsTable, 'objpos.post_uid');
 
 	return "(
 			SELECT COUNT(*)
@@ -269,20 +300,97 @@ function objectivePositionSubquery(
 		)";
 }
 
-function excludeDeletedThreadsCondition(string $deletedPostsTable): string {
-	return " AND NOT EXISTS (
-		SELECT 1
-		FROM $deletedPostsTable dpx
-		WHERE dpx.post_uid = t.post_op_post_uid
-		  AND dpx.open_flag = 1
-		  AND dpx.file_id IS NULL
+/*
+ * ---------------------------------------------------------------------------
+ * Deletion-state predicates
+ *
+ * A post is hidden exactly when an *open post-level* deletion record exists for
+ * it: one that has not been restored (restored_at IS NULL) and that deletes the
+ * post rather than a single attachment (file_id IS NULL).
+ *
+ * The deletedPosts table keeps every deletion and restore a post has ever been
+ * through, so several rows can share a post_uid and only one of them describes
+ * the post's state right now. Rather than re-derive that at read time — which
+ * used to mean grouping the whole table by post_uid to find each post's newest
+ * row — lean on the schema: the STORED generated column
+ *
+ *     open_key = CASE WHEN restored_at IS NULL AND file_id IS NULL
+ *                     THEN post_uid ELSE NULL END
+ *
+ * carries a UNIQUE index (uq_open_post). Repeated NULLs are permitted in a
+ * MySQL unique index, so history rows coexist freely while the database
+ * guarantees at most one open post-level row per post. That makes
+ * "open_key = <post uid>" both exact and a single unique-index probe, and it
+ * removes any notion of a 'latest' row from the read path entirely.
+ *
+ * Every visibility test in the codebase goes through the helpers below so the
+ * rule is stated once. Do not hand-roll another one.
+ * ---------------------------------------------------------------------------
+ */
+
+/**
+ * Condition matching posts that currently have an open post-level deletion.
+ *
+ * @param string $deletedPostsTable Deleted-posts table name.
+ * @param string $postUidExpr       SQL expression yielding the post uid to test (e.g. 'p.post_uid').
+ * @return string A bare EXISTS(...) condition, with no leading boolean operator.
+ */
+function openDeletionExistsCondition(string $deletedPostsTable, string $postUidExpr): string {
+	return "EXISTS (
+		SELECT 1 FROM $deletedPostsTable WHERE open_key = $postUidExpr
 	)";
 }
 
+/**
+ * Join that attaches a post's open post-level deletion row, or nothing when it is visible.
+ * The join is a lookup on uq_open_post and can match at most one row, so it never fans out.
+ *
+ * @param string $deletedPostsTable Deleted-posts table name.
+ * @param string $postUidExpr       SQL expression yielding the post uid to join on.
+ * @param string $alias             Alias to give the joined deleted-posts row.
+ * @return string A LEFT JOIN clause.
+ */
+function openDeletionJoin(string $deletedPostsTable, string $postUidExpr, string $alias): string {
+	return "LEFT JOIN $deletedPostsTable $alias ON $alias.open_key = $postUidExpr";
+}
+
+/**
+ * Condition matching posts that have an open *attachment-level* deletion — one or more of their
+ * files were deleted while the post itself stayed visible. Distinct from
+ * openDeletionExistsCondition(): the two are independent, and a post can satisfy both.
+ *
+ * @param string $deletedPostsTable Deleted-posts table name.
+ * @param string $postUidExpr       SQL expression yielding the post uid to test.
+ * @return string A bare EXISTS(...) condition, with no leading boolean operator.
+ */
+function openFileDeletionExistsCondition(string $deletedPostsTable, string $postUidExpr): string {
+	return "EXISTS (
+		SELECT 1 FROM $deletedPostsTable
+		WHERE post_uid = $postUidExpr AND open_flag = 1 AND file_id IS NOT NULL
+	)";
+}
+
+/**
+ * Restrict a thread query to threads whose OP post is not deleted. Expects the thread table
+ * aliased as 't', matching every call site.
+ *
+ * @param string $deletedPostsTable Deleted-posts table name.
+ * @return string A condition prefixed with ' AND ', for appending to an existing WHERE clause.
+ */
+function excludeDeletedThreadsCondition(string $deletedPostsTable): string {
+	return ' AND NOT ' . openDeletionExistsCondition($deletedPostsTable, 't.post_op_post_uid');
+}
+
+/**
+ * Restrict a query to visible posts, given a deleted-posts row already attached by
+ * openDeletionJoin(). The join only ever matches open post-level deletions, so the row being
+ * absent is exactly the post being visible.
+ *
+ * @param string $alias Alias used for the openDeletionJoin() row.
+ * @return string A condition prefixed with ' AND ', for appending to an existing WHERE clause.
+ */
 function excludeDeletedPostsCondition(string $alias = 'dp'): string {
-	return " AND (COALESCE($alias.open_flag, 0) = 0
-					OR COALESCE($alias.file_only, 0) = 1
-					OR COALESCE($alias.by_proxy, 0) = 1)";
+	return " AND $alias.open_key IS NULL";
 }
 
 /**
@@ -511,20 +619,21 @@ function mergeDeletedPostRows(null|false|array $rows): false|array {
 
 		// Reuse existing logic for wiring up attachments + deleted_attachments
 		mergeRowIntoPost($entries[$dpId], $row);
+
+		// soudane data — set the same way mergeMultiplePostRows() does, so a deleted post renders
+		// its vote counts like any other post
+		if (isset($row['votes_total_count']) && $row['votes_total_count'] !== null) {
+			$entries[$dpId]->setVotes([
+				'total_score' => $row['votes_total_count'],
+				'yeah_count' => $row['votes_yeah_count'],
+				'nope_count' => $row['votes_nope_count']
+			]);
+		}
 	}
 
 	return array_values($entries);
 }
 
-function sqlLatestDeletionEntry(string $deletedPostsTable): string {
-	return "
-		SELECT d1.post_uid, d1.open_flag, d1.file_only, d1.by_proxy
-		FROM {$deletedPostsTable} d1
-		INNER JOIN (
-			SELECT post_uid, MAX(id) AS max_id
-			FROM {$deletedPostsTable}
-			GROUP BY post_uid
-		) d2 ON d1.post_uid = d2.post_uid
-		     AND d1.id = d2.max_id
-	";
-}
+// sqlLatestDeletionEntry() lived here. It built a derived table of each post's newest deletion
+// row so callers could read state off it; use openDeletionJoin() instead, which gets the same
+// answer from uq_open_post without grouping the table. See the deletion-state predicates above.

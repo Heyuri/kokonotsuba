@@ -10,7 +10,9 @@ use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\database\OrderFieldWhitelistTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\thread\Thread;
-use function Kokonotsuba\libraries\sqlLatestDeletionEntry;
+use function Kokonotsuba\libraries\openDeletionExistsCondition;
+use function Kokonotsuba\libraries\openDeletionJoin;
+use function Kokonotsuba\libraries\openFileDeletionExistsCondition;
 use function Kokonotsuba\libraries\excludeDeletedPostsCondition;
 use function Kokonotsuba\libraries\excludeDeletedThreadsCondition;
 use function Kokonotsuba\libraries\bindThreadFilterParameters;
@@ -50,20 +52,21 @@ class threadRepository extends baseRepository {
 	 * @return string Partial SQL SELECT string.
 	 */
 	private function getBaseThreadQuery(bool $includeDeletedCount = true): string {
-		$latestDel   = sqlLatestDeletionEntry($this->deletedPostsTable);
-		$visibleCond = excludeDeletedPostsCondition('d');
+		// attachment-level deletions are independent of whether the OP itself is deleted, so they
+		// are tested separately rather than read off the deletion row joined below
+		$opAttachmentDeleted = openFileDeletionExistsCondition($this->deletedPostsTable, 't.post_op_post_uid');
 
 		// conditional filter
 		$countFilter = $includeDeletedCount
 			? ""                    // include all posts
-			: $visibleCond; // restrict to visible posts only
+			: ' AND NOT ' . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid');
 
 		$query = "
-			SELECT 
+			SELECT
 				t.*,
-				
+
 				dp.open_flag AS thread_deleted,
-				dp.file_only AS thread_attachment_deleted,
+				{$opAttachmentDeleted} AS thread_attachment_deleted,
 				dp.by_proxy,
 
 				theme.background_hex_color,
@@ -78,18 +81,13 @@ class threadRepository extends baseRepository {
 				(
 					SELECT COUNT(*)
 					FROM {$this->postTable} p
-					LEFT JOIN (
-						{$latestDel}
-					) d ON p.post_uid = d.post_uid
 					WHERE p.thread_uid = t.thread_uid
 					{$countFilter}
 				) AS number_of_posts
 
 			FROM {$this->table} t
-			LEFT JOIN (
-				{$latestDel}
-			) dp ON t.post_op_post_uid = dp.post_uid
-			
+			{$this->getBaseThreadJoinClause()}
+
 			LEFT JOIN $this->threadThemeTable theme ON theme.thread_uid = t.thread_uid
 			LEFT JOIN $this->accountTable a ON theme.added_by = a.id
 		";
@@ -121,23 +119,14 @@ class threadRepository extends baseRepository {
 	}
 
 	/**
-	 * Build the LEFT JOIN clause that attaches the latest deletion-state row for each thread's OP post.
+	 * Build the LEFT JOIN clause that attaches the open deletion row for each thread's OP post.
 	 *
 	 * @return string SQL LEFT JOIN fragment.
 	 */
 	private function getBaseThreadJoinClause(): string {
 		// join clause for thread data
-		$joinClause = "
-			LEFT JOIN (
-			 	   SELECT dp1.post_uid, dp1.open_flag, dp1.file_only, dp1.by_proxy
-			 	   FROM {$this->deletedPostsTable} dp1
-			 	   INNER JOIN (
-			 		   SELECT post_uid, MAX(deleted_at) AS max_deleted_at
-			 		   FROM {$this->deletedPostsTable}
-			 		   GROUP BY post_uid
-			 	   ) dp2 ON dp1.post_uid = dp2.post_uid AND dp1.deleted_at = dp2.max_deleted_at
-			) dp ON t.post_op_post_uid = dp.post_uid";
-	
+		$joinClause = "\n\t\t\t" . openDeletionJoin($this->deletedPostsTable, 't.post_op_post_uid', 'dp');
+
 		// return join clause
 		return $joinClause;
 	}
@@ -212,14 +201,11 @@ class threadRepository extends baseRepository {
 			$direction = 'DESC';
 		}
 
-		// join latest deletion entry for the thread OP post, and exclude deleted threads
-		$latestDeletionSQL = sqlLatestDeletionEntry($this->deletedPostsTable);
+		// exclude threads whose OP post is deleted
 		$visibleCond = excludeDeletedThreadsCondition($this->deletedPostsTable);
 
 		$query = "SELECT t.thread_uid
 				FROM {$this->table} t
-				LEFT JOIN ({$latestDeletionSQL}) d
-					ON d.post_uid = t.post_op_post_uid
 				WHERE t.boardUID = :board_uid
 					{$visibleCond}
 				ORDER BY {$orderBy} {$direction}";
@@ -587,10 +573,11 @@ class threadRepository extends baseRepository {
 			WHERE t.boardUID = :board_uid
 		";
 
-		// optionally exclude threads where OP is fully deleted
+		// optionally exclude threads where the OP post itself is deleted. thread_deleted already
+		// means "open post-level deletion", which excludes attachment-level ones by construction,
+		// so a thread that merely lost a file is still visible without testing for it separately
 		if (!$includeDeleted) {
-			// deleted = dp.open_flag = 0 AND dp.file_only = 0
-			$query .= " AND (COALESCE(t.thread_deleted, 0) = 0 OR COALESCE(t.thread_attachment_deleted, 0) = 1)";
+			$query .= " AND COALESCE(t.thread_deleted, 0) = 0";
 		}
 
 		// add ordering (sticky first)
@@ -699,18 +686,7 @@ class threadRepository extends baseRepository {
 		// the set of replies actually rendered.
 		$deletionFilter = '';
 		if (!$includeDeleted) {
-			$deletionFilter = "
-				AND NOT EXISTS (
-					SELECT 1
-					FROM {$this->deletedPostsTable} d1
-					INNER JOIN (
-						SELECT post_uid, MAX(id) AS max_id
-						FROM {$this->deletedPostsTable}
-						GROUP BY post_uid
-					) d2 ON d1.post_uid = d2.post_uid AND d1.id = d2.max_id
-					WHERE d1.post_uid = p.post_uid
-					  AND d1.file_id IS NULL AND d1.open_flag = 1
-				)";
+			$deletionFilter = ' AND NOT ' . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid');
 		}
 
 		// OP first (is_op DESC) then replies by post_uid ASC — the exact order pagination
@@ -745,18 +721,7 @@ class threadRepository extends baseRepository {
 		$threadDeletionFilter = '';
 
 		if (!$includeDeleted) {
-			$deletionFilter = "
-				AND NOT EXISTS (
-					SELECT 1
-					FROM {$this->deletedPostsTable} d1
-					INNER JOIN (
-						SELECT post_uid, MAX(id) AS max_id
-						FROM {$this->deletedPostsTable}
-						GROUP BY post_uid
-					) d2 ON d1.post_uid = d2.post_uid AND d1.id = d2.max_id
-					WHERE d1.post_uid = p.post_uid
-					  AND d1.file_id IS NULL AND d1.open_flag = 1
-				)";
+			$deletionFilter = ' AND NOT ' . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid');
 			$threadDeletionFilter = excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 
@@ -837,18 +802,7 @@ class threadRepository extends baseRepository {
 		$threadDeletionFilter = '';
 
 		if (!$includeDeleted) {
-			$deletionFilter = "
-				AND NOT EXISTS (
-					SELECT 1
-					FROM {$this->deletedPostsTable} d1
-					INNER JOIN (
-						SELECT post_uid, MAX(id) AS max_id
-						FROM {$this->deletedPostsTable}
-						GROUP BY post_uid
-					) d2 ON d1.post_uid = d2.post_uid AND d1.id = d2.max_id
-					WHERE d1.post_uid = p.post_uid
-					  AND d1.file_id IS NULL AND d1.open_flag = 1
-				)";
+			$deletionFilter = ' AND NOT ' . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid');
 			$threadDeletionFilter = excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 
@@ -1013,18 +967,7 @@ class threadRepository extends baseRepository {
 
 		if (!$includeDeleted) {
 			$ranked .= excludeDeletedThreadsCondition($this->deletedPostsTable);
-			$ranked .= " AND NOT EXISTS (
-				SELECT 1
-				FROM {$this->deletedPostsTable} d1
-				INNER JOIN (
-					SELECT post_uid, MAX(id) AS max_id
-					FROM {$this->deletedPostsTable}
-					GROUP BY post_uid
-				) d2 ON d1.post_uid = d2.post_uid AND d1.id = d2.max_id
-				WHERE d1.post_uid = p.post_uid
-				  AND d1.open_flag = 1
-				  AND d1.file_id IS NULL
-			)";
+			$ranked .= ' AND NOT ' . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid');
 		}
 
 		$base = getBasePostQuery(

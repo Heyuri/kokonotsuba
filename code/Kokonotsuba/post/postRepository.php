@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\post;
 
+use function Kokonotsuba\libraries\openDeletionExistsCondition;
+
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\database\OrderFieldWhitelistTrait;
@@ -125,18 +127,10 @@ class postRepository extends baseRepository {
 		if ($includeDeleted) {
 			$query = "SELECT p.post_uid FROM {$this->table} p WHERE 1";
 		} else {
-			// Exclude posts whose latest deletion entry is a full-post deletion that is still open.
-			// This is equivalent to the LEFT JOIN + WHERE IS NULL logic in getBasePostQuery but
-			// expressed as NOT EXISTS so it works as a correlated lookup against an index.
+			// Exclude posts with an open post-level deletion, matching getBasePostQuery().
 			$query = "
 				SELECT p.post_uid FROM {$this->table} p
-				WHERE NOT EXISTS (
-					SELECT 1 FROM {$this->deletedPostsTable} dpx
-					WHERE dpx.post_uid = p.post_uid
-					AND dpx.file_id IS NULL
-					AND dpx.open_flag = 1
-					AND dpx.id = (SELECT MAX(id) FROM {$this->deletedPostsTable} WHERE post_uid = p.post_uid)
-				)
+				WHERE NOT " . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid') . "
 				AND 1
 			";
 		}

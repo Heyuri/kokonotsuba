@@ -871,11 +871,13 @@ class deletedPostsRepository extends baseRepository {
 	 * @return array|false Flat array of deletion record IDs, or false if none.
 	 */
 	public function getExpiredEntryIDs(int $timeLimit, bool $attachmentsOnly = false): false|array {
-		// query to get entries older than the time limit (in hours) 
+		// query to get entries older than the time limit (in hours)
+		// open_flag is a STORED generated column (IF(restored_at IS NULL, 1, 0)) so it is never
+		// NULL — comparing it directly rather than through COALESCE lets idx_dp_prune apply
 		$query = "SELECT id
 			FROM {$this->table}
 			WHERE deleted_at < DATE_SUB(NOW(), INTERVAL :timeLimit HOUR)
-			AND COALESCE(open_flag, 0) = 1";
+			AND open_flag = 1";
 
 		$params = [':timeLimit' => $timeLimit];
 		// if we only want the attachments then append a condition to get attachment-level deletions 
