@@ -62,6 +62,11 @@ function coalescedAttachmentColumns(string $fileIdAlias, string $postUidAlias): 
  * @param string $accountTable
  * @param bool   $viewDeleted      Whether to include deleted posts (post-centric only)
  * @param bool   $deletionCentric  If true, query from deleted_posts perspective
+ * @param bool   $includeObjectivePosition Select the objective_position column (post-centric only).
+ *                                 It is a correlated COUNT(*) evaluated per result row, so pass
+ *                                 false when the caller follows up with
+ *                                 threadRepository::attachObjectivePositions(), which derives the
+ *                                 same values in one window-function query and overwrites these.
  * @return string
  */
 function getBasePostQuery(
@@ -75,7 +80,8 @@ function getBasePostQuery(
     bool $viewDeleted = false,
 	bool $deletionCentric = false,
 	string $countryFlagTable = '',
-	string $displayIpTable = ''
+	string $displayIpTable = '',
+	bool $includeObjectivePosition = true
 ): string {
 
 	// Shared column definitions
@@ -107,11 +113,6 @@ function getBasePostQuery(
 			dp.file_only         AS file_only_deleted,
 			dp.file_id";
 
-	$soudaneColumns = "
-			sv.votes_total_count,
-			sv.votes_yeah_count,
-			sv.votes_nope_count";
-
 	$noteColumns = "
 			n.id AS note_id,
 			n.note_submitted,
@@ -119,18 +120,6 @@ function getBasePostQuery(
 			n.note_text";
 
 	// Shared JOIN fragments
-	$soudaneJoin = "
-		LEFT JOIN (
-			SELECT
-				post_uid,
-				COUNT(*) AS vote_rows,
-				SUM(CASE WHEN yeah = 1 THEN 1 ELSE 0 END) AS votes_yeah_count,
-				SUM(CASE WHEN yeah = 0 THEN 1 ELSE 0 END) AS votes_nope_count,
-				SUM(CASE WHEN yeah = 1 THEN 1 ELSE -1 END) AS votes_total_count
-			FROM {$soudaneTable}
-			GROUP BY post_uid
-		)";
-
 	$noteJoin = "
 		LEFT JOIN {$noteTable} n";
 
@@ -213,14 +202,32 @@ function getBasePostQuery(
 	$displayIpColumn   = $displayIpTable ? "\n\t\t\tdip.ip_part AS display_ip_ip_part," : '';
 	$displayIpJoin     = $displayIpTable ? "\n\t\tLEFT JOIN $displayIpTable dip ON dip.post_uid = p.post_uid" : '';
 
+	// The vote aggregate used to be a LEFT JOIN onto a derived table that grouped the entire
+	// soudane table with no filter. MariaDB can neither merge a GROUP BY derived table into the
+	// outer query nor push the caller's WHERE through it, so every call materialised every vote in
+	// the database *and* left the posts scan unfiltered. Correlated subqueries ride
+	// idx_soudane_vote (post_uid, yeah) and run per result row instead. SUM over no rows yields
+	// NULL, matching the miss behaviour of the LEFT JOIN they replace - mergeRowIntoPost() reads a
+	// NULL votes_total_count as "this post has no votes".
+	$soudaneColumns = "
+			(SELECT SUM(CASE WHEN sv.yeah = 1 THEN 1 ELSE -1 END)
+				FROM {$soudaneTable} sv WHERE sv.post_uid = p.post_uid) AS votes_total_count,
+			(SELECT SUM(CASE WHEN sv.yeah = 1 THEN 1 ELSE 0 END)
+				FROM {$soudaneTable} sv WHERE sv.post_uid = p.post_uid) AS votes_yeah_count,
+			(SELECT SUM(CASE WHEN sv.yeah = 0 THEN 1 ELSE 0 END)
+				FROM {$soudaneTable} sv WHERE sv.post_uid = p.post_uid) AS votes_nope_count";
+
 	// True ordinal within the thread (OP = 0), used for pagination page math instead of
-	// the drift-prone stored post_position column.
-	$objectivePositionColumn = objectivePositionSubquery($postTable, $deletedPostsTable, 'p', $viewDeleted);
+	// the drift-prone stored post_position column. Correlated COUNT(*) with a nested EXISTS,
+	// evaluated once per result row - see $includeObjectivePosition.
+	$objectivePositionColumn = $includeObjectivePosition
+		? objectivePositionSubquery($postTable, $deletedPostsTable, 'p', $viewDeleted) . ' AS objective_position,'
+		: '';
 
     $query = "
         SELECT
             p.*,
-            {$objectivePositionColumn} AS objective_position,
+            {$objectivePositionColumn}
             t.post_op_number,
 			{$countryFlagColumn}
 			{$displayIpColumn}
@@ -237,8 +244,6 @@ function getBasePostQuery(
         FROM ($postFilterSubquery) p
 
         LEFT JOIN $fileTable f ON f.post_uid = p.post_uid
-
-		{$soudaneJoin} sv ON sv.post_uid = p.post_uid
 
 		{$noteJoin} ON n.post_uid = p.post_uid
 		LEFT JOIN $accountTable a ON a.id = n.added_by

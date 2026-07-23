@@ -4,6 +4,7 @@ namespace Kokonotsuba\renderers;
 
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\thread\Thread;
 
 class postWidget {
     public function __construct(
@@ -18,9 +19,9 @@ class postWidget {
 		$widgetDataHtml .= $replyWidgets;
 	}
 
-	public function addOpeningPostWidget(string &$widgetDataHtml, Post $post, array $threadPosts): void {
+	public function addOpeningPostWidget(string &$widgetDataHtml, Post $post, array $threadPosts, ?Thread $thread = null): void {
 		// generate widget menu for thread
-		$threadWidgets = $this->generateThreadWidgets($post, $threadPosts);
+		$threadWidgets = $this->generateThreadWidgets($post, $threadPosts, false, $thread);
 
 		// append to widget data htnk
 		$widgetDataHtml .= $threadWidgets;
@@ -42,9 +43,9 @@ class postWidget {
 		$modWidgetHtml .= $replyWidgets;
 	}
 
-	public function addThreadModerateWidget(string &$modWidgetHtml, Post &$post, array &$threadPosts): void {
+	public function addThreadModerateWidget(string &$modWidgetHtml, Post &$post, array &$threadPosts, ?Thread $thread = null): void {
 		// generate moderate widget menu for thread
-		$threadWidgets = $this->generateThreadWidgets($post, $threadPosts, true);
+		$threadWidgets = $this->generateThreadWidgets($post, $threadPosts, true, $thread);
 
 		// append to mod widget html
 		$modWidgetHtml .= $threadWidgets;
@@ -58,13 +59,13 @@ class postWidget {
 		$modWidgetHtml .= $postWidgets;
 	}
 
-	private function generateThreadWidgets(Post $openingPost, array $threadPosts, bool $isModerate = false): string {
+	private function generateThreadWidgets(Post $openingPost, array $threadPosts, bool $isModerate = false, ?Thread $thread = null): string {
 		// whether to use the moderate or user-end hook point
         // moderate hook points dont get called for statis html generation
         $threadWidgetHookPoint = $isModerate ? 'ModerateThreadWidget' : 'ThreadWidget';
         
         // build the thread widget array via hookpoint
-		$threadWidgets = $this->buildWidgetArray($threadWidgetHookPoint, [$openingPost, $threadPosts]);
+		$threadWidgets = $this->buildWidgetArray($threadWidgetHookPoint, [$openingPost, $threadPosts, $thread]);
 
 		// generate thread widget data div
 		$widgetDataDiv = $this->buildWidgetMenuHtml($threadWidgets);

@@ -622,7 +622,8 @@ class threadRepository extends baseRepository {
 		$query = getBasePostQuery(
 			$this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table,
 			$this->soudaneTable, $this->noteTable, $this->accountTable,
-			$includeDeleted, false, $this->countryFlagTable, $this->displayIpTable
+			$includeDeleted, false, $this->countryFlagTable, $this->displayIpTable,
+			includeObjectivePosition: false
 		);
 		$query .= " WHERE p.post_uid IN {$placeholders} ORDER BY p.post_uid ASC";
 
@@ -659,7 +660,12 @@ class threadRepository extends baseRepository {
 			$posts
 		)));
 
-		$positions = $this->getObjectivePositions($threadUIDs, $includeDeleted);
+		$postUIDs = array_values(array_map(
+			static fn(Post $post): int => $post->getUid(),
+			$posts
+		));
+
+		$positions = $this->getObjectivePositions($threadUIDs, $includeDeleted, $postUIDs);
 
 		foreach ($posts as $post) {
 			$post->setObjectivePosition($positions[$post->getUid()] ?? 0);
@@ -673,9 +679,12 @@ class threadRepository extends baseRepository {
 	 *
 	 * @param string[] $threadUIDs     Thread UIDs to compute positions for.
 	 * @param bool     $includeDeleted Whether deleted replies count toward the ordinal.
+	 * @param string[] $restrictToPostUIDs Return only these posts' positions. The ordinals are
+	 *                                 unchanged - see below - so this is purely a way to avoid
+	 *                                 hauling back a whole thread to position a preview.
 	 * @return array<int,int> post_uid => objective position
 	 */
-	public function getObjectivePositions(array $threadUIDs, bool $includeDeleted = false): array {
+	public function getObjectivePositions(array $threadUIDs, bool $includeDeleted = false, array $restrictToPostUIDs = []): array {
 		if (empty($threadUIDs)) {
 			return [];
 		}
@@ -703,7 +712,25 @@ class threadRepository extends baseRepository {
 			{$deletionFilter}
 		";
 
-		$rows = $this->queryAll($query, $threadUIDs);
+		$params = $threadUIDs;
+
+		// ROW_NUMBER has to see every post in the partition to number correctly, so the restriction
+		// is applied *outside* the window rather than in its WHERE - the ordinals are identical
+		// either way. Callers rendering a handful of preview posts would otherwise get back a row
+		// for every post in every thread on the page, only to index and discard almost all of them.
+		if (!empty($restrictToPostUIDs)) {
+			$restrictPlaceholders = pdoPlaceholdersForIn($restrictToPostUIDs);
+			$query = "
+				SELECT positioned.post_uid, positioned.objective_position
+				FROM (
+					$query
+				) positioned
+				WHERE positioned.post_uid IN {$restrictPlaceholders}
+			";
+			$params = array_merge($params, array_values($restrictToPostUIDs));
+		}
+
+		$rows = $this->queryAll($query, $params);
 
 		$map = [];
 		foreach ($rows ?? [] as $row) {
@@ -780,7 +807,8 @@ class threadRepository extends baseRepository {
 		$query = getBasePostQuery(
 			$this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table,
 			$this->soudaneTable, $this->noteTable, $this->accountTable,
-			$includeDeleted, false, $this->countryFlagTable, $this->displayIpTable
+			$includeDeleted, false, $this->countryFlagTable, $this->displayIpTable,
+			includeObjectivePosition: false
 		);
 		$query .= " WHERE p.post_uid IN {$placeholders} ORDER BY p.post_uid ASC";
 
@@ -837,7 +865,7 @@ class threadRepository extends baseRepository {
 	 */
 	public function getAllPostsFromThread(string $threadUID, bool $includeDeleted = false): ?array {
 		// Generate the base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable, includeObjectivePosition: false);
 
 		// Add thread condition
 		$query .= " WHERE p.thread_uid = :thread_uid";
@@ -880,7 +908,7 @@ class threadRepository extends baseRepository {
 	 */
 	public function getVisiblePostsFromDeletedThread(string $threadUID): ?array {
 		// viewDeleted=false filters out deleted posts in the subquery
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, false, false, $this->countryFlagTable, $this->displayIpTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, false, false, $this->countryFlagTable, $this->displayIpTable, includeObjectivePosition: false);
 
 		// Filter by thread — intentionally no excludeDeletedThreadsCondition
 		// so the query works even when the OP is deleted
@@ -910,7 +938,7 @@ class threadRepository extends baseRepository {
 	 * @return Post[]|null Array of Post objects, or null if none found.
 	 */
 	public function getRepliesAfterPostNumber(string $threadUID, int $afterPostNo, bool $includeDeleted = false): ?array {
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable, includeObjectivePosition: false);
 
 		$query .= " WHERE p.thread_uid = :thread_uid AND p.is_op = 0 AND p.no > :after_no";
 
@@ -936,76 +964,172 @@ class threadRepository extends baseRepository {
 	}
 
 	/**
-	 * Fetch the latest N posts from each of the given threads in one query.
+	 * Fetch the latest N posts from each of the given threads.
 	 * Results always include the OP and up to ($previewCount - 1) most-recent replies.
 	 *
-	 * @param string[] $threadUIDs    Array of thread UIDs.
+	 * Takes Thread objects rather than bare UIDs because each thread's number_of_posts is what
+	 * makes the posts' objective positions derivable without re-reading the thread - see
+	 * deriveObjectivePositions(). Those counts must therefore come from a thread query run with
+	 * the same $includeDeleted visibility as this call, which is how all callers use it.
+	 *
+	 * @param Thread[] $threads       Threads to fetch previews for.
 	 * @param int      $previewCount  Number of posts to return per thread (including OP).
 	 * @param bool     $includeDeleted Whether to include soft-deleted posts.
 	 * @return array Array of merged post data arrays across all threads.
 	 */
-	public function getPostsForThreads(array $threadUIDs, int $previewCount, bool $includeDeleted = false): array {
-		if (empty($threadUIDs)) return [];
+	public function getPostsForThreads(array $threads, int $previewCount, bool $includeDeleted = false): array {
+		if (empty($threads)) return [];
 
 		// include OP
 		$previewCount++;
 
-		$inClause = pdoPlaceholdersForIn($threadUIDs);
-
-		$ranked = "
-			SELECT
-				p.post_uid,
-				p.thread_uid,
-				ROW_NUMBER() OVER (
-					PARTITION BY p.thread_uid
-					ORDER BY p.is_op DESC, p.post_uid DESC
-				) AS rn
-			FROM {$this->postTable} p
-			JOIN {$this->table} t ON t.thread_uid = p.thread_uid
-			WHERE p.thread_uid IN $inClause
-		";
-
-		if (!$includeDeleted) {
-			$ranked .= excludeDeletedThreadsCondition($this->deletedPostsTable);
-			$ranked .= ' AND NOT ' . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid');
+		// excludeDeletedThreadsCondition() tests for an open post-level deletion on the thread's
+		// OP, which is exactly what thread_deleted already records on the row in hand - so the
+		// thread-level filter is applied here rather than joining the deleted-posts table into
+		// every branch of the query below.
+		// $threadUIDs is kept alongside the map rather than recovered from its keys: thread_uid is a
+		// VARCHAR, but PHP silently turns a numeric-string array key into an int, and bindTypedParams()
+		// then binds it as PDO::PARAM_INT. Comparing a varchar column against an integer makes MariaDB
+		// convert the column instead of probing idx_posts_thread_rank, turning a 45-row ref lookup
+		// into a full scan with a filesort. Hold on to the strings.
+		$threadUIDs = [];
+		$visiblePostCounts = [];
+		foreach ($threads as $thread) {
+			if (!$includeDeleted && $thread->isThreadDeleted()) {
+				continue;
+			}
+			$threadUID = $thread->getUid();
+			$threadUIDs[] = $threadUID;
+			$visiblePostCounts[$threadUID] = $thread->getPostCount();
 		}
 
-		$base = getBasePostQuery(
-			$this->postTable,
-			$this->deletedPostsTable,
-			$this->fileTable,
-			$this->table,
-			$this->soudaneTable,
-			$this->noteTable,
-			$this->accountTable,
-			$includeDeleted,
-			false,
-			$this->countryFlagTable,
-			$this->displayIpTable
+		if (empty($threadUIDs)) {
+			return [];
+		}
+
+		// Step 1: read just the preview posts. This was once joined to the full post query below as
+		// two derived tables, but that query carries no restriction of its own and its inner derived
+		// tables stop the optimiser pushing "rn <= N" down into it, so the database built every post
+		// on the site and then threw all but the preview away. Resolving the UIDs first and passing
+		// them as an IN list keeps the expensive query bounded to the rows actually rendered.
+		$previewRows = $this->fetchPreviewPostRows($threadUIDs, $previewCount, $includeDeleted);
+
+		if (empty($previewRows)) {
+			return [];
+		}
+
+		$positions = $this->deriveObjectivePositions($previewRows, $visiblePostCounts);
+		$postUIDs = array_keys($positions);
+
+		// Step 2: single full query for exactly those UIDs.
+		$placeholders = pdoPlaceholdersForIn($postUIDs);
+		$query = getBasePostQuery(
+			$this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table,
+			$this->soudaneTable, $this->noteTable, $this->accountTable,
+			$includeDeleted, false, $this->countryFlagTable, $this->displayIpTable,
+			includeObjectivePosition: false
 		);
+		$query .= " WHERE p.post_uid IN {$placeholders} ORDER BY p.no ASC";
 
-		$query = "
-			SELECT full.*
-			FROM (
-				$ranked
-			) r
-			JOIN (
-				$base
-			) full ON full.post_uid = r.post_uid
-			WHERE r.rn <= ?
-			ORDER BY full.no ASC
-		";
-
-		$params = array_merge($threadUIDs, [$previewCount]);
-
-		$posts = $this->queryAll($query, $params) ?? [];
+		$posts = $this->queryAll($query, $postUIDs) ?? [];
 		$posts = mergeMultiplePostRows($posts);
 
-		if ($posts) {
-			$this->attachObjectivePositions($posts, $includeDeleted);
+		// Step 1 already knows each post's ordinal, so there is no attachObjectivePositions() call
+		// here - that would re-scan the same threads a second time to recompute what we have.
+		foreach ($posts as $post) {
+			$post->setObjectivePosition($positions[$post->getUid()] ?? 0);
 		}
 
 		return $posts ?: [];
+	}
+
+	/**
+	 * Read the preview posts for each thread: the OP, then the most recent replies, capped per
+	 * thread.
+	 *
+	 * One branch per thread rather than a single ROW_NUMBER() over all of them. The window form
+	 * has to materialise and rank every visible post in every thread on the page before the outer
+	 * "rn <= N" throws almost all of them away; a per-thread ORDER BY ... LIMIT walks
+	 * idx_posts_thread_rank (thread_uid, is_op DESC, post_uid DESC) backwards and stops after N
+	 * rows. Same rows, same order, but the work is bounded by what is rendered instead of by how
+	 * long the threads happen to be.
+	 *
+	 * @param string[] $threadUIDs     Thread UIDs to read, already filtered for thread-level deletion.
+	 * @param int      $rankLimit      Posts to keep per thread, OP included.
+	 * @param bool     $includeDeleted Whether soft-deleted posts are returned.
+	 * @return array Rows of post_uid, thread_uid, is_op.
+	 */
+	private function fetchPreviewPostRows(array $threadUIDs, int $rankLimit, bool $includeDeleted): array {
+		$deletionFilter = '';
+		if (!$includeDeleted) {
+			$deletionFilter = ' AND NOT ' . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid');
+		}
+
+		// Interpolated, not bound: this is a validated integer rather than caller data, and a named
+		// placeholder cannot be reused across branches without relying on emulated prepares.
+		$rankLimit = max(0, $rankLimit);
+
+		$branches = [];
+		$params   = [];
+
+		foreach ($threadUIDs as $threadUID) {
+			$branches[] = "
+				(SELECT p.post_uid, p.thread_uid, p.is_op
+				FROM {$this->postTable} p
+				WHERE p.thread_uid = ?
+				{$deletionFilter}
+				ORDER BY p.is_op DESC, p.post_uid DESC
+				LIMIT {$rankLimit})
+			";
+			$params[] = $threadUID;
+		}
+
+		return $this->queryAll(implode("\nUNION ALL\n", $branches), $params) ?? [];
+	}
+
+	/**
+	 * Work out each preview post's objective position without going back to the database.
+	 *
+	 * The position is a post's ordinal among its thread's currently-visible posts, OP = 0. Ranking
+	 * the posts to find that out means reading the whole thread, but the same ordinal falls out of
+	 * arithmetic: for a thread of N visible posts of which O are the OP (one, or none once the OP
+	 * itself is deleted), a reply lying D places from the newest end sits at position N + O - D.
+	 * N is the thread row's number_of_posts, counted with the very same visibility filter, so the
+	 * preview posts can be positioned from the handful of rows already in hand.
+	 *
+	 * Rows are re-sorted here rather than trusted to arrive in order: UNION ALL gives no guarantee
+	 * that a branch's ORDER BY survives into the combined result.
+	 *
+	 * @param array          $previewRows       Rows from fetchPreviewPostRows().
+	 * @param array<int|string,int> $visiblePostCounts thread_uid => number_of_posts.
+	 * @return array<int,int> post_uid => objective position.
+	 */
+	private function deriveObjectivePositions(array $previewRows, array $visiblePostCounts): array {
+		$byThread = [];
+		foreach ($previewRows as $row) {
+			$byThread[$row['thread_uid']][] = $row;
+		}
+
+		$positions = [];
+
+		foreach ($byThread as $threadUID => $rows) {
+			// OP first, then newest reply downwards - the order the ranking used.
+			usort($rows, static fn(array $a, array $b): int =>
+				[(int)$b['is_op'], (int)$b['post_uid']] <=> [(int)$a['is_op'], (int)$a['post_uid']]);
+
+			// A thread absent from the counts cannot be positioned by arithmetic; falling back to
+			// the rows in hand keeps the OP at 0 rather than inventing an offset.
+			$visibleCount = $visiblePostCounts[$threadUID] ?? count($rows);
+			$hasOp        = (int)($rows[0]['is_op'] ?? 0) === 1 ? 1 : 0;
+
+			foreach ($rows as $index => $row) {
+				$positions[(int)$row['post_uid']] = (int)$row['is_op'] === 1
+					? 0
+					: $visibleCount + $hasOp - ($index + 1);
+			}
+		}
+
+		return $positions;
 	}
 
 	/**

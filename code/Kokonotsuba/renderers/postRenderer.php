@@ -99,7 +99,7 @@ class postRenderer {
 
 		// Admin controls and widgets
 		$postFormExtra .= $this->generateAdminControls($post, $adminMode, $isThreadOp);
-		$widgetDataHtml = $this->generateAdminWidgets($post, $threadPosts, $adminMode, $isThreadOp);
+		$widgetDataHtml = $this->generateAdminWidgets($post, $threadPosts, $adminMode, $isThreadOp, $thread);
 
 		// Generate post metadata (name HTML, buttons, URLs, attributes, first attachment)
 		$metadata = $this->generatePostMetadata($data, $threadResno, $replyCount, $repliesPerPage, $threadMode, $crossLink, $contentData['isDeleted']);
@@ -117,8 +117,8 @@ class postRenderer {
 		);
 
 		// Dispatch module events and finalize post menu
-		$this->dispatchPostModuleEvents($templateValues, $data, $post, $threadPosts, $adminMode, $isThreadOp, $isThreadReply, $threadMode);
-		$this->finalizePostWidgets($templateValues, $post, $threadPosts, $isThreadOp, $isThreadReply, $widgetDataHtml);
+		$this->dispatchPostModuleEvents($templateValues, $data, $post, $threadPosts, $adminMode, $isThreadOp, $isThreadReply, $threadMode, $thread);
+		$this->finalizePostWidgets($templateValues, $post, $threadPosts, $isThreadOp, $isThreadReply, $widgetDataHtml, $thread);
 		
 		// Return rendered HTML
 		if ($shouldRenderReply) {
@@ -295,7 +295,7 @@ class postRenderer {
 		];
 	}
 
-	private function dispatchPostModuleEvents(array &$templateValues, $data, Post $post, array $threadPosts, bool $adminMode, bool $isThreadOp, bool $isThreadReply, bool $threadMode = true): void {
+	private function dispatchPostModuleEvents(array &$templateValues, $data, Post $post, array $threadPosts, bool $adminMode, bool $isThreadOp, bool $isThreadReply, bool $threadMode = true, ?Thread $thread = null): void {
 		$board = $this->board;
 		$this->moduleEngine->dispatch('Post', [
 			&$templateValues, &$data, &$threadPosts, &$board, &$adminMode,
@@ -332,15 +332,18 @@ class postRenderer {
 		if ($isThreadReply) {
 			$this->moduleEngine->dispatch('ThreadReply', [&$templateValues, &$post, &$threadPosts]);
 		} elseif ($isThreadOp) {
-			$this->moduleEngine->dispatch('OpeningPost', [&$templateValues, &$post, &$threadPosts]);
+			// The thread row rides along so listeners can read thread-level state (sticky, theme,
+			// counts) without a lookup per opening post. Null on render paths that have no thread
+			// to hand, such as search hits and API output.
+			$this->moduleEngine->dispatch('OpeningPost', [&$templateValues, &$post, &$threadPosts, $thread]);
 		}
 	}
 
-	private function finalizePostWidgets(array &$templateValues, Post $post, array $threadPosts, bool $isThreadOp, bool $isThreadReply, string $widgetDataHtml): void {
+	private function finalizePostWidgets(array &$templateValues, Post $post, array $threadPosts, bool $isThreadOp, bool $isThreadReply, string $widgetDataHtml, ?Thread $thread = null): void {
 		if ($isThreadReply) {
 			$this->postWidget->addThreadReplyWidget($widgetDataHtml, $post);
 		} elseif ($isThreadOp) {
-			$this->postWidget->addOpeningPostWidget($widgetDataHtml, $post, $threadPosts);
+			$this->postWidget->addOpeningPostWidget($widgetDataHtml, $post, $threadPosts, $thread);
 		}
 
 		$this->postWidget->addPostWidget($widgetDataHtml, $post);
@@ -416,13 +419,13 @@ class postRenderer {
 		}
 	}
 
-	private function generateAdminWidgets(Post $post, array $threadPosts, bool $adminMode, bool $isThreadOp): string {
+	private function generateAdminWidgets(Post $post, array $threadPosts, bool $adminMode, bool $isThreadOp, ?Thread $thread = null): string {
 		// if the user is logged in as a mod, then run moderator widgets
 		if ($adminMode) {
 			$widgetDataHtml = '';
 			
 			if($isThreadOp) {
-				$this->postWidget->addThreadModerateWidget($widgetDataHtml, $post, $threadPosts);
+				$this->postWidget->addThreadModerateWidget($widgetDataHtml, $post, $threadPosts, $thread);
 			} else {
 				$this->postWidget->addReplyModerateWidget($widgetDataHtml, $post);
 			}

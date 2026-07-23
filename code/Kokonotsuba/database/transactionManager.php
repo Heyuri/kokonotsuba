@@ -25,6 +25,17 @@ class transactionManager {
 		$this->databaseConnection = $databaseConnection;
 	}
 
+	/**
+	 * Whether a transaction is already open on the connection.
+	 *
+	 * Callers that want to batch their own writes have to ask: begin() and commit() here act on
+	 * whatever transaction is current, so committing while nested inside somebody else's would end
+	 * theirs, not yours.
+	 */
+	public function inTransaction(): bool {
+		return $this->databaseConnection->inTransaction();
+	}
+
 	public function begin(): void {
 		if (!$this->databaseConnection->inTransaction()) {
 			$this->databaseConnection->beginTransaction();

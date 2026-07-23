@@ -4,6 +4,7 @@ namespace Kokonotsuba\module_classes\traits\listeners;
 
 use Kokonotsuba\post\Post;
 use Kokonotsuba\board\board;
+use Kokonotsuba\thread\Thread;
 
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\getPageOfThread;
@@ -117,8 +118,8 @@ trait PostControlHooksTrait {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModerateThreadWidget',
-			function(array &$widgetArray, Post &$post) use ($methodName) {
-				$this->$methodName($widgetArray, $post);
+			function(array &$widgetArray, Post &$post, array &$threadPosts, ?Thread $thread = null) use ($methodName) {
+				$this->$methodName($widgetArray, $post, $thread);
 			}
 		);
 	}

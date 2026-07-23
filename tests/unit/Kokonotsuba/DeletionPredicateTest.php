@@ -53,11 +53,11 @@ final class DeletionPredicateTest extends TestCase {
 	}
 
 	/** Build the post-centric query used for board indexes, threads and search. */
-	private function postCentricQuery(bool $viewDeleted): string {
+	private function postCentricQuery(bool $viewDeleted, bool $includeObjectivePosition = true): string {
 		return getBasePostQuery(
 			self::POSTS, self::DELETED, self::FILES, self::THREADS,
 			self::SOUDANE, self::NOTES, self::ACCOUNTS,
-			$viewDeleted, false
+			$viewDeleted, false, '', '', $includeObjectivePosition
 		);
 	}
 
@@ -201,13 +201,35 @@ final class DeletionPredicateTest extends TestCase {
 		$this->assertStringContains('SELECT * FROM posts', $sql, 'admin views should not filter at all');
 	}
 
-	public function testPostCentricKeepsItsOwnVoteAggregate(): void {
+	public function testPostCentricCorrelatesItsVoteAggregate(): void {
 		$sql = $this->flatten($this->postCentricQuery(false));
 
-		// Only the deletion-centric branch was converted to correlated subqueries; the post-centric
-		// aggregate feeds mergeMultiplePostRows and is deliberately left as-is.
-		$this->assertStringContains('GROUP BY post_uid', $sql, 'the soudane aggregate should be untouched');
-		$this->assertStringContains('votes_yeah_count', $sql, 'should still select vote counts');
+		// This was a LEFT JOIN onto a derived table grouping the entire votes table, matching the
+		// shape the deletion-centric branch had already moved away from. Being unmergeable it
+		// materialised every vote in the database on every call, and it also stopped the caller's
+		// WHERE reaching the posts scan — which is what made the board rebuild's preview query read
+		// every post on the site. SUM rather than COUNT keeps the no-votes case NULL, which is how
+		// mergeRowIntoPost() tells "no votes" apart from "a score of zero".
+		$this->assertStringNotContains('GROUP BY post_uid', $sql, 'must not aggregate the whole votes table');
+		$this->assertStringContains('FROM soudane_votes sv WHERE sv.post_uid = p.post_uid', $sql, 'counts should be correlated per post');
+		foreach (['votes_total_count', 'votes_yeah_count', 'votes_nope_count'] as $column) {
+			$this->assertStringContains($column, $sql, "should still select {$column}");
+		}
+	}
+
+	public function testPostCentricOmitsObjectivePositionOnRequest(): void {
+		// The column is a correlated COUNT(*) evaluated per result row. Callers that follow up with
+		// attachObjectivePositions() overwrite every value it produces, so they opt out of it.
+		$this->assertStringContains(
+			'AS objective_position',
+			$this->flatten($this->postCentricQuery(false)),
+			'the column is selected by default'
+		);
+		$this->assertStringNotContains(
+			'AS objective_position',
+			$this->flatten($this->postCentricQuery(false, false)),
+			'and omitted when the caller derives it separately'
+		);
 	}
 
 	public function testNeitherQueryModeSearchesForALatestDeletionRow(): void {

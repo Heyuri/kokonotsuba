@@ -3,6 +3,7 @@
 namespace Kokonotsuba\module_classes\traits;
 
 use Kokonotsuba\post\Post;
+use Kokonotsuba\thread\Thread;
 
 use function Kokonotsuba\libraries\generateModerateForm;
 
@@ -51,8 +52,8 @@ trait ToggleActionTrait {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'ModerateThreadWidget',
-			function(array &$widgetArray, Post &$post) {
-				$this->onRenderToggleWidget($widgetArray, $post);
+			function(array &$widgetArray, Post &$post, array &$threadPosts, ?Thread $thread = null) {
+				$this->onRenderToggleWidget($widgetArray, $post, $thread);
 			}
 		);
 
@@ -78,7 +79,7 @@ trait ToggleActionTrait {
 		);
 	}
 
-	protected function onRenderToggleWidget(array &$widgetArray, Post &$post): void {
+	protected function onRenderToggleWidget(array &$widgetArray, Post &$post, ?Thread $thread = null): void {
 		$isActive = $post->getFlags()->value($this->getToggleFlagKey());
 		$url = $this->getModulePageURL([], false, true);
 		$label = $isActive ? $this->getToggleActiveTitle() : $this->getToggleInactiveTitle();

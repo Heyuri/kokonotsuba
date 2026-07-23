@@ -124,8 +124,11 @@ class quoteLinkRepository extends baseRepository {
 		// get the query
 		$query = $this->getQuoteLinkQuery();
 
-		// add the IN clause for getting the posts by uids
-		$query .= "WHERE q.target_post_uid IN $inClause OR q.host_post_uid IN $inClause";
+		// add the IN clause for getting the posts by uids. The parentheses are load-bearing: AND
+		// binds tighter than OR, so without them the deleted-post filter appended below applies
+		// only to the host_post_uid branch and quote-links onto deleted posts leak through the
+		// target_post_uid one.
+		$query .= "WHERE (q.target_post_uid IN $inClause OR q.host_post_uid IN $inClause)";
 
 		// if we want to exclude quote links from deleted posts
 		if(!$includeDeletedPostQuotelinks) {
