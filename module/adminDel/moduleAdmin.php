@@ -254,55 +254,59 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// get action
 		$action = $this->moduleContext->request->getParameter('action', null, '');
-		
-		switch ($action) {
-			case 'del':
-			case 'delete':
-				$this->moduleContext->postService->removePosts([$post->getUid()], $this->moduleContext->currentUserId);
-				$this->logAction('Deleted post No.'.$post->getNumber(), $boardUID);
-				break;
-			case 'delmute':
-			case 'mute':
-				$this->moduleContext->postService->removePosts([$post->getUid()], $this->moduleContext->currentUserId);
-				$ip = $post->getIp();
-				$starttime = $this->moduleContext->request->getRequestTime();
-				$expires = $starttime + intval($this->JANIMUTE_LENGTH) * 60;
-				$reason = $this->JANIMUTE_REASON;
 
-				if ($ip) {
-					$this->addBanEntry($this->getGlobalBanFilePath(), $ip, $starttime, $expires, $reason);
-				}
+		// One transaction for the whole action: the deletion services and logAction
+		// all join it, so the request pays a single commit flush instead of one per write.
+		$this->moduleContext->transactionManager->run(function () use ($action, $post, $board, $boardUID, &$fileId): void {
+			switch ($action) {
+				case 'del':
+				case 'delete':
+					$this->moduleContext->postService->removePosts([$post->getUid()], $this->moduleContext->currentUserId);
+					$this->logAction('Deleted post No.'.$post->getNumber(), $boardUID);
+					break;
+				case 'delmute':
+				case 'mute':
+					$this->moduleContext->postService->removePosts([$post->getUid()], $this->moduleContext->currentUserId);
+					$ip = $post->getIp();
+					$starttime = $this->moduleContext->request->getRequestTime();
+					$expires = $starttime + intval($this->JANIMUTE_LENGTH) * 60;
+					$reason = $this->JANIMUTE_REASON;
 
-				$this->logAction('Muted '.$ip.' and deleted post No.'.$post->getNumber() . ' ' . $board->getBoardTitle() . ' (' . $board->getBoardUID() . ')', GLOBAL_BOARD_UID);
+					if ($ip) {
+						$this->addBanEntry($this->getGlobalBanFilePath(), $ip, $starttime, $expires, $reason);
+					}
 
-				break;
-			case 'attachmentDel':
-				// get the file Id
-				$fileId = $this->moduleContext->request->getParameter('fileId');
-				
-				// cast to int
-				$fileId = (int)$fileId;
+					$this->logAction('Muted '.$ip.' and deleted post No.'.$post->getNumber() . ' ' . $board->getBoardTitle() . ' (' . $board->getBoardUID() . ')', GLOBAL_BOARD_UID);
 
-				// throw board exception if its null/empty/zero or isn't an integer
-				if(empty($fileId) || !is_int($fileId)) {
-					throw new BoardException("Invalid file ID supplied!");
-				}
+					break;
+				case 'attachmentDel':
+					// get the file Id
+					$fileId = $this->moduleContext->request->getParameter('fileId');
 
-				// get the attachment to deleted
-				$attachment = $post->getAttachmentById($fileId);
+					// cast to int
+					$fileId = (int)$fileId;
 
-				if(!$attachment) {
-					throw new BoardException(_T('attachment_not_found'));
-				}
+					// throw board exception if its null/empty/zero or isn't an integer
+					if(empty($fileId) || !is_int($fileId)) {
+						throw new BoardException("Invalid file ID supplied!");
+					}
 
-				$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$attachment], $this->moduleContext->currentUserId);
+					// get the attachment to deleted
+					$attachment = $post->getAttachmentById($fileId);
 
-				$this->logAction('Deleted file for post No.'.$post->getNumber(), $boardUID);
-				break;
-			default:
-				throw new BoardException('ERROR: Invalid action.');
-				break;
-		}
+					if(!$attachment) {
+						throw new BoardException(_T('attachment_not_found'));
+					}
+
+					$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$attachment], $this->moduleContext->currentUserId);
+
+					$this->logAction('Deleted file for post No.'.$post->getNumber(), $boardUID);
+					break;
+				default:
+					throw new BoardException('ERROR: Invalid action.');
+					break;
+			}
+		});
 		// Will be implemented later
 		//deleteThreadCache($post['thread_uid']);
 
