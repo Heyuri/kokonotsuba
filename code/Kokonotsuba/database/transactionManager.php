@@ -57,9 +57,17 @@ class transactionManager {
 	/**
 	 * Execute a callback in a safe transaction.
 	 * Rolls back automatically if an exception is thrown.
+	 *
+	 * Nests safely: if a transaction is already open, the callback simply joins it
+	 * and the outermost run() keeps ownership of the commit/rollback. Committing
+	 * here would end the caller's transaction early.
 	 */
 	public function run(callable $callback): mixed {
-		$this->begin();
+		if ($this->databaseConnection->inTransaction()) {
+			return $callback();
+		}
+
+		$this->databaseConnection->beginTransaction();
 		try {
 			$result = $callback();
 			$this->commit();
