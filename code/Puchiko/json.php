@@ -40,6 +40,27 @@ function sendCachedJsonResponse($data, $cacheSeconds = 3600, $statusCode = 200) 
 }
 
 /**
+ * Sends a JSON response that must never be stored by a shared cache.
+ *
+ * Use this for any response whose body varies by session/role (e.g. staff
+ * viewing admin-mode content with poster IPs). `private, no-store` keeps CDNs
+ * and reverse proxies from caching it and later serving it to other users.
+ *
+ * @param mixed $data        The data to encode as JSON.
+ * @param int   $statusCode  The HTTP status code to send (default 200).
+ *
+ * @return void
+ */
+function sendPrivateJsonResponse($data, $statusCode = 200) {
+	http_response_code($statusCode);
+	header('Content-Type: application/json; charset=utf-8');
+	header('Cache-Control: private, no-store, max-age=0');
+
+	echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+	exit;
+}
+
+/**
  * Renders a JSON error response with message and code.
  *
  * @param string $message     The error message to display.
@@ -80,6 +101,18 @@ function renderJsonPage($data, $statusCode = 200) {
  */
 function renderCachedJsonPage($data, $cacheSeconds = 3600, $statusCode = 200) {
 	sendCachedJsonResponse($data, $cacheSeconds, $statusCode);
+}
+
+/**
+ * Renders a JSON response that shared caches must not store (private, no-store).
+ *
+ * @param mixed $data        The JSON-ready data to send.
+ * @param int   $statusCode  The HTTP status code (default 200).
+ *
+ * @return void
+ */
+function renderPrivateJsonPage($data, $statusCode = 200) {
+	sendPrivateJsonResponse($data, $statusCode);
 }
 
 function sendAjaxAndDetach(array $payload): void {
