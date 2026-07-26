@@ -281,6 +281,7 @@ $language['pm_body_label'] = 'Mesaj';
 $language['pm_send_btn'] = 'Gönder';
 $language['pm_recipient_label'] = 'Alıcı';
 $language['pm_recipient_placeholder'] = '◆tripcode veya ★tripcode';
+$language['pm_post_button_title'] = 'Bu tripcode\'a özel mesaj gönder';
 $language['pm_logged_in_as'] = '%s olarak giriş yapıldı';
 $language['pm_logout_btn'] = 'Çıkış yap';
 $language['pm_direction_sent'] = 'Kime';

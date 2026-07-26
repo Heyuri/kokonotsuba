@@ -360,6 +360,10 @@
 
 /************************ Private Messages *****************************/
 
+.pmNameLink {
+	font-size: var(--font-size-small);
+}
+
 .pmSendForm {
 	margin: 0.5em 0;
 }

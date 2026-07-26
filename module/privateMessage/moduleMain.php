@@ -9,13 +9,16 @@ require_once __DIR__ . '/messagePolicy.php';
 require_once __DIR__ . '/messageRenderer.php';
 require_once __DIR__ . '/messageRequestHandler.php';
 
+use Kokonotsuba\board\board;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
 use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
 use Kokonotsuba\post\helper\postDateFormatter;
+use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
@@ -25,6 +28,7 @@ class moduleMain extends abstractModuleMain {
 	use TopLinksListenerTrait;
 	use IncludeScriptTrait;
 	use BanFileOperationsTrait;
+	use PostListenerTrait;
 
 	private string $modulePageUrl;
 	private messageService $messageService;
@@ -47,7 +51,8 @@ class moduleMain extends abstractModuleMain {
 		$this->addTopLink($this->modulePageUrl, _T('private_message_top_bar'));
 		$this->registerScript('privateMessage.js?v=2');
 
-		// $this->listenPost('onRenderPost');
+		// PM button next to tripcode'd names
+		$this->listenPost('onRenderPost');
 
 		// get database table and connection
 		$databaseConnection = databaseConnection::getInstance();
@@ -97,6 +102,22 @@ class moduleMain extends abstractModuleMain {
 
 		// browser notifications for unread PMs
 		$this->registerUnreadNotificationHook();
+	}
+
+	private function onRenderPost(array &$templateValues, Post &$post, array &$threadPosts, board &$board, bool &$adminMode): void {
+		if (!isset($templateValues['{$NAME}'])) {
+			return;
+		}
+
+		// only posts made with a tripcode get a PM button
+		$recipientTrip = $this->messageUtility->buildTripcodeIdentity($post->getTripcode(), $post->getSecureTripcode());
+		if ($recipientTrip === '') {
+			return;
+		}
+
+		$composeUrl = $this->getModulePageURL(['recipient' => $recipientTrip]);
+
+		$templateValues['{$NAME}'] .= ' <span class="pmNameLinkContainer">[<a href="' . $composeUrl . '" class="pmNameLink" title="' . _T('pm_post_button_title') . '">PM</a>]</span>';
 	}
 
 	private function registerUnreadNotificationHook(): void {
