@@ -1007,7 +1007,7 @@ class threadRepository extends baseRepository {
 			return [];
 		}
 
-		// Step 1: read just the preview posts. This was once joined to the full post query below as
+		// read just the preview posts. This was once joined to the full post query below as
 		// two derived tables, but that query carries no restriction of its own and its inner derived
 		// tables stop the optimiser pushing "rn <= N" down into it, so the database built every post
 		// on the site and then threw all but the preview away. Resolving the UIDs first and passing
@@ -1021,7 +1021,7 @@ class threadRepository extends baseRepository {
 		$positions = $this->deriveObjectivePositions($previewRows, $visiblePostCounts);
 		$postUIDs = array_keys($positions);
 
-		// Step 2: single full query for exactly those UIDs.
+		// single full query for exactly those UIDs.
 		$placeholders = pdoPlaceholdersForIn($postUIDs);
 		$query = getBasePostQuery(
 			$this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table,
