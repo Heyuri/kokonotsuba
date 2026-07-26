@@ -381,8 +381,6 @@ class threadService {
 				$boardUID,
 				$newThreadPostNumber
 			);
-
-			$this->transactionManager->commit();
 		});
 	}
 
