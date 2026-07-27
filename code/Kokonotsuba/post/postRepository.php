@@ -501,6 +501,63 @@ class postRepository extends baseRepository {
 	}
 
 	/**
+	 * Fetch the minimal per-post state the deletion cascade needs for whole threads: identity,
+	 * OP-ness and the post's current open deletion row.
+	 *
+	 * Deliberately not built on getBasePostQuery(). The cascade only ever reads post_uid, is_op,
+	 * open_flag and by_proxy, while the base query also carries attachments, staff notes, account
+	 * names, three vote aggregates and a correlated objective_position COUNT(*) — and that last one
+	 * costs O(replies^2) index probes, so deleting a thread got dramatically slower the longer the
+	 * thread was.
+	 *
+	 * @param string[] $threadUids Thread UIDs.
+	 * @return Post[] One Post per currently visible post in those threads.
+	 */
+	public function getThreadPostsForDeletion(array $threadUids): array {
+		$threadUids = array_values(array_unique($threadUids));
+
+		// nothing to fetch
+		if (empty($threadUids)) {
+			return [];
+		}
+
+		$inClause = pdoPlaceholdersForIn($threadUids);
+
+		// Visible posts only, matching getBasePostQuery()'s $viewDeleted = false filter: a post that
+		// already has an open post-level deletion is gone and must not be flagged again. Every open
+		// row that survives that filter is therefore attachment-level, which is exactly what
+		// open_flag/by_proxy reported here before.
+		$query = "
+			SELECT
+				p.post_uid,
+				p.thread_uid,
+				p.is_op,
+				dp.open_flag,
+				dp.by_proxy
+			FROM {$this->table} p
+			LEFT JOIN {$this->deletedPostsTable} dp
+				ON dp.post_uid = p.post_uid AND dp.open_flag = 1
+			WHERE p.thread_uid IN $inClause
+				AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid');
+
+		$rows = $this->queryAll($query, $threadUids);
+
+		if (!$rows) {
+			return [];
+		}
+
+		// a post with several deleted attachments has one row per attachment-level deletion;
+		// first row wins, as it did under mergeMultiplePostRows()
+		$posts = [];
+
+		foreach ($rows as $row) {
+			$posts[$row['post_uid']] ??= new Post($row);
+		}
+
+		return array_values($posts);
+	}
+
+	/**
 	 * Return a flat array of all post UIDs belonging to the given thread.
 	 *
 	 * @param string $threadUid Thread UID.

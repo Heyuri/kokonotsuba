@@ -17,6 +17,10 @@ use function Kokonotsuba\libraries\applyLikeIPFilter;
 class deletedPostsRepository extends baseRepository {
 	use OrderFieldWhitelistTrait;
 
+	/** Maximum post uids per multi-row statement, so a huge thread cascade stays well under the
+	 *  server's prepared-statement placeholder limit. */
+	private const BATCH_ROW_LIMIT = 1000;
+
 	private array $allowedOrderFields;
 
 	public function __construct(
@@ -731,6 +735,45 @@ class deletedPostsRepository extends baseRepository {
 	}
 
 	/**
+	 * Insert deletion records for multiple posts, batched into multi-row inserts.
+	 * All rows share the same deleted_by / file_only / by_proxy values.
+	 *
+	 * @param int[]    $postUids  Post UIDs being deleted.
+	 * @param int|null $deletedBy Account ID performing the deletion, or null if anonymous.
+	 * @param bool     $fileOnly  True if only attachments are deleted (posts remain).
+	 * @param bool     $byProxy   True if these records were created because the thread OP was deleted.
+	 * @return void
+	 */
+	public function insertDeletedPostEntries(array $postUids, ?int $deletedBy, bool $fileOnly, bool $byProxy): void {
+		// nothing to insert
+		if(empty($postUids)) {
+			return;
+		}
+
+		// deleting a several-thousand-reply thread would otherwise build one statement with four
+		// placeholders per reply, which runs into the server's prepared-statement parameter limit
+		foreach(array_chunk($postUids, self::BATCH_ROW_LIMIT) as $chunk) {
+			// one placeholder row per post, with positional parameters in matching order
+			$rowParts = [];
+			$params = [];
+
+			foreach($chunk as $postUid) {
+				$rowParts[] = '(?, ?, ?, ?)';
+				$params[] = $postUid;
+				$params[] = $deletedBy;
+				$params[] = (int)$fileOnly;
+				$params[] = (int)$byProxy;
+			}
+
+			// insert this batch of deletion records in one statement
+			$query = "INSERT INTO {$this->table} (post_uid, deleted_by, file_only, by_proxy) VALUES " . implode(', ', $rowParts);
+
+			// execute query
+			$this->query($query, $params);
+		}
+	}
+
+	/**
 	 * Return the board UID for the post referenced by the given deletion record ID.
 	 *
 	 * @param int $deletedPostId Deletion record ID.
@@ -930,23 +973,29 @@ class deletedPostsRepository extends baseRepository {
 	}
 
 	/**
-	 * Delete all open (non-restored, non-file-only) deletion records for the given post UID.
-	 * Called before inserting a new deletion entry to avoid conflicts.
+	 * Delete all open (non-restored, non-file-only) deletion records for the given post UIDs.
+	 * Called before inserting new deletion entries to avoid conflicts.
 	 *
-	 * @param int $postUid Post UID.
+	 * @param int[] $postUids Post UIDs.
 	 * @return void
 	 */
-	public function removeOpenRows(int $postUid): void {
-		// query to remove open post deletions under this post uid
-		$query = "DELETE FROM {$this->table} WHERE post_uid = :post_uid AND open_flag = 1 AND file_only = 0";
+	public function removeOpenRows(array $postUids): void {
+		// nothing to remove
+		if(empty($postUids)) {
+			return;
+		}
 
-		// parameter
-		$params = [
-			':post_uid' => $postUid
-		];
+		// batched for the same reason as insertDeletedPostEntries()
+		foreach(array_chunk(array_values($postUids), self::BATCH_ROW_LIMIT) as $chunk) {
+			// '?' placeholders for the IN clause
+			$inClause = pdoPlaceholdersForIn($chunk);
 
-		// execute query
-		$this->query($query, $params);	
+			// query to remove open post deletions under these post uids
+			$query = "DELETE FROM {$this->table} WHERE post_uid IN $inClause AND open_flag = 1 AND file_only = 0";
+
+			// execute query
+			$this->query($query, $chunk);
+		}
 	}
 
 	private function buildMapSql(array $oldValues, array $newValues, string $oldKey, string $newKey, string $paramPrefix, array &$params): string {
