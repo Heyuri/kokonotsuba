@@ -1043,7 +1043,7 @@ $language['report_status_approved'] = 'Approved';
 $language['report_status_dismissed'] = 'Dismissed';
 
 $language['report_my_reports_title'] = 'Your reports';
-$language['report_my_reports_intro'] = 'Reports you\'ve made.';
+$language['report_my_reports_intro'] = 'Here you can see all reports you\'ve filed and whether the post has been deleted or not, as well as the mod\'s reason.';
 $language['report_my_reports_empty'] = 'You haven\'t reported any posts.';
 
 $language['report_admin_title'] = 'Reports';
