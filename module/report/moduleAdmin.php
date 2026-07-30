@@ -123,7 +123,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$indicatorHtml = $this->renderIndicator(
 			'reportUnread',
-			'(' . $unreadCount . ')',
+			' (' . $unreadCount . ')',
 			'reportUnreadIndicator',
 			$unreadCount === 0,
 			_T('report_nav_unread_title')
@@ -131,7 +131,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$linkHtml .= '<li class="adminNavLink"><a title="' . sanitizeStr(_T('report_nav_title'))
 			. '" href="' . sanitizeStr($this->modulePageUrl) . '">'
-			. sanitizeStr(_T('report_nav')) . ' ' . $indicatorHtml . '</a></li>';
+			. sanitizeStr(_T('report_nav')) . $indicatorHtml . '</a></li>';
 	}
 
 	/**
@@ -145,7 +145,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			return;
 		}
 
-		$this->includeScript('reportAdmin.js?v=1', $moduleHeader);
+		$this->includeScript('reportAdmin.js?v=2', $moduleHeader);
 
 		$moduleHeader .= '<meta name="reportNotifyApi" content="'
 			. sanitizeStr($this->getModulePageURL(['pageName' => 'notifications'], false, true)) . '">';

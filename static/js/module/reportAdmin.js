@@ -31,7 +31,7 @@
 		var indicator = document.querySelector('.indicator-reportUnread');
 		if (!indicator) return;
 
-		indicator.textContent = '(' + unreadCount + ')';
+		indicator.textContent = ' (' + unreadCount + ')';
 		indicator.classList.toggle('indicatorHidden', !unreadCount);
 	}
 
