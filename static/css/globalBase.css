@@ -107,6 +107,20 @@
 	cursor: pointer;
 }
 
+/************************ Reader-facing module pages *******************/
+
+/* Return link pageRenderer puts above every non-staff page. */
+.userNavBar {
+	margin-bottom: 0.5em;
+}
+
+/* Prose-and-tables documentation pages (currently only the postApi reference). Long-form
+   reading, so the column is capped and centred rather than spanning the window. */
+.documentationPage {
+	max-width: 640px;
+	margin: 0 auto;
+}
+
 /************************ Collapsible Details Boxes ********************/
 
 .indicatorHidden {
@@ -634,7 +648,7 @@
 	padding: 0;             /* Remove padding */
 }
 
-.alignLeft {
+.alignLeft, .modPagePostContainer {
 	text-align: left;
 }
 

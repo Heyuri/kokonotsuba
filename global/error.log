@@ -39,3 +39,40 @@ Stack trace:
 #3 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/Utilities/configEditor-cli.php(94): require('...')
 #4 {main}
   thrown in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php on line 64
+[2026-07-30 13:27:06] Fatal Error #64: Declaration of benchModuleEngine::dispatch($hook, $args = []): mixed must be compatible with Kokonotsuba\module_classes\moduleEngine::dispatch(string $hookPoint, array $parameters = []): void in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_render.php on line 55
+[2026-07-30 13:30:06] Fatal Error #1: Uncaught Error: Undefined constant "Kokonotsuba\libraries\GLOBAL_BOARD_ARRAY" in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_post.php:29
+Stack trace:
+#0 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_attachment.php(193): Kokonotsuba\libraries\searchBoardArrayForBoard()
+#1 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_attachment.php(16): Kokonotsuba\libraries\getAttachmentBoard()
+#2 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/attachmentRenderer.php(38): Kokonotsuba\libraries\resolveThumbName()
+#3 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/postRenderer.php(388): Kokonotsuba\renderers\attachmentRenderer->generateAttachmentHtml()
+#4 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/postRenderer.php(155): Kokonotsuba\renderers\postRenderer->processAttachments()
+#5 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/postRenderer.php(90): Kokonotsuba\renderers\postRenderer->preparePostContent()
+#6 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/threadRenderer.php(185): Kokonotsuba\renderers\postRenderer->render()
+#7 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/threadRenderer.php(96): Kokonotsuba\renderers\threadRenderer->renderSinglePost()
+#8 /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_render.php(178): Kokonotsuba\renderers\threadRenderer->render()
+#9 {main}
+  thrown in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_post.php on line 29
+[2026-07-30 13:30:23] Fatal Error #1: Uncaught Error: Typed property Kokonotsuba\board\board::$boardPathService must not be accessed before initialization in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/board/board.php:190
+Stack trace:
+#0 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/board/board.php(219): Kokonotsuba\board\board->getBoardLocalUploadDir()
+#1 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_attachment.php(30): Kokonotsuba\board\board->getBoardUploadedFilesDirectory()
+#2 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/attachmentRenderer.php(38): Kokonotsuba\libraries\resolveThumbName()
+#3 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/postRenderer.php(388): Kokonotsuba\renderers\attachmentRenderer->generateAttachmentHtml()
+#4 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/postRenderer.php(155): Kokonotsuba\renderers\postRenderer->processAttachments()
+#5 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/postRenderer.php(90): Kokonotsuba\renderers\postRenderer->preparePostContent()
+#6 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/threadRenderer.php(185): Kokonotsuba\renderers\postRenderer->render()
+#7 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/threadRenderer.php(96): Kokonotsuba\renderers\threadRenderer->renderSinglePost()
+#8 /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_render.php(180): Kokonotsuba\renderers\threadRenderer->render()
+#9 {main}
+  thrown in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/board/board.php on line 190
+[2026-07-30 13:43:02] Fatal Error #1: Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'host' in 'INSERT INTO' in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_db.php:81
+Stack trace:
+#0 /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_db.php(81): PDOStatement->execute()
+#1 {main}
+  thrown in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_db.php on line 81
+[2026-07-30 13:43:39] Fatal Error #1: Uncaught PDOException: SQLSTATE[HY000]: General error: 2014 Cannot execute queries while other unbuffered queries are active.  Consider using PDOStatement::fetchAll().  Alternatively, if your code is only ever going to run against mysql, you may enable query buffering by setting the PDO::MYSQL_ATTR_USE_BUFFERED_QUERY attribute. in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_db.php:92
+Stack trace:
+#0 /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_db.php(92): PDO->query()
+#1 {main}
+  thrown in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_db.php on line 92

@@ -25,6 +25,7 @@ return [
 	'FILE_TABLE' => 'files', // file table, stores meta data on files  
 	'QUOTE_LINK_TABLE' => 'quote_links',
 	'REPORT_TABLE' => 'reports', // report table used by report module
+	'REPORT_READ_TABLE' => 'report_reads', // per-staff read receipts for reports
 	'BAN_TABLE' => 'bans', // ban table used by adminban module
 	'BOARD_TABLE' => 'boards', // board table for all boards active on an instance
 	'BOARD_CONFIG_TABLE' => 'board_configs', // per-board configuration overrides (JSON), keyed by board_uid

@@ -23,6 +23,17 @@ function generateAdminLinkButtons(string $liveIndexFile, string $staticIndexFile
 	return $linksAboveBar;
 }
 
+/**
+ * The nav bar for user-facing module pages (reports, blotter, ban notice, ...).
+ *
+ * The staff equivalent is generateAdminLinkButtons(); readers only need the way back to the
+ * board, so this is just the Return link, carrying the same cache-busting query string.
+ */
+function generateUserNavBar(string $staticIndexFile, request $request): string {
+	return '<div class="userNavBar">[<a href="' . htmlspecialchars($staticIndexFile) . '?' . $request->getRequestTime() . '">'
+		. _T('return') . '</a>]</div>';
+}
+
 function generateAdminNavLink(string $liveIndexFile, string $mode, string $navTitle, userRole $requiredRole, string $titleAttr = ''): string {
 	// role level
 	$roleLevel = getRoleLevelFromSession();

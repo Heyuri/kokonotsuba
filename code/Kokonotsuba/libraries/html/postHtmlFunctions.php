@@ -104,7 +104,6 @@ function generateNoticeSage(bool $noticeSage, string $email): string {
  * @param bool $useQuoteSystem Whether quote links should be transformed.
  * @param board $board Board object used to generate URLs.
  * @param int $repliesPerPage Number of replies per page (e.g. 200).
- * @param int $totalReplies Total number of replies in the thread (not required for core logic).
  *
  * @return string The comment HTML with quote links replaced.
  */

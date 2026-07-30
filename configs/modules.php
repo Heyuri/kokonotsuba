@@ -36,6 +36,7 @@ return [
 	'ModuleList.perceptualBan'=> boolField('config_label_ModuleList.perceptualBan', true),
 	'ModuleList.excimerViewer'=> boolField('config_label_ModuleList.excimerViewer', true),
 	'ModuleList.anonIp'       => boolField('config_label_ModuleList.anonIp', true),
+	'ModuleList.report'       => boolField('config_label_ModuleList.report', true),
 
 	/* thread modes */
 	'ModuleList.autoSage'     => boolField('config_label_ModuleList.autoSage', true),
@@ -81,4 +82,5 @@ return [
 	'ModuleList.nameRandomizer'=> boolField('config_label_ModuleList.nameRandomizer', false),
 	'ModuleList.youtubeEmbed' => boolField('config_label_ModuleList.youtubeEmbed', true),
 	'ModuleList.segregator'   => boolField('config_label_ModuleList.segregator', false),
+	'ModuleList.linkCleaner' => boolField('config_label_ModuleList.linkCleaner', true),
 ];

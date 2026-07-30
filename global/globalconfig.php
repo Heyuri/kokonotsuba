@@ -77,6 +77,10 @@ return [
 		'CAN_MANAGE_ANTI_SPAM_SYSTEM' => Kokonotsuba\userRole::LEV_MODERATOR,
 		'CAN_ANONYMIZE_IPS' => Kokonotsuba\userRole::LEV_ADMIN,
 		'CAN_VIEW_VOTES' => Kokonotsuba\userRole::LEV_MODERATOR,
+		'CAN_VIEW_REPORTS' => Kokonotsuba\userRole::LEV_JANITOR,
+		'CAN_APPROVE_REPORT' => Kokonotsuba\userRole::LEV_JANITOR,
+		'CAN_DISMISS_REPORT' => Kokonotsuba\userRole::LEV_MODERATOR,
+		'CAN_CLEAR_POST_REPORTS' => Kokonotsuba\userRole::LEV_MODERATOR,
 	],
 
 	// mod capcode map

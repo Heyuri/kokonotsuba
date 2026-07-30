@@ -230,7 +230,7 @@ class postRenderer {
 		$data->setComment(generateQuoteLinkHtml(
 			$this->quoteLinksFromBoard, $data, $threadResno,
 			$this->board->getConfigValue('USE_QUOTESYSTEM'),
-			$this->board, $repliesPerPage, $replyCount
+			$this->board, $repliesPerPage
 		));
 		$data->setComment(quote_unkfunc($data->getComment()));
 	}

@@ -14,8 +14,10 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
 use function Puchiko\strings\newLinesToBreakLines;
+use function Kokonotsuba\libraries\html\getPageForPostPosition;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 use function Kokonotsuba\libraries\requirePostWithCsrf;
+use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\json\sendAjaxAndDetach;
 use function Puchiko\request\redirect;
@@ -127,35 +129,63 @@ class moduleAdmin extends abstractModuleAdmin {
 		exit;
 	}
 
-	private function redirect(int $postNumber): void {
-		// then redirect to the post
-		if($postNumber) {
-			redirect($this->moduleContext->board->getBoardThreadURL($postNumber));
-		} else {
-			// fallback redirect to board if post number isn't available for some reason
+	/**
+	 * Send the user back to the post they just edited.
+	 *
+	 * The edit form is reachable from mod pages that list posts from every board, so the redirect
+	 * has to be built from the edited post's own board rather than the one this request happens to
+	 * be served from — otherwise editing a post on another board drops you on the current board.
+	 */
+	private function redirect(?Post $post): void {
+		// no post to go back to, so fall back to the board this request was served from
+		if($post === null) {
 			redirect($this->moduleContext->board->getBoardURL());
+			return;
 		}
+
+		// the board the edited post was made to
+		$board = searchBoardArrayForBoard($post->getBoardUID()) ?? $this->moduleContext->board;
+
+		$postNumber = $post->getNumber();
+
+		// fallback redirect to the board if the post number isn't available for some reason
+		if(!$postNumber) {
+			redirect($board->getBoardURL());
+			return;
+		}
+
+		// replies live under their thread, so link the thread and anchor the post within it
+		$threadNumber = $post->getOpNumber() ?: $postNumber;
+		$page = getPageForPostPosition($post->getObjectivePosition(), $board->getConfigValue('REPLIES_PER_PAGE', 200));
+
+		redirect($board->getBoardThreadURL($threadNumber, $postNumber, false, $page));
 	}
 
 	private function handleEditRequest(int $postUid): void {
-		// variable to hold post number for redirect after edit
+		// variable to hold the edited post, used to build the redirect after the edit
+		$editedPost = null;
+
+		// post number, kept for the audit log entry
 		$postNumber = null;
 
 		// board uid
 		$boardUid = null;
 
 		// wrap in transaction to ensure data integrity
-		$this->moduleContext->transactionManager->run(function() use ($postUid, &$postNumber, &$boardUid) {
+		$this->moduleContext->transactionManager->run(function() use ($postUid, &$editedPost, &$postNumber, &$boardUid) {
 			// get post details for widget
 			$post = $this->moduleContext->postRepository->getPostByUID(
-				$postUid, 
+				$postUid,
 				$this->moduleContext->postRenderingPolicy->viewDeleted()
 			);
 
 			// check if post exists
 			validatePostInput($post, false);
 
-			// store post number for redirect after edit
+			// store the post so the redirect can be built against its own board
+			$editedPost = $post;
+
+			// store post number for the log entry
 			$postNumber = $post->getNumber() ?? null;
 
 			// get board uid
@@ -183,9 +213,9 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->sendJson($postUid);
 		}
 		// otherwise redirect back to the post
-		else if($postNumber) {
+		else if($editedPost !== null) {
 			// redirect back to the post after edit
-			$this->redirect($postNumber);
+			$this->redirect($editedPost);
 		}
 	}
 

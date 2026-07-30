@@ -13,6 +13,7 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawAdminTheading;
 use function Kokonotsuba\libraries\html\generateAdminLinkButtons;
 use function Kokonotsuba\libraries\html\generateAdminNavLink;
+use function Kokonotsuba\libraries\html\generateUserNavBar;
 
 class pageRenderer {
 	private templateEngine $templateEngine;
@@ -55,6 +56,10 @@ class pageRenderer {
 
 			// add admin threading
 			$htmlOutput .= drawAdminTheading($thead, new staffAccountFromSession);
+		} else {
+			// Reader-facing pages (reports, blotter, ban notice, ...) get the same way back to
+			// the board that staff pages get from their nav bar.
+			$htmlOutput .= generateUserNavBar($staticIndexFile, $this->request);
 		}
 
 		$htmlOutput .= $this->templateEngine->ParseBlock($templateBlock, $templateValues);

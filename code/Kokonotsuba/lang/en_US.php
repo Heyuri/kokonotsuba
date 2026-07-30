@@ -819,6 +819,7 @@ $language['config_label_ModuleList.emotes'] = 'Emotes';
 $language['config_label_ModuleList.nameRandomizer'] = 'Name randomizer';
 $language['config_label_ModuleList.youtubeEmbed'] = 'YouTube embed';
 $language['config_label_ModuleList.segregator'] = 'Segregator';
+$language['config_label_ModuleList.linkCleaner'] = 'Link cleaner';
 
 // configs/overboard.php
 $language['config_label_OVERBOARD_TITLE'] = 'Overboard title';
@@ -1014,3 +1015,123 @@ $language['config_label_modules.threadList.HIGHLIGHT_COUNT'] = 'Popular reply hi
 
 // module/wordFilter/config.php
 $language['config_label_modules.wordFilter.FILTERS'] = 'Word filters';
+
+// module/report
+$language['report_widget_label'] = 'Report';
+$language['report_widget_title'] = 'Report post';
+$language['report_widget_view_reports'] = 'View reports';
+$language['report_adminbar_link'] = 'Report';
+$language['report_form_title'] = 'Report a post';
+$language['report_reason_hint'] = 'Optional. Describe what\'s wrong with it.';
+$language['report_submit'] = 'Send report';
+$language['report_submitted'] = 'Your report on No.%1$s has been sent';
+$language['report_submitted_title'] = 'Report sent';
+$language['report_notification_title'] = 'New post report';
+
+$language['report_error_banned'] = 'You are banned and cannot report posts.';
+$language['report_error_post_not_found'] = 'That post could not be found.';
+$language['report_error_already_reported'] = 'You have already reported this post';
+$language['report_error_reason_too_long'] = 'Your reason is too long. The limit is %1$s characters';
+$language['report_error_not_found'] = 'Report not found!';
+$language['report_error_unknown_action'] = 'Unknown report action';
+$language['report_error_cannot_approve'] = 'You are not allowed to approve reports';
+$language['report_error_cannot_dismiss'] = 'You are not allowed to dismiss reports';
+$language['report_error_cannot_clear'] = 'You are not allowed to clear the reports on a post';
+
+$language['report_status_pending'] = 'Awaiting review';
+$language['report_status_approved'] = 'Approved';
+$language['report_status_dismissed'] = 'Dismissed';
+
+$language['report_my_reports_title'] = 'Your reports';
+$language['report_my_reports_intro'] = 'Reports you\'ve made.';
+$language['report_my_reports_empty'] = 'You haven\'t reported any posts.';
+
+$language['report_admin_title'] = 'Reports';
+$language['report_admin_empty'] = 'There are no reports here.';
+$language['report_select_disabled_title'] = 'Already actioned — nothing left to decide';
+$language['report_nav'] = 'Reports';
+$language['report_nav_title'] = 'Manage post reports';
+$language['report_nav_unread_title'] = 'Reports you have not read yet';
+$language['report_back_to_queue'] = 'Back to reports';
+$language['report_view_link'] = 'View';
+$language['report_view_title'] = 'Report #%1$s';
+$language['report_view_post_stats'] = 'Post report history';
+$language['report_post_reports_title'] = 'Reports on post No.%1$s';
+$language['report_post_unavailable'] = 'This post is no longer available.';
+
+$language['report_ip_reports_title'] = 'Reports from %1$s';
+$language['report_ip_reports_link'] = 'All reports from this reporter';
+$language['report_clear_ip'] = 'Dismiss all reports from this reporter';
+$language['report_clear_ip_hint'] = 'Closes every report from this address that is still awaiting review.';
+
+$language['report_th_stat'] = 'Report status';
+$language['report_th_count'] = 'Count';
+$language['report_stat_total'] = 'Total reports';
+
+$language['report_heading_details'] = 'Report details';
+$language['report_heading_post'] = 'Reported post';
+$language['report_heading_totals'] = 'Report totals';
+$language['report_heading_reports'] = 'Reports';
+$language['report_heading_reports_on_post'] = 'Reports on this post';
+$language['report_heading_reports_from_ip'] = 'Reports from this reporter';
+$language['report_heading_reported_posts'] = 'Posts that have been reported';
+$language['report_heading_your_reports'] = 'Reports you have filed';
+
+$language['report_reported_posts_title'] = 'Reported posts';
+$language['report_reported_posts_total'] = '%1$s post(s) have been reported.';
+$language['report_reported_posts_empty'] = 'No posts have been reported.';
+
+$language['report_decision_heading'] = 'Take action';
+$language['report_decision_legend'] = 'Approve and Dismiss act on the reports you tick above; a Dismiss all button acts on every report still awaiting review. Both reasons are optional — the public one is shown to the reporter, the staff-only one is not.';
+$language['report_approve'] = 'Approve and delete';
+$language['report_approve_hint'] = 'Deletes the reported post and marks every report on it as approved.';
+$language['report_dismiss'] = 'Dismiss';
+$language['report_dismiss_hint'] = 'Leaves the post up and closes the selected reports.';
+$language['report_clear_post'] = 'Dismiss all reports on this post';
+$language['report_clear_post_hint'] = 'Dismisses every report still open on this post.';
+$language['report_cleared_default_reason'] = 'All reports for this post dismissed.';
+$language['report_public_reason_label'] = 'Public reason';
+$language['report_public_reason_hint'] = 'Shown to the person who filed the report, and to other staff.';
+$language['report_private_reason_label'] = 'Staff-only reason';
+$language['report_private_reason_hint'] = 'Only visible to staff who can see reports. The reporter never sees this.';
+
+$language['report_filter_all'] = 'All';
+$language['report_filter_pending'] = 'Awaiting review';
+$language['report_filter_approved'] = 'Approved';
+$language['report_filter_dismissed'] = 'Dismissed';
+
+$language['report_th_id'] = 'ID';
+$language['report_th_preview'] = 'Preview';
+$language['report_th_post'] = 'Post';
+$language['report_th_post_number'] = 'Post number';
+$language['report_th_board'] = 'Board';
+$language['report_th_reason'] = 'Reason';
+$language['report_th_reporter_reason'] = 'Reporter reason';
+$language['report_th_your_reason'] = 'Your reason';
+$language['report_th_staff_reason'] = 'Staff reason';
+$language['report_th_ip'] = 'Reporter IP';
+$language['report_th_date'] = 'Reported';
+$language['report_th_status'] = 'Status';
+$language['report_th_actioned_by'] = 'Actioned by';
+$language['report_th_actioned_at'] = 'Actioned';
+$language['report_th_actions'] = 'Actions';
+$language['report_th_stats'] = 'Report history';
+$language['report_th_report_count'] = 'Reports';
+$language['report_th_pending_count'] = 'Awaiting review';
+$language['report_th_approved_count'] = 'Approved';
+$language['report_th_dismissed_count'] = 'Dismissed';
+$language['report_th_last_reported'] = 'Last reported';
+
+$language['config_label_ModuleList.report'] = 'Post reports';
+
+// module/report/config.php
+$language['config_label_modules.report.REASON_MAX_LENGTH'] = 'Report reason length limit';
+$language['config_desc_modules.report.REASON_MAX_LENGTH'] = 'Maximum number of characters a reporter may write in the reason field.';
+$language['config_label_modules.report.ENABLE_NOTIFICATIONS'] = 'Report browser notifications';
+$language['config_desc_modules.report.ENABLE_NOTIFICATIONS'] = 'Show staff a browser notification for recent reports they have not read yet.';
+$language['config_label_modules.report.NOTIFICATION_WINDOW_MINUTES'] = 'Report notification window';
+$language['config_desc_modules.report.NOTIFICATION_WINDOW_MINUTES'] = 'How recent a report must be, in minutes, to be worth notifying staff about.';
+$language['config_label_modules.report.NOTIFICATION_POLL_SECONDS'] = 'Report notification poll interval';
+$language['config_desc_modules.report.NOTIFICATION_POLL_SECONDS'] = 'How often, in seconds, staff pages check for new reports.';
+$language['config_label_modules.report.REPORT_POST_TEMPLATE'] = 'Report post preview template';
+$language['config_desc_modules.report.REPORT_POST_TEMPLATE'] = 'Template directory used to render reported posts on the staff report pages.';

@@ -649,6 +649,46 @@ class tableCreator {
                 CONSTRAINT fk_notes_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
             ) ENGINE=InnoDB;
             ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['REPORT_TABLE']} (
+                report_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                post_uid INT NOT NULL,
+                board_uid INT NOT NULL,
+                reporter_ip VARCHAR(255) NOT NULL,
+                reporter_reason TEXT NULL,
+                date_reported DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+                status TINYINT NOT NULL DEFAULT 0,
+                actioned_by INT NULL,
+                actioned_at DATETIME NULL,
+
+                public_reason TEXT NULL,
+                private_reason TEXT NULL,
+
+                INDEX idx_reports_status_date (status, date_reported),
+                INDEX idx_reports_post_uid (post_uid),
+                INDEX idx_reports_board_uid (board_uid),
+                INDEX idx_reports_reporter_ip (reporter_ip),
+                INDEX idx_reports_date_reported (date_reported),
+                INDEX idx_reports_actioned_by (actioned_by),
+
+                CONSTRAINT fk_reports_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
+                CONSTRAINT fk_reports_board_uid FOREIGN KEY (board_uid) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(board_uid) ON DELETE CASCADE,
+                CONSTRAINT fk_reports_actioned_by FOREIGN KEY (actioned_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB;
+            ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['REPORT_READ_TABLE']} (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                report_id BIGINT UNSIGNED NOT NULL,
+                account_id INT NOT NULL,
+                date_read DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+                UNIQUE KEY uniq_report_read (report_id, account_id),
+                INDEX idx_report_reads_account (account_id),
+
+                CONSTRAINT fk_report_reads_report_id FOREIGN KEY (report_id) REFERENCES `{$sanitizedTableNames['REPORT_TABLE']}`(report_id) ON DELETE CASCADE,
+                CONSTRAINT fk_report_reads_account_id FOREIGN KEY (account_id) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
+            ",
             "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['PRIVATE_MESSAGE_TABLE']} (
                 id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                 ip_address TEXT NOT NULL, 
@@ -920,6 +960,7 @@ switch ($action) {
                 'FILE_TABLE' => $dbSettings['FILE_TABLE'],
                 'QUOTE_LINK_TABLE' => $dbSettings['QUOTE_LINK_TABLE'],
                 'REPORT_TABLE' => $dbSettings['REPORT_TABLE'],
+                'REPORT_READ_TABLE' => $dbSettings['REPORT_READ_TABLE'],
                 'BAN_TABLE' => $dbSettings['BAN_TABLE'],
                 'BOARD_TABLE' => $dbSettings['BOARD_TABLE'],
                 'BOARD_CONFIG_TABLE' => $dbSettings['BOARD_CONFIG_TABLE'],
