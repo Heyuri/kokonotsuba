@@ -31,6 +31,7 @@ use function Kokonotsuba\libraries\html\generateHeadHtml;
 use function Kokonotsuba\libraries\html\generatePostFormHTML;
 use function Kokonotsuba\libraries\html\generateFooterHtml;
 use function Puchiko\getDirectorySize;
+use function Puchiko\strings\applySubdomainToUrl;
 
 class board implements IBoard {
 	private readonly boardPostNumbers $boardPostNumbers;
@@ -41,17 +42,55 @@ class board implements IBoard {
 	private ?moduleEngine $moduleEngine;
 	private templateEngine $templateEngine;
 
-	public function __construct(boardPostNumbers $boardPostNumbers, boardData $boardData, boardPathService $boardPathService) {
+	/**
+	 * @param boardPostNumbers $boardPostNumbers Board post-number helper.
+	 * @param boardData        $boardData        Hydrated board metadata.
+	 * @param boardPathService $boardPathService Board path cache service.
+	 * @param array            $config           Fully-resolved effective config for this board
+	 *                                           (globals + schema defaults + DB overrides), as
+	 *                                           produced by configService::getEffectiveConfig().
+	 */
+	public function __construct(boardPostNumbers $boardPostNumbers, boardData $boardData, boardPathService $boardPathService, array $config = []) {
 		$this->boardData = $boardData;
-		
-		$config = $this->loadBoardConfig();
+
 		$this->config = is_array($config) ? $config : [];
+
+		$this->applySubdomainToConfig();
 
 		$this->boardPostNumbers = $boardPostNumbers;
 		$this->boardPathService = $boardPathService;
-		
+
 		$this->boardRebuilder = null;
 		$this->moduleEngine = null;
+	}
+
+	/**
+	 * Move this board onto its own subdomain, if it has one, by rewriting the host of the
+	 * WEBSITE_URL it was handed.
+	 *
+	 * The board's subdomain lives on its database row ('cgi', 'dis', …); a board without one keeps
+	 * the site-wide WEBSITE_URL untouched. Rewriting the config value once, here, rather than at
+	 * each call site means everything downstream agrees on this board's host: getBoardURL(), the
+	 * local upload URL, the request's $config (bootstrap/requestBoard.php reads it back out of the
+	 * board), the template engine, and any module reading WEBSITE_URL. Because every board object
+	 * carries its own config, a link one board renders to another — the board list, the overboard,
+	 * a cross-board quote — is built from the target board's host, not the current one's.
+	 *
+	 * The rewrite needs an absolute WEBSITE_URL to attach the subdomain to. If the site is served
+	 * from a relative URL (the '/' default) or the stored subdomain is not a usable DNS name,
+	 * applySubdomainToUrl() returns the URL untouched and the board simply stays where it was.
+	 *
+	 * @return void
+	 */
+	private function applySubdomainToConfig(): void {
+		$subdomain = $this->boardData->getBoardSubdomain();
+		$websiteUrl = (string)($this->config['WEBSITE_URL'] ?? '');
+
+		if ($subdomain === '' || $websiteUrl === '') {
+			return;
+		}
+
+		$this->config['WEBSITE_URL'] = applySubdomainToUrl($websiteUrl, $subdomain);
 	}
 
 	// Must be set for rebuilding methods to work
@@ -86,14 +125,6 @@ class board implements IBoard {
 		return $this->boardData->getBoardSubTitle();
 	}
 
-	public function getFullConfigPath(): string {
-		return getBoardConfigDir() . ($this->boardData->getConfigFileName() ?? '');
-	}
-
-	public function getConfigFileName(): string {
-		return $this->boardData->getConfigFileName();
-	}
-
 	public function getBoardStorageDirName(): string {
 		return $this->boardData->getBoardStorageDirName();
 	}
@@ -104,6 +135,10 @@ class board implements IBoard {
 
 	public function getBoardIdentifier(): string {
 		return $this->boardData->getBoardIdentifier();
+	}
+
+	public function getBoardSubdomain(): string {
+		return $this->boardData->getBoardSubdomain();
 	}
 
 	public function getBoardListed(): bool {
@@ -209,21 +244,16 @@ class board implements IBoard {
 		return $this->config['WEBSITE_URL'] ?? '';
 	}
 
+	/**
+	 * Return this board's effective config.
+	 *
+	 * The config is resolved once (globals + schema defaults + DB overrides) by
+	 * configService::getEffectiveConfig() and injected at construction — this is now
+	 * just an accessor, kept for backward compatibility with existing callers.
+	 *
+	 * @return array The effective config array.
+	 */
 	public function loadBoardConfig(): array {
-		$fullConfigPath = $this->getFullConfigPath();
-
-		if (!file_exists($fullConfigPath) || is_dir($fullConfigPath)) {
-			return [];
-		}		
-
-		if (!empty($this->config)) {
-			return $this->config;
-		}
-
-		// Load config if not already loaded
-		require $fullConfigPath;
-		$this->config = $config ?? [];
-
 		return $this->config;
 	}
 

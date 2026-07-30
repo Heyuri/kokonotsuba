@@ -29,7 +29,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$this->IPTOGGLE = $this->getConfig('ModuleSettings.IPTOGGLE', -1);
+		$this->IPTOGGLE = $this->getModuleConfig('IPTOGGLE', -1);
 
 		$dbSettings = $this->moduleContext->dbSettings;
 		$this->displayIpRepository = new displayIpRepository(

@@ -28,6 +28,10 @@ $root = dirname(__DIR__);
 // Core application autoloader (maps Kokonotsuba\… and Puchiko\… to /code).
 require $root . '/autoload.php';
 
+// Namespaced constants (GLOBAL_BOARD_UID, …). Not autoloadable — the app requires this file
+// directly, and the config layer compares board UIDs against it.
+require $root . '/code/Kokonotsuba/constants.php';
+
 // Puchiko helpers are namespaced *functions*, not autoloaded classes, so the
 // app requires them explicitly. Do the same here.
 require $root . '/code/Puchiko/includes.php';
@@ -43,6 +47,29 @@ require $root . '/code/Puchiko/normalize.php';
 if (!function_exists('getBackendGlobalDir')) {
 	function getBackendGlobalDir(): string {
 		return __DIR__ . '/fixtures/global/';
+	}
+}
+
+// The config layer (configSchema / configService / legacyConfigConverter) is pure apart from these
+// path helpers: the schema is loaded from the real configs/*.php and module/{name}/config.php, and
+// the defaults sit on top of global/globalconfig.php. Point them at the real tree so the tests
+// exercise the shipped schema rather than a fixture of it. (paths.php itself is not loaded: it
+// would redeclare getBackendGlobalDir, which is stubbed above.)
+if (!function_exists('getBackendDir')) {
+	function getBackendDir(): string {
+		return KOKO_TEST_ROOT . '/';
+	}
+}
+
+if (!function_exists('getConfigSchemaDir')) {
+	function getConfigSchemaDir(): string {
+		return KOKO_TEST_ROOT . '/configs/';
+	}
+}
+
+if (!function_exists('getGlobalConfig')) {
+	function getGlobalConfig(): array {
+		return require KOKO_TEST_ROOT . '/global/globalconfig.php';
 	}
 }
 
@@ -81,5 +108,6 @@ require __DIR__ . '/framework/AssertionFailedException.php';
 require __DIR__ . '/framework/TestCase.php';
 require __DIR__ . '/framework/TestRunner.php';
 require __DIR__ . '/framework/Fuzzer.php';
+require __DIR__ . '/framework/InMemoryConfigRepository.php';
 
 return $root;

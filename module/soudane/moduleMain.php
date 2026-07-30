@@ -37,10 +37,10 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		// Load settings to enable/disable each button, score display, and score-only mode
-		$this->enableYeah = $this->getConfig('ModuleSettings.ENABLE_YEAH', true);
-		$this->enableNope = $this->getConfig('ModuleSettings.ENABLE_NOPE', true);
-		$this->enableScore = $this->getConfig('ModuleSettings.ENABLE_SCORE', false);        // Score display toggle
-		$this->showScoreOnly = $this->getConfig('ModuleSettings.SHOW_SCORE_ONLY', false);   // Score-only button mode
+		$this->enableYeah = $this->getModuleConfig('ENABLE_YEAH', true);
+		$this->enableNope = $this->getModuleConfig('ENABLE_NOPE', true);
+		$this->enableScore = $this->getModuleConfig('ENABLE_SCORE', false);        // Score display toggle
+		$this->showScoreOnly = $this->getModuleConfig('SHOW_SCORE_ONLY', false);   // Score-only button mode
 
 		$this->moduleUrl = $this->getModulePageURL([], false);
 
@@ -152,7 +152,7 @@ class moduleMain extends abstractModuleMain {
 		// generate the soudane js <script> include
 		// Not deferred: the "Enable soudane" toggle runs in <head> and hides the
 		// vote HTML before posts paint, so toggling is seamless.
-		$this->includeScript('soudane.js?v=2', $moduleHeader, false);
+		$this->includeScript('soudane.js?v=3', $moduleHeader, false);
 
 		// now build a meta tag to store the API endpoint for fetching votes
 		$moduleHeader .= '<meta name="soudaneUrl" content="' . $this->getModulePageURL(['modPage' => 'soudaneApi']) . '">';

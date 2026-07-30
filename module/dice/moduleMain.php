@@ -22,16 +22,16 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		// get the die Amount config value and set it
-		$this->dieAmountLimit = $this->getConfig('ModuleSettings.DICE_AMOUNT_LIMIT', 30);
+		$this->dieAmountLimit = $this->getModuleConfig('DICE_AMOUNT_LIMIT', 30);
 
 		// get the die face config value and set it
-		$this->dieFaceLimit = $this->getConfig('ModuleSettings.DICE_FACE_LIMIT', 9999);
+		$this->dieFaceLimit = $this->getModuleConfig('DICE_FACE_LIMIT', 9999);
 
 		// get the email dice roll config value and set it
-		$this->emailDiceRoll = $this->getConfig('ModuleSettings.EMAIL_DICE_ROLL', false);
+		$this->emailDiceRoll = $this->getModuleConfig('EMAIL_DICE_ROLL', false);
 
 		// get the comment dice roll config value and set it
-		$this->commentDiceRoll = $this->getConfig('ModuleSettings.COMMENT_DICE_ROLL', true);
+		$this->commentDiceRoll = $this->getModuleConfig('COMMENT_DICE_ROLL', true);
 
 		$this->listenRegistBeforeCommit('onBeforeCommit');
 

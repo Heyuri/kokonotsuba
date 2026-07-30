@@ -93,7 +93,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function onRenderThreadSeparate(string &$html, int $threadIterator): void {
-		$inlineEvery = max(1, (int)$this->getConfig('ModuleSettings.ADS_INLINE_EVERY_N_THREADS', 4));
+		$inlineEvery = max(1, (int)$this->getModuleConfig('ADS_INLINE_EVERY_N_THREADS', 4));
 		if (($threadIterator + 1) % $inlineEvery !== 0) {
 			return;
 		}
@@ -101,7 +101,7 @@ class moduleMain extends abstractModuleMain {
 		if ($ad === null) {
 			return;
 		}
-		$count = min(5, max(1, (int)$this->getConfig('ModuleSettings.ADS_INLINE_COUNT', 3)));
+		$count = min(5, max(1, (int)$this->getModuleConfig('ADS_INLINE_COUNT', 3)));
 		$adHtml = $this->buildAdHtml($ad, 'inline');
 		$slots = '';
 		for ($i = 0; $i < $count; $i++) {
@@ -122,7 +122,7 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function onRenderPostSeparate(string &$html, int $replyIterator): void {
-		$everyN = max(1, (int)$this->getConfig('ModuleSettings.ADS_POST_AD_EVERY_N_POSTS', 5));
+		$everyN = max(1, (int)$this->getModuleConfig('ADS_POST_AD_EVERY_N_POSTS', 5));
 		if (($replyIterator + 1) % $everyN !== 0) {
 			return;
 		}
@@ -131,7 +131,7 @@ class moduleMain extends abstractModuleMain {
 			return;
 		}
 
-		$names = $this->getConfig('ModuleSettings.NAME_RANDOMIZER_NAMES', []);
+		$names = $this->getConfig('modules.nameRandomizer.NAME_RANDOMIZER_NAMES', []);
 		$name  = (!empty($names) && is_array($names))
 			? sanitizeStr($names[array_rand($names)])
 			: 'Anonymous';
@@ -189,7 +189,7 @@ class moduleMain extends abstractModuleMain {
 
 	private function onRenderFoot(string &$footer): void {
 		$footer .= $this->moduleContext->adminPageRenderer->ParseBlock('ADS_FOOTER_INJECT', [
-			'{$STICKY_ROTATE_SECONDS}' => max(0, (int)$this->getConfig('ModuleSettings.ADS_STICKY_ROTATE_SECONDS', 45)),
+			'{$STICKY_ROTATE_SECONDS}' => max(0, (int)$this->getModuleConfig('ADS_STICKY_ROTATE_SECONDS', 45)),
 		]);
 
 		$mobileAd = $this->getNextAdForSlot('mobile');
@@ -240,27 +240,41 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function getSlotDimensions(string $slot): array {
-		$dimensions = $this->getConfig('ModuleSettings.ADS_SLOT_DIMENSIONS', []);
+		$dimensions = $this->getModuleConfig('ADS_SLOT_DIMENSIONS', []);
 
 		$defaults = [
-			'top'    => ['width' => 728, 'height' => 90],
-			'mobile' => ['width' => 300, 'height' => 250],
-			'sticky' => ['width' => 728, 'height' => 90],
-			'above' => ['width' => 728, 'height' => 90],
-			'below' => ['width' => 728, 'height' => 90],
-			'inline' => ['width' => 728, 'height' => 90],
-			'post_ad' => ['width' => 300, 'height' => 250],
+			'top'     => '728x90',
+			'mobile'  => '300x250',
+			'sticky'  => '728x90',
+			'above'   => '728x90',
+			'below'   => '728x90',
+			'inline'  => '728x90',
+			'post_ad' => '300x250',
 		];
 
-		$slotDefault = $defaults[$slot] ?? ['width' => 728, 'height' => 90];
-		$slotConfig = (is_array($dimensions) && isset($dimensions[$slot]) && is_array($dimensions[$slot]))
-			? $dimensions[$slot]
-			: [];
+		$configured = is_array($dimensions) ? ($dimensions[$slot] ?? null) : null;
 
-		$width = max(1, (int)($slotConfig['width'] ?? $slotDefault['width']));
-		$height = max(1, (int)($slotConfig['height'] ?? $slotDefault['height']));
+		return $this->parseSlotDimensions($configured)
+			?? $this->parseSlotDimensions($defaults[$slot] ?? null)
+			?? ['width' => 728, 'height' => 90];
+	}
 
-		return ['width' => $width, 'height' => $height];
+	/**
+	 * Read a slot size, which is configured as a "WIDTHxHEIGHT" string. A board configured before
+	 * the setting became a flat list may still hold the old ['width' => .., 'height' => ..] shape.
+	 *
+	 * @return array{width: int, height: int}|null Null if the value isn't a usable size.
+	 */
+	private function parseSlotDimensions(mixed $value): ?array {
+		if (is_array($value) && isset($value['width'], $value['height'])) {
+			return ['width' => max(1, (int)$value['width']), 'height' => max(1, (int)$value['height'])];
+		}
+
+		if (is_string($value) && preg_match('/^\s*(\d+)\s*x\s*(\d+)\s*$/i', $value, $matches)) {
+			return ['width' => max(1, (int)$matches[1]), 'height' => max(1, (int)$matches[2])];
+		}
+
+		return null;
 	}
 
 	private function getAdsRepo(): adRepository {

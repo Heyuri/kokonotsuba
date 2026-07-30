@@ -3,6 +3,7 @@
 namespace Kokonotsuba\action_log;
 
 use Kokonotsuba\account\accountRepository;
+use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\request\request;
@@ -12,7 +13,8 @@ class actionLoggerService {
 	public function __construct(
 		private readonly actionLoggerRepository $actionLoggerRepository,
 		private readonly accountRepository $accountRepository,
-		private readonly request $request
+		private readonly request $request,
+		private readonly transactionManager $transactionManager
 	) {}
 
 	/**
@@ -51,11 +53,29 @@ class actionLoggerService {
 		$roleEnum = $staffSession->getRoleLevel();
 		$role = $roleEnum->value;
 
-		if ($roleEnum->isStaff()) {
-			$this->accountRepository->incrementAccountActionRecordByID($staffSession->getUID());
+		$write = function () use ($staffSession, $roleEnum, $name, $role, $actionString, $IPAddress, $board_uid): void {
+			if ($roleEnum->isStaff()) {
+				$this->accountRepository->incrementAccountActionRecordByID($staffSession->getUID());
+			}
+
+			$this->actionLoggerRepository->insertLogEntry($name, $role, $actionString, (string)$IPAddress, $board_uid);
+		};
+
+		// Left to themselves these are two autocommit writes, so two commits, and with
+		// innodb_flush_log_at_trx_commit = 1 each commit is its own redo-log flush. On a board
+		// rebuild - which logs one line and then does all its work - that pair has been profiled at
+		// over 200ms, more than every SELECT in the rebuild put together. Batched, it costs one
+		// flush instead of two.
+		//
+		// When the caller already has a transaction open (registRoute logs the post it is in the
+		// middle of committing) the writes just join it. Committing here would end the caller's
+		// transaction early, which is exactly the bug this branch avoids.
+		if ($this->transactionManager->inTransaction()) {
+			$write();
+			return;
 		}
 
-		$this->actionLoggerRepository->insertLogEntry($name, $role, $actionString, (string)$IPAddress, $board_uid);
+		$this->transactionManager->run($write);
 	}
 
 	/**

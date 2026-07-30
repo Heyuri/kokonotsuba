@@ -25,6 +25,23 @@ class messageUtility {
 		return preg_match('/^#{1,2}.+$/', $tripCode) === 1;
 	}
 
+	/**
+	 * Build the prefixed tripcode identity used as a PM address from a post's
+	 * raw tripcode columns. Secure tripcodes take priority over regular ones.
+	 * Returns an empty string when the post has no tripcode.
+	 */
+	public function buildTripcodeIdentity(string $tripcode, string $secureTripcode): string {
+		if ($secureTripcode !== '') {
+			return '★' . $secureTripcode;
+		}
+
+		if ($tripcode !== '') {
+			return '◆' . $tripcode;
+		}
+
+		return '';
+	}
+
 	public function getUsertripCode(): ?string {
 		return $_SESSION['private_message_tripcode'] ?? null;
 	}

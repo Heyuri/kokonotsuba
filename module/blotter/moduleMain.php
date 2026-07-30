@@ -35,7 +35,7 @@ class moduleMain extends abstractModuleMain {
 			$databaseSettings['ACCOUNT_TABLE']
 		);
 		$this->blotterService = new blotterService($blotterRepository, $this->moduleContext->transactionManager);
-		$this->previewLimit = (int) $this->getConfig('ModuleSettings.BLOTTER_PREVIEW_AMOUNT');
+		$this->previewLimit = (int) $this->getModuleConfig('BLOTTER_PREVIEW_AMOUNT');
 		
 		$this->modulePage = $this->getModulePageURL([], false);
 

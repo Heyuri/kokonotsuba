@@ -1,0 +1,78 @@
+[2026-07-13 17:50:40] Fatal Error #64: Cannot redeclare function Kokonotsuba\libraries\html\drawBoardConfigForm() (previously declared in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/html/configForm.php:28) in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/html/configForm.php on line 28
+[2026-07-13 17:50:49] Fatal Error #1: Uncaught ArgumentCountError: 2 arguments are required, 1 given in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/lang/LanguageLoader.php:113
+Stack trace:
+#0 [internal function]: sprintf()
+#1 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/lang/LanguageLoader.php(113): call_user_func_array()
+#2 [internal function]: Kokonotsuba\lang\LanguageLoader->getTranslation()
+#3 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_compatible.php(22): call_user_func_array()
+#4 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/html/configForm.php(59): Kokonotsuba\libraries\_T()
+#5 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/html/configForm.php(101): Kokonotsuba\libraries\html\configFormMessages()
+#6 /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/formRender.php(30): Kokonotsuba\libraries\html\drawGlobalConfigForm()
+#7 {main}
+  thrown in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/lang/LanguageLoader.php on line 113
+[2026-07-14 14:22:53] PHP Error #2: Trying to access array offset on null in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/websiteUrl.php on line 22
+[2026-07-14 14:22:53] Fatal Error #1: Uncaught TypeError: Kokonotsuba\libraries\_T(): Argument #1 ($translationLable) must be of type string, null given, called in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/websiteUrl.php on line 22 and defined in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_compatible.php:19
+Stack trace:
+#0 /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/websiteUrl.php(22): Kokonotsuba\libraries\_T()
+#1 {main}
+  thrown in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_compatible.php on line 19
+[2026-07-14 18:38:07] PHP Error #2: Undefined array key "HTTP_HOST" in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/legacy/global/globalconfig.php on line 13
+[2026-07-14 18:38:07] PHP Error #2: Undefined array key "HTTP_HOST" in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/legacy/global/globalconfig.php on line 13
+[2026-07-14 18:38:07] PHP Error #2: Undefined array key "HTTP_HOST" in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/a4ec6da5-1a6b-47a4-995a-7cbcfc6da7aa/scratchpad/legacy/global/globalconfig.php on line 13
+[2026-07-15 00:16:47] PHP Error #2: Undefined array key "HTTP_HOST" in /tmp/tmp.QIMUwHF5I0/global/globalconfig.php on line 13
+[2026-07-15 00:16:47] PHP Error #2: Undefined array key "HTTP_HOST" in /tmp/tmp.QIMUwHF5I0/global/globalconfig.php on line 13
+[2026-07-15 00:16:47] PHP Error #2: Undefined array key "HTTP_HOST" in /tmp/tmp.QIMUwHF5I0/global/globalconfig.php on line 13
+[2026-07-15 14:49:39] Fatal Error #1: Uncaught PDOException: could not find driver in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php:59
+Stack trace:
+#0 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php(59): PDO->__construct()
+#1 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php(19): Kokonotsuba\database\databaseConnection->createPDOConnection()
+#2 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php(25): Kokonotsuba\database\databaseConnection->__construct()
+#3 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/bootstrap/database.php(13): Kokonotsuba\database\databaseConnection::createInstance()
+#4 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/Utilities/configEditor-cli.php(94): require('...')
+#5 {main}
+
+Next RuntimeException: There was a problem connecting to the database. in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php:64
+Stack trace:
+#0 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php(19): Kokonotsuba\database\databaseConnection->createPDOConnection()
+#1 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php(25): Kokonotsuba\database\databaseConnection->__construct()
+#2 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/bootstrap/database.php(13): Kokonotsuba\database\databaseConnection::createInstance()
+#3 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/Utilities/configEditor-cli.php(94): require('...')
+#4 {main}
+  thrown in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/database/databaseConnection.php on line 64
+[2026-07-30 13:27:06] Fatal Error #64: Declaration of benchModuleEngine::dispatch($hook, $args = []): mixed must be compatible with Kokonotsuba\module_classes\moduleEngine::dispatch(string $hookPoint, array $parameters = []): void in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_render.php on line 55
+[2026-07-30 13:30:06] Fatal Error #1: Uncaught Error: Undefined constant "Kokonotsuba\libraries\GLOBAL_BOARD_ARRAY" in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_post.php:29
+Stack trace:
+#0 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_attachment.php(193): Kokonotsuba\libraries\searchBoardArrayForBoard()
+#1 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_attachment.php(16): Kokonotsuba\libraries\getAttachmentBoard()
+#2 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/attachmentRenderer.php(38): Kokonotsuba\libraries\resolveThumbName()
+#3 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/postRenderer.php(388): Kokonotsuba\renderers\attachmentRenderer->generateAttachmentHtml()
+#4 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/postRenderer.php(155): Kokonotsuba\renderers\postRenderer->processAttachments()
+#5 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/postRenderer.php(90): Kokonotsuba\renderers\postRenderer->preparePostContent()
+#6 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/threadRenderer.php(185): Kokonotsuba\renderers\postRenderer->render()
+#7 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/threadRenderer.php(96): Kokonotsuba\renderers\threadRenderer->renderSinglePost()
+#8 /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_render.php(178): Kokonotsuba\renderers\threadRenderer->render()
+#9 {main}
+  thrown in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_post.php on line 29
+[2026-07-30 13:30:23] Fatal Error #1: Uncaught Error: Typed property Kokonotsuba\board\board::$boardPathService must not be accessed before initialization in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/board/board.php:190
+Stack trace:
+#0 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/board/board.php(219): Kokonotsuba\board\board->getBoardLocalUploadDir()
+#1 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/libraries/lib_attachment.php(30): Kokonotsuba\board\board->getBoardUploadedFilesDirectory()
+#2 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/attachmentRenderer.php(38): Kokonotsuba\libraries\resolveThumbName()
+#3 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/postRenderer.php(388): Kokonotsuba\renderers\attachmentRenderer->generateAttachmentHtml()
+#4 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/postRenderer.php(155): Kokonotsuba\renderers\postRenderer->processAttachments()
+#5 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/postRenderer.php(90): Kokonotsuba\renderers\postRenderer->preparePostContent()
+#6 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/threadRenderer.php(185): Kokonotsuba\renderers\postRenderer->render()
+#7 /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/renderers/threadRenderer.php(96): Kokonotsuba\renderers\threadRenderer->renderSinglePost()
+#8 /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_render.php(180): Kokonotsuba\renderers\threadRenderer->render()
+#9 {main}
+  thrown in /home/leaf/Documents/Development/Heyuri/kokonotsuba/kokonotsuba/code/Kokonotsuba/board/board.php on line 190
+[2026-07-30 13:43:02] Fatal Error #1: Uncaught PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'host' in 'INSERT INTO' in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_db.php:81
+Stack trace:
+#0 /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_db.php(81): PDOStatement->execute()
+#1 {main}
+  thrown in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_db.php on line 81
+[2026-07-30 13:43:39] Fatal Error #1: Uncaught PDOException: SQLSTATE[HY000]: General error: 2014 Cannot execute queries while other unbuffered queries are active.  Consider using PDOStatement::fetchAll().  Alternatively, if your code is only ever going to run against mysql, you may enable query buffering by setting the PDO::MYSQL_ATTR_USE_BUFFERED_QUERY attribute. in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_db.php:92
+Stack trace:
+#0 /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_db.php(92): PDO->query()
+#1 {main}
+  thrown in /tmp/claude-1000/-home-leaf-Documents-Development-Heyuri-kokonotsuba-kokonotsuba/af912be4-fa19-4d76-8e74-7ed6ebbd595a/scratchpad/bench_db.php on line 92

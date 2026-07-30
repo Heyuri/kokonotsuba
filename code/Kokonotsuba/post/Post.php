@@ -36,15 +36,15 @@ class Post implements JsonSerializable {
 	public function isOp(): bool { return (bool)($this->data['is_op'] ?? false); }
 	public function getPostPosition(): int { return (int)($this->data['post_position'] ?? 0); }
 	/**
-	 * The post's true ordinal within its thread (OP = 0), numbered by its position among
-	 * the currently-visible replies. Use this for pagination page math — post_position is
-	 * a stored insert counter that drifts after deletions. This is eager-loaded onto the
-	 * Post when a thread is fetched for rendering; it falls back to post_position for
-	 * contexts that don't load it.
+	 * The post's true ordinal within its thread (OP = 0), computed from the currently
+	 * visible replies. Use this for pagination page math — post_position is a stored
+	 * insert counter that drifts after deletions. Falls back to post_position when the
+	 * position column wasn't selected (queries that don't include it).
 	 */
 	public function getObjectivePosition(): int {
 		return (int)($this->data['objective_position'] ?? $this->data['post_position'] ?? 0);
 	}
+
 	public function setObjectivePosition(int $position): void { $this->data['objective_position'] = $position; }
 
 	// Content

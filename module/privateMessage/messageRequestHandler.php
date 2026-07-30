@@ -21,7 +21,7 @@ class messageRequestHandler {
         private int $messagesPerPage = 20,
     ) {}
 
-	public function handleInboxPage(): void {
+	public function handleInboxPage(string $prefillRecipient = ''): void {
 		$tripCode = $this->messageUtility->getUsertripCode();
 		$modulePageUrl = $this->messageUtility->getModulePageURL();
 
@@ -37,8 +37,23 @@ class messageRequestHandler {
 			$modulePageUrl,
 			$tripCode,
 			$totalEntries,
-			$this->messagesPerPage
+			$this->messagesPerPage,
+			$prefillRecipient
 		);
+	}
+
+	/**
+	 * Recipient tripcode requested via the post [PM] button, as a GET parameter.
+	 * Returns an empty string unless it's a valid prefixed tripcode.
+	 */
+	private function getRequestedRecipient(): string {
+		$recipient = trim($this->request->getParameter('recipient', 'GET') ?? '');
+
+		if ($recipient === '' || !$this->messageUtility->isValidTripCode($recipient)) {
+			return '';
+		}
+
+		return $recipient;
 	}
 
 	private function handleViewMessage(): void {
@@ -144,7 +159,11 @@ class messageRequestHandler {
 
 		$this->messageUtility->loginUser($tripCodeInput);
 
-		redirect($this->messageUtility->getModulePageURL());
+		// keep the requested PM recipient across the login redirect
+		$recipient = $this->getRequestedRecipient();
+		$redirectParams = $recipient !== '' ? ['recipient' => $recipient] : [];
+
+		redirect($this->messageUtility->getModulePageURL($redirectParams));
 		exit;
 	}
 
@@ -182,8 +201,12 @@ class messageRequestHandler {
 		}
 	}
 
-	private function handleLoginPage(): void {
-		$this->messageRenderer->renderLoginPage($this->messageUtility->getModulePageURL());
+	private function handleLoginPage(string $prefillRecipient = ''): void {
+		// the login form posts back to this URL, so a requested recipient
+		// rides along as a GET parameter and survives the login
+		$loginFormParams = $prefillRecipient !== '' ? ['recipient' => $prefillRecipient] : [];
+
+		$this->messageRenderer->renderLoginPage($this->messageUtility->getModulePageURL($loginFormParams));
 	}
 
 	public function handleGetRequest(): void {
@@ -193,9 +216,10 @@ class messageRequestHandler {
 		}
 
 		$tripAuthorized = $this->messageUtility->isLoggedIn();
+		$recipient = $this->getRequestedRecipient();
 
 		if (!$tripAuthorized) {
-			$this->handleLoginPage();
+			$this->handleLoginPage($recipient);
 			return;
 		}
 
@@ -204,7 +228,7 @@ class messageRequestHandler {
 			return;
 		}
 
-		$this->handleInboxPage();
+		$this->handleInboxPage($recipient);
 	}
 
 	private function handleNotificationsApi(): void {

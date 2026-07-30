@@ -1,4 +1,3 @@
-[<a href="{$STATIC_INDEX_FILE}">Return</a>]
 <h2 class="theading2">Full banners</h2>
 
 <!--&FULLBANNER_SUBMIT_FORM/-->

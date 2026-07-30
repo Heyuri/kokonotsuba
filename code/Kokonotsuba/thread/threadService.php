@@ -155,7 +155,7 @@ class threadService {
 
 		// if the reply amount parameter is set then fetch last X amount of posts
 		if($amountOfRepliesToRender) {
-			$posts = $this->threadRepository->getPostsForThreads([$thread_uid], $amountOfRepliesToRender, $showDeleted);
+			$posts = $this->threadRepository->getPostsForThreads([$threadMeta], $amountOfRepliesToRender, $showDeleted);
 		}
 		
 		// otherwise if paged results are fetched then fetch paged results
@@ -212,9 +212,7 @@ class threadService {
 
 		if (empty($threads)) return [];
 
-		$threadUIDs = array_map(fn($t) => $t->getUid(), $threads);
-		
-		$postRows = $this->threadRepository->getPostsForThreads($threadUIDs, $previewCount, $adminMode);
+		$postRows = $this->threadRepository->getPostsForThreads($threads, $previewCount, $adminMode);
 		$postsByThread = $this->groupPostsByThread($postRows);
 
 		return $this->buildPreviewResults($threads, $postsByThread, $previewCount);
@@ -286,10 +284,8 @@ class threadService {
 
 		if (empty($threads)) return [];
 
-		$threadUIDs = array_map(fn($t) => $t->getUid(), $threads);
-
 		// get posts from thread
-		$allPosts = $this->threadRepository->getPostsForThreads($threadUIDs, $previewCount, $includeDeleted);
+		$allPosts = $this->threadRepository->getPostsForThreads($threads, $previewCount, $includeDeleted);
 		
 		// get post counts
 		$postsByThread = $this->groupPostsByThread($allPosts);
@@ -385,8 +381,6 @@ class threadService {
 				$boardUID,
 				$newThreadPostNumber
 			);
-
-			$this->transactionManager->commit();
 		});
 	}
 

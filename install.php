@@ -1,10 +1,8 @@
 <?php
 
-use function Puchiko\copyFileWithNewName;
 use function Puchiko\createDirectory;
 use function Puchiko\createFileAndWriteText;
 use function Puchiko\request\redirect;
-use function Puchiko\strings\generateUid;
 
 function getRootPath() {
     $kokoFile = __DIR__ . DIRECTORY_SEPARATOR . 'koko.php';
@@ -77,22 +75,11 @@ function isCommandAvailable(string $command): bool {
 }
 
 function getGlobalConfig(): array {
-    require ROOTPATH . '/global/globalconfig.php';
-    return $config;
+    return require ROOTPATH . '/global/globalconfig.php';
 }
 
 function getBoardStorageDir() {
     return ROOTPATH.'/global/board-storages/';
-}
-
-function generateNewBoardConfigFile() {
-    $templateConfigPath = ROOTPATH . '/global/board-configs/board-template.php';
-    $newConfigFileName = 'board-' . generateUid() . '.php';
-    $boardConfigsDirectory = ROOTPATH . '/global/board-configs/';
-    if (!copyFileWithNewName($templateConfigPath, $newConfigFileName, $boardConfigsDirectory)) {
-        throw new Exception("Failed to copy new config file");
-    }
-    return $newConfigFileName;
 }
 
 // Function to sanitize table names using regular expression validation
@@ -104,8 +91,58 @@ function sanitizeTableName($tableName) {
     return $tableName;
 }
 
+// Set a value at a dot-path within a nested config array (installer-local helper).
+function setNestedInstallConfig(array &$config, string $dotpath, $value): void {
+    $segments = explode('.', $dotpath);
+    $cursor =& $config;
+    foreach ($segments as $i => $segment) {
+        if ($i === array_key_last($segments)) {
+            $cursor[$segment] = $value;
+            return;
+        }
+        if (!isset($cursor[$segment]) || !is_array($cursor[$segment])) {
+            $cursor[$segment] = [];
+        }
+        $cursor =& $cursor[$segment];
+    }
+}
+
+// Build the board-agnostic default config: globalconfig.php base + the editable configs/
+// core schema defaults + each module's own module/{name}/config.php defaults.
 function getTemplateConfigArray() {
-    require ROOTPATH . '/global/board-configs/board-template.php';
+    $config = getGlobalConfig();
+
+    // Core config files: keys are full config dot-paths.
+    foreach (glob(ROOTPATH . '/configs/*.php') ?: [] as $schemaFile) {
+        // Files beginning with "_" are shared helpers (e.g. _fieldTypes.php), not groups.
+        if (str_starts_with(basename($schemaFile), '_')) {
+            continue;
+        }
+        $definition = require $schemaFile;
+        if (!is_array($definition)) {
+            continue;
+        }
+        unset($definition['_group'], $definition['_module']);
+        foreach ($definition as $dotpath => $meta) {
+            $default = (is_array($meta) && array_key_exists('default', $meta)) ? $meta['default'] : $meta;
+            setNestedInstallConfig($config, (string) $dotpath, $default);
+        }
+    }
+
+    // Per-module config files: bare keys prefixed with "modules.{name}.".
+    foreach (glob(ROOTPATH . '/module/*/config.php') ?: [] as $moduleFile) {
+        $moduleName = basename(dirname($moduleFile));
+        $definition = require $moduleFile;
+        if (!is_array($definition)) {
+            continue;
+        }
+        unset($definition['_group'], $definition['_module']);
+        foreach ($definition as $key => $meta) {
+            $default = (is_array($meta) && array_key_exists('default', $meta)) ? $meta['default'] : $meta;
+            setNestedInstallConfig($config, "modules.{$moduleName}.{$key}", $default);
+        }
+    }
+
     return $config;
 }
 
@@ -138,9 +175,9 @@ function createBoardAndFiles($boardTable) {
     //create dat
     createDirectory($dataDir);
 
-    //generate new config
-    $boardConfigName = generateNewBoardConfigFile();
-    $boardTable->addFirstBoard($board_identifier, $board_title, $board_sub_title, $boardConfigName, $dataDirName);
+    // Board config is stored in the board_configs table (created on first edit via the admin
+    // board configuration editor). No per-board PHP config file is generated.
+    $boardTable->addFirstBoard($board_identifier, $board_title, $board_sub_title, $dataDirName);
     $boardUIDforBootstrapFile = $boardTable->getLastBoardUID();
     createFileAndWriteText($board_path, 'boardUID.ini', "board_uid = $boardUIDforBootstrapFile");
 }
@@ -305,12 +342,20 @@ class tableCreator {
                 `board_identifier` TEXT,
                 `board_title` TEXT NOT NULL,
                 `board_sub_title` TEXT,
-                `config_name` TEXT NOT NULL,
                 `storage_directory_name` TEXT NOT NULL,
+                `subdomain` VARCHAR(253) NOT NULL DEFAULT '',
                 `listed` BOOL DEFAULT TRUE,
                 `date_added` DATE DEFAULT CURRENT_DATE,
                 PRIMARY KEY(`board_uid`),
                 INDEX(date_added)
+            ) ENGINE=InnoDB;",
+
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BOARD_CONFIG_TABLE']} (
+                `board_uid` INT NOT NULL,
+                `conf_values` JSON NOT NULL,
+                PRIMARY KEY (`board_uid`),
+                UNIQUE KEY uq_board_config_board_uid (`board_uid`),
+                CONSTRAINT fk_board_config_board_uid FOREIGN KEY (`board_uid`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
             ) ENGINE=InnoDB;",
 
             "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['THREAD_TABLE']} (
@@ -361,7 +406,6 @@ class tableCreator {
                 INDEX (`no`),
                 INDEX idx_host (`host`),
                 INDEX idx_posts_thread_rank (thread_uid, is_op DESC, post_uid DESC),
-                INDEX idx_posts_thread_rank_cover (thread_uid, is_op DESC, post_uid DESC, post_uid),
                 INDEX idx_post_root (`root`),
                 INDEX idx_tag (`tag`),
                 INDEX idx_tripcode (`tripcode`(10)),
@@ -605,6 +649,46 @@ class tableCreator {
                 CONSTRAINT fk_notes_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
             ) ENGINE=InnoDB;
             ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['REPORT_TABLE']} (
+                report_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                post_uid INT NOT NULL,
+                board_uid INT NOT NULL,
+                reporter_ip VARCHAR(255) NOT NULL,
+                reporter_reason TEXT NULL,
+                date_reported DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+                status TINYINT NOT NULL DEFAULT 0,
+                actioned_by INT NULL,
+                actioned_at DATETIME NULL,
+
+                public_reason TEXT NULL,
+                private_reason TEXT NULL,
+
+                INDEX idx_reports_status_date (status, date_reported),
+                INDEX idx_reports_post_uid (post_uid),
+                INDEX idx_reports_board_uid (board_uid),
+                INDEX idx_reports_reporter_ip (reporter_ip),
+                INDEX idx_reports_date_reported (date_reported),
+                INDEX idx_reports_actioned_by (actioned_by),
+
+                CONSTRAINT fk_reports_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
+                CONSTRAINT fk_reports_board_uid FOREIGN KEY (board_uid) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(board_uid) ON DELETE CASCADE,
+                CONSTRAINT fk_reports_actioned_by FOREIGN KEY (actioned_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
+            ) ENGINE=InnoDB;
+            ",
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['REPORT_READ_TABLE']} (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                report_id BIGINT UNSIGNED NOT NULL,
+                account_id INT NOT NULL,
+                date_read DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+                UNIQUE KEY uniq_report_read (report_id, account_id),
+                INDEX idx_report_reads_account (account_id),
+
+                CONSTRAINT fk_report_reads_report_id FOREIGN KEY (report_id) REFERENCES `{$sanitizedTableNames['REPORT_TABLE']}`(report_id) ON DELETE CASCADE,
+                CONSTRAINT fk_report_reads_account_id FOREIGN KEY (account_id) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB;
+            ",
             "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['PRIVATE_MESSAGE_TABLE']} (
                 id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                 ip_address TEXT NOT NULL, 
@@ -762,17 +846,16 @@ class boardTable {
         // If global board doesn't exist, insert it
         if ($count == 0) {
             // Insert the global board with a reserved UID
-            $query = "INSERT INTO {$this->boardTableName} 
-                        (board_uid, board_identifier, board_title, board_sub_title, config_name, storage_directory_name, listed, date_added) 
-                      VALUES 
-                        (:board_uid, :board_identifier, :board_title, :board_sub_title, :config_name, :storage_directory_name, :listed, :date_added)";
-            
+            $query = "INSERT INTO {$this->boardTableName}
+                        (board_uid, board_identifier, board_title, board_sub_title, storage_directory_name, listed, date_added)
+                      VALUES
+                        (:board_uid, :board_identifier, :board_title, :board_sub_title, :storage_directory_name, :listed, :date_added)";
+
             $stmt = $this->db->prepare($query);
             $stmt->bindValue(':board_uid', GLOBAL_BOARD_UID);
             $stmt->bindValue(':board_identifier', 'GLOBAL');
             $stmt->bindValue(':board_title', 'GLOBAL');
             $stmt->bindValue(':board_sub_title', 'Global board scope');
-            $stmt->bindValue(':config_name', '');
             $stmt->bindValue(':storage_directory_name', '');
             $stmt->bindValue(':listed', 0, PDO::PARAM_INT);
             $stmt->bindValue(':date_added', date('Y-m-d'));
@@ -785,19 +868,18 @@ class boardTable {
     }
 
     // Method to add the first board to the system (example for initial setup)
-    public function addFirstBoard($board_identifier, $board_title, $board_sub_title, $config_name, $storage_directory_name) {
-        $query = "INSERT INTO {$this->boardTableName} 
-                    (board_identifier, board_title, board_sub_title, config_name, storage_directory_name) 
-                  VALUES 
-                    (:board_identifier, :board_title, :board_sub_title, :config_name, :storage_directory_name)";
-        
+    public function addFirstBoard($board_identifier, $board_title, $board_sub_title, $storage_directory_name) {
+        $query = "INSERT INTO {$this->boardTableName}
+                    (board_identifier, board_title, board_sub_title, storage_directory_name)
+                  VALUES
+                    (:board_identifier, :board_title, :board_sub_title, :storage_directory_name)";
+
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':board_identifier', $board_identifier);
         $stmt->bindParam(':board_title', $board_title);
         $stmt->bindParam(':board_sub_title', $board_sub_title);
-        $stmt->bindParam(':config_name', $config_name);
         $stmt->bindParam(':storage_directory_name', $storage_directory_name);
-        
+
         return $stmt->execute(); // Return true if successful
     }
 
@@ -878,8 +960,10 @@ switch ($action) {
                 'FILE_TABLE' => $dbSettings['FILE_TABLE'],
                 'QUOTE_LINK_TABLE' => $dbSettings['QUOTE_LINK_TABLE'],
                 'REPORT_TABLE' => $dbSettings['REPORT_TABLE'],
+                'REPORT_READ_TABLE' => $dbSettings['REPORT_READ_TABLE'],
                 'BAN_TABLE' => $dbSettings['BAN_TABLE'],
                 'BOARD_TABLE' => $dbSettings['BOARD_TABLE'],
+                'BOARD_CONFIG_TABLE' => $dbSettings['BOARD_CONFIG_TABLE'],
                 'BOARD_PATH_CACHE_TABLE' => $dbSettings['BOARD_PATH_CACHE_TABLE'],
                 'THREAD_TABLE' => $dbSettings['THREAD_TABLE'],
                 'POST_NUMBER_TABLE' => $dbSettings['POST_NUMBER_TABLE'],

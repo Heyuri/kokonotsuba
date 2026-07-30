@@ -46,7 +46,7 @@ class moduleMain extends abstractModuleMain {
 		$this->modulePageUrl = $this->getModulePageURL([], false);
 
 		// init the module template engine
-		$this->moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.SEARCH_TEMPLATE', 'kokoimg');
+		$this->moduleTemplateEngine = $this->initModuleTemplateEngine('modules.search.SEARCH_TEMPLATE', 'kokoimg');
 
 		$this->addTopLink($this->modulePageUrl, _T('head_search'));
 	}
@@ -361,7 +361,7 @@ class moduleMain extends abstractModuleMain {
 		bool $adminMode
 	): string {
 		$searchPage = max(1, intval($this->moduleContext->request->getParameter('page', 'GET', 1)));
-		$searchPostsPerPage = $this->getConfig('ModuleSettings.SEARCH_POSTS_PER_PAGE');
+		$searchPostsPerPage = $this->getModuleConfig('SEARCH_POSTS_PER_PAGE');
 
 		// determine search method
 		$matchWholeWords = $this->moduleContext->request->getParameter('searchMatchWord', 'GET') === 'on';
@@ -401,7 +401,7 @@ class moduleMain extends abstractModuleMain {
 			$postRenderersForResults = $this->buildPostRenderers($boards, $quoteLinks);
 
 			// config option for displaying all posts as OPs
-			$displayThreadedFormat = $this->getConfig('ModuleSettings.DISPLAY_THREADED_FORMAT', false);
+			$displayThreadedFormat = $this->getModuleConfig('DISPLAY_THREADED_FORMAT', false);
 
 			// whether to render all posts with the OP html since searching isn't a threaded format
 			$renderAsOp = !$displayThreadedFormat;

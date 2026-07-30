@@ -202,7 +202,6 @@ class moduleMain extends abstractModuleMain {
 
 		// Build template variables; the template engine expects literal placeholders.
 		return [
-			'{$RETURN_URL}' => $this->config['STATIC_INDEX_FILE'] ?? './',
 			'{$IS_BANNED}'  => $isBanned,        // tells template “use banned layout”
 			'{$BAN_TYPE}'   => $banType,
 			'{$REASON}'     => $reason,

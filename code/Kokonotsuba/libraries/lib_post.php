@@ -50,6 +50,56 @@ function searchBoardArrayForBoardByIdentifier(string $identifier): ?board {
 	return null;
 }
 
+/**
+ * Resolve a cross-board quote reference to a board: a plain identifier ('b'), or an identifier
+ * qualified by the target board's subdomain ('img.b', 'cgi.b') for when boards on different
+ * subdomains share an identifier.
+ *
+ * Board identifiers cannot contain dots, so everything after the reference's last dot is the
+ * identifier and everything before it is the subdomain ('a.b.c' → subdomain 'a.b', identifier
+ * 'c'). A plain reference matches by identifier alone; if several boards share that identifier,
+ * the one without a subdomain wins, so '>>>/b/…' keeps pointing at the main /b/ even after a
+ * subdomained sibling /b/ appears.
+ *
+ * @param string $reference Board reference as written in the quote (without the slashes).
+ * @return board|null The referenced board, or null if nothing matches.
+ */
+function searchBoardArrayForBoardByReference(string $reference): ?board {
+	$boards = GLOBAL_BOARD_ARRAY;
+
+	$lastDot = strrpos($reference, '.');
+
+	// Plain identifier: prefer the board with no subdomain, fall back to the first match.
+	if ($lastDot === false) {
+		$fallback = null;
+
+		foreach ($boards as $board) {
+			if ($board->getBoardIdentifier() !== $reference) {
+				continue;
+			}
+			if ($board->getBoardSubdomain() === '') {
+				return $board;
+			}
+			$fallback ??= $board;
+		}
+
+		return $fallback;
+	}
+
+	// Subdomain-qualified: both parts must match. Subdomains are stored lowercased, so compare
+	// the reference's subdomain case-insensitively; identifiers stay case-sensitive as elsewhere.
+	$subdomain = strtolower(substr($reference, 0, $lastDot));
+	$identifier = substr($reference, $lastDot + 1);
+
+	foreach ($boards as $board) {
+		if ($board->getBoardIdentifier() === $identifier && $board->getBoardSubdomain() === $subdomain) {
+			return $board;
+		}
+	}
+
+	return null;
+}
+
 function createAssocArrayFromBoardArray(array $boards): array {
 	$assocBoardArray = [];
 

@@ -12,11 +12,12 @@ use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\userRole;
 
-use function Kokonotsuba\libraries\deleteCreatedBoardConfig;
 use function Puchiko\createDirectory;
 use function Puchiko\createFileAndWriteText;
 use function Puchiko\rollbackCreatedPaths;
 use function Puchiko\safeRmdir;
+use function Puchiko\strings\isValidSubdomain;
+use function Puchiko\strings\normalizeSubdomain;
 use function Puchiko\strings\sanitizeStr;
 
 /** Service for assembling, creating, editing, and deleting board objects. */
@@ -51,14 +52,16 @@ class boardService {
 		if (!empty($inputFields['board_sub_title'])) {
 			$fields['board_sub_title'] = $inputFields['board_sub_title'];
 		}
-		if (!empty($inputFields['config_name'])) {
-			$fields['config_name'] = $inputFields['config_name'];
-		}
 		if (!empty($inputFields['storage_directory_name'])) {
 			$fields['storage_directory_name'] = $inputFields['storage_directory_name'];
 		}
 		if (isset($inputFields['listed'])) {
 			$fields['listed'] = $inputFields['listed'] ? 1 : 0;
+		}
+		// Checked with array_key_exists, not empty(): an empty subdomain is a meaningful value that
+		// moves the board back onto the site-wide host, so it has to be saveable.
+		if (array_key_exists('subdomain', $inputFields)) {
+			$fields['subdomain'] = $this->sanitizeSubdomain((string)$inputFields['subdomain']);
 		}
 
 		if (empty($fields)) {
@@ -81,17 +84,16 @@ class boardService {
 		// get board file properties
 		$boardPath = $board->getBoardCachedPath();
 		$boardStoragePath = $board->getBoardStoragePath();
-		$boardConfigPath = $board->getFullConfigPath();
 		$boardCdnDir = $board->getBoardCdnDir();
-		
-		// Delete board from the database
+
+		// Delete board from the database. The board_configs row is removed automatically
+		// via the ON DELETE CASCADE foreign key on board_uid.
 		$this->boardRepository->deleteBoardByUID($boardUid);
 
 		// delete files and directories
 		safeRmdir($boardPath);
 		safeRmDir($boardStoragePath);
 		safeRmDir($boardCdnDir);
-		unlink($boardConfigPath);
 	}
 
 	/**
@@ -123,6 +125,7 @@ class boardService {
         $boardTitle = $this->sanitizeTextField($inputFields['boardTitle']);
         $boardSubTitle = isset($inputFields['boardSubTitle']) ? $this->sanitizeTextField($inputFields['boardSubTitle']) : '';
         $boardListed = isset($inputFields['boardListed']) ? (int) $inputFields['boardListed'] : 0;
+        $boardSubdomain = $this->sanitizeSubdomain((string) ($inputFields['boardSubdomain'] ?? ''));
 
         // Ensure valid `boardListed` (0 or 1)
         if (!in_array($boardListed, [0, 1], true)) {
@@ -155,11 +158,11 @@ class boardService {
             $dataDir = getBoardStoragesDir() . $boardStorageDirectoryName;
             $createdPaths[] = createDirectory($dataDir);
 
-            // Generate config file for the board
-            $boardConfigName = generateNewBoardConfigFile($nextBoardUid);
+            // Board config is stored in the board_configs table (created on first edit via the
+            // admin board configuration editor); no per-board PHP config file is generated.
 
             // Add board to the database
-            $this->boardRepository->addNewBoard($boardIdentifier, $boardTitle, $boardSubTitle, $boardListed, $boardConfigName, $boardStorageDirectoryName);
+            $this->boardRepository->addNewBoard($boardIdentifier, $boardTitle, $boardSubTitle, $boardListed, $boardStorageDirectoryName, $boardSubdomain);
 
             // Initialize boardUID.ini
             $newBoardUID = $this->boardRepository->getLastBoardUID();
@@ -176,7 +179,6 @@ class boardService {
         } catch (Exception $e) {
             // Handle rollback and cleanup
             rollbackCreatedPaths($createdPaths);
-            deleteCreatedBoardConfig($boardConfigName);
             throw $e;
         }
     }
@@ -197,6 +199,27 @@ class boardService {
         }
         return $input;
     }
+
+	/**
+	 * Validate and normalize a board subdomain ('cgi', 'dis', …).
+	 *
+	 * Rejecting a bad value here means a typo surfaces as an error on the board form instead of
+	 * silently producing a broken host when the board is rendered. An empty subdomain is valid and
+	 * means "serve this board from the site-wide WEBSITE_URL".
+	 *
+	 * @param string $input Raw subdomain input.
+	 * @return string Normalized subdomain, or '' for none.
+	 * @throws Exception If the value is not a usable DNS name.
+	 */
+	private function sanitizeSubdomain(string $input): string {
+		$subdomain = normalizeSubdomain($input);
+
+		if ($subdomain !== '' && !isValidSubdomain($subdomain)) {
+			throw new Exception("Invalid board subdomain. Use dot-separated DNS labels of letters, digits and hyphens (e.g. 'cgi'), or leave it empty.");
+		}
+
+		return $subdomain;
+	}
 
 	/**
 	 * Validate that a board path is an existing directory and strip trailing slashes.
@@ -327,7 +350,10 @@ class boardService {
 	 * @return board|null Fully assembled board object, or null on failure.
 	 */
 	private function assembleBoard(boardData $boardData): ?board {
-		$board = new board($this->container->get('boardPostNumbers'), $boardData, $this->container->get('boardPathService'));
+		// Resolve the fully-merged effective config (globals + schema defaults + DB overrides).
+		$effectiveConfig = $this->container->get('configService')->getEffectiveConfig($boardData->getBoardUID());
+
+		$board = new board($this->container->get('boardPostNumbers'), $boardData, $this->container->get('boardPathService'), $effectiveConfig);
 
 		// initialize dependencies for setter inject
 		$templateEngine = $this->initializeTemplateEngine($board);

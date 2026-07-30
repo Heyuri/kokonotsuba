@@ -29,7 +29,7 @@ const kkStore = (function () {
 	var registered = Object.create(null);
 	function registeredKeys() { return Object.keys(registered); }
 
-	var HUB_URL = STATIC_URL + 'html/storageHub.html';
+	var HUB_URL = STATIC_URL + 'html/storageHub.html?v=2';
 	var hubOrigin;
 	try { hubOrigin = new URL(HUB_URL, location.href).origin; } catch (e) { hubOrigin = null; }
 
@@ -92,6 +92,39 @@ const kkStore = (function () {
 		selfWrites.push({ key: key, value: value, expires: now + SELF_WRITE_TTL });
 	}
 
+	/* Rapid-fire circuit breaker.
+	 *
+	 * Nothing in this protocol legitimately changes a key more than a few times a second.
+	 * If a key starts changing at a sustained rapid rate — a relay loop between tabs/hubs,
+	 * a stuck writer, an echo-suppression miss — the cascade of storage/message events can
+	 * peg the CPU and allocate without bound (each application re-fires events elsewhere).
+	 * Rather than trusting every other guard to be airtight, count changes per key and trip
+	 * a cooldown when the rate is absurd: during the cooldown that key's changes are
+	 * dropped. The mirror may briefly go stale; the next genuine change re-syncs it.
+	 * Incoming (applied) and outgoing (broadcast) directions are counted separately so a
+	 * flood arriving from outside can't silence this tab's own legitimate writes. */
+	var FLOOD_WINDOW_MS = 2000;
+	var FLOOD_LIMIT = 25;          // changes per key per window before tripping
+	var FLOOD_COOLDOWN_MS = 10000;
+	var floodCounts = Object.create(null);   // "dir:key" -> { count, windowStart, blockedUntil, warned }
+
+	function floodGuard(dirKey) {
+		var now = Date.now();
+		var f = floodCounts[dirKey];
+		if (!f) { f = floodCounts[dirKey] = { count: 0, windowStart: now, blockedUntil: 0, warned: false }; }
+		if (now < f.blockedUntil) return true;
+		if (now - f.windowStart > FLOOD_WINDOW_MS) { f.windowStart = now; f.count = 0; f.warned = false; }
+		if (++f.count > FLOOD_LIMIT) {
+			f.blockedUntil = now + FLOOD_COOLDOWN_MS;
+			if (!f.warned) {
+				f.warned = true;
+				try { console.warn('kkStore: rapid-fire changes for "' + dirKey + '" — dropping for ' + (FLOOD_COOLDOWN_MS / 1000) + 's'); } catch (e) {}
+			}
+			return true;
+		}
+		return false;
+	}
+
 	function isOwnEcho(key, value) {
 		var now = Date.now();
 		for (var i = 0; i < selfWrites.length; i++) {
@@ -102,6 +135,39 @@ const kkStore = (function () {
 			}
 		}
 		return false;
+	}
+
+	// Whether we wrote this key recently (an unexpired note exists), without consuming it.
+	function hasPendingSelfWrite(key) {
+		var now = Date.now();
+		for (var i = 0; i < selfWrites.length; i++) {
+			if (selfWrites[i].key === key && selfWrites[i].expires > now) return true;
+		}
+		return false;
+	}
+
+	/* Writer self-verification.
+	 *
+	 * When several tabs write the same key near-simultaneously (e.g. every tab's poll
+	 * firing at once after the network comes back), message ordering between the direct
+	 * hub echo and the storage-event relays is not guaranteed: the writer can end up with
+	 * its mirror pinned on another tab's older value while every other tab converged on
+	 * the hub's final one. A permanently diverged kktwch_lastPoll mirror then defeats the
+	 * cross-tab poll lock — every tab polls and collides again on every cycle, forever.
+	 *
+	 * So after each write, ask the hub (debounced) what it actually holds and adopt that.
+	 * The same verify is re-armed when a conflicting change lands while our own write is
+	 * still pending, so late stale relays get repaired too. Bounded: one message per key
+	 * per SYNC_DELAY window, and only ever in the wake of our own writes. */
+	var SYNC_DELAY_MS = 400;
+	var syncTimers = Object.create(null);
+
+	function scheduleSync(key) {
+		if (syncTimers[key]) clearTimeout(syncTimers[key]);
+		syncTimers[key] = setTimeout(function () {
+			delete syncTimers[key];
+			post({ __kkstore: 1, type: 'sync', key: key });
+		}, SYNC_DELAY_MS);
 	}
 
 	function settle() {
@@ -125,7 +191,9 @@ const kkStore = (function () {
 	// Same-origin cross-tab changes still arrive via the native storage event.
 	window.addEventListener('storage', function (e) {
 		if (e.key === null) return;
-		if (isShared(e.key)) fireChange(e.key);
+		if (!isShared(e.key)) return;
+		if (floodGuard('in:' + e.key)) return;
+		fireChange(e.key);
 	});
 
 	// Messages from the hub iframe.
@@ -161,12 +229,27 @@ const kkStore = (function () {
 			keys.forEach(fireChange);
 		} else if (d.type === 'change' && isShared(d.key)) {
 			var incoming = (d.value === null || d.value === undefined) ? null : d.value;
-			// Ignore the echo of our own write — our local mirror is already current, and
-			// re-applying it would re-trigger the hub and start a feedback loop.
-			if (isOwnEcho(d.key, incoming)) return;
+			// Recognize (and consume) the echo of our own write. The hub confirms every
+			// accepted write back to its writer, so this echo marks where our write landed
+			// in the hub's ordered change stream.
+			var ownEcho = isOwnEcho(d.key, incoming);
+			// A change matching what the mirror already holds carries no information —
+			// applying it again can only re-fire events, never tell anyone anything new.
+			// The common own-echo case (nothing raced us) ends here.
+			if (incoming === lsGet(d.key)) return;
+			// From here the value differs from the mirror. If it's our own echo, racing
+			// writes from other tabs were applied over our value between the write and its
+			// confirmation — adopt it back. For everything else, the circuit breaker is the
+			// last line of defense: a key changing at an absurd sustained rate is a loop,
+			// whatever its cause.
+			if (!ownEcho && floodGuard('in:' + d.key)) return;
 			if (incoming === null) lsRemove(d.key);
 			else lsSet(d.key, incoming);
 			fireChange(d.key);
+			// A conflicting change landed while our own write is still pending: message
+			// ordering between the echo and relays is not guaranteed, so re-verify against
+			// the hub once things settle rather than trusting whichever arrived last.
+			if (!ownEcho && hasPendingSelfWrite(d.key)) scheduleSync(d.key);
 		}
 	});
 
@@ -216,7 +299,11 @@ const kkStore = (function () {
 				// our newer value (the post below is a no-op until the hub connects, so
 				// the snapshot handler is what actually carries this write up).
 				if (!settled) pendingLocalWrites[key] = true;
+				// A runaway writer keeps its local value but stops broadcasting, so one
+				// misbehaving tab can't flood every other tab with change events.
+				if (floodGuard('out:' + key)) return;
 				post({ __kkstore: 1, type: 'set', key: key, value: value });
+				scheduleSync(key);
 			}
 		},
 		remove: function (key) {
@@ -224,7 +311,9 @@ const kkStore = (function () {
 			if (isShared(key)) {
 				noteSelfWrite(key, null);
 				if (!settled) pendingLocalWrites[key] = true;
+				if (floodGuard('out:' + key)) return;
 				post({ __kkstore: 1, type: 'remove', key: key });
+				scheduleSync(key);
 			}
 		}
 	};

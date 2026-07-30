@@ -10,7 +10,7 @@ class moduleMain extends abstractModuleMain {
 	private array $FILTERS;
 
 	public function initialize(): void {
-		$this->FILTERS = $this->getConfig('ModuleSettings.FILTERS');
+		$this->FILTERS = $this->getModuleConfig('FILTERS');
 		
 		$this->listenRegistBeforeCommit('onBeforeCommit');
 	}

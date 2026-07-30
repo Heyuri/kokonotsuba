@@ -1,0 +1,173 @@
+/* ── Report form (window and the no-JS page) ──────────────────────────────── */
+
+.reportFormContainer {
+	padding: 4px;
+}
+
+.reportFormTitle {
+	margin: 0 0 6px;
+}
+
+.reportFormTable {
+	width: 100%;
+}
+
+.reportFormTable td {
+	vertical-align: top;
+}
+
+.reportFormTable textarea {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.reportPostPreview {
+	max-height: 24em;
+	overflow-y: auto;
+}
+
+.reportPostPreviewStandalone {
+	margin-bottom: 1em;
+}
+
+/* The cloned post keeps the live page's controls, none of which do anything in here. */
+.reportPostPreview .postMenu,
+.reportPostPreview .deletionCheckbox,
+.reportPostPreview .reportLinkContainer,
+.reportPostPreview .widgetRefs {
+	display: none;
+}
+
+.reportPostPreview .post {
+	margin: 0;
+}
+
+/* ── Report tables ────────────────────────────────────────────────────────── */
+
+.reportTable td {
+	vertical-align: top;
+}
+
+.reportTable .colReason {
+	min-width: 14em;
+	max-width: 320px;
+	word-break: break-word;
+}
+
+/* Keep the [View] [History] links on one line instead of breaking mid-row. */
+.reportTable .colActions {
+	white-space: nowrap;
+}
+
+.reportRowApproved {
+	background-color: rgba(60, 160, 60, 0.18);
+}
+
+.reportRowDismissed {
+	background-color: rgba(190, 55, 55, 0.16);
+}
+
+/* Pending rows are deliberately unstyled — they keep the table's own background so the two
+   actioned states are the things that stand out. */
+
+.reportStatusLabel {
+	font-weight: var(--font-weight-bold);
+}
+
+.reportActionedAt {
+	font-size: var(--font-size-small);
+	opacity: 0.8;
+}
+
+.reportEmpty {
+	text-align: center;
+	font-style: italic;
+}
+
+.reportIntro,
+.reportStats {
+	margin: 4px 0 8px;
+}
+
+/* The tallies table is a handful of rows, so it stays narrow instead of stretching the page. */
+.reportStatsTable {
+	min-width: 16em;
+}
+
+.reportStatsTable .colCount {
+	text-align: center;
+}
+
+#adminPageContent .reportDetailTable .reportStatsTable,
+.modulePageContent .reportDetailTable .reportStatsTable,
+.reportDetailTable .reportStatsTable {
+	margin-left: 0;
+	margin-right: auto;
+}
+
+.reportToolbar {
+	margin: 4px 0;
+}
+
+/* ── Public vs private reasons ────────────────────────────────────────────── */
+.reportReasonTag {
+	font-size: var(--font-size-x-small);
+	font-weight: var(--font-weight-bold);
+	text-transform: uppercase;
+	padding: 0 3px;
+	border-radius: 2px;
+}
+
+.reportPublicReason .reportReasonTag {
+	background-color: rgba(60, 120, 200, 0.25);
+}
+
+.reportPrivateReason .reportReasonTag {
+	background-color: rgba(190, 130, 40, 0.3);
+}
+
+.reportPublicReason,
+.reportPrivateReason {
+	font-size: var(--font-size-small);
+	margin-top: 2px;
+}
+
+.reportDecisionTable textarea {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.reportSectionHeading {
+	margin: 1em 0 0.25em;
+}
+
+.reportDecisionLegend {
+	max-width: none;
+	margin-bottom: 0.5em;
+}
+
+/* ── Filters ──────────────────────────────────────────────────────────────── */
+
+.reportFilters {
+	margin: 4px 0;
+}
+
+.reportFilterLink {
+	margin-right: 6px;
+}
+
+.reportFilterActive {
+	font-weight: var(--font-weight-bold);
+	text-decoration: none;
+}
+
+/* ── Misc ─────────────────────────────────────────────────────────────────── */
+
+.reportMissingPost {
+	font-style: italic;
+	opacity: 0.75;
+}
+
+.reportUnreadIndicator {
+	font-weight: var(--font-weight-bold);
+}

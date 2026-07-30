@@ -130,8 +130,11 @@ class postFileUploadController {
 	
 
 	private function validateThumbnail(string $fileExtention, string $mimeType): void {
-		// create video extensions array
-		$videoExts = explode('|', strtolower($this->config['VIDEO_EXT']));
+		// create video extensions array (a board configured before VIDEO_EXT became a list may
+		// still hold the old pipe-separated string)
+		$videoExt = $this->config['VIDEO_EXT'] ?? [];
+		$videoExts = is_array($videoExt) ? $videoExt : explode('|', (string)$videoExt);
+		$videoExts = array_map('strtolower', $videoExts);
 		
 		// generate thumbnail for video
 		if(isVideo($mimeType) && in_array($fileExtention, $videoExts)) {

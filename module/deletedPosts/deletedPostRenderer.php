@@ -29,6 +29,16 @@ use function Kokonotsuba\libraries\getFiltersFromRequest;
 use function Puchiko\strings\buildSmartQuery;
 
 class deletedPostRenderer {
+	/**
+	 * Renderer pairs keyed by the board UID they were built for.
+	 *
+	 * @var array<int, array{0: postRenderer, 1: threadRenderer}>
+	 */
+	private array $renderersByBoardUid = [];
+
+	/** Quote links for the posts currently being drawn, keyed by post uid. */
+	private array $quoteLinks = [];
+
 	public function __construct(
 		private board $board,
 		private array $config,
@@ -55,27 +65,9 @@ class deletedPostRenderer {
 		// certain actions involve drawing/GET
 		$pageName = $this->request->getParameter('pageName', 'GET');
 
-		// init post renderer using the board's template engine (has OP/REPLY blocks)
-		$postRenderer = new postRenderer(
-			$this->board, 
-			$this->config, 
-			$this->moduleEngine, 
-			$this->moduleTemplateEngine, 
-			[],
-			$this->request
-		);
-		
-		// init thread renderer using the board's template engine
-		$threadRenderer = new threadRenderer(
-			$this->board->loadBoardConfig(), 
-			$this->moduleTemplateEngine, 
-			$postRenderer, 
-			$this->moduleEngine
-		);
-
 		// view a single deleted post in full detail
 		if($pageName === 'viewMore') {
-			$this->handlePostView($roleLevel, $accountId, $postRenderer, $threadRenderer);
+			$this->handlePostView($roleLevel, $accountId);
 
 			// return early so other drawing methods dont run
 			return;
@@ -84,17 +76,68 @@ class deletedPostRenderer {
 		// view restore posts index
 		else if($pageName === 'restoredIndex') {
 			// handle restored post index logic
-			$this->handleRestoredPostIndex($roleLevel, $page, $accountId, $postRenderer, $threadRenderer);
-		} 
+			$this->handleRestoredPostIndex($roleLevel, $page, $accountId);
+		}
 
 		// view deleted post index
 		else {
 			// handle deleted post index logic
-			$this->handleDeletedPostIndex($roleLevel, $page, $accountId, $postRenderer, $threadRenderer);
+			$this->handleDeletedPostIndex($roleLevel, $page, $accountId);
 		}
 	}
 
-	private function handlePostView(userRole $roleLevel, int $accountId, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
+	/**
+	 * Get the post/thread renderers bound to the board a deleted post was made to.
+	 *
+	 * The queue mixes posts from every board, so a renderer bound to whichever board the mod page
+	 * happens to be served from would build each entry's post link, element ids, quote links and
+	 * attachment URLs against the wrong board. Renderers are built once per board UID and reused
+	 * by every entry that shares it.
+	 *
+	 * @param int $boardUid UID of the board the post was made to.
+	 * @return array{0: postRenderer, 1: threadRenderer}
+	 */
+	private function getRenderersForBoard(int $boardUid): array {
+		if (!isset($this->renderersByBoardUid[$boardUid])) {
+			$board = $this->resolvePostBoard($boardUid);
+			$boardConfig = $board->loadBoardConfig();
+
+			// init post renderer using the module's template engine (has OP/REPLY blocks)
+			$postRenderer = new postRenderer(
+				$board,
+				$boardConfig,
+				$this->moduleEngine,
+				$this->moduleTemplateEngine,
+				[],
+				$this->request
+			);
+
+			// init thread renderer using the module's template engine
+			$threadRenderer = new threadRenderer(
+				$boardConfig,
+				$this->moduleTemplateEngine,
+				$postRenderer,
+				$this->moduleEngine
+			);
+
+			$this->renderersByBoardUid[$boardUid] = [$postRenderer, $threadRenderer];
+		}
+
+		// quote links are fetched once per drawn page, so hand the current set to the cached renderer
+		$this->renderersByBoardUid[$boardUid][0]->setQuoteLinks($this->quoteLinks);
+
+		return $this->renderersByBoardUid[$boardUid];
+	}
+
+	/**
+	 * Resolve the board a deleted post was made to. Falls back to the board being viewed when the
+	 * post's board is no longer in the board array, so a stale entry renders instead of fatalling.
+	 */
+	private function resolvePostBoard(int $boardUid): board {
+		return searchBoardArrayForBoard($boardUid) ?? $this->board;
+	}
+
+	private function handlePostView(userRole $roleLevel, int $accountId): void {
 		// to view a deleted post in full detail we need the deleted post id
 		$deletedPostId = $this->request->getParameter('deletedPostId', 'GET');
 
@@ -122,25 +165,23 @@ class deletedPostRenderer {
 		}
 
 		// draw it
-		$this->drawDeletedPostView($roleLevel, $deletedPost, $postRenderer, $threadRenderer);
+		$this->drawDeletedPostView($roleLevel, $deletedPost);
 	}
 
-	private function handleRestoredPostIndex(userRole $roleLevel, int $page, int $accountId, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
+	private function handleRestoredPostIndex(userRole $roleLevel, int $page, int $accountId): void {
 		$filters = $this->resolveFilters('restoredIndex');
-		$this->handlePostIndex($roleLevel, $page, $accountId, $postRenderer, $threadRenderer, 'restored', 'Restored posts', $filters);
+		$this->handlePostIndex($roleLevel, $page, $accountId, 'restored', 'Restored posts', $filters);
 	}
 
-	private function handleDeletedPostIndex(userRole $roleLevel, int $page, int $accountId, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
+	private function handleDeletedPostIndex(userRole $roleLevel, int $page, int $accountId): void {
 		$filters = $this->resolveFilters();
-		$this->handlePostIndex($roleLevel, $page, $accountId, $postRenderer, $threadRenderer, 'deleted', 'Deleted posts', $filters);
+		$this->handlePostIndex($roleLevel, $page, $accountId, 'deleted', 'Deleted posts', $filters);
 	}
 
 	private function handlePostIndex(
 		userRole $roleLevel,
 		int $page,
 		int $accountId,
-		postRenderer $postRenderer,
-		threadRenderer $threadRenderer,
 		string $type,
 		string $title,
 		array $filters = []
@@ -185,7 +226,7 @@ class deletedPostRenderer {
 		}
 		
 		// finalize html output
-		$this->handleHtmlOutput($roleLevel, $posts, $postsCount, $postRenderer, $threadRenderer, $title, $filters);
+		$this->handleHtmlOutput($roleLevel, $posts, $postsCount, $title, $filters);
 	}
 
 	private function outputAdminPage(string $pageContentHtml, string $pagerHtml = ''): void {
@@ -202,7 +243,7 @@ class deletedPostRenderer {
 		echo $pageHtml;
 	}
 
-	private function drawDeletedPostView(userRole $roleLevel, DeletedPost $deletedPost, postRenderer $postRenderer, threadRenderer $threadRenderer): void {
+	private function drawDeletedPostView(userRole $roleLevel, DeletedPost $deletedPost): void {
 		// if its a thread then get the thread data
 		if($deletedPost->isOp()) {
 			$thread = $this->threadService->getThreadAllReplies($deletedPost->getThreadUid(), true, 0);
@@ -226,15 +267,13 @@ class deletedPostRenderer {
 		// get the quotelinks
 		$quoteLinks = $this->quoteLinkService->getQuoteLinksByPostUids($postUids, true);
 
-		// set the quotelinks
-		$postRenderer->setQuoteLinks($quoteLinks);
+		// set the quotelinks, which the per-board renderers are handed as they are built
+		$this->quoteLinks = $quoteLinks;
 
 		// get the template values for the deleted post entry
 		$deletedPostTemplateValues = $this->prepareDeletedEntryPlaceholders(
 			$roleLevel,
 			$deletedPost, 
-			$postRenderer, 
-			$threadRenderer, 
 			true, 
 			$thread);
 
@@ -284,8 +323,6 @@ class deletedPostRenderer {
 		userRole $roleLevel, 
 		?array $deletedPosts, 
 		int $deletedPostsCount, 
-		postRenderer $postRenderer, 
-		threadRenderer $threadRenderer,
 		string $moduleHeader = 'Deleted posts',
 		array $filters = []
 	): void {
@@ -298,8 +335,8 @@ class deletedPostRenderer {
 		// then get the quote links for the posts
 		$quoteLinks = $this->quoteLinkService->getQuoteLinksByPostUids($postUids, true);
 
-		// set the post renderer quote links
-		$postRenderer->setQuoteLinks($quoteLinks);
+		// set the quote links, which the per-board renderers are handed as they are built
+		$this->quoteLinks = $quoteLinks;
 		
 		// flag for if there's no posts.
 		$areNoPosts = empty($deletedPosts);
@@ -312,9 +349,7 @@ class deletedPostRenderer {
 			// get deleted posts html
 			$deletedPostListValues = $this->renderDeletedPosts(
 				$roleLevel,
-				$deletedPosts,
-				$postRenderer,
-				$threadRenderer
+				$deletedPosts
 			);
 		}
 
@@ -362,7 +397,7 @@ class deletedPostRenderer {
 		$this->outputAdminPage($deletedPostsPageHtml, $pager);
 	}
 
-	private function renderDeletedPosts(userRole $roleLevel, array $deletedPostEntries, postRenderer $postRenderer, threadRenderer $threadRenderer): array {
+	private function renderDeletedPosts(userRole $roleLevel, array $deletedPostEntries): array {
 		// array to store the template values
 		$deletedPostsTemplateValues = [];
 		
@@ -371,9 +406,7 @@ class deletedPostRenderer {
 			// prepare the entry placeholders
 			$deletedPostsTemplateValues[] = $this->prepareDeletedEntryPlaceholders(
 				$roleLevel, 
-				$deletedEntry, 
-				$postRenderer, 
-				$threadRenderer);
+				$deletedEntry);
 		}
 
 		// now, return the template values
@@ -383,8 +416,6 @@ class deletedPostRenderer {
 	private function prepareDeletedEntryPlaceholders(
 		userRole $roleLevel,
 		DeletedPost $deletedEntry, 
-		postRenderer $postRenderer, 
-		threadRenderer $threadRenderer, 
 		bool $showAll = false, 
 		?ThreadData $thread = null
 		): array {
@@ -401,7 +432,7 @@ class deletedPostRenderer {
 		$deletedTimestamp = $deletedEntry->getDeletedAt();
 
 		// board the post was made to
-		$board = searchBoardArrayForBoard($boardUID);
+		$board = $this->resolvePostBoard($boardUID);
 
 		// title of the board
 		$boardTitle = $board->getBoardTitle();
@@ -413,7 +444,7 @@ class deletedPostRenderer {
 		$viewMoreUrl = $this->generateViewMoreUrl($id, $this->modulePageUrl);
 
 		// handle post html rendering logic
-		$postHtml = $this->generatePostHtml($deletedEntry, $thread, $showAll, $postRenderer, $threadRenderer);
+		$postHtml = $this->generatePostHtml($deletedEntry, $thread, $showAll);
 
 		// attachment only deletion
 		$isAttachmentOnly = !empty($deletedEntry->getFileId()) && !empty($deletedEntry->getFileOnlyDeleted());
@@ -443,12 +474,13 @@ class deletedPostRenderer {
 	}
 
 	private function generatePostHtml(
-		DeletedPost $deletedEntry, 
-		?ThreadData $thread, 
-		bool $showAll, 
-		postRenderer $postRenderer, 
-		threadRenderer $threadRenderer
+		DeletedPost $deletedEntry,
+		?ThreadData $thread,
+		bool $showAll
 	): string {
+		// the queue mixes boards, so render this entry with its own board's renderers
+		[$postRenderer, $threadRenderer] = $this->getRenderersForBoard($deletedEntry->getBoardUID());
+
 		// Attachment-only view
 		if ($deletedEntry->getFileOnlyDeleted()) {
 			return $this->renderAttachmentDeletion($deletedEntry, $postRenderer);
@@ -458,7 +490,7 @@ class deletedPostRenderer {
 		$templateValues = [];
 
 		// get the board of the post
-		$board = searchBoardArrayForBoard($deletedEntry->getBoardUID());
+		$board = $this->resolvePostBoard($deletedEntry->getBoardUID());
 
 		// get the base url of the board
 		$boardUrl = $board->getBoardURL();

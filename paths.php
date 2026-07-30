@@ -1,7 +1,5 @@
 <?php
 
-use function Puchiko\copyFileWithNewName;
-
 function getBackendDir() {
 	return __DIR__.'/';
 }
@@ -14,42 +12,21 @@ function getBackendGlobalDir() {
 	return getBackendDir().'global/';
 }
 
-function getBoardConfigDir() {
-	return getBackendGlobalDir().'board-configs/';
+/** Directory holding the board configuration schema files (grouped defaults + metadata). */
+function getConfigSchemaDir() {
+	return getBackendDir().'configs/';
 }
 
 function getBoardStoragesDir() {
 	return getBackendGlobalDir().'board-storages/';
 }
 
+/**
+ * Return the board-agnostic default config array (immutable globals + editable schema
+ * defaults). This is the source of truth for board creation.
+ */
 function getTemplateConfigArray(): array {
-	// Path to the board template configuration file
-	$configFile = getBoardConfigDir() . 'board-template.php';
-	
-	// Check if the file exists before including
-	if (!file_exists($configFile)) {
-#		throw new Exception("Configuration file not found: " . $configFile);
-		throw new Exception("Configuration file not found: " . $configFile);
-	}
-
-	require $configFile;
-	
-	// Ensure $config is set in the included file
-	if (!isset($config)) {
-#		throw new Exception("Configuration array $config is not defined in: " . $configFile);
-		throw new Exception("Configuration array \$config is not defined in: " . $configFile);
-	}
-	
-	return $config;
-}
-
-function generateNewBoardConfigFile(string $boardUid): ?string {
-	$templateConfigPath = getBoardConfigDir().'board-template.php';//config template
-	$newConfigFileName = 'board-' . $boardUid . '.php';
-	$boardConfigsDirectory = getBoardConfigDir();
-
-	if(!copyFileWithNewName($templateConfigPath, $newConfigFileName, $boardConfigsDirectory)) throw new Exception("Failed to copy new config file");
-	return $newConfigFileName;
+	return \Kokonotsuba\config\configService::resolveDefaults();
 }
 
 /* get the database settings from dbSettings PHP file */
@@ -61,9 +38,7 @@ function getDatabaseSettings() {
 }
 
 function getGlobalConfig() {
-	require __DIR__.'/global/globalconfig.php';
-	
-	return $config;
+	return require __DIR__.'/global/globalconfig.php';
 }
 
 function getGlobalAttachmentDirectory(): string {

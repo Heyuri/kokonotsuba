@@ -13,6 +13,7 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawAdminTheading;
 use function Kokonotsuba\libraries\html\generateAdminLinkButtons;
 use function Kokonotsuba\libraries\html\generateAdminNavLink;
+use function Kokonotsuba\libraries\html\generateUserNavBar;
 
 class pageRenderer {
 	private templateEngine $templateEngine;
@@ -48,12 +49,17 @@ class pageRenderer {
 			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'managePosts', _T('admin_nav_posts'), userRole::LEV_JANITOR, _T('admin_nav_posts_title'));
 			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'rebuild', _T('admin_nav_rebuild'), userRole::LEV_JANITOR, _T('admin_nav_rebuild_title'));
 			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'boards', _T('admin_nav_boards'), userRole::LEV_ADMIN, _T('admin_nav_boards_title'));
+			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'globalConfig', _T('admin_nav_global_config'), userRole::LEV_ADMIN, _T('admin_nav_global_config_title'));
 
 			// add the admin links to html output
 			$htmlOutput .= generateAdminLinkButtons($liveIndexFile, $staticIndexFile, $this->moduleEngine, $adminLinkHtml, $this->request);
 
 			// add admin threading
 			$htmlOutput .= drawAdminTheading($thead, new staffAccountFromSession);
+		} else {
+			// Reader-facing pages (reports, blotter, ban notice, ...) get the same way back to
+			// the board that staff pages get from their nav bar.
+			$htmlOutput .= generateUserNavBar($staticIndexFile, $this->request);
 		}
 
 		$htmlOutput .= $this->templateEngine->ParseBlock($templateBlock, $templateValues);

@@ -38,9 +38,9 @@ class moduleMain extends abstractModuleMain {
 	 * @return void
 	 */
 	public function initialize(): void {
-		$this->subDomain     = $this->getConfig('ModuleSettings.SEGREGATOR_SUB_DOMAIN', '');
-		$this->cookieName    = $this->getConfig('ModuleSettings.SEGREGATOR_COOKIE_NAME', 'viewAllContent');
-		$this->cookieDomain  = $this->getConfig('ModuleSettings.SEGREGATOR_COOKIE_DOMAIN', '');
+		$this->subDomain     = $this->getModuleConfig('SEGREGATOR_SUB_DOMAIN', '');
+		$this->cookieName    = $this->getModuleConfig('SEGREGATOR_COOKIE_NAME', 'viewAllContent');
+		$this->cookieDomain  = $this->getModuleConfig('SEGREGATOR_COOKIE_DOMAIN', '');
 		$this->cookieExpiry  = time() + (10 * 365 * 24 * 60 * 60); // 10 years
 		$this->cookieService = $this->moduleContext->cookieService;
 

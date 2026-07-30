@@ -17,9 +17,14 @@ use Kokonotsuba\post\attachment\fileService;
 use Kokonotsuba\quote_link\quoteLinkRepository;
 use Kokonotsuba\userRole;
 use Kokonotsuba\board\boardCreator;
+use Kokonotsuba\config\configService;
 use Kokonotsuba\request\request;
+use Puchiko\background\BackgroundTaskDispatcher;
 use function Puchiko\request\redirect;
+use function Puchiko\json\sendJsonResponse;
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getRoleLevelFromSession;
+use function Kokonotsuba\libraries\logError;
 use function Kokonotsuba\libraries\requirePostWithCsrf;
 use function Puchiko\isValidMySQLDumpFile;
 
@@ -37,7 +42,8 @@ class handleBoardRequestsRoute {
 		private threadRepository $threadRepository,
 		private fileService $fileService,
 		private quoteLinkRepository $quoteLinkRepository,
-		private request $request
+		private request $request,
+		private configService $configService
 	) {}
 
 
@@ -53,14 +59,20 @@ class handleBoardRequestsRoute {
 			$this->editBoardFromRequest();
 		}
 
+		// reset a board's configuration back to the defaults. Checked before the save below: the
+		// config form posts its saveBoardConfig field whichever of its two buttons was clicked.
+		if(!empty($this->request->getParameter('resetBoardConfig', 'POST'))) {
+			$this->resetBoardConfigFromRequest();
+		}
+
+		// save a board's configuration overrides
+		if(!empty($this->request->getParameter('saveBoardConfig', 'POST'))) {
+			$this->saveBoardConfigFromRequest();
+		}
+
 		// create a new board
 		if(!empty($this->request->getParameter('new-board', 'POST'))) {
 			$this->createNewBoardFromRequest();
-		}
-
-		// import a board
-		if(!empty($this->request->getParameter('import-board', 'POST'))) {
-			$this->importBoardFromRequest();
 		}
 
 		// redirect
@@ -92,14 +104,12 @@ class handleBoardRequestsRoute {
 				'board_identifier' => $this->request->getParameter('edit-board-identifier', 'POST', false),
 				'board_title' => $this->request->getParameter('edit-board-title', 'POST', false),
 				'board_sub_title' => $this->request->getParameter('edit-board-sub-title', 'POST', false),
-				'config_name' => $this->request->getParameter('edit-board-config-path', 'POST', false),
 				'storage_directory_name' => $this->request->getParameter('edit-board-storage-dir', 'POST', false),
-				'listed' => $this->request->getParameter('edit-board-listed', 'POST', false)
+				'listed' => $this->request->getParameter('edit-board-listed', 'POST', false),
+				// Always sent by the form, and an empty value legitimately clears the subdomain.
+				'subdomain' => $this->request->getParameter('edit-board-subdomain', 'POST', '')
 			];
 
-			if (!file_exists(getBoardConfigDir() . $fields['config_name'])) {
-				throw new BoardException("Invalid config file, doesn't exist.");
-			}
 			if (!file_exists(getBoardStoragesDir() . $fields['storage_directory_name'])) {
 				throw new BoardException("Invalid storage directory, doesn't exist.");
 			}
@@ -114,6 +124,105 @@ class handleBoardRequestsRoute {
 		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=boards&view=' . $boardRedirectUID);
 	}
 
+	// handle saving a board's configuration overrides
+	private function saveBoardConfigFromRequest(): void {
+		$boardUid = intval($this->request->getParameter('saveBoardConfig', 'POST'));
+
+		if (!$boardUid) {
+			throw new \InvalidArgumentException("Board UID for config save cannot be empty.");
+		}
+
+		if ($boardUid === GLOBAL_BOARD_UID) {
+			throw new \InvalidArgumentException("Cannot edit the reserved board's configuration.");
+		}
+
+		// Ensure the board exists before writing config.
+		$board = $this->boardService->getBoard($boardUid);
+		if (!$board) {
+			throw new BoardException("Board not found.");
+		}
+
+		$submitted = $this->request->getParameter('config', 'POST', []);
+		if (!is_array($submitted)) {
+			$submitted = [];
+		}
+
+		$isAjax = $this->request->isAjax();
+
+		try {
+			// Persist only values that differ from the schema defaults.
+			$this->configService->saveOverrides($boardUid, $submitted);
+		} catch (Exception $e) {
+			if ($isAjax) {
+				sendJsonResponse(['success' => false, 'message' => $e->getMessage()], 400);
+			}
+
+			http_response_code(400);
+			echo "Error saving configuration: " . $e->getMessage();
+			return;
+		}
+
+		// Regenerate the board's static pages using the freshly-resolved config.
+		$this->queueBoardRebuild($boardUid);
+
+		// The editor saves over AJAX so the admin keeps their scroll position; without JS the same
+		// POST falls through to the redirect below.
+		if ($isAjax) {
+			sendJsonResponse([
+				'success'    => true,
+				'message'    => _T('config_saved'),
+				'overridden' => array_keys($this->configService->getOverrides($boardUid)),
+			]);
+		}
+
+		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=boards&view=' . $boardUid . '&rebuild=queued');
+	}
+
+	// handle resetting a board's configuration - deletes its stored overrides so every setting
+	// falls back to the schema default
+	private function resetBoardConfigFromRequest(): void {
+		$boardUid = intval($this->request->getParameter('resetBoardConfig', 'POST'));
+
+		if (!$boardUid) {
+			throw new \InvalidArgumentException("Board UID for config reset cannot be empty.");
+		}
+
+		if ($boardUid === GLOBAL_BOARD_UID) {
+			throw new \InvalidArgumentException("Cannot edit the reserved board's configuration.");
+		}
+
+		$board = $this->boardService->getBoard($boardUid);
+		if (!$board) {
+			throw new BoardException("Board not found.");
+		}
+
+		try {
+			$this->configService->resetOverrides($boardUid);
+		} catch (Exception $e) {
+			http_response_code(400);
+			echo "Error resetting configuration: " . $e->getMessage();
+			return;
+		}
+
+		// Regenerate the board's static pages using the freshly-resolved config.
+		$this->queueBoardRebuild($boardUid);
+
+		redirect($this->config['LIVE_INDEX_FILE'] . '?mode=boards&view=' . $boardUid . '&rebuild=queued');
+	}
+
+	/**
+	 * Hand the board's rebuild to the detached 'rebuild_boards' task rather than doing it inside
+	 * this request. The config is already committed by this point, so a rebuild that fails to
+	 * dispatch is logged and left for the Rebuild page; it never fails the save.
+	 */
+	private function queueBoardRebuild(int $boardUid): void {
+		try {
+			BackgroundTaskDispatcher::dispatch('rebuild_boards', ['boardUIDs' => [$boardUid]]);
+		} catch (\Throwable $e) {
+			logError('[boardConfig] rebuild dispatch failed: ' . $e->getMessage());
+		}
+	}
+
 	// handle board creation
 	private function createNewBoardFromRequest() {
 		// Get board information from the request
@@ -122,52 +231,13 @@ class handleBoardRequestsRoute {
 		$boardIdentifier = $this->request->getParameter('new-board-identifier', 'POST', '');
 		$boardListed = !empty($this->request->getParameter('new-board-listed', 'POST')) ? 1 : 0;
 		$boardPath = $this->request->getParameter('new-board-path', 'POST') ?? throw new BoardException("Board path wasn't set!");
-	
+		$boardSubdomain = $this->request->getParameter('new-board-subdomain', 'POST', '');
+
 		// Create an instance of the BoardCreator helper class
 		$boardCreator = new boardCreator($this->boardService);
-	
+
 		// Call the createNewBoard method in the BoardCreator class
-		$boardCreator->createNewBoard($boardTitle, $boardSubTitle, $boardIdentifier, $boardListed, $boardPath, getRoleLevelFromSession());
+		$boardCreator->createNewBoard($boardTitle, $boardSubTitle, $boardIdentifier, $boardListed, $boardPath, getRoleLevelFromSession(), $boardSubdomain);
 	}
-	
-
-	// Import board from request
-	private function importBoardFromRequest() {
-		try {
-			// board creation object
-			$boardCreator = new boardCreator(
-			 $this->boardService, 
-			 $this->boardPathService);
-	
-			// Initialize board variables
-			$boardPath = $this->request->getParameter('import-board-path', 'POST') ?? throw new BoardException("Board path wasn't set!");
-			$dumpPath = $this->request->getParameter('import-dump-path', 'POST') ?? throw new BoardException("Dump path wasn't set!");
-	
-			// basic check to ensure it's a mysql dump
-			if(!isValidMySQLDumpFile($dumpPath)) {
-				throw new Exception("Invalid database file");
-			}
-	
-			// Create board importer instance
-			/*$vichanBoardImporter = new vichanBoard(
-				$this->databaseConnection,
-				$boardCreator,
-				$this->boardService,
-				$this->postRepository,
-				$this->threadRepository,
-				$this->fileService,
-				$this->transactionManager,
-				$this->quoteLinkRepository
-			);*/
-
-			// import the instance!
-			// the contents are wrapped in a transaction to it shouldn't cause any database problems
-			//$vichanBoardImporter->importVichanInstance($dumpPath, $boardPath);
-		} catch (Exception $e) {
-			// run error
-			throw new BoardException('Error during board import: ' . $e->getMessage());
-		}
-	}
-	
 
 }

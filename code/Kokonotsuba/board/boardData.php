@@ -7,10 +7,10 @@ class boardData {
 	public ?string $board_identifier;
 	public ?string $board_title;
 	public ?string $board_sub_title;
-	public ?string $config_name;
 	public ?string $storage_directory_name;
 	public ?string $date_added;
 	public ?string $board_file_url;
+	public ?string $subdomain = '';
 	public bool $listed = false;
 
 	// Getters
@@ -26,10 +26,6 @@ class boardData {
 		return $this->board_sub_title ?? '';
 	}
 
-	public function getConfigFileName(): string {
-		return $this->config_name ?? '';
-	}
-
 	public function getBoardStorageDirName(): string {
 		return $this->storage_directory_name ?? '';
 	}
@@ -40,6 +36,11 @@ class boardData {
 
 	public function getBoardIdentifier(): string {
 		return $this->board_identifier ?? '';
+	}
+
+	/** Subdomain this board is served from ('cgi', 'dis', …), or '' for the site-wide host. */
+	public function getBoardSubdomain(): string {
+		return $this->subdomain ?? '';
 	}
 
 	public function getBoardListed(): bool {

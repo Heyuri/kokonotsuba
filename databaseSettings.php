@@ -25,8 +25,10 @@ return [
 	'FILE_TABLE' => 'files', // file table, stores meta data on files  
 	'QUOTE_LINK_TABLE' => 'quote_links',
 	'REPORT_TABLE' => 'reports', // report table used by report module
+	'REPORT_READ_TABLE' => 'report_reads', // per-staff read receipts for reports
 	'BAN_TABLE' => 'bans', // ban table used by adminban module
 	'BOARD_TABLE' => 'boards', // board table for all boards active on an instance
+	'BOARD_CONFIG_TABLE' => 'board_configs', // per-board configuration overrides (JSON), keyed by board_uid
 	'BOARD_PATH_CACHE_TABLE' => 'board_paths', // for caching board paths
 	'THREAD_CACHE_TABLE' => 'thread_cache', // for thread html caching
 	'POST_NUMBER_TABLE' => 'post_numbers', // used for futaba-like `No. XXXX` system

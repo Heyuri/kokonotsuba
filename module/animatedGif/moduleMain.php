@@ -127,7 +127,7 @@ class moduleMain extends abstractModuleMain {
 		$fileSize = $attachment['fileSize'];
 
 		// max file size for animated gif (in kilobytes)
-		$maxGifFileSize = $this->getConfig('ModuleSettings.MAX_SIZE_FOR_ANIMATED_GIF');
+		$maxGifFileSize = $this->getModuleConfig('MAX_SIZE_FOR_ANIMATED_GIF');
 		
 		// this is so large GIFs don't get loaded into the page
 		// e.g a 50mb gif getting embedded straight into the page increases load time by a ton and causes problems for users with low bandwidth

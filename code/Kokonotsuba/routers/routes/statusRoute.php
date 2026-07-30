@@ -86,7 +86,7 @@ class statusRoute {
 		</tr>
 		<tr>
 			<td>' . _T('info_basic_urllinking') . '</td>
-			<td colspan="3"> ' . $this->config['AUTO_LINK'] . ' ' . _T('info_0no1yes') . '</td>
+			<td colspan="3"> ' . (int)$this->config['AUTO_LINK'] . ' ' . _T('info_0no1yes') . '</td>
 		</tr>
 		<tr>
 			<td>' . _T('info_basic_com_limit') . '</td>
@@ -106,7 +106,7 @@ class statusRoute {
 		</tr>
 		<tr>
 			<td>' . _T('info_basic_useblock') . '</td>
-			<td colspan="3"> ' . $this->config['BAN_CHECK'] . ' ' . _T('info_0disable1enable') . '</td>
+			<td colspan="3"> ' . (int)$this->config['BAN_CHECK'] . ' ' . _T('info_0disable1enable') . '</td>
 		</tr>
 		<tr>
 			<td>' . _T('info_basic_showid') . '</td>

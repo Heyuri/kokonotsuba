@@ -28,6 +28,13 @@
 					</td>
 				</tr>
 				<tr>
+					<td class="postblock"><label for="new-board-subdomain">Subdomain</label></td>
+					<td>
+						<input class="inputtext" id="new-board-subdomain" name="new-board-subdomain" placeholder="cgi">
+						<div class="formItemDescription">Optional. Serves the board from a subdomain of the website URL, e.g. 'cgi' makes the board "https://cgi.example.net/b/" instead of "https://example.net/b/". Leave empty to serve it from the website URL as-is.</div>
+					</td>
+				</tr>
+				<tr>
 					<td class="postblock"><label for="new-board-path">Absolute directory</label></td>
 					<td>
 						<input class="inputtext" id="new-board-path" name="new-board-path" required class="url-input" placeholder="/var/www/html/boards/" value="{$DEFAULT_PATH}">

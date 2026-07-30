@@ -9,7 +9,7 @@
 	<meta name="description" content="{$PAGE_TITLE}">
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/globalBase.css?v=3">
+	<link rel="stylesheet" href="{$STATIC_URL}css/globalBase.css?v=7">
 	<link rel="stylesheet" href="{$STATIC_URL}css/kokoimg/base.css?v=140">
 	{$BOARD_STYLESHEETS}
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">

@@ -288,6 +288,7 @@ $language['pm_body_label'] = 'Message';
 $language['pm_send_btn'] = 'Send';
 $language['pm_recipient_label'] = 'Recipient';
 $language['pm_recipient_placeholder'] = '◆tripcode or ★tripcode';
+$language['pm_post_button_title'] = 'Send a private message to this tripcode';
 $language['pm_logged_in_as'] = 'Logged in as %s';
 $language['pm_logout_btn'] = 'Logout';
 $language['pm_direction_sent'] = 'To';
@@ -343,6 +344,28 @@ $language['admin_nav_posts_title'] = 'Manage posts';
 $language['admin_nav_posts'] = 'Posts';
 $language['admin_nav_boards_title'] = 'Manage boards';
 $language['admin_nav_boards'] = 'Boards';
+$language['admin_nav_global_config_title'] = 'Edit the configuration applied to every board';
+$language['admin_nav_global_config'] = 'Global config';
+$language['config_saved'] = 'Configuration edited.';
+$language['config_no_changes'] = 'No changes to save.';
+$language['config_save_failed'] = 'Could not save the configuration.';
+$language['config_confirm_save'] = 'Save these changes?';
+$language['config_confirm_apply'] = 'Confirm';
+$language['config_confirm_cancel'] = 'Cancel';
+$language['config_confirm_col_setting'] = 'Setting';
+$language['config_confirm_col_from'] = 'Current';
+$language['config_confirm_col_to'] = 'New';
+$language['config_confirm_empty_value'] = '(empty)';
+// {count} is substituted by the editor's JS - not a sprintf placeholder (see config_confirm_more).
+$language['config_confirm_entries'] = '{count} entries';
+$language['config_confirm_entries_unchanged'] = '{count} entries, none changed';
+$language['config_discard'] = 'Discard changes';
+// {count} is substituted by the editor's JS - not a sprintf placeholder (see config_confirm_more).
+$language['config_discard_confirm'] = 'Discard your unsaved changes to {count} setting(s)? The saved configuration is not touched.';
+$language['config_discarded'] = 'Unsaved changes discarded.';
+// {count} is substituted by the editor's JS, so it must not be a sprintf placeholder: _T() runs
+// every string through sprintf, and a bare %s here would throw when translated with no arguments.
+$language['config_confirm_more'] = '...and {count} more.';
 $language['admin_nav_action_log_title'] = 'View staff action log';
 $language['admin_nav_action_log'] = 'Action log';
 $language['admin_nav_rebuild_multiple_title'] = 'Rebuild multiple boards';
@@ -483,3 +506,632 @@ $language['anon_ip_dispatched']       = 'Anonymization job queued. You will be n
 $language['anon_ip_completed']        = 'IP anonymization completed successfully.';
 $language['anon_ip_dispatch_failed']  = 'Failed to start anonymization job. Please try again.';
 $language['anon_ip_invalid_request']  = 'Invalid anonymization request.';
+
+// ── Board / global config editor field descriptions ──────────────────────────────
+// One entry per schema field (see configs/*.php and module/{name}/config.php).
+
+// configs/appearance.php
+$language['config_desc_HOME'] = 'What the [Home] button links to.';
+$language['config_desc_FOOTTEXT'] = 'HTML shown at the bottom of the page.';
+$language['config_desc_REF_URL'] = 'URL prefix for outbound links (e.g. https://jump.example.net).';
+$language['config_desc_TEMPLATE_FILE'] = 'Template directory for the index page.';
+$language['config_desc_REPLY_TEMPLATE_FILE'] = 'Template directory for the thread/reply page.';
+$language['config_desc_TOP_THREAD_PAGER'] = 'Render a thread pager at the top of the thread.';
+$language['config_desc_RENDER_REPLY_NUMBER'] = 'Show the sequential reply number for each post within a thread.';
+$language['config_desc_REPLIES_PER_PAGE'] = 'Replies shown (excluding OP) per thread page.';
+$language['config_desc_PAGE_DEF'] = 'How many threads per index page.';
+$language['config_desc_ADMIN_PAGE_DEF'] = 'How many replies per page in the admin panel.';
+$language['config_desc_RE_DEF'] = 'Replies shown per thread on the index.';
+$language['config_desc_RE_PAGE_DEF'] = 'Replies shown on the thread page.';
+$language['config_desc_MAX_RES'] = 'How many replies before a thread is auto-saged.';
+$language['config_desc_MAX_THREAD_AMOUNT'] = 'Threads beyond this are pruned oldest-first.';
+$language['config_desc_MAX_AGE_TIME'] = 'How long a thread accepts age replies, in hours (0 = always).';
+$language['config_desc_STATIC_HTML_UNTIL'] = 'How many index pages are statically generated (-1 = all, 0 = portal only).';
+$language['config_desc_GZIP_COMPRESS_LEVEL'] = 'Gzip compression level (1-9, 0 = off).';
+$language['config_desc_MINIFY_HTML'] = 'Remove unnecessary whitespace from generated HTML.';
+$language['config_desc_AUTO_LINK'] = 'Turn URLs in comments into links.';
+
+// configs/flooding.php
+$language['config_desc_RENZOKU'] = 'Minimum seconds between posts (0 = off).';
+$language['config_desc_RENZOKU2'] = 'Minimum seconds between image posts (0 = off).';
+
+// configs/misc.php
+$language['config_desc_TIME_ZONE'] = 'Offset from UTC, e.g. "-4" for New York or "9" for Japan.';
+$language['config_desc_TRUST_HTTP_X_FORWARDED_FOR'] = 'Use HTTP_X_FORWARDED_FOR to find the real IP behind a proxy (headers can be forged).';
+$language['config_desc_DISCORD_WH'] = 'Webhook URL for post notifications.';
+$language['config_desc_IRC_WH'] = 'Webhook URL for post notifications.';
+$language['config_desc_ACTIONLOG_MAX_PER_PAGE'] = 'Number of action-log entries shown per page.';
+$language['config_desc_STAFF_LOGIN_TIMEOUT'] = 'Inactivity allowed before a staff user is logged out. Must not exceed session.gc_maxlifetime.';
+$language['config_desc_SYSTEMCHAN_NAME'] = 'Name of the system role/user.';
+$language['config_desc_FORTUNES'] = 'JSON array of fortunes selected at random by the fortune function.';
+
+// configs/moderation.php
+$language['config_desc_BAN_CHECK'] = 'Comprehensive ban-check function.';
+$language['config_desc_POST_DELETION_TIME_LIMIT'] = 'Time limit for users deleting their posts, in hours.';
+
+// configs/overboard.php
+$language['config_desc_OVERBOARD_TITLE'] = 'Title of the overboard.';
+$language['config_desc_OVERBOARD_SUBTITLE'] = 'Subtitle of the overboard.';
+$language['config_desc_OVERBOARD_SUB_HEADER_HTML'] = 'HTML shown above the overboard filter box.';
+$language['config_desc_OVERBOARD_THREADS_PER_PAGE'] = 'How many threads per overboard page.';
+$language['config_desc_ADMINBAR_OVERBOARD_BUTTON'] = 'Show an [Overboard] link on the admin bar.';
+$language['config_desc_CONTACT_URL'] = 'Link shown as [Contact] on the admin bar (empty = hidden).';
+
+// configs/posting.php
+$language['config_desc_ALWAYS_NOKO'] = 'Redirect to the reply by default.';
+$language['config_desc_USE_SAGE_CHECKBOX'] = 'Show the sage checkbox in the post form.';
+$language['config_desc_USE_NOKO_CHECKBOX'] = 'Show the noko checkbox in the post form.';
+$language['config_desc_USE_DUMP_CHECKBOX'] = 'Show the dump checkbox in the post form.';
+$language['config_desc_THREAD_ATTACHMENT_REQUIRED'] = 'New threads must have a file attached.';
+$language['config_desc_ALLOW_NONAME'] = 'Allow posters to submit without a name (1 = yes, 0 = no).';
+$language['config_desc_CLEAR_SAGE'] = 'Disable sage entirely.';
+$language['config_desc_NOTICE_SAGE'] = 'Show a visible "SAGE!" notice.';
+$language['config_desc_USE_QUOTESYSTEM'] = 'Enable >>1234 quote links.';
+$language['config_desc_USE_CATEGORY'] = 'Enable post categories.';
+$language['config_desc_COMM_MAX'] = 'Maximum number of characters in a comment.';
+$language['config_desc_INPUT_MAX'] = 'Maximum length of non-message fields (name, subject, etc.).';
+$language['config_desc_BR_CHECK'] = 'How many lines to show (0 = no limit).';
+$language['config_desc_DEFAULT_NOTITLE'] = 'Title used when none is entered.';
+$language['config_desc_DEFAULT_NONAME'] = 'Name used when none is entered.';
+$language['config_desc_DEFAULT_NOCOMMENT'] = 'Comment used when none is entered.';
+$language['config_desc_ENABLE_TAGS'] = 'Show post tags (requires TAGS defined).';
+$language['config_desc_FORCE_TAGS'] = 'Require a tag for new threads.';
+$language['config_desc_DEFAULT_TAG'] = 'Default tag key for new threads (a key of TAGS, or empty).';
+$language['config_desc_TAGS'] = 'Post tags: JSON object of abbreviation (stored) => display name.';
+
+// configs/uploads.php
+$language['config_desc_ATTACHMENT_UPLOAD_LIMIT'] = 'How many files a user can attach to a single post.';
+$language['config_desc_MAX_KB'] = 'Maximum upload size in kilobytes.';
+$language['config_desc_STORAGE_LIMIT'] = 'Per-board storage limit (0 = unlimited).';
+$language['config_desc_STORAGE_MAX'] = 'Total storage limit.';
+$language['config_desc_TEXTBOARD_ONLY'] = 'Completely disable all file features.';
+$language['config_desc_RESIMG'] = 'Allow files to be attached to replies.';
+$language['config_desc_SHOW_IMGWH'] = 'Display the original width/height of the attachment.';
+$language['config_desc_PREVENT_DUPLICATE_FILE_UPLOADS'] = 'Disallow the same file being posted twice.';
+$language['config_desc_DUPLICATE_FILE_TIME'] = 'Time a duplicate attachment cannot be re-uploaded.';
+$language['config_desc_VIDEO_EXT'] = 'Filetypes loaded as video.';
+$language['config_desc_HTTP_UPLOAD_DIFF'] = 'Upload timing tolerance.';
+$language['config_desc_ALLOW_UPLOAD_EXT'] = 'JSON object of extension => mime-type.';
+
+// module/addInfo/config.php
+$language['config_desc_modules.addInfo.ADD_INFO'] = 'JSON array of HTML lines shown by the additional-info module.';
+
+// module/adminDel/config.php
+$language['config_desc_modules.adminDel.JANIMUTE_LENGTH'] = 'Janitor mute duration in minutes.';
+$language['config_desc_modules.adminDel.JANIMUTE_REASON'] = 'Reason shown for a janitor mute.';
+
+// module/ads/config.php
+$language['config_desc_modules.ads.ADS_STICKY_ROTATE_SECONDS'] = 'Seconds between sticky ad rotations.';
+$language['config_desc_modules.ads.ADS_INLINE_EVERY_N_THREADS'] = 'Insert an inline ad after every N threads.';
+$language['config_desc_modules.ads.ADS_INLINE_COUNT'] = 'Number of ads shown side-by-side in each inline row (1-5).';
+$language['config_desc_modules.ads.ADS_POST_AD_EVERY_N_POSTS'] = 'Insert a post-style ad after every N reply posts within a thread.';
+$language['config_desc_modules.ads.ADS_SLOT_DIMENSIONS'] = 'One entry per ad slot: slot name => WIDTHxHEIGHT (e.g. 728x90).';
+
+// module/animatedGif/config.php
+$language['config_desc_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'] = 'Maximum file size for animated GIFs.';
+
+// module/antiFlood/config.php
+$language['config_desc_modules.antiFlood.RENZOKU3'] = 'Minimum wait before a poster can start another thread.';
+$language['config_desc_modules.antiFlood.SAME_COMMENT_TIME_WINDOW'] = 'Seconds between posts that can share the same comment.';
+$language['config_desc_modules.antiFlood.SAME_THREAD_COMMENT_TIME_WINDOW'] = 'Seconds between OP posts that can share the same comment (0 = off).';
+$language['config_desc_modules.antiFlood.ALLOWED_COMMENT_REPETITIONS'] = 'How many identical comments are allowed in the window before older ones are pruned.';
+
+// module/antiSpam/config.php
+$language['config_desc_modules.antiSpam.FILTER_BAN_TIME'] = 'Ban duration when a spam filter triggers, in hours.';
+
+// module/blotter/config.php
+$language['config_desc_modules.blotter.BLOTTER_PREVIEW_AMOUNT'] = 'Number of blotter entries previewed on the index and thread view.';
+
+// module/countryFlags/config.php
+$language['config_desc_modules.countryFlags.FLAG_MODE'] = '1 = hide flags on posts with "flag" in the email field, 2 = show them.';
+
+// module/deletedPosts/config.php
+$language['config_desc_modules.deletedPosts.DELETED_POSTS_TEMPLATE'] = 'Template used to render deleted posts.';
+$language['config_desc_modules.deletedPosts.PRUNE_TIME'] = 'How long deleted-post records are retained, in hours.';
+
+// module/dice/config.php
+$language['config_desc_modules.dice.DICE_AMOUNT_LIMIT'] = 'Maximum number of dice per roll.';
+$language['config_desc_modules.dice.DICE_FACE_LIMIT'] = 'Maximum number of faces per die.';
+$language['config_desc_modules.dice.EMAIL_DICE_ROLL'] = 'Allow rolling dice from the email field.';
+$language['config_desc_modules.dice.COMMENT_DICE_ROLL'] = 'Allow rolling dice from the comment.';
+
+// module/displayId/config.php
+$language['config_desc_modules.displayId.DISP_ID'] = 'When poster IDs are enabled: false = OPs opt in via mail, true = always on.';
+
+// module/displayIp/config.php
+$language['config_desc_modules.displayIp.IPTOGGLE'] = '1 = OPs toggle IP display, 2 = enabled for all posts.';
+
+// module/emotes/config.php
+$language['config_desc_modules.emotes.KAOMOJI'] = 'JSON object of display text => value inserted into the comment.';
+$language['config_desc_modules.emotes.EMOTES'] = 'JSON object of emote name => image filename (from static/image/emotes/).';
+
+// module/fullBanner/config.php
+$language['config_desc_modules.fullBanner.SHOW_TOP_AD'] = 'Show the top full-banner ad.';
+$language['config_desc_modules.fullBanner.SHOW_BOTTOM_AD'] = 'Show the bottom full-banner ad.';
+$language['config_desc_modules.fullBanner.FULLBANNER_SUBMISSION_COOLDOWN'] = 'Seconds between banner submissions per IP.';
+$language['config_desc_modules.fullBanner.FULLBANNER_REQUIRED_WIDTH'] = 'Required banner image width in pixels.';
+$language['config_desc_modules.fullBanner.FULLBANNER_REQUIRED_HEIGHT'] = 'Required banner image height in pixels.';
+$language['config_desc_modules.fullBanner.FULLBANNER_MAX_FILE_SIZE'] = 'Maximum banner file size in bytes.';
+
+// module/imageMeta/config.php
+$language['config_desc_modules.imageMeta.EXIF_DATA_VIEWER'] = 'Show an EXIF data viewer for images.';
+$language['config_desc_modules.imageMeta.IMG_OPS'] = 'ImgOps reverse-image-search portal.';
+$language['config_desc_modules.imageMeta.IQDB'] = 'IQDB reverse-image-search portal.';
+$language['config_desc_modules.imageMeta.SWFCHAN'] = 'SWFchan archive link.';
+
+// module/indexCommentTruncator/config.php
+$language['config_desc_modules.indexCommentTruncator.CHARACTER_PREVIEW_LIMIT'] = 'Max characters shown in an index comment preview.';
+$language['config_desc_modules.indexCommentTruncator.LINE_PREVIEW_LIMIT'] = 'Max lines shown in an index comment preview.';
+
+// module/nameRandomizer/config.php
+$language['config_desc_modules.nameRandomizer.NAME_RANDOMIZER_TTL'] = 'How long a randomized name persists, in seconds.';
+$language['config_desc_modules.nameRandomizer.NAME_RANDOMIZER_NAMES'] = 'JSON array of names picked at random when the name randomizer is enabled.';
+
+// module/oldThread/config.php
+$language['config_desc_modules.oldThread.THREAD_REPLY_TIME_LIMIT'] = 'Maximum thread age (hours) allowed for replies (0 = off).';
+
+// module/onlineCounter/config.php
+$language['config_desc_modules.onlineCounter.USER_COUNT_DAT_FILE'] = 'Filename used to track viewing IPs (stored in the board storage dir).';
+$language['config_desc_modules.onlineCounter.USER_COUNT_TIMEOUT'] = 'How long an IP counts as online, in minutes.';
+
+// module/perceptualBan/config.php
+$language['config_desc_modules.perceptualBan.HAMMING_THRESHOLD'] = 'Max Hamming distance for a perceptual hash match.';
+
+// module/privateMessage/config.php
+$language['config_desc_modules.privateMessage.APPEND_TRIP_PM_BUTTON_TO_POST'] = 'Show a private-message button next to tripcoded posts.';
+
+// module/readOnly/config.php
+$language['config_desc_modules.readOnly.ALLOW_REPLY'] = 'Allow replies but disallow new threads when the board is read-only.';
+
+// module/search/config.php
+$language['config_desc_modules.search.SEARCH_POSTS_PER_PAGE'] = 'Number of search results shown per page.';
+$language['config_desc_modules.search.SEARCH_TEMPLATE'] = 'Template used to render search results.';
+$language['config_desc_modules.search.DISPLAY_THREADED_FORMAT'] = 'Display search results in a threaded format.';
+
+// module/segregator/config.php
+$language['config_desc_modules.segregator.SEGREGATOR_SUB_DOMAIN'] = 'Subdomain prefix prepended to the file host (empty = disabled).';
+$language['config_desc_modules.segregator.SEGREGATOR_COOKIE_NAME'] = 'Name of the access cookie checked by nginx.';
+$language['config_desc_modules.segregator.SEGREGATOR_COOKIE_DOMAIN'] = 'Cookie domain scope (empty = current host only).';
+
+// module/soudane/config.php
+$language['config_desc_modules.soudane.ENABLE_YEAH'] = 'Enable positive soudane votes.';
+$language['config_desc_modules.soudane.ENABLE_NOPE'] = 'Enable negative soudane votes.';
+$language['config_desc_modules.soudane.ENABLE_SCORE'] = 'Enable a numeric vote score.';
+$language['config_desc_modules.soudane.SHOW_SCORE_ONLY'] = 'Show only the score rather than individual vote buttons.';
+
+// module/spoiler/config.php
+$language['config_desc_modules.spoiler.SPOILER_THUMB_W'] = 'Width in pixels of the spoiler thumbnail.';
+$language['config_desc_modules.spoiler.SPOILER_THUMB_H'] = 'Height in pixels of the spoiler thumbnail.';
+
+// module/tegaki/config.php
+$language['config_desc_modules.tegaki.TEGAKI_TEMPLATE'] = 'Template used for the tegaki (oekaki) page.';
+
+// module/threadList/config.php
+$language['config_desc_modules.threadList.THREADLIST_NUMBER'] = 'Number of entries shown per thread-list page.';
+$language['config_desc_modules.threadList.FORCE_SUBJECT'] = 'Require a subject for new threads.';
+$language['config_desc_modules.threadList.SHOW_IN_MAIN'] = 'Display the thread list on the main page.';
+$language['config_desc_modules.threadList.THREADLIST_NUMBER_IN_MAIN'] = 'Number of entries shown on the main page.';
+$language['config_desc_modules.threadList.SHOW_FORM'] = 'Display the delete form on the thread list.';
+$language['config_desc_modules.threadList.HIGHLIGHT_COUNT'] = 'Reply count above which the count turns red (0 = off).';
+
+// module/wordFilter/config.php
+$language['config_desc_modules.wordFilter.FILTERS'] = 'JSON object of regex pattern => replacement HTML.';
+
+
+// ── Board / global config editor field labels ────────────────────────────────────
+// One entry per schema field (see configs/*.php and module/{name}/config.php).
+
+// configs/appearance.php
+$language['config_label_HOME'] = 'Home link target';
+$language['config_label_FOOTTEXT'] = 'Footer text';
+$language['config_label_REF_URL'] = 'Referrer URL prefix';
+$language['config_label_TEMPLATE_FILE'] = 'Index template';
+$language['config_label_REPLY_TEMPLATE_FILE'] = 'Reply template';
+$language['config_label_TOP_THREAD_PAGER'] = 'Top thread pager';
+$language['config_label_RENDER_REPLY_NUMBER'] = 'Show reply numbers';
+$language['config_label_REPLIES_PER_PAGE'] = 'Replies per thread page';
+$language['config_label_PAGE_DEF'] = 'Threads per page';
+$language['config_label_ADMIN_PAGE_DEF'] = 'Admin replies per page';
+$language['config_label_RE_DEF'] = 'Replies shown on index';
+$language['config_label_RE_PAGE_DEF'] = 'Replies shown on thread';
+$language['config_label_MAX_RES'] = 'Replies before auto-sage';
+$language['config_label_MAX_THREAD_AMOUNT'] = 'Max threads per board';
+$language['config_label_MAX_AGE_TIME'] = 'Age reply window (h)';
+$language['config_label_STATIC_HTML_UNTIL'] = 'Static HTML pages';
+$language['config_label_GZIP_COMPRESS_LEVEL'] = 'Gzip level';
+$language['config_label_MINIFY_HTML'] = 'Minify HTML';
+$language['config_label_AUTO_LINK'] = 'Auto-link URLs';
+
+// configs/flooding.php
+$language['config_label_RENZOKU'] = 'Post interval (s)';
+$language['config_label_RENZOKU2'] = 'Image post interval (s)';
+
+// configs/misc.php
+$language['config_label_TIME_ZONE'] = 'Time zone';
+$language['config_label_TRUST_HTTP_X_FORWARDED_FOR'] = 'Trust X-Forwarded-For';
+$language['config_label_DISCORD_WH'] = 'Discord webhook';
+$language['config_label_IRC_WH'] = 'IRC webhook';
+$language['config_label_ACTIONLOG_MAX_PER_PAGE'] = 'Action log per page';
+$language['config_label_STAFF_LOGIN_TIMEOUT'] = 'Staff login timeout (s)';
+$language['config_label_SYSTEMCHAN_NAME'] = 'System user name';
+$language['config_label_FORTUNES'] = 'Fortunes';
+
+// configs/moderation.php
+$language['config_label_BAN_CHECK'] = 'Ban check';
+$language['config_label_POST_DELETION_TIME_LIMIT'] = 'Post deletion time limit (h)';
+
+// configs/modules.php
+$language['config_label_ModuleList.catalog'] = 'Catalog';
+$language['config_label_ModuleList.search'] = 'Search';
+$language['config_label_ModuleList.threadList'] = 'Thread list';
+$language['config_label_ModuleList.rebuild'] = 'Rebuild';
+$language['config_label_ModuleList.adminDel'] = 'Admin delete';
+$language['config_label_ModuleList.adminBan'] = 'Admin ban';
+$language['config_label_ModuleList.fileBan'] = 'File ban';
+$language['config_label_ModuleList.globalMessage'] = 'Global message';
+$language['config_label_ModuleList.blotter'] = 'Blotter';
+$language['config_label_ModuleList.janitor'] = 'Janitor';
+$language['config_label_ModuleList.moveThread'] = 'Move thread';
+$language['config_label_ModuleList.rawHtml'] = 'Raw HTML';
+$language['config_label_ModuleList.deletedPosts'] = 'Deleted posts';
+$language['config_label_ModuleList.cssHax'] = 'CSS hax';
+$language['config_label_ModuleList.notes'] = 'Notes';
+$language['config_label_ModuleList.edit'] = 'Edit posts';
+$language['config_label_ModuleList.perceptualBan'] = 'Perceptual ban';
+$language['config_label_ModuleList.excimerViewer'] = 'Excimer profile viewer';
+$language['config_label_ModuleList.anonIp'] = 'Anonymize IPs';
+$language['config_label_ModuleList.autoSage'] = 'Auto-sage';
+$language['config_label_ModuleList.lockThread'] = 'Lock thread';
+$language['config_label_ModuleList.oldThread'] = 'Old thread';
+$language['config_label_ModuleList.sticky'] = 'Sticky';
+$language['config_label_ModuleList.antiSpam'] = 'Anti-spam';
+$language['config_label_ModuleList.csrfPrevent'] = 'CSRF prevention';
+$language['config_label_ModuleList.bbCode'] = 'BBCode';
+$language['config_label_ModuleList.emoji'] = 'Emoji';
+$language['config_label_ModuleList.wordFilter'] = 'Word filter';
+$language['config_label_ModuleList.countryFlags'] = 'Country flags';
+$language['config_label_ModuleList.antiFlood'] = 'Anti-flood';
+$language['config_label_ModuleList.fieldTraps'] = 'Field traps';
+$language['config_label_ModuleList.readOnly'] = 'Read-only';
+$language['config_label_ModuleList.viewPosts'] = 'View posts';
+$language['config_label_ModuleList.displayId'] = 'Display ID';
+$language['config_label_ModuleList.dice'] = 'Dice';
+$language['config_label_ModuleList.tripcode'] = 'Tripcode';
+$language['config_label_ModuleList.displayIp'] = 'Display IP';
+$language['config_label_ModuleList.animatedGif'] = 'Animated GIF';
+$language['config_label_ModuleList.tegaki'] = 'Tegaki (oekaki)';
+$language['config_label_ModuleList.quickReply'] = 'Quick reply';
+$language['config_label_ModuleList.spoiler'] = 'Spoiler';
+$language['config_label_ModuleList.threadWatcher'] = 'Thread watcher';
+$language['config_label_ModuleList.soudane'] = 'Soudane (voting)';
+$language['config_label_ModuleList.postApi'] = 'Post API';
+$language['config_label_ModuleList.privateMessage'] = 'Private messages';
+$language['config_label_ModuleList.fullBanner'] = 'Full banner';
+$language['config_label_ModuleList.imageMeta'] = 'Image metadata';
+$language['config_label_ModuleList.onlineCounter'] = 'Online counter';
+$language['config_label_ModuleList.ads'] = 'Ads';
+$language['config_label_ModuleList.banner'] = 'Banner';
+$language['config_label_ModuleList.addInfo'] = 'Additional info';
+$language['config_label_ModuleList.imageServer'] = 'Image server';
+$language['config_label_ModuleList.filter'] = 'Filter';
+$language['config_label_ModuleList.indexCommentTruncator'] = 'Index comment truncator';
+$language['config_label_ModuleList.emotes'] = 'Emotes';
+$language['config_label_ModuleList.nameRandomizer'] = 'Name randomizer';
+$language['config_label_ModuleList.youtubeEmbed'] = 'YouTube embed';
+$language['config_label_ModuleList.segregator'] = 'Segregator';
+$language['config_label_ModuleList.linkCleaner'] = 'Link cleaner';
+
+// configs/overboard.php
+$language['config_label_OVERBOARD_TITLE'] = 'Overboard title';
+$language['config_label_OVERBOARD_SUBTITLE'] = 'Overboard subtitle';
+$language['config_label_OVERBOARD_SUB_HEADER_HTML'] = 'Overboard sub-header HTML';
+$language['config_label_OVERBOARD_THREADS_PER_PAGE'] = 'Overboard threads per page';
+$language['config_label_ADMINBAR_OVERBOARD_BUTTON'] = 'Overboard admin-bar button';
+$language['config_label_CONTACT_URL'] = 'Contact URL';
+
+// configs/posting.php
+$language['config_label_ALWAYS_NOKO'] = 'Always noko';
+$language['config_label_USE_SAGE_CHECKBOX'] = 'Show sage checkbox';
+$language['config_label_USE_NOKO_CHECKBOX'] = 'Show noko checkbox';
+$language['config_label_USE_DUMP_CHECKBOX'] = 'Show dump checkbox';
+$language['config_label_THREAD_ATTACHMENT_REQUIRED'] = 'Require file for new threads';
+$language['config_label_ALLOW_NONAME'] = 'Allow no name';
+$language['config_label_CLEAR_SAGE'] = 'Disable sage';
+$language['config_label_NOTICE_SAGE'] = 'Visible sage';
+$language['config_label_USE_QUOTESYSTEM'] = 'Enable quote links';
+$language['config_label_USE_CATEGORY'] = 'Enable categories';
+$language['config_label_COMM_MAX'] = 'Max comment length';
+$language['config_label_INPUT_MAX'] = 'Max field length';
+$language['config_label_BR_CHECK'] = 'Line limit';
+$language['config_label_DEFAULT_NOTITLE'] = 'Default title';
+$language['config_label_DEFAULT_NONAME'] = 'Default name';
+$language['config_label_DEFAULT_NOCOMMENT'] = 'Default comment';
+$language['config_label_ENABLE_TAGS'] = 'Enable tags';
+$language['config_label_FORCE_TAGS'] = 'Force tags';
+$language['config_label_DEFAULT_TAG'] = 'Default tag';
+$language['config_label_TAGS'] = 'Tags';
+
+// configs/uploads.php
+$language['config_label_ATTACHMENT_UPLOAD_LIMIT'] = 'Attachments per post';
+$language['config_label_MAX_KB'] = 'Max upload size (KB)';
+$language['config_label_STORAGE_LIMIT'] = 'Storage limit';
+$language['config_label_STORAGE_MAX'] = 'Total storage max';
+$language['config_label_TEXTBOARD_ONLY'] = 'Textboard only';
+$language['config_label_RESIMG'] = 'Allow files in replies';
+$language['config_label_SHOW_IMGWH'] = 'Show image dimensions';
+$language['config_label_PREVENT_DUPLICATE_FILE_UPLOADS'] = 'Prevent duplicate uploads';
+$language['config_label_DUPLICATE_FILE_TIME'] = 'Duplicate file window (s)';
+$language['config_label_VIDEO_EXT'] = 'Video extensions';
+$language['config_label_HTTP_UPLOAD_DIFF'] = 'HTTP upload diff';
+$language['config_label_ALLOW_UPLOAD_EXT'] = 'Allowed upload types';
+
+// module/addInfo/config.php
+$language['config_label_modules.addInfo.ADD_INFO'] = 'Additional info lines';
+
+// module/adminDel/config.php
+$language['config_label_modules.adminDel.JANIMUTE_LENGTH'] = 'Janitor mute length (min)';
+$language['config_label_modules.adminDel.JANIMUTE_REASON'] = 'Janitor mute reason';
+
+// module/ads/config.php
+$language['config_label_modules.ads.ADS_STICKY_ROTATE_SECONDS'] = 'Sticky ad rotate (s)';
+$language['config_label_modules.ads.ADS_INLINE_EVERY_N_THREADS'] = 'Inline ad every N threads';
+$language['config_label_modules.ads.ADS_INLINE_COUNT'] = 'Inline ads per row';
+$language['config_label_modules.ads.ADS_POST_AD_EVERY_N_POSTS'] = 'Post ad every N posts';
+$language['config_label_modules.ads.ADS_SLOT_DIMENSIONS'] = 'Ad slot dimensions';
+
+// module/animatedGif/config.php
+$language['config_label_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'] = 'Max animated GIF size (KB)';
+
+// module/antiFlood/config.php
+$language['config_label_modules.antiFlood.RENZOKU3'] = 'Seconds between new threads';
+$language['config_label_modules.antiFlood.SAME_COMMENT_TIME_WINDOW'] = 'Same-comment window (s)';
+$language['config_label_modules.antiFlood.SAME_THREAD_COMMENT_TIME_WINDOW'] = 'Same OP-comment window (s)';
+$language['config_label_modules.antiFlood.ALLOWED_COMMENT_REPETITIONS'] = 'Allowed comment repetitions';
+
+// module/antiSpam/config.php
+$language['config_label_modules.antiSpam.FILTER_BAN_TIME'] = 'Filter ban time (h)';
+
+// module/bbCode/config.php
+$language['config_label_modules.bbCode.supportBold'] = 'Bold';
+$language['config_label_modules.bbCode.supportSpoiler'] = 'Spoiler';
+$language['config_label_modules.bbCode.supportStrikeThrough'] = 'Strikethrough';
+$language['config_label_modules.bbCode.supportHeading'] = 'Heading';
+$language['config_label_modules.bbCode.supportCode'] = 'Code';
+$language['config_label_modules.bbCode.supportCodeBlocks'] = 'Code blocks';
+$language['config_label_modules.bbCode.supportItalic'] = 'Italic';
+$language['config_label_modules.bbCode.supportUnderline'] = 'Underline';
+$language['config_label_modules.bbCode.supportParagraph'] = 'Paragraph';
+$language['config_label_modules.bbCode.supportSw'] = 'Strange-world AA';
+$language['config_label_modules.bbCode.supportColor'] = 'Color';
+$language['config_label_modules.bbCode.supportColorBg'] = 'Background color';
+$language['config_label_modules.bbCode.supportNeon'] = 'Neon';
+$language['config_label_modules.bbCode.supportTextShadow'] = 'Text shadow';
+$language['config_label_modules.bbCode.supportPartybus'] = 'Partybus';
+$language['config_label_modules.bbCode.supportEcho'] = 'Echo';
+$language['config_label_modules.bbCode.supportFontSize'] = 'Font size';
+$language['config_label_modules.bbCode.supportPre'] = 'Pre';
+$language['config_label_modules.bbCode.supportQuote'] = 'Quote';
+$language['config_label_modules.bbCode.supportRuby'] = 'Ruby';
+$language['config_label_modules.bbCode.supportURL'] = 'URL';
+$language['config_label_modules.bbCode.supportEmail'] = 'Email';
+$language['config_label_modules.bbCode.supportImg'] = 'Img';
+$language['config_label_modules.bbCode.supportScroll'] = 'Scroll';
+$language['config_label_modules.bbCode.supportKao'] = 'Kao';
+
+// module/blotter/config.php
+$language['config_label_modules.blotter.BLOTTER_PREVIEW_AMOUNT'] = 'Blotter preview amount';
+
+// module/countryFlags/config.php
+$language['config_label_modules.countryFlags.FLAG_MODE'] = 'Country flag mode';
+
+// module/deletedPosts/config.php
+$language['config_label_modules.deletedPosts.DELETED_POSTS_TEMPLATE'] = 'Deleted posts template';
+$language['config_label_modules.deletedPosts.PRUNE_TIME'] = 'Deleted posts prune time (h)';
+
+// module/dice/config.php
+$language['config_label_modules.dice.DICE_AMOUNT_LIMIT'] = 'Dice amount limit';
+$language['config_label_modules.dice.DICE_FACE_LIMIT'] = 'Dice face limit';
+$language['config_label_modules.dice.EMAIL_DICE_ROLL'] = 'Dice via email field';
+$language['config_label_modules.dice.COMMENT_DICE_ROLL'] = 'Dice via comment';
+
+// module/displayId/config.php
+$language['config_label_modules.displayId.DISP_ID'] = 'Always show poster ID';
+
+// module/displayIp/config.php
+$language['config_label_modules.displayIp.IPTOGGLE'] = 'IP display toggle';
+
+// module/emotes/config.php
+$language['config_label_modules.emotes.KAOMOJI'] = 'Kaomoji';
+$language['config_label_modules.emotes.EMOTES'] = 'Emotes';
+
+// module/fullBanner/config.php
+$language['config_label_modules.fullBanner.SHOW_TOP_AD'] = 'Show top full banner';
+$language['config_label_modules.fullBanner.SHOW_BOTTOM_AD'] = 'Show bottom full banner';
+$language['config_label_modules.fullBanner.FULLBANNER_SUBMISSION_COOLDOWN'] = 'Banner submission cooldown (s)';
+$language['config_label_modules.fullBanner.FULLBANNER_REQUIRED_WIDTH'] = 'Banner required width';
+$language['config_label_modules.fullBanner.FULLBANNER_REQUIRED_HEIGHT'] = 'Banner required height';
+$language['config_label_modules.fullBanner.FULLBANNER_MAX_FILE_SIZE'] = 'Banner max file size (bytes)';
+
+// module/imageMeta/config.php
+$language['config_label_modules.imageMeta.EXIF_DATA_VIEWER'] = 'EXIF data viewer';
+$language['config_label_modules.imageMeta.IMG_OPS'] = 'ImgOps portal';
+$language['config_label_modules.imageMeta.IQDB'] = 'IQDB portal';
+$language['config_label_modules.imageMeta.SWFCHAN'] = 'SWFchan archive';
+
+// module/indexCommentTruncator/config.php
+$language['config_label_modules.indexCommentTruncator.CHARACTER_PREVIEW_LIMIT'] = 'Preview character limit';
+$language['config_label_modules.indexCommentTruncator.LINE_PREVIEW_LIMIT'] = 'Preview line limit';
+
+// module/nameRandomizer/config.php
+$language['config_label_modules.nameRandomizer.NAME_RANDOMIZER_TTL'] = 'Name randomizer TTL (s)';
+$language['config_label_modules.nameRandomizer.NAME_RANDOMIZER_NAMES'] = 'Name randomizer pool';
+
+// module/oldThread/config.php
+$language['config_label_modules.oldThread.THREAD_REPLY_TIME_LIMIT'] = 'Thread reply time limit (h)';
+
+// module/onlineCounter/config.php
+$language['config_label_modules.onlineCounter.USER_COUNT_DAT_FILE'] = 'Online counter data file';
+$language['config_label_modules.onlineCounter.USER_COUNT_TIMEOUT'] = 'Online counter timeout (min)';
+
+// module/perceptualBan/config.php
+$language['config_label_modules.perceptualBan.HAMMING_THRESHOLD'] = 'Hamming threshold';
+
+// module/privateMessage/config.php
+$language['config_label_modules.privateMessage.APPEND_TRIP_PM_BUTTON_TO_POST'] = 'Append PM button to posts';
+
+// module/readOnly/config.php
+$language['config_label_modules.readOnly.ALLOW_REPLY'] = 'Allow replies when read-only';
+
+// module/search/config.php
+$language['config_label_modules.search.SEARCH_POSTS_PER_PAGE'] = 'Search results per page';
+$language['config_label_modules.search.SEARCH_TEMPLATE'] = 'Search template';
+$language['config_label_modules.search.DISPLAY_THREADED_FORMAT'] = 'Threaded search format';
+
+// module/segregator/config.php
+$language['config_label_modules.segregator.SEGREGATOR_SUB_DOMAIN'] = 'Segregator subdomain';
+$language['config_label_modules.segregator.SEGREGATOR_COOKIE_NAME'] = 'Segregator cookie name';
+$language['config_label_modules.segregator.SEGREGATOR_COOKIE_DOMAIN'] = 'Segregator cookie domain';
+
+// module/soudane/config.php
+$language['config_label_modules.soudane.ENABLE_YEAH'] = 'Enable "yeah" votes';
+$language['config_label_modules.soudane.ENABLE_NOPE'] = 'Enable "nope" votes';
+$language['config_label_modules.soudane.ENABLE_SCORE'] = 'Enable score';
+$language['config_label_modules.soudane.SHOW_SCORE_ONLY'] = 'Show score only';
+
+// module/spoiler/config.php
+$language['config_label_modules.spoiler.SPOILER_THUMB_W'] = 'Spoiler thumb width';
+$language['config_label_modules.spoiler.SPOILER_THUMB_H'] = 'Spoiler thumb height';
+
+// module/tegaki/config.php
+$language['config_label_modules.tegaki.TEGAKI_TEMPLATE'] = 'Tegaki template';
+
+// module/threadList/config.php
+$language['config_label_modules.threadList.THREADLIST_NUMBER'] = 'Thread list per page';
+$language['config_label_modules.threadList.FORCE_SUBJECT'] = 'Force subject';
+$language['config_label_modules.threadList.SHOW_IN_MAIN'] = 'Show thread list on main';
+$language['config_label_modules.threadList.THREADLIST_NUMBER_IN_MAIN'] = 'Thread list on main count';
+$language['config_label_modules.threadList.SHOW_FORM'] = 'Show thread-list delete form';
+$language['config_label_modules.threadList.HIGHLIGHT_COUNT'] = 'Popular reply highlight';
+
+// module/wordFilter/config.php
+$language['config_label_modules.wordFilter.FILTERS'] = 'Word filters';
+
+// module/report
+$language['report_widget_label'] = 'Report';
+$language['report_widget_title'] = 'Report post';
+$language['report_widget_view_reports'] = 'View reports';
+$language['report_adminbar_link'] = 'Report';
+$language['report_form_title'] = 'Report a post';
+$language['report_reason_hint'] = 'Optional. Describe what\'s wrong with it.';
+$language['report_submit'] = 'Send report';
+$language['report_submitted'] = 'Your report on No.%1$s has been sent';
+$language['report_submitted_title'] = 'Report sent';
+$language['report_notification_title'] = 'New post report';
+
+$language['report_error_banned'] = 'You are banned and cannot report posts.';
+$language['report_error_post_not_found'] = 'That post could not be found.';
+$language['report_error_already_reported'] = 'You have already reported this post';
+$language['report_error_reason_too_long'] = 'Your reason is too long. The limit is %1$s characters';
+$language['report_error_not_found'] = 'Report not found!';
+$language['report_error_unknown_action'] = 'Unknown report action';
+$language['report_error_cannot_approve'] = 'You are not allowed to approve reports';
+$language['report_error_cannot_dismiss'] = 'You are not allowed to dismiss reports';
+$language['report_error_cannot_clear'] = 'You are not allowed to clear the reports on a post';
+
+$language['report_status_pending'] = 'Awaiting review';
+$language['report_status_approved'] = 'Approved';
+$language['report_status_dismissed'] = 'Dismissed';
+
+$language['report_my_reports_title'] = 'Your reports';
+$language['report_my_reports_intro'] = 'Here you can see all reports you\'ve filed and whether the post has been deleted or not, as well as the mod\'s reason.';
+$language['report_my_reports_empty'] = 'You haven\'t reported any posts.';
+
+$language['report_admin_title'] = 'Reports';
+$language['report_admin_empty'] = 'There are no reports here.';
+$language['report_select_disabled_title'] = 'Already actioned — nothing left to decide';
+$language['report_nav'] = 'Reports';
+$language['report_nav_title'] = 'Manage post reports';
+$language['report_nav_unread_title'] = 'Reports you have not read yet';
+$language['report_back_to_queue'] = 'Back to reports';
+$language['report_view_link'] = 'View';
+$language['report_view_title'] = 'Report #%1$s';
+$language['report_view_post_stats'] = 'Post report history';
+$language['report_post_reports_title'] = 'Reports on post No.%1$s';
+$language['report_post_unavailable'] = 'This post is no longer available.';
+
+$language['report_ip_reports_title'] = 'Reports from %1$s';
+$language['report_ip_reports_link'] = 'All reports from this reporter';
+$language['report_clear_ip'] = 'Dismiss all reports from this reporter';
+$language['report_clear_ip_hint'] = 'Closes every report from this address that is still awaiting review.';
+
+$language['report_th_stat'] = 'Report status';
+$language['report_th_count'] = 'Count';
+$language['report_stat_total'] = 'Total reports';
+
+$language['report_heading_details'] = 'Report details';
+$language['report_heading_post'] = 'Reported post';
+$language['report_heading_totals'] = 'Report totals';
+$language['report_heading_reports'] = 'Reports';
+$language['report_heading_reports_on_post'] = 'Reports on this post';
+$language['report_heading_reports_from_ip'] = 'Reports from this reporter';
+$language['report_heading_reported_posts'] = 'Posts that have been reported';
+$language['report_heading_your_reports'] = 'Reports you have filed';
+
+$language['report_reported_posts_title'] = 'Reported posts';
+$language['report_reported_posts_total'] = '%1$s post(s) have been reported.';
+$language['report_reported_posts_empty'] = 'No posts have been reported.';
+
+$language['report_decision_heading'] = 'Take action';
+$language['report_decision_legend'] = 'Approve and Dismiss act on the reports you tick above; a Dismiss all button acts on every report still awaiting review. Both reasons are optional — the public one is shown to the reporter, the staff-only one is not.';
+$language['report_approve'] = 'Approve and delete';
+$language['report_approve_hint'] = 'Deletes the reported post and marks every report on it as approved.';
+$language['report_dismiss'] = 'Dismiss';
+$language['report_dismiss_hint'] = 'Leaves the post up and closes the selected reports.';
+$language['report_clear_post'] = 'Dismiss all reports on this post';
+$language['report_clear_post_hint'] = 'Dismisses every report still open on this post.';
+$language['report_cleared_default_reason'] = 'All reports for this post dismissed.';
+$language['report_public_reason_label'] = 'Public reason';
+$language['report_public_reason_hint'] = 'Shown to the person who filed the report, and to other staff.';
+$language['report_private_reason_label'] = 'Staff-only reason';
+$language['report_private_reason_hint'] = 'Only visible to staff who can see reports. The reporter never sees this.';
+
+$language['report_filter_all'] = 'All';
+$language['report_filter_pending'] = 'Awaiting review';
+$language['report_filter_approved'] = 'Approved';
+$language['report_filter_dismissed'] = 'Dismissed';
+
+$language['report_th_id'] = 'ID';
+$language['report_th_preview'] = 'Preview';
+$language['report_th_post'] = 'Post';
+$language['report_th_post_number'] = 'Post number';
+$language['report_th_board'] = 'Board';
+$language['report_th_reason'] = 'Reason';
+$language['report_th_reporter_reason'] = 'Reporter reason';
+$language['report_th_your_reason'] = 'Your reason';
+$language['report_th_staff_reason'] = 'Staff reason';
+$language['report_th_ip'] = 'Reporter IP';
+$language['report_th_date'] = 'Reported';
+$language['report_th_status'] = 'Status';
+$language['report_th_actioned_by'] = 'Actioned by';
+$language['report_th_actioned_at'] = 'Actioned';
+$language['report_th_actions'] = 'Actions';
+$language['report_th_stats'] = 'Report history';
+$language['report_th_report_count'] = 'Reports';
+$language['report_th_pending_count'] = 'Awaiting review';
+$language['report_th_approved_count'] = 'Approved';
+$language['report_th_dismissed_count'] = 'Dismissed';
+$language['report_th_last_reported'] = 'Last reported';
+
+$language['config_label_ModuleList.report'] = 'Post reports';
+
+// module/report/config.php
+$language['config_label_modules.report.REASON_MAX_LENGTH'] = 'Report reason length limit';
+$language['config_desc_modules.report.REASON_MAX_LENGTH'] = 'Maximum number of characters a reporter may write in the reason field.';
+$language['config_label_modules.report.ENABLE_NOTIFICATIONS'] = 'Report browser notifications';
+$language['config_desc_modules.report.ENABLE_NOTIFICATIONS'] = 'Show staff a browser notification for recent reports they have not read yet.';
+$language['config_label_modules.report.NOTIFICATION_WINDOW_MINUTES'] = 'Report notification window';
+$language['config_desc_modules.report.NOTIFICATION_WINDOW_MINUTES'] = 'How recent a report must be, in minutes, to be worth notifying staff about.';
+$language['config_label_modules.report.NOTIFICATION_POLL_SECONDS'] = 'Report notification poll interval';
+$language['config_desc_modules.report.NOTIFICATION_POLL_SECONDS'] = 'How often, in seconds, staff pages check for new reports.';
+$language['config_label_modules.report.REPORT_POST_TEMPLATE'] = 'Report post preview template';
+$language['config_desc_modules.report.REPORT_POST_TEMPLATE'] = 'Template directory used to render reported posts on the staff report pages.';

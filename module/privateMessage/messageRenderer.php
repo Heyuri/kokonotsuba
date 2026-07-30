@@ -141,14 +141,15 @@ class messageRenderer {
 		string $modulePageUrl,
 		string $userTripCode,
 		int $totalEntries,
-		int $messagesPerPage
+		int $messagesPerPage,
+		string $prefillRecipient = ''
 	): void {
 		$userTrip = sanitizeStr($this->messageUtility->getUsertripCode() ?? '');
 		$pagerHtml = drawPager($messagesPerPage, $totalEntries, $modulePageUrl, $this->request);
 		$rows = $this->generateMessageRowTemplates($messages, $userTripCode, $modulePageUrl);
 
 		$inboxHtml = $this->adminPageRenderer->ParseBlock('PM_INBOX_PAGE', array_merge(
-			$this->getComposeFormVariables($modulePageUrl),
+			$this->getComposeFormVariables($modulePageUrl, $prefillRecipient),
 			[
 			'{$INBOX_TITLE}' => _T('pm_inbox_page_title'),
 			'{$LOGGED_IN_AS}' => _T('pm_logged_in_as', $userTrip),

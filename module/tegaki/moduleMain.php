@@ -29,7 +29,7 @@ class moduleMain extends abstractModuleMain {
 	private function onCommentBlock(string &$commentBlock): void {
 		$this->registerScript('momo/tegaki.js');
 
-		$moduleTemplateEngine = $this->initModuleTemplateEngine('ModuleSettings.TEGAKI_TEMPLATE', 'tegaki');
+		$moduleTemplateEngine = $this->initModuleTemplateEngine('modules.tegaki.TEGAKI_TEMPLATE', 'tegaki');
 		$commentBlock .= $moduleTemplateEngine->ParseBlock('button', []);
 	}
 }

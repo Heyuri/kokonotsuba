@@ -21,12 +21,15 @@
 					<td> <input id="edit-board-sub-title" name="edit-board-sub-title" value="{$BOARD_SUB_TITLE}"></td>
 				</tr>
 				<tr>
-					<td class="postblock"><label for="edit-board-config-path">Config file</label></td>
-					<td> <input id="edit-board-config-path" class="url-input" name="edit-board-config-path" value="{$BOARD_CONFIG_FILE}" required></td>
-				</tr>
-				<tr>
 					<td class="postblock"><label for="edit-board-storage-dir">Board storage directory</label></td>
 					<td> <input id="edit-board-storage-dir" name="edit-board-storage-dir" value="{$BOARD_STORAGE_DIR}" required> </td>
+				</tr>
+				<tr>
+					<td class="postblock"><label for="edit-board-subdomain">Subdomain</label></td>
+					<td>
+						<input id="edit-board-subdomain" name="edit-board-subdomain" value="{$BOARD_SUBDOMAIN}" placeholder="cgi">
+						<div class="formItemDescription">Serves this board from a subdomain of the website URL, e.g. 'cgi' turns "https://example.net/b/" into "https://cgi.example.net/b/". Leave empty to serve it from the website URL as-is. The subdomain must already point at this server, and the website URL must be absolute (a subdomain cannot be applied to "/").</div>
+					</td>
 				</tr>
 				<tr>
 					<td class="postblock"><label for="edit-board-listed">Listed</label></td>

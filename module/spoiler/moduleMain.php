@@ -126,8 +126,8 @@ class moduleMain extends abstractModuleMain {
 		$attachmentImage = preg_replace('/<img src="[^"]*"/U', '<img src="' . sanitizeStr($spoilerImageUrl) . '"', $attachmentImage);
 
 		// replace thumbnail dimensions with configured spoiler size
-		$spoilerW = (int) $this->getConfig('ModuleSettings.SPOILER_THUMB_W', 255);
-		$spoilerH = (int) $this->getConfig('ModuleSettings.SPOILER_THUMB_H', 255);
+		$spoilerW = (int) $this->getModuleConfig('SPOILER_THUMB_W', 255);
+		$spoilerH = (int) $this->getModuleConfig('SPOILER_THUMB_H', 255);
 		$attachmentImage = preg_replace('/width="\d+"/', 'width="' . $spoilerW . '"', $attachmentImage);
 		$attachmentImage = preg_replace('/height="\d+"/', 'height="' . $spoilerH . '"', $attachmentImage);
 	}

@@ -125,7 +125,7 @@ class moduleMain extends abstractModuleMain {
 			case 'mute':
 				// get the mute time config value
 				// measured in minutes - defaults to 20 minutes
-				$muteTime = $this->getConfig('ModuleSettings.JANIMUTE_LENGTH', 20);
+				$muteTime = $this->getConfig('modules.adminDel.JANIMUTE_LENGTH', 20);
 
 				// Mute the user (short-term ban)
 				$this->banUser($message, $muteTime * 60);
@@ -135,7 +135,7 @@ class moduleMain extends abstractModuleMain {
 			case 'ban':
 				// get the ban time config value
 				// measured in hours - defaults to 24 hours
-				$banTime = $this->getConfig('ModuleSettings.FILTER_BAN_TIME', 24);
+				$banTime = $this->getModuleConfig('FILTER_BAN_TIME', 24);
 
 				// Ban the current user
 				$this->banUser($message, $banTime * 3600);

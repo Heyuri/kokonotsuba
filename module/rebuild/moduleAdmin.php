@@ -2,14 +2,11 @@
 
 namespace Kokonotsuba\Modules\rebuild;
 
-require_once __DIR__ . '/rebuildTask.php';
-
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\BackgroundTaskTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
-use Puchiko\background\BackgroundTaskRegistry;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfHiddenInput;
@@ -41,8 +38,6 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function initialize(): void {
 		$this->modulePageUrl = $this->getModulePageURL([], false);
-
-		BackgroundTaskRegistry::register('rebuild_boards', rebuildTask::class, __DIR__ . '/rebuildTask.php');
 
 		$this->registerLinksAboveBarHook(_T('admin_nav_rebuild_multiple_title'), $this->modulePageUrl, _T('admin_nav_rebuild_multiple'));
 		$this->registerScript('rebuild.js');

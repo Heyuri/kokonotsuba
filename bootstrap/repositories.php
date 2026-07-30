@@ -39,7 +39,7 @@ use Kokonotsuba\thread\threadService;
 $accountRepository = new accountRepository($databaseConnection, $dbSettings['ACCOUNT_TABLE']);
 
 $actionLoggerRepository = new actionLoggerRepository($databaseConnection, $dbSettings['ACTIONLOG_TABLE'], $dbSettings['BOARD_TABLE']);
-$actionLoggerService = new actionLoggerService($actionLoggerRepository, $accountRepository, $request); 
+$actionLoggerService = new actionLoggerService($actionLoggerRepository, $accountRepository, $request, $transactionManager); 
 
 $accountService = new accountService($accountRepository, $actionLoggerService, $request);
 

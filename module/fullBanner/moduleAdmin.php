@@ -48,9 +48,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->fullBannerService = getFullBannerService($this->moduleContext->transactionManager);
 		$this->modulePage = $this->getModulePageURL([], false);
 		$this->serveImageUrl = $this->getModulePageURL(['page' => 'bannerServeImage'], false, false);
-		$this->requiredWidth = $this->getConfig('ModuleSettings.FULLBANNER_REQUIRED_WIDTH', 468);
-		$this->requiredHeight = $this->getConfig('ModuleSettings.FULLBANNER_REQUIRED_HEIGHT', 60);
-		$this->maxFileSize = $this->getConfig('ModuleSettings.FULLBANNER_MAX_FILE_SIZE', 204800);
+		$this->requiredWidth = $this->getModuleConfig('FULLBANNER_REQUIRED_WIDTH', 468);
+		$this->requiredHeight = $this->getModuleConfig('FULLBANNER_REQUIRED_HEIGHT', 60);
+		$this->maxFileSize = $this->getModuleConfig('FULLBANNER_MAX_FILE_SIZE', 204800);
 
 		$this->registerLinksAboveBarHook('Manage full banners', $this->modulePage, 'Full banners');
 	}

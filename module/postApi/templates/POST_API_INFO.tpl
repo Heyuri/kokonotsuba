@@ -1,5 +1,5 @@
 [<a href="{$STATIC_INDEX_FILE}">Return</a>]
-	<div class="postApiInfo">
+	<div class="documentationPage postApiInfo">
 		<h2>{$POST_API_TITLE}</h2>
 		<p>{$POST_API_DESCRIPTION}</p>
 

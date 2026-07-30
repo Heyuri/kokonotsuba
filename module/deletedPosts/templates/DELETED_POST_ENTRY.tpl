@@ -30,7 +30,7 @@
 					</tbody>
 				</table>
 			</form>
-			<div class="deletedPostHtmlContainer alignLeft">
+			<div class="modPagePostContainer">
 				{$POST_HTML}
 			</div>
 		</div>

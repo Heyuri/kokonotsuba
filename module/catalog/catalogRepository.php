@@ -6,7 +6,7 @@ use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\database\OrderFieldWhitelistTrait;
 
-use function Kokonotsuba\libraries\sqlLatestDeletionEntry;
+use function Kokonotsuba\libraries\openDeletionExistsCondition;
 use function Kokonotsuba\libraries\excludeDeletedThreadsCondition;
 
 /**
@@ -61,8 +61,8 @@ class catalogRepository extends baseRepository {
 			$direction = 'DESC';
 		}
 
-		$latestDel = sqlLatestDeletionEntry($this->deletedPostsTable);
 		$excludeDeleted = excludeDeletedThreadsCondition($this->deletedPostsTable);
+		$replyVisible = ' AND NOT ' . openDeletionExistsCondition($this->deletedPostsTable, 'cp.post_uid');
 
 		// Fetch thread metadata + OP post data + first attachment in a single query.
 		// Uses a lateral-style subquery to grab only the first file per OP post.
@@ -80,9 +80,8 @@ class catalogRepository extends baseRepository {
 				(
 					SELECT COUNT(*) - 1
 					FROM {$this->postTable} cp
-					LEFT JOIN ({$latestDel}) cd ON cp.post_uid = cd.post_uid
 					WHERE cp.thread_uid = t.thread_uid
-					AND (COALESCE(cd.open_flag, 0) = 0 OR COALESCE(cd.file_only, 0) = 1)
+					{$replyVisible}
 				) AS reply_count,
 
 				f.id AS file_id,
@@ -101,9 +100,6 @@ class catalogRepository extends baseRepository {
 			INNER JOIN {$this->postTable} op
 				ON op.post_uid = t.post_op_post_uid
 
-			LEFT JOIN ({$latestDel}) dp
-				ON t.post_op_post_uid = dp.post_uid
-
 			LEFT JOIN {$this->fileTable} f
 				ON f.post_uid = op.post_uid
 				AND f.id = (
@@ -114,7 +110,6 @@ class catalogRepository extends baseRepository {
 
 			WHERE t.boardUID = :board_uid
 			{$excludeDeleted}
-			AND (COALESCE(dp.open_flag, 0) = 0 OR COALESCE(dp.file_only, 0) = 1)
 
 			ORDER BY t.is_sticky DESC, t.{$orderBy} {$direction}
 		";

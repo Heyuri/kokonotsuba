@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\post;
 
+use function Kokonotsuba\libraries\openDeletionExistsCondition;
+
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
@@ -149,12 +151,7 @@ class postSearchRepository extends baseRepository {
 	private function buildGeneralSearchUnion(array $fields, array $boardUids, bool $openingPostsOnly): array {
 		$nonGeneralFields = array_diff_key($fields, ['general' => true]);
 
-		$deletedExclusion = "NOT EXISTS (
-			SELECT 1 FROM {$this->deletedPostsTable} dp
-			WHERE dp.post_uid = p.post_uid
-			AND dp.file_id IS NULL
-			AND dp.open_flag = 1
-		)";
+		$deletedExclusion = 'NOT ' . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid');
 
 		// Build extra clauses for non-general fields (board filter, opening posts, etc.)
 		// We need two copies with different param names for UNION branches
@@ -297,12 +294,7 @@ class postSearchRepository extends baseRepository {
 		$searchClause = $this->buildSearchClause($fields, $boardUids, $openingPostsOnly);
 
 		$whereParts = [
-			"NOT EXISTS (
-				SELECT 1 FROM {$this->deletedPostsTable} dp
-				WHERE dp.post_uid = p.post_uid
-				AND dp.file_id IS NULL
-				AND dp.open_flag = 1
-			)"
+			'NOT ' . openDeletionExistsCondition($this->deletedPostsTable, 'p.post_uid')
 		];
 
 		if ($searchClause !== '') {

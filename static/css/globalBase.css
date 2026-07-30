@@ -107,6 +107,20 @@
 	cursor: pointer;
 }
 
+/************************ Reader-facing module pages *******************/
+
+/* Return link pageRenderer puts above every non-staff page. */
+.userNavBar {
+	margin-bottom: 0.5em;
+}
+
+/* Prose-and-tables documentation pages (currently only the postApi reference). Long-form
+   reading, so the column is capped and centred rather than spanning the window. */
+.documentationPage {
+	max-width: 640px;
+	margin: 0 auto;
+}
+
 /************************ Collapsible Details Boxes ********************/
 
 .indicatorHidden {
@@ -359,6 +373,10 @@
 }
 
 /************************ Private Messages *****************************/
+
+.pmNameLink {
+	font-size: var(--font-size-small);
+}
 
 .pmSendForm {
 	margin: 0.5em 0;
@@ -630,7 +648,7 @@
 	padding: 0;             /* Remove padding */
 }
 
-.alignLeft {
+.alignLeft, .modPagePostContainer {
 	text-align: left;
 }
 
@@ -1102,3 +1120,81 @@ a.linkjs {
 		max-width: initial;
 	}
 }
+
+/* ── Board / global config editor (admin > boards, admin > global config) ────────────
+   The editor markup is built by code/Kokonotsuba/libraries/html/configForm.php and the
+   templates/admin/config/ blocks; its behaviour lives in static/js/boardConfigForm.js. */
+.configModuleHeader h3 { margin: 0; }
+.configArrayList { list-style: none; margin: 0; padding: 0; }
+.configArrayRow, .configArrayAddRow { display: flex; gap: 4px; margin-bottom: 3px; align-items: center; }
+.configArrayRow input, .configArrayAddRow input { flex: 1 1 auto; min-width: 0; }
+.configArrayKey, .configArrayNewKey { flex: 0 0 32%; }
+.configArrayEditor button { flex: 0 0 auto; cursor: pointer; padding: 0 8px; line-height: 1.6; }
+.configArrayAddRow { margin-top: 4px; }
+
+/* Once anything in the form is edited, the save button follows the viewport so it stays
+   reachable without scrolling to the end of a long form. */
+#boardConfigForm.configFormDirty .buttonSection { position: sticky; bottom: 8px; z-index: 20; }
+#boardConfigForm.configFormDirty #boardConfigSaveButton { box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45); }
+
+/* The save-confirmation window. The table is a .postlists table, so it inherits the admin
+   panel's colours; everything here only bounds it against the viewport.
+
+   A kkwm window sizes itself to its contents, so the body is capped to the viewport (less room
+   for the window's title bar and a margin) and laid out as a column: the change list takes
+   whatever height is left and scrolls inside it, and the buttons stay visible however many
+   settings changed. */
+.configChangesBody {
+	width: min(600px, calc(100vw - 60px));
+	max-height: calc(100vh - 120px);
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	padding: 8px;
+}
+/* min-height:0 is what actually lets a flex child shrink below its content and scroll. */
+.configChangesList { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.configChangesTable { width: 100%; table-layout: fixed; }
+.configChangesTable th, .configChangesTable td {
+	vertical-align: top;
+	/* A value can be a long path or an unbroken string: wrap it rather than widen the window. */
+	word-break: break-word;
+	overflow-wrap: anywhere;
+}
+/* The key column is the narrow one - the two value columns get the remaining width evenly. */
+.configChangesTable .configChangeKey { width: 34%; font-family: monospace; }
+
+/* A list setting is shown one entry per line instead of as raw JSON. Only the edited elements
+   are spelled out; each run of unedited ones collapses to a muted "...N more..." line.
+
+   Entries keep a real list marker and hanging indent: an entry can wrap over several lines, and
+   without the marker the entries run together into a block of text instead of reading as a list. */
+.configChangeEntries { list-style: disc; margin: 0; padding-left: 1.25em; }
+.configChangeEntries li { padding: 0; margin: 0; }
+.configChangeEntries li.configChangeEdited { white-space: pre-wrap; }
+
+/* The run of text that actually differs, inside an edited entry. An entry is cut around this, so
+   it is always on screen; the surrounding unchanged context is plain, and a leading/trailing … marks
+   where text was cut away. Removed text is struck through, added text is not. */
+.configChangeDelta { font-weight: bold; border-radius: 2px; padding: 0 1px; }
+.configChangeFrom .configChangeDelta {
+	background-color: rgba(220, 70, 70, 0.35);
+	text-decoration: line-through;
+}
+.configChangeTo .configChangeDelta {
+	background-color: rgba(70, 180, 90, 0.35);
+}
+/* The collapsed-run summaries are notes about the list, not entries in it, so they get no marker. */
+.configChangeEntries li.configChangeMore {
+	list-style: none;
+	margin-left: -1.25em;
+	opacity: 0.6;
+	font-size: 0.9em;
+	font-style: italic;
+}
+.configChangeCount { opacity: 0.7; font-size: 0.9em; }
+.configChangeEmpty { opacity: 0.7; font-style: italic; }
+.configChangeText { white-space: pre-wrap; }
+
+.configChangesButtons { flex: 0 0 auto; display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px; }
+.configChangesButtons button { cursor: pointer; padding: 2px 10px; }

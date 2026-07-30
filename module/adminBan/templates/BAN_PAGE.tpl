@@ -1,5 +1,3 @@
-	<div>[<a href="{$RETURN_URL}">Return</a>]</div>
-
 	<h2 id="banHeading" class="centerText warning">
 		<!--&IF($IS_BANNED,'You have been {$BAN_TYPE}! ヽ(ー_ー )ノ','You are not banned! <span class="ascii">ヽ(´∇`)ノ</span>')-->
 	</h2>

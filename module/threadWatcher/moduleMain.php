@@ -12,6 +12,7 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\request\request;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\renderJsonPage;
 use function Puchiko\json\renderJsonErrorPage;
 use function Puchiko\strings\sanitizeStr;
@@ -158,11 +159,15 @@ class moduleMain extends abstractModuleMain {
 			$latest = $since;
 		}
 
-		$websiteUrl = (string) $this->getConfig('WEBSITE_URL', '/');
-		$liveIndex = (string) $this->getConfig('LIVE_INDEX_FILE', 'koko.php');
-
 		$items = [];
 		foreach ($rows as $row) {
+			// Each thread's link is built from its own board, whose config carries that board's
+			// WEBSITE_URL — a board on its own subdomain must not be linked on this board's host.
+			$threadBoard = searchBoardArrayForBoard((int) $row['boardUID']);
+			if ($threadBoard === null) {
+				continue;
+			}
+
 			$items[] = [
 				'board_uid'      => (int) $row['boardUID'],
 				'board_title'    => (string) $row['board_title'],
@@ -175,7 +180,7 @@ class moduleMain extends abstractModuleMain {
 					(string) $row['op_file_name'],
 					$defaultComment
 				),
-				'url'         => $websiteUrl . rawurlencode((string) $row['board_identifier']) . '/' . $liveIndex . '?res=' . (int) $row['post_op_number'],
+				'url'         => $threadBoard->getBoardThreadURL((int) $row['post_op_number']),
 			];
 		}
 

@@ -9,9 +9,11 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\renderers\postRenderer;
 
 use function Kokonotsuba\libraries\_T;
+use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\json\renderCachedJsonPage;
 use function Puchiko\json\renderJsonErrorPage;
+use function Puchiko\json\renderPrivateJsonPage;
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
@@ -20,6 +22,34 @@ class moduleMain extends abstractModuleMain {
 
 	/** Resolved filesystem path to the cache directory. */
 	private string $cacheDir;
+
+	/** Memoized staff-session check for this request (null until first resolved). */
+	private ?bool $isStaffSession = null;
+
+	/**
+	 * Whether the current request comes from a logged-in staff member.
+	 *
+	 * Resolved once per request. When true, post HTML is rendered in admin mode
+	 * (poster IPs, mod controls) and the response must not be shared-cached.
+	 */
+	private function isStaff(): bool {
+		return $this->isStaffSession ??= isActiveStaffSession();
+	}
+
+	/**
+	 * Send a JSON payload, choosing cache policy by viewer.
+	 *
+	 * Staff responses carry admin-mode content (IPs) and are marked
+	 * private/no-store so shared caches never serve them to other users.
+	 * Everyone else gets the public, IP-free, cacheable response.
+	 */
+	private function renderPostDataResponse(array $data, int $cacheSeconds = 60, int $statusCode = 200): void {
+		if ($this->isStaff()) {
+			renderPrivateJsonPage($data, $statusCode);
+		} else {
+			renderCachedJsonPage($data, $cacheSeconds, $statusCode);
+		}
+	}
 
 	public function getName(): string {
 		return 'Post API';
@@ -160,7 +190,7 @@ class moduleMain extends abstractModuleMain {
 			'posts' => $postsData,
 		];
 
-		renderCachedJsonPage($data);
+		$this->renderPostDataResponse($data, 3600);
 	}
 
 	/**
@@ -193,8 +223,9 @@ class moduleMain extends abstractModuleMain {
 
 		// New replies must surface promptly, so keep the client cache window short. The
 		// URL carries after_uid, so each poll is a distinct (uncacheable-in-practice) key;
-		// the short max-age just coalesces simultaneous identical requests.
-		renderCachedJsonPage($data, 3);
+		// the short max-age just coalesces simultaneous identical requests. Staff polls
+		// return admin-mode HTML (IPs) and are sent private/no-store instead.
+		$this->renderPostDataResponse($data, 3);
 	}
 
 	/** Handle request for a paginated list of thread UIDs sorted by creation time. */
@@ -264,7 +295,7 @@ class moduleMain extends abstractModuleMain {
 		$html = $this->renderPostHtml($post);
 		$data = $this->buildPostData($post, $html);
 
-		renderCachedJsonPage($data, 60);
+		$this->renderPostDataResponse($data, 60);
 	}
 
 	/** Build the JSON-safe data array for a post. */
@@ -347,7 +378,7 @@ class moduleMain extends abstractModuleMain {
 			$threadNumber,
 			false,           // killSensor
 			[$post],         // threadPosts
-			false,           // adminMode
+			$this->isStaff(),// adminMode
 			'',              // postFormExtra
 			'',              // warnHidePost
 			0,               // replyCount

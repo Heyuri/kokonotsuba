@@ -657,20 +657,16 @@ class deletedPostsService {
 			return $item->isOp();
 		});
 
+		// nothing selected was a thread OP, so there is no thread to cascade into
+		if(empty($openingPosts)) {
+			return [];
+		}
+
 		// get their thread uids
 		$threadUids = array_map(fn($p) => $p->getThreadUid(), $openingPosts);
 
-		// then fetch posts from those threads
-		$threadPosts = $this->postRepository->getPostsByThreadUIDs($threadUids);
-
-		// return empty array if false
-		if(!$threadPosts) {
-			return [];
-		}
-		else {
-			// return thread posts
-			return $threadPosts;
-		}
+		// then fetch the deletion state of every post in those threads
+		return $this->postRepository->getThreadPostsForDeletion($threadUids);
 	}
 
 	private function removeDuplicatesByPostUid(array $posts): array {
@@ -721,16 +717,19 @@ class deletedPostsService {
 	}
 
 	private function removeOverlap(array $a, array $b): array {
-		// collect all post_uid values from $b
-		$bUids = array_map(fn($p) => $p->getUid(), $b);
-		$bUids = array_map('strval', $bUids); // normalize to string
+		// collect all post_uid values from $b, keyed for O(1) lookup - a thread cascade compares
+		// every reply against every selected post, so a linear scan per reply is quadratic
+		$bUids = [];
+		foreach ($b as $row) {
+			$bUids[(string)$row->getUid()] = true;
+		}
 
 		$result = [];
 		foreach ($a as $row) {
 			if (!($row instanceof Post)) continue;
 			$key = (string)$row->getUid();
 
-			if (!in_array($key, $bUids, true)) {
+			if (!isset($bUids[$key])) {
 				$result[] = $row;
 			}
 		}
@@ -752,27 +751,25 @@ class deletedPostsService {
 	}
 
 	private function deleteMultiplePosts(array $posts, ?int $deletedBy , bool $fileOnly = false, bool $byProxy = false): void {
-		// loop through posts and delete each one
-		foreach($posts as $p) {
-			// mark post as deleted
-			$this->deletePost($p, $deletedBy, $fileOnly, $byProxy);
-		}
-	}
+		// collect the post uids, deduplicated so the batch insert can't
+		// violate the one-open-entry-per-post unique key
+		$postUids = array_values(array_unique(array_map(fn($p) => $p->getUid(), $posts)));
 
-	private function deletePost(Post $post, ?int $deletedBy , bool $fileOnly = false, bool $byProxy = false): void {
-		// the post uid
-		$postUid = $post->getUid();
+		// nothing to delete
+		if(empty($postUids)) {
+			return;
+		}
 
 		// delete any pre-existing open entries in order to avoid conflicts
-		// "open" meaning they aren't restored and are
-		$this->deletedPostsRepository->removeOpenRows($postUid);
+		// "open" meaning they aren't restored
+		$this->deletedPostsRepository->removeOpenRows($postUids);
 
-		// add a new row to the deleted posts table
-		// this will automatically mark the post as deleted and make it hidden from regular users
-		$this->deletedPostsRepository->insertDeletedPostEntry(
-			$postUid, 
+		// add the new rows to the deleted posts table in a single query
+		// this will automatically mark the posts as deleted and make them hidden from regular users
+		$this->deletedPostsRepository->insertDeletedPostEntries(
+			$postUids,
 			$deletedBy,
-			$fileOnly, 
+			$fileOnly,
 			$byProxy,
 		);
 	}

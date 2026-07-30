@@ -42,7 +42,7 @@ class moduleMain extends abstractModuleMain {
 			return;
 		}
 
-		$threshold = $this->getConfig('ModuleSettings.perceptualBan.HAMMING_THRESHOLD', 10);
+		$threshold = $this->getModuleConfig('HAMMING_THRESHOLD', 10);
 
 		foreach ($files as $fileMeta) {
 			$file = $fileMeta['file'] ?? null;

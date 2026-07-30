@@ -45,8 +45,29 @@ const kkupdate = { name: "KK Thread Updating",
 	inci: 0,
 	timer: 0,
 	hold: 0,
+	// True while a fetch is in flight, so neither the timer nor the manual [Update] link
+	// can stack a second request on top of a slow or hung one.
+	inflight: false,
+	// Lengthen the auto-update interval one step (shared by "no new posts" and errors).
+	backoff: function () {
+		kkupdate.inci++;
+		if (kkupdate.inci >= kkupdate.inc.length) kkupdate.inci--;
+	},
 	update: function () {
+		if (kkupdate.inflight) return;
+
 		var statusEl = document.querySelector("#update-status");
+
+		// Offline (e.g. the connection dropped overnight): a fetch can only fail, so skip
+		// it and back off instead of hammering a dead connection every few seconds forever.
+		if (navigator.onLine === false) {
+			kkupdate.backoff();
+			if (statusEl) statusEl.innerText = "";
+			kkupdate.hold = 0;
+			return;
+		}
+
+		kkupdate.inflight = true;
 		if (statusEl) statusEl.innerText = "Updating...";
 		// Suppress the countdown display while the fetch is in flight.
 		kkupdate.hold = -1;
@@ -54,11 +75,11 @@ const kkupdate = { name: "KK Thread Updating",
 		// fetchNewReplies (updateThread.js) pulls only the posts newer than what's on the
 		// page via the post API and appends them; we just reflect the result in the UI.
 		fetchNewReplies().then(function (inserted) {
+			kkupdate.inflight = false;
 			var npc = inserted.length;
 			if (npc === 0) {
 				// Nothing new — lengthen the auto-update interval (back off).
-				kkupdate.inci++;
-				if (kkupdate.inci >= kkupdate.inc.length) kkupdate.inci--;
+				kkupdate.backoff();
 				if (statusEl) statusEl.innerText = "No new posts";
 				// Keep the status visible for one tick before the countdown resumes.
 				kkupdate.hold = 1;
@@ -70,6 +91,7 @@ const kkupdate = { name: "KK Thread Updating",
 			kkupdate.hold = 1;
 			kkTitle.set('updater', kkupdate.total);
 		}).catch(function (err) {
+			kkupdate.inflight = false;
 			if (err === 'pruned') {
 				// Thread is gone — stop auto-updating entirely.
 				if (statusEl) statusEl.innerText = "This thread has been pruned or deleted";
@@ -83,7 +105,10 @@ const kkupdate = { name: "KK Thread Updating",
 				}
 				return;
 			}
-			// Transient network/parse error: keep the updater running, just clear the status.
+			// Transient network/parse error: keep the updater running, but back off like
+			// "no new posts" does — without this, errors retried at the shortest interval
+			// forever (e.g. with the network down all night).
+			kkupdate.backoff();
 			if (statusEl) statusEl.innerText = "";
 			kkupdate.hold = 0;
 		});

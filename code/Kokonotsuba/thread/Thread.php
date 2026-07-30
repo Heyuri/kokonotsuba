@@ -67,7 +67,13 @@ class Thread implements JsonSerializable {
 	public function isThreadDeleted(): bool { return (bool)$this->thread_deleted; }
 	public function isAttachmentDeleted(): bool { return (bool)$this->thread_attachment_deleted; }
 	public function isByProxy(): bool { return (bool)$this->by_proxy; }
-	public function isHardDeleted(): bool { return $this->isThreadDeleted() && !$this->isAttachmentDeleted(); }
+	/**
+	 * thread_deleted comes from an open *post-level* deletion, which by definition is not an
+	 * attachment-level one, so on its own it already means the thread itself is gone. This used to
+	 * also require !isAttachmentDeleted(), because both flags were read off whichever deletion row
+	 * happened to be newest and a later file deletion could otherwise mask a deleted OP.
+	 */
+	public function isHardDeleted(): bool { return $this->isThreadDeleted(); }
 
 	// Sticky
 	public function isSticky(): bool { return (bool)$this->is_sticky; }

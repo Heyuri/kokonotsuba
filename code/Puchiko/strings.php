@@ -300,3 +300,131 @@ function truncateText(
 function newLinesToBreakLines(string $str): string {
 	return nl2br($str, false);
 }
+
+/**
+ * Clean up a hand-typed subdomain: trim whitespace, drop stray leading/trailing dots, lowercase.
+ * Normalizing before validating means '.CGI. ' and 'cgi' are treated as the same value.
+ *
+ * @param string $subdomain Raw subdomain as configured.
+ * @return string Normalized subdomain ('' if nothing is left).
+ */
+function normalizeSubdomain(string $subdomain): string {
+	return strtolower(trim($subdomain, " \t\n\r\0\x0B."));
+}
+
+/**
+ * Whether a normalized subdomain is a usable DNS name: one or more labels, each alphanumeric with
+ * inner hyphens and at most 63 characters. An empty subdomain is not valid (callers treat "no
+ * subdomain" as its own case).
+ *
+ * @param string $subdomain Normalized subdomain (see normalizeSubdomain()).
+ * @return bool True if every label is a valid DNS label.
+ */
+function isValidSubdomain(string $subdomain): bool {
+	if ($subdomain === '' || strlen($subdomain) > 253) {
+		return false;
+	}
+
+	foreach (explode('.', $subdomain) as $label) {
+		if (!preg_match('/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/', $label)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
+ * Strip a leading subdomain label off a host, leaving the part a sibling subdomain hangs from:
+ * 'sakaki.yuisuki.net' -> 'yuisuki.net', while 'example.net' and 'localhost' are returned as-is.
+ *
+ * A host of two labels or fewer is assumed to have no subdomain to strip. See applySubdomainToUrl()
+ * for the limits of that assumption on three-label registrable domains like 'example.co.uk'.
+ *
+ * @param string $host Lowercased hostname.
+ * @return string The host with any leading subdomain label removed.
+ */
+function registrableHost(string $host): string {
+	$labels = explode('.', $host);
+
+	return count($labels) > 2 ? implode('.', array_slice($labels, 1)) : $host;
+}
+
+/**
+ * Put a URL's host on the given subdomain, leaving scheme, port, path, query and fragment intact.
+ *
+ *   applySubdomainToUrl('https://example.net/', 'cgi')             -> 'https://cgi.example.net/'
+ *   applySubdomainToUrl('https://example.net:8080/b/', 'dis')      -> 'https://dis.example.net:8080/b/'
+ *   applySubdomainToUrl('https://sakaki.yuisuki.net/b/', 'waha')   -> 'https://waha.yuisuki.net/b/'
+ *
+ * The subdomain REPLACES the host's existing leading label rather than stacking on top of it, so a
+ * site already served from a subdomain moves the board across to a sibling host ('waha.yuisuki.net')
+ * instead of burrowing under the current one ('waha.sakaki.yuisuki.net'). A host of two labels or
+ * fewer is treated as having no subdomain to replace, so the value is prepended ('example.net' ->
+ * 'cgi.example.net'). This is the same rule the segregator module applies to file URLs.
+ *
+ * That "more than two labels means the first one is a subdomain" test is a heuristic, and it is
+ * wrong for a registrable domain that genuinely has three labels: on 'example.co.uk' it would
+ * replace 'example' and produce 'cgi.co.uk'. Determining this properly needs the public suffix
+ * list, which is more machinery than this is worth; installs on such a domain should leave board
+ * subdomains unset.
+ *
+ * The URL is returned unchanged whenever the rewrite cannot be performed safely, so a bad value
+ * degrades to the original URL instead of producing a malformed one. That covers: an empty
+ * subdomain, a subdomain that isn't a valid DNS name, a relative URL (no host to attach to), a
+ * scheme other than http/https, an IP-literal host, and a result that would exceed the 253-char
+ * hostname limit. A host already on the subdomain is left alone, so the function is idempotent.
+ *
+ * @param string $url       Absolute URL to rewrite.
+ * @param string $subdomain Subdomain to apply (e.g. 'cgi'). May contain multiple labels ('a.b').
+ * @return string The rewritten URL, or the original URL if it cannot be rewritten safely.
+ */
+function applySubdomainToUrl(string $url, string $subdomain): string {
+	$subdomain = normalizeSubdomain($subdomain);
+
+	if ($url === '' || $subdomain === '' || !isValidSubdomain($subdomain)) {
+		return $url;
+	}
+
+	$parts = parse_url($url);
+
+	// A relative URL ('/' or '/boards/') has no host, so there is nothing to put the subdomain on.
+	if (!is_array($parts) || empty($parts['scheme']) || empty($parts['host'])) {
+		return $url;
+	}
+
+	$scheme = strtolower($parts['scheme']);
+	if ($scheme !== 'http' && $scheme !== 'https') {
+		return $url;
+	}
+
+	$host = strtolower($parts['host']);
+
+	// An IP literal (v4, or v6 in brackets) cannot carry a subdomain.
+	if (filter_var(trim($host, '[]'), FILTER_VALIDATE_IP) !== false) {
+		return $url;
+	}
+
+	$newHost = $host === $subdomain || str_starts_with($host, $subdomain . '.')
+		// Already on this subdomain, so there is nothing to replace.
+		? $host
+		: $subdomain . '.' . registrableHost($host);
+
+	if (strlen($newHost) > 253) {
+		return $url;
+	}
+
+	$userInfo = '';
+	if (isset($parts['user']) && $parts['user'] !== '') {
+		$userInfo = $parts['user']
+			. (isset($parts['pass']) && $parts['pass'] !== '' ? ':' . $parts['pass'] : '')
+			. '@';
+	}
+
+	$port     = isset($parts['port']) ? ':' . (int)$parts['port'] : '';
+	$path     = $parts['path'] ?? '';
+	$query    = isset($parts['query']) ? '?' . $parts['query'] : '';
+	$fragment = isset($parts['fragment']) ? '#' . $parts['fragment'] : '';
+
+	return $scheme . '://' . $userInfo . $newHost . $port . $path . $query . $fragment;
+}

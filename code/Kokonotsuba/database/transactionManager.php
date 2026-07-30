@@ -25,6 +25,17 @@ class transactionManager {
 		$this->databaseConnection = $databaseConnection;
 	}
 
+	/**
+	 * Whether a transaction is already open on the connection.
+	 *
+	 * Callers that want to batch their own writes have to ask: begin() and commit() here act on
+	 * whatever transaction is current, so committing while nested inside somebody else's would end
+	 * theirs, not yours.
+	 */
+	public function inTransaction(): bool {
+		return $this->databaseConnection->inTransaction();
+	}
+
 	public function begin(): void {
 		if (!$this->databaseConnection->inTransaction()) {
 			$this->databaseConnection->beginTransaction();
@@ -46,9 +57,17 @@ class transactionManager {
 	/**
 	 * Execute a callback in a safe transaction.
 	 * Rolls back automatically if an exception is thrown.
+	 *
+	 * Nests safely: if a transaction is already open, the callback simply joins it
+	 * and the outermost run() keeps ownership of the commit/rollback. Committing
+	 * here would end the caller's transaction early.
 	 */
 	public function run(callable $callback): mixed {
-		$this->begin();
+		if ($this->databaseConnection->inTransaction()) {
+			return $callback();
+		}
+
+		$this->databaseConnection->beginTransaction();
 		try {
 			$result = $callback();
 			$this->commit();

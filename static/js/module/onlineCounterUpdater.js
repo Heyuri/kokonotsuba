@@ -19,11 +19,16 @@ const kkUserUpdate = {  name: "KK online user updating",
 	},
 
 	startInterval: function () {
-		this.minutes = document.getElementById(this.elementId).dataset.timeout;
+		// data-timeout comes from board config, so treat it as untrusted: a missing, empty,
+		// zero or garbage value would make setInterval fire with a 0ms delay — a fetch storm
+		// that pegs the CPU and queues requests faster than they complete, growing memory
+		// without bound on any tab left open. Clamp to at least 1 minute, default 10.
+		this.minutes = parseInt(document.getElementById(this.elementId).dataset.timeout, 10);
+		if (!Number.isFinite(this.minutes) || this.minutes < 1) this.minutes = 10;
 		const milliseconds = this.minutes * 60 * 1000;
 		this.intervalId = setInterval(() => {
-			// don't poll while the tab is hidden
-			if (!document.hidden) this.reloadElement();
+			// don't poll while the tab is hidden or the network is down
+			if (!document.hidden && navigator.onLine !== false) this.reloadElement();
 		}, milliseconds);
 	},
 

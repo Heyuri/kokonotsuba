@@ -30,10 +30,10 @@ class moduleMain extends abstractModuleMain {
 
 	public function initialize(): void {
 		// get character preview limit config
-		$this->characterPreviewLimit = $this->getConfig('ModuleSettings.CHARACTER_PREVIEW_LIMIT', 2500);
+		$this->characterPreviewLimit = $this->getModuleConfig('CHARACTER_PREVIEW_LIMIT', 2500);
 		
 		// get line preview limit config
-		$this->breakLinePreviewLimit = $this->getConfig('ModuleSettings.LINE_PREVIEW_LIMIT', 10);
+		$this->breakLinePreviewLimit = $this->getModuleConfig('LINE_PREVIEW_LIMIT', 10);
 
 		// add hook point listener for post
 		$this->listenPostComment('onRenderComment', -10000);

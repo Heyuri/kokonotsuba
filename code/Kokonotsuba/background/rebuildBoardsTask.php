@@ -1,6 +1,6 @@
 <?php
 
-namespace Kokonotsuba\Modules\rebuild;
+namespace Kokonotsuba\background;
 
 use Puchiko\background\BackgroundTaskInterface;
 use Kokonotsuba\account\staffAccountFromSession;
@@ -14,7 +14,16 @@ use Kokonotsuba\request\request;
 
 use function Kokonotsuba\libraries\rebuildBoardsByArray;
 
-class rebuildTask implements BackgroundTaskInterface {
+/**
+ * Regenerate the static pages of the given boards in a detached process.
+ *
+ * Registered once at bootstrap under 'rebuild_boards' (see bootstrap/global.php), so anything
+ * that changes rendered output - the rebuild module, a board config save, a global config save -
+ * dispatches the same task rather than rebuilding inside the request.
+ *
+ * Runs with no HTTP session, so it rebuilds the boards from scratch off its own bootstrap.
+ */
+class rebuildBoardsTask implements BackgroundTaskInterface {
 	public function handle(array $args): void {
 		$boardUIDs = array_map('intval', $args['boardUIDs'] ?? []);
 		if (empty($boardUIDs)) {

@@ -49,11 +49,10 @@ class quoteLinkRepository extends baseRepository {
 					'post_position' => (int)$row['target_post_position'],
 					'board_uid' => (int)$row['target_board_uid'],
 				],
+				// only the uid: the entry is filed under it, and nothing reads any other
+				// host-side field, so the query no longer joins the host post or its thread
 				'host_post' => [
 					'post_uid' => (int)$row['host_post_uid'],
-					'no' => (int)$row['host_no'],
-					'post_op_number' => (int)$row['host_post_op_number'],
-					'post_position' => (int)$row['host_post_position'],
 				]
 			];
 		}
@@ -80,12 +79,8 @@ class quoteLinkRepository extends baseRepository {
 				tp.no AS target_no,
 				tt.post_op_number AS target_post_op_number,
 
-				hp.no AS host_no,
-				ht.post_op_number AS host_post_op_number,
-
 				tp.boardUID AS target_board_uid,
 				{$targetObjectivePosition} AS target_post_position,
-				hp.post_position AS host_post_position,
 
 				hdp.open_flag AS host_open_flag,
 				tdp.open_flag AS target_open_flag,
@@ -96,9 +91,9 @@ class quoteLinkRepository extends baseRepository {
 			JOIN {$this->postTable} tp ON q.target_post_uid = tp.post_uid
 			JOIN {$this->threadTable} tt ON tp.thread_uid = tt.thread_uid
 
-			JOIN {$this->postTable} hp ON q.host_post_uid = hp.post_uid
-			JOIN {$this->threadTable} ht ON hp.thread_uid = ht.thread_uid
-
+			-- No join onto the host post or its thread: prepareResults() keeps only
+			-- host_post_uid, which the quote-link row already carries. The deletion state below
+			-- hangs off q.host_post_uid directly.
 			LEFT JOIN {$this->deletedPostsTable} hdp ON q.host_post_uid = hdp.post_uid AND hdp.open_flag = 1
 			LEFT JOIN {$this->deletedPostsTable} tdp ON q.target_post_uid = tdp.post_uid AND tdp.open_flag = 1
 		";
@@ -107,7 +102,11 @@ class quoteLinkRepository extends baseRepository {
 	}
 
 	/**
-	 * Fetch quote-links for the given post UIDs (as host or target), with full post-number metadata.
+	 * Fetch the quote-links *originating from* the given post UIDs, with target post-number metadata.
+	 *
+	 * Links pointing *at* these posts are not returned. Results are indexed by host_post_uid and
+	 * every caller looks them up with the uid of a post it is about to render, so an entry whose
+	 * host lies outside $postUids can never be read back out.
 	 *
 	 * @param array $postUids                     Array of post UIDs to look up.
 	 * @param bool  $includeDeletedPostQuotelinks Whether to include links where a post is deleted.
@@ -119,13 +118,15 @@ class quoteLinkRepository extends baseRepository {
 		}
 
 		$inClause = pdoPlaceholdersForIn($postUids);
-		$allParams = array_merge($postUids, $postUids);
 
 		// get the query
 		$query = $this->getQuoteLinkQuery();
 
-		// add the IN clause for getting the posts by uids
-		$query .= "WHERE q.target_post_uid IN $inClause OR q.host_post_uid IN $inClause";
+		// Host side only. This used to also match "OR q.target_post_uid IN (...)", which on a board
+		// whose rendered posts are popular quote targets pulled back every post that had ever
+		// quoted them - thousands of rows, each costing a correlated position subquery and an
+		// array in prepareResults(), all of them filed under a host uid nobody looks up.
+		$query .= "WHERE q.host_post_uid IN $inClause";
 
 		// if we want to exclude quote links from deleted posts
 		if(!$includeDeletedPostQuotelinks) {
@@ -138,7 +139,7 @@ class quoteLinkRepository extends baseRepository {
 			)";
 		}
 
-		$rows = $this->queryAll($query, $allParams);
+		$rows = $this->queryAll($query, array_values($postUids));
 		return $this->prepareResults($rows);
 	}
 
