@@ -210,4 +210,7 @@ return [
 
 	// Navigation links at top left (read from global/toplinks.txt)
 	'TOP_LINKS' => @file_get_contents(__DIR__.'/toplinks.txt'),
+
+	// overboard sub header conf, its in here so we can attach functions to it for seeing last post times on other scripts
+	'OVERBOARD_SUB_HEADER_HTML' => '',
 ];
