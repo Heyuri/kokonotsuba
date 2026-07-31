@@ -47,8 +47,9 @@ return [
 	/* posting */
 	'ModuleList.antiSpam'     => boolField('config_label_ModuleList.antiSpam', true),
 	'ModuleList.csrfPrevent'  => boolField('config_label_ModuleList.csrfPrevent', true),
-	'ModuleList.bbCode'       => boolField('config_label_ModuleList.bbCode', true),
+	'ModuleList.emotes'       => boolField('config_label_ModuleList.emotes', true),
 	'ModuleList.emoji'        => boolField('config_label_ModuleList.emoji', true),
+	'ModuleList.bbCode'       => boolField('config_label_ModuleList.bbCode', true),
 	'ModuleList.wordFilter'   => boolField('config_label_ModuleList.wordFilter', true),
 	'ModuleList.countryFlags' => boolField('config_label_ModuleList.countryFlags', false),
 	'ModuleList.antiFlood'    => boolField('config_label_ModuleList.antiFlood', true),
@@ -78,7 +79,6 @@ return [
 	'ModuleList.imageServer'  => boolField('config_label_ModuleList.imageServer', true),
 	'ModuleList.filter'       => boolField('config_label_ModuleList.filter', true),
 	'ModuleList.indexCommentTruncator' => boolField('config_label_ModuleList.indexCommentTruncator', true),
-	'ModuleList.emotes'       => boolField('config_label_ModuleList.emotes', true),
 	'ModuleList.nameRandomizer'=> boolField('config_label_ModuleList.nameRandomizer', false),
 	'ModuleList.youtubeEmbed' => boolField('config_label_ModuleList.youtubeEmbed', true),
 	'ModuleList.segregator'   => boolField('config_label_ModuleList.segregator', false),

@@ -268,7 +268,7 @@ $language['self_serve_banner_suggest'] = 'Want your banner here? Click here to s
 // DEPRECATED: pm_contacts_section_title, pm_view_thread_page_title, pm_contact_view_no_messages,
 // contact_not_selected, pm_no_message, pm_contact_self, pm_compose_title, pm_new_message, pm_no_contacts
 
-$language['private_message_top_bar'] = 'Private messages';
+$language['private_message_top_bar'] = 'PMs';
 $language['pm_recipient_and_message_required'] = 'Recipient and message are required!';
 $language['pm_invalid_recipient'] = 'Invalid recipient tripcode!';
 $language['pm_main_title'] = 'Private messaging system';
@@ -309,7 +309,7 @@ $language['pm_reply_label'] = 'Reply';
 $language['pm_user_banned'] = 'You are banned from using the private messaging system.';
 $language['pm_admin_title'] = 'Private Message Administration';
 $language['admin_nav_pm_title'] = 'Manage private messages';
-$language['admin_nav_pm'] = 'Private messages';
+$language['admin_nav_pm'] = 'PMs';
 $language['pm_admin_th_select'] = 'Select';
 $language['pm_admin_th_sender'] = 'Sender';
 $language['pm_admin_th_recipient'] = 'Recipient';
@@ -475,7 +475,7 @@ $language['fullbanner_upload_button'] = 'Upload banner';
 $language['quick_reply_link'] = 'Quick reply';
 
 // threadWatcher module
-$language['thread_watch_link'] = 'Thread watcher';
+$language['thread_watch_link'] = 'Watcher';
 $language['thread_watch_label'] = 'Watch thread';
 $language['thread_unwatch_label'] = 'Unwatch thread';
 $language['thread_watch_empty'] = 'No watched threads.';
@@ -1081,7 +1081,7 @@ $language['report_reported_posts_title'] = 'Reported posts';
 $language['report_reported_posts_total'] = '%1$s post(s) have been reported.';
 $language['report_reported_posts_empty'] = 'No posts have been reported.';
 
-$language['report_decision_heading'] = 'Take action';
+$language['report_decision_heading'] = 'Actions';
 $language['report_decision_legend'] = 'Approve and Dismiss act on the reports you tick above; a Dismiss all button acts on every report still awaiting review. Both reasons are optional — the public one is shown to the reporter, the staff-only one is not.';
 $language['report_approve'] = 'Approve and delete';
 $language['report_approve_hint'] = 'Deletes the reported post and marks every report on it as approved.';
