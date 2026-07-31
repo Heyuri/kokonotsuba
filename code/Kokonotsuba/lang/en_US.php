@@ -1081,7 +1081,7 @@ $language['report_reported_posts_title'] = 'Reported posts';
 $language['report_reported_posts_total'] = '%1$s post(s) have been reported.';
 $language['report_reported_posts_empty'] = 'No posts have been reported.';
 
-$language['report_decision_heading'] = 'Take action';
+$language['report_decision_heading'] = 'Actions';
 $language['report_decision_legend'] = 'Approve and Dismiss act on the reports you tick above; a Dismiss all button acts on every report still awaiting review. Both reasons are optional — the public one is shown to the reporter, the staff-only one is not.';
 $language['report_approve'] = 'Approve and delete';
 $language['report_approve_hint'] = 'Deletes the reported post and marks every report on it as approved.';
