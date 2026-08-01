@@ -71,6 +71,8 @@ class moduleMain extends abstractModuleMain {
 			'searchFileName' => '',
 			'searchPostNumber' => '',
 			'searchTag' => '',
+			'searchDateAfter' => '',
+			'searchDateBefore' => '',
 			'searchMatchWord' => $isSubmission ? '' : 'on',
 			'searchOpeningPost' => $isSubmission ? '' : 'off',
 			'searchMatchMode' => 'and',
@@ -109,16 +111,27 @@ class moduleMain extends abstractModuleMain {
 		if (!is_array($boardUids) && !empty($boardUids)) {
 			// convert to array of integers
 			$boardUids = explode(' ', $boardUids);
-		} 
+		}
 
-		if (!empty(array_filter($searchFields))) {
+		// the From/To days are picked in this board's local time; convert them to the
+		// UTC bounds the posts table stores
+		[$dateAfter, $dateBefore] = $this->buildDateRangeBounds(
+			$this->getDayParameter('searchDateAfter'),
+			$this->getDayParameter('searchDateBefore')
+		);
+
+		// a date range on its own is a valid search - it browses the selected boards
+		// over that window - so it counts alongside the keyword fields
+		$hasDateRange = $dateAfter !== null || $dateBefore !== null;
+
+		if (!empty(array_filter($searchFields)) || $hasDateRange) {
 			// fetch database stop words.
 			// This is to prevent the engine from trying to search for words it can't index
 			// note: this is statically cached per request
 			$stopWords = databaseConnection::getInstance()->fetchFulltextStopWords();
 
 			// handle search result fetching and displaying
-			$dat .= $this->handleSearchResults($this->moduleContext->postSearchService, $stopWords, $searchFields, $boardUids, $cleanUrl, $adminMode);
+			$dat .= $this->handleSearchResults($this->moduleContext->postSearchService, $stopWords, $searchFields, $boardUids, $cleanUrl, $adminMode, $dateAfter, $dateBefore);
 		}
 
 		// close tag
@@ -129,6 +142,72 @@ class moduleMain extends abstractModuleMain {
 		echo $dat;
 	}
 	
+	/**
+	 * Read a date-picker value from the query string as a plain string.
+	 *
+	 * Array-shaped input (e.g. "?searchDateAfter[]=x") is discarded rather than
+	 * coerced, so a hand-built URL cannot provoke a conversion warning.
+	 *
+	 * @param string $name Query string parameter name.
+	 * @return string The submitted day, or '' if absent or not a string.
+	 */
+	private function getDayParameter(string $name): string {
+		$value = $this->moduleContext->request->getParameter($name, 'GET', '');
+
+		return is_string($value) ? $value : '';
+	}
+
+	/**
+	 * Turn the From/To calendar days from the form into UTC datetime bounds.
+	 *
+	 * Post timestamps are stored in UTC, but the days the user picks read as days on
+	 * this board's clock (its TIME_ZONE offset), so each bound is shifted by that
+	 * offset. Results from a board on a different offset are therefore bounded by the
+	 * searching board's day, not their own.
+	 *
+	 * The range is half-open: the "To" day becomes midnight of the day after it, so
+	 * that whole day is included.
+	 *
+	 * @param string $dateAfter  The "From" day as 'Y-m-d', or '' if unset.
+	 * @param string $dateBefore The "To" day as 'Y-m-d', or '' if unset.
+	 * @return array{0: ?string, 1: ?string} UTC 'Y-m-d H:i:s' bounds; either may be null.
+	 */
+	private function buildDateRangeBounds(string $dateAfter, string $dateBefore): array {
+		// TIME_ZONE is an offset in hours from UTC, and may be fractional (e.g. 5.5)
+		$timeZoneOffsetSeconds = (int)round(floatval($this->getConfig('TIME_ZONE', 0)) * 3600);
+
+		return [
+			$this->localDayToUtc($dateAfter, 0, $timeZoneOffsetSeconds),
+			$this->localDayToUtc($dateBefore, 86400, $timeZoneOffsetSeconds),
+		];
+	}
+
+	/**
+	 * Convert one board-local calendar day into a UTC datetime string.
+	 *
+	 * @param string $day                   The day as 'Y-m-d'; anything else yields null.
+	 * @param int    $dayOffsetSeconds      Seconds past local midnight to land on (86400 for the next day).
+	 * @param int    $timeZoneOffsetSeconds The board's offset from UTC, in seconds.
+	 * @return string|null A UTC 'Y-m-d H:i:s' string, or null if the day is empty or malformed.
+	 */
+	private function localDayToUtc(string $day, int $dayOffsetSeconds, int $timeZoneOffsetSeconds): ?string {
+		$day = trim($day);
+
+		// the date input posts 'Y-m-d'; a hand-edited URL may not, so check before parsing
+		if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $day) !== 1) {
+			return null;
+		}
+
+		$localMidnight = strtotime($day . ' 00:00:00 UTC');
+
+		// strtotime accepts the format but still rejects impossible days (e.g. 2026-02-31)
+		if ($localMidnight === false || gmdate('Y-m-d', $localMidnight) !== $day) {
+			return null;
+		}
+
+		return gmdate('Y-m-d H:i:s', $localMidnight + $dayOffsetSeconds - $timeZoneOffsetSeconds);
+	}
+
 	private function renderReturnLink() {
 		return '[<a href="' . $this->getConfig('STATIC_INDEX_FILE') . '?' . time() . '">' . _T('return') . '</a>]';
 	}
@@ -150,6 +229,8 @@ class moduleMain extends abstractModuleMain {
 		$searchFileName = $filtersFromRequest['searchFileName'] ?? '';
 		$searchPostNumber = $filtersFromRequest['searchPostNumber'] ?? '';
 		$searchTag = $filtersFromRequest['searchTag'] ?? '';
+		$searchDateAfter = $filtersFromRequest['searchDateAfter'] ?? '';
+		$searchDateBefore = $filtersFromRequest['searchDateBefore'] ?? '';
 		$searchMatchWord = $filtersFromRequest['searchMatchWord'] ?? '';
 		$searchOpeningPost = $filtersFromRequest['searchOpeningPost'] ?? '';
 		$searchMatchMode = ($filtersFromRequest['searchMatchMode'] ?? 'and') === 'or' ? 'or' : 'and';
@@ -187,43 +268,55 @@ class moduleMain extends abstractModuleMain {
 							<tr>
 								<td class="postblock"><label for="searchGeneral">' . _T('search_target_general') . '</label></td>
 								<td>
-									<input id="searchGeneral" name="searchGeneral" value="' . htmlspecialchars($searchGeneral) . '">
+									<input id="searchGeneral" class="inputtext" name="searchGeneral" value="' . htmlspecialchars($searchGeneral) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchComment">' . _T('search_target_comment') . '</label></td>
 								<td>
-									<input id="searchComment" name="searchComment" value="' . htmlspecialchars($searchComment) . '">
+									<input id="searchComment" class="inputtext" name="searchComment" value="' . htmlspecialchars($searchComment) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchName">' . _T('search_target_name') . '</label></td>
 								<td>
-									<input id="searchName" name="searchName" value="' . htmlspecialchars($searchName) . '">
+									<input id="searchName" class="inputtext" name="searchName" value="' . htmlspecialchars($searchName) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchEmail">' . _T('search_target_email') . '</label></td>
 								<td>
-									<input id="searchEmail" name="searchEmail" value="' . htmlspecialchars($searchEmail) . '">
+									<input id="searchEmail" class="inputtext" name="searchEmail" value="' . htmlspecialchars($searchEmail) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchSubject">' . _T('search_target_subject') . '</label></td>
 								<td>
-									<input id="searchSubject" name="searchSubject" value="' . htmlspecialchars($searchSubject) . '">
+									<input id="searchSubject" class="inputtext" name="searchSubject" value="' . htmlspecialchars($searchSubject) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchFileName">' . _T('search_target_file_name') . '</label></td>
 								<td>
-									<input id="searchFileName" name="searchFileName" value="' . htmlspecialchars($searchFileName) . '">
+									<input id="searchFileName" class="inputtext" name="searchFileName" value="' . htmlspecialchars($searchFileName) . '">
 								</td>
 							</tr>
 							<tr>
 								<td class="postblock"><label for="searchPostNumber">' . _T('search_target_number') . '</label></td>
 								<td>
 									<input type="number" min="1" id="searchPostNumber" name="searchPostNumber" value="' . htmlspecialchars($searchPostNumber) . '">
+								</td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="searchDateAfter">' . _T('search_target_date_from') . '</label></td>
+								<td>
+									<input type="date" class="inputtext" id="searchDateAfter" name="searchDateAfter" value="' . htmlspecialchars($searchDateAfter) . '">
+								</td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="searchDateBefore">' . _T('search_target_date_to') . '</label></td>
+								<td>
+									<input type="date" class="inputtext" id="searchDateBefore" name="searchDateBefore" value="' . htmlspecialchars($searchDateBefore) . '">
 								</td>
 							</tr>
 							<tr>
@@ -356,9 +449,11 @@ class moduleMain extends abstractModuleMain {
 		postSearchService $postSearchService, 
 		array $stopWords,
 		array $fields, 
-		array $boardUids, 
+		array $boardUids,
 		string $searchUrl,
-		bool $adminMode
+		bool $adminMode,
+		?string $dateAfter = null,
+		?string $dateBefore = null
 	): string {
 		$searchPage = max(1, intval($this->moduleContext->request->getParameter('page', 'GET', 1)));
 		$searchPostsPerPage = $this->getModuleConfig('SEARCH_POSTS_PER_PAGE');
@@ -376,7 +471,7 @@ class moduleMain extends abstractModuleMain {
 		$fields['file_name'] = stripExtension($fields['file_name']);
 
 		// search database
-		$hitPosts = $postSearchService->searchPosts($stopWords, $fields, $boardUids, $matchWholeWords, $openingPostsOnly, $searchPage, $searchPostsPerPage, $searchMode) ?? [];
+		$hitPosts = $postSearchService->searchPosts($stopWords, $fields, $boardUids, $matchWholeWords, $openingPostsOnly, $searchPage, $searchPostsPerPage, $searchMode, $dateAfter, $dateBefore) ?? [];
 		
 		$totalPostHits = $hitPosts['total_posts'] ?? 0;
 		$resultList = '';
