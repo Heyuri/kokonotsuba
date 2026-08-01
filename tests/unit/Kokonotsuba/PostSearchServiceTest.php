@@ -182,10 +182,73 @@ final class PostSearchServiceTest extends TestCase {
 	public function testSanitizeFieldsKeepsAllAllowedKeys(): void {
 		$input = [
 			'general'   => 'g', 'com' => 'c', 'name' => 'n', 'email' => 'e',
-			'sub'       => 's', 'no' => '1', 'file_name' => 'f', 'root' => 'r',
+			'sub'       => 's', 'no' => '1', 'file_name' => 'f',
 			'tag'       => 't',
 		];
 		$out = $this->call('sanitizeFields', $input);
 		$this->assertSame($input, $out);
+	}
+
+	/** The timestamp is range-compared via the date arguments, never passed as a field. */
+	public function testSanitizeFieldsDropsRoot(): void {
+		$out = $this->call('sanitizeFields', ['name' => 'n', 'root' => '2026-07-01 00:00:00']);
+		$this->assertSame(['name' => 'n'], $out);
+	}
+
+	// ---- normalizeSqlDateTime ----------------------------------------------
+
+	public function testNormalizeSqlDateTimeAcceptsExactFormat(): void {
+		$this->assertSame('2026-07-01 00:00:00', $this->call('normalizeSqlDateTime', '2026-07-01 00:00:00'));
+		$this->assertSame('2026-07-01 13:45:09', $this->call('normalizeSqlDateTime', '  2026-07-01 13:45:09  '));
+	}
+
+	public function testNormalizeSqlDateTimeRejectsEmptyAndNull(): void {
+		$this->assertSame(null, $this->call('normalizeSqlDateTime', null));
+		$this->assertSame(null, $this->call('normalizeSqlDateTime', ''));
+		$this->assertSame(null, $this->call('normalizeSqlDateTime', '   '));
+	}
+
+	public function testNormalizeSqlDateTimeRejectsMalformedValues(): void {
+		// date only, impossible day, wrong separator, and injected trailing text
+		$this->assertSame(null, $this->call('normalizeSqlDateTime', '2026-07-01'));
+		$this->assertSame(null, $this->call('normalizeSqlDateTime', '2026-02-31 00:00:00'));
+		$this->assertSame(null, $this->call('normalizeSqlDateTime', '2026/07/01 00:00:00'));
+		$this->assertSame(null, $this->call('normalizeSqlDateTime', "2026-07-01 00:00:00' OR 1=1"));
+	}
+
+	// ---- buildDateRangeFields ----------------------------------------------
+
+	public function testBuildDateRangeFieldsMapsBothBounds(): void {
+		$out = $this->call('buildDateRangeFields', '2026-07-01 00:00:00', '2026-08-01 00:00:00');
+		$this->assertSame([
+			'root_after'  => '2026-07-01 00:00:00',
+			'root_before' => '2026-08-01 00:00:00',
+		], $out);
+	}
+
+	public function testBuildDateRangeFieldsAllowsOpenEndedRange(): void {
+		$this->assertSame(
+			['root_after' => '2026-07-01 00:00:00'],
+			$this->call('buildDateRangeFields', '2026-07-01 00:00:00', null)
+		);
+		$this->assertSame(
+			['root_before' => '2026-08-01 00:00:00'],
+			$this->call('buildDateRangeFields', null, '2026-08-01 00:00:00')
+		);
+		$this->assertSame([], $this->call('buildDateRangeFields', null, null));
+	}
+
+	/** A backwards range would match nothing, so the bounds are swapped instead. */
+	public function testBuildDateRangeFieldsSwapsReversedBounds(): void {
+		$out = $this->call('buildDateRangeFields', '2026-08-01 00:00:00', '2026-07-01 00:00:00');
+		$this->assertSame([
+			'root_after'  => '2026-07-01 00:00:00',
+			'root_before' => '2026-08-01 00:00:00',
+		], $out);
+	}
+
+	public function testBuildDateRangeFieldsDropsMalformedBound(): void {
+		$out = $this->call('buildDateRangeFields', 'tomorrow', '2026-08-01 00:00:00');
+		$this->assertSame(['root_before' => '2026-08-01 00:00:00'], $out);
 	}
 }

@@ -141,7 +141,12 @@ $fuzzer->target(
 	fn() => [Fuzzer::bool() ? Fuzzer::url() . ' ' . Fuzzer::nastyString(20) : Fuzzer::nastyString(40)],
 	[
 		['returns a string', fn($r) => is_string($r)],
-		['every emitted anchor is closed', fn($r) => substr_count($r, '<a ') === substr_count($r, '</a>')],
+		// autoLink only wraps URLs; markup already in the text is passed through
+		// verbatim (escaping happens elsewhere), so count the anchors it *added*
+		// rather than every anchor in the result.
+		['every emitted anchor is closed', fn($r, $a) =>
+			substr_count($r, '<a ') - substr_count($a[0], '<a ')
+				=== substr_count($r, '</a>') - substr_count($a[0], '</a>')],
 		['no double-escaped ampersand entities introduced', fn($r) => !str_contains($r, '&amp;amp;')],
 	]
 );
@@ -339,18 +344,47 @@ $fuzzer->target(
 
 // parseToBooleanFulltext compiles arbitrary input into a boolean FULLTEXT query.
 // Whatever the input, the output must be a (possibly empty) space-separated list
-// of required (+) tokens, each a run of letters/numbers with an optional trailing
-// wildcard — nothing MySQL would reject in BOOLEAN MODE.
-$booleanSafe = '/^(\+[\p{L}\p{N}]+\*?(\s\+[\p{L}\p{N}]+\*?)*)?$/u';
+// of tokens, each a run of letters/numbers with an optional operator prefix and
+// trailing wildcard — nothing MySQL would reject in BOOLEAN MODE. Only '+' (AND
+// mode) and '-' (an exclusion the user asked for) may appear as prefixes.
+$booleanSafe = '/^([+-]?[\p{L}\p{N}]+\*?(\s[+-]?[\p{L}\p{N}]+\*?)*)?$/u';
 $fuzzer->target(
 	'search:parseToBooleanFulltext',
-	fn(string $s, bool $whole) => $invokeSearch('parseToBooleanFulltext', $s, $whole, ['the', 'and', 'a'], 3),
-	fn() => [Fuzzer::nastyString(50), Fuzzer::bool()],
+	fn(string $s, bool $whole, string $mode) => $invokeSearch('parseToBooleanFulltext', $s, $whole, ['the', 'and', 'a'], 3, $mode),
+	fn() => [Fuzzer::nastyString(50), Fuzzer::bool(), Fuzzer::pick(['and', 'or'])],
 	[
 		['returns a string', fn($r) => is_string($r)],
 		['valid UTF-8 out', fn($r) => mb_check_encoding($r, 'UTF-8')],
 		['boolean-mode safe shape', fn($r) => preg_match($booleanSafe, $r) === 1],
-		['every token is required', fn($r) => $r === '' || !array_filter(explode(' ', $r), fn($t) => $t[0] !== '+')],
+		// AND mode requires every kept term (+term); OR mode leaves them unprefixed
+		// so any one of them can match. Exclusions (-term) are legal in both.
+		['prefixes match the combine mode', function ($r, $a) {
+			if ($r === '') {
+				return true;
+			}
+			foreach (explode(' ', $r) as $token) {
+				if ($token[0] === '-') {
+					continue;
+				}
+				if ($a[2] === 'or' ? $token[0] === '+' : $token[0] !== '+') {
+					return false;
+				}
+			}
+			return true;
+		}],
+		// An exclusion may only appear when the user prefixed a word with '-';
+		// the sanitizer strips the operator everywhere else.
+		['exclusions trace back to the input', function ($r, $a) {
+			if (!str_contains($r, '-')) {
+				return true;
+			}
+			foreach (preg_split('/\s+/u', trim($a[0])) ?: [] as $word) {
+				if (str_starts_with($word, '-')) {
+					return true;
+				}
+			}
+			return false;
+		}],
 		['whole-word mode has no wildcards', fn($r, $a) => !$a[1] || !str_contains($r, '*')],
 	]
 );
