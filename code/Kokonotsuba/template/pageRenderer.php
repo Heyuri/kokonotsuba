@@ -9,11 +9,11 @@ use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
-use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawAdminTheading;
 use function Kokonotsuba\libraries\html\generateAdminLinkButtons;
-use function Kokonotsuba\libraries\html\generateAdminNavLink;
 use function Kokonotsuba\libraries\html\generateUserNavBar;
+use function Kokonotsuba\libraries\html\getStaffNavCoreEntries;
+use function Kokonotsuba\libraries\html\renderStaffNavCoreEntry;
 
 class pageRenderer {
 	private templateEngine $templateEngine;
@@ -40,16 +40,19 @@ class pageRenderer {
 		$htmlOutput .= $this->board->getBoardHead($this->board->getBoardTitle());
 
 		if($isAdmin) {
-			// admin link html
-			// add hard-coded modes
-			// there'll be a more modular way (that doesn't require modules) later 
+			// The built-in modes, from the same list the sticky staff nav is built from, so a
+			// destination added there shows up in both. Live frontend is left out — the bar
+			// below renders it alongside Return.
 			$adminLinkHtml = '';
-			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'actionLog', _T('admin_nav_action_log'), $this->board->getConfigValue('AuthLevels.CAN_VIEW_ACTION_LOG', userRole::LEV_MODERATOR), _T('admin_nav_action_log_title'));
-			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'account', _T('admin_nav_accounts'), userRole::LEV_USER, _T('admin_nav_accounts_title'));
-			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'managePosts', _T('admin_nav_posts'), userRole::LEV_JANITOR, _T('admin_nav_posts_title'));
-			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'rebuild', _T('admin_nav_rebuild'), userRole::LEV_JANITOR, _T('admin_nav_rebuild_title'));
-			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'boards', _T('admin_nav_boards'), userRole::LEV_ADMIN, _T('admin_nav_boards_title'));
-			$adminLinkHtml .= generateAdminNavLink($liveIndexFile, 'globalConfig', _T('admin_nav_global_config'), userRole::LEV_ADMIN, _T('admin_nav_global_config_title'));
+			$coreNavEntries = getStaffNavCoreEntries(
+				$liveIndexFile,
+				$this->board->getConfigValue('AuthLevels.CAN_VIEW_ACTION_LOG', userRole::LEV_MODERATOR),
+				false
+			);
+
+			foreach ($coreNavEntries as $coreNavEntry) {
+				$adminLinkHtml .= renderStaffNavCoreEntry($coreNavEntry);
+			}
 
 			// add the admin links to html output
 			$htmlOutput .= generateAdminLinkButtons($liveIndexFile, $staticIndexFile, $this->moduleEngine, $adminLinkHtml, $this->request);

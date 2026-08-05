@@ -52,6 +52,10 @@ class fullBannerService {
 		return $this->fullBannerRepository->getAllBanners();
 	}
 
+	public function countPendingBanners(): int {
+		return $this->fullBannerRepository->countPendingBanners();
+	}
+
 	public function getRandomActiveBanner(): ?fullBannerEntry {
 		return $this->fullBannerRepository->getRandomActiveBanner();
 	}

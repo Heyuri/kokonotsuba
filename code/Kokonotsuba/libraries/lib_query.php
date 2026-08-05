@@ -62,6 +62,7 @@ function coalescedAttachmentColumns(string $fileIdAlias, string $postUidAlias): 
  * @param string $accountTable
  * @param bool   $viewDeleted      Whether to include deleted posts (post-centric only)
  * @param bool   $deletionCentric  If true, query from deleted_posts perspective
+ * @param string $reportTable      Reports table, or '' to leave the pending-report count out.
  * @param bool   $includeObjectivePosition Select the objective_position column (post-centric only).
  *                                 It is a correlated COUNT(*) evaluated per result row, so pass
  *                                 false when the caller follows up with
@@ -81,7 +82,8 @@ function getBasePostQuery(
 	bool $deletionCentric = false,
 	string $countryFlagTable = '',
 	string $displayIpTable = '',
-	bool $includeObjectivePosition = true
+	bool $includeObjectivePosition = true,
+	string $reportTable = ''
 ): string {
 
 	// Shared column definitions
@@ -197,10 +199,10 @@ function getBasePostQuery(
         WHERE NOT " . openDeletionExistsCondition($deletedPostsTable, 'p1.post_uid');
 
     // Main query: join threads, attachments, and all deletion rows (for mergeRowIntoPost)
-	$countryFlagColumn = $countryFlagTable ? "\n\t\t\tcf.country AS country_flag_country," : '';
-	$countryFlagJoin   = $countryFlagTable ? "\n\t\tLEFT JOIN $countryFlagTable cf ON cf.post_uid = p.post_uid" : '';
-	$displayIpColumn   = $displayIpTable ? "\n\t\t\tdip.ip_part AS display_ip_ip_part," : '';
-	$displayIpJoin     = $displayIpTable ? "\n\t\tLEFT JOIN $displayIpTable dip ON dip.post_uid = p.post_uid" : '';
+	$countryFlagColumn = $countryFlagTable ? " cf.country AS country_flag_country," : '';
+	$countryFlagJoin   = $countryFlagTable ? " LEFT JOIN $countryFlagTable cf ON cf.post_uid = p.post_uid" : '';
+	$displayIpColumn   = $displayIpTable ? " dip.ip_part AS display_ip_ip_part," : '';
+	$displayIpJoin     = $displayIpTable ? " LEFT JOIN $displayIpTable dip ON dip.post_uid = p.post_uid" : '';
 
 	// The vote aggregate used to be a LEFT JOIN onto a derived table that grouped the entire
 	// soudane table with no filter. MariaDB can neither merge a GROUP BY derived table into the
@@ -224,6 +226,14 @@ function getBasePostQuery(
 		? objectivePositionSubquery($postTable, $deletedPostsTable, 'p', $viewDeleted) . ' AS objective_position,'
 		: '';
 
+	// Lets the report module flag a reported post wherever posts are rendered, without a query
+	// per post. Correlated like the soudane counts above so it rides idx_reports_post_uid;
+	// empty when no reports table is configured, so the join is opt-out.
+	$reportColumn = $reportTable
+		? "(SELECT COUNT(*) FROM {$reportTable} rp
+				WHERE rp.post_uid = p.post_uid AND rp.status = 0) AS pending_report_count,"
+		: '';
+
     $query = "
         SELECT
             p.*,
@@ -231,6 +241,7 @@ function getBasePostQuery(
             t.post_op_number,
 			{$countryFlagColumn}
 			{$displayIpColumn}
+			{$reportColumn}
 
             {$attachmentColumns},
 

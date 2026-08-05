@@ -84,11 +84,18 @@ class moduleMain extends abstractModuleMain {
 
 		$this->reportPostPreview = new reportPostPreview(
 			$this->moduleContext->board,
-			$this->moduleContext->board->loadBoardConfig(),
 			$this->moduleContext->moduleEngine,
 			$this->moduleContext->templateEngine,
 			$this->moduleContext->quoteLinkService,
 			$this->moduleContext->request
+		);
+
+		// Not role-protected: a post can be deleted by staff, by a thread cascade, or by its own
+		// author with a password, and its reports should resolve in every case.
+		$this->moduleContext->moduleEngine->addListener('PostsDeleted',
+			function (array &$postUids, ?int &$accountId) {
+				$this->onPostsDeleted($postUids, $accountId);
+			}
 		);
 
 		$this->listenPostWidget('onRenderPostWidget');
@@ -124,6 +131,24 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	/**
+	 * Resolve a deleted post's reports.
+	 *
+	 * Deleting the post is what approving a report does, so a deletion from anywhere else grants
+	 * those reports by the same logic — and leaves the queue pointing at live posts only.
+	 *
+	 * Approving through the queue reaches this too, via removePosts(); by then those reports are
+	 * already approved inside the same transaction, so there is nothing pending left to find and
+	 * it quietly does nothing.
+	 */
+	private function onPostsDeleted(array $postUids, ?int $accountId): void {
+		$this->reportService->approveReportsForDeletedPosts(
+			$postUids,
+			$accountId ?: null,
+			_T('report_auto_approved_reason')
+		);
+	}
+
+	/**
 	 * The post dropdown toggle is .js-only, so without JS there'd be no way to reach the form.
 	 * Mirror the entry as a plain link that only shows when scripting is off.
 	 */
@@ -147,7 +172,7 @@ class moduleMain extends abstractModuleMain {
 		$moduleHeader .= '<link rel="stylesheet" href="'
 			. sanitizeStr($this->getConfig('STATIC_URL') . 'css/module/report.css') . '">';
 
-		$this->includeScript('report.js?v=2', $moduleHeader);
+		$this->includeScript('report.js?v=3', $moduleHeader);
 
 		$moduleHeader .= '<meta name="reportModuleUrl" content="' . sanitizeStr($this->modulePageUrl) . '">';
 

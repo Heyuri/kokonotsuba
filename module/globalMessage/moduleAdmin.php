@@ -37,7 +37,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		
 		$this->modulePageUrl = $this->getModulePageURL([], false);
 
-		$this->registerLinksAboveBarHook(_T('admin_nav_global_message_title'), $this->modulePageUrl, _T('admin_nav_global_message'));
+		$this->registerLinksAboveBarHook(_T('admin_nav_global_message_title'), $this->modulePageUrl, _T('admin_nav_global_message'), 'content');
 	}
 
 	public function ModulePage() {

@@ -134,6 +134,9 @@ return [
 		'threadWatcherAutoWatch' => true,
 		'threadWatcherAutoWatchOwnThreads' => true,
 		'enablesoudane' => true,
+		'reportNotifs' => true,
+		'staffNav' => true,
+		'staffAlerts' => true,
 	],
 
 	// Board styles

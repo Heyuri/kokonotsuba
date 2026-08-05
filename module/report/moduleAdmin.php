@@ -8,6 +8,8 @@ use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\IndicatorTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\module_classes\traits\listeners\StaffAlertsListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\StaffNavListenerTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
@@ -38,6 +40,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	use AuditableTrait;
 	use IndicatorTrait;
 	use PostControlHooksTrait;
+	use StaffAlertsListenerTrait;
+	use StaffNavListenerTrait;
 
 	/** ?status= value that widens the queue back out to every status. */
 	private const STATUS_FILTER_ALL = 'all';
@@ -53,6 +57,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	/** Post|false keyed by UID, so a post appearing in several report rows is fetched once. */
 	private array $postCache = [];
+
+	/** True while this module is rendering a post preview of its own; see renderPostPreview(). */
+	private bool $renderingPreview = false;
 
 	public function getRequiredRole(): userRole {
 		return $this->getConfig('AuthLevels.CAN_VIEW_REPORTS', userRole::LEV_JANITOR);
@@ -95,7 +102,6 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->reportPostPreview = new reportPostPreview(
 			$this->moduleContext->board,
-			$this->moduleContext->board->loadBoardConfig(),
 			$this->moduleContext->moduleEngine,
 			$this->initModuleTemplateEngine('modules.report.REPORT_POST_TEMPLATE', 'kokoimg'),
 			$this->moduleContext->quoteLinkService,
@@ -108,6 +114,19 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->registerAdminHeaderHook('onGenerateAdminHeader');
 		$this->registerPostWidgetHook('onRenderPostWidget');
+		$this->listenStaffAlertsProtected('onCollectStaffAlerts');
+		$this->listenStaffNavProtected('onCollectStaffNavLinks');
+
+		// ModuleAdminHeader is not dispatched on admin panel pages, and the report tables live
+		// there — so the action window's assets ride the plain ModuleHeader hook, role-protected
+		// so they are only emitted for staff who can see reports.
+		$this->listenProtected('ModuleHeader', function (string &$moduleHeader) {
+			$this->onGenerateReportAssets($moduleHeader);
+		});
+
+		$this->listenProtected('BelowComment', function (string &$belowComment, Post &$post, array &$threadPosts, bool &$adminMode) {
+			$this->onRenderReportedNotice($belowComment, $post, $adminMode);
+		});
 	}
 
 	// ─── Admin UI hooks ───────────────────────────────────────────
@@ -135,6 +154,41 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	/**
+	 * "Reports" in the sticky staff nav, kept at the top level rather than inside a drop-up: it
+	 * is the one nav entry that regularly has something waiting behind it.
+	 */
+	private function onCollectStaffNavLinks(array &$entries): void {
+		$entries[] = [
+			'key' => 'report',
+			'label' => _T('report_nav'),
+			'url' => $this->modulePageUrl,
+			'title' => _T('report_nav_title'),
+			'group' => '',
+			'count' => $this->currentAccountId > 0
+				? $this->reportService->countUnreadForAccount($this->currentAccountId)
+				: 0,
+		];
+	}
+
+	/**
+	 * "Reports" in the staff alerts widget, carrying the same unread count as the nav badge.
+	 *
+	 * Opening the queue marks what it lists as read, so the count clears itself by being acted
+	 * on — the widget needs no read receipt of its own.
+	 */
+	private function onCollectStaffAlerts(array &$alerts): void {
+		$alerts[] = [
+			'key' => 'reports',
+			'label' => _T('report_nav'),
+			'count' => $this->currentAccountId > 0
+				? $this->reportService->countUnreadForAccount($this->currentAccountId)
+				: 0,
+			'url' => $this->modulePageUrl,
+			'title' => _T('report_nav_unread_title'),
+		];
+	}
+
+	/**
 	 * Notification poller, only on staff-rendered pages.
 	 *
 	 * No stylesheet link here — moduleMain already emits one from the ModuleHeader hook, which
@@ -145,12 +199,97 @@ class moduleAdmin extends abstractModuleAdmin {
 			return;
 		}
 
-		$this->includeScript('reportAdmin.js?v=2', $moduleHeader);
+		$this->includeScript('reportAdmin.js?v=3', $moduleHeader);
 
 		$moduleHeader .= '<meta name="reportNotifyApi" content="'
 			. sanitizeStr($this->getModulePageURL(['pageName' => 'notifications'], false, true)) . '">';
 		$moduleHeader .= '<meta name="reportNotifyInterval" content="'
 			. (int) $this->getModuleConfig('NOTIFICATION_POLL_SECONDS', 60) . '">';
+	}
+
+	/**
+	 * The [Action] window's script and the form markup it clones.
+	 *
+	 * The <template> carries an empty CSRF token on purpose — this hook also runs while static
+	 * HTML is generated, and a baked-in token would be stale for whoever reads that page later.
+	 * reportAction.js copies a live one off a form already on the page.
+	 */
+	private function onGenerateReportAssets(string &$moduleHeader): void {
+		$this->includeScript('reportAction.js?v=2', $moduleHeader);
+
+		$formHtml = $this->moduleContext->adminPageRenderer->ParseBlock(
+			'REPORT_ACTION_FORM',
+			$this->buildActionFormValues(null, '', '<input type="hidden" name="csrf_token" value="">')
+		);
+
+		$moduleHeader .= $this->generateTemplate('reportActionFormTemplate', $formHtml);
+
+		// The reports window clones the very same page and row blocks, rendered blank: the client
+		// fills them from the postReportsApi payload, and .reportWindowBody drops the columns and
+		// page chrome a window doesn't need. One set of markup serves both.
+		$blank = array_merge($this->getSharedTemplateValues(), [
+			'{$PAGE_TITLE}' => '', '{$QUEUE_URL}' => '', '{$QUEUE_TEXT}' => '',
+			'{$HEADING_POST}' => '', '{$POST_PREVIEW}' => '', '{$POST_UID}' => 0,
+			'{$HEADING_TOTALS}' => sanitizeStr(_T('report_heading_totals')),
+			'{$HEADING_REPORTS}' => sanitizeStr(_T('report_heading_reports_on_post')),
+			'{$STATS_TABLE}' => $this->renderStatsTable([]),
+			'{$TH_DECISION}' => '', '{$CAN_CLEAR}' => '', '{$DECISION_FORM}' => '',
+			// Rendered as the empty case so the clone carries the no-reports message and a hidden
+			// table; the client removes one and reveals the other once the payload arrives.
+			'{$HAS_REPORTS}' => '', '{$NO_REPORTS_TEXT}' => sanitizeStr(_T('report_admin_empty')),
+			'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
+			'{$REPORTS}' => [],
+		]);
+
+		$moduleHeader .= $this->generateTemplate(
+			'reportWindowTemplate',
+			$this->moduleContext->adminPageRenderer->ParseBlock('REPORT_POST_REPORTS_PAGE', $blank)
+		);
+
+		$moduleHeader .= $this->generateTemplate(
+			'reportWindowRowTemplate',
+			$this->moduleContext->adminPageRenderer->ParseBlock('REPORT_POST_REPORT_ROW', array_merge($blank, [
+				'{$STATUS_CLASS}' => '', '{$IS_PENDING}' => '1', '{$REPORT_ID}' => 0,
+				'{$REPORTER_REASON}' => '', '{$REPORTER_IP}' => '', '{$IP_REPORTS_URL}' => '#',
+				'{$DATE_REPORTED}' => '', '{$SHOW_STATUS}' => '',
+				'{$PUBLIC_REASON}' => '', '{$PRIVATE_REASON}' => '',
+				'{$ACTIONED_BY}' => '', '{$ACTIONED_AT}' => '',
+				'{$ACTION_URL}' => '#', '{$VIEW_URL}' => '#',
+			]))
+		);
+	}
+
+	/**
+	 * "Post has been reported" under a post on the live frontend, for staff who can act on it.
+	 *
+	 * The count rides along on the post itself (see the reports join in getBasePostQuery), so
+	 * this costs no query per post.
+	 */
+	private function onRenderReportedNotice(string &$belowComment, Post $post, bool $adminMode): void {
+		// Not on the module's own previews: on a report page every post is reported by
+		// definition, and the link would point back at the page already being read.
+		if ($this->renderingPreview) {
+			return;
+		}
+
+		if (!$adminMode || $post->getPendingReportCount() < 1) {
+			return;
+		}
+
+		$dataUrl = $this->getModulePageURL(
+			['pageName' => 'postReportsApi', 'postUid' => $post->getUid()],
+			false,
+			true
+		);
+
+		// href is the real page so no-JS lands somewhere useful; reportAction.js prefers the
+		// data URL and builds the window from templates instead of navigating.
+		$linkHtml = '<a class="reportedPostLink" data-reports-url="' . sanitizeStr($dataUrl) . '" href="'
+			. sanitizeStr($this->getPostReportsUrl($post->getUid())) . '">'
+			. sanitizeStr(_T('report_post_reported_link', $post->getNumber())) . '</a>';
+
+		$belowComment .= '<div class="reportedPostNotice">'
+			. sanitizeStr(_T('report_post_reported_notice')) . ' ' . $linkHtml . '</div>';
 	}
 
 	/** "View reports" on each post, so a post's report history is reachable from the board. */
@@ -174,6 +313,9 @@ class moduleAdmin extends abstractModuleAdmin {
 			'posts' => $this->drawReportedPosts(),
 			'postReports' => $this->drawPostReports(),
 			'ipReports' => $this->drawIpReports(),
+			'postReportsApi' => $this->handlePostReportsApi(),
+			'reportApi' => $this->handleReportApi(),
+			'action' => $this->drawActionForm(),
 			default => $this->drawReportQueue(),
 		};
 	}
@@ -184,6 +326,15 @@ class moduleAdmin extends abstractModuleAdmin {
 	 */
 	protected function handleModuleRequest(): void {
 		$request = $this->moduleContext->request;
+
+		// The per-row [Dismiss all from IP] button names the report whose reporter to clear. A
+		// submit button can only carry one name/value pair, so it spends it on the id and its
+		// presence stands in for the action.
+		if ((int) $request->getParameter('clearIpReportId', 'POST', 0) > 0) {
+			$this->handleClearIp();
+			return;
+		}
+
 		$action = (string) $request->getParameter('action', 'POST', '');
 
 		match ($action) {
@@ -289,7 +440,12 @@ class moduleAdmin extends abstractModuleAdmin {
 			throw new BoardException(_T('report_error_cannot_clear'));
 		}
 
-		$reporterIp = $this->resolveReporterIp((int) $this->moduleContext->request->getParameter('ipReportId', 'POST', 0));
+		// Named ipReportId by the IP page's bulk form, clearIpReportId by the per-row button.
+		$request = $this->moduleContext->request;
+		$reportId = (int) $request->getParameter('ipReportId', 'POST', 0)
+			?: (int) $request->getParameter('clearIpReportId', 'POST', 0);
+
+		$reporterIp = $this->resolveReporterIp($reportId);
 
 		if ($reporterIp === null) {
 			$this->redirectBack();
@@ -368,6 +524,100 @@ class moduleAdmin extends abstractModuleAdmin {
 		]);
 	}
 
+	/**
+	 * One report, as data.
+	 *
+	 * Fills the [Action] window: the form template is cloned blank from the page head, so the
+	 * report it is about has to arrive separately. Private, not cached — it names the reporter.
+	 */
+	private function handleReportApi(): void {
+		$reportId = (int) $this->moduleContext->request->getParameter('reportId', 'GET', 0);
+		$report = $reportId > 0 ? $this->reportService->getReportById($reportId) : null;
+
+		if ($report === null) {
+			renderPrivateJsonPage(['error' => true], 404);
+			return;
+		}
+
+		// Opening the form is a moderator actually looking at the report.
+		if ($this->currentAccountId > 0) {
+			$this->reportService->markReportsRead([$reportId], $this->currentAccountId);
+		}
+
+		$status = reportStatus::fromValue($report['status']);
+		$postNumber = (int) ($report['post_number'] ?? 0);
+
+		renderPrivateJsonPage([
+			'reportId' => $reportId,
+			'postNumber' => $postNumber,
+			'postUrl' => $this->getPostUrl((int) $report['board_uid'], $postNumber),
+			'boardTitle' => (string) ($report['board_title'] ?? ''),
+			'reason' => (string) ($report['reporter_reason'] ?? ''),
+			// Server-built date markup, inserted as HTML by the client.
+			'dateHtml' => $this->formatDate($report['date_reported'] ?? null),
+			'statusLabel' => $status->label(),
+			'isPending' => $status->isPending(),
+		]);
+	}
+
+	/**
+	 * The reports on one post, as data.
+	 *
+	 * Backs the window opened from the notice under a post: reportAction.js fills the
+	 * REPORT_WINDOW templates with this rather than being handed rendered page HTML, so the
+	 * markup still lives in template files and the window is not carrying a whole admin page.
+	 *
+	 * Private, not cached: the payload includes reporter IPs for staff cleared to see them.
+	 */
+	private function handlePostReportsApi(): void {
+		$postUid = (int) $this->moduleContext->request->getParameter('postUid', 'GET', 0);
+
+		if ($postUid <= 0) {
+			renderPrivateJsonPage(['reports' => [], 'stats' => $this->reportService->getPostReportStats(0)]);
+			return;
+		}
+
+		// Only what still needs a decision: the window is a prompt to act, not a history view.
+		$reports = array_values(array_filter(
+			$this->reportService->getReportsForPost($postUid),
+			static fn(array $report): bool => reportStatus::fromValue($report['status'])->isPending()
+		));
+
+		// Deliberately does NOT mark anything read: the client preloads this for every reported
+		// post on screen, so a fetch is no evidence a moderator looked. Opening the queue or a
+		// report is what counts as reading.
+
+		$payload = [];
+		foreach ($reports as $report) {
+			$status = reportStatus::fromValue($report['status']);
+			$reportId = (int) $report['report_id'];
+
+			$payload[] = [
+				'reportId' => $reportId,
+				'reason' => (string) ($report['reporter_reason'] ?? ''),
+				'ip' => $this->maskIp((string) $report['reporter_ip']),
+				// Server-built markup (date/weekday spans), inserted as HTML by the client.
+				'dateHtml' => $this->formatDate($report['date_reported'] ?? null),
+				'actionedAtHtml' => $this->formatDate($report['actioned_at'] ?? null),
+				'statusLabel' => $status->label(),
+				'statusClass' => $status->rowCssClass(),
+				'isPending' => $status->isPending(),
+				'actionedBy' => (string) ($report['actioned_by_username'] ?? ''),
+				'publicReason' => (string) ($report['public_reason'] ?? ''),
+				'privateReason' => (string) ($report['private_reason'] ?? ''),
+				'ipReportsUrl' => $this->getIpReportsUrl($reportId),
+				'actionUrl' => $this->getActionUrl($reportId),
+				'actionDataUrl' => $this->getReportApiUrl($reportId),
+				'viewUrl' => $this->getModulePageURL(['pageName' => 'view', 'reportId' => $reportId], false, true),
+			];
+		}
+
+		renderPrivateJsonPage([
+			'stats' => $this->reportService->getPostReportStats($postUid),
+			'reports' => $payload,
+		]);
+	}
+
 	// ─── Pages ────────────────────────────────────────────────────
 
 	/** The queue: every report, newest first, filterable by status and board. */
@@ -386,9 +636,14 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->markListedReportsRead($reports);
 		$this->preloadPreviews($reports);
 
+		// A table filtered to one status doesn't need to repeat it on every row, and nothing on
+		// the awaiting-review filter has been actioned, so that column would be empty throughout.
+		$showStatus = $statusFilter === null;
+		$showActionedBy = $statusFilter !== reportStatus::PENDING->value;
+
 		$rows = [];
 		foreach ($reports as $report) {
-			$rows[] = $this->buildReportRow($report);
+			$rows[] = $this->buildReportRow($report, $showStatus, $showActionedBy);
 		}
 
 		$queueUrl = $this->buildQueueUrl($statusParam, $boardFilter);
@@ -401,6 +656,8 @@ class moduleAdmin extends abstractModuleAdmin {
 				'{$REPORTED_POSTS_URL}' => sanitizeStr($this->reportedPostsUrl),
 				'{$REPORTED_POSTS_TEXT}' => sanitizeStr(_T('report_reported_posts_title')),
 				'{$FILTER_HTML}' => $this->renderStatusFilter($statusParam),
+				'{$TH_DECISION}' => sanitizeStr(_T($showStatus ? 'report_th_status' : 'report_th_decision_reasons')),
+				'{$SHOW_ACTIONED_BY}' => $showActionedBy ? '1' : '',
 				'{$DECISION_FORM}' => $this->renderDecisionForm(),
 				'{$REPORTS}' => $rows,
 				'{$HAS_REPORTS}' => empty($rows) ? '' : '1',
@@ -544,6 +801,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			[
 				'{$PAGE_TITLE}' => sanitizeStr(_T('report_ip_reports_title', $maskedIp)),
 				'{$HEADING_REPORTS}' => sanitizeStr(_T('report_heading_reports_from_ip')),
+				'{$TH_DECISION}' => sanitizeStr(_T('report_th_status')),
 				'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
 				'{$QUEUE_URL}' => sanitizeStr($this->modulePageUrl),
 				'{$QUEUE_TEXT}' => sanitizeStr(_T('report_back_to_queue')),
@@ -561,6 +819,60 @@ class moduleAdmin extends abstractModuleAdmin {
 		));
 
 		$this->outputAdminPage($contentHtml, drawPager($this->reportsPerPage, $totalReports, $ipReportsUrl, $request));
+	}
+
+	/**
+	 * The approve/dismiss form for a single report.
+	 *
+	 * Laid out like the reader's report form — the post, who reported it and why, then the two
+	 * reasons — so acting on a report reads the same way filing one does. reportAction.js opens
+	 * the same markup in a window from the report tables; this page is what no-JS lands on.
+	 */
+	private function drawActionForm(): void {
+		$reportId = (int) $this->moduleContext->request->getParameter('reportId', 'GET', 0);
+		$report = $reportId > 0 ? $this->reportService->getReportById($reportId) : null;
+
+		if ($report === null) {
+			throw new BoardException(_T('report_error_not_found'));
+		}
+
+		if ($this->currentAccountId > 0) {
+			$this->reportService->markReportsRead([$reportId], $this->currentAccountId);
+		}
+
+		$postUid = (int) $report['post_uid'];
+		$this->reportPostPreview->preloadQuoteLinks([$postUid]);
+
+		$contentHtml = $this->moduleContext->adminPageRenderer->ParseBlock(
+			'REPORT_ACTION_FORM',
+			$this->buildActionFormValues($report, $this->renderPostPreview($postUid), getCsrfHiddenInput())
+		);
+
+		$this->outputAdminPage($contentHtml);
+	}
+
+	/**
+	 * Values for REPORT_ACTION_FORM.
+	 *
+	 * Filled in twice: populated for the page, and blank for the <template> reportAction.js
+	 * clones into its window.
+	 */
+	private function buildActionFormValues(?array $report, string $postPreviewHtml, string $csrfInput): array {
+		$postNumber = (int) ($report['post_number'] ?? 0);
+		$boardUid = (int) ($report['board_uid'] ?? 0);
+
+		return array_merge($this->getSharedTemplateValues(), [
+			'{$FORM_TITLE}' => sanitizeStr(_T('report_action_title')),
+			'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
+			'{$CSRF_TOKEN}' => $csrfInput,
+			'{$REPORT_ID}' => (int) ($report['report_id'] ?? 0),
+			'{$POST_NUMBER}' => $postNumber ?: '',
+			'{$POST_URL}' => sanitizeStr($this->getPostUrl($boardUid, $postNumber)),
+			'{$BOARD_TITLE}' => sanitizeStr((string) ($report['board_title'] ?? '')),
+			'{$REPORTER_REASON}' => newLinesToBreakLines(sanitizeStr((string) ($report['reporter_reason'] ?? ''))),
+			'{$DATE_REPORTED}' => $this->formatDate($report['date_reported'] ?? null),
+			'{$POST_PREVIEW}' => $postPreviewHtml,
+		]);
 	}
 
 	/** One post's report history: the post, its tallies, and every report filed against it. */
@@ -593,6 +905,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			[
 				'{$PAGE_TITLE}' => sanitizeStr(_T('report_post_reports_title', (string) ($postNumber ?? '?'))),
 				'{$HEADING_REPORTS}' => sanitizeStr(_T('report_heading_reports_on_post')),
+				'{$TH_DECISION}' => sanitizeStr(_T('report_th_status')),
 				'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
 				'{$QUEUE_URL}' => sanitizeStr($this->modulePageUrl),
 				'{$QUEUE_TEXT}' => sanitizeStr(_T('report_back_to_queue')),
@@ -638,6 +951,12 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$DISMISS_HINT}' => sanitizeStr(_T('report_dismiss_hint')),
 			'{$VIEW_TEXT}' => sanitizeStr(_T('report_view_link')),
 			'{$IP_REPORTS_TEXT}' => sanitizeStr(_T('report_ip_reports_link')),
+			'{$ACTION_TEXT}' => sanitizeStr(_T('report_action_link')),
+			'{$CLEAR_IP_TEXT}' => sanitizeStr(_T('report_clear_ip_row')),
+			'{$CLEAR_IP_HINT}' => sanitizeStr(_T('report_clear_ip_hint')),
+			'{$TH_REPORTER_REASON}' => sanitizeStr(_T('report_th_reporter_reason')),
+			'{$SHOW_STATUS}' => '1',
+			'{$SHOW_ACTIONED_BY}' => '1',
 			'{$HEADING_TOTALS}' => sanitizeStr(_T('report_heading_totals')),
 			'{$HEADING_DETAILS}' => sanitizeStr(_T('report_heading_details')),
 			'{$HEADING_POST}' => sanitizeStr(_T('report_heading_post')),
@@ -648,7 +967,6 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$PRIVATE_REASON_HINT}' => sanitizeStr(_T('report_private_reason_hint')),
 			'{$TH_SELECT}' => '',
 			'{$SELECT_DISABLED_TITLE}' => sanitizeStr(_T('report_select_disabled_title')),
-			'{$TH_ID}' => sanitizeStr(_T('report_th_id')),
 			'{$TH_POST}' => sanitizeStr(_T('report_th_post')),
 			'{$TH_PREVIEW}' => sanitizeStr(_T('report_th_preview')),
 			'{$TH_BOARD}' => sanitizeStr(_T('report_th_board')),
@@ -662,7 +980,17 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	/** One row of the report table. */
-	private function buildReportRow(array $report): array {
+	/**
+	 * One row of a report table.
+	 *
+	 * @param bool $showStatus     Whether the decision column names the status. False on a table
+	 *                             already filtered to one status, where the label would just
+	 *                             repeat the filter — the reasons get the column instead.
+	 * @param bool $showActionedBy Whether to render the actioned-by column at all. False on the
+	 *                             awaiting-review filter, where nothing has been actioned yet so
+	 *                             every cell would be blank.
+	 */
+	private function buildReportRow(array $report, bool $showStatus = true, bool $showActionedBy = true): array {
 		$status = reportStatus::fromValue($report['status']);
 		$postUid = (int) $report['post_uid'];
 		$reportId = (int) $report['report_id'];
@@ -680,6 +1008,10 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$STATUS_LABEL}' => sanitizeStr($status->label()),
 			'{$STATUS_CLASS}' => $status->rowCssClass(),
 			'{$IS_PENDING}' => $status->isPending() ? '1' : '',
+			'{$SHOW_STATUS}' => $showStatus ? '1' : '',
+			'{$SHOW_ACTIONED_BY}' => $showActionedBy ? '1' : '',
+			'{$ACTION_URL}' => sanitizeStr($this->getActionUrl($reportId)),
+			'{$ACTION_DATA_URL}' => sanitizeStr($this->getReportApiUrl($reportId)),
 			'{$ACTIONED_BY}' => sanitizeStr((string) ($report['actioned_by_username'] ?? '')),
 			'{$ACTIONED_AT}' => $this->formatDate($report['actioned_at'] ?? null),
 			'{$PUBLIC_REASON}' => newLinesToBreakLines(sanitizeStr((string) ($report['public_reason'] ?? ''))),
@@ -719,13 +1051,22 @@ class moduleAdmin extends abstractModuleAdmin {
 	 */
 	private function getStatsTemplateValues(array $stats): array {
 		$counts = [
-			'{$REPORT_COUNT}' => $stats['report_count'],
-			'{$PENDING_COUNT}' => $stats['pending_count'],
-			'{$APPROVED_COUNT}' => $stats['approved_count'],
-			'{$DISMISSED_COUNT}' => $stats['dismissed_count'],
+			'{$REPORT_COUNT}' => $stats['report_count'] ?? 0,
+			'{$PENDING_COUNT}' => $stats['pending_count'] ?? 0,
+			'{$APPROVED_COUNT}' => $stats['approved_count'] ?? 0,
+			'{$DISMISSED_COUNT}' => $stats['dismissed_count'] ?? 0,
 		];
 
-		$statsTableHtml = $this->moduleContext->adminPageRenderer->ParseBlock('REPORT_STATS_TABLE', $counts + [
+		return $counts + ['{$STATS_TABLE}' => $this->renderStatsTable($stats)];
+	}
+
+	/** The tallies table on its own, so the reports window can clone a blank one. */
+	private function renderStatsTable(array $stats): string {
+		return $this->moduleContext->adminPageRenderer->ParseBlock('REPORT_STATS_TABLE', [
+			'{$REPORT_COUNT}' => $stats['report_count'] ?? '',
+			'{$PENDING_COUNT}' => $stats['pending_count'] ?? '',
+			'{$APPROVED_COUNT}' => $stats['approved_count'] ?? '',
+			'{$DISMISSED_COUNT}' => $stats['dismissed_count'] ?? '',
 			'{$TH_STAT}' => sanitizeStr(_T('report_th_stat')),
 			'{$TH_COUNT}' => sanitizeStr(_T('report_th_count')),
 			'{$LABEL_TOTAL}' => sanitizeStr(_T('report_stat_total')),
@@ -733,8 +1074,6 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$LABEL_APPROVED}' => sanitizeStr(_T('report_status_approved')),
 			'{$LABEL_DISMISSED}' => sanitizeStr(_T('report_status_dismissed')),
 		]);
-
-		return $counts + ['{$STATS_TABLE}' => $statsTableHtml];
 	}
 
 	/** Stats table for everything filed from one reporter's IP. */
@@ -896,6 +1235,16 @@ class moduleAdmin extends abstractModuleAdmin {
 		return $this->getModulePageURL($parameters, false, true);
 	}
 
+	/** The single-report approve/dismiss form. */
+	/** The data behind the [Action] window. */
+	private function getReportApiUrl(int $reportId): string {
+		return $this->getModulePageURL(['pageName' => 'reportApi', 'reportId' => $reportId], false, true);
+	}
+
+	private function getActionUrl(int $reportId): string {
+		return $this->getModulePageURL(['pageName' => 'action', 'reportId' => $reportId], false, true);
+	}
+
 	private function getPostReportsUrl(int $postUid): string {
 		return $this->getModulePageURL(['pageName' => 'postReports', 'postUid' => $postUid], false, true);
 	}
@@ -946,7 +1295,16 @@ class moduleAdmin extends abstractModuleAdmin {
 			return '<div class="reportMissingPost">' . sanitizeStr(_T('report_post_unavailable')) . '</div>';
 		}
 
-		return $this->reportPostPreview->render($post, true);
+		// Flagged for the duration so the BelowComment listener above can tell this render apart
+		// from a post being drawn on the board. finally, because a render that throws must not
+		// leave the flag set for the rest of the request.
+		$this->renderingPreview = true;
+
+		try {
+			return $this->reportPostPreview->render($post, true);
+		} finally {
+			$this->renderingPreview = false;
+		}
 	}
 
 	/**

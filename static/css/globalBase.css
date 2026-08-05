@@ -659,6 +659,86 @@
 	right: 5px;  /* Adjust the distance from the right */
 }
 
+/************************ Mass moderation ******************************/
+
+/* Sits above the password row inside #userdelete, so it rides the same bottom-right corner. */
+.massModerateBar {
+	text-align: right;
+	user-select: none;
+}
+
+.massModerateHidden {
+	display: none;
+}
+
+.massModerateFloating {
+	position: fixed;
+	right: 5px;
+	bottom: 5px;
+	z-index: 999;
+}
+
+.massModerateWindow {
+	padding: 0.5em;
+	text-align: center;
+	font-size: var(--font-size-small);
+}
+
+.massModerateStatus {
+	padding-bottom: 0.4em;
+	border-bottom: 1px solid var(--color-border, rgba(128, 128, 128, 0.4));
+}
+
+.massModerateList {
+	max-height: 50vh;
+	overflow-y: auto;
+}
+
+/* Each section is its own list under its own header. */
+.massModerateGroup + .massModerateGroup {
+	margin-top: 0.5em;
+}
+
+.massModerateGroupHeader {
+	margin-bottom: 0.2em;
+	font-size: var(--font-size-x-small);
+	font-weight: var(--font-weight-bold);
+	border-bottom: 1px solid var(--color-border, rgba(128, 128, 128, 0.4));
+}
+
+.massModerateGroup .littlelist {
+	margin: 0 auto;
+}
+
+.massModerateList .massModerateItem a {
+	display: block;
+	padding: 0.2em 0.6em;
+	cursor: pointer;
+}
+
+.massModerateList .massModerateItem a:hover {
+	font-weight: var(--font-weight-bold);
+}
+
+.massModerateExtra {
+	text-align: left;
+	max-height: 50vh;
+	overflow-y: auto;
+}
+
+.massModerateExtra:not(:empty) {
+	padding: 0.4em 0;
+}
+
+.massModerateControls {
+	padding-top: 0.4em;
+}
+
+.massModerateBusy {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
 .selectlinktextjs {
 	font-size: var(--font-size-x-small);
 	user-select: none;

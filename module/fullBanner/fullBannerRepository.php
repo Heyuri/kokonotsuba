@@ -33,6 +33,15 @@ class fullBannerRepository extends baseRepository {
 		return (int)($this->databaseConnection->fetchColumn($query) ?? 0);
 	}
 
+	/**
+	 * Banners submitted by readers that no one has approved or deleted yet — the queue behind
+	 * the staff alerts widget's Banners row.
+	 */
+	public function countPendingBanners(): int {
+		$query = "SELECT COUNT(*) FROM {$this->table} WHERE is_approved = 0";
+		return (int)($this->databaseConnection->fetchColumn($query) ?? 0);
+	}
+
 	public function getAllBanners(): array {
 		$query = "SELECT * FROM {$this->table} ORDER BY date_submitted DESC";
 		return $this->databaseConnection->fetchAllAsClass($query, [], fullBannerEntry::class);

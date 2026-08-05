@@ -3,11 +3,13 @@
 namespace Kokonotsuba\Modules\deletedPosts;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\listeners\MassModerateListenerTrait;
 use Kokonotsuba\userRole;
 use Kokonotsuba\account\staffAccountFromSession;
 
 use function Puchiko\request\redirect;
 use function Puchiko\json\renderJsonPage;
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\requirePostWithCsrf;
 
 // require helper classes
@@ -17,6 +19,8 @@ require __DIR__ . '/deletedPostRenderer.php';
 require __DIR__ . '/deletedPostUIHooks.php';
 
 class moduleAdmin extends abstractModuleAdmin {
+	use MassModerateListenerTrait;
+
 	// property to store the url of the module
 	private string $modulePageUrl;
 
@@ -106,9 +110,34 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// run hooks
 		$deletedPostUIHooks->runHooks(
-			$this->moduleContext->moduleEngine, 
+			$this->moduleContext->moduleEngine,
 			$this->getRequiredRole()
 		);
+
+		// bulk restore for anyone who may see deleted posts, purge only for the higher role
+		$this->listenMassModerateTools('onMassModerateRestoreTool', 80);
+		$this->listenMassModerateTools('onMassModeratePurgeTool', 70, $this->requiredRoleActionForModAll);
+	}
+
+	private function onMassModerateRestoreTool(array &$tools): void {
+		$tools[] = $this->buildMassTool('restore', 'Restore', [
+			'url' => $this->modulePageUrl,
+			'group' => 'Deleted posts',
+			'effect' => 'restore',
+			'requires' => 'deleted',
+			'priority' => 80,
+		]);
+	}
+
+	private function onMassModeratePurgeTool(array &$tools): void {
+		$tools[] = $this->buildMassTool('purge', 'Purge', [
+			'url' => $this->modulePageUrl,
+			'group' => 'Deleted posts',
+			'effect' => 'purge',
+			'requires' => 'deleted',
+			'confirm' => _T('mass_moderate_confirm'),
+			'priority' => 70,
+		]);
 	}
 
 	private function pruneDeletedPosts(): void {

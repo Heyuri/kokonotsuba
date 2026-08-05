@@ -112,7 +112,7 @@ $language['admin_stop_btn']				= 'Stop';
 $language['admin_totalsize']			= '[Total size of images: <b>%1$s</b> KB ]';
 $language['search_disabled']			= 'Search is disabled!';
 $language['search_top']					= 'Search';
-$language['search_notice']				= '<li>Enter keywords into the desired fields, then press the <q>Search</q> button.</li><li>The <i>General</i> field will search all available text fields.</li><li>Separate multiple keywords with spaces. <i>Match mode</i> chooses whether posts must contain <q>all</q> (AND) or <q>any</q> (OR) of them.</li><li>Prefix a keyword with <q>-</q> to exclude posts that contain it (e.g. <q>cat -dog</q>).</li><li>You can choose to match whole words, and also choose which boards to return posts from.</li><li>Note: words shorter than 3 letters and very common words may be ignored, and only letters and numbers are searched - punctuation and other symbols are skipped.</li>';
+$language['search_notice']				= '<li>Enter keywords into the desired fields, then press the <q>Search</q> button.</li><li>The <i>General</i> field will search all available text fields.</li><li>Separate multiple keywords with spaces. <i>Match mode</i> chooses whether posts must contain <q>all</q> (AND) or <q>any</q> (OR) of them.</li><li>Prefix a keyword with <q>-</q> to exclude posts that contain it (e.g. <q>cat -dog</q>).</li><li>You can choose to match whole words, and also choose which boards to return posts from.</li><li>The <i>From</i> and <i>To</i> dates limit results to posts made in that range (both days included). A date range works on its own, without any keywords.</li><li>Note: words shorter than 3 letters and very common words may be ignored, and only letters and numbers are searched - punctuation and other symbols are skipped.</li>';
 $language['search_keyword']				= 'Keyword';
 $language['search_target']				= 'Target';
 $language['search_target_comment']		= 'Comment';
@@ -122,6 +122,8 @@ $language['search_target_file_name']	= 'File name';
 $language['search_target_subject']		= 'Subject';
 $language['search_target_number']		= 'No.';
 $language['search_target_general']		= 'General';
+$language['search_target_date_from']	= 'From';
+$language['search_target_date_to']		= 'To';
 $language['search_target_matchword']	= 'Match whole words';
 $language['search_target_matchmode']	= 'Match mode';
 $language['search_matchmode_and']		= 'All keywords (AND)';
@@ -325,6 +327,20 @@ $language['pm_notification_title'] = 'New private messages';
 $language['pm_notification_body'] = 'You have %d unread message(s).';
 
 $language['admin_nav_capcodes_title'] = 'Manage user capcodes and view staff capcodes';
+// mass moderation window (post checkboxes)
+$language['mass_moderate_open'] = 'Moderate';
+$language['mass_moderate_title'] = 'Moderate selected';
+$language['mass_moderate_status'] = '%1$s posts selected, %2$s threads';
+$language['mass_moderate_apply'] = 'Apply';
+$language['mass_moderate_back'] = 'Back';
+$language['mass_moderate_none_selected'] = 'No posts are selected.';
+$language['mass_moderate_no_threads'] = 'That action needs threads to be selected.';
+// {action} and {count} are filled in by massModerate.js, so they are not sprintf placeholders:
+// _T() runs the string through sprintf, which would demand the arguments here.
+$language['mass_moderate_confirm'] = 'Apply "{action}" to {count} selected posts?';
+$language['mass_moderate_done'] = '{action}: {count} done';
+$language['mass_moderate_failed'] = 'Mass action failed.';
+
 $language['admin_nav_capcodes'] = 'Capcodes';
 $language['admin_nav_blotter_title'] = 'Manage blotter';
 $language['admin_nav_blotter'] = 'Blotter';
@@ -471,6 +487,24 @@ $language['fullbanner_submit_heading'] = 'Submit a banner';
 $language['fullbanner_submit_button'] = 'Submit banner';
 $language['fullbanner_upload_heading'] = 'Upload banner (Auto-Approved)';
 $language['fullbanner_upload_button'] = 'Upload banner';
+$language['fullbanner_alert_label'] = 'Banners';
+$language['fullbanner_alert_title'] = 'Submitted banners awaiting approval';
+
+// staffNav module
+$language['staffnav_title'] = 'Staff navigation';
+// Who the bar says you are signed in as: name, then role.
+$language['staffnav_user'] = '%1$s (%2$s)';
+// Drop-up names. A module names one of these keys (bare, e.g. 'bans') when it registers its nav
+// link; an unknown key falls back to showing itself.
+$language['staffnav_group_bans'] = 'Bans & spam';
+$language['staffnav_group_content'] = 'Content';
+$language['staffnav_group_tools'] = 'Tools';
+
+// staffAlerts module
+$language['staffalerts_title'] = 'Alerts';
+$language['staffalerts_unread_title'] = 'Entries you have not read yet';
+$language['staffalerts_collapse'] = 'Collapse the alerts widget';
+$language['staffalerts_expand'] = 'Show the alerts widget';
 
 $language['quick_reply_link'] = 'Quick reply';
 
@@ -1020,7 +1054,7 @@ $language['config_label_modules.wordFilter.FILTERS'] = 'Word filters';
 $language['report_widget_label'] = 'Report';
 $language['report_widget_title'] = 'Report post';
 $language['report_widget_view_reports'] = 'View reports';
-$language['report_adminbar_link'] = 'Report';
+$language['report_adminbar_link'] = 'Reports';
 $language['report_form_title'] = 'Report a post';
 $language['report_reason_hint'] = 'Optional. Describe what\'s wrong with it.';
 $language['report_submit'] = 'Send report';
@@ -1062,9 +1096,16 @@ $language['report_post_unavailable'] = 'This post is no longer available.';
 $language['report_ip_reports_title'] = 'Reports from %1$s';
 $language['report_ip_reports_link'] = 'All reports from this reporter';
 $language['report_clear_ip'] = 'Dismiss all reports from this reporter';
+$language['report_clear_ip_row'] = 'Dismiss all from IP';
 $language['report_clear_ip_hint'] = 'Closes every report from this address that is still awaiting review.';
 
 $language['report_th_stat'] = 'Report status';
+$language['report_th_decision_reasons'] = 'Reasons';
+$language['report_action_link'] = 'Action';
+$language['report_action_title'] = 'Action this report';
+$language['report_post_reported_notice'] = 'This post has been reported.';
+$language['report_post_reported_link'] = 'View all reports for post No.%1$s';
+$language['report_auto_approved_reason'] = 'The reported post was deleted.';
 $language['report_th_count'] = 'Count';
 $language['report_stat_total'] = 'Total reports';
 
@@ -1100,7 +1141,6 @@ $language['report_filter_pending'] = 'Awaiting review';
 $language['report_filter_approved'] = 'Approved';
 $language['report_filter_dismissed'] = 'Dismissed';
 
-$language['report_th_id'] = 'ID';
 $language['report_th_preview'] = 'Preview';
 $language['report_th_post'] = 'Post';
 $language['report_th_post_number'] = 'Post number';
@@ -1123,6 +1163,12 @@ $language['report_th_dismissed_count'] = 'Dismissed';
 $language['report_th_last_reported'] = 'Last reported';
 
 $language['config_label_ModuleList.report'] = 'Post reports';
+$language['config_label_ModuleList.staffAlerts'] = 'Staff alerts widget';
+$language['config_label_ModuleList.staffNav'] = 'Staff navigation bar';
+
+// module/staffAlerts/config.php
+$language['config_label_modules.staffAlerts.POLL_SECONDS'] = 'Staff alerts poll interval';
+$language['config_desc_modules.staffAlerts.POLL_SECONDS'] = 'How often, in seconds, the staff alerts widget refreshes its counts.';
 
 // module/report/config.php
 $language['config_label_modules.report.REASON_MAX_LENGTH'] = 'Report reason length limit';

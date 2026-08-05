@@ -38,7 +38,8 @@ class threadRepository extends baseRepository {
 		private string $soudaneTable,
 		private string $noteTable,
 		private string $countryFlagTable = '',
-		private string $displayIpTable = ''
+		private string $displayIpTable = '',
+		private string $reportTable = ''
 	) {
 		parent::__construct($databaseConnection, $threadTable);
 		self::validateTableNames($postTable, $threadThemeTable, $deletedPostsTable, $fileTable, $accountTable, $soudaneTable, $noteTable);
@@ -623,7 +624,7 @@ class threadRepository extends baseRepository {
 			$this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table,
 			$this->soudaneTable, $this->noteTable, $this->accountTable,
 			$includeDeleted, false, $this->countryFlagTable, $this->displayIpTable,
-			includeObjectivePosition: false
+			includeObjectivePosition: false, reportTable: $this->reportTable
 		);
 		$query .= " WHERE p.post_uid IN {$placeholders} ORDER BY p.post_uid ASC";
 
@@ -808,7 +809,7 @@ class threadRepository extends baseRepository {
 			$this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table,
 			$this->soudaneTable, $this->noteTable, $this->accountTable,
 			$includeDeleted, false, $this->countryFlagTable, $this->displayIpTable,
-			includeObjectivePosition: false
+			includeObjectivePosition: false, reportTable: $this->reportTable
 		);
 		$query .= " WHERE p.post_uid IN {$placeholders} ORDER BY p.post_uid ASC";
 
@@ -865,7 +866,7 @@ class threadRepository extends baseRepository {
 	 */
 	public function getAllPostsFromThread(string $threadUID, bool $includeDeleted = false): ?array {
 		// Generate the base query
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable, includeObjectivePosition: false);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable, includeObjectivePosition: false, reportTable: $this->reportTable);
 
 		// Add thread condition
 		$query .= " WHERE p.thread_uid = :thread_uid";
@@ -908,7 +909,7 @@ class threadRepository extends baseRepository {
 	 */
 	public function getVisiblePostsFromDeletedThread(string $threadUID): ?array {
 		// viewDeleted=false filters out deleted posts in the subquery
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, false, false, $this->countryFlagTable, $this->displayIpTable, includeObjectivePosition: false);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, false, false, $this->countryFlagTable, $this->displayIpTable, includeObjectivePosition: false, reportTable: $this->reportTable);
 
 		// Filter by thread — intentionally no excludeDeletedThreadsCondition
 		// so the query works even when the OP is deleted
@@ -938,7 +939,7 @@ class threadRepository extends baseRepository {
 	 * @return Post[]|null Array of Post objects, or null if none found.
 	 */
 	public function getRepliesAfterPostNumber(string $threadUID, int $afterPostNo, bool $includeDeleted = false): ?array {
-		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable, includeObjectivePosition: false);
+		$query = getBasePostQuery($this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable, includeObjectivePosition: false, reportTable: $this->reportTable);
 
 		$query .= " WHERE p.thread_uid = :thread_uid AND p.is_op = 0 AND p.no > :after_no";
 
@@ -1027,7 +1028,7 @@ class threadRepository extends baseRepository {
 			$this->postTable, $this->deletedPostsTable, $this->fileTable, $this->table,
 			$this->soudaneTable, $this->noteTable, $this->accountTable,
 			$includeDeleted, false, $this->countryFlagTable, $this->displayIpTable,
-			includeObjectivePosition: false
+			includeObjectivePosition: false, reportTable: $this->reportTable
 		);
 		$query .= " WHERE p.post_uid IN {$placeholders} ORDER BY p.no ASC";
 

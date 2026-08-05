@@ -4,5 +4,6 @@
 		<div id="footerText">{$FOOTTEXT}</div>
 	</div>
 	<div id="bottom"></div>
+	{$PAGE_BOTTOM}
 </body>
 </html>

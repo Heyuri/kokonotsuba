@@ -2,6 +2,9 @@
 
 namespace Kokonotsuba\post;
 
+use DateTimeImmutable;
+use DateTimeZone;
+
 /** Service for full-text post searching: field sanitization, boolean query building, and result pagination. */
 class postSearchService {
 	public function __construct(
@@ -136,6 +139,8 @@ class postSearchService {
 	 * @param int    $page            Zero-based page number.
 	 * @param int    $postsPerPage    Number of posts per page.
 	 * @param string $searchMode      How to combine keywords: 'and' (all required) or 'or' (any). '-word' always excludes.
+	 * @param string|null $dateAfter  Inclusive lower bound on the post timestamp, as a UTC 'Y-m-d H:i:s' string.
+	 * @param string|null $dateBefore Exclusive upper bound on the post timestamp, as a UTC 'Y-m-d H:i:s' string.
 	 * @return array|null Associative array with 'results_data' and 'total_posts', or null if no results.
 	 */
 	public function searchPosts(
@@ -146,7 +151,9 @@ class postSearchService {
 		bool $openingPostOnly = false,
 		int $page = 1,
 		int $postsPerPage = 20,
-		string $searchMode = 'and'
+		string $searchMode = 'and',
+		?string $dateAfter = null,
+		?string $dateBefore = null
 	): ?array {
 		// Normalize the combine mode; anything other than 'or' falls back to 'and'.
 		$searchMode = strtolower($searchMode) === 'or' ? 'or' : 'and';
@@ -178,6 +185,11 @@ class postSearchService {
 			unset($fields['name']);
 			$fields['name_tripcode'] = $tripcodeCandidate;
 		}
+
+		// The date range is compared against the timestamp column rather than tokenized,
+		// so it is added after the full-text pass. It arrives as its own arguments (not
+		// through $fields) so a caller cannot smuggle a raw value into the comparison.
+		$fields += $this->buildDateRangeFields($dateAfter, $dateBefore);
 
 		// calculate pagination parameters
 		$offset = ($page - 1) * $postsPerPage;
@@ -220,6 +232,67 @@ class postSearchService {
 		return trim($matches[1]);
 	}
 
+	/**
+	 * Validate the date-range bounds and turn them into repository search fields.
+	 *
+	 * The range is half-open: 'root_after' is compared with >= and 'root_before' with
+	 * <, so a caller wanting a whole calendar day included passes midnight of the day
+	 * after it. Both bounds are UTC, matching how post timestamps are stored — the
+	 * caller is responsible for converting from whatever time zone it displays. A
+	 * bound that is not a well-formed datetime is dropped rather than rejected, so a
+	 * mangled URL narrows the search instead of erroring out.
+	 *
+	 * @param string|null $dateAfter  Lower bound as a UTC 'Y-m-d H:i:s' string.
+	 * @param string|null $dateBefore Upper bound as a UTC 'Y-m-d H:i:s' string.
+	 * @return array Map with optional 'root_after' / 'root_before' keys.
+	 */
+	private function buildDateRangeFields(?string $dateAfter, ?string $dateBefore): array {
+		$after = $this->normalizeSqlDateTime($dateAfter);
+		$before = $this->normalizeSqlDateTime($dateBefore);
+
+		// A reversed range can never match; read it as the range the user meant.
+		if ($after !== null && $before !== null && $after > $before) {
+			[$after, $before] = [$before, $after];
+		}
+
+		$dateFields = [];
+
+		if ($after !== null) {
+			$dateFields['root_after'] = $after;
+		}
+
+		if ($before !== null) {
+			$dateFields['root_before'] = $before;
+		}
+
+		return $dateFields;
+	}
+
+	/**
+	 * Accept a UTC 'Y-m-d H:i:s' string, rejecting anything that is not exactly that.
+	 *
+	 * Values that only look like dates (impossible days such as 2026-02-31, or extra
+	 * trailing text) fail the round-trip check and return null.
+	 *
+	 * @param string|null $value Raw bound value.
+	 * @return string|null The normalized datetime, or null if the input is empty or malformed.
+	 */
+	private function normalizeSqlDateTime(?string $value): ?string {
+		$value = trim((string) $value);
+
+		if ($value === '') {
+			return null;
+		}
+
+		$date = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $value, new DateTimeZone('UTC'));
+
+		if ($date === false || $date->format('Y-m-d H:i:s') !== $value) {
+			return null;
+		}
+
+		return $value;
+	}
+
 	private function sanitizeFields(array $fields): array {
 		// Define allowed fields
 		$allowedFields = [
@@ -242,14 +315,15 @@ class postSearchService {
 			'no', 
 			
 			// file name field for any files attached to the post
-			'file_name', 
-			
-			// timestamp of the post
-			'root',
+			'file_name',
 
 			// tag (exact match abbreviation)
 			'tag',
 		];
+
+		// note: the post timestamp ('root') is deliberately absent — it is a datetime
+		// with no FULLTEXT index, and is filtered through the $dateAfter / $dateBefore
+		// arguments of searchPosts() instead.
 
 		// Remove any fields that are not allowed
 		$fields = array_intersect_key($fields, array_flip($allowedFields));

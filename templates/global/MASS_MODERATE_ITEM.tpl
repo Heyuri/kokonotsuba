@@ -1,0 +1,1 @@
+<li class="massModerateItem"><a href="#" data-mm-action="{$MM_ACTION}" data-mm-url="{$MM_URL}" data-mm-scope="{$MM_SCOPE}" data-mm-effect="{$MM_EFFECT}" data-mm-requires="{$MM_REQUIRES}" data-mm-indicator="{$MM_INDICATOR}" data-mm-form="{$MM_FORM}" data-mm-confirm="{$MM_CONFIRM}" data-mm-params="{$MM_PARAMS}">{$MM_LABEL}</a></li>

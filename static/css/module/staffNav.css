@@ -1,0 +1,145 @@
+/**
+ * staffNav.css — the sticky staff nav.
+ *
+ * A .theading bar across the top of the page, above the board list and the admin bar, that sticks
+ * to the top of the viewport as the page scrolls. It takes the theme's heading colours as they
+ * come; everything here is layout, plus the drop-downs, which are anchored to their own button
+ * rather than positioned in JS.
+ */
+
+.staffNav {
+	/* Sticky rather than fixed: the bar keeps its place in the flow, so it pushes the page down
+	   instead of covering it, and no one has to measure its height to make room. */
+	position: sticky;
+	top: 0;
+	width: 100%;
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+	/* Sized against the page rather than against whatever it is nested in, so the two ways the
+	   bar reaches the page read identically. */
+	font-size: var(--font-size-main, medium);
+	/* Above what it scrolls over, below any window the moderator opens — a window sitting over
+	   the bar can be dragged off it, a bar sitting over a window cannot. */
+	z-index: 99;
+	margin: 0;
+	padding: 0;
+	text-align: left;
+}
+
+/* Switched off under Staff in the settings window. Spelled out because the display above would
+   otherwise win over the attribute. */
+.staffNav[hidden] {
+	display: none;
+}
+
+.staffNavList {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0 0.75em;
+	flex: 1 1 auto;
+	margin: 0;
+	padding: 0.25em 0.5em;
+	list-style: none;
+	font-size: var(--font-size-regular, 1em);
+	font-weight: var(--font-weight-normal, normal);
+}
+
+/* Signed in as. Pinned to the right end and kept out of the link list, so it stays put when the
+   links wrap onto a second row. */
+.staffNavUser {
+	flex: 0 0 auto;
+	margin-left: auto;
+	padding: 0.25em 0.5em;
+	font-size: var(--font-size-regular, 1em);
+	font-weight: var(--font-weight-normal, normal);
+	white-space: nowrap;
+}
+
+.staffNavItem {
+	display: inline-flex;
+	align-items: center;
+}
+
+.staffNav .staffNavLink {
+	color: inherit;
+	text-decoration: none;
+}
+
+.staffNav .staffNavLink:hover {
+	text-decoration: underline;
+}
+
+.staffNavCount {
+	margin-left: 0.25em;
+	font-weight: var(--font-weight-bold);
+}
+
+/* ── Groups (drop-downs) ──────────────────────────────────────────────────── */
+
+.staffNavGroup {
+	position: relative;
+}
+
+.staffNavGroupToggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25em;
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+}
+
+.staffNavGroupToggle:hover .staffNavLabel {
+	text-decoration: underline;
+}
+
+.staffNavArrow {
+	display: inline-block;
+	font-size: var(--font-size-xx-small);
+}
+
+.staffNavGroupOpen .staffNavArrow {
+	transform: rotate(180deg);
+}
+
+/* Anchored to its own button rather than placed in JS — the bar is at the top of the page, so
+   the menu hangs from the button it belongs to. */
+.staffNavMenu {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	min-width: 100%;
+	margin: 0.25em 0 0;
+	padding: 2px 0;
+	list-style: none;
+	background: var(--color-bg-reply);
+	color: var(--color-fg-main);
+	border: 1px solid var(--color-hi-contrast-border);
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+	white-space: nowrap;
+	font-weight: var(--font-weight-normal, normal);
+}
+
+.staffNavMenu[hidden] {
+	display: none;
+}
+
+.staffNavMenu .staffNavItem {
+	display: block;
+}
+
+.staffNavMenu .staffNavLink {
+	display: block;
+	padding: 2px 8px;
+	color: var(--color-fg-link);
+}
+
+.staffNavMenu .staffNavLink:hover {
+	background: rgba(0, 0, 0, 0.05);
+}

@@ -150,6 +150,40 @@ class reportService {
 	}
 
 	/**
+	 * Close the pending reports on posts that have just been deleted.
+	 *
+	 * A post can be deleted from anywhere — the mod tools, a thread cascade, the poster's own
+	 * delete form — and once it is gone its reports have effectively been granted, so they are
+	 * marked approved rather than left in the queue pointing at nothing.
+	 *
+	 * @param array       $postUids  Posts that were deleted.
+	 * @param int|null    $accountId Account that performed the deletion, if any.
+	 * @param string|null $publicReason Reason shown to the reporters.
+	 * @return int Number of reports closed.
+	 */
+	public function approveReportsForDeletedPosts(array $postUids, ?int $accountId, ?string $publicReason): int {
+		$pendingIds = [];
+
+		foreach (array_unique(array_map('intval', $postUids)) as $postUid) {
+			$pendingIds = array_merge($pendingIds, $this->reportRepository->getPendingReportIdsForPost($postUid));
+		}
+
+		if (empty($pendingIds)) {
+			return 0;
+		}
+
+		$this->reportRepository->actionReports(
+			$pendingIds,
+			reportStatus::APPROVED->value,
+			$accountId,
+			$publicReason,
+			null
+		);
+
+		return count($pendingIds);
+	}
+
+	/**
 	 * Dismiss every pending report filed from one IP.
 	 *
 	 * @return int Number of reports cleared.

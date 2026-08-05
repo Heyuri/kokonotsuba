@@ -222,7 +222,6 @@ class postSearchRepository extends baseRepository {
 			'sub'       => 'p.sub',
 			'no'        => 'p.no',
 			'file_name' => 'f.file_name',
-			'root'      => 'p.root',
 			'tag'       => 'p.tag',
 		];
 
@@ -247,6 +246,15 @@ class postSearchRepository extends baseRepository {
 		// tripcode indexes instead of falling back to a full table scan.
 		if (isset($fields['name_tripcode'])) {
 			$clauses[] = "(p.tripcode = :name_tripcode{$suffix} OR p.secure_tripcode = :name_tripcode{$suffix})";
+		}
+
+		// Half-open date range over the (UTC) post timestamp, served by idx_post_root.
+		if (isset($fields['root_after'])) {
+			$clauses[] = "(p.root >= :root_after{$suffix})";
+		}
+
+		if (isset($fields['root_before'])) {
+			$clauses[] = "(p.root < :root_before{$suffix})";
 		}
 
 		if (!empty($boardUids)) {
@@ -311,6 +319,7 @@ class postSearchRepository extends baseRepository {
 		$clauses = [];
 
 		// map of searchable columns
+		// (the post timestamp is not here: it is range-compared below, not full-text matched)
 		$fieldColumns = [
 			'com'       => 'p.com',
 			'name'      => 'p.name',
@@ -318,7 +327,6 @@ class postSearchRepository extends baseRepository {
 			'sub'       => 'p.sub',
 			'no'        => 'p.no',
 			'file_name' => 'f.file_name',
-			'root'      => 'p.root',
 			'tag'       => 'p.tag',
 		];
 
@@ -360,6 +368,17 @@ class postSearchRepository extends baseRepository {
 		// tripcode indexes instead of falling back to a full table scan.
 		if (isset($fields['name_tripcode'])) {
 			$clauses[] = '(p.tripcode = :name_tripcode OR p.secure_tripcode = :name_tripcode)';
+		}
+
+		// build the date range clause (if any)
+		// the range is half-open — inclusive lower bound, exclusive upper bound — and
+		// compares against the UTC timestamp column, which idx_post_root covers
+		if (isset($fields['root_after'])) {
+			$clauses[] = '(p.root >= :root_after)';
+		}
+
+		if (isset($fields['root_before'])) {
+			$clauses[] = '(p.root < :root_before)';
 		}
 
 		// build boardUID clause (if any)

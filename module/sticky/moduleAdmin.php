@@ -14,9 +14,6 @@ use Kokonotsuba\module_classes\traits\ToggleActionTrait;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\generateModerateForm;
-use function Kokonotsuba\libraries\searchBoardArrayForBoard;
-use function Puchiko\json\sendAjaxAndDetach;
-use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use ToggleActionTrait;
@@ -46,7 +43,11 @@ class moduleAdmin extends abstractModuleAdmin {
 	protected function getToggleJsFile(): string { return 'sticky.js'; }
 
 	protected function getToggleUrlParams(Post $post): array {
-		return ['thread_uid' => $post->getThreadUid()];
+		return ['post_uid' => $post->getUid()];
+	}
+
+	protected function getToggleLogLabel(bool $active): string {
+		return $active ? 'Stickied thread' : 'Un-stickied thread';
 	}
 
 	public function initialize(): void {
@@ -87,63 +88,56 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	protected function handleModuleRequest(): void {
-		// Accept post_uid (from widget JS) or thread_uid (from admin control forms)
-		$postUid = $this->moduleContext->request->getParameter('post_uid');
-		if ($postUid) {
-			$post = $this->moduleContext->postRepository->getPostByUid($postUid, true);
-			if (!$post) {
-				throw new BoardException('ERROR: Post does not exist.');
+		// thread_uid is what the older admin control forms send
+		$threadUid = $this->moduleContext->request->getParameter('thread_uid');
+
+		if ($threadUid !== null && !$this->moduleContext->request->hasParameter('post_uid')) {
+			$openingPost = $this->moduleContext->postRepository->getOpeningPostFromThread($threadUid);
+
+			if (!$openingPost) {
+				throw new BoardException('ERROR: Thread does not exist.');
 			}
-			$thread_uid = $post->getThreadUid();
-		} else {
-			$thread_uid = $this->moduleContext->request->getParameter('thread_uid');
-		}
-	
-		// no thread uid selected - throw exception
-		if($thread_uid === null) {
-			throw new BoardException("No thread was selected!");
-		}
-		
-		// get the thread and associated data (thread data, posts, etc)
-		$threadData = $this->moduleContext->threadService->getThreadData($thread_uid, true);
-		
-		// throw an exception if the thread doesn't exist
-		if (!$threadData) {
-			throw new BoardException('ERROR: Thread does not exist.');
+
+			$this->handleToggleRequest([$openingPost->getUid()]);
+			return;
 		}
 
-		// toggle sticky status in the threads table
-		$isStickied = $this->stickyRepository->toggleSticky($thread_uid);
-	
-		// post op number of the thread
-		$post_op_number = $threadData->getOpNumber();
-	
-		// board uid of the thread
-		$boardUid = $threadData->getBoardUID();
+		$this->handleToggleRequest();
+	}
 
-		$this->logAction(
-			'Changed sticky status on post No.' . $post_op_number . ' (' . ($isStickied ? 'true' : 'false') . ')',
-			$boardUid
-		);
-	
-		$board = searchBoardArrayForBoard($boardUid);
-	
-		// ===== AJAX handling updated to use helper =====
-		if($this->moduleContext->request->isAjax()) {
-			// send json first
-			sendAjaxAndDetach([
-				'active' => $isStickied
-			]);
+	/**
+	 * Sticky lives on the thread row rather than the post's flags, so the whole selection is two
+	 * statements: one for the threads being stickied, one for those being un-stickied.
+	 */
+	protected function applyToggleState(array $openingPosts, ?bool $state): array {
+		$threadUids = array_map(fn(Post $post) => $post->getThreadUid(), $openingPosts);
 
-			// rebuild after client already received JSON
-			$board->rebuildBoard();
-			exit;
+		// only needed when flipping each thread from whatever it is now
+		$currentlySticky = $state === null
+			? array_flip($this->stickyRepository->getStickyThreadUids($threadUids))
+			: [];
+
+		$states = [];
+		$toSticky = [];
+		$toUnsticky = [];
+
+		foreach ($openingPosts as $post) {
+			$threadUid = $post->getThreadUid();
+			$next = $state ?? !isset($currentlySticky[$threadUid]);
+
+			if ($next) {
+				$toSticky[] = $threadUid;
+			} else {
+				$toUnsticky[] = $threadUid;
+			}
+
+			$states[$post->getUid()] = $next;
 		}
-		// ===== end AJAX handling =====
-	
-		$board->rebuildBoard();
-	
-		redirect($this->moduleContext->request->getReferer());
+
+		$this->stickyRepository->setStickyForThreads($toSticky, true);
+		$this->stickyRepository->setStickyForThreads($toUnsticky, false);
+
+		return $states;
 	}
 
 }

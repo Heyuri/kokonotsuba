@@ -31,7 +31,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->excimerDir = getBackendGlobalDir() . 'excimer';
 		$this->modulePageUrl = $this->getModulePageURL([], false);
 
-		$this->registerLinksAboveBarHook('View Excimer profiles', $this->modulePageUrl, 'Excimer Profiles');
+		$this->registerLinksAboveBarHook('View Excimer profiles', $this->modulePageUrl, 'Excimer Profiles', 'tools');
 	}
 
 	public function ModulePage() {

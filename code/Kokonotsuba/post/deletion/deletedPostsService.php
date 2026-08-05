@@ -238,6 +238,45 @@ class deletedPostsService {
 		});
 	}
 
+	/**
+	 * Restore several deletion records in one transaction.
+	 *
+	 * Each record still needs its own OP/reply handling, but they share a single commit instead of
+	 * paying for one per post.
+	 *
+	 * @param int[] $deletedPostIds Deletion record IDs.
+	 * @param int   $accountId      Account performing the restore.
+	 */
+	public function restorePosts(array $deletedPostIds, int $accountId): void {
+		if (!$deletedPostIds) {
+			return;
+		}
+
+		$this->inTransaction(function() use($deletedPostIds, $accountId) {
+			foreach ($deletedPostIds as $deletedPostId) {
+				$this->restorePost($deletedPostId, $accountId);
+			}
+		});
+	}
+
+	/**
+	 * Permanently purge several deletion records in one transaction.
+	 *
+	 * @param int[] $deletedPostIds Deletion record IDs.
+	 * @param bool  $logAction      Whether each purge is logged.
+	 */
+	public function purgePosts(array $deletedPostIds, bool $logAction = true): void {
+		if (!$deletedPostIds) {
+			return;
+		}
+
+		$this->inTransaction(function() use($deletedPostIds, $logAction) {
+			foreach ($deletedPostIds as $deletedPostId) {
+				$this->purgePost($deletedPostId, $logAction);
+			}
+		});
+	}
+
 	private function purgePostsFromList(array $deletedPostIdList, bool $attachmentsOnly = false): void {
 		// There could be a query to do it all in one swoop but there's some things that need fine-grained logic (a la OP vs reply) which is tricky to recreate with a single query
 		// will look into re-implementing a different way later
@@ -819,6 +858,16 @@ class deletedPostsService {
 	 * @param int $deletedPostId Deletion record ID.
 	 * @return int|null Board UID, or null if not found.
 	 */
+	/**
+	 * Return the distinct board UIDs behind the given deletion records.
+	 *
+	 * @param int[] $deletedPostIds Deletion record IDs.
+	 * @return int[] Board UIDs.
+	 */
+	public function getBoardUidsByDeletedPostIds(array $deletedPostIds): array {
+		return $this->deletedPostsRepository->getBoardUidsByDeletedPostIds($deletedPostIds);
+	}
+
 	public function getBoardUidByDeletedPostId(int $deletedPostId): ?int {
 		// fetch board uid from database based on the deleted id
 		$boardUid = $this->deletedPostsRepository->getBoardUidByDeletedPostId($deletedPostId);
@@ -837,6 +886,27 @@ class deletedPostsService {
 		$id = $this->deletedPostsRepository->getDeletedPostIdByPostUid($postUid);
 
 		return $id !== false ? $id : null;
+	}
+
+	/**
+	 * Return which of the given deletion records the account itself deleted.
+	 *
+	 * @param int[] $deletedPostIds Deletion record IDs.
+	 * @param int   $accountId      Account ID.
+	 * @return int[] The subset the account owns.
+	 */
+	public function filterDeletedPostIdsByAccountId(array $deletedPostIds, int $accountId): array {
+		return $this->deletedPostsRepository->filterDeletedPostIdsByAccountId($deletedPostIds, $accountId);
+	}
+
+	/**
+	 * Fetch the most-recent post-level deleted_post ID for each of the given post UIDs.
+	 *
+	 * @param int[] $postUids Post UIDs.
+	 * @return array<int, int> post UID => deleted post ID.
+	 */
+	public function getDeletedPostIdsByPostUids(array $postUids): array {
+		return $this->deletedPostsRepository->getDeletedPostIdsByPostUids($postUids);
 	}
 
 	/**

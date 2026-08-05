@@ -26,10 +26,27 @@ trait BanFileOperationsTrait {
 	}
 
 	protected function addBanEntry(string $banFile, string $ip, int $startTime, int $expires, string $reason): void {
+		$this->addBanEntries($banFile, [$ip], $startTime, $expires, $reason);
+	}
+
+	/**
+	 * Ban several hosts on the same terms with one read and one write of the file.
+	 *
+	 * @param string[] $ips Hosts to ban.
+	 */
+	protected function addBanEntries(string $banFile, array $ips, int $startTime, int $expires, string $reason): void {
+		if (!$ips) {
+			return;
+		}
+
 		$log = $this->readBanLog($banFile);
 		$reason = str_replace(["\r\n", "\n", "\r"], '<br />', $reason);
 		$reason = str_replace(',', '&#44;', $reason);
-		$log[] = "{$ip},{$startTime},{$expires},{$reason}";
+
+		foreach ($ips as $ip) {
+			$log[] = "{$ip},{$startTime},{$expires},{$reason}";
+		}
+
 		$this->writeBanLog($banFile, $log);
 	}
 

@@ -1,5 +1,36 @@
 (function() {
 	window.PostActionUtils = {
+		/**
+		 * Build an Error for a failed response, carrying the server's own explanation.
+		 *
+		 * renderJsonErrorPage() sends {error, code, message}; the message is the part worth
+		 * showing, so it becomes the Error's message and is also exposed as .serverMessage for
+		 * callers that want to tell a real explanation apart from a bare transport failure.
+		 */
+		responseError: async function (res) {
+			let serverMessage = '';
+
+			try {
+				const contentType = res.headers.get('content-type');
+				if (contentType && contentType.includes('application/json')) {
+					const body = await res.json();
+					if (body && body.message) serverMessage = String(body.message);
+				}
+			} catch (parseError) {
+				// Not JSON, or truncated — fall back to the status below.
+			}
+
+			const err = new Error(serverMessage || ('HTTP ' + res.status));
+			err.status = res.status;
+			err.serverMessage = serverMessage;
+			return err;
+		},
+
+		/** The server's explanation if there was one, otherwise the caller's wording. */
+		errorMessage: function (err, fallback) {
+			return (err && err.serverMessage) ? err.serverMessage : fallback;
+		},
+
 		openWindow: function({
 			templateId,
 			title = '',
@@ -117,7 +148,13 @@
     					}
 					});
 
-					if (!res.ok) throw new Error('HTTP ' + res.status);
+					// Backends answer a rejected action with renderJsonErrorPage(), whose body
+					// carries the reason the reader needs to see ("You are banned", "You have
+					// already reported this post"). Lift it onto the error so onFail can show it
+					// instead of a status code.
+					if (!res.ok) {
+						throw await PostActionUtils.responseError(res);
+					}
 
 					let data = res;
 					
