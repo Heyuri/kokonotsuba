@@ -690,20 +690,24 @@
 }
 
 .massModerateList {
-	margin: 0 auto;
 	max-height: 50vh;
 	overflow-y: auto;
 }
 
+/* Each section is its own list under its own header. */
 .massModerateGroup + .massModerateGroup {
-	margin-top: 0.4em;
+	margin-top: 0.5em;
 }
 
 .massModerateGroupHeader {
-	display: block;
+	margin-bottom: 0.2em;
 	font-size: var(--font-size-x-small);
 	font-weight: var(--font-weight-bold);
 	border-bottom: 1px solid var(--color-border, rgba(128, 128, 128, 0.4));
+}
+
+.massModerateGroup .littlelist {
+	margin: 0 auto;
 }
 
 .massModerateList .massModerateItem a {
