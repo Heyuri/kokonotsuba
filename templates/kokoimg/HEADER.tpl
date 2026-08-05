@@ -6,13 +6,12 @@
 	<script src="{$STATIC_URL}js/style.js?v=4"></script>
 	<script src="{$STATIC_URL}js/css-vars-ponyfill.js" defer></script>
 	<script src="{$STATIC_URL}js/gallery.js?v=5" defer></script>
-	<script src="{$STATIC_URL}js/attachmentExpander.js?v=6" defer></script>
+	<script src="{$STATIC_URL}js/attachmentExpander.js?v=7" defer></script>
 	<script src="{$STATIC_URL}js/inline.js?v=10" defer></script>
 	<script src="{$STATIC_URL}js/updateThread.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/update.js?v=7" defer></script>
 	<script src="{$STATIC_URL}js/admin.js?v=7" defer></script>
 	<script src="{$STATIC_URL}js/clipboard.js?v=16" defer></script>
-	<script src="{$STATIC_URL}js/ruffle/ruffle.js" defer></script>
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/message.js?v=3" defer></script>
 	<script src="{$STATIC_URL}js/dropdownMenu.js" defer></script>

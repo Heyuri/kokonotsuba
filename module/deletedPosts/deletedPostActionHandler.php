@@ -7,6 +7,8 @@ use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\request\request;
 use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\getBoardsByUIDs;
+use function Kokonotsuba\libraries\rebuildBoardsByArray;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
 
@@ -29,6 +31,13 @@ class deletedPostActionHandler {
 			?? $this->request->getParameter('deletedPostId', 'POST');
 		$action = $this->request->getParameter('action', 'POST');
 
+		// a selection from the [Moderate] window, addressed by post UID
+		$postUids = $this->request->getParameter('post_uids', 'POST');
+
+		if(is_array($postUids)) {
+			return $this->handleMassAction($postUids, $accountId, $roleLevel, $action);
+		}
+
 		// handle an action for single deleted post
 		if(isset($deletedPostId)) {
 			// make sure the user is a high enough role level if the post wasn't deleted by them
@@ -42,6 +51,61 @@ class deletedPostActionHandler {
 		else {
 			throw new BoardException("Invalid action");
 		}
+	}
+
+	/**
+	 * Restore or purge a whole selection of posts.
+	 *
+	 * The window hands over post UIDs, so the deletion records are resolved, authorised and acted
+	 * on as a set: two lookups and one transaction for the selection, then one rebuild per board it
+	 * reached into (purging touches nothing that is still rendered, so it rebuilds nothing).
+	 *
+	 * @param array $postUids Post UIDs from the selection.
+	 * @return array{action: string, message: string, results: array}
+	 */
+	private function handleMassAction(array $postUids, int $accountId, userRole $roleLevel, string $action): array {
+		if($action !== 'restore' && $action !== 'purge') {
+			throw new BoardException("Invalid action");
+		}
+
+		$postUids = array_values(array_unique(array_filter(
+			array_map(fn($postUid) => (int)$postUid, $postUids),
+			fn(int $postUid) => $postUid > 0
+		)));
+
+		$deletedPostIds = $this->deletedPostsService->getDeletedPostIdsByPostUids($postUids);
+
+		if(!$deletedPostIds) {
+			throw new BoardException("None of the selected posts are deleted");
+		}
+
+		$authenticated = $this->deletedPostUtility->authenticateDeletedPosts(
+			array_values($deletedPostIds),
+			$roleLevel,
+			$accountId
+		);
+
+		if($action === 'purge') {
+			if(!$roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {
+				throw new BoardException("Invalid action");
+			}
+
+			$this->deletedPostsService->purgePosts($authenticated);
+
+			return ['action' => 'purge', 'message' => 'Posts purged', 'results' => []];
+		}
+
+		$this->deletedPostsService->restorePosts($authenticated, $accountId);
+
+		$this->rebuildBoardsByDeletedPostIds($authenticated);
+
+		return ['action' => 'restore', 'message' => 'Posts restored', 'results' => []];
+	}
+
+	private function rebuildBoardsByDeletedPostIds(array $deletedPostIds): void {
+		$boardUids = $this->deletedPostsService->getBoardUidsByDeletedPostIds($deletedPostIds);
+
+		rebuildBoardsByArray(getBoardsByUIDs($boardUids));
 	}
 
     /**

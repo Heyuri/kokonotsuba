@@ -13,24 +13,28 @@ use Kokonotsuba\template\templateEngine;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 
 /**
- * Renders a reported post the same way the board itself would.
+ * Renders a reported post the same way its own board would.
  *
- * Used by both sides of the module: the no-JS report form shows the post the user is about to
- * report, and the moderator tables show the post each report points at. Posts can come from any
- * board, so the board is resolved per post and passed as the cross-link base.
+ * Reports span every board, so a renderer is built per board rather than once for whichever
+ * board happens to be serving the page: the post template takes {$BOARD_UID}, {$BOARD_URL} and
+ * {$BOARD_IDENTIFIER} from the renderer's board, so a shared renderer would give every post the
+ * serving board's element IDs and links — colliding IDs across boards and links that go nowhere.
  *
- * A page of the report queue renders one post per row, so the renderer is built once and the
- * rows' quote links are fetched in a single batch rather than a query per post.
+ * Renderers, their quote links and the rendered HTML are all cached for the request, so a page
+ * of reports costs one renderer per board and one post render per post however often it repeats.
  */
 class reportPostPreview {
-	private ?postRenderer $postRenderer = null;
+	/** postRenderer keyed by board UID. */
+	private array $renderers = [];
 
-	/** Rendered HTML keyed by post UID — the same post often appears in several report rows. */
+	/** Quote links for every post preloaded so far, shared with each renderer as it is built. */
+	private array $quoteLinks = [];
+
+	/** Rendered HTML keyed by "postUid:mode" — the same post often appears in several rows. */
 	private array $renderCache = [];
 
 	public function __construct(
-		private readonly IBoard $board,
-		private readonly array $config,
+		private readonly IBoard $fallbackBoard,
 		private readonly moduleEngine $moduleEngine,
 		private readonly templateEngine $templateEngine,
 		private readonly quoteLinkService $quoteLinkService,
@@ -38,18 +42,23 @@ class reportPostPreview {
 	) {}
 
 	/**
-	 * Fetch the quote links for a whole page of posts up front.
+	 * Fetch the quote links for a whole page of posts up front, instead of a query per post.
 	 *
 	 * @param array $postUids UIDs about to be rendered.
 	 */
 	public function preloadQuoteLinks(array $postUids): void {
+		$postUids = array_values(array_unique(array_filter(array_map('intval', $postUids))));
+
 		if (empty($postUids)) {
 			return;
 		}
 
-		$this->getPostRenderer()->setQuoteLinks(
-			$this->quoteLinkService->getQuoteLinksByPostUids(array_values(array_unique($postUids)), true)
-		);
+		$this->quoteLinks = $this->quoteLinkService->getQuoteLinksByPostUids($postUids, true);
+
+		// Renderers built before this call need the links too.
+		foreach ($this->renderers as $renderer) {
+			$renderer->setQuoteLinks($this->quoteLinks);
+		}
 	}
 
 	/**
@@ -66,11 +75,11 @@ class reportPostPreview {
 			return $this->renderCache[$cacheKey];
 		}
 
-		// Replies are rendered through the OP block so they stand on their own outside a thread.
-		$postBoard = searchBoardArrayForBoard($post->getBoardUID()) ?? $this->board;
+		$postBoard = searchBoardArrayForBoard($post->getBoardUID()) ?? $this->fallbackBoard;
 		$templateValues = [];
 
-		return $this->renderCache[$cacheKey] = $this->getPostRenderer()->render(
+		// Replies render through the OP block so they stand on their own outside a thread.
+		return $this->renderCache[$cacheKey] = $this->getRenderer($postBoard)->render(
 			$post,
 			$templateValues,
 			$post->getOpNumber(),
@@ -86,14 +95,24 @@ class reportPostPreview {
 		);
 	}
 
-	private function getPostRenderer(): postRenderer {
-		return $this->postRenderer ??= new postRenderer(
-			$this->board,
-			$this->config,
-			$this->moduleEngine,
-			$this->templateEngine,
-			[],
-			$this->request
-		);
+	private function getRenderer(IBoard $board): postRenderer {
+		$boardUid = $board->getBoardUID();
+
+		if (!isset($this->renderers[$boardUid])) {
+			$renderer = new postRenderer(
+				$board,
+				$board->loadBoardConfig(),
+				$this->moduleEngine,
+				$this->templateEngine,
+				[],
+				$this->request
+			);
+
+			$renderer->setQuoteLinks($this->quoteLinks);
+
+			$this->renderers[$boardUid] = $renderer;
+		}
+
+		return $this->renderers[$boardUid];
 	}
 }

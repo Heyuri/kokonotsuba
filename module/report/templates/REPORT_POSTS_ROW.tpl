@@ -1,6 +1,5 @@
 	<tr class="reportedPostRow">
-		<td class="colPreview"><div class="reportPostPreview modPagePostContainer">{$POST_PREVIEW}</div></td>
-		<td class="colPost"><a href="{$POST_URL}">No.{$POST_NUMBER}</a></td>
+		<td class="colPost"><div class="reportPostPreview modPagePostContainer">{$POST_PREVIEW}</div></td>
 		<td class="colBoard">{$BOARD_TITLE}</td>
 		<td class="colReportCount">{$REPORT_COUNT}</td>
 		<td class="colPendingCount">{$PENDING_COUNT}</td>

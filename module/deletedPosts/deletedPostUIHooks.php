@@ -28,6 +28,22 @@ class deletedPostUIHooks {
 			}
 		);
 
+		// The same destination in the sticky staff nav (module/staffNav), which builds from data
+		// rather than the markup above.
+		$moduleEngine->addRoleProtectedListener(
+			$requiredRole,
+			'StaffNavLinks',
+			function(array &$entries) {
+				$entries[] = [
+					'key' => 'deletedPosts',
+					'label' => _T('admin_nav_deleted_posts'),
+					'url' => $this->modulePageUrl,
+					'title' => _T('admin_nav_deleted_posts_title'),
+					'group' => 'tools',
+				];
+			}
+		);
+
 		$moduleEngine->addRoleProtectedListener(
 			$requiredRole,
 			'PostAdminControls',

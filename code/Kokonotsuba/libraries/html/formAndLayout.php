@@ -29,6 +29,7 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 		// regardless of which modules are enabled on the board.
 		$pte_vals['{$MODULE_HEADER_HTML}'] .= getCsrfMetaTag();
 		$moduleEngine->dispatch('ModuleAdminHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
+		$pte_vals['{$MODULE_HEADER_HTML}'] .= generateMassModerateHtml($templateEngine, $moduleEngine, $config);
 	}
 	
 	// dispatch module header hook point for static html
@@ -68,6 +69,12 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 
 	$moduleEngine->dispatch('TopLinks', array(&$pte_vals['{$HOOKLINKS}'], !empty($resto)));
 	$moduleEngine->dispatch('PageTop', array(&$pte_vals['{$BANNER}'])); // Hook: AboveTitle
+
+	// Hook: PageStart — the first thing inside <body>, above the board list and the admin bar.
+	// Not to be confused with PageTop above, which lands in the banner beneath both. For chrome
+	// that has to sit over the whole page (a sticky bar) rather than inside its header.
+	$pte_vals['{$PAGE_START}'] = '';
+	$moduleEngine->dispatch('PageStart', array(&$pte_vals['{$PAGE_START}']));
 
 	$html .= $templateEngine->ParseBlock('BODYHEAD', $pte_vals);
 
@@ -150,10 +157,16 @@ function generateFooterHtml(templateEngine $templateEngine, moduleEngine $module
 
 	$pte_vals = array(
 		'{$FOOTER}' => '',
+		'{$PAGE_BOTTOM}' => '',
 		'{$IS_THREAD}' => $isThread
 	);
 
 	$moduleEngine->dispatch('Foot', array(&$pte_vals['{$FOOTER}'])); // Hook: Foot
+
+	// Hook: PageBottom — the end of the body, outside the footer. For chrome that belongs to the
+	// page rather than to its footer (fixed bars, overlays), which would otherwise inherit the
+	// footer's small print.
+	$moduleEngine->dispatch('PageBottom', array(&$pte_vals['{$PAGE_BOTTOM}']));
 
 	$pte_vals['{$FOOTER}'] .= getDefaultFooterLinks();
 

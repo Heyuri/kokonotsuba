@@ -18,7 +18,7 @@
 	<script src="{$STATIC_URL}js/postInit.js" defer></script>
 	<script src="{$STATIC_URL}js/posting.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/inline.js" defer></script>
-	<script src="{$STATIC_URL}js/attachmentExpander.js?v=2" defer></script>
+	<script src="{$STATIC_URL}js/attachmentExpander.js?v=7" defer></script>
 	<script src="{$STATIC_URL}js/postDeletionLib.js" defer></script>
 	<script src="{$STATIC_URL}js/formExtras.js" defer></script>
 	<script src="{$STATIC_URL}js/updateThread.js?v=2" defer></script>

@@ -27,11 +27,12 @@ class postService {
 	/**
 	 * Fetch multiple posts by their UIDs, with merged attachment rows.
 	 *
-	 * @param int[] $postUids Array of post UIDs.
+	 * @param int[] $postUids    Array of post UIDs.
+	 * @param bool  $viewDeleted Whether deleted posts are returned too.
 	 * @return array|false Array of merged post data arrays, or false if none found.
 	 */
-	public function getPostsByUids(array $postUids): false|array {
-		$postsFromList = $this->postRepository->getPostsByUids($postUids);
+	public function getPostsByUids(array $postUids, bool $viewDeleted = false): false|array {
+		$postsFromList = $this->postRepository->getPostsByUids($postUids, $viewDeleted);
 
 		return $postsFromList;
 	}

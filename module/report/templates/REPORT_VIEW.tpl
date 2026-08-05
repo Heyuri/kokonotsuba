@@ -12,10 +12,6 @@
 				<td><div class="reportPostPreview modPagePostContainer">{$POST_PREVIEW}</div></td>
 			</tr>
 			<tr>
-				<td class="postblock">{$TH_POST}</td>
-				<td><a href="{$POST_URL}">No.{$POST_NUMBER}</a></td>
-			</tr>
-			<tr>
 				<td class="postblock">{$TH_BOARD}</td>
 				<td>{$BOARD_TITLE}</td>
 			</tr>

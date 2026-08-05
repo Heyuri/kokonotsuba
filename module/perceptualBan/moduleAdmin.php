@@ -49,7 +49,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->listenProtected('ModerateAttachmentWidget', function(array &$widgetArray, array &$fileData) {
 			$this->onRenderAttachmentWidget($widgetArray, $fileData);
 		});
-		$this->registerLinksAboveBarHook(_T('admin_nav_perceptual_ban_title'), $this->moduleUrl, _T('admin_nav_perceptual_ban'));
+		$this->registerLinksAboveBarHook(_T('admin_nav_perceptual_ban_title'), $this->moduleUrl, _T('admin_nav_perceptual_ban'), 'bans');
 	}
 
 	private function onRenderAttachmentWidget(array &$widgetArray, array &$fileData): void {

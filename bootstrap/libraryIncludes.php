@@ -22,6 +22,7 @@ require getBackendCodeDir() . 'libraries/html/configForm.php';
 require getBackendCodeDir() . 'libraries/html/filterForms.php';
 require getBackendCodeDir() . 'libraries/html/formAndLayout.php';
 require getBackendCodeDir() . 'libraries/html/helperHtmlFunctions.php';
+require getBackendCodeDir() . 'libraries/html/massModerate.php';
 require getBackendCodeDir() . 'libraries/html/miscPartials.php';
 require getBackendCodeDir() . 'libraries/html/pagers.php';
 require getBackendCodeDir() . 'libraries/html/postHtmlFunctions.php';

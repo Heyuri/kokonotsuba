@@ -76,12 +76,34 @@ trait PostControlHooksTrait {
 		);
 	}
 
-	protected function registerLinksAboveBarHook(string $title, string $href, string $textContent): void {
+	/**
+	 * Put a link to this module's admin page in both staff navs: the bar above admin pages, and
+	 * the sticky nav (module/staffNav).
+	 *
+	 * @param string $group Optional drop-up to file the sticky nav's entry under — a bare key the
+	 *                      nav translates ('staffnav_group_{key}'). Empty keeps it at the top
+	 *                      level. The bar above admin pages is a flat list and ignores it.
+	 */
+	protected function registerLinksAboveBarHook(string $title, string $href, string $textContent, string $group = ''): void {
 		$this->moduleContext->moduleEngine->addRoleProtectedListener(
 			$this->getRequiredRole(),
 			'LinksAboveBar',
 			function(string &$linkHtml) use ($title, $href, $textContent) {
 				$linkHtml .= '<li class="adminNavLink"><a title="' . htmlspecialchars($title) . '" href="' . htmlspecialchars($href) . '">' . htmlspecialchars($textContent) . '</a></li>';
+			}
+		);
+
+		$this->moduleContext->moduleEngine->addRoleProtectedListener(
+			$this->getRequiredRole(),
+			'StaffNavLinks',
+			function(array &$entries) use ($title, $href, $textContent, $group) {
+				$entries[] = [
+					'key' => $this->moduleName,
+					'label' => $textContent,
+					'url' => $href,
+					'title' => $title,
+					'group' => $group,
+				];
 			}
 		);
 	}

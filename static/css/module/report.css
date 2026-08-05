@@ -171,3 +171,55 @@
 .reportUnreadIndicator {
 	font-weight: var(--font-weight-bold);
 }
+
+/* ── Reported-post notice (live frontend, staff only) ─────────────────────── */
+
+/* Sits under the comment alongside staff notes, so it reads as another mod annotation. */
+.reportedPostNotice {
+	font-size: var(--font-size-small);
+	color: var(--color-fg-warning);
+}
+
+/* ── Reports window ───────────────────────────────────────────────────────── */
+
+/* kkwm windows are overflow:hidden and size themselves to their content, so injected page
+   content has to bound itself against the viewport and scroll inside — otherwise a long report
+   list pushes the window past the screen edge and gets clipped by the frame. */
+.reportWindowBody {
+	width: min(1100px, calc(100vw - 40px));
+	max-height: calc(100vh - 120px);
+	overflow: auto;
+	box-sizing: border-box;
+	padding: 8px;
+}
+
+/* The window clones the whole per-post reports page, so the parts that only make sense as a
+   page are dropped here rather than duplicated into a second template: its own title and Back
+   link (the window has a title bar and was opened from the post), the post preview (the post is
+   right behind the window), and the bulk-action form.
+
+   Columns go by class, which works because a th and its td share one — and the two the window
+   drops are dead weight in it anyway: it lists only reports still awaiting review, so every row
+   would read the same status and have no-one to name as having actioned it. */
+.reportWindowBody > .theading2,
+.reportWindowBody .reportToolbar,
+.reportWindowBody .reportPostPreviewStandalone,
+.reportWindowBody .reportClearForm,
+.reportWindowBody .reportDecisionButtons,
+.reportWindowBody .reportDecisionTable,
+.reportWindowBody .reportDecisionLegend,
+.reportWindowBody .colSelect,
+.reportWindowBody .colStatus,
+.reportWindowBody .colActionedBy {
+	display: none;
+}
+
+/* Headings whose text was left blank for the window (the post preview's) collapse with the
+   section they labelled. */
+.reportWindowBody .reportSectionHeading:empty {
+	display: none;
+}
+
+.reportTableHidden {
+	display: none;
+}

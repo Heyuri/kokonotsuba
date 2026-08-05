@@ -678,6 +678,39 @@ class deletedPostsRepository extends baseRepository {
 	}
 
 	/**
+	 * Return which of the given deletion records belong to the account.
+	 *
+	 * One query for a whole selection, so authorising a mass restore does not cost a round trip
+	 * per post.
+	 *
+	 * @param int[] $deletedPostIds Deletion record IDs.
+	 * @param int   $accountId      Account ID to match against deleted_by.
+	 * @return int[] The subset of IDs the account deleted.
+	 */
+	public function filterDeletedPostIdsByAccountId(array $deletedPostIds, int $accountId): array {
+		if (!$deletedPostIds) {
+			return [];
+		}
+
+		$owned = [];
+
+		foreach (array_chunk(array_values($deletedPostIds), self::BATCH_ROW_LIMIT) as $chunk) {
+			$inClause = pdoPlaceholdersForIn($chunk);
+
+			$rows = $this->queryAllAsIndexArray(
+				"SELECT id FROM {$this->table} WHERE id IN $inClause AND deleted_by = ?",
+				array_merge($chunk, [$accountId])
+			);
+
+			foreach ($rows as $row) {
+				$owned[] = (int)$row[0];
+			}
+		}
+
+		return $owned;
+	}
+
+	/**
 	 * Permanently delete posts (and their deletion records) for the given list of deletion record IDs.
 	 *
 	 * @param int[] $deletedPostsList Array of deletion record IDs.
@@ -779,6 +812,38 @@ class deletedPostsRepository extends baseRepository {
 	 * @param int $deletedPostId Deletion record ID.
 	 * @return int|false Board UID, or false if not found.
 	 */
+	/**
+	 * Return the distinct board UIDs behind the given deletion records.
+	 *
+	 * @param int[] $deletedPostIds Deletion record IDs.
+	 * @return int[] Board UIDs.
+	 */
+	public function getBoardUidsByDeletedPostIds(array $deletedPostIds): array {
+		if (!$deletedPostIds) {
+			return [];
+		}
+
+		$boardUids = [];
+
+		foreach (array_chunk(array_values($deletedPostIds), self::BATCH_ROW_LIMIT) as $chunk) {
+			$inClause = pdoPlaceholdersForIn($chunk);
+
+			$rows = $this->queryAllAsIndexArray(
+				"SELECT DISTINCT p.boardUID
+				FROM {$this->table} dp
+				INNER JOIN {$this->postTable} p ON p.post_uid = dp.post_uid
+				WHERE dp.id IN $inClause",
+				$chunk
+			);
+
+			foreach ($rows as $row) {
+				$boardUids[] = (int)$row[0];
+			}
+		}
+
+		return array_values(array_unique($boardUids));
+	}
+
 	public function getBoardUidByDeletedPostId(int $deletedPostId): false|int {
 		// query to get boardUID from post table via post_uid in deletedPosts table
 		$query = "
@@ -813,6 +878,41 @@ class deletedPostsRepository extends baseRepository {
 		);
 
 		return $id !== false ? (int)$id : false;
+	}
+
+	/**
+	 * Fetch the most-recent post-level deleted_post ID for each of the given post UIDs.
+	 *
+	 * One query for the whole selection, which is what the mass moderation window needs to answer
+	 * with a link per deleted post.
+	 *
+	 * @param int[] $postUids Post UIDs.
+	 * @return array<int, int> post UID => deleted post ID, for the UIDs that have an entry.
+	 */
+	public function getDeletedPostIdsByPostUids(array $postUids): array {
+		if (!$postUids) {
+			return [];
+		}
+
+		$ids = [];
+
+		foreach (array_chunk(array_values($postUids), self::BATCH_ROW_LIMIT) as $chunk) {
+			$inClause = pdoPlaceholdersForIn($chunk);
+
+			$rows = $this->queryAll(
+				"SELECT post_uid, MAX(id) AS id
+				FROM {$this->table}
+				WHERE post_uid IN $inClause AND file_id IS NULL
+				GROUP BY post_uid",
+				$chunk
+			);
+
+			foreach ($rows as $row) {
+				$ids[(int)$row['post_uid']] = (int)$row['id'];
+			}
+		}
+
+		return $ids;
 	}
 
 	/**

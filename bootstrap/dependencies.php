@@ -39,6 +39,9 @@ use Kokonotsuba\template\templateEngine;
 $templateEngine = $board->getBoardTemplateEngine();
 $moduleEngine = $board->getModuleEngine();
 
+// Deletion is announced through the module engine, which only exists once the board does.
+$postDeletionService->setModuleEngine($moduleEngine);
+
 $adminTemplateEngine = new templateEngine(getBackendDir() . 'templates/admin', [
 	'config'	=> $config,
 	'boardData'	=> [

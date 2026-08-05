@@ -11,6 +11,7 @@ use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\module_classes\traits\listeners\StaffAlertsListenerTrait;
 use Kokonotsuba\userRole;
 
 use const Kokonotsuba\GLOBAL_BOARD_UID;
@@ -24,6 +25,7 @@ use function Kokonotsuba\libraries\html\getPageFromRequest;
 class moduleAdmin extends abstractModuleAdmin {
 	use AuditableTrait;
 	use PostControlHooksTrait;
+	use StaffAlertsListenerTrait;
 
 	private fullBannerService $fullBannerService;
 	private readonly string $modulePage;
@@ -52,7 +54,24 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->requiredHeight = $this->getModuleConfig('FULLBANNER_REQUIRED_HEIGHT', 60);
 		$this->maxFileSize = $this->getModuleConfig('FULLBANNER_MAX_FILE_SIZE', 204800);
 
-		$this->registerLinksAboveBarHook('Manage full banners', $this->modulePage, 'Full banners');
+		$this->registerLinksAboveBarHook('Manage full banners', $this->modulePage, 'Full banners', 'content');
+		$this->listenStaffAlertsProtected('onCollectStaffAlerts');
+	}
+
+	/**
+	 * "Banners" in the staff alerts widget.
+	 *
+	 * Unread here means unapproved: a reader-submitted banner sits at is_approved = 0 until
+	 * someone acts on it, so the pending count is exactly the pile waiting to be looked at.
+	 */
+	private function onCollectStaffAlerts(array &$alerts): void {
+		$alerts[] = [
+			'key' => 'banners',
+			'label' => _T('fullbanner_alert_label'),
+			'count' => $this->fullBannerService->countPendingBanners(),
+			'url' => $this->modulePage,
+			'title' => _T('fullbanner_alert_title'),
+		];
 	}
 
 	public function ModulePage(): void {

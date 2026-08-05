@@ -15,6 +15,7 @@ use Kokonotsuba\thread\threadRepository;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\getPageForPostPosition;
+use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\request\redirect;
 
 class defaultRoute {
@@ -73,6 +74,9 @@ class defaultRoute {
 		} elseif ($pageParam !== null && intval($pageParam) >= 1) {
 			// Handle specific board page
 			$this->board->drawPage(intval($pageParam));
+		} elseif (isActiveStaffSession()) {
+			// Staff get the index rendered here rather than being sent to the html index
+			$this->board->drawPage(1);
 		} else {
 			// If the static index page is missing, regenerate it
 			if (!is_file($this->config['STATIC_INDEX_FILE'])) {

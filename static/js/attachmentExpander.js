@@ -25,6 +25,89 @@
 		if (h) h.src = "";
 	} }, "Media");
 
+	// ruffle is only shipped in the page on flash boards - everywhere else it's
+	// pulled in the first time someone actually expands a .swf, since it drags a
+	// multi-megabyte wasm blob along with it
+	attachmentExpander._rufflePromise = null;
+
+	// full-bleed "Loading Ruffle..." cover for a flash host, matching the overlay
+	// the standalone flash window uses. Returns the element with setStatus()/done()
+	// bolted on
+	attachmentExpander.createRuffleOverlay = function (label) {
+		var overlay = document.createElement("div"),
+			dots    = 0,
+			timer   = null;
+
+		overlay.className             = "ruffleLoadingOverlay";
+		overlay.style.position        = "absolute";
+		overlay.style.inset           = "0";
+		overlay.style.display         = "flex";
+		overlay.style.alignItems      = "center";
+		overlay.style.justifyContent  = "center";
+		overlay.style.background      = "#fff";
+		overlay.style.color           = "#000";
+		overlay.style.fontFamily      = "monospace";
+		overlay.style.fontSize        = "12px";
+		overlay.style.zIndex          = "10";
+		overlay.style.pointerEvents   = "none";
+
+		overlay.setStatus = function (msg, animate) {
+			if (timer) clearInterval(timer);
+			timer = null;
+
+			if (animate === false) {
+				overlay.textContent = msg;
+				return;
+			}
+
+			// trailing dots so a slow fetch doesn't look like a frozen board
+			dots = 0;
+			overlay.textContent = msg;
+			timer = setInterval(function () {
+				dots = (dots + 1) % 4;
+				overlay.textContent = msg + " ".repeat(3 - dots) + ".".repeat(dots);
+			}, 400);
+		};
+
+		overlay.done = function () {
+			if (timer) clearInterval(timer);
+			timer = null;
+			overlay.remove();
+		};
+
+		overlay.setStatus(label);
+
+		return overlay;
+	};
+
+	attachmentExpander.loadRuffle = function () {
+		if (window.RufflePlayer) return Promise.resolve(window.RufflePlayer);
+		if (attachmentExpander._rufflePromise) return attachmentExpander._rufflePromise;
+
+		attachmentExpander._rufflePromise = new Promise(function (resolve, reject) {
+			var src    = STATIC_URL + "js/ruffle/ruffle.js",
+				script = document.querySelector('script[src="' + src + '"]');
+
+			// reuse the page's own tag if it's there but hasn't run yet
+			if (!script) {
+				script = document.createElement("script");
+				script.src = src;
+				document.head.appendChild(script);
+			}
+
+			script.addEventListener("load", function () {
+				if (window.RufflePlayer) resolve(window.RufflePlayer);
+				else reject(new Error("Ruffle did not initialise"));
+			});
+			script.addEventListener("error", function () {
+				attachmentExpander._rufflePromise = null;
+				reject(new Error("Could not load Ruffle"));
+			});
+		});
+
+		return attachmentExpander._rufflePromise;
+	};
+
 	attachmentExpander.startUpimageExpanding = function () {
 
 		// fetch all post images
@@ -310,13 +393,26 @@
 			obj.style.height = "100%";
 			host.appendChild(obj);
 		} else {
-			// ruffle emulator, fill host
-			var ruffle = window.RufflePlayer.newest(),
-			player = ruffle.createPlayer();
-			player.style.width  = "100%";
-			player.style.height = "100%";
-			host.appendChild(player);
-			player.load(anchor.href);
+			// ruffle emulator, fill host - it's fetched on demand here, which can
+			// take a moment, so cover the host with a loading overlay until it's up
+			var status = document.createElement("div");
+			status.className      = "ruffleLoadingStatus";
+			status.style.padding  = "4px";
+			status.style.fontSize = "12px";
+			status.textContent    = "Loading Ruffle…";
+			host.appendChild(status);
+
+			attachmentExpander.loadRuffle().then(function (RufflePlayer) {
+				status.remove();
+
+				var player = RufflePlayer.newest().createPlayer();
+				player.style.width  = "100%";
+				player.style.height = "100%";
+				host.appendChild(player);
+				player.load(anchor.href);
+			}).catch(function () {
+				status.textContent = "Failed to load Ruffle";
+			});
 		}
 		
 		return true;

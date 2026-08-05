@@ -7,13 +7,14 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
+use Kokonotsuba\module_classes\traits\listeners\MassModerateListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
-use Kokonotsuba\post\deletion\DeletedPost;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\attachmentFileExists;
 use function Kokonotsuba\libraries\generateModerateForm;
+use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\validatePostInput;
 use function Puchiko\json\sendAjaxAndDetach;
@@ -23,6 +24,7 @@ use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
+	use MassModerateListenerTrait;
 	use AuditableTrait;
 	use BanFileOperationsTrait;
 
@@ -48,6 +50,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->registerPostControlPair('onRenderPostAdminControls');
 		$this->registerPostWidgetHook('onRenderPostWidget');
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
+		$this->listenMassModerateTools('onMassModerateTools', 100);
 		$this->listenProtected('ModerateAttachmentWidget', function(array &$widgetArray, array &$fileData) {
 			$this->onRenderAttachmentWidget($widgetArray, $fileData);
 		});
@@ -84,6 +87,25 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 	
+	private function onMassModerateTools(array &$tools): void {
+		$muteMinutes = $this->JANIMUTE_LENGTH;
+		$plural = $muteMinutes == 1 ? '' : 's';
+
+		$tools[] = $this->buildMassTool('del', 'Delete', [
+			'group' => 'Deletion',
+			'effect' => 'delete',
+			'confirm' => _T('mass_moderate_confirm'),
+			'priority' => 100,
+		]);
+
+		$tools[] = $this->buildMassTool('delmute', 'Delete & mute for ' . $muteMinutes . ' minute' . $plural, [
+			'group' => 'Deletion',
+			'effect' => 'delete',
+			'confirm' => _T('mass_moderate_confirm'),
+			'priority' => 90,
+		]);
+	}
+
 	private function canRenderButton(Post $post): bool {
 		// whether the post is deleted or not
 		$openFlag = $post->getOpenFlag();
@@ -229,139 +251,190 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	protected function handleModuleRequest(): void {
-		// get post uid from request (POST body from JS, or query string from admin control forms)
-		$postUid = $this->moduleContext->request->getParameter('post_uid');
-
-		// validate + fetch post
-		$post = $this->fetchValidatedPost($postUid);
-
-		// whether the post has been deleted
-		$isDeleted = !empty($post->getOpenFlag()) && !$post->isFileOnlyDeleted();
-
-		// get board object
-		$board = searchBoardArrayForBoard($post->getBoardUID());
-		
-		// get board uid
-		$boardUID = $board->getBoardUID();
-
-		// validate the post input for deletion
-		validatePostInput($post, false, 404);
-
-		// throw an error if the post was already deleted
-		if ($isDeleted) {
-			throw new BoardException('Post already deleted!');
-		}
-
 		// get action
 		$action = $this->moduleContext->request->getParameter('action', null, '');
 
-		// One transaction for the whole action: the deletion services and logAction
-		// all join it, so the request pays a single commit flush instead of one per write.
-		$this->moduleContext->transactionManager->run(function () use ($action, $post, $board, $boardUID, &$fileId): void {
-			switch ($action) {
-				case 'del':
-				case 'delete':
-					$this->moduleContext->postService->removePosts([$post->getUid()], $this->moduleContext->currentUserId);
-					$this->logAction('Deleted post No.'.$post->getNumber(), $boardUID);
-					break;
-				case 'delmute':
-				case 'mute':
-					$this->moduleContext->postService->removePosts([$post->getUid()], $this->moduleContext->currentUserId);
-					$ip = $post->getIp();
-					$starttime = $this->moduleContext->request->getRequestTime();
-					$expires = $starttime + intval($this->JANIMUTE_LENGTH) * 60;
-					$reason = $this->JANIMUTE_REASON;
+		// attachments are addressed by file ID, never by a selection
+		if ($action === 'attachmentDel') {
+			$this->handleAttachmentDeletion();
+			return;
+		}
 
-					if ($ip) {
-						$this->addBanEntry($this->getGlobalBanFilePath(), $ip, $starttime, $expires, $reason);
-					}
+		// the [Moderate] window sends post_uids[], the per-post controls a single post_uid
+		$postUids = $this->getRequestedPostUids();
 
-					$this->logAction('Muted '.$ip.' and deleted post No.'.$post->getNumber() . ' ' . $board->getBoardTitle() . ' (' . $board->getBoardUID() . ')', GLOBAL_BOARD_UID);
+		match ($action) {
+			'del', 'delete' => $this->handlePostDeletion($postUids, false),
+			'delmute', 'mute' => $this->handlePostDeletion($postUids, true),
+			default => throw new BoardException('ERROR: Invalid action.'),
+		};
+	}
 
-					break;
-				case 'attachmentDel':
-					// get the file Id
-					$fileId = $this->moduleContext->request->getParameter('fileId');
+	/**
+	 * Delete every selected post, optionally muting the hosts behind them.
+	 *
+	 * The whole selection is one query to read, one soft-delete pass, one ban-file write and one
+	 * rebuild per affected board — the cost of deleting fifty posts is the cost of deleting one
+	 * plus rows, not fifty round trips.
+	 */
+	private function handlePostDeletion(array $postUids, bool $mute): void {
+		$posts = $this->fetchRequestedPosts($postUids);
 
-					// cast to int
-					$fileId = (int)$fileId;
+		// skip anything already deleted rather than failing the whole selection
+		$targets = array_values(array_filter($posts, fn(Post $post) => $this->canRenderButton($post)));
 
-					// throw board exception if its null/empty/zero or isn't an integer
-					if(empty($fileId) || !is_int($fileId)) {
-						throw new BoardException("Invalid file ID supplied!");
-					}
+		if (!$targets) {
+			throw new BoardException('Post already deleted!');
+		}
 
-					// get the attachment to deleted
-					$attachment = $post->getAttachmentById($fileId);
+		$targetUids = array_map(fn(Post $post) => $post->getUid(), $targets);
 
-					if(!$attachment) {
-						throw new BoardException(_T('attachment_not_found'));
-					}
+		// One transaction for the whole action: the deletion service and logAction all join it,
+		// so the request pays a single commit flush instead of one per write.
+		$this->moduleContext->transactionManager->run(function () use ($targets, $targetUids, $mute): void {
+			$this->moduleContext->postService->removePosts($targetUids, $this->moduleContext->currentUserId);
 
-					$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$attachment], $this->moduleContext->currentUserId);
-
-					$this->logAction('Deleted file for post No.'.$post->getNumber(), $boardUID);
-					break;
-				default:
-					throw new BoardException('ERROR: Invalid action.');
-					break;
+			if ($mute) {
+				$this->muteHostsFromPosts($targets);
 			}
+
+			$this->logDeletions($targets, $mute);
 		});
-		// Will be implemented later
-		//deleteThreadCache($post['thread_uid']);
 
 		// AJAX first: send JSON, flush to client, then rebuild in the background of this request.
 		if ($this->moduleContext->request->isAjax()) {
-			// if it was an attachment deletion then use the appropriate method to generate the url
-			if($action === 'attachmentDel' && isset($fileId)) {
-				$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
-			}
-			// otherwise just get the regular deletion url
-			else {
-				$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByPostUid($post->getUid());
-			}
-			$deletionUrl = $this->getDeletionViewUrl($deletedPost);
+			$firstPost = $targets[0];
+			$deletedPostIds = $this->moduleContext->deletedPostsService->getDeletedPostIdsByPostUids($targetUids);
 
-			// Return JSON for AJAX requests, detach client, then rebuild server-side.
+			$results = [];
+			foreach ($deletedPostIds as $postUid => $deletedPostId) {
+				$results[$postUid] = [
+					'deleted_link' => $this->getDeletionViewUrl($deletedPostId),
+					'deleted_post_id' => $deletedPostId,
+				];
+			}
+
+			// The single-post keys stay for the per-post widgets, which know nothing of selections.
 			sendAjaxAndDetach([
 				'success' => true,
-				'is_op' => $post->isOp(),
-				'deleted_link' => $deletionUrl,
-				'deleted_post_id' => $deletedPost->getDeletedPostId()
+				'is_op' => $firstPost->isOp(),
+				'deleted_link' => $results[$firstPost->getUid()]['deleted_link'] ?? '',
+				'deleted_post_id' => $results[$firstPost->getUid()]['deleted_post_id'] ?? null,
+				'results' => $results,
 			]);
 
 			// ===== rebuild after the response has been sent =====
-			$this->rebuildBoardForPost($board, $post);
+			$this->rebuildAfterDeletion($targets);
 			exit;
 		}
 
-		// Non-AJAX fallback: do the rebuild first, then redirect (unchanged)
-		$this->rebuildBoardForPost($board, $post);
+		// Non-AJAX fallback: do the rebuild first, then redirect
+		$this->rebuildAfterDeletion($targets);
 
 		// Fallback for non-JS users: redirect
 		redirect($this->moduleContext->request->getReferer());
 	}
 
-	private function getDeletionUrlForPost(int $postUid): string {
-		// fetch the deleted post by post uid
-		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByPostUid($postUid);
+	/**
+	 * Mute every distinct host in the selection with one read/write of the ban file.
+	 */
+	private function muteHostsFromPosts(array $posts): void {
+		$startTime = $this->moduleContext->request->getRequestTime();
+		$expires = $startTime + intval($this->JANIMUTE_LENGTH) * 60;
 
-		// now get the deleted post url and return
-		return $this->getDeletionViewUrl($deletedPost);
+		$hosts = array_values(array_unique(array_filter(array_map(fn(Post $post) => $post->getIp(), $posts))));
+
+		if (!$hosts) {
+			return;
+		}
+
+		$this->addBanEntries($this->getGlobalBanFilePath(), $hosts, $startTime, $expires, $this->JANIMUTE_REASON);
 	}
 
-	private function getDeletionUrlForAttachment(int $fileId): string {
-		// fetch the deleted post by file id
-		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
+	/**
+	 * One log line per board the selection touched, listing the post numbers it took with it.
+	 */
+	private function logDeletions(array $posts, bool $muted): void {
+		$numbersByBoard = [];
+		foreach ($posts as $post) {
+			$numbersByBoard[$post->getBoardUID()][] = 'No.' . $post->getNumber();
+		}
 
-		// now get the deleted post url and return
-		return $this->getDeletionViewUrl($deletedPost);
+		foreach ($numbersByBoard as $boardUid => $numbers) {
+			$this->logAction('Deleted post ' . implode(', ', $numbers), (int)$boardUid);
+		}
+
+		if (!$muted) {
+			return;
+		}
+
+		$hosts = array_unique(array_filter(array_map(fn(Post $post) => $post->getIp(), $posts)));
+		if ($hosts) {
+			$this->logAction('Muted ' . implode(', ', $hosts), GLOBAL_BOARD_UID);
+		}
 	}
 
-	private function getDeletionViewUrl(DeletedPost $deletedPost): string {
-		// get the deleted post id for the url
-		$deletedPostId = $deletedPost->getDeletedPostId();
+	/**
+	 * A lone reply only invalidates its own page; anything wider is cheaper to rebuild whole,
+	 * per board the selection reached into.
+	 */
+	private function rebuildAfterDeletion(array $posts): void {
+		if (count($posts) === 1) {
+			$post = $posts[0];
+			$this->rebuildBoardForPost(searchBoardArrayForBoard($post->getBoardUID()), $post);
+			return;
+		}
 
+		rebuildBoardsFromPosts(
+			array_map(fn(Post $post) => $post->getUid(), $posts),
+			$this->moduleContext->postService
+		);
+	}
+
+	private function handleAttachmentDeletion(): void {
+		$post = $this->fetchValidatedPost($this->moduleContext->request->getParameter('post_uid'));
+
+		validatePostInput($post, false, 404);
+
+		$fileId = (int)$this->moduleContext->request->getParameter('fileId');
+
+		if (empty($fileId)) {
+			throw new BoardException("Invalid file ID supplied!");
+		}
+
+		$attachment = $post->getAttachmentById($fileId);
+
+		if (!$attachment) {
+			throw new BoardException(_T('attachment_not_found'));
+		}
+
+		$board = searchBoardArrayForBoard($post->getBoardUID());
+
+		$this->moduleContext->transactionManager->run(function () use ($attachment, $post, $board): void {
+			$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$attachment], $this->moduleContext->currentUserId);
+			$this->logAction('Deleted file for post No.' . $post->getNumber(), $board->getBoardUID());
+		});
+
+		if ($this->moduleContext->request->isAjax()) {
+			$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
+
+			sendAjaxAndDetach([
+				'success' => true,
+				'is_op' => $post->isOp(),
+				'deleted_link' => $this->getDeletionViewUrl($deletedPost->getDeletedPostId()),
+				'deleted_post_id' => $deletedPost->getDeletedPostId()
+			]);
+
+			$this->rebuildBoardForPost($board, $post);
+			exit;
+		}
+
+		$this->rebuildBoardForPost($board, $post);
+
+		redirect($this->moduleContext->request->getReferer());
+	}
+
+	private function getDeletionViewUrl(int $deletedPostId): string {
 		// base url
 		$baseUrl = $this->moduleContext->request->getCurrentUrlNoQuery();
 

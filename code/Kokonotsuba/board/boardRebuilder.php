@@ -29,8 +29,22 @@ use function Puchiko\strings\sanitizeStr;
 use function Puchiko\strings\truncateText;
 
 class boardRebuilder {
+	/**
+	 * True only while page HTML is being generated for a static file.
+	 *
+	 * The request doing the generating is an ordinary live one — usually a moderator's — so
+	 * nothing about the session tells a hook whether its output is going to that moderator or
+	 * into a file every reader will be served. This does.
+	 */
+	private static bool $renderingStaticHtml = false;
+
 	private array $config;
 	private bool $adminMode, $canViewDeleted;
+
+	/** Whether the HTML being generated right now is destined for a static file. */
+	public static function isRenderingStaticHtml(): bool {
+		return self::$renderingStaticHtml;
+	}
 
 	public function __construct(
 		private board $board, 
@@ -444,6 +458,18 @@ class boardRebuilder {
 
 
 	private function renderStaticPage(int $page, array $threads, int $totalThreadCountForBoard, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals, bool $threadsAreSliced, array $quoteLinksFromBoard): void {
+    	// This regenerates the head below, so the flag has to hold for the whole method and not
+    	// just for prepareStaticPageRenderContext() — everything from here goes into a file.
+    	self::$renderingStaticHtml = true;
+
+    	try {
+    	    $this->renderStaticPageHtml($page, $threads, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals, $threadsAreSliced, $quoteLinksFromBoard);
+    	} finally {
+    	    self::$renderingStaticHtml = false;
+    	}
+	}
+
+	private function renderStaticPageHtml(int $page, array $threads, int $totalThreadCountForBoard, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals, bool $threadsAreSliced, array $quoteLinksFromBoard): void {
     	$threadRenderer = $this->getThreadRenderer($quoteLinksFromBoard);
 
     	$threadsPerPage = $this->config['PAGE_DEF'];
@@ -587,15 +613,25 @@ class boardRebuilder {
 	}
 
 	private function prepareStaticPageRenderContext(): array {
-		$pte_vals = $this->buildPteVals(false);
+		// Everything built here is written to a file and served to everyone who asks for it,
+		// rather than to the person whose request built it. Hooks that render something for the
+		// reader — staff chrome, anything naming an account — have to know the difference, and
+		// this is the only place the difference is known.
+		self::$renderingStaticHtml = true;
 
-		$headerHtml = $this->board->getBoardHead($this->board->getBoardTitle());
+		try {
+			$pte_vals = $this->buildPteVals(false);
 
-		$formHtml = $this->buildFormHtml(0, $pte_vals);
+			$headerHtml = $this->board->getBoardHead($this->board->getBoardTitle());
 
-		$footHtml = $this->board->getBoardFooter();
+			$formHtml = $this->buildFormHtml(0, $pte_vals);
 
-		return [$pte_vals, $headerHtml, $formHtml, $footHtml];
+			$footHtml = $this->board->getBoardFooter();
+
+			return [$pte_vals, $headerHtml, $formHtml, $footHtml];
+		} finally {
+			self::$renderingStaticHtml = false;
+		}
 	}
 
 	private function renderThreadsToPteVals(array $threadsInPage, threadRenderer $threadRenderer, array $pte_vals, bool $adminMode = false): string {

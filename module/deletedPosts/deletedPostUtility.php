@@ -137,6 +137,29 @@ class deletedPostUtility {
 		return $url;
 	}
 
+	/**
+	 * Narrow a selection to the records this account may act on.
+	 *
+	 * Staff who can moderate anyone's deletions keep the whole list; everyone else keeps their own,
+	 * resolved in one query rather than one per record.
+	 *
+	 * @param int[] $deletedPostIds Deletion record IDs.
+	 * @return int[] The records the account may restore or purge.
+	 */
+	public function authenticateDeletedPosts(array $deletedPostIds, userRole $roleLevel, int $accountId): array {
+		if($roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {
+			return $deletedPostIds;
+		}
+
+		$authenticated = $this->deletedPostsService->filterDeletedPostIdsByAccountId($deletedPostIds, $accountId);
+
+		if(!$authenticated) {
+			throw new BoardException("You are not authenticated to modify or view this deleted post!");
+		}
+
+		return $authenticated;
+	}
+
     public function authenticateDeletedPost(int $deletedPostId, userRole $roleLevel, int $accountId): void {
 		// don't loop if the user has the required permission to restore/purge any post regardless of their role
 		if($roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {

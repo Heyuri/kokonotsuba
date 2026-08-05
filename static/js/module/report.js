@@ -90,11 +90,14 @@
 
 				showMessage(data && data.message ? data.message : 'Report submitted.', true);
 			},
-			onFail: function () {
-				// openWindow() leaves the window standing on failure, so the reader can fix the
-				// reason and retry. It only hands us the HTTP status, not the endpoint's JSON
-				// message, hence the generic wording.
-				showMessage('Your report could not be filed.', false);
+			onFail: function (result) {
+				// The endpoint explains itself — banned, already reported, post gone, reason too
+				// long — so show that rather than a generic failure. openWindow() leaves the
+				// window standing, so the reader can correct it and try again.
+				showMessage(
+					PostActionUtils.errorMessage(result.err, 'Your report could not be filed.'),
+					false
+				);
 			}
 		});
 	});

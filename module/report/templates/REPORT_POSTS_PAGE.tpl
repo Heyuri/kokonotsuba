@@ -7,7 +7,6 @@
 		<table class="postlists reportTable" id="reportedPostsTable">
 			<thead>
 				<tr>
-					<th class="colPreview">{$TH_PREVIEW}</th>
 					<th class="colPost">{$TH_POST}</th>
 					<th class="colBoard">{$TH_BOARD}</th>
 					<th class="colReportCount">{$TH_REPORT_COUNT}</th>

@@ -16,15 +16,13 @@
 				<thead>
 					<tr>
 						<th class="colSelect"></th>
-						<th class="colId">{$TH_ID}</th>
-						<th class="colPreview">{$TH_PREVIEW}</th>
 						<th class="colPost">{$TH_POST}</th>
 						<th class="colBoard">{$TH_BOARD}</th>
 						<th class="colReason">{$TH_REASON}</th>
 						<th class="colDate">{$TH_DATE}</th>
-						<th class="colStatus">{$TH_STATUS}</th>
+						<th class="colStatus">{$TH_DECISION}</th>
 						<th class="colActionedBy">{$TH_ACTIONED_BY}</th>
-						<th class="colActions">{$TH_ACTIONS}</th>
+						<th class="colActions"></th>
 					</tr>
 				</thead>
 				<tbody>

@@ -34,37 +34,60 @@ function generateUserNavBar(string $staticIndexFile, request $request): string {
 		. _T('return') . '</a>]</div>';
 }
 
-function generateAdminNavLink(string $liveIndexFile, string $mode, string $navTitle, userRole $requiredRole, string $titleAttr = ''): string {
-	// role level
+/**
+ * The built-in staff nav destinations, as data, with anything this account's role can't reach
+ * already dropped.
+ *
+ * Shared by the nav above admin pages and the sticky staff nav (module/staffNav) so the two
+ * can't drift apart. Entries carry the same shape module entries do (see StaffNavListenerTrait),
+ * minus the group: these are the primary destinations and stay at the top level.
+ *
+ * @param  bool $includeLiveFrontend Whether to lead with the link back to the live board.
+ *              False where that link is already rendered separately.
+ * @return array<int, array{key: string, label: string, url: string, title: string, group: string}>
+ */
+function getStaffNavCoreEntries(string $liveIndexFile, userRole $actionLogRole, bool $includeLiveFrontend = true): array {
 	$roleLevel = getRoleLevelFromSession();
 
-	// check if the user doesnt have the required role
-	$isAuthorized = $roleLevel->isAtLeast($requiredRole);
-
-	// return early
-	if(!$isAuthorized) {
-		return '';
-	}
-
-	// base url
-	$baseUrl = $liveIndexFile;
-
-	// parameters
-	$parameters = [
-		'mode' => $mode
+	$destinations = [
+		['key' => 'liveFrontend', 'query' => ['page' => 1], 'label' => _T('admin_nav_live_frontend'), 'title' => '', 'role' => userRole::LEV_USER],
+		['key' => 'actionLog', 'query' => ['mode' => 'actionLog'], 'label' => _T('admin_nav_action_log'), 'title' => _T('admin_nav_action_log_title'), 'role' => $actionLogRole],
+		['key' => 'account', 'query' => ['mode' => 'account'], 'label' => _T('admin_nav_accounts'), 'title' => _T('admin_nav_accounts_title'), 'role' => userRole::LEV_USER],
+		['key' => 'managePosts', 'query' => ['mode' => 'managePosts'], 'label' => _T('admin_nav_posts'), 'title' => _T('admin_nav_posts_title'), 'role' => userRole::LEV_JANITOR],
+		['key' => 'rebuild', 'query' => ['mode' => 'rebuild'], 'label' => _T('admin_nav_rebuild'), 'title' => _T('admin_nav_rebuild_title'), 'role' => userRole::LEV_JANITOR],
+		['key' => 'boards', 'query' => ['mode' => 'boards'], 'label' => _T('admin_nav_boards'), 'title' => _T('admin_nav_boards_title'), 'role' => userRole::LEV_ADMIN],
+		['key' => 'globalConfig', 'query' => ['mode' => 'globalConfig'], 'label' => _T('admin_nav_global_config'), 'title' => _T('admin_nav_global_config_title'), 'role' => userRole::LEV_ADMIN],
 	];
 
-	// generate the url parameters
-	$urlParameters = http_build_query($parameters);
+	$entries = [];
+	foreach ($destinations as $destination) {
+		if (!$includeLiveFrontend && $destination['key'] === 'liveFrontend') {
+			continue;
+		}
 
-	// generate url
-	$modeUrl = $baseUrl . '?' . $urlParameters;
-	
-	// generate the action log entry html
-	$titleHtml = $titleAttr !== '' ? ' title="' . htmlspecialchars($titleAttr) . '"' : '';
-	return '<li class="adminNavLink"><a' . $titleHtml . ' href="' . htmlspecialchars($modeUrl) . '">' . htmlspecialchars($navTitle) . '</a></li>';
+		if ($roleLevel->isLessThan($destination['role'])) {
+			continue;
+		}
+
+		$entries[] = [
+			'key' => $destination['key'],
+			'label' => $destination['label'],
+			'url' => $liveIndexFile . '?' . http_build_query($destination['query']),
+			'title' => $destination['title'],
+			'group' => '',
+		];
+	}
+
+	return $entries;
 }
 
+/** One core nav entry as the list item the admin nav bar is built from. */
+function renderStaffNavCoreEntry(array $entry): string {
+	$titleHtml = ($entry['title'] ?? '') !== '' ? ' title="' . htmlspecialchars($entry['title']) . '"' : '';
+
+	return '<li class="adminNavLink"><a' . $titleHtml . ' href="' . htmlspecialchars($entry['url']) . '">'
+		. htmlspecialchars($entry['label']) . '</a></li>';
+}
 
 function drawAccountTable(string $liveIndexFile, array $accounts, string $csrfHiddenInput) {
 	$dat = '';
@@ -204,13 +227,7 @@ function drawAdminTheading(&$dat, $staffSession) {
 	$roleEnum = $staffSession->getRoleLevel();
 	$roleName = sanitizeStr($roleEnum->displayRoleName());
 	
-	$loggedInInfo = '';
-		
-	if($roleEnum !== userRole::LEV_NONE) {
-		$loggedInInfo = '<div class="username">' . _T('admin_logged_in_as', sanitizeStr($username), sanitizeStr($roleName)) . '</div>';
-	}
-	
-	$html = '<div class="theading3"><h2>' . _T('admin_top') . '</h2>' . $loggedInInfo . '</div>';
+	$html = '<div class="theading3"><h2>' . _T('admin_top') . '</h2></div>';
 	
 	$dat .= $html;
 	return $html;

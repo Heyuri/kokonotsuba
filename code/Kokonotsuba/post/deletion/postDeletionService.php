@@ -5,6 +5,7 @@ namespace Kokonotsuba\post\deletion;
 use Kokonotsuba\board\board;
 use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\database\TransactionalTrait;
+use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\request\request;
 use Kokonotsuba\thread\threadRepository;
@@ -14,6 +15,9 @@ use function Kokonotsuba\libraries\getBoardsByUIDs;
 /** Handles soft-deletion of posts with thread cascade and bump restoration. */
 class postDeletionService {
 	use TransactionalTrait;
+
+	/** Set once the board and its module engine exist; see setModuleEngine(). */
+	private ?moduleEngine $moduleEngine = null;
 
 	public function __construct(
 		private readonly postRepository $postRepository,
@@ -57,6 +61,21 @@ class postDeletionService {
 			// Restore bump ordering on affected threads
 			$this->restoreThreadBumps($deletionRows);
 		});
+
+		// Announced after the transaction so listeners see the posts as actually deleted.
+		// Carries the UIDs that were asked for; replies proxy-deleted by a thread cascade are
+		// not enumerated here.
+		$this->moduleEngine?->dispatch('PostsDeleted', [&$posts, &$accountId]);
+	}
+
+	/**
+	 * Wire up the module engine so deletions can be announced.
+	 *
+	 * Set after construction rather than injected: this service is built in
+	 * bootstrap/repositories.php, before the board (and with it the module engine) exists.
+	 */
+	public function setModuleEngine(moduleEngine $moduleEngine): void {
+		$this->moduleEngine = $moduleEngine;
 	}
 
 	/**

@@ -83,6 +83,14 @@ class Post implements JsonSerializable {
 	public function getDeletedAttachments(): array { return $this->deletedAttachments; }
 	public function getStaffNotes(): array { return $this->staffNotes; }
 	public function getVotes(): ?array { return $this->votes; }
+
+	/**
+	 * Reports on this post still awaiting review.
+	 *
+	 * Comes from the reports subquery in getBasePostQuery(), which is only added when a reports
+	 * table is configured — so this reads 0 rather than failing when the module is not installed.
+	 */
+	public function getPendingReportCount(): int { return (int)($this->data['pending_report_count'] ?? 0); }
 	public function hasAttachments(): bool { return !empty($this->attachments); }
 	public function getAttachmentById(int $id): ?array { return $this->attachments[$id] ?? null; }
 	public function getFirstAttachment(): ?array {

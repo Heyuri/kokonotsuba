@@ -8,6 +8,9 @@
  *
  * Permission is requested once, on the first poll that finds something worth showing, and only
  * while permission is still "default" — a moderator who said no is not asked again.
+ *
+ * Staff who would rather not be interrupted can turn notifications off under Staff in the
+ * settings window; polling stops with them.
  */
 (function () {
 	'use strict';
@@ -25,6 +28,36 @@
 	if (!pollSeconds || pollSeconds < 10) pollSeconds = 60;
 
 	var permissionAsked = false;
+
+	var NOTIFY_KEY = 'reportNotifs';
+	var settingAdded = false;
+
+	/** An absent settings registry means koko.js isn't there to turn anything off — leave it on. */
+	function notificationsEnabled() {
+		return typeof kkSetting === 'undefined' || kkSetting.get(NOTIFY_KEY);
+	}
+
+	/**
+	 * Offer the toggle, once, to someone the server has just confirmed can see reports.
+	 *
+	 * Registered on the first answered poll rather than at load: this file is baked into static
+	 * HTML during a rebuild, so an ordinary reader downloads it too and has no business being
+	 * shown a staff setting. Turning notifications off does not unregister it — the switch that
+	 * turns them back on has to stay.
+	 */
+	function addSetting() {
+		if (settingAdded || typeof kkSetting === 'undefined') return;
+		settingAdded = true;
+
+		kkSetting.add({
+			key: NOTIFY_KEY,
+			label: 'Notify me about new reports',
+			onChange: function (enabled) {
+				// Turning it back on shouldn't wait out a whole poll interval.
+				if (enabled) checkForReports();
+			}
+		}, 'Moderation');
+	}
 
 	/** Keep the (n) badge in the admin nav in step with what the server just told us. */
 	function updateUnreadIndicator(unreadCount) {
@@ -86,9 +119,17 @@
 			.then(function (data) {
 				if (!data) return;
 
+				// An answered poll is the server confirming this account can see reports, which
+				// is the point the toggle is worth showing.
+				addSetting();
+
 				updateUnreadIndicator(data.unreadCount || 0);
 
 				if (!data.reports || !data.reports.length) return;
+
+				// Left unread on purpose: switching notifications back on should surface what
+				// came in while they were off, rather than having silently consumed it.
+				if (!notificationsEnabled()) return;
 
 				if (Notification.permission === 'granted') {
 					notifyAbout(data);
@@ -110,9 +151,14 @@
 
 	checkForReports();
 
-	// Poll while the tab is in the background too — the whole point is to reach a moderator
-	// who is looking at something else. Skip ticks with no network rather than burning a fetch.
+	// Poll while the tab is in the background too — the whole point is to reach a moderator who is
+	// looking at something else. Skipped when the network is down, and when notifications are off:
+	// on the live frontend there is no unread badge to keep current, so the request would be for
+	// nothing. The first poll above still runs either way, so the setting gets registered.
 	setInterval(function () {
-		if (navigator.onLine !== false) checkForReports();
+		if (navigator.onLine === false) return;
+		if (!notificationsEnabled() && settingAdded) return;
+
+		checkForReports();
 	}, pollSeconds * 1000);
 })();

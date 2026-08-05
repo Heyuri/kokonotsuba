@@ -4,16 +4,11 @@ namespace Kokonotsuba\Modules\lockThread;
 
 require_once __DIR__ . '/lockThreadLibrary.php';
 
-use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\ToggleActionTrait;
 use Kokonotsuba\userRole;
-
-use function Kokonotsuba\libraries\searchBoardArrayForBoard;
-use function Puchiko\json\sendAjaxAndDetach;
-use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
 	use ToggleActionTrait;
@@ -44,51 +39,15 @@ class moduleAdmin extends abstractModuleAdmin {
 		return ['post_uid' => $post->getUid()];
 	}
 
+	protected function getToggleLogLabel(bool $active): string {
+		return $active ? 'Locked thread' : 'Unlocked thread';
+	}
+
 	public function initialize(): void {
 		$this->registerToggleHooks();
 	}
 
-	protected function handleModuleRequest(): void {		
-		$post = $this->moduleContext->postRepository->getPostByUid($this->moduleContext->request->getParameter('post_uid'), true);
-
-		$board = searchBoardArrayForBoard($post->getBoardUID());
-
-		if(!$post->isOp()) {
-			throw new BoardException('ERROR: Cannot lock reply.');
-		}
-
-		if(!$post) {
-			throw new BoardException('ERROR: Post does not exist.');
-		}
-
-		$status = $post->getFlags();
-		
-		$status->toggle('stop');
-
-		$this->moduleContext->postRepository->setPostStatus($post->getUid(), $status->toString());
-		
-		$logMessage = $status->value('stop') ? "Locked thread No. {$post->getNumber()}" : "Unlock thread No. {$post->getNumber()}";
-		
-		$this->logAction($logMessage, $board->getBoardUID());
-		
-		// ===== AJAX handling updated to use helper =====
-		if($this->moduleContext->request->isAjax()) {
-			// whether the post-action thread is locked or not
-			$isLocked = $status->value('stop');
-
-			// send json first
-			sendAjaxAndDetach([
-				'active' => $isLocked
-			]);
-
-			// rebuild after client already received JSON
-			$board->rebuildBoard();
-			exit;
-		}
-		// ===== end AJAX handling =====
-
-		$board->rebuildBoard();
-
-		redirect($this->moduleContext->request->getReferer());
+	protected function handleModuleRequest(): void {
+		$this->handleToggleRequest();
 	}
 }

@@ -2,10 +2,16 @@
 
 namespace Kokonotsuba\module_classes\traits;
 
+use Kokonotsuba\error\BoardException;
+use Kokonotsuba\module_classes\traits\listeners\MassModerateListenerTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\thread\Thread;
 
 use function Kokonotsuba\libraries\generateModerateForm;
+use function Kokonotsuba\libraries\getBoardsByUIDs;
+use function Kokonotsuba\libraries\rebuildBoardsByArray;
+use function Puchiko\json\sendAjaxAndDetach;
+use function Puchiko\request\redirect;
 
 /**
  * Trait for thread-level toggle modules (lock, sticky, autosage).
@@ -16,6 +22,8 @@ use function Kokonotsuba\libraries\generateModerateForm;
  * Requires the using class to extend abstractModuleAdmin.
  */
 trait ToggleActionTrait {
+	use MassModerateListenerTrait;
+
 	abstract protected function getToggleFlagKey(): string;
 	abstract protected function getToggleActiveLabel(): string;
 	abstract protected function getToggleInactiveLabel(): string;
@@ -25,6 +33,9 @@ trait ToggleActionTrait {
 	abstract protected function getToggleActionName(): string;
 	abstract protected function getToggleJsFile(): string;
 	abstract protected function getToggleUrlParams(Post $post): array;
+
+	/** Wording for the action log, e.g. "Locked thread" / "Unlocked thread". */
+	abstract protected function getToggleLogLabel(bool $active): string;
 
 	protected function shouldRegisterThreadAdminControls(): bool {
 		return true;
@@ -64,6 +75,147 @@ trait ToggleActionTrait {
 				$this->onToggleModuleHeader($moduleHeader);
 			}
 		);
+
+		$this->listenMassModerateTools('onToggleMassModerateTools', $this->getToggleMassPriority());
+	}
+
+	protected function getToggleMassPriority(): int {
+		return 50;
+	}
+
+	/** All three thread toggles read as one area of moderation, so they share a heading. */
+	protected function getToggleMassGroup(): string {
+		return 'Thread';
+	}
+
+	/**
+	 * Set and unset are separate entries rather than one toggle: a selection of threads is rarely
+	 * all in the same state, and staff mean "make these sticky", not "flip each of these".
+	 */
+	protected function onToggleMassModerateTools(array &$tools): void {
+		$priority = $this->getToggleMassPriority();
+		$actionName = $this->getToggleActionName();
+
+		$tools[] = $this->buildMassTool($actionName . 'On', $this->getToggleInactiveTitle(), [
+			'group' => $this->getToggleMassGroup(),
+			'scope' => 'thread',
+			'effect' => 'flag',
+			'indicator' => 'indicator-' . $actionName,
+			'params' => ['action' => $actionName, 'state' => 1],
+			'priority' => $priority,
+		]);
+
+		$tools[] = $this->buildMassTool($actionName . 'Off', $this->getToggleActiveTitle(), [
+			'group' => $this->getToggleMassGroup(),
+			'scope' => 'thread',
+			'effect' => 'flag',
+			'indicator' => 'indicator-' . $actionName,
+			'params' => ['action' => $actionName, 'state' => 0],
+			'priority' => $priority - 1,
+		]);
+	}
+
+	/**
+	 * Handle both shapes of request: the per-post controls flip one thread, the [Moderate] window
+	 * sets an explicit state on a whole selection. Either way it is one read, one write pass and
+	 * one rebuild per board involved.
+	 */
+	protected function handleToggleRequest(?array $postUids = null): void {
+		$openingPosts = array_values(array_filter(
+			$this->fetchRequestedPosts($postUids ?? $this->getRequestedPostUids(), true),
+			fn(Post $post) => $post->isOp()
+		));
+
+		if (!$openingPosts) {
+			throw new BoardException('ERROR: Cannot ' . $this->getToggleActionName() . ' a reply.');
+		}
+
+		// no state means the historic behaviour: flip whatever the thread is now
+		$requestedState = $this->moduleContext->request->getParameter('state', 'POST');
+		$state = $requestedState === null ? null : (bool)(int)$requestedState;
+
+		$states = [];
+		$this->moduleContext->transactionManager->run(function () use ($openingPosts, $state, &$states): void {
+			$states = $this->applyToggleState($openingPosts, $state);
+			$this->logToggleActions($openingPosts, $states);
+		});
+
+		$boards = getBoardsByUIDs(array_unique(array_map(fn(Post $post) => $post->getBoardUID(), $openingPosts)));
+
+		if ($this->moduleContext->request->isAjax()) {
+			$results = [];
+			foreach ($states as $postUid => $active) {
+				$results[$postUid] = ['active' => $active];
+			}
+
+			// 'active' stays for the per-post widget, which flips one thread and reads it directly
+			sendAjaxAndDetach([
+				'success' => true,
+				'active' => $states[$openingPosts[0]->getUid()] ?? false,
+				'results' => $results,
+			]);
+
+			rebuildBoardsByArray($boards);
+			exit;
+		}
+
+		rebuildBoardsByArray($boards);
+
+		redirect($this->moduleContext->request->getReferer());
+	}
+
+	/**
+	 * Write the new state for every opening post and report what each ended up as.
+	 *
+	 * Flags live on the post row, so the whole selection goes out as a single statement. Modules
+	 * keeping their state elsewhere (sticky, on the thread row) override this.
+	 *
+	 * @param Post[]    $openingPosts
+	 * @param bool|null $state True/false to set, null to flip each thread.
+	 * @return array<int, bool> post UID => resulting state.
+	 */
+	protected function applyToggleState(array $openingPosts, ?bool $state): array {
+		$flagKey = $this->getToggleFlagKey();
+		$statuses = [];
+		$states = [];
+
+		foreach ($openingPosts as $post) {
+			$flags = $post->getFlags();
+			$current = (bool)$flags->value($flagKey);
+			$next = $state ?? !$current;
+
+			if ($next !== $current) {
+				$next ? $flags->add($flagKey) : $flags->remove($flagKey);
+				$statuses[$post->getUid()] = $flags->toString();
+			}
+
+			$states[$post->getUid()] = $next;
+		}
+
+		$this->moduleContext->postRepository->setPostStatuses($statuses);
+
+		return $states;
+	}
+
+	/**
+	 * One log line per board and resulting state, listing the threads it covered.
+	 *
+	 * @param Post[]           $openingPosts
+	 * @param array<int, bool> $states
+	 */
+	protected function logToggleActions(array $openingPosts, array $states): void {
+		$grouped = [];
+
+		foreach ($openingPosts as $post) {
+			$active = !empty($states[$post->getUid()]);
+			$grouped[$post->getBoardUID()][$active ? 1 : 0][] = 'No.' . $post->getNumber();
+		}
+
+		foreach ($grouped as $boardUid => $byState) {
+			foreach ($byState as $active => $numbers) {
+				$this->logAction($this->getToggleLogLabel((bool)$active) . ' ' . implode(', ', $numbers), (int)$boardUid);
+			}
+		}
 	}
 
 	protected function renderToggleButton(string &$modfunc, Post $post, bool $noScript): void {

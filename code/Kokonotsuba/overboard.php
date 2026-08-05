@@ -26,6 +26,7 @@ use function Kokonotsuba\libraries\html\getThreadTitle;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getOrCreateCsrfToken;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
+use function Kokonotsuba\libraries\html\generateMassModerateHtml;
 use function Kokonotsuba\libraries\html\getBoardStylesheetsFromConfig;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\strings\sanitizeStr;
@@ -73,6 +74,8 @@ class overboard {
 			$pte_vals['{$MODULE_HEADER_HTML}'] .= getCsrfMetaTag();
 
 			$this->moduleEngine->dispatch('ModuleAdminHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
+
+			$pte_vals['{$MODULE_HEADER_HTML}'] .= generateMassModerateHtml($this->templateEngine, $this->moduleEngine, $this->config);
 		}
 		// dispatch module header hook point for static html
 		$this->moduleEngine->dispatch('ModuleHeader', array(&$pte_vals['{$MODULE_HEADER_HTML}']));
@@ -98,7 +101,11 @@ class overboard {
 		$this->moduleEngine->dispatch('PlaceHolderIntercept', [&$pte_vals]);
 		$this->moduleEngine->dispatch('TopLinks', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
 		$this->moduleEngine->dispatch('PageTop', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
-		
+
+		// Hook: PageStart — the first thing inside <body>, as on a board page.
+		$pte_vals['{$PAGE_START}'] = '';
+		$this->moduleEngine->dispatch('PageStart', array(&$pte_vals['{$PAGE_START}']));
+
 		$html .= $this->templateEngine->ParseBlock('BODYHEAD',$pte_vals);
 		
 		$pte_vals['{$MODULE_INFO_HOOK}'] = $this->templateEngine->ParseBlock('MODULE_INFO_HOOK', $pte_vals);

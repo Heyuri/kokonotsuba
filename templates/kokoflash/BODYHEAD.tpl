@@ -1,4 +1,5 @@
 <body id="flash">
+	{$PAGE_START}
 	<!-- <script id="wz_tooltip" src="{$STATIC_URL}js/wz_tooltip.js"></script> -->
 	<div id="top"></div>
 	<!--&TOPLINKS/-->

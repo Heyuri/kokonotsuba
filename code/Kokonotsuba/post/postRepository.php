@@ -30,6 +30,7 @@ class postRepository extends baseRepository {
 		private readonly string $accountTable,
 		private readonly string $countryFlagTable = '',
 		private readonly string $displayIpTable = '',
+		private readonly string $reportTable = '',
 	) {
 		parent::__construct($databaseConnection, $postTable);
 		self::validateTableNames($threadTable, $deletedPostsTable, $fileTable, $soudaneTable, $noteTable, $accountTable);
@@ -100,7 +101,7 @@ class postRepository extends baseRepository {
 		// Fetch the full join data for only those post_uids.
 		// pdoPlaceholdersForIn uses positional '?' placeholders; pass $postUids as the params array.
 		$inClause = pdoPlaceholdersForIn($postUids);
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable, reportTable: $this->reportTable);
 		$query .= " WHERE p.post_uid IN $inClause ORDER BY p.$order DESC";
 
 		$posts = $this->queryAll($query, $postUids);
@@ -188,7 +189,7 @@ class postRepository extends baseRepository {
 		}
 
 		$whereClause = implode(' OR ', $conditions);
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $viewDeleted, false, $this->countryFlagTable, $this->displayIpTable);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $viewDeleted, false, $this->countryFlagTable, $this->displayIpTable, reportTable: $this->reportTable);
 		$query .= " WHERE {$whereClause}";
 
 		$posts = $this->queryAll($query, $params);
@@ -207,7 +208,7 @@ class postRepository extends baseRepository {
 	 */
 	public function getPostByUid(int $post_uid, bool $viewDeleted = false): Post|false {
 		// get base post query
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $viewDeleted, false, $this->countryFlagTable, $this->displayIpTable);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $viewDeleted, false, $this->countryFlagTable, $this->displayIpTable, reportTable: $this->reportTable);
 		
 		// append WHERE clause to get it by the post uid
 		$query .= " WHERE p.post_uid = :post_uid";
@@ -366,6 +367,41 @@ class postRepository extends baseRepository {
 	}
 
 	/**
+	 * Update the status column of many posts at once.
+	 *
+	 * Every post carries its own flag string, so the new values ride in a CASE rather than as one
+	 * assignment — a selection of any size costs a statement per chunk instead of one per post.
+	 *
+	 * @param array<int, string> $statusesByUid post UID => new status value.
+	 * @return void
+	 */
+	public function setPostStatuses(array $statusesByUid): void {
+		if (!$statusesByUid) {
+			return;
+		}
+
+		foreach (array_chunk($statusesByUid, 200, true) as $chunk) {
+			$cases = '';
+			$caseParams = [];
+			$uids = [];
+
+			foreach ($chunk as $postUid => $status) {
+				$cases .= ' WHEN ? THEN ?';
+				$caseParams[] = $postUid;
+				$caseParams[] = $status;
+				$uids[] = $postUid;
+			}
+
+			$inClause = pdoPlaceholdersForIn($uids);
+
+			$this->query(
+				"UPDATE {$this->table} SET status = CASE post_uid{$cases} END WHERE post_uid IN $inClause",
+				array_merge($caseParams, $uids)
+			);
+		}
+	}
+
+	/**
 	 * Update arbitrary columns for the given post UID.
 	 *
 	 * @param mixed $post_uid   Post UID.
@@ -426,11 +462,12 @@ class postRepository extends baseRepository {
 	 * Fetch multiple posts by their UIDs, with merged attachment rows.
 	 *
 	 * @param int[] $postUIDsList Array of post UIDs.
+	 * @param bool  $viewDeleted  Whether deleted posts are returned too.
 	 * @return array|false Array of merged post data arrays, or false if not found.
 	 */
-	public function getPostsByUids(array $postUIDsList): array|false {
+	public function getPostsByUids(array $postUIDsList, bool $viewDeleted = false): array|false {
 		// get base query
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, false, false, $this->countryFlagTable, $this->displayIpTable);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $viewDeleted, false, $this->countryFlagTable, $this->displayIpTable, reportTable: $this->reportTable);
 
 		// generate in clause
 		$inClause = pdoPlaceholdersForIn($postUIDsList);
@@ -486,7 +523,7 @@ class postRepository extends baseRepository {
 		$inClause = pdoPlaceholdersForIn($threadUids);
 
 		// base post query
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable,  $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable, reportTable: $this->reportTable);
 
 		// append where clause
 		$query .= " WHERE p.thread_uid IN $inClause";
@@ -576,7 +613,7 @@ class postRepository extends baseRepository {
 	 */
 	public function getOpeningPostFromThread(string $threadUid, bool $includeDeleted = false): bool|Post {
 		// get base post query
-		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable);
+		$query = getBasePostQuery($this->table, $this->deletedPostsTable, $this->fileTable, $this->threadTable, $this->soudaneTable, $this->noteTable, $this->accountTable, $includeDeleted, false, $this->countryFlagTable, $this->displayIpTable, reportTable: $this->reportTable);
 
 		// append WHERE clause
 		$query .= " WHERE p.post_uid = (SELECT post_op_post_uid FROM {$this->threadTable} WHERE thread_uid = :thread_uid)";
