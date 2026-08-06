@@ -788,13 +788,24 @@ class registRoute {
 			// static page limit
 			$staticHtmlUntil = $this->board->getConfigValue('STATIC_HTML_UNTIL', 10);
 
-			// dont even bother if the page is larger than the static page limit
+			// Whether the reply actually bumps the thread to the top of the board
+			// (agingHandler already accounts for sage, MAX_RES and MAX_AGE_TIME)
+			$isBumping = $postData['age'] !== false;
+
+			// the thread sits past the static page limit
 			if(($pageToRebuild > $staticHtmlUntil) && $staticHtmlUntil > 0) {
+				// A bump drags the thread to the front, pushing every thread above it down one slot,
+				// so every static page changes even though the thread itself wasn't on one
+				if($isBumping) {
+					$this->board->rebuildBoard();
+				}
+
+				// A sage only changes the thread's own page, which isn't static - nothing to do
 				return;
 			}
 
 			// If saging, just rebuild that one page
-			if($postData['age'] === false) {
+			if(!$isBumping) {
 				$this->board->rebuildBoardPage($pageToRebuild);
 			} else {
 				// If a non-sage reply, rebuild all pages until the page the thread is on
