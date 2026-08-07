@@ -881,6 +881,51 @@ class deletedPostsRepository extends baseRepository {
 	}
 
 	/**
+	 * Find the open deletion record the given account owns for a post number on a board.
+	 *
+	 * Staff who cannot see deleted posts can still see their own deletions, so a thread they took
+	 * down has an entry they are entitled to reach even though the thread itself is gone for them.
+	 *
+	 * A reply that went down with its thread carries only a by-proxy row, which is not viewable on
+	 * its own — the OP's record is the one that represents the deletion, so it is matched too. The
+	 * post's own record wins when both exist.
+	 *
+	 * @param int $postNumber Post number (`no`) being accessed.
+	 * @param int $boardUid   Board the post number belongs to.
+	 * @param int $accountId  Account whose deletions to match against.
+	 * @return int|false Deletion record ID, or false if the account owns no such record.
+	 */
+	public function findOwnOpenDeletionIdForPostNumber(int $postNumber, int $boardUid, int $accountId): int|false {
+		// open_key is only set on open, post-level rows, so it filters out restored and file-only
+		// entries without a second condition
+		$query = "
+			SELECT dp.id
+			FROM {$this->table} dp
+			JOIN {$this->postTable} p ON p.post_uid = dp.post_uid
+			JOIN {$this->postTable} target ON target.no = :post_number AND target.boardUID = :board_uid
+			WHERE dp.deleted_by = :account_id
+				AND dp.by_proxy = 0
+				AND dp.open_key IS NOT NULL
+				AND (
+					dp.open_key = target.post_uid
+					OR (p.is_op = 1 AND p.thread_uid = target.thread_uid)
+				)
+			ORDER BY CASE WHEN dp.open_key = target.post_uid THEN 0 ELSE 1 END, dp.id DESC
+			LIMIT 1
+		";
+
+		$params = [
+			':post_number' => $postNumber,
+			':board_uid' => $boardUid,
+			':account_id' => $accountId,
+		];
+
+		$id = $this->queryValue($query, $params);
+
+		return $id !== false ? (int)$id : false;
+	}
+
+	/**
 	 * Fetch the most-recent post-level deleted_post ID for each of the given post UIDs.
 	 *
 	 * One query for the whole selection, which is what the mass moderation window needs to answer

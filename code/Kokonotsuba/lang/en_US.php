@@ -503,8 +503,6 @@ $language['staffnav_group_tools'] = 'Tools';
 // staffAlerts module
 $language['staffalerts_title'] = 'Alerts';
 $language['staffalerts_unread_title'] = 'Entries you have not read yet';
-$language['staffalerts_collapse'] = 'Collapse the alerts widget';
-$language['staffalerts_expand'] = 'Show the alerts widget';
 
 $language['quick_reply_link'] = 'Quick reply';
 
@@ -540,6 +538,47 @@ $language['anon_ip_dispatched']       = 'Anonymization job queued. You will be n
 $language['anon_ip_completed']        = 'IP anonymization completed successfully.';
 $language['anon_ip_dispatch_failed']  = 'Failed to start anonymization job. Please try again.';
 $language['anon_ip_invalid_request']  = 'Invalid anonymization request.';
+
+// postStats module
+$language['poststats_link']             = 'Stats';
+$language['poststats_title']            = 'Statistics';
+$language['poststats_note']             = 'Counted using post numbers, deleted posts are included.';
+$language['poststats_sitewide']         = 'Site-wide';
+$language['poststats_generating']       = 'Being worked out in the background. Reload in a moment.';
+$language['poststats_empty']            = 'No posts yet.';
+// Stands in for a figure a board has no value for yet.
+$language['poststats_none']             = '—';
+// Chart captions. %s is the board the chart covers.
+$language['poststats_chart_board']      = 'Posts made - %s';
+$language['poststats_chart_site']       = 'Posts made - all listed boards';
+// The rate tiles above each chart.
+$language['poststats_tile_today']       = 'Posts today';
+// The rate is for the span currently selected, so the label names it: %s is that span.
+$language['poststats_tile_per_day']     = 'Posts per day (%s)';
+$language['poststats_tile_per_hour']    = 'Posts per hour (%s)';
+$language['poststats_tile_total']       = 'Posts made';
+$language['poststats_tile_first_post']  = 'First post';
+$language['poststats_tile_latest_no']   = 'Latest No.';
+// Zoom links. postStatsRenderer::RANGES names these keys rather than the text itself.
+$language['poststats_range_30d']        = '30 days';
+$language['poststats_range_90d']        = '90 days';
+$language['poststats_range_1y']         = '1 year';
+$language['poststats_range_all']        = 'All time';
+// Column headings of the per-board breakdown.
+$language['poststats_col_board']        = 'Board';
+$language['poststats_col_today']        = 'Today';
+$language['poststats_col_per_day']      = 'Posts/day';
+$language['poststats_col_per_hour']     = 'Posts/hour';
+$language['poststats_col_total']        = 'Posts made';
+$language['poststats_col_first_post']   = 'First post';
+// Bar tooltips: %1$s the day or span, %2$s the count, %3$s the daily average.
+$language['poststats_bar']              = '%1$s: %2$s posts';
+$language['poststats_bar_rate']         = '%1$s: %2$s posts (%3$s/day)';
+$language['poststats_bar_span']         = '%1$s to %2$s';
+// Wraps a tooltip for the bucket that is still filling up.
+$language['poststats_bar_partial']      = '%s - in progress';
+// One segment of a site-wide bar: %1$s the day or span, %2$s the board, %3$s the count.
+$language['poststats_segment']          = '%1$s - %2$s: %3$s posts';
 
 // ── Board / global config editor field descriptions ──────────────────────────────
 // One entry per schema field (see configs/*.php and module/{name}/config.php).
@@ -711,6 +750,12 @@ $language['config_desc_modules.onlineCounter.USER_COUNT_TIMEOUT'] = 'How long an
 // module/perceptualBan/config.php
 $language['config_desc_modules.perceptualBan.HAMMING_THRESHOLD'] = 'Max Hamming distance for a perceptual hash match.';
 
+// module/postStats/config.php
+$language['config_desc_modules.postStats.SHOW_SITE_WIDE'] = 'Show the site-wide post rates below the board ones.';
+$language['config_desc_modules.postStats.SHOW_BOARD_TABLE'] = 'Show the per-board breakdown table under the site-wide chart.';
+$language['config_desc_modules.postStats.DEFAULT_RANGE_DAYS'] = 'Span the charts open on, in days (0 = all time; 30, 90 and 365 also selectable).';
+$language['config_desc_modules.postStats.MAX_BARS'] = 'Most bars a chart may draw before days are grouped into weeks, then months.';
+
 // module/privateMessage/config.php
 $language['config_desc_modules.privateMessage.APPEND_TRIP_PM_BUTTON_TO_POST'] = 'Show a private-message button next to tripcoded posts.';
 
@@ -798,6 +843,7 @@ $language['config_label_POST_DELETION_TIME_LIMIT'] = 'Post deletion time limit (
 $language['config_label_ModuleList.catalog'] = 'Catalog';
 $language['config_label_ModuleList.search'] = 'Search';
 $language['config_label_ModuleList.threadList'] = 'Thread list';
+$language['config_label_ModuleList.postStats'] = 'Post statistics';
 $language['config_label_ModuleList.rebuild'] = 'Rebuild';
 $language['config_label_ModuleList.adminDel'] = 'Admin delete';
 $language['config_label_ModuleList.adminBan'] = 'Admin ban';
@@ -1009,6 +1055,12 @@ $language['config_label_modules.onlineCounter.USER_COUNT_TIMEOUT'] = 'Online cou
 
 // module/perceptualBan/config.php
 $language['config_label_modules.perceptualBan.HAMMING_THRESHOLD'] = 'Hamming threshold';
+
+// module/postStats/config.php
+$language['config_label_modules.postStats.SHOW_SITE_WIDE'] = 'Show site-wide statistics';
+$language['config_label_modules.postStats.SHOW_BOARD_TABLE'] = 'Show per-board breakdown';
+$language['config_label_modules.postStats.DEFAULT_RANGE_DAYS'] = 'Default chart span (days)';
+$language['config_label_modules.postStats.MAX_BARS'] = 'Maximum chart bars';
 
 // module/privateMessage/config.php
 $language['config_label_modules.privateMessage.APPEND_TRIP_PM_BUTTON_TO_POST'] = 'Append PM button to posts';

@@ -4,9 +4,11 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\board\board;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\policy\postRenderingPolicy;
+use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\request\request;
 use Kokonotsuba\thread\postRedirectService;
 use Kokonotsuba\thread\Thread;
@@ -29,6 +31,8 @@ class defaultRoute {
 		private readonly postRepository $postRepository,
 		private readonly postRedirectService $postRedirectService,
 		private readonly postRenderingPolicy $postRenderingPolicy,
+		private readonly deletedPostsService $deletedPostsService,
+		private readonly staffAccountFromSession $staffAccountFromSession,
 		private readonly request $request
 	) {}
 
@@ -101,6 +105,13 @@ class defaultRoute {
 			redirect($movedThreadRedirect);
 		}
 
+		// Staff who can't see deleted posts still get to see their own deletions, so send them to
+		// the entry for anything they took down rather than letting the render 404 on them
+		$ownDeletionEntry = $this->resolveOwnDeletionEntryUrl($resno);
+		if ($ownDeletionEntry) {
+			redirect($ownDeletionEntry);
+		}
+
 		// Try to resolve the thread UID directly from the post number
 		$thread_uid = $this->threadRepository->resolveThreadUidFromResno($this->board, $resno);
 
@@ -143,5 +154,59 @@ class defaultRoute {
 			$redirectString = $this->board->getBoardThreadURL($resnoNew, $resno, false, $page);
 			redirect($redirectString);
 		}
+	}
+
+	/**
+	 * Resolve the deleted post entry a restricted staff member should be sent to for this post
+	 * number, or null when the normal render should go ahead.
+	 *
+	 * Staff whose role is below the one needed to view deleted posts see nothing of a thread they
+	 * deleted, which leaves them staring at a 404 for their own action. They are still entitled to
+	 * their own deletion records, so point them at the entry instead.
+	 */
+	private function resolveOwnDeletionEntryUrl(int $resno): ?string {
+		// staff who may view deleted posts outright get the thread rendered as usual
+		if ($this->postRenderingPolicy->canViewDeletedPosts()) {
+			return null;
+		}
+
+		// no session, no deletions to own
+		$accountId = $this->staffAccountFromSession->getUID();
+		if ($accountId === null) {
+			return null;
+		}
+
+		// nowhere to send them if the board doesn't run the deleted posts viewer
+		if (!$this->board->getConfigValue('ModuleList.deletedPosts', false)) {
+			return null;
+		}
+
+		// look for an open deletion record of theirs covering this post
+		$deletedPostId = $this->deletedPostsService->findOwnOpenDeletionIdForPostNumber(
+			$resno,
+			(int) $this->board->getBoardUID(),
+			(int) $accountId
+		);
+
+		if ($deletedPostId === null) {
+			return null;
+		}
+
+		return $this->buildDeletedPostEntryUrl($deletedPostId);
+	}
+
+	/**
+	 * Build the URL of a single entry on the deleted posts module page.
+	 */
+	private function buildDeletedPostEntryUrl(int $deletedPostId): string {
+		$urlParameters = [
+			'pageName' => 'viewMore',
+			'deletedPostId' => $deletedPostId,
+			'moduleMode' => 'admin',
+			'mode' => 'module',
+			'load' => 'deletedPosts',
+		];
+
+		return $this->request->getCurrentUrlNoQuery() . '?' . http_build_query($urlParameters);
 	}
 }

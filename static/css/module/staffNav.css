@@ -1,34 +1,28 @@
 /**
- * staffNav.css — the sticky staff nav.
+ * staffNav.css — the staff nav bar.
  *
- * A .theading bar across the top of the page, above the board list and the admin bar, that sticks
- * to the top of the viewport as the page scrolls. It takes the theme's heading colours as they
- * come; everything here is layout, plus the drop-downs, which are anchored to their own button
- * rather than positioned in JS.
+ * A .theading bar in the nav section, under the board list. Whether that section sticks to the
+ * viewport is the Persistent navigation setting's doing, not this file's.
  */
 
 .staffNav {
-	/* Sticky rather than fixed: the bar keeps its place in the flow, so it pushes the page down
-	   instead of covering it, and no one has to measure its height to make room. */
-	position: sticky;
-	top: 0;
-	width: 100%;
 	display: flex;
 	align-items: center;
 	gap: 0.5em;
-	/* Sized against the page rather than against whatever it is nested in, so the two ways the
-	   bar reaches the page read identically. */
 	font-size: var(--font-size-main, medium);
-	/* Above what it scrolls over, below any window the moderator opens — a window sitting over
-	   the bar can be dragged off it, a bar sitting over a window cannot. */
-	z-index: 99;
-	margin: 0;
+	margin: 0 -8px;
 	padding: 0;
 	text-align: left;
+	clear: both;
 }
 
-/* Switched off under Staff in the settings window. Spelled out because the display above would
-   otherwise win over the attribute. */
+@media screen and (max-width: 600px) {
+	.staffNav {
+		margin: 0;
+	}
+}
+
+/* Switched off under Moderation in the settings window; the display above would otherwise win. */
 .staffNav[hidden] {
 	display: none;
 }

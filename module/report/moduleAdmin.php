@@ -955,6 +955,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$CLEAR_IP_TEXT}' => sanitizeStr(_T('report_clear_ip_row')),
 			'{$CLEAR_IP_HINT}' => sanitizeStr(_T('report_clear_ip_hint')),
 			'{$TH_REPORTER_REASON}' => sanitizeStr(_T('report_th_reporter_reason')),
+			'{$TH_POST_NUMBER}' => sanitizeStr(_T('report_th_post_number')),
 			'{$SHOW_STATUS}' => '1',
 			'{$SHOW_ACTIONED_BY}' => '1',
 			'{$HEADING_TOTALS}' => sanitizeStr(_T('report_heading_totals')),

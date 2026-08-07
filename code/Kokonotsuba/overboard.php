@@ -102,9 +102,9 @@ class overboard {
 		$this->moduleEngine->dispatch('TopLinks', array(&$pte_vals['{$HOOKLINKS}'],$resno)); // "Toplink" Hook Point
 		$this->moduleEngine->dispatch('PageTop', array(&$pte_vals['{$BANNER}'])); //"AboveTitle" Hook Point
 
-		// Hook: PageStart — the first thing inside <body>, as on a board page.
-		$pte_vals['{$PAGE_START}'] = '';
-		$this->moduleEngine->dispatch('PageStart', array(&$pte_vals['{$PAGE_START}']));
+		// Hook: TopNavSection — as on a board page.
+		$pte_vals['{$TOP_NAV_SECTION_HOOK}'] = '';
+		$this->moduleEngine->dispatch('TopNavSection', array(&$pte_vals['{$TOP_NAV_SECTION_HOOK}']));
 
 		$html .= $this->templateEngine->ParseBlock('BODYHEAD',$pte_vals);
 		

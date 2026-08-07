@@ -308,6 +308,8 @@ class modeHandler {
 				$this->container->get('postRepository'),
 				$this->container->get('postRedirectService'),
 				$this->container->get('postRenderingPolicy'),
+				$this->container->get('deletedPostsService'),
+				$this->container->get('staffAccountFromSession'),
 				$this->container->get('request')
 			);
 			$defaultRoute->handleDefault();

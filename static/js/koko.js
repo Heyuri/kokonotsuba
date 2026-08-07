@@ -713,7 +713,8 @@ const kkSetting = {
 // General-tab settings, grouped into sections.
 kkSetting.add({ key: "neomenu", label: "Use neomenu", bodyClass: "neomenuEnabled",
 	onChange: function (v) { kkjs.toggleNeomenu(v); } }, "Interface");
-kkSetting.add({ key: "persistnav", label: "Persistent navigation", bodyClass: "persistnav" }, "Layout");
+kkSetting.add({ key: "persistnav", label: "Persistent navigation", bodyClass: "persistnav",
+	onChange: function (v) { kkjs.stickNav(v); } }, "Layout");
 kkSetting.add({ key: "persistpager", label: "Persistent pager", bodyClass: "persistpager" }, "Layout");
 kkSetting.add({ key: "centerthreads", label: "Center threads", bodyClass: "centerthreads" }, "Layout");
 kkSetting.add({ key: "tripkeys", label: "Futallaby style tripkeys" }, "Posting");
@@ -721,6 +722,15 @@ kkSetting.add({ key: "tripkeys", label: "Futallaby style tripkeys" }, "Posting")
 const kkjs = {
 	modules: Array(),
 	posts: null,
+	/* Persistent navigation: pin the nav section, so everything in it rides along. */
+	stickNav: function (enabled) {
+		var section = $doc.querySelector(".stickyNav");
+		if (!section) return;
+
+		section.style.position = enabled ? "sticky" : "";
+		section.style.top = enabled ? "0" : "";
+		section.style.zIndex = enabled ? 3 : "";
+	},
 	startup: function () {
 		kkjs.posts = $class("post");
 		// Load stored name, email, and password
@@ -749,6 +759,8 @@ const kkjs = {
 		} else {
 			body.classList.remove("persistnav");
 		}
+
+		kkjs.stickNav(_kkSetting("persistnav"));
 
 		if (_kkSetting("neomenu")) {
 			body.classList.add("neomenuEnabled");
