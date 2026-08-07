@@ -1,0 +1,302 @@
+/**
+ * postStats.css — the statistics page.
+ *
+ * The chart is plain elements: a row of equal-width slots, each holding a bar whose height is a
+ * percentage of the tallest bucket, so nothing has to be measured or drawn at runtime. Colours
+ * come from the theme variables, with fallbacks for themes that do not define them.
+ */
+
+.postStatsNote {
+	font-size: var(--font-size-small, small);
+	color: var(--color-fg-omitted, #707070);
+	margin: 0.5em 0 1em;
+}
+
+/* Rate tiles. A grid rather than a table: the row reflows to however many fit the width. */
+.postStatsTiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9em, 1fr));
+	gap: 0.5em;
+	margin: 0.75em 0;
+	padding: 0;
+}
+
+.postStatsTile {
+	background: var(--color-bg-reply, #f0e0d6);
+	border: 1px solid var(--color-lo-contrast-border, #d9bfb7);
+	padding: 0.5em 0.75em;
+	text-align: center;
+}
+
+.postStatsTile dt {
+	font-size: var(--font-size-x-small, x-small);
+	color: var(--color-fg-omitted, #707070);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.postStatsTile dd {
+	margin: 0.15em 0 0;
+	font-size: var(--font-size-large, large);
+	font-weight: var(--font-weight-bold, bold);
+	color: var(--color-fg-title, #cc1105);
+}
+
+/* Zoom links. */
+.postStatsRanges {
+	margin: 0.75em 0 0.25em;
+}
+
+.postStatsRanges a,
+.postStatsRangeCurrent {
+	display: inline-block;
+	margin-right: 0.5em;
+	font-size: var(--font-size-small, small);
+}
+
+.postStatsRangeCurrent {
+	font-weight: var(--font-weight-bold, bold);
+	text-decoration: underline;
+}
+
+.postStatsFigure {
+	margin: 0 0 1.5em;
+	padding: 0.5em;
+	background: var(--color-bg-reply, #f0e0d6);
+	border: 1px solid var(--color-lo-contrast-border, #d9bfb7);
+
+	/*
+	 * Series colours for the site-wide stack. Every listed board gets its own identity.
+	 *
+	 * There are eight hues, and that is the whole supply — they are validated as an adjacent set
+	 * (which is what a stack needs) against both the lightest and darkest board themes, and
+	 * inventing a ninth is how a palette quietly stops being colourblind-safe. Past eight, boards
+	 * take a second channel instead: the same hues hatched at 45 degrees, then at 135. Hue and
+	 * pattern together are the identity, so two boards sharing a hue are still told apart without
+	 * relying on colour. The order is the safety mechanism, not decoration — do not reorder or
+	 * substitute without re-validating.
+	 *
+	 * Several hues sit under 3:1 on the pale themes. That is allowed only because the value is
+	 * legible another way: the legend prints every board's count, and the per-board table below
+	 * repeats them. Keep those if you touch this.
+	 */
+	--poststats-series-1: #2a78d6;
+	--poststats-series-2: #eb6834;
+	--poststats-series-3: #1baf7a;
+	--poststats-series-4: #eda100;
+	--poststats-series-5: #e87ba4;
+	--poststats-series-6: #008300;
+	--poststats-series-7: #4a3aa7;
+	--poststats-series-8: #e34948;
+}
+
+/*
+ * The dark steps are the same eight hues re-stepped for a dark surface, not an automatic flip.
+ * They follow the theme's own colour-scheme, so a dark board theme gets them and a light one
+ * does not. Browsers without light-dark() keep the light steps above.
+ */
+@supports (color: light-dark(#000, #fff)) {
+	.postStatsFigure {
+		--poststats-series-1: light-dark(#2a78d6, #3987e5);
+		--poststats-series-2: light-dark(#eb6834, #d95926);
+		--poststats-series-3: light-dark(#1baf7a, #199e70);
+		--poststats-series-4: light-dark(#eda100, #c98500);
+		--poststats-series-5: light-dark(#e87ba4, #d55181);
+		--poststats-series-6: #008300;
+		--poststats-series-7: light-dark(#4a3aa7, #9085e9);
+		--poststats-series-8: light-dark(#e34948, #e66767);
+	}
+}
+
+.postStatsCaption {
+	font-size: var(--font-size-small, small);
+	font-weight: var(--font-weight-bold, bold);
+	margin-bottom: 0.5em;
+}
+
+.postStatsPlot {
+	display: flex;
+	align-items: stretch;
+	gap: 0.5em;
+	height: 12em;
+}
+
+/* Peak / midpoint / zero, spread over the full plot height so they line up with the bars. */
+.postStatsYAxis {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: flex-end;
+	flex: 0 0 auto;
+	font-size: var(--font-size-x-small, x-small);
+	color: var(--color-fg-omitted, #707070);
+	/* Half a line at each end so the numbers sit on the gridline rather than under it. */
+	margin: -0.5em 0;
+}
+
+.postStatsBars {
+	display: flex;
+	align-items: flex-end;
+	/* Centred so that when the bars hit their width cap the leftover is air on both sides
+	   rather than a ragged gap on the right. */
+	justify-content: center;
+	flex: 1 1 auto;
+	gap: 2px;
+	height: 100%;
+	border-left: 1px solid var(--color-hi-contrast-border, #d9bfb7);
+	border-bottom: 1px solid var(--color-hi-contrast-border, #d9bfb7);
+	padding: 0 1px;
+	overflow: hidden;
+}
+
+/* One slot per bucket. Equal shares of the width, and a minimum so a long history stays visible
+   rather than collapsing to nothing. */
+.postStatsSlot {
+	flex: 1 1 0;
+	min-width: 1px;
+	/* Thin marks: a bar never grows into a slab just because there is room. */
+	max-width: 24px;
+	height: 100%;
+	display: flex;
+	align-items: flex-end;
+}
+
+.postStatsBar {
+	width: 100%;
+	/* A day with posts should never be indistinguishable from a day without. */
+	min-height: 1px;
+	background: var(--color-bg-theading, #e04000);
+}
+
+.postStatsSlot:hover .postStatsBar {
+	background: var(--color-bg-theading2, #0040e0);
+}
+
+/* Stacked column: segments sit bottom-up in a fixed slot order, so a colour holds its place
+   in every column and matches the legend's order. */
+.postStatsStack {
+	flex-direction: column-reverse;
+	align-items: stretch;
+	/* The surface separating touching segments — a gap, never a border drawn round each one.
+	   The gaps eat into the column's height, so the tallest stack would overflow; the segments
+	   are left shrinkable, which takes it out of all of them in proportion rather than
+	   clipping the top one. The chart narrows it when a stack is deep enough that the gaps
+	   would otherwise take more of the column than the data. */
+	gap: var(--poststats-gap, 2px);
+}
+
+.postStatsSegment {
+	width: 100%;
+	/* A board that posted at all should never render as nothing. */
+	min-height: 1px;
+}
+
+/* The hue picks the fill; the tier decides whether it is laid down solid or hatched. */
+.postStatsHue1 { --poststats-fill: var(--poststats-series-1); }
+.postStatsHue2 { --poststats-fill: var(--poststats-series-2); }
+.postStatsHue3 { --poststats-fill: var(--poststats-series-3); }
+.postStatsHue4 { --poststats-fill: var(--poststats-series-4); }
+.postStatsHue5 { --poststats-fill: var(--poststats-series-5); }
+.postStatsHue6 { --poststats-fill: var(--poststats-series-6); }
+.postStatsHue7 { --poststats-fill: var(--poststats-series-7); }
+.postStatsHue8 { --poststats-fill: var(--poststats-series-8); }
+
+.postStatsTier0,
+.postStatsTier1,
+.postStatsTier2 {
+	background-color: var(--poststats-fill);
+}
+
+/*
+ * Tiers 1 and 2 are the second identity channel, for the boards past the eighth. Tone-on-tone
+ * hatching in the fill's own colour, one angle each, so the pair is told apart by pattern where
+ * the hue repeats — and stays told apart in greyscale, in print, and under any colour blindness.
+ */
+.postStatsTier1 {
+	background-image: repeating-linear-gradient(
+		45deg,
+		rgba(0, 0, 0, 0.32) 0 3px,
+		transparent 3px 6px
+	);
+}
+
+.postStatsTier2 {
+	background-image: repeating-linear-gradient(
+		135deg,
+		rgba(0, 0, 0, 0.32) 0 3px,
+		transparent 3px 6px
+	);
+}
+
+.postStatsLegend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25em 1em;
+	margin: 0.75em 0 0;
+	padding: 0;
+	list-style: none;
+	font-size: var(--font-size-small, small);
+}
+
+.postStatsLegendItem {
+	display: flex;
+	align-items: center;
+	gap: 0.35em;
+}
+
+.postStatsSwatch {
+	flex: 0 0 auto;
+	width: 0.75em;
+	height: 0.75em;
+	border-radius: 2px;
+}
+
+/* The count is what makes the chart readable when two hues are hard to tell apart, so it is
+   ordinary text rather than anything tinted by the series colour. */
+.postStatsLegendValue {
+	color: var(--color-fg-omitted, #707070);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Today, or whichever bucket runs up to today: still filling, so it is drawn as unfinished. */
+.postStatsBarPartial {
+	background: repeating-linear-gradient(
+		135deg,
+		var(--color-bg-theading, #e04000),
+		var(--color-bg-theading, #e04000) 3px,
+		transparent 3px,
+		transparent 6px
+	);
+	border: 1px solid var(--color-bg-theading, #e04000);
+	box-sizing: border-box;
+}
+
+.postStatsXAxis {
+	display: flex;
+	justify-content: space-between;
+	margin-top: 0.25em;
+	font-size: var(--font-size-x-small, x-small);
+	color: var(--color-fg-omitted, #707070);
+}
+
+/* Everything but the board name is a figure, centred under its own heading. */
+.postStatsTable td:not(:first-child),
+.postStatsTable th:not(:first-child) {
+	text-align: center;
+	white-space: nowrap;
+}
+
+.postStatsEmpty {
+	font-size: var(--font-size-small, small);
+	color: var(--color-fg-omitted, #707070);
+}
+
+/* Shown while the one-off full-history build runs out of band. */
+.postStatsGenerating {
+	margin: 0.5em 0 1.5em;
+	padding: 0.75em;
+	background: var(--color-bg-reply, #f0e0d6);
+	border: 1px solid var(--color-lo-contrast-border, #d9bfb7);
+	font-size: var(--font-size-small, small);
+}

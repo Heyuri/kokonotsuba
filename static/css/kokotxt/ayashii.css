@@ -1,4 +1,7 @@
 :root {
+  /* Dark theme: declared so colour-scheme-aware CSS (light-dark()) picks its dark values. */
+  color-scheme: dark;
+
   /* Global */
   --font-family-main: var(--font-family-mspgothic);
   --font-size-main: 12pt;

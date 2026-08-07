@@ -18,6 +18,7 @@ return [
 	'ModuleList.catalog'      => boolField('config_label_ModuleList.catalog', true),
 	'ModuleList.search'       => boolField('config_label_ModuleList.search', true),
 	'ModuleList.threadList'   => boolField('config_label_ModuleList.threadList', true),
+	'ModuleList.postStats'    => boolField('config_label_ModuleList.postStats', true),
 
 	/* admin */
 	'ModuleList.rebuild'      => boolField('config_label_ModuleList.rebuild', true),
