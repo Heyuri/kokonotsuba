@@ -93,23 +93,16 @@ class accountRepository extends baseRepository {
 	}
 	
 	/**
-	 * Increase the role level of an account by 1.
+	 * Set the role level of an account to an exact value.
+	 * Role levels aren't contiguous, so promotion picks the neighbouring role in PHP
+	 * instead of doing `role + 1` in SQL.
 	 *
-	 * @param int|string $id Account primary key.
+	 * @param int|string $id   Account primary key.
+	 * @param int        $role Role level integer, from a userRole case.
 	 * @return void
 	 */
-	public function promoteAccountByID($id) {
-		$this->updateWhere(['role' => SqlExpression::increment('role')], 'id', $id);
-	}
-	
-	/**
-	 * Decrease the role level of an account by 1.
-	 *
-	 * @param int|string $id Account primary key.
-	 * @return void
-	 */
-	public function demoteAccountByID($id) {
-		$this->updateWhere(['role' => SqlExpression::decrement('role')], 'id', $id);
+	public function updateAccountRoleByID($id, int $role) {
+		$this->updateWhere(['role' => $role], 'id', $id);
 	}
 	
 	/**

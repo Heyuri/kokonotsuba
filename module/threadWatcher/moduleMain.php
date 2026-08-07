@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\threadWatcher;
 
+use Kokonotsuba\board\board;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
@@ -53,7 +54,7 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// The watcher window is opened from a top-link in the admin bar.
 		$this->listenTopLinks('onRenderTopLinks');
-		$this->registerScript('threadWatcher.js?v=23');
+		$this->registerScript('threadWatcher.js?v=24');
 		$this->listenModuleHeader('onGenerateModuleHeader');
 		$this->listenOpeningPost('onRenderOpeningPost');
 	}
@@ -108,6 +109,10 @@ class moduleMain extends abstractModuleMain {
 			$found = [];
 			foreach ($rows as $row) {
 				$threadUid = (string) $row['thread_uid'];
+				// Each thread's link is built from its own board, so a thread on another
+				// subdomain keeps pointing at that subdomain no matter which board the
+				// watch list is being read on.
+				$threadBoard = searchBoardArrayForBoard((int) $row['boardUID']);
 				$found[$threadUid] = [
 					'post_count'  => (int) $row['post_count'],
 					'board_title' => (string) $row['board_title'],
@@ -117,6 +122,12 @@ class moduleMain extends abstractModuleMain {
 						(string) $row['op_file_name'],
 						$defaultComment
 					),
+					'url'         => $threadBoard !== null
+						? $this->absoluteThreadUrl(
+							$threadBoard->getBoardThreadURL((int) $row['post_op_number']),
+							$threadBoard
+						)
+						: null,
 					'quote_count' => $quoteCounts[$threadUid] ?? 0,
 					// Post number of the first unread reply (null when nothing is unread),
 					// so the client can link straight to it.
@@ -180,11 +191,60 @@ class moduleMain extends abstractModuleMain {
 					(string) $row['op_file_name'],
 					$defaultComment
 				),
-				'url'         => $threadBoard->getBoardThreadURL((int) $row['post_op_number']),
+				'url'         => $this->absoluteThreadUrl(
+					$threadBoard->getBoardThreadURL((int) $row['post_op_number']),
+					$threadBoard
+				),
 			];
 		}
 
 		return ['latest' => $latest, 'items' => $items];
+	}
+
+	/**
+	 * Anchor a board's thread URL to the host that board is actually served from.
+	 *
+	 * board::getBoardThreadURL() already builds its URL from the target board's own config,
+	 * whose WEBSITE_URL carries that board's subdomain — but only when WEBSITE_URL is
+	 * absolute. On the default relative WEBSITE_URL ('/') there is no host to attach a
+	 * subdomain to, so every board's URL comes out host-relative and the browser resolves it
+	 * against whichever subdomain the reader happens to be on: a notification for a thread on
+	 * cgi.example.net, opened while reading dis.example.net, lands on dis.example.net.
+	 *
+	 * The watcher's URLs cross boards by nature (new-thread alerts and the watch list both
+	 * span the whole site), so root-relative ones are given an explicit host here. The site's
+	 * base host is the current request's host with the *current* board's subdomain label
+	 * removed — we know exactly which label was prepended, so nothing is guessed — and the
+	 * target board's subdomain is then put back on top of it.
+	 *
+	 * Anything already absolute is returned untouched, so an install with an absolute
+	 * WEBSITE_URL keeps the URLs the board itself built.
+	 */
+	private function absoluteThreadUrl(string $url, board $threadBoard): string {
+		// Only a root-relative URL can be given a host without guessing at a base path.
+		if (!str_starts_with($url, '/') || str_starts_with($url, '//')) {
+			return $url;
+		}
+
+		$request = $this->moduleContext->request;
+		$host = strtolower($request->getHttpHost());
+
+		// No Host header (a CLI context): nothing to anchor to, so leave the URL alone.
+		if ($host === '') {
+			return $url;
+		}
+
+		$currentSubdomain = $this->moduleContext->board->getBoardSubdomain();
+		if ($currentSubdomain !== '' && str_starts_with($host, $currentSubdomain . '.')) {
+			$host = substr($host, strlen($currentSubdomain) + 1);
+		}
+
+		$threadSubdomain = $threadBoard->getBoardSubdomain();
+		if ($threadSubdomain !== '') {
+			$host = $threadSubdomain . '.' . $host;
+		}
+
+		return ($request->isHttps() ? 'https' : 'http') . '://' . $host . $url;
 	}
 
 	/** Read the user's overboard board blacklist (cookie) as an array of board UIDs. */

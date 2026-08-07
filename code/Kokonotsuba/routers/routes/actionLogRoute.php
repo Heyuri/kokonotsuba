@@ -78,8 +78,7 @@ class actionLogRoute {
 		} else {
 			//generate table entry html
 			foreach ($entriesFromDatabase as $actionLogEntry) {
-				$roleValue = $actionLogEntry->getRole();
-				$roleEnum = userRole::tryFrom($roleValue);
+				$roleEnum = userRole::fromStored($actionLogEntry->getRole());
 
 				$tableEntries .= "
 				<tr>
@@ -132,15 +131,11 @@ class actionLogRoute {
 		// Default board selection: current board and global board
 		$defaultSelectedBoards = [$this->board->getBoardUID(), GLOBAL_BOARD_UID];
 	
-		// Define user roles (these constants should exist in your application)
-		$none = userRole::LEV_NONE->value;
-		$user = userRole::LEV_USER->value;
-		$janitor = userRole::LEV_JANITOR->value;
-		$moderator = userRole::LEV_MODERATOR->value;
-		$admin = userRole::LEV_ADMIN->value;
-	
-		// Default roles selection
-		$defaultRoleSelections = [$none, $user, $janitor, $moderator, $admin];
+		// Default roles selection - every role an account can hold
+		$defaultRoleSelections = array_map(
+			fn(userRole $role): int => $role->value,
+			userRole::accountRoles()
+		);
 	
 		return [
 			'ip_address' => '',

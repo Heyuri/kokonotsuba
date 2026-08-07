@@ -16,13 +16,13 @@ function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, a
 	$filterRole = is_array($filters['role']) ? $filters['role'] : [];
 	$filterBoard = is_array($filters['board']) ? $filters['board'] : [];
 
-	// role levels
-	$none = userRole::LEV_NONE->value;
-	$user = userRole::LEV_USER->value;
-	$janitor = userRole::LEV_JANITOR->value;
-	$moderator = userRole::LEV_MODERATOR->value;
-	$admin = userRole::LEV_ADMIN->value;
-	
+	// one checkbox per role an account can hold
+	$roleCheckboxHTML = '';
+	foreach (userRole::accountRoles() as $role) {
+		$checked = in_array($role->value, $filterRole) ? 'checked' : '';
+		$roleCheckboxHTML .= '<li><label><input name="role[]" type="checkbox" value="' . $role->value . '" ' . $checked . '>' . htmlspecialchars($role->displayRoleName()) . '</label></li>';
+	}
+
 	$boardCheckboxHTML = generateBoardListCheckBoxHTML($filterBoard, $allBoards, false);
 	$dat .= '
 		<form class="detailsboxForm formtable" id="actionLogFilterForm" action="' . $board->getBoardURL(true) . '" method="get">
@@ -61,11 +61,7 @@ function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, a
 								<td class="postblock">Roles <br> <div class="selectlinktextjs" id="roleselectall">[<a>Select all</a>]</div></td>
 								<td>
 									<ul class="littlelist">
-										<li><label><input name="role[]" type="checkbox" value="' . $none . '" ' . (in_array($none, $filterRole) ? 'checked' : '') . '>None</label></li>
-										<li><label><input name="role[]" type="checkbox" value="' . $user . '" ' . (in_array($user, $filterRole) ? 'checked' : '') . '>User</label></li>
-										<li><label><input name="role[]" type="checkbox" value="' . $janitor . '" ' . (in_array($janitor, $filterRole) ? 'checked' : '') . '>Janitor</label></li>
-										<li><label><input name="role[]" type="checkbox" value="' . $moderator . '" ' . (in_array($moderator, $filterRole) ? 'checked' : '') . '>Moderator</label></li>
-										<li><label><input name="role[]" type="checkbox" value="' . $admin . '" ' . (in_array($admin, $filterRole) ? 'checked' : '') . '>Admin</label></li>
+										' . $roleCheckboxHTML . '
 									</ul>
 								</td>
 							</tr>

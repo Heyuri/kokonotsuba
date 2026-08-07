@@ -18,8 +18,8 @@ class staffAccount {
 		return $this->username; 
 	}
 	
-	public function getRoleLevel(): userRole { 
-		return userRole::tryFrom($this->role); 
+	public function getRoleLevel(): userRole {
+		return userRole::fromStored($this->role);
 	}
 	
 	public function getPasswordHash() { 

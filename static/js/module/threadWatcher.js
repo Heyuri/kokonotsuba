@@ -731,6 +731,14 @@ const kktwch = { name: "KK Thread watcher",
 		// Nothing to do if not watching anything and new-thread alerts are off.
 		if (!threadUids.length && !wantNewThreads) return;
 
+		// The shared store loads asynchronously, so until its snapshot has merged in, this
+		// subdomain's localStorage still holds whatever it last saw — on a board opened after
+		// browsing a different subdomain that can be days out of date. Polling on it would
+		// replay every thread posted since as a fresh notification, and save the stale watch
+		// list straight back over the shared one. Wait: startup's onReady handler fires the
+		// first real poll the moment the snapshot lands.
+		if (!kkStore.isReady()) return;
+
 		// Offline (e.g. the connection dropped overnight): the fetch can only fail, so
 		// don't fire it. Polling resumes as soon as the browser reports the network back.
 		if (navigator.onLine === false) return;
@@ -846,6 +854,13 @@ const kktwch = { name: "KK Thread watcher",
 
 						if (typeof info.board_title === 'string') {
 							entry.boardTitle = info.board_title;
+						}
+						// The server builds each thread's link from its own board, so this
+						// corrects an entry watched where the link on the page was relative
+						// (e.g. a cross-subdomain thread on the overboard, whose href the
+						// browser resolved against the board being read at the time).
+						if (typeof info.url === 'string' && info.url !== '') {
+							entry.url = info.url;
 						}
 						if (typeof info.label === 'string' && info.label !== '') {
 							entry.label = info.label;

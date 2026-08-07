@@ -21,7 +21,7 @@ class staffAccountFromSession {
 	}
 
 	public function getRoleLevel(): userRole {
-		return userRole::tryFrom($_SESSION['role_level'] ?? 0) ?? userRole::LEV_NONE;
+		return userRole::fromStored($_SESSION['role_level'] ?? 0);
 	}
 
 	public function getUserAgent(): ?string {

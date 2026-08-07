@@ -27,33 +27,37 @@ class accountService {
 	}
 
 	/**
-	 * Demote an account by reducing its role level by 1.
-	 * No-ops if the account is already at the lowest role level.
+	 * Demote an account to the next role down the assignable ladder.
+	 * No-ops if the account is already at the lowest assignable role.
 	 *
 	 * @param int $id Account primary key.
 	 * @return void
 	 */
 	public function handleAccountDemote(int $id) {
 		$account = $this->accountRepository->getAccountByID($id);
-		
-		if($account->getRoleLevel()->value - 1 == userRole::LEV_NONE->value) return; # == is for PHP7 compatibility, change to === in future for PHP8
-		
-		$this->accountRepository->demoteAccountByID($id);
+		if(!$account) return;
+
+		$demotedRole = $account->getRoleLevel()->demoted();
+		if($demotedRole === null) return;
+
+		$this->accountRepository->updateAccountRoleByID($id, $demotedRole->value);
 	}
 
 	/**
-	 * Promote an account by increasing its role level by 1.
-	 * No-ops if the account is already at the highest role level.
+	 * Promote an account to the next role up the assignable ladder.
+	 * No-ops if the account is already at the highest assignable role.
 	 *
 	 * @param int $id Account primary key.
 	 * @return void
 	 */
 	public function handleAccountPromote(int $id) {
 		$account = $this->accountRepository->getAccountByID($id);
-	
-		if($account->getRoleLevel()->value + 1 == userRole::LEV_ADMIN->value + 1) return; # == is for PHP7 compatibility, change to === in future for PHP8
-	
-		$this->accountRepository->promoteAccountByID($id);
+		if(!$account) return;
+
+		$promotedRole = $account->getRoleLevel()->promoted();
+		if($promotedRole === null) return;
+
+		$this->accountRepository->updateAccountRoleByID($id, $promotedRole->value);
 	}
 
 	/**
@@ -63,9 +67,16 @@ class accountService {
 	 * @param string $password Plain-text password (or hash if $isHashed is true).
 	 * @param string $username New account username.
 	 * @param int    $role     Initial role level integer.
+	 * @throws \InvalidArgumentException If the role is not one an account can be given.
 	 * @return void
 	 */
 	public function handleAccountCreation(bool $isHashed, string $password, string $username, int $role) {
+		// role comes straight off the form - only accept a real, assignable role level
+		$roleLevel = userRole::fromStored($role);
+		if(!$roleLevel->isAssignable()) {
+			throw new \InvalidArgumentException("Invalid role level for a new account: $role");
+		}
+
 		// don't hash the password if its being passed as hashed from the request
 		if(!$isHashed) {
 			$passwordHash = password_hash($password, PASSWORD_DEFAULT);
@@ -73,7 +84,7 @@ class accountService {
 			$passwordHash = $password;
 		}
 
-		$this->accountRepository->addNewAccount($username, $role, $passwordHash);
+		$this->accountRepository->addNewAccount($username, $roleLevel->value, $passwordHash);
 		$this->actionLoggerService->logAction("Registered a new account ($username)", GLOBAL_BOARD_UID);
 	}
 

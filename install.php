@@ -1008,7 +1008,7 @@ switch ($action) {
 
             $username = $_POST['admin-username'] ?? '';
             $password = $_POST['admin-password'] ?? '';
-            $accountTable->addAdminAccount($username, $password, 4);
+            $accountTable->addAdminAccount($username, $password, Kokonotsuba\userRole::LEV_ADMIN->value);
 
             
             touch(INSTALLED_MARKER);
