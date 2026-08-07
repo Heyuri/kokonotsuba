@@ -82,7 +82,7 @@
 			key: SETTING_KEY,
 			label: 'Show the staff navigation bar',
 			onChange: applyVisibility
-		}, 'Staff');
+		}, 'Moderation');
 	}
 
 	applyVisibility(isEnabled());
