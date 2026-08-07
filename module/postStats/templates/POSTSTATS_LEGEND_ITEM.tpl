@@ -1,0 +1,1 @@
+<li class="postStatsLegendItem"><span class="postStatsSwatch postStatsHue{$HUE} postStatsTier{$TIER}"></span><!--&IF($URL,'<a href="{$URL}">{$LABEL}</a>','<span>{$LABEL}</span>')--> <span class="postStatsLegendValue">{$VALUE}</span></li>

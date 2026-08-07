@@ -70,11 +70,9 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 	$moduleEngine->dispatch('TopLinks', array(&$pte_vals['{$HOOKLINKS}'], !empty($resto)));
 	$moduleEngine->dispatch('PageTop', array(&$pte_vals['{$BANNER}'])); // Hook: AboveTitle
 
-	// Hook: PageStart — the first thing inside <body>, above the board list and the admin bar.
-	// Not to be confused with PageTop above, which lands in the banner beneath both. For chrome
-	// that has to sit over the whole page (a sticky bar) rather than inside its header.
-	$pte_vals['{$PAGE_START}'] = '';
-	$moduleEngine->dispatch('PageStart', array(&$pte_vals['{$PAGE_START}']));
+	// Hook: TopNavSection — the top of the nav section, above the board list.
+	$pte_vals['{$TOP_NAV_SECTION_HOOK}'] = '';
+	$moduleEngine->dispatch('TopNavSection', array(&$pte_vals['{$TOP_NAV_SECTION_HOOK}']));
 
 	$html .= $templateEngine->ParseBlock('BODYHEAD', $pte_vals);
 

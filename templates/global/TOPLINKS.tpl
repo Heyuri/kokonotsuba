@@ -1,4 +1,7 @@
-	<div class="boardlist">
-		<div class="toplinks">{$TOP_LINKS}</div>
-		<div class="adminbar"><span id="settingsLink" class="js-only">[<a href="javascript:void(0);" onclick="kkjs.sett_open(this);">Settings</a>] </span>{$HOME} {$OVERBOARD} {$CONTACT} {$HOOKLINKS} {$ADMIN}</div>
+	<div class="stickyNav">
+		<div class="boardlist">
+			<div class="toplinks">{$TOP_LINKS}</div>
+			<div class="adminbar"><span id="settingsLink" class="js-only">[<a href="javascript:void(0);" onclick="kkjs.sett_open(this);">Settings</a>] </span>{$HOME} {$OVERBOARD} {$CONTACT} {$HOOKLINKS} {$ADMIN}</div>
+		</div>
+		{$TOP_NAV_SECTION_HOOK}
 	</div>

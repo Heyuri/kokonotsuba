@@ -889,6 +889,23 @@ class deletedPostsService {
 	}
 
 	/**
+	 * Find the open deletion record the given account owns for a post number on a board.
+	 *
+	 * Used to send staff who cannot view deleted posts to their own deletion entry instead of a
+	 * 404 when they open something they took down themselves.
+	 *
+	 * @param int $postNumber Post number (`no`) being accessed.
+	 * @param int $boardUid   Board the post number belongs to.
+	 * @param int $accountId  Account whose deletions to match against.
+	 * @return int|null Deletion record ID, or null if the account owns no such record.
+	 */
+	public function findOwnOpenDeletionIdForPostNumber(int $postNumber, int $boardUid, int $accountId): ?int {
+		$id = $this->deletedPostsRepository->findOwnOpenDeletionIdForPostNumber($postNumber, $boardUid, $accountId);
+
+		return $id !== false ? $id : null;
+	}
+
+	/**
 	 * Return which of the given deletion records the account itself deleted.
 	 *
 	 * @param int[] $deletedPostIds Deletion record IDs.

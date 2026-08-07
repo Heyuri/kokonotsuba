@@ -7,37 +7,6 @@
 	<h3 class="reportSectionHeading">{$HEADING_TOTALS}</h3>
 	<div class="reportStats">{$STATS_TABLE}</div>
 
-	<!--&IF($CAN_CLEAR,'
-	<h3 class="reportSectionHeading">{$CLEAR_TEXT}</h3>
-	<form class="reportClearForm" method="POST" action="{$MODULE_URL}">
-		{$CSRF_TOKEN}
-		<input type="hidden" name="postUid" value="{$POST_UID}">
-		<input type="hidden" name="action" value="clearPost">
-		<div class="formItemDescription reportClearHint">{$CLEAR_HINT}</div>
-		<table class="formtable reportClearTable">
-			<tbody>
-				<tr>
-					<td class="postblock"><label for="reportClearPublicReason">{$PUBLIC_REASON_LABEL}</label></td>
-					<td>
-						<div class="formItemDescription">{$PUBLIC_REASON_HINT}</div>
-						<textarea id="reportClearPublicReason" name="publicReason" cols="60" rows="2"></textarea>
-					</td>
-				</tr>
-				<tr>
-					<td class="postblock"><label for="reportClearPrivateReason">{$PRIVATE_REASON_LABEL}</label></td>
-					<td>
-						<div class="formItemDescription">{$PRIVATE_REASON_HINT}</div>
-						<textarea id="reportClearPrivateReason" name="privateReason" cols="60" rows="2"></textarea>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-		<div class="buttonSection">
-			<button type="submit" class="reportClearButton">{$CLEAR_BUTTON_TEXT}</button>
-		</div>
-	</form>
-	','')-->
-
 	<h3 class="reportSectionHeading">{$HEADING_REPORTS}</h3>
 	<form class="reportQueueForm" method="POST" action="{$MODULE_URL}">
 		{$CSRF_TOKEN}

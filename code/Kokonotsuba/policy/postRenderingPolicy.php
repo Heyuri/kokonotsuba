@@ -15,7 +15,11 @@ class postRenderingPolicy extends policyBase {
 		parent::__construct($authLevels, $roleLevel, $accountId);
 	}
 
-	private function canViewDeletedPosts(): bool {
+	/**
+	 * Whether the user's role lets them see deleted posts at all, ignoring the display toggle.
+	 * Staff below this line only ever get to see the deletions they made themselves.
+	 */
+	public function canViewDeletedPosts(): bool {
 		// Minimum auth role
 		$canDeleteAll = $this->authLevels['CAN_DELETE_ALL'];
 

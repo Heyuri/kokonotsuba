@@ -62,7 +62,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$moduleHeader .= '<link rel="stylesheet" href="'
 			. sanitizeStr($this->getConfig('STATIC_URL') . 'css/module/staffAlerts.css') . '">';
 
-		$this->includeScript('staffAlerts.js?v=7', $moduleHeader);
+		$this->includeScript('staffAlerts.js?v=9', $moduleHeader);
 
 		$moduleHeader .= '<meta name="staffAlertsApi" content="' . sanitizeStr($this->alertsApiUrl) . '">';
 		$moduleHeader .= '<meta name="staffAlertsInterval" content="'
@@ -109,8 +109,6 @@ class moduleAdmin extends abstractModuleAdmin {
 		renderPrivateJsonPage([
 			'title' => _T('staffalerts_title'),
 			'unreadTitle' => _T('staffalerts_unread_title'),
-			'collapseTitle' => _T('staffalerts_collapse'),
-			'expandTitle' => _T('staffalerts_expand'),
 			'alerts' => $this->collectAlerts(),
 		]);
 	}
@@ -152,7 +150,6 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		return $this->moduleContext->adminPageRenderer->ParseBlock('STAFF_ALERTS_WIDGET', [
 			'{$WIDGET_TITLE}' => sanitizeStr(_T('staffalerts_title')),
-			'{$COLLAPSE_TITLE}' => sanitizeStr(_T('staffalerts_collapse')),
 			'{$UNREAD_TITLE}' => sanitizeStr(_T('staffalerts_unread_title')),
 			'{$TOTAL}' => '(' . $total . ')',
 			'{$TOTAL_CLASS}' => $total === 0 ? 'indicatorHidden' : '',
@@ -180,7 +177,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	 */
 	private function renderBlankBlock(string $block): string {
 		return $this->moduleContext->adminPageRenderer->ParseBlock($block, [
-			'{$WIDGET_TITLE}' => '', '{$COLLAPSE_TITLE}' => '', '{$UNREAD_TITLE}' => '',
+			'{$WIDGET_TITLE}' => '', '{$UNREAD_TITLE}' => '',
 			'{$TOTAL}' => '', '{$TOTAL_CLASS}' => 'indicatorHidden', '{$ROWS}' => '',
 			'{$URL}' => '#', '{$LINK_TITLE}' => '', '{$LABEL}' => '',
 			'{$COUNT}' => '', '{$COUNT_CLASS}' => 'indicatorHidden', '{$ROW_CLASS}' => '',

@@ -407,6 +407,7 @@ class tableCreator {
                 INDEX idx_host (`host`),
                 INDEX idx_posts_thread_rank (thread_uid, is_op DESC, post_uid DESC),
                 INDEX idx_post_root (`root`),
+                INDEX idx_post_board_root (`boardUID`, `root`, `no`),
                 INDEX idx_tag (`tag`),
                 INDEX idx_tripcode (`tripcode`(10)),
                 INDEX idx_secure_tripcode (`secure_tripcode`(10)),

@@ -1,42 +1,18 @@
 /**
- * staffAlerts.css — the docked staff alerts widget.
+ * staffAlerts.css — the staff alerts widget.
  *
- * A koko window's chrome, shrunk down, on something that is not a window: the panel is rendered
- * into the page rather than placed by the window manager, so everything the manager would have
- * decided — where it sits, what it stacks above — is decided here. Docked by its right edge and
- * never dragged, which is also what makes collapsing it cheap: it folds into the edge on its own.
+ * An ordinary koko window; the manager owns where it sits, how it stacks and how it minimises.
+ * Everything here is the contents.
  */
 
 .staffAlertsWindow {
-	position: fixed;
-	/* Clear of the scrollbar, and low enough that the widget isn't the first thing read. */
-	right: 12px;
-	top: 50%;
-	transform: translateY(-50%);
-	/* Above the page, below any window the moderator opens — the manager hands its own windows
-	   a z-index from 100 up, and one of those landing under this would be unreachable. */
-	z-index: 99;
 	min-width: 0;
 	min-height: 0;
 	width: auto;
 	font-size: var(--font-size-x-small);
-	/* .window fades in by animating transform from scale(0.95), which for the 0.1s it runs
-	   replaces the translateY(-50%) holding this panel in place — it drops half its own height
-	   and slides back. Nothing to announce anyway: the panel is furniture, not something
-	   opening. */
-	animation: none;
 }
-
-/* Switched off under Staff in the settings window, or folded away on a narrow screen. Spelled
-   out rather than left to the browser, so a theme that gives .window a display can't undo it. */
-.staffAlertsWindow[hidden] {
-	display: none;
-}
-
-/* ── Title bar ────────────────────────────────────────────────────────────── */
 
 .staffAlertsWindow .winbar {
-	cursor: default;
 	gap: 0.25em;
 	flex-wrap: nowrap;
 }
@@ -44,23 +20,6 @@
 .staffAlertsWindow .winname {
 	margin: 0 0.25em;
 	white-space: nowrap;
-}
-
-/* The collapse arrow stands in for both, so the window manager's own buttons are redundant —
-   and a widget meant to stay open has no business offering a close button. */
-.staffAlertsWindow .winctrl {
-	display: none;
-}
-
-.staffAlertsToggle {
-	background-color: transparent;
-	border: none;
-	padding: 0 0.25em;
-	margin: 0;
-	color: inherit;
-	font-size: inherit;
-	line-height: 1.4;
-	cursor: pointer;
 }
 
 /* ── Alert rows ───────────────────────────────────────────────────────────── */
@@ -91,7 +50,7 @@
 	font-weight: var(--font-weight-bold);
 }
 
-/* Anything actually waiting on this moderator should be the part that catches the eye. */
+/* Anything actually waiting on this moderator should catch the eye. */
 .staffAlertsRowUnread .staffAlertsCount {
 	color: var(--color-fg-warning);
 }
@@ -100,24 +59,9 @@
 	margin-left: 0.25em;
 }
 
-/* ── Collapsed ────────────────────────────────────────────────────────────── */
-
-/* Folded down to the arrow and its tally: still says whether anything is waiting, takes up
-   almost nothing while saying it. */
-.staffAlertsCollapsed .winname,
-.staffAlertsCollapsed .staffAlertsWidget {
-	display: none;
-}
-
-.staffAlertsCollapsed .winbar {
-	border-bottom: none;
-}
-
 /* ── Mobile ───────────────────────────────────────────────────────────────── */
 
-/* No room to dock anything against the edge, and every alert here is reachable from the admin
-   nav anyway. Wholly a stylesheet's decision — the panel is placed here and taken away here, so
-   a viewport that crosses the cutoff either way needs nothing from the script. */
+/* No room for it, and every alert is reachable from the staff nav anyway. */
 @media screen and (max-width: 600px) {
 	.staffAlertsWindow {
 		display: none !important;

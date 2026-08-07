@@ -14,15 +14,16 @@ use function Puchiko\strings\sanitizeStr;
 /**
  * The sticky staff nav.
  *
- * A bar across the top of the page carrying everything the nav above admin pages carries (minus
- * Return, which is what the board itself is), so staff can reach the admin pages from wherever
- * they are — a board page, a thread, a module page, the admin panel. It sits above the board list
- * and the admin bar, and sticks to the top of the viewport as the page scrolls.
+ * A bar at the top of the nav section, above the board list, carrying everything the nav above
+ * admin pages carries (minus Return, which is what the board itself is), so staff can reach the
+ * admin pages from wherever they are — a board page, a thread, a module page, the admin panel.
+ * Whether the section sticks to the top of the viewport is the Persistent navigation setting's
+ * business, not this module's.
  *
  * The destinations are the built-in modes (getStaffNavCoreEntries) plus whatever modules answer
  * the 'StaffNavLinks' hook with; a module may file its entry under a drop-down by naming a group.
  *
- * It is rendered into the page, from the PageStart hook, on every page PHP renders for a
+ * It is rendered into the page, from the TopNavSection hook, on every page PHP renders for a
  * signed-in staff member — the client is never asked to put it there. The one exception is HTML
  * being written to a static file: that file is served to everyone, so a bar baked into it would
  * show readers what the staff nav holds and show a janitor whatever the admin who rebuilt the
@@ -52,8 +53,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->onGenerateModuleHeader($moduleHeader);
 		});
 
-		$this->listenProtected('PageStart', function (string &$pageStart) {
-			$this->onRenderPageStart($pageStart);
+		$this->listenProtected('TopNavSection', function (string &$topNavSection) {
+			$this->onRenderTopNavSection($topNavSection);
 		});
 	}
 
@@ -71,16 +72,16 @@ class moduleAdmin extends abstractModuleAdmin {
 		$moduleHeader .= '<link rel="stylesheet" href="'
 			. sanitizeStr($this->getConfig('STATIC_URL') . 'css/module/staffNav.css') . '">';
 
-		$this->includeScript('staffNav.js?v=10', $moduleHeader);
+		$this->includeScript('staffNav.js?v=11', $moduleHeader);
 	}
 
-	/** The finished bar, at the top of every page rendered for a signed-in staff member. */
-	private function onRenderPageStart(string &$pageStart): void {
+	/** The finished bar, above the board list, on every page rendered for a signed-in staff member. */
+	private function onRenderTopNavSection(string &$topNavSection): void {
 		if (!$this->servesThisReader()) {
 			return;
 		}
 
-		$pageStart .= $this->renderBar($this->collectEntries(), $this->getSignedInUser());
+		$topNavSection .= $this->renderBar($this->collectEntries(), $this->getSignedInUser());
 	}
 
 	// ─── Building the bar ─────────────────────────────────────────
