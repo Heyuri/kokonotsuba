@@ -23,12 +23,14 @@ class threadWatcherRepository extends baseRepository {
 	}
 
 	/**
-	 * Fetch metadata for a list of thread UIDs in one query: live post count plus the OP's
-	 * board title, subject, comment and first attachment filename (used to build a display label).
+	 * Fetch metadata for a list of thread UIDs in one query: live post count, the thread's board
+	 * and OP number (used to build its link), plus the OP's board title, subject, comment and
+	 * first attachment filename (used to build a display label).
 	 * Threads that are deleted or do not exist are omitted from the result.
 	 *
 	 * @param string[] $threadUids
-	 * @return array Rows with keys: thread_uid, post_count, board_title, subject, comment, op_file_name
+	 * @return array Rows with keys: thread_uid, boardUID, post_op_number, post_count, board_title,
+	 *               subject, comment, op_file_name
 	 */
 	public function batchGetThreadMeta(array $threadUids): array {
 		if (empty($threadUids)) {
@@ -40,6 +42,8 @@ class threadWatcherRepository extends baseRepository {
 		$query = "
 			SELECT
 				t.thread_uid,
+				t.boardUID,
+				t.post_op_number,
 				COALESCE(b.board_title, '') AS board_title,
 				COALESCE(p_op.sub, '')      AS subject,
 				COALESCE(p_op.com, '')      AS comment,

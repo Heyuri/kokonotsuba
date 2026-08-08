@@ -13,6 +13,7 @@ $staticPath = '/var/www/static/'; // Where static files are stored on the server
 $jCapcodeFmt = '%s';
 $dCapcodeFmt = '<span class="capcode capcodeDev">%s ## Developer</span>';
 $mCapcodeFmt = '<span class="capcode capcodeMod">%s ## Mod</span>';
+$mgCapcodeFmt = '<span class="capcode capcodeManager">%s ## Manager</span>';
 $aCapcodeFmt = '<span class="capcode capcodeAdmin">%s ## Admin</span>';
 $sCapcodeFmt = '<span class="capcode capcodeSystem">%s ## System</span>';
 
@@ -61,8 +62,8 @@ return [
 		'CAN_STICKY' => Kokonotsuba\userRole::LEV_MODERATOR,
 		'CAN_AUTO_SAGE' => Kokonotsuba\userRole::LEV_MODERATOR,
 		'CAN_MANAGE_REBUILD' => Kokonotsuba\userRole::LEV_MODERATOR,
-		'CAN_EDIT_GLOBAL_MESSAGE' => Kokonotsuba\userRole::LEV_ADMIN,
-		'CAN_EDIT_BLOTTER' => Kokonotsuba\userRole::LEV_ADMIN,
+		'CAN_EDIT_GLOBAL_MESSAGE' => Kokonotsuba\userRole::LEV_MANAGER,
+		'CAN_EDIT_BLOTTER' => Kokonotsuba\userRole::LEV_MANAGER,
 		'CAN_MANAGE_POSTS' => Kokonotsuba\userRole::LEV_JANITOR,
 		'CAN_VIEW_ACTION_LOG' => Kokonotsuba\userRole::LEV_MODERATOR,
 		'CAN_RAW_HTML' => Kokonotsuba\userRole::LEV_ADMIN,
@@ -74,7 +75,8 @@ return [
 		'CAN_BAN_FILES' => Kokonotsuba\userRole::LEV_MODERATOR,
 		'CAN_MANAGE_PMS' => Kokonotsuba\userRole::LEV_ADMIN,
 		'CAN_MANAGE_ADS' => Kokonotsuba\userRole::LEV_ADMIN,
-		'CAN_MANAGE_ANTI_SPAM_SYSTEM' => Kokonotsuba\userRole::LEV_MODERATOR,
+		'CAN_MANAGE_ANTI_SPAM_SYSTEM' => Kokonotsuba\userRole::LEV_MANAGER,
+		'CAN_MANAGE_FULL_BANNERS' => Kokonotsuba\userRole::LEV_MANAGER,
 		'CAN_ANONYMIZE_IPS' => Kokonotsuba\userRole::LEV_ADMIN,
 		'CAN_VIEW_VOTES' => Kokonotsuba\userRole::LEV_MODERATOR,
 		'CAN_VIEW_REPORTS' => Kokonotsuba\userRole::LEV_JANITOR,
@@ -94,6 +96,10 @@ return [
 		'Admin' => [
 			'capcodeHtml' => $aCapcodeFmt,
 			'requiredRole' => Kokonotsuba\userRole::LEV_ADMIN,
+		],
+		'Manager' => [
+			'capcodeHtml' => $mgCapcodeFmt,
+			'requiredRole' => Kokonotsuba\userRole::LEV_MANAGER,
 		],
 		'Mod' => [
 			'capcodeHtml' => $mCapcodeFmt,

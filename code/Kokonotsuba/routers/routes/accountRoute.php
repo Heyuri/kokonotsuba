@@ -51,12 +51,14 @@ class accountRoute {
 			'{$ACCOUNT_ACTIONS}' => htmlspecialchars($currentAccount->getNumberOfActions()),
 		];
 
+		$roleOptions = '';
+		foreach (userRole::assignableRoles() as $role) {
+			$roleOptions .= '<option value="' . $role->value . '">' . htmlspecialchars($role->displayRoleName()) . '</option>';
+		}
+
 		$accountTemplateRoles = [
 			'{$CSRF_HIDDEN_INPUT}' => $csrfHiddenInput,
-			'{$USER}' => userRole::LEV_USER->value,
-			'{$JANITOR}' => userRole::LEV_JANITOR->value,
-			'{$MODERATOR}' => userRole::LEV_MODERATOR->value,
-			'{$ADMIN}' => userRole::LEV_ADMIN->value,
+			'{$ROLE_OPTIONS}' => $roleOptions,
 		];
 
 		$template_values = [

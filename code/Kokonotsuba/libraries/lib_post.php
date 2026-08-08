@@ -352,6 +352,8 @@ function generatePostHash(
 		return ' Heaven';
 	} elseif ($roleLevel === userRole::LEV_ADMIN && !$formModOveride) {
 		return ' ADMIN';
+	} elseif ($roleLevel === userRole::LEV_MANAGER && !$formModOveride) {
+		return ' MANAGER';
 	} elseif ($roleLevel === userRole::LEV_MODERATOR && !$formModOveride) {
 		return ' MODERATOR';
 	} else {

@@ -35,7 +35,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	private readonly int $maxFileSize;
 
 	public function getRequiredRole(): userRole {
-		return userRole::LEV_MODERATOR;
+		return $this->getConfig('AuthLevels.CAN_MANAGE_FULL_BANNERS', userRole::LEV_MANAGER);
 	}
 
 	public function getName(): string {

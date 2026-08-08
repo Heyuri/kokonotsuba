@@ -21,10 +21,7 @@
 					<td>
 						<select id="role" name="role" required>
 							<option value="" disabled checked>Select a role</option>
-							<option value="{$USER}">User</option>
-							<option value="{$JANITOR}">Janitor</option>
-							<option value="{$MODERATOR}">Moderator</option>
-							<option value="{$ADMIN}">Admin</option>
+							{$ROLE_OPTIONS}
 						</select>
 					</td>
 				</tr>
