@@ -138,9 +138,10 @@
 .postStatsBars {
 	display: flex;
 	align-items: flex-end;
-	/* Centred so that when the bars hit their width cap the leftover is air on both sides
-	   rather than a ragged gap on the right. */
-	justify-content: center;
+	/* The bars divide the whole width, so the first and last sit on the plot's edges, under the
+	   first and last date on the axis below. Anything that leaves the row narrower than the plot
+	   puts those labels next to empty space, which reads as missing data. */
+	justify-content: space-between;
 	flex: 1 1 auto;
 	gap: 2px;
 	height: 100%;
@@ -153,10 +154,10 @@
 /* One slot per bucket. Equal shares of the width, and a minimum so a long history stays visible
    rather than collapsing to nothing. */
 .postStatsSlot {
+	/* Equal shares of the full width, with no cap: a short span gets wide bars rather than thin
+	   ones marooned in whitespace. */
 	flex: 1 1 0;
 	min-width: 1px;
-	/* Thin marks: a bar never grows into a slab just because there is room. */
-	max-width: 24px;
 	height: 100%;
 	display: flex;
 	align-items: flex-end;
