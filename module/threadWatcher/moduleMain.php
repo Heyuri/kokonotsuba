@@ -30,6 +30,13 @@ class moduleMain extends abstractModuleMain {
 	private const LABEL_MAX_LENGTH = 25;
 
 	/**
+	 * Max watched threads answered for in one poll (and the matching cap on the seen-count
+	 * list). The client sends its most recently watched threads first, so this bounds the
+	 * query work without silently dropping whichever threads happened to sort last.
+	 */
+	private const MAX_WATCHED_THREADS = 300;
+
+	/**
 	 * Inline SVG for the watch toggle: a regular 5-pointed star in a 24x24 viewBox.
 	 * Rendered hollow (CSS stroke, no fill) by default; the ".twStarWatched" class the
 	 * client adds fills it in. A single geometry serves both states so they line up.
@@ -54,7 +61,7 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// The watcher window is opened from a top-link in the admin bar.
 		$this->listenTopLinks('onRenderTopLinks');
-		$this->registerScript('threadWatcher.js?v=24');
+		$this->registerScript('threadWatcher.js?v=25');
 		$this->listenModuleHeader('onGenerateModuleHeader');
 		$this->listenOpeningPost('onRenderOpeningPost');
 	}
@@ -72,6 +79,9 @@ class moduleMain extends abstractModuleMain {
 		if ($pageName !== 'counts') {
 			renderJsonErrorPage('Not found', 404);
 		}
+
+		// The response is specific to this visitor's watch list, own posts and read counts.
+		header('Cache-Control: no-store');
 
 		$request = $this->moduleContext->request;
 		$threadUids = $this->parseThreadUids($request->getParameter('thread_uids', 'GET', ''));
@@ -98,13 +108,19 @@ class moduleMain extends abstractModuleMain {
 			$rows = $repo->batchGetThreadMeta($threadUids);
 			$quoteCounts = $repo->batchGetQuoteCounts($threadUids, $ownPosts);
 
-			// Resolve each thread's first-unread post number from the client's seen counts,
-			// scoped to the threads actually requested.
-			$firstUnread = [];
-			$seenScoped = array_intersect_key($seenMap, array_flip($threadUids));
-			if (!empty($seenScoped)) {
-				$firstUnread = $repo->batchGetFirstUnreadNo($seenScoped);
+			// Resolve each thread's first-unread post number from the client's seen counts.
+			// Only threads that actually have unread posts are looked up: the ranking query
+			// walks every post of every thread it's given, so fully-read threads (the common
+			// case) would make it scan the whole watch list for nothing.
+			$seenScoped = [];
+			foreach ($rows as $row) {
+				$uid = (string) $row['thread_uid'];
+				if (isset($seenMap[$uid]) && $seenMap[$uid] < (int) $row['post_count']) {
+					$seenScoped[$uid] = $seenMap[$uid];
+				}
 			}
+
+			$firstUnread = !empty($seenScoped) ? $repo->batchGetFirstUnreadNo($seenScoped) : [];
 
 			$found = [];
 			foreach ($rows as $row) {
@@ -235,7 +251,13 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		$currentSubdomain = $this->moduleContext->board->getBoardSubdomain();
-		if ($currentSubdomain !== '' && str_starts_with($host, $currentSubdomain . '.')) {
+		if ($currentSubdomain !== '') {
+			// The board is being read from a host that doesn't carry its subdomain label (an
+			// alias, or an IP). Stripping nothing and prepending the target's label would
+			// invent a host that doesn't exist, so leave the URL root-relative instead.
+			if (!str_starts_with($host, $currentSubdomain . '.')) {
+				return $url;
+			}
 			$host = substr($host, strlen($currentSubdomain) + 1);
 		}
 
@@ -274,7 +296,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		$threadUids = [];
-		foreach (array_slice(explode(',', $raw), 0, 100) as $part) {
+		foreach (array_slice(explode(',', $raw), 0, self::MAX_WATCHED_THREADS) as $part) {
 			$uid = trim($part);
 			// thread_uid is VARCHAR(255); allow alphanumeric, dash, underscore only
 			if ($uid !== '' && preg_match('/^[a-zA-Z0-9_\-]{1,255}$/', $uid)) {
@@ -297,7 +319,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		$seen = [];
-		foreach (array_slice(explode(',', $raw), 0, 100) as $part) {
+		foreach (array_slice(explode(',', $raw), 0, self::MAX_WATCHED_THREADS) as $part) {
 			$bits = explode(':', trim($part), 2);
 			if (count($bits) !== 2) {
 				continue;
@@ -395,6 +417,10 @@ class moduleMain extends abstractModuleMain {
 		// Max label length, so the client can truncate its own subject fallback to match the
 		// server-side truncation until the first poll supplies the server-computed label.
 		$moduleHeader .= '<meta name="threadWatcherLabelMaxLength" content="' . self::LABEL_MAX_LENGTH . '">';
+
+		// How many threads a single poll may ask about, so the client sends its most recent
+		// ones rather than having the server truncate an arbitrary tail.
+		$moduleHeader .= '<meta name="threadWatcherMaxThreads" content="' . self::MAX_WATCHED_THREADS . '">';
 
 		// Current board's title, so watching from a single-board page (thread/index) can
 		// label the entry "Board - Subject" immediately (the overboard uses its per-thread
