@@ -8,10 +8,6 @@
 		</div>
 		<div class="postStatsBars" style="--poststats-gap:{$GAP}"><!--&FOREACH($COLUMNS,'POSTSTATS_STACK_COLUMN')--></div>
 	</div>
-	<div class="postStatsXAxis">
-		<span>{$FIRST_LABEL}</span>
-		<span>{$MIDDLE_LABEL}</span>
-		<span>{$LAST_LABEL}</span>
-	</div>
+	<div class="postStatsXAxis"><!--&FOREACH($AXIS,'POSTSTATS_AXIS_LABEL')--></div>
 	{$LEGEND}
 </figure>

@@ -8,9 +8,5 @@
 		</div>
 		<div class="postStatsBars"><!--&FOREACH($BARS,'POSTSTATS_BAR')--></div>
 	</div>
-	<div class="postStatsXAxis">
-		<span>{$FIRST_LABEL}</span>
-		<span>{$MIDDLE_LABEL}</span>
-		<span>{$LAST_LABEL}</span>
-	</div>
+	<div class="postStatsXAxis"><!--&FOREACH($AXIS,'POSTSTATS_AXIS_LABEL')--></div>
 </figure>

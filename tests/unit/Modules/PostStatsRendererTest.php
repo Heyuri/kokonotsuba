@@ -182,16 +182,56 @@ final class PostStatsRendererTest extends TestCase {
 		$this->assertStringContains('<dd>40.00</dd>', $renderer->renderTiles($stats, $recent, 'x', false));
 	}
 
-	public function testThereIsOnlyOneRatePairRatherThanARowOfAverages(): void {
+	public function testEachRateAppearsOnceForTheSelectedSpan(): void {
 		$renderer = $this->renderer(120);
 		$stats = $this->tenADayStats();
 		$series = $renderer->buildSeries($stats['days'], $stats['firstDay'], $stats['today'], 0);
 
 		$html = $renderer->renderTiles($stats, $series, 'poststats_range_all', true);
 
+		// One figure per unit, all for the same span — not a row of competing averages.
+		$this->assertSame(1, substr_count($html, 'poststats_tile_per_month'));
 		$this->assertSame(1, substr_count($html, 'poststats_tile_per_day'));
 		$this->assertSame(1, substr_count($html, 'poststats_tile_per_hour'));
-		$this->assertSame(6, substr_count($html, '<dt>'));
+		$this->assertSame(7, substr_count($html, '<dt>'));
+	}
+
+	public function testTheMonthlyFigureIsTheDailyOneOverAMeanMonth(): void {
+		$renderer = $this->renderer(120);
+		$stats = $this->tenADayStats();
+		$series = $renderer->buildSeries($stats['days'], $stats['firstDay'], $stats['today'], 0);
+
+		$html = $renderer->renderTiles($stats, $series, 'x', false);
+
+		// Ten a day over a mean Gregorian month of 30.4375 days, rounded whole the way every
+		// figure past a hundred is.
+		$this->assertStringContains('<dd>304</dd>', $html);
+	}
+
+	public function testTheAxisCarriesMoreThanThreeDates(): void {
+		$renderer = $this->renderer(120);
+
+		$days = [];
+		for ($i = 0; $i < 30; $i++) {
+			$days[date('Y-m-d', strtotime('2026-07-07 +' . $i . ' days'))] = 5;
+		}
+
+		$series = $renderer->buildSeries($days, '2026-07-07', '2026-08-05', 0);
+		$html = $renderer->renderChart($renderer->bucketSeries($series, '2026-08-05'), 'Test');
+
+		// Six evenly spaced dates, first and last among them.
+		$this->assertSame(6, substr_count($html, '<span>2026-'));
+		$this->assertStringContains('<span>2026-07-07</span>', $html);
+		$this->assertStringContains('<span>2026-08-05</span>', $html);
+	}
+
+	public function testAShortSeriesLabelsEveryBar(): void {
+		$renderer = $this->renderer(120);
+		$series = $renderer->buildSeries(['2026-08-01' => 1], '2026-08-01', '2026-08-03', 0);
+
+		$html = $renderer->renderChart($renderer->bucketSeries($series, '2026-08-03'), 'Test');
+
+		$this->assertSame(3, substr_count($html, '<span>2026-'));
 	}
 
 	public function testASpanOfOnlyTodayFallsBackToTodaysCount(): void {
@@ -208,6 +248,42 @@ final class PostStatsRendererTest extends TestCase {
 		$series = $renderer->buildSeries($stats['days'], $stats['firstDay'], $stats['today'], 0);
 
 		$this->assertStringContains('<dd>7.00</dd>', $renderer->renderTiles($stats, $series, 'x', false));
+	}
+
+	public function testTheRateCountsFromTheBoardsStartNotItsFirstSurvivingPost(): void {
+		$renderer = $this->renderer(120);
+
+		// 100 posts on a board created 100 days ago, whose oldest surviving post is 9 days old.
+		$boards = [$this->board(7, 'Board 7')];
+		$stats = [7 => ['total' => 100, 'todayCount' => 0, 'firstDay' => '2026-08-01']];
+
+		$fromCreation = $renderer->renderBoardTable($stats, $boards, '2026-08-10', [7 => '2026-05-03']);
+		$fromFirstPost = $renderer->renderBoardTable($stats, $boards, '2026-08-10');
+
+		// Over the board's whole life that is about 1/day; measured from its surviving posts it
+		// looks ten times busier. The first is the honest figure.
+		$this->assertStringContains('<td>1.00</td>', $fromCreation);
+		$this->assertStringContains('<td>10.00</td>', $fromFirstPost);
+
+		// The column still reports the first post, not the creation date.
+		$this->assertStringContains('<td>2026-08-01</td>', $fromCreation);
+	}
+
+	public function testTheTableCarriesTheSameThreeUnitsAsTheTiles(): void {
+		$renderer = $this->renderer(120);
+
+		// 100 posts over 100 days: 1/day, so 30.44/month and 0.04/hour.
+		$html = $renderer->renderBoardTable(
+			[7 => ['total' => 100, 'todayCount' => 0, 'firstDay' => '2026-05-03']],
+			[$this->board(7, 'Board 7')],
+			'2026-08-10',
+			[7 => '2026-05-03']
+		);
+
+		$this->assertStringContains('poststats_col_per_month', $html);
+		$this->assertStringContains('<td>30.44</td>', $html);
+		$this->assertStringContains('<td>1.00</td>', $html);
+		$this->assertStringContains('<td>0.04</td>', $html);
 	}
 
 	public function testRangeLinksMarkTheCurrentSpan(): void {
