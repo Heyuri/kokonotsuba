@@ -40,6 +40,12 @@ class postStatsRenderer {
 	/** Solid, then the same hues at 45°, then at 135°. */
 	public const TIERS = 3;
 
+	/** Mean Gregorian month, so a monthly figure does not swing with the length of the month. */
+	private const DAYS_PER_MONTH = 365.25 / 12;
+
+	/** Most dates the x axis will carry before it starts skipping buckets. */
+	private const AXIS_LABELS = 6;
+
 	public function __construct(
 		private readonly templateEngine $templateEngine,
 		private readonly int $maxBars,
@@ -237,6 +243,31 @@ class postStatsRenderer {
 		return $series;
 	}
 
+	/**
+	 * Dates for the x axis, evenly spaced across the buckets.
+	 *
+	 * The labels are laid out with the same spacing as the bars, so taking evenly spaced buckets
+	 * keeps each date under the bar it belongs to. Short series get a label per bucket.
+	 */
+	private function axisLabels(array $buckets): array {
+		$count = count($buckets);
+
+		if ($count <= self::AXIS_LABELS) {
+			$indices = range(0, $count - 1);
+		} else {
+			$indices = [];
+			for ($i = 0; $i < self::AXIS_LABELS; $i++) {
+				$indices[] = (int)round($i * ($count - 1) / (self::AXIS_LABELS - 1));
+			}
+			$indices = array_values(array_unique($indices));
+		}
+
+		return array_map(
+			fn($index) => ['{$LABEL}' => htmlspecialchars($buckets[$index]['label'])],
+			$indices
+		);
+	}
+
 	/** One heading's worth of page. */
 	public function renderSection(string $anchor, string $heading, string $body): string {
 		return $this->templateEngine->ParseBlock('POSTSTATS_SECTION', [
@@ -273,18 +304,12 @@ class postStatsRenderer {
 			];
 		}
 
-		$first = $buckets[0];
-		$last = $buckets[count($buckets) - 1];
-		$middle = $buckets[intdiv(count($buckets), 2)];
-
 		return $this->templateEngine->ParseBlock('POSTSTATS_CHART', [
 			'{$CAPTION}' => htmlspecialchars($caption),
 			'{$PEAK}' => number_format($peak),
 			'{$MIDPOINT}' => number_format(intdiv($peak, 2)),
 			'{$BARS}' => $bars,
-			'{$FIRST_LABEL}' => htmlspecialchars($first['label']),
-			'{$MIDDLE_LABEL}' => htmlspecialchars($middle['label']),
-			'{$LAST_LABEL}' => htmlspecialchars($last['label']),
+			'{$AXIS}' => $this->axisLabels($buckets),
 		]);
 	}
 
@@ -343,9 +368,7 @@ class postStatsRenderer {
 			// finer one - otherwise a site with twenty boards spends more of the plot on gaps
 			// than on data.
 			'{$GAP}' => $deepest > 8 ? '1px' : '2px',
-			'{$FIRST_LABEL}' => htmlspecialchars($buckets[0]['label']),
-			'{$MIDDLE_LABEL}' => htmlspecialchars($buckets[intdiv(count($buckets), 2)]['label']),
-			'{$LAST_LABEL}' => htmlspecialchars($buckets[count($buckets) - 1]['label']),
+			'{$AXIS}' => $this->axisLabels($buckets),
 			'{$LEGEND}' => $this->renderLegend($series, $totals),
 		]);
 	}
@@ -416,6 +439,7 @@ class postStatsRenderer {
 
 		$values = [
 			'poststats_tile_today' => [null, number_format($stats['todayCount'])],
+			'poststats_tile_per_month' => [$rangeLabel, $this->formatRate($rate * self::DAYS_PER_MONTH)],
 			'poststats_tile_per_day' => [$rangeLabel, $this->formatRate($rate)],
 			'poststats_tile_per_hour' => [$rangeLabel, $this->formatRate($rate / 24)],
 			'poststats_tile_total' => [null, number_format($stats['total'])],
@@ -459,7 +483,7 @@ class postStatsRenderer {
 	}
 
 	/** Per-board breakdown under the site-wide chart. */
-	public function renderBoardTable(array $boardStats, array $boards, string $today): string {
+	public function renderBoardTable(array $boardStats, array $boards, string $today, array $startDays = []): string {
 		$rows = [];
 
 		foreach ($boards as $board) {
@@ -469,10 +493,9 @@ class postStatsRenderer {
 			}
 
 			$stats = $boardStats[$uid] + ['today' => $today, 'days' => []];
-			$identifier = $board->getBoardIdentifier();
 
 			$rows[] = [
-				'rate' => $this->allTimeRate($stats),
+				'rate' => $this->rateSince($startDays[$uid] ?? $stats['firstDay'], $today, $stats['total']),
 				'name' => $board->getBoardTitle(),
 				'url' => (string)$board->getBoardURL(),
 				'todayCount' => $stats['todayCount'],
@@ -493,6 +516,7 @@ class postStatsRenderer {
 				'{$URL}' => htmlspecialchars($row['url']),
 				'{$BOARD}' => htmlspecialchars($row['name']),
 				'{$TODAY}' => number_format($row['todayCount']),
+				'{$PER_MONTH}' => $this->formatRate($row['rate'] * self::DAYS_PER_MONTH),
 				'{$PER_DAY}' => $this->formatRate($row['rate']),
 				'{$PER_HOUR}' => $this->formatRate($row['rate'] / 24),
 				'{$TOTAL}' => number_format($row['total']),
@@ -504,6 +528,7 @@ class postStatsRenderer {
 			'{$ROWS}' => $values,
 			'{$COL_BOARD}' => htmlspecialchars(_T('poststats_col_board')),
 			'{$COL_TODAY}' => htmlspecialchars(_T('poststats_col_today')),
+			'{$COL_PER_MONTH}' => htmlspecialchars(_T('poststats_col_per_month')),
 			'{$COL_PER_DAY}' => htmlspecialchars(_T('poststats_col_per_day')),
 			'{$COL_PER_HOUR}' => htmlspecialchars(_T('poststats_col_per_hour')),
 			'{$COL_TOTAL}' => htmlspecialchars(_T('poststats_col_total')),
@@ -527,17 +552,19 @@ class postStatsRenderer {
 	}
 
 	/**
-	 * Posts per day over the whole history, taken from the distance the post-number sequence has
-	 * moved rather than from the number of posts still present.
+	 * Posts per day since a given day, taken from the distance the post-number sequence has moved
+	 * rather than from the number of posts still present.
+	 *
+	 * The caller passes the board's own beginning — the day it was created, not the day its oldest
+	 * surviving post happens to carry — so a board that sat quiet for a year before it got going
+	 * is not flattered by leaving that year out of the average.
 	 */
-	private function allTimeRate(array $stats): float {
-		if ($stats['firstDay'] === '' || $stats['total'] <= 0) {
+	private function rateSince(string $startDay, string $today, int $total): float {
+		if ($startDay === '' || $total <= 0) {
 			return 0.0;
 		}
 
-		$span = $this->daysBetween($stats['firstDay'], $stats['today']) + 1;
-
-		return $stats['total'] / max(1, $span);
+		return $total / max(1, $this->daysBetween($startDay, $today) + 1);
 	}
 
 	private function daysBetween(string $from, string $to): int {

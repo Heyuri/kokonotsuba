@@ -554,6 +554,7 @@ $language['poststats_chart_site']       = 'Posts made - all listed boards';
 // The rate tiles above each chart.
 $language['poststats_tile_today']       = 'Posts today';
 // The rate is for the span currently selected, so the label names it: %s is that span.
+$language['poststats_tile_per_month']   = 'Posts per month (%s)';
 $language['poststats_tile_per_day']     = 'Posts per day (%s)';
 $language['poststats_tile_per_hour']    = 'Posts per hour (%s)';
 $language['poststats_tile_total']       = 'Posts made';
@@ -567,6 +568,7 @@ $language['poststats_range_all']        = 'All time';
 // Column headings of the per-board breakdown.
 $language['poststats_col_board']        = 'Board';
 $language['poststats_col_today']        = 'Today';
+$language['poststats_col_per_month']    = 'Posts/month';
 $language['poststats_col_per_day']      = 'Posts/day';
 $language['poststats_col_per_hour']     = 'Posts/hour';
 $language['poststats_col_total']        = 'Posts made';

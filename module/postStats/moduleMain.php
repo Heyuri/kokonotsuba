@@ -77,9 +77,12 @@ class moduleMain extends abstractModuleMain {
 		$service = $this->buildService();
 		$renderer = new postStatsRenderer($this->moduleContext->templateEngine, $this->maxBars);
 
+		$boardStats = $service->getBoardStats($board->getBoardUID());
+
 		$boardSection = $this->renderScope(
 			$renderer,
-			$service->getBoardStats($board->getBoardUID()),
+			$boardStats,
+			$this->scopeStart($board->getDateAdded(), $boardStats['firstDay']),
 			'board',
 			$this->describeBoard($board),
 			_T('poststats_chart_board', $this->describeBoard($board)),
@@ -112,9 +115,25 @@ class moduleMain extends abstractModuleMain {
 
 		$siteStats = $service->getSiteStats($boardUids);
 
+		// Each board counts from its own beginning; the site counts from the oldest of them.
+		$startDays = [];
+		foreach ($boards as $listedBoard) {
+			$uid = $listedBoard->getBoardUID();
+			$startDays[$uid] = $this->scopeStart(
+				$listedBoard->getDateAdded(),
+				$siteStats['boards'][$uid]['firstDay'] ?? ''
+			);
+		}
+
+		// A board with neither a creation date nor a post has no start; an empty string would win
+		// min() and take the whole chart with it.
+		$known = array_filter($startDays);
+		$siteStart = $known ? min($known) : $siteStats['firstDay'];
+
 		$html = $this->renderScope(
 			$renderer,
 			$siteStats,
+			$siteStart,
 			'sitewide',
 			_T('poststats_sitewide'),
 			_T('poststats_chart_site'),
@@ -125,7 +144,7 @@ class moduleMain extends abstractModuleMain {
 		);
 
 		if (!$siteStats['generating'] && $this->showBoardTable) {
-			$html .= $renderer->renderBoardTable($siteStats['boards'], $boards, $siteStats['today']);
+			$html .= $renderer->renderBoardTable($siteStats['boards'], $boards, $siteStats['today'], $startDays);
 		}
 
 		return $html;
@@ -141,6 +160,7 @@ class moduleMain extends abstractModuleMain {
 	private function renderScope(
 		postStatsRenderer $renderer,
 		array $stats,
+		string $startDay,
 		string $anchor,
 		string $heading,
 		string $caption,
@@ -156,7 +176,7 @@ class moduleMain extends abstractModuleMain {
 			));
 		}
 
-		$series = $renderer->buildSeries($stats['days'], $stats['firstDay'], $stats['today'], $rangeDays);
+		$series = $renderer->buildSeries($stats['days'], $startDay, $stats['today'], $rangeDays);
 
 		if ($boards !== null) {
 			$chart = $renderer->renderStackedChart(
@@ -202,6 +222,26 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		return 'all';
+	}
+
+	/**
+	 * Where a scope's history starts.
+	 *
+	 * The board's creation date, so an all-time rate is measured over the whole time the board has
+	 * existed rather than from whenever its oldest surviving post happens to be dated. A board
+	 * carrying posts older than its own row — anything imported — starts from those instead, so
+	 * nothing it holds falls off the left of the chart.
+	 */
+	private function scopeStart(string $created, string $firstPostDay): string {
+		if ($created === '') {
+			return $firstPostDay;
+		}
+
+		if ($firstPostDay === '') {
+			return $created;
+		}
+
+		return min($created, $firstPostDay);
 	}
 
 	private function describeBoard(board $board): string {

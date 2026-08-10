@@ -39,6 +39,8 @@ class threadWatcherRepository extends baseRepository {
 
 		$placeholders = '(' . implode(', ', array_fill(0, count($threadUids), '?')) . ')';
 
+		// Post counts come from one grouped scan joined in, rather than a correlated
+		// COUNT(*) re-run per watched thread.
 		$query = "
 			SELECT
 				t.thread_uid,
@@ -55,20 +57,23 @@ class threadWatcherRepository extends baseRepository {
 					ORDER BY f.id ASC
 					LIMIT 1
 				), '') AS op_file_name,
-				(
-					SELECT COUNT(*)
-					FROM {$this->postTable} p_cnt
-					WHERE p_cnt.thread_uid = t.thread_uid
-					  AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 'p_cnt.post_uid') . "
-				) AS post_count
+				COALESCE(counts.post_count, 0) AS post_count
 			FROM {$this->table} t
 			LEFT JOIN {$this->postTable} p_op ON p_op.post_uid = t.post_op_post_uid
 			LEFT JOIN {$this->boardTable} b ON b.board_uid = t.boardUID
+			LEFT JOIN (
+				SELECT p_cnt.thread_uid AS thread_uid, COUNT(*) AS post_count
+				FROM {$this->postTable} p_cnt
+				WHERE p_cnt.thread_uid IN {$placeholders}
+				  AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 'p_cnt.post_uid') . "
+				GROUP BY p_cnt.thread_uid
+			) counts ON counts.thread_uid = t.thread_uid
 			WHERE t.thread_uid IN {$placeholders}
 			  AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 't.post_op_post_uid') . "
 		";
 
-		return $this->queryAll($query, array_values($threadUids));
+		$uids = array_values($threadUids);
+		return $this->queryAll($query, array_merge($uids, $uids));
 	}
 
 	/**

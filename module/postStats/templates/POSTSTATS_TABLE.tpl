@@ -4,6 +4,7 @@
 			<tr>
 				<th>{$COL_BOARD}</th>
 				<th>{$COL_TODAY}</th>
+				<th>{$COL_PER_MONTH}</th>
 				<th>{$COL_PER_DAY}</th>
 				<th>{$COL_PER_HOUR}</th>
 				<th>{$COL_TOTAL}</th>

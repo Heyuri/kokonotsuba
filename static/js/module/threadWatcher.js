@@ -44,8 +44,8 @@ const kktwch = { name: "KK Thread watcher",
 		// the initially-visible ones so the first poll's notifications are correct.
 		kktwch.initIndexViewportTracking();
 
-		// Threads already scrolled into view on this index/overboard page count as seen —
-		// mark them read before reflecting unread counts in the title.
+		// Only does anything on browsers without IntersectionObserver, where every rendered
+		// thread is seeded as seen above; otherwise visibility arrives via the observer.
 		kktwch.markVisibleThreadsAsRead();
 
 		// Reflect any existing unread counts in the title before the first poll lands
@@ -88,27 +88,13 @@ const kktwch = { name: "KK Thread watcher",
 		kktwch.stopPolling();
 		kktwch.stopUpdatedTicker();
 		kktwch.clearRefreshPending();
-		if (kktwch._viewportObserver) {
-			kktwch._viewportObserver.disconnect();
-			kktwch._viewportObserver = null;
-		}
-		if (kktwch._viewportMutObserver) {
-			kktwch._viewportMutObserver.disconnect();
-			kktwch._viewportMutObserver = null;
-		}
-		if (kktwch._bottomScrollHandler) {
-			window.removeEventListener('scroll', kktwch._bottomScrollHandler);
-			kktwch._bottomScrollHandler = null;
-		}
+		kktwch.stopViewportTracking();
 		if (kktwch._indexViewportObserver) {
 			kktwch._indexViewportObserver.disconnect();
 			kktwch._indexViewportObserver = null;
 		}
 		kktwch._indexObservedEls = null;
 		kktwch._indexSeenThreads = {};
-		kktwch._viewportThreadUid = null;
-		kktwch._viewportThreadEl = null;
-		kktwch._maxSeenIndex = -1;
 		if (kktwch._win) {
 			kktwch._win.remove();
 			kktwch._win = null;
@@ -130,14 +116,18 @@ const kktwch = { name: "KK Thread watcher",
 		kkStore.set(kktwch.STORAGE_KEY, JSON.stringify(threads));
 	},
 
-	// The user's own posts, recorded at post time as a set of "board_no" keys (see posting.js).
-	// Returned as "board:no" tokens for the counts endpoint's `you` parameter.
+	// The user's own posts, recorded at post time as a set of "board_no" keys mapped to their
+	// timestamps (see posting.js). Returned as "board:no" tokens for the counts endpoint's
+	// `you` parameter, newest first: the server caps the list, and a reply is far likelier to
+	// quote a recent post than the first one you ever made.
 	getOwnPostTokens: function () {
 		try {
 			var data = JSON.parse(localStorage.getItem('kkOwnPosts') || '{}');
-			return Object.keys(data).map(function (key) {
-				return key.replace('_', ':');
-			});
+			return Object.keys(data)
+				.sort(function (a, b) { return (data[b] || 0) - (data[a] || 0); })
+				.map(function (key) {
+					return key.replace('_', ':');
+				});
 		} catch (e) {
 			return [];
 		}
@@ -216,6 +206,12 @@ const kktwch = { name: "KK Thread watcher",
 
 		kktwch.saveWatchedThreads(watched);
 		kktwch.requestNotificationPermission();
+
+		// Watching the thread we're currently reading: start read tracking now. Startup ran
+		// before it was watched, so without this, scrolling would never mark anything read.
+		if (kktwch.currentThreadUid() === threadUid) {
+			kktwch.initViewportTracking();
+		}
 	},
 
 	unwatchThread: function (threadUid) {
@@ -441,7 +437,14 @@ const kktwch = { name: "KK Thread watcher",
 	_viewportMutObserver: null,
 	_viewportThreadUid: null,
 	_viewportThreadEl: null,
-	_maxSeenIndex: -1,
+	// Furthest-read point on the thread page: whether the OP has been seen, and the highest
+	// reply position (0-based, among rendered replies) that has scrolled past the read line.
+	// Reading a reply implies everything above it was read, so only the maximum matters.
+	_opSeen: false,
+	_maxSeenReplyIdx: -1,
+	// Thread position of the first rendered reply (OP is position 1, so 2 on a full page).
+	// Resolved once, lazily — see resolveReplyPosOffset.
+	_replyPosOffset: null,
 	// Scroll listener (+ its rAF throttle flag) used to detect reaching the page bottom.
 	_bottomScrollHandler: null,
 	_bottomScrollScheduled: false,
@@ -468,24 +471,25 @@ const kktwch = { name: "KK Thread watcher",
 		var threadEl = opPost.closest('.thread') || opPost.parentElement;
 		if (!threadEl) return;
 
+		// Starting fresh (this also covers being called again after the thread is watched
+		// mid-visit, which startup skipped because it wasn't watched then).
+		kktwch.stopViewportTracking();
+
 		kktwch._viewportThreadUid = threadUid;
 		kktwch._viewportThreadEl = threadEl;
-		// Track read progress by the furthest-read post's DOM position rather than a raw
-		// count of posts that scrolled by. The thread page renders every post in order, so
-		// "seen up to position k (0-based)" means k+1 posts have been read. Using the max
-		// position keeps read tracking correct even when the user enters partway down the
-		// thread (e.g. via the first-unread anchor) and only scrolls the lower portion.
-		kktwch._maxSeenIndex = -1;
+		kktwch._opSeen = false;
+		kktwch._maxSeenReplyIdx = -1;
+		kktwch._replyPosOffset = null;
+		// Drop any flags left by a previous init (see reset) so posts get re-observed.
+		threadEl.querySelectorAll('.post[data-tw-observed]').forEach(function (post) {
+			delete post.dataset.twObserved;
+		});
 
 		kktwch._viewportObserver = new IntersectionObserver(function (entries) {
 			var advanced = false;
 			entries.forEach(function (entry) {
 				if (!entry.isIntersecting) return;
-				var idx = kktwch.postIndexInThread(entry.target);
-				if (idx > kktwch._maxSeenIndex) {
-					kktwch._maxSeenIndex = idx;
-					advanced = true;
-				}
+				advanced = kktwch.markPostSeen(entry.target) || advanced;
 				// A post counts as read once; stop observing it.
 				kktwch._viewportObserver.unobserve(entry.target);
 			});
@@ -533,6 +537,27 @@ const kktwch = { name: "KK Thread watcher",
 		}
 	},
 
+	// Tear down the thread-page observers and read markers.
+	stopViewportTracking: function () {
+		if (kktwch._viewportObserver) {
+			kktwch._viewportObserver.disconnect();
+			kktwch._viewportObserver = null;
+		}
+		if (kktwch._viewportMutObserver) {
+			kktwch._viewportMutObserver.disconnect();
+			kktwch._viewportMutObserver = null;
+		}
+		if (kktwch._bottomScrollHandler) {
+			window.removeEventListener('scroll', kktwch._bottomScrollHandler);
+			kktwch._bottomScrollHandler = null;
+		}
+		kktwch._viewportThreadUid = null;
+		kktwch._viewportThreadEl = null;
+		kktwch._opSeen = false;
+		kktwch._maxSeenReplyIdx = -1;
+		kktwch._replyPosOffset = null;
+	},
+
 	// When the page is scrolled to (near) the bottom, every rendered post has been passed,
 	// so mark the last one seen. This reliably clears the tail of the thread, which the
 	// IntersectionObserver's bottom margin can otherwise leave perpetually unread.
@@ -543,8 +568,11 @@ const kktwch = { name: "KK Thread watcher",
 		var viewportBottom = window.innerHeight + window.scrollY;
 		if (viewportBottom < docHeight - 100) return;
 
-		var lastIdx = kktwch._viewportThreadEl.querySelectorAll('.post').length - 1;
-		if (lastIdx > kktwch._maxSeenIndex) kktwch._maxSeenIndex = lastIdx;
+		var replies = kktwch.renderedReplies();
+		kktwch._opSeen = true;
+		if (replies.length - 1 > kktwch._maxSeenReplyIdx) {
+			kktwch._maxSeenReplyIdx = replies.length - 1;
+		}
 		kktwch.commitViewportProgress();
 	},
 
@@ -624,27 +652,74 @@ const kktwch = { name: "KK Thread watcher",
 			(el.closest('.thread')?.getAttribute('data-thread-uid')) || null;
 	},
 
-	// Observe every not-yet-observed post in the tracked thread. Idempotent: posts are
-	// flagged so repeated calls (e.g. after new replies are inserted) don't re-observe.
+	// Replies rendered on this thread page, in order (the OP is tracked separately).
+	renderedReplies: function () {
+		if (!kktwch._viewportThreadEl) return [];
+		return kktwch._viewportThreadEl.querySelectorAll('.post:not(.op)');
+	},
+
+	// Observe every not-yet-observed post in the tracked thread, stamping each reply with
+	// its position among the rendered replies so the observer callback doesn't have to
+	// search the DOM. Idempotent, and re-stamps after replies are appended.
 	observeThreadPosts: function () {
 		if (!kktwch._viewportObserver || !kktwch._viewportThreadEl) return;
-		var posts = kktwch._viewportThreadEl.querySelectorAll('.post');
-		posts.forEach(function (post) {
+		var replyIdx = 0;
+		kktwch._viewportThreadEl.querySelectorAll('.post').forEach(function (post) {
+			post.dataset.twIdx = post.classList.contains('op') ? 'op' : replyIdx++;
 			if (post.dataset.twObserved) return;
 			post.dataset.twObserved = '1';
 			kktwch._viewportObserver.observe(post);
 		});
 	},
 
-	// DOM position (0-based) of a post among all posts in the tracked thread.
-	postIndexInThread: function (postEl) {
-		if (!kktwch._viewportThreadEl) return -1;
-		var posts = kktwch._viewportThreadEl.querySelectorAll('.post');
-		return Array.prototype.indexOf.call(posts, postEl);
+	// Record a post as read. Returns true if this moved the read marker forward.
+	markPostSeen: function (postEl) {
+		var stamp = postEl.dataset.twIdx;
+		if (stamp === 'op') {
+			if (kktwch._opSeen) return false;
+			kktwch._opSeen = true;
+			return true;
+		}
+		var idx = parseInt(stamp, 10);
+		if (isNaN(idx) || idx <= kktwch._maxSeenReplyIdx) return false;
+		kktwch._maxSeenReplyIdx = idx;
+		return true;
 	},
 
-	// Persist read progress from the viewport: lastSeenCount becomes the number of posts
-	// read from the top (furthest-seen position + 1), but only ever increases.
+	// Thread position of the first rendered reply. A thread page is head-anchored — it
+	// renders the OP then replies from the start of the thread — unless the URL asks for a
+	// later page or the "last X replies" view, so normally the first reply is position 2.
+	// For those tail/offset views the client can't count the omitted replies, so anchor off
+	// the first unread post instead: the server tells us its number and the read count it
+	// followed, which pins one rendered reply to a known thread position. Returns null when
+	// neither applies (nothing is marked read then, rather than guessing).
+	resolveReplyPosOffset: function (entry) {
+		if (kktwch._replyPosOffset !== null) return kktwch._replyPosOffset;
+
+		var params = new URLSearchParams(window.location.search);
+		var page = parseInt(params.get('page'), 10);
+		if (!params.get('recentReplies') && !(page > 1)) {
+			kktwch._replyPosOffset = 2;
+			return 2;
+		}
+
+		var anchorNo = entry.firstUnreadNo;
+		var anchorAt = entry.firstUnreadAt;
+		if (!anchorNo || typeof anchorAt !== 'number' || !entry.boardId) return null;
+
+		var anchorEl = document.getElementById('p' + entry.boardId + '_' + anchorNo);
+		if (!anchorEl || !kktwch._viewportThreadEl.contains(anchorEl)) return null;
+
+		var anchorIdx = parseInt(anchorEl.dataset.twIdx, 10);
+		if (isNaN(anchorIdx)) return null;
+
+		// The anchor post is at thread position anchorAt + 1.
+		kktwch._replyPosOffset = anchorAt + 1 - anchorIdx;
+		return kktwch._replyPosOffset;
+	},
+
+	// Persist read progress from the viewport: lastSeenCount becomes the thread position of
+	// the furthest-read post, which marks everything above it read too. Only ever increases.
 	commitViewportProgress: function () {
 		var threadUid = kktwch._viewportThreadUid;
 		if (!threadUid) return;
@@ -657,50 +732,27 @@ const kktwch = { name: "KK Thread watcher",
 		// lock in a position before the true post count is known.
 		if (e.lastSeenCount === null || e.lastSeenCount === undefined) return;
 
-		var seenCount = kktwch.seenCountFromMaxIndex(e);
-		if (seenCount > e.lastSeenCount) {
-			e.lastSeenCount = seenCount;
-			// Reading through to the end of the thread means every quoting reply has been
-			// seen too, so clear the unread-quote flag the same way the unread count clears.
-			// Otherwise the red "quoted you" state would linger until the mark-read button.
-			if (e.lastSeenCount >= (e.postCount || 0)) {
-				e.seenQuoteCount = e.quoteCount || 0;
+		var seenCount = kktwch._opSeen ? 1 : 0;
+		if (kktwch._maxSeenReplyIdx >= 0) {
+			var offset = kktwch.resolveReplyPosOffset(e);
+			if (offset !== null) {
+				seenCount = Math.max(seenCount, kktwch._maxSeenReplyIdx + offset);
 			}
-			kktwch.saveWatchedThreads(w);
-			kktwch.renderWatchList();
 		}
-	},
+		// Replies the server has counted but this page never rendered stay unread.
+		if (e.postCount) seenCount = Math.min(seenCount, e.postCount);
 
-	// Translate the furthest-seen DOM position (_maxSeenIndex) into "posts read from the
-	// top of the thread". The page renders the OP followed by the *newest* replies: the
-	// whole thread when nothing is omitted, or just the last N in an abbreviated
-	// ("last X replies") view. So a reply at DOM index i sits at thread position
-	// (postCount - domCount + 1 + i), and the OP is always position 1. On a full thread
-	// page domCount === postCount and this reduces to i + 1. Returns 0 when it can't
-	// safely advance.
-	seenCountFromMaxIndex: function (entry) {
-		var idx = kktwch._maxSeenIndex;
-		if (idx < 0 || !kktwch._viewportThreadEl) return 0;
+		if (seenCount <= e.lastSeenCount) return;
 
-		var postCount = entry.postCount || 0;
-		if (!postCount) return 0;
-
-		var domCount = kktwch._viewportThreadEl.querySelectorAll('.post').length;
-		if (!domCount) return 0;
-
-		// The OP (index 0) is always thread position 1.
-		if (idx === 0) return 1;
-
-		// The rendered replies cover thread positions [postCount - domCount + 2 .. postCount].
-		// If what's already read stops before that block begins, there are unread posts
-		// above the visible replies (an abbreviated view with a large backlog). Advancing
-		// would silently skip them, so leave those to a fuller view / the mark-read button.
-		if (entry.lastSeenCount < postCount - (domCount - 1)) return 0;
-
-		var pos = postCount - domCount + 1 + idx;
-		if (pos < 1) pos = 1;
-		if (pos > postCount) pos = postCount;
-		return pos;
+		e.lastSeenCount = seenCount;
+		// Reading through to the end of the thread means every quoting reply has been
+		// seen too, so clear the unread-quote flag the same way the unread count clears.
+		// Otherwise the red "quoted you" state would linger until the mark-read button.
+		if (e.lastSeenCount >= (e.postCount || 0)) {
+			e.seenQuoteCount = e.quoteCount || 0;
+		}
+		kktwch.saveWatchedThreads(w);
+		kktwch.renderWatchList();
 	},
 
 	/* --- Polling --- */
@@ -720,12 +772,27 @@ const kktwch = { name: "KK Thread watcher",
 		}
 	},
 
+	// Watched thread UIDs to ask the server about, capped to what the endpoint will answer
+	// for (it truncates anything past its own limit). Most recently watched first, so the
+	// threads that drop off are the stalest ones rather than an arbitrary tail.
+	threadUidsToPoll: function (watched) {
+		var uids = Object.keys(watched);
+		var meta = document.querySelector('meta[name="threadWatcherMaxThreads"]');
+		var max = meta ? parseInt(meta.content, 10) : NaN;
+		if (!(max > 0)) max = 300;
+		if (uids.length <= max) return uids;
+
+		return uids.sort(function (a, b) {
+			return (watched[b].watchedAt || 0) - (watched[a].watchedAt || 0);
+		}).slice(0, max);
+	},
+
 	// `force` (manual refresh) bypasses the cross-tab poll lock. Returns the fetch
 	// promise so callers can react when the refresh completes (or undefined when there's
 	// nothing to fetch).
 	checkAllThreads: function (force) {
 		var watched = kktwch.getWatchedThreads();
-		var threadUids = Object.keys(watched);
+		var threadUids = kktwch.threadUidsToPoll(watched);
 		var wantNewThreads = _kkSetting('threadWatcherNewThreads');
 
 		// Nothing to do if not watching anything and new-thread alerts are off.
@@ -751,19 +818,24 @@ const kktwch = { name: "KK Thread watcher",
 		// notifications) and instead refresh their UI from the `storage` event. This
 		// stops every open tab from notifying for the same new post. A manual refresh
 		// (force) is user-initiated, so it ignores the lock.
+		// Claimed only once we know this page can actually poll — otherwise a page without the
+		// endpoint meta tag would burn the shared interval for every other tab.
+		var apiUrl = document.querySelector('meta[name="threadWatcherApiUrl"]')?.content || null;
+		if (!apiUrl) return;
+
 		var now = Date.now();
 		var lastPoll = parseInt(localStorage.getItem('kktwch_lastPoll') || '0', 10);
 		if (!force && now - lastPoll < kktwch.POLL_INTERVAL - 1000) return;
 		kkStore.set('kktwch_lastPoll', now);
-
-		var apiUrl = document.querySelector('meta[name="threadWatcherApiUrl"]')?.content || null;
-		if (!apiUrl) return;
 
 		// Mark the poll in flight and reflect it on the refresh button (spin + lock).
 		kktwch._pollInProgress = true;
 		kktwch.updateRefreshUi();
 
 		var params = [];
+		// Seen counts as sent to the server, so the reply the response points at can be
+		// pinned to a thread position even if the local count moves meanwhile.
+		var sentSeen = {};
 		if (threadUids.length) {
 			params.push('thread_uids=' + threadUids.map(encodeURIComponent).join(','));
 			// Send the user's own posts so the server can flag threads that quote them.
@@ -778,7 +850,8 @@ const kktwch = { name: "KK Thread watcher",
 			threadUids.forEach(function (uid) {
 				var e = watched[uid];
 				if (e && e.lastSeenCount !== null && e.lastSeenCount !== undefined) {
-					seenPairs.push(encodeURIComponent(uid) + ':' + (e.lastSeenCount || 0));
+					sentSeen[uid] = e.lastSeenCount || 0;
+					seenPairs.push(encodeURIComponent(uid) + ':' + sentSeen[uid]);
 				}
 			});
 			if (seenPairs.length) {
@@ -844,6 +917,10 @@ const kktwch = { name: "KK Thread watcher",
 						var postWasSeeded = entry.lastSeenCount !== null && entry.lastSeenCount !== undefined;
 						if (!postWasSeeded) {
 							entry.lastSeenCount = newPostCount;
+						} else if (entry.lastSeenCount > newPostCount) {
+							// Posts were deleted. A read count left above the live one would
+							// silently swallow that many future replies.
+							entry.lastSeenCount = newPostCount;
 						}
 
 						// Post number of the first unread reply, so the watch-list link can
@@ -851,6 +928,9 @@ const kktwch = { name: "KK Thread watcher",
 						entry.firstUnreadNo = (typeof info.first_unread_no === 'number')
 							? info.first_unread_no
 							: null;
+						// The read count that number was resolved against: post firstUnreadNo
+						// sits at thread position firstUnreadAt + 1 (see resolveReplyPosOffset).
+						entry.firstUnreadAt = (threadUid in sentSeen) ? sentSeen[threadUid] : null;
 
 						if (typeof info.board_title === 'string') {
 							entry.boardTitle = info.board_title;
@@ -871,7 +951,9 @@ const kktwch = { name: "KK Thread watcher",
 						var newQuoteCount = info.quote_count || 0;
 						var prevQuoteCount = entry.quoteCount || 0;
 						var quoteWasSeeded = entry.seenQuoteCount !== null && entry.seenQuoteCount !== undefined;
-						if (!quoteWasSeeded) {
+						if (!quoteWasSeeded || entry.seenQuoteCount > newQuoteCount) {
+							// Same clamp as lastSeenCount: a deleted quoting post must not
+							// mask the next real quote.
 							entry.seenQuoteCount = newQuoteCount;
 						}
 						entry.quoteCount = newQuoteCount;
@@ -1229,6 +1311,10 @@ const kktwch = { name: "KK Thread watcher",
 		// Check if notifications are enabled in settings
 		if (!_kkSetting('threadWatcherNotifs')) return;
 
+		// A reply to the thread on screen only pings when the tab isn't focused — otherwise
+		// it dings for a post the user is already looking at.
+		if (kktwch.currentThreadUid() === entry.threadUid && document.hasFocus()) return;
+
 		var replyWord = unreadCount === 1 ? 'reply' : 'replies';
 
 		// Quote-replies: prefer a push notification when the user allows them. 
@@ -1491,11 +1577,13 @@ const kktwch = { name: "KK Thread watcher",
 		if (emptyEl) emptyEl.remove();
 		list.hidden = false;
 
-		// Clear existing rows
-		list.innerHTML = '';
-
 		var rowTpl = document.getElementById('threadWatcherRowTpl');
 		if (!rowTpl) return;
+
+		// The list is rebuilt wholesale on every poll, which resets the scroll position of an
+		// open watcher window; put the user back where they were.
+		var scrollTop = content.scrollTop;
+		list.innerHTML = '';
 
 		keys.forEach(function (threadUid) {
 			var entry = watched[threadUid];
@@ -1554,6 +1642,8 @@ const kktwch = { name: "KK Thread watcher",
 
 			list.appendChild(row);
 		});
+
+		content.scrollTop = scrollTop;
 
 		kktwch.updatePageTitle();
 	},
