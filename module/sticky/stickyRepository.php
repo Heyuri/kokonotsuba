@@ -5,6 +5,8 @@ namespace Kokonotsuba\Modules\sticky;
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
+use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
+
 class stickyRepository extends baseRepository {
 	public function __construct(
 		databaseConnection $databaseConnection,
