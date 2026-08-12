@@ -131,6 +131,14 @@
 				ev.preventDefault();
 				const formData = new FormData(form);
 
+				// A submit button contributes its name/value only as the submitter, which
+				// FormData(form) knows nothing about. Forms that carry the choice on the button
+				// rather than in a field — approve vs dismiss on a report — would otherwise post
+				// without it and be rejected as an unknown action.
+				if (ev.submitter && ev.submitter.name) {
+					formData.append(ev.submitter.name, ev.submitter.value);
+				}
+
 				if (onSubmit) {
 					const result = await onSubmit({ form, formData, postEl, win });
 					if (result === false) return;
