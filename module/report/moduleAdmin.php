@@ -376,14 +376,19 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		[$publicReason, $privateReason] = $this->getSubmittedReasons();
 
+		// An unticked checkbox submits nothing, so absence means the moderator cleared it. Only
+		// meaningful for an approval; dismissing never touched the post.
+		$deletePost = $this->moduleContext->request->getParameter('deletePost', 'POST', '') !== '';
+
 		$affected = $isApproval
-			? $this->reportService->approveReports($reportIds, $this->getActorAccountId(), $publicReason, $privateReason)
+			? $this->reportService->approveReports($reportIds, $this->getActorAccountId(), $publicReason, $privateReason, $deletePost)
 			: $this->reportService->dismissReports($reportIds, $this->getActorAccountId(), $publicReason, $privateReason);
 
 		if ($affected > 0) {
 			$this->logAction(
 				$isApproval
-					? 'Approved ' . count($reportIds) . ' report(s), deleting ' . $affected . ' post(s)'
+					? 'Approved ' . count($reportIds) . ' report(s) on ' . $affected . ' post(s)'
+						. ($deletePost ? ', deleting them' : ', leaving them up')
 					: 'Dismissed ' . $affected . ' report(s)',
 				$this->moduleContext->board->getBoardUID()
 			);
@@ -956,6 +961,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$CLEAR_IP_HINT}' => sanitizeStr(_T('report_clear_ip_hint')),
 			'{$TH_REPORTER_REASON}' => sanitizeStr(_T('report_th_reporter_reason')),
 			'{$TH_POST_NUMBER}' => sanitizeStr(_T('report_th_post_number')),
+			'{$DELETE_POST_LABEL}' => sanitizeStr(_T('report_delete_post_label')),
+			'{$DELETE_POST_HINT}' => sanitizeStr(_T('report_delete_post_hint')),
 			'{$SHOW_STATUS}' => '1',
 			'{$SHOW_ACTIONED_BY}' => '1',
 			'{$HEADING_TOTALS}' => sanitizeStr(_T('report_heading_totals')),

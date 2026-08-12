@@ -565,6 +565,8 @@ $language['poststats_range_30d']        = '30 days';
 $language['poststats_range_90d']        = '90 days';
 $language['poststats_range_1y']         = '1 year';
 $language['poststats_range_all']        = 'All time';
+// Sits above the per-board breakdown: %s is how many days its rates cover.
+$language['poststats_table_caption']    = 'Rates over the last %s days. Posts made is the lifetime total.';
 // Column headings of the per-board breakdown.
 $language['poststats_col_board']        = 'Board';
 $language['poststats_col_today']        = 'Today';
@@ -1178,8 +1180,10 @@ $language['report_reported_posts_empty'] = 'No posts have been reported.';
 
 $language['report_decision_heading'] = 'Actions';
 $language['report_decision_legend'] = 'Approve and Dismiss act on the reports you tick above; a Dismiss all button acts on every report still awaiting review. Both reasons are optional — the public one is shown to the reporter, the staff-only one is not.';
-$language['report_approve'] = 'Approve and delete';
-$language['report_approve_hint'] = 'Deletes the reported post and marks every report on it as approved.';
+$language['report_approve'] = 'Approve';
+$language['report_approve_hint'] = 'Mark the report as approved and optionally deleting it';
+$language['report_delete_post_label'] = 'Delete post?';
+$language['report_delete_post_hint'] = 'Ticked, approving deletes the reported post. Untick to agree with the report but leave the post up.';
 $language['report_dismiss'] = 'Dismiss';
 $language['report_dismiss_hint'] = 'Leaves the post up and closes the selected reports.';
 $language['report_clear_post'] = 'Dismiss all reports on this post';

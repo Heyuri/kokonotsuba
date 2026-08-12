@@ -39,6 +39,13 @@
 							<textarea id="reportActionPrivateReason" name="privateReason" cols="60" rows="3"></textarea>
 						</td>
 					</tr>
+					<!--&IF($CAN_APPROVE,'<tr>
+						<td class="postblock"><label for="reportActionDeletePost">{$DELETE_POST_LABEL}</label></td>
+						<td>
+							<div class="formItemDescription">{$DELETE_POST_HINT}</div>
+							<input type="checkbox" id="reportActionDeletePost" name="deletePost" value="1" checked>
+						</td>
+					</tr>','')-->
 				</tbody>
 			</table>
 			<div class="buttonSection reportDecisionButtons">
