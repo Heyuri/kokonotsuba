@@ -131,6 +131,11 @@
 				ev.preventDefault();
 				const formData = new FormData(form);
 
+				// append submission name as value for compatability with certain forms
+				if (ev.submitter && ev.submitter.name) {
+					formData.append(ev.submitter.name, ev.submitter.value);
+				}
+
 				if (onSubmit) {
 					const result = await onSubmit({ form, formData, postEl, win });
 					if (result === false) return;

@@ -12,7 +12,7 @@
 	<script src="{$STATIC_URL}js/postWidget.js" defer></script>
 	<script src="{$STATIC_URL}js/attachmentWidget.js" defer></script>
 	<script src="{$STATIC_URL}js/threadToggle.js" defer></script>
-	<script src="{$STATIC_URL}js/windowLibrary.js" defer></script>
+	<script src="{$STATIC_URL}js/windowLibrary.js?v=2" defer></script>
 	<script src="{$STATIC_URL}js/checkboxDeletion.js" defer></script>
 	<script src="{$STATIC_URL}js/postInit.js" defer></script>
 	<script src="{$STATIC_URL}js/posting.js?v=2" defer></script>
