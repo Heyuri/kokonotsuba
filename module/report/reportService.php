@@ -9,8 +9,8 @@ use Kokonotsuba\post\deletion\postDeletionService;
 /**
  * Report business rules: filing, moderator decisions, and read receipts.
  *
- * Approving is the only action with a side effect outside the report tables — it deletes the
- * reported post — so it runs in a transaction alongside the status update.
+ * Approving is the only action with a side effect outside the report tables — it usually deletes
+ * the reported post — so it runs in a transaction alongside the status update.
  */
 class reportService {
 	use TransactionalTrait;
@@ -40,23 +40,25 @@ class reportService {
 	}
 
 	/**
-	 * Approve reports: mark them approved and delete the posts they point at.
+	 * Approve reports, and by default delete the posts they point at.
 	 *
-	 * Any other pending report on the same post is approved too — the post is gone, so
-	 * leaving its remaining reports in the queue would only produce dead rows, and every
-	 * reporter of that post deserves to see their report was acted on.
+	 * Any other pending report on the same post is approved too: agreeing with one report on a
+	 * post settles the rest of them, and every reporter deserves to see their report was acted
+	 * on rather than left in the queue.
 	 *
 	 * @param array       $reportIds     Report ids the moderator selected.
 	 * @param int|null    $accountId     Staff account performing the action.
 	 * @param string|null $publicReason  Reason visible to the reporter.
 	 * @param string|null $privateReason Reason visible only to staff.
-	 * @return int Number of posts deleted.
+	 * @param bool        $deletePost    Whether to delete the posts as well as close the reports.
+	 * @return int Number of posts whose reports were approved.
 	 */
 	public function approveReports(
 		array $reportIds,
 		?int $accountId,
 		?string $publicReason,
-		?string $privateReason
+		?string $privateReason,
+		bool $deletePost = true
 	): int {
 		$reports = $this->loadReports($reportIds);
 
@@ -76,7 +78,7 @@ class reportService {
 		}
 		$idsToAction = array_values(array_unique($idsToAction));
 
-		$this->inTransaction(function () use ($idsToAction, $postUids, $accountId, $publicReason, $privateReason) {
+		$this->inTransaction(function () use ($idsToAction, $postUids, $accountId, $publicReason, $privateReason, $deletePost) {
 			$this->reportRepository->actionReports(
 				$idsToAction,
 				reportStatus::APPROVED->value,
@@ -85,7 +87,11 @@ class reportService {
 				$privateReason
 			);
 
-			$this->postDeletionService->removePosts($postUids, $accountId);
+			// Approving normally means the report was right and the post goes, but a moderator
+			// can agree with a report and still leave the post up — a warning, say.
+			if ($deletePost) {
+				$this->postDeletionService->removePosts($postUids, $accountId);
+			}
 		});
 
 		return count($postUids);
