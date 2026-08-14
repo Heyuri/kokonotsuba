@@ -28,7 +28,10 @@ class postIdGenerator {
 			return ' ADMIN';
 		} elseif ($roleLevel == userRole::LEV_MODERATOR) {
 			return ' MODERATOR';
-		} elseif (stristr($email, 'sage')) {
+		} elseif ($roleLevel == userRole::LEV_MANAGER) {
+			return ' MANAGER';
+		}
+		elseif (stristr($email, 'sage')) {
 			return ' Heaven';
 		} else {
 			$ip = $this->request->userIp();
