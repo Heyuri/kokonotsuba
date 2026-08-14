@@ -346,15 +346,15 @@ function generatePostHash(
 	int $threadNumber, 
 	string $email, 
 	userRole $roleLevel, 
-	string $idSeed, 
-	bool $formModOveride): string {
+	string $idSeed,
+	bool $showModId): string {
 	if (stristr($email, 'sage')) {
 		return ' Heaven';
-	} elseif ($roleLevel === userRole::LEV_ADMIN && !$formModOveride) {
+	} elseif ($roleLevel === userRole::LEV_ADMIN && $showModId) {
 		return ' ADMIN';
-	} elseif ($roleLevel === userRole::LEV_MANAGER && !$formModOveride) {
+	} elseif ($roleLevel === userRole::LEV_MANAGER && $showModId) {
 		return ' MANAGER';
-	} elseif ($roleLevel === userRole::LEV_MODERATOR && !$formModOveride) {
+	} elseif ($roleLevel === userRole::LEV_MODERATOR && $showModId) {
 		return ' MODERATOR';
 	} else {
 		$baseString = $ip . $idSeed . $threadNumber;

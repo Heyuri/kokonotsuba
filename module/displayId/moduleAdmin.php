@@ -30,29 +30,29 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	private function renderPostFormCheckbox(string &$adminPostFormCheckbox): void {
 		// cookie for whether the checkbox is selected
-		$overidePostIdCookie = $this->moduleContext->cookieService->get('overidePostId');
+		$showModIdCookie = $this->moduleContext->cookieService->get('showModId');
 
 		// string for 'checked'
-		$checked = $overidePostIdCookie ? 'checked=""' : '';
+		$checked = $showModIdCookie ? 'checked=""' : '';
 
 		// checkbox html
 		$adminPostFormCheckbox .= '
-			<span class="postFormAdminFunc overidePostId">
-				<label title="If enabled, your post\'s hash will be generated normally"><input name="formModIdOveride" type="checkbox" value="on" ' . htmlspecialchars($checked) . '>Hide ID</label>
+			<span class="postFormAdminFunc showModId">
+				<label title="If enabled, your post\'s ID will show your staff rank instead of a normally generated hash"><input name="formShowModId" type="checkbox" value="on" ' . htmlspecialchars($checked) . '>Show mod ID</label>
 			</span>';
 	}
 
 	private function onRegistBegin(): void {
-		// Hide ID checkbox from request
-		$formModIdOveride = !empty($this->moduleContext->request->getParameter('formModIdOveride', 'POST'));
+		// Show mod ID checkbox from request
+		$formShowModId = !empty($this->moduleContext->request->getParameter('formShowModId', 'POST'));
 
 		// if a post has been submitted with it selected, then set the cookie so its persistent
-		if($formModIdOveride) {
-			$this->moduleContext->cookieService->set('overidePostId', '1', time() + 86400, '/');
+		if($formShowModId) {
+			$this->moduleContext->cookieService->set('showModId', '1', time() + 86400, '/');
 		}
 		// clear the cookie if it wasn't selected
 		else {
-			$this->moduleContext->cookieService->delete('overidePostId', '/');
+			$this->moduleContext->cookieService->delete('showModId', '/');
 		}
 	}
 }
