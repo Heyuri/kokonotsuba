@@ -7,6 +7,7 @@ use Kokonotsuba\module_classes\traits\listeners\FormFuncsListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\renderers\postRenderer;
+use Kokonotsuba\template\templateEngine;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\isActiveStaffSession;
@@ -25,6 +26,12 @@ class moduleMain extends abstractModuleMain {
 
 	/** Memoized staff-session check for this request (null until first resolved). */
 	private ?bool $isStaffSession = null;
+
+	/** Template to fall back on when the page's own template has no post block. */
+	private const FALLBACK_TEMPLATE = 'kokoimg';
+
+	/** Fallback engine, built on first use and reused across the posts of one request. */
+	private ?templateEngine $fallbackTemplateEngine = null;
 
 	/**
 	 * Whether the current request comes from a logged-in staff member.
@@ -339,8 +346,40 @@ class moduleMain extends abstractModuleMain {
 		return $attachments;
 	}
 
-	/** Render a post to full HTML using the postRenderer pipeline. */
+	/**
+	 * Render a post to full HTML using the postRenderer pipeline.
+	 *
+	 * The page's own template goes first, but not every one can render a standalone post:
+	 * kokoflash lists its index as table rows, so it has no REPLY block and an OP block of bare
+	 * <td>s. Missing the reply block is what marks such a listing template, and it is skipped
+	 * outright — a quoted OP would otherwise render as table cells no client can display.
+	 */
 	private function renderPostHtml(Post $post): string {
+		$pageTemplateEngine = $this->moduleContext->templateEngine;
+
+		if (trim($pageTemplateEngine->BlockValue('REPLY')) === '') {
+			return $this->renderPostWithTemplate($post, $this->getFallbackTemplateEngine());
+		}
+
+		$html = $this->renderPostWithTemplate($post, $pageTemplateEngine);
+
+		return trim($html) !== ''
+			? $html
+			: $this->renderPostWithTemplate($post, $this->getFallbackTemplateEngine());
+	}
+
+	/** Cloned from the page's engine to keep the module template search paths on it. */
+	private function getFallbackTemplateEngine(): templateEngine {
+		if ($this->fallbackTemplateEngine === null) {
+			$this->fallbackTemplateEngine = clone $this->moduleContext->templateEngine;
+			$this->fallbackTemplateEngine->setTemplateFile(self::FALLBACK_TEMPLATE);
+		}
+
+		return $this->fallbackTemplateEngine;
+	}
+
+	/** Run a post through the render pipeline with the given template engine. */
+	private function renderPostWithTemplate(Post $post, templateEngine $templateEngine): string {
 		// Resolve the board for this post
 		$board = searchBoardArrayForBoard($post->getBoardUID());
 
@@ -356,7 +395,7 @@ class moduleMain extends abstractModuleMain {
 			$board,
 			$config,
 			$this->moduleContext->moduleEngine,
-			$this->moduleContext->templateEngine,
+			$templateEngine,
 			[],
 			$this->moduleContext->request
 		);
