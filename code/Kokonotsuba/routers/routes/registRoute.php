@@ -196,8 +196,10 @@ class registRoute {
 			// Handle adding attachments
 			$this->handleAttachments($fileMeta['files'], $nextPostUid); 
 
-			// Log and hooks
-			$this->actionLoggerService->logAction("Post No.{$computedPostInfo['no']} registered", $this->board->getBoardUID());
+			// log anonymously since posting habits could be tied to staff in leaks
+			$this->actionLoggerService->logAction("Post No.{$computedPostInfo['no']} registered", $this->board->getBoardUID(), true);
+
+			// after-commit hook point
 			$this->moduleEngine->dispatch('RegistAfterCommit', [$this->board->getLastPostNoFromBoard(), $postData['thread_uid'], $postData['name'], $postData['email'], $postData['sub'], $postData['comment']]);
 			
 			// get post-insert post data
