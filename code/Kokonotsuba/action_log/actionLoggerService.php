@@ -7,6 +7,7 @@ use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\request\request;
+use Kokonotsuba\userRole;
 
 /** Service for logging and retrieving staff administrative actions. */
 class actionLoggerService {
@@ -43,18 +44,35 @@ class actionLoggerService {
 	 *
 	 * @param string $actionString Human-readable description of the action.
 	 * @param int    $board_uid    Board UID the action was performed on.
+	 * @param bool $isAnon Flag whether to log the role + username of the user
 	 * @return void
 	 */
-	public function logAction(string $actionString, int $board_uid): void {
+	public function logAction(string $actionString, int $board_uid, bool $isAnon = false): void {
+		// grab staff session
 		$staffSession = new staffAccountFromSession;
+		
+		// get the ip from request for logging
 		$IPAddress = $this->request->userIp();
 
+		// extract the name and role enum
 		$name = $staffSession->getUsername();
 		$roleEnum = $staffSession->getRoleLevel();
+
+		// anonymize values, mostly useful for keeping staff anonymous for actions that are too identifiable
+		if($isAnon) {
+			// set the name to the default
+			$name = "Nameless";
+
+			// set the role to none
+			$roleEnum = userRole::LEV_NONE;
+		}
+
+		// get the role value
 		$role = $roleEnum->value;
 
-		$write = function () use ($staffSession, $roleEnum, $name, $role, $actionString, $IPAddress, $board_uid): void {
-			if ($roleEnum->isStaff()) {
+		// write function for transaction
+		$write = function () use ($staffSession, $roleEnum, $name, $role, $actionString, $IPAddress, $board_uid, $isAnon): void {
+			if ($roleEnum->isStaff() && !$isAnon) {
 				$this->accountRepository->incrementAccountActionRecordByID($staffSession->getUID());
 			}
 
