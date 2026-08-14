@@ -1,5 +1,6 @@
 <div class="tableViewportWrapper">
 	<table class="postlists postStatsTable">
+		<caption class="postStatsTableCaption">{$CAPTION}</caption>
 		<thead>
 			<tr>
 				<th>{$COL_BOARD}</th>

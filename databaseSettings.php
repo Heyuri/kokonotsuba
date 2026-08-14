@@ -32,6 +32,7 @@ return [
 	'BOARD_PATH_CACHE_TABLE' => 'board_paths', // for caching board paths
 	'THREAD_CACHE_TABLE' => 'thread_cache', // for thread html caching
 	'POST_NUMBER_TABLE' => 'post_numbers', // used for futaba-like `No. XXXX` system
+	'POST_NUMBER_HISTORY_TABLE' => 'post_number_history', // daily post-counter readings, for post statistics
 	'ACCOUNT_TABLE' => 'accounts', // staff account table
 	'ACTIONLOG_TABLE' => 'actionlog', // user log
 	'THREAD_TABLE' => 'threads', // holds all threads

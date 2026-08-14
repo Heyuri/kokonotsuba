@@ -4,8 +4,6 @@ namespace Kokonotsuba\Modules\postStats;
 
 require_once __DIR__ . '/postStatsDates.php';
 
-use DateInterval;
-use DatePeriod;
 use Kokonotsuba\template\templateEngine;
 
 use function Kokonotsuba\libraries\_T;
@@ -75,15 +73,14 @@ class postStatsRenderer {
 			return [];
 		}
 
-		$period = new DatePeriod(
-			utcDay($start),
-			new DateInterval('P1D'),
-			utcDay($today)->modify('+1 day')
-		);
+		// Whole days of seconds rather than a DatePeriod: an all-time range on an old board is
+		// thousands of steps, and this is on the page's critical path.
+		$from = utcDay($start)->getTimestamp();
+		$to = utcDay($today)->getTimestamp();
 
 		$series = [];
-		foreach ($period as $date) {
-			$day = $date->format('Y-m-d');
+		for ($at = $from; $at <= $to; $at += 86400) {
+			$day = gmdate('Y-m-d', $at);
 			$series[$day] = (int)($days[$day] ?? 0);
 		}
 
@@ -135,13 +132,25 @@ class postStatsRenderer {
 		return (int)ceil($dayCount / 7) <= $this->maxBars ? 'week' : 'month';
 	}
 
-	/** Which bucket a day falls in. Doubles as the bucket's label. */
+	/**
+	 * Which bucket a day falls in. Doubles as the bucket's label.
+	 *
+	 * The week is found by arithmetic rather than by asking a date object for "monday this week":
+	 * this runs once per day per pass, twice over, and a year's range is a thousand calls.
+	 */
 	private function bucketKey(string $day, string $unit): string {
-		return match ($unit) {
-			'day' => $day,
-			'week' => utcDay($day)->modify('monday this week')->format('Y-m-d'),
-			default => substr($day, 0, 7),
-		};
+		if ($unit === 'day') {
+			return $day;
+		}
+
+		if ($unit !== 'week') {
+			return substr($day, 0, 7);
+		}
+
+		$epochDays = intdiv(utcDay($day)->getTimestamp(), 86400);
+
+		// Day 0 was a Thursday, so +3 lands Monday on a multiple of seven.
+		return gmdate('Y-m-d', ($epochDays - (($epochDays + 3) % 7)) * 86400);
 	}
 
 	/**
@@ -483,7 +492,13 @@ class postStatsRenderer {
 	}
 
 	/** Per-board breakdown under the site-wide chart. */
-	public function renderBoardTable(array $boardStats, array $boards, string $today, array $startDays = []): string {
+	public function renderBoardTable(
+		array $boardStats,
+		array $boards,
+		string $today,
+		array $window = [],
+		int $windowDays = 30
+	): string {
 		$rows = [];
 
 		foreach ($boards as $board) {
@@ -493,9 +508,12 @@ class postStatsRenderer {
 			}
 
 			$stats = $boardStats[$uid] + ['today' => $today, 'days' => []];
+			$recent = $window[$uid] ?? ['posts' => 0, 'days' => 1];
 
 			$rows[] = [
-				'rate' => $this->rateSince($startDays[$uid] ?? $stats['firstDay'], $today, $stats['total']),
+				// Recent activity, not a lifetime average — which is also what the table is
+				// ordered by, so it ranks the boards that are busy now.
+				'rate' => $recent['posts'] / max(1, $recent['days']),
 				'name' => $board->getBoardTitle(),
 				'url' => (string)$board->getBoardURL(),
 				'todayCount' => $stats['todayCount'],
@@ -526,6 +544,7 @@ class postStatsRenderer {
 
 		return $this->templateEngine->ParseBlock('POSTSTATS_TABLE', [
 			'{$ROWS}' => $values,
+			'{$CAPTION}' => htmlspecialchars(_T('poststats_table_caption', $windowDays)),
 			'{$COL_BOARD}' => htmlspecialchars(_T('poststats_col_board')),
 			'{$COL_TODAY}' => htmlspecialchars(_T('poststats_col_today')),
 			'{$COL_PER_MONTH}' => htmlspecialchars(_T('poststats_col_per_month')),
@@ -549,26 +568,6 @@ class postStatsRenderer {
 		}
 
 		return $this->templateEngine->ParseBlock('POSTSTATS_RANGES', ['{$RANGES}' => $ranges]);
-	}
-
-	/**
-	 * Posts per day since a given day, taken from the distance the post-number sequence has moved
-	 * rather than from the number of posts still present.
-	 *
-	 * The caller passes the board's own beginning — the day it was created, not the day its oldest
-	 * surviving post happens to carry — so a board that sat quiet for a year before it got going
-	 * is not flattered by leaving that year out of the average.
-	 */
-	private function rateSince(string $startDay, string $today, int $total): float {
-		if ($startDay === '' || $total <= 0) {
-			return 0.0;
-		}
-
-		return $total / max(1, $this->daysBetween($startDay, $today) + 1);
-	}
-
-	private function daysBetween(string $from, string $to): int {
-		return (int)utcDay($from)->diff(utcDay($to))->days;
 	}
 
 	private function formatRate(float $rate): string {

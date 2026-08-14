@@ -26,6 +26,9 @@ class moduleMain extends abstractModuleMain {
 	private readonly int $defaultRangeDays;
 	private readonly int $maxBars;
 
+	/** How far back the per-board table's rates look. */
+	private const TABLE_WINDOW_DAYS = 30;
+
 	public function getName(): string {
 		return 'Post statistics';
 	}
@@ -77,12 +80,12 @@ class moduleMain extends abstractModuleMain {
 		$service = $this->buildService();
 		$renderer = new postStatsRenderer($this->moduleContext->templateEngine, $this->maxBars);
 
-		$boardStats = $service->getBoardStats($board->getBoardUID());
+		$boardStats = $service->getBoardStats($board->getBoardUID(), $board->getDateAdded());
 
 		$boardSection = $this->renderScope(
 			$renderer,
 			$boardStats,
-			$this->scopeStart($board->getDateAdded(), $boardStats['firstDay']),
+			$boardStats['startDay'],
 			'board',
 			$this->describeBoard($board),
 			_T('poststats_chart_board', $this->describeBoard($board)),
@@ -113,27 +116,25 @@ class moduleMain extends abstractModuleMain {
 			return '';
 		}
 
-		$siteStats = $service->getSiteStats($boardUids);
+		// Each board counts from its own creation date; the service works out where the chart
+		// starts from those and from whatever history each board still has.
+		$created = [];
+		foreach ($boards as $listedBoard) {
+			$created[$listedBoard->getBoardUID()] = $listedBoard->getDateAdded();
+		}
 
-		// Each board counts from its own beginning; the site counts from the oldest of them.
+		$siteStats = $service->getSiteStats($boardUids, $created);
+
 		$startDays = [];
 		foreach ($boards as $listedBoard) {
 			$uid = $listedBoard->getBoardUID();
-			$startDays[$uid] = $this->scopeStart(
-				$listedBoard->getDateAdded(),
-				$siteStats['boards'][$uid]['firstDay'] ?? ''
-			);
+			$startDays[$uid] = $siteStats['boards'][$uid]['startDay'] ?? '';
 		}
-
-		// A board with neither a creation date nor a post has no start; an empty string would win
-		// min() and take the whole chart with it.
-		$known = array_filter($startDays);
-		$siteStart = $known ? min($known) : $siteStats['firstDay'];
 
 		$html = $this->renderScope(
 			$renderer,
 			$siteStats,
-			$siteStart,
+			$siteStats['startDay'],
 			'sitewide',
 			_T('poststats_sitewide'),
 			_T('poststats_chart_site'),
@@ -144,7 +145,13 @@ class moduleMain extends abstractModuleMain {
 		);
 
 		if (!$siteStats['generating'] && $this->showBoardTable) {
-			$html .= $renderer->renderBoardTable($siteStats['boards'], $boards, $siteStats['today'], $startDays);
+			$html .= $renderer->renderBoardTable(
+				$siteStats['boards'],
+				$boards,
+				$siteStats['today'],
+				$this->recentWindow($siteStats, $startDays),
+				self::TABLE_WINDOW_DAYS
+			);
 		}
 
 		return $html;
@@ -202,7 +209,8 @@ class moduleMain extends abstractModuleMain {
 		$repository = new postStatsRepository(
 			$this->moduleContext->databaseConnection,
 			$dbSettings['POST_TABLE'],
-			$dbSettings['POST_NUMBER_TABLE']
+			$dbSettings['POST_NUMBER_TABLE'],
+			$dbSettings['POST_NUMBER_HISTORY_TABLE'] ?? ''
 		);
 
 		return new postStatsService($repository, $cacheDirectory, new postStatsBackgroundQueue($cacheDirectory));
@@ -225,23 +233,45 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	/**
-	 * Where a scope's history starts.
+	 * Each board's posts over the last completed days, and how many of those days it was around
+	 * for.
 	 *
-	 * The board's creation date, so an all-time rate is measured over the whole time the board has
-	 * existed rather than from whenever its oldest surviving post happens to be dated. A board
-	 * carrying posts older than its own row — anything imported — starts from those instead, so
-	 * nothing it holds falls off the left of the chart.
+	 * The table reports recent activity rather than a lifetime average, so a board that was busy
+	 * years ago does not sit at the top of it forever. A board younger than the window is measured
+	 * against the days it has existed, not the full thirty, so it is not averaged against days it
+	 * did not have.
+	 *
+	 * @return array [uid => ['posts' => int, 'days' => int]]
 	 */
-	private function scopeStart(string $created, string $firstPostDay): string {
-		if ($created === '') {
-			return $firstPostDay;
+	private function recentWindow(array $siteStats, array $startDays): array {
+		$today = $siteStats['today'];
+		$windowStart = utcDay($today)->modify('-' . self::TABLE_WINDOW_DAYS . ' days')->format('Y-m-d');
+
+		// The window is the completed days only — today is still running.
+		$positions = [];
+		foreach ($siteStats['dayList'] as $position => $day) {
+			if ($day >= $windowStart && $day < $today) {
+				$positions[] = $position;
+			}
 		}
 
-		if ($firstPostDay === '') {
-			return $created;
+		$window = [];
+		foreach ($siteStats['series'] as $uid => $counts) {
+			$posts = 0;
+			foreach ($positions as $position) {
+				$posts += $counts[$position] ?? 0;
+			}
+
+			$start = $startDays[$uid] ?? '';
+			$from = ($start !== '' && $start > $windowStart) ? $start : $windowStart;
+
+			$window[$uid] = [
+				'posts' => $posts,
+				'days' => max(1, (int)utcDay($from)->diff(utcDay($today))->days),
+			];
 		}
 
-		return min($created, $firstPostDay);
+		return $window;
 	}
 
 	private function describeBoard(board $board): string {

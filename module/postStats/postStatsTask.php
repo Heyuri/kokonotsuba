@@ -24,18 +24,19 @@ class postStatsTask implements BackgroundTaskInterface {
 		$repository = new postStatsRepository(
 			databaseConnection::getInstance(),
 			$dbSettings['POST_TABLE'],
-			$dbSettings['POST_NUMBER_TABLE']
+			$dbSettings['POST_NUMBER_TABLE'],
+			$dbSettings['POST_NUMBER_HISTORY_TABLE'] ?? ''
 		);
 
 		// No queue of its own: this is the build, it does not get to defer itself.
 		$service = new postStatsService($repository, $args['cacheDirectory']);
 
 		if (isset($args['boardUid'])) {
-			$service->rebuildBoard((int)$args['boardUid']);
+			$service->rebuildBoard((int)$args['boardUid'], (string)($args['startDay'] ?? ''));
 		}
 
 		if (!empty($args['siteBoardUids'])) {
-			$service->rebuildSite($args['siteBoardUids']);
+			$service->rebuildSite($args['siteBoardUids'], $args['startDays'] ?? []);
 		}
 	}
 }

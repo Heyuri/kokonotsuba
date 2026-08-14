@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\postStats;
 
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
+use Throwable;
 
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
@@ -14,21 +15,119 @@ use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
  * A number is handed out once per post and never reused, so the distance between two points in
  * the sequence is the number of posts *made* between them, including the ones deleted since.
  *
- * There are only two queries. One returns today's date together with every board's latest post
- * number; the other returns the whole daily series with the subtraction already applied by the
- * server, so a page view costs one round trip and a rebuild costs two.
+ * A warm page view costs one round trip: today's date and every board's current counter come
+ * back together. A rebuild adds the surviving posts' per-day high and low, and the recorded
+ * counter readings. What those add up to per day is worked out in PHP, since it has to fill in
+ * the days the rows no longer cover.
  *
  * Day bucketing happens in the database (DATE(root), CURDATE()) so that the boundaries match
  * the timestamps as they are stored and read back everywhere else.
  */
 class postStatsRepository extends baseRepository {
+	/** Set once per request if the readings table turns out not to be usable. */
+	private static bool $historyUnavailable = false;
+
 	public function __construct(
 		databaseConnection $databaseConnection,
 		string $postTable,
 		private readonly string $postNumberTable,
+		private readonly string $postNumberHistoryTable = '',
 	) {
 		parent::__construct($databaseConnection, $postTable);
 		self::validateTableNames($postNumberTable);
+
+		if ($postNumberHistoryTable !== '') {
+			self::validateTableNames($postNumberHistoryTable);
+		}
+	}
+
+	/**
+	 * Readings of each board's counter, by day.
+	 *
+	 * These are the only record of activity that pruning cannot erase: a post's row can go, but
+	 * the reading taken that day still says where the sequence had got to. Where they exist the
+	 * daily figures are exact; where they do not, the surviving posts are all there is to go on.
+	 *
+	 * @return array Rows of ['board_uid', 'day', 'post_number'].
+	 */
+	public function getCounterHistory(array $boardUids): array {
+		if (!$boardUids || !$this->historyAvailable()) {
+			return [];
+		}
+
+		$params = array_values($boardUids);
+		$inClause = pdoPlaceholdersForIn($params);
+
+		try {
+			return $this->queryAll(
+				"SELECT board_uid, day, post_number
+				 FROM {$this->postNumberHistoryTable}
+				 WHERE board_uid IN {$inClause}
+				 ORDER BY board_uid, day",
+				$params
+			);
+		} catch (Throwable $error) {
+			$this->historyFailed($error);
+
+			return [];
+		}
+	}
+
+	/**
+	 * Record where each board's counter stands today.
+	 *
+	 * Written on the way past rather than on a schedule: the last reading taken on a day becomes
+	 * that day's closing figure. Posts made after it roll into the next day, which is a few hours
+	 * of drift rather than the open-ended error that reading pruned history gives.
+	 */
+	public function recordCounterHistory(array $numbers, string $day): void {
+		if (!$numbers || !$this->historyAvailable()) {
+			return;
+		}
+
+		$values = [];
+		$params = [];
+
+		foreach ($numbers as $uid => $number) {
+			$values[] = '(?, ?, ?)';
+			$params[] = (int)$uid;
+			$params[] = $day;
+			$params[] = (int)$number;
+		}
+
+		try {
+			$this->query(
+				"INSERT INTO {$this->postNumberHistoryTable} (board_uid, day, post_number)
+				 VALUES " . implode(', ', $values) . "
+				 ON DUPLICATE KEY UPDATE post_number = GREATEST(post_number, VALUES(post_number))",
+				$params
+			);
+		} catch (Throwable $error) {
+			$this->historyFailed($error);
+		}
+	}
+
+	/**
+	 * Whether the readings table can be used.
+	 *
+	 * It is the one part of this that needs a table creating by hand, so an install that has the
+	 * setting but not the table is a real possibility. That should cost the readings, not the
+	 * page: without them the figures fall back to what the surviving posts say, which is what
+	 * every install had before the table existed.
+	 */
+	private function historyAvailable(): bool {
+		return $this->postNumberHistoryTable !== '' && !self::$historyUnavailable;
+	}
+
+	private function historyFailed(Throwable $error): void {
+		if (!self::$historyUnavailable) {
+			self::$historyUnavailable = true;
+			error_log(
+				'postStats: counter readings unavailable (' . $error->getMessage() . '). '
+				. 'Statistics will fall back to surviving posts; create the '
+				. $this->postNumberHistoryTable . ' table to record them.'
+			);
+		}
 	}
 
 	/**
@@ -65,21 +164,19 @@ class postStatsRepository extends baseRepository {
 	}
 
 	/**
-	 * The daily series for one board: how many posts were made on each completed day.
+	 * What each completed day's surviving posts say about where the sequence had got to.
 	 *
-	 * The per-day high-water marks are differenced by the server with LAG, so what comes back is
-	 * already the answer rather than something for PHP to subtract row by row.
+	 * The lowest and highest number left on each day, which is all the evidence the rows can
+	 * give. Turning that into per-day counts is the caller's job: it also has the board's
+	 * creation date and the recorded readings to weigh in, and the days with nothing left on
+	 * them have to be filled from the gaps between.
 	 *
-	 * @param int      $boardUid Board to report on.
-	 * @param string   $fromDay  Earliest day to include (Y-m-d), or '' for the whole history.
-	 * @param int|null $boundary Highest number reached before $fromDay, when it is already known.
-	 *                           Without it the first day counts from zero — the start of the
-	 *                           board's numbering — so numbers whose posts have since been purged
-	 *                           are still counted as posts that were made.
-	 * @return array Rows of ['day', 'min_no', 'max_no', 'made'], oldest first.
+	 * @param int    $boardUid Board to report on.
+	 * @param string $fromDay  Earliest day to include (Y-m-d), or '' for the whole history.
+	 * @return array Rows of ['day', 'min_no', 'max_no'], oldest first.
 	 */
-	public function getDailySeries(int $boardUid, string $fromDay = '', ?int $boundary = null): array {
-		$params = [':board' => $boardUid, ':boundary' => $boundary];
+	public function getDailySeries(int $boardUid, string $fromDay = ''): array {
+		$params = [':board' => $boardUid];
 		$fromCondition = '';
 
 		if ($fromDay !== '') {
@@ -88,27 +185,19 @@ class postStatsRepository extends baseRepository {
 		}
 
 		return $this->queryAll(
-			"SELECT day, min_no, max_no,
-			        GREATEST(0, max_no - COALESCE(LAG(max_no) OVER (ORDER BY day), :boundary, 0)) AS made
-			 FROM (
-			     SELECT DATE(root) AS day, MIN(`no`) AS min_no, MAX(`no`) AS max_no
-			     FROM {$this->table}
-			     WHERE boardUID = :board AND root < CURDATE(){$fromCondition}
-			     GROUP BY day
-			 ) AS daily
+			"SELECT DATE(root) AS day, MIN(`no`) AS min_no, MAX(`no`) AS max_no
+			 FROM {$this->table}
+			 WHERE boardUID = :board AND root < CURDATE(){$fromCondition}
+			 GROUP BY day
 			 ORDER BY day",
 			$params
 		);
 	}
 
 	/**
-	 * The same series for several boards at once, partitioned so each board is differenced
-	 * against its own history rather than against whichever board happened to precede it.
+	 * The same evidence for several boards at once, in one statement whatever the board count.
 	 *
-	 * Per-board starting boundaries are not passed here — the caller holds them and corrects the
-	 * first row of each board itself, which keeps this to one statement for any number of boards.
-	 *
-	 * @return array Rows of ['board_uid', 'day', 'min_no', 'max_no', 'made'], grouped by board.
+	 * @return array Rows of ['board_uid', 'day', 'min_no', 'max_no'], grouped by board.
 	 */
 	public function getDailySeriesForBoards(array $boardUids, string $fromDay = ''): array {
 		if (!$boardUids) {
@@ -125,14 +214,10 @@ class postStatsRepository extends baseRepository {
 		}
 
 		return $this->queryAll(
-			"SELECT board_uid, day, min_no, max_no,
-			        GREATEST(0, max_no - COALESCE(LAG(max_no) OVER (PARTITION BY board_uid ORDER BY day), 0)) AS made
-			 FROM (
-			     SELECT boardUID AS board_uid, DATE(root) AS day, MIN(`no`) AS min_no, MAX(`no`) AS max_no
-			     FROM {$this->table}
-			     WHERE boardUID IN {$inClause} AND root < CURDATE(){$fromCondition}
-			     GROUP BY board_uid, day
-			 ) AS daily
+			"SELECT boardUID AS board_uid, DATE(root) AS day, MIN(`no`) AS min_no, MAX(`no`) AS max_no
+			 FROM {$this->table}
+			 WHERE boardUID IN {$inClause} AND root < CURDATE(){$fromCondition}
+			 GROUP BY board_uid, day
 			 ORDER BY board_uid, day",
 			$params
 		);

@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\postStats;
 
 require_once __DIR__ . '/postStatsDates.php';
 require_once __DIR__ . '/postStatsBuildQueue.php';
+require_once __DIR__ . '/postStatsSpread.php';
 
 use function Puchiko\createDirectory;
 
@@ -16,9 +17,13 @@ use function Puchiko\createDirectory;
  * in the sequence, so purged posts — spam sweeps included — still count as posts that were made.
  *
  * The one thing the sequence cannot say is *when* a purged post was made, since the timestamp
- * went with the row. If every post of a day is purged, that day has no surviving evidence at all
- * and its share of the sequence lands on the next day that does. Nothing is lost from the totals;
- * it is attributed a day or so late.
+ * went with the row. So the days are built from readings of the counter — the board's creation,
+ * every day that still has posts on it, every recorded reading, and today — and the numbers
+ * between two readings are spread across the days they must have fallen in. See spreadReadings().
+ * Totals stay exact; only the attribution of a pruned stretch is estimated.
+ *
+ * A reading of today's counter is recorded on the way past, so days from here on are anchored by
+ * something pruning cannot erase, and the estimating is only ever needed for history.
  *
  * A completed day can never change, so it is computed once and then only appended to: the cache
  * records the day it has looked up to, and a view on a later day extends it with the days in
@@ -42,8 +47,13 @@ class postStatsService {
 	 *    boards a day's activity came from.
 	 * 4: those per-board counts are stored positionally against the shared day list rather than
 	 *    as a date-keyed map per board.
+	 * 5: days come from spreading counter readings rather than from the surviving posts alone, so
+	 *    a pruned stretch no longer piles onto one day.
+	 * 6: the counter closes the run as well as opening it, so the stretch between the last
+	 *    surviving post and now is spread too instead of landing on today. The stored boundary
+	 *    means something different under this rule, so caches written under 5 are discarded.
 	 */
-	private const CACHE_VERSION = 4;
+	private const CACHE_VERSION = 6;
 
 	/** Today's date and the latest post numbers, fetched once and shared by every scope. */
 	private string $today = '';
@@ -74,6 +84,12 @@ class postStatsService {
 			foreach ($missing as $uid) {
 				$this->currentNumbers[$uid] ??= 0;
 			}
+
+			// Leave a mark for today on the way past. Once a day has a reading of its own, no
+			// amount of later pruning can take that day's activity away.
+			if ($snapshot['numbers']) {
+				$this->repository->recordCounterHistory($snapshot['numbers'], $this->today);
+			}
 		}
 
 		return $this->currentNumbers;
@@ -84,18 +100,22 @@ class postStatsService {
 	 *
 	 * @return array ['days' => ['Y-m-d' => int], 'firstNo', 'firstDay', 'lastNo', 'total', 'today', 'todayCount', 'generating']
 	 */
-	public function getBoardStats(int $boardUid): array {
+	public function getBoardStats(int $boardUid, string $startDay = ''): array {
 		$currentNo = $this->snapshot([$boardUid])[$boardUid] ?? 0;
 		$today = $this->today;
 		$path = $this->cacheDirectory . 'board-' . $boardUid . '.json';
 		$cache = $this->readCache($path);
 
 		if (!$this->isUsableBoardCache($cache, $boardUid)) {
-			if ($this->buildQueue?->request('board-' . $boardUid, ['boardUid' => $boardUid, 'cacheDirectory' => $this->cacheDirectory])) {
+			if ($this->buildQueue?->request('board-' . $boardUid, [
+				'boardUid' => $boardUid,
+				'startDay' => $startDay,
+				'cacheDirectory' => $this->cacheDirectory,
+			])) {
 				return $this->pendingStats($today);
 			}
 
-			$cache = $this->buildBoardCache($boardUid, $today);
+			$cache = $this->buildBoardCache($boardUid, $today, $startDay);
 			$this->writeCache($path, $cache);
 		} elseif ($cache['through'] !== $this->previousDay($today)) {
 			$cache = $this->extendBoardCache($cache, $today);
@@ -113,6 +133,8 @@ class postStatsService {
 			'days' => $days,
 			'firstNo' => $cache['firstNo'],
 			'firstDay' => $cache['firstDay'],
+			// Where the chart starts: the board's creation, or its oldest post when that is older.
+			'startDay' => $cache['startDay'] ?: $cache['firstDay'],
 			'lastNo' => $currentNo,
 			// The counter is incremented once per post and never rolled back, so its current
 			// value IS the number of posts ever made — no row has to survive for it to be right.
@@ -129,7 +151,7 @@ class postStatsService {
 	 * @param int[] $boardUids Boards to include.
 	 * @return array Board-shaped stats with an extra 'boards' map keyed by board uid.
 	 */
-	public function getSiteStats(array $boardUids): array {
+	public function getSiteStats(array $boardUids, array $startDays = []): array {
 		$boardUids = array_values(array_unique(array_map('intval', $boardUids)));
 		sort($boardUids);
 
@@ -139,11 +161,15 @@ class postStatsService {
 		$cache = $this->readCache($path);
 
 		if (!$this->isUsableSiteCache($cache, $boardUids)) {
-			if ($this->buildQueue?->request('site', ['siteBoardUids' => $boardUids, 'cacheDirectory' => $this->cacheDirectory])) {
+			if ($this->buildQueue?->request('site', [
+				'siteBoardUids' => $boardUids,
+				'startDays' => $startDays,
+				'cacheDirectory' => $this->cacheDirectory,
+			])) {
 				return $this->pendingStats($today) + ['boards' => []];
 			}
 
-			$cache = $this->buildSiteCache($boardUids, $today);
+			$cache = $this->buildSiteCache($boardUids, $today, $startDays);
 			$this->writeCache($path, $cache);
 		} elseif ($cache['through'] !== $this->previousDay($today)) {
 			$cache = $this->extendSiteCache($cache, $today);
@@ -154,6 +180,7 @@ class postStatsService {
 		$todayCount = 0;
 		$total = 0;
 		$firstDay = '';
+		$startDay = '';
 
 		$series = [];
 
@@ -172,6 +199,7 @@ class postStatsService {
 			$boards[$uid] = [
 				'firstNo' => $board['firstNo'],
 				'firstDay' => $board['firstDay'],
+				'startDay' => ($board['startDay'] ?? '') ?: $board['firstDay'],
 				'lastNo' => $currentNo,
 				'total' => $boardTotal,
 				'todayCount' => $boardToday,
@@ -182,6 +210,11 @@ class postStatsService {
 
 			if ($board['firstDay'] !== '' && ($firstDay === '' || $board['firstDay'] < $firstDay)) {
 				$firstDay = $board['firstDay'];
+			}
+
+			$boardStart = $boards[$uid]['startDay'];
+			if ($boardStart !== '' && ($startDay === '' || $boardStart < $startDay)) {
+				$startDay = $boardStart;
 			}
 		}
 
@@ -194,6 +227,8 @@ class postStatsService {
 			'days' => $days,
 			'firstNo' => 0,
 			'firstDay' => $firstDay,
+			// The site's history starts with its oldest board.
+			'startDay' => $startDay ?: $firstDay,
 			'lastNo' => 0,
 			'total' => $total,
 			'today' => $today,
@@ -213,20 +248,26 @@ class postStatsService {
 	 * Build a board's cache from nothing, whatever it costs. This is what the background task
 	 * calls; page views go through getBoardStats(), which hands this off rather than waiting.
 	 */
-	public function rebuildBoard(int $boardUid): void {
+	public function rebuildBoard(int $boardUid, string $startDay = ''): void {
 		$this->snapshot([$boardUid]);
 
-		$this->writeCache($this->cacheDirectory . 'board-' . $boardUid . '.json', $this->buildBoardCache($boardUid, $this->today));
+		$this->writeCache(
+			$this->cacheDirectory . 'board-' . $boardUid . '.json',
+			$this->buildBoardCache($boardUid, $this->today, $startDay)
+		);
 	}
 
 	/** As above, for the site-wide series. */
-	public function rebuildSite(array $boardUids): void {
+	public function rebuildSite(array $boardUids, array $startDays = []): void {
 		$boardUids = array_values(array_unique(array_map('intval', $boardUids)));
 		sort($boardUids);
 
 		$this->snapshot($boardUids);
 
-		$this->writeCache($this->cacheDirectory . 'site.json', $this->buildSiteCache($boardUids, $this->today));
+		$this->writeCache(
+			$this->cacheDirectory . 'site.json',
+			$this->buildSiteCache($boardUids, $this->today, $startDays)
+		);
 	}
 
 	/** What a scope looks like while its first build is still running. */
@@ -239,38 +280,46 @@ class postStatsService {
 			'total' => 0,
 			'today' => $today,
 			'todayCount' => 0,
+			'startDay' => '',
 			'generating' => true,
 		];
 	}
 
-	private function buildBoardCache(int $boardUid, string $today): array {
+	private function buildBoardCache(int $boardUid, string $today, string $startDay = ''): array {
 		$rows = $this->repository->getDailySeries($boardUid);
 
 		$cache = [
 			'version' => self::CACHE_VERSION,
 			'boardUid' => $boardUid,
 			'through' => $this->previousDay($today),
-			// The first surviving post of the first day is where the sequence starts, and it comes
-			// back with the series rather than costing a query of its own.
+			// The first surviving post is where the board's remaining history starts, and it comes
+			// back with the series rather than costing a query of its own. It is what the page
+			// reports as "first post"; the readings below decide where the *chart* starts.
 			'firstNo' => $rows ? (int)$rows[0]['min_no'] : 0,
 			'firstDay' => $rows ? (string)$rows[0]['day'] : '',
 			'boundary' => 0,
+			'startDay' => '',
 			'days' => [],
 		];
 
-		return $this->collectBoardRows($cache, $rows);
+		$readings = $this->openingReading($startDay, $rows);
+		$cache['startDay'] = $readings ? (string)array_key_first($readings) : '';
+
+		$readings = $this->addReadings($readings, $rows, $this->recordedReadings($boardUid, $today));
+
+		return $this->applyReadings($cache, $readings, $today, $this->currentNumbers[$boardUid] ?? 0);
 	}
 
 	private function extendBoardCache(array $cache, string $today): array {
-		// The cached boundary goes into the query, so the server differences the first new day
-		// against the real end of the cached history rather than against its own lowest post.
-		$rows = $this->repository->getDailySeries(
-			$cache['boardUid'],
-			$this->nextDay($cache['through']),
-			$cache['boundary']
-		);
+		$from = $this->nextDay($cache['through']);
+		$rows = $this->repository->getDailySeries($cache['boardUid'], $from);
 
-		$cache = $this->collectBoardRows($cache, $rows);
+		// The cached history's end is the opening reading, so the first new day is measured from
+		// where the last build left off rather than from its own lowest surviving post.
+		$readings = [$cache['through'] => $cache['boundary']];
+		$readings = $this->addReadings($readings, $rows, $this->recordedReadings($cache['boardUid'], $today, $from));
+
+		$cache = $this->applyReadings($cache, $readings, $today, $this->currentNumbers[$cache['boardUid']] ?? 0);
 		$cache['through'] = $this->previousDay($today);
 
 		// A board whose whole history was made today has no first post until the day turns over.
@@ -282,12 +331,101 @@ class postStatsService {
 		return $cache;
 	}
 
-	/** Take the already-differenced rows onto a board cache. */
-	private function collectBoardRows(array $cache, array $rows): array {
-		foreach ($rows as $row) {
-			$cache['days'][(string)$row['day']] = (int)$row['made'];
-			$cache['boundary'] = max($cache['boundary'], (int)$row['max_no']);
+	/**
+	 * Where a board's sequence is known to have started.
+	 *
+	 * The day it was created, when it is known — the counter stood at nothing then, so everything
+	 * since is accounted for. Without it there is no lower bound on when the pruned posts were
+	 * made, and the best that can be said is that the first surviving day holds its own posts and
+	 * no more; the numbers before it are left off the chart rather than dropped onto it.
+	 */
+	private function openingReading(string $startDay, array $rows): array {
+		$firstDay = $rows ? (string)$rows[0]['day'] : '';
+
+		// Created before any of its surviving posts: the counter stood at nothing that day, and
+		// everything since is accounted for between there and now.
+		if ($startDay !== '' && ($firstDay === '' || $startDay < $firstDay)) {
+			return [$startDay => 0];
 		}
+
+		if ($firstDay === '') {
+			return $startDay !== '' ? [$startDay => 0] : [];
+		}
+
+		// The opening reading has to sit on its own day, or it merges with the first surviving
+		// day's and there is nothing to measure between.
+		$opening = $this->previousDay($firstDay);
+
+		// Created the same day it was first posted on: nothing came before, so the sequence
+		// really did start at zero.
+		if ($startDay === $firstDay) {
+			return [$opening => 0];
+		}
+
+		// Otherwise the board is older than its own row says, or has no creation date at all.
+		// Either way there is no lower bound on when the numbers below its oldest surviving post
+		// were made, so the first surviving day is credited with its own posts and no more. The
+		// alternative — calling the sequence zero the day before — is the pile-up this whole
+		// approach exists to avoid, and it would be inventing a date rather than admitting there
+		// isn't one.
+		return [$opening => max(0, (int)$rows[0]['min_no'] - 1)];
+	}
+
+	/** Fold surviving-post maxima and recorded counter readings into one set of readings. */
+	private function addReadings(array $readings, array $rows, array $recorded): array {
+		foreach ($rows as $row) {
+			$day = (string)$row['day'];
+			$readings[$day] = max($readings[$day] ?? 0, (int)$row['max_no']);
+		}
+
+		foreach ($recorded as $day => $value) {
+			$readings[$day] = max($readings[$day] ?? 0, $value);
+		}
+
+		return $readings;
+	}
+
+	/** Recorded counter readings for completed days only; today is never cached. */
+	private function recordedReadings(int $boardUid, string $today, string $from = ''): array {
+		$readings = [];
+
+		foreach ($this->repository->getCounterHistory([$boardUid]) as $row) {
+			$day = (string)$row['day'];
+
+			if ($day >= $today || ($from !== '' && $day < $from)) {
+				continue;
+			}
+
+			$readings[$day] = (int)$row['post_number'];
+		}
+
+		return $readings;
+	}
+
+	/**
+	 * Spread the readings into days and take them onto the cache.
+	 *
+	 * The counter closes the run. Without it the days stop at the last post still on disk and
+	 * everything since — which on a pruned board can be years of it — has nowhere to go but
+	 * today, which is the same pile-up as the opening one, just at the other end.
+	 *
+	 * Today itself is never cached: what is stored is where the sequence had got to by the end of
+	 * yesterday, so today's figure stays live as the day runs.
+	 */
+	private function applyReadings(array $cache, array $readings, string $today, int $counter): array {
+		if ($counter > 0) {
+			$readings[$today] = max($readings[$today] ?? 0, $counter);
+		}
+
+		$spread = spreadReadings($readings);
+		$todayShare = $spread[$today] ?? 0;
+		unset($spread[$today]);
+
+		foreach ($spread as $day => $made) {
+			$cache['days'][$day] = $made;
+		}
+
+		$cache['boundary'] = max($cache['boundary'], $counter - $todayShare);
 
 		return $cache;
 	}
@@ -309,10 +447,10 @@ class postStatsService {
 		return array_keys($totals);
 	}
 
-	private function buildSiteCache(array $boardUids, string $today): array {
+	private function buildSiteCache(array $boardUids, string $today, array $startDays = []): array {
 		$boards = [];
 		foreach ($boardUids as $uid) {
-			$boards[$uid] = ['firstNo' => 0, 'firstDay' => '', 'boundary' => 0];
+			$boards[$uid] = ['firstNo' => 0, 'firstDay' => '', 'boundary' => 0, 'startDay' => ''];
 		}
 
 		$cache = [
@@ -323,67 +461,103 @@ class postStatsService {
 			'series' => [],
 		];
 
-		return $this->collectSiteRows($cache, $this->repository->getDailySeriesForBoards($boardUids));
+		return $this->collectSiteRows(
+			$cache,
+			$this->repository->getDailySeriesForBoards($boardUids),
+			$today,
+			$startDays
+		);
 	}
 
 	private function extendSiteCache(array $cache, string $today): array {
 		$boardUids = array_map('intval', array_keys($cache['boards']));
-		$rows = $this->repository->getDailySeriesForBoards($boardUids, $this->nextDay($cache['through']));
+		$from = $this->nextDay($cache['through']);
+		$rows = $this->repository->getDailySeriesForBoards($boardUids, $from);
 
-		$cache = $this->collectSiteRows($cache, $rows);
+		$cache = $this->collectSiteRows($cache, $rows, $today, [], $from);
 		$cache['through'] = $this->previousDay($today);
 
 		return $cache;
 	}
 
 	/**
-	 * Sum the per-board rows into one shared day total.
+	 * Build each board's days from its own readings, then sum them into the shared series.
 	 *
-	 * The server differences each board against its own previous day, but it does not know where
-	 * a board's cached history left off — so the first row of each board is re-differenced here
-	 * against the stored boundary when there is one. Rows arrive grouped by board, oldest first.
+	 * Every board is spread separately — a pruned stretch on one says nothing about another — and
+	 * only then added together, so the site total is the sum of the per-board estimates rather
+	 * than an estimate made over the pile.
+	 *
+	 * @param string $from Earliest day being added, when this is extending an existing cache.
 	 */
-	private function collectSiteRows(array $cache, array $rows): array {
-		$seen = [];
+	private function collectSiteRows(array $cache, array $rows, string $today, array $startDays = [], string $from = ''): array {
+		$byBoard = [];
+		foreach ($rows as $row) {
+			$uid = (int)$row['board_uid'];
+			if (isset($cache['boards'][$uid])) {
+				$byBoard[$uid][] = $row;
+			}
+		}
+
+		$recorded = $this->recordedReadingsForBoards(array_map('intval', array_keys($cache['boards'])), $today, $from);
+
 		$fresh = [];
 		$perBoard = [];
 
-		foreach ($rows as $row) {
-			$uid = (int)$row['board_uid'];
+		foreach ($cache['boards'] as $uid => $board) {
+			$uid = (int)$uid;
+			$boardRows = $byBoard[$uid] ?? [];
 
-			if (!isset($cache['boards'][$uid])) {
-				continue;
+			if ($board['firstDay'] === '' && $boardRows) {
+				$cache['boards'][$uid]['firstNo'] = (int)$boardRows[0]['min_no'];
+				$cache['boards'][$uid]['firstDay'] = (string)$boardRows[0]['day'];
 			}
 
-			$board = &$cache['boards'][$uid];
-			$maxNo = (int)$row['max_no'];
-			$day = (string)$row['day'];
+			if ($from !== '') {
+				$readings = [$cache['through'] => $board['boundary']];
+			} else {
+				$readings = $this->openingReading($startDays[$uid] ?? '', $boardRows);
+				$cache['boards'][$uid]['startDay'] = $readings ? (string)array_key_first($readings) : '';
+			}
 
-			if (!isset($seen[$uid])) {
-				$seen[$uid] = true;
+			$readings = $this->addReadings($readings, $boardRows, $recorded[$uid] ?? []);
 
-				if ($board['firstDay'] === '') {
-					$board['firstNo'] = (int)$row['min_no'];
-					$board['firstDay'] = $day;
+			$counter = $this->currentNumbers[$uid] ?? 0;
+			if ($counter > 0) {
+				$readings[$today] = max($readings[$today] ?? 0, $counter);
+			}
+
+			$spread = spreadReadings($readings);
+			$cache['boards'][$uid]['boundary'] = max($board['boundary'], $counter - ($spread[$today] ?? 0));
+			unset($spread[$today]);
+
+			foreach ($spread as $day => $made) {
+				if ($made <= 0) {
+					continue;
 				}
 
-				// Picks up whatever was made after the cached history ended, deletions included.
-				$made = $board['boundary'] > 0 ? max(0, $maxNo - $board['boundary']) : (int)$row['made'];
-			} else {
-				$made = (int)$row['made'];
-			}
-
-			$board['boundary'] = max($board['boundary'], $maxNo);
-			$fresh[$day] = ($fresh[$day] ?? 0) + $made;
-
-			if ($made > 0) {
 				$perBoard[$uid][$day] = $made;
+				$fresh[$day] = ($fresh[$day] ?? 0) + $made;
 			}
-
-			unset($board);
 		}
 
 		return $this->appendDays($cache, $fresh, $perBoard);
+	}
+
+	/** Recorded readings for several boards, keyed by uid then day. */
+	private function recordedReadingsForBoards(array $boardUids, string $today, string $from = ''): array {
+		$readings = [];
+
+		foreach ($this->repository->getCounterHistory($boardUids) as $row) {
+			$day = (string)$row['day'];
+
+			if ($day >= $today || ($from !== '' && $day < $from)) {
+				continue;
+			}
+
+			$readings[(int)$row['board_uid']][$day] = (int)$row['post_number'];
+		}
+
+		return $readings;
 	}
 
 	/**
@@ -454,12 +628,17 @@ class postStatsService {
 
 		$temporaryPath = $path . '.' . getmypid() . '.tmp';
 
-		if (file_put_contents($temporaryPath, json_encode($cache)) === false) {
+		// A cache that cannot be written is not a small problem: every view then rebuilds the
+		// whole history from scratch, which looks like the page being slow for no reason. Say so
+		// rather than failing quietly.
+		if (@file_put_contents($temporaryPath, json_encode($cache)) === false) {
+			error_log('postStats: could not write ' . $temporaryPath . ' — statistics will be rebuilt on every view.');
 			return;
 		}
 
-		if (!rename($temporaryPath, $path)) {
-			unlink($temporaryPath);
+		if (!@rename($temporaryPath, $path)) {
+			error_log('postStats: could not move ' . $temporaryPath . ' into place.');
+			@unlink($temporaryPath);
 		}
 	}
 

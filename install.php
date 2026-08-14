@@ -426,6 +426,14 @@ class tableCreator {
                 CONSTRAINT fk_post_count_board_uid FOREIGN KEY (`board_uid`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
             ) ENGINE=InnoDB;",
     
+            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_NUMBER_HISTORY_TABLE']} (
+                `board_uid` INT NOT NULL,
+                `day` DATE NOT NULL,
+                `post_number` INT NOT NULL,
+                PRIMARY KEY (`board_uid`, `day`),
+                CONSTRAINT fk_post_number_history_board_uid FOREIGN KEY (`board_uid`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
+            ) ENGINE=InnoDB;",
+
             "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['QUOTE_LINK_TABLE']} (
                 `quotelink_id` INT NOT NULL AUTO_INCREMENT,
                 `board_uid` INT NOT NULL,

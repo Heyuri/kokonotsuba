@@ -282,6 +282,15 @@
 }
 
 /* Everything but the board name is a figure, centred under its own heading. */
+/* Says which span the table's rates cover, since it is not the one the zoom links select. */
+.postStatsTableCaption {
+	caption-side: top;
+	text-align: left;
+	padding: 0 0 0.35em;
+	font-size: var(--font-size-x-small, x-small);
+	color: var(--color-fg-omitted, #707070);
+}
+
 .postStatsTable td:not(:first-child),
 .postStatsTable th:not(:first-child) {
 	text-align: center;
