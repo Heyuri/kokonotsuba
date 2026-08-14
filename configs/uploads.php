@@ -26,6 +26,7 @@ return [
 	'VIDEO_EXT'               => arrayField('config_label_VIDEO_EXT', ['webm', 'mp4'], 'config_desc_VIDEO_EXT'),
 	'HTTP_UPLOAD_DIFF'        => intField('config_label_HTTP_UPLOAD_DIFF', 50, 'config_desc_HTTP_UPLOAD_DIFF'),
 
+	// Extension => the mime type accepted for it, comma separated if it has more than one
 	'ALLOW_UPLOAD_EXT' => arrayField('config_label_ALLOW_UPLOAD_EXT', [
 		'gif'  => 'image/gif',
 		'jpg'  => 'image/jpeg',
@@ -35,7 +36,7 @@ return [
 		'webp' => 'image/webp',
 		'swf'  => 'application/x-shockwave-flash',
 		'webm' => 'video/webm',
-		'mp4'  => 'video/mp4',
+		'mp4'  => 'video/mp4, video/x-m4v',
 		'mp3'  => 'audio/mpeg',
 	], 'config_desc_ALLOW_UPLOAD_EXT'),
 ];

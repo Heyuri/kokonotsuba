@@ -49,7 +49,7 @@ $language['regist_upload_noimg']		= 'New threads require an image!';
 $language['regist_upload_filenotfound']	= 'Upload failed.<br>Server disabled file uploading, permission denied, or unsupported format.';
 $language['regist_upload_killincomp']	= 'NOTICE: Your sending was canceled because of the incorrect file size.';
 $language['regist_upload_notimage']		= 'Upload failed.<br>Files other than image is not accepted.';
-$language['regist_upload_notsupport']	= 'Unsupported image.';
+$language['regist_upload_notsupport']	= 'Unsupported file (%1$s - %2$s)';
 $language['regist_upload_blocked']		= 'Upload failed.<br>Uploading this image is blocked.';
 $language['regist_uploaded']			= 'Image %1$s uploaded.<br>';
 $language['regist_sakuradetected']		= 'Big5 sakura Japanese characters detected.';
@@ -668,7 +668,7 @@ $language['config_desc_PREVENT_DUPLICATE_FILE_UPLOADS'] = 'Disallow the same fil
 $language['config_desc_DUPLICATE_FILE_TIME'] = 'Time a duplicate attachment cannot be re-uploaded.';
 $language['config_desc_VIDEO_EXT'] = 'Filetypes loaded as video.';
 $language['config_desc_HTTP_UPLOAD_DIFF'] = 'Upload timing tolerance.';
-$language['config_desc_ALLOW_UPLOAD_EXT'] = 'JSON object of extension => mime-type.';
+$language['config_desc_ALLOW_UPLOAD_EXT'] = 'JSON object of extension => mime-type. Separate mime-types with a comma to accept any of them for that extension.';
 
 // module/addInfo/config.php
 $language['config_desc_modules.addInfo.ADD_INFO'] = 'JSON array of HTML lines shown by the additional-info module.';

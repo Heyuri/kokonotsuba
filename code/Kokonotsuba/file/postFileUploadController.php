@@ -153,13 +153,38 @@ class postFileUploadController {
 
 		// Check if the extension is allowed
 		if (!array_key_exists($ext, $this->config['ALLOW_UPLOAD_EXT'])) {
-			throw new BoardException(_T('regist_upload_notsupport'));
+			throw new BoardException(_T('regist_upload_notsupport', ...$this->describeFileType($ext, $mimeType)));
 		}
 
-		// Check if the MIME type matches the one configured for the extension
-		if ($this->config['ALLOW_UPLOAD_EXT'][$ext] !== $mimeType) {
-			throw new BoardException(_T('regist_upload_notsupport'));
+		// Check if the MIME type matches one of those configured for the extension
+		if (!in_array(strtolower(trim($mimeType)), $this->allowedMimeTypesFor($ext), true)) {
+			throw new BoardException(_T('regist_upload_notsupport', ...$this->describeFileType($ext, $mimeType)));
 		}
+	}
+
+	// Mime types accepted for an extension - comma separated if it has more than one
+	private function allowedMimeTypesFor(string $ext): array {
+		$allowed = $this->config['ALLOW_UPLOAD_EXT'][$ext];
+		$allowed = is_array($allowed) ? $allowed : explode(',', (string)$allowed);
+
+		$allowed = array_map(static fn($mimeType) => strtolower(trim((string)$mimeType)), $allowed);
+
+		return array_filter($allowed, static fn($mimeType) => $mimeType !== '');
+	}
+
+	// Extension and mime type shown in the rejection error - escaped, they come from the upload
+	private function describeFileType(string $fileExtention, string $mimeType): array {
+		$describe = static function (string $value): string {
+			$value = trim($value);
+
+			if ($value === '') {
+				return '?';
+			}
+
+			return htmlspecialchars(mb_substr($value, 0, 32), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+		};
+
+		return [$describe($fileExtention), $describe($mimeType)];
 	}
 
 	private function validateFileSize(int $fileSize): void {
