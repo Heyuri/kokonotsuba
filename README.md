@@ -79,13 +79,13 @@ You'll need to set your database creds and database name here
 #### globalconfig.php
 You can configure most things after installing but these will be required for your new board to behave as expected.
 
-1. Set the value of `$config['WEBSITE_URL']` to the base URL of where your koko boards are located in web root
+1. Set the value of `'WEBSITE_URL'` to the base URL of where your koko boards are located in web root
 
-2. Set the value `$config['TRIPSALT']` to a random value, you could either mash your keyboard or generate a large string comprised of random characters. This is used for secure tripcodes so don't change it after setting it
+2. Set the value `'TRIPSALT'` to a random value, you could either mash your keyboard or generate a large string comprised of random characters. This is used for secure tripcodes so don't change it after setting it
 
-3. Set `$config['STATIC_URL']` to the web-accessible URL of the static directory from earlier. Depending on how you set it up, the URL might look like `https://example.net/static/` or `https://static.example.net/` - it's up to you as long as its in a web-accessible location.
+3. Set `'STATIC_URL'` to the web-accessible URL of the static directory from earlier. Depending on how you set it up, the URL might look like `https://example.net/static/` or `https://static.example.net/` - it's up to you as long as its in a web-accessible location.
 
-4. Following up from step 3, set `$config['STATIC_PATH']` to the absolute path to that static directory.
+4. Following up from step 3, set `'STATIC_PATH'` to the absolute path to that static directory.
 
 ### 5. Final
 
