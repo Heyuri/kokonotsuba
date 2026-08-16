@@ -6,7 +6,7 @@ use Kokonotsuba\userRole;
 
 /**
  * Translation from the old contiguous role numbering (None 0 ... System 5) to the current spaced
- * values in userRole. Drives Utilities/migrateRoleLevels-cli.php, which rewrites the `role` column
+ * values in userRole. Drives migrations/20260815_000002_role_levels.php, which rewrites the `role` column
  * of the account and action log tables.
  *
  * Only 0 appears in both numberings, and it means None in both, so applying the map twice is a

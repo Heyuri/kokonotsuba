@@ -46,7 +46,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->messagesPerPage = $this->getConfig('ADMIN_PAGE_DEF', 100);
 
 		$databaseConnection = databaseConnection::getInstance();
-		$privateMessageTable = getDatabaseSettings()['PRIVATE_MESSAGE_TABLE'];
+		$privateMessageTable = $this->moduleContext->getTableName('PRIVATE_MESSAGE_TABLE');
 		$this->messageRepository = new messageRepository($databaseConnection, $privateMessageTable);
 
 		$this->messageRenderer = new messageRenderer(

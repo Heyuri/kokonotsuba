@@ -31,10 +31,9 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		$this->staticUrl = $this->getConfig('STATIC_URL');
 
-		$dbSettings = $this->moduleContext->dbSettings;
 		$this->countryFlagRepository = new countryFlagRepository(
 			$this->moduleContext->databaseConnection,
-			$dbSettings['COUNTRY_FLAG_TABLE']
+			$this->moduleContext->getTableName('COUNTRY_FLAG_TABLE')
 		);
 
 		$this->listenPost('onRenderPost');

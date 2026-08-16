@@ -46,10 +46,9 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$databaseSettings = getDatabaseSettings();
 		$this->adRepository = new adRepository(
 			databaseConnection::getInstance(),
-			$databaseSettings['ADS_TABLE']
+			$this->moduleContext->getTableName('ADS_TABLE')
 		);
 		$this->modulePage = $this->getModulePageURL([], false);
 

@@ -279,10 +279,9 @@ class moduleMain extends abstractModuleMain {
 
 	private function getAdsRepo(): adRepository {
 		if ($this->adRepo === null) {
-			$databaseSettings = getDatabaseSettings();
 			$this->adRepo = new adRepository(
 				databaseConnection::getInstance(),
-				$databaseSettings['ADS_TABLE']
+				$this->moduleContext->getTableName('ADS_TABLE')
 			);
 		}
 		return $this->adRepo;

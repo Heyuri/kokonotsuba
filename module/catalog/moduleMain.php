@@ -84,14 +84,14 @@ class moduleMain extends abstractModuleMain {
 	 * Wire up the catalog repository and service.
 	 */
 	private function initCatalogService(): void {
-		$dbSettings = getDatabaseSettings();
+		$tableNames = $this->moduleContext->getTableNames();
 
 		$catalogRepository = new catalogRepository(
 			databaseConnection::getInstance(),
-			$dbSettings['THREAD_TABLE'],
-			$dbSettings['POST_TABLE'],
-			$dbSettings['FILE_TABLE'],
-			$dbSettings['DELETED_POSTS_TABLE'],
+			$tableNames['THREAD_TABLE'],
+			$tableNames['POST_TABLE'],
+			$tableNames['FILE_TABLE'],
+			$tableNames['DELETED_POSTS_TABLE'],
 		);
 
 		$this->catalogService = new catalogService($catalogRepository, $this->moduleContext->moduleEngine);

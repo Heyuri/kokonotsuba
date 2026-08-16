@@ -102,7 +102,7 @@ $databaseSettings = getDatabaseSettings();
 
 $configRepository = new configRepository(
 	databaseConnection::getInstance(),
-	$databaseSettings['BOARD_CONFIG_TABLE']
+	getTableName('BOARD_CONFIG_TABLE')
 );
 $configService = new configService($configRepository);
 
@@ -373,7 +373,7 @@ function listBoards(array $databaseSettings): array {
 
 	$repository = new \Kokonotsuba\board\boardRepository(
 		databaseConnection::getInstance(),
-		$databaseSettings['BOARD_TABLE']
+		getTableName('BOARD_TABLE')
 	);
 
 	$boards = [];

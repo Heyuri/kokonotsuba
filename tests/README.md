@@ -89,9 +89,27 @@ tests/
     Puchiko/             Tests for the helper functions
     Kokonotsuba/         Tests for core classes (e.g. userRole)
     Modules/             Tests for the module logic layer
+  integration/           Needs a live MariaDB; NOT picked up by run.php
+    migrations.php       Migration runner: baseline, reconcile, detect, rollback
+    roleLevelMigration.php
+    deletionSemantics.php
   fixtures/
     global/              Committed homoglyph map so normalisation tests stay offline
 ```
+
+## Running the integration tests
+
+`tests/run.php` scans `tests/unit/` only. Anything needing a live database lives
+in `tests/integration/` and is executed directly, reading its connection from the
+environment. Point these at a throwaway database — they drop and recreate tables.
+
+```sh
+KOKO_TEST_DSN='mysql:host=127.0.0.1;dbname=koko_test;charset=utf8mb4' \
+KOKO_TEST_USER=claude KOKO_TEST_PASS=claude_local_dev \
+php tests/integration/migrations.php
+```
+
+Exit code is `0` on success, `1` on failure, `2` when no database is reachable.
 
 ### Testing a module class
 

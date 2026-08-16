@@ -176,8 +176,7 @@ function migrateBlotterEntries(
 
 $arguments = parseArguments($argv);
 $flatFilePath = $arguments['flatFilePath'] ?? getDefaultBlotterFilePath();
-$dbSettings = getDatabaseSettings();
-$blotterTable = (string) $dbSettings['BLOTTER_TABLE'];
+$blotterTable = (string) getTableName('BLOTTER_TABLE');
 
 if (!is_file($flatFilePath)) {
 	fwrite(STDERR, "Blotter file not found: {$flatFilePath}\n");

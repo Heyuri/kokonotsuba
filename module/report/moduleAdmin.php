@@ -79,14 +79,14 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->reportsPerPage = max(1, (int) $this->getConfig('ADMIN_PAGE_DEF', 100));
 		$this->currentAccountId = (int) ($this->moduleContext->currentUserId ?? 0);
 
-		$databaseSettings = getDatabaseSettings();
+		$tableNames = $this->moduleContext->getTableNames();
 		$reportRepository = new reportRepository(
 			databaseConnection::getInstance(),
-			$databaseSettings['REPORT_TABLE'],
-			$databaseSettings['REPORT_READ_TABLE'],
-			$databaseSettings['ACCOUNT_TABLE'],
-			$databaseSettings['POST_TABLE'],
-			$databaseSettings['BOARD_TABLE']
+			$tableNames['REPORT_TABLE'],
+			$tableNames['REPORT_READ_TABLE'],
+			$tableNames['ACCOUNT_TABLE'],
+			$tableNames['POST_TABLE'],
+			$tableNames['BOARD_TABLE']
 		);
 
 		$this->reportService = new reportService(

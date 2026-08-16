@@ -56,7 +56,7 @@ class moduleMain extends abstractModuleMain {
 
 		// get database table and connection
 		$databaseConnection = databaseConnection::getInstance();
-		$privateMessageTable = getDatabaseSettings()['PRIVATE_MESSAGE_TABLE'];
+		$privateMessageTable = $this->moduleContext->getTableName('PRIVATE_MESSAGE_TABLE');
 
 		// init message repo
 		$messageRepository = new messageRepository($databaseConnection, $privateMessageTable);

@@ -33,10 +33,15 @@ function getRootPath() {
 
 define('ROOTPATH', getRootPath());
 
+require ROOTPATH . '/autoload.php';
 require ROOTPATH . '/code/Puchiko/includes.php';
 require ROOTPATH . '/code/Kokonotsuba/constants.php';
 require ROOTPATH . '/code/Kokonotsuba/userRole.php';
 
+use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\migrations\migrationLedger;
+use Kokonotsuba\migrations\migrationRunner;
+use Kokonotsuba\migrations\schemaInspector;
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 $extensions = [
@@ -83,14 +88,6 @@ function getBoardStorageDir() {
 }
 
 // Function to sanitize table names using regular expression validation
-function sanitizeTableName($tableName) {
-    // Validat e table name: Only allow alphanumeric characters and underscores
-    if (!preg_match('/^[a-zA-Z0-9_]+$/', $tableName)) {
-        throw new InvalidArgumentException("Invalid table name: $tableName. Only alphanumeric characters and underscores are allowed.");
-    }
-    return $tableName;
-}
-
 // Set a value at a dot-path within a nested config array (installer-local helper).
 function setNestedInstallConfig(array &$config, string $dotpath, $value): void {
     $segments = explode('.', $dotpath);
@@ -326,478 +323,6 @@ class html {
     }
 }
 
-class tableCreator {
-    private $db;	
-    public function __construct($pdoConnection) {
-        $this->db = $pdoConnection;
-
-    }
-    public function createTables($tableNames) {
-        $sanitizedTableNames = array_map('sanitizeTableName', $tableNames);
-    
-        // Define the SQL queries using sanitized table names
-        $queries = [
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BOARD_TABLE']} (
-                `board_uid` INT NOT NULL AUTO_INCREMENT,
-                `board_identifier` TEXT,
-                `board_title` TEXT NOT NULL,
-                `board_sub_title` TEXT,
-                `storage_directory_name` TEXT NOT NULL,
-                `subdomain` VARCHAR(253) NOT NULL DEFAULT '',
-                `listed` BOOL DEFAULT TRUE,
-                `date_added` DATE DEFAULT CURRENT_DATE,
-                PRIMARY KEY(`board_uid`),
-                INDEX(date_added)
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BOARD_CONFIG_TABLE']} (
-                `board_uid` INT NOT NULL,
-                `conf_values` JSON NOT NULL,
-                PRIMARY KEY (`board_uid`),
-                UNIQUE KEY uq_board_config_board_uid (`board_uid`),
-                CONSTRAINT fk_board_config_board_uid FOREIGN KEY (`board_uid`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['THREAD_TABLE']} (
-                `insert_id` INT NOT NULL AUTO_INCREMENT,
-                `thread_uid` VARCHAR(255) NOT NULL,
-                `post_op_number` INT NOT NULL,
-                `post_op_post_uid` INT NOT NULL,
-                `boardUID` INT NOT NULL,
-                `last_reply_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                `last_bump_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                `thread_created_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                `is_sticky` BOOL DEFAULT FALSE,
-                PRIMARY KEY (`insert_id`),
-                CONSTRAINT fk_thread_boardUID FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
-                INDEX (`thread_uid`),
-                INDEX (`last_reply_time`),
-                INDEX (`last_bump_time`),
-                INDEX (`thread_created_time`)
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_TABLE']} (
-                `post_uid` INT NOT NULL AUTO_INCREMENT,
-                `no` INT NOT NULL,
-                `poster_hash` VARCHAR(255) DEFAULT NULL,
-                `boardUID` INT NOT NULL,
-                `thread_uid` VARCHAR(255) NOT NULL,
-                `post_position` INT DEFAULT 0,
-                `is_op` BOOLEAN NOT NULL,
-                `root` TIMESTAMP NOT NULL,
-                `md5chksum` TEXT,
-                `category` TEXT,
-                `pwd` TEXT NOT NULL,
-                `now` TEXT NOT NULL,
-                `name` TEXT NOT NULL,
-                `tripcode` TEXT,
-                `secure_tripcode` TEXT,
-                `capcode` TEXT,
-                `email` TEXT NOT NULL,
-                `sub` TEXT NOT NULL,
-                `com` MEDIUMTEXT NOT NULL,
-                `host` VARCHAR(45) NOT NULL,
-                `status` TEXT,
-                `tag` VARCHAR(16) DEFAULT NULL,
-                PRIMARY KEY (`post_uid`),
-                CONSTRAINT fk_boardUID FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
-                CONSTRAINT fk_thread_uid FOREIGN KEY (`thread_uid`) REFERENCES `{$sanitizedTableNames['THREAD_TABLE']}`(`thread_uid`) ON DELETE CASCADE,
-                INDEX (`thread_uid`),
-                INDEX (`no`),
-                INDEX idx_host (`host`),
-                INDEX idx_posts_thread_rank (thread_uid, is_op DESC, post_uid DESC),
-                INDEX idx_post_root (`root`),
-                INDEX idx_post_board_root (`boardUID`, `root`, `no`),
-                INDEX idx_tag (`tag`),
-                INDEX idx_tripcode (`tripcode`(10)),
-                INDEX idx_secure_tripcode (`secure_tripcode`(10)),
-                UNIQUE KEY uniq_board_no (boardUID, no),
-                FULLTEXT INDEX ft_com (com),
-                FULLTEXT INDEX ft_sub (sub),
-                FULLTEXT INDEX ft_name (name),
-                FULLTEXT INDEX ft_email (email),
-                FULLTEXT INDEX ft_general (name, email, sub, com)
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_NUMBER_TABLE']} (
-                `board_uid` INT NOT NULL,
-                `post_number` INT NOT NULL DEFAULT 0,
-                PRIMARY KEY (`board_uid`),
-                CONSTRAINT fk_post_count_board_uid FOREIGN KEY (`board_uid`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
-            ) ENGINE=InnoDB;",
-    
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_NUMBER_HISTORY_TABLE']} (
-                `board_uid` INT NOT NULL,
-                `day` DATE NOT NULL,
-                `post_number` INT NOT NULL,
-                PRIMARY KEY (`board_uid`, `day`),
-                CONSTRAINT fk_post_number_history_board_uid FOREIGN KEY (`board_uid`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['QUOTE_LINK_TABLE']} (
-                `quotelink_id` INT NOT NULL AUTO_INCREMENT,
-                `board_uid` INT NOT NULL,
-                `host_post_uid` INT NOT NULL,
-                `target_post_uid` INT NOT NULL,
-                PRIMARY KEY (`quotelink_id`),
-                INDEX (`host_post_uid`),
-                INDEX (`target_post_uid`),
-                CONSTRAINT `fk_quote_link_host_post_uid` FOREIGN KEY (`host_post_uid`)
-                REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE,
-                CONSTRAINT `fk_quote_link_target_post_uid` FOREIGN KEY (`target_post_uid`)
-                REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['ACTIONLOG_TABLE']} (
-                `id` INT NOT NULL AUTO_INCREMENT,
-                `time_added` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                `date_added` DATE DEFAULT CURRENT_DATE,
-                `name` TEXT NOT NULL,
-                `role` INT NOT NULL,
-                `log_action` TEXT NOT NULL,
-                `ip_address` TEXT NOT NULL,
-                `board_uid` INT,
-                `board_title` TEXT NOT NULL,
-                PRIMARY KEY (`id`),
-                INDEX (role),
-                INDEX (time_added),
-                INDEX (name),
-                INDEX (board_uid)
-            ) ENGINE=InnoDB;",
-    
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['ACCOUNT_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                username TEXT NOT NULL UNIQUE,
-                role INT DEFAULT 0,
-                password_hash TEXT NOT NULL,
-                number_of_actions INT DEFAULT 0,
-                last_login TIMESTAMP DEFAULT NULL,
-                date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                index(last_login),
-                index(date_added)
-            ) ENGINE=InnoDB;",
-    
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['THREAD_REDIRECT_TABLE']} (
-                `redirect_id` INT NOT NULL AUTO_INCREMENT,
-                `original_board_uid` INT NOT NULL,
-                `new_board_uid` INT NOT NULL,
-                `post_op_number` INT NOT NULL,
-                `thread_uid` VARCHAR(255) NOT NULL,
-                PRIMARY KEY (`redirect_id`),
-                CONSTRAINT new_board_uid FOREIGN KEY (`new_board_uid`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
-                CONSTRAINT redirect_thread_uid FOREIGN KEY (`thread_uid`) REFERENCES `{$sanitizedTableNames['THREAD_TABLE']}`(`thread_uid`) ON DELETE CASCADE,
-                INDEX (`original_board_uid`),
-                INDEX (`thread_uid`)
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BOARD_PATH_CACHE_TABLE']} (
-                `id` INT NOT NULL AUTO_INCREMENT,
-                `boardUID` INT NOT NULL,
-                `board_path` TEXT NOT NULL,
-                PRIMARY KEY (`id`),
-                CONSTRAINT path_cache_board_uid FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['FILE_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                post_uid INT NOT NULL,
-                file_name VARCHAR(255) NOT NULL,
-                stored_filename TEXT NOT NULL,
-                file_ext VARCHAR(16) NOT NULL,
-                file_md5 VARCHAR(32) NOT NULL,
-                file_width INT DEFAULT NULL,
-                file_height INT DEFAULT NULL,
-                thumb_file_width INT DEFAULT NULL,
-                thumb_file_height INT DEFAULT NULL,
-                file_size BIGINT UNSIGNED NULL,
-                mime_type VARCHAR(255) NULL,
-                is_hidden TINYINT(1) NOT NULL DEFAULT 0,
-                is_deleted TINYINT(1) NOT NULL DEFAULT 0,
-                is_animated TINYINT(1) NOT NULL DEFAULT 0,
-                is_spoilered TINYINT(1) NOT NULL DEFAULT 0,
-                timestamp_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-                CONSTRAINT fk_file_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
-
-                INDEX idx_md5 (file_md5),
-                INDEX idx_post_uid (post_uid),
-                INDEX idx_file_ext (file_ext),
-                INDEX idx_file_size (file_size),
-                INDEX idx_file_name_prefix (file_name(255)),
-                INDEX idx_mime_type (mime_type),
-                INDEX idx_post_uid_file_md5 (post_uid, file_md5),
-                FULLTEXT INDEX ft_file_name (file_name)
-            ) ENGINE=InnoDB;
-            ",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['DELETED_POSTS_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                post_uid INT NOT NULL,
-                deleted_by INT NULL,
-                deleted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                file_only TINYINT(1) DEFAULT 0,
-                by_proxy TINYINT(1) DEFAULT 0,
-
-                restored_at TIMESTAMP NULL,
-                restored_by INT NULL,
-                
-                file_id INT NULL,
-
-                open_flag TINYINT(1) AS (IF(restored_at IS NULL, 1, 0)) STORED,
-
-                open_key INT AS (CASE WHEN restored_at IS NULL AND file_id IS NULL THEN post_uid ELSE NULL END) STORED,
-
-                CONSTRAINT fk_dp_post FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
-                CONSTRAINT fk_dp_file FOREIGN KEY (file_id) REFERENCES `{$sanitizedTableNames['FILE_TABLE']}`(id) ON DELETE CASCADE,
-
-                INDEX idx_post_uid (post_uid),
-                INDEX idx_deleted_by_deleted_at (deleted_by, deleted_at),
-                INDEX idx_restored_at (restored_at),
-                INDEX idx_file_id (file_id),
-
-
-                UNIQUE KEY uq_open_post (open_key)
-            ) ENGINE=InnoDB;
-            ",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['CAPCODE_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                tripcode VARCHAR(255),
-                is_secure TINYINT(1) DEFAULT 0,
-                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                added_by INT NULL,
-                color_hex CHAR(7) NOT NULL,
-                cap_text TEXT,
-
-                UNIQUE KEY unique_tripcode_is_secure (tripcode, is_secure),
-                CONSTRAINT fk_capcodes_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['SPAM_STRING_TABLE']} (
-                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                pattern TEXT NOT NULL,
-                max_distance TINYINT UNSIGNED DEFAULT NULL,
-                match_type ENUM('contains','exact', 'fuzzy', 'regex') NOT NULL DEFAULT 'contains',
-                apply_subject TINYINT(1) NOT NULL DEFAULT 1,
-                apply_comment TINYINT(1) NOT NULL DEFAULT 1,
-                apply_name TINYINT(1) NOT NULL DEFAULT 1,
-                apply_email TINYINT(1) NOT NULL DEFAULT 1,
-                apply_filename TINYINT(1) NOT NULL DEFAULT 1,
-                apply_op_only TINYINT(1) NOT NULL DEFAULT 0,
-                silent_reject TINYINT(1) NOT NULL DEFAULT 0,
-                case_sensitive TINYINT(1) NOT NULL DEFAULT 0,
-                is_active TINYINT(1) NOT NULL DEFAULT 1,
-                user_message TEXT DEFAULT NULL,
-                description TEXT DEFAULT NULL,
-                action ENUM('mute','reject','ban') NOT NULL DEFAULT 'reject',
-                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                created_by INT NULL,
-
-                PRIMARY KEY (id),
-                INDEX idx_spam_active (is_active),
-                INDEX idx_spam_match_type (match_type),
-                INDEX idx_spam_created_by (created_by),
-
-                CONSTRAINT fk_spam_string_rules_created_by
-                    FOREIGN KEY (created_by)
-                    REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id)
-                    ON DELETE SET NULL
-                    ON UPDATE CASCADE
-            ) ENGINE=InnoDB;
-            ",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['SOUDANE_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                ip_address VARCHAR(255),
-                yeah TINYINT(1) DEFAULT 0,
-                post_uid INT NULL,
-                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-                INDEX idx_soudane_vote (post_uid, yeah),
-                INDEX idx_soudane_ip (ip_address),
-                INDEX idx_soudane_date_added (date_added),
-
-                CONSTRAINT fk_soudane_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['THREAD_THEMES_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                thread_uid VARCHAR(255) NULL,
-                background_hex_color CHAR(7) NULL,
-                reply_background_hex_color CHAR(7) NULL,
-                text_hex_color CHAR(7) NULL,
-                background_image_url TEXT NULL, 
-                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL, 
-                audio TEXT NULL, 
-                raw_styling TEXT NULL, 
-                added_by INT NULL,
-
-                UNIQUE KEY unique_thread_uid (thread_uid),
-                INDEX idx_theme_added_by (added_by),
-
-                CONSTRAINT fk_theme_thread_uid FOREIGN KEY (thread_uid) REFERENCES `{$sanitizedTableNames['THREAD_TABLE']}`(thread_uid) ON DELETE CASCADE,
-                CONSTRAINT fk_theme_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['LAST_THREAD_SUBMISSIONS_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                board_uid INT NOT NULL UNIQUE,
-                last_submission_timestamp TIMESTAMP(3) NOT NULL,
-                
-                CONSTRAINT fk_last_thread_submissions_board_uid FOREIGN KEY (board_uid) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(board_uid) ON DELETE CASCADE
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['NOTE_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                post_uid INT NOT NULL,
-                note_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                added_by INT NULL,
-                note_text TEXT NOT NULL,
-                
-                CONSTRAINT fk_notes_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
-                CONSTRAINT fk_notes_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['REPORT_TABLE']} (
-                report_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                post_uid INT NOT NULL,
-                board_uid INT NOT NULL,
-                reporter_ip VARCHAR(255) NOT NULL,
-                reporter_reason TEXT NULL,
-                date_reported DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-                status TINYINT NOT NULL DEFAULT 0,
-                actioned_by INT NULL,
-                actioned_at DATETIME NULL,
-
-                public_reason TEXT NULL,
-                private_reason TEXT NULL,
-
-                INDEX idx_reports_status_date (status, date_reported),
-                INDEX idx_reports_post_uid (post_uid),
-                INDEX idx_reports_board_uid (board_uid),
-                INDEX idx_reports_reporter_ip (reporter_ip),
-                INDEX idx_reports_date_reported (date_reported),
-                INDEX idx_reports_actioned_by (actioned_by),
-
-                CONSTRAINT fk_reports_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
-                CONSTRAINT fk_reports_board_uid FOREIGN KEY (board_uid) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(board_uid) ON DELETE CASCADE,
-                CONSTRAINT fk_reports_actioned_by FOREIGN KEY (actioned_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['REPORT_READ_TABLE']} (
-                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                report_id BIGINT UNSIGNED NOT NULL,
-                account_id INT NOT NULL,
-                date_read DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-                UNIQUE KEY uniq_report_read (report_id, account_id),
-                INDEX idx_report_reads_account (account_id),
-
-                CONSTRAINT fk_report_reads_report_id FOREIGN KEY (report_id) REFERENCES `{$sanitizedTableNames['REPORT_TABLE']}`(report_id) ON DELETE CASCADE,
-                CONSTRAINT fk_report_reads_account_id FOREIGN KEY (account_id) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE CASCADE
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['PRIVATE_MESSAGE_TABLE']} (
-                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                ip_address TEXT NOT NULL, 
-                date_sent TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                sender_tripcode VARCHAR(255) NOT NULL,
-                sender_name TEXT NOT NULL,
-                recipient_tripcode VARCHAR(255) NOT NULL,
-                message_subject TEXT NOT NULL,
-                message_body TEXT NOT NULL,
-                is_read TINYINT(1) NOT NULL DEFAULT 0
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BANNER_AD_TABLE']} (
-                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                link TEXT DEFAULT NULL,
-                banner_file_name TEXT NOT NULL,
-                ip_address VARCHAR(45) DEFAULT NULL,
-                is_active TINYINT(1) NOT NULL DEFAULT 1,
-                is_approved TINYINT(1) NOT NULL DEFAULT 0,
-                date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                INDEX idx_active_approved (is_active, is_approved),
-                INDEX idx_date_submitted (date_submitted),
-                INDEX idx_ip_date (ip_address, date_submitted)
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['ADS_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                slot VARCHAR(20) NOT NULL,
-                type VARCHAR(10) NOT NULL,
-                src TEXT NULL,
-                href TEXT NULL,
-                alt TEXT NULL,
-                html TEXT NULL,
-                enabled TINYINT(1) NOT NULL DEFAULT 1,
-                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                INDEX idx_ads_slot_enabled (slot, enabled)
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BLOTTER_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                blotter_content TEXT NOT NULL,
-                added_by INT NULL,
-                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                
-                CONSTRAINT fk_blotter_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['FILE_BAN_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                file_md5 CHAR(32) NOT NULL,
-                added_by INT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-                UNIQUE KEY uq_file_md5 (file_md5),
-                INDEX idx_file_ban_added_by (added_by),
-
-                CONSTRAINT fk_file_ban_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['PERCEPTUAL_BAN_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                phash BIGINT NOT NULL,
-                phash_hex CHAR(16) NOT NULL,
-                added_by INT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-                UNIQUE KEY uq_phash (phash),
-                INDEX idx_perceptual_ban_added_by (added_by),
-
-                CONSTRAINT fk_perceptual_ban_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['COUNTRY_FLAG_TABLE']} (
-                `id` INT NOT NULL AUTO_INCREMENT,
-                `post_uid` INT NOT NULL,
-                `country` VARCHAR(8) NOT NULL,
-                PRIMARY KEY (`id`),
-                UNIQUE KEY uq_country_flag_post_uid (`post_uid`),
-                CONSTRAINT fk_country_flag_post_uid FOREIGN KEY (`post_uid`) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['DISPLAY_IP_TABLE']} (
-                `id` INT NOT NULL AUTO_INCREMENT,
-                `post_uid` INT NOT NULL,
-                `ip_part` VARCHAR(512) NOT NULL DEFAULT '',
-                PRIMARY KEY (`id`),
-                UNIQUE KEY uq_display_ip_post_uid (`post_uid`),
-                CONSTRAINT fk_display_ip_post_uid FOREIGN KEY (`post_uid`) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE
-            ) ENGINE=InnoDB;
-            ",
-        ];
-    
-        // Use prepared statements for execution
-        foreach ($queries as $query) {
-            $stmt = $this->db->prepare($query);
-            $stmt->execute();
-        }
-    }
-    
-}
 
 class accountTable {
     private $db, $accountTableName;
@@ -934,6 +459,7 @@ class boardTable {
 
 // Main execution
 $dbSettings = require ROOTPATH . '/databaseSettings.php';
+$tableNames = require ROOTPATH . '/tables.php';
 $html = new html($dbSettings);
 
 // Anchor the install marker to the application root, NOT the (SAPI-dependent) CWD.
@@ -963,44 +489,30 @@ switch ($action) {
 
             $globalConfig = getGlobalConfig();
 
-            $tableCreator = new tableCreator($pdoConnection);
-            $tables = [
-                'POST_TABLE' => $dbSettings['POST_TABLE'],
-                'FILE_TABLE' => $dbSettings['FILE_TABLE'],
-                'QUOTE_LINK_TABLE' => $dbSettings['QUOTE_LINK_TABLE'],
-                'REPORT_TABLE' => $dbSettings['REPORT_TABLE'],
-                'REPORT_READ_TABLE' => $dbSettings['REPORT_READ_TABLE'],
-                'BAN_TABLE' => $dbSettings['BAN_TABLE'],
-                'BOARD_TABLE' => $dbSettings['BOARD_TABLE'],
-                'BOARD_CONFIG_TABLE' => $dbSettings['BOARD_CONFIG_TABLE'],
-                'BOARD_PATH_CACHE_TABLE' => $dbSettings['BOARD_PATH_CACHE_TABLE'],
-                'THREAD_TABLE' => $dbSettings['THREAD_TABLE'],
-                'POST_NUMBER_TABLE' => $dbSettings['POST_NUMBER_TABLE'],
-                'ACCOUNT_TABLE' => $dbSettings['ACCOUNT_TABLE'],
-                'ACTIONLOG_TABLE' => $dbSettings['ACTIONLOG_TABLE'],
-                'THREAD_REDIRECT_TABLE' => $dbSettings['THREAD_REDIRECT_TABLE'],
-                'DELETED_POSTS_TABLE' => $dbSettings['DELETED_POSTS_TABLE'],
-                'CAPCODE_TABLE' => $dbSettings['CAPCODE_TABLE'],
-                'SPAM_STRING_TABLE' => $dbSettings['SPAM_STRING_TABLE'],
-                'SOUDANE_TABLE' => $dbSettings['SOUDANE_TABLE'],
-                'THREAD_THEMES_TABLE' => $dbSettings['THREAD_THEMES_TABLE'],
-                'LAST_THREAD_SUBMISSIONS_TABLE' => $dbSettings['LAST_THREAD_SUBMISSIONS_TABLE'],
-                'NOTE_TABLE' => $dbSettings['NOTE_TABLE'],
-                'PRIVATE_MESSAGE_TABLE' => $dbSettings['PRIVATE_MESSAGE_TABLE'],
-                'BANNER_AD_TABLE' => $dbSettings['BANNER_AD_TABLE'],
-                'BANNER_TABLE' => $dbSettings['BANNER_TABLE'],
-                'ADS_TABLE' => $dbSettings['ADS_TABLE'],
-                'BLOTTER_TABLE' => $dbSettings['BLOTTER_TABLE'],
-                'FILE_BAN_TABLE' => $dbSettings['FILE_BAN_TABLE'],
-                'PERCEPTUAL_BAN_TABLE' => $dbSettings['PERCEPTUAL_BAN_TABLE'],
-                'COUNTRY_FLAG_TABLE' => $dbSettings['COUNTRY_FLAG_TABLE'],
-                'DISPLAY_IP_TABLE' => $dbSettings['DISPLAY_IP_TABLE'],
-            ];
+            // The schema is built by the migration runner, so a fresh install and an upgraded
+            // one go through exactly the same code. See Utilities/migrate-cli.php.
+            databaseConnection::createInstance($dbSettings);
+            $databaseConnection = databaseConnection::getInstance();
+            $ledger = new migrationLedger($databaseConnection, $tableNames['SCHEMA_MIGRATION_TABLE']);
 
-            $tableCreator->createTables($tables);
-            $sanitizedTableNames = array_map('sanitizeTableName', $tables);
-            $boardTable = new boardTable($pdoConnection, $sanitizedTableNames['BOARD_TABLE'], $dbSettings['DATABASE_NAME']);
-            $accountTable = new accountTable($pdoConnection, $sanitizedTableNames['ACCOUNT_TABLE']);
+            $runner = new migrationRunner(
+                $databaseConnection,
+                $ledger,
+                new schemaInspector($databaseConnection, $dbSettings['DATABASE_NAME']),
+                $tableNames,
+                ROOTPATH,
+                Kokonotsuba\KOKO_VERSION,
+                static function (string $message, string $level): void {
+                    if ($level === 'migration') {
+                        error_log('install: '.$message);
+                    }
+                }
+            );
+
+            $runner->withLock(static fn (): array => $runner->up());
+
+            $boardTable = new boardTable($pdoConnection, $tableNames['BOARD_TABLE'], $dbSettings['DATABASE_NAME']);
+            $accountTable = new accountTable($pdoConnection, $tableNames['ACCOUNT_TABLE']);
 
             // Refuse to provision a new admin on an already-installed instance, even if the
             // .installed marker is absent (e.g. CLI/SQL install, backup restore, wrong CWD).

@@ -28,11 +28,10 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
-		$databaseSettings = getDatabaseSettings();
 		$blotterRepository = new blotterRepository(
 			databaseConnection::getInstance(),
-			$databaseSettings['BLOTTER_TABLE'],
-			$databaseSettings['ACCOUNT_TABLE']
+			$this->moduleContext->getTableName('BLOTTER_TABLE'),
+			$this->moduleContext->getTableName('ACCOUNT_TABLE')
 		);
 		$this->blotterService = new blotterService($blotterRepository, $this->moduleContext->transactionManager);
 		$this->previewLimit = (int) $this->getModuleConfig('BLOTTER_PREVIEW_AMOUNT');

@@ -64,10 +64,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		});
 
 		// fetch database settings
-		$databaseSettings = getDatabaseSettings();
 
 		// init dependencies and set note service
-		$noteRepository = new noteRepository(databaseConnection::getInstance(),$databaseSettings['NOTE_TABLE']);
+		$noteRepository = new noteRepository(databaseConnection::getInstance(),$this->moduleContext->getTableName('NOTE_TABLE'));
 		$this->noteService = new noteService($noteRepository, $this->moduleContext->transactionManager);
 		$this->notePolicy = new notePolicy(
 			$this->getConfig('AuthLevels', []), 

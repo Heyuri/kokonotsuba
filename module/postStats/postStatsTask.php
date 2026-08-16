@@ -14,18 +14,18 @@ use Puchiko\background\BackgroundTaskInterface;
  * Only ever runs the first build of a scope — the one query that reads a board's whole history.
  * Once the cache exists, page views keep it current themselves a day at a time.
  *
- * The background-runner.php bootstrap provides getDatabaseSettings() and a live
+ * The background-runner.php bootstrap provides getTableNames() and a live
  * databaseConnection singleton before handle() is called.
  */
 class postStatsTask implements BackgroundTaskInterface {
 	public function handle(array $args): void {
-		$dbSettings = getDatabaseSettings();
+		$tableNames = getTableNames();
 
 		$repository = new postStatsRepository(
 			databaseConnection::getInstance(),
-			$dbSettings['POST_TABLE'],
-			$dbSettings['POST_NUMBER_TABLE'],
-			$dbSettings['POST_NUMBER_HISTORY_TABLE'] ?? ''
+			$tableNames['POST_TABLE'],
+			$tableNames['POST_NUMBER_TABLE'],
+			$tableNames['POST_NUMBER_HISTORY_TABLE']
 		);
 
 		// No queue of its own: this is the build, it does not get to defer itself.

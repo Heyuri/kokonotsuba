@@ -151,10 +151,9 @@ if ($dryRun) {
 
 require $root . '/bootstrap/database.php';
 
-$databaseSettings = getDatabaseSettings();
 $configRepository = new configRepository(
 	databaseConnection::getInstance(),
-	$databaseSettings['BOARD_CONFIG_TABLE']
+	getTableName('BOARD_CONFIG_TABLE')
 );
 
 $write = function (int $boardUid, array $overrides) use ($configRepository): void {

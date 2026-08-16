@@ -10,6 +10,9 @@ use Kokonotsuba\database\transactionManager;
 // ───────────────────────────────────────
 $dbSettings ??= getDatabaseSettings();
 
+// Table names are fixed by tables.php, not by the credentials file.
+$tableNames ??= getTableNames();
+
 databaseConnection::createInstance($dbSettings);
 
 $databaseConnection = databaseConnection::getInstance();

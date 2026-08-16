@@ -51,10 +51,9 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$databaseSettings = \getDatabaseSettings();
 		$this->stickyRepository = new stickyRepository(
 			databaseConnection::getInstance(),
-			$databaseSettings['THREAD_TABLE']
+			$this->moduleContext->getTableName('THREAD_TABLE')
 		);
 
 		$this->registerToggleHooks();

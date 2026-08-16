@@ -6,13 +6,12 @@ use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\database\transactionManager;
 
 function getFileBanRepository(): fileBanRepository {
-	$databaseSettings = getDatabaseSettings();
 	$databaseConnection = databaseConnection::getInstance();
 
 	return new fileBanRepository(
 		$databaseConnection,
-		$databaseSettings['FILE_BAN_TABLE'],
-		$databaseSettings['ACCOUNT_TABLE']
+		getTableName('FILE_BAN_TABLE'),
+		getTableName('ACCOUNT_TABLE')
 	);
 }
 

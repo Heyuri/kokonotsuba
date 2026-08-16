@@ -5,6 +5,7 @@
  *
  * @var \Kokonotsuba\database\databaseConnection $databaseConnection
  * @var array                                    $dbSettings
+ * @var array                                    $tableNames
  * @var \Kokonotsuba\containers\appContainer     $container
  */
 
@@ -20,15 +21,15 @@ use Kokonotsuba\config\configService;
 // Board Bootstrap
 // ───────────────────────────────────────
 
-$boardPostNumbers = new boardPostNumbers($databaseConnection, $dbSettings['POST_NUMBER_TABLE']);
+$boardPostNumbers = new boardPostNumbers($databaseConnection, $tableNames['POST_NUMBER_TABLE']);
 
-$boardPathRepository = new boardPathRepository($databaseConnection, $dbSettings['BOARD_PATH_CACHE_TABLE']);
+$boardPathRepository = new boardPathRepository($databaseConnection, $tableNames['BOARD_PATH_CACHE_TABLE']);
 
 $boardPathService = new boardPathService($boardPathRepository);
 
-$boardRepository = new boardRepository($databaseConnection, $dbSettings['BOARD_TABLE']);
+$boardRepository = new boardRepository($databaseConnection, $tableNames['BOARD_TABLE']);
 
-$configRepository = new configRepository($databaseConnection, $dbSettings['BOARD_CONFIG_TABLE']);
+$configRepository = new configRepository($databaseConnection, $tableNames['BOARD_CONFIG_TABLE']);
 $configService = new configService($configRepository);
 
 // Register in container before boardService uses them via assembleBoard()

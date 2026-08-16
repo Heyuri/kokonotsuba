@@ -13,3 +13,8 @@ namespace Kokonotsuba;
 /* Constants */
 const GLOBAL_BOARD_UID = -1; // number that corrosponds to all boards
 
+/*
+ * Kokonotsuba's software version. Used for determining which migrations to apply
+ */
+const KOKO_VERSION = '2.0.0';
+

@@ -8,13 +8,12 @@ use Kokonotsuba\Modules\antiSpam\antiSpamService;
 
 function getAntiSpamService(): antiSpamService {
     // get database settings
-	$databaseSettings = getDatabaseSettings();
 
 	// get database connection
 	$databaseConnection = databaseConnection::getInstance();
 
 	// initialize repo
-	$antiSpamRepository = new antiSpamRepository($databaseConnection, $databaseSettings['SPAM_STRING_TABLE'], $databaseSettings['ACCOUNT_TABLE']);
+	$antiSpamRepository = new antiSpamRepository($databaseConnection, getTableName('SPAM_STRING_TABLE'), getTableName('ACCOUNT_TABLE'));
 
 	// then init and return antiSpamService
 	return new antiSpamService($antiSpamRepository);

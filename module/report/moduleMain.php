@@ -66,14 +66,14 @@ class moduleMain extends abstractModuleMain {
 		$this->myReportsUrl = $this->getModulePageURL(['pageName' => 'myReports'], false);
 		$this->reasonMaxLength = (int) $this->getModuleConfig('REASON_MAX_LENGTH', 1000);
 
-		$databaseSettings = getDatabaseSettings();
+		$tableNames = $this->moduleContext->getTableNames();
 		$reportRepository = new reportRepository(
 			databaseConnection::getInstance(),
-			$databaseSettings['REPORT_TABLE'],
-			$databaseSettings['REPORT_READ_TABLE'],
-			$databaseSettings['ACCOUNT_TABLE'],
-			$databaseSettings['POST_TABLE'],
-			$databaseSettings['BOARD_TABLE']
+			$tableNames['REPORT_TABLE'],
+			$tableNames['REPORT_READ_TABLE'],
+			$tableNames['ACCOUNT_TABLE'],
+			$tableNames['POST_TABLE'],
+			$tableNames['BOARD_TABLE']
 		);
 
 		$this->reportService = new reportService(

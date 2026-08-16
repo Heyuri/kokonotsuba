@@ -44,7 +44,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	 */
 	public function initialize(): void {
 		$databaseConnection = databaseConnection::getInstance();
-		$soudaneTable = getDatabaseSettings()['SOUDANE_TABLE'];
+		$soudaneTable = $this->moduleContext->getTableName('SOUDANE_TABLE');
 		$soudaneRepository = new soudaneRepository($databaseConnection, $soudaneTable);
 		$this->soudaneService = new soudaneService($soudaneRepository);
 

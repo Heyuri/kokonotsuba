@@ -12,21 +12,22 @@ use Puchiko\background\BackgroundTaskInterface;
 /**
  * Background task that anonymizes IP addresses in posts and the action log.
  *
- * The background-runner.php bootstrap provides getDatabaseSettings() and a
+ * The background-runner.php bootstrap provides getDatabaseSettings()/getTableNames() and a
  * live databaseConnection singleton before handle() is called.
  */
 class anonIpTask implements BackgroundTaskInterface {
 	public function handle(array $args): void {
 		$timeframe = $args['timeframe'] ?? '';
 
+		$tableNames = getTableNames();
 		$dbSettings = getDatabaseSettings();
 		$conn       = databaseConnection::getInstance();
 
 		$repo = new anonIpRepository(
 			$conn,
-			$dbSettings['POST_TABLE'],
-			$dbSettings['ACTIONLOG_TABLE'],
-			$dbSettings['SOUDANE_TABLE'],
+			$tableNames['POST_TABLE'],
+			$tableNames['ACTIONLOG_TABLE'],
+			$tableNames['SOUDANE_TABLE'],
 			$dbSettings['ANON_IP_SALT'] ?? ''
 		);
 

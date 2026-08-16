@@ -6,11 +6,10 @@ use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\database\transactionManager;
 
 function getFullBannerRepository(): fullBannerRepository {
-	$databaseSettings = getDatabaseSettings();
 	$databaseConnection = databaseConnection::getInstance();
 	return new fullBannerRepository(
 		$databaseConnection,
-		$databaseSettings['BANNER_AD_TABLE']
+		getTableName('BANNER_AD_TABLE')
 	);
 }
 

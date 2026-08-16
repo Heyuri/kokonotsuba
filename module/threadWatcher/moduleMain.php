@@ -89,15 +89,15 @@ class moduleMain extends abstractModuleMain {
 		$seenMap = $this->parseSeen($request->getParameter('seen', 'GET', ''));
 		$wantNewThreads = $request->getParameter('newthreads', 'GET', '') !== '';
 
-		$dbSettings = getDatabaseSettings();
+		$tableNames = $this->moduleContext->getTableNames();
 		$repo = new threadWatcherRepository(
 			databaseConnection::getInstance(),
-			$dbSettings['THREAD_TABLE'],
-			$dbSettings['POST_TABLE'],
-			$dbSettings['DELETED_POSTS_TABLE'],
-			$dbSettings['BOARD_TABLE'],
-			$dbSettings['FILE_TABLE'],
-			$dbSettings['QUOTE_LINK_TABLE']
+			$tableNames['THREAD_TABLE'],
+			$tableNames['POST_TABLE'],
+			$tableNames['DELETED_POSTS_TABLE'],
+			$tableNames['BOARD_TABLE'],
+			$tableNames['FILE_TABLE'],
+			$tableNames['QUOTE_LINK_TABLE']
 		);
 
 		$defaultComment = (string) $this->getConfig('DEFAULT_NOCOMMENT', '');

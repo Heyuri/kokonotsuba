@@ -35,3 +35,4 @@ $container->set('globalConfig', $globalConfig);
 $container->set('databaseConnection', $databaseConnection);
 $container->set('transactionManager', $transactionManager);
 $container->set('dbSettings', $dbSettings);
+$container->set('tableNames', $tableNames);

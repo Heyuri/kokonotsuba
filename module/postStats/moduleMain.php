@@ -203,14 +203,14 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function buildService(): postStatsService {
-		$dbSettings = $this->moduleContext->dbSettings;
+		$tableNames = $this->moduleContext->getTableNames();
 		$cacheDirectory = \getBackendGlobalDir() . 'post-stats/';
 
 		$repository = new postStatsRepository(
 			$this->moduleContext->databaseConnection,
-			$dbSettings['POST_TABLE'],
-			$dbSettings['POST_NUMBER_TABLE'],
-			$dbSettings['POST_NUMBER_HISTORY_TABLE'] ?? ''
+			$tableNames['POST_TABLE'],
+			$tableNames['POST_NUMBER_TABLE'],
+			$tableNames['POST_NUMBER_HISTORY_TABLE']
 		);
 
 		return new postStatsService($repository, $cacheDirectory, new postStatsBackgroundQueue($cacheDirectory));

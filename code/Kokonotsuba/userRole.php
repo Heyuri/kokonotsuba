@@ -5,7 +5,7 @@ namespace Kokonotsuba;
 // account role
 // Values are spaced so a new role can be slotted in without renumbering the ones above it.
 // They are stored in the `role` column of the account and action log tables - changing them
-// needs a migration (Utilities/migrateRoleLevels-cli.php).
+// needs a migration (migrations/20260815_000002_role_levels.php).
 enum userRole: int {
 	case LEV_NONE = 0;
 	case LEV_USER = 10;

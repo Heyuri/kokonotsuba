@@ -98,6 +98,7 @@ use function Kokonotsuba\libraries\getRoleLevelFromSession;
 			$this,
 			$this->moduleEngineContext->postDateFormatter,
 			$this->moduleEngineContext->getContainer(),
+			getTableNames(),
 		);
 
 		foreach ($loadlist as $moduleName => $moduleStatus) {

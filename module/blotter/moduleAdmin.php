@@ -40,11 +40,10 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function initialize(): void {
-		$databaseSettings = getDatabaseSettings();
 		$blotterRepository = new blotterRepository(
 			databaseConnection::getInstance(),
-			$databaseSettings['BLOTTER_TABLE'],
-			$databaseSettings['ACCOUNT_TABLE']
+			$this->moduleContext->getTableName('BLOTTER_TABLE'),
+			$this->moduleContext->getTableName('ACCOUNT_TABLE')
 		);
 		$this->blotterService = new blotterService($blotterRepository, $this->moduleContext->transactionManager);
 		$this->modulePage = $this->getModulePageURL([], false);

@@ -44,9 +44,9 @@ class moduleMain extends abstractModuleMain {
 
 		$this->moduleUrl = $this->getModulePageURL([], false);
 
-		// get database connection and database setting
+		// get database connection and table name
 		$databaseConnection = databaseConnection::getInstance();
-		$soudaneTable = getDatabaseSettings()['SOUDANE_TABLE'];
+		$soudaneTable = $this->moduleContext->getTableName('SOUDANE_TABLE');
 
 		// init soudane repo
 		$soudaneRepository = new soudaneRepository($databaseConnection, $soudaneTable);
