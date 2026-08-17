@@ -55,6 +55,29 @@
 		return ctx.container || (ctx.bar && ctx.bar.closest('.attachmentContainer'));
 	}
 
+	// Put the file's delete entry back from adminDel's template — a restored file can be deleted
+	// again, but the server left that entry out while it was deleted
+	function addAttachmentDeleteEntry(attachmentEl, params) {
+		if (!attachmentEl || !params) return;
+
+		var tmpl = document.getElementById('del-file-restore-tmpl');
+		var data = attachmentEl.querySelector('.attachmentWidgetData');
+		if (!tmpl || !data) return;
+
+		// already there — nothing to add
+		if (data.querySelector('a[data-action="deleteFile"]')) return;
+
+		var clone = tmpl.content.cloneNode(true);
+
+		clone.querySelectorAll('a').forEach(function (a) {
+			a.setAttribute('href', a.getAttribute('href')
+				.replace('__FILEID__', params.fileid)
+				.replace('__POSTUID__', params.postuid));
+		});
+
+		data.appendChild(clone);
+	}
+
 	// Drop widget entries from an attachment's hidden data container
 	function removeAttachmentWidgetActions(attachmentEl, actions) {
 		if (!attachmentEl) return;
@@ -243,6 +266,7 @@
 				errorMessage: 'Failed to restore the file.',
 				onSuccess: function () {
 					removeAttachmentWidgetActions(attachmentEl, ['restoreDeletedFile', 'viewDeletedAttachment', 'purgeDeletedFile']);
+					addAttachmentDeleteEntry(attachmentEl, ctx.params);
 				}
 			}, ctx.params);
 		});

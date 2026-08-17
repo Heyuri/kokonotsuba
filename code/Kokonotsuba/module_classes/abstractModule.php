@@ -15,9 +15,12 @@
 namespace Kokonotsuba\module_classes;
 
 use Kokonotsuba\module_classes\moduleContext;
+use Kokonotsuba\renderers\widgetMenuPolicy;
 use Kokonotsuba\template\templateEngine;
 
 abstract class abstractModule {
+	private ?widgetMenuPolicy $menuPolicy = null;
+
 	public function __construct(
 		protected readonly moduleContext $moduleContext, 
 		protected readonly string $moduleName
@@ -163,6 +166,17 @@ abstract class abstractModule {
 
 		// return assembled widget
 		return $widget;
+	}
+
+	/**
+	 * The board's menu entry toggles.
+	 *
+	 * Entries handed to a widget hook are filtered by the renderers already. A module only needs
+	 * this when it renders entries itself - a <template> the front-end clones back in, say - since
+	 * nothing filters those on the way out.
+	 */
+	protected function getMenuPolicy(): widgetMenuPolicy {
+		return $this->menuPolicy ??= widgetMenuPolicy::fromBoard($this->moduleContext->board);
 	}
 
 	public function generateToggleWidget(string &$moduleHeader, string $jsName, string $templateHtml): void {

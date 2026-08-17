@@ -9,6 +9,7 @@ use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
 use Kokonotsuba\module_classes\traits\listeners\MassModerateListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\renderers\widgetMenuPolicy;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
@@ -128,7 +129,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$widgetArray[] = $this->buildWidgetEntry($url, 'deleteFile', 'Delete file', '');
 	}
 
-	private function generateDeleteAttachUrl(int $fileId, int $postUid): string {
+	private function generateDeleteAttachUrl(int|string $fileId, int|string $postUid): string {
 		// params
 		$params = [
 			'post_uid' => $postUid,
@@ -234,20 +235,38 @@ class moduleAdmin extends abstractModuleAdmin {
 		// or URLs).  '__POSTUID__' is a placeholder that JS replaces with the real post_uid.
 		if ($canViewDeleted) {
 			$baseUrl = $this->getModulePageURL([], false, true);
-			$tmplEntries = [
+			$moduleHeader .= '<template id="del-restore-tmpl">' . $this->widgetEntriesToHtml(widgetMenuPolicy::MENU_POST, [
 				$this->buildWidgetEntry($baseUrl, 'delete', 'Delete',       '', ['post_uid' => '__POSTUID__', 'action' => 'del']),
 				$this->buildWidgetEntry($baseUrl, 'mute',   'Delete & Mute', '', ['post_uid' => '__POSTUID__', 'action' => 'delmute']),
-			];
-			$tmplHtml = '';
-			foreach ($tmplEntries as $w) {
-				$paramAttrs = '';
-				foreach ($w['params'] as $k => $v) {
-					$paramAttrs .= ' data-param-' . htmlspecialchars($k) . '="' . htmlspecialchars((string)$v) . '"';
-				}
-				$tmplHtml .= '<a href="' . htmlspecialchars($w['href']) . '" data-action="' . htmlspecialchars($w['action']) . '" data-label="' . htmlspecialchars($w['label']) . '" data-subMenu="' . htmlspecialchars($w['subMenu']) . '"' . $paramAttrs . '></a>';
-			}
-			$moduleHeader .= '<template id="del-restore-tmpl">' . $tmplHtml . '</template>';
+			]) . '</template>';
+
+			// the same for a single file, which can be deleted again once it is restored.
+			// this entry carries its parameters in the URL, so the placeholders sit there.
+			$attachmentUrl = $this->generateDeleteAttachUrl('__FILEID__', '__POSTUID__');
+			$moduleHeader .= '<template id="del-file-restore-tmpl">' . $this->widgetEntriesToHtml(widgetMenuPolicy::MENU_ATTACHMENT, [
+				$this->buildWidgetEntry($attachmentUrl, 'deleteFile', 'Delete file', ''),
+			]) . '</template>';
 		}
+	}
+
+	/**
+	 * Serialise widget entries to the anchor markup the widget menus read, minus the ones this
+	 * board turns off - nothing else filters an entry the front-end clones back in.
+	 */
+	private function widgetEntriesToHtml(string $menu, array $entries): string {
+		$entries = $this->getMenuPolicy()->filter($menu, $entries);
+
+		$html = '';
+
+		foreach ($entries as $w) {
+			$paramAttrs = '';
+			foreach ($w['params'] as $k => $v) {
+				$paramAttrs .= ' data-param-' . htmlspecialchars($k) . '="' . htmlspecialchars((string)$v) . '"';
+			}
+			$html .= '<a href="' . htmlspecialchars($w['href']) . '" data-action="' . htmlspecialchars($w['action']) . '" data-label="' . htmlspecialchars($w['label']) . '" data-subMenu="' . htmlspecialchars($w['subMenu']) . '"' . $paramAttrs . '></a>';
+		}
+
+		return $html;
 	}
 
 	protected function handleModuleRequest(): void {

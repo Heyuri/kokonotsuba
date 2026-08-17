@@ -7,6 +7,7 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\module_classes\traits\IndicatorTrait;
+use Kokonotsuba\renderers\widgetMenuPolicy;
 
 use function Kokonotsuba\libraries\_T;
 
@@ -21,7 +22,8 @@ class deletedPostUIHooks {
 		private Closure $buildWidgetEntry,
 		private deletedPostUtility $deletedPostUtility,
 		private string $modulePageUrl,
-		private userRole $purgeRole
+		private userRole $purgeRole,
+		private widgetMenuPolicy $menuPolicy
 	) {}
 
 	public function runHooks(moduleEngine $moduleEngine, userRole $requiredRole): void {
@@ -44,7 +46,7 @@ class deletedPostUIHooks {
 					'label' => _T('admin_nav_deleted_posts'),
 					'url' => $this->modulePageUrl,
 					'title' => _T('admin_nav_deleted_posts_title'),
-					'group' => 'tools',
+					'group' => '',
 				];
 			}
 		);
@@ -220,8 +222,13 @@ class deletedPostUIHooks {
 	/**
 	 * Serialise an array of widget entry arrays (as returned by buildWidgetEntry) to
 	 * anchor HTML, matching the format used by postWidget.php's buildWidgetMenuHtml.
+	 *
+	 * Entries disabled for this board are dropped here: the renderers filter the menus they build,
+	 * but nothing filters a <template> the front-end clones back in.
 	 */
 	private function widgetEntriesToHtml(array $entries): string {
+		$entries = $this->menuPolicy->filter(widgetMenuPolicy::MENU_POST, $entries);
+
 		$html = '';
 		foreach ($entries as $w) {
 			$href    = htmlspecialchars($w['href'] ?? '');
@@ -309,12 +316,19 @@ class deletedPostUIHooks {
 			self::DELETION_SUBMENU
 		);
 
+		// fileId and postUid are unused by the restore itself - they're what the JS needs to put the
+		// file's delete entry back once it is no longer deleted
 		$widgetArray[] = ($this->buildWidgetEntry)(
 			$this->modulePageUrl,
 			'restoreDeletedFile',
 			'Restore file',
 			self::DELETION_SUBMENU,
-			['deletedPostId' => $deletedPostId, 'action' => 'restoreAttachment']
+			[
+				'deletedPostId' => $deletedPostId,
+				'action' => 'restoreAttachment',
+				'fileId' => $attachment['fileId'],
+				'postUid' => $attachment['postUid'],
+			]
 		);
 	}
 

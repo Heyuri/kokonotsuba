@@ -21,4 +21,8 @@ return [
 	'NOTIFICATION_WINDOW_MINUTES' => intField('config_label_modules.report.NOTIFICATION_WINDOW_MINUTES', 60, 'config_desc_modules.report.NOTIFICATION_WINDOW_MINUTES', min: 1),
 	'NOTIFICATION_POLL_SECONDS' => intField('config_label_modules.report.NOTIFICATION_POLL_SECONDS', 60, 'config_desc_modules.report.NOTIFICATION_POLL_SECONDS', min: 10),
 	'REPORT_POST_TEMPLATE' => templateField('config_label_modules.report.REPORT_POST_TEMPLATE', 'kokoimg', 'config_desc_modules.report.REPORT_POST_TEMPLATE'),
+
+	// menu entries this module adds, see widgetMenuPolicy
+	'PostMenu.viewReports' => boolField('config_label_modules.report.PostMenu.viewReports', true),
+	'PostMenu.reportPost'  => boolField('config_label_modules.report.PostMenu.reportPost', true),
 ];

@@ -106,7 +106,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->buildWidgetEntry(...),
 			$deletedPostUtility,
 			$this->modulePageUrl,
-			$this->requiredRoleActionForModAll
+			$this->requiredRoleActionForModAll,
+			$this->getMenuPolicy()
 		);
 
 		// run hooks

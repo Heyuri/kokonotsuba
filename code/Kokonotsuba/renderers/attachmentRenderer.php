@@ -21,7 +21,8 @@ class attachmentRenderer {
 	public function __construct(
 		private board $board,
 		private moduleEngine $moduleEngine,
-		private templateEngine $templateEngine
+		private templateEngine $templateEngine,
+		private widgetMenuPolicy $menuPolicy
 	) {}
 
 	public function generateAttachmentHtml(
@@ -104,6 +105,9 @@ class attachmentRenderer {
 		if($adminMode) {
 			$this->moduleEngine->dispatch('ModerateAttachmentWidget', [&$attachmentWidgets, &$fileData]);
 		}
+
+		// drop the entries this board turns off
+		$attachmentWidgets = $this->menuPolicy->filter(widgetMenuPolicy::MENU_ATTACHMENT, $attachmentWidgets);
 
 		$attachmentButtons = $this->buildAttachmentWidgetHtml($attachmentWidgets);
 

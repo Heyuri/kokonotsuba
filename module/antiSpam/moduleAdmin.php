@@ -44,7 +44,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'filterPost',
 			'Filter post'
 		);
-		$this->registerLinksAboveBarHook(_T('admin_nav_anti_spam_title'), $this->moduleUrl, _T('admin_nav_anti_spam'), 'bans');
+		$this->registerLinksAboveBarHook(_T('admin_nav_anti_spam_title'), $this->moduleUrl, _T('admin_nav_anti_spam'));
 
 		// set antispam service instance
 		$this->antiSpamService = getAntiSpamService();
