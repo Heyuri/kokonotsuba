@@ -464,6 +464,52 @@ class deletedPostsService {
 
 	}
 
+	/**
+	 * Permanently purge a single attachment, however it was deleted.
+	 *
+	 * A file deleted on its own has a deletion record, which goes with it. A file deleted with its
+	 * whole post has none, so only the file goes and the post-level record stays behind.
+	 *
+	 * @param int $fileId File row ID.
+	 * @return void
+	 * @throws BoardException If the attachment does not exist.
+	 */
+	public function purgeAttachmentByFileId(int $fileId): void {
+		// run transaction
+		$this->inTransaction(function() use($fileId) {
+			// get the attachment being purged
+			$attachment = $this->fileService->getAttachment($fileId);
+
+			// nothing to purge
+			if(!$attachment) {
+				throw new BoardException(_T('attachment_not_found'));
+			}
+
+			// the file's own deletion record, if it has one
+			$fileOnlyEntryId = $this->deletedPostsRepository->getOpenEntryIdByFileId($fileId);
+
+			// there's nothing left to restore, so the record goes too
+			if($fileOnlyEntryId !== false) {
+				$this->deletedPostsRepository->removeRowById($fileOnlyEntryId);
+			}
+
+			// keep the row flagged so it still renders as a deleted file
+			$this->fileService->markAttachmentsAsDeleted([$fileId]);
+
+			// destroy the file and its thumbnail
+			$this->fileService->purgeAttachmentsFromPurgatory([$attachment]);
+
+			// post number for the log line
+			$postNumber = (int)$this->postRepository->resolvePostNumberFromUID($attachment->getPostUid());
+
+			// generate the logging string for the file purge
+			$purgeActionString = $this->generateFilePurgeLoggingString($postNumber);
+
+			// Log the purge action to the logging table
+			$this->logAction($purgeActionString, $attachment->getBoardUid());
+		});
+	}
+
 	private function generateFilePurgeLoggingString(int $no): string {
 		// generate file purge action for logger
 		$actionString = "Purged attachment from post No.$no from system";

@@ -104,8 +104,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$deletedPostUIHooks = new deletedPostUIHooks(
 			$this->includeScript(...),
 			$this->buildWidgetEntry(...),
-			$deletedPostUtility, 
-			$this->modulePageUrl
+			$deletedPostUtility,
+			$this->modulePageUrl,
+			$this->requiredRoleActionForModAll
 		);
 
 		// run hooks

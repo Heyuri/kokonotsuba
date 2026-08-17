@@ -360,10 +360,11 @@ class attachmentRenderer {
 		$html = '';
 
 		foreach ($widgets as $w) {
-			$href   = $w['href'] ?? '';
-			$action = $w['action'] ?? '';
-			$label  = $w['label'] ?? '';
-			$params = $w['params'] ?? [];
+			$href    = $w['href'] ?? '';
+			$action  = $w['action'] ?? '';
+			$label   = $w['label'] ?? '';
+			$subMenu = $w['subMenu'] ?? '';
+			$params  = $w['params'] ?? [];
 
 			$targetAttr = '';
 			if (isset($params['target'])) {
@@ -379,6 +380,7 @@ class attachmentRenderer {
 			$html .= '<a href="' . htmlspecialchars($href) . '"'
 				. ' data-action="' . htmlspecialchars($action) . '"'
 				. ' data-label="' . htmlspecialchars($label) . '"'
+				. ' data-subMenu="' . htmlspecialchars($subMenu) . '"'
 				. $targetAttr
 				. $paramAttrs
 				. '>' . htmlspecialchars($label) . '</a>';

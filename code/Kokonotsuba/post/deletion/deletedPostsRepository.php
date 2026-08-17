@@ -976,6 +976,21 @@ class deletedPostsRepository extends baseRepository {
 	}
 
 	/**
+	 * Fetch the open (not yet restored) deletion record for the given file ID.
+	 *
+	 * @param int $fileId File row ID.
+	 * @return int|false Deletion record ID, or false if the file has no open record of its own.
+	 */
+	public function getOpenEntryIdByFileId(int $fileId): int|false {
+		$id = $this->queryValue(
+			"SELECT id FROM {$this->table} WHERE file_id = :file_id AND open_flag = 1 ORDER BY id DESC LIMIT 1",
+			[':file_id' => $fileId]
+		);
+
+		return $id !== false ? (int)$id : false;
+	}
+
+	/**
 	 * Fetch the most-recent deletion row for the given post UID.
 	 *
 	 * @param int $postUid Post UID.

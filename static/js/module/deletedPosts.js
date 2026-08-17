@@ -50,6 +50,25 @@
 		return formData;
 	}
 
+	// The .attachmentContainer an attachment menu was opened from
+	function attachmentElOf(ctx) {
+		return ctx.container || (ctx.bar && ctx.bar.closest('.attachmentContainer'));
+	}
+
+	// Drop widget entries from an attachment's hidden data container
+	function removeAttachmentWidgetActions(attachmentEl, actions) {
+		if (!attachmentEl) return;
+
+		var data = attachmentEl.querySelector('.attachmentWidgetData');
+		if (!data) return;
+
+		actions.forEach(function (action) {
+			data.querySelectorAll('a[data-action="' + action + '"]').forEach(function (a) {
+				a.remove();
+			});
+		});
+	}
+
 	function hideDeletedPost(postContainer) {
 		if (postContainer) {
 			// also remove a trailing threadSeparator <hr> if it follows this container
@@ -198,6 +217,54 @@
 				}, ctx.params);
 			});
 		}
+	}
+
+	// The attachment menu's Deletion submenu
+	if (window.attachmentWidget && typeof window.attachmentWidget.registerActionHandler === 'function') {
+		// 'View entry' has no handler on purpose - it's a plain link, so it can be opened in a new tab
+
+		window.attachmentWidget.registerActionHandler('restoreDeletedFile', function (ctx) {
+			var menuItem = ctx && ctx.menuItem;
+			if (!menuItem || !menuItem.href) return;
+
+			var attachmentEl = attachmentElOf(ctx);
+			var indicator = attachmentEl ? attachmentEl.querySelector('.indicator-fileDeleted') : null;
+
+			// Optimistic UI: undelete the file, put it back if the request fails
+			if (attachmentEl) attachmentEl.classList.remove('deletedFile');
+			if (indicator) indicator.classList.add('indicatorHidden');
+
+			sendModuleAction(menuItem.href, {
+				revertUI: function () {
+					if (attachmentEl) attachmentEl.classList.add('deletedFile');
+					if (indicator) indicator.classList.remove('indicatorHidden');
+				},
+				successMessage: 'File restored.',
+				errorMessage: 'Failed to restore the file.',
+				onSuccess: function () {
+					removeAttachmentWidgetActions(attachmentEl, ['restoreDeletedFile', 'viewDeletedAttachment', 'purgeDeletedFile']);
+				}
+			}, ctx.params);
+		});
+
+		window.attachmentWidget.registerActionHandler('purgeDeletedFile', function (ctx) {
+			var menuItem = ctx && ctx.menuItem;
+			if (!menuItem || !menuItem.href) return;
+
+			var attachmentEl = attachmentElOf(ctx);
+
+			sendModuleAction(menuItem.href, {
+				successMessage: 'File purged.',
+				errorMessage: 'Failed to purge the file.',
+				onSuccess: function () {
+					// the file is gone, so drop the entries that act on it
+					removeAttachmentWidgetActions(attachmentEl, ['purgeDeletedFile', 'restoreDeletedFile', 'viewDeletedAttachment']);
+
+					if (attachmentEl) attachmentEl.classList.add('deletedFile');
+					showDeletionIndicator(ctx.post || attachmentEl, 'file', attachmentEl);
+				}
+			}, ctx.params);
+		});
 	}
 
 	// Augment the post widget menu: when a post has been deleted live (postDeletion.js sets

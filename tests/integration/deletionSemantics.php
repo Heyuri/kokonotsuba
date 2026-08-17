@@ -31,10 +31,14 @@ if (PHP_SAPI !== 'cli') {
 	exit("This script must be run from the command line.\n");
 }
 
+require_once __DIR__ . '/../../autoload.php';
 require_once __DIR__ . '/../../code/Kokonotsuba/libraries/lib_query.php';
+
+use Kokonotsuba\post\Post;
 
 use function Kokonotsuba\libraries\excludeDeletedThreadsCondition;
 use function Kokonotsuba\libraries\getBasePostQuery;
+use function Kokonotsuba\libraries\mergeMultiplePostRows;
 use function Kokonotsuba\libraries\objectivePositionSubquery;
 use function Kokonotsuba\libraries\openDeletionExistsCondition;
 use function Kokonotsuba\libraries\openFileDeletionExistsCondition;
@@ -225,11 +229,17 @@ function resetSchema(PDO $pdo): void {
  *   8  deleted by proxy              hidden
  *   9  OP of T2, deleted             hidden   (T2 itself must disappear)
  *  10  OP of T3, only file deleted   visible  (T3 must survive)
+ *
+ * Thread 'T4' covers posts carrying several files at once:
+ *
+ *  11  OP of T4, no files            visible
+ *  12  three files, middle one deleted on its own
+ *  13  two files, whole post deleted
  */
 function loadFixtures(PDO $pdo): void {
 	$pdo->exec("INSERT INTO `" . ACCOUNTS . "` (id, username) VALUES (1, 'mod')");
 
-	foreach ([['T1', 1, 1], ['T2', 9, 9], ['T3', 10, 10]] as [$uid, $no, $opUid]) {
+	foreach ([['T1', 1, 1], ['T2', 9, 9], ['T3', 10, 10], ['T4', 11, 11]] as [$uid, $no, $opUid]) {
 		$pdo->exec("INSERT INTO `" . THREADS . "` (thread_uid, post_op_number, post_op_post_uid, boardUID)
 			VALUES ('{$uid}', {$no}, {$opUid}, 1)");
 	}
@@ -242,14 +252,22 @@ function loadFixtures(PDO $pdo): void {
 		[1, 1, 'T1', 1], [2, 2, 'T1', 0], [3, 3, 'T1', 0], [4, 4, 'T1', 0],
 		[5, 5, 'T1', 0], [6, 6, 'T1', 0], [7, 7, 'T1', 0], [8, 8, 'T1', 0],
 		[9, 9, 'T2', 1], [10, 10, 'T3', 1],
+		[11, 11, 'T4', 1], [12, 12, 'T4', 0], [13, 13, 'T4', 0],
 	] as $row) {
 		$post->execute($row);
 	}
 
-	// One attachment per post that needs one.
-	$file = $pdo->prepare("INSERT INTO `" . FILES . "` (id, post_uid, file_name, stored_filename, file_ext, file_md5)
-		VALUES (?, ?, 'a.png', 's.png', 'png', 'd41d8cd98f00b204e9800998ecf8427e')");
-	foreach ([[60, 6], [70, 7], [100, 10]] as $row) {
+	// One attachment per post that needs one, except posts 12 and 13 which carry several.
+	// is_deleted mirrors what moveFilesToPurgatory() sets when the file goes down.
+	$file = $pdo->prepare("INSERT INTO `" . FILES . "` (id, post_uid, file_name, stored_filename, file_ext, file_md5, is_deleted, is_hidden)
+		VALUES (?, ?, 'a.png', 's.png', 'png', 'd41d8cd98f00b204e9800998ecf8427e', ?, ?)");
+	foreach ([
+		[60, 6, 1, 1], [70, 7, 1, 1], [100, 10, 1, 1],
+		// post 12: only the middle file is deleted
+		[120, 12, 0, 0], [121, 12, 1, 1], [122, 12, 0, 0],
+		// post 13: the post went down, so both of its files went with it
+		[130, 13, 1, 1], [131, 13, 1, 1],
+	] as $row) {
 		$file->execute($row);
 	}
 
@@ -282,6 +300,12 @@ function loadFixtures(PDO $pdo): void {
 	// 9 / 10: an OP deleted outright, and an OP that only lost its file.
 	$del->execute([9, 0, 0, null, null, null]);
 	$del->execute([10, 1, 0, null, null, 100]);
+
+	// 12: one of three files deleted on its own — no post-level row.
+	$del->execute([12, 1, 0, null, null, 121]);
+
+	// 13: post-level deletion covering both files, with no per-file rows.
+	$del->execute([13, 0, 0, null, null, null]);
 }
 
 // ---------------------------------------------------------------------------
@@ -299,6 +323,27 @@ function visiblePostUids(PDO $pdo, string $threadUid, bool $viewDeleted = false)
 	$uids = array_map('intval', array_column($stmt->fetchAll(), 'post_uid'));
 
 	return array_values(array_unique($uids));
+}
+
+/**
+ * Posts of a thread as the renderers see them: merged into Post objects with their attachments and
+ * deletion metadata attached, keyed by post uid.
+ *
+ * @return array<int, Post>
+ */
+function mergedPosts(PDO $pdo, string $threadUid): array {
+	$sql = getBasePostQuery(POSTS, DELETED, FILES, THREADS, SOUDANE, NOTES, ACCOUNTS, true, false);
+	$sql .= ' WHERE p.thread_uid = :thread_uid';
+
+	$stmt = $pdo->prepare($sql);
+	$stmt->execute([':thread_uid' => $threadUid]);
+
+	$posts = [];
+	foreach (mergeMultiplePostRows($stmt->fetchAll()) ?: [] as $post) {
+		$posts[$post->getUid()] = $post;
+	}
+
+	return $posts;
 }
 
 /** Thread uids that survive the deleted-thread filter. */
@@ -395,6 +440,54 @@ testCase('an attachment-level deletion is reported separately from a post-level 
 	assertSameValue([1, 0], $state[3], 'post 3 is deleted outright');
 	assertSameValue([1, 1], $state[6], 'post 6 is deleted and has a deleted attachment');
 	assertSameValue([0, 1], $state[7], 'post 7 only lost its attachment');
+});
+
+echo "\n\033[1mposts with several files\033[0m\n";
+
+testCase('each file carries its own deletion state', function () use ($pdo) {
+	$post = mergedPosts($pdo, 'T4')[12];
+	$attachments = $post->getAttachments();
+
+	assertSameValue([120, 121, 122], array_keys($attachments), 'all three files come back');
+
+	assertSameValue(0, (int) $attachments[120]['isDeleted'], 'first file is untouched');
+	assertSameValue(1, (int) $attachments[121]['isDeleted'], 'second file is the deleted one');
+	assertSameValue(0, (int) $attachments[122]['isDeleted'], 'third file is untouched');
+
+	// the deletion entry belongs to file 121 alone — this is what decides which attachment menu
+	// offers View entry / Restore file
+	assertSameValue(null, $attachments[120]['deletedPostId'], 'no entry on the first file');
+	assertSameValue(null, $attachments[122]['deletedPostId'], 'no entry on the third file');
+
+	if (!$attachments[121]['deletedPostId']) {
+		throw new RuntimeException('the deleted file should name its deletion entry');
+	}
+});
+
+testCase('a file-only deletion is not a deleted post', function () use ($pdo) {
+	// canRenderButton() reads this: the post menu must not offer a Deletion submenu here, or it
+	// would act on the file's entry as though the whole post were deleted
+	$post = mergedPosts($pdo, 'T4')[12];
+
+	assertSameValue(1, $post->getOpenFlag(), 'the joined row is an open deletion');
+	assertSameValue(true, $post->isFileOnlyDeleted(), 'but a file-only one');
+	assertSameValue(false, $post->isDeleted(), 'so the post itself is not deleted');
+});
+
+testCase('a post-level deletion covers every file without naming one', function () use ($pdo) {
+	$post = mergedPosts($pdo, 'T4')[13];
+	$attachments = $post->getAttachments();
+
+	assertSameValue(true, $post->isDeleted(), 'the post is deleted outright');
+	assertSameValue(false, $post->isFileOnlyDeleted(), 'not a file-only deletion');
+	assertSameValue([130, 131], array_keys($attachments), 'both files come back');
+
+	foreach ($attachments as $fileId => $attachment) {
+		assertSameValue(1, (int) $attachment['isDeleted'], "file {$fileId} went down with the post");
+
+		// no per-file entry exists, so purging one is addressed by file id instead
+		assertSameValue(null, $attachment['deletedPostId'], "file {$fileId} has no entry of its own");
+	}
 });
 
 echo "\n\033[1mthread visibility\033[0m\n";
