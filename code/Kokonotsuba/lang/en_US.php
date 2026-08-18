@@ -499,6 +499,7 @@ $language['staffnav_user'] = '%1$s (%2$s)';
 $language['staffnav_group_bans'] = 'Bans & spam';
 $language['staffnav_group_content'] = 'Content';
 $language['staffnav_group_files'] = 'File bans';
+$language['staffnav_group_rebuilding'] = 'Rebuilding';
 $language['staffnav_group_tools'] = 'Tools';
 
 // staffAlerts module
