@@ -9,10 +9,12 @@ use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
 use Kokonotsuba\module_classes\traits\listeners\MassModerateListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\renderers\widgetMenuPolicy;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\attachmentFileExists;
+use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\generateModerateForm;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
@@ -104,6 +106,15 @@ class moduleAdmin extends abstractModuleAdmin {
 			'confirm' => _T('mass_moderate_confirm'),
 			'priority' => 90,
 		]);
+
+		// takes the files off the selection and leaves the posts themselves standing
+		$tools[] = $this->buildMassTool('delfiles', 'Delete files', [
+			'group' => 'Deletion',
+			'effect' => 'deleteFiles',
+			'requires' => 'files',
+			'confirm' => _T('mass_moderate_confirm'),
+			'priority' => 80,
+		]);
 	}
 
 	private function canRenderButton(Post $post): bool {
@@ -128,7 +139,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$widgetArray[] = $this->buildWidgetEntry($url, 'deleteFile', 'Delete file', '');
 	}
 
-	private function generateDeleteAttachUrl(int $fileId, int $postUid): string {
+	private function generateDeleteAttachUrl(int|string $fileId, int|string $postUid): string {
 		// params
 		$params = [
 			'post_uid' => $postUid,
@@ -234,20 +245,38 @@ class moduleAdmin extends abstractModuleAdmin {
 		// or URLs).  '__POSTUID__' is a placeholder that JS replaces with the real post_uid.
 		if ($canViewDeleted) {
 			$baseUrl = $this->getModulePageURL([], false, true);
-			$tmplEntries = [
+			$moduleHeader .= '<template id="del-restore-tmpl">' . $this->widgetEntriesToHtml(widgetMenuPolicy::MENU_POST, [
 				$this->buildWidgetEntry($baseUrl, 'delete', 'Delete',       '', ['post_uid' => '__POSTUID__', 'action' => 'del']),
 				$this->buildWidgetEntry($baseUrl, 'mute',   'Delete & Mute', '', ['post_uid' => '__POSTUID__', 'action' => 'delmute']),
-			];
-			$tmplHtml = '';
-			foreach ($tmplEntries as $w) {
-				$paramAttrs = '';
-				foreach ($w['params'] as $k => $v) {
-					$paramAttrs .= ' data-param-' . htmlspecialchars($k) . '="' . htmlspecialchars((string)$v) . '"';
-				}
-				$tmplHtml .= '<a href="' . htmlspecialchars($w['href']) . '" data-action="' . htmlspecialchars($w['action']) . '" data-label="' . htmlspecialchars($w['label']) . '" data-subMenu="' . htmlspecialchars($w['subMenu']) . '"' . $paramAttrs . '></a>';
-			}
-			$moduleHeader .= '<template id="del-restore-tmpl">' . $tmplHtml . '</template>';
+			]) . '</template>';
+
+			// the same for a single file, which can be deleted again once it is restored.
+			// this entry carries its parameters in the URL, so the placeholders sit there.
+			$attachmentUrl = $this->generateDeleteAttachUrl('__FILEID__', '__POSTUID__');
+			$moduleHeader .= '<template id="del-file-restore-tmpl">' . $this->widgetEntriesToHtml(widgetMenuPolicy::MENU_ATTACHMENT, [
+				$this->buildWidgetEntry($attachmentUrl, 'deleteFile', 'Delete file', ''),
+			]) . '</template>';
 		}
+	}
+
+	/**
+	 * Serialise widget entries to the anchor markup the widget menus read, minus the ones this
+	 * board turns off - nothing else filters an entry the front-end clones back in.
+	 */
+	private function widgetEntriesToHtml(string $menu, array $entries): string {
+		$entries = $this->getMenuPolicy()->filter($menu, $entries);
+
+		$html = '';
+
+		foreach ($entries as $w) {
+			$paramAttrs = '';
+			foreach ($w['params'] as $k => $v) {
+				$paramAttrs .= ' data-param-' . htmlspecialchars($k) . '="' . htmlspecialchars((string)$v) . '"';
+			}
+			$html .= '<a href="' . htmlspecialchars($w['href']) . '" data-action="' . htmlspecialchars($w['action']) . '" data-label="' . htmlspecialchars($w['label']) . '" data-subMenu="' . htmlspecialchars($w['subMenu']) . '"' . $paramAttrs . '></a>';
+		}
+
+		return $html;
 	}
 
 	protected function handleModuleRequest(): void {
@@ -266,6 +295,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		match ($action) {
 			'del', 'delete' => $this->handlePostDeletion($postUids, false),
 			'delmute', 'mute' => $this->handlePostDeletion($postUids, true),
+			'delfiles' => $this->handleSelectionFileDeletion($postUids),
 			default => throw new BoardException('ERROR: Invalid action.'),
 		};
 	}
@@ -391,6 +421,87 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
+	/**
+	 * Take the files off every selected post, leaving the posts themselves standing.
+	 *
+	 * The same shape as a mass post deletion: one read, one file-only deletion pass, one rebuild
+	 * per board the selection reached into. Attachments that are already gone are skipped rather
+	 * than failing the whole selection.
+	 */
+	private function handleSelectionFileDeletion(array $postUids): void {
+		$posts = $this->fetchRequestedPosts($postUids);
+
+		$attachments = array_values(array_filter(
+			getAttachmentsFromPosts($posts),
+			fn(array $attachment) => $this->canRenderAttachmentButton($attachment)
+		));
+
+		if (!$attachments) {
+			throw new BoardException('No files to delete!');
+		}
+
+		// only the posts that actually lost a file need rebuilding or logging
+		$affectedUids = array_values(array_unique(array_map(fn(array $a) => (int)$a['postUid'], $attachments)));
+		$targets = array_values(array_filter($posts, fn(Post $post) => in_array($post->getUid(), $affectedUids, true)));
+
+		$this->moduleContext->transactionManager->run(function () use ($targets, $attachments): void {
+			$this->moduleContext->deletedPostsService->deleteFilesFromPosts($attachments, $this->moduleContext->currentUserId);
+			$this->logFileDeletions($targets);
+		});
+
+		if ($this->moduleContext->request->isAjax()) {
+			sendAjaxAndDetach([
+				'success' => true,
+				'results' => $this->buildFileDeletionResults($attachments),
+			]);
+
+			$this->rebuildAfterDeletion($targets);
+			exit;
+		}
+
+		$this->rebuildAfterDeletion($targets);
+
+		redirect($this->moduleContext->request->getReferer());
+	}
+
+	/**
+	 * What the front-end needs per post: the files it just lost, so each attachment's menu can be
+	 * rebuilt without a reload.
+	 *
+	 * @return array<int, array{files: array<int, array{file_id: int, deleted_link: string, deleted_post_id: int}>}>
+	 */
+	private function buildFileDeletionResults(array $attachments): array {
+		$fileIds = array_map(fn(array $a) => (int)$a['fileId'], $attachments);
+		$deletedPostIds = $this->moduleContext->deletedPostsService->getDeletedPostIdsByFileIds($fileIds);
+
+		$results = [];
+
+		foreach ($attachments as $attachment) {
+			$fileId = (int)$attachment['fileId'];
+			$deletedPostId = $deletedPostIds[$fileId] ?? 0;
+
+			$results[(int)$attachment['postUid']]['files'][] = [
+				'file_id' => $fileId,
+				'deleted_link' => $this->getDeletionViewUrl($deletedPostId),
+				'deleted_post_id' => $deletedPostId,
+			];
+		}
+
+		return $results;
+	}
+
+	/** One log line per board the file deletion touched. */
+	private function logFileDeletions(array $posts): void {
+		$numbersByBoard = [];
+		foreach ($posts as $post) {
+			$numbersByBoard[$post->getBoardUID()][] = 'No.' . $post->getNumber();
+		}
+
+		foreach ($numbersByBoard as $boardUid => $numbers) {
+			$this->logAction('Deleted file for post ' . implode(', ', $numbers), (int)$boardUid);
+		}
+	}
+
 	private function handleAttachmentDeletion(): void {
 		$post = $this->fetchValidatedPost($this->moduleContext->request->getParameter('post_uid'));
 
@@ -416,14 +527,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		});
 
 		if ($this->moduleContext->request->isAjax()) {
-			$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
-
+			// the file id rides along too: the front-end addresses the file itself for the
+			// deletion entries it adds to that attachment's menu
 			sendAjaxAndDetach([
 				'success' => true,
 				'is_op' => $post->isOp(),
-				'deleted_link' => $this->getDeletionViewUrl($deletedPost->getDeletedPostId()),
-				'deleted_post_id' => $deletedPost->getDeletedPostId()
-			]);
+			] + $this->getFileDeletionResult($fileId));
 
 			$this->rebuildBoardForPost($board, $post);
 			exit;
@@ -434,26 +543,4 @@ class moduleAdmin extends abstractModuleAdmin {
 		redirect($this->moduleContext->request->getReferer());
 	}
 
-	private function getDeletionViewUrl(int $deletedPostId): string {
-		// base url
-		$baseUrl = $this->moduleContext->request->getCurrentUrlNoQuery();
-
-		// parameters for the link
-		$urlParameters = [
-			'pageName' => 'viewMore',
-			'deletedPostId' => $deletedPostId,
-			'moduleMode' => 'admin',
-			'mode' => 'module',
-			'load' => 'deletedPosts'
-		];
-
-		// build the query parameters
-		$queryParameters = http_build_query($urlParameters);
-
-		// construct the link
-		$viewUrl = $baseUrl . '?' . $queryParameters;
-
-		// return the url
-		return $viewUrl;
-	}
 }

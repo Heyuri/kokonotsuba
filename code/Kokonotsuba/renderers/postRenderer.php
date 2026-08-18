@@ -11,6 +11,7 @@ use Kokonotsuba\renderers\postDataPreparer;
 use Kokonotsuba\renderers\postElementGenerator;
 use Kokonotsuba\renderers\postTemplateBinder;
 use Kokonotsuba\renderers\postWidget;
+use Kokonotsuba\renderers\widgetMenuPolicy;
 use Kokonotsuba\interfaces\IBoard;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\post\Post;
@@ -42,8 +43,11 @@ class postRenderer {
 			// initialize post data preperation class
 			$this->postDataPreparer = new postDataPreparer($board);
 
+			// which menu entries this board shows, shared by both menus
+			$menuPolicy = widgetMenuPolicy::fromBoard($board);
+
 			// initialize attachment rendering class
-			$this->attachmentRenderer = new attachmentRenderer($board, $moduleEngine, $templateEngine);
+			$this->attachmentRenderer = new attachmentRenderer($board, $moduleEngine, $templateEngine, $menuPolicy);
 
 			// intialize post template binding class
 			$this->postTemplateBinder = new postTemplateBinder($board, $config);
@@ -52,7 +56,7 @@ class postRenderer {
 			$this->postElementGenerator = new postElementGenerator($board);
 			
 			// initialize post widget generator class
-			$this->postWidget = new postWidget($moduleEngine);
+			$this->postWidget = new postWidget($moduleEngine, $menuPolicy);
 		}
 
 	public function setQuoteLinks(array $quoteLinks): void {

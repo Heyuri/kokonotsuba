@@ -54,7 +54,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->requiredHeight = $this->getModuleConfig('FULLBANNER_REQUIRED_HEIGHT', 60);
 		$this->maxFileSize = $this->getModuleConfig('FULLBANNER_MAX_FILE_SIZE', 204800);
 
-		$this->registerLinksAboveBarHook('Manage full banners', $this->modulePage, 'Full banners', 'content');
+		$this->registerLinksAboveBarHook('Manage full banners', $this->modulePage, 'Full banners');
 		$this->listenStaffAlertsProtected('onCollectStaffAlerts');
 	}
 

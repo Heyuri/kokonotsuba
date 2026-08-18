@@ -39,7 +39,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	public function initialize(): void {
 		$this->modulePageUrl = $this->getModulePageURL([], false);
 
-		$this->registerLinksAboveBarHook(_T('admin_nav_rebuild_multiple_title'), $this->modulePageUrl, _T('admin_nav_rebuild_multiple'), 'tools');
+		$this->registerLinksAboveBarHook(_T('admin_nav_rebuild_multiple_title'), $this->modulePageUrl, _T('admin_nav_rebuild_multiple'), 'rebuilding');
 		$this->registerScript('rebuild.js');
 	}
 

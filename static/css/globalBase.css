@@ -242,8 +242,38 @@
 	text-align: left;
 }
 
-.deletedPost, .deletedFile { 
+.deletedPost, .deletedFile {
 	opacity: 0.75;
+}
+
+/* The deletion entry the [View entry] widget opens in a window */
+.dpEntryWindow {
+	text-align: left;
+	padding: 4px;
+}
+
+.dpEntryWindow .deletedPostTable td {
+	padding: 1px 4px;
+	vertical-align: top;
+}
+
+.dpEntryWindow .dpEntryActions {
+	margin: 4px 0;
+}
+
+/* the post is a copy of the one on the page, so keep it from stretching the window */
+.dpEntryWindow .dpEntryPost {
+	overflow: auto;
+	max-height: 40vh;
+}
+
+.dpEntryWindow .dpEntryPost .post,
+.dpEntryWindow .dpEntryPost .thread {
+	opacity: 1;
+}
+
+.dpEntryFooter {
+	font-size: var(--font-size-small);
 }
 
 .managepostsCommentWrapper {
@@ -661,14 +691,20 @@
 
 /************************ Mass moderation ******************************/
 
-/* Sits above the password row inside #userdelete, so it rides the same bottom-right corner. */
-.massModerateBar {
-	text-align: right;
-	user-select: none;
-}
-
 .massModerateHidden {
 	display: none;
+}
+
+/* the same control docked in the staff alerts panel, where the bar isn't used */
+.massModerateButton {
+	display: block;
+	width: 100%;
+	cursor: pointer;
+}
+
+.massModerateButton[disabled] {
+	cursor: default;
+	opacity: 0.5;
 }
 
 .massModerateFloating {

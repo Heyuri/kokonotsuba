@@ -71,6 +71,15 @@ class LegacyConfigConverterTest extends TestCase {
 		$this->assertNull(legacyConfigConverter::moduleDotpathFor('A_DEAD_MODULE_SETTING'));
 	}
 
+	/** Menu entry toggles are new, so no legacy value can be migrated into one. */
+	public function testMenuEntryTogglesAreNotLegacySettings(): void {
+		$this->assertNull(legacyConfigConverter::moduleDotpathFor('delete'));
+		$this->assertNull(legacyConfigConverter::moduleDotpathFor('BanFile'));
+
+		$this->assertTrue(legacyConfigConverter::isNonLegacyPath('modules.adminDel.PostMenu.delete'));
+		$this->assertFalse(legacyConfigConverter::isNonLegacyPath('modules.antiFlood.RENZOKU3'));
+	}
+
 	/**
 	 * Matching legacy module settings by their bare name only works because no two modules declare
 	 * the same one. If that ever stops being true the mapping becomes ambiguous - fail loudly here
@@ -80,7 +89,10 @@ class LegacyConfigConverterTest extends TestCase {
 		$seen = [];
 
 		foreach (array_keys(configSchema::getAllFields()) as $dotpath) {
-			if (!str_starts_with((string)$dotpath, 'modules.')) {
+			// menu entry toggles are keyed by action name, are shared between modules by design,
+			// and were never in the legacy bag - they are excluded from the mapping
+			if (!str_starts_with((string)$dotpath, 'modules.')
+				|| legacyConfigConverter::isNonLegacyPath((string)$dotpath)) {
 				continue;
 			}
 

@@ -220,11 +220,9 @@ trait PostControlHooksTrait {
 	}
 
 	/**
-	 * Generate a URL linking to the deleted posts viewer for a given file ID.
+	 * Generate a URL linking to the deleted posts viewer for a given deletion record.
 	 */
-	protected function getDeletedLinkForFile(int $fileId): string {
-		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
-		$deletedPostId = $deletedPost['deleted_post_id'];
+	protected function getDeletionViewUrl(int $deletedPostId): string {
 		$baseUrl = $this->moduleContext->request->getCurrentUrlNoQuery();
 
 		$urlParameters = [
@@ -236,5 +234,22 @@ trait PostControlHooksTrait {
 		];
 
 		return $baseUrl . '?' . http_build_query($urlParameters);
+	}
+
+	/**
+	 * What the front-end needs after a file is deleted: where the deletion entry is, which record
+	 * it is, and which file it was. The menu rebuilds this file's deletion entries from these.
+	 *
+	 * @return array{deleted_link: string, deleted_post_id: int, file_id: int}
+	 */
+	protected function getFileDeletionResult(int $fileId): array {
+		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
+		$deletedPostId = $deletedPost ? $deletedPost->getDeletedPostId() : 0;
+
+		return [
+			'deleted_link' => $this->getDeletionViewUrl($deletedPostId),
+			'deleted_post_id' => $deletedPostId,
+			'file_id' => $fileId,
+		];
 	}
 }

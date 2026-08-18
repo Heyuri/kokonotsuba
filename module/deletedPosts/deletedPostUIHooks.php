@@ -7,16 +7,24 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\module_classes\traits\IndicatorTrait;
+use Kokonotsuba\renderers\widgetMenuPolicy;
 
 use function Kokonotsuba\libraries\_T;
 
 class deletedPostUIHooks {
 	use IndicatorTrait;
+
+	// submenu the deletion entries are grouped under, in both the post and attachment menus
+	private const DELETION_SUBMENU = 'Deletion';
+
 	public function __construct(
 		private Closure $includeScript,
 		private Closure $buildWidgetEntry,
 		private deletedPostUtility $deletedPostUtility,
-		private string $modulePageUrl
+		private string $modulePageUrl,
+		private userRole $purgeRole,
+		private widgetMenuPolicy $menuPolicy,
+		private string $entryWindowHtml
 	) {}
 
 	public function runHooks(moduleEngine $moduleEngine, userRole $requiredRole): void {
@@ -39,7 +47,7 @@ class deletedPostUIHooks {
 					'label' => _T('admin_nav_deleted_posts'),
 					'url' => $this->modulePageUrl,
 					'title' => _T('admin_nav_deleted_posts_title'),
-					'group' => 'tools',
+					'group' => '',
 				];
 			}
 		);
@@ -97,6 +105,23 @@ class deletedPostUIHooks {
 			'ModerateAttachmentWidget',
 			function(array &$widgetArray, array &$attachment) {
 				$this->onRenderAttachmentWidget($widgetArray, $attachment);
+			}
+		);
+
+		// purging sits behind the higher role, not the one for merely seeing deleted posts
+		$moduleEngine->addRoleProtectedListener(
+			$this->purgeRole,
+			'ModerateAttachmentWidget',
+			function(array &$widgetArray, array &$attachment) {
+				$this->onRenderAttachmentPurgeWidget($widgetArray, $attachment);
+			}
+		);
+
+		$moduleEngine->addRoleProtectedListener(
+			$this->purgeRole,
+			'ModuleHeader',
+			function(&$moduleHeader) {
+				$this->onGeneratePurgeModuleHeader($moduleHeader);
 			}
 		);
 
@@ -206,8 +231,13 @@ class deletedPostUIHooks {
 	/**
 	 * Serialise an array of widget entry arrays (as returned by buildWidgetEntry) to
 	 * anchor HTML, matching the format used by postWidget.php's buildWidgetMenuHtml.
+	 *
+	 * Entries disabled for this board are dropped here: the renderers filter the menus they build,
+	 * but nothing filters a <template> the front-end clones back in.
 	 */
-	private function widgetEntriesToHtml(array $entries): string {
+	private function widgetEntriesToHtml(array $entries, string $menu = widgetMenuPolicy::MENU_POST): string {
+		$entries = $this->menuPolicy->filter($menu, $entries);
+
 		$html = '';
 		foreach ($entries as $w) {
 			$href    = htmlspecialchars($w['href'] ?? '');
@@ -227,14 +257,51 @@ class deletedPostUIHooks {
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		($this->includeScript)('deletedPosts.js', $moduleHeader);
 
+		// where the window reads an entry from, and posts its actions to
+		$moduleHeader .= '<meta name="deletedPostsModuleUrl" content="' . htmlspecialchars($this->modulePageUrl) . '">';
+
+		// the window's own markup
+		$moduleHeader .= $this->entryWindowHtml;
+
 		// Template for dynamic Deletion submenu injection after a post is deleted live.
 		// JS replaces the '__DPID__' placeholder with the actual deleted-post ID.
 		$templateEntries = [
-			($this->buildWidgetEntry)('#', 'viewDeletedPost', 'View entry', 'Deletion'),
-			($this->buildWidgetEntry)($this->modulePageUrl, 'restoreDeletedPost', 'Restore post', 'Deletion', ['deletedPostId' => '__DPID__', 'action' => 'restore']),
-			($this->buildWidgetEntry)($this->modulePageUrl, 'purgeDeletedPost',   'Purge post',   'Deletion', ['deletedPostId' => '__DPID__', 'action' => 'purge']),
+			($this->buildWidgetEntry)('#', 'viewDeletedPost', 'View entry', self::DELETION_SUBMENU, ['deletedPostId' => '__DPID__']),
+			($this->buildWidgetEntry)($this->modulePageUrl, 'restoreDeletedPost', 'Restore post', self::DELETION_SUBMENU, ['deletedPostId' => '__DPID__', 'action' => 'restore']),
+			($this->buildWidgetEntry)($this->modulePageUrl, 'purgeDeletedPost',   'Purge post',   self::DELETION_SUBMENU, ['deletedPostId' => '__DPID__', 'action' => 'purge']),
 		];
 		$moduleHeader .= '<template id="dp-widget-tmpl">' . $this->widgetEntriesToHtml($templateEntries) . '</template>';
+
+		// The same for a file deleted live, with '__FILEID__' / '__POSTUID__' alongside '__DPID__'
+		$attachmentEntries = [
+			($this->buildWidgetEntry)('#', 'viewDeletedAttachment', 'View entry', self::DELETION_SUBMENU, ['deletedPostId' => '__DPID__']),
+			($this->buildWidgetEntry)($this->modulePageUrl, 'restoreDeletedFile', 'Restore file', self::DELETION_SUBMENU, [
+				'deletedPostId' => '__DPID__',
+				'action' => 'restoreAttachment',
+				'fileId' => '__FILEID__',
+				'postUid' => '__POSTUID__',
+			]),
+		];
+		$moduleHeader .= '<template id="dp-attachment-widget-tmpl">'
+			. $this->widgetEntriesToHtml($attachmentEntries, widgetMenuPolicy::MENU_ATTACHMENT)
+			. '</template>';
+	}
+
+	/**
+	 * Purging is gated on the higher role, so its template entry is emitted separately - the
+	 * listener carrying this one is only registered for staff who may purge.
+	 */
+	private function onGeneratePurgeModuleHeader(string &$moduleHeader): void {
+		$purgeEntry = [
+			($this->buildWidgetEntry)($this->modulePageUrl, 'purgeDeletedFile', 'Purge file', self::DELETION_SUBMENU, [
+				'fileId' => '__FILEID__',
+				'action' => 'purgeFile',
+			]),
+		];
+
+		$moduleHeader .= '<template id="dp-attachment-purge-tmpl">'
+			. $this->widgetEntriesToHtml($purgeEntry, widgetMenuPolicy::MENU_ATTACHMENT)
+			. '</template>';
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
@@ -251,7 +318,8 @@ class deletedPostUIHooks {
 			$deletedEntryUrl,
 			'viewDeletedPost',
 			'View entry',
-			'Deletion'
+			self::DELETION_SUBMENU,
+			['deletedPostId' => $deletedPostId]
 		);
 
 		// Restore action (POST with CSRF) under the "Deletion" submenu
@@ -259,7 +327,7 @@ class deletedPostUIHooks {
 			$this->modulePageUrl,
 			'restoreDeletedPost',
 			'Restore post',
-			'Deletion',
+			self::DELETION_SUBMENU,
 			['deletedPostId' => $deletedPostId, 'action' => 'restore']
 		);
 
@@ -268,23 +336,73 @@ class deletedPostUIHooks {
 			$this->modulePageUrl,
 			'purgeDeletedPost',
 			'Purge post',
-			'Deletion',
+			self::DELETION_SUBMENU,
 			['deletedPostId' => $deletedPostId, 'action' => 'purge']
 		);
 	}
 
+	/**
+	 * View and restore entries for a file deleted on its own, under the same "Deletion" submenu
+	 * the post widget uses.
+	 */
 	private function onRenderAttachmentWidget(array &$widgetArray, array &$attachment): void {
-		if (!$attachment['isDeleted'] && !$attachment['onlyFileDeleted']) {
-			return;
-		}
-
+		// per file: only the one with a deletion record of its own has an entry to show or restore
+		// from ('onlyFileDeleted' is a post-level flag, so it can't tell files apart)
 		$deletedPostId = $attachment['deletedPostId'] ?? null;
-		if (!$deletedPostId) {
+
+		if (empty($attachment['isDeleted']) || !$deletedPostId) {
 			return;
 		}
 
 		$deletedEntryUrl = $this->deletedPostUtility->generateViewDeletedPostUrl($deletedPostId);
-		$widgetArray[] = ($this->buildWidgetEntry)($deletedEntryUrl, 'viewDeletedAttachment', 'View deleted file', '');
+
+		$widgetArray[] = ($this->buildWidgetEntry)(
+			$deletedEntryUrl,
+			'viewDeletedAttachment',
+			'View entry',
+			self::DELETION_SUBMENU,
+			['deletedPostId' => $deletedPostId]
+		);
+
+		// fileId and postUid are unused by the restore itself - they're what the JS needs to put the
+		// file's delete entry back once it is no longer deleted
+		$widgetArray[] = ($this->buildWidgetEntry)(
+			$this->modulePageUrl,
+			'restoreDeletedFile',
+			'Restore file',
+			self::DELETION_SUBMENU,
+			[
+				'deletedPostId' => $deletedPostId,
+				'action' => 'restoreAttachment',
+				'fileId' => $attachment['fileId'],
+				'postUid' => $attachment['postUid'],
+			]
+		);
+	}
+
+	/**
+	 * Offer to destroy a single deleted file. Addressed by file ID, since a file deleted with its
+	 * whole post has no deletion record of its own to name.
+	 */
+	private function onRenderAttachmentPurgeWidget(array &$widgetArray, array &$attachment): void {
+		// only files already in purgatory can be purged
+		if(empty($attachment['isDeleted'])) {
+			return;
+		}
+
+		$fileId = $attachment['fileId'] ?? null;
+
+		if(!$fileId) {
+			return;
+		}
+
+		$widgetArray[] = ($this->buildWidgetEntry)(
+			$this->modulePageUrl,
+			'purgeDeletedFile',
+			'Purge file',
+			self::DELETION_SUBMENU,
+			['fileId' => $fileId, 'action' => 'purgeFile']
+		);
 	}
 
 	private function onRenderAttachmentIndicator(string &$fileInfoBar, array &$attachment): void {

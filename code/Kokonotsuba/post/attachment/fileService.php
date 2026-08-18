@@ -24,6 +24,14 @@ class fileService {
 	 * @return void
 	 */
 	public function restoreAttachmentsFromPurgatory(array $attachments): void {
+		// anything already purged stays flagged as deleted
+		$attachments = $this->filterAttachmentsStillInPurgatory($attachments);
+
+		// nothing left to restore
+		if(empty($attachments)) {
+			return;
+		}
+
 		// get file IDs
 		$fileIDs = $this->getFileIDsFromAttachments($attachments);
 
@@ -32,9 +40,23 @@ class fileService {
 
 		// also mark each file
 		$this->markAttachmentsAsRestored($fileIDs);
-		
+
 		// move the files out of the attachment directory back to their respective boards
 		$this->restoreFileLocation($attachments);
+	}
+
+	/**
+	 * Drop attachments whose file is no longer in purgatory - a file purged on its own leaves no
+	 * other trace of it.
+	 *
+	 * @param attachment[] $attachments
+	 * @return attachment[]
+	 */
+	private function filterAttachmentsStillInPurgatory(array $attachments): array {
+		return array_values(array_filter(
+			$attachments,
+			fn($attach) => file_exists($attach->getHiddenPath())
+		));
 	}
 
 	private function restoreFileLocation(array $attachments): void {

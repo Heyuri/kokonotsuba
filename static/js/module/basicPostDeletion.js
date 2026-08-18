@@ -87,7 +87,7 @@
 			errorMessage: 'Failed to delete the attachment.',
 			onSuccess: function (data) {
 				if (data && data.deleted_link) {
-					state.addViewFileButton(data.deleted_link);
+					state.addViewFileButton(data);
 				}
 			}
 		});
@@ -215,7 +215,7 @@
 				errorMessage: 'Failed to delete the attachment.',
 				onSuccess: function (data) {
 					if (data && data.deleted_link) {
-						state.addViewFileButton(data.deleted_link);
+						state.addViewFileButton(data);
 					}
 				}
 			});

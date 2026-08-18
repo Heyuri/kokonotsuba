@@ -8,7 +8,8 @@ use Kokonotsuba\thread\Thread;
 
 class postWidget {
     public function __construct(
-        private moduleEngine $moduleEngine
+        private moduleEngine $moduleEngine,
+        private widgetMenuPolicy $menuPolicy
     ) {}
 
     public function addThreadReplyWidget(string &$widgetDataHtml, Post &$post): void {
@@ -139,8 +140,8 @@ class postWidget {
 		}
 		$this->moduleEngine->dispatch($hook, $args);
 
-		// return
-		return $widgets; 
+		// drop the entries this board turns off
+		return $this->menuPolicy->filter(widgetMenuPolicy::MENU_POST, $widgets);
 	}
 
     public function generatePostMenuHtml(string $widgetDataHtml): string {

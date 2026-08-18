@@ -45,7 +45,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->listenProtected('ModerateAttachmentWidget', function(array &$widgets, array &$fileData) {
 			$this->onAttachmentWidget($widgets, $fileData);
 		});
-		$this->registerLinksAboveBarHook(_T('admin_nav_file_ban_title'), $this->moduleUrl, _T('admin_nav_file_ban'), 'bans');
+		$this->registerLinksAboveBarHook(_T('admin_nav_file_ban_title'), $this->moduleUrl, _T('admin_nav_file_ban'), 'files');
 
 		$this->listenProtected('ModuleAdminHeader', function(string &$moduleHeader) {
 			$this->includeScript('fileBan.js', $moduleHeader);
@@ -150,8 +150,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 
 		if ($this->moduleContext->request->isAjax()) {
-			$deletedLink = $this->getDeletedLinkForFile($fileId);
-			sendAjaxAndDetach(['success' => true, 'deleted_link' => $deletedLink]);
+			sendAjaxAndDetach(['success' => true] + $this->getFileDeletionResult($fileId));
 			$this->rebuildBoardForPost($board, $post);
 			exit;
 		}

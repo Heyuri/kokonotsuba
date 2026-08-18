@@ -304,6 +304,71 @@ class deletedPostRenderer {
 		$this->outputAdminPage($deletedPostEntryPage);
 	}
 
+	/**
+	 * An entry's own data, for the [View entry] window.
+	 *
+	 * The same metadata and actions the entry page renders, minus the post itself — the window
+	 * reuses the post already on the page rather than re-rendering it.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function getEntryData(DeletedPost $deletedPost, userRole $roleLevel): array {
+		$board = $this->resolvePostBoard($deletedPost->getBoardUID());
+
+		$isOpen = (bool)$deletedPost->getOpenFlag();
+		$isAttachmentOnly = !empty($deletedPost->getFileId()) && !empty($deletedPost->getFileOnlyDeleted());
+
+		return [
+			'id' => $deletedPost->getDeletedPostId(),
+			'postNumber' => $deletedPost->getNumber(),
+			'boardTitle' => $board->getBoardTitle(),
+			'boardUid' => $deletedPost->getBoardUID(),
+			'deletedBy' => $deletedPost->getDeletedByUsername(),
+			'deletedAt' => $this->formatEntryDate($deletedPost->getDeletedAt()),
+			'restoredBy' => $deletedPost->getRestoredByUsername(),
+			'restoredAt' => $this->formatEntryDate($deletedPost->getRestoredAt()),
+			'isOpen' => $isOpen,
+			'isAttachmentOnly' => $isAttachmentOnly,
+			'viewUrl' => $this->deletedPostUtility->generateDeletedPostViewUrl($deletedPost->getDeletedPostId()),
+			'actions' => $this->buildEntryActions($isOpen, $isAttachmentOnly, $roleLevel),
+		];
+	}
+
+	/** Plain text: the window puts these straight into the page as text, not as markup. */
+	private function formatEntryDate(?string $date): string {
+		return $date !== null ? $this->postDateFormatter->formatPlainFromDateString($date) : '';
+	}
+
+	/**
+	 * The actions this entry offers, matching the buttons the entry page renders for this role.
+	 *
+	 * @return array<int, array{action: string, label: string}>
+	 */
+	private function buildEntryActions(bool $isOpen, bool $isAttachmentOnly, userRole $roleLevel): array {
+		// a restored entry has nothing left to act on but its own record
+		if(!$isOpen) {
+			if(!$roleLevel->isAtLeast($this->requiredRoleForDeleteRestoredRecord)) {
+				return [];
+			}
+
+			return [['action' => 'deleteRecord', 'label' => 'Delete record']];
+		}
+
+		$actions = [[
+			'action' => $isAttachmentOnly ? 'restoreAttachment' : 'restore',
+			'label' => $isAttachmentOnly ? 'Restore file' : 'Restore',
+		]];
+
+		if($roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {
+			$actions[] = [
+				'action' => $isAttachmentOnly ? 'purgeAttachment' : 'purge',
+				'label' => $isAttachmentOnly ? 'Purge file' : 'Purge',
+			];
+		}
+
+		return $actions;
+	}
+
 	private function generateBackUrl(DeletedPost $deletedPost): string {
 		// flag for if its restored or not
 		$isRestoredPost = $deletedPost->getOpenFlag() === 0;

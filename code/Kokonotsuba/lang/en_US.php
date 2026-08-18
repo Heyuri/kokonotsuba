@@ -252,6 +252,7 @@ $language['post_not_found'] = "Post not found!";
 $language['module_route_not_found'] = "Module route not found!";
 $language['anti_spam_message'] = "Your post was caught by anti-spam rules. Contact staff if you think it was a mistake.";
 $language['thread_not_found_for_deletion'] = "Thread not found for deleted post preview!";
+$language['deleted_post_not_found'] = "Deletion entry not found!";
 $language['post_singular'] = 'post';
 $language['post_multiple'] = 'posts';
 $language['poster_hash_count'] = 'There\'s %1$s %2$s by this ID.';
@@ -498,6 +499,8 @@ $language['staffnav_user'] = '%1$s (%2$s)';
 // link; an unknown key falls back to showing itself.
 $language['staffnav_group_bans'] = 'Bans & spam';
 $language['staffnav_group_content'] = 'Content';
+$language['staffnav_group_files'] = 'File bans';
+$language['staffnav_group_rebuilding'] = 'Rebuilding';
 $language['staffnav_group_tools'] = 'Tools';
 
 // staffAlerts module
@@ -800,7 +803,6 @@ $language['config_desc_modules.threadList.HIGHLIGHT_COUNT'] = 'Reply count above
 // module/wordFilter/config.php
 $language['config_desc_modules.wordFilter.FILTERS'] = 'JSON object of regex pattern => replacement HTML.';
 
-
 // ── Board / global config editor field labels ────────────────────────────────────
 // One entry per schema field (see configs/*.php and module/{name}/config.php).
 
@@ -955,6 +957,9 @@ $language['config_label_modules.addInfo.ADD_INFO'] = 'Additional info lines';
 // module/adminDel/config.php
 $language['config_label_modules.adminDel.JANIMUTE_LENGTH'] = 'Janitor mute length (min)';
 $language['config_label_modules.adminDel.JANIMUTE_REASON'] = 'Janitor mute reason';
+$language['config_label_modules.adminDel.PostMenu.delete'] = 'Post menu: Delete';
+$language['config_label_modules.adminDel.PostMenu.mute'] = 'Post menu: Delete & mute';
+$language['config_label_modules.adminDel.AttachmentMenu.deleteFile'] = 'File menu: Delete file';
 
 // module/ads/config.php
 $language['config_label_modules.ads.ADS_STICKY_ROTATE_SECONDS'] = 'Sticky ad rotate (s)';
@@ -965,6 +970,7 @@ $language['config_label_modules.ads.ADS_SLOT_DIMENSIONS'] = 'Ad slot dimensions'
 
 // module/animatedGif/config.php
 $language['config_label_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'] = 'Max animated GIF size (KB)';
+$language['config_label_modules.animatedGif.AttachmentMenu.animateGif'] = 'File menu: Animated GIF';
 
 // module/antiFlood/config.php
 $language['config_label_modules.antiFlood.RENZOKU3'] = 'Seconds between new threads';
@@ -974,6 +980,7 @@ $language['config_label_modules.antiFlood.ALLOWED_COMMENT_REPETITIONS'] = 'Allow
 
 // module/antiSpam/config.php
 $language['config_label_modules.antiSpam.FILTER_BAN_TIME'] = 'Filter ban time (h)';
+$language['config_label_modules.antiSpam.PostMenu.filterPost'] = 'Post menu: Filter post';
 
 // module/bbCode/config.php
 $language['config_label_modules.bbCode.supportBold'] = 'Bold';
@@ -1011,6 +1018,12 @@ $language['config_label_modules.countryFlags.FLAG_MODE'] = 'Country flag mode';
 // module/deletedPosts/config.php
 $language['config_label_modules.deletedPosts.DELETED_POSTS_TEMPLATE'] = 'Deleted posts template';
 $language['config_label_modules.deletedPosts.PRUNE_TIME'] = 'Deleted posts prune time (h)';
+$language['config_label_modules.deletedPosts.PostMenu.viewDeletedPost'] = 'Post menu: View deletion entry';
+$language['config_label_modules.deletedPosts.PostMenu.restoreDeletedPost'] = 'Post menu: Restore post';
+$language['config_label_modules.deletedPosts.PostMenu.purgeDeletedPost'] = 'Post menu: Purge post';
+$language['config_label_modules.deletedPosts.AttachmentMenu.viewDeletedAttachment'] = 'File menu: View deletion entry';
+$language['config_label_modules.deletedPosts.AttachmentMenu.restoreDeletedFile'] = 'File menu: Restore file';
+$language['config_label_modules.deletedPosts.AttachmentMenu.purgeDeletedFile'] = 'File menu: Purge file';
 
 // module/dice/config.php
 $language['config_label_modules.dice.DICE_AMOUNT_LIMIT'] = 'Dice amount limit';
@@ -1041,6 +1054,10 @@ $language['config_label_modules.imageMeta.EXIF_DATA_VIEWER'] = 'EXIF data viewer
 $language['config_label_modules.imageMeta.IMG_OPS'] = 'ImgOps portal';
 $language['config_label_modules.imageMeta.IQDB'] = 'IQDB portal';
 $language['config_label_modules.imageMeta.SWFCHAN'] = 'SWFchan archive';
+$language['config_label_modules.imageMeta.AttachmentMenu.exif'] = 'File menu: EXIF';
+$language['config_label_modules.imageMeta.AttachmentMenu.imgops'] = 'File menu: ImgOps';
+$language['config_label_modules.imageMeta.AttachmentMenu.iqdb'] = 'File menu: iqdb';
+$language['config_label_modules.imageMeta.AttachmentMenu.swfchan'] = 'File menu: swfchan';
 
 // module/indexCommentTruncator/config.php
 $language['config_label_modules.indexCommentTruncator.CHARACTER_PREVIEW_LIMIT'] = 'Preview character limit';
@@ -1059,6 +1076,8 @@ $language['config_label_modules.onlineCounter.USER_COUNT_TIMEOUT'] = 'Online cou
 
 // module/perceptualBan/config.php
 $language['config_label_modules.perceptualBan.HAMMING_THRESHOLD'] = 'Hamming threshold';
+$language['config_label_modules.perceptualBan.AttachmentMenu.BanFile'] = 'File menu: Ban file';
+$language['config_label_modules.perceptualBan.AttachmentMenu.BanDeleteFile'] = 'File menu: Ban and delete file';
 
 // module/postStats/config.php
 $language['config_label_modules.postStats.SHOW_SITE_WIDE'] = 'Show site-wide statistics';
@@ -1087,10 +1106,12 @@ $language['config_label_modules.soudane.ENABLE_YEAH'] = 'Enable "yeah" votes';
 $language['config_label_modules.soudane.ENABLE_NOPE'] = 'Enable "nope" votes';
 $language['config_label_modules.soudane.ENABLE_SCORE'] = 'Enable score';
 $language['config_label_modules.soudane.SHOW_SCORE_ONLY'] = 'Show score only';
+$language['config_label_modules.soudane.PostMenu.viewVotes'] = 'Post menu: View votes';
 
 // module/spoiler/config.php
 $language['config_label_modules.spoiler.SPOILER_THUMB_W'] = 'Spoiler thumb width';
 $language['config_label_modules.spoiler.SPOILER_THUMB_H'] = 'Spoiler thumb height';
+$language['config_label_modules.spoiler.AttachmentMenu.toggleSpoiler'] = 'File menu: Spoiler';
 
 // module/tegaki/config.php
 $language['config_label_modules.tegaki.TEGAKI_TEMPLATE'] = 'Tegaki template';
@@ -1239,3 +1260,43 @@ $language['config_label_modules.report.NOTIFICATION_POLL_SECONDS'] = 'Report not
 $language['config_desc_modules.report.NOTIFICATION_POLL_SECONDS'] = 'How often, in seconds, staff pages check for new reports.';
 $language['config_label_modules.report.REPORT_POST_TEMPLATE'] = 'Report post preview template';
 $language['config_desc_modules.report.REPORT_POST_TEMPLATE'] = 'Template directory used to render reported posts on the staff report pages.';
+$language['config_label_modules.report.PostMenu.viewReports'] = 'Post menu: View reports';
+$language['config_label_modules.report.PostMenu.reportPost'] = 'Post menu: Report post';
+
+// module/adminBan/config.php
+$language['config_label_modules.adminBan.PostMenu.ban'] = 'Post menu: Ban';
+
+// module/janitor/config.php
+$language['config_label_modules.janitor.PostMenu.warn'] = 'Post menu: Warn';
+
+// module/edit/config.php
+$language['config_label_modules.edit.PostMenu.editPost'] = 'Post menu: Edit post';
+
+// module/notes/config.php
+$language['config_label_modules.notes.PostMenu.leaveNote'] = 'Post menu: Leave note';
+
+// module/moveThread/config.php
+$language['config_label_modules.moveThread.PostMenu.moveThread'] = 'Post menu: Move thread';
+
+// module/cssHax/config.php
+$language['config_label_modules.cssHax.PostMenu.cssHax'] = 'Post menu: Css hax';
+
+// module/sticky/config.php
+$language['config_label_modules.sticky.PostMenu.sticky'] = 'Post menu: Sticky';
+
+// module/lockThread/config.php
+$language['config_label_modules.lockThread.PostMenu.lock'] = 'Post menu: Lock thread';
+
+// module/autoSage/config.php
+$language['config_label_modules.autoSage.PostMenu.autosage'] = 'Post menu: Autosage';
+
+// module/viewPosts/config.php
+$language['config_label_modules.viewPosts.PostMenu.viewPosts'] = 'Post menu: View posts by user';
+
+// module/filter/config.php
+$language['config_label_modules.filter.PostMenu.hide'] = 'Post menu: Hide post';
+$language['config_label_modules.filter.AttachmentMenu.hideImage'] = 'File menu: Hide image';
+
+// module/fileBan/config.php
+$language['config_label_modules.fileBan.AttachmentMenu.BanFile'] = 'File menu: Ban file';
+$language['config_label_modules.fileBan.AttachmentMenu.BanDeleteFile'] = 'File menu: Ban and delete file';

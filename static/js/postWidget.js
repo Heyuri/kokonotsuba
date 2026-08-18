@@ -2,267 +2,40 @@
  * postWidget.js — Dropdown menu for post actions
  *
  * Builds a per-post dropdown from hidden widget refs injected by PHP modules.
- * Supports action handlers, label providers, menu augmenters, and submenus.
+ * The menu itself is widgetMenu.js; this only says where the items come from.
  *
- * Depends on: dropdownMenu.js (loaded first)
+ * Depends on: dropdownMenu.js, widgetMenu.js (loaded first)
  */
 (function () {
 	'use strict';
 
-	var dropdown = DropdownMenu.create('postMenuDropdown');
+	window.postWidget = WidgetMenu.create({
+		menuClass: 'postMenuDropdown',
+		submenuClass: 'postMenuSubmenu',
+		toggleSelector: '.postMenu .menuToggle',
 
-	// registry for javascript-only actions
-	var actionHandlers = new Map();
-	var labelProviders = new Map();
-	var menuAugmenters = [];
+		// PHP renders each entry as an empty <a> in the post's hidden .widgetRefs container
+		collectItems: function (arrow) {
+			var post = arrow.closest('.post');
+			if (!post) return [];
 
-	// track the active arrow independently — dropdownMenu.js clears activeToggle
-	// before our click handler fires when submenu items are clicked
-	var currentArrow = null;
+			var items = [];
 
-	// expose api for other modules
-	window.postWidget = {
-		registerActionHandler: function (action, cb) {
-			if (typeof cb === 'function') actionHandlers.set(action, cb);
-		},
-		registerLabelProvider: function (action, cb) {
-			if (typeof cb === 'function') labelProviders.set(action, cb);
-		},
-		registerMenuAugmenter: function (cb) {
-			if (typeof cb === 'function') menuAugmenters.push(cb);
-		}
-	};
-
-	// ---- helpers ----
-
-	// Collect data-param-* attributes from an element into a plain object.
-	// Keys are as the browser stores them (always lowercased for HTML attributes).
-	function collectParams(el) {
-		var params = {};
-		if (!el || !el.attributes) return params;
-		for (var i = 0; i < el.attributes.length; i++) {
-			var attr = el.attributes[i];
-			if (attr.name.indexOf('data-param-') === 0) {
-				params[attr.name.slice(11)] = attr.value;
-			}
-		}
-		return params;
-	}
-
-	// Copy a params object onto an element as data-param-* attributes
-	function applyParams(el, params) {
-		if (!params) return;
-		for (var key in params) {
-			if (params.hasOwnProperty(key)) {
-				el.setAttribute('data-param-' + key, params[key]);
-			}
-		}
-	}
-
-	// ---- click delegation ----
-
-	document.addEventListener('click', function (e) {
-		// --- toggle arrow ---
-		var arrow = e.target.closest('.postMenu .menuToggle');
-		if (arrow) {
-			e.preventDefault();
-
-			currentArrow = arrow;
-			dropdown.open(arrow, function (menu, subMenus) {
-				buildMenuContent(menu, subMenus, arrow);
+			post.querySelectorAll('.widgetRefs a').forEach(function (ref) {
+				items.push({
+					href: ref.href,
+					action: ref.dataset.action,
+					label: ref.dataset.label,
+					subMenu: ref.dataset.submenu,
+					params: WidgetMenu.collectParams(ref)
+				});
 			});
-			return;
-		}
 
-		// --- menu item ---
-		var menuItem = e.target.closest('.postMenuDropdown a, .postMenuSubmenu a');
-		if (menuItem) {
-			e.preventDefault();
+			return items;
+		},
 
-			// submenu header — do nothing
-			if (menuItem.dataset && menuItem.dataset.submenuToggle === '1') return;
-
-			var action = menuItem.dataset.action || '';
-			var hasHandler = actionHandlers.has(action);
-
-			if (!hasHandler) {
-				// treat as normal link
-				var url = menuItem.href;
-				if (url && url !== '#') {
-					if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) {
-						window.open(url, '_blank');
-					} else {
-						window.location.assign(url);
-					}
-				}
-				dropdown.close();
-				return;
-			}
-
-			handleWidgetAction(action, menuItem.href, menuItem);
-			currentArrow = null;
-			dropdown.close();
-			return;
+		buildContext: function (arrow) {
+			return { arrow: arrow, post: arrow.closest('.post') };
 		}
 	});
-
-	// ---- menu content builder ----
-
-	function buildMenuContent(menu, subMenus, arrow) {
-		var post = arrow.closest('.post');
-		var refs = post.querySelectorAll('.widgetRefs a');
-
-		var rootItems = [];
-		var groups = {};
-
-		refs.forEach(function (ref) {
-			var subName = (ref.dataset.submenu || '').trim();
-			var itemData = {
-				href: ref.href,
-				action: ref.dataset.action,
-				label: ref.dataset.label,
-				params: collectParams(ref)
-			};
-
-			if (subName) {
-				if (!groups[subName]) groups[subName] = [];
-				groups[subName].push(itemData);
-			} else {
-				rootItems.push(itemData);
-			}
-		});
-
-		// let external modules inject extra items
-		menuAugmenters.forEach(function (aug) {
-			try {
-				var extra = aug({ post: post, arrow: arrow });
-				if (Array.isArray(extra)) {
-					extra.forEach(function (item) {
-						if (!item || (!item.label && !item.action)) return;
-						var subName = (item.subMenu || '').trim();
-						var data = {
-							href: item.href || '#',
-							action: item.action || '',
-							label: item.label || '',
-							params: item.params || {}
-						};
-						if (subName) {
-							if (!groups[subName]) groups[subName] = [];
-							groups[subName].push(data);
-						} else {
-							rootItems.push(data);
-						}
-					});
-				}
-			} catch (err) {
-				console.error('menu augmenter error', err);
-			}
-		});
-
-		// helper
-		function buildMenuItem(item) {
-			var a = document.createElement('a');
-			a.href = item.href;
-			a.dataset.action = item.action;
-			applyParams(a, item.params);
-
-			var label = item.label;
-			var lp = labelProviders.get(a.dataset.action);
-			if (lp) {
-				try {
-					var custom = lp({
-						action: a.dataset.action,
-						url: a.href,
-						arrow: arrow,
-						post: post
-					});
-					if (typeof custom === 'string' && custom.length) label = custom;
-				} catch (err) {
-					console.error('label provider error', err);
-				}
-			}
-
-			a.textContent = label;
-			return a;
-		}
-
-		// root items
-		rootItems.forEach(function (item) {
-			menu.appendChild(buildMenuItem(item));
-		});
-
-		// submenus
-		Object.keys(groups).forEach(function (groupName) {
-			var wrapper = document.createElement('div');
-			wrapper.className = 'submenuWrapper';
-
-			var headerA = document.createElement('a');
-			headerA.href = 'javascript:void(0);';
-			headerA.textContent = groupName + ' \u25B6';
-			headerA.dataset.submenuToggle = '1';
-			wrapper.appendChild(headerA);
-
-			var subDiv = document.createElement('div');
-			subDiv.className = 'dropdownMenu submenu postMenuSubmenu';
-			subDiv.hidden = true;
-
-			groups[groupName].forEach(function (item) {
-				subDiv.appendChild(buildMenuItem(item));
-			});
-
-			// hover logic
-			var hideTimeout;
-
-			function showSubmenu() {
-				clearTimeout(hideTimeout);
-				var wrapperRect = wrapper.getBoundingClientRect();
-				var mainMenuRect = menu.getBoundingClientRect();
-				subDiv.style.position = 'absolute';
-				subDiv.style.top = (window.scrollY + wrapperRect.top) + 'px';
-				subDiv.style.left = (window.scrollX + mainMenuRect.right + 2) + 'px';
-				subDiv.hidden = false;
-			}
-
-			function scheduleHide() {
-				clearTimeout(hideTimeout);
-				hideTimeout = setTimeout(function () { subDiv.hidden = true; }, 150);
-			}
-
-			wrapper.addEventListener('mouseenter', showSubmenu);
-			wrapper.addEventListener('mouseleave', scheduleHide);
-			subDiv.addEventListener('mouseenter', showSubmenu);
-			subDiv.addEventListener('mouseleave', scheduleHide);
-
-			menu.appendChild(wrapper);
-			document.body.appendChild(subDiv);
-			subDiv.style.position = 'fixed';
-
-			subMenus.push(subDiv);
-		});
-	}
-
-	// ---- action handling ----
-
-	function handleWidgetAction(action, url, menuItem) {
-		var handler = actionHandlers.get(action);
-		if (handler) {
-			// prefer our own tracked arrow — getActiveToggle() may already be null
-			// if dropdownMenu.js's click-outside handler fired first (submenu clicks)
-			var activeToggle = currentArrow || dropdown.getActiveToggle();
-			handler({
-				action: action,
-				url: url,
-				menuItem: menuItem,
-				arrow: activeToggle,
-				post: activeToggle ? activeToggle.closest('.post') : null,
-				params: collectParams(menuItem)
-			});
-			return;
-		}
-
-		if (url && url !== '#') {
-			window.location.assign(url);
-		}
-	}
-
 })();
