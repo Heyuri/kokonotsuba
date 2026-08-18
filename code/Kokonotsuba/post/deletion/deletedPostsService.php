@@ -973,6 +973,16 @@ class deletedPostsService {
 	}
 
 	/**
+	 * Fetch the most-recent deleted_post ID for each of the given file IDs.
+	 *
+	 * @param int[] $fileIds File row IDs.
+	 * @return array<int, int> file ID => deleted post ID.
+	 */
+	public function getDeletedPostIdsByFileIds(array $fileIds): array {
+		return $this->deletedPostsRepository->getDeletedPostIdsByFileIds($fileIds);
+	}
+
+	/**
 	 * Fetch the most-recent deleted_post ID for the given file ID.
 	 *
 	 * @param int $fileId File row ID.

@@ -183,6 +183,12 @@
 				subMenus.push(subMenu);
 				subMenuEls.push(subMenu);
 			});
+
+			// A menu is open, on this post or this file, offering these entries. Anything one of
+			// them will need on click can be warmed now — the reader has yet to pick it.
+			document.dispatchEvent(new CustomEvent('widgetMenu:open', {
+				detail: Object.assign({}, ctx, { items: items })
+			}));
 		}
 
 		function openMenu(toggle) {

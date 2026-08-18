@@ -57,8 +57,8 @@
 
 	// Put the file's delete entry back from adminDel's template — a restored file can be deleted
 	// again, but the server left that entry out while it was deleted
-	function addAttachmentDeleteEntry(attachmentEl, params) {
-		if (!attachmentEl || !params) return;
+	function addAttachmentDeleteEntry(attachmentEl, postEl) {
+		if (!attachmentEl) return;
 
 		var tmpl = document.getElementById('del-file-restore-tmpl');
 		var data = attachmentEl.querySelector('.attachmentWidgetData');
@@ -67,12 +67,16 @@
 		// already there — nothing to add
 		if (data.querySelector('a[data-action="deleteFile"]')) return;
 
+		var host = postEl || attachmentEl.closest('.post');
+		var fileId = attachmentEl.dataset.fileId || '';
+		var postUid = host ? (host.dataset.postUid || '') : '';
+
 		var clone = tmpl.content.cloneNode(true);
 
 		clone.querySelectorAll('a').forEach(function (a) {
 			a.setAttribute('href', a.getAttribute('href')
-				.replace('__FILEID__', params.fileid)
-				.replace('__POSTUID__', params.postuid));
+				.replace('__FILEID__', fileId)
+				.replace('__POSTUID__', postUid));
 		});
 
 		data.appendChild(clone);
@@ -200,6 +204,207 @@
 		});
 	}
 
+	// ---- the entry window ----
+
+	/**
+	 * Open the deletion entry in a window instead of navigating to the mod page.
+	 *
+	 * The post itself is the copy already on the page; only the entry's own metadata and the
+	 * actions it offers come from the server. Falls back to the mod page when the window can't be
+	 * built (no window library, no template, no id to look up).
+	 */
+	function openEntryWindow(ctx, postEl, attachmentEl) {
+		var fullViewUrl = (ctx.url && ctx.url !== '#') ? ctx.url : '';
+		var deletedPostId = (ctx.params && ctx.params.deletedpostid)
+			|| (attachmentEl && attachmentEl.dataset.deletedPostId)
+			|| (postEl && postEl.dataset.deletedPostId);
+
+		if (!deletedPostId || !window.PostActionUtils || !document.getElementById('dpEntryWindowTemplate')) {
+			if (fullViewUrl) window.location.assign(fullViewUrl);
+			return;
+		}
+
+		PostActionUtils.openWindow({
+			templateId: '#dpEntryWindowTemplate',
+			title: 'Deletion entry',
+			postEl: postEl,
+			onOpen: function (opened) {
+				fillEntryWindow(opened.win, deletedPostId, postEl, attachmentEl, fullViewUrl);
+			}
+		});
+	}
+
+	function fillEntryWindow(win, deletedPostId, postEl, attachmentEl, fullViewUrl) {
+		var body = win.div.querySelector('.dpEntryWindow');
+		if (!body) return;
+
+		showEntryPost(body, postEl);
+
+		var fullView = body.querySelector('.dpEntryFullView');
+		if (fullView) {
+			if (fullViewUrl) fullView.href = fullViewUrl;
+			else fullView.parentNode.hidden = true;
+		}
+
+		fetchEntry(deletedPostId)
+			.then(function (data) {
+				fillEntryDetails(body, data);
+				fillEntryActions(body, data, win, deletedPostId, postEl, attachmentEl);
+			})
+			.catch(function (err) {
+				showMessage(PostActionUtils.errorMessage(err, 'Could not read the deletion entry.'), false);
+			});
+	}
+
+	// ---- reading an entry ----
+
+	// Entries already read, by id: opening a menu warms the one behind it, so the click that
+	// follows usually has it in hand. Short-lived, because another moderator may act meanwhile.
+	var entryCache = {};
+	var ENTRY_TTL = 30000;
+
+	function fetchEntry(deletedPostId) {
+		var cached = entryCache[deletedPostId];
+		if (cached && (Date.now() - cached.time) < ENTRY_TTL) {
+			return cached.request;
+		}
+
+		var url = moduleUrl() + '&pageName=entryData&deletedPostId=' + encodeURIComponent(deletedPostId);
+
+		var request = fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+			.then(function (res) {
+				// the endpoint explains a refusal ("not authenticated to view this"), so keep it
+				if (!res.ok) {
+					return PostActionUtils.responseError(res).then(function (err) { throw err; });
+				}
+				return res.json();
+			})
+			.catch(function (err) {
+				// a refusal or a dropped request is not worth remembering
+				forgetEntry(deletedPostId);
+				throw err;
+			});
+
+		entryCache[deletedPostId] = { request: request, time: Date.now() };
+
+		return request;
+	}
+
+	/** Warm an entry without caring about the result — the window is what reports a failure. */
+	function prefetchEntry(deletedPostId) {
+		fetchEntry(deletedPostId).catch(function () {});
+	}
+
+	/** Anything that acts on an entry changes what it says, so the copy in hand is spent. */
+	function forgetEntry(deletedPostId) {
+		delete entryCache[deletedPostId];
+	}
+
+	/** The entry id a menu entry carries, whichever way the attribute was cased. */
+	function entryIdOf(params) {
+		return (params && (params.deletedpostid || params.deletedPostId)) || '';
+	}
+
+	// A menu carrying a [View entry] is a menu whose entry is about to be wanted.
+	document.addEventListener('widgetMenu:open', function (ev) {
+		var items = (ev.detail && ev.detail.items) || [];
+
+		items.forEach(function (item) {
+			if (item.action !== 'viewDeletedPost' && item.action !== 'viewDeletedAttachment') return;
+
+			var deletedPostId = entryIdOf(item.params);
+
+			// the placeholder stands in the template the augmenters fill from
+			if (deletedPostId && deletedPostId !== '__DPID__') prefetchEntry(deletedPostId);
+		});
+	});
+
+	/** Show the post the menu was opened from — a static copy, without its own menus */
+	function showEntryPost(body, postEl) {
+		var container = body.querySelector('.dpEntryPost');
+		if (!container || !postEl) return;
+
+		var clone = postEl.cloneNode(true);
+
+		// ids would be duplicated across the document, and the copy has no menus of its own
+		clone.removeAttribute('id');
+		clone.querySelectorAll('[id]').forEach(function (el) { el.removeAttribute('id'); });
+		clone.querySelectorAll('.postMenu, .widgetRefs, .attachmentWidgetData, .attachmentMenuToggle')
+			.forEach(function (el) { el.remove(); });
+
+		container.appendChild(clone);
+	}
+
+	function fillEntryDetails(body, data) {
+		function set(selector, value) {
+			var el = body.querySelector(selector);
+			if (el) el.textContent = value;
+		}
+
+		set('.dpEntryBoard', data.boardTitle + ' (' + data.boardUid + ')');
+		set('.dpEntryDeletedBy', data.deletedBy || 'User');
+		set('.dpEntryDeletedAt', data.deletedAt);
+
+		// a restored entry says who put it back, an open one has nothing to say yet
+		if (!data.isOpen) {
+			set('.dpEntryRestoredBy', data.restoredBy || 'N/A');
+			set('.dpEntryRestoredAt', data.restoredAt || 'N/A');
+			body.querySelectorAll('.dpEntryRestoredRow').forEach(function (row) { row.hidden = false; });
+		}
+	}
+
+	/** The same actions the entry page offers, each posting what its form would have posted */
+	function fillEntryActions(body, data, win, deletedPostId, postEl, attachmentEl) {
+		var container = body.querySelector('.dpEntryActions');
+		if (!container || !data.actions) return;
+
+		data.actions.forEach(function (entry) {
+			var button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'adminFunctions buttonLink';
+			button.textContent = entry.label;
+
+			button.addEventListener('click', function () {
+				runEntryAction(entry.action, {
+					win: win,
+					params: { deletedPostId: deletedPostId, action: entry.action },
+					postEl: postEl,
+					attachmentEl: attachmentEl
+				});
+			});
+
+			container.appendChild(document.createTextNode('['));
+			container.appendChild(button);
+			container.appendChild(document.createTextNode('] '));
+		});
+	}
+
+	function runEntryAction(action, ctx) {
+		var url = moduleUrl();
+		var close = function () { ctx.win.remove(); };
+
+		// restoring, purging or deleting the record rewrites the entry this was read from
+		forgetEntry(entryIdOf(ctx.params));
+
+		switch (action) {
+			case 'restore':
+				restorePost(ctx.postEl, url, ctx.params, close);
+				break;
+			case 'purge':
+				purgePost(ctx.postEl, url, ctx.params, close);
+				break;
+			case 'restoreAttachment':
+				restoreFile(ctx.attachmentEl, ctx.postEl, url, ctx.params, close);
+				break;
+			case 'purgeAttachment':
+				purgeFile(ctx.attachmentEl, ctx.postEl, url, ctx.params, close);
+				break;
+			case 'deleteRecord':
+				deleteEntryRecord(url, ctx.params, close);
+				break;
+		}
+	}
+
 	// ---- actions, shared by the menus and the entry window ----
 
 	// Where the module's own actions are posted to, and where the window reads an entry from
@@ -304,7 +509,7 @@
 			errorMessage: 'Failed to restore the file.',
 			onSuccess: function () {
 				clearAttachmentDeletionEntries(attachmentEl);
-				addAttachmentDeleteEntry(attachmentEl, params);
+				addAttachmentDeleteEntry(attachmentEl, postEl);
 				if (onDone) onDone();
 			}
 		}, params);
@@ -343,10 +548,12 @@
 			});
 
 			window.postWidget.registerActionHandler('restoreDeletedPost', function (ctx) {
+				forgetEntry(entryIdOf(ctx.params));
 				restorePost(ctx.post, ctx.url, ctx.params);
 			});
 
 			window.postWidget.registerActionHandler('purgeDeletedPost', function (ctx) {
+				forgetEntry(entryIdOf(ctx.params));
 				purgePost(ctx.post, ctx.url, ctx.params);
 			});
 		}
@@ -359,10 +566,12 @@
 		});
 
 		window.attachmentWidget.registerActionHandler('restoreDeletedFile', function (ctx) {
+			forgetEntry(entryIdOf(ctx.params));
 			restoreFile(attachmentElOf(ctx), ctx.post, ctx.url, ctx.params);
 		});
 
 		window.attachmentWidget.registerActionHandler('purgeDeletedFile', function (ctx) {
+			forgetEntry(entryIdOf(ctx.params));
 			purgeFile(attachmentElOf(ctx), ctx.post, ctx.url, ctx.params);
 		});
 	}

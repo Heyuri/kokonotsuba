@@ -93,6 +93,19 @@
 	function applySetting() {
 		if (isEnabled()) open();
 		else close();
+
+		announce();
+	}
+
+	/**
+	 * Say where the panel stands, for anything that docks a control of its own in it (the
+	 * [Moderate] button). A static page builds the panel from a fetch, so it can arrive late, and
+	 * the setting can put it away again at any point.
+	 */
+	function announce() {
+		document.dispatchEvent(new CustomEvent('staffAlerts:ready', {
+			detail: { widget: content, visible: !!content && !content.hidden }
+		}));
 	}
 
 	/** Offered once there are contents to show, which means the server called this reader staff. */

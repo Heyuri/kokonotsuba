@@ -198,9 +198,18 @@ class moduleAdmin extends abstractModuleAdmin {
 		return ['success' => true, ...$this->deletedPostRenderer->getEntryData($deletedPost, $roleLevel)];
 	}
 
+	/** Whether this request is the [View entry] window reading one entry. */
+	private function isEntryDataRequest(): bool {
+		return !$this->moduleContext->request->isPost()
+			&& $this->moduleContext->request->getParameter('pageName', 'GET') === 'entryData';
+	}
+
 	public function ModulePage(): void {
-		// first things first, prune posts from the table that have expired
-		$this->pruneDeletedPosts();
+		// first things first, prune posts from the table that have expired — except on the entry
+		// read, which the post menus warm as soon as they open and which changes nothing itself
+		if(!$this->isEntryDataRequest()) {
+			$this->pruneDeletedPosts();
+		}
 
 		// Account session values
 		$staffAccountFromSession = new staffAccountFromSession;
@@ -224,7 +233,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			redirect($redirectUrl);
 		} 
 		// the [View entry] window asks for the entry's metadata and actions
-		else if($this->moduleContext->request->getParameter('pageName', 'GET') === 'entryData') {
+		else if($this->isEntryDataRequest()) {
 			renderJsonPage($this->fetchEntryData($accountId, $roleLevel));
 		}
 		// handle DP visibilty toggle

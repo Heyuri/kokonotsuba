@@ -125,7 +125,8 @@ class attachmentRenderer {
 			$fileBarData['fileSize'],
 			$fileBarData['fileDimensions'],
 			$attachmentButtons,
-			$attachmentClasses
+			$attachmentClasses,
+			(int)$fileData['fileId']
 		);
 
 		// return html
@@ -138,7 +139,8 @@ class attachmentRenderer {
 		string $fileSize,
 		string $fileDimensions,
 		string $attachmentButtons,
-		string $attachmentClasses
+		string $attachmentClasses,
+		int $fileId
 	): string {
 		// render attachment buttons through template if there are any
 		$buttonsHtml = '';
@@ -151,6 +153,8 @@ class attachmentRenderer {
 		// render attachment container
 		return $this->templateEngine->ParseBlock('ATTACHMENT_CONTAINER', [
 			'{$ATTACHMENT_CLASSES}' => $attachmentClasses,
+			// the front-end addresses an attachment by its file id
+			'{$FILE_ID}' => htmlspecialchars((string)$fileId),
 			'{$FILE_INFO_BAR}' => $fileInfoBar,
 			'{$FILE_SIZE}' => $fileSize,
 			'{$FILE_DIMENSIONS}' => $fileDimensions,

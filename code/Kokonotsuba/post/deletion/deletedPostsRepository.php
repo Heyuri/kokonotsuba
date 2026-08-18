@@ -961,6 +961,41 @@ class deletedPostsRepository extends baseRepository {
 	}
 
 	/**
+	 * Fetch the most-recent deleted_post ID for each of the given file IDs.
+	 *
+	 * The file-level counterpart of getDeletedPostIdsByPostUids: one query for a whole selection
+	 * of attachments, so a mass file deletion can answer with a link per file.
+	 *
+	 * @param int[] $fileIds File row IDs.
+	 * @return array<int, int> file ID => deleted post ID, for the IDs that have an entry.
+	 */
+	public function getDeletedPostIdsByFileIds(array $fileIds): array {
+		if (!$fileIds) {
+			return [];
+		}
+
+		$ids = [];
+
+		foreach (array_chunk(array_values($fileIds), self::BATCH_ROW_LIMIT) as $chunk) {
+			$inClause = pdoPlaceholdersForIn($chunk);
+
+			$rows = $this->queryAll(
+				"SELECT file_id, MAX(id) AS id
+				FROM {$this->table}
+				WHERE file_id IN $inClause
+				GROUP BY file_id",
+				$chunk
+			);
+
+			foreach ($rows as $row) {
+				$ids[(int)$row['file_id']] = (int)$row['id'];
+			}
+		}
+
+		return $ids;
+	}
+
+	/**
 	 * Fetch the most-recent deleted_post ID for the given file ID.
 	 *
 	 * @param int $fileId File row ID.

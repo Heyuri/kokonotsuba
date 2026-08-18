@@ -14,6 +14,7 @@ use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\attachmentFileExists;
+use function Kokonotsuba\libraries\getAttachmentsFromPosts;
 use function Kokonotsuba\libraries\generateModerateForm;
 use function Kokonotsuba\libraries\rebuildBoardsFromPosts;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
@@ -104,6 +105,15 @@ class moduleAdmin extends abstractModuleAdmin {
 			'effect' => 'delete',
 			'confirm' => _T('mass_moderate_confirm'),
 			'priority' => 90,
+		]);
+
+		// takes the files off the selection and leaves the posts themselves standing
+		$tools[] = $this->buildMassTool('delfiles', 'Delete files', [
+			'group' => 'Deletion',
+			'effect' => 'deleteFiles',
+			'requires' => 'files',
+			'confirm' => _T('mass_moderate_confirm'),
+			'priority' => 80,
 		]);
 	}
 
@@ -285,6 +295,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		match ($action) {
 			'del', 'delete' => $this->handlePostDeletion($postUids, false),
 			'delmute', 'mute' => $this->handlePostDeletion($postUids, true),
+			'delfiles' => $this->handleSelectionFileDeletion($postUids),
 			default => throw new BoardException('ERROR: Invalid action.'),
 		};
 	}
@@ -408,6 +419,87 @@ class moduleAdmin extends abstractModuleAdmin {
 			array_map(fn(Post $post) => $post->getUid(), $posts),
 			$this->moduleContext->postService
 		);
+	}
+
+	/**
+	 * Take the files off every selected post, leaving the posts themselves standing.
+	 *
+	 * The same shape as a mass post deletion: one read, one file-only deletion pass, one rebuild
+	 * per board the selection reached into. Attachments that are already gone are skipped rather
+	 * than failing the whole selection.
+	 */
+	private function handleSelectionFileDeletion(array $postUids): void {
+		$posts = $this->fetchRequestedPosts($postUids);
+
+		$attachments = array_values(array_filter(
+			getAttachmentsFromPosts($posts),
+			fn(array $attachment) => $this->canRenderAttachmentButton($attachment)
+		));
+
+		if (!$attachments) {
+			throw new BoardException('No files to delete!');
+		}
+
+		// only the posts that actually lost a file need rebuilding or logging
+		$affectedUids = array_values(array_unique(array_map(fn(array $a) => (int)$a['postUid'], $attachments)));
+		$targets = array_values(array_filter($posts, fn(Post $post) => in_array($post->getUid(), $affectedUids, true)));
+
+		$this->moduleContext->transactionManager->run(function () use ($targets, $attachments): void {
+			$this->moduleContext->deletedPostsService->deleteFilesFromPosts($attachments, $this->moduleContext->currentUserId);
+			$this->logFileDeletions($targets);
+		});
+
+		if ($this->moduleContext->request->isAjax()) {
+			sendAjaxAndDetach([
+				'success' => true,
+				'results' => $this->buildFileDeletionResults($attachments),
+			]);
+
+			$this->rebuildAfterDeletion($targets);
+			exit;
+		}
+
+		$this->rebuildAfterDeletion($targets);
+
+		redirect($this->moduleContext->request->getReferer());
+	}
+
+	/**
+	 * What the front-end needs per post: the files it just lost, so each attachment's menu can be
+	 * rebuilt without a reload.
+	 *
+	 * @return array<int, array{files: array<int, array{file_id: int, deleted_link: string, deleted_post_id: int}>}>
+	 */
+	private function buildFileDeletionResults(array $attachments): array {
+		$fileIds = array_map(fn(array $a) => (int)$a['fileId'], $attachments);
+		$deletedPostIds = $this->moduleContext->deletedPostsService->getDeletedPostIdsByFileIds($fileIds);
+
+		$results = [];
+
+		foreach ($attachments as $attachment) {
+			$fileId = (int)$attachment['fileId'];
+			$deletedPostId = $deletedPostIds[$fileId] ?? 0;
+
+			$results[(int)$attachment['postUid']]['files'][] = [
+				'file_id' => $fileId,
+				'deleted_link' => $this->getDeletionViewUrl($deletedPostId),
+				'deleted_post_id' => $deletedPostId,
+			];
+		}
+
+		return $results;
+	}
+
+	/** One log line per board the file deletion touched. */
+	private function logFileDeletions(array $posts): void {
+		$numbersByBoard = [];
+		foreach ($posts as $post) {
+			$numbersByBoard[$post->getBoardUID()][] = 'No.' . $post->getNumber();
+		}
+
+		foreach ($numbersByBoard as $boardUid => $numbers) {
+			$this->logAction('Deleted file for post ' . implode(', ', $numbers), (int)$boardUid);
+		}
 	}
 
 	private function handleAttachmentDeletion(): void {
