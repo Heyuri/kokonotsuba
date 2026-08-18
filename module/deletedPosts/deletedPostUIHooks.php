@@ -23,7 +23,8 @@ class deletedPostUIHooks {
 		private deletedPostUtility $deletedPostUtility,
 		private string $modulePageUrl,
 		private userRole $purgeRole,
-		private widgetMenuPolicy $menuPolicy
+		private widgetMenuPolicy $menuPolicy,
+		private string $entryWindowHtml
 	) {}
 
 	public function runHooks(moduleEngine $moduleEngine, userRole $requiredRole): void {
@@ -113,6 +114,14 @@ class deletedPostUIHooks {
 			'ModerateAttachmentWidget',
 			function(array &$widgetArray, array &$attachment) {
 				$this->onRenderAttachmentPurgeWidget($widgetArray, $attachment);
+			}
+		);
+
+		$moduleEngine->addRoleProtectedListener(
+			$this->purgeRole,
+			'ModuleHeader',
+			function(&$moduleHeader) {
+				$this->onGeneratePurgeModuleHeader($moduleHeader);
 			}
 		);
 
@@ -226,8 +235,8 @@ class deletedPostUIHooks {
 	 * Entries disabled for this board are dropped here: the renderers filter the menus they build,
 	 * but nothing filters a <template> the front-end clones back in.
 	 */
-	private function widgetEntriesToHtml(array $entries): string {
-		$entries = $this->menuPolicy->filter(widgetMenuPolicy::MENU_POST, $entries);
+	private function widgetEntriesToHtml(array $entries, string $menu = widgetMenuPolicy::MENU_POST): string {
+		$entries = $this->menuPolicy->filter($menu, $entries);
 
 		$html = '';
 		foreach ($entries as $w) {
@@ -248,14 +257,51 @@ class deletedPostUIHooks {
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		($this->includeScript)('deletedPosts.js', $moduleHeader);
 
+		// where the window reads an entry from, and posts its actions to
+		$moduleHeader .= '<meta name="deletedPostsModuleUrl" content="' . htmlspecialchars($this->modulePageUrl) . '">';
+
+		// the window's own markup
+		$moduleHeader .= $this->entryWindowHtml;
+
 		// Template for dynamic Deletion submenu injection after a post is deleted live.
 		// JS replaces the '__DPID__' placeholder with the actual deleted-post ID.
 		$templateEntries = [
-			($this->buildWidgetEntry)('#', 'viewDeletedPost', 'View entry', self::DELETION_SUBMENU),
+			($this->buildWidgetEntry)('#', 'viewDeletedPost', 'View entry', self::DELETION_SUBMENU, ['deletedPostId' => '__DPID__']),
 			($this->buildWidgetEntry)($this->modulePageUrl, 'restoreDeletedPost', 'Restore post', self::DELETION_SUBMENU, ['deletedPostId' => '__DPID__', 'action' => 'restore']),
 			($this->buildWidgetEntry)($this->modulePageUrl, 'purgeDeletedPost',   'Purge post',   self::DELETION_SUBMENU, ['deletedPostId' => '__DPID__', 'action' => 'purge']),
 		];
 		$moduleHeader .= '<template id="dp-widget-tmpl">' . $this->widgetEntriesToHtml($templateEntries) . '</template>';
+
+		// The same for a file deleted live, with '__FILEID__' / '__POSTUID__' alongside '__DPID__'
+		$attachmentEntries = [
+			($this->buildWidgetEntry)('#', 'viewDeletedAttachment', 'View entry', self::DELETION_SUBMENU, ['deletedPostId' => '__DPID__']),
+			($this->buildWidgetEntry)($this->modulePageUrl, 'restoreDeletedFile', 'Restore file', self::DELETION_SUBMENU, [
+				'deletedPostId' => '__DPID__',
+				'action' => 'restoreAttachment',
+				'fileId' => '__FILEID__',
+				'postUid' => '__POSTUID__',
+			]),
+		];
+		$moduleHeader .= '<template id="dp-attachment-widget-tmpl">'
+			. $this->widgetEntriesToHtml($attachmentEntries, widgetMenuPolicy::MENU_ATTACHMENT)
+			. '</template>';
+	}
+
+	/**
+	 * Purging is gated on the higher role, so its template entry is emitted separately - the
+	 * listener carrying this one is only registered for staff who may purge.
+	 */
+	private function onGeneratePurgeModuleHeader(string &$moduleHeader): void {
+		$purgeEntry = [
+			($this->buildWidgetEntry)($this->modulePageUrl, 'purgeDeletedFile', 'Purge file', self::DELETION_SUBMENU, [
+				'fileId' => '__FILEID__',
+				'action' => 'purgeFile',
+			]),
+		];
+
+		$moduleHeader .= '<template id="dp-attachment-purge-tmpl">'
+			. $this->widgetEntriesToHtml($purgeEntry, widgetMenuPolicy::MENU_ATTACHMENT)
+			. '</template>';
 	}
 
 	private function onRenderPostWidget(array &$widgetArray, Post &$post): void {
@@ -272,7 +318,8 @@ class deletedPostUIHooks {
 			$deletedEntryUrl,
 			'viewDeletedPost',
 			'View entry',
-			self::DELETION_SUBMENU
+			self::DELETION_SUBMENU,
+			['deletedPostId' => $deletedPostId]
 		);
 
 		// Restore action (POST with CSRF) under the "Deletion" submenu
@@ -313,7 +360,8 @@ class deletedPostUIHooks {
 			$deletedEntryUrl,
 			'viewDeletedAttachment',
 			'View entry',
-			self::DELETION_SUBMENU
+			self::DELETION_SUBMENU,
+			['deletedPostId' => $deletedPostId]
 		);
 
 		// fileId and postUid are unused by the restore itself - they're what the JS needs to put the

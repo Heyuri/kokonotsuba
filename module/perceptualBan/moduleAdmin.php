@@ -137,8 +137,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 
 		if ($this->moduleContext->request->isAjax()) {
-			$deletedLink = $this->getDeletedLinkForFile($fileId);
-			sendAjaxAndDetach(['success' => true, 'deleted_link' => $deletedLink]);
+			sendAjaxAndDetach(['success' => true] + $this->getFileDeletionResult($fileId));
 			$this->rebuildBoardForPost($board, $post);
 			exit;
 		}

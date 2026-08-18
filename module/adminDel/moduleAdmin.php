@@ -435,14 +435,12 @@ class moduleAdmin extends abstractModuleAdmin {
 		});
 
 		if ($this->moduleContext->request->isAjax()) {
-			$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowByFileId($fileId);
-
+			// the file id rides along too: the front-end addresses the file itself for the
+			// deletion entries it adds to that attachment's menu
 			sendAjaxAndDetach([
 				'success' => true,
 				'is_op' => $post->isOp(),
-				'deleted_link' => $this->getDeletionViewUrl($deletedPost->getDeletedPostId()),
-				'deleted_post_id' => $deletedPost->getDeletedPostId()
-			]);
+			] + $this->getFileDeletionResult($fileId));
 
 			$this->rebuildBoardForPost($board, $post);
 			exit;
@@ -453,26 +451,4 @@ class moduleAdmin extends abstractModuleAdmin {
 		redirect($this->moduleContext->request->getReferer());
 	}
 
-	private function getDeletionViewUrl(int $deletedPostId): string {
-		// base url
-		$baseUrl = $this->moduleContext->request->getCurrentUrlNoQuery();
-
-		// parameters for the link
-		$urlParameters = [
-			'pageName' => 'viewMore',
-			'deletedPostId' => $deletedPostId,
-			'moduleMode' => 'admin',
-			'mode' => 'module',
-			'load' => 'deletedPosts'
-		];
-
-		// build the query parameters
-		$queryParameters = http_build_query($urlParameters);
-
-		// construct the link
-		$viewUrl = $baseUrl . '?' . $queryParameters;
-
-		// return the url
-		return $viewUrl;
-	}
 }

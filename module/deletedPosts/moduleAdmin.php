@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\deletedPosts;
 
+use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\listeners\MassModerateListenerTrait;
 use Kokonotsuba\userRole;
@@ -32,6 +33,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	// class used for handling dp requests
 	private deletedPostActionHandler $deletedPostActionHandler;
+
+	// shared checks on a deletion record
+	private deletedPostUtility $deletedPostUtility;
 
 	// handles
 	private deletedPostRenderer $deletedPostRenderer;
@@ -65,7 +69,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$moduleTemplateEngine = $this->initModuleTemplateEngine('modules.deletedPosts.DELETED_POSTS_TEMPLATE', 'kokoimg');
 
 		// init utility class
-		$deletedPostUtility = new deletedPostUtility(
+		$this->deletedPostUtility = $deletedPostUtility = new deletedPostUtility(
 			$this, 
 			$this->moduleContext->deletedPostsService,
 			$this->requiredRoleActionForModAll,
@@ -100,6 +104,12 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->moduleContext->request
 		);
 
+		// the [View entry] window's body, rendered here so its markup stays in a template
+		$entryWindowHtml = $this->generateTemplate(
+			'dpEntryWindowTemplate',
+			$moduleTemplateEngine->ParseBlock('DELETED_POST_WINDOW', [])
+		);
+
 		// init ui hooks class
 		$deletedPostUIHooks = new deletedPostUIHooks(
 			$this->includeScript(...),
@@ -107,7 +117,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			$deletedPostUtility,
 			$this->modulePageUrl,
 			$this->requiredRoleActionForModAll,
-			$this->getMenuPolicy()
+			$this->getMenuPolicy(),
+			$entryWindowHtml
 		);
 
 		// run hooks
@@ -163,6 +174,30 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
+	/**
+	 * Read one entry for the window the [View entry] widget opens. Gated exactly like acting on it:
+	 * staff who may not touch someone else's deletion may not read it either.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function fetchEntryData(int $accountId, userRole $roleLevel): array {
+		$deletedPostId = (int)$this->moduleContext->request->getParameter('deletedPostId', 'GET');
+
+		if($deletedPostId <= 0) {
+			throw new BoardException(_T('deleted_post_not_found'));
+		}
+
+		$this->deletedPostUtility->authenticateDeletedPost($deletedPostId, $roleLevel, $accountId);
+
+		$deletedPost = $this->moduleContext->deletedPostsService->getDeletedPostRowById($deletedPostId);
+
+		if(!$deletedPost) {
+			throw new BoardException(_T('deleted_post_not_found'));
+		}
+
+		return ['success' => true, ...$this->deletedPostRenderer->getEntryData($deletedPost, $roleLevel)];
+	}
+
 	public function ModulePage(): void {
 		// first things first, prune posts from the table that have expired
 		$this->pruneDeletedPosts();
@@ -188,6 +223,10 @@ class moduleAdmin extends abstractModuleAdmin {
 			$redirectUrl = $result['redirect'] ?? $this->modulePageUrl;
 			redirect($redirectUrl);
 		} 
+		// the [View entry] window asks for the entry's metadata and actions
+		else if($this->moduleContext->request->getParameter('pageName', 'GET') === 'entryData') {
+			renderJsonPage($this->fetchEntryData($accountId, $roleLevel));
+		}
 		// handle DP visibilty toggle
 		else if($this->moduleContext->request->hasParameter('toggleVisibility', 'GET')) {
 			$this->handleDpToggle();

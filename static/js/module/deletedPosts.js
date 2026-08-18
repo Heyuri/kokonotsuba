@@ -78,18 +78,58 @@
 		data.appendChild(clone);
 	}
 
-	// Drop widget entries from an attachment's hidden data container
-	function removeAttachmentWidgetActions(attachmentEl, actions) {
+	// Drop this file's deletion entries, both the server-rendered ones and the dataset the
+	// augmenter rebuilds them from after a live deletion
+	function clearAttachmentDeletionEntries(attachmentEl) {
 		if (!attachmentEl) return;
 
-		var data = attachmentEl.querySelector('.attachmentWidgetData');
-		if (!data) return;
+		removeAttachmentWidgetActions(attachmentEl, ['viewDeletedAttachment', 'restoreDeletedFile', 'purgeDeletedFile']);
 
-		actions.forEach(function (action) {
-			data.querySelectorAll('a[data-action="' + action + '"]').forEach(function (a) {
-				a.remove();
+		delete attachmentEl.dataset.deletedPostId;
+		delete attachmentEl.dataset.deletedLink;
+	}
+
+	/**
+	 * Build menu items from a server-rendered <template>, so labels, URLs and submenu names all
+	 * come from the server.
+	 *
+	 * @param {string} templateId  Element id of the <template>
+	 * @param {Object} values      Placeholder ('__DPID__', ...) => the real value
+	 * @param {Function} [hrefFor] Given (action, templateHref), the href to use — return null to
+	 *                             drop the entry, for a link that isn't known yet
+	 */
+	function itemsFromTemplate(templateId, values, hrefFor) {
+		var tmpl = document.getElementById(templateId);
+		if (!tmpl) return [];
+
+		var items = [];
+
+		tmpl.content.querySelectorAll('a[data-action]').forEach(function (a) {
+			var action = a.getAttribute('data-action') || '';
+			var href = a.getAttribute('href') || '#';
+
+			if (hrefFor) href = hrefFor(action, href);
+			if (href === null) return;
+
+			// fill the placeholders the server left in the parameters
+			var params = {};
+			for (var i = 0; i < a.attributes.length; i++) {
+				var attr = a.attributes[i];
+				if (attr.name.indexOf('data-param-') !== 0) continue;
+
+				params[attr.name.slice(11)] = values.hasOwnProperty(attr.value) ? values[attr.value] : attr.value;
+			}
+
+			items.push({
+				href: href,
+				action: action,
+				label: a.getAttribute('data-label') || '',
+				subMenu: a.getAttribute('data-submenu') || '',
+				params: params
 			});
 		});
+
+		return items;
 	}
 
 	function hideDeletedPost(postContainer) {
@@ -160,181 +200,219 @@
 		});
 	}
 
+	// ---- actions, shared by the menus and the entry window ----
+
+	// Where the module's own actions are posted to, and where the window reads an entry from
+	function moduleUrl() {
+		var meta = document.querySelector('meta[name="deletedPostsModuleUrl"]');
+		return meta ? meta.content : '';
+	}
+
+	// Restore a deleted post, undeleting its styling first and putting it back if the request fails
+	function restorePost(postEl, url, params, onDone) {
+		if (!postEl || !url) return;
+
+		var restyled = [];
+		var hiddenIndicators = [];
+
+		function applyRestore(el) {
+			if (!el) return;
+			el.classList.remove('deletedPost');
+			restyled.push(el);
+			el.querySelectorAll('.indicator-deleted, .indicator-fileDeleted').forEach(function (ind) {
+				ind.classList.add('indicatorHidden');
+				hiddenIndicators.push(ind);
+			});
+		}
+
+		if (postEl.classList.contains('op')) {
+			var thread = postEl.closest('.thread');
+			if (thread) {
+				applyRestore(thread);
+				thread.querySelectorAll('.post').forEach(applyRestore);
+			}
+		} else {
+			applyRestore(postEl);
+		}
+
+		sendModuleAction(url, {
+			revertUI: function () {
+				restyled.forEach(function (el) { el.classList.add('deletedPost'); });
+				hiddenIndicators.forEach(function (ind) { ind.classList.remove('indicatorHidden'); });
+			},
+			successMessage: 'Post restored.',
+			errorMessage: 'Failed to restore post.',
+			onSuccess: function () {
+				removeWidgetActions(postEl, ['viewDeletedPost', 'restoreDeletedPost', 'purgeDeletedPost']);
+
+				// clear the id stored after a live deletion, so the menu stops rebuilding the entries
+				delete postEl.dataset.deletedPostId;
+
+				addPostDeleteEntries(postEl);
+				if (onDone) onDone();
+			}
+		}, params);
+	}
+
+	// Put the post's delete/mute entries back from adminDel's template
+	function addPostDeleteEntries(postEl) {
+		var tmpl = document.getElementById('del-restore-tmpl');
+		var refs = postEl.querySelector('.widgetRefs');
+		if (!tmpl || !refs) return;
+
+		var clone = tmpl.content.cloneNode(true);
+		var postUid = postEl.dataset.postUid;
+
+		clone.querySelectorAll('a').forEach(function (a) {
+			if (a.getAttribute('data-param-post_uid') === '__POSTUID__') {
+				a.setAttribute('data-param-post_uid', postUid);
+			}
+		});
+
+		// prepend so delete/mute appear first, matching server-side order
+		refs.insertBefore(clone, refs.firstChild);
+	}
+
+	function purgePost(postEl, url, params, onDone) {
+		if (!postEl || !url) return;
+
+		sendModuleAction(url, {
+			successMessage: 'Post purged.',
+			errorMessage: 'Failed to purge post.',
+			onSuccess: function () {
+				fadeAndRemovePost(postEl);
+				if (onDone) onDone();
+			}
+		}, params);
+	}
+
+	function restoreFile(attachmentEl, postEl, url, params, onDone) {
+		if (!url) return;
+
+		var indicator = attachmentEl ? attachmentEl.querySelector('.indicator-fileDeleted') : null;
+
+		// Optimistic UI: undelete the file, put it back if the request fails
+		if (attachmentEl) attachmentEl.classList.remove('deletedFile');
+		if (indicator) indicator.classList.add('indicatorHidden');
+
+		sendModuleAction(url, {
+			revertUI: function () {
+				if (attachmentEl) attachmentEl.classList.add('deletedFile');
+				if (indicator) indicator.classList.remove('indicatorHidden');
+			},
+			successMessage: 'File restored.',
+			errorMessage: 'Failed to restore the file.',
+			onSuccess: function () {
+				clearAttachmentDeletionEntries(attachmentEl);
+				addAttachmentDeleteEntry(attachmentEl, params);
+				if (onDone) onDone();
+			}
+		}, params);
+	}
+
+	function purgeFile(attachmentEl, postEl, url, params, onDone) {
+		if (!url) return;
+
+		sendModuleAction(url, {
+			successMessage: 'File purged.',
+			errorMessage: 'Failed to purge the file.',
+			onSuccess: function () {
+				// the file is gone, so drop the entries that act on it
+				clearAttachmentDeletionEntries(attachmentEl);
+
+				if (attachmentEl) attachmentEl.classList.add('deletedFile');
+				showDeletionIndicator(postEl || attachmentEl, 'file', attachmentEl);
+				if (onDone) onDone();
+			}
+		}, params);
+	}
+
+	// Remove a restored post's record. The post itself is untouched, so nothing on the page changes.
+	function deleteEntryRecord(url, params, onDone) {
+		sendModuleAction(url, {
+			successMessage: 'Record deleted.',
+			errorMessage: 'Failed to delete the record.',
+			onSuccess: function () { if (onDone) onDone(); }
+		}, params);
+	}
+
 	if (window.postWidget) {
 		if (typeof window.postWidget.registerActionHandler === 'function') {
 			window.postWidget.registerActionHandler('viewDeletedPost', function (ctx) {
-				if (ctx && ctx.url && ctx.url !== '#') window.location.assign(ctx.url);
+				openEntryWindow(ctx, ctx.post, null);
 			});
 
 			window.postWidget.registerActionHandler('restoreDeletedPost', function (ctx) {
-				var post = ctx.post;
-				if (!post || !ctx.url) return;
-
-				// Optimistic UI: strip deleted styling immediately
-				var addedClasses = [];
-				var hiddenIndicators = [];
-
-				function applyRestore(el) {
-					if (!el) return;
-					el.classList.remove('deletedPost');
-					addedClasses.push(el);
-					el.querySelectorAll('.indicator-deleted, .indicator-fileDeleted').forEach(function (ind) {
-						ind.classList.add('indicatorHidden');
-						hiddenIndicators.push(ind);
-					});
-				}
-
-				if (post.classList.contains('op')) {
-					var thread = post.closest('.thread');
-					if (thread) {
-						applyRestore(thread);
-						thread.querySelectorAll('.post').forEach(applyRestore);
-					}
-				} else {
-					applyRestore(post);
-				}
-
-				sendModuleAction(ctx.url, {
-					revertUI: function () {
-						addedClasses.forEach(function (el) { el.classList.add('deletedPost'); });
-						hiddenIndicators.forEach(function (ind) { ind.classList.remove('indicatorHidden'); });
-					},
-					successMessage: 'Post restored.',
-					errorMessage: 'Failed to restore post.',
-					onSuccess: function () {
-						removeWidgetActions(post, ['viewDeletedPost', 'restoreDeletedPost', 'purgeDeletedPost']);
-
-						// Clear the deleted-post-id stored after live deletion
-						delete post.dataset.deletedPostId;
-
-						// Re-inject delete/mute entries from the adminDel template
-						var delTmpl = document.getElementById('del-restore-tmpl');
-						if (delTmpl) {
-							var refs = post.querySelector('.widgetRefs');
-							if (refs) {
-								var clone = delTmpl.content.cloneNode(true);
-								var postUid = post.dataset.postUid;
-								clone.querySelectorAll('a').forEach(function (a) {
-									if (a.getAttribute('data-param-post_uid') === '__POSTUID__') {
-										a.setAttribute('data-param-post_uid', postUid);
-									}
-								});
-								// Prepend so delete/mute appear first, matching server-side order
-								refs.insertBefore(clone, refs.firstChild);
-							}
-						}
-					}
-				}, ctx.params);
+				restorePost(ctx.post, ctx.url, ctx.params);
 			});
 
 			window.postWidget.registerActionHandler('purgeDeletedPost', function (ctx) {
-				var post = ctx.post;
-				if (!post || !ctx.url) return;
-
-				sendModuleAction(ctx.url, {
-					successMessage: 'Post purged.',
-					errorMessage: 'Failed to purge post.',
-					onSuccess: function () {
-						fadeAndRemovePost(post);
-					}
-				}, ctx.params);
+				purgePost(ctx.post, ctx.url, ctx.params);
 			});
 		}
 	}
 
 	// The attachment menu's Deletion submenu
 	if (window.attachmentWidget && typeof window.attachmentWidget.registerActionHandler === 'function') {
-		// 'View entry' has no handler on purpose - it's a plain link, so it can be opened in a new tab
+		window.attachmentWidget.registerActionHandler('viewDeletedAttachment', function (ctx) {
+			openEntryWindow(ctx, ctx.post, attachmentElOf(ctx));
+		});
 
 		window.attachmentWidget.registerActionHandler('restoreDeletedFile', function (ctx) {
-			var menuItem = ctx && ctx.menuItem;
-			if (!menuItem || !menuItem.href) return;
-
-			var attachmentEl = attachmentElOf(ctx);
-			var indicator = attachmentEl ? attachmentEl.querySelector('.indicator-fileDeleted') : null;
-
-			// Optimistic UI: undelete the file, put it back if the request fails
-			if (attachmentEl) attachmentEl.classList.remove('deletedFile');
-			if (indicator) indicator.classList.add('indicatorHidden');
-
-			sendModuleAction(menuItem.href, {
-				revertUI: function () {
-					if (attachmentEl) attachmentEl.classList.add('deletedFile');
-					if (indicator) indicator.classList.remove('indicatorHidden');
-				},
-				successMessage: 'File restored.',
-				errorMessage: 'Failed to restore the file.',
-				onSuccess: function () {
-					removeAttachmentWidgetActions(attachmentEl, ['restoreDeletedFile', 'viewDeletedAttachment', 'purgeDeletedFile']);
-					addAttachmentDeleteEntry(attachmentEl, ctx.params);
-				}
-			}, ctx.params);
+			restoreFile(attachmentElOf(ctx), ctx.post, ctx.url, ctx.params);
 		});
 
 		window.attachmentWidget.registerActionHandler('purgeDeletedFile', function (ctx) {
-			var menuItem = ctx && ctx.menuItem;
-			if (!menuItem || !menuItem.href) return;
-
-			var attachmentEl = attachmentElOf(ctx);
-
-			sendModuleAction(menuItem.href, {
-				successMessage: 'File purged.',
-				errorMessage: 'Failed to purge the file.',
-				onSuccess: function () {
-					// the file is gone, so drop the entries that act on it
-					removeAttachmentWidgetActions(attachmentEl, ['purgeDeletedFile', 'restoreDeletedFile', 'viewDeletedAttachment']);
-
-					if (attachmentEl) attachmentEl.classList.add('deletedFile');
-					showDeletionIndicator(ctx.post || attachmentEl, 'file', attachmentEl);
-				}
-			}, ctx.params);
+			purgeFile(attachmentElOf(ctx), ctx.post, ctx.url, ctx.params);
 		});
 	}
 
-	// Augment the post widget menu: when a post has been deleted live (postDeletion.js sets
-	// dataset.deletedPostId), clone the server-rendered <template id="dp-widget-tmpl"> and
-	// return its entries — labels, URLs, and subMenu name all come from the server.
+	// Augment the post menu: when a post has been deleted live (postDeletion.js sets
+	// dataset.deletedPostId), add the Deletion submenu from the server-rendered template.
 	if (window.postWidget && typeof window.postWidget.registerMenuAugmenter === 'function') {
 		window.postWidget.registerMenuAugmenter(function (ctx) {
 			var post = ctx.post;
 			if (!post) return [];
 
-			// data-deleted-post-id is set by postDeletion.js after a live deletion
 			var deletedPostId = post.dataset.deletedPostId;
 			if (!deletedPostId) return [];
 
-			// Don't add if already present (rendered server-side or previously injected)
+			// don't add if already present (rendered server-side or previously injected)
 			if (post.querySelector('.widgetRefs a[data-action="restoreDeletedPost"]')) return [];
 
-			var tmpl = document.getElementById('dp-widget-tmpl');
-			if (!tmpl) return [];
-
-			var items = [];
-			tmpl.content.querySelectorAll('a[data-action]').forEach(function (a) {
-				var action  = a.getAttribute('data-action')  || '';
-				var label   = a.getAttribute('data-label')   || '';
-				var subMenu = a.getAttribute('data-submenu') || '';
-				var href    = a.getAttribute('href')         || '#';
-
-				if (action === 'viewDeletedPost') {
-					var viewLink = post.dataset.deletedLink;
-					if (!viewLink) return; // no link yet — skip
-					href = viewLink;
-				}
-
-				// Collect params and replace the placeholder with the real deleted-post ID
-				var params = {};
-				for (var i = 0; i < a.attributes.length; i++) {
-					var attr = a.attributes[i];
-					if (attr.name.indexOf('data-param-') === 0) {
-						var key = attr.name.slice(11);
-						params[key] = attr.value === '__DPID__' ? deletedPostId : attr.value;
-					}
-				}
-
-				items.push({ href: href, action: action, label: label, subMenu: subMenu, params: params });
+			return itemsFromTemplate('dp-widget-tmpl', { '__DPID__': deletedPostId }, function (action, href) {
+				// the entry's link only exists once the deletion has happened
+				return action === 'viewDeletedPost' ? (post.dataset.deletedLink || null) : href;
 			});
-			return items;
+		});
+	}
+
+	// The same for the attachment menu, after a file has been deleted live. The purge entry comes
+	// from its own template, which the server only emits for staff who may purge.
+	if (window.attachmentWidget && typeof window.attachmentWidget.registerMenuAugmenter === 'function') {
+		window.attachmentWidget.registerMenuAugmenter(function (ctx) {
+			var attachmentEl = attachmentElOf(ctx);
+			if (!attachmentEl) return [];
+
+			// set by postDeletionLib.js from the deletion response
+			var deletedPostId = attachmentEl.dataset.deletedPostId;
+			if (!deletedPostId) return [];
+
+			var data = attachmentEl.querySelector('.attachmentWidgetData');
+			if (data && data.querySelector('a[data-action="restoreDeletedFile"]')) return [];
+
+			var values = {
+				'__DPID__': deletedPostId,
+				'__FILEID__': attachmentEl.dataset.fileId || '',
+				'__POSTUID__': (ctx.post && ctx.post.dataset.postUid) || ''
+			};
+
+			function hrefFor(action, href) {
+				return action === 'viewDeletedAttachment' ? (attachmentEl.dataset.deletedLink || null) : href;
+			}
+
+			return itemsFromTemplate('dp-attachment-widget-tmpl', values, hrefFor)
+				.concat(itemsFromTemplate('dp-attachment-purge-tmpl', values, hrefFor));
 		});
 	}
 
