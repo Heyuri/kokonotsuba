@@ -25,7 +25,7 @@
 					<td class="postblock"><label>Options</label></td>
 					<td>
 						<label id="move-thread-leave-shadow-thread" title="Leave original thread up and lock it">
-							<input type="checkbox" name="leave-shadow-thread" checked value="1">Leave shadow thread
+							<input type="checkbox" name="leave-shadow-thread" value="1">Leave shadow thread
 						</label>		
 					</td>
 				</tr>
