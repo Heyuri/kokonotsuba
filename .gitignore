@@ -1,3 +1,4 @@
 *.html
 CLAUDE.md
 databaseSettings.php
+.vscode/sftp.json
