@@ -85,7 +85,7 @@ function getBoardStorageDir() {
 // Function to sanitize table names using regular expression validation
 function sanitizeTableName($tableName) {
     // Validat e table name: Only allow alphanumeric characters and underscores
-    if (!preg_match('/^[a-zA-Z0-9_]+$/', $tableName)) {
+    if (!preg_match('/\A[a-zA-Z0-9_]+\z/', $tableName)) {
         throw new InvalidArgumentException("Invalid table name: $tableName. Only alphanumeric characters and underscores are allowed.");
     }
     return $tableName;
@@ -370,7 +370,7 @@ class tableCreator {
                 `is_sticky` BOOL DEFAULT FALSE,
                 PRIMARY KEY (`insert_id`),
                 CONSTRAINT fk_thread_boardUID FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
-                INDEX (`thread_uid`),
+                UNIQUE KEY uq_thread_uid (`thread_uid`),
                 INDEX (`last_reply_time`),
                 INDEX (`last_bump_time`),
                 INDEX (`thread_created_time`)
@@ -384,7 +384,7 @@ class tableCreator {
                 `thread_uid` VARCHAR(255) NOT NULL,
                 `post_position` INT DEFAULT 0,
                 `is_op` BOOLEAN NOT NULL,
-                `root` TIMESTAMP NOT NULL,
+                `root` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 `md5chksum` TEXT,
                 `category` TEXT,
                 `pwd` TEXT NOT NULL,
@@ -453,18 +453,19 @@ class tableCreator {
                 PRIMARY KEY (`id`),
                 INDEX (role),
                 INDEX (time_added),
-                INDEX (name),
+                INDEX (`name`(64)),
                 INDEX (board_uid)
             ) ENGINE=InnoDB;",
     
             "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['ACCOUNT_TABLE']} (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                username TEXT NOT NULL UNIQUE,
+                username TEXT NOT NULL,
                 role INT DEFAULT 0,
                 password_hash TEXT NOT NULL,
                 number_of_actions INT DEFAULT 0,
-                last_login TIMESTAMP DEFAULT NULL,
+                last_login TIMESTAMP NULL DEFAULT NULL,
                 date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY uq_username (username(191)),
                 index(last_login),
                 index(date_added)
             ) ENGINE=InnoDB;",
