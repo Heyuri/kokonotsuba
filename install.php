@@ -345,7 +345,7 @@ class tableCreator {
                 `storage_directory_name` TEXT NOT NULL,
                 `subdomain` VARCHAR(253) NOT NULL DEFAULT '',
                 `listed` BOOL DEFAULT TRUE,
-                `date_added` DATE DEFAULT CURRENT_DATE,
+                `date_added` DATE DEFAULT (CURRENT_DATE),
                 PRIMARY KEY(`board_uid`),
                 INDEX(date_added)
             ) ENGINE=InnoDB;",
@@ -443,7 +443,7 @@ class tableCreator {
             "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['ACTIONLOG_TABLE']} (
                 `id` INT NOT NULL AUTO_INCREMENT,
                 `time_added` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                `date_added` DATE DEFAULT CURRENT_DATE,
+                `date_added` DATE DEFAULT (CURRENT_DATE),
                 `name` TEXT NOT NULL,
                 `role` INT NOT NULL,
                 `log_action` TEXT NOT NULL,
