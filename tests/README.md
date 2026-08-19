@@ -84,14 +84,26 @@ tests/
     TestRunner.php       Discovery + execution + coloured reporting
     Fuzzer.php           Property-based fuzzer + input generators
     i18nStub.php         Test stub for the _T() translation helper
+    InstallerHarness.php Loads install.php's declarations without running the installer
     AssertionFailedException.php
   unit/
     Puchiko/             Tests for the helper functions
     Kokonotsuba/         Tests for core classes (e.g. userRole)
     Modules/             Tests for the module logic layer
+  fuzz/                  Per-domain fuzz targets, auto-included by fuzz.php
+  integration/           Scripts run directly; need a database (see each file's header)
   fixtures/
     global/              Committed homoglyph map so normalisation tests stay offline
 ```
+
+### Testing install.php
+
+install.php is a front controller: requiring it defines ROOTPATH, opens a database connection and
+dispatches on `$_REQUEST`. `InstallerHarness` tokenizes the file and re-declares only its `use`,
+`function` and `class` declarations, in a private namespace, so the installer's logic can be tested
+without any of that running. `InstallerTest.php` covers identifier validation, the config-template
+builder and the shape of the DDL; the DDL itself is executed against a real server by
+`tests/integration/installSchema.php`.
 
 ### Testing a module class
 
