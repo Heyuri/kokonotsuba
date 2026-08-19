@@ -18,10 +18,17 @@ If you are going to suggest pull requests, please make sure the change would wor
 ## Dependencies
 - mbstring
 - pdo
+- php-mysql (or any other suitable pdo driver)
 - gd
 - bcmath
 - ffmpeg
 - exiftool
+
+If you are on Debian, try use the below commands to install all PHP dependencies:
+
+`apt update`
+
+`apt install php-mbstring php-pdo php-mysql php-gd php-bcmath ffmpeg exiftool`
 
 ## Basic installation instructions
 
@@ -53,18 +60,26 @@ In mariadb, run these:
 
 ### 3. Permissions & Ownership
 For the backend's global directory:
+
 `chown -R sysuser:webgroup`
+
 `chmod 770 global/`
+
 `chmod -R 770 global/board-storages/`
+
 `chmod -R 770 global/board-configs/`
 
 Once again lets say the first board is called `test`
 For the first board:
+
 `chmod -R 770 test`
+
 `chown -R sysuser:webgroup test`
 
 Also ensure that the directory that your boards are in can be written to so board creation/deletion can work. You can do this by:
+
 `chown sysuser:webgroup /var/www/html`
+
 `chmod 770 /var/www/html`
 
 ### 4. Configure
@@ -76,7 +91,7 @@ You'll need to set your database creds and database name here
 
 2. Then set the database name to the name of the database you created - in this case `kokonotsuba`.
 
-#### globalconfig.php
+#### global/globalconfig.php
 You can configure most things after installing but these will be required for your new board to behave as expected.
 
 1. Set the value of `'WEBSITE_URL'` to the base URL of where your koko boards are located in web root
