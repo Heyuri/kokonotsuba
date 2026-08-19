@@ -6,5 +6,5 @@
 		{$THREADREAR}
 		<!--&DELFORM/-->
 	</form>
-	{$BOTTOM_PAGENAV}
+	<!--&IF($BOTTOM_PAGENAV,'{$BOTTOM_PAGENAV}','')-->
 	<div id="postarea2"></div>
