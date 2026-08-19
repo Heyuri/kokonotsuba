@@ -1,12 +1,5 @@
 <?php
 
-/*
- * Copy to databaseSettings.php and fill in. That file is not tracked by git, so it survives
- * updates and never carries real credentials into the repository.
- *
- * Table names are not here — they live in tables.php, which is tracked.
- */
-
 return [
 	'DATABASE_USERNAME' => 'user',
 	'DATABASE_PASSWORD' => 'password',
