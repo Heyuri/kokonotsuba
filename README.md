@@ -18,10 +18,17 @@ If you are going to suggest pull requests, please make sure the change would wor
 ## Dependencies
 - mbstring
 - pdo
+- php-mysql (or any other suitable pdo driver)
 - gd
 - bcmath
 - ffmpeg
 - exiftool
+
+If you are on Debian, try use the below commands to install all PHP dependencies:
+
+`apt update`
+
+`apt install php-mbstring php-pdo php-mysql php-gd php-bcmath ffmpeg exiftool`
 
 ## Basic installation instructions
 
