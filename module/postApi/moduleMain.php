@@ -2,9 +2,13 @@
 
 namespace Kokonotsuba\Modules\postApi;
 
+use Kokonotsuba\board\board;
+use Kokonotsuba\containers\moduleEngineContext;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\module_classes\traits\listeners\FormFuncsListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
+use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\renderers\postRenderer;
 use Kokonotsuba\template\templateEngine;
@@ -21,9 +25,6 @@ class moduleMain extends abstractModuleMain {
 	use FormFuncsListenerTrait;
 	use ModuleHeaderListenerTrait;
 
-	/** Resolved filesystem path to the cache directory. */
-	private string $cacheDir;
-
 	/** Memoized staff-session check for this request (null until first resolved). */
 	private ?bool $isStaffSession = null;
 
@@ -32,6 +33,9 @@ class moduleMain extends abstractModuleMain {
 
 	/** Fallback engine, built on first use and reused across the posts of one request. */
 	private ?templateEngine $fallbackTemplateEngine = null;
+
+	/** Module engines keyed by board UID and template engine, reused across one request. */
+	private array $moduleEnginesByBoard = [];
 
 	/**
 	 * Whether the current request comes from a logged-in staff member.
@@ -378,6 +382,39 @@ class moduleMain extends abstractModuleMain {
 		return $this->fallbackTemplateEngine;
 	}
 
+	/**
+	 * Module engine for the post's own board, bound to the given template engine.
+	 *
+	 * A post can belong to another board, and the render hooks that decorate it come from
+	 * that board's module list and config, so the engine is built against the target board.
+	 * The template engine stays the requesting page's own, so the markup matches the page
+	 * the HTML is being fetched into rather than the target board's template.
+	 *
+	 * Engines are cached per board and template engine: building one instantiates every
+	 * enabled module, and a thread's posts usually share both.
+	 */
+	private function getModuleEngineForBoard(board $board, templateEngine $templateEngine): moduleEngine {
+		$cacheKey = $board->getBoardUID() . '|' . spl_object_id($templateEngine);
+
+		if (!isset($this->moduleEnginesByBoard[$cacheKey])) {
+			$config = $board->loadBoardConfig();
+
+			$moduleEngineContext = new moduleEngineContext(
+				$config,
+				$board->getConfigValue('LIVE_INDEX_FILE'),
+				$board->getConfigValue('ModuleList'),
+				$templateEngine,
+				$board,
+				new postDateFormatter($config['TIME_ZONE']),
+				$this->moduleContext->getContainer()
+			);
+
+			$this->moduleEnginesByBoard[$cacheKey] = new moduleEngine($moduleEngineContext);
+		}
+
+		return $this->moduleEnginesByBoard[$cacheKey];
+	}
+
 	/** Run a post through the render pipeline with the given template engine. */
 	private function renderPostWithTemplate(Post $post, templateEngine $templateEngine): string {
 		// Resolve the board for this post
@@ -394,7 +431,7 @@ class moduleMain extends abstractModuleMain {
 		$postRenderer = new postRenderer(
 			$board,
 			$config,
-			$this->moduleContext->moduleEngine,
+			$this->getModuleEngineForBoard($board, $templateEngine),
 			$templateEngine,
 			[],
 			$this->moduleContext->request

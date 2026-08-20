@@ -1,2 +1,4 @@
 *.html
 CLAUDE.md
+databaseSettings.php
+global/globalconfig.php

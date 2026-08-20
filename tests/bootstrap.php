@@ -109,5 +109,6 @@ require __DIR__ . '/framework/TestCase.php';
 require __DIR__ . '/framework/TestRunner.php';
 require __DIR__ . '/framework/Fuzzer.php';
 require __DIR__ . '/framework/InMemoryConfigRepository.php';
+require __DIR__ . '/framework/InstallerHarness.php';
 
 return $root;

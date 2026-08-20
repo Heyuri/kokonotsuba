@@ -785,11 +785,61 @@ class tableCreator {
     
         // Use prepared statements for execution
         foreach ($queries as $query) {
-            $stmt = $this->db->prepare($query);
-            $stmt->execute();
+            $this->runCreateStatement($query);
         }
     }
-    
+
+    /**
+     * Execute one CREATE TABLE, naming the table in the failure so the error log
+     * says which statement the server rejected rather than just that one did.
+     *
+     * @param string $query CREATE TABLE statement.
+     * @return void
+     * @throws RuntimeException If the server rejects the statement.
+     */
+    private function runCreateStatement(string $query): void {
+        try {
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            return;
+        } catch (PDOException $e) {
+            preg_match('/CREATE TABLE IF NOT EXISTS\s+`?([A-Za-z0-9_]+)`?/i', $query, $matches);
+            $table = $matches[1] ?? 'unknown';
+
+            error_log("Installer: CREATE TABLE `$table` failed: " . $e->getMessage());
+            error_log('Installer: failing statement: ' . preg_replace('/\s+/', ' ', trim($query)));
+
+            // 1215/1005 say nothing useful on their own; InnoDB keeps the real reason here.
+            $foreignKeyError = $this->latestForeignKeyError();
+            if ($foreignKeyError !== '') {
+                error_log("Installer: InnoDB's last foreign key error: $foreignKeyError");
+            }
+
+            throw new RuntimeException("Failed to create table `$table`: " . $e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
+     * InnoDB's own account of the last foreign key failure, when the DB user may read it.
+     *
+     * @return string The LATEST FOREIGN KEY ERROR block, or '' when unavailable.
+     */
+    private function latestForeignKeyError(): string {
+        try {
+            // Needs the global PROCESS privilege; absent it, we simply have nothing to add.
+            $row = $this->db->query('SHOW ENGINE INNODB STATUS')->fetch();
+        } catch (PDOException $e) {
+            return '';
+        }
+
+        $status = is_array($row) ? ($row['Status'] ?? '') : '';
+        if (!preg_match('/LATEST FOREIGN KEY ERROR\s*-+\s*(.*?)(?=\n-{10,})/s', (string) $status, $matches)) {
+            return '';
+        }
+
+        return preg_replace('/\s+/', ' ', trim($matches[1]));
+    }
+
 }
 
 class accountTable {
