@@ -1278,3 +1278,12 @@ a.linkjs {
 
 .configChangesButtons { flex: 0 0 auto; display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px; }
 .configChangesButtons button { cursor: pointer; padding: 2px 10px; }
+
+/************************ Error page ******************************/
+
+/* The blanket error's image. Width/height are on the tag so the page does not reflow when it
+   loads; this keeps it inside a narrow viewport without losing that aspect ratio. */
+.errorImage {
+	max-width: 100%;
+	height: auto;
+}

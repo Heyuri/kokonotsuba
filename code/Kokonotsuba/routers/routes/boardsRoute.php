@@ -55,7 +55,9 @@ class boardsRoute {
 
 		// admin forms for importing/creating boards
 		if($authRoleLevel === userRole::LEV_ADMIN) {
-			$defaultPath = dirname(getcwd()) . '/';
+			// Boards live under the backend's boards/ directory; fall back to this board's
+			// parent for an install laid out the old way.
+			$defaultPath = is_dir(getBoardsDir()) ? getBoardsDir() : dirname(getcwd()) . '/';
 			// create board form
 			$templateValues['{$CREATE_BOARD}'] = $this->adminTemplateEngine->ParseBlock('CREATE_BOARD', [
 				'{$DEFAULT_CDN_DIR}' => $this->config['CDN_DIR'],

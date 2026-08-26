@@ -100,18 +100,23 @@ function getDirectorySize($directory): int|false {
 }
 
 /**
- * Simple directory creation (die on failure).
+ * Create a directory if it isn't there already.
+ *
+ * Returns the path only when this call created it, so a caller collecting paths for rollback
+ * never ends up deleting a directory that was already in use.
  *
  * @param string $directoryName
- * @return void
+ * @return string The created path, or '' when it already existed.
  */
-function createDirectory(string $directoryName): void {
+function createDirectory(string $directoryName): string {
 	if (file_exists($directoryName)) {
-		return;
+		return '';
 	}
-	if (!mkdir($directoryName, 0755, true)) {
+	if (!mkdir($directoryName, 0755, true) && !is_dir($directoryName)) {
 		throw new Exception("Could not create $directoryName");
 	}
+
+	return $directoryName;
 }
 
 /**
@@ -210,11 +215,17 @@ function moveFileOnly(string $sourceFile, string $destPath, bool $overwrite = fa
 /**
  * Roll back a stack of created paths (in reverse).
  *
+ * Empty entries are skipped: createDirectory() returns one for a directory that already existed,
+ * which this must not delete.
+ *
  * @param array $paths
  * @return void
  */
 function rollbackCreatedPaths(array $paths): void {
 	foreach (array_reverse($paths) as $path) {
+		if (!is_string($path) || $path === '') {
+			continue;
+		}
 		safeRmdir($path);
 	}
 }

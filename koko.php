@@ -92,7 +92,7 @@ try {
 		->error($e->__toString());
 
 	// throw blanket error message
-	$softErrorHandler->errorAndExit(_T('blanket_error'));
+	$softErrorHandler->errorAndExit(_T('blanket_error'), 0, true);
 }
 
 clearstatcache();

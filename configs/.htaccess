@@ -1,0 +1,8 @@
+# Kokonotsuba: nothing in this directory is meant to be fetched by a browser.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

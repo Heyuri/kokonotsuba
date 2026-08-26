@@ -17,20 +17,26 @@ If you are going to suggest pull requests, please make sure the change would wor
 
 ## Dependencies
 - mbstring
-- pdo
+- pdo, pdo_mysql
 - gd
 - bcmath
-- ffmpeg
-- exiftool
+- ffmpeg (video thumbnails)
+- exiftool (stripping GPS metadata from uploads)
 
-## Basic installation instructions
+`install.php` checks for all of these and names the package to install for anything that is missing.
 
-### 1. Database set-up
+## Installation
 
-In this step, you just need to create the database and give the database user privileges for it.
+Kokonotsuba is installed by cloning it into a web-accessible directory and opening `install.php` in a
+browser. The installer checks the environment, writes the config, builds the database schema, and
+creates the first board and the admin account. It changes nothing until every check passes, and
+undoes what it did if a step fails.
 
-In mariadb, run these:
-1. `CREATE DATABASE kokonotsuba;`
+### 1. Create the database
+
+The installer connects to a database, it does not create one. In mariadb:
+
+1. `CREATE DATABASE kokonotsuba CHARACTER SET utf8mb4;`
 
 2. `CREATE USER 'koko_user'@'localhost' IDENTIFIED BY 'your_password';`
 
@@ -38,65 +44,148 @@ In mariadb, run these:
 
 4. `FLUSH PRIVILEGES;`
 
-### 2. File set-up
-1. Clone the repo into a directory outside of web root `git clone https://github.com/Heyuri/kokonotsuba`
+A grant for `'koko_user'@'localhost'` only covers socket connections. If you are going to point the
+installer at `127.0.0.1`, grant that host instead.
 
-2. Move the `static` directory out of the backend to somewhere web-accessible.
+### 2. Clone it into the web root
 
-3. Create the directory for the first board, which will be where your boards will be (MUST be in web root to be accessible) E.g if the base directory for your boards is `/var/www/html/`, if your board's uri will be /test/ then: `mkdir /var/www/html/test`
+`git clone https://github.com/Heyuri/kokonotsuba /var/www/html/kokonotsuba`
 
-4. Move install.php from the backend directory into the new board's directory (in this case, `test`)
+Everything lives under that one directory:
 
-5. Now, create koko.php and make its contents `require` the koko.php located in the backend directory. Lets say the backend is located at `/var/www/kokonotsuba`.
- - open it in vim `vim /var/www/html/test/koko.php`
- - then paste this into it `<?php require '/var/www/kokonotsuba/koko.php';` then save it.
+```
+/var/www/html/kokonotsuba/
+├── install.php   open this in a browser, then delete it
+├── koko.php      backend entry point (each board's koko.php requires it)
+├── static/       css, js and images, served directly
+├── global/       site settings, error log, board storage - must not be web-readable
+├── boards/       one directory per board, created by the installer and the admin panel
+└── ...           the rest of the backend, also not web-readable
+```
 
-### 3. Permissions & Ownership
-For the backend's global directory:
-`chown -R sysuser:webgroup`
-`chmod 770 global/`
-`chmod -R 770 global/board-storages/`
-`chmod -R 770 global/board-configs/`
+Boards are served from inside it: a board called `b` ends up at
+`https://example.net/kokonotsuba/boards/b/`.
 
-Once again lets say the first board is called `test`
-For the first board:
-`chmod -R 770 test`
-`chown -R sysuser:webgroup test`
+### 3. Permissions
 
-Also ensure that the directory that your boards are in can be written to so board creation/deletion can work. You can do this by:
-`chown sysuser:webgroup /var/www/html`
-`chmod 770 /var/www/html`
+The web server needs to read everything and write to a few directories. Replace `www-data` with the
+user your web server runs as:
 
-### 4. Configure
+```
+sudo chown -R www-data:www-data /var/www/html/kokonotsuba
+sudo chmod -R 750 /var/www/html/kokonotsuba
+sudo chmod -R 770 /var/www/html/kokonotsuba/global
+sudo chmod 770 /var/www/html/kokonotsuba
+```
 
-#### databaseSettings.php
-You'll need to set your database creds and database name here
+The last line lets the installer write `databaseSettings.php` and create `boards/`; step 6 takes it
+back. You do not have to get this exactly right first go: `install.php` lists every directory it
+needs, says what is wrong with it, and prints the command that fixes it.
 
-1. Set database username and database password to the account you created and granted access to earlier.
+### 4. Keep the backend out of reach
 
-2. Then set the database name to the name of the database you created - in this case `kokonotsuba`.
+The backend is inside the web root now, so the web server has to be told not to serve it.
 
-#### globalconfig.php
-You can configure most things after installing but these will be required for your new board to behave as expected.
+**Apache** reads the `.htaccess` files that ship in the tree, so it is already covered. Make sure
+`AllowOverride All` is set for the directory.
 
-1. Set the value of `$config['WEBSITE_URL']` to the base URL of where your koko boards are located in web root
+**nginx** ignores those files. Paste this into the `server` block and reload - `install.php` prints
+the same rules with your own path already filled in:
 
-2. Set the value `$config['TRIPSALT']` to a random value, you could either mash your keyboard or generate a large string comprised of random characters. This is used for secure tripcodes so don't change it after setting it
+```
+location ~ ^/kokonotsuba/(bootstrap|code|configs|global|migrations|module|templates|tests|Utilities)/ {
+    deny all;
+}
 
-3. Set `$config['STATIC_URL']` to the web-accessible URL of the static directory from earlier. Depending on how you set it up, the URL might look like `https://example.net/static/` or `https://static.example.net/` - it's up to you as long as its in a web-accessible location.
+location ~ ^/kokonotsuba/(autoload|databaseSettings|databaseSettings\.example|koko|paths|tables)\.php$ {
+    deny all;
+}
 
-4. Following up from step 3, set `$config['STATIC_PATH']` to the absolute path to that static directory.
+location ~ ^/kokonotsuba/\. {
+    deny all;
+}
+```
 
-### 5. Final
+The installer fetches its own `databaseSettings.php` and a few other files over HTTP and refuses to
+run if the web server hands any of them out.
 
-1. From your browser, access install.php at `test/install.php`
+### 5. Run the installer
 
-2. On install.php, set the admin username and password, and fill in the board title and sub-title (these are required). The board identifier and path are pre-filled for you. Then click submit. If there's no errors, delete install.php and access `test/koko.php`
+Open `https://example.net/kokonotsuba/install.php`. It reports on PHP, its extensions, the external
+commands, every directory it needs and what is reachable from the web. Anything red has a command
+next to it; fix it and reload the page.
 
-3. You should be good to go. If you have any problems, open an Issue on the repository and describe the problem along with any error logs you can provide
+The form asks for the database credentials, the admin account and the first board. The URLs are
+filled in from the address you are reading the page on, so they only need changing if the site is
+served from somewhere else - the exception is the home link, which defaults to the site root and is
+where the "Home" link in every board's header goes. Submitting it:
 
-#### Note 
- - this installation assumes that your user is in the web user group
- - sysuser is the user you use on your system
- - webgroup is what the group that the web server / user uses, usually its `www-data` or `www`
-`chown -R sysuser:webgroup`
+- writes `databaseSettings.php` (your credentials) and `global/siteSettings.php` (your URLs, and a
+  freshly generated tripcode salt and ID seed) - both untracked by git, so updates never touch them
+- creates every table by running the migrations, the same ones an update runs
+- creates the board directory, its database rows and the admin account in a single transaction
+
+If anything fails, it says what failed, rolls the database work back, removes what it created and
+puts any config file it replaced back the way it was. Fix the problem and submit again.
+
+### 6. After installing
+
+The installer prints these; they are here too:
+
+```
+rm /var/www/html/kokonotsuba/install.php
+sudo chmod 640 /var/www/html/kokonotsuba/databaseSettings.php
+sudo chown root:www-data /var/www/html/kokonotsuba && sudo chmod 750 /var/www/html/kokonotsuba
+```
+
+The last line takes back the write access on the top directory that the installer needed. Then open
+your board (`https://example.net/kokonotsuba/boards/b/koko.php` for a board called `b`) - the first
+request renders its index page. Log in through `?mode=admin` to add more boards.
+
+#### Note
+ - `global/siteSettings.php` is where your site's URLs and salts live from then on; everything else
+   is edited from the admin panel. `global/siteSettings.example.php` documents the file
+ - never change `TRIPSALT` or `IDSEED` once there are posts: every tripcode and poster ID changes
+ - `databaseSettings.php` is not tracked by git. `databaseSettings.example.php` is, for setting an
+   instance up by hand without the installer
+ - if you are moving an existing install into this layout, keep your current `databaseSettings.php`
+   and copy your `WEBSITE_URL`, `STATIC_URL`, `STATIC_PATH`, `TRIPSALT` and `IDSEED` out of
+   `globalconfig.php` into `global/siteSettings.php` rather than running the installer again
+
+## Updating
+
+Code updates come from `git pull` (or from unpacking a release), then the migrator applies the matching database changes. It doesn't need git itself, so a release tarball updates the same way a clone does. All of the commands below are run from the backend directory.
+
+### First update on an existing install
+
+An install made before the migrator existed has no record of what's already been applied, so it needs baselining once before anything else.
+
+1. Back up your database and `databaseSettings.php`. Nothing here takes a backup for you, and database changes can't be undone.
+
+2. `databaseSettings.php` is no longer tracked by git, so stop tracking it on your install before pulling, otherwise the pull will conflict on it: `git rm --cached databaseSettings.php`
+
+3. Pull the code: `git pull`
+
+4. See what would change without changing anything: `php Utilities/migrate-cli.php baseline --dry-run`
+
+5. If it looks right, run it: `php Utilities/migrate-cli.php baseline`
+
+This adds whatever your database is missing, records what it already had, and leaves anything newer for the next step. It won't drop or overwrite anything.
+
+6. Apply whatever is left: `php Utilities/migrate-cli.php up`
+
+### Every update after that
+
+1. Pull the code: `git pull`
+
+2. See what's pending: `php Utilities/migrate-cli.php status`
+
+3. Apply it: `php Utilities/migrate-cli.php up`
+
+#### Note
+ - run `baseline` before `up` on an install that predates the migrator. Running `up` first will record the database as up to date without adding missing columns or indexes, and you'd have to fix it by hand
+ - add `--dry-run` to `up` or `baseline` to print the SQL it would run and touch nothing
+ - `php Utilities/migrate-cli.php doctor` reports anything that doesn't match the expected schema. It only reads, so it's safe to run whenever
+ - `php Utilities/migrate-cli.php version` shows the version, what the database is on, and how many changes are pending
+ - new installs don't need any of this, install.php runs the migrator for you
+ - an existing install keeps working unchanged: `global/siteSettings.php` is optional, and without it the values in `globalconfig.php` still stand. Moving them into it is worth doing anyway, since `globalconfig.php` is tracked and will conflict on a future pull

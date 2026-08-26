@@ -3,11 +3,22 @@
 * This is for global settings that should not be overwritten by any board's config, and thus can be accessed without needing to access the board.
 *
 * This file returns the config array directly. Load it via getGlobalConfig().
+*
+* Values specific to one site (URLs, salts) belong in the generated global/siteSettings.php,
+* which overrides the defaults below. This file is tracked by git; that one is not.
 */
 
+// The autoloader is registered by the entry point, but this file is also read very early by
+// tooling, so make sure the overlay class can be found.
+if (!class_exists(Kokonotsuba\config\siteSettings::class, false)) {
+	require_once __DIR__.'/../autoload.php';
+}
+
+$siteSettings = Kokonotsuba\config\siteSettings::load(__DIR__.'/siteSettings.php');
+
 // Values reused when building derived entries below.
-$staticUrl = 'https://static.example.net/'; // Where static files are located on the web. Include trailing '/'
-$staticPath = '/var/www/static/'; // Where static files are stored on the server. Include trailing '/'
+$staticUrl = $siteSettings['STATIC_URL'] ?? 'https://static.example.net/'; // Where static files are located on the web. Include trailing '/'
+$staticPath = $siteSettings['STATIC_PATH'] ?? '/var/www/static/'; // Where static files are stored on the server. Include trailing '/'
 
 // Capcode formats (put '%s' where you want the original name). Consumed only by staffCapcodes.
 $jCapcodeFmt = '%s';
@@ -17,13 +28,17 @@ $mgCapcodeFmt = '<span class="capcode capcodeManager">%s ## Manager</span>';
 $aCapcodeFmt = '<span class="capcode capcodeAdmin">%s ## Admin</span>';
 $sCapcodeFmt = '<span class="capcode capcodeSystem">%s ## System</span>';
 
-return [
+$config = [
 	'PIXMICAT_LANGUAGE' => 'en_US', // Language (available languages in /lib/lang/)
 	'ERROR_HANDLER_FILE' => __DIR__.'/error.log',
 
 	'STATIC_URL' => $staticUrl,
 	'STATIC_PATH' => $staticPath,
 	'WEBSITE_URL' => '/',
+
+	// Where the header's "Home" link points. Site-wide default: boards can override it from the
+	// board configuration editor, which takes this as its default (see configs/appearance.php).
+	'HOME' => 'index.html',
 
 	'USE_CDN' => false, // Whether to use the "cdn" (storing all board upload storages in one central directory)
 
@@ -223,3 +238,6 @@ return [
 	// overboard sub header conf, its in here so we can attach functions to it for seeing last post times on other scripts
 	'OVERBOARD_SUB_HEADER_HTML' => '',
 ];
+
+// Site-specific values from global/siteSettings.php win over the defaults above.
+return array_replace($config, $siteSettings);

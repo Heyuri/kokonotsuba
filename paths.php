@@ -22,6 +22,14 @@ function getBoardStoragesDir() {
 }
 
 /**
+ * Where board directories are created. Boards live inside the backend directory, which is itself
+ * web-accessible, so a board is reachable at {backend URL}/boards/{identifier}/.
+ */
+function getBoardsDir() {
+	return getBackendDir().'boards/';
+}
+
+/**
  * Return the board-agnostic default config array (immutable globals + editable schema
  * defaults). This is the source of truth for board creation.
  */

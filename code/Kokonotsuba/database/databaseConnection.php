@@ -38,12 +38,22 @@ class databaseConnection {
 
 	// Create the PDO connection
 	private function createPDOConnection(array $dbSettings) {
+		// A port is only added when one is configured: on 'localhost' MySQL uses a unix socket,
+		// and naming a port there forces TCP instead, which needs a different grant.
+		$port = isset($dbSettings['DATABASE_PORT']) && (int)$dbSettings['DATABASE_PORT'] > 0
+			? (int)$dbSettings['DATABASE_PORT']
+			: null;
+
 		switch ($dbSettings['DATABASE_DRIVER']) {
 			case 'mysql':
-				$dsn = "mysql:host={$dbSettings['DATABASE_HOST']};dbname={$dbSettings['DATABASE_NAME']};charset={$dbSettings['DATABASE_CHARSET']}";
+				$dsn = "mysql:host={$dbSettings['DATABASE_HOST']};"
+					.($port !== null && $dbSettings['DATABASE_HOST'] !== 'localhost' ? "port={$port};" : '')
+					."dbname={$dbSettings['DATABASE_NAME']};charset={$dbSettings['DATABASE_CHARSET']}";
 				break;
 			case 'pgsql':
-				$dsn = "pgsql:host={$dbSettings['DATABASE_HOST']};dbname={$dbSettings['DATABASE_NAME']};";
+				$dsn = "pgsql:host={$dbSettings['DATABASE_HOST']};"
+					.($port !== null ? "port={$port};" : '')
+					."dbname={$dbSettings['DATABASE_NAME']};";
 				break;
 			case 'sqlite':
 				$dsn = "sqlite:{$dbSettings['DATABASE_NAME']}";

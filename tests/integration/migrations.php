@@ -222,8 +222,14 @@ testCase('baseline recreates missing tables, columns and indexes without losing 
 	$indexes = $pdo->query("SHOW INDEX FROM `{$tableNames['POST_TABLE']}` WHERE Key_name = 'idx_host'")->fetchAll();
 	assertTrueValue($indexes !== [], 'dropped index was not restored');
 
-	$boards = (int)$pdo->query("SELECT COUNT(*) FROM `{$tableNames['BOARD_TABLE']}`")->fetchColumn();
+	$boards = (int)$pdo->query("SELECT COUNT(*) FROM `{$tableNames['BOARD_TABLE']}` WHERE board_uid = 1")->fetchColumn();
 	assertSameValue(1, $boards, 'reconciliation destroyed existing rows');
+
+	// The GLOBAL board is seeded by its own migration, which baseline applies along the way.
+	$globalBoard = (int)$pdo->query(
+		"SELECT COUNT(*) FROM `{$tableNames['BOARD_TABLE']}` WHERE board_uid = " . \Kokonotsuba\GLOBAL_BOARD_UID
+	)->fetchColumn();
+	assertSameValue(1, $globalBoard, 'the reserved GLOBAL board row was not seeded');
 });
 
 testCase('doctor is clean again after baseline', function () use ($makeRunner) {
@@ -297,8 +303,8 @@ testCase('an irreversible migration refuses to roll back', function () use ($mak
 });
 
 testCase('down on the baseline drops every table it created', function () use ($pdo, $tableNames, $makeRunner) {
-	// Forget the irreversible migration so the baseline becomes the newest applied one.
-	$pdo->exec("DELETE FROM `{$tableNames['SCHEMA_MIGRATION_TABLE']}` WHERE `name` = 'role_levels'");
+	// Forget the irreversible migrations so the baseline becomes the newest applied one.
+	$pdo->exec("DELETE FROM `{$tableNames['SCHEMA_MIGRATION_TABLE']}` WHERE `name` IN ('role_levels', 'global_board')");
 
 	$makeRunner()->down(1);
 
