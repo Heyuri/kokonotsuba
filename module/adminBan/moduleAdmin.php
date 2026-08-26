@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\adminBan;
 
+use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
@@ -247,8 +248,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		// Build the action string based on whether it's a global ban or related to a post
 		$actionString = $this->buildActionString($newIp, $duration, $isGlobal, $post);
 
-		// Log the action with the board UID
-		$boardUid = $this->moduleContext->board->getBoardUID();
+		// Log the action against the board the ban was actually applied to
+		$boardUid = $this->resolveBanBoard($post)->getBoardUID();
 
 		// Log globally if its a global ban 
 		if($isGlobal) {
@@ -303,6 +304,23 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 
+	/**
+	 * Board a board-scoped ban applies to: the target post's own board, so a post moderated
+	 * from somewhere else (the overboard, the reports page, another board's admin panel) is
+	 * banned where it was actually made. Falls back to the board being moderated when no post
+	 * is selected, or when the post's board is no longer in the board array.
+	 */
+	private function resolveBanBoard(Post|false $post): board {
+		if ($post) {
+			$postBoard = searchBoardArrayForBoard($post->getBoardUID());
+			if ($postBoard !== null) {
+				return $postBoard;
+			}
+		}
+
+		return $this->moduleContext->board;
+	}
+
 	private function processBanForm(
 		string $reasonFromRequest, 
 		string $newIp,  
@@ -317,7 +335,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		$expires = $starttime + $this->calculateBanDuration($duration);
 
 		if (!empty($newIp)) {
-			$banFile = $isGlobal ? $this->getGlobalBanFilePath() : $this->getBanFilePath();
+			$banFile = $isGlobal
+				? $this->getGlobalBanFilePath()
+				: $this->getBanFilePathForBoard($this->resolveBanBoard($post));
 			$this->addBanEntry($banFile, $newIp, $starttime, $expires, $reason);
 		}
 

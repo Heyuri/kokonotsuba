@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\module_classes\traits;
 
+use Kokonotsuba\board\board;
+
 /**
  * Trait providing shared ban file operations for modules.
  *
@@ -10,7 +12,12 @@ namespace Kokonotsuba\module_classes\traits;
 trait BanFileOperationsTrait {
 
 	protected function getBanFilePath(): string {
-		return $this->moduleContext->board->getBoardStoragePath() . 'bans.log.txt';
+		return $this->getBanFilePathForBoard($this->moduleContext->board);
+	}
+
+	/** Ban log of an arbitrary board, for moderating a post that isn't on the current one. */
+	protected function getBanFilePathForBoard(board $board): string {
+		return $board->getBoardStoragePath() . 'bans.log.txt';
 	}
 
 	protected function getGlobalBanFilePath(): string {
