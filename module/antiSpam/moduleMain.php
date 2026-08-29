@@ -185,7 +185,7 @@ class moduleMain extends abstractModuleMain {
 
 	private function banUser(string $reason, int $durationSeconds): void {
 		// get IP from request
-		$ip = $this->moduleContext->request->getIpAddress();
+		$ip = $this->moduleContext->request->getRemoteAddr();
 
 		// calculate start time
 		$startTime = $_SERVER['REQUEST_TIME'];
