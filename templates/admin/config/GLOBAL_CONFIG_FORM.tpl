@@ -9,12 +9,10 @@
 
 	{$CONFIG_NOTICE}
 
-	<div class="configEditorLayout">
-		{$CONFIG_NAV}
+	{$CONFIG_NAV}
 
-		<div class="configEditorGroups">
-			{$CONFIG_GROUPS}
-		</div>
+	<div class="configEditorGroups">
+		{$CONFIG_GROUPS}
 	</div>
 
 	<div class="buttonSection">

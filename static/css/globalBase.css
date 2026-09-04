@@ -1369,54 +1369,20 @@ a.linkjs {
 .configArrayAddRow { margin-top: 4px; }
 
 /* ── The section navigator ───────────────────────────────────────────────────────────
-   The navigator is rendered docked as a column down the left of the form, following the
-   viewport so it stays in reach on a long form. Its sticky offset clears whatever is already
-   pinned to the top of the viewport (the persistent nav and the message stack) -
-   boardConfigForm.js sets --config-nav-sticky-top to the clearance its floating window keeps;
-   without JS it gets the fallback and may sit under them. A narrow screen stacks it above the
-   form instead.
+   Rendered hidden with the form; boardConfigForm.js lifts it into an ordinary koko window,
+   the same way the staff alerts widget floats. The window's bar carries the title and the
+   close button, so the list takes the whole body. Without the window manager it stays hidden. */
+.configEditorGroups { text-align: left; }
 
-   With the window manager and the room for it, boardConfigForm.js lifts it out into an
-   ordinary koko window instead, the same way the staff alerts widget floats. */
-.configEditorLayout { display: flex; flex-direction: row; align-items: flex-start; gap: 12px; text-align: left; }
-.configEditorGroups { flex: 1 1 auto; min-width: 0; }
-
-.configNav {
-	box-sizing: border-box;
-	background-color: var(--color-bg-reply);
-	border: 1px solid var(--color-hi-contrast-border);
-	font-size: var(--font-size-small);
-	flex: 0 0 15em;
-	max-width: 15em;
-	position: sticky;
-	top: var(--config-nav-sticky-top, 8px);
-	/* Capped so it scrolls inside rather than running past the bottom of the viewport. */
-	max-height: calc(100vh - var(--config-nav-sticky-top, 8px) - 16px);
-	display: flex;
-	flex-direction: column;
+.configNavWindow {
+	min-height: 0;
+	width: auto;
+	font-size: var(--font-size-x-small);
 }
-
-@media (max-width: 900px) {
-	.configEditorLayout { flex-direction: column; }
-	.configNav { position: static; flex: 0 0 auto; max-width: 24em; max-height: 45vh; }
-}
-
-.configNavHead {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 6px;
-	padding: 2px 4px;
-	background-color: var(--color-bg-postblock);
-	border-bottom: 1px solid var(--color-hi-contrast-border);
-}
-.configNavTitle { font-weight: var(--font-weight-bold); }
-.configNavHeadButtons { display: flex; gap: 2px; }
-.configNavCollapse, .configNavFloat { cursor: pointer; padding: 0 5px; line-height: 1.4; }
+.configNav { width: 15em; max-width: 100%; }
 
 .configNavList, .configNavSubList { list-style: none; margin: 0; padding: 0; }
-.configNavList { overflow-y: auto; padding: 3px 4px; }
-.configNav.configNavCollapsed .configNavList { display: none; }
+.configNavList { overflow-y: auto; max-height: 60vh; padding: 3px 4px; }
 
 .configNavRow { display: flex; align-items: baseline; gap: 3px; }
 .configNavLink {
@@ -1460,32 +1426,8 @@ a.linkjs {
 }
 .configNavToggle::before { content: "\25B8"; }
 .configNavItem.configNavOpen > .configNavRow > .configNavToggle::before { content: "\25BE"; }
-.configNavSubList { padding-left: 1.2em; }
-
-/* Nothing opens a sub-list without JS, so without it they are simply all open. The class is
-   set by boardConfigForm.js, alongside the toggles that collapse them. */
-.configNavJs .configNavSubList { display: none; }
-.configNavJs .configNavItem.configNavOpen > .configNavSubList { display: block; }
-
-/* ── Floated into a window ───────────────────────────────────────────────────────────
-   An ordinary koko window; the manager owns where it sits, how it stacks and how it
-   minimises. The window's own bar carries the title and the close button, so the docked
-   header goes away and the list takes the whole body. */
-.configNavWindow {
-	min-height: 0;
-	width: auto;
-	font-size: var(--font-size-x-small);
-}
-
-.configNav.configNavFloating {
-	border: 0;
-	background: none;
-	width: 15em;
-	max-width: 100%;
-	max-height: none;
-}
-.configNav.configNavFloating .configNavHead { display: none; }
-.configNav.configNavFloating .configNavList { max-height: 60vh; }
+.configNavSubList { display: none; padding-left: 1.2em; }
+.configNavItem.configNavOpen > .configNavSubList { display: block; }
 
 /* Once anything in the form is edited, the save button follows the viewport so it stays
    reachable without scrolling to the end of a long form. */

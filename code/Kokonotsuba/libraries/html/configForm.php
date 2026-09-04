@@ -210,8 +210,6 @@ function renderConfigSections(templateEngine $tpl, array $values, array $inherit
 	return [
 		'nav' => $tpl->ParseBlock('CONFIG_NAV', [
 			'{$NAV_HEADING}'     => sanitizeStr(_T('config_nav_heading')),
-			'{$NAV_HIDE_TITLE}'  => sanitizeStr(_T('config_nav_hide')),
-			'{$NAV_FLOAT_TITLE}' => sanitizeStr(_T('config_nav_float')),
 			'{$NAV_ITEMS}'       => $navItemsHtml,
 		]),
 		'groups' => $groupsHtml,

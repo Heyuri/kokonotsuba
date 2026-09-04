@@ -453,9 +453,7 @@ $language['config_discard'] = 'Discard changes';
 $language['config_discard_confirm'] = 'Discard your unsaved changes to {count} setting(s)? The saved configuration is not touched.';
 $language['config_discarded'] = 'Unsaved changes discarded.';
 $language['config_nav_heading'] = 'Sections';
-$language['config_nav_hide'] = 'Show/hide the section list';
 $language['config_nav_toggle'] = 'Show the modules in this section';
-$language['config_nav_float'] = 'Show the section list in its own window';
 // {count} is substituted by the editor's JS, so it must not be a sprintf placeholder: _T() runs
 // every string through sprintf, and a bare %s here would throw when translated with no arguments.
 $language['config_confirm_more'] = '...and {count} more.';

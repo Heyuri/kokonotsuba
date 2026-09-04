@@ -167,7 +167,6 @@ $config = [
 		'reportNotifs' => true,
 		'staffNav' => true,
 		'staffAlerts' => true,
-		'configNav' => true,
 	],
 
 	// Board styles
