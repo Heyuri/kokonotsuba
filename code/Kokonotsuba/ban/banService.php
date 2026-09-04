@@ -296,7 +296,7 @@ class banService {
 			$key = $checkpoint === null ? '' : self::checkpointKey($checkpoint);
 			$where = $key === '' ? '' : ' from ' . $this->checkpoints->labelFor($key);
 
-			$message = $reference . ' blocked a visitor' . $where;
+			$message = $reference . ' blocked a user' . $where;
 		}
 
 		$this->actionLoggerService->logAction($message, $ban->boardUid, actionType::BAN_TRIGGER, true);
