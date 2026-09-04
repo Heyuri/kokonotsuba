@@ -265,13 +265,6 @@ final class installer {
 			$this->makeDirectory($this->defaults->boardsPath());
 			$this->makeDirectory($boardPath);
 
-			$uploadDirectory = $config['USE_CDN']
-				? rtrim((string)$config['CDN_DIR'], '/').'/'.$identifier.'/'
-				: $boardPath;
-
-			$this->makeDirectory($uploadDirectory.$config['IMG_DIR']);
-			$this->makeDirectory($uploadDirectory.$config['THUMB_DIR']);
-
 			// Sanitised the same way boardService does it, so a board made here and one made from
 			// the admin panel store their titles identically.
 			$boardRepository->addNewBoard(
@@ -288,10 +281,18 @@ final class installer {
 				throw new RuntimeException('The board row was inserted but came back without a UID.');
 			}
 
-			// The storage directory is named after the UID, which only exists once the row does.
+			// The storage and CDN directories are named after the UID, which only exists once the
+			// row does. The CDN layout matches board::getCdnDir(): {CDN_DIR}{uid}/.
 			$storageDirectoryName = 'storage-'.$boardUid;
 			$boardRepository->updateBoardByUID($boardUid, ['storage_directory_name' => $storageDirectoryName]);
-			$this->makeDirectory(getBoardStoragesDir().$storageDirectoryName);
+			$this->makeDirectory($this->appRoot.'/global/board-storages/'.$storageDirectoryName);
+
+			$uploadDirectory = $config['USE_CDN']
+				? rtrim((string)$config['CDN_DIR'], '/').'/'.$boardUid.'/'
+				: $boardPath;
+
+			$this->makeDirectory($uploadDirectory.$config['IMG_DIR']);
+			$this->makeDirectory($uploadDirectory.$config['THUMB_DIR']);
 
 			$boardPathRepository->insertPath($boardUid, $boardPath);
 
@@ -334,7 +335,7 @@ final class installer {
 
 		$this->writeFile(
 			$boardPath.$liveIndexFile,
-			"<?php require_once '".$this->appRoot.'/'.$liveIndexFile."';\n"
+			'<?php require_once '.var_export($this->appRoot.'/'.$liveIndexFile, true).";\n"
 		);
 
 		$this->writeFile($boardPath.'boardUID.ini', "board_uid = {$boardUid}\n");

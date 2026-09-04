@@ -356,40 +356,44 @@ class boardService {
 		$board = new board($this->container->get('boardPostNumbers'), $boardData, $this->container->get('boardPathService'), $effectiveConfig);
 
 		// initialize dependencies for setter inject
-		$templateEngine = $this->initializeTemplateEngine($board);
+		// Engines instantiate every enabled module, so they are built on first use rather than for
+		// every board in the list on every request.
+		$board->setEngineFactory(function (board $board): void {
+			$templateEngine = $this->initializeTemplateEngine($board);
+			$board->setTemplateEngine($templateEngine);
 		
-		$liveIndexFile = $board->getConfigValue('LIVE_INDEX_FILE');
+			$liveIndexFile = $board->getConfigValue('LIVE_INDEX_FILE');
 
-		$boardConfig = $board->loadBoardConfig();
-		$postDateFormatter = new postDateFormatter($boardConfig['TIME_ZONE']);
+			$boardConfig = $board->loadBoardConfig();
+			$postDateFormatter = new postDateFormatter($boardConfig['TIME_ZONE']);
 
-		$moduleEngineContext = new moduleEngineContext(
-			$boardConfig,
-			$liveIndexFile,
-			$board->getConfigValue('ModuleList'),
-			$templateEngine,
-			$board,
-			$postDateFormatter,
-			$this->container
-		);
+			$moduleEngineContext = new moduleEngineContext(
+				$boardConfig,
+				$liveIndexFile,
+				$board->getConfigValue('ModuleList'),
+				$templateEngine,
+				$board,
+				$postDateFormatter,
+				$this->container
+			);
 			
-		$moduleEngine = new moduleEngine($moduleEngineContext);
+			$moduleEngine = new moduleEngine($moduleEngineContext);
 		
-		// setter inject certain dependencies
-		$board->setTemplateEngine($templateEngine);
-		$board->setModuleEngine($moduleEngine);
+			// setter inject certain dependencies
+			$board->setModuleEngine($moduleEngine);
 
-		$boardRebuilder = new boardRebuilder($board,
-			$moduleEngine,
-			$templateEngine,
-			$this->container->get('actionLoggerService'),
-			$this->container->get('threadRepository'),
-			$this->container->get('threadService'),
-			$this->container->get('quoteLinkService'),
-			$this->container->get('postRenderingPolicy'),
-			$this->container->get('request'));
+			$boardRebuilder = new boardRebuilder($board,
+				$moduleEngine,
+				$templateEngine,
+				$this->container->get('actionLoggerService'),
+				$this->container->get('threadRepository'),
+				$this->container->get('threadService'),
+				$this->container->get('quoteLinkService'),
+				$this->container->get('postRenderingPolicy'),
+				$this->container->get('request'));
 
-		$board->setBoardRebuilder($boardRebuilder);
+			$board->setBoardRebuilder($boardRebuilder);
+		});
 
 		// It's all set up now. So we can return it 
 		return $board;

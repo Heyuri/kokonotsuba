@@ -11,6 +11,7 @@ use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\deletion\DeletedPost;
 use Kokonotsuba\template\pageRenderer;
+use Kokonotsuba\renderers\boardRendererFactory;
 use Kokonotsuba\renderers\postRenderer;
 use Kokonotsuba\quote_link\quoteLinkService;
 use RuntimeException;
@@ -29,15 +30,7 @@ use function Kokonotsuba\libraries\getFiltersFromRequest;
 use function Puchiko\strings\buildSmartQuery;
 
 class deletedPostRenderer {
-	/**
-	 * Renderer pairs keyed by the board UID they were built for.
-	 *
-	 * @var array<int, array{0: postRenderer, 1: threadRenderer}>
-	 */
-	private array $renderersByBoardUid = [];
-
-	/** Quote links for the posts currently being drawn, keyed by post uid. */
-	private array $quoteLinks = [];
+	private ?boardRendererFactory $rendererFactory = null;
 
 	public function __construct(
 		private board $board,
@@ -87,46 +80,19 @@ class deletedPostRenderer {
 	}
 
 	/**
-	 * Get the post/thread renderers bound to the board a deleted post was made to.
+	 * Renderers bound to the board a deleted post was made to.
 	 *
 	 * The queue mixes posts from every board, so a renderer bound to whichever board the mod page
 	 * happens to be served from would build each entry's post link, element ids, quote links and
-	 * attachment URLs against the wrong board. Renderers are built once per board UID and reused
-	 * by every entry that shares it.
-	 *
-	 * @param int $boardUid UID of the board the post was made to.
-	 * @return array{0: postRenderer, 1: threadRenderer}
+	 * attachment URLs against the wrong board.
 	 */
-	private function getRenderersForBoard(int $boardUid): array {
-		if (!isset($this->renderersByBoardUid[$boardUid])) {
-			$board = $this->resolvePostBoard($boardUid);
-			$boardConfig = $board->loadBoardConfig();
-
-			// init post renderer using the module's template engine (has OP/REPLY blocks)
-			$postRenderer = new postRenderer(
-				$board,
-				$boardConfig,
-				$this->moduleEngine,
-				$this->moduleTemplateEngine,
-				[],
-				$this->request
-			);
-
-			// init thread renderer using the module's template engine
-			$threadRenderer = new threadRenderer(
-				$boardConfig,
-				$this->moduleTemplateEngine,
-				$postRenderer,
-				$this->moduleEngine
-			);
-
-			$this->renderersByBoardUid[$boardUid] = [$postRenderer, $threadRenderer];
-		}
-
-		// quote links are fetched once per drawn page, so hand the current set to the cached renderer
-		$this->renderersByBoardUid[$boardUid][0]->setQuoteLinks($this->quoteLinks);
-
-		return $this->renderersByBoardUid[$boardUid];
+	private function getRendererFactory(): boardRendererFactory {
+		return $this->rendererFactory ??= new boardRendererFactory(
+			$this->moduleTemplateEngine,
+			$this->moduleEngine,
+			$this->request,
+			$this->board
+		);
 	}
 
 	/**
@@ -268,7 +234,7 @@ class deletedPostRenderer {
 		$quoteLinks = $this->quoteLinkService->getQuoteLinksByPostUids($postUids, true);
 
 		// set the quotelinks, which the per-board renderers are handed as they are built
-		$this->quoteLinks = $quoteLinks;
+		$this->getRendererFactory()->setQuoteLinks($quoteLinks);
 
 		// get the template values for the deleted post entry
 		$deletedPostTemplateValues = $this->prepareDeletedEntryPlaceholders(
@@ -336,7 +302,7 @@ class deletedPostRenderer {
 		$quoteLinks = $this->quoteLinkService->getQuoteLinksByPostUids($postUids, true);
 
 		// set the quote links, which the per-board renderers are handed as they are built
-		$this->quoteLinks = $quoteLinks;
+		$this->getRendererFactory()->setQuoteLinks($quoteLinks);
 		
 		// flag for if there's no posts.
 		$areNoPosts = empty($deletedPosts);
@@ -479,18 +445,16 @@ class deletedPostRenderer {
 		bool $showAll
 	): string {
 		// the queue mixes boards, so render this entry with its own board's renderers
-		[$postRenderer, $threadRenderer] = $this->getRenderersForBoard($deletedEntry->getBoardUID());
+		$rendererFactory = $this->getRendererFactory();
+		$board = $this->resolvePostBoard($deletedEntry->getBoardUID());
 
 		// Attachment-only view
 		if ($deletedEntry->getFileOnlyDeleted()) {
-			return $this->renderAttachmentDeletion($deletedEntry, $postRenderer);
+			return $this->renderAttachmentDeletion($deletedEntry, $rendererFactory->postRendererFor($board));
 		}
 
 		// init template values
 		$templateValues = [];
-
-		// get the board of the post
-		$board = $this->resolvePostBoard($deletedEntry->getBoardUID());
 
 		// get the base url of the board
 		$boardUrl = $board->getBoardURL();
@@ -498,14 +462,8 @@ class deletedPostRenderer {
 
 		// if the post is a reply then render it as an OP
 		if(!$deletedEntry->isOp() || !$showAll) {
-			// flag to make sure the reply gets rendered using the OP template block
-			$renderAsOp = true;
-
-			// fetch thread number and default to zero if it isn't there for some reason
-			$threadNumber = $deletedEntry->getOpNumber();
-
-			// html of the post / thread
-			$postHtml = $postRenderer->render($deletedEntry, $templateValues, $threadNumber, false, [$deletedEntry], true, '', '', 0, false, $boardUrl, $renderAsOp);
+			// html of the post / thread, the reply drawn through the OP template block
+			$postHtml = $rendererFactory->renderPost($deletedEntry, true);
 		}
 		// if its a thread (and we're showing all) then render it along with its replies
 		elseif ($deletedEntry->isOp() && $showAll) {
@@ -519,7 +477,7 @@ class deletedPostRenderer {
 			}, $posts);
 
 			// thread html
-			$postHtml = $threadRenderer->render([$thread], true, $thread->getThread(), $posts, 0, false, true, 0, '', $boardUrl, $templateValues);
+			$postHtml = $rendererFactory->threadRendererFor($board)->render([$thread], true, $thread->getThread(), $posts, 0, false, true, 0, '', $boardUrl, $templateValues);
 		}
 
 		// return post/thread html

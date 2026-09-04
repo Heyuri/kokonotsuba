@@ -1,5 +1,5 @@
 	<h2 class="theading2">{$PAGE_TITLE}</h2>
-	<div class="reportToolbar">[<a href="{$QUEUE_URL}">{$QUEUE_TEXT}</a>]</div>
+	<div class="reportToolbar">[<a href="{$QUEUE_URL}">{$QUEUE_TEXT}</a>] <!--&IF($CAN_VIEW_IP,'[<a class="reportPostsLink" href="{$REPORTER_POSTS_URL}" title="{$REPORTER_POSTS_HINT}">{$REPORTER_POSTS_TEXT}</a>]','')--></div>
 
 	<h3 class="reportSectionHeading">{$HEADING_TOTALS}</h3>
 	<div class="reportStats">{$STATS_TABLE}</div>
@@ -11,6 +11,7 @@
 		     approve/dismiss handler reads as a single selected report. -->
 		<input type="hidden" name="ipReportId" value="{$REPORT_ID}">
 		<!--&IF($HAS_REPORTS,'
+		{$DECISION_BUTTONS}
 		<div class="tableViewportWrapper">
 			<table class="postlists reportTable">
 				<thead>

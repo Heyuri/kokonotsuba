@@ -113,9 +113,7 @@ class boardRepository extends baseRepository {
 	 */
 	public function getAllBoardUIDs() {
 		return $this->cacheMethodResult(__METHOD__, function () {
-			$query = "SELECT board_uid FROM {$this->table}";
-			$boards = $this->queryAllAsIndexArray($query);
-			return array_merge(...$boards);
+			return $this->queryFlatColumn("SELECT board_uid FROM {$this->table}");
 		});
 	}
 

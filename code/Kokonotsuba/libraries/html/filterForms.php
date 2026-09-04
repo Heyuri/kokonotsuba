@@ -3,18 +3,23 @@
 namespace Kokonotsuba\libraries\html;
 
 use Kokonotsuba\board\board;
+use Kokonotsuba\action_log\actionTypeRegistry;
 use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\html\generateBoardListCheckBoxHTML;
 
-function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, array $filters) {
+/**
+ * @param actionTypeRegistry $actionTypes Every event type the log can be filtered on.
+ */
+function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, array $filters, actionTypeRegistry $actionTypes) {
 	$filterIP = $filters['ip_address'];
 	$filterDateBefore = $filters['date_before'];
 	$filterDateAfter = $filters['date_after'];
 	$filterName = $filters['log_name'];
-	$filterBan = !empty($filters['ban']) ? 'checked' : '';
-	$filterDelete = !empty($filters['deleted']) ? 'checked' : '';
+	$filterAction = $filters['log_action'] ?? '';
+	$filterId = $filters['id'] ?? '';
 	$filterRole = is_array($filters['role']) ? $filters['role'] : [];
 	$filterBoard = is_array($filters['board']) ? $filters['board'] : [];
+	$filterTypes = is_array($filters['action_type'] ?? null) ? $filters['action_type'] : [];
 
 	// one checkbox per role an account can hold
 	$roleCheckboxHTML = '';
@@ -22,6 +27,8 @@ function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, a
 		$checked = in_array($role->value, $filterRole) ? 'checked' : '';
 		$roleCheckboxHTML .= '<li><label><input name="role[]" type="checkbox" value="' . $role->value . '" ' . $checked . '>' . htmlspecialchars($role->displayRoleName()) . '</label></li>';
 	}
+
+	$typeCheckboxHTML = generateActionTypeCheckBoxHTML($filterTypes, $actionTypes);
 
 	$boardCheckboxHTML = generateBoardListCheckBoxHTML($filterBoard, $allBoards, false);
 	$dat .= '
@@ -43,6 +50,14 @@ function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, a
 								<td><input class="inputtext" id="log_name" name="log_name" value="' . htmlspecialchars($filterName) . '"></td>
 							</tr>
 							<tr>
+								<td class="postblock"><label for="log_action">Action text</label></td>
+								<td><input class="inputtext" id="log_action" name="log_action" value="' . htmlspecialchars($filterAction) . '"></td>
+							</tr>
+							<tr>
+								<td class="postblock"><label for="entryid">Entry ID</label></td>
+								<td><input class="inputtext" type="number" min="1" id="entryid" name="id" value="' . htmlspecialchars((string)$filterId) . '"></td>
+							</tr>
+							<tr>
 								<td class="postblock"><label for="date_after">From</label></td>
 								<td><input class="inputtext" type="date" id="date_after" name="date_after" value="' . htmlspecialchars($filterDateAfter) . '"></td>
 							</tr>
@@ -50,11 +65,10 @@ function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, a
 								<td class="postblock"><label for="date_before">To</label></td>
 								<td><input class="inputtext" type="date" id="date_before" name="date_before" value="' . htmlspecialchars($filterDateBefore) . '"></td>
 							</tr>
-							<tr>
-								<td class="postblock">Actions</td>
-								<td> 
-									<label><input type="checkbox" id="ban" name="ban" ' . htmlspecialchars($filterBan) . '>Bans</label>  
-									<label><input type="checkbox" id="deletions" name="deleted" ' . htmlspecialchars($filterDelete) . '>Deletions</label>
+							<tr id="actiontyperow">
+								<td class="postblock">Events <br> <div class="selectlinktextjs" id="actiontypeselectall">[<a>Select all</a>]</div></td>
+								<td>
+									' . $typeCheckboxHTML . '
 								</td>
 							</tr>
 							<tr id="rolerow">
@@ -83,10 +97,46 @@ function drawActionLogFilterForm(string &$dat, board $board, array $allBoards, a
 			</details>
 		</form>
 		';
-	}	
-	
-function drawManagePostsFilterForm(string &$dat, board $board, array $filters, bool $canViewIp, array $boards) {
+	}
+
+/**
+ * Event type checkboxes, laid out under their group headings.
+ *
+ * An entry is ticked when the filter names it; an entirely empty filter means the caller has not
+ * narrowed anything, so everything is ticked.
+ */
+function generateActionTypeCheckBoxHTML(array $selected, actionTypeRegistry $actionTypes): string {
+	$html = '';
+
+	foreach ($actionTypes->grouped() as $groupKey => $group) {
+		$items = '';
+
+		foreach ($group['entries'] as $entry) {
+			$checked = (empty($selected) || in_array($entry['key'], $selected, true)) ? 'checked' : '';
+			$items .= '<li><label><input name="action_type[]" type="checkbox" value="' . htmlspecialchars($entry['key']) . '" ' . $checked . '>' . htmlspecialchars($entry['label']) . '</label></li>';
+		}
+
+		$rowId = 'actiontypegroup-' . $groupKey;
+
+		$html .= '<div class="actionTypeGroup" id="' . htmlspecialchars($rowId) . '">'
+			. '<div class="actionTypeGroupLabel">' . htmlspecialchars($group['label'])
+			. ' <span class="selectlinktextjs actionTypeGroupToggle" data-target="' . htmlspecialchars($rowId) . '">[<a>Select all</a>]</span></div>'
+			. '<ul class="littlelist">' . $items . '</ul></div>';
+	}
+
+	return '<div class="actionTypeGroups">' . $html . '</div>';
+}
+
+/**
+ * The post filter form shared by every staff page that lists posts from more than one board.
+ *
+ * @param string $formAction    Where the form submits - the page drawing it.
+ * @param array  $hiddenFields  name => value pairs identifying that page (mode, load, ...).
+ * @param string $summaryLabel  Text on the collapsed <summary>.
+ */
+function drawManagePostsFilterForm(string &$dat, string $formAction, array $hiddenFields, array $filters, bool $canViewIp, array $boards, string $summaryLabel = 'Filter posts') {
 	$filterIP = $filters['ip_address'];
+	$filterTokenHash = $filters['visitor_token_hash'] ?? '';
 	$filterName = $filters['post_name'];
 	$filterTripcode = $filters['tripcode'];
 	$filterCapcode = $filters['capcode'];
@@ -95,12 +145,18 @@ function drawManagePostsFilterForm(string &$dat, board $board, array $filters, b
 	$filterBoard = $filters['board'];
 	
 	$boardCheckboxHTML = generateBoardListCheckBoxHTML($filterBoard, $boards);
+
+	$hiddenFieldHTML = '';
+	foreach ($hiddenFields as $hiddenName => $hiddenValue) {
+		$hiddenFieldHTML .= '<input type="hidden" name="' . htmlspecialchars($hiddenName) . '" value="' . htmlspecialchars($hiddenValue) . '">';
+	}
+
 	$dat .= '
-	<form class="detailsboxForm formtable" action="' . $board->getBoardURL(true) . '" method="get">
+	<form class="detailsboxForm formtable" action="' . htmlspecialchars($formAction) . '" method="get">
 		<details id="filtercontainer" class="detailsbox">
-			<summary>Filter posts</summary>
+			<summary>' . htmlspecialchars($summaryLabel) . '</summary>
 			<div class="detailsboxContent">
-				<input type="hidden" name="mode" value="managePosts">
+				' . $hiddenFieldHTML . '
 				<input type="hidden" name="filterSubmissionFlag" value="true">
 
 				<table id="adminPostFilterTable" class="centerBlock">
@@ -108,6 +164,10 @@ function drawManagePostsFilterForm(string &$dat, board $board, array $filters, b
 						' . ($canViewIp ? '<tr>
 							<td class="postblock"><label for="ip_address">IP address</label></td>
 							<td><input class="inputtext" id="ip_address" name="ip_address" value="'.htmlspecialchars($filterIP).'"></td>
+						</tr>
+						<tr>
+							<td class="postblock"><label for="visitor_token_hash">Browser</label></td>
+							<td><input class="inputtext" id="visitor_token_hash" name="visitor_token_hash" value="'.htmlspecialchars($filterTokenHash).'"></td>
 						</tr>' : '') . '
 						<tr>
 							<td class="postblock"><label for="post_name">Name</label></td>

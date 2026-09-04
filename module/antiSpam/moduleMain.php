@@ -6,7 +6,11 @@ require_once __DIR__ . '/antiSpamRepository.php';
 require_once __DIR__ . '/antiSpamService.php';
 require_once __DIR__ . '/antiSpamLib.php';
 
+use Kokonotsuba\action_log\actionLogReferences;
+use Kokonotsuba\ban\banCheckpoint;
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\module_classes\traits\AuditableTrait;
+use Kokonotsuba\module_classes\traits\BanCheckpointTrait;
 use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\Modules\antiSpam\antiSpamService;
@@ -17,9 +21,16 @@ use function Puchiko\json\renderJsonErrorPage;
 use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
 
+use const Kokonotsuba\GLOBAL_BOARD_UID;
+
 class moduleMain extends abstractModuleMain {
+	use AuditableTrait;
+	use BanCheckpointTrait;
+
+	/** Action log type a tripped filter is recorded under. */
+	public const FILTER_ACTION_TYPE = 'spam.filter';
+
 	private antiSpamService $antiSpamService;
-	private string $globalBansPath;
 
 	public function getName(): string {
 		return 'Anti-spam checking system';
@@ -30,6 +41,10 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function initialize(): void {
+		// a tripped filter is its own kind of event, so it gets its own checkbox on the action
+		// log filter form
+		$this->registerActionType(self::FILTER_ACTION_TYPE, 'Spam filter tripped');
+
 		// add to the regist before commit hook point
 		// this is ran before a post is inserted
 		$this->moduleContext->moduleEngine->addListener('RegistBegin', function (&$registInfo) {
@@ -46,8 +61,6 @@ class moduleMain extends abstractModuleMain {
 		// set antispam service instance
 		$this->antiSpamService = getAntiSpamService();
 
-		// get global bans path
-		$this->globalBansPath = getBackendGlobalDir() . $this->getConfig('GLOBAL_BANS');
 	}
 	
 	private function onBeforeCommit(?string $name, ?string $comment, ?string $email, ?string $subject, array $files = [], bool $isOp = false): void{
@@ -91,7 +104,7 @@ class moduleMain extends abstractModuleMain {
 
 				// Check if the field value matches the spam rule
 				if($this->matchesRule($value, $rule)){
-					$this->executeRuleAction($rule);
+					$this->executeRuleAction($rule, $field);
 				}
 			}
 
@@ -99,7 +112,7 @@ class moduleMain extends abstractModuleMain {
 			if(!empty($rule['apply_filename'])){
 				foreach($fileNames as $fileName){
 					if($this->matchesRule($fileName, $rule)){
-						$this->executeRuleAction($rule);
+						$this->executeRuleAction($rule, 'filename');
 					}
 				}
 			}
@@ -116,7 +129,7 @@ class moduleMain extends abstractModuleMain {
 		return $fileNames;
 	}
 
-	private function executeRuleAction(array $rule): void {
+	private function executeRuleAction(array $rule, string $field): void {
 		// Use custom user message if provided, otherwise fallback
 		$message = $rule['user_message'] ?: _T('anti_spam_message');
 
@@ -128,26 +141,57 @@ class moduleMain extends abstractModuleMain {
 				$muteTime = $this->getConfig('modules.adminDel.JANIMUTE_LENGTH', 20);
 
 				// Mute the user (short-term ban)
-				$this->banUser($message, $muteTime * 60);
-
-				// reject the submission
-				$this->rejectSubmission($message, !empty($rule['silent_reject']));
+				$banId = $this->banUser($message, $muteTime * 60, true);
+				break;
 			case 'ban':
 				// get the ban time config value
 				// measured in hours - defaults to 24 hours
 				$banTime = $this->getModuleConfig('FILTER_BAN_TIME', 24);
 
 				// Ban the current user
-				$this->banUser($message, $banTime * 3600);
-
-				// reject the submission
-				$this->rejectSubmission($message, !empty($rule['silent_reject']));
+				$banId = $this->banUser($message, $banTime * 3600);
+				break;
 			case 'reject':
 			default:
-				// reject the submission
-				$this->rejectSubmission($message, !empty($rule['silent_reject']));
+				// nothing is filed against the poster, the post just does not go through
+				$banId = null;
 			break;
 		}
+
+		// record the hit while the ban it filed is still to hand - the rejection below ends the
+		// request either way
+		$this->logRuleHit($rule, $field, $banId);
+
+		// reject the submission
+		$this->rejectSubmission($message, !empty($rule['silent_reject']));
+	}
+
+	/**
+	 * Note in the action log that a rule matched.
+	 *
+	 * Logged as the poster rather than as staff, and referencing the rule itself so the entry
+	 * links straight to it.
+	 */
+	private function logRuleHit(array $rule, string $field, ?int $banId = null): void {
+		$reference = actionLogReferences::reference('spamrule', (int)$rule['id'], 'Spam filter #' . (int)$rule['id']);
+
+		$outcome = match ($rule['action']) {
+			'ban' => 'poster banned',
+			'mute' => 'poster muted',
+			default => 'post rejected',
+		};
+
+		// the ban the rule just filed, so the entry links to it as well as to the rule
+		if ($banId !== null) {
+			$outcome .= ' (' . actionLogReferences::reference('ban', $banId, 'ban #' . $banId) . ')';
+		}
+
+		$this->logAction(
+			"{$reference} matched on {$field}, {$outcome}",
+			$this->moduleContext->board->getBoardUID(),
+			self::FILTER_ACTION_TYPE,
+			true
+		);
 	}
 
 	private function rejectSubmission(string $message, bool $silent): void {
@@ -183,33 +227,34 @@ class moduleMain extends abstractModuleMain {
 		throw new BoardException($message);
 	}
 
-	private function banUser(string $reason, int $durationSeconds): void {
-		// get IP from request
-		$ip = $this->moduleContext->request->getIpAddress();
+	/**
+	 * Ban the poster who tripped a rule.
+	 *
+	 * Posting only: a spam filter should stop the flood, not silently cut the poster off from
+	 * reporting or appealing. A rule's 'mute' action files a mute, which is swept out of the ban
+	 * table once it lapses - a filter firing on a flood would otherwise bury the real bans.
+	 */
+	private function banUser(string $reason, int $durationSeconds, bool $isMute = false): ?int {
+		$expires = $this->moduleContext->request->getRequestTime() + $durationSeconds;
 
-		// calculate start time
-		$startTime = $_SERVER['REQUEST_TIME'];
+		$banId = $this->getBanService()->fileBan(
+			(string) $this->moduleContext->request->userIp(),
+			GLOBAL_BOARD_UID,
+			[banCheckpoint::POST->value],
+			$expires,
+			$reason,
+			null,
+			null,
+			false,
+			false,
+			$isMute
+		);
 
-		// calculate end time
-		$expires = $startTime + $durationSeconds;
-
-		// sanitize reason for flat-file storage (commas break the CSV format)
-		$reason = str_replace(',', '&#44;', $reason);
-
-		// build ban entry
-		$banEntry = "{$ip},{$startTime},{$expires},{$reason}";
-
-		// append to global bans file
-		$needsNewline = file_exists($this->globalBansPath) && filesize($this->globalBansPath) > 0;
-
-		$f = fopen($this->globalBansPath, 'a');
-		if ($f) {
-			if ($needsNewline) {
-				fwrite($f, "\n");
-			}
-			fwrite($f, $banEntry);
-			fclose($f);
+		if ($isMute) {
+			$this->getBanService()->pruneExpiredMutes();
 		}
+
+		return $banId;
 	}
 
 	private function matchesRule(string $value, array $rule): bool {

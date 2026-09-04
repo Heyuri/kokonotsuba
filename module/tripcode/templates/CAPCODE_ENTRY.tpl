@@ -17,6 +17,10 @@
 					<td><input id="capcodeText" name="capcodeText" value="{$CAPCODE_TEXT}"></td>
 				</tr>
 				<tr>
+					<td class="postblock"><label for="capcodeEnabled">Status</label></td>
+					<td><label><input type="checkbox" id="capcodeEnabled" name="capcodeEnabled" value="1"<!--&IF($IS_ENABLED,' checked','')-->>Enabled</label></td>
+				</tr>
+				<tr>
 					<td class="postblock">Preview</td>
 					<td><span class="capcodeEntryPreview">{$PREVIEW}</span></td>
 				</tr>

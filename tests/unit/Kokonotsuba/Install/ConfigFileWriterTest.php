@@ -102,7 +102,11 @@ class ConfigFileWriterTest extends TestCase {
 		$path = $this->dir.'/settings.php';
 		(new configFileWriter())->write($path, configFileWriter::render(['KEY' => 'value']));
 
-		$this->assertCount(0, glob($this->dir.'/*.tmp-*') ?: []);
+		$this->assertCount(0, glob($this->dir.'/{,.}*.tmp-*', GLOB_BRACE) ?: []);
+	}
+
+	public function testSidecarFilesAreDotfilesSoTheDenyRulesCoverThem(): void {
+		$this->assertSame('/srv/koko/.databaseSettings.php.tmp-1a2b', configFileWriter::sidecarPath('/srv/koko/databaseSettings.php', '.tmp-1a2b'));
 	}
 
 	public function testRefusesToWriteIntoADirectoryThatIsNotThere(): void {
@@ -123,6 +127,6 @@ class ConfigFileWriterTest extends TestCase {
 		$this->assertThrows(fn () => $writer->write($path, "<?php return 'not an array';\n"), RuntimeException::class);
 
 		$this->assertSame('original', $this->load($path)['KEY']);
-		$this->assertCount(0, glob($this->dir.'/*.tmp-*') ?: []);
+		$this->assertCount(0, glob($this->dir.'/{,.}*.tmp-*', GLOB_BRACE) ?: []);
 	}
 }

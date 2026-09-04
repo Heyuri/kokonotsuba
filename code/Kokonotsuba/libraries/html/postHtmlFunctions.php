@@ -9,6 +9,7 @@ namespace Kokonotsuba\libraries\html;
 use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\post\textFormat;
 
 use function Puchiko\strings\containsHtmlTags;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
@@ -24,7 +25,13 @@ function getPageForPostPosition(int $postPosition, int $repliesPerPage): int {
 	return ($postPosition <= 0) ? 1 : (int)floor(($postPosition - 1) / $repliesPerPage) + 1;
 }
 
-/* Generate html for the post name dynamically */
+/**
+ * Generate html for the post name dynamically.
+ *
+ * $format says how the stored name is held. A plain-text name is escaped here; a LEGACY_HTML one
+ * is not, because it was escaped at post time. The default is LEGACY_HTML so callers that render
+ * names from somewhere other than a post row keep their existing behaviour.
+ */
 function generatePostNameHtml(
 	moduleEngine $moduleEngine, 
 	string $name,
@@ -32,10 +39,15 @@ function generatePostNameHtml(
 	string $secure_tripcode,
 	string $capcode,
 	string $email,
-	bool $noticeSage = false): string {
-	// For compatability reasons, names already containing html will just be displayed without any further processing.
-	// Because kokonotsuba previously stored name/trip/capcode html all in the name column, and this can cause double wrapped html
-	if(containsHtmlTags($name)) return $name;
+	bool $noticeSage = false,
+	textFormat $format = textFormat::LEGACY_HTML): string {
+	if($format->fieldsAreHtml()) {
+		// For compatability reasons, names already containing html will just be displayed without any further processing.
+		// Because kokonotsuba previously stored name/trip/capcode html all in the name column, and this can cause double wrapped html
+		if(containsHtmlTags($name)) return $name;
+	} else {
+		$name = sanitizeStr($name);
+	}
 
 	// generate poster name
 	$nameHtml = '<span class="postername">' . $name . '</span>';

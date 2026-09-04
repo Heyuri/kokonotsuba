@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\cookie\cookieService;
 use Kokonotsuba\error\BoardException;
@@ -194,7 +195,8 @@ class usrdelRoute {
 				// Log the action (whether it's just the file or the entire post deletion)
 				$this->actionLoggerService->logAction(
 					"Deleted post No." . $post->getNumber() . ($onlyImgDel ? ' (file only)' : ''), 
-					$board->getBoardUID()
+					$board->getBoardUID(),
+					$onlyImgDel ? actionType::POST_FILE_DELETE : actionType::POST_DELETE
 				);
 			}
 		}

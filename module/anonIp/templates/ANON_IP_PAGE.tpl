@@ -3,9 +3,43 @@
 
 		<!--&IF($SUCCESS_MESSAGE,'<p class="anonIpSuccess">{$SUCCESS_MESSAGE}</p>','')-->
 
-		<p class="anonIpWarning">
-			<strong>{$WARNING_MESSAGE}</strong>
+		<div class="anonIpWarning">
+			<p><strong>{$WARNING_MESSAGE}</strong></p>
+			<ul class="anonIpTargets">
+				{$WARNING_TARGETS}
+			</ul>
+			<p><strong>{$WARNING_UNDO}</strong></p>
+		</div>
+
+		<p class="anonIpStatus">
+			{$SCHEDULE_STATUS}<br>
+			{$LAST_RUN}
 		</p>
+
+		<!--&IF($SCHEDULE_NOTE,'<p class="anonIpScheduleNote">{$SCHEDULE_NOTE}</p>','')-->
+
+		<form method="POST" action="{$MODULE_URL}" id="anonIpScheduleForm">
+			{$CSRF_TOKEN}
+			<input type="hidden" name="anonIpAction" value="schedule">
+
+			<h3>{$SCHEDULE_HEADING}</h3>
+
+			<table class="formtable">
+				<tbody>
+					<tr>
+						<td class="postblock"><label for="scheduleEveryDays">{$SCHEDULE_EVERY_LABEL}</label></td>
+						<td>
+							<input type="number" class="inputtext" id="scheduleEveryDays" name="scheduleEveryDays" min="0" step="1" value="{$SCHEDULE_EVERY}">
+							<div class="formItemDescription">{$SCHEDULE_EVERY_DESC}</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+
+			<div class="buttonSection">
+				<input type="submit" value="{$SCHEDULE_SUBMIT}">
+			</div>
+		</form>
 
 		<form method="POST" action="{$MODULE_URL}" id="anonIpForm">
 			{$CSRF_TOKEN}

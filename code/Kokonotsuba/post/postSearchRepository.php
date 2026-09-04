@@ -78,11 +78,10 @@ class postSearchRepository extends baseRepository {
 		$uidQuery .= " ORDER BY p.root DESC, p.post_uid DESC";
 		$this->paginate($uidQuery, $params, $limit, $offset);
 
-		$uidRows = $this->queryAllAsIndexArray($uidQuery, $params);
-		if (empty($uidRows)) {
+		$postUids = $this->queryFlatColumn($uidQuery, $params);
+		if (empty($postUids)) {
 			return false;
 		}
-		$postUids = array_merge(...$uidRows);
 
 		return $this->loadFullPostData($postUids);
 	}
@@ -119,12 +118,12 @@ class postSearchRepository extends baseRepository {
 		$query = "SELECT post_uid FROM ({$unionQuery}) AS search_hits ORDER BY root DESC, post_uid DESC";
 		$this->paginate($query, $params, $limit, $offset);
 
-		$uidRows = $this->queryAllAsIndexArray($query, $params);
-		if (empty($uidRows)) {
+		$postUids = $this->queryFlatColumn($query, $params);
+		if (empty($postUids)) {
 			return false;
 		}
 
-		return $this->loadFullPostData(array_merge(...$uidRows));
+		return $this->loadFullPostData($postUids);
 	}
 
 	/**

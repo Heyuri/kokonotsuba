@@ -100,7 +100,7 @@ final class systemRequirements {
 					self::GROUP,
 					"Extension {$extension}",
 					"Required for {$purpose}.",
-					'sudo apt install php-'.self::packageSuffix($extension).' && sudo systemctl restart php-fpm'
+					'sudo apt install php-'.self::packageSuffix($extension).' && sudo systemctl restart '.self::fpmServiceName($this->phpVersion)
 				);
 		}
 
@@ -212,6 +212,13 @@ final class systemRequirements {
 		}
 
 		return round($bytes / 1024).'K';
+	}
+
+	/** "php8.3-fpm": Debian names the service after the PHP minor version. */
+	public static function fpmServiceName(string $phpVersion = PHP_VERSION): string {
+		$parts = explode('.', $phpVersion);
+
+		return 'php'.($parts[0] ?? '8').'.'.($parts[1] ?? '3').'-fpm';
 	}
 
 	/** php-mbstring, php-mysql, … — the Debian package name for an extension. */

@@ -192,7 +192,10 @@ class quoteLinkRepository extends baseRepository {
 		}
 
 		$query = "INSERT INTO {$this->table} (board_uid, host_post_uid, target_post_uid) VALUES " . implode(', ', $placeholders);
-		return $this->query($query, $params);
+
+		// query() only reports success, so this used to return a coerced `true` - callers
+		// logging "inserted N links" were told 1 no matter how many rows went in.
+		return $this->queryAffected($query, $params);
 	}
 
 	/**

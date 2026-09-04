@@ -12,5 +12,6 @@ return [
 	'_group' => 'Moderation',
 
 	'BAN_CHECK'               => boolField('config_label_BAN_CHECK', true, 'config_desc_BAN_CHECK'),
+	'RECORD_POST_BROWSER'     => boolField('config_label_RECORD_POST_BROWSER', true, 'config_desc_RECORD_POST_BROWSER'),
 	'POST_DELETION_TIME_LIMIT'=> intField('config_label_POST_DELETION_TIME_LIMIT', 168, 'config_desc_POST_DELETION_TIME_LIMIT'),
 ];

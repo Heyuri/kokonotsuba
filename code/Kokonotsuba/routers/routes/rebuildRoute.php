@@ -4,6 +4,7 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\board\board;
 use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\action_log\actionLoggerService;
@@ -20,7 +21,7 @@ class rebuildRoute {
 	public function handleRebuild(): void {
 		$this->softErrorHandler->handleAuthError(userRole::LEV_JANITOR);
 
-		$this->actionLoggerService->logAction("Rebuilt pages", $this->board->getBoardUID());
+		$this->actionLoggerService->logAction("Rebuilt pages", $this->board->getBoardUID(), actionType::BOARD_REBUILD);
 		$this->board->updateBoardPathCache(); 
 		$this->board->rebuildBoard();
 

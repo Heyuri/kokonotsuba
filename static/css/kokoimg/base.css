@@ -151,6 +151,13 @@ caption h3 {
 	float: left;
 }
 
+/* Persistent navigation: pin the nav section, so everything in it rides along. */
+.persistnav .stickyNav {
+	position: sticky;
+	top: 0;
+	z-index: 3;
+}
+
 .persistnav .boardlist {
   background-color: var(--color-bg-boardlist);
 	border-color: inherit;
@@ -315,6 +322,11 @@ caption h3 {
 #banner,
 .fullbannerIframe {
 	border: 1px solid var(--color-fg-main);
+}
+
+/* Pulled up against the banner, whose container reserves a fixed height. */
+.boardbannerSuggestionContainer {
+	margin-top: -1em;
 }
 
 .mtitle {
@@ -1357,7 +1369,6 @@ caption h3 {
 
 #banForm {
 	margin: 1em auto;
-	max-width: 640px;
 }
 
 #banForm #bandays {
@@ -1396,23 +1407,33 @@ caption h3 {
 
 /************************ Ban screen **********************************/
 
+/* The whole ban page lives in here: heading, the summary row, and every ban listed under it. */
 #banScreen {
-	display: flex;
-	gap: 0.5em;
-  justify-content: space-between;
-  align-items: center;
-  background-color: var(--color-bg-reply);
+	background-color: var(--color-bg-reply);
 	max-width: 800px;
 	margin: 0 auto;
 	padding: 0.5em;
 }
 
+#banHeading {
+	margin: 0 0 0.5em;
+}
+
+/* The heading sits above; this is the row that puts the text beside the picture. */
+#banScreenSummary {
+	display: flex;
+	gap: 0.5em;
+	justify-content: space-between;
+	align-items: center;
+}
+
 #banScreenText {
 	flex: 1;
-	vertical-align: top;
 	text-align: left;
 }
 
+/* The tag carries the file's own width and height, so height:auto here is what lets the
+   browser reserve the right space from the aspect ratio before the picture arrives. */
 #banimg {
 	border: 1px solid;
 	max-width: 100%;
@@ -1421,17 +1442,17 @@ caption h3 {
 }
 
 #hrBan {
-	clear: both;
+	margin: 0.6em 0;
 }
 
 @media screen and (max-width: 640px) {
-  #banScreen {
-    flex-direction: column;
+	#banScreenSummary {
+		flex-direction: column;
 	}
 
-  #banimg {
-    width: 100%; /* Makes the image container fill the width */
-  }
+	#banimg {
+		width: 100%; /* Makes the image container fill the width */
+	}
 }
 
 /************************ Overboard ***********************************/

@@ -264,10 +264,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 			// --- NOKO reply ---
 			if (isNoko && isReply) {
-				// #pagerNextCell only appears when the current page is the last page.
-				// If there's a pager but no #pagerNextCell, we're on an earlier page.
+				// #pagerNextCell only holds a form while a next page exists.
+				// A pager whose next cell has no form means we're already on the last page.
 				const hasPager = !!document.getElementById('pager');
-				const onLastPage = !hasPager || !!document.getElementById('pagerNextCell');
+				const nextCell = document.getElementById('pagerNextCell');
+				const onLastPage = !hasPager || !nextCell || !nextCell.querySelector('form');
 				if (!onLastPage && data.redirectUrl) {
 					window.location.href = data.redirectUrl;
 					return;

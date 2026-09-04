@@ -30,16 +30,24 @@ return [
 	'BOARD_PATH_CACHE_TABLE' => 'board_paths',
 
 	'ACCOUNT_TABLE' => 'accounts',
+	'LOGIN_ATTEMPT_TABLE' => 'login_attempts',
 	'ACTIONLOG_TABLE' => 'actionlog',
 	'CAPCODE_TABLE' => 'capcodes',
 	'NOTE_TABLE' => 'notes',
+	'HOST_NOTE_TABLE' => 'host_notes',
+	'POST_EDIT_REVISION_TABLE' => 'post_edit_revisions',
 	'PRIVATE_MESSAGE_TABLE' => 'private_messages',
+
+	'BAN_TABLE' => 'bans',
+	'BAN_APPEAL_TABLE' => 'ban_appeals',
 
 	'REPORT_TABLE' => 'reports',
 	'REPORT_READ_TABLE' => 'report_reads',
 	'SPAM_STRING_TABLE' => 'spam_string_rules',
 	'FILE_BAN_TABLE' => 'file_bans',
 	'PERCEPTUAL_BAN_TABLE' => 'perceptual_bans',
+
+	'ANON_IP_RUN_TABLE' => 'anon_ip_runs',
 
 	'SOUDANE_TABLE' => 'soudane_votes',
 	'COUNTRY_FLAG_TABLE' => 'country_flags',

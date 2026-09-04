@@ -154,8 +154,8 @@ class threadRepository extends baseRepository {
 
 		$params = [':thread_uid' => (string) $thread_uid];
 		
-		$threadData = $this->databaseConnection->fetchAllAsClass($query, $params, 'Kokonotsuba\\thread\\Thread')[0] ?? null;	
-	
+		$threadData = $this->queryAllAsClass($query, $params, 'Kokonotsuba\\thread\\Thread')[0] ?? null;
+
 		return $threadData ?: false;
 	}
 
@@ -170,10 +170,10 @@ class threadRepository extends baseRepository {
 			return array(); // early return if no thread UIDs
 		}
 	
-		$placeholders = pdoPlaceholdersForIn($threadUidArray);
-		$query = "SELECT post_op_number, boardUID FROM {$this->table} WHERE thread_uid IN ($placeholders) ORDER BY last_bump_time DESC";
-		
-		return $this->queryAll($query, $threadUidArray);
+		$placeholders = $this->buildInClause($threadUidArray);
+		$query = "SELECT post_op_number, boardUID FROM {$this->table} WHERE thread_uid IN {$placeholders} ORDER BY last_bump_time DESC";
+
+		return $this->queryAll($query, array_values($threadUidArray));
 	}
 
 	/**
@@ -197,10 +197,7 @@ class threadRepository extends baseRepository {
 		$orderBy = $this->validateOrderField($orderBy, 'last_bump_time');
 
 		// Validate direction
-		$direction = strtoupper($direction);
-		if ($direction !== 'ASC' && $direction !== 'DESC') {
-			$direction = 'DESC';
-		}
+		$direction = self::sortDirection($direction);
 
 		// exclude threads whose OP post is deleted
 		$visibleCond = excludeDeletedThreadsCondition($this->deletedPostsTable);
@@ -217,8 +214,7 @@ class threadRepository extends baseRepository {
 			$this->paginate($query, $params, $amount, $start);
 		}
 
-		$threads = $this->queryAllAsIndexArray($query, $params);
-		return !empty($threads) ? array_merge(...$threads) : [];
+		return $this->queryFlatColumn($query, $params);
 	}
 	
 	/**
@@ -428,6 +424,47 @@ class threadRepository extends baseRepository {
 		$this->deleteWhere('thread_uid', $threadUID);
 	}
 
+	/**
+	 * Reparent every post of the given threads onto another thread, demoting their OPs to replies.
+	 *
+	 * @param string[] $sourceThreadUIDs   Threads whose posts are being absorbed.
+	 * @param string   $destinationThreadUID Thread that receives them.
+	 * @return void
+	 */
+	public function reparentPostsToThread(array $sourceThreadUIDs, string $destinationThreadUID): void {
+		if (empty($sourceThreadUIDs)) {
+			return;
+		}
+
+		$sourceThreadUIDs = array_map('strval', array_unique($sourceThreadUIDs));
+		$placeholders = pdoPlaceholdersForIn($sourceThreadUIDs);
+
+		$query = "UPDATE {$this->postTable} SET thread_uid = ?, is_op = 0 WHERE thread_uid IN $placeholders";
+
+		$this->query($query, array_merge([strval($destinationThreadUID)], $sourceThreadUIDs));
+	}
+
+	/**
+	 * Renumber post_position across a thread so the OP is 0 and replies follow in chronological order.
+	 * Needed after posts from another thread are absorbed, since their stored positions collide.
+	 *
+	 * @param string $threadUID Thread to renumber.
+	 * @return void
+	 */
+	public function reindexPostPositions(string $threadUID): void {
+		$query = "
+			UPDATE {$this->postTable} p
+			JOIN (
+				SELECT post_uid, ROW_NUMBER() OVER (ORDER BY is_op DESC, root ASC, post_uid ASC) - 1 AS new_position
+				FROM {$this->postTable}
+				WHERE thread_uid = :thread_uid
+			) ordered ON ordered.post_uid = p.post_uid
+			SET p.post_position = ordered.new_position
+		";
+
+		$this->query($query, [':thread_uid' => strval($threadUID)]);
+	}
+
 
 	/**
 	 * Update only the last reply time of a thread (no bump).
@@ -456,19 +493,10 @@ class threadRepository extends baseRepository {
 		$threadUIDs = array_map('strval', array_unique($threadUIDs));
 		$placeholders = pdoPlaceholdersForIn($threadUIDs);
 
-		// Subquery to get the first (oldest) post of each thread
-		$query = "
-			SELECT p.*
-			FROM {$this->postTable} p
-			INNER JOIN (
-				SELECT thread_uid, MIN(post_uid) AS first_post_uid
-				FROM {$this->postTable}
-				WHERE thread_uid IN $placeholders
-				GROUP BY thread_uid
-			) first_posts
-			ON p.thread_uid = first_posts.thread_uid AND p.post_uid = first_posts.first_post_uid
-		";
-
+		// The opening post of each thread. Ranked on is_op rather than MIN(post_uid): a merged
+		// thread holds posts older than its own OP, and the flag is what actually marks it.
+		// is_op is an explicit flag, so the (thread_uid, is_op, post_uid) index answers this directly
+		$query = "SELECT p.* FROM {$this->postTable} p WHERE p.is_op = 1 AND p.thread_uid IN $placeholders";
 		$results = $this->queryAll($query, $threadUIDs);
 
 		// merge rows (in cases of multiple attachments)
@@ -552,10 +580,7 @@ class threadRepository extends baseRepository {
 		$offset = max(0, (int)$offset);
 
 		// santitize/validate direction
-		$direction = strtoupper($direction);
-		if ($direction !== 'ASC' && $direction !== 'DESC') {
-			$direction = 'DESC';
-		}
+		$direction = self::sortDirection($direction);
 
 		// validate order by
 		if (!$this->isValidOrderField($orderBy)) {
@@ -626,7 +651,9 @@ class threadRepository extends baseRepository {
 			$includeDeleted, false, $this->countryFlagTable, $this->displayIpTable,
 			includeObjectivePosition: false, reportTable: $this->reportTable
 		);
-		$query .= " WHERE p.post_uid IN {$placeholders} ORDER BY p.post_uid ASC";
+		// is_op first: a merge reparents an older thread's posts onto a newer one, so the OP is
+		// not the lowest post_uid in the thread and ordering on that alone buries it under them
+		$query .= " WHERE p.post_uid IN {$placeholders} ORDER BY p.is_op DESC, p.post_uid ASC";
 
 		$posts = $this->queryAll($query, $postUIDs) ?? [];
 		$posts = mergeMultiplePostRows($posts);
@@ -876,8 +903,8 @@ class threadRepository extends baseRepository {
 			$query .= excludeDeletedThreadsCondition($this->deletedPostsTable);
 		}
 
-		// Order results by post id
-		$query .= " ORDER BY p.post_uid ASC";
+		// Order OP first, then replies by post id - see getPostsFromThread on why is_op leads
+		$query .= " ORDER BY p.is_op DESC, p.post_uid ASC";
 
 		$params = [
 			':thread_uid' => $threadUID
@@ -914,7 +941,7 @@ class threadRepository extends baseRepository {
 		// Filter by thread — intentionally no excludeDeletedThreadsCondition
 		// so the query works even when the OP is deleted
 		$query .= " WHERE p.thread_uid = :thread_uid";
-		$query .= " ORDER BY p.post_uid ASC";
+		$query .= " ORDER BY p.is_op DESC, p.post_uid ASC";
 
 		$params = [':thread_uid' => $threadUID];
 
@@ -1030,7 +1057,9 @@ class threadRepository extends baseRepository {
 			$includeDeleted, false, $this->countryFlagTable, $this->displayIpTable,
 			includeObjectivePosition: false, reportTable: $this->reportTable
 		);
-		$query .= " WHERE p.post_uid IN {$placeholders} ORDER BY p.no ASC";
+		// is_op first for the same reason as getPostsFromThread: after a merge the OP does not
+		// hold the thread's lowest post number either
+		$query .= " WHERE p.post_uid IN {$placeholders} ORDER BY p.is_op DESC, p.no ASC";
 
 		$posts = $this->queryAll($query, $postUIDs) ?? [];
 		$posts = mergeMultiplePostRows($posts);

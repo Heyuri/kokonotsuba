@@ -9,13 +9,40 @@ use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getCsrfMetaTag;
 use function Puchiko\strings\sanitizeStr;
 
-function buildTagSelectOptions(array $tags, string $currentTag = '', string $emptyLabel = ''): string {
+function buildTagSelectOptions(array $tags, string $currentTag = '', string $emptyLabel = '--'): string {
 	$html = '<option value=""' . ($currentTag === '' ? ' selected' : '') . '>' . sanitizeStr($emptyLabel) . '</option>';
 	foreach ($tags as $abbr => $name) {
 		$selected = ($currentTag === $abbr) ? ' selected' : '';
 		$html .= '<option value="' . sanitizeStr($abbr) . '"' . $selected . '>' . sanitizeStr($name) . '</option>';
 	}
 	return $html;
+}
+
+/**
+ * Body classes driven by a JS user setting, keyed by its localStorage key.
+ * Mirrors the bodyClass fields of the kkSetting definitions in static/js/koko.js;
+ * keep the two in step.
+ */
+const JS_SETTING_BODY_CLASSES = [
+	'neomenu' => 'neomenuEnabled',
+	'persistnav' => 'persistnav',
+	'persistpager' => 'persistpager',
+	'centerthreads' => 'centerthreads',
+];
+
+/**
+ * Inline script applying the layout settings' body classes at the top of the body,
+ * before the page paints. koko.js applies the same classes again on DOMContentLoaded,
+ * which is too late on its own: the page renders with the defaults first and the
+ * setting visibly snaps into place.
+ */
+function generateEarlySettingsScript(): string {
+	$map = json_encode((object)JS_SETTING_BODY_CLASSES, JSON_HEX_TAG | JSON_HEX_AMP);
+
+	return '<script>(function(){var m=' . $map . ',d=window.KOKO_DEFAULT_SETTINGS||{},c=[];' .
+		'for(var k in m){var v=null;try{v=localStorage.getItem(k)}catch(e){}' .
+		'if(v!==null?v==="true":!!d[k])c.push(m[k])}' .
+		'if(c.length)document.body.classList.add.apply(document.body.classList,c)})();</script>';
 }
 
 function generateHeadHtml(array $config, templateEngine $templateEngine, moduleEngine $moduleEngine, string $pageTitle = '', int $resno = 0, bool $isStaff = false, array $options = []) {
@@ -45,6 +72,9 @@ function generateHeadHtml(array $config, templateEngine $templateEngine, moduleE
 	$jsDefaults = $config['JS_DEFAULT_SETTINGS'] ?? [];
 	// Cast to object to ensure json_encode always produces {} not [] when the array is empty
 	$pte_vals['{$JS_DEFAULT_SETTINGS}'] = '<script>window.KOKO_DEFAULT_SETTINGS=' . json_encode((object)$jsDefaults, JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
+
+	// Applied at the top of the body so the settings land before the first paint
+	$pte_vals['{$EARLY_JS_SETTINGS}'] = generateEarlySettingsScript();
 
 	$html .= $templateEngine->ParseBlock('HEADER', $pte_vals);
 	$moduleEngine->dispatch('Head', array(&$html, $resno)); // Hook: Head

@@ -8,11 +8,13 @@ use Kokonotsuba\module_classes\traits\listeners\RegistBeforeCommitListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\AboveThreadAreaListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\renderers\commentFormatter;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\pageToOffset;
 use function Kokonotsuba\libraries\html\generatePostNameHtml;
+use function Puchiko\strings\sanitizeStr;
 use function Puchiko\strings\truncateText;
 
 class moduleMain extends abstractModuleMain {
@@ -85,11 +87,13 @@ class moduleMain extends abstractModuleMain {
 						$post = $t->getOpeningPost();
 						if (!$post) continue;
 
-						$cleanComment = strip_tags($post->getComment());
+						$postTextFormat = $post->getTextFormat();
+						$cleanComment = commentFormatter::commentToPlainText($post->getComment(), $postTextFormat);
 						$truncatedComment = truncateText($cleanComment, 100);
-						$truncatedSubject = truncateText($post->getSubject(), 100);
+						$truncatedSubject = truncateText(commentFormatter::fieldToPlainText($post->getSubject(), $postTextFormat), 100);
 
-						$title = $truncatedSubject ?: $truncatedComment;
+						// truncated as text, then escaped, so the cut can never split an entity
+						$title = sanitizeStr($truncatedSubject ?: $truncatedComment);
 
 						$replyCount = $t->getNumberOfPosts() - 1;
 
@@ -210,7 +214,8 @@ function checkall(){
 			}
 
 			$no = $opPost->getNumber();
-			$sub = $opPost->getSubject();
+			$postTextFormat = $opPost->getTextFormat();
+			$sub = commentFormatter::fieldToHtml($opPost->getSubject(), $postTextFormat);
 			$name = $opPost->getName();
 			$email = $opPost->getEmail();
 			$tripcode = $opPost->getTripcode();
@@ -225,7 +230,8 @@ function checkall(){
 				$secure_tripcode, 
 				$capcode,
 				$email,
-				$this->getConfig('NOTICE_SAGE', false)
+				$this->getConfig('NOTICE_SAGE', false),
+				$postTextFormat
 			);
 
 			$rescount = $t->getNumberOfPosts() - 1;

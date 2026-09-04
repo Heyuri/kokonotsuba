@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\report;
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
@@ -10,6 +11,7 @@ use Kokonotsuba\module_classes\traits\IndicatorTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\module_classes\traits\listeners\StaffAlertsListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\StaffNavListenerTrait;
+use Kokonotsuba\post\managePostsLink;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
@@ -46,7 +48,11 @@ class moduleAdmin extends abstractModuleAdmin {
 	/** ?status= value that widens the queue back out to every status. */
 	private const STATUS_FILTER_ALL = 'all';
 
+	/** id of the decision form on one report's page, so the copy above the table submits it. */
+	private const DECISION_FORM_ID = 'reportDecisionForm';
+
 	private reportService $reportService;
+	private ?int $unreadCount = null;
 	private reportPolicy $reportPolicy;
 	private reportPostPreview $reportPostPreview;
 	private string $modulePageUrl;
@@ -135,9 +141,13 @@ class moduleAdmin extends abstractModuleAdmin {
 	 * "Reports" in the nav above the admin bar, with a (n) indicator when this moderator has
 	 * pending reports they haven't opened yet.
 	 */
+	private function unreadCount(): int {
+		return $this->unreadCount ??= $this->reportService->countUnreadForAccount($this->currentAccountId);
+	}
+
 	private function onRenderNavLink(string &$linkHtml): void {
 		$unreadCount = $this->currentAccountId > 0
-			? $this->reportService->countUnreadForAccount($this->currentAccountId)
+			? $this->unreadCount()
 			: 0;
 
 		$indicatorHtml = $this->renderIndicator(
@@ -165,7 +175,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'title' => _T('report_nav_title'),
 			'group' => '',
 			'count' => $this->currentAccountId > 0
-				? $this->reportService->countUnreadForAccount($this->currentAccountId)
+				? $this->unreadCount()
 				: 0,
 		];
 	}
@@ -181,7 +191,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'key' => 'reports',
 			'label' => _T('report_nav'),
 			'count' => $this->currentAccountId > 0
-				? $this->reportService->countUnreadForAccount($this->currentAccountId)
+				? $this->unreadCount()
 				: 0,
 			'url' => $this->modulePageUrl,
 			'title' => _T('report_nav_unread_title'),
@@ -234,6 +244,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$HEADING_REPORTS}' => sanitizeStr(_T('report_heading_reports_on_post')),
 			'{$STATS_TABLE}' => $this->renderStatsTable([]),
 			'{$TH_DECISION}' => '', '{$CAN_CLEAR}' => '', '{$DECISION_FORM}' => '',
+			'{$DECISION_BUTTONS}' => '',
 			// Rendered as the empty case so the clone carries the no-reports message and a hidden
 			// table; the client removes one and reveals the other once the payload arrives.
 			'{$HAS_REPORTS}' => '', '{$NO_REPORTS_TEXT}' => sanitizeStr(_T('report_admin_empty')),
@@ -251,6 +262,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->moduleContext->adminPageRenderer->ParseBlock('REPORT_POST_REPORT_ROW', array_merge($blank, [
 				'{$STATUS_CLASS}' => '', '{$IS_PENDING}' => '1', '{$REPORT_ID}' => 0,
 				'{$REPORTER_REASON}' => '', '{$REPORTER_IP}' => '', '{$IP_REPORTS_URL}' => '#',
+				'{$REPORTER_POSTS_URL}' => '#',
 				'{$DATE_REPORTED}' => '', '{$SHOW_STATUS}' => '',
 				'{$PUBLIC_REASON}' => '', '{$PRIVATE_REASON}' => '',
 				'{$ACTIONED_BY}' => '', '{$ACTIONED_AT}' => '',
@@ -390,7 +402,8 @@ class moduleAdmin extends abstractModuleAdmin {
 					? 'Approved ' . count($reportIds) . ' report(s) on ' . $affected . ' post(s)'
 						. ($deletePost ? ', deleting them' : ', leaving them up')
 					: 'Dismissed ' . $affected . ' report(s)',
-				$this->moduleContext->board->getBoardUID()
+				$this->moduleContext->board->getBoardUID(),
+				actionType::TOOL_REPORT
 			);
 		}
 
@@ -427,7 +440,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		if ($cleared > 0) {
 			$this->logAction(
 				'Cleared ' . $cleared . ' report(s) on post UID ' . $postUid,
-				$this->moduleContext->board->getBoardUID()
+				$this->moduleContext->board->getBoardUID(),
+				actionType::TOOL_REPORT
 			);
 		}
 
@@ -473,7 +487,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		if ($cleared > 0) {
 			$this->logAction(
 				'Cleared ' . $cleared . ' report(s) from reporter ' . $reporterIp,
-				$this->moduleContext->board->getBoardUID()
+				$this->moduleContext->board->getBoardUID(),
+				actionType::TOOL_REPORT
 			);
 		}
 
@@ -523,7 +538,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		renderPrivateJsonPage([
 			'reports' => $payload,
-			'unreadCount' => $this->reportService->countUnreadForAccount($this->currentAccountId),
+			'unreadCount' => $this->unreadCount(),
 			'markReadUrl' => $this->modulePageUrl,
 			'title' => _T('report_notification_title'),
 		]);
@@ -611,6 +626,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				'publicReason' => (string) ($report['public_reason'] ?? ''),
 				'privateReason' => (string) ($report['private_reason'] ?? ''),
 				'ipReportsUrl' => $this->getIpReportsUrl($reportId),
+				'reporterPostsUrl' => $this->getReporterPostsUrl((string) $report['reporter_ip']),
 				'actionUrl' => $this->getActionUrl($reportId),
 				'actionDataUrl' => $this->getReportApiUrl($reportId),
 				'viewUrl' => $this->getModulePageURL(['pageName' => 'view', 'reportId' => $reportId], false, true),
@@ -664,6 +680,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				'{$TH_DECISION}' => sanitizeStr(_T($showStatus ? 'report_th_status' : 'report_th_decision_reasons')),
 				'{$SHOW_ACTIONED_BY}' => $showActionedBy ? '1' : '',
 				'{$DECISION_FORM}' => $this->renderDecisionForm(),
+				'{$DECISION_BUTTONS}' => $this->renderDecisionButtons(),
 				'{$REPORTS}' => $rows,
 				'{$HAS_REPORTS}' => empty($rows) ? '' : '1',
 				'{$NO_REPORTS_TEXT}' => sanitizeStr(_T('report_admin_empty')),
@@ -701,6 +718,7 @@ class moduleAdmin extends abstractModuleAdmin {
 				'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
 				'{$TH_STATS}' => sanitizeStr(_T('report_th_stats')),
 				'{$DECISION_FORM}' => $this->renderDecisionForm(),
+				'{$DECISION_BUTTONS}' => $this->renderDecisionButtons(formId: self::DECISION_FORM_ID),
 				'{$BACK_URL}' => sanitizeStr($this->modulePageUrl),
 				'{$BACK_TEXT}' => sanitizeStr(_T('report_back_to_queue')),
 				'{$POST_PREVIEW}' => $this->renderPostPreview($postUid),
@@ -812,7 +830,13 @@ class moduleAdmin extends abstractModuleAdmin {
 				'{$QUEUE_TEXT}' => sanitizeStr(_T('report_back_to_queue')),
 				'{$REPORT_ID}' => $reportId,
 				'{$REPORTER_IP}' => sanitizeStr($maskedIp),
+				'{$REPORTER_POSTS_URL}' => sanitizeStr($this->getReporterPostsUrl($reporterIp)),
 				'{$DECISION_FORM}' => $this->renderDecisionForm(
+					'clearIp',
+					_T('report_clear_ip'),
+					_T('report_clear_ip_hint')
+				),
+				'{$DECISION_BUTTONS}' => $this->renderDecisionButtons(
 					'clearIp',
 					_T('report_clear_ip'),
 					_T('report_clear_ip_hint')
@@ -868,6 +892,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		return array_merge($this->getSharedTemplateValues(), [
 			'{$FORM_TITLE}' => sanitizeStr(_T('report_action_title')),
+			'{$DECISION_BUTTONS}' => $this->renderDecisionButtons(),
 			'{$MODULE_URL}' => sanitizeStr($this->modulePageUrl),
 			'{$CSRF_TOKEN}' => $csrfInput,
 			'{$REPORT_ID}' => (int) ($report['report_id'] ?? 0),
@@ -921,6 +946,11 @@ class moduleAdmin extends abstractModuleAdmin {
 					_T('report_clear_post'),
 					_T('report_clear_post_hint')
 				),
+				'{$DECISION_BUTTONS}' => $this->renderDecisionButtons(
+					'clearPost',
+					_T('report_clear_post'),
+					_T('report_clear_post_hint')
+				),
 				'{$REPORTS}' => $rows,
 				'{$HAS_REPORTS}' => empty($rows) ? '' : '1',
 				'{$NO_REPORTS_TEXT}' => sanitizeStr(_T('report_admin_empty')),
@@ -956,6 +986,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$DISMISS_HINT}' => sanitizeStr(_T('report_dismiss_hint')),
 			'{$VIEW_TEXT}' => sanitizeStr(_T('report_view_link')),
 			'{$IP_REPORTS_TEXT}' => sanitizeStr(_T('report_ip_reports_link')),
+			'{$REPORTER_POSTS_TEXT}' => sanitizeStr(_T('report_reporter_posts_link')),
+			'{$REPORTER_POSTS_HINT}' => sanitizeStr(_T('report_reporter_posts_hint')),
 			'{$ACTION_TEXT}' => sanitizeStr(_T('report_action_link')),
 			'{$CLEAR_IP_TEXT}' => sanitizeStr(_T('report_clear_ip_row')),
 			'{$CLEAR_IP_HINT}' => sanitizeStr(_T('report_clear_ip_hint')),
@@ -1012,6 +1044,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$REPORTER_REASON}' => newLinesToBreakLines(sanitizeStr((string) ($report['reporter_reason'] ?? ''))),
 			'{$REPORTER_IP}' => sanitizeStr($this->maskIp((string) $report['reporter_ip'])),
 			'{$IP_REPORTS_URL}' => sanitizeStr($this->getIpReportsUrl((int) $report['report_id'])),
+			'{$REPORTER_POSTS_URL}' => sanitizeStr($this->getReporterPostsUrl((string) $report['reporter_ip'])),
 			'{$DATE_REPORTED}' => $this->formatDate($report['date_reported'] ?? null),
 			'{$STATUS_LABEL}' => sanitizeStr($status->label()),
 			'{$STATUS_CLASS}' => $status->rowCssClass(),
@@ -1042,6 +1075,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$REPORTER_REASON}' => newLinesToBreakLines(sanitizeStr((string) ($report['reporter_reason'] ?? ''))),
 			'{$REPORTER_IP}' => sanitizeStr($this->maskIp((string) $report['reporter_ip'])),
 			'{$IP_REPORTS_URL}' => sanitizeStr($this->getIpReportsUrl((int) $report['report_id'])),
+			'{$REPORTER_POSTS_URL}' => sanitizeStr($this->getReporterPostsUrl((string) $report['reporter_ip'])),
 			'{$DATE_REPORTED}' => $this->formatDate($report['date_reported'] ?? null),
 			'{$STATUS_LABEL}' => sanitizeStr($status->label()),
 			'{$STATUS_CLASS}' => $status->rowCssClass(),
@@ -1111,17 +1145,41 @@ class moduleAdmin extends abstractModuleAdmin {
 		string $clearText = '',
 		string $clearHint = ''
 	): string {
-		$showClear = $clearAction !== null && $this->reportPolicy->canClearPostReports();
-
 		return $this->moduleContext->adminPageRenderer->ParseBlock('REPORT_DECISION_FORM', array_merge(
 			$this->getSharedTemplateValues(),
 			[
 				'{$DECISION_HEADING}' => sanitizeStr(_T('report_decision_heading')),
 				'{$DECISION_LEGEND}' => sanitizeStr(_T('report_decision_legend')),
+				'{$DECISION_BUTTONS}' => $this->renderDecisionButtons($clearAction, $clearText, $clearHint),
+			]
+		));
+	}
+
+	/**
+	 * The approve/dismiss/clear buttons on their own.
+	 *
+	 * A queue repeats them above its table as well as below it, so acting on a long page does
+	 * not mean scrolling back to the bottom. Only the buttons are repeated - the reasons they
+	 * submit are one set of fields, in the decision form under the table.
+	 */
+	private function renderDecisionButtons(
+		?string $clearAction = null,
+		string $clearText = '',
+		string $clearHint = '',
+		string $formId = ''
+	): string {
+		$showClear = $clearAction !== null && $this->reportPolicy->canClearPostReports();
+
+		return $this->moduleContext->adminPageRenderer->ParseBlock('REPORT_DECISION_BUTTONS', array_merge(
+			$this->getSharedTemplateValues(),
+			[
 				'{$SHOW_CLEAR}' => $showClear ? '1' : '',
 				'{$CLEAR_ACTION}' => sanitizeStr((string) $clearAction),
 				'{$CLEAR_TEXT}' => sanitizeStr($clearText),
 				'{$CLEAR_HINT}' => sanitizeStr($clearHint),
+				// A copy above a table the form does not reach around still submits it, rather
+				// than needing a second set of the reason fields it carries.
+				'{$FORM_ATTR}' => $formId === '' ? '' : ' form="' . sanitizeStr($formId) . '"',
 			]
 		));
 	}
@@ -1265,6 +1323,21 @@ class moduleAdmin extends abstractModuleAdmin {
 	 */
 	private function getIpReportsUrl(int $reportId): string {
 		return $this->getModulePageURL(['pageName' => 'ipReports', 'reportId' => $reportId], false, true);
+	}
+
+	/**
+	 * Every post made from a reporter's address, across every board.
+	 *
+	 * The one link in the module that has to carry the address itself, since manage-posts filters
+	 * on an address rather than on a report - so it is built only for staff cleared to see one.
+	 * Everyone else gets '' and the templates leave the button out.
+	 */
+	private function getReporterPostsUrl(string $reporterIp): string {
+		if ($reporterIp === '' || !$this->reportPolicy->canViewIpAddresses()) {
+			return '';
+		}
+
+		return managePostsLink::forIp($this->moduleContext->request->getCurrentUrlNoQuery(), $reporterIp);
 	}
 
 	/** The reporter IP behind a report id, or null when the report doesn't exist. */

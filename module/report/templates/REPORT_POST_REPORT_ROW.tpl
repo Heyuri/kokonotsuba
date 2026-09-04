@@ -12,5 +12,5 @@
 			<span class="reportActionedBy">{$ACTIONED_BY}</span>
 			<span class="reportActionedAt">{$ACTIONED_AT}</span>
 		</td>
-		<td class="colActions">[<a class="reportActionLink reportRowActionLink" href="{$ACTION_URL}" data-report-url="{$ACTION_DATA_URL}" data-report-id="{$REPORT_ID}">{$ACTION_TEXT}</a>] [<a class="reportRowViewLink" href="{$VIEW_URL}">{$VIEW_TEXT}</a>] <!--&IF($CAN_CLEAR,'[<button type="submit" class="buttonLink reportClearIpButton" name="clearIpReportId" value="{$REPORT_ID}" title="{$CLEAR_IP_HINT}">{$CLEAR_IP_TEXT}</button>]','')--></td>
+		<td class="colActions">[<a class="reportActionLink reportRowActionLink" href="{$ACTION_URL}" data-report-url="{$ACTION_DATA_URL}" data-report-id="{$REPORT_ID}">{$ACTION_TEXT}</a>] [<a class="reportRowViewLink" href="{$VIEW_URL}">{$VIEW_TEXT}</a>] <!--&IF($CAN_VIEW_IP,'[<a class="reportPostsLink reportRowPostsLink" href="{$REPORTER_POSTS_URL}" title="{$REPORTER_POSTS_HINT}">{$REPORTER_POSTS_TEXT}</a>]','')--> <!--&IF($CAN_CLEAR,'[<button type="submit" class="buttonLink reportClearIpButton" name="clearIpReportId" value="{$REPORT_ID}" title="{$CLEAR_IP_HINT}">{$CLEAR_IP_TEXT}</button>]','')--></td>
 	</tr>

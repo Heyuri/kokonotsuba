@@ -6,10 +6,12 @@ require_once __DIR__ . '/messageRepository.php';
 require_once __DIR__ . '/messageRenderer.php';
 require_once __DIR__ . '/messageUtility.php';
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
-use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
+use Kokonotsuba\ban\banDuration;
+use Kokonotsuba\module_classes\traits\BanCheckpointTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\userRole;
@@ -19,10 +21,12 @@ use function Kokonotsuba\libraries\html\drawPager;
 use function Puchiko\request\redirect;
 use function Puchiko\strings\sanitizeStr;
 
+use const Kokonotsuba\GLOBAL_BOARD_UID;
+
 class moduleAdmin extends abstractModuleAdmin {
 	use AuditableTrait;
     use PostControlHooksTrait;
-	use BanFileOperationsTrait;
+	use BanCheckpointTrait;
 
 	private messageRepository $messageRepository;
 	private messageRenderer $messageRenderer;
@@ -88,7 +92,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$ids = $this->getSelectedIds();
 		if (!empty($ids)) {
 			$this->messageRepository->deleteMessages($ids);
-			$this->logAction('Deleted ' . count($ids) . ' private message(s)', $this->moduleContext->board->getBoardUID());
+			$this->logAction('Deleted ' . count($ids) . ' private message(s)', $this->moduleContext->board->getBoardUID(), actionType::TOOL_PM);
 		}
 		redirect($this->moduleContext->request->getReferer());
 		exit;
@@ -102,27 +106,41 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		$bannedIps = [];
-		$banFile = $this->getGlobalBanFilePath();
-		$startTime = time();
-		$expires = $startTime + $this->calculateBanDuration('1y');
 
 		foreach ($ids as $id) {
 			$message = $this->messageRepository->getMessageById($id);
 			if ($message && !empty($message['ip_address'])) {
 				$ip = $message['ip_address'];
 				if (!in_array($ip, $bannedIps, true)) {
-					$this->addBanEntry($banFile, $ip, $startTime, $expires, 'Banned via PM admin');
 					$bannedIps[] = $ip;
 				}
 			}
 		}
 
+		$expires = $this->moduleContext->request->getRequestTime() + banDuration::toSeconds('1y');
+
+		$this->getBanService()->fileBans(
+			$bannedIps,
+			GLOBAL_BOARD_UID,
+			$this->getBanService()->getDefaultCheckpoints(),
+			$expires,
+			'Banned via PM admin',
+			$this->getActorAccountId()
+		);
+
 		if (!empty($bannedIps)) {
-			$this->logAction('Banned ' . implode(', ', $bannedIps) . ' via PM admin', -1);
+			$this->logAction('Banned ' . implode(', ', $bannedIps) . ' via PM admin', -1, actionType::BAN_ISSUE);
 		}
 
 		redirect($this->moduleContext->request->getReferer());
 		exit;
+	}
+
+	/** The acting moderator's account id, or null when the action had no account behind it. */
+	private function getActorAccountId(): ?int {
+		$accountId = (int) ($this->moduleContext->currentUserId ?? 0);
+
+		return $accountId > 0 ? $accountId : null;
 	}
 
 	private function getSelectedIds(): array {

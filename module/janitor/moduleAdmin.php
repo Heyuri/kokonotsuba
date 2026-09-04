@@ -3,18 +3,24 @@
 
 namespace Kokonotsuba\Modules\janitor;
 
+use Kokonotsuba\action_log\actionType;
+use Kokonotsuba\ban\banImagePicker;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\BanCheckpointTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
+use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Puchiko\strings\newLinesToBreakLines;
 use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Puchiko\request\redirect;
+use function Puchiko\strings\sanitizeStr;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use BanCheckpointTrait;
 	use PostControlHooksTrait;
 	public function getRequiredRole(): userRole {
 		return userRole::LEV_JANITOR;
@@ -110,8 +116,14 @@ class moduleAdmin extends abstractModuleAdmin {
 	private function getWarnTemplateValues(): array {
 		// return shared warn template values
 		return [
-			'{$REASON_DEFAULT}'	=> 'No reason given.',
-			'{$FORM_ACTION}'	=> $this->getModulePageURL(),
+			'{$REASON_DEFAULT}'	=> sanitizeStr(_T('ban_no_reason')),
+			'{$FORM_ACTION}'	=> sanitizeStr($this->getModulePageURL()),
+			'{$FORM_HEADING}'	=> sanitizeStr(_T('warn_form_heading')),
+			'{$LABEL_POST}'		=> sanitizeStr(_T('warn_form_label_post')),
+			'{$LABEL_REASON}'	=> sanitizeStr(_T('warn_form_label_reason')),
+			'{$LABEL_PUBLIC}'	=> sanitizeStr(_T('warn_form_label_public')),
+			'{$DESC_PUBLIC}'	=> sanitizeStr(_T('warn_form_desc_public')),
+			'{$SUBMIT_TEXT}'	=> sanitizeStr(_T('warn_form_submit')),
 		];
 	}
 
@@ -146,38 +158,48 @@ class moduleAdmin extends abstractModuleAdmin {
 		$reason = str_replace(",", "&#44;", preg_replace("/[\r\n]/", '', newLinesToBreakLines($this->moduleContext->request->getParameter('msg', 'POST', ''))));
 		if (!$reason) $reason = 'No reason given.';
 
-		if (!empty($this->moduleContext->request->getParameter('public', 'POST'))) {
-			$post->setComment($post->getComment() . $this->getPublicWarnMessageHtml($reason));
-			
-			// parameters to update in the query
-			$updatePostParameters = [
-				'com' => $post->getComment()
-			];
-			
-			$this->moduleContext->postRepository->updatePost($post->getUid(), $updatePostParameters);
-		}
+		// The public notice rides on the ban, the way adminBan's does: the post's comment is the
+		// poster's text and nothing else, so withdrawing the warning withdraws the notice too.
+		$publicReason = !empty($this->moduleContext->request->getParameter('public', 'POST'))
+			? $this->getPublicWarnMessageHtml($reason)
+			: '';
 
 		$board = searchBoardArrayForBoard($post->getBoardUID());
 
-		$BANFILE = $board->getBoardStoragePath() . 'bans.log.txt';
-		touch($BANFILE);
+		// A warning is a ban that blocks nothing: it is shown once and gets out of the way.
+		$accountId = (int) ($this->moduleContext->currentUserId ?? 0);
 
-		$log = array_map('rtrim', file($BANFILE));
-		$rtime = $this->moduleContext->request->getRequestTime();
-		$log[] = "$ip,$rtime,$rtime,$reason";
-		file_put_contents($BANFILE, implode(PHP_EOL, $log) . PHP_EOL);
+		$this->getBanService()->fileBan(
+			$ip,
+			$board->getBoardUID(),
+			[],
+			null,
+			$reason,
+			$accountId > 0 ? $accountId : null,
+			$post->getUid(),
+			false,
+			true,
+			false,
+			$publicReason
+		);
 
-		$this->moduleContext->actionLoggerService->logAction('Warned ' . $ip . ' for post No. ' . $postNumber, $board->getBoardUID());
+		$this->moduleContext->actionLoggerService->logAction('Warned ' . $ip . ' for post No. ' . $postNumber, $board->getBoardUID(), actionType::BAN_ISSUE);
 
 		$board->rebuildBoard();
 		redirect($board->getBoardURL());
 	}
 
+	/** The image comes from static/image/ban/ at random, same as a ban's own notice. */
 	private function getPublicWarnMessageHtml(string $reason = ''): string {
-		// put together public warn message
-		$warnHtml = "<p class=\"warning\">(<span class=\"reasonText\">$reason</span>) <img class=\"banIcon icon\" alt=\"banhammer\" src=\"" . $this->getConfig('STATIC_URL') . "/image/hammer.gif\"></p>";
-	
-		// return message
-		return $warnHtml;
+		$image = (new banImagePicker(
+			(string) $this->getConfig('STATIC_PATH'),
+			(string) $this->getConfig('STATIC_URL')
+		))->random();
+
+		$url = $image->url;
+		$dimensions = $image->dimensionAttributes();
+
+		return "<p class=\"warning\">(<span class=\"reasonText\">$reason</span>) "
+			. "<img class=\"banIcon icon\" alt=\"banhammer\" src=\"$url\" $dimensions></p>";
 	}
 }

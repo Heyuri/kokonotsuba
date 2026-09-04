@@ -85,7 +85,8 @@ class modeHandler {
 					$this->container->get('threadRepository'),
 					$this->container->get('threadService'),
 					$this->container->get('quoteLinkService'),
-					$this->container->get('request')
+					$this->container->get('request'),
+					$this->container->get('banService')
 				);
 				$route->registerPostToDatabase();
 			},
@@ -105,6 +106,7 @@ class modeHandler {
 					$this->container->get('board'),
 					$this->container->get('adminLoginController'),
 					$this->container->get('adminPageRenderer'),
+					$this->container->get('loginAttemptService'),
 					$this->container->get('request'),
 				);
 				$route->drawAdminPage();
@@ -251,6 +253,7 @@ class modeHandler {
 					$this->container->get('boardList'),
 					$this->container->get('postDateFormatter'),
 					$this->container->get('request'),
+					$this->container->get('postRepository'),
 				);
 				$route->drawActionLog();
 			},

@@ -15,7 +15,9 @@ spl_autoload_register(function (string $class): void {
 
 	$file = $baseDir . str_replace('\\', '/', $class) . '.php';
 
+	// require_once: a name whose file exists but declares a different symbol would otherwise
+	// be re-included on every lookup and fatal with "cannot redeclare".
 	if (is_file($file)) {
-		require $file;
+		require_once $file;
 	}
 });

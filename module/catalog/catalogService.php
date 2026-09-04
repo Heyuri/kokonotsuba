@@ -5,6 +5,8 @@ namespace Kokonotsuba\Modules\catalog;
 use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\module_classes\traits\CommentHooksTrait;
+use Kokonotsuba\post\textFormat;
+use Kokonotsuba\renderers\commentFormatter;
 
 use function Kokonotsuba\libraries\resolveThumbnailDisplayUrl;
 
@@ -110,6 +112,7 @@ class catalogService {
 	 */
 	private function buildEntries(array $rows, board $board): array {
 		$entries = [];
+		$commentFormatter = new commentFormatter($board->loadBoardConfig());
 
 		foreach ($rows as $row) {
 			$threadNumber = (int) $row['post_op_number'];
@@ -119,9 +122,15 @@ class catalogService {
 			$thumbnailUrl = $this->resolveThumbnailUrl($row, $board);
 			$thumbWidth = $thumbnailUrl ? (int) ($row['file_thumb_width'] ?? 0) : 0;
 
-			// Process the comment text for display
-			$comment = $this->applyCommentHooks((string) ($row['op_comment'] ?? ''));
-			$subject = (string) ($row['op_subject'] ?? '');
+			// Format the stored text the same way the board does, then let the comment hooks run
+			$rowTextFormat = textFormat::fromStored($row['op_text_format'] ?? 0);
+
+			$comment = $this->applyCommentHooks(
+				$commentFormatter->commentToHtml((string) ($row['op_comment'] ?? ''), $rowTextFormat)
+			);
+			// Text, not markup: catalogEntry escapes it for the template and hands the JSON
+			// build the same text, which the catalog script writes in as textContent.
+			$subject = commentFormatter::fieldToPlainText((string) ($row['op_subject'] ?? ''), $rowTextFormat);
 
 			$replyCount = max(0, (int) ($row['reply_count'] ?? 0));
 

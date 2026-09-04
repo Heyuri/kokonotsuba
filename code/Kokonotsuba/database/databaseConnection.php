@@ -82,6 +82,23 @@ class databaseConnection {
 		return $stmt->execute();
 	}
 
+	/**
+	 * Execute a write and report how many rows it touched.
+	 *
+	 * execute() only reports success, which is no use to a caller that has to say how many rows
+	 * a multi-row INSERT wrote or a conditional UPDATE actually changed.
+	 *
+	 * @param string $query  Raw SQL string with named or positional placeholders.
+	 * @param array  $params Bound parameters.
+	 * @return int Rows affected by the statement.
+	 */
+	public function executeWithRowCount(string $query, array $params = []): int {
+		$stmt = $this->pdo->prepare($query);
+		$this->bindTypedParams($stmt, $params);
+		$stmt->execute();
+		return $stmt->rowCount();
+	}
+
 	// Bind parameters with proper PDO types (int params as PARAM_INT so LIMIT/OFFSET work)
 	private function bindTypedParams(\PDOStatement $stmt, array $params): void {
 		foreach ($params as $key => $value) {

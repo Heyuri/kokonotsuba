@@ -13,10 +13,12 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
+use Kokonotsuba\ban\banCheckpoint;
+use Kokonotsuba\module_classes\traits\BanCheckpointTrait;
 use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\RegistPostInsertedListenerTrait;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\Post;
 
@@ -27,8 +29,9 @@ use function Puchiko\strings\sanitizeStr;
 class moduleMain extends abstractModuleMain {
 	use TopLinksListenerTrait;
 	use IncludeScriptTrait;
-	use BanFileOperationsTrait;
+	use BanCheckpointTrait;
 	use PostListenerTrait;
+	use RegistPostInsertedListenerTrait;
 
 	private string $modulePageUrl;
 	private messageService $messageService;
@@ -52,7 +55,9 @@ class moduleMain extends abstractModuleMain {
 		$this->registerScript('privateMessage.js?v=2');
 
 		// PM button next to tripcode'd names
-		$this->listenPost('onRenderPost');
+		if ($this->getModuleConfig('APPEND_TRIP_PM_BUTTON_TO_POST', true)) {
+			$this->listenPost('onRenderPost');
+		}
 
 		// get database table and connection
 		$databaseConnection = databaseConnection::getInstance();
@@ -89,6 +94,9 @@ class moduleMain extends abstractModuleMain {
 			$this->moduleContext->request
 		);
 
+		// posting with a tripcode signs you in to the PM system as that tripcode
+		$this->listenRegistPostInserted('onPostInserted');
+
 		// init request handler
 		$this->messageRequestHandler = new messageRequestHandler(
 			$this->messageService,
@@ -120,6 +128,24 @@ class moduleMain extends abstractModuleMain {
 		$templateValues['{$NAME}'] .= ' <span class="pmNameLinkContainer">[<a href="' . $composeUrl . '" class="pmNameLink" title="' . _T('pm_post_button_title') . '">PM</a>]</span>';
 	}
 
+	/**
+	 * Adopt the tripcode a freshly registered post was made with as the PM identity.
+	 * The stored columns are read back rather than the submitted name so a board that
+	 * strips or rewrites tripcodes is respected.
+	 */
+	private function onPostInserted(int $postUid, string $ip): void {
+		if (!$this->messageUtility->canAdoptPostTripcode()) {
+			return;
+		}
+
+		$post = $this->moduleContext->postRepository->getPostByUid($postUid);
+		if ($post === false) {
+			return;
+		}
+
+		$this->messageUtility->loginFromPostTripcode($post->getTripcode(), $post->getSecureTripcode());
+	}
+
 	private function registerUnreadNotificationHook(): void {
 		if (!$this->messageUtility->isLoggedIn()) {
 			return;
@@ -135,11 +161,8 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	public function ModulePage() {
-		// check if the user's IP is banned
-		$userIp = (string) $this->moduleContext->request->userIp();
-		if ($this->isIpBanned($userIp)) {
-			throw new BoardException(_T('pm_user_banned'));
-		}
+		// check if the user is banned from private messages
+		$this->assertNotBanned(banCheckpoint::PM);
 
 		// handle submitted forms and such
 		if($this->moduleContext->request->isPost()) {

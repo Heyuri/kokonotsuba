@@ -8,6 +8,7 @@ require_once __DIR__ . '/antiSpamLib.php';
 
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
@@ -15,9 +16,12 @@ use Kokonotsuba\userRole;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\generateModerateButton;
 use function Kokonotsuba\libraries\html\drawPager;
+use function Puchiko\json\renderJsonErrorPage;
+use function Puchiko\json\sendJsonResponse;
 use function Puchiko\request\redirect;
 
 class moduleAdmin extends abstractModuleAdmin {
+	use AuditableTrait;
 	use PostControlHooksTrait;
 
 	private antiSpamService $antiSpamService;
@@ -45,6 +49,10 @@ class moduleAdmin extends abstractModuleAdmin {
 			'Filter post'
 		);
 		$this->registerLinksAboveBarHook(_T('admin_nav_anti_spam_title'), $this->moduleUrl, _T('admin_nav_anti_spam'), 'bans');
+		$this->registerAdminHeaderHook('onGenerateModuleHeader');
+
+		// makes a tripped filter clickable in the action log
+		$this->registerActionReference('spamrule', fn(string $id): string => $this->getEntryUrl((int)$id));
 
 		// set antispam service instance
 		$this->antiSpamService = getAntiSpamService();
@@ -62,6 +70,26 @@ class moduleAdmin extends abstractModuleAdmin {
 			'adminFilterPostFunction',
 			$noScript
 		);
+	}
+
+	/**
+	 * Ship the filter form to the board page so the post menu's "Filter post" entry can open it
+	 * in a window instead of navigating away. The form is cloned client-side and its pattern
+	 * field filled with the post's own comment.
+	 */
+	private function onGenerateModuleHeader(string &$moduleHeader): void {
+		// include the filter window js
+		$this->includeScript('antiSpam.js', $moduleHeader);
+
+		// render an empty new entry form for the window to clone
+		$form = $this->moduleContext->adminPageRenderer->ParseBlock('NEW_ENTRY_FORM',
+			[
+				'{$MODULE_URL}' => htmlspecialchars($this->moduleUrl),
+				'{$PATTERN_VALUE}' => ''
+			]
+		);
+
+		$moduleHeader .= $this->generateTemplate('filterPostFormTemplate', $form);
 	}
 
 	private function generateFilterPostUrl(int $postUid): string {
@@ -111,6 +139,11 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// require a non-empty pattern
 		if ($fields['pattern'] === '') {
+			// the filter window needs the reason, not a redirect it cannot follow
+			if ($this->moduleContext->request->isAjax()) {
+				renderJsonErrorPage('A pattern is required.');
+			}
+
 			redirect($this->moduleUrl);
 		}
 
@@ -137,6 +170,11 @@ class moduleAdmin extends abstractModuleAdmin {
 				$createdBy
 			);
 		});
+
+		// submissions from the filter window only need to know it worked
+		if ($this->moduleContext->request->isAjax()) {
+			sendJsonResponse(['pattern' => $fields['pattern']]);
+		}
 
 		// then redirect
 		redirect($this->moduleUrl);

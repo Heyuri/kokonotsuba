@@ -24,6 +24,9 @@ use const Kokonotsuba\GLOBAL_BOARD_UID;
  * deliberately diverge from it.
  */
 class configService {
+	/** @var array<int, array<string, mixed>> Overrides already read this request, by scope. */
+	private array $overridesCache = [];
+
 	public function __construct(
 		private readonly configRepository $configRepository
 	) {}
@@ -35,6 +38,10 @@ class configService {
 	 * @return array<string, mixed> dot-path => override value.
 	 */
 	public function getOverrides(int $boardUid): array {
+		if (isset($this->overridesCache[$boardUid])) {
+			return $this->overridesCache[$boardUid];
+		}
+
 		$stored = $this->configRepository->getOverridesByBoardUid($boardUid);
 
 		$overrides = [];
@@ -44,7 +51,7 @@ class configService {
 			}
 		}
 
-		return $overrides;
+		return $this->overridesCache[$boardUid] = $overrides;
 	}
 
 	/**
@@ -197,6 +204,7 @@ class configService {
 	 * @return void
 	 */
 	public function resetOverrides(int $boardUid): void {
+		unset($this->overridesCache[$boardUid]);
 		$this->configRepository->deleteOverridesForBoardUid($boardUid);
 	}
 
@@ -265,6 +273,7 @@ class configService {
 	 * @return void
 	 */
 	private function persistOverrides(int $boardUid, array $overrides): void {
+		unset($this->overridesCache[$boardUid]);
 		if (empty($overrides)) {
 			$this->configRepository->deleteOverridesForBoardUid($boardUid);
 		} else {

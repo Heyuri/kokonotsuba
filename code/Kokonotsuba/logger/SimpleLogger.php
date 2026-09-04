@@ -1,10 +1,6 @@
 <?php
 /**
- * A simple ILogger implementation.
- * Log everything it got to the log file. (Default log level: ERROR only)
- *
- * @package PMCLibrary
- * @version $Id$
+ * Appends everything it is given to a log file. Only the error level is emitted.
  */
 
 namespace Kokonotsuba\logger;

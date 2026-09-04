@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\rebuild;
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\BackgroundTaskTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
@@ -74,7 +75,8 @@ class moduleAdmin extends abstractModuleAdmin {
 				$count = count($boardUIDs);
 				$this->moduleContext->actionLoggerService->logAction(
 					"Queued rebuild for $count board(s) (UIDs: " . implode(', ', $boardUIDs) . ')',
-					GLOBAL_BOARD_UID
+					GLOBAL_BOARD_UID,
+					actionType::BOARD_REBUILD
 				);
 			}
 		);

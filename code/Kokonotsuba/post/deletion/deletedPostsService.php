@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\post\deletion;
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\database\TransactionalTrait;
@@ -90,7 +91,7 @@ class deletedPostsService {
 		$restoreActionString = $this->generateActionLoggingString($opPostData->getNumber(), false, true);
 
 		// Log the restore action to the logging table
-		$this->logAction($restoreActionString, $opPostData->getBoardUID());
+		$this->logAction($restoreActionString, $opPostData->getBoardUID(), actionType::POST_RESTORE);
 	}
 
 	private function restoreReply(DeletedPost $postData, int $deletedPostId, int $accountId): void {
@@ -122,7 +123,7 @@ class deletedPostsService {
 		$restoreActionString = $this->generateActionLoggingString($postData->getNumber(), false, false);
 
 		// Log the restore action to the logging table
-		$this->logAction($restoreActionString, $postData->getBoardUID());
+		$this->logAction($restoreActionString, $postData->getBoardUID(), actionType::POST_RESTORE);
 	}
 
 	/**
@@ -185,7 +186,7 @@ class deletedPostsService {
 		$this->deletedPostsRepository->restorePostData($deletedPostId, $accountId);
 
 		// Log the restore
-		$this->logAction("Restored attachment $fileId on post No.{$deletedPostEntry->getNumber()}", $deletedPostEntry->getBoardUID());
+		$this->logAction("Restored attachment $fileId on post No.{$deletedPostEntry->getNumber()}", $deletedPostEntry->getBoardUID(), actionType::POST_RESTORE);
 	}
 
 	/**
@@ -333,7 +334,7 @@ class deletedPostsService {
 			$purgeActionString = $this->generateActionLoggingString($opPostData->getNumber(), true, true);
 
 			// Log the purge action to the logging table
-			$this->logAction($purgeActionString, $opPostData->getBoardUID());
+			$this->logAction($purgeActionString, $opPostData->getBoardUID(), actionType::POST_PURGE);
 		}
 	}
 
@@ -359,7 +360,7 @@ class deletedPostsService {
 			$purgeActionString = $this->generateActionLoggingString($replyPostData->getNumber(), true, false);
 
 			// Log the purge action to the logging table
-			$this->logAction($purgeActionString, $replyPostData->getBoardUID());
+			$this->logAction($purgeActionString, $replyPostData->getBoardUID(), actionType::POST_PURGE);
 		}
 	}
 
@@ -459,7 +460,7 @@ class deletedPostsService {
 			$purgeActionString = $this->generateFilePurgeLoggingString($row->getNumber());
 
 			// Log the purge action to the logging table
-			$this->logAction($purgeActionString, $row->getBoardUID());
+			$this->logAction($purgeActionString, $row->getBoardUID(), actionType::POST_PURGE);
 		});
 
 	}
@@ -472,9 +473,9 @@ class deletedPostsService {
 		return $actionString;
 	}
 	
-	private function logAction(string $actionString, int $boardUid): void {
+	private function logAction(string $actionString, int $boardUid, actionType $type): void {
 		// log the action
-		$this->actionLoggerService->logAction($actionString, $boardUid);
+		$this->actionLoggerService->logAction($actionString, $boardUid, $type);
 	}
 
 	private function getPaginationParams(int $page, int $entriesPerPage): array {

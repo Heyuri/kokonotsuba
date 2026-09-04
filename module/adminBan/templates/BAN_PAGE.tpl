@@ -1,14 +1,18 @@
-	<h2 id="banHeading" class="centerText warning">
-		<!--&IF($IS_BANNED,'You have been {$BAN_TYPE}! ヽ(ー_ー )ノ','You are not banned! <span class="ascii">ヽ(´∇`)ノ</span>')-->
-	</h2>
-
+	<h2 id="banHeading" class="centerText warning">{$BAN_HEADING}</h2>
 	<div id="banScreen">
-		<div id="banScreenText">
-			<p><!--&IF($REASON,'{$REASON}','')--></p>
-			<!--&IF($IS_BANNED,'{$BAN_DETAIL}','')-->
+
+		<div id="banScreenSummary">
+			<div id="banScreenText">
+				<!--&IF($IS_BANNED,'','<p>{$CLEAR_TEXT}</p>')-->
+				<!--&IF($BLOCKED_TEXT,'<p class="banBlockedText">{$BLOCKED_TEXT}</p>','')-->
+
+				<!--&FOREACH($ENTRIES,'BAN_PAGE_ENTRY')-->
+			</div>
+
+			<img id="banimg" src="{$BAN_IMAGE}" alt="{$BAN_IMAGE_ALT}" {$BAN_IMAGE_DIMENSIONS}>
 		</div>
 
-		<img id="banimg" src="{$BAN_IMAGE}" alt="<!--&IF($IS_BANNED,'BANNED!','NOT BANNED!')-->">
+		<!--&FOREACH($ENTRIES,'BAN_PAGE_ENTRY_BELOW')-->
 	</div>
 
-	<hr id="hrBan">
+	<!--&IF($HAS_ENTRIES,'<hr id="hrBan">','')-->

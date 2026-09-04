@@ -68,6 +68,8 @@ final class webServerRules {
 
 		return <<<NGINX
 		# Kokonotsuba: keep the backend out of reach of browsers.
+		# Regex locations match in the order written, so these go ABOVE the "location ~ \.php$"
+		# block, or that block will hand the denied .php files to PHP-FPM first.
 		location ~ ^{$prefix}/({$directories})/ {
 		    deny all;
 		}

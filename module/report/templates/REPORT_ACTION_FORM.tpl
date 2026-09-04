@@ -3,6 +3,9 @@
 		<form class="reportForm reportActionForm" method="POST" action="{$MODULE_URL}">
 			{$CSRF_TOKEN}
 			<input type="hidden" name="reportId" class="reportActionIdField" value="{$REPORT_ID}">
+
+			{$DECISION_BUTTONS}
+
 			<table class="formtable reportFormTable">
 				<tbody>
 					<tr class="reportPreviewRow">
@@ -48,9 +51,6 @@
 					</tr>','')-->
 				</tbody>
 			</table>
-			<div class="buttonSection reportDecisionButtons">
-				<!--&IF($CAN_APPROVE,'<button type="submit" class="reportApproveButton" name="action" value="approve" title="{$APPROVE_HINT}">{$APPROVE_TEXT}</button>','')-->
-				<!--&IF($CAN_DISMISS,'<button type="submit" class="reportDismissButton" name="action" value="dismiss" title="{$DISMISS_HINT}">{$DISMISS_TEXT}</button>','')-->
-			</div>
+			{$DECISION_BUTTONS}
 		</form>
 	</div>

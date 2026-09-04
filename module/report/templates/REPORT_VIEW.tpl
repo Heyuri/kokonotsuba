@@ -2,9 +2,13 @@
 	<div class="reportToolbar">
 		[<a href="{$BACK_URL}">{$BACK_TEXT}</a>]
 		[<a href="{$POST_REPORTS_URL}">{$POST_REPORTS_TEXT}</a>]
+		<!--&IF($CAN_VIEW_IP,'[<a class="reportPostsLink" href="{$REPORTER_POSTS_URL}" title="{$REPORTER_POSTS_HINT}">{$REPORTER_POSTS_TEXT}</a>]','')-->
 	</div>
 
 	<h3 class="reportSectionHeading">{$HEADING_DETAILS}</h3>
+
+	<!--&IF($IS_PENDING,'{$DECISION_BUTTONS}','')-->
+
 	<table class="formtable reportDetailTable">
 		<tbody>
 			<tr>
@@ -51,7 +55,7 @@
 	</table>
 	<hr>
 	<!--&IF($IS_PENDING,'
-	<form class="reportDecisionForm" method="POST" action="{$MODULE_URL}">
+	<form class="reportDecisionForm" id="reportDecisionForm" method="POST" action="{$MODULE_URL}">
 		{$CSRF_TOKEN}
 		<input type="hidden" name="reportId" value="{$REPORT_ID}">
 		{$DECISION_FORM}

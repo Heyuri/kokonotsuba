@@ -2,9 +2,12 @@
 
 namespace Kokonotsuba\Modules\soudane;
 
+use Kokonotsuba\ban\banCheckpoint;
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\ip\ipAnonymizer;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\traits\BanCheckpointTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\Post;
@@ -17,6 +20,7 @@ require_once __DIR__ . '/soudaneRepository.php';
 require_once __DIR__ . '/soudaneService.php';
 
 class moduleMain extends abstractModuleMain {
+	use BanCheckpointTrait;
 	use PostListenerTrait;
 	use ModuleHeaderListenerTrait;
 
@@ -253,6 +257,11 @@ class moduleMain extends abstractModuleMain {
 			throw new BoardException('Invalid parameters.');
 		}
 
+		// Reading a score is not voting, so only the two vote types pass the checkpoint.
+		if ($type !== 'score') {
+			$this->assertNotBanned(banCheckpoint::SOUDANE);
+		}
+
 		// Validate that the post exists and get the poster's IP
 		$posterHost = $this->moduleContext->postRepository->resolveHostFromPostUid((int) $postUid);
 		if ($posterHost === null) {
@@ -278,17 +287,15 @@ class moduleMain extends abstractModuleMain {
 
 		$yeahIPs = !empty($log) ? array_column($log, 'ip_address') : [];
 
-		// An IP that was stored before anonymization appears as raw; after
-		// anonymization it appears as LEFT(SHA512, 16).  Check both forms so
-		// the toggle works correctly regardless of whether the vote has been
-		// anonymized in the meantime.
-		$ipStr  = (string) $ip;
-		$ipHash = substr(hash('sha512', $ipStr), 0, 16);
+		// An IP stored before anonymization appears raw; afterwards it appears as its salted
+		// hash. Check every form so the toggle works either way.
+		$ipStr = (string) $ip;
+		$forms = ipAnonymizer::fromSettings()->storedForms($ipStr);
 
 		// Check if the current IP has already voted; if so, remove the vote (toggle off)
-		if (in_array($ipStr, $yeahIPs, true) || in_array($ipHash, $yeahIPs, true)) {
+		if (array_intersect($forms, $yeahIPs) !== []) {
 			// remove whichever form is stored so the updated count is correct
-			$yeahIPs = array_values(array_filter($yeahIPs, fn($v) => $v !== $ipStr && $v !== $ipHash));
+			$yeahIPs = array_values(array_filter($yeahIPs, fn($v) => !in_array($v, $forms, true)));
 
 			// Remove the vote using the service
 			$this->soudaneService->removeVote($postUid, $ipStr, $type);

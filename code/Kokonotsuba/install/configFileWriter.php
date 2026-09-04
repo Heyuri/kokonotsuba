@@ -11,6 +11,9 @@ use RuntimeException;
  * valid PHP returning an array, and only then renamed into place — so a half-written config can
  * never replace a working one. An existing file is copied aside first and can be put back if a
  * later step of the install fails.
+ *
+ * The temporary and backup files are dotfiles: the web server rules deny those already, and
+ * a copy of databaseSettings.php under another name must not be fetchable while it exists.
  */
 final class configFileWriter {
 	/** @var list<array{path: string, backup: ?string}> */
@@ -70,7 +73,7 @@ final class configFileWriter {
 			throw new RuntimeException("Cannot write {$path}: {$directory} is not writable by the web server.");
 		}
 
-		$temporary = $path.'.tmp-'.bin2hex(random_bytes(4));
+		$temporary = self::sidecarPath($path, '.tmp-'.bin2hex(random_bytes(4)));
 
 		if (file_put_contents($temporary, $contents, LOCK_EX) === false) {
 			@unlink($temporary);
@@ -83,7 +86,7 @@ final class configFileWriter {
 
 		$backup = null;
 		if (file_exists($path)) {
-			$backup = $path.'.bak-'.date('YmdHis');
+			$backup = self::sidecarPath($path, '.bak-'.date('YmdHis'));
 			if (!@copy($path, $backup)) {
 				@unlink($temporary);
 				throw new RuntimeException("Failed to back up the existing {$path}.");
@@ -123,6 +126,11 @@ final class configFileWriter {
 		}
 
 		$this->written = [];
+	}
+
+	/** "/dir/settings.php" + ".tmp-1a2b" => "/dir/.settings.php.tmp-1a2b". */
+	public static function sidecarPath(string $path, string $suffix): string {
+		return dirname($path).'/.'.basename($path).$suffix;
 	}
 
 	/** Parse the freshly written file to be sure it is loadable before it replaces anything. */

@@ -4,13 +4,26 @@ namespace Kokonotsuba\migrations;
 
 use Kokonotsuba\database\databaseConnection;
 
-/** Everything a migration is handed: DDL, raw SQL, live-schema reads, table-name resolution. */
+/**
+ * Everything a migration is handed: DDL, raw SQL, live-schema reads, table-name resolution, and
+ * for data migrations that read the install's files, where the install is.
+ */
 class migrationContext {
+	/** @param callable(string):void $noteLogger Receives progress messages from up(). */
 	public function __construct(
 		public readonly sqlRunner $sql,
 		public readonly schemaBuilder $schema,
-		public readonly schemaInspector $inspector
+		public readonly schemaInspector $inspector,
+		public readonly string $appRoot = '',
+		private $noteLogger = null
 	) {}
+
+	/** Report progress from a migration that does more than run statements. */
+	public function note(string $message): void {
+		if ($this->noteLogger !== null) {
+			($this->noteLogger)($message);
+		}
+	}
 
 	/** Resolve a logical table key to its real name. */
 	public function table(string $key): string {

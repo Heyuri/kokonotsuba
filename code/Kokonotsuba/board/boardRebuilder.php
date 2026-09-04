@@ -2,8 +2,10 @@
 
 namespace Kokonotsuba\board;
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\renderers\commentFormatter;
 use Kokonotsuba\renderers\postRenderer;
 use Kokonotsuba\renderers\threadRenderer;
 use Kokonotsuba\module_classes\moduleEngine;
@@ -22,6 +24,7 @@ use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\getPageForPostPosition;
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
+use function Kokonotsuba\libraries\getPostsFromThreadArrays;
 use function Kokonotsuba\libraries\getOrCreateCsrfToken;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\strings\html_minify;
@@ -184,6 +187,8 @@ class boardRebuilder {
 			? $totalThreadPages
 			: ($page ?? 1);
 
+		$this->moduleEngine->dispatch('PostsPrefetch', [&$posts]);
+
 		// Render threads
 		$pte_vals['{$THREADS}'] .= $threadRenderer->render([],
 			true,
@@ -270,8 +275,10 @@ class boardRebuilder {
 	}
 
 	private function getThreadPageTitle(Post $opPost, string $boardTitle): string {
-		$subject = strip_tags($opPost->getSubject()); // thread subject/topic
-		$comment = strip_tags($opPost->getComment()); // op post comment
+		$format = $opPost->getTextFormat();
+
+		$subject = commentFormatter::fieldToPlainText($opPost->getSubject(), $format); // thread subject/topic
+		$comment = commentFormatter::commentToPlainText($opPost->getComment(), $format); // op post comment
 		
 		// get the first attachment
 		$firstAttachment = $opPost->getFirstAttachment();
@@ -282,25 +289,26 @@ class boardRebuilder {
 		// Max length before truncating strings
 		$maxTitleLength = 20;
 		
-		// no sanitization is done here because kokonotsuba stores them sanitized
+		// The pieces above are plain text and the title is emitted as markup, so each is escaped
+		// as it goes in. The board title is configuration, not post content, and is left alone.
 		// first, have it include the subject + board title 
 		if(!empty($subject)) {
 			// truncate the subject
-			$truncateSubject = truncateText($subject, $maxTitleLength);
+			$truncateSubject = sanitizeStr(truncateText($subject, $maxTitleLength));
 
 			$threadTitle = "$truncateSubject - $boardTitle";
 		} 
 		// then try the comment
 		else if(!empty($comment) && $comment !== $this->config['DEFAULT_NOCOMMENT']) {
 			// truncate the comment
-			$truncatedComment = truncateText($comment, $maxTitleLength);
+			$truncatedComment = sanitizeStr(truncateText($comment, $maxTitleLength));
 
 			$threadTitle = $truncatedComment . ' - ' . $boardTitle;
 		} 
 		// then try the file name (useful for dump/flash boards)
 		else if(!empty($fileName)) {
 			// truncate file name
-			$truncateFileName = truncateText($fileName, $maxTitleLength);
+			$truncateFileName = sanitizeStr(truncateText($fileName, $maxTitleLength));
 
 			$threadTitle = $truncateFileName . ' - ' . $boardTitle;
 		}
@@ -398,7 +406,8 @@ class boardRebuilder {
 		if ($logRebuild) {
 			$this->actionLoggerService->logAction(
 				"Rebuilt board: " . $this->board->getBoardTitle() . ' (' . $this->board->getBoardUID() . ')',
-				$this->board->getBoardUID()
+				$this->board->getBoardUID(),
+				actionType::BOARD_REBUILD
 			);
 		}
 	}
@@ -451,7 +460,8 @@ class boardRebuilder {
 		if ($logRebuild) {
 			$this->actionLoggerService->logAction(
 				"Rebuilt board: " . $this->board->getBoardTitle() . ' (' . $this->board->getBoardUID() . ')',
-				$this->board->getBoardUID()
+				$this->board->getBoardUID(),
+				actionType::BOARD_REBUILD
 			);
 		}
 	}
@@ -635,6 +645,9 @@ class boardRebuilder {
 	}
 
 	private function renderThreadsToPteVals(array $threadsInPage, threadRenderer $threadRenderer, array $pte_vals, bool $adminMode = false): string {
+		$pagePosts = getPostsFromThreadArrays($threadsInPage);
+		$this->moduleEngine->dispatch('PostsPrefetch', [&$pagePosts]);
+
 		$output = '';
 		foreach ($threadsInPage as $i => $data) {
 			$output .= $threadRenderer->render($threadsInPage,

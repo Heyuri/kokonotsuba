@@ -19,6 +19,13 @@ return [
 
 	'ACTIONLOG_MAX_PER_PAGE' => intField('config_label_ACTIONLOG_MAX_PER_PAGE', 50, 'config_desc_ACTIONLOG_MAX_PER_PAGE'),
 	'STAFF_LOGIN_TIMEOUT'    => intField('config_label_STAFF_LOGIN_TIMEOUT', 86400, 'config_desc_STAFF_LOGIN_TIMEOUT'),
+
+	'LOGIN_MAX_ATTEMPTS'           => intField('config_label_LOGIN_MAX_ATTEMPTS', 5, 'config_desc_LOGIN_MAX_ATTEMPTS', min: 1),
+	'LOGIN_MAX_ATTEMPTS_PER_IP'    => intField('config_label_LOGIN_MAX_ATTEMPTS_PER_IP', 15, 'config_desc_LOGIN_MAX_ATTEMPTS_PER_IP', min: 1),
+	'LOGIN_ATTEMPT_WINDOW'         => intField('config_label_LOGIN_ATTEMPT_WINDOW', 900, 'config_desc_LOGIN_ATTEMPT_WINDOW', min: 1),
+	'LOGIN_LOCKOUT_SECONDS'        => intField('config_label_LOGIN_LOCKOUT_SECONDS', 30, 'config_desc_LOGIN_LOCKOUT_SECONDS', min: 1),
+	'LOGIN_LOCKOUT_MAX_SECONDS'    => intField('config_label_LOGIN_LOCKOUT_MAX_SECONDS', 3600, 'config_desc_LOGIN_LOCKOUT_MAX_SECONDS', min: 1),
+	'LOGIN_ATTEMPT_RETENTION_DAYS' => intField('config_label_LOGIN_ATTEMPT_RETENTION_DAYS', 30, 'config_desc_LOGIN_ATTEMPT_RETENTION_DAYS', min: 1),
 	'SYSTEMCHAN_NAME'        => stringField('config_label_SYSTEMCHAN_NAME', 'System-chan', 'config_desc_SYSTEMCHAN_NAME'),
 
 	'FORTUNES' => arrayField('config_label_FORTUNES', [

@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\report;
 
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\ip\ipAnonymizer;
 
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
@@ -67,12 +68,17 @@ class reportRepository extends baseRepository {
 	}
 
 	/**
-	 * The anonIp module rewrites stored IPs in place as LEFT(SHA512, 16), so a row filed before
+	 * The anonIp module rewrites stored IPs in place as a salted hash, so a row filed before
 	 * anonymization holds the raw address and the same row afterwards holds the hash. Every
 	 * lookup by reporter IP has to accept both forms or it silently stops matching.
+	 *
+	 * Falls back to the address itself when no salt is configured: nothing has been anonymized
+	 * in that case, so the second half of the IN () is simply a duplicate.
 	 */
 	private function ipHash(string $ip): string {
-		return substr(hash('sha512', $ip), 0, 16);
+		$forms = ipAnonymizer::fromSettings()->storedForms($ip);
+
+		return end($forms);
 	}
 
 	/**

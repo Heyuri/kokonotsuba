@@ -7,6 +7,8 @@
 
 		<!--&IF($HAS_REPORTS,'','<p class="reportEmpty">{$NO_REPORTS_TEXT}</p>')-->
 
+		<!--&IF($HAS_REPORTS,'{$DECISION_BUTTONS}','')-->
+
 		<!-- The table is not wrapped in the HAS_REPORTS conditional: the compiler will not nest an
 		     IF inside an IF branch, and the per-column conditions below have to be top level. It
 		     is hidden with a class instead when there is nothing to list. -->

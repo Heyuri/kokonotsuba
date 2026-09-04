@@ -8,7 +8,7 @@ YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE TH
 /* Prevent the user from aborting script execution */
 
 use Kokonotsuba\error\BoardException;
-use Kokonotsuba\PMCLibrary;
+use Kokonotsuba\kokoLibrary;
 use Kokonotsuba\routers\modeHandler;
 
 use function Kokonotsuba\libraries\_T;
@@ -88,7 +88,7 @@ try {
 	}
 } catch (\Throwable $e) {
 	// log message
-	PMCLibrary::getLoggerInstance($globalConfig['ERROR_HANDLER_FILE'], 'Global')
+	kokoLibrary::getLoggerInstance($globalConfig['ERROR_HANDLER_FILE'], 'Global')
 		->error($e->__toString());
 
 	// throw blanket error message

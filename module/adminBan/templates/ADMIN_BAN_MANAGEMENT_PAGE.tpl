@@ -1,2 +1,0 @@
-	<!--&ADMIN_BAN_FORM/-->
-	<!--&FOREACH($TABLES,'ADMIN_BAN_TABLE')-->

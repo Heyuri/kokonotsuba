@@ -224,8 +224,7 @@ class baseRepository {
 		$this->validateColumnName($selectColumn);
 		$this->validateColumnName($whereColumn);
 		$query = "SELECT {$selectColumn} FROM {$this->table} WHERE {$whereColumn} = :value";
-		$rows = $this->databaseConnection->fetchAllAsIndexArray($query, [':value' => $value]);
-		return $rows ? array_merge(...$rows) : [];
+		return $this->queryFlatColumn($query, [':value' => $value]);
 	}
 
 	/**
@@ -244,8 +243,7 @@ class baseRepository {
 		$select = $distinct ? "SELECT DISTINCT {$selectColumn}" : "SELECT {$selectColumn}";
 		$in = $this->buildInClause($values);
 		$query = "{$select} FROM {$this->table} WHERE {$whereColumn} IN {$in}";
-		$rows = $this->databaseConnection->fetchAllAsIndexArray($query, array_values($values));
-		return $rows ? array_merge(...$rows) : [];
+		return $this->queryFlatColumn($query, array_values($values));
 	}
 
 	/**
@@ -335,12 +333,34 @@ class baseRepository {
 	/**
 	 * Build a positional placeholder IN clause for the given values.
 	 *
+	 * The parentheses are part of the result, so it is written straight after IN with none of
+	 * its own: "IN {$clause}", never "IN ({$clause})" - a second pair turns the list into a row
+	 * constructor and the comparison fails outright.
+	 *
 	 * @param array $values Values to create placeholders for.
 	 * @return string Parenthesised placeholder string, e.g. "(?, ?, ?)".
 	 */
-	private function buildInClause(array $values): string {
+	protected function buildInClause(array $values): string {
 		if (empty($values)) return '(NULL)';
 		return '(' . implode(', ', array_fill(0, count($values), '?')) . ')';
+	}
+
+	/**
+	 * Normalize a caller-supplied sort direction to ASC or DESC.
+	 *
+	 * Direction can never be bound as a parameter, so every ordered query has to fold whatever
+	 * it was handed down to one of two literals before interpolating it.
+	 *
+	 * @param string $direction Raw direction, in any case.
+	 * @param string $default   Direction to fall back to when it is neither.
+	 * @return string Either 'ASC' or 'DESC'.
+	 */
+	protected static function sortDirection(string $direction, string $default = 'DESC'): string {
+		$direction = strtoupper($direction);
+		if ($direction === 'ASC' || $direction === 'DESC') {
+			return $direction;
+		}
+		return strtoupper($default) === 'ASC' ? 'ASC' : 'DESC';
 	}
 
 	// ─── Query-building helpers ────────────────────────────────────
@@ -452,5 +472,36 @@ class baseRepository {
 	 */
 	protected function queryAllAsIndexArray(string $sql, array $params = []): array {
 		return $this->databaseConnection->fetchAllAsIndexArray($sql, $params);
+	}
+
+	/**
+	 * Fetch one column of a result set as a flat list.
+	 *
+	 * The single-column shape queryAllAsIndexArray() returns - one row array per row - is
+	 * almost never what the caller wants, so the unwrapping lives here rather than being
+	 * spelled out as array_merge(...$rows) at every call site.
+	 *
+	 * @param string $sql         SELECT query returning one column.
+	 * @param array  $params      Bound parameters.
+	 * @param int    $columnIndex Zero-based column to take.
+	 * @return array Flat array of that column's values (empty when nothing matched).
+	 */
+	protected function queryFlatColumn(string $sql, array $params = [], int $columnIndex = 0): array {
+		$rows = $this->databaseConnection->fetchAllAsIndexArray($sql, $params);
+		return $rows ? array_column($rows, $columnIndex) : [];
+	}
+
+	/**
+	 * Execute a raw write and return how many rows it affected.
+	 *
+	 * query() only reports success. Use this where the count is the answer: how many rows a
+	 * multi-row INSERT wrote, or how many an UPDATE with its own guard clause actually changed.
+	 *
+	 * @param string $sql    Raw SQL string with named or positional placeholders.
+	 * @param array  $params Bound parameters.
+	 * @return int Rows affected.
+	 */
+	protected function queryAffected(string $sql, array $params = []): int {
+		return $this->databaseConnection->executeWithRowCount($sql, $params);
 	}
 }

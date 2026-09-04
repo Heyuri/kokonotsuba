@@ -205,7 +205,7 @@ class deletedPostUIHooks {
 
 	/**
 	 * Serialise an array of widget entry arrays (as returned by buildWidgetEntry) to
-	 * anchor HTML, matching the format used by postWidget.php's buildWidgetMenuHtml.
+	 * anchor HTML, matching the widget refs Kokonotsuba\renderers\post\postMenu draws.
 	 */
 	private function widgetEntriesToHtml(array $entries): string {
 		$html = '';

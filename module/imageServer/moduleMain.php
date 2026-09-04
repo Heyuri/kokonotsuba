@@ -84,15 +84,22 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function authenticateUserForAttachment(attachment $attachment): void {
-		// whether the user is a staff user
-		$isStaff = isActiveStaffSession();
-
-		// whether its a hidden attachment
-		$isHidden = $attachment->isHidden();
-
-		// throw error if the attachment is hidden and the user isn't staff
-		if($isHidden && $isStaff === false) {
-			throw new BoardException("You cannot access this attachment!");
+		// a visible attachment is served to anyone
+		if($attachment->isHidden() === false) {
+			return;
 		}
+
+		// staff see hidden attachments
+		if(isActiveStaffSession()) {
+			return;
+		}
+
+		// the banned party is shown the post they were banned for, files and all, even once
+		// that post has been deleted and its attachments hidden
+		if($this->moduleContext->banService->viewerWasBannedForPost($attachment->getPostUid())) {
+			return;
+		}
+
+		throw new BoardException("You cannot access this attachment!");
 	}
 }

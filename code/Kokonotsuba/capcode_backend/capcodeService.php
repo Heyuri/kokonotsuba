@@ -39,6 +39,19 @@ class capcodeService {
 	}
 
 	/**
+	 * List every capcode that is currently enabled.
+	 *
+	 * This is the list the front end renders from: a disabled capcode leaves the tripcode alone
+	 * and shows no badge, while its row stays put for the admin page.
+	 *
+	 * @return array Array of associative capcode rows.
+	 */
+	public function listEnabledCapcodes(): array {
+		// Get every capcode still switched on
+		return $this->capcodeRepository->getAllEnabled();
+	}
+
+	/**
 	 * Create a new capcode record.
 	 *
 	 * @param string $tripcode     Tripcode string this capcode applies to.
@@ -105,6 +118,18 @@ class capcodeService {
 			// Update the specified capcode record
 			$this->capcodeRepository->update($id, $data);
 		});
+	}
+
+	/**
+	 * Switch a capcode on or off without removing its record.
+	 *
+	 * @param int  $id        Capcode primary key.
+	 * @param bool $isEnabled Whether the capcode should render.
+	 * @return void
+	 */
+	public function setCapcodeEnabled(int $id, bool $isEnabled): void {
+		// Reuse the whitelisted update path
+		$this->editCapcode($id, ['is_enabled' => (int)$isEnabled]);
 	}
 
 	/**

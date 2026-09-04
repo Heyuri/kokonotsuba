@@ -105,7 +105,7 @@ $language['admin_archive']				= '<th>Arşiv</th>';
 $language['admin_notices']				= '<ul><li>Eğer bir post silecekseniz, postun önündeki "sil" kutucuğunu seçip Submit butonuna basın.</li><li>If you want to delete image only, please check "Delete image only" checkbox and follow normal deletion procedures.</li><li>If you want to lock/unlock a thread, please check "Stop" checkbox of that thread and click "Submit" button.</li><li>Please press "Update" after managing posts.</li></ul>';
 $language['admin_submit_btn']			= 'Submit';
 $language['admin_reset_btn']			= 'Reset';
-$language['admin_list_header']			= '<tr><th class="colFunc">Func</th><th class="colDel">Del</th><th class="colBoard">Board</th><th class="colDate">Date</th><th class="colSub">Subject</th><th class="colName">Name</th><th class="colComment">Comment</th><th class="colHost">Host</th><th class="colImage"><div>Image (Bytes)</div><div>MD5 checksum</div></th></tr>';
+$language['admin_list_header']			= '<th class="colFunc">Func</th><th class="colDel">Del</th><th class="colBoard">Board</th><th class="colDate">Date</th><th class="colSub">Subject</th><th class="colName">Name</th><th class="colComment">Comment</th><th class="colHost">Host</th><th class="colBrowser">Tarayıcı</th><th class="colImage"><div>Image (Bytes)</div><div>MD5 checksum</div></th>';
 $language['admin_archive_btn']			= 'A';
 $language['admin_stop_btn']				= 'Stop';
 $language['admin_totalsize']			= '[Total size of images: <b>%1$s</b> KB ]';
@@ -257,6 +257,7 @@ $language['delete_note'] = 'Notu sil';
 $language['note_no_permission'] = 'Bu notu düzenleme yetkiniz yok.';
 $language['edit_post'] = 'Postu düzenle';
 $language['self_serve_banner_suggest'] = 'Kendi bannerınızı burada göstermek ister misiniz? Başvurmak için tıklayın!';
+$language['self_serve_board_banner_suggest'] = 'Tahta banner\'ı buradan gönderin.';
 
 // DEPRECATED: pm_contacts_section_title, pm_view_thread_page_title, pm_contact_view_no_messages,
 // contact_not_selected, pm_no_message, pm_contact_self, pm_compose_title, pm_new_message, pm_no_contacts
@@ -422,27 +423,28 @@ $language['post_api_thread_list_field_last_bump_time'] = 'Son bump zaman damgas�
 $language['post_api_thread_list_field_created_time'] = 'Thread\'in oluşturulma zaman damgası';
 $language['post_api_thread_list_field_post_count'] = 'Thread içindeki toplam post sayısı';
 
-// fullBanner module
-$language['fullbanner_no_file'] = 'Dosya yüklenmedi.';
-$language['fullbanner_invalid_link'] = 'Geçersiz hedef bağlantı URL\'si.';
-$language['fullbanner_flood'] = 'Lütfen başka bir banner göndermeden önce %1$s saniye bekleyin.';
-$language['fullbanner_upload_failed'] = 'Dosya yükleme başarısız.';
-$language['fullbanner_invalid_upload'] = 'Geçersiz dosya yükleme.';
-$language['fullbanner_invalid_extension'] = 'Yalnızca PNG, JPG, JPEG ve GIF dosyalarına izin verilir.';
-$language['fullbanner_invalid_image'] = 'Dosya geçerli bir görsel gibi görünmüyor.';
-$language['fullbanner_ext_mime_mismatch'] = 'Dosya uzantısı içerik türüyle eşleşmiyor.';
-$language['fullbanner_save_failed'] = 'Yüklenen dosya kaydedilemedi.';
-$language['fullbanner_mkdir_failed'] = 'Banner depolama dizini oluşturulamadı.';
-$language['fullbanner_invalid_dimensions'] = 'Banner görselleri tam olarak %1$sx%2$s piksel olmalıdır.';
-$language['fullbanner_submit_success'] = 'Bu banner gönderildi ve yetkililerin onayını bekliyor!';
-$language['fullbanner_req_dimensions'] = 'Görseller tam olarak %1$sx%2$s piksel olmalıdır.';
-$language['fullbanner_req_filetypes'] = 'Kabul edilen dosya türleri: PNG, JPG, GIF.';
-$language['fullbanner_req_filesize'] = 'Maksimum dosya boyutu: %1$sKB.';
-$language['fullbanner_file_too_large'] = 'Dosya boyutu izin verilen maksimum %1$sKB sınırını aşıyor.';
-$language['fullbanner_submit_heading'] = 'Banner gönder';
-$language['fullbanner_submit_button'] = 'Banner gönder';
-$language['fullbanner_upload_heading'] = 'Banner yükle (Otomatik Onaylı)';
-$language['fullbanner_upload_button'] = 'Banner yükle';
+// banner module
+$language['banner_toplink'] = 'Bannerlar';
+$language['banner_no_file'] = 'Dosya yüklenmedi.';
+$language['banner_invalid_link'] = 'Geçersiz hedef bağlantı URL\'si.';
+$language['banner_flood'] = 'Lütfen başka bir banner göndermeden önce %1$s saniye bekleyin.';
+$language['banner_upload_failed'] = 'Dosya yükleme başarısız.';
+$language['banner_invalid_upload'] = 'Geçersiz dosya yükleme.';
+$language['banner_invalid_extension'] = 'Yalnızca PNG, JPG, JPEG ve GIF dosyalarına izin verilir.';
+$language['banner_invalid_image'] = 'Dosya geçerli bir görsel gibi görünmüyor.';
+$language['banner_ext_mime_mismatch'] = 'Dosya uzantısı içerik türüyle eşleşmiyor.';
+$language['banner_save_failed'] = 'Yüklenen dosya kaydedilemedi.';
+$language['banner_mkdir_failed'] = 'Banner depolama dizini oluşturulamadı.';
+$language['banner_invalid_dimensions'] = 'Banner görselleri tam olarak %1$sx%2$s piksel olmalıdır.';
+$language['banner_submit_success'] = 'Bu banner gönderildi ve yetkililerin onayını bekliyor!';
+$language['banner_req_dimensions'] = 'Görseller tam olarak %1$sx%2$s piksel olmalıdır.';
+$language['banner_req_filetypes'] = 'Kabul edilen dosya türleri: PNG, JPG, GIF.';
+$language['banner_req_filesize'] = 'Maksimum dosya boyutu: %1$sKB.';
+$language['banner_file_too_large'] = 'Dosya boyutu izin verilen maksimum %1$sKB sınırını aşıyor.';
+$language['banner_submit_heading'] = 'Banner gönder';
+$language['banner_submit_button'] = 'Banner gönder';
+$language['banner_upload_heading'] = 'Banner yükle (Otomatik Onaylı)';
+$language['banner_upload_button'] = 'Banner yükle';
 
 $language['quick_reply_link'] = 'Hızlı yanıt';
 

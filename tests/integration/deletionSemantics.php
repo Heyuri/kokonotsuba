@@ -121,12 +121,20 @@ try {
 // ---------------------------------------------------------------------------
 
 /**
- * Rebuild the schema from scratch. Dropped in dependency order so the foreign keys do not block.
+ * Rebuild the schema from scratch.
+ *
+ * Only this script's own tables are dropped, and constraint checking is off while they go: a
+ * table left behind by another integration script (the ban tables reference posts and accounts)
+ * would otherwise block the drop depending on which script ran last.
  */
 function resetSchema(PDO $pdo): void {
+	$pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+
 	foreach ([SOUDANE, NOTES, DELETED, FILES, POSTS, THREADS, ACCOUNTS] as $table) {
 		$pdo->exec("DROP TABLE IF EXISTS `{$table}`");
 	}
+
+	$pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
 
 	$pdo->exec("CREATE TABLE `" . THREADS . "` (
 		insert_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,

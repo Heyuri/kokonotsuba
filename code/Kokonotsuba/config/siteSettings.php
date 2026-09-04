@@ -23,6 +23,7 @@ final class siteSettings {
 		'STATIC_PATH',
 		'TRIPSALT',
 		'IDSEED',
+		'VISITOR_TOKEN_SECRET',
 		'USE_CDN',
 		'CDN_DIR',
 		'CDN_URL',

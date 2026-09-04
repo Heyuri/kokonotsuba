@@ -216,8 +216,8 @@ final class installerPage {
 		echo '</table>';
 
 		if (!$succeeded) {
-			echo '<p>Nothing was left half-written: the database changes were rolled back and any config files ',
-				'the installer replaced were put back. Fix what is above and submit the form again.</p>',
+			echo '<p>Nothing is left half-written: whatever the installer had done was rolled back and any config ',
+				'file it replaced was put back. Fix what is above and submit the form again.</p>',
 				'</div>';
 
 			return;

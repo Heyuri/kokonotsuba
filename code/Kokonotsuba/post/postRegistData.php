@@ -22,7 +22,9 @@ class postRegistData {
         private string $host,
         private bool $age,
         private string $status,
-        private int $post_position = 0
+        private textFormat $textFormat = textFormat::PLAIN_TEXT,
+        private int $post_position = 0,
+        private ?string $visitor_token_hash = null
     ) {}
 
     // Getters
@@ -44,9 +46,15 @@ class postRegistData {
     public function getHost(): string { return $this->host; }
     public function getAgeru(): bool { return $this->age; }
     public function getFlags(): string { return $this->status; }
+    public function getTextFormat(): textFormat { return $this->textFormat; }
     public function getPostPosition(): int { return $this->post_position; }
+    public function getVisitorTokenHash(): ?string { return $this->visitor_token_hash; }
 
     // Setters
+    public function setTextFormat(textFormat $textFormat): void {
+        $this->textFormat = $textFormat;
+    }
+
     public function setPostPosition(int $post_position): void {
         $this->post_position = $post_position;
     }
@@ -78,7 +86,9 @@ class postRegistData {
             ':sub' => $this->sub,
             ':com' => $this->com,
             ':host' => $this->host,
-            ':status' => $this->status
+            ':visitor_token_hash' => $this->visitor_token_hash,
+            ':status' => $this->status,
+            ':text_format' => $this->textFormat->value
         ];
 
         // If $placeholderIndex is not null, append it to each key

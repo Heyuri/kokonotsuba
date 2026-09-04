@@ -375,6 +375,9 @@
 	}
 
 	var baseline = new Map();
+
+	/** Set by the section navigator, once it exists, to re-mark the groups holding edits. */
+	var navRefresh = null;
 	function snapshot(){
 		baseline.clear();
 		configFields().forEach(function(field){
@@ -615,6 +618,7 @@
 					notify(data.message || 'Configuration edited.', true);
 					applyOverrideMarkers(data.overridden);
 					snapshot();                                   // these values are the saved ones now
+					if (navRefresh) navRefresh();                 // ... and nothing is outstanding in the navigator either
 					form.classList.remove('configFormDirty');     // nothing outstanding, so unstick save
 				} else {
 					notify((data && data.message) || form.dataset.msgFailed || 'Could not save the configuration.', false);
@@ -690,6 +694,270 @@
 	});
 
 	snapshot();
+
+	/* ── Section navigator ───────────────────────────────────────────────────────────────────
+	   The list of groups (and, under each, its modules) rendered by CONFIG_NAV.tpl. It jumps to a
+	   section on click, follows the scroll position, and marks the groups holding unsaved edits.
+	   Every link points at an id the form actually rendered, so nothing here has to guess.
+
+	   It works wherever it is: docked in the form as served, or floated into a koko window (see
+	   the end of this block). */
+	var nav = document.getElementById('configNav');
+
+	if (nav){
+		// In document order: the navigator is built by the same walk that builds the fieldsets.
+		var navSections = [];
+		nav.querySelectorAll('.configNavLink').forEach(function(link){
+			var target = document.getElementById(link.getAttribute('href').slice(1));
+			if (target) navSections.push({ link: link, target: target, item: link.closest('.configNavItem') });
+		});
+
+		var currentLink = null;
+		var currentItem = null;
+
+		function openItem(item, open){
+			if (!item) return;
+			item.classList.toggle('configNavOpen', open);
+			var toggle = item.querySelector('.configNavToggle');
+			if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+		}
+
+		// Highlight one entry, and open the group it belongs to so the entry is visible at all.
+		function setCurrent(section){
+			if (!section || section.link === currentLink) return;
+
+			if (currentLink) currentLink.classList.remove('configNavCurrent');
+			section.link.classList.add('configNavCurrent');
+			currentLink = section.link;
+
+			if (section.item !== currentItem){
+				openItem(currentItem, false);
+				openItem(section.item, true);
+				currentItem = section.item;
+			}
+		}
+
+		// The section that owns the top of the viewport: the last one that starts above the line.
+		// Nothing has scrolled past it yet at the top of the page, so the first section stands in.
+		function updateCurrent(){
+			var line = 90;
+			var found = navSections[0];
+
+			for (var i = 0; i < navSections.length; i++){
+				if (navSections[i].target.getBoundingClientRect().top > line) break;
+				found = navSections[i];
+			}
+
+			setCurrent(found);
+		}
+
+		var scrollQueued = false;
+		function queueUpdate(){
+			if (scrollQueued) return;
+			scrollQueued = true;
+			window.requestAnimationFrame(function(){
+				scrollQueued = false;
+				updateCurrent();
+			});
+		}
+
+		// A group is starred while it holds an edit that has not been saved yet, so a long form's
+		// outstanding changes are visible without scrolling through it.
+		function updateChangedMarkers(){
+			var changed = new Set();
+			configFields().forEach(function(field){
+				var was = baseline.get(field.name);
+				if (was === undefined || was === fieldValue(field)) return;
+				var group = field.closest('.boardConfigGroup');
+				if (group) changed.add(group.id);
+			});
+
+			// The marker goes on the row rather than the link: a link is ellipsized when its label
+			// is too long for the column, which would swallow a marker inside it.
+			navSections.forEach(function(section){
+				var row = section.link.closest('.configNavRow');
+				if (!row) return;   // a module sub-entry: its group carries the marker for it
+				row.classList.toggle('configNavChanged', changed.has(section.target.id));
+			});
+		}
+
+		nav.addEventListener('click', function(e){
+			var toggle = e.target.closest('.configNavToggle');
+			if (toggle){
+				e.preventDefault();
+				var item = toggle.closest('.configNavItem');
+				openItem(item, !item.classList.contains('configNavOpen'));
+				return;
+			}
+
+			var link = e.target.closest('.configNavLink');
+			if (!link) return;
+
+			var target = document.getElementById(link.getAttribute('href').slice(1));
+			if (!target) return;
+
+			// Scrolled by hand rather than by the browser's jump: the highlight is then set from
+			// the link that was clicked instead of waiting for the scroll to land.
+			e.preventDefault();
+			target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+			navSections.forEach(function(section){
+				if (section.link === link) setCurrent(section);
+			});
+		});
+
+		var collapseButton = document.getElementById('configNavCollapse');
+		if (collapseButton){
+			collapseButton.addEventListener('click', function(){
+				var collapsed = nav.classList.toggle('configNavCollapsed');
+				collapseButton.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+			});
+		}
+
+		/* ── Floating the navigator ───────────────────────────────────────────────────────
+		   Like the staff alerts widget, the navigator can live in an ordinary koko window, so
+		   it drags, stacks, minimises and remembers where it was put. The docked list the page
+		   is served with is the fallback: it is what a narrow screen and a browser without the
+		   window manager keep, and closing the window puts the list back into the form rather
+		   than losing it. */
+
+		// The sub-lists are collapsible only from here, so they open by default until this runs.
+		nav.classList.add('configNavJs');
+
+		var SETTING_KEY = 'configNav';
+		var FLOAT_MIN_WIDTH = 900;
+		var EDGE_MARGIN = 12;
+		// Clear of everything already pinned to the top of the viewport - the persistent nav and
+		// the staff bar under it, and the message stack that drops down over both.
+		var TOP_MARGIN = 140;
+
+		// The docked column is sticky; give it the same clearance so it does not slide under them.
+		nav.style.setProperty('--config-nav-sticky-top', TOP_MARGIN + 'px');
+
+		var navWindow = null;
+		var dockParent = nav.parentNode;
+		var dockBefore = nav.nextSibling;
+
+		function canFloat(){
+			return typeof kkwmWindow === 'function'
+				&& document.documentElement.clientWidth >= FLOAT_MIN_WIDTH;
+		}
+
+		function wantsFloat(){
+			return typeof kkSetting === 'undefined' || kkSetting.get(SETTING_KEY);
+		}
+
+		// Written by hand rather than through kkSetting, which only stores from its own checkbox:
+		// closing the window is the same decision, and the settings window must agree with it.
+		function storeFloat(value){
+			try { localStorage.setItem(SETTING_KEY, value ? 'true' : 'false'); } catch (e) {}
+		}
+
+		function redock(){
+			nav.classList.remove('configNavFloating');
+			dockParent.insertBefore(nav, dockBefore);
+		}
+
+		/**
+		 * Sit against the right edge, once the window has a width to measure. The manager places
+		 * windows before their contents exist, so the width it clamps against is zero and a
+		 * right-hand position overshoots. Skipped once it has a position of its own to remember.
+		 */
+		function placeByRightEdge(name, win){
+			try { if (localStorage.getItem('kkwm_pos_' + name)) return; } catch (e) { /* no memory of it */ }
+
+			requestAnimationFrame(function(){
+				if (navWindow !== win) return;
+
+				var box = win.div.getBoundingClientRect();
+				win.move(document.documentElement.clientWidth - box.width - EDGE_MARGIN, box.top);
+			});
+		}
+
+		function floatNav(){
+			if (navWindow || !canFloat()) return;
+
+			var title = nav.dataset.title || 'Sections';
+			var win = new kkwmWindow(title, {
+				w: 220,
+				h: 320,
+				y: Math.max(TOP_MARGIN, Math.floor(document.documentElement.clientHeight / 4))
+			});
+			// A window under this title is already open (kkwm keys them by name): leave it be.
+			if (!win || !win.div) return;
+
+			win.div.classList.add('configNavWindow');
+			nav.classList.add('configNavFloating');
+
+			// The collapse toggle lives in the head, which the window hides: a list collapsed
+			// before it was floated could not be opened again.
+			nav.classList.remove('configNavCollapsed');
+			if (collapseButton) collapseButton.setAttribute('aria-expanded', 'true');
+
+			win.div.appendChild(nav);
+
+			// Closed by its own X rather than by us, so the setting follows the visible state.
+			win.onclose = function(){
+				navWindow = null;
+				redock();
+				storeFloat(false);
+			};
+
+			navWindow = win;
+			placeByRightEdge(title, win);
+		}
+
+		function dockNav(){
+			if (!navWindow) return;
+
+			var win = navWindow;
+			navWindow = null;
+			win.onclose = null;        // this is our own close: the docking is done here
+			redock();
+			win.remove();
+		}
+
+		// Only offered while the list is docked and there is room to float it.
+		var floatButton = document.getElementById('configNavFloat');
+
+		function applyFloatSetting(){
+			if (wantsFloat() && canFloat()) floatNav();
+			else dockNav();
+
+			if (floatButton) floatButton.hidden = !canFloat() || navWindow !== null;
+		}
+
+		if (floatButton){
+			floatButton.addEventListener('click', function(){
+				storeFloat(true);
+				applyFloatSetting();
+			});
+		}
+
+		if (typeof kkSetting !== 'undefined'){
+			kkSetting.add({
+				key: SETTING_KEY,
+				label: 'Float the config section list',
+				onChange: applyFloatSetting
+			}, 'Moderation');
+		}
+
+		window.addEventListener('scroll', queueUpdate, { passive: true });
+		window.addEventListener('resize', queueUpdate, { passive: true });
+		// Crossing the width the window needs docks or re-floats the list to match.
+		window.addEventListener('resize', applyFloatSetting, { passive: true });
+
+		// Every path that can change a field: typing, checkboxes and selects, the array editors'
+		// add/delete buttons, and the discard button's restore (which lands a tick later).
+		form.addEventListener('input', updateChangedMarkers);
+		form.addEventListener('change', updateChangedMarkers);
+		form.addEventListener('click', function(){ setTimeout(updateChangedMarkers, 0); });
+		form.addEventListener('reset', function(){ setTimeout(updateChangedMarkers, 0); });
+
+		navRefresh = updateChangedMarkers;
+		applyFloatSetting();
+		updateCurrent();
+	}
 
 	form.addEventListener('submit', function(e){
 		flushArrayEditors();

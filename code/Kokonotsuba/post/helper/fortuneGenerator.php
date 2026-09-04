@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\post\helper;
 
+use Kokonotsuba\post\commentMarker;
+
 class fortuneGenerator {
 	private readonly array $fortunes;
 
@@ -9,15 +11,17 @@ class fortuneGenerator {
 		$this->fortunes = $fortunes;
 	}
 
+	/**
+	 * Draw a fortune and append its marker to the comment.
+	 *
+	 * Only the index is stored, so the comment stays plain text; commentFormatter turns the
+	 * marker into the coloured line at render time.
+	 */
 	public function apply(string &$com): void {
-		$index = array_rand($this->fortunes);
-		$total = count($this->fortunes);
-		$color = sprintf(
-			"%02x%02x%02x",
-			127 + 127 * sin(2 * M_PI * $index / $total),
-			127 + 127 * sin(2 * M_PI * $index / $total + 2 / 3 * M_PI),
-			127 + 127 * sin(2 * M_PI * $index / $total + 4 / 3 * M_PI)
-		);
-		$com .= "<p class=\"fortune\" style=\"color: #$color;\">Your fortune: " . $this->fortunes[$index] . "</p>";
+		if (empty($this->fortunes)) {
+			return;
+		}
+
+		$com .= "\n" . commentMarker::make('fortune', (string)array_rand($this->fortunes));
 	}
 }

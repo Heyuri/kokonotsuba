@@ -11,3 +11,6 @@ global/.installed
 /boards/
 
 .vscode/sftp.json
+
+# Runtime log, written by the app
+global/error.log

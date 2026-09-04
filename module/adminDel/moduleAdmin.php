@@ -2,11 +2,13 @@
 
 namespace Kokonotsuba\Modules\adminDel;
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
-use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
+use Kokonotsuba\ban\banCheckpoint;
+use Kokonotsuba\module_classes\traits\BanCheckpointTrait;
 use Kokonotsuba\module_classes\traits\listeners\MassModerateListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\userRole;
@@ -26,7 +28,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
 	use MassModerateListenerTrait;
 	use AuditableTrait;
-	use BanFileOperationsTrait;
+	use BanCheckpointTrait;
 
 	private readonly int $JANIMUTE_LENGTH;
 	private readonly string $JANIMUTE_REASON;
@@ -336,11 +338,14 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	/**
-	 * Mute every distinct host in the selection with one read/write of the ban file.
+	 * Mute every distinct host in the selection.
+	 *
+	 * A mute only stops them posting, so it names the posting checkpoint and nothing else - a
+	 * janitor clearing a flood should not also cut off their reports or banner submissions. It is
+	 * filed as a mute, so it is swept out of the ban table once it lapses rather than kept.
 	 */
 	private function muteHostsFromPosts(array $posts): void {
-		$startTime = $this->moduleContext->request->getRequestTime();
-		$expires = $startTime + intval($this->JANIMUTE_LENGTH) * 60;
+		$expires = $this->moduleContext->request->getRequestTime() + intval($this->JANIMUTE_LENGTH) * 60;
 
 		$hosts = array_values(array_unique(array_filter(array_map(fn(Post $post) => $post->getIp(), $posts))));
 
@@ -348,7 +353,17 @@ class moduleAdmin extends abstractModuleAdmin {
 			return;
 		}
 
-		$this->addBanEntries($this->getGlobalBanFilePath(), $hosts, $startTime, $expires, $this->JANIMUTE_REASON);
+		$accountId = (int) ($this->moduleContext->currentUserId ?? 0);
+
+		$this->getBanService()->fileBans(
+			$hosts,
+			GLOBAL_BOARD_UID,
+			[banCheckpoint::POST->value],
+			$expires,
+			$this->JANIMUTE_REASON,
+			$accountId > 0 ? $accountId : null,
+			true
+		);
 	}
 
 	/**
@@ -361,7 +376,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		foreach ($numbersByBoard as $boardUid => $numbers) {
-			$this->logAction('Deleted post ' . implode(', ', $numbers), (int)$boardUid);
+			$this->logAction('Deleted post ' . implode(', ', $numbers), (int)$boardUid, actionType::POST_DELETE);
 		}
 
 		if (!$muted) {
@@ -370,7 +385,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$hosts = array_unique(array_filter(array_map(fn(Post $post) => $post->getIp(), $posts)));
 		if ($hosts) {
-			$this->logAction('Muted ' . implode(', ', $hosts), GLOBAL_BOARD_UID);
+			$this->logAction('Muted ' . implode(', ', $hosts), GLOBAL_BOARD_UID, actionType::BAN_ISSUE);
 		}
 	}
 
@@ -412,7 +427,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->transactionManager->run(function () use ($attachment, $post, $board): void {
 			$this->moduleContext->deletedPostsService->deleteFilesFromPosts([$attachment], $this->moduleContext->currentUserId);
-			$this->logAction('Deleted file for post No.' . $post->getNumber(), $board->getBoardUID());
+			$this->logAction('Deleted file for post No.' . $post->getNumber(), $board->getBoardUID(), actionType::POST_FILE_DELETE);
 		});
 
 		if ($this->moduleContext->request->isAjax()) {

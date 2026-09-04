@@ -89,8 +89,9 @@ The backend is inside the web root now, so the web server has to be told not to 
 **Apache** reads the `.htaccess` files that ship in the tree, so it is already covered. Make sure
 `AllowOverride All` is set for the directory.
 
-**nginx** ignores those files. Paste this into the `server` block and reload - `install.php` prints
-the same rules with your own path already filled in:
+**nginx** ignores those files. Paste this into the `server` block, above the `location ~ \.php$`
+block (regex locations match in the order written, and the PHP handler must not see these files
+first), and reload - `install.php` prints the same rules with your own path already filled in:
 
 ```
 location ~ ^/kokonotsuba/(bootstrap|code|configs|global|migrations|module|templates|tests|Utilities)/ {
@@ -160,19 +161,40 @@ Code updates come from `git pull` (or from unpacking a release), then the migrat
 
 An install made before the migrator existed has no record of what's already been applied, so it needs baselining once before anything else.
 
-1. Back up your database and `databaseSettings.php`. Nothing here takes a backup for you, and database changes can't be undone.
+1. Back up your database. Nothing here takes a backup for you, and database changes can't be undone.
 
-2. `databaseSettings.php` is no longer tracked by git, so stop tracking it on your install before pulling, otherwise the pull will conflict on it: `git rm --cached databaseSettings.php`
+2. Three files you edited used to be tracked by git, and the pull will refuse to run over your copies of them. Set them aside, then put git's copies back so the pull can proceed:
+
+   ```
+   mkdir -p ../koko-upgrade-backup
+   cp databaseSettings.php global/globalconfig.php global/globalBoardConfig.php ../koko-upgrade-backup/
+   git checkout -- databaseSettings.php global/globalconfig.php global/globalBoardConfig.php
+   ```
+
+   `global/board-configs/board-*.php` and `global/board-storages/` were never tracked, so they stay where they are.
 
 3. Pull the code: `git pull`
 
-4. See what would change without changing anything: `php Utilities/migrate-cli.php baseline --dry-run`
+4. Put your credentials back, and the old site-wide config where the upgrade can read it (it is untracked now, so neither will conflict again):
 
-5. If it looks right, run it: `php Utilities/migrate-cli.php baseline`
+   ```
+   cp ../koko-upgrade-backup/databaseSettings.php databaseSettings.php
+   cp ../koko-upgrade-backup/globalBoardConfig.php global/globalBoardConfig.php
+   ```
+
+5. Copy `WEBSITE_URL`, `STATIC_URL`, `STATIC_PATH`, `TRIPSALT` and `IDSEED` (and the `CDN_*` keys if you use them) out of your backed-up `globalconfig.php` into a new `global/siteSettings.php`, following `global/siteSettings.example.php`. The values in `globalconfig.php` are now only defaults.
+
+6. See what would change without changing anything: `php Utilities/migrate-cli.php baseline --dry-run`
+
+7. If it looks right, run it: `php Utilities/migrate-cli.php baseline`
 
 This adds whatever your database is missing, records what it already had, and leaves anything newer for the next step. It won't drop or overwrite anything.
 
-6. Apply whatever is left: `php Utilities/migrate-cli.php up`
+8. Apply whatever is left: `php Utilities/migrate-cli.php up`
+
+This is also where your old config files, flat-file bans and HTML-stored posts are carried into the database. Once `up` reports nothing pending, `global/globalBoardConfig.php` and `global/board-configs/` can go.
+
+9. Copy the new `static/` over the directory `STATIC_PATH` points at, then rebuild every board from the admin panel so the pages pick up the converted posts.
 
 ### Every update after that
 

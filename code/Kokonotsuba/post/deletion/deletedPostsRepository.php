@@ -239,10 +239,7 @@ class deletedPostsRepository extends baseRepository {
 		$orderBy = $this->validateOrderField($orderBy, 'id');
 
 		// Validate direction
-		$direction = strtoupper($direction);
-		if (!in_array($direction, ['ASC', 'DESC'], true)) {
-			$direction = 'DESC';
-		}
+		$direction = self::sortDirection($direction);
 
 		// Parameters get accumulated here
 		$params = [];
@@ -420,15 +417,8 @@ class deletedPostsRepository extends baseRepository {
 
 		$this->paginate($query, $params, $amount, $offset);
 
-		// Returns structured array like [ ['post_uid' => 123], ['post_uid' => 456] ]
-		$rows = $this->queryAllAsIndexArray($query, $params);
-
-		if (!$rows) {
-			return false;
-		}
-
-		// Flatten into [123, 456, ...]
-		return array_merge(...$rows);
+		// Flat list of post_uid values, or false when the page is empty
+		return $this->queryFlatColumn($query, $params) ?: false;
 	}
 
 	/**
@@ -1079,14 +1069,8 @@ class deletedPostsRepository extends baseRepository {
 			$query .= " AND file_only = 0";
 		}
 
-		// fetch the results as array
-		$entries = $this->queryAllAsIndexArray($query, $params);
-
-		// unpack
-		$entries = array_merge(...$entries);
-
-		// return the entries
-		return $entries;
+		// return the entry ids as a flat list
+		return $this->queryFlatColumn($query, $params);
 	}
 
 	/**

@@ -13,6 +13,8 @@ $language['error_board_api']            = 'Error during rendering of board API';
 $language['error_invalid_board_id']     = 'Invalid board UID!';
 $language['error_invalid_board_endpoint'] = 'Invalid board API endpoint page';
 $language['error_invalid_thread_id']    = 'Invalid thread ID supplied to system';
+$language['error_post_not_found']       = 'That post could not be found.';
+$language['invalid_action']             = 'Invalid action.';
 $language['page_not_found']				= 'Sorry, the page you requested is not found.';
 $language['thread_not_found']			= 'Thread not found!';
 $language['thread_deleted']			    = 'This thread was deleted!';
@@ -96,6 +98,9 @@ $language['admin_delete']				= 'Delete';
 $language['admin_top']					= 'Administrator mode';
 $language['admin_logged_in_as']			= 'Logged in as %1$s (%2$s)';
 $language['admin_logout']			    = 'Log out';
+$language['login_throttled']            = 'Too many failed login attempts. Please wait %d seconds before trying again.';
+$language['login_failure_warning']      = 'Warning: there have been %1$d failed login attempts on your account from %2$d IP address(es) since you were last notified. Make sure your password is long, unique and not shared with any other site.';
+$language['login_failure_warning_last'] = 'The most recent attempt was at %s.';
 $language['admin_manageposts']			= 'Manage posts';
 $language['admin_optimize']				= 'Optimize';
 $language['admin_check']				= 'Check data source';
@@ -106,7 +111,7 @@ $language['admin_archive']				= '<th>Archive</th>';
 $language['admin_notices']				= '<ul><li>If you want to delete a post, check the "delete" checkbox before that post and click Submit button.</li><li>If you want to delete image only, please check "Delete image only" checkbox and follow normal deletion procedures.</li><li>If you want to lock/unlock a thread, please check "Stop" checkbox of that thread and click "Submit" button.</li><li>Please press "Update" after managing posts.</li></ul>';
 $language['admin_submit_btn']			= 'Submit';
 $language['admin_reset_btn']			= 'Reset';
-$language['admin_list_header']			= '<tr><th class="colFunc">Func</th><th class="colDel">Del</th><th class="colBoard">Board</th><th class="colDate">Date</th><th class="colSub">Subject</th><th class="colName">Name</th><th class="colComment">Comment</th><th class="colHost">Host</th><th class="colImage"><div>Image (Bytes)</div><div>MD5 checksum</div></th></tr>';
+$language['admin_list_header']			= '<th class="colFunc">Func</th><th class="colDel">Del</th><th class="colBoard">Board</th><th class="colDate">Date</th><th class="colSub">Subject</th><th class="colName">Name</th><th class="colComment">Comment</th><th class="colHost">Host</th><th class="colBrowser">Browser</th><th class="colImage"><div>Image (Bytes)</div><div>MD5 checksum</div></th>';
 $language['admin_archive_btn']			= 'A';
 $language['admin_stop_btn']				= 'Stop';
 $language['admin_totalsize']			= '[Total size of images: <b>%1$s</b> KB ]';
@@ -257,6 +262,10 @@ $language['post_multiple'] = 'posts';
 $language['poster_hash_count'] = 'There\'s %1$s %2$s by this ID.';
 $language['score_pre_text'] = 'Score: %1$s';
 $language['view_posts_by_user'] = 'View posts by user';
+$language['view_posts_no_cookies'] = 'no cookies';
+$language['view_posts_by_browser'] = 'View posts from this browser';
+$language['config_label_RECORD_POST_BROWSER'] = 'Record which browser made each post';
+$language['config_desc_RECORD_POST_BROWSER'] = 'Stores a short label for the posting browser, so staff can tell apart people sharing one address. Off, new posts record nothing; posts already recorded keep their label and bans already tied to a browser go on working.';
 $language['leave_note'] = 'Leave a note';
 $language['note_visibility_description'] = 'This note is only visible to other staff';
 $language['note_title_text'] = 'This is a note';
@@ -264,8 +273,69 @@ $language['edit_note'] = 'Edit note';
 $language['delete_note'] = 'Delete note';
 $language['note_no_permission'] = 'You do not have permission to modify this note.';
 $language['note_not_found'] = 'Note not found!';
+
+// host notes
+$language['leave_host_note'] = 'Leave a host note';
+$language['add_host_note'] = 'Add host note';
+$language['edit_host_note'] = 'Edit host note';
+$language['delete_host_note'] = 'Delete host note';
+$language['host_notes_header'] = 'Host notes';
+$language['host_note_title_text'] = 'This is a note on the poster\'s host';
+$language['host_note_visibility_description'] = 'This note is only visible to other staff, and shows on every post from this host';
+$language['host_notes_panel_title'] = 'Host notes for %s (%d)';
+$language['host_notes_none'] = 'No notes on this host.';
+$language['host_note_no_permission'] = 'You do not have permission to modify this host note.';
+$language['host_note_not_found'] = 'Host note not found!';
+$language['host_note_no_host'] = 'No host to leave a note on.';
+$language['host_note_form_title'] = 'Leave a note';
+$language['host_note_edit_form_title'] = 'Edit note';
+$language['host_note_form_target'] = 'Target';
+$language['host_note_form_target_host'] = 'Host';
+$language['host_note_form_target_browser'] = 'Browser';
+$language['host_note_form_note'] = 'Note';
+$language['host_note_form_submit'] = 'Save note';
+$language['host_note_target_description'] = 'What the note follows. Both are taken from the post you opened this from.';
+$language['host_note_no_browser_target'] = 'That post kept no browser token.';
+$language['host_note_bad_host'] = 'That is not a valid address or range.';
+$language['add_browser_note'] = 'Add browser note';
+$language['browser_notes_header'] = 'Browser notes';
+$language['browser_notes_panel_title'] = 'Browser notes for %s (%d)';
+$language['browser_note_visibility_description'] = 'This note is only visible to other staff, and shows on every post from this browser';
+$language['browser_note_bad_hash'] = 'That is not a valid browser token.';
 $language['edit_post'] = 'Edit post';
+
+// Editing your own post with its password (module/edit's reader half)
+$language['edit_own_post'] = 'Edit';
+$language['edit_own_post_title'] = 'Edit this post using the password you posted it with';
+$language['edit_own_form_title'] = 'Edit post';
+$language['edit_own_password'] = 'Password';
+$language['edit_own_password_hint'] = 'The password you set when you made the post. Leave blank to use the one saved in this browser.';
+$language['edit_own_submit'] = 'Save';
+$language['edit_own_wrongpassword'] = 'No such post or wrong password.';
+$language['edit_own_timeexceeded'] = 'This post is too old to edit.';
+$language['edit_own_disabled'] = 'Editing your own posts is not available on this board.';
+$language['edit_own_notplaintext'] = 'This post is too old to be edited.';
+$language['edit_attachments'] = 'Attachments';
+$language['edit_attachments_description'] = 'Tick a file to drop it. Dropped files go to the deleted posts viewer, not the bin.';
+$language['edit_attachments_none'] = 'This post has no attachments.';
+$language['edit_attachment_toomany'] = 'This board allows at most %d attachments on a post.';
+$language['edit_attachment_op_required'] = 'A thread on this board has to keep an attachment.';
+$language['edit_attachment_timeexceeded'] = 'This post is too old to change its attachments.';
+$language['view_post_revisions'] = 'Edit history';
+$language['post_revisions_title'] = 'Edit history for post No.%s';
+$language['post_revisions_none'] = 'This post has never been edited.';
+$language['post_revision_heading'] = 'Before the edit of %s';
+$language['post_revision_by_poster'] = 'the poster';
+$language['post_revision_by'] = 'Edited by %s';
+$language['post_revision_restore'] = 'Restore';
+$language['post_revision_restore_title'] = 'Put these values back on the post';
+$language['post_revision_restored'] = 'Restored post No.%s from its edit history.';
+$language['post_revision_not_found'] = 'No such revision.';
+$language['post_revision_no_permission'] = 'You do not have permission to restore a revision.';
+$language['post_revision_unchanged'] = '(unchanged)';
+$language['post_revision_empty'] = '(empty)';
 $language['self_serve_banner_suggest'] = 'Want your banner here? Click here to submit yours!';
+$language['self_serve_board_banner_suggest'] = 'Submit board banners here.';
 
 // DEPRECATED: pm_contacts_section_title, pm_view_thread_page_title, pm_contact_view_no_messages,
 // contact_not_selected, pm_no_message, pm_contact_self, pm_compose_title, pm_new_message, pm_no_contacts
@@ -281,6 +351,7 @@ $language['pm_login_description'] = 'Enter your tripcode to access your private 
 $language['pm_tripcode_login_hash_note'] = 'Include the \'#\' followed by your tripcode password. Use two \'#\' (##) for secure tripcodes.';
 $language['pm_tripcode_login_label'] = 'Tripcode';
 $language['pm_invalid_tripcode'] = 'Invalid tripcode input!';
+$language['pm_input_too_long'] = 'That input is too long.';
 $language['pm_no_conversation'] = 'No conversation found with this user.';
 $language['pm_no_messages'] = 'No messages yet.';
 $language['pm_message_not_found'] = 'Message not found.';
@@ -348,6 +419,8 @@ $language['admin_nav_global_message_title'] = 'Manage global message';
 $language['admin_nav_global_message'] = 'Global message';
 $language['admin_nav_deleted_posts_title'] = 'View deleted posts';
 $language['admin_nav_deleted_posts'] = 'Deleted posts';
+$language['admin_nav_recent_posts_title'] = 'The newest posts from every board, as posts';
+$language['admin_nav_recent_posts'] = 'Recent posts';
 $language['admin_nav_rebuild_title'] = 'Rebuild tools';
 $language['admin_nav_rebuild'] = 'Rebuild board';
 $language['admin_nav_accounts_title'] = 'Manage user accounts and permissions';
@@ -379,6 +452,10 @@ $language['config_discard'] = 'Discard changes';
 // {count} is substituted by the editor's JS - not a sprintf placeholder (see config_confirm_more).
 $language['config_discard_confirm'] = 'Discard your unsaved changes to {count} setting(s)? The saved configuration is not touched.';
 $language['config_discarded'] = 'Unsaved changes discarded.';
+$language['config_nav_heading'] = 'Sections';
+$language['config_nav_hide'] = 'Show/hide the section list';
+$language['config_nav_toggle'] = 'Show the modules in this section';
+$language['config_nav_float'] = 'Show the section list in its own window';
 // {count} is substituted by the editor's JS, so it must not be a sprintf placeholder: _T() runs
 // every string through sprintf, and a bare %s here would throw when translated with no arguments.
 $language['config_confirm_more'] = '...and {count} more.';
@@ -466,29 +543,34 @@ $language['post_api_thread_list_field_last_bump_time'] = 'Timestamp of the last 
 $language['post_api_thread_list_field_created_time'] = 'Timestamp of when the thread was created';
 $language['post_api_thread_list_field_post_count'] = 'Total number of posts in the thread';
 
-// fullBanner module
-$language['fullbanner_no_file'] = 'No file uploaded.';
-$language['fullbanner_invalid_link'] = 'Invalid destination link URL.';
-$language['fullbanner_flood'] = 'Please wait %1$s seconds before submitting another banner.';
-$language['fullbanner_upload_failed'] = 'File upload failed.';
-$language['fullbanner_invalid_upload'] = 'Invalid file upload.';
-$language['fullbanner_invalid_extension'] = 'Only PNG, JPG, JPEG, and GIF files are allowed.';
-$language['fullbanner_invalid_image'] = 'The file does not appear to be a valid image.';
-$language['fullbanner_ext_mime_mismatch'] = 'File extension does not match its content type.';
-$language['fullbanner_save_failed'] = 'Failed to save uploaded file.';
-$language['fullbanner_mkdir_failed'] = 'Failed to create banner storage directory.';
-$language['fullbanner_invalid_dimensions'] = 'Banner images must be exactly %1$sx%2$s pixels.';
-$language['fullbanner_submit_success'] = 'This banner has been submitted and is awaiting approval by staff!';
-$language['fullbanner_req_dimensions'] = 'Images must be exactly %1$sx%2$s pixels.';
-$language['fullbanner_req_filetypes'] = 'Accepted file types: PNG, JPG, GIF.';
-$language['fullbanner_req_filesize'] = 'Maximum file size: %1$sKB.';
-$language['fullbanner_file_too_large'] = 'File size exceeds the maximum allowed size of %1$sKB.';
-$language['fullbanner_submit_heading'] = 'Submit a banner';
-$language['fullbanner_submit_button'] = 'Submit banner';
-$language['fullbanner_upload_heading'] = 'Upload banner (Auto-Approved)';
-$language['fullbanner_upload_button'] = 'Upload banner';
-$language['fullbanner_alert_label'] = 'Banners';
-$language['fullbanner_alert_title'] = 'Submitted banners awaiting approval';
+// banner module
+$language['banner_no_file'] = 'No file uploaded.';
+$language['banner_invalid_link'] = 'Invalid destination link URL.';
+$language['banner_flood'] = 'Please wait %1$s seconds before submitting another banner.';
+$language['banner_upload_failed'] = 'File upload failed.';
+$language['banner_invalid_upload'] = 'Invalid file upload.';
+$language['banner_invalid_extension'] = 'Only PNG, JPG, JPEG, and GIF files are allowed.';
+$language['banner_invalid_image'] = 'The file does not appear to be a valid image.';
+$language['banner_ext_mime_mismatch'] = 'File extension does not match its content type.';
+$language['banner_save_failed'] = 'Failed to save uploaded file.';
+$language['banner_mkdir_failed'] = 'Failed to create banner storage directory.';
+$language['banner_invalid_dimensions'] = 'Banner images must be exactly %1$sx%2$s pixels.';
+$language['banner_submit_success'] = 'This banner has been submitted and is awaiting approval by staff!';
+$language['banner_req_dimensions'] = 'Images must be exactly %1$sx%2$s pixels.';
+$language['banner_req_filetypes'] = 'Accepted file types: PNG, JPG, GIF.';
+$language['banner_req_filesize'] = 'Maximum file size: %1$sKB.';
+$language['banner_file_too_large'] = 'File size exceeds the maximum allowed size of %1$sKB.';
+$language['banner_submit_heading'] = 'Submit a banner';
+$language['banner_submissions_disabled'] = 'Banner submissions are not being accepted.';
+$language['banner_submit_button'] = 'Submit banner';
+$language['banner_upload_heading'] = 'Upload banner (Auto-Approved)';
+$language['banner_upload_button'] = 'Upload banner';
+$language['banner_preset_ad'] = 'Banner ad';
+$language['banner_preset_board'] = 'Board banner';
+$language['banner_preset_all'] = 'All presets';
+$language['banner_alert_label'] = 'Banners';
+$language['banner_toplink'] = 'Banners';
+$language['banner_alert_title'] = 'Submitted banners awaiting approval';
 
 // staffNav module
 $language['staffnav_title'] = 'Staff navigation';
@@ -520,24 +602,51 @@ $language['thread_watch_updated_label'] = 'Updated:';
 
 $language['soudane_vote_own_post'] = 'You cannot vote on your own post';
 $language['soudane_no_post_ids_provided'] = 'No post IDs provided.';
+$language['soudane_invalid_type'] = 'Invalid vote type.';
 
 // anonIp module
-$language['admin_nav_anon_ip_title']  = 'Anonymize IP addresses of old posts';
+$language['admin_nav_anon_ip_title']  = 'Anonymize stored IP addresses';
 $language['admin_nav_anon_ip']        = 'Anonymize IPs';
 $language['anon_ip_title']            = 'Anonymize IP Addresses';
-$language['anon_ip_warning']          = 'This will anonymize the IP addresses of posts older than the selected time frame - it cannot be undone.';
-$language['anon_ip_select_label']     = 'Anonymize posts older than:';
+$language['anon_ip_warning']          = 'This replaces every stored IP address older than the selected time frame with a salted hash, in:';
+$language['anon_ip_warning_undo']     = 'It cannot be undone.';
+$language['anon_ip_target_posts']     = 'posts';
+$language['anon_ip_target_reports']   = 'reports';
+$language['anon_ip_target_pms']       = 'private messages';
+$language['anon_ip_target_soudane']   = 'soudane votes';
+$language['anon_ip_target_appeals']   = 'ban appeals';
+$language['anon_ip_target_banners']   = 'banner submissions';
+$language['anon_ip_target_logins']    = 'failed logins';
+$language['anon_ip_target_actionlog'] = 'the action log';
+$language['anon_ip_target_bans']      = 'the patterns of bans that have already lapsed';
+$language['anon_ip_select_label']     = 'Anonymize records older than:';
 $language['anon_ip_1_year']           = '1 year';
 $language['anon_ip_1_month']          = '1 month';
 $language['anon_ip_1_week']           = '1 week';
 $language['anon_ip_24_hours']         = '24 hours';
-$language['anon_ip_now']              = 'All posts (now)';
+$language['anon_ip_now']              = 'Everything (now)';
 $language['anon_ip_submit']           = 'Anonymize';
 $language['anon_ip_success']          = '%d IP address(es) have been anonymized.';
 $language['anon_ip_dispatched']       = 'Anonymization job queued. You will be notified when it completes.';
 $language['anon_ip_completed']        = 'IP anonymization completed successfully.';
 $language['anon_ip_dispatch_failed']  = 'Failed to start anonymization job. Please try again.';
 $language['anon_ip_invalid_request']  = 'Invalid anonymization request.';
+$language['anon_ip_never_run']        = 'The anonymizer has not run yet.';
+$language['anon_ip_last_run']         = 'Last run %s (%s), %d record(s) anonymized.';
+$language['anon_ip_last_run_unfinished'] = 'Last run %s (%s), still running or interrupted.';
+$language['anon_ip_source_manual']    = 'by hand';
+$language['anon_ip_source_scheduled'] = 'on schedule';
+$language['anon_ip_schedule_off']     = 'No automatic runs are scheduled.';
+$language['anon_ip_schedule_on']      = 'Runs automatically every %d day(s), in the background, over every record still holding an address.';
+$language['anon_ip_schedule_heading'] = 'Automatic runs';
+$language['anon_ip_schedule_every_label'] = 'Run every (days)';
+$language['anon_ip_schedule_every_desc'] = 'How often the anonymizer runs. 0 turns automatic runs off, leaving only the button above.';
+$language['anon_ip_schedule_submit'] = 'Save schedule';
+$language['anon_ip_schedule_saved'] = 'Schedule saved.';
+$language['anon_ip_schedule_board_override'] = 'This board overrides the interval in its own config, so it does not follow the value below. Clear the board-level override in the config editor for this to take effect here.';
+
+$language['config_label_modules.anonIp.AUTO_ANONYMIZE_DAYS'] = 'Anonymize automatically every (days)';
+$language['config_desc_modules.anonIp.AUTO_ANONYMIZE_DAYS'] = 'How often the anonymizer runs on its own, in days, over every record regardless of age. 0 turns automatic runs off and leaves it to the button on the anonymizer page. The run is a background task, so nothing waits on it. There is no cron: the interval is checked when a post is made and when staff open the anonymizer page, so a board with no traffic and nobody looking in does not run.';
 
 // postStats module
 $language['poststats_link']             = 'Stats';
@@ -619,6 +728,12 @@ $language['config_desc_DISCORD_WH'] = 'Webhook URL for post notifications.';
 $language['config_desc_IRC_WH'] = 'Webhook URL for post notifications.';
 $language['config_desc_ACTIONLOG_MAX_PER_PAGE'] = 'Number of action-log entries shown per page.';
 $language['config_desc_STAFF_LOGIN_TIMEOUT'] = 'Inactivity allowed before a staff user is logged out. Must not exceed session.gc_maxlifetime.';
+$language['config_desc_LOGIN_MAX_ATTEMPTS'] = 'Failed logins against one account within the window before it is locked out.';
+$language['config_desc_LOGIN_MAX_ATTEMPTS_PER_IP'] = 'Failed logins from one IP within the window, across every username, before it is locked out.';
+$language['config_desc_LOGIN_ATTEMPT_WINDOW'] = 'How far back failed logins are counted, in seconds. Older failures stop counting.';
+$language['config_desc_LOGIN_LOCKOUT_SECONDS'] = 'Lockout applied at the first breach, in seconds. Doubles with every further failure.';
+$language['config_desc_LOGIN_LOCKOUT_MAX_SECONDS'] = 'Ceiling the doubling lockout stops at, in seconds.';
+$language['config_desc_LOGIN_ATTEMPT_RETENTION_DAYS'] = 'Days a failed login is kept on record before being pruned.';
 $language['config_desc_SYSTEMCHAN_NAME'] = 'Name of the system role/user.';
 $language['config_desc_FORTUNES'] = 'JSON array of fortunes selected at random by the fortune function.';
 
@@ -685,7 +800,7 @@ $language['config_desc_modules.ads.ADS_POST_AD_EVERY_N_POSTS'] = 'Insert a post-
 $language['config_desc_modules.ads.ADS_SLOT_DIMENSIONS'] = 'One entry per ad slot: slot name => WIDTHxHEIGHT (e.g. 728x90).';
 
 // module/animatedGif/config.php
-$language['config_desc_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'] = 'Maximum file size for animated GIFs.';
+$language['config_desc_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'] = 'Largest animated GIF, WebP or PNG that may be played in place of its thumbnail.';
 
 // module/antiFlood/config.php
 $language['config_desc_modules.antiFlood.RENZOKU3'] = 'Minimum wait before a poster can start another thread.';
@@ -707,6 +822,9 @@ $language['config_desc_modules.deletedPosts.DELETED_POSTS_TEMPLATE'] = 'Template
 $language['config_desc_modules.deletedPosts.PRUNE_TIME'] = 'How long deleted-post records are retained, in hours.';
 
 // module/dice/config.php
+$language['config_desc_modules.edit.ALLOW_USER_EDIT'] = 'Let people edit their own posts by entering the post password.';
+$language['config_desc_modules.edit.USER_EDIT_TIME_LIMIT'] = 'How many hours after posting someone may still edit their own post. 0 removes the limit.';
+$language['config_desc_modules.edit.ATTACHMENT_EDIT_TIME_LIMIT'] = 'How many hours after posting someone may still add or drop attachments on their own post. 0 removes the limit.';
 $language['config_desc_modules.dice.DICE_AMOUNT_LIMIT'] = 'Maximum number of dice per roll.';
 $language['config_desc_modules.dice.DICE_FACE_LIMIT'] = 'Maximum number of faces per die.';
 $language['config_desc_modules.dice.EMAIL_DICE_ROLL'] = 'Allow rolling dice from the email field.';
@@ -717,18 +835,26 @@ $language['config_desc_modules.displayId.DISP_ID'] = 'When poster IDs are enable
 
 // module/displayIp/config.php
 $language['config_desc_modules.displayIp.IPTOGGLE'] = '1 = OPs toggle IP display, 2 = enabled for all posts.';
+$language['config_desc_modules.viewPosts.SHOW_VISITOR_TOKEN'] = 'Show a short label for the browser each post was made with, beside its IP. Tells apart people sharing one address.';
 
 // module/emotes/config.php
 $language['config_desc_modules.emotes.KAOMOJI'] = 'JSON object of display text => value inserted into the comment.';
 $language['config_desc_modules.emotes.EMOTES'] = 'JSON object of emote name => image filename (from static/image/emotes/).';
 
-// module/fullBanner/config.php
-$language['config_desc_modules.fullBanner.SHOW_TOP_AD'] = 'Show the top full-banner ad.';
-$language['config_desc_modules.fullBanner.SHOW_BOTTOM_AD'] = 'Show the bottom full-banner ad.';
-$language['config_desc_modules.fullBanner.FULLBANNER_SUBMISSION_COOLDOWN'] = 'Seconds between banner submissions per IP.';
-$language['config_desc_modules.fullBanner.FULLBANNER_REQUIRED_WIDTH'] = 'Required banner image width in pixels.';
-$language['config_desc_modules.fullBanner.FULLBANNER_REQUIRED_HEIGHT'] = 'Required banner image height in pixels.';
-$language['config_desc_modules.fullBanner.FULLBANNER_MAX_FILE_SIZE'] = 'Maximum banner file size in bytes.';
+// module/banner/config.php
+$language['config_desc_modules.banner.SHOW_TOP_AD'] = 'Show the banner ad above the threads.';
+$language['config_desc_modules.banner.SHOW_BOTTOM_AD'] = 'Show the banner ad below the threads.';
+$language['config_desc_modules.banner.SHOW_BOARD_BANNER'] = 'Show the board banner at the top of the page.';
+$language['config_desc_modules.banner.BANNER_AD_ALLOW_SUBMISSIONS'] = 'Let users submit their own banner ads. When off, submissions are rejected and the submission link under the banner is hidden.';
+$language['config_desc_modules.banner.BANNER_AD_SUBMISSION_COOLDOWN'] = 'Seconds between banner ad submissions per IP.';
+$language['config_desc_modules.banner.BANNER_AD_WIDTH'] = 'Required banner ad width in pixels.';
+$language['config_desc_modules.banner.BANNER_AD_HEIGHT'] = 'Required banner ad height in pixels.';
+$language['config_desc_modules.banner.BANNER_AD_MAX_FILE_SIZE'] = 'Maximum banner ad file size in bytes.';
+$language['config_desc_modules.banner.BOARD_BANNER_ALLOW_SUBMISSIONS'] = 'Let users submit their own board banners. When off, submissions are rejected and the submission link is hidden.';
+$language['config_desc_modules.banner.BOARD_BANNER_SUBMISSION_COOLDOWN'] = 'Seconds between board banner submissions per IP.';
+$language['config_desc_modules.banner.BOARD_BANNER_WIDTH'] = 'Required board banner width in pixels.';
+$language['config_desc_modules.banner.BOARD_BANNER_HEIGHT'] = 'Required board banner height in pixels.';
+$language['config_desc_modules.banner.BOARD_BANNER_MAX_FILE_SIZE'] = 'Maximum board banner file size in bytes.';
 
 // module/imageMeta/config.php
 $language['config_desc_modules.imageMeta.EXIF_DATA_VIEWER'] = 'Show an EXIF data viewer for images.';
@@ -836,6 +962,12 @@ $language['config_label_DISCORD_WH'] = 'Discord webhook';
 $language['config_label_IRC_WH'] = 'IRC webhook';
 $language['config_label_ACTIONLOG_MAX_PER_PAGE'] = 'Action log per page';
 $language['config_label_STAFF_LOGIN_TIMEOUT'] = 'Staff login timeout (s)';
+$language['config_label_LOGIN_MAX_ATTEMPTS'] = 'Failed logins per account';
+$language['config_label_LOGIN_MAX_ATTEMPTS_PER_IP'] = 'Failed logins per IP';
+$language['config_label_LOGIN_ATTEMPT_WINDOW'] = 'Failed login window (s)';
+$language['config_label_LOGIN_LOCKOUT_SECONDS'] = 'Login lockout (s)';
+$language['config_label_LOGIN_LOCKOUT_MAX_SECONDS'] = 'Maximum login lockout (s)';
+$language['config_label_LOGIN_ATTEMPT_RETENTION_DAYS'] = 'Failed login retention (days)';
 $language['config_label_SYSTEMCHAN_NAME'] = 'System user name';
 $language['config_label_FORTUNES'] = 'Fortunes';
 
@@ -858,8 +990,10 @@ $language['config_label_ModuleList.janitor'] = 'Janitor';
 $language['config_label_ModuleList.moveThread'] = 'Move thread';
 $language['config_label_ModuleList.rawHtml'] = 'Raw HTML';
 $language['config_label_ModuleList.deletedPosts'] = 'Deleted posts';
+$language['config_label_ModuleList.recentPosts'] = 'Recent posts';
 $language['config_label_ModuleList.cssHax'] = 'CSS hax';
 $language['config_label_ModuleList.notes'] = 'Notes';
+$language['config_label_ModuleList.hostNotes'] = 'Host notes';
 $language['config_label_ModuleList.edit'] = 'Edit posts';
 $language['config_label_ModuleList.perceptualBan'] = 'Perceptual ban';
 $language['config_label_ModuleList.excimerViewer'] = 'Excimer profile viewer';
@@ -882,7 +1016,7 @@ $language['config_label_ModuleList.displayId'] = 'Display ID';
 $language['config_label_ModuleList.dice'] = 'Dice';
 $language['config_label_ModuleList.tripcode'] = 'Tripcode';
 $language['config_label_ModuleList.displayIp'] = 'Display IP';
-$language['config_label_ModuleList.animatedGif'] = 'Animated GIF';
+$language['config_label_ModuleList.animatedGif'] = 'Animated images';
 $language['config_label_ModuleList.tegaki'] = 'Tegaki (oekaki)';
 $language['config_label_ModuleList.quickReply'] = 'Quick reply';
 $language['config_label_ModuleList.spoiler'] = 'Spoiler';
@@ -890,11 +1024,10 @@ $language['config_label_ModuleList.threadWatcher'] = 'Thread watcher';
 $language['config_label_ModuleList.soudane'] = 'Soudane (voting)';
 $language['config_label_ModuleList.postApi'] = 'Post API';
 $language['config_label_ModuleList.privateMessage'] = 'Private messages';
-$language['config_label_ModuleList.fullBanner'] = 'Full banner';
 $language['config_label_ModuleList.imageMeta'] = 'Image metadata';
 $language['config_label_ModuleList.onlineCounter'] = 'Online counter';
 $language['config_label_ModuleList.ads'] = 'Ads';
-$language['config_label_ModuleList.banner'] = 'Banner';
+$language['config_label_ModuleList.banner'] = 'Banners';
 $language['config_label_ModuleList.addInfo'] = 'Additional info';
 $language['config_label_ModuleList.imageServer'] = 'Image server';
 $language['config_label_ModuleList.filter'] = 'Filter';
@@ -964,7 +1097,7 @@ $language['config_label_modules.ads.ADS_POST_AD_EVERY_N_POSTS'] = 'Post ad every
 $language['config_label_modules.ads.ADS_SLOT_DIMENSIONS'] = 'Ad slot dimensions';
 
 // module/animatedGif/config.php
-$language['config_label_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'] = 'Max animated GIF size (KB)';
+$language['config_label_modules.animatedGif.MAX_SIZE_FOR_ANIMATED_GIF'] = 'Max animated image size (KB)';
 
 // module/antiFlood/config.php
 $language['config_label_modules.antiFlood.RENZOKU3'] = 'Seconds between new threads';
@@ -1013,6 +1146,9 @@ $language['config_label_modules.deletedPosts.DELETED_POSTS_TEMPLATE'] = 'Deleted
 $language['config_label_modules.deletedPosts.PRUNE_TIME'] = 'Deleted posts prune time (h)';
 
 // module/dice/config.php
+$language['config_label_modules.edit.ALLOW_USER_EDIT'] = 'Allow editing your own posts';
+$language['config_label_modules.edit.USER_EDIT_TIME_LIMIT'] = 'Own-post edit time limit (hours)';
+$language['config_label_modules.edit.ATTACHMENT_EDIT_TIME_LIMIT'] = 'Own-post attachment edit time limit (hours)';
 $language['config_label_modules.dice.DICE_AMOUNT_LIMIT'] = 'Dice amount limit';
 $language['config_label_modules.dice.DICE_FACE_LIMIT'] = 'Dice face limit';
 $language['config_label_modules.dice.EMAIL_DICE_ROLL'] = 'Dice via email field';
@@ -1023,18 +1159,26 @@ $language['config_label_modules.displayId.DISP_ID'] = 'Always show poster ID';
 
 // module/displayIp/config.php
 $language['config_label_modules.displayIp.IPTOGGLE'] = 'IP display toggle';
+$language['config_label_modules.viewPosts.SHOW_VISITOR_TOKEN'] = 'Show browser label beside IP';
 
 // module/emotes/config.php
 $language['config_label_modules.emotes.KAOMOJI'] = 'Kaomoji';
 $language['config_label_modules.emotes.EMOTES'] = 'Emotes';
 
-// module/fullBanner/config.php
-$language['config_label_modules.fullBanner.SHOW_TOP_AD'] = 'Show top full banner';
-$language['config_label_modules.fullBanner.SHOW_BOTTOM_AD'] = 'Show bottom full banner';
-$language['config_label_modules.fullBanner.FULLBANNER_SUBMISSION_COOLDOWN'] = 'Banner submission cooldown (s)';
-$language['config_label_modules.fullBanner.FULLBANNER_REQUIRED_WIDTH'] = 'Banner required width';
-$language['config_label_modules.fullBanner.FULLBANNER_REQUIRED_HEIGHT'] = 'Banner required height';
-$language['config_label_modules.fullBanner.FULLBANNER_MAX_FILE_SIZE'] = 'Banner max file size (bytes)';
+// module/banner/config.php
+$language['config_label_modules.banner.SHOW_TOP_AD'] = 'Show top banner ad';
+$language['config_label_modules.banner.SHOW_BOTTOM_AD'] = 'Show bottom banner ad';
+$language['config_label_modules.banner.SHOW_BOARD_BANNER'] = 'Show board banner';
+$language['config_label_modules.banner.BANNER_AD_ALLOW_SUBMISSIONS'] = 'Allow banner ad submissions';
+$language['config_label_modules.banner.BANNER_AD_SUBMISSION_COOLDOWN'] = 'Banner ad submission cooldown (s)';
+$language['config_label_modules.banner.BANNER_AD_WIDTH'] = 'Banner ad required width';
+$language['config_label_modules.banner.BANNER_AD_HEIGHT'] = 'Banner ad required height';
+$language['config_label_modules.banner.BANNER_AD_MAX_FILE_SIZE'] = 'Banner ad max file size (bytes)';
+$language['config_label_modules.banner.BOARD_BANNER_ALLOW_SUBMISSIONS'] = 'Allow board banner submissions';
+$language['config_label_modules.banner.BOARD_BANNER_SUBMISSION_COOLDOWN'] = 'Board banner submission cooldown (s)';
+$language['config_label_modules.banner.BOARD_BANNER_WIDTH'] = 'Board banner required width';
+$language['config_label_modules.banner.BOARD_BANNER_HEIGHT'] = 'Board banner required height';
+$language['config_label_modules.banner.BOARD_BANNER_MAX_FILE_SIZE'] = 'Board banner max file size (bytes)';
 
 // module/imageMeta/config.php
 $language['config_label_modules.imageMeta.EXIF_DATA_VIEWER'] = 'EXIF data viewer';
@@ -1073,6 +1217,16 @@ $language['config_label_modules.privateMessage.APPEND_TRIP_PM_BUTTON_TO_POST'] =
 $language['config_label_modules.readOnly.ALLOW_REPLY'] = 'Allow replies when read-only';
 
 // module/search/config.php
+// module/recentPosts/config.php
+$language['config_label_modules.recentPosts.RECENT_POSTS_PER_PAGE'] = 'Recent posts per page';
+$language['config_desc_modules.recentPosts.RECENT_POSTS_PER_PAGE'] = 'How many posts the Recent posts mod page shows at a time.';
+$language['config_label_modules.recentPosts.RECENT_POSTS_TEMPLATE'] = 'Recent posts template';
+$language['config_desc_modules.recentPosts.RECENT_POSTS_TEMPLATE'] = 'Template the Recent posts mod page draws posts with.';
+
+// module/recentPosts/moduleAdmin.php
+$language['recent_posts_filter'] = 'Filter recent posts';
+$language['recent_posts_none'] = 'No posts found!';
+
 $language['config_label_modules.search.SEARCH_POSTS_PER_PAGE'] = 'Search results per page';
 $language['config_label_modules.search.SEARCH_TEMPLATE'] = 'Search template';
 $language['config_label_modules.search.DISPLAY_THREADED_FORMAT'] = 'Threaded search format';
@@ -1151,6 +1305,8 @@ $language['report_post_unavailable'] = 'This post is no longer available.';
 
 $language['report_ip_reports_title'] = 'Reports from %1$s';
 $language['report_ip_reports_link'] = 'All reports from this reporter';
+$language['report_reporter_posts_link'] = 'Reporter\'s posts';
+$language['report_reporter_posts_hint'] = 'Every post made from this reporter\'s address, across every board.';
 $language['report_clear_ip'] = 'Dismiss all reports from this reporter';
 $language['report_clear_ip_row'] = 'Dismiss all from IP';
 $language['report_clear_ip_hint'] = 'Closes every report from this address that is still awaiting review.';
@@ -1239,3 +1395,304 @@ $language['config_label_modules.report.NOTIFICATION_POLL_SECONDS'] = 'Report not
 $language['config_desc_modules.report.NOTIFICATION_POLL_SECONDS'] = 'How often, in seconds, staff pages check for new reports.';
 $language['config_label_modules.report.REPORT_POST_TEMPLATE'] = 'Report post preview template';
 $language['config_desc_modules.report.REPORT_POST_TEMPLATE'] = 'Template directory used to render reported posts on the staff report pages.';
+
+// ─── Ban system (code/Kokonotsuba/ban, module/adminBan) ───────────────────────
+
+// Checkpoints: what a ban can be set to stop.
+$language['ban_checkpoint_post'] = 'Posting';
+$language['ban_checkpoint_report'] = 'Reporting posts';
+$language['ban_checkpoint_banner'] = 'Submitting banners';
+$language['ban_checkpoint_soudane'] = 'Voting on posts';
+$language['ban_checkpoint_pm'] = 'Private messages';
+
+$language['ban_blocked_generic'] = 'You are banned from doing that.';
+$language['ban_blocked_post'] = 'You are banned and cannot post.';
+$language['ban_blocked_report'] = 'You are banned and cannot report posts.';
+$language['ban_blocked_banner'] = 'You are banned and cannot submit banners.';
+$language['ban_blocked_soudane'] = 'You are banned and cannot vote on posts.';
+$language['ban_blocked_pm'] = 'You are banned and cannot use private messages.';
+$language['ban_view_details'] = 'View ban details';
+$language['ban_expired_notice'] = 'Your ban has expired. You can post again now - try that again.';
+
+// Durations.
+$language['ban_duration_none'] = 'none';
+$language['ban_duration_permanent'] = 'Permanent';
+$language['ban_duration_years'] = '%1$sy';
+$language['ban_duration_months'] = '%1$smo';
+$language['ban_duration_days'] = '%1$sd';
+$language['ban_duration_hours'] = '%1$sh';
+$language['ban_duration_minutes'] = '%1$smin';
+$language['ban_duration_seconds'] = '%1$ss';
+
+// The banned user's own page.
+$language['ban_form_func_link'] = 'Banned?';
+$language['ban_page_banned_heading'] = 'You have been banned! ヽ(ー_ー )ノ';
+$language['ban_page_warned_heading'] = 'You have been warned! ヽ(ー_ー )ノ';
+$language['ban_page_clear_heading'] = 'You are not banned! <span class="ascii">ヽ(´∇`)ノ</span>';
+$language['ban_page_clear_text'] = 'You can post!';
+$language['ban_page_expired_heading'] = 'Your ban has expired! <span class="ascii">ヽ(´∇`)ノ</span>';
+$language['ban_page_expired_text'] = 'Now that your ban has expired, you can post again!';
+$language['ban_page_image_alt_banned'] = 'BANNED!';
+$language['ban_page_image_alt_clear'] = 'NOT BANNED!';
+$language['ban_page_type_ban'] = 'Ban';
+$language['ban_page_type_warning'] = 'Warning';
+$language['ban_page_scope_global'] = "You've been banned from all boards";
+$language['ban_page_scope_board'] = 'Banned from';
+$language['ban_page_scope_global_warning'] = "You've been warned on all boards";
+$language['ban_page_scope_board_warning'] = 'Warned on';
+$language['ban_page_reason_label'] = 'Reason:';
+$language['ban_page_filed_on'] = 'Filed on %1$s.';
+$language['ban_page_expires_on'] = 'Expires on %1$s (%2$s left).';
+$language['ban_page_expired_on'] = 'Expired on %1$s.';
+$language['ban_page_permanent'] = 'This ban does not expire.';
+$language['ban_no_reason'] = 'No reason given.';
+$language['ban_page_post_heading'] = 'The post you were banned for:';
+
+// Appeals, reader side.
+$language['ban_appeal_heading'] = 'Appeal this ban';
+$language['ban_appeal_hint'] = 'Explain why this ban should be lifted. Staff will read it.';
+$language['ban_appeal_submit'] = 'Send appeal';
+$language['ban_appeal_placeholder_reason'] = 'Why the ban should be lifted.';
+$language['ban_appeal_your_reason'] = 'Your appeal:';
+$language['ban_appeal_filed_label'] = 'Filed';
+$language['ban_appeal_staff_note'] = 'Staff:';
+$language['ban_appeal_status_pending'] = 'Your appeal is being reviewed.';
+$language['ban_appeal_status_approved'] = 'Your appeal was accepted.';
+$language['ban_appeal_status_denied'] = 'Your appeal was denied.';
+$language['ban_appeal_error_disabled'] = 'Ban appeals are not accepted here.';
+$language['ban_appeal_error_not_found'] = 'That ban could not be found.';
+$language['ban_appeal_error_not_appealable'] = 'There is nothing left to appeal.';
+$language['ban_appeal_error_pending'] = 'You already have an appeal waiting to be reviewed.';
+$language['ban_appeal_error_cooldown'] = 'You can appeal again in %1$s.';
+$language['ban_appeal_error_empty'] = 'Write something in your appeal.';
+$language['ban_appeal_error_too_long'] = 'Your appeal is too long. The limit is %1$s characters.';
+
+// Ban form.
+$language['ban_form_heading'] = 'Add a ban';
+$language['ban_form_label_ip'] = 'IP address';
+$language['ban_form_desc_ip'] = "The IP to be banned. You can use '*' for range bans - '127.0.*' bans any IP starting with '127.0.'";
+$language['ban_form_label_duration'] = 'Ban duration';
+$language['ban_form_desc_duration'] = "Legend: '1y' = 1 year, '1m' = 1 month, '1w' = 1 week, '1d' = 1 day, '1h' = 1 hour. Decimals work ('1.5y'), and units combine ('1y2m'). '0' files a warning.";
+$language['ban_form_label_permanent'] = 'Permanent';
+$language['ban_form_desc_permanent'] = 'A permanent ban never expires and can only be lifted by hand.';
+$language['ban_form_label_checkpoints'] = 'This ban stops';
+$language['ban_form_desc_checkpoints'] = 'Tick everything this ban should block.';
+$language['ban_form_select_all'] = 'Select all';
+$language['ban_form_label_reason'] = 'Reason for ban';
+$language['ban_form_label_public_message'] = 'Public ban message';
+$language['ban_form_label_public'] = 'Public ban';
+$language['ban_form_label_global'] = 'Global ban';
+$language['ban_form_desc_global'] = 'Applies on every board rather than just this one.';
+$language['ban_form_label_token'] = 'Also ban this browser';
+$language['ban_form_desc_token'] = 'Ties the ban to the browser that made the post, so it follows them to a new address. Be cautious applying it to long-term range bans.';
+$language['ban_form_desc_token_no_post'] = 'Only available when banning a post: the browser is read off the post itself.';
+$language['ban_form_submit'] = 'BAN!';
+
+// Placeholder text, for the fields whose label alone does not say what belongs in them.
+$language['ban_form_placeholder_ip'] = '127.0.0.1';
+$language['ban_form_placeholder_duration'] = '1d';
+$language['ban_form_placeholder_reason'] = 'What they did. They read this on their ban page.';
+$language['ban_form_placeholder_private_reason'] = 'Anything other staff should know. Never shown to them.';
+$language['ban_form_placeholder_public_message'] = 'Shown under the post they were banned for.';
+
+// Janitor warn form.
+$language['warn_form_heading'] = 'Warn user';
+$language['warn_form_label_post'] = 'Post number';
+$language['warn_form_label_reason'] = 'Reason for warning';
+$language['warn_form_label_public'] = 'Public warning';
+$language['warn_form_desc_public'] = 'Shows the reason under the post, the way a public ban notice does.';
+$language['warn_form_submit'] = 'Warn';
+
+// Ban table.
+$language['ban_admin_title'] = 'Bans';
+$language['ban_admin_heading'] = 'Bans (%1$s)';
+$language['ban_admin_empty'] = 'There are no bans here.';
+$language['ban_widget_label'] = 'Ban';
+$language['ban_control_title'] = 'Ban this user';
+$language['ban_revoke_selected'] = 'Revoke selected';
+$language['ban_revoke_this'] = 'Revoke this ban';
+$language['ban_view_link'] = 'View';
+$language['ban_row_has_appeal'] = 'appealed';
+$language['ban_ip_hidden'] = '(hidden)';
+$language['ban_filed_by_system'] = 'system';
+$language['ban_type_ban'] = 'Ban';
+$language['ban_type_warning'] = 'Warning';
+$language['ban_scope_global'] = 'Global';
+$language['ban_scope_unknown'] = '(unknown board)';
+$language['ban_status_active'] = 'Active';
+$language['ban_status_expired'] = 'Expired';
+$language['ban_status_revoked'] = 'Revoked';
+$language['ban_status_revoked_by'] = 'Revoked by %1$s';
+$language['ban_seen_never'] = 'Not seen';
+$language['ban_seen_at'] = 'Seen %1$s';
+$language['ban_seen_no_cookies'] = 'Seen %1$s (cookies disabled)';
+$language['ban_expires_in'] = '%1$s (%2$s left)';
+$language['ban_expires_never_warning'] = 'Warnings do not expire.';
+$language['ban_token_not_tied'] = 'Not tied to a browser';
+$language['ban_token_tied'] = 'Tied to a browser (%1$s…)';
+
+$language['ban_th_ip'] = 'IP address';
+$language['ban_th_board'] = 'Board';
+$language['ban_th_filed_by'] = 'Banned by';
+$language['ban_th_filed_at'] = 'Banned';
+$language['ban_th_duration'] = 'Duration';
+$language['ban_th_reason'] = 'Reason';
+$language['ban_th_post'] = 'Post';
+$language['ban_th_seen'] = 'Seen';
+$language['ban_th_status'] = 'Status';
+
+// Single ban page.
+$language['ban_view_title'] = 'Ban #%1$s — %2$s';
+$language['ban_view_back'] = 'Back to bans';
+$language['ban_view_heading_details'] = 'The ban';
+$language['ban_view_label_preview'] = 'Post';
+$language['ban_post_unavailable'] = 'The post this ban was filed on is no longer available.';
+$language['ban_view_label_type'] = 'Type';
+$language['ban_view_label_expires'] = 'Expires';
+$language['ban_view_label_token'] = 'Browser';
+$language['ban_view_label_revoked'] = 'Revoked';
+$language['ban_view_heading_appeals'] = 'Appeals';
+$language['ban_view_no_appeals'] = 'This ban has not been appealed.';
+
+// Filters.
+$language['ban_filter_summary'] = 'Filter bans';
+$language['ban_filter_label_board'] = 'Boards';
+$language['ban_filter_label_status'] = 'Status';
+$language['ban_filter_label_kind'] = 'Type';
+$language['ban_filter_label_checkpoints'] = 'Blocks';
+$language['ban_filter_label_general'] = 'General';
+$language['ban_filter_placeholder_general'] = 'Address, reason or staff name';
+$language['ban_filter_label_ip'] = 'IP address';
+$language['ban_filter_placeholder_ip'] = 'Exact address or pattern';
+$language['ban_filter_label_token'] = 'Browser';
+$language['ban_filter_placeholder_token'] = 'Token hash';
+$language['ban_filter_label_reason'] = 'Reason';
+$language['ban_filter_label_staff'] = 'Filed by';
+$language['ban_filter_label_ban_id'] = 'Ban ID';
+$language['ban_filter_label_post'] = 'Post No.';
+$language['ban_filter_label_date_after'] = 'Filed from';
+$language['ban_filter_label_date_before'] = 'Filed to';
+$language['ban_filter_submit'] = 'Filter';
+$language['ban_filter_reset'] = 'Reset';
+$language['ban_filter_kind_all'] = 'Any';
+$language['ban_filter_kind_ban'] = 'Bans';
+$language['ban_filter_kind_warning'] = 'Warnings';
+$language['ban_filter_kind_mute'] = 'Mutes';
+$language['ban_filter_status_all'] = 'All';
+$language['ban_filter_status_active'] = 'Active';
+$language['ban_filter_status_expired'] = 'Expired';
+$language['ban_filter_status_revoked'] = 'Revoked';
+$language['ban_filter_status_appealed'] = 'Awaiting appeal';
+
+// Appeal queue.
+$language['ban_appeal_nav'] = 'Ban appeals';
+$language['ban_appeal_nav_title'] = 'Review ban appeals';
+$language['ban_appeal_queue_title'] = 'Ban appeals';
+$language['ban_appeal_queue_empty'] = 'There are no appeals here.';
+$language['ban_appeal_heading_queue'] = 'Appeals (%1$s)';
+$language['ban_appeal_back_to_bans'] = 'Back to bans';
+$language['ban_appeal_th_ban'] = 'Ban';
+$language['ban_appeal_th_appellant'] = 'Appealed from';
+$language['ban_appeal_th_filed'] = 'Filed';
+$language['ban_appeal_th_actions'] = '';
+$language['ban_appeal_ban_reason_tag'] = 'Banned for:';
+$language['ban_appeal_filter_pending'] = 'Awaiting review';
+$language['ban_appeal_filter_actioned'] = 'Decided';
+$language['ban_appeal_filter_all'] = 'All';
+$language['ban_appeal_label_note'] = 'Note to the user';
+$language['ban_appeal_desc_note'] = 'Shown to them on their ban page. Optional.';
+$language['ban_appeal_label_reduce'] = 'Reduce to';
+$language['ban_appeal_desc_reduce'] = 'Approving with a duration here shortens the ban to it instead of lifting it. Leave blank to lift.';
+$language['ban_appeal_placeholder_note'] = 'Why the appeal was approved or denied.';
+$language['ban_appeal_placeholder_reduce'] = '1d';
+$language['ban_appeal_approve'] = 'Approve selected';
+$language['ban_appeal_deny'] = 'Deny selected';
+$language['ban_appeal_approve_one'] = 'Approve this appeal';
+$language['ban_appeal_deny_one'] = 'Deny this appeal';
+$language['ban_appeal_heading_decide'] = 'Decide this appeal';
+$language['ban_appeal_heading_decide_selected'] = 'Decide the ticked appeals';
+$language['ban_appeal_desc_decision'] = 'Approving lifts the ban, or shortens it if a duration is given. Denying leaves it as it is and lets them try again once the cooldown has passed.';
+$language['ban_appeal_view_title'] = 'Appeal #%1$s';
+$language['ban_appeal_back_to_queue'] = 'Back to appeals';
+$language['ban_appeal_heading_appeal'] = 'The appeal';
+$language['ban_appeal_heading_ban'] = 'The ban it argues with';
+$language['ban_appeal_label_status'] = 'Status';
+$language['ban_appeal_label_reason'] = 'Their appeal';
+$language['ban_appeal_label_decided_by'] = 'Decided by';
+$language['ban_appeal_no_reason'] = 'They wrote nothing.';
+$language['ban_appeal_error_appeal_not_found'] = 'That appeal could not be found.';
+
+// Errors.
+$language['ban_error_unknown_action'] = 'Unknown ban action';
+$language['ban_error_not_found'] = 'That ban could not be found.';
+$language['ban_error_no_ip'] = 'Enter an IP address to ban.';
+$language['ban_error_no_duration'] = 'Enter a duration, or tick Permanent.';
+$language['ban_error_zero_on_edit'] = 'A ban that has already been filed cannot be turned into a warning. Revoke it and file a warning instead.';
+$language['ban_error_cannot_ban'] = 'You are not allowed to ban users';
+$language['ban_error_cannot_revoke'] = 'You are not allowed to revoke bans';
+$language['ban_appeal_error_cannot_view'] = 'You are not allowed to see ban appeals';
+$language['ban_appeal_error_cannot_action'] = 'You are not allowed to decide ban appeals';
+
+// Action log.
+$language['ban_log_scope_global'] = 'from all boards';
+$language['ban_log_scope_board'] = 'from this board';
+$language['ban_log_warned'] = 'Warned %1$s';
+$language['ban_log_banned'] = 'Banned %1$s %2$s for %3$s';
+$language['ban_log_banned_permanent'] = 'Permanently banned %1$s %2$s';
+$language['ban_log_for_post'] = 'for post No.%1$s';
+$language['ban_log_revoked'] = 'Revoked the ban on %1$s (#%2$s)';
+$language['ban_log_appeal_approved'] = 'Approved %1$s ban appeal(s), lifting the bans';
+$language['ban_log_appeal_reduced'] = 'Approved %1$s ban appeal(s), reducing the bans to %2$s';
+$language['ban_log_appeal_denied'] = 'Denied %1$s ban appeal(s)';
+
+// module/adminBan/config.php
+$language['config_label_modules.adminBan.DEFAULT_BAN_MESSAGE'] = 'Default public ban message';
+$language['config_desc_modules.adminBan.DEFAULT_BAN_MESSAGE'] = 'HTML appended to a post when a ban is filed as public. Leave blank for the built-in banhammer notice. Images dropped into static/image/ban/ are used at random; write {$BAN_IMAGE} where the chosen one should go.';
+$language['config_label_modules.adminBan.SHOW_BANNED_POST'] = 'Show the post on the ban page';
+$language['config_desc_modules.adminBan.SHOW_BANNED_POST'] = 'Show a banned user the post their ban was filed on, files and all, even once it has been deleted.';
+$language['config_label_modules.adminBan.ENABLE_APPEALS'] = 'Accept ban appeals';
+$language['config_desc_modules.adminBan.ENABLE_APPEALS'] = 'Let banned users argue their case from the ban page, into a queue staff work through.';
+$language['config_label_modules.adminBan.APPEAL_MAX_LENGTH'] = 'Ban appeal length limit';
+$language['config_desc_modules.adminBan.APPEAL_MAX_LENGTH'] = 'Maximum number of characters an appeal may run to.';
+$language['config_label_modules.adminBan.APPEAL_COOLDOWN_HOURS'] = 'Ban appeal cooldown';
+$language['config_desc_modules.adminBan.APPEAL_COOLDOWN_HOURS'] = 'How many hours after a denied appeal before the same ban may be appealed again. 0 allows an immediate retry.';
+$language['config_label_modules.adminBan.ENABLE_JS_BAN_CHECK'] = 'Tell banned users on the page';
+$language['config_desc_modules.adminBan.ENABLE_JS_BAN_CHECK'] = 'Have the page ask whether the visitor is banned and say so above the post form, instead of waiting for them to write a post. Also what plants the marker cookie.';
+$language['config_label_modules.adminBan.BAN_MARKER_COOKIE'] = 'Ban marker cookie';
+$language['config_desc_modules.adminBan.BAN_MARKER_COOKIE'] = 'Name of the cookie a banned browser is marked with, set for the whole domain so every board sees it. Blank turns the marker off.';
+$language['config_label_modules.adminBan.BAN_MARKER_URL'] = 'Ban marker page';
+$language['config_desc_modules.adminBan.BAN_MARKER_URL'] = 'The page loaded in a hidden frame to plant that cookie. Blank uses static/html/yay.html. It must be served from your own domain, so set this by hand if static files come from somewhere else.';
+
+// Mutes: the short automatic bans the janitor tools and spam filter file in bulk.
+$language['ban_type_mute'] = 'Mute';
+$language['ban_status_muted'] = 'Muted';
+$language['ban_duration_mute'] = 'Mute (%1$s)';
+
+// Filtering the table down to one address.
+$language['ban_ip_filter_title'] = 'Show every ban on this address';
+$language['ban_filter_showing_ip'] = 'Showing bans on %1$s.';
+$language['ban_filter_clear_ip'] = 'show all';
+
+// Editing a ban, and the three reasons a ban carries.
+$language['ban_form_submit_edit'] = 'Save changes';
+$language['ban_log_edited'] = 'Edited the ban on %1$s (#%2$s)';
+
+$language['ban_form_label_private_reason'] = 'Staff note';
+$language['ban_form_desc_private_reason'] = 'Only ever shown on these pages. The banned user never sees it.';
+$language['ban_view_label_public_reason'] = 'Public notice';
+$language['ban_view_label_private_reason'] = 'Staff note';
+$language['ban_private_reason_tag'] = 'Staff:';
+$language['ban_public_reason_none'] = 'Nothing shown on the post.';
+$language['ban_private_reason_none'] = 'No staff note.';
+
+// Refusing appeals, per ban.
+$language['ban_form_label_reject_appeals'] = 'Reject appeals';
+$language['ban_form_desc_reject_appeals'] = 'This ban cannot be appealed. Leave unticked to let them appeal it.';
+$language['ban_view_label_appeals'] = 'Appeals';
+$language['ban_appeals_accepted'] = 'Can be appealed';
+$language['ban_appeals_refused'] = 'Appeals refused';
+$language['ban_appeal_error_refused'] = 'This ban cannot be appealed.';
+
+// cssHax module
+$language['theme_exists'] = 'This thread already has a theme.';
+$language['theme_not_found'] = 'Theme not found.';

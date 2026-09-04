@@ -421,9 +421,9 @@ class postRepository extends baseRepository {
 	public function insertPost(array $params): void {
 		$query = "INSERT INTO {$this->table} 
 			(no, poster_hash, boardUID, thread_uid, post_position, is_op, root, category, tag, pwd, now, 
-			name, tripcode, secure_tripcode, capcode, email, sub, com, host, status) 
+			name, tripcode, secure_tripcode, capcode, email, sub, com, host, visitor_token_hash, status, text_format) 
 			VALUES (:no, :poster_hash, :boardUID, :thread_uid, :post_position, :is_op, :root,
-			:category, :tag, :pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :status)";
+			:category, :tag, :pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :visitor_token_hash, :status, :text_format)";
 		
 		$this->query($query, $params);
 	}
@@ -664,7 +664,7 @@ class postRepository extends baseRepository {
 		$columns = [
 			'no', 'poster_hash', 'boardUID', 'thread_uid', 'post_position', 'is_op',
 			'root', 'category', 'tag', 'pwd', 'now', 'name', 'tripcode', 'secure_tripcode',
-			'capcode', 'email', 'sub', 'com', 'host', 'status'
+			'capcode', 'email', 'sub', 'com', 'host', 'visitor_token_hash', 'status', 'text_format'
 		];
 
 		// Reindex the array
@@ -673,23 +673,23 @@ class postRepository extends baseRepository {
 		// Create the column list for the query
 		$fieldList = implode(', ', $columns);
 
-		$rows = [];
-		
-		foreach ($posts as $post) {
-			// get param array keys
-			$params = array_keys($post);
+		// Positional placeholders, not the ':name' keys the param arrays carry: every row
+		// carries the same key set, so reusing them gave each row the same named placeholders
+		// and flattening collapsed all but the last row's values into one.
+		$rowPlaceholders = '(' . implode(', ', array_fill(0, count($columns), '?')) . ')';
 
-			// Add the placeholders for this row
-			$rows[] = '(' . implode(', ', $params) . ')';
+		$paramsForQuery = [];
+
+		foreach ($posts as $post) {
+			// toParams() emits the columns in the order listed above, so positional order holds
+			foreach (array_values($post) as $value) {
+				$paramsForQuery[] = $value;
+			}
 		}
 
 		// Construct the full SQL query
-		$query = "INSERT INTO {$this->table} ($fieldList) VALUES " . implode(',', $rows);
-
-		// flatten into 1d array so we can pass it as regular query params
-		$paramsForQuery = array_merge(...$posts);
-
-		//echo '<br><br><br>'; echo '<pre>'; echo $query . '<br>'; print_r($paramsForQuery); echo '</pre>';
+		$query = "INSERT INTO {$this->table} ($fieldList) VALUES "
+			. implode(', ', array_fill(0, count($posts), $rowPlaceholders));
 
 		// Execute the query with the parameters
 		$this->query($query, $paramsForQuery);
@@ -754,11 +754,8 @@ class postRepository extends baseRepository {
 			$params[':host'] = $host;
 		}
 
-		// Execute the query and fetch results as a numeric index array
-		$result = $this->queryAllAsIndexArray($query, $params);
-
 		// Normalize empty result sets to null for easier upstream handling
-		return array_merge(...$result) ?: null;
+		return $this->queryFlatColumn($query, $params) ?: null;
 	}
 
 	/**
@@ -794,9 +791,7 @@ class postRepository extends baseRepository {
 			$params[':host'] = $host;
 		}
 
-		$result = $this->queryAllAsIndexArray($query, $params);
-
-		return array_merge(...$result) ?: null;
+		return $this->queryFlatColumn($query, $params) ?: null;
 	}
 
 	/**
@@ -817,5 +812,52 @@ class postRepository extends baseRepository {
 	 */
 	public function resolveHostFromPostUid(int $postUid): ?string {
 		return $this->pluck('host', 'post_uid', $postUid);
+	}
+
+	/**
+	 * The thread each of these post numbers sits in, which is what a link to one needs.
+	 *
+	 * Deleted posts are included: a log line about a post that has since gone still points at
+	 * the thread it was in, which is where a moderator is looking for it.
+	 *
+	 * @param array<int, list<int>> $numbersByBoard Board UID => post numbers on that board.
+	 * @return array<int, array<int, int>> Board UID => post number => its thread's OP number.
+	 */
+	public function findThreadNumbersForPostNumbers(array $numbersByBoard): array {
+		$conditions = [];
+		$params = [];
+
+		foreach ($numbersByBoard as $boardUid => $postNumbers) {
+			$postNumbers = array_values(array_unique(array_map('intval', $postNumbers)));
+
+			if ($postNumbers === []) {
+				continue;
+			}
+
+			$conditions[] = "(p.boardUID = ? AND p.no IN " . pdoPlaceholdersForIn($postNumbers) . ")";
+			$params[] = (int)$boardUid;
+
+			foreach ($postNumbers as $postNumber) {
+				$params[] = $postNumber;
+			}
+		}
+
+		if ($conditions === []) {
+			return [];
+		}
+
+		$query = "
+			SELECT p.boardUID, p.no, t.post_op_number
+				FROM {$this->table} p
+			INNER JOIN {$this->threadTable} t ON p.thread_uid = t.thread_uid
+			WHERE " . implode(' OR ', $conditions);
+
+		$threadNumbers = [];
+
+		foreach ($this->queryAll($query, $params) as $row) {
+			$threadNumbers[(int)$row['boardUID']][(int)$row['no']] = (int)$row['post_op_number'];
+		}
+
+		return $threadNumbers;
 	}
 }

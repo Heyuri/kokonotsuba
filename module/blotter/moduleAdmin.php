@@ -6,6 +6,7 @@ require_once __DIR__ . '/blotterEntry.php';
 require_once __DIR__ . '/blotterRepository.php';
 require_once __DIR__ . '/blotterService.php';
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
@@ -60,7 +61,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		if (!empty($this->moduleContext->request->getParameter('new_blot_txt', 'POST'))) {
 			$this->handleBlotterAddition();
 
-			$this->logAction("Added new blotter entry", GLOBAL_BOARD_UID);
+			$this->logAction("Added new blotter entry", GLOBAL_BOARD_UID, actionType::CONTENT_BLOTTER);
 
 			rebuildAllBoards(); //rebuild all pages so it takes effect immedietly
 
@@ -72,7 +73,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$editedIds = $this->editBlotterEntries($this->moduleContext->request->getParameter('entryedit', 'POST'));
 
 			if (!empty($editedIds)) {
-				$this->logAction("Edited blotter entries with IDs: " . implode(", ", $editedIds), GLOBAL_BOARD_UID);
+				$this->logAction("Edited blotter entries with IDs: " . implode(", ", $editedIds), GLOBAL_BOARD_UID, actionType::CONTENT_BLOTTER);
 				rebuildAllBoards(); //rebuild all pages so it takes effect immedietly
 			}
 
@@ -84,7 +85,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->deleteBlotterEntries($this->moduleContext->request->getParameter('entrydelete', 'POST'));
 
 			// log deletion
-			$this->logAction("Deleted blotter entries with IDs: " . implode(", ", $this->moduleContext->request->getParameter('entrydelete', 'POST')), GLOBAL_BOARD_UID);
+			$this->logAction("Deleted blotter entries with IDs: " . implode(", ", $this->moduleContext->request->getParameter('entrydelete', 'POST')), GLOBAL_BOARD_UID, actionType::CONTENT_BLOTTER);
 
 			rebuildAllBoards(); //rebuild all pages so it takes effect immedietly
 

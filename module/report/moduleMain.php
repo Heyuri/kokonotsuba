@@ -6,7 +6,8 @@ use Kokonotsuba\board\board;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\traits\BanFileOperationsTrait;
+use Kokonotsuba\ban\banCheckpoint;
+use Kokonotsuba\module_classes\traits\BanCheckpointTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\PostWidgetListenerTrait;
@@ -38,7 +39,7 @@ require_once __DIR__ . '/reportPostPreview.php';
  * filed and what staff did about it.
  */
 class moduleMain extends abstractModuleMain {
-	use BanFileOperationsTrait;
+	use BanCheckpointTrait;
 	use ModuleHeaderListenerTrait;
 	use PostListenerTrait;
 	use PostWidgetListenerTrait;
@@ -219,10 +220,7 @@ class moduleMain extends abstractModuleMain {
 
 		$reporterIp = (string) $request->userIp();
 
-		if ($this->isIpBanned($reporterIp)) {
-			$this->fail(_T('report_error_banned'), 403);
-			return;
-		}
+		$this->assertNotBanned(banCheckpoint::REPORT);
 
 		$postUid = (int) $request->getParameter('postUid', 'POST', 0);
 		$post = $postUid > 0 ? $this->moduleContext->postRepository->getPostByUid($postUid) : false;
@@ -295,9 +293,7 @@ class moduleMain extends abstractModuleMain {
 			throw new BoardException(_T('report_error_post_not_found'));
 		}
 
-		if ($this->isIpBanned((string) $this->moduleContext->request->userIp())) {
-			throw new BoardException(_T('report_error_banned'));
-		}
+		$this->assertNotBanned(banCheckpoint::REPORT);
 
 		$postBoard = searchBoardArrayForBoard($post->getBoardUID()) ?? $this->moduleContext->board;
 

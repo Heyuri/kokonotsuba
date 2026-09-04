@@ -9,6 +9,7 @@ class loggedActionEntry {
 	public readonly string $name;
 	public readonly string $role;
 	public readonly string $log_action;
+	public readonly string $action_type;
 	public readonly int $id;
 	public readonly string $ip_address;
 	public readonly int $board_uid;
@@ -19,6 +20,7 @@ class loggedActionEntry {
 	public function getName(): string { return $this->name; }
 	public function getRole(): string { return $this->role; }
 	public function getLogAction(): string { return $this->log_action; }
+	public function getActionType(): string { return $this->action_type; }
 	public function getId(): int { return $this->id; }
 	public function getIpAddress(): string { return $this->ip_address; }
 	public function getBoardUID(): int { return $this->board_uid; }

@@ -8,7 +8,7 @@ use Kokonotsuba\database\databaseConnection;
 /** Repository for capcode (trip-based role badge) records. */
 class capcodeRepository extends baseRepository {
 	// Whitelisted columns
-	private array $allowedColumns = ['tripcode', 'is_secure', 'date_added', 'added_by', 'color_hex', 'cap_text']; 
+	private array $allowedColumns = ['tripcode', 'is_secure', 'date_added', 'added_by', 'color_hex', 'cap_text', 'is_enabled']; 
 
 	public function __construct(
         databaseConnection $databaseConnection,
@@ -44,6 +44,16 @@ class capcodeRepository extends baseRepository {
 	 */
 	public function getAll(): array {
 		$query = $this->getBaseSelectQuery() . " ORDER BY cap.id ASC";
+		return $this->queryAll($query);
+	}
+
+	/**
+	 * Fetch every enabled capcode record ordered by ID ascending, including the adder's username.
+	 *
+	 * @return array Array of associative rows.
+	 */
+	public function getAllEnabled(): array {
+		$query = $this->getBaseSelectQuery() . " WHERE cap.is_enabled = 1 ORDER BY cap.id ASC";
 		return $this->queryAll($query);
 	}
 

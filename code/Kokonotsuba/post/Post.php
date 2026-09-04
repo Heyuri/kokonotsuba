@@ -56,8 +56,14 @@ class Post implements JsonSerializable {
 	public function getSubject(): string { return (string)($this->data['sub'] ?? ''); }
 	public function getComment(): string { return (string)($this->data['com'] ?? ''); }
 	public function getCategory(): string { return (string)($this->data['category'] ?? ''); }
+	/** How this post's text columns are stored; drives escaping at render time. */
+	public function getTextFormat(): textFormat { return textFormat::fromStored($this->data['text_format'] ?? 0); }
 	public function getTag(): string { return (string)($this->data['tag'] ?? ''); }
 	public function getIp(): string { return (string)($this->data['host'] ?? ''); }
+	/** Short label for the browser that made this post, empty when it kept no token. */
+	public function getVisitorTokenHash(): string { return (string)($this->data['visitor_token_hash'] ?? ''); }
+	/** Whether the browser was on record at all; false for posts predating the column. */
+	public function hasVisitorTokenHash(): bool { return ($this->data['visitor_token_hash'] ?? null) !== null; }
 	public function getTimestamp(): string { return (string)($this->data['now'] ?? ''); }
 	public function getRoot(): string { return (string)($this->data['root'] ?? ''); }
 	public function getPassword(): string { return (string)($this->data['pwd'] ?? ''); }

@@ -9,6 +9,7 @@
  * @var \Kokonotsuba\containers\appContainer     $container
  */
 
+use Kokonotsuba\board\board;
 use Kokonotsuba\board\boardPostNumbers;
 use Kokonotsuba\board\boardRepository;
 use Kokonotsuba\board\boardService;
@@ -43,11 +44,11 @@ $boardService = new boardService($boardRepository, $container, $boardPathService
 $container->set('boardService', $boardService);
 
 $boardList = $boardService->getAllRegularBoards();
-$visibleBoards = $boardService->getAllListedBoards();
+$visibleBoards = array_values(array_filter($boardList, static fn (board $board): bool => (bool)$board->getBoardListed()));
 
 // Globally accessible board array, it exists to avoid managing complicated dependencies and circular dependencies
 // Defines and globals are to be avoided, but this is an exception
-define('GLOBAL_BOARD_ARRAY', $boardService->getAllRegularBoards());
+define('GLOBAL_BOARD_ARRAY', $boardList);
 
 $container->set('boardList', $boardList);
 $container->set('visibleBoards', $visibleBoards);

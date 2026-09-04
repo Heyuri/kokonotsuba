@@ -74,6 +74,13 @@ class SystemRequirementsTest extends TestCase {
 		$this->assertStringContains('apt install php-mysql', (string)$result->fix);
 	}
 
+	public function testTheRestartCommandNamesTheRunningPhpsFpmService(): void {
+		$result = $this->check('8.1.27', array_diff(self::ALL_EXTENSIONS, ['gd']))['Extension gd'];
+
+		$this->assertStringContains('systemctl restart php8.1-fpm', (string)$result->fix);
+		$this->assertSame('php8.3-fpm', systemRequirements::fpmServiceName('8.3.12'));
+	}
+
 	public function testAMissingOptionalExtensionOnlyWarns(): void {
 		$result = $this->check('8.3.0', array_diff(self::ALL_EXTENSIONS, ['curl']))['Extension curl'];
 

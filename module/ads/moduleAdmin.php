@@ -5,6 +5,7 @@ namespace Kokonotsuba\Modules\ads;
 require_once __DIR__ . '/adEntry.php';
 require_once __DIR__ . '/adRepository.php';
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
@@ -121,7 +122,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$html  !== '' ? $html  : null,
 		);
 
-		$this->logAction("Added ad for slot '{$slot}' (type: {$type})", GLOBAL_BOARD_UID);
+		$this->logAction("Added ad for slot '{$slot}' (type: {$type})", GLOBAL_BOARD_UID, actionType::CONTENT_AD);
 	}
 
 	private function handleBulkDelete(): void {
@@ -136,7 +137,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		if (!empty($ids)) {
-			$this->logAction("Deleted ad(s): " . implode(', ', $ids), GLOBAL_BOARD_UID);
+			$this->logAction("Deleted ad(s): " . implode(', ', $ids), GLOBAL_BOARD_UID, actionType::CONTENT_AD);
 		}
 	}
 
@@ -180,7 +181,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		}
 
 		if (!empty($updated)) {
-			$this->logAction('Saved ad(s): ' . implode(', ', $updated), GLOBAL_BOARD_UID);
+			$this->logAction('Saved ad(s): ' . implode(', ', $updated), GLOBAL_BOARD_UID, actionType::CONTENT_AD);
 		}
 	}
 

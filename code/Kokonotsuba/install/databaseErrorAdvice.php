@@ -64,7 +64,7 @@ final class databaseErrorAdvice {
 		if (str_contains($error, 'could not find driver')) {
 			return new self(
 				'PHP has no MariaDB/MySQL driver loaded.',
-				'sudo apt install php-mysql && sudo systemctl restart php8.3-fpm'
+				'sudo apt install php-mysql && sudo systemctl restart '.systemRequirements::fpmServiceName()
 			);
 		}
 

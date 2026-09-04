@@ -26,13 +26,13 @@ use const Kokonotsuba\GLOBAL_BOARD_UID;
  * @return string The complete <form> HTML.
  */
 function drawBoardConfigForm(templateEngine $tpl, configService $configService, int $boardUid, string $liveIndexFile, string $csrfInput, string $notice = ''): string {
-	$groupsHtml = renderConfigGroups(
+	$sections = renderConfigSections(
 		$tpl,
 		$configService->getEffectiveValues($boardUid),
 		$configService->getInheritedValues($boardUid)
 	);
 
-	if ($groupsHtml === '') {
+	if ($sections['groups'] === '') {
 		return '<p>No configurable settings are defined.</p>';
 	}
 
@@ -41,7 +41,8 @@ function drawBoardConfigForm(templateEngine $tpl, configService $configService, 
 		'{$BOARD_UID}'       => $boardUid,
 		'{$CSRF_INPUT}'      => $csrfInput,
 		'{$CONFIG_NOTICE}'   => renderConfigNotice($tpl, $notice),
-		'{$CONFIG_GROUPS}'   => $groupsHtml,
+		'{$CONFIG_NAV}'      => $sections['nav'],
+		'{$CONFIG_GROUPS}'   => $sections['groups'],
 	]);
 }
 
@@ -99,13 +100,13 @@ function renderConfigNotice(templateEngine $tpl, string $notice): string {
  * @return string The complete <form> HTML.
  */
 function drawGlobalConfigForm(templateEngine $tpl, configService $configService, string $liveIndexFile, string $csrfInput, string $notice = ''): string {
-	$groupsHtml = renderConfigGroups(
+	$sections = renderConfigSections(
 		$tpl,
 		$configService->getEffectiveValues(GLOBAL_BOARD_UID),
 		$configService->getInheritedValues(GLOBAL_BOARD_UID)
 	);
 
-	if ($groupsHtml === '') {
+	if ($sections['groups'] === '') {
 		return '<p>No configurable settings are defined.</p>';
 	}
 
@@ -113,42 +114,61 @@ function drawGlobalConfigForm(templateEngine $tpl, configService $configService,
 		'{$LIVE_INDEX_FILE}' => sanitizeStr($liveIndexFile),
 		'{$CSRF_INPUT}'      => $csrfInput,
 		'{$CONFIG_NOTICE}'   => renderConfigNotice($tpl, $notice),
-		'{$CONFIG_GROUPS}'   => $groupsHtml,
+		'{$CONFIG_NAV}'      => $sections['nav'],
+		'{$CONFIG_GROUPS}'   => $sections['groups'],
 	]);
 }
 
 /**
- * Render every schema group as a fieldset of field rows. Shared by both scopes: the only
- * difference between the board and global editors is which values they pass in.
+ * Render every schema group as a fieldset of field rows, together with the navigator that jumps
+ * between them. Shared by both scopes: the only difference between the board and global editors
+ * is which values they pass in.
  *
- * All markup lives in the templates/admin/config/ blocks; this only supplies their values.
+ * The navigator is built from the same walk that builds the fieldsets, so it can never list a
+ * section the form does not actually render. All markup lives in the templates/admin/config/
+ * blocks; this only supplies their values.
  *
  * @param templateEngine $tpl       Admin template engine.
  * @param array          $values    dot-path => the value to prefill each field with.
  * @param array          $inherited dot-path => the value this scope would show if it overrode
  *                                  nothing; a field differing from it is marked as overridden.
- * @return string The fieldsets' HTML ('' if the schema declares no fields).
+ * @return array{nav: string, groups: string} 'groups' is the fieldsets' HTML ('' if the schema
+ *         declares no fields); 'nav' is the navigator listing them ('' along with it).
  */
-function renderConfigGroups(templateEngine $tpl, array $values, array $inherited): string {
+function renderConfigSections(templateEngine $tpl, array $values, array $inherited): array {
 	$groupLabels = configSchema::getGroupLabels();
 	$groupsHtml = '';
+	$navItemsHtml = '';
 
 	foreach (configSchema::getGroups() as $groupName => $fields) {
 		if (empty($fields)) {
 			continue;
 		}
 
+		$groupName = (string)$groupName;
+		$groupAnchor = configAnchorId('configGroup', $groupName);
+
 		// Emit a sub-header row each time the owning module changes, so module-contributed
 		// settings are visually grouped under their module name within the thematic group.
+		// Each of those sub-headers is also an entry in the group's navigator sub-list.
 		$rowsHtml = '';
+		$navSubItemsHtml = '';
 		$currentModule = '';
 
 		foreach ($fields as $dotpath => $meta) {
 			$moduleLabel = $meta['module'] ?? '';
 			if ($moduleLabel !== '' && $moduleLabel !== $currentModule) {
+				$moduleAnchor = configAnchorId('configModule', $groupName . ' ' . $moduleLabel);
+
 				$rowsHtml .= $tpl->ParseBlock('CONFIG_MODULE_HEADER', [
-					'{$MODULE_LABEL}' => sanitizeStr($moduleLabel),
+					'{$MODULE_ANCHOR}' => sanitizeStr($moduleAnchor),
+					'{$MODULE_LABEL}'  => sanitizeStr($moduleLabel),
 				]);
+				$navSubItemsHtml .= $tpl->ParseBlock('CONFIG_NAV_SUBITEM', [
+					'{$NAV_ANCHOR}' => sanitizeStr($moduleAnchor),
+					'{$NAV_LABEL}'  => sanitizeStr($moduleLabel),
+				]);
+
 				$currentModule = $moduleLabel;
 			}
 
@@ -162,13 +182,58 @@ function renderConfigGroups(templateEngine $tpl, array $values, array $inherited
 			);
 		}
 
+		$groupLabel = (string)($groupLabels[$groupName] ?? $groupName);
+
 		$groupsHtml .= $tpl->ParseBlock('CONFIG_GROUP', [
-			'{$GROUP_LABEL}' => sanitizeStr($groupLabels[$groupName] ?? $groupName),
-			'{$CONFIG_ROWS}' => $rowsHtml,
+			'{$GROUP_ANCHOR}' => sanitizeStr($groupAnchor),
+			'{$GROUP_LABEL}'  => sanitizeStr($groupLabel),
+			'{$CONFIG_ROWS}'  => $rowsHtml,
+		]);
+
+		$navItemsHtml .= $tpl->ParseBlock('CONFIG_NAV_ITEM', [
+			'{$NAV_ANCHOR}'  => sanitizeStr($groupAnchor),
+			'{$NAV_LABEL}'   => sanitizeStr($groupLabel),
+			// A group with no module settings gets neither a sub-list nor the arrow that opens one.
+			'{$NAV_TOGGLE}'  => $navSubItemsHtml === '' ? '' : $tpl->ParseBlock('CONFIG_NAV_TOGGLE', [
+				'{$NAV_TOGGLE_TITLE}' => sanitizeStr(_T('config_nav_toggle')),
+			]),
+			'{$NAV_SUBLIST}' => $navSubItemsHtml === '' ? '' : $tpl->ParseBlock('CONFIG_NAV_SUBLIST', [
+				'{$NAV_SUBITEMS}' => $navSubItemsHtml,
+			]),
 		]);
 	}
 
-	return $groupsHtml;
+	if ($groupsHtml === '') {
+		return ['nav' => '', 'groups' => ''];
+	}
+
+	return [
+		'nav' => $tpl->ParseBlock('CONFIG_NAV', [
+			'{$NAV_HEADING}'     => sanitizeStr(_T('config_nav_heading')),
+			'{$NAV_HIDE_TITLE}'  => sanitizeStr(_T('config_nav_hide')),
+			'{$NAV_FLOAT_TITLE}' => sanitizeStr(_T('config_nav_float')),
+			'{$NAV_ITEMS}'       => $navItemsHtml,
+		]),
+		'groups' => $groupsHtml,
+	];
+}
+
+/**
+ * Build the id a navigator link jumps to, from a group or module label.
+ *
+ * The labels are author-written strings, so a label made entirely of characters an id cannot hold
+ * falls back to a hash of it rather than collapsing to the bare prefix (which every such label
+ * would then share).
+ *
+ * @param string $prefix Kind of section the id belongs to ('configGroup' / 'configModule').
+ * @param string $text   Label to derive the id from.
+ * @return string Anchor id.
+ */
+function configAnchorId(string $prefix, string $text): string {
+	$slug = strtolower((string)preg_replace('/[^a-zA-Z0-9]+/', '-', $text));
+	$slug = trim($slug, '-');
+
+	return $prefix . '-' . ($slug !== '' ? $slug : substr(md5($text), 0, 8));
 }
 
 /**

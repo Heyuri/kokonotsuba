@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\moveThread;
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Exception;
 use Kokonotsuba\post\FlagHelper;
@@ -14,6 +15,7 @@ use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\postRegistData;
+use Kokonotsuba\renderers\commentFormatter;
 use Kokonotsuba\thread\Thread;
 use Kokonotsuba\thread\ThreadData;
 use Kokonotsuba\userRole;
@@ -33,6 +35,8 @@ class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
 	use IncludeScriptTrait;
 
+	private const MERGE_THREAD_LIST_LIMIT = 100;
+
 	private readonly string $modulePageUrl;
 
     public function getRequiredRole(): userRole {
@@ -51,13 +55,94 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->modulePageUrl = $this->getModulePageURL();
 
 		$this->registerThreadControlPair('renderMoveThreadButton');
+		$this->registerThreadControlPair('renderMergeThreadButton');
 		$this->registerThreadWidgetHook('onRenderThreadWidget');
 		$this->registerAdminHeaderHook('onGenerateModuleHeader');
 		$this->registerScript('moveThread.js');
+		$this->registerScript('mergeThread.js');
 	}
 
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		$moduleHeader .= $this->generateMoveThreadJsTemplate();
+		$moduleHeader .= $this->generateMergeThreadJsTemplate();
+	}
+
+	/**
+	 * Build the merge form template the JS window clones. The thread list is rendered for the board
+	 * being viewed, which is the only board a merge can involve.
+	 */
+	private function generateMergeThreadJsTemplate(): string {
+		$templateValues = [
+			'{$FORM_ACTION}' => $this->modulePageUrl,
+			'{$THREAD_UID}' => '',
+			'{$THREAD_NUMBER}' => '',
+			'{$THREAD_SUBJECT}' => '',
+			'{$THREAD_LIST_HTML}' => $this->generateThreadListHTML($this->moduleContext->board),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
+		];
+
+		$formHtml = $this->moduleContext->adminPageRenderer->ParseBlock('THREAD_MERGE_FORM', $templateValues);
+
+		return $this->generateTemplate('mergeThreadFormTemplate', $formHtml);
+	}
+
+	/**
+	 * Render the board's most recently bumped threads as merge-source checkboxes.
+	 */
+	private function generateThreadListHTML(IBoard $board, string $excludeThreadUid = ''): string {
+		$threads = $this->moduleContext->threadRepository->getThreadsFromBoard(
+			$board->getBoardUID(),
+			self::MERGE_THREAD_LIST_LIMIT
+		) ?? [];
+
+		if (!$threads) {
+			return '';
+		}
+
+		$openingPosts = $this->moduleContext->threadRepository->getFirstPostsFromThreads(
+			array_map(fn(Thread $thread) => $thread->getUid(), $threads)
+		);
+
+		$html = '';
+		foreach ($threads as $thread) {
+			if ($thread->getUid() === $excludeThreadUid) {
+				continue;
+			}
+
+			$openingPost = $openingPosts[$thread->getUid()] ?? null;
+
+			// escaped here, because a subject is stored as the poster typed it
+			$subject = $openingPost
+				? trim(commentFormatter::fieldToHtml($openingPost->getSubject(), $openingPost->getTextFormat()))
+				: '';
+			$replyCount = max(0, $thread->getPostCount() - 1);
+
+			$html .= $this->moduleContext->adminPageRenderer->ParseBlock('MERGE_THREAD_ITEM', [
+				'{$THREAD_UID}' => sanitizeStr($thread->getUid()),
+				'{$THREAD_NUMBER}' => $thread->getOpNumber(),
+				'{$THREAD_SUBJECT}' => $subject !== '' ? $subject : '(no subject)',
+				'{$REPLY_COUNT}' => $replyCount === 1 ? '1 reply' : $replyCount . ' replies',
+				'{$PREVIEW_ATTRIBUTES}' => $this->buildThreadPreviewAttributes($board, $thread, $openingPost),
+			]);
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Attributes letting mergeThread.js preview a list entry's opening post on hover.
+	 *
+	 * The target id is the post element the board already renders, so a thread visible on the page
+	 * previews without a request; the script falls back to fetching the post uid through the post
+	 * API when it isn't there, which is the case on a thread page.
+	 */
+	private function buildThreadPreviewAttributes(IBoard $board, Thread $thread, ?Post $openingPost): string {
+		if (!$openingPost) {
+			return '';
+		}
+
+		return ' data-op-post-uid="' . sanitizeStr($openingPost->getUid()) . '"'
+			. ' data-op-target-id="p' . sanitizeStr($board->getBoardUID()) . '_' . sanitizeStr($thread->getOpNumber()) . '"';
 	}
 
 	private function generateMoveThreadJsTemplate(): string {
@@ -103,6 +188,16 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
+	public function renderMergeThreadButton(string &$modfunc, Post $post, bool $noScript): void {
+		$modfunc .= generateModerateButton(
+			$this->generateMergeThreadUrl($post->getThreadUid()),
+			'MG',
+			'Merge threads',
+			'adminMergeThreadFunction',
+			$noScript
+		);
+	}
+
 	private function onRenderThreadWidget(array &$widgetArray, Post &$post): void {
 		// generate move thread url
 		$moveThreadUrl = $this->generateMoveThreadUrl($post->getThreadUid());
@@ -121,6 +216,35 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// add the widget to the array
 		$widgetArray[] = $moveThreadWidget;
+
+		// the merge window lists the board being viewed, so it only makes sense on the thread's own
+		// board - elsewhere (the overboard) the plain page form handles it
+		if ($post->getBoardUID() !== $this->moduleContext->board->getBoardUID()) {
+			return;
+		}
+
+		$widgetArray[] = $this->buildWidgetEntry(
+			$this->generateMergeThreadUrl($post->getThreadUid()),
+			'mergeThread',
+			'Merge threads',
+			'',
+			[
+				'thread_uid'     => $post->getThreadUid(),
+				'thread_number'  => $post->getNumber(),
+				'thread_subject' => commentFormatter::fieldToPlainText($post->getSubject(), $post->getTextFormat()),
+			]
+		);
+	}
+
+	private function generateMergeThreadUrl(string $thread_uid): string {
+		return $this->getModulePageURL(
+			[
+				'pageName' => 'merge',
+				'thread_uid' => $thread_uid,
+			],
+			false,
+			true
+		);
 	}
 
 	private function generateMoveThreadUrl(string $thread_uid): string {
@@ -137,52 +261,47 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function leavePostInShadowThread(Thread $originalThread, IBoard $originalBoard, Thread $newThread, IBoard $destinationBoard) {
-		$originalBoardConfig = $originalBoard->loadBoardConfig();
-
-		$postDateFormatter = new postDateFormatter($originalBoardConfig['TIME_ZONE']);
-		
-		$time = $this->moduleContext->request->getRequestTime();
-		$now = $postDateFormatter->formatFromTimestamp($time);
-
-		// Generate new post number
-		$no = $originalBoard->incrementBoardPostNumber();
-
-		// Determine name and capcode
-		$capcode = "";
-		$name = $originalBoardConfig['SYSTEMCHAN_NAME'];
-
 		// Generate cross-board quote link to the new thread
 		$boardIdentifier = sanitizeStr($destinationBoard->getBoardIdentifier());
-		$opNumber = $newThread->getOpNumber();
-		$moveComment = 'Thread moved to &gt;&gt;&gt;/' . $boardIdentifier . '/' . $opNumber;
+		$moveComment = 'Thread moved to &gt;&gt;&gt;/' . $boardIdentifier . '/' . $newThread->getOpNumber();
 
-		// Prepare post metadata
-		$ip = new IPAddress('127.0.0.1');
+		$this->postSystemNotice($originalThread, $originalBoard, $moveComment, $newThread->getOpPostUid());
+	}
 
-		// set the capcode to System-chan's capcode label
-		$capcode = 'System';
+	/**
+	 * Post a System-chan notice into a thread, quote-linked to the post it points at.
+	 *
+	 * @param Thread $thread        Thread the notice is left in.
+	 * @param IBoard $board         Board that thread belongs to.
+	 * @param string $comment       Notice body, already escaped.
+	 * @param int    $targetPostUid Post UID the notice's quote link resolves to.
+	 */
+	private function postSystemNotice(Thread $thread, IBoard $board, string $comment, int $targetPostUid): void {
+		$boardConfig = $board->loadBoardConfig();
 
-		// Get original thread UID
-		$originalThreadUid = $originalThread->getUid();
+		$postDateFormatter = new postDateFormatter($boardConfig['TIME_ZONE']);
+		$now = $postDateFormatter->formatFromTimestamp($this->moduleContext->request->getRequestTime());
 
+		// Generate new post number
+		$no = $board->incrementBoardPostNumber();
 
 		$postRegistData = new postRegistData(
 				$no,
 				'SYSTEM',
-				$originalThreadUid,
+				$thread->getUid(),
 				false,
 				'',
 				'',
 				'',
 				$now,
-				$name,
+				$boardConfig['SYSTEMCHAN_NAME'],
 				'',
 				'',
-				$capcode,
+				'System',
 				'',
 				'',
-				$moveComment,
-				$ip,
+				$comment,
+				new IPAddress('127.0.0.1'),
 				false,
 				'',
 
@@ -191,15 +310,14 @@ class moduleAdmin extends abstractModuleAdmin {
 		// get next post uid
 		$postUid = $this->moduleContext->postRepository->getNextPostUid();
 
-		// Add shadow post
-		$this->moduleContext->postService->addPostToThread(
-			$originalBoard, $postRegistData, $postUid);
+		// Add the notice post
+		$this->moduleContext->postService->addPostToThread($board, $postRegistData, $postUid);
 
-		// Register quote link so the cross-board reference resolves in the renderer
+		// Register quote link so the reference resolves in the renderer
 		$this->moduleContext->quoteLinkService->createQuoteLinksFromArray(
-			$originalBoard->getBoardUID(),
+			$board->getBoardUID(),
 			$postUid,
-			[$newThread->getOpPostUid()]
+			[$targetPostUid]
 		);
 	}
 
@@ -415,18 +533,34 @@ class moduleAdmin extends abstractModuleAdmin {
 
 
 	public function ModulePage() {
-		// Show move form
-		$templateData = $this->prepareMoveFormTemplateValues();
-		$threadMoveFormHtml = $this->moduleContext->adminPageRenderer->ParseBlock('THREAD_MOVE_FORM', $templateData);
-	
+		$pageName = $this->moduleContext->request->getParameter('pageName', 'GET', '');
+
+		// Show the merge or the move form
+		if ($pageName === 'merge') {
+			$formHtml = $this->moduleContext->adminPageRenderer->ParseBlock(
+				'THREAD_MERGE_FORM',
+				$this->prepareMergeFormTemplateValues()
+			);
+		} else {
+			$formHtml = $this->moduleContext->adminPageRenderer->ParseBlock(
+				'THREAD_MOVE_FORM',
+				$this->prepareMoveFormTemplateValues()
+			);
+		}
+
 		echo $this->moduleContext->adminPageRenderer->ParsePage(
 			'GLOBAL_ADMIN_PAGE_CONTENT',
-			['{$PAGE_CONTENT}' => $threadMoveFormHtml],
+			['{$PAGE_CONTENT}' => $formHtml],
 			true
 		);
 	}
 
 	protected function handleModuleRequest(): void {
+		if ($this->moduleContext->request->getParameter('merge-thread-action', 'POST')) {
+			$this->handleMergeRequest();
+			return;
+		}
+
 		$thread_uid = $this->moduleContext->request->getParameter('move-thread-uid', 'POST');
 		$destinationBoardUID = $this->moduleContext->request->getParameter('radio-board-selection', 'POST');
 		$leaveShadowThread = !empty($this->moduleContext->request->getParameter('leave-shadow-thread', 'POST'));
@@ -475,8 +609,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		// Log the action
 		$destinationBoardTitle = htmlspecialchars($destinationBoard->getBoardTitle());
 		$this->moduleContext->actionLoggerService->logAction(
-			"Moved thread {$thread->getThread()->getOpNumber()} to board $destinationBoardTitle",
-			$hostBoard->getBoardUID()
+			"Moved thread No.{$thread->getThread()->getOpNumber()} to board $destinationBoardTitle",
+			$hostBoard->getBoardUID(),
+			actionType::POST_MOVE
 		);
 
 		if ($this->moduleContext->request->isAjax()) {
@@ -486,6 +621,203 @@ class moduleAdmin extends abstractModuleAdmin {
 		redirect($redirectURL);
 	}
 	
+
+	/**
+	 * Build the merge form for the thread named by the request, listing the rest of its board as
+	 * candidate sources.
+	 */
+	private function prepareMergeFormTemplateValues(): array {
+		$thread_uid = $this->moduleContext->request->getParameter('thread_uid', 'GET', '');
+
+		if (!$thread_uid) {
+			throw new InvalidArgumentException("No thread uid selected");
+		}
+
+		$thread = $this->moduleContext->threadService->getThreadData($thread_uid, true);
+
+		if (!$thread) {
+			throw new BoardException("Thread not found");
+		}
+
+		$board = searchBoardArrayForBoard($thread->getBoardUID());
+		$openingPost = $this->moduleContext->postRepository->getOpeningPostFromThread($thread_uid, true);
+		$subject = $openingPost
+			? trim(commentFormatter::fieldToHtml($openingPost->getSubject(), $openingPost->getTextFormat()))
+			: '';
+
+		return [
+			'{$FORM_ACTION}' => $this->modulePageUrl,
+			'{$THREAD_UID}' => htmlspecialchars($thread_uid),
+			'{$THREAD_NUMBER}' => $thread->getOpNumber(),
+			'{$THREAD_SUBJECT}' => $subject !== '' ? $subject : '(no subject)',
+			'{$THREAD_LIST_HTML}' => $this->generateThreadListHTML($board, $thread_uid),
+			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
+		];
+	}
+
+	/**
+	 * Validate a merge submission, absorb the chosen threads into the destination and rebuild.
+	 */
+	private function handleMergeRequest(): void {
+		$request = $this->moduleContext->request;
+
+		$destinationThreadUid = $request->getParameter('merge-thread-uid', 'POST', '');
+
+		if (empty($destinationThreadUid) || !is_string($destinationThreadUid)) {
+			throw new BoardException("Invalid thread_uid from request");
+		}
+
+		$destinationThread = $this->moduleContext->threadService->getThreadData($destinationThreadUid, true);
+
+		if (!$destinationThread) {
+			throw new BoardException("Destination thread not found");
+		}
+
+		$board = searchBoardArrayForBoard($destinationThread->getBoardUID());
+
+		if ($this->isGhostThread($destinationThreadUid)) {
+			throw new BoardException("Cannot merge into a ghost thread");
+		}
+
+		$sourceThreadUids = $this->collectMergeSources($destinationThread, $board);
+		$leaveShadowThreads = !empty($request->getParameter('leave-shadow-thread', 'POST'));
+
+		$this->moduleContext->transactionManager->run(function () use (
+			$destinationThread,
+			$sourceThreadUids,
+			$board,
+			$leaveShadowThreads
+		) {
+			if ($leaveShadowThreads) {
+				foreach ($sourceThreadUids as $sourceThreadUid) {
+					$this->copyThreadIntoThread($sourceThreadUid, $destinationThread, $board);
+				}
+
+				return;
+			}
+
+			$this->moduleContext->threadService->mergeThreadsIntoThread(
+				$destinationThread->getUid(),
+				$sourceThreadUids
+			);
+		});
+
+		rebuildBoardsByArray([$board]);
+
+		$this->moduleContext->actionLoggerService->logAction(
+			"Merged " . count($sourceThreadUids) . " thread(s) into thread No.{$destinationThread->getOpNumber()}",
+			$board->getBoardUID(),
+			actionType::POST_MOVE
+		);
+
+		$redirectURL = $board->getBoardThreadURL($destinationThread->getOpNumber());
+
+		if ($request->isAjax()) {
+			sendJsonResponse(['redirectUrl' => $redirectURL]);
+		}
+
+		redirect($redirectURL);
+	}
+
+	/**
+	 * Resolve the ticked thread UIDs and the typed post numbers into a validated source list.
+	 *
+	 * @return string[] Thread UIDs, guaranteed to share the destination's board.
+	 */
+	private function collectMergeSources(Thread $destinationThread, IBoard $board): array {
+		$request = $this->moduleContext->request;
+
+		$selectedUids = $request->getParameter('merge-source-uids', 'POST', []);
+		$selectedUids = is_array($selectedUids) ? array_map('strval', $selectedUids) : [];
+
+		// threads too old to appear in the list are named by post number instead
+		$typedNumbers = (string)$request->getParameter('merge-source-numbers', 'POST', '');
+		foreach (preg_split('/[^0-9]+/', $typedNumbers, -1, PREG_SPLIT_NO_EMPTY) ?: [] as $postNumber) {
+			$resolvedUid = $this->moduleContext->threadRepository->resolveThreadUidFromResno($board, (int)$postNumber);
+
+			if (!$resolvedUid) {
+				throw new BoardException("No thread found with post number $postNumber on this board");
+			}
+
+			$selectedUids[] = (string)$resolvedUid;
+		}
+
+		$selectedUids = array_values(array_diff(array_unique($selectedUids), [$destinationThread->getUid()]));
+
+		if (empty($selectedUids)) {
+			throw new BoardException("No threads selected to merge");
+		}
+
+		foreach ($selectedUids as $sourceThreadUid) {
+			$sourceThread = $this->moduleContext->threadService->getThreadData($sourceThreadUid, true);
+
+			if (!$sourceThread) {
+				throw new BoardException("Thread not found");
+			}
+
+			if ($sourceThread->getBoardUID() !== $destinationThread->getBoardUID()) {
+				throw new BoardException("Threads can only be merged within the same board");
+			}
+
+			if ($this->isGhostThread($sourceThreadUid)) {
+				throw new BoardException("Cannot merge ghost threads");
+			}
+		}
+
+		return $selectedUids;
+	}
+
+	private function isGhostThread(string $threadUid): bool {
+		$openingPost = $this->moduleContext->postRepository->getOpeningPostFromThread($threadUid, true);
+
+		return $openingPost ? $openingPost->getFlags()->value('ghost') : false;
+	}
+
+	/**
+	 * Shadow variant of a merge: duplicate a thread's posts into the destination, then lock the
+	 * original and point it at where its posts went.
+	 */
+	private function copyThreadIntoThread(string $sourceThreadUid, Thread $destinationThread, IBoard $board): void {
+		$sourceThread = $this->moduleContext->threadService->getThreadAllReplies(
+			$sourceThreadUid,
+			true,
+			$board->getConfigValue('RE_DEF')
+		);
+
+		if (!$sourceThread) {
+			throw new BoardException("Thread not found");
+		}
+
+		$copyResult = $this->moduleContext->threadService->copyThreadPostsIntoThread(
+			$sourceThreadUid,
+			$destinationThread->getUid(),
+			$board
+		);
+
+		$this->moduleContext->quoteLinkService->copyQuoteLinksFromThread(
+			$sourceThreadUid,
+			$board->getBoardUID(),
+			$copyResult['postUidMap']
+		);
+
+		$this->copyAttachmentsFiles(
+			getAttachmentsFromPosts($sourceThread->getPosts()),
+			$copyResult['fileIdMapping'],
+			$board
+		);
+
+		$this->postSystemNotice(
+			$sourceThread->getThread(),
+			$board,
+			'Thread merged into &gt;&gt;' . $destinationThread->getOpNumber(),
+			$destinationThread->getOpPostUid()
+		);
+
+		// lock the emptied original and make it unmoveable
+		$openingPost = $sourceThread->getOpeningPost();
+		$flags = $this->toggleThreadStatus($openingPost, 'stop');
+		$this->toggleThreadStatus($openingPost, 'ghost', $flags);
+	}
 
 	private function prepareMoveFormTemplateValues(): array {
 		$thread_uid = $this->moduleContext->request->getParameter('thread_uid', 'GET', '');

@@ -293,10 +293,16 @@ echo "\nRollback\n";
 testCase('an irreversible migration refuses to roll back', function () use ($makeRunner) {
 	$threw = false;
 
-	try {
-		$makeRunner()->down(1);
-	} catch (irreversibleMigrationException) {
-		$threw = true;
+	// Rollback walks backwards from the newest applied migration, so unwind one step at a time
+	// until an irreversible one stops it. Reversible migrations added since simply undo first,
+	// which also leaves the database where the next test expects it.
+	for ($step = 0; $step < 64; $step++) {
+		try {
+			$makeRunner()->down(1);
+		} catch (irreversibleMigrationException) {
+			$threw = true;
+			break;
+		}
 	}
 
 	assertTrueValue($threw, 'down() did not refuse an irreversible migration');

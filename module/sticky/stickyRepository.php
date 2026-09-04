@@ -5,8 +5,6 @@ namespace Kokonotsuba\Modules\sticky;
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
 
-use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
-
 class stickyRepository extends baseRepository {
 	public function __construct(
 		databaseConnection $databaseConnection,
@@ -15,15 +13,20 @@ class stickyRepository extends baseRepository {
 		parent::__construct($databaseConnection, $threadTable);
 	}
 
+	/** @var array<string, bool> Flags already read this request. */
+	private array $stickyByThread = [];
+
 	public function isSticky(string $thread_uid): bool {
-		return (bool) $this->pluck('is_sticky', 'thread_uid', $thread_uid);
+		return $this->stickyByThread[$thread_uid] ??= (bool) $this->pluck('is_sticky', 'thread_uid', $thread_uid);
 	}
 
 	public function stickyThread(string $thread_uid): void {
+		unset($this->stickyByThread[$thread_uid]);
 		$this->updateWhere(['is_sticky' => true], 'thread_uid', $thread_uid);
 	}
 
 	public function unstickyThread(string $thread_uid): void {
+		unset($this->stickyByThread[$thread_uid]);
 		$this->updateWhere(['is_sticky' => false], 'thread_uid', $thread_uid);
 	}
 
@@ -37,6 +40,7 @@ class stickyRepository extends baseRepository {
 			return;
 		}
 
+		$this->stickyByThread = [];
 		$this->updateWhereIn(['is_sticky' => $isSticky], 'thread_uid', array_values($threadUids));
 	}
 
@@ -52,14 +56,12 @@ class stickyRepository extends baseRepository {
 		}
 
 		$threadUids = array_values($threadUids);
-		$inClause = pdoPlaceholdersForIn($threadUids);
+		$inClause = $this->buildInClause($threadUids);
 
-		$rows = $this->queryAllAsIndexArray(
+		return $this->queryFlatColumn(
 			"SELECT thread_uid FROM {$this->table} WHERE thread_uid IN $inClause AND is_sticky = 1",
 			$threadUids
 		);
-
-		return $rows ? array_merge(...$rows) : [];
 	}
 
 	public function toggleSticky(string $thread_uid): bool {

@@ -1,10 +1,11 @@
 <?php
-// animated gif module made for kokonotsuba by deadking
-// "forked" from the siokara mod for pixmicat
+// animated image module made for kokonotsuba by deadking
+// plays animated GIF, WebP and PNG uploads inline instead of their still thumbnail
 
 namespace Kokonotsuba\Modules\animatedGif;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\thumb\imageProbe;
 use Kokonotsuba\module_classes\traits\IndicatorTrait;
 use Kokonotsuba\module_classes\traits\listeners\AttachmentsAfterInsertListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\AttachmentListenerTrait;
@@ -13,6 +14,7 @@ use Kokonotsuba\module_classes\traits\listeners\PostFormFileListenerTrait;
 use RuntimeException;
 
 use function Kokonotsuba\libraries\attachmentFileExists;
+use function Kokonotsuba\libraries\getAttachmentFilePath;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\strings\sanitizeStr;
 
@@ -23,8 +25,11 @@ class moduleMain extends abstractModuleMain {
 	use IndicatorTrait;
 	use PostFormFileListenerTrait;
 
+	/** Formats that carry more than one frame and can be played in place of a thumbnail. */
+	private const ANIMATABLE_EXTENSIONS = ['gif', 'webp', 'png'];
+
 	public function getName(): string {
-		return 'Kokonotsuba Animated GIF';
+		return 'Kokonotsuba Animated Images';
 	}
 
 	public function getVersion(): string  {
@@ -45,7 +50,7 @@ class moduleMain extends abstractModuleMain {
 
 	private function onRenderPostFormFile(string &$file): void {
 		// noscript fallback checkbox for no-JS users
-		$file .= '<noscript><div id="anigifContainer"><label id="anigifLabel" title="Makes GIF thumbnails animated"><input type="checkbox" name="anigif" id="anigif" value="on">Animated GIF</label></div></noscript>';
+		$file .= '<noscript><div id="anigifContainer"><label id="anigifLabel" title="Plays animated GIF, WebP and PNG uploads in place of their thumbnail"><input type="checkbox" name="anigif" id="anigif" value="on">Animated image</label></div></noscript>';
 	}
 
 	private function onAttachmentsAfterInsert(?array &$attachments): void {
@@ -60,36 +65,59 @@ class moduleMain extends abstractModuleMain {
 	private function handlePostAnimatedGif(array &$attachments): void {
 		// whether anigif was toggled
 		$anigifRequested = $this->moduleContext->request->hasParameter('anigif', 'POST');
-		
-		// if toggled then loop through attachments and toggle each gif to be animated
-		// non-GIFs are skipped
+
+		// if toggled then mark every attachment that actually holds more than one frame
 		if ($anigifRequested) {
 			$this->animateAllAttachments($attachments);
 		}
 	}
 
 	private function animateAllAttachments(array &$attachments): void {
-		// loop over all attachments and mark them as animated if their extension + mime type is an animated gif
-		foreach($attachments as &$att) {
-			// file extension
-			$fileExtension = $att['fileExtension'];
-			
-			// mime type
-			$mimeType = $att['mimeType'];
+		$sizeLimit = (int)$this->getModuleConfig('MAX_SIZE_FOR_ANIMATED_GIF', 2000);
 
-			// Don't accept it if its not even a GIF
-			if($mimeType !== 'image/gif' && $fileExtension === 'gif') {
-				return;
+		foreach($attachments as &$att) {
+			// skip anything that isn't an animation, rather than abandoning the whole batch:
+			// one still image among the uploads must not stop the rest being marked
+			if(!self::isAnimatedAttachment($att, $sizeLimit)) {
+				continue;
 			}
 
-			// get the file id to pass to animate gif method
-			// file id is used to target the file entry with an UPDATE query to mark it as animated
-			$fileId = $att['fileId'];
-
-			// all good
-			// now animate the attachment
-			$this->animateGif($fileId);
+			// the file id targets the row the animated flag is set on
+			$this->animateGif($att['fileId']);
 		}
+	}
+
+	/**
+	 * Whether an attachment is an animation this module can play in place of its thumbnail.
+	 * The file itself is read, so a still GIF or a WebP that only looks animated is rejected.
+	 *
+	 * @param int $sizeLimitKb Skip files at or above this size, which the renderer refuses
+	 *                         to play inline anyway. Reading one to find out costs time
+	 *                         proportional to its size, so the cheap test goes first.
+	 */
+	public static function isAnimatedAttachment(array $attachment, int $sizeLimitKb = 0): bool {
+		if(!in_array($attachment['fileExtension'] ?? '', self::ANIMATABLE_EXTENSIONS, true)) {
+			return false;
+		}
+
+		if($sizeLimitKb > 0 && (int)($attachment['fileSize'] ?? 0) >= $sizeLimitKb * 1024) {
+			return false;
+		}
+
+		$filePath = getAttachmentFilePath($attachment);
+
+		return $filePath !== '' && is_file($filePath) && imageProbe::isAnimated($filePath);
+	}
+
+	/** Label for the animation indicator, named for the format it belongs to. */
+	public static function animationLabel(array $attachment): string {
+		$format = match ($attachment['fileExtension'] ?? '') {
+			'webp' => 'WebP',
+			'png' => 'PNG',
+			default => 'GIF',
+		};
+
+		return '[Animated ' . $format . ']';
 	}
 
 	private function animateGif(int $fileId): void {
@@ -108,8 +136,8 @@ class moduleMain extends abstractModuleMain {
 		string &$attachmentUrl, 
 		array &$attachment
 	): void {
-		// stop module early if its not a gif		
-		if ($attachment['fileExtension'] !== 'gif') {
+		// stop early unless this is a format that can be played inline
+		if (!in_array($attachment['fileExtension'], self::ANIMATABLE_EXTENSIONS, true)) {
 			return;
 		}
 
@@ -126,7 +154,7 @@ class moduleMain extends abstractModuleMain {
 		// file size in bytes
 		$fileSize = $attachment['fileSize'];
 
-		// max file size for animated gif (in kilobytes)
+		// max file size for an animation (in kilobytes)
 		$maxGifFileSize = $this->getModuleConfig('MAX_SIZE_FOR_ANIMATED_GIF');
 		
 		// this is so large GIFs don't get loaded into the page
@@ -138,12 +166,12 @@ class moduleMain extends abstractModuleMain {
 
 		$isAnimated = (bool) $attachment['isAnimated'];
 
-		// replace image src url in order to directly display the gif (only when animated)
+		// replace image src url in order to directly display the animation (only when animated)
 		if ($isAnimated) {
 			$attachmentImage = preg_replace('/<img src=".*"/U', '<img src="' . $attachmentUrl . '"', $attachmentImage);
 		}
 		
-		// always render animated gif label wrapper, hidden when not active
-		$attachmentProperties .= $this->renderIndicator('animatedGifLabel', '[Animated GIF]', 'animatedGIFLabel imageOptions', !$isAnimated);
+		// always render the indicator wrapper, hidden when not active
+		$attachmentProperties .= $this->renderIndicator('animatedGifLabel', self::animationLabel($attachment), 'animatedGIFLabel imageOptions', !$isAnimated);
 	}
 }

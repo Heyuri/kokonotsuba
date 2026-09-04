@@ -6,9 +6,11 @@ require_once __DIR__ . '/fileBanRepository.php';
 require_once __DIR__ . '/fileBanService.php';
 require_once __DIR__ . '/fileBanLib.php';
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
+use Kokonotsuba\post\Post;
 use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
@@ -23,6 +25,9 @@ class moduleAdmin extends abstractModuleAdmin {
 	use PostControlHooksTrait;
 
 	private fileBanService $fileBanService;
+
+	/** @var array<string, bool> md5 => banned, filled per page by the prefetch hook. */
+	private array $bannedByHash = [];
 	private string $moduleUrl;
 
 	public function getRequiredRole(): userRole {
@@ -42,6 +47,9 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->fileBanService = getFileBanService($this->moduleContext->transactionManager);
 
+		$this->listenProtected('PostsPrefetch', function(array $posts) {
+			$this->prefetchBannedHashes($posts);
+		});
 		$this->listenProtected('ModerateAttachmentWidget', function(array &$widgets, array &$fileData) {
 			$this->onAttachmentWidget($widgets, $fileData);
 		});
@@ -52,14 +60,40 @@ class moduleAdmin extends abstractModuleAdmin {
 		});
 	}
 
+	/** @param Post[] $posts */
+	private function prefetchBannedHashes(array $posts): void {
+		$hashes = [];
+		foreach ($posts as $post) {
+			if (!$post instanceof Post) {
+				continue;
+			}
+			foreach ($post->getAttachments() as $attachment) {
+				$md5 = (string) ($attachment['fileMd5'] ?? '');
+				if ($md5 !== '' && !isset($this->bannedByHash[$md5])) {
+					$hashes[$md5] = $md5;
+				}
+			}
+		}
+		if ($hashes === []) {
+			return;
+		}
+		$banned = array_fill_keys($this->fileBanService->findBannedHashes(array_values($hashes)), true);
+		foreach ($hashes as $md5) {
+			$this->bannedByHash[$md5] = isset($banned[$md5]);
+		}
+	}
+
+	private function isBannedHash(string $md5): bool {
+		return $this->bannedByHash[$md5] ??= $this->fileBanService->findBannedHashes([$md5]) !== [];
+	}
+
 	private function onAttachmentWidget(array &$widgets, array &$fileData): void {
 		$md5 = $fileData['fileMd5'] ?? '';
 		if (empty($md5)) {
 			return;
 		}
 
-		$banned = $this->fileBanService->findBannedHashes([$md5]);
-		if (!empty($banned)) {
+		if ($this->isBannedHash($md5)) {
 			return;
 		}
 
@@ -146,7 +180,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->actionLoggerService->logAction(
 			'Banned and deleted file hash: ' . $md5 . ' from post No.' . $post->getNumber(),
-			$boardUID
+			$boardUID,
+			actionType::TOOL_FILE_BAN
 		);
 
 		if ($this->moduleContext->request->isAjax()) {
@@ -187,7 +222,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->actionLoggerService->logAction(
 			'Banned file hash: ' . $md5 . ' from post No.' . $post->getNumber(),
-			$boardUID
+			$boardUID,
+			actionType::TOOL_FILE_BAN
 		);
 
 		if ($this->moduleContext->request->isAjax()) {
@@ -212,7 +248,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->actionLoggerService->logAction(
 			'Banned file hash: ' . $md5,
-			$this->moduleContext->board->getBoardUID()
+			$this->moduleContext->board->getBoardUID(),
+			actionType::TOOL_FILE_BAN
 		);
 
 		redirect($this->moduleUrl);
@@ -229,7 +266,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->actionLoggerService->logAction(
 			'Removed ' . count($entryIDs) . ' file ban(s)',
-			$this->moduleContext->board->getBoardUID()
+			$this->moduleContext->board->getBoardUID(),
+			actionType::TOOL_FILE_BAN
 		);
 
 		redirect($this->moduleUrl);

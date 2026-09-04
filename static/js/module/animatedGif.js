@@ -32,15 +32,17 @@
                 // Update the hidden widget data so the next menu open shows the correct label
                 if (ctx.bar) {
                     var widgetAnchor = ctx.bar.querySelector('.attachmentWidgetData a[data-action="animateGif"]');
-                    if (widgetAnchor) {
-                        var newLabel = data.active ? 'Use still image of GIF' : 'Use animated GIF';
-                        widgetAnchor.dataset.label = newLabel;
-                        widgetAnchor.textContent = newLabel;
+                    if (widgetAnchor && data.label) {
+                        widgetAnchor.dataset.label = data.label;
+                        widgetAnchor.textContent = data.label;
                     }
 
-                    // Toggle the "[Animated GIF]" indicator label
+                    // Toggle the "[Animated GIF]" / "[Animated WebP]" indicator
                     var labelIndicator = ctx.bar.querySelector('.indicator-animatedGifLabel');
                     if (labelIndicator) {
+                        if (data.indicatorLabel) {
+                            labelIndicator.textContent = data.indicatorLabel;
+                        }
                         if (data.active) {
                             labelIndicator.classList.remove('indicatorHidden');
                         } else {
@@ -49,13 +51,13 @@
                     }
                 }
 
-                showMessage(data.active ? 'GIF animated!' : 'GIF animation disabled', true);
+                showMessage(data.active ? 'Animation enabled!' : 'Animation disabled', true);
             })
             .catch(function (error) {
                 if (imageElement) {
                     imageElement.style.opacity = 1;
                 }
-                showMessage('Error while toggling GIF animate status', false);
+                showMessage('Error while toggling animation status', false);
                 console.error(error);
             });
     });

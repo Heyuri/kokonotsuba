@@ -2,10 +2,13 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\action_log\actionLogPostLinks;
 use Kokonotsuba\action_log\actionLoggerService;
+use Kokonotsuba\action_log\actionTypeRegistry;
 use Kokonotsuba\board\board;
 use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\post\helper\postDateFormatter;
+use Kokonotsuba\post\postRepository;
 use Kokonotsuba\request\request;
 use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\userRole;
@@ -19,6 +22,9 @@ use function Puchiko\strings\buildSmartQuery;
 use const Kokonotsuba\GLOBAL_BOARD_UID;
 
 class actionLogRoute {
+	/** Columns the table headers may sort on, matching the repository's allowlist. */
+	private const SORTABLE_COLUMNS = ['id', 'time_added', 'action_type', 'name', 'role', 'board_uid', 'board_title'];
+
 	public function __construct(
 		private board $board,
 		private readonly array $config,
@@ -27,7 +33,8 @@ class actionLogRoute {
 		private readonly pageRenderer $adminPageRenderer,
 		private readonly array $regularBoards,
 		private readonly postDateFormatter $postDateFormatter,
-		private readonly request $request
+		private readonly request $request,
+		private readonly postRepository $postRepository
 	) {}
 
 	public function drawActionLog() {
@@ -46,11 +53,19 @@ class actionLogRoute {
 		
 		$actionLogUrl = $this->board->getBoardURL(true) . '?mode=actionLog';
 
-		$defaultActionLogFilters = $this->initializeActionLogFilters();
+		$typeRegistry = $this->actionLoggerService->getTypeRegistry();
+		$references = $this->actionLoggerService->getReferences();
 
-		$filtersFromRequest = getFiltersFromRequest($actionLogUrl, $isSubmission, $defaultActionLogFilters, $this->request);
+		$defaultActionLogFilters = $this->initializeActionLogFilters($typeRegistry);
+
+		$filtersFromRequest = getFiltersFromRequest($actionLogUrl, $isSubmission, $defaultActionLogFilters, $this->request, ['action_type']);
 
 		$cleanUrl = buildSmartQuery($actionLogUrl, $defaultActionLogFilters, $filtersFromRequest, true);
+
+		[$sortColumn, $sortDirection] = $this->resolveSort();
+
+		// the sort lives outside the filter set, so it has to be carried on the pager links by hand
+		$cleanUrl .= (str_contains($cleanUrl, '?') ? '&' : '?') . 'sort=' . rawurlencode($sortColumn) . '&dir=' . $sortDirection;
 
 		// get the associate array for the checkbox generator
 		$arrayForFilter = createAssocArrayFromBoardArray($this->regularBoards);
@@ -62,15 +77,19 @@ class actionLogRoute {
 		];
 
 		// draw action log entry filter form
-		drawActionLogFilterForm($actionLogHtml, $this->board, $arrayForFilter, $filtersFromRequest);
+		drawActionLogFilterForm($actionLogHtml, $this->board, $arrayForFilter, $filtersFromRequest, $typeRegistry);
 		
-		$entriesFromDatabase = $this->actionLoggerService->getSpecifiedLogEntries($limit, $offset, $filtersFromRequest);
+		$entriesFromDatabase = $this->actionLoggerService->getSpecifiedLogEntries($limit, $offset, $filtersFromRequest, $sortColumn, $sortDirection);
 		$numberOfActionLogs = $this->actionLoggerService->getAmountOfLogEntries($filtersFromRequest);
+
+		// the post numbers on this page, resolved together rather than one link at a time
+		(new actionLogPostLinks($this->postRepository, $this->regularBoards))
+			->register($references, $entriesFromDatabase ?: []);
 	
 		if(!$entriesFromDatabase) {
 			$tableEntries .= 
 				'<tr>
-					<td colspan="7">
+					<td colspan="8">
 						<b class="error"> - No entries found in database -</b> 
 					</td> 
 				</tr>';
@@ -87,7 +106,8 @@ class actionLogRoute {
 					<td>" . htmlspecialchars($actionLogEntry->getName()) . "</td>
 					<td>" . htmlspecialchars($roleEnum->displayRoleName()) . "</td>
 					<td>" . htmlspecialchars($actionLogEntry->getIpAddress()) . "</td>
-					<td>" . htmlspecialchars($actionLogEntry->getLogAction()) . "</td>
+					<td>" . htmlspecialchars($typeRegistry->labelFor($actionLogEntry->getActionType())) . "</td>
+					<td>" . $references->toHtml($actionLogEntry->getLogAction(), $actionLogEntry->getBoardUID()) . "</td>
 					<td>" . $this->postDateFormatter->formatFromDateString($actionLogEntry->getTimeAdded()) . "</td>
    			 	</tr>";
 			}
@@ -99,13 +119,14 @@ class actionLogRoute {
 				<table class=\"postlists\" id=\"actionlogtable\">
 					<thead>
 						<tr>
-							<th>Board title</th>
+							" . $this->sortableHeader('Board title', 'board_title', $sortColumn, $sortDirection, $cleanUrl) . "
 							<th>Board UID</th>
-							<th>Name</th>
-							<th>Role</th>
+							" . $this->sortableHeader('Name', 'name', $sortColumn, $sortDirection, $cleanUrl) . "
+							" . $this->sortableHeader('Role', 'role', $sortColumn, $sortDirection, $cleanUrl) . "
 							<th>IP</th>
+							" . $this->sortableHeader('Event', 'action_type', $sortColumn, $sortDirection, $cleanUrl) . "
 							<th>Action</th>
-							<th>Time</th>
+							" . $this->sortableHeader('Time', 'time_added', $sortColumn, $sortDirection, $cleanUrl) . "
 						</tr>
 					</thead>
 					<tbody>
@@ -127,7 +148,35 @@ class actionLogRoute {
 		echo $htmlOutput;
 	}
 
-	private function initializeActionLogFilters(): array {
+	/** @return array{0: string, 1: string} Sort column and direction from the request. */
+	private function resolveSort(): array {
+		$column = (string) $this->request->getParameter('sort', default: 'time_added');
+
+		if (!in_array($column, self::SORTABLE_COLUMNS, true)) {
+			$column = 'time_added';
+		}
+
+		$direction = strtoupper((string) $this->request->getParameter('dir', default: 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
+
+		return [$column, $direction];
+	}
+
+	/** A header cell that links to the same page sorted by its column, flipping when already active. */
+	private function sortableHeader(string $label, string $column, string $sortColumn, string $sortDirection, string $baseUrl): string {
+		$isActive = $sortColumn === $column;
+		$nextDirection = ($isActive && $sortDirection === 'DESC') ? 'ASC' : 'DESC';
+
+		// resolveSort() put sort/dir on the URL already, so replace rather than append
+		$url = preg_replace('/([?&])(sort|dir)=[^&]*/', '', $baseUrl);
+		$url = rtrim($url, '?&');
+		$url .= (str_contains($url, '?') ? '&' : '?') . 'sort=' . rawurlencode($column) . '&dir=' . $nextDirection;
+
+		$arrow = $isActive ? ($sortDirection === 'DESC' ? ' &#9662;' : ' &#9652;') : '';
+
+		return '<th class="sortableColumn' . ($isActive ? ' sortedColumn' : '') . '"><a href="' . htmlspecialchars($url) . '">' . htmlspecialchars($label) . $arrow . '</a></th>';
+	}
+
+	private function initializeActionLogFilters(actionTypeRegistry $typeRegistry): array {
 		// Default board selection: current board and global board
 		$defaultSelectedBoards = [$this->board->getBoardUID(), GLOBAL_BOARD_UID];
 	
@@ -138,10 +187,11 @@ class actionLogRoute {
 		);
 	
 		return [
+			'id' => '',
 			'ip_address' => '',
 			'log_name' => '',
-			'ban' => '',
-			'deleted' => '',
+			'log_action' => '',
+			'action_type' => $typeRegistry->defaultKeys(),
 			'role' => $defaultRoleSelections,
 			'board' => $defaultSelectedBoards,
 			'date_before' => '',

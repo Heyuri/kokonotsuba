@@ -191,7 +191,15 @@ class migrationRunner {
 			}
 		);
 
-		return new migrationContext($sql, new schemaBuilder($sql, $this->inspector, $mode), $this->inspector);
+		return new migrationContext(
+			$sql,
+			new schemaBuilder($sql, $this->inspector, $mode),
+			$this->inspector,
+			$this->appRoot,
+			function (string $message): void {
+				$this->log('  '.$message);
+			}
+		);
 	}
 
 	/**

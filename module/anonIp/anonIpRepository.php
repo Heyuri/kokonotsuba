@@ -2,219 +2,112 @@
 
 namespace Kokonotsuba\Modules\anonIp;
 
+require_once __DIR__ . '/anonIpTarget.php';
+
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\ip\ipAnonymizer;
 
 /**
- * Repository for IP anonymization operations on the posts and action log tables.
+ * Applies anonymization to one anonIpTarget at a time.
  *
- * A row is considered already anonymized when its IP column is exactly
- * 16 lowercase hex characters (the 16-char SHA-512 truncation this module applies).
+ * A row counts as already done when a hashed column holds exactly ipAnonymizer::HASH_LENGTH
+ * lowercase hex characters, or when a cleared column is empty, so every operation is idempotent
+ * and a re-run costs only the scan.
+ *
+ * The primary table is the posts table because that is the schema's main IP store, but no
+ * operation here uses it: each one names its own table through the target it is given.
  */
 class anonIpRepository extends baseRepository {
 
 	public function __construct(
 		databaseConnection $databaseConnection,
 		string $postTable,
-		private readonly string $actionLogTable,
-		private readonly string $soudaneTable,
-		private readonly string $anonSalt,
+		private readonly ipAnonymizer $anonymizer,
 	) {
 		parent::__construct($databaseConnection, $postTable);
-		self::validateTableNames($actionLogTable, $soudaneTable);
+	}
 
-		// A reversible hash is not anonymization. Refuse to run with an empty salt:
-		// without a secret salt, the truncated SHA-512 of an IP can be brute-forced.
-		if ($this->anonSalt === '') {
-			throw new \RuntimeException(
-				"anonIp: ANON_IP_SALT is empty in databaseSettings.php. "
-				. "Set a long random secret before anonymizing IPs."
-			);
+	/**
+	 * Rows in the target still holding an address, optionally limited to those older than
+	 * the cutoff.
+	 *
+	 * @param string|null $cutoff MySQL datetime (Y-m-d H:i:s), or null for every row.
+	 */
+	public function countPending(anonIpTarget $target, ?string $cutoff): int {
+		[$where, $params] = $this->buildWhere($target, $cutoff);
+
+		return (int) $this->queryColumn(
+			"SELECT COUNT(*) FROM `{$target->table}` WHERE {$where}",
+			$params
+		);
+	}
+
+	/**
+	 * Anonymize the target, optionally limited to rows older than the cutoff.
+	 *
+	 * @param string|null $cutoff MySQL datetime (Y-m-d H:i:s), or null for every row.
+	 * @return int Rows changed.
+	 */
+	public function anonymize(anonIpTarget $target, ?string $cutoff): int {
+		[$where, $params] = $this->buildWhere($target, $cutoff);
+
+		if ($target->mode === anonIpTarget::MODE_CLEAR) {
+			$set = "`{$target->ipColumn}` = :clear_to";
+			$params[':clear_to'] = $target->clearTo;
+		} else {
+			$set = "`{$target->ipColumn}` = " . ipAnonymizer::hashColumnSql("`{$target->ipColumn}`");
+			$params[':anon_salt'] = $this->anonymizer->requireSalt();
 		}
+
+		return $this->queryAffected(
+			"UPDATE `{$target->table}` SET {$set} WHERE {$where}",
+			$params
+		);
 	}
 
 	/**
-	 * Count posts whose `host` has not yet been anonymized and whose `root`
-	 * timestamp is older than the given cutoff.
+	 * The WHERE shared by the count and the update: not already done, within the target's own
+	 * guard, and older than the cutoff when one was given.
 	 *
-	 * @param string $cutoff  MySQL-formatted datetime string (Y-m-d H:i:s).
-	 * @return int
+	 * @return array{0: string, 1: array} SQL fragment and its bound parameters.
 	 */
-	public function countToAnonymize(string $cutoff): int {
-		$sql = "SELECT COUNT(*)
-		        FROM {$this->table}
-		        WHERE root < :cutoff
-		        AND host NOT REGEXP '^[0-9a-f]{16}$'";
+	private function buildWhere(anonIpTarget $target, ?string $cutoff): array {
+		$column = "`{$target->ipColumn}`";
 
-		return (int) $this->queryColumn($sql, [':cutoff' => $cutoff]);
+		$clauses = [$this->pendingSql($target, $column)];
+		$params = [];
+
+		if ($target->mode === anonIpTarget::MODE_CLEAR && $target->clearTo !== null) {
+			$params[':clear_pending'] = $target->clearTo;
+		}
+
+		if ($target->guardSql !== '') {
+			$clauses[] = "({$target->guardSql})";
+			$params += $target->guardParams;
+		}
+
+		if ($cutoff !== null) {
+			if (!$target->canBeAged()) {
+				throw new \LogicException("Target '{$target->key}' cannot be filtered by age.");
+			}
+			$clauses[] = "({$target->cutoffSql})";
+			$params[':cutoff'] = $cutoff;
+		}
+
+		return [implode(' AND ', $clauses), $params];
 	}
 
-	/**
-	 * Replace `host` with the first 16 hex characters of SHA-512(host) for
-	 * all posts older than the given cutoff that have not already been anonymized.
-	 *
-	 * @param string $cutoff  MySQL-formatted datetime string (Y-m-d H:i:s).
-	 * @return void
-	 */
-	public function anonymizeBefore(string $cutoff): void {
-		$sql = "UPDATE {$this->table}
-		        SET host = LEFT(SHA2(CONCAT(:anon_salt, host), 512), 16)
-		        WHERE root < :cutoff
-		        AND host NOT REGEXP '^[0-9a-f]{16}$'";
+	/** Rows this target has not dealt with yet. */
+	private function pendingSql(anonIpTarget $target, string $column): string {
+		if ($target->mode !== anonIpTarget::MODE_CLEAR) {
+			return ipAnonymizer::notAnonymizedSql($column);
+		}
 
-		$this->query($sql, [':cutoff' => $cutoff, ':anon_salt' => $this->anonSalt]);
-	}
-
-	/**
-	 * Count action log entries whose `ip_address` has not yet been anonymized
-	 * and whose `time_added` timestamp is older than the given cutoff.
-	 *
-	 * @param string $cutoff  MySQL-formatted datetime string (Y-m-d H:i:s).
-	 * @return int
-	 */
-	public function countActionLogToAnonymize(string $cutoff): int {
-		$sql = "SELECT COUNT(*)
-		        FROM {$this->actionLogTable}
-		        WHERE time_added < :cutoff
-		        AND ip_address NOT REGEXP '^[0-9a-f]{16}$'";
-
-		return (int) $this->queryColumn($sql, [':cutoff' => $cutoff]);
-	}
-
-	/**
-	 * Replace `ip_address` with the first 16 hex characters of SHA-512(ip_address)
-	 * for all action log entries older than the given cutoff that have not already
-	 * been anonymized.
-	 *
-	 * @param string $cutoff  MySQL-formatted datetime string (Y-m-d H:i:s).
-	 * @return void
-	 */
-	public function anonymizeActionLogBefore(string $cutoff): void {
-		$sql = "UPDATE {$this->actionLogTable}
-		        SET ip_address = LEFT(SHA2(CONCAT(:anon_salt, ip_address), 512), 16)
-		        WHERE time_added < :cutoff
-		        AND ip_address NOT REGEXP '^[0-9a-f]{16}$'";
-
-		$this->query($sql, [':cutoff' => $cutoff, ':anon_salt' => $this->anonSalt]);
-	}
-
-	/**
-	 * Count all posts whose `host` has not yet been anonymized, regardless of age.
-	 *
-	 * @return int
-	 */
-	public function countAllToAnonymize(): int {
-		$sql = "SELECT COUNT(*)
-		        FROM {$this->table}
-		        WHERE host NOT REGEXP '^[0-9a-f]{16}$'";
-
-		return (int) $this->queryColumn($sql);
-	}
-
-	/**
-	 * Replace `host` with the first 16 hex characters of SHA-512(host) for
-	 * every post that has not already been anonymized.
-	 *
-	 * @return void
-	 */
-	public function anonymizeAll(): void {
-		$sql = "UPDATE {$this->table}
-		        SET host = LEFT(SHA2(CONCAT(:anon_salt, host), 512), 16)
-		        WHERE host NOT REGEXP '^[0-9a-f]{16}$'";
-
-		$this->query($sql, [':anon_salt' => $this->anonSalt]);
-	}
-
-	/**
-	 * Count all action log entries whose `ip_address` has not yet been anonymized,
-	 * regardless of age.
-	 *
-	 * @return int
-	 */
-	public function countAllActionLogToAnonymize(): int {
-		$sql = "SELECT COUNT(*)
-		        FROM {$this->actionLogTable}
-		        WHERE ip_address NOT REGEXP '^[0-9a-f]{16}$'";
-
-		return (int) $this->queryColumn($sql);
-	}
-
-	/**
-	 * Replace `ip_address` with the first 16 hex characters of SHA-512(ip_address)
-	 * for every action log entry that has not already been anonymized.
-	 *
-	 * @return void
-	 */
-	public function anonymizeAllActionLog(): void {
-		$sql = "UPDATE {$this->actionLogTable}
-		        SET ip_address = LEFT(SHA2(CONCAT(:anon_salt, ip_address), 512), 16)
-		        WHERE ip_address NOT REGEXP '^[0-9a-f]{16}$'";
-
-		$this->query($sql, [':anon_salt' => $this->anonSalt]);
-	}
-
-	// -------------------------------------------------------------------------
-	// Soudane votes table
-	// -------------------------------------------------------------------------
-
-	/**
-	 * Count soudane vote rows whose `ip_address` has not yet been anonymized
-	 * and whose `date_added` timestamp is older than the given cutoff.
-	 *
-	 * @param string $cutoff  MySQL-formatted datetime string (Y-m-d H:i:s).
-	 * @return int
-	 */
-	public function countSoudaneToAnonymize(string $cutoff): int {
-		$sql = "SELECT COUNT(*)
-		        FROM {$this->soudaneTable}
-		        WHERE date_added < :cutoff
-		        AND ip_address NOT REGEXP '^[0-9a-f]{16}$'";
-
-		return (int) $this->queryColumn($sql, [':cutoff' => $cutoff]);
-	}
-
-	/**
-	 * Replace `ip_address` with the first 16 hex characters of SHA-512(ip_address)
-	 * for all soudane vote rows older than the given cutoff that have not already
-	 * been anonymized.
-	 *
-	 * @param string $cutoff  MySQL-formatted datetime string (Y-m-d H:i:s).
-	 * @return void
-	 */
-	public function anonymizeSoudaneBefore(string $cutoff): void {
-		$sql = "UPDATE {$this->soudaneTable}
-		        SET ip_address = LEFT(SHA2(CONCAT(:anon_salt, ip_address), 512), 16)
-		        WHERE date_added < :cutoff
-		        AND ip_address NOT REGEXP '^[0-9a-f]{16}$'";
-
-		$this->query($sql, [':cutoff' => $cutoff, ':anon_salt' => $this->anonSalt]);
-	}
-
-	/**
-	 * Count all soudane vote rows whose `ip_address` has not yet been anonymized,
-	 * regardless of age.
-	 *
-	 * @return int
-	 */
-	public function countAllSoudaneToAnonymize(): int {
-		$sql = "SELECT COUNT(*)
-		        FROM {$this->soudaneTable}
-		        WHERE ip_address NOT REGEXP '^[0-9a-f]{16}$'";
-
-		return (int) $this->queryColumn($sql);
-	}
-
-	/**
-	 * Replace `ip_address` with the first 16 hex characters of SHA-512(ip_address)
-	 * for every soudane vote row that has not already been anonymized.
-	 *
-	 * @return void
-	 */
-	public function anonymizeAllSoudane(): void {
-		$sql = "UPDATE {$this->soudaneTable}
-		        SET ip_address = LEFT(SHA2(CONCAT(:anon_salt, ip_address), 512), 16)
-		        WHERE ip_address NOT REGEXP '^[0-9a-f]{16}$'";
-
-		$this->query($sql, [':anon_salt' => $this->anonSalt]);
+		// A clear is done when the column already holds the value it writes. NULL never compares
+		// equal, so each cleared-to value needs its own test.
+		return $target->clearTo === null
+			? "{$column} IS NOT NULL"
+			: "({$column} IS NULL OR {$column} <> :clear_pending)";
 	}
 }

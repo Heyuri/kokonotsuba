@@ -12,7 +12,6 @@ use Kokonotsuba\userRole;
 
 use function Kokonotsuba\libraries\_T;
 use function Kokonotsuba\libraries\anti_sakura;
-use function Puchiko\strings\newLinesToBreakLines;
 use function Puchiko\strings\strlenUnicode;
 
 class postValidator {
@@ -130,10 +129,11 @@ class postValidator {
 		// with a single newline to prevent large vertical gaps in comments.
 		$com = preg_replace("/\n((　| )*\n){3,}/", "\n", $com);
 
-		if(!$this->config['BR_CHECK'] || substr_count($com,"\n") < $this->config['BR_CHECK']){
-			$com = newLinesToBreakLines($com); // Newline characters are replaced by <br>
+		// Over the break limit the post loses its line structure entirely, which is what the
+		// <br>-stripping here has always done; the renderer turns whatever survives into <br>.
+		if($this->config['BR_CHECK'] && substr_count($com, "\n") >= $this->config['BR_CHECK']){
+			$com = str_replace("\n", '', $com);
 		}
-		$com = str_replace("\n", '', $com); // If there are still \n newline characters, cancel the newline
 
 		return $com;
 	}
