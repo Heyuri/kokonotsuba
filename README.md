@@ -2,7 +2,7 @@
 
 ## About Kokonotsuba
 * https://kokonotsuba.github.io/
-* 
+
 ## Required stack
 Kokonotsuba is designed and tested on the following stack, and isn't guaranteed to work on any other stack.
 - OS: Debian 10\~12
