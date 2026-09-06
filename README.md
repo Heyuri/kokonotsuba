@@ -2,10 +2,7 @@
 
 ## About Kokonotsuba
 * https://kokonotsuba.github.io/
-
-## Detailed installation instructions
-* https://kokonotsuba.github.io/setup.html
-
+* 
 ## Required stack
 Kokonotsuba is designed and tested on the following stack, and isn't guaranteed to work on any other stack.
 - OS: Debian 10\~12
