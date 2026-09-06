@@ -5,6 +5,7 @@ namespace Koko\Tests\Unit\Puchiko;
 use Koko\Tests\Framework\TestCase;
 
 use function Puchiko\request\absoluteUrl;
+use function Puchiko\request\isDirectRequestFor;
 
 /**
  * Unit tests for the Puchiko\request helpers.
@@ -72,5 +73,14 @@ final class RequestHelpersTest extends TestCase {
 			'http://localhost/b/koko.php?t=12:30',
 			absoluteUrl('koko.php?t=12:30', 'http', 'localhost', '/b/koko.php')
 		);
+	}
+
+	public function testTheBackendEntryPointKnowsWhenItIsRequestedDirectly(): void {
+		$backend = '/var/www/html/kokonotsuba/koko.php';
+
+		$this->assertTrue(isDirectRequestFor($backend, ['SCRIPT_FILENAME' => $backend]));
+		$this->assertFalse(isDirectRequestFor($backend, ['SCRIPT_FILENAME' => '/var/www/html/kokonotsuba/boards/b/koko.php']));
+		$this->assertFalse(isDirectRequestFor($backend, ['SCRIPT_FILENAME' => '']));
+		$this->assertFalse(isDirectRequestFor($backend, []));
 	}
 }

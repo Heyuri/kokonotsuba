@@ -83,3 +83,16 @@ function absoluteUrl(string $url, string $scheme, string $host, string $document
 
 	return $origin . $directory . $url;
 }
+
+/**
+ * Whether the web server ran $file itself rather than a script that required it. The path is
+ * compared unresolved, so a board whose koko.php is a symlink to the backend's is not mistaken
+ * for a direct request.
+ *
+ * @param array<string, mixed> $server $_SERVER
+ */
+function isDirectRequestFor(string $file, array $server): bool {
+	$script = (string)($server['SCRIPT_FILENAME'] ?? '');
+
+	return $script !== '' && $script === $file;
+}

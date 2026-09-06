@@ -16,20 +16,35 @@ Kokonotsuba is designed and tested on the following stack, and isn't guaranteed 
 If you are going to suggest pull requests, please make sure the change would work on the above stack first.
 
 ## Dependencies
-- mbstring
-- pdo, pdo_mysql
-- gd
-- bcmath
-- ffmpeg (video thumbnails)
-- exiftool (stripping GPS metadata from uploads)
 
-If you are on Debian, try use the below commands to install all PHP dependencies:
+PHP extensions: `mbstring`, `pdo`, `pdo_mysql`, `gd`, `bcmath`
 
-`apt update`
+Programs: `ffmpeg` (video thumbnails), `exiftool` (stripping GPS metadata from uploads)
 
-`apt install php-mbstring php-pdo php-mysql php-gd php-bcmath ffmpeg exiftool`
+1. Install dependencies. On Debian:
 
-`install.php` checks for all of these and names the package to install for anything that is missing.
+   ```
+   sudo apt update
+   sudo apt install php-mbstring php-pdo php-mysql php-gd php-bcmath ffmpeg exiftool
+   ```
+
+2. Open the `php.ini` your web server uses and add these lines:
+
+   ```
+   extension=mbstring
+   extension=pdo_mysql
+   extension=gd
+   extension=bcmath
+   ```
+
+3. Restart PHP so it picks them up. One of these, depending on your setup:
+
+   ```
+   sudo systemctl restart php8.3-fpm    # nginx, change 8.3 to your PHP version
+   sudo systemctl restart apache2       # Apache
+   ```
+
+`install.php` checks all of this for you and tells you what to run for anything missing.
 
 ## Installation
 
@@ -117,12 +132,12 @@ Backend files must not be served over HTTP. Follow the steps for your web server
        deny all;
    }
 
-   location ~ ^/kokonotsuba/(autoload\.php|databaseSettings\.php|databaseSettings\.example\.php|koko\.php|paths\.php|tables\.php|README\.md|LICENSE)$ {
+   location ~ ^/kokonotsuba/(autoload\.php|databaseSettings\.php|databaseSettings\.example\.php|koko\.php|paths\.php|tables\.php|README\.md|LICENSE)(/|$) {
        deny all;
    }
 
-   # Dotfiles and every board's boardUID.ini
-   location ~ ^/kokonotsuba/(\.|.*\.ini$) {
+   # Dotfiles at any depth, and every board's boardUID.ini
+   location ~ ^/kokonotsuba/((.*/)?\.|.*\.ini$) {
        deny all;
    }
    ```
@@ -167,6 +182,17 @@ run if the web server hands any of them out.
 - **A directory check is red** - the web server user cannot read or write it. Run the
   `chown`/`chmod` command printed next to it; the installer works out the right user itself, so it
   is safe to paste as-is even if you guessed `www-data` wrong in step 3.
+
+- **Every page is a 500, `install.php` included** - the `.htaccess` sets `Options -Indexes`, which
+  Apache refuses to honour unless `AllowOverride` includes `Options`. Use `AllowOverride All` as
+  in step 4, not a narrower list, and reload.
+
+- **Everything under `boards/` is a 403, but `install.php` and the backend load** - Apache and
+  PHP-FPM run as different users, and the directories the installer created are only readable by
+  PHP's. The Apache error log says "Permission denied" rather than "denied by server
+  configuration". Compare `ps -eo user,comm | grep -E 'apache2|php-fpm'` with
+  `ls -ld boards boards/*`, then either put Apache's user in PHP's group or
+  `sudo chmod -R o+rX boards`. Boards created before this was fixed in the installer are 0770.
 
 - **An exposure check says a file is served** - the step 4 rules are missing or in the wrong
   place. On nginx, make sure the `deny` blocks sit *above* `location ~ \.php$` and that you

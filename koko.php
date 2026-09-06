@@ -28,6 +28,13 @@ require_once __DIR__ . '/code/Kokonotsuba/constants.php';
 require __DIR__ . '/paths.php';
 require __DIR__ . '/bootstrap/libraryIncludes.php';
 
+// The backend entry point only runs when a board's koko.php requires it. Requested directly it
+// has no board, so it refuses here rather than in a web server rule that has to know its path.
+if (PHP_SAPI !== 'cli' && \Puchiko\request\isDirectRequestFor(__FILE__, $_SERVER)) {
+	http_response_code(403);
+	exit('Forbidden');
+}
+
 // Create request object from superglobals (must be early, before other bootstrap files)
 $request = \Kokonotsuba\request\request::fromGlobals();
 

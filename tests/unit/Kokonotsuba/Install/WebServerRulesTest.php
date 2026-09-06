@@ -53,6 +53,45 @@ class WebServerRulesTest extends TestCase {
 		$this->assertSame(0, preg_match($regex, '/koko/static/js/postWidget.js'));
 	}
 
+	public function testDotfilesAreDeniedAtAnyDepth(): void {
+		$regex = $this->ruleMatching('ini', webServerRules::nginxSnippet('/koko/'));
+
+		$this->assertSame(1, preg_match($regex, '/koko/boards/b/.hidden'));
+		$this->assertSame(1, preg_match($regex, '/koko/global/.installed'));
+		$this->assertSame(0, preg_match($regex, '/koko/boards/b/src/1.png'));
+	}
+
+	public function testRootFilesAreDeniedWithTrailingPathInfoButBoardsAreNot(): void {
+		$regex = $this->ruleMatching('databaseSettings', webServerRules::nginxSnippet('/koko/'));
+
+		$this->assertSame(1, preg_match($regex, '/koko/koko.php'));
+		$this->assertSame(1, preg_match($regex, '/koko/koko.php/anything'));
+		$this->assertSame(1, preg_match($regex, '/koko/databaseSettings.php/x'));
+		$this->assertSame(0, preg_match($regex, '/koko/koko.php.bak'));
+		$this->assertSame(0, preg_match($regex, '/koko/boards/b/koko.php'));
+		$this->assertSame(0, preg_match($regex, '/koko/boards/b/koko.php/anything'));
+	}
+
+	public function testThePrefixIsQuotedForTheRegex(): void {
+		$regex = $this->ruleMatching('databaseSettings', webServerRules::nginxSnippet('/koko.net/'));
+
+		$this->assertSame(1, preg_match($regex, '/koko.net/koko.php'));
+		$this->assertSame(0, preg_match($regex, '/kokoXnet/koko.php'));
+	}
+
+	/** The regex of the first location line in the snippet whose pattern contains $needle. */
+	private function ruleMatching(string $needle, string $snippet): string {
+		preg_match_all('/^location ~ (\S+) \{$/m', $snippet, $matches);
+
+		foreach ($matches[1] as $pattern) {
+			if (str_contains($pattern, $needle)) {
+				return '#'.$pattern.'#';
+			}
+		}
+
+		$this->fail('No location rule mentions '.$needle);
+	}
+
 	public function testEveryDeniedDirectoryShipsAnHtaccess(): void {
 		foreach (webServerRules::DENIED_DIRECTORIES as $directory) {
 			$path = KOKO_TEST_ROOT.'/'.$directory.'/.htaccess';
@@ -67,8 +106,9 @@ class WebServerRulesTest extends TestCase {
 
 		$this->assertStringContains('databaseSettings', $htaccess);
 		$this->assertStringContains('ini', $htaccess);
-		$this->assertStringContains('RewriteRule ^koko\\.php$ - [F]', $htaccess);
+		// Denying koko.php by name would catch every board, and mod_rewrite needs FollowSymLinks.
 		$this->assertStringNotContains('|koko|', $htaccess);
+		$this->assertStringNotContains('Rewrite', $htaccess);
 		$this->assertStringContains('Options -Indexes', $htaccess);
 	}
 

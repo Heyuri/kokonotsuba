@@ -59,7 +59,7 @@ final class webServerRules {
 	 */
 	public static function nginxSnippet(string $urlPrefix): string {
 		$prefix = '/'.trim($urlPrefix, '/');
-		$prefix = $prefix === '/' ? '' : $prefix;
+		$prefix = $prefix === '/' ? '' : preg_quote($prefix);
 
 		$directories = implode('|', self::DENIED_DIRECTORIES);
 		$files = implode('|', array_map(
@@ -74,12 +74,12 @@ final class webServerRules {
 		    deny all;
 		}
 
-		location ~ ^{$prefix}/({$files})$ {
+		location ~ ^{$prefix}/({$files})(/|$) {
 		    deny all;
 		}
 
-		# Dotfiles and every board's boardUID.ini
-		location ~ ^{$prefix}/(\.|.*\.ini$) {
+		# Dotfiles at any depth, and every board's boardUID.ini
+		location ~ ^{$prefix}/((.*/)?\.|.*\.ini$) {
 		    deny all;
 		}
 		NGINX;

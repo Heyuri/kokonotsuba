@@ -1,6 +1,4 @@
 # Kokonotsuba: the root includes, dotfiles, docs and every boardUID.ini are denied.
-# install.php stays reachable and is deleted after the install. nginx ignores this
-# file; the installer and README carry the equivalent rules.
 <FilesMatch "^(autoload|databaseSettings|databaseSettings\.example|paths|tables)\.php$|^\.|\.(md|ini)$|^LICENSE$">
     <IfModule mod_authz_core.c>
         Require all denied
@@ -10,11 +8,5 @@
         Deny from all
     </IfModule>
 </FilesMatch>
-
-# FilesMatch would also catch every board's koko.php, so the root one is matched by path.
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteRule ^koko\.php$ - [F]
-</IfModule>
 
 Options -Indexes

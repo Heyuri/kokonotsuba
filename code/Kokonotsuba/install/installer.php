@@ -285,7 +285,7 @@ final class installer {
 			// row does. The CDN layout matches board::getCdnDir(): {CDN_DIR}{uid}/.
 			$storageDirectoryName = 'storage-'.$boardUid;
 			$boardRepository->updateBoardByUID($boardUid, ['storage_directory_name' => $storageDirectoryName]);
-			$this->makeDirectory($this->appRoot.'/global/board-storages/'.$storageDirectoryName);
+			$this->makeDirectory($this->appRoot.'/global/board-storages/'.$storageDirectoryName, 0770);
 
 			$uploadDirectory = $config['USE_CDN']
 				? rtrim((string)$config['CDN_DIR'], '/').'/'.$boardUid.'/'
@@ -420,14 +420,18 @@ final class installer {
 		return is_array($values) ? $values : [];
 	}
 
-	private function makeDirectory(string $path): void {
+	/**
+	 * Board directories are served by the web server, which may not run as the PHP user, so they
+	 * default to world-traversable like the rest of the app. Private storage passes 0770.
+	 */
+	private function makeDirectory(string $path, int $mode = 0755): void {
 		$path = rtrim($path, '/');
 
 		if (is_dir($path)) {
 			return;
 		}
 
-		if (!@mkdir($path, 0770, true) && !is_dir($path)) {
+		if (!@mkdir($path, $mode, true) && !is_dir($path)) {
 			throw new RuntimeException(
 				'Could not create '.$path.'. Check that '.dirname($path).' is writable by '
 					.processIdentity::current()->user.'.'
