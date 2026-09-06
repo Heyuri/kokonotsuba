@@ -8,7 +8,7 @@ Kokonotsuba is designed and tested on the following stack, and isn't guaranteed 
 - OS: Debian 10\~12
 - Web server: nginx (but seems to work fine on Apache)
 - DB: MariaDB
-- PHP: PHP8.1\~PHP8.3
+- PHP: PHP8.3\~PHP8.5
 
 If you are going to suggest pull requests, please make sure the change would work on the above stack first.
 
@@ -77,7 +77,7 @@ Everything lives under that one directory:
 ├── koko.php      backend entry point (each board's koko.php requires it)
 ├── static/       css, js and images, served directly
 ├── global/       site settings, error log, board storage - must not be web-readable
-├── boards/       one directory per board, created by the installer and the admin panel
+├── boards/       board directories go in here, created by the installer and the admin panel
 └── ...           the rest of the backend, also not web-readable
 ```
 
@@ -246,7 +246,7 @@ run if the web server hands any of them out.
 #### Note
  - `global/siteSettings.php` is where your site's URLs and salts live from then on; everything else
    is edited from the admin panel. `global/siteSettings.example.php` documents the file
- - never change `TRIPSALT` or `IDSEED` once there are posts: every tripcode and poster ID changes
+ - never change `TRIPSALT` or `IDSEED` once there are posts: every secure tripcode and poster ID changes
  - `databaseSettings.php` is not tracked by git. `databaseSettings.example.php` is, for setting an
    instance up by hand without the installer
  - if you are moving an existing install into this layout, keep your current `databaseSettings.php`
