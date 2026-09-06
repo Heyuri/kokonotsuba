@@ -3,9 +3,6 @@
 ## About Kokonotsuba
 * https://kokonotsuba.github.io/
 
-## Detailed installation instructions
-* https://kokonotsuba.github.io/setup.html
-
 ## Required stack
 Kokonotsuba is designed and tested on the following stack, and isn't guaranteed to work on any other stack.
 - OS: Debian 10\~12
@@ -175,7 +172,7 @@ run if the web server hands any of them out.
 
 6. On success the page lists the clean-up commands from step 6 and links to your new board.
 
-#### Common mistakes
+#### Common install errors
 
 - **The page says "Already installed"** - `global/.installed` exists from an earlier run. If that
   run really did finish, delete `install.php` and log in. If you are starting over on purpose,
