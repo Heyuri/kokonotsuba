@@ -33,6 +33,7 @@ class rebuildBoardsTask implements BackgroundTaskInterface {
 		// ── Database ─────────────────────────────────────────────────────
 		$databaseConnection = databaseConnection::getInstance();
 		$dbSettings         = getDatabaseSettings();
+		$tableNames         = getTableNames();
 		$transactionManager = new transactionManager($databaseConnection);
 
 		// ── Request and auth stubs (no HTTP session in CLI) ───────────────
@@ -66,6 +67,7 @@ class rebuildBoardsTask implements BackgroundTaskInterface {
 		$container->set('databaseConnection',      $databaseConnection);
 		$container->set('transactionManager',      $transactionManager);
 		$container->set('dbSettings',              $dbSettings);
+		$container->set('tableNames',              $tableNames);
 
 		// ── Repositories (also registers services in $container) ──────────
 		// Variables created here become local vars: $actionLoggerService,

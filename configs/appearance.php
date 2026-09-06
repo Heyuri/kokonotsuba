@@ -8,10 +8,15 @@ require_once __DIR__ . '/_fieldTypes.php';
 
 use function Kokonotsuba\config\fields\{boolField, intField, stringField, textField, templateField};
 
+// The home link's default is the site-wide one from global/siteSettings.php (falling back to
+// globalconfig.php), so setting it once at install time covers every board while each board can
+// still point its own header somewhere else.
+$homeDefault = getGlobalConfig()['HOME'] ?? 'index.html';
+
 return [
 	'_group' => 'Appearance & pagination',
 
-	'HOME'               => stringField('config_label_HOME', 'index.html', 'config_desc_HOME'),
+	'HOME'               => stringField('config_label_HOME', $homeDefault, 'config_desc_HOME'),
 	'FOOTTEXT'           => textField('config_label_FOOTTEXT', '', 'config_desc_FOOTTEXT'),
 	'REF_URL'            => stringField('config_label_REF_URL', '', 'config_desc_REF_URL'),
 

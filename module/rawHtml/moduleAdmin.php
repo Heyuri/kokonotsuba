@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\rawHtml;
 
 use Kokonotsuba\module_classes\abstractModuleAdmin;
+use Kokonotsuba\post\textFormat;
 use Kokonotsuba\userRole;
 
 class moduleAdmin extends abstractModuleAdmin {
@@ -31,7 +32,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			$this->getRequiredRole(),
 			'RegistBegin',
 			function(array &$registInfo) {
-				$this->onRegistBegin($registInfo['com']);
+				$this->onRegistBegin($registInfo['textFormat']);
 			}
 		);
 	}
@@ -50,7 +51,13 @@ class moduleAdmin extends abstractModuleAdmin {
 			</span>';
 	}
 
-	private function onRegistBegin(string &$comment): void {
+	/**
+	 * Mark the post as raw HTML so the renderer emits its comment unescaped.
+	 *
+	 * The comment itself is stored as typed, like any other; only the flag differs. That keeps
+	 * this the single documented way unescaped post text reaches a page.
+	 */
+	private function onRegistBegin(textFormat &$textFormat): void {
 		// Raw HTML checkbox from request
 		$formRawHtml = !empty($this->moduleContext->request->getParameter('formRawHtml', 'POST'));
 
@@ -58,8 +65,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		if($formRawHtml) {
 			$this->moduleContext->cookieService->set('rawHtml', '1', time() + 86400, '/');
 
-            // html decode the comment html
-            $comment = htmlspecialchars_decode($comment);
+			$textFormat = textFormat::RAW_HTML;
 		}
 		// clear the cookie if it wasn't selected
 		else {

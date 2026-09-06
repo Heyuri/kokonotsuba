@@ -23,6 +23,13 @@
 	float: left;
 }
 
+/* Persistent navigation: pin the nav section, so everything in it rides along. */
+.persistnav .stickyNav {
+	position: sticky;
+	top: 0;
+	z-index: 3;
+}
+
 .persistnav .boardlist {
   background-color: var(--color-bg-boardlist);
 	border-color: inherit;
@@ -106,6 +113,28 @@
 
 .logo hr {
 	width: 90%;
+}
+
+#bannerContainer {
+	height: 118px;
+	width: 100%;
+}
+
+#banner {
+	display: block;
+	width: 302px;
+	max-width: 100%;
+	margin: 8px auto;
+}
+
+#banner,
+.fullbannerIframe {
+	border: 1px solid var(--color-fg-main);
+}
+
+/* Pulled up against the banner, whose container reserves a fixed height. */
+.boardbannerSuggestionContainer {
+	margin-top: -1em;
 }
 
 .mtitle {
@@ -423,6 +452,134 @@
 .postlists th,
 .postlists td {
 	padding: 0.125em;
+}
+
+.postlists .title {
+	font-size: var(--font-size-regular);
+}
+
+.error,
+.offline {
+	color: #ff0000;
+	font-weight: var(--font-weight-bold);
+}
+
+.good,
+.online {
+	color: #008000;
+	font-weight: var(--font-weight-bold);
+}
+
+#actionlogForm {
+	display: table;
+	margin: 1em auto;
+}
+
+#actionlog {
+	text-align: left;
+}
+
+#accountManagementList {
+	margin: 0;
+}
+
+#inputGlobalMessage {
+	width: 100%;
+}
+
+.pendingDeletion {
+	opacity: 0.6;
+	transition: opacity 0.3s ease;
+}
+
+/************************ Ban management*******************************/
+
+#banForm {
+	margin: 1em auto;
+}
+
+#banForm #bandays {
+	width: 100%;
+	max-width: 4em;
+}
+
+#banForm #banprivmsg,
+#banForm #banmsg {
+	width: 100%;
+	height: 5em;
+}
+
+#bigredbutton {
+	background-color: #ff0000;
+	color: white;
+	border-style: outset;
+	border-width: 3px;
+	font-family: Verdana, Tahoma, Arial, sans-serif;
+	font-size: 1.2em;
+	font-weight: var(--font-weight-bold);
+	cursor: pointer;
+}
+
+#bigredbutton:active:hover {
+	border-style: inset;
+}
+
+#banTableContainer {
+	overflow: auto;
+}
+
+#banTable .colDel {
+	text-align: center;
+}
+
+/************************ Ban screen **********************************/
+
+/* The whole ban page lives in here: heading, the summary row, and every ban listed under it. */
+#banScreen {
+	background-color: var(--color-bg-reply);
+	max-width: 800px;
+	margin: 0 auto;
+	padding: 0.5em;
+}
+
+#banHeading {
+	margin: 0 0 0.5em;
+}
+
+/* The heading sits above; this is the row that puts the text beside the picture. */
+#banScreenSummary {
+	display: flex;
+	gap: 0.5em;
+	justify-content: space-between;
+	align-items: center;
+}
+
+#banScreenText {
+	flex: 1;
+	text-align: left;
+}
+
+/* The tag carries the file's own width and height, so height:auto here is what lets the
+   browser reserve the right space from the aspect ratio before the picture arrives. */
+#banimg {
+	border: 1px solid;
+	max-width: 100%;
+	width: 300px;
+	height: auto;
+}
+
+#hrBan {
+	margin: 0.6em 0;
+}
+
+@media screen and (max-width: 640px) {
+	#banScreenSummary {
+		flex-direction: column;
+	}
+
+	#banimg {
+		width: 100%; /* Makes the image container fill the width */
+	}
 }
 
 /************************ Overboard ***********************************/

@@ -104,6 +104,13 @@ function bindPostFilterParameters(array &$params, string &$query, array $filters
 		}
 	}
 
+	// Apply the 'visitor_token_hash' filter. Exact, never a prefix: the value shown to staff is
+	// the first half of it, and matching on that would pull in a different browser sooner or later.
+	if (!empty($filters['visitor_token_hash']) && is_string($filters['visitor_token_hash'])) {
+		$query .= " AND " . $columnPrefix . "visitor_token_hash = :visitor_token_hash";
+		$params[':visitor_token_hash'] = $filters['visitor_token_hash'];
+	}
+
 	// Apply the 'ip_address' filter using a LIKE pattern against the indexed host column
 	if (!empty($filters['ip_address']) && is_string($filters['ip_address'])) {
 		$likePattern = applyLikeIPFilter($filters['ip_address']);
@@ -241,26 +248,20 @@ function bindActionLogFiltersParameters(array &$params, string &$query, array $f
 		}
 	}
 
-	$actionConditions = [];
-	
-	if (!empty($filters['deleted'])) {
-		$actionConditions[] = "log_action LIKE :delete";
-		$params[':delete'] = '%delete%';
+	// Event types. The caller has already dropped unknown keys and the select-everything case, so
+	// an empty list here means the filter deselected the lot: match nothing rather than everything.
+	if (isset($filters['action_type']) && is_array($filters['action_type'])) {
+		if (empty($filters['action_type'])) {
+			$query .= " AND 0";
+		} else {
+			$placeholders = [];
+			foreach (array_values($filters['action_type']) as $index => $type) {
+				$placeholders[] = ":action_type_$index";
+				$params[":action_type_$index"] = (string)$type;
+			}
+			$query .= " AND action_type IN (" . implode(', ', $placeholders) . ")";
+		}
 	}
-
-	if (!empty($filters['ban'])) {
-		$actionConditions[] = "log_action LIKE :ban";
-		$actionConditions[] = "log_action LIKE :mute";
-		$actionConditions[] = "log_action LIKE :warn";
-		$params[':ban'] = '%ban%';
-		$params[':mute'] = '%mute%';
-		$params[':warn'] = '%warn%';
-	}
-
-	if (!empty($actionConditions)) {
-		$query .= " AND (" . implode(" OR ", $actionConditions) . ")";
-	}
-
 }
 
 
@@ -318,20 +319,20 @@ function buildFiltersFromRequest(array $defaultFilters, request $request): array
 }
 
 /**
- * Process 'role' and 'board' filters to ensure they are arrays if they are strings.
+ * Split the multi-select filters back into arrays.
+ *
+ * buildSmartQuery() joins them with spaces on the way into the URL, so anything arriving as a
+ * string has to be exploded again before it can be bound.
  *
  * @param array $filtersFromRequest The filters taken from the request.
- * @return array The processed filters with 'role' and 'board' as arrays.
+ * @param list<string> $extraKeys Additional multi-select keys beyond role and board.
+ * @return array The processed filters with every multi-select key as an array.
  */
-function processRoleAndBoardFilters(array $filtersFromRequest): array {
-	// Ensure that 'role' is an array if it's provided as a space-separated string
-	if (array_key_exists('role', $filtersFromRequest) && is_string($filtersFromRequest['role'])) {
-		$filtersFromRequest['role'] = explode(' ', $filtersFromRequest['role']);
-	}
-
-	// Ensure that 'board' is an array if it's provided as a space-separated string
-	if (array_key_exists('board', $filtersFromRequest) && is_string($filtersFromRequest['board'])) {
-		$filtersFromRequest['board'] = explode(' ', $filtersFromRequest['board']);
+function processRoleAndBoardFilters(array $filtersFromRequest, array $extraKeys = []): array {
+	foreach (array_merge(['role', 'board'], $extraKeys) as $key) {
+		if (array_key_exists($key, $filtersFromRequest) && is_string($filtersFromRequest[$key])) {
+			$filtersFromRequest[$key] = array_filter(explode(' ', $filtersFromRequest[$key]), fn($v) => $v !== '');
+		}
 	}
 
 	return $filtersFromRequest;
@@ -364,14 +365,15 @@ function handleRedirection(array $filtersFromRequest, bool $isSubmission, array 
  * @param bool $isSubmission Whether the form is being submitted
  * @param array $defaultFilters The default filters to fall back on if not provided in the request
  * @param request $request The request object to extract parameters from
+ * @param list<string> $extraArrayKeys Multi-select filter keys beyond role and board
  * @return array The filters array, processed and ready for use.
  */
-function getFiltersFromRequest(string $url, bool $isSubmission, array $defaultFilters, request $request): array {
+function getFiltersFromRequest(string $url, bool $isSubmission, array $defaultFilters, request $request, array $extraArrayKeys = []): array {
 	// Build filters based on the GET request
 	$filtersFromRequest = buildFiltersFromRequest($defaultFilters, $request);
 
-	// Process the 'role' and 'board' filters to ensure they are arrays
-	$filtersFromRequest = processRoleAndBoardFilters($filtersFromRequest);
+	// Ensure every multi-select filter is an array
+	$filtersFromRequest = processRoleAndBoardFilters($filtersFromRequest, $extraArrayKeys);
 
 	// trim trailing/prepended spaces
 	$filtersFromRequest = array_map(function($item) {

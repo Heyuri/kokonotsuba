@@ -72,7 +72,7 @@ function renderPager(int $currentPage, int $totalPages, callable $getLink, ?call
 	if ($currentPage >= $totalPages) {
 		$pageHTML .= '<td id="pagerNextCell">Last</td>';
 	} else {
-		$pageHTML .= '<td id="pagerPreviousCell">' . ($getForm ? $getForm($currentPage + 1, 'Next') : '<form action="' . $getLink($currentPage + 1) . '" method="get"><button type="submit">Next</button></form>') . '</td>';
+		$pageHTML .= '<td id="pagerNextCell">' . ($getForm ? $getForm($currentPage + 1, 'Next') : '<form action="' . $getLink($currentPage + 1) . '" method="get"><button type="submit">Next</button></form>') . '</td>';
 	}
 
 	$pageHTML .= '</tr></tbody></table>';

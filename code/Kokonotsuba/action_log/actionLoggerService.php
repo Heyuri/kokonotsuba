@@ -11,31 +11,78 @@ use Kokonotsuba\userRole;
 
 /** Service for logging and retrieving staff administrative actions. */
 class actionLoggerService {
+	private readonly actionTypeRegistry $typeRegistry;
+	private readonly actionLogReferences $references;
+
 	public function __construct(
 		private readonly actionLoggerRepository $actionLoggerRepository,
 		private readonly accountRepository $accountRepository,
 		private readonly request $request,
 		private readonly transactionManager $transactionManager
-	) {}
+	) {
+		$this->typeRegistry = new actionTypeRegistry();
+		$this->references = new actionLogReferences();
+	}
+
+	/** Every action type the filter form can offer, built-ins plus module-registered ones. */
+	public function getTypeRegistry(): actionTypeRegistry {
+		return $this->typeRegistry;
+	}
+
+	/** Declare an action type of a module's own. */
+	public function registerType(string $key, string $label, string $group = 'tool', bool $default = true): void {
+		$this->typeRegistry->register($key, $label, $group, $default);
+	}
+
+	/** The references log lines point at, and the resolvers that make them clickable. */
+	public function getReferences(): actionLogReferences {
+		return $this->references;
+	}
+
+	/**
+	 * Say where a kind of reference in a log line points, making those entries clickable.
+	 *
+	 * @param callable(string, int): ?string $resolver Given the id and the entry's board UID.
+	 */
+	public function registerReference(string $kind, callable $resolver): void {
+		$this->references->register($kind, $resolver);
+	}
 
 	/**
 	 * Fetch a paginated, optionally filtered slice of the action log.
 	 *
-	 * @param int    $amount  Maximum number of entries to return.
-	 * @param int    $offset  Pagination offset.
-	 * @param array  $filters Optional filter criteria.
-	 * @param string $order   Column to order by (validated against an allowlist).
+	 * @param int    $amount    Maximum number of entries to return.
+	 * @param int    $offset    Pagination offset.
+	 * @param array  $filters   Optional filter criteria.
+	 * @param string $order     Column to order by (validated against an allowlist).
+	 * @param string $direction Sort direction, ASC or DESC.
 	 * @return loggedActionEntry[] Array of hydrated log entry objects.
 	 */
-	public function getSpecifiedLogEntries(int $amount = 0, int $offset = 0, array $filters = [], string $order = 'time_added'): array {
-		$allowedOrderFields = ['time_added', 'user_id', 'action_type'];
-		if (!in_array($order, $allowedOrderFields, true)) {
-			$order = 'time_added';
+	public function getSpecifiedLogEntries(int $amount = 0, int $offset = 0, array $filters = [], string $order = 'time_added', string $direction = 'DESC'): array {
+		$filters = $this->normaliseTypeFilter($filters);
+
+		return $this->actionLoggerRepository->fetchLogEntries($amount, max($offset, 0), $filters, $order, $direction);
+	}
+
+	/**
+	 * Drop unknown action type keys, and the filter entirely when it selects everything, so the
+	 * common case does not carry a 27-way IN list into the query.
+	 */
+	private function normaliseTypeFilter(array $filters): array {
+		if (!isset($filters['action_type']) || !is_array($filters['action_type'])) {
+			return $filters;
 		}
 
-		$offset = max($offset, 0);
+		$known = $this->typeRegistry->filterKnown($filters['action_type']);
 
-		return $this->actionLoggerRepository->fetchLogEntries($amount, $offset, $filters, $order);
+		if (count($known) === count($this->typeRegistry->allKeys())) {
+			unset($filters['action_type']);
+			return $filters;
+		}
+
+		$filters['action_type'] = $known;
+
+		return $filters;
 	}
 
 	/**
@@ -44,10 +91,17 @@ class actionLoggerService {
 	 *
 	 * @param string $actionString Human-readable description of the action.
 	 * @param int    $board_uid    Board UID the action was performed on.
+	 * @param actionType|string $type The kind of event, for filtering.
 	 * @param bool $isAnon Flag whether to log the role + username of the user
 	 * @return void
 	 */
-	public function logAction(string $actionString, int $board_uid, bool $isAnon = false): void {
+	public function logAction(string $actionString, int $board_uid, actionType|string $type = actionType::OTHER, bool $isAnon = false): void {
+		$typeKey = $type instanceof actionType ? $type->value : strtolower(trim($type));
+
+		if (!$this->typeRegistry->has($typeKey)) {
+			$typeKey = actionType::OTHER->value;
+		}
+
 		// grab staff session
 		$staffSession = new staffAccountFromSession;
 		
@@ -71,12 +125,12 @@ class actionLoggerService {
 		$role = $roleEnum->value;
 
 		// write function for transaction
-		$write = function () use ($staffSession, $roleEnum, $name, $role, $actionString, $IPAddress, $board_uid, $isAnon): void {
+		$write = function () use ($staffSession, $roleEnum, $name, $role, $actionString, $typeKey, $IPAddress, $board_uid, $isAnon): void {
 			if ($roleEnum->isStaff() && !$isAnon) {
 				$this->accountRepository->incrementAccountActionRecordByID($staffSession->getUID());
 			}
 
-			$this->actionLoggerRepository->insertLogEntry($name, $role, $actionString, (string)$IPAddress, $board_uid);
+			$this->actionLoggerRepository->insertLogEntry($name, $role, $actionString, $typeKey, (string)$IPAddress, $board_uid);
 		};
 
 		// Left to themselves these are two autocommit writes, so two commits, and with
@@ -103,6 +157,6 @@ class actionLoggerService {
 	 * @return int|null Entry count, or null if unavailable.
 	 */
 	public function getAmountOfLogEntries(array $filters): ?int {
-		return $this->actionLoggerRepository->getAmountOfLogEntries($filters);
+		return $this->actionLoggerRepository->getAmountOfLogEntries($this->normaliseTypeFilter($filters));
 	}
 }

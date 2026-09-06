@@ -58,9 +58,6 @@ class postFileUploadController {
 
 	public function savePostThumbnailToBoard(): void {
 		$timeInMilliseconds = $this->file->getTimeInMilliseconds();
-		
-		$imageWidth = $this->file->getImageWidth();
-		$imageHeight = $this->file->getImageHeight();
 
 		$thumbnailExtention = $this->config['THUMB_SETTING']['Format'];
 		$thumbnailWidth = $this->thumbnail->getThumbnailWidth();
@@ -90,8 +87,6 @@ class postFileUploadController {
 		$this->thumbnailCreator->makeAndUpload(
 			$thumbnailPath,
 			$thumbnailDestinationName,
-			$imageWidth,
-			$imageHeight,
 			$thumbnailWidth,
 			$thumbnailHeight
 		);

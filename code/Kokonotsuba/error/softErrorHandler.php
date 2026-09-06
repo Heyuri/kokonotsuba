@@ -31,7 +31,13 @@ class softErrorHandler {
 		}
 	}
 
-	public function errorAndExit(string $errorMessage, int $statusCode = 0): void {
+	/**
+	 * Render an error page and stop.
+	 *
+	 * @param bool $showErrorImage Show the oopsie image - reserved for the blanket error, where
+	 *                             the message alone says nothing about what went wrong.
+	 */
+	public function errorAndExit(string $errorMessage, int $statusCode = 0, bool $showErrorImage = false): void {
 		if ($statusCode > 0) {
 			http_response_code($statusCode);
 		} else {
@@ -43,7 +49,8 @@ class softErrorHandler {
 			'{$MESG}' => htmlspecialchars($errorMessage, ENT_QUOTES, 'UTF-8'),
 			'{$RETURN_TEXT}' => _T('return'),
 			'{$BACK_TEXT}' => _T('error_back'),
-			'{$BACK_URL}' => htmlspecialchars($this->request->getReferer())
+			'{$BACK_URL}' => htmlspecialchars($this->request->getReferer()),
+			'{$SHOW_ERROR_IMAGE}' => $showErrorImage
 		);
 
 		$htmlOutput = '';

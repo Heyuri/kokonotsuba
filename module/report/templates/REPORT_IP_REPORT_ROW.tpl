@@ -17,5 +17,6 @@
 			[<a class="reportActionLink" href="{$ACTION_URL}" data-report-url="{$ACTION_DATA_URL}" data-report-id="{$REPORT_ID}">{$ACTION_TEXT}</a>]
 			[<a href="{$VIEW_URL}">{$VIEW_TEXT}</a>]
 			[<a href="{$POST_REPORTS_URL}">{$POST_REPORTS_TEXT}</a>]
+			<!--&IF($CAN_VIEW_IP,'[<a class="reportPostsLink" href="{$REPORTER_POSTS_URL}" title="{$REPORTER_POSTS_HINT}">{$REPORTER_POSTS_TEXT}</a>]','')-->
 		</td>
 	</tr>

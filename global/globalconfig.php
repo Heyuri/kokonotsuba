@@ -3,11 +3,22 @@
 * This is for global settings that should not be overwritten by any board's config, and thus can be accessed without needing to access the board.
 *
 * This file returns the config array directly. Load it via getGlobalConfig().
+*
+* Values specific to one site (URLs, salts) belong in the generated global/siteSettings.php,
+* which overrides the defaults below. This file is tracked by git; that one is not.
 */
 
+// The autoloader is registered by the entry point, but this file is also read very early by
+// tooling, so make sure the overlay class can be found.
+if (!class_exists(Kokonotsuba\config\siteSettings::class, false)) {
+	require_once __DIR__.'/../autoload.php';
+}
+
+$siteSettings = Kokonotsuba\config\siteSettings::load(__DIR__.'/siteSettings.php');
+
 // Values reused when building derived entries below.
-$staticUrl = 'https://static.example.net/'; // Where static files are located on the web. Include trailing '/'
-$staticPath = '/var/www/static/'; // Where static files are stored on the server. Include trailing '/'
+$staticUrl = $siteSettings['STATIC_URL'] ?? 'https://static.example.net/'; // Where static files are located on the web. Include trailing '/'
+$staticPath = $siteSettings['STATIC_PATH'] ?? '/var/www/static/'; // Where static files are stored on the server. Include trailing '/'
 
 // Capcode formats (put '%s' where you want the original name). Consumed only by staffCapcodes.
 $jCapcodeFmt = '%s';
@@ -17,7 +28,7 @@ $mgCapcodeFmt = '<span class="capcode capcodeManager">%s ## Manager</span>';
 $aCapcodeFmt = '<span class="capcode capcodeAdmin">%s ## Admin</span>';
 $sCapcodeFmt = '<span class="capcode capcodeSystem">%s ## System</span>';
 
-return [
+$config = [
 	'PIXMICAT_LANGUAGE' => 'en_US', // Language (available languages in /lib/lang/)
 	'ERROR_HANDLER_FILE' => __DIR__.'/error.log',
 
@@ -25,18 +36,24 @@ return [
 	'STATIC_PATH' => $staticPath,
 	'WEBSITE_URL' => '/',
 
+	// Where the header's "Home" link points. Site-wide default: boards can override it from the
+	// board configuration editor, which takes this as its default (see configs/appearance.php).
+	'HOME' => 'index.html',
+
 	'USE_CDN' => false, // Whether to use the "cdn" (storing all board upload storages in one central directory)
 
 	// Image Thumbnailing
-	'USE_THUMB' => 1, // Enable Thumbnailing [gd, imagemagick, imagick, magickwand, repng2jpeg]
+	'USE_THUMB' => 1, // Enable Thumbnailing
 	'MAX_W' => 250,  // Max Width
 	'MAX_H' => 250,  // Max Height
 	'MAX_RW' => 200, // Reply Max Width
 	'MAX_RH' => 200, // Reply Max Height
 	'THUMB_SETTING' => [ // Thumbnail Gen. Settings
-		'Method' => 'gd', // gd (default), imagemagick, imagick, magickwand, repng2jpeg
-		'Format' => 'png',
-		'Quality' => 75,
+		// Preferred backend: gd (default) or ffmpeg. Whichever is set, the other one covers
+		// the files it cannot read, such as AVIF and images too large to decode in memory.
+		'Method' => 'gd',
+		'Format' => 'png', // jpg, png, gif or webp
+		'Quality' => 75, // 1-100, lossy formats only (jpg, webp)
 		'TransparentBackgroundColor' => '#F0E0D6',
 	],
 
@@ -71,18 +88,25 @@ return [
 		'CAN_ONLY_VIEW_POSTS_FROM_USER' => Kokonotsuba\userRole::LEV_JANITOR,
 		'CAN_LEAVE_NOTE' => Kokonotsuba\userRole::LEV_JANITOR,
 		'CAN_DELETE_NOTE' => Kokonotsuba\userRole::LEV_ADMIN,
+		'CAN_VIEW_HOST_NOTE' => Kokonotsuba\userRole::LEV_JANITOR,
+		'CAN_LEAVE_HOST_NOTE' => Kokonotsuba\userRole::LEV_MODERATOR,
+		'CAN_DELETE_HOST_NOTE' => Kokonotsuba\userRole::LEV_ADMIN,
 		'CAN_EDIT_POST' => Kokonotsuba\userRole::LEV_MODERATOR,
+		'CAN_VIEW_POST_REVISIONS' => Kokonotsuba\userRole::LEV_JANITOR,
+		'CAN_RESTORE_POST_REVISIONS' => Kokonotsuba\userRole::LEV_MODERATOR,
 		'CAN_BAN_FILES' => Kokonotsuba\userRole::LEV_MODERATOR,
 		'CAN_MANAGE_PMS' => Kokonotsuba\userRole::LEV_ADMIN,
 		'CAN_MANAGE_ADS' => Kokonotsuba\userRole::LEV_ADMIN,
 		'CAN_MANAGE_ANTI_SPAM_SYSTEM' => Kokonotsuba\userRole::LEV_MANAGER,
-		'CAN_MANAGE_FULL_BANNERS' => Kokonotsuba\userRole::LEV_MANAGER,
+		'CAN_MANAGE_BANNERS' => Kokonotsuba\userRole::LEV_MANAGER,
 		'CAN_ANONYMIZE_IPS' => Kokonotsuba\userRole::LEV_ADMIN,
 		'CAN_VIEW_VOTES' => Kokonotsuba\userRole::LEV_MODERATOR,
 		'CAN_VIEW_REPORTS' => Kokonotsuba\userRole::LEV_JANITOR,
 		'CAN_APPROVE_REPORT' => Kokonotsuba\userRole::LEV_JANITOR,
 		'CAN_DISMISS_REPORT' => Kokonotsuba\userRole::LEV_MODERATOR,
 		'CAN_CLEAR_POST_REPORTS' => Kokonotsuba\userRole::LEV_MODERATOR,
+		'CAN_VIEW_BAN_APPEALS' => Kokonotsuba\userRole::LEV_MODERATOR,
+		'CAN_ACTION_BAN_APPEAL' => Kokonotsuba\userRole::LEV_MODERATOR,
 	],
 
 	// mod capcode map
@@ -209,8 +233,20 @@ return [
 		'HTTP_FORWARDED',
 	],
 
-	// Global bans file name (stored in global/)
+	// Legacy flat-file bans, kept only so Utilities/ban-import-cli.php knows where to look.
+	// Bans themselves live in the database; see code/Kokonotsuba/ban/.
 	'GLOBAL_BANS' => 'globalbans.log',
+
+	// Name of the token cookie
+	'VISITOR_TOKEN_COOKIE' => 'koko',
+
+	// How long that cookie lives, in days.
+	'VISITOR_TOKEN_DAYS' => 730,
+
+	// Key the token cookie is signed with, so a hand-edited one is thrown away and reissued
+	// rather than believed. Blank falls back to TRIPSALT + IDSEED, which every install has.
+	// Changing it invalidates every token cookie; the bans tied to them are untouched.
+	'VISITOR_TOKEN_SECRET' => '',
 
 	// Placeholder thumbnails (derived from STATIC_URL)
 	'SWF_THUMB' => $staticUrl.'image/swf_thumb.png',
@@ -223,3 +259,6 @@ return [
 	// overboard sub header conf, its in here so we can attach functions to it for seeing last post times on other scripts
 	'OVERBOARD_SUB_HEADER_HTML' => '',
 ];
+
+// Site-specific values from global/siteSettings.php win over the defaults above.
+return array_replace($config, $siteSettings);

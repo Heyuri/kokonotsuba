@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\tripcode;
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\capcode_backend\capcodeService;
@@ -41,6 +42,12 @@ class capcodeModuleRequestHandler {
 			$this->handleCapcodeCreate($accountId);
 		}
 
+		// switch a capcode on or off
+		elseif($action === 'toggleCapcode') {
+			// handle capcode toggle request
+			$this->handleCapcodeToggle();
+		}
+
 		// modify a capcode
 		elseif($action) {
 			// handle capcode modification request
@@ -61,10 +68,39 @@ class capcodeModuleRequestHandler {
 			$this->capcodeService->removeCapcode($capcodeId);
 
 			// log the deletion
-			$this->actionLoggerService->logAction("Deleted capcode ($capcodeId)", GLOBAL_BOARD_UID);
+			$this->actionLoggerService->logAction("Deleted capcode ($capcodeId)", GLOBAL_BOARD_UID, actionType::TOOL_CAPCODE);
 		});
 	}
 	
+	private function handleCapcodeToggle(): void {
+		$this->handleCapcodeOperation('toggling', function() {
+			// get the capcode id from POST
+			$capcodeId = (int)$this->request->getParameter('capcodeId', 'POST');
+
+			// validate the capcode id
+			validateCapcodeId($capcodeId);
+
+			// fetch the row so the current state is known
+			$capcode = $this->capcodeService->getCapcode($capcodeId);
+
+			// check if its not empty (meaning that it exists)
+			if(empty($capcode)) {
+				// throw an exception to the user
+				throw new BoardException("Capcode not found when toggling!");
+			}
+
+			// flip whatever it is currently set to
+			$isEnabled = empty($capcode['is_enabled']);
+
+			// persist the new state
+			$this->capcodeService->setCapcodeEnabled($capcodeId, $isEnabled);
+
+			// log the toggle
+			$state = $isEnabled ? 'Enabled' : 'Disabled';
+			$this->actionLoggerService->logAction("$state capcode ($capcodeId)", GLOBAL_BOARD_UID, actionType::TOOL_CAPCODE);
+		});
+	}
+
 	private function handleCapcodeCreate(int $accountId): void {
 		$this->handleCapcodeOperation('creating', function() use ($accountId) {
 			// who is adding the capcode
@@ -84,7 +120,7 @@ class capcodeModuleRequestHandler {
 			);
 
 			// log the creation
-			$this->actionLoggerService->logAction("Created capcode ($capcodeId)", GLOBAL_BOARD_UID);
+			$this->actionLoggerService->logAction("Created capcode ($capcodeId)", GLOBAL_BOARD_UID, actionType::TOOL_CAPCODE);
 		});
 	}
 
@@ -205,20 +241,24 @@ class capcodeModuleRequestHandler {
 			// get the input from POST
 			[$tripcode, $isSecure, $colorHex, $capcodeText] = $this->getCapcodeInputFromRequest();
 
+			// unchecked checkboxes are absent from POST, so a missing value means disabled
+			$isEnabled = (bool)$this->request->getParameter('capcodeEnabled', 'POST', '');
+
 			// get the fields from POST and assemble into an assoc array
 			// each field corrosponds to a database column
 			$data = [
 				'tripcode' => $tripcode,
 				'is_secure' => (int)$isSecure,
 				'color_hex' => $colorHex,
-				'cap_text' => $capcodeText
+				'cap_text' => $capcodeText,
+				'is_enabled' => (int)$isEnabled
 			];
 
 			// pass the id and data array to a modify method that UPDATEs the row in the database
 			$this->capcodeService->editCapcode($capcodeId, $data);
 
 			// log the modification
-			$this->actionLoggerService->logAction("Modified capcode ($capcodeId)", GLOBAL_BOARD_UID);
+			$this->actionLoggerService->logAction("Modified capcode ($capcodeId)", GLOBAL_BOARD_UID, actionType::TOOL_CAPCODE);
 		});
 	}
 

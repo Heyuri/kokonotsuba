@@ -9,6 +9,7 @@ use Kokonotsuba\module_classes\traits\listeners\CommentExtrasListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\ip\ipAnonymizer;
 
 use function Puchiko\strings\sanitizeStr;
 
@@ -824,8 +825,15 @@ class moduleMain extends abstractModuleMain {
 
 	private function _URLExcced(){
 		if($this->urlcount > $this->MaxURLCount) {
+			// A flat file the anonymizer cannot reach, so the address is written already
+			// anonymized. With no salt configured nothing anywhere is anonymized and this
+			// falls back to the raw address.
+			$forms = ipAnonymizer::fromSettings()->storedForms(
+				$this->moduleContext->request->getRemoteAddr()
+			);
+
 		  	  $fh = fopen($this->URLTrapLog, 'a+b');
-		  	  fwrite($fh, time()."\t" . $this->moduleContext->request->getRemoteAddr() . "\t{$this->urlcount}\n");
+		  	  fwrite($fh, time()."\t" . end($forms) . "\t{$this->urlcount}\n");
 		  	  fclose($fh);
 		  	  throw new BoardException("URL: Tags exceed max limit");
 		}

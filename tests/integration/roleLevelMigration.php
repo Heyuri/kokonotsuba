@@ -4,7 +4,7 @@
  * Integration tests for the role level migration, run against a real MariaDB.
  *
  * The unit suite pins the shape of the map (tests/unit/Kokonotsuba/LegacyRoleLevelMapTest.php).
- * This runs the UPDATE that Utilities/migrateRoleLevels-cli.php issues against real tables and
+ * This runs the UPDATE that migrations/20260815_000002_role_levels.php issues against real tables and
  * checks what the database is left holding - including the parts that only a real engine can
  * settle: that a single CASE statement cannot collide old and new values partway through, and
  * that re-running it is a no-op.

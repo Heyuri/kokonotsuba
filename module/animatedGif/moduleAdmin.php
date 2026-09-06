@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\animatedGif;
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
@@ -22,7 +23,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	public function getName(): string {
-		return 'Animated gif toggle tool';
+		return 'Animated image toggle tool';
 	}
 
 	public function getVersion(): string {
@@ -41,12 +42,23 @@ class moduleAdmin extends abstractModuleAdmin {
 			return;
 		}
 		$url = $this->generateAnimatedGifUrl($fileData['postUid'], $fileData['fileId']);
-		$label = $fileData['isAnimated'] ? 'Use still image of GIF' : 'Use animated GIF';
-		$widgetArray[] = $this->buildWidgetEntry($url, 'animateGif', $label, '');
+		$widgetArray[] = $this->buildWidgetEntry($url, 'animateGif', self::toggleLabel($fileData), '');
 	}
 
+	/**
+	 * Only offer the toggle on files that really do hold more than one frame, and that are
+	 * small enough for the renderer to play inline once toggled.
+	 */
 	private function canAnimateAttachment(array $attachment): bool {
-		return $attachment['fileExtension'] === 'gif';
+		return moduleMain::isAnimatedAttachment(
+			$attachment,
+			(int)$this->getModuleConfig('MAX_SIZE_FOR_ANIMATED_GIF', 2000)
+		);
+	}
+
+	/** Menu label for the toggle, which flips depending on what is showing now. */
+	private static function toggleLabel(array $attachment): string {
+		return $attachment['isAnimated'] ? 'Use still thumbnail' : 'Play animation inline';
 	}
 
 	private function generateAnimatedGifUrl(int $postUid, int $fileId): string {
@@ -124,10 +136,10 @@ class moduleAdmin extends abstractModuleAdmin {
 		$isAnimated = !$isAnimated;
 
 		$logMessage = $isAnimated
-			? 'Animated GIF activated on No. ' . htmlspecialchars($post->getNumber())
-			: 'Animated GIF deactivated on No. ' . htmlspecialchars($post->getNumber());
+			? 'Inline animation activated on No. ' . htmlspecialchars($post->getNumber())
+			: 'Inline animation deactivated on No. ' . htmlspecialchars($post->getNumber());
 
-		$this->logAction($logMessage, $post->getBoardUID());
+		$this->logAction($logMessage, $post->getBoardUID(), actionType::POST_FLAG);
 
 		// get the board of the post
 		$board = searchBoardArrayForBoard($post->getBoardUID());
@@ -139,11 +151,13 @@ class moduleAdmin extends abstractModuleAdmin {
 
 			// send json first
 			$flag = $isAnimated ? 'g' : 'G';
-			$title = $isAnimated ? 'Use still image of GIF' : 'Use animated GIF';
+			$title = self::toggleLabel($attachment);
 			$animatedGifButtonUrl = $this->generateAnimatedGifUrl($attachment['postUid'], $attachment['fileId']);
 			sendAjaxAndDetach([
 				'active' => $isAnimated,
 				'attachmentUrl' => $attachmentUrl,
+				'label' => $title,
+				'indicatorLabel' => moduleMain::animationLabel($attachment),
 				'newGifButton' => $this->renderAttachmentButton($animatedGifButtonUrl, 'GIF', $title, $flag)
 			]);
 
@@ -160,7 +174,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	private function getAnimatedAttachmentUrl(array $attachment, bool $isAnimated): string {
-		// if its animated then get the true attachment url
+		// if its animated then get the full file url so the animation plays
 		if($isAnimated) {
 			// return attachment url
 			return getAttachmentUrl($attachment, false);

@@ -151,7 +151,16 @@ function generateUid($length = 8) {
 	return $uid;
 }
 
-function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = false, bool $convertNewLines = false): string {
+/**
+ * Escape a string for HTML output.
+ *
+ * There is deliberately no way to opt out: the one path that emits unescaped post text is a
+ * post flagged textFormat::RAW_HTML, handled by commentFormatter.
+ *
+ * @param string $str             Text to escape.
+ * @param bool   $convertNewLines Whether newlines become <br>.
+ */
+function sanitizeStr(string $str, bool $convertNewLines = false): string {
 	// Trim whitespace from both ends of the string
 	$str = trim($str);
 
@@ -165,12 +174,6 @@ function sanitizeStr(string $str, bool $isAdmin = false, bool $injectHtml = fals
 
 	// Convert single quote to HTML entity (htmlspecialchars doesn't convert it by default)
 	$str = str_replace("'", "&#039;", $str);
-
-	// Allow HTML tags when $injectHtml is true and the user is an admin ($isAdmin)
-	if ($isAdmin && $injectHtml) {
-		// Convert &lt;tag&gt; back to <tag>
-		$str = preg_replace('/&lt;(.*?)&gt;/', '<$1>', $str);
-	}
 
 	// Convert newlines to <br> tags if $convertNewLines is true
 	if ($convertNewLines) {

@@ -4,6 +4,7 @@ namespace Kokonotsuba\Modules\soudane;
 
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\ip\ipAnonymizer;
 
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
 
@@ -57,7 +58,7 @@ class soudaneRepository extends baseRepository {
 		$this->query($query, [
 			':post_uid'   => $postUid,
 			':ip_address' => $ipAddress,
-			':ip_hash'    => substr(hash('sha512', $ipAddress), 0, 16),
+			':ip_hash'    => $this->anonymizedForm($ipAddress),
 			':yeah'       => (int)$isYeah,
 		]);
 	}
@@ -114,5 +115,16 @@ class soudaneRepository extends baseRepository {
 		$params[] = (int)$isYeah;
 
 		return $this->queryAll($query, $params);
+	}
+
+	/**
+	 * The form this address takes once anonymized, so a lookup matches a vote whether it was
+	 * cast before or after the anonymizer ran. Falls back to the address itself when no salt is
+	 * configured, since nothing has been anonymized in that case.
+	 */
+	private function anonymizedForm(string $ipAddress): string {
+		$forms = ipAnonymizer::fromSettings()->storedForms($ipAddress);
+
+		return end($forms);
 	}
 }

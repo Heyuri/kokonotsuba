@@ -1,4 +1,4 @@
-        <div class="pmFormContainer centerText">
+        <div id="pmCompose" class="pmFormContainer centerText">
             <form class="detailsboxForm formtable" action="{$MODULE_PAGE_URL}" method="POST" class="pmComposeForm">
                 <details class="pmReplyForm detailsbox" open><summary>{$SEND_LABEL}</summary>
                     <div class="disclaimer pmEncryptionDiclaimer">{$PM_DISCLAIMER_TEXT}</div>

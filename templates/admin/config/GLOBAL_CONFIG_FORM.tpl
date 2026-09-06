@@ -9,7 +9,11 @@
 
 	{$CONFIG_NOTICE}
 
-	{$CONFIG_GROUPS}
+	{$CONFIG_NAV}
+
+	<div class="configEditorGroups">
+		{$CONFIG_GROUPS}
+	</div>
 
 	<div class="buttonSection">
 		<button type="submit" id="boardConfigSaveButton">Save configuration</button>

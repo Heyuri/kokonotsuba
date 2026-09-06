@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\module_classes\traits;
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\traits\listeners\MassModerateListenerTrait;
 use Kokonotsuba\post\Post;
@@ -213,7 +214,7 @@ trait ToggleActionTrait {
 
 		foreach ($grouped as $boardUid => $byState) {
 			foreach ($byState as $active => $numbers) {
-				$this->logAction($this->getToggleLogLabel((bool)$active) . ' ' . implode(', ', $numbers), (int)$boardUid);
+				$this->logAction($this->getToggleLogLabel((bool)$active) . ' ' . implode(', ', $numbers), (int)$boardUid, actionType::POST_FLAG);
 			}
 		}
 	}

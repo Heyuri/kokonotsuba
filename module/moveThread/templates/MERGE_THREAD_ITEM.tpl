@@ -1,0 +1,1 @@
+<li class="mergeThreadItem" data-thread-uid="{$THREAD_UID}"{$PREVIEW_ATTRIBUTES}><label><input type="checkbox" name="merge-source-uids[]" value="{$THREAD_UID}"> No.{$THREAD_NUMBER} - {$THREAD_SUBJECT} ({$REPLY_COUNT})</label></li>

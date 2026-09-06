@@ -1,0 +1,337 @@
+/* ── The banned user's own page ────────────────────────────────────────────── */
+
+.banBlockedText {
+	font-weight: var(--font-weight-bold);
+}
+
+.banEntry {
+	margin: 0.6em 0;
+	padding: 0.5em;
+}
+
+.banEntryHeading {
+	margin: 0 0 0.4em;
+}
+
+.banEntryBoard {
+	font-weight: normal;
+}
+
+.banEntryReason {
+	margin-bottom: 0.4em;
+}
+
+.banEntryReasonLabel {
+	font-weight: var(--font-weight-bold);
+}
+
+.banEntryDetail {
+	margin: 0.2em 0;
+}
+
+/* The post and the appeal form, under the summary row rather than beside the picture. The
+   page around them is centred, so this is where they are set back to reading left, the way
+   deletedPostEntry and the report previews do it. */
+.banEntryBelow {
+	margin-top: 0.6em;
+	text-align: left;
+}
+
+/* ── The post a ban was filed on ───────────────────────────────────────────── */
+
+/* The post itself is rendered by the board's own post renderer, so it brings its own styling;
+   this is only the box it sits in. */
+.banPost {
+	margin: 0.6em 0;
+	padding: 0.4em;
+	background-color: var(--color-bg-main);
+	border-left: 3px solid red;
+	text-align: left;
+	display: flow-root;
+}
+
+.banPostHeading {
+	margin: 0 0 0.4em;
+}
+
+/* ── Appeals, reader side ──────────────────────────────────────────────────── */
+
+/* The rule above the form is a threadSeparator <hr>, the same one that parts posts, so it is
+   the theme that decides what it looks like. */
+.banAppealForm {
+	margin-top: 0.4em;
+}
+
+.banAppealHeading {
+	margin: 0 0 0.3em;
+}
+
+.banAppealReason {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.banAppealStatus {
+	margin-top: 0.8em;
+	padding: 0.4em;
+	border-left: 3px solid var(--color-border, #aaa);
+}
+
+.banAppealStatusLabel {
+	margin: 0 0 0.3em;
+	font-weight: var(--font-weight-bold);
+}
+
+.banAppealStatus p {
+	margin: 0.2em 0;
+}
+
+.banAppealTag {
+	font-weight: var(--font-weight-bold);
+}
+
+.banAppealBlocked {
+	margin-top: 0.8em;
+	font-style: italic;
+}
+
+/* ── Ban table ─────────────────────────────────────────────────────────────── */
+
+.banToolbar {
+	margin-bottom: 0.5em;
+}
+
+.banSectionHeading {
+	margin: 0.8em 0 0.4em;
+}
+
+/* The appeal queue's one-select filter; the ban table's own filter form is the shared
+   details box the other staff pages use. */
+.banFilterForm {
+	margin-bottom: 0.6em;
+}
+
+.banFilterField {
+	margin-right: 0.8em;
+}
+
+.banTableHidden {
+	display: none;
+}
+
+.banEmpty {
+	font-style: italic;
+}
+
+.banTable .colSelect,
+.banTable .colStatus {
+	text-align: center;
+}
+
+.banTable .colReason {
+	max-width: 24em;
+}
+
+/* Rows that no longer bite stay in place and fade, so the table doubles as the record of
+   what was done rather than only what is live. */
+.banRowExpired,
+.banRowRevoked {
+	opacity: 0.55;
+}
+
+.banRowWarning {
+	opacity: 0.8;
+}
+
+/* A live mute is in force, so it is not dimmed - just marked, since it will be swept away
+   on its own once it lapses. */
+.banRowMute .colStatus,
+.banRowMute .colDuration {
+	font-style: italic;
+}
+
+/* The public "user was banned for this post" notice, rendered from the ban rather than
+   baked into the comment. */
+.banPublicNotice {
+	margin-top: 0.3em;
+}
+
+.banPrivateReason {
+	font-size: 0.9em;
+	font-style: italic;
+}
+
+.banReasonTag {
+	font-weight: var(--font-weight-bold);
+	font-style: normal;
+}
+
+.banIpLink {
+	white-space: nowrap;
+}
+
+.banIpFilterNotice {
+	margin: 0 0 0.4em;
+}
+
+.banAppealFlag {
+	display: block;
+	font-size: 0.9em;
+	font-style: italic;
+}
+
+/* ── Ban form ──────────────────────────────────────────────────────────────── */
+
+.banCheckpointList {
+	margin: 0.3em 0 0;
+	padding-left: 0;
+	list-style: none;
+	font-size: var(--font-size-small);
+}
+
+.banCheckpointItem {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.banSelectAllLabel {
+	font-weight: var(--font-weight-bold);
+}
+
+.banPermanentLabel {
+	margin-left: 0.6em;
+}
+
+/* ── Single ban page ───────────────────────────────────────────────────────── */
+
+.banDetailTable {
+	margin-bottom: 0.8em;
+}
+
+/* The post is drawn by its own board's renderer, so it brings its own styling; this is the
+   box around it and the cap that keeps a long post from burying the rest of the record. */
+.banPostPreview {
+	max-width: 48em;
+	max-height: 24em;
+	overflow-y: auto;
+}
+
+.banPostPreview .post {
+	margin: 0;
+}
+
+/* Controls the cloned post keeps from the live page, none of which mean anything in here. */
+.banPostPreview .postMenu,
+.banPostPreview .deletionCheckbox,
+.banPostPreview .widgetRefs {
+	display: none;
+}
+
+.banMissingPost {
+	font-style: italic;
+	color: var(--color-fg-omitted);
+}
+
+.banDetailReason {
+	max-width: 40em;
+}
+
+.banStatusExpired,
+.banStatusRevoked {
+	opacity: 0.7;
+}
+
+/* ── Appeal queue ──────────────────────────────────────────────────────────── */
+
+/* A row is as tall as its longest cell, so everything short in it has to start at the top
+   rather than float in the middle of the space the reasons opened up. */
+.banAppealTable td {
+	vertical-align: top;
+}
+
+.banAppealTable .colSelect {
+	text-align: center;
+}
+
+/* Nothing on a ban's own page is ticked - the deciding is done from the queue or from the
+   appeal's own page - so its appeal table drops the column rather than showing an empty one. */
+.banViewAppealTable .colSelect {
+	display: none;
+}
+
+/* Widths are set on the cells that hold running text, so the columns stop trading places
+   from page to page as the reasons on them change length. min-width is what an auto-layout
+   table actually honours; the caps live on the wrapper divs below. */
+.banAppealTable .colBan {
+	min-width: 11em;
+}
+
+.banAppealTable .colReason {
+	min-width: 18em;
+}
+
+.banAppealTable .colStatus {
+	min-width: 10em;
+}
+
+.banAppealTable .colAppellant,
+.banAppealTable .colFiledAt,
+.banAppealTable .colActions {
+	white-space: nowrap;
+}
+
+/* An appeal is however much the user chose to type, so it is capped and scrolled rather than
+   left to set the height of every row beside it. */
+.banAppealReasonText {
+	max-width: 34em;
+	max-height: 9em;
+	overflow-y: auto;
+	overflow-wrap: anywhere;
+}
+
+.banAppealStatusTag {
+	font-weight: var(--font-weight-bold);
+	white-space: nowrap;
+}
+
+/* The ban's own reason and a staff note are context for the appeal beside them rather than
+   part of it, so they read quieter and are set off from the cell's own text. */
+.banAppealAside {
+	margin-top: 0.35em;
+	padding-left: 0.5em;
+	border-left: 2px solid var(--color-x-lo-contrast-border);
+	font-size: var(--font-size-small);
+	max-width: 26em;
+	max-height: 7em;
+	overflow-y: auto;
+	overflow-wrap: anywhere;
+}
+
+.banAppealBanBoard,
+.banAppealActionedBy {
+	margin-top: 0.2em;
+	font-size: var(--font-size-small);
+	color: var(--color-fg-omitted);
+}
+
+.banAppealBanId {
+	white-space: nowrap;
+}
+
+.banAppealApproved,
+.banAppealDenied {
+	opacity: 0.7;
+}
+
+/* The decision sits in a formtable like every other staff form, so it needs no layout of its
+   own - only the room between it and the table it decides on. */
+.banAppealDecisionTable,
+.banAppealDecisionLegend {
+	margin-bottom: 0.5em;
+}
+
+.banAppealReasonCell,
+.banAppealNote {
+	max-width: 40em;
+	word-break: break-word;
+}

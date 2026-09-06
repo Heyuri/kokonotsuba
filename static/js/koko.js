@@ -1,6 +1,63 @@
 /* LOL HEYURI
  */
 
+/* Storage that cannot throw.
+ *
+ * A browser told to block cookies/site data does not hand back an empty localStorage - it
+ * throws SecurityError on the property itself, so the first unguarded read kills the script
+ * that touched it where it stands. Nothing looks broken until something only JS can finish
+ * stops halfway: a noko reply is inserted client-side rather than by a page load, so the
+ * post is saved and the page never says so.
+ *
+ * If a store is unreachable (blocked, or Safari's private mode, which reads fine and throws
+ * on write) it is shadowed with an in-memory one for the life of the page. Nothing persists,
+ * which is what the visitor asked for, and every getItem/setItem in the codebase - modules
+ * included - keeps working untouched.
+ *
+ * This runs before anything else in koko.js because koko.js is the first script on the page.
+ */
+(function () {
+	function memoryStorage() {
+		var data = Object.create(null);
+
+		return {
+			getItem: function (key) {
+				key = String(key);
+				return key in data ? data[key] : null;
+			},
+			setItem: function (key, value) { data[String(key)] = String(value); },
+			removeItem: function (key) { delete data[String(key)]; },
+			clear: function () { data = Object.create(null); },
+			key: function (i) {
+				var keys = Object.keys(data);
+				return i < keys.length ? keys[i] : null;
+			},
+			get length() { return Object.keys(data).length; }
+		};
+	}
+
+	// Reads and writes are probed together: a store that reads but cannot be written to is no
+	// more usable than one that throws outright.
+	function usable(name) {
+		try {
+			var store = window[name];
+			store.setItem('__kkprobe', '1');
+			store.removeItem('__kkprobe');
+			return true;
+		} catch (e) {
+			return false;
+		}
+	}
+
+	['localStorage', 'sessionStorage'].forEach(function (name) {
+		if (usable(name)) return;
+
+		try {
+			Object.defineProperty(window, name, { value: memoryStorage(), configurable: true });
+		} catch (e) {}
+	});
+})();
+
 const KOKOJS = true;
 const STATIC_URL = document.currentScript.src.split('?')[0].replace(/js\/[^/]+\.js$/, ''); // Get the script URL, and remove 'js/{filename}.js'
 
@@ -658,6 +715,21 @@ const kkSetting = {
 		if (def.bodyClass) document.body.classList.toggle(def.bodyClass, value);
 		if (typeof def.onChange == "function") def.onChange(value);
 	},
+	/*
+	 * Re-assert every bodyClass from its stored value. The inline script at the top of
+	 * the body (generateEarlySettingsScript) has already done this before the first
+	 * paint; this catches values that only arrived afterwards, e.g. through kkStore's
+	 * cross-subdomain mirror.
+	 */
+	applyBodyClasses: function () {
+		for (var i=0; i<this._sections.length; i++) {
+			var items = this._sections[i].items;
+			for (var j=0; j<items.length; j++) {
+				var def = items[j];
+				if (def.bodyClass) document.body.classList.toggle(def.bodyClass, _kkSetting(def.key));
+			}
+		}
+	},
 	_store: function (def, value) {
 		if (typeof def.store == "function") def.store(def.key, value);
 		else localStorage.setItem(def.key, value);
@@ -713,8 +785,7 @@ const kkSetting = {
 // General-tab settings, grouped into sections.
 kkSetting.add({ key: "neomenu", label: "Use neomenu", bodyClass: "neomenuEnabled",
 	onChange: function (v) { kkjs.toggleNeomenu(v); } }, "Interface");
-kkSetting.add({ key: "persistnav", label: "Persistent navigation", bodyClass: "persistnav",
-	onChange: function (v) { kkjs.stickNav(v); } }, "Layout");
+kkSetting.add({ key: "persistnav", label: "Persistent navigation", bodyClass: "persistnav" }, "Layout");
 kkSetting.add({ key: "persistpager", label: "Persistent pager", bodyClass: "persistpager" }, "Layout");
 kkSetting.add({ key: "centerthreads", label: "Center threads", bodyClass: "centerthreads" }, "Layout");
 kkSetting.add({ key: "tripkeys", label: "Futallaby style tripkeys" }, "Posting");
@@ -722,15 +793,6 @@ kkSetting.add({ key: "tripkeys", label: "Futallaby style tripkeys" }, "Posting")
 const kkjs = {
 	modules: Array(),
 	posts: null,
-	/* Persistent navigation: pin the nav section, so everything in it rides along. */
-	stickNav: function (enabled) {
-		var section = $doc.querySelector(".stickyNav");
-		if (!section) return;
-
-		section.style.position = enabled ? "sticky" : "";
-		section.style.top = enabled ? "0" : "";
-		section.style.zIndex = enabled ? 3 : "";
-	},
 	startup: function () {
 		kkjs.posts = $class("post");
 		// Load stored name, email, and password
@@ -739,35 +801,9 @@ const kkjs = {
 		// Initialize email behavior and file upload reset
     kkjs.ee();
 
-		// Initialization logic for centerthreads, persistpager, persistnav
-		const body = document.body;
-		if (_kkSetting("centerthreads")) {
-			body.classList.add("centerthreads");
-		} else {
-			body.classList.remove("centerthreads");
-		}
-
-		if (_kkSetting("persistpager")) {
-			body.classList.add("persistpager");
-		} else {
-			body.classList.remove("persistpager");
-		}
-
-		if (_kkSetting("persistnav")) {
-			body.classList.add("persistnav");
-			// body.insertAdjacentHTML("afterbegin", '<br>');
-		} else {
-			body.classList.remove("persistnav");
-		}
-
-		kkjs.stickNav(_kkSetting("persistnav"));
-
-		if (_kkSetting("neomenu")) {
-			body.classList.add("neomenuEnabled");
-			// body.insertAdjacentHTML("afterbegin", '<br>');
-		} else {
-			body.classList.remove("neomenuEnabled");
-		}
+		// Layout settings (centerthreads, persistpager, persistnav, neomenu) are already
+		// on the body from the inline script; this only re-asserts them.
+		kkSetting.applyBodyClasses();
 
 		if (_kkSetting("tripkeys")) {
 			kkjs.applyTripKeys();

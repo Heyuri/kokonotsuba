@@ -2,10 +2,14 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\action_log\actionType;
+use Kokonotsuba\renderers\commentFormatter;
+
 use Kokonotsuba\board\board;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\account\staffAccountFromSession;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\post\postListFilters;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\post\postService;
 use Kokonotsuba\error\softErrorHandler;
@@ -14,10 +18,9 @@ use Kokonotsuba\template\pageRenderer;
 use Kokonotsuba\post\deletion\deletedPostsService;
 use Kokonotsuba\policy\postRenderingPolicy;
 use Kokonotsuba\request\request;
-use Kokonotsuba\userRole;
+use Kokonotsuba\ban\visitorTokenSigner;
 use Kokonotsuba\error\BoardException;
-use function Kokonotsuba\libraries\getFiltersFromRequest;
-use function Puchiko\strings\buildSmartQuery;
+use function Puchiko\strings\sanitizeStr;
 use function Kokonotsuba\libraries\createAssocArrayFromBoardArray;
 use function Kokonotsuba\libraries\html\drawManagePostsFilterForm;
 use function Kokonotsuba\libraries\_T;
@@ -73,57 +76,23 @@ class managePostsRoute {
 	}
 
 	private function initializePageContext(): array {
-		$isSubmission = $this->request->hasParameter('filterSubmissionFlag', 'GET');
 		$managePostsUrl = $this->board->getBoardURL(true) . '?mode=managePosts';
-		$accountId = $this->currentUserId;
-		
-		$defaultFilters = $this->initializeManagePostsFilters();
-		$filtersFromRequest = getFiltersFromRequest($managePostsUrl, $isSubmission, $defaultFilters, $this->request);
 
-		// Restrict ip_address filter to users with CAN_VIEW_IP_ADDRESSES
-		$roleLevel = $this->staffAccountFromSession->getRoleLevel();
-		$canViewIp = $roleLevel->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_JANITOR));
-		if (!$canViewIp && isset($filtersFromRequest['ip_address']) && $filtersFromRequest['ip_address'] !== '') {
-			$filtersFromRequest['ip_address'] = '';
-		}
-		
-		// Keep form filters clean - don't expose the resolved IP
-		$formFilters = $filtersFromRequest;
-		
-		// Create query filters with resolved postsFrom for accurate results
-		$queryFilters = $filtersFromRequest;
-		$postsFrom = $this->request->getParameter('postsFrom', 'GET');
-		if ($postsFrom && is_numeric($postsFrom)) {
-			$queryFilters['ip_address'] = $this->postRepository->resolveHostFromPostUid((int)$postsFrom);
-		}
-		
-		$cleanUrl = buildSmartQuery($managePostsUrl, $defaultFilters, $formFilters, true);
-		
-		// Append postsFrom to cleanUrl if it exists (keep URL clean - don't expose IP)
-		if($postsFrom) {
-			$cleanUrl .= '&postsFrom=' . urlencode($postsFrom);
-		}
-		
-		$roleLevel = $this->staffAccountFromSession->getRoleLevel();
-		$canViewIp = $roleLevel->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_VIEW_IP_ADDRESSES', userRole::LEV_JANITOR));
-		$canViewHashedIp = $roleLevel->isAtLeast($this->board->getConfigValue('AuthLevels.CAN_ONLY_VIEW_POSTS_FROM_USER', userRole::LEV_JANITOR));
-		$canViewDeleted = $this->postRenderingPolicy->viewDeleted();
-		
-		$page = max(1, (int) $this->request->getParameter('page', default: 1));
-		
-		return [
+		$filters = new postListFilters(
+			$this->board,
+			$this->postRepository,
+			$this->request,
+			$this->staffAccountFromSession->getRoleLevel()
+		);
+
+		$context = $filters->resolve($managePostsUrl);
+
+		return $context + [
 			'managePostsUrl' => $managePostsUrl,
-			'accountId' => $accountId,
-			'formFilters' => $formFilters,
-			'queryFilters' => $queryFilters,
-			'cleanUrl' => $cleanUrl,
-			'roleLevel' => $roleLevel,
-			'canViewIp' => $canViewIp,
-			'canViewHashedIp' => $canViewHashedIp,
-			'canViewDeleted' => $canViewDeleted,
-			'page' => $page,
+			'accountId' => $this->currentUserId,
+			'canViewDeleted' => $this->postRenderingPolicy->viewDeleted(),
 			'postsPerPage' => $this->config['ADMIN_PAGE_DEF'],
-			'numberOfFilteredPosts' => $this->postRepository->postCount($queryFilters)
+			'numberOfFilteredPosts' => $this->postRepository->postCount($context['queryFilters'])
 		];
 	}
 
@@ -168,7 +137,21 @@ class managePostsRoute {
 		$html = '';
 		
 		// Render filter form
-		drawManagePostsFilterForm($html, $this->board, $context['formFilters'], $context['canViewIp'], createAssocArrayFromBoardArray($this->allRegularBoards));
+		drawManagePostsFilterForm(
+			$html,
+			$this->board->getBoardURL(true),
+			['mode' => 'managePosts'],
+			$context['formFilters'],
+			$context['canViewIp'],
+			createAssocArrayFromBoardArray($this->allRegularBoards)
+		);
+
+		// Panel space between the filter and the results, for whoever the address being filtered
+		// on means something to. The resolved address is passed, not the form's, so a postsFrom
+		// lookup lands on the host it resolved to.
+		$filteredIp = (string) ($context['queryFilters']['ip_address'] ?? '');
+		$filteredTokenHash = (string) ($context['queryFilters']['visitor_token_hash'] ?? '');
+		$this->moduleEngine->dispatch('ManagePostsHostPanel', [&$html, &$filteredIp, $context['canViewIp'], &$filteredTokenHash]);
 		
 		// Render posts table
 		$html .= $this->renderPostsTable($posts, $boardMap, $boardList, $context);
@@ -196,7 +179,7 @@ class managePostsRoute {
 		if ($posts && (is_array($posts) || $posts instanceof \Traversable)) {
 			$html .= $this->renderPostEntries($posts, $boardMap, $context['canViewIp'], $context['canViewHashedIp'], $context['managePostsUrl'], $boardList);
 		} else {
-			$html .= '<tr><td colspan="9"><b class="error" id="no-posts-found"> - No posts found! - </b></td></tr>';
+			$html .= '<tr><td colspan="10"><b class="error" id="no-posts-found"> - No posts found! - </b></td></tr>';
 		}
 		
 		$html .= '</tbody></table></div>';
@@ -235,23 +218,6 @@ class managePostsRoute {
 		
 		$htmlOutput = $this->adminPageRenderer->ParsePage('GLOBAL_ADMIN_PAGE_CONTENT', $templateValues, true);
 		echo $htmlOutput;
-	}
-
-	private function initializeManagePostsFilters(): array {
-		$defaultSelectedBoards = [$this->board->getBoardUID()];
-
-		return [
-			'ip_address' => '',
-			'post_name' => '',
-			'tripcode' => '',
-			'capcode' => '',
-			'subject' => '',
-			'comment' => '',
-			'board' => $defaultSelectedBoards,
-			'date_before' => '',
-			'date_after' => '',
-			'postsFrom' => ''
-		];
 	}
 
 	private function renderPostEntries(
@@ -295,10 +261,13 @@ class managePostsRoute {
 		$postBoard = $boardMap[$boardUID];
 		$postBoardConfig = $postBoard->loadBoardConfig();
 
-		// Prepare post data
+		// Prepare post data. The row is markup, so the stored text is formatted on the way in.
+		$postTextFormat = $post->getTextFormat();
+		$commentFormatter = new commentFormatter($postBoardConfig);
 		$name = substr($post->getName(), 0, 500);
-		$sub = substr($post->getSubject(), 0, 500);
-		$com = $post->getComment();
+		// truncated as text, then escaped, so the cut can never land inside an entity
+		$sub = sanitizeStr(substr(commentFormatter::fieldToPlainText($post->getSubject(), $postTextFormat), 0, 500));
+		$com = $commentFormatter->commentToHtml($post->getComment(), $postTextFormat);
 		$post_uid = $post->getUid();
 		$no = $post->getNumber();
 		$now = $post->getTimestamp();
@@ -320,7 +289,8 @@ class managePostsRoute {
 			$post->getSecureTripcode(), 
 			$post->getCapcode(), 
 			$post->getEmail(),
-			$this->config['NOTICE_SAGE']
+			$this->config['NOTICE_SAGE'],
+			$postTextFormat
 		);
 
 		// Build module functions
@@ -344,6 +314,8 @@ class managePostsRoute {
 		   } else {
 			   $hostColHtml = '<td class="colHost">---</td>';
 		   }
+
+		   $browserColHtml = $this->renderBrowserCell($post, $canViewIp, $managePostsUrl, $boardList);
 		   return '
 			   <tr>
 				   <td class="colFunc">' . $modFunc . '</td>
@@ -354,8 +326,35 @@ class managePostsRoute {
 				   <td class="colName"><span class="name">' . $nameHtml . '</span></td>
 				   <td class="colComment"><div class="managepostsCommentWrapper">' . $com . '</div></td>
 				   ' . $hostColHtml . '
+				   ' . $browserColHtml . '
 				   ' . $attachmentsHtml . '
 			   </tr>';
+	}
+
+	/**
+	 * The post's browser as a short label, telling apart people sharing one address.
+	 *
+	 * Three states that are not the same: a token hash, a post explicitly recorded as keeping no
+	 * token, and a post made before this was recorded at all. The label is only ever shown to
+	 * raw-IP staff, which is also the only role allowed to filter on it.
+	 */
+	private function renderBrowserCell(Post $post, bool $canViewIp, string $managePostsUrl, string $boardList): string {
+		if (!$canViewIp) {
+			return '<td class="colBrowser">---</td>';
+		}
+
+		$hash = $post->getVisitorTokenHash();
+
+		if ($hash === '') {
+			return $post->hasVisitorTokenHash()
+				? '<td class="colBrowser"><i>(' . sanitizeStr(_T('view_posts_no_cookies')) . ')</i></td>'
+				: '<td class="colBrowser">---</td>';
+		}
+
+		$url = $managePostsUrl . '&visitor_token_hash=' . urlencode($hash) . '&board=' . $boardList;
+
+		return '<td class="colBrowser"><a href="' . sanitizeStr($url) . '" title="' . sanitizeStr(_T('view_posts_by_browser')) . '">'
+			. sanitizeStr(substr($hash, 0, visitorTokenSigner::DISPLAY_LENGTH)) . '</a></td>';
 	}
 
 	private function renderAttachments(array $attachments): string {
@@ -407,8 +406,9 @@ class managePostsRoute {
 
 		// Extract attachments and post numbers for logging
 		$attachments = getAttachmentsFromPosts($postsData);
-		$postNumbers = array_map(fn($p) => $p->getNumber(), $postsData);
-		$checkboxDeletionActionLogStr = is_array($postNumbers) ? implode(', No. ',$postNumbers) : $postNumbers;
+		// every number carries the "No." the log links on, the first one included
+		$postNumbers = array_map(fn($p) => 'No.' . $p->getNumber(), $postsData);
+		$checkboxDeletionActionLogStr = implode(', ', $postNumbers);
 
 		// Delete only files or entire posts based on user selection
 		if($onlyDeleteImages) {
@@ -421,6 +421,6 @@ class managePostsRoute {
 		rebuildBoardsFromPosts($postUids, $this->postService);
 
 		// Record deletion action in logs
-		$this->actionLoggerService->logAction("Delete posts: $checkboxDeletionActionLogStr".($onlyDeleteImages?' (file only)':''), $this->board->getBoardUID());
+		$this->actionLoggerService->logAction("Delete posts: $checkboxDeletionActionLogStr".($onlyDeleteImages?' (file only)':''), $this->board->getBoardUID(), $onlyDeleteImages ? actionType::POST_FILE_DELETE : actionType::POST_DELETE);
 	}
 }

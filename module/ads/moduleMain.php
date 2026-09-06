@@ -35,6 +35,9 @@ class moduleMain extends abstractModuleMain {
 	private string $modulePageUrl;
 	private ?adRepository $adRepo = null;
 
+	/** @var array<string, adEntry[]> Enabled ads already read this request, by slot. */
+	private array $adsBySlot = [];
+
 	public function getName(): string {
 		return 'Ads Module';
 	}
@@ -279,17 +282,16 @@ class moduleMain extends abstractModuleMain {
 
 	private function getAdsRepo(): adRepository {
 		if ($this->adRepo === null) {
-			$databaseSettings = getDatabaseSettings();
 			$this->adRepo = new adRepository(
 				databaseConnection::getInstance(),
-				$databaseSettings['ADS_TABLE']
+				$this->moduleContext->getTableName('ADS_TABLE')
 			);
 		}
 		return $this->adRepo;
 	}
 
 	private function getAdsForSlot(string $slot): array {
-		return $this->getAdsRepo()->getEnabledAdsForSlot($slot);
+		return $this->adsBySlot[$slot] ??= $this->getAdsRepo()->getEnabledAdsForSlot($slot);
 	}
 
 	private function getNextAdForSlot(string $slot): ?adEntry {

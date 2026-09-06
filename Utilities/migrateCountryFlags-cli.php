@@ -78,8 +78,8 @@ require $rootDir . 'bootstrap/repositories.php';
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 
-$postTable        = $dbSettings['POST_TABLE'];
-$countryFlagTable = $dbSettings['COUNTRY_FLAG_TABLE'];
+$postTable        = getTableName('POST_TABLE');
+$countryFlagTable = getTableName('COUNTRY_FLAG_TABLE');
 
 $flagRepo = new countryFlagRepository($databaseConnection, $countryFlagTable);
 $reader   = new Reader($rootDir . 'module/countryFlags/geoip/GeoLite2-Country.mmdb');

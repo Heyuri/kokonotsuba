@@ -4,11 +4,16 @@ namespace Kokonotsuba\action_log;
 
 use Kokonotsuba\database\baseRepository;
 use Kokonotsuba\database\databaseConnection;
+use Kokonotsuba\database\OrderFieldWhitelistTrait;
 
 use function Kokonotsuba\libraries\bindActionLogFiltersParameters;
 
 /** Repository for the staff action log table. */
 class actionLoggerRepository extends baseRepository {
+	use OrderFieldWhitelistTrait;
+
+	private array $allowedOrderFields;
+
 	public function __construct(
 		databaseConnection $databaseConnection,
 		string $actionLogTable,
@@ -16,6 +21,7 @@ class actionLoggerRepository extends baseRepository {
 	) {
 		parent::__construct($databaseConnection, $actionLogTable);
 		self::validateTableNames($boardTable);
+		$this->allowedOrderFields = ['id', 'time_added', 'action_type', 'name', 'role', 'board_uid', 'board_title'];
 	}
 
 	/**
@@ -47,24 +53,23 @@ class actionLoggerRepository extends baseRepository {
 	 * @param int    $amount  Maximum number of entries to return.
 	 * @param int    $offset  Row offset for pagination.
 	 * @param array  $filters Optional filter criteria.
-	 * @param string $order   Column to order by (validated against an allowlist).
+	 * @param string $order     Column to order by (validated against an allowlist).
+	 * @param string $direction Sort direction, ASC or DESC.
 	 * @return loggedActionEntry[] Array of hydrated log entry objects.
 	 */
-	public function fetchLogEntries(int $amount, int $offset, array $filters, string $order): array {
+	public function fetchLogEntries(int $amount, int $offset, array $filters, string $order, string $direction = 'DESC'): array {
 		if ($amount == 0) return [];
 
-		// Whitelist allowed ORDER BY fields
-		$allowedOrderFields = ['time_added', 'user_id', 'action_type', 'name', 'role', 'board_uid'];
-		if (!in_array($order, $allowedOrderFields, true)) {
-			$order = 'time_added';
-		}
+		$order = $this->validateOrderField($order, 'time_added');
+		$direction = strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
 
 		$query = "SELECT * FROM {$this->table} WHERE 1";
 		$params = [];
 
 		bindActionLogFiltersParameters($params, $query, $filters);
 
-		$query .= " ORDER BY {$order} DESC";
+		// id breaks ties so paging stays stable when a column repeats across rows
+		$query .= " ORDER BY {$order} {$direction}" . ($order === 'id' ? '' : ", id {$direction}");
 		$this->paginate($query, $params, $amount, $offset);
 
 		return $this->queryAllAsClass($query, $params, '\Kokonotsuba\action_log\loggedActionEntry') ?? [];
@@ -76,19 +81,21 @@ class actionLoggerRepository extends baseRepository {
 	 * @param string $name      Username of the acting staff member.
 	 * @param string $role      Role level string of the acting member.
 	 * @param string $action    Human-readable description of the action performed.
+	 * @param string $type      Action type key the entry is filtered by.
 	 * @param string $ipAddress IP address of the acting staff member.
 	 * @param int    $board_uid Board UID the action was performed on.
 	 * @return void
 	 */
-	public function insertLogEntry(string $name, string $role, string $action, string $ipAddress, int $board_uid): void {
-		$query = "INSERT INTO {$this->table} (name, role, log_action, ip_address, board_uid, board_title)
-				  VALUES (:name, :role, :log_action, :ip_address, :board_uid,
+	public function insertLogEntry(string $name, string $role, string $action, string $type, string $ipAddress, int $board_uid): void {
+		$query = "INSERT INTO {$this->table} (name, role, log_action, action_type, ip_address, board_uid, board_title)
+				  VALUES (:name, :role, :log_action, :action_type, :ip_address, :board_uid,
 				  (SELECT board_title FROM {$this->boardTable} WHERE board_uid = :board_uid LIMIT 1))";
 
 		$params = [
 			':name' => $name,
 			':role' => $role,
 			':log_action' => $action,
+			':action_type' => $type,
 			':ip_address' => $ipAddress,
 			':board_uid' => $board_uid,
 		];

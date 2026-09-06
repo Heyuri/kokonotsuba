@@ -1,0 +1,1 @@
+<button type="button" class="configNavToggle js-only" title="{$NAV_TOGGLE_TITLE}" aria-expanded="false"></button>

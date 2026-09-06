@@ -46,12 +46,17 @@ class messageUtility {
 		return $_SESSION['private_message_tripcode'] ?? null;
 	}
 
-	public function setUsertripCode(string $tripCode): void {
+	/**
+	 * @param bool $automatic True when the identity was adopted from a post rather
+	 *                        than chosen on the login form.
+	 */
+	public function setUsertripCode(string $tripCode, bool $automatic = false): void {
 		$_SESSION['private_message_tripcode'] = $tripCode;
+		$_SESSION['private_message_tripcode_automatic'] = $automatic;
 	}
 
 	public function logoutUser(): void {
-		unset($_SESSION['private_message_tripcode']);
+		unset($_SESSION['private_message_tripcode'], $_SESSION['private_message_tripcode_automatic']);
 	}
 
 	public function isLoggedIn(): bool {
@@ -75,6 +80,31 @@ class messageUtility {
 		} else {
 			$this->setUsertripCode('◆' . $tripcode);
 		}
+	}
+
+	/**
+	 * Whether a tripcode from a post may take over the session. A login chosen on the
+	 * form wins, so an identity the user picked is never swapped out from under them.
+	 */
+	public function canAdoptPostTripcode(): bool {
+		return !$this->isLoggedIn() || !empty($_SESSION['private_message_tripcode_automatic']);
+	}
+
+	/**
+	 * Log in as the tripcode a post was just made with. Posting with a tripcode proves
+	 * the same thing the login form asks for, so no second login is needed.
+	 */
+	public function loginFromPostTripcode(string $tripcode, string $secureTripcode): void {
+		if (!$this->canAdoptPostTripcode()) {
+			return;
+		}
+
+		$identity = $this->buildTripcodeIdentity($tripcode, $secureTripcode);
+		if ($identity === '' || $identity === $this->getUsertripCode()) {
+			return;
+		}
+
+		$this->setUsertripCode($identity, true);
 	}
 
 	public function getModulePageURL(array $additionalParams = [], bool $includeBaseUrl = false): string {

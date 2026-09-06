@@ -56,10 +56,7 @@ class catalogRepository extends baseRepository {
 		$offset = max(0, $offset);
 		$orderBy = $this->validateOrderField($orderBy, 'last_bump_time');
 
-		$direction = strtoupper($direction);
-		if ($direction !== 'ASC' && $direction !== 'DESC') {
-			$direction = 'DESC';
-		}
+		$direction = self::sortDirection($direction);
 
 		$excludeDeleted = excludeDeletedThreadsCondition($this->deletedPostsTable);
 		$replyVisible = ' AND NOT ' . openDeletionExistsCondition($this->deletedPostsTable, 'cp.post_uid');
@@ -76,6 +73,7 @@ class catalogRepository extends baseRepository {
 
 				op.sub AS op_subject,
 				op.com AS op_comment,
+				op.text_format AS op_text_format,
 
 				(
 					SELECT COUNT(*) - 1
@@ -103,9 +101,13 @@ class catalogRepository extends baseRepository {
 			LEFT JOIN {$this->fileTable} f
 				ON f.post_uid = op.post_uid
 				AND f.id = (
-					SELECT MIN(f2.id)
+					-- oldest file still on the post, falling back to a deleted one when a
+					-- replacement never arrived, so a file dropped and re-uploaded shows the new one
+					SELECT f2.id
 					FROM {$this->fileTable} f2
 					WHERE f2.post_uid = op.post_uid
+					ORDER BY f2.is_deleted ASC, f2.id ASC
+					LIMIT 1
 				)
 
 			WHERE t.boardUID = :board_uid

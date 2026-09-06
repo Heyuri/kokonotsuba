@@ -26,7 +26,7 @@ class moduleAdmin extends abstractModuleAdmin {
 	private capcodeModuleRenderer $capcodeModuleRenderer;
 
 	public function getRequiredRole(): userRole {
-		return $this->getModuleConfig('CAN_MANAGE_CAPCODES', userRole::LEV_ADMIN);
+		return $this->getConfig('AuthLevels.CAN_MANAGE_CAPCODES', userRole::LEV_ADMIN);
 	}
 
 	public function getName(): string {

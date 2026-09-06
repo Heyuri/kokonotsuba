@@ -7,6 +7,7 @@ require_once __DIR__ . '/perceptualBanService.php';
 require_once __DIR__ . '/perceptualBanLib.php';
 require_once __DIR__ . '/perceptualHasher.php';
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\listeners\PostControlHooksTrait;
@@ -133,7 +134,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->actionLoggerService->logAction(
 			'Perceptually banned and deleted file (pHash: ' . $hashHex . ') from post No.' . $post->getNumber(),
-			$boardUID
+			$boardUID,
+			actionType::TOOL_FILE_BAN
 		);
 
 		if ($this->moduleContext->request->isAjax()) {
@@ -169,7 +171,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->actionLoggerService->logAction(
 			'Perceptually banned file (pHash: ' . $hashHex . ') from post No.' . $post->getNumber(),
-			$boardUID
+			$boardUID,
+			actionType::TOOL_FILE_BAN
 		);
 
 		if ($this->moduleContext->request->isAjax()) {
@@ -219,7 +222,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->actionLoggerService->logAction(
 			'Perceptually banned hash: ' . $hashHex,
-			$this->moduleContext->board->getBoardUID()
+			$this->moduleContext->board->getBoardUID(),
+			actionType::TOOL_FILE_BAN
 		);
 
 		redirect($this->moduleUrl);
@@ -236,7 +240,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->moduleContext->actionLoggerService->logAction(
 			'Removed ' . count($entryIDs) . ' perceptual file ban(s)',
-			$this->moduleContext->board->getBoardUID()
+			$this->moduleContext->board->getBoardUID(),
+			actionType::TOOL_FILE_BAN
 		);
 
 		redirect($this->moduleUrl);

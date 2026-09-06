@@ -1,1104 +1,127 @@
 <?php
 
-use function Puchiko\createDirectory;
-use function Puchiko\createFileAndWriteText;
-use function Puchiko\request\redirect;
+/**
+ * Kokonotsuba installer.
+ *
+ * Runs from the backend directory itself: clone the repository somewhere web-accessible, point a
+ * browser at this file, and it checks the environment, writes the config, migrates the schema, and
+ * creates the first board and admin account. Delete it afterwards.
+ */
 
-function getRootPath() {
-    $kokoFile = __DIR__ . DIRECTORY_SEPARATOR . 'koko.php';
-    if (!file_exists($kokoFile)) {
-        die(
-            "The file <i>" . __DIR__ . DIRECTORY_SEPARATOR . "koko.php</i> couldn't be found. Please create it with the following code:<br>" .
-            "<code>&lt;?php require_once '/path/to/kokonotsuba/koko.php'; ?&gt;</code>"
-        );
-    }
+use Kokonotsuba\install\checkReport;
+use Kokonotsuba\install\exposureProbe;
+use Kokonotsuba\install\installDefaults;
+use Kokonotsuba\install\installer;
+use Kokonotsuba\install\installerPage;
+use Kokonotsuba\install\installInput;
+use Kokonotsuba\install\pathRequirements;
+use Kokonotsuba\install\systemRequirements;
 
-    $fileHandle = fopen($kokoFile, 'r');
-    if (!$fileHandle) {
-        die("Error: Unable to open <i>koko.php</i>.");
-    }
+// Details belong on the page, not in the response of a half-rendered one.
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+error_reporting(E_ALL);
 
-    while (($line = fgets($fileHandle)) !== false) {
-        if (preg_match("/require(?:_once)? ['\"](.*?koko\.php)['\"];/", $line, $matches)) {
-            fclose($fileHandle);
-            // Use dirname to extract the directory path from the matched file
-            return dirname($matches[1]);
-        }
-    }
-
-    fclose($fileHandle);
-    return __DIR__;
+if (!is_file(__DIR__.'/koko.php')) {
+	http_response_code(500);
+	exit('install.php has been moved out of the Kokonotsuba directory. Run it from where koko.php is.');
 }
 
+require __DIR__.'/autoload.php';
+require __DIR__.'/code/Kokonotsuba/constants.php';
+require __DIR__.'/paths.php';
+require __DIR__.'/code/Puchiko/includes.php';
 
-define('ROOTPATH', getRootPath());
+$appRoot = __DIR__;
+$selfUrl = (string)($_SERVER['SCRIPT_NAME'] ?? 'install.php');
+$page = new installerPage($selfUrl);
 
-require ROOTPATH . '/code/Puchiko/includes.php';
-require ROOTPATH . '/code/Kokonotsuba/constants.php';
-require ROOTPATH . '/code/Kokonotsuba/userRole.php';
-
-use const Kokonotsuba\GLOBAL_BOARD_UID;
-
-$extensions = [
-    'mbstring',
-    'pdo',
-    'gd',
-    'bcmath',
-];
-
-$commands = [
-    'ffmpeg',
-    'exiftool'
-];
-
-function checkExtensions(array $extensions) {
-    $results = [];
-    foreach ($extensions as $extension) {
-        $results[$extension] = extension_loaded($extension);
-    }
-    return $results;
+if (installer::isInstalled($appRoot)) {
+	$page->alreadyInstalled($appRoot);
+	exit;
 }
 
-function checkCommands(array $commands) {
-    $results = [];
-    foreach ($commands as $command) {
-        $results[$command] = isCommandAvailable($command);
-    }
-    return $results;
+$defaults = installDefaults::detect($_SERVER, $appRoot);
+
+/** Every preflight check, in display order. */
+function buildReport(installDefaults $defaults, string $appRoot): checkReport {
+	$report = new checkReport();
+	$report->addAll((new systemRequirements())->check());
+	$report->addAll(pathRequirements::forAppRoot($appRoot)->check());
+	$report->addAll((new exposureProbe($defaults->baseUrl()))->check());
+
+	return $report;
 }
 
-function isCommandAvailable(string $command): bool {
-    $output = null;
-    $status = null;
-    exec("which " . escapeshellarg($command), $output, $status);
-    return $status === 0 && !empty($output);
+/** @return array<string, string> */
+function formDefaults(installDefaults $defaults): array {
+	return [
+		// Matches the grant the README tells you to create ('koko_user'@'localhost').
+		'db_host' => 'localhost',
+		'db_port' => '3306',
+		'db_name' => 'kokonotsuba',
+		'db_user' => 'koko_user',
+		'admin_username' => '',
+		'board_identifier' => 'b',
+		'board_title' => '',
+		'board_sub_title' => '',
+		'website_url' => $defaults->websiteUrl(),
+		'home_url' => $defaults->homeUrl(),
+		'static_url' => $defaults->staticUrl(),
+		'static_path' => $defaults->staticPath(),
+	];
 }
 
-function getGlobalConfig(): array {
-    return require ROOTPATH . '/global/globalconfig.php';
-}
-
-function getBoardStorageDir() {
-    return ROOTPATH.'/global/board-storages/';
-}
-
-// Function to sanitize table names using regular expression validation
-function sanitizeTableName($tableName) {
-    // Validat e table name: Only allow alphanumeric characters and underscores
-    if (!preg_match('/\A[a-zA-Z0-9_]+\z/', $tableName)) {
-        throw new InvalidArgumentException("Invalid table name: $tableName. Only alphanumeric characters and underscores are allowed.");
-    }
-    return $tableName;
-}
-
-// Set a value at a dot-path within a nested config array (installer-local helper).
-function setNestedInstallConfig(array &$config, string $dotpath, $value): void {
-    $segments = explode('.', $dotpath);
-    $cursor =& $config;
-    foreach ($segments as $i => $segment) {
-        if ($i === array_key_last($segments)) {
-            $cursor[$segment] = $value;
-            return;
-        }
-        if (!isset($cursor[$segment]) || !is_array($cursor[$segment])) {
-            $cursor[$segment] = [];
-        }
-        $cursor =& $cursor[$segment];
-    }
-}
-
-// Build the board-agnostic default config: globalconfig.php base + the editable configs/
-// core schema defaults + each module's own module/{name}/config.php defaults.
-function getTemplateConfigArray() {
-    $config = getGlobalConfig();
-
-    // Core config files: keys are full config dot-paths.
-    foreach (glob(ROOTPATH . '/configs/*.php') ?: [] as $schemaFile) {
-        // Files beginning with "_" are shared helpers (e.g. _fieldTypes.php), not groups.
-        if (str_starts_with(basename($schemaFile), '_')) {
-            continue;
-        }
-        $definition = require $schemaFile;
-        if (!is_array($definition)) {
-            continue;
-        }
-        unset($definition['_group'], $definition['_module']);
-        foreach ($definition as $dotpath => $meta) {
-            $default = (is_array($meta) && array_key_exists('default', $meta)) ? $meta['default'] : $meta;
-            setNestedInstallConfig($config, (string) $dotpath, $default);
-        }
-    }
-
-    // Per-module config files: bare keys prefixed with "modules.{name}.".
-    foreach (glob(ROOTPATH . '/module/*/config.php') ?: [] as $moduleFile) {
-        $moduleName = basename(dirname($moduleFile));
-        $definition = require $moduleFile;
-        if (!is_array($definition)) {
-            continue;
-        }
-        unset($definition['_group'], $definition['_module']);
-        foreach ($definition as $key => $meta) {
-            $default = (is_array($meta) && array_key_exists('default', $meta)) ? $meta['default'] : $meta;
-            setNestedInstallConfig($config, "modules.{$moduleName}.{$key}", $default);
-        }
-    }
-
-    return $config;
-}
-
-function createBoardAndFiles($boardTable) {
-    //create board
-    $board_identifier = $_POST['board-identifier'] ?? '';
-    $board_title = $_POST['board-title'] ?? '';
-    $board_sub_title = $_POST['board-sub-title'] ?? '';
-    $board_path = $_POST['board-path'] ?? '';
-
-
-    $globalConfig = getGlobalConfig();
-    $mockConfig = getTemplateConfigArray();
-
-    $nextBoardUID = $boardTable->getLastBoardUID() + 1;
-
-    $dataDirName = 'storage-'.$nextBoardUID;
-    $dataDir = getBoardStorageDir().'/'.$dataDirName;
-    //create physical board files
-    $fileUploadedImgDirectory = $globalConfig['USE_CDN']
-        ? $globalConfig['CDN_DIR'].$board_identifier.'/'.$mockConfig['IMG_DIR'].'/'
-        : $board_path . $mockConfig['IMG_DIR'].'/';
-    $fileUploadedThumbDirectory = $globalConfig['USE_CDN']
-        ? $globalConfig['CDN_DIR'].$board_identifier.'/'.$mockConfig['THUMB_DIR'].'/'
-        : $board_path.$mockConfig['THUMB_DIR'].'/';
-
-    //create upload dirs
-    createDirectory($fileUploadedImgDirectory);
-    createDirectory($fileUploadedThumbDirectory);
-    //create dat
-    createDirectory($dataDir);
-
-    // Board config is stored in the board_configs table (created on first edit via the admin
-    // board configuration editor). No per-board PHP config file is generated.
-    $boardTable->addFirstBoard($board_identifier, $board_title, $board_sub_title, $dataDirName);
-    $boardUIDforBootstrapFile = $boardTable->getLastBoardUID();
-    createFileAndWriteText($board_path, 'boardUID.ini', "board_uid = $boardUIDforBootstrapFile");
-}
-
-class html {
-    private $dbSettings;
-
-    public function __construct($dbSettings) {
-        $this->dbSettings = $dbSettings;
-    }
-
-    public function drawHeader() {
-        echo '<head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-            <!-- Prevent caching -->
-            <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, proxy-revalidate">
-            <meta http-equiv="Pragma" content="no-cache">
-            <meta http-equiv="Expires" content="0">
-
-            <!-- Prevent archiving by search engines -->
-            <meta name="robots" content="noarchive, noindex, nofollow">
-            <meta http-equiv="X-Robots-Tag" content="noindex, nofollow">
-
-            <title>Kokonotsuba Installer</title>
-        </head>
-        <h1 class="page-head-title">Kokonotsuba Installer</h1>';
-    }
-
-    public function drawStyle() {
-        echo '<style>
-            .postblock {
-                border: 1px solid #800043;
-                background: #eeaa88;
-            }
-            .notice-text {
-                padding-bottom: 20px;
-                text-align:center;
-            }
-
-            body {
-                background-color: #ffffee;
-                color: #880000;
-                font-size: 16px;
-            }
-        </style>';
-    }
-
-    public function drawInstallNotice() {
-        echo '<div class="notice-text">
-            <h2>Notice!</h2>
-            <p>Kokonotsuba is a BBS software in active development.</p>
-            <p>Read the instructions, other documentation or open an Issue on the <a href="https://github.com/Heyuri/kokonotsuba">repo</a> if there are any problems</p>
-            <p>For more info: <a href="https://kokonotsuba.github.io/">see here</a></p>
-        </div><hr size=1>';
-    }
-
-    public function drawRequiredExtentions() {
-        global $extensions, $commands;
-        $extentionResults = checkExtensions($extensions);
-        $commandResults = checkCommands($commands);
-
-        echo '<h3>Required extensions</h3>
-        <p>These are the extensions required for Kokonotsuba to work fully:</p>
-        <ul>';
-        foreach ($extentionResults as $extension => $isEnabled) {
-            echo "<li>$extension: " . ($isEnabled ? 'enabled' : 'not enabled') . '</li>';
-        }
-        echo '</ul>';
-        echo '<h3>Required commands</h3>
-        <p>These are the commands that are required for certain features in Kokonotsuba';
-        foreach($commandResults as $command => $isInstalled) {
-            echo '<li>' . $command . ': ' . ($isInstalled ? 'enabled' : 'not enabled') . '</li>';
-        }
-        echo '</ul>';
-    }
-
-    public function drawImportantConfigValuesPreview() {
-        $globalConfig = getGlobalConfig();
-
-        $websiteURL = $globalConfig['WEBSITE_URL'];
-        $staticURL = $globalConfig['STATIC_URL']; // eg. 'https://static.example.com/'
-        $staticPath = $globalConfig['STATIC_PATH']; // eg. '/home/example/web/static/'
-
-        echo '<h3>Config</h3>
-        <p>Ensure these values are correctly set in global/globalconfig.php:</p>
-        <table>
-            <tr>
-                <td>Static Path:</td>
-                <td>' . htmlspecialchars($staticPath) . '</td>
-            </tr>
-            <tr>
-                <td>Static URL:</td>
-                <td>' . htmlspecialchars($staticURL) . '</td>
-            </tr>
-            <tr>
-                <td>Website URL:</td>
-                <td>' . htmlspecialchars($websiteURL) . '</td>
-            </tr>
-        </table>';
-    }
-
-    public function drawInstallForm() {
-        echo '<form id="installation-form" action="' . htmlspecialchars($_SERVER['PHP_SELF']) . '" method="POST">
-            <input type="hidden" name="action" value="install">
-            <h3>Admin Account</h3>
-        <p>The username and password of the admin account, it can be changed at any time</p>
-            <table id="installation-form-admin-account-table">
-                <tr>
-                    <td class="postblock"> <label for "admin-username-input" >Admin username</label></td>
-                    <td> <input id="admin-username-input" name="admin-username" required> </td>
-                </tr>
-                <tr>
-                    <td class="postblock"> <label for "admin-password-input">Admin password</label></td>
-                    <td> <input type="password" id="admin-password-input" name="admin-password" required> </td>
-                </tr>
-            </table>
-            <h3>First Board</h3>
-        <p>This will be the first board on your kokonotsuba instance</p>
-            <table id="installation-form-admin-account-table">
-                <tr> 
-                    <td class="postblock"> <label for "first-board-identifier-input" >Board identifier</label></td>
-                    <td> <input id="first-board-identifier-input" name="board-identifier" placeholder="b" value="'.basename(__DIR__).'"> </td>
-                    <td> (leave blank if the board is in web root) </td>
-                </tr>
-                <tr> 
-                    <td class="postblock"> <label for "first-board-title-input" >Board title</label></td>
-                    <td> <input id="first-board-title-input" name="board-title" placeholder="board@example.net" required> </td>
-                </tr>
-                <tr> 
-                    <td class="postblock"> <label for "first-board-sub-title-input" >Board sub-title</label></td>
-                    <td> <input id="first-board-sub-title-input" name="board-sub-title" placeholder="an example board" required> </td>
-                </tr>
-                <tr> 
-                    <td class="postblock"> <label for "first-board-path-input" >Board path</label></td>
-                    <td> <input id="first-board-path-input" name="board-path" placeholder="an example board" value="'.dirname(__FILE__).'/'.'" required> </td>
-                </tr>
-            </table>
-            <input type="submit" value="Install">
-        </form>';
-    }
-
-    public function drawFooter() {
-        echo '<hr>';
-    }
-}
-
-class tableCreator {
-    private $db;	
-    public function __construct($pdoConnection) {
-        $this->db = $pdoConnection;
-
-    }
-    public function createTables($tableNames) {
-        $sanitizedTableNames = array_map('sanitizeTableName', $tableNames);
-    
-        // Define the SQL queries using sanitized table names
-        $queries = [
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BOARD_TABLE']} (
-                `board_uid` INT NOT NULL AUTO_INCREMENT,
-                `board_identifier` TEXT,
-                `board_title` TEXT NOT NULL,
-                `board_sub_title` TEXT,
-                `storage_directory_name` TEXT NOT NULL,
-                `subdomain` VARCHAR(253) NOT NULL DEFAULT '',
-                `listed` BOOL DEFAULT TRUE,
-                `date_added` DATE DEFAULT (CURRENT_DATE),
-                PRIMARY KEY(`board_uid`),
-                INDEX(date_added)
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BOARD_CONFIG_TABLE']} (
-                `board_uid` INT NOT NULL,
-                `conf_values` JSON NOT NULL,
-                PRIMARY KEY (`board_uid`),
-                UNIQUE KEY uq_board_config_board_uid (`board_uid`),
-                CONSTRAINT fk_board_config_board_uid FOREIGN KEY (`board_uid`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['THREAD_TABLE']} (
-                `insert_id` INT NOT NULL AUTO_INCREMENT,
-                `thread_uid` VARCHAR(255) NOT NULL,
-                `post_op_number` INT NOT NULL,
-                `post_op_post_uid` INT NOT NULL,
-                `boardUID` INT NOT NULL,
-                `last_reply_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                `last_bump_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                `thread_created_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                `is_sticky` BOOL DEFAULT FALSE,
-                PRIMARY KEY (`insert_id`),
-                CONSTRAINT fk_thread_boardUID FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
-                UNIQUE KEY uq_thread_uid (`thread_uid`),
-                INDEX (`last_reply_time`),
-                INDEX (`last_bump_time`),
-                INDEX (`thread_created_time`)
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_TABLE']} (
-                `post_uid` INT NOT NULL AUTO_INCREMENT,
-                `no` INT NOT NULL,
-                `poster_hash` VARCHAR(255) DEFAULT NULL,
-                `boardUID` INT NOT NULL,
-                `thread_uid` VARCHAR(255) NOT NULL,
-                `post_position` INT DEFAULT 0,
-                `is_op` BOOLEAN NOT NULL,
-                `root` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                `md5chksum` TEXT,
-                `category` TEXT,
-                `pwd` TEXT NOT NULL,
-                `now` TEXT NOT NULL,
-                `name` TEXT NOT NULL,
-                `tripcode` TEXT,
-                `secure_tripcode` TEXT,
-                `capcode` TEXT,
-                `email` TEXT NOT NULL,
-                `sub` TEXT NOT NULL,
-                `com` MEDIUMTEXT NOT NULL,
-                `host` VARCHAR(45) NOT NULL,
-                `status` TEXT,
-                `tag` VARCHAR(16) DEFAULT NULL,
-                PRIMARY KEY (`post_uid`),
-                CONSTRAINT fk_boardUID FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
-                CONSTRAINT fk_thread_uid FOREIGN KEY (`thread_uid`) REFERENCES `{$sanitizedTableNames['THREAD_TABLE']}`(`thread_uid`) ON DELETE CASCADE,
-                INDEX (`thread_uid`),
-                INDEX (`no`),
-                INDEX idx_host (`host`),
-                INDEX idx_posts_thread_rank (thread_uid, is_op DESC, post_uid DESC),
-                INDEX idx_post_root (`root`),
-                INDEX idx_post_board_root (`boardUID`, `root`, `no`),
-                INDEX idx_tag (`tag`),
-                INDEX idx_tripcode (`tripcode`(10)),
-                INDEX idx_secure_tripcode (`secure_tripcode`(10)),
-                UNIQUE KEY uniq_board_no (boardUID, no),
-                FULLTEXT INDEX ft_com (com),
-                FULLTEXT INDEX ft_sub (sub),
-                FULLTEXT INDEX ft_name (name),
-                FULLTEXT INDEX ft_email (email),
-                FULLTEXT INDEX ft_general (name, email, sub, com)
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['POST_NUMBER_TABLE']} (
-                `board_uid` INT NOT NULL,
-                `post_number` INT NOT NULL DEFAULT 0,
-                PRIMARY KEY (`board_uid`),
-                CONSTRAINT fk_post_count_board_uid FOREIGN KEY (`board_uid`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
-            ) ENGINE=InnoDB;",
-    
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['QUOTE_LINK_TABLE']} (
-                `quotelink_id` INT NOT NULL AUTO_INCREMENT,
-                `board_uid` INT NOT NULL,
-                `host_post_uid` INT NOT NULL,
-                `target_post_uid` INT NOT NULL,
-                PRIMARY KEY (`quotelink_id`),
-                INDEX (`host_post_uid`),
-                INDEX (`target_post_uid`),
-                CONSTRAINT `fk_quote_link_host_post_uid` FOREIGN KEY (`host_post_uid`)
-                REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE,
-                CONSTRAINT `fk_quote_link_target_post_uid` FOREIGN KEY (`target_post_uid`)
-                REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['ACTIONLOG_TABLE']} (
-                `id` INT NOT NULL AUTO_INCREMENT,
-                `time_added` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                `date_added` DATE DEFAULT (CURRENT_DATE),
-                `name` TEXT NOT NULL,
-                `role` INT NOT NULL,
-                `log_action` TEXT NOT NULL,
-                `ip_address` TEXT NOT NULL,
-                `board_uid` INT,
-                `board_title` TEXT NOT NULL,
-                PRIMARY KEY (`id`),
-                INDEX (role),
-                INDEX (time_added),
-                INDEX (`name`(64)),
-                INDEX (board_uid)
-            ) ENGINE=InnoDB;",
-    
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['ACCOUNT_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                username TEXT NOT NULL,
-                role INT DEFAULT 0,
-                password_hash TEXT NOT NULL,
-                number_of_actions INT DEFAULT 0,
-                last_login TIMESTAMP NULL DEFAULT NULL,
-                date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE KEY uq_username (username(191)),
-                index(last_login),
-                index(date_added)
-            ) ENGINE=InnoDB;",
-    
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['THREAD_REDIRECT_TABLE']} (
-                `redirect_id` INT NOT NULL AUTO_INCREMENT,
-                `original_board_uid` INT NOT NULL,
-                `new_board_uid` INT NOT NULL,
-                `post_op_number` INT NOT NULL,
-                `thread_uid` VARCHAR(255) NOT NULL,
-                PRIMARY KEY (`redirect_id`),
-                CONSTRAINT new_board_uid FOREIGN KEY (`new_board_uid`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE,
-                CONSTRAINT redirect_thread_uid FOREIGN KEY (`thread_uid`) REFERENCES `{$sanitizedTableNames['THREAD_TABLE']}`(`thread_uid`) ON DELETE CASCADE,
-                INDEX (`original_board_uid`),
-                INDEX (`thread_uid`)
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BOARD_PATH_CACHE_TABLE']} (
-                `id` INT NOT NULL AUTO_INCREMENT,
-                `boardUID` INT NOT NULL,
-                `board_path` TEXT NOT NULL,
-                PRIMARY KEY (`id`),
-                CONSTRAINT path_cache_board_uid FOREIGN KEY (`boardUID`) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(`board_uid`) ON DELETE CASCADE
-            ) ENGINE=InnoDB;",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['FILE_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                post_uid INT NOT NULL,
-                file_name VARCHAR(255) NOT NULL,
-                stored_filename TEXT NOT NULL,
-                file_ext VARCHAR(16) NOT NULL,
-                file_md5 VARCHAR(32) NOT NULL,
-                file_width INT DEFAULT NULL,
-                file_height INT DEFAULT NULL,
-                thumb_file_width INT DEFAULT NULL,
-                thumb_file_height INT DEFAULT NULL,
-                file_size BIGINT UNSIGNED NULL,
-                mime_type VARCHAR(255) NULL,
-                is_hidden TINYINT(1) NOT NULL DEFAULT 0,
-                is_deleted TINYINT(1) NOT NULL DEFAULT 0,
-                is_animated TINYINT(1) NOT NULL DEFAULT 0,
-                is_spoilered TINYINT(1) NOT NULL DEFAULT 0,
-                timestamp_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-                CONSTRAINT fk_file_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
-
-                INDEX idx_md5 (file_md5),
-                INDEX idx_post_uid (post_uid),
-                INDEX idx_file_ext (file_ext),
-                INDEX idx_file_size (file_size),
-                INDEX idx_file_name_prefix (file_name(255)),
-                INDEX idx_mime_type (mime_type),
-                INDEX idx_post_uid_file_md5 (post_uid, file_md5),
-                FULLTEXT INDEX ft_file_name (file_name)
-            ) ENGINE=InnoDB;
-            ",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['DELETED_POSTS_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                post_uid INT NOT NULL,
-                deleted_by INT NULL,
-                deleted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                file_only TINYINT(1) DEFAULT 0,
-                by_proxy TINYINT(1) DEFAULT 0,
-
-                restored_at TIMESTAMP NULL,
-                restored_by INT NULL,
-                
-                file_id INT NULL,
-
-                open_flag TINYINT(1) AS (IF(restored_at IS NULL, 1, 0)) STORED,
-
-                open_key INT AS (CASE WHEN restored_at IS NULL AND file_id IS NULL THEN post_uid ELSE NULL END) STORED,
-
-                CONSTRAINT fk_dp_post FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
-                CONSTRAINT fk_dp_file FOREIGN KEY (file_id) REFERENCES `{$sanitizedTableNames['FILE_TABLE']}`(id) ON DELETE CASCADE,
-
-                INDEX idx_post_uid (post_uid),
-                INDEX idx_deleted_by_deleted_at (deleted_by, deleted_at),
-                INDEX idx_restored_at (restored_at),
-                INDEX idx_file_id (file_id),
-
-
-                UNIQUE KEY uq_open_post (open_key)
-            ) ENGINE=InnoDB;
-            ",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['CAPCODE_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                tripcode VARCHAR(255),
-                is_secure TINYINT(1) DEFAULT 0,
-                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                added_by INT NULL,
-                color_hex CHAR(7) NOT NULL,
-                cap_text TEXT,
-
-                UNIQUE KEY unique_tripcode_is_secure (tripcode, is_secure),
-                CONSTRAINT fk_capcodes_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['SPAM_STRING_TABLE']} (
-                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                pattern TEXT NOT NULL,
-                max_distance TINYINT UNSIGNED DEFAULT NULL,
-                match_type ENUM('contains','exact', 'fuzzy', 'regex') NOT NULL DEFAULT 'contains',
-                apply_subject TINYINT(1) NOT NULL DEFAULT 1,
-                apply_comment TINYINT(1) NOT NULL DEFAULT 1,
-                apply_name TINYINT(1) NOT NULL DEFAULT 1,
-                apply_email TINYINT(1) NOT NULL DEFAULT 1,
-                apply_filename TINYINT(1) NOT NULL DEFAULT 1,
-                apply_op_only TINYINT(1) NOT NULL DEFAULT 0,
-                silent_reject TINYINT(1) NOT NULL DEFAULT 0,
-                case_sensitive TINYINT(1) NOT NULL DEFAULT 0,
-                is_active TINYINT(1) NOT NULL DEFAULT 1,
-                user_message TEXT DEFAULT NULL,
-                description TEXT DEFAULT NULL,
-                action ENUM('mute','reject','ban') NOT NULL DEFAULT 'reject',
-                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                created_by INT NULL,
-
-                PRIMARY KEY (id),
-                INDEX idx_spam_active (is_active),
-                INDEX idx_spam_match_type (match_type),
-                INDEX idx_spam_created_by (created_by),
-
-                CONSTRAINT fk_spam_string_rules_created_by
-                    FOREIGN KEY (created_by)
-                    REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id)
-                    ON DELETE SET NULL
-                    ON UPDATE CASCADE
-            ) ENGINE=InnoDB;
-            ",
-
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['SOUDANE_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                ip_address VARCHAR(255),
-                yeah TINYINT(1) DEFAULT 0,
-                post_uid INT NULL,
-                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-                INDEX idx_soudane_vote (post_uid, yeah),
-                INDEX idx_soudane_ip (ip_address),
-                INDEX idx_soudane_date_added (date_added),
-
-                CONSTRAINT fk_soudane_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['THREAD_THEMES_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                thread_uid VARCHAR(255) NULL,
-                background_hex_color CHAR(7) NULL,
-                reply_background_hex_color CHAR(7) NULL,
-                text_hex_color CHAR(7) NULL,
-                background_image_url TEXT NULL, 
-                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL, 
-                audio TEXT NULL, 
-                raw_styling TEXT NULL, 
-                added_by INT NULL,
-
-                UNIQUE KEY unique_thread_uid (thread_uid),
-                INDEX idx_theme_added_by (added_by),
-
-                CONSTRAINT fk_theme_thread_uid FOREIGN KEY (thread_uid) REFERENCES `{$sanitizedTableNames['THREAD_TABLE']}`(thread_uid) ON DELETE CASCADE,
-                CONSTRAINT fk_theme_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['LAST_THREAD_SUBMISSIONS_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                board_uid INT NOT NULL UNIQUE,
-                last_submission_timestamp TIMESTAMP(3) NOT NULL,
-                
-                CONSTRAINT fk_last_thread_submissions_board_uid FOREIGN KEY (board_uid) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(board_uid) ON DELETE CASCADE
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['NOTE_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                post_uid INT NOT NULL,
-                note_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                added_by INT NULL,
-                note_text TEXT NOT NULL,
-                
-                CONSTRAINT fk_notes_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
-                CONSTRAINT fk_notes_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['REPORT_TABLE']} (
-                report_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                post_uid INT NOT NULL,
-                board_uid INT NOT NULL,
-                reporter_ip VARCHAR(255) NOT NULL,
-                reporter_reason TEXT NULL,
-                date_reported DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-                status TINYINT NOT NULL DEFAULT 0,
-                actioned_by INT NULL,
-                actioned_at DATETIME NULL,
-
-                public_reason TEXT NULL,
-                private_reason TEXT NULL,
-
-                INDEX idx_reports_status_date (status, date_reported),
-                INDEX idx_reports_post_uid (post_uid),
-                INDEX idx_reports_board_uid (board_uid),
-                INDEX idx_reports_reporter_ip (reporter_ip),
-                INDEX idx_reports_date_reported (date_reported),
-                INDEX idx_reports_actioned_by (actioned_by),
-
-                CONSTRAINT fk_reports_post_uid FOREIGN KEY (post_uid) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(post_uid) ON DELETE CASCADE,
-                CONSTRAINT fk_reports_board_uid FOREIGN KEY (board_uid) REFERENCES `{$sanitizedTableNames['BOARD_TABLE']}`(board_uid) ON DELETE CASCADE,
-                CONSTRAINT fk_reports_actioned_by FOREIGN KEY (actioned_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['REPORT_READ_TABLE']} (
-                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                report_id BIGINT UNSIGNED NOT NULL,
-                account_id INT NOT NULL,
-                date_read DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-                UNIQUE KEY uniq_report_read (report_id, account_id),
-                INDEX idx_report_reads_account (account_id),
-
-                CONSTRAINT fk_report_reads_report_id FOREIGN KEY (report_id) REFERENCES `{$sanitizedTableNames['REPORT_TABLE']}`(report_id) ON DELETE CASCADE,
-                CONSTRAINT fk_report_reads_account_id FOREIGN KEY (account_id) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE CASCADE
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['PRIVATE_MESSAGE_TABLE']} (
-                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                ip_address TEXT NOT NULL, 
-                date_sent TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                sender_tripcode VARCHAR(255) NOT NULL,
-                sender_name TEXT NOT NULL,
-                recipient_tripcode VARCHAR(255) NOT NULL,
-                message_subject TEXT NOT NULL,
-                message_body TEXT NOT NULL,
-                is_read TINYINT(1) NOT NULL DEFAULT 0
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BANNER_AD_TABLE']} (
-                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                link TEXT DEFAULT NULL,
-                banner_file_name TEXT NOT NULL,
-                ip_address VARCHAR(45) DEFAULT NULL,
-                is_active TINYINT(1) NOT NULL DEFAULT 1,
-                is_approved TINYINT(1) NOT NULL DEFAULT 0,
-                date_submitted TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                INDEX idx_active_approved (is_active, is_approved),
-                INDEX idx_date_submitted (date_submitted),
-                INDEX idx_ip_date (ip_address, date_submitted)
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['ADS_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                slot VARCHAR(20) NOT NULL,
-                type VARCHAR(10) NOT NULL,
-                src TEXT NULL,
-                href TEXT NULL,
-                alt TEXT NULL,
-                html TEXT NULL,
-                enabled TINYINT(1) NOT NULL DEFAULT 1,
-                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                INDEX idx_ads_slot_enabled (slot, enabled)
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['BLOTTER_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                blotter_content TEXT NOT NULL,
-                added_by INT NULL,
-                date_added DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-                
-                CONSTRAINT fk_blotter_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['FILE_BAN_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                file_md5 CHAR(32) NOT NULL,
-                added_by INT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-                UNIQUE KEY uq_file_md5 (file_md5),
-                INDEX idx_file_ban_added_by (added_by),
-
-                CONSTRAINT fk_file_ban_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['PERCEPTUAL_BAN_TABLE']} (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                phash BIGINT NOT NULL,
-                phash_hex CHAR(16) NOT NULL,
-                added_by INT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
-
-                UNIQUE KEY uq_phash (phash),
-                INDEX idx_perceptual_ban_added_by (added_by),
-
-                CONSTRAINT fk_perceptual_ban_added_by FOREIGN KEY (added_by) REFERENCES `{$sanitizedTableNames['ACCOUNT_TABLE']}`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['COUNTRY_FLAG_TABLE']} (
-                `id` INT NOT NULL AUTO_INCREMENT,
-                `post_uid` INT NOT NULL,
-                `country` VARCHAR(8) NOT NULL,
-                PRIMARY KEY (`id`),
-                UNIQUE KEY uq_country_flag_post_uid (`post_uid`),
-                CONSTRAINT fk_country_flag_post_uid FOREIGN KEY (`post_uid`) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE
-            ) ENGINE=InnoDB;
-            ",
-            "CREATE TABLE IF NOT EXISTS {$sanitizedTableNames['DISPLAY_IP_TABLE']} (
-                `id` INT NOT NULL AUTO_INCREMENT,
-                `post_uid` INT NOT NULL,
-                `ip_part` VARCHAR(512) NOT NULL DEFAULT '',
-                PRIMARY KEY (`id`),
-                UNIQUE KEY uq_display_ip_post_uid (`post_uid`),
-                CONSTRAINT fk_display_ip_post_uid FOREIGN KEY (`post_uid`) REFERENCES `{$sanitizedTableNames['POST_TABLE']}`(`post_uid`) ON DELETE CASCADE
-            ) ENGINE=InnoDB;
-            ",
-        ];
-    
-        // Use prepared statements for execution
-        foreach ($queries as $query) {
-            $this->runCreateStatement($query);
-        }
-    }
-
-    /**
-     * Execute one CREATE TABLE, naming the table in the failure so the error log
-     * says which statement the server rejected rather than just that one did.
-     *
-     * @param string $query CREATE TABLE statement.
-     * @return void
-     * @throws RuntimeException If the server rejects the statement.
-     */
-    private function runCreateStatement(string $query): void {
-        try {
-            $stmt = $this->db->prepare($query);
-            $stmt->execute();
-            return;
-        } catch (PDOException $e) {
-            preg_match('/CREATE TABLE IF NOT EXISTS\s+`?([A-Za-z0-9_]+)`?/i', $query, $matches);
-            $table = $matches[1] ?? 'unknown';
-
-            error_log("Installer: CREATE TABLE `$table` failed: " . $e->getMessage());
-            error_log('Installer: failing statement: ' . preg_replace('/\s+/', ' ', trim($query)));
-
-            // 1215/1005 say nothing useful on their own; InnoDB keeps the real reason here.
-            $foreignKeyError = $this->latestForeignKeyError();
-            if ($foreignKeyError !== '') {
-                error_log("Installer: InnoDB's last foreign key error: $foreignKeyError");
-            }
-
-            throw new RuntimeException("Failed to create table `$table`: " . $e->getMessage(), 0, $e);
-        }
-    }
-
-    /**
-     * InnoDB's own account of the last foreign key failure, when the DB user may read it.
-     *
-     * @return string The LATEST FOREIGN KEY ERROR block, or '' when unavailable.
-     */
-    private function latestForeignKeyError(): string {
-        try {
-            // Needs the global PROCESS privilege; absent it, we simply have nothing to add.
-            $row = $this->db->query('SHOW ENGINE INNODB STATUS')->fetch();
-        } catch (PDOException $e) {
-            return '';
-        }
-
-        $status = is_array($row) ? ($row['Status'] ?? '') : '';
-        if (!preg_match('/LATEST FOREIGN KEY ERROR\s*-+\s*(.*?)(?=\n-{10,})/s', (string) $status, $matches)) {
-            return '';
-        }
-
-        return preg_replace('/\s+/', ' ', trim($matches[1]));
-    }
-
-}
-
-class accountTable {
-    private $db, $accountTableName;
-
-    public function __construct($pdoConnection, $accountTableName) {	
-        $this->db = $pdoConnection;
-        $this->accountTableName = $accountTableName;
-    }
-
-    public function addAdminAccount($username, $unhashedPassword, $role) {
-        $hashedPassword = password_hash($unhashedPassword, PASSWORD_DEFAULT);
-        $query = "INSERT INTO {$this->accountTableName} (username, password_hash, role) VALUES(:username, :password_hash, :role)";
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':username', $username);
-        $stmt->bindParam(':password_hash', $hashedPassword);
-        $stmt->bindParam(':role', $role);
-        return $stmt->execute();
-    }
-
-    // Returns true if the accounts table already holds at least one account.
-    // Used to refuse re-running the installer (which would create a new admin) on an
-    // already-provisioned instance, even if the .installed marker is missing.
-    public function anyAccountExists() {
-        try {
-            $stmt = $this->db->query("SELECT 1 FROM {$this->accountTableName} LIMIT 1");
-            return $stmt !== false && $stmt->fetchColumn() !== false;
-        } catch (PDOException $e) {
-            // Table doesn't exist yet (fresh DB) - no accounts.
-            return false;
-        }
-    }
-}
-
-
-class boardTable {
-    private $db, $boardTableName, $databaseName;
-
-    // Constructor to initialize the PDO connection, table name, and database name
-    public function __construct($pdoConnection, $boardTableName, $databaseName) {
-        $this->db = $pdoConnection;
-        $this->boardTableName = $boardTableName;
-        $this->databaseName = $databaseName;
-    }
-
-    // Method to create a global board if it doesn't exist
-    public function createGlobalBoard() {
-        // Check if the global board already exists
-        $query = "SELECT COUNT(*) FROM {$this->boardTableName} WHERE board_uid = :global_board_uid";
-        $stmt = $this->db->prepare($query);
-        $stmt->execute([
-            ':global_board_uid' => GLOBAL_BOARD_UID
-        ]);
-        $count = $stmt->fetchColumn();
-
-        // If global board doesn't exist, insert it
-        if ($count == 0) {
-            // Insert the global board with a reserved UID
-            $query = "INSERT INTO {$this->boardTableName}
-                        (board_uid, board_identifier, board_title, board_sub_title, storage_directory_name, listed, date_added)
-                      VALUES
-                        (:board_uid, :board_identifier, :board_title, :board_sub_title, :storage_directory_name, :listed, :date_added)";
-
-            $stmt = $this->db->prepare($query);
-            $stmt->bindValue(':board_uid', GLOBAL_BOARD_UID);
-            $stmt->bindValue(':board_identifier', 'GLOBAL');
-            $stmt->bindValue(':board_title', 'GLOBAL');
-            $stmt->bindValue(':board_sub_title', 'Global board scope');
-            $stmt->bindValue(':storage_directory_name', '');
-            $stmt->bindValue(':listed', 0, PDO::PARAM_INT);
-            $stmt->bindValue(':date_added', date('Y-m-d'));
-            
-            return $stmt->execute(); // Return true if successful
-        }
-
-        // If the global board exists, return false or a message (optional)
-        return false; // Board already exists
-    }
-
-    // Method to add the first board to the system (example for initial setup)
-    public function addFirstBoard($board_identifier, $board_title, $board_sub_title, $storage_directory_name) {
-        $query = "INSERT INTO {$this->boardTableName}
-                    (board_identifier, board_title, board_sub_title, storage_directory_name)
-                  VALUES
-                    (:board_identifier, :board_title, :board_sub_title, :storage_directory_name)";
-
-        $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':board_identifier', $board_identifier);
-        $stmt->bindParam(':board_title', $board_title);
-        $stmt->bindParam(':board_sub_title', $board_sub_title);
-        $stmt->bindParam(':storage_directory_name', $storage_directory_name);
-
-        return $stmt->execute(); // Return true if successful
-    }
-
-    // Method to fetch the last board UID (useful for inserting new boards)
-    public function getLastBoardUID() {
-        $query = "SELECT MAX(board_uid) AS max_uid FROM {$this->boardTableName}";
-        $stmt = $this->db->query($query);
-        $board_uid = $stmt->fetchColumn();
-        return $board_uid ?? 0;
-    }
-
-    // Method to get the next AUTO_INCREMENT value for a table
-    public function getNextAutoIncrement($tableName) {
-        try {
-            // Query to get the AUTO_INCREMENT value from information_schema
-            $query = "SELECT AUTO_INCREMENT 
-                      FROM information_schema.TABLES 
-                      WHERE TABLE_SCHEMA = :databaseName 
-                      AND TABLE_NAME = :tableName";
-    
-            $stmt = $this->db->prepare($query);
-            $stmt->execute([
-                ':databaseName' => $this->databaseName,
-                ':tableName' => $tableName,
-            ]);
-    
-            // Fetch the result
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-            if ($result && isset($result['AUTO_INCREMENT'])) {
-                return (int)$result['AUTO_INCREMENT'];
-            }
-    
-            // Return null if AUTO_INCREMENT value is not found
-            return null;
-        } catch (PDOException $e) {
-            // Handle exceptions by logging or re-throwing
-            error_log("Error fetching AUTO_INCREMENT value: " . $e->getMessage());
-            return null;
-        }
-    }
-}
-
-// Main execution
-$dbSettings = require ROOTPATH . '/databaseSettings.php';
-$html = new html($dbSettings);
-
-// Anchor the install marker to the application root, NOT the (SAPI-dependent) CWD.
-// A relative './.installed' could be written/checked in the wrong directory, silently
-// re-enabling the unauthenticated installer.
-define('INSTALLED_MARKER', ROOTPATH . '/.installed');
-
-if (file_exists(INSTALLED_MARKER)) {
-    $html->drawHeader();
-    $html->drawStyle();
-    $html->drawInstallNotice();
-    echo "Kokonotsuba has been installed!";
-    $html->drawFooter();
-    exit;
-}
-
-$action = $_REQUEST['action'] ?? '';
-switch ($action) {
-    case 'install':
-        try {
-            $dsn = "{$dbSettings['DATABASE_DRIVER']}:host={$dbSettings['DATABASE_HOST']};port={$dbSettings['DATABASE_PORT']};dbname={$dbSettings['DATABASE_NAME']};charset={$dbSettings['DATABASE_CHARSET']}";
-            $pdoConnection = new PDO($dsn, $dbSettings['DATABASE_USERNAME'], $dbSettings['DATABASE_PASSWORD'], [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ]);
-
-            $globalConfig = getGlobalConfig();
-
-            $tableCreator = new tableCreator($pdoConnection);
-            $tables = [
-                'POST_TABLE' => $dbSettings['POST_TABLE'],
-                'FILE_TABLE' => $dbSettings['FILE_TABLE'],
-                'QUOTE_LINK_TABLE' => $dbSettings['QUOTE_LINK_TABLE'],
-                'REPORT_TABLE' => $dbSettings['REPORT_TABLE'],
-                'REPORT_READ_TABLE' => $dbSettings['REPORT_READ_TABLE'],
-                'BAN_TABLE' => $dbSettings['BAN_TABLE'],
-                'BOARD_TABLE' => $dbSettings['BOARD_TABLE'],
-                'BOARD_CONFIG_TABLE' => $dbSettings['BOARD_CONFIG_TABLE'],
-                'BOARD_PATH_CACHE_TABLE' => $dbSettings['BOARD_PATH_CACHE_TABLE'],
-                'THREAD_TABLE' => $dbSettings['THREAD_TABLE'],
-                'POST_NUMBER_TABLE' => $dbSettings['POST_NUMBER_TABLE'],
-                'ACCOUNT_TABLE' => $dbSettings['ACCOUNT_TABLE'],
-                'ACTIONLOG_TABLE' => $dbSettings['ACTIONLOG_TABLE'],
-                'THREAD_REDIRECT_TABLE' => $dbSettings['THREAD_REDIRECT_TABLE'],
-                'DELETED_POSTS_TABLE' => $dbSettings['DELETED_POSTS_TABLE'],
-                'CAPCODE_TABLE' => $dbSettings['CAPCODE_TABLE'],
-                'SPAM_STRING_TABLE' => $dbSettings['SPAM_STRING_TABLE'],
-                'SOUDANE_TABLE' => $dbSettings['SOUDANE_TABLE'],
-                'THREAD_THEMES_TABLE' => $dbSettings['THREAD_THEMES_TABLE'],
-                'LAST_THREAD_SUBMISSIONS_TABLE' => $dbSettings['LAST_THREAD_SUBMISSIONS_TABLE'],
-                'NOTE_TABLE' => $dbSettings['NOTE_TABLE'],
-                'PRIVATE_MESSAGE_TABLE' => $dbSettings['PRIVATE_MESSAGE_TABLE'],
-                'BANNER_AD_TABLE' => $dbSettings['BANNER_AD_TABLE'],
-                'BANNER_TABLE' => $dbSettings['BANNER_TABLE'],
-                'ADS_TABLE' => $dbSettings['ADS_TABLE'],
-                'BLOTTER_TABLE' => $dbSettings['BLOTTER_TABLE'],
-                'FILE_BAN_TABLE' => $dbSettings['FILE_BAN_TABLE'],
-                'PERCEPTUAL_BAN_TABLE' => $dbSettings['PERCEPTUAL_BAN_TABLE'],
-                'COUNTRY_FLAG_TABLE' => $dbSettings['COUNTRY_FLAG_TABLE'],
-                'DISPLAY_IP_TABLE' => $dbSettings['DISPLAY_IP_TABLE'],
-            ];
-
-            $tableCreator->createTables($tables);
-            $sanitizedTableNames = array_map('sanitizeTableName', $tables);
-            $boardTable = new boardTable($pdoConnection, $sanitizedTableNames['BOARD_TABLE'], $dbSettings['DATABASE_NAME']);
-            $accountTable = new accountTable($pdoConnection, $sanitizedTableNames['ACCOUNT_TABLE']);
-
-            // Refuse to provision a new admin on an already-installed instance, even if the
-            // .installed marker is absent (e.g. CLI/SQL install, backup restore, wrong CWD).
-            if ($accountTable->anyAccountExists()) {
-                touch(INSTALLED_MARKER);
-                http_response_code(403);
-                exit('Installation aborted: accounts already exist. Delete install.php.');
-            }
-
-            $boardTable->createGlobalBoard(); // create global dummy board
-
-            createBoardAndFiles($boardTable);
-
-            $username = $_POST['admin-username'] ?? '';
-            $password = $_POST['admin-password'] ?? '';
-            $accountTable->addAdminAccount($username, $password, Kokonotsuba\userRole::LEV_ADMIN->value);
-
-            
-            touch(INSTALLED_MARKER);
-
-            if(file_exists(dirname(__FILE__) . '/' .$globalConfig['STATIC_INDEX_FILE'])) {
-
-                unlink('./'.$globalConfig['STATIC_INDEX_FILE']);
-                createFileAndWriteText(dirname(__FILE__) . '/', $globalConfig['STATIC_INDEX_FILE'], '
-                    <!DOCTYPE html>
-                    <html lang="en">
-                        <head>
-                            <meta charset="UTF-8">
-                            <meta http-equiv="refresh" content="url='.$globalConfig['LIVE_INDEX_FILE'].'">
-                            <title>Redirecting...</title>
-                        </head>
-                        <body>
-                            <p>If you are not redirected automatically, follow this <a href="'.$globalConfig['LIVE_INDEX_FILE'].'">link</a>.</p>
-                        </body>
-                    </html>
-                ');
-            }
-            
-            redirect($globalConfig['LIVE_INDEX_FILE']);
-        } catch (Exception $e) {
-            // Log the detail server-side; never expose stack traces / SQL / paths to the client.
-            error_log('Installer error: ' . $e->getMessage());
-            http_response_code(500);
-            exit('Installation failed. Check the server error log for details.');
-        }
-        break;
-
-    //default main
-    default:
-        $html->drawHeader();
-        $html->drawStyle();
-        $html->drawInstallNotice();
-        $html->drawRequiredExtentions();
-        $html->drawImportantConfigValuesPreview();
-        $html->drawInstallForm();
-        $html->drawFooter();
-    break;
+$isInstallRequest = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
+	&& ($_POST['action'] ?? '') === 'install';
+
+try {
+	$report = buildReport($defaults, $appRoot);
+
+	if (!$isInstallRequest) {
+		$page->header('Serving from '.$defaults->baseUrl());
+		$page->report($report);
+		$page->webServerHelp($defaults->urlPrefix, $appRoot);
+		$page->form(formDefaults($defaults), [], $report->hasFailures());
+		$page->footer();
+		exit;
+	}
+
+	$input = installInput::fromArray($_POST);
+
+	// The environment can change between drawing the form and submitting it, so it is checked
+	// again here rather than trusted from the page the user is looking at.
+	if ($report->hasFailures() || !$input->isValid()) {
+		http_response_code(422);
+		$page->header('Nothing has been changed yet');
+		$page->report($report);
+		$page->form(array_merge(formDefaults($defaults), $input->redrawValues()), $input->errors(), $report->hasFailures());
+		$page->footer();
+		exit;
+	}
+
+	$installer = new installer($appRoot, getTableNames(), Kokonotsuba\KOKO_VERSION, $defaults);
+	$result = $installer->run($input);
+
+	if (!$result->succeeded()) {
+		http_response_code(500);
+	}
+
+	$page->header();
+	$page->result($result);
+
+	if (!$result->succeeded()) {
+		$page->form(array_merge(formDefaults($defaults), $input->redrawValues()), [], false);
+	}
+
+	$page->footer();
+} catch (Throwable $e) {
+	error_log('Installer: '.$e);
+
+	http_response_code(500);
+	$page->header();
+	echo '<div class="panel fail"><h2>The installer itself failed</h2><p>',
+		htmlspecialchars($e->getMessage(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+		'</p><p>The full trace is in the PHP error log.</p></div>';
+	$page->footer();
 }

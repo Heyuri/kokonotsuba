@@ -9,7 +9,7 @@ use Kokonotsuba\post\postRepository;
 use Kokonotsuba\template\templateEngine;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\module_classes\moduleEngine;
-use Kokonotsuba\thumb\ThumbWrapper;
+use Kokonotsuba\thumb\thumbnailerFactory;
 use function Kokonotsuba\libraries\_T;
 use function Puchiko\strings\formatFileSize;
 
@@ -41,12 +41,19 @@ class statusRoute {
 		$func_thumbWork = '<span class="offline">'._T('info_nonfunctional').'</span>';
 		$func_thumbInfo = '(No thumbnail)';
 		if ($this->config['USE_THUMB'] !== 0) {
-				$thumbType = $this->config['USE_THUMB']; if ($this->config['USE_THUMB'] == 1) { $thumbType = 'gd'; }
-				require(getBackendCodeDir() . 'thumb/thumb.' . $thumbType . '.php');
-				$thObj = new ThumbWrapper();
-				if ($thObj->isWorking()) $func_thumbWork = '<span class="online">'._T('info_functional').'</span>';
-				$func_thumbInfo = $thObj->getClass();
-				unset($thObj);
+			$factory = new thumbnailerFactory($this->config['THUMB_SETTING']['Method'] ?? 'gd');
+			$installed = $factory->describeInstalled();
+
+			if ($installed !== []) {
+				$func_thumbWork = '<span class="online">'._T('info_functional').'</span>';
+				$func_thumbInfo = implode(', ', $installed);
+			}
+
+			// a board carried over from a build that still had the Imagick or repng2jpeg
+			// wrappers keeps its old method name, so say what is actually being used
+			if ($factory->isRetiredMethod()) {
+				$func_thumbInfo .= ' (configured method is no longer available)';
+			}
 		}
 
 		$dat = '';

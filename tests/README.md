@@ -19,7 +19,8 @@ Two layers of the module system are integration concerns, not unit-testable in
 isolation, so they are deliberately excluded:
 
 - **`*Repository` classes** extend `baseRepository` and need a live PDO/MariaDB
-  connection. They are exercised against a real database, not here.
+  connection. They are exercised against a real database, not here — see
+  `integration/repositoryHelpers.php`.
 - **`moduleMain.php` / `moduleAdmin.php`** are constructed with the full
   `moduleContext` (board, template engine, DI container, request) and mostly
   register hooks and render templates. Testing them means booting the request
@@ -84,26 +85,45 @@ tests/
     TestRunner.php       Discovery + execution + coloured reporting
     Fuzzer.php           Property-based fuzzer + input generators
     i18nStub.php         Test stub for the _T() translation helper
-    InstallerHarness.php Loads install.php's declarations without running the installer
     AssertionFailedException.php
   unit/
     Puchiko/             Tests for the helper functions
     Kokonotsuba/         Tests for core classes (e.g. userRole)
     Modules/             Tests for the module logic layer
-  fuzz/                  Per-domain fuzz targets, auto-included by fuzz.php
-  integration/           Scripts run directly; need a database (see each file's header)
+  integration/           Needs a live MariaDB; NOT picked up by run.php
+    migrations.php       Migration runner: baseline, reconcile, detect, rollback
+    install.php          The installer against a scratch app root: files, rows,
+                         refusal over a live database, rollback and retry
+    roleLevelMigration.php
+    deletionSemantics.php
+    loginAttempts.php    Staff login brute-force ledger: counting, clearing, warning
+    bans.php             Ban enforcement: scope, checkpoints, wildcards, visitor
+                         tokens, seen state, appeals, listing
+    repositoryHelpers.php  baseRepository's shared query helpers, and the repository
+                           methods built on them
   fixtures/
     global/              Committed homoglyph map so normalisation tests stay offline
 ```
 
-### Testing install.php
+## Running the integration tests
 
-install.php is a front controller: requiring it defines ROOTPATH, opens a database connection and
-dispatches on `$_REQUEST`. `InstallerHarness` tokenizes the file and re-declares only its `use`,
-`function` and `class` declarations, in a private namespace, so the installer's logic can be tested
-without any of that running. `InstallerTest.php` covers identifier validation, the config-template
-builder and the shape of the DDL; the DDL itself is executed against a real server by
-`tests/integration/installSchema.php`.
+`tests/run.php` scans `tests/unit/` only. Anything needing a live database lives
+in `tests/integration/` and is executed directly, reading its connection from the
+environment. Point these at a throwaway database — they drop and recreate tables.
+
+```sh
+KOKO_TEST_DSN='mysql:host=127.0.0.1;dbname=koko_test;charset=utf8mb4' \
+KOKO_TEST_USER=claude KOKO_TEST_PASS=claude_local_dev \
+php tests/integration/migrations.php
+php tests/integration/bans.php
+php tests/integration/anonIp.php
+```
+
+`anonIp.php` also sweeps `information_schema` for columns that look like an
+address and fails when one is not registered in `anonIpTargets`, so a new table
+storing an IP is caught the moment its migration lands.
+
+Exit code is `0` on success, `1` on failure, `2` when no database is reachable.
 
 ### Testing a module class
 

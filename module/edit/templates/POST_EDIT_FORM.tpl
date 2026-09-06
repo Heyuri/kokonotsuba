@@ -1,7 +1,7 @@
 	<div class="editFormContainer">
 		<h3>Edit post No.<span class="noteFormPostNumber" id="post_number">{$POST_NUMBER}</span></h3>
 		<div class="editForm">
-			<form method="POST" action="{$MODULE_URL}">
+			<form method="POST" action="{$MODULE_URL}" enctype="multipart/form-data">
 				{$CSRF_TOKEN}
 				<input name="postUid" value="<!--&IF($POST_UID,'{$POST_UID}','')-->" type="hidden">
 				<table>
@@ -36,6 +36,14 @@
 								<select name="tag" id="editTag">
 									{$TAG_SELECT}
 								</select>
+							</td>
+						</tr>
+						<tr class="editAttachmentsRow" <!--&IF($SHOW_ATTACHMENTS,'','hidden')-->>
+							<td class="postblock"><label>{$FORM_ATTACHMENTS}</label></td>
+							<td>
+								<div class="formItemDescription">{$ATTACHMENTS_DESCRIPTION}</div>
+								<div class="editAttachmentList" data-empty-text="{$NO_ATTACHMENTS_TEXT}">{$ATTACHMENT_LIST}</div>
+								<input type="file" name="upfile[]" class="editAttachmentUpload" multiple>
 							</td>
 						</tr>
 					</tbody>

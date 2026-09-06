@@ -40,4 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
 	setupSelectAllFeature('roleselectall', 'rolerow');
 	setupSelectAllFeature('boardselectall', 'boardrow');
 	setupSelectAllFeature('overboardselectall', 'overboardFilterList');
+	setupSelectAllFeature('actiontypeselectall', 'actiontyperow');
+	setupSelectAllFeature('bancheckpointselectall', 'bancheckpointrow');
+
+	// each action log event group carries its own toggle
+	document.querySelectorAll('.actionTypeGroupToggle').forEach(toggle => {
+		if (!toggle.id) toggle.id = toggle.dataset.target + '-toggle';
+		setupSelectAllFeature(toggle.id, toggle.dataset.target);
+	});
 });

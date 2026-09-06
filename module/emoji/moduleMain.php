@@ -3,15 +3,16 @@
 namespace Kokonotsuba\Modules\emoji;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\traits\listeners\RegistBeforeCommitListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\CommentExtrasListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
+use Kokonotsuba\post\Post;
 
 use function Puchiko\strings\sanitizeStr;
 
 class moduleMain extends abstractModuleMain {
-	use RegistBeforeCommitListenerTrait;
+	use PostCommentListenerTrait;
 	use CommentExtrasListenerTrait;
 	use IncludeScriptTrait;
 	use FormattingDetailsTrait;
@@ -34,7 +35,7 @@ class moduleMain extends abstractModuleMain {
 		$this->emojis = require __DIR__ . '/emojis.php';
 		$this->emojiFilter = $this->buildEmojiFilter();
 
-		$this->listenRegistBeforeCommit('onBeforeCommit');
+		$this->listenPostComment('onRenderComment');
 		$this->listenCommentExtras('onRenderCommentExtras');
 		$this->registerScript('addemoji.js');
 	}
@@ -78,11 +79,17 @@ class moduleMain extends abstractModuleMain {
 		return $emojiFilter;
 	}
 
-	public function onBeforeCommit(&$name, &$email, &$emailForInsertion, &$sub, string &$com): void {
+	/**
+	 * Swap emoji characters for their images.
+	 *
+	 * Done at render time so the stored comment keeps the characters the poster typed, which
+	 * also means the images follow the board's current STATIC_URL.
+	 */
+	private function onRenderComment(string &$comment, ?Post $post = null, bool $isThreadView = false): void {
 		// Loop through emoji regex and apply it on the comment 
 		foreach ($this->emojiFilter as $filterin => $filterout) {
 			// apply filter
-			$com = preg_replace($filterin, $filterout, $com);
+			$comment = preg_replace($filterin, $filterout, $comment);
 		}
 	}
 

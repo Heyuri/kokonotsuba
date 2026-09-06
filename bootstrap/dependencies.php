@@ -11,6 +11,7 @@
  * @var \Kokonotsuba\policy\postRenderingPolicy          $postRenderingPolicy
  * @var \Kokonotsuba\action_log\actionLoggerService      $actionLoggerService
  * @var \Kokonotsuba\account\accountRepository           $accountRepository
+ * @var \Kokonotsuba\log_in\loginAttemptRepository      $loginAttemptRepository
  * @var \Kokonotsuba\thread\threadRepository             $threadRepository
  * @var \Kokonotsuba\thread\threadService                $threadService
  * @var \Kokonotsuba\post\attachment\fileService         $fileService
@@ -29,6 +30,8 @@ use Kokonotsuba\error\softErrorHandler;
 use Kokonotsuba\ip\IPValidator;
 use Kokonotsuba\log_in\adminLoginController;
 use Kokonotsuba\log_in\authenticationHandler;
+use Kokonotsuba\log_in\loginAttemptPolicy;
+use Kokonotsuba\log_in\loginAttemptService;
 use Kokonotsuba\log_in\loginSessionHandler;
 use Kokonotsuba\overboard;
 use Kokonotsuba\post\postValidator;
@@ -59,12 +62,33 @@ $softErrorHandler = new softErrorHandler($board->getBoardHead('Error!'), $board-
 $loginSessionHandler = new loginSessionHandler($request, $config['STAFF_LOGIN_TIMEOUT']);
 $authenticationHandler = new authenticationHandler();
 
+// Brute-force throttle: a tight per-account counter, plus a looser per-IP one so spraying
+// usernames does not sidestep it.
+$loginAttemptService = new loginAttemptService(
+	$loginAttemptRepository,
+	new loginAttemptPolicy(
+		$config['LOGIN_MAX_ATTEMPTS'],
+		$config['LOGIN_ATTEMPT_WINDOW'],
+		$config['LOGIN_LOCKOUT_SECONDS'],
+		$config['LOGIN_LOCKOUT_MAX_SECONDS']
+	),
+	new loginAttemptPolicy(
+		$config['LOGIN_MAX_ATTEMPTS_PER_IP'],
+		$config['LOGIN_ATTEMPT_WINDOW'],
+		$config['LOGIN_LOCKOUT_SECONDS'],
+		$config['LOGIN_LOCKOUT_MAX_SECONDS']
+	),
+	$config['LOGIN_ATTEMPT_RETENTION_DAYS']
+);
+
 $adminLoginController = new adminLoginController(
 	$actionLoggerService,
 	$accountRepository,
 	$loginSessionHandler,
 	$authenticationHandler,
-	$softErrorHandler
+	$softErrorHandler,
+	$loginAttemptService,
+	$request
 );
 
 $IPValidator = new IPValidator($config, $request->userIp(), $request);
@@ -109,6 +133,7 @@ $container->set('adminPageRenderer', $adminPageRenderer);
 $container->set('softErrorHandler', $softErrorHandler);
 $container->set('loginSessionHandler', $loginSessionHandler);
 $container->set('adminLoginController', $adminLoginController);
+$container->set('loginAttemptService', $loginAttemptService);
 $container->set('postValidator', $postValidator);
 $container->set('postDateFormatter', $postDateFormatter);
 $container->set('overboard', $overboard);

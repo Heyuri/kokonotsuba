@@ -37,7 +37,7 @@ class threadWatcherRepository extends baseRepository {
 			return [];
 		}
 
-		$placeholders = '(' . implode(', ', array_fill(0, count($threadUids), '?')) . ')';
+		$placeholders = $this->buildInClause($threadUids);
 
 		// Post counts come from one grouped scan joined in, rather than a correlated
 		// COUNT(*) re-run per watched thread.
@@ -91,7 +91,7 @@ class threadWatcherRepository extends baseRepository {
 			return [];
 		}
 
-		$threadPlaceholders = '(' . implode(', ', array_fill(0, count($threadUids), '?')) . ')';
+		$threadPlaceholders = $this->buildInClause($threadUids);
 		$pairPlaceholders = '(' . implode(', ', array_fill(0, count($ownPosts), '(?, ?)')) . ')';
 
 		$pairParams = [];
@@ -142,7 +142,7 @@ class threadWatcherRepository extends baseRepository {
 		}
 
 		$threadUids = array_keys($seenMap);
-		$threadPlaceholders = '(' . implode(', ', array_fill(0, count($threadUids), '?')) . ')';
+		$threadPlaceholders = $this->buildInClause($threadUids);
 		$pairPlaceholders = '(' . implode(', ', array_fill(0, count($seenMap), '(?, ?)')) . ')';
 
 		$pairParams = [];
@@ -182,8 +182,8 @@ class threadWatcherRepository extends baseRepository {
 		if (empty($blacklist)) {
 			return ['', []];
 		}
-		$placeholders = implode(', ', array_fill(0, count($blacklist), '?'));
-		return [" AND t.boardUID NOT IN ($placeholders)", $blacklist];
+		$placeholders = $this->buildInClause($blacklist);
+		return [" AND t.boardUID NOT IN {$placeholders}", $blacklist];
 	}
 
 	/**

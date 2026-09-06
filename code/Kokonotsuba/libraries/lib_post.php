@@ -13,6 +13,7 @@ use Kokonotsuba\ip\IPAddress;
 use Kokonotsuba\post\Post;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\request\request;
+use Kokonotsuba\thumb\imageProbe;
 use Kokonotsuba\userRole;
 
 use function Puchiko\getVideoDimensions;
@@ -210,6 +211,12 @@ function getMediaDimensions(string $filePath, string $mimeType, string $extensio
 
 	if (isImage($mimeType)) {
 		[$imgW, $imgH] = getimagesize($filePath);
+
+		// browsers apply a JPEG's EXIF orientation when they display it, so a quarter turn
+		// means the stored dimensions have to be swapped to match what anyone actually sees
+		if (imageProbe::orientationSwapsAxes(imageProbe::orientation($filePath))) {
+			[$imgW, $imgH] = [$imgH, $imgW];
+		}
 	} elseif (isVideo($mimeType)) {
 		[$imgW, $imgH] = getVideoDimensions($filePath); // You must implement this
 	} elseif (isSwf($mimeType, $extension)) {
@@ -327,6 +334,23 @@ function getPageOfThread(string $thread_uid, array $threads, int $threadsPerPage
 	}
 	
 	return -1; // Thread not found
+}
+
+/**
+ * Every post carried by a list of thread previews.
+ *
+ * @param ThreadData[] $threads
+ * @return Post[]
+ */
+function getPostsFromThreadArrays(array $threads): array {
+	$posts = [];
+	foreach ($threads as $thread) {
+		$threadPosts = $thread->getPosts();
+		if (is_array($threadPosts)) {
+			array_push($posts, ...$threadPosts);
+		}
+	}
+	return $posts;
 }
 
 function getPostUidsFromThreadArrays(array $threads): array {

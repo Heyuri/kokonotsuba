@@ -3,16 +3,17 @@
 namespace Kokonotsuba\Modules\wordFilter;
 
 use Kokonotsuba\module_classes\abstractModuleMain;
-use Kokonotsuba\module_classes\traits\listeners\RegistBeforeCommitListenerTrait;
+use Kokonotsuba\module_classes\traits\listeners\PostCommentListenerTrait;
+use Kokonotsuba\post\Post;
 
 class moduleMain extends abstractModuleMain {
-	use RegistBeforeCommitListenerTrait;
+	use PostCommentListenerTrait;
 	private array $FILTERS;
 
 	public function initialize(): void {
 		$this->FILTERS = $this->getModuleConfig('FILTERS');
 		
-		$this->listenRegistBeforeCommit('onBeforeCommit');
+		$this->listenPostComment('onRenderComment');
 	}
 		 
 	public function getName(): string {
@@ -23,7 +24,13 @@ class moduleMain extends abstractModuleMain {
 		return 'Koko BBS Release 1';
 	}
 
-	public function onBeforeCommit($name, &$email, &$emailForInsertion, &$sub, &$com): void {
+	/**
+	 * Apply the filters to a comment on its way to the page.
+	 *
+	 * The stored comment keeps what was typed; filtering here means a change to FILTERS takes
+	 * effect on every post rather than only on new ones.
+	 */
+	private function onRenderComment(string &$com, ?Post $post = null, bool $isThreadView = false): void {
 		//VAGINA filter
 		$this->FILTERS['~<a\b[^>]*>.*?</a>(*SKIP)(*F)|vagina~i'] = $this->generateColorSpan('VAGINA');
 		 

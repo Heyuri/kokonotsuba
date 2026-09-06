@@ -25,6 +25,24 @@ class attachmentRenderer {
 		private widgetMenuPolicy $menuPolicy
 	) {}
 
+	/**
+	 * Html for every attachment on a post, each drawn by generateAttachmentHtml().
+	 *
+	 * @param array $attachments Attachment rows to draw.
+	 * @param bool  $isDeleted   The post is a deleted one shown to staff.
+	 * @param bool  $adminMode   The viewer is staff.
+	 */
+	public function renderAttachments(array $attachments, bool $isDeleted, bool $adminMode): string {
+		$html = '';
+		$multiple = count($attachments) > 1;
+
+		foreach (array_values($attachments) as $index => $attachment) {
+			$html .= $this->generateAttachmentHtml($attachment, $isDeleted, $adminMode, $index, $multiple);
+		}
+
+		return $html;
+	}
+
 	public function generateAttachmentHtml(
 		array $fileData, 
 		bool $isDeleted, 
@@ -110,6 +128,7 @@ class attachmentRenderer {
 		$attachmentWidgets = $this->menuPolicy->filter(widgetMenuPolicy::MENU_ATTACHMENT, $attachmentWidgets);
 
 		$attachmentButtons = $this->buildAttachmentWidgetHtml($attachmentWidgets);
+		$noscriptButtons = noscriptWidgetMenu::render($attachmentWidgets);
 
 		// build container css classes and let modules append to them
 		$attachmentClasses = 'attachmentContainer';
@@ -125,6 +144,7 @@ class attachmentRenderer {
 			$fileBarData['fileSize'],
 			$fileBarData['fileDimensions'],
 			$attachmentButtons,
+			$noscriptButtons,
 			$attachmentClasses,
 			(int)$fileData['fileId']
 		);
@@ -139,6 +159,7 @@ class attachmentRenderer {
 		string $fileSize,
 		string $fileDimensions,
 		string $attachmentButtons,
+		string $noscriptButtons,
 		string $attachmentClasses,
 		int $fileId
 	): string {
@@ -147,6 +168,7 @@ class attachmentRenderer {
 		if(!empty($attachmentButtons)) {
 			$buttonsHtml = $this->templateEngine->ParseBlock('ATTACHMENT_BUTTONS', [
 				'{$BUTTONS}' => $attachmentButtons,
+				'{$NOSCRIPT_BUTTONS}' => $noscriptButtons,
 			]);
 		}
 

@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\account;
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\action_log\actionLoggerService;
 use Kokonotsuba\log_in\loginSessionHandler;
 use Kokonotsuba\request\request;
@@ -85,7 +86,7 @@ class accountService {
 		}
 
 		$this->accountRepository->addNewAccount($username, $roleLevel->value, $passwordHash);
-		$this->actionLoggerService->logAction("Registered a new account ($username)", GLOBAL_BOARD_UID);
+		$this->actionLoggerService->logAction("Registered a new account ($username)", GLOBAL_BOARD_UID, actionType::ACCOUNT_CREATE);
 	}
 
 	/**
@@ -109,7 +110,7 @@ class accountService {
 		$accountAfterPasswordUpdate = $this->accountRepository->getAccountById($accountID);
 		$loginSessionHandler->login($accountAfterPasswordUpdate);
 
-		$this->actionLoggerService->logAction("Reset password", GLOBAL_BOARD_UID);
+		$this->actionLoggerService->logAction("Reset password", GLOBAL_BOARD_UID, actionType::ACCOUNT_PASSWORD);
 	}
 
 	/**
@@ -122,7 +123,7 @@ class accountService {
 	public function handleAdminPasswordReset(int $accountId, string $newPassword): void {
 		$passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
 		$this->accountRepository->updateAccountPasswordHashById($accountId, $passwordHash);
-		$this->actionLoggerService->logAction("Admin reset password for account #$accountId", GLOBAL_BOARD_UID);
+		$this->actionLoggerService->logAction("Admin reset password for account #$accountId", GLOBAL_BOARD_UID, actionType::ACCOUNT_PASSWORD);
 	}
 	
 }

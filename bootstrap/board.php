@@ -5,9 +5,11 @@
  *
  * @var \Kokonotsuba\database\databaseConnection $databaseConnection
  * @var array                                    $dbSettings
+ * @var array                                    $tableNames
  * @var \Kokonotsuba\containers\appContainer     $container
  */
 
+use Kokonotsuba\board\board;
 use Kokonotsuba\board\boardPostNumbers;
 use Kokonotsuba\board\boardRepository;
 use Kokonotsuba\board\boardService;
@@ -20,15 +22,15 @@ use Kokonotsuba\config\configService;
 // Board Bootstrap
 // ───────────────────────────────────────
 
-$boardPostNumbers = new boardPostNumbers($databaseConnection, $dbSettings['POST_NUMBER_TABLE']);
+$boardPostNumbers = new boardPostNumbers($databaseConnection, $tableNames['POST_NUMBER_TABLE']);
 
-$boardPathRepository = new boardPathRepository($databaseConnection, $dbSettings['BOARD_PATH_CACHE_TABLE']);
+$boardPathRepository = new boardPathRepository($databaseConnection, $tableNames['BOARD_PATH_CACHE_TABLE']);
 
 $boardPathService = new boardPathService($boardPathRepository);
 
-$boardRepository = new boardRepository($databaseConnection, $dbSettings['BOARD_TABLE']);
+$boardRepository = new boardRepository($databaseConnection, $tableNames['BOARD_TABLE']);
 
-$configRepository = new configRepository($databaseConnection, $dbSettings['BOARD_CONFIG_TABLE']);
+$configRepository = new configRepository($databaseConnection, $tableNames['BOARD_CONFIG_TABLE']);
 $configService = new configService($configRepository);
 
 // Register in container before boardService uses them via assembleBoard()
@@ -42,11 +44,11 @@ $boardService = new boardService($boardRepository, $container, $boardPathService
 $container->set('boardService', $boardService);
 
 $boardList = $boardService->getAllRegularBoards();
-$visibleBoards = $boardService->getAllListedBoards();
+$visibleBoards = array_values(array_filter($boardList, static fn (board $board): bool => (bool)$board->getBoardListed()));
 
 // Globally accessible board array, it exists to avoid managing complicated dependencies and circular dependencies
 // Defines and globals are to be avoided, but this is an exception
-define('GLOBAL_BOARD_ARRAY', $boardService->getAllRegularBoards());
+define('GLOBAL_BOARD_ARRAY', $boardList);
 
 $container->set('boardList', $boardList);
 $container->set('visibleBoards', $visibleBoards);

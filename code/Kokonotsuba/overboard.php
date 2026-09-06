@@ -5,14 +5,11 @@ namespace Kokonotsuba;
 use Kokonotsuba\board\board;
 use Kokonotsuba\board\boardService;
 use Kokonotsuba\containers\appContainer;
-use Kokonotsuba\containers\moduleEngineContext;
 use Kokonotsuba\error\softErrorHandler;
-use Kokonotsuba\renderers\postRenderer;
+use Kokonotsuba\renderers\boardRendererFactory;
 use Kokonotsuba\renderers\threadRenderer;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\policy\postRenderingPolicy;
-use Kokonotsuba\post\helper\postDateFormatter;
-use Kokonotsuba\post\Post;
 use Kokonotsuba\post\postRepository;
 use Kokonotsuba\quote_link\quoteLinkService;
 use Kokonotsuba\request\request;
@@ -28,6 +25,7 @@ use function Kokonotsuba\libraries\getOrCreateCsrfToken;
 use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
 use function Kokonotsuba\libraries\html\generateMassModerateHtml;
 use function Kokonotsuba\libraries\html\getBoardStylesheetsFromConfig;
+use function Kokonotsuba\libraries\html\generateEarlySettingsScript;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\strings\sanitizeStr;
 use function Kokonotsuba\libraries\getCsrfMetaTag;
@@ -35,8 +33,8 @@ use function Kokonotsuba\libraries\getCsrfMetaTag;
 class overboard {
 	private bool $adminMode, $canViewDeleted;
 
-	// thread renderers are reused across every thread belonging to the same board
-	private array $threadRenderersByBoardUID = [];
+	// renderers are reused across every thread belonging to the same board
+	private ?boardRendererFactory $rendererFactory = null;
 
 	public function __construct(
 		private board $board,
@@ -86,6 +84,9 @@ class overboard {
 		// Inject default JS user settings as JSON for koko.js
 		$jsDefaults = $this->config['JS_DEFAULT_SETTINGS'] ?? [];
 		$pte_vals['{$JS_DEFAULT_SETTINGS}'] = '<script>window.KOKO_DEFAULT_SETTINGS=' . json_encode((object)$jsDefaults, JSON_HEX_TAG | JSON_HEX_AMP) . ';</script>';
+
+		// Applied at the top of the body so the settings land before the first paint
+		$pte_vals['{$EARLY_JS_SETTINGS}'] = generateEarlySettingsScript();
 
 		$html .= $this->templateEngine->ParseBlock('HEADER',$pte_vals);
 		$this->moduleEngine->dispatch('Head', array(&$html, $resno)); // "Head" Hook Point
@@ -150,18 +151,29 @@ class overboard {
 		
 		$postUidsInPage =  getPostUidsFromThreadArrays($threads);
 
-		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage, $this->canViewDeleted);
+		// one set of quote links for the whole page, shared by every board's renderer
+		$this->getRendererFactory()->setQuoteLinks(
+			$this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage, $this->canViewDeleted)
+		);
 		
 		$boardMap = $this->loadBoardsForThreads($threads);
-		$postsByBoardAndThread = $this->loadPostsForThreads($threads);
+
+		$postsByBoard = [];
+		foreach ($threads as $thread) {
+			$postsByBoard[$thread->getThread()->getBoardUID()][] = $thread->getPosts();
+		}
+		foreach ($postsByBoard as $boardUid => $postLists) {
+			if (isset($boardMap[$boardUid])) {
+				$boardPosts = array_merge(...$postLists);
+				$boardMap[$boardUid]->getModuleEngine()->dispatch('PostsPrefetch', [&$boardPosts]);
+			}
+		}
 
 		foreach ($threads as $iterator => $thread) {
 			$threadHTML = $this->renderOverboardThread(
 				$thread,
 				$iterator,
 				$boardMap,
-				$quoteLinksFromPage,
-				$postsByBoardAndThread,
 				$threads
 			);
 		
@@ -214,41 +226,15 @@ class overboard {
 		return $boardMap;
 	}
 	
-	private function loadPostsForThreads($threads) {
-		$tIDsByBoard = array();
-		
-		foreach ($threads as $thread) {
-			$tIDsByBoard[$thread->getThread()->getBoardUID()][] = $thread->getThread()->getUid();
-		}
-		
-		$allPosts = $this->postRepository->fetchPostsFromBoardsAndThreads($tIDsByBoard, $this->canViewDeleted);
-		
-		$postsByBoardAndThread = array();
-		foreach ($allPosts as $post) {
-			// sanity check - skip if not a Post instance
-			if($post instanceof Post === false) {
-				continue;
-			}
-
-			$boardUID = $post->getBoardUid();
-			$threadID = ($post->getThreadUid() == 0) ? $post->getNumber() : $post->getThreadUid();
-			$postsByBoardAndThread[$boardUID][$threadID][] = $post;
-		}
-		return $postsByBoardAndThread;
-	}
-
 	private function renderOverboardThread(
 		ThreadData $thread, 
 		int $iterator, 
 		array $boardMap, 
-		array $quoteLinksFromPage,
-		array $postsByBoardAndThread, 
 		array $threads
 	): string {
 		$boardUID = $thread->getThread()->getBoardUID();
-		$threadID = $thread->getThreadUid();
 	
-		if (!isset($boardMap[$boardUID]) || !isset($postsByBoardAndThread[$boardUID][$threadID])) {
+		if (!isset($boardMap[$boardUID]) || $thread->getPosts() === []) {
 			return '';
 		}
 	
@@ -256,7 +242,7 @@ class overboard {
 		$posts = $thread->getPosts();
 		$threadToRender = $thread->getThread();
 
-		$threadRenderer = $this->getThreadRenderer($board, $quoteLinksFromPage);
+		$threadRenderer = $this->getThreadRenderer($board);
 
 		[$overboardThreadTitle, $crossLink] = $this->buildThreadTitleAndLink($board);
 	
@@ -288,49 +274,20 @@ class overboard {
 	* its own index. Building one per thread re-instantiated every module - along with
 	* an admin template engine and page renderer - for each thread on the page.
 	*/
-	private function getThreadRenderer(board $board, array $quoteLinksFromPage): threadRenderer {
-		$boardUID = $board->getBoardUID();
-
-		if (!isset($this->threadRenderersByBoardUID[$boardUID])) {
-			$config = $board->loadBoardConfig();
-
-			$this->threadRenderersByBoardUID[$boardUID] = $this->createThreadRenderer(
-				$board,
-				$config,
-				$this->templateEngine,
-				$quoteLinksFromPage
-			);
-		}
-
-		return $this->threadRenderersByBoardUID[$boardUID];
+	private function getThreadRenderer(board $board): threadRenderer {
+		return $this->getRendererFactory()->threadRendererFor($board);
 	}
 
-	private function createThreadRenderer(board $board, array $config, templateEngine $templateEngine, array $quoteLinksFromPage): threadRenderer {
-		$postDateFormatter = new postDateFormatter($config['TIME_ZONE']);
-
-		$moduleEngineContext = new moduleEngineContext(
-			$config, 
-			$board->getConfigValue('LIVE_INDEX_FILE'), 
-			$board->getConfigValue('ModuleList'), 
-			$templateEngine, 
-			$board,
-			$postDateFormatter,
+	private function getRendererFactory(): boardRendererFactory {
+		return $this->rendererFactory ??= new boardRendererFactory(
+			$this->templateEngine,
+			$this->moduleEngine,
+			$this->request,
+			$this->board,
 			$this->container
 		);
-
-		$moduleEngine = new moduleEngine($moduleEngineContext);
-		
-		$postRenderer = new postRenderer($board,
-		 $config, 
-		 $moduleEngine, 
-		 $templateEngine, 
-		 $quoteLinksFromPage,
-		 $this->request
-		);
-
-		return new threadRenderer($config, $templateEngine, $postRenderer, $moduleEngine);
 	}
-	
+
 	private function buildThreadTitleAndLink(board $board): array {
 		$boardTitle = $board->getBoardTitle();
 		$boardURL = $board->getBoardURL();

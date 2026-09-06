@@ -8,8 +8,8 @@
 	<title>{$PAGE_TITLE}</title>
 	<meta name="robots" content="follow,archive">
 	<link rel="shortcut icon" href="{$STATIC_URL}image/favicon.png">
-	<link rel="stylesheet" href="{$STATIC_URL}css/globalBase.css?v=7">
-	<link rel="stylesheet" href="{$STATIC_URL}css/kokotxt/base.css?v=98">
+	<link rel="stylesheet" href="{$STATIC_URL}css/globalBase.css?v=9">
+	<link rel="stylesheet" href="{$STATIC_URL}css/kokotxt/base.css?v=99">
 	{$BOARD_STYLESHEETS}
 	<link class="linkstyle" rel="stylesheet alternate" href="{$STATIC_URL}css/blank.css?v=2" title="Import custom">
 	{$JS_DEFAULT_SETTINGS}

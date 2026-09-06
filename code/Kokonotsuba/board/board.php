@@ -42,6 +42,9 @@ class board implements IBoard {
 	private ?moduleEngine $moduleEngine;
 	private templateEngine $templateEngine;
 
+	/** Builds the template engine, module engine and rebuilder on first use; null once run. */
+	private ?\Closure $engineFactory = null;
+
 	/**
 	 * @param boardPostNumbers $boardPostNumbers Board post-number helper.
 	 * @param boardData        $boardData        Hydrated board metadata.
@@ -104,7 +107,31 @@ class board implements IBoard {
 	}
 
 	public function getModuleEngine(): moduleEngine {
+		$this->ensureEngines();
 		return $this->moduleEngine;
+	}
+
+	/**
+	 * Defer engine construction until something needs it. Instantiating every enabled module is
+	 * the bulk of a board's cost, and most boards in the list are never rendered by a request.
+	 */
+	public function setEngineFactory(\Closure $factory): void {
+		$this->engineFactory = $factory;
+	}
+
+	private function ensureEngines(): void {
+		if ($this->engineFactory === null) {
+			return;
+		}
+
+		$factory = $this->engineFactory;
+		$this->engineFactory = null;
+		$factory($this);
+	}
+
+	private function rebuilder(): boardRebuilder {
+		$this->ensureEngines();
+		return $this->boardRebuilder;
 	}
 
 	// Must be set for rebuilding and html methods to work
@@ -146,6 +173,7 @@ class board implements IBoard {
 	}
 
 	public function getBoardTemplateEngine(): templateEngine {
+		$this->ensureEngines();
 		return $this->templateEngine;
 	}
 
@@ -258,27 +286,27 @@ class board implements IBoard {
 	}
 
 	public function drawRecentReplies(int $res, int $amountOfRepliesToRender): void {
-		$this->boardRebuilder->drawRecentReplies($res, $amountOfRepliesToRender);
+		$this->rebuilder()->drawRecentReplies($res, $amountOfRepliesToRender);
 	}
 
 	public function drawThread(int $res, int $page = 1): void {
-		$this->boardRebuilder->drawThread($res, $page);
+		$this->rebuilder()->drawThread($res, $page);
 	}
 
 	public function drawPage(int $pageNumber): void {
-		$this->boardRebuilder->drawPage($pageNumber);
+		$this->rebuilder()->drawPage($pageNumber);
 	}
 
 	public function rebuildBoard(bool $logRebuild = false): void {
-		$this->boardRebuilder->rebuildBoardHtml($logRebuild);
+		$this->rebuilder()->rebuildBoardHtml($logRebuild);
 	}
 
 	public function rebuildBoardPage(int $pageNumber, bool $logRebuild = false): void {
-		$this->boardRebuilder->rebuildBoardPageHtml($pageNumber, $logRebuild);
+		$this->rebuilder()->rebuildBoardPageHtml($pageNumber, $logRebuild);
 	}
 
 	public function rebuildBoardPages(int $amountOfPagesToRebuild): void {
-		$this->boardRebuilder->rebuildBoardPages($amountOfPagesToRebuild);
+		$this->rebuilder()->rebuildBoardPages($amountOfPagesToRebuild);
 	}
 
 	public function getBoardThreadURL(
@@ -327,18 +355,21 @@ class board implements IBoard {
 	}
 
 	public function getBoardHead(string $pageTitle = '', int $threadNumber = 0, bool $isStaff = false): string {
+		$this->ensureEngines();
 		$headHtml = generateHeadHtml($this->config, $this->templateEngine, $this->moduleEngine, $pageTitle, $threadNumber, $isStaff);
 
 		return $headHtml;
 	}
 
 	public function getBoardPostForm(int $resno = 0, string $moduleInfoHook = '', string $name = '', string $email = '', string $subject = '', string $comment = '', string $category = '', bool $isStaff = false): string {
+		$this->ensureEngines();
 		$postFormHtml = generatePostFormHTML($resno, $this, $this->config, $this->templateEngine, $this->moduleEngine, $moduleInfoHook, $name, $email, $subject, $comment, $category, $isStaff);
 	
 		return $postFormHtml;
 	}
 
 	public function getBoardFooter(bool $isThread = false): string {
+		$this->ensureEngines();
 		$footerHtml = generateFooterHtml($this->templateEngine, $this->moduleEngine, $isThread);
 
 		return $footerHtml;

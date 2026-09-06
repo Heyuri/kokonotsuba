@@ -27,8 +27,16 @@ class pageRenderer {
 		$this->board = $board;
 	}
 	
-	// get template block content with header and footer
-	public function ParsePage(string $templateBlock = '', array $templateValues = array(), bool $isAdmin = false): string {
+	/**
+	 * A template block wrapped in the board's header and footer.
+	 *
+	 * @param bool $isAdmin       Render the staff nav bar above the block.
+	 * @param bool $withStaffHead Emit the staff head a live board gets: the CSRF meta tag, the
+	 *                            ModuleAdminHeader hook and the [Moderate] window. Off by default,
+	 *                            since most admin pages are tables with nothing to moderate; a page
+	 *                            drawing real posts with their deletion checkboxes wants it on.
+	 */
+	public function ParsePage(string $templateBlock = '', array $templateValues = array(), bool $isAdmin = false, bool $withStaffHead = false): string {
 		$htmlOutput = '';
 		$thead = '';
 
@@ -37,7 +45,7 @@ class pageRenderer {
 		$liveIndexFile = $config['LIVE_INDEX_FILE'];
 		$staticIndexFile = $config['STATIC_INDEX_FILE'];
 		
-		$htmlOutput .= $this->board->getBoardHead($this->board->getBoardTitle());
+		$htmlOutput .= $this->board->getBoardHead($this->board->getBoardTitle(), 0, $withStaffHead);
 
 		if($isAdmin) {
 			// The built-in modes, from the same list the sticky staff nav is built from, so a

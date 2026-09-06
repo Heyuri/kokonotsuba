@@ -5,13 +5,13 @@
 		<p>User capcodes that can be used as long as the user knows the trip password.</p>
 		<table class="capcodeList postlists">
 			<thead>
-				<tr> <th>Tripcode</th> <th>Color hexadecimal</th> <th>Capcode text</th> <th>Preview</th> <th></th> </tr>
+				<tr> <th>Tripcode</th> <th>Color hexadecimal</th> <th>Capcode text</th> <th>Preview</th> <th>Status</th> <th></th> </tr>
 			</thead>
 			<tbody>
 				<!--&FOREACH($CAPCODES,'CAPCODE_ROW')-->
 				<!--&IF($ARE_NO_CAPCODES,'
 					<tr>
-						<td colspan="5" class="centerText">No capcodes found.</td>
+						<td colspan="6" class="centerText">No capcodes found.</td>
 					</tr>','')-->
 			</tbody>
 		</table>

@@ -375,6 +375,9 @@
 	}
 
 	var baseline = new Map();
+
+	/** Set by the section navigator, once it exists, to re-mark the groups holding edits. */
+	var navRefresh = null;
 	function snapshot(){
 		baseline.clear();
 		configFields().forEach(function(field){
@@ -615,6 +618,7 @@
 					notify(data.message || 'Configuration edited.', true);
 					applyOverrideMarkers(data.overridden);
 					snapshot();                                   // these values are the saved ones now
+					if (navRefresh) navRefresh();                 // ... and nothing is outstanding in the navigator either
 					form.classList.remove('configFormDirty');     // nothing outstanding, so unstick save
 				} else {
 					notify((data && data.message) || form.dataset.msgFailed || 'Could not save the configuration.', false);
@@ -690,6 +694,197 @@
 	});
 
 	snapshot();
+
+	/* ── Section navigator ───────────────────────────────────────────────────────────────────
+	   The list of groups (and, under each, its modules) rendered hidden by CONFIG_NAV.tpl. It
+	   lives in an ordinary koko window, like the staff alerts widget, so it drags, stacks,
+	   minimises and remembers where it was put. It jumps to a section on click, follows the
+	   scroll position, and marks the groups holding unsaved edits. Every link points at an id
+	   the form actually rendered, so nothing here has to guess. Without the window manager
+	   there is no navigator. */
+	var nav = document.getElementById('configNav');
+
+	if (nav && typeof kkwmWindow === 'function'){
+		var EDGE_MARGIN = 12;
+		// Clear of everything already pinned to the top of the viewport - the persistent nav and
+		// the staff bar under it, and the message stack that drops down over both.
+		var TOP_MARGIN = 140;
+		// A jump lands its section this far down the viewport, and the highlight follows the
+		// section under a line just below that. The two agreeing is what makes the entry that
+		// was clicked the one that ends up highlighted, rather than whatever a short section
+		// leaves peeking over a higher line.
+		var LINE = TOP_MARGIN + 4;
+
+		// In document order: the navigator is built by the same walk that builds the fieldsets.
+		var navSections = [];
+		nav.querySelectorAll('.configNavLink').forEach(function(link){
+			var target = document.getElementById(link.getAttribute('href').slice(1));
+			if (!target) return;
+			target.style.scrollMarginTop = TOP_MARGIN + 'px';
+			navSections.push({ link: link, target: target, item: link.closest('.configNavItem') });
+		});
+
+		var currentLink = null;
+		var currentItem = null;
+
+		function openItem(item, open){
+			if (!item) return;
+			item.classList.toggle('configNavOpen', open);
+			var toggle = item.querySelector('.configNavToggle');
+			if (toggle) toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+		}
+
+		// Highlight one entry, and open the group it belongs to so the entry is visible at all.
+		function setCurrent(section){
+			if (!section || section.link === currentLink) return;
+
+			if (currentLink) currentLink.classList.remove('configNavCurrent');
+			section.link.classList.add('configNavCurrent');
+			currentLink = section.link;
+
+			if (section.item !== currentItem){
+				openItem(currentItem, false);
+				openItem(section.item, true);
+				currentItem = section.item;
+			}
+		}
+
+		// The section that owns the line: the last one that starts above it. Nothing has scrolled
+		// past it yet at the top of the page, so the first section stands in there; at the very
+		// bottom nothing further can reach the line, so the last one stands in instead.
+		function updateCurrent(){
+			if (navSections.length === 0) return;
+
+			var doc = document.documentElement;
+			if (window.innerHeight + window.scrollY >= doc.scrollHeight - 2){
+				setCurrent(navSections[navSections.length - 1]);
+				return;
+			}
+
+			var found = navSections[0];
+			for (var i = 0; i < navSections.length; i++){
+				if (navSections[i].target.getBoundingClientRect().top > LINE) break;
+				found = navSections[i];
+			}
+
+			setCurrent(found);
+		}
+
+		// A click's smooth scroll passes other sections on its way, and following it would flick
+		// the highlight between them. The clicked entry holds until the scrolling has settled.
+		var settleTimer = null;
+
+		function settled(){
+			settleTimer = null;
+			updateCurrent();
+		}
+
+		function holdUntilSettled(){
+			if (settleTimer !== null) clearTimeout(settleTimer);
+			settleTimer = setTimeout(settled, 150);
+		}
+
+		var scrollQueued = false;
+		function queueUpdate(){
+			if (settleTimer !== null){
+				holdUntilSettled();
+				return;
+			}
+			if (scrollQueued) return;
+			scrollQueued = true;
+			window.requestAnimationFrame(function(){
+				scrollQueued = false;
+				updateCurrent();
+			});
+		}
+
+		// A group is starred while it holds an edit that has not been saved yet, so a long form's
+		// outstanding changes are visible without scrolling through it.
+		function updateChangedMarkers(){
+			var changed = new Set();
+			configFields().forEach(function(field){
+				var was = baseline.get(field.name);
+				if (was === undefined || was === fieldValue(field)) return;
+				var group = field.closest('.boardConfigGroup');
+				if (group) changed.add(group.id);
+			});
+
+			// The marker goes on the row rather than the link: a link is ellipsized when its label
+			// is too long for the column, which would swallow a marker inside it.
+			navSections.forEach(function(section){
+				var row = section.link.closest('.configNavRow');
+				if (!row) return;   // a module sub-entry: its group carries the marker for it
+				row.classList.toggle('configNavChanged', changed.has(section.target.id));
+			});
+		}
+
+		nav.addEventListener('click', function(e){
+			var toggle = e.target.closest('.configNavToggle');
+			if (toggle){
+				e.preventDefault();
+				var item = toggle.closest('.configNavItem');
+				openItem(item, !item.classList.contains('configNavOpen'));
+				return;
+			}
+
+			var link = e.target.closest('.configNavLink');
+			if (!link) return;
+
+			var section = null;
+			navSections.forEach(function(candidate){
+				if (candidate.link === link) section = candidate;
+			});
+			if (!section) return;
+
+			// Scrolled by hand rather than by the browser's jump, and highlighted from the click
+			// rather than from wherever the scroll happens to be on its way there.
+			e.preventDefault();
+			setCurrent(section);
+			holdUntilSettled();
+			section.target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		});
+
+		/**
+		 * Sit against the right edge, once the window has a width to measure. The manager places
+		 * windows before their contents exist, so the width it clamps against is zero and a
+		 * right-hand position overshoots. Skipped once it has a position of its own to remember.
+		 */
+		function placeByRightEdge(name, win){
+			try { if (localStorage.getItem('kkwm_pos_' + name)) return; } catch (e) { /* no memory of it */ }
+
+			requestAnimationFrame(function(){
+				var box = win.div.getBoundingClientRect();
+				win.move(document.documentElement.clientWidth - box.width - EDGE_MARGIN, box.top);
+			});
+		}
+
+		var title = nav.dataset.title || 'Sections';
+		var win = new kkwmWindow(title, {
+			w: 220,
+			h: 320,
+			y: Math.max(TOP_MARGIN, Math.floor(document.documentElement.clientHeight / 4))
+		});
+		// A window under this title is already open (kkwm keys them by name): leave it be.
+		if (win && win.div){
+			win.div.classList.add('configNavWindow');
+			win.div.appendChild(nav);
+			nav.hidden = false;
+			placeByRightEdge(title, win);
+		}
+
+		window.addEventListener('scroll', queueUpdate, { passive: true });
+		window.addEventListener('resize', queueUpdate, { passive: true });
+
+		// Every path that can change a field: typing, checkboxes and selects, the array editors'
+		// add/delete buttons, and the discard button's restore (which lands a tick later).
+		form.addEventListener('input', updateChangedMarkers);
+		form.addEventListener('change', updateChangedMarkers);
+		form.addEventListener('click', function(){ setTimeout(updateChangedMarkers, 0); });
+		form.addEventListener('reset', function(){ setTimeout(updateChangedMarkers, 0); });
+
+		navRefresh = updateChangedMarkers;
+		updateCurrent();
+	}
 
 	form.addEventListener('submit', function(e){
 		flushArrayEditors();

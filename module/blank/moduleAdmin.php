@@ -2,12 +2,12 @@
 
 namespace Kokonotsuba\Modules\blank;
 
-use Kokonotsuba\module_classes\abstractModuleMain;
+use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\userRole;
 
-class moduleMain extends abstractModuleMain {
+class moduleAdmin extends abstractModuleAdmin {
     public function getRequiredRole(): userRole {
-        return $this->getConfig('AuthLevels.BLANK_AUTH_LEVEL', userRole::LEV_MODERATOR); 
+        return $this->getConfig('AuthLevels.BLANK_AUTH_LEVEL', userRole::LEV_MODERATOR);
     }
 
     public function getName(): string {

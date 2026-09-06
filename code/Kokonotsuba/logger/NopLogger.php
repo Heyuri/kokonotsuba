@@ -1,11 +1,9 @@
 <?php
 /**
- * NopLogger means it doesn't log anything.
- * Only for production use. Do not use on testing enviroments.
- * Because there is no traceable information left to provide for debugging.
+ * A logger that discards everything handed to it.
  *
- * @package PMCLibrary
- * @version $Id$
+ * Only ever appropriate in production, and rarely even there: nothing it is given
+ * survives, so there is nothing to debug from afterwards.
  */
 
 namespace Kokonotsuba\logger;

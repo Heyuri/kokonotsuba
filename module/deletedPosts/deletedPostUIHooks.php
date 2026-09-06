@@ -230,7 +230,7 @@ class deletedPostUIHooks {
 
 	/**
 	 * Serialise an array of widget entry arrays (as returned by buildWidgetEntry) to
-	 * anchor HTML, matching the format used by postWidget.php's buildWidgetMenuHtml.
+	 * anchor HTML, matching the widget refs Kokonotsuba\renderers\post\postMenu draws.
 	 *
 	 * Entries disabled for this board are dropped here: the renderers filter the menus they build,
 	 * but nothing filters a <template> the front-end clones back in.

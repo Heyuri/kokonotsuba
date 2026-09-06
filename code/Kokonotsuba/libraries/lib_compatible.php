@@ -1,38 +1,33 @@
 <?php
 /**
- * Pixmicat! compatible components
- *
- * @package PMCLibrary
- * @version $Id$
+ * Translation shorthand used throughout the codebase.
  */
 
 namespace Kokonotsuba\libraries;
 
-use Kokonotsuba\PMCLibrary;
+use Kokonotsuba\kokoLibrary;
 
 /**
- * Look up the matching string from the translation resource file.
+ * Look up a translated string by key.
  *
- * @param args Translation resource index, followed by any additional variables
- * @see LanguageLoader->getTranslation
+ * @param string $translationLable Translation key, followed by any sprintf arguments
+ * @see LanguageLoader::getTranslation
  */
 function _T(string $translationLable) {
-	// Prior to PHP 5.3, func_get_args() could not be assigned directly, so its result must be stored in $args first.
 	$args = func_get_args();
 	return call_user_func_array(
-		array(PMCLibrary::getLanguageInstance(), 'getTranslation'),
+		array(kokoLibrary::getLanguageInstance(), 'getTranslation'),
 		$args);
 }
 
 /**
- * Dynamically attach additional translation resources. This function has been
- * superseded by {@link #LanguageLoader->attachLanguage}.
+ * Attach extra translation strings at runtime.
  *
- * @deprecated 7th.Release. Use LanguageLoader->attachLanguage instead.
- * @param callable $fcall Function that appends translation resource strings
+ * @deprecated Call LanguageLoader::attachLanguage directly instead.
+ * @param callable $fcall Function that fills $GLOBALS['language'] with the extra strings
  */
 function AttachLanguage($fcall){
 	$GLOBALS['language'] = array();
 	call_user_func($fcall);
-	PMCLibrary::getLanguageInstance()->attachLanguage($GLOBALS['language']);
+	kokoLibrary::getLanguageInstance()->attachLanguage($GLOBALS['language']);
 }

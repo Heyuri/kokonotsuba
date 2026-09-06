@@ -4,6 +4,8 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\action_log\actionType;
+use Kokonotsuba\ban\banService;
 use Kokonotsuba\board\board;
 use Kokonotsuba\post\postValidator;
 use Kokonotsuba\account\staffAccountFromSession;
@@ -25,6 +27,8 @@ use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\helper\agingHandler;
 use Kokonotsuba\post\helper\webhookDispatcher;
 use Kokonotsuba\post\postRegistData;
+use Kokonotsuba\post\commentMarker;
+use Kokonotsuba\post\textFormat;
 use Kokonotsuba\renderers\postRenderer;
 use Kokonotsuba\file\postFileUploadController;
 use Kokonotsuba\request\request;
@@ -59,7 +63,8 @@ class registRoute {
 		private readonly threadRepository $threadRepository,
 		private readonly threadService $threadService,
 		private readonly quoteLinkService $quoteLinkService,
-		private readonly request $request
+		private readonly request $request,
+		private readonly banService $banService
 	) {}
 
     /* Write to post table */
@@ -181,7 +186,18 @@ class registRoute {
 				$postData['comment'],
 				$postData['ip'],
 				$postData['age'],
-				$postData['status']
+				$postData['status'],
+				$postData['textFormat'],
+				0,
+				// Taken at insert time: nothing on the server records which browser was at an
+				// address, so this cannot be answered after the fact. Only a token the browser
+				// handed back counts - one minted for this request says nothing about whether it
+				// will be kept, and a browser refusing cookies would otherwise stamp every post
+				// with a different one. Null, not '', when the board is not recording: '' is a
+				// claim that the browser kept no cookie, and nothing was asked of it.
+				$this->board->getConfigValue('RECORD_POST_BROWSER', true)
+					? $this->banService->hashIncomingToken()
+					: null
 			);
 
 			// get the post uid
@@ -197,7 +213,7 @@ class registRoute {
 			$this->handleAttachments($fileMeta['files'], $nextPostUid); 
 
 			// log anonymously since posting habits could be tied to staff in leaks
-			$this->actionLoggerService->logAction("Post No.{$computedPostInfo['no']} registered", $this->board->getBoardUID(), true);
+			$this->actionLoggerService->logAction("Post No.{$computedPostInfo['no']} registered", $this->board->getBoardUID(), actionType::POST_REGISTER, true);
 
 			// after-commit hook point
 			$this->moduleEngine->dispatch('RegistAfterCommit', [$this->board->getLastPostNoFromBoard(), $postData['thread_uid'], $postData['name'], $postData['email'], $postData['sub'], $postData['comment']]);
@@ -223,7 +239,7 @@ class registRoute {
 
 		// Set cookies for password and email
 		$this->cookieService->set('pwdc', $postData['pwd'], time()+7*24*3600);
-		$this->cookieService->set('emailc', htmlspecialchars_decode($postData['email']), time()+7*24*3600);
+		$this->cookieService->set('emailc', $postData['email'], time()+7*24*3600);
 
 		// Save files
 		foreach($fileMeta['files'] as $entry) {
@@ -263,13 +279,16 @@ class registRoute {
 	}
 
 	private function gatherPostInputData(): array {
-		// Extract tripcode from raw name before HTML escaping
+		// Every text field is stored exactly as typed; escaping and formatting happen at render
+		// time, driven by the post's textFormat.
 		$rawName = $this->request->getParameter('name', 'POST', '');
-		$email = htmlspecialchars($this->request->getParameter('email', 'POST', ''));
-		$sub = htmlspecialchars($this->request->getParameter('sub', 'POST', ''));
-		$comment = htmlspecialchars($this->request->getParameter('com', 'POST', ''));
+		$email = $this->request->getParameter('email', 'POST', '');
+		$sub = $this->request->getParameter('sub', 'POST', '');
+		// Drop any marker the poster typed, so only markers added below are rendered as real
+		// dice rolls and fortunes.
+		$comment = commentMarker::strip($this->request->getParameter('com', 'POST', ''));
 		$pwd = $this->request->getParameter('pwd', 'POST', '');
-		$category = htmlspecialchars($this->request->getParameter('category', 'POST', ''));
+		$category = $this->request->getParameter('category', 'POST', '');
 		$tag = $this->request->getParameter('tag', 'POST', '');
 		$resno = intval($this->request->getParameter('resto', 'POST', 0));
 		$pwdc = $this->cookieService->get('pwdc', '');
@@ -291,7 +310,6 @@ class registRoute {
 		$up_incomplete = 0;
 		$is_admin = $roleLevel === userRole::LEV_ADMIN;
 
-		// Parse tripcode from raw name before HTML escaping
 		$tripcode = '';
 		$secure_tripcode = '';
 		$staffCapcodeInput = '';
@@ -316,10 +334,9 @@ class registRoute {
 			$secure_tripcode = $staffCapcodeInput;
 		}
 		
-		// Now apply HTML escaping to the name portion
-		$name = htmlspecialchars($nameOnly);
+		$name = $nameOnly;
 
-		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'tripcode_input' => $tripcode, 'secure_tripcode_input' => $secure_tripcode,
+		return [ 'nameCookie' => $nameCookie, 'name' => $name, 'textFormat' => textFormat::PLAIN_TEXT, 'tripcode_input' => $tripcode, 'secure_tripcode_input' => $secure_tripcode,
 			 'tripcode' => '', 'secure_tripcode' => '', 'capcode' => '', 'email' => $email, 'sub' => $sub, 'comment' => $comment, 'pwd' => $pwd,
 			 'category' => $category, 'tag' => $tag, 'resno' => $resno, 'pwdc' => $pwdc, 'ip' => $ip,
 			 'thread_uid' => $thread_uid, 'isReply' => $isReply, 'roleLevel' => $roleLevel, 'time' => $time,
@@ -464,6 +481,7 @@ class registRoute {
 		$this->postValidator->spamValidate($postData['name'], $postData['email'], $postData['sub'], $postData['comment']);
 	
 		$registInfo = [
+			'textFormat' => &$postData['textFormat'],
 			'name' => &$postData['name'], 
 			'email' => &$postData['email'], 
 			'sub' => &$postData['sub'],
@@ -488,7 +506,7 @@ class registRoute {
 		if (strlenUnicode($postData['sub']) > $this->config['INPUT_MAX']) throw new BoardException(_T('regist_topictoolong'));
 		if (strlenUnicode($postData['pwd']) > $this->config['INPUT_MAX']) throw new BoardException(_T('regist_passtoolong'));
 
-		$this->cookieService->setRaw('namec', rawurlencode(htmlspecialchars_decode($postData['nameCookie'])), time() + 7 * 24 * 3600);
+		$this->cookieService->setRaw('namec', rawurlencode($postData['nameCookie']), time() + 7 * 24 * 3600);
 	
 		$postData['email'] = str_replace("\r\n", '', $postData['email']);
 		$postData['sub'] = str_replace("\r\n", '', $postData['sub']);
@@ -557,12 +575,14 @@ class registRoute {
 
 		// if noko is inside the email-field or always noko is enabled, then redirect to the thread
 		if((strstr($email, 'noko') && !strstr($email, 'nonoko')) || ($alwaysNoko && !strstr($email, 'nonoko'))) {
-			$redirectReplyNumber = $no;
-			$redirect = $this->board->getBoardThreadURL($redirectReplyNumber);
+			// The new post's own number, not the thread's: defaultRoute resolves a reply number
+			// to its thread and sends the visitor on to the right page of it with the post
+			// anchored, which is the page number this route has no cheap way to work out.
+			$redirect = $this->board->getBoardThreadURL($no);
 		} elseif(strstr($email, 'dump')) {
-			// if 'dump' is contained in the email-field then dont redirect to the reply by setting it to 0
-			$redirectReplyNumber = 0;
-			$redirect = $this->board->getBoardThreadURL($redirectReplyNumber);
+			// if 'dump' is contained in the email-field then dont redirect to the reply,
+			// just the top of the thread it went in
+			$redirect = $this->board->getBoardThreadURL($threadResno);
 		} else {
 			// default to board index if neither noko nor dump
 			$redirect = $this->config['STATIC_INDEX_FILE'] . '?' . $timeInMilliseconds;
@@ -659,8 +679,9 @@ class registRoute {
 	private function handlePostQuoteLink(int $postNumber, string $postComment) {
 		$allQuoteLinkedPostUids = [];
 
-		// Match same-board quote patterns like ">>123" or ">>No.123"
-		if(preg_match_all('/((?:&gt;|＞){2})(?:No\.)?(\d+)/i', $postComment, $matches, PREG_SET_ORDER)) {
+		// Match same-board quote patterns like ">>123" or ">>No.123". Comments are stored as
+		// typed, so '>' is the usual spelling; '&gt;' still matches for legacy rows.
+		if(preg_match_all('/((?:&gt;|>|＞){2})(?:No\.)?(\d+)/i', $postComment, $matches, PREG_SET_ORDER)) {
 			$uniqueMatches = [];
 			foreach ($matches as $match) {
 				if (!in_array($match, $uniqueMatches)) {
@@ -679,7 +700,7 @@ class registRoute {
 
 		// Match cross-board quote patterns like ">>>/c/123", including subdomain-qualified
 		// references like ">>>/img.b/123" for boards that share an identifier across subdomains.
-		if(preg_match_all('/((?:&gt;|＞){3})\/((?:[a-zA-Z0-9_-]+\.)*[a-zA-Z0-9_-]+)\/(\d+)/i', $postComment, $crossMatches, PREG_SET_ORDER)) {
+		if(preg_match_all('/((?:&gt;|>|＞){3})\/((?:[a-zA-Z0-9_-]+\.)*[a-zA-Z0-9_-]+)\/(\d+)/i', $postComment, $crossMatches, PREG_SET_ORDER)) {
 			$crossBoardPosts = [];
 			foreach ($crossMatches as $match) {
 				$boardReference = $match[2];

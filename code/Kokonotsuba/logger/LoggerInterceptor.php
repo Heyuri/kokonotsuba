@@ -1,10 +1,7 @@
 <?php
 /**
- * AOP Logger
- *
- * @package PMCLibrary
- * @version $Id$
- * @since 7th.Release
+ * Wraps an object's method calls so failures get logged without the object itself
+ * knowing about a logger.
  */
 
 namespace Kokonotsuba\logger;
@@ -15,7 +12,7 @@ use Kokonotsuba\interfaces\ILogger;
 use Kokonotsuba\interfaces\MethodInterceptor;
 
 /**
- * Logger Around Advice Interceptor
+ * Runs a call and logs anything it throws, returning null in place of the result.
  */
 class LoggerInterceptor implements MethodInterceptor {
 	private $LOG;
@@ -43,8 +40,7 @@ class LoggerInterceptor implements MethodInterceptor {
 }
 
 /**
- * Logger injector.
- * Uses MethodInterceptor to proxy-wrap an object's methods so that a Logger can be injected.
+ * Proxy that routes every call on the wrapped object through a MethodInterceptor.
  */
 class LoggerInjector {
 	private $principalClass;
@@ -67,11 +63,9 @@ class LoggerInjector {
 	}
 
 	/**
-	 * Inject the logger via the MethodInterceptor.
-	 *
-	 * @param  string $name Name of the method being called
-	 * @param  array $args Arguments passed to the method
-	 * @return mixed       Return value of the called method
+	 * @param  string $name Method being called on the wrapped object
+	 * @param  array  $args Arguments it was called with
+	 * @return mixed        Whatever the interceptor returns
 	 */
 	public function __call($name, $args) {
 		if (!method_exists($this->principalClass, $name)) {

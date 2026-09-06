@@ -5,13 +5,9 @@ namespace Kokonotsuba\Modules\search;
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\traits\listeners\TopLinksListenerTrait;
-use Kokonotsuba\module_classes\moduleEngine;
-use Kokonotsuba\containers\moduleEngineContext;
-use Kokonotsuba\renderers\postRenderer;
-use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\renderers\boardRendererFactory;
 use Kokonotsuba\post\postSearchService;
-use Kokonotsuba\board\board;
 use Kokonotsuba\template\templateEngine;
 
 use function Kokonotsuba\libraries\_T;
@@ -20,10 +16,8 @@ use function Kokonotsuba\libraries\getFiltersFromRequest;
 use function Kokonotsuba\libraries\createAssocArrayFromBoardArray;
 use function Kokonotsuba\libraries\html\generateBoardListCheckBoxHTML;
 use function Kokonotsuba\libraries\stripExtension;
-use function Kokonotsuba\libraries\searchBoardArrayForBoard;
 use function Kokonotsuba\libraries\html\getThreadTitle;
 use function Kokonotsuba\libraries\html\drawPager;
-use function Kokonotsuba\libraries\getBoardsByUIDs;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 
 class moduleMain extends abstractModuleMain {
@@ -366,85 +360,6 @@ class moduleMain extends abstractModuleMain {
 		';
 	}
 
-	/**
-	 * Build a unique postRenderer (and moduleEngine) for each board.
-	 *
-	 * @param Board[] $boards
-	 * @return postRenderer[] keyed by board UID
-	 */
-	private function buildPostRenderers(array $boards, array $quoteLinks): array {
-		// init post renderers array
-		$postRenderers = [];
-
-		// loop through boards and create 
-		foreach ($boards as $board) {
-			$boardUID = $board->getBoardUID();
-
-			// Skip if we already created it (safety)
-			if (isset($postRenderers[$boardUID])) {
-				continue;
-			}
-
-			// Build the module engine context
-			$postDateFormatter = new postDateFormatter($board->loadBoardConfig()['TIME_ZONE']);
-
-			$moduleEngineContext = new moduleEngineContext(
-				$this->moduleContext->config,
-				$board->getConfigValue('LIVE_INDEX_FILE'),
-				$board->getConfigValue('ModuleList'),
-				$this->moduleTemplateEngine,
-				$board,
-				$postDateFormatter,
-				$this->moduleContext->getContainer()
-			);
-
-			// moduleEngine is unique per board
-			$moduleEngine = new moduleEngine($moduleEngineContext);
-
-			// postRenderer is unique per board
-			$postRenderer = new postRenderer(
-				$board,
-				$this->moduleContext->config,
-				$moduleEngine,
-				$this->moduleTemplateEngine,
-				$quoteLinks,
-				$this->moduleContext->request
-			);
-
-			// Store it keyed by board UID
-			$postRenderers[$boardUID] = $postRenderer;
-		}
-
-		return $postRenderers;
-	}
-
-	/**
-	 * Extract unique board UIDs from hit post result data.
-	 *
-	 * @param array $hitPostResultData
-	 * @return array<int|string> Unique board UIDs
-	 */
-	private function extractBoardUids(array $hitPostResultData): array {
-		$boardUids = [];
-
-		foreach ($hitPostResultData as $row) {
-			if (!isset($row['post']) || !($row['post'] instanceof Post)) {
-				continue;
-			}
-
-			$boardUID = $row['post']->getBoardUID();
-
-			if (!is_string($boardUID) && !is_int($boardUID)) {
-				continue;
-			}
-
-			// dedupe
-			$boardUids[$boardUID] = true;
-		}
-
-		return array_keys($boardUids);
-	}
-
 	private function handleSearchResults(
 		postSearchService $postSearchService, 
 		array $stopWords,
@@ -480,20 +395,16 @@ class moduleMain extends abstractModuleMain {
 			// extract the plain posts
 			$hitPostResultData = $hitPosts['results_data'];
 
-			// fetch hit post uids
-			$postUids = array_keys($hitPostResultData);
+			// results mix boards, so each is drawn by a renderer built against its own board
+			$rendererFactory = new boardRendererFactory(
+				$this->moduleTemplateEngine,
+				$this->moduleContext->moduleEngine,
+				$this->moduleContext->request,
+				$this->moduleContext->board,
+				$this->moduleContext->getContainer()
+			);
 
-			// get quote links
-			$quoteLinks = $this->moduleContext->quoteLinkService->getQuoteLinksByPostUids($postUids);
-
-			// extract board uids
-			$boardUids = $this->extractBoardUids($hitPostResultData);
-
-			// fetch the boards for searched posts
-			$boards = getBoardsByUIDs($boardUids);
-
-			// build post renderers (keyed by board_uid)
-			$postRenderersForResults = $this->buildPostRenderers($boards, $quoteLinks);
+			$rendererFactory->setQuoteLinks($this->moduleContext->quoteLinkService->getQuoteLinksByPostUids(array_keys($hitPostResultData)));
 
 			// config option for displaying all posts as OPs
 			$displayThreadedFormat = $this->getModuleConfig('DISPLAY_THREADED_FORMAT', false);
@@ -502,58 +413,23 @@ class moduleMain extends abstractModuleMain {
 			$renderAsOp = !$displayThreadedFormat;
 
 			foreach ($hitPostResultData as $hitPost) {
-				// declare template values per post
-				$templateValues = [];
-
 				// extract post data
 				$hitPostData = $hitPost['post'] ?? null;
-				
+
 				// no post data - don't render
-				if(empty($hitPostData)) {
+				if (!$hitPostData instanceof Post) {
 					continue;
 				}
 
-				// get the board uid
-				$boardUid = $hitPostData->getBoardUID();
-
-				// no board uid = invalid search result
-				if(!$boardUid) {
-					continue;
-				}
-
-				// dont render if the post renderer doesn't exist for this board
-				if(isset($postRenderersForResults[$boardUid]) === false || !is_object($postRenderersForResults[$boardUid])) {
-					continue;
-				}
-
-				// now select the post renderer for this board
-				$postRenderer = $postRenderersForResults[$boardUid];
-
-				// get the thread resno for linking
-				$hitThreadResno = $hitPostData->getOpNumber();
-
-				// get board object
-				$board = searchBoardArrayForBoard($hitPostData->getBoardUID());
+				$board = $rendererFactory->boardForPost($hitPostData);
 
 				// set board/thread name for template
-				$templateValues['{$BOARD_THREAD_NAME}'] = getThreadTitle(
+				$templateValues = ['{$BOARD_THREAD_NAME}' => getThreadTitle(
 					$board->getBoardURL(),
 					$board->getBoardTitle()
-				);
+				)];
 
-				// set board/thread name for template
-				$resultList .= $postRenderer->render($hitPostData,
-					$templateValues,
-					$hitThreadResno,
-					false,
-					[$hitPostData],
-					$adminMode,
-					'',
-					'',
-					0,
-					true,
-					$board->getBoardURL(),
-					$renderAsOp);
+				$resultList .= $rendererFactory->renderPost($hitPostData, $adminMode, $renderAsOp, true, $templateValues);
 				$resultList .= $this->moduleTemplateEngine->ParseBlock('THREADSEPARATE', []);
 			}
 

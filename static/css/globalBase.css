@@ -1,7 +1,19 @@
+/* The admin page centres its content; a post list reads like a board, so it is left-aligned. */
+#recentPosts { text-align: left; }
+
 /************************ Dropdown Menus ******************************/
 
 .postMenuContainer {
 	display: inline-block;
+}
+
+/* Bracketed [Link] row shown in place of a dropdown when JS is off */
+.noscriptMenu {
+	font-size: var(--font-size-small);
+}
+
+.noscriptMenu a {
+	text-decoration: none;
 }
 
 /* Shared toggle arrow (▶) for all dropdown menus */
@@ -288,6 +300,101 @@
 	color: var(--color-fg-warning);
 }
 
+/* Notes on the poster's host rather than the post, so they read as a separate block under
+   their own header and in a colour post notes never use. */
+.hostNotesContainer {
+	font-size: var(--font-size-small);
+	color: var(--color-fg-link);
+}
+
+.hostNotesHeader {
+	display: block;
+	font-weight: var(--font-weight-bold);
+}
+
+.hostNotesPanel .hostNotesPanelList {
+	margin-bottom: 0.5em;
+}
+
+.hostNotesPanel .hostNoteOnPost {
+	font-size: var(--font-size-small);
+}
+
+.hostNotesPanelEmpty {
+	font-size: var(--font-size-small);
+	font-style: italic;
+}
+
+/* The host-note form picks between the post's two targets rather than asking for either, so the
+   choices sit on their own lines with the value they stand for beside them. */
+.hostNoteTargetChoice label {
+	display: block;
+}
+
+.hostNoteFormPattern,
+.hostNoteFormToken {
+	font-family: monospace;
+}
+
+/*********************** Editing a post *******************************/
+
+/* One removable file per row, thumbnail beside its name. */
+.editAttachmentList {
+	margin-bottom: 0.3em;
+}
+
+.editAttachmentEntry {
+	align-items: center;
+	display: flex;
+	gap: 0.4em;
+}
+
+.editAttachmentThumb {
+	max-height: 40px;
+	max-width: 40px;
+}
+
+.editAttachmentName {
+	font-family: monospace;
+	font-size: var(--font-size-small);
+}
+
+.editAttachmentsEmpty {
+	font-size: var(--font-size-small);
+}
+
+/* A post's edit history: one block per revision, oldest at the bottom. */
+.postRevision {
+	border: 1px solid var(--color-border, rgba(128, 128, 128, 0.4));
+	margin-bottom: 0.8em;
+	padding: 0.4em;
+}
+
+.postRevisionHeader {
+	font-weight: var(--font-weight-bold);
+}
+
+.postRevisionWho {
+	font-weight: normal;
+}
+
+.postRevisionValue {
+	word-break: break-word;
+}
+
+.postRevisionsEmpty {
+	font-style: italic;
+}
+
+/* Failed-login notice on the admin landing page. Deliberately loud: it only appears when
+   somebody has been guessing at the account the reader just logged into. */
+.loginFailureWarning {
+	color: var(--color-fg-warning);
+	font-weight: var(--font-weight-bold);
+	margin: 0 auto 1em;
+	max-width: 60ch;
+}
+
 /************************ Overboard ***********************************/
 
 .overboardThreadBoardTitle {
@@ -306,6 +413,20 @@
 	margin: 0;
 	padding: 0;
 	list-style: none;
+}
+
+.mergeThreadList {
+	max-height: 220px;
+	overflow-y: auto;
+}
+
+.mergeThreadItem label {
+	cursor: pointer;
+}
+
+.mergeThreadHelp {
+	margin: 0 0 4px;
+	font-size: smaller;
 }
 
 /************************ Post Form & Dropzone ************************/
@@ -780,6 +901,33 @@
 	user-select: none;
 }
 
+/* Action log event filter: one column per group, wrapping when the form is narrow */
+.actionTypeGroups {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.2em 1.4em;
+	text-align: left;
+}
+
+.actionTypeGroupLabel {
+	font-weight: var(--font-weight-bold);
+	white-space: nowrap;
+}
+
+.actionTypeGroupToggle {
+	font-weight: normal;
+}
+
+/* Sortable column headers on the action log table */
+.sortableColumn a {
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.sortableColumn.sortedColumn a {
+	font-weight: var(--font-weight-bold);
+}
+
 .url-input {
 	min-width: 35ch;
 }
@@ -789,6 +937,14 @@
 }
 
 /************************ Tables *******************************/
+/* A long table repeats its action buttons above itself as well as below, so a decision made
+   at the top of the page does not mean scrolling to the bottom to submit it. The top copy
+   needs the gap under it that the bottom copy gets over it. */
+.buttonSection + .tableViewportWrapper,
+.buttonSection + .formtable {
+	margin-top: 0.5em;
+}
+
 .tableViewportWrapper {
 	max-width: 100%;
 	overflow: auto;
@@ -1247,6 +1403,67 @@ a.linkjs {
 .configArrayKey, .configArrayNewKey { flex: 0 0 32%; }
 .configArrayEditor button { flex: 0 0 auto; cursor: pointer; padding: 0 8px; line-height: 1.6; }
 .configArrayAddRow { margin-top: 4px; }
+
+/* ── The section navigator ───────────────────────────────────────────────────────────
+   Rendered hidden with the form; boardConfigForm.js lifts it into an ordinary koko window,
+   the same way the staff alerts widget floats. The window's bar carries the title and the
+   close button, so the list takes the whole body. Without the window manager it stays hidden. */
+.configEditorGroups { text-align: left; }
+
+.configNavWindow {
+	min-height: 0;
+	width: auto;
+	font-size: var(--font-size-x-small);
+}
+.configNav { width: 15em; max-width: 100%; }
+
+.configNavList, .configNavSubList { list-style: none; margin: 0; padding: 0; }
+.configNavList { overflow-y: auto; max-height: 60vh; padding: 3px 4px; }
+
+.configNavRow { display: flex; align-items: baseline; gap: 3px; }
+.configNavLink {
+	flex: 1 1 auto;
+	display: block;
+	padding: 1px 3px;
+	text-decoration: none;
+	/* A group or module label is short: keep each entry on one line rather than reflowing
+	   the whole list when one of them is long. */
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.configNavLink:hover { text-decoration: underline; }
+
+/* The entry for the section currently under the top of the viewport. */
+.configNavLink.configNavCurrent {
+	background-color: var(--color-bg-window-item-highlight);
+	font-weight: var(--font-weight-bold);
+}
+
+/* A group whose settings have been edited but not yet saved. */
+.configNavRow.configNavChanged::after {
+	content: "*";
+	flex: 0 0 auto;
+	color: var(--color-fg-warning);
+	font-weight: var(--font-weight-bold);
+}
+
+/* Only the open group spells out its modules - a list of every module in every group would be
+   longer than the form it navigates. */
+.configNavToggle {
+	flex: 0 0 auto;
+	cursor: pointer;
+	padding: 0;
+	width: 1.2em;
+	background: none;
+	border: 0;
+	color: inherit;
+	font-size: inherit;
+}
+.configNavToggle::before { content: "\25B8"; }
+.configNavItem.configNavOpen > .configNavRow > .configNavToggle::before { content: "\25BE"; }
+.configNavSubList { display: none; padding-left: 1.2em; }
+.configNavItem.configNavOpen > .configNavSubList { display: block; }
 
 /* Once anything in the form is edited, the save button follows the viewport so it stays
    reachable without scrolling to the end of a long form. */
@@ -2445,4 +2662,24 @@ caption h3 {
 		display: block;
 		text-align: left;
 	}
+}
+
+/* The anti-spam rule form, opened from a post's menu. A kkwm window sizes itself to its contents
+   and clips whatever overflows, so the form is bounded against the viewport and scrolls inside
+   the window instead. Only applies in a window; the admin page shows the same form full height. */
+.window .newEntryForm {
+	width: min(520px, calc(100vw - 60px));
+	max-height: calc(100vh - 120px);
+	overflow-y: auto;
+	box-sizing: border-box;
+	padding: 8px;
+}
+
+/************************ Error page ******************************/
+
+/* The blanket error's image. Width/height are on the tag so the page does not reflow when it
+   loads; this keeps it inside a narrow viewport without losing that aspect ratio. */
+.errorImage {
+	max-width: 100%;
+	height: auto;
 }

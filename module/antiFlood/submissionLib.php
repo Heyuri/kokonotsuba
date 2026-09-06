@@ -8,7 +8,6 @@ use Kokonotsuba\Modules\antiFlood\submissionService;
 
 function getSubmissionService(): submissionService {
 	// Get database settings
-	$databaseSettings = getDatabaseSettings();
 
 	// Get database connection
 	$databaseConnection = databaseConnection::getInstance();
@@ -16,7 +15,7 @@ function getSubmissionService(): submissionService {
 	// Initialize repository
 	$submissionRepository = new submissionRepository(
 		$databaseConnection,
-		$databaseSettings['LAST_THREAD_SUBMISSIONS_TABLE']
+		getTableName('LAST_THREAD_SUBMISSIONS_TABLE')
 	);
 
 	// Initialize and return service

@@ -471,22 +471,122 @@ class threadService {
 	}
 
 	/**
+	 * Absorb whole threads into another thread by reparenting their posts, then drop the emptied
+	 * thread rows. Positions are renumbered so the destination stays chronological.
+	 *
+	 * @param string   $destinationThreadUid Thread that receives the posts.
+	 * @param string[] $sourceThreadUids     Threads to dissolve.
+	 * @return void
+	 */
+	public function mergeThreadsIntoThread(string $destinationThreadUid, array $sourceThreadUids): void {
+		$sourceThreadUids = array_values(array_diff(array_unique($sourceThreadUids), [$destinationThreadUid]));
+
+		if (empty($sourceThreadUids)) {
+			throw new Exception('No source threads given to merge.');
+		}
+
+		$this->transactionManager->run(function () use ($destinationThreadUid, $sourceThreadUids) {
+			$this->threadRepository->reparentPostsToThread($sourceThreadUids, $destinationThreadUid);
+
+			foreach ($sourceThreadUids as $sourceThreadUid) {
+				$this->threadRepository->deleteThreadByUID($sourceThreadUid);
+			}
+
+			$this->threadRepository->reindexPostPositions($destinationThreadUid);
+			$this->threadRepository->bumpThread($destinationThreadUid);
+		});
+	}
+
+	/**
+	 * Copy every post of a thread into an existing thread as replies, leaving the original intact.
+	 * Used by the merge tool when a shadow thread is kept behind.
+	 *
+	 * @param string $sourceThreadUid      Thread being copied from.
+	 * @param string $destinationThreadUid Thread the copies are appended to.
+	 * @param mixed  $destinationBoard     Board owning the destination thread.
+	 * @return array Map containing 'postUidMap' and 'fileIdMapping'.
+	 */
+	public function copyThreadPostsIntoThread(string $sourceThreadUid, string $destinationThreadUid, $destinationBoard): array {
+		$copyData = [];
+
+		$this->transactionManager->run(function () use (
+			$sourceThreadUid,
+			$destinationThreadUid,
+			$destinationBoard,
+			&$copyData
+		) {
+			$posts = $this->threadRepository->getAllPostsFromThread($sourceThreadUid, true);
+
+			if (empty($posts)) {
+				throw new Exception("No posts found for thread UID: $sourceThreadUid");
+			}
+
+			$boardUID = $destinationBoard->getBoardUID();
+			$lastPostNo = $destinationBoard->getLastPostNoFromBoard();
+			$position = ($this->postRepository->getMaxPostPosition($destinationThreadUid) ?? 0) + 1;
+
+			$postNumberMapping = [];
+			$postUidMapping = [];
+			$newPostsData = [];
+
+			foreach ($posts as $post) {
+				/** @var Post $post */
+				$newPostNumber = ++$lastPostNo;
+				$postNumberMapping[$post->getNumber()] = $newPostNumber;
+				$destinationBoard->incrementBoardPostNumber();
+
+				// every copied post lands as a reply, including the source thread's OP
+				$newPost = $this->mapPostData($post, $boardUID, $newPostNumber, $destinationThreadUid, false);
+				$newPost['post_position'] = $position++;
+				$newPost['_original_uid'] = $post->getUid();
+				$newPostsData[] = $newPost;
+			}
+
+			foreach ($newPostsData as $postData) {
+				$originalUid = $postData['_original_uid'];
+				unset($postData['_original_uid']);
+
+				$postData['com'] = $this->updateQuoteReferences($postData['com'], $postNumberMapping);
+
+				$this->postRepository->insertPost($postData);
+				$postUidMapping[$originalUid] = $this->postRepository->getLastInsertPostUid();
+			}
+
+			$attachments = getAttachmentsFromPosts($posts);
+			$fileIdMapping = $this->copyAttachmentsData($attachments, $postUidMapping);
+
+			$this->markDeletedPosts($postUidMapping, $fileIdMapping);
+
+			$this->threadRepository->reindexPostPositions($destinationThreadUid);
+			$this->threadRepository->bumpThread($destinationThreadUid);
+
+			$copyData = [
+				'postUidMap' => $postUidMapping,
+				'fileIdMapping' => $fileIdMapping,
+			];
+		});
+
+		return $copyData;
+	}
+
+	/**
 	 * Build the data array for a new post based on an original post being copied.
 	 *
-	 * @param Post   $post           Original post object.
-	 * @param mixed  $boardUID       Destination board UID.
-	 * @param int    $newPostNumber  New post number in the destination board.
-	 * @param string $newThreadUid   UID of the new thread.
+	 * @param Post      $post           Original post object.
+	 * @param mixed     $boardUID       Destination board UID.
+	 * @param int       $newPostNumber  New post number in the destination board.
+	 * @param string    $newThreadUid   UID of the new thread.
+	 * @param bool|null $isOp           Override for the OP flag, null keeps the original's.
 	 * @return array New post data array ready for insertion.
 	 */
-	private function mapPostData(Post $post, $boardUID, $newPostNumber, $newThreadUid) {
+	private function mapPostData(Post $post, $boardUID, $newPostNumber, $newThreadUid, ?bool $isOp = null) {
 		return [
 			'no'			=> $newPostNumber,
 			'poster_hash'	=> $post->getPosterHash(),
 			'boardUID'		=> $boardUID,
 			'thread_uid'	=> $newThreadUid,
 			'post_position' => $post->getPostPosition(),
-			'is_op'			=> $post->isOp(),
+			'is_op'			=> $isOp ?? $post->isOp(),
 			'root'			=> $post->getRoot(),
 			'category'		=> $post->getCategory(),
 			'tag'			=> $post->getTag(),
@@ -500,21 +600,27 @@ class threadService {
 			'sub'			=> $post->getSubject(),
 			'com'			=> $post->getComment(),
 			'host'			=> $post->getIp(),
-			'status'		=> $post->getFlags()
+			// '' means recorded as cookieless, which a move must not turn back into 'unknown'
+			'visitor_token_hash' => $post->hasVisitorTokenHash() ? $post->getVisitorTokenHash() : null,
+			'status'		=> $post->getFlags(),
+			'text_format'	=> $post->getTextFormat()->value
 		];
 	}
 	
 	/**
 	 * Rewrite >>postNo quote references in a comment using a mapping of old to new post numbers.
 	 *
-	 * @param string $comment            Post comment HTML.
+	 * Both spellings of the marker are matched: plain-text comments store '>>123', while rows
+	 * written before the plain-text switch stored it escaped as '&gt;&gt;123'.
+	 *
+	 * @param string $comment            Post comment as stored.
 	 * @param array  $postNumberMapping  Map of old post number => new post number.
 	 * @return string Updated comment.
 	 */
 	private function updateQuoteReferences($comment, $postNumberMapping) {
-		return preg_replace_callback('/&gt;&gt;(\d+)/', function ($matches) use ($postNumberMapping) {
-			$oldQuote = $matches[1];
-			return isset($postNumberMapping[$oldQuote]) ? '&gt;&gt;' . $postNumberMapping[$oldQuote] : $matches[0];
+		return preg_replace_callback('/(&gt;&gt;|>>)(\d+)/', function ($matches) use ($postNumberMapping) {
+			$oldQuote = $matches[2];
+			return isset($postNumberMapping[$oldQuote]) ? $matches[1] . $postNumberMapping[$oldQuote] : $matches[0];
 		}, $comment);
 	}
 

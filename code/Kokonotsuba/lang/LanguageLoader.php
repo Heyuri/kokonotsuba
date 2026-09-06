@@ -1,9 +1,7 @@
 <?php
 /**
- * Pixmicat! Language module loader
- *
- * @package PMCLibrary
- * @version $Id$
+ * Loads a locale's strings and looks translations up in them, falling back to another
+ * locale for keys the chosen one does not carry.
  */
 
 namespace Kokonotsuba\lang;
@@ -22,10 +20,9 @@ class LanguageLoader {
 	}
 
 	/**
-	 * Get the singleton instance of the language object.
+	 * Get the shared loader, built from PIXMICAT_LANGUAGE on first call.
 	 *
-	 * @return LanguageLoader Language object
-	 * @throws InvalidArgumentException If the configured language cannot be found
+	 * @throws InvalidArgumentException If the configured locale has no file
 	 */
 	public static function getInstance() {
 		static $inst = null;
@@ -47,9 +44,9 @@ class LanguageLoader {
 	}
 
 	/**
-	 * Set the fallback locale.
+	 * Set the locale consulted for keys the current one is missing.
 	 *
-	 * @param string $localeFallback Fallback locale
+	 * @param string $localeFallback
 	 */
 	public function setFallback($localeFallback = 'en_US') {
 		if ($localeFallback != $this->getLocale()) {
@@ -57,35 +54,34 @@ class LanguageLoader {
 			$this->hasFallback = true;
 			$this->languageFallback = $language;
 		} else {
-			// Fallback is invalid (same as current locale)
+			// nothing to fall back to when it is the locale we are already using
 			$this->hasFallback = false;
 		}
 	}
 
 	/**
-	 * Get the current locale setting.
+	 * The locale currently in use.
 	 *
-	 * @see PIXMICAT_LANGUAGE
-	 * @return string Locale identifier string
+	 * @return string Locale identifier, e.g. "en_US"
 	 */
 	public function getLocale() {
 		return $this->locale;
 	}
 
 	/**
-	 * Get the array of translated resource strings.
+	 * All loaded strings for the current locale.
 	 *
-	 * @return array Array of translation strings
+	 * @return array
 	 */
 	public function getLanguage() {
 		return $this->language;
 	}
 
 	/**
-	 * Look up the matching text from the array of translation resource strings.
+	 * Look a key up, trying the fallback locale before giving up and returning the key.
 	 *
-	 * @param  string $index Translation resource index
-	 * @return string        Corresponding translated text
+	 * @param  string $index Translation key
+	 * @return string
 	 */
 	private function getTranslationBody($index) {
 		$str = $index;
@@ -98,11 +94,11 @@ class LanguageLoader {
 	}
 
 	/**
-	 * Get the translation for the specified item and perform variable substitution.
+	 * Translate a key and run the result through sprintf with any further arguments.
 	 *
-	 * @param string arg1 Translation resource index string
-	 * @param mixed  arg2 Variables to substitute
-	 * @return string The translated string
+	 * @param string arg1 Translation key
+	 * @param mixed  arg2 Values to substitute
+	 * @return string
 	 */
 	public function getTranslation(/*args[]*/) {
 		if (!func_num_args()) {
@@ -114,9 +110,9 @@ class LanguageLoader {
 	}
 
 	/**
-	 * Append additional translation resource strings.
+	 * Merge in extra strings. Keys already loaded keep their existing value.
 	 *
-	 * @param  array  $language Array of translation resource strings
+	 * @param array $language
 	 */
 	public function attachLanguage(array $language) {
 		$this->language = $this->language + $language;

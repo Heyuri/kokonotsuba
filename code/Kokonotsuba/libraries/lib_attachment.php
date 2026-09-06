@@ -154,35 +154,34 @@ function getAttachmentUrl(?array $attachment, bool $isThumb = false): ?string {
 	}
 }
 
-function attachmentFileExists(?array $attachment): bool {
-	// if theres no valid attachment then return false
+/**
+ * Full path to an attachment's file on disk.
+ *
+ * @return string Empty string when there is no attachment to locate.
+ */
+function getAttachmentFilePath(?array $attachment): string {
 	if(!$attachment) {
-		return false;
+		return '';
 	}
 
 	// get board
 	$board = getAttachmentBoard($attachment);
 
-	// get the upload directory
+	// upload directory, then the attachments directory inside it
 	$baseDirectory = $board->getBoardUploadedFilesDirectory();
-
-	// attachment directory name
 	$attachmentsDirectory = $board->getConfigValue('IMG_DIR');
 
 	// get file name
 	$fileName = $attachment['storedFileName'] . '.' . $attachment['fileExtension'];
 
 	// put together full path
-	$filePath = $baseDirectory . $attachmentsDirectory . $fileName;
+	return $baseDirectory . $attachmentsDirectory . $fileName;
+}
 
-	// if file exists then return true
-	if(file_exists($filePath)) {
-		return true;
-	}
-	// otherwise return false - file doesn't exist
-	else {
-		return false;
-	}
+function attachmentFileExists(?array $attachment): bool {
+	$filePath = getAttachmentFilePath($attachment);
+
+	return $filePath !== '' && file_exists($filePath);
 }
 
 function getAttachmentBoard(array $attachment): board {
@@ -305,4 +304,26 @@ function getAttachmentsFromPosts(array $posts): array {
 	}
 
 	return $all;
+}
+/**
+ * The attachments a post still shows.
+ *
+ * A board taking one file per post has no slot to keep a deleted file in: a file put on the post
+ * afterwards stands in the old one's place, so the deleted entry is dropped rather than drawn as
+ * a [FILE DELETED] stub beside its replacement. Boards allowing several keep the stub, since
+ * there the deleted file had a slot of its own. A post left with nothing but deleted files keeps
+ * showing them - that is the file-only deletion, not a replacement.
+ *
+ * @param array $attachments Attachment rows as buildAttachment() returns them.
+ * @param int   $uploadLimit Files the board allows on one post.
+ * @return array Rows to render, keyed as they came in.
+ */
+function visibleAttachments(array $attachments, int $uploadLimit): array {
+	if ($uploadLimit > 1) {
+		return $attachments;
+	}
+
+	$live = array_filter($attachments, static fn(?array $attachment) => $attachment && empty($attachment['isDeleted']));
+
+	return $live ?: $attachments;
 }

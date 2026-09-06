@@ -38,12 +38,22 @@ class databaseConnection {
 
 	// Create the PDO connection
 	private function createPDOConnection(array $dbSettings) {
+		// A port is only added when one is configured: on 'localhost' MySQL uses a unix socket,
+		// and naming a port there forces TCP instead, which needs a different grant.
+		$port = isset($dbSettings['DATABASE_PORT']) && (int)$dbSettings['DATABASE_PORT'] > 0
+			? (int)$dbSettings['DATABASE_PORT']
+			: null;
+
 		switch ($dbSettings['DATABASE_DRIVER']) {
 			case 'mysql':
-				$dsn = "mysql:host={$dbSettings['DATABASE_HOST']};dbname={$dbSettings['DATABASE_NAME']};charset={$dbSettings['DATABASE_CHARSET']}";
+				$dsn = "mysql:host={$dbSettings['DATABASE_HOST']};"
+					.($port !== null && $dbSettings['DATABASE_HOST'] !== 'localhost' ? "port={$port};" : '')
+					."dbname={$dbSettings['DATABASE_NAME']};charset={$dbSettings['DATABASE_CHARSET']}";
 				break;
 			case 'pgsql':
-				$dsn = "pgsql:host={$dbSettings['DATABASE_HOST']};dbname={$dbSettings['DATABASE_NAME']};";
+				$dsn = "pgsql:host={$dbSettings['DATABASE_HOST']};"
+					.($port !== null ? "port={$port};" : '')
+					."dbname={$dbSettings['DATABASE_NAME']};";
 				break;
 			case 'sqlite':
 				$dsn = "sqlite:{$dbSettings['DATABASE_NAME']}";
@@ -70,6 +80,23 @@ class databaseConnection {
 		$stmt = $this->pdo->prepare($query);
 		$this->bindTypedParams($stmt, $params);
 		return $stmt->execute();
+	}
+
+	/**
+	 * Execute a write and report how many rows it touched.
+	 *
+	 * execute() only reports success, which is no use to a caller that has to say how many rows
+	 * a multi-row INSERT wrote or a conditional UPDATE actually changed.
+	 *
+	 * @param string $query  Raw SQL string with named or positional placeholders.
+	 * @param array  $params Bound parameters.
+	 * @return int Rows affected by the statement.
+	 */
+	public function executeWithRowCount(string $query, array $params = []): int {
+		$stmt = $this->pdo->prepare($query);
+		$this->bindTypedParams($stmt, $params);
+		$stmt->execute();
+		return $stmt->rowCount();
 	}
 
 	// Bind parameters with proper PDO types (int params as PARAM_INT so LIMIT/OFFSET work)

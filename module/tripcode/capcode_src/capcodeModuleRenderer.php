@@ -214,6 +214,9 @@ class capcodeModuleRenderer {
 		// capcode text
 		$capcodeText = $capcode['cap_text'];
 
+		// whether the capcode currently renders on posts
+		$isEnabled = !empty($capcode['is_enabled']);
+
 		// get placeholder name from config
 		$placeHolderName = $this->board->getConfigValue('DEFAULT_NONAME', 'System-chan');
 
@@ -237,6 +240,7 @@ class capcodeModuleRenderer {
 			'{$TRIPCODE}' => htmlspecialchars($tripcode),
 			'{$CAPCODE_COLOR}' => htmlspecialchars($capcodeColor),
 			'{$CAPCODE_TEXT}' => htmlspecialchars($capcodeText),
+			'{$IS_ENABLED}' => $isEnabled,
 			'{$PREVIEW}' => $capcodePreviewHtml, // premade html - dont sanitize or it'll break the html 
 			'{$VIEW_ENTRY_URL}' => htmlspecialchars($viewUrl),
 			'{$MODULE_URL}' => $this->modulePageUrl

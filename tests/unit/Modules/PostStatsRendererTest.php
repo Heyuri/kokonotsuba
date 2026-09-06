@@ -250,40 +250,52 @@ final class PostStatsRendererTest extends TestCase {
 		$this->assertStringContains('<dd>7.00</dd>', $renderer->renderTiles($stats, $series, 'x', false));
 	}
 
-	public function testTheRateCountsFromTheBoardsStartNotItsFirstSurvivingPost(): void {
+	public function testTheTableReportsRecentActivityRatherThanALifetimeAverage(): void {
 		$renderer = $this->renderer(120);
 
-		// 100 posts on a board created 100 days ago, whose oldest surviving post is 9 days old.
-		$boards = [$this->board(7, 'Board 7')];
-		$stats = [7 => ['total' => 100, 'todayCount' => 0, 'firstDay' => '2026-08-01']];
-
-		$fromCreation = $renderer->renderBoardTable($stats, $boards, '2026-08-10', [7 => '2026-05-03']);
-		$fromFirstPost = $renderer->renderBoardTable($stats, $boards, '2026-08-10');
-
-		// Over the board's whole life that is about 1/day; measured from its surviving posts it
-		// looks ten times busier. The first is the honest figure.
-		$this->assertStringContains('<td>1.00</td>', $fromCreation);
-		$this->assertStringContains('<td>10.00</td>', $fromFirstPost);
-
-		// The column still reports the first post, not the creation date.
-		$this->assertStringContains('<td>2026-08-01</td>', $fromCreation);
-	}
-
-	public function testTheTableCarriesTheSameThreeUnitsAsTheTiles(): void {
-		$renderer = $this->renderer(120);
-
-		// 100 posts over 100 days: 1/day, so 30.44/month and 0.04/hour.
+		// A board with a huge lifetime total that has gone quiet: 30 posts in the last 30 days.
 		$html = $renderer->renderBoardTable(
-			[7 => ['total' => 100, 'todayCount' => 0, 'firstDay' => '2026-05-03']],
+			[7 => ['total' => 500000, 'todayCount' => 0, 'firstDay' => '2016-01-01']],
 			[$this->board(7, 'Board 7')],
 			'2026-08-10',
-			[7 => '2026-05-03']
+			[7 => ['posts' => 30, 'days' => 30]]
 		);
 
-		$this->assertStringContains('poststats_col_per_month', $html);
-		$this->assertStringContains('<td>30.44</td>', $html);
+		// 1/day now, not the thousands its lifetime total would suggest.
 		$this->assertStringContains('<td>1.00</td>', $html);
-		$this->assertStringContains('<td>0.04</td>', $html);
+		// The lifetime total is still reported as such.
+		$this->assertStringContains('<td>500,000</td>', $html);
+	}
+
+	public function testTheTableIsOrderedByRecentActivity(): void {
+		$renderer = $this->renderer(120);
+
+		$html = $renderer->renderBoardTable(
+			[
+				7 => ['total' => 500000, 'todayCount' => 0, 'firstDay' => '2016-01-01'],
+				8 => ['total' => 100, 'todayCount' => 0, 'firstDay' => '2026-08-01'],
+			],
+			[$this->board(7, 'Old Board'), $this->board(8, 'New Board')],
+			'2026-08-10',
+			[7 => ['posts' => 30, 'days' => 30], 8 => ['posts' => 300, 'days' => 30]]
+		);
+
+		// The busy newcomer outranks the huge dormant board.
+		$this->assertLessThan(strpos($html, 'Old Board'), strpos($html, 'New Board'));
+	}
+
+	public function testAYoungBoardIsNotAveragedAgainstDaysItDidNotExist(): void {
+		$renderer = $this->renderer(120);
+
+		// 50 posts over the five days it has been open, not spread across thirty.
+		$html = $renderer->renderBoardTable(
+			[7 => ['total' => 50, 'todayCount' => 0, 'firstDay' => '2026-08-05']],
+			[$this->board(7, 'Board 7')],
+			'2026-08-10',
+			[7 => ['posts' => 50, 'days' => 5]]
+		);
+
+		$this->assertStringContains('<td>10.00</td>', $html);
 	}
 
 	public function testRangeLinksMarkTheCurrentSpan(): void {

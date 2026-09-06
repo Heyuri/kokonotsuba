@@ -40,7 +40,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->moduleUrl = $this->getModulePageURL([], false, true);
 
 		// get database table for themes
-		$threadThemeTable = getDatabaseSettings()['THREAD_THEMES_TABLE'];
+		$threadThemeTable = $this->moduleContext->getTableName('THREAD_THEMES_TABLE');
 
 		// get db connection
 		$databaseConnection = databaseConnection::getInstance();

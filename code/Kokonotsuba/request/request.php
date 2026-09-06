@@ -4,6 +4,8 @@ namespace Kokonotsuba\request;
 
 use Kokonotsuba\ip\IPAddress;
 
+use function Puchiko\request\absoluteUrl as resolveAbsoluteUrl;
+
 class request {
 	private array $get;
 	private array $post;
@@ -269,6 +271,25 @@ class request {
 		$path = $this->getServer('SCRIPT_NAME', '');
 
 		return $scheme . '://' . $host . $path;
+	}
+
+	/**
+	 * Resolve a possibly relative URL against this request's origin.
+	 *
+	 * WEBSITE_URL and STATIC_URL may be relative, which only works while the document holding
+	 * the URL is served over HTTP from the expected directory. Use this wherever a real URL is
+	 * required: Location headers, iframe documents, markup baked into a static rebuild.
+	 *
+	 * @param string $url URL that may be absolute, protocol-relative, root-relative or relative.
+	 * @return string Absolute URL.
+	 */
+	public function absoluteUrl(string $url): string {
+		return resolveAbsoluteUrl(
+			$url,
+			$this->isHttps() ? 'https' : 'http',
+			$this->getHttpHost(),
+			(string) $this->getServer('SCRIPT_NAME', '')
+		);
 	}
 
 	/**

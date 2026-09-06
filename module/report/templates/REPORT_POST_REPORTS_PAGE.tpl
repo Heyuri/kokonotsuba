@@ -14,6 +14,8 @@
 
 		<!--&IF($HAS_REPORTS,'','<p class="reportEmpty reportWindowEmpty">{$NO_REPORTS_TEXT}</p>')-->
 
+		{$DECISION_BUTTONS}
+
 		<!-- The table always renders: the reports window clones this same block and fills the
 		     tbody client-side, and an IF around it could not also hold the per-column IFs the
 		     compiler refuses to nest. It is hidden instead when there is nothing in it. -->

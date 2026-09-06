@@ -133,6 +133,8 @@
 		setHref('.reportRowIpLink', report.ipReportsUrl);
 		setHref('.reportRowActionLink', report.actionUrl);
 		setHref('.reportRowViewLink', report.viewUrl);
+		// Absent from the row template for staff who may not see addresses, so this no-ops there.
+		setHref('.reportRowPostsLink', report.reporterPostsUrl);
 
 		// dateHtml is server-built date markup (spans for date/weekday/time), not user input.
 		var dateCell = fragment.querySelector('.reportRowDate');

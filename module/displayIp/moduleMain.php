@@ -31,10 +31,9 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		$this->IPTOGGLE = $this->getModuleConfig('IPTOGGLE', -1);
 
-		$dbSettings = $this->moduleContext->dbSettings;
 		$this->displayIpRepository = new displayIpRepository(
 			$this->moduleContext->databaseConnection,
-			$dbSettings['DISPLAY_IP_TABLE']
+			$this->moduleContext->getTableName('DISPLAY_IP_TABLE')
 		);
 
 		$this->listenPost('onRenderPost');

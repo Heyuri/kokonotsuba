@@ -2,6 +2,7 @@
 
 namespace Kokonotsuba\Modules\spoiler;
 
+use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
@@ -100,7 +101,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			? 'Spoiler enabled on No. ' . htmlspecialchars($post->getNumber())
 			: 'Spoiler removed on No. ' . htmlspecialchars($post->getNumber());
 
-		$this->logAction($logMessage, $post->getBoardUID());
+		$this->logAction($logMessage, $post->getBoardUID(), actionType::POST_FLAG);
 
 		$board = searchBoardArrayForBoard($post->getBoardUID());
 

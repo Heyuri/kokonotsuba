@@ -10,7 +10,7 @@ use Kokonotsuba\module_classes\traits\listeners\FormFuncsListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\Post;
-use Kokonotsuba\renderers\postRenderer;
+use Kokonotsuba\renderers\boardRendererFactory;
 use Kokonotsuba\template\templateEngine;
 
 use function Kokonotsuba\libraries\_T;
@@ -34,8 +34,8 @@ class moduleMain extends abstractModuleMain {
 	/** Fallback engine, built on first use and reused across the posts of one request. */
 	private ?templateEngine $fallbackTemplateEngine = null;
 
-	/** Module engines keyed by board UID and template engine, reused across one request. */
-	private array $moduleEnginesByBoard = [];
+	/** One renderer factory per template engine the posts may be drawn with. */
+	private array $rendererFactories = [];
 
 	/**
 	 * Whether the current request comes from a logged-in staff member.
@@ -309,7 +309,14 @@ class moduleMain extends abstractModuleMain {
 		$this->renderPostDataResponse($data, 60);
 	}
 
-	/** Build the JSON-safe data array for a post. */
+	/**
+	 * Build the JSON-safe data array for a post.
+	 *
+	 * The text fields are the post as it is stored, which for anything written since the
+	 * plain-text switch is what the poster typed rather than markup. 'text_format' says which,
+	 * so a consumer knows whether it is holding text or HTML; 'html' is the rendered post either
+	 * way and is what the board's own scripts use.
+	 */
 	private function buildPostData(Post $post, string $html): array {
 		return [
 			'timestamp' => $post->getRoot(),
@@ -321,6 +328,7 @@ class moduleMain extends abstractModuleMain {
 			'email' => $post->getEmail(),
 			'subject' => $post->getSubject(),
 			'comment' => $post->getComment(),
+			'text_format' => $post->getTextFormat()->value,
 			'parent_thread_uid' => $post->getThreadUid(),
 			'parent_post_number' => $post->getOpNumber(),
 			'attachments' => $this->buildAttachmentsData($post),
@@ -417,50 +425,22 @@ class moduleMain extends abstractModuleMain {
 
 	/** Run a post through the render pipeline with the given template engine. */
 	private function renderPostWithTemplate(Post $post, templateEngine $templateEngine): string {
-		// Resolve the board for this post
-		$board = searchBoardArrayForBoard($post->getBoardUID());
+		$rendererFactory = $this->getRendererFactory($templateEngine);
 
-		if (!$board) {
-			$board = $this->moduleContext->board;
-		}
+		// Posts are quoted from every board, so each renders against its own
+		$rendererFactory->setQuoteLinks(
+			$this->moduleContext->quoteLinkService->getQuoteLinksByPostUids([$post->getUid()])
+		);
 
-		$config = $board->loadBoardConfig();
-		$boardUrl = $board->getBoardURL();
+		return $rendererFactory->renderPost($post, $this->isStaff(), false);
+	}
 
-		// Build the post renderer with all the standard rendering logic
-		$postRenderer = new postRenderer(
-			$board,
-			$config,
-			$this->getModuleEngineForBoard($board, $templateEngine),
+	private function getRendererFactory(templateEngine $templateEngine): boardRendererFactory {
+		return $this->rendererFactories[spl_object_id($templateEngine)] ??= new boardRendererFactory(
 			$templateEngine,
-			[],
-			$this->moduleContext->request
-		);
-
-		// Fetch and set quote links for this post
-		$quoteLinks = $this->moduleContext->quoteLinkService->getQuoteLinksByPostUids(
-			[$post->getUid()]
-		);
-		$postRenderer->setQuoteLinks($quoteLinks);
-
-		// Determine thread number
-		$threadNumber = $post->getOpNumber();
-
-		// Render using the full post rendering pipeline
-		$templateValues = [];
-		return $postRenderer->render(
-			$post,
-			$templateValues,
-			$threadNumber,
-			false,           // killSensor
-			[$post],         // threadPosts
-			$this->isStaff(),// adminMode
-			'',              // postFormExtra
-			'',              // warnHidePost
-			0,               // replyCount
-			false,           // threadMode
-			$boardUrl,       // crossLink
-			false            // renderAsOp
+			$this->moduleContext->moduleEngine,
+			$this->moduleContext->request,
+			$this->moduleContext->board
 		);
 	}
 }

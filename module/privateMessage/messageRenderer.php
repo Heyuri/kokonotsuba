@@ -124,6 +124,8 @@ class messageRenderer {
 				'{$PM_DIRECTION}' => $isSent ? _T('pm_direction_sent') : _T('pm_direction_received'),
 				'{$PM_DIRECTION_CLASS}' => $isSent ? 'pmSent' : 'pmReceived',
 				'{$PM_OTHER_TRIP}' => sanitizeStr($otherTrip),
+				'{$PM_OTHER_TRIP_URL}' => sanitizeStr($this->messageUtility->getModulePageURL(['recipient' => $otherTrip]) . '#pmCompose'),
+				'{$PM_COMPOSE_TITLE}' => _T('pm_post_button_title'),
 				'{$PM_SUBJECT}' => sanitizeStr($message['message_subject'] ?? ''),
 				'{$PM_PREVIEW}' => $this->formatPreviewComment($message['message_body'] ?? '', 80),
 				'{$PM_DATE}' => $this->dateFormatter->formatFromDateString($message['date_sent']),

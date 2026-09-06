@@ -6,13 +6,12 @@ use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\database\transactionManager;
 
 function getPerceptualBanRepository(): perceptualBanRepository {
-	$databaseSettings = getDatabaseSettings();
 	$databaseConnection = databaseConnection::getInstance();
 
 	return new perceptualBanRepository(
 		$databaseConnection,
-		$databaseSettings['PERCEPTUAL_BAN_TABLE'],
-		$databaseSettings['ACCOUNT_TABLE']
+		getTableName('PERCEPTUAL_BAN_TABLE'),
+		getTableName('ACCOUNT_TABLE')
 	);
 }
 
