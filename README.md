@@ -28,7 +28,9 @@ Programs: `ffmpeg` (video thumbnails), `exiftool` (stripping GPS metadata from u
    sudo apt install php-mbstring php-pdo php-mysql php-gd php-bcmath ffmpeg exiftool
    ```
 
-2. Open the `php.ini` your web server uses and add these lines:
+2. Open the `php.ini` your web server uses and add these lines. On Debian it is
+   `/etc/php/8.X/fpm/php.ini` for nginx and `/etc/php/8.X/apache2/php.ini` for Apache, with
+   `8.X` being your PHP version:
 
    ```
    extension=mbstring
