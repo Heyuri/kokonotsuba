@@ -77,7 +77,7 @@ Everything lives under that one directory:
 ├── koko.php      backend entry point (each board's koko.php requires it)
 ├── static/       css, js and images, served directly
 ├── global/       site settings, error log, board storage - must not be web-readable
-├── boards/       one directory per board, created by the installer and the admin panel
+├── boards/       board directories go in here, created by the installer and the admin panel
 └── ...           the rest of the backend, also not web-readable
 ```
 
