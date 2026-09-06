@@ -246,7 +246,7 @@ run if the web server hands any of them out.
 #### Note
  - `global/siteSettings.php` is where your site's URLs and salts live from then on; everything else
    is edited from the admin panel. `global/siteSettings.example.php` documents the file
- - never change `TRIPSALT` or `IDSEED` once there are posts: every tripcode and poster ID changes
+ - never change `TRIPSALT` or `IDSEED` once there are posts: every secure tripcode and poster ID changes
  - `databaseSettings.php` is not tracked by git. `databaseSettings.example.php` is, for setting an
    instance up by hand without the installer
  - if you are moving an existing install into this layout, keep your current `databaseSettings.php`
