@@ -23,7 +23,7 @@ final class webServerRules {
 		'Utilities',
 	];
 
-	/** Root-level PHP files that are includes or credentials, never entry points. */
+	/** Root-level files that are includes, credentials or docs, never entry points. */
 	public const DENIED_FILES = [
 		'autoload.php',
 		'databaseSettings.php',
@@ -31,6 +31,8 @@ final class webServerRules {
 		'koko.php',
 		'paths.php',
 		'tables.php',
+		'README.md',
+		'LICENSE',
 	];
 
 	/**
@@ -46,13 +48,12 @@ final class webServerRules {
 			['path' => 'global/globalconfig.php', 'marker' => 'TRIPSALT'],
 			['path' => 'global/globalmsg.txt', 'marker' => ''],
 			['path' => 'code/Kokonotsuba/constants.php', 'marker' => 'KOKO_VERSION'],
+			['path' => 'README.md', 'marker' => 'Kokonotsuba'],
 		];
 	}
 
 	/**
 	 * nginx location blocks for this install.
-	 *
-	 * install.php is deliberately left reachable — it is deleted after the install instead.
 	 *
 	 * @param string $urlPrefix URL path the backend is served from, e.g. "/kokonotsuba/".
 	 */
@@ -67,9 +68,8 @@ final class webServerRules {
 		));
 
 		return <<<NGINX
-		# Kokonotsuba: keep the backend out of reach of browsers.
-		# Regex locations match in the order written, so these go ABOVE the "location ~ \.php$"
-		# block, or that block will hand the denied .php files to PHP-FPM first.
+		# Kokonotsuba: keep the backend out of reach. These go ABOVE the "location ~ \.php$"
+		# block, or that block hands the denied .php files to PHP-FPM first.
 		location ~ ^{$prefix}/({$directories})/ {
 		    deny all;
 		}
@@ -78,23 +78,26 @@ final class webServerRules {
 		    deny all;
 		}
 
-		# Dotfiles: .installed, .backend, .git, .gitignore
-		location ~ ^{$prefix}/\. {
+		# Dotfiles and every board's boardUID.ini
+		location ~ ^{$prefix}/(\.|.*\.ini$) {
 		    deny all;
 		}
 		NGINX;
 	}
 
-	/** The Apache equivalent, for reference — the shipped .htaccess files already do this. */
-	public static function apacheSnippet(): string {
+	/**
+	 * What Apache needs before the shipped .htaccess files do anything: Debian's default
+	 * <Directory /var/www/> sets AllowOverride None, which ignores them all.
+	 *
+	 * @param string $appRoot Filesystem path of the install, e.g. "/var/www/html/kokonotsuba".
+	 */
+	public static function apacheSnippet(string $appRoot): string {
+		$path = rtrim($appRoot, '/');
+
 		return <<<APACHE
-		<IfModule mod_authz_core.c>
-		    Require all denied
-		</IfModule>
-		<IfModule !mod_authz_core.c>
-		    Order allow,deny
-		    Deny from all
-		</IfModule>
+		<Directory "{$path}">
+		    AllowOverride All
+		</Directory>
 		APACHE;
 	}
 }

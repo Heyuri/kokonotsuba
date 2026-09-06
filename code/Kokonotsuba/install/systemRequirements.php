@@ -11,8 +11,23 @@ namespace Kokonotsuba\install;
 final class systemRequirements {
 	public const GROUP = 'PHP & system';
 
+	/**
+	 * The PHP minor series this release is tested against, both ends inclusive.
+	 *
+	 * Series, not full versions: '8.5' covers every 8.5.x. Moving the range is these two lines
+	 * and nothing else - the boundaries compared against and the wording reported are derived
+	 * from them, and the tests are written against them rather than against literal versions.
+	 */
+	public const TESTED_PHP_MIN = '8.3';
+	public const TESTED_PHP_MAX = '8.5';
+
+	/**
+	 * Below this the installer refuses to run instead of warning.
+	 *
+	 * Deliberately older than TESTED_PHP_MIN: a version we no longer test on is not one we have
+	 * broken, so it warns and installs rather than being locked out.
+	 */
 	public const MIN_PHP_VERSION = '8.1.0';
-	public const UNTESTED_FROM_VERSION = '8.4.0';
 
 	/** Extensions without which the board cannot run. */
 	private const REQUIRED_EXTENSIONS = [
@@ -78,15 +93,42 @@ final class systemRequirements {
 			);
 		}
 
-		if (version_compare($this->phpVersion, self::UNTESTED_FROM_VERSION, '>=')) {
+		if (version_compare($this->phpVersion, self::TESTED_PHP_MIN.'.0', '<')) {
 			return checkResult::warn(
 				self::GROUP,
 				$label,
-				'Newer than the tested range (8.1 to 8.3). It may work; nothing is verified above 8.3.'
+				'Older than the tested range ('.self::testedRangeLabel().'). It should still work;'
+					.' nothing is verified below '.self::TESTED_PHP_MIN.'.'
 			);
 		}
 
-		return checkResult::ok(self::GROUP, $label, 'Within the tested range.');
+		if (version_compare($this->phpVersion, self::untestedFromVersion(), '>=')) {
+			return checkResult::warn(
+				self::GROUP,
+				$label,
+				'Newer than the tested range ('.self::testedRangeLabel().'). It may work;'
+					.' nothing is verified above '.self::TESTED_PHP_MAX.'.'
+			);
+		}
+
+		return checkResult::ok(self::GROUP, $label, 'Within the tested range ('.self::testedRangeLabel().').');
+	}
+
+	/**
+	 * The first version past the tested range: the series after TESTED_PHP_MAX.
+	 *
+	 * A bare series compares as lower than any release in it ('8.5' < '8.5.7'), so the ceiling
+	 * has to be the next series' .0 rather than the max itself.
+	 */
+	public static function untestedFromVersion(): string {
+		[$major, $minor] = array_pad(explode('.', self::TESTED_PHP_MAX), 2, '0');
+
+		return $major.'.'.((int)$minor + 1).'.0';
+	}
+
+	/** The tested range as it is written in the report, e.g. "8.3 to 8.5". */
+	public static function testedRangeLabel(): string {
+		return self::TESTED_PHP_MIN.' to '.self::TESTED_PHP_MAX;
 	}
 
 	/** @return list<checkResult> */

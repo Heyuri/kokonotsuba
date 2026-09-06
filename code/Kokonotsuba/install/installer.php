@@ -161,7 +161,7 @@ final class installer {
 
 		if ($existing !== []) {
 			$result->add(installStep::fail(
-				'Existing install',
+				'Database validation',
 				'The database "'.$input->value('db_name').'" already holds '.implode(' and ', $existing)
 					.'. Installing again would add a second admin account to a live site. Use an empty database, '
 					.'or delete install.php and log in with the account you already have.'
@@ -170,7 +170,7 @@ final class installer {
 			return false;
 		}
 
-		$result->add(installStep::ok('Existing install', 'No accounts or boards in this database yet.'));
+		$result->add(installStep::ok('Database validation', 'Database OK'));
 
 		return true;
 	}

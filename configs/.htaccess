@@ -1,4 +1,4 @@
-# Kokonotsuba: nothing in this directory is meant to be fetched by a browser.
+# Kokonotsuba backend: never served.
 <IfModule mod_authz_core.c>
     Require all denied
 </IfModule>

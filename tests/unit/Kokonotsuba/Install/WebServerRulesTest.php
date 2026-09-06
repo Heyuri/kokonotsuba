@@ -41,8 +41,16 @@ class WebServerRulesTest extends TestCase {
 		$this->assertFalse(in_array('install.php', webServerRules::DENIED_FILES, true));
 	}
 
-	public function testDotfilesAreDenied(): void {
-		$this->assertStringContains('/\.', webServerRules::nginxSnippet('/koko/'));
+	public function testDotfilesAndBoardUidsAreDeniedButBoardsAreNot(): void {
+		$snippet = webServerRules::nginxSnippet('/koko/');
+		$this->assertSame(1, preg_match('/^location ~ (\S*ini\$\S*) \{$/m', $snippet, $matches));
+		$regex = '#'.$matches[1].'#';
+
+		$this->assertSame(1, preg_match($regex, '/koko/.git/config'));
+		$this->assertSame(1, preg_match($regex, '/koko/boards/b/boardUID.ini'));
+		$this->assertSame(0, preg_match($regex, '/koko/boards/b/koko.php'));
+		$this->assertSame(0, preg_match($regex, '/koko/boards/b/src/1.png'));
+		$this->assertSame(0, preg_match($regex, '/koko/static/js/postWidget.js'));
 	}
 
 	public function testEveryDeniedDirectoryShipsAnHtaccess(): void {
@@ -54,10 +62,20 @@ class WebServerRulesTest extends TestCase {
 		}
 	}
 
-	public function testTheRootHtaccessDeniesTheCredentialsFile(): void {
+	public function testTheRootHtaccessDeniesTheCredentialsFileAndIniFiles(): void {
 		$htaccess = (string)file_get_contents(KOKO_TEST_ROOT.'/.htaccess');
 
 		$this->assertStringContains('databaseSettings', $htaccess);
+		$this->assertStringContains('ini', $htaccess);
+		$this->assertStringContains('RewriteRule ^koko\\.php$ - [F]', $htaccess);
+		$this->assertStringNotContains('|koko|', $htaccess);
 		$this->assertStringContains('Options -Indexes', $htaccess);
+	}
+
+	public function testTheApacheSnippetTurnsOnOverridesForTheInstallDirectory(): void {
+		$snippet = webServerRules::apacheSnippet('/var/www/html/kokonotsuba/');
+
+		$this->assertStringContains('<Directory "/var/www/html/kokonotsuba">', $snippet);
+		$this->assertStringContains('AllowOverride All', $snippet);
 	}
 }

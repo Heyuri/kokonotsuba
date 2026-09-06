@@ -81,7 +81,7 @@ try {
 	if (!$isInstallRequest) {
 		$page->header('Serving from '.$defaults->baseUrl());
 		$page->report($report);
-		$page->webServerHelp($defaults->urlPrefix);
+		$page->webServerHelp($defaults->urlPrefix, $appRoot);
 		$page->form(formDefaults($defaults), [], $report->hasFailures());
 		$page->footer();
 		exit;

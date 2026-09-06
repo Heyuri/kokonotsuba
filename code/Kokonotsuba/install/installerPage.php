@@ -91,11 +91,18 @@ final class installerPage {
 		}
 	}
 
-	/** nginx does not read .htaccess, so its rules are printed for pasting into the server block. */
-	public function webServerHelp(string $urlPrefix): void {
-		echo '<details class="panel"><summary>Web server rules (nginx)</summary>',
-			'<p>Apache is covered by the <code>.htaccess</code> files in the tree. On nginx, paste this ',
-			'into the <code>server</code> block and reload, then reload this page to re-run the exposure check:</p>',
+	/**
+	 * Apache needs AllowOverride before the shipped .htaccess files count, and nginx does not read
+	 * them at all, so both are printed for pasting; reloading the page re-runs the exposure check.
+	 */
+	public function webServerHelp(string $urlPrefix, string $appRoot): void {
+		echo '<details class="panel"><summary>Web server rules (Apache and nginx)</summary>',
+			'<p><strong>Apache</strong> reads the <code>.htaccess</code> files in the tree only when the ',
+			'<code>&lt;Directory&gt;</code> block covering this install allows it. If everything below is ',
+			'reachable, that is almost certainly the cause: add this to the virtual host and reload.</p>',
+			'<pre class="command">', self::escape(webServerRules::apacheSnippet($appRoot)), '</pre>',
+			'<p><strong>nginx</strong> ignores those files. Paste this into the <code>server</code> block, ',
+			'above the <code>location ~ \.php$</code> block, and reload.</p>',
 			'<pre class="command">', self::escape(webServerRules::nginxSnippet($urlPrefix)), '</pre>',
 			'</details>';
 	}
@@ -253,7 +260,7 @@ final class installerPage {
 			h3 { font-size:15px; margin:14px 0 4px; }
 			a { color:#0000ee; }
 			.subtitle { margin-top:0; }
-			.panel { border:1px solid #d9bfb7; background:#f0e0d6; padding:12px; margin:12px 0; border-radius:3px; }
+			.panel { border:1px solid #d9bfb7; background:#f0e0d6; padding:12px; margin:12px 0;}
 			.panel.ok { border-color:#4c7c2f; }
 			.panel.warn { border-color:#b8860b; }
 			.panel.fail { border-color:#a00000; }

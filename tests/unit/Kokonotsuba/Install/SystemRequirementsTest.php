@@ -40,8 +40,17 @@ class SystemRequirementsTest extends TestCase {
 
 	private const ALL_EXTENSIONS = ['mbstring', 'pdo', 'pdo_mysql', 'gd', 'bcmath', 'json', 'fileinfo', 'posix', 'curl'];
 
+	/** The PHP version check, for a version given as a string. */
+	private function phpVersionResult(string $phpVersion): checkResult {
+		return $this->check($phpVersion, self::ALL_EXTENSIONS)['PHP '.$phpVersion];
+	}
+
 	public function testAFullyEquippedHostPassesEverything(): void {
-		$results = $this->check('8.2.10', self::ALL_EXTENSIONS, ['ffmpeg', 'exiftool']);
+		$results = $this->check(
+			systemRequirements::TESTED_PHP_MIN.'.0',
+			self::ALL_EXTENSIONS,
+			['ffmpeg', 'exiftool']
+		);
 
 		foreach ($results as $label => $result) {
 			$this->assertSame(checkResult::OK, $result->status, $label.': '.$result->detail);
@@ -49,16 +58,52 @@ class SystemRequirementsTest extends TestCase {
 	}
 
 	public function testTooOldPhpFails(): void {
-		$result = $this->check('8.0.30', self::ALL_EXTENSIONS)['PHP 8.0.30'];
+		$result = $this->phpVersionResult('8.0.30');
 
 		$this->assertSame(checkResult::FAIL, $result->status);
-		$this->assertStringContains('8.1.0 or newer', $result->detail);
+		$this->assertStringContains(systemRequirements::MIN_PHP_VERSION.' or newer', $result->detail);
 	}
 
-	public function testUntestedPhpOnlyWarns(): void {
-		$result = $this->check('8.4.1', self::ALL_EXTENSIONS)['PHP 8.4.1'];
+	/**
+	 * Both ends of the range are inclusive, so the last patch of the top series still passes.
+	 * Written against the constants: moving the range must not mean editing these.
+	 */
+	public function testBothEndsOfTheTestedRangeAreAccepted(): void {
+		foreach ([systemRequirements::TESTED_PHP_MIN.'.0', systemRequirements::TESTED_PHP_MAX.'.99'] as $version) {
+			$result = $this->phpVersionResult($version);
+
+			$this->assertSame(checkResult::OK, $result->status, $version.': '.$result->detail);
+			$this->assertStringContains(systemRequirements::testedRangeLabel(), $result->detail);
+		}
+	}
+
+	public function testNewerThanTheTestedRangeOnlyWarns(): void {
+		$result = $this->phpVersionResult(systemRequirements::untestedFromVersion());
 
 		$this->assertSame(checkResult::WARN, $result->status);
+		$this->assertStringContains('Newer than the tested range', $result->detail);
+	}
+
+	/** Still supported, just no longer exercised, so it warns rather than blocking the install. */
+	public function testOlderThanTheTestedRangeWarnsButStillInstalls(): void {
+		$result = $this->phpVersionResult(systemRequirements::MIN_PHP_VERSION);
+
+		$this->assertSame(checkResult::WARN, $result->status);
+		$this->assertStringContains('Older than the tested range', $result->detail);
+	}
+
+	/**
+	 * The range this release actually declares, spelled out.
+	 *
+	 * The only test here that names versions, and the only one to edit when the range moves -
+	 * which is the point: changing what is tested should be a deliberate line in a test, not a
+	 * silent constant edit.
+	 */
+	public function testTheDeclaredTestedRange(): void {
+		$this->assertSame('8.3', systemRequirements::TESTED_PHP_MIN);
+		$this->assertSame('8.5', systemRequirements::TESTED_PHP_MAX);
+		$this->assertSame('8.3 to 8.5', systemRequirements::testedRangeLabel());
+		$this->assertSame('8.6.0', systemRequirements::untestedFromVersion());
 	}
 
 	public function testAMissingRequiredExtensionFailsWithAnInstallCommand(): void {

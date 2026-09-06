@@ -1,10 +1,7 @@
-# Kokonotsuba lives inside the web root, so the files a browser must never fetch are denied here.
-# install.php is deliberately left reachable: it locks itself and is deleted after the install.
-#
-# nginx ignores this file. The installer prints the equivalent location blocks for it, and they
-# are in the README.
-
-<FilesMatch "^(autoload|databaseSettings|databaseSettings\.example|koko|paths|tables)\.php$">
+# Kokonotsuba: the root includes, dotfiles, docs and every boardUID.ini are denied.
+# install.php stays reachable and is deleted after the install. nginx ignores this
+# file; the installer and README carry the equivalent rules.
+<FilesMatch "^(autoload|databaseSettings|databaseSettings\.example|paths|tables)\.php$|^\.|\.(md|ini)$|^LICENSE$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>
@@ -14,26 +11,10 @@
     </IfModule>
 </FilesMatch>
 
-# .installed, .backend, .git, .gitignore, .htaccess itself
-<FilesMatch "^\.">
-    <IfModule mod_authz_core.c>
-        Require all denied
-    </IfModule>
-    <IfModule !mod_authz_core.c>
-        Order allow,deny
-        Deny from all
-    </IfModule>
-</FilesMatch>
-
-# Markdown and licence files carry no secrets, but there is no reason to serve them either.
-<FilesMatch "\.(md|example\.php)$">
-    <IfModule mod_authz_core.c>
-        Require all denied
-    </IfModule>
-    <IfModule !mod_authz_core.c>
-        Order allow,deny
-        Deny from all
-    </IfModule>
-</FilesMatch>
+# FilesMatch would also catch every board's koko.php, so the root one is matched by path.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^koko\.php$ - [F]
+</IfModule>
 
 Options -Indexes
