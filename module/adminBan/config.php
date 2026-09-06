@@ -25,4 +25,7 @@ return [
 	'ENABLE_JS_BAN_CHECK' => boolField('config_label_modules.adminBan.ENABLE_JS_BAN_CHECK', true, 'config_desc_modules.adminBan.ENABLE_JS_BAN_CHECK'),
 	'BAN_MARKER_COOKIE' => stringField('config_label_modules.adminBan.BAN_MARKER_COOKIE', 'yay', 'config_desc_modules.adminBan.BAN_MARKER_COOKIE'),
 	'BAN_MARKER_URL' => stringField('config_label_modules.adminBan.BAN_MARKER_URL', '', 'config_desc_modules.adminBan.BAN_MARKER_URL'),
+
+	// menu entries this module adds, see widgetMenuPolicy
+	'PostMenu.ban' => boolField('config_label_modules.adminBan.PostMenu.ban', true),
 ];

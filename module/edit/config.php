@@ -19,4 +19,7 @@ return [
 	'ALLOW_USER_EDIT' => boolField('config_label_modules.edit.ALLOW_USER_EDIT', true, 'config_desc_modules.edit.ALLOW_USER_EDIT'),
 	'USER_EDIT_TIME_LIMIT' => intField('config_label_modules.edit.USER_EDIT_TIME_LIMIT', 1, 'config_desc_modules.edit.USER_EDIT_TIME_LIMIT', min: 0),
 	'ATTACHMENT_EDIT_TIME_LIMIT' => intField('config_label_modules.edit.ATTACHMENT_EDIT_TIME_LIMIT', 1, 'config_desc_modules.edit.ATTACHMENT_EDIT_TIME_LIMIT', min: 0),
+
+	// menu entries this module adds, see widgetMenuPolicy
+	'PostMenu.editPost' => boolField('config_label_modules.edit.PostMenu.editPost', true),
 ];

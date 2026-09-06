@@ -45,9 +45,11 @@ trait MassModerateListenerTrait {
 	 * @param array  $options scope: 'post' (default) or 'thread' — thread entries are hidden unless
 	 *                        an OP is selected, and only OPs are sent.
 	 *                        effect: what JS does to the selected posts on success —
-	 *                        'delete', 'restore', 'purge', 'flag', 'reload' or 'none'.
+	 *                        'delete', 'restore', 'purge', 'flag', 'deleteFiles', 'reload' or
+	 *                        'none'.
 	 *                        indicator: for effect 'flag', the indicator class to show/hide.
-	 *                        requires: 'deleted' to only enable the entry for deleted posts.
+	 *                        requires: 'deleted' to only enable the entry for deleted posts,
+	 *                        'files' for posts that still have an attachment.
 	 *                        form: id of a <template> with extra fields to fill in first.
 	 *                        confirm: prompt shown before the request ('{action}' and '{count}' are
 	 *                        filled in by the window).

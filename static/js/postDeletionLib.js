@@ -90,7 +90,7 @@ function removeWidgetActions(postEl, actions) {
 
 /**
  * Prepare attachment deletion UI state: mark as deleted, hide buttons, add warning.
- * Returns an object with revertUI() and addViewFileButton(deletedLink) methods.
+ * Returns an object with revertUI() and addViewFileButton(data) methods.
  *
  * @param {Element} attachmentEl  The .attachmentContainer or .file element
  * @param {Element} postEl        The containing .post element
@@ -122,12 +122,37 @@ function prepareAttachmentDeletion(attachmentEl, postEl, buttonSelectors) {
 				warningResult.indicator.classList.add('indicatorHidden');
 			}
 		},
-		addViewFileButton: function (deletedLink) {
-			if (deletedLink) {
-				attachmentEl.dataset.deletedLink = deletedLink;
-			}
+		/**
+		 * Record the deletion on the attachment itself. deletedPosts.js reads these back to add
+		 * the Deletion submenu to this file's menu, the way it does for a deleted post.
+		 *
+		 * @param {Object} data  The deletion response (deleted_link, deleted_post_id, file_id)
+		 */
+		addViewFileButton: function (data) {
+			if (!data) return;
+
+			if (data.deleted_link) attachmentEl.dataset.deletedLink = data.deleted_link;
+			if (data.deleted_post_id) attachmentEl.dataset.deletedPostId = data.deleted_post_id;
+			if (data.file_id) attachmentEl.dataset.fileId = data.file_id;
+
+			// the file is deleted now, so its delete entry no longer applies
+			removeAttachmentWidgetActions(attachmentEl, ['deleteFile']);
 		},
 	};
+}
+
+/** Remove widget entries from an attachment's hidden data container */
+function removeAttachmentWidgetActions(attachmentEl, actions) {
+	if (!attachmentEl) return;
+
+	var data = attachmentEl.querySelector('.attachmentWidgetData');
+	if (!data) return;
+
+	actions.forEach(function (action) {
+		data.querySelectorAll('a[data-action="' + action + '"]').forEach(function (a) {
+			a.remove();
+		});
+	});
 }
 
 /**

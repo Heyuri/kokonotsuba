@@ -13,4 +13,6 @@ return [
 	'_module' => 'View posts',
 
 	'SHOW_VISITOR_TOKEN' => boolField('config_label_modules.viewPosts.SHOW_VISITOR_TOKEN', true, 'config_desc_modules.viewPosts.SHOW_VISITOR_TOKEN'),
+	// menu entries this module adds, see widgetMenuPolicy
+	'PostMenu.viewPosts' => boolField('config_label_modules.viewPosts.PostMenu.viewPosts', true),
 ];

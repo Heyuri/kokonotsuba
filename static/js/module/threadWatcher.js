@@ -7,6 +7,12 @@
 const kktwch = { name: "KK Thread watcher",
 	STORAGE_KEY: 'threadWatcher',
 	POLL_INTERVAL: 15000,
+	// Watched threads asked about per request. The whole list in one query string runs
+	// past the web server's URI limit (414), so a poll fans out over several requests.
+	POLL_CHUNK_SIZE: 50,
+	// Character budget for the own-post list repeated on every chunk, so a long posting
+	// history can't push the URI over the limit either.
+	OWN_TOKENS_MAX_CHARS: 2000,
 	// How long to wait before retrying a manual refresh that failed to reach the server.
 	REFRESH_RETRY_DELAY: 3000,
 	_pollTimer: null,
@@ -118,13 +124,18 @@ const kktwch = { name: "KK Thread watcher",
 
 	// The user's own posts, recorded at post time as a set of "board_no" keys mapped to their
 	// timestamps (see posting.js). Returned as "board:no" tokens for the counts endpoint's
-	// `you` parameter, newest first: the server caps the list, and a reply is far likelier to
-	// quote a recent post than the first one you ever made.
+	// `you` parameter, newest first: a reply is far likelier to quote a recent post than the
+	// first one you ever made, and the list is capped to what the server reads anyway so a
+	// long posting history can't blow the request's URI limit on its own.
 	getOwnPostTokens: function () {
 		try {
 			var data = JSON.parse(localStorage.getItem('kkOwnPosts') || '{}');
+			var meta = document.querySelector('meta[name="threadWatcherMaxOwnPosts"]');
+			var max = meta ? parseInt(meta.content, 10) : NaN;
+			if (!(max > 0)) max = 300;
 			return Object.keys(data)
 				.sort(function (a, b) { return (data[b] || 0) - (data[a] || 0); })
+				.slice(0, max)
 				.map(function (key) {
 					return key.replace('_', ':');
 				});
@@ -787,6 +798,39 @@ const kktwch = { name: "KK Thread watcher",
 		}).slice(0, max);
 	},
 
+	// Encode the own-post tokens as the `you` parameter's value, dropping the oldest ones
+	// once they'd push a chunk's URI past the budget. Every chunk carries this list, so it
+	// has to stay short whatever the poster's history looks like.
+	ownTokensParam: function (tokens) {
+		var out = '';
+		for (var i = 0; i < tokens.length; i++) {
+			var piece = (out === '' ? '' : ',') + encodeURIComponent(tokens[i]);
+			if (out.length + piece.length > kktwch.OWN_TOKENS_MAX_CHARS) break;
+			out += piece;
+		}
+		return out;
+	},
+
+	// Fold the per-chunk poll responses back into the single shape the poll handler
+	// expects. Each chunk only reports on the threads it was asked about, so the maps
+	// merge cleanly; `newThreads` is carried by one chunk only.
+	mergePollResponses: function (responses) {
+		var merged = { threads: {}, deleted: [] };
+		responses.forEach(function (data) {
+			if (!data) return;
+			if (data.threads && typeof data.threads === 'object') {
+				Object.keys(data.threads).forEach(function (uid) {
+					merged.threads[uid] = data.threads[uid];
+				});
+			}
+			if (Array.isArray(data.deleted)) {
+				merged.deleted = merged.deleted.concat(data.deleted);
+			}
+			if (data.newThreads) merged.newThreads = data.newThreads;
+		});
+		return merged;
+	},
+
 	// `force` (manual refresh) bypasses the cross-tab poll lock. Returns the fetch
 	// promise so callers can react when the refresh completes (or undefined when there's
 	// nothing to fetch).
@@ -832,22 +876,29 @@ const kktwch = { name: "KK Thread watcher",
 		kktwch._pollInProgress = true;
 		kktwch.updateRefreshUi();
 
-		var params = [];
 		// Seen counts as sent to the server, so the reply the response points at can be
 		// pinned to a thread position even if the local count moves meanwhile.
 		var sentSeen = {};
-		if (threadUids.length) {
-			params.push('thread_uids=' + threadUids.map(encodeURIComponent).join(','));
+		var ownTokens = threadUids.length ? kktwch.ownTokensParam(kktwch.getOwnPostTokens()) : '';
+		var separator = apiUrl.includes('?') ? '&' : '?';
+
+		// A whole watch list in one query string overruns the server's URI limit (414), so
+		// the threads are split into chunks, each fetched as its own request. The requests
+		// run concurrently and their responses are merged before anything is applied, so a
+		// poll still lands as one update.
+		var urls = [];
+		for (var i = 0; i < threadUids.length; i += kktwch.POLL_CHUNK_SIZE) {
+			var chunk = threadUids.slice(i, i + kktwch.POLL_CHUNK_SIZE);
+			var params = ['thread_uids=' + chunk.map(encodeURIComponent).join(',')];
 			// Send the user's own posts so the server can flag threads that quote them.
-			var ownTokens = kktwch.getOwnPostTokens();
-			if (ownTokens.length) {
-				params.push('you=' + ownTokens.map(encodeURIComponent).join(','));
+			if (ownTokens !== '') {
+				params.push('you=' + ownTokens);
 			}
 			// Send per-thread seen counts so the server can resolve each thread's
 			// first-unread post number (used to anchor the watch-list link). Only
 			// seeded entries have a meaningful count.
 			var seenPairs = [];
-			threadUids.forEach(function (uid) {
+			chunk.forEach(function (uid) {
 				var e = watched[uid];
 				if (e && e.lastSeenCount !== null && e.lastSeenCount !== undefined) {
 					sentSeen[uid] = e.lastSeenCount || 0;
@@ -857,27 +908,39 @@ const kktwch = { name: "KK Thread watcher",
 			if (seenPairs.length) {
 				params.push('seen=' + seenPairs.join(','));
 			}
+			urls.push(apiUrl + separator + params.join('&'));
 		}
+
+		// New-thread alerts are global rather than per-thread, so they ride along on the
+		// first chunk (or get a request of their own when nothing is watched).
 		if (wantNewThreads) {
-			params.push('newthreads=1');
+			var newParams = ['newthreads=1'];
 			var sinceMark = localStorage.getItem('kktwch_lastThreadSeen') || '';
-			if (sinceMark) params.push('since=' + encodeURIComponent(sinceMark));
+			if (sinceMark) newParams.push('since=' + encodeURIComponent(sinceMark));
+			var newQuery = newParams.join('&');
+			if (urls.length) urls[0] += '&' + newQuery;
+			else urls.push(apiUrl + separator + newQuery);
 		}
 
-		var separator = apiUrl.includes('?') ? '&' : '?';
-		var url = apiUrl + separator + params.join('&');
-
-		// Tracks whether this poll actually reached the server and parsed a response, so a
+		// Tracks whether every chunk of this poll reached the server and parsed, so a
 		// manual refresh knows whether to stop spinning or keep retrying.
 		var succeeded = false;
 
-		return fetch(url)
-			.then(function (res) {
-				if (!res.ok) return null;
-				return res.json();
-			})
-			.then(function (data) {
-				if (!data) return;
+		return Promise.all(urls.map(function (url) {
+			return fetch(url)
+				.then(function (res) {
+					if (!res.ok) return null;
+					return res.json();
+				})
+				// Silently fail on network errors: the merge below just skips this chunk.
+				.catch(function () { return null; });
+		}))
+			.then(function (responses) {
+				// A chunk that failed contributes nothing. What did arrive is still applied,
+				// but only a complete poll counts as a success.
+				var arrived = responses.filter(function (r) { return r; });
+				if (!arrived.length) return;
+				var data = kktwch.mergePollResponses(arrived);
 
 				var watched = kktwch.getWatchedThreads();
 				var changed = false;
@@ -1013,7 +1076,7 @@ const kktwch = { name: "KK Thread watcher",
 				kkStore.set('kktwch_lastUpdated', Date.now());
 				kktwch.updateUpdatedLabel();
 
-				succeeded = true;
+				succeeded = arrived.length === responses.length;
 			})
 			.catch(function () {
 				// Silently fail on network errors

@@ -13,6 +13,9 @@
 	var windowName = 'Moderate';
 
 	var template = null;
+
+	// the button docked in the staff alerts panel, and the bar that stands in for it elsewhere
+	var button = null;
 	var bar = null;
 
 	// the open window and its content, so ticking a box while it is up updates what it offers
@@ -39,6 +42,7 @@
 		var posts = [];
 		var threads = [];
 		var deleted = 0;
+		var files = 0;
 
 		document.querySelectorAll('.deletionCheckbox:checked').forEach(function (box) {
 			var postEl = box.closest('.post');
@@ -48,9 +52,10 @@
 			posts.push(entry);
 			if (postEl.classList.contains('op')) threads.push(entry);
 			if (postEl.classList.contains('deletedPost')) deleted++;
+			if (postEl.querySelector('.attachmentContainer:not(.deletedFile)')) files++;
 		});
 
-		return { posts: posts, threads: threads, deleted: deleted };
+		return { posts: posts, threads: threads, deleted: deleted, files: files };
 	}
 
 	function clearSelection(targets) {
@@ -62,14 +67,21 @@
 	}
 
 	function selectionChanged() {
-		syncBar();
+		syncControls();
 		refreshWindow();
 	}
 
-	function syncBar() {
-		if (!bar) return;
+	/** Nothing ticked means nothing to moderate: the bar goes away, the docked button greys out. */
+	function syncControls() {
 		var anyChecked = document.querySelector('.deletionCheckbox:checked') !== null;
-		bar.classList.toggle('massModerateHidden', !anyChecked);
+
+		if (bar) bar.classList.toggle('massModerateHidden', !anyChecked);
+
+		// the attribute rather than the property: the control is a link, which has no disabled state
+		if (button) {
+			button.toggleAttribute('disabled', !anyChecked);
+			button.title = anyChecked ? '' : template.dataset.noneSelected;
+		}
 	}
 
 	// ---- window ----
@@ -178,10 +190,11 @@
 			var link = item.querySelector('a[data-mm-action]');
 			if (!link) return;
 
-			// A thread action with no thread selected, or a deleted-posts action with nothing
-			// deleted in the selection, has nothing to act on.
+			// A thread action with no thread selected, or an action wanting deleted posts or files
+			// where the selection has none, has nothing to act on.
 			var unusable = (link.dataset.mmScope === 'thread' && !selection.threads.length)
-				|| (link.dataset.mmRequires === 'deleted' && !selection.deleted);
+				|| (link.dataset.mmRequires === 'deleted' && !selection.deleted)
+				|| (link.dataset.mmRequires === 'files' && !selection.files);
 
 			item.classList.toggle('massModerateHidden', unusable);
 		});
@@ -324,6 +337,9 @@
 				case 'restore':
 					markRestored(target.el);
 					break;
+				case 'deleteFiles':
+					markFilesDeleted(target.el, result);
+					break;
 				case 'purge':
 					if (typeof fadeAndRemovePost === 'function') fadeAndRemovePost(target.el);
 					break;
@@ -359,6 +375,26 @@
 		if (typeof removeWidgetActions === 'function') removeWidgetActions(postEl, ['delete', 'mute']);
 	}
 
+	/**
+	 * Files taken off a post that stays where it is: each attachment is marked the same way a
+	 * single file deletion marks it, so the [FILE DELETED] indicator and the file's own menu end
+	 * up matching what the server did.
+	 */
+	function markFilesDeleted(postEl, result) {
+		var files = result.files || [];
+		if (!files.length || typeof prepareAttachmentDeletion !== 'function') return;
+
+		files.forEach(function (file) {
+			var fileId = Number(file.file_id);
+			if (!fileId) return;
+
+			var attachmentEl = postEl.querySelector('.attachmentContainer[data-file-id="' + fileId + '"]');
+			if (!attachmentEl || attachmentEl.classList.contains('deletedFile')) return;
+
+			prepareAttachmentDeletion(attachmentEl, postEl, []).addViewFileButton(file);
+		});
+	}
+
 	function markRestored(postEl) {
 		var thread = postEl.closest('.thread');
 		if (postEl.classList.contains('op') && thread) {
@@ -384,12 +420,40 @@
 		indicator.classList.toggle('indicatorHidden', !active);
 	}
 
-	// ---- setup ----
+	// ---- the control that opens the window ----
 
-	document.addEventListener('DOMContentLoaded', function () {
-		template = document.getElementById('massModerateTemplate');
-		if (!template || !document.querySelector('.deletionCheckbox')) return;
+	/**
+	 * The button belongs at the foot of the staff alerts panel, which is where a moderator already
+	 * watches. It travels with the panel's contents, so it survives the window being closed and
+	 * reopened from the settings.
+	 *
+	 * Boards without the panel — a static page until its fetch lands, or a moderator who has turned
+	 * the panel off — keep the old bar above the delete form instead, so the window is never out of
+	 * reach; the panel taking the button removes the bar again.
+	 */
+	function mountControl() {
+		var widget = document.querySelector('.staffAlertsWidget');
+		var actions = widget && !widget.hidden ? widget.querySelector('.staffAlertsActions') : null;
 
+		// no panel, or a page whose panel was rendered before it had a foot to dock in
+		if (!button || !actions) {
+			if (!bar) addBar();
+			syncControls();
+			return;
+		}
+
+		if (button.parentNode !== actions) actions.appendChild(button);
+		actions.hidden = false;
+
+		if (bar) {
+			bar.remove();
+			bar = null;
+		}
+
+		syncControls();
+	}
+
+	function addBar() {
 		bar = template.content.querySelector('.massModerateBar').cloneNode(true);
 		bar.classList.add('massModerateHidden');
 
@@ -407,6 +471,29 @@
 			ev.preventDefault();
 			openWindow();
 		});
+	}
+
+	// ---- setup ----
+
+	document.addEventListener('DOMContentLoaded', function () {
+		template = document.getElementById('massModerateTemplate');
+		if (!template || !document.querySelector('.deletionCheckbox')) return;
+
+		// absent on a page rendered before the button existed, which keeps the bar instead
+		var buttonNode = template.content.querySelector('.massModerateButton');
+		if (buttonNode) {
+			button = buttonNode.cloneNode(true);
+			button.addEventListener('click', function (ev) {
+				ev.preventDefault();
+				if (!button.hasAttribute('disabled')) openWindow();
+			});
+		}
+
+		mountControl();
+
+		// the panel is built from a fetch on static pages, so it can turn up after this, and the
+		// setting can put it away and bring it back at any point
+		document.addEventListener('staffAlerts:ready', mountControl);
 
 		// click as well as change: checkboxDeletion.js fills in ranges on shift-click, which fires
 		// neither event on the boxes it sets
@@ -416,7 +503,5 @@
 		document.addEventListener('change', function (ev) {
 			if (ev.target.classList && ev.target.classList.contains('deletionCheckbox')) selectionChanged();
 		});
-
-		syncBar();
 	});
 })();

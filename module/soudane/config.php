@@ -16,4 +16,7 @@ return [
 	'ENABLE_NOPE' => boolField('config_label_modules.soudane.ENABLE_NOPE', false, 'config_desc_modules.soudane.ENABLE_NOPE'),
 	'ENABLE_SCORE' => boolField('config_label_modules.soudane.ENABLE_SCORE', false, 'config_desc_modules.soudane.ENABLE_SCORE'),
 	'SHOW_SCORE_ONLY' => boolField('config_label_modules.soudane.SHOW_SCORE_ONLY', false, 'config_desc_modules.soudane.SHOW_SCORE_ONLY'),
+
+	// menu entries this module adds, see widgetMenuPolicy
+	'PostMenu.viewVotes' => boolField('config_label_modules.soudane.PostMenu.viewVotes', true),
 ];

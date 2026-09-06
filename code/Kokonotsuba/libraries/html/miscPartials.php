@@ -39,8 +39,8 @@ function generateUserNavBar(string $staticIndexFile, request $request): string {
  * already dropped.
  *
  * Shared by the nav above admin pages and the sticky staff nav (module/staffNav) so the two
- * can't drift apart. Entries carry the same shape module entries do (see StaffNavListenerTrait),
- * minus the group: these are the primary destinations and stay at the top level.
+ * can't drift apart. Entries carry the same shape module entries do (see StaffNavListenerTrait);
+ * most are primary destinations and stay at the top level, so a group is the exception.
  *
  * @param  bool $includeLiveFrontend Whether to lead with the link back to the live board.
  *              False where that link is already rendered separately.
@@ -54,7 +54,7 @@ function getStaffNavCoreEntries(string $liveIndexFile, userRole $actionLogRole, 
 		['key' => 'actionLog', 'query' => ['mode' => 'actionLog'], 'label' => _T('admin_nav_action_log'), 'title' => _T('admin_nav_action_log_title'), 'role' => $actionLogRole],
 		['key' => 'account', 'query' => ['mode' => 'account'], 'label' => _T('admin_nav_accounts'), 'title' => _T('admin_nav_accounts_title'), 'role' => userRole::LEV_USER],
 		['key' => 'managePosts', 'query' => ['mode' => 'managePosts'], 'label' => _T('admin_nav_posts'), 'title' => _T('admin_nav_posts_title'), 'role' => userRole::LEV_JANITOR],
-		['key' => 'rebuild', 'query' => ['mode' => 'rebuild'], 'label' => _T('admin_nav_rebuild'), 'title' => _T('admin_nav_rebuild_title'), 'role' => userRole::LEV_JANITOR],
+		['key' => 'rebuild', 'query' => ['mode' => 'rebuild'], 'label' => _T('admin_nav_rebuild'), 'title' => _T('admin_nav_rebuild_title'), 'role' => userRole::LEV_JANITOR, 'group' => 'rebuilding'],
 		['key' => 'boards', 'query' => ['mode' => 'boards'], 'label' => _T('admin_nav_boards'), 'title' => _T('admin_nav_boards_title'), 'role' => userRole::LEV_ADMIN],
 		['key' => 'globalConfig', 'query' => ['mode' => 'globalConfig'], 'label' => _T('admin_nav_global_config'), 'title' => _T('admin_nav_global_config_title'), 'role' => userRole::LEV_ADMIN],
 	];
@@ -74,7 +74,7 @@ function getStaffNavCoreEntries(string $liveIndexFile, userRole $actionLogRole, 
 			'label' => $destination['label'],
 			'url' => $liveIndexFile . '?' . http_build_query($destination['query']),
 			'title' => $destination['title'],
-			'group' => '',
+			'group' => $destination['group'] ?? '',
 		];
 	}
 

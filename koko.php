@@ -1,9 +1,4 @@
 <?php
-/*
-
-YOU MUST GIVE CREDIT TO WWW.HEYURI.NET ON YOUR BBS IF YOU ARE PLANNING TO USE THIS SOFTWARE.
-
-*/
 
 /* Prevent the user from aborting script execution */
 

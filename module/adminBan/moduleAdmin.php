@@ -105,7 +105,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 
 		$this->registerPostControlPair('onRenderPostAdminControls');
-		$this->registerLinksAboveBarHook(_T('admin_nav_ban_title'), $this->modulePageUrl, _T('admin_nav_ban'), 'bans');
+		$this->registerLinksAboveBarHook(_T('admin_nav_ban_title'), $this->modulePageUrl, _T('admin_nav_ban'));
 		$this->registerSimplePostWidget(
 			fn(Post $post) => $this->generateBanUrl($post->getIp(), $post->getUid()),
 			'ban',

@@ -38,6 +38,15 @@ class deletedPostActionHandler {
 			return $this->handleMassAction($postUids, $accountId, $roleLevel, $action);
 		}
 
+		// a single attachment, addressed by file ID since a file deleted with its whole post has no
+		// deletion record of its own (same lowercased/camelCase pair as above)
+		$fileId = $this->request->getParameter('fileid', 'POST')
+			?? $this->request->getParameter('fileId', 'POST');
+
+		if(isset($fileId) && $action === 'purgeFile') {
+			return $this->handleFilePurge((int)$fileId, $roleLevel);
+		}
+
 		// handle an action for single deleted post
 		if(isset($deletedPostId)) {
 			// make sure the user is a high enough role level if the post wasn't deleted by them
@@ -100,6 +109,27 @@ class deletedPostActionHandler {
 		$this->rebuildBoardsByDeletedPostIds($authenticated);
 
 		return ['action' => 'restore', 'message' => 'Posts restored', 'results' => []];
+	}
+
+	/**
+	 * Purge one attachment on its own, leaving its post's deletion untouched. The file is already
+	 * hidden from the board, so nothing needs rebuilding.
+	 *
+	 * @return array{action: string, message: string}
+	 */
+	private function handleFilePurge(int $fileId, userRole $roleLevel): array {
+		// same role as purging a whole post
+		if(!$roleLevel->isAtLeast($this->requiredRoleActionForModAll)) {
+			throw new BoardException("Invalid action");
+		}
+
+		if($fileId <= 0) {
+			throw new BoardException("Invalid action");
+		}
+
+		$this->deletedPostsService->purgeAttachmentByFileId($fileId);
+
+		return ['action' => 'purgeFile', 'message' => 'File purged'];
 	}
 
 	private function rebuildBoardsByDeletedPostIds(array $deletedPostIds): void {

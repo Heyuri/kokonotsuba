@@ -3,17 +3,20 @@
 namespace Kokonotsuba\renderers\post;
 
 use Kokonotsuba\module_classes\moduleEngine;
+use Kokonotsuba\renderers\widgetMenuPolicy;
 
 /**
  * Collects the entries modules put on a post's dropdown menu.
  *
  * Each hook is handed an empty array and appends buildWidgetEntry() shapes to it. The thread
  * hooks also get the other posts and the thread row; the Moderate* hooks are only dispatched
- * for staff, so they never reach static html.
+ * for staff, so they never reach static html. Entries the board's config turns off are dropped
+ * before they reach the menu.
  */
 final class postWidget {
 	public function __construct(
 		private readonly moduleEngine $moduleEngine,
+		private readonly widgetMenuPolicy $menuPolicy,
 	) {}
 
 	/** Staff entries: the thread's or reply's moderation menu, then the ones every post gets. */
@@ -52,6 +55,6 @@ final class postWidget {
 
 		$this->moduleEngine->dispatch($hook, $parameters);
 
-		return $widgets;
+		return $this->menuPolicy->filter(widgetMenuPolicy::MENU_POST, $widgets);
 	}
 }

@@ -15,6 +15,7 @@
 	<script src="{$STATIC_URL}js/select-all-feature.js?v=5" defer></script>
 	<script src="{$STATIC_URL}js/message.js?v=3" defer></script>
 	<script src="{$STATIC_URL}js/dropdownMenu.js" defer></script>
+	<script src="{$STATIC_URL}js/widgetMenu.js" defer></script>
 	<script src="{$STATIC_URL}js/postWidget.js" defer></script>
 	<script src="{$STATIC_URL}js/attachmentWidget.js" defer></script>
 	<script src="{$STATIC_URL}js/threadToggle.js" defer></script>

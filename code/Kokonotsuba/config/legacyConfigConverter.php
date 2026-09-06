@@ -27,6 +27,15 @@ class legacyConfigConverter {
 	/** Legacy flat bag of module settings. */
 	private const LEGACY_MODULE_BAG = 'ModuleSettings';
 
+	/**
+	 * Sub-namespaces a module can declare that never existed in the legacy bag.
+	 *
+	 * Menu entry toggles (modules.{name}.PostMenu.{action}) are keyed by an action name rather than
+	 * a setting name, so two modules adding the same entry declare the same bare key. They have no
+	 * legacy counterpart to migrate, so they stay out of the bare-name index entirely.
+	 */
+	private const NON_LEGACY_NAMESPACES = ['PostMenu', 'AttachmentMenu'];
+
 	/** @var array<string, string>|null Cached bare module key => schema dot-path. */
 	private static ?array $moduleKeyMap = null;
 
@@ -41,7 +50,7 @@ class legacyConfigConverter {
 			self::$moduleKeyMap = [];
 
 			foreach (configSchema::getAllFields() as $dotpath => $meta) {
-				if (!str_starts_with((string)$dotpath, 'modules.')) {
+				if (!str_starts_with((string)$dotpath, 'modules.') || self::isNonLegacyPath((string)$dotpath)) {
 					continue;
 				}
 
@@ -51,6 +60,18 @@ class legacyConfigConverter {
 		}
 
 		return self::$moduleKeyMap[$bareKey] ?? null;
+	}
+
+	/**
+	 * Whether a module dot-path belongs to a namespace with no legacy equivalent.
+	 *
+	 * @param string $dotpath e.g. 'modules.adminDel.PostMenu.delete'.
+	 */
+	public static function isNonLegacyPath(string $dotpath): bool {
+		$segments = explode('.', $dotpath);
+
+		// modules.{name}.{namespace}.{key}
+		return count($segments) > 3 && in_array($segments[2], self::NON_LEGACY_NAMESPACES, true);
 	}
 
 	/**

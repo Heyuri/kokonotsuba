@@ -40,7 +40,10 @@ class postRenderer {
 		array $quoteLinksFromBoard,
 		request $request
 	) {
-		$this->attachmentRenderer = new attachmentRenderer($board, $moduleEngine, $templateEngine);
+		// which menu entries this board shows, shared by the post and attachment menus
+		$menuPolicy = widgetMenuPolicy::fromBoard($board);
+
+		$this->attachmentRenderer = new attachmentRenderer($board, $moduleEngine, $templateEngine, $menuPolicy);
 		$this->commentRenderer = new postCommentRenderer($board, new commentFormatter($config), $quoteLinksFromBoard);
 		$this->binder = new postTemplateBinder(
 			$board,
@@ -51,7 +54,7 @@ class postRenderer {
 			new postWarnings($config, $request->getRequestTime())
 		);
 		$this->hooks = new postModuleHooks($board, $moduleEngine);
-		$this->widgets = new postWidget($moduleEngine);
+		$this->widgets = new postWidget($moduleEngine, $menuPolicy);
 	}
 
 	/** Quote links for the posts about to be drawn, fetched once per page by the caller. */

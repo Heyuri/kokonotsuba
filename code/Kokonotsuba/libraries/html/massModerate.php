@@ -69,7 +69,7 @@ function generateMassModerateHtml(templateEngine $templateEngine, moduleEngine $
 		'{$MM_GROUPS}'      => $groups,
 	]);
 
-	$scriptUrl = ($config['STATIC_URL'] ?? '') . 'js/massModerate.js';
+	$scriptUrl = ($config['STATIC_URL'] ?? '') . 'js/massModerate.js?v=2';
 
 	// The window's own wording travels with the template so the script holds no English of its own.
 	$strings = [

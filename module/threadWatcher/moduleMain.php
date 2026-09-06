@@ -37,6 +37,13 @@ class moduleMain extends abstractModuleMain {
 	private const MAX_WATCHED_THREADS = 300;
 
 	/**
+	 * Max own-post tokens read from one poll. The client sends its newest posts first and
+	 * caps itself to the same number, so the quote-count query stays bounded and the
+	 * request URI can't grow with the poster's history.
+	 */
+	private const MAX_OWN_POSTS = 300;
+
+	/**
 	 * Inline SVG for the watch toggle: a regular 5-pointed star in a 24x24 viewBox.
 	 * Rendered hollow (CSS stroke, no fill) by default; the ".twStarWatched" class the
 	 * client adds fills it in. A single geometry serves both states so they line up.
@@ -61,7 +68,7 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		// The watcher window is opened from a top-link in the admin bar.
 		$this->listenTopLinks('onRenderTopLinks');
-		$this->registerScript('threadWatcher.js?v=25');
+		$this->registerScript('threadWatcher.js?v=26');
 		$this->listenModuleHeader('onGenerateModuleHeader');
 		$this->listenOpeningPost('onRenderOpeningPost');
 	}
@@ -348,7 +355,7 @@ class moduleMain extends abstractModuleMain {
 		}
 
 		$ownPosts = [];
-		foreach (array_slice(explode(',', $raw), 0, 300) as $part) {
+		foreach (array_slice(explode(',', $raw), 0, self::MAX_OWN_POSTS) as $part) {
 			if (preg_match('/^(\d{1,10}):(\d{1,10})$/', trim($part), $m)) {
 				$ownPosts[] = [(int) $m[1], (int) $m[2]];
 			}
@@ -421,6 +428,10 @@ class moduleMain extends abstractModuleMain {
 		// How many threads a single poll may ask about, so the client sends its most recent
 		// ones rather than having the server truncate an arbitrary tail.
 		$moduleHeader .= '<meta name="threadWatcherMaxThreads" content="' . self::MAX_WATCHED_THREADS . '">';
+
+		// How many of the visitor's own posts a poll may carry, so the client trims the list
+		// to what the server reads instead of sending a query string that can't be answered.
+		$moduleHeader .= '<meta name="threadWatcherMaxOwnPosts" content="' . self::MAX_OWN_POSTS . '">';
 
 		// Current board's title, so watching from a single-board page (thread/index) can
 		// label the entry "Board - Subject" immediately (the overboard uses its per-thread

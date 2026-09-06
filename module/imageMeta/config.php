@@ -16,4 +16,10 @@ return [
 	'IMG_OPS' => boolField('config_label_modules.imageMeta.IMG_OPS', true, 'config_desc_modules.imageMeta.IMG_OPS'),
 	'IQDB' => boolField('config_label_modules.imageMeta.IQDB', false, 'config_desc_modules.imageMeta.IQDB'),
 	'SWFCHAN' => boolField('config_label_modules.imageMeta.SWFCHAN', true, 'config_desc_modules.imageMeta.SWFCHAN'),
+
+	// menu entries this module adds, see widgetMenuPolicy
+	'AttachmentMenu.exif'    => boolField('config_label_modules.imageMeta.AttachmentMenu.exif', true),
+	'AttachmentMenu.imgops'  => boolField('config_label_modules.imageMeta.AttachmentMenu.imgops', true),
+	'AttachmentMenu.iqdb'    => boolField('config_label_modules.imageMeta.AttachmentMenu.iqdb', true),
+	'AttachmentMenu.swfchan' => boolField('config_label_modules.imageMeta.AttachmentMenu.swfchan', true),
 ];

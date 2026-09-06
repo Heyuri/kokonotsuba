@@ -62,7 +62,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$moduleHeader .= '<link rel="stylesheet" href="'
 			. sanitizeStr($this->getConfig('STATIC_URL') . 'css/module/staffAlerts.css') . '">';
 
-		$this->includeScript('staffAlerts.js?v=9', $moduleHeader);
+		$this->includeScript('staffAlerts.js?v=10', $moduleHeader);
 
 		$moduleHeader .= '<meta name="staffAlertsApi" content="' . sanitizeStr($this->alertsApiUrl) . '">';
 		$moduleHeader .= '<meta name="staffAlertsInterval" content="'

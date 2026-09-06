@@ -1,4 +1,5 @@
 <div class="massModerateBar">[<a href="#" class="massModerateOpen">{$MM_OPEN_LABEL}</a>]</div>
+<a class="massModerateButton" disabled href="#">{$MM_OPEN_LABEL}</a>
 <div class="massModerateWindow">
 	<div class="massModerateStatus">{$MM_STATUS}</div>
 	<div class="massModerateList"><!--&FOREACH($MM_GROUPS,'MASS_MODERATE_GROUP')--></div>

@@ -53,7 +53,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 		$this->modulePage = $this->getModulePageURL([], false);
 
-		$this->registerLinksAboveBarHook('Manage ads', $this->modulePage, 'Ads', 'content');
+		$this->registerLinksAboveBarHook('Manage ads', $this->modulePage, 'Ads');
 	}
 
 	public function ModulePage(): void {

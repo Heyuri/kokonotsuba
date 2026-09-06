@@ -73,11 +73,9 @@ class deletedPostUtility {
 	}
 
 	public function canRenderButton(Post $post): bool {
-		// whether the post is deleted or not
-		$isPostDeleted = $this->isPostDeleted($post);
-
-		// don't bother if the post isn't deleted
-		if(!$isPostDeleted) {
+		// isDeleted() is post-level only: a file-only deletion belongs to the attachment menu,
+		// and its entry is reached from there
+		if(!$post->isDeleted()) {
 			return false;
 		}
 

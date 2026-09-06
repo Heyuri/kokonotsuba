@@ -39,7 +39,7 @@
 			errorMessage: 'Failed to ban and delete file.',
 			onSuccess: function (data) {
 				if (data && data.deleted_link) {
-					state.addViewFileButton(data.deleted_link);
+					state.addViewFileButton(data);
 				}
 			}
 		});

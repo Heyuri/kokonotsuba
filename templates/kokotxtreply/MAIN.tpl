@@ -7,5 +7,5 @@
 		<div class="threadNavBar threadRear">[<a href="#top">Top</a>]<hr></div>
 		<!--&DELFORM/-->
 	</form>
-	{$BOTTOM_PAGENAV}
+	<!--&IF($BOTTOM_PAGENAV,'{$BOTTOM_PAGENAV}','')-->
 	{$FORMDAT}

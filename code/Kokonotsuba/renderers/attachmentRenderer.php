@@ -21,7 +21,8 @@ class attachmentRenderer {
 	public function __construct(
 		private board $board,
 		private moduleEngine $moduleEngine,
-		private templateEngine $templateEngine
+		private templateEngine $templateEngine,
+		private widgetMenuPolicy $menuPolicy
 	) {}
 
 	/**
@@ -123,6 +124,9 @@ class attachmentRenderer {
 			$this->moduleEngine->dispatch('ModerateAttachmentWidget', [&$attachmentWidgets, &$fileData]);
 		}
 
+		// drop the entries this board turns off
+		$attachmentWidgets = $this->menuPolicy->filter(widgetMenuPolicy::MENU_ATTACHMENT, $attachmentWidgets);
+
 		$attachmentButtons = $this->buildAttachmentWidgetHtml($attachmentWidgets);
 		$noscriptButtons = noscriptWidgetMenu::render($attachmentWidgets);
 
@@ -141,7 +145,8 @@ class attachmentRenderer {
 			$fileBarData['fileDimensions'],
 			$attachmentButtons,
 			$noscriptButtons,
-			$attachmentClasses
+			$attachmentClasses,
+			(int)$fileData['fileId']
 		);
 
 		// return html
@@ -155,7 +160,8 @@ class attachmentRenderer {
 		string $fileDimensions,
 		string $attachmentButtons,
 		string $noscriptButtons,
-		string $attachmentClasses
+		string $attachmentClasses,
+		int $fileId
 	): string {
 		// render attachment buttons through template if there are any
 		$buttonsHtml = '';
@@ -169,6 +175,8 @@ class attachmentRenderer {
 		// render attachment container
 		return $this->templateEngine->ParseBlock('ATTACHMENT_CONTAINER', [
 			'{$ATTACHMENT_CLASSES}' => $attachmentClasses,
+			// the front-end addresses an attachment by its file id
+			'{$FILE_ID}' => htmlspecialchars((string)$fileId),
 			'{$FILE_INFO_BAR}' => $fileInfoBar,
 			'{$FILE_SIZE}' => $fileSize,
 			'{$FILE_DIMENSIONS}' => $fileDimensions,
@@ -382,10 +390,11 @@ class attachmentRenderer {
 		$html = '';
 
 		foreach ($widgets as $w) {
-			$href   = $w['href'] ?? '';
-			$action = $w['action'] ?? '';
-			$label  = $w['label'] ?? '';
-			$params = $w['params'] ?? [];
+			$href    = $w['href'] ?? '';
+			$action  = $w['action'] ?? '';
+			$label   = $w['label'] ?? '';
+			$subMenu = $w['subMenu'] ?? '';
+			$params  = $w['params'] ?? [];
 
 			$targetAttr = '';
 			if (isset($params['target'])) {
@@ -401,6 +410,7 @@ class attachmentRenderer {
 			$html .= '<a href="' . htmlspecialchars($href) . '"'
 				. ' data-action="' . htmlspecialchars($action) . '"'
 				. ' data-label="' . htmlspecialchars($label) . '"'
+				. ' data-subMenu="' . htmlspecialchars($subMenu) . '"'
 				. $targetAttr
 				. $paramAttrs
 				. '>' . htmlspecialchars($label) . '</a>';
