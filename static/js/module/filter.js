@@ -5,10 +5,12 @@ const kkfilter = {
 	name: "KK Filter",
 	F: Array(),
 	die: '',
-	matchers: [],
+	matchers: null,
 	hiddenImages: [],
+	pass: 0,
 	startup: function () {
-		kkfilter.compile();
+		// the early pass compiled already; reset() clears it to force a fresh one
+		if (!kkfilter.matchers) kkfilter.compile();
 		for (var post of kkjs.posts) kkfilter.applyToPost(post);
 
 		// Hook into the widget dropdown system (if it's loaded)
@@ -74,6 +76,7 @@ const kkfilter = {
 	// Compile every stored filter into matchers, once per pass
 	compile: function () {
 		kkfilter.die = '';
+		kkfilter.pass++;
 		kkfilter.matchers = [];
 		kkfilter.F.forEach(function (F) { F.compile(kkfilter.matchers); });
 		kkfilter.hiddenImages = kkfilter.getHiddenImages();
@@ -85,6 +88,9 @@ const kkfilter = {
 		return kkfilter.matchers.some(function (m) { return m.func(post, m.regex); });
 	},
 	applyToPost: function (post) {
+		// skip posts already handled in this pass
+		if (post.kkFilterPass === kkfilter.pass) return;
+		post.kkFilterPass = kkfilter.pass;
 		if (kkfilter.matches(post)) {
 			if (post.classList.contains('op')) {
 				// an OP is never hidden on its own thread page
@@ -121,11 +127,13 @@ const kkfilter = {
 		}
 
 		function sweep() {
-			while (next < posts.length && complete(posts[next])) {
+			// every post but the newest is complete, since a later one follows it
+			var count = posts.length;
+			while (next < count && (next < count - 1 || complete(posts[next]))) {
 				kkfilter.applyToPost(posts[next]);
 				next++;
 			}
-			var tail = next < posts.length ? posts[next] : null;
+			var tail = next < count ? posts[next] : null;
 			if (pending && pending !== tail) pending.classList.remove('filterPending');
 			if (tail && tail !== pending) tail.classList.add('filterPending');
 			pending = tail;
@@ -149,6 +157,7 @@ const kkfilter = {
 			fp[i-1].remove();
 		}
 		kkfilter.die = '';
+		kkfilter.matchers = null;
 	},
 	sett_tab: function (id) {
 		$id(id).innerHTML+= ' | <a href="javascript:kkjs.sett_tab(\'filter\');" id="settab_filter">Filter</a>';
