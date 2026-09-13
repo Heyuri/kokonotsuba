@@ -490,6 +490,11 @@
   opacity: 0.5;
 }
 
+/* post still being parsed, held until filter.js can match it */
+.filterPending {
+  visibility: hidden;
+}
+
 /* .filterpost {
   text-decoration: none;
   font-weight: var(--font-weight-bold);

@@ -5,13 +5,11 @@ const kkfilter = {
 	name: "KK Filter",
 	F: Array(),
 	die: '',
+	matchers: [],
+	hiddenImages: [],
 	startup: function () {
-		kkfilter.F.forEach(function(F){
-			F.exec();
-
-			// we no longer inject [Hide]/[Show] links into each post here,
-			// because the widget menu will handle toggling via hooks.
-		});
+		kkfilter.compile();
+		for (var post of kkjs.posts) kkfilter.applyToPost(post);
 
 		// Hook into the widget dropdown system (if it's loaded)
 		if (window.postWidget) {
@@ -68,12 +66,77 @@ const kkfilter = {
 				if (!key) return;
 				kkfilter.toggleImage(key, ctx.container);
 			});
-
-			// Apply stored hidden states on load
-			kkfilter.applyHiddenImages();
 		}
 
 		return true;
+	},
+
+	// Compile every stored filter into matchers, once per pass
+	compile: function () {
+		kkfilter.die = '';
+		kkfilter.matchers = [];
+		kkfilter.F.forEach(function (F) { F.compile(kkfilter.matchers); });
+		kkfilter.hiddenImages = kkfilter.getHiddenImages();
+	},
+	isThreadPage: function () {
+		return /[?&]res=\d/.test(location.search);
+	},
+	matches: function (post) {
+		return kkfilter.matchers.some(function (m) { return m.func(post, m.regex); });
+	},
+	applyToPost: function (post) {
+		if (kkfilter.matches(post)) {
+			if (post.classList.contains('op')) {
+				// an OP is never hidden on its own thread page
+				if (!kkfilter.isThreadPage()) {
+					var thread = post.closest('.thread');
+					if (thread) thread.classList.add('filter');
+					post.classList.add('filter');
+				}
+			} else post.classList.add('filter');
+		}
+		kkfilter.applyHiddenImages(post);
+	},
+
+	/*
+	 * Runs from <head>: filters each post as the parser finishes it, so a hidden
+	 * post never paints. The post still being parsed is held invisible until its
+	 * end tag arrives, since its comment cannot be matched before then.
+	 */
+	early: function () {
+		if (!window.MutationObserver) return;
+		kkfilter.compile();
+		if (!kkfilter.matchers.length && !kkfilter.hiddenImages.length) return;
+
+		var posts = $class('post');
+		var next = 0;
+		var pending = null;
+
+		// true once something follows the element, i.e. its end tag has been parsed
+		function complete(el) {
+			for (var n = el; n && n !== $doc.body; n = n.parentNode) {
+				if (n.nextSibling) return true;
+			}
+			return false;
+		}
+
+		function sweep() {
+			while (next < posts.length && complete(posts[next])) {
+				kkfilter.applyToPost(posts[next]);
+				next++;
+			}
+			var tail = next < posts.length ? posts[next] : null;
+			if (pending && pending !== tail) pending.classList.remove('filterPending');
+			if (tail && tail !== pending) tail.classList.add('filterPending');
+			pending = tail;
+		}
+
+		var observer = new MutationObserver(sweep);
+		observer.observe($doc.documentElement, { childList: true, subtree: true });
+		$doc.addEventListener('DOMContentLoaded', function () {
+			observer.disconnect();
+			sweep();
+		});
 	},
 
 	reset: function () {
@@ -230,26 +293,19 @@ const kkfilter = {
 			containerEl.classList.remove('filterImage');
 		}
 		this.saveHiddenImages(list);
+		kkfilter.hiddenImages = list;
 	},
 
-	applyHiddenImages: function () {
-		var list = this.getHiddenImages();
-		if (!list.length) return;
-		for (var i = 0; i < list.length; i++) {
-			var parts = list[i].split('-');
-			if (parts.length < 2) continue;
-			var postNo = parts[0];
-			var attachIndex = parts[1];
-			var post = document.getElementById('p' + postNo);
-			if (!post) continue;
-			var containers = post.querySelectorAll('.attachmentContainer');
-			containers.forEach(function (c) {
-				var anchor = c.querySelector('.attachmentAnchor');
-				if (anchor && anchor.dataset.attachmentIndex === attachIndex) {
-					c.classList.add('filterImage');
-				}
-			});
-		}
+	applyHiddenImages: function (post) {
+		var list = kkfilter.hiddenImages;
+		if (!list.length || !post.id) return;
+		var postNo = post.id.slice(1);
+		post.querySelectorAll('.attachmentContainer').forEach(function (c) {
+			var anchor = c.querySelector('.attachmentAnchor');
+			if (anchor && list.indexOf(postNo + '-' + anchor.dataset.attachmentIndex) !== -1) {
+				c.classList.add('filterImage');
+			}
+		});
 	}
 
 };
@@ -265,12 +321,12 @@ class kkFilter {
 		this.func = func;
 		kkfilter.F.push(this);
 	}
-	exec () {
+	// Append a matcher per valid stored line to list
+	compile (list) {
 		var a = localStorage.getItem(this.storagename);
 		if (a===null) a = '';
-		var b = a.split("\n");
 		var that = this;
-		b.forEach( function (line, i) {
+		a.split("\n").forEach( function (line, i) {
 			if (line.match(/^\s*(#|$)/)) return; // continue
 			var m = line.match(/^\/(.*)\/([a-z]*)/i);
 			if (m===null) {
@@ -283,17 +339,7 @@ class kkFilter {
 				kkfilter.die = 'Invalid Regex in <q>' + that.name + '</q> on line ' + i + ':<div>' + e.message + '</div>';
 				return; // continue
 			}
-			for (var post of kkjs.posts) {
-				if (that.func(post, r)) {
-					if (post.classList.contains("op")) {
-						if ($class("thread").length!=1) {
-							var thread = post.closest('.thread');
-							if (thread) thread.classList.add('filter');
-							post.classList.add("filter");
-						}
-					} else post.classList.add("filter");
-				}
-			}
+			list.push({ func: that.func, regex: r });
 		});
 	}
 }
@@ -348,6 +394,7 @@ new kkFilter("Category", "filter_category", function(post, r) {
 /* Register */
 if (typeof(KOKOJS) != "undefined"){
 	kkjs.modules.push(kkfilter);
+	kkfilter.early();
 } else {
 	console.log("ERROR: KOKOJS not loaded!\nPlease load 'koko.js' before this script.");
 }
