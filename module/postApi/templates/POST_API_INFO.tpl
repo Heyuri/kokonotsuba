@@ -72,5 +72,19 @@
 			<tr><td><code>post_count</code></td><td>integer</td><td>{$THREAD_LIST_FIELD_POST_COUNT}</td></tr>
 		</table>
 		</div>
+
+		<h3>{$GET_QUOTE_SOURCE}</h3>
+		<pre><code>GET {$API_BASE_URL}&amp;pageName=quote&amp;thread_uid={thread_uid}&amp;before_uid={post_uid}&amp;text={text}</code></pre>
+		<p>{$RETURNS_JSON_QUOTE_SOURCE}</p>
+		<h4>{$PARAMETERS}</h4>
+		<div class="tableViewportWrapper">
+		<table class="postlists">
+			<tr><th>{$TH_PARAMETER}</th><th>{$TH_TYPE}</th><th>{$TH_DESCRIPTION}</th></tr>
+			<tr><td><code>thread_uid</code></td><td>string</td><td>{$THREAD_UID_DESC}</td></tr>
+			<tr><td><code>before_uid</code></td><td>integer</td><td>{$BEFORE_UID_DESC}</td></tr>
+			<tr><td><code>text</code></td><td>string</td><td>{$QUOTE_TEXT_DESC}</td></tr>
+			<tr><td><code>quoted</code></td><td>0 | 1</td><td>{$QUOTE_QUOTED_DESC}</td></tr>
+		</table>
+		</div>
 	</div>
 <hr>

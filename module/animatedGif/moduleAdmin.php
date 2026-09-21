@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\Modules\animatedGif;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
@@ -143,6 +145,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		// get the board of the post
 		$board = searchBoardArrayForBoard($post->getBoardUID());
+		threadFragments::forgetPosts([$post]);
 
 		// ===== AJAX handling updated to use helper =====
 		if($this->moduleContext->request->isAjax()) {

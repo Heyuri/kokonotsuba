@@ -8,6 +8,7 @@ require_once __DIR__ . '/stickyRepository.php';
 use Kokonotsuba\database\databaseConnection;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\thread\Thread;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
 use Kokonotsuba\module_classes\traits\AuditableTrait;
 use Kokonotsuba\module_classes\traits\ToggleActionTrait;
@@ -59,8 +60,8 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->registerToggleHooks();
 	}
 
-	protected function renderToggleButton(string &$modfunc, Post $post, bool $noScript): void {
-		$isActive = $this->stickyRepository->isSticky($post->getThreadUid());
+	protected function renderToggleButton(string &$modfunc, Post $post, bool $noScript, ?Thread $thread = null): void {
+		$isActive = $thread !== null ? $thread->isSticky() : $this->stickyRepository->isSticky($post->getThreadUid());
 		$url = $this->generateToggleActionUrl($post);
 
 		$modfunc .= generateModerateForm(
@@ -72,8 +73,9 @@ class moduleAdmin extends abstractModuleAdmin {
 		);
 	}
 
-	protected function onRenderToggleWidget(array &$widgetArray, Post &$post): void {
-		$isActive = $this->stickyRepository->isSticky($post->getThreadUid());
+	protected function onRenderToggleWidget(array &$widgetArray, Post &$post, ?Thread $thread = null): void {
+		// the thread row already carries the flag when the renderer hands it over
+		$isActive = $thread !== null ? $thread->isSticky() : $this->stickyRepository->isSticky($post->getThreadUid());
 		$url = $this->getModulePageURL([], false, true);
 		$label = $isActive ? $this->getToggleActiveTitle() : $this->getToggleInactiveTitle();
 

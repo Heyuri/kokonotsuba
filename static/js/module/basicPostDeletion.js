@@ -155,7 +155,7 @@
 				removeWidgetActions(postEl, ['deleteAttachment']);
 				await reloadAttachment(postEl);
 			} else {
-				removeWidgetActions(postEl, ['delete', 'mute', 'deleteAttachment']);
+				removeWidgetActions(postEl, ['delete', 'mute', 'deletePurge', 'deleteAttachment']);
 				fadeAndRemovePost(postEl);
 			}
 		} catch (err) {
@@ -191,6 +191,9 @@
 		window.postWidget.registerActionHandler('mute', ctx =>
 			handleWidgetDeletion('mute', ctx)
 		);
+		window.postWidget.registerActionHandler('deletePurge', ctx =>
+			deleteAndPurgePost(ctx?.post, ctx?.url, ctx?.params || {})
+		);
 		window.postWidget.registerActionHandler('viewdeleted', ctx => {
 			if (ctx?.url && ctx.url !== '#') window.location.assign(ctx.url);
 		});
@@ -221,6 +224,19 @@
 			});
 		});
 	}
+
+	// [DP]: delete and purge, confirmed first since nothing is kept to restore
+	document.addEventListener('click', function (e) {
+		var control = e.target.closest('.adminDeletePurgeFunction');
+		if (!control) return;
+
+		var button = control.querySelector('button[formaction]');
+		var postEl = control.closest('.post');
+		if (!button || !postEl) return;
+
+		e.preventDefault();
+		deleteAndPurgePost(postEl, button.formAction);
+	});
 
 	// Legacy admin delete attachment handler (fallback when attachmentWidget is not present)
 	document.addEventListener('click', function (e) {

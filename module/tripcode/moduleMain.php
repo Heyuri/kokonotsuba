@@ -30,8 +30,9 @@ class moduleMain extends abstractModuleMain {
 	public function initialize(): void {
 		
 		// init tripcode renderer
+		// disabled capcodes are left out so they render as a plain tripcode; read on first use
 		$this->tripcodeRenderer = new tripcodeRenderer(
-			$this->moduleContext->userCapcodes,
+			fn() => $this->moduleContext->capcodeService->listEnabledCapcodes(),
 			$this->getConfig('staffCapcodes')
 		);
 

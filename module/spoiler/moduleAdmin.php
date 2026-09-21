@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\Modules\spoiler;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\module_classes\abstractModuleAdmin;
@@ -104,6 +106,7 @@ class moduleAdmin extends abstractModuleAdmin {
 		$this->logAction($logMessage, $post->getBoardUID(), actionType::POST_FLAG);
 
 		$board = searchBoardArrayForBoard($post->getBoardUID());
+		threadFragments::forgetPosts([$post]);
 
 		if ($this->moduleContext->request->isAjax()) {
 			$spoilerImageUrl = $this->getConfig('STATIC_URL') . 'image/spoiler_image.png';

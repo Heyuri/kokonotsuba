@@ -31,6 +31,7 @@ class postRepository extends baseRepository {
 		private readonly string $countryFlagTable = '',
 		private readonly string $displayIpTable = '',
 		private readonly string $reportTable = '',
+		private readonly string $boardTable = '',
 	) {
 		parent::__construct($databaseConnection, $postTable);
 		self::validateTableNames($threadTable, $deletedPostsTable, $fileTable, $soudaneTable, $noteTable, $accountTable);
@@ -274,15 +275,6 @@ class postRepository extends baseRepository {
 	}
 
 	/**
-	 * Return the next AUTO_INCREMENT value for the posts table.
-	 *
-	 * @return int Next available post_uid.
-	 */
-	public function getNextPostUid(): int {
-		return $this->getNextAutoIncrement();
-	}
-
-	/**
 	 * Resolve a post number (no) from a post UID.
 	 *
 	 * @param mixed $post_uid Post UID.
@@ -416,9 +408,9 @@ class postRepository extends baseRepository {
 	 * Insert a new post row using the given parameter array.
 	 *
 	 * @param array $params Named parameter array matching the posts table columns.
-	 * @return void
+	 * @return int The post_uid the row was given.
 	 */
-	public function insertPost(array $params): void {
+	public function insertPost(array $params): int {
 		$query = "INSERT INTO {$this->table} 
 			(no, poster_hash, boardUID, thread_uid, post_position, is_op, root, category, tag, pwd, now, 
 			name, tripcode, secure_tripcode, capcode, email, sub, com, host, visitor_token_hash, status, text_format) 
@@ -426,6 +418,8 @@ class postRepository extends baseRepository {
 			:category, :tag, :pwd, :now, :name, :tripcode, :secure_tripcode, :capcode, :email, :sub, :com, :host, :visitor_token_hash, :status, :text_format)";
 		
 		$this->query($query, $params);
+
+		return (int)$this->lastInsertId();
 	}
 
 	/**
@@ -636,6 +630,34 @@ class postRepository extends baseRepository {
 	 * @param int[] $postUIDsList Array of post UIDs.
 	 * @return array|false Array of rows with 'thread_uid' and 'boardUID', or false if none found.
 	 */
+	/**
+	 * The threads these posts are drawn in, each row carrying the board's storage directory name so
+	 * the caller needs no board object. Quoting a post does not change its markup: backlinks are
+	 * drawn client-side, so a quoted thread is not included.
+	 *
+	 * @param int[] $postUids
+	 * @return array<array{thread_uid: string, boardUID: int, storage_directory_name: string}>
+	 */
+	public function getThreadsTouchedByPosts(array $postUids): array {
+		$postUids = array_values(array_filter(array_map('intval', $postUids)));
+		if ($postUids === [] || $this->boardTable === '') {
+			return [];
+		}
+		$inClause = pdoPlaceholdersForIn($postUids);
+		$query = "
+			SELECT DISTINCT p.thread_uid, p.boardUID, b.storage_directory_name
+			FROM {$this->table} p
+			INNER JOIN {$this->boardTable} b ON b.board_uid = p.boardUID
+			WHERE p.post_uid IN $inClause
+		";
+
+		return array_map(fn(array $row): array => [
+			'thread_uid' => (string)$row['thread_uid'],
+			'boardUID' => (int)$row['boardUID'],
+			'storage_directory_name' => (string)$row['storage_directory_name'],
+		], $this->queryAll($query, $postUids));
+	}
+
 	public function getUniquePairFromPostUids(array $postUIDsList): array|false {
 		$inClause = pdoPlaceholdersForIn($postUIDsList);
 
@@ -699,16 +721,6 @@ class postRepository extends baseRepository {
 		return range($firstId, $firstId + count($posts) - 1);
 	}
 
-	/**
-	 * Get next post UID once and then increment locally.
-	 *
-	 * @param int $count Number of UIDs you need
-	 * @return array Array of post_uids
-	 */
-	public function getNextPostUids(int $count): array {
-		$startUid = $this->getNextPostUid();
-		return range($startUid, $startUid + $count - 1);
-	}
 
 
 	/**

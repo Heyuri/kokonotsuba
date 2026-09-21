@@ -3,6 +3,7 @@
 namespace Kokonotsuba\Modules\postApi;
 
 use Kokonotsuba\board\board;
+use Kokonotsuba\board\boardRebuilder;
 use Kokonotsuba\containers\moduleEngineContext;
 use Kokonotsuba\module_classes\abstractModuleMain;
 use Kokonotsuba\module_classes\moduleEngine;
@@ -10,6 +11,7 @@ use Kokonotsuba\module_classes\traits\listeners\FormFuncsListenerTrait;
 use Kokonotsuba\module_classes\traits\listeners\ModuleHeaderListenerTrait;
 use Kokonotsuba\post\helper\postDateFormatter;
 use Kokonotsuba\post\Post;
+use Kokonotsuba\quote_link\textQuoteMatcher;
 use Kokonotsuba\renderers\boardRendererFactory;
 use Kokonotsuba\template\templateEngine;
 
@@ -31,6 +33,9 @@ class moduleMain extends abstractModuleMain {
 	/** Template to fall back on when the page's own template has no post block. */
 	private const FALLBACK_TEMPLATE = 'kokoimg';
 
+	/** How long a quote lookup that found nothing may be cached. */
+	private const MISS_CACHE_SECONDS = 900;
+
 	/** Fallback engine, built on first use and reused across the posts of one request. */
 	private ?templateEngine $fallbackTemplateEngine = null;
 
@@ -50,15 +55,35 @@ class moduleMain extends abstractModuleMain {
 	/**
 	 * Send a JSON payload, choosing cache policy by viewer.
 	 *
-	 * Staff responses carry admin-mode content (IPs) and are marked
-	 * private/no-store so shared caches never serve them to other users.
-	 * Everyone else gets the public, IP-free, cacheable response.
+	 * Staff responses carry admin-mode content (IPs) and are marked private/no-store so shared
+	 * caches never serve them to other users, and so a moderator never reads a post from a cache
+	 * that was filled before they deleted it. Everyone else gets the public, IP-free,
+	 * cacheable response.
 	 */
-	private function renderPostDataResponse(array $data, int $cacheSeconds = 60, int $statusCode = 200): void {
+	private function renderPostDataResponse(array|string $data, int $cacheSeconds = 60, int $statusCode = 200): void {
 		if ($this->isStaff()) {
 			renderPrivateJsonPage($data, $statusCode);
-		} else {
-			renderCachedJsonPage($data, $cacheSeconds, $statusCode);
+			return;
+		}
+
+		// the public answer is the same for every reader, but a request carrying a session is
+		// answered from the staff branch above, so a shared cache has to key on the cookie or
+		// it would hand a staff member somebody else's public copy and back
+		header('Vary: Cookie');
+		renderCachedJsonPage($data, $cacheSeconds, $statusCode);
+	}
+
+	/**
+	 * Let go of the session before the work of a public read starts.
+	 *
+	 * Every request opens a session and PHP holds its lock until the script ends, so without
+	 * this a reader hovering two quotes has them answered one after the other, and their next
+	 * page load waits behind both. Staff keep theirs: their posts are rendered with the
+	 * controls, and those read the session.
+	 */
+	private function releaseSessionForReads(): void {
+		if (!$this->isStaff() && session_status() === PHP_SESSION_ACTIVE) {
+			session_write_close();
 		}
 	}
 
@@ -75,13 +100,24 @@ class moduleMain extends abstractModuleMain {
 		$this->listenModuleHeader('onGenerateModuleHeader');
 	}
 
-	/** Inject the API base URL meta tag into the page header. */
+	/**
+	 * Inject the API base URL meta tag into the page header.
+	 *
+	 * A live page drawn for staff also says so, which is how the page script knows to ask with
+	 * the session cookie: staff get their own rendering of a quoted post, uncached, while every
+	 * other reader sends no cookie and gets the one public answer a shared cache can hold.
+	 * Static html is built once and read by everybody, so it never carries the staff mark.
+	 */
 	private function onGenerateModuleHeader(string &$moduleHeader): void {
 		$apiUrl = $this->getModulePageURL();
 		$fetchingText = sanitizeStr(_T('post_api_fetching'));
 
 		$moduleHeader .= '<meta name="postApiUrl" content="' . $apiUrl . '">';
 		$moduleHeader .= '<meta name="postApiFetchingText" content="' . $fetchingText . '">';
+
+		if ($this->isStaff() && !boardRebuilder::isRenderingStaticHtml()) {
+			$moduleHeader .= '<meta name="postApiStaff" content="1">';
+		}
 	}
 
 	/** Module page — routes between info page and JSON API endpoints. */
@@ -100,6 +136,11 @@ class moduleMain extends abstractModuleMain {
 
 		if ($pageName === 'threads') {
 			$this->handleThreadListRequest();
+			return;
+		}
+
+		if ($pageName === 'quote') {
+			$this->handleQuoteLookupRequest();
 			return;
 		}
 
@@ -153,6 +194,11 @@ class moduleMain extends abstractModuleMain {
 			'{$THREAD_LIST_FIELD_LAST_BUMP_TIME}' => _T('post_api_thread_list_field_last_bump_time'),
 			'{$THREAD_LIST_FIELD_CREATED_TIME}' => _T('post_api_thread_list_field_created_time'),
 			'{$THREAD_LIST_FIELD_POST_COUNT}' => _T('post_api_thread_list_field_post_count'),
+			'{$GET_QUOTE_SOURCE}'          => _T('post_api_get_quote_source'),
+			'{$RETURNS_JSON_QUOTE_SOURCE}' => _T('post_api_returns_json_quote_source'),
+			'{$BEFORE_UID_DESC}'           => _T('post_api_before_uid_desc'),
+			'{$QUOTE_TEXT_DESC}'           => _T('post_api_quote_text_desc', textQuoteMatcher::MAX_NEEDLE_LENGTH),
+			'{$QUOTE_QUOTED_DESC}'         => _T('post_api_quote_quoted_desc'),
 		]);
 
 		$html = $board->getBoardHead(_T('post_api_title'));
@@ -297,6 +343,8 @@ class moduleMain extends abstractModuleMain {
 			renderCachedJsonPage(_T('post_not_found'), 3600, 400);
 		}
 
+		$this->releaseSessionForReads();
+
 		$post = $this->moduleContext->postRepository->getCorePostByUid($postUid);
 
 		if (!$post) {
@@ -307,6 +355,39 @@ class moduleMain extends abstractModuleMain {
 		$data = $this->buildPostData($post, $html);
 
 		$this->renderPostDataResponse($data, 60);
+	}
+
+	/**
+	 * Find the post a ">text", ">file.jpg" or ">No.123" quote refers to: the nearest earlier
+	 * post of the same thread. The page script asks only on hover, and only when the source
+	 * may be among posts its page does not hold, so misses are cached like hits.
+	 */
+	private function handleQuoteLookupRequest(): void {
+		$request = $this->moduleContext->request;
+
+		$threadUid = (string)$request->getParameter('thread_uid', 'GET', '');
+		$beforeUid = (int)$request->getParameter('before_uid', 'GET', '0');
+		$needle = textQuoteMatcher::normalizeNeedle((string)$request->getParameter('text', 'GET', ''));
+		$quoted = $request->getParameter('quoted', 'GET', '') === '1';
+
+		if ($needle === null || $beforeUid <= 0 || !preg_match('/^[A-Za-z0-9_-]{1,255}$/', $threadUid)) {
+			renderCachedJsonPage(_T('post_not_found'), 3600, 400);
+		}
+
+		$this->releaseSessionForReads();
+
+		$postUid = $this->moduleContext->getContainer()->get('textQuoteResolver')
+			->resolve($threadUid, $beforeUid, $needle, $quoted);
+
+		$post = $postUid ? $this->moduleContext->postRepository->getCorePostByUid($postUid) : false;
+
+		if (!$post) {
+			// a quote only ever points at an earlier post, so nothing posted later can turn this
+			// into a hit: the miss keeps for a good while, and it is the expensive one to work out
+			$this->renderPostDataResponse(_T('post_not_found'), self::MISS_CACHE_SECONDS, 404);
+		}
+
+		$this->renderPostDataResponse($this->buildPostData($post, $this->renderPostHtml($post)), 60);
 	}
 
 	/**
@@ -365,8 +446,15 @@ class moduleMain extends abstractModuleMain {
 	 * kokoflash lists its index as table rows, so it has no REPLY block and an OP block of bare
 	 * <td>s. Missing the reply block is what marks such a listing template, and it is skipped
 	 * outright — a quoted OP would otherwise render as table cells no client can display.
+	 *
+	 * The post is drawn from a copy: the pipeline rewrites its comment into html in place.
 	 */
 	private function renderPostHtml(Post $post): string {
+		// the render pipeline rewrites the post's comment into html in place, and the payload is
+		// built from the same object, so it draws a copy: 'comment' is the stored text that
+		// 'text_format' describes, not the markup of this request's template
+		$post = clone $post;
+
 		$pageTemplateEngine = $this->moduleContext->templateEngine;
 
 		if (trim($pageTemplateEngine->BlockValue('REPLY')) === '') {

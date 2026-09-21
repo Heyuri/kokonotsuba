@@ -123,6 +123,64 @@ class threadWatcherRepository extends baseRepository {
 	}
 
 	/**
+	 * For each thread, return the post `no` of the first quoting post the client has not
+	 * seen yet: quoting posts are ranked chronologically with the same filters as
+	 * batchGetQuoteCounts(), and the one at rank seen+1 is the first unread.
+	 *
+	 * @param array<string,int> $quoteSeenMap thread_uid => number of quoting posts already seen
+	 * @param int[][]           $ownPosts     List of [boardUID, no] pairs identifying the user's own posts.
+	 * @return array<string,int> thread_uid => first-unread quoting post number (only threads with one)
+	 */
+	public function batchGetFirstUnreadQuoteNo(array $quoteSeenMap, array $ownPosts): array {
+		if (empty($quoteSeenMap) || empty($ownPosts)) {
+			return [];
+		}
+
+		$threadUids = array_keys($quoteSeenMap);
+		$threadPlaceholders = $this->buildInClause($threadUids);
+		$ownPlaceholders = '(' . implode(', ', array_fill(0, count($ownPosts), '(?, ?)')) . ')';
+		$rankPlaceholders = '(' . implode(', ', array_fill(0, count($quoteSeenMap), '(?, ?)')) . ')';
+
+		$ownParams = [];
+		foreach ($ownPosts as $pair) {
+			$ownParams[] = (int) $pair[0];
+			$ownParams[] = (int) $pair[1];
+		}
+		$rankParams = [];
+		foreach ($quoteSeenMap as $uid => $seen) {
+			$rankParams[] = (string) $uid;
+			$rankParams[] = max(0, (int) $seen) + 1;
+		}
+
+		$query = "
+			SELECT ranked.thread_uid AS thread_uid, ranked.no AS no
+			FROM (
+				SELECT
+					host.thread_uid AS thread_uid,
+					host.no AS no,
+					ROW_NUMBER() OVER (PARTITION BY host.thread_uid ORDER BY host.no ASC) AS rn
+				FROM {$this->quoteLinkTable} q
+				JOIN {$this->postTable} host   ON q.host_post_uid   = host.post_uid
+				JOIN {$this->postTable} target ON q.target_post_uid = target.post_uid
+				WHERE host.thread_uid IN {$threadPlaceholders}
+				  AND (target.boardUID, target.no) IN {$ownPlaceholders}
+				  AND (host.boardUID, host.no) NOT IN {$ownPlaceholders}
+				  AND NOT " . openDeletionExistsCondition($this->deletedPostsTable, 'host.post_uid') . "
+			) ranked
+			WHERE (ranked.thread_uid, ranked.rn) IN {$rankPlaceholders}
+		";
+
+		$params = array_merge(array_map('strval', $threadUids), $ownParams, $ownParams, $rankParams);
+		$rows = $this->queryAll($query, $params);
+
+		$out = [];
+		foreach ($rows as $row) {
+			$out[(string) $row['thread_uid']] = (int) $row['no'];
+		}
+		return $out;
+	}
+
+	/**
 	 * For each watched thread, return the post `no` of the first post the client hasn't
 	 * seen yet, given how many posts from the top it has already read.
 	 *

@@ -288,7 +288,7 @@ class fileService {
 	 * @param string|null $mimeType         MIME type.
 	 * @param bool        $isHidden         Whether the file starts in purgatory.
 	 * @param bool        $isDeleted        Whether the file starts marked deleted.
-	 * @return void
+	 * @return int The id the file row was given.
 	 */
 	public function addFile(
 		int $postUid,
@@ -304,9 +304,9 @@ class fileService {
 		?string $mimeType,
 		bool $isHidden,
 		bool $isDeleted = false,
-	): void {
+	): int {
 		// add the row to database
-		$this->fileRepository->insertFileRow($postUid, 
+		return $this->fileRepository->insertFileRow($postUid, 
 			$fileName, 
 			$storedFileName, 
 			$fileExtension, 
@@ -444,18 +444,5 @@ class fileService {
 
 		// then return the condition
 		return $isDuplicate;
-	}
-
-	/**
-	 * Return the next AUTO_INCREMENT value for the files table.
-	 *
-	 * @return int Next available file ID.
-	 */
-	public function getNextId(): int {
-		// use repo to check database for the last inserted id for the files table
-		$nextId = $this->fileRepository->getNextId();
-
-		// then return it
-		return $nextId;
 	}
 }

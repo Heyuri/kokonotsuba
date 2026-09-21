@@ -83,4 +83,14 @@ final class CommentMarkerTest extends TestCase {
 
 		$this->assertSame($text, commentMarker::strip($text));
 	}
+
+	/**
+	 * Raw input is stripped before it is escaped, and the escaper drops control characters, so a
+	 * payload hiding one would otherwise become a genuine marker once rendered.
+	 */
+	public function testStripRemovesAMarkerSmugglingACharacterTheEscaperDrops(): void {
+		foreach (["\x01", "\0", "\r", "\x7F", "\u{0080}", "\u{FDD0}"] as $hidden) {
+			$this->assertSame('a  b', commentMarker::strip("a [[koko:fortune:{$hidden}0]] b"));
+		}
+	}
 }

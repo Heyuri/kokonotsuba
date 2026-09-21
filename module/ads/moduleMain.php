@@ -35,8 +35,8 @@ class moduleMain extends abstractModuleMain {
 	private string $modulePageUrl;
 	private ?adRepository $adRepo = null;
 
-	/** @var array<string, adEntry[]> Enabled ads already read this request, by slot. */
-	private array $adsBySlot = [];
+	/** @var array<string, adEntry[]>|null Every enabled ad, by slot, read once on first use. */
+	private ?array $adsBySlot = null;
 
 	public function getName(): string {
 		return 'Ads Module';
@@ -291,7 +291,10 @@ class moduleMain extends abstractModuleMain {
 	}
 
 	private function getAdsForSlot(string $slot): array {
-		return $this->adsBySlot[$slot] ??= $this->getAdsRepo()->getEnabledAdsForSlot($slot);
+		// a page asks for five slots, so the table is read once and split
+		$this->adsBySlot ??= $this->getAdsRepo()->getAllEnabledBySlot();
+
+		return $this->adsBySlot[$slot] ?? [];
 	}
 
 	private function getNextAdForSlot(string $slot): ?adEntry {

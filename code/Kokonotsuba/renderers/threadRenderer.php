@@ -31,17 +31,47 @@ class threadRenderer {
 	public function render(array $threadsInPage,
 			bool $isReplyMode,
 			Thread $thread,
-			array $posts, 
-			int $hiddenReply, 
-			bool $killSensor,  
-			bool $adminMode = false, 
-			int $threadIterator = 0, 
-			string $overboardBoardTitleHTML = '', 
+			array $posts,
+			int $hiddenReply,
+			bool $killSensor,
+			bool $adminMode = false,
+			int $threadIterator = 0,
+			string $overboardBoardTitleHTML = '',
 			string $crossLink = '',
 			array $templateValues = [],
 			int $currentPage = 0,
 			int $totalPages = 1,
 			?int $recentRepliesCount = null
+		): string {
+		// the arrows point at the neighbouring threads on this page, so they are page state
+		$threadNav = $isReplyMode ? '' : buildThreadNavButtons($threadsInPage, $threadIterator);
+
+		return $this->renderThreadBlock($isReplyMode, $thread, $posts, $hiddenReply, $killSensor, $adminMode,
+				$overboardBoardTitleHTML, $crossLink, $templateValues, $currentPage, $totalPages, $recentRepliesCount, $threadNav)
+			. $this->renderThreadSeparator($threadIterator);
+	}
+
+	/**
+	 * The thread's own markup: OP, replies and the THREAD block, without the separator after it.
+	 *
+	 * Everything here follows from the thread and its board rather than the page it sits on,
+	 * except $threadNav, which the caller supplies, so the result can be cached and shown on
+	 * another page (see threadFragmentCache).
+	 */
+	public function renderThreadBlock(
+			bool $isReplyMode,
+			Thread $thread,
+			array $posts,
+			int $hiddenReply,
+			bool $killSensor,
+			bool $adminMode,
+			string $overboardBoardTitleHTML,
+			string $crossLink,
+			array $templateValues,
+			int $currentPage,
+			int $totalPages,
+			?int $recentRepliesCount,
+			string $threadNav
 		): string {
 
 		$threadResno = $thread->getOpNumber();
@@ -57,8 +87,6 @@ class threadRenderer {
 		// number of posts excluding OP
 		$replyCount = $thread->getPostCount() - 1;
 	
-		$threadHtml = '';
-
 		$templateValues['{$REPLIES}'] = '';
 
 		$templateValues['{$THREAD_OP}'] = '';
@@ -120,23 +148,33 @@ class threadRenderer {
 			}
 		}
 		
-		// append board title to thread 
+		// append board title to thread
 		$templateValues['{$BOARD_THREAD_NAME}'] = $overboardBoardTitleHTML;
 
 		$templateValues['{$THREAD_NO}'] = $threadResno;
 
-		$templateValues['{$THREADNAV}'] = '';
+		$templateValues['{$THREADNAV}'] = $threadNav;
 
-		// Navigation
-		if ($threadMode) {
-			$templateValues['{$THREADNAV}'] = buildThreadNavButtons($threadsInPage, $threadIterator);
-		}
+		return $this->templateEngine->ParseBlock('THREAD', $templateValues);
+	}
 
-		$threadHtml .= $this->templateEngine->ParseBlock('THREAD', $templateValues);
+	/** The separator drawn after a thread. Modules (ads) key it on the thread's position on the page. */
+	public function renderThreadSeparator(int $threadIterator): string {
 		$separateHtml = $this->templateEngine->ParseBlock('THREADSEPARATE', []);
 		$this->moduleEngine->dispatch('ThreadSeparate', [&$separateHtml, $threadIterator]);
-		$threadHtml .= $separateHtml;
-		return $threadHtml;
+		return $separateHtml;
+	}
+
+	/**
+	 * Run the thread-level hook for a thread whose markup came from a cache.
+	 *
+	 * A ModuleThreadHeader listener may keep page-level state beyond the thread's own markup
+	 * (cssHax collects the thread's styling for the page head), so it has to see every thread on
+	 * the page, drawn or not. The header it writes is discarded: it is already in the fragment.
+	 */
+	public function notifyCachedThread(Thread $thread, bool $isReplyMode = false): void {
+		$discarded = '';
+		$this->moduleEngine->dispatch('ModuleThreadHeader', [&$discarded, &$thread, $isReplyMode]);
 	}
 	
 	/*
@@ -164,17 +202,18 @@ class threadRenderer {
 
 		$postFormExtra = $warnHidePost = '';
 
+		// data-gap tells qu3.js whether replies are missing between the OP and the first one drawn
 		// Hidden reply notice
 		if (!$isReply && $hiddenReply) {
-			$warnHidePost = '<div class="omittedposts">'._T('notice_omitted', $hiddenReply).'</div>';
+			$warnHidePost = '<div class="omittedposts" data-gap="1">'._T('notice_omitted', $hiddenReply).'</div>';
 		}
 
 		// Page viewing notice
 		if (!$isReply && $recentRepliesCount !== null) {
 			$shownReplies = count($threadPosts) - 1;
-			$warnHidePost .= '<div class="omittedposts">'._T('notice_viewing_last_posts', $shownReplies, $shownReplies === 1 ? _T('post_singular') : _T('post_multiple')).'</div>';
+			$warnHidePost .= '<div class="omittedposts" data-gap="1">'._T('notice_viewing_last_posts', $shownReplies, $shownReplies === 1 ? _T('post_singular') : _T('post_multiple')).'</div>';
 		} elseif (!$isReply && $totalPages > 1) {
-			$warnHidePost .= '<div class="omittedposts">'._T('notice_viewing_page', $currentPage, max(1, $totalPages)).'</div>';
+			$warnHidePost .= '<div class="omittedposts" data-gap="' . ($currentPage > 1 ? '1' : '0') . '">'._T('notice_viewing_page', $currentPage, max(1, $totalPages)).'</div>';
 		}
 
 		// bind post op number to resto

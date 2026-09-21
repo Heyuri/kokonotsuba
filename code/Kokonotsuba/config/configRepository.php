@@ -43,6 +43,21 @@ class configRepository extends baseRepository {
 	}
 
 	/**
+	 * The decoded overrides of every scope in one read, keyed by board UID.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	public function getAllOverrides(): array {
+		$all = [];
+		foreach ($this->queryAll("SELECT board_uid, conf_values FROM {$this->table}") as $row) {
+			$decoded = empty($row['conf_values']) ? [] : json_decode((string)$row['conf_values'], true);
+			$all[(int)$row['board_uid']] = is_array($decoded) ? $decoded : [];
+		}
+
+		return $all;
+	}
+
+	/**
 	 * Insert or replace the overrides for a board.
 	 *
 	 * @param int                  $boardUid  Board UID.

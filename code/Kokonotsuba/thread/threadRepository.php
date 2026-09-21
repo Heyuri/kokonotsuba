@@ -16,7 +16,6 @@ use function Kokonotsuba\libraries\openFileDeletionExistsCondition;
 use function Kokonotsuba\libraries\excludeDeletedPostsCondition;
 use function Kokonotsuba\libraries\excludeDeletedThreadsCondition;
 use function Kokonotsuba\libraries\bindThreadFilterParameters;
-use function Kokonotsuba\libraries\bindBoardUIDFilter;
 use function Kokonotsuba\libraries\getBasePostQuery;
 use function Kokonotsuba\libraries\mergeMultiplePostRows;
 use function Kokonotsuba\libraries\pdoPlaceholdersForIn;
@@ -97,26 +96,13 @@ class threadRepository extends baseRepository {
 	}
 
 	/**
-	 * Build the base COUNT query for threads, including deletion state columns.
+	 * Build the base COUNT query for threads. Deletion state is applied by the caller's WHERE
+	 * clause, so no join is needed.
 	 *
 	 * @return string Partial SQL SELECT COUNT string.
 	 */
 	private function getBaseCountThreadQuery(): string {
-		// get join clause
-		$joinClause = $this->getBaseThreadJoinClause();
-		
-		// generate thread count query
-		$query = "
-			SELECT COUNT(thread_uid),
-					t.*,					
-					dp.open_flag AS thread_deleted,
-					dp.file_only AS thread_attachment_deleted
-			FROM {$this->table} t
-			$joinClause 
-		";
-
-		// return query
-		return $query;
+		return "SELECT COUNT(*) FROM {$this->table} t";
 	}
 
 	/**
@@ -300,7 +286,7 @@ class threadRepository extends baseRepository {
 	 * @param bool  $includeDeleted Whether to include threads whose OP is deleted.
 	 * @return int Thread count.
 	 */
-	public function getFilteredThreadCount($filters = [], bool $includeDeleted = false) {
+	public function getFilteredThreadCount(array $filters = [], bool $includeDeleted = false): int {
 		// get base count query
 		$query = $this->getBaseCountThreadQuery();
 
@@ -316,10 +302,8 @@ class threadRepository extends baseRepository {
 		$params = [];
 		
 		bindThreadFilterParameters($params, $query, $filters); //apply filtration to query
-		
-		$threads = $this->queryColumn($query, $params);
-	
-		return $threads;
+
+		return (int)$this->queryValue($query, $params);
 	}
 
 	/**
@@ -352,9 +336,8 @@ class threadRepository extends baseRepository {
 
 		$params = [];
 
-		if (!empty($filters['board']) && is_array($filters['board'])) {
-			bindBoardUIDFilter($params, $query, $filters['board'], 't.boardUID');
-		}
+		// the same filters as getFilteredThreadCount(), so the pager and the page agree
+		bindThreadFilterParameters($params, $query, $filters);
 
 		$query .= " ORDER BY t.{$order} DESC";
 		$this->paginate($query, $params, $amount, $offset);
@@ -381,14 +364,28 @@ class threadRepository extends baseRepository {
 	 * @return mixed Thread UID, or null/false if not found.
 	 */
 	public function resolveThreadUidFromResno($board, $resno) {
+		// the route and the renderer both ask for the same number; only a hit is remembered, so a
+		// thread created later in the request is still found
+		$key = $board->getBoardUID() . ':' . intval($resno);
+		if (isset(self::$resolvedThreadUids[$key])) {
+			return self::$resolvedThreadUids[$key];
+		}
+
 		$query = "SELECT thread_uid FROM {$this->table} WHERE post_op_number = :resno AND boardUID = :board_uid";
 		$params = [
 			':resno' => intval($resno),
 			':board_uid' => $board->getBoardUID(),
 		];
 		$thread_uid = $this->queryColumn($query, $params);
+		if ($thread_uid) {
+			self::$resolvedThreadUids[$key] = $thread_uid;
+		}
+
 		return $thread_uid;
 	}
+
+	/** @var array<string, string> Thread uids resolved this request, by board and OP number. */
+	private static array $resolvedThreadUids = [];
 
 	/**
 	 * Resolve the OP post number from a thread UID.

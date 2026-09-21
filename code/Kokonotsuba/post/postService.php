@@ -58,14 +58,13 @@ class postService {
 	 *
 	 * @param board          $board         The board the post belongs to.
 	 * @param postRegistData $postRegistData Post registration DTO.
-	 * @param int            $postUID        Pre-reserved post UID.
-	 * @return void
+	 * @return int The post_uid the post was given. It is only known once the row is in: a uid
+	 *             read off the table beforehand is shared by every poster who asks at that moment.
 	 */
 	public function addPostToThread(
 		board $board, 
-		postRegistData $postRegistData,
-		int $postUID 
-	): void {
+		postRegistData $postRegistData
+	): int {
 		$boardUID = $board->getBoardUID();
 		$root = gmdate('Y-m-d H:i:s');
 		$isThread = false;
@@ -78,7 +77,8 @@ class postService {
 			// get the updated property
 			$threadUidFromUrl = $postRegistData->getThreadUidFromUrl();
 
-			$this->threadRepository->addThread($boardUID, $postUID, $threadUidFromUrl, $postRegistData->getNo());
+			// the thread row has to exist before its OP does; the OP's uid is filled in below
+			$this->threadRepository->addThread($boardUID, 0, $threadUidFromUrl, $postRegistData->getNo());
 			
 			$isThread = true;
 		}
@@ -92,13 +92,19 @@ class postService {
 
 		$params = $postRegistData->toParams($boardUID, $root); // convert DTO to SQL params
 
-		$this->postRepository->insertPost($params);
+		$postUID = $this->postRepository->insertPost($params);
+
+		if ($isThread) {
+			$this->threadRepository->updatePostOpUid($threadUidFromUrl, $postUID);
+		}
 
 		if ($postRegistData->getAgeru() || $isThread) {
 			$this->threadRepository->bumpThread($postRegistData->getThreadUIDFromUrl());
 		} else {
 			$this->threadRepository->updateThreadLastReplyTime($postRegistData->getThreadUIDFromUrl());
 		}
+
+		return $postUID;
 	}
 
 	/**
@@ -111,6 +117,11 @@ class postService {
 	 */
 	public function removePosts(array|int $posts, ?int $accountId = 0): void {
 		$this->postDeletionService->removePosts($posts, $accountId);
+	}
+
+	/** The threads these posts are drawn in, with storage names, for fragment invalidation. */
+	public function getThreadPairsFromPostUids(array $postUids): array {
+		return $this->postRepository->getThreadsTouchedByPosts($postUids);
 	}
 
 	/**

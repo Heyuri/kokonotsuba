@@ -17,6 +17,15 @@ final class commentMarker {
 	private const PATTERN = '/\[\[koko:([a-z][a-z0-9_]*):([A-Za-z0-9,.:_+\- ]*)\]\]/';
 
 	/**
+	 * What strip() removes: a marker whose payload also holds characters the renderer drops
+	 * (sanitizeStr's control characters, and the CR commentToHtml discards). Raw input is
+	 * stripped before it is escaped, so a payload smuggling one of those past the strict pattern
+	 * would turn into a genuine marker at render time. Matched bytewise, since raw input need
+	 * not be valid UTF-8: C1 controls and the U+FDD0 block are spelled as their UTF-8 bytes.
+	 */
+	private const STRIP_PATTERN = '/\[\[koko:[a-z][a-z0-9_]*:(?:[A-Za-z0-9,.:_+\- \x00-\x08\x0B-\x1F\x7F]|\xC2[\x80-\x84\x86-\x9F]|\xEF\xB7[\x90-\x9F])*\]\]/';
+
+	/**
 	 * Build a marker for the given kind.
 	 *
 	 * @param string $kind    Marker kind, e.g. 'dice'.
@@ -35,7 +44,7 @@ final class commentMarker {
 	 * @param string $text Text to strip.
 	 */
 	public static function strip(string $text): string {
-		return (string)preg_replace(self::PATTERN, '', $text);
+		return (string)preg_replace(self::STRIP_PATTERN, '', $text);
 	}
 
 	/**

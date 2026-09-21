@@ -17,11 +17,18 @@ final class legacyTextConverter {
 	/** '<div class="rollContainer"><p class="roll">[NUMBERS: 4, 5]</p></div>' - an email roll. */
 	private const EMAIL_ROLL = '#\s*<div class="rollContainer">\s*<p class="roll"[^>]*>\[NUMBERS?:\s*([\d,\s]+)\]</p>\s*</div>#i';
 
-	/** '<span class="rollContainer">dice2d6=<span class="roll">4, 5 (9)</span></span>' */
-	private const COMMENT_ROLL = '#\s*<span class="rollContainer">dice(\d+d\d+(?:[+-]\d+)?)=<span class="roll"[^>]*>([^<]*)</span></span>#i';
+	/**
+	 * '<span class="rollContainer">dice2d6=<span class="roll">4, 5 (9)</span></span>' - a comment
+	 * roll, which sat at the start of its line. The break before it is captured so the marker
+	 * takes the same line rather than a new one.
+	 */
+	private const COMMENT_ROLL = '#(<br\s*/?>)?<span class="rollContainer">dice(\d+d\d+(?:[+-]\d+)?)=<span class="roll"[^>]*>([^<]*)</span></span>#i';
 
-	/** '<p class="fortune" style="color: #aabbcc;">Your fortune: Great luck</p>' */
-	private const FORTUNE = '#\s*<p class="fortune"[^>]*>Your fortune:\s*(.*?)</p>#is';
+	/**
+	 * '<p class="fortune" style="color: #aabbcc;">Your fortune: Great luck</p>'. A break before
+	 * it is consumed, since the marker is always written on its own line, as a new post has it.
+	 */
+	private const FORTUNE = '#(?:<br\s*/?>)?<p class="fortune"[^>]*>Your fortune:\s*(.*?)</p>#is';
 
 	private const BREAK_TAG = '#<br\s*/?>#i';
 
@@ -68,9 +75,9 @@ final class legacyTextConverter {
 
 		return (string)preg_replace_callback(self::COMMENT_ROLL, function (array $m): string {
 			// The trailing '(total)' is recomputed from the notation at render time.
-			$rolled = self::parseValues(explode('(', $m[2], 2)[0]);
+			$rolled = self::parseValues(explode('(', $m[3], 2)[0]);
 
-			return $rolled === '' ? '' : "\n" . commentMarker::make('dice', $m[1] . ':' . $rolled);
+			return $rolled === '' ? '' : ($m[1] === '' ? '' : "\n") . commentMarker::make('dice', $m[2] . ':' . $rolled);
 		}, $html);
 	}
 

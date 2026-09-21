@@ -119,4 +119,17 @@ final class StringsTest extends TestCase {
 		// Two consecutive UIDs should differ.
 		$this->assertNotSame(generateUid(8), generateUid(8));
 	}
+
+	public function testGenerateUidDefaultsToSixtyFourCharacters(): void {
+		$this->assertMatchesRegex('/^[0-9a-f]{64}$/', generateUid());
+	}
+
+	public function testGenerateUidHonoursEveryLength(): void {
+		// Odd lengths and ones past the old 38 character ceiling.
+		foreach ([1, 2, 7, 38, 39, 63, 64, 65, 255] as $length) {
+			$this->assertSame($length, strlen(generateUid($length)));
+		}
+
+		$this->assertSame(1, strlen(generateUid(0)));
+	}
 }

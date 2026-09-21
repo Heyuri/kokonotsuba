@@ -5,10 +5,22 @@ namespace Kokonotsuba\Modules\tripcode;
 use function Puchiko\array\find_row_by_key_value;
 
 class tripcodeRenderer {
+	/**
+	 * @param array|\Closure $userCapcodes The enabled user capcodes, or a closure returning them,
+	 *                                     called the first time a tripcode is looked up.
+	 */
 	public function __construct(
-		private array $userCapcodes,
+		private array|\Closure $userCapcodes,
 		private array $staffCapcodes
 	) {}
+
+	private function userCapcodes(): array {
+		if ($this->userCapcodes instanceof \Closure) {
+			$this->userCapcodes = ($this->userCapcodes)();
+		}
+
+		return $this->userCapcodes;
+	}
 
 	public function renderTripcode(
 		string $nameHtml, 
@@ -112,7 +124,7 @@ class tripcodeRenderer {
 
 	private function findUserCapcode(string $tripcode, string $secure_tripcode): ?array {
 		// check for a regular tripcode in the userCapcodes array
-		$capcodeRow = find_row_by_key_value($this->userCapcodes, 'tripcode', $tripcode);
+		$capcodeRow = find_row_by_key_value($this->userCapcodes(), 'tripcode', $tripcode);
 
 		// if no matching tripcode entry is found, stop here and return null
 		if (!$capcodeRow) {

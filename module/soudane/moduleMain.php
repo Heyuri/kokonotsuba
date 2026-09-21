@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\Modules\soudane;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\ban\banCheckpoint;
 use Kokonotsuba\error\BoardException;
 use Kokonotsuba\ip\ipAnonymizer;
@@ -306,6 +308,9 @@ class moduleMain extends abstractModuleMain {
 			// Save the new vote using the service
 			$this->soudaneService->addVote($postUid, $ip, $type);
 		}
+
+		// the count is drawn into the post, so the thread's cached markup is stale
+		threadFragments::forgetThreadPairs($this->moduleContext->postRepository->getUniquePairFromPostUids([(int) $postUid]));
 
 		// Output the updated button text with the new vote count
 		$buttonText = $this->getVoteButtonText($type, count($yeahIPs));

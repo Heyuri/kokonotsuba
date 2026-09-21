@@ -32,6 +32,7 @@ class deletedPostsRepository extends baseRepository {
 		private readonly string $threadTable,
 		private readonly string $soudaneTable,
 		private readonly string $noteTable,
+		private readonly string $boardTable = '',
 	) {
 		parent::__construct($databaseConnection, $deletedPostsTable);
 		self::validateTableNames($postTable, $accountTable, $fileTable, $threadTable, $soudaneTable, $noteTable);
@@ -808,6 +809,36 @@ class deletedPostsRepository extends baseRepository {
 	 * @param int[] $deletedPostIds Deletion record IDs.
 	 * @return int[] Board UIDs.
 	 */
+	/**
+	 * The threads of the posts behind these deletion records. Rows carry the board's storage
+	 * directory name when the board table is known.
+	 *
+	 * @param int[] $deletedPostIds
+	 * @return array<array{thread_uid: string, boardUID: int, storage_directory_name: string}>
+	 */
+	public function getThreadPairsByDeletedPostIds(array $deletedPostIds): array {
+		$pairs = [];
+		$boardJoin = $this->boardTable !== '' ? "INNER JOIN {$this->boardTable} b ON b.board_uid = p.boardUID" : '';
+		$storageColumn = $this->boardTable !== '' ? 'b.storage_directory_name' : "''";
+		foreach (array_chunk(array_values($deletedPostIds), self::BATCH_ROW_LIMIT) as $chunk) {
+			$inClause = pdoPlaceholdersForIn($chunk);
+			$query = "SELECT DISTINCT p.thread_uid, p.boardUID, $storageColumn AS storage_directory_name
+				FROM {$this->table} dp
+				INNER JOIN {$this->postTable} p ON p.post_uid = dp.post_uid
+				$boardJoin
+				WHERE dp.id IN $inClause";
+			foreach ($this->queryAll($query, $chunk) as $row) {
+				$pairs[$row['thread_uid'] . ':' . $row['boardUID']] = [
+					'thread_uid' => (string)$row['thread_uid'],
+					'boardUID' => (int)$row['boardUID'],
+					'storage_directory_name' => (string)$row['storage_directory_name'],
+				];
+			}
+		}
+
+		return array_values($pairs);
+	}
+
 	public function getBoardUidsByDeletedPostIds(array $deletedPostIds): array {
 		if (!$deletedPostIds) {
 			return [];

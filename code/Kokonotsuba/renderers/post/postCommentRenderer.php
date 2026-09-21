@@ -9,7 +9,7 @@ use function Kokonotsuba\libraries\html\generateQuoteLinkHtml;
 use function Kokonotsuba\libraries\html\quote_unkfunc;
 
 /**
- * Turns a post's stored comment into html, then layers the quote links and greentext on top.
+ * Turns a post's stored comment into html, then layers the quote links and quote on top.
  *
  * The formatter runs first because everything after it, and every PostComment listener,
  * expects html: quote markers as &gt;&gt; and line breaks as <br>.

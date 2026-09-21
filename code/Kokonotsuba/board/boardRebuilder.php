@@ -4,9 +4,11 @@ namespace Kokonotsuba\board;
 
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\action_log\actionLoggerService;
+use Kokonotsuba\cache\thread_fragment\threadFragmentCache;
 use Kokonotsuba\error\BoardException;
+use Kokonotsuba\renderers\boardRendererFactory;
 use Kokonotsuba\renderers\commentFormatter;
-use Kokonotsuba\renderers\postRenderer;
+use Kokonotsuba\renderers\threadPageRenderer;
 use Kokonotsuba\renderers\threadRenderer;
 use Kokonotsuba\module_classes\moduleEngine;
 use Kokonotsuba\policy\postRenderingPolicy;
@@ -14,18 +16,17 @@ use Kokonotsuba\post\Post;
 use Kokonotsuba\quote_link\quoteLinkService;
 use Kokonotsuba\request\request;
 use Kokonotsuba\template\templateEngine;
+use Kokonotsuba\thread\Thread;
 use Kokonotsuba\thread\ThreadData;
 use Kokonotsuba\thread\threadRepository;
 use Kokonotsuba\thread\threadService;
 
+use function Kokonotsuba\libraries\html\buildThreadAreaTemplateValues;
 use function Kokonotsuba\libraries\html\drawBoardPager;
 use function Kokonotsuba\libraries\html\drawLiveBoardPager;
 use function Kokonotsuba\libraries\html\drawPager;
 use function Kokonotsuba\libraries\html\getPageForPostPosition;
 use function Kokonotsuba\libraries\_T;
-use function Kokonotsuba\libraries\getPostUidsFromThreadArrays;
-use function Kokonotsuba\libraries\getPostsFromThreadArrays;
-use function Kokonotsuba\libraries\getOrCreateCsrfToken;
 use function Kokonotsuba\libraries\isActiveStaffSession;
 use function Puchiko\strings\html_minify;
 use function Puchiko\strings\sanitizeStr;
@@ -43,6 +44,8 @@ class boardRebuilder {
 
 	private array $config;
 	private bool $adminMode, $canViewDeleted;
+	private ?boardRendererFactory $rendererFactory = null;
+	private ?threadFragmentCache $fragmentCache = null;
 
 	/** Whether the HTML being generated right now is destined for a static file. */
 	public static function isRenderingStaticHtml(): bool {
@@ -96,136 +99,89 @@ class boardRebuilder {
 		?int $amountOfRepliesToRender = null, 
 		bool $showPostForm = true
 	): void {
-		// resolve the thread uid from the thread number
 		$uid = $this->threadRepository->resolveThreadUidFromResno($this->board, $threadNumber);
-		
-		// get preview count
 		$previewCount = $this->board->getConfigValue('RE_DEF', 5);
-
-		// get replies per thread page
 		$repliesPerPage = $this->board->getConfigValue('REPLIES_PER_PAGE', 200);
-		
-		// get the thread and decide how to fetch its data based on the provided parameters
-		$threadData = $this->getThreadForRendering(
-			$uid, 
-			$previewCount, 
-			$repliesPerPage, 
-			$page, 
-			$amountOfRepliesToRender, 
-			$this->postRenderingPolicy->viewDeleted()
-		);
-		
-		// throw 404 error if no thread data is found
-		// otherwise it'll just dump errors to error log - its data-related and not code-related
+		$includeDeleted = $this->postRenderingPolicy->viewDeleted();
+
+		// the last-N view is the reader's own choice of N, so it is never cached
+		$cache = is_null($amountOfRepliesToRender) ? $this->fragmentCache(!$this->adminMode && !$this->canViewDeleted) : null;
+		$variant = threadFragmentCache::threadVariant($page);
+
+		// The row is read once: it is the stamp the cache is checked with, and it is handed on to
+		// whichever fetch follows so neither reads it again. A cached thread then needs only its
+		// OP, for the title, pager and hooks.
+		$thread = $uid ? $this->threadRepository->getThreadByUid((string)$uid, $includeDeleted) : false;
+		if ($thread === false) {
+			throw new BoardException(_T('thread_not_found'), 404);
+		}
+
+		$cachedBlock = $cache?->get($uid, $variant, threadFragmentCache::stampFor($thread));
+
+		$threadData = $cachedBlock !== null
+			? $this->threadService->getThreadWithOpeningPost($uid, $includeDeleted, $thread)
+			: $this->getThreadForRendering($uid, $previewCount, $repliesPerPage, $page, $amountOfRepliesToRender, $includeDeleted, $thread);
+
 		if ($threadData === false) {
 			throw new BoardException(_T('thread_not_found'), 404);
-			return;
 		}
 
-		// get the thread row
 		$thread = $threadData->getThread();
-
-		// get the total amount of posts in the thread
 		$totalPosts = $thread->getPostCount();
+		$hardDeleted = $thread->isThreadDeleted() && !$thread->isAttachmentDeleted();
 
-		// whether the thread has been deleted
-		$threadDeleted = $thread->isThreadDeleted();
-
-		// whether it was a file-only deletion
-		$fileOnly = $thread->isAttachmentDeleted();
-
-		// hard deleted (a la, thread itself was deleted and the file isn't what was deleted)
-		$hardDeleted = $threadDeleted && !$fileOnly;
-
-		// Throw a 404 error if the thread isn't found
-		// Also throw a 404 if the thread was deleted
-		if (!$threadData || (($hardDeleted) && !$this->postRenderingPolicy->viewDeleted())) {
+		if ($hardDeleted && !$includeDeleted) {
 			throw new BoardException(_T('thread_not_found'), 404);
-			return;
 		}
 
-		// get the posts from the thread
-		$posts = $threadData->getPosts();
-		
-		// get the post uids from the thread posts
-		$postUids = $threadData->getPostUids();
-
-		// init hidden reply var
-		$hiddenReply = 0;
-
-		// generate thread url
 		$threadUrl = $this->board->getBoardThreadURL($threadNumber);
-
-		// get quote links for thread
-		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByPostUids($postUids, $this->canViewDeleted);
-
-		// init thread and post renderer
-		$threadRenderer = $this->getThreadRenderer($quoteLinksFromBoard);
-
-		// init template placeholders
 		$pte_vals = $this->buildPteVals(true);
 
-		// add CSRF token to delform for logged-in staff on live pages
-		if($this->adminMode) {
-			$pte_vals['{$DELFORM_CSRF}'] = '<input type="hidden" name="csrf_token" value="' . sanitizeStr(getOrCreateCsrfToken()) . '">';
-		}
-		
-		// if we want to render the post form then build form html and bind to template parameter
 		if($showPostForm) {
-			// get form html
 			$pte_vals['{$FORMDAT}'] = $this->buildFormHtml($threadNumber, $pte_vals, $this->adminMode);
 		}
 
-		// Dispatch viewed thread hook
-		// This hook is one that only gets dispatched for threads that are being viewed through drawThread
+		// only dispatched for threads being viewed through drawThread
 		$this->moduleEngine->dispatch('ViewedThread', [&$pte_vals, &$threadData]);
 
-		// calculate current page and total pages for thread pagination display
 		// totalPosts includes OP; last reply position = totalPosts - 1
 		$totalThreadPages = getPageForPostPosition($totalPosts - 1, $repliesPerPage);
 		$currentPage = !is_null($amountOfRepliesToRender)
 			? $totalThreadPages
 			: ($page ?? 1);
 
-		$this->moduleEngine->dispatch('PostsPrefetch', [&$posts]);
+		if ($cachedBlock !== null) {
+			$threadRenderer = $this->getThreadRenderer();
+			$threadRenderer->notifyCachedThread($thread, true);
+			$block = $cachedBlock;
+		} else {
+			$posts = $threadData->getPosts();
+			$quoteLinks = $this->quoteLinkService->getQuoteLinksByPostUids($threadData->getPostUids(), $this->canViewDeleted);
+			$threadRenderer = $this->getThreadRenderer($quoteLinks);
+			$this->moduleEngine->dispatch('PostsPrefetch', [&$posts]);
 
-		// Render threads
-		$pte_vals['{$THREADS}'] .= $threadRenderer->render([],
-			true,
-			$thread,
-			$posts,
-			$hiddenReply,
-			false,
-			$this->adminMode,
-			0,
-			'',
-			'',
-			$pte_vals,
-			$currentPage,
-			$totalThreadPages,
-			$amountOfRepliesToRender
-		);
-		
+			$block = $threadRenderer->renderThreadBlock(true, $thread, $posts, 0, false, $this->adminMode,
+				'', '', $pte_vals, $currentPage, $totalThreadPages, $amountOfRepliesToRender, '');
+			$cache?->put($uid, $variant, threadFragmentCache::stampFor($thread), $block);
+		}
+		$pte_vals['{$THREADS}'] .= $block . $threadRenderer->renderThreadSeparator(0);
+
 		// if a non-null page value is set - then draw the pager
 		if(!is_null($page)) {
-			// get 'top pager for threads' config value
 			$enableTopPager = $this->board->getConfigValue('TOP_THREAD_PAGER', false);
 
 			// reply count excludes OP (which is always shown separately)
 			$replyCount = max(0, $totalPosts - 1);
 
-			// if the top pager for threads is enabled, render it
 			if($enableTopPager) {
 				$pte_vals['{$TOP_PAGENAV}'] = drawPager($repliesPerPage, $replyCount, $threadUrl, $this->request);
 			}
 
-			// always draw bottom pager
 			$pte_vals['{$BOTTOM_PAGENAV}'] = drawPager($repliesPerPage, $replyCount, $threadUrl, $this->request);
 		}
 
 		$opPost = $threadData->getOpeningPost();
 		$boardTitle = $this->board->getBoardTitle();
-
 		$pageTitle = $this->getThreadPageTitle($opPost, $boardTitle);
 
 		$pageData = $this->buildFullPage($pte_vals, $pageTitle, $threadNumber, true, $this->adminMode);
@@ -238,7 +194,8 @@ class boardRebuilder {
 		int $repliesPerPage, 
 		?int $page, 
 		?int $amountOfRepliesToRender,
-		bool $includeDeleted = false
+		bool $includeDeleted = false,
+		?Thread $thread = null
 	): false|ThreadData {
 		// Fetch thread with a limited amount of replies	
 		if(!is_null($amountOfRepliesToRender)) {
@@ -248,7 +205,8 @@ class boardRebuilder {
 				$this->canViewDeleted, 
 				$previewCount, 
 				$amountOfRepliesToRender,
-				$includeDeleted
+				$includeDeleted,
+				$thread
 			);
 
 		}
@@ -261,13 +219,14 @@ class boardRebuilder {
 				$previewCount, 
 				$repliesPerPage, 
 				$page, 
-				$includeDeleted
+				$includeDeleted,
+				$thread
 			);
 		}
 		// Fetch unpaged thread (intensive)
 		else {
 			// get the whole thing
-			$threadData = $this->threadService->getThreadAllReplies($threadUid, $this->canViewDeleted, $previewCount, $includeDeleted);
+			$threadData = $this->threadService->getThreadAllReplies($threadUid, $this->canViewDeleted, $previewCount, $includeDeleted, $thread);
 		}
 
 		// then return the thread data
@@ -322,58 +281,35 @@ class boardRebuilder {
 	}
 
 	public function drawPage(int $page = 1): void {
-		// url of the board
 		$boardUrl = $this->board->getBoardURL();
-
-		// threads to show per page
 		$threadsPerPage = $this->config['PAGE_DEF'];
-
-		// thread offset for pagination query
 		$threadPageOffset = ($page - 1) * $threadsPerPage;
-		
-		// max amounts of reply previews to show for each thread
-		$previewCount = $this->config['RE_DEF'];
 
-		// get threads + previews for this page
-		$threadsInPage = $this->threadService->getThreadPreviewsFromBoard($this->board, $previewCount, $threadsPerPage, $threadPageOffset, $this->canViewDeleted);
-		
-		// post uids of posts that are rendered
-		$postUidsInPage = getPostUidsFromThreadArrays($threadsInPage);
-
-		// get all associated quote links for the page
-		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage, $this->canViewDeleted);
-
-		// init thread renderer + post renderer
-		$threadRenderer = $this->getThreadRenderer($quoteLinksFromPage);
-
-		// total thread count
+		$threads = $this->threadService->getThreadsFromBoard($this->board, $threadsPerPage, $threadPageOffset, $this->canViewDeleted);
 		$totalThreads = $this->threadRepository->threadCountFromBoard($this->board, $this->canViewDeleted);
 
-		// init placeholder template values
 		$pte_vals = $this->buildPteVals(false);
 
-		// add CSRF token to delform for logged-in staff on live pages
-		if($this->adminMode) {
-			$pte_vals['{$DELFORM_CSRF}'] = '<input type="hidden" name="csrf_token" value="' . sanitizeStr(getOrCreateCsrfToken()) . '">';
-		}
-
-		// build form html
 		$pte_vals['{$FORMDAT}'] = $this->buildFormHtml(0, $pte_vals, $this->adminMode);
 
-		// render thread html
-		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $pte_vals, $this->adminMode);
+		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threads, $pte_vals, $this->adminMode, $this->canViewDeleted,
+			!$this->adminMode && !$this->canViewDeleted);
 
-		// thread pager
 		$pte_vals['{$BOTTOM_PAGENAV}'] = drawLiveBoardPager($threadsPerPage, $totalThreads, $boardUrl, $this->board->getConfigValue('STATIC_HTML_UNTIL'), $this->board->getConfigValue('LIVE_INDEX_FILE'), $this->request);
 
-		// generate the whole page's html
 		$pageData = $this->buildFullPage($pte_vals, $this->board->getBoardTitle(), 0, false, $this->adminMode);
-		
-		// now output the page's html
 		echo $this->finalizePageData($pageData);
 	}
 
-	
+	/** The store for what every anonymous reader sees; null when this view is not that, or the cache is off. */
+	private function fragmentCache(bool $anonymousView): ?threadFragmentCache {
+		if (!$anonymousView || empty($this->config['THREAD_FRAGMENT_CACHE'])) {
+			return null;
+		}
+
+		return $this->fragmentCache ??= threadFragmentCache::forBoard($this->board);
+	}
+
 	public function rebuildBoardHtml(bool $logRebuild = false): void {
 		$totalThreadCount = $this->threadRepository->threadCountFromBoard($this->board);
 		$threadsPerPage = $this->config['PAGE_DEF'];
@@ -385,22 +321,15 @@ class boardRebuilder {
 			default => max(1, min($this->config['STATIC_HTML_UNTIL'], $totalPages))
 		};
 
-		// database offset
-		$threadPreviewAmount = $totalPagesToRebuild * $threadsPerPage;
-
-		// get paginated thread previews
-		$threads = $this->threadService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $threadPreviewAmount);
-
-		// all post uids from the threads
-		$postUidsFromThreads = getPostUidsFromThreadArrays($threads);
-
-		// get all associated quote links for the page
-		$quoteLinksFromBoard = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsFromThreads);
+		$threads = $totalPagesToRebuild > 0
+			? $this->threadService->getThreadsFromBoard($this->board, $totalPagesToRebuild * $threadsPerPage)
+			: [];
 
 		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
 
 		for ($page = 1; $page <= $totalPagesToRebuild; $page++) {
-			$this->renderStaticPage($page, $threads, $totalThreadCount, $headerHtml, $formHtml, $footHtml, $pte_vals, false, $quoteLinksFromBoard);
+			$threadsInPage = array_slice($threads, ($page - 1) * $threadsPerPage, $threadsPerPage);
+			$this->renderStaticPage($page, $threadsInPage, $totalThreadCount, $headerHtml, $formHtml, $footHtml, $pte_vals);
 		}
 
 		if ($logRebuild) {
@@ -417,20 +346,14 @@ class boardRebuilder {
 
 		$totalThreadCountForBoard = $this->threadRepository->threadCountFromBoard($this->board);
 		$threadsPerPage = $this->config['PAGE_DEF'];
-		$amountOfThreads = $threadsPerPage * $lastPageToRebuild;
 
-		$threads = $this->threadService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $amountOfThreads, 0);
-
-		// post uids of posts that are rendered
-		$postUidsInPage = getPostUidsFromThreadArrays($threads);
-
-		// get all associated quote links for the page
-		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage);
+		$threads = $this->threadService->getThreadsFromBoard($this->board, $threadsPerPage * $lastPageToRebuild);
 
 		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
 
 		for ($page = 1; $page <= $lastPageToRebuild; $page++) {
-			$this->renderStaticPage($page, $threads, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals, false, $quoteLinksFromPage);
+			$threadsInPage = array_slice($threads, ($page - 1) * $threadsPerPage, $threadsPerPage);
+			$this->renderStaticPage($page, $threadsInPage, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals);
 		}
 	}
 
@@ -438,24 +361,15 @@ class boardRebuilder {
 		if ($targetPage < 1) return;
 
 		$totalThreadCountForBoard = $this->threadRepository->threadCountFromBoard($this->board);
+		$threadsPerPage = $this->config['PAGE_DEF'];
 
-		$offset = ($targetPage - 1) * $this->config['PAGE_DEF'];
-		$limit = $this->config['PAGE_DEF'];
+		if ($targetPage > ceil($totalThreadCountForBoard / $threadsPerPage)) return;
 
-		$threads = $this->threadService->getThreadPreviewsFromBoard($this->board, $this->config['RE_DEF'], $limit, $offset);
-		$totalPages = ceil($totalThreadCountForBoard / $this->config['PAGE_DEF']);
-
-		if ($targetPage > $totalPages) return;
-
-		// post uids of posts that are rendered
-		$postUidsInPage = getPostUidsFromThreadArrays($threads);
-
-		// get all associated quote links for the page
-		$quoteLinksFromPage = $this->quoteLinkService->getQuoteLinksByPostUids($postUidsInPage);
+		$threads = $this->threadService->getThreadsFromBoard($this->board, $threadsPerPage, ($targetPage - 1) * $threadsPerPage);
 
 		[$pte_vals, $headerHtml, $formHtml, $footHtml] = $this->prepareStaticPageRenderContext();
-		
-		$this->renderStaticPage($targetPage, $threads, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals, true, $quoteLinksFromPage);
+
+		$this->renderStaticPage($targetPage, $threads, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals);
 
 		if ($logRebuild) {
 			$this->actionLoggerService->logAction(
@@ -466,48 +380,35 @@ class boardRebuilder {
 		}
 	}
 
-
-	private function renderStaticPage(int $page, array $threads, int $totalThreadCountForBoard, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals, bool $threadsAreSliced, array $quoteLinksFromBoard): void {
-    	// This regenerates the head below, so the flag has to hold for the whole method and not
-    	// just for prepareStaticPageRenderContext() — everything from here goes into a file.
-    	self::$renderingStaticHtml = true;
-
-    	try {
-    	    $this->renderStaticPageHtml($page, $threads, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals, $threadsAreSliced, $quoteLinksFromBoard);
-    	} finally {
-    	    self::$renderingStaticHtml = false;
-    	}
+	/** @param Thread[] $threadsInPage */
+	private function renderStaticPage(int $page, array $threadsInPage, int $totalThreadCountForBoard, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals): void {
+		self::$renderingStaticHtml = true;
+		try {
+			$this->renderStaticPageHtml($page, $threadsInPage, $totalThreadCountForBoard, $headerHtml, $formHtml, $footHtml, $pte_vals);
+		} finally {
+			self::$renderingStaticHtml = false;
+		}
 	}
 
-	private function renderStaticPageHtml(int $page, array $threads, int $totalThreadCountForBoard, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals, bool $threadsAreSliced, array $quoteLinksFromBoard): void {
-    	$threadRenderer = $this->getThreadRenderer($quoteLinksFromBoard);
+	private function renderStaticPageHtml(int $page, array $threadsInPage, int $totalThreadCountForBoard, string $headerHtml, string $formHtml, string $footHtml, array $pte_vals): void {
+		$threadsPerPage = $this->config['PAGE_DEF'];
+		$boardUrl = $this->board->getBoardURL();
 
-    	$threadsPerPage = $this->config['PAGE_DEF'];
-    	$boardUrl = $this->board->getBoardURL();
+		// a static page is what every anonymous reader sees, whoever triggered the rebuild
+		$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $pte_vals, false, false, true);
 
-    	// Slice threads or use all of them depending on the flag
-    	$threadsInPage = $threadsAreSliced
-    	    ? $threads
-    	    : array_slice($threads, ($page - 1) * $threadsPerPage, $threadsPerPage);
+		$headerHtml = $this->board->getBoardHead($this->board->getBoardTitle());
 
-    	// Render thread data to PTE values
-    	$pte_vals['{$THREADS}'] = $this->renderThreadsToPteVals($threadsInPage, $threadRenderer, $pte_vals);
+		$pte_vals['{$BOTTOM_PAGENAV}'] = drawBoardPager(
+			$threadsPerPage,
+			$totalThreadCountForBoard,
+			$boardUrl,
+			$page,
+			$this->board->getConfigValue('STATIC_HTML_UNTIL'),
+			$this->board->getConfigValue('LIVE_INDEX_FILE'),
+			$this->board->getConfigValue('STATIC_INDEX_FILE')
+		);
 
-    	// Regenerate head HTML after thread rendering so modules can inject per-thread styles into <head>
-    	$headerHtml = $this->board->getBoardHead($this->board->getBoardTitle());
-
-    	// Render page navigation
-    	$pte_vals['{$BOTTOM_PAGENAV}'] = drawBoardPager(
-    	    $threadsPerPage,
-    	    $totalThreadCountForBoard,
-    	    $boardUrl,
-    	    $page,
-    	    $this->board->getConfigValue('STATIC_HTML_UNTIL'),
-    	    $this->board->getConfigValue('LIVE_INDEX_FILE'),
-    	    $this->board->getConfigValue('STATIC_INDEX_FILE')
-    	);
-
-    	// Build static page HTML
     	$pageData = $this->buildStaticPageHtml($pte_vals, $headerHtml, $formHtml, $footHtml);
 
     	// Determine file name
@@ -546,29 +447,22 @@ class boardRebuilder {
 	}
 
 
+	/**
+	 * The board's own thread-area values: the delete form lands the poster back on the board, and
+	 * the board-scoped hooks run, which a cross-board page (the overboard) leaves out.
+	 */
 	private function buildPteVals(bool $isThreadView): array {
-		$pte_vals = [
-			'{$THREADS}' => '',
-			'{$THREADFRONT}' => '',
-			'{$THREADREAR}' => '',
-			'{$DELFORM_CSRF}' => '',
-			'{$DEL_HEAD_TEXT}' => '<input type="hidden" name="mode" value="usrdel">' . _T('del_head'),
-			'{$DEL_IMG_ONLY_FIELD}' => '<input type="checkbox" name="onlyimgdel" id="onlyimgdel" value="on">',
-			'{$DEL_IMG_ONLY_TEXT}' => _T('del_img_only'),
-			'{$DEL_PASS_TEXT}' => ($this->adminMode ? '<input type="hidden" name="func" value="delete">' : '') . _T('del_pass'),
-			'<input type="hidden" name="func" value="delete"> <input type="password" class="inputtext" name="pwd" id="pwd2" value="">' => '<input type="password" class="inputtext" name="pwd" id="pwd2" value="">',
-			'{$DEL_SUBMIT_BTN}' => '<input type="submit" value="' . _T('del_btn') . '">',
-			'{$IS_THREAD}' => $isThreadView,
-		];
-
-		$this->runThreadModuleHooks($pte_vals, $isThreadView);
-	
-		return $pte_vals;
+		return buildThreadAreaTemplateValues($this->moduleEngine, $isThreadView, $this->adminMode, [
+			'boardScopedHooks' => true,
+			'dispatchPlaceHolderIntercept' => true,
+		]);
 	}
-	
+
 	private function finalizePageData(string $pageData): string {
-		$pageData = preg_replace('/id="com" class="inputtext">(.*)<\/textarea>/', 'id="com" class="inputtext"></textarea>', $pageData);
-		$pageData = preg_replace('/name="email" id="email" value="(.*)" class="inputtext">/', 'name="email" id="email" value="" class="inputtext">', $pageData);
+		// each pattern stops at its own field's end, so a multi-line comment or another field on
+		// the same line is not swallowed
+		$pageData = preg_replace('/id="com" class="inputtext">.*?<\/textarea>/s', 'id="com" class="inputtext"></textarea>', $pageData);
+		$pageData = preg_replace('/name="email" id="email" value="[^"]*" class="inputtext">/', 'name="email" id="email" value="" class="inputtext">', $pageData);
 		$pageData = preg_replace('/replyhl/', '', $pageData);
 		if ($this->config['MINIFY_HTML']) {
 			$pageData = html_minify($pageData);
@@ -577,21 +471,23 @@ class boardRebuilder {
 	}
 
 	private function getThreadRenderer(array $quoteLinksFromBoard = []): threadRenderer {
-		$postRenderer = new postRenderer(
-			$this->board,
-			$this->config,
+		$rendererFactory = $this->rendererFactory();
+
+		if ($quoteLinksFromBoard !== []) {
+			$rendererFactory->setQuoteLinks($quoteLinksFromBoard);
+		}
+
+		return $rendererFactory->threadRendererFor($this->board);
+	}
+
+	/** One factory per request, so every view of the board shares its renderers. */
+	private function rendererFactory(): boardRendererFactory {
+		return $this->rendererFactory ??= new boardRendererFactory(
+			$this->templateEngine,
 			$this->moduleEngine,
-			$this->templateEngine,
-			$quoteLinksFromBoard,
-			$this->request
+			$this->request,
+			$this->board
 		);
-		$threadRenderer = new threadRenderer(
-			$this->config,
-			$this->templateEngine,
-			$postRenderer,
-			$this->moduleEngine
-		);
-		return $threadRenderer;
 	}
 
 	private function buildFormHtml(int $resno, array &$pte_vals, bool $isStaff = false): string {
@@ -600,14 +496,6 @@ class boardRebuilder {
 		$postFormHtml = $this->board->getBoardPostForm($resno, $moduleInfoHook, '', '', '', '', '', $isStaff);
 		
 		return $postFormHtml;
-	}
-
-	private function runThreadModuleHooks(array &$pte_vals, int $resno): void {
-		$this->moduleEngine->dispatch('AboveThreadArea', array(&$pte_vals['{$THREADFRONT}'], empty($resno)));
-		$this->moduleEngine->dispatch('AboveThreadsGlobal', array(&$pte_vals['{$THREADFRONT}']));
-		$this->moduleEngine->dispatch('BelowThreadArea', array(&$pte_vals['{$THREADREAR}'], empty($resno)));
-		$this->moduleEngine->dispatch('BelowThreadsGlobal', array(&$pte_vals['{$THREADREAR}']));
-		$this->moduleEngine->dispatch('PlaceHolderIntercept', [&$pte_vals]);
 	}
 
 	private function buildFullPage(array $pte_vals, string $pageTitle, int $resno = 0, bool $isThreadView = false, bool $isStaff = false): string {
@@ -644,26 +532,29 @@ class boardRebuilder {
 		}
 	}
 
-	private function renderThreadsToPteVals(array $threadsInPage, threadRenderer $threadRenderer, array $pte_vals, bool $adminMode = false): string {
-		$pagePosts = getPostsFromThreadArrays($threadsInPage);
-		$this->moduleEngine->dispatch('PostsPrefetch', [&$pagePosts]);
+	/**
+	 * Draw a page of thread previews, reusing cached blocks and storing the ones drawn.
+	 *
+	 * @param Thread[] $threads
+	 */
+	private function renderThreadsToPteVals(array $threads, array $pte_vals, bool $adminMode, bool $includeDeleted, bool $cacheFragments): string {
+		$pageRenderer = new threadPageRenderer(
+			$this->rendererFactory(),
+			$this->threadService,
+			$this->quoteLinkService,
+			$this->board,
+			$adminMode,
+			$includeDeleted,
+			$cacheFragments
+		);
 
-		$output = '';
-		foreach ($threadsInPage as $i => $data) {
-			$output .= $threadRenderer->render($threadsInPage,
-				false,
-				$data->getThread(),
-				$data->getPosts(),
-				$data->getHiddenReplyCount(),
-				false,
-				$adminMode,
-				$i,
-				'',
-				'',
-				$pte_vals
-			);
-		}
-		return $output;
+		return $pageRenderer->renderThreads(
+			$threads,
+			[$this->board->getBoardUID() => $this->board],
+			$this->config['RE_DEF'],
+			threadFragmentCache::indexVariant($this->config['RE_DEF']),
+			$pte_vals
+		);
 	}
 
 	private function buildStaticPageHtml(array $pte_vals, string $headerHtml, string $formHtml, string $footHtml): string {

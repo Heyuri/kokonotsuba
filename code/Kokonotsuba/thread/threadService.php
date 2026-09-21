@@ -49,7 +49,8 @@ class threadService {
 		bool $adminMode,
 		int $previewCount,
 		int $amountOfRepliesToRender,
-		bool $includeDeleted = false
+		bool $includeDeleted = false,
+		?Thread $thread = null
 	): ThreadData|false {
 		return $this->getThreadByUidInternal(
 			$thread_uid,
@@ -58,7 +59,8 @@ class threadService {
 			$amountOfRepliesToRender,
 			null,
 			null,
-			$includeDeleted
+			$includeDeleted,
+			$thread
 		);
 	}
 
@@ -80,7 +82,8 @@ class threadService {
 		int $previewCount,
 		int $repliesPerPage,
 		int $page,
-		bool $includeDeleted = false
+		bool $includeDeleted = false,
+		?Thread $thread = null
 	): ThreadData|false {
 		return $this->getThreadByUidInternal(
 			$thread_uid,
@@ -89,7 +92,8 @@ class threadService {
 			null,
 			$repliesPerPage,
 			$page,
-			$includeDeleted
+			$includeDeleted,
+			$thread
 		);
 	}
 
@@ -107,7 +111,8 @@ class threadService {
 		string $thread_uid,
 		bool $adminMode,
 		int $previewCount,
-		bool $includeDeleted = false
+		bool $includeDeleted = false,
+		?Thread $thread = null
 	): ThreadData|false {
 		return $this->getThreadByUidInternal(
 			$thread_uid,
@@ -116,7 +121,8 @@ class threadService {
 			null,
 			null,
 			null,
-			$includeDeleted
+			$includeDeleted,
+			$thread
 		);
 	}
 
@@ -131,6 +137,7 @@ class threadService {
 	 * @param int|null $amountOfRepliesToRender  If set, fetch only the last N replies.
 	 * @param int|null $repliesPerPage           If set (with $page), fetch a paginated slice.
 	 * @param int|null $page                     Page index (1-based) for paginated fetch.
+	 * @param Thread|null $thread                The thread row, when the caller already read it.
 	 * @return ThreadData|false Preview result, or false if the thread does not exist.
 	 */
 	private function getThreadByUidInternal(
@@ -140,12 +147,13 @@ class threadService {
 		?int $amountOfRepliesToRender = 50, 
 		?int $repliesPerPage = 500,
 		?int $page = 1,
-		bool $includeDeleted = false
+		bool $includeDeleted = false,
+		?Thread $thread = null
 	): ThreadData|false {
 		$showDeleted = $adminMode || $includeDeleted;
 
 		// get thread meta data
-		$threadMeta = $this->threadRepository->getThreadByUID($thread_uid, $showDeleted);
+		$threadMeta = $thread ?? $this->threadRepository->getThreadByUID($thread_uid, $showDeleted);
 
 		// return false if thread data is falsey
 		if (!$threadMeta) {
@@ -280,19 +288,57 @@ class threadService {
 	 * @return ThreadData[] Array of ThreadData structures.
 	 */
 	public function getFilteredThreads(int $previewCount, int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'last_bump_time'): array {
-		$threads = $this->threadRepository->fetchFilteredThreads($filters, $order, $amount, $offset, $includeDeleted);
+		$threads = $this->getFilteredThreadList($amount, $offset, $filters, $includeDeleted, $order);
 
+		return $this->buildThreadPreviews($threads, $previewCount, $includeDeleted);
+	}
+
+	/**
+	 * Fetch a filtered, paginated page of threads without their posts.
+	 *
+	 * @return Thread[]
+	 */
+	public function getFilteredThreadList(int $amount, int $offset = 0, array $filters = [], bool $includeDeleted = false, string $order = 'last_bump_time'): array {
+		return $this->threadRepository->fetchFilteredThreads($filters, $order, $amount, $offset, $includeDeleted);
+	}
+
+	/**
+	 * A page of a board's threads without their posts.
+	 *
+	 * @return Thread[]
+	 */
+	public function getThreadsFromBoard(board $board, int $amount, int $offset = 0, bool $includeDeleted = false): array {
+		// the repository answers null for a board with no threads
+		return $this->threadRepository->getThreadsFromBoard($board->getBoardUID(), max(0, $amount), max(0, $offset), 'last_bump_time', 'DESC', $includeDeleted) ?? [];
+	}
+
+	/** The thread row with only its opening post, for a page that draws the thread itself from a cache. */
+	public function getThreadWithOpeningPost(string $threadUid, bool $includeDeleted = false, ?Thread $thread = null): ThreadData|false {
+		$thread ??= $this->threadRepository->getThreadByUid($threadUid, $includeDeleted);
+		if (!$thread) {
+			return false;
+		}
+		$openingPost = $this->postRepository->getOpeningPostFromThread($threadUid, $includeDeleted);
+		if (!$openingPost) {
+			return false;
+		}
+
+		return new ThreadData($thread, [$openingPost], null, $thread->getPostCount());
+	}
+
+	/**
+	 * Attach preview posts to threads already fetched, one ThreadData per thread in the same order.
+	 *
+	 * @param Thread[] $threads
+	 * @return ThreadData[]
+	 */
+	public function buildThreadPreviews(array $threads, int $previewCount, bool $includeDeleted = false): array {
 		if (empty($threads)) return [];
 
-		// get posts from thread
 		$allPosts = $this->threadRepository->getPostsForThreads($threads, $previewCount, $includeDeleted);
-		
-		// get post counts
 		$postsByThread = $this->groupPostsByThread($allPosts);
 
-		$result = $this->buildPreviewResults($threads, $postsByThread, $previewCount);
-
-		return $result;
+		return $this->buildPreviewResults($threads, $postsByThread, $previewCount);
 	}
 
 	/**
@@ -634,9 +680,6 @@ class threadService {
 	private function copyAttachmentsData(array $attachments, array $postUidMapping): array {
 		// init file id map
 		$fileIdMapping = [];
-		
-		// get the next file id
-		$nextFileId = $this->fileService->getNextId();
 
 		// loop through attachments and add them - the only difference being between the original being the post uid
 		foreach($attachments as $att) {
@@ -648,8 +691,8 @@ class threadService {
 				// the post uid of the new copied post
 				$newPostUid = $postUidMapping[$oldPostUid];
 
-				// then add the file
-				$this->fileService->addFile(
+				// then add the file, which hands back the id it was given
+				$newFileId = $this->fileService->addFile(
 					$newPostUid,
 					$att['fileName'],
 					$att['storedFileName'],
@@ -670,10 +713,7 @@ class threadService {
 
 				// set fileId map entry
 				// old file_id => new file_id
-				$fileIdMapping[$oldFileId] = $nextFileId;
-
-				// then increment the file id by 1
-				$nextFileId++;
+				$fileIdMapping[$oldFileId] = $newFileId;
 			} else {
 				// Handle the case where the old post uid is not found in the mapping (optional)
 				// You can log an error or take other actions depending on your needs

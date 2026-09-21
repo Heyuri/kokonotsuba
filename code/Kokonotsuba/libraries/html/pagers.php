@@ -27,7 +27,8 @@ function validateAndClampPagination(int $entriesPerPage, int $totalEntries, int 
 		throw new BoardException("Total entries must be a valid non-negative integer.");
 	}
 
-	$totalPages = (int) ceil($totalEntries / $entriesPerPage);
+	// a page holds at least one entry, so a size of 0 cannot divide
+	$totalPages = (int) ceil($totalEntries / max(1, $entriesPerPage));
 
 	if (filter_var($currentPage, FILTER_VALIDATE_INT) === false) {
 		throw new BoardException("Invalid page number");
@@ -87,10 +88,10 @@ function drawBoardPager(int $entriesPerPage, int $totalEntries, string $url, int
 
 	$getLink = function($page) use ($url, $staticUntil, $isStaticAll, $liveIndexFile, $staticIndexFile) {
 		if ($page === 1) {
-			return $url . $staticIndexFile;
+			return htmlspecialchars($url . $staticIndexFile);
 		}
 		if (!$isStaticAll && $page > $staticUntil) {
-			return $url . $liveIndexFile . '?page=' . $page;
+			return htmlspecialchars($url . $liveIndexFile) . '?page=' . $page;
 		}
 		return $page . '.html';
 	};

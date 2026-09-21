@@ -141,14 +141,15 @@ function _getbits($buffer, $pos, $count){
 	return $result;
 }
 
-function generateUid($length = 8) {
-	$randomData = bin2hex(random_bytes(8));
+/**
+ * Random lowercase hex identifier, used for thread uids.
+ *
+ * @param int $length Characters to return.
+ */
+function generateUid(int $length = 64): string {
+	$length = max(1, $length);
 
-	$uid = uniqid($randomData, true);
-	$uid = str_replace('.', '', $uid);
-	$uid = substr($uid, 0, $length);
-
-	return $uid;
+	return substr(bin2hex(random_bytes(intdiv($length + 1, 2))), 0, $length);
 }
 
 /**
@@ -167,7 +168,7 @@ function sanitizeStr(string $str, bool $convertNewLines = false): string {
 	// Remove potentially problematic characters (e.g., control characters not allowed in XML 1.1)
 	// Reference: http://www.w3.org/TR/2006/REC-xml11-20060816/#charsets
 	$str = preg_replace(
-		'/([\x01-\x08\x0B\x0C\x0E-\x1F\x7F-\x84\x86-\x9F\x{FDD0}-\x{FDDF}])/u',
+		'/([\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x84\x86-\x9F\x{FDD0}-\x{FDDF}])/u',
 		'',
 		htmlspecialchars($str, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
 	);

@@ -51,7 +51,7 @@ class reportService {
 	 * @param string|null $publicReason  Reason visible to the reporter.
 	 * @param string|null $privateReason Reason visible only to staff.
 	 * @param bool        $deletePost    Whether to delete the posts as well as close the reports.
-	 * @return int Number of posts whose reports were approved.
+	 * @return int[] UIDs of the posts whose reports were approved, deleted when $deletePost.
 	 */
 	public function approveReports(
 		array $reportIds,
@@ -59,11 +59,11 @@ class reportService {
 		?string $publicReason,
 		?string $privateReason,
 		bool $deletePost = true
-	): int {
+	): array {
 		$reports = $this->loadReports($reportIds);
 
 		if (empty($reports)) {
-			return 0;
+			return [];
 		}
 
 		$postUids = array_values(array_unique(array_map(
@@ -94,7 +94,7 @@ class reportService {
 			}
 		});
 
-		return count($postUids);
+		return $postUids;
 	}
 
 	/**

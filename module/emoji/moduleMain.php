@@ -9,7 +9,8 @@ use Kokonotsuba\module_classes\traits\listeners\IncludeScriptTrait;
 use Kokonotsuba\module_classes\traits\FormattingDetailsTrait;
 use Kokonotsuba\post\Post;
 
-use function Puchiko\strings\sanitizeStr;
+
+require_once __DIR__ . '/emojiReplacer.php';
 
 class moduleMain extends abstractModuleMain {
 	use PostCommentListenerTrait;
@@ -17,7 +18,7 @@ class moduleMain extends abstractModuleMain {
 	use IncludeScriptTrait;
 	use FormattingDetailsTrait;
 
-	private array $emojiFilter;
+	private emojiReplacer $replacer;
 	private array $emojis;
 	private readonly string $staticUrl;
 		 
@@ -33,7 +34,7 @@ class moduleMain extends abstractModuleMain {
 		$this->staticUrl = $this->getConfig('STATIC_URL');
 		
 		$this->emojis = require __DIR__ . '/emojis.php';
-		$this->emojiFilter = $this->buildEmojiFilter();
+		$this->replacer = new emojiReplacer($this->emojis, $this->staticUrl);
 
 		$this->listenPostComment('onRenderComment');
 		$this->listenCommentExtras('onRenderCommentExtras');
@@ -68,17 +69,6 @@ class moduleMain extends abstractModuleMain {
 		return $this->renderFormattingDetails('emojiContainer', 'Emoji', $content);
 	}
 
-	private function buildEmojiFilter(): array {
-		$emojiFilter = [];
-
-		foreach ($this->emojis as $char => $name) {
-			$emojiFilter["/$char/u"] =
-				'<img class="emoji" src="' . sanitizeStr($this->staticUrl) . 'image/emoji/' . sanitizeStr($name) . '.gif" title="' . sanitizeStr($name) . '" alt="' . sanitizeStr($char) . '">';
-		}
-
-		return $emojiFilter;
-	}
-
 	/**
 	 * Swap emoji characters for their images.
 	 *
@@ -86,11 +76,7 @@ class moduleMain extends abstractModuleMain {
 	 * also means the images follow the board's current STATIC_URL.
 	 */
 	private function onRenderComment(string &$comment, ?Post $post = null, bool $isThreadView = false): void {
-		// Loop through emoji regex and apply it on the comment 
-		foreach ($this->emojiFilter as $filterin => $filterout) {
-			// apply filter
-			$comment = preg_replace($filterin, $filterout, $comment);
-		}
+		$comment = $this->replacer->replace($comment);
 	}
 
 

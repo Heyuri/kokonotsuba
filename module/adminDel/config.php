@@ -18,5 +18,6 @@ return [
 	// menu entries this module adds, see widgetMenuPolicy
 	'PostMenu.delete'           => boolField('config_label_modules.adminDel.PostMenu.delete', true),
 	'PostMenu.mute'             => boolField('config_label_modules.adminDel.PostMenu.mute', true),
+	'PostMenu.deletePurge'      => boolField('config_label_modules.adminDel.PostMenu.deletePurge', true),
 	'AttachmentMenu.deleteFile' => boolField('config_label_modules.adminDel.AttachmentMenu.deleteFile', true),
 ];

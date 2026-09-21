@@ -4,6 +4,8 @@
 
 namespace Kokonotsuba\routers\routes;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\board\board;
 use Kokonotsuba\error\softErrorHandler;
@@ -22,7 +24,8 @@ class rebuildRoute {
 		$this->softErrorHandler->handleAuthError(userRole::LEV_JANITOR);
 
 		$this->actionLoggerService->logAction("Rebuilt pages", $this->board->getBoardUID(), actionType::BOARD_REBUILD);
-		$this->board->updateBoardPathCache(); 
+		$this->board->updateBoardPathCache();
+		threadFragments::forgetBoard($this->board);
 		$this->board->rebuildBoard();
 
 		header('HTTP/1.1 302 Moved Temporarily');

@@ -560,11 +560,8 @@ class vichanBoardImporter {
 		// generate params
 		$postParams = $postRegistData->toParams($boardUid, $root);
 
-		// get next post uid before insert - which will be the post uid of the newly inserted post
-		$postUid = $this->postRepository->getNextPostUid();
-
-		// then insert post using post repo
-		$this->postRepository->insertPost($postParams);
+		// insert post using post repo, which hands back the post uid it was given
+		$postUid = $this->postRepository->insertPost($postParams);
 
 		// get file data
 		// vichan stores files in the json format

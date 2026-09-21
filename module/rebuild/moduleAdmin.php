@@ -65,7 +65,7 @@ class moduleAdmin extends abstractModuleAdmin {
 
 		$this->dispatchBackgroundJob(
 			'rebuild_boards',
-			['boardUIDs' => $boardUIDs],
+			['boardUIDs' => $boardUIDs, 'dropFragments' => true],
 			'Rebuild started.',
 			'Failed to start rebuild.',
 			$this->getModulePageURL(['dispatched' => '1'], false),

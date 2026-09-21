@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\post\deletion;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\board\board;
 use Kokonotsuba\database\transactionManager;
 use Kokonotsuba\database\TransactionalTrait;
@@ -44,7 +46,9 @@ class postDeletionService {
 
 		$posts = array_filter($posts, fn($v) => filter_var($v, FILTER_VALIDATE_INT) !== false);
 
-		$this->inTransaction(function () use ($posts, $accountId) {
+		// Tried again when it deadlocks with a reply landing in the same thread. Safe to run twice:
+		// apart from the rows, it only moves attachments to purgatory, which skips a file already moved.
+		$this->inRetriedTransaction(function () use ($posts, $accountId) {
 			$postsData = $this->postRepository->getPostsByUids($posts);
 			if (!$postsData) return;
 
@@ -61,6 +65,9 @@ class postDeletionService {
 			// Restore bump ordering on affected threads
 			$this->restoreThreadBumps($deletionRows);
 		});
+
+		// the deleted posts' threads; backlinks are client-side, so quoted threads are untouched
+		threadFragments::forgetThreadPairs($this->postRepository->getThreadsTouchedByPosts($posts));
 
 		// Announced after the transaction so listeners see the posts as actually deleted.
 		// Carries the UIDs that were asked for; replies proxy-deleted by a thread cascade are

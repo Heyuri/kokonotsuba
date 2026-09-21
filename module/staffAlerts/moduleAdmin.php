@@ -121,6 +121,10 @@ class moduleAdmin extends abstractModuleAdmin {
 	 * @return array<int, array{key: string, label: string, count: int, url: string, title: string}>
 	 */
 	private function collectAlerts(): array {
+		if ($this->collectedAlerts !== null) {
+			return $this->collectedAlerts;
+		}
+
 		$alerts = [];
 		$this->moduleContext->moduleEngine->dispatch('StaffAlerts', [&$alerts]);
 
@@ -135,8 +139,11 @@ class moduleAdmin extends abstractModuleAdmin {
 			];
 		}
 
-		return $normalised;
+		return $this->collectedAlerts = $normalised;
 	}
+
+	/** @var array<int, array{key: string, label: string, count: int, url: string, title: string}>|null */
+	private ?array $collectedAlerts = null;
 
 	/** The whole panel, from the same blocks the client fills its own from. */
 	private function renderWidget(array $alerts): string {

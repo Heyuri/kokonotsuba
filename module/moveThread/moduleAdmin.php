@@ -2,6 +2,8 @@
 
 namespace Kokonotsuba\Modules\moveThread;
 
+use Kokonotsuba\cache\thread_fragment\threadFragments;
+
 use Kokonotsuba\action_log\actionType;
 use Kokonotsuba\error\BoardException;
 use Exception;
@@ -68,8 +70,9 @@ class moduleAdmin extends abstractModuleAdmin {
 	}
 
 	/**
-	 * Build the merge form template the JS window clones. The thread list is rendered for the board
-	 * being viewed, which is the only board a merge can involve.
+	 * Build the merge form template the JS window clones. The thread list is left empty here and
+	 * fetched from the mergeList page when the window opens: it costs two queries and a render of
+	 * every recent thread, which is too much to pay on every page for a window rarely opened.
 	 */
 	private function generateMergeThreadJsTemplate(): string {
 		$templateValues = [
@@ -77,7 +80,7 @@ class moduleAdmin extends abstractModuleAdmin {
 			'{$THREAD_UID}' => '',
 			'{$THREAD_NUMBER}' => '',
 			'{$THREAD_SUBJECT}' => '',
-			'{$THREAD_LIST_HTML}' => $this->generateThreadListHTML($this->moduleContext->board),
+			'{$THREAD_LIST_HTML}' => '',
 			'{$CSRF_TOKEN}' => getCsrfHiddenInput(),
 		];
 
@@ -307,11 +310,8 @@ class moduleAdmin extends abstractModuleAdmin {
 
 			);
 
-		// get next post uid
-		$postUid = $this->moduleContext->postRepository->getNextPostUid();
-
 		// Add the notice post
-		$this->moduleContext->postService->addPostToThread($board, $postRegistData, $postUid);
+		$postUid = $this->moduleContext->postService->addPostToThread($board, $postRegistData);
 
 		// Register quote link so the reference resolves in the renderer
 		$this->moduleContext->quoteLinkService->createQuoteLinksFromArray(
@@ -519,6 +519,8 @@ class moduleAdmin extends abstractModuleAdmin {
 			$threadRedirectUrl = $this->moduleContext->postRedirectService->resolveRedirectUrlFromThreadUID($threadUid);
 		}
 
+		threadFragments::forgetThread($threadUid, $hostBoard->getBoardUID());
+
 		// rebuild the boards' html
 		$boardsToRebuild = [
 			$hostBoard,
@@ -534,6 +536,14 @@ class moduleAdmin extends abstractModuleAdmin {
 
 	public function ModulePage() {
 		$pageName = $this->moduleContext->request->getParameter('pageName', 'GET', '');
+
+		// The merge window's thread list, fetched when it opens; the viewed board is the only
+		// board a merge can involve, and the destination thread is left out of its own list.
+		if ($pageName === 'mergeList') {
+			$excludeThreadUid = (string) $this->moduleContext->request->getParameter('thread_uid', 'GET', '');
+			sendJsonResponse(['html' => $this->generateThreadListHTML($this->moduleContext->board, $excludeThreadUid)]);
+			return;
+		}
 
 		// Show the merge or the move form
 		if ($pageName === 'merge') {
@@ -701,6 +711,11 @@ class moduleAdmin extends abstractModuleAdmin {
 				$sourceThreadUids
 			);
 		});
+
+		foreach ($sourceThreadUids as $sourceThreadUid) {
+			threadFragments::forgetThread($sourceThreadUid, $board->getBoardUID());
+		}
+		threadFragments::forgetThread($destinationThread->getUid(), $destinationThread->getBoardUID());
 
 		rebuildBoardsByArray([$board]);
 

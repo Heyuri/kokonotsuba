@@ -38,4 +38,9 @@ class postPolicy extends policyBase {
 		return $isAuthorized;
 	}
 
+	/** Whether the viewer may purge any post, which is what deleting and purging in one step takes. */
+	public function canStaffPurge(): bool {
+		return $this->roleLevel->isAtLeast($this->authLevels['CAN_DELETE_ALL'] ?? \Kokonotsuba\userRole::LEV_MODERATOR);
+	}
+
 }
